@@ -1,5 +1,5 @@
 import { StatusBar } from "expo-status-bar";
-import { StyleSheet, Text } from "react-native";
+import { StyleSheet, Text, useColorScheme } from "react-native";
 import * as SplashScreen from "expo-splash-screen";
 import { useCallback } from "react";
 import Entypo from "@expo/vector-icons/Entypo";
@@ -10,14 +10,24 @@ import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 SplashScreen.preventAutoHideAsync();
 
 const styles = StyleSheet.create({
+  lightThemeContainer: {
+    backgroundColor: "#ffffff",
+  },
+  darkThemeContainer: {
+    backgroundColor: "#242c40",
+  },
+  lightThemeText: {
+    color: "#242c40",
+  },
+  darkThemeText: {
+    color: "#ffffff",
+  },
   container: {
     flex: 1,
-    backgroundColor: "#fff",
     alignItems: "center",
     justifyContent: "center",
-    fontFamily: "Inter-Regular",
   },
-  font: {
+  text: {
     fontFamily: "Inter-Regular",
   },
 });
@@ -26,6 +36,14 @@ export default function App() {
   const [fontsLoaded] = useFonts({
     "Inter-Regular": require("./assets/fonts/Inter-Regular.otf"),
   });
+  const colorScheme = useColorScheme();
+
+  const themeTextStyle =
+    colorScheme === "light" ? styles.lightThemeText : styles.darkThemeText;
+  const themeContainerStyle =
+    colorScheme === "light"
+      ? styles.lightThemeContainer
+      : styles.darkThemeContainer;
 
   const onLayoutRootView = useCallback(async () => {
     if (fontsLoaded) {
@@ -39,9 +57,13 @@ export default function App() {
 
   return (
     <SafeAreaProvider>
-      <SafeAreaView style={styles.container} onLayout={onLayoutRootView}>
-        <Text style={styles.font}>Hello World!</Text>
-        <Text style={styles.font}>Hello World!</Text>
+      <SafeAreaView
+        style={[styles.container, themeContainerStyle]}
+        onLayout={onLayoutRootView}
+      >
+        <Text style={[styles.text, themeTextStyle]}>
+          Color scheme: {colorScheme}
+        </Text>
         <StatusBar style="auto" />
         <Entypo name="rocket" size={30} color="#AC94C9" />
       </SafeAreaView>

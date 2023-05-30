@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "Expo Demo",
-    "slug": "expo-demo",
+    "name": "JW Time",
+    "slug": "jw-time",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -15,7 +15,10 @@
       "**/*"
     ],
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "config": {
+        "usesNonExemptEncryption": false
+      }
     },
     "android": {
       "adaptiveIcon": {

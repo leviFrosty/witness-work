@@ -27,8 +27,6 @@ i18n.locale = getLocales()[0].languageCode;
 // When a value is missing from a language it'll fall back to another language with the key present.
 i18n.enableFallback = true;
 
-i18n.locale = "fr";
-
 export type RootStackParamList = {
   Home: undefined;
 };

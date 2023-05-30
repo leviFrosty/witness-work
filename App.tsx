@@ -24,7 +24,7 @@ SplashScreen.preventAutoHideAsync();
 
 // Error tracking application setup
 Sentry.init({
-  dsn: process.env.SENTRY_DNS,
+  dsn: process.env.SENTRY_DSN,
   debug: true,
 });
 

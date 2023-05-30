@@ -1,4 +1,4 @@
-import { View, useColorScheme } from "react-native";
+import { useColorScheme } from "react-native";
 import { useMaterial3Theme } from "@pchmn/expo-material3-theme";
 import * as SplashScreen from "expo-splash-screen";
 import {
@@ -15,9 +15,19 @@ import {
 } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import HomeScreen from "./screens/HomeScreen";
+import { i18n } from "./translations";
+import { getLocales } from "expo-localization";
 
 // Keep the splash screen visible while we fetch resources
 SplashScreen.preventAutoHideAsync();
+
+// Sets default language based on system language
+i18n.locale = getLocales()[0].languageCode;
+
+// When a value is missing from a language it'll fall back to another language with the key present.
+i18n.enableFallback = true;
+
+i18n.locale = "fr";
 
 export type RootStackParamList = {
   Home: undefined;
@@ -39,26 +49,21 @@ export default function App() {
   });
 
   const Stack = createNativeStackNavigator<RootStackParamList>();
-  
+
   useEffect(() => {
-    onLayoutRootView()
-  }, [])
+    onLayoutRootView();
+  }, []);
 
   return (
     <PaperProvider theme={paperTheme}>
       <NavigationContainer
         theme={colorScheme === "dark" ? DarkTheme : LightTheme}
       >
-        <Stack.Navigator initialRouteName="Home" screenOptions={{ headerShown: false}} >
-          <Stack.Screen
-            name="Home"
-            component={HomeScreen}
-            options={
-              {
-                // headerShown: false,
-              }
-            }
-          />
+        <Stack.Navigator
+          initialRouteName="Home"
+          screenOptions={{ headerShown: false }}
+        >
+          <Stack.Screen name="Home" component={HomeScreen} />
         </Stack.Navigator>
       </NavigationContainer>
     </PaperProvider>

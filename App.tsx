@@ -17,9 +17,15 @@ import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import HomeScreen from "./screens/HomeScreen";
 import { i18n } from "./translations";
 import { getLocales } from "expo-localization";
+import * as Sentry from "sentry-expo";
 
 // Keep the splash screen visible while we fetch resources
 SplashScreen.preventAutoHideAsync();
+
+Sentry.init({
+  dsn: process.env.SENTRY_DNS,
+  debug: true,
+});
 
 // Sets default language based on system language
 i18n.locale = getLocales()[0].languageCode;
@@ -31,7 +37,7 @@ export type RootStackParamList = {
   Home: undefined;
 };
 
-export default function App() {
+function App() {
   const onLayoutRootView = useCallback(async () => {
     await SplashScreen.hideAsync();
   }, []);
@@ -67,3 +73,5 @@ export default function App() {
     </PaperProvider>
   );
 }
+
+export default Sentry.Native.wrap(App);

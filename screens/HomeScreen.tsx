@@ -48,6 +48,7 @@ const HomeScreen = ({ navigation }: HomeProps) => {
         value={nameFromState}
         onChangeText={(text) => setNameFromState(text)}
       />
+      <Text>URL: {process.env.SENTRY_DNS}</Text>
     </View>
   );
 };

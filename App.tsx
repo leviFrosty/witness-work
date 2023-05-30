@@ -22,6 +22,7 @@ import * as Sentry from "sentry-expo";
 // Keep the splash screen visible while we fetch resources
 SplashScreen.preventAutoHideAsync();
 
+// Error tracking application setup
 Sentry.init({
   dsn: process.env.SENTRY_DNS,
   debug: true,

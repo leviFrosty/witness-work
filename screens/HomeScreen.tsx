@@ -1,17 +1,26 @@
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { RootStackParamList } from "../App";
 import { StyleSheet, View } from "react-native";
-import { Button, Text, TextInput, useTheme } from "react-native-paper";
+import {
+  Button,
+  IconButton,
+  MD3Colors,
+  Text,
+  TextInput,
+  useTheme,
+} from "react-native-paper";
 import ScreenTitle from "../components/ScreenTitle";
 import { i18n } from "../translations";
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import BottomSheet from "@gorhom/bottom-sheet";
-import { useCallback, useMemo, useRef, useState } from "react";
-import Layout from "./Layout";
+import { useMemo, useRef, useState } from "react";
+import Layout from "../components/Layout";
+import { theme as appTheme } from "./../lib/theme";
+import { HomeStackParamList } from "../stacks/HomeStackScreen";
 
-type HomeProps = NativeStackScreenProps<RootStackParamList, "Home">;
+type HomeProps = NativeStackScreenProps<HomeStackParamList, "Home">;
 
 type Store = {
   name: string;
@@ -36,9 +45,6 @@ const HomeScreen = ({ navigation }: HomeProps) => {
   const [sheetOpen, setSheetOpen] = useState(false);
   const bottomSheetRef = useRef<BottomSheet>(null);
   const snapPoints = useMemo(() => ["3%", "98%"], []);
-  const handleSheetChanges = useCallback((index: number) => {
-    console.log("handleSheetChanges", index);
-  }, []);
   const theme = useTheme();
 
   const styles = StyleSheet.create({
@@ -49,15 +55,31 @@ const HomeScreen = ({ navigation }: HomeProps) => {
   });
 
   return (
-    <Layout>
+    <Layout removeContentPadding>
       <View
         style={{
-          position: "relative",
           flex: 1,
         }}
       >
-        <View>
-          <ScreenTitle>{i18n.t("dashboard")}</ScreenTitle>
+        <View
+          style={{
+            flex: 1,
+            paddingTop: appTheme.contentPaddingTop,
+            paddingRight: appTheme.contentPaddingLeftRight,
+            paddingLeft: appTheme.contentPaddingLeftRight,
+          }}
+        >
+          <ScreenTitle
+            title={i18n.t("dashboard")}
+            icon={
+              <IconButton
+                icon="cog"
+                iconColor={theme.colors.tertiary}
+                size={25}
+                onPress={() => navigation.navigate("Settings")}
+              />
+            }
+          />
           <Text>Name from store: {name}</Text>
           <TextInput value={name} onChangeText={(text) => setName(text)} />
           <Button onPress={() => setSheetOpen(!sheetOpen)}>Toggle Sheet</Button>
@@ -67,7 +89,6 @@ const HomeScreen = ({ navigation }: HomeProps) => {
             ref={bottomSheetRef}
             index={1}
             snapPoints={snapPoints}
-            onChange={handleSheetChanges}
             onClose={() => setSheetOpen(false)}
             enablePanDownToClose={true}
             handleStyle={{

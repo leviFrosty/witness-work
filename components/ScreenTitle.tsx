@@ -1,17 +1,32 @@
-import React, { PropsWithChildren } from "react";
-import { Text } from "react-native-paper";
-import { StyleSheet } from "react-native";
+import React, { ReactNode } from "react";
+import { Text, useTheme } from "react-native-paper";
+import { StyleSheet, View } from "react-native";
 
-interface Props {}
+interface ScreenTitleProps {
+  title: string;
+  icon?: ReactNode;
+}
 
-const styles = StyleSheet.create({
-  title: {
-    fontSize: 40,
-  },
-});
+const ScreenTitle: React.FC<ScreenTitleProps> = ({ title, icon }) => {
+  const theme = useTheme();
 
-const ScreenTitle: React.FC<PropsWithChildren<Props>> = ({ children }) => {
-  return <Text style={styles.title}>{children}</Text>;
+  const styles = StyleSheet.create({
+    container: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+    },
+    title: {
+      fontSize: 40,
+      color: theme.colors.tertiary,
+    },
+  });
+
+  return (
+    <View style={styles.container}>
+      <Text style={styles.title}>{title}</Text>
+      {icon}
+    </View>
+  );
 };
 
 export default ScreenTitle;

@@ -13,13 +13,12 @@ import {
   DefaultTheme as NavigationDefaultTheme,
   DarkTheme as NavigationDarkTheme,
 } from "@react-navigation/native";
-import { createNativeStackNavigator } from "@react-navigation/native-stack";
-import HomeScreen from "./screens/HomeScreen";
 import { i18n } from "./translations";
 import { getLocales } from "expo-localization";
 import * as Sentry from "sentry-expo";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { SafeAreaProvider } from "react-native-safe-area-context";
+import HomeStackScreen from "./stacks/HomeStackScreen";
 
 // Keep the splash screen visible while we fetch resources
 SplashScreen.preventAutoHideAsync();
@@ -71,7 +70,7 @@ function App() {
             initialRouteName="Home"
             screenOptions={{ headerShown: false }}
           >
-            <Tab.Screen name="Home" component={HomeScreen} />
+            <Tab.Screen name="Home" component={HomeStackScreen} />
           </Tab.Navigator>
         </NavigationContainer>
       </SafeAreaProvider>

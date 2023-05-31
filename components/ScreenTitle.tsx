@@ -14,6 +14,7 @@ const ScreenTitle: React.FC<ScreenTitleProps> = ({ title, icon }) => {
     container: {
       flexDirection: "row",
       justifyContent: "space-between",
+      paddingBottom: 10,
     },
     title: {
       fontSize: 40,

@@ -1,12 +1,12 @@
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { PropsWithChildren } from "react";
-import HomeScreen from "../screens/HomeScreen";
+import DashboardScreen from "../screens/DashboardScreen";
 import SettingsScreen from "../screens/SettingsScreen";
 
 interface HomeStackScreenProps {}
 
 export type HomeStackParamList = {
-  Home: undefined;
+  Dashboard: undefined;
   Settings: undefined;
 };
 
@@ -16,10 +16,10 @@ const HomeStackScreen: React.FC<PropsWithChildren<HomeStackScreenProps>> = ({
   const HomeStack = createNativeStackNavigator<HomeStackParamList>();
   return (
     <HomeStack.Navigator
-      initialRouteName="Home"
+      initialRouteName="Dashboard"
       screenOptions={{ headerShown: false }}
     >
-      <HomeStack.Screen name="Home" component={HomeScreen} />
+      <HomeStack.Screen name="Dashboard" component={DashboardScreen} />
       <HomeStack.Screen name="Settings" component={SettingsScreen} />
     </HomeStack.Navigator>
   );

@@ -1,10 +1,8 @@
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
-import { RootStackParamList } from "../App";
 import { StyleSheet, View } from "react-native";
 import {
   Button,
   IconButton,
-  MD3Colors,
   Text,
   TextInput,
   useTheme,
@@ -17,10 +15,10 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import BottomSheet from "@gorhom/bottom-sheet";
 import { useMemo, useRef, useState } from "react";
 import Layout from "../components/Layout";
-import { theme as appTheme } from "./../lib/theme";
+import { theme as appTheme } from "../lib/theme";
 import { HomeStackParamList } from "../stacks/HomeStackScreen";
 
-type HomeProps = NativeStackScreenProps<HomeStackParamList, "Home">;
+type HomeProps = NativeStackScreenProps<HomeStackParamList, "Dashboard">;
 
 type Store = {
   name: string;
@@ -40,7 +38,7 @@ export const useStore = create(
   )
 );
 
-const HomeScreen = ({ navigation }: HomeProps) => {
+const DashboardScreen = ({ navigation }: HomeProps) => {
   const { name, setName } = useStore();
   const [sheetOpen, setSheetOpen] = useState(false);
   const bottomSheetRef = useRef<BottomSheet>(null);
@@ -111,4 +109,4 @@ const HomeScreen = ({ navigation }: HomeProps) => {
   );
 };
 
-export default HomeScreen;
+export default DashboardScreen;

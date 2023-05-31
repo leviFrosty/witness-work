@@ -19,6 +19,7 @@ import * as Sentry from "sentry-expo";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import HomeStackScreen from "./stacks/HomeStackScreen";
+import useSettingStore from "./stores/SettingsStore";
 
 // Keep the splash screen visible while we fetch resources
 SplashScreen.preventAutoHideAsync();
@@ -43,7 +44,11 @@ function App() {
   const onLayoutRootView = useCallback(async () => {
     await SplashScreen.hideAsync();
   }, []);
-  const colorScheme = useColorScheme();
+  const deviceColorScheme = useColorScheme();
+  const { userPreferenceColorScheme } = useSettingStore();
+
+  const colorScheme = userPreferenceColorScheme || deviceColorScheme;
+
   const { theme } = useMaterial3Theme();
   const paperTheme =
     colorScheme === "dark"
@@ -64,7 +69,7 @@ function App() {
     <PaperProvider theme={paperTheme}>
       <SafeAreaProvider>
         <NavigationContainer
-          theme={colorScheme === "dark" ? DarkTheme : LightTheme}
+          theme={deviceColorScheme === "dark" ? DarkTheme : LightTheme}
         >
           <Tab.Navigator
             initialRouteName="Home"

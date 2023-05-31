@@ -3,5 +3,11 @@
   "dashboard": "Dashboard",
   "home": "Home",
   "calls": "Calls",
-  "returnVisits": "Return Visits"
+  "returnVisits": "Return Visits",
+  "settings": "Settings",
+  "theme": "Theme",
+  "systemPreference": "System Preference",
+  "light": "Light",
+  "dark": "Dark",
+  "system": "System"
 }

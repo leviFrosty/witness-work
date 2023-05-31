@@ -1,5 +1,5 @@
 export const theme = {
-  contentPaddingTop: 10,
+  contentPaddingTop: 25,
   contentPaddingLeftRight: 18,
 };
 

@@ -18,6 +18,8 @@ import HomeScreen from "./screens/HomeScreen";
 import { i18n } from "./translations";
 import { getLocales } from "expo-localization";
 import * as Sentry from "sentry-expo";
+import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
+import { SafeAreaProvider } from "react-native-safe-area-context";
 
 // Keep the splash screen visible while we fetch resources
 SplashScreen.preventAutoHideAsync();
@@ -53,7 +55,7 @@ function App() {
     reactNavigationDark: NavigationDarkTheme,
   });
 
-  const Stack = createNativeStackNavigator<RootStackParamList>();
+  const Tab = createBottomTabNavigator<RootStackParamList>();
 
   useEffect(() => {
     onLayoutRootView();
@@ -61,16 +63,18 @@ function App() {
 
   return (
     <PaperProvider theme={paperTheme}>
-      <NavigationContainer
-        theme={colorScheme === "dark" ? DarkTheme : LightTheme}
-      >
-        <Stack.Navigator
-          initialRouteName="Home"
-          screenOptions={{ headerShown: false }}
+      <SafeAreaProvider>
+        <NavigationContainer
+          theme={colorScheme === "dark" ? DarkTheme : LightTheme}
         >
-          <Stack.Screen name="Home" component={HomeScreen} />
-        </Stack.Navigator>
-      </NavigationContainer>
+          <Tab.Navigator
+            initialRouteName="Home"
+            screenOptions={{ headerShown: false }}
+          >
+            <Tab.Screen name="Home" component={HomeScreen} />
+          </Tab.Navigator>
+        </NavigationContainer>
+      </SafeAreaProvider>
     </PaperProvider>
   );
 }

@@ -1,5 +1,5 @@
 import React, { PropsWithChildren } from "react";
-import { Title } from "react-native-paper";
+import { Text } from "react-native-paper";
 import { StyleSheet } from "react-native";
 
 interface Props {}
@@ -11,7 +11,7 @@ const styles = StyleSheet.create({
 });
 
 const ScreenTitle: React.FC<PropsWithChildren<Props>> = ({ children }) => {
-  return <Title style={styles.title}>{children}</Title>;
+  return <Text style={styles.title}>{children}</Text>;
 };
 
 export default ScreenTitle;

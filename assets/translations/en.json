@@ -9,5 +9,6 @@
   "systemPreference": "System Preference",
   "light": "Light",
   "dark": "Dark",
-  "system": "System"
+  "system": "System",
+  "territory": "Territory"
 }

@@ -2,6 +2,7 @@ import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { StyleSheet, View } from "react-native";
 import {
   Button,
+  FAB,
   IconButton,
   Text,
   TextInput,
@@ -49,6 +50,12 @@ const DashboardScreen = ({ navigation }: HomeProps) => {
     contentContainer: {
       flex: 1,
       backgroundColor: theme.colors.inverseOnSurface,
+    },
+    fab: {
+      position: "absolute",
+      // marginBottom: 16,
+      right: 30,
+      bottom: 30,
     },
   });
 
@@ -105,6 +112,7 @@ const DashboardScreen = ({ navigation }: HomeProps) => {
           </BottomSheet>
         )}
       </View>
+      <FAB style={styles.fab} icon={sheetOpen ? "content-save" : "plus"} />
     </Layout>
   );
 };

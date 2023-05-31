@@ -20,6 +20,8 @@ import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import HomeStackScreen from "./stacks/HomeStackScreen";
 import useSettingStore from "./stores/SettingsStore";
+import TerritoryScreen from "./screens/TerritoryScreen";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
 
 // Keep the splash screen visible while we fetch resources
 SplashScreen.preventAutoHideAsync();
@@ -38,6 +40,7 @@ i18n.enableFallback = true;
 
 export type RootStackParamList = {
   Home: undefined;
+  Territory: undefined;
 };
 
 function App() {
@@ -73,9 +76,37 @@ function App() {
         >
           <Tab.Navigator
             initialRouteName="Home"
-            screenOptions={{ headerShown: false }}
+            screenOptions={({ route }) => ({
+              tabBarIcon: ({ focused, color, size }) => {
+                type PossibleIcon =
+                  | "home"
+                  | "home-outline"
+                  | "map"
+                  | "map-outline"
+                  | "help";
+                let iconName: PossibleIcon = "help";
+
+                if (route.name === "Home") {
+                  iconName = focused ? "home" : "home-outline";
+                } else if (route.name === "Territory") {
+                  iconName = focused ? "map" : "map-outline";
+                }
+
+                return (
+                  <MaterialCommunityIcons
+                    name={iconName}
+                    size={size}
+                    color={color}
+                  />
+                );
+              },
+              headerShown: false,
+              tabBarActiveTintColor: paperTheme.colors.primary,
+              tabBarInactiveTintColor: paperTheme.colors.secondary,
+            })}
           >
             <Tab.Screen name="Home" component={HomeStackScreen} />
+            <Tab.Screen name="Territory" component={TerritoryScreen} />
           </Tab.Navigator>
         </NavigationContainer>
       </SafeAreaProvider>

@@ -1,6 +1,6 @@
 # JW Time
 
-![JW-Time](./assets/icon.png)
+![JW-Time](./assets/favicon.png)
 
 > JW Time is a field service recording iOS and Android app created for Jehovah's Witnesses.
 

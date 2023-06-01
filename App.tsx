@@ -20,8 +20,8 @@ import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import HomeStackScreen from "./stacks/HomeStackScreen";
 import useSettingStore from "./stores/SettingsStore";
-import TerritoryScreen from "./screens/TerritoryScreen";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
+import TerritoryStackScreen from "./stacks/TerritoryStackScreen";
 
 // Keep the splash screen visible while we fetch resources
 SplashScreen.preventAutoHideAsync();
@@ -106,7 +106,7 @@ function App() {
             })}
           >
             <Tab.Screen name="Home" component={HomeStackScreen} />
-            <Tab.Screen name="Territory" component={TerritoryScreen} />
+            <Tab.Screen name="Territory" component={TerritoryStackScreen} />
           </Tab.Navigator>
         </NavigationContainer>
       </SafeAreaProvider>

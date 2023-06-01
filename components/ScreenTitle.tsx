@@ -18,7 +18,7 @@ const ScreenTitle: React.FC<ScreenTitleProps> = ({ title, icon }) => {
     },
     title: {
       fontSize: 40,
-      color: theme.colors.tertiary,
+      color: theme.colors.secondary,
     },
   });
 

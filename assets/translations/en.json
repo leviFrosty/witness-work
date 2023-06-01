@@ -3,6 +3,7 @@
   "dashboard": "Dashboard",
   "home": "Home",
   "calls": "Calls",
+  "returnVisit": "Return Visit",
   "returnVisits": "Return Visits",
   "settings": "Settings",
   "theme": "Theme",
@@ -10,5 +11,14 @@
   "light": "Light",
   "dark": "Dark",
   "system": "System",
-  "territory": "Territory"
+  "territory": "Territory",
+  "startTimer": "Start Timer",
+  "stopTimer": "Stop Timer",
+  "timeEntry": "Time Entry",
+  "name": "Name",
+  "fullName": "Full Name",
+  "firstName": "First Name",
+  "lastName": "Last Name",
+  "quickAddVideoPlacement": "Quick Add Video Placement",
+  "quickAddPlacement": "Quick Add Placement"
 }

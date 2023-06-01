@@ -1,6 +1,4 @@
 import { PropsWithChildren, useState } from "react";
-import Layout from "../components/Layout";
-import ScreenTitle from "../components/ScreenTitle";
 import { i18n } from "../translations";
 import useSettingStore, {
   SYSTEM_PREFERENCE_KEY,
@@ -33,23 +31,20 @@ const SettingsScreen: React.FC<PropsWithChildren<SettingsScreenProps>> = () => {
   ];
 
   return (
-    <Layout>
-      <ScreenTitle title={i18n.t("settings")} />
-      <View>
-        <Text>{i18n.t("system")}</Text>
-        <DropDown
-          list={colorSchemeList}
-          value={userPreferenceColorScheme}
-          label={i18n.t("theme")}
-          mode={"outlined"}
-          setValue={(value) => setUserPreferenceColorScheme(value)}
-          visible={showColorSchemeDropDown}
-          showDropDown={() => setShowColorSchemeDropDown(true)}
-          onDismiss={() => setShowColorSchemeDropDown(false)}
-          theme={theme}
-        />
-      </View>
-    </Layout>
+    <View>
+      <Text>{i18n.t("system")}</Text>
+      <DropDown
+        list={colorSchemeList}
+        value={userPreferenceColorScheme}
+        label={i18n.t("theme")}
+        mode={"outlined"}
+        setValue={(value) => setUserPreferenceColorScheme(value)}
+        visible={showColorSchemeDropDown}
+        showDropDown={() => setShowColorSchemeDropDown(true)}
+        onDismiss={() => setShowColorSchemeDropDown(false)}
+        theme={theme}
+      />
+    </View>
   );
 };
 

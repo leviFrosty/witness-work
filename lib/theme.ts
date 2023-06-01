@@ -1,6 +1,7 @@
 export const theme = {
-  contentPaddingTop: 25,
-  contentPaddingLeftRight: 18,
+  contentPaddingTop: 30,
+  contentPaddingTopSm: 15,
+  contentPaddingLeftRight: 10,
 };
 
 export default theme;

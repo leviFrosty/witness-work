@@ -21,5 +21,9 @@
   "lastName": "Last Name",
   "quickAddVideoPlacement": "Quick Add Video Placement",
   "quickAddPlacement": "Quick Add Placement",
-  "newCall": "New Call"
+  "newCall": "New Call",
+  "not-interested": "Not Interested",
+  "little-interested": "Little Interested",
+  "interested": "Interested",
+  "hungry": "Hungry"
 }

@@ -2,14 +2,24 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 
+export type InterestLevel =
+  | "not-interested"
+  | "little-interested"
+  | "interested"
+  | "hungry"
+  | string;
+
+export const interestLevels: InterestLevel[] = [
+  "not-interested",
+  "little-interested",
+  "interested",
+  "hungry",
+];
+
 export interface Call {
   id: string;
   name: string;
-  interestLevel?:
-    | "not-interested"
-    | "little-interested"
-    | "interested"
-    | "hungry";
+  interestLevel?: InterestLevel;
 }
 
 type CallsStore = {

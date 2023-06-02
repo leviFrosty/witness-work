@@ -1,30 +1,27 @@
+import { Heading, Text } from "native-base";
+import { ThemeComponentSizeType } from "native-base/lib/typescript/components/types";
 import React, { ReactNode } from "react";
-import { Text, useTheme } from "react-native-paper";
 import { StyleSheet, View } from "react-native";
 
 interface ScreenTitleProps {
   title: string;
+  size?: ThemeComponentSizeType<"Heading">;
   icon?: ReactNode;
 }
 
-const ScreenTitle: React.FC<ScreenTitleProps> = ({ title, icon }) => {
-  const theme = useTheme();
-
+const ScreenTitle: React.FC<ScreenTitleProps> = ({ title, size, icon }) => {
   const styles = StyleSheet.create({
     container: {
       flexDirection: "row",
+      alignItems: "center",
       justifyContent: "space-between",
       paddingBottom: 10,
-    },
-    title: {
-      fontSize: 40,
-      color: theme.colors.secondary,
     },
   });
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>{title}</Text>
+      <Heading size={size || "xl"}>{title}</Heading>
       {icon}
     </View>
   );

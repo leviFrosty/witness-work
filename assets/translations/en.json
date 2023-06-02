@@ -15,6 +15,7 @@
   "startTimer": "Start Timer",
   "stopTimer": "Stop Timer",
   "timeEntry": "Time Entry",
+  "enterName": "Enter Name",
   "name": "Name",
   "fullName": "Full Name",
   "firstName": "First Name",
@@ -25,5 +26,14 @@
   "not-interested": "Not Interested",
   "little-interested": "Little Interested",
   "interested": "Interested",
-  "hungry": "Hungry"
+  "hungry": "Hungry",
+  "en": "English",
+  "es": "Spanish",
+  "fr": "French",
+  "ja": "Japanese",
+  "language": "Language",
+  "selectLanguage": "Select Language",
+  "systemDefault": "System Default",
+  "preferences": "Preferences",
+  "interestLevel": "Interest Level"
 }

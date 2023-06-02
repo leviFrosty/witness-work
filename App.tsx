@@ -1,19 +1,11 @@
-import { useColorScheme } from "react-native";
-import { useMaterial3Theme } from "@pchmn/expo-material3-theme";
 import * as SplashScreen from "expo-splash-screen";
-import {
-  PaperProvider,
-  MD3DarkTheme,
-  MD3LightTheme,
-  adaptNavigationTheme,
-} from "react-native-paper";
 import { useCallback, useEffect } from "react";
 import {
+  DarkTheme,
+  DefaultTheme,
   NavigationContainer,
-  DefaultTheme as NavigationDefaultTheme,
-  DarkTheme as NavigationDarkTheme,
 } from "@react-navigation/native";
-import { i18n } from "./translations";
+import { i18n } from "./lib/translations";
 import { getLocales } from "expo-localization";
 import * as Sentry from "sentry-expo";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
@@ -22,6 +14,7 @@ import HomeStackScreen from "./stacks/HomeStackScreen";
 import useSettingStore from "./stores/SettingsStore";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import TerritoryStackScreen from "./stacks/TerritoryStackScreen";
+import NativeBase from "./components/NativeBase";
 
 // Keep the splash screen visible while we fetch resources
 SplashScreen.preventAutoHideAsync();
@@ -47,20 +40,6 @@ function App() {
   const onLayoutRootView = useCallback(async () => {
     await SplashScreen.hideAsync();
   }, []);
-  const deviceColorScheme = useColorScheme();
-  const { userPreferenceColorScheme } = useSettingStore();
-
-  const colorScheme = userPreferenceColorScheme || deviceColorScheme;
-
-  const { theme } = useMaterial3Theme();
-  const paperTheme =
-    colorScheme === "dark"
-      ? { ...MD3DarkTheme, colors: theme.dark }
-      : { ...MD3LightTheme, colors: theme.light };
-  const { DarkTheme, LightTheme } = adaptNavigationTheme({
-    reactNavigationLight: NavigationDefaultTheme,
-    reactNavigationDark: NavigationDarkTheme,
-  });
 
   const Tab = createBottomTabNavigator<RootStackParamList>();
 
@@ -68,12 +47,18 @@ function App() {
     onLayoutRootView();
   }, []);
 
+  const { language: userPreferenceLanguage } = useSettingStore();
+
+  useEffect(() => {
+    if (userPreferenceLanguage) {
+      i18n.locale = userPreferenceLanguage;
+    }
+  }, [userPreferenceLanguage]);
+
   return (
-    <PaperProvider theme={paperTheme}>
+    <NativeBase>
       <SafeAreaProvider>
-        <NavigationContainer
-          theme={deviceColorScheme === "dark" ? DarkTheme : LightTheme}
-        >
+        <NavigationContainer theme={DarkTheme}>
           <Tab.Navigator
             initialRouteName="Home"
             screenOptions={({ route }) => ({
@@ -101,8 +86,6 @@ function App() {
                 );
               },
               headerShown: false,
-              tabBarActiveTintColor: paperTheme.colors.primary,
-              tabBarInactiveTintColor: paperTheme.colors.secondary,
             })}
           >
             <Tab.Screen name="Home" component={HomeStackScreen} />
@@ -110,7 +93,7 @@ function App() {
           </Tab.Navigator>
         </NavigationContainer>
       </SafeAreaProvider>
-    </PaperProvider>
+    </NativeBase>
   );
 }
 

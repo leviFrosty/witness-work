@@ -4,28 +4,18 @@ import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 
 type SettingsStore = {
-  userPreferenceColorScheme: ColorSchemeName;
-  setUserPreferenceColorScheme: (
-    input: ColorSchemeName | typeof SYSTEM_PREFERENCE_KEY
-  ) => void;
+  language?: string;
+  setLanguage: (input?: string) => void;
 };
-
-export const SYSTEM_PREFERENCE_KEY = "systemPreference";
 
 const useSettingStore = create(
   persist<SettingsStore>(
     (set) => ({
-      userPreferenceColorScheme: undefined,
-      setUserPreferenceColorScheme: (input) => {
-        if (input === SYSTEM_PREFERENCE_KEY) {
-          set({ userPreferenceColorScheme: undefined });
-        } else {
-          set({ userPreferenceColorScheme: input });
-        }
-      },
+      language: undefined,
+      setLanguage: (input) => set({ language: input }),
     }),
     {
-      name: "example", // unique name
+      name: "settingsStore", // unique name
       storage: createJSONStorage(() => AsyncStorage),
     }
   )

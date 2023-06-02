@@ -1,33 +1,39 @@
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { StyleSheet, View } from "react-native";
-import { Button, FAB, IconButton, Portal, useTheme } from "react-native-paper";
 import ScreenTitle from "../components/ScreenTitle";
-import { i18n } from "../translations";
+import { i18n } from "../lib/translations";
 import BottomSheet from "@gorhom/bottom-sheet";
 import { useMemo, useRef, useState } from "react";
-import theme from "../lib/theme";
+import appTheme from "../lib/theme";
 import { HomeStackParamList } from "../stacks/HomeStackScreen";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import NewCallForm from "../components/NewCallForm";
+import { Button, Fab, useTheme } from "native-base";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
 
 type HomeProps = NativeStackScreenProps<HomeStackParamList, "Dashboard">;
 
+export type Sheet = {
+  isOpen: boolean;
+  hasSaved: boolean;
+};
+
 const DashboardScreen = ({ navigation }: HomeProps) => {
   const [fabOpen, setFabOpen] = useState(false);
-  const [sheet, setSheet] = useState({ isOpen: false, hasSaved: false });
+  const [sheet, setSheet] = useState<Sheet>({ isOpen: false, hasSaved: false });
   const [timeRunning, setTimerRunning] = useState(false);
   const [showConfirmExit, setShowConfirmExit] = useState(false);
   const bottomSheetRef = useRef<BottomSheet>(null);
   const snapPoints = useMemo(() => ["3%", "90%"], []);
-  const paperTheme = useTheme();
   const insets = useSafeAreaInsets();
+  const theme = useTheme();
 
   const styles = StyleSheet.create({
     wrapper: {
       flex: 1,
-      paddingTop: insets.top + 10,
-      paddingRight: theme.contentPaddingLeftRight,
-      paddingLeft: theme.contentPaddingLeftRight,
+      paddingTop: insets.top + 25,
+      paddingRight: appTheme.contentPaddingLeftRight,
+      paddingLeft: appTheme.contentPaddingLeftRight,
     },
     fab: {
       position: "absolute",
@@ -41,9 +47,9 @@ const DashboardScreen = ({ navigation }: HomeProps) => {
       <ScreenTitle
         title={i18n.t("dashboard")}
         icon={
-          <IconButton
-            icon="cog"
-            iconColor={paperTheme.colors.tertiary}
+          <MaterialCommunityIcons
+            name="cog"
+            color={theme.colors.white}
             size={25}
             onPress={() => navigation.navigate("Settings")}
           />
@@ -60,17 +66,24 @@ const DashboardScreen = ({ navigation }: HomeProps) => {
           onClose={() => setSheet({ ...sheet, isOpen: false })}
           enablePanDownToClose={true}
           handleStyle={{
-            backgroundColor: paperTheme.colors.inversePrimary,
+            backgroundColor: theme.colors.primary[600],
             borderTopLeftRadius: 15,
             borderTopRightRadius: 15,
           }}
         >
           <NewCallForm
             handleSaveClick={() => setSheet({ ...sheet, hasSaved: true })}
+            sheet={sheet}
+            setSheet={setSheet}
           />
         </BottomSheet>
       )}
-      <Portal>
+      <Fab
+        renderInPortal={false}
+        icon={<MaterialCommunityIcons name="plus" />}
+      ></Fab>
+
+      {/* <Portal>
         <FAB.Group
           open={fabOpen}
           style={styles.fab}
@@ -132,7 +145,7 @@ const DashboardScreen = ({ navigation }: HomeProps) => {
             }
           }}
         />
-      </Portal>
+      </Portal> */}
     </View>
   );
 };

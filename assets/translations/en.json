@@ -20,5 +20,6 @@
   "firstName": "First Name",
   "lastName": "Last Name",
   "quickAddVideoPlacement": "Quick Add Video Placement",
-  "quickAddPlacement": "Quick Add Placement"
+  "quickAddPlacement": "Quick Add Placement",
+  "newCall": "New Call"
 }

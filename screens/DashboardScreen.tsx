@@ -14,8 +14,9 @@ type HomeProps = NativeStackScreenProps<HomeStackParamList, "Dashboard">;
 
 const DashboardScreen = ({ navigation }: HomeProps) => {
   const [fabOpen, setFabOpen] = useState(false);
-  const [sheet, setSheet] = useState({ isOpen: false });
+  const [sheet, setSheet] = useState({ isOpen: false, hasSaved: false });
   const [timeRunning, setTimerRunning] = useState(false);
+  const [showConfirmExit, setShowConfirmExit] = useState(false);
   const bottomSheetRef = useRef<BottomSheet>(null);
   const snapPoints = useMemo(() => ["3%", "90%"], []);
   const paperTheme = useTheme();
@@ -48,7 +49,7 @@ const DashboardScreen = ({ navigation }: HomeProps) => {
           />
         }
       />
-      <Button onPress={() => setSheet({ isOpen: !sheet.isOpen })}>
+      <Button onPress={() => setSheet({ ...sheet, isOpen: !sheet.isOpen })}>
         Toggle Sheet
       </Button>
       {sheet.isOpen && (
@@ -56,7 +57,7 @@ const DashboardScreen = ({ navigation }: HomeProps) => {
           ref={bottomSheetRef}
           index={1}
           snapPoints={snapPoints}
-          onClose={() => setSheet({ isOpen: false })}
+          onClose={() => setSheet({ ...sheet, isOpen: false })}
           enablePanDownToClose={true}
           handleStyle={{
             backgroundColor: paperTheme.colors.inversePrimary,
@@ -64,7 +65,9 @@ const DashboardScreen = ({ navigation }: HomeProps) => {
             borderTopRightRadius: 15,
           }}
         >
-          <NewCallForm />
+          <NewCallForm
+            handleSaveClick={() => setSheet({ ...sheet, hasSaved: true })}
+          />
         </BottomSheet>
       )}
       <Portal>
@@ -72,7 +75,9 @@ const DashboardScreen = ({ navigation }: HomeProps) => {
           open={fabOpen}
           style={styles.fab}
           visible={true}
-          icon={fabOpen ? "account-box" : "plus"}
+          icon={
+            sheet.isOpen ? "content-save" : fabOpen ? "account-box" : "plus"
+          }
           actions={[
             {
               icon: "movie",
@@ -109,11 +114,19 @@ const DashboardScreen = ({ navigation }: HomeProps) => {
               },
             },
           ]}
-          onStateChange={({ open }) => setFabOpen(open)}
+          onStateChange={({ open }) => {
+            if (sheet.isOpen) {
+              setFabOpen(false);
+            } else {
+              setFabOpen(open);
+            }
+          }}
           onPress={() => {
-            if (fabOpen) {
+            if (sheet.isOpen) {
+            } else if (fabOpen) {
               console.log("creating contact...");
               setSheet({
+                ...sheet,
                 isOpen: true,
               });
             }

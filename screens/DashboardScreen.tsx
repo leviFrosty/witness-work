@@ -7,9 +7,12 @@ import { useMemo, useRef, useState } from "react";
 import appTheme from "../lib/theme";
 import { HomeStackParamList } from "../stacks/HomeStackScreen";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import NewCallForm from "../components/NewCallForm";
-import { AlertDialog, Button, Fab, useTheme } from "native-base";
+import CallForm from "../components/CallForm";
+import { Button, Fab, useTheme } from "native-base";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
+import useCallsStore, { Call } from "../stores/CallStore";
+import "react-native-get-random-values";
+import { v4 as uuidv4 } from "uuid";
 
 type HomeProps = NativeStackScreenProps<HomeStackParamList, "Dashboard">;
 
@@ -19,27 +22,26 @@ export type Sheet = {
 };
 
 const DashboardScreen = ({ navigation }: HomeProps) => {
-  const [fabOpen, setFabOpen] = useState(false);
+  const newCallBase = (): Call => ({
+    id: "bob",
+    name: "",
+  });
+  const [call, setCall] = useState<Call>(newCallBase());
+  const {
+    calls,
+    setCall: setCallStorage,
+    deleteCall,
+    deleteAllCalls,
+  } = useCallsStore();
   const [sheet, setSheet] = useState<Sheet>({ isOpen: false, hasSaved: false });
-  const [confirmClose, setConfirmClose] = useState(false);
-  const [timeRunning, setTimerRunning] = useState(false);
-  const cancelRef = useRef(null);
   const bottomSheetRef = useRef<BottomSheet>(null);
-
   const snapPoints = useMemo(() => ["3%", "90%"], []);
   const insets = useSafeAreaInsets();
   const theme = useTheme();
 
-  const onCancelClose = () => {
-    setSheet({ ...sheet, isOpen: true });
-    bottomSheetRef.current?.snapToIndex(1);
-    setConfirmClose(false);
-  };
-
-  const onConfirmClosed = () => {
-    bottomSheetRef.current?.snapToIndex(0);
-    setSheet({ ...sheet, isOpen: false });
-    setConfirmClose(false);
+  const handleSaveCall = () => {
+    setCallStorage(call);
+    setCall(newCallBase());
   };
 
   const styles = StyleSheet.create({
@@ -64,7 +66,7 @@ const DashboardScreen = ({ navigation }: HomeProps) => {
           <MaterialCommunityIcons
             name="cog"
             color={theme.colors.white}
-            size={25}
+            size={30}
             onPress={() => navigation.navigate("Settings")}
           />
         }
@@ -72,41 +74,14 @@ const DashboardScreen = ({ navigation }: HomeProps) => {
       <Button onPress={() => setSheet({ ...sheet, isOpen: !sheet.isOpen })}>
         Toggle Sheet
       </Button>
-      <AlertDialog
-        leastDestructiveRef={cancelRef}
-        isOpen={confirmClose}
-        onClose={onCancelClose}
-      >
-        <AlertDialog.Content>
-          <AlertDialog.CloseButton />
-          <AlertDialog.Header>Delete Customer</AlertDialog.Header>
-          <AlertDialog.Body>
-            This will remove all data relating to Alex. This action cannot be
-            reversed. Deleted data can not be recovered.
-          </AlertDialog.Body>
-          <AlertDialog.Footer>
-            <Button.Group space={2}>
-              <Button
-                variant="unstyled"
-                colorScheme="coolGray"
-                onPress={onCancelClose}
-                ref={cancelRef}
-              >
-                Cancel
-              </Button>
-              <Button colorScheme="danger" onPress={onConfirmClosed}>
-                Delete
-              </Button>
-            </Button.Group>
-          </AlertDialog.Footer>
-        </AlertDialog.Content>
-      </AlertDialog>
+      <Button onPress={handleSaveCall}>Save</Button>
+      <Button onPress={() => deleteAllCalls()}>Delete All Calls</Button>
       {sheet.isOpen && (
         <BottomSheet
           ref={bottomSheetRef}
           index={1}
           snapPoints={snapPoints}
-          onClose={() => setConfirmClose(true)}
+          onClose={() => setSheet({ ...sheet, isOpen: false })}
           enablePanDownToClose={true}
           handleStyle={{
             backgroundColor: theme.colors.primary[600],
@@ -114,18 +89,33 @@ const DashboardScreen = ({ navigation }: HomeProps) => {
             borderTopRightRadius: 15,
           }}
         >
-          <NewCallForm
+          <CallForm
+            call={call}
+            setCall={setCall}
             handleSaveClick={() => setSheet({ ...sheet, hasSaved: true })}
             sheet={sheet}
-            setConfirmClose={setConfirmClose}
+            setSheet={setSheet}
           />
         </BottomSheet>
       )}
       <Fab
         renderInPortal={false}
-        icon={<MaterialCommunityIcons name="plus" color={theme.colors.white} />}
+        padding="3"
+        icon={
+          <MaterialCommunityIcons
+            name={sheet.isOpen ? "content-save" : "plus"}
+            color={theme.colors.white}
+            size={25}
+          />
+        }
+        onPress={
+          sheet.isOpen
+            ? handleSaveCall
+            : () => {
+                console.log("creating something....");
+              }
+        }
       ></Fab>
-
       {/* <Portal>
         <FAB.Group
           open={fabOpen}

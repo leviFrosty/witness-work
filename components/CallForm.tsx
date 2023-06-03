@@ -11,37 +11,39 @@ import {
   Box,
   Button,
   Divider,
+  FlatList,
   FormControl,
   HStack,
   Heading,
   Input,
   Pressable,
   Select,
+  Text,
   TextArea,
   useTheme,
 } from "native-base";
 import ScreenTitle from "./ScreenTitle";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { Sheet } from "../screens/DashboardScreen";
+import { BottomSheetScrollView, BottomSheetView } from "@gorhom/bottom-sheet";
 
 type NewCallFormProps = {
+  call: Call;
+  setCall: React.Dispatch<React.SetStateAction<Call>>;
   sheet: Sheet;
-  setConfirmClose: React.Dispatch<React.SetStateAction<boolean>>;
+  setSheet: React.Dispatch<React.SetStateAction<Sheet>>;
   handleSaveClick: () => void;
 };
 
-const NewCallForm: React.FC<NewCallFormProps> = ({
+const CallForm: React.FC<NewCallFormProps> = ({
   handleSaveClick,
+  call,
+  setCall,
   sheet,
-  setConfirmClose,
+  setSheet,
 }) => {
-  const id = useId();
-  const [call, setCall] = useState<Call>({
-    id,
-    name: "",
-  });
-  const { calls, addCall, updateCall, deleteCall, deleteAllCalls } =
-    useCallsStore();
+  const { calls } = useCallsStore();
+  const [step, setStep] = useState(0);
   const theme = useTheme();
 
   const getInterestLevelIcon = (interestLevel: InterestLevel) => {
@@ -70,7 +72,7 @@ const NewCallForm: React.FC<NewCallFormProps> = ({
   });
 
   return (
-    <View style={styles.wrapper}>
+    <BottomSheetView style={styles.wrapper}>
       <Pressable onPress={() => Keyboard.dismiss()}>
         <ScreenTitle
           title={i18n.t("newCall")}
@@ -85,13 +87,10 @@ const NewCallForm: React.FC<NewCallFormProps> = ({
                   size={15}
                 />
               }
-              onPress={() => setConfirmClose(true)}
+              onPress={() => setSheet({ ...sheet, isOpen: false })}
             />
           }
         />
-        {/* <Text>From state: {JSON.stringify(call)}</Text>
-        <Text>From store: {JSON.stringify(calls)}</Text> */}
-        <Divider my="2" />
         <Box>
           <Heading size="sm">{i18n.t("personalInfo")}</Heading>
           <FormControl>
@@ -102,32 +101,8 @@ const NewCallForm: React.FC<NewCallFormProps> = ({
               onChangeText={(name) => setCall({ ...call, name })}
             />
           </FormControl>
-          <FormControl>
-            <FormControl.Label>{i18n.t("interestLevel")}</FormControl.Label>
-            <Select
-              selectedValue={call.interestLevel}
-              onValueChange={(interestLevel) =>
-                setCall({ ...call, interestLevel })
-              }
-            >
-              {interestLevels.map((interestLevel) => (
-                <Select.Item
-                  key={interestLevel}
-                  leftIcon={
-                    <MaterialCommunityIcons
-                      name={getInterestLevelIcon(interestLevel)}
-                      size={20}
-                      color={theme.colors.white}
-                    />
-                  }
-                  value={interestLevel}
-                  label={i18n.t(interestLevel)}
-                />
-              ))}
-            </Select>
-          </FormControl>
         </Box>
-        <Divider my="5" />
+        <Divider my="3" />
         <Box>
           <Heading size="sm">{i18n.t("address")}</Heading>
           <FormControl>
@@ -169,7 +144,7 @@ const NewCallForm: React.FC<NewCallFormProps> = ({
             </FormControl>
           </HStack>
         </Box>
-        <Divider my="5" />
+        <Divider my="3" />
         <Box>
           <Heading size="sm">{i18n.t("moreDetails")}</Heading>
           <FormControl>
@@ -179,17 +154,39 @@ const NewCallForm: React.FC<NewCallFormProps> = ({
               autoCompleteType="off"
               value={call.note}
               onChangeText={(note) => setCall({ ...call, note })}
-              // blurOnSubmit={true}
-              // onSubmitEditing={() => Keyboard.dismiss()}
-              // returnKeyType="done"
+              blurOnSubmit={true}
+              onSubmitEditing={() => Keyboard.dismiss()}
+              returnKeyType="done"
             />
           </FormControl>
+          <FormControl>
+            <FormControl.Label>{i18n.t("interestLevel")}</FormControl.Label>
+            <Select
+              selectedValue={call.interestLevel}
+              onValueChange={(interestLevel) =>
+                setCall({ ...call, interestLevel })
+              }
+            >
+              {interestLevels.map((interestLevel) => (
+                <Select.Item
+                  key={interestLevel}
+                  leftIcon={
+                    <MaterialCommunityIcons
+                      name={getInterestLevelIcon(interestLevel)}
+                      size={20}
+                      color={theme.colors.white}
+                    />
+                  }
+                  value={interestLevel}
+                  label={i18n.t(interestLevel)}
+                />
+              ))}
+            </Select>
+          </FormControl>
         </Box>
-        <Button onPress={() => addCall(call)}>Save</Button>
-        <Button onPress={() => deleteAllCalls()}>Delete All Calls</Button>
       </Pressable>
-    </View>
+    </BottomSheetView>
   );
 };
 
-export default NewCallForm;
+export default CallForm;

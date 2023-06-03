@@ -28,13 +28,14 @@ export interface Call {
   };
   note?: string;
   interestLevel?: InterestLevel;
+  createdAt?: Date;
+  lastUpdated?: Date;
 }
 
 type CallsStore = {
   calls: Call[];
-  addCall: (call: Call) => void;
   deleteCall: (callId: string) => void;
-  updateCall: (updatedCall: Call) => void;
+  setCall: (updatedCall: Call) => void;
   deleteAllCalls: () => void;
 };
 
@@ -42,35 +43,32 @@ const useCallsStore = create(
   persist<CallsStore>(
     (set) => ({
       calls: [],
-      addCall: (newCall) => {
-        set((state) => {
-          const calls: Call[] = JSON.parse(JSON.stringify(state.calls));
-          if (calls.map((o) => o.id).indexOf(newCall.id) === -1) {
-            calls.push(newCall);
-          }
-          return { calls };
-        });
-      },
       deleteCall: (callId) => {
         set((state) => ({
           calls: state.calls.filter((o) => o.id !== callId),
         }));
       },
-      updateCall: (updatedCall) => {
+      setCall: (newCallOrCallUpdates) => {
         set((state) => {
           const calls: Call[] = JSON.parse(JSON.stringify(state.calls));
-          const index = calls.findIndex((o) => o.id === updatedCall.id);
+          const index = calls.findIndex(
+            (o) => o.id === newCallOrCallUpdates.id
+          );
           if (index === -1) {
-            // Call not found.
-            return { calls };
+            // call not found
+            // pushing new call to list
+            calls.push({ createdAt: new Date(), ...newCallOrCallUpdates });
+          } else {
+            // call found
+            const existingCall = calls[index];
+            // Overrides existing values
+            const newCall: Call = {
+              ...existingCall,
+              lastUpdated: new Date(),
+              ...newCallOrCallUpdates,
+            };
+            calls[index] = newCall;
           }
-          const existingCall = calls[index];
-          // Overrides existing values
-          const newCall = {
-            ...existingCall,
-            ...updatedCall,
-          };
-          calls[index] = newCall;
           return { calls };
         });
       },

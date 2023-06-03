@@ -8,7 +8,7 @@ import appTheme from "../lib/theme";
 import { HomeStackParamList } from "../stacks/HomeStackScreen";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import NewCallForm from "../components/NewCallForm";
-import { Button, Fab, useTheme } from "native-base";
+import { AlertDialog, Button, Fab, useTheme } from "native-base";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 
 type HomeProps = NativeStackScreenProps<HomeStackParamList, "Dashboard">;
@@ -21,12 +21,26 @@ export type Sheet = {
 const DashboardScreen = ({ navigation }: HomeProps) => {
   const [fabOpen, setFabOpen] = useState(false);
   const [sheet, setSheet] = useState<Sheet>({ isOpen: false, hasSaved: false });
+  const [confirmClose, setConfirmClose] = useState(false);
   const [timeRunning, setTimerRunning] = useState(false);
-  const [showConfirmExit, setShowConfirmExit] = useState(false);
+  const cancelRef = useRef(null);
   const bottomSheetRef = useRef<BottomSheet>(null);
+
   const snapPoints = useMemo(() => ["3%", "90%"], []);
   const insets = useSafeAreaInsets();
   const theme = useTheme();
+
+  const onCancelClose = () => {
+    setSheet({ ...sheet, isOpen: true });
+    bottomSheetRef.current?.snapToIndex(1);
+    setConfirmClose(false);
+  };
+
+  const onConfirmClosed = () => {
+    bottomSheetRef.current?.snapToIndex(0);
+    setSheet({ ...sheet, isOpen: false });
+    setConfirmClose(false);
+  };
 
   const styles = StyleSheet.create({
     wrapper: {
@@ -58,12 +72,41 @@ const DashboardScreen = ({ navigation }: HomeProps) => {
       <Button onPress={() => setSheet({ ...sheet, isOpen: !sheet.isOpen })}>
         Toggle Sheet
       </Button>
+      <AlertDialog
+        leastDestructiveRef={cancelRef}
+        isOpen={confirmClose}
+        onClose={onCancelClose}
+      >
+        <AlertDialog.Content>
+          <AlertDialog.CloseButton />
+          <AlertDialog.Header>Delete Customer</AlertDialog.Header>
+          <AlertDialog.Body>
+            This will remove all data relating to Alex. This action cannot be
+            reversed. Deleted data can not be recovered.
+          </AlertDialog.Body>
+          <AlertDialog.Footer>
+            <Button.Group space={2}>
+              <Button
+                variant="unstyled"
+                colorScheme="coolGray"
+                onPress={onCancelClose}
+                ref={cancelRef}
+              >
+                Cancel
+              </Button>
+              <Button colorScheme="danger" onPress={onConfirmClosed}>
+                Delete
+              </Button>
+            </Button.Group>
+          </AlertDialog.Footer>
+        </AlertDialog.Content>
+      </AlertDialog>
       {sheet.isOpen && (
         <BottomSheet
           ref={bottomSheetRef}
           index={1}
           snapPoints={snapPoints}
-          onClose={() => setSheet({ ...sheet, isOpen: false })}
+          onClose={() => setConfirmClose(true)}
           enablePanDownToClose={true}
           handleStyle={{
             backgroundColor: theme.colors.primary[600],
@@ -74,13 +117,13 @@ const DashboardScreen = ({ navigation }: HomeProps) => {
           <NewCallForm
             handleSaveClick={() => setSheet({ ...sheet, hasSaved: true })}
             sheet={sheet}
-            setSheet={setSheet}
+            setConfirmClose={setConfirmClose}
           />
         </BottomSheet>
       )}
       <Fab
         renderInPortal={false}
-        icon={<MaterialCommunityIcons name="plus" />}
+        icon={<MaterialCommunityIcons name="plus" color={theme.colors.white} />}
       ></Fab>
 
       {/* <Portal>

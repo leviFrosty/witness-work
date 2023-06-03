@@ -35,5 +35,14 @@
   "selectLanguage": "Select Language",
   "systemDefault": "System Default",
   "preferences": "Preferences",
-  "interestLevel": "Interest Level"
+  "interestLevel": "Interest Level",
+  "personalInfo": "Personal Info",
+  "address": "Address",
+  "addressLine1": "Address Line 1",
+  "addressLine2": "Address Line 2",
+  "city": "City",
+  "state": "State",
+  "country": "Country",
+  "moreDetails": "More Details",
+  "note": "Note"
 }

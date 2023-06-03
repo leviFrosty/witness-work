@@ -1,5 +1,5 @@
 import React, { useId, useState } from "react";
-import { View, StyleSheet } from "react-native";
+import { View, StyleSheet, Keyboard } from "react-native";
 import appTheme from "../lib/theme";
 import useCallsStore, {
   Call,
@@ -8,12 +8,16 @@ import useCallsStore, {
 } from "../stores/CallStore";
 import { i18n } from "../lib/translations";
 import {
+  Box,
   Button,
+  Divider,
   FormControl,
+  HStack,
   Heading,
   Input,
+  Pressable,
   Select,
-  Text,
+  TextArea,
   useTheme,
 } from "native-base";
 import ScreenTitle from "./ScreenTitle";
@@ -22,14 +26,14 @@ import { Sheet } from "../screens/DashboardScreen";
 
 type NewCallFormProps = {
   sheet: Sheet;
-  setSheet: React.Dispatch<React.SetStateAction<Sheet>>;
+  setConfirmClose: React.Dispatch<React.SetStateAction<boolean>>;
   handleSaveClick: () => void;
 };
 
 const NewCallForm: React.FC<NewCallFormProps> = ({
   handleSaveClick,
   sheet,
-  setSheet,
+  setConfirmClose,
 }) => {
   const id = useId();
   const [call, setCall] = useState<Call>({
@@ -63,74 +67,127 @@ const NewCallForm: React.FC<NewCallFormProps> = ({
       paddingLeft: appTheme.contentPaddingLeftRight,
       backgroundColor: theme.colors.dark[50],
     },
-    title: {
-      fontSize: 30,
-    },
-    chipContainer: {
-      marginTop: 8,
-      flexDirection: "row",
-      flexWrap: "wrap",
-      gap: 4,
-    },
   });
 
   return (
     <View style={styles.wrapper}>
-      <ScreenTitle title={i18n.t("newCall")} size="md" />
-      <Text>From state: {JSON.stringify(call)}</Text>
-      <Text>From store: {JSON.stringify(calls)}</Text>
-      <FormControl>
-        <FormControl.Label>{i18n.t("name")}</FormControl.Label>
-        <Input
-          placeholder={i18n.t("enterName")}
-          value={call.name}
-          onChangeText={(name) => setCall({ ...call, name })}
-        />
-      </FormControl>
-      <FormControl>
-        <FormControl.Label>{i18n.t("interestLevel")}</FormControl.Label>
-        <Select
-          selectedValue={call.interestLevel}
-          onValueChange={(interestLevel) => setCall({ ...call, interestLevel })}
-        >
-          {interestLevels.map((interestLevel) => (
-            <Select.Item
+      <Pressable onPress={() => Keyboard.dismiss()}>
+        <ScreenTitle
+          title={i18n.t("newCall")}
+          size="md"
+          icon={
+            <Button
+              backgroundColor={theme.colors.muted[700]}
               leftIcon={
                 <MaterialCommunityIcons
-                  name={getInterestLevelIcon(interestLevel)}
-                  size={20}
+                  name="close"
                   color={theme.colors.white}
+                  size={15}
                 />
               }
-              value={interestLevel}
-              label={i18n.t(interestLevel)}
+              onPress={() => setConfirmClose(true)}
             />
-          ))}
-        </Select>
-      </FormControl>
-
-      <View style={styles.chipContainer}>
-        {/* {interestLevels.map((interestLevel) => (
-          <Chip
-            icon={getInterestLevelIcon(
-              interestLevel,
-              call.interestLevel === interestLevel
-            )}
-            onPress={() => setCall({ ...call, interestLevel })}
-            selected={call.interestLevel === interestLevel}
-            mode="outlined"
-            style={
-              call.interestLevel === interestLevel && {
-                backgroundColor: paperTheme.colors.secondaryContainer,
+          }
+        />
+        {/* <Text>From state: {JSON.stringify(call)}</Text>
+        <Text>From store: {JSON.stringify(calls)}</Text> */}
+        <Divider my="2" />
+        <Box>
+          <Heading size="sm">{i18n.t("personalInfo")}</Heading>
+          <FormControl>
+            <FormControl.Label>{i18n.t("name")}</FormControl.Label>
+            <Input
+              placeholder={i18n.t("enterName")}
+              value={call.name}
+              onChangeText={(name) => setCall({ ...call, name })}
+            />
+          </FormControl>
+          <FormControl>
+            <FormControl.Label>{i18n.t("interestLevel")}</FormControl.Label>
+            <Select
+              selectedValue={call.interestLevel}
+              onValueChange={(interestLevel) =>
+                setCall({ ...call, interestLevel })
               }
-            }
-          >
-            <Text style={{ fontSize: 14 }}>{i18n.t(interestLevel)}</Text>
-          </Chip>
-        ))} */}
-      </View>
-      <Button onPress={() => addCall(call)}>Save</Button>
-      <Button onPress={() => deleteAllCalls()}>Delete All Calls</Button>
+            >
+              {interestLevels.map((interestLevel) => (
+                <Select.Item
+                  key={interestLevel}
+                  leftIcon={
+                    <MaterialCommunityIcons
+                      name={getInterestLevelIcon(interestLevel)}
+                      size={20}
+                      color={theme.colors.white}
+                    />
+                  }
+                  value={interestLevel}
+                  label={i18n.t(interestLevel)}
+                />
+              ))}
+            </Select>
+          </FormControl>
+        </Box>
+        <Divider my="5" />
+        <Box>
+          <Heading size="sm">{i18n.t("address")}</Heading>
+          <FormControl>
+            <FormControl.Label>{i18n.t("addressLine1")}</FormControl.Label>
+            <Input
+              value={call.address?.line1}
+              onChangeText={(line1) =>
+                setCall({ ...call, address: { ...call.address, line1 } })
+              }
+            />
+          </FormControl>
+          <FormControl>
+            <FormControl.Label>{i18n.t("addressLine2")}</FormControl.Label>
+            <Input
+              value={call.address?.line2}
+              onChangeText={(line2) =>
+                setCall({ ...call, address: { ...call.address, line2 } })
+              }
+            />
+          </FormControl>
+          <HStack size={2} space={3}>
+            <FormControl flex={1}>
+              <FormControl.Label>{i18n.t("city")}</FormControl.Label>
+              <Input
+                value={call.address?.city}
+                onChangeText={(city) =>
+                  setCall({ ...call, address: { ...call.address, city } })
+                }
+              />
+            </FormControl>
+            <FormControl flex={1}>
+              <FormControl.Label>{i18n.t("state")}</FormControl.Label>
+              <Input
+                value={call.address?.state}
+                onChangeText={(state) =>
+                  setCall({ ...call, address: { ...call.address, state } })
+                }
+              />
+            </FormControl>
+          </HStack>
+        </Box>
+        <Divider my="5" />
+        <Box>
+          <Heading size="sm">{i18n.t("moreDetails")}</Heading>
+          <FormControl>
+            <FormControl.Label>{i18n.t("note")}</FormControl.Label>
+            <TextArea
+              h={20}
+              autoCompleteType="off"
+              value={call.note}
+              onChangeText={(note) => setCall({ ...call, note })}
+              // blurOnSubmit={true}
+              // onSubmitEditing={() => Keyboard.dismiss()}
+              // returnKeyType="done"
+            />
+          </FormControl>
+        </Box>
+        <Button onPress={() => addCall(call)}>Save</Button>
+        <Button onPress={() => deleteAllCalls()}>Delete All Calls</Button>
+      </Pressable>
     </View>
   );
 };

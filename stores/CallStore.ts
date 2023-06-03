@@ -19,6 +19,14 @@ export const interestLevels: InterestLevel[] = [
 export interface Call {
   id: string;
   name: string;
+  address?: {
+    line1?: string;
+    line2?: string;
+    city?: string;
+    state?: string;
+    country?: string;
+  };
+  note?: string;
   interestLevel?: InterestLevel;
 }
 

@@ -40,6 +40,7 @@ const SettingsScreen: React.FC<PropsWithChildren<SettingsScreenProps>> = () => {
             />
             {translationKeys.map((translationCode) => (
               <Select.Item
+                key={translationCode}
                 label={i18n.t(translationCode)}
                 value={translationCode}
               />

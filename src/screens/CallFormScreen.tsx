@@ -1,23 +1,13 @@
-import React, { useContext } from "react";
+import React, { useContext, useState } from "react";
 import {
-  Box,
-  Button,
-  Divider,
-  FormControl,
-  HStack,
-  Heading,
-  Input,
+  ImageProps,
+  Keyboard,
   Pressable,
-  Select,
-  TextArea,
+  StyleSheet,
   View,
-  useTheme,
-} from "native-base";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Keyboard, StyleSheet } from "react-native";
+} from "react-native";
 import appTheme from "../lib/theme";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
-import { MaterialCommunityIcons } from "@expo/vector-icons";
 import useCallsStore, {
   InterestLevel,
   interestLevels,
@@ -26,6 +16,18 @@ import ScreenTitle from "../components/ScreenTitle";
 import { HomeStackParamList } from "../stacks/ParamLists";
 import { HomeContext } from "../contexts/HomeStackContext";
 import { i18n } from "../lib/translations";
+import {
+  Button,
+  Divider,
+  Icon,
+  IndexPath,
+  Input,
+  Layout,
+  Select,
+  SelectItem,
+  Text,
+} from "@ui-kitten/components";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 type CallFormScreenProps = NativeStackScreenProps<
   HomeStackParamList,
@@ -33,11 +35,30 @@ type CallFormScreenProps = NativeStackScreenProps<
 >;
 
 const CallFormScreen: React.FC<CallFormScreenProps> = ({ navigation }) => {
+  const [interestLevelIndex, setInterestLevelIndex] = useState<
+    IndexPath | IndexPath[]
+  >();
   const insets = useSafeAreaInsets();
-  const theme = useTheme();
-  const { setCall } = useCallsStore();
+  const { setCall, deleteAllCalls } = useCallsStore();
   const { newCallFromState, setCallState, newCallBase } =
     useContext(HomeContext);
+  const [validation, setValidation] = useState<{
+    [key: string]: any;
+    name: boolean;
+  }>({
+    name: false,
+  });
+
+  const validate = () => {
+    if (!newCallFromState.name) {
+      setValidation({ ...validation, name: true });
+    }
+    console.log("result:", Object.values(validation).includes(true));
+    console.log("actual values", Object.values(validation));
+    if (!Object.values(validation).includes(true)) {
+      handleSaveCall();
+    }
+  };
 
   const handleSaveCall = () => {
     setCall(newCallFromState);
@@ -47,6 +68,7 @@ const CallFormScreen: React.FC<CallFormScreenProps> = ({ navigation }) => {
 
   const styles = StyleSheet.create({
     wrapper: {
+      height: "100%",
       paddingTop: insets.top + 10,
       paddingLeft: appTheme.contentPaddingLeftRight,
       paddingRight: appTheme.contentPaddingLeftRight,
@@ -68,139 +90,116 @@ const CallFormScreen: React.FC<CallFormScreenProps> = ({ navigation }) => {
     }
   };
 
+  interface InterestLevelIconProps extends Partial<ImageProps> {
+    name: string;
+  }
+
+  const InterestLevelIcon = (
+    props?: InterestLevelIconProps
+  ): React.ReactElement<ImageProps> => <Icon {...props} name={props?.name} />;
+
   return (
-    <View style={styles.wrapper}>
+    <Layout style={styles.wrapper}>
       <Pressable onPress={() => Keyboard.dismiss()}>
         <ScreenTitle
           title={i18n.t("newCall")}
-          size="md"
-          icon={
-            <Button
-              backgroundColor={theme.colors.muted[700]}
-              leftIcon={
-                <MaterialCommunityIcons
-                  name="close"
-                  color={theme.colors.white}
-                  size={15}
-                />
-              }
-              onPress={() => navigation.goBack()}
-            />
-          }
+          category="h2"
+          icon="close"
+          onIconPress={() => navigation.goBack()}
         />
-        <Box>
-          <Heading size="sm">{i18n.t("personalInfo")}</Heading>
-          <FormControl>
-            <FormControl.Label>{i18n.t("name")}</FormControl.Label>
+        <View>
+          <Text category="h5">{i18n.t("personalInfo")}</Text>
+          <Input
+            label={i18n.t("name")}
+            placeholder={i18n.t("enterName")}
+            value={newCallFromState.name}
+            status={validation.name ? "danger" : "basic"}
+            onChangeText={(name) => setCallState({ ...newCallFromState, name })}
+          />
+        </View>
+        <Divider style={{ marginTop: 10, marginBottom: 5 }} />
+        <View>
+          <Text category="h5">{i18n.t("address")}</Text>
+          <Input
+            label={i18n.t("addressLine1")}
+            value={newCallFromState.address?.line1 || ""}
+            onChangeText={(line1) =>
+              setCallState({
+                ...newCallFromState,
+                address: { ...newCallFromState.address, line1 },
+              })
+            }
+          />
+          <Input
+            label={i18n.t("addressLine2")}
+            value={newCallFromState.address?.line2 || ""}
+            onChangeText={(line2) =>
+              setCallState({
+                ...newCallFromState,
+                address: { ...newCallFromState.address, line2 },
+              })
+            }
+          />
+          <View style={{ flexDirection: "row", gap: 3 }}>
             <Input
-              placeholder={i18n.t("enterName")}
-              value={newCallFromState.name}
-              onChangeText={(name) =>
-                setCallState({ ...newCallFromState, name })
-              }
-            />
-          </FormControl>
-        </Box>
-        <Divider my="3" />
-        <Box>
-          <Heading size="sm">{i18n.t("address")}</Heading>
-          <FormControl>
-            <FormControl.Label>{i18n.t("addressLine1")}</FormControl.Label>
-            <Input
-              value={newCallFromState.address?.line1}
-              onChangeText={(line1) =>
+              style={{ flex: 1 }}
+              label={i18n.t("city")}
+              value={newCallFromState.address?.city || ""}
+              onChangeText={(city) =>
                 setCallState({
                   ...newCallFromState,
-                  address: { ...newCallFromState.address, line1 },
+                  address: { ...newCallFromState.address, city },
                 })
               }
             />
-          </FormControl>
-          <FormControl>
-            <FormControl.Label>{i18n.t("addressLine2")}</FormControl.Label>
             <Input
-              value={newCallFromState.address?.line2}
-              onChangeText={(line2) =>
+              style={{ flex: 1 }}
+              label={i18n.t("state")}
+              value={newCallFromState.address?.state || ""}
+              onChangeText={(state) =>
                 setCallState({
                   ...newCallFromState,
-                  address: { ...newCallFromState.address, line2 },
+                  address: { ...newCallFromState.address, state },
                 })
               }
             />
-          </FormControl>
-          <HStack size={2} space={3}>
-            <FormControl flex={1}>
-              <FormControl.Label>{i18n.t("city")}</FormControl.Label>
-              <Input
-                value={newCallFromState.address?.city}
-                onChangeText={(city) =>
-                  setCallState({
-                    ...newCallFromState,
-                    address: { ...newCallFromState.address, city },
-                  })
-                }
+          </View>
+        </View>
+        <Divider style={{ marginTop: 10, marginBottom: 5 }} />
+        <View>
+          <Text category="h5">{i18n.t("moreDetails")}</Text>
+          <Input
+            label={i18n.t("note")}
+            value={newCallFromState.note || ""}
+            onChangeText={(note) => setCallState({ ...newCallFromState, note })}
+          />
+          <Select
+            label={(evaProps) => (
+              <Text {...evaProps}>{i18n.t("selectLanguage")}</Text>
+            )}
+            placeholder={i18n.t("language")}
+            selectedIndex={interestLevelIndex}
+            onSelect={(index) => setInterestLevelIndex(index)}
+          >
+            {interestLevels.map((interestLevel) => (
+              <SelectItem
+                key={interestLevel}
+                accessoryLeft={(props) => (
+                  <InterestLevelIcon
+                    {...props}
+                    name={getInterestLevelIcon(interestLevel)}
+                  />
+                )}
+                title={i18n.t(interestLevel)}
               />
-            </FormControl>
-            <FormControl flex={1}>
-              <FormControl.Label>{i18n.t("state")}</FormControl.Label>
-              <Input
-                value={newCallFromState.address?.state}
-                onChangeText={(state) =>
-                  setCallState({
-                    ...newCallFromState,
-                    address: { ...newCallFromState.address, state },
-                  })
-                }
-              />
-            </FormControl>
-          </HStack>
-        </Box>
-        <Divider my="3" />
-        <Box>
-          <Heading size="sm">{i18n.t("moreDetails")}</Heading>
-          <FormControl>
-            <FormControl.Label>{i18n.t("note")}</FormControl.Label>
-            <TextArea
-              h={20}
-              autoCompleteType="off"
-              value={newCallFromState.note}
-              onChangeText={(note) =>
-                setCallState({ ...newCallFromState, note })
-              }
-              blurOnSubmit={true}
-              onSubmitEditing={() => Keyboard.dismiss()}
-              returnKeyType="done"
-            />
-          </FormControl>
-          <FormControl>
-            <FormControl.Label>{i18n.t("interestLevel")}</FormControl.Label>
-            <Select
-              selectedValue={newCallFromState.interestLevel}
-              onValueChange={(interestLevel) =>
-                setCallState({ ...newCallFromState, interestLevel })
-              }
-            >
-              {interestLevels.map((interestLevel) => (
-                <Select.Item
-                  key={interestLevel}
-                  leftIcon={
-                    <MaterialCommunityIcons
-                      name={getInterestLevelIcon(interestLevel)}
-                      size={20}
-                      color={theme.colors.white}
-                    />
-                  }
-                  value={interestLevel}
-                  label={i18n.t(interestLevel)}
-                />
-              ))}
-            </Select>
-          </FormControl>
-        </Box>
-        <Divider my="3" />
-        <Button onPress={() => handleSaveCall()}>{i18n.t("save")}</Button>
+            ))}
+          </Select>
+        </View>
+        <Divider style={{ marginTop: 10, marginBottom: 10 }} />
+        <Button onPress={() => validate()}>{i18n.t("save")}</Button>
+        <Button onPress={() => deleteAllCalls()}>Delete All Call</Button>
       </Pressable>
-    </View>
+    </Layout>
   );
 };
 

@@ -1,22 +1,14 @@
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
-import { StyleSheet, View } from "react-native";
+import { FlatList, ImageProps, StyleSheet } from "react-native";
 import ScreenTitle from "../components/ScreenTitle";
 import { i18n } from "../lib/translations";
 import appTheme from "../lib/theme";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import {
-  Fab,
-  FlatList,
-  Heading,
-  Input,
-  Skeleton,
-  Text,
-  useTheme,
-} from "native-base";
-import { MaterialCommunityIcons } from "@expo/vector-icons";
 import CallCard from "../components/CallCard";
 import useCallsStore from "../stores/CallStore";
 import { HomeStackParamList } from "../stacks/ParamLists";
+import { Button, Icon, Input, Layout, Text } from "@ui-kitten/components";
+import { useState } from "react";
 
 type HomeProps = NativeStackScreenProps<HomeStackParamList, "Dashboard">;
 
@@ -25,15 +17,18 @@ export type Sheet = {
   hasSaved: boolean;
 };
 
+const MagnifyIcon = (
+  props?: Partial<ImageProps>
+): React.ReactElement<ImageProps> => <Icon {...props} name="magnify" />;
+
 const DashboardScreen = ({ navigation }: HomeProps) => {
+  const [query, setQuery] = useState("");
   const { calls } = useCallsStore();
   const insets = useSafeAreaInsets();
-  const theme = useTheme();
 
   const styles = StyleSheet.create({
     wrapper: {
-      flex: 1,
-      paddingTop: insets.top + 25,
+      paddingTop: insets.top + 20,
       paddingRight: appTheme.contentPaddingLeftRight,
       paddingLeft: appTheme.contentPaddingLeftRight,
     },
@@ -49,55 +44,32 @@ const DashboardScreen = ({ navigation }: HomeProps) => {
   });
 
   return (
-    <View style={styles.wrapper}>
-      <ScreenTitle
-        title={i18n.t("dashboard")}
-        icon={
-          <MaterialCommunityIcons
-            name="cog"
-            color={theme.colors.white}
-            size={30}
-            onPress={() => navigation.navigate("Settings")}
-          />
-        }
-      />
-      <Text my="5">Weekly routine goes here...</Text>
-      <Heading>{i18n.t("monthlyTotals")}</Heading>
-      <Text my="12">Monthly totals goes here...</Text>
-      <Heading mb="4">Calls</Heading>
+    <Layout style={styles.wrapper}>
+      <ScreenTitle title={i18n.t("dashboard")} icon="cog" />
+      <Text style={{ margin: 5 }}>Weekly routine goes here...</Text>
+      <Text category="h2">{i18n.t("monthlyTotals")}</Text>
+      <Text style={{ marginTop: 12, marginBottom: 12 }}>
+        Monthly totals goes here...
+      </Text>
+      <Text style={{ marginBottom: 4 }} category="h2">
+        Calls
+      </Text>
+      <Button onPress={() => navigation.navigate("CallForm")}>
+        Create Call
+      </Button>
       <Input
-        size="xl"
         style={styles.input}
+        value={query}
+        onChangeText={(text) => setQuery(text)}
         placeholder="Search for a call..."
-        variant="filled"
-        InputRightElement={
-          <MaterialCommunityIcons
-            name="magnify"
-            color={theme.colors.white}
-            size={20}
-            style={{ marginRight: 10 }}
-          />
-        }
+        accessoryRight={MagnifyIcon}
       />
       <FlatList
         data={calls}
         renderItem={({ item }) => <CallCard call={item} />}
         keyExtractor={(item) => item.id}
-        ListEmptyComponent={<Skeleton h={5} />}
       />
-      <Fab
-        renderInPortal={false}
-        padding="3"
-        icon={
-          <MaterialCommunityIcons
-            name="plus"
-            color={theme.colors.white}
-            size={25}
-          />
-        }
-        onPress={() => navigation.navigate("CallForm")}
-      />
-    </View>
+    </Layout>
   );
 };
 

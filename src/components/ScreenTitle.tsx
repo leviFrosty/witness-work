@@ -1,15 +1,20 @@
-import { Heading } from "native-base";
-import { ThemeComponentSizeType } from "native-base/lib/typescript/components/types";
-import React, { ReactNode } from "react";
-import { StyleSheet, View } from "react-native";
+import { Button, Icon, Text } from "@ui-kitten/components";
+import React from "react";
+import { ImageProps, StyleSheet, View } from "react-native";
 
 interface ScreenTitleProps {
   title: string;
-  size?: ThemeComponentSizeType<"Heading">;
-  icon?: ReactNode;
+  category?: string;
+  icon?: string;
+  onIconPress?: () => void;
 }
 
-const ScreenTitle: React.FC<ScreenTitleProps> = ({ title, size, icon }) => {
+const ScreenTitle: React.FC<ScreenTitleProps> = ({
+  title,
+  category,
+  icon,
+  onIconPress,
+}) => {
   const styles = StyleSheet.create({
     container: {
       flexDirection: "row",
@@ -19,10 +24,16 @@ const ScreenTitle: React.FC<ScreenTitleProps> = ({ title, size, icon }) => {
     },
   });
 
+  const SelectedIcon = (
+    props?: Partial<ImageProps>
+  ): React.ReactElement<ImageProps> => (
+    <Icon {...props} name={icon || "help"} />
+  );
+
   return (
     <View style={styles.container}>
-      <Heading size={size || "2xl"}>{title}</Heading>
-      {icon}
+      <Text category={category || "h1"}>{title}</Text>
+      <Button accessoryLeft={SelectedIcon} onPress={onIconPress} />
     </View>
   );
 };

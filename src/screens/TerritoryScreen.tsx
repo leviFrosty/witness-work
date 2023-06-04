@@ -2,9 +2,9 @@ import React, { FC } from "react";
 import ScreenTitle from "../components/ScreenTitle";
 import { View, StyleSheet } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Text } from "native-base";
 import appTheme from "../lib/theme";
 import { i18n } from "../lib/translations";
+import { Text } from "@ui-kitten/components";
 
 const TerritoryScreen: FC = () => {
   const insets = useSafeAreaInsets();

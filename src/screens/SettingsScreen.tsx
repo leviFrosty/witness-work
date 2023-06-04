@@ -1,14 +1,17 @@
-import { PropsWithChildren } from "react";
+import { PropsWithChildren, useState } from "react";
 import { i18n, translationKeys } from "../lib/translations";
-import useSettingStore from "../stores/SettingsStore";
+// import useSettingStore from "../stores/SettingsStore";
 import { StyleSheet, View } from "react-native";
-import { FormControl, Heading, Select, VStack } from "native-base";
 import appTheme from "../lib/theme";
+import { IndexPath, Select, SelectItem, Text } from "@ui-kitten/components";
 
 interface SettingsScreenProps {}
 
 const SettingsScreen: React.FC<PropsWithChildren<SettingsScreenProps>> = () => {
-  const { language, setLanguage } = useSettingStore();
+  // const { language, setLanguage } = useSettingStore();
+  const [languageIndex, setLanguageIndex] = useState<IndexPath | IndexPath[]>(
+    new IndexPath(0)
+  );
 
   const styles = StyleSheet.create({
     wrapper: {
@@ -19,47 +22,30 @@ const SettingsScreen: React.FC<PropsWithChildren<SettingsScreenProps>> = () => {
     },
   });
 
-  const handleSetLanguage = (value?: string) => {
-    setLanguage(value);
-  };
+  console.log(languageIndex);
+
+  // const handleSetLanguage = (value?: string) => {
+  //   setLanguage(languageIndex);
+  // };
 
   return (
     <View style={styles.wrapper}>
-      <Heading size="md">{i18n.t("preferences")}</Heading>
-      <VStack>
-        <FormControl>
-          <FormControl.Label>{i18n.t("selectLanguage")}</FormControl.Label>
-          <Select
-            placeholder={i18n.t("language")}
-            selectedValue={language}
-            onValueChange={(lang) => handleSetLanguage(lang)}
-          >
-            <Select.Item
-              label={i18n.t("systemDefault")}
-              value={"systemDefault"}
-            />
-            {translationKeys.map((translationCode) => (
-              <Select.Item
-                key={translationCode}
-                label={i18n.t(translationCode)}
-                value={translationCode}
-              />
-            ))}
-          </Select>
-        </FormControl>
-      </VStack>
-
-      {/* <DropDown
-        list={colorSchemeList}
-        value={userPreferenceColorScheme}
-        label={i18n.t("theme")}
-        mode={"outlined"}
-        setValue={(value) => setUserPreferenceColorScheme(value)}
-        visible={showColorSchemeDropDown}
-        showDropDown={() => setShowColorSchemeDropDown(true)}
-        onDismiss={() => setShowColorSchemeDropDown(false)}
-        theme={theme}
-      /> */}
+      <Text category="h2">{i18n.t("preferences")}</Text>
+      <Select
+        label={(evaProps) => (
+          <Text {...evaProps}>{i18n.t("selectLanguage")}</Text>
+        )}
+        placeholder={i18n.t("language")}
+        selectedIndex={languageIndex}
+        onSelect={(index) => setLanguageIndex(index)}
+      >
+        {translationKeys.map((translationCode) => (
+          <SelectItem
+            key={translationCode}
+            title={() => <Text>{i18n.t(translationCode)}</Text>}
+          />
+        ))}
+      </Select>
     </View>
   );
 };

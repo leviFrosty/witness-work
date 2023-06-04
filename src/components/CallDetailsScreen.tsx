@@ -1,12 +1,12 @@
 import React from "react";
 import ScreenTitle from "./ScreenTitle";
 import { i18n } from "../lib/translations";
-import { Text, View } from "native-base";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { StyleSheet } from "react-native";
+import { StyleSheet, View } from "react-native";
 import appTheme from "../lib/theme";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { HomeStackParamList } from "../stacks/ParamLists";
+import { Text } from "@ui-kitten/components";
 
 type CallDetailsProps = NativeStackScreenProps<
   HomeStackParamList,

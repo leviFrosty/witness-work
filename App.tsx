@@ -1,17 +1,34 @@
 import * as SplashScreen from "expo-splash-screen";
-import { useCallback, useEffect } from "react";
-import { DarkTheme, NavigationContainer } from "@react-navigation/native";
+import React, { useCallback, useEffect, useState } from "react";
+import {
+  DarkTheme,
+  DefaultTheme,
+  NavigationContainer,
+} from "@react-navigation/native";
 import { i18n } from "./src/lib/translations";
 import { getLocales } from "expo-localization";
 import * as Sentry from "sentry-expo";
-import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
+import {
+  BottomTabBarProps,
+  createBottomTabNavigator,
+} from "@react-navigation/bottom-tabs";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import HomeStackScreen from "./src/stacks/HomeStackScreen";
 import useSettingStore from "./src/stores/SettingsStore";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import TerritoryStackScreen from "./src/stacks/TerritoryStackScreen";
-import NativeBase from "./src/components/NativeBase";
 import { RootStackParamList } from "./src/stacks/ParamLists";
+import * as eva from "@eva-design/eva";
+import {
+  ApplicationProvider,
+  BottomNavigation,
+  BottomNavigationTab,
+  Icon,
+  IconRegistry,
+} from "@ui-kitten/components";
+import { ThemeContext } from "./src/contexts/ThemeContext";
+import { MaterialCommunityIconsPack } from "./src/lib/MaterialIconsPack";
+import { ImageProps } from "react-native";
 
 // Keep the splash screen visible while we fetch resources
 SplashScreen.preventAutoHideAsync();
@@ -29,6 +46,13 @@ i18n.locale = getLocales()[0].languageCode;
 i18n.enableFallback = true;
 
 function App() {
+  const [theme, setTheme] = useState<"dark" | "light">("dark");
+
+  const toggleTheme = () => {
+    const nextTheme = theme === "light" ? "dark" : "light";
+    setTheme(nextTheme);
+  };
+
   const onLayoutRootView = useCallback(async () => {
     await SplashScreen.hideAsync();
   }, []);
@@ -47,45 +71,53 @@ function App() {
     }
   }, [userPreferenceLanguage]);
 
+  const HomeIcon = (
+    props?: Partial<ImageProps>
+  ): React.ReactElement<ImageProps> => <Icon {...props} name="home" />;
+
+  const MapIcon = (
+    props?: Partial<ImageProps>
+  ): React.ReactElement<ImageProps> => <Icon {...props} name="map" />;
+
+  const BottomBar = ({ navigation, state }: BottomTabBarProps) => {
+    return (
+      <BottomNavigation
+        selectedIndex={state.index}
+        onSelect={(index) => navigation.navigate(state.routeNames[index])}
+      >
+        <BottomNavigationTab
+          style={{ height: 100 }}
+          title={i18n.t("home")}
+          icon={HomeIcon}
+        />
+        <BottomNavigationTab
+          style={{ height: 100 }}
+          title={i18n.t("territory")}
+          icon={MapIcon}
+        />
+      </BottomNavigation>
+    );
+  };
+
   return (
-    <NativeBase>
-      <SafeAreaProvider>
-        <NavigationContainer theme={DarkTheme}>
-          <Tab.Navigator
-            initialRouteName="Home"
-            screenOptions={({ route }) => ({
-              tabBarIcon: ({ focused, color, size }) => {
-                type PossibleIcon =
-                  | "home"
-                  | "home-outline"
-                  | "map"
-                  | "map-outline"
-                  | "help";
-                let iconName: PossibleIcon = "help";
-
-                if (route.name === "Home") {
-                  iconName = focused ? "home" : "home-outline";
-                } else if (route.name === "Territory") {
-                  iconName = focused ? "map" : "map-outline";
-                }
-
-                return (
-                  <MaterialCommunityIcons
-                    name={iconName}
-                    size={size}
-                    color={color}
-                  />
-                );
-              },
-              headerShown: false,
-            })}
+    <ThemeContext.Provider value={{ theme, toggleTheme }}>
+      <IconRegistry icons={MaterialCommunityIconsPack} />
+      <ApplicationProvider {...eva} theme={eva[theme]}>
+        <SafeAreaProvider>
+          <NavigationContainer
+            theme={theme === "dark" ? DarkTheme : DefaultTheme}
           >
-            <Tab.Screen name="Home" component={HomeStackScreen} />
-            <Tab.Screen name="Territory" component={TerritoryStackScreen} />
-          </Tab.Navigator>
-        </NavigationContainer>
-      </SafeAreaProvider>
-    </NativeBase>
+            <Tab.Navigator
+              initialRouteName="Home"
+              tabBar={(props) => <BottomBar {...props} />}
+            >
+              <Tab.Screen name="Home" component={HomeStackScreen} />
+              <Tab.Screen name="Territory" component={TerritoryStackScreen} />
+            </Tab.Navigator>
+          </NavigationContainer>
+        </SafeAreaProvider>
+      </ApplicationProvider>
+    </ThemeContext.Provider>
   );
 }
 

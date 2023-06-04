@@ -10,12 +10,12 @@ export type TerritoryStackParamList = {
 
 const TerritoryStackScreen: React.FC<
   PropsWithChildren<TerritoryStackScreenProps>
-> = ({ children }) => {
+> = () => {
   const TerritoryStack = createNativeStackNavigator<TerritoryStackParamList>();
   return (
     <TerritoryStack.Navigator
       initialRouteName="Home"
-      screenOptions={({ route }) => ({
+      screenOptions={() => ({
         headerShown: false,
       })}
     >

@@ -13,7 +13,7 @@ type CallDetailsProps = NativeStackScreenProps<
   "CallDetails"
 >;
 
-const CallDetailsScreen: React.FC<CallDetailsProps> = ({ route }) => {
+const CallDetailsScreen = ({ route }: CallDetailsProps) => {
   const callId = route.params.id;
   const insets = useSafeAreaInsets();
 

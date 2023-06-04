@@ -1,8 +1,8 @@
-import { PropsWithChildren, useState } from "react";
+import { PropsWithChildren } from "react";
 import { i18n, translationKeys } from "../lib/translations";
 import useSettingStore from "../stores/SettingsStore";
 import { StyleSheet, View } from "react-native";
-import { FormControl, Heading, Select, Text, VStack } from "native-base";
+import { FormControl, Heading, Select, VStack } from "native-base";
 import appTheme from "../lib/theme";
 
 interface SettingsScreenProps {}

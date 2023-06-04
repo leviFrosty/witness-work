@@ -1,4 +1,4 @@
-import { Heading, Text } from "native-base";
+import { Heading } from "native-base";
 import { ThemeComponentSizeType } from "native-base/lib/typescript/components/types";
 import React, { ReactNode } from "react";
 import { StyleSheet, View } from "react-native";

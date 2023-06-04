@@ -2,11 +2,11 @@ import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { PropsWithChildren, useState } from "react";
 import DashboardScreen from "../screens/DashboardScreen";
 import SettingsScreen from "../screens/SettingsScreen";
-import CallDetailsScreen from "../components/CallDetailsScreen";
 import { Call } from "../stores/CallStore";
 import CallFormScreen from "../screens/CallFormScreen";
 import { HomeContext, newCallBase } from "../contexts/HomeStackContext";
 import { HomeStackParamList } from "./ParamLists";
+import CallDetailsScreen from "../components/CallDetailsScreen";
 
 interface HomeStackScreenProps {}
 

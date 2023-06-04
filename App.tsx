@@ -1,17 +1,17 @@
 import * as SplashScreen from "expo-splash-screen";
 import { useCallback, useEffect } from "react";
 import { DarkTheme, NavigationContainer } from "@react-navigation/native";
-import { i18n } from "./lib/translations";
+import { i18n } from "./src/lib/translations";
 import { getLocales } from "expo-localization";
 import * as Sentry from "sentry-expo";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { SafeAreaProvider } from "react-native-safe-area-context";
-import HomeStackScreen from "./stacks/HomeStackScreen";
-import useSettingStore from "./stores/SettingsStore";
+import HomeStackScreen from "./src/stacks/HomeStackScreen";
+import useSettingStore from "./src/stores/SettingsStore";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
-import TerritoryStackScreen from "./stacks/TerritoryStackScreen";
-import NativeBase from "./components/NativeBase";
-import { RootStackParamList } from "./stacks/ParamLists";
+import TerritoryStackScreen from "./src/stacks/TerritoryStackScreen";
+import NativeBase from "./src/components/NativeBase";
+import { RootStackParamList } from "./src/stacks/ParamLists";
 
 // Keep the splash screen visible while we fetch resources
 SplashScreen.preventAutoHideAsync();

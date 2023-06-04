@@ -14,8 +14,8 @@ import {
   useTheme,
 } from "native-base";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
-import useCallsStore from "../stores/CallStore";
 import CallCard from "../components/CallCard";
+import useCallsStore from "../stores/CallStore";
 import { HomeStackParamList } from "../stacks/ParamLists";
 
 type HomeProps = NativeStackScreenProps<HomeStackParamList, "Dashboard">;

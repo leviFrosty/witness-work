@@ -4,10 +4,10 @@ module.exports = {
     slug: "jw-time",
     version: "1.0.0",
     orientation: "portrait",
-    icon: "./assets/icon.png",
+    icon: "./src/assets/icon.png",
     userInterfaceStyle: "automatic",
     splash: {
-      image: "./assets/splash.png",
+      image: "./src/assets/splash.png",
       resizeMode: "contain",
       backgroundColor: "#ffffff",
     },
@@ -31,12 +31,12 @@ module.exports = {
     },
     android: {
       adaptiveIcon: {
-        foregroundImage: "./assets/adaptive-icon.png",
+        foregroundImage: "./src/assets/adaptive-icon.png",
         backgroundColor: "#ffffff",
       },
     },
     web: {
-      favicon: "./assets/favicon.png",
+      favicon: "./src/assets/favicon.png",
     },
     plugins: ["expo-localization", "sentry-expo"],
   },

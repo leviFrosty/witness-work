@@ -3,7 +3,7 @@ import ScreenTitle from "../components/ScreenTitle";
 import { i18n } from "../lib/translations";
 import { View, StyleSheet } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import theme from "../lib/theme";
+import appTheme from "../lib/theme";
 import { Text } from "native-base";
 
 const TerritoryScreen: FC = () => {
@@ -12,8 +12,8 @@ const TerritoryScreen: FC = () => {
     wrapper: {
       flex: 1,
       paddingTop: insets.top + 10,
-      paddingRight: theme.contentPaddingLeftRight,
-      paddingLeft: theme.contentPaddingLeftRight,
+      paddingRight: appTheme.contentPaddingLeftRight,
+      paddingLeft: appTheme.contentPaddingLeftRight,
     },
   });
 

@@ -44,5 +44,8 @@
   "state": "State",
   "country": "Country",
   "moreDetails": "More Details",
-  "note": "Note"
+  "note": "Note",
+  "monthlyTotals": "Monthly Totals",
+  "callDetails": "Call Details",
+  "save": "Save"
 }

@@ -1,29 +1,44 @@
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
-import { PropsWithChildren } from "react";
+import { PropsWithChildren, useState } from "react";
 import DashboardScreen from "../screens/DashboardScreen";
 import SettingsScreen from "../screens/SettingsScreen";
+import CallDetailsScreen from "../components/CallDetailsScreen";
+import { Call } from "../stores/CallStore";
+import CallFormScreen from "../screens/CallFormScreen";
+import { HomeContext, newCallBase } from "../contexts/HomeStackContext";
+import { HomeStackParamList } from "./ParamLists";
 
 interface HomeStackScreenProps {}
 
-export type HomeStackParamList = {
-  Dashboard: undefined;
-  Settings: undefined;
-};
-
-const HomeStackScreen: React.FC<PropsWithChildren<HomeStackScreenProps>> = ({
-  children,
-}) => {
+const HomeStackScreen: React.FC<
+  PropsWithChildren<HomeStackScreenProps>
+> = () => {
   const HomeStack = createNativeStackNavigator<HomeStackParamList>();
+
+  const [newCallFromState, setCallState] = useState<Call>(newCallBase());
+
   return (
-    <HomeStack.Navigator
-      initialRouteName="Dashboard"
-      screenOptions={({ route }) => ({
-        headerShown: route.name === "Settings",
-      })}
+    <HomeContext.Provider
+      value={{ newCallFromState, setCallState, newCallBase }}
     >
-      <HomeStack.Screen name="Dashboard" component={DashboardScreen} />
-      <HomeStack.Screen name="Settings" component={SettingsScreen} />
-    </HomeStack.Navigator>
+      <HomeStack.Navigator
+        initialRouteName="Dashboard"
+        screenOptions={({ route }) => ({
+          headerShown: route.name === "Settings",
+        })}
+      >
+        <HomeStack.Screen name="Dashboard" component={DashboardScreen} />
+        <HomeStack.Screen name="Settings" component={SettingsScreen} />
+        <HomeStack.Screen
+          name="CallDetails"
+          component={CallDetailsScreen}
+          options={{
+            presentation: "modal",
+          }}
+        />
+        <HomeStack.Screen name="CallForm" component={CallFormScreen} />
+      </HomeStack.Navigator>
+    </HomeContext.Provider>
   );
 };
 

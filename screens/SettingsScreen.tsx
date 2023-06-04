@@ -3,7 +3,7 @@ import { i18n, translationKeys } from "../lib/translations";
 import useSettingStore from "../stores/SettingsStore";
 import { StyleSheet, View } from "react-native";
 import { FormControl, Heading, Select, Text, VStack } from "native-base";
-import theme from "../lib/theme";
+import appTheme from "../lib/theme";
 
 interface SettingsScreenProps {}
 
@@ -14,8 +14,8 @@ const SettingsScreen: React.FC<PropsWithChildren<SettingsScreenProps>> = () => {
     wrapper: {
       flex: 1,
       paddingTop: 10,
-      paddingRight: theme.contentPaddingLeftRight,
-      paddingLeft: theme.contentPaddingLeftRight,
+      paddingRight: appTheme.contentPaddingLeftRight,
+      paddingLeft: appTheme.contentPaddingLeftRight,
     },
   });
 

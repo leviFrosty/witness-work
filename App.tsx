@@ -1,10 +1,6 @@
 import * as SplashScreen from "expo-splash-screen";
 import { useCallback, useEffect } from "react";
-import {
-  DarkTheme,
-  DefaultTheme,
-  NavigationContainer,
-} from "@react-navigation/native";
+import { DarkTheme, NavigationContainer } from "@react-navigation/native";
 import { i18n } from "./lib/translations";
 import { getLocales } from "expo-localization";
 import * as Sentry from "sentry-expo";
@@ -15,6 +11,7 @@ import useSettingStore from "./stores/SettingsStore";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import TerritoryStackScreen from "./stacks/TerritoryStackScreen";
 import NativeBase from "./components/NativeBase";
+import { RootStackParamList } from "./stacks/ParamLists";
 
 // Keep the splash screen visible while we fetch resources
 SplashScreen.preventAutoHideAsync();
@@ -30,11 +27,6 @@ i18n.locale = getLocales()[0].languageCode;
 
 // When a value is missing from a language it'll fall back to another language with the key present.
 i18n.enableFallback = true;
-
-export type RootStackParamList = {
-  Home: undefined;
-  Territory: undefined;
-};
 
 function App() {
   const onLayoutRootView = useCallback(async () => {

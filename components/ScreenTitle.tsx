@@ -21,7 +21,7 @@ const ScreenTitle: React.FC<ScreenTitleProps> = ({ title, size, icon }) => {
 
   return (
     <View style={styles.container}>
-      <Heading size={size || "xl"}>{title}</Heading>
+      <Heading size={size || "2xl"}>{title}</Heading>
       {icon}
     </View>
   );

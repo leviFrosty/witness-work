@@ -65,5 +65,7 @@
   "postalCode": "Postal Code",
   "addLine": "Add Line",
   "removeLine": "Remove Line",
-  "pinAddedToCall": "Pin Added To Call"
+  "pinAddedToCall": "Pin Added To Call",
+  "permissionToAccessLocationDenied": "Permission to access location was denied. Please go to your device settings to allow location services.",
+  "formNameRequired": "A name is required."
 }

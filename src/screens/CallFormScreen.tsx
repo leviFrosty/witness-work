@@ -66,6 +66,11 @@ const CallFormScreen: React.FC<CallFormScreenProps> = ({ navigation }) => {
   >(new IndexPath(0));
   const [useAddressLine2, setUseAddressLine2] = useState(false);
   const [hasManuallyRemovedPin, setHasManuallyRemovedPin] = useState(false);
+  const [errorMsg, setErrorMsg] = useState("");
+  const [showMap, setShowMap] = useState(false);
+  const [location, setLocation] = useState<Location.LocationObject>();
+  const mapRef = useRef<MapView>(null);
+  const theme = useTheme();
   const { setCall } = useCallsStore();
   const { newCallFromState, setCallState, newCallBase } =
     useContext(HomeContext);
@@ -84,9 +89,60 @@ const CallFormScreen: React.FC<CallFormScreenProps> = ({ navigation }) => {
     });
   }, []);
 
+  useEffect(() => {
+    // fetches and sets location based on last known position if there isn't a location
+    (async () => {
+      if (!location) {
+        try {
+          const lastLocation = await Location.getLastKnownPositionAsync();
+          if (lastLocation) {
+            setLocation(lastLocation);
+          }
+        } catch (err) {
+          setErrorMsg(JSON.stringify(err));
+        }
+      }
+    })();
+  }, []);
+
+  useEffect(() => {
+    // Fetches location data on mount
+    (async () => {
+      try {
+        const { status } = await Location.requestForegroundPermissionsAsync();
+        if (status !== "granted") {
+          setErrorMsg(i18n.t("permissionToAccessLocationDenied"));
+          return;
+        }
+
+        const _location = await Location.getCurrentPositionAsync({});
+        setLocation(_location);
+      } catch (err) {
+        // If fails, tries to set based on last known position
+        (async () => {
+          if (!location) {
+            try {
+              const lastLocation = await Location.getLastKnownPositionAsync();
+              if (lastLocation) {
+                setLocation(lastLocation);
+              }
+            } catch (err) {
+              setErrorMsg(JSON.stringify(err));
+            }
+          }
+        })();
+        setErrorMsg(JSON.stringify(err));
+      }
+    })();
+  }, []);
+
   const validate = () => {
     if (!newCallFromState.name) {
       setValidation({ ...validation, name: true });
+      return;
+    } else {
+      setValidation({ ...validation, name: false });
+      handleSaveCall();
     }
     if (!Object.values(validation).includes(true)) {
       handleSaveCall();
@@ -95,7 +151,9 @@ const CallFormScreen: React.FC<CallFormScreenProps> = ({ navigation }) => {
 
   const handleSaveCall = () => {
     setCall(newCallFromState);
-    setCallState(newCallBase());
+    handleClearData();
+    setHasManuallyRemovedPin(false);
+    setUseAddressLine2(false);
     navigation.goBack();
   };
 
@@ -113,27 +171,6 @@ const CallFormScreen: React.FC<CallFormScreenProps> = ({ navigation }) => {
         return "help";
     }
   };
-
-  const [location, setLocation] = useState<Location.LocationObject>();
-  const [errorMsg, setErrorMsg] = useState("");
-  const mapRef = useRef<MapView>(null);
-  const [showMap, setShowMap] = useState(false);
-  const theme = useTheme();
-
-  useEffect(() => {
-    (async () => {
-      if (!location) {
-        try {
-          const lastLocation = await Location.getLastKnownPositionAsync();
-          if (lastLocation) {
-            setLocation(lastLocation);
-          }
-        } catch (err) {
-          setErrorMsg(JSON.stringify(err));
-        }
-      }
-    })();
-  }, []);
 
   const fitToCoordinates = () => {
     if (hasPin()) {
@@ -155,23 +192,6 @@ const CallFormScreen: React.FC<CallFormScreenProps> = ({ navigation }) => {
     }
     setShowMap(!showMap);
   };
-
-  useEffect(() => {
-    (async () => {
-      try {
-        const { status } = await Location.requestForegroundPermissionsAsync();
-        if (status !== "granted") {
-          setErrorMsg("Permission to access location was denied");
-          return;
-        }
-
-        const _location = await Location.getCurrentPositionAsync({});
-        setLocation(_location);
-      } catch (err) {
-        setErrorMsg(JSON.stringify(err));
-      }
-    })();
-  }, []);
 
   const removePin = () => {
     setHasManuallyRemovedPin(true);
@@ -232,13 +252,38 @@ const CallFormScreen: React.FC<CallFormScreenProps> = ({ navigation }) => {
     props?: Partial<ImageProps>
   ): React.ReactElement<ImageProps> => <Icon {...props} name="minus" />;
 
+  const DeleteIcon = (
+    props?: Partial<ImageProps>
+  ): React.ReactElement<ImageProps> => <Icon {...props} name="delete" />;
+
   const CheckIcon = (): React.ReactElement<ImageProps> => (
     <Icon style={{ height: 20, width: 20, color: "#00E096" }} name="check" />
   );
 
+  const handleClearData = () => {
+    setValidation({ name: false });
+    setInterestLevelIndex(new IndexPath(0));
+    setCallState(newCallBase());
+  };
+
+  const handleRenderTextErrorCaption = () => {
+    return validation.name ? (
+      <Text category="label" status="danger">
+        {i18n.t("formNameRequired")}
+      </Text>
+    ) : (
+      <React.Fragment />
+    );
+  };
+
   return (
     <Layout style={styles.wrapper}>
-      <TopNavBarWithBackButton arrow="down" title={i18n.t("newCall")} />
+      <TopNavBarWithBackButton
+        arrow="down"
+        title={i18n.t("newCall")}
+        iconRight={DeleteIcon}
+        onPressRight={handleClearData}
+      />
       <KeyboardAwareScrollView>
         <Pressable onPress={() => Keyboard.dismiss()}>
           <View style={{ gap: 8 }}>
@@ -248,6 +293,7 @@ const CallFormScreen: React.FC<CallFormScreenProps> = ({ navigation }) => {
             <Input
               label={i18n.t("name")}
               placeholder={i18n.t("enterName")}
+              caption={handleRenderTextErrorCaption}
               value={newCallFromState.name}
               status={validation.name ? "danger" : "basic"}
               onChangeText={(name) =>
@@ -440,7 +486,7 @@ const CallFormScreen: React.FC<CallFormScreenProps> = ({ navigation }) => {
                                     theme["background-basic-color-1"],
                                 }}
                               >
-                                {newCallFromState.name || "New Call"}
+                                {newCallFromState.name || i18n.t("newCall")}
                               </Text>
                             </Layout>
                           </Callout>

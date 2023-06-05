@@ -6,7 +6,8 @@ import { Call } from "../stores/CallStore";
 import CallFormScreen from "../screens/CallFormScreen";
 import { HomeContext, newCallBase } from "../contexts/HomeStackContext";
 import { HomeStackParamList } from "./ParamLists";
-import CallDetailsScreen from "../components/CallDetailsScreen";
+import CallDetailsScreen from "../screens/CallDetailsScreen";
+import VisitFormScreen from "../screens/VisitFormScreen";
 
 interface HomeStackScreenProps {}
 
@@ -29,6 +30,13 @@ const HomeStackScreen: React.FC<
       >
         <HomeStack.Screen name="Dashboard" component={DashboardScreen} />
         <HomeStack.Screen name="Settings" component={SettingsScreen} />
+        <HomeStack.Screen
+          name="VisitForm"
+          component={VisitFormScreen}
+          options={{
+            presentation: "modal",
+          }}
+        />
         <HomeStack.Screen
           name="CallDetails"
           component={CallDetailsScreen}

@@ -38,6 +38,29 @@ type CallFormScreenProps = NativeStackScreenProps<
   "CallForm"
 >;
 
+interface InterestLevelIconProps extends Partial<ImageProps> {
+  name: string;
+}
+
+export const InterestLevelIcon = (
+  props?: InterestLevelIconProps
+): React.ReactElement<ImageProps> => <Icon {...props} name={props?.name} />;
+
+export const getInterestLevelIcon = (interestLevel: InterestLevel) => {
+  switch (interestLevel) {
+    case "not-interested":
+      return "hand-back-left";
+    case "little-interested":
+      return "hand-extended";
+    case "interested":
+      return "hands-pray";
+    case "hungry":
+      return "silverware-fork-knife";
+    default:
+      return "help";
+  }
+};
+
 const CallFormScreen: React.FC<CallFormScreenProps> = ({ navigation }) => {
   const themedStyles = StyleSheet.create({
     wrapper: {
@@ -157,21 +180,6 @@ const CallFormScreen: React.FC<CallFormScreenProps> = ({ navigation }) => {
     navigation.goBack();
   };
 
-  const getInterestLevelIcon = (interestLevel: InterestLevel) => {
-    switch (interestLevel) {
-      case "not-interested":
-        return "hand-back-left";
-      case "little-interested":
-        return "hand-extended";
-      case "interested":
-        return "hands-pray";
-      case "hungry":
-        return "silverware-fork-knife";
-      default:
-        return "help";
-    }
-  };
-
   const fitToCoordinates = () => {
     if (hasPin()) {
       mapRef.current?.fitToCoordinates([
@@ -235,14 +243,6 @@ const CallFormScreen: React.FC<CallFormScreenProps> = ({ navigation }) => {
     latitudeDelta: 0.2,
     longitudeDelta: 0.2,
   };
-
-  interface InterestLevelIconProps extends Partial<ImageProps> {
-    name: string;
-  }
-
-  const InterestLevelIcon = (
-    props?: InterestLevelIconProps
-  ): React.ReactElement<ImageProps> => <Icon {...props} name={props?.name} />;
 
   const PlusIcon = (
     props?: Partial<ImageProps>

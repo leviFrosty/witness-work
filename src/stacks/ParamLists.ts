@@ -7,7 +7,10 @@ export type HomeStackParamList = {
   Dashboard: undefined;
   Settings: undefined;
   CallDetails: {
-    id: string;
+    callId: string;
+  };
+  VisitForm: {
+    callId: string;
   };
   CallForm: undefined;
 };

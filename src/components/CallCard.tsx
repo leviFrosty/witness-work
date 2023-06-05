@@ -27,10 +27,11 @@ const CallCard: React.FC<CallCardProps> = ({ call }) => {
   const styles = StyleSheet.create({
     container: {
       backgroundColor: "teal",
+      height: 100,
       padding: 5,
       borderRadius: appTheme.borderRadius,
     },
-    pressable: { marginTop: 10 },
+    pressable: {},
   });
 
   const renderMenuToggleButton = () => {
@@ -48,17 +49,23 @@ const CallCard: React.FC<CallCardProps> = ({ call }) => {
     >
       <Layout level="2" style={styles.container}>
         <View style={{ flex: 1, flexDirection: "row" }}>
-          <View style={{ flex: 1, flexDirection: "column" }}>
-            <Text category="h3">{call.name}</Text>
+          <View
+            style={{
+              flexDirection: "column",
+              alignItems: "center",
+              width: "30%",
+            }}
+          >
+            <Text category="h5">{call.name}</Text>
             {call.interestLevel && <Text>{i18n.t(call.interestLevel)}</Text>}
           </View>
           <View style={{ flex: 1, flexDirection: "column" }}>
             <Text>$Next Visit Goes Here$</Text>
-            <Text category="h4" appearance="hint">
+            <Text category="s2" appearance="hint">
               Next Visit
             </Text>
             <Text>$Previous Visit Goes Here$</Text>
-            <Text category="h4" appearance="hint">
+            <Text category="s2" appearance="hint">
               Last Visit
             </Text>
           </View>

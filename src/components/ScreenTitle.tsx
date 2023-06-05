@@ -33,7 +33,13 @@ const ScreenTitle: React.FC<ScreenTitleProps> = ({
   return (
     <View style={styles.container}>
       <Text category={category || "h1"}>{title}</Text>
-      <Button accessoryLeft={SelectedIcon} onPress={onIconPress} />
+      {icon && (
+        <Button
+          appearance="ghost"
+          accessoryLeft={SelectedIcon}
+          onPress={onIconPress}
+        />
+      )}
     </View>
   );
 };

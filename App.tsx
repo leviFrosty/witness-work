@@ -82,19 +82,13 @@ function App() {
   const BottomBar = ({ navigation, state }: BottomTabBarProps) => {
     return (
       <BottomNavigation
+        appearance="noIndicator"
+        style={{ paddingBottom: 40 }}
         selectedIndex={state.index}
         onSelect={(index) => navigation.navigate(state.routeNames[index])}
       >
-        <BottomNavigationTab
-          style={{ height: 100 }}
-          title={i18n.t("home")}
-          icon={HomeIcon}
-        />
-        <BottomNavigationTab
-          style={{ height: 100 }}
-          title={i18n.t("territory")}
-          icon={MapIcon}
-        />
+        <BottomNavigationTab title={i18n.t("home")} icon={HomeIcon} />
+        <BottomNavigationTab title={i18n.t("territory")} icon={MapIcon} />
       </BottomNavigation>
     );
   };
@@ -110,6 +104,9 @@ function App() {
             <Tab.Navigator
               initialRouteName="Home"
               tabBar={(props) => <BottomBar {...props} />}
+              screenOptions={{
+                headerShown: false,
+              }}
             >
               <Tab.Screen name="Home" component={HomeStackScreen} />
               <Tab.Screen name="Territory" component={TerritoryStackScreen} />

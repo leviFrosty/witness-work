@@ -23,9 +23,9 @@ const HomeStackScreen: React.FC<
     >
       <HomeStack.Navigator
         initialRouteName="Dashboard"
-        screenOptions={({ route }) => ({
-          headerShown: route.name === "Settings",
-        })}
+        screenOptions={{
+          headerShown: false,
+        }}
       >
         <HomeStack.Screen name="Dashboard" component={DashboardScreen} />
         <HomeStack.Screen name="Settings" component={SettingsScreen} />
@@ -36,7 +36,13 @@ const HomeStackScreen: React.FC<
             presentation: "modal",
           }}
         />
-        <HomeStack.Screen name="CallForm" component={CallFormScreen} />
+        <HomeStack.Screen
+          name="CallForm"
+          component={CallFormScreen}
+          options={{
+            presentation: "modal",
+          }}
+        />
       </HomeStack.Navigator>
     </HomeContext.Provider>
   );

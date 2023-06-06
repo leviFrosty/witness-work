@@ -15,7 +15,7 @@ import {
   Layout,
   Text,
 } from "@ui-kitten/components";
-import { useState } from "react";
+import React, { useMemo, useState } from "react";
 import * as Haptics from "expo-haptics";
 import useVisitsStore from "../stores/VisitStore";
 
@@ -41,6 +41,12 @@ const DashboardScreen = ({ navigation }: HomeProps) => {
   const { deleteAllVisits } = useVisitsStore();
   const insets = useSafeAreaInsets();
 
+  const queriedCalls = useMemo(() => {
+    return calls.filter((c) =>
+      c.name.toLocaleLowerCase().includes(query.toLocaleLowerCase())
+    );
+  }, [calls, query]);
+
   const styles = StyleSheet.create({
     wrapper: {
       flex: 1,
@@ -54,6 +60,7 @@ const DashboardScreen = ({ navigation }: HomeProps) => {
       paddingBottom: 90,
       paddingRight: 10,
     },
+    actionCardWrapper: {},
   });
 
   return (
@@ -74,24 +81,38 @@ const DashboardScreen = ({ navigation }: HomeProps) => {
           Monthly totals goes here...
         </Text>
       </View>
-      <View style={{ flex: 1 }}>
+      <View style={{ flex: 1, gap: 5 }}>
         <Text style={{ marginBottom: 4 }} category="h4">
           Calls
         </Text>
-        <Input
-          value={query}
-          onChangeText={(text) => setQuery(text)}
-          placeholder="Search for a call..."
-          accessoryRight={MagnifyIcon}
-        />
-        <FlatList
-          data={calls}
-          ItemSeparatorComponent={(props) => (
-            <Divider style={{ marginVertical: 5 }} {...props} />
-          )}
-          renderItem={({ item }) => <CallCard call={item} />}
-          keyExtractor={(item) => item.id}
-        />
+        <Layout level="2" style={{ gap: 10, flex: 1 }}>
+          <Input
+            value={query}
+            onChangeText={(text) => setQuery(text)}
+            placeholder="Search for a call..."
+            accessoryRight={MagnifyIcon}
+          />
+          <FlatList
+            data={queriedCalls || calls}
+            ListEmptyComponent={
+              query ? (
+                <Text style={{ marginHorizontal: 5 }} appearance="hint">
+                  <React.Fragment>
+                    {i18n.t("noResultsForQuery")}"
+                    <Text category="c2">{query}</Text>
+                    "...
+                  </React.Fragment>
+                </Text>
+              ) : undefined
+            }
+            ItemSeparatorComponent={(props) => (
+              <Divider style={{ marginVertical: 5 }} {...props} />
+            )}
+            renderItem={({ item }) => <CallCard call={item} />}
+            keyExtractor={(item) => item.id}
+          />
+        </Layout>
+
         {/* TODO: Filter options */}
         {/* Filter options: 
             - Upcoming Visit

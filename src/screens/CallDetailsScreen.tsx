@@ -129,6 +129,20 @@ const CallDetailsScreen = ({ route }: CallDetailsProps) => {
     );
   }
 
+  const DotsIcon = (
+    props?: Partial<ImageProps>
+  ): React.ReactElement<ImageProps> => (
+    <Icon {...props} name="dots-horizontal" />
+  );
+
+  const MapMarkerIcon = (
+    props?: Partial<ImageProps>
+  ): React.ReactElement<ImageProps> => <Icon {...props} name="map-marker" />;
+
+  const EditIcon = (
+    props?: Partial<ImageProps>
+  ): React.ReactElement<ImageProps> => <Icon {...props} name="pencil" />;
+
   const OpenMapIcon = (
     props?: Partial<ImageProps>
   ): React.ReactElement<ImageProps> => <Icon {...props} name="map-marker" />;
@@ -144,6 +158,25 @@ const CallDetailsScreen = ({ route }: CallDetailsProps) => {
         - Share Call
         - Delete call
         */}
+        {/* <View style={{ flex: 1, flexDirection: "column" }}>
+            <OverflowMenu
+              onBackdropPress={() => setIsMenuOpen(false)}
+              backdropStyle={styles.backdrop}
+              anchor={renderMenuToggleButton}
+              visible={isMenuOpen}
+            >
+              {call.address?.line1 || call.address?.coordinates?.latitude ? (
+                <MenuItem
+                  title={i18n.t("navigateTo")}
+                  accessoryLeft={MapMarkerIcon}
+                  onPress={() => openLinkToCoordinatesOrAddress(call)}
+                />
+              ) : (
+                <React.Fragment />
+              )}
+              <MenuItem title="Edit" accessoryLeft={EditIcon} />
+            </OverflowMenu>
+          </View> */}
         {Object.keys(call.address || {}).length !== 0 && (
           <View>
             <Text style={{ marginBottom: 5 }} category="s1">

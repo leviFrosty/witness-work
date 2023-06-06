@@ -13,3 +13,13 @@ const translations = {
 
 export const translationKeys = ["en", "es", "fr", "ja"];
 export const i18n = new I18n(translations);
+
+export const capitalizeEachWordInSentence = (sentence: string) => {
+  const words = sentence.split(" ");
+
+  return words
+    .map((word) => {
+      return word[0].toLocaleUpperCase(i18n.locale) + word.substring(1);
+    })
+    .join(" ");
+};

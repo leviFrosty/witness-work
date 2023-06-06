@@ -1,18 +1,23 @@
-import React, { useContext, useState } from "react";
+import React, { useContext, useMemo, useState } from "react";
 import { Call } from "../stores/CallStore";
 import { ImageProps, Pressable, StyleSheet, View } from "react-native";
-import { i18n } from "../lib/translations";
+import { capitalizeEachWordInSentence, i18n } from "../lib/translations";
 import { NavigationContext } from "@react-navigation/native";
 import appTheme from "../lib/theme";
 import {
   Button,
   Icon,
+  IconElement,
   Layout,
   MenuItem,
   OverflowMenu,
   Text,
+  useStyleSheet,
 } from "@ui-kitten/components";
 import { openLinkToCoordinatesOrAddress } from "../screens/CallDetailsScreen";
+import * as Haptics from "expo-haptics";
+import useVisitsStore from "../stores/VisitStore";
+import moment from "moment";
 
 interface CallCardProps {
   call: Call;
@@ -31,57 +36,67 @@ const EditIcon = (
 ): React.ReactElement<ImageProps> => <Icon {...props} name="pencil" />;
 
 const CallCard: React.FC<CallCardProps> = ({ call }) => {
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const navigation = useContext(NavigationContext);
-  const styles = StyleSheet.create({
+  const themedStyles = StyleSheet.create({
     container: {
-      backgroundColor: "teal",
-      height: 100,
-      padding: 5,
+      height: 70,
+      paddingHorizontal: 20,
+      flex: 1,
+      flexDirection: "row",
+      alignItems: "center",
+      backgroundColor: "color-primary-transparent-100",
+      borderStyle: "solid",
+      borderWidth: 1,
+      borderColor: "color-primary-default-border",
       borderRadius: appTheme.borderRadius,
     },
     pressable: {},
-    backdrop: {
-      backgroundColor: "rgba(0, 0, 0, 0.5)",
-    },
+    chevronRight: { height: 20, width: 20, color: "color-basic-default" },
   });
+  const styles = useStyleSheet(themedStyles);
+  const { visits } = useVisitsStore();
+  const callVisits = visits.filter((v) => v.call.id === call.id);
 
-  const renderMenuToggleButton = () => {
-    return (
-      <Button onPress={() => setIsMenuOpen(true)}>
-        <DotsIcon />
-      </Button>
+  const ChevronRight = (): IconElement => (
+    <Icon style={styles.chevronRight} name={"chevron-right"} />
+  );
+
+  const timeSinceLastVisit = useMemo(() => {
+    const mostRecentVisitMoment = callVisits
+      ?.filter((v) => v.call.id === call.id)
+      .sort((a, b) => moment(b.date).valueOf() - moment(a.date).valueOf())
+      .find((_, index) => index == 0)?.date;
+    if (!mostRecentVisitMoment) {
+      return "";
+    }
+    return capitalizeEachWordInSentence(
+      moment(mostRecentVisitMoment).fromNow()
     );
-  };
+  }, [callVisits, call]);
 
   return (
     <Pressable
       style={styles.pressable}
-      onPress={() => navigation?.navigate("CallDetails", { callId: call.id })}
+      onPress={() => {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+        navigation?.navigate("CallDetails", { callId: call.id });
+      }}
     >
-      <Layout level="2" style={styles.container}>
-        <View style={{ flex: 1, flexDirection: "row" }}>
-          <View
-            style={{
-              flexDirection: "column",
-              alignItems: "center",
-              width: "30%",
-            }}
-          >
-            <Text category="h5">{call.name}</Text>
-            {call.interestLevel && <Text>{i18n.t(call.interestLevel)}</Text>}
-          </View>
-          <View style={{ flex: 1, flexDirection: "column" }}>
-            <Text>$Next Visit Goes Here$</Text>
-            <Text category="s2" appearance="hint">
-              Next Visit
-            </Text>
-            <Text>$Previous Visit Goes Here$</Text>
-            <Text category="s2" appearance="hint">
-              Last Visit
-            </Text>
-          </View>
-          <View style={{ flex: 1, flexDirection: "column" }}>
+      <Layout level="3" style={styles.container}>
+        <View
+          style={{
+            flex: 1,
+            flexDirection: "column",
+            alignItems: "flex-start",
+          }}
+        >
+          <Text category="h6">{call.name}</Text>
+          <Text appearance="hint" category="c1">
+            {timeSinceLastVisit}
+          </Text>
+        </View>
+        <ChevronRight />
+        {/* <View style={{ flex: 1, flexDirection: "column" }}>
             <OverflowMenu
               onBackdropPress={() => setIsMenuOpen(false)}
               backdropStyle={styles.backdrop}
@@ -99,8 +114,7 @@ const CallCard: React.FC<CallCardProps> = ({ call }) => {
               )}
               <MenuItem title="Edit" accessoryLeft={EditIcon} />
             </OverflowMenu>
-          </View>
-        </View>
+          </View> */}
       </Layout>
     </Pressable>
   );

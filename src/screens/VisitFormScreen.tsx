@@ -120,6 +120,7 @@ const VisitFormScreen = ({ route, navigation }: VisitFormScreenProps) => {
                   id: callIdFromParams ?? "",
                 },
                 date: moment(),
+                time: new Date(),
                 topic: "",
                 note: "",
                 placement: "",
@@ -150,17 +151,21 @@ const VisitFormScreen = ({ route, navigation }: VisitFormScreenProps) => {
               );
 
               const {
-                nextVisit: { time, ...nextVisit },
+                time,
+                nextVisit: { time: nextVisitTime, ...nextVisit },
                 ..._visit
               } = visit;
 
               const withNextVisitDateTime: Visit = {
                 ..._visit,
+                date: visit.date
+                  .hour(moment(time).hour())
+                  .minute(moment(time).minute()),
                 nextVisit: {
                   ...nextVisit,
                   date: nextVisit.date
-                    .hour(moment(time).hour())
-                    .minute(moment(time).minute()),
+                    .hour(moment(nextVisitTime).hour())
+                    .minute(moment(nextVisitTime).minute()),
                 },
               };
               setVisit(withNextVisitDateTime);
@@ -237,7 +242,37 @@ const VisitFormScreen = ({ route, navigation }: VisitFormScreenProps) => {
                         })
                       }
                     />
-
+                    <View
+                      style={{
+                        flexDirection: "column",
+                        gap: 3,
+                        alignItems: "flex-start",
+                      }}
+                    >
+                      <Text appearance="hint" category="c2">
+                        {i18n.t("time")}
+                      </Text>
+                      <RNDateTimePicker
+                        style={{
+                          marginLeft: -10,
+                        }}
+                        value={values.visit.nextVisit.time}
+                        onChange={({ nativeEvent: { timestamp } }) => {
+                          console.log("timestamp:", timestamp);
+                          if (!timestamp) {
+                            return;
+                          }
+                          setValues({
+                            ...values,
+                            visit: {
+                              ...values.visit,
+                              time: new Date(timestamp),
+                            },
+                          });
+                        }}
+                        mode="time"
+                      />
+                    </View>
                     <Input
                       accessoryLeft={HookIcon}
                       label={i18n.t("topic")}
@@ -375,10 +410,7 @@ const VisitFormScreen = ({ route, navigation }: VisitFormScreenProps) => {
                             ...values,
                             visit: {
                               ...values.visit,
-                              nextVisit: {
-                                ...values.visit.nextVisit,
-                                time: new Date(timestamp),
-                              },
+                              time: new Date(timestamp),
                             },
                           });
                         }}

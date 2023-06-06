@@ -32,6 +32,9 @@ import {
 } from "@ui-kitten/components";
 import TopNavBarWithBackButton from "../components/TopNavBarWithBackButton";
 import * as Location from "expo-location";
+import { TouchableWithoutFeedback } from "@ui-kitten/components/devsupport";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import * as Haptics from "expo-haptics";
 
 type CallFormScreenProps = NativeStackScreenProps<
   HomeStackParamList,
@@ -62,12 +65,13 @@ export const getInterestLevelIcon = (interestLevel: InterestLevel) => {
 };
 
 const CallFormScreen: React.FC<CallFormScreenProps> = ({ navigation }) => {
+  const insets = useSafeAreaInsets();
   const themedStyles = StyleSheet.create({
     wrapper: {
       height: "100%",
       paddingLeft: appTheme.contentPaddingLeftRight,
       paddingRight: appTheme.contentPaddingLeftRight,
-      paddingBottom: 50,
+      paddingBottom: insets.bottom + 10,
     },
     map: {
       height: "100%",
@@ -162,6 +166,7 @@ const CallFormScreen: React.FC<CallFormScreenProps> = ({ navigation }) => {
   const validate = () => {
     if (!newCallFromState.name) {
       setValidation({ ...validation, name: true });
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       return;
     } else {
       setValidation({ ...validation, name: false });
@@ -173,11 +178,12 @@ const CallFormScreen: React.FC<CallFormScreenProps> = ({ navigation }) => {
   };
 
   const handleSaveCall = () => {
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     setCall(newCallFromState);
     handleClearData();
     setHasManuallyRemovedPin(false);
     setUseAddressLine2(false);
-    navigation.goBack();
+    navigation.replace("VisitForm", { callId: newCallFromState.id });
   };
 
   const fitToCoordinates = () => {
@@ -285,12 +291,13 @@ const CallFormScreen: React.FC<CallFormScreenProps> = ({ navigation }) => {
         onPressRight={handleClearData}
       />
       <KeyboardAwareScrollView>
-        <Pressable onPress={() => Keyboard.dismiss()}>
+        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
           <View style={{ gap: 8 }}>
             <Text style={{ marginBottom: 2 }} category="s1">
               {i18n.t("personalInfo")}
             </Text>
             <Input
+              autoFocus={true}
               label={i18n.t("name")}
               placeholder={i18n.t("enterName")}
               caption={handleRenderTextErrorCaption}
@@ -541,9 +548,9 @@ const CallFormScreen: React.FC<CallFormScreenProps> = ({ navigation }) => {
             />
             <Select
               label={(evaProps) => (
-                <Text {...evaProps}>{i18n.t("selectLanguage")}</Text>
+                <Text {...evaProps}>{i18n.t("interestLevel")}</Text>
               )}
-              placeholder={i18n.t("language")}
+              placeholder={i18n.t("interestLevel")}
               selectedIndex={interestLevelIndex}
               // @ts-ignore
               value={i18n.t(interestLevels[interestLevelIndex.row])}
@@ -564,7 +571,7 @@ const CallFormScreen: React.FC<CallFormScreenProps> = ({ navigation }) => {
             </Select>
           </View>
           <Divider style={{ margin: 12 }} />
-        </Pressable>
+        </TouchableWithoutFeedback>
       </KeyboardAwareScrollView>
       <Button onPress={() => validate()}>{i18n.t("save")}</Button>
     </Layout>

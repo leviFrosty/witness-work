@@ -9,8 +9,10 @@ export type HomeStackParamList = {
   CallDetails: {
     callId: string;
   };
-  VisitForm: {
+  VisitForm?: {
     callId: string;
   };
-  CallForm: undefined;
+  CallForm?: {
+    editing: boolean;
+  };
 };

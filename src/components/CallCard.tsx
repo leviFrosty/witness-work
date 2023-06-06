@@ -6,12 +6,13 @@ import { NavigationContext } from "@react-navigation/native";
 import appTheme from "../lib/theme";
 import {
   Button,
-  Divider,
   Icon,
   Layout,
-  Popover,
+  MenuItem,
+  OverflowMenu,
   Text,
 } from "@ui-kitten/components";
+import { openLinkToCoordinatesOrAddress } from "../screens/CallDetailsScreen";
 
 interface CallCardProps {
   call: Call;
@@ -20,6 +21,14 @@ interface CallCardProps {
 const DotsIcon = (
   props?: Partial<ImageProps>
 ): React.ReactElement<ImageProps> => <Icon {...props} name="dots-horizontal" />;
+
+const MapMarkerIcon = (
+  props?: Partial<ImageProps>
+): React.ReactElement<ImageProps> => <Icon {...props} name="map-marker" />;
+
+const EditIcon = (
+  props?: Partial<ImageProps>
+): React.ReactElement<ImageProps> => <Icon {...props} name="pencil" />;
 
 const CallCard: React.FC<CallCardProps> = ({ call }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -32,6 +41,9 @@ const CallCard: React.FC<CallCardProps> = ({ call }) => {
       borderRadius: appTheme.borderRadius,
     },
     pressable: {},
+    backdrop: {
+      backgroundColor: "rgba(0, 0, 0, 0.5)",
+    },
   });
 
   const renderMenuToggleButton = () => {
@@ -45,7 +57,7 @@ const CallCard: React.FC<CallCardProps> = ({ call }) => {
   return (
     <Pressable
       style={styles.pressable}
-      onPress={() => navigation?.navigate("CallDetails", { id: call.id })}
+      onPress={() => navigation?.navigate("CallDetails", { callId: call.id })}
     >
       <Layout level="2" style={styles.container}>
         <View style={{ flex: 1, flexDirection: "row" }}>
@@ -70,18 +82,23 @@ const CallCard: React.FC<CallCardProps> = ({ call }) => {
             </Text>
           </View>
           <View style={{ flex: 1, flexDirection: "column" }}>
-            <Popover
-              visible={isMenuOpen}
-              anchor={renderMenuToggleButton}
+            <OverflowMenu
               onBackdropPress={() => setIsMenuOpen(false)}
+              backdropStyle={styles.backdrop}
+              anchor={renderMenuToggleButton}
+              visible={isMenuOpen}
             >
-              <View style={{ flex: 1, flexDirection: "column" }}>
-                <Text>Open</Text>
-                <Divider />
-                <Text>Add Visit</Text>
-                <Text>Edit</Text>
-              </View>
-            </Popover>
+              {call.address?.line1 || call.address?.coordinates?.latitude ? (
+                <MenuItem
+                  title={i18n.t("navigateTo")}
+                  accessoryLeft={MapMarkerIcon}
+                  onPress={() => openLinkToCoordinatesOrAddress(call)}
+                />
+              ) : (
+                <React.Fragment />
+              )}
+              <MenuItem title="Edit" accessoryLeft={EditIcon} />
+            </OverflowMenu>
           </View>
         </View>
       </Layout>

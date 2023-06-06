@@ -1,11 +1,5 @@
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
-import {
-  FlatList,
-  ImageProps,
-  ScrollView,
-  StyleSheet,
-  View,
-} from "react-native";
+import { FlatList, ImageProps, StyleSheet, View } from "react-native";
 import ScreenTitle from "../components/ScreenTitle";
 import { i18n } from "../lib/translations";
 import appTheme from "../lib/theme";
@@ -22,6 +16,8 @@ import {
   Text,
 } from "@ui-kitten/components";
 import { useState } from "react";
+import * as Haptics from "expo-haptics";
+import useVisitsStore from "../stores/VisitStore";
 
 type HomeProps = NativeStackScreenProps<HomeStackParamList, "Dashboard">;
 
@@ -39,8 +35,10 @@ const PlusIcon = (
 ): React.ReactElement<ImageProps> => <Icon {...props} name="plus" />;
 
 const DashboardScreen = ({ navigation }: HomeProps) => {
+  const debug = true;
   const [query, setQuery] = useState("");
   const { calls, deleteAllCalls } = useCallsStore();
+  const { deleteAllVisits } = useVisitsStore();
   const insets = useSafeAreaInsets();
 
   const styles = StyleSheet.create({
@@ -60,11 +58,13 @@ const DashboardScreen = ({ navigation }: HomeProps) => {
 
   return (
     <Layout style={styles.wrapper}>
-      <View style={{}}>
+      <View>
         <ScreenTitle
           title={i18n.t("dashboard")}
           icon="cog"
-          onIconPress={() => navigation.navigate("Settings")}
+          onIconPress={() => {
+            navigation.navigate("Settings");
+          }}
         />
         <Text style={{ margin: 5 }}>Weekly routine goes here...</Text>
       </View>
@@ -92,10 +92,42 @@ const DashboardScreen = ({ navigation }: HomeProps) => {
           renderItem={({ item }) => <CallCard call={item} />}
           keyExtractor={(item) => item.id}
         />
+        {/* TODO: Filter options */}
+        {/* Filter options: 
+            - Upcoming Visit
+            - Hunger Level
+            - A -> Z
+            -Proximity
+            -Longest since visited 
+        */}
       </View>
-      <Button size="tiny" appearance="outline" onPress={() => deleteAllCalls()}>
-        Delete All Calls
-      </Button>
+      {debug && (
+        <Layout level="2" style={{ paddingVertical: 10, gap: 5 }} id="debug">
+          <Text category="s1">Debug:</Text>
+          <Button
+            appearance="outline"
+            status="warning"
+            onPress={() => navigation.navigate("VisitForm")}
+          >
+            Open Visit Form
+          </Button>
+          <Button
+            appearance="outline"
+            status="danger"
+            onPress={() => deleteAllCalls()}
+          >
+            Delete All Calls
+          </Button>
+          <Button
+            appearance="outline"
+            status="danger"
+            onPress={() => deleteAllVisits()}
+          >
+            Delete All Visits
+          </Button>
+        </Layout>
+      )}
+
       <Button
         style={{
           position: "absolute",
@@ -103,7 +135,10 @@ const DashboardScreen = ({ navigation }: HomeProps) => {
           right: 10,
         }}
         accessoryLeft={PlusIcon}
-        onPress={() => navigation.navigate("CallForm")}
+        onPress={() => {
+          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+          navigation.navigate("CallForm");
+        }}
       ></Button>
     </Layout>
   );

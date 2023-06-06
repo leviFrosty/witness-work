@@ -2,6 +2,8 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { LatLng } from "react-native-maps";
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
+import Asset from "./assets";
+import moment from "moment";
 
 export type InterestLevel =
   | "not-interested"
@@ -17,8 +19,7 @@ export const interestLevels: InterestLevel[] = [
   "hungry",
 ];
 
-export interface Call {
-  id: string;
+export interface Call extends Asset {
   name: string;
   address?: {
     line1?: string;
@@ -31,8 +32,9 @@ export interface Call {
   };
   note?: string;
   interestLevel?: InterestLevel;
-  createdAt?: Date;
-  lastUpdated?: Date;
+  preferredVisitTime?: string;
+  // DO NOT SAVE VISITS DIRECTLY TO CALL.
+  // Filter visits by call.id to get call's visits.
 }
 
 type CallsStore = {
@@ -60,17 +62,17 @@ const useCallsStore = create(
           if (index === -1) {
             // call not found
             // pushing new call to list
-            calls.push({ createdAt: new Date(), ...newCallOrCallUpdates });
+            calls.push({ createdAt: moment(), ...newCallOrCallUpdates });
           } else {
             // call found
             const existingCall = calls[index];
             // Overrides existing values
-            const newCall: Call = {
+            const updatedCall: Call = {
               ...existingCall,
-              lastUpdated: new Date(),
+              lastUpdated: moment(),
               ...newCallOrCallUpdates,
             };
-            calls[index] = newCall;
+            calls[index] = updatedCall;
           }
           return { calls };
         });

@@ -16,7 +16,7 @@ export interface Visit extends Asset {
   partners?: string;
   nextVisit?: {
     // display special card on CallDetails if nextVisit.date is in the future
-    date: moment.Moment;
+    date: moment.Moment; // includes time
     notifyMe?: boolean; // true by default // TODO: add option to change notification before time eg... 12 hours before, 1 hour before
     linkTopic?: string;
     linkScripture?: string;

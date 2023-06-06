@@ -1,6 +1,8 @@
 {
   "cSpell.words": [
     "Datepicker",
+    "datetimepicker",
+    "devsupport",
     "Entypo",
     "Formik",
     "Geocode",
@@ -8,6 +10,7 @@
     "Haptics",
     "Preferencecolor",
     "pressable",
+    "uuidv",
     "zustand"
   ]
 }

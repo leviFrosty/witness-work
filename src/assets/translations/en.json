@@ -102,5 +102,7 @@
   "visitLinkScripturePlaceholder": "e.g. Re 21:3,4",
   "call": "Call",
   "visitNextVisitNotePlaceholder": "Make sure to mention...",
-  "addVisit": "Add Visit"
+  "addVisit": "Add Visit",
+  "time": "Time",
+  "doNotCountTowardsStudyCaption": "JW Time automatically counts initial calls, return visits, and studies based on number of visits per call. Checking this box will add this visit towards your call's count, but will still display visit details."
 }

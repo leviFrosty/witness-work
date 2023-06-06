@@ -24,9 +24,9 @@ import TopNavBarWithBackButton from "../components/TopNavBarWithBackButton";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { HomeStackParamList } from "../stacks/ParamLists";
 import useCallsStore, { Call } from "../stores/CallStore";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useRef, useState } from "react";
 import { Formik } from "formik";
-import useVisitsStore from "../stores/VisitStore";
+import useVisitsStore, { Visit } from "../stores/VisitStore";
 import "react-native-get-random-values";
 import { v4 as uuidv4 } from "uuid";
 import * as Yup from "yup";
@@ -36,6 +36,7 @@ import { TouchableWithoutFeedback } from "@ui-kitten/components/devsupport";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import * as Haptics from "expo-haptics";
+import RNDateTimePicker from "@react-native-community/datetimepicker";
 
 type VisitFormScreenProps = NativeStackScreenProps<
   HomeStackParamList,
@@ -128,6 +129,7 @@ const VisitFormScreen = ({ route, navigation }: VisitFormScreenProps) => {
                 partners: "",
                 nextVisit: {
                   date: moment().add(1, "week"),
+                  time: new Date(),
                   notifyMe: true,
                   linkTopic: "",
                   linkScripture: "",
@@ -146,7 +148,22 @@ const VisitFormScreen = ({ route, navigation }: VisitFormScreenProps) => {
               Haptics.notificationAsync(
                 Haptics.NotificationFeedbackType.Success
               );
-              setVisit(visit);
+
+              const {
+                nextVisit: { time, ...nextVisit },
+                ..._visit
+              } = visit;
+
+              const withNextVisitDateTime: Visit = {
+                ..._visit,
+                nextVisit: {
+                  ...nextVisit,
+                  date: nextVisit.date
+                    .hour(moment(time).hour())
+                    .minute(moment(time).minute()),
+                },
+              };
+              setVisit(withNextVisitDateTime);
               navigation.replace("CallDetails", { callId: visit.call.id });
             }}
           >
@@ -220,6 +237,7 @@ const VisitFormScreen = ({ route, navigation }: VisitFormScreenProps) => {
                         })
                       }
                     />
+
                     <Input
                       accessoryLeft={HookIcon}
                       label={i18n.t("topic")}
@@ -333,6 +351,40 @@ const VisitFormScreen = ({ route, navigation }: VisitFormScreenProps) => {
                         })
                       }
                     />
+                    <View
+                      style={{
+                        flexDirection: "column",
+                        gap: 3,
+                        alignItems: "flex-start",
+                      }}
+                    >
+                      <Text appearance="hint" category="c2">
+                        {i18n.t("time")}
+                      </Text>
+                      <RNDateTimePicker
+                        style={{
+                          marginLeft: -10,
+                        }}
+                        value={values.visit.nextVisit.time}
+                        onChange={({ nativeEvent: { timestamp } }) => {
+                          console.log("timestamp:", timestamp);
+                          if (!timestamp) {
+                            return;
+                          }
+                          setValues({
+                            ...values,
+                            visit: {
+                              ...values.visit,
+                              nextVisit: {
+                                ...values.visit.nextVisit,
+                                time: new Date(timestamp),
+                              },
+                            },
+                          });
+                        }}
+                        mode="time"
+                      />
+                    </View>
                     <Input
                       accessoryLeft={HookIcon}
                       label={i18n.t("visitLinkTopic")}
@@ -405,6 +457,9 @@ const VisitFormScreen = ({ route, navigation }: VisitFormScreenProps) => {
                       >
                         {i18n.t("doNotCountTowardsStudy")}
                       </CheckBox>
+                      <Text appearance="hint" category="c1">
+                        {i18n.t("doNotCountTowardsStudyCaption")}
+                      </Text>
                       <CheckBox
                         checked={values.visit.doNotIncludeInMonthlyReport}
                         onChange={(doNotIncludeInMonthlyReport) =>

@@ -82,7 +82,11 @@ export const getInterestLevelIcon = (interestLevel: InterestLevel) => {
 
 // TODO: resolve state mismatch issue when saving
 
-const CallFormScreen: React.FC<CallFormScreenProps> = ({ navigation }) => {
+const CallFormScreen: React.FC<CallFormScreenProps> = ({
+  navigation,
+  route,
+}) => {
+  const callIdFromRoute = route.params?.callId;
   const insets = useSafeAreaInsets();
   const themedStyles = StyleSheet.create({
     wrapper: {
@@ -105,12 +109,23 @@ const CallFormScreen: React.FC<CallFormScreenProps> = ({ navigation }) => {
       alignItems: "center",
     },
   });
-
   const styles = useStyleSheet(themedStyles);
-  const [newCallFromState, setCallState] = useState<Call>(newCallBase());
+  const { calls, setCall } = useCallsStore();
+  const callToEdit = calls.find((c) => c.id === callIdFromRoute);
+  const [newCallFromState, setCallState] = useState<Call>(
+    callToEdit || newCallBase()
+  );
   const [interestLevelIndex, setInterestLevelIndex] = useState<
     IndexPath | IndexPath[]
-  >(new IndexPath(1));
+  >(
+    callToEdit
+      ? new IndexPath(
+          interestLevels.indexOf(newCallFromState.interestLevel || "") === -1
+            ? 0
+            : interestLevels.indexOf(newCallFromState.interestLevel || "")
+        )
+      : new IndexPath(1)
+  );
   const [useAddressLine2, setUseAddressLine2] = useState(false);
   const [hasManuallyRemovedPin, setHasManuallyRemovedPin] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
@@ -118,7 +133,6 @@ const CallFormScreen: React.FC<CallFormScreenProps> = ({ navigation }) => {
   const [location, setLocation] = useState<Location.LocationObject>();
   const mapRef = useRef<MapView>(null);
   const theme = useTheme();
-  const { setCall } = useCallsStore();
   const [validation, setValidation] = useState<{
     [key: string]: any;
     name: boolean;
@@ -132,7 +146,7 @@ const CallFormScreen: React.FC<CallFormScreenProps> = ({ navigation }) => {
       // @ts-ignore
       interestLevel: interestLevels[interestLevelIndex.row],
     });
-  }, []);
+  }, [interestLevelIndex]);
 
   useEffect(() => {
     // fetches and sets location based on last known position if there isn't a location
@@ -201,7 +215,11 @@ const CallFormScreen: React.FC<CallFormScreenProps> = ({ navigation }) => {
     handleClearData();
     setHasManuallyRemovedPin(false);
     setUseAddressLine2(false);
-    navigation.replace("VisitForm", { callId: newCallFromState.id });
+    if (callToEdit) {
+      navigation.replace("CallDetails", { callId: newCallFromState.id });
+    } else {
+      navigation.replace("VisitForm", { callId: newCallFromState.id });
+    }
   };
 
   const fitToCoordinates = () => {
@@ -289,7 +307,11 @@ const CallFormScreen: React.FC<CallFormScreenProps> = ({ navigation }) => {
   return (
     <Layout style={styles.wrapper}>
       <TopNavBarWithBackButton
-        title={i18n.t("newCall")}
+        title={
+          callToEdit
+            ? `${i18n.t("editing")} ${newCallFromState.name}`
+            : i18n.t("newCall")
+        }
         iconLeft={CloseIcon}
         onPressLeft={() =>
           Alert.alert(

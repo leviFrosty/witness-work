@@ -69,15 +69,15 @@ const useCallsStore = create(
           if (index === -1) {
             // call not found
             // pushing new call to list
-            calls.push({ createdAt: moment(), ...newCallOrCallUpdates });
+            calls.push({ ...newCallOrCallUpdates, createdAt: moment() });
           } else {
             // call found
             const existingCall = calls[index];
             // Overrides existing values
             const updatedCall: Call = {
               ...existingCall,
-              lastUpdated: moment(),
               ...newCallOrCallUpdates,
+              lastUpdated: moment(),
             };
             calls[index] = updatedCall;
           }

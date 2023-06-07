@@ -118,5 +118,6 @@
   "cancel": "Cancel",
   "deleteCaption": "This action cannot be undone. Are you sure you want to delete?",
   "edit": "Edit",
+  "editing": "Editing",
   "upcomingVisitDetails": "Upcoming Visit Details"
 }

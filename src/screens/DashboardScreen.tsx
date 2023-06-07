@@ -36,7 +36,7 @@ const PlusIcon = (
 ): React.ReactElement<ImageProps> => <Icon {...props} name="plus" />;
 
 const DashboardScreen = ({ navigation }: HomeProps) => {
-  const debug = true;
+  const debug = false;
   const [query, setQuery] = useState("");
   const { calls, deleteAllCalls } = useCallsStore();
   const { deleteAllVisits } = useVisitsStore();

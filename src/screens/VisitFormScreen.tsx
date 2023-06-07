@@ -258,12 +258,6 @@ const VisitFormScreen = ({ route, navigation }: VisitFormScreenProps) => {
 
                   <View style={{ gap: 10 }}>
                     <Text category="s1">{i18n.t("visitDetails")}</Text>
-                    <Text>
-                      {values.visit.date
-                        .hour(moment(values.visit.time).hour())
-                        .minute(moment(values.visit.time).minute())
-                        .toString()}
-                    </Text>
                     <Datepicker
                       accessoryLeft={CalendarIcon}
                       label={i18n.t("date")}

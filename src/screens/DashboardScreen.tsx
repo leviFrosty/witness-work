@@ -14,6 +14,7 @@ import {
   Input,
   Layout,
   Text,
+  useStyleSheet,
 } from "@ui-kitten/components";
 import React, { useMemo, useState } from "react";
 import * as Haptics from "expo-haptics";
@@ -47,7 +48,7 @@ const DashboardScreen = ({ navigation }: HomeProps) => {
     );
   }, [calls, query]);
 
-  const styles = StyleSheet.create({
+  const themeStyles = StyleSheet.create({
     wrapper: {
       flex: 1,
       position: "relative",
@@ -62,6 +63,8 @@ const DashboardScreen = ({ navigation }: HomeProps) => {
     },
     actionCardWrapper: {},
   });
+
+  const styles = useStyleSheet(themeStyles);
 
   return (
     <Layout style={styles.wrapper}>
@@ -123,7 +126,15 @@ const DashboardScreen = ({ navigation }: HomeProps) => {
         */}
       </View>
       {debug && (
-        <Layout level="2" style={{ paddingVertical: 10, gap: 5 }} id="debug">
+        <Layout
+          level="2"
+          style={{
+            paddingVertical: 10,
+            gap: 5,
+            borderRadius: appTheme.borderRadius,
+          }}
+          id="debug"
+        >
           <Text category="s1">Debug:</Text>
           <Button
             appearance="outline"
@@ -148,7 +159,6 @@ const DashboardScreen = ({ navigation }: HomeProps) => {
           </Button>
         </Layout>
       )}
-
       <Button
         style={{
           position: "absolute",

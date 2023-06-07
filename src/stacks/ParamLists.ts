@@ -13,6 +13,6 @@ export type HomeStackParamList = {
     callId: string;
   };
   CallForm?: {
-    editing: boolean;
+    callId: string;
   };
 };

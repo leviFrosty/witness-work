@@ -1,6 +1,7 @@
-import React from "react";
+import React, { useState } from "react";
 import { i18n } from "../lib/translations";
 import {
+  Alert,
   ImageProps,
   Platform,
   Pressable,
@@ -10,16 +11,28 @@ import {
 import appTheme from "../lib/theme";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { HomeStackParamList } from "../stacks/ParamLists";
-import { Button, Icon, IconElement, Layout, Text } from "@ui-kitten/components";
+import {
+  Button,
+  Divider,
+  Icon,
+  IconElement,
+  Layout,
+  MenuItem,
+  OverflowMenu,
+  Text,
+  TopNavigation,
+  TopNavigationAction,
+  useStyleSheet,
+} from "@ui-kitten/components";
 import useCallsStore, { Call } from "../stores/CallStore";
-import { useNavigation } from "@react-navigation/native";
-import TopNavBarWithBackButton from "../components/TopNavBarWithBackButton";
 import { formatAddress } from "localized-address-format";
 import * as Linking from "expo-linking";
 import { getInterestLevelIcon } from "./CallFormScreen";
-import useVisitsStore from "../stores/VisitStore";
+import useVisitsStore, { getCallMostRecentVisit } from "../stores/VisitStore";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { TouchableWebElement } from "@ui-kitten/components/devsupport";
+import moment from "moment";
 
 type CallDetailsProps = NativeStackScreenProps<
   HomeStackParamList,
@@ -94,16 +107,48 @@ export const openLinkToCoordinate = (call: Call) => {
   }
 };
 
-const CallDetailsScreen = ({ route }: CallDetailsProps) => {
+const DotsIcon = (
+  props?: Partial<ImageProps>
+): React.ReactElement<ImageProps> => <Icon {...props} name="dots-horizontal" />;
+
+const MapMarkerIcon = (
+  props?: Partial<ImageProps>
+): React.ReactElement<ImageProps> => <Icon {...props} name="map-marker" />;
+
+const EditIcon = (
+  props?: Partial<ImageProps>
+): React.ReactElement<ImageProps> => <Icon {...props} name="pencil" />;
+
+const OpenMapIcon = (
+  props?: Partial<ImageProps>
+): React.ReactElement<ImageProps> => <Icon {...props} name="map-marker" />;
+const AddIcon = (
+  props?: Partial<ImageProps>
+): React.ReactElement<ImageProps> => <Icon {...props} name="plus" />;
+
+const DownArrowIcon = (
+  props?: Partial<ImageProps>
+): React.ReactElement<ImageProps> => <Icon {...props} name={"arrow-down"} />;
+const DeleteIcon = (
+  props?: Partial<ImageProps>
+): React.ReactElement<ImageProps> => <Icon {...props} name={"delete"} />;
+
+const CallDetailsScreen = ({ route, navigation }: CallDetailsProps) => {
   const callId = route.params.callId;
   const { calls, deleteCall } = useCallsStore();
   const { visits: visitsFromStorage } = useVisitsStore();
   const visits = visitsFromStorage.filter((v) => v.call.id === callId);
-  const navigation = useNavigation();
   const call = calls.find((c) => c.id === callId);
   const insets = useSafeAreaInsets();
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
 
-  const styles = StyleSheet.create({
+  const mostRecentVisit = getCallMostRecentVisit(visits, call?.id);
+  const nextVisitIsSoon = moment(mostRecentVisit?.nextVisit?.date).isBetween(
+    moment(),
+    moment(new Date()).add(4, "days")
+  );
+
+  const themedStyles = StyleSheet.create({
     wrapper: {
       flex: 1,
       paddingTop: 10,
@@ -112,7 +157,34 @@ const CallDetailsScreen = ({ route }: CallDetailsProps) => {
       paddingRight: appTheme.contentPaddingLeftRight,
       paddingBottom: insets.bottom + 10,
     },
+    warningMenuItem: {},
+    noteIcon: { height: 15, width: 15, color: "color-basic-100" },
+    scriptureIcon: { height: 12, width: 12, color: "color-basic-100" },
+    card: {
+      paddingVertical: 15,
+      paddingHorizontal: 10,
+      flexDirection: "row",
+      justifyContent: "space-between",
+      backgroundColor: "color-primary-transparent-100",
+      borderStyle: "solid",
+      borderWidth: 1,
+      borderColor: "color-primary-default-border",
+      borderRadius: appTheme.borderRadius,
+    },
+    cardGreen: {
+      paddingVertical: 10,
+      paddingHorizontal: 15,
+      flexDirection: "row",
+      justifyContent: "space-between",
+      backgroundColor: "color-success-transparent-100",
+      borderStyle: "solid",
+      borderWidth: 1,
+      borderColor: "color-success-default-border",
+      borderRadius: appTheme.borderRadius,
+    },
   });
+
+  const styles = useStyleSheet(themedStyles);
 
   if (!call) {
     return (
@@ -129,145 +201,266 @@ const CallDetailsScreen = ({ route }: CallDetailsProps) => {
     );
   }
 
-  const DotsIcon = (
-    props?: Partial<ImageProps>
-  ): React.ReactElement<ImageProps> => (
-    <Icon {...props} name="dots-horizontal" />
+  const renderMenuToggleButton = () => {
+    return (
+      <TopNavigationAction
+        onPress={() => setIsMenuOpen(true)}
+        icon={DotsIcon}
+      />
+    );
+  };
+
+  const TopNavigationWithBackBottom = (): TouchableWebElement => (
+    <TopNavigationAction
+      icon={DownArrowIcon}
+      onPress={() => navigation.goBack()}
+    />
   );
 
-  const MapMarkerIcon = (
-    props?: Partial<ImageProps>
-  ): React.ReactElement<ImageProps> => <Icon {...props} name="map-marker" />;
+  const renderRightNavActions = (): React.ReactElement => {
+    return (
+      <React.Fragment>
+        <TopNavigationAction
+          icon={AddIcon}
+          onPress={() => navigation.replace("VisitForm", { callId: call.id })}
+        />
+        <OverflowMenu
+          onBackdropPress={() => setIsMenuOpen(false)}
+          anchor={renderMenuToggleButton}
+          visible={isMenuOpen}
+        >
+          <MenuItem
+            title={i18n.t("edit")}
+            accessoryLeft={EditIcon}
+            onPress={() => {
+              setIsMenuOpen(false);
+              navigation.replace("CallForm", { callId: call.id });
+            }}
+          />
+          <MenuItem
+            title={i18n.t("addVisit")}
+            accessoryLeft={AddIcon}
+            onPress={() => {
+              setIsMenuOpen(false);
+              navigation.replace("VisitForm", { callId: call.id });
+            }}
+          />
+          {call.address?.line1 || call.address?.coordinates?.latitude ? (
+            <MenuItem
+              title={i18n.t("navigateTo")}
+              accessoryLeft={MapMarkerIcon}
+              onPress={() => openLinkToCoordinatesOrAddress(call)}
+            />
+          ) : (
+            <React.Fragment />
+          )}
+          <MenuItem
+            style={styles.warningMenuItem}
+            title={i18n.t("delete")}
+            accessoryLeft={DeleteIcon}
+            onPress={() => {
+              Alert.alert(i18n.t("deleteCall"), i18n.t("deleteCaption"), [
+                {
+                  text: i18n.t("cancel"),
+                  style: "cancel",
+                  onPress: () => {
+                    setIsMenuOpen(false);
+                  },
+                },
+                {
+                  text: i18n.t("delete"),
+                  style: "destructive",
+                  // If the user confirmed, then we dispatch the action we blocked earlier
+                  // This will continue the action that had triggered the removal of the screen
+                  onPress: () => {
+                    navigation.popToTop();
+                    deleteCall(call.id);
+                  },
+                },
+              ]);
+            }}
+          />
+        </OverflowMenu>
+      </React.Fragment>
+    );
+  };
 
-  const EditIcon = (
-    props?: Partial<ImageProps>
-  ): React.ReactElement<ImageProps> => <Icon {...props} name="pencil" />;
-
-  const OpenMapIcon = (
-    props?: Partial<ImageProps>
-  ): React.ReactElement<ImageProps> => <Icon {...props} name="map-marker" />;
+  const NoteIcon = (): IconElement => {
+    return <Icon style={styles.noteIcon} name={"note"} />;
+  };
+  const ScriptureIcon = (): IconElement => {
+    return (
+      <Icon style={styles.scriptureIcon} name={"book-open-page-variant"} />
+    );
+  };
 
   return (
     <Layout style={styles.wrapper}>
-      <TopNavBarWithBackButton arrow="down" title={call.name} />
+      <TopNavigation
+        alignment="center"
+        accessoryRight={renderRightNavActions}
+        accessoryLeft={TopNavigationWithBackBottom}
+        title={call.name}
+      />
       <KeyboardAwareScrollView>
         {/* Add more options menu: */}
         {/* Menu contains:
-        - Add visit
-        - Edit call
         - Share Call
-        - Delete call
         */}
-        {/* <View style={{ flex: 1, flexDirection: "column" }}>
-            <OverflowMenu
-              onBackdropPress={() => setIsMenuOpen(false)}
-              backdropStyle={styles.backdrop}
-              anchor={renderMenuToggleButton}
-              visible={isMenuOpen}
-            >
-              {call.address?.line1 || call.address?.coordinates?.latitude ? (
-                <MenuItem
-                  title={i18n.t("navigateTo")}
-                  accessoryLeft={MapMarkerIcon}
-                  onPress={() => openLinkToCoordinatesOrAddress(call)}
-                />
-              ) : (
-                <React.Fragment />
-              )}
-              <MenuItem title="Edit" accessoryLeft={EditIcon} />
-            </OverflowMenu>
-          </View> */}
-        {Object.keys(call.address || {}).length !== 0 && (
-          <View>
-            <Text style={{ marginBottom: 5 }} category="s1">
-              {i18n.t("address")}
-            </Text>
-
-            {call.address?.line1 && (
-              <Pressable
-                style={{ marginVertical: 10, gap: 10 }}
-                hitSlop={5}
-                onPress={() => openLinkToAddress(call)}
-              >
-                <Text style={{ marginBottom: 2 }} category="s2">
-                  {i18n.t("streetAddress")}
-                </Text>
-                <Layout
-                  level="2"
-                  style={{
-                    paddingVertical: 15,
-                    paddingHorizontal: 10,
-                    borderRadius: appTheme.borderRadius,
-                    flexDirection: "row",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                  }}
-                >
-                  <Text>
-                    {formatAddress({
-                      addressLines: [
-                        call.address?.line1 || "",
-                        call.address?.line2 || "",
-                      ],
-                      locality: call.address?.city,
-                      administrativeArea: call.address?.state,
-                      postalCode: call.address?.postalCode,
-                      postalCountry: call.address?.country || "US",
-                    }).join("\n")}
-                  </Text>
-                  <Button
-                    appearance="ghost"
-                    accessoryRight={OpenMapIcon}
-                    onPress={() => openLinkToAddress(call)}
-                  />
-                </Layout>
-              </Pressable>
-            )}
-
-            {call?.address?.coordinates?.latitude &&
-              call?.address?.coordinates?.longitude && (
+        {nextVisitIsSoon && (
+          <React.Fragment>
+            <View>
+              <Text style={{ marginBottom: 5 }} category="h5">
                 <React.Fragment>
-                  <Text style={{ marginBottom: 2 }} category="s2">
-                    {i18n.t("coordinates")}
+                  {i18n.t("nextVisit")}
+                  <Text status="success" category="h5">
+                    {` ${moment(mostRecentVisit?.nextVisit?.date).fromNow()}`}
                   </Text>
-                  <Pressable
-                    style={{ marginVertical: 10, gap: 10 }}
-                    onPress={() => openLinkToCoordinate(call)}
-                  >
-                    <Layout
-                      level="2"
+                </React.Fragment>
+              </Text>
+              <View style={styles.cardGreen}>
+                <View style={{ flexDirection: "column", gap: 5, flex: 1 }}>
+                  <Text appearance="hint" category="c1">
+                    {moment(mostRecentVisit?.nextVisit?.date).calendar()}
+                  </Text>
+                  {mostRecentVisit?.nextVisit?.linkTopic && (
+                    <Text category="s1">
+                      {mostRecentVisit?.nextVisit?.linkTopic}
+                    </Text>
+                  )}
+                  {mostRecentVisit?.nextVisit?.linkScripture && (
+                    <View
                       style={{
-                        paddingHorizontal: 10,
-                        borderRadius: appTheme.borderRadius,
                         flexDirection: "row",
-                        justifyContent: "space-between",
+                        gap: 5,
                         alignItems: "center",
                       }}
                     >
-                      <Text category="c1">{`${call?.address?.coordinates?.latitude}, ${call?.address?.coordinates?.longitude}`}</Text>
-                      <Button
-                        appearance="ghost"
-                        accessoryRight={OpenMapIcon}
-                        onPress={() => openLinkToCoordinate(call)}
-                      />
-                    </Layout>
-                  </Pressable>
-                </React.Fragment>
+                      <ScriptureIcon />
+                      <Text category="c1">
+                        {mostRecentVisit?.nextVisit?.linkScripture}
+                      </Text>
+                    </View>
+                  )}
+                  {mostRecentVisit?.nextVisit?.linkNote && (
+                    <React.Fragment>
+                      <Divider style={{ marginVertical: 5 }} />
+                      <Text appearance="hint" category="c1">
+                        {i18n.t("note")}
+                      </Text>
+                      <Text>{mostRecentVisit?.nextVisit?.linkNote}</Text>
+                    </React.Fragment>
+                  )}
+                </View>
+              </View>
+            </View>
+            <Divider style={{ marginVertical: 10 }} />
+          </React.Fragment>
+        )}
+        {Object.keys(call.address || {}).length !== 0 && (
+          <React.Fragment>
+            <View>
+              <Text style={{ marginBottom: 5 }} category="s1">
+                {i18n.t("address")}
+              </Text>
+              {call.address?.line1 && (
+                <Pressable
+                  style={{}}
+                  hitSlop={5}
+                  onPress={() => openLinkToAddress(call)}
+                >
+                  <Text style={{ marginBottom: 2 }} category="s2">
+                    {i18n.t("streetAddress")}
+                  </Text>
+                  <Layout level="2" style={styles.card}>
+                    <Text>
+                      {formatAddress({
+                        addressLines: [
+                          call.address?.line1 || "",
+                          call.address?.line2 || "",
+                        ],
+                        locality: call.address?.city,
+                        administrativeArea: call.address?.state,
+                        postalCode: call.address?.postalCode,
+                        postalCountry: call.address?.country || "US",
+                      }).join("\n")}
+                    </Text>
+                    <Button
+                      appearance="ghost"
+                      accessoryRight={OpenMapIcon}
+                      onPress={() => openLinkToAddress(call)}
+                    />
+                  </Layout>
+                </Pressable>
               )}
-          </View>
+
+              {call?.address?.coordinates?.latitude &&
+                call?.address?.coordinates?.longitude && (
+                  <React.Fragment>
+                    <Text style={{ marginBottom: 2 }} category="s2">
+                      {i18n.t("coordinates")}
+                    </Text>
+                    <Pressable
+                      style={{ marginVertical: 10, gap: 10 }}
+                      onPress={() => openLinkToCoordinate(call)}
+                    >
+                      <Layout
+                        level="2"
+                        style={{
+                          paddingHorizontal: 10,
+                          borderRadius: appTheme.borderRadius,
+                          flexDirection: "row",
+                          justifyContent: "space-between",
+                          alignItems: "center",
+                        }}
+                      >
+                        <Text category="c1">{`${call?.address?.coordinates?.latitude}, ${call?.address?.coordinates?.longitude}`}</Text>
+                        <Button
+                          appearance="ghost"
+                          accessoryRight={OpenMapIcon}
+                          onPress={() => openLinkToCoordinate(call)}
+                        />
+                      </Layout>
+                    </Pressable>
+                  </React.Fragment>
+                )}
+            </View>
+            <Divider style={{ marginVertical: 10 }} />
+          </React.Fragment>
+        )}
+        {call.note && (
+          <React.Fragment>
+            <View>
+              <Text style={{ marginBottom: 5 }} category="s1">
+                {i18n.t("note")}
+              </Text>
+              <View style={{ flexDirection: "row", gap: 10 }}>
+                <View
+                  style={{ flexDirection: "column", justifyContent: "center" }}
+                >
+                  <NoteIcon />
+                </View>
+                <Text>{call.note}</Text>
+              </View>
+            </View>
+            <Divider style={{ marginVertical: 10 }} />
+          </React.Fragment>
+        )}
+        {call.interestLevel && (
+          <React.Fragment>
+            <View>
+              <Text style={{ marginBottom: 5 }} category="s1">
+                {i18n.t("interestLevel")}
+              </Text>
+              <View style={{ flexDirection: "row", gap: 10 }}>
+                <InterestLevelIcon name={call.interestLevel} />
+                <Text>{i18n.t(call.interestLevel)}</Text>
+              </View>
+            </View>
+            <Divider style={{ marginVertical: 10 }} />
+          </React.Fragment>
         )}
 
-        {call.interestLevel && (
-          <View>
-            <Text style={{ marginBottom: 5 }} category="s1">
-              {i18n.t("interestLevel")}
-            </Text>
-            <View style={{ flexDirection: "row", gap: 10 }}>
-              <InterestLevelIcon name={call.interestLevel} />
-              <Text>{i18n.t(call.interestLevel)}</Text>
-            </View>
-          </View>
-        )}
         {/* TODO: add sections from visits here, display history of previous items */}
         <Text category="s1">Call Data</Text>
         <Text>{JSON.stringify(call, null, 2)}</Text>

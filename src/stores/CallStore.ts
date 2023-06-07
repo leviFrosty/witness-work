@@ -4,6 +4,8 @@ import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 import Asset from "./assets";
 import moment from "moment";
+import "react-native-get-random-values";
+import { v4 as uuidv4 } from "uuid";
 
 export type InterestLevel =
   | "not-interested"
@@ -18,6 +20,11 @@ export const interestLevels: InterestLevel[] = [
   "interested",
   "hungry",
 ];
+
+export const newCallBase = (): Call => ({
+  id: uuidv4(),
+  name: "",
+});
 
 export interface Call extends Asset {
   name: string;

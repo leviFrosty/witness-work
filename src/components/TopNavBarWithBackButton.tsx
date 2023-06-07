@@ -10,6 +10,10 @@ import { ImageProps } from "react-native";
 interface TopBarNavWithBackButtonProps {
   title?: string;
   arrow?: "up" | "down" | "left" | "right";
+  iconLeft?:
+    | (() => React.ReactElement<any, string | React.JSXElementConstructor<any>>)
+    | undefined;
+  onPressLeft?: () => void;
   iconRight?:
     | (() => React.ReactElement<any, string | React.JSXElementConstructor<any>>)
     | undefined;
@@ -19,6 +23,8 @@ interface TopBarNavWithBackButtonProps {
 const TopNavBarWithBackButton: React.FC<TopBarNavWithBackButtonProps> = ({
   title,
   arrow,
+  iconLeft,
+  onPressLeft,
   iconRight,
   onPressRight,
 }) => {
@@ -30,8 +36,13 @@ const TopNavBarWithBackButton: React.FC<TopBarNavWithBackButtonProps> = ({
     <Icon {...props} name={`arrow-${arrow || "left"}`} />
   );
 
+  const goBack = () => navigation.goBack();
+
   const TopNavigationWithBackBottom = (): TouchableWebElement => (
-    <TopNavigationAction icon={BackIcon} onPress={() => navigation.goBack()} />
+    <TopNavigationAction
+      icon={iconLeft || BackIcon}
+      onPress={onPressLeft || goBack}
+    />
   );
 
   const TopNavigationRight = () => (

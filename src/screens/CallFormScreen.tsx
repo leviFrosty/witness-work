@@ -1,20 +1,15 @@
-import React, { useContext, useEffect, useRef, useState } from "react";
-import {
-  ImageProps,
-  Keyboard,
-  Pressable,
-  StyleSheet,
-  View,
-} from "react-native";
+import React, { useEffect, useRef, useState } from "react";
+import { Alert, ImageProps, Keyboard, StyleSheet, View } from "react-native";
 import appTheme from "../lib/theme";
 import MapView, { Callout, Marker, Region } from "react-native-maps";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import useCallsStore, {
+  Call,
   InterestLevel,
   interestLevels,
+  newCallBase,
 } from "../stores/CallStore";
 import { HomeStackParamList } from "../stacks/ParamLists";
-import { HomeContext } from "../contexts/HomeStackContext";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import { i18n } from "../lib/translations";
 import {
@@ -48,6 +43,27 @@ interface InterestLevelIconProps extends Partial<ImageProps> {
 export const InterestLevelIcon = (
   props?: InterestLevelIconProps
 ): React.ReactElement<ImageProps> => <Icon {...props} name={props?.name} />;
+const ContactIcon = (
+  props?: Partial<ImageProps>
+): React.ReactElement<ImageProps> => <Icon {...props} name="account-box" />;
+const NoteIcon = (
+  props?: Partial<ImageProps>
+): React.ReactElement<ImageProps> => <Icon {...props} name="note" />;
+const PlusIcon = (
+  props?: Partial<ImageProps>
+): React.ReactElement<ImageProps> => <Icon {...props} name="plus" />;
+const MinusIcon = (
+  props?: Partial<ImageProps>
+): React.ReactElement<ImageProps> => <Icon {...props} name="minus" />;
+const DeleteIcon = (
+  props?: Partial<ImageProps>
+): React.ReactElement<ImageProps> => <Icon {...props} name="delete" />;
+const CheckIcon = (): React.ReactElement<ImageProps> => (
+  <Icon style={{ height: 20, width: 20, color: "#00E096" }} name="check" />
+);
+const CloseIcon = (
+  props?: Partial<ImageProps>
+): React.ReactElement<ImageProps> => <Icon {...props} name="close" />;
 
 export const getInterestLevelIcon = (interestLevel: InterestLevel) => {
   switch (interestLevel) {
@@ -64,11 +80,14 @@ export const getInterestLevelIcon = (interestLevel: InterestLevel) => {
   }
 };
 
+// TODO: resolve state mismatch issue when saving
+
 const CallFormScreen: React.FC<CallFormScreenProps> = ({ navigation }) => {
   const insets = useSafeAreaInsets();
   const themedStyles = StyleSheet.create({
     wrapper: {
       height: "100%",
+      paddingTop: insets.top,
       paddingLeft: appTheme.contentPaddingLeftRight,
       paddingRight: appTheme.contentPaddingLeftRight,
       paddingBottom: insets.bottom + 10,
@@ -88,9 +107,10 @@ const CallFormScreen: React.FC<CallFormScreenProps> = ({ navigation }) => {
   });
 
   const styles = useStyleSheet(themedStyles);
+  const [newCallFromState, setCallState] = useState<Call>(newCallBase());
   const [interestLevelIndex, setInterestLevelIndex] = useState<
     IndexPath | IndexPath[]
-  >(new IndexPath(0));
+  >(new IndexPath(1));
   const [useAddressLine2, setUseAddressLine2] = useState(false);
   const [hasManuallyRemovedPin, setHasManuallyRemovedPin] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
@@ -99,8 +119,6 @@ const CallFormScreen: React.FC<CallFormScreenProps> = ({ navigation }) => {
   const mapRef = useRef<MapView>(null);
   const theme = useTheme();
   const { setCall } = useCallsStore();
-  const { newCallFromState, setCallState, newCallBase } =
-    useContext(HomeContext);
   const [validation, setValidation] = useState<{
     [key: string]: any;
     name: boolean;
@@ -250,22 +268,6 @@ const CallFormScreen: React.FC<CallFormScreenProps> = ({ navigation }) => {
     longitudeDelta: 0.2,
   };
 
-  const PlusIcon = (
-    props?: Partial<ImageProps>
-  ): React.ReactElement<ImageProps> => <Icon {...props} name="plus" />;
-
-  const MinusIcon = (
-    props?: Partial<ImageProps>
-  ): React.ReactElement<ImageProps> => <Icon {...props} name="minus" />;
-
-  const DeleteIcon = (
-    props?: Partial<ImageProps>
-  ): React.ReactElement<ImageProps> => <Icon {...props} name="delete" />;
-
-  const CheckIcon = (): React.ReactElement<ImageProps> => (
-    <Icon style={{ height: 20, width: 20, color: "#00E096" }} name="check" />
-  );
-
   const handleClearData = () => {
     setValidation({ name: false });
     setInterestLevelIndex(new IndexPath(0));
@@ -282,11 +284,29 @@ const CallFormScreen: React.FC<CallFormScreenProps> = ({ navigation }) => {
     );
   };
 
+  // TODO: handle redirect from params. Should be in 'edit' mode and prefill all forms with current data. Change page title  to Editing call.name
+
   return (
     <Layout style={styles.wrapper}>
       <TopNavBarWithBackButton
-        arrow="down"
         title={i18n.t("newCall")}
+        iconLeft={CloseIcon}
+        onPressLeft={() =>
+          Alert.alert(
+            i18n.t("discardChanges"),
+            i18n.t("unsavedChangesOnScreen"),
+            [
+              { text: i18n.t("dontLeave"), style: "cancel", onPress: () => {} },
+              {
+                text: i18n.t("discard"),
+                style: "destructive",
+                // If the user confirmed, then we dispatch the action we blocked earlier
+                // This will continue the action that had triggered the removal of the screen
+                onPress: () => navigation.goBack(),
+              },
+            ]
+          )
+        }
         iconRight={DeleteIcon}
         onPressRight={handleClearData}
       />
@@ -297,6 +317,7 @@ const CallFormScreen: React.FC<CallFormScreenProps> = ({ navigation }) => {
               {i18n.t("personalInfo")}
             </Text>
             <Input
+              accessoryLeft={ContactIcon}
               autoFocus={true}
               label={i18n.t("name")}
               placeholder={i18n.t("enterName")}
@@ -314,6 +335,7 @@ const CallFormScreen: React.FC<CallFormScreenProps> = ({ navigation }) => {
               {i18n.t("address")}
             </Text>
             <Input
+              placeholder={i18n.t("addressLine1Placeholder")}
               label={i18n.t("addressLine1")}
               value={newCallFromState.address?.line1 || ""}
               onChangeText={(line1) =>
@@ -539,6 +561,7 @@ const CallFormScreen: React.FC<CallFormScreenProps> = ({ navigation }) => {
               {i18n.t("moreDetails")}
             </Text>
             <Input
+              accessoryLeft={NoteIcon}
               label={i18n.t("note")}
               multiline={true}
               value={newCallFromState.note || ""}

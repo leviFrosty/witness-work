@@ -1,9 +1,10 @@
 import { PropsWithChildren, useEffect, useState } from "react";
 import { i18n, translationKeys } from "../lib/translations";
 // import useSettingStore from "../stores/SettingsStore";
-import { StyleSheet, View } from "react-native";
+import { ImageProps, StyleSheet, View } from "react-native";
 import appTheme from "../lib/theme";
 import {
+  Icon,
   IndexPath,
   Layout,
   Select,
@@ -15,6 +16,10 @@ import TopNavBarWithBackButton from "../components/TopNavBarWithBackButton";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 interface SettingsScreenProps {}
+
+const TranslationIcon = (
+  props?: Partial<ImageProps>
+): React.ReactElement<ImageProps> => <Icon {...props} name="translate" />;
 
 const SettingsScreen: React.FC<PropsWithChildren<SettingsScreenProps>> = () => {
   const { language, setLanguage } = useSettingStore();
@@ -47,6 +52,7 @@ const SettingsScreen: React.FC<PropsWithChildren<SettingsScreenProps>> = () => {
       <TopNavBarWithBackButton title={i18n.t("settings")} />
       <Text category="s1">{i18n.t("preferences")}</Text>
       <Select
+        accessoryLeft={TranslationIcon}
         label={(evaProps) => (
           <Text {...evaProps}>{i18n.t("selectLanguage")}</Text>
         )}

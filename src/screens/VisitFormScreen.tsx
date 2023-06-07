@@ -1,5 +1,6 @@
 import { i18n } from "../lib/translations";
 import {
+  Alert,
   Dimensions,
   ImageProps,
   Keyboard,
@@ -24,7 +25,7 @@ import TopNavBarWithBackButton from "../components/TopNavBarWithBackButton";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { HomeStackParamList } from "../stacks/ParamLists";
 import useCallsStore, { Call } from "../stores/CallStore";
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Formik } from "formik";
 import useVisitsStore, { Visit } from "../stores/VisitStore";
 import "react-native-get-random-values";
@@ -74,6 +75,9 @@ const MultiplePersonIcon = (
 ): React.ReactElement<ImageProps> => (
   <Icon {...props} name="account-multiple" />
 );
+const CloseIcon = (
+  props?: Partial<ImageProps>
+): React.ReactElement<ImageProps> => <Icon {...props} name="close" />;
 
 const VisitFormScreen = ({ route, navigation }: VisitFormScreenProps) => {
   const callIdFromParams = route.params?.callId;
@@ -86,6 +90,7 @@ const VisitFormScreen = ({ route, navigation }: VisitFormScreenProps) => {
   const styles = StyleSheet.create({
     wrapper: {
       flex: 1,
+      paddingTop: insets.top + 10,
       paddingRight: appTheme.contentPaddingLeftRight,
       paddingLeft: appTheme.contentPaddingLeftRight,
       paddingBottom: insets.bottom + 10,
@@ -104,7 +109,26 @@ const VisitFormScreen = ({ route, navigation }: VisitFormScreenProps) => {
 
   return (
     <Layout style={styles.wrapper}>
-      <TopNavBarWithBackButton arrow="down" title={i18n.t("newVisit")} />
+      <TopNavBarWithBackButton
+        iconLeft={CloseIcon}
+        onPressLeft={() =>
+          Alert.alert(
+            i18n.t("discardChanges"),
+            i18n.t("unsavedChangesOnScreen"),
+            [
+              { text: i18n.t("dontLeave"), style: "cancel", onPress: () => {} },
+              {
+                text: i18n.t("discard"),
+                style: "destructive",
+                // If the user confirmed, then we dispatch the action we blocked earlier
+                // This will continue the action that had triggered the removal of the screen
+                onPress: () => navigation.goBack(),
+              },
+            ]
+          )
+        }
+        title={i18n.t("newVisit")}
+      />
       <KeyboardAwareScrollView>
         <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
           <Formik
@@ -156,20 +180,25 @@ const VisitFormScreen = ({ route, navigation }: VisitFormScreenProps) => {
                 ..._visit
               } = visit;
 
+              const date = visit.date
+                .hour(moment(time).hour())
+                .minute(moment(time).minute());
+
+              const nextVisitDate = nextVisit.date
+                .hour(moment(nextVisitTime).hour())
+                .minute(moment(nextVisitTime).minute());
+
               const withNextVisitDateTime: Visit = {
                 ..._visit,
-                date: visit.date
-                  .hour(moment(time).hour())
-                  .minute(moment(time).minute()),
+                date,
                 nextVisit: {
                   ...nextVisit,
-                  date: nextVisit.date
-                    .hour(moment(nextVisitTime).hour())
-                    .minute(moment(nextVisitTime).minute()),
+                  date: nextVisitDate,
                 },
               };
               setVisit(withNextVisitDateTime);
-              navigation.replace("CallDetails", { callId: visit.call.id });
+              navigation.popToTop();
+              navigation.push("CallDetails", { callId: visit.call.id });
             }}
           >
             {({ values, handleBlur, setValues, errors, touched }) => {
@@ -229,6 +258,12 @@ const VisitFormScreen = ({ route, navigation }: VisitFormScreenProps) => {
 
                   <View style={{ gap: 10 }}>
                     <Text category="s1">{i18n.t("visitDetails")}</Text>
+                    <Text>
+                      {values.visit.date
+                        .hour(moment(values.visit.time).hour())
+                        .minute(moment(values.visit.time).minute())
+                        .toString()}
+                    </Text>
                     <Datepicker
                       accessoryLeft={CalendarIcon}
                       label={i18n.t("date")}
@@ -256,9 +291,8 @@ const VisitFormScreen = ({ route, navigation }: VisitFormScreenProps) => {
                         style={{
                           marginLeft: -10,
                         }}
-                        value={values.visit.nextVisit.time}
+                        value={values.visit.time}
                         onChange={({ nativeEvent: { timestamp } }) => {
-                          console.log("timestamp:", timestamp);
                           if (!timestamp) {
                             return;
                           }
@@ -402,7 +436,6 @@ const VisitFormScreen = ({ route, navigation }: VisitFormScreenProps) => {
                         }}
                         value={values.visit.nextVisit.time}
                         onChange={({ nativeEvent: { timestamp } }) => {
-                          console.log("timestamp:", timestamp);
                           if (!timestamp) {
                             return;
                           }
@@ -410,7 +443,10 @@ const VisitFormScreen = ({ route, navigation }: VisitFormScreenProps) => {
                             ...values,
                             visit: {
                               ...values.visit,
-                              time: new Date(timestamp),
+                              nextVisit: {
+                                ...values.visit.nextVisit,
+                                time: new Date(timestamp),
+                              },
                             },
                           });
                         }}

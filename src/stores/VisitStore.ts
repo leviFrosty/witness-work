@@ -4,11 +4,21 @@ import { createJSONStorage, persist } from "zustand/middleware";
 import Asset from "./assets";
 import moment from "moment";
 
+export const getCallMostRecentVisit = (visits: Visit[], callId?: string) => {
+  if (!callId) {
+    return undefined;
+  }
+  return visits
+    ?.filter((v) => v.call.id === callId)
+    .sort((a, b) => moment(b.date).valueOf() - moment(a.date).valueOf())
+    .find((_, index) => index == 0);
+};
+
 export interface Visit extends Asset {
   call: {
     id: string;
   };
-  date: moment.Moment;
+  date: moment.Moment; // includes time
   topic?: string; // display history on CallDetailsScreen
   note?: string; // display history on CallDetailsScreen
   placement?: string; // display history on CallDetailsScreen

@@ -5,24 +5,26 @@ import { PropsWithChildren } from "react";
 
 interface CardProps {}
 
+export const cardStyles: StyleSheet.NamedStyles<unknown> = {
+  position: "relative",
+  paddingVertical: 10,
+  paddingHorizontal: 20,
+  flex: 1,
+  flexDirection: "row",
+  alignItems: "center",
+  backgroundColor: "color-primary-transparent-100",
+  borderStyle: "solid",
+  borderWidth: 1,
+  borderColor: "color-primary-default-border",
+  borderRadius: appTheme.borderRadius,
+};
+
 const Card: React.FC<PropsWithChildren<CardProps>> = ({
   children,
   ...props
 }) => {
   const themedStyles = StyleSheet.create({
-    container: {
-      position: "relative",
-      paddingVertical: 10,
-      paddingHorizontal: 20,
-      flex: 1,
-      flexDirection: "row",
-      alignItems: "center",
-      backgroundColor: "color-primary-transparent-100",
-      borderStyle: "solid",
-      borderWidth: 1,
-      borderColor: "color-primary-default-border",
-      borderRadius: appTheme.borderRadius,
-    },
+    container: cardStyles,
   });
   const styles = useStyleSheet(themedStyles);
 

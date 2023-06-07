@@ -370,6 +370,7 @@ const CallFormScreen: React.FC<CallFormScreenProps> = ({
             {useAddressLine2 && (
               <Input
                 label={i18n.t("addressLine2")}
+                placeholder={i18n.t("addressLine2Placeholder")}
                 value={newCallFromState.address?.line2 || ""}
                 onChangeText={(line2) =>
                   setCallState({
@@ -418,6 +419,7 @@ const CallFormScreen: React.FC<CallFormScreenProps> = ({
               <Input
                 style={{ flex: 1 }}
                 label={i18n.t("city")}
+                placeholder={i18n.t("callCityPlaceholder")}
                 value={newCallFromState.address?.city || ""}
                 onChangeText={(city) =>
                   setCallState({
@@ -429,6 +431,7 @@ const CallFormScreen: React.FC<CallFormScreenProps> = ({
               <Input
                 style={{ flex: 1 }}
                 label={i18n.t("state")}
+                placeholder={i18n.t("callStatePlaceholder")}
                 value={newCallFromState.address?.state || ""}
                 onChangeText={(state) =>
                   setCallState({
@@ -443,6 +446,8 @@ const CallFormScreen: React.FC<CallFormScreenProps> = ({
               <Input
                 style={{ flex: 1 }}
                 label={i18n.t("postalCode")}
+                placeholder={i18n.t("callPostalCodePlaceholder")}
+                caption={i18n.t("callPostalCodeCaption")}
                 keyboardType="number-pad"
                 value={newCallFromState.address?.postalCode || ""}
                 onChangeText={(postalCode) =>
@@ -455,6 +460,7 @@ const CallFormScreen: React.FC<CallFormScreenProps> = ({
               <Input
                 style={{ flex: 1 }}
                 label={i18n.t("country")}
+                placeholder={i18n.t("callCountryPlaceholder")}
                 value={newCallFromState.address?.country || ""}
                 onChangeText={(country) =>
                   setCallState({
@@ -585,6 +591,7 @@ const CallFormScreen: React.FC<CallFormScreenProps> = ({
             <Input
               accessoryLeft={NoteIcon}
               label={i18n.t("note")}
+              placeholder={i18n.t("callNotePlaceholder")}
               multiline={true}
               value={newCallFromState.note || ""}
               onChangeText={(note) =>

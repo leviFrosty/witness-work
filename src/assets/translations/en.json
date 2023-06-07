@@ -39,7 +39,7 @@
   "personalInfo": "Personal Info",
   "address": "Address",
   "addressLine1": "Address Line 1",
-  "addressLine1Placeholder": "Street address",
+  "addressLine1Placeholder": "1 Kings Dr.",
   "addressLine2": "Address Line 2",
   "addressLine2Placeholder": "Apt or unit number",
   "city": "City",
@@ -119,5 +119,11 @@
   "deleteCaption": "This action cannot be undone. Are you sure you want to delete?",
   "edit": "Edit",
   "editing": "Editing",
-  "upcomingVisitDetails": "Upcoming Visit Details"
+  "upcomingVisitDetails": "Upcoming Visit Details",
+  "callNotePlaceholder": "Write information about the individual that isn't specific to the visit. e.g. Has kids, loves coffee, has their own beliefs, dog's name is Navi...",
+  "callCountryPlaceholder": "US, CA, FR...",
+  "callPostalCodePlaceholder": "41092",
+  "callPostalCodeCaption": "In some regions this may be used for locality, region code, etc.",
+  "callStatePlaceholder": "NY",
+  "callCityPlaceholder": "Tuxedo Park"
 }

@@ -25,7 +25,7 @@ import TopNavBarWithBackButton from "../components/TopNavBarWithBackButton";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { HomeStackParamList } from "../stacks/ParamLists";
 import useCallsStore, { Call } from "../stores/CallStore";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useRef, useState } from "react";
 import { Formik } from "formik";
 import useVisitsStore, { Visit } from "../stores/VisitStore";
 import "react-native-get-random-values";
@@ -81,11 +81,11 @@ const CloseIcon = (
 
 const VisitFormScreen = ({ route, navigation }: VisitFormScreenProps) => {
   const callIdFromParams = route.params?.callId;
-  const { calls } = useCallsStore();
+  const { calls, setCall } = useCallsStore();
   const [data, setData] = useState(calls);
   const formikRef = useRef<any>(null);
   const call = calls.find((c) => c.id === callIdFromParams);
-  const { setVisit } = useVisitsStore();
+  const { visits, setVisit } = useVisitsStore();
   const insets = useSafeAreaInsets();
   const styles = StyleSheet.create({
     wrapper: {
@@ -196,6 +196,21 @@ const VisitFormScreen = ({ route, navigation }: VisitFormScreenProps) => {
                   date: nextVisitDate,
                 },
               };
+
+              // check how many visits are tied to call
+              // update call based on how many visits it has.
+              if (call && !visit.doNotCountTowardsStudy) {
+                const callVisits = visits.filter(
+                  (v) => v.call.id === visit.call.id
+                );
+                const visitAmount = callVisits.length + 1; // add one for current call
+                setCall({
+                  ...call,
+                  isStudy: visitAmount >= 4,
+                  isReturnVisit: visitAmount > 1 && visitAmount < 4,
+                });
+              }
+
               setVisit(withNextVisitDateTime);
               navigation.popToTop();
               navigation.push("CallDetails", { callId: visit.call.id });

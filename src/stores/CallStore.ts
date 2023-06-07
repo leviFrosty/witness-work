@@ -40,6 +40,8 @@ export interface Call extends Asset {
   note?: string;
   interestLevel?: InterestLevel;
   preferredVisitTime?: string;
+  isStudy: boolean; // a call must have at least 4 visits to become a study
+  isReturnVisit: boolean; // a call must have at least 2 visits to become a return visit
   // DO NOT SAVE VISITS DIRECTLY TO CALL.
   // Filter visits by call.id to get call's visits.
 }
@@ -69,6 +71,7 @@ const useCallsStore = create(
           if (index === -1) {
             // call not found
             // pushing new call to list
+
             calls.push({ ...newCallOrCallUpdates, createdAt: moment() });
           } else {
             // call found

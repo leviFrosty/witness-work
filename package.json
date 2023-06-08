@@ -54,7 +54,9 @@
     "sentry-expo": "~6.2.0",
     "uuid": "^9.0.0",
     "yup": "^1.2.0",
-    "zustand": "^4.3.8"
+    "zustand": "^4.3.8",
+    "@shopify/flash-list": "1.4.0",
+    "expo-clipboard": "~4.1.2"
   },
   "devDependencies": {
     "@babel/core": "^7.20.0",

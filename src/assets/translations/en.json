@@ -125,5 +125,7 @@
   "callPostalCodePlaceholder": "41092",
   "callPostalCodeCaption": "In some regions this may be used for locality, region code, etc.",
   "callStatePlaceholder": "NY",
-  "callCityPlaceholder": "Tuxedo Park"
+  "callCityPlaceholder": "Tuxedo Park",
+  "copied!": "Copied!",
+  "copied": "Copied"
 }

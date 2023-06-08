@@ -1,5 +1,6 @@
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
-import { FlatList, ImageProps, StyleSheet, View } from "react-native";
+import { ImageProps, StyleSheet, View } from "react-native";
+import { FlashList } from "@shopify/flash-list";
 import ScreenTitle from "../components/ScreenTitle";
 import { i18n } from "../lib/translations";
 import appTheme from "../lib/theme";
@@ -95,7 +96,7 @@ const DashboardScreen = ({ navigation }: HomeProps) => {
             placeholder="Search for a call..."
             accessoryRight={MagnifyIcon}
           />
-          <FlatList
+          <FlashList
             data={queriedCalls || calls}
             ListEmptyComponent={
               query ? (
@@ -111,6 +112,7 @@ const DashboardScreen = ({ navigation }: HomeProps) => {
             ItemSeparatorComponent={(props) => (
               <Divider style={{ marginVertical: 5 }} {...props} />
             )}
+            estimatedItemSize={60}
             renderItem={({ item }) => <CallCard call={item} />}
             keyExtractor={(item) => item.id}
           />

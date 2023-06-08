@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import { i18n } from "../lib/translations";
 import {
   Alert,
@@ -6,6 +6,7 @@ import {
   Platform,
   Pressable,
   StyleSheet,
+  TouchableOpacity,
   View,
 } from "react-native";
 import appTheme from "../lib/theme";
@@ -33,6 +34,7 @@ import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { TouchableWebElement } from "@ui-kitten/components/devsupport";
 import moment from "moment";
+import CopyToClipBoardWithTooltip from "../components/CopyToClipboard";
 
 type CallDetailsProps = NativeStackScreenProps<
   HomeStackParamList,
@@ -285,12 +287,78 @@ const CallDetailsScreen = ({ route, navigation }: CallDetailsProps) => {
     );
   };
 
+  const formattedAddress = useMemo(
+    () =>
+      formatAddress({
+        addressLines: [call.address?.line1 || "", call.address?.line2 || ""],
+        locality: call.address?.city,
+        administrativeArea: call.address?.state,
+        postalCode: call.address?.postalCode,
+        postalCountry: call.address?.country || "US",
+      }).join("\n"),
+    [call]
+  );
+
   const NoteIcon = (): IconElement => {
     return <Icon style={styles.noteIcon} name={"note"} />;
   };
   const ScriptureIcon = (): IconElement => {
     return (
       <Icon style={styles.scriptureIcon} name={"book-open-page-variant"} />
+    );
+  };
+  const coordinatesDisplayValue = `${call?.address?.coordinates?.latitude}, ${call?.address?.coordinates?.longitude}`;
+
+  const CoordinatesCard = (copyToClipboard: () => void) => {
+    return (
+      <TouchableOpacity
+        activeOpacity={0.8}
+        style={{ marginVertical: 10, gap: 10 }}
+        onLongPress={copyToClipboard}
+        onPress={() => openLinkToCoordinate(call)}
+      >
+        <Layout
+          level="2"
+          style={{
+            paddingHorizontal: 10,
+            borderRadius: appTheme.borderRadius,
+            flexDirection: "row",
+            justifyContent: "space-between",
+            alignItems: "center",
+          }}
+        >
+          <Text category="c1">{coordinatesDisplayValue}</Text>
+          <Button
+            appearance="ghost"
+            accessoryRight={OpenMapIcon}
+            onPress={() => openLinkToCoordinate(call)}
+          />
+        </Layout>
+      </TouchableOpacity>
+    );
+  };
+
+  const AddressCard = (copyToClipboard: () => void) => {
+    return (
+      <TouchableOpacity
+        style={{}}
+        activeOpacity={0.8}
+        hitSlop={5}
+        onLongPress={copyToClipboard}
+        onPress={() => openLinkToAddress(call)}
+      >
+        <Text style={{ marginBottom: 2 }} category="s2">
+          {i18n.t("streetAddress")}
+        </Text>
+        <Layout level="2" style={styles.card}>
+          <Text>{formattedAddress}</Text>
+          <Button
+            appearance="ghost"
+            accessoryRight={OpenMapIcon}
+            onPress={() => openLinkToAddress(call)}
+          />
+        </Layout>
+      </TouchableOpacity>
     );
   };
 
@@ -364,34 +432,12 @@ const CallDetailsScreen = ({ route, navigation }: CallDetailsProps) => {
                 {i18n.t("address")}
               </Text>
               {call.address?.line1 && (
-                <Pressable
-                  style={{}}
-                  hitSlop={5}
-                  onPress={() => openLinkToAddress(call)}
-                >
-                  <Text style={{ marginBottom: 2 }} category="s2">
-                    {i18n.t("streetAddress")}
-                  </Text>
-                  <Layout level="2" style={styles.card}>
-                    <Text>
-                      {formatAddress({
-                        addressLines: [
-                          call.address?.line1 || "",
-                          call.address?.line2 || "",
-                        ],
-                        locality: call.address?.city,
-                        administrativeArea: call.address?.state,
-                        postalCode: call.address?.postalCode,
-                        postalCountry: call.address?.country || "US",
-                      }).join("\n")}
-                    </Text>
-                    <Button
-                      appearance="ghost"
-                      accessoryRight={OpenMapIcon}
-                      onPress={() => openLinkToAddress(call)}
-                    />
-                  </Layout>
-                </Pressable>
+                <React.Fragment>
+                  <CopyToClipBoardWithTooltip
+                    component={AddressCard}
+                    string={formattedAddress}
+                  />
+                </React.Fragment>
               )}
 
               {call?.address?.coordinates?.latitude &&
@@ -400,28 +446,10 @@ const CallDetailsScreen = ({ route, navigation }: CallDetailsProps) => {
                     <Text style={{ marginBottom: 2 }} category="s2">
                       {i18n.t("coordinates")}
                     </Text>
-                    <Pressable
-                      style={{ marginVertical: 10, gap: 10 }}
-                      onPress={() => openLinkToCoordinate(call)}
-                    >
-                      <Layout
-                        level="2"
-                        style={{
-                          paddingHorizontal: 10,
-                          borderRadius: appTheme.borderRadius,
-                          flexDirection: "row",
-                          justifyContent: "space-between",
-                          alignItems: "center",
-                        }}
-                      >
-                        <Text category="c1">{`${call?.address?.coordinates?.latitude}, ${call?.address?.coordinates?.longitude}`}</Text>
-                        <Button
-                          appearance="ghost"
-                          accessoryRight={OpenMapIcon}
-                          onPress={() => openLinkToCoordinate(call)}
-                        />
-                      </Layout>
-                    </Pressable>
+                    <CopyToClipBoardWithTooltip
+                      component={CoordinatesCard}
+                      string={coordinatesDisplayValue}
+                    />
                   </React.Fragment>
                 )}
             </View>
@@ -440,7 +468,12 @@ const CallDetailsScreen = ({ route, navigation }: CallDetailsProps) => {
                 >
                   <NoteIcon />
                 </View>
-                <Text>{call.note}</Text>
+                <CopyToClipBoardWithTooltip
+                  component={(copy) => (
+                    <Text onLongPress={copy}>{call.note}</Text>
+                  )}
+                  string={call.note}
+                />
               </View>
             </View>
             <Divider style={{ marginVertical: 10 }} />
@@ -454,13 +487,19 @@ const CallDetailsScreen = ({ route, navigation }: CallDetailsProps) => {
               </Text>
               <View style={{ flexDirection: "row", gap: 10 }}>
                 <InterestLevelIcon name={call.interestLevel} />
-                <Text>{i18n.t(call.interestLevel)}</Text>
+                <CopyToClipBoardWithTooltip
+                  component={(copy) => (
+                    <Text onLongPress={copy}>
+                      {i18n.t(call.interestLevel || "")}
+                    </Text>
+                  )}
+                  string={i18n.t(call.interestLevel)}
+                />
               </View>
             </View>
             <Divider style={{ marginVertical: 10 }} />
           </React.Fragment>
         )}
-
         {/* TODO: add sections from visits here, display history of previous items */}
         <Text category="s1">Call Data</Text>
         <Text>{JSON.stringify(call, null, 2)}</Text>

@@ -1,7 +1,7 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
-import Asset from "./assets";
+import Asset from "./asset";
 import moment from "moment";
 
 export const getCallMostRecentVisit = (visits: Visit[], callId?: string) => {

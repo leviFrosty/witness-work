@@ -18,10 +18,12 @@
     "@react-navigation/native": "^6.1.6",
     "@react-navigation/native-stack": "^6.9.12",
     "@sentry/react-native": "4.15.2",
+    "@shopify/flash-list": "1.4.0",
     "@ui-kitten/components": "^5.3.1",
     "@ui-kitten/moment": "^5.3.1",
     "expo": "~48.0.15",
     "expo-application": "~5.1.1",
+    "expo-clipboard": "~4.1.2",
     "expo-constants": "~14.2.1",
     "expo-device": "~5.2.1",
     "expo-font": "^11.1.1",
@@ -54,9 +56,7 @@
     "sentry-expo": "~6.2.0",
     "uuid": "^9.0.0",
     "yup": "^1.2.0",
-    "zustand": "^4.3.8",
-    "@shopify/flash-list": "1.4.0",
-    "expo-clipboard": "~4.1.2"
+    "zustand": "^4.3.8"
   },
   "devDependencies": {
     "@babel/core": "^7.20.0",

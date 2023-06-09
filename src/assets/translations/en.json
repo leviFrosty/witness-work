@@ -127,5 +127,8 @@
   "callStatePlaceholder": "NY",
   "callCityPlaceholder": "Tuxedo Park",
   "copied!": "Copied!",
-  "copied": "Copied"
+  "copied": "Copied",
+  "share": "Share",
+  "shareCall": "Share Call",
+  "youAreInService!": "You're in service!"
 }

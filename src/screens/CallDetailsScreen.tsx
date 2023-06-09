@@ -4,7 +4,7 @@ import {
   Alert,
   ImageProps,
   Platform,
-  Pressable,
+  Share,
   StyleSheet,
   TouchableOpacity,
   View,
@@ -25,7 +25,10 @@ import {
   TopNavigationAction,
   useStyleSheet,
 } from "@ui-kitten/components";
-import useCallsStore, { Call } from "../stores/CallStore";
+import useCallsStore, {
+  Call,
+  convertCallToReadableExport,
+} from "../stores/CallStore";
 import { formatAddress } from "localized-address-format";
 import * as Linking from "expo-linking";
 import { getInterestLevelIcon } from "./CallFormScreen";
@@ -127,6 +130,9 @@ const OpenMapIcon = (
 const AddIcon = (
   props?: Partial<ImageProps>
 ): React.ReactElement<ImageProps> => <Icon {...props} name="plus" />;
+const ExportIcon = (
+  props?: Partial<ImageProps>
+): React.ReactElement<ImageProps> => <Icon {...props} name="export-variant" />;
 
 const DownArrowIcon = (
   props?: Partial<ImageProps>
@@ -246,6 +252,16 @@ const CallDetailsScreen = ({ route, navigation }: CallDetailsProps) => {
               setIsMenuOpen(false);
               navigation.replace("VisitForm", { callId: call.id });
             }}
+          />
+          <MenuItem
+            title={i18n.t("share")}
+            accessoryLeft={ExportIcon}
+            onPress={async () =>
+              await Share.share({
+                title: i18n.t("shareCall"),
+                message: convertCallToReadableExport(call, visits),
+              })
+            }
           />
           {call.address?.line1 || call.address?.coordinates?.latitude ? (
             <MenuItem

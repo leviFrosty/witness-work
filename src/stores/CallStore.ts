@@ -2,10 +2,14 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { LatLng } from "react-native-maps";
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
-import Asset from "./assets";
+import Asset from "./asset";
 import moment from "moment";
 import "react-native-get-random-values";
 import { v4 as uuidv4 } from "uuid";
+import { formatAddress } from "localized-address-format";
+import { Visit } from "./VisitStore";
+import { getCallMostRecentVisit } from "./VisitStore";
+import { prettifyJson } from "../lib/strings";
 
 export type InterestLevel =
   | "not-interested"
@@ -24,7 +28,52 @@ export const interestLevels: InterestLevel[] = [
 export const newCallBase = (): Call => ({
   id: uuidv4(),
   name: "",
+  isStudy: false,
+  isReturnVisit: false,
 });
+
+export const convertCallToReadableExport = (call: Call, visits: Visit[]) => {
+  const mostRecentVisit = getCallMostRecentVisit(visits, call.id);
+
+  if (!mostRecentVisit) {
+    return "";
+  }
+
+  const {
+    id,
+    createdAt,
+    lastUpdated,
+    call: c,
+    doNotCountTowardsStudy,
+    doNotIncludeInMonthlyReport,
+    ...recentVisit
+  } = mostRecentVisit;
+
+  const dataToShow = {
+    name: call.name,
+    address: formatAddress({
+      addressLines: [call.address?.line1 || "", call.address?.line2 || ""],
+      locality: call.address?.city,
+      administrativeArea: call.address?.state,
+      postalCode: call.address?.postalCode,
+      postalCountry: call.address?.country || "US",
+    }).join("\n"),
+    note: call.note,
+    lastVisit: {
+      ...recentVisit,
+      date: moment(recentVisit?.date).format("dddd, MMMM Do YYYY, h:mm:ss a"),
+      nextVisit: {
+        ...recentVisit.nextVisit,
+        date: moment(recentVisit?.nextVisit?.date).format(
+          "dddd, MMMM Do YYYY, h:mm:ss a"
+        ),
+        notifyMe: undefined,
+      },
+    },
+  };
+
+  return prettifyJson(dataToShow);
+};
 
 export interface Call extends Asset {
   name: string;
@@ -43,7 +92,7 @@ export interface Call extends Asset {
   isStudy: boolean; // a call must have at least 4 visits to become a study
   isReturnVisit: boolean; // a call must have at least 2 visits to become a return visit
   // DO NOT SAVE VISITS DIRECTLY TO CALL.
-  // Filter visits by call.id to get call's visits.
+  // Filter visits from useVisitsStore by call.id to get call's visits.
 }
 
 type CallsStore = {

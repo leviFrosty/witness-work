@@ -20,6 +20,7 @@ import {
 import React, { useMemo, useState } from "react";
 import * as Haptics from "expo-haptics";
 import useVisitsStore from "../stores/VisitStore";
+import { usePersistedStopWatch } from "../lib/usePersistedStopwatch";
 
 type HomeProps = NativeStackScreenProps<HomeStackParamList, "Dashboard">;
 
@@ -37,7 +38,8 @@ const PlusIcon = (
 ): React.ReactElement<ImageProps> => <Icon {...props} name="plus" />;
 
 const DashboardScreen = ({ navigation }: HomeProps) => {
-  const debug = false;
+  const { reset, start, stop, time, isRunning } = usePersistedStopWatch();
+  const debug = true;
   const [query, setQuery] = useState("");
   const { calls, deleteAllCalls } = useCallsStore();
   const { deleteAllVisits } = useVisitsStore();
@@ -71,13 +73,14 @@ const DashboardScreen = ({ navigation }: HomeProps) => {
     <Layout style={styles.wrapper}>
       <View>
         <ScreenTitle
-          title={i18n.t("dashboard")}
+          title={i18n.t(isRunning ? "youAreInService!" : "dashboard")}
           icon="cog"
           onIconPress={() => {
             navigation.navigate("Settings");
           }}
         />
         <Text style={{ margin: 5 }}>Weekly routine goes here...</Text>
+        <Text>{time}</Text>
       </View>
       <View style={{}}>
         <Text category="h4">{i18n.t("monthlyTotals")}</Text>
@@ -138,6 +141,16 @@ const DashboardScreen = ({ navigation }: HomeProps) => {
           id="debug"
         >
           <Text category="s1">Debug:</Text>
+          <Button
+            appearance="outline"
+            status="success"
+            onPress={() => (isRunning ? stop() : start())}
+          >
+            {isRunning ? "Pause Timer" : "Start Timer"}
+          </Button>
+          <Button appearance="outline" status="warning" onPress={reset}>
+            Stop timer
+          </Button>
           <Button
             appearance="outline"
             status="warning"

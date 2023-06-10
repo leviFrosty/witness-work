@@ -15,7 +15,6 @@ import {
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import HomeStackScreen from "./src/stacks/HomeStackScreen";
 import useSettingStore from "./src/stores/SettingsStore";
-import { MaterialCommunityIcons } from "@expo/vector-icons";
 import TerritoryStackScreen from "./src/stacks/TerritoryStackScreen";
 import { RootStackParamList } from "./src/stacks/ParamLists";
 import * as eva from "@eva-design/eva";

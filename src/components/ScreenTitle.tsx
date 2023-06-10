@@ -7,6 +7,7 @@ interface ScreenTitleProps {
   category?: string;
   icon?: string;
   onIconPress?: () => void;
+  status?: string;
 }
 
 const ScreenTitle: React.FC<ScreenTitleProps> = ({
@@ -14,13 +15,15 @@ const ScreenTitle: React.FC<ScreenTitleProps> = ({
   category,
   icon,
   onIconPress,
+  status,
 }) => {
   const styles = StyleSheet.create({
     container: {
+      flex: 1,
       flexDirection: "row",
       alignItems: "center",
       justifyContent: "space-between",
-      paddingBottom: 10,
+      marginBottom: 10,
     },
   });
 
@@ -32,7 +35,9 @@ const ScreenTitle: React.FC<ScreenTitleProps> = ({
 
   return (
     <View style={styles.container}>
-      <Text category={category || "h1"}>{title}</Text>
+      <Text category={category || "h1"} status={status || "basic"}>
+        {title}
+      </Text>
       {icon && (
         <Button
           appearance="ghost"

@@ -15,4 +15,5 @@ export type HomeStackParamList = {
   CallForm?: {
     callId: string;
   };
+  ServiceRecordForm: undefined;
 };

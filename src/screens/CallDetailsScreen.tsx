@@ -173,6 +173,19 @@ const CallDetailsScreen = ({ route, navigation }: CallDetailsProps) => {
       paddingHorizontal: 10,
       flexDirection: "row",
       justifyContent: "space-between",
+      alignItems: "center",
+      backgroundColor: "color-primary-transparent-100",
+      borderStyle: "solid",
+      borderWidth: 1,
+      borderColor: "color-primary-default-border",
+      borderRadius: appTheme.borderRadius,
+    },
+    cardLowPadding: {
+      paddingVertical: 5,
+      paddingHorizontal: 10,
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
       backgroundColor: "color-primary-transparent-100",
       borderStyle: "solid",
       borderWidth: 1,
@@ -329,20 +342,14 @@ const CallDetailsScreen = ({ route, navigation }: CallDetailsProps) => {
     return (
       <TouchableOpacity
         activeOpacity={0.8}
-        style={{ marginVertical: 10, gap: 10 }}
+        style={{ marginVertical: 10 }}
         onLongPress={copyToClipboard}
         onPress={() => openLinkToCoordinate(call)}
       >
-        <Layout
-          level="2"
-          style={{
-            paddingHorizontal: 10,
-            borderRadius: appTheme.borderRadius,
-            flexDirection: "row",
-            justifyContent: "space-between",
-            alignItems: "center",
-          }}
-        >
+        <Text style={{ marginBottom: 2 }} category="s2">
+          {i18n.t("coordinates")}
+        </Text>
+        <Layout level="2" style={styles.cardLowPadding}>
           <Text category="c1">{coordinatesDisplayValue}</Text>
           <Button
             appearance="ghost"
@@ -455,13 +462,9 @@ const CallDetailsScreen = ({ route, navigation }: CallDetailsProps) => {
                   />
                 </React.Fragment>
               )}
-
               {call?.address?.coordinates?.latitude &&
                 call?.address?.coordinates?.longitude && (
                   <React.Fragment>
-                    <Text style={{ marginBottom: 2 }} category="s2">
-                      {i18n.t("coordinates")}
-                    </Text>
                     <CopyToClipBoardWithTooltip
                       component={CoordinatesCard}
                       string={coordinatesDisplayValue}

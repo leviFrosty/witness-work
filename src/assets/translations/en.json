@@ -130,5 +130,7 @@
   "copied": "Copied",
   "share": "Share",
   "shareCall": "Share Call",
-  "youAreInService!": "You're in service!"
+  "youAreInService!": "You're in service!",
+  "newServiceEntry": "New Service Entry",
+  "stopTimeWillAutomaticallyAddToReport": "Stop timer to automatically add time to report."
 }

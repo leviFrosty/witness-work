@@ -10,6 +10,7 @@ import useCallsStore from "../stores/CallStore";
 import { HomeStackParamList } from "../stacks/ParamLists";
 import {
   Button,
+  ButtonGroup,
   Divider,
   Icon,
   Input,
@@ -17,10 +18,9 @@ import {
   Text,
   useStyleSheet,
 } from "@ui-kitten/components";
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useRef, useState } from "react";
 import * as Haptics from "expo-haptics";
-import useVisitsStore from "../stores/VisitStore";
-import { usePersistedStopWatch } from "../lib/usePersistedStopwatch";
+import useTimer from "../lib/userTimer";
 
 type HomeProps = NativeStackScreenProps<HomeStackParamList, "Dashboard">;
 
@@ -36,13 +36,22 @@ const MagnifyIcon = (
 const PlusIcon = (
   props?: Partial<ImageProps>
 ): React.ReactElement<ImageProps> => <Icon {...props} name="plus" />;
+const PlayIcon = (
+  props?: Partial<ImageProps>
+): React.ReactElement<ImageProps> => <Icon {...props} name="play" />;
+const PauseIcon = (
+  props?: Partial<ImageProps>
+): React.ReactElement<ImageProps> => <Icon {...props} name="pause" />;
+const StopIcon = (
+  props?: Partial<ImageProps>
+): React.ReactElement<ImageProps> => <Icon {...props} name="stop" />;
 
 const DashboardScreen = ({ navigation }: HomeProps) => {
-  const { reset, start, stop, time, isRunning } = usePersistedStopWatch();
+  const { play, pause, reset, formattedTime, hasStarted, isRunning } =
+    useTimer();
   const debug = true;
   const [query, setQuery] = useState("");
-  const { calls, deleteAllCalls } = useCallsStore();
-  const { deleteAllVisits } = useVisitsStore();
+  const { calls } = useCallsStore();
   const insets = useSafeAreaInsets();
 
   const queriedCalls = useMemo(() => {
@@ -69,18 +78,46 @@ const DashboardScreen = ({ navigation }: HomeProps) => {
 
   const styles = useStyleSheet(themeStyles);
 
+  const isInService = hasStarted || isRunning;
+
   return (
     <Layout style={styles.wrapper}>
       <View>
-        <ScreenTitle
-          title={i18n.t(isRunning ? "youAreInService!" : "dashboard")}
-          icon="cog"
-          onIconPress={() => {
-            navigation.navigate("Settings");
-          }}
-        />
-        <Text style={{ margin: 5 }}>Weekly routine goes here...</Text>
-        <Text>{time}</Text>
+        <View style={{ flexDirection: "row" }}>
+          {isInService && (
+            <View style={{ flexDirection: "row", flexShrink: 1, gap: 5 }}>
+              {isRunning ? (
+                <Button accessoryLeft={PauseIcon} onPress={pause} />
+              ) : (
+                <Button accessoryLeft={PlayIcon} onPress={play} />
+              )}
+              <Button
+                appearance="ghost"
+                accessoryLeft={StopIcon}
+                onPress={reset}
+              />
+            </View>
+          )}
+          <ScreenTitle
+            title={isInService ? formattedTime : i18n.t("dashboard")}
+            icon="cog"
+            status={isInService ? "success" : "basic"}
+            onIconPress={() => {
+              navigation.navigate("Settings");
+            }}
+          />
+        </View>
+
+        {isInService ? (
+          <React.Fragment>
+            <Text>{i18n.t("youAreInService!")}</Text>
+            <Text appearance="hint" category="c1">
+              {i18n.t("stopTimeWillAutomaticallyAddToReport")}
+            </Text>
+          </React.Fragment>
+        ) : (
+          <Text style={{ margin: 5 }}>Weekly routine goes here...</Text>
+        )}
       </View>
       <View style={{}}>
         <Text category="h4">{i18n.t("monthlyTotals")}</Text>
@@ -144,7 +181,7 @@ const DashboardScreen = ({ navigation }: HomeProps) => {
           <Button
             appearance="outline"
             status="success"
-            onPress={() => (isRunning ? stop() : start())}
+            onPress={() => (isRunning ? pause() : play())}
           >
             {isRunning ? "Pause Timer" : "Start Timer"}
           </Button>
@@ -153,24 +190,10 @@ const DashboardScreen = ({ navigation }: HomeProps) => {
           </Button>
           <Button
             appearance="outline"
-            status="warning"
-            onPress={() => navigation.navigate("VisitForm")}
+            status="success"
+            onPress={() => navigation.navigate("ServiceRecordForm")}
           >
-            Open Visit Form
-          </Button>
-          <Button
-            appearance="outline"
-            status="danger"
-            onPress={() => deleteAllCalls()}
-          >
-            Delete All Calls
-          </Button>
-          <Button
-            appearance="outline"
-            status="danger"
-            onPress={() => deleteAllVisits()}
-          >
-            Delete All Visits
+            Create Service Record
           </Button>
         </Layout>
       )}

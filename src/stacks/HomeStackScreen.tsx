@@ -6,6 +6,7 @@ import CallFormScreen from "../screens/CallFormScreen";
 import { HomeStackParamList } from "./ParamLists";
 import CallDetailsScreen from "../screens/CallDetailsScreen";
 import VisitFormScreen from "../screens/VisitFormScreen";
+import ServiceRecordFormScreen from "../screens/ServiceRecordFormScreen";
 
 interface HomeStackScreenProps {}
 
@@ -42,6 +43,13 @@ const HomeStackScreen: React.FC<
         component={CallFormScreen}
         options={{
           presentation: "fullScreenModal",
+        }}
+      />
+      <HomeStack.Screen
+        name="ServiceRecordForm"
+        component={ServiceRecordFormScreen}
+        options={{
+          presentation: "modal",
         }}
       />
     </HomeStack.Navigator>

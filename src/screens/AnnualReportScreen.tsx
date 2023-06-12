@@ -137,12 +137,13 @@ const AnnualReportScreen = ({ route, navigation }: AnnualReportScreenProps) => {
             appearance="ghost"
             size="small"
             accessoryLeft={Export}
-            onPress={async () =>
+            onPress={async () => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
               await Share.share({
                 title: item.share?.title,
                 message: item.share?.message || "",
-              })
-            }
+              });
+            }}
           />
         </View>
         <MonthReport report={item} hideArrow />
@@ -182,10 +183,24 @@ const AnnualReportScreen = ({ route, navigation }: AnnualReportScreenProps) => {
           visible={isMenuOpen}
         >
           <MenuItem
+            title={i18n.t("shareAnnualReport")}
+            accessoryLeft={Export}
+            onPress={async () => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              await Share.share({
+                title: annualReport.share?.title,
+                message: annualReport.share?.message || "",
+              });
+            }}
+          />
+          <MenuItem
             style={styles.warningMenuItem}
             title={i18n.t("deleteAll")}
             accessoryLeft={DeleteIcon}
             onPress={() => {
+              Haptics.notificationAsync(
+                Haptics.NotificationFeedbackType.Warning
+              );
               Alert.alert(
                 i18n.t("deleteAllServiceRecords"),
                 i18n.t("deleteCaption"),
@@ -228,6 +243,7 @@ const AnnualReportScreen = ({ route, navigation }: AnnualReportScreenProps) => {
         <Button
           accessoryLeft={ChevronLeft}
           onPress={() => {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
             navigation.replace("AnnualReport", {
               year: year - 1,
               previouslyViewedYear: year,
@@ -238,17 +254,6 @@ const AnnualReportScreen = ({ route, navigation }: AnnualReportScreenProps) => {
           <Text style={{ flexShrink: 1 }} category="h3">
             {year}
           </Text>
-          <Button
-            appearance="ghost"
-            size="small"
-            accessoryLeft={Export}
-            onPress={async () =>
-              await Share.share({
-                title: annualReport.share?.title,
-                message: annualReport.share?.message || "",
-              })
-            }
-          />
         </View>
         <Button
           style={{
@@ -257,6 +262,7 @@ const AnnualReportScreen = ({ route, navigation }: AnnualReportScreenProps) => {
           disabled={year === moment().year()}
           accessoryLeft={ChevronRight}
           onPress={() => {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
             navigation.replace("AnnualReport", {
               year: year + 1,
               previouslyViewedYear: year,

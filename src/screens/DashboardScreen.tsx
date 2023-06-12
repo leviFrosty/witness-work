@@ -2,6 +2,7 @@ import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import {
   ImageProps,
   Keyboard,
+  Pressable,
   Share,
   StyleSheet,
   TouchableOpacity,
@@ -32,7 +33,6 @@ import moment from "moment";
 import useVisitsStore from "../stores/VisitStore";
 import MonthReport, {
   MonthReportData,
-  formatReportForSharing,
   parseForMonthReport,
 } from "../components/MonthReport";
 import { Export } from "../components/Icons";
@@ -167,7 +167,16 @@ const DashboardScreen = ({ navigation }: HomeProps) => {
             <View
               style={{ flexDirection: "row", gap: 5, alignItems: "center" }}
             >
-              <Text category="h4">{i18n.t("monthlyTotals")}</Text>
+              <Pressable
+                onPress={() => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                  navigation.navigate("AnnualReport", {
+                    year: moment().year(),
+                  });
+                }}
+              >
+                <Text category="h4">{i18n.t("monthlyTotals")}</Text>
+              </Pressable>
               <Button
                 appearance="ghost"
                 size="small"

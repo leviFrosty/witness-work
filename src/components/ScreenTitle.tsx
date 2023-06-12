@@ -1,6 +1,7 @@
 import { Button, Icon, Text } from "@ui-kitten/components";
 import React from "react";
 import { ImageProps, StyleSheet, View } from "react-native";
+import * as Haptics from "expo-haptics";
 
 interface ScreenTitleProps {
   title: string;
@@ -33,6 +34,11 @@ const ScreenTitle: React.FC<ScreenTitleProps> = ({
     <Icon {...props} name={icon || "help"} />
   );
 
+  const handlePress = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    if (onIconPress) onIconPress();
+  };
+
   return (
     <View style={styles.container}>
       <Text category={category || "h1"} status={status || "basic"}>
@@ -42,7 +48,7 @@ const ScreenTitle: React.FC<ScreenTitleProps> = ({
         <Button
           appearance="ghost"
           accessoryLeft={SelectedIcon}
-          onPress={onIconPress}
+          onPress={onIconPress ? handlePress : undefined}
         />
       )}
     </View>

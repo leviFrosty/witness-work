@@ -38,6 +38,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { TouchableWebElement } from "@ui-kitten/components/devsupport";
 import moment from "moment";
 import CopyToClipBoardWithTooltip from "../components/CopyToClipboard";
+import { Export } from "../components/Icons";
 
 type CallDetailsProps = NativeStackScreenProps<
   HomeStackParamList,
@@ -130,10 +131,6 @@ const OpenMapIcon = (
 const AddIcon = (
   props?: Partial<ImageProps>
 ): React.ReactElement<ImageProps> => <Icon {...props} name="plus" />;
-const ExportIcon = (
-  props?: Partial<ImageProps>
-): React.ReactElement<ImageProps> => <Icon {...props} name="export-variant" />;
-
 const DownArrowIcon = (
   props?: Partial<ImageProps>
 ): React.ReactElement<ImageProps> => <Icon {...props} name={"arrow-down"} />;
@@ -268,7 +265,7 @@ const CallDetailsScreen = ({ route, navigation }: CallDetailsProps) => {
           />
           <MenuItem
             title={i18n.t("share")}
-            accessoryLeft={ExportIcon}
+            accessoryLeft={Export}
             onPress={async () =>
               await Share.share({
                 title: i18n.t("shareCall"),

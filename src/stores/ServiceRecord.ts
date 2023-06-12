@@ -4,9 +4,13 @@ import { createJSONStorage, persist } from "zustand/middleware";
 import Asset from "./asset";
 import moment from "moment";
 
+export const secondInMS = 1000;
+export const minuteInMS = 60 * secondInMS;
+export const hourInMS = 60 * minuteInMS;
 export interface ServiceRecord extends Asset {
   date: moment.Moment;
-  time: number;
+  time: number; // while taking user input, time will be a moment. When stored, stored in milliseconds.
+  ldc: boolean; // Whether time value was part of LDC service
   placements: number;
   videoPlacements: number;
   returnVisitOffset: number; // manually added by user. Adds to the calls.returnVisit total

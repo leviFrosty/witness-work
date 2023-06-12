@@ -45,12 +45,12 @@ export const convertCallToReadableExport = (call: Call, visits: Visit[]) => {
     lastUpdated,
     call: c,
     doNotCountTowardsStudy,
-    doNotIncludeInMonthlyReport,
     ...recentVisit
   } = mostRecentVisit;
 
   const dataToShow = {
     name: call.name,
+    phone: call.phoneNumber,
     address: formatAddress({
       addressLines: [call.address?.line1 || "", call.address?.line2 || ""],
       locality: call.address?.city,
@@ -77,6 +77,7 @@ export const convertCallToReadableExport = (call: Call, visits: Visit[]) => {
 
 export interface Call extends Asset {
   name: string;
+  phoneNumber?: string;
   address?: {
     line1?: string;
     line2?: string;

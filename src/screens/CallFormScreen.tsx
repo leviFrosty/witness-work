@@ -339,8 +339,9 @@ const CallFormScreen: React.FC<CallFormScreenProps> = ({
               {i18n.t("personalInfo")}
             </Text>
             <Input
+              clearButtonMode="while-editing"
               accessoryLeft={ContactIcon}
-              autoFocus={true}
+              autoFocus={!callIdFromRoute}
               label={i18n.t("name")}
               placeholder={i18n.t("enterName")}
               caption={handleRenderTextErrorCaption}

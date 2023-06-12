@@ -1,4 +1,4 @@
-import React, { useContext, useMemo, useState } from "react";
+import React, { useContext, useMemo } from "react";
 import { Call } from "../stores/CallStore";
 import { Pressable, StyleSheet, View } from "react-native";
 import { capitalizeEachWordInSentence } from "../lib/translations";
@@ -41,7 +41,7 @@ const CallCard: React.FC<CallCardProps> = ({ call }) => {
   return (
     <Pressable
       onPress={() => {
-        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
         navigation?.navigate("CallDetails", { callId: call.id });
       }}
     >

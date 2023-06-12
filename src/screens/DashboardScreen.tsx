@@ -10,7 +10,6 @@ import useCallsStore from "../stores/CallStore";
 import { HomeStackParamList } from "../stacks/ParamLists";
 import {
   Button,
-  ButtonGroup,
   Divider,
   Icon,
   Input,
@@ -18,9 +17,16 @@ import {
   Text,
   useStyleSheet,
 } from "@ui-kitten/components";
-import React, { useMemo, useRef, useState } from "react";
+import React, { useMemo, useState } from "react";
 import * as Haptics from "expo-haptics";
 import useTimer from "../lib/userTimer";
+import useServiceRecordStore from "../stores/ServiceRecord";
+import moment from "moment";
+import useVisitsStore from "../stores/VisitStore";
+import MonthReport, {
+  MonthReportData,
+  parseForMonthReport,
+} from "../components/MonthReport";
 
 type HomeProps = NativeStackScreenProps<HomeStackParamList, "Dashboard">;
 
@@ -51,8 +57,26 @@ const DashboardScreen = ({ navigation }: HomeProps) => {
     useTimer();
   const debug = true;
   const [query, setQuery] = useState("");
-  const { calls } = useCallsStore();
+  const { calls, deleteAllCalls } = useCallsStore();
+  const { records, deleteAllRecords } = useServiceRecordStore();
+  const { visits, deleteAllVisits } = useVisitsStore();
   const insets = useSafeAreaInsets();
+
+  const monthReport = useMemo((): MonthReportData => {
+    const month = moment().month();
+    const year = moment().year();
+    const report = parseForMonthReport({
+      calls,
+      records,
+      visits,
+      month,
+    });
+    return {
+      ...report,
+      month,
+      year,
+    };
+  }, [records, calls, visits]);
 
   const queriedCalls = useMemo(() => {
     return calls.filter((c) =>
@@ -121,9 +145,7 @@ const DashboardScreen = ({ navigation }: HomeProps) => {
       </View>
       <View style={{}}>
         <Text category="h4">{i18n.t("monthlyTotals")}</Text>
-        <Text style={{ marginTop: 12, marginBottom: 12 }}>
-          Monthly totals goes here...
-        </Text>
+        <MonthReport report={monthReport} />
       </View>
       <View style={{ flex: 1, gap: 5 }}>
         <Text style={{ marginBottom: 4 }} category="h4">
@@ -132,6 +154,7 @@ const DashboardScreen = ({ navigation }: HomeProps) => {
         <Layout level="2" style={{ gap: 10, flex: 1 }}>
           <Input
             value={query}
+            clearButtonMode="while-editing"
             onChangeText={(text) => setQuery(text)}
             placeholder="Search for a call..."
             accessoryRight={MagnifyIcon}
@@ -195,6 +218,27 @@ const DashboardScreen = ({ navigation }: HomeProps) => {
           >
             Create Service Record
           </Button>
+          <Button
+            status="danger"
+            appearance="outline"
+            onLongPress={deleteAllRecords}
+          >
+            Delete All Reports
+          </Button>
+          <Button
+            status="danger"
+            appearance="outline"
+            onLongPress={deleteAllVisits}
+          >
+            Delete All Visits
+          </Button>
+          <Button
+            status="danger"
+            appearance="outline"
+            onLongPress={deleteAllCalls}
+          >
+            Delete All Calls
+          </Button>
         </Layout>
       )}
       <Button
@@ -205,7 +249,7 @@ const DashboardScreen = ({ navigation }: HomeProps) => {
         }}
         accessoryLeft={PlusIcon}
         onPress={() => {
-          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
           navigation.navigate("CallForm");
         }}
       ></Button>

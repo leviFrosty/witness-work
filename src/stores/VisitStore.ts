@@ -32,7 +32,6 @@ export interface Visit extends Asset {
     linkScripture?: string;
     linkNote?: string;
   };
-  doNotIncludeInMonthlyReport?: boolean;
   doNotCountTowardsStudy?: boolean;
 }
 

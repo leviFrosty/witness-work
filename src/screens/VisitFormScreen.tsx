@@ -149,7 +149,6 @@ const VisitFormScreen = ({ route, navigation }: VisitFormScreenProps) => {
                 note: "",
                 placement: "",
                 videoPlacement: "",
-                doNotIncludeInMonthlyReport: false,
                 doNotCountTowardsStudy: false,
                 partners: "",
                 nextVisit: {
@@ -203,7 +202,9 @@ const VisitFormScreen = ({ route, navigation }: VisitFormScreenProps) => {
                 const callVisits = visits.filter(
                   (v) => v.call.id === visit.call.id
                 );
-                const visitAmount = callVisits.length + 1; // add one for current call
+                const visitAmount =
+                  callVisits.filter((v) => !v.doNotCountTowardsStudy).length +
+                  1; // add one for current visit
                 setCall({
                   ...call,
                   isStudy: visitAmount >= 4,
@@ -251,8 +252,8 @@ const VisitFormScreen = ({ route, navigation }: VisitFormScreenProps) => {
                 <View style={{ gap: 10, paddingBottom: 30 }}>
                   <View style={{ gap: 10 }}>
                     <Text category="s1">{i18n.t("call")}</Text>
-
                     <Autocomplete
+                      clearButtonMode="while-editing"
                       accessoryLeft={ContactIcon}
                       status={
                         touched.query && errors.visit?.call ? "danger" : "basic"
@@ -274,7 +275,7 @@ const VisitFormScreen = ({ route, navigation }: VisitFormScreenProps) => {
                   <View style={{ gap: 10 }}>
                     <Text category="s1">{i18n.t("visitDetails")}</Text>
                     <Datepicker
-                      accessoryLeft={CalendarIcon}
+                      accessoryRight={CalendarIcon}
                       label={i18n.t("date")}
                       dateService={new MomentDateService(i18n.locale)}
                       onBlur={() => handleBlur("visit.date")}
@@ -411,7 +412,7 @@ const VisitFormScreen = ({ route, navigation }: VisitFormScreenProps) => {
                       </View>
                     </View>
                     <Datepicker
-                      accessoryLeft={CalendarIcon}
+                      accessoryRight={CalendarIcon}
                       label={i18n.t("date")}
                       dateService={new MomentDateService(i18n.locale)}
                       onBlur={() => handleBlur("visit.nextVisit.date")}
@@ -537,20 +538,6 @@ const VisitFormScreen = ({ route, navigation }: VisitFormScreenProps) => {
                       <Text appearance="hint" category="c1">
                         {i18n.t("doNotCountTowardsStudyCaption")}
                       </Text>
-                      <CheckBox
-                        checked={values.visit.doNotIncludeInMonthlyReport}
-                        onChange={(doNotIncludeInMonthlyReport) =>
-                          setValues({
-                            ...values,
-                            visit: {
-                              ...values.visit,
-                              doNotIncludeInMonthlyReport,
-                            },
-                          })
-                        }
-                      >
-                        {i18n.t("doNotIncludeInMonthlyReport")}
-                      </CheckBox>
                     </View>
                   </View>
                 </View>

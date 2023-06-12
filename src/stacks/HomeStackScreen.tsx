@@ -7,6 +7,7 @@ import { HomeStackParamList } from "./ParamLists";
 import CallDetailsScreen from "../screens/CallDetailsScreen";
 import VisitFormScreen from "../screens/VisitFormScreen";
 import ServiceRecordFormScreen from "../screens/ServiceRecordFormScreen";
+import AnnualReportScreen from "../screens/AnnualReportScreen";
 
 interface HomeStackScreenProps {}
 
@@ -50,6 +51,24 @@ const HomeStackScreen: React.FC<
         component={ServiceRecordFormScreen}
         options={{
           presentation: "modal",
+        }}
+      />
+      <HomeStack.Screen
+        name="AnnualReport"
+        component={AnnualReportScreen}
+        options={({
+          route: {
+            params: { previouslyViewedYear },
+          },
+        }) => {
+          if (!previouslyViewedYear) {
+            return {
+              animation: "default",
+            };
+          }
+          return {
+            animation: "fade",
+          };
         }}
       />
     </HomeStack.Navigator>

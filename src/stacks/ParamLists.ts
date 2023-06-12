@@ -16,4 +16,8 @@ export type HomeStackParamList = {
     callId: string;
   };
   ServiceRecordForm: undefined;
+  AnnualReport: {
+    year: number;
+    previouslyViewedYear?: number;
+  };
 };

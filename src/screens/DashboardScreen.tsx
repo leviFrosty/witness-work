@@ -1,5 +1,12 @@
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
-import { ImageProps, StyleSheet, View } from "react-native";
+import {
+  ImageProps,
+  Keyboard,
+  Share,
+  StyleSheet,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import { FlashList } from "@shopify/flash-list";
 import ScreenTitle from "../components/ScreenTitle";
 import { i18n } from "../lib/translations";
@@ -25,8 +32,11 @@ import moment from "moment";
 import useVisitsStore from "../stores/VisitStore";
 import MonthReport, {
   MonthReportData,
+  formatReportForSharing,
   parseForMonthReport,
 } from "../components/MonthReport";
+import { Export } from "../components/Icons";
+import { TouchableWithoutFeedback } from "@ui-kitten/components/devsupport";
 
 type HomeProps = NativeStackScreenProps<HomeStackParamList, "Dashboard">;
 
@@ -55,7 +65,7 @@ const StopIcon = (
 const DashboardScreen = ({ navigation }: HomeProps) => {
   const { play, pause, reset, formattedTime, hasStarted, isRunning } =
     useTimer();
-  const debug = true;
+  const [debug, setDebug] = useState(false);
   const [query, setQuery] = useState("");
   const { calls, deleteAllCalls } = useCallsStore();
   const { records, deleteAllRecords } = useServiceRecordStore();
@@ -64,18 +74,12 @@ const DashboardScreen = ({ navigation }: HomeProps) => {
 
   const monthReport = useMemo((): MonthReportData => {
     const month = moment().month();
-    const year = moment().year();
-    const report = parseForMonthReport({
+    return parseForMonthReport({
       calls,
       records,
       visits,
       month,
     });
-    return {
-      ...report,
-      month,
-      year,
-    };
   }, [records, calls, visits]);
 
   const queriedCalls = useMemo(() => {
@@ -92,6 +96,10 @@ const DashboardScreen = ({ navigation }: HomeProps) => {
       paddingRight: appTheme.contentPaddingLeftRight,
       paddingLeft: appTheme.contentPaddingLeftRight,
     },
+    content: {
+      flex: 1,
+      gap: 20,
+    },
     fab: {
       position: "absolute",
       paddingBottom: 90,
@@ -102,157 +110,199 @@ const DashboardScreen = ({ navigation }: HomeProps) => {
 
   const styles = useStyleSheet(themeStyles);
 
-  const isInService = hasStarted || isRunning;
+  const isInService = useMemo(
+    () => hasStarted || isRunning,
+    [hasStarted, isRunning]
+  ); // would otherwise run each on clock tick.
 
   return (
     <Layout style={styles.wrapper}>
-      <View>
-        <View style={{ flexDirection: "row" }}>
-          {isInService && (
-            <View style={{ flexDirection: "row", flexShrink: 1, gap: 5 }}>
-              {isRunning ? (
-                <Button accessoryLeft={PauseIcon} onPress={pause} />
-              ) : (
-                <Button accessoryLeft={PlayIcon} onPress={play} />
+      <TouchableWithoutFeedback style={{ flex: 1 }} onPress={Keyboard.dismiss}>
+        <View style={styles.content}>
+          <View>
+            <View style={{ flexDirection: "row" }}>
+              {isInService && (
+                <View style={{ flexDirection: "row", flexShrink: 1, gap: 5 }}>
+                  {isRunning ? (
+                    <Button accessoryLeft={PauseIcon} onPress={pause} />
+                  ) : (
+                    <Button accessoryLeft={PlayIcon} onPress={play} />
+                  )}
+                  <Button
+                    appearance="ghost"
+                    accessoryLeft={StopIcon}
+                    onPress={reset}
+                  />
+                </View>
               )}
-              <Button
-                appearance="ghost"
-                accessoryLeft={StopIcon}
-                onPress={reset}
+              <ScreenTitle
+                title={isInService ? formattedTime : i18n.t("dashboard")}
+                icon="cog"
+                status={isInService ? "success" : "basic"}
+                onIconLongPress={() => {
+                  Haptics.notificationAsync(
+                    Haptics.NotificationFeedbackType.Warning
+                  );
+                  setDebug(!debug);
+                }}
+                onIconPress={() => {
+                  navigation.navigate("Settings");
+                }}
               />
             </View>
-          )}
-          <ScreenTitle
-            title={isInService ? formattedTime : i18n.t("dashboard")}
-            icon="cog"
-            status={isInService ? "success" : "basic"}
-            onIconPress={() => {
-              navigation.navigate("Settings");
-            }}
-          />
-        </View>
-
-        {isInService ? (
-          <React.Fragment>
-            <Text>{i18n.t("youAreInService!")}</Text>
-            <Text appearance="hint" category="c1">
-              {i18n.t("stopTimeWillAutomaticallyAddToReport")}
+            <View>
+              {isInService ? (
+                <React.Fragment>
+                  <Text>{i18n.t("youAreInService!")}</Text>
+                  <Text appearance="hint" category="c1">
+                    {i18n.t("stopTimeWillAutomaticallyAddToReport")}
+                  </Text>
+                </React.Fragment>
+              ) : (
+                <Text style={{ margin: 5 }}>Weekly routine goes here...</Text>
+              )}
+            </View>
+          </View>
+          <View style={{ gap: 10 }}>
+            <View
+              style={{ flexDirection: "row", gap: 5, alignItems: "center" }}
+            >
+              <Text category="h4">{i18n.t("monthlyTotals")}</Text>
+              <Button
+                appearance="ghost"
+                size="small"
+                accessoryLeft={Export}
+                onPress={async () =>
+                  await Share.share({
+                    title: monthReport.share?.title,
+                    message: monthReport.share?.message || "",
+                  })
+                }
+              />
+            </View>
+            <TouchableOpacity
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                navigation.navigate("AnnualReport", { year: moment().year() });
+              }}
+            >
+              <MonthReport report={monthReport} />
+            </TouchableOpacity>
+          </View>
+          <View style={{ flex: 1, gap: 5 }}>
+            <Text style={{ marginBottom: 5 }} category="h4">
+              Calls
             </Text>
-          </React.Fragment>
-        ) : (
-          <Text style={{ margin: 5 }}>Weekly routine goes here...</Text>
-        )}
-      </View>
-      <View style={{}}>
-        <Text category="h4">{i18n.t("monthlyTotals")}</Text>
-        <MonthReport report={monthReport} />
-      </View>
-      <View style={{ flex: 1, gap: 5 }}>
-        <Text style={{ marginBottom: 4 }} category="h4">
-          Calls
-        </Text>
-        <Layout level="2" style={{ gap: 10, flex: 1 }}>
-          <Input
-            value={query}
-            clearButtonMode="while-editing"
-            onChangeText={(text) => setQuery(text)}
-            placeholder="Search for a call..."
-            accessoryRight={MagnifyIcon}
-          />
-          <FlashList
-            data={queriedCalls || calls}
-            ListEmptyComponent={
-              query ? (
-                <Text style={{ marginHorizontal: 5 }} appearance="hint">
-                  <React.Fragment>
-                    {i18n.t("noResultsForQuery")}"
-                    <Text category="c2">{query}</Text>
-                    "...
-                  </React.Fragment>
-                </Text>
-              ) : undefined
-            }
-            ItemSeparatorComponent={(props) => (
-              <Divider style={{ marginVertical: 5 }} {...props} />
-            )}
-            estimatedItemSize={60}
-            renderItem={({ item }) => <CallCard call={item} />}
-            keyExtractor={(item) => item.id}
-          />
-        </Layout>
+            <Layout level="2" style={{ gap: 10, flex: 1 }}>
+              <Input
+                value={query}
+                clearButtonMode="while-editing"
+                onChangeText={(text) => setQuery(text)}
+                placeholder="Search for a call..."
+                accessoryRight={MagnifyIcon}
+              />
+              <FlashList
+                data={queriedCalls || calls}
+                ListEmptyComponent={
+                  query ? (
+                    <Text style={{ marginHorizontal: 5 }} appearance="hint">
+                      <React.Fragment>
+                        {i18n.t("noResultsForQuery")}"
+                        <Text category="c2">{query}</Text>
+                        "...
+                      </React.Fragment>
+                    </Text>
+                  ) : undefined
+                }
+                ItemSeparatorComponent={(props) => (
+                  <Divider style={{ marginVertical: 5 }} {...props} />
+                )}
+                estimatedItemSize={60}
+                renderItem={({ item }) => <CallCard call={item} />}
+                keyExtractor={(item) => item.id}
+              />
+            </Layout>
 
-        {/* TODO: Filter options */}
-        {/* Filter options: 
+            {/* TODO: Filter options */}
+            {/* Filter options: 
             - Upcoming Visit
             - Hunger Level
             - A -> Z
             -Proximity
             -Longest since visited 
         */}
-      </View>
-      {debug && (
-        <Layout
-          level="2"
+          </View>
+        </View>
+        {debug && (
+          <Layout
+            level="2"
+            style={{
+              paddingVertical: 10,
+              gap: 5,
+              borderRadius: appTheme.borderRadius,
+            }}
+            id="debug"
+          >
+            <Text category="s1">Debug:</Text>
+            <Button
+              appearance="outline"
+              status="success"
+              onPress={() => (isRunning ? pause() : play())}
+            >
+              {isRunning ? "Pause Timer" : "Start Timer"}
+            </Button>
+            <Button appearance="outline" status="warning" onPress={reset}>
+              Stop timer
+            </Button>
+            <Button
+              appearance="outline"
+              status="success"
+              onPress={() => navigation.navigate("ServiceRecordForm")}
+            >
+              Create Service Record
+            </Button>
+            <Button
+              status="danger"
+              appearance="outline"
+              onLongPress={deleteAllRecords}
+            >
+              Delete All Reports
+            </Button>
+            <Button
+              status="danger"
+              appearance="outline"
+              onLongPress={deleteAllVisits}
+            >
+              Delete All Visits
+            </Button>
+            <Button
+              status="danger"
+              appearance="outline"
+              onLongPress={deleteAllCalls}
+            >
+              Delete All Calls
+            </Button>
+          </Layout>
+        )}
+        <Button
           style={{
-            paddingVertical: 10,
-            gap: 5,
-            borderRadius: appTheme.borderRadius,
+            position: "absolute",
+            bottom: 15,
+            right: 10,
+            shadowRadius: 2,
+            shadowOpacity: 0.4,
+            shadowOffset: {
+              width: 2,
+              height: 2,
+            },
           }}
-          id="debug"
-        >
-          <Text category="s1">Debug:</Text>
-          <Button
-            appearance="outline"
-            status="success"
-            onPress={() => (isRunning ? pause() : play())}
-          >
-            {isRunning ? "Pause Timer" : "Start Timer"}
-          </Button>
-          <Button appearance="outline" status="warning" onPress={reset}>
-            Stop timer
-          </Button>
-          <Button
-            appearance="outline"
-            status="success"
-            onPress={() => navigation.navigate("ServiceRecordForm")}
-          >
-            Create Service Record
-          </Button>
-          <Button
-            status="danger"
-            appearance="outline"
-            onLongPress={deleteAllRecords}
-          >
-            Delete All Reports
-          </Button>
-          <Button
-            status="danger"
-            appearance="outline"
-            onLongPress={deleteAllVisits}
-          >
-            Delete All Visits
-          </Button>
-          <Button
-            status="danger"
-            appearance="outline"
-            onLongPress={deleteAllCalls}
-          >
-            Delete All Calls
-          </Button>
-        </Layout>
-      )}
-      <Button
-        style={{
-          position: "absolute",
-          bottom: 15,
-          right: 10,
-        }}
-        accessoryLeft={PlusIcon}
-        onPress={() => {
-          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
-          navigation.navigate("CallForm");
-        }}
-      ></Button>
+          accessoryLeft={PlusIcon}
+          onPress={() => {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+            navigation.navigate("CallForm");
+          }}
+        />
+      </TouchableWithoutFeedback>
     </Layout>
   );
 };

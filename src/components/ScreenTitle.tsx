@@ -8,6 +8,7 @@ interface ScreenTitleProps {
   category?: string;
   icon?: string;
   onIconPress?: () => void;
+  onIconLongPress?: () => void;
   status?: string;
 }
 
@@ -16,6 +17,7 @@ const ScreenTitle: React.FC<ScreenTitleProps> = ({
   category,
   icon,
   onIconPress,
+  onIconLongPress,
   status,
 }) => {
   const styles = StyleSheet.create({
@@ -48,6 +50,7 @@ const ScreenTitle: React.FC<ScreenTitleProps> = ({
         <Button
           appearance="ghost"
           accessoryLeft={SelectedIcon}
+          onLongPress={onIconLongPress}
           onPress={onIconPress ? handlePress : undefined}
         />
       )}

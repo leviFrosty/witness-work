@@ -162,7 +162,9 @@ const CallDetailsScreen = ({ route, navigation }: CallDetailsProps) => {
       paddingRight: appTheme.contentPaddingLeftRight,
       paddingBottom: insets.bottom + 10,
     },
-    warningMenuItem: {},
+    warningMenuItem: {
+      color: "color-danger-500",
+    },
     noteIcon: { height: 15, width: 15, color: "color-basic-100" },
     scriptureIcon: { height: 12, width: 12, color: "color-basic-100" },
     card: {

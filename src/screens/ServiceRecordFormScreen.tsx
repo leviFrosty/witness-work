@@ -66,6 +66,7 @@ const ServiceRecordFormScreen = ({ navigation }: ServiceRecordFormProps) => {
     },
   });
   const styles = useStyleSheet(themedStyles);
+  const formikRef = useRef<any>(null);
 
   const TopNavigationWithBackBottom = (): TouchableWebElement => (
     <TopNavigationAction
@@ -135,6 +136,7 @@ const ServiceRecordFormScreen = ({ navigation }: ServiceRecordFormProps) => {
         <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
           <React.Fragment>
             <Formik
+              innerRef={formikRef}
               initialValues={formikInitialValues}
               onSubmit={(input, { setValues }) => {
                 const { time, hours, minutes, ...values } = input;
@@ -178,20 +180,9 @@ const ServiceRecordFormScreen = ({ navigation }: ServiceRecordFormProps) => {
                 return (
                   <View style={{ gap: 10 }}>
                     <View style={{ gap: 10 }}>
-                      <Button
-                        status="danger"
-                        appearance="outline"
-                        onLongPress={() => {
-                          Haptics.impactAsync(
-                            Haptics.ImpactFeedbackStyle.Light
-                          );
-                          deleteAllRecords();
-                        }}
-                      >
-                        Delete All Records
-                      </Button>
                       <Text category="s1">{i18n.t("date")}</Text>
                       <Calendar
+                        min={moment().subtract(3, "year")}
                         style={{
                           width: "100%",
                         }}
@@ -477,10 +468,6 @@ const ServiceRecordFormScreen = ({ navigation }: ServiceRecordFormProps) => {
                         </View>
                       </Card>
                     )}
-                    <Divider />
-                    <Button onPress={() => handleSubmit()}>
-                      {i18n.t("addServiceEntry")}
-                    </Button>
                   </View>
                 );
               }}
@@ -488,6 +475,9 @@ const ServiceRecordFormScreen = ({ navigation }: ServiceRecordFormProps) => {
           </React.Fragment>
         </TouchableWithoutFeedback>
       </KeyboardAwareScrollView>
+      <Button onPress={() => formikRef.current?.handleSubmit()}>
+        {i18n.t("addServiceEntry")}
+      </Button>
     </Layout>
   );
 };

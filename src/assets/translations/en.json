@@ -115,6 +115,7 @@
   "dontLeave": "Don't leave",
   "discard": "Discard",
   "deleteCall": "Delete Call",
+  "deleteAllServiceRecords": "Delete All Service Records",
   "cancel": "Cancel",
   "deleteCaption": "This action cannot be undone. Are you sure you want to delete?",
   "edit": "Edit",
@@ -157,5 +158,9 @@
   "2andHalfHrs": "2½ hrs",
   "studies": "Studies",
   "videos": "Videos",
-  "serviceReport": "Service Report"
+  "serviceReport": "Service Report",
+  "thereAreNoMonthlyReportsAvailable": "There are no monthly reports available.",
+  "annualReport": "Annual Report",
+  "shareMonth": "Share Month",
+  "deleteAll": "Delete All"
 }

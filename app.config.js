@@ -1,8 +1,13 @@
 module.exports = {
   expo: {
+    extra: {
+      eas: {
+        projectId: "a67257dc-2fb8-4942-97f2-e9364b80d318",
+      },
+    },
     name: "JW Time",
     slug: "jw-time",
-    version: "1.0.0",
+    version: "0.1.0",
     orientation: "portrait",
     icon: "./src/assets/icon.png",
     userInterfaceStyle: "automatic",
@@ -24,12 +29,14 @@ module.exports = {
       ],
     },
     ios: {
+      bundleIdentifier: "com.leviWilkerson.jw-time",
       supportsTablet: true,
       config: {
         usesNonExemptEncryption: false,
       },
     },
     android: {
+      package: "com.leviWilkerson.jw_time",
       adaptiveIcon: {
         foregroundImage: "./src/assets/adaptive-icon.png",
         backgroundColor: "#ffffff",

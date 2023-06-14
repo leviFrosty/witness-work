@@ -13,13 +13,15 @@ import {
 } from "@ui-kitten/components";
 import { Alert, Share, StyleSheet, View } from "react-native";
 import MonthReport, {
-  MonthReportData,
   formatReportForSharing,
   parseForMonthReport,
 } from "../components/MonthReport";
 import { FlashList } from "@shopify/flash-list";
 import useCallsStore from "../stores/CallStore";
-import useServiceRecordStore from "../stores/ServiceRecord";
+import useServiceRecordStore, {
+  AnnualReportData,
+  MonthReportData,
+} from "../stores/ServiceRecord";
 import useVisitsStore from "../stores/VisitStore";
 import moment from "moment";
 import React, { useMemo, useState } from "react";
@@ -36,6 +38,10 @@ import {
 } from "../components/Icons";
 import { TouchableWebElement } from "@ui-kitten/components/devsupport";
 import * as Haptics from "expo-haptics";
+import AnnualReport from "../components/AnnualReport";
+import useSettingStore, {
+  publisherTypeHasAnnualRequirement,
+} from "../stores/SettingsStore";
 
 type AnnualReportScreenProps = NativeStackScreenProps<
   HomeStackParamList,
@@ -43,6 +49,7 @@ type AnnualReportScreenProps = NativeStackScreenProps<
 >;
 
 const AnnualReportScreen = ({ route, navigation }: AnnualReportScreenProps) => {
+  const { user } = useSettingStore();
   const { calls } = useCallsStore();
   const { records } = useServiceRecordStore();
   const { visits } = useVisitsStore();
@@ -69,7 +76,7 @@ const AnnualReportScreen = ({ route, navigation }: AnnualReportScreenProps) => {
     return monthReports.sort((a, b) => (a.month > b.month ? -1 : 1));
   }, [records, calls, visits]);
 
-  const annualReport = useMemo(() => {
+  const annualReport: AnnualReportData = useMemo(() => {
     const annualNumbers = monthlyReports.reduce(
       (total, report) => {
         return {
@@ -94,6 +101,7 @@ const AnnualReportScreen = ({ route, navigation }: AnnualReportScreenProps) => {
 
     return {
       ...annualNumbers,
+      year: parseInt(moment().year(year).format("YYYY")),
       share: {
         title,
         message: `${title}\n${formatReportForSharing(annualNumbers)}`,
@@ -270,6 +278,17 @@ const AnnualReportScreen = ({ route, navigation }: AnnualReportScreenProps) => {
           }}
         />
       </View>
+      {publisherTypeHasAnnualRequirement(user.publisherType) && (
+        <View style={{ marginVertical: 10 }}>
+          <AnnualReport
+            report={annualReport}
+            targetHours={
+              user.monthlyTargetHours ? user.monthlyTargetHours * 12 : undefined
+            }
+            year={year}
+          />
+        </View>
+      )}
       <FlashList
         data={monthlyReports}
         ListEmptyComponent={

@@ -20,3 +20,11 @@ export const DotsIcon = (
 export const DeleteIcon = (
   props?: Partial<ImageProps>
 ): React.ReactElement<ImageProps> => <Icon {...props} name={"delete"} />;
+export const PublisherTypeIcon = (
+  props?: Partial<ImageProps>
+): React.ReactElement<ImageProps> => <Icon {...props} name={"badge-account"} />;
+export const TargetIcon = (
+  props?: Partial<ImageProps>
+): React.ReactElement<ImageProps> => (
+  <Icon {...props} name={"bullseye-arrow"} />
+);

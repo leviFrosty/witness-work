@@ -4,6 +4,24 @@ import { createJSONStorage, persist } from "zustand/middleware";
 import Asset from "./asset";
 import moment from "moment";
 
+export interface AnnualReportData
+  extends Omit<MonthReportData, "studies" | "month"> {
+  year: number;
+}
+export interface MonthReportData {
+  hours: number;
+  placements: number;
+  videoPlacements: number;
+  returnVisits: number;
+  studies: number;
+  month: number;
+  year?: number;
+  share?: {
+    title: string;
+    message: string;
+  };
+}
+
 export const secondInMS = 1000;
 export const minuteInMS = 60 * secondInMS;
 export const hourInMS = 60 * minuteInMS;

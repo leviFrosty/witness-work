@@ -11,7 +11,7 @@ const translations = {
   ja,
 };
 
-export const translationKeys = ["en", "es", "fr", "ja"];
+export const translationKeys = Object.keys(translations);
 export const i18n = new I18n(translations);
 
 export const capitalizeEachWordInSentence = (sentence: string) => {

@@ -28,15 +28,15 @@ import {
 import React, { useMemo, useState } from "react";
 import * as Haptics from "expo-haptics";
 import useTimer from "../lib/userTimer";
-import useServiceRecordStore from "../stores/ServiceRecord";
+import useServiceRecordStore, {
+  MonthReportData,
+} from "../stores/ServiceRecord";
 import moment from "moment";
 import useVisitsStore from "../stores/VisitStore";
-import MonthReport, {
-  MonthReportData,
-  parseForMonthReport,
-} from "../components/MonthReport";
+import MonthReport, { parseForMonthReport } from "../components/MonthReport";
 import { Export } from "../components/Icons";
 import { TouchableWithoutFeedback } from "@ui-kitten/components/devsupport";
+import useSettingStore from "../stores/SettingsStore";
 
 type HomeProps = NativeStackScreenProps<HomeStackParamList, "Dashboard">;
 
@@ -67,6 +67,7 @@ const DashboardScreen = ({ navigation }: HomeProps) => {
     useTimer();
   const [debug, setDebug] = useState(false);
   const [query, setQuery] = useState("");
+  const { resetAllSettings } = useSettingStore();
   const { calls, deleteAllCalls } = useCallsStore();
   const { records, deleteAllRecords } = useServiceRecordStore();
   const { visits, deleteAllVisits } = useVisitsStore();
@@ -263,12 +264,20 @@ const DashboardScreen = ({ navigation }: HomeProps) => {
             <Button appearance="outline" status="warning" onPress={reset}>
               Stop timer
             </Button>
+
             <Button
               appearance="outline"
               status="success"
               onPress={() => navigation.navigate("ServiceRecordForm")}
             >
               Create Service Record
+            </Button>
+            <Button
+              onLongPress={resetAllSettings}
+              status="danger"
+              appearance="outline"
+            >
+              Reset all settings
             </Button>
             <Button
               status="danger"

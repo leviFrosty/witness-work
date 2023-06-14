@@ -163,5 +163,19 @@
   "annualReport": "Annual Report",
   "shareMonth": "Share Month",
   "deleteAll": "Delete All",
-  "shareAnnualReport": "Share Annual Report"
+  "shareAnnualReport": "Share Annual Report",
+  "serviceYear": "Service Year",
+  "target": "Target",
+  "monthlyTarget": "Monthly Target",
+  "monthlyHourTarget": "Monthly Hour Target",
+  "annualTarget": "Annual Target",
+  "personalDetails": "Personal Details",
+  "publisher": "Publisher",
+  "auxiliaryPioneer": "Auxiliary Pioneer",
+  "circuitOverseer": "Circuit Overseer",
+  "regularPioneer": "Regular Pioneer",
+  "specialPioneer": "Special Pioneer",
+  "publisherType": "Publisher Type",
+  "publisherTypeCaption": "JW Time will tailor your experience to your publisher type, as well as automatically set your hour requirement if necessary. You can override this.",
+  "annualHourTarget": "Annual Hour Target"
 }

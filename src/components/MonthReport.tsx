@@ -1,6 +1,10 @@
 import moment from "moment";
 import { Call } from "../stores/CallStore";
-import { ServiceRecord, hourInMS } from "../stores/ServiceRecord";
+import {
+  MonthReportData,
+  ServiceRecord,
+  hourInMS,
+} from "../stores/ServiceRecord";
 import { Visit } from "../stores/VisitStore";
 import { StyleSheet, View } from "react-native";
 import {
@@ -12,20 +16,8 @@ import {
 } from "@ui-kitten/components";
 import { i18n } from "../lib/translations";
 import appTheme from "../lib/theme";
-
-export interface MonthReportData {
-  hours: number;
-  placements: number;
-  videoPlacements: number;
-  returnVisits: number;
-  studies: number;
-  month: number;
-  year?: number;
-  share?: {
-    title: string;
-    message: string;
-  };
-}
+import ReportHours from "./ReportHours";
+import useSettingStore from "../stores/SettingsStore";
 
 export const parseForMonthReport = ({
   calls,
@@ -195,18 +187,23 @@ interface MonthReportProps {
 
 const MonthReport: React.FC<MonthReportProps> = ({ report, hideArrow }) => {
   const { hours, placements, returnVisits, studies, videoPlacements } = report;
+  const {
+    user: { monthlyTargetHours },
+  } = useSettingStore();
   const themeStyles = StyleSheet.create({
     container: {
       borderWidth: 1,
       borderColor: "border-primary-color-1",
       borderRadius: appTheme.borderRadius,
-      paddingTop: hideArrow ? 15 : 0,
       paddingHorizontal: 15,
-      paddingBottom: 15,
+      paddingTop: 15,
+      paddingBottom: monthlyTargetHours ? 5 : 15,
       gap: 5,
     },
-    header: {
-      flexDirection: "row",
+    arrow: {
+      position: "absolute",
+      bottom: 8,
+      right: 8,
       justifyContent: "flex-end",
     },
     content: {
@@ -234,15 +231,12 @@ const MonthReport: React.FC<MonthReportProps> = ({ report, hideArrow }) => {
 
   return (
     <Layout level="2" style={styles.container}>
-      <View style={styles.header}>{!hideArrow && <ChevronRight />}</View>
       <View style={styles.content}>
         <View style={styles.box}>
           <Text appearance="hint" category="c2">
             {i18n.t("hours")}
           </Text>
-          <Text category="h6" style={styles.number}>
-            {hours}
-          </Text>
+          <ReportHours hours={hours} target={monthlyTargetHours} />
         </View>
         <View style={styles.box}>
           <Text appearance="hint" category="c2">
@@ -277,6 +271,7 @@ const MonthReport: React.FC<MonthReportProps> = ({ report, hideArrow }) => {
           </Text>
         </View>
       </View>
+      <View style={styles.arrow}>{!hideArrow && <ChevronRight />}</View>
     </Layout>
   );
 };

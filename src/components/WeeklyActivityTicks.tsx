@@ -115,10 +115,11 @@ const WeeklyActivityTicks: React.FC = () => {
           };
           return (
             <Layout
+              key={week}
               level={weeklyReport.currentWeek === week ? "3" : "2"}
               style={styles.checkLayout}
             >
-              <CheckIcon key={week} status={getStatus()} />
+              <CheckIcon status={getStatus()} />
             </Layout>
           );
         })}

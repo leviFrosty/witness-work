@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { PropsWithChildren, useMemo, useState } from "react";
 import { i18n } from "../lib/translations";
 import {
   Alert,
@@ -39,6 +39,8 @@ import { TouchableWebElement } from "@ui-kitten/components/devsupport";
 import moment from "moment";
 import CopyToClipBoardWithTooltip from "../components/CopyToClipboard";
 import { Export } from "../components/Icons";
+import * as Haptics from "expo-haptics";
+import { prettifyJson } from "../lib/strings";
 
 type CallDetailsProps = NativeStackScreenProps<
   HomeStackParamList,
@@ -142,16 +144,16 @@ const CallDetailsScreen = ({ route, navigation }: CallDetailsProps) => {
   const callId = route.params.callId;
   const { calls, deleteCall } = useCallsStore();
   const { visits: visitsFromStorage } = useVisitsStore();
-  const visits = visitsFromStorage.filter((v) => v.call.id === callId);
-  const call = calls.find((c) => c.id === callId);
+  const visits = useMemo(
+    () => visitsFromStorage.filter((v) => v.call.id === callId),
+    [visitsFromStorage, callId]
+  );
+  const call = useMemo(
+    () => calls.find((c) => c.id === callId),
+    [calls, callId]
+  );
   const insets = useSafeAreaInsets();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-
-  const mostRecentVisit = getCallMostRecentVisit(visits, call?.id);
-  const nextVisitIsSoon = moment(mostRecentVisit?.nextVisit?.date).isBetween(
-    moment(),
-    moment(new Date()).add(4, "days")
-  );
 
   const themedStyles = StyleSheet.create({
     wrapper: {
@@ -167,6 +169,9 @@ const CallDetailsScreen = ({ route, navigation }: CallDetailsProps) => {
     },
     noteIcon: { height: 15, width: 15, color: "color-basic-100" },
     scriptureIcon: { height: 12, width: 12, color: "color-basic-100" },
+    content: {
+      gap: 10,
+    },
     card: {
       paddingVertical: 15,
       paddingHorizontal: 10,
@@ -202,6 +207,11 @@ const CallDetailsScreen = ({ route, navigation }: CallDetailsProps) => {
       borderColor: "color-success-default-border",
       borderRadius: appTheme.borderRadius,
     },
+    section: {
+      padding: 10,
+      borderRadius: appTheme.borderRadius,
+    },
+    callStatusIcon: { height: 15, width: 15, color: "color-basic-100" },
   });
 
   const styles = useStyleSheet(themedStyles);
@@ -220,6 +230,12 @@ const CallDetailsScreen = ({ route, navigation }: CallDetailsProps) => {
       </Layout>
     );
   }
+
+  const mostRecentVisit = getCallMostRecentVisit(visits, call.id);
+  const nextVisitIsSoon = moment(mostRecentVisit?.nextVisit?.date).isBetween(
+    moment(),
+    moment(new Date()).add(4, "days")
+  );
 
   const renderMenuToggleButton = () => {
     return (
@@ -327,8 +343,29 @@ const CallDetailsScreen = ({ route, navigation }: CallDetailsProps) => {
     [call]
   );
 
+  const upcomingVisitFormattedForSms = useMemo(() => {
+    const nextVisit = mostRecentVisit?.nextVisit;
+    if (!nextVisit) {
+      return "";
+    }
+    const { date, notifyMe, ...details } = nextVisit;
+    const message = `${i18n.t("visitWith")} ${call.name} ${moment(
+      mostRecentVisit?.nextVisit?.date
+    ).fromNow()}: ${moment(mostRecentVisit?.nextVisit?.date).format(
+      "ddd, Do @ h:mmA"
+    )}\n\n${formattedAddress}\n\n${i18n.t("topic")}: ${
+      details.linkTopic
+    }\n${i18n.t("scripture")}: ${details.linkScripture}\n${i18n.t("notes")}: ${
+      details.linkNote
+    }`;
+    return message;
+  }, [mostRecentVisit, formattedAddress]);
+
   const NoteIcon = (): IconElement => {
     return <Icon style={styles.noteIcon} name={"note"} />;
+  };
+  const CallStatusIcon = (): IconElement => {
+    return <Icon style={styles.callStatusIcon} name={"flag"} />;
   };
   const ScriptureIcon = (): IconElement => {
     return (
@@ -384,6 +421,17 @@ const CallDetailsScreen = ({ route, navigation }: CallDetailsProps) => {
     );
   };
 
+  type SubHeaderProps = {
+    children: string;
+  };
+  const SubHeader: React.FC<SubHeaderProps> = ({ children }) => {
+    return (
+      <Text appearance="hint" style={{ marginBottom: 5 }} category="s1">
+        {children}
+      </Text>
+    );
+  };
+
   return (
     <Layout style={styles.wrapper}>
       <TopNavigation
@@ -393,23 +441,46 @@ const CallDetailsScreen = ({ route, navigation }: CallDetailsProps) => {
         title={call.name}
       />
       <KeyboardAwareScrollView>
-        {/* Add more options menu: */}
-        {/* Menu contains:
-        - Share Call
-        */}
-        {nextVisitIsSoon && (
-          <React.Fragment>
-            <View>
-              <Text style={{ marginBottom: 5 }} category="h5">
-                <React.Fragment>
-                  {i18n.t("nextVisit")}
+        <View style={styles.content}>
+          {nextVisitIsSoon && (
+            <Layout level="2" style={styles.section}>
+              <View
+                style={{
+                  flexDirection: "row",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                }}
+              >
+                <View
+                  style={{
+                    flexDirection: "row",
+                    alignItems: "center",
+                    marginBottom: 5,
+                  }}
+                >
+                  <Text category="h5">{i18n.t("nextVisit")}</Text>
                   <Text status="success" category="h5">
                     {` ${moment(mostRecentVisit?.nextVisit?.date).fromNow()}`}
                   </Text>
-                </React.Fragment>
-              </Text>
+                </View>
+                <View>
+                  <Button
+                    size="small"
+                    appearance="ghost"
+                    status="success"
+                    accessoryLeft={Export}
+                    onPress={async () => {
+                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                      await Share.share({
+                        message: upcomingVisitFormattedForSms,
+                      });
+                    }}
+                  />
+                </View>
+              </View>
+
               <View style={styles.cardGreen}>
-                <View style={{ flexDirection: "column", gap: 5, flex: 1 }}>
+                <View style={{ flex: 1, flexDirection: "column", gap: 5 }}>
                   <Text appearance="hint" category="c1">
                     {moment(mostRecentVisit?.nextVisit?.date).calendar()}
                   </Text>
@@ -434,7 +505,6 @@ const CallDetailsScreen = ({ route, navigation }: CallDetailsProps) => {
                   )}
                   {mostRecentVisit?.nextVisit?.linkNote && (
                     <React.Fragment>
-                      <Divider style={{ marginVertical: 5 }} />
                       <Text appearance="hint" category="c1">
                         {i18n.t("note")}
                       </Text>
@@ -443,95 +513,142 @@ const CallDetailsScreen = ({ route, navigation }: CallDetailsProps) => {
                   )}
                 </View>
               </View>
-            </View>
-            <Divider style={{ marginVertical: 10 }} />
-          </React.Fragment>
-        )}
-        {Object.keys(call.address || {}).length !== 0 && (
-          <React.Fragment>
-            <View>
-              <Text style={{ marginBottom: 5 }} category="s1">
-                {i18n.t("address")}
-              </Text>
-              {call.address?.line1 && (
-                <React.Fragment>
-                  <CopyToClipBoardWithTooltip
-                    component={AddressCard}
-                    string={formattedAddress}
-                  />
-                </React.Fragment>
-              )}
-              {call?.address?.coordinates?.latitude &&
-                call?.address?.coordinates?.longitude && (
+            </Layout>
+          )}
+          {Object.keys(call.address || {}).length !== 0 && (
+            <Layout level="2" style={styles.section}>
+              <View>
+                <SubHeader>{i18n.t("address")}</SubHeader>
+                {call.address?.line1 && (
                   <React.Fragment>
                     <CopyToClipBoardWithTooltip
-                      component={CoordinatesCard}
-                      string={coordinatesDisplayValue}
+                      component={AddressCard}
+                      string={formattedAddress}
                     />
                   </React.Fragment>
                 )}
-            </View>
-            <Divider style={{ marginVertical: 10 }} />
-          </React.Fragment>
-        )}
-        {call.note && (
-          <React.Fragment>
-            <View>
-              <Text style={{ marginBottom: 5 }} category="s1">
-                {i18n.t("note")}
-              </Text>
-              <View style={{ flexDirection: "row", gap: 10 }}>
-                <View
-                  style={{ flexDirection: "column", justifyContent: "center" }}
-                >
-                  <NoteIcon />
+                {call?.address?.coordinates?.latitude &&
+                  call?.address?.coordinates?.longitude && (
+                    <React.Fragment>
+                      <CopyToClipBoardWithTooltip
+                        component={CoordinatesCard}
+                        string={coordinatesDisplayValue}
+                      />
+                    </React.Fragment>
+                  )}
+              </View>
+            </Layout>
+          )}
+          {call.note && (
+            <Layout level="2" style={styles.section}>
+              <View>
+                <SubHeader>{i18n.t("note")}</SubHeader>
+                <View style={{ flexDirection: "row", gap: 10 }}>
+                  <View
+                    style={{
+                      flexDirection: "column",
+                      justifyContent: "center",
+                    }}
+                  >
+                    <NoteIcon />
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <CopyToClipBoardWithTooltip
+                      component={(copy) => (
+                        <Text onLongPress={copy}>{call.note}</Text>
+                      )}
+                      string={call.note}
+                    />
+                  </View>
                 </View>
-                <CopyToClipBoardWithTooltip
-                  component={(copy) => (
-                    <Text onLongPress={copy}>{call.note}</Text>
-                  )}
-                  string={call.note}
-                />
+              </View>
+            </Layout>
+          )}
+          {!!visits && (
+            <Layout level="2" style={styles.section}>
+              <Text>Visits!</Text>
+            </Layout>
+          )}
+          <Layout level="2" style={styles.section}>
+            <View style={{ flexDirection: "row" }}>
+              {call.interestLevel && (
+                <View style={{ flex: 1 }}>
+                  <SubHeader>{i18n.t("interestLevel")}</SubHeader>
+                  <View
+                    style={{
+                      flexDirection: "row",
+                      gap: 10,
+                      alignItems: "center",
+                    }}
+                  >
+                    <InterestLevelIcon name={call.interestLevel} />
+                    <CopyToClipBoardWithTooltip
+                      component={(copy) => (
+                        <Text onLongPress={copy}>
+                          {i18n.t(call.interestLevel || "")}
+                        </Text>
+                      )}
+                      string={i18n.t(call.interestLevel)}
+                    />
+                  </View>
+                </View>
+              )}
+              <View style={{ flexDirection: "column", flex: 1 }}>
+                <SubHeader>{i18n.t("status")}</SubHeader>
+                <View
+                  style={{
+                    flexDirection: "row",
+                    gap: 10,
+                    alignItems: "center",
+                  }}
+                >
+                  <CallStatusIcon />
+                  <CopyToClipBoardWithTooltip
+                    component={(copy) => (
+                      <Text onLongPress={copy}>
+                        {i18n.t(
+                          call.isStudy
+                            ? "study"
+                            : call.isReturnVisit
+                            ? "returnVisit"
+                            : "initialCall"
+                        )}
+                      </Text>
+                    )}
+                    string={i18n.t(
+                      call.isStudy
+                        ? "study"
+                        : call.isReturnVisit
+                        ? "returnVisit"
+                        : "initialCall"
+                    )}
+                  />
+                </View>
               </View>
             </View>
-            <Divider style={{ marginVertical: 10 }} />
-          </React.Fragment>
-        )}
-        {call.interestLevel && (
-          <React.Fragment>
-            <View>
-              <Text style={{ marginBottom: 5 }} category="s1">
-                {i18n.t("interestLevel")}
-              </Text>
-              <View style={{ flexDirection: "row", gap: 10 }}>
-                <InterestLevelIcon name={call.interestLevel} />
-                <CopyToClipBoardWithTooltip
-                  component={(copy) => (
-                    <Text onLongPress={copy}>
-                      {i18n.t(call.interestLevel || "")}
-                    </Text>
-                  )}
-                  string={i18n.t(call.interestLevel)}
-                />
-              </View>
-            </View>
-            <Divider style={{ marginVertical: 10 }} />
-          </React.Fragment>
-        )}
-        {/* TODO: add sections from visits here, display history of previous items */}
-        <Text category="s1">Call Data</Text>
-        <Text>{JSON.stringify(call, null, 2)}</Text>
-        <Text category="s1">Corresponding Visits</Text>
-        <Text>{JSON.stringify(visits, null, 2)}</Text>
-        <Button
-          onPress={() => {
-            deleteCall(call.id);
-            navigation.goBack();
-          }}
-          status="danger"
-        >
-          Delete Call
-        </Button>
+          </Layout>
+
+          <View style={{ gap: 5, flexDirection: "row", alignItems: "center" }}>
+            <Divider />
+            <Text appearance="hint" category="c2">
+              {i18n.t("created")}
+            </Text>
+            <CopyToClipBoardWithTooltip
+              component={(copy) => (
+                <Text onLongPress={copy} appearance="hint" category="c1">
+                  {moment(call.createdAt).format("dddd, MMMM Do YYYY")}
+                </Text>
+              )}
+              string={moment(call.createdAt).format("dddd, MMMM Do YYYY")}
+            />
+          </View>
+
+          {/* TODO: add sections from visits here, display history of previous items */}
+          <Text category="s1">Call Data</Text>
+          <Text>{JSON.stringify(call, null, 2)}</Text>
+          <Text category="s1">Corresponding Visits</Text>
+          <Text>{JSON.stringify(visits, null, 2)}</Text>
+        </View>
       </KeyboardAwareScrollView>
     </Layout>
   );

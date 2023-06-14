@@ -95,7 +95,7 @@
   "partners": "Partners",
   "visitPartnersPlaceholder": "Sam",
   "visitPartnersCaption": "The person(s) you brought along with you on the visit, if any.",
-  "nextVisit": "Next Visit",
+  "nextVisit": "Next visit",
   "nextVisitHelperCaption": "Schedule and write details notes for your next visit to make it successful!",
   "notifyMe": "Notify Me",
   "visitLinkTopic": "Topic",
@@ -178,5 +178,12 @@
   "publisherType": "Publisher Type",
   "publisherTypeCaption": "JW Time will tailor your experience to your publisher type, as well as automatically set your hour requirement if necessary. You can override this.",
   "annualHourTarget": "Annual Hour Target",
-  "weeklyActivity": "Weekly Activity"
+  "weeklyActivity": "Weekly Activity",
+  "created": "Created",
+  "status": "Status",
+  "initialCall": "Initial Call",
+  "study": "Study",
+  "visitWith": "Visit with",
+  "scripture": "Scripture",
+  "notes": "Notes"
 }

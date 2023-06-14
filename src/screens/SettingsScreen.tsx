@@ -98,8 +98,6 @@ const SettingsScreen: React.FC<PropsWithChildren<SettingsScreenProps>> = () => {
           onPress={Keyboard.dismiss}
         >
           <View style={{ gap: 10 }}>
-            <Text>{JSON.stringify(user, null, 2)}</Text>
-
             <View style={{ gap: 10 }}>
               <Text category="s1">{i18n.t("preferences")}</Text>
               <Select

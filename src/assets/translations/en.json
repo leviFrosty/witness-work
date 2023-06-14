@@ -177,5 +177,6 @@
   "specialPioneer": "Special Pioneer",
   "publisherType": "Publisher Type",
   "publisherTypeCaption": "JW Time will tailor your experience to your publisher type, as well as automatically set your hour requirement if necessary. You can override this.",
-  "annualHourTarget": "Annual Hour Target"
+  "annualHourTarget": "Annual Hour Target",
+  "weeklyActivity": "Weekly Activity"
 }

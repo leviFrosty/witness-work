@@ -19,6 +19,16 @@ import appTheme from "../lib/theme";
 import ReportHours from "./ReportHours";
 import useSettingStore from "../stores/SettingsStore";
 
+export const isSameMonthAndYear = (
+  date: moment.Moment,
+  month: number,
+  year: number
+) =>
+  moment(date).month() === month &&
+  (year
+    ? moment(date).year() === year
+    : moment(date).year() === moment().year());
+
 export const parseForMonthReport = ({
   calls,
   visits,
@@ -33,17 +43,12 @@ export const parseForMonthReport = ({
   year?: number;
 }): MonthReportData => {
   const year = yearFromProps || moment().year();
-  const isSameMonthAndYear = (date: moment.Moment) =>
-    moment(date).month() === month &&
-    (year
-      ? moment(date).year() === year
-      : moment(date).year() === moment().year());
 
   const visitsThisMonth = visits.filter((visit) =>
-    isSameMonthAndYear(visit.date)
+    isSameMonthAndYear(visit.date, month, year)
   );
   const recordsThisMonth = records.filter((record) =>
-    isSameMonthAndYear(record.date)
+    isSameMonthAndYear(record.date, month, year)
   );
 
   const timeInMS = recordsThisMonth.reduce(
@@ -88,7 +93,7 @@ export const parseForMonthReport = ({
       if (index === 0) {
         return callCount + 0;
       } else {
-        if (isSameMonthAndYear(visit.date)) {
+        if (isSameMonthAndYear(visit.date, month, year)) {
           return callCount + 1;
         } else {
           return callCount + 0;
@@ -128,6 +133,7 @@ export const parseForMonthReport = ({
     studies,
     month,
     year,
+
     share: {
       title,
       message: `${title}\n${formatReportForSharing({

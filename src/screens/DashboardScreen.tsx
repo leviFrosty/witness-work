@@ -37,6 +37,7 @@ import MonthReport, { parseForMonthReport } from "../components/MonthReport";
 import { Export } from "../components/Icons";
 import { TouchableWithoutFeedback } from "@ui-kitten/components/devsupport";
 import useSettingStore from "../stores/SettingsStore";
+import WeeklyActivityTicks from "../components/WeeklyActivityTicks";
 
 type HomeProps = NativeStackScreenProps<HomeStackParamList, "Dashboard">;
 
@@ -106,7 +107,6 @@ const DashboardScreen = ({ navigation }: HomeProps) => {
       paddingBottom: 90,
       paddingRight: 10,
     },
-    actionCardWrapper: {},
   });
 
   const styles = useStyleSheet(themeStyles);
@@ -160,7 +160,7 @@ const DashboardScreen = ({ navigation }: HomeProps) => {
                   </Text>
                 </React.Fragment>
               ) : (
-                <Text style={{ margin: 5 }}>Weekly routine goes here...</Text>
+                <WeeklyActivityTicks />
               )}
             </View>
           </View>

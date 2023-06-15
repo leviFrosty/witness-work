@@ -7,9 +7,10 @@
     "android": "expo start --android",
     "ios": "expo start --ios",
     "web": "expo start --web",
-    "lint": "echo \"\\033[33mRunning eslint fix\" && eslint --fix .",
+    "test": "echo \"\\033[33mRunning tests\" && npm run test:eslint && npm run test:tsc",
     "test:eslint": "echo \"\\033[33mRunning eslint check\" &&  eslint .",
-    "test:tsc": "echo \"\\033[33mRunning typescript check\" && tsc"
+    "test:tsc": "echo \"\\033[33mRunning typescript check\" && tsc",
+    "prepare": "husky install"
   },
   "dependencies": {
     "@eva-design/eva": "^2.2.0",
@@ -80,7 +81,8 @@
     "@types/react-native-vector-icons": "^6.4.13",
     "@types/uuid": "^9.0.1",
     "react-native-dotenv": "^3.4.8",
-    "typescript": "^4.9.4"
+    "typescript": "^4.9.4",
+    "husky": "^8.0.0"
   },
   "private": true
 }

@@ -1,5 +1,5 @@
-import { NativeStackScreenProps } from "@react-navigation/native-stack";
-import { HomeStackParamList } from "../stacks/ParamLists";
+import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { FlashList } from '@shopify/flash-list';
 import {
   Button,
   Divider,
@@ -10,24 +10,15 @@ import {
   TopNavigation,
   TopNavigationAction,
   useStyleSheet,
-} from "@ui-kitten/components";
-import { Alert, Share, StyleSheet, View } from "react-native";
-import MonthReport, {
-  formatReportForSharing,
-  parseForMonthReport,
-} from "../components/MonthReport";
-import { FlashList } from "@shopify/flash-list";
-import useCallsStore from "../stores/CallStore";
-import useServiceRecordStore, {
-  AnnualReportData,
-  MonthReportData,
-} from "../stores/ServiceRecord";
-import useVisitsStore from "../stores/VisitStore";
-import moment from "moment";
-import React, { useMemo, useState } from "react";
-import { i18n } from "../lib/translations";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
-import appTheme from "../lib/theme";
+} from '@ui-kitten/components';
+import { TouchableWebElement } from '@ui-kitten/components/devsupport';
+import * as Haptics from 'expo-haptics';
+import moment from 'moment';
+import React, { useMemo, useState } from 'react';
+import { Alert, Share, StyleSheet, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+
+import AnnualReport from '../components/AnnualReport';
 import {
   ChevronLeft,
   ChevronRight,
@@ -35,17 +26,27 @@ import {
   DotsIcon,
   Export,
   PlusIcon,
-} from "../components/Icons";
-import { TouchableWebElement } from "@ui-kitten/components/devsupport";
-import * as Haptics from "expo-haptics";
-import AnnualReport from "../components/AnnualReport";
+} from '../components/Icons';
+import MonthReport, {
+  formatReportForSharing,
+  parseForMonthReport,
+} from '../components/MonthReport';
+import appTheme from '../lib/theme';
+import { i18n } from '../lib/translations';
+import { HomeStackParamList } from '../stacks/ParamLists';
+import useCallsStore from '../stores/CallStore';
+import useServiceRecordStore, {
+  AnnualReportData,
+  MonthReportData,
+} from '../stores/ServiceRecord';
 import useSettingStore, {
   publisherTypeHasAnnualRequirement,
-} from "../stores/SettingsStore";
+} from '../stores/SettingsStore';
+import useVisitsStore from '../stores/VisitStore';
 
 type AnnualReportScreenProps = NativeStackScreenProps<
   HomeStackParamList,
-  "AnnualReport"
+  'AnnualReport'
 >;
 
 const AnnualReportScreen = ({ route, navigation }: AnnualReportScreenProps) => {
@@ -70,11 +71,11 @@ const AnnualReportScreen = ({ route, navigation }: AnnualReportScreenProps) => {
           visits,
           month,
           year,
-        })
+        }),
       );
     }
     return monthReports.sort((a, b) => (a.month > b.month ? -1 : 1));
-  }, [records, calls, visits]);
+  }, [records, calls, visits, year]);
 
   const annualReport: AnnualReportData = useMemo(() => {
     const annualNumbers = monthlyReports.reduce(
@@ -93,15 +94,15 @@ const AnnualReportScreen = ({ route, navigation }: AnnualReportScreenProps) => {
         videoPlacements: 0,
         returnVisits: 0,
         share: {},
-      }
+      },
     );
 
-    const yearDisplay = `${moment().year(year).format("YYYY")}`;
-    const title = `${yearDisplay} ${i18n.t("serviceReport")}`;
+    const yearDisplay = `${moment().year(year).format('YYYY')}`;
+    const title = `${yearDisplay} ${i18n.t('serviceReport')}`;
 
     return {
       ...annualNumbers,
-      year: parseInt(moment().year(year).format("YYYY")),
+      year: parseInt(moment().year(year).format('YYYY'), 10),
       share: {
         title,
         message: `${title}\n${formatReportForSharing(annualNumbers)}`,
@@ -112,25 +113,25 @@ const AnnualReportScreen = ({ route, navigation }: AnnualReportScreenProps) => {
   const themeStyles = StyleSheet.create({
     wrapper: {
       flex: 1,
-      position: "relative",
+      position: 'relative',
       paddingTop: insets.top,
       paddingRight: appTheme.contentPaddingLeftRight,
       paddingLeft: appTheme.contentPaddingLeftRight,
     },
     itemHeader: {
-      flexDirection: "row",
-      alignItems: "center",
+      flexDirection: 'row',
+      alignItems: 'center',
     },
     buttons: {
-      flexDirection: "row",
-      justifyContent: "space-between",
-      alignItems: "center",
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
     },
     item: {
       gap: 5,
     },
     warningMenuItem: {
-      color: "color-danger-500",
+      color: 'color-danger-500',
     },
   });
 
@@ -140,7 +141,7 @@ const AnnualReportScreen = ({ route, navigation }: AnnualReportScreenProps) => {
     return (
       <View style={styles.item}>
         <View style={styles.itemHeader}>
-          <Text category="h6">{moment().month(item.month).format("MMMM")}</Text>
+          <Text category="h6">{moment().month(item.month).format('MMMM')}</Text>
           <Button
             appearance="ghost"
             size="small"
@@ -149,7 +150,7 @@ const AnnualReportScreen = ({ route, navigation }: AnnualReportScreenProps) => {
               Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
               await Share.share({
                 title: item.share?.title,
-                message: item.share?.message || "",
+                message: item.share?.message || '',
               });
             }}
           />
@@ -182,47 +183,46 @@ const AnnualReportScreen = ({ route, navigation }: AnnualReportScreenProps) => {
           icon={PlusIcon}
           onPress={() => {
             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-            navigation.push("ServiceRecordForm");
+            navigation.push('ServiceRecordForm');
           }}
         />
         <OverflowMenu
           onBackdropPress={() => setIsMenuOpen(false)}
           anchor={renderMenuToggleButton}
-          visible={isMenuOpen}
-        >
+          visible={isMenuOpen}>
           <MenuItem
-            title={i18n.t("shareAnnualReport")}
+            title={i18n.t('shareAnnualReport')}
             accessoryLeft={Export}
             onPress={async () => {
               Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
               await Share.share({
                 title: annualReport.share?.title,
-                message: annualReport.share?.message || "",
+                message: annualReport.share?.message || '',
               });
             }}
           />
           <MenuItem
             style={styles.warningMenuItem}
-            title={i18n.t("deleteAll")}
+            title={i18n.t('deleteAll')}
             accessoryLeft={DeleteIcon}
             onPress={() => {
               Haptics.notificationAsync(
-                Haptics.NotificationFeedbackType.Warning
+                Haptics.NotificationFeedbackType.Warning,
               );
               Alert.alert(
-                i18n.t("deleteAllServiceRecords"),
-                i18n.t("deleteCaption"),
+                i18n.t('deleteAllServiceRecords'),
+                i18n.t('deleteCaption'),
                 [
                   {
-                    text: i18n.t("cancel"),
-                    style: "cancel",
+                    text: i18n.t('cancel'),
+                    style: 'cancel',
                     onPress: () => {
                       setIsMenuOpen(false);
                     },
                   },
                   {
-                    text: i18n.t("delete"),
-                    style: "destructive",
+                    text: i18n.t('delete'),
+                    style: 'destructive',
                     // If the user confirmed, then we dispatch the action we blocked earlier
                     // This will continue the action that had triggered the removal of the screen
                     onPress: () => {
@@ -230,7 +230,7 @@ const AnnualReportScreen = ({ route, navigation }: AnnualReportScreenProps) => {
                       deleteAllRecords();
                     },
                   },
-                ]
+                ],
               );
             }}
           />
@@ -245,20 +245,20 @@ const AnnualReportScreen = ({ route, navigation }: AnnualReportScreenProps) => {
         alignment="center"
         accessoryRight={renderRightNavActions}
         accessoryLeft={TopNavigationWithBackBottom}
-        title={i18n.t("annualReport")}
+        title={i18n.t('annualReport')}
       />
       <View style={styles.buttons}>
         <Button
           accessoryLeft={ChevronLeft}
           onPress={() => {
             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-            navigation.replace("AnnualReport", {
+            navigation.replace('AnnualReport', {
               year: year - 1,
               previouslyViewedYear: year,
             });
           }}
         />
-        <View style={{ flexDirection: "row", gap: 5, alignItems: "center" }}>
+        <View style={{ flexDirection: 'row', gap: 5, alignItems: 'center' }}>
           <Text style={{ flexShrink: 1 }} category="h3">
             {year}
           </Text>
@@ -271,7 +271,7 @@ const AnnualReportScreen = ({ route, navigation }: AnnualReportScreenProps) => {
           accessoryLeft={ChevronRight}
           onPress={() => {
             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-            navigation.replace("AnnualReport", {
+            navigation.replace('AnnualReport', {
               year: year + 1,
               previouslyViewedYear: year,
             });
@@ -293,11 +293,11 @@ const AnnualReportScreen = ({ route, navigation }: AnnualReportScreenProps) => {
         data={monthlyReports}
         ListEmptyComponent={
           <Text category="c2">
-            {i18n.t("thereAreNoMonthlyReportsAvailable")}
+            {i18n.t('thereAreNoMonthlyReportsAvailable')}
           </Text>
         }
         estimatedItemSize={113}
-        ItemSeparatorComponent={(props) => (
+        ItemSeparatorComponent={props => (
           <Divider style={{ marginVertical: 10 }} {...props} />
         )}
         renderItem={({ item }) => handleRenderItem(item)}

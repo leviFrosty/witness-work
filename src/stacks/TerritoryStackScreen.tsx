@@ -1,6 +1,7 @@
-import { createNativeStackNavigator } from "@react-navigation/native-stack";
-import { PropsWithChildren } from "react";
-import TerritoryScreen from "../screens/TerritoryScreen";
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { PropsWithChildren } from 'react';
+
+import TerritoryScreen from '../screens/TerritoryScreen';
 
 interface TerritoryStackScreenProps {}
 
@@ -17,8 +18,7 @@ const TerritoryStackScreen: React.FC<
       initialRouteName="Home"
       screenOptions={() => ({
         headerShown: false,
-      })}
-    >
+      })}>
       <TerritoryStack.Screen name="Home" component={TerritoryScreen} />
     </TerritoryStack.Navigator>
   );

@@ -1,11 +1,12 @@
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import { create } from "zustand";
-import { createJSONStorage, persist } from "zustand/middleware";
-import Asset from "./asset";
-import moment from "moment";
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import moment from 'moment';
+import { create } from 'zustand';
+import { createJSONStorage, persist } from 'zustand/middleware';
+
+import Asset from './asset';
 
 export interface AnnualReportData
-  extends Omit<MonthReportData, "studies" | "month"> {
+  extends Omit<MonthReportData, 'studies' | 'month'> {
   year: number;
 }
 export interface MonthReportData {
@@ -44,19 +45,19 @@ type ServiceRecordStore = {
 
 const useServiceRecordStore = create(
   persist<ServiceRecordStore>(
-    (set) => ({
+    set => ({
       records: [],
-      deleteRecord: (id) => {
-        set((state) => ({
-          records: state.records.filter((o) => o.id !== id),
+      deleteRecord: id => {
+        set(state => ({
+          records: state.records.filter(o => o.id !== id),
         }));
       },
-      setRecord: (newItemOrUpdates) => {
-        set((state) => {
+      setRecord: newItemOrUpdates => {
+        set(state => {
           const records: ServiceRecord[] = JSON.parse(
-            JSON.stringify(state.records)
+            JSON.stringify(state.records),
           );
-          const index = records.findIndex((o) => o.id === newItemOrUpdates.id);
+          const index = records.findIndex(o => o.id === newItemOrUpdates.id);
           if (index === -1) {
             // not found
             // pushing new item to list
@@ -78,10 +79,10 @@ const useServiceRecordStore = create(
       deleteAllRecords: () => set({ records: [] }),
     }),
     {
-      name: "serviceRecordStore", // unique name
+      name: 'serviceRecordStore', // unique name
       storage: createJSONStorage(() => AsyncStorage),
-    }
-  )
+    },
+  ),
 );
 
 export default useServiceRecordStore;

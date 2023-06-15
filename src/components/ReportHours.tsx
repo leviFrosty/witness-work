@@ -1,6 +1,7 @@
-import { Icon, IconElement, Text, useStyleSheet } from "@ui-kitten/components";
-import { StyleSheet, View } from "react-native";
-import { i18n } from "../lib/translations";
+import { Icon, IconElement, Text, useStyleSheet } from '@ui-kitten/components';
+import { StyleSheet, View } from 'react-native';
+
+import { i18n } from '../lib/translations';
 
 type ReportHoursProps = {
   hours: number;
@@ -12,34 +13,34 @@ const ReportHours: React.FC<ReportHoursProps> = ({ hours, target }) => {
 
   const themeStyles = StyleSheet.create({
     number: {
-      textAlign: "center",
+      textAlign: 'center',
     },
     chevronUp: {
       height: 20,
       width: 20,
-      color: "color-success-500",
+      color: 'color-success-500',
     },
     chevronDown: {
       height: 20,
       width: 20,
-      color: "color-warning-500",
+      color: 'color-warning-500',
     },
     chevronDownDanger: {
       height: 20,
       width: 20,
-      color: "color-danger-500",
+      color: 'color-danger-500',
     },
   });
   const styles = useStyleSheet(themeStyles);
 
   const ChevronUp = (): IconElement => (
-    <Icon style={styles.chevronUp} name={"chevron-up-circle"} />
+    <Icon style={styles.chevronUp} name={'chevron-up-circle'} />
   );
   const ChevronDown = (): IconElement =>
     inactive ? (
-      <Icon style={styles.chevronDownDanger} name={"chevron-down-circle"} />
+      <Icon style={styles.chevronDownDanger} name={'chevron-down-circle'} />
     ) : (
-      <Icon style={styles.chevronDown} name={"chevron-down-circle"} />
+      <Icon style={styles.chevronDown} name={'chevron-down-circle'} />
     );
 
   // Displays green up arrow if true, if false, displays red down arrow
@@ -49,19 +50,18 @@ const ReportHours: React.FC<ReportHoursProps> = ({ hours, target }) => {
 
   return target ? (
     <View style={{ gap: 10 }}>
-      <View style={{ flexDirection: "row", alignItems: "center", gap: 5 }}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
         <Text
           category="h6"
-          status={inactive ? "danger" : target <= hours ? "success" : "warning"}
-          style={styles.number}
-        >
+          status={inactive ? 'danger' : target <= hours ? 'success' : 'warning'}
+          style={styles.number}>
           {hours}
         </Text>
         <StatusArrow positive={target <= hours} />
       </View>
-      <View style={{ flexDirection: "row", alignItems: "center", gap: 2 }}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 2 }}>
         <Text appearance="hint" category="c1">
-          {i18n.t("target")}
+          {i18n.t('target')}
         </Text>
         <Text appearance="hint" category="c2">
           {target}

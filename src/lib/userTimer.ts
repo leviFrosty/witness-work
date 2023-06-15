@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useRef, useState } from "react";
-import throttle from "lodash.throttle";
+import throttle from 'lodash.throttle';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 /**
  * A custom hook that handles the state for the timer
@@ -12,7 +12,7 @@ const useTimer = (initialTimeInMs = 0, onFinish = () => null) => {
   const throttledOnFinish = useMemo(
     () => throttle(onFinish, 100, { trailing: false }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    []
+    [],
   );
   const [isRunning, setIsRunning] = useState(false);
   const [hasStarted, setHasStarted] = useState(false);
@@ -97,7 +97,7 @@ const useTimer = (initialTimeInMs = 0, onFinish = () => null) => {
   // const countInSeconds = Math.floor(getSnapshot() / 1000);
   let seconds = Math.floor(getSnapshot() / 1000);
   let minutes = Math.floor(seconds / 60);
-  let hours = Math.floor(minutes / 60);
+  const hours = Math.floor(minutes / 60);
 
   // using the modulus operator gets the remainder if the time roles over
   // we don't do this for hours because we want them to rollover
@@ -107,11 +107,11 @@ const useTimer = (initialTimeInMs = 0, onFinish = () => null) => {
   seconds %= 60;
 
   const padStart = (num: number) => {
-    return num.toString().padStart(2, "0");
+    return num.toString().padStart(2, '0');
   };
 
   const formattedTime = `${padStart(hours)}:${padStart(minutes)}:${padStart(
-    seconds
+    seconds,
   )}`;
 
   return {

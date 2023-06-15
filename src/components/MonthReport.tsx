@@ -1,28 +1,29 @@
-import moment from "moment";
-import { Call } from "../stores/CallStore";
-import {
-  MonthReportData,
-  ServiceRecord,
-  hourInMS,
-} from "../stores/ServiceRecord";
-import { Visit } from "../stores/VisitStore";
-import { StyleSheet, View } from "react-native";
 import {
   Icon,
   IconElement,
   Layout,
   Text,
   useStyleSheet,
-} from "@ui-kitten/components";
-import { i18n } from "../lib/translations";
-import appTheme from "../lib/theme";
-import ReportHours from "./ReportHours";
-import useSettingStore from "../stores/SettingsStore";
+} from '@ui-kitten/components';
+import moment from 'moment';
+import { StyleSheet, View } from 'react-native';
+
+import ReportHours from './ReportHours';
+import appTheme from '../lib/theme';
+import { i18n } from '../lib/translations';
+import { Call } from '../stores/CallStore';
+import {
+  MonthReportData,
+  ServiceRecord,
+  hourInMS,
+} from '../stores/ServiceRecord';
+import useSettingStore from '../stores/SettingsStore';
+import { Visit } from '../stores/VisitStore';
 
 export const isSameMonthAndYear = (
   date: moment.Moment,
   month: number,
-  year: number
+  year: number,
 ) =>
   moment(date).month() === month &&
   (year
@@ -44,51 +45,51 @@ export const parseForMonthReport = ({
 }): MonthReportData => {
   const year = yearFromProps || moment().year();
 
-  const visitsThisMonth = visits.filter((visit) =>
-    isSameMonthAndYear(visit.date, month, year)
+  const visitsThisMonth = visits.filter(visit =>
+    isSameMonthAndYear(visit.date, month, year),
   );
-  const recordsThisMonth = records.filter((record) =>
-    isSameMonthAndYear(record.date, month, year)
+  const recordsThisMonth = records.filter(record =>
+    isSameMonthAndYear(record.date, month, year),
   );
 
   const timeInMS = recordsThisMonth.reduce(
     (add, record) => add + record.time,
-    0
+    0,
   );
   const hours = Math.floor(timeInMS / hourInMS);
 
   const placementOffset = recordsThisMonth.reduce(
     (count, record) => count + record.placements,
-    0
+    0,
   );
   const videoPlacementOffset = recordsThisMonth.reduce(
     (count, record) => count + record.videoPlacements,
-    0
+    0,
   );
   const returnVisitsOffset = recordsThisMonth.reduce(
     (count, record) => count + record.placements,
-    0
+    0,
   );
 
   const studiesOffset = recordsThisMonth.reduce(
     (count, record) => count + record.studyOffset,
-    0
+    0,
   );
 
   const placementsThisMonth = visitsThisMonth.reduce(
     (placementCount, visit) =>
       !visit.placement ? placementCount + 0 : placementCount + 1,
-    0
+    0,
   );
 
   const videoPlacementsThisMonth = visitsThisMonth.reduce(
     (placementCount, visit) =>
       !visit.videoPlacement ? placementCount + 0 : placementCount + 1,
-    0
+    0,
   );
 
   const automatedReturnVisits = calls.reduce((totalCount, call) => {
-    const callVisits = visits.filter((v) => v.call.id === call.id);
+    const callVisits = visits.filter(v => v.call.id === call.id);
     const callVisitsForMonth = callVisits.reduce((callCount, visit, index) => {
       if (index === 0) {
         return callCount + 0;
@@ -106,7 +107,7 @@ export const parseForMonthReport = ({
   const automatedStudies = calls.reduce((count, call) => {
     if (
       call.isStudy &&
-      visitsThisMonth.filter((v) => v.call.id === call.id).length > 0
+      visitsThisMonth.filter(v => v.call.id === call.id).length > 0
     ) {
       return count + 1;
     } else {
@@ -119,11 +120,11 @@ export const parseForMonthReport = ({
   const studies = automatedStudies + studiesOffset;
   const returnVisits = automatedReturnVisits + returnVisitsOffset;
 
-  const monthDisplay = month ? moment().month(month).format("MMMM") : "";
-  const yearDisplay = year ? `, ${moment().year(year).format("YYYY")}` : "";
+  const monthDisplay = month ? moment().month(month).format('MMMM') : '';
+  const yearDisplay = year ? `, ${moment().year(year).format('YYYY')}` : '';
   const title = `${
-    monthDisplay || yearDisplay ? `${monthDisplay}${yearDisplay} ` : ""
-  }${i18n.t("serviceReport")}`;
+    monthDisplay || yearDisplay ? `${monthDisplay}${yearDisplay} ` : ''
+  }${i18n.t('serviceReport')}`;
 
   return {
     hours,
@@ -169,20 +170,20 @@ export const formatReportForSharing = ({
       studies: studies || undefined,
     },
     null,
-    2
+    2,
   );
-  const lines = json.split("\n");
-  const formattedLines = lines.map((line) => line.trim());
-  let formattedJSON = formattedLines.join("\n").replace(/["{},]/g, "");
+  const lines = json.split('\n');
+  const formattedLines = lines.map(line => line.trim());
+  let formattedJSON = formattedLines.join('\n').replace(/["{},]/g, '');
   // TODO: change to regex
-  formattedJSON = formattedJSON.replace("hours", i18n.t("hours"));
-  formattedJSON = formattedJSON.replace("placements", i18n.t("placements"));
+  formattedJSON = formattedJSON.replace('hours', i18n.t('hours'));
+  formattedJSON = formattedJSON.replace('placements', i18n.t('placements'));
   formattedJSON = formattedJSON.replace(
-    "videoPlacements",
-    i18n.t("videoPlacements")
+    'videoPlacements',
+    i18n.t('videoPlacements'),
   );
-  formattedJSON = formattedJSON.replace("returnVisits", i18n.t("returnVisits"));
-  formattedJSON = formattedJSON.replace("studies", i18n.t("studies"));
+  formattedJSON = formattedJSON.replace('returnVisits', i18n.t('returnVisits'));
+  formattedJSON = formattedJSON.replace('studies', i18n.t('studies'));
   return formattedJSON.trim();
 };
 
@@ -199,7 +200,7 @@ const MonthReport: React.FC<MonthReportProps> = ({ report, hideArrow }) => {
   const themeStyles = StyleSheet.create({
     container: {
       borderWidth: 1,
-      borderColor: "border-primary-color-1",
+      borderColor: 'border-primary-color-1',
       borderRadius: appTheme.borderRadius,
       paddingHorizontal: 15,
       paddingTop: 15,
@@ -207,32 +208,32 @@ const MonthReport: React.FC<MonthReportProps> = ({ report, hideArrow }) => {
       gap: 5,
     },
     arrow: {
-      position: "absolute",
+      position: 'absolute',
       bottom: 8,
       right: 8,
-      justifyContent: "flex-end",
+      justifyContent: 'flex-end',
     },
     content: {
-      flexDirection: "row",
-      justifyContent: "space-between",
+      flexDirection: 'row',
+      justifyContent: 'space-between',
     },
     box: {
       gap: 10,
     },
     number: {
-      textAlign: "center",
+      textAlign: 'center',
     },
     chevronRight: {
       marginTop: 10,
       height: 15,
       width: 15,
-      color: "text-hint-color",
+      color: 'text-hint-color',
     },
   });
   const styles = useStyleSheet(themeStyles);
 
   const ChevronRight = (): IconElement => (
-    <Icon style={styles.chevronRight} name={"chevron-right"} />
+    <Icon style={styles.chevronRight} name={'chevron-right'} />
   );
 
   return (
@@ -240,13 +241,13 @@ const MonthReport: React.FC<MonthReportProps> = ({ report, hideArrow }) => {
       <View style={styles.content}>
         <View style={styles.box}>
           <Text appearance="hint" category="c2">
-            {i18n.t("hours")}
+            {i18n.t('hours')}
           </Text>
           <ReportHours hours={hours} target={monthlyTargetHours} />
         </View>
         <View style={styles.box}>
           <Text appearance="hint" category="c2">
-            {i18n.t("placements")}
+            {i18n.t('placements')}
           </Text>
           <Text category="h6" style={styles.number}>
             {placements}
@@ -254,7 +255,7 @@ const MonthReport: React.FC<MonthReportProps> = ({ report, hideArrow }) => {
         </View>
         <View style={styles.box}>
           <Text appearance="hint" category="c2">
-            {i18n.t("videos")}
+            {i18n.t('videos')}
           </Text>
           <Text category="h6" style={styles.number}>
             {videoPlacements}
@@ -262,7 +263,7 @@ const MonthReport: React.FC<MonthReportProps> = ({ report, hideArrow }) => {
         </View>
         <View style={styles.box}>
           <Text appearance="hint" category="c2">
-            {i18n.t("returnVisits")}
+            {i18n.t('returnVisits')}
           </Text>
           <Text category="h6" style={styles.number}>
             {returnVisits}
@@ -270,7 +271,7 @@ const MonthReport: React.FC<MonthReportProps> = ({ report, hideArrow }) => {
         </View>
         <View style={styles.box}>
           <Text appearance="hint" category="c2">
-            {i18n.t("studies")}
+            {i18n.t('studies')}
           </Text>
           <Text category="h6" style={styles.number}>
             {studies}

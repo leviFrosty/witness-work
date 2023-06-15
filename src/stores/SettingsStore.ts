@@ -1,17 +1,17 @@
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import { create } from "zustand";
-import { createJSONStorage, persist } from "zustand/middleware";
-import { produce } from "immer";
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { produce } from 'immer';
+import { create } from 'zustand';
+import { createJSONStorage, persist } from 'zustand/middleware';
 
 export const publisherTypeHasAnnualRequirement = (
-  publisherType: PublisherType
+  publisherType: PublisherType,
 ) => {
   switch (publisherType) {
-    case "circuitOverseer":
+    case 'circuitOverseer':
       return true;
-    case "regularPioneer":
+    case 'regularPioneer':
       return true;
-    case "specialPioneer":
+    case 'specialPioneer':
       return true;
     default:
       return false;
@@ -19,11 +19,11 @@ export const publisherTypeHasAnnualRequirement = (
 };
 
 export const publisherTypes = [
-  "publisher",
-  "auxiliaryPioneer",
-  "circuitOverseer",
-  "regularPioneer",
-  "specialPioneer",
+  'publisher',
+  'auxiliaryPioneer',
+  'circuitOverseer',
+  'regularPioneer',
+  'specialPioneer',
 ] as const;
 
 export type PublisherType = (typeof publisherTypes)[number];
@@ -47,28 +47,28 @@ type Action = {
 const initialState: State = {
   language: undefined,
   user: {
-    publisherType: "publisher",
+    publisherType: 'publisher',
   },
 };
 
 const useSettingStore = create(
   persist<State & Action>(
-    (set) => ({
+    set => ({
       ...initialState,
-      setUser: (input) =>
+      setUser: input =>
         set(
           produce((state: State) => {
             state.user = input;
-          })
+          }),
         ),
-      setLanguage: (input) => set({ language: input }),
+      setLanguage: input => set({ language: input }),
       resetAllSettings: () => set(initialState),
     }),
     {
-      name: "settingsStore", // unique name
+      name: 'settingsStore', // unique name
       storage: createJSONStorage(() => AsyncStorage),
-    }
-  )
+    },
+  ),
 );
 
 export default useSettingStore;

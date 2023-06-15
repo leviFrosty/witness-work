@@ -1,8 +1,4 @@
-import { PropsWithChildren, useEffect, useState } from "react";
-import { i18n, translationKeys } from "../lib/translations";
 // import useSettingStore from "../stores/SettingsStore";
-import { ImageProps, Keyboard, StyleSheet, View } from "react-native";
-import appTheme from "../lib/theme";
 import {
   Icon,
   IndexPath,
@@ -11,28 +7,33 @@ import {
   Select,
   SelectItem,
   Text,
-} from "@ui-kitten/components";
+} from '@ui-kitten/components';
+import { TouchableWithoutFeedback } from '@ui-kitten/components/devsupport';
+import { PropsWithChildren, useEffect, useState } from 'react';
+import { ImageProps, Keyboard, StyleSheet, View } from 'react-native';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+
+import { PublisherTypeIcon, TargetIcon } from '../components/Icons';
+import TopNavBarWithBackButton from '../components/TopNavBarWithBackButton';
+import appTheme from '../lib/theme';
+import { i18n, translationKeys } from '../lib/translations';
 import useSettingStore, {
   PublisherType,
   publisherTypeHasAnnualRequirement,
   publisherTypes,
-} from "../stores/SettingsStore";
-import TopNavBarWithBackButton from "../components/TopNavBarWithBackButton";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { TouchableWithoutFeedback } from "@ui-kitten/components/devsupport";
-import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
-import { PublisherTypeIcon, TargetIcon } from "../components/Icons";
+} from '../stores/SettingsStore';
 
 interface SettingsScreenProps {}
 
 const TranslationIcon = (
-  props?: Partial<ImageProps>
+  props?: Partial<ImageProps>,
 ): React.ReactElement<ImageProps> => <Icon {...props} name="translate" />;
 
 const SettingsScreen: React.FC<PropsWithChildren<SettingsScreenProps>> = () => {
   const { language, setLanguage, user, setUser } = useSettingStore();
   const [languageIndex, setLanguageIndex] = useState<IndexPath | IndexPath[]>(
-    new IndexPath(translationKeys.indexOf(language || i18n.locale))
+    new IndexPath(translationKeys.indexOf(language || i18n.locale)),
   );
   const [publisherTypeIndex, setPublisherTypeIndex] = useState<
     IndexPath | IndexPath[]
@@ -42,7 +43,7 @@ const SettingsScreen: React.FC<PropsWithChildren<SettingsScreenProps>> = () => {
   useEffect(() => {
     const setPublisherTypeWithHourTarget = (
       publisherType: PublisherType,
-      monthlyTargetHours?: number
+      monthlyTargetHours?: number,
     ) => {
       // Don't override existing hours if set
       if (!user.monthlyTargetHours && monthlyTargetHours) {
@@ -54,18 +55,18 @@ const SettingsScreen: React.FC<PropsWithChildren<SettingsScreenProps>> = () => {
     // @ts-ignore
     const publisherType = publisherTypes[publisherTypeIndex.row];
     switch (publisherType) {
-      case "auxiliaryPioneer":
+      case 'auxiliaryPioneer':
         setPublisherTypeWithHourTarget(publisherType, 30);
         break;
-      case "circuitOverseer": {
+      case 'circuitOverseer': {
         setPublisherTypeWithHourTarget(publisherType, 50);
         break;
       }
-      case "regularPioneer": {
+      case 'regularPioneer': {
         setPublisherTypeWithHourTarget(publisherType, 50);
         break;
       }
-      case "specialPioneer": {
+      case 'specialPioneer': {
         setPublisherTypeWithHourTarget(publisherType, 90);
         break;
       }
@@ -73,12 +74,12 @@ const SettingsScreen: React.FC<PropsWithChildren<SettingsScreenProps>> = () => {
         setPublisherTypeWithHourTarget(publisherType);
     }
     // @ts-ignore
-  }, [publisherTypeIndex]);
+  }, [publisherTypeIndex, setUser, user]);
 
   useEffect(() => {
     // @ts-ignore
     setLanguage(translationKeys[languageIndex.row]);
-  }, [languageIndex]);
+  }, [languageIndex, setLanguage]);
 
   const styles = StyleSheet.create({
     wrapper: {
@@ -91,28 +92,26 @@ const SettingsScreen: React.FC<PropsWithChildren<SettingsScreenProps>> = () => {
 
   return (
     <Layout style={styles.wrapper}>
-      <TopNavBarWithBackButton title={i18n.t("settings")} />
+      <TopNavBarWithBackButton title={i18n.t('settings')} />
       <KeyboardAwareScrollView>
         <TouchableWithoutFeedback
           style={{ flex: 1 }}
-          onPress={Keyboard.dismiss}
-        >
+          onPress={Keyboard.dismiss}>
           <View style={{ gap: 10 }}>
             <View style={{ gap: 10 }}>
-              <Text category="s1">{i18n.t("preferences")}</Text>
+              <Text category="s1">{i18n.t('preferences')}</Text>
               <Select
                 accessoryLeft={TranslationIcon}
-                label={(evaProps) => (
-                  <Text {...evaProps}>{i18n.t("language")}</Text>
+                label={evaProps => (
+                  <Text {...evaProps}>{i18n.t('language')}</Text>
                 )}
                 // @ts-ignore
                 value={i18n.t(translationKeys[languageIndex.row])}
-                placeholder={i18n.t("language")}
+                placeholder={i18n.t('language')}
                 selectedIndex={languageIndex}
-                onSelect={(index) => setLanguageIndex(index)}
-                caption={i18n.t("changingLanguageCaption")}
-              >
-                {translationKeys.map((translationCode) => (
+                onSelect={index => setLanguageIndex(index)}
+                caption={i18n.t('changingLanguageCaption')}>
+                {translationKeys.map(translationCode => (
                   <SelectItem
                     key={translationCode}
                     title={() => <Text>{i18n.t(translationCode)}</Text>}
@@ -122,36 +121,35 @@ const SettingsScreen: React.FC<PropsWithChildren<SettingsScreenProps>> = () => {
             </View>
 
             <View style={{ gap: 10 }}>
-              <Text category="s1">{i18n.t("personalDetails")}</Text>
+              <Text category="s1">{i18n.t('personalDetails')}</Text>
               <Select
-                label={i18n.t("publisherType")}
+                label={i18n.t('publisherType')}
                 accessoryLeft={PublisherTypeIcon}
                 // @ts-ignore
                 value={i18n.t(publisherTypes[publisherTypeIndex.row])}
                 selectedIndex={publisherTypeIndex}
-                caption={i18n.t("publisherTypeCaption")}
-                onSelect={(index) => setPublisherTypeIndex(index)}
-              >
-                {publisherTypes.map((publisherType) => (
+                caption={i18n.t('publisherTypeCaption')}
+                onSelect={index => setPublisherTypeIndex(index)}>
+                {publisherTypes.map(publisherType => (
                   <SelectItem
                     key={publisherType}
                     title={() => <Text>{i18n.t(publisherType)}</Text>}
                   />
                 ))}
               </Select>
-              <View style={{ flexDirection: "row", gap: 5 }}>
+              <View style={{ flexDirection: 'row', gap: 5 }}>
                 <Input
                   style={{ flex: 1 }}
                   accessoryLeft={TargetIcon}
-                  label={i18n.t("monthlyHourTarget")}
+                  label={i18n.t('monthlyHourTarget')}
                   keyboardType="number-pad"
-                  value={user.monthlyTargetHours?.toString() || "0"}
-                  onChangeText={(numberString) => {
+                  value={user.monthlyTargetHours?.toString() || '0'}
+                  onChangeText={numberString => {
                     let number: number;
-                    if (Number.isNaN(parseInt(numberString))) {
+                    if (Number.isNaN(parseInt(numberString, 10))) {
                       number = 0;
                     } else {
-                      number = parseInt(numberString);
+                      number = parseInt(numberString, 10);
                     }
                     if (number < 0) {
                       number = 0;
@@ -166,7 +164,7 @@ const SettingsScreen: React.FC<PropsWithChildren<SettingsScreenProps>> = () => {
                   user.monthlyTargetHours !== undefined && (
                     <View style={{ flex: 1, gap: 10 }}>
                       <Text category="c2" appearance="hint">
-                        {i18n.t("annualHourTarget")}
+                        {i18n.t('annualHourTarget')}
                       </Text>
                       <Text style={{ paddingHorizontal: 10 }} category="h6">
                         {user.monthlyTargetHours * 12}

@@ -1,17 +1,18 @@
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import { create } from "zustand";
-import { createJSONStorage, persist } from "zustand/middleware";
-import Asset from "./asset";
-import moment from "moment";
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import moment from 'moment';
+import { create } from 'zustand';
+import { createJSONStorage, persist } from 'zustand/middleware';
+
+import Asset from './asset';
 
 export const getCallMostRecentVisit = (visits: Visit[], callId?: string) => {
   if (!callId) {
     return undefined;
   }
   return visits
-    ?.filter((v) => v.call.id === callId)
+    ?.filter(v => v.call.id === callId)
     .sort((a, b) => moment(b.date).valueOf() - moment(a.date).valueOf())
-    .find((_, index) => index == 0);
+    .find((_, index) => index === 0);
 };
 
 export interface Visit extends Asset {
@@ -44,17 +45,17 @@ type VisitsStore = {
 
 const useVisitsStore = create(
   persist<VisitsStore>(
-    (set) => ({
+    set => ({
       visits: [],
-      deleteVisit: (callId) => {
-        set((state) => ({
-          visits: state.visits.filter((o) => o.id !== callId),
+      deleteVisit: callId => {
+        set(state => ({
+          visits: state.visits.filter(o => o.id !== callId),
         }));
       },
-      setVisit: (newItemOrUpdates) => {
-        set((state) => {
+      setVisit: newItemOrUpdates => {
+        set(state => {
           const visits: Visit[] = JSON.parse(JSON.stringify(state.visits));
-          const index = visits.findIndex((o) => o.id === newItemOrUpdates.id);
+          const index = visits.findIndex(o => o.id === newItemOrUpdates.id);
           if (index === -1) {
             // not found
             // pushing new item to list
@@ -76,10 +77,10 @@ const useVisitsStore = create(
       deleteAllVisits: () => set({ visits: [] }),
     }),
     {
-      name: "visitsStore", // unique name
+      name: 'visitsStore', // unique name
       storage: createJSONStorage(() => AsyncStorage),
-    }
-  )
+    },
+  ),
 );
 
 export default useVisitsStore;

@@ -1,21 +1,5 @@
-import { NativeStackScreenProps } from "@react-navigation/native-stack";
-import {
-  ImageProps,
-  Keyboard,
-  Pressable,
-  Share,
-  StyleSheet,
-  TouchableOpacity,
-  View,
-} from "react-native";
-import { FlashList } from "@shopify/flash-list";
-import ScreenTitle from "../components/ScreenTitle";
-import { i18n } from "../lib/translations";
-import appTheme from "../lib/theme";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
-import CallCard from "../components/CallCard";
-import useCallsStore from "../stores/CallStore";
-import { HomeStackParamList } from "../stacks/ParamLists";
+import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { FlashList } from '@shopify/flash-list';
 import {
   Button,
   Divider,
@@ -24,22 +8,39 @@ import {
   Layout,
   Text,
   useStyleSheet,
-} from "@ui-kitten/components";
-import React, { useMemo, useState } from "react";
-import * as Haptics from "expo-haptics";
-import useTimer from "../lib/userTimer";
+} from '@ui-kitten/components';
+import { TouchableWithoutFeedback } from '@ui-kitten/components/devsupport';
+import * as Haptics from 'expo-haptics';
+import moment from 'moment';
+import React, { useMemo, useState } from 'react';
+import {
+  ImageProps,
+  Keyboard,
+  Pressable,
+  Share,
+  StyleSheet,
+  TouchableOpacity,
+  View,
+} from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+
+import CallCard from '../components/CallCard';
+import { Export } from '../components/Icons';
+import MonthReport, { parseForMonthReport } from '../components/MonthReport';
+import ScreenTitle from '../components/ScreenTitle';
+import WeeklyActivityTicks from '../components/WeeklyActivityTicks';
+import appTheme from '../lib/theme';
+import { i18n } from '../lib/translations';
+import useTimer from '../lib/userTimer';
+import { HomeStackParamList } from '../stacks/ParamLists';
+import useCallsStore from '../stores/CallStore';
 import useServiceRecordStore, {
   MonthReportData,
-} from "../stores/ServiceRecord";
-import moment from "moment";
-import useVisitsStore from "../stores/VisitStore";
-import MonthReport, { parseForMonthReport } from "../components/MonthReport";
-import { Export } from "../components/Icons";
-import { TouchableWithoutFeedback } from "@ui-kitten/components/devsupport";
-import useSettingStore from "../stores/SettingsStore";
-import WeeklyActivityTicks from "../components/WeeklyActivityTicks";
+} from '../stores/ServiceRecord';
+import useSettingStore from '../stores/SettingsStore';
+import useVisitsStore from '../stores/VisitStore';
 
-type HomeProps = NativeStackScreenProps<HomeStackParamList, "Dashboard">;
+type HomeProps = NativeStackScreenProps<HomeStackParamList, 'Dashboard'>;
 
 export type Sheet = {
   isOpen: boolean;
@@ -47,27 +48,27 @@ export type Sheet = {
 };
 
 const MagnifyIcon = (
-  props?: Partial<ImageProps>
+  props?: Partial<ImageProps>,
 ): React.ReactElement<ImageProps> => <Icon {...props} name="magnify" />;
 
 const PlusIcon = (
-  props?: Partial<ImageProps>
+  props?: Partial<ImageProps>,
 ): React.ReactElement<ImageProps> => <Icon {...props} name="plus" />;
 const PlayIcon = (
-  props?: Partial<ImageProps>
+  props?: Partial<ImageProps>,
 ): React.ReactElement<ImageProps> => <Icon {...props} name="play" />;
 const PauseIcon = (
-  props?: Partial<ImageProps>
+  props?: Partial<ImageProps>,
 ): React.ReactElement<ImageProps> => <Icon {...props} name="pause" />;
 const StopIcon = (
-  props?: Partial<ImageProps>
+  props?: Partial<ImageProps>,
 ): React.ReactElement<ImageProps> => <Icon {...props} name="stop" />;
 
 const DashboardScreen = ({ navigation }: HomeProps) => {
   const { play, pause, reset, formattedTime, hasStarted, isRunning } =
     useTimer();
   const [debug, setDebug] = useState(false);
-  const [query, setQuery] = useState("");
+  const [query, setQuery] = useState('');
   const { resetAllSettings } = useSettingStore();
   const { calls, deleteAllCalls } = useCallsStore();
   const { records, deleteAllRecords } = useServiceRecordStore();
@@ -85,15 +86,15 @@ const DashboardScreen = ({ navigation }: HomeProps) => {
   }, [records, calls, visits]);
 
   const queriedCalls = useMemo(() => {
-    return calls.filter((c) =>
-      c.name.toLocaleLowerCase().includes(query.toLocaleLowerCase())
+    return calls.filter(c =>
+      c.name.toLocaleLowerCase().includes(query.toLocaleLowerCase()),
     );
   }, [calls, query]);
 
   const themeStyles = StyleSheet.create({
     wrapper: {
       flex: 1,
-      position: "relative",
+      position: 'relative',
       paddingTop: insets.top + 20,
       paddingRight: appTheme.contentPaddingLeftRight,
       paddingLeft: appTheme.contentPaddingLeftRight,
@@ -103,7 +104,7 @@ const DashboardScreen = ({ navigation }: HomeProps) => {
       gap: 20,
     },
     fab: {
-      position: "absolute",
+      position: 'absolute',
       paddingBottom: 90,
       paddingRight: 10,
     },
@@ -113,7 +114,7 @@ const DashboardScreen = ({ navigation }: HomeProps) => {
 
   const isInService = useMemo(
     () => hasStarted || isRunning,
-    [hasStarted, isRunning]
+    [hasStarted, isRunning],
   ); // would otherwise run each on clock tick.
 
   return (
@@ -121,9 +122,9 @@ const DashboardScreen = ({ navigation }: HomeProps) => {
       <TouchableWithoutFeedback style={{ flex: 1 }} onPress={Keyboard.dismiss}>
         <View style={styles.content}>
           <View>
-            <View style={{ flexDirection: "row" }}>
+            <View style={{ flexDirection: 'row' }}>
               {isInService && (
-                <View style={{ flexDirection: "row", flexShrink: 1, gap: 5 }}>
+                <View style={{ flexDirection: 'row', flexShrink: 1, gap: 5 }}>
                   {isRunning ? (
                     <Button accessoryLeft={PauseIcon} onPress={pause} />
                   ) : (
@@ -137,26 +138,26 @@ const DashboardScreen = ({ navigation }: HomeProps) => {
                 </View>
               )}
               <ScreenTitle
-                title={isInService ? formattedTime : i18n.t("dashboard")}
+                title={isInService ? formattedTime : i18n.t('dashboard')}
                 icon="cog"
-                status={isInService ? "success" : "basic"}
+                status={isInService ? 'success' : 'basic'}
                 onIconLongPress={() => {
                   Haptics.notificationAsync(
-                    Haptics.NotificationFeedbackType.Warning
+                    Haptics.NotificationFeedbackType.Warning,
                   );
                   setDebug(!debug);
                 }}
                 onIconPress={() => {
-                  navigation.navigate("Settings");
+                  navigation.navigate('Settings');
                 }}
               />
             </View>
             <View>
               {isInService ? (
                 <React.Fragment>
-                  <Text>{i18n.t("youAreInService!")}</Text>
+                  <Text>{i18n.t('youAreInService!')}</Text>
                   <Text appearance="hint" category="c1">
-                    {i18n.t("stopTimeWillAutomaticallyAddToReport")}
+                    {i18n.t('stopTimeWillAutomaticallyAddToReport')}
                   </Text>
                 </React.Fragment>
               ) : (
@@ -166,17 +167,15 @@ const DashboardScreen = ({ navigation }: HomeProps) => {
           </View>
           <View style={{ gap: 10 }}>
             <View
-              style={{ flexDirection: "row", gap: 5, alignItems: "center" }}
-            >
+              style={{ flexDirection: 'row', gap: 5, alignItems: 'center' }}>
               <Pressable
                 onPress={() => {
                   Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-                  navigation.navigate("AnnualReport", {
+                  navigation.navigate('AnnualReport', {
                     year: moment().year(),
                   });
-                }}
-              >
-                <Text category="h4">{i18n.t("monthlyTotals")}</Text>
+                }}>
+                <Text category="h4">{i18n.t('monthlyTotals')}</Text>
               </Pressable>
               <Button
                 appearance="ghost"
@@ -185,7 +184,7 @@ const DashboardScreen = ({ navigation }: HomeProps) => {
                 onPress={async () =>
                   await Share.share({
                     title: monthReport.share?.title,
-                    message: monthReport.share?.message || "",
+                    message: monthReport.share?.message || '',
                   })
                 }
               />
@@ -193,9 +192,8 @@ const DashboardScreen = ({ navigation }: HomeProps) => {
             <TouchableOpacity
               onPress={() => {
                 Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-                navigation.navigate("AnnualReport", { year: moment().year() });
-              }}
-            >
+                navigation.navigate('AnnualReport', { year: moment().year() });
+              }}>
               <MonthReport report={monthReport} />
             </TouchableOpacity>
           </View>
@@ -207,7 +205,7 @@ const DashboardScreen = ({ navigation }: HomeProps) => {
               <Input
                 value={query}
                 clearButtonMode="while-editing"
-                onChangeText={(text) => setQuery(text)}
+                onChangeText={text => setQuery(text)}
                 placeholder="Search for a call..."
                 accessoryRight={MagnifyIcon}
               />
@@ -217,19 +215,19 @@ const DashboardScreen = ({ navigation }: HomeProps) => {
                   query ? (
                     <Text style={{ marginHorizontal: 5 }} appearance="hint">
                       <React.Fragment>
-                        {i18n.t("noResultsForQuery")}"
+                        {i18n.t('noResultsForQuery')}"
                         <Text category="c2">{query}</Text>
                         "...
                       </React.Fragment>
                     </Text>
                   ) : undefined
                 }
-                ItemSeparatorComponent={(props) => (
+                ItemSeparatorComponent={props => (
                   <Divider style={{ marginVertical: 5 }} {...props} />
                 )}
                 estimatedItemSize={60}
                 renderItem={({ item }) => <CallCard call={item} />}
-                keyExtractor={(item) => item.id}
+                keyExtractor={item => item.id}
               />
             </Layout>
 
@@ -251,15 +249,13 @@ const DashboardScreen = ({ navigation }: HomeProps) => {
               gap: 5,
               borderRadius: appTheme.borderRadius,
             }}
-            id="debug"
-          >
+            id="debug">
             <Text category="s1">Debug:</Text>
             <Button
               appearance="outline"
               status="success"
-              onPress={() => (isRunning ? pause() : play())}
-            >
-              {isRunning ? "Pause Timer" : "Start Timer"}
+              onPress={() => (isRunning ? pause() : play())}>
+              {isRunning ? 'Pause Timer' : 'Start Timer'}
             </Button>
             <Button appearance="outline" status="warning" onPress={reset}>
               Stop timer
@@ -268,43 +264,38 @@ const DashboardScreen = ({ navigation }: HomeProps) => {
             <Button
               appearance="outline"
               status="success"
-              onPress={() => navigation.navigate("ServiceRecordForm")}
-            >
+              onPress={() => navigation.navigate('ServiceRecordForm')}>
               Create Service Record
             </Button>
             <Button
               onLongPress={resetAllSettings}
               status="danger"
-              appearance="outline"
-            >
+              appearance="outline">
               Reset all settings
             </Button>
             <Button
               status="danger"
               appearance="outline"
-              onLongPress={deleteAllRecords}
-            >
+              onLongPress={deleteAllRecords}>
               Delete All Reports
             </Button>
             <Button
               status="danger"
               appearance="outline"
-              onLongPress={deleteAllVisits}
-            >
+              onLongPress={deleteAllVisits}>
               Delete All Visits
             </Button>
             <Button
               status="danger"
               appearance="outline"
-              onLongPress={deleteAllCalls}
-            >
+              onLongPress={deleteAllCalls}>
               Delete All Calls
             </Button>
           </Layout>
         )}
         <Button
           style={{
-            position: "absolute",
+            position: 'absolute',
             bottom: 15,
             right: 10,
             shadowRadius: 2,
@@ -317,7 +308,7 @@ const DashboardScreen = ({ navigation }: HomeProps) => {
           accessoryLeft={PlusIcon}
           onPress={() => {
             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
-            navigation.navigate("CallForm");
+            navigation.navigate('CallForm');
           }}
         />
       </TouchableWithoutFeedback>

@@ -7,9 +7,9 @@
     "android": "expo start --android",
     "ios": "expo start --ios",
     "web": "expo start --web",
-    "test": "echo \"\\033[33mRunning tests\" && npm run test:eslint && npm run test:tsc",
-    "test:eslint": "echo \"\\033[33mRunning eslint check\" &&  eslint .",
-    "test:tsc": "echo \"\\033[33mRunning typescript check\" && tsc",
+    "test": "echo \"\\033[33mRunning all tests...\\033[0m\" && npm run test:eslint && npm run test:tsc",
+    "test:eslint": "echo \"\\033[33mRunning eslint check\\033[0m\" &&  eslint .",
+    "test:tsc": "echo \"\\033[33mRunning typescript check\\033[0m\" && tsc",
     "prepare": "husky install"
   },
   "dependencies": {

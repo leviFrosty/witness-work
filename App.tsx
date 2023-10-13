@@ -1,6 +1,8 @@
 import React, { useState } from "react";
-import { StyleSheet, SafeAreaView, Dimensions, View, Text } from "react-native";
+import { SafeAreaView } from "react-native";
 import OnBoarding from "./src/components/onboarding/Onboarding";
+import { styles } from "./App.styles";
+import Home from "./src/screens/Home";
 
 // async function schedulePushNotification() {
 //   await Notifications.scheduleNotificationAsync({
@@ -16,14 +18,6 @@ import OnBoarding from "./src/components/onboarding/Onboarding";
 export default function App() {
   const [onboardingComplete, setOnboardingComplete] = useState(false);
 
-  const Home = () => {
-    return (
-      <View>
-        <Text>Home Screen!</Text>
-      </View>
-    );
-  };
-
   return (
     <SafeAreaView style={styles.container}>
       {onboardingComplete ? (
@@ -34,11 +28,3 @@ export default function App() {
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    height: Dimensions.get("window").height,
-    marginTop: 40,
-    marginHorizontal: 25,
-  },
-});

@@ -3,12 +3,8 @@ import { styles } from "../Onboarding.styles";
 import OnboardingNav from "../OnboardingNav";
 import DropDownPicker from "react-native-dropdown-picker";
 import { useState } from "react";
-import {
-  Publisher,
-  publisherHours,
-  publishers,
-} from "../../../types/publisher";
 import { usePreferences } from "../../../stores/preferences";
+import { publisherHours, publishers } from "../../../constants/publisher";
 
 interface Props {
   goBack: () => void;

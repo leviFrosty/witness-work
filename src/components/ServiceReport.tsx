@@ -154,7 +154,7 @@ const RightCard = () => {
     return phrases[random];
   };
 
-  const studies = 1;
+  const studies = 0;
 
   return (
     <View
@@ -188,8 +188,6 @@ const RightCard = () => {
 };
 
 const ServiceReport = () => {
-  const { hours, set } = useServiceReport();
-
   return (
     <View style={{ gap: 8 }}>
       <Text style={{ fontSize: 12, fontWeight: "600", marginLeft: 5 }}>

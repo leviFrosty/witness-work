@@ -3,6 +3,7 @@ import { SafeAreaView } from "react-native";
 import OnBoarding from "./src/components/onboarding/Onboarding";
 import { styles } from "./App.styles";
 import Home from "./src/screens/Home";
+import { usePreferences } from "./src/stores/preferences";
 
 // async function schedulePushNotification() {
 //   await Notifications.scheduleNotificationAsync({
@@ -16,14 +17,17 @@ import Home from "./src/screens/Home";
 // }
 
 export default function App() {
-  const [onboardingComplete, setOnboardingComplete] = useState(false);
+  // const [onboardingComplete, setOnboardingComplete] = useState(false);
+  const { onboardingComplete, set } = usePreferences();
 
   return (
     <SafeAreaView style={styles.container}>
       {onboardingComplete ? (
         <Home />
       ) : (
-        <OnBoarding setOnboardingComplete={setOnboardingComplete} />
+        <OnBoarding
+          setOnboardingComplete={(c: boolean) => set({ onboardingComplete: c })}
+        />
       )}
     </SafeAreaView>
   );

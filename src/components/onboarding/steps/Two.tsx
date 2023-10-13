@@ -8,6 +8,7 @@ import {
   publisherHours,
   publishers,
 } from "../../../types/publisher";
+import { usePreferences } from "../../../stores/preferences";
 
 interface Props {
   goBack: () => void;
@@ -16,7 +17,7 @@ interface Props {
 }
 
 const StepTwo = ({ goBack, setOnboardingComplete, goNext }: Props) => {
-  const [publisher, setPublisher] = useState<Publisher>("publisher");
+  // const [publisher, setPublisher] = useState<Publisher>("publisher");
   const [open, setOpen] = useState(false);
   const [items, setItems] = useState([
     { label: "Publisher", value: publishers[0] },
@@ -25,6 +26,8 @@ const StepTwo = ({ goBack, setOnboardingComplete, goNext }: Props) => {
     { label: "Circuit Overseer", value: publishers[3] },
     { label: "Special Pioneer", value: publishers[4] },
   ]);
+
+  const { publisher, setPublisher } = usePreferences();
 
   return (
     <View style={styles.stepContainer}>
@@ -39,7 +42,7 @@ const StepTwo = ({ goBack, setOnboardingComplete, goNext }: Props) => {
           value={publisher}
           items={items}
           setOpen={setOpen}
-          setValue={setPublisher}
+          setValue={(val: any) => setPublisher(val())}
           setItems={setItems}
           style={styles.dropDownPicker}
           dropDownContainerStyle={styles.dropDownOptionsContainer}

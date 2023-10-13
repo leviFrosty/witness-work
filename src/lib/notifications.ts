@@ -2,6 +2,17 @@ import * as Notifications from "expo-notifications";
 import * as Device from "expo-device";
 import { Platform } from "react-native";
 
+// async function schedulePushNotification() {
+//   await Notifications.scheduleNotificationAsync({
+//     content: {
+//       title: "You have a return visit today!",
+//       body: "John doe ",
+//       data: { data: "goes here" },
+//     },
+//     trigger: { seconds: 6 },
+//   });
+// }
+
 export async function registerForPushNotificationsAsync() {
   let token;
 

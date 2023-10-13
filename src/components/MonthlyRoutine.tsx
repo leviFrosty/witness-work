@@ -1,7 +1,7 @@
 import { View, Text, FlatList } from "react-native";
 import moment from "moment";
 import { FontAwesome } from "@expo/vector-icons";
-import theme from "../../constants/theme";
+import theme from "../constants/theme";
 
 const Month = ({ month }: { month: number }) => {
   const currentMonth = moment().month() === month;
@@ -32,7 +32,7 @@ const Month = ({ month }: { month: number }) => {
       <Text
         style={{
           textAlign: "center",
-          color: currentMonth ? theme.colors.background : theme.colors.altText,
+          color: currentMonth ? theme.colors.background : theme.colors.textAlt,
         }}
       >
         {moment().month(month).format("MMM")}

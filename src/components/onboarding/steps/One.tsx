@@ -1,4 +1,4 @@
-import { View, Pressable, Text } from "react-native";
+import { View, Text, TouchableOpacity } from "react-native";
 import { styles } from "../Onboarding.styles";
 
 interface Props {
@@ -14,9 +14,9 @@ const StepOne = ({ goNext }: Props) => {
           <Text style={styles.title}>JW Time</Text>
         </View>
       </View>
-      <Pressable style={styles.actionButton} onPress={goNext}>
+      <TouchableOpacity style={styles.actionButton} onPress={goNext}>
         <Text style={styles.actionButtonInner}>Get Started</Text>
-      </Pressable>
+      </TouchableOpacity>
     </View>
   );
 };

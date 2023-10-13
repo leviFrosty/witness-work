@@ -1,4 +1,4 @@
-import { View, Pressable, Text } from "react-native";
+import { View, Text, TouchableOpacity } from "react-native";
 import { styles } from "../Onboarding.styles";
 import OnboardingNav from "../OnboardingNav";
 import DropDownPicker from "react-native-dropdown-picker";
@@ -52,9 +52,9 @@ const StepTwo = ({ goBack, setOnboardingComplete, goNext }: Props) => {
             : `${publisherHours[publisher]} Hour Monthly Requirement`}
         </Text>
       </View>
-      <Pressable style={styles.actionButton} onPress={goNext}>
+      <TouchableOpacity style={styles.actionButton} onPress={goNext}>
         <Text style={styles.actionButtonInner}>Continue</Text>
-      </Pressable>
+      </TouchableOpacity>
     </View>
   );
 };

@@ -1,5 +1,6 @@
-import { View, Pressable, Text } from "react-native";
+import { View, Text, TouchableOpacity } from "react-native";
 import { styles } from "./Onboarding.styles";
+import { FontAwesome } from "@expo/vector-icons";
 
 interface Props {
   noActions?: boolean;
@@ -11,9 +12,9 @@ const OnboardingNav = ({ noActions, goBack, setOnboardingComplete }: Props) => {
   return (
     <View style={styles.navContainer}>
       {!noActions ? (
-        <Text style={styles.navBack} onPress={goBack}>
-          {"<"}
-        </Text>
+        <TouchableOpacity hitSlop={20} style={styles.navBack} onPress={goBack}>
+          <FontAwesome style={styles.chevronLeft} name="chevron-left" />
+        </TouchableOpacity>
       ) : null}
       <Text style={styles.navTitle}>JW Time</Text>
     </View>

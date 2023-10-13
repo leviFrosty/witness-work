@@ -1,4 +1,4 @@
-import { View, Pressable, Text } from "react-native";
+import { View, Pressable, Text, TouchableOpacity } from "react-native";
 import { styles } from "../Onboarding.styles";
 import OnboardingNav from "../OnboardingNav";
 import { registerForPushNotificationsAsync } from "../../../lib/notifications";
@@ -24,7 +24,7 @@ const StepThree = ({ goBack, setOnboardingComplete, goNext }: Props) => {
         </Text>
       </View>
       <View>
-        <Pressable
+        <TouchableOpacity
           style={styles.actionButton}
           onPress={async () => {
             registerForPushNotificationsAsync().then(() => {
@@ -33,7 +33,7 @@ const StepThree = ({ goBack, setOnboardingComplete, goNext }: Props) => {
           }}
         >
           <Text style={styles.actionButtonInner}>Allow notifications</Text>
-        </Pressable>
+        </TouchableOpacity>
         <View style={{ alignItems: "center", marginTop: 15 }}>
           <Pressable hitSlop={10} onPress={goNext}>
             <Text style={styles.navSkip}>Skip</Text>

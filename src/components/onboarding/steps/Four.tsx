@@ -1,4 +1,4 @@
-import { View, Pressable, Text } from "react-native";
+import { View, Text, TouchableOpacity } from "react-native";
 import { styles } from "../Onboarding.styles";
 import OnboardingNav from "../OnboardingNav";
 
@@ -21,12 +21,12 @@ const StepFour = ({ goBack, setOnboardingComplete }: Props) => {
           JW Time will notify you each month to report your time and more!
         </Text>
       </View>
-      <Pressable
+      <TouchableOpacity
         style={styles.actionButton}
         onPress={() => setOnboardingComplete(true)}
       >
         <Text style={styles.actionButtonInner}>Complete Setup</Text>
-      </Pressable>
+      </TouchableOpacity>
     </View>
   );
 };

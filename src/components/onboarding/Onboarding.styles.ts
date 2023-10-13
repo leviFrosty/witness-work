@@ -39,8 +39,10 @@ export const styles = StyleSheet.create({
   navBack: {
     position: "absolute",
     left: 0,
+  },
+  chevronLeft: {
     color: "#9B9B9B",
-    fontSize: 30,
+    fontSize: 15,
   },
   navTitle: {
     fontSize: 24,

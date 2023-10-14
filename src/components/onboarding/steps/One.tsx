@@ -1,5 +1,6 @@
 import { View, Text, TouchableOpacity } from "react-native";
 import { styles } from "../Onboarding.styles";
+import MyText from "../../MyText";
 
 interface Props {
   goNext: () => void;
@@ -10,12 +11,12 @@ const StepOne = ({ goNext }: Props) => {
     <View style={styles.stepContainer}>
       <View style={styles.onboardingTitleWrapper}>
         <View style={styles.textContainer}>
-          <Text style={styles.subTitle}>Welcome to</Text>
-          <Text style={styles.title}>JW Time</Text>
+          <MyText style={styles.subTitle}>Welcome to</MyText>
+          <MyText style={styles.title}>JW Time</MyText>
         </View>
       </View>
       <TouchableOpacity style={styles.actionButton} onPress={goNext}>
-        <Text style={styles.actionButtonInner}>Get Started</Text>
+        <MyText style={styles.actionButtonInner}>Get Started</MyText>
       </TouchableOpacity>
     </View>
   );

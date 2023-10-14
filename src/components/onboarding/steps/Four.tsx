@@ -3,6 +3,7 @@ import { View, Text, TouchableOpacity } from "react-native";
 import { styles } from "../Onboarding.styles";
 import OnboardingNav from "../OnboardingNav";
 import * as Notifications from "expo-notifications";
+import MyText from "../../MyText";
 
 interface Props {
   goBack: () => void;
@@ -29,18 +30,18 @@ const StepFour = ({ goBack, setOnboardingComplete }: Props) => {
         setOnboardingComplete={setOnboardingComplete}
       />
       <View>
-        <Text style={styles.stepTitle}>You're all set!</Text>
-        <Text style={styles.description}>
+        <MyText style={styles.stepTitle}>You're all set!</MyText>
+        <MyText style={styles.description}>
           {notificationsAllowed
             ? "JW Time will notify you each month to report your time and more!"
             : "You can opt-in to notifications in the settings later."}
-        </Text>
+        </MyText>
       </View>
       <TouchableOpacity
         style={styles.actionButton}
         onPress={() => setOnboardingComplete(true)}
       >
-        <Text style={styles.actionButtonInner}>Complete Setup</Text>
+        <MyText style={styles.actionButtonInner}>Complete Setup</MyText>
       </TouchableOpacity>
     </View>
   );

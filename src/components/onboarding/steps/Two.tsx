@@ -5,6 +5,7 @@ import DropDownPicker from "react-native-dropdown-picker";
 import { useState } from "react";
 import { usePreferences } from "../../../stores/preferences";
 import { publisherHours, publishers } from "../../../constants/publisher";
+import MyText from "../../MyText";
 
 interface Props {
   goBack: () => void;
@@ -32,7 +33,9 @@ const StepTwo = ({ goBack, setOnboardingComplete, goNext }: Props) => {
         setOnboardingComplete={setOnboardingComplete}
       />
       <View style={styles.stepContentContainer}>
-        <Text style={styles.stepTitle}>What type of publisher are you?</Text>
+        <MyText style={styles.stepTitle}>
+          What type of publisher are you?
+        </MyText>
         <DropDownPicker
           open={open}
           value={publisher}
@@ -45,14 +48,14 @@ const StepTwo = ({ goBack, setOnboardingComplete, goNext }: Props) => {
           itemSeparatorStyle={styles.dropDownSeparatorStyles}
           itemSeparator={true}
         />
-        <Text style={styles.description}>
+        <MyText style={styles.description}>
           {publisher === publishers[0]
             ? "No hour requirement"
             : `${publisherHours[publisher]} Hour Monthly Requirement`}
-        </Text>
+        </MyText>
       </View>
       <TouchableOpacity style={styles.actionButton} onPress={goNext}>
-        <Text style={styles.actionButtonInner}>Continue</Text>
+        <MyText style={styles.actionButtonInner}>Continue</MyText>
       </TouchableOpacity>
     </View>
   );

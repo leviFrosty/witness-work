@@ -1,4 +1,4 @@
-import { Text, View } from "react-native";
+import { Text, View, TouchableOpacity } from "react-native";
 import { useServiceReport } from "../stores/serviceReport";
 import theme from "../constants/theme";
 import ProgressBar from "./ProgressBar";
@@ -8,6 +8,8 @@ import {
   calculateHoursRemaining,
   calculateProgress,
 } from "../lib/serviceReport";
+import Card from "./Card";
+import MyText from "./MyText";
 
 const LeftCard = () => {
   const { publisher } = usePreferences();
@@ -59,13 +61,14 @@ const LeftCard = () => {
   };
 
   return (
-    <View
+    <TouchableOpacity
       style={{
         flexDirection: "column",
         paddingHorizontal: 10,
         paddingVertical: 10,
-        backgroundColor: theme.colors.background,
         borderRadius: theme.numbers.borderRadiusSm,
+        backgroundColor: theme.colors.backgroundLighter,
+        gap: 5,
       }}
     >
       <View
@@ -86,8 +89,8 @@ const LeftCard = () => {
         }}
       >
         <View style={{ position: "relative" }}>
-          <Text style={{ fontSize: 32, fontWeight: "700" }}>{hours}</Text>
-          <Text
+          <MyText style={{ fontSize: 32, fontWeight: "700" }}>{hours}</MyText>
+          <MyText
             style={{
               position: "absolute",
               right: -25,
@@ -98,26 +101,28 @@ const LeftCard = () => {
             }}
           >
             /{goalHours}
-          </Text>
+          </MyText>
         </View>
-        <Text style={{ fontWeight: "700" }}>{encouragementHourPhrase()}</Text>
+        <MyText style={{ fontWeight: "700" }}>
+          {encouragementHourPhrase()}
+        </MyText>
         <View
           style={{
             borderRadius: theme.numbers.borderRadiusLg,
-            backgroundColor: theme.colors.accentLight,
+            backgroundColor: theme.colors.accentAlt,
             paddingHorizontal: 25,
             paddingVertical: 5,
           }}
         >
-          <Text style={{ fontSize: 10 }}>
+          <MyText style={{ fontSize: 10 }}>
             {calculateHoursRemaining({ hours, goalHours })} hours left
-          </Text>
+          </MyText>
         </View>
-        <Text style={{ fontSize: 8, color: theme.colors.textAlt }}>
+        <MyText style={{ fontSize: 8, color: theme.colors.textAlt }}>
           Goal is based on your publisher type
-        </Text>
+        </MyText>
       </View>
-    </View>
+    </TouchableOpacity>
   );
 };
 
@@ -157,12 +162,12 @@ const RightCard = () => {
   const studies = 0;
 
   return (
-    <View
+    <TouchableOpacity
       style={{
         flexDirection: "column",
         paddingHorizontal: 10,
         paddingVertical: 10,
-        backgroundColor: theme.colors.background,
+        backgroundColor: theme.colors.backgroundLighter,
         borderRadius: theme.numbers.borderRadiusSm,
         flexGrow: 1,
       }}
@@ -175,58 +180,40 @@ const RightCard = () => {
           flexGrow: 1,
         }}
       >
-        <Text style={{ fontSize: 32, fontWeight: "700" }}>{studies}</Text>
-        <Text style={{ fontWeight: "700" }}>
+        <MyText style={{ fontSize: 32, fontWeight: "700" }}>{studies}</MyText>
+        <MyText
+          style={{
+            fontWeight: "700",
+          }}
+        >
           {encouragementStudiesPhrase(studies)}
-        </Text>
+        </MyText>
       </View>
-      <Text style={{ fontSize: 8, color: theme.colors.textAlt }}>
+      <MyText style={{ fontSize: 8, color: theme.colors.textAlt }}>
         Based on contacts
-      </Text>
-    </View>
+      </MyText>
+    </TouchableOpacity>
   );
 };
 
 const ServiceReport = () => {
   return (
-    <View style={{ gap: 8 }}>
-      <Text style={{ fontSize: 12, fontWeight: "600", marginLeft: 5 }}>
-        Service Report
-      </Text>
-      <View
-        style={{
-          borderRadius: theme.numbers.borderRadiusLg,
-          backgroundColor: theme.colors.card,
-          flexDirection: "row",
-          gap: 15,
-          padding: 10,
-        }}
-      >
+    <Card>
+      <View style={{ flexDirection: "row", gap: 5 }}>
         <View style={{ flexDirection: "column", gap: 5, flexGrow: 1 }}>
-          <Text style={{ color: theme.colors.textAlt, fontWeight: "500" }}>
+          <MyText style={{ color: theme.colors.textAlt, fontWeight: "600" }}>
             Hours
-          </Text>
+          </MyText>
           <LeftCard />
         </View>
         <View style={{ flexDirection: "column", gap: 5 }}>
-          <Text style={{ color: theme.colors.textAlt, fontWeight: "500" }}>
+          <MyText style={{ color: theme.colors.textAlt, fontWeight: "600" }}>
             Studies
-          </Text>
+          </MyText>
           <RightCard />
         </View>
       </View>
-      {/* <Text>Hours: {hours}</Text>
-      <Text onPress={() => set({ hours: -10 })}>Set Hours -10</Text>
-      <Text onPress={() => set({ hours: 0 })}>Set Hours 0</Text>
-      <Text onPress={() => set({ hours: 15 })}>Set Hours 15</Text>
-      <Text onPress={() => set({ hours: 30 })}>Set Hours 30</Text>
-      <Text onPress={() => set({ hours: 35 })}>Set Hours 35</Text>
-      <Text onPress={() => set({ hours: 40 })}>Set Hours 40</Text>
-      <Text onPress={() => set({ hours: 45 })}>Set Hours 45</Text>
-      <Text onPress={() => set({ hours: 50 })}>Set Hours 50</Text>
-      <Text onPress={() => set({ hours: 60 })}>Set Hours 60</Text>
-      <Text onPress={() => set({ hours: 70 })}>Set Hours 70</Text> */}
-    </View>
+    </Card>
   );
 };
 

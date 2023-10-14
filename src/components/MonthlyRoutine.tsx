@@ -2,6 +2,8 @@ import { View, Text, FlatList } from "react-native";
 import moment from "moment";
 import { FontAwesome } from "@expo/vector-icons";
 import theme from "../constants/theme";
+import Card from "./Card";
+import MyText from "./MyText";
 
 const Month = ({ month }: { month: number }) => {
   const currentMonth = moment().month() === month;
@@ -17,7 +19,7 @@ const Month = ({ month }: { month: number }) => {
     >
       <View
         style={{
-          backgroundColor: theme.colors.background,
+          backgroundColor: theme.colors.backgroundLighter,
           padding: 8,
           borderRadius: theme.numbers.borderRadiusSm,
           justifyContent: "center",
@@ -32,7 +34,7 @@ const Month = ({ month }: { month: number }) => {
       <Text
         style={{
           textAlign: "center",
-          color: currentMonth ? theme.colors.background : theme.colors.textAlt,
+          color: currentMonth ? theme.colors.textInverse : theme.colors.textAlt,
         }}
       >
         {moment().month(month).format("MMM")}
@@ -43,34 +45,27 @@ const Month = ({ month }: { month: number }) => {
 
 const MonthlyRoutine = () => {
   return (
-    <View
-      style={{
-        borderRadius: theme.numbers.borderRadiusLg,
-        backgroundColor: theme.colors.card,
-        paddingVertical: 20,
-        paddingHorizontal: 10,
-        gap: 15,
-        shadowOffset: { width: 0, height: 1 },
-        shadowColor: theme.colors.shadow,
-        shadowOpacity: theme.numbers.shadowOpacity,
-      }}
-    >
-      <Text style={{ fontSize: 12, fontWeight: "600" }}>Monthly Routine</Text>
-      <FlatList
-        horizontal
-        initialScrollIndex={moment().month()}
-        keyExtractor={(item) => item.toString()}
-        getItemLayout={(_, index) => ({
-          length: 45,
-          offset: 45 * index,
-          index,
-        })}
-        data={[...Array(12).keys()]}
-        renderItem={({ item: month }) => {
-          return <Month month={month} />;
-        }}
-        showsHorizontalScrollIndicator={false}
-      />
+    <View style={{ gap: 10 }}>
+      <MyText style={{ fontSize: 14, fontWeight: "600", marginLeft: 5 }}>
+        Monthly Routine
+      </MyText>
+      <Card>
+        <FlatList
+          horizontal
+          initialScrollIndex={moment().month()}
+          keyExtractor={(item) => item.toString()}
+          getItemLayout={(_, index) => ({
+            length: 45,
+            offset: 45 * index,
+            index,
+          })}
+          data={[...Array(12).keys()]}
+          renderItem={({ item: month }) => {
+            return <Month month={month} />;
+          }}
+          showsHorizontalScrollIndicator={false}
+        />
+      </Card>
     </View>
   );
 };

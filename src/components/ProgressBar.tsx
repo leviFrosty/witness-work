@@ -18,7 +18,7 @@ const ProgressBarSegment = ({
       style={{
         backgroundColor,
         width,
-        height: 15,
+        height: 18,
         borderRadius: theme.numbers.borderRadiusLg,
       }}
     />
@@ -38,7 +38,7 @@ const Good = ({ active }: { active: boolean }) => {
   return (
     <ProgressBarSegment
       backgroundColor={active ? theme.colors.accent3 : theme.colors.accent3Alt}
-      width={"35%"}
+      width={"30%"}
     />
   );
 };
@@ -47,7 +47,7 @@ const Success = ({ active }: { active: boolean }) => {
   return (
     <ProgressBarSegment
       backgroundColor={active ? theme.colors.accent : theme.colors.accentAlt}
-      width={"5%"}
+      width={"10%"}
     />
   );
 };
@@ -77,14 +77,14 @@ const ProgressBar = () => {
         flexDirection: "row",
         gap: 2,
         position: "relative",
-        maxWidth: 200,
+        maxWidth: 175,
         marginBottom: 15,
       }}
     >
       <Bad active={badProgress} />
       <Good active={goodProgress} />
       <Success active={successProgress} />
-      <View style={{ position: "absolute", left: arrowProgress, top: 3 }}>
+      <View style={{ position: "absolute", left: arrowProgress, top: 8 }}>
         <FontAwesome
           style={{ color: arrowColor(), fontSize: 30 }}
           name="caret-up"

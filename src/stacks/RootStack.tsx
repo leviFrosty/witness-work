@@ -13,6 +13,7 @@ import { Pressable } from "react-native";
 export type RootStackParamList = {
   Home: undefined;
   "Contact Form": { id: string };
+  "Visit Form": { id: string };
   "Contact Details": { id: string };
 };
 

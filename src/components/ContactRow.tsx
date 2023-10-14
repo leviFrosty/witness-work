@@ -3,10 +3,16 @@ import MyText from "./MyText";
 import theme from "../constants/theme";
 import Card from "./Card";
 import { FontAwesome } from "@expo/vector-icons";
+import { useNavigation } from "@react-navigation/native";
+import { RootStackNavigation } from "../stacks/RootStack";
 
 const ContactRow = () => {
+  const navigation = useNavigation<RootStackNavigation>();
+
   return (
-    <TouchableOpacity>
+    <TouchableOpacity
+      onPress={() => navigation.navigate("Contact Details", { id: "test" })}
+    >
       <Card
         style={{
           backgroundColor: theme.colors.backgroundLighter,

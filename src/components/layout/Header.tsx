@@ -3,36 +3,49 @@ import theme from "../../constants/theme";
 import moment from "moment";
 import { FontAwesome } from "@expo/vector-icons";
 import MyText from "../MyText";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 const Header = ({ title }: { title?: string }) => {
+  const { top } = useSafeAreaInsets();
+
   return (
     <View
       style={{
-        flexDirection: "row",
-        alignItems: "center",
-        justifyContent: "center",
-        position: "relative",
+        backgroundColor: theme.colors.accentBackground,
+        paddingTop: top,
       }}
     >
-      <Pressable
-        style={{ position: "absolute", left: 0 }}
-        hitSlop={15}
-        onPress={() => console.log("Navigating to settings...")}
-      >
-        <FontAwesome
-          style={{ color: theme.colors.textInverse, fontSize: 20 }}
-          name="cog"
-        />
-      </Pressable>
-      <MyText
+      <View
         style={{
-          fontSize: 18,
-          fontWeight: "600",
-          color: theme.colors.textInverse,
+          position: "relative",
+          flexGrow: 1,
+          marginHorizontal: 15,
+          flexDirection: "row",
+          alignItems: "center",
+          justifyContent: "center",
+          paddingVertical: 10,
         }}
       >
-        {title || moment().format("MMMM DD, YYYY")}
-      </MyText>
+        <Pressable
+          style={{ position: "absolute", left: 0 }}
+          hitSlop={15}
+          onPress={() => console.log("Navigating to settings...")}
+        >
+          <FontAwesome
+            style={{ color: theme.colors.textInverse, fontSize: 20 }}
+            name="cog"
+          />
+        </Pressable>
+        <MyText
+          style={{
+            fontSize: 18,
+            fontWeight: "600",
+            color: theme.colors.textInverse,
+          }}
+        >
+          {title || moment().format("MMMM DD, YYYY")}
+        </MyText>
+      </View>
     </View>
   );
 };

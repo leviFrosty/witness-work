@@ -5,8 +5,12 @@ import { FontAwesome } from "@expo/vector-icons";
 import Card from "./Card";
 import MyText from "./MyText";
 import ContactRow from "./ContactRow";
+import { useNavigation } from "@react-navigation/native";
+import { RootStackNavigation } from "../stacks/RootStack";
 
 const ContactsList = () => {
+  const navigation = useNavigation<RootStackNavigation>();
+
   return (
     <View style={{ gap: 8 }}>
       <MyText style={{ fontSize: 12, fontWeight: "600", marginLeft: 5 }}>
@@ -37,6 +41,7 @@ const ContactsList = () => {
               alignItems: "center",
               justifyContent: "center",
             }}
+            onPress={() => navigation.navigate("Contact Form")}
           >
             <FontAwesome
               style={{ fontSize: 15, color: theme.colors.textInverse }}

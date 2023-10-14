@@ -3,18 +3,20 @@ import theme from "../../constants/theme";
 import { rowPaddingVertical } from "../../constants/Inputs";
 import MyText from "../MyText";
 
-const InputRow = ({
-  label,
-  placeholder,
-  lastInSection,
-  noHorizontalPadding,
-  textInputProps,
-}: {
+interface Props {
   label: string;
   placeholder: string;
   lastInSection?: boolean;
   noHorizontalPadding?: boolean;
   textInputProps?: any;
+}
+
+const InputRow: React.FC<Props> = ({
+  label,
+  placeholder,
+  lastInSection,
+  noHorizontalPadding,
+  textInputProps,
 }) => {
   return (
     <View

@@ -1,9 +1,11 @@
-import { PropsWithChildren } from "react";
+import { PropsWithChildren, ReactNode } from "react";
 import { View } from "react-native";
 import theme from "../../constants/theme";
 import { rowPaddingVertical } from "../../constants/Inputs";
 
-const Section: React.FC<PropsWithChildren> = ({ children }) => {
+interface Props {}
+
+const Section: React.FC<PropsWithChildren<Props>> = ({ children }) => {
   return (
     <View
       style={{

@@ -14,6 +14,7 @@ const Home = () => {
 
   return (
     <KeyboardAwareScrollView
+      automaticallyAdjustKeyboardInsets
       style={{
         flexGrow: 1,
         padding: 15,

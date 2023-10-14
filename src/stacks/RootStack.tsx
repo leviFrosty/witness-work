@@ -9,12 +9,14 @@ import ContactFormHeader from "../components/layout/ContactFormHeader";
 import MyText from "../components/MyText";
 import theme from "../constants/theme";
 import { Pressable } from "react-native";
+import ConversationForm from "../components/ConversationForm";
+import { Contact } from "../types/contact";
 
 export type RootStackParamList = {
   Home: undefined;
-  "Contact Form": { id: string };
-  "Visit Form": { id: string };
-  "Contact Details": { id: string };
+  "Conversation Form": Pick<Contact, "id">;
+  "Contact Details": Pick<Contact, "id">;
+  "Contact Form": Pick<Contact, "id">;
 };
 
 export type RootStackNavigation = NativeStackNavigationProp<RootStackParamList>;
@@ -64,6 +66,10 @@ const RootStackComponent = () => {
         }}
       >
         <RootStack.Screen name="Contact Form" component={ContactForm} />
+        <RootStack.Screen
+          name="Conversation Form"
+          component={ConversationForm}
+        />
       </RootStack.Group>
     </RootStack.Navigator>
   );

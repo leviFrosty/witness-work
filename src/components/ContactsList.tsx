@@ -8,8 +8,10 @@ import ContactRow from "./ContactRow";
 import { useNavigation } from "@react-navigation/native";
 import { RootStackNavigation } from "../stacks/RootStack";
 import * as Crypto from "expo-crypto";
+import useContacts from "../stores/contactsStore";
 
 const ContactsList = () => {
+  const { contacts } = useContacts();
   const navigation = useNavigation<RootStackNavigation>();
 
   return (
@@ -53,10 +55,9 @@ const ContactsList = () => {
           </TouchableOpacity>
         </View>
         <View style={{ gap: 12 }}>
-          {[...Array(12).keys()].map((val) => (
-            <ContactRow key={val} />
+          {contacts.map((contact) => (
+            <ContactRow key={contact.id} contact={contact} />
           ))}
-          <ContactRow />
         </View>
       </Card>
     </View>

@@ -25,7 +25,8 @@
     "undefined": "@expo/vector-icons/",
     "zustand": "^4.4.3",
     "expo-crypto": "~12.4.1",
-    "expo-splash-screen": "~0.20.5"
+    "expo-splash-screen": "~0.20.5",
+    "expo-checkbox": "~2.4.0"
   },
   "devDependencies": {
     "@babel/core": "^7.20.0",

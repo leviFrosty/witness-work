@@ -1,24 +1,256 @@
-import React, { PropsWithChildren, useRef } from "react";
-import {
-  TextInput,
-  View,
-  TextInputBase,
-  TextInputComponent,
-  NativeMethods,
-} from "react-native";
+import React, { PropsWithChildren, useEffect, useRef, useState } from "react";
+import { TextInput, View, Pressable } from "react-native";
 import MyText from "./MyText";
 import { RootStackParamList } from "../stacks/RootStack";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import useContacts from "../stores/contactsStore";
 import theme from "../constants/theme";
 import Divider from "./Divider";
-import { TimerMixin } from "react-native/types/private/TimerMixin";
 import { Contact } from "../types/contact";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
+import Checkbox from "expo-checkbox";
+
+const rowPaddingVertical = 15;
+
+const InputRow = ({
+  label,
+  placeholder,
+  lastInSection,
+  noHorizontalPadding,
+  textInputProps,
+}: {
+  label: string;
+  placeholder: string;
+  lastInSection?: boolean;
+  noHorizontalPadding?: boolean;
+  textInputProps?: any;
+}) => {
+  return (
+    <View
+      style={{
+        flexDirection: "row",
+        borderColor: theme.colors.border,
+        borderBottomWidth: lastInSection ? 0 : 1,
+        paddingBottom: lastInSection ? 0 : rowPaddingVertical,
+        paddingRight: noHorizontalPadding ? 0 : 20,
+        alignItems: "center",
+        flexGrow: 1,
+      }}
+    >
+      <MyText style={{ fontWeight: "600" }}>{label}</MyText>
+      <TextInput
+        hitSlop={{ top: 20, bottom: 20 }}
+        style={{ flexGrow: 1, paddingLeft: 15 }}
+        placeholder={placeholder}
+        textAlign="right"
+        returnKeyType="next"
+        {...textInputProps}
+      />
+    </View>
+  );
+};
+
+const Section: React.FC<PropsWithChildren> = ({ children }) => {
+  return (
+    <View
+      style={{
+        borderColor: theme.colors.border,
+        borderTopWidth: 2,
+        borderBottomWidth: 2,
+        backgroundColor: theme.colors.backgroundLighter,
+        paddingVertical: rowPaddingVertical,
+        paddingLeft: 25,
+        gap: 10,
+      }}
+    >
+      {children}
+    </View>
+  );
+};
+
+const PersonalContactSection = ({
+  nameInput,
+  phoneInput,
+  setName,
+  emailInput,
+  setPhone,
+  line1Input,
+  setEmail,
+}: {
+  nameInput: React.RefObject<TextInput>;
+  phoneInput: React.RefObject<TextInput>;
+  setName: React.Dispatch<React.SetStateAction<string>>;
+  emailInput: React.RefObject<TextInput>;
+  setPhone: React.Dispatch<React.SetStateAction<string>>;
+  line1Input: React.RefObject<TextInput>;
+  setEmail: React.Dispatch<React.SetStateAction<string>>;
+}) => {
+  return (
+    <Section>
+      <InputRow
+        label="Name"
+        placeholder="What's their name?"
+        textInputProps={{
+          // autoFocus: true,
+          ref: nameInput,
+          onSubmitEditing: () => phoneInput.current?.focus(),
+          onChangeText: (val: string) => setName(val),
+        }}
+      />
+      <InputRow
+        label="Phone"
+        placeholder="+x (xxx) xxx-xxxx"
+        textInputProps={{
+          ref: phoneInput,
+          onSubmitEditing: () => emailInput.current?.focus(),
+          onChangeText: (val: string) => setPhone(val),
+        }}
+      />
+      <InputRow
+        label="Email"
+        placeholder="example@acme.com"
+        lastInSection
+        textInputProps={{
+          ref: emailInput,
+          onSubmitEditing: () => line1Input.current?.focus(),
+          keyboardType: "email-address",
+          onChangeText: (val: string) => setEmail(val),
+        }}
+      />
+    </Section>
+  );
+};
+
+const AddressSection = ({
+  line1Input,
+  line2Input,
+  setLine1,
+  cityInput,
+  setLine2,
+  setCity,
+  stateInput,
+  setState,
+  zipInput,
+  countryInput,
+  setZip,
+  submit,
+  setCountry,
+}: {
+  line1Input: React.RefObject<TextInput>;
+  line2Input: React.RefObject<TextInput>;
+  setLine1: React.Dispatch<React.SetStateAction<string>>;
+  cityInput: React.RefObject<TextInput>;
+  setLine2: React.Dispatch<React.SetStateAction<string>>;
+  setCity: React.Dispatch<React.SetStateAction<string>>;
+  stateInput: React.RefObject<TextInput>;
+  setState: React.Dispatch<React.SetStateAction<string>>;
+  zipInput: React.RefObject<TextInput>;
+  countryInput: React.RefObject<TextInput>;
+  setZip: React.Dispatch<React.SetStateAction<string>>;
+  setCountry: React.Dispatch<React.SetStateAction<string>>;
+  submit: () => void;
+}) => {
+  return (
+    <Section>
+      <InputRow
+        label="Address Line 1"
+        placeholder=""
+        textInputProps={{
+          ref: line1Input,
+          onSubmitEditing: () => line2Input.current?.focus(),
+          onChangeText: (val: string) => setLine1(val),
+        }}
+      />
+      <InputRow
+        label="Address Line 2"
+        placeholder=""
+        textInputProps={{
+          ref: line2Input,
+          onSubmitEditing: () => cityInput.current?.focus(),
+          onChangeText: (val: string) => setLine2(val),
+        }}
+      />
+      <View
+        style={{
+          flexDirection: "row",
+          justifyContent: "space-between",
+        }}
+      >
+        <View style={{ width: "50%" }}>
+          <InputRow
+            label="City"
+            placeholder=""
+            textInputProps={{
+              onChangeText: (val: string) => setCity(val),
+              ref: cityInput,
+              onSubmitEditing: () => stateInput.current?.focus(),
+            }}
+          />
+        </View>
+        <View style={{ width: "50%" }}>
+          <InputRow
+            label="State"
+            placeholder=""
+            textInputProps={{
+              onChangeText: (val: string) => setState(val),
+              ref: stateInput,
+              onSubmitEditing: () => zipInput.current?.focus(),
+            }}
+          />
+        </View>
+      </View>
+      <View
+        style={{
+          flexDirection: "row",
+          justifyContent: "space-between",
+        }}
+      >
+        <View style={{ width: "50%" }}>
+          <InputRow
+            label="ZIP"
+            placeholder=""
+            lastInSection
+            textInputProps={{
+              ref: zipInput,
+              onSubmitEditing: () => countryInput.current?.focus(),
+              onChangeText: (val: string) => setZip(val),
+
+              keyboardType: "number-pad",
+            }}
+          />
+        </View>
+        <View style={{ width: "50%" }}>
+          <InputRow
+            label="Country"
+            placeholder=""
+            lastInSection
+            textInputProps={{
+              returnKeyType: "done",
+              ref: countryInput,
+              onChangeText: (val: string) => setCountry(val),
+              onSubmitEditing: submit,
+            }}
+          />
+        </View>
+      </View>
+    </Section>
+  );
+};
 
 type Props = NativeStackScreenProps<RootStackParamList, "Contact Form">;
 
 const ContactForm = ({ navigation, route }: Props) => {
+  const [name, setName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [email, setEmail] = useState("");
+  const [isBibleStudy, setIsBibleStudy] = useState(false);
+  const [line1, setLine1] = useState("");
+  const [line2, setLine2] = useState("");
+  const [city, setCity] = useState("");
+  const [state, setState] = useState("");
+  const [zip, setZip] = useState("");
+  const [country, setCountry] = useState("");
+  const nameInput = useRef<TextInput>(null);
   const phoneInput = useRef<TextInput>(null);
   const emailInput = useRef<TextInput>(null);
   const line1Input = useRef<TextInput>(null);
@@ -27,7 +259,10 @@ const ContactForm = ({ navigation, route }: Props) => {
   const stateInput = useRef<TextInput>(null);
   const zipInput = useRef<TextInput>(null);
   const countryInput = useRef<TextInput>(null);
-  const isStudyInput = useRef<TextInput>(null);
+
+  useEffect(() => {
+    nameInput.current?.focus();
+  }, []);
 
   const {
     contacts,
@@ -39,182 +274,42 @@ const ContactForm = ({ navigation, route }: Props) => {
     _WARNING_forceDeleteContacts,
   } = useContacts();
 
-  const rowPaddingVertical = 15;
-
   const submit = () => {
-    // addContact(contact)
+    const newContact: Contact = {
+      id: route.params.id,
+      name,
+      phone,
+      email,
+      isBibleStudy,
+      address: {
+        line1,
+        line2,
+        city,
+        state,
+        zip,
+        country,
+      },
+    };
+    addContact(newContact);
   };
 
-  const Section: React.FC<PropsWithChildren> = ({ children }) => {
+  const IsBibleStudyCheckbox = () => {
     return (
-      <View
-        style={{
-          borderColor: theme.colors.border,
-          borderTopWidth: 2,
-          borderBottomWidth: 2,
-          backgroundColor: theme.colors.backgroundLighter,
-          paddingVertical: rowPaddingVertical,
-          paddingLeft: 25,
-          gap: 10,
-        }}
+      <Pressable
+        style={{ flexDirection: "row", gap: 10, marginLeft: 20 }}
+        onPress={() => setIsBibleStudy(!isBibleStudy)}
       >
-        {children}
-      </View>
-    );
-  };
-
-  const InputRow = ({
-    label,
-    placeholder,
-    lastInSection,
-    noHorizontalPadding,
-    textInputProps,
-  }: {
-    label: string;
-    placeholder: string;
-    lastInSection?: boolean;
-    noHorizontalPadding?: boolean;
-    textInputProps?: any;
-  }) => {
-    return (
-      <View
-        style={{
-          flexDirection: "row",
-          borderColor: theme.colors.border,
-          borderBottomWidth: lastInSection ? 0 : 1,
-          paddingBottom: lastInSection ? 0 : rowPaddingVertical,
-          paddingRight: noHorizontalPadding ? 0 : 20,
-          alignItems: "center",
-          flexGrow: 1,
-        }}
-      >
-        <MyText style={{ fontWeight: "600" }}>{label}</MyText>
-        <TextInput
-          hitSlop={{ top: 20, bottom: 20 }}
-          style={{ flexGrow: 1, paddingLeft: 15 }}
-          placeholder={placeholder}
-          textAlign="right"
-          returnKeyType="next"
-          {...textInputProps}
+        <Checkbox
+          value={isBibleStudy}
+          onValueChange={(val) => setIsBibleStudy(val)}
         />
-      </View>
-    );
-  };
-
-  const PersonalContactSection = () => {
-    return (
-      <Section>
-        <InputRow
-          label="Name"
-          placeholder="What's their name?"
-          textInputProps={{
-            autoFocus: true,
-            onSubmitEditing: () => phoneInput.current?.focus(),
-          }}
-        />
-        <InputRow
-          label="Phone"
-          placeholder="+x (xxx) xxx-xxxx"
-          textInputProps={{
-            ref: phoneInput,
-            onSubmitEditing: () => emailInput.current?.focus(),
-          }}
-        />
-        <InputRow
-          label="Email"
-          placeholder="example@acme.com"
-          lastInSection
-          textInputProps={{
-            ref: emailInput,
-            onSubmitEditing: () => line1Input.current?.focus(),
-          }}
-        />
-      </Section>
-    );
-  };
-
-  const AddressSection = () => {
-    return (
-      <Section>
-        <InputRow
-          label="Address Line 1"
-          placeholder=""
-          textInputProps={{
-            ref: line1Input,
-            onSubmitEditing: () => line2Input.current?.focus(),
-          }}
-        />
-        <InputRow
-          label="Address Line 2"
-          placeholder=""
-          textInputProps={{
-            ref: line2Input,
-            onSubmitEditing: () => cityInput.current?.focus(),
-          }}
-        />
-        <View
-          style={{
-            flexDirection: "row",
-            justifyContent: "space-between",
-          }}
-        >
-          <View style={{ width: "50%" }}>
-            <InputRow
-              label="City"
-              placeholder=""
-              textInputProps={{
-                ref: cityInput,
-                onSubmitEditing: () => stateInput.current?.focus(),
-              }}
-            />
-          </View>
-          <View style={{ width: "50%" }}>
-            <InputRow
-              label="State"
-              placeholder=""
-              textInputProps={{
-                ref: stateInput,
-                onSubmitEditing: () => zipInput.current?.focus(),
-              }}
-            />
-          </View>
-        </View>
-        <View
-          style={{
-            flexDirection: "row",
-            justifyContent: "space-between",
-          }}
-        >
-          <View style={{ width: "50%" }}>
-            <InputRow
-              label="ZIP"
-              placeholder=""
-              lastInSection
-              textInputProps={{
-                ref: zipInput,
-                onSubmitEditing: () => countryInput.current?.focus(),
-              }}
-            />
-          </View>
-          <View style={{ width: "50%" }}>
-            <InputRow
-              label="Country"
-              placeholder=""
-              lastInSection
-              textInputProps={{
-                returnKeyType: "done",
-                ref: countryInput,
-                onSubmitEditing: submit,
-              }}
-            />
-          </View>
-        </View>
-      </Section>
+        <MyText>is Bible Study</MyText>
+      </Pressable>
     );
   };
 
   return (
-    <KeyboardAwareScrollView>
+    <KeyboardAwareScrollView automaticallyAdjustKeyboardInsets>
       <View style={{ gap: 30 }}>
         <View style={{ padding: 20, gap: 5 }}>
           <MyText style={{ fontSize: 32, fontWeight: "700" }}>
@@ -225,9 +320,33 @@ const ContactForm = ({ navigation, route }: Props) => {
             adding to JW Time.
           </MyText>
         </View>
-        <PersonalContactSection />
+        <PersonalContactSection
+          emailInput={emailInput}
+          line1Input={line1Input}
+          nameInput={nameInput}
+          phoneInput={phoneInput}
+          setEmail={setEmail}
+          setName={setName}
+          setPhone={setPhone}
+        />
+        <IsBibleStudyCheckbox />
         <Divider borderStyle="dashed" />
-        <AddressSection />
+        <AddressSection
+          cityInput={cityInput}
+          countryInput={countryInput}
+          line1Input={line1Input}
+          line2Input={line2Input}
+          setCity={setCity}
+          setLine1={setLine1}
+          setLine2={setLine2}
+          setState={setState}
+          setZip={setZip}
+          setCountry={setCountry}
+          stateInput={stateInput}
+          submit={submit}
+          zipInput={zipInput}
+        />
+        <Divider borderStyle="dashed" />
       </View>
     </KeyboardAwareScrollView>
   );

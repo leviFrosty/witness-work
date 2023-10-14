@@ -5,8 +5,10 @@ import Card from "./Card";
 import { FontAwesome } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import { RootStackNavigation } from "../stacks/RootStack";
+import { Contact } from "../types/contact";
 
-const ContactRow = () => {
+const ContactRow = ({ contact }: { contact: Contact }) => {
+  const { name, isBibleStudy } = contact;
   const navigation = useNavigation<RootStackNavigation>();
 
   return (
@@ -21,16 +23,18 @@ const ContactRow = () => {
         flexDirection="row"
       >
         <View style={{ flexGrow: 1, gap: 2 }}>
-          <MyText style={{ fontSize: 18 }}>Contact Row</MyText>
+          <MyText style={{ fontSize: 18 }}>{name}</MyText>
           <MyText style={{ color: theme.colors.textAlt, fontSize: 10 }}>
             2 Weeks Ago
           </MyText>
         </View>
         <View style={{ flexDirection: "row", gap: 10 }}>
-          <FontAwesome
-            style={{ color: theme.colors.text, fontSize: 15 }}
-            name="book"
-          />
+          {isBibleStudy && (
+            <FontAwesome
+              style={{ color: theme.colors.text, fontSize: 15 }}
+              name="book"
+            />
+          )}
           <FontAwesome
             style={{ color: theme.colors.textAlt, fontSize: 15 }}
             name="chevron-right"

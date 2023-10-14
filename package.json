@@ -23,7 +23,9 @@
     "react-native-keyboard-aware-scroll-view": "^0.9.5",
     "react-native-safe-area-context": "^4.7.2",
     "undefined": "@expo/vector-icons/",
-    "zustand": "^4.4.3"
+    "zustand": "^4.4.3",
+    "expo-crypto": "~12.4.1",
+    "expo-splash-screen": "~0.20.5"
   },
   "devDependencies": {
     "@babel/core": "^7.20.0",

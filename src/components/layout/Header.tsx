@@ -4,14 +4,48 @@ import moment from "moment";
 import { FontAwesome } from "@expo/vector-icons";
 import MyText from "../MyText";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useNavigation } from "@react-navigation/native";
+import { RootStackNavigation } from "../../stacks/RootStack";
 
-const Header = ({ title }: { title?: string }) => {
+type Props = {
+  backgroundColor?: string;
+  title?: string;
+  buttonType?: "exit" | "settings";
+  rightElement?: React.ReactNode;
+};
+
+const Header = ({
+  title,
+  buttonType,
+  rightElement,
+  backgroundColor,
+}: Props) => {
   const { top } = useSafeAreaInsets();
+  const navigation = useNavigation<RootStackNavigation>();
+
+  const handleButtonAction = () => {
+    if (buttonType === "settings") {
+      console.log("Navigating to settings...");
+    }
+    if (buttonType === "exit") {
+      navigation.popToTop();
+    }
+  };
+
+  const iconName = () => {
+    if (buttonType === "settings") {
+      return "cog";
+    }
+    if (buttonType === "exit") {
+      return "times";
+    }
+    return "cog";
+  };
 
   return (
     <View
       style={{
-        backgroundColor: theme.colors.accentBackground,
+        backgroundColor: backgroundColor || theme.colors.accentBackground,
         paddingTop: top,
       }}
     >
@@ -23,17 +57,17 @@ const Header = ({ title }: { title?: string }) => {
           flexDirection: "row",
           alignItems: "center",
           justifyContent: "center",
-          paddingVertical: 10,
+          paddingVertical: 12,
         }}
       >
         <Pressable
           style={{ position: "absolute", left: 0 }}
           hitSlop={15}
-          onPress={() => console.log("Navigating to settings...")}
+          onPress={handleButtonAction}
         >
           <FontAwesome
             style={{ color: theme.colors.textInverse, fontSize: 20 }}
-            name="cog"
+            name={iconName()}
           />
         </Pressable>
         <MyText
@@ -43,8 +77,9 @@ const Header = ({ title }: { title?: string }) => {
             color: theme.colors.textInverse,
           }}
         >
-          {title || moment().format("MMMM DD, YYYY")}
+          {title ?? moment().format("MMMM DD, YYYY")}
         </MyText>
+        {rightElement}
       </View>
     </View>
   );

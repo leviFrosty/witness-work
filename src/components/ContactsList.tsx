@@ -7,6 +7,7 @@ import MyText from "./MyText";
 import ContactRow from "./ContactRow";
 import { useNavigation } from "@react-navigation/native";
 import { RootStackNavigation } from "../stacks/RootStack";
+import * as Crypto from "expo-crypto";
 
 const ContactsList = () => {
   const navigation = useNavigation<RootStackNavigation>();
@@ -41,7 +42,9 @@ const ContactsList = () => {
               alignItems: "center",
               justifyContent: "center",
             }}
-            onPress={() => navigation.navigate("Contact Form")}
+            onPress={() =>
+              navigation.navigate("Contact Form", { id: Crypto.randomUUID() })
+            }
           >
             <FontAwesome
               style={{ fontSize: 15, color: theme.colors.textInverse }}

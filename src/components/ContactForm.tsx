@@ -35,17 +35,19 @@ const InputRow = ({
         paddingRight: noHorizontalPadding ? 0 : 20,
         alignItems: "center",
         flexGrow: 1,
+        gap: 15,
       }}
     >
       <MyText style={{ fontWeight: "600" }}>{label}</MyText>
-      <TextInput
-        hitSlop={{ top: 20, bottom: 20 }}
-        style={{ flexGrow: 1, paddingLeft: 15 }}
-        placeholder={placeholder}
-        textAlign="right"
-        returnKeyType="next"
-        {...textInputProps}
-      />
+      <View style={{ flexGrow: 1, flex: 1 }}>
+        <TextInput
+          hitSlop={{ top: 20, bottom: 20 }}
+          placeholder={placeholder}
+          textAlign="right"
+          returnKeyType="next"
+          {...textInputProps}
+        />
+      </View>
     </View>
   );
 };
@@ -94,6 +96,9 @@ const PersonalContactSection = ({
           ref: nameInput,
           onSubmitEditing: () => phoneInput.current?.focus(),
           onChangeText: (val: string) => setName(val),
+          autoCapitalize: "words",
+          autoCorrect: false,
+          autoComplete: "",
         }}
       />
       <InputRow

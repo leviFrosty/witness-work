@@ -9,66 +9,8 @@ import Divider from "./Divider";
 import { Contact } from "../types/contact";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import Checkbox from "expo-checkbox";
-
-const rowPaddingVertical = 15;
-
-const InputRow = ({
-  label,
-  placeholder,
-  lastInSection,
-  noHorizontalPadding,
-  textInputProps,
-}: {
-  label: string;
-  placeholder: string;
-  lastInSection?: boolean;
-  noHorizontalPadding?: boolean;
-  textInputProps?: any;
-}) => {
-  return (
-    <View
-      style={{
-        flexDirection: "row",
-        borderColor: theme.colors.border,
-        borderBottomWidth: lastInSection ? 0 : 1,
-        paddingBottom: lastInSection ? 0 : rowPaddingVertical,
-        paddingRight: noHorizontalPadding ? 0 : 20,
-        alignItems: "center",
-        flexGrow: 1,
-        gap: 15,
-      }}
-    >
-      <MyText style={{ fontWeight: "600" }}>{label}</MyText>
-      <View style={{ flexGrow: 1, flex: 1 }}>
-        <TextInput
-          hitSlop={{ top: 20, bottom: 20 }}
-          placeholder={placeholder}
-          textAlign="right"
-          returnKeyType="next"
-          {...textInputProps}
-        />
-      </View>
-    </View>
-  );
-};
-
-const Section: React.FC<PropsWithChildren> = ({ children }) => {
-  return (
-    <View
-      style={{
-        borderColor: theme.colors.border,
-        borderTopWidth: 2,
-        borderBottomWidth: 2,
-        backgroundColor: theme.colors.backgroundLighter,
-        paddingVertical: rowPaddingVertical,
-        paddingLeft: 25,
-        gap: 10,
-      }}
-    >
-      {children}
-    </View>
-  );
-};
+import Section from "./inputs/Section";
+import InputRow from "./inputs/InputRow";
 
 const PersonalContactSection = ({
   nameInput,
@@ -98,7 +40,6 @@ const PersonalContactSection = ({
           onChangeText: (val: string) => setName(val),
           autoCapitalize: "words",
           autoCorrect: false,
-          autoComplete: "",
         }}
       />
       <InputRow

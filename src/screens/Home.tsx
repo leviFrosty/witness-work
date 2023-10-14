@@ -22,8 +22,8 @@ const Home = () => {
       }}
     >
       <View style={{ gap: 30 }}>
-        <ServiceReport />
         <MonthlyRoutine />
+        <ServiceReport />
         <ContactsList />
         <Pressable onPress={() => set({ onboardingComplete: false })}>
           <Text>Startup Screen</Text>

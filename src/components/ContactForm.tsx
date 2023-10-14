@@ -91,7 +91,6 @@ const PersonalContactSection = ({
         label="Name"
         placeholder="What's their name?"
         textInputProps={{
-          // autoFocus: true,
           ref: nameInput,
           onSubmitEditing: () => phoneInput.current?.focus(),
           onChangeText: (val: string) => setName(val),
@@ -240,6 +239,8 @@ const AddressSection = ({
 type Props = NativeStackScreenProps<RootStackParamList, "Contact Form">;
 
 const ContactForm = ({ navigation, route }: Props) => {
+  const { addContact } = useContacts();
+
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
@@ -259,20 +260,6 @@ const ContactForm = ({ navigation, route }: Props) => {
   const stateInput = useRef<TextInput>(null);
   const zipInput = useRef<TextInput>(null);
   const countryInput = useRef<TextInput>(null);
-
-  useEffect(() => {
-    nameInput.current?.focus();
-  }, []);
-
-  const {
-    contacts,
-    deletedContacts,
-    addContact,
-    updateContact,
-    deleteContact,
-    _WARNING_clearDeleted,
-    _WARNING_forceDeleteContacts,
-  } = useContacts();
 
   const submit = () => {
     const newContact: Contact = {
@@ -311,7 +298,7 @@ const ContactForm = ({ navigation, route }: Props) => {
   return (
     <KeyboardAwareScrollView automaticallyAdjustKeyboardInsets>
       <View style={{ gap: 30 }}>
-        <View style={{ padding: 20, gap: 5 }}>
+        <View style={{ padding: 25, gap: 5 }}>
           <MyText style={{ fontSize: 32, fontWeight: "700" }}>
             Add Contact
           </MyText>
@@ -346,36 +333,9 @@ const ContactForm = ({ navigation, route }: Props) => {
           submit={submit}
           zipInput={zipInput}
         />
-        <Divider borderStyle="dashed" />
       </View>
     </KeyboardAwareScrollView>
   );
 };
 
 export default ContactForm;
-
-{
-  /* <MyText
-        onPress={() => {
-          addContact({ id: "2", name: "Bob" });
-        }}
-      >
-        Add Contact
-      </MyText>
-      <MyText
-        onPress={() => {
-          updateContact({ id: "1", name: "George" });
-        }}
-      >
-        Update Contact
-      </MyText>
-      <MyText>Contacts: {JSON.stringify(contacts, null, 2)}</MyText>
-      <MyText onPress={() => deleteContact("2")}>Delete Contact</MyText>
-      <MyText>
-        Deleted contacts: {JSON.stringify(deletedContacts, null, 2)}
-      </MyText>
-      <MyText onPress={_WARNING_forceDeleteContacts}>
-        Delete All Contacts
-      </MyText>
-      <MyText onPress={_WARNING_clearDeleted}>Clear Deleted</MyText> */
-}

@@ -3,18 +3,19 @@ import MyText from "./MyText";
 import theme from "../constants/theme";
 import Card from "./Card";
 import { FontAwesome } from "@expo/vector-icons";
-import { useNavigation } from "@react-navigation/native";
-import { RootStackNavigation } from "../stacks/RootStack";
 import { Contact } from "../types/contact";
 
-const ContactRow = ({ contact }: { contact: Contact }) => {
+const ContactRow = ({
+  contact,
+  onPress,
+}: {
+  contact: Contact;
+  onPress?: () => void;
+}) => {
   const { name, isBibleStudy } = contact;
-  const navigation = useNavigation<RootStackNavigation>();
 
   return (
-    <TouchableOpacity
-      onPress={() => navigation.navigate("Contact Details", { id: "test" })}
-    >
+    <TouchableOpacity onPress={onPress}>
       <Card
         style={{
           backgroundColor: theme.colors.backgroundLighter,

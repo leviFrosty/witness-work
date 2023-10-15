@@ -1,9 +1,10 @@
-import { View, Text, FlatList } from "react-native";
+import { View, Text } from "react-native";
 import moment from "moment";
 import { FontAwesome } from "@expo/vector-icons";
 import theme from "../constants/theme";
 import Card from "./Card";
 import MyText from "./MyText";
+import { FlashList } from "@shopify/flash-list";
 
 const Month = ({ month }: { month: number }) => {
   const currentMonth = moment().month() === month;
@@ -50,15 +51,11 @@ const MonthlyRoutine = () => {
         Monthly Routine
       </MyText>
       <Card>
-        <FlatList
+        <FlashList
           horizontal
           initialScrollIndex={moment().month()}
           keyExtractor={(item) => item.toString()}
-          getItemLayout={(_, index) => ({
-            length: 45,
-            offset: 45 * index,
-            index,
-          })}
+          estimatedItemSize={45}
           data={[...Array(12).keys()]}
           renderItem={({ item: month }) => {
             return <Month month={month} />;

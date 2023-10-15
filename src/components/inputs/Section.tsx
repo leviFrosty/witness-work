@@ -1,4 +1,4 @@
-import { PropsWithChildren, ReactNode } from "react";
+import { PropsWithChildren } from "react";
 import { View } from "react-native";
 import theme from "../../constants/theme";
 import { rowPaddingVertical } from "../../constants/Inputs";

@@ -1,5 +1,5 @@
-import React from "react";
-import { View, Text, TextInput, TouchableOpacity } from "react-native";
+import React, { useState } from "react";
+import { View, TouchableOpacity } from "react-native";
 import theme from "../constants/theme";
 import { FontAwesome } from "@expo/vector-icons";
 import Card from "./Card";
@@ -9,8 +9,10 @@ import { useNavigation } from "@react-navigation/native";
 import { RootStackNavigation } from "../stacks/RootStack";
 import * as Crypto from "expo-crypto";
 import useContacts from "../stores/contactsStore";
+import SearchBar from "./SearchBar";
 
 const ContactsList = () => {
+  const [search, setSearch] = useState("");
   const { contacts } = useContacts();
   const navigation = useNavigation<RootStackNavigation>();
 
@@ -21,20 +23,7 @@ const ContactsList = () => {
       </MyText>
       <Card>
         <View style={{ flexDirection: "row", gap: 10 }}>
-          <TextInput
-            style={{
-              height: 65,
-              borderRadius: theme.numbers.borderRadiusLg,
-              backgroundColor: theme.colors.backgroundLighter,
-              paddingHorizontal: 15,
-              borderColor: theme.colors.border,
-              borderWidth: 1,
-              flexGrow: 1,
-            }}
-            placeholder="Search for contact..."
-            clearButtonMode="while-editing"
-            returnKeyType="search"
-          />
+          <SearchBar value={search} setValue={setSearch} />
           <TouchableOpacity
             style={{
               paddingVertical: 15,
@@ -56,7 +45,13 @@ const ContactsList = () => {
         </View>
         <View style={{ gap: 12 }}>
           {contacts.map((contact) => (
-            <ContactRow key={contact.id} contact={contact} />
+            <ContactRow
+              key={contact.id}
+              contact={contact}
+              onPress={() =>
+                navigation.navigate("Contact Details", { id: contact.id })
+              }
+            />
           ))}
         </View>
       </Card>

@@ -1,48 +1,79 @@
 import { TextInput, View } from "react-native";
 import theme from "../../constants/theme";
-import { rowPaddingVertical } from "../../constants/Inputs";
 import MyText from "../MyText";
+import InputRowContainer from "./InputRowContainer";
+
+export type Errors = Record<string, string>;
 
 interface Props {
+  /**
+   * Errors key should match param id.
+   * @example errors: { name: "" }
+   * id: 'name'
+   */
+  errors?: Errors;
+  setErrors?: React.Dispatch<React.SetStateAction<Errors>>;
+  /**
+   * ID should also be used as key in error object
+   */
+  id?: string;
   label: string;
-  placeholder: string;
+  placeholder?: string;
   lastInSection?: boolean;
   noHorizontalPadding?: boolean;
+  // eslint-disable-next-line
   textInputProps?: any;
 }
 
-const InputRow: React.FC<Props> = ({
+const TextInputRow: React.FC<Props> = ({
+  id,
+  errors,
+  setErrors,
   label,
   placeholder,
   lastInSection,
   noHorizontalPadding,
   textInputProps,
 }) => {
+  const error = id && errors ? errors[id] : undefined;
+
   return (
-    <View
-      style={{
-        flexDirection: "row",
-        borderColor: theme.colors.border,
-        borderBottomWidth: lastInSection ? 0 : 1,
-        paddingBottom: lastInSection ? 0 : rowPaddingVertical,
-        paddingRight: noHorizontalPadding ? 0 : 20,
-        alignItems: "center",
-        flexGrow: 1,
-        gap: 15,
-      }}
+    <InputRowContainer
+      lastInSection={lastInSection}
+      noHorizontalPadding={noHorizontalPadding}
+      label={label}
     >
-      <MyText style={{ fontWeight: "600" }}>{label}</MyText>
-      <View style={{ flexGrow: 1, flex: 1 }}>
+      <View style={{ flexGrow: 1, flex: 1, gap: 5 }}>
         <TextInput
+          style={{
+            borderWidth: error ? 1 : 0,
+            padding: 3,
+            borderRadius: theme.numbers.borderRadiusSm,
+            borderColor: theme.colors.error,
+          }}
+          onChangeText={() => setErrors?.({ ...errors, id: "" })}
           hitSlop={{ top: 20, bottom: 20 }}
           placeholder={placeholder}
           textAlign="right"
+          clearButtonMode="while-editing"
           returnKeyType="next"
           {...textInputProps}
         />
+        {error && (
+          <MyText
+            style={{
+              color: theme.colors.error,
+              fontWeight: "600",
+              textAlign: "right",
+              fontSize: 12,
+            }}
+          >
+            {error}
+          </MyText>
+        )}
       </View>
-    </View>
+    </InputRowContainer>
   );
 };
 
-export default InputRow;
+export default TextInputRow;

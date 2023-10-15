@@ -25,7 +25,7 @@ const Header = ({
 
   const handleButtonAction = () => {
     if (buttonType === "settings") {
-      console.log("Navigating to settings...");
+      navigation.navigate("Settings");
     }
     if (buttonType === "exit") {
       navigation.popToTop();

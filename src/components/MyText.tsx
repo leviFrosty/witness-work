@@ -1,5 +1,5 @@
 import { PropsWithChildren } from "react";
-import { Text, StyleProp, TextStyle, TextProps } from "react-native";
+import { Text, TextProps } from "react-native";
 import theme from "../constants/theme";
 
 const MyText: React.FC<PropsWithChildren<TextProps>> = ({

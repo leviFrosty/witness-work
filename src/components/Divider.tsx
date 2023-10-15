@@ -2,10 +2,12 @@ import { DimensionValue, View } from "react-native";
 import theme from "../constants/theme";
 
 const Divider = ({
-  margin,
+  marginVertical,
+  marginHorizontal,
   borderStyle,
 }: {
-  margin?: DimensionValue;
+  marginHorizontal?: DimensionValue;
+  marginVertical?: DimensionValue;
   borderStyle?: "solid" | "dotted" | "dashed" | undefined;
 }) => {
   return (
@@ -16,7 +18,8 @@ const Divider = ({
         borderColor: theme.colors.border,
         borderWidth: 1,
         borderStyle,
-        margin,
+        marginVertical,
+        marginHorizontal,
       }}
     />
   );

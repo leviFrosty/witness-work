@@ -2,6 +2,7 @@ const colors = {
   text: "#373737",
   textAlt: "#9B9B9B",
   textInverse: "#FFFFFF",
+  textInverseAlt: "#E2E2E2",
   accent: "#1BD15D",
   accentBackground: "#4BD27C",
   accentAlt: "#B7DDC5",

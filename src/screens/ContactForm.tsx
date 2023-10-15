@@ -1,16 +1,17 @@
-import React, { PropsWithChildren, useEffect, useRef, useState } from "react";
+import React, { useRef, useState, useCallback, useEffect } from "react";
 import { TextInput, View, Pressable } from "react-native";
-import MyText from "./MyText";
+import MyText from "../components/MyText";
 import { RootStackParamList } from "../stacks/RootStack";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import useContacts from "../stores/contactsStore";
 import theme from "../constants/theme";
-import Divider from "./Divider";
+import Divider from "../components/Divider";
 import { Contact } from "../types/contact";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import Checkbox from "expo-checkbox";
-import Section from "./inputs/Section";
-import InputRow from "./inputs/InputRow";
+import Section from "../components/inputs/Section";
+import TextInputRow, { Errors } from "../components/inputs/InputRow";
+import Header from "../components/layout/Header";
 
 const PersonalContactSection = ({
   nameInput,
@@ -20,6 +21,8 @@ const PersonalContactSection = ({
   setPhone,
   line1Input,
   setEmail,
+  setErrors,
+  errors,
 }: {
   nameInput: React.RefObject<TextInput>;
   phoneInput: React.RefObject<TextInput>;
@@ -28,10 +31,15 @@ const PersonalContactSection = ({
   setPhone: React.Dispatch<React.SetStateAction<string>>;
   line1Input: React.RefObject<TextInput>;
   setEmail: React.Dispatch<React.SetStateAction<string>>;
+  errors: Errors;
+  setErrors: React.Dispatch<React.SetStateAction<Errors>>;
 }) => {
   return (
     <Section>
-      <InputRow
+      <TextInputRow
+        errors={errors}
+        setErrors={setErrors}
+        id="name"
         label="Name"
         placeholder="What's their name?"
         textInputProps={{
@@ -42,7 +50,7 @@ const PersonalContactSection = ({
           autoCorrect: false,
         }}
       />
-      <InputRow
+      <TextInputRow
         label="Phone"
         placeholder="+x (xxx) xxx-xxxx"
         textInputProps={{
@@ -51,7 +59,7 @@ const PersonalContactSection = ({
           onChangeText: (val: string) => setPhone(val),
         }}
       />
-      <InputRow
+      <TextInputRow
         label="Email"
         placeholder="example@acme.com"
         lastInSection
@@ -97,7 +105,7 @@ const AddressSection = ({
 }) => {
   return (
     <Section>
-      <InputRow
+      <TextInputRow
         label="Address Line 1"
         placeholder=""
         textInputProps={{
@@ -106,7 +114,7 @@ const AddressSection = ({
           onChangeText: (val: string) => setLine1(val),
         }}
       />
-      <InputRow
+      <TextInputRow
         label="Address Line 2"
         placeholder=""
         textInputProps={{
@@ -122,7 +130,7 @@ const AddressSection = ({
         }}
       >
         <View style={{ width: "50%" }}>
-          <InputRow
+          <TextInputRow
             label="City"
             placeholder=""
             textInputProps={{
@@ -133,7 +141,7 @@ const AddressSection = ({
           />
         </View>
         <View style={{ width: "50%" }}>
-          <InputRow
+          <TextInputRow
             label="State"
             placeholder=""
             textInputProps={{
@@ -151,7 +159,7 @@ const AddressSection = ({
         }}
       >
         <View style={{ width: "50%" }}>
-          <InputRow
+          <TextInputRow
             label="ZIP"
             placeholder=""
             lastInSection
@@ -165,7 +173,7 @@ const AddressSection = ({
           />
         </View>
         <View style={{ width: "50%" }}>
-          <InputRow
+          <TextInputRow
             label="Country"
             placeholder=""
             lastInSection
@@ -184,9 +192,11 @@ const AddressSection = ({
 
 type Props = NativeStackScreenProps<RootStackParamList, "Contact Form">;
 
-const ContactForm = ({ navigation, route }: Props) => {
+const ContactForm = ({ route, navigation }: Props) => {
   const { addContact } = useContacts();
-
+  const [errors, setErrors] = useState<Errors>({
+    name: "",
+  });
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
@@ -207,24 +217,94 @@ const ContactForm = ({ navigation, route }: Props) => {
   const zipInput = useRef<TextInput>(null);
   const countryInput = useRef<TextInput>(null);
 
-  const submit = () => {
-    const newContact: Contact = {
-      id: route.params.id,
-      name,
-      phone,
-      email,
-      isBibleStudy,
-      address: {
-        line1,
-        line2,
-        city,
-        state,
-        zip,
-        country,
-      },
-    };
-    addContact(newContact);
-  };
+  const validate = useCallback((): boolean => {
+    if (!name) {
+      nameInput.current?.focus();
+      setErrors({ name: "A name is required." });
+      return false;
+    }
+    if (name) {
+      setErrors({ name: "" });
+    }
+    return true;
+  }, [name]);
+
+  const submit = useCallback(() => {
+    return new Promise((resolve) => {
+      const passValidation = validate();
+      if (!passValidation) {
+        return resolve(false);
+      }
+      const newContact: Contact = {
+        id: route.params.id,
+        name,
+        phone,
+        email,
+        isBibleStudy,
+        address: {
+          line1,
+          line2,
+          city,
+          state,
+          zip,
+          country,
+        },
+      };
+      addContact(newContact);
+      resolve(newContact);
+    });
+  }, [
+    addContact,
+    city,
+    country,
+    email,
+    isBibleStudy,
+    line1,
+    line2,
+    name,
+    phone,
+    route.params.id,
+    state,
+    validate,
+    zip,
+  ]);
+
+  useEffect(() => {
+    navigation.setOptions({
+      header: ({ route: { params }, navigation }) => (
+        <Header
+          title=""
+          buttonType="exit"
+          rightElement={
+            <Pressable
+              style={{ position: "absolute", right: 0 }}
+              hitSlop={15}
+              onPress={async () => {
+                const succeeded = await submit();
+                if (!succeeded) {
+                  // Failed validation if didn't submit
+                  return;
+                }
+                navigation.replace("Conversation Form", {
+                  id: (params as { id: string }).id,
+                });
+              }}
+            >
+              <MyText
+                style={{
+                  color: theme.colors.textInverse,
+                  textDecorationLine: "underline",
+                  fontSize: 16,
+                }}
+              >
+                Continue
+              </MyText>
+            </Pressable>
+          }
+        />
+      ),
+    });
+  }, [navigation, submit, validate]);
 
   const IsBibleStudyCheckbox = () => {
     return (
@@ -261,6 +341,8 @@ const ContactForm = ({ navigation, route }: Props) => {
           setEmail={setEmail}
           setName={setName}
           setPhone={setPhone}
+          errors={errors}
+          setErrors={setErrors}
         />
         <IsBibleStudyCheckbox />
         <Divider borderStyle="dashed" />

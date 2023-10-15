@@ -1,4 +1,4 @@
-import { Text, View, TouchableOpacity } from "react-native";
+import { View, TouchableOpacity } from "react-native";
 import { useServiceReport } from "../stores/serviceReport";
 import theme from "../constants/theme";
 import ProgressBar from "./ProgressBar";
@@ -10,6 +10,7 @@ import {
 } from "../lib/serviceReport";
 import Card from "./Card";
 import MyText from "./MyText";
+import Divider from "./Divider";
 
 const LeftCard = () => {
   const { publisher } = usePreferences();
@@ -61,68 +62,85 @@ const LeftCard = () => {
   };
 
   return (
-    <TouchableOpacity
-      style={{
-        flexDirection: "column",
-        paddingHorizontal: 10,
-        paddingVertical: 10,
-        borderRadius: theme.numbers.borderRadiusSm,
-        backgroundColor: theme.colors.backgroundLighter,
-        gap: 5,
-      }}
-    >
-      <View
+    <View>
+      <TouchableOpacity
         style={{
-          flexDirection: "row",
-          alignItems: "center",
-          justifyContent: "center",
-        }}
-      >
-        <ProgressBar />
-      </View>
-      <View
-        style={{
-          justifyContent: "center",
-          alignItems: "center",
           flexDirection: "column",
-          gap: 10,
+          paddingHorizontal: 10,
+          paddingVertical: 10,
+          borderRadius: theme.numbers.borderRadiusSm,
+          backgroundColor: theme.colors.backgroundLighter,
+          gap: 5,
         }}
       >
-        <View style={{ position: "relative" }}>
-          <MyText style={{ fontSize: 32, fontWeight: "700" }}>{hours}</MyText>
-          <MyText
-            style={{
-              position: "absolute",
-              right: -25,
-              bottom: 0,
-              fontSize: 12,
-              color: theme.colors.textAlt,
-              fontWeight: "600",
-            }}
-          >
-            /{goalHours}
-          </MyText>
-        </View>
-        <MyText style={{ fontWeight: "700" }}>
-          {encouragementHourPhrase()}
-        </MyText>
         <View
           style={{
-            borderRadius: theme.numbers.borderRadiusLg,
-            backgroundColor: theme.colors.accentAlt,
-            paddingHorizontal: 25,
-            paddingVertical: 5,
+            flexDirection: "row",
+            alignItems: "center",
+            justifyContent: "center",
           }}
         >
-          <MyText style={{ fontSize: 10 }}>
-            {calculateHoursRemaining({ hours, goalHours })} hours left
+          <ProgressBar />
+        </View>
+        <View
+          style={{
+            justifyContent: "center",
+            alignItems: "center",
+            flexDirection: "column",
+            gap: 10,
+          }}
+        >
+          <View style={{ position: "relative" }}>
+            <MyText style={{ fontSize: 32, fontWeight: "700" }}>{hours}</MyText>
+            <MyText
+              style={{
+                position: "absolute",
+                right: -25,
+                bottom: 0,
+                fontSize: 12,
+                color: theme.colors.textAlt,
+                fontWeight: "600",
+              }}
+            >
+              /{goalHours}
+            </MyText>
+          </View>
+          <MyText style={{ fontWeight: "700" }}>
+            {encouragementHourPhrase()}
+          </MyText>
+          <View
+            style={{
+              borderRadius: theme.numbers.borderRadiusLg,
+              backgroundColor: theme.colors.accentAlt,
+              paddingHorizontal: 25,
+              paddingVertical: 5,
+            }}
+          >
+            <MyText style={{ fontSize: 10 }}>
+              {calculateHoursRemaining({ hours, goalHours })} hours left
+            </MyText>
+          </View>
+          <MyText style={{ fontSize: 8, color: theme.colors.textAlt }}>
+            Goal is based on your publisher type
           </MyText>
         </View>
-        <MyText style={{ fontSize: 8, color: theme.colors.textAlt }}>
-          Goal is based on your publisher type
+      </TouchableOpacity>
+      <Divider borderStyle="dashed" />
+      <TouchableOpacity
+        style={{
+          flexDirection: "column",
+          paddingHorizontal: 10,
+          paddingVertical: 10,
+          borderRadius: theme.numbers.borderRadiusSm,
+          backgroundColor: theme.colors.backgroundLighter,
+          gap: 5,
+        }}
+      >
+        <MyText style={{ textAlign: "center", fontWeight: "700" }}>
+          Add Time
         </MyText>
-      </View>
-    </TouchableOpacity>
+      </TouchableOpacity>
+    </View>
   );
 };
 

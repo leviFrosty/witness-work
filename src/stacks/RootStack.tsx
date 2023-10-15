@@ -10,13 +10,14 @@ import ContactSelector from "../screens/ContactSelector";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { View } from "react-native";
 import theme from "../constants/theme";
+import ContactDetails from "../screens/ContactDetails";
 
 export type RootStackParamList = {
   Home: undefined;
+  Settings: undefined;
   "Conversation Form": { id: string }; // Contact ID
   "Contact Details": { id: string }; // Contact ID
-  "Contact Form": { id: string }; // Contact ID
-  Settings: undefined;
+  "Contact Form": { id: string; edit?: boolean }; // Contact ID
   "Contact Selector": undefined;
 };
 
@@ -35,6 +36,11 @@ const RootStackComponent = () => {
         component={Home}
       />
       <RootStack.Group>
+        <RootStack.Screen
+          options={{ presentation: "containedModal" }}
+          name="Contact Details"
+          component={ContactDetails}
+        />
         <RootStack.Screen name="Contact Form" component={ContactForm} />
         <RootStack.Screen
           name="Conversation Form"

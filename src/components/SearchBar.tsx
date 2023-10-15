@@ -1,4 +1,3 @@
-import { ReactNode } from "react";
 import { TextInput } from "react-native";
 import theme from "../constants/theme";
 

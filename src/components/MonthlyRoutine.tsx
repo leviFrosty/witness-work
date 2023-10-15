@@ -32,14 +32,14 @@ const Month = ({ month }: { month: number }) => {
           name="check"
         />
       </View>
-      <Text
+      <MyText
         style={{
           textAlign: "center",
           color: currentMonth ? theme.colors.textInverse : theme.colors.textAlt,
         }}
       >
         {moment().month(month).format("MMM")}
-      </Text>
+      </MyText>
     </View>
   );
 };

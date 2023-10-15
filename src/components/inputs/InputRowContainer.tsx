@@ -9,6 +9,14 @@ interface Props {
   lastInSection?: boolean;
   noHorizontalPadding?: boolean;
   label?: string;
+  justifyContent?:
+    | "flex-start"
+    | "flex-end"
+    | "center"
+    | "space-between"
+    | "space-around"
+    | "space-evenly"
+    | undefined;
 }
 
 const InputRowContainer: React.FC<PropsWithChildren<Props>> = ({
@@ -16,6 +24,7 @@ const InputRowContainer: React.FC<PropsWithChildren<Props>> = ({
   lastInSection,
   noHorizontalPadding,
   label,
+  justifyContent,
 }: Props) => {
   return (
     <View
@@ -27,6 +36,7 @@ const InputRowContainer: React.FC<PropsWithChildren<Props>> = ({
         paddingRight: noHorizontalPadding ? 0 : 20,
         alignItems: "center",
         flexGrow: 1,
+        justifyContent,
         gap: 15,
       }}
     >

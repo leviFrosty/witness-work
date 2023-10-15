@@ -10,6 +10,7 @@ import { RootStackNavigation } from "../stacks/RootStack";
 import * as Crypto from "expo-crypto";
 import useContacts from "../stores/contactsStore";
 import SearchBar from "./SearchBar";
+import { FlashList } from "@shopify/flash-list";
 
 const ContactsList = () => {
   const [search, setSearch] = useState("");
@@ -43,16 +44,23 @@ const ContactsList = () => {
             />
           </TouchableOpacity>
         </View>
-        <View style={{ gap: 12 }}>
-          {contacts.map((contact) => (
-            <ContactRow
-              key={contact.id}
-              contact={contact}
-              onPress={() =>
-                navigation.navigate("Contact Details", { id: contact.id })
-              }
-            />
-          ))}
+        <View style={{ flex: 1, minHeight: 10 }}>
+          <FlashList
+            data={contacts}
+            renderItem={({ item }) => (
+              <ContactRow
+                key={item.id}
+                contact={item}
+                onPress={() =>
+                  navigation.navigate("Contact Details", { id: item.id })
+                }
+              />
+            )}
+            estimatedItemSize={84}
+            ItemSeparatorComponent={() => (
+              <View style={{ marginVertical: 6 }} />
+            )}
+          />
         </View>
       </Card>
     </View>

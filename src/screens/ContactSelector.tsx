@@ -10,7 +10,6 @@ import { useNavigation } from "@react-navigation/native";
 import { RootStackNavigation } from "../stacks/RootStack";
 import Divider from "../components/Divider";
 import ContactRow from "../components/ContactRow";
-import { FontAwesome } from "@expo/vector-icons";
 
 const ContactSelector = () => {
   const navigation = useNavigation<RootStackNavigation>();

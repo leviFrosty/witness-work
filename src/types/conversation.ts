@@ -7,5 +7,6 @@ export type Conversation = {
   note?: string;
   followUp?: {
     date: Date;
+    topic?: string;
   };
 };

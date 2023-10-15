@@ -16,9 +16,9 @@ const colors = {
   accent3Alt: "#EBFCFF",
   error: "#E30909",
   errorAlt: "#FA6868",
-  warn: "#FFF500",
-  warnAlt: "#FDFFA5",
-  shadow: "#000",
+  warn: "#FCC014",
+  warnAlt: "#FFEAB8",
+  shadow: "#000000",
 };
 
 const numbers = {

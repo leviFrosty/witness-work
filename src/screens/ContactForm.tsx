@@ -12,6 +12,7 @@ import Checkbox from "expo-checkbox";
 import Section from "../components/inputs/Section";
 import TextInputRow, { Errors } from "../components/inputs/InputRow";
 import Header from "../components/layout/Header";
+import CheckboxWithLabel from "../components/inputs/CheckboxWithLabel";
 
 const PersonalContactSection = ({
   nameInput,

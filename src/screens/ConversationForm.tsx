@@ -131,7 +131,16 @@ const ConversationForm = ({ route, navigation }: Props) => {
       notifyMe: false,
     },
   });
-  const [notifyMe, setNotifyMe] = useState(false);
+  const setNotifyMe = (notifyMe: boolean) => {
+    setConversation({
+      ...conversation,
+      followUp: {
+        ...conversation.followUp!,
+        notifyMe,
+      },
+    });
+  };
+
   const selectedContact = contacts.find((c) => c.id === assignedContactId);
   const { addConversation } = useConversations();
   const [notificationsAllowed, setNotificationsAllowed] =
@@ -287,7 +296,7 @@ const ConversationForm = ({ route, navigation }: Props) => {
         return notifications;
       };
 
-      if (notifyMe && notificationsAllowed) {
+      if (conversation.followUp?.notifyMe && notificationsAllowed) {
         scheduleNotifications()
           .then((notifications) => {
             const conversationWithIds: Conversation = {
@@ -313,7 +322,6 @@ const ConversationForm = ({ route, navigation }: Props) => {
     addConversation,
     conversation,
     notificationsAllowed,
-    notifyMe,
     selectedContact,
     validate,
   ]);
@@ -457,7 +465,7 @@ const ConversationForm = ({ route, navigation }: Props) => {
           >
             <CheckboxWithLabel
               label=""
-              value={notifyMe}
+              value={conversation.followUp?.notifyMe || false}
               setValue={setNotifyMe}
               disabled={!notificationsAllowed}
               description="Notifications are disabled. Enable them via device settings to use this feature."

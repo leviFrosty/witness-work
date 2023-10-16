@@ -46,7 +46,7 @@ const ConversationRow = ({ conversation }: { conversation: Conversation }) => {
           onPress={() =>
             Alert.alert(
               "Delete Conversation?",
-              "Deleting this conversation will permanently remove it. You cannot restore conversations.",
+              "Deleting this conversation will permanently remove it and assigned notifications.",
               [
                 {
                   text: "Cancel",
@@ -69,7 +69,7 @@ const ConversationRow = ({ conversation }: { conversation: Conversation }) => {
       {hasNoConversationDetails && (
         <MyText>No conversation notes saved.</MyText>
       )}
-      {!conversation.followUp?.notifyMe && (
+      {conversation.followUp?.notifyMe && (
         <View style={{ gap: 5 }}>
           <Divider />
           <View

@@ -207,7 +207,13 @@ const RightCard = () => {
           {encouragementStudiesPhrase(studies)}
         </MyText>
       </View>
-      <MyText style={{ fontSize: 8, color: theme.colors.textAlt }}>
+      <MyText
+        style={{
+          fontSize: 8,
+          color: theme.colors.textAlt,
+          textAlign: "center",
+        }}
+      >
         Based on contacts
       </MyText>
     </TouchableOpacity>

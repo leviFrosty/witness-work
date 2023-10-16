@@ -6,7 +6,7 @@ import {
   Alert,
   ScrollView,
 } from "react-native";
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import MyText from "../components/MyText";
 import theme from "../constants/theme";
 import { RootStackParamList } from "../stacks/RootStack";
@@ -260,7 +260,7 @@ const DeleteContactButton = ({
         onPress={() =>
           Alert.alert(
             "Delete Contact?",
-            "This contact will be deleted. You can restore it later from the deleted contacts.",
+            "This contact will be deleted. You can restore it later from your deleted contacts.",
             [
               {
                 text: "Cancel",
@@ -299,6 +299,15 @@ const ContactDetails = ({ route, navigation }: Props) => {
   const { contacts, deleteContact } = useContacts();
   const contact = contacts.find((c) => c.id === params.id);
   const { conversations } = useConversations();
+
+  const contactConversations = conversations.filter(
+    ({ contact: { id } }) => id === contact?.id
+  );
+
+  const contactConversationsSorted = useMemo(
+    () => contactConversations.sort((a, b) => (a.date < b.date ? 1 : 0)),
+    [contactConversations]
+  );
 
   useEffect(() => {
     navigation.setOptions({
@@ -370,10 +379,6 @@ const ContactDetails = ({ route, navigation }: Props) => {
     );
   }
 
-  const contactConversations = conversations.filter(
-    ({ contact: { id } }) => id === contact.id
-  );
-
   const { name, address, isBibleStudy, phone, email } = contact;
 
   const hasAddress =
@@ -409,7 +414,7 @@ const ContactDetails = ({ route, navigation }: Props) => {
                   <ConversationRow conversation={item} />
                 )}
                 ItemSeparatorComponent={() => <Divider marginVertical={15} />}
-                data={contactConversations}
+                data={contactConversationsSorted}
                 ListEmptyComponent={
                   <MyText>
                     Tap the plus icon above to add a conversation.

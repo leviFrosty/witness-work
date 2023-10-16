@@ -2,6 +2,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { create } from "zustand";
 import { persist, combine, createJSONStorage } from "zustand/middleware";
 import { Conversation } from "../types/conversation";
+import * as Notifications from "expo-notifications";
 
 const initialState = {
   conversations: [] as Conversation[],
@@ -33,6 +34,12 @@ export const useConversations = create(
           if (!foundConversation) {
             return {};
           }
+
+          foundConversation.followUp?.notifications?.forEach(
+            async ({ id }) =>
+              await Notifications.cancelScheduledNotificationAsync(id)
+          );
+
           return {
             conversations: conversations.filter(
               (conversation) => conversation.id !== id

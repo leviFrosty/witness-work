@@ -1,3 +1,8 @@
+export type Notification = {
+  date: Date;
+  id: string;
+};
+
 export type Conversation = {
   id: string;
   contact: {
@@ -9,5 +14,6 @@ export type Conversation = {
     date: Date;
     notifyMe: boolean;
     topic?: string;
+    notifications?: Notification[];
   };
 };

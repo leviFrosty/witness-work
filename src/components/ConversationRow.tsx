@@ -1,12 +1,14 @@
-import { View } from "react-native";
+import { Alert, View } from "react-native";
 import MyText from "./MyText";
 import { Conversation } from "../types/conversation";
 import moment from "moment";
 import theme from "../constants/theme";
 import { FontAwesome } from "@expo/vector-icons";
 import Divider from "./Divider";
+import useConversations from "../stores/conversationStore";
 
 const ConversationRow = ({ conversation }: { conversation: Conversation }) => {
+  const { deleteConversation } = useConversations();
   const notificationHasPassed =
     conversation.followUp &&
     moment(conversation.followUp.date).isSameOrAfter(moment());
@@ -22,11 +24,47 @@ const ConversationRow = ({ conversation }: { conversation: Conversation }) => {
         padding: 15,
       }}
     >
-      <MyText
-        style={{ fontSize: 12, fontWeight: "600", color: theme.colors.textAlt }}
+      <View
+        style={{
+          flexDirection: "row",
+          justifyContent: "space-between",
+          alignItems: "center",
+        }}
       >
-        {moment(conversation.date).format("MMM DD, YYYY")}
-      </MyText>
+        <MyText
+          style={{
+            fontSize: 12,
+            fontWeight: "600",
+            color: theme.colors.textAlt,
+          }}
+        >
+          {moment(conversation.date).format("MMM DD, YYYY")}
+        </MyText>
+        <FontAwesome
+          name="trash"
+          style={{ color: theme.colors.textAlt }}
+          onPress={() =>
+            Alert.alert(
+              "Delete Conversation?",
+              "Deleting this conversation will permanently remove it. You cannot restore conversations.",
+              [
+                {
+                  text: "Cancel",
+                  style: "cancel",
+                },
+                {
+                  text: "Delete",
+                  style: "destructive",
+                  onPress: () => {
+                    deleteConversation(conversation.id);
+                  },
+                },
+              ]
+            )
+          }
+        />
+      </View>
+
       {!!conversation.note?.length && <MyText>{conversation.note}</MyText>}
       {hasNoConversationDetails && (
         <MyText>No conversation notes saved.</MyText>

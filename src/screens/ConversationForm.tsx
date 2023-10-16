@@ -16,7 +16,7 @@ import Divider from "../components/Divider";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import Section from "../components/inputs/Section";
 import { FontAwesome } from "@expo/vector-icons";
-import { Conversation } from "../types/conversation";
+import { Conversation, Notification } from "../types/conversation";
 import InputRowContainer from "../components/inputs/InputRowContainer";
 import RNDateTimePicker, {
   DateTimePickerEvent,
@@ -128,6 +128,7 @@ const ConversationForm = ({ route, navigation }: Props) => {
     followUp: {
       date: new Date(),
       topic: "",
+      notifyMe: false,
     },
   });
   const [notifyMe, setNotifyMe] = useState(false);
@@ -187,70 +188,126 @@ const ConversationForm = ({ route, navigation }: Props) => {
       if (!passValidation) {
         return resolve(false);
       }
-      // Selected contact will always be available here because validation forces contact.id
-      const scheduleNotification = async () => {
+
+      const scheduleNotifications = async () => {
         if (!conversation.followUp) {
-          return;
+          return [];
         }
-        // If notifications fail, we cannot really do anything to retry. It's likely set in the past from the current date.
-        await Notifications.scheduleNotificationAsync({
-          content: {
-            title: `Conversation Reminder`,
-            body: `Hey! Your chat with ${
-              selectedContact!.name
-            } is in 2 hours.📌${
-              conversation.followUp.topic &&
-              `\nTopic: ${conversation.followUp.topic}`
-            }`,
-            data: { data: "goes here" },
-            sound: true,
-          },
-          trigger: {
-            date: moment(conversation.followUp.date)
-              .subtract(2, "hours")
-              .toDate(),
-          },
-        }).catch(() => {});
-        await Notifications.scheduleNotificationAsync({
-          content: {
-            title: `Conversation Reminder`,
-            body: `⏰ Your chat with ${
-              selectedContact!.name
-            } is in 15 mins. Prep up and get ready for a fruitful conversation!🚀📖${
-              conversation.followUp.topic &&
-              `\nTopic: ${conversation.followUp.topic}`
-            }`,
-            data: { data: "goes here" },
-            sound: true,
-          },
-          trigger: {
-            date: moment(conversation.followUp.date)
-              .subtract(15, "minutes")
-              .toDate(),
-          },
-        }).catch(() => {});
-        await Notifications.scheduleNotificationAsync({
-          content: {
-            title: `Conversation Reminder`,
-            body: `It's time for your chat with ${
-              selectedContact!.name
-            } now.🎉 Have a great conversation!☕${
-              conversation.followUp.topic &&
-              `\nTopic: ${conversation.followUp.topic}`
-            }`,
-            data: { data: "goes here" },
-            sound: true,
-          },
-          trigger: { date: conversation.followUp.date },
-        }).catch(() => {});
+
+        const notifications: Notification[] = [];
+
+        const twoHoursBeforeDate = moment(conversation.followUp.date)
+          .subtract(2, "hours")
+          .toDate();
+        if (moment(twoHoursBeforeDate).isAfter(moment())) {
+          try {
+            const notificationId1 =
+              await Notifications.scheduleNotificationAsync({
+                content: {
+                  title: "Conversation Reminder",
+                  body: `Hey! Your chat with ${
+                    selectedContact!.name
+                  } is in 2 hours.📌${
+                    conversation.followUp.topic &&
+                    `\nTopic: ${conversation.followUp.topic}`
+                  }`,
+                  data: { data: "goes here" },
+                  sound: true,
+                },
+                trigger: {
+                  date: twoHoursBeforeDate,
+                },
+              });
+            notifications.push({
+              date: twoHoursBeforeDate,
+              id: notificationId1,
+            });
+          } catch (error) {
+            console.error(error);
+          }
+        }
+
+        const fifteenMinutesBeforeDate = moment(conversation.followUp.date)
+          .subtract(15, "minutes")
+          .toDate();
+
+        if (moment(twoHoursBeforeDate).isAfter(moment())) {
+          try {
+            const notificationId2 =
+              await Notifications.scheduleNotificationAsync({
+                content: {
+                  title: "Conversation Reminder",
+                  body: `⏰ Your chat with ${
+                    selectedContact!.name
+                  } is in 15 mins. Prep up and get ready for a fruitful conversation!🚀📖${
+                    conversation.followUp.topic &&
+                    `\nTopic: ${conversation.followUp.topic}`
+                  }`,
+                  data: { data: "goes here" },
+                  sound: true,
+                },
+                trigger: {
+                  date: fifteenMinutesBeforeDate,
+                },
+              });
+            notifications.push({
+              date: fifteenMinutesBeforeDate,
+              id: notificationId2,
+            });
+          } catch (error) {
+            console.error(error);
+          }
+        }
+
+        try {
+          const notificationId3 = await Notifications.scheduleNotificationAsync(
+            {
+              content: {
+                title: "Conversation Reminder",
+                body: `It's time for your chat with ${
+                  selectedContact!.name
+                } now.🎉${
+                  conversation.followUp.topic &&
+                  `\nTopic: ${conversation.followUp.topic}`
+                }`,
+                data: { data: "goes here" },
+                sound: true,
+              },
+              trigger: { date: conversation.followUp.date },
+            }
+          );
+          notifications.push({
+            date: conversation.followUp!.date,
+            id: notificationId3,
+          });
+        } catch (error) {
+          console.error(error);
+        }
+
+        return notifications;
       };
 
       if (notifyMe && notificationsAllowed) {
-        scheduleNotification();
+        scheduleNotifications()
+          .then((notifications) => {
+            const conversationWithIds: Conversation = {
+              ...conversation,
+              followUp: {
+                ...conversation.followUp!,
+                notifications,
+              },
+            };
+            addConversation(conversationWithIds);
+            resolve(conversation);
+          })
+          .catch((error) => {
+            console.error(error);
+            resolve(false);
+          });
+      } else {
+        addConversation(conversation);
+        resolve(conversation);
       }
-
-      addConversation(conversation);
-      resolve(conversation);
     });
   }, [
     addConversation,

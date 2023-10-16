@@ -181,7 +181,7 @@ const AddressRow = ({ contact }: { contact: Contact }) => {
             }}
           >
             {Object.keys(address).map((key) => {
-              return <MyText>{address[key as keyof Address]}</MyText>;
+              return <MyText key={key}>{address[key as keyof Address]}</MyText>;
             })}
           </View>
           <FontAwesome

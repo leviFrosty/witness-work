@@ -14,6 +14,7 @@ import TextInputRow, { Errors } from "../components/inputs/InputRow";
 import Header from "../components/layout/Header";
 
 const PersonalContactSection = ({
+  contact,
   nameInput,
   phoneInput,
   setName,
@@ -24,13 +25,14 @@ const PersonalContactSection = ({
   setErrors,
   errors,
 }: {
+  contact: Contact;
   nameInput: React.RefObject<TextInput>;
   phoneInput: React.RefObject<TextInput>;
-  setName: React.Dispatch<React.SetStateAction<string>>;
+  setName: (name: string) => void;
   emailInput: React.RefObject<TextInput>;
-  setPhone: React.Dispatch<React.SetStateAction<string>>;
+  setPhone: (phone: string) => void;
   line1Input: React.RefObject<TextInput>;
-  setEmail: React.Dispatch<React.SetStateAction<string>>;
+  setEmail: (email: string) => void;
   errors: Errors;
   setErrors: React.Dispatch<React.SetStateAction<Errors>>;
 }) => {
@@ -46,6 +48,7 @@ const PersonalContactSection = ({
           ref: nameInput,
           onSubmitEditing: () => phoneInput.current?.focus(),
           onChangeText: (val: string) => setName(val),
+          value: contact.name,
           autoCapitalize: "words",
           autoCorrect: false,
         }}
@@ -57,6 +60,7 @@ const PersonalContactSection = ({
           ref: phoneInput,
           onSubmitEditing: () => emailInput.current?.focus(),
           onChangeText: (val: string) => setPhone(val),
+          value: contact.phone,
         }}
       />
       <TextInputRow
@@ -68,6 +72,7 @@ const PersonalContactSection = ({
           onSubmitEditing: () => line1Input.current?.focus(),
           keyboardType: "email-address",
           onChangeText: (val: string) => setEmail(val),
+          value: contact.email,
         }}
       />
     </Section>
@@ -75,6 +80,7 @@ const PersonalContactSection = ({
 };
 
 const AddressSection = ({
+  contact,
   line1Input,
   line2Input,
   setLine1,
@@ -86,22 +92,21 @@ const AddressSection = ({
   zipInput,
   countryInput,
   setZip,
-  submit,
   setCountry,
 }: {
+  contact: Contact;
   line1Input: React.RefObject<TextInput>;
   line2Input: React.RefObject<TextInput>;
-  setLine1: React.Dispatch<React.SetStateAction<string>>;
+  setLine1: (line1: string) => void;
   cityInput: React.RefObject<TextInput>;
-  setLine2: React.Dispatch<React.SetStateAction<string>>;
-  setCity: React.Dispatch<React.SetStateAction<string>>;
+  setLine2: (line2: string) => void;
+  setCity: (city: string) => void;
   stateInput: React.RefObject<TextInput>;
-  setState: React.Dispatch<React.SetStateAction<string>>;
+  setState: (state: string) => void;
   zipInput: React.RefObject<TextInput>;
   countryInput: React.RefObject<TextInput>;
-  setZip: React.Dispatch<React.SetStateAction<string>>;
-  setCountry: React.Dispatch<React.SetStateAction<string>>;
-  submit: () => void;
+  setZip: (zip: string) => void;
+  setCountry: (country: string) => void;
 }) => {
   return (
     <Section>
@@ -112,6 +117,7 @@ const AddressSection = ({
           ref: line1Input,
           onSubmitEditing: () => line2Input.current?.focus(),
           onChangeText: (val: string) => setLine1(val),
+          value: contact.address?.line1 || "",
         }}
       />
       <TextInputRow
@@ -121,6 +127,7 @@ const AddressSection = ({
           ref: line2Input,
           onSubmitEditing: () => cityInput.current?.focus(),
           onChangeText: (val: string) => setLine2(val),
+          value: contact.address?.line2 || "",
         }}
       />
       <View
@@ -134,9 +141,10 @@ const AddressSection = ({
             label="City"
             placeholder=""
             textInputProps={{
-              onChangeText: (val: string) => setCity(val),
               ref: cityInput,
               onSubmitEditing: () => stateInput.current?.focus(),
+              onChangeText: (val: string) => setCity(val),
+              value: contact.address?.city || "",
             }}
           />
         </View>
@@ -145,9 +153,10 @@ const AddressSection = ({
             label="State"
             placeholder=""
             textInputProps={{
-              onChangeText: (val: string) => setState(val),
               ref: stateInput,
               onSubmitEditing: () => zipInput.current?.focus(),
+              onChangeText: (val: string) => setState(val),
+              value: contact.address?.state || "",
             }}
           />
         </View>
@@ -167,7 +176,7 @@ const AddressSection = ({
               ref: zipInput,
               onSubmitEditing: () => countryInput.current?.focus(),
               onChangeText: (val: string) => setZip(val),
-
+              value: contact.address?.zip || "",
               keyboardType: "number-pad",
             }}
           />
@@ -178,10 +187,9 @@ const AddressSection = ({
             placeholder=""
             lastInSection
             textInputProps={{
-              returnKeyType: "done",
               ref: countryInput,
               onChangeText: (val: string) => setCountry(val),
-              onSubmitEditing: submit,
+              value: contact.address?.country || "",
             }}
           />
         </View>
@@ -193,20 +201,111 @@ const AddressSection = ({
 type Props = NativeStackScreenProps<RootStackParamList, "Contact Form">;
 
 const ContactForm = ({ route, navigation }: Props) => {
-  const { addContact } = useContacts();
+  const { addContact, contacts, updateContact } = useContacts();
+  const editMode = route.params.edit;
   const [errors, setErrors] = useState<Errors>({
     name: "",
   });
-  const [name, setName] = useState("");
-  const [phone, setPhone] = useState("");
-  const [email, setEmail] = useState("");
-  const [isBibleStudy, setIsBibleStudy] = useState(false);
-  const [line1, setLine1] = useState("");
-  const [line2, setLine2] = useState("");
-  const [city, setCity] = useState("");
-  const [state, setState] = useState("");
-  const [zip, setZip] = useState("");
-  const [country, setCountry] = useState("");
+  const contactToUpdate = editMode
+    ? contacts.find((c) => c.id === route.params.id)
+    : undefined;
+  const [contact, setContact] = useState<Contact>(
+    contactToUpdate || {
+      id: route.params.id,
+      createdAt: new Date(),
+      name: "",
+      address: {
+        line1: "",
+        line2: "",
+        city: "",
+        state: "",
+        zip: "",
+        country: "",
+      },
+      email: "",
+      isBibleStudy: false,
+      phone: "",
+    }
+  );
+
+  const setName = (name: string) => {
+    setContact({
+      ...contact,
+      name,
+    });
+  };
+  const setPhone = (phone: string) => {
+    setContact({
+      ...contact,
+      phone,
+    });
+  };
+  const setEmail = (email: string) => {
+    setContact({
+      ...contact,
+      email,
+    });
+  };
+  const setIsBibleStudy = (isBibleStudy: boolean) => {
+    setContact({
+      ...contact,
+      isBibleStudy,
+    });
+  };
+  const setLine1 = (line1: string) => {
+    setContact({
+      ...contact,
+      address: {
+        ...contact.address,
+        line1,
+      },
+    });
+  };
+  const setLine2 = (line2: string) => {
+    setContact({
+      ...contact,
+      address: {
+        ...contact.address,
+        line2,
+      },
+    });
+  };
+  const setCity = (city: string) => {
+    setContact({
+      ...contact,
+      address: {
+        ...contact.address,
+        city,
+      },
+    });
+  };
+  const setState = (state: string) => {
+    setContact({
+      ...contact,
+      address: {
+        ...contact.address,
+        state,
+      },
+    });
+  };
+  const setZip = (zip: string) => {
+    setContact({
+      ...contact,
+      address: {
+        ...contact.address,
+        zip,
+      },
+    });
+  };
+  const setCountry = (country: string) => {
+    setContact({
+      ...contact,
+      address: {
+        ...contact.address,
+        country,
+      },
+    });
+  };
   const nameInput = useRef<TextInput>(null);
   const phoneInput = useRef<TextInput>(null);
   const emailInput = useRef<TextInput>(null);
@@ -218,16 +317,16 @@ const ContactForm = ({ route, navigation }: Props) => {
   const countryInput = useRef<TextInput>(null);
 
   const validate = useCallback((): boolean => {
-    if (!name) {
+    if (!contact.name) {
       nameInput.current?.focus();
       setErrors({ name: "A name is required." });
       return false;
     }
-    if (name) {
+    if (contact.name) {
       setErrors({ name: "" });
     }
     return true;
-  }, [name]);
+  }, [contact.name]);
 
   const submit = useCallback(() => {
     return new Promise((resolve) => {
@@ -235,40 +334,14 @@ const ContactForm = ({ route, navigation }: Props) => {
       if (!passValidation) {
         return resolve(false);
       }
-      const newContact: Contact = {
-        id: route.params.id,
-        name,
-        phone,
-        email,
-        isBibleStudy,
-        createdAt: new Date(),
-        address: {
-          line1,
-          line2,
-          city,
-          state,
-          zip,
-          country,
-        },
-      };
-      addContact(newContact);
-      resolve(newContact);
+      if (editMode) {
+        updateContact(contact);
+      } else {
+        addContact(contact);
+      }
+      resolve(contact);
     });
-  }, [
-    addContact,
-    city,
-    country,
-    email,
-    isBibleStudy,
-    line1,
-    line2,
-    name,
-    phone,
-    route.params.id,
-    state,
-    validate,
-    zip,
-  ]);
+  }, [addContact, contact, editMode, updateContact, validate]);
 
   useEffect(() => {
     navigation.setOptions({
@@ -286,6 +359,13 @@ const ContactForm = ({ route, navigation }: Props) => {
                   // Failed validation if didn't submit
                   return;
                 }
+                if (editMode) {
+                  navigation.replace("Contact Details", {
+                    id: (params as { id: string }).id,
+                  });
+                  return;
+                }
+
                 navigation.replace("Conversation Form", {
                   id: (params as { id: string }).id,
                 });
@@ -298,23 +378,23 @@ const ContactForm = ({ route, navigation }: Props) => {
                   fontSize: 16,
                 }}
               >
-                Continue
+                {editMode ? "Save" : "Continue"}
               </MyText>
             </Pressable>
           }
         />
       ),
     });
-  }, [navigation, submit, validate]);
+  }, [editMode, navigation, submit, validate]);
 
   const IsBibleStudyCheckbox = () => {
     return (
       <Pressable
         style={{ flexDirection: "row", gap: 10, marginLeft: 20 }}
-        onPress={() => setIsBibleStudy(!isBibleStudy)}
+        onPress={() => setIsBibleStudy(!contact.isBibleStudy)}
       >
         <Checkbox
-          value={isBibleStudy}
+          value={contact.isBibleStudy}
           onValueChange={(val) => setIsBibleStudy(val)}
         />
         <MyText>is Bible Study</MyText>
@@ -327,7 +407,7 @@ const ContactForm = ({ route, navigation }: Props) => {
       <View style={{ gap: 30 }}>
         <View style={{ padding: 25, gap: 5 }}>
           <MyText style={{ fontSize: 32, fontWeight: "700" }}>
-            Add Contact
+            {editMode ? "Edit" : "Add"} Contact
           </MyText>
           <MyText style={{ color: theme.colors.textAlt, fontSize: 12 }}>
             Enter the contact information below for the person you will be
@@ -335,6 +415,7 @@ const ContactForm = ({ route, navigation }: Props) => {
           </MyText>
         </View>
         <PersonalContactSection
+          contact={contact}
           emailInput={emailInput}
           line1Input={line1Input}
           nameInput={nameInput}
@@ -348,6 +429,7 @@ const ContactForm = ({ route, navigation }: Props) => {
         <IsBibleStudyCheckbox />
         <Divider borderStyle="dashed" />
         <AddressSection
+          contact={contact}
           cityInput={cityInput}
           countryInput={countryInput}
           line1Input={line1Input}
@@ -359,7 +441,6 @@ const ContactForm = ({ route, navigation }: Props) => {
           setZip={setZip}
           setCountry={setCountry}
           stateInput={stateInput}
-          submit={submit}
           zipInput={zipInput}
         />
       </View>

@@ -6,24 +6,24 @@ import ServiceReport from "../components/ServiceReport";
 import ContactsList from "../components/ContactsList";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import * as Notifications from "expo-notifications";
-import { useEffect } from "react";
+// import * as Notifications from "expo-notifications";
+// import { useEffect } from "react";
 
 const Home = () => {
   // const { set } = usePreferences();
   const { bottom } = useSafeAreaInsets();
 
-  useEffect(() => {
-    // const cancelAllNotifs = async () => {
-    //   await Notifications.cancelAllScheduledNotificationsAsync();
-    // };
-    // cancelAllNotifs();
-    const scheduledNotifs = async () =>
-      await Notifications.getAllScheduledNotificationsAsync();
-    scheduledNotifs().then((result) =>
-      console.log("Scheduled Notifications\n", JSON.stringify(result, null, 2))
-    );
-  }, []);
+  // useEffect(() => {
+  //   // const cancelAllNotifs = async () => {
+  //   //   await Notifications.cancelAllScheduledNotificationsAsync();
+  //   // };
+  //   // cancelAllNotifs();
+  //   const scheduledNotifs = async () =>
+  //     await Notifications.getAllScheduledNotificationsAsync();
+  //   scheduledNotifs().then((result) =>
+  //     console.log("Scheduled Notifications\n", JSON.stringify(result, null, 2))
+  //   );
+  // }, []);
 
   return (
     <KeyboardAwareScrollView

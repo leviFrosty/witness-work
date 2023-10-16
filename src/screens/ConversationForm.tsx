@@ -126,13 +126,23 @@ const ConversationForm = ({ route, navigation }: Props) => {
     date: new Date(),
     note: "",
     followUp: {
-      date: moment().add(7, "days").toDate(),
+      date: new Date(),
       topic: "",
     },
   });
   const [notifyMe, setNotifyMe] = useState(false);
   const selectedContact = contacts.find((c) => c.id === assignedContactId);
   const { addConversation } = useConversations();
+  const [notificationsAllowed, setNotificationsAllowed] =
+    useState<boolean>(false);
+
+  useEffect(() => {
+    const fetchNotificationsSetting = async () => {
+      const { granted } = await Notifications.getPermissionsAsync();
+      setNotificationsAllowed(granted);
+    };
+    fetchNotificationsSetting();
+  }, []);
 
   const handleDateChange = (_: DateTimePickerEvent, date: Date | undefined) => {
     if (!date) {
@@ -182,6 +192,7 @@ const ConversationForm = ({ route, navigation }: Props) => {
         if (!conversation.followUp) {
           return;
         }
+        // If notifications fail, we cannot really do anything to retry. It's likely set in the past from the current date.
         await Notifications.scheduleNotificationAsync({
           content: {
             title: `Conversation Reminder`,
@@ -199,7 +210,7 @@ const ConversationForm = ({ route, navigation }: Props) => {
               .subtract(2, "hours")
               .toDate(),
           },
-        });
+        }).catch(() => {});
         await Notifications.scheduleNotificationAsync({
           content: {
             title: `Conversation Reminder`,
@@ -217,7 +228,7 @@ const ConversationForm = ({ route, navigation }: Props) => {
               .subtract(15, "minutes")
               .toDate(),
           },
-        });
+        }).catch(() => {});
         await Notifications.scheduleNotificationAsync({
           content: {
             title: `Conversation Reminder`,
@@ -231,16 +242,24 @@ const ConversationForm = ({ route, navigation }: Props) => {
             sound: true,
           },
           trigger: { date: conversation.followUp.date },
-        });
+        }).catch(() => {});
       };
-      if (notifyMe) {
+
+      if (notifyMe && notificationsAllowed) {
         scheduleNotification();
       }
 
       addConversation(conversation);
       resolve(conversation);
     });
-  }, [addConversation, conversation, notifyMe, selectedContact, validate]);
+  }, [
+    addConversation,
+    conversation,
+    notificationsAllowed,
+    notifyMe,
+    selectedContact,
+    validate,
+  ]);
 
   useEffect(() => {
     navigation.setOptions({
@@ -377,6 +396,9 @@ const ConversationForm = ({ route, navigation }: Props) => {
               label=""
               value={notifyMe}
               setValue={setNotifyMe}
+              disabled={!notificationsAllowed}
+              description="Notifications are disabled. Enable them via device settings to use this feature."
+              descriptionOnlyOnDisabled
             />
           </InputRowContainer>
         </Section>

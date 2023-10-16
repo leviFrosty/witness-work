@@ -277,27 +277,33 @@ const ConversationForm = ({ route, navigation }: Props) => {
                 right: 0,
               }}
             >
-              <Pressable
-                hitSlop={15}
-                onPress={async () => {
-                  navigation.popToTop();
-                }}
-              >
-                <MyText
-                  style={{
-                    color: theme.colors.textInverse,
-                    fontSize: 12,
+              {!params.referrer && (
+                <Pressable
+                  hitSlop={15}
+                  onPress={async () => {
+                    navigation.popToTop();
                   }}
                 >
-                  Skip
-                </MyText>
-              </Pressable>
+                  <MyText
+                    style={{
+                      color: theme.colors.textInverse,
+                      fontSize: 12,
+                    }}
+                  >
+                    Skip
+                  </MyText>
+                </Pressable>
+              )}
               <Pressable
                 hitSlop={15}
                 onPress={async () => {
                   const succeeded = await submit();
                   if (!succeeded) {
                     // Failed validation if didn't submit
+                    return;
+                  }
+                  if (params.referrer) {
+                    navigation.replace(params.referrer, { id: params.id });
                     return;
                   }
                   navigation.popToTop();
@@ -310,7 +316,7 @@ const ConversationForm = ({ route, navigation }: Props) => {
                     fontSize: 16,
                   }}
                 >
-                  Save
+                  {params.referrer ? "Add" : "Save"}
                 </MyText>
               </Pressable>
             </View>
@@ -318,7 +324,7 @@ const ConversationForm = ({ route, navigation }: Props) => {
         />
       ),
     });
-  }, [navigation, submit]);
+  }, [navigation, params.id, params.referrer, submit]);
 
   return (
     <KeyboardAwareScrollView

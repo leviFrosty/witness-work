@@ -7,7 +7,7 @@ const colors = {
   accentBackground: "#4BD27C",
   accentAlt: "#B7DDC5",
   background: "#F4F4F4",
-  border: "#CFCFCF",
+  border: "#E1E1E1",
   backgroundLighter: "#F8F8F8",
   card: "#FFFFFF",
   accent2: "#F19389",

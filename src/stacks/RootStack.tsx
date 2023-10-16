@@ -15,7 +15,7 @@ import ContactDetails from "../screens/ContactDetails";
 export type RootStackParamList = {
   Home: undefined;
   Settings: undefined;
-  "Conversation Form": { id: string }; // Contact ID
+  "Conversation Form": { id: string; referrer?: string }; // Contact ID
   "Contact Details": { id: string }; // Contact ID
   "Contact Form": { id: string; edit?: boolean }; // Contact ID
   "Contact Selector": undefined;

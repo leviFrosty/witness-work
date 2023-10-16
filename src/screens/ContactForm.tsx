@@ -241,6 +241,7 @@ const ContactForm = ({ route, navigation }: Props) => {
         phone,
         email,
         isBibleStudy,
+        createdAt: new Date(),
         address: {
           line1,
           line2,

@@ -14,14 +14,23 @@ import MyText from "./MyText";
 import Divider from "./Divider";
 import { useNavigation } from "@react-navigation/native";
 import { RootStackNavigation } from "../stacks/RootStack";
+import { useMemo } from "react";
+import { getTotalStudiesCount } from "../lib/contacts";
+import useContacts from "../stores/contactsStore";
 
 const LeftCard = () => {
   const { publisher } = usePreferences();
   const { serviceReports } = useServiceReport();
   const navigation = useNavigation<RootStackNavigation>();
   const goalHours = publisherHours[publisher];
-  const hours = getTotalHoursForMonth(serviceReports);
-  const progress = calculateProgress({ hours, goalHours });
+  const hours = useMemo(
+    () => getTotalHoursForMonth(serviceReports),
+    [serviceReports]
+  );
+  const progress = useMemo(
+    () => calculateProgress({ hours, goalHours }),
+    [hours, goalHours]
+  );
 
   const encouragementHourPhrase = () => {
     let phrases: string[] = [];
@@ -65,6 +74,11 @@ const LeftCard = () => {
     const random = Math.floor(Math.random() * phrases.length);
     return phrases[random];
   };
+
+  const hoursRemaining = useMemo(
+    () => calculateHoursRemaining({ hours, goalHours }),
+    [hours, goalHours]
+  );
 
   return (
     <View>
@@ -122,7 +136,7 @@ const LeftCard = () => {
             }}
           >
             <MyText style={{ fontSize: 10 }}>
-              {calculateHoursRemaining({ hours, goalHours })} hours left
+              {hoursRemaining} hours left
             </MyText>
           </View>
           <MyText style={{ fontSize: 8, color: theme.colors.textAlt }}>
@@ -151,6 +165,9 @@ const LeftCard = () => {
 };
 
 const RightCard = () => {
+  const { contacts } = useContacts();
+  const studies = useMemo(() => getTotalStudiesCount(contacts), [contacts]);
+
   const encouragementStudiesPhrase = (studies: number) => {
     let phrases: string[] = [];
 
@@ -182,8 +199,6 @@ const RightCard = () => {
     const random = Math.floor(Math.random() * phrases.length);
     return phrases[random];
   };
-
-  const studies = 0;
 
   return (
     <View

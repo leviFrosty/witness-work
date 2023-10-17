@@ -5,6 +5,7 @@ import { useServiceReport } from "../stores/serviceReport";
 import theme from "../constants/theme";
 import { FontAwesome } from "@expo/vector-icons";
 import { calculateProgress, getTotalHoursForMonth } from "../lib/serviceReport";
+import { useMemo } from "react";
 
 const ProgressBarSegment = ({
   backgroundColor,
@@ -57,7 +58,10 @@ const ProgressBar = () => {
   const hours = getTotalHoursForMonth(serviceReports);
   const { publisher } = usePreferences();
   const goalHours = publisherHours[publisher];
-  const progress = calculateProgress({ hours, goalHours });
+  const progress = useMemo(
+    () => calculateProgress({ hours, goalHours }),
+    [hours, goalHours]
+  );
 
   const arrowProgress: DimensionValue = `${progress * 100 - 2}%`; // Offsets slightly for arrow width;
 

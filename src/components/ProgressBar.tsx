@@ -4,7 +4,7 @@ import { usePreferences } from "../stores/preferences";
 import { useServiceReport } from "../stores/serviceReport";
 import theme from "../constants/theme";
 import { FontAwesome } from "@expo/vector-icons";
-import { calculateProgress } from "../lib/serviceReport";
+import { calculateProgress, getTotalHoursForMonth } from "../lib/serviceReport";
 
 const ProgressBarSegment = ({
   backgroundColor,
@@ -53,7 +53,8 @@ const Success = ({ active }: { active: boolean }) => {
 };
 
 const ProgressBar = () => {
-  const { hours } = useServiceReport();
+  const { serviceReports } = useServiceReport();
+  const hours = getTotalHoursForMonth(serviceReports);
   const { publisher } = usePreferences();
   const goalHours = publisherHours[publisher];
   const progress = calculateProgress({ hours, goalHours });

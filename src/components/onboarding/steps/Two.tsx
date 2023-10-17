@@ -1,4 +1,4 @@
-import { View, Text, TouchableOpacity } from "react-native";
+import { View, TouchableOpacity } from "react-native";
 import { styles } from "../Onboarding.styles";
 import OnboardingNav from "../OnboardingNav";
 import DropDownPicker from "react-native-dropdown-picker";
@@ -41,6 +41,7 @@ const StepTwo = ({ goBack, setOnboardingComplete, goNext }: Props) => {
           value={publisher}
           items={items}
           setOpen={setOpen}
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           setValue={(val: any) => setPublisher(val())}
           setItems={setItems}
           style={styles.dropDownPicker}

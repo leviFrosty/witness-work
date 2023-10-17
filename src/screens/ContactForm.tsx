@@ -10,7 +10,7 @@ import { Contact } from "../types/contact";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import Checkbox from "expo-checkbox";
 import Section from "../components/inputs/Section";
-import TextInputRow, { Errors } from "../components/inputs/InputRow";
+import TextInputRow, { Errors } from "../components/inputs/TextInputRow";
 import Header from "../components/layout/Header";
 
 const PersonalContactSection = ({

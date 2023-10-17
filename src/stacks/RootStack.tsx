@@ -11,6 +11,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { View } from "react-native";
 import theme from "../constants/theme";
 import ContactDetails from "../screens/ContactDetails";
+import AddTime from "../screens/AddTime";
 
 export type RootStackParamList = {
   Home: undefined;
@@ -19,6 +20,7 @@ export type RootStackParamList = {
   "Contact Details": { id: string }; // Contact ID
   "Contact Form": { id: string; edit?: boolean }; // Contact ID
   "Contact Selector": undefined;
+  "Add Time": undefined;
 };
 
 export type RootStackNavigation = NativeStackNavigationProp<RootStackParamList>;
@@ -60,6 +62,14 @@ const RootStackComponent = () => {
               />
             ),
           }}
+        />
+        <RootStack.Screen
+          name="Add Time"
+          options={{
+            presentation: "modal",
+            header: () => <Header buttonType="exit" />,
+          }}
+          component={AddTime}
         />
       </RootStack.Group>
     </RootStack.Navigator>

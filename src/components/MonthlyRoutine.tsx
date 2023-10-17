@@ -1,4 +1,4 @@
-import { View, Text } from "react-native";
+import { View } from "react-native";
 import moment from "moment";
 import { FontAwesome } from "@expo/vector-icons";
 import theme from "../constants/theme";

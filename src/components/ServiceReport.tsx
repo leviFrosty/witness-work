@@ -7,15 +7,20 @@ import { usePreferences } from "../stores/preferences";
 import {
   calculateHoursRemaining,
   calculateProgress,
+  getTotalHoursForMonth,
 } from "../lib/serviceReport";
 import Card from "./Card";
 import MyText from "./MyText";
 import Divider from "./Divider";
+import { useNavigation } from "@react-navigation/native";
+import { RootStackNavigation } from "../stacks/RootStack";
 
 const LeftCard = () => {
   const { publisher } = usePreferences();
-  const { hours } = useServiceReport();
+  const { serviceReports } = useServiceReport();
+  const navigation = useNavigation<RootStackNavigation>();
   const goalHours = publisherHours[publisher];
+  const hours = getTotalHoursForMonth(serviceReports);
   const progress = calculateProgress({ hours, goalHours });
 
   const encouragementHourPhrase = () => {
@@ -135,6 +140,7 @@ const LeftCard = () => {
           backgroundColor: theme.colors.backgroundLighter,
           gap: 5,
         }}
+        onPress={() => navigation.navigate("Add Time")}
       >
         <MyText style={{ textAlign: "center", fontWeight: "700" }}>
           Add Time
@@ -180,7 +186,7 @@ const RightCard = () => {
   const studies = 0;
 
   return (
-    <TouchableOpacity
+    <View
       style={{
         flexDirection: "column",
         paddingHorizontal: 10,
@@ -216,7 +222,7 @@ const RightCard = () => {
       >
         Based on contacts
       </MyText>
-    </TouchableOpacity>
+    </View>
   );
 };
 

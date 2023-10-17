@@ -21,7 +21,7 @@ import InputRowContainer from "../components/inputs/InputRowContainer";
 import RNDateTimePicker, {
   DateTimePickerEvent,
 } from "@react-native-community/datetimepicker";
-import TextInputRow from "../components/inputs/InputRow";
+import TextInputRow from "../components/inputs/TextInputRow";
 import CheckboxWithLabel from "../components/inputs/CheckboxWithLabel";
 import { Contact } from "../types/contact";
 import moment from "moment";

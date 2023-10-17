@@ -1,6 +1,5 @@
-import { Button, View } from "react-native";
-// import { usePreferences } from "../stores/preferences";
-// import { Pressable } from "react-native";
+import { View } from "react-native";
+import { usePreferences } from "../stores/preferences";
 import MonthlyRoutine from "../components/MonthlyRoutine";
 import ServiceReport from "../components/ServiceReport";
 import ContactsList from "../components/ContactsList";
@@ -12,9 +11,10 @@ import useServiceReport from "../stores/serviceReport";
 import MyText from "../components/MyText";
 
 const Home = () => {
-  // const { set } = usePreferences();
+  const { set } = usePreferences();
   const { bottom } = useSafeAreaInsets();
   const { _WARNING_forceDeleteServiceReport } = useServiceReport();
+
   useEffect(() => {
     // const cancelAllNotifs = async () => {
     //   await Notifications.cancelAllScheduledNotificationsAsync();
@@ -42,6 +42,10 @@ const Home = () => {
         <MyText onPress={() => _WARNING_forceDeleteServiceReport()}>
           Debug: Delete All Service Reports
         </MyText>
+        <MyText onPress={() => set({ onboardingComplete: false })}>
+          Debug: Go to setup screen
+        </MyText>
+
         <ContactsList />
         {/* <Pressable onPress={() => set({ onboardingComplete: false })}>
           <MyText>Startup Screen</MyText>

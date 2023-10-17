@@ -1,4 +1,4 @@
-import { Alert, View } from "react-native";
+import { Alert, TouchableOpacity, View } from "react-native";
 import MyText from "./MyText";
 import { Conversation } from "../types/conversation";
 import moment from "moment";
@@ -40,9 +40,8 @@ const ConversationRow = ({ conversation }: { conversation: Conversation }) => {
         >
           {moment(conversation.date).format("MMM DD, YYYY")}
         </MyText>
-        <FontAwesome
-          name="trash"
-          style={{ color: theme.colors.textAlt }}
+        <TouchableOpacity
+          hitSlop={15}
           onPress={() =>
             Alert.alert(
               "Delete Conversation?",
@@ -62,7 +61,9 @@ const ConversationRow = ({ conversation }: { conversation: Conversation }) => {
               ]
             )
           }
-        />
+        >
+          <FontAwesome name="trash" style={{ color: theme.colors.textAlt }} />
+        </TouchableOpacity>
       </View>
 
       {!!conversation.note?.length && <MyText>{conversation.note}</MyText>}

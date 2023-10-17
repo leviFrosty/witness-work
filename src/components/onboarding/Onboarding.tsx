@@ -59,7 +59,7 @@ const OnBoarding = ({ setOnboardingComplete }: Props) => {
     }
   };
 
-  return <View style={{ flexGrow: 1 }}>{renderStep()}</View>;
+  return <View style={{ flexGrow: 1, padding: 20 }}>{renderStep()}</View>;
 };
 
 export default OnBoarding;

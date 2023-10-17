@@ -250,13 +250,8 @@ const DeleteContactButton = ({
 }) => {
   return (
     <View style={{ gap: 5 }}>
-      <MyText
-        style={{
-          fontWeight: "600",
-          textAlign: "center",
-          fontSize: 10,
-          textDecorationLine: "underline",
-        }}
+      <TouchableOpacity
+        hitSlop={15}
         onPress={() =>
           Alert.alert(
             "Delete Contact?",
@@ -278,8 +273,17 @@ const DeleteContactButton = ({
           )
         }
       >
-        Delete Contact
-      </MyText>
+        <MyText
+          style={{
+            fontWeight: "600",
+            textAlign: "center",
+            fontSize: 10,
+            textDecorationLine: "underline",
+          }}
+        >
+          Delete Contact
+        </MyText>
+      </TouchableOpacity>
       <MyText
         style={{
           fontSize: 10,

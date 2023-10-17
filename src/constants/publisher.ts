@@ -11,6 +11,6 @@ export const publisherHours: PublisherHours = {
   publisher: 0,
   regularAuxiliary: 30,
   regularPioneer: 50,
-  circuitOverseer: 70,
-  specialPioneer: 90,
+  circuitOverseer: 50,
+  specialPioneer: 70,
 };

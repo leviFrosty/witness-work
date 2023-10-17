@@ -7,7 +7,7 @@ import DropDownPicker from "react-native-dropdown-picker";
 import MyText from "../components/MyText";
 import ActionButton from "../components/ActionButton";
 import useServiceReport from "../stores/serviceReport";
-import * as Cypto from "expo-crypto";
+import * as Crypto from "expo-crypto";
 import RNDateTimePicker, {
   DateTimePickerEvent,
 } from "@react-native-community/datetimepicker";
@@ -21,7 +21,7 @@ const AddTime = () => {
   const navigation = useNavigation<RootStackNavigation>();
   const insets = useSafeAreaInsets();
   const [serviceReport, setServiceReport] = useState<ServiceReport>({
-    id: Cypto.randomUUID(),
+    id: Crypto.randomUUID(),
     hours: 0,
     minutes: 0,
     date: new Date(),

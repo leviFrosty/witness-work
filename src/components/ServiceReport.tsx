@@ -1,4 +1,4 @@
-import { View, TouchableOpacity } from "react-native";
+import { View, TouchableOpacity, Pressable } from "react-native";
 import { useServiceReport } from "../stores/serviceReport";
 import theme from "../constants/theme";
 import ProgressBar from "./ProgressBar";
@@ -8,17 +8,22 @@ import {
   calculateHoursRemaining,
   calculateProgress,
   getTotalHoursForMonth,
+  hasServiceReportsForMonth,
 } from "../lib/serviceReport";
 import Card from "./Card";
 import MyText from "./MyText";
 import Divider from "./Divider";
 import { useNavigation } from "@react-navigation/native";
 import { RootStackNavigation } from "../stacks/RootStack";
-import { useEffect, useMemo, useState, useCallback } from "react";
+import { useEffect, useMemo, useState, useCallback, useRef } from "react";
 import { getTotalStudiesCount } from "../lib/contacts";
 import useContacts from "../stores/contactsStore";
+import { FontAwesome } from "@expo/vector-icons";
+import moment from "moment";
+import LottieView from "lottie-react-native";
+import * as Crypto from "expo-crypto";
 
-const LeftCard = () => {
+const HourEntryCard = () => {
   const { publisher } = usePreferences();
   const { serviceReports } = useServiceReport();
   const navigation = useNavigation<RootStackNavigation>();
@@ -252,7 +257,87 @@ const RightCard = () => {
   );
 };
 
+const CheckMarkAnimationComponent = () => {
+  const ref = useRef<LottieView>(null);
+  return (
+    <View
+      style={{
+        backgroundColor: theme.colors.backgroundLighter,
+        alignItems: "center",
+        justifyContent: "center",
+        flex: 1,
+      }}
+    >
+      <LottieView
+        onLayout={() => ref.current?.play()}
+        loop={false}
+        ref={ref}
+        style={{
+          width: 125,
+          height: 125,
+          backgroundColor: theme.colors.backgroundLighter,
+        }}
+        // Find more Lottie files at https://lottiefiles.com/featured
+        source={require("./../assets/lottie/checkMark.json")}
+      />
+    </View>
+  );
+};
+
+const StandardPublisherTimeEntry = () => {
+  const { serviceReports, addServiceReport } = useServiceReport();
+  const hasGoneOutInServiceThisMonth = hasServiceReportsForMonth(
+    serviceReports,
+    moment().month()
+  );
+  return (
+    <TouchableOpacity
+      style={{
+        backgroundColor: hasGoneOutInServiceThisMonth
+          ? theme.colors.backgroundLighter
+          : theme.colors.accent,
+        borderColor: theme.colors.border,
+        paddingVertical: hasGoneOutInServiceThisMonth ? 5 : 46,
+        justifyContent: "center",
+        alignItems: "center",
+        borderRadius: theme.numbers.borderRadiusSm,
+      }}
+      onPress={() =>
+        addServiceReport({
+          date: new Date(),
+          hours: 0,
+          minutes: 0,
+          id: Crypto.randomUUID(),
+        })
+      }
+    >
+      {hasGoneOutInServiceThisMonth ? (
+        <CheckMarkAnimationComponent />
+      ) : (
+        <Pressable
+          style={{ flexDirection: "row", gap: 10, alignItems: "center" }}
+        >
+          <FontAwesome
+            name="square-o"
+            style={{ color: theme.colors.textInverse, fontSize: 25 }}
+          />
+          <MyText
+            style={{
+              color: theme.colors.textInverse,
+              fontSize: 18,
+              fontWeight: "600",
+            }}
+          >
+            {"Shared the\nGood News"}
+          </MyText>
+        </Pressable>
+      )}
+    </TouchableOpacity>
+  );
+};
+
 const ServiceReport = () => {
+  const { publisher } = usePreferences();
   return (
     <Card>
       <View style={{ flexDirection: "row", gap: 5 }}>
@@ -260,7 +345,11 @@ const ServiceReport = () => {
           <MyText style={{ color: theme.colors.textAlt, fontWeight: "600" }}>
             Hours
           </MyText>
-          <LeftCard />
+          {publisher === "publisher" ? (
+            <StandardPublisherTimeEntry />
+          ) : (
+            <HourEntryCard />
+          )}
         </View>
         <View style={{ flexDirection: "column", gap: 5 }}>
           <MyText style={{ color: theme.colors.textAlt, fontWeight: "600" }}>

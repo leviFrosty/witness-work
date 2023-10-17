@@ -1,4 +1,4 @@
-import { View, Text, TouchableOpacity } from "react-native";
+import { View, TouchableOpacity } from "react-native";
 import { styles } from "./Onboarding.styles";
 import { FontAwesome } from "@expo/vector-icons";
 import MyText from "../MyText";
@@ -9,7 +9,7 @@ interface Props {
   setOnboardingComplete: (val: boolean) => void;
 }
 
-const OnboardingNav = ({ noActions, goBack, setOnboardingComplete }: Props) => {
+const OnboardingNav = ({ noActions, goBack }: Props) => {
   return (
     <View style={styles.navContainer}>
       {!noActions ? (

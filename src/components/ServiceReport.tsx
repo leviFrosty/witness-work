@@ -14,7 +14,7 @@ import MyText from "./MyText";
 import Divider from "./Divider";
 import { useNavigation } from "@react-navigation/native";
 import { RootStackNavigation } from "../stacks/RootStack";
-import { useMemo } from "react";
+import { useEffect, useMemo, useState, useCallback } from "react";
 import { getTotalStudiesCount } from "../lib/contacts";
 import useContacts from "../stores/contactsStore";
 
@@ -32,7 +32,7 @@ const LeftCard = () => {
     [hours, goalHours]
   );
 
-  const encouragementHourPhrase = () => {
+  const encouragementHourPhrase = useCallback((progress: number) => {
     let phrases: string[] = [];
 
     if (progress < 0.6) {
@@ -73,7 +73,15 @@ const LeftCard = () => {
 
     const random = Math.floor(Math.random() * phrases.length);
     return phrases[random];
-  };
+  }, []);
+
+  const [encouragementPhrase, setEncouragementPhrase] = useState(
+    encouragementHourPhrase(progress)
+  );
+
+  useEffect(() => {
+    setEncouragementPhrase(encouragementHourPhrase(progress));
+  }, [encouragementHourPhrase, progress]);
 
   const hoursRemaining = useMemo(
     () => calculateHoursRemaining({ hours, goalHours }),
@@ -124,9 +132,7 @@ const LeftCard = () => {
               /{goalHours}
             </MyText>
           </View>
-          <MyText style={{ fontWeight: "700" }}>
-            {encouragementHourPhrase()}
-          </MyText>
+          <MyText style={{ fontWeight: "700" }}>{encouragementPhrase}</MyText>
           <View
             style={{
               borderRadius: theme.numbers.borderRadiusLg,
@@ -167,7 +173,6 @@ const LeftCard = () => {
 const RightCard = () => {
   const { contacts } = useContacts();
   const studies = useMemo(() => getTotalStudiesCount(contacts), [contacts]);
-
   const encouragementStudiesPhrase = (studies: number) => {
     let phrases: string[] = [];
 
@@ -199,7 +204,13 @@ const RightCard = () => {
     const random = Math.floor(Math.random() * phrases.length);
     return phrases[random];
   };
+  const [encouragementPhrase, setEncouragementPhrase] = useState(
+    encouragementStudiesPhrase(studies)
+  );
 
+  useEffect(() => {
+    setEncouragementPhrase(encouragementStudiesPhrase(studies));
+  }, [studies]);
   return (
     <View
       style={{
@@ -225,7 +236,7 @@ const RightCard = () => {
             fontWeight: "700",
           }}
         >
-          {encouragementStudiesPhrase(studies)}
+          {encouragementPhrase}
         </MyText>
       </View>
       <MyText

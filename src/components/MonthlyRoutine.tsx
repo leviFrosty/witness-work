@@ -12,6 +12,7 @@ const Month = ({ month }: { month: number }) => {
   const currentMonth = moment().month();
   const isCurrentMonth = currentMonth === month;
   const monthHasPassed = currentMonth > month;
+  const monthInFuture = currentMonth < month;
   const { serviceReports } = useServiceReport();
   const wentOutThisMonth = hasServiceReportsForMonth(serviceReports, month);
 
@@ -39,7 +40,7 @@ const Month = ({ month }: { month: number }) => {
           style={{
             color: didNotGoOutInService
               ? theme.colors.error
-              : hasNotGoneOutTheCurrentMonth
+              : hasNotGoneOutTheCurrentMonth || monthInFuture
               ? theme.colors.textAlt
               : theme.colors.accent,
             fontSize: 15,

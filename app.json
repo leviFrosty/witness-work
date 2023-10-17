@@ -9,17 +9,16 @@
     "splash": {
       "image": "./src/assets/splash.png",
       "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
+      "backgroundColor": "#4BD27C"
     },
-    "assetBundlePatterns": [
-      "**/*"
-    ],
+    "assetBundlePatterns": ["**/*"],
     "ios": {
       "supportsTablet": false
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./src/assets/adaptive-icon.png",
+        "monochromeImage": "/src/assets/adaptive-icon-monochrome.png",
         "backgroundColor": "#ffffff"
       },
       "package": "com.leviwilkerson.jwtime"

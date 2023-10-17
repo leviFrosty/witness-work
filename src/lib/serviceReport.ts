@@ -53,3 +53,15 @@ export const getTotalHoursForMonth = (
 
   return totalHoursRoundedDown;
 };
+
+export const hasServiceReportsForMonth = (
+  serviceReports: ServiceReport[],
+  month: number
+): boolean => {
+  // Check if there are any service reports for the current month
+  const hasReportsForMonth = serviceReports.some(
+    (report) => moment(report.date).month() === month
+  );
+
+  return hasReportsForMonth;
+};

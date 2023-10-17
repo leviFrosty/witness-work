@@ -5,15 +5,23 @@ import theme from "../constants/theme";
 import Card from "./Card";
 import MyText from "./MyText";
 import { FlashList } from "@shopify/flash-list";
+import { hasServiceReportsForMonth } from "../lib/serviceReport";
+import useServiceReport from "../stores/serviceReport";
 
 const Month = ({ month }: { month: number }) => {
-  const currentMonth = moment().month() === month;
+  const currentMonth = moment().month();
+  const isCurrentMonth = currentMonth === month;
+  const monthHasPassed = currentMonth > month;
+  const { serviceReports } = useServiceReport();
+  const wentOutThisMonth = hasServiceReportsForMonth(serviceReports, month);
 
+  const didNotGoOutInService = monthHasPassed && !wentOutThisMonth;
+  const hasNotGoneOutTheCurrentMonth = isCurrentMonth && !wentOutThisMonth;
   return (
     <View
       style={{
         gap: 5,
-        backgroundColor: currentMonth ? theme.colors.accent3 : undefined,
+        backgroundColor: isCurrentMonth ? theme.colors.accent3 : undefined,
         borderRadius: theme.numbers.borderRadiusSm,
         padding: 7,
       }}
@@ -28,14 +36,23 @@ const Month = ({ month }: { month: number }) => {
         }}
       >
         <FontAwesome
-          style={{ color: theme.colors.accent, fontSize: 15 }}
-          name="check"
+          style={{
+            color: didNotGoOutInService
+              ? theme.colors.error
+              : hasNotGoneOutTheCurrentMonth
+              ? theme.colors.textAlt
+              : theme.colors.accent,
+            fontSize: 15,
+          }}
+          name={didNotGoOutInService ? "times" : "check"}
         />
       </View>
       <MyText
         style={{
           textAlign: "center",
-          color: currentMonth ? theme.colors.textInverse : theme.colors.textAlt,
+          color: isCurrentMonth
+            ? theme.colors.textInverse
+            : theme.colors.textAlt,
         }}
       >
         {moment().month(month).format("MMM")}

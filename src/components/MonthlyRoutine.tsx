@@ -7,14 +7,17 @@ import MyText from "./MyText";
 import { FlashList } from "@shopify/flash-list";
 import { hasServiceReportsForMonth } from "../lib/serviceReport";
 import useServiceReport from "../stores/serviceReport";
+import { usePreferences } from "../stores/preferences";
 
 const Month = ({ month }: { month: number }) => {
+  const { installedOn } = usePreferences();
   const currentMonth = moment().month();
   const isCurrentMonth = currentMonth === month;
   const monthHasPassed = currentMonth > month;
   const monthInFuture = currentMonth < month;
   const { serviceReports } = useServiceReport();
   const wentOutThisMonth = hasServiceReportsForMonth(serviceReports, month);
+  const monthWasBeforeInstalled = moment(installedOn).month() > month;
 
   const didNotGoOutInService = monthHasPassed && !wentOutThisMonth;
   const hasNotGoneOutTheCurrentMonth = isCurrentMonth && !wentOutThisMonth;
@@ -38,14 +41,22 @@ const Month = ({ month }: { month: number }) => {
       >
         <FontAwesome
           style={{
-            color: didNotGoOutInService
+            color: monthWasBeforeInstalled
+              ? theme.colors.textAlt
+              : didNotGoOutInService
               ? theme.colors.error
               : hasNotGoneOutTheCurrentMonth || monthInFuture
               ? theme.colors.textAlt
               : theme.colors.accent,
             fontSize: 15,
           }}
-          name={didNotGoOutInService ? "times" : "check"}
+          name={
+            monthWasBeforeInstalled
+              ? "minus"
+              : didNotGoOutInService
+              ? "times"
+              : "check"
+          }
         />
       </View>
       <MyText

@@ -6,6 +6,7 @@ import { Publisher } from "../types/publisher";
 const initialState = {
   publisher: "publisher" as Publisher,
   onboardingComplete: false,
+  installedOn: new Date(),
 };
 
 export const usePreferences = create(

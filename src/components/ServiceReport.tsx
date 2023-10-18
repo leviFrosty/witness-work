@@ -258,8 +258,10 @@ const RightCard = () => {
   );
 };
 
-const CheckMarkAnimationComponent = () => {
+const CheckMarkAnimationComponent = ({ undoId }: { undoId?: string }) => {
+  const { deleteServiceReport } = useServiceReport();
   const ref = useRef<LottieView>(null);
+
   return (
     <View
       style={{
@@ -281,57 +283,91 @@ const CheckMarkAnimationComponent = () => {
         // Find more Lottie files at https://lottiefiles.com/featured
         source={require("./../assets/lottie/checkMark.json")}
       />
+      {undoId && (
+        <TouchableOpacity onPress={() => deleteServiceReport(undoId)}>
+          <MyText
+            style={{
+              fontSize: 10,
+              color: theme.colors.textAlt,
+              textDecorationLine: "underline",
+            }}
+          >
+            Undo
+          </MyText>
+        </TouchableOpacity>
+      )}
     </View>
   );
 };
 
 const StandardPublisherTimeEntry = () => {
+  const [undoId, setUndoId] = useState<string>();
   const { serviceReports, addServiceReport } = useServiceReport();
   const hasGoneOutInServiceThisMonth = hasServiceReportsForMonth(
     serviceReports,
     moment().month()
   );
+
+  const handleSubmitDidService = () => {
+    const id = Crypto.randomUUID();
+    addServiceReport({
+      date: new Date(),
+      hours: 0,
+      minutes: 0,
+      id,
+    });
+    setUndoId(id);
+  };
+
   return (
-    <TouchableOpacity
-      style={{
-        backgroundColor: hasGoneOutInServiceThisMonth
-          ? theme.colors.backgroundLighter
-          : theme.colors.accent,
-        borderColor: theme.colors.border,
-        paddingVertical: hasGoneOutInServiceThisMonth ? 5 : 46,
-        justifyContent: "center",
-        alignItems: "center",
-        borderRadius: theme.numbers.borderRadiusSm,
-      }}
-      onPress={() =>
-        addServiceReport({
-          date: new Date(),
-          hours: 0,
-          minutes: 0,
-          id: Crypto.randomUUID(),
-        })
-      }
-    >
+    <View>
       {hasGoneOutInServiceThisMonth ? (
-        <CheckMarkAnimationComponent />
-      ) : (
-        <View style={{ flexDirection: "row", gap: 10, alignItems: "center" }}>
-          <FontAwesome
-            name="square-o"
-            style={{ color: theme.colors.textInverse, fontSize: 25 }}
-          />
-          <MyText
-            style={{
-              color: theme.colors.textInverse,
-              fontSize: 18,
-              fontWeight: "600",
-            }}
-          >
-            {"Shared the\nGood News"}
-          </MyText>
+        <View
+          style={{
+            backgroundColor: hasGoneOutInServiceThisMonth
+              ? theme.colors.backgroundLighter
+              : theme.colors.accent,
+            borderColor: theme.colors.border,
+            paddingVertical: hasGoneOutInServiceThisMonth ? 5 : 46,
+            justifyContent: "center",
+            alignItems: "center",
+            borderRadius: theme.numbers.borderRadiusSm,
+          }}
+        >
+          <CheckMarkAnimationComponent undoId={undoId} />
         </View>
+      ) : (
+        <TouchableOpacity
+          style={{
+            backgroundColor: hasGoneOutInServiceThisMonth
+              ? theme.colors.backgroundLighter
+              : theme.colors.accent,
+            borderColor: theme.colors.border,
+            paddingVertical: hasGoneOutInServiceThisMonth ? 5 : 46,
+            justifyContent: "center",
+            alignItems: "center",
+            borderRadius: theme.numbers.borderRadiusSm,
+          }}
+          onPress={handleSubmitDidService}
+        >
+          <View style={{ flexDirection: "row", gap: 10, alignItems: "center" }}>
+            <FontAwesome
+              name="square-o"
+              style={{ color: theme.colors.textInverse, fontSize: 25 }}
+            />
+            <MyText
+              style={{
+                color: theme.colors.textInverse,
+                fontSize: 18,
+                fontWeight: "600",
+              }}
+            >
+              {"Shared the\nGood News"}
+            </MyText>
+          </View>
+        </TouchableOpacity>
       )}
-    </TouchableOpacity>
+    </View>
   );
 };
 

@@ -8,9 +8,14 @@ import Section from "../components/inputs/Section";
 import { FontAwesome } from "@expo/vector-icons";
 import { getTotalHoursForSpecificMonth } from "../lib/serviceReport";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import Card from "../components/Card";
+import ActionButton from "../components/ActionButton";
+import { useNavigation } from "@react-navigation/native";
+import { RootStackNavigation } from "../stacks/RootStack";
 
 const TimeReports = () => {
   const { serviceReports, deleteServiceReport } = useServiceReport();
+  const navigation = useNavigation<RootStackNavigation>();
   const insets = useSafeAreaInsets();
   // Group service reports by year and then by month
   const reportsByYearAndMonth: {
@@ -54,6 +59,23 @@ const TimeReports = () => {
         contentInset={{ top: 0, right: 0, bottom: insets.bottom + 30, left: 0 }}
       >
         <View style={{ gap: 40 }}>
+          {!years.length && (
+            <Card style={{ marginHorizontal: 20 }}>
+              <MyText
+                style={{
+                  padding: 20,
+                  fontSize: 16,
+                  color: theme.colors.textAlt,
+                }}
+              >
+                No time entries yet.. 🕒
+              </MyText>
+              <ActionButton
+                label="Add Time"
+                action={() => navigation.navigate("Add Time")}
+              />
+            </Card>
+          )}
           {years.map((year) => (
             <View key={year} style={{ gap: 10 }}>
               <MyText
@@ -78,7 +100,7 @@ const TimeReports = () => {
                     parseInt(year)
                   );
                   return (
-                    <View style={{ gap: 5 }}>
+                    <View style={{ gap: 5 }} key={month}>
                       <View style={{ flexDirection: "row", gap: 10 }}>
                         <MyText
                           style={{
@@ -91,7 +113,7 @@ const TimeReports = () => {
                           {month} - {totalHours} hours
                         </MyText>
                       </View>
-                      <Section key={month}>
+                      <Section>
                         <View style={{ gap: 15 }}>
                           {reportsByYearAndMonth[year][month].map((report) => (
                             <View

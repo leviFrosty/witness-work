@@ -17,6 +17,8 @@ const ContactsList = () => {
   const { contacts } = useContacts();
   const navigation = useNavigation<RootStackNavigation>();
 
+  const searchResults = contacts.filter((c) => c.name.includes(search));
+
   return (
     <View style={{ gap: 8 }}>
       <MyText style={{ fontSize: 12, fontWeight: "600", marginLeft: 5 }}>
@@ -46,7 +48,7 @@ const ContactsList = () => {
         </View>
         <View style={{ flex: 1, minHeight: 10 }}>
           <FlashList
-            data={contacts}
+            data={searchResults}
             renderItem={({ item }) => (
               <ContactRow
                 key={item.id}
@@ -55,6 +57,11 @@ const ContactsList = () => {
                   navigation.navigate("Contact Details", { id: item.id })
                 }
               />
+            )}
+            ListEmptyComponent={() => (
+              <MyText style={{ color: theme.colors.textAlt, fontSize: 12 }}>
+                No contacts saved. Tap the plus button to add a contact.
+              </MyText>
             )}
             estimatedItemSize={84}
             ItemSeparatorComponent={() => (

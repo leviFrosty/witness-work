@@ -50,6 +50,26 @@ export const useContacts = create(
           };
         });
       },
+      recoverContact: (id: string) => {
+        set(({ contacts, deletedContacts }) => {
+          const recoverContact = deletedContacts.find((dC) => dC.id === id);
+          if (!recoverContact) {
+            return {};
+          }
+
+          return {
+            deletedContacts: deletedContacts.filter((dC) => dC.id !== id),
+            contacts: [...contacts, recoverContact],
+          };
+        });
+      },
+      removeDeletedContact: (id: string) => {
+        set(({ deletedContacts }) => {
+          return {
+            deletedContacts: deletedContacts.filter((dC) => dC.id !== id),
+          };
+        });
+      },
       _WARNING_forceDeleteContacts: () => set({ contacts: [] }),
       _WARNING_clearDeleted: () => set({ deletedContacts: [] }),
     })),

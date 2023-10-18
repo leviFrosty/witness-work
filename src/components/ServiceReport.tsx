@@ -338,26 +338,31 @@ const StandardPublisherTimeEntry = () => {
 const ServiceReport = () => {
   const { publisher } = usePreferences();
   return (
-    <Card>
-      <View style={{ flexDirection: "row", gap: 5 }}>
-        <View style={{ flexDirection: "column", gap: 5, flexGrow: 1 }}>
-          <MyText style={{ color: theme.colors.textAlt, fontWeight: "600" }}>
-            Hours
-          </MyText>
-          {publisher === "publisher" ? (
-            <StandardPublisherTimeEntry />
-          ) : (
-            <HourEntryCard />
-          )}
+    <View style={{ gap: 10 }}>
+      <MyText style={{ fontSize: 14, fontWeight: "600", marginLeft: 5 }}>
+        Service Report
+      </MyText>
+      <Card>
+        <View style={{ flexDirection: "row", gap: 5 }}>
+          <View style={{ flexDirection: "column", gap: 5, flexGrow: 1 }}>
+            <MyText style={{ color: theme.colors.textAlt, fontWeight: "600" }}>
+              Hours
+            </MyText>
+            {publisher === "publisher" ? (
+              <StandardPublisherTimeEntry />
+            ) : (
+              <HourEntryCard />
+            )}
+          </View>
+          <View style={{ flexDirection: "column", gap: 5 }}>
+            <MyText style={{ color: theme.colors.textAlt, fontWeight: "600" }}>
+              Studies
+            </MyText>
+            <RightCard />
+          </View>
         </View>
-        <View style={{ flexDirection: "column", gap: 5 }}>
-          <MyText style={{ color: theme.colors.textAlt, fontWeight: "600" }}>
-            Studies
-          </MyText>
-          <RightCard />
-        </View>
-      </View>
-    </Card>
+      </Card>
+    </View>
   );
 };
 

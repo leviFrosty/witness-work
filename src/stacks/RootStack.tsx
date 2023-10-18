@@ -13,6 +13,7 @@ import theme from "../constants/theme";
 import ContactDetails from "../screens/ContactDetails";
 import AddTime from "../screens/AddTime";
 import TimeReports from "../screens/TimeReports";
+import RecoverContacts from "../screens/RecoverContacts";
 
 export type RootStackParamList = {
   Home: undefined;
@@ -22,6 +23,7 @@ export type RootStackParamList = {
   "Contact Selector": undefined;
   "Add Time": undefined;
   "Time Reports": undefined;
+  "Recover Contacts": undefined;
 };
 
 export type RootStackNavigation = NativeStackNavigationProp<RootStackParamList>;
@@ -77,6 +79,14 @@ const RootStackComponent = () => {
           }}
           name="Time Reports"
           component={TimeReports}
+        />
+        <RootStack.Screen
+          options={{
+            presentation: "modal",
+            header: () => <Header buttonType="exit" />,
+          }}
+          name="Recover Contacts"
+          component={RecoverContacts}
         />
       </RootStack.Group>
     </RootStack.Navigator>

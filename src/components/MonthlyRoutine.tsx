@@ -1,4 +1,4 @@
-import { View } from "react-native";
+import { Pressable, View } from "react-native";
 import moment from "moment";
 import { FontAwesome } from "@expo/vector-icons";
 import theme from "../constants/theme";
@@ -8,13 +8,12 @@ import { FlashList } from "@shopify/flash-list";
 import { hasServiceReportsForMonth } from "../lib/serviceReport";
 import useServiceReport from "../stores/serviceReport";
 import { usePreferences } from "../stores/preferences";
-import { TouchableOpacity } from "react-native-gesture-handler";
 import { useNavigation } from "@react-navigation/native";
 import { RootStackNavigation } from "../stacks/RootStack";
 
 const Month = ({ month }: { month: number }) => {
   const navigation = useNavigation<RootStackNavigation>();
-  const { installedOn } = usePreferences();
+  const { installedOn, publisher } = usePreferences();
   const currentMonth = moment().month();
   const isCurrentMonth = currentMonth === month;
   const monthHasPassed = currentMonth > month;
@@ -27,8 +26,12 @@ const Month = ({ month }: { month: number }) => {
   const hasNotGoneOutTheCurrentMonth = isCurrentMonth && !wentOutThisMonth;
 
   return (
-    <TouchableOpacity
-      onPress={() => navigation.navigate("Time Reports")}
+    <Pressable
+      onPress={
+        publisher === "publisher"
+          ? undefined
+          : () => navigation.navigate("Time Reports")
+      }
       style={{
         gap: 5,
         backgroundColor: isCurrentMonth ? theme.colors.accent3 : undefined,
@@ -75,7 +78,7 @@ const Month = ({ month }: { month: number }) => {
       >
         {moment().month(month).format("MMM")}
       </MyText>
-    </TouchableOpacity>
+    </Pressable>
   );
 };
 

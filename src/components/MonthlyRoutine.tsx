@@ -20,7 +20,7 @@ const Month = ({ month }: { month: number }) => {
   const monthInFuture = currentMonth < month;
   const { serviceReports } = useServiceReport();
   const wentOutThisMonth = hasServiceReportsForMonth(serviceReports, month);
-  const monthWasBeforeInstalled = moment(installedOn).month() > month;
+  const monthWasBeforeInstalled = month < moment(installedOn).month();
 
   const didNotGoOutInService = monthHasPassed && !wentOutThisMonth;
   const hasNotGoneOutTheCurrentMonth = isCurrentMonth && !wentOutThisMonth;
@@ -50,21 +50,21 @@ const Month = ({ month }: { month: number }) => {
       >
         <FontAwesome
           style={{
-            color: monthWasBeforeInstalled
+            color: wentOutThisMonth
+              ? theme.colors.accent
+              : hasNotGoneOutTheCurrentMonth ||
+                monthInFuture ||
+                monthWasBeforeInstalled
               ? theme.colors.textAlt
-              : didNotGoOutInService
-              ? theme.colors.error
-              : hasNotGoneOutTheCurrentMonth || monthInFuture
-              ? theme.colors.textAlt
-              : theme.colors.accent,
+              : theme.colors.error,
             fontSize: 15,
           }}
           name={
-            monthWasBeforeInstalled
+            !didNotGoOutInService
+              ? "check"
+              : monthWasBeforeInstalled
               ? "minus"
-              : didNotGoOutInService
-              ? "times"
-              : "check"
+              : "times"
           }
         />
       </View>

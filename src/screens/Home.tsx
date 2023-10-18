@@ -15,11 +15,12 @@ const Dashboard = () => {
   return (
     <View style={{ flexGrow: 1, backgroundColor: theme.colors.background }}>
       <KeyboardAwareScrollView
-        contentContainerStyle={{ paddingBottom: insets.bottom }}
+        contentContainerStyle={{ paddingBottom: insets.bottom + 30 }}
         automaticallyAdjustKeyboardInsets
         style={{
           flexGrow: 1,
           padding: 15,
+          marginBottom: insets.bottom,
         }}
       >
         <View style={{ gap: 30, paddingBottom: insets.bottom }}>

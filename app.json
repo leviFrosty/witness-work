@@ -11,9 +11,12 @@
       "resizeMode": "contain",
       "backgroundColor": "#4BD27C"
     },
-    "assetBundlePatterns": ["**/*"],
+    "assetBundlePatterns": [
+      "**/*"
+    ],
     "ios": {
-      "supportsTablet": false
+      "supportsTablet": false,
+      "bundleIdentifier": "com.leviwilkerson.jwtime"
     },
     "android": {
       "adaptiveIcon": {

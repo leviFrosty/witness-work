@@ -276,8 +276,8 @@ const CheckMarkAnimationComponent = ({ undoId }: { undoId?: string }) => {
         loop={false}
         ref={ref}
         style={{
-          width: 125,
-          height: 125,
+          width: 110,
+          height: 110,
           backgroundColor: theme.colors.backgroundLighter,
         }}
         // Find more Lottie files at https://lottiefiles.com/featured

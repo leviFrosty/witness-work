@@ -7,17 +7,12 @@ import { FontAwesome } from "@expo/vector-icons";
 import moment from "moment";
 import Card from "../components/Card";
 import useConversations from "../stores/conversationStore";
+import { FlashList } from "@shopify/flash-list";
 
 const RecoverContacts = () => {
   const { conversations, deleteConversation } = useConversations();
-  const {
-    deletedContacts,
-    recoverContact,
-    contacts,
-    _WARNING_forceDeleteContacts,
-    _WARNING_clearDeleted,
-    removeDeletedContact,
-  } = useContacts();
+  const { deletedContacts, recoverContact, removeDeletedContact } =
+    useContacts();
   const insets = useSafeAreaInsets();
 
   const handleRemoveDeleted = (id: string) => {
@@ -29,6 +24,10 @@ const RecoverContacts = () => {
       deleteConversation(cToDelete.id)
     );
   };
+
+  const sortedContacts = deletedContacts.sort((a, b) =>
+    moment(a.createdAt).unix() < moment(b.createdAt).unix() ? 1 : -1
+  );
 
   return (
     <View
@@ -62,92 +61,94 @@ const RecoverContacts = () => {
           <View
             style={{
               gap: 20,
-              paddingHorizontal: 20,
+              paddingHorizontal: 10,
               marginBottom: insets.bottom,
             }}
           >
-            <MyText onPress={() => _WARNING_forceDeleteContacts()}>
-              Delete All contacts
-            </MyText>
-            <MyText onPress={() => _WARNING_clearDeleted()}>
-              Clear Deleted
-            </MyText>
-            <MyText>{JSON.stringify(contacts, null, 2)}</MyText>
-            <MyText>{JSON.stringify(deletedContacts, null, 2)}</MyText>
-            {deletedContacts
-              .sort((a, b) =>
-                moment(a.createdAt).unix() < moment(b.createdAt).unix() ? 1 : -1
-              )
-              .map((contact) => (
-                <Card
-                  key={contact.id}
-                  style={{
-                    flexDirection: "row",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                  }}
-                >
-                  <View style={{ gap: 5 }}>
-                    <MyText
-                      style={{
-                        fontSize: 10,
-                        fontWeight: "600",
-                        color: theme.colors.textAlt,
-                      }}
-                    >
-                      Created:
-                      {moment(contact.createdAt).format("MMM DD, YYYY")}
-                    </MyText>
-                    <View
+            {deletedContacts.length === 0 && (
+              <MyText style={{ paddingHorizontal: 20 }}>
+                Deleted contacts will appear here.
+              </MyText>
+            )}
+            <View style={{ minHeight: 2 }}>
+              <FlashList
+                data={sortedContacts}
+                estimatedItemSize={87}
+                renderItem={({ item }) => (
+                  <View style={{ padding: 6 }}>
+                    <Card
+                      key={item.id}
                       style={{
                         flexDirection: "row",
-                        gap: 10,
+                        justifyContent: "space-between",
                         alignItems: "center",
                       }}
                     >
-                      <TouchableOpacity
-                        onPress={() => recoverContact(contact.id)}
-                      >
-                        <FontAwesome
+                      <View style={{ gap: 5 }}>
+                        <MyText
                           style={{
-                            fontSize: 16,
+                            fontSize: 10,
+                            fontWeight: "600",
                             color: theme.colors.textAlt,
                           }}
-                          name="undo"
+                        >
+                          {`Created: ${moment(item.createdAt).format(
+                            "MMM DD, YYYY"
+                          )}`}
+                        </MyText>
+                        <View
+                          style={{
+                            flexDirection: "row",
+                            gap: 10,
+                            alignItems: "center",
+                          }}
+                        >
+                          <TouchableOpacity
+                            onPress={() => recoverContact(item.id)}
+                          >
+                            <FontAwesome
+                              style={{
+                                fontSize: 16,
+                                color: theme.colors.textAlt,
+                              }}
+                              name="undo"
+                            />
+                          </TouchableOpacity>
+                          <MyText>{item.name}</MyText>
+                        </View>
+                      </View>
+                      <TouchableOpacity
+                        style={{ flexDirection: "row", gap: 40 }}
+                        onPress={() =>
+                          Alert.alert(
+                            "Permanently Delete?",
+                            "Deleting this contact will permanently remove it and corresponding conversations.",
+                            [
+                              {
+                                text: "Cancel",
+                                style: "cancel",
+                              },
+                              {
+                                text: "Delete",
+                                style: "destructive",
+                                onPress: () => {
+                                  handleRemoveDeleted(item.id);
+                                },
+                              },
+                            ]
+                          )
+                        }
+                      >
+                        <FontAwesome
+                          name="trash"
+                          style={{ fontSize: 16, color: theme.colors.textAlt }}
                         />
                       </TouchableOpacity>
-                      <MyText>{contact.name}</MyText>
-                    </View>
+                    </Card>
                   </View>
-                  <TouchableOpacity
-                    style={{ flexDirection: "row", gap: 40 }}
-                    onPress={() =>
-                      Alert.alert(
-                        "Permanently Delete?",
-                        "Deleting this contact will permanently remove it and corresponding conversations.",
-                        [
-                          {
-                            text: "Cancel",
-                            style: "cancel",
-                          },
-                          {
-                            text: "Delete",
-                            style: "destructive",
-                            onPress: () => {
-                              handleRemoveDeleted(contact.id);
-                            },
-                          },
-                        ]
-                      )
-                    }
-                  >
-                    <FontAwesome
-                      name="trash"
-                      style={{ fontSize: 16, color: theme.colors.textAlt }}
-                    />
-                  </TouchableOpacity>
-                </Card>
-              ))}
+                )}
+              />
+            </View>
           </View>
         </ScrollView>
       </View>

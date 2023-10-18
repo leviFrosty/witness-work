@@ -8,8 +8,12 @@ import { FlashList } from "@shopify/flash-list";
 import { hasServiceReportsForMonth } from "../lib/serviceReport";
 import useServiceReport from "../stores/serviceReport";
 import { usePreferences } from "../stores/preferences";
+import { TouchableOpacity } from "react-native-gesture-handler";
+import { useNavigation } from "@react-navigation/native";
+import { RootStackNavigation } from "../stacks/RootStack";
 
 const Month = ({ month }: { month: number }) => {
+  const navigation = useNavigation<RootStackNavigation>();
   const { installedOn } = usePreferences();
   const currentMonth = moment().month();
   const isCurrentMonth = currentMonth === month;
@@ -21,8 +25,10 @@ const Month = ({ month }: { month: number }) => {
 
   const didNotGoOutInService = monthHasPassed && !wentOutThisMonth;
   const hasNotGoneOutTheCurrentMonth = isCurrentMonth && !wentOutThisMonth;
+
   return (
-    <View
+    <TouchableOpacity
+      onPress={() => navigation.navigate("Time Reports")}
       style={{
         gap: 5,
         backgroundColor: isCurrentMonth ? theme.colors.accent3 : undefined,
@@ -69,7 +75,7 @@ const Month = ({ month }: { month: number }) => {
       >
         {moment().month(month).format("MMM")}
       </MyText>
-    </View>
+    </TouchableOpacity>
   );
 };
 

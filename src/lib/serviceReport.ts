@@ -59,7 +59,6 @@ export const getTotalHoursForSpecificMonth = (
   targetMonth: number,
   targetYear: number
 ): number => {
-  console.log(targetMonth, targetYear);
   const totalMinutesForMonth = serviceReports
     .filter(
       (report) =>

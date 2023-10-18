@@ -5,27 +5,17 @@ import ServiceReport from "../components/ServiceReport";
 import ContactsList from "../components/ContactsList";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-// import * as Notifications from "expo-notifications";
-import { useEffect } from "react";
 import useServiceReport from "../stores/serviceReport";
 import MyText from "../components/MyText";
+import { createDrawerNavigator } from "@react-navigation/drawer";
+import Header from "../components/layout/Header";
+import Settings from "./Settings";
+import theme from "../constants/theme";
 
-const Home = () => {
+const Dashboard = () => {
   const { set } = usePreferences();
   const { bottom } = useSafeAreaInsets();
   const { _WARNING_forceDeleteServiceReport } = useServiceReport();
-
-  useEffect(() => {
-    // const cancelAllNotifs = async () => {
-    //   await Notifications.cancelAllScheduledNotificationsAsync();
-    // };
-    // cancelAllNotifs();
-    // const scheduledNotifs = async () =>
-    //   await Notifications.getAllScheduledNotificationsAsync();
-    // scheduledNotifs().then((result) =>
-    //   console.log("Scheduled Notifications\n", JSON.stringify(result, null, 2))
-    // );
-  }, []);
 
   return (
     <KeyboardAwareScrollView
@@ -34,6 +24,7 @@ const Home = () => {
         flexGrow: 1,
         padding: 15,
         paddingBottom: bottom,
+        backgroundColor: theme.colors.background,
       }}
     >
       <View style={{ gap: 30 }}>
@@ -47,12 +38,25 @@ const Home = () => {
         </MyText>
 
         <ContactsList />
-        {/* <Pressable onPress={() => set({ onboardingComplete: false })}>
-          <MyText>Startup Screen</MyText>
-        </Pressable> */}
       </View>
     </KeyboardAwareScrollView>
   );
 };
 
-export default Home;
+const HomeScreen = () => {
+  const Drawer = createDrawerNavigator();
+
+  return (
+    <Drawer.Navigator
+      screenOptions={{
+        header: ({ navigation }) => (
+          <Header onPressLeftIcon={() => navigation.toggleDrawer()} />
+        ),
+      }}
+      drawerContent={Settings}
+    >
+      <Drawer.Screen name="Dashboard" component={Dashboard} />
+    </Drawer.Navigator>
+  );
+};
+export default HomeScreen;

@@ -38,13 +38,34 @@ export const getTotalHours = (serviceReports: ServiceReport[]): number => {
 };
 
 // Written by chat-gpt
-export const getTotalHoursForMonth = (
+export const getTotalHoursForCurrentMonth = (
   serviceReports: ServiceReport[]
 ): number => {
   const currentMonth = moment().month(); // Get the current month (0-indexed)
 
   const totalMinutesForMonth = serviceReports
     .filter((report) => moment(report.date).month() === currentMonth)
+    .reduce((accumulator, report) => {
+      return accumulator + report.hours * 60 + report.minutes;
+    }, 0);
+
+  const totalHoursRoundedDown = Math.floor(totalMinutesForMonth / 60);
+
+  return totalHoursRoundedDown;
+};
+
+export const getTotalHoursForSpecificMonth = (
+  serviceReports: ServiceReport[],
+  targetMonth: number,
+  targetYear: number
+): number => {
+  console.log(targetMonth, targetYear);
+  const totalMinutesForMonth = serviceReports
+    .filter(
+      (report) =>
+        moment(report.date).month() === targetMonth &&
+        moment(report.date).year() === targetYear
+    )
     .reduce((accumulator, report) => {
       return accumulator + report.hours * 60 + report.minutes;
     }, 0);

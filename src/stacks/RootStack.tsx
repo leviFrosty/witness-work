@@ -12,15 +12,16 @@ import { View } from "react-native";
 import theme from "../constants/theme";
 import ContactDetails from "../screens/ContactDetails";
 import AddTime from "../screens/AddTime";
+import TimeReports from "../screens/TimeReports";
 
 export type RootStackParamList = {
   Home: undefined;
-  Settings: undefined;
   "Conversation Form": { id: string; referrer?: string }; // Contact ID
   "Contact Details": { id: string }; // Contact ID
   "Contact Form": { id: string; edit?: boolean }; // Contact ID
   "Contact Selector": undefined;
   "Add Time": undefined;
+  "Time Reports": undefined;
 };
 
 export type RootStackNavigation = NativeStackNavigationProp<RootStackParamList>;
@@ -31,9 +32,7 @@ const RootStackComponent = () => {
   return (
     <RootStack.Navigator>
       <RootStack.Screen
-        options={{
-          header: () => <Header />,
-        }}
+        options={{ header: () => undefined }}
         name="Home"
         component={Home}
       />
@@ -70,6 +69,14 @@ const RootStackComponent = () => {
             header: () => <Header buttonType="exit" />,
           }}
           component={AddTime}
+        />
+        <RootStack.Screen
+          options={{
+            presentation: "modal",
+            header: () => <Header buttonType="exit" />,
+          }}
+          name="Time Reports"
+          component={TimeReports}
         />
       </RootStack.Group>
     </RootStack.Navigator>

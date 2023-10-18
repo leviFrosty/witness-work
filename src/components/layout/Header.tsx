@@ -1,4 +1,4 @@
-import { Pressable, Text, View } from "react-native";
+import { Pressable, View } from "react-native";
 import theme from "../../constants/theme";
 import moment from "moment";
 import { FontAwesome } from "@expo/vector-icons";
@@ -11,6 +11,7 @@ type Props = {
   backgroundColor?: string;
   title?: string;
   buttonType?: "exit" | "settings";
+  onPressLeftIcon?: () => void;
   rightElement?: React.ReactNode;
 };
 
@@ -19,13 +20,14 @@ const Header = ({
   buttonType,
   rightElement,
   backgroundColor,
+  onPressLeftIcon,
 }: Props) => {
   const { top } = useSafeAreaInsets();
   const navigation = useNavigation<RootStackNavigation>();
 
   const handleButtonAction = () => {
-    if (buttonType === "settings") {
-      navigation.navigate("Settings");
+    if (onPressLeftIcon) {
+      return onPressLeftIcon();
     }
     if (buttonType === "exit") {
       navigation.popToTop();

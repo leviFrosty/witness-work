@@ -1,4 +1,4 @@
-import { View, TouchableOpacity, Pressable } from "react-native";
+import { View, TouchableOpacity } from "react-native";
 import { useServiceReport } from "../stores/serviceReport";
 import theme from "../constants/theme";
 import ProgressBar from "./ProgressBar";
@@ -7,7 +7,7 @@ import { usePreferences } from "../stores/preferences";
 import {
   calculateHoursRemaining,
   calculateProgress,
-  getTotalHoursForMonth,
+  getTotalHoursForCurrentMonth,
   hasServiceReportsForMonth,
 } from "../lib/serviceReport";
 import Card from "./Card";
@@ -29,7 +29,7 @@ const HourEntryCard = () => {
   const navigation = useNavigation<RootStackNavigation>();
   const goalHours = publisherHours[publisher];
   const hours = useMemo(
-    () => getTotalHoursForMonth(serviceReports),
+    () => getTotalHoursForCurrentMonth(serviceReports),
     [serviceReports]
   );
   const progress = useMemo(
@@ -104,6 +104,7 @@ const HourEntryCard = () => {
           backgroundColor: theme.colors.backgroundLighter,
           gap: 5,
         }}
+        onPress={() => navigation.navigate("Time Reports")}
       >
         <View
           style={{
@@ -314,9 +315,7 @@ const StandardPublisherTimeEntry = () => {
       {hasGoneOutInServiceThisMonth ? (
         <CheckMarkAnimationComponent />
       ) : (
-        <Pressable
-          style={{ flexDirection: "row", gap: 10, alignItems: "center" }}
-        >
+        <View style={{ flexDirection: "row", gap: 10, alignItems: "center" }}>
           <FontAwesome
             name="square-o"
             style={{ color: theme.colors.textInverse, fontSize: 25 }}
@@ -330,7 +329,7 @@ const StandardPublisherTimeEntry = () => {
           >
             {"Shared the\nGood News"}
           </MyText>
-        </Pressable>
+        </View>
       )}
     </TouchableOpacity>
   );

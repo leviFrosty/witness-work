@@ -309,7 +309,10 @@ const ContactDetails = ({ route, navigation }: Props) => {
   );
 
   const contactConversationsSorted = useMemo(
-    () => contactConversations.sort((a, b) => (a.date < b.date ? 1 : -1)),
+    () =>
+      contactConversations.sort((a, b) =>
+        moment(a.date).unix() < moment(b.date).unix() ? 1 : -1
+      ),
     [contactConversations]
   );
 

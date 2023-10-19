@@ -70,7 +70,7 @@ const ConversationRow = ({ conversation }: { conversation: Conversation }) => {
       {hasNoConversationDetails && (
         <MyText>No conversation notes saved.</MyText>
       )}
-      {conversation.followUp?.notifyMe && (
+      {(conversation.followUp?.notifyMe || conversation.followUp?.topic) && (
         <View style={{ gap: 5 }}>
           <Divider />
           <View

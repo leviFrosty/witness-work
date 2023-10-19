@@ -20,7 +20,7 @@ const Dashboard = () => {
         style={{
           flexGrow: 1,
           padding: 15,
-          marginBottom: insets.bottom,
+          paddingBottom: insets.bottom,
         }}
       >
         <View style={{ gap: 30, paddingBottom: insets.bottom }}>

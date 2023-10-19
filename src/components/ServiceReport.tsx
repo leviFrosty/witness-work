@@ -12,7 +12,6 @@ import {
 } from "../lib/serviceReport";
 import Card from "./Card";
 import MyText from "./MyText";
-import Divider from "./Divider";
 import { useNavigation } from "@react-navigation/native";
 import { RootStackNavigation } from "../stacks/RootStack";
 import { useEffect, useMemo, useState, useCallback, useRef } from "react";
@@ -69,7 +68,7 @@ const HourEntryCard = () => {
         "Goal achieved!",
         "You nailed it!",
         "Congratulations!",
-        "Triumph attained!",
+        "Take your shoes off!",
         "Hats off to you!",
         "Mission complete!",
         "Success!",
@@ -156,19 +155,26 @@ const HourEntryCard = () => {
           </MyText>
         </View>
       </TouchableOpacity>
-      <Divider borderStyle="dashed" />
       <TouchableOpacity
         style={{
           flexDirection: "column",
           paddingHorizontal: 10,
           paddingVertical: 10,
-          borderRadius: theme.numbers.borderRadiusSm,
-          backgroundColor: theme.colors.backgroundLighter,
+          borderBottomLeftRadius: theme.numbers.borderRadiusSm,
+          borderBottomRightRadius: theme.numbers.borderRadiusSm,
+          backgroundColor: theme.colors.accent,
           gap: 5,
         }}
         onPress={() => navigation.navigate("Add Time")}
       >
-        <MyText style={{ textAlign: "center", fontWeight: "700" }}>
+        <MyText
+          style={{
+            textAlign: "center",
+            fontWeight: "700",
+            fontSize: 18,
+            color: theme.colors.textInverse,
+          }}
+        >
           Add Time
         </MyText>
       </TouchableOpacity>

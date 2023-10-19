@@ -205,10 +205,11 @@ const ConversationForm = ({ route, navigation }: Props) => {
 
         const notifications: Notification[] = [];
 
-        const twoHoursBeforeDate = moment(conversation.followUp.date)
-          .subtract(2, "hours")
+        const oneDayBeforeDate = moment(conversation.followUp.date)
+          .subtract(1, "days")
           .toDate();
-        if (moment(twoHoursBeforeDate).isAfter(moment())) {
+
+        if (moment(oneDayBeforeDate).isAfter(moment())) {
           try {
             const notificationId1 =
               await Notifications.scheduleNotificationAsync({
@@ -216,7 +217,9 @@ const ConversationForm = ({ route, navigation }: Props) => {
                   title: "Conversation Reminder",
                   body: `Hey! Your chat with ${
                     selectedContact!.name
-                  } is in 2 hours.📌${
+                  } is tomorrow at ${moment(conversation.followUp.date).format(
+                    "h:mm a"
+                  )}.📌${
                     conversation.followUp.topic &&
                     `\nTopic: ${conversation.followUp.topic}`
                   }`,
@@ -224,11 +227,12 @@ const ConversationForm = ({ route, navigation }: Props) => {
                   sound: true,
                 },
                 trigger: {
-                  date: twoHoursBeforeDate,
+                  date: oneDayBeforeDate,
                 },
               });
+
             notifications.push({
-              date: twoHoursBeforeDate,
+              date: oneDayBeforeDate,
               id: notificationId1,
             });
           } catch (error) {
@@ -240,7 +244,7 @@ const ConversationForm = ({ route, navigation }: Props) => {
           .subtract(15, "minutes")
           .toDate();
 
-        if (moment(twoHoursBeforeDate).isAfter(moment())) {
+        if (moment(fifteenMinutesBeforeDate).isAfter(moment())) {
           try {
             const notificationId2 =
               await Notifications.scheduleNotificationAsync({
@@ -259,6 +263,7 @@ const ConversationForm = ({ route, navigation }: Props) => {
                   date: fifteenMinutesBeforeDate,
                 },
               });
+
             notifications.push({
               date: fifteenMinutesBeforeDate,
               id: notificationId2,
@@ -268,30 +273,30 @@ const ConversationForm = ({ route, navigation }: Props) => {
           }
         }
 
-        try {
-          const notificationId3 = await Notifications.scheduleNotificationAsync(
-            {
-              content: {
-                title: "Conversation Reminder",
-                body: `It's time for your chat with ${
-                  selectedContact!.name
-                } now.🎉${
-                  conversation.followUp.topic &&
-                  `\nTopic: ${conversation.followUp.topic}`
-                }`,
-                data: { data: "goes here" },
-                sound: true,
-              },
-              trigger: { date: conversation.followUp.date },
-            }
-          );
-          notifications.push({
-            date: conversation.followUp!.date,
-            id: notificationId3,
-          });
-        } catch (error) {
-          console.error(error);
-        }
+        // try {
+        //   const notificationId3 = await Notifications.scheduleNotificationAsync(
+        //     {
+        //       content: {
+        //         title: "Conversation Reminder",
+        //         body: `It's time for your chat with ${
+        //           selectedContact!.name
+        //         } now.🎉${
+        //           conversation.followUp.topic &&
+        //           `\nTopic: ${conversation.followUp.topic}`
+        //         }`,
+        //         data: { data: "goes here" },
+        //         sound: true,
+        //       },
+        //       trigger: { date: conversation.followUp.date },
+        //     }
+        //   );
+        //   notifications.push({
+        //     date: conversation.followUp!.date,
+        //     id: notificationId3,
+        //   });
+        // } catch (error) {
+        //   console.error(error);
+        // }
 
         return notifications;
       };
@@ -472,6 +477,16 @@ const ConversationForm = ({ route, navigation }: Props) => {
               descriptionOnlyOnDisabled
             />
           </InputRowContainer>
+          <MyText
+            style={{
+              color: theme.colors.textAlt,
+              fontSize: 12,
+              marginRight: 20,
+            }}
+          >
+            You will be notified 1 day before and 15 minutes before your desired
+            time.
+          </MyText>
         </Section>
       </View>
     </KeyboardAwareScrollView>

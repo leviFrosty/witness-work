@@ -12,6 +12,7 @@ import Checkbox from "expo-checkbox";
 import Section from "../components/inputs/Section";
 import TextInputRow, { Errors } from "../components/inputs/TextInputRow";
 import Header from "../components/layout/Header";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 const PersonalContactSection = ({
   contact,
@@ -117,6 +118,7 @@ const AddressSection = ({
           ref: line1Input,
           onSubmitEditing: () => line2Input.current?.focus(),
           onChangeText: (val: string) => setLine1(val),
+          autoCapitalize: "words",
           value: contact.address?.line1 || "",
         }}
       />
@@ -128,6 +130,7 @@ const AddressSection = ({
           onSubmitEditing: () => cityInput.current?.focus(),
           onChangeText: (val: string) => setLine2(val),
           value: contact.address?.line2 || "",
+          autoCapitalize: "words",
         }}
       />
       <View
@@ -144,6 +147,7 @@ const AddressSection = ({
               ref: cityInput,
               onSubmitEditing: () => stateInput.current?.focus(),
               onChangeText: (val: string) => setCity(val),
+              autoCapitalize: "words",
               value: contact.address?.city || "",
             }}
           />
@@ -157,6 +161,7 @@ const AddressSection = ({
               onSubmitEditing: () => zipInput.current?.focus(),
               onChangeText: (val: string) => setState(val),
               value: contact.address?.state || "",
+              autoCapitalize: "words",
             }}
           />
         </View>
@@ -171,7 +176,7 @@ const AddressSection = ({
           <TextInputRow
             label="ZIP"
             placeholder=""
-            lastInSection
+            // lastInSection
             textInputProps={{
               ref: zipInput,
               onSubmitEditing: () => countryInput.current?.focus(),
@@ -185,11 +190,12 @@ const AddressSection = ({
           <TextInputRow
             label="Country"
             placeholder=""
-            lastInSection
+            // lastInSection
             textInputProps={{
               ref: countryInput,
               onChangeText: (val: string) => setCountry(val),
               value: contact.address?.country || "",
+              autoCapitalize: "words",
             }}
           />
         </View>
@@ -201,6 +207,7 @@ const AddressSection = ({
 type Props = NativeStackScreenProps<RootStackParamList, "Contact Form">;
 
 const ContactForm = ({ route, navigation }: Props) => {
+  const insets = useSafeAreaInsets();
   const { addContact, contacts, updateContact } = useContacts();
   const editMode = route.params.edit;
   const [errors, setErrors] = useState<Errors>({
@@ -403,8 +410,12 @@ const ContactForm = ({ route, navigation }: Props) => {
   };
 
   return (
-    <KeyboardAwareScrollView automaticallyAdjustKeyboardInsets>
-      <View style={{ gap: 30 }}>
+    <KeyboardAwareScrollView
+      extraHeight={100}
+      automaticallyAdjustContentInsets
+      automaticallyAdjustKeyboardInsets
+    >
+      <View style={{ gap: 30, paddingBottom: insets.bottom + 100 }}>
         <View style={{ padding: 25, gap: 5 }}>
           <MyText style={{ fontSize: 32, fontWeight: "700" }}>
             {editMode ? "Edit" : "Add"} Contact

@@ -77,7 +77,7 @@ const TimeReports = () => {
             </Card>
           )}
           {years.map((year) => (
-            <View key={year} style={{ gap: 10 }}>
+            <View key={year} style={{ gap: 25 }}>
               <MyText
                 style={{
                   marginHorizontal: 20,
@@ -114,54 +114,60 @@ const TimeReports = () => {
                         </MyText>
                       </View>
                       <Section>
-                        <View style={{ gap: 15 }}>
-                          {reportsByYearAndMonth[year][month].map((report) => (
-                            <View
-                              key={report.id}
-                              style={{
-                                flexDirection: "row",
-                                justifyContent: "space-between",
-                                marginRight: 20,
-                              }}
-                            >
-                              <MyText>
-                                {`${moment(report.date).format(
-                                  "MMM D, YYYY"
-                                )} - ${report.hours} hours ${
-                                  report.minutes
-                                } minutes`}
-                              </MyText>
-                              <TouchableOpacity
-                                onPress={() =>
-                                  Alert.alert(
-                                    "Delete Time Report?",
-                                    "Deleting this time report will permanently remove it.",
-                                    [
-                                      {
-                                        text: "Cancel",
-                                        style: "cancel",
-                                      },
-                                      {
-                                        text: "Delete",
-                                        style: "destructive",
-                                        onPress: () => {
-                                          deleteServiceReport(report.id);
-                                        },
-                                      },
-                                    ]
-                                  )
-                                }
+                        <View style={{ gap: 20 }}>
+                          {reportsByYearAndMonth[year][month]
+                            .sort((a, b) =>
+                              moment(a.date).unix() < moment(b.date).unix()
+                                ? 1
+                                : -1
+                            )
+                            .map((report) => (
+                              <View
+                                key={report.id}
+                                style={{
+                                  flexDirection: "row",
+                                  justifyContent: "space-between",
+                                  marginRight: 20,
+                                }}
                               >
-                                <FontAwesome
-                                  style={{
-                                    color: theme.colors.textAlt,
-                                    fontSize: 18,
-                                  }}
-                                  name="trash"
-                                />
-                              </TouchableOpacity>
-                            </View>
-                          ))}
+                                <MyText>
+                                  {`${moment(report.date).format(
+                                    "MMM D, YYYY"
+                                  )} - ${report.hours} hours ${
+                                    report.minutes
+                                  } minutes`}
+                                </MyText>
+                                <TouchableOpacity
+                                  onPress={() =>
+                                    Alert.alert(
+                                      "Delete Time Report?",
+                                      "Deleting this time report will permanently remove it.",
+                                      [
+                                        {
+                                          text: "Cancel",
+                                          style: "cancel",
+                                        },
+                                        {
+                                          text: "Delete",
+                                          style: "destructive",
+                                          onPress: () => {
+                                            deleteServiceReport(report.id);
+                                          },
+                                        },
+                                      ]
+                                    )
+                                  }
+                                >
+                                  <FontAwesome
+                                    style={{
+                                      color: theme.colors.textAlt,
+                                      fontSize: 16,
+                                    }}
+                                    name="trash"
+                                  />
+                                </TouchableOpacity>
+                              </View>
+                            ))}
                         </View>
                       </Section>
                     </View>

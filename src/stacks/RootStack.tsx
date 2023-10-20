@@ -50,57 +50,52 @@ const RootStackComponent = () => {
         name="Onboarding"
         component={OnBoarding}
       />
-      <RootStack.Group>
-        <RootStack.Screen
-          options={{ presentation: "containedModal" }}
-          name="Contact Details"
-          component={ContactDetails}
-        />
-        <RootStack.Screen name="Contact Form" component={ContactForm} />
-        <RootStack.Screen
-          name="Conversation Form"
-          component={ConversationForm}
-        />
-        <RootStack.Screen
-          name="Contact Selector"
-          component={ContactSelector}
-          options={{
-            presentation: "formSheet",
-            header: () => (
-              <View
-                style={{
-                  paddingTop: insets.top,
-                  backgroundColor: theme.colors.accentBackground,
-                }}
-              />
-            ),
-          }}
-        />
-        <RootStack.Screen
-          name="Add Time"
-          options={{
-            presentation: "modal",
-            header: () => <Header buttonType="exit" />,
-          }}
-          component={AddTime}
-        />
-        <RootStack.Screen
-          options={{
-            presentation: "modal",
-            header: () => <Header buttonType="exit" />,
-          }}
-          name="Time Reports"
-          component={TimeReports}
-        />
-        <RootStack.Screen
-          options={{
-            presentation: "modal",
-            header: () => <Header buttonType="exit" />,
-          }}
-          name="Recover Contacts"
-          component={RecoverContacts}
-        />
-      </RootStack.Group>
+      <RootStack.Screen
+        options={{ presentation: "containedModal" }}
+        name="Contact Details"
+        component={ContactDetails}
+      />
+      <RootStack.Screen name="Contact Form" component={ContactForm} />
+      <RootStack.Screen name="Conversation Form" component={ConversationForm} />
+      <RootStack.Screen
+        name="Contact Selector"
+        component={ContactSelector}
+        options={{
+          presentation: "formSheet",
+          header: () => (
+            <View
+              style={{
+                paddingTop: insets.top,
+                backgroundColor: theme.colors.accentBackground,
+              }}
+            />
+          ),
+        }}
+      />
+      <RootStack.Screen
+        name="Add Time"
+        options={{
+          presentation: "modal",
+          header: () => <Header buttonType="exit" />,
+        }}
+        component={AddTime}
+      />
+      <RootStack.Screen
+        options={{
+          presentation: "modal",
+          header: () => <Header buttonType="exit" />,
+        }}
+        name="Time Reports"
+        component={TimeReports}
+      />
+      <RootStack.Screen
+        options={{
+          presentation: "modal",
+          header: () => <Header buttonType="exit" />,
+        }}
+        name="Recover Contacts"
+        component={RecoverContacts}
+      />
     </RootStack.Navigator>
   );
 };

@@ -6,14 +6,11 @@ import StepThree from "./steps/Three";
 import StepFour from "./steps/Four";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { usePreferences } from "../../stores/preferences";
-import { useNavigation } from "@react-navigation/native";
-import { RootStackNavigation } from "../../stacks/RootStack";
 
 const steps = [StepOne, StepTwo, StepThree, StepFour];
 
 const OnBoarding = () => {
   const { set, onboardingComplete } = usePreferences();
-  const navigation = useNavigation<RootStackNavigation>();
   const [onboardingStep, setOnboardingStep] = useState(0);
   const insets = useSafeAreaInsets();
 
@@ -26,7 +23,6 @@ const OnBoarding = () => {
   const goNext = () => {
     if (onboardingStep === steps.length - 1) {
       set({ onboardingComplete: true });
-      navigation.navigate("Home");
       return;
     }
     setOnboardingStep(onboardingStep + 1);

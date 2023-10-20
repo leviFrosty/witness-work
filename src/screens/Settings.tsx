@@ -16,7 +16,6 @@ const Settings = () => {
 
   const resetToOnboarding = () => {
     setPreferences({ onboardingComplete: false });
-    navigation.navigate("Onboarding");
   };
 
   return (

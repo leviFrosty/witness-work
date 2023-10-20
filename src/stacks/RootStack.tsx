@@ -14,8 +14,8 @@ import ContactDetails from "../screens/ContactDetails";
 import AddTime from "../screens/AddTime";
 import TimeReports from "../screens/TimeReports";
 import RecoverContacts from "../screens/RecoverContacts";
-import { usePreferences } from "../stores/preferences";
 import OnBoarding from "../components/onboarding/Onboarding";
+import { usePreferences } from "../stores/preferences";
 
 export type RootStackParamList = {
   Home: undefined;
@@ -37,19 +37,27 @@ const RootStackComponent = () => {
   const { onboardingComplete } = usePreferences();
 
   return (
-    <RootStack.Navigator
-      initialRouteName={onboardingComplete ? undefined : "Onboarding"}
-    >
-      <RootStack.Screen
-        options={{ header: () => undefined }}
-        name="Home"
-        component={Home}
-      />
-      <RootStack.Screen
-        options={{ header: () => undefined }}
-        name="Onboarding"
-        component={OnBoarding}
-      />
+    <RootStack.Navigator>
+      {/* 
+      Cannot render onboarding via Navigator initialRouteName. 
+      This alternative allows for dynamically rendering screen. 
+      Navigating directly between conditional screens causes an error
+      because from each screen's perspective the other screen does not exist. 
+      You must update the variable instead. 
+      See: https://github.com/react-navigation/react-navigation/discussions/10346*/}
+      {onboardingComplete ? (
+        <RootStack.Screen
+          options={{ header: () => undefined }}
+          name="Home"
+          component={Home}
+        />
+      ) : (
+        <RootStack.Screen
+          options={{ header: () => undefined }}
+          name="Onboarding"
+          component={OnBoarding}
+        />
+      )}
       <RootStack.Screen
         options={{ presentation: "containedModal" }}
         name="Contact Details"

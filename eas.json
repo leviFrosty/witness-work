@@ -1,7 +1,8 @@
 {
   "cli": {
     "version": ">= 5.4.0",
-    "appVersionSource": "remote"
+    "appVersionSource": "remote",
+    "promptToConfigurePushNotifications": false
   },
   "build": {
     "development": {
@@ -11,7 +12,10 @@
     },
     "preview": {
       "distribution": "internal",
-      "channel": "preview"
+      "channel": "preview",
+      "ios": {
+        "simulator": true
+      }
     },
     "production": {
       "channel": "production",

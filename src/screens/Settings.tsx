@@ -14,6 +14,11 @@ const Settings = () => {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<RootStackNavigation>();
 
+  const resetToOnboarding = () => {
+    setPreferences({ onboardingComplete: false });
+    navigation.navigate("Onboarding");
+  };
+
   return (
     <View
       style={{
@@ -34,7 +39,7 @@ const Settings = () => {
                 justifyContent: "space-between",
                 alignItems: "center",
               }}
-              onPress={() => setPreferences({ onboardingComplete: false })}
+              onPress={resetToOnboarding}
             >
               <MyText style={{ fontWeight: "600", color: theme.colors.text }}>
                 Restart Onboarding

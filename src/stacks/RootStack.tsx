@@ -14,6 +14,8 @@ import ContactDetails from "../screens/ContactDetails";
 import AddTime from "../screens/AddTime";
 import TimeReports from "../screens/TimeReports";
 import RecoverContacts from "../screens/RecoverContacts";
+import { usePreferences } from "../stores/preferences";
+import OnBoarding from "../components/onboarding/Onboarding";
 
 export type RootStackParamList = {
   Home: undefined;
@@ -24,6 +26,7 @@ export type RootStackParamList = {
   "Add Time": undefined;
   "Time Reports": undefined;
   "Recover Contacts": undefined;
+  Onboarding: undefined;
 };
 
 export type RootStackNavigation = NativeStackNavigationProp<RootStackParamList>;
@@ -31,12 +34,21 @@ const RootStack = createNativeStackNavigator<RootStackParamList>();
 
 const RootStackComponent = () => {
   const insets = useSafeAreaInsets();
+  const { onboardingComplete } = usePreferences();
+
   return (
-    <RootStack.Navigator>
+    <RootStack.Navigator
+      initialRouteName={onboardingComplete ? undefined : "Onboarding"}
+    >
       <RootStack.Screen
         options={{ header: () => undefined }}
         name="Home"
         component={Home}
+      />
+      <RootStack.Screen
+        options={{ header: () => undefined }}
+        name="Onboarding"
+        component={OnBoarding}
       />
       <RootStack.Group>
         <RootStack.Screen

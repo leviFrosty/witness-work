@@ -6,11 +6,11 @@ import * as Notifications from "expo-notifications";
 import MyText from "../../MyText";
 
 interface Props {
+  goNext: () => void;
   goBack: () => void;
-  setOnboardingComplete: (val: boolean) => void;
 }
 
-const StepFour = ({ goBack, setOnboardingComplete }: Props) => {
+const StepFour = ({ goNext, goBack }: Props) => {
   const [notificationsAllowed, setNotificationsAllowed] =
     useState<boolean>(false);
 
@@ -24,11 +24,7 @@ const StepFour = ({ goBack, setOnboardingComplete }: Props) => {
 
   return (
     <View style={styles.stepContainer}>
-      <OnboardingNav
-        noActions
-        goBack={goBack}
-        setOnboardingComplete={setOnboardingComplete}
-      />
+      <OnboardingNav noActions goBack={goBack} />
       <View>
         <MyText style={styles.stepTitle}>You're all set!</MyText>
         <MyText style={styles.description}>
@@ -37,10 +33,7 @@ const StepFour = ({ goBack, setOnboardingComplete }: Props) => {
             : "You can opt-in to notifications in the settings later."}
         </MyText>
       </View>
-      <TouchableOpacity
-        style={styles.actionButton}
-        onPress={() => setOnboardingComplete(true)}
-      >
+      <TouchableOpacity style={styles.actionButton} onPress={goNext}>
         <MyText style={styles.actionButtonInner}>Complete Setup</MyText>
       </TouchableOpacity>
     </View>

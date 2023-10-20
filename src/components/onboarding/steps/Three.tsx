@@ -1,4 +1,4 @@
-import { View, Pressable, Text, TouchableOpacity } from "react-native";
+import { View, Pressable, TouchableOpacity } from "react-native";
 import { styles } from "../Onboarding.styles";
 import OnboardingNav from "../OnboardingNav";
 import { registerForPushNotificationsAsync } from "../../../lib/notifications";
@@ -7,16 +7,12 @@ import MyText from "../../MyText";
 interface Props {
   goBack: () => void;
   goNext: () => void;
-  setOnboardingComplete: (val: boolean) => void;
 }
 
-const StepThree = ({ goBack, setOnboardingComplete, goNext }: Props) => {
+const StepThree = ({ goBack, goNext }: Props) => {
   return (
     <View style={styles.stepContainer}>
-      <OnboardingNav
-        goBack={goBack}
-        setOnboardingComplete={setOnboardingComplete}
-      />
+      <OnboardingNav goBack={goBack} />
       <View>
         <MyText style={styles.stepTitle}>Never forget a return visit.</MyText>
         <MyText style={styles.description}>

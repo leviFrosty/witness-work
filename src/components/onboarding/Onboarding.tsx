@@ -1,24 +1,32 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { View } from "react-native";
 import StepOne from "./steps/One";
 import StepTwo from "./steps/Two";
 import StepThree from "./steps/Three";
 import StepFour from "./steps/Four";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { usePreferences } from "../../stores/preferences";
+import { useNavigation } from "@react-navigation/native";
+import { RootStackNavigation } from "../../stacks/RootStack";
 
 const steps = [StepOne, StepTwo, StepThree, StepFour];
 
-interface Props {
-  setOnboardingComplete: (val: boolean) => void;
-}
-
-const OnBoarding = ({ setOnboardingComplete }: Props) => {
+const OnBoarding = () => {
+  const { set, onboardingComplete } = usePreferences();
+  const navigation = useNavigation<RootStackNavigation>();
   const [onboardingStep, setOnboardingStep] = useState(0);
   const insets = useSafeAreaInsets();
 
+  useEffect(() => {
+    if (onboardingComplete === false) {
+      setOnboardingStep(0);
+    }
+  }, [onboardingComplete]);
+
   const goNext = () => {
     if (onboardingStep === steps.length - 1) {
-      setOnboardingComplete(true);
+      set({ onboardingComplete: true });
+      navigation.navigate("Home");
       return;
     }
     setOnboardingStep(onboardingStep + 1);
@@ -36,28 +44,11 @@ const OnBoarding = ({ setOnboardingComplete }: Props) => {
       case 0:
         return <StepOne goNext={goNext} />;
       case 1:
-        return (
-          <StepTwo
-            goBack={goBack}
-            goNext={goNext}
-            setOnboardingComplete={setOnboardingComplete}
-          />
-        );
+        return <StepTwo goBack={goBack} goNext={goNext} />;
       case 2:
-        return (
-          <StepThree
-            goBack={goBack}
-            goNext={goNext}
-            setOnboardingComplete={setOnboardingComplete}
-          />
-        );
+        return <StepThree goBack={goBack} goNext={goNext} />;
       case 3:
-        return (
-          <StepFour
-            goBack={goBack}
-            setOnboardingComplete={setOnboardingComplete}
-          />
-        );
+        return <StepFour goNext={goNext} goBack={goBack} />;
     }
   };
 

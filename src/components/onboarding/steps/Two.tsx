@@ -10,10 +10,9 @@ import MyText from "../../MyText";
 interface Props {
   goBack: () => void;
   goNext: () => void;
-  setOnboardingComplete: (val: boolean) => void;
 }
 
-const StepTwo = ({ goBack, setOnboardingComplete, goNext }: Props) => {
+const StepTwo = ({ goBack, goNext }: Props) => {
   // const [publisher, setPublisher] = useState<Publisher>("publisher");
   const [open, setOpen] = useState(false);
   const [items, setItems] = useState([
@@ -28,10 +27,7 @@ const StepTwo = ({ goBack, setOnboardingComplete, goNext }: Props) => {
 
   return (
     <View style={styles.stepContainer}>
-      <OnboardingNav
-        goBack={goBack}
-        setOnboardingComplete={setOnboardingComplete}
-      />
+      <OnboardingNav goBack={goBack} />
       <View style={styles.stepContentContainer}>
         <MyText style={styles.stepTitle}>
           What type of publisher are you?

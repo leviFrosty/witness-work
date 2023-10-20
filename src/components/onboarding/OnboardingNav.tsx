@@ -6,7 +6,6 @@ import MyText from "../MyText";
 interface Props {
   noActions?: boolean;
   goBack: () => void;
-  setOnboardingComplete: (val: boolean) => void;
 }
 
 const OnboardingNav = ({ noActions, goBack }: Props) => {

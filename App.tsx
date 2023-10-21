@@ -18,6 +18,7 @@ Sentry.init({
   dsn: "https://f9600209459a43d18c3d2c3a6ac2aa7b@o572512.ingest.sentry.io/4505271593074688",
   enableInExpoDevelopment: true,
   debug: __DEV__,
+  attachScreenshot: true,
 });
 
 export default function App() {

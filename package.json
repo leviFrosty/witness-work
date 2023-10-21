@@ -33,12 +33,12 @@
     "react-native-keyboard-aware-scroll-view": "^0.9.5",
     "react-native-reanimated": "~3.3.0",
     "react-native-safe-area-context": "4.6.3",
+    "react-native-screens": "~3.22.0",
     "undefined": "@expo/vector-icons/",
-    "zustand": "^4.4.3",
-    "react-native-screens": "~3.22.0"
+    "zustand": "^4.4.3"
   },
   "devDependencies": {
-    "@babel/core": "^7.20.0",
+    "@babel/core": "^7.23.2",
     "@types/react": "~18.2.14",
     "@typescript-eslint/eslint-plugin": "^6.7.5",
     "@typescript-eslint/parser": "^6.7.5",

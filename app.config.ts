@@ -17,8 +17,12 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   ios: {
     supportsTablet: false,
     bundleIdentifier: "com.leviwilkerson.jwtime",
+    infoPlist: {
+      RCTAsyncStorageExcludeFromBackup: false,
+    },
   },
   android: {
+    allowBackup: true,
     adaptiveIcon: {
       foregroundImage: "./src/assets/adaptive-icon.png",
       monochromeImage: "./src/assets/adaptive-icon-monochrome.png",

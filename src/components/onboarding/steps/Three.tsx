@@ -3,6 +3,7 @@ import { styles } from "../Onboarding.styles";
 import OnboardingNav from "../OnboardingNav";
 import { registerForPushNotificationsAsync } from "../../../lib/notifications";
 import MyText from "../../MyText";
+import i18n from "../../../locales";
 
 interface Props {
   goBack: () => void;
@@ -14,10 +15,11 @@ const StepThree = ({ goBack, goNext }: Props) => {
     <View style={styles.stepContainer}>
       <OnboardingNav goBack={goBack} />
       <View>
-        <MyText style={styles.stepTitle}>Never forget a return visit.</MyText>
+        <MyText style={styles.stepTitle}>
+          {i18n.t("neverForgetAReturnVisit")}
+        </MyText>
         <MyText style={styles.description}>
-          JW Time will notify you about upcoming visits and remind you to submit
-          your service report. You can change this later in the settings.
+          {i18n.t("neverForgetAReturnVisit_description")}
         </MyText>
       </View>
       <View>
@@ -29,11 +31,13 @@ const StepThree = ({ goBack, goNext }: Props) => {
             });
           }}
         >
-          <MyText style={styles.actionButtonInner}>Allow notifications</MyText>
+          <MyText style={styles.actionButtonInner}>
+            {i18n.t("allowNotifications")}
+          </MyText>
         </TouchableOpacity>
         <View style={{ alignItems: "center", marginTop: 15 }}>
           <Pressable hitSlop={10} onPress={goNext}>
-            <MyText style={styles.navSkip}>Skip</MyText>
+            <MyText style={styles.navSkip}>{i18n.t("skip")}</MyText>
           </Pressable>
         </View>
       </View>

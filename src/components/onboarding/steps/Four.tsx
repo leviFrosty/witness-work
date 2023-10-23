@@ -4,6 +4,7 @@ import { styles } from "../Onboarding.styles";
 import OnboardingNav from "../OnboardingNav";
 import * as Notifications from "expo-notifications";
 import MyText from "../../MyText";
+import i18n from "../../../locales";
 
 interface Props {
   goNext: () => void;
@@ -26,15 +27,17 @@ const StepFour = ({ goNext, goBack }: Props) => {
     <View style={styles.stepContainer}>
       <OnboardingNav noActions goBack={goBack} />
       <View>
-        <MyText style={styles.stepTitle}>You're all set!</MyText>
+        <MyText style={styles.stepTitle}>{i18n.t("youreAllSet")}</MyText>
         <MyText style={styles.description}>
           {notificationsAllowed
-            ? "JW Time will notify you each month to report your time and more!"
-            : "You can opt-in to notifications in the settings later."}
+            ? i18n.t("youreAllSet_description")
+            : i18n.t("optInNotificationsLater")}
         </MyText>
       </View>
       <TouchableOpacity style={styles.actionButton} onPress={goNext}>
-        <MyText style={styles.actionButtonInner}>Complete Setup</MyText>
+        <MyText style={styles.actionButtonInner}>
+          {i18n.t("completeSetup")}
+        </MyText>
       </TouchableOpacity>
     </View>
   );

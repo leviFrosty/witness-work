@@ -148,5 +148,9 @@
   "permanentlyDeleteContact_warning": "Wenn Sie diesen Kontakt löschen, werden er und die entsprechenden Konversationen dauerhaft entfernt.",
   "settings": "Einstellungen",
   "restartOnboarding": "Starten Sie das Onboarding neu",
-  "basedOnContacts": "Basierend auf Kontakten"
+  "basedOnContacts": "Basierend auf Kontakten",
+  "allTimeEntries": "Alle Zeiteinträge",
+  "noTimeEntriesYet": "Noch keine Zeiteinträge.. 🕒",
+  "deleteTime_title": "Zeitbericht löschen?",
+  "deleteTime_description": "Wenn Sie diesen Zeitbericht löschen, wird er dauerhaft entfernt."
 }

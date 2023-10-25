@@ -148,5 +148,9 @@
   "permanentlyDeleteContact_warning": "Deleting this contact will permanently remove it and corresponding conversations.",
   "settings": "Settings",
   "restartOnboarding": "Restart Onboarding",
-  "basedOnContacts": "Based on contacts"
+  "basedOnContacts": "Based on contacts",
+  "allTimeEntries": "All Time Entries",
+  "noTimeEntriesYet": "No time entries yet.. 🕒",
+  "deleteTime_title": "Delete Time Report?",
+  "deleteTime_description": "Deleting this time report will permanently remove it."
 }

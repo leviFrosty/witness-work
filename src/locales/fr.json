@@ -148,5 +148,9 @@
   "permanentlyDeleteContact_warning": "La suppression de ce contact le supprimera définitivement ainsi que les conversations correspondantes.",
   "settings": "Paramètres",
   "restartOnboarding": "Redémarrer l'intégration",
-  "basedOnContacts": "Basé sur les contacts"
+  "basedOnContacts": "Basé sur les contacts",
+  "allTimeEntries": "Toutes les entrées de temps",
+  "noTimeEntriesYet": "Aucune entrée de temps pour l'instant.. 🕒",
+  "deleteTime_title": "Supprimer le rapport de temps ?",
+  "deleteTime_description": "La suppression de ce rapport de temps le supprimera définitivement."
 }

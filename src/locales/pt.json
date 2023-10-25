@@ -148,5 +148,9 @@
   "permanentlyDeleteContact_warning": "Excluir este contato removerá permanentemente ele e as conversas correspondentes.",
   "settings": "Configurações",
   "restartOnboarding": "Reinicie a integração",
-  "basedOnContacts": "Com base em contatos"
+  "basedOnContacts": "Com base em contatos",
+  "allTimeEntries": "Todas as entradas de tempo",
+  "noTimeEntriesYet": "Ainda não há registros de horário.. 🕒",
+  "deleteTime_title": "Excluir relatório de tempo?",
+  "deleteTime_description": "Excluir este relatório de tempo irá removê-lo permanentemente."
 }

@@ -148,5 +148,9 @@
   "permanentlyDeleteContact_warning": "Xóa liên hệ này sẽ xóa vĩnh viễn liên hệ đó và các cuộc trò chuyện tương ứng.",
   "settings": "Cài đặt",
   "restartOnboarding": "Khởi động lại quá trình giới thiệu",
-  "basedOnContacts": "Dựa trên địa chỉ liên lạc"
+  "basedOnContacts": "Dựa trên địa chỉ liên lạc",
+  "allTimeEntries": "Tất cả các mục nhập thời gian",
+  "noTimeEntriesYet": "Chưa có mục thời gian nào.. 🕒",
+  "deleteTime_title": "Xóa Báo cáo Thời gian?",
+  "deleteTime_description": "Xóa báo cáo thời gian này sẽ xóa nó vĩnh viễn."
 }

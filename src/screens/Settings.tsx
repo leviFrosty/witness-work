@@ -8,6 +8,7 @@ import { usePreferences } from "../stores/preferences";
 import { FontAwesome } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import { RootStackNavigation } from "../stacks/RootStack";
+import i18n from "../lib/locales";
 
 const Settings = () => {
   const { set: setPreferences } = usePreferences();
@@ -28,7 +29,9 @@ const Settings = () => {
     >
       <View style={{ gap: 10 }}>
         <View style={{ padding: 20 }}>
-          <MyText style={{ fontSize: 16, fontWeight: "600" }}>Settings</MyText>
+          <MyText style={{ fontSize: 16, fontWeight: "600" }}>
+            {i18n.t("settings")}
+          </MyText>
         </View>
         <Section>
           <View style={{ marginRight: 20 }}>
@@ -41,7 +44,7 @@ const Settings = () => {
               onPress={resetToOnboarding}
             >
               <MyText style={{ fontWeight: "600", color: theme.colors.text }}>
-                Restart Onboarding
+                {i18n.t("restartOnboarding")}
               </MyText>
               <FontAwesome name="chevron-right" />
             </TouchableOpacity>
@@ -58,7 +61,7 @@ const Settings = () => {
               onPress={() => navigation.navigate("Recover Contacts")}
             >
               <MyText style={{ fontWeight: "600", color: theme.colors.text }}>
-                Recover Contacts
+                {i18n.t("recoverContacts")}
               </MyText>
               <FontAwesome name="chevron-right" />
             </TouchableOpacity>

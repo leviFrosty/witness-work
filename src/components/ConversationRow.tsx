@@ -6,6 +6,7 @@ import theme from "../constants/theme";
 import { FontAwesome } from "@expo/vector-icons";
 import Divider from "./Divider";
 import useConversations from "../stores/conversationStore";
+import i18n from "../lib/locales";
 
 const ConversationRow = ({ conversation }: { conversation: Conversation }) => {
   const { deleteConversation } = useConversations();
@@ -44,15 +45,15 @@ const ConversationRow = ({ conversation }: { conversation: Conversation }) => {
           hitSlop={15}
           onPress={() =>
             Alert.alert(
-              "Delete Conversation?",
-              "Deleting this conversation will permanently remove it and assigned notifications.",
+              i18n.t("deleteConversation"),
+              i18n.t("deleteConversation_description"),
               [
                 {
-                  text: "Cancel",
+                  text: i18n.t("cancel"),
                   style: "cancel",
                 },
                 {
-                  text: "Delete",
+                  text: i18n.t("delete"),
                   style: "destructive",
                   onPress: () => {
                     deleteConversation(conversation.id);
@@ -68,7 +69,7 @@ const ConversationRow = ({ conversation }: { conversation: Conversation }) => {
 
       {!!conversation.note?.length && <MyText>{conversation.note}</MyText>}
       {hasNoConversationDetails && (
-        <MyText>No conversation notes saved.</MyText>
+        <MyText>{i18n.t("noConversationNotesSaved")}</MyText>
       )}
       {(conversation.followUp?.notifyMe || conversation.followUp?.topic) && (
         <View style={{ gap: 5 }}>
@@ -89,8 +90,10 @@ const ConversationRow = ({ conversation }: { conversation: Conversation }) => {
                 color: theme.colors.textAlt,
               }}
             >
-              Follow up information
-              {notificationHasPassed ? " - upcoming" : " - past"}
+              {i18n.t("followUpInformation")}
+              {notificationHasPassed
+                ? ` - ${i18n.t("upcoming")}`
+                : ` - ${i18n.t("past")}`}
             </MyText>
           </View>
           {conversation.followUp?.date && (
@@ -114,7 +117,7 @@ const ConversationRow = ({ conversation }: { conversation: Conversation }) => {
                   : theme.colors.textAlt,
               }}
             >
-              Topic: {conversation.followUp?.topic}
+              {i18n.t("topic")} {conversation.followUp?.topic}
             </MyText>
           )}
         </View>

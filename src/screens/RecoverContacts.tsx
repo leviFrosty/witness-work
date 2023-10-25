@@ -8,6 +8,8 @@ import moment from "moment";
 import Card from "../components/Card";
 import useConversations from "../stores/conversationStore";
 import { FlashList } from "@shopify/flash-list";
+import i18n from "../lib/locales";
+import { useMemo } from "react";
 
 const RecoverContacts = () => {
   const { conversations, deleteConversation } = useConversations();
@@ -25,8 +27,12 @@ const RecoverContacts = () => {
     );
   };
 
-  const sortedContacts = deletedContacts.sort((a, b) =>
-    moment(a.createdAt).unix() < moment(b.createdAt).unix() ? 1 : -1
+  const sortedContacts = useMemo(
+    () =>
+      deletedContacts.sort((a, b) =>
+        moment(a.createdAt).unix() < moment(b.createdAt).unix() ? 1 : -1
+      ),
+    [deletedContacts]
   );
 
   return (
@@ -41,12 +47,10 @@ const RecoverContacts = () => {
       <View style={{ gap: 30, flexGrow: 1 }}>
         <View style={{ padding: 25, gap: 5 }}>
           <MyText style={{ fontSize: 32, fontWeight: "700" }}>
-            Recover Contacts
+            {i18n.t("recoverContacts")}
           </MyText>
           <MyText style={{ color: theme.colors.textAlt, fontSize: 12 }}>
-            Press undo below to recover a contact. Deleting contacts from this
-            page will permanently delete it as well as corresponding
-            conversations.
+            {i18n.t("recoverContacts_description")}
           </MyText>
         </View>
         <ScrollView
@@ -67,7 +71,7 @@ const RecoverContacts = () => {
           >
             {deletedContacts.length === 0 && (
               <MyText style={{ paddingHorizontal: 20 }}>
-                Deleted contacts will appear here.
+                {i18n.t("deletedContactsWillAppearHere")}
               </MyText>
             )}
             <View style={{ minHeight: 2 }}>
@@ -92,7 +96,7 @@ const RecoverContacts = () => {
                             color: theme.colors.textAlt,
                           }}
                         >
-                          {`Created: ${moment(item.createdAt).format(
+                          {`${i18n.t("created")}${moment(item.createdAt).format(
                             "MMM DD, YYYY"
                           )}`}
                         </MyText>
@@ -121,15 +125,15 @@ const RecoverContacts = () => {
                         style={{ flexDirection: "row", gap: 40 }}
                         onPress={() =>
                           Alert.alert(
-                            "Permanently Delete?",
-                            "Deleting this contact will permanently remove it and corresponding conversations.",
+                            i18n.t("permanentlyDelete"),
+                            i18n.t("permanentlyDeleteContact_warning"),
                             [
                               {
-                                text: "Cancel",
+                                text: i18n.t("cancel"),
                                 style: "cancel",
                               },
                               {
-                                text: "Delete",
+                                text: i18n.t("delete"),
                                 style: "destructive",
                                 onPress: () => {
                                   handleRemoveDeleted(item.id);

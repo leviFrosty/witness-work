@@ -19,6 +19,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     bundleIdentifier: "com.leviwilkerson.jwtime",
     infoPlist: {
       RCTAsyncStorageExcludeFromBackup: false,
+      CFBundleDisplayName: "JW Time",
     },
   },
   android: {
@@ -44,7 +45,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   updates: {
     url: "https://u.expo.dev/a67257dc-2fb8-4942-97f2-e9364b80d318",
   },
-  plugins: ["sentry-expo"],
+  plugins: ["sentry-expo", "expo-localization"],
 
   hooks: {
     postPublish: [

@@ -1,5 +1,6 @@
 import { TextInput } from "react-native";
 import theme from "../constants/theme";
+import i18n from "../lib/locales";
 
 interface Props {
   placeholder?: string;
@@ -23,7 +24,7 @@ const SearchBar = ({ placeholder, value, setValue }: Props) => {
         borderWidth: 1,
         flexGrow: 1,
       }}
-      placeholder={placeholder ?? "Search for contact..."}
+      placeholder={placeholder ?? i18n.t("searchForContact")}
       clearButtonMode="while-editing"
       returnKeyType="search"
     />

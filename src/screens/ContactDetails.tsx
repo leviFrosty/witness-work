@@ -25,6 +25,7 @@ import useConversations from "../stores/conversationStore";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Divider from "../components/Divider";
 import moment from "moment";
+import i18n from "../lib/locales";
 
 type Props = NativeStackScreenProps<RootStackParamList, "Contact Details">;
 
@@ -37,7 +38,7 @@ const PhoneRow = ({ contact }: { contact: Contact }) => {
       <MyText
         style={{ fontSize: 14, fontWeight: "600", color: theme.colors.textAlt }}
       >
-        Phone
+        {i18n.t("phone")}
       </MyText>
       <View
         style={{
@@ -103,7 +104,7 @@ const Hero = ({
           color: theme.colors.textInverse,
         }}
       >
-        Contact
+        {i18n.t("contact")}
       </MyText>
       <MyText
         style={{
@@ -123,7 +124,7 @@ const Hero = ({
               color: theme.colors.textInverse,
             }}
           >
-            is studying
+            {i18n.t("isStudying")}
           </MyText>
           <FontAwesome
             style={{ color: theme.colors.textInverse, fontSize: 14 }}
@@ -138,7 +139,7 @@ const Hero = ({
 const AddressRow = ({ contact }: { contact: Contact }) => {
   const { address } = contact;
   if (!address) {
-    return;
+    return null;
   }
 
   const navigateTo = (a: Address) => {
@@ -164,7 +165,7 @@ const AddressRow = ({ contact }: { contact: Contact }) => {
       <MyText
         style={{ fontSize: 14, fontWeight: "600", color: theme.colors.textAlt }}
       >
-        Address
+        {i18n.t("address")}
       </MyText>
       <TouchableOpacity onPress={() => navigateTo(address)}>
         <View
@@ -197,7 +198,7 @@ const AddressRow = ({ contact }: { contact: Contact }) => {
 const EmailRow = ({ contact }: { contact: Contact }) => {
   const { email } = contact;
   if (!email) {
-    return;
+    return null;
   }
 
   return (
@@ -205,7 +206,7 @@ const EmailRow = ({ contact }: { contact: Contact }) => {
       <MyText
         style={{ fontSize: 14, fontWeight: "600", color: theme.colors.textAlt }}
       >
-        Email
+        {i18n.t("email")}
       </MyText>
       <TouchableOpacity onPress={() => Linking.openURL(`mailTo:${email}`)}>
         <View
@@ -281,7 +282,7 @@ const DeleteContactButton = ({
             textDecorationLine: "underline",
           }}
         >
-          Delete Contact
+          {i18n.t("deleteContact")}
         </MyText>
       </TouchableOpacity>
       <MyText
@@ -291,7 +292,7 @@ const DeleteContactButton = ({
           textAlign: "center",
         }}
       >
-        Created: {moment(contact.createdAt).format("MMM DD, YYYY")}
+        {i18n.t("created")} {moment(contact.createdAt).format("MMM DD, YYYY")}
       </MyText>
     </View>
   );
@@ -301,11 +302,15 @@ const ContactDetails = ({ route, navigation }: Props) => {
   const { params } = route;
   const insets = useSafeAreaInsets();
   const { contacts, deleteContact } = useContacts();
-  const contact = contacts.find((c) => c.id === params.id);
+  const contact = useMemo(
+    () => contacts.find((c) => c.id === params.id),
+    [contacts, params.id]
+  );
   const { conversations } = useConversations();
 
-  const contactConversations = conversations.filter(
-    ({ contact: { id } }) => id === contact?.id
+  const contactConversations = useMemo(
+    () => conversations.filter(({ contact: { id } }) => id === contact?.id),
+    [contact?.id, conversations]
   );
 
   const contactConversationsSorted = useMemo(
@@ -353,7 +358,7 @@ const ContactDetails = ({ route, navigation }: Props) => {
                     fontSize: 16,
                   }}
                 >
-                  Edit
+                  {i18n.t("edit")}
                 </MyText>
               </TouchableOpacity>
               <TouchableOpacity
@@ -381,7 +386,7 @@ const ContactDetails = ({ route, navigation }: Props) => {
   if (!contact) {
     return (
       <MyText style={{ fontSize: 18, marginTop: 15 }}>
-        Contact not found for provided ID: {params.id}
+        {i18n.t("contactNotFoundForProvidedId")} {params.id}
       </MyText>
     );
   }
@@ -409,7 +414,7 @@ const ContactDetails = ({ route, navigation }: Props) => {
               {hasAddress && <AddressRow contact={contact} />}
               {phone && <PhoneRow contact={contact} />}
               {!hasAddress && !phone && !email && (
-                <MyText>No personal information saved. 🧐</MyText>
+                <MyText>{i18n.t("noPersonalInformationSaved")}</MyText>
               )}
               {email && <EmailRow contact={contact} />}
             </View>
@@ -423,9 +428,7 @@ const ContactDetails = ({ route, navigation }: Props) => {
                 ItemSeparatorComponent={() => <Divider marginVertical={15} />}
                 data={contactConversationsSorted}
                 ListEmptyComponent={
-                  <MyText>
-                    Tap the plus icon above to add a conversation.
-                  </MyText>
+                  <MyText>{i18n.t("tapPlusToAddConvo")}</MyText>
                 }
                 estimatedItemSize={70}
               />

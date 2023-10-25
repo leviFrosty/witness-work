@@ -6,6 +6,7 @@ import { useState } from "react";
 import { usePreferences } from "../../../stores/preferences";
 import { publisherHours, publishers } from "../../../constants/publisher";
 import MyText from "../../MyText";
+import i18n from "../../../lib/locales";
 
 interface Props {
   goBack: () => void;
@@ -16,11 +17,11 @@ const StepTwo = ({ goBack, goNext }: Props) => {
   // const [publisher, setPublisher] = useState<Publisher>("publisher");
   const [open, setOpen] = useState(false);
   const [items, setItems] = useState([
-    { label: "Publisher", value: publishers[0] },
-    { label: "Regular Auxiliary", value: publishers[1] },
-    { label: "Regular Pioneer", value: publishers[2] },
-    { label: "Circuit Overseer", value: publishers[3] },
-    { label: "Special Pioneer", value: publishers[4] },
+    { label: i18n.t("publisher"), value: publishers[0] },
+    { label: i18n.t("regularAuxiliary"), value: publishers[1] },
+    { label: i18n.t("regularPioneer"), value: publishers[2] },
+    { label: i18n.t("circuitOverseer"), value: publishers[3] },
+    { label: i18n.t("specialPioneer"), value: publishers[4] },
   ]);
 
   const { publisher, setPublisher } = usePreferences();
@@ -30,7 +31,7 @@ const StepTwo = ({ goBack, goNext }: Props) => {
       <OnboardingNav goBack={goBack} />
       <View style={styles.stepContentContainer}>
         <MyText style={styles.stepTitle}>
-          What type of publisher are you?
+          {i18n.t("whatTypePublisherAreYou")}
         </MyText>
         <DropDownPicker
           open={open}
@@ -47,12 +48,14 @@ const StepTwo = ({ goBack, goNext }: Props) => {
         />
         <MyText style={styles.description}>
           {publisher === publishers[0]
-            ? "No hour requirement"
-            : `${publisherHours[publisher]} Hour Monthly Requirement`}
+            ? i18n.t("noHourRequirement")
+            : i18n.t("hourMonthlyRequirement", {
+                count: publisherHours[publisher],
+              })}
         </MyText>
       </View>
       <TouchableOpacity style={styles.actionButton} onPress={goNext}>
-        <MyText style={styles.actionButtonInner}>Continue</MyText>
+        <MyText style={styles.actionButtonInner}>{i18n.t("continue")}</MyText>
       </TouchableOpacity>
     </View>
   );

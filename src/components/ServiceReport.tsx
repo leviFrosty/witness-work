@@ -21,6 +21,7 @@ import { FontAwesome } from "@expo/vector-icons";
 import moment from "moment";
 import LottieView from "lottie-react-native";
 import * as Crypto from "expo-crypto";
+import i18n from "../lib/locales";
 
 const HourEntryCard = () => {
   const { publisher } = usePreferences();
@@ -41,37 +42,37 @@ const HourEntryCard = () => {
 
     if (progress < 0.6) {
       phrases = [
-        "Keep going!",
-        "You can do this.",
-        "Never give up!",
-        "Preach the word!",
-        "Stay focused!",
-        "Have faith!",
-        "Stay strong!",
+        i18n.t("phrasesFar.keepGoing"),
+        i18n.t("phrasesFar.youCanDoThis"),
+        i18n.t("phrasesFar.neverGiveUp"),
+        i18n.t("phrasesFar.preachTheWord"),
+        i18n.t("phrasesFar.stayFocused"),
+        i18n.t("phrasesFar.haveFaith"),
+        i18n.t("phrasesFar.stayStrong"),
       ];
     }
     if (progress >= 0.6 && progress < 0.95) {
       phrases = [
-        "One Step Closer!",
-        "Almost there!",
-        "Keep moving forward!",
-        "Success on the horizon!",
-        "Momentum is yours!",
-        "Nearing achievement!",
-        "You're closing in!",
-        "Closer than ever!",
+        i18n.t("phrasesClose.oneStepCloser"),
+        i18n.t("phrasesClose.almostThere"),
+        i18n.t("phrasesClose.keepMovingForward"),
+        i18n.t("phrasesClose.successOnTheHorizon"),
+        i18n.t("phrasesClose.momentumIsYours"),
+        i18n.t("phrasesClose.nearingAchievement"),
+        i18n.t("phrasesClose.youreClosingIn"),
+        i18n.t("phrasesClose.closerThanEver"),
       ];
     }
     if (progress > 0.95) {
       phrases = [
-        "You did it!",
-        "Goal achieved!",
-        "You nailed it!",
-        "Congratulations!",
-        "Take your shoes off!",
-        "Hats off to you!",
-        "Mission complete!",
-        "Success!",
+        i18n.t("phrasesDone.youDidIt"),
+        i18n.t("phrasesDone.goalAchieved"),
+        i18n.t("phrasesDone.youNailedIt"),
+        i18n.t("phrasesDone.congratulations"),
+        i18n.t("phrasesDone.takeYourShoesOff"),
+        i18n.t("phrasesDone.hatsOffToYou"),
+        i18n.t("phrasesDone.missionComplete"),
+        i18n.t("phrasesDone.success"),
       ];
     }
 
@@ -147,11 +148,11 @@ const HourEntryCard = () => {
             }}
           >
             <MyText style={{ fontSize: 10 }}>
-              {hoursRemaining} hours left
+              {hoursRemaining} {i18n.t("hoursLeft")}
             </MyText>
           </View>
           <MyText style={{ fontSize: 8, color: theme.colors.textAlt }}>
-            Goal is based on your publisher type
+            {i18n.t("goalBasedOnPublisherType")}
           </MyText>
         </View>
       </TouchableOpacity>
@@ -175,7 +176,7 @@ const HourEntryCard = () => {
             color: theme.colors.textInverse,
           }}
         >
-          Add Time
+          {i18n.t("addTime")}
         </MyText>
       </TouchableOpacity>
     </View>
@@ -190,23 +191,23 @@ const RightCard = () => {
 
     if (studies === 0) {
       phrases = [
-        "Keep going!",
-        "Stay strong!",
-        "Stay Positive!",
-        "Grind on!",
-        "Keep Searching!",
-        "Stay Resilient!",
+        i18n.t("phrasesStudiesNone.keepGoing"),
+        i18n.t("phrasesStudiesNone.stayStrong"),
+        i18n.t("phrasesStudiesNone.stayPositive"),
+        i18n.t("phrasesStudiesNone.grindOn"),
+        i18n.t("phrasesStudiesNone.keepSearching"),
+        i18n.t("phrasesStudiesNone.stayResilient"),
       ];
     }
     if (studies > 0 && studies <= 15) {
       phrases = [
-        "Bravo!",
-        "Well done!",
-        "Amazing Job!",
-        "Way to go!",
-        "Victory Lap!",
-        "Fantastic!",
-        "Wow!",
+        i18n.t("phrasesStudiesDone.bravo"),
+        i18n.t("phrasesStudiesDone.wellDone"),
+        i18n.t("phrasesStudiesDone.amazingJob"),
+        i18n.t("phrasesStudiesDone.wayToGo"),
+        i18n.t("phrasesStudiesDone.victoryLap"),
+        i18n.t("phrasesStudiesDone.fantastic"),
+        i18n.t("phrasesStudiesDone.wow"),
       ];
     }
     if (studies > 15) {
@@ -258,7 +259,7 @@ const RightCard = () => {
           textAlign: "center",
         }}
       >
-        Based on contacts
+        {i18n.t("basedOnContacts")}
       </MyText>
     </View>
   );
@@ -298,7 +299,7 @@ const CheckMarkAnimationComponent = ({ undoId }: { undoId?: string }) => {
               textDecorationLine: "underline",
             }}
           >
-            Undo
+            {i18n.t("undo")}
           </MyText>
         </TouchableOpacity>
       )}
@@ -368,7 +369,7 @@ const StandardPublisherTimeEntry = () => {
                 fontWeight: "600",
               }}
             >
-              {"Shared the\nGood News"}
+              {i18n.t("sharedTheGoodNews")}
             </MyText>
           </View>
         </TouchableOpacity>
@@ -382,13 +383,13 @@ const ServiceReport = () => {
   return (
     <View style={{ gap: 10 }}>
       <MyText style={{ fontSize: 14, fontWeight: "600", marginLeft: 5 }}>
-        Service Report
+        {i18n.t("serviceReport")}
       </MyText>
       <Card>
         <View style={{ flexDirection: "row", gap: 5 }}>
           <View style={{ flexDirection: "column", gap: 5, flexGrow: 1 }}>
             <MyText style={{ color: theme.colors.textAlt, fontWeight: "600" }}>
-              Hours
+              {i18n.t("hours")}
             </MyText>
             {publisher === "publisher" ? (
               <StandardPublisherTimeEntry />
@@ -398,7 +399,7 @@ const ServiceReport = () => {
           </View>
           <View style={{ flexDirection: "column", gap: 5 }}>
             <MyText style={{ color: theme.colors.textAlt, fontWeight: "600" }}>
-              Studies
+              {i18n.t("studies")}
             </MyText>
             <RightCard />
           </View>

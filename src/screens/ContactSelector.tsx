@@ -10,6 +10,7 @@ import { useNavigation } from "@react-navigation/native";
 import { RootStackNavigation } from "../stacks/RootStack";
 import Divider from "../components/Divider";
 import ContactRow from "../components/ContactRow";
+import i18n from "../lib/locales";
 
 const ContactSelector = () => {
   const navigation = useNavigation<RootStackNavigation>();
@@ -25,7 +26,7 @@ const ContactSelector = () => {
     <View style={{ flexGrow: 1, padding: 20, gap: 20 }}>
       <View style={{ gap: 20 }}>
         <MyText style={{ fontSize: 32, fontWeight: "700" }}>
-          Assign Contact
+          {i18n.t("assignContact")}
         </MyText>
         <SearchBar value={search} setValue={setSearch} />
       </View>

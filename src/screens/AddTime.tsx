@@ -16,6 +16,7 @@ import { ServiceReport } from "../types/serviceReport";
 import { useNavigation } from "@react-navigation/native";
 import { RootStackNavigation } from "../stacks/RootStack";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import i18n from "../lib/locales";
 
 const AddTime = () => {
   const navigation = useNavigation<RootStackNavigation>();
@@ -80,15 +81,17 @@ const AddTime = () => {
     >
       <View style={{ gap: 30 }}>
         <View style={{ padding: 25, gap: 5 }}>
-          <MyText style={{ fontSize: 32, fontWeight: "700" }}>Add Time</MyText>
+          <MyText style={{ fontSize: 32, fontWeight: "700" }}>
+            {i18n.t("addTime")}
+          </MyText>
           <MyText style={{ color: theme.colors.textAlt, fontSize: 12 }}>
-            Entering time information below will log service time for that day.
+            {i18n.t("addTime_description")}
           </MyText>
         </View>
         <Section>
           <InputRowContainer
             lastInSection
-            label="Date"
+            label={i18n.t("date")}
             justifyContent="space-between"
           >
             <RNDateTimePicker
@@ -103,7 +106,7 @@ const AddTime = () => {
             style={{ flexDirection: "row", justifyContent: "space-between" }}
           >
             <View style={{ width: "50%" }}>
-              <InputRowContainer label="Hours" lastInSection>
+              <InputRowContainer label={i18n.t("hours")} lastInSection>
                 <DropDownPicker
                   open={hourOpen}
                   value={serviceReport.hours}
@@ -130,7 +133,7 @@ const AddTime = () => {
             </View>
 
             <View style={{ width: "50%" }}>
-              <InputRowContainer label="Minutes" lastInSection>
+              <InputRowContainer label={i18n.t("minutes")} lastInSection>
                 <DropDownPicker
                   open={open}
                   value={serviceReport.minutes}
@@ -159,7 +162,7 @@ const AddTime = () => {
         </Section>
       </View>
       <View style={{ paddingHorizontal: 20 }}>
-        <ActionButton action={submit} label="Submit" />
+        <ActionButton action={submit} label={i18n.t("submit")} />
       </View>
     </View>
   );

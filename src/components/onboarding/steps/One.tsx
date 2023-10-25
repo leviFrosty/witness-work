@@ -12,8 +12,8 @@ const StepOne = ({ goNext }: Props) => {
     <View style={styles.stepContainer}>
       <View style={styles.onboardingTitleWrapper}>
         <View style={styles.textContainer}>
-          <MyText style={styles.subTitle}>{i18n.t("hello")}</MyText>
-          <MyText style={styles.title}>{i18n.t("welcomeTo")}</MyText>
+          <MyText style={styles.subTitle}>{i18n.t("welcomeTo")}</MyText>
+          <MyText style={styles.title}>{i18n.t("jwTime")}</MyText>
         </View>
       </View>
       <TouchableOpacity style={styles.actionButton} onPress={goNext}>

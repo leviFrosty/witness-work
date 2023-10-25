@@ -61,7 +61,6 @@ const Settings = () => {
               onPress={() => navigation.navigate("Recover Contacts")}
             >
               <MyText style={{ fontWeight: "600", color: theme.colors.text }}>
-                Recover Contacts
                 {i18n.t("recoverContacts")}
               </MyText>
               <FontAwesome name="chevron-right" />

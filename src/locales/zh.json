@@ -148,5 +148,9 @@
   "permanentlyDeleteContact_warning": "删除此联系人将永久删除它以及相应的对话。",
   "settings": "设置",
   "restartOnboarding": "重新启动入职",
-  "basedOnContacts": "基于联系人"
+  "basedOnContacts": "基于联系人",
+  "allTimeEntries": "所有时间条目",
+  "noTimeEntriesYet": "还没有时间条目..🕒",
+  "deleteTime_title": "删除时间报告？",
+  "deleteTime_description": "删除此时间报告将永久删除它。"
 }

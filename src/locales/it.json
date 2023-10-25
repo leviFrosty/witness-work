@@ -148,5 +148,9 @@
   "permanentlyDeleteContact_warning": "L'eliminazione di questo contatto lo rimuoverà definitivamente insieme alle conversazioni corrispondenti.",
   "settings": "Impostazioni",
   "restartOnboarding": "Riavviare l'onboarding",
-  "basedOnContacts": "In base ai contatti"
+  "basedOnContacts": "In base ai contatti",
+  "allTimeEntries": "Tutte le voci di tempo",
+  "noTimeEntriesYet": "Nessun orario ancora inserito.. 🕒",
+  "deleteTime_title": "Eliminare il rapporto temporale?",
+  "deleteTime_description": "L'eliminazione di questo rapporto temporale lo rimuoverà definitivamente."
 }

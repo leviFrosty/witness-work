@@ -148,5 +148,9 @@
   "permanentlyDeleteContact_warning": "この連絡先を削除すると、連絡先と対応する会話が完全に削除されます。",
   "settings": "設定",
   "restartOnboarding": "オンボーディングを再開する",
-  "basedOnContacts": "連絡先に基づいて"
+  "basedOnContacts": "連絡先に基づいて",
+  "allTimeEntries": "すべてのタイムエントリー",
+  "noTimeEntriesYet": "まだタイムエントリーがありません.. 🕒",
+  "deleteTime_title": "時間レポートを削除しますか?",
+  "deleteTime_description": "この時間レポートを削除すると、完全に削除されます。"
 }

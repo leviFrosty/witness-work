@@ -12,6 +12,7 @@ import Card from "../components/Card";
 import ActionButton from "../components/ActionButton";
 import { useNavigation } from "@react-navigation/native";
 import { RootStackNavigation } from "../stacks/RootStack";
+import i18n from "../lib/locales";
 
 const TimeReports = () => {
   const { serviceReports, deleteServiceReport } = useServiceReport();
@@ -51,7 +52,7 @@ const TimeReports = () => {
     >
       <View style={{ padding: 20, paddingVertical: 30 }}>
         <MyText style={{ fontSize: 32, fontWeight: "700" }}>
-          All Time Entries
+          {i18n.t("allTimeEntries")}
         </MyText>
       </View>
       <ScrollView
@@ -68,10 +69,10 @@ const TimeReports = () => {
                   color: theme.colors.textAlt,
                 }}
               >
-                No time entries yet.. 🕒
+                {i18n.t("noTimeEntriesYet")}
               </MyText>
               <ActionButton
-                label="Add Time"
+                label={i18n.t("addTime")}
                 action={() => navigation.navigate("Add Time")}
               />
             </Card>
@@ -110,7 +111,7 @@ const TimeReports = () => {
                             color: theme.colors.textAlt,
                           }}
                         >
-                          {month} - {totalHours} hours
+                          {month} - {totalHours} ${i18n.t("hours")}
                         </MyText>
                       </View>
                       <Section>
@@ -140,15 +141,15 @@ const TimeReports = () => {
                                 <TouchableOpacity
                                   onPress={() =>
                                     Alert.alert(
-                                      "Delete Time Report?",
-                                      "Deleting this time report will permanently remove it.",
+                                      i18n.t("deleteTime_title"),
+                                      i18n.t("deleteTime_description"),
                                       [
                                         {
-                                          text: "Cancel",
+                                          text: i18n.t("cancel"),
                                           style: "cancel",
                                         },
                                         {
-                                          text: "Delete",
+                                          text: i18n.t("delete"),
                                           style: "destructive",
                                           onPress: () => {
                                             deleteServiceReport(report.id);

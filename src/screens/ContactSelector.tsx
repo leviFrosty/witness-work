@@ -10,7 +10,7 @@ import { useNavigation } from "@react-navigation/native";
 import { RootStackNavigation } from "../stacks/RootStack";
 import Divider from "../components/Divider";
 import ContactRow from "../components/ContactRow";
-import i18n from "../locales";
+import i18n from "../lib/locales";
 
 const ContactSelector = () => {
   const navigation = useNavigation<RootStackNavigation>();

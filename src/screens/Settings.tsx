@@ -8,7 +8,7 @@ import { usePreferences } from "../stores/preferences";
 import { FontAwesome } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import { RootStackNavigation } from "../stacks/RootStack";
-import i18n from "../locales";
+import i18n from "../lib/locales";
 
 const Settings = () => {
   const { set: setPreferences } = usePreferences();

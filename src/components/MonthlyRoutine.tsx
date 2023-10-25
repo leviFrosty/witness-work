@@ -10,7 +10,7 @@ import useServiceReport from "../stores/serviceReport";
 import { usePreferences } from "../stores/preferences";
 import { useNavigation } from "@react-navigation/native";
 import { RootStackNavigation } from "../stacks/RootStack";
-import i18n from "../locales";
+import i18n from "../lib/locales";
 
 const Month = ({ month }: { month: number }) => {
   const navigation = useNavigation<RootStackNavigation>();

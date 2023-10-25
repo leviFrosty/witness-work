@@ -27,7 +27,7 @@ import { Contact } from "../types/contact";
 import moment from "moment";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import useConversations from "../stores/conversationStore";
-import i18n from "../locales";
+import i18n from "../lib/locales";
 
 type Props = NativeStackScreenProps<RootStackParamList, "Conversation Form">;
 

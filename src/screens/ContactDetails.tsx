@@ -25,7 +25,7 @@ import useConversations from "../stores/conversationStore";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Divider from "../components/Divider";
 import moment from "moment";
-import i18n from "../locales";
+import i18n from "../lib/locales";
 
 type Props = NativeStackScreenProps<RootStackParamList, "Contact Details">;
 

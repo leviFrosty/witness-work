@@ -8,7 +8,7 @@ import moment from "moment";
 import Card from "../components/Card";
 import useConversations from "../stores/conversationStore";
 import { FlashList } from "@shopify/flash-list";
-import i18n from "../locales";
+import i18n from "../lib/locales";
 import { useMemo } from "react";
 
 const RecoverContacts = () => {

@@ -2,7 +2,7 @@ import { View, TouchableOpacity } from "react-native";
 import { styles } from "./Onboarding.styles";
 import { FontAwesome } from "@expo/vector-icons";
 import MyText from "../MyText";
-import i18n from "../../locales";
+import i18n from "../../lib/locales";
 
 interface Props {
   noActions?: boolean;

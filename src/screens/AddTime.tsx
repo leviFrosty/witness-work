@@ -16,7 +16,7 @@ import { ServiceReport } from "../types/serviceReport";
 import { useNavigation } from "@react-navigation/native";
 import { RootStackNavigation } from "../stacks/RootStack";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import i18n from "../locales";
+import i18n from "../lib/locales";
 
 const AddTime = () => {
   const navigation = useNavigation<RootStackNavigation>();

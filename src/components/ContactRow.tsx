@@ -7,7 +7,7 @@ import { Contact } from "../types/contact";
 import useConversations from "../stores/conversationStore";
 import { useMemo } from "react";
 import moment from "moment";
-import i18n from "../locales";
+import i18n from "../lib/locales";
 
 const ContactRow = ({
   contact,

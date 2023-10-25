@@ -6,7 +6,7 @@ import theme from "../constants/theme";
 import { FontAwesome } from "@expo/vector-icons";
 import Divider from "./Divider";
 import useConversations from "../stores/conversationStore";
-import i18n from "../locales";
+import i18n from "../lib/locales";
 
 const ConversationRow = ({ conversation }: { conversation: Conversation }) => {
   const { deleteConversation } = useConversations();

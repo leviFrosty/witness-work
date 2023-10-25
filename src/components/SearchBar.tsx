@@ -1,6 +1,6 @@
 import { TextInput } from "react-native";
 import theme from "../constants/theme";
-import i18n from "../locales";
+import i18n from "../lib/locales";
 
 interface Props {
   placeholder?: string;

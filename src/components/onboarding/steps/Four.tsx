@@ -4,7 +4,7 @@ import { styles } from "../Onboarding.styles";
 import OnboardingNav from "../OnboardingNav";
 import * as Notifications from "expo-notifications";
 import MyText from "../../MyText";
-import i18n from "../../../locales";
+import i18n from "../../../lib/locales";
 
 interface Props {
   goNext: () => void;

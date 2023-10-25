@@ -21,7 +21,7 @@ import { FontAwesome } from "@expo/vector-icons";
 import moment from "moment";
 import LottieView from "lottie-react-native";
 import * as Crypto from "expo-crypto";
-import i18n from "../locales";
+import i18n from "../lib/locales";
 
 const HourEntryCard = () => {
   const { publisher } = usePreferences();

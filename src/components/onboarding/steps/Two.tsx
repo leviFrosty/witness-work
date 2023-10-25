@@ -6,7 +6,7 @@ import { useState } from "react";
 import { usePreferences } from "../../../stores/preferences";
 import { publisherHours, publishers } from "../../../constants/publisher";
 import MyText from "../../MyText";
-import i18n from "../../../locales";
+import i18n from "../../../lib/locales";
 
 interface Props {
   goBack: () => void;

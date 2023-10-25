@@ -13,7 +13,7 @@ import SearchBar from "./SearchBar";
 import { FlashList } from "@shopify/flash-list";
 import moment from "moment";
 import useConversations from "../stores/conversationStore";
-import i18n from "../locales";
+import i18n from "../lib/locales";
 
 const ContactsList = () => {
   const [search, setSearch] = useState("");

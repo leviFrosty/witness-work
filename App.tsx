@@ -5,7 +5,7 @@ import RootStackComponent from "./src/stacks/RootStack";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import * as Notifications from "expo-notifications";
 import * as Sentry from "sentry-expo";
-import "./src/locales";
+import "./src/lib/locales";
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({

@@ -13,7 +13,7 @@ import Section from "../components/inputs/Section";
 import TextInputRow, { Errors } from "../components/inputs/TextInputRow";
 import Header from "../components/layout/Header";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import i18n from "../locales";
+import i18n from "../lib/locales";
 
 const PersonalContactSection = ({
   contact,

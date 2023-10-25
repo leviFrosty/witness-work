@@ -7,6 +7,7 @@ import { Contact } from "../types/contact";
 import useConversations from "../stores/conversationStore";
 import { useMemo } from "react";
 import moment from "moment";
+import i18n from "../locales";
 
 const ContactRow = ({
   contact,
@@ -43,7 +44,7 @@ const ContactRow = ({
           <MyText style={{ color: theme.colors.textAlt, fontSize: 10 }}>
             {mostRecentConversation
               ? moment(mostRecentConversation.date).fromNow()
-              : `No recent conversations`}
+              : i18n.t("noRecentConversation_plural")}
           </MyText>
         </View>
         <View style={{ flexDirection: "row", gap: 10 }}>

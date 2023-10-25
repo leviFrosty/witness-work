@@ -13,6 +13,7 @@ import SearchBar from "./SearchBar";
 import { FlashList } from "@shopify/flash-list";
 import moment from "moment";
 import useConversations from "../stores/conversationStore";
+import i18n from "../locales";
 
 const ContactsList = () => {
   const [search, setSearch] = useState("");
@@ -62,7 +63,7 @@ const ContactsList = () => {
   return (
     <View style={{ gap: 8 }}>
       <MyText style={{ fontSize: 12, fontWeight: "600", marginLeft: 5 }}>
-        Return Visit Contacts
+        {i18n.t("returnVisitContacts")}
       </MyText>
       <Card>
         <View style={{ flexDirection: "row", gap: 10 }}>
@@ -100,7 +101,7 @@ const ContactsList = () => {
             )}
             ListEmptyComponent={() => (
               <MyText style={{ color: theme.colors.textAlt, fontSize: 12 }}>
-                No contacts saved. Tap the plus button to add a contact.
+                {i18n.t("noContactsSaved")}
               </MyText>
             )}
             estimatedItemSize={84}

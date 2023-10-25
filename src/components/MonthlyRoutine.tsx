@@ -10,6 +10,7 @@ import useServiceReport from "../stores/serviceReport";
 import { usePreferences } from "../stores/preferences";
 import { useNavigation } from "@react-navigation/native";
 import { RootStackNavigation } from "../stacks/RootStack";
+import i18n from "../locales";
 
 const Month = ({ month }: { month: number }) => {
   const navigation = useNavigation<RootStackNavigation>();
@@ -86,7 +87,7 @@ const MonthlyRoutine = () => {
   return (
     <View style={{ gap: 10 }}>
       <MyText style={{ fontSize: 14, fontWeight: "600", marginLeft: 5 }}>
-        Monthly Routine
+        {i18n.t("monthlyRoutine")}
       </MyText>
       <Card>
         <FlashList

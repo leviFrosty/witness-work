@@ -24,11 +24,77 @@ const en = {
   optInNotificationsLater:
     "You can opt-in to notifications in the settings later.",
   completeSetup: "Complete Setup",
+  noRecentConversation: "No Recent Conversation",
+  noRecentConversation_plural: "No Recent Conversations",
+  returnVisitContacts: "Return Visit Contacts",
+  noContactsSaved: "No contacts saved. Tap the plus button to add a contact.",
+  deleteConversation: "Delete Conversation?",
+  deleteConversation_description:
+    "Deleting this conversation will permanently remove it and any assigned notifications.",
+  cancel: "Cancel",
+  delete: "Delete",
+  noConversationNotesSaved: "No conversation notes saved.",
+  followUpInformation: "Follow Up Information",
+  upcoming: "upcoming",
+  past: "past",
+  topic: "Topic:",
+  monthlyRoutine: "Monthly Routine",
+  searchForContact: "Search for contact...",
+  phrasesFar: {
+    keepGoing: "Keep going!",
+    youCanDoThis: "You can do this!",
+    neverGiveUp: "Never give up!",
+    preachTheWord: "Preach the word!",
+    stayFocused: "Stay focused!",
+    haveFaith: "Have faith!",
+    stayStrong: "Stay Strong!",
+  },
+  phrasesClose: {
+    oneStepCloser: "One step closer!",
+    almostThere: "Almost there!",
+    keepMovingForward: "Keep moving forward!",
+    successOnTheHorizon: "Success on the horizon!",
+    momentumIsYours: "Momentum is yours!",
+    nearingAchievement: "Nearing achievement!",
+    youreClosingIn: "You're closing in!",
+    closerThanEver: "Closer than ever!",
+  },
+  phrasesDone: {
+    youDidIt: "You did it!",
+    goalAchieved: "Goal achieved!",
+    youNailedIt: "You nailed it!",
+    congratulations: "Congratulations!",
+    takeYourShoesOff: "Take your shoes off!",
+    hatsOffToYou: "Hats off to you!",
+    missionComplete: "Mission complete!",
+    success: "Success!",
+  },
+  hoursLeft: "hours left",
+  goalBasedOnPublisherType: "Goal is based on your publisher type",
+  addTime: "Add Time",
+  phrasesStudiesNone: {
+    keepGoing: "Keep going!",
+    stayStrong: "Stay strong!",
+    stayPositive: "Stay positive!",
+    grindOn: "Grind on!",
+    keepSearching: "Keep searching!",
+    stayResilient: "Stay resilient!",
+  },
+  phrasesStudiesDone: {
+    bravo: "Bravo!",
+    wellDone: "Well done!",
+    amazingJob: "Amazing job!",
+    wayToGo: "Way to go!",
+    victoryLap: "Victory lap!",
+    fantastic: "Fantastic!",
+    wow: "Wow!",
+  },
+  basedOnConcacts: "Based On Contacts",
 } as const;
 
 // Extract the type of the properties
 export type LocaleWordSet = {
-  [K in keyof typeof en]: string;
+  [K in keyof typeof en]: string | Record<string, string>;
 };
 
 export default en;

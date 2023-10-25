@@ -19,6 +19,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     bundleIdentifier: "com.leviwilkerson.jwtime",
     infoPlist: {
       RCTAsyncStorageExcludeFromBackup: false,
+      CFBundleDisplayName: "JW Time",
     },
   },
   android: {

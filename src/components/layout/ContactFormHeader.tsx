@@ -4,7 +4,6 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import theme from "../../constants/theme";
 import { useNavigation } from "@react-navigation/native";
 import { RootStackNavigation } from "../../stacks/RootStack";
-import MyText from "../MyText";
 
 const ContactFormHeader = () => {
   const navigation = useNavigation<RootStackNavigation>();

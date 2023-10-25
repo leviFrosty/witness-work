@@ -27,6 +27,7 @@ import { Contact } from "../types/contact";
 import moment from "moment";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import useConversations from "../stores/conversationStore";
+import i18n from "../locales";
 
 type Props = NativeStackScreenProps<RootStackParamList, "Conversation Form">;
 
@@ -74,7 +75,7 @@ const AssignmentSection = ({
               </MyText>
             </View>
           ) : (
-            <MyText>No contact assigned</MyText>
+            <MyText>{i18n.t("noContactAssigned")}</MyText>
           )}
           <Pressable
             onPress={() =>
@@ -89,7 +90,7 @@ const AssignmentSection = ({
                 textDecorationLine: "underline",
               }}
             >
-              {selectedContact ? "Unassign" : "Assign"}
+              {selectedContact ? i18n.t("unassign") : i18n.t("assign")}
             </MyText>
           </Pressable>
         </View>
@@ -182,7 +183,7 @@ const ConversationForm = ({ route, navigation }: Props) => {
 
   const validate = useCallback((): boolean => {
     if (!conversation.contact.id) {
-      setErrors({ contact: "You must assign a conversation to a contact." });
+      setErrors({ contact: i18n.t("youMustAssignAConversationToContact") });
       return false;
     }
     if (conversation.contact.id) {
@@ -214,16 +215,15 @@ const ConversationForm = ({ route, navigation }: Props) => {
             const notificationId1 =
               await Notifications.scheduleNotificationAsync({
                 content: {
-                  title: "Conversation Reminder",
-                  body: `Hey! Your chat with ${
+                  title: i18n.t("reminder_title"),
+                  body: `${i18n.t("reminderTwoHours_part1")}${
                     selectedContact!.name
-                  } is tomorrow at ${moment(conversation.followUp.date).format(
-                    "h:mm a"
-                  )}.📌${
+                  }${i18n.t("reminderTwoHours_part2")}${moment(
+                    conversation.followUp.date
+                  ).format("h:mm a")}.📌${
                     conversation.followUp.topic &&
-                    `\nTopic: ${conversation.followUp.topic}`
+                    `${i18n.t("reminder_topic")}${conversation.followUp.topic}`
                   }`,
-                  data: { data: "goes here" },
                   sound: true,
                 },
                 trigger: {
@@ -249,14 +249,13 @@ const ConversationForm = ({ route, navigation }: Props) => {
             const notificationId2 =
               await Notifications.scheduleNotificationAsync({
                 content: {
-                  title: "Conversation Reminder",
-                  body: `⏰ Your chat with ${
+                  title: i18n.t("reminder_title"),
+                  body: `${i18n.t("reminderFifteenMinutes_part1")}${
                     selectedContact!.name
-                  } is in 15 mins. Prep up and get ready for a fruitful conversation!🚀📖${
+                  }${i18n.t("reminderFifteenMinutes_part2")}${
                     conversation.followUp.topic &&
-                    `\nTopic: ${conversation.followUp.topic}`
+                    `${i18n.t("reminder_topic")}${conversation.followUp.topic}`
                   }`,
-                  data: { data: "goes here" },
                   sound: true,
                 },
                 trigger: {
@@ -272,31 +271,6 @@ const ConversationForm = ({ route, navigation }: Props) => {
             console.error(error);
           }
         }
-
-        // try {
-        //   const notificationId3 = await Notifications.scheduleNotificationAsync(
-        //     {
-        //       content: {
-        //         title: "Conversation Reminder",
-        //         body: `It's time for your chat with ${
-        //           selectedContact!.name
-        //         } now.🎉${
-        //           conversation.followUp.topic &&
-        //           `\nTopic: ${conversation.followUp.topic}`
-        //         }`,
-        //         data: { data: "goes here" },
-        //         sound: true,
-        //       },
-        //       trigger: { date: conversation.followUp.date },
-        //     }
-        //   );
-        //   notifications.push({
-        //     date: conversation.followUp!.date,
-        //     id: notificationId3,
-        //   });
-        // } catch (error) {
-        //   console.error(error);
-        // }
 
         return notifications;
       };
@@ -360,7 +334,7 @@ const ConversationForm = ({ route, navigation }: Props) => {
                       fontSize: 12,
                     }}
                   >
-                    Skip
+                    {i18n.t("skip")}
                   </MyText>
                 </Pressable>
               )}
@@ -386,7 +360,7 @@ const ConversationForm = ({ route, navigation }: Props) => {
                     fontSize: 16,
                   }}
                 >
-                  {params.referrer ? "Add" : "Save"}
+                  {params.referrer ? i18n.t("add") : i18n.t("save")}
                 </MyText>
               </Pressable>
             </View>
@@ -404,11 +378,10 @@ const ConversationForm = ({ route, navigation }: Props) => {
       <View style={{ gap: 30 }}>
         <View style={{ padding: 25, paddingBottom: 0, gap: 5 }}>
           <MyText style={{ fontSize: 32, fontWeight: "700" }}>
-            Add Conversation
+            {i18n.t("addConversation")}
           </MyText>
           <MyText style={{ color: theme.colors.textAlt, fontSize: 12 }}>
-            Enter the contact information below for the person you will be
-            adding to JW Time.
+            {i18n.t("addConversation_description")}
           </MyText>
         </View>
         <AssignmentSection
@@ -419,7 +392,10 @@ const ConversationForm = ({ route, navigation }: Props) => {
         />
         <Divider borderStyle="dashed" />
         <Section>
-          <InputRowContainer label="Date" justifyContent="space-between">
+          <InputRowContainer
+            label={i18n.t("date")}
+            justifyContent="space-between"
+          >
             <RNDateTimePicker
               maximumDate={moment().toDate()}
               value={conversation.date}
@@ -427,8 +403,8 @@ const ConversationForm = ({ route, navigation }: Props) => {
             />
           </InputRowContainer>
           <TextInputRow
-            label="Note"
-            placeholder="Write down information about your conversation. Be sure to be descriptive!"
+            label={i18n.t("note")}
+            placeholder={i18n.t("note_placeholder")}
             textInputProps={{
               multiline: true,
               textAlign: "left",
@@ -440,7 +416,10 @@ const ConversationForm = ({ route, navigation }: Props) => {
           />
         </Section>
         <Section>
-          <InputRowContainer label="Follow Up" justifyContent="space-between">
+          <InputRowContainer
+            label={i18n.t("followUp")}
+            justifyContent="space-between"
+          >
             <RNDateTimePicker
               mode="datetime"
               minimumDate={moment().toDate()}
@@ -449,8 +428,8 @@ const ConversationForm = ({ route, navigation }: Props) => {
             />
           </InputRowContainer>
           <TextInputRow
-            label="Topic"
-            placeholder="Enter topic, e.g., Enjoy Life Forever Ch. 1"
+            label={i18n.t("topic")}
+            placeholder={i18n.t("topic_placeholder")}
             textInputProps={{
               returnKeyType: "default",
               onChangeText: (topic: string) =>
@@ -464,7 +443,7 @@ const ConversationForm = ({ route, navigation }: Props) => {
             }}
           />
           <InputRowContainer
-            label="Notify Me"
+            label={i18n.t("notifyMe")}
             justifyContent="space-between"
             lastInSection
           >
@@ -473,7 +452,7 @@ const ConversationForm = ({ route, navigation }: Props) => {
               value={conversation.followUp?.notifyMe || false}
               setValue={setNotifyMe}
               disabled={!notificationsAllowed}
-              description="Notifications are disabled. Enable them via device settings to use this feature."
+              description={i18n.t("notifyMe_description")}
               descriptionOnlyOnDisabled
             />
           </InputRowContainer>
@@ -484,8 +463,7 @@ const ConversationForm = ({ route, navigation }: Props) => {
               marginRight: 20,
             }}
           >
-            You will be notified 1 day before and 15 minutes before your desired
-            time.
+            {i18n.t("notifyMe_notice")}
           </MyText>
         </Section>
       </View>

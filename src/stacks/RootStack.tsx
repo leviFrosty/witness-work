@@ -44,7 +44,8 @@ const RootStackComponent = () => {
       Navigating directly between conditional screens causes an error
       because from each screen's perspective the other screen does not exist. 
       You must update the variable instead. 
-      See: https://github.com/react-navigation/react-navigation/discussions/10346*/}
+      See: https://github.com/react-navigation/react-navigation/discussions/10346
+      */}
       {onboardingComplete ? (
         <RootStack.Screen
           options={{ header: () => undefined }}

@@ -13,6 +13,7 @@ import Section from "../components/inputs/Section";
 import TextInputRow, { Errors } from "../components/inputs/TextInputRow";
 import Header from "../components/layout/Header";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import i18n from "../locales";
 
 const PersonalContactSection = ({
   contact,
@@ -43,8 +44,8 @@ const PersonalContactSection = ({
         errors={errors}
         setErrors={setErrors}
         id="name"
-        label="Name"
-        placeholder="What's their name?"
+        label={i18n.t("name")}
+        placeholder={i18n.t("name_placeholder")}
         textInputProps={{
           ref: nameInput,
           onSubmitEditing: () => phoneInput.current?.focus(),
@@ -55,8 +56,8 @@ const PersonalContactSection = ({
         }}
       />
       <TextInputRow
-        label="Phone"
-        placeholder="+x (xxx) xxx-xxxx"
+        label={i18n.t("phone")}
+        placeholder={i18n.t("phone_placeholder")}
         textInputProps={{
           ref: phoneInput,
           onSubmitEditing: () => emailInput.current?.focus(),
@@ -65,8 +66,8 @@ const PersonalContactSection = ({
         }}
       />
       <TextInputRow
-        label="Email"
-        placeholder="example@acme.com"
+        label={i18n.t("email")}
+        placeholder={i18n.t("email_placeholder")}
         lastInSection
         textInputProps={{
           ref: emailInput,
@@ -112,7 +113,7 @@ const AddressSection = ({
   return (
     <Section>
       <TextInputRow
-        label="Address Line 1"
+        label={i18n.t("addressLine1")}
         placeholder=""
         textInputProps={{
           ref: line1Input,
@@ -123,7 +124,7 @@ const AddressSection = ({
         }}
       />
       <TextInputRow
-        label="Address Line 2"
+        label={i18n.t("addressLine2")}
         placeholder=""
         textInputProps={{
           ref: line2Input,
@@ -141,7 +142,7 @@ const AddressSection = ({
       >
         <View style={{ width: "50%" }}>
           <TextInputRow
-            label="City"
+            label={i18n.t("city")}
             placeholder=""
             textInputProps={{
               ref: cityInput,
@@ -154,7 +155,7 @@ const AddressSection = ({
         </View>
         <View style={{ width: "50%" }}>
           <TextInputRow
-            label="State"
+            label={i18n.t("state")}
             placeholder=""
             textInputProps={{
               ref: stateInput,
@@ -174,7 +175,7 @@ const AddressSection = ({
       >
         <View style={{ width: "50%" }}>
           <TextInputRow
-            label="ZIP"
+            label={i18n.t("zip")}
             placeholder=""
             // lastInSection
             textInputProps={{
@@ -188,7 +189,7 @@ const AddressSection = ({
         </View>
         <View style={{ width: "50%" }}>
           <TextInputRow
-            label="Country"
+            label={i18n.t("country")}
             placeholder=""
             // lastInSection
             textInputProps={{
@@ -326,7 +327,7 @@ const ContactForm = ({ route, navigation }: Props) => {
   const validate = useCallback((): boolean => {
     if (!contact.name) {
       nameInput.current?.focus();
-      setErrors({ name: "A name is required." });
+      setErrors({ name: i18n.t("name_error") });
       return false;
     }
     if (contact.name) {
@@ -385,7 +386,7 @@ const ContactForm = ({ route, navigation }: Props) => {
                   fontSize: 16,
                 }}
               >
-                {editMode ? "Save" : "Continue"}
+                {editMode ? i18n.t("save") : i18n.t("continue")}
               </MyText>
             </Pressable>
           }
@@ -404,7 +405,7 @@ const ContactForm = ({ route, navigation }: Props) => {
           value={contact.isBibleStudy}
           onValueChange={(val) => setIsBibleStudy(val)}
         />
-        <MyText>is Bible Study</MyText>
+        <MyText>{i18n.t("isBibleStudy")}</MyText>
       </Pressable>
     );
   };
@@ -418,11 +419,10 @@ const ContactForm = ({ route, navigation }: Props) => {
       <View style={{ gap: 30, paddingBottom: insets.bottom + 100 }}>
         <View style={{ padding: 25, gap: 5 }}>
           <MyText style={{ fontSize: 32, fontWeight: "700" }}>
-            {editMode ? "Edit" : "Add"} Contact
+            {editMode ? i18n.t("edit") : i18n.t("add")} {i18n.t("contact")}
           </MyText>
           <MyText style={{ color: theme.colors.textAlt, fontSize: 12 }}>
-            Enter the contact information below for the person you will be
-            adding to JW Time.
+            {i18n.t("enterContactInformation")}
           </MyText>
         </View>
         <PersonalContactSection

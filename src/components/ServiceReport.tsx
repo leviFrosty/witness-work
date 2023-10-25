@@ -299,7 +299,7 @@ const CheckMarkAnimationComponent = ({ undoId }: { undoId?: string }) => {
               textDecorationLine: "underline",
             }}
           >
-            Undo
+            {i18n.t("undo")}
           </MyText>
         </TouchableOpacity>
       )}
@@ -369,7 +369,7 @@ const StandardPublisherTimeEntry = () => {
                 fontWeight: "600",
               }}
             >
-              {"Shared the\nGood News"}
+              {i18n.t("sharedTheGoodNews")}
             </MyText>
           </View>
         </TouchableOpacity>
@@ -383,13 +383,13 @@ const ServiceReport = () => {
   return (
     <View style={{ gap: 10 }}>
       <MyText style={{ fontSize: 14, fontWeight: "600", marginLeft: 5 }}>
-        Service Report
+        {i18n.t("serviceReport")}
       </MyText>
       <Card>
         <View style={{ flexDirection: "row", gap: 5 }}>
           <View style={{ flexDirection: "column", gap: 5, flexGrow: 1 }}>
             <MyText style={{ color: theme.colors.textAlt, fontWeight: "600" }}>
-              Hours
+              {i18n.t("hours")}
             </MyText>
             {publisher === "publisher" ? (
               <StandardPublisherTimeEntry />
@@ -399,7 +399,7 @@ const ServiceReport = () => {
           </View>
           <View style={{ flexDirection: "column", gap: 5 }}>
             <MyText style={{ color: theme.colors.textAlt, fontWeight: "600" }}>
-              Studies
+              {i18n.t("studies")}
             </MyText>
             <RightCard />
           </View>

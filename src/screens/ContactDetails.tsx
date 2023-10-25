@@ -139,7 +139,7 @@ const Hero = ({
 const AddressRow = ({ contact }: { contact: Contact }) => {
   const { address } = contact;
   if (!address) {
-    return;
+    return null;
   }
 
   const navigateTo = (a: Address) => {
@@ -198,7 +198,7 @@ const AddressRow = ({ contact }: { contact: Contact }) => {
 const EmailRow = ({ contact }: { contact: Contact }) => {
   const { email } = contact;
   if (!email) {
-    return;
+    return null;
   }
 
   return (

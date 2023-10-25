@@ -6,7 +6,8 @@
     "dev": "expo start",
     "android": "expo start --android",
     "ios": "expo start --ios",
-    "web": "expo start --web"
+    "web": "expo start --web",
+    "translate": "node ./src/scripts/translate.js"
   },
   "dependencies": {
     "@react-native-async-storage/async-storage": "1.18.2",
@@ -16,6 +17,7 @@
     "@react-navigation/native-stack": "^6.9.14",
     "@sentry/react-native": "5.5.0",
     "@shopify/flash-list": "1.4.3",
+    "dotenv": "^16.3.1",
     "expo": "~49.0.13",
     "expo-application": "~5.3.0",
     "expo-checkbox": "~2.4.0",

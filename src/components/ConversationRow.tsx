@@ -39,7 +39,7 @@ const ConversationRow = ({ conversation }: { conversation: Conversation }) => {
             color: theme.colors.textAlt,
           }}
         >
-          {moment(conversation.date).format("MMM DD, YYYY")}
+          {moment(conversation.date).format("LL")}
         </MyText>
         <TouchableOpacity
           hitSlop={15}
@@ -106,7 +106,7 @@ const ConversationRow = ({ conversation }: { conversation: Conversation }) => {
                   : theme.colors.textAlt,
               }}
             >
-              {moment(conversation.followUp.date).format("MMM DD, YYYY h:mm A")}
+              {moment(conversation.followUp.date).format("LLL")}
             </MyText>
           )}
           {conversation.followUp?.topic && (

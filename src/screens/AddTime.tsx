@@ -1,4 +1,4 @@
-import { View } from "react-native";
+import { View, Platform } from "react-native";
 import { useState } from "react";
 import Section from "../components/inputs/Section";
 import InputRowContainer from "../components/inputs/InputRowContainer";
@@ -17,6 +17,8 @@ import { useNavigation } from "@react-navigation/native";
 import { RootStackNavigation } from "../stacks/RootStack";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import i18n from "../lib/locales";
+import CheckboxWithLabel from "../components/inputs/CheckboxWithLabel";
+import AndroidDateTimePicker from "../components/AndroidDateTimePicker";
 
 const AddTime = () => {
   const navigation = useNavigation<RootStackNavigation>();
@@ -26,6 +28,7 @@ const AddTime = () => {
     hours: 0,
     minutes: 0,
     date: new Date(),
+    ldc: false,
   });
   const setHours = (hours: number) => {
     setServiceReport({
@@ -48,7 +51,12 @@ const AddTime = () => {
       date,
     });
   };
-
+  const handleLdcTimeChange = (ldc: boolean) => {
+    setServiceReport({
+      ...serviceReport,
+      ldc,
+    });
+  };
   const [open, setOpen] = useState(false);
   const [minuteOptions, setMinuteOptions] = useState(
     [0, 15, 30, 45].map((value) => ({
@@ -90,14 +98,28 @@ const AddTime = () => {
         </View>
         <Section>
           <InputRowContainer
-            lastInSection
             label={i18n.t("date")}
             justifyContent="space-between"
           >
-            <RNDateTimePicker
-              maximumDate={moment().toDate()}
-              value={serviceReport.date}
-              onChange={handleDateChange}
+            {Platform.OS !== "android" ? (
+              <RNDateTimePicker
+                maximumDate={moment().toDate()}
+                value={serviceReport.date}
+                onChange={handleDateChange}
+              />
+            ) : (
+              <AndroidDateTimePicker
+                value={serviceReport.date}
+                onChange={handleDateChange}
+                maximumDate={moment().toDate()}
+              />
+            )}
+          </InputRowContainer>
+          <InputRowContainer lastInSection>
+            <CheckboxWithLabel
+              label={i18n.t("ldcTime")}
+              value={serviceReport.ldc!}
+              setValue={handleLdcTimeChange}
             />
           </InputRowContainer>
         </Section>

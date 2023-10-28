@@ -89,10 +89,12 @@
   "undo": "Undo",
   "sharedTheGoodNews": "Shared the\nGood News",
   "serviceReport": "Service Report",
+  "hours_lowercase": "hours",
   "hours": "Hours",
   "studies": "Studies",
   "addTime_description": "Entering time information below will log service time for that day",
   "minutes": "Minutes",
+  "minutes_lowercase": "minutes",
   "submit": "Submit",
   "date": "Date",
   "phone": "Phone",
@@ -152,5 +154,14 @@
   "allTimeEntries": "All Time Entries",
   "noTimeEntriesYet": "No time entries yet.. 🕒",
   "deleteTime_title": "Delete Time Report?",
-  "deleteTime_description": "Deleting this time report will permanently remove it."
+  "deleteTime_description": "Deleting this time report will permanently remove it.",
+  "ldcTime": "LDC Time",
+  "selectDate": "Select Date",
+  "selectTime": "Select Time",
+  "ldc": "LDC",
+  "total": "Total",
+  "standard": "Standard",
+  "viewTime": "View Time",
+  "view": "View",
+  "viewHours": "View Hours"
 }

@@ -4,6 +4,12 @@ const path = require("path");
 require("dotenv").config();
 const { exec } = require("child_process");
 
+if (!process.env.GOOGLE_TRANSLATE_API_KEY) {
+  return new Error(
+    "Google API key not provided. Please add GOOGLE_TRANSLATE_API_KEY to .env"
+  );
+}
+
 const listFilesWithoutExtensions = (directoryPath) => {
   try {
     const files = fs.readdirSync(directoryPath);

@@ -79,7 +79,7 @@ const Header = ({
             color: theme.colors.textInverse,
           }}
         >
-          {title ?? moment().format("MMMM DD, YYYY")}
+          {title ?? moment().format("LL")}
         </MyText>
         {rightElement}
       </View>

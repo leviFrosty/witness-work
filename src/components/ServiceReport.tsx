@@ -7,7 +7,7 @@ import { usePreferences } from "../stores/preferences";
 import {
   calculateHoursRemaining,
   calculateProgress,
-  getTotalHoursForCurrentMonth,
+  totalHoursForCurrentMonth,
   hasServiceReportsForMonth,
 } from "../lib/serviceReport";
 import Card from "./Card";
@@ -29,7 +29,7 @@ const HourEntryCard = () => {
   const navigation = useNavigation<RootStackNavigation>();
   const goalHours = publisherHours[publisher];
   const hours = useMemo(
-    () => getTotalHoursForCurrentMonth(serviceReports),
+    () => totalHoursForCurrentMonth(serviceReports),
     [serviceReports]
   );
   const progress = useMemo(
@@ -103,6 +103,7 @@ const HourEntryCard = () => {
           borderRadius: theme.numbers.borderRadiusSm,
           backgroundColor: theme.colors.backgroundLighter,
           gap: 5,
+          position: "relative",
         }}
         onPress={() => navigation.navigate("Time Reports")}
       >
@@ -138,7 +139,9 @@ const HourEntryCard = () => {
               /{goalHours}
             </MyText>
           </View>
-          <MyText style={{ fontWeight: "700" }}>{encouragementPhrase}</MyText>
+          <MyText style={{ fontWeight: "700", maxWidth: 200 }}>
+            {encouragementPhrase}
+          </MyText>
           <View
             style={{
               borderRadius: theme.numbers.borderRadiusLg,
@@ -155,6 +158,16 @@ const HourEntryCard = () => {
             {i18n.t("goalBasedOnPublisherType")}
           </MyText>
         </View>
+        <FontAwesome
+          style={{
+            position: "absolute",
+            top: "50%",
+            right: 5,
+            fontSize: 15,
+            color: theme.colors.textAlt,
+          }}
+          name="chevron-right"
+        />
       </TouchableOpacity>
       <TouchableOpacity
         style={{
@@ -247,6 +260,7 @@ const RightCard = () => {
         <MyText
           style={{
             fontWeight: "700",
+            maxWidth: 125,
           }}
         >
           {encouragementPhrase}
@@ -380,6 +394,7 @@ const StandardPublisherTimeEntry = () => {
 
 const ServiceReport = () => {
   const { publisher } = usePreferences();
+  const navigation = useNavigation<RootStackNavigation>();
   return (
     <View style={{ gap: 10 }}>
       <MyText style={{ fontSize: 14, fontWeight: "600", marginLeft: 5 }}>
@@ -388,9 +403,21 @@ const ServiceReport = () => {
       <Card>
         <View style={{ flexDirection: "row", gap: 5 }}>
           <View style={{ flexDirection: "column", gap: 5, flexGrow: 1 }}>
-            <MyText style={{ color: theme.colors.textAlt, fontWeight: "600" }}>
-              {i18n.t("hours")}
-            </MyText>
+            <View style={{ flexDirection: "row" }}>
+              <TouchableOpacity
+                onPress={() => navigation.navigate("Time Reports")}
+              >
+                <MyText
+                  style={{
+                    color: theme.colors.textAlt,
+                    fontWeight: "600",
+                    textDecorationLine: "underline",
+                  }}
+                >
+                  {i18n.t("viewHours")}
+                </MyText>
+              </TouchableOpacity>
+            </View>
             {publisher === "publisher" ? (
               <StandardPublisherTimeEntry />
             ) : (

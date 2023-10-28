@@ -1,5 +1,5 @@
 import { useCallback } from "react";
-import { Pressable, View } from "react-native";
+import { Pressable, View, Platform } from "react-native";
 import MyText from "../components/MyText";
 import * as Notifications from "expo-notifications";
 import * as Crypto from "expo-crypto";
@@ -28,6 +28,7 @@ import moment from "moment";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import useConversations from "../stores/conversationStore";
 import i18n from "../lib/locales";
+import AndroidDateTimePicker from "../components/AndroidDateTimePicker";
 
 type Props = NativeStackScreenProps<RootStackParamList, "Conversation Form">;
 
@@ -220,7 +221,7 @@ const ConversationForm = ({ route, navigation }: Props) => {
                     selectedContact!.name
                   }${i18n.t("reminderTwoHours_part2")}${moment(
                     conversation.followUp.date
-                  ).format("h:mm a")}.📌${
+                  ).format("LT")}.📌${
                     conversation.followUp.topic &&
                     `${i18n.t("reminder_topic")}${conversation.followUp.topic}`
                   }`,
@@ -396,11 +397,19 @@ const ConversationForm = ({ route, navigation }: Props) => {
             label={i18n.t("date")}
             justifyContent="space-between"
           >
-            <RNDateTimePicker
-              maximumDate={moment().toDate()}
-              value={conversation.date}
-              onChange={handleDateChange}
-            />
+            {Platform.OS === "android" ? (
+              <AndroidDateTimePicker
+                maximumDate={moment().toDate()}
+                value={conversation.date}
+                onChange={handleDateChange}
+              />
+            ) : (
+              <RNDateTimePicker
+                maximumDate={moment().toDate()}
+                value={conversation.date}
+                onChange={handleDateChange}
+              />
+            )}
           </InputRowContainer>
           <TextInputRow
             label={i18n.t("note")}
@@ -420,12 +429,21 @@ const ConversationForm = ({ route, navigation }: Props) => {
             label={i18n.t("followUp")}
             justifyContent="space-between"
           >
-            <RNDateTimePicker
-              mode="datetime"
-              minimumDate={moment().toDate()}
-              value={conversation.followUp!.date}
-              onChange={handleFollowUpDateChange}
-            />
+            {Platform.OS === "android" ? (
+              <AndroidDateTimePicker
+                minimumDate={moment().toDate()}
+                value={conversation.followUp!.date}
+                onChange={handleFollowUpDateChange}
+                timeAndDate
+              />
+            ) : (
+              <RNDateTimePicker
+                mode="datetime"
+                minimumDate={moment().toDate()}
+                value={conversation.followUp!.date}
+                onChange={handleFollowUpDateChange}
+              />
+            )}
           </InputRowContainer>
           <TextInputRow
             label={i18n.t("topic")}

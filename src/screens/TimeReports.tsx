@@ -6,7 +6,11 @@ import { ServiceReport } from "../types/serviceReport";
 import moment from "moment";
 import Section from "../components/inputs/Section";
 import { FontAwesome } from "@expo/vector-icons";
-import { getTotalHoursForSpecificMonth } from "../lib/serviceReport";
+import {
+  ldcHoursForSpecificMonth,
+  nonLdcHoursForSpecificMonth,
+  totalHoursForSpecificMonth,
+} from "../lib/serviceReport";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Card from "../components/Card";
 import ActionButton from "../components/ActionButton";
@@ -95,14 +99,32 @@ const TimeReports = () => {
                     moment(a, "MMMM YYYY").unix()
                 )
                 .map((month) => {
-                  const totalHours = getTotalHoursForSpecificMonth(
+                  const totalHours = totalHoursForSpecificMonth(
                     reportsByYearAndMonth[year][month],
                     moment(month, "MMMM YYYY").month(),
                     parseInt(year)
                   );
+                  const ldcHours = ldcHoursForSpecificMonth(
+                    reportsByYearAndMonth[year][month],
+                    moment(month, "MMMM YYYY").month(),
+                    parseInt(year)
+                  );
+                  const nonLdcHours = nonLdcHoursForSpecificMonth(
+                    reportsByYearAndMonth[year][month],
+                    moment(month, "MMMM YYYY").month(),
+                    parseInt(year)
+                  );
+
                   return (
                     <View style={{ gap: 5 }} key={month}>
-                      <View style={{ flexDirection: "row", gap: 10 }}>
+                      <View
+                        style={{
+                          flexDirection: "row",
+                          gap: 10,
+                          justifyContent: "space-between",
+                          marginRight: 20,
+                        }}
+                      >
                         <MyText
                           style={{
                             marginHorizontal: 20,
@@ -111,8 +133,29 @@ const TimeReports = () => {
                             color: theme.colors.textAlt,
                           }}
                         >
-                          {month} - {totalHours} ${i18n.t("hours")}
+                          {month}
+                          {` - ${totalHours} ${i18n.t("hours")}`}
                         </MyText>
+                        <View style={{ flexDirection: "row", gap: 5 }}>
+                          <MyText
+                            style={{
+                              fontSize: 14,
+                              fontWeight: "500",
+                              color: theme.colors.textAlt,
+                            }}
+                          >
+                            {i18n.t("standard")}: {nonLdcHours}
+                          </MyText>
+                          <MyText
+                            style={{
+                              fontSize: 14,
+                              fontWeight: "500",
+                              color: theme.colors.textAlt,
+                            }}
+                          >
+                            {i18n.t("ldc")}: {ldcHours}
+                          </MyText>
+                        </View>
                       </View>
                       <Section>
                         <View style={{ gap: 20 }}>
@@ -129,15 +172,105 @@ const TimeReports = () => {
                                   flexDirection: "row",
                                   justifyContent: "space-between",
                                   marginRight: 20,
+                                  gap: 10,
                                 }}
                               >
-                                <MyText>
-                                  {`${moment(report.date).format(
-                                    "MMM D, YYYY"
-                                  )} - ${report.hours} hours ${
-                                    report.minutes
-                                  } minutes`}
-                                </MyText>
+                                <View
+                                  style={{
+                                    flexDirection: "row",
+                                    flexGrow: 1,
+                                  }}
+                                >
+                                  <View
+                                    style={{ flexDirection: "row", gap: 10 }}
+                                  >
+                                    <MyText
+                                      style={{
+                                        fontWeight: "600",
+                                      }}
+                                    >
+                                      {`${moment(report.date).format("L")}`}
+                                    </MyText>
+                                    {report.ldc && (
+                                      <View
+                                        style={{
+                                          flexDirection: "row",
+                                          gap: 3,
+                                          alignItems: "center",
+                                        }}
+                                      >
+                                        <FontAwesome
+                                          name="wrench"
+                                          style={{
+                                            color: theme.colors.textAlt,
+                                          }}
+                                        />
+                                        <MyText
+                                          style={{
+                                            color: theme.colors.textAlt,
+                                            flexDirection: "row",
+                                            gap: 10,
+                                          }}
+                                        >
+                                          {i18n.t("ldc")}
+                                        </MyText>
+                                      </View>
+                                    )}
+                                  </View>
+                                  <View
+                                    style={{
+                                      flexDirection: "row",
+                                      gap: 10,
+                                      flexGrow: 1,
+                                      justifyContent: "flex-end",
+                                      alignItems: "center",
+                                    }}
+                                  >
+                                    <View
+                                      style={{
+                                        position: "relative",
+                                        paddingLeft: 20,
+                                      }}
+                                    >
+                                      <MyText style={{ fontSize: 12 }}>
+                                        {i18n.t("hours")}
+                                      </MyText>
+                                      <MyText
+                                        style={{
+                                          position: "absolute",
+                                          left: 0,
+                                          fontSize: 12,
+                                        }}
+                                      >
+                                        {report.hours}
+                                      </MyText>
+                                    </View>
+                                    <View
+                                      style={{
+                                        position: "relative",
+                                        paddingLeft: 20,
+                                      }}
+                                    >
+                                      <MyText
+                                        style={{
+                                          flexDirection: "row",
+                                          fontSize: 12,
+                                        }}
+                                      >
+                                        {i18n.t("minutes")}
+                                      </MyText>
+                                      <MyText
+                                        style={{
+                                          position: "absolute",
+                                          left: 0,
+                                          fontSize: 12,
+                                        }}
+                                      >
+                                        {report.minutes}
+                                      </MyText>
+                                    </View>
+                                  </View>
+                                </View>
                                 <TouchableOpacity
                                   onPress={() =>
                                     Alert.alert(
@@ -161,7 +294,7 @@ const TimeReports = () => {
                                 >
                                   <FontAwesome
                                     style={{
-                                      color: theme.colors.textAlt,
+                                      color: theme.colors.errorAlt,
                                       fontSize: 16,
                                     }}
                                     name="trash"

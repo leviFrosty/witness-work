@@ -3,4 +3,5 @@ export type ServiceReport = {
   hours: number;
   minutes: number;
   date: Date;
+  ldc?: boolean;
 };

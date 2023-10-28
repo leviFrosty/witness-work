@@ -38,7 +38,7 @@ export const getTotalHours = (serviceReports: ServiceReport[]): number => {
 };
 
 // Written by chat-gpt
-export const getTotalHoursForCurrentMonth = (
+export const totalHoursForCurrentMonth = (
   serviceReports: ServiceReport[]
 ): number => {
   const currentMonth = moment().month(); // Get the current month (0-indexed)
@@ -54,7 +54,7 @@ export const getTotalHoursForCurrentMonth = (
   return totalHoursRoundedDown;
 };
 
-export const getTotalHoursForSpecificMonth = (
+export const totalHoursForSpecificMonth = (
   serviceReports: ServiceReport[],
   targetMonth: number,
   targetYear: number
@@ -64,6 +64,48 @@ export const getTotalHoursForSpecificMonth = (
       (report) =>
         moment(report.date).month() === targetMonth &&
         moment(report.date).year() === targetYear
+    )
+    .reduce((accumulator, report) => {
+      return accumulator + report.hours * 60 + report.minutes;
+    }, 0);
+
+  const totalHoursRoundedDown = Math.floor(totalMinutesForMonth / 60);
+
+  return totalHoursRoundedDown;
+};
+
+export const ldcHoursForSpecificMonth = (
+  serviceReports: ServiceReport[],
+  targetMonth: number,
+  targetYear: number
+): number => {
+  const totalMinutesForMonth = serviceReports
+    .filter(
+      (report) =>
+        moment(report.date).month() === targetMonth &&
+        moment(report.date).year() === targetYear &&
+        report.ldc
+    )
+    .reduce((accumulator, report) => {
+      return accumulator + report.hours * 60 + report.minutes;
+    }, 0);
+
+  const totalHoursRoundedDown = Math.floor(totalMinutesForMonth / 60);
+
+  return totalHoursRoundedDown;
+};
+
+export const nonLdcHoursForSpecificMonth = (
+  serviceReports: ServiceReport[],
+  targetMonth: number,
+  targetYear: number
+): number => {
+  const totalMinutesForMonth = serviceReports
+    .filter(
+      (report) =>
+        moment(report.date).month() === targetMonth &&
+        moment(report.date).year() === targetYear &&
+        !report.ldc
     )
     .reduce((accumulator, report) => {
       return accumulator + report.hours * 60 + report.minutes;

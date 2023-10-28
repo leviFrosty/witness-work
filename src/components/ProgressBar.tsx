@@ -6,7 +6,7 @@ import theme from "../constants/theme";
 import { FontAwesome } from "@expo/vector-icons";
 import {
   calculateProgress,
-  getTotalHoursForCurrentMonth,
+  totalHoursForCurrentMonth,
 } from "../lib/serviceReport";
 import { useMemo } from "react";
 
@@ -58,7 +58,7 @@ const Success = ({ active }: { active: boolean }) => {
 
 const ProgressBar = () => {
   const { serviceReports } = useServiceReport();
-  const hours = getTotalHoursForCurrentMonth(serviceReports);
+  const hours = totalHoursForCurrentMonth(serviceReports);
   const { publisher } = usePreferences();
   const goalHours = publisherHours[publisher];
   const progress = useMemo(

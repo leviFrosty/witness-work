@@ -292,7 +292,7 @@ const DeleteContactButton = ({
           textAlign: "center",
         }}
       >
-        {i18n.t("created")} {moment(contact.createdAt).format("MMM DD, YYYY")}
+        {i18n.t("created")} {moment(contact.createdAt).format("LL")}
       </MyText>
     </View>
   );

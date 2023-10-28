@@ -97,7 +97,7 @@ const RecoverContacts = () => {
                           }}
                         >
                           {`${i18n.t("created")}${moment(item.createdAt).format(
-                            "MMM DD, YYYY"
+                            "LL"
                           )}`}
                         </MyText>
                         <View

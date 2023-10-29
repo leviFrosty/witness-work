@@ -404,19 +404,30 @@ const ServiceReport = () => {
         <View style={{ flexDirection: "row", gap: 5 }}>
           <View style={{ flexDirection: "column", gap: 5, flexGrow: 1 }}>
             <View style={{ flexDirection: "row" }}>
-              <TouchableOpacity
-                onPress={() => navigation.navigate("Time Reports")}
-              >
+              {publisher !== "publisher" ? (
+                <TouchableOpacity
+                  onPress={() => navigation.navigate("Time Reports")}
+                >
+                  <MyText
+                    style={{
+                      color: theme.colors.textAlt,
+                      fontWeight: "600",
+                      textDecorationLine: "underline",
+                    }}
+                  >
+                    {i18n.t("viewHours")}
+                  </MyText>
+                </TouchableOpacity>
+              ) : (
                 <MyText
                   style={{
                     color: theme.colors.textAlt,
                     fontWeight: "600",
-                    textDecorationLine: "underline",
                   }}
                 >
-                  {i18n.t("viewHours")}
+                  {i18n.t("hours")}
                 </MyText>
-              </TouchableOpacity>
+              )}
             </View>
             {publisher === "publisher" ? (
               <StandardPublisherTimeEntry />

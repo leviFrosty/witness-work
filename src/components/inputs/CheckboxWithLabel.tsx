@@ -44,7 +44,12 @@ const CheckboxWithLabel = ({
   return (
     <View style={{ gap: 10, flex: 1 }}>
       <View
-        style={{ flexDirection: "row", justifyContent: "flex-end", gap: 10 }}
+        style={{
+          flexDirection: "row",
+          justifyContent: "flex-end",
+          gap: 10,
+          alignItems: "center",
+        }}
       >
         <Checkbox
           hitSlop={{ top: 15, right: 15, bottom: 15, left: 15 }}

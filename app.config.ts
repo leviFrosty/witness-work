@@ -20,6 +20,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     infoPlist: {
       RCTAsyncStorageExcludeFromBackup: false,
     },
+    appStoreUrl: "https://apps.apple.com/us/app/jw-time/id6469723047",
   },
   android: {
     allowBackup: true,
@@ -44,7 +45,11 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   updates: {
     url: "https://u.expo.dev/a67257dc-2fb8-4942-97f2-e9364b80d318",
   },
-  plugins: ["sentry-expo", "expo-localization"],
+  plugins: [
+    "sentry-expo",
+    "expo-localization",
+    ["expo-updates", { username: "levi_frosty" }],
+  ],
   hooks: {
     postPublish: [
       {

@@ -5,7 +5,7 @@ import theme from "../constants/theme";
 import { ServiceReport } from "../types/serviceReport";
 import moment from "moment";
 import Section from "../components/inputs/Section";
-import { FontAwesome } from "@expo/vector-icons";
+import { FontAwesome5 } from "@expo/vector-icons";
 import {
   ldcHoursForSpecificMonth,
   nonLdcHoursForSpecificMonth,
@@ -199,8 +199,8 @@ const TimeReports = () => {
                                           alignItems: "center",
                                         }}
                                       >
-                                        <FontAwesome
-                                          name="wrench"
+                                        <FontAwesome5
+                                          name="hammer"
                                           style={{
                                             color: theme.colors.textAlt,
                                           }}
@@ -249,6 +249,7 @@ const TimeReports = () => {
                                       style={{
                                         position: "relative",
                                         paddingLeft: 20,
+                                        alignItems: "center",
                                       }}
                                     >
                                       <MyText
@@ -272,6 +273,7 @@ const TimeReports = () => {
                                   </View>
                                 </View>
                                 <TouchableOpacity
+                                  hitSlop={20}
                                   onPress={() =>
                                     Alert.alert(
                                       i18n.t("deleteTime_title"),
@@ -291,11 +293,12 @@ const TimeReports = () => {
                                       ]
                                     )
                                   }
+                                  style={{ alignItems: "center" }}
                                 >
-                                  <FontAwesome
+                                  <FontAwesome5
                                     style={{
                                       color: theme.colors.errorAlt,
-                                      fontSize: 16,
+                                      fontSize: 14,
                                     }}
                                     name="trash"
                                   />

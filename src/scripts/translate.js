@@ -24,10 +24,10 @@ const listFilesWithoutExtensions = (directoryPath) => {
   }
 };
 
-const directoryPath = "./src/locales";
+const directoryPath = "src/locales/";
 const locales = listFilesWithoutExtensions(directoryPath);
 locales.forEach((locale) => {
-  const nodeCommand = `i18n-auto-translation -k ${process.env.GOOGLE_TRANSLATE_API_KEY} -d "./src/locales/" -f en -t ${locale}`;
+  const nodeCommand = `cd ${directoryPath} && i18n-auto-translation -k ${process.env.GOOGLE_TRANSLATE_API_KEY} -d ./ -f en -t ${locale}`;
 
   exec(nodeCommand, (error, stdout) => {
     if (error) {

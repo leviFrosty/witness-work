@@ -44,7 +44,9 @@
     "react-native-screens": "~3.22.0",
     "sentry-expo": "~7.0.0",
     "undefined": "@expo/vector-icons/",
-    "zustand": "^4.4.3"
+    "zustand": "^4.4.3",
+    "expo-store-review": "~6.4.0",
+    "expo-linking": "~5.0.2"
   },
   "devDependencies": {
     "@babel/core": "^7.23.2",

@@ -1,24 +1,21 @@
 # JW Time
 
-JW Time is the easy way to manage your field service priorities. Written for iOS and Android
+JW Time is the easy way to manage your field service priorities. Written for iOS and Android 🔥
 
-Updated to include October 2023 newest reporting requirements from the branch!
+[View on the App Store](https://apps.apple.com/us/app/jw-time/id6469723047)
 
-## Key Features
+~~View on the Play Store~~ Coming soon!
 
-- Make "conversations" that link to your contacts and notify you about upcoming return visits
-- Swift options for reaching a contact's address, making a call, sending a message, or emailing them.
-- Time tracking for every type of publisher
-- Automatic goal creation based on your publisher type
-- Monthly time and study tracking
-- Create and manage contacts easily
-- Gamified service reporting via your "Monthly Routine"
-- Recover deleted contacts
-- View reports about monthly and annual time entries
+## Need help translating! 🌐
 
-## Additional Info
+JW Time is available in over 10+ languages by means of automatic translation tools. At times, these translations may not always be accurate. If interested in contributing to high quality translations, [please open a PR](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests), or email me at levi.wilkerson@proton.me!
 
-JW Time does not and will never track any personal information. All data stays local to your device and is never sent to external servers.
-Designed in a way to focus on user experience, JW Time is simple yet feature rich.
+Thanks for your support!
 
-No data sync means no backup. Backup and exporting features, while retaining your data privacy, will be pushed in an future update.
+## Want to contribute? ❤️
+
+Please look at the [project board](https://github.com/users/leviFrosty/projects/2) to see what's currently being worked on. The [existing issues](https://github.com/leviFrosty/JW-Time/issues) are features/bugs that are yet to have been completed. If you see an improvement you'd like to make to the app, please [create an issue](https://github.com/leviFrosty/JW-Time/issues/new) and PR!
+
+## Donate 💵
+
+If you wish to contribute to help cover the costs associated with app-store fees, you may wish to [buy me a coffee](https://www.buymeacoffee.com/leviwilkerson). Donations are never expected, but greatly appreciated.

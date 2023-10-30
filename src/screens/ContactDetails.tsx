@@ -26,6 +26,12 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Divider from "../components/Divider";
 import moment from "moment";
 import i18n from "../lib/locales";
+import {
+  contactHasAtLeastOneStudy,
+  contactMostRecentStudy,
+  contactStudiedForGivenMonth,
+} from "../lib/conversations";
+import { Conversation } from "../types/conversation";
 
 type Props = NativeStackScreenProps<RootStackParamList, "Contact Details">;
 
@@ -83,16 +89,20 @@ const PhoneRow = ({ contact }: { contact: Contact }) => {
 
 const Hero = ({
   name,
-  isBibleStudy,
+  isBibleStudy: isActiveBibleStudy,
+  hasStudiedPreviously,
+  mostRecentStudy,
 }: {
   name: string;
   isBibleStudy?: boolean;
+  hasStudiedPreviously?: boolean;
+  mostRecentStudy: Conversation | null;
 }) => {
   return (
     <View
       style={{
         paddingVertical: 100,
-        gap: 5,
+        gap: 8,
         justifyContent: "center",
         alignItems: "center",
       }}
@@ -115,22 +125,33 @@ const Hero = ({
       >
         {name}
       </MyText>
-      {isBibleStudy && (
+      {hasStudiedPreviously && mostRecentStudy && (
         <View style={{ flexDirection: "row", gap: 5, alignItems: "center" }}>
           <MyText
             style={{
-              fontSize: 14,
+              fontSize: 16,
               fontWeight: "500",
               color: theme.colors.textInverse,
             }}
           >
-            {i18n.t("isStudying")}
+            {isActiveBibleStudy
+              ? i18n.t("isStudying")
+              : `${i18n.t("lastStudied")} ${moment(mostRecentStudy.date).format(
+                  "L"
+                )}`}
           </MyText>
           <FontAwesome
             style={{ color: theme.colors.textInverse, fontSize: 14 }}
             name="book"
           />
         </View>
+      )}
+      {!isActiveBibleStudy && hasStudiedPreviously && (
+        <MyText
+          style={{ fontSize: 12, color: theme.colors.textAlt, maxWidth: 250 }}
+        >
+          {i18n.t("inactiveBibleStudiesDoNoCountTowardsMonthlyTotals")}
+        </MyText>
       )}
     </View>
   );
@@ -383,6 +404,34 @@ const ContactDetails = ({ route, navigation }: Props) => {
     });
   }, [navigation, params.id]);
 
+  const isActiveBibleStudy = useMemo(
+    () =>
+      contact
+        ? contactStudiedForGivenMonth({
+            contact,
+            conversations,
+            month: new Date(),
+          })
+        : false,
+    [contact, conversations]
+  );
+
+  const hasStudiedPreviously = useMemo(
+    () =>
+      contact
+        ? contactHasAtLeastOneStudy({
+            conversations,
+            contact,
+          })
+        : false,
+    [contact, conversations]
+  );
+
+  const mostRecentStudy = useMemo(
+    () => (contact ? contactMostRecentStudy({ conversations, contact }) : null),
+    [contact, conversations]
+  );
+
   if (!contact) {
     return (
       <MyText style={{ fontSize: 18, marginTop: 15 }}>
@@ -391,7 +440,7 @@ const ContactDetails = ({ route, navigation }: Props) => {
     );
   }
 
-  const { name, address, isBibleStudy, phone, email } = contact;
+  const { name, address, phone, email } = contact;
 
   const hasAddress =
     address && Object.values(address).some((v) => v.length > 0);
@@ -407,7 +456,12 @@ const ContactDetails = ({ route, navigation }: Props) => {
           flex: 1,
         }}
       >
-        <Hero isBibleStudy={isBibleStudy} name={name} />
+        <Hero
+          isBibleStudy={isActiveBibleStudy}
+          hasStudiedPreviously={hasStudiedPreviously}
+          mostRecentStudy={mostRecentStudy}
+          name={name}
+        />
         <View style={{ gap: 30, padding: 20 }}>
           <CardWithTitle title="Details" titleColor={theme.colors.textInverse}>
             <View style={{ gap: 15 }}>
@@ -419,13 +473,13 @@ const ContactDetails = ({ route, navigation }: Props) => {
               {email && <EmailRow contact={contact} />}
             </View>
           </CardWithTitle>
-          <CardWithTitle title="Conversations History">
+          <CardWithTitle noPadding title="Conversations History">
             <View style={{ minHeight: 2 }}>
               <FlashList
                 renderItem={({ item }) => (
                   <ConversationRow conversation={item} />
                 )}
-                ItemSeparatorComponent={() => <Divider marginVertical={15} />}
+                ItemSeparatorComponent={() => <Divider />}
                 data={contactConversationsSorted}
                 ListEmptyComponent={
                   <MyText>{i18n.t("tapPlusToAddConvo")}</MyText>

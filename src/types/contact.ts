@@ -12,6 +12,5 @@ export type Contact = {
   phone?: string;
   email?: string;
   address?: Address;
-  isBibleStudy?: boolean;
   createdAt: Date;
 };

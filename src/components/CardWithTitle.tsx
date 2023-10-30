@@ -7,6 +7,7 @@ interface Props {
   title: string;
   titlePosition?: "inside";
   titleColor?: ColorValue;
+  noPadding?: boolean;
 }
 
 const CardWithTitle: React.FC<PropsWithChildren<Props>> = ({
@@ -14,6 +15,7 @@ const CardWithTitle: React.FC<PropsWithChildren<Props>> = ({
   title,
   titlePosition,
   titleColor,
+  noPadding,
 }) => {
   return (
     <View style={{ gap: 10 }}>
@@ -29,7 +31,11 @@ const CardWithTitle: React.FC<PropsWithChildren<Props>> = ({
           {title}
         </MyText>
       )}
-      <Card>
+      <Card
+        style={
+          noPadding ? { paddingVertical: 0, paddingHorizontal: 0 } : undefined
+        }
+      >
         {titlePosition === "inside" && (
           <MyText style={{ fontSize: 14, fontWeight: "600", marginLeft: 5 }}>
             {title}

@@ -8,7 +8,6 @@ import theme from "../constants/theme";
 import Divider from "../components/Divider";
 import { Contact } from "../types/contact";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
-import Checkbox from "expo-checkbox";
 import Section from "../components/inputs/Section";
 import TextInputRow, { Errors } from "../components/inputs/TextInputRow";
 import Header from "../components/layout/Header";
@@ -231,7 +230,6 @@ const ContactForm = ({ route, navigation }: Props) => {
         country: "",
       },
       email: "",
-      isBibleStudy: false,
       phone: "",
     }
   );
@@ -254,12 +252,7 @@ const ContactForm = ({ route, navigation }: Props) => {
       email,
     });
   };
-  const setIsBibleStudy = (isBibleStudy: boolean) => {
-    setContact({
-      ...contact,
-      isBibleStudy,
-    });
-  };
+
   const setLine1 = (line1: string) => {
     setContact({
       ...contact,
@@ -395,21 +388,6 @@ const ContactForm = ({ route, navigation }: Props) => {
     });
   }, [editMode, navigation, submit, validate]);
 
-  const IsBibleStudyCheckbox = () => {
-    return (
-      <Pressable
-        style={{ flexDirection: "row", gap: 10, marginLeft: 20 }}
-        onPress={() => setIsBibleStudy(!contact.isBibleStudy)}
-      >
-        <Checkbox
-          value={contact.isBibleStudy}
-          onValueChange={(val) => setIsBibleStudy(val)}
-        />
-        <MyText>{i18n.t("isBibleStudy")}</MyText>
-      </Pressable>
-    );
-  };
-
   return (
     <KeyboardAwareScrollView
       extraHeight={100}
@@ -437,7 +415,6 @@ const ContactForm = ({ route, navigation }: Props) => {
           errors={errors}
           setErrors={setErrors}
         />
-        <IsBibleStudyCheckbox />
         <Divider borderStyle="dashed" />
         <AddressSection
           contact={contact}

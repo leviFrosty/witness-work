@@ -8,6 +8,10 @@ import useConversations from "../stores/conversationStore";
 import { useMemo } from "react";
 import moment from "moment";
 import i18n from "../lib/locales";
+import {
+  contactHasAtLeastOneStudy,
+  contactStudiedForGivenMonth,
+} from "../lib/conversations";
 
 const ContactRow = ({
   contact,
@@ -17,7 +21,18 @@ const ContactRow = ({
   onPress?: () => void;
 }) => {
   const { conversations } = useConversations();
-  const { name, isBibleStudy } = contact;
+  const { name } = contact;
+
+  const isActiveBibleStudy = contactStudiedForGivenMonth({
+    contact,
+    conversations,
+    month: new Date(),
+  });
+
+  const hasStudiedPreviously = contactHasAtLeastOneStudy({
+    conversations,
+    contact,
+  });
 
   const mostRecentConversation = useMemo(() => {
     const filteredConversations = conversations.filter(
@@ -48,9 +63,14 @@ const ContactRow = ({
           </MyText>
         </View>
         <View style={{ flexDirection: "row", gap: 10 }}>
-          {isBibleStudy && (
+          {hasStudiedPreviously && (
             <FontAwesome
-              style={{ color: theme.colors.text, fontSize: 15 }}
+              style={{
+                color: isActiveBibleStudy
+                  ? theme.colors.text
+                  : theme.colors.textAlt,
+                fontSize: 15,
+              }}
               name="book"
             />
           )}

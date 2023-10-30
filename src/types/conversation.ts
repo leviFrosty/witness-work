@@ -16,4 +16,5 @@ export type Conversation = {
     topic?: string;
     notifications?: Notification[];
   };
+  isBibleStudy: boolean;
 };

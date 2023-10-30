@@ -181,5 +181,10 @@
   "ok": "ĐƯỢC RỒI",
   "noUpdateAvailable": "Hiện tại không có bản cập nhật nào.",
   "updateViaThe": "Hãy thử cập nhật qua",
-  "update_error": "Lỗi khi tìm nạp bản cập nhật mới nhất."
+  "update_error": "Lỗi khi tìm nạp bản cập nhật mới nhất.",
+  "lastStudied": "học lần cuối",
+  "conductedBibleStudy": "Điều khiển việc học Kinh Thánh",
+  "inactiveBibleStudiesDoNoCountTowardsMonthlyTotals": "Các nghiên cứu Kinh Thánh sẽ không được tính vào tổng số hàng tháng trừ khi được tiến hành ít nhất một lần trong tháng hiện tại.",
+  "bibleStudy": "Nghiên cứu Kinh Thánh",
+  "study": "Học"
 }

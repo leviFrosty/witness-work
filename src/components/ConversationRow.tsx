@@ -20,9 +20,13 @@ const ConversationRow = ({ conversation }: { conversation: Conversation }) => {
     <View
       style={{
         gap: 10,
+        marginHorizontal: 15,
+        marginVertical: 20,
         backgroundColor: theme.colors.background,
         borderRadius: theme.numbers.borderRadiusLg,
-        padding: 15,
+        paddingVertical: 22,
+        paddingHorizontal: 12,
+        position: "relative",
       }}
     >
       <View
@@ -32,15 +36,18 @@ const ConversationRow = ({ conversation }: { conversation: Conversation }) => {
           alignItems: "center",
         }}
       >
-        <MyText
-          style={{
-            fontSize: 12,
-            fontWeight: "600",
-            color: theme.colors.textAlt,
-          }}
-        >
-          {moment(conversation.date).format("LL")}
-        </MyText>
+        <View style={{ flexDirection: "row", gap: 10, alignItems: "center" }}>
+          <MyText
+            style={{
+              fontSize: 12,
+              fontWeight: "600",
+              // color: theme.colors.textAlt,
+            }}
+          >
+            {moment(conversation.date).format("LL")}
+          </MyText>
+        </View>
+
         <TouchableOpacity
           hitSlop={15}
           onPress={() =>
@@ -120,6 +127,36 @@ const ConversationRow = ({ conversation }: { conversation: Conversation }) => {
               {i18n.t("topic")} {conversation.followUp?.topic}
             </MyText>
           )}
+        </View>
+      )}
+      {conversation.isBibleStudy && (
+        <View
+          style={{
+            flexDirection: "row",
+            gap: 5,
+            alignItems: "center",
+            position: "absolute",
+            top: -7,
+            left: -5,
+            borderRadius: theme.numbers.borderRadiusLg,
+            paddingHorizontal: 15,
+            paddingVertical: 2,
+            backgroundColor: theme.colors.accent3,
+          }}
+        >
+          <MyText
+            style={{
+              fontSize: 10,
+              fontWeight: "600",
+              color: theme.colors.textInverse,
+            }}
+          >
+            {i18n.t("study")}
+          </MyText>
+          <FontAwesome
+            name="book"
+            style={{ fontSize: 10, color: theme.colors.textInverse }}
+          />
         </View>
       )}
     </View>

@@ -181,5 +181,10 @@
   "ok": "OK",
   "noUpdateAvailable": "Nenhuma atualização disponível atualmente.",
   "updateViaThe": "Tente atualizar através do",
-  "update_error": "Erro ao buscar a atualização mais recente."
+  "update_error": "Erro ao buscar a atualização mais recente.",
+  "lastStudied": "último estudado",
+  "conductedBibleStudy": "Estudo Bíblico Dirigido",
+  "inactiveBibleStudiesDoNoCountTowardsMonthlyTotals": "Os estudos bíblicos não contribuirão para os totais mensais, a menos que sejam realizados pelo menos uma vez no mês corrente.",
+  "bibleStudy": "Estudo da Bíblia",
+  "study": "Estudar"
 }

@@ -181,5 +181,10 @@
   "ok": "OK",
   "noUpdateAvailable": "Derzeit ist kein Update verfügbar.",
   "updateViaThe": "Versuchen Sie, über das zu aktualisieren",
-  "update_error": "Fehler beim Abrufen des neuesten Updates."
+  "update_error": "Fehler beim Abrufen des neuesten Updates.",
+  "lastStudied": "zuletzt studiert",
+  "conductedBibleStudy": "Bibelstudium durchgeführt",
+  "inactiveBibleStudiesDoNoCountTowardsMonthlyTotals": "Bibelstudien tragen nicht zu den monatlichen Gesamtbeträgen bei, es sei denn, sie werden mindestens einmal im laufenden Monat durchgeführt.",
+  "bibleStudy": "Bibelstudium",
+  "study": "Studie"
 }

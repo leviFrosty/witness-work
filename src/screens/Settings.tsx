@@ -9,7 +9,6 @@ import { useNavigation } from "@react-navigation/native";
 import { RootStackNavigation } from "../stacks/RootStack";
 import i18n from "../lib/locales";
 import InputRowButton from "../components/inputs/InputRowButton";
-import Divider from "../components/Divider";
 import Constants from "expo-constants";
 import * as Linking from "expo-linking";
 import * as Application from "expo-application";
@@ -185,7 +184,6 @@ const Settings = () => {
             </InputRowButton>
           </Section>
         </View>
-        <Divider borderStyle="dashed" />
         <View style={{ gap: 3 }}>
           <MyText
             style={{

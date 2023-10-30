@@ -8,7 +8,7 @@ import Home from "../screens/Home";
 import ConversationForm from "../screens/ConversationForm";
 import ContactSelector from "../screens/ContactSelector";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { View } from "react-native";
+import { View, TouchableOpacity } from "react-native";
 import theme from "../constants/theme";
 import ContactDetails from "../screens/ContactDetails";
 import AddTime from "../screens/AddTime";
@@ -16,6 +16,7 @@ import TimeReports from "../screens/TimeReports";
 import RecoverContacts from "../screens/RecoverContacts";
 import OnBoarding from "../components/onboarding/Onboarding";
 import { usePreferences } from "../stores/preferences";
+import { FontAwesome } from "@expo/vector-icons";
 
 export type RootStackParamList = {
   Home: undefined;
@@ -92,7 +93,23 @@ const RootStackComponent = () => {
       <RootStack.Screen
         options={{
           presentation: "modal",
-          header: () => <Header buttonType="exit" />,
+          header: ({ navigation }) => (
+            <Header
+              buttonType="exit"
+              rightElement={
+                <TouchableOpacity
+                  hitSlop={20}
+                  style={{ position: "absolute", right: 0 }}
+                  onPress={() => navigation.navigate("Add Time")}
+                >
+                  <FontAwesome
+                    name="plus"
+                    style={{ fontSize: 20, color: theme.colors.textInverse }}
+                  />
+                </TouchableOpacity>
+              }
+            />
+          ),
         }}
         name="Time Reports"
         component={TimeReports}

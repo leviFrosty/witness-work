@@ -22,6 +22,7 @@ import moment from "moment";
 import LottieView from "lottie-react-native";
 import * as Crypto from "expo-crypto";
 import i18n from "../lib/locales";
+import useConversations from "../stores/conversationStore";
 
 const HourEntryCard = () => {
   const { publisher } = usePreferences();
@@ -198,7 +199,11 @@ const HourEntryCard = () => {
 
 const RightCard = () => {
   const { contacts } = useContacts();
-  const studies = useMemo(() => getTotalStudiesCount(contacts), [contacts]);
+  const { conversations } = useConversations();
+  const studies = useMemo(
+    () => getTotalStudiesCount({ contacts, conversations, month: new Date() }),
+    [contacts, conversations]
+  );
   const encouragementStudiesPhrase = (studies: number) => {
     let phrases: string[] = [];
 

@@ -181,5 +181,10 @@
   "ok": "D'ACCORD",
   "noUpdateAvailable": "Aucune mise à jour disponible actuellement.",
   "updateViaThe": "Essayez de mettre à jour via le",
-  "update_error": "Erreur lors de la récupération de la dernière mise à jour."
+  "update_error": "Erreur lors de la récupération de la dernière mise à jour.",
+  "lastStudied": "dernière étude",
+  "conductedBibleStudy": "Réalisation d'une étude biblique",
+  "inactiveBibleStudiesDoNoCountTowardsMonthlyTotals": "Les études bibliques ne contribueront pas aux totaux mensuels à moins d'être menées au moins une fois au cours du mois en cours.",
+  "bibleStudy": "L'étude de la bible",
+  "study": "Étude"
 }

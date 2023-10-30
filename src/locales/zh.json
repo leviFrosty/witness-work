@@ -181,5 +181,10 @@
   "ok": "好的",
   "noUpdateAvailable": "目前没有可用的更新。",
   "updateViaThe": "尝试通过更新",
-  "update_error": "获取最新更新时出错。"
+  "update_error": "获取最新更新时出错。",
+  "lastStudied": "最后学习",
+  "conductedBibleStudy": "进行圣经研究",
+  "inactiveBibleStudiesDoNoCountTowardsMonthlyTotals": "除非当月至少进行一次，否则圣经研究不会对每月总数产生影响。",
+  "bibleStudy": "圣经学习;圣经讨论",
+  "study": "学习"
 }

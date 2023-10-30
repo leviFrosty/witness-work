@@ -181,5 +181,10 @@
   "ok": "わかりました",
   "noUpdateAvailable": "現在利用可能なアップデートはありません。",
   "updateViaThe": "経由で更新してみてください",
-  "update_error": "最新のアップデートの取得中にエラーが発生しました。"
+  "update_error": "最新のアップデートの取得中にエラーが発生しました。",
+  "lastStudied": "最後に勉強した",
+  "conductedBibleStudy": "聖書研究を実施",
+  "inactiveBibleStudiesDoNoCountTowardsMonthlyTotals": "聖書研究は、当月に少なくとも 1 回実施されない限り、月の合計には反映されません。",
+  "bibleStudy": "聖書研究",
+  "study": "勉強"
 }

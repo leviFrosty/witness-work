@@ -99,7 +99,8 @@
   "date": "Date",
   "phone": "Phone",
   "contact": "Contact",
-  "isStudying": "is studying",
+  "isStudying": "currently studying",
+  "lastStudied": "last studied",
   "address": "Address",
   "email": "Email",
   "deleteContact": "Delete Contact",
@@ -181,5 +182,9 @@
   "ok": "OK",
   "noUpdateAvailable": "No update currently available.",
   "updateViaThe": "Try to update via the",
-  "update_error": "Error fetching latest update."
+  "update_error": "Error fetching latest update.",
+  "conductedBibleStudy": "Conducted Bible Study",
+  "inactiveBibleStudiesDoNoCountTowardsMonthlyTotals": "Bible studies won't contribute to monthly totals unless conducted at least once in current the month.",
+  "bibleStudy": "Bible Study",
+  "study": "Study"
 }

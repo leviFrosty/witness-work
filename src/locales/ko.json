@@ -181,5 +181,10 @@
   "ok": "좋아요",
   "noUpdateAvailable": "현재 사용 가능한 업데이트가 없습니다.",
   "updateViaThe": "다음을 통해 업데이트해 보세요.",
-  "update_error": "최신 업데이트를 가져오는 중에 오류가 발생했습니다."
+  "update_error": "최신 업데이트를 가져오는 중에 오류가 발생했습니다.",
+  "lastStudied": "마지막으로 공부한",
+  "conductedBibleStudy": "성서 연구를 사회함",
+  "inactiveBibleStudiesDoNoCountTowardsMonthlyTotals": "성경 공부는 해당 달에 적어도 한 번 진행되지 않는 한 월별 총계에 기여하지 않습니다.",
+  "bibleStudy": "성경 연구",
+  "study": "공부하다"
 }

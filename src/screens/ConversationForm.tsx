@@ -29,6 +29,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import useConversations from "../stores/conversationStore";
 import i18n from "../lib/locales";
 import AndroidDateTimePicker from "../components/AndroidDateTimePicker";
+import Checkbox from "expo-checkbox";
 
 type Props = NativeStackScreenProps<RootStackParamList, "Conversation Form">;
 
@@ -132,6 +133,7 @@ const ConversationForm = ({ route, navigation }: Props) => {
       topic: "",
       notifyMe: false,
     },
+    isBibleStudy: false,
   });
   const setNotifyMe = (notifyMe: boolean) => {
     setConversation({
@@ -371,6 +373,27 @@ const ConversationForm = ({ route, navigation }: Props) => {
     });
   }, [navigation, params.id, params.referrer, submit]);
 
+  const IsBibleStudyCheckbox = () => {
+    const setIsBibleStudy = (isBibleStudy: boolean) => {
+      setConversation({
+        ...conversation,
+        isBibleStudy,
+      });
+    };
+
+    return (
+      <Pressable
+        style={{ flexDirection: "row", gap: 10, marginLeft: 20 }}
+        onPress={() => setIsBibleStudy(!conversation.isBibleStudy)}
+      >
+        <Checkbox
+          value={conversation.isBibleStudy}
+          onValueChange={(val) => setIsBibleStudy(val)}
+        />
+      </Pressable>
+    );
+  };
+
   return (
     <KeyboardAwareScrollView
       automaticallyAdjustKeyboardInsets
@@ -421,8 +444,14 @@ const ConversationForm = ({ route, navigation }: Props) => {
               onChangeText: (note: string) =>
                 setConversation({ ...conversation, note }),
             }}
-            lastInSection
           />
+          <InputRowContainer
+            label={i18n.t("conductedBibleStudy")}
+            justifyContent="space-between"
+            lastInSection
+          >
+            <IsBibleStudyCheckbox />
+          </InputRowContainer>
         </Section>
         <Section>
           <InputRowContainer

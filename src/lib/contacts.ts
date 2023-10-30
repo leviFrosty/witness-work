@@ -1,9 +1,20 @@
 import { Contact } from "../types/contact";
+import { Conversation } from "../types/conversation";
+import { contactStudiedForGivenMonth } from "./conversations";
 
-export const getTotalStudiesCount = (contacts: Contact[]) => {
-  return contacts.reduce(
-    (accumulator, contact) =>
-      contact.isBibleStudy ? accumulator + 1 : accumulator,
-    0
-  );
+export const getTotalStudiesCount = ({
+  contacts,
+  conversations,
+  month,
+}: {
+  contacts: Contact[];
+  conversations: Conversation[];
+  month: Date;
+}) => {
+  return contacts.reduce((accumulator, contact) => {
+    if (contactStudiedForGivenMonth({ contact, conversations, month })) {
+      return accumulator + 1;
+    }
+    return accumulator;
+  }, 0);
 };

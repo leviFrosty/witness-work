@@ -190,5 +190,7 @@
   "recentConversation": "최근 대화",
   "alphabeticalAsc": "알파벳순(A-Z)",
   "alphabeticalDesc": "알파벳순(Z-A)",
-  "sort": "종류"
+  "sort": "종류",
+  "addContact": "주소록에 추가",
+  "search": "찾다..."
 }

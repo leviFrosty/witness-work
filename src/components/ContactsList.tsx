@@ -27,6 +27,7 @@ const ContactsList = () => {
   const { conversations } = useConversations();
   const { contacts } = useContacts();
   const navigation = useNavigation<RootStackNavigation>();
+  const [focusingSearchBar, setFocusingSearchBar] = useState(false);
 
   const searchResultsSorted = useMemo(() => {
     const filteredContacts = contacts.filter((c) => c.name.includes(search));
@@ -197,22 +198,45 @@ const ContactsList = () => {
       </View>
       <Card>
         <View style={{ flexDirection: "row", gap: 10 }}>
-          <SearchBar value={search} setValue={setSearch} />
+          <SearchBar
+            placeholder={
+              focusingSearchBar ? i18n.t("searchForContact") : i18n.t("search")
+            }
+            value={search}
+            setValue={setSearch}
+            onFocus={() => setFocusingSearchBar(true)}
+            onBlur={() => setFocusingSearchBar(false)}
+          />
           <TouchableOpacity
             style={{
+              flexGrow: focusingSearchBar ? undefined : 1,
               paddingVertical: 15,
               paddingHorizontal: 25,
               backgroundColor: theme.colors.accent,
               borderRadius: theme.numbers.borderRadiusLg,
               alignItems: "center",
               justifyContent: "center",
+              flexDirection: "row",
+              gap: 10,
             }}
             onPress={() =>
               navigation.navigate("Contact Form", { id: Crypto.randomUUID() })
             }
           >
+            {!focusingSearchBar && (
+              <Text
+                style={{
+                  textAlign: "center",
+                  fontFamily: "Inter_700Bold",
+                  fontSize: 18,
+                  color: theme.colors.textInverse,
+                }}
+              >
+                {i18n.t("addContact")}
+              </Text>
+            )}
             <FontAwesome
-              style={{ fontSize: 15, color: theme.colors.textInverse }}
+              style={{ fontSize: 14, color: theme.colors.textInverse }}
               name="plus"
             />
           </TouchableOpacity>

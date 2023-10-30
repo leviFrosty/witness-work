@@ -190,5 +190,7 @@
   "recentConversation": "Недавний разговор",
   "alphabeticalAsc": "Алфавитный (А-Я)",
   "alphabeticalDesc": "Алфавитный (Я-А)",
-  "sort": "Сортировать"
+  "sort": "Сортировать",
+  "addContact": "Добавить контакт",
+  "search": "Поиск..."
 }

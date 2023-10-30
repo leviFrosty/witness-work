@@ -190,5 +190,7 @@
   "recentConversation": "Conversation récente",
   "alphabeticalAsc": "Alphabétique (A-Z)",
   "alphabeticalDesc": "Alphabétique (ZA)",
-  "sort": "Trier"
+  "sort": "Trier",
+  "addContact": "Ajouter le contact",
+  "search": "Recherche..."
 }

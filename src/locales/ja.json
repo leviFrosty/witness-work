@@ -190,5 +190,7 @@
   "recentConversation": "最近の会話",
   "alphabeticalAsc": "アルファベット順 (A ～ Z)",
   "alphabeticalDesc": "アルファベット順 (Z-A)",
-  "sort": "選別"
+  "sort": "選別",
+  "addContact": "連絡先を追加",
+  "search": "検索..."
 }

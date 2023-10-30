@@ -1,4 +1,8 @@
-import { TextInput } from "react-native";
+import {
+  TextInput,
+  NativeSyntheticEvent,
+  TextInputFocusEventData,
+} from "react-native";
 import theme from "../constants/theme";
 import i18n from "../lib/locales";
 
@@ -8,13 +12,27 @@ interface Props {
   setValue:
     | React.Dispatch<React.SetStateAction<string | undefined>>
     | ((value: string) => unknown);
+  onFocus?:
+    | ((e: NativeSyntheticEvent<TextInputFocusEventData>) => void)
+    | undefined;
+  onBlur?:
+    | ((e: NativeSyntheticEvent<TextInputFocusEventData>) => void)
+    | undefined;
 }
 
-const SearchBar = ({ placeholder, value, setValue }: Props) => {
+const SearchBar = ({
+  placeholder,
+  value,
+  setValue,
+  onFocus,
+  onBlur,
+}: Props) => {
   return (
     <TextInput
       value={value}
       onChangeText={(val) => setValue(val)}
+      onFocus={onFocus}
+      onBlur={onBlur}
       style={{
         height: 65,
         borderRadius: theme.numbers.borderRadiusLg,

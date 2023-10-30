@@ -190,5 +190,7 @@
   "recentConversation": "最近的谈话",
   "alphabeticalAsc": "按字母顺序 (A-Z)",
   "alphabeticalDesc": "按字母顺序 (Z-A)",
-  "sort": "种类"
+  "sort": "种类",
+  "addContact": "增加联系人",
+  "search": "搜索..."
 }

@@ -1,6 +1,6 @@
 import { TextInput, View } from "react-native";
 import theme from "../../constants/theme";
-import MyText from "../MyText";
+import Text from "../MyText";
 import InputRowContainer from "./InputRowContainer";
 
 export type Errors = Record<string, string>;
@@ -60,16 +60,16 @@ const TextInputRow: React.FC<Props> = ({
           {...textInputProps}
         />
         {error && (
-          <MyText
+          <Text
             style={{
               color: theme.colors.error,
-              fontWeight: "600",
+              fontFamily: "Inter_600SemiBold",
               textAlign: "right",
               fontSize: 12,
             }}
           >
             {error}
-          </MyText>
+          </Text>
         )}
       </View>
     </InputRowContainer>

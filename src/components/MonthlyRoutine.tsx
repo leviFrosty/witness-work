@@ -3,7 +3,7 @@ import moment from "moment";
 import { FontAwesome } from "@expo/vector-icons";
 import theme from "../constants/theme";
 import Card from "./Card";
-import MyText from "./MyText";
+import Text from "./MyText";
 import { FlashList } from "@shopify/flash-list";
 import { hasServiceReportsForMonth } from "../lib/serviceReport";
 import useServiceReport from "../stores/serviceReport";
@@ -69,7 +69,7 @@ const Month = ({ month }: { month: number }) => {
           }
         />
       </View>
-      <MyText
+      <Text
         style={{
           textAlign: "center",
           color: isCurrentMonth
@@ -78,7 +78,7 @@ const Month = ({ month }: { month: number }) => {
         }}
       >
         {moment().month(month).format("MMM")}
-      </MyText>
+      </Text>
     </Pressable>
   );
 };
@@ -86,9 +86,11 @@ const Month = ({ month }: { month: number }) => {
 const MonthlyRoutine = () => {
   return (
     <View style={{ gap: 10 }}>
-      <MyText style={{ fontSize: 14, fontWeight: "600", marginLeft: 5 }}>
+      <Text
+        style={{ fontSize: 14, fontFamily: "Inter_600SemiBold", marginLeft: 5 }}
+      >
         {i18n.t("monthlyRoutine")}
-      </MyText>
+      </Text>
       <Card>
         <FlashList
           horizontal

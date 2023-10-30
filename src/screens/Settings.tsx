@@ -1,5 +1,5 @@
 import { Platform, View, Alert } from "react-native";
-import MyText from "../components/MyText";
+import Text from "../components/MyText";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import theme from "../constants/theme";
 import Section from "../components/inputs/Section";
@@ -102,28 +102,28 @@ const Settings = () => {
       }}
     >
       <View style={{ gap: 25 }}>
-        <MyText
+        <Text
           style={{
             marginLeft: 20,
             marginTop: 20,
             fontSize: 16,
-            fontWeight: "600",
+            fontFamily: "Inter_600SemiBold",
           }}
         >
           {i18n.t("settings")}
-        </MyText>
+        </Text>
         <View style={{ gap: 3 }}>
-          <MyText
+          <Text
             style={{
               marginLeft: 20,
-              fontWeight: "600",
+              fontFamily: "Inter_600SemiBold",
               fontSize: 12,
               color: theme.colors.textAlt,
               textTransform: "uppercase",
             }}
           >
             {i18n.t("app")}
-          </MyText>
+          </Text>
           <Section>
             <InputRowButton
               leftIcon={notificationsEnabled ? "bell" : "bell-slash"}
@@ -185,17 +185,17 @@ const Settings = () => {
           </Section>
         </View>
         <View style={{ gap: 3 }}>
-          <MyText
+          <Text
             style={{
               marginLeft: 20,
-              fontWeight: "600",
+              fontFamily: "Inter_600SemiBold",
               fontSize: 12,
               color: theme.colors.textAlt,
               textTransform: "uppercase",
             }}
           >
             {i18n.t("misc")}
-          </MyText>
+          </Text>
           <Section>
             <InputRowButton
               leftIcon="heart"
@@ -261,17 +261,17 @@ const Settings = () => {
         </View>
       </View>
       <View>
-        <MyText
+        <Text
           style={{
             textAlign: "center",
             color: theme.colors.textAlt,
-            fontWeight: "600",
+            fontFamily: "Inter_600SemiBold",
           }}
         >
           {Constants.expoConfig?.version
             ? `v${Constants.expoConfig?.version}`
             : i18n.t("versionUnknown")}
-        </MyText>
+        </Text>
       </View>
     </View>
   );

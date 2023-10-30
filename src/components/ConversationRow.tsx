@@ -1,5 +1,5 @@
 import { Alert, TouchableOpacity, View } from "react-native";
-import MyText from "./MyText";
+import Text from "./MyText";
 import { Conversation } from "../types/conversation";
 import moment from "moment";
 import theme from "../constants/theme";
@@ -37,15 +37,15 @@ const ConversationRow = ({ conversation }: { conversation: Conversation }) => {
         }}
       >
         <View style={{ flexDirection: "row", gap: 10, alignItems: "center" }}>
-          <MyText
+          <Text
             style={{
               fontSize: 12,
-              fontWeight: "600",
+              fontFamily: "Inter_600SemiBold",
               // color: theme.colors.textAlt,
             }}
           >
             {moment(conversation.date).format("LL")}
-          </MyText>
+          </Text>
         </View>
 
         <TouchableOpacity
@@ -74,9 +74,9 @@ const ConversationRow = ({ conversation }: { conversation: Conversation }) => {
         </TouchableOpacity>
       </View>
 
-      {!!conversation.note?.length && <MyText>{conversation.note}</MyText>}
+      {!!conversation.note?.length && <Text>{conversation.note}</Text>}
       {hasNoConversationDetails && (
-        <MyText>{i18n.t("noConversationNotesSaved")}</MyText>
+        <Text>{i18n.t("noConversationNotesSaved")}</Text>
       )}
       {(conversation.followUp?.notifyMe || conversation.followUp?.topic) && (
         <View style={{ gap: 5 }}>
@@ -90,10 +90,10 @@ const ConversationRow = ({ conversation }: { conversation: Conversation }) => {
             }}
           >
             <FontAwesome name="bell" style={{ color: theme.colors.textAlt }} />
-            <MyText
+            <Text
               style={{
                 fontSize: 12,
-                fontWeight: "600",
+                fontFamily: "Inter_600SemiBold",
                 color: theme.colors.textAlt,
               }}
             >
@@ -101,23 +101,23 @@ const ConversationRow = ({ conversation }: { conversation: Conversation }) => {
               {notificationHasPassed
                 ? ` - ${i18n.t("upcoming")}`
                 : ` - ${i18n.t("past")}`}
-            </MyText>
+            </Text>
           </View>
           {conversation.followUp?.date && (
-            <MyText
+            <Text
               style={{
                 fontSize: 16,
-                fontWeight: "600",
+                fontFamily: "Inter_600SemiBold",
                 color: notificationHasPassed
                   ? theme.colors.accent3
                   : theme.colors.textAlt,
               }}
             >
               {moment(conversation.followUp.date).format("LLL")}
-            </MyText>
+            </Text>
           )}
           {conversation.followUp?.topic && (
-            <MyText
+            <Text
               style={{
                 color: notificationHasPassed
                   ? theme.colors.accent3
@@ -125,7 +125,7 @@ const ConversationRow = ({ conversation }: { conversation: Conversation }) => {
               }}
             >
               {i18n.t("topic")} {conversation.followUp?.topic}
-            </MyText>
+            </Text>
           )}
         </View>
       )}
@@ -144,15 +144,15 @@ const ConversationRow = ({ conversation }: { conversation: Conversation }) => {
             backgroundColor: theme.colors.accent3,
           }}
         >
-          <MyText
+          <Text
             style={{
               fontSize: 10,
-              fontWeight: "600",
+              fontFamily: "Inter_600SemiBold",
               color: theme.colors.textInverse,
             }}
           >
             {i18n.t("study")}
-          </MyText>
+          </Text>
           <FontAwesome
             name="book"
             style={{ fontSize: 10, color: theme.colors.textInverse }}

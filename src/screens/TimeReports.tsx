@@ -1,5 +1,5 @@
 import { View, TouchableOpacity, Alert, ScrollView } from "react-native";
-import MyText from "../components/MyText";
+import Text from "../components/MyText";
 import useServiceReport from "../stores/serviceReport";
 import theme from "../constants/theme";
 import { ServiceReport } from "../types/serviceReport";
@@ -55,9 +55,9 @@ const TimeReports = () => {
       }}
     >
       <View style={{ padding: 20, paddingVertical: 30 }}>
-        <MyText style={{ fontSize: 32, fontWeight: "700" }}>
+        <Text style={{ fontSize: 32, fontFamily: "Inter_700Bold" }}>
           {i18n.t("allTimeEntries")}
-        </MyText>
+        </Text>
       </View>
       <ScrollView
         style={{ marginBottom: insets.bottom }}
@@ -66,7 +66,7 @@ const TimeReports = () => {
         <View style={{ gap: 40 }}>
           {!years.length && (
             <Card style={{ marginHorizontal: 20 }}>
-              <MyText
+              <Text
                 style={{
                   padding: 20,
                   fontSize: 16,
@@ -74,7 +74,7 @@ const TimeReports = () => {
                 }}
               >
                 {i18n.t("noTimeEntriesYet")}
-              </MyText>
+              </Text>
               <ActionButton
                 label={i18n.t("addTime")}
                 action={() => navigation.navigate("Add Time")}
@@ -83,15 +83,15 @@ const TimeReports = () => {
           )}
           {years.map((year) => (
             <View key={year} style={{ gap: 25 }}>
-              <MyText
+              <Text
                 style={{
                   marginHorizontal: 20,
                   fontSize: 20,
-                  fontWeight: "600",
+                  fontFamily: "Inter_600SemiBold",
                 }}
               >
                 {year}
-              </MyText>
+              </Text>
               {Object.keys(reportsByYearAndMonth[year])
                 .sort(
                   (a, b) =>
@@ -125,36 +125,36 @@ const TimeReports = () => {
                           marginRight: 20,
                         }}
                       >
-                        <MyText
+                        <Text
                           style={{
                             marginHorizontal: 20,
                             fontSize: 14,
-                            fontWeight: "500",
+                            fontFamily: "Inter_500Medium",
                             color: theme.colors.textAlt,
                           }}
                         >
                           {month}
                           {` - ${totalHours} ${i18n.t("hours")}`}
-                        </MyText>
+                        </Text>
                         <View style={{ flexDirection: "row", gap: 5 }}>
-                          <MyText
+                          <Text
                             style={{
                               fontSize: 14,
-                              fontWeight: "500",
+                              fontFamily: "Inter_500Medium",
                               color: theme.colors.textAlt,
                             }}
                           >
                             {i18n.t("standard")}: {nonLdcHours}
-                          </MyText>
-                          <MyText
+                          </Text>
+                          <Text
                             style={{
                               fontSize: 14,
-                              fontWeight: "500",
+                              fontFamily: "Inter_500Medium",
                               color: theme.colors.textAlt,
                             }}
                           >
                             {i18n.t("ldc")}: {ldcHours}
-                          </MyText>
+                          </Text>
                         </View>
                       </View>
                       <Section>
@@ -184,13 +184,13 @@ const TimeReports = () => {
                                   <View
                                     style={{ flexDirection: "row", gap: 10 }}
                                   >
-                                    <MyText
+                                    <Text
                                       style={{
-                                        fontWeight: "600",
+                                        fontFamily: "Inter_600SemiBold",
                                       }}
                                     >
                                       {`${moment(report.date).format("L")}`}
-                                    </MyText>
+                                    </Text>
                                     {report.ldc && (
                                       <View
                                         style={{
@@ -205,7 +205,7 @@ const TimeReports = () => {
                                             color: theme.colors.textAlt,
                                           }}
                                         />
-                                        <MyText
+                                        <Text
                                           style={{
                                             color: theme.colors.textAlt,
                                             flexDirection: "row",
@@ -213,7 +213,7 @@ const TimeReports = () => {
                                           }}
                                         >
                                           {i18n.t("ldc")}
-                                        </MyText>
+                                        </Text>
                                       </View>
                                     )}
                                   </View>
@@ -232,10 +232,10 @@ const TimeReports = () => {
                                         paddingLeft: 20,
                                       }}
                                     >
-                                      <MyText style={{ fontSize: 12 }}>
+                                      <Text style={{ fontSize: 12 }}>
                                         {i18n.t("hours")}
-                                      </MyText>
-                                      <MyText
+                                      </Text>
+                                      <Text
                                         style={{
                                           position: "absolute",
                                           left: 0,
@@ -243,7 +243,7 @@ const TimeReports = () => {
                                         }}
                                       >
                                         {report.hours}
-                                      </MyText>
+                                      </Text>
                                     </View>
                                     <View
                                       style={{
@@ -252,15 +252,15 @@ const TimeReports = () => {
                                         alignItems: "center",
                                       }}
                                     >
-                                      <MyText
+                                      <Text
                                         style={{
                                           flexDirection: "row",
                                           fontSize: 12,
                                         }}
                                       >
                                         {i18n.t("minutes")}
-                                      </MyText>
-                                      <MyText
+                                      </Text>
+                                      <Text
                                         style={{
                                           position: "absolute",
                                           left: 0,
@@ -268,7 +268,7 @@ const TimeReports = () => {
                                         }}
                                       >
                                         {report.minutes}
-                                      </MyText>
+                                      </Text>
                                     </View>
                                   </View>
                                 </View>

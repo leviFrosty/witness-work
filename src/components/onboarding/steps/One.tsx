@@ -1,6 +1,6 @@
 import { View, TouchableOpacity } from "react-native";
 import { styles } from "../Onboarding.styles";
-import MyText from "../../MyText";
+import Text from "../../MyText";
 import i18n from "../../../lib/locales";
 
 interface Props {
@@ -12,12 +12,12 @@ const StepOne = ({ goNext }: Props) => {
     <View style={styles.stepContainer}>
       <View style={styles.onboardingTitleWrapper}>
         <View style={styles.textContainer}>
-          <MyText style={styles.subTitle}>{i18n.t("welcomeTo")}</MyText>
-          <MyText style={styles.title}>{i18n.t("jwTime")}</MyText>
+          <Text style={styles.subTitle}>{i18n.t("welcomeTo")}</Text>
+          <Text style={styles.title}>{i18n.t("jwTime")}</Text>
         </View>
       </View>
       <TouchableOpacity style={styles.actionButton} onPress={goNext}>
-        <MyText style={styles.actionButtonInner}>{i18n.t("getStarted")}</MyText>
+        <Text style={styles.actionButtonInner}>{i18n.t("getStarted")}</Text>
       </TouchableOpacity>
     </View>
   );

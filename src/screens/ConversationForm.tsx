@@ -1,6 +1,6 @@
 import { useCallback } from "react";
 import { Pressable, View, Platform } from "react-native";
-import MyText from "../components/MyText";
+import Text from "../components/MyText";
 import * as Notifications from "expo-notifications";
 import * as Crypto from "expo-crypto";
 import {
@@ -72,12 +72,12 @@ const AssignmentSection = ({
               }}
             >
               <FontAwesome name="id-badge" style={{ fontSize: 16 }} />
-              <MyText style={{ fontWeight: "600", fontSize: 16 }}>
+              <Text style={{ fontFamily: "Inter_600SemiBold", fontSize: 16 }}>
                 {selectedContact.name}
-              </MyText>
+              </Text>
             </View>
           ) : (
-            <MyText>{i18n.t("noContactAssigned")}</MyText>
+            <Text>{i18n.t("noContactAssigned")}</Text>
           )}
           <Pressable
             onPress={() =>
@@ -86,18 +86,18 @@ const AssignmentSection = ({
                 : navigation.navigate("Contact Selector")
             }
           >
-            <MyText
+            <Text
               style={{
                 color: theme.colors.textAlt,
                 textDecorationLine: "underline",
               }}
             >
               {selectedContact ? i18n.t("unassign") : i18n.t("assign")}
-            </MyText>
+            </Text>
           </Pressable>
         </View>
         {errors["contact"] && (
-          <MyText
+          <Text
             style={{
               textAlign: "right",
               paddingRight: 20,
@@ -105,7 +105,7 @@ const AssignmentSection = ({
             }}
           >
             {errors["contact"]}
-          </MyText>
+          </Text>
         )}
       </View>
     </Section>
@@ -331,14 +331,14 @@ const ConversationForm = ({ route, navigation }: Props) => {
                     navigation.popToTop();
                   }}
                 >
-                  <MyText
+                  <Text
                     style={{
                       color: theme.colors.textInverse,
                       fontSize: 12,
                     }}
                   >
                     {i18n.t("skip")}
-                  </MyText>
+                  </Text>
                 </Pressable>
               )}
               <Pressable
@@ -356,7 +356,7 @@ const ConversationForm = ({ route, navigation }: Props) => {
                   navigation.popToTop();
                 }}
               >
-                <MyText
+                <Text
                   style={{
                     color: theme.colors.textInverse,
                     textDecorationLine: "underline",
@@ -364,7 +364,7 @@ const ConversationForm = ({ route, navigation }: Props) => {
                   }}
                 >
                   {params.referrer ? i18n.t("add") : i18n.t("save")}
-                </MyText>
+                </Text>
               </Pressable>
             </View>
           }
@@ -401,12 +401,12 @@ const ConversationForm = ({ route, navigation }: Props) => {
     >
       <View style={{ gap: 30 }}>
         <View style={{ padding: 25, paddingBottom: 0, gap: 5 }}>
-          <MyText style={{ fontSize: 32, fontWeight: "700" }}>
+          <Text style={{ fontSize: 32, fontFamily: "Inter_700Bold" }}>
             {i18n.t("addConversation")}
-          </MyText>
-          <MyText style={{ color: theme.colors.textAlt, fontSize: 12 }}>
+          </Text>
+          <Text style={{ color: theme.colors.textAlt, fontSize: 12 }}>
             {i18n.t("addConversation_description")}
-          </MyText>
+          </Text>
         </View>
         <AssignmentSection
           errors={errors}
@@ -503,7 +503,7 @@ const ConversationForm = ({ route, navigation }: Props) => {
               descriptionOnlyOnDisabled
             />
           </InputRowContainer>
-          <MyText
+          <Text
             style={{
               color: theme.colors.textAlt,
               fontSize: 12,
@@ -511,7 +511,7 @@ const ConversationForm = ({ route, navigation }: Props) => {
             }}
           >
             {i18n.t("notifyMe_notice")}
-          </MyText>
+          </Text>
         </Section>
       </View>
     </KeyboardAwareScrollView>

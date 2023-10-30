@@ -4,7 +4,7 @@ import Section from "../components/inputs/Section";
 import InputRowContainer from "../components/inputs/InputRowContainer";
 import theme from "../constants/theme";
 import DropDownPicker from "react-native-dropdown-picker";
-import MyText from "../components/MyText";
+import Text from "../components/MyText";
 import ActionButton from "../components/ActionButton";
 import useServiceReport from "../stores/serviceReport";
 import * as Crypto from "expo-crypto";
@@ -89,12 +89,12 @@ const AddTime = () => {
     >
       <View style={{ gap: 30 }}>
         <View style={{ padding: 25, gap: 5 }}>
-          <MyText style={{ fontSize: 32, fontWeight: "700" }}>
+          <Text style={{ fontSize: 32, fontFamily: "Inter_700Bold" }}>
             {i18n.t("addTime")}
-          </MyText>
-          <MyText style={{ color: theme.colors.textAlt, fontSize: 12 }}>
+          </Text>
+          <Text style={{ color: theme.colors.textAlt, fontSize: 12 }}>
             {i18n.t("addTime_description")}
-          </MyText>
+          </Text>
         </View>
         <Section>
           <InputRowContainer

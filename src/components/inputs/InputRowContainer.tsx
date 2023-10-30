@@ -2,7 +2,7 @@ import React, { PropsWithChildren, ReactNode } from "react";
 import { View } from "react-native";
 import theme from "../../constants/theme";
 import { rowPaddingVertical } from "../../constants/Inputs";
-import MyText from "../MyText";
+import Text from "../MyText";
 
 interface Props {
   children?: ReactNode;
@@ -40,9 +40,11 @@ const InputRowContainer: React.FC<PropsWithChildren<Props>> = ({
         gap: 15,
       }}
     >
-      <MyText style={{ fontWeight: "600", flexDirection: "column" }}>
+      <Text
+        style={{ fontFamily: "Inter_600SemiBold", flexDirection: "column" }}
+      >
         {label}
-      </MyText>
+      </Text>
       {children}
     </View>
   );

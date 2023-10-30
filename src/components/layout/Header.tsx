@@ -2,7 +2,7 @@ import { Pressable, View } from "react-native";
 import theme from "../../constants/theme";
 import moment from "moment";
 import { FontAwesome } from "@expo/vector-icons";
-import MyText from "../MyText";
+import Text from "../MyText";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
 import { RootStackNavigation } from "../../stacks/RootStack";
@@ -72,15 +72,15 @@ const Header = ({
             name={iconName()}
           />
         </Pressable>
-        <MyText
+        <Text
           style={{
             fontSize: 18,
-            fontWeight: "600",
+            fontFamily: "Inter_600SemiBold",
             color: theme.colors.textInverse,
           }}
         >
           {title ?? moment().format("LL")}
-        </MyText>
+        </Text>
         {rightElement}
       </View>
     </View>

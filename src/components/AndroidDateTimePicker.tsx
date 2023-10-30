@@ -1,5 +1,5 @@
 import { Platform, View, TouchableOpacity } from "react-native";
-import MyText from "./MyText";
+import Text from "./MyText";
 import moment from "moment";
 import {
   DateTimePickerAndroid,
@@ -45,9 +45,9 @@ const AndroidDateTimePicker = ({
   }
   return (
     <View style={{ flexDirection: timeAndDate ? "column" : "row", gap: 10 }}>
-      <MyText style={{ fontWeight: "600" }}>
+      <Text style={{ fontFamily: "Inter_600SemiBold" }}>
         {moment(value).format(timeAndDate ? "LLL" : "LL")}
-      </MyText>
+      </Text>
       <View style={{ flexDirection: "row", gap: 7 }}>
         <TouchableOpacity
           onPress={() => {
@@ -60,13 +60,13 @@ const AndroidDateTimePicker = ({
             });
           }}
         >
-          <MyText
+          <Text
             style={{
               textDecorationLine: "underline",
             }}
           >
             {i18n.t("selectDate")}
-          </MyText>
+          </Text>
         </TouchableOpacity>
         {timeAndDate && (
           <TouchableOpacity
@@ -80,13 +80,13 @@ const AndroidDateTimePicker = ({
               });
             }}
           >
-            <MyText
+            <Text
               style={{
                 textDecorationLine: "underline",
               }}
             >
               {i18n.t("selectTime")}
-            </MyText>
+            </Text>
           </TouchableOpacity>
         )}
       </View>

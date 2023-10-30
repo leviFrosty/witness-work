@@ -15,7 +15,7 @@ export const styles = StyleSheet.create({
   title: {
     fontSize: 75,
     lineHeight: 85,
-    fontWeight: "700",
+    fontFamily: "Inter_700Bold",
   },
   actionButton: {
     backgroundColor: "#1BD15D",
@@ -28,7 +28,7 @@ export const styles = StyleSheet.create({
   actionButtonInner: {
     fontSize: 24,
     color: "#fff",
-    fontWeight: "700",
+    fontFamily: "Inter_700Bold",
   },
   navContainer: {
     position: "relative",
@@ -46,7 +46,7 @@ export const styles = StyleSheet.create({
   },
   navTitle: {
     fontSize: 24,
-    fontWeight: "700",
+    fontFamily: "Inter_700Bold",
   },
   navSkip: {
     color: "#9B9B9B",
@@ -61,7 +61,7 @@ export const styles = StyleSheet.create({
   },
   stepTitle: {
     fontSize: 32,
-    fontWeight: "700",
+    fontFamily: "Inter_700Bold",
     marginBottom: 20,
   },
   stepContentContainer: {
@@ -69,7 +69,6 @@ export const styles = StyleSheet.create({
   },
   description: {
     fontSize: 12,
-    fontWeight: "400",
     color: "#9B9B9B",
   },
   dropDownPicker: {

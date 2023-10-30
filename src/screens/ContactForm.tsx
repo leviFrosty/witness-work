@@ -1,6 +1,6 @@
 import React, { useRef, useState, useCallback, useEffect } from "react";
 import { TextInput, View, Pressable } from "react-native";
-import MyText from "../components/MyText";
+import Text from "../components/MyText";
 import { RootStackParamList } from "../stacks/RootStack";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import useContacts from "../stores/contactsStore";
@@ -372,7 +372,7 @@ const ContactForm = ({ route, navigation }: Props) => {
                 });
               }}
             >
-              <MyText
+              <Text
                 style={{
                   color: theme.colors.textInverse,
                   textDecorationLine: "underline",
@@ -380,7 +380,7 @@ const ContactForm = ({ route, navigation }: Props) => {
                 }}
               >
                 {editMode ? i18n.t("save") : i18n.t("continue")}
-              </MyText>
+              </Text>
             </Pressable>
           }
         />
@@ -396,12 +396,12 @@ const ContactForm = ({ route, navigation }: Props) => {
     >
       <View style={{ gap: 30, paddingBottom: insets.bottom + 100 }}>
         <View style={{ padding: 25, gap: 5 }}>
-          <MyText style={{ fontSize: 32, fontWeight: "700" }}>
+          <Text style={{ fontSize: 32, fontFamily: "Inter_700Bold" }}>
             {editMode ? i18n.t("edit") : i18n.t("add")} {i18n.t("contact")}
-          </MyText>
-          <MyText style={{ color: theme.colors.textAlt, fontSize: 12 }}>
+          </Text>
+          <Text style={{ color: theme.colors.textAlt, fontSize: 12 }}>
             {i18n.t("enterContactInformation")}
-          </MyText>
+          </Text>
         </View>
         <PersonalContactSection
           contact={contact}

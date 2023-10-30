@@ -7,7 +7,7 @@ import {
   ScrollView,
 } from "react-native";
 import { useEffect, useMemo } from "react";
-import MyText from "../components/MyText";
+import Text from "../components/MyText";
 import theme from "../constants/theme";
 import { RootStackParamList } from "../stacks/RootStack";
 import {
@@ -41,18 +41,22 @@ const PhoneRow = ({ contact }: { contact: Contact }) => {
   const { phone } = contact;
   return (
     <View style={{ gap: 10 }}>
-      <MyText
-        style={{ fontSize: 14, fontWeight: "600", color: theme.colors.textAlt }}
+      <Text
+        style={{
+          fontSize: 14,
+          fontFamily: "Inter_600SemiBold",
+          color: theme.colors.textAlt,
+        }}
       >
         {i18n.t("phone")}
-      </MyText>
+      </Text>
       <View
         style={{
           flexDirection: "row",
           justifyContent: "space-between",
         }}
       >
-        <MyText onPress={() => Linking.openURL(`tel:${phone}`)}>{phone}</MyText>
+        <Text onPress={() => Linking.openURL(`tel:${phone}`)}>{phone}</Text>
         <View
           style={{
             flexDirection: "row",
@@ -107,30 +111,30 @@ const Hero = ({
         alignItems: "center",
       }}
     >
-      <MyText
+      <Text
         style={{
           fontSize: 14,
-          fontWeight: "600",
+          fontFamily: "Inter_600SemiBold",
           color: theme.colors.textInverse,
         }}
       >
         {i18n.t("contact")}
-      </MyText>
-      <MyText
+      </Text>
+      <Text
         style={{
           fontSize: 40,
-          fontWeight: "700",
+          fontFamily: "Inter_700Bold",
           color: theme.colors.textInverse,
         }}
       >
         {name}
-      </MyText>
+      </Text>
       {hasStudiedPreviously && mostRecentStudy && (
         <View style={{ flexDirection: "row", gap: 5, alignItems: "center" }}>
-          <MyText
+          <Text
             style={{
               fontSize: 16,
-              fontWeight: "500",
+              fontFamily: "Inter_500Medium",
               color: theme.colors.textInverse,
             }}
           >
@@ -139,7 +143,7 @@ const Hero = ({
               : `${i18n.t("lastStudied")} ${moment(mostRecentStudy.date).format(
                   "L"
                 )}`}
-          </MyText>
+          </Text>
           <FontAwesome
             style={{ color: theme.colors.textInverse, fontSize: 14 }}
             name="book"
@@ -147,11 +151,11 @@ const Hero = ({
         </View>
       )}
       {!isActiveBibleStudy && hasStudiedPreviously && (
-        <MyText
+        <Text
           style={{ fontSize: 12, color: theme.colors.textAlt, maxWidth: 250 }}
         >
           {i18n.t("inactiveBibleStudiesDoNoCountTowardsMonthlyTotals")}
-        </MyText>
+        </Text>
       )}
     </View>
   );
@@ -183,11 +187,15 @@ const AddressRow = ({ contact }: { contact: Contact }) => {
 
   return (
     <View style={{ gap: 10 }}>
-      <MyText
-        style={{ fontSize: 14, fontWeight: "600", color: theme.colors.textAlt }}
+      <Text
+        style={{
+          fontSize: 14,
+          fontFamily: "Inter_600SemiBold",
+          color: theme.colors.textAlt,
+        }}
       >
         {i18n.t("address")}
-      </MyText>
+      </Text>
       <TouchableOpacity onPress={() => navigateTo(address)}>
         <View
           style={{
@@ -203,7 +211,7 @@ const AddressRow = ({ contact }: { contact: Contact }) => {
             }}
           >
             {Object.keys(address).map((key) => {
-              return <MyText key={key}>{address[key as keyof Address]}</MyText>;
+              return <Text key={key}>{address[key as keyof Address]}</Text>;
             })}
           </View>
           <FontAwesome
@@ -224,11 +232,15 @@ const EmailRow = ({ contact }: { contact: Contact }) => {
 
   return (
     <View style={{ gap: 10 }}>
-      <MyText
-        style={{ fontSize: 14, fontWeight: "600", color: theme.colors.textAlt }}
+      <Text
+        style={{
+          fontSize: 14,
+          fontFamily: "Inter_600SemiBold",
+          color: theme.colors.textAlt,
+        }}
       >
         {i18n.t("email")}
-      </MyText>
+      </Text>
       <TouchableOpacity onPress={() => Linking.openURL(`mailTo:${email}`)}>
         <View
           style={{
@@ -243,7 +255,7 @@ const EmailRow = ({ contact }: { contact: Contact }) => {
               justifyContent: "space-between",
             }}
           >
-            <MyText>{email}</MyText>
+            <Text>{email}</Text>
           </View>
           <FontAwesome
             style={{ fontSize: iconSize, color: theme.colors.accent }}
@@ -295,18 +307,18 @@ const DeleteContactButton = ({
           )
         }
       >
-        <MyText
+        <Text
           style={{
-            fontWeight: "600",
+            fontFamily: "Inter_600SemiBold",
             textAlign: "center",
             fontSize: 10,
             textDecorationLine: "underline",
           }}
         >
           {i18n.t("deleteContact")}
-        </MyText>
+        </Text>
       </TouchableOpacity>
-      <MyText
+      <Text
         style={{
           fontSize: 10,
           color: theme.colors.textAlt,
@@ -314,7 +326,7 @@ const DeleteContactButton = ({
         }}
       >
         {i18n.t("created")} {moment(contact.createdAt).format("LL")}
-      </MyText>
+      </Text>
     </View>
   );
 };
@@ -372,7 +384,7 @@ const ContactDetails = ({ route, navigation }: Props) => {
                   name="pencil"
                   style={{ fontSize: 16, color: theme.colors.textInverse }}
                 />
-                <MyText
+                <Text
                   style={{
                     color: theme.colors.textInverse,
                     textDecorationLine: "underline",
@@ -380,7 +392,7 @@ const ContactDetails = ({ route, navigation }: Props) => {
                   }}
                 >
                   {i18n.t("edit")}
-                </MyText>
+                </Text>
               </TouchableOpacity>
               <TouchableOpacity
                 hitSlop={15}
@@ -434,9 +446,9 @@ const ContactDetails = ({ route, navigation }: Props) => {
 
   if (!contact) {
     return (
-      <MyText style={{ fontSize: 18, marginTop: 15 }}>
+      <Text style={{ fontSize: 18, marginTop: 15 }}>
         {i18n.t("contactNotFoundForProvidedId")} {params.id}
-      </MyText>
+      </Text>
     );
   }
 
@@ -468,7 +480,7 @@ const ContactDetails = ({ route, navigation }: Props) => {
               {hasAddress && <AddressRow contact={contact} />}
               {phone && <PhoneRow contact={contact} />}
               {!hasAddress && !phone && !email && (
-                <MyText>{i18n.t("noPersonalInformationSaved")}</MyText>
+                <Text>{i18n.t("noPersonalInformationSaved")}</Text>
               )}
               {email && <EmailRow contact={contact} />}
             </View>
@@ -481,9 +493,7 @@ const ContactDetails = ({ route, navigation }: Props) => {
                 )}
                 ItemSeparatorComponent={() => <Divider />}
                 data={contactConversationsSorted}
-                ListEmptyComponent={
-                  <MyText>{i18n.t("tapPlusToAddConvo")}</MyText>
-                }
+                ListEmptyComponent={<Text>{i18n.t("tapPlusToAddConvo")}</Text>}
                 estimatedItemSize={70}
               />
             </View>

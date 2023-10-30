@@ -34,7 +34,8 @@ export const contactHasAtLeastOneStudy = ({
   contact: Contact;
 }) => {
   const hasStudied = conversations.some(
-    (conversation) => conversation.contact.id === contact.id
+    (conversation) =>
+      conversation.contact.id === contact.id && conversation.isBibleStudy
   );
 
   return hasStudied;

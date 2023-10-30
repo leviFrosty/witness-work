@@ -186,5 +186,9 @@
   "conductedBibleStudy": "Проведенное изучение Библии",
   "inactiveBibleStudiesDoNoCountTowardsMonthlyTotals": "Изучение Библии не будет способствовать ежемесячному итогу, если оно не будет проведено хотя бы один раз в течение месяца.",
   "bibleStudy": "Изучение Библии",
-  "study": "Изучать"
+  "study": "Изучать",
+  "recentConversation": "Недавний разговор",
+  "alphabeticalAsc": "Алфавитный (А-Я)",
+  "alphabeticalDesc": "Алфавитный (Я-А)",
+  "sort": "Сортировать"
 }

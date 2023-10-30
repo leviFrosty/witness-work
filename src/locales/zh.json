@@ -186,5 +186,9 @@
   "conductedBibleStudy": "进行圣经研究",
   "inactiveBibleStudiesDoNoCountTowardsMonthlyTotals": "除非当月至少进行一次，否则圣经研究不会对每月总数产生影响。",
   "bibleStudy": "圣经学习;圣经讨论",
-  "study": "学习"
+  "study": "学习",
+  "recentConversation": "最近的谈话",
+  "alphabeticalAsc": "按字母顺序 (A-Z)",
+  "alphabeticalDesc": "按字母顺序 (Z-A)",
+  "sort": "种类"
 }

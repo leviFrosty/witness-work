@@ -186,5 +186,9 @@
   "conductedBibleStudy": "성서 연구를 사회함",
   "inactiveBibleStudiesDoNoCountTowardsMonthlyTotals": "성경 공부는 해당 달에 적어도 한 번 진행되지 않는 한 월별 총계에 기여하지 않습니다.",
   "bibleStudy": "성경 연구",
-  "study": "공부하다"
+  "study": "공부하다",
+  "recentConversation": "최근 대화",
+  "alphabeticalAsc": "알파벳순(A-Z)",
+  "alphabeticalDesc": "알파벳순(Z-A)",
+  "sort": "종류"
 }

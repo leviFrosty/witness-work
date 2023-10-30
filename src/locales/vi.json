@@ -186,5 +186,9 @@
   "conductedBibleStudy": "Điều khiển việc học Kinh Thánh",
   "inactiveBibleStudiesDoNoCountTowardsMonthlyTotals": "Các nghiên cứu Kinh Thánh sẽ không được tính vào tổng số hàng tháng trừ khi được tiến hành ít nhất một lần trong tháng hiện tại.",
   "bibleStudy": "Nghiên cứu Kinh Thánh",
-  "study": "Học"
+  "study": "Học",
+  "recentConversation": "Cuộc trò chuyện gần đây",
+  "alphabeticalAsc": "Theo bảng chữ cái (A-Z)",
+  "alphabeticalDesc": "Theo bảng chữ cái (Z-A)",
+  "sort": "Loại"
 }

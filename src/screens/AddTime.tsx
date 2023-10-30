@@ -131,11 +131,11 @@ const AddTime = () => {
               <InputRowContainer label={i18n.t("hours")} lastInSection>
                 <DropDownPicker
                   open={hourOpen}
-                  value={serviceReport.hours}
-                  items={hourOptions}
                   setOpen={setHourOpen}
+                  value={serviceReport.hours}
                   // eslint-disable-next-line @typescript-eslint/no-explicit-any
                   setValue={(val: any) => setHours(val())}
+                  items={hourOptions}
                   setItems={setHourOptions}
                   style={{
                     backgroundColor: theme.colors.background,

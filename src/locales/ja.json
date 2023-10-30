@@ -186,5 +186,9 @@
   "conductedBibleStudy": "聖書研究を実施",
   "inactiveBibleStudiesDoNoCountTowardsMonthlyTotals": "聖書研究は、当月に少なくとも 1 回実施されない限り、月の合計には反映されません。",
   "bibleStudy": "聖書研究",
-  "study": "勉強"
+  "study": "勉強",
+  "recentConversation": "最近の会話",
+  "alphabeticalAsc": "アルファベット順 (A ～ Z)",
+  "alphabeticalDesc": "アルファベット順 (Z-A)",
+  "sort": "選別"
 }

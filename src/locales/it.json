@@ -186,5 +186,9 @@
   "conductedBibleStudy": "Studio biblico condotto",
   "inactiveBibleStudiesDoNoCountTowardsMonthlyTotals": "Gli studi biblici non contribuiranno ai totali mensili a meno che non siano condotti almeno una volta nel mese corrente.",
   "bibleStudy": "Studio della Bibbia",
-  "study": "Studio"
+  "study": "Studio",
+  "recentConversation": "Conversazione recente",
+  "alphabeticalAsc": "Alfabetico (A-Z)",
+  "alphabeticalDesc": "Alfabetico (Z-A)",
+  "sort": "Ordinare"
 }

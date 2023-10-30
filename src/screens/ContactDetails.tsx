@@ -292,11 +292,11 @@ const DeleteContactButton = ({
             "This contact will be deleted. You can restore it later from your deleted contacts.",
             [
               {
-                text: "Cancel",
+                text: i18n.t("cancel"),
                 style: "cancel",
               },
               {
-                text: "Delete",
+                text: i18n.t("delete"),
                 style: "destructive",
                 onPress: () => {
                   deleteContact(contactId);

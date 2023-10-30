@@ -61,23 +61,20 @@ const Settings = () => {
     try {
       const update = await Updates.checkForUpdateAsync();
       if (update.isAvailable) {
-        Alert.alert(
-          i18n.t("update"),
-          i18n.t("update_description", [
-            {
-              text: i18n.t("cancel"),
-              style: "cancel",
+        Alert.alert(i18n.t("update"), i18n.t("update_description"), [
+          {
+            text: i18n.t("cancel"),
+            style: "cancel",
+          },
+          {
+            text: i18n.t("yes"),
+            style: "default",
+            onPress: async () => {
+              await Updates.fetchUpdateAsync();
+              await Updates.reloadAsync();
             },
-            {
-              text: i18n.t("yes"),
-              style: "default",
-              onPress: async () => {
-                await Updates.fetchUpdateAsync();
-                await Updates.reloadAsync();
-              },
-            },
-          ])
-        );
+          },
+        ]);
         return;
       }
       Alert.alert(i18n.t("noUpdateAvailable"));

@@ -493,7 +493,11 @@ const ContactDetails = ({ route, navigation }: Props) => {
                 )}
                 ItemSeparatorComponent={() => <Divider />}
                 data={contactConversationsSorted}
-                ListEmptyComponent={<Text>{i18n.t("tapPlusToAddConvo")}</Text>}
+                ListEmptyComponent={
+                  <Text style={{ margin: 20 }}>
+                    {i18n.t("tapPlusToAddConvo")}
+                  </Text>
+                }
                 estimatedItemSize={70}
               />
             </View>

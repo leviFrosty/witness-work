@@ -1,6 +1,6 @@
 import Checkbox from "expo-checkbox";
 import { View } from "react-native";
-import MyText from "../MyText";
+import Text from "../MyText";
 import theme from "../../constants/theme";
 
 const CheckboxWithLabel = ({
@@ -28,15 +28,14 @@ const CheckboxWithLabel = ({
       (descriptionOnlyOnDisabled && disabled)
     ) {
       return (
-        <MyText
+        <Text
           style={{
             fontSize: 12,
-            fontWeight: "400",
             color: theme.colors.textAlt,
           }}
         >
           {description}
-        </MyText>
+        </Text>
       );
     }
   };
@@ -57,7 +56,7 @@ const CheckboxWithLabel = ({
           value={value}
           onValueChange={(val: boolean) => setValue(val)}
         />
-        <MyText>{label}</MyText>
+        <Text>{label}</Text>
       </View>
       {renderDescription()}
     </View>

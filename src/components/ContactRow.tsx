@@ -1,5 +1,5 @@
 import { View, TouchableOpacity } from "react-native";
-import MyText from "./MyText";
+import Text from "./MyText";
 import theme from "../constants/theme";
 import Card from "./Card";
 import { FontAwesome } from "@expo/vector-icons";
@@ -55,12 +55,12 @@ const ContactRow = ({
         flexDirection="row"
       >
         <View style={{ flexGrow: 1, gap: 2 }}>
-          <MyText style={{ fontSize: 18 }}>{name}</MyText>
-          <MyText style={{ color: theme.colors.textAlt, fontSize: 10 }}>
+          <Text style={{ fontSize: 18 }}>{name}</Text>
+          <Text style={{ color: theme.colors.textAlt, fontSize: 10 }}>
             {mostRecentConversation
               ? moment(mostRecentConversation.date).fromNow()
               : i18n.t("noRecentConversation_plural")}
-          </MyText>
+          </Text>
         </View>
         <View style={{ flexDirection: "row", gap: 10 }}>
           {hasStudiedPreviously && (

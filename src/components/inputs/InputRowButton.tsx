@@ -7,7 +7,7 @@ import {
 } from "react-native";
 import theme from "../../constants/theme";
 import { rowPaddingVertical } from "../../constants/Inputs";
-import MyText from "../MyText";
+import Text from "../MyText";
 import { FontAwesome5 } from "@expo/vector-icons";
 
 interface Props {
@@ -62,9 +62,11 @@ const InputRowButton: React.FC<PropsWithChildren<Props>> = ({
             style={{ color: theme.colors.textAlt }}
           />
         )}
-        <MyText style={{ fontWeight: "600", flexDirection: "column" }}>
+        <Text
+          style={{ fontFamily: "Inter_600SemiBold", flexDirection: "column" }}
+        >
           {label}
-        </MyText>
+        </Text>
       </View>
       {children}
     </TouchableOpacity>

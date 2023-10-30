@@ -1,5 +1,5 @@
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
-import MyText from "../components/MyText";
+import Text from "../components/MyText";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { FlashList } from "@shopify/flash-list";
 import useContacts from "../stores/contactsStore";
@@ -25,9 +25,9 @@ const ContactSelector = () => {
   return (
     <View style={{ flexGrow: 1, padding: 20, gap: 20 }}>
       <View style={{ gap: 20 }}>
-        <MyText style={{ fontSize: 32, fontWeight: "700" }}>
+        <Text style={{ fontSize: 32, fontFamily: "Inter_700Bold" }}>
           {i18n.t("assignContact")}
-        </MyText>
+        </Text>
         <SearchBar value={search} setValue={setSearch} />
       </View>
       <KeyboardAwareScrollView style={{ flexGrow: 1, paddingHorizontal: 10 }}>

@@ -2,7 +2,7 @@ import { View, Pressable, TouchableOpacity } from "react-native";
 import { styles } from "../Onboarding.styles";
 import OnboardingNav from "../OnboardingNav";
 import { registerForPushNotificationsAsync } from "../../../lib/notifications";
-import MyText from "../../MyText";
+import Text from "../../MyText";
 import i18n from "../../../lib/locales";
 
 interface Props {
@@ -15,12 +15,12 @@ const StepThree = ({ goBack, goNext }: Props) => {
     <View style={styles.stepContainer}>
       <OnboardingNav goBack={goBack} />
       <View>
-        <MyText style={styles.stepTitle}>
+        <Text style={styles.stepTitle}>
           {i18n.t("neverForgetAReturnVisit")}
-        </MyText>
-        <MyText style={styles.description}>
+        </Text>
+        <Text style={styles.description}>
           {i18n.t("neverForgetAReturnVisit_description")}
-        </MyText>
+        </Text>
       </View>
       <View>
         <TouchableOpacity
@@ -31,13 +31,13 @@ const StepThree = ({ goBack, goNext }: Props) => {
             });
           }}
         >
-          <MyText style={styles.actionButtonInner}>
+          <Text style={styles.actionButtonInner}>
             {i18n.t("allowNotifications")}
-          </MyText>
+          </Text>
         </TouchableOpacity>
         <View style={{ alignItems: "center", marginTop: 15 }}>
           <Pressable hitSlop={10} onPress={goNext}>
-            <MyText style={styles.navSkip}>{i18n.t("skip")}</MyText>
+            <Text style={styles.navSkip}>{i18n.t("skip")}</Text>
           </Pressable>
         </View>
       </View>

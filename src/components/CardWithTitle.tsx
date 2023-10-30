@@ -1,5 +1,5 @@
 import { ColorValue, View } from "react-native";
-import MyText from "./MyText";
+import Text from "./MyText";
 import Card from "./Card";
 import { PropsWithChildren } from "react";
 
@@ -20,16 +20,16 @@ const CardWithTitle: React.FC<PropsWithChildren<Props>> = ({
   return (
     <View style={{ gap: 10 }}>
       {!titlePosition && (
-        <MyText
+        <Text
           style={{
             fontSize: 14,
-            fontWeight: "600",
+            fontFamily: "Inter_600SemiBold",
             marginLeft: 5,
             color: titleColor,
           }}
         >
           {title}
-        </MyText>
+        </Text>
       )}
       <Card
         style={
@@ -37,9 +37,15 @@ const CardWithTitle: React.FC<PropsWithChildren<Props>> = ({
         }
       >
         {titlePosition === "inside" && (
-          <MyText style={{ fontSize: 14, fontWeight: "600", marginLeft: 5 }}>
+          <Text
+            style={{
+              fontSize: 14,
+              fontFamily: "Inter_600SemiBold",
+              marginLeft: 5,
+            }}
+          >
             {title}
-          </MyText>
+          </Text>
         )}
         {children}
       </Card>

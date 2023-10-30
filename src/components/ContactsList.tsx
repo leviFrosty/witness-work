@@ -3,7 +3,7 @@ import { View, TouchableOpacity } from "react-native";
 import theme from "../constants/theme";
 import { FontAwesome } from "@expo/vector-icons";
 import Card from "./Card";
-import MyText from "./MyText";
+import Text from "./MyText";
 import ContactRow from "./ContactRow";
 import { useNavigation } from "@react-navigation/native";
 import { RootStackNavigation } from "../stacks/RootStack";
@@ -62,9 +62,11 @@ const ContactsList = () => {
 
   return (
     <View style={{ gap: 8 }}>
-      <MyText style={{ fontSize: 12, fontWeight: "600", marginLeft: 5 }}>
+      <Text
+        style={{ fontSize: 12, fontFamily: "Inter_600SemiBold", marginLeft: 5 }}
+      >
         {i18n.t("returnVisitContacts")}
-      </MyText>
+      </Text>
       <Card>
         <View style={{ flexDirection: "row", gap: 10 }}>
           <SearchBar value={search} setValue={setSearch} />
@@ -100,9 +102,9 @@ const ContactsList = () => {
               />
             )}
             ListEmptyComponent={() => (
-              <MyText style={{ color: theme.colors.textAlt, fontSize: 12 }}>
+              <Text style={{ color: theme.colors.textAlt, fontSize: 12 }}>
                 {i18n.t("noContactsSaved")}
-              </MyText>
+              </Text>
             )}
             estimatedItemSize={84}
             ItemSeparatorComponent={() => (

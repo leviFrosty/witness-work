@@ -11,7 +11,7 @@ import {
   hasServiceReportsForMonth,
 } from "../lib/serviceReport";
 import Card from "./Card";
-import MyText from "./MyText";
+import Text from "./MyText";
 import { useNavigation } from "@react-navigation/native";
 import { RootStackNavigation } from "../stacks/RootStack";
 import { useEffect, useMemo, useState, useCallback, useRef } from "react";
@@ -126,23 +126,25 @@ const HourEntryCard = () => {
           }}
         >
           <View style={{ position: "relative" }}>
-            <MyText style={{ fontSize: 32, fontWeight: "700" }}>{hours}</MyText>
-            <MyText
+            <Text style={{ fontSize: 32, fontFamily: "Inter_700Bold" }}>
+              {hours}
+            </Text>
+            <Text
               style={{
                 position: "absolute",
                 right: -25,
                 bottom: 0,
                 fontSize: 12,
                 color: theme.colors.textAlt,
-                fontWeight: "600",
+                fontFamily: "Inter_600SemiBold",
               }}
             >
               /{goalHours}
-            </MyText>
+            </Text>
           </View>
-          <MyText style={{ fontWeight: "700", maxWidth: 200 }}>
+          <Text style={{ fontFamily: "Inter_700Bold", maxWidth: 200 }}>
             {encouragementPhrase}
-          </MyText>
+          </Text>
           <View
             style={{
               borderRadius: theme.numbers.borderRadiusLg,
@@ -151,13 +153,13 @@ const HourEntryCard = () => {
               paddingVertical: 5,
             }}
           >
-            <MyText style={{ fontSize: 10 }}>
+            <Text style={{ fontSize: 10 }}>
               {hoursRemaining} {i18n.t("hoursLeft")}
-            </MyText>
+            </Text>
           </View>
-          <MyText style={{ fontSize: 8, color: theme.colors.textAlt }}>
+          <Text style={{ fontSize: 8, color: theme.colors.textAlt }}>
             {i18n.t("goalBasedOnPublisherType")}
-          </MyText>
+          </Text>
         </View>
         <FontAwesome
           style={{
@@ -182,16 +184,16 @@ const HourEntryCard = () => {
         }}
         onPress={() => navigation.navigate("Add Time")}
       >
-        <MyText
+        <Text
           style={{
             textAlign: "center",
-            fontWeight: "700",
+            fontFamily: "Inter_700Bold",
             fontSize: 18,
             color: theme.colors.textInverse,
           }}
         >
           {i18n.t("addTime")}
-        </MyText>
+        </Text>
       </TouchableOpacity>
     </View>
   );
@@ -261,17 +263,19 @@ const RightCard = () => {
           flexGrow: 1,
         }}
       >
-        <MyText style={{ fontSize: 32, fontWeight: "700" }}>{studies}</MyText>
-        <MyText
+        <Text style={{ fontSize: 32, fontFamily: "Inter_700Bold" }}>
+          {studies}
+        </Text>
+        <Text
           style={{
-            fontWeight: "700",
+            fontFamily: "Inter_700Bold",
             maxWidth: 125,
           }}
         >
           {encouragementPhrase}
-        </MyText>
+        </Text>
       </View>
-      <MyText
+      <Text
         style={{
           fontSize: 8,
           color: theme.colors.textAlt,
@@ -279,7 +283,7 @@ const RightCard = () => {
         }}
       >
         {i18n.t("basedOnContacts")}
-      </MyText>
+      </Text>
     </View>
   );
 };
@@ -311,7 +315,7 @@ const CheckMarkAnimationComponent = ({ undoId }: { undoId?: string }) => {
       />
       {undoId && (
         <TouchableOpacity onPress={() => deleteServiceReport(undoId)}>
-          <MyText
+          <Text
             style={{
               fontSize: 10,
               color: theme.colors.textAlt,
@@ -319,7 +323,7 @@ const CheckMarkAnimationComponent = ({ undoId }: { undoId?: string }) => {
             }}
           >
             {i18n.t("undo")}
-          </MyText>
+          </Text>
         </TouchableOpacity>
       )}
     </View>
@@ -381,15 +385,15 @@ const StandardPublisherTimeEntry = () => {
               name="square-o"
               style={{ color: theme.colors.textInverse, fontSize: 25 }}
             />
-            <MyText
+            <Text
               style={{
                 color: theme.colors.textInverse,
                 fontSize: 18,
-                fontWeight: "600",
+                fontFamily: "Inter_600SemiBold",
               }}
             >
               {i18n.t("sharedTheGoodNews")}
-            </MyText>
+            </Text>
           </View>
         </TouchableOpacity>
       )}
@@ -402,9 +406,11 @@ const ServiceReport = () => {
   const navigation = useNavigation<RootStackNavigation>();
   return (
     <View style={{ gap: 10 }}>
-      <MyText style={{ fontSize: 14, fontWeight: "600", marginLeft: 5 }}>
+      <Text
+        style={{ fontSize: 14, fontFamily: "Inter_600SemiBold", marginLeft: 5 }}
+      >
         {i18n.t("serviceReport")}
-      </MyText>
+      </Text>
       <Card>
         <View style={{ flexDirection: "row", gap: 5 }}>
           <View style={{ flexDirection: "column", gap: 5, flexGrow: 1 }}>
@@ -413,25 +419,25 @@ const ServiceReport = () => {
                 <TouchableOpacity
                   onPress={() => navigation.navigate("Time Reports")}
                 >
-                  <MyText
+                  <Text
                     style={{
                       color: theme.colors.textAlt,
-                      fontWeight: "600",
+                      fontFamily: "Inter_600SemiBold",
                       textDecorationLine: "underline",
                     }}
                   >
                     {i18n.t("viewHours")}
-                  </MyText>
+                  </Text>
                 </TouchableOpacity>
               ) : (
-                <MyText
+                <Text
                   style={{
                     color: theme.colors.textAlt,
-                    fontWeight: "600",
+                    fontFamily: "Inter_600SemiBold",
                   }}
                 >
                   {i18n.t("hours")}
-                </MyText>
+                </Text>
               )}
             </View>
             {publisher === "publisher" ? (
@@ -441,9 +447,14 @@ const ServiceReport = () => {
             )}
           </View>
           <View style={{ flexDirection: "column", gap: 5 }}>
-            <MyText style={{ color: theme.colors.textAlt, fontWeight: "600" }}>
+            <Text
+              style={{
+                color: theme.colors.textAlt,
+                fontFamily: "Inter_600SemiBold",
+              }}
+            >
               {i18n.t("studies")}
-            </MyText>
+            </Text>
             <RightCard />
           </View>
         </View>

@@ -1,5 +1,5 @@
 import { TouchableOpacity } from "react-native";
-import MyText from "./MyText";
+import Text from "./MyText";
 import theme from "../constants/theme";
 
 interface Props {
@@ -20,15 +20,15 @@ const ActionButton = ({ action, label }: Props) => {
       }}
       onPress={action}
     >
-      <MyText
+      <Text
         style={{
           fontSize: 24,
           color: theme.colors.textInverse,
-          fontWeight: "700",
+          fontFamily: "Inter_700Bold",
         }}
       >
         {label}
-      </MyText>
+      </Text>
     </TouchableOpacity>
   );
 };

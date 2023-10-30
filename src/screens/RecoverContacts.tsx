@@ -1,5 +1,5 @@
 import { Alert, ScrollView, TouchableOpacity, View } from "react-native";
-import MyText from "../components/MyText";
+import Text from "../components/MyText";
 import theme from "../constants/theme";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import useContacts from "../stores/contactsStore";
@@ -46,12 +46,12 @@ const RecoverContacts = () => {
     >
       <View style={{ gap: 30, flexGrow: 1 }}>
         <View style={{ padding: 25, gap: 5 }}>
-          <MyText style={{ fontSize: 32, fontWeight: "700" }}>
+          <Text style={{ fontSize: 32, fontFamily: "Inter_700Bold" }}>
             {i18n.t("recoverContacts")}
-          </MyText>
-          <MyText style={{ color: theme.colors.textAlt, fontSize: 12 }}>
+          </Text>
+          <Text style={{ color: theme.colors.textAlt, fontSize: 12 }}>
             {i18n.t("recoverContacts_description")}
-          </MyText>
+          </Text>
         </View>
         <ScrollView
           style={{ marginBottom: insets.bottom + 60 }}
@@ -70,9 +70,9 @@ const RecoverContacts = () => {
             }}
           >
             {deletedContacts.length === 0 && (
-              <MyText style={{ paddingHorizontal: 20 }}>
+              <Text style={{ paddingHorizontal: 20 }}>
                 {i18n.t("deletedContactsWillAppearHere")}
-              </MyText>
+              </Text>
             )}
             <View style={{ minHeight: 2 }}>
               <FlashList
@@ -89,17 +89,17 @@ const RecoverContacts = () => {
                       }}
                     >
                       <View style={{ gap: 5 }}>
-                        <MyText
+                        <Text
                           style={{
                             fontSize: 10,
-                            fontWeight: "600",
+                            fontFamily: "Inter_600SemiBold",
                             color: theme.colors.textAlt,
                           }}
                         >
                           {`${i18n.t("created")}${moment(item.createdAt).format(
                             "LL"
                           )}`}
-                        </MyText>
+                        </Text>
                         <View
                           style={{
                             flexDirection: "row",
@@ -118,7 +118,7 @@ const RecoverContacts = () => {
                               name="undo"
                             />
                           </TouchableOpacity>
-                          <MyText>{item.name}</MyText>
+                          <Text>{item.name}</Text>
                         </View>
                       </View>
                       <TouchableOpacity

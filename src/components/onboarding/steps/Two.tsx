@@ -5,7 +5,7 @@ import DropDownPicker from "react-native-dropdown-picker";
 import { useState } from "react";
 import { usePreferences } from "../../../stores/preferences";
 import { publisherHours, publishers } from "../../../constants/publisher";
-import MyText from "../../MyText";
+import Text from "../../MyText";
 import i18n from "../../../lib/locales";
 
 interface Props {
@@ -30,9 +30,9 @@ const StepTwo = ({ goBack, goNext }: Props) => {
     <View style={styles.stepContainer}>
       <OnboardingNav goBack={goBack} />
       <View style={styles.stepContentContainer}>
-        <MyText style={styles.stepTitle}>
+        <Text style={styles.stepTitle}>
           {i18n.t("whatTypePublisherAreYou")}
-        </MyText>
+        </Text>
         <DropDownPicker
           open={open}
           value={publisher}
@@ -46,16 +46,16 @@ const StepTwo = ({ goBack, goNext }: Props) => {
           itemSeparatorStyle={styles.dropDownSeparatorStyles}
           itemSeparator={true}
         />
-        <MyText style={styles.description}>
+        <Text style={styles.description}>
           {publisher === publishers[0]
             ? i18n.t("noHourRequirement")
             : i18n.t("hourMonthlyRequirement", {
                 count: publisherHours[publisher],
               })}
-        </MyText>
+        </Text>
       </View>
       <TouchableOpacity style={styles.actionButton} onPress={goNext}>
-        <MyText style={styles.actionButtonInner}>{i18n.t("continue")}</MyText>
+        <Text style={styles.actionButtonInner}>{i18n.t("continue")}</Text>
       </TouchableOpacity>
     </View>
   );

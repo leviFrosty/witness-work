@@ -11,12 +11,12 @@ import i18n from "../lib/locales";
 import InputRowButton from "../components/inputs/InputRowButton";
 import Constants from "expo-constants";
 import * as Linking from "expo-linking";
-import * as Application from "expo-application";
 import * as Sentry from "sentry-expo";
 import * as Device from "expo-device";
 import * as Notifications from "expo-notifications";
 import * as Updates from "expo-updates";
 import { useEffect, useState } from "react";
+import links from "../constants/links";
 
 const Settings = () => {
   const { set: setPreferences } = usePreferences();
@@ -202,15 +202,10 @@ const Settings = () => {
                   : i18n.t("rateJWTimeOnAppStore")
               }
               onPress={() => {
-                const itunesItemId = 6469723047;
                 try {
                   Platform.OS === "android"
-                    ? Linking.openURL(
-                        `market://details?id=${Application.applicationId}&showAllReviews=true`
-                      )
-                    : Linking.openURL(
-                        `https://apps.apple.com/app/apple-store/id${itunesItemId}?action=write-review`
-                      );
+                    ? Linking.openURL(links.playStoreReview)
+                    : Linking.openURL(links.appStoreReview);
                 } catch (error) {
                   Sentry.Native.captureException(error);
                 }
@@ -222,7 +217,6 @@ const Settings = () => {
               />
             </InputRowButton>
             <InputRowButton
-              lastInSection
               leftIcon="bug"
               label={i18n.t("bugReport")}
               onPress={() => {
@@ -254,6 +248,17 @@ const Settings = () => {
                 name="chevron-right"
               />
             </InputRowButton> */}
+            <InputRowButton
+              leftIcon="file-alt"
+              label={i18n.t("privacyPolicy")}
+              onPress={() => Linking.openURL(links.privacyPolicy)}
+              lastInSection
+            >
+              <FontAwesome
+                style={{ color: theme.colors.textAlt }}
+                name="chevron-right"
+              />
+            </InputRowButton>
           </Section>
         </View>
       </View>

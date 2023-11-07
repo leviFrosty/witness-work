@@ -18,7 +18,6 @@ import { contactSortOptions, usePreferences } from "../stores/preferences";
 import { Contact } from "../types/contact";
 import { contactMostRecentStudy } from "../lib/conversations";
 import { Dropdown } from "react-native-element-dropdown";
-// import DropDownPicker from "react-native-dropdown-picker";
 
 const ContactsList = () => {
   const [search, setSearch] = useState("");

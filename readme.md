@@ -4,7 +4,7 @@ JW Time is the easy way to manage your field service priorities. Written for iOS
 
 [View on the App Store](https://apps.apple.com/us/app/jw-time/id6469723047)
 
-~~View on the Play Store~~ Coming soon!
+[View on the Play Store](https://play.google.com/store/apps/details?id=com.leviwilkerson.jwtime)
 
 ## Need help translating! 🌐
 

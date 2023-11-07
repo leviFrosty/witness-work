@@ -17,6 +17,8 @@ import * as Notifications from "expo-notifications";
 import * as Updates from "expo-updates";
 import { useEffect, useState } from "react";
 import links from "../constants/links";
+import InputRowContainer from "../components/inputs/InputRowContainer";
+import PublisherTypeSelector from "../components/PublisherTypeSelector";
 
 const Settings = () => {
   const { set: setPreferences } = usePreferences();
@@ -109,6 +111,26 @@ const Settings = () => {
         >
           {i18n.t("settings")}
         </Text>
+        <View style={{ gap: 3 }}>
+          <Text
+            style={{
+              marginLeft: 20,
+              fontFamily: "Inter_600SemiBold",
+              fontSize: 12,
+              color: theme.colors.textAlt,
+              textTransform: "uppercase",
+            }}
+          >
+            {i18n.t("publisher")}
+          </Text>
+          <Section>
+            <InputRowContainer label={i18n.t("status")} lastInSection>
+              <View style={{ flex: 1 }}>
+                <PublisherTypeSelector />
+              </View>
+            </InputRowContainer>
+          </Section>
+        </View>
         <View style={{ gap: 3 }}>
           <Text
             style={{
@@ -268,6 +290,8 @@ const Settings = () => {
             textAlign: "center",
             color: theme.colors.textAlt,
             fontFamily: "Inter_600SemiBold",
+            marginBottom: 5,
+            fontSize: 14,
           }}
         >
           {Constants.expoConfig?.version

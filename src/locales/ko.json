@@ -193,5 +193,6 @@
   "sort": "종류",
   "addContact": "주소록에 추가",
   "search": "찾다...",
-  "privacyPolicy": "개인 정보 정책"
+  "privacyPolicy": "개인 정보 정책",
+  "status": "상태"
 }

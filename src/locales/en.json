@@ -193,5 +193,6 @@
   "sort": "Sort",
   "addContact": "Add Contact",
   "search": "Search...",
-  "privacyPolicy": "Privacy Policy"
+  "privacyPolicy": "Privacy Policy",
+  "status": "Status"
 }

@@ -193,5 +193,6 @@
   "sort": "選別",
   "addContact": "連絡先を追加",
   "search": "検索...",
-  "privacyPolicy": "プライバシーポリシー"
+  "privacyPolicy": "プライバシーポリシー",
+  "status": "状態"
 }

@@ -3,7 +3,6 @@ import { useState } from "react";
 import Section from "../components/inputs/Section";
 import InputRowContainer from "../components/inputs/InputRowContainer";
 import theme from "../constants/theme";
-import DropDownPicker from "react-native-dropdown-picker";
 import Text from "../components/MyText";
 import ActionButton from "../components/ActionButton";
 import useServiceReport from "../stores/serviceReport";
@@ -19,6 +18,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import i18n from "../lib/locales";
 import CheckboxWithLabel from "../components/inputs/CheckboxWithLabel";
 import AndroidDateTimePicker from "../components/AndroidDateTimePicker";
+import { Dropdown } from "react-native-element-dropdown";
 
 const AddTime = () => {
   const navigation = useNavigation<RootStackNavigation>();
@@ -57,20 +57,14 @@ const AddTime = () => {
       ldc,
     });
   };
-  const [open, setOpen] = useState(false);
-  const [minuteOptions, setMinuteOptions] = useState(
-    [0, 15, 30, 45].map((value) => ({
-      label: `${value}`,
-      value: value,
-    }))
-  );
-  const [hourOptions, setHourOptions] = useState(
-    [...Array(24).keys()].map((value) => ({
-      label: `${value}`,
-      value: value,
-    }))
-  );
-  const [hourOpen, setHourOpen] = useState(false);
+  const minuteOptions = [0, 15, 30, 45].map((value) => ({
+    label: `${value}`,
+    value,
+  }));
+  const hourOptions = [...Array(24).keys()].map((value) => ({
+    label: `${value}`,
+    value,
+  }));
   const { addServiceReport } = useServiceReport();
 
   const submit = () => {
@@ -129,60 +123,59 @@ const AddTime = () => {
           >
             <View style={{ width: "50%" }}>
               <InputRowContainer label={i18n.t("hours")} lastInSection>
-                <DropDownPicker
-                  open={hourOpen}
-                  setOpen={setHourOpen}
-                  value={serviceReport.hours}
-                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                  setValue={(val: any) => setHours(val())}
-                  items={hourOptions}
-                  setItems={setHourOptions}
-                  style={{
-                    backgroundColor: theme.colors.background,
-                    borderColor: theme.colors.border,
-                    width: 100,
-                  }}
-                  dropDownContainerStyle={{
-                    backgroundColor: theme.colors.background,
-                    borderColor: theme.colors.border,
-                  }}
-                  itemSeparatorStyle={{
-                    backgroundColor: theme.colors.border,
-                  }}
-                  itemSeparator={true}
-                />
+                <View style={{ flex: 1 }}>
+                  <Dropdown
+                    data={hourOptions}
+                    labelField={"label"}
+                    valueField={"value"}
+                    style={{
+                      backgroundColor: theme.colors.background,
+                      borderColor: theme.colors.border,
+                      borderWidth: 1,
+                      paddingHorizontal: 10,
+                      borderRadius: theme.numbers.borderRadiusSm,
+                    }}
+                    containerStyle={{
+                      borderRadius: theme.numbers.borderRadiusSm,
+                      backgroundColor: theme.colors.background,
+                    }}
+                    placeholder={serviceReport.hours.toString()}
+                    onChange={({ value }) => setHours(value)}
+                    value={serviceReport.hours.toString()}
+                  />
+                </View>
               </InputRowContainer>
             </View>
 
             <View style={{ width: "50%" }}>
               <InputRowContainer label={i18n.t("minutes")} lastInSection>
-                <DropDownPicker
-                  open={open}
-                  value={serviceReport.minutes}
-                  items={minuteOptions}
-                  setOpen={setOpen}
-                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                  setValue={(val: any) => setMinutes(val())}
-                  setItems={setMinuteOptions}
-                  style={{
-                    backgroundColor: theme.colors.background,
-                    borderColor: theme.colors.border,
-                    width: 100,
-                  }}
-                  dropDownContainerStyle={{
-                    backgroundColor: theme.colors.background,
-                    borderColor: theme.colors.border,
-                  }}
-                  itemSeparatorStyle={{
-                    backgroundColor: theme.colors.border,
-                  }}
-                  itemSeparator={true}
-                />
+                <View style={{ flex: 1 }}>
+                  <Dropdown
+                    data={minuteOptions}
+                    labelField={"label"}
+                    valueField={"value"}
+                    style={{
+                      backgroundColor: theme.colors.background,
+                      borderColor: theme.colors.border,
+                      borderWidth: 1,
+                      paddingHorizontal: 10,
+                      borderRadius: theme.numbers.borderRadiusSm,
+                    }}
+                    containerStyle={{
+                      borderRadius: theme.numbers.borderRadiusSm,
+                      backgroundColor: theme.colors.background,
+                    }}
+                    placeholder={serviceReport.minutes.toString()}
+                    onChange={({ value }) => setMinutes(value)}
+                    value={serviceReport.hours.toString()}
+                  />
+                </View>
               </InputRowContainer>
             </View>
           </View>
         </Section>
       </View>
+
       <View style={{ paddingHorizontal: 20 }}>
         <ActionButton action={submit} label={i18n.t("submit")} />
       </View>

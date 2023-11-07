@@ -17,13 +17,12 @@ import i18n from "../lib/locales";
 import { contactSortOptions, usePreferences } from "../stores/preferences";
 import { Contact } from "../types/contact";
 import { contactMostRecentStudy } from "../lib/conversations";
-import DropDownPicker from "react-native-dropdown-picker";
+import { Dropdown } from "react-native-element-dropdown";
+// import DropDownPicker from "react-native-dropdown-picker";
 
 const ContactsList = () => {
   const [search, setSearch] = useState("");
   const { contactSort, setContactSort } = usePreferences();
-  const [sortSelectOpen, setSortSelectOpen] = useState(false);
-  const [sortOptions, setSortOptions] = useState(contactSortOptions);
   const { conversations } = useConversations();
   const { contacts } = useContacts();
   const navigation = useNavigation<RootStackNavigation>();
@@ -117,84 +116,28 @@ const ContactsList = () => {
           {i18n.t("returnVisitContacts")}
         </Text>
 
-        <TouchableOpacity
-          hitSlop={15}
-          style={{
-            flexDirection: "row",
-            alignItems: "center",
-            position: "relative",
-          }}
-          onPress={() => setSortSelectOpen(!sortSelectOpen)}
-        >
-          <Text
+        <View style={{ flex: 1 }}>
+          <Dropdown
+            data={contactSortOptions}
+            labelField={"label"}
+            valueField={"value"}
             style={{
-              fontSize: 12,
-              fontFamily: "Inter_600SemiBold",
-              marginLeft: 5,
-              position: "absolute",
-              top: "33%",
-              left: 0,
-              zIndex: 10000,
+              borderWidth: 0,
+              borderRadius: theme.numbers.borderRadiusSm,
+              paddingHorizontal: 10,
             }}
-          >
-            {i18n.t("sort")}
-          </Text>
-          <View>
-            <DropDownPicker
-              open={sortSelectOpen}
-              setOpen={setSortSelectOpen}
-              value={contactSort}
-              labelStyle={{
-                display: "none",
-              }}
-              listMode="MODAL"
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              setValue={(val: any) => setContactSort(val())}
-              items={sortOptions}
-              setItems={setSortOptions}
-              ArrowUpIconComponent={() => (
-                <View
-                  style={{
-                    backgroundColor: theme.colors.card,
-                    borderRadius: theme.numbers.borderRadiusLg,
-                    borderColor: theme.colors.background,
-                    borderWidth: 1,
-                  }}
-                >
-                  <FontAwesome
-                    name="sort"
-                    style={{ color: theme.colors.textAlt }}
-                  />
-                </View>
-              )}
-              ArrowDownIconComponent={() => (
-                <View
-                  style={{
-                    padding: 10,
-                    borderColor: theme.colors.background,
-                    borderWidth: 1,
-                  }}
-                >
-                  <FontAwesome name="sort" style={{ fontSize: 12 }} />
-                </View>
-              )}
-              style={{
-                backgroundColor: theme.colors.background,
-                borderColor: theme.colors.background,
-                width: 70,
-                justifyContent: "center",
-              }}
-              dropDownContainerStyle={{
-                backgroundColor: theme.colors.background,
-                borderColor: theme.colors.border,
-              }}
-              itemSeparatorStyle={{
-                backgroundColor: theme.colors.border,
-              }}
-              itemSeparator={true}
-            />
-          </View>
-        </TouchableOpacity>
+            containerStyle={{
+              borderRadius: theme.numbers.borderRadiusSm,
+              backgroundColor: theme.colors.background,
+            }}
+            placeholder="Sort"
+            placeholderStyle={{ fontSize: 12 }}
+            selectedTextStyle={{ opacity: 0 }}
+            renderRightIcon={() => <FontAwesome name="sort" />}
+            onChange={({ value }) => setContactSort(value)}
+            value={contactSort}
+          />
+        </View>
       </View>
       <Card>
         <View style={{ flexDirection: "row", gap: 10 }}>

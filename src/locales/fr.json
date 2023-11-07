@@ -193,5 +193,6 @@
   "sort": "Trier",
   "addContact": "Ajouter le contact",
   "search": "Recherche...",
-  "privacyPolicy": "politique de confidentialité"
+  "privacyPolicy": "politique de confidentialité",
+  "status": "Statut"
 }

@@ -193,5 +193,6 @@
   "sort": "Soort",
   "addContact": "Contactpersoon toevoegen",
   "search": "Zoekopdracht...",
-  "privacyPolicy": "Privacybeleid"
+  "privacyPolicy": "Privacybeleid",
+  "status": "Toestand"
 }

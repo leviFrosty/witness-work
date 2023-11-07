@@ -193,5 +193,6 @@
   "sort": "种类",
   "addContact": "增加联系人",
   "search": "搜索...",
-  "privacyPolicy": "隐私政策"
+  "privacyPolicy": "隐私政策",
+  "status": "地位"
 }

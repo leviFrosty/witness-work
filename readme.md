@@ -1,6 +1,6 @@
 # JW Time
 
-JW Time is the easy way to manage your field service priorities. Written for iOS and Android 🔥
+JW Time is the easy way for Jehovah's Witnesses to manage their field service priorities. Written for iOS and Android 🔥
 
 [View on the App Store](https://apps.apple.com/us/app/jw-time/id6469723047)
 

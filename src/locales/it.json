@@ -201,5 +201,14 @@
   "notification_part1": "EHI! La tua chat con",
   "notification_part2": "sta arrivando",
   "notify": "Notificare",
-  "notification": "Notifica"
+  "notification": "Notifica",
+  "updating": "In aggiornamento...",
+  "error": "Errore",
+  "thereWasAnErrorWithYourUpdate": "Si è verificato un errore con il tuo aggiornamento.",
+  "viewError": "Visualizza errore",
+  "failedToOpenMailApplication": "Impossibile aprire l'applicazione di posta.",
+  "loadingSlowly": "L'operazione sta richiedendo più tempo del solito...",
+  "loadingSlowly_description": "Riprova più tardi quando sei connesso al Wi-Fi o quando hai una connessione Internet stabile.",
+  "quit": "Esentato",
+  "goHome": "Andare a casa"
 }

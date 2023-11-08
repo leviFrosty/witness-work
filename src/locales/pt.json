@@ -201,5 +201,14 @@
   "notification_part1": "Ei! Seu bate-papo com",
   "notification_part2": "está chegando",
   "notify": "Notificar",
-  "notification": "Notificação"
+  "notification": "Notificação",
+  "updating": "Atualizando...",
+  "error": "Erro",
+  "thereWasAnErrorWithYourUpdate": "Ocorreu um erro com sua atualização.",
+  "viewError": "Ver erro",
+  "failedToOpenMailApplication": "Falha ao abrir o aplicativo de e-mail.",
+  "loadingSlowly": "Isso está demorando mais que o normal...",
+  "loadingSlowly_description": "Tente novamente mais tarde quando estiver conectado ao WIFI ou quando tiver Internet estável.",
+  "quit": "Desistir",
+  "goHome": "Ir para casa"
 }

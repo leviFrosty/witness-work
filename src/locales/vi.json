@@ -201,5 +201,14 @@
   "notification_part1": "Chào! Cuộc trò chuyện của bạn với",
   "notification_part2": "đang đến",
   "notify": "Thông báo",
-  "notification": "Thông báo"
+  "notification": "Thông báo",
+  "updating": "Đang cập nhật...",
+  "error": "Lỗi",
+  "thereWasAnErrorWithYourUpdate": "Đã xảy ra lỗi với bản cập nhật của bạn.",
+  "viewError": "Xem lỗi",
+  "failedToOpenMailApplication": "Không thể mở ứng dụng thư.",
+  "loadingSlowly": "Việc này tốn nhiều thời gian hơn bình thường...",
+  "loadingSlowly_description": "Hãy thử lại sau khi được kết nối với WIFI hoặc khi bạn có mạng Internet ổn định.",
+  "quit": "Từ bỏ",
+  "goHome": "Về nhà"
 }

@@ -241,15 +241,22 @@ const Settings = () => {
             <InputRowButton
               leftIcon="bug"
               label={i18n.t("bugReport")}
-              onPress={() => {
+              onPress={async () => {
                 const email = "levi.wilkerson@proton.me";
                 const subjectText = "Bug Report";
                 const bodyText = `App Version: ${Constants.expoConfig?.version}, Device: ${Device.modelName}, OS: ${Device.osVersion}. Please describe your issue in detail: --------------`;
                 const subject = encodeURIComponent(subjectText);
                 const body = encodeURIComponent(bodyText);
-                Linking.openURL(
-                  `mailto:${email}?subject=${subject}&body=${body}`
-                );
+                try {
+                  await Linking.openURL(
+                    `mailto:${email}?subject=${subject}&body=${body}`
+                  );
+                } catch (error) {
+                  Alert.alert(
+                    i18n.t("error"),
+                    i18n.t("failedToOpenMailApplication")
+                  );
+                }
               }}
             >
               <FontAwesome

@@ -201,5 +201,14 @@
   "notification_part1": "Привет! Ваш чат с",
   "notification_part2": "приближается",
   "notify": "Поставить в известность",
-  "notification": "Уведомление"
+  "notification": "Уведомление",
+  "updating": "Обновление...",
+  "error": "Ошибка",
+  "thereWasAnErrorWithYourUpdate": "При вашем обновлении произошла ошибка.",
+  "viewError": "Ошибка просмотра",
+  "failedToOpenMailApplication": "Не удалось открыть почтовое приложение.",
+  "loadingSlowly": "Это занимает больше времени, чем обычно...",
+  "loadingSlowly_description": "Повторите попытку позже при подключении к Wi-Fi или при стабильном Интернете.",
+  "quit": "Покидать",
+  "goHome": "Иди домой"
 }

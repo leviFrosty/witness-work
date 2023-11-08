@@ -230,6 +230,14 @@ const EmailRow = ({ contact }: { contact: Contact }) => {
     return null;
   }
 
+  const openMail = async () => {
+    try {
+      await Linking.openURL(`mailTo:${email}`);
+    } catch (error) {
+      Alert.alert(i18n.t("error"), i18n.t("failedToOpenMailApplication"));
+    }
+  };
+
   return (
     <View style={{ gap: 10 }}>
       <Text
@@ -241,7 +249,7 @@ const EmailRow = ({ contact }: { contact: Contact }) => {
       >
         {i18n.t("email")}
       </Text>
-      <TouchableOpacity onPress={() => Linking.openURL(`mailTo:${email}`)}>
+      <TouchableOpacity onPress={openMail}>
         <View
           style={{
             flexDirection: "row",

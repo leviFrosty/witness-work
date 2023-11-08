@@ -17,6 +17,7 @@ import RecoverContacts from "../screens/RecoverContacts";
 import OnBoarding from "../components/onboarding/Onboarding";
 import { usePreferences } from "../stores/preferences";
 import { FontAwesome } from "@expo/vector-icons";
+import Update from "../screens/Update";
 
 export type RootStackParamList = {
   Home: undefined;
@@ -28,6 +29,7 @@ export type RootStackParamList = {
   "Time Reports": undefined;
   "Recover Contacts": undefined;
   Onboarding: undefined;
+  Update: undefined;
 };
 
 export type RootStackNavigation = NativeStackNavigationProp<RootStackParamList>;
@@ -39,6 +41,11 @@ const RootStackComponent = () => {
 
   return (
     <RootStack.Navigator>
+      <RootStack.Screen
+        options={{ header: () => undefined }}
+        name="Update"
+        component={Update}
+      />
       {/* 
       Cannot render onboarding via Navigator initialRouteName. 
       This alternative allows for dynamically rendering screen. 
@@ -122,6 +129,11 @@ const RootStackComponent = () => {
         name="Recover Contacts"
         component={RecoverContacts}
       />
+      {/* <RootStack.Screen
+        options={{ header: () => undefined }}
+        name="Update"
+        component={Update}
+      /> */}
     </RootStack.Navigator>
   );
 };

@@ -201,5 +201,14 @@
   "notification_part1": "Hoi! Jouw chat met",
   "notification_part2": "komt binnen",
   "notify": "Informeer",
-  "notification": "Kennisgeving"
+  "notification": "Kennisgeving",
+  "updating": "Updaten...",
+  "error": "Fout",
+  "thereWasAnErrorWithYourUpdate": "Er is een fout opgetreden bij uw update.",
+  "viewError": "Bekijk fout",
+  "failedToOpenMailApplication": "Kan de e-mailtoepassing niet openen.",
+  "loadingSlowly": "Dit duurt langer dan normaal...",
+  "loadingSlowly_description": "Probeer het later opnieuw als u verbonden bent met WIFI of als u stabiel internet heeft.",
+  "quit": "Ontslag nemen",
+  "goHome": "Ga naar huis"
 }

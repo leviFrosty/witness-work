@@ -201,5 +201,14 @@
   "notification_part1": "Hé! Votre conversation avec",
   "notification_part2": "arrive dans",
   "notify": "Notifier",
-  "notification": "Notification"
+  "notification": "Notification",
+  "updating": "Mise à jour...",
+  "error": "Erreur",
+  "thereWasAnErrorWithYourUpdate": "Une erreur s'est produite avec votre mise à jour.",
+  "viewError": "Afficher l'erreur",
+  "failedToOpenMailApplication": "Échec de l'ouverture de l'application de messagerie.",
+  "loadingSlowly": "Cela prend plus de temps que d'habitude...",
+  "loadingSlowly_description": "Réessayez plus tard lorsque vous êtes connecté au WIFI ou lorsque vous disposez d'une connexion Internet stable.",
+  "quit": "Quitter",
+  "goHome": "Rentrer chez soi"
 }

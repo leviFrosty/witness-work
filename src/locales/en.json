@@ -201,5 +201,14 @@
   "notification_part1": "Hey! Your chat with",
   "notification_part2": "is coming up in ",
   "notify": "Notify",
-  "notification": "Notification"
+  "notification": "Notification",
+  "updating": "Updating...",
+  "error": "Error",
+  "thereWasAnErrorWithYourUpdate": "There was an error with your update.",
+  "viewError": "View Error",
+  "failedToOpenMailApplication": "Failed to open mail application.",
+  "loadingSlowly": "This is taking longer than usual...",
+  "loadingSlowly_description": "Try again later when connected to WIFI or when you have stable internet.",
+  "quit": "Quit",
+  "goHome": "Go Home"
 }

@@ -60,24 +60,14 @@ const Settings = () => {
   };
 
   const fetchUpdate = async () => {
+    if (__DEV__) {
+      return Alert.alert("Cannot update in dev mode.");
+    }
+
     try {
       const update = await Updates.checkForUpdateAsync();
       if (update.isAvailable) {
-        Alert.alert(i18n.t("update"), i18n.t("update_description"), [
-          {
-            text: i18n.t("cancel"),
-            style: "cancel",
-          },
-          {
-            text: i18n.t("yes"),
-            style: "default",
-            onPress: async () => {
-              await Updates.fetchUpdateAsync();
-              await Updates.reloadAsync();
-            },
-          },
-        ]);
-        return;
+        navigation.navigate("Update");
       }
       Alert.alert(i18n.t("noUpdateAvailable"));
     } catch (error) {
@@ -87,6 +77,7 @@ const Settings = () => {
         }`,
         `${i18n.t("update_error")} ${error}`
       );
+      Sentry.Native.captureException(error);
     }
   };
 

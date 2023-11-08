@@ -201,5 +201,14 @@
   "notification_part1": "여기요! 당신과의 채팅",
   "notification_part2": "에오고있다",
   "notify": "알림",
-  "notification": "공고"
+  "notification": "공고",
+  "updating": "업데이트 중...",
+  "error": "오류",
+  "thereWasAnErrorWithYourUpdate": "업데이트에 오류가 발생했습니다.",
+  "viewError": "오류 보기",
+  "failedToOpenMailApplication": "메일 애플리케이션을 열지 못했습니다.",
+  "loadingSlowly": "평소보다 시간이 더 걸리네요...",
+  "loadingSlowly_description": "나중에 WIFI에 연결되거나 인터넷이 안정적일 때 다시 시도하세요.",
+  "quit": "그만두다",
+  "goHome": "집에가"
 }

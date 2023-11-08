@@ -201,5 +201,14 @@
   "notification_part1": "おい！あなたのチャット",
   "notification_part2": "が近づいてきます",
   "notify": "通知する",
-  "notification": "通知"
+  "notification": "通知",
+  "updating": "更新中...",
+  "error": "エラー",
+  "thereWasAnErrorWithYourUpdate": "アップデートでエラーが発生しました。",
+  "viewError": "ビューエラー",
+  "failedToOpenMailApplication": "メールアプリケーションを開けませんでした。",
+  "loadingSlowly": "いつもより時間がかかっています...",
+  "loadingSlowly_description": "WIFI に接続しているか、インターネットが安定しているときに、もう一度お試しください。",
+  "quit": "やめる",
+  "goHome": "家に帰れ"
 }

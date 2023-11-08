@@ -201,5 +201,14 @@
   "notification_part1": "¡Ey! Tu charla con",
   "notification_part2": "está llegando en",
   "notify": "Notificar",
-  "notification": "Notificación"
+  "notification": "Notificación",
+  "updating": "Actualizando...",
+  "error": "Error",
+  "thereWasAnErrorWithYourUpdate": "Hubo un error con tu actualización.",
+  "viewError": "Ver error",
+  "failedToOpenMailApplication": "No se pudo abrir la aplicación de correo.",
+  "loadingSlowly": "Esto está tardando más de lo habitual...",
+  "loadingSlowly_description": "Vuelve a intentarlo más tarde cuando estés conectado a WIFI o cuando tengas Internet estable.",
+  "quit": "Abandonar",
+  "goHome": "Vete a casa"
 }

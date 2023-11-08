@@ -201,5 +201,14 @@
   "notification_part1": "Hey! Ihr Chat mit",
   "notification_part2": "kommt rein",
   "notify": "Benachrichtigen",
-  "notification": "Benachrichtigung"
+  "notification": "Benachrichtigung",
+  "updating": "Aktualisierung...",
+  "error": "Fehler",
+  "thereWasAnErrorWithYourUpdate": "Bei Ihrem Update ist ein Fehler aufgetreten.",
+  "viewError": "Fehler anzeigen",
+  "failedToOpenMailApplication": "E-Mail-Anwendung konnte nicht geöffnet werden.",
+  "loadingSlowly": "Das dauert länger als gewöhnlich...",
+  "loadingSlowly_description": "Versuchen Sie es später erneut, wenn eine WLAN-Verbindung besteht oder Sie über eine stabile Internetverbindung verfügen.",
+  "quit": "Aufhören",
+  "goHome": "Nach Hause gehen"
 }

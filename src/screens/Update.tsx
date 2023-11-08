@@ -26,7 +26,6 @@ const Update = () => {
         if (update.isAvailable) {
           await Updates.fetchUpdateAsync();
           await Updates.reloadAsync();
-          navigation.replace("Home");
         }
       } catch (err) {
         setError(err);

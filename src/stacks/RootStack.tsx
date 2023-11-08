@@ -41,11 +41,6 @@ const RootStackComponent = () => {
 
   return (
     <RootStack.Navigator>
-      <RootStack.Screen
-        options={{ header: () => undefined }}
-        name="Update"
-        component={Update}
-      />
       {/* 
       Cannot render onboarding via Navigator initialRouteName. 
       This alternative allows for dynamically rendering screen. 
@@ -129,11 +124,11 @@ const RootStackComponent = () => {
         name="Recover Contacts"
         component={RecoverContacts}
       />
-      {/* <RootStack.Screen
+      <RootStack.Screen
         options={{ header: () => undefined }}
         name="Update"
         component={Update}
-      /> */}
+      />
     </RootStack.Navigator>
   );
 };

@@ -72,6 +72,8 @@ const AddTime = () => {
     navigation.popToTop();
   };
 
+  const submittable = serviceReport.hours !== 0 || serviceReport.minutes !== 0;
+
   return (
     <View
       style={{
@@ -109,7 +111,7 @@ const AddTime = () => {
               />
             )}
           </InputRowContainer>
-          <InputRowContainer lastInSection>
+          <InputRowContainer lastInSection justifyContent="flex-end">
             <CheckboxWithLabel
               label={i18n.t("ldcTime")}
               value={serviceReport.ldc!}
@@ -176,8 +178,17 @@ const AddTime = () => {
         </Section>
       </View>
 
-      <View style={{ paddingHorizontal: 20 }}>
-        <ActionButton action={submit} label={i18n.t("submit")} />
+      <View style={{ paddingHorizontal: 20, gap: 10 }}>
+        {!submittable && (
+          <Text style={{ fontSize: 12, color: theme.colors.textAlt }}>
+            {i18n.t("timeNeeded")}
+          </Text>
+        )}
+        <ActionButton
+          disabled={!submittable}
+          action={submit}
+          label={i18n.t("submit")}
+        />
       </View>
     </View>
   );

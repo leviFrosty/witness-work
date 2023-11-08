@@ -210,5 +210,6 @@
   "loadingSlowly": "L'operazione sta richiedendo più tempo del solito...",
   "loadingSlowly_description": "Riprova più tardi quando sei connesso al Wi-Fi o quando hai una connessione Internet stabile.",
   "quit": "Esentato",
-  "goHome": "Andare a casa"
+  "goHome": "Andare a casa",
+  "timeNeeded": "Aggiungi ore o minuti qui sopra per inviare l'inserimento dell'orario."
 }

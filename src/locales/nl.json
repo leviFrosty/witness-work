@@ -210,5 +210,6 @@
   "loadingSlowly": "Dit duurt langer dan normaal...",
   "loadingSlowly_description": "Probeer het later opnieuw als u verbonden bent met WIFI of als u stabiel internet heeft.",
   "quit": "Ontslag nemen",
-  "goHome": "Ga naar huis"
+  "goHome": "Ga naar huis",
+  "timeNeeded": "Voeg hierboven uren of minuten toe om uw tijdsinvoer in te dienen."
 }

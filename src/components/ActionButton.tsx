@@ -1,17 +1,20 @@
-import { TouchableOpacity } from "react-native";
+import { TouchableHighlight } from "react-native";
 import Text from "./MyText";
 import theme from "../constants/theme";
 
 interface Props {
   action: () => unknown;
   label: string;
+  disabled?: boolean;
 }
 
-const ActionButton = ({ action, label }: Props) => {
+const ActionButton = ({ action, label, disabled }: Props) => {
   return (
-    <TouchableOpacity
+    <TouchableHighlight
       style={{
-        backgroundColor: theme.colors.accent,
+        backgroundColor: disabled
+          ? theme.colors.accentAlt
+          : theme.colors.accent,
         borderRadius: 15,
         paddingVertical: 12,
         flexDirection: "row",
@@ -19,6 +22,7 @@ const ActionButton = ({ action, label }: Props) => {
         justifyContent: "center",
       }}
       onPress={action}
+      disabled={disabled}
     >
       <Text
         style={{
@@ -29,7 +33,7 @@ const ActionButton = ({ action, label }: Props) => {
       >
         {label}
       </Text>
-    </TouchableOpacity>
+    </TouchableHighlight>
   );
 };
 

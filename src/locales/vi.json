@@ -210,5 +210,6 @@
   "loadingSlowly": "Việc này tốn nhiều thời gian hơn bình thường...",
   "loadingSlowly_description": "Hãy thử lại sau khi được kết nối với WIFI hoặc khi bạn có mạng Internet ổn định.",
   "quit": "Từ bỏ",
-  "goHome": "Về nhà"
+  "goHome": "Về nhà",
+  "timeNeeded": "Thêm giờ hoặc phút ở trên để gửi mục nhập thời gian của bạn."
 }

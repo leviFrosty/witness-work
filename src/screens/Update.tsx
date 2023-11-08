@@ -14,6 +14,7 @@ import { RootStackNavigation } from "../stacks/RootStack";
 const Update = () => {
   const insets = useSafeAreaInsets();
   const loadingAnimation = useRef<LottieView>(null);
+  const errorAnimation = useRef<LottieView>(null);
   const [error, setError] = useState<unknown>();
   const [viewError, setViewError] = useState(false);
   const [isLoadingSlowly, setIsLoadingSlowly] = useState(false);
@@ -93,9 +94,9 @@ const Update = () => {
           <View style={{ gap: 10 }}>
             <View style={{ flexDirection: "row", justifyContent: "center" }}>
               <LottieView
-                onLayout={() => loadingAnimation.current?.play()}
+                onLayout={() => errorAnimation.current?.play()}
                 loop={true}
-                ref={loadingAnimation}
+                ref={errorAnimation}
                 style={{
                   width: "50%",
                 }}

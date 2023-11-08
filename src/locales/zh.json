@@ -210,5 +210,6 @@
   "loadingSlowly": "这比平时要花更长的时间...",
   "loadingSlowly_description": "请稍后在连接到 WIFI 或网络稳定时重试。",
   "quit": "辞职",
-  "goHome": "回家"
+  "goHome": "回家",
+  "timeNeeded": "在上面添加小时或分钟以提交您的时间条目。"
 }

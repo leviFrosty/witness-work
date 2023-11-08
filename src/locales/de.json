@@ -210,5 +210,6 @@
   "loadingSlowly": "Das dauert länger als gewöhnlich...",
   "loadingSlowly_description": "Versuchen Sie es später erneut, wenn eine WLAN-Verbindung besteht oder Sie über eine stabile Internetverbindung verfügen.",
   "quit": "Aufhören",
-  "goHome": "Nach Hause gehen"
+  "goHome": "Nach Hause gehen",
+  "timeNeeded": "Fügen Sie oben Stunden oder Minuten hinzu, um Ihren Zeiteintrag zu übermitteln."
 }

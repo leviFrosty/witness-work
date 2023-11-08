@@ -74,6 +74,7 @@ const PersonalContactSection = ({
           keyboardType: "email-address",
           onChangeText: (val: string) => setEmail(val),
           value: contact.email,
+          autoCapitalize: "none",
         }}
       />
     </Section>

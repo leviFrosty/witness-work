@@ -210,5 +210,6 @@
   "loadingSlowly": "いつもより時間がかかっています...",
   "loadingSlowly_description": "WIFI に接続しているか、インターネットが安定しているときに、もう一度お試しください。",
   "quit": "やめる",
-  "goHome": "家に帰れ"
+  "goHome": "家に帰れ",
+  "timeNeeded": "上記に時間または分を追加して、時間エントリを送信します。"
 }

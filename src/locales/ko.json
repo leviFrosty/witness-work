@@ -210,5 +210,6 @@
   "loadingSlowly": "평소보다 시간이 더 걸리네요...",
   "loadingSlowly_description": "나중에 WIFI에 연결되거나 인터넷이 안정적일 때 다시 시도하세요.",
   "quit": "그만두다",
-  "goHome": "집에가"
+  "goHome": "집에가",
+  "timeNeeded": "시간 항목을 제출하려면 위에 시간 또는 분을 추가하세요."
 }

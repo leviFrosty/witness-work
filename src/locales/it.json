@@ -194,5 +194,12 @@
   "addContact": "Aggiungi contatto",
   "search": "Ricerca...",
   "privacyPolicy": "politica sulla riservatezza",
-  "status": "Stato"
+  "status": "Stato",
+  "before": "Prima",
+  "days_lowercase": "giorni",
+  "weeks_lowercase": "settimane",
+  "notification_part1": "EHI! La tua chat con",
+  "notification_part2": "sta arrivando",
+  "notify": "Notificare",
+  "notification": "Notifica"
 }

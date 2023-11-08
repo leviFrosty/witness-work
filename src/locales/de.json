@@ -194,5 +194,12 @@
   "addContact": "Kontakt hinzufügen",
   "search": "Suchen...",
   "privacyPolicy": "Datenschutzrichtlinie",
-  "status": "Status"
+  "status": "Status",
+  "before": "Vor",
+  "days_lowercase": "Tage",
+  "weeks_lowercase": "Wochen",
+  "notification_part1": "Hey! Ihr Chat mit",
+  "notification_part2": "kommt rein",
+  "notify": "Benachrichtigen",
+  "notification": "Benachrichtigung"
 }

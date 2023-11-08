@@ -3,9 +3,11 @@ import { View } from "react-native";
 import theme from "../../constants/theme";
 import { rowPaddingVertical } from "../../constants/Inputs";
 import Text from "../MyText";
+import { FontAwesome5 } from "@expo/vector-icons";
 
 interface Props {
   children?: ReactNode;
+  leftIcon?: string;
   lastInSection?: boolean;
   noHorizontalPadding?: boolean;
   label?: string;
@@ -17,14 +19,17 @@ interface Props {
     | "space-around"
     | "space-evenly"
     | undefined;
+  gap?: number;
 }
 
 const InputRowContainer: React.FC<PropsWithChildren<Props>> = ({
   children,
+  leftIcon,
   lastInSection,
   noHorizontalPadding,
   label,
   justifyContent,
+  gap,
 }: Props) => {
   return (
     <View
@@ -37,14 +42,30 @@ const InputRowContainer: React.FC<PropsWithChildren<Props>> = ({
         alignItems: "center",
         flexGrow: 1,
         justifyContent,
-        gap: 15,
+        gap: gap || 15,
       }}
     >
-      <Text
-        style={{ fontFamily: "Inter_600SemiBold", flexDirection: "column" }}
-      >
-        {label}
-      </Text>
+      {(leftIcon || label) && (
+        <View style={{ alignItems: "center", gap: 5, flexDirection: "row" }}>
+          {leftIcon && (
+            <FontAwesome5
+              name={leftIcon}
+              style={{ color: theme.colors.textAlt }}
+            />
+          )}
+          {label && (
+            <Text
+              style={{
+                fontFamily: "Inter_600SemiBold",
+                flexDirection: "column",
+                gap: 10,
+              }}
+            >
+              {label}
+            </Text>
+          )}
+        </View>
+      )}
       {children}
     </View>
   );

@@ -194,5 +194,12 @@
   "addContact": "增加联系人",
   "search": "搜索...",
   "privacyPolicy": "隐私政策",
-  "status": "地位"
+  "status": "地位",
+  "before": "前",
+  "days_lowercase": "天",
+  "weeks_lowercase": "周",
+  "notification_part1": "嘿！您的聊天对象",
+  "notification_part2": "即将到来",
+  "notify": "通知",
+  "notification": "通知"
 }

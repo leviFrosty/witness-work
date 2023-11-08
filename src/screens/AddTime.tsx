@@ -165,6 +165,7 @@ const AddTime = () => {
                       borderRadius: theme.numbers.borderRadiusSm,
                       backgroundColor: theme.colors.background,
                     }}
+                    placeholder={serviceReport.minutes.toString()}
                     onChange={({ value }) => setMinutes(value)}
                     value={serviceReport.hours.toString()}
                   />

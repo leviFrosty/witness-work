@@ -194,5 +194,12 @@
   "addContact": "Добавить контакт",
   "search": "Поиск...",
   "privacyPolicy": "политика конфиденциальности",
-  "status": "Положение дел"
+  "status": "Положение дел",
+  "before": "до",
+  "days_lowercase": "дни",
+  "weeks_lowercase": "недели",
+  "notification_part1": "Привет! Ваш чат с",
+  "notification_part2": "приближается",
+  "notify": "Поставить в известность",
+  "notification": "Уведомление"
 }

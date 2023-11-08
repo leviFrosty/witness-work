@@ -30,6 +30,7 @@ import useConversations from "../stores/conversationStore";
 import i18n from "../lib/locales";
 import AndroidDateTimePicker from "../components/AndroidDateTimePicker";
 import Checkbox from "expo-checkbox";
+import { Dropdown } from "react-native-element-dropdown";
 
 type Props = NativeStackScreenProps<RootStackParamList, "Conversation Form">;
 
@@ -121,6 +122,15 @@ const ConversationForm = ({ route, navigation }: Props) => {
     contact: "",
   });
   const insets = useSafeAreaInsets();
+
+  const [notifyMeOffset, setNotifyMeOffset] = useState<{
+    amount?: number;
+    unit?: moment.unitOfTime.DurationConstructor | undefined;
+  }>({
+    amount: 2,
+    unit: "hours",
+  });
+
   const [conversation, setConversation] = useState<Conversation>({
     id: Crypto.randomUUID(),
     contact: {
@@ -135,6 +145,7 @@ const ConversationForm = ({ route, navigation }: Props) => {
     },
     isBibleStudy: false,
   });
+
   const setNotifyMe = (notifyMe: boolean) => {
     setConversation({
       ...conversation,
@@ -209,66 +220,50 @@ const ConversationForm = ({ route, navigation }: Props) => {
 
         const notifications: Notification[] = [];
 
-        const oneDayBeforeDate = moment(conversation.followUp.date)
-          .subtract(1, "days")
+        const selectedDate = moment(conversation.followUp?.date)
+          .subtract(notifyMeOffset.amount, notifyMeOffset.unit)
           .toDate();
 
-        if (moment(oneDayBeforeDate).isAfter(moment())) {
-          try {
-            const notificationId1 =
-              await Notifications.scheduleNotificationAsync({
-                content: {
-                  title: i18n.t("reminder_title"),
-                  body: `${i18n.t("reminderTwoHours_part1")}${
-                    selectedContact!.name
-                  }${i18n.t("reminderTwoHours_part2")}${moment(
-                    conversation.followUp.date
-                  ).format("LT")}.📌${
-                    conversation.followUp.topic &&
-                    `${i18n.t("reminder_topic")}${conversation.followUp.topic}`
-                  }`,
-                  sound: true,
-                },
-                trigger: {
-                  date: oneDayBeforeDate,
-                },
-              });
+        const getRandomEmoji = () => {
+          const emojis = [
+            "😀",
+            "✨",
+            "🚀",
+            "⭐",
+            "🎉",
+            "💨",
+            "👀",
+            "💪",
+            "⏱️",
+            "🌟",
+          ];
+          const randomIndex = Math.floor(Math.random() * emojis.length);
+          return emojis[randomIndex];
+        };
 
-            notifications.push({
-              date: oneDayBeforeDate,
-              id: notificationId1,
+        if (moment(selectedDate).isAfter(moment())) {
+          try {
+            const id = await Notifications.scheduleNotificationAsync({
+              content: {
+                title: i18n.t("reminder_title"),
+                body: `${i18n.t("notification_part1")} ${
+                  selectedContact!.name
+                } ${i18n.t("notification_part2")} ${notifyMeOffset.amount} ${
+                  notifyMeOffset.unit
+                }. ${getRandomEmoji()}${
+                  conversation.followUp.topic &&
+                  `${i18n.t("reminder_topic")}${conversation.followUp.topic}`
+                }`,
+                sound: true,
+              },
+              trigger: {
+                date: selectedDate,
+              },
             });
-          } catch (error) {
-            console.error(error);
-          }
-        }
-
-        const fifteenMinutesBeforeDate = moment(conversation.followUp.date)
-          .subtract(15, "minutes")
-          .toDate();
-
-        if (moment(fifteenMinutesBeforeDate).isAfter(moment())) {
-          try {
-            const notificationId2 =
-              await Notifications.scheduleNotificationAsync({
-                content: {
-                  title: i18n.t("reminder_title"),
-                  body: `${i18n.t("reminderFifteenMinutes_part1")}${
-                    selectedContact!.name
-                  }${i18n.t("reminderFifteenMinutes_part2")}${
-                    conversation.followUp.topic &&
-                    `${i18n.t("reminder_topic")}${conversation.followUp.topic}`
-                  }`,
-                  sound: true,
-                },
-                trigger: {
-                  date: fifteenMinutesBeforeDate,
-                },
-              });
 
             notifications.push({
-              date: fifteenMinutesBeforeDate,
-              id: notificationId2,
+              date: selectedDate,
+              id,
             });
           } catch (error) {
             console.error(error);
@@ -304,6 +299,8 @@ const ConversationForm = ({ route, navigation }: Props) => {
     addConversation,
     conversation,
     notificationsAllowed,
+    notifyMeOffset.amount,
+    notifyMeOffset.unit,
     selectedContact,
     validate,
   ]);
@@ -393,6 +390,18 @@ const ConversationForm = ({ route, navigation }: Props) => {
       </Pressable>
     );
   };
+
+  const amountOptions = [...Array(1000).keys()].map((value) => ({
+    label: `${value}`,
+    value,
+  }));
+  const unitOptions: {
+    label: string;
+    value: moment.unitOfTime.DurationConstructor;
+  }[] = ["minutes", "hours", "days", "weeks"].map((value) => ({
+    label: i18n.t(`${value}_lowercase`),
+    value: value as moment.unitOfTime.DurationConstructor,
+  }));
 
   return (
     <KeyboardAwareScrollView
@@ -489,29 +498,81 @@ const ConversationForm = ({ route, navigation }: Props) => {
                 }),
             }}
           />
-          <InputRowContainer
-            label={i18n.t("notifyMe")}
-            justifyContent="space-between"
-            lastInSection
-          >
-            <CheckboxWithLabel
-              label=""
-              value={conversation.followUp?.notifyMe || false}
-              setValue={setNotifyMe}
-              disabled={!notificationsAllowed}
-              description={i18n.t("notifyMe_description")}
-              descriptionOnlyOnDisabled
-            />
+
+          <InputRowContainer label={i18n.t("notification")} lastInSection>
+            <View style={{ gap: 15, flex: 1 }}>
+              <View
+                style={{
+                  justifyContent: "flex-end",
+                  flex: 1,
+                  flexDirection: "row",
+                }}
+              >
+                <CheckboxWithLabel
+                  label={i18n.t("notifyMe")}
+                  value={conversation.followUp?.notifyMe || false}
+                  setValue={setNotifyMe}
+                  disabled={!notificationsAllowed}
+                  description={i18n.t("notifyMe_description")}
+                  descriptionOnlyOnDisabled
+                />
+              </View>
+              <View
+                style={{ flexDirection: "row", gap: 10, alignItems: "center" }}
+              >
+                <View style={{ flex: 1 }}>
+                  <Dropdown
+                    data={amountOptions}
+                    labelField={"label"}
+                    dropdownPosition="top"
+                    valueField={"value"}
+                    style={{
+                      backgroundColor: theme.colors.background,
+                      borderColor: theme.colors.border,
+                      borderWidth: 1,
+                      paddingHorizontal: 10,
+                      borderRadius: theme.numbers.borderRadiusSm,
+                    }}
+                    containerStyle={{
+                      borderRadius: theme.numbers.borderRadiusSm,
+                      backgroundColor: theme.colors.background,
+                    }}
+                    onChange={({ value: amount }) =>
+                      setNotifyMeOffset({ ...notifyMeOffset, amount })
+                    }
+                    placeholder={notifyMeOffset.amount?.toString()}
+                    value={notifyMeOffset.amount?.toString()}
+                  />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Dropdown
+                    data={unitOptions}
+                    labelField={"label"}
+                    dropdownPosition="top"
+                    valueField={"value"}
+                    style={{
+                      backgroundColor: theme.colors.background,
+                      borderColor: theme.colors.border,
+                      borderWidth: 1,
+                      paddingHorizontal: 10,
+                      borderRadius: theme.numbers.borderRadiusSm,
+                    }}
+                    containerStyle={{
+                      borderRadius: theme.numbers.borderRadiusSm,
+                      backgroundColor: theme.colors.background,
+                    }}
+                    onChange={({ value: unit }) =>
+                      setNotifyMeOffset({ ...notifyMeOffset, unit })
+                    }
+                    value={notifyMeOffset.unit}
+                  />
+                </View>
+                <Text style={{ color: theme.colors.textAlt }}>
+                  {i18n.t("before")}
+                </Text>
+              </View>
+            </View>
           </InputRowContainer>
-          <Text
-            style={{
-              color: theme.colors.textAlt,
-              fontSize: 12,
-              marginRight: 20,
-            }}
-          >
-            {i18n.t("notifyMe_notice")}
-          </Text>
         </Section>
       </View>
     </KeyboardAwareScrollView>

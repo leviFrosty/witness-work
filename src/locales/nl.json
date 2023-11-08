@@ -194,5 +194,12 @@
   "addContact": "Contactpersoon toevoegen",
   "search": "Zoekopdracht...",
   "privacyPolicy": "Privacybeleid",
-  "status": "Toestand"
+  "status": "Toestand",
+  "before": "voor",
+  "days_lowercase": "dagen",
+  "weeks_lowercase": "weken",
+  "notification_part1": "Hoi! Jouw chat met",
+  "notification_part2": "komt binnen",
+  "notify": "Informeer",
+  "notification": "Kennisgeving"
 }

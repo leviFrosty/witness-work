@@ -194,5 +194,12 @@
   "addContact": "Thêm liên hệ",
   "search": "Tìm kiếm...",
   "privacyPolicy": "Chính sách bảo mật",
-  "status": "Trạng thái"
+  "status": "Trạng thái",
+  "before": "trước",
+  "days_lowercase": "ngày",
+  "weeks_lowercase": "tuần",
+  "notification_part1": "Chào! Cuộc trò chuyện của bạn với",
+  "notification_part2": "đang đến",
+  "notify": "Thông báo",
+  "notification": "Thông báo"
 }

@@ -124,7 +124,7 @@ const ConversationRow = ({ conversation }: { conversation: Conversation }) => {
                   : theme.colors.textAlt,
               }}
             >
-              {i18n.t("topic")} {conversation.followUp?.topic}
+              {i18n.t("topic")}: {conversation.followUp?.topic}
             </Text>
           )}
         </View>

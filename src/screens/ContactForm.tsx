@@ -184,6 +184,7 @@ const AddressSection = ({
               value: contact.address?.zip || "",
               keyboardType: "number-pad",
             }}
+            lastInSection
           />
         </View>
         <View style={{ width: "50%" }}>
@@ -197,6 +198,7 @@ const AddressSection = ({
               value: contact.address?.country || "",
               autoCapitalize: "words",
             }}
+            lastInSection
           />
         </View>
       </View>

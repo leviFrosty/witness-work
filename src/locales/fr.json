@@ -194,5 +194,12 @@
   "addContact": "Ajouter le contact",
   "search": "Recherche...",
   "privacyPolicy": "politique de confidentialité",
-  "status": "Statut"
+  "status": "Statut",
+  "before": "avant",
+  "days_lowercase": "jours",
+  "weeks_lowercase": "semaines",
+  "notification_part1": "Hé! Votre conversation avec",
+  "notification_part2": "arrive dans",
+  "notify": "Notifier",
+  "notification": "Notification"
 }

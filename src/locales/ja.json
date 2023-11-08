@@ -194,5 +194,12 @@
   "addContact": "連絡先を追加",
   "search": "検索...",
   "privacyPolicy": "プライバシーポリシー",
-  "status": "状態"
+  "status": "状態",
+  "before": "前に",
+  "days_lowercase": "日々",
+  "weeks_lowercase": "週",
+  "notification_part1": "おい！あなたのチャット",
+  "notification_part2": "が近づいてきます",
+  "notify": "通知する",
+  "notification": "通知"
 }

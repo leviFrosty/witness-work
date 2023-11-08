@@ -10,6 +10,7 @@ const CheckboxWithLabel = ({
   disabled,
   description,
   descriptionOnlyOnDisabled,
+  labelPosition = "left",
 }: {
   value: boolean;
   setValue: (val: boolean) => void;
@@ -17,6 +18,7 @@ const CheckboxWithLabel = ({
   disabled?: boolean;
   description?: string;
   descriptionOnlyOnDisabled?: boolean;
+  labelPosition?: "left" | "right";
 }) => {
   const renderDescription = () => {
     if (!description) {
@@ -41,22 +43,22 @@ const CheckboxWithLabel = ({
   };
 
   return (
-    <View style={{ gap: 10, flex: 1 }}>
+    <View style={{ gap: 5 }}>
       <View
         style={{
           flexDirection: "row",
-          justifyContent: "flex-end",
           gap: 10,
           alignItems: "center",
         }}
       >
+        {labelPosition === "left" && label && <Text>{label}</Text>}
         <Checkbox
           hitSlop={{ top: 15, right: 15, bottom: 15, left: 15 }}
           disabled={disabled}
           value={value}
           onValueChange={(val: boolean) => setValue(val)}
         />
-        <Text>{label}</Text>
+        {labelPosition === "right" && label && <Text>{label}</Text>}
       </View>
       {renderDescription()}
     </View>

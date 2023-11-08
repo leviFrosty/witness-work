@@ -194,5 +194,12 @@
   "addContact": "주소록에 추가",
   "search": "찾다...",
   "privacyPolicy": "개인 정보 정책",
-  "status": "상태"
+  "status": "상태",
+  "before": "~ 전에",
+  "days_lowercase": "날",
+  "weeks_lowercase": "주",
+  "notification_part1": "여기요! 당신과의 채팅",
+  "notification_part2": "에오고있다",
+  "notify": "알림",
+  "notification": "공고"
 }

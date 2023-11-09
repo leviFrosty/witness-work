@@ -1,7 +1,7 @@
 {
   "name": "jw-time",
   "version": "1.4.0",
-  "main": "src/index",
+  "main": "node_modules/expo/AppEntry.js",
   "scripts": {
     "dev": "expo start",
     "android": "expo start --android",

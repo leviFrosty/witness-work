@@ -58,7 +58,6 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
         config: {
           organization: "levi-wilkerson",
           project: "jw-time",
-          setCommits: true,
         },
       },
     ],

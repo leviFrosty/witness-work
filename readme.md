@@ -19,3 +19,7 @@ Please look at the [project board](https://github.com/users/leviFrosty/projects/
 ## Donate 💵
 
 If you wish to contribute to help cover the costs associated with app-store fees, you may wish to [buy me a coffee](https://www.buymeacoffee.com/leviwilkerson). Donations are never expected, but greatly appreciated.
+
+## License
+
+JW Time © 2023 by Levi Wilkerson is licensed under [Fair Source License 0.9](./LICENSE)

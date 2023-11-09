@@ -1,11 +1,12 @@
 import "react-native-gesture-handler";
 import React from "react";
+import { registerRootComponent } from "expo";
 import { NavigationContainer } from "@react-navigation/native";
-import RootStackComponent from "./src/stacks/RootStack";
+import RootStackComponent from "./stacks/RootStack";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import * as Notifications from "expo-notifications";
 import * as Sentry from "sentry-expo";
-import "./src/lib/locales";
+import "./lib/locales";
 import {
   useFonts,
   Inter_400Regular,
@@ -29,7 +30,7 @@ Sentry.init({
   attachScreenshot: true,
 });
 
-export default function App() {
+const App = () => {
   const [fontsLoaded, fontError] = useFonts({
     Inter_400Regular,
     Inter_500Medium,
@@ -52,4 +53,6 @@ export default function App() {
   } catch (error) {
     Sentry.Native.captureException(error);
   }
-}
+};
+
+registerRootComponent(App);

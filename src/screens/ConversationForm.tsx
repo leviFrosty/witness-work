@@ -11,7 +11,7 @@ import { RootStackParamList } from "../stacks/RootStack";
 import useContacts from "../stores/contactsStore";
 import { useEffect, useState } from "react";
 import Header from "../components/layout/Header";
-import theme from "../constants/theme";
+import useTheme from "../contexts/theme";
 import Divider from "../components/Divider";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import Section from "../components/inputs/Section";
@@ -25,12 +25,12 @@ import TextInputRow from "../components/inputs/TextInputRow";
 import CheckboxWithLabel from "../components/inputs/CheckboxWithLabel";
 import { Contact } from "../types/contact";
 import moment from "moment";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 import useConversations from "../stores/conversationStore";
 import i18n from "../lib/locales";
 import AndroidDateTimePicker from "../components/AndroidDateTimePicker";
 import Checkbox from "expo-checkbox";
-import { Dropdown } from "react-native-element-dropdown";
+import Select from "../components/Select";
+import Wrapper from "../components/Wrapper";
 
 type Props = NativeStackScreenProps<RootStackParamList, "Conversation Form">;
 
@@ -51,6 +51,8 @@ const AssignmentSection = ({
     undefined
   >;
 }) => {
+  const theme = useTheme();
+
   return (
     <Section>
       <View style={{ gap: 10 }}>
@@ -72,7 +74,10 @@ const AssignmentSection = ({
                 gap: 10,
               }}
             >
-              <FontAwesome name="id-badge" style={{ fontSize: 16 }} />
+              <FontAwesome
+                name="id-badge"
+                style={{ fontSize: 16, color: theme.colors.textAlt }}
+              />
               <Text style={{ fontFamily: "Inter_600SemiBold", fontSize: 16 }}>
                 {selectedContact.name}
               </Text>
@@ -114,6 +119,7 @@ const AssignmentSection = ({
 };
 
 const ConversationForm = ({ route, navigation }: Props) => {
+  const theme = useTheme();
   const { params } = route;
   const { contacts } = useContacts();
   const [_selectedContactId, set_selectedContactId] = useState<string>();
@@ -121,7 +127,6 @@ const ConversationForm = ({ route, navigation }: Props) => {
   const [errors, setErrors] = useState<Record<string, string>>({
     contact: "",
   });
-  const insets = useSafeAreaInsets();
 
   const [notifyMeOffset, setNotifyMeOffset] = useState<{
     amount?: number;
@@ -330,7 +335,7 @@ const ConversationForm = ({ route, navigation }: Props) => {
                 >
                   <Text
                     style={{
-                      color: theme.colors.textInverse,
+                      color: theme.colors.text,
                       fontSize: 12,
                     }}
                   >
@@ -355,7 +360,7 @@ const ConversationForm = ({ route, navigation }: Props) => {
               >
                 <Text
                   style={{
-                    color: theme.colors.textInverse,
+                    color: theme.colors.text,
                     textDecorationLine: "underline",
                     fontSize: 16,
                   }}
@@ -368,7 +373,14 @@ const ConversationForm = ({ route, navigation }: Props) => {
         />
       ),
     });
-  }, [navigation, params.id, params.referrer, submit]);
+  }, [
+    navigation,
+    params.id,
+    params.referrer,
+    submit,
+    theme.colors.text,
+    theme.colors.textInverse,
+  ]);
 
   const IsBibleStudyCheckbox = () => {
     const setIsBibleStudy = (isBibleStudy: boolean) => {
@@ -406,9 +418,9 @@ const ConversationForm = ({ route, navigation }: Props) => {
   return (
     <KeyboardAwareScrollView
       automaticallyAdjustKeyboardInsets
-      style={{ marginBottom: insets.bottom }}
+      style={{ backgroundColor: theme.colors.background }}
     >
-      <View style={{ gap: 30 }}>
+      <Wrapper noInsets style={{ gap: 30, marginTop: 20 }}>
         <View style={{ padding: 25, paddingBottom: 0, gap: 5 }}>
           <Text style={{ fontSize: 32, fontFamily: "Inter_700Bold" }}>
             {i18n.t("addConversation")}
@@ -521,22 +533,9 @@ const ConversationForm = ({ route, navigation }: Props) => {
                 style={{ flexDirection: "row", gap: 10, alignItems: "center" }}
               >
                 <View style={{ flex: 1 }}>
-                  <Dropdown
+                  <Select
                     data={amountOptions}
-                    labelField={"label"}
                     dropdownPosition="top"
-                    valueField={"value"}
-                    style={{
-                      backgroundColor: theme.colors.background,
-                      borderColor: theme.colors.border,
-                      borderWidth: 1,
-                      paddingHorizontal: 10,
-                      borderRadius: theme.numbers.borderRadiusSm,
-                    }}
-                    containerStyle={{
-                      borderRadius: theme.numbers.borderRadiusSm,
-                      backgroundColor: theme.colors.background,
-                    }}
                     onChange={({ value: amount }) =>
                       setNotifyMeOffset({ ...notifyMeOffset, amount })
                     }
@@ -545,22 +544,9 @@ const ConversationForm = ({ route, navigation }: Props) => {
                   />
                 </View>
                 <View style={{ flex: 1 }}>
-                  <Dropdown
+                  <Select
                     data={unitOptions}
-                    labelField={"label"}
                     dropdownPosition="top"
-                    valueField={"value"}
-                    style={{
-                      backgroundColor: theme.colors.background,
-                      borderColor: theme.colors.border,
-                      borderWidth: 1,
-                      paddingHorizontal: 10,
-                      borderRadius: theme.numbers.borderRadiusSm,
-                    }}
-                    containerStyle={{
-                      borderRadius: theme.numbers.borderRadiusSm,
-                      backgroundColor: theme.colors.background,
-                    }}
                     onChange={({ value: unit }) =>
                       setNotifyMeOffset({ ...notifyMeOffset, unit })
                     }
@@ -574,7 +560,7 @@ const ConversationForm = ({ route, navigation }: Props) => {
             </View>
           </InputRowContainer>
         </Section>
-      </View>
+      </Wrapper>
     </KeyboardAwareScrollView>
   );
 };

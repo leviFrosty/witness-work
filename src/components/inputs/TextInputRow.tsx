@@ -1,5 +1,5 @@
 import { TextInput, View } from "react-native";
-import theme from "../../constants/theme";
+import useTheme from "../../contexts/theme";
 import Text from "../MyText";
 import InputRowContainer from "./InputRowContainer";
 
@@ -35,6 +35,7 @@ const TextInputRow: React.FC<Props> = ({
   noHorizontalPadding,
   textInputProps,
 }) => {
+  const theme = useTheme();
   const error = id && errors ? errors[id] : undefined;
 
   return (
@@ -50,7 +51,9 @@ const TextInputRow: React.FC<Props> = ({
             padding: 3,
             borderRadius: theme.numbers.borderRadiusSm,
             borderColor: theme.colors.error,
+            color: theme.colors.text,
           }}
+          placeholderTextColor={theme.colors.textAlt}
           onChangeText={() => setErrors?.({ ...errors, id: "" })}
           hitSlop={{ top: 20, bottom: 20 }}
           placeholder={placeholder}

@@ -5,10 +5,11 @@ import {
   Platform,
   Alert,
   ScrollView,
+  useColorScheme,
 } from "react-native";
 import { useEffect, useMemo } from "react";
 import Text from "../components/MyText";
-import theme from "../constants/theme";
+import useTheme from "../contexts/theme";
 import { RootStackParamList } from "../stacks/RootStack";
 import {
   NativeStackNavigationProp,
@@ -32,12 +33,15 @@ import {
   contactStudiedForGivenMonth,
 } from "../lib/conversations";
 import { Conversation } from "../types/conversation";
+import Wrapper from "../components/Wrapper";
+import { StatusBar } from "expo-status-bar";
 
 type Props = NativeStackScreenProps<RootStackParamList, "Contact Details">;
 
 const iconSize = 18;
 
 const PhoneRow = ({ contact }: { contact: Contact }) => {
+  const theme = useTheme();
   const { phone } = contact;
   return (
     <View style={{ gap: 10 }}>
@@ -102,6 +106,8 @@ const Hero = ({
   hasStudiedPreviously?: boolean;
   mostRecentStudy: Conversation | null;
 }) => {
+  const theme = useTheme();
+
   return (
     <View
       style={{
@@ -162,6 +168,7 @@ const Hero = ({
 };
 
 const AddressRow = ({ contact }: { contact: Contact }) => {
+  const theme = useTheme();
   const { address } = contact;
   if (!address) {
     return null;
@@ -225,6 +232,7 @@ const AddressRow = ({ contact }: { contact: Contact }) => {
 };
 
 const EmailRow = ({ contact }: { contact: Contact }) => {
+  const theme = useTheme();
   const { email } = contact;
   if (!email) {
     return null;
@@ -290,6 +298,8 @@ const DeleteContactButton = ({
   contactId: string;
   contact: Contact;
 }) => {
+  const theme = useTheme();
+
   return (
     <View style={{ gap: 5 }}>
       <TouchableOpacity
@@ -340,6 +350,8 @@ const DeleteContactButton = ({
 };
 
 const ContactDetails = ({ route, navigation }: Props) => {
+  const colorScheme = useColorScheme();
+  const theme = useTheme();
   const { params } = route;
   const insets = useSafeAreaInsets();
   const { contacts, deleteContact } = useContacts();
@@ -366,6 +378,8 @@ const ContactDetails = ({ route, navigation }: Props) => {
     navigation.setOptions({
       header: ({ navigation }) => (
         <Header
+          inverseTextAndIconColor
+          noBottomBorder
           title=""
           buttonType="exit"
           rightElement={
@@ -422,7 +436,7 @@ const ContactDetails = ({ route, navigation }: Props) => {
         />
       ),
     });
-  }, [navigation, params.id]);
+  }, [navigation, params.id, theme.colors.accent3, theme.colors.textInverse]);
 
   const isActiveBibleStudy = useMemo(
     () =>
@@ -467,9 +481,16 @@ const ContactDetails = ({ route, navigation }: Props) => {
 
   return (
     <ScrollView
-      style={{ position: "relative", paddingTop: 100, marginTop: -100 }}
+      style={{
+        position: "relative",
+        paddingTop: 100,
+        marginTop: -100,
+        backgroundColor: theme.colors.background,
+      }}
     >
-      <View
+      <StatusBar style={colorScheme === "light" ? "light" : "dark"} />
+      <Wrapper
+        noInsets
         style={{
           marginBottom: insets.bottom + 100,
           flexGrow: 1,
@@ -538,7 +559,7 @@ const ContactDetails = ({ route, navigation }: Props) => {
             }}
           />
         )}
-      </View>
+      </Wrapper>
     </ScrollView>
   );
 };

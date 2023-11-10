@@ -1,5 +1,5 @@
 import { Pressable, View } from "react-native";
-import theme from "../../constants/theme";
+import useTheme from "../../contexts/theme";
 import moment from "moment";
 import { FontAwesome } from "@expo/vector-icons";
 import Text from "../MyText";
@@ -9,10 +9,13 @@ import { RootStackNavigation } from "../../stacks/RootStack";
 
 type Props = {
   backgroundColor?: string;
+  inverseTextAndIconColor?: boolean;
   title?: string;
   buttonType?: "exit" | "settings";
   onPressLeftIcon?: () => void;
   rightElement?: React.ReactNode;
+  noBottomBorder?: boolean;
+  noInsets?: boolean;
 };
 
 const Header = ({
@@ -20,9 +23,13 @@ const Header = ({
   buttonType,
   rightElement,
   backgroundColor,
+  inverseTextAndIconColor,
+  noBottomBorder,
+  noInsets,
   onPressLeftIcon,
 }: Props) => {
-  const { top } = useSafeAreaInsets();
+  const theme = useTheme();
+  const insets = useSafeAreaInsets();
   const navigation = useNavigation<RootStackNavigation>();
 
   const handleButtonAction = () => {
@@ -47,8 +54,10 @@ const Header = ({
   return (
     <View
       style={{
-        backgroundColor: backgroundColor || theme.colors.accentBackground,
-        paddingTop: top,
+        backgroundColor: backgroundColor || theme.colors.background,
+        paddingTop: noInsets ? 10 : insets.top,
+        borderBottomWidth: noBottomBorder ? 0 : 1,
+        borderBottomColor: theme.colors.border,
       }}
     >
       <View
@@ -68,7 +77,12 @@ const Header = ({
           onPress={handleButtonAction}
         >
           <FontAwesome
-            style={{ color: theme.colors.textInverse, fontSize: 20 }}
+            style={{
+              color: inverseTextAndIconColor
+                ? theme.colors.textInverse
+                : theme.colors.text,
+              fontSize: 20,
+            }}
             name={iconName()}
           />
         </Pressable>
@@ -76,7 +90,9 @@ const Header = ({
           style={{
             fontSize: 18,
             fontFamily: "Inter_600SemiBold",
-            color: theme.colors.textInverse,
+            color: inverseTextAndIconColor
+              ? theme.colors.textInverse
+              : theme.colors.text,
           }}
         >
           {title ?? moment().format("LL")}

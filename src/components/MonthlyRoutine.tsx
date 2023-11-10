@@ -1,7 +1,7 @@
 import { Pressable, View } from "react-native";
 import moment from "moment";
 import { FontAwesome } from "@expo/vector-icons";
-import theme from "../constants/theme";
+import useTheme from "../contexts/theme";
 import Card from "./Card";
 import Text from "./MyText";
 import { FlashList } from "@shopify/flash-list";
@@ -13,6 +13,7 @@ import { RootStackNavigation } from "../stacks/RootStack";
 import i18n from "../lib/locales";
 
 const Month = ({ month }: { month: number }) => {
+  const theme = useTheme();
   const navigation = useNavigation<RootStackNavigation>();
   const { installedOn, publisher } = usePreferences();
   const currentMonth = moment().month();

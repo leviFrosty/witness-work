@@ -7,7 +7,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { createDrawerNavigator } from "@react-navigation/drawer";
 import Header from "../components/layout/Header";
 import Settings from "./Settings";
-import theme from "../constants/theme";
+import useTheme from "../contexts/theme";
 import { useEffect } from "react";
 import { useNavigation } from "@react-navigation/native";
 import * as Updates from "expo-updates";
@@ -15,6 +15,7 @@ import * as Sentry from "sentry-expo";
 import { RootStackNavigation } from "../stacks/RootStack";
 
 const Dashboard = () => {
+  const theme = useTheme();
   const insets = useSafeAreaInsets();
 
   return (

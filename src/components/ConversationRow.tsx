@@ -2,13 +2,14 @@ import { Alert, TouchableOpacity, View } from "react-native";
 import Text from "./MyText";
 import { Conversation } from "../types/conversation";
 import moment from "moment";
-import theme from "../constants/theme";
+import useTheme from "../contexts/theme";
 import { FontAwesome } from "@expo/vector-icons";
 import Divider from "./Divider";
 import useConversations from "../stores/conversationStore";
 import i18n from "../lib/locales";
 
 const ConversationRow = ({ conversation }: { conversation: Conversation }) => {
+  const theme = useTheme();
   const { deleteConversation } = useConversations();
   const notificationHasPassed =
     conversation.followUp &&

@@ -1,11 +1,12 @@
 import { Pressable, View } from "react-native";
 import { FontAwesome } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import theme from "../../constants/theme";
+import useTheme from "../../contexts/theme";
 import { useNavigation } from "@react-navigation/native";
 import { RootStackNavigation } from "../../stacks/RootStack";
 
 const ContactFormHeader = () => {
+  const theme = useTheme();
   const navigation = useNavigation<RootStackNavigation>();
   const { top } = useSafeAreaInsets();
 

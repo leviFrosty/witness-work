@@ -1,9 +1,11 @@
-import { View, TouchableOpacity } from "react-native";
+import { View } from "react-native";
 import { styles } from "../Onboarding.styles";
 import OnboardingNav from "../OnboardingNav";
 import Text from "../../MyText";
 import i18n from "../../../lib/locales";
 import PublisherTypeSelector from "../../PublisherTypeSelector";
+import Wrapper from "../../Wrapper";
+import ActionButton from "../../ActionButton";
 
 interface Props {
   goBack: () => void;
@@ -12,7 +14,9 @@ interface Props {
 
 const StepTwo = ({ goBack, goNext }: Props) => {
   return (
-    <View style={styles.stepContainer}>
+    <Wrapper
+      style={{ flexGrow: 1, padding: 30, justifyContent: "space-between" }}
+    >
       <OnboardingNav goBack={goBack} />
       <View style={styles.stepContentContainer}>
         <Text style={styles.stepTitle}>
@@ -20,10 +24,8 @@ const StepTwo = ({ goBack, goNext }: Props) => {
         </Text>
         <PublisherTypeSelector />
       </View>
-      <TouchableOpacity style={styles.actionButton} onPress={goNext}>
-        <Text style={styles.actionButtonInner}>{i18n.t("continue")}</Text>
-      </TouchableOpacity>
-    </View>
+      <ActionButton action={goNext} label={i18n.t("continue")} />
+    </Wrapper>
   );
 };
 

@@ -2,7 +2,7 @@ import { View, DimensionValue, ColorValue } from "react-native";
 import { publisherHours } from "../constants/publisher";
 import { usePreferences } from "../stores/preferences";
 import { useServiceReport } from "../stores/serviceReport";
-import theme from "../constants/theme";
+import useTheme from "../contexts/theme";
 import { FontAwesome } from "@expo/vector-icons";
 import {
   calculateProgress,
@@ -17,6 +17,8 @@ const ProgressBarSegment = ({
   backgroundColor: ColorValue | undefined;
   width: DimensionValue;
 }) => {
+  const theme = useTheme();
+
   return (
     <View
       style={{
@@ -30,6 +32,8 @@ const ProgressBarSegment = ({
 };
 
 const Bad = ({ active }: { active: boolean }) => {
+  const theme = useTheme();
+
   return (
     <ProgressBarSegment
       backgroundColor={active ? theme.colors.warn : theme.colors.warnAlt}
@@ -39,6 +43,8 @@ const Bad = ({ active }: { active: boolean }) => {
 };
 
 const Good = ({ active }: { active: boolean }) => {
+  const theme = useTheme();
+
   return (
     <ProgressBarSegment
       backgroundColor={active ? theme.colors.accent3 : theme.colors.accent3Alt}
@@ -48,6 +54,8 @@ const Good = ({ active }: { active: boolean }) => {
 };
 
 const Success = ({ active }: { active: boolean }) => {
+  const theme = useTheme();
+
   return (
     <ProgressBarSegment
       backgroundColor={active ? theme.colors.accent : theme.colors.accentAlt}
@@ -57,6 +65,7 @@ const Success = ({ active }: { active: boolean }) => {
 };
 
 const ProgressBar = () => {
+  const theme = useTheme();
   const { serviceReports } = useServiceReport();
   const hours = totalHoursForCurrentMonth(serviceReports);
   const { publisher } = usePreferences();

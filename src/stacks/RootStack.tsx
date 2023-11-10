@@ -7,9 +7,8 @@ import Header from "../components/layout/Header";
 import Home from "../screens/Home";
 import ConversationForm from "../screens/ConversationForm";
 import ContactSelector from "../screens/ContactSelector";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { View, TouchableOpacity } from "react-native";
-import theme from "../constants/theme";
+import { TouchableOpacity } from "react-native";
+import useTheme from "../contexts/theme";
 import ContactDetails from "../screens/ContactDetails";
 import AddTime from "../screens/AddTime";
 import TimeReports from "../screens/TimeReports";
@@ -36,7 +35,7 @@ export type RootStackNavigation = NativeStackNavigationProp<RootStackParamList>;
 const RootStack = createNativeStackNavigator<RootStackParamList>();
 
 const RootStackComponent = () => {
-  const insets = useSafeAreaInsets();
+  const theme = useTheme();
   const { onboardingComplete } = usePreferences();
 
   return (
@@ -74,21 +73,14 @@ const RootStackComponent = () => {
         component={ContactSelector}
         options={{
           presentation: "formSheet",
-          header: () => (
-            <View
-              style={{
-                paddingTop: insets.top,
-                backgroundColor: theme.colors.accentBackground,
-              }}
-            />
-          ),
+          header: () => <Header noInsets buttonType="exit" />,
         }}
       />
       <RootStack.Screen
         name="Add Time"
         options={{
           presentation: "modal",
-          header: () => <Header buttonType="exit" />,
+          header: () => <Header noInsets buttonType="exit" />,
         }}
         component={AddTime}
       />
@@ -97,6 +89,7 @@ const RootStackComponent = () => {
           presentation: "modal",
           header: ({ navigation }) => (
             <Header
+              noInsets
               buttonType="exit"
               rightElement={
                 <TouchableOpacity
@@ -106,7 +99,7 @@ const RootStackComponent = () => {
                 >
                   <FontAwesome
                     name="plus"
-                    style={{ fontSize: 20, color: theme.colors.textInverse }}
+                    style={{ fontSize: 20, color: theme.colors.text }}
                   />
                 </TouchableOpacity>
               }
@@ -119,7 +112,7 @@ const RootStackComponent = () => {
       <RootStack.Screen
         options={{
           presentation: "modal",
-          header: () => <Header buttonType="exit" />,
+          header: () => <Header noInsets buttonType="exit" />,
         }}
         name="Recover Contacts"
         component={RecoverContacts}

@@ -1,11 +1,13 @@
 import { PropsWithChildren } from "react";
 import { View } from "react-native";
-import theme from "../../constants/theme";
+import useTheme from "../../contexts/theme";
 import { rowPaddingVertical } from "../../constants/Inputs";
 
 interface Props {}
 
 const Section: React.FC<PropsWithChildren<Props>> = ({ children }) => {
+  const theme = useTheme();
+
   return (
     <View
       style={{

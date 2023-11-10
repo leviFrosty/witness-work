@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from "react";
 import { View, TouchableOpacity } from "react-native";
-import theme from "../constants/theme";
+import useTheme from "../contexts/theme";
 import { FontAwesome } from "@expo/vector-icons";
 import Card from "./Card";
 import Text from "./MyText";
@@ -17,9 +17,10 @@ import i18n from "../lib/locales";
 import { contactSortOptions, usePreferences } from "../stores/preferences";
 import { Contact } from "../types/contact";
 import { contactMostRecentStudy } from "../lib/conversations";
-import { Dropdown } from "react-native-element-dropdown";
+import Select from "./Select";
 
 const ContactsList = () => {
+  const theme = useTheme();
   const [search, setSearch] = useState("");
   const { contactSort, setContactSort } = usePreferences();
   const { conversations } = useConversations();
@@ -116,23 +117,15 @@ const ContactsList = () => {
         </Text>
 
         <View style={{ flex: 1 }}>
-          <Dropdown
+          <Select
             data={contactSortOptions}
-            labelField={"label"}
-            valueField={"value"}
-            style={{
-              borderWidth: 0,
-              borderRadius: theme.numbers.borderRadiusSm,
-              paddingHorizontal: 10,
-            }}
-            containerStyle={{
-              borderRadius: theme.numbers.borderRadiusSm,
-              backgroundColor: theme.colors.background,
-            }}
             placeholder="Sort"
+            style={{ borderWidth: 0, marginRight: 15 }}
             placeholderStyle={{ fontSize: 12 }}
             selectedTextStyle={{ opacity: 0 }}
-            renderRightIcon={() => <FontAwesome name="sort" />}
+            renderRightIcon={() => (
+              <FontAwesome name="sort" style={{ color: theme.colors.text }} />
+            )}
             onChange={({ value }) => setContactSort(value)}
             value={contactSort}
           />

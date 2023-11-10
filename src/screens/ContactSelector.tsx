@@ -11,6 +11,7 @@ import { RootStackNavigation } from "../stacks/RootStack";
 import Divider from "../components/Divider";
 import ContactRow from "../components/ContactRow";
 import i18n from "../lib/locales";
+import Wrapper from "../components/Wrapper";
 
 const ContactSelector = () => {
   const navigation = useNavigation<RootStackNavigation>();
@@ -23,7 +24,10 @@ const ContactSelector = () => {
   );
 
   return (
-    <View style={{ flexGrow: 1, padding: 20, gap: 20 }}>
+    <Wrapper
+      noInsets
+      style={{ flexGrow: 1, paddingTop: 20, paddingHorizontal: 20, gap: 20 }}
+    >
       <View style={{ gap: 20 }}>
         <Text style={{ fontSize: 32, fontFamily: "Inter_700Bold" }}>
           {i18n.t("assignContact")}
@@ -56,7 +60,7 @@ const ContactSelector = () => {
           />
         </View>
       </KeyboardAwareScrollView>
-    </View>
+    </Wrapper>
   );
 };
 

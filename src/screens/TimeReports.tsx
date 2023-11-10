@@ -1,7 +1,7 @@
 import { View, TouchableOpacity, Alert, ScrollView } from "react-native";
 import Text from "../components/MyText";
 import useServiceReport from "../stores/serviceReport";
-import theme from "../constants/theme";
+import useTheme from "../contexts/theme";
 import { ServiceReport } from "../types/serviceReport";
 import moment from "moment";
 import Section from "../components/inputs/Section";
@@ -19,6 +19,7 @@ import { RootStackNavigation } from "../stacks/RootStack";
 import i18n from "../lib/locales";
 
 const TimeReports = () => {
+  const theme = useTheme();
   const { serviceReports, deleteServiceReport } = useServiceReport();
   const navigation = useNavigation<RootStackNavigation>();
   const insets = useSafeAreaInsets();

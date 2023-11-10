@@ -4,15 +4,15 @@ import Text from "../components/MyText";
 import { RootStackParamList } from "../stacks/RootStack";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import useContacts from "../stores/contactsStore";
-import theme from "../constants/theme";
+import useTheme from "../contexts/theme";
 import Divider from "../components/Divider";
 import { Contact } from "../types/contact";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import Section from "../components/inputs/Section";
 import TextInputRow, { Errors } from "../components/inputs/TextInputRow";
 import Header from "../components/layout/Header";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 import i18n from "../lib/locales";
+import Wrapper from "../components/Wrapper";
 
 const PersonalContactSection = ({
   contact,
@@ -210,7 +210,7 @@ const AddressSection = ({
 type Props = NativeStackScreenProps<RootStackParamList, "Contact Form">;
 
 const ContactForm = ({ route, navigation }: Props) => {
-  const insets = useSafeAreaInsets();
+  const theme = useTheme();
   const { addContact, contacts, updateContact } = useContacts();
   const editMode = route.params.edit;
   const [errors, setErrors] = useState<Errors>({
@@ -377,7 +377,7 @@ const ContactForm = ({ route, navigation }: Props) => {
             >
               <Text
                 style={{
-                  color: theme.colors.textInverse,
+                  color: theme.colors.text,
                   textDecorationLine: "underline",
                   fontSize: 16,
                 }}
@@ -389,15 +389,23 @@ const ContactForm = ({ route, navigation }: Props) => {
         />
       ),
     });
-  }, [editMode, navigation, submit, validate]);
+  }, [
+    editMode,
+    navigation,
+    submit,
+    theme.colors.text,
+    theme.colors.textInverse,
+    validate,
+  ]);
 
   return (
     <KeyboardAwareScrollView
       extraHeight={100}
       automaticallyAdjustContentInsets
       automaticallyAdjustKeyboardInsets
+      style={{ backgroundColor: theme.colors.background }}
     >
-      <View style={{ gap: 30, paddingBottom: insets.bottom + 100 }}>
+      <Wrapper noInsets style={{ gap: 30, marginTop: 20 }}>
         <View style={{ padding: 25, gap: 5 }}>
           <Text style={{ fontSize: 32, fontFamily: "Inter_700Bold" }}>
             {editMode ? i18n.t("edit") : i18n.t("add")} {i18n.t("contact")}
@@ -434,7 +442,7 @@ const ContactForm = ({ route, navigation }: Props) => {
           stateInput={stateInput}
           zipInput={zipInput}
         />
-      </View>
+      </Wrapper>
     </KeyboardAwareScrollView>
   );
 };

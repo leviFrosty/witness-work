@@ -3,7 +3,7 @@ import {
   NativeSyntheticEvent,
   TextInputFocusEventData,
 } from "react-native";
-import theme from "../constants/theme";
+import useTheme from "../contexts/theme";
 import i18n from "../lib/locales";
 
 interface Props {
@@ -27,6 +27,8 @@ const SearchBar = ({
   onFocus,
   onBlur,
 }: Props) => {
+  const theme = useTheme();
+
   return (
     <TextInput
       value={value}
@@ -34,6 +36,7 @@ const SearchBar = ({
       onFocus={onFocus}
       onBlur={onBlur}
       style={{
+        color: theme.colors.text,
         height: 65,
         borderRadius: theme.numbers.borderRadiusLg,
         backgroundColor: theme.colors.backgroundLighter,

@@ -2,7 +2,7 @@ import { View, Platform } from "react-native";
 import { useState } from "react";
 import Section from "../components/inputs/Section";
 import InputRowContainer from "../components/inputs/InputRowContainer";
-import theme from "../constants/theme";
+import useTheme from "../contexts/theme";
 import Text from "../components/MyText";
 import ActionButton from "../components/ActionButton";
 import useServiceReport from "../stores/serviceReport";
@@ -14,15 +14,15 @@ import moment from "moment";
 import { ServiceReport } from "../types/serviceReport";
 import { useNavigation } from "@react-navigation/native";
 import { RootStackNavigation } from "../stacks/RootStack";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 import i18n from "../lib/locales";
 import CheckboxWithLabel from "../components/inputs/CheckboxWithLabel";
 import AndroidDateTimePicker from "../components/AndroidDateTimePicker";
-import { Dropdown } from "react-native-element-dropdown";
+import Wrapper from "../components/Wrapper";
+import Select from "../components/Select";
 
 const AddTime = () => {
+  const theme = useTheme();
   const navigation = useNavigation<RootStackNavigation>();
-  const insets = useSafeAreaInsets();
   const [serviceReport, setServiceReport] = useState<ServiceReport>({
     id: Crypto.randomUUID(),
     hours: 0,
@@ -75,12 +75,11 @@ const AddTime = () => {
   const submittable = serviceReport.hours !== 0 || serviceReport.minutes !== 0;
 
   return (
-    <View
+    <Wrapper
       style={{
         flex: 1,
         flexGrow: 1,
         justifyContent: "space-between",
-        marginBottom: insets.bottom + 30,
       }}
     >
       <View style={{ gap: 30 }}>
@@ -126,21 +125,8 @@ const AddTime = () => {
             <View style={{ width: "50%" }}>
               <InputRowContainer label={i18n.t("hours")} lastInSection>
                 <View style={{ flex: 1 }}>
-                  <Dropdown
+                  <Select
                     data={hourOptions}
-                    labelField={"label"}
-                    valueField={"value"}
-                    style={{
-                      backgroundColor: theme.colors.background,
-                      borderColor: theme.colors.border,
-                      borderWidth: 1,
-                      paddingHorizontal: 10,
-                      borderRadius: theme.numbers.borderRadiusSm,
-                    }}
-                    containerStyle={{
-                      borderRadius: theme.numbers.borderRadiusSm,
-                      backgroundColor: theme.colors.background,
-                    }}
                     placeholder={serviceReport.hours.toString()}
                     onChange={({ value }) => setHours(value)}
                     value={serviceReport.hours.toString()}
@@ -152,21 +138,8 @@ const AddTime = () => {
             <View style={{ width: "50%" }}>
               <InputRowContainer label={i18n.t("minutes")} lastInSection>
                 <View style={{ flex: 1 }}>
-                  <Dropdown
+                  <Select
                     data={minuteOptions}
-                    labelField={"label"}
-                    valueField={"value"}
-                    style={{
-                      backgroundColor: theme.colors.background,
-                      borderColor: theme.colors.border,
-                      borderWidth: 1,
-                      paddingHorizontal: 10,
-                      borderRadius: theme.numbers.borderRadiusSm,
-                    }}
-                    containerStyle={{
-                      borderRadius: theme.numbers.borderRadiusSm,
-                      backgroundColor: theme.colors.background,
-                    }}
                     placeholder={serviceReport.minutes.toString()}
                     onChange={({ value }) => setMinutes(value)}
                     value={serviceReport.hours.toString()}
@@ -177,7 +150,6 @@ const AddTime = () => {
           </View>
         </Section>
       </View>
-
       <View style={{ paddingHorizontal: 20, gap: 10 }}>
         {!submittable && (
           <Text style={{ fontSize: 12, color: theme.colors.textAlt }}>
@@ -190,7 +162,7 @@ const AddTime = () => {
           label={i18n.t("submit")}
         />
       </View>
-    </View>
+    </Wrapper>
   );
 };
 

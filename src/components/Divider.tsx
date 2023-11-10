@@ -1,5 +1,5 @@
 import { DimensionValue, View } from "react-native";
-import theme from "../constants/theme";
+import useTheme from "../contexts/theme";
 
 const Divider = ({
   marginVertical,
@@ -10,6 +10,7 @@ const Divider = ({
   marginVertical?: DimensionValue;
   borderStyle?: "solid" | "dotted" | "dashed" | undefined;
 }) => {
+  const theme = useTheme();
   return (
     <View
       style={{

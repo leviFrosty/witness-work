@@ -1,7 +1,7 @@
 import Checkbox from "expo-checkbox";
 import { View } from "react-native";
 import Text from "../MyText";
-import theme from "../../constants/theme";
+import useTheme from "../../contexts/theme";
 
 const CheckboxWithLabel = ({
   value,
@@ -20,6 +20,7 @@ const CheckboxWithLabel = ({
   descriptionOnlyOnDisabled?: boolean;
   labelPosition?: "left" | "right";
 }) => {
+  const theme = useTheme();
   const renderDescription = () => {
     if (!description) {
       return null;

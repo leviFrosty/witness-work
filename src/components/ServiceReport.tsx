@@ -1,6 +1,6 @@
 import { View, TouchableOpacity } from "react-native";
 import { useServiceReport } from "../stores/serviceReport";
-import theme from "../constants/theme";
+import useTheme from "../contexts/theme";
 import ProgressBar from "./ProgressBar";
 import { publisherHours } from "../constants/publisher";
 import { usePreferences } from "../stores/preferences";
@@ -25,6 +25,7 @@ import i18n from "../lib/locales";
 import useConversations from "../stores/conversationStore";
 
 const HourEntryCard = () => {
+  const theme = useTheme();
   const { publisher } = usePreferences();
   const { serviceReports } = useServiceReport();
   const navigation = useNavigation<RootStackNavigation>();
@@ -200,6 +201,7 @@ const HourEntryCard = () => {
 };
 
 const RightCard = () => {
+  const theme = useTheme();
   const { contacts } = useContacts();
   const { conversations } = useConversations();
   const studies = useMemo(
@@ -289,6 +291,7 @@ const RightCard = () => {
 };
 
 const CheckMarkAnimationComponent = ({ undoId }: { undoId?: string }) => {
+  const theme = useTheme();
   const { deleteServiceReport } = useServiceReport();
   const ref = useRef<LottieView>(null);
 
@@ -331,6 +334,7 @@ const CheckMarkAnimationComponent = ({ undoId }: { undoId?: string }) => {
 };
 
 const StandardPublisherTimeEntry = () => {
+  const theme = useTheme();
   const [undoId, setUndoId] = useState<string>();
   const { serviceReports, addServiceReport } = useServiceReport();
   const hasGoneOutInServiceThisMonth = hasServiceReportsForMonth(
@@ -402,6 +406,7 @@ const StandardPublisherTimeEntry = () => {
 };
 
 const ServiceReport = () => {
+  const theme = useTheme();
   const { publisher } = usePreferences();
   const navigation = useNavigation<RootStackNavigation>();
   return (

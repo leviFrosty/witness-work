@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from "react";
-import { View, TouchableOpacity } from "react-native";
+import { View } from "react-native";
 import { styles } from "../Onboarding.styles";
 import OnboardingNav from "../OnboardingNav";
 import * as Notifications from "expo-notifications";
 import Text from "../../MyText";
 import i18n from "../../../lib/locales";
+import Wrapper from "../../Wrapper";
+import ActionButton from "../../ActionButton";
 
 interface Props {
   goNext: () => void;
@@ -24,7 +26,9 @@ const StepFour = ({ goNext, goBack }: Props) => {
   }, []);
 
   return (
-    <View style={styles.stepContainer}>
+    <Wrapper
+      style={{ flexGrow: 1, padding: 30, justifyContent: "space-between" }}
+    >
       <OnboardingNav noActions goBack={goBack} />
       <View>
         <Text style={styles.stepTitle}>{i18n.t("youreAllSet")}</Text>
@@ -34,10 +38,8 @@ const StepFour = ({ goNext, goBack }: Props) => {
             : i18n.t("optInNotificationsLater")}
         </Text>
       </View>
-      <TouchableOpacity style={styles.actionButton} onPress={goNext}>
-        <Text style={styles.actionButtonInner}>{i18n.t("completeSetup")}</Text>
-      </TouchableOpacity>
-    </View>
+      <ActionButton action={goNext} label={i18n.t("completeSetup")} />
+    </Wrapper>
   );
 };
 

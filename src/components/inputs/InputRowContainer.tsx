@@ -1,6 +1,6 @@
 import React, { PropsWithChildren, ReactNode } from "react";
 import { View } from "react-native";
-import theme from "../../constants/theme";
+import useTheme from "../../contexts/theme";
 import { rowPaddingVertical } from "../../constants/Inputs";
 import Text from "../MyText";
 import { FontAwesome5 } from "@expo/vector-icons";
@@ -31,6 +31,8 @@ const InputRowContainer: React.FC<PropsWithChildren<Props>> = ({
   justifyContent,
   gap,
 }: Props) => {
+  const theme = useTheme();
+
   return (
     <View
       style={{

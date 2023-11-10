@@ -1,7 +1,7 @@
 import { Platform, View, Alert } from "react-native";
 import Text from "../components/MyText";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import theme from "../constants/theme";
+import useTheme from "../contexts/theme";
 import Section from "../components/inputs/Section";
 import { usePreferences } from "../stores/preferences";
 import { FontAwesome } from "@expo/vector-icons";
@@ -21,6 +21,7 @@ import InputRowContainer from "../components/inputs/InputRowContainer";
 import PublisherTypeSelector from "../components/PublisherTypeSelector";
 
 const Settings = () => {
+  const theme = useTheme();
   const { set: setPreferences } = usePreferences();
   const [notificationsEnabled, setNotificationsEnabled] = useState(false);
   const insets = useSafeAreaInsets();

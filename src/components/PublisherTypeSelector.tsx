@@ -1,12 +1,13 @@
 import { View } from "react-native";
-import { Dropdown } from "react-native-element-dropdown";
-import theme from "../constants/theme";
+import useTheme from "../contexts/theme";
 import Text from "./MyText";
 import i18n from "../lib/locales";
 import { usePreferences } from "../stores/preferences";
 import { publisherHours, publishers } from "../constants/publisher";
+import Select from "./Select";
 
 const PublisherTypeSelector = () => {
+  const theme = useTheme();
   const items = [
     { label: i18n.t("publisher"), value: publishers[0] },
     { label: i18n.t("regularAuxiliary"), value: publishers[1] },
@@ -19,22 +20,8 @@ const PublisherTypeSelector = () => {
 
   return (
     <View>
-      <Dropdown
+      <Select
         data={items}
-        labelField={"label"}
-        valueField={"value"}
-        style={{
-          backgroundColor: theme.colors.background,
-          borderColor: theme.colors.border,
-          borderWidth: 1,
-          paddingHorizontal: 10,
-          borderRadius: theme.numbers.borderRadiusSm,
-          marginBottom: 10,
-        }}
-        containerStyle={{
-          borderRadius: theme.numbers.borderRadiusSm,
-          backgroundColor: theme.colors.background,
-        }}
         onChange={({ value }) => setPublisher(value)}
         value={publisher}
       />

@@ -13,6 +13,10 @@ import {
   Inter_600SemiBold,
   Inter_700Bold,
 } from "@expo-google-fonts/inter";
+import { useColorScheme } from "react-native";
+import { StatusBar } from "expo-status-bar"; // automatically switches bar style based on theme!
+import getThemeFromColorScheme from "./src/constants/theme";
+import { ThemeContext } from "./src/contexts/theme";
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
@@ -30,6 +34,9 @@ Sentry.init({
 });
 
 export default function App() {
+  const colorScheme = useColorScheme();
+  const theme = getThemeFromColorScheme(colorScheme);
+
   const [fontsLoaded, fontError] = useFonts({
     Inter_400Regular,
     Inter_500Medium,
@@ -45,7 +52,10 @@ export default function App() {
     return (
       <NavigationContainer>
         <SafeAreaProvider>
-          <RootStackComponent />
+          <ThemeContext.Provider value={theme}>
+            <StatusBar />
+            <RootStackComponent />
+          </ThemeContext.Provider>
         </SafeAreaProvider>
       </NavigationContainer>
     );

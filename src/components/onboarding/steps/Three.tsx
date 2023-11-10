@@ -1,9 +1,11 @@
-import { View, Pressable, TouchableOpacity } from "react-native";
+import { View, Pressable } from "react-native";
 import { styles } from "../Onboarding.styles";
 import OnboardingNav from "../OnboardingNav";
 import { registerForPushNotificationsAsync } from "../../../lib/notifications";
 import Text from "../../MyText";
 import i18n from "../../../lib/locales";
+import Wrapper from "../../Wrapper";
+import ActionButton from "../../ActionButton";
 
 interface Props {
   goBack: () => void;
@@ -12,7 +14,9 @@ interface Props {
 
 const StepThree = ({ goBack, goNext }: Props) => {
   return (
-    <View style={styles.stepContainer}>
+    <Wrapper
+      style={{ flexGrow: 1, padding: 30, justifyContent: "space-between" }}
+    >
       <OnboardingNav goBack={goBack} />
       <View>
         <Text style={styles.stepTitle}>
@@ -23,25 +27,21 @@ const StepThree = ({ goBack, goNext }: Props) => {
         </Text>
       </View>
       <View>
-        <TouchableOpacity
-          style={styles.actionButton}
-          onPress={async () => {
+        <ActionButton
+          action={async () => {
             registerForPushNotificationsAsync().then(() => {
               goNext();
             });
           }}
-        >
-          <Text style={styles.actionButtonInner}>
-            {i18n.t("allowNotifications")}
-          </Text>
-        </TouchableOpacity>
+          label={i18n.t("allowNotifications")}
+        />
         <View style={{ alignItems: "center", marginTop: 15 }}>
           <Pressable hitSlop={10} onPress={goNext}>
             <Text style={styles.navSkip}>{i18n.t("skip")}</Text>
           </Pressable>
         </View>
       </View>
-    </View>
+    </Wrapper>
   );
 };
 

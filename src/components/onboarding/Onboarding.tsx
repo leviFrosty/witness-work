@@ -4,7 +4,6 @@ import StepOne from "./steps/One";
 import StepTwo from "./steps/Two";
 import StepThree from "./steps/Three";
 import StepFour from "./steps/Four";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { usePreferences } from "../../stores/preferences";
 
 const steps = [StepOne, StepTwo, StepThree, StepFour];
@@ -12,7 +11,6 @@ const steps = [StepOne, StepTwo, StepThree, StepFour];
 const OnBoarding = () => {
   const { set, onboardingComplete } = usePreferences();
   const [onboardingStep, setOnboardingStep] = useState(0);
-  const insets = useSafeAreaInsets();
 
   useEffect(() => {
     if (onboardingComplete === false) {
@@ -52,8 +50,6 @@ const OnBoarding = () => {
     <View
       style={{
         flexGrow: 1,
-        paddingTop: insets.top,
-        paddingHorizontal: 20,
       }}
     >
       {renderStep()}

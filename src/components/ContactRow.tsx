@@ -1,6 +1,6 @@
 import { View, TouchableOpacity } from "react-native";
 import Text from "./MyText";
-import theme from "../constants/theme";
+import useTheme from "../contexts/theme";
 import Card from "./Card";
 import { FontAwesome } from "@expo/vector-icons";
 import { Contact } from "../types/contact";
@@ -20,6 +20,7 @@ const ContactRow = ({
   contact: Contact;
   onPress?: () => void;
 }) => {
+  const theme = useTheme();
   const { conversations } = useConversations();
   const { name } = contact;
 

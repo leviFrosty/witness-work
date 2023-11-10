@@ -3,6 +3,7 @@ import { create } from "zustand";
 import { persist, combine, createJSONStorage } from "zustand/middleware";
 import { Publisher } from "../types/publisher";
 import i18n from "../lib/locales";
+import { ColorSchemeName } from "react-native";
 
 export const contactSortOptions = [
   {

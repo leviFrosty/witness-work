@@ -1,6 +1,6 @@
 import { TouchableHighlight } from "react-native";
 import Text from "./MyText";
-import theme from "../constants/theme";
+import useTheme from "../contexts/theme";
 
 interface Props {
   action: () => unknown;
@@ -9,6 +9,7 @@ interface Props {
 }
 
 const ActionButton = ({ action, label, disabled }: Props) => {
+  const theme = useTheme();
   return (
     <TouchableHighlight
       style={{

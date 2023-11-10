@@ -1,6 +1,6 @@
 import { Alert, ScrollView, TouchableOpacity, View } from "react-native";
 import Text from "../components/MyText";
-import theme from "../constants/theme";
+import useTheme from "../contexts/theme";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import useContacts from "../stores/contactsStore";
 import { FontAwesome } from "@expo/vector-icons";
@@ -10,8 +10,10 @@ import useConversations from "../stores/conversationStore";
 import { FlashList } from "@shopify/flash-list";
 import i18n from "../lib/locales";
 import { useMemo } from "react";
+import Wrapper from "../components/Wrapper";
 
 const RecoverContacts = () => {
+  const theme = useTheme();
   const { conversations, deleteConversation } = useConversations();
   const { deletedContacts, recoverContact, removeDeletedContact } =
     useContacts();
@@ -36,15 +38,15 @@ const RecoverContacts = () => {
   );
 
   return (
-    <View
+    <Wrapper
+      noInsets
       style={{
         flex: 1,
         flexGrow: 1,
         justifyContent: "space-between",
-        marginBottom: insets.bottom + 30,
       }}
     >
-      <View style={{ gap: 30, flexGrow: 1 }}>
+      <View style={{ flexGrow: 1 }}>
         <View style={{ padding: 25, gap: 5 }}>
           <Text style={{ fontSize: 32, fontFamily: "Inter_700Bold" }}>
             {i18n.t("recoverContacts")}
@@ -156,7 +158,7 @@ const RecoverContacts = () => {
           </View>
         </ScrollView>
       </View>
-    </View>
+    </Wrapper>
   );
 };
 

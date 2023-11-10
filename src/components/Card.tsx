@@ -1,6 +1,6 @@
 import { PropsWithChildren } from "react";
 import { View, StyleProp, ViewStyle } from "react-native";
-import theme from "../constants/theme";
+import useTheme from "../contexts/theme";
 
 interface Props {
   flexDirection?:
@@ -17,6 +17,8 @@ const Card: React.FC<PropsWithChildren<Props>> = ({
   flexDirection,
   style,
 }) => {
+  const theme = useTheme();
+
   return (
     <View
       style={[

@@ -1,18 +1,18 @@
 import { View, ScrollView, TouchableOpacity } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 import LottieView from "lottie-react-native";
 import Text from "../components/MyText";
 import { useEffect, useRef, useState } from "react";
-import theme from "../constants/theme";
+import useTheme from "../contexts/theme";
 import i18n from "../lib/locales";
 import * as Updates from "expo-updates";
 import * as Sentry from "sentry-expo";
 import ActionButton from "../components/ActionButton";
 import { useNavigation } from "@react-navigation/native";
 import { RootStackNavigation } from "../stacks/RootStack";
+import Wrapper from "../components/Wrapper";
 
 const Update = () => {
-  const insets = useSafeAreaInsets();
+  const theme = useTheme();
   const loadingAnimation = useRef<LottieView>(null);
   const errorAnimation = useRef<LottieView>(null);
   const [error, setError] = useState<unknown>();
@@ -41,10 +41,8 @@ const Update = () => {
   }, [navigation]);
 
   return (
-    <View
+    <Wrapper
       style={{
-        marginTop: insets.top,
-        marginBottom: insets.bottom,
         flexGrow: 1,
         padding: 30,
       }}
@@ -132,7 +130,7 @@ const Update = () => {
           />
         </View>
       )}
-    </View>
+    </Wrapper>
   );
 };
 export default Update;

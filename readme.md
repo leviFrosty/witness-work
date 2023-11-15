@@ -18,7 +18,9 @@ Please look at the [project board](https://github.com/users/leviFrosty/projects/
 
 ## Donate 💵
 
-If you wish to contribute to help cover the costs associated with app-store fees, you may wish to [buy me a coffee](https://www.buymeacoffee.com/leviwilkerson). Donations are never expected, but greatly appreciated.
+If you wish to contribute to help cover the costs associated with app-store fees, you may wish to [buy me a coffee](https://ko-fi.com/leviwilkerson). Donations are never expected, but greatly appreciated.
+
+[![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/leviwilkerson)
 
 ## License
 

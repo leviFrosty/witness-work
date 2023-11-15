@@ -35,6 +35,7 @@ const SearchBar = ({
       onChangeText={(val) => setValue(val)}
       onFocus={onFocus}
       onBlur={onBlur}
+      placeholderTextColor={theme.colors.textAlt}
       style={{
         color: theme.colors.text,
         borderRadius: theme.numbers.borderRadiusSm,

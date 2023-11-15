@@ -16,7 +16,6 @@ import IconButton from "./IconButton";
 import { faBell, faBellSlash, faBook } from "@fortawesome/free-solid-svg-icons";
 import Copyeable from "./Copyeable";
 
-// TODO: Change display of upcoming followup notification status. If someone clicked "Notify Me", more clearly represent that. Currently, there is no difference between "notify me" and not
 const ConversationRow = ({
   conversation,
   highlighted,

@@ -37,13 +37,14 @@ const SearchBar = ({
       onBlur={onBlur}
       style={{
         color: theme.colors.text,
-        height: 65,
-        borderRadius: theme.numbers.borderRadiusLg,
+        borderRadius: theme.numbers.borderRadiusSm,
         backgroundColor: theme.colors.backgroundLighter,
+        paddingVertical: 20,
         paddingHorizontal: 15,
         borderColor: theme.colors.border,
         borderWidth: 1,
         flexGrow: 1,
+        fontSize: theme.fontSize("lg"),
       }}
       placeholder={placeholder ?? i18n.t("searchForContact")}
       clearButtonMode="while-editing"

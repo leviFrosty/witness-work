@@ -38,7 +38,7 @@ const StepFour = ({ goNext, goBack }: Props) => {
             : i18n.t("optInNotificationsLater")}
         </Text>
       </View>
-      <ActionButton action={goNext} label={i18n.t("completeSetup")} />
+      <ActionButton onPress={goNext}>{i18n.t("completeSetup")}</ActionButton>
     </Wrapper>
   );
 };

@@ -14,7 +14,10 @@ export type Conversation = {
     date: Date;
     notifyMe: boolean;
     topic?: string;
-    notifications?: Notification[];
+    /**
+     * TODO: Refactor where there is only one notification enabled. Also simplifies ConversationForm.tsx submit function.
+     */
+    notifications?: Notification[]; // Changing to only one
   };
   isBibleStudy: boolean;
 };

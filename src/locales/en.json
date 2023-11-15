@@ -136,7 +136,7 @@
   "reminderFifteenMinutes_part1": "⏰ Your chat with ",
   "reminderFifteenMinutes_part2": " is in 15 mins. Prep up and get ready for a fruitful conversation!🚀📖",
   "addConversation": "Add Conversation",
-  "addConversation_description": "Enter the contact information below for the person you will be adding to JW Time.",
+  "addConversation_description": "Enter the conversation information below for the conversation you will be assigning to your contact.",
   "note": "Note",
   "note_placeholder": "Write down information about your conversation. Be sure to be descriptive!",
   "followUp": "Follow Up",
@@ -211,5 +211,16 @@
   "loadingSlowly_description": "Try again later when connected to WIFI or when you have stable internet.",
   "quit": "Quit",
   "goHome": "Go Home",
-  "timeNeeded": "Add hours or minutes above to submit your time entry."
+  "timeNeeded": "Add hours or minutes above to submit your time entry.",
+  "editConversation": "Edit Conversation",
+  "conversationHistory": "Conversation History",
+  "copied": "Copied!",
+  "archive": "Archive",
+  "archiveContact": "Archive Contact",
+  "archiveContact_question": "Archive Contact?",
+  "archiveContact_description": "Archiving this contact will delete it. You can recover it from the settings.",
+  "tapToAddAConversation": "Tap here to add a conversation, or press the + button above.",
+  "todaysConversations": "Today's Conversations",
+  "upcomingConversations": "Upcoming Conversations",
+  "noTopicProvided": "No Topic Provided."
 }

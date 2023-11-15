@@ -17,18 +17,19 @@ import { useColorScheme } from "react-native";
 import { StatusBar } from "expo-status-bar"; // automatically switches bar style based on theme!
 import getThemeFromColorScheme from "./src/constants/theme";
 import { ThemeContext } from "./src/contexts/theme";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
     shouldShowAlert: true,
-    shouldPlaySound: false,
+    shouldPlaySound: true,
     shouldSetBadge: false,
   }),
 });
 
 Sentry.init({
   dsn: "https://f9600209459a43d18c3d2c3a6ac2aa7b@o572512.ingest.sentry.io/4505271593074688",
-  enableInExpoDevelopment: true,
+  enableInExpoDevelopment: false,
   debug: __DEV__,
   attachScreenshot: true,
 });
@@ -53,8 +54,10 @@ export default function App() {
       <NavigationContainer>
         <SafeAreaProvider>
           <ThemeContext.Provider value={theme}>
-            <StatusBar />
-            <RootStackComponent />
+            <GestureHandlerRootView style={{ flex: 1 }}>
+              <StatusBar />
+              <RootStackComponent />
+            </GestureHandlerRootView>
           </ThemeContext.Provider>
         </SafeAreaProvider>
       </NavigationContainer>

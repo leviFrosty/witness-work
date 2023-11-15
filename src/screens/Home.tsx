@@ -13,10 +13,19 @@ import { useNavigation } from "@react-navigation/native";
 import * as Updates from "expo-updates";
 import * as Sentry from "sentry-expo";
 import { RootStackNavigation } from "../stacks/RootStack";
+import useConversations from "../stores/conversationStore";
+import { upcomingConversations } from "../lib/conversations";
+import ApproachingConversations from "../components/ApproachingConversations";
 
 const Dashboard = () => {
   const theme = useTheme();
   const insets = useSafeAreaInsets();
+  const { conversations } = useConversations();
+
+  const approachingConversations = upcomingConversations({
+    conversations,
+    withinNextDays: 1,
+  });
 
   return (
     <View style={{ flexGrow: 1, backgroundColor: theme.colors.background }}>
@@ -29,7 +38,12 @@ const Dashboard = () => {
           paddingBottom: insets.bottom,
         }}
       >
-        <View style={{ gap: 30, paddingBottom: insets.bottom }}>
+        <View style={{ gap: 30, paddingBottom: insets.bottom, flex: 1 }}>
+          {!!approachingConversations.length && (
+            <ApproachingConversations
+              conversations={approachingConversations}
+            />
+          )}
           <MonthlyRoutine />
           <ServiceReport />
           <ContactsList />

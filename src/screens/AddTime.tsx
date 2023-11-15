@@ -156,11 +156,9 @@ const AddTime = () => {
             {i18n.t("timeNeeded")}
           </Text>
         )}
-        <ActionButton
-          disabled={!submittable}
-          action={submit}
-          label={i18n.t("submit")}
-        />
+        <ActionButton disabled={!submittable} onPress={submit}>
+          {i18n.t("submit")}
+        </ActionButton>
       </View>
     </Wrapper>
   );

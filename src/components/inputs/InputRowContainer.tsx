@@ -3,11 +3,12 @@ import { View } from "react-native";
 import useTheme from "../../contexts/theme";
 import { rowPaddingVertical } from "../../constants/Inputs";
 import Text from "../MyText";
-import { FontAwesome5 } from "@expo/vector-icons";
+import IconButton from "../IconButton";
+import { IconProp } from "@fortawesome/fontawesome-svg-core";
 
 interface Props {
   children?: ReactNode;
-  leftIcon?: string;
+  leftIcon?: IconProp;
   lastInSection?: boolean;
   noHorizontalPadding?: boolean;
   label?: string;
@@ -49,12 +50,7 @@ const InputRowContainer: React.FC<PropsWithChildren<Props>> = ({
     >
       {(leftIcon || label) && (
         <View style={{ alignItems: "center", gap: 5, flexDirection: "row" }}>
-          {leftIcon && (
-            <FontAwesome5
-              name={leftIcon}
-              style={{ color: theme.colors.textAlt }}
-            />
-          )}
+          {leftIcon && <IconButton icon={leftIcon} />}
           {label && (
             <Text
               style={{

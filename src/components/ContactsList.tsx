@@ -1,7 +1,6 @@
 import React, { useMemo, useState } from "react";
-import { View, TouchableOpacity } from "react-native";
+import { View } from "react-native";
 import useTheme from "../contexts/theme";
-import { FontAwesome } from "@expo/vector-icons";
 import Card from "./Card";
 import Text from "./MyText";
 import ContactRow from "./ContactRow";
@@ -18,6 +17,9 @@ import { contactSortOptions, usePreferences } from "../stores/preferences";
 import { Contact } from "../types/contact";
 import { contactMostRecentStudy } from "../lib/conversations";
 import Select from "./Select";
+import ActionButton from "./ActionButton";
+import IconButton from "./IconButton";
+import { faPlus, faSort } from "@fortawesome/free-solid-svg-icons";
 
 const ContactsList = () => {
   const theme = useTheme();
@@ -124,7 +126,10 @@ const ContactsList = () => {
             placeholderStyle={{ fontSize: 12 }}
             selectedTextStyle={{ opacity: 0 }}
             renderRightIcon={() => (
-              <FontAwesome name="sort" style={{ color: theme.colors.text }} />
+              <IconButton
+                icon={faSort}
+                iconStyle={{ color: theme.colors.text }}
+              />
             )}
             onChange={({ value }) => setContactSort(value)}
             value={contactSort}
@@ -132,7 +137,7 @@ const ContactsList = () => {
         </View>
       </View>
       <Card>
-        <View style={{ flexDirection: "row", gap: 10 }}>
+        <View style={{ flexDirection: "row", gap: 5 }}>
           <SearchBar
             placeholder={
               focusingSearchBar ? i18n.t("searchForContact") : i18n.t("search")
@@ -142,39 +147,41 @@ const ContactsList = () => {
             onFocus={() => setFocusingSearchBar(true)}
             onBlur={() => setFocusingSearchBar(false)}
           />
-          <TouchableOpacity
-            style={{
-              flexGrow: focusingSearchBar ? undefined : 1,
-              paddingVertical: 15,
-              paddingHorizontal: 25,
-              backgroundColor: theme.colors.accent,
-              borderRadius: theme.numbers.borderRadiusLg,
-              alignItems: "center",
-              justifyContent: "center",
-              flexDirection: "row",
-              gap: 10,
-            }}
+          <ActionButton
             onPress={() =>
               navigation.navigate("Contact Form", { id: Crypto.randomUUID() })
             }
           >
-            {!focusingSearchBar && (
-              <Text
-                style={{
-                  textAlign: "center",
-                  fontFamily: "Inter_700Bold",
-                  fontSize: 18,
+            <View
+              style={{
+                flexGrow: focusingSearchBar ? undefined : 1,
+                alignItems: "center",
+                justifyContent: "center",
+                flexDirection: "row",
+                gap: 10,
+              }}
+            >
+              {!focusingSearchBar && (
+                <Text
+                  style={{
+                    textAlign: "center",
+                    fontFamily: "Inter_700Bold",
+                    fontSize: theme.fontSize("lg"),
+                    color: theme.colors.textInverse,
+                  }}
+                >
+                  {i18n.t("addContact")}
+                </Text>
+              )}
+              <IconButton
+                icon={faPlus}
+                size="lg"
+                iconStyle={{
                   color: theme.colors.textInverse,
                 }}
-              >
-                {i18n.t("addContact")}
-              </Text>
-            )}
-            <FontAwesome
-              style={{ fontSize: 14, color: theme.colors.textInverse }}
-              name="plus"
-            />
-          </TouchableOpacity>
+              />
+            </View>
+          </ActionButton>
         </View>
         <View style={{ flex: 1, minHeight: 10 }}>
           <FlashList

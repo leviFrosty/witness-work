@@ -211,5 +211,16 @@
   "loadingSlowly_description": "请稍后在连接到 WIFI 或网络稳定时重试。",
   "quit": "辞职",
   "goHome": "回家",
-  "timeNeeded": "在上面添加小时或分钟以提交您的时间条目。"
+  "timeNeeded": "在上面添加小时或分钟以提交您的时间条目。",
+  "editConversation": "编辑对话",
+  "conversationHistory": "对话历史记录",
+  "copied": "复制了！",
+  "archive": "档案",
+  "archiveContact": "存档联系方式",
+  "archiveContact_question": "存档联系方式？",
+  "archiveContact_description": "归档此联系人将删除它。您可以从设置中恢复它。",
+  "tapToAddAConversation": "点击此处添加对话，或按上面的 + 按钮。",
+  "todaysConversations": "今天的对话",
+  "upcomingConversations": "即将进行的对话",
+  "noTopicProvided": "未提供主题。"
 }

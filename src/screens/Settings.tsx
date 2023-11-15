@@ -4,7 +4,6 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import useTheme from "../contexts/theme";
 import Section from "../components/inputs/Section";
 import { usePreferences } from "../stores/preferences";
-import { FontAwesome } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import { RootStackNavigation } from "../stacks/RootStack";
 import i18n from "../lib/locales";
@@ -19,6 +18,18 @@ import { useEffect, useState } from "react";
 import links from "../constants/links";
 import InputRowContainer from "../components/inputs/InputRowContainer";
 import PublisherTypeSelector from "../components/PublisherTypeSelector";
+import { faBell } from "@fortawesome/free-regular-svg-icons/faBell";
+import { faBellSlash } from "@fortawesome/free-solid-svg-icons/faBellSlash";
+import { faHeart, faHourglassHalf } from "@fortawesome/free-regular-svg-icons/";
+import IconButton from "../components/IconButton";
+import {
+  faBug,
+  faChevronRight,
+  faDownload,
+  faFileContract,
+  faTools,
+  faUndo,
+} from "@fortawesome/free-solid-svg-icons";
 
 const Settings = () => {
   const theme = useTheme();
@@ -137,7 +148,7 @@ const Settings = () => {
           </Text>
           <Section>
             <InputRowButton
-              leftIcon={notificationsEnabled ? "bell" : "bell-slash"}
+              leftIcon={notificationsEnabled ? faBell : faBellSlash}
               label={
                 notificationsEnabled
                   ? i18n.t("pushNotificationsEnabled")
@@ -145,53 +156,36 @@ const Settings = () => {
               }
               onPress={notificationsEnabled ? undefined : askToTakeToSettings}
             >
-              {!notificationsEnabled && (
-                <FontAwesome
-                  name="chevron-right"
-                  style={{ color: theme.colors.textAlt }}
-                />
-              )}
+              {!notificationsEnabled && <IconButton icon={faChevronRight} />}
             </InputRowButton>
             <InputRowButton
-              leftIcon="hourglass-half"
+              leftIcon={faHourglassHalf}
               label={i18n.t("viewHours")}
               onPress={() => navigation.navigate("Time Reports")}
             >
-              <FontAwesome
-                name="chevron-right"
-                style={{ color: theme.colors.textAlt }}
-              />
+              <IconButton icon={faChevronRight} />
             </InputRowButton>
             <InputRowButton
-              leftIcon="undo"
+              leftIcon={faUndo}
               label={i18n.t("recoverContacts")}
               onPress={() => navigation.navigate("Recover Contacts")}
             >
-              <FontAwesome
-                name="chevron-right"
-                style={{ color: theme.colors.textAlt }}
-              />
+              <IconButton icon={faChevronRight} />
             </InputRowButton>
             <InputRowButton
-              leftIcon="tools"
+              leftIcon={faTools}
               label={i18n.t("restartOnboarding")}
               onPress={resetToOnboarding}
             >
-              <FontAwesome
-                style={{ color: theme.colors.textAlt }}
-                name="chevron-right"
-              />
+              <IconButton icon={faChevronRight} />
             </InputRowButton>
             <InputRowButton
-              leftIcon="download"
+              leftIcon={faDownload}
               label={i18n.t("checkForUpdate")}
               onPress={fetchUpdate}
               lastInSection
             >
-              <FontAwesome
-                style={{ color: theme.colors.textAlt }}
-                name="chevron-right"
-              />
+              <IconButton icon={faChevronRight} />
             </InputRowButton>
           </Section>
         </View>
@@ -209,7 +203,7 @@ const Settings = () => {
           </Text>
           <Section>
             <InputRowButton
-              leftIcon="heart"
+              leftIcon={faHeart}
               label={
                 Platform.OS === "android"
                   ? i18n.t("rateJWTimeOnPlayStore")
@@ -225,13 +219,10 @@ const Settings = () => {
                 }
               }}
             >
-              <FontAwesome
-                name="chevron-right"
-                style={{ color: theme.colors.textAlt }}
-              />
+              <IconButton icon={faChevronRight} />
             </InputRowButton>
             <InputRowButton
-              leftIcon="bug"
+              leftIcon={faBug}
               label={i18n.t("bugReport")}
               onPress={async () => {
                 const email = "levi.wilkerson@proton.me";
@@ -251,34 +242,15 @@ const Settings = () => {
                 }
               }}
             >
-              <FontAwesome
-                name="chevron-right"
-                style={{ color: theme.colors.textAlt }}
-              />
+              <IconButton icon={faChevronRight} />
             </InputRowButton>
-            {/* <InputRowButton
-              leftIcon="gift"
-              label={i18n.t("buyMeACoffee")}
-              onPress={() =>
-                Linking.openURL("https://www.buymeacoffee.com/leviwilkerson")
-              }
-              lastInSection
-            >
-              <FontAwesome
-                style={{ color: theme.colors.textAlt }}
-                name="chevron-right"
-              />
-            </InputRowButton> */}
             <InputRowButton
-              leftIcon="file-alt"
+              leftIcon={faFileContract}
               label={i18n.t("privacyPolicy")}
               onPress={() => Linking.openURL(links.privacyPolicy)}
               lastInSection
             >
-              <FontAwesome
-                style={{ color: theme.colors.textAlt }}
-                name="chevron-right"
-              />
+              <IconButton icon={faChevronRight} />
             </InputRowButton>
           </Section>
         </View>

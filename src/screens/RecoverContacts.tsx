@@ -1,9 +1,8 @@
-import { Alert, ScrollView, TouchableOpacity, View } from "react-native";
+import { Alert, ScrollView, View } from "react-native";
 import Text from "../components/MyText";
 import useTheme from "../contexts/theme";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import useContacts from "../stores/contactsStore";
-import { FontAwesome } from "@expo/vector-icons";
 import moment from "moment";
 import Card from "../components/Card";
 import useConversations from "../stores/conversationStore";
@@ -11,6 +10,8 @@ import { FlashList } from "@shopify/flash-list";
 import i18n from "../lib/locales";
 import { useMemo } from "react";
 import Wrapper from "../components/Wrapper";
+import IconButton from "../components/IconButton";
+import { faTrash, faUndo } from "@fortawesome/free-solid-svg-icons";
 
 const RecoverContacts = () => {
   const theme = useTheme();
@@ -98,9 +99,9 @@ const RecoverContacts = () => {
                             color: theme.colors.textAlt,
                           }}
                         >
-                          {`${i18n.t("created")}${moment(item.createdAt).format(
-                            "LL"
-                          )}`}
+                          {`${i18n.t("created")} ${moment(
+                            item.createdAt
+                          ).format("LL")}`}
                         </Text>
                         <View
                           style={{
@@ -109,22 +110,15 @@ const RecoverContacts = () => {
                             alignItems: "center",
                           }}
                         >
-                          <TouchableOpacity
+                          <IconButton
                             onPress={() => recoverContact(item.id)}
-                          >
-                            <FontAwesome
-                              style={{
-                                fontSize: 16,
-                                color: theme.colors.textAlt,
-                              }}
-                              name="undo"
-                            />
-                          </TouchableOpacity>
+                            icon={faUndo}
+                          />
                           <Text>{item.name}</Text>
                         </View>
                       </View>
-                      <TouchableOpacity
-                        style={{ flexDirection: "row", gap: 40 }}
+                      <IconButton
+                        icon={faTrash}
                         onPress={() =>
                           Alert.alert(
                             i18n.t("permanentlyDelete"),
@@ -144,12 +138,7 @@ const RecoverContacts = () => {
                             ]
                           )
                         }
-                      >
-                        <FontAwesome
-                          name="trash"
-                          style={{ fontSize: 16, color: theme.colors.textAlt }}
-                        />
-                      </TouchableOpacity>
+                      />
                     </Card>
                   </View>
                 )}

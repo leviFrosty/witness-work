@@ -1,40 +1,52 @@
-import { TouchableHighlight } from "react-native";
 import Text from "./MyText";
 import useTheme from "../contexts/theme";
-
+import Button from "./Button";
+import { ThemeSizes } from "../types/theme";
+import React, { PropsWithChildren } from "react";
 interface Props {
-  action: () => unknown;
-  label: string;
+  onPress: () => unknown;
   disabled?: boolean;
+  size?: ThemeSizes;
 }
 
-const ActionButton = ({ action, label, disabled }: Props) => {
+const ActionButton: React.FC<PropsWithChildren<Props>> = ({
+  onPress,
+  children,
+  disabled,
+  size = "lg",
+}) => {
   const theme = useTheme();
+
   return (
-    <TouchableHighlight
+    <Button
       style={{
         backgroundColor: disabled
           ? theme.colors.accentAlt
           : theme.colors.accent,
-        borderRadius: 15,
+        borderRadius: theme.numbers.borderRadiusSm,
         paddingVertical: 12,
+        paddingHorizontal: 24,
         flexDirection: "row",
         alignItems: "center",
         justifyContent: "center",
       }}
-      onPress={action}
+      onPress={onPress}
       disabled={disabled}
     >
-      <Text
-        style={{
-          fontSize: 24,
-          color: theme.colors.textInverse,
-          fontFamily: "Inter_700Bold",
-        }}
-      >
-        {label}
-      </Text>
-    </TouchableHighlight>
+      {typeof children === "string" ? (
+        <Text
+          style={{
+            fontSize: theme.fontSize(size),
+            color: theme.colors.textInverse,
+            fontFamily: "Inter_700Bold",
+          }}
+        >
+          {children}
+        </Text>
+      ) : (
+        children
+      )}
+    </Button>
   );
 };
 

@@ -211,5 +211,16 @@
   "loadingSlowly_description": "Riprova più tardi quando sei connesso al Wi-Fi o quando hai una connessione Internet stabile.",
   "quit": "Esentato",
   "goHome": "Andare a casa",
-  "timeNeeded": "Aggiungi ore o minuti qui sopra per inviare l'inserimento dell'orario."
+  "timeNeeded": "Aggiungi ore o minuti qui sopra per inviare l'inserimento dell'orario.",
+  "editConversation": "Modifica conversazione",
+  "conversationHistory": "Cronologia delle conversazioni",
+  "copied": "Copiato!",
+  "archive": "Archivio",
+  "archiveContact": "Contatto archivio",
+  "archiveContact_question": "Contatto archivio?",
+  "archiveContact_description": "L'archiviazione di questo contatto lo eliminerà. Puoi recuperarlo dalle impostazioni.",
+  "tapToAddAConversation": "Tocca qui per aggiungere una conversazione o premi il pulsante + in alto.",
+  "todaysConversations": "Conversazioni di oggi",
+  "upcomingConversations": "Prossime conversazioni",
+  "noTopicProvided": "Nessun argomento fornito."
 }

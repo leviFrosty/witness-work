@@ -369,9 +369,8 @@ const ContactForm = ({ route, navigation }: Props) => {
                   });
                   return;
                 }
-
                 navigation.replace("Conversation Form", {
-                  id: (params as { id: string }).id,
+                  contactId: (params as { id: string }).id,
                 });
               }}
             >

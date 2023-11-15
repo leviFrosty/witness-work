@@ -1,5 +1,5 @@
 import { useCallback } from "react";
-import { Pressable, View, Platform } from "react-native";
+import { View, Platform } from "react-native";
 import Text from "../components/MyText";
 import * as Notifications from "expo-notifications";
 import * as Crypto from "expo-crypto";
@@ -15,7 +15,6 @@ import useTheme from "../contexts/theme";
 import Divider from "../components/Divider";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import Section from "../components/inputs/Section";
-import { FontAwesome } from "@expo/vector-icons";
 import { Conversation, Notification } from "../types/conversation";
 import InputRowContainer from "../components/inputs/InputRowContainer";
 import RNDateTimePicker, {
@@ -31,6 +30,10 @@ import AndroidDateTimePicker from "../components/AndroidDateTimePicker";
 import Checkbox from "expo-checkbox";
 import Select from "../components/Select";
 import Wrapper from "../components/Wrapper";
+import IconButton from "../components/IconButton";
+import { faIdBadge } from "@fortawesome/free-solid-svg-icons";
+import _ from "lodash";
+import Button from "../components/Button";
 
 type Props = NativeStackScreenProps<RootStackParamList, "Conversation Form">;
 
@@ -41,9 +44,7 @@ const AssignmentSection = ({
   errors,
 }: {
   selectedContact: Contact | undefined;
-  set_selectedContactId: React.Dispatch<
-    React.SetStateAction<string | undefined>
-  >;
+  set_selectedContactId: React.Dispatch<React.SetStateAction<string>>;
   errors: Record<string, string>;
   navigation: NativeStackNavigationProp<
     RootStackParamList,
@@ -74,10 +75,7 @@ const AssignmentSection = ({
                 gap: 10,
               }}
             >
-              <FontAwesome
-                name="id-badge"
-                style={{ fontSize: 16, color: theme.colors.textAlt }}
-              />
+              <IconButton icon={faIdBadge} />
               <Text style={{ fontFamily: "Inter_600SemiBold", fontSize: 16 }}>
                 {selectedContact.name}
               </Text>
@@ -85,7 +83,7 @@ const AssignmentSection = ({
           ) : (
             <Text>{i18n.t("noContactAssigned")}</Text>
           )}
-          <Pressable
+          <Button
             onPress={() =>
               selectedContact
                 ? set_selectedContactId("")
@@ -100,7 +98,7 @@ const AssignmentSection = ({
             >
               {selectedContact ? i18n.t("unassign") : i18n.t("assign")}
             </Text>
-          </Pressable>
+          </Button>
         </View>
         {errors["contact"] && (
           <Text
@@ -122,8 +120,18 @@ const ConversationForm = ({ route, navigation }: Props) => {
   const theme = useTheme();
   const { params } = route;
   const { contacts } = useContacts();
-  const [_selectedContactId, set_selectedContactId] = useState<string>();
-  const assignedContactId = _selectedContactId ?? params.id;
+  const { conversations, addConversation, updateConversation } =
+    useConversations();
+
+  const conversationToEditViaProps = params.conversationToEditId;
+  const conversationToUpdate = conversationToEditViaProps
+    ? [...conversations].find((c) => c.id === conversationToEditViaProps)
+    : undefined;
+
+  const [assignedContactId, set_selectedContactId] = useState<string>(
+    params.contactId || conversationToUpdate?.contact.id || ""
+  );
+
   const [errors, setErrors] = useState<Record<string, string>>({
     contact: "",
   });
@@ -136,20 +144,43 @@ const ConversationForm = ({ route, navigation }: Props) => {
     unit: "hours",
   });
 
-  const [conversation, setConversation] = useState<Conversation>({
-    id: Crypto.randomUUID(),
-    contact: {
-      id: assignedContactId,
-    },
-    date: new Date(),
-    note: "",
-    followUp: {
+  const getConversationDefaultValue = (): Conversation => {
+    if (conversationToUpdate) {
+      return {
+        id: conversationToUpdate.id,
+        contact: {
+          id: conversationToUpdate.contact.id,
+        },
+        date: new Date(conversationToUpdate.date),
+        isBibleStudy: conversationToUpdate.isBibleStudy,
+        followUp: {
+          topic: conversationToUpdate.followUp?.topic,
+          date: new Date(conversationToUpdate.followUp?.date || new Date()),
+          notifyMe: conversationToUpdate.followUp?.notifyMe || false,
+          notifications: conversationToUpdate.followUp?.notifications,
+        },
+        note: conversationToUpdate.note,
+      };
+    }
+    return {
+      id: Crypto.randomUUID(),
+      contact: {
+        id: assignedContactId || "",
+      },
       date: new Date(),
-      topic: "",
-      notifyMe: false,
-    },
-    isBibleStudy: false,
-  });
+      note: "",
+      followUp: {
+        date: new Date(),
+        topic: "",
+        notifyMe: false,
+      },
+      isBibleStudy: false,
+    };
+  };
+
+  const [conversation, setConversation] = useState<Conversation>(
+    getConversationDefaultValue()
+  );
 
   const setNotifyMe = (notifyMe: boolean) => {
     setConversation({
@@ -162,7 +193,6 @@ const ConversationForm = ({ route, navigation }: Props) => {
   };
 
   const selectedContact = contacts.find((c) => c.id === assignedContactId);
-  const { addConversation } = useConversations();
   const [notificationsAllowed, setNotificationsAllowed] =
     useState<boolean>(false);
 
@@ -218,8 +248,29 @@ const ConversationForm = ({ route, navigation }: Props) => {
         return resolve(false);
       }
 
+      const cancelExistingNotification = () => {
+        conversationToUpdate?.followUp?.notifications?.forEach(
+          async ({ id }) => {
+            await Notifications.cancelScheduledNotificationAsync(id);
+          }
+        );
+      };
+
       const scheduleNotifications = async () => {
         if (!conversation.followUp) {
+          return [];
+        }
+
+        const notificationChanged = !_.isEqual(
+          conversationToUpdate?.followUp,
+          conversation.followUp
+        );
+
+        if (notificationChanged) {
+          cancelExistingNotification();
+        }
+
+        if (!conversation.followUp.notifyMe) {
           return [];
         }
 
@@ -278,17 +329,19 @@ const ConversationForm = ({ route, navigation }: Props) => {
         return notifications;
       };
 
-      if (conversation.followUp?.notifyMe && notificationsAllowed) {
+      if (notificationsAllowed) {
         scheduleNotifications()
           .then((notifications) => {
-            const conversationWithIds: Conversation = {
+            const conversationWithNotificationIds: Conversation = {
               ...conversation,
               followUp: {
                 ...conversation.followUp!,
                 notifications,
               },
             };
-            addConversation(conversationWithIds);
+            params.conversationToEditId
+              ? updateConversation(conversationWithNotificationIds)
+              : addConversation(conversationWithNotificationIds);
             resolve(conversation);
           })
           .catch((error) => {
@@ -296,17 +349,22 @@ const ConversationForm = ({ route, navigation }: Props) => {
             resolve(false);
           });
       } else {
-        addConversation(conversation);
+        params.conversationToEditId
+          ? updateConversation(conversation)
+          : addConversation(conversation);
         resolve(conversation);
       }
     });
   }, [
     addConversation,
     conversation,
+    conversationToUpdate?.followUp,
     notificationsAllowed,
     notifyMeOffset.amount,
     notifyMeOffset.unit,
+    params.conversationToEditId,
     selectedContact,
+    updateConversation,
     validate,
   ]);
 
@@ -326,9 +384,8 @@ const ConversationForm = ({ route, navigation }: Props) => {
                 right: 0,
               }}
             >
-              {!params.referrer && (
-                <Pressable
-                  hitSlop={15}
+              {!params.contactId && (
+                <Button
                   onPress={async () => {
                     navigation.popToTop();
                   }}
@@ -341,18 +398,19 @@ const ConversationForm = ({ route, navigation }: Props) => {
                   >
                     {i18n.t("skip")}
                   </Text>
-                </Pressable>
+                </Button>
               )}
-              <Pressable
-                hitSlop={15}
+              <Button
                 onPress={async () => {
                   const succeeded = await submit();
                   if (!succeeded) {
                     // Failed validation if didn't submit
                     return;
                   }
-                  if (params.referrer) {
-                    navigation.replace(params.referrer, { id: params.id });
+                  if (params.contactId || conversationToUpdate?.contact.id) {
+                    navigation.replace("Contact Details", {
+                      id: params.contactId || conversationToUpdate?.contact.id,
+                    });
                     return;
                   }
                   navigation.popToTop();
@@ -365,18 +423,18 @@ const ConversationForm = ({ route, navigation }: Props) => {
                     fontSize: 16,
                   }}
                 >
-                  {params.referrer ? i18n.t("add") : i18n.t("save")}
+                  {params.contactId ? i18n.t("add") : i18n.t("save")}
                 </Text>
-              </Pressable>
+              </Button>
             </View>
           }
         />
       ),
     });
   }, [
+    conversationToUpdate?.contact.id,
     navigation,
-    params.id,
-    params.referrer,
+    params,
     submit,
     theme.colors.text,
     theme.colors.textInverse,
@@ -391,7 +449,7 @@ const ConversationForm = ({ route, navigation }: Props) => {
     };
 
     return (
-      <Pressable
+      <Button
         style={{ flexDirection: "row", gap: 10, marginLeft: 20 }}
         onPress={() => setIsBibleStudy(!conversation.isBibleStudy)}
       >
@@ -399,7 +457,7 @@ const ConversationForm = ({ route, navigation }: Props) => {
           value={conversation.isBibleStudy}
           onValueChange={(val) => setIsBibleStudy(val)}
         />
-      </Pressable>
+      </Button>
     );
   };
 
@@ -423,7 +481,9 @@ const ConversationForm = ({ route, navigation }: Props) => {
       <Wrapper noInsets style={{ gap: 30, marginTop: 20 }}>
         <View style={{ padding: 25, paddingBottom: 0, gap: 5 }}>
           <Text style={{ fontSize: 32, fontFamily: "Inter_700Bold" }}>
-            {i18n.t("addConversation")}
+            {params?.conversationToEditId
+              ? i18n.t("editConversation")
+              : i18n.t("addConversation")}
           </Text>
           <Text style={{ color: theme.colors.textAlt, fontSize: 12 }}>
             {i18n.t("addConversation_description")}
@@ -460,6 +520,7 @@ const ConversationForm = ({ route, navigation }: Props) => {
             placeholder={i18n.t("note_placeholder")}
             textInputProps={{
               multiline: true,
+              defaultValue: conversation.note,
               textAlign: "left",
               returnKeyType: "default",
               onChangeText: (note: string) =>
@@ -499,6 +560,7 @@ const ConversationForm = ({ route, navigation }: Props) => {
             label={i18n.t("topic")}
             placeholder={i18n.t("topic_placeholder")}
             textInputProps={{
+              defaultValue: conversation.followUp?.topic,
               returnKeyType: "default",
               onChangeText: (topic: string) =>
                 setConversation({

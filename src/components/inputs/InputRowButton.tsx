@@ -1,21 +1,18 @@
 import React, { PropsWithChildren, ReactNode } from "react";
-import {
-  GestureResponderEvent,
-  TouchableOpacity,
-  ViewStyle,
-  View,
-} from "react-native";
+import { GestureResponderEvent, ViewStyle, View } from "react-native";
 import useTheme from "../../contexts/theme";
 import { rowPaddingVertical } from "../../constants/Inputs";
 import Text from "../MyText";
-import { FontAwesome5 } from "@expo/vector-icons";
+import Button from "../Button";
+import IconButton from "../IconButton";
+import { IconProp } from "@fortawesome/fontawesome-svg-core";
 
 interface Props {
   children?: ReactNode;
   lastInSection?: boolean;
   noHorizontalPadding?: boolean;
   label?: string;
-  leftIcon?: string;
+  leftIcon?: IconProp;
   justifyContent?:
     | "flex-start"
     | "flex-end"
@@ -41,7 +38,8 @@ const InputRowButton: React.FC<PropsWithChildren<Props>> = ({
   const theme = useTheme();
 
   return (
-    <TouchableOpacity
+    <Button
+      noTransform
       style={{
         flexDirection: "row",
         borderColor: theme.colors.border,
@@ -55,15 +53,9 @@ const InputRowButton: React.FC<PropsWithChildren<Props>> = ({
         ...style,
       }}
       onPress={onPress}
-      hitSlop={20}
     >
       <View style={{ flexDirection: "row", gap: 8, alignItems: "center" }}>
-        {leftIcon && (
-          <FontAwesome5
-            name={leftIcon}
-            style={{ color: theme.colors.textAlt }}
-          />
-        )}
+        {leftIcon && <IconButton icon={leftIcon} />}
         <Text
           style={{ fontFamily: "Inter_600SemiBold", flexDirection: "column" }}
         >
@@ -71,7 +63,7 @@ const InputRowButton: React.FC<PropsWithChildren<Props>> = ({
         </Text>
       </View>
       {children}
-    </TouchableOpacity>
+    </Button>
   );
 };
 

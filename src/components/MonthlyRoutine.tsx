@@ -1,6 +1,5 @@
 import { Pressable, View } from "react-native";
 import moment from "moment";
-import { FontAwesome } from "@expo/vector-icons";
 import useTheme from "../contexts/theme";
 import Card from "./Card";
 import Text from "./MyText";
@@ -11,6 +10,8 @@ import { usePreferences } from "../stores/preferences";
 import { useNavigation } from "@react-navigation/native";
 import { RootStackNavigation } from "../stacks/RootStack";
 import i18n from "../lib/locales";
+import IconButton from "./IconButton";
+import { faCheck, faMinus, faTimes } from "@fortawesome/free-solid-svg-icons";
 
 const Month = ({ month }: { month: number }) => {
   const theme = useTheme();
@@ -50,8 +51,8 @@ const Month = ({ month }: { month: number }) => {
           alignItems: "center",
         }}
       >
-        <FontAwesome
-          style={{
+        <IconButton
+          iconStyle={{
             color: wentOutThisMonth
               ? theme.colors.accent
               : hasNotGoneOutTheCurrentMonth ||
@@ -59,14 +60,13 @@ const Month = ({ month }: { month: number }) => {
                 monthWasBeforeInstalled
               ? theme.colors.textAlt
               : theme.colors.error,
-            fontSize: 15,
           }}
-          name={
+          icon={
             !didNotGoOutInService
-              ? "check"
+              ? faCheck
               : monthWasBeforeInstalled
-              ? "minus"
-              : "times"
+              ? faMinus
+              : faTimes
           }
         />
       </View>

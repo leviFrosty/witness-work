@@ -1,4 +1,4 @@
-import { View, ScrollView, TouchableOpacity } from "react-native";
+import { View, ScrollView } from "react-native";
 import LottieView from "lottie-react-native";
 import Text from "../components/MyText";
 import { useEffect, useRef, useState } from "react";
@@ -10,6 +10,7 @@ import ActionButton from "../components/ActionButton";
 import { useNavigation } from "@react-navigation/native";
 import { RootStackNavigation } from "../stacks/RootStack";
 import Wrapper from "../components/Wrapper";
+import Button from "../components/Button";
 
 const Update = () => {
   const theme = useTheme();
@@ -70,14 +71,14 @@ const Update = () => {
               <Text style={{ fontSize: 12, color: theme.colors.textAlt }}>
                 {i18n.t("loadingSlowly_description")}
               </Text>
-              <TouchableOpacity>
+              <Button>
                 <Text
                   onPress={() => navigation.replace("Home")}
                   style={{ fontSize: 14, textDecorationLine: "underline" }}
                 >
                   {i18n.t("cancel")}
                 </Text>
-              </TouchableOpacity>
+              </Button>
             </View>
           )}
         </View>
@@ -124,10 +125,9 @@ const Update = () => {
               </Text>
             )}
           </View>
-          <ActionButton
-            action={() => navigation.replace("Home")}
-            label={i18n.t("goHome")}
-          />
+          <ActionButton onPress={() => navigation.replace("Home")}>
+            {i18n.t("goHome")}
+          </ActionButton>
         </View>
       )}
     </Wrapper>

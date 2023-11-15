@@ -24,7 +24,7 @@ const StepTwo = ({ goBack, goNext }: Props) => {
         </Text>
         <PublisherTypeSelector />
       </View>
-      <ActionButton action={goNext} label={i18n.t("continue")} />
+      <ActionButton onPress={goNext}>{i18n.t("continue")}</ActionButton>
     </Wrapper>
   );
 };

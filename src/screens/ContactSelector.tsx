@@ -45,11 +45,13 @@ const ContactSelector = () => {
         >
           <FlashList
             data={searchResults}
-            renderItem={({ item }) => (
+            renderItem={({ item: contact }) => (
               <ContactRow
-                contact={item}
+                contact={contact}
                 onPress={() =>
-                  navigation.replace("Conversation Form", { id: item.id })
+                  navigation.replace("Conversation Form", {
+                    contactId: contact.id,
+                  })
                 }
               />
             )}

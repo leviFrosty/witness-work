@@ -1,4 +1,4 @@
-import { View, TouchableOpacity } from "react-native";
+import { View } from "react-native";
 import { useServiceReport } from "../stores/serviceReport";
 import useTheme from "../contexts/theme";
 import ProgressBar from "./ProgressBar";
@@ -14,15 +14,19 @@ import Card from "./Card";
 import Text from "./MyText";
 import { useNavigation } from "@react-navigation/native";
 import { RootStackNavigation } from "../stacks/RootStack";
-import { useEffect, useMemo, useState, useCallback, useRef } from "react";
+import { useEffect, useMemo, useState, useCallback } from "react";
 import { getTotalStudiesCount } from "../lib/contacts";
 import useContacts from "../stores/contactsStore";
-import { FontAwesome } from "@expo/vector-icons";
 import moment from "moment";
 import LottieView from "lottie-react-native";
 import * as Crypto from "expo-crypto";
 import i18n from "../lib/locales";
 import useConversations from "../stores/conversationStore";
+import ActionButton from "./ActionButton";
+import IconButton from "./IconButton";
+import { faChevronRight } from "@fortawesome/free-solid-svg-icons";
+import { faSquare } from "@fortawesome/free-regular-svg-icons";
+import Button from "./Button";
 
 const HourEntryCard = () => {
   const theme = useTheme();
@@ -97,7 +101,7 @@ const HourEntryCard = () => {
 
   return (
     <View>
-      <TouchableOpacity
+      <Button
         style={{
           flexDirection: "column",
           paddingHorizontal: 10,
@@ -130,18 +134,23 @@ const HourEntryCard = () => {
             <Text style={{ fontSize: 32, fontFamily: "Inter_700Bold" }}>
               {hours}
             </Text>
-            <Text
+            <View
               style={{
                 position: "absolute",
                 right: -25,
                 bottom: 0,
-                fontSize: 12,
-                color: theme.colors.textAlt,
-                fontFamily: "Inter_600SemiBold",
               }}
             >
-              /{goalHours}
-            </Text>
+              <Text
+                style={{
+                  fontSize: 12,
+                  color: theme.colors.textAlt,
+                  fontFamily: "Inter_600SemiBold",
+                }}
+              >
+                /{goalHours}
+              </Text>
+            </View>
           </View>
           <Text style={{ fontFamily: "Inter_700Bold", maxWidth: 200 }}>
             {encouragementPhrase}
@@ -162,40 +171,18 @@ const HourEntryCard = () => {
             {i18n.t("goalBasedOnPublisherType")}
           </Text>
         </View>
-        <FontAwesome
+        <IconButton
           style={{
             position: "absolute",
             top: "50%",
             right: 5,
-            fontSize: 15,
-            color: theme.colors.textAlt,
           }}
-          name="chevron-right"
+          icon={faChevronRight}
         />
-      </TouchableOpacity>
-      <TouchableOpacity
-        style={{
-          flexDirection: "column",
-          paddingHorizontal: 10,
-          paddingVertical: 10,
-          borderBottomLeftRadius: theme.numbers.borderRadiusSm,
-          borderBottomRightRadius: theme.numbers.borderRadiusSm,
-          backgroundColor: theme.colors.accent,
-          gap: 5,
-        }}
-        onPress={() => navigation.navigate("Add Time")}
-      >
-        <Text
-          style={{
-            textAlign: "center",
-            fontFamily: "Inter_700Bold",
-            fontSize: 18,
-            color: theme.colors.textInverse,
-          }}
-        >
-          {i18n.t("addTime")}
-        </Text>
-      </TouchableOpacity>
+      </Button>
+      <ActionButton onPress={() => navigation.navigate("Add Time")}>
+        {i18n.t("addTime")}
+      </ActionButton>
     </View>
   );
 };
@@ -293,7 +280,6 @@ const RightCard = () => {
 const CheckMarkAnimationComponent = ({ undoId }: { undoId?: string }) => {
   const theme = useTheme();
   const { deleteServiceReport } = useServiceReport();
-  const ref = useRef<LottieView>(null);
 
   return (
     <View
@@ -305,9 +291,8 @@ const CheckMarkAnimationComponent = ({ undoId }: { undoId?: string }) => {
       }}
     >
       <LottieView
-        onLayout={() => ref.current?.play()}
+        autoPlay={true}
         loop={false}
-        ref={ref}
         style={{
           width: 110,
           height: 110,
@@ -317,7 +302,7 @@ const CheckMarkAnimationComponent = ({ undoId }: { undoId?: string }) => {
         source={require("./../assets/lottie/checkMark.json")}
       />
       {undoId && (
-        <TouchableOpacity onPress={() => deleteServiceReport(undoId)}>
+        <Button onPress={() => deleteServiceReport(undoId)}>
           <Text
             style={{
               fontSize: 10,
@@ -327,7 +312,7 @@ const CheckMarkAnimationComponent = ({ undoId }: { undoId?: string }) => {
           >
             {i18n.t("undo")}
           </Text>
-        </TouchableOpacity>
+        </Button>
       )}
     </View>
   );
@@ -371,7 +356,7 @@ const StandardPublisherTimeEntry = () => {
           <CheckMarkAnimationComponent undoId={undoId} />
         </View>
       ) : (
-        <TouchableOpacity
+        <Button
           style={{
             backgroundColor: hasGoneOutInServiceThisMonth
               ? theme.colors.backgroundLighter
@@ -385,9 +370,10 @@ const StandardPublisherTimeEntry = () => {
           onPress={handleSubmitDidService}
         >
           <View style={{ flexDirection: "row", gap: 10, alignItems: "center" }}>
-            <FontAwesome
-              name="square-o"
-              style={{ color: theme.colors.textInverse, fontSize: 25 }}
+            <IconButton
+              icon={faSquare}
+              size="xl"
+              iconStyle={{ color: theme.colors.textInverse }}
             />
             <Text
               style={{
@@ -399,7 +385,7 @@ const StandardPublisherTimeEntry = () => {
               {i18n.t("sharedTheGoodNews")}
             </Text>
           </View>
-        </TouchableOpacity>
+        </Button>
       )}
     </View>
   );
@@ -421,9 +407,7 @@ const ServiceReport = () => {
           <View style={{ flexDirection: "column", gap: 5, flexGrow: 1 }}>
             <View style={{ flexDirection: "row" }}>
               {publisher !== "publisher" ? (
-                <TouchableOpacity
-                  onPress={() => navigation.navigate("Time Reports")}
-                >
+                <Button onPress={() => navigation.navigate("Time Reports")}>
                   <Text
                     style={{
                       color: theme.colors.textAlt,
@@ -433,7 +417,7 @@ const ServiceReport = () => {
                   >
                     {i18n.t("viewHours")}
                   </Text>
-                </TouchableOpacity>
+                </Button>
               ) : (
                 <Text
                   style={{

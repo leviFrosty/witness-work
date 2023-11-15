@@ -1,4 +1,4 @@
-import { Platform, View, TouchableOpacity } from "react-native";
+import { Platform, View } from "react-native";
 import Text from "./MyText";
 import moment from "moment";
 import {
@@ -6,6 +6,7 @@ import {
   DateTimePickerEvent,
 } from "@react-native-community/datetimepicker";
 import i18n from "../lib/locales";
+import Button from "./Button";
 
 type AndroidMode = "date" | "time";
 
@@ -49,7 +50,7 @@ const AndroidDateTimePicker = ({
         {moment(value).format(timeAndDate ? "LLL" : "LL")}
       </Text>
       <View style={{ flexDirection: "row", gap: 7 }}>
-        <TouchableOpacity
+        <Button
           onPress={() => {
             DateTimePickerAndroid.open({
               mode,
@@ -67,9 +68,9 @@ const AndroidDateTimePicker = ({
           >
             {i18n.t("selectDate")}
           </Text>
-        </TouchableOpacity>
+        </Button>
         {timeAndDate && (
-          <TouchableOpacity
+          <Button
             onPress={() => {
               DateTimePickerAndroid.open({
                 mode: "time",
@@ -87,7 +88,7 @@ const AndroidDateTimePicker = ({
             >
               {i18n.t("selectTime")}
             </Text>
-          </TouchableOpacity>
+          </Button>
         )}
       </View>
     </View>

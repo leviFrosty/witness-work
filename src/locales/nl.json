@@ -211,5 +211,16 @@
   "loadingSlowly_description": "Probeer het later opnieuw als u verbonden bent met WIFI of als u stabiel internet heeft.",
   "quit": "Ontslag nemen",
   "goHome": "Ga naar huis",
-  "timeNeeded": "Voeg hierboven uren of minuten toe om uw tijdsinvoer in te dienen."
+  "timeNeeded": "Voeg hierboven uren of minuten toe om uw tijdsinvoer in te dienen.",
+  "editConversation": "Gesprek bewerken",
+  "conversationHistory": "Gespreksgeschiedenis",
+  "copied": "Gekopieerd!",
+  "archive": "Archief",
+  "archiveContact": "Contactpersoon archiveren",
+  "archiveContact_question": "Contact archiveren?",
+  "archiveContact_description": "Als u dit contact archiveert, wordt het verwijderd. U kunt het herstellen via de instellingen.",
+  "tapToAddAConversation": "Tik hier om een gesprek toe te voegen, of druk op de + knop hierboven.",
+  "todaysConversations": "De gesprekken van vandaag",
+  "upcomingConversations": "Aankomende gesprekken",
+  "noTopicProvided": "Geen onderwerp opgegeven."
 }

@@ -1,8 +1,10 @@
-import { View, TouchableOpacity } from "react-native";
+import { View } from "react-native";
 import { styles } from "./Onboarding.styles";
-import { FontAwesome } from "@expo/vector-icons";
 import Text from "../MyText";
 import i18n from "../../lib/locales";
+import IconButton from "../IconButton";
+import { faChevronLeft } from "@fortawesome/free-solid-svg-icons";
+import Button from "../Button";
 
 interface Props {
   noActions?: boolean;
@@ -13,9 +15,9 @@ const OnboardingNav = ({ noActions, goBack }: Props) => {
   return (
     <View style={styles.navContainer}>
       {!noActions ? (
-        <TouchableOpacity hitSlop={20} style={styles.navBack} onPress={goBack}>
-          <FontAwesome style={styles.chevronLeft} name="chevron-left" />
-        </TouchableOpacity>
+        <Button style={styles.navBack} onPress={goBack}>
+          <IconButton icon={faChevronLeft} />
+        </Button>
       ) : null}
       <Text style={styles.navTitle}>{i18n.t("jwTime")}</Text>
     </View>

@@ -1,14 +1,23 @@
-import { ColorValue, View } from "react-native";
+import {
+  ColorValue,
+  StyleProp,
+  View,
+  ViewStyle,
+  TextStyle,
+} from "react-native";
 import Text from "./MyText";
 import Card from "./Card";
-import { PropsWithChildren } from "react";
+import { PropsWithChildren, ReactNode } from "react";
 import useTheme from "../contexts/theme";
+import Divider from "./Divider";
 
 interface Props {
-  title: string;
+  title: string | ReactNode;
   titlePosition?: "inside";
   titleColor?: ColorValue;
   noPadding?: boolean;
+  style?: StyleProp<ViewStyle>;
+  titleStyle?: TextStyle;
 }
 
 const CardWithTitle: React.FC<PropsWithChildren<Props>> = ({
@@ -17,18 +26,25 @@ const CardWithTitle: React.FC<PropsWithChildren<Props>> = ({
   titlePosition,
   titleColor,
   noPadding,
+  style,
+  titleStyle,
 }) => {
   const theme = useTheme();
   return (
-    <View style={{ gap: 10 }}>
-      {!titlePosition && (
+    <View style={[[{ gap: 10 }], [style]]}>
+      {!titlePosition && typeof title === "string" && (
         <Text
-          style={{
-            fontSize: 14,
-            fontFamily: "Inter_600SemiBold",
-            marginLeft: 5,
-            color: titleColor || theme.colors.text,
-          }}
+          style={[
+            [
+              {
+                fontSize: 14,
+                fontFamily: "Inter_600SemiBold",
+                marginLeft: 5,
+                color: titleColor || theme.colors.text,
+              },
+            ],
+            [titleStyle],
+          ]}
         >
           {title}
         </Text>
@@ -38,16 +54,26 @@ const CardWithTitle: React.FC<PropsWithChildren<Props>> = ({
           noPadding ? { paddingVertical: 0, paddingHorizontal: 0 } : undefined
         }
       >
-        {titlePosition === "inside" && (
-          <Text
-            style={{
-              fontSize: 14,
-              fontFamily: "Inter_600SemiBold",
-              marginLeft: 5,
-            }}
-          >
-            {title}
-          </Text>
+        {titlePosition === "inside" && typeof title === "string" ? (
+          <View style={{ gap: 10 }}>
+            <Text
+              style={[
+                [
+                  {
+                    fontSize: theme.fontSize("md"),
+                    fontFamily: "Inter_600SemiBold",
+                    color: titleColor || theme.colors.text,
+                  },
+                ],
+                [titleStyle],
+              ]}
+            >
+              {title}
+            </Text>
+            <Divider />
+          </View>
+        ) : (
+          title
         )}
         {children}
       </Card>

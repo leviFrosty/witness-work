@@ -211,5 +211,16 @@
   "loadingSlowly_description": "WIFI に接続しているか、インターネットが安定しているときに、もう一度お試しください。",
   "quit": "やめる",
   "goHome": "家に帰れ",
-  "timeNeeded": "上記に時間または分を追加して、時間エントリを送信します。"
+  "timeNeeded": "上記に時間または分を追加して、時間エントリを送信します。",
+  "editConversation": "会話を編集する",
+  "conversationHistory": "会話履歴",
+  "copied": "コピーしました！",
+  "archive": "アーカイブ",
+  "archiveContact": "アーカイブ連絡先",
+  "archiveContact_question": "アーカイブ連絡先?",
+  "archiveContact_description": "この連絡先をアーカイブすると削除されます。設定から復元できます。",
+  "tapToAddAConversation": "ここをタップして会話を追加するか、上の + ボタンを押してください。",
+  "todaysConversations": "今日の会話",
+  "upcomingConversations": "今後の会話",
+  "noTopicProvided": "トピックが提供されていません。"
 }

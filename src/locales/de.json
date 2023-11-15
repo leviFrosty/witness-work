@@ -211,5 +211,16 @@
   "loadingSlowly_description": "Versuchen Sie es später erneut, wenn eine WLAN-Verbindung besteht oder Sie über eine stabile Internetverbindung verfügen.",
   "quit": "Aufhören",
   "goHome": "Nach Hause gehen",
-  "timeNeeded": "Fügen Sie oben Stunden oder Minuten hinzu, um Ihren Zeiteintrag zu übermitteln."
+  "timeNeeded": "Fügen Sie oben Stunden oder Minuten hinzu, um Ihren Zeiteintrag zu übermitteln.",
+  "editConversation": "Konversation bearbeiten",
+  "conversationHistory": "Gesprächsverlauf",
+  "copied": "Kopiert!",
+  "archive": "Archiv",
+  "archiveContact": "Archivkontakt",
+  "archiveContact_question": "Archivkontakt?",
+  "archiveContact_description": "Durch das Archivieren dieses Kontakts wird dieser gelöscht. Sie können es über die Einstellungen wiederherstellen.",
+  "tapToAddAConversation": "Tippen Sie hier, um eine Konversation hinzuzufügen, oder klicken Sie oben auf die Schaltfläche „+“.",
+  "todaysConversations": "Heutige Gespräche",
+  "upcomingConversations": "Kommende Gespräche",
+  "noTopicProvided": "Kein Thema angegeben."
 }

@@ -211,5 +211,16 @@
   "loadingSlowly_description": "Tente novamente mais tarde quando estiver conectado ao WIFI ou quando tiver Internet estável.",
   "quit": "Desistir",
   "goHome": "Ir para casa",
-  "timeNeeded": "Adicione horas ou minutos acima para enviar sua entrada de tempo."
+  "timeNeeded": "Adicione horas ou minutos acima para enviar sua entrada de tempo.",
+  "editConversation": "Editar conversa",
+  "conversationHistory": "Histórico de conversas",
+  "copied": "Copiado!",
+  "archive": "Arquivo",
+  "archiveContact": "Arquivar contato",
+  "archiveContact_question": "Arquivar contato?",
+  "archiveContact_description": "Arquivar este contato irá excluí-lo. Você pode recuperá-lo nas configurações.",
+  "tapToAddAConversation": "Toque aqui para adicionar uma conversa ou pressione o botão + acima.",
+  "todaysConversations": "Conversas de hoje",
+  "upcomingConversations": "Próximas conversas",
+  "noTopicProvided": "Nenhum tópico fornecido."
 }

@@ -3,12 +3,13 @@ import { publisherHours } from "../constants/publisher";
 import { usePreferences } from "../stores/preferences";
 import { useServiceReport } from "../stores/serviceReport";
 import useTheme from "../contexts/theme";
-import { FontAwesome } from "@expo/vector-icons";
 import {
   calculateProgress,
   totalHoursForCurrentMonth,
 } from "../lib/serviceReport";
 import { useMemo } from "react";
+import IconButton from "./IconButton";
+import { faCaretUp } from "@fortawesome/free-solid-svg-icons";
 
 const ProgressBarSegment = ({
   backgroundColor,
@@ -101,10 +102,11 @@ const ProgressBar = () => {
       <Bad active={badProgress} />
       <Good active={goodProgress} />
       <Success active={successProgress} />
-      <View style={{ position: "absolute", left: arrowProgress, top: 8 }}>
-        <FontAwesome
-          style={{ color: arrowColor(), fontSize: 30 }}
-          name="caret-up"
+      <View style={{ position: "absolute", left: arrowProgress, top: 10 }}>
+        <IconButton
+          iconStyle={{ color: arrowColor() }}
+          size={30}
+          icon={faCaretUp}
         />
       </View>
     </View>

@@ -20,7 +20,7 @@ const StepOne = ({ goNext }: Props) => {
           <Text style={styles.title}>{i18n.t("jwTime")}</Text>
         </View>
       </View>
-      <ActionButton action={goNext} label={i18n.t("getStarted")} />
+      <ActionButton onPress={goNext}>{i18n.t("getStarted")}</ActionButton>
     </Wrapper>
   );
 };

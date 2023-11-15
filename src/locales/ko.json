@@ -211,5 +211,16 @@
   "loadingSlowly_description": "나중에 WIFI에 연결되거나 인터넷이 안정적일 때 다시 시도하세요.",
   "quit": "그만두다",
   "goHome": "집에가",
-  "timeNeeded": "시간 항목을 제출하려면 위에 시간 또는 분을 추가하세요."
+  "timeNeeded": "시간 항목을 제출하려면 위에 시간 또는 분을 추가하세요.",
+  "editConversation": "대화 편집",
+  "conversationHistory": "대화 기록",
+  "copied": "복사되었습니다!",
+  "archive": "보관소",
+  "archiveContact": "아카이브 연락처",
+  "archiveContact_question": "연락처를 보관하시겠습니까?",
+  "archiveContact_description": "이 연락처를 보관하면 삭제됩니다. 설정에서 복구할 수 있습니다.",
+  "tapToAddAConversation": "대화를 추가하려면 여기를 누르거나, 위의 + 버튼을 누르세요.",
+  "todaysConversations": "오늘의 대화",
+  "upcomingConversations": "다가오는 대화",
+  "noTopicProvided": "제공된 주제가 없습니다."
 }

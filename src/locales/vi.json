@@ -211,5 +211,16 @@
   "loadingSlowly_description": "Hãy thử lại sau khi được kết nối với WIFI hoặc khi bạn có mạng Internet ổn định.",
   "quit": "Từ bỏ",
   "goHome": "Về nhà",
-  "timeNeeded": "Thêm giờ hoặc phút ở trên để gửi mục nhập thời gian của bạn."
+  "timeNeeded": "Thêm giờ hoặc phút ở trên để gửi mục nhập thời gian của bạn.",
+  "editConversation": "Chỉnh sửa cuộc trò chuyện",
+  "conversationHistory": "Lịch sử trò chuyện",
+  "copied": "Đã sao chép!",
+  "archive": "Lưu trữ",
+  "archiveContact": "Lưu trữ liên hệ",
+  "archiveContact_question": "Lưu trữ liên hệ?",
+  "archiveContact_description": "Việc lưu trữ liên hệ này sẽ xóa liên hệ đó. Bạn có thể khôi phục nó từ cài đặt.",
+  "tapToAddAConversation": "Nhấn vào đây để thêm cuộc trò chuyện hoặc nhấn nút + ở trên.",
+  "todaysConversations": "Cuộc trò chuyện hôm nay",
+  "upcomingConversations": "Cuộc trò chuyện sắp tới",
+  "noTopicProvided": "Không có chủ đề được cung cấp."
 }

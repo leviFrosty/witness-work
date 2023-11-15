@@ -1,11 +1,13 @@
-import { Pressable, View } from "react-native";
+import { View } from "react-native";
 import useTheme from "../../contexts/theme";
 import moment from "moment";
-import { FontAwesome } from "@expo/vector-icons";
 import Text from "../MyText";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
 import { RootStackNavigation } from "../../stacks/RootStack";
+import IconButton from "../IconButton";
+import { faBars, faTimes } from "@fortawesome/free-solid-svg-icons";
+import { IconProp } from "@fortawesome/fontawesome-svg-core";
 
 type Props = {
   backgroundColor?: string;
@@ -41,14 +43,14 @@ const Header = ({
     }
   };
 
-  const iconName = () => {
+  const iconName = (): IconProp => {
     if (buttonType === "settings") {
-      return "cog";
+      return faBars;
     }
     if (buttonType === "exit") {
-      return "times";
+      return faTimes;
     }
-    return "cog";
+    return faBars;
   };
 
   return (
@@ -71,21 +73,17 @@ const Header = ({
           paddingVertical: 12,
         }}
       >
-        <Pressable
+        <IconButton
           style={{ position: "absolute", left: 0 }}
-          hitSlop={15}
           onPress={handleButtonAction}
-        >
-          <FontAwesome
-            style={{
-              color: inverseTextAndIconColor
-                ? theme.colors.textInverse
-                : theme.colors.text,
-              fontSize: 20,
-            }}
-            name={iconName()}
-          />
-        </Pressable>
+          icon={iconName()}
+          iconStyle={{
+            color: inverseTextAndIconColor
+              ? theme.colors.textInverse
+              : theme.colors.text,
+          }}
+          size={"xl"}
+        />
         <Text
           style={{
             fontSize: 18,

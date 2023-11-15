@@ -1,5 +1,4 @@
 import {
-  TouchableOpacity,
   View,
   Linking,
   Platform,
@@ -17,7 +16,6 @@ import {
 } from "@react-navigation/native-stack";
 import useContacts from "../stores/contactsStore";
 import Header from "../components/layout/Header";
-import { FontAwesome } from "@expo/vector-icons";
 import CardWithTitle from "../components/CardWithTitle";
 import { Address, Contact } from "../types/contact";
 import { FlashList } from "@shopify/flash-list";
@@ -35,10 +33,20 @@ import {
 import { Conversation } from "../types/conversation";
 import Wrapper from "../components/Wrapper";
 import { StatusBar } from "expo-status-bar";
+import IconButton from "../components/IconButton";
+import {
+  faBook,
+  faComment,
+  faEnvelope,
+  faLocationDot,
+  faPencil,
+  faPhone,
+  faPlus,
+} from "@fortawesome/free-solid-svg-icons";
+import Copyeable from "../components/Copyeable";
+import Button from "../components/Button";
 
 type Props = NativeStackScreenProps<RootStackParamList, "Contact Details">;
-
-const iconSize = 18;
 
 const PhoneRow = ({ contact }: { contact: Contact }) => {
   const theme = useTheme();
@@ -60,7 +68,11 @@ const PhoneRow = ({ contact }: { contact: Contact }) => {
           justifyContent: "space-between",
         }}
       >
-        <Text onPress={() => Linking.openURL(`tel:${phone}`)}>{phone}</Text>
+        <Copyeable
+          textProps={{ onPress: () => Linking.openURL(`tel:${phone}`) }}
+        >
+          {phone}
+        </Copyeable>
         <View
           style={{
             flexDirection: "row",
@@ -68,25 +80,16 @@ const PhoneRow = ({ contact }: { contact: Contact }) => {
             alignItems: "center",
           }}
         >
-          <FontAwesome
-            name="phone"
-            style={{
-              fontSize: iconSize,
-              color: theme.colors.accent,
-
-              // backgroundColor: "orange",
-            }}
+          <IconButton
+            icon={faPhone}
+            size="lg"
+            iconStyle={{ color: theme.colors.accent }}
             onPress={() => Linking.openURL(`tel:${phone}`)}
           />
-          <FontAwesome
-            name="comment"
-            style={{
-              fontSize: iconSize,
-              color: theme.colors.accent,
-              paddingBottom: 6,
-
-              // backgroundColor: "red",
-            }}
+          <IconButton
+            icon={faComment}
+            size="lg"
+            iconStyle={{ color: theme.colors.accent }}
             onPress={() => Linking.openURL(`sms:${phone}`)}
           />
         </View>
@@ -126,15 +129,17 @@ const Hero = ({
       >
         {i18n.t("contact")}
       </Text>
-      <Text
-        style={{
-          fontSize: 40,
-          fontFamily: "Inter_700Bold",
-          color: theme.colors.textInverse,
+      <Copyeable
+        textProps={{
+          style: {
+            fontSize: 40,
+            fontFamily: "Inter_700Bold",
+            color: theme.colors.textInverse,
+          },
         }}
       >
         {name}
-      </Text>
+      </Copyeable>
       {hasStudiedPreviously && mostRecentStudy && (
         <View style={{ flexDirection: "row", gap: 5, alignItems: "center" }}>
           <Text
@@ -150,9 +155,9 @@ const Hero = ({
                   "L"
                 )}`}
           </Text>
-          <FontAwesome
-            style={{ color: theme.colors.textInverse, fontSize: 14 }}
-            name="book"
+          <IconButton
+            icon={faBook}
+            iconStyle={{ color: theme.colors.textInverse }}
           />
         </View>
       )}
@@ -192,6 +197,16 @@ const AddressRow = ({ contact }: { contact: Contact }) => {
     Linking.openURL(url);
   };
 
+  const addressAsSingleString = Object.keys(address).reduce(
+    (prev, line, index) =>
+      !address[line as keyof Address]?.length
+        ? prev
+        : (prev += `${index !== 0 ? " " : ""}${
+            address[line as keyof Address]
+          }`),
+    ""
+  );
+
   return (
     <View style={{ gap: 10 }}>
       <Text
@@ -203,7 +218,8 @@ const AddressRow = ({ contact }: { contact: Contact }) => {
       >
         {i18n.t("address")}
       </Text>
-      <TouchableOpacity onPress={() => navigateTo(address)}>
+
+      <Button onPress={() => navigateTo(address)}>
         <View
           style={{
             flexDirection: "row",
@@ -211,22 +227,31 @@ const AddressRow = ({ contact }: { contact: Contact }) => {
             alignItems: "center",
           }}
         >
-          <View
-            style={{
-              flexDirection: "column",
-              justifyContent: "space-between",
-            }}
+          <Copyeable
+            text={addressAsSingleString}
+            onPress={() => navigateTo(address)}
           >
-            {Object.keys(address).map((key) => {
-              return <Text key={key}>{address[key as keyof Address]}</Text>;
-            })}
-          </View>
-          <FontAwesome
-            style={{ fontSize: iconSize, color: theme.colors.accent }}
-            name="map-pin"
+            <View
+              style={{
+                flexDirection: "column",
+                justifyContent: "center",
+                gap: 5,
+              }}
+            >
+              {Object.keys(address).map((key) => {
+                if (address[key as keyof Address]) {
+                  return <Text key={key}>{address[key as keyof Address]}</Text>;
+                }
+              })}
+            </View>
+          </Copyeable>
+          <IconButton
+            size="lg"
+            iconStyle={{ color: theme.colors.accent }}
+            icon={faLocationDot}
           />
         </View>
-      </TouchableOpacity>
+      </Button>
     </View>
   );
 };
@@ -257,7 +282,7 @@ const EmailRow = ({ contact }: { contact: Contact }) => {
       >
         {i18n.t("email")}
       </Text>
-      <TouchableOpacity onPress={openMail}>
+      <Button onPress={openMail}>
         <View
           style={{
             flexDirection: "row",
@@ -271,14 +296,15 @@ const EmailRow = ({ contact }: { contact: Contact }) => {
               justifyContent: "space-between",
             }}
           >
-            <Text>{email}</Text>
+            <Copyeable>{email}</Copyeable>
           </View>
-          <FontAwesome
-            style={{ fontSize: iconSize, color: theme.colors.accent }}
-            name="envelope"
+          <IconButton
+            size="lg"
+            iconStyle={{ color: theme.colors.accent }}
+            icon={faEnvelope}
           />
         </View>
-      </TouchableOpacity>
+      </Button>
     </View>
   );
 };
@@ -302,12 +328,11 @@ const DeleteContactButton = ({
 
   return (
     <View style={{ gap: 5 }}>
-      <TouchableOpacity
-        hitSlop={15}
+      <Button
         onPress={() =>
           Alert.alert(
-            "Delete Contact?",
-            "This contact will be deleted. You can restore it later from your deleted contacts.",
+            i18n.t("archiveContact_question"),
+            i18n.t("archiveContact_description"),
             [
               {
                 text: i18n.t("cancel"),
@@ -333,9 +358,9 @@ const DeleteContactButton = ({
             textDecorationLine: "underline",
           }}
         >
-          {i18n.t("deleteContact")}
+          {i18n.t("archiveContact")}
         </Text>
-      </TouchableOpacity>
+      </Button>
       <Text
         style={{
           fontSize: 10,
@@ -360,6 +385,11 @@ const ContactDetails = ({ route, navigation }: Props) => {
     [contacts, params.id]
   );
   const { conversations } = useConversations();
+
+  const highlightedConversation = useMemo(
+    () => conversations.find((c) => c.id === params.highlightedConversationId),
+    [conversations, params.highlightedConversationId]
+  );
 
   const contactConversations = useMemo(
     () => conversations.filter(({ contact: { id } }) => id === contact?.id),
@@ -387,13 +417,12 @@ const ContactDetails = ({ route, navigation }: Props) => {
               style={{
                 flexDirection: "row",
                 alignItems: "center",
-                gap: 35,
+                gap: 20,
                 position: "absolute",
                 right: 0,
               }}
             >
-              <TouchableOpacity
-                hitSlop={15}
+              <Button
                 onPress={async () => {
                   navigation.replace("Contact Form", {
                     id: params.id,
@@ -402,41 +431,33 @@ const ContactDetails = ({ route, navigation }: Props) => {
                 }}
                 style={{ flexDirection: "row", gap: 5, alignItems: "center" }}
               >
-                <FontAwesome
-                  name="pencil"
-                  style={{ fontSize: 16, color: theme.colors.textInverse }}
+                <IconButton
+                  icon={faPencil}
+                  iconStyle={{ color: theme.colors.textInverse }}
                 />
-                <Text
-                  style={{
-                    color: theme.colors.textInverse,
-                    textDecorationLine: "underline",
-                    fontSize: 16,
-                  }}
-                >
-                  {i18n.t("edit")}
-                </Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                hitSlop={15}
+              </Button>
+              <IconButton
                 onPress={async () => {
                   navigation.replace("Conversation Form", {
-                    id: params.id,
-                    referrer: "Contact Details",
+                    contactId: contact?.id,
                   });
                 }}
-              >
-                <FontAwesome
-                  name="plus"
-                  style={{ fontSize: 16, color: theme.colors.textInverse }}
-                />
-              </TouchableOpacity>
+                iconStyle={{ color: theme.colors.textInverse }}
+                icon={faPlus}
+              />
             </View>
           }
           backgroundColor={theme.colors.accent3}
         />
       ),
     });
-  }, [navigation, params.id, theme.colors.accent3, theme.colors.textInverse]);
+  }, [
+    contact?.id,
+    navigation,
+    params.id,
+    theme.colors.accent3,
+    theme.colors.textInverse,
+  ]);
 
   const isActiveBibleStudy = useMemo(
     () =>
@@ -503,8 +524,12 @@ const ContactDetails = ({ route, navigation }: Props) => {
           mostRecentStudy={mostRecentStudy}
           name={name}
         />
-        <View style={{ gap: 30, padding: 20 }}>
-          <CardWithTitle title="Details" titleColor={theme.colors.textInverse}>
+        <View style={{ gap: 30 }}>
+          <CardWithTitle
+            titlePosition="inside"
+            title="Details"
+            style={{ margin: 20 }}
+          >
             <View style={{ gap: 15 }}>
               {hasAddress && <AddressRow contact={contact} />}
               {phone && <PhoneRow contact={contact} />}
@@ -514,23 +539,53 @@ const ContactDetails = ({ route, navigation }: Props) => {
               {email && <EmailRow contact={contact} />}
             </View>
           </CardWithTitle>
-          <CardWithTitle noPadding title="Conversations History">
+          <View style={{ gap: 10 }}>
+            <Text
+              style={{
+                fontSize: 14,
+                fontFamily: "Inter_600SemiBold",
+                marginLeft: 10,
+                color: theme.colors.text,
+              }}
+            >
+              {i18n.t("conversationHistory")}
+            </Text>
             <View style={{ minHeight: 2 }}>
               <FlashList
                 renderItem={({ item }) => (
-                  <ConversationRow conversation={item} />
+                  <ConversationRow
+                    conversation={item}
+                    highlighted={item.id === highlightedConversation?.id}
+                  />
                 )}
-                ItemSeparatorComponent={() => <Divider />}
+                ItemSeparatorComponent={() => <Divider borderWidth={2} />}
                 data={contactConversationsSorted}
                 ListEmptyComponent={
-                  <Text style={{ margin: 20 }}>
-                    {i18n.t("tapPlusToAddConvo")}
-                  </Text>
+                  <View
+                    style={{
+                      backgroundColor: theme.colors.backgroundLighter,
+                      paddingVertical: 10,
+                    }}
+                  >
+                    <Button
+                      onPress={() =>
+                        navigation.replace("Conversation Form", {
+                          contactId: contact.id,
+                        })
+                      }
+                    >
+                      <Text
+                        style={{ margin: 20, textDecorationLine: "underline" }}
+                      >
+                        {i18n.t("tapToAddAConversation")}
+                      </Text>
+                    </Button>
+                  </View>
                 }
                 estimatedItemSize={70}
               />
             </View>
-          </CardWithTitle>
+          </View>
           <DeleteContactButton
             contact={contact}
             contactId={params.id}

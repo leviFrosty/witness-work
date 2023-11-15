@@ -1,5 +1,5 @@
 import { ColorSchemeName } from "react-native";
-import { Colors, Theme } from "../types/theme";
+import { Colors, Theme, ThemeSizes } from "../types/theme";
 
 export const lightModeColors = {
   text: "#373737",
@@ -54,8 +54,34 @@ export const numbers = {
   shadowOpacity: 0.1,
 };
 
+export const fonts = {
+  regular: "Inter_400Regular",
+  medium: "Inter_500Medium",
+  semiBold: "Inter_600SemiBold",
+  bold: "Inter_700Bold",
+};
+
+const fontSize = (size?: ThemeSizes) => {
+  switch (size) {
+    case "xs":
+      return 10;
+    case "sm":
+      return 12;
+    case "md":
+      return 14;
+    case "lg":
+      return 16;
+    case "xl":
+      return 18;
+    default:
+      return 14;
+  }
+};
+
 const baseTheme = {
   numbers,
+  fonts,
+  fontSize,
 };
 
 const getThemeFromColorScheme = (colorScheme: ColorSchemeName): Theme => {

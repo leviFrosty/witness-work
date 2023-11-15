@@ -4,21 +4,27 @@ import useTheme from "../contexts/theme";
 const Divider = ({
   marginVertical,
   marginHorizontal,
+  borderWidth,
   borderStyle,
+  vertical,
 }: {
   marginHorizontal?: DimensionValue;
   marginVertical?: DimensionValue;
   borderStyle?: "solid" | "dotted" | "dashed" | undefined;
+  borderWidth?: number;
+  vertical?: boolean;
 }) => {
   const theme = useTheme();
+
   return (
     <View
       style={{
-        width: "100%",
-        height: 1,
+        width: vertical ? 1 : "100%",
+        height: vertical ? "100%" : 1,
         borderColor: theme.colors.border,
-        borderWidth: borderStyle ? 1 : undefined,
+        borderWidth: borderWidth ? 1 : undefined,
         borderTopWidth: !borderStyle ? 1 : undefined,
+        borderLeftWidth: vertical ? 1 : undefined,
         borderStyle,
         marginVertical,
         marginHorizontal,

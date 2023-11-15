@@ -63,3 +63,33 @@ export const contactMostRecentStudy = ({
 
   return sortedStudies[0];
 };
+
+export const upcomingConversations = ({
+  conversations,
+  withinNextDays,
+}: {
+  conversations: Conversation[];
+  withinNextDays: number;
+}) => {
+  const now = moment();
+  const endOfDay = moment().endOf("day").hour(17); // 5pm
+
+  const isMorning = now.isBefore(endOfDay);
+
+  const maxDate = isMorning
+    ? moment().endOf("day")
+    : moment().add(withinNextDays, "days").endOf("day");
+
+  const minDate = isMorning ? moment().subtract(6, "hours") : moment();
+
+  return conversations.filter((conversation) => {
+    const date = conversation.followUp?.date;
+
+    const isUpcoming = moment(date).isBetween(minDate, maxDate);
+    if (!isUpcoming) return;
+
+    if (conversation.followUp?.notifyMe || conversation.followUp?.topic) {
+      return conversation;
+    }
+  });
+};

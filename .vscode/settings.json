@@ -1,3 +1,10 @@
 {
-  "cSpell.words": ["convo", "datetimepicker", "Pressable"]
+  "cSpell.words": [
+    "convo",
+    "copyeable",
+    "datetimepicker",
+    "Haptics",
+    "Pressable",
+    "Swipeable"
+  ]
 }

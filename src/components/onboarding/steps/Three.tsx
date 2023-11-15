@@ -1,4 +1,4 @@
-import { View, Pressable } from "react-native";
+import { View } from "react-native";
 import { styles } from "../Onboarding.styles";
 import OnboardingNav from "../OnboardingNav";
 import { registerForPushNotificationsAsync } from "../../../lib/notifications";
@@ -6,6 +6,7 @@ import Text from "../../MyText";
 import i18n from "../../../lib/locales";
 import Wrapper from "../../Wrapper";
 import ActionButton from "../../ActionButton";
+import Button from "../../Button";
 
 interface Props {
   goBack: () => void;
@@ -28,17 +29,18 @@ const StepThree = ({ goBack, goNext }: Props) => {
       </View>
       <View>
         <ActionButton
-          action={async () => {
+          onPress={async () => {
             registerForPushNotificationsAsync().then(() => {
               goNext();
             });
           }}
-          label={i18n.t("allowNotifications")}
-        />
+        >
+          {i18n.t("allowNotifications")}
+        </ActionButton>
         <View style={{ alignItems: "center", marginTop: 15 }}>
-          <Pressable hitSlop={10} onPress={goNext}>
+          <Button onPress={goNext}>
             <Text style={styles.navSkip}>{i18n.t("skip")}</Text>
-          </Pressable>
+          </Button>
         </View>
       </View>
     </Wrapper>

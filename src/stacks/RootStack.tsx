@@ -7,7 +7,6 @@ import Header from "../components/layout/Header";
 import Home from "../screens/Home";
 import ConversationForm from "../screens/ConversationForm";
 import ContactSelector from "../screens/ContactSelector";
-import { TouchableOpacity } from "react-native";
 import useTheme from "../contexts/theme";
 import ContactDetails from "../screens/ContactDetails";
 import AddTime from "../screens/AddTime";
@@ -15,13 +14,17 @@ import TimeReports from "../screens/TimeReports";
 import RecoverContacts from "../screens/RecoverContacts";
 import OnBoarding from "../components/onboarding/Onboarding";
 import { usePreferences } from "../stores/preferences";
-import { FontAwesome } from "@expo/vector-icons";
 import Update from "../screens/Update";
+import IconButton from "../components/IconButton";
+import { faPlus } from "@fortawesome/free-solid-svg-icons";
 
 export type RootStackParamList = {
   Home: undefined;
-  "Conversation Form": { id: string; referrer?: string }; // Contact ID
-  "Contact Details": { id: string }; // Contact ID
+  "Conversation Form": {
+    contactId?: string;
+    conversationToEditId?: string;
+  };
+  "Contact Details": { id: string; highlightedConversationId?: string }; // Contact ID
   "Contact Form": { id: string; edit?: boolean }; // Contact ID
   "Contact Selector": undefined;
   "Add Time": undefined;
@@ -92,16 +95,13 @@ const RootStackComponent = () => {
               noInsets
               buttonType="exit"
               rightElement={
-                <TouchableOpacity
-                  hitSlop={20}
+                <IconButton
                   style={{ position: "absolute", right: 0 }}
+                  icon={faPlus}
                   onPress={() => navigation.navigate("Add Time")}
-                >
-                  <FontAwesome
-                    name="plus"
-                    style={{ fontSize: 20, color: theme.colors.text }}
-                  />
-                </TouchableOpacity>
+                  size="xl"
+                  iconStyle={{ color: theme.colors.text }}
+                />
               }
             />
           ),

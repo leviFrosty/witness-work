@@ -6,9 +6,12 @@ import { ThemeContext } from "../contexts/theme";
 import { useContext, useMemo } from "react";
 import { View } from "react-native";
 import IconButton from "./IconButton";
-import { faPersonRunning } from "@fortawesome/free-solid-svg-icons";
 import ApproachingConversationRow from "./ApproachingConversationsRow";
 import moment from "moment";
+import {
+  faPersonRunning,
+  faThumbtack,
+} from "@fortawesome/free-solid-svg-icons";
 
 interface Props {
   conversations: Conversation[];
@@ -36,7 +39,7 @@ const ApproachingConversations = ({ conversations }: Props) => {
       title={
         <View style={{ flexDirection: "row", gap: 5, alignItems: "center" }}>
           <IconButton
-            icon={faPersonRunning}
+            icon={isMorning ? faPersonRunning : faThumbtack}
             iconStyle={{ color: theme.colors.accent }}
           />
           <Text

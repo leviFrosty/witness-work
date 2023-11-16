@@ -6,9 +6,10 @@
 
 JW Time is the easy way for Jehovah's Witnesses to manage their field service priorities. Written for iOS and Android 🔥
 
-[View on App Store](https://apps.apple.com/us/app/jw-time/id6469723047) [![App Store](https://img.shields.io/badge/App_Store-0D96F6?style=flat&logo=app-store&logoColor=white)](https://apps.apple.com/us/app/jw-time/id6469723047)
+### View On
 
-[View on Play Store](https://apps.apple.com/us/app/jw-time/id6469723047) [![Play Store](https://img.shields.io/badge/Google_Play-414141?style=flat=google-play&logoColor=white)](https://apps.apple.com/us/app/jw-time/id6469723047)
+[![App Store](https://img.shields.io/badge/App_Store-0D96F6?style=flat&logo=app-store&logoColor=white)](https://apps.apple.com/us/app/jw-time/id6469723047)
+[![Play Store](https://img.shields.io/badge/Google_Play-414141?style=flat=google-play&logoColor=white)](https://apps.apple.com/us/app/jw-time/id6469723047)
 
 ## We Need Your Help Translating! 🌐
 

@@ -1,6 +1,7 @@
 import { Pressable, View } from "react-native";
+import { useContext } from "react";
 import moment from "moment";
-import useTheme from "../contexts/theme";
+import useTheme, { ThemeContext } from "../contexts/theme";
 import Card from "./Card";
 import Text from "./MyText";
 import { FlashList } from "@shopify/flash-list";
@@ -85,10 +86,16 @@ const Month = ({ month }: { month: number }) => {
 };
 
 const MonthlyRoutine = () => {
+  const theme = useContext(ThemeContext);
+
   return (
     <View style={{ gap: 10 }}>
       <Text
-        style={{ fontSize: 14, fontFamily: "Inter_600SemiBold", marginLeft: 5 }}
+        style={{
+          fontSize: 14,
+          fontFamily: theme.fonts.semiBold,
+          marginLeft: 5,
+        }}
       >
         {i18n.t("monthlyRoutine")}
       </Text>

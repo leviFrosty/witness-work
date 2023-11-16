@@ -57,7 +57,7 @@ const InputRowButton: React.FC<PropsWithChildren<Props>> = ({
       <View style={{ flexDirection: "row", gap: 8, alignItems: "center" }}>
         {leftIcon && <IconButton icon={leftIcon} />}
         <Text
-          style={{ fontFamily: "Inter_600SemiBold", flexDirection: "column" }}
+          style={{ fontFamily: theme.fonts.semiBold, flexDirection: "column" }}
         >
           {label}
         </Text>

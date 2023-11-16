@@ -111,7 +111,7 @@ const ContactsList = () => {
         <Text
           style={{
             fontSize: 12,
-            fontFamily: "Inter_600SemiBold",
+            fontFamily: theme.fonts.semiBold,
             marginLeft: 5,
           }}
         >
@@ -165,7 +165,7 @@ const ContactsList = () => {
                 <Text
                   style={{
                     textAlign: "center",
-                    fontFamily: "Inter_700Bold",
+                    fontFamily: theme.fonts.bold,
                     fontSize: theme.fontSize("lg"),
                     color: theme.colors.textInverse,
                   }}

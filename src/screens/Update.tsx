@@ -102,7 +102,7 @@ const Update = () => {
                 source={require("./../assets/lottie/error.json")}
               />
             </View>
-            <Text style={{ fontSize: 40, fontFamily: "Inter_700Bold" }}>
+            <Text style={{ fontSize: 40, fontFamily: theme.fonts.bold }}>
               {i18n.t("thereWasAnErrorWithYourUpdate")}
             </Text>
             {viewError ? (
@@ -116,7 +116,7 @@ const Update = () => {
                 style={{
                   fontSize: 14,
                   color: theme.colors.textAlt,
-                  fontFamily: "Inter_700Bold",
+                  fontFamily: theme.fonts.bold,
                   textDecorationLine: "underline",
                 }}
                 onPress={() => setViewError(true)}

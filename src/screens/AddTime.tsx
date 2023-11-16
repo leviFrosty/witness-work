@@ -84,7 +84,7 @@ const AddTime = () => {
     >
       <View style={{ gap: 30 }}>
         <View style={{ padding: 25, gap: 5 }}>
-          <Text style={{ fontSize: 32, fontFamily: "Inter_700Bold" }}>
+          <Text style={{ fontSize: 32, fontFamily: theme.fonts.bold }}>
             {i18n.t("addTime")}
           </Text>
           <Text style={{ color: theme.colors.textAlt, fontSize: 12 }}>

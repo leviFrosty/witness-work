@@ -38,7 +38,7 @@ const ActionButton: React.FC<PropsWithChildren<Props>> = ({
           style={{
             fontSize: theme.fontSize(size),
             color: theme.colors.textInverse,
-            fontFamily: "Inter_700Bold",
+            fontFamily: theme.fonts.bold,
           }}
         >
           {children}

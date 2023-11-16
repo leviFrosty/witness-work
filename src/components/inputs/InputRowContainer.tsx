@@ -54,7 +54,7 @@ const InputRowContainer: React.FC<PropsWithChildren<Props>> = ({
           {label && (
             <Text
               style={{
-                fontFamily: "Inter_600SemiBold",
+                fontFamily: theme.fonts.semiBold,
                 flexDirection: "column",
                 gap: 10,
               }}

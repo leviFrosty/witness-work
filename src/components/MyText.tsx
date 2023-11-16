@@ -14,7 +14,7 @@ const Text: React.FC<PropsWithChildren<Props>> = ({
     <ReactNativeText
       {...props}
       style={[
-        [{ color: theme.colors.text, fontFamily: "Inter_400Regular" }],
+        [{ color: theme.colors.text, fontFamily: theme.fonts.regular }],
         [style],
       ]}
     >

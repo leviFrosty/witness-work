@@ -56,7 +56,7 @@ const PhoneRow = ({ contact }: { contact: Contact }) => {
       <Text
         style={{
           fontSize: 14,
-          fontFamily: "Inter_600SemiBold",
+          fontFamily: theme.fonts.semiBold,
           color: theme.colors.textAlt,
         }}
       >
@@ -123,7 +123,7 @@ const Hero = ({
       <Text
         style={{
           fontSize: 14,
-          fontFamily: "Inter_600SemiBold",
+          fontFamily: theme.fonts.semiBold,
           color: theme.colors.textInverse,
         }}
       >
@@ -133,7 +133,7 @@ const Hero = ({
         textProps={{
           style: {
             fontSize: 40,
-            fontFamily: "Inter_700Bold",
+            fontFamily: theme.fonts.bold,
             color: theme.colors.textInverse,
           },
         }}
@@ -145,7 +145,7 @@ const Hero = ({
           <Text
             style={{
               fontSize: 16,
-              fontFamily: "Inter_500Medium",
+              fontFamily: theme.fonts.regular,
               color: theme.colors.textInverse,
             }}
           >
@@ -212,7 +212,7 @@ const AddressRow = ({ contact }: { contact: Contact }) => {
       <Text
         style={{
           fontSize: 14,
-          fontFamily: "Inter_600SemiBold",
+          fontFamily: theme.fonts.semiBold,
           color: theme.colors.textAlt,
         }}
       >
@@ -276,7 +276,7 @@ const EmailRow = ({ contact }: { contact: Contact }) => {
       <Text
         style={{
           fontSize: 14,
-          fontFamily: "Inter_600SemiBold",
+          fontFamily: theme.fonts.semiBold,
           color: theme.colors.textAlt,
         }}
       >
@@ -352,7 +352,7 @@ const DeleteContactButton = ({
       >
         <Text
           style={{
-            fontFamily: "Inter_600SemiBold",
+            fontFamily: theme.fonts.semiBold,
             textAlign: "center",
             fontSize: 10,
             textDecorationLine: "underline",
@@ -543,7 +543,7 @@ const ContactDetails = ({ route, navigation }: Props) => {
             <Text
               style={{
                 fontSize: 14,
-                fontFamily: "Inter_600SemiBold",
+                fontFamily: theme.fonts.semiBold,
                 marginLeft: 10,
                 color: theme.colors.text,
               }}

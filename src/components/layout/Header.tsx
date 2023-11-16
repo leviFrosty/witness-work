@@ -87,7 +87,7 @@ const Header = ({
         <Text
           style={{
             fontSize: 18,
-            fontFamily: "Inter_600SemiBold",
+            fontFamily: theme.fonts.semiBold,
             color: inverseTextAndIconColor
               ? theme.colors.textInverse
               : theme.colors.text,

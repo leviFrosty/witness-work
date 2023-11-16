@@ -49,7 +49,7 @@ const RecoverContacts = () => {
     >
       <View style={{ flexGrow: 1 }}>
         <View style={{ padding: 25, gap: 5 }}>
-          <Text style={{ fontSize: 32, fontFamily: "Inter_700Bold" }}>
+          <Text style={{ fontSize: 32, fontFamily: theme.fonts.bold }}>
             {i18n.t("recoverContacts")}
           </Text>
           <Text style={{ color: theme.colors.textAlt, fontSize: 12 }}>
@@ -95,7 +95,7 @@ const RecoverContacts = () => {
                         <Text
                           style={{
                             fontSize: 10,
-                            fontFamily: "Inter_600SemiBold",
+                            fontFamily: theme.fonts.semiBold,
                             color: theme.colors.textAlt,
                           }}
                         >

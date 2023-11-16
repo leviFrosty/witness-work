@@ -406,7 +406,7 @@ const ContactForm = ({ route, navigation }: Props) => {
     >
       <Wrapper noInsets style={{ gap: 30, marginTop: 20 }}>
         <View style={{ padding: 25, gap: 5 }}>
-          <Text style={{ fontSize: 32, fontFamily: "Inter_700Bold" }}>
+          <Text style={{ fontSize: 32, fontFamily: theme.fonts.bold }}>
             {editMode ? i18n.t("edit") : i18n.t("add")} {i18n.t("contact")}
           </Text>
           <Text style={{ color: theme.colors.textAlt, fontSize: 12 }}>

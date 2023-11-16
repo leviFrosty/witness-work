@@ -38,7 +38,7 @@ const Badge: React.FC<PropsWithChildren<Props>> = ({
           style={[
             [
               {
-                fontFamily: "Inter_600SemiBold",
+                fontFamily: theme.fonts.semiBold,
                 textTransform: "uppercase",
                 fontSize: theme.fontSize(size),
               },

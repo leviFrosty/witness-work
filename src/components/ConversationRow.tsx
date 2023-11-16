@@ -99,7 +99,7 @@ const ConversationRow = ({
             <Text
               style={{
                 fontSize: 16,
-                fontFamily: "Inter_600SemiBold",
+                fontFamily: theme.fonts.semiBold,
                 color: theme.colors.textAlt,
               }}
             >
@@ -110,7 +110,7 @@ const ConversationRow = ({
                 size="sm"
                 color={theme.colors.accent3}
                 textStyle={{
-                  fontFamily: "Inter_600SemiBold",
+                  fontFamily: theme.fonts.semiBold,
                   color: theme.colors.textInverse,
                 }}
               >
@@ -119,7 +119,7 @@ const ConversationRow = ({
                 >
                   <Text
                     style={{
-                      fontFamily: "Inter_600SemiBold",
+                      fontFamily: theme.fonts.semiBold,
                       textTransform: "uppercase",
                       fontSize: theme.fontSize("xs"),
                       color: theme.colors.textInverse,
@@ -161,7 +161,7 @@ const ConversationRow = ({
                     <Text
                       style={{
                         fontSize: 12,
-                        fontFamily: "Inter_600SemiBold",
+                        fontFamily: theme.fonts.semiBold,
                         color: theme.colors.textAlt,
                       }}
                     >
@@ -190,7 +190,7 @@ const ConversationRow = ({
                       <Text
                         style={{
                           fontSize: 12,
-                          fontFamily: "Inter_600SemiBold",
+                          fontFamily: theme.fonts.semiBold,
                           color: notificationHasPassed
                             ? theme.colors.textAlt
                             : theme.colors.accent3,
@@ -207,7 +207,7 @@ const ConversationRow = ({
                     <Text
                       style={{
                         fontSize: 12,
-                        fontFamily: "Inter_600SemiBold",
+                        fontFamily: theme.fonts.semiBold,
                         color: theme.colors.textAlt,
                       }}
                     >
@@ -245,7 +245,7 @@ const ConversationRow = ({
                 <Text
                   style={{
                     fontSize: 12,
-                    fontFamily: "Inter_600SemiBold",
+                    fontFamily: theme.fonts.semiBold,
                     color: theme.colors.textAlt,
                   }}
                 >

@@ -46,7 +46,7 @@ const ApproachingConversations = ({ conversations }: Props) => {
             style={{
               fontSize: theme.fontSize("xl"),
               color: theme.colors.accent,
-              fontFamily: "Inter_700Bold",
+              fontFamily: theme.fonts.bold,
             }}
           >
             {isMorning

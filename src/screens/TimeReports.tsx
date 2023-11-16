@@ -89,7 +89,7 @@ const TimeReports = () => {
       }}
     >
       <View style={{ padding: 20, paddingVertical: 30 }}>
-        <Text style={{ fontSize: 32, fontFamily: "Inter_700Bold" }}>
+        <Text style={{ fontSize: 32, fontFamily: theme.fonts.bold }}>
           {i18n.t("allTimeEntries")}
         </Text>
       </View>
@@ -120,7 +120,7 @@ const TimeReports = () => {
                 style={{
                   marginHorizontal: 20,
                   fontSize: 20,
-                  fontFamily: "Inter_600SemiBold",
+                  fontFamily: theme.fonts.semiBold,
                 }}
               >
                 {year}
@@ -162,7 +162,7 @@ const TimeReports = () => {
                           style={{
                             marginHorizontal: 20,
                             fontSize: 14,
-                            fontFamily: "Inter_500Medium",
+                            fontFamily: theme.fonts.regular,
                             color: theme.colors.textAlt,
                           }}
                         >
@@ -173,7 +173,7 @@ const TimeReports = () => {
                           <Text
                             style={{
                               fontSize: 14,
-                              fontFamily: "Inter_500Medium",
+                              fontFamily: theme.fonts.regular,
                               color: theme.colors.textAlt,
                             }}
                           >
@@ -182,7 +182,7 @@ const TimeReports = () => {
                           <Text
                             style={{
                               fontSize: 14,
-                              fontFamily: "Inter_500Medium",
+                              fontFamily: theme.fonts.regular,
                               color: theme.colors.textAlt,
                             }}
                           >
@@ -238,7 +238,7 @@ const TimeReports = () => {
                                     >
                                       <Text
                                         style={{
-                                          fontFamily: "Inter_600SemiBold",
+                                          fontFamily: theme.fonts.semiBold,
                                         }}
                                       >
                                         {`${moment(report.date).format("L")}`}

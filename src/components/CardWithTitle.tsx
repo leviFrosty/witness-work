@@ -38,7 +38,7 @@ const CardWithTitle: React.FC<PropsWithChildren<Props>> = ({
             [
               {
                 fontSize: 14,
-                fontFamily: "Inter_600SemiBold",
+                fontFamily: theme.fonts.semiBold,
                 marginLeft: 5,
                 color: titleColor || theme.colors.text,
               },
@@ -61,7 +61,7 @@ const CardWithTitle: React.FC<PropsWithChildren<Props>> = ({
                 [
                   {
                     fontSize: theme.fontSize("md"),
-                    fontFamily: "Inter_600SemiBold",
+                    fontFamily: theme.fonts.semiBold,
                     color: titleColor || theme.colors.text,
                   },
                 ],

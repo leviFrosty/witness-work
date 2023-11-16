@@ -131,7 +131,7 @@ const HourEntryCard = () => {
           }}
         >
           <View style={{ position: "relative" }}>
-            <Text style={{ fontSize: 32, fontFamily: "Inter_700Bold" }}>
+            <Text style={{ fontSize: 32, fontFamily: theme.fonts.bold }}>
               {hours}
             </Text>
             <View
@@ -145,14 +145,14 @@ const HourEntryCard = () => {
                 style={{
                   fontSize: 12,
                   color: theme.colors.textAlt,
-                  fontFamily: "Inter_600SemiBold",
+                  fontFamily: theme.fonts.semiBold,
                 }}
               >
                 /{goalHours}
               </Text>
             </View>
           </View>
-          <Text style={{ fontFamily: "Inter_700Bold", maxWidth: 200 }}>
+          <Text style={{ fontFamily: theme.fonts.bold, maxWidth: 200 }}>
             {encouragementPhrase}
           </Text>
           <View
@@ -252,12 +252,12 @@ const RightCard = () => {
           flexGrow: 1,
         }}
       >
-        <Text style={{ fontSize: 32, fontFamily: "Inter_700Bold" }}>
+        <Text style={{ fontSize: 32, fontFamily: theme.fonts.bold }}>
           {studies}
         </Text>
         <Text
           style={{
-            fontFamily: "Inter_700Bold",
+            fontFamily: theme.fonts.bold,
             maxWidth: 125,
           }}
         >
@@ -379,7 +379,7 @@ const StandardPublisherTimeEntry = () => {
               style={{
                 color: theme.colors.textInverse,
                 fontSize: 18,
-                fontFamily: "Inter_600SemiBold",
+                fontFamily: theme.fonts.semiBold,
               }}
             >
               {i18n.t("sharedTheGoodNews")}
@@ -398,7 +398,11 @@ const ServiceReport = () => {
   return (
     <View style={{ gap: 10 }}>
       <Text
-        style={{ fontSize: 14, fontFamily: "Inter_600SemiBold", marginLeft: 5 }}
+        style={{
+          fontSize: 14,
+          fontFamily: theme.fonts.semiBold,
+          marginLeft: 5,
+        }}
       >
         {i18n.t("serviceReport")}
       </Text>
@@ -411,7 +415,7 @@ const ServiceReport = () => {
                   <Text
                     style={{
                       color: theme.colors.textAlt,
-                      fontFamily: "Inter_600SemiBold",
+                      fontFamily: theme.fonts.semiBold,
                       textDecorationLine: "underline",
                     }}
                   >
@@ -422,7 +426,7 @@ const ServiceReport = () => {
                 <Text
                   style={{
                     color: theme.colors.textAlt,
-                    fontFamily: "Inter_600SemiBold",
+                    fontFamily: theme.fonts.semiBold,
                   }}
                 >
                   {i18n.t("hours")}
@@ -439,7 +443,7 @@ const ServiceReport = () => {
             <Text
               style={{
                 color: theme.colors.textAlt,
-                fontFamily: "Inter_600SemiBold",
+                fontFamily: theme.fonts.semiBold,
               }}
             >
               {i18n.t("studies")}

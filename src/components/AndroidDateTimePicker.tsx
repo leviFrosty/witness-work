@@ -7,6 +7,8 @@ import {
 } from "@react-native-community/datetimepicker";
 import i18n from "../lib/locales";
 import Button from "./Button";
+import { useContext } from "react";
+import { ThemeContext } from "../contexts/theme";
 
 type AndroidMode = "date" | "time";
 
@@ -41,12 +43,14 @@ const AndroidDateTimePicker = ({
   minimumDate,
   timeAndDate,
 }: Props) => {
+  const theme = useContext(ThemeContext);
+
   if (Platform.OS !== "android") {
     return null;
   }
   return (
     <View style={{ flexDirection: timeAndDate ? "column" : "row", gap: 10 }}>
-      <Text style={{ fontFamily: "Inter_600SemiBold" }}>
+      <Text style={{ fontFamily: theme.fonts.semiBold }}>
         {moment(value).format(timeAndDate ? "LLL" : "LL")}
       </Text>
       <View style={{ flexDirection: "row", gap: 7 }}>

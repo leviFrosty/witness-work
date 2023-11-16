@@ -109,7 +109,7 @@ const Settings = () => {
             marginLeft: 20,
             marginTop: 20,
             fontSize: 16,
-            fontFamily: "Inter_600SemiBold",
+            fontFamily: theme.fonts.semiBold,
           }}
         >
           {i18n.t("settings")}
@@ -118,7 +118,7 @@ const Settings = () => {
           <Text
             style={{
               marginLeft: 20,
-              fontFamily: "Inter_600SemiBold",
+              fontFamily: theme.fonts.semiBold,
               fontSize: 12,
               color: theme.colors.textAlt,
               textTransform: "uppercase",
@@ -138,7 +138,7 @@ const Settings = () => {
           <Text
             style={{
               marginLeft: 20,
-              fontFamily: "Inter_600SemiBold",
+              fontFamily: theme.fonts.semiBold,
               fontSize: 12,
               color: theme.colors.textAlt,
               textTransform: "uppercase",
@@ -193,7 +193,7 @@ const Settings = () => {
           <Text
             style={{
               marginLeft: 20,
-              fontFamily: "Inter_600SemiBold",
+              fontFamily: theme.fonts.semiBold,
               fontSize: 12,
               color: theme.colors.textAlt,
               textTransform: "uppercase",
@@ -260,7 +260,7 @@ const Settings = () => {
           style={{
             textAlign: "center",
             color: theme.colors.textAlt,
-            fontFamily: "Inter_600SemiBold",
+            fontFamily: theme.fonts.semiBold,
             marginBottom: 5,
             fontSize: 14,
           }}

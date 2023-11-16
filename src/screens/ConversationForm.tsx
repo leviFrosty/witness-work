@@ -76,7 +76,7 @@ const AssignmentSection = ({
               }}
             >
               <IconButton icon={faIdBadge} />
-              <Text style={{ fontFamily: "Inter_600SemiBold", fontSize: 16 }}>
+              <Text style={{ fontFamily: theme.fonts.semiBold, fontSize: 16 }}>
                 {selectedContact.name}
               </Text>
             </View>
@@ -480,7 +480,7 @@ const ConversationForm = ({ route, navigation }: Props) => {
     >
       <Wrapper noInsets style={{ gap: 30, marginTop: 20 }}>
         <View style={{ padding: 25, paddingBottom: 0, gap: 5 }}>
-          <Text style={{ fontSize: 32, fontFamily: "Inter_700Bold" }}>
+          <Text style={{ fontSize: 32, fontFamily: theme.fonts.bold }}>
             {params?.conversationToEditId
               ? i18n.t("editConversation")
               : i18n.t("addConversation")}

@@ -66,7 +66,7 @@ const TextInputRow: React.FC<Props> = ({
           <Text
             style={{
               color: theme.colors.error,
-              fontFamily: "Inter_600SemiBold",
+              fontFamily: theme.fonts.semiBold,
               textAlign: "right",
               fontSize: 12,
             }}

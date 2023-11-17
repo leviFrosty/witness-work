@@ -8,13 +8,13 @@ import { createDrawerNavigator } from "@react-navigation/drawer";
 import Header from "../components/layout/Header";
 import Settings from "./Settings";
 import useTheme from "../contexts/theme";
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import { useNavigation } from "@react-navigation/native";
 import * as Updates from "expo-updates";
 import * as Sentry from "sentry-expo";
 import { RootStackNavigation } from "../stacks/RootStack";
 import useConversations from "../stores/conversationStore";
-import { upcomingConversations } from "../lib/conversations";
+import { upcomingFollowUpConversations } from "../lib/conversations";
 import ApproachingConversations from "../components/ApproachingConversations";
 
 const Dashboard = () => {
@@ -22,10 +22,21 @@ const Dashboard = () => {
   const insets = useSafeAreaInsets();
   const { conversations } = useConversations();
 
-  const approachingConversations = upcomingConversations({
-    conversations,
-    withinNextDays: 1,
-  });
+  const now = useMemo(() => new Date(), []);
+
+  const approachingConversations = useMemo(
+    () =>
+      upcomingFollowUpConversations({
+        currentTime: now,
+        conversations,
+        withinNextDays: 1,
+      }),
+    [conversations, now]
+  );
+
+  const conversationsWithNotificationOrTopic = conversations.filter(
+    (c) => c.followUp?.notifyMe || c.followUp?.topic
+  );
 
   return (
     <View style={{ flexGrow: 1, backgroundColor: theme.colors.background }}>
@@ -41,7 +52,7 @@ const Dashboard = () => {
         <View style={{ gap: 30, paddingBottom: insets.bottom, flex: 1 }}>
           {!!approachingConversations.length && (
             <ApproachingConversations
-              conversations={approachingConversations}
+              conversations={conversationsWithNotificationOrTopic}
             />
           )}
           <MonthlyRoutine />

@@ -34,7 +34,7 @@ const Dashboard = () => {
     [conversations, now]
   );
 
-  const conversationsWithNotificationOrTopic = conversations.filter(
+  const conversationsWithNotificationOrTopic = approachingConversations.filter(
     (c) => c.followUp?.notifyMe || c.followUp?.topic
   );
 

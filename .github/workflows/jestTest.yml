@@ -1,6 +1,14 @@
 name: Jest Tests
 
-on: [push]
+on:
+  push:
+    branches:
+      - production
+      - preview
+      - development
+  pull_request:
+    branches:
+      - production
 
 jobs:
   test:

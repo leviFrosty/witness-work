@@ -1,4 +1,4 @@
-name: update
+name: Expo EAS Update
 on:
   push:
     branches:
@@ -7,7 +7,7 @@ on:
 
 jobs:
   update:
-    name: EAS Update
+    name: Expo EAS Update
     runs-on: ubuntu-latest
     steps:
       - name: Check for EXPO_TOKEN

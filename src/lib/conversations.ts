@@ -64,32 +64,31 @@ export const contactMostRecentStudy = ({
   return sortedStudies[0];
 };
 
-export const upcomingConversations = ({
+export const upcomingFollowUpConversations = ({
+  currentTime,
   conversations,
   withinNextDays,
 }: {
+  currentTime: Date;
   conversations: Conversation[];
   withinNextDays: number;
 }) => {
-  const now = moment();
-  const endOfDay = moment().endOf("day").hour(17); // 5pm
-
-  const isMorning = now.isBefore(endOfDay);
+  const endOfMorning = moment(currentTime).endOf("day").hour(16); // 4:59:59 pm
+  const isMorning = moment(currentTime).isBefore(endOfMorning);
 
   const maxDate = isMorning
-    ? moment().endOf("day")
-    : moment().add(withinNextDays, "days").endOf("day");
+    ? moment(currentTime).endOf("day")
+    : moment(currentTime).add(withinNextDays, "days").endOf("day");
 
-  const minDate = isMorning ? moment().subtract(6, "hours") : moment();
+  const minDate = moment(currentTime).subtract(4, "hours");
 
   return conversations.filter((conversation) => {
     const date = conversation.followUp?.date;
 
-    const isUpcoming = moment(date).isBetween(minDate, maxDate);
-    if (!isUpcoming) return;
-
-    if (conversation.followUp?.notifyMe || conversation.followUp?.topic) {
-      return conversation;
+    if (date) {
+      const isUpcoming = moment(date).isBetween(minDate, maxDate);
+      return isUpcoming;
     }
+    return false;
   });
 };

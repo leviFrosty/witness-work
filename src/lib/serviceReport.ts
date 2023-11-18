@@ -8,11 +8,8 @@ export const calculateProgress = ({
   hours: number;
   goalHours: number;
 }) => {
-  return hours / goalHours < 0
-    ? 0
-    : hours / goalHours <= 1
-    ? hours / goalHours
-    : 1; // Does not allow percent less than 0 and greater than 1
+  const percentage = hours / goalHours;
+  return percentage < 0 ? 0 : percentage <= 1 ? percentage : 1;
 };
 
 export const calculateHoursRemaining = ({
@@ -26,7 +23,6 @@ export const calculateHoursRemaining = ({
   return remaining < 0 ? 0 : remaining > goalHours ? goalHours : remaining;
 };
 
-// Written by chat-gpt
 export const getTotalHours = (serviceReports: ServiceReport[]): number => {
   const totalMinutes = serviceReports.reduce((accumulator, report) => {
     return accumulator + report.hours * 60 + report.minutes; // Convert hours to minutes and accumulate
@@ -37,14 +33,18 @@ export const getTotalHours = (serviceReports: ServiceReport[]): number => {
   return totalHoursRoundedDown;
 };
 
-// Written by chat-gpt
 export const totalHoursForCurrentMonth = (
   serviceReports: ServiceReport[]
 ): number => {
-  const currentMonth = moment().month(); // Get the current month (0-indexed)
+  const currentMonth = moment().month();
+  const currentYear = moment().year();
 
   const totalMinutesForMonth = serviceReports
-    .filter((report) => moment(report.date).month() === currentMonth)
+    .filter(
+      (report) =>
+        moment(report.date).month() === currentMonth &&
+        moment(report.date).year() === currentYear
+    )
     .reduce((accumulator, report) => {
       return accumulator + report.hours * 60 + report.minutes;
     }, 0);
@@ -120,7 +120,6 @@ export const hasServiceReportsForMonth = (
   serviceReports: ServiceReport[],
   month: number
 ): boolean => {
-  // Check if there are any service reports for the current month
   const hasReportsForMonth = serviceReports.some(
     (report) => moment(report.date).month() === month
   );

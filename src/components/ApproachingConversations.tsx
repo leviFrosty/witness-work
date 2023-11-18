@@ -21,7 +21,7 @@ const ApproachingConversations = ({ conversations }: Props) => {
   const theme = useContext(ThemeContext);
 
   const now = moment();
-  const endOfDay = moment().endOf("day").hour(17); // 5pm
+  const endOfDay = moment().endOf("day").hour(16); // 4:59:59 PM
 
   const isMorning = now.isBefore(endOfDay);
 

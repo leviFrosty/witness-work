@@ -2,4 +2,8 @@
 . "$(dirname -- "$0")/_/husky.sh"
 
 ./node_modules/.bin/tsc
-npm run translate
+
+
+yarn run testFinal
+
+yarn run translate

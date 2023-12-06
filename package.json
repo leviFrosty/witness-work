@@ -26,7 +26,7 @@
     "@react-navigation/drawer": "^6.6.4",
     "@react-navigation/native": "^6.1.8",
     "@react-navigation/native-stack": "^6.9.14",
-    "@sentry/react-native": "5.5.0",
+    "@sentry/react-native": "5.10.0",
     "@shopify/flash-list": "1.4.3",
     "@types/jest": "^29.5.8",
     "@types/lodash": "^4.14.201",
@@ -68,7 +68,7 @@
     "react-native-screens": "~3.22.0",
     "react-native-svg": "13.9.0",
     "react-test-renderer": "^18.2.0",
-    "sentry-expo": "~7.0.0",
+    "sentry-expo": "~7.1.0",
     "undefined": "@expo/vector-icons/",
     "zustand": "^4.4.3"
   },

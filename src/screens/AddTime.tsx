@@ -57,10 +57,12 @@ const AddTime = () => {
       ldc,
     });
   };
-  const minuteOptions = [0, 15, 30, 45].map((value) => ({
-    label: `${value}`,
-    value,
-  }));
+  const minuteOptions = [0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55].map(
+    (value) => ({
+      label: `${value}`,
+      value,
+    })
+  );
   const hourOptions = [...Array(24).keys()].map((value) => ({
     label: `${value}`,
     value,

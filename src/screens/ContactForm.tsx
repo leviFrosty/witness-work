@@ -454,9 +454,7 @@ const ContactForm = ({ route, navigation }: Props) => {
         return resolve(false);
       }
       if (editMode) {
-        updateContact({
-          ...contact,
-        });
+        updateContact(contact);
       } else {
         addContact(contact);
       }

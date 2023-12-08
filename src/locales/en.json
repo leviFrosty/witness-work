@@ -111,7 +111,7 @@
   "tapPlusToAddConvo": "Tap the plus icon above to add a conversation.",
   "name_placeholder": "What's their name?",
   "name": "Name",
-  "phone_placeholder": "+x (xxx) xxx-xxxx",
+  "phone_placeholder": "What's their number?",
   "email_placeholder": "example@acme.com",
   "addressLine1": "Address Line 1",
   "addressLine2": "Address Line 2",
@@ -222,5 +222,10 @@
   "tapToAddAConversation": "Tap here to add a conversation, or press the + button above.",
   "todaysConversations": "Today's Conversations",
   "upcomingConversations": "Upcoming Conversations",
-  "noTopicProvided": "No Topic Provided."
+  "noTopicProvided": "No Topic Provided.",
+  "customHourRequirement": "Custom Hour Requirement",
+  "custom": "Custom",
+  "pleaseDescribeYourIssue": "Please describe your issue in detail",
+  "invalidPhone": "Invalid Phone Number",
+  "invalidPhone_description": "is not a valid number for the region code:"
 }

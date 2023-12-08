@@ -21,6 +21,7 @@ interface Props {
     | "space-evenly"
     | undefined;
   gap?: number;
+  required?: boolean;
 }
 
 const InputRowContainer: React.FC<PropsWithChildren<Props>> = ({
@@ -31,6 +32,7 @@ const InputRowContainer: React.FC<PropsWithChildren<Props>> = ({
   label,
   justifyContent,
   gap,
+  required,
 }: Props) => {
   const theme = useTheme();
 
@@ -60,6 +62,16 @@ const InputRowContainer: React.FC<PropsWithChildren<Props>> = ({
               }}
             >
               {label}
+            </Text>
+          )}
+          {required && (
+            <Text
+              style={{
+                color: theme.colors.error,
+                fontSize: theme.fontSize("sm"),
+              }}
+            >
+              *
             </Text>
           )}
         </View>

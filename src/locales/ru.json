@@ -222,5 +222,10 @@
   "tapToAddAConversation": "Нажмите здесь, чтобы добавить разговор, или нажмите кнопку + выше.",
   "todaysConversations": "Сегодняшние разговоры",
   "upcomingConversations": "Предстоящие разговоры",
-  "noTopicProvided": "Тема не указана."
+  "noTopicProvided": "Тема не указана.",
+  "customHourRequirement": "Индивидуальные требования к часам",
+  "custom": "Обычай",
+  "pleaseDescribeYourIssue": "Пожалуйста, опишите вашу проблему подробно",
+  "invalidPhone": "Неправильный номер телефона",
+  "invalidPhone_description": "недопустимый номер для кода региона:"
 }

@@ -1,5 +1,4 @@
 import { View, DimensionValue, ColorValue } from "react-native";
-import { publisherHours } from "../constants/publisher";
 import { usePreferences } from "../stores/preferences";
 import { useServiceReport } from "../stores/serviceReport";
 import useTheme from "../contexts/theme";
@@ -69,7 +68,7 @@ const ProgressBar = () => {
   const theme = useTheme();
   const { serviceReports } = useServiceReport();
   const hours = totalHoursForCurrentMonth(serviceReports);
-  const { publisher } = usePreferences();
+  const { publisher, publisherHours } = usePreferences();
   const goalHours = publisherHours[publisher];
   const progress = useMemo(
     () => calculateProgress({ hours, goalHours }),

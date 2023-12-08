@@ -1,9 +1,8 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { create } from "zustand";
 import { persist, combine, createJSONStorage } from "zustand/middleware";
-import { Publisher } from "../types/publisher";
+import { Publisher, PublisherHours } from "../types/publisher";
 import i18n from "../lib/locales";
-import { ColorSchemeName } from "react-native";
 
 export const contactSortOptions = [
   {
@@ -24,8 +23,28 @@ export const contactSortOptions = [
   },
 ];
 
+export type GoalHours = {
+  month: Date;
+  hours: number;
+};
+
+const publisherHours: PublisherHours = {
+  publisher: 0,
+  regularAuxiliary: 30,
+  regularPioneer: 50,
+  circuitOverseer: 50,
+  specialPioneer: 100,
+  custom: 50,
+};
+
 const initialState = {
   publisher: "publisher" as Publisher,
+  publisherHours: publisherHours,
+
+  /**
+   * Overrides publisherHours hour requirement for given month.
+   */
+  oneOffGoalHours: [] as GoalHours[],
   onboardingComplete: false,
   installedOn: new Date(),
   contactSort: "recentConversation",

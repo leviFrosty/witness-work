@@ -9,7 +9,7 @@ import {
 import { useEffect, useMemo } from "react";
 import Text from "../components/MyText";
 import useTheme from "../contexts/theme";
-import { RootStackParamList } from "../stacks/RootStack";
+import { RootStackNavigation, RootStackParamList } from "../stacks/RootStack";
 import {
   NativeStackNavigationProp,
   NativeStackScreenProps,
@@ -45,12 +45,65 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import Copyeable from "../components/Copyeable";
 import Button from "../components/Button";
+import { parsePhoneNumber } from "awesome-phonenumber";
+import { useNavigation } from "@react-navigation/native";
+import { getLocales } from "expo-localization";
 
 type Props = NativeStackScreenProps<RootStackParamList, "Contact Details">;
 
 const PhoneRow = ({ contact }: { contact: Contact }) => {
   const theme = useTheme();
+  const navigation = useNavigation<RootStackNavigation>();
   const { phone } = contact;
+  const locales = getLocales();
+
+  const formatted = useMemo(
+    () =>
+      parsePhoneNumber(phone || "", {
+        regionCode: contact.phoneRegionCode || locales[0].regionCode || "",
+      }),
+    [contact.phoneRegionCode, locales, phone]
+  );
+
+  if (!phone) {
+    return;
+  }
+
+  const isValid = formatted.valid;
+
+  const alertInvalidPhone = () => {
+    Alert.alert(
+      i18n.t("invalidPhone"),
+      `"${formatted.number?.input}" ${i18n.t("invalidPhone_description")} ${
+        formatted.regionCode
+      }.`,
+      [
+        { style: "cancel", text: i18n.t("cancel") },
+        {
+          style: "default",
+          text: i18n.t("edit"),
+          onPress: () =>
+            navigation.replace("Contact Form", {
+              id: contact.id,
+              edit: true,
+            }),
+        },
+      ]
+    );
+  };
+
+  const handleCall = () => {
+    if (isValid) {
+      Linking.openURL(`tel:${formatted.number.e164}`);
+    } else alertInvalidPhone();
+  };
+
+  const handleMessage = () => {
+    if (isValid) {
+      Linking.openURL(`sms:${formatted.number.e164}`);
+    } else alertInvalidPhone();
+  };
+
   return (
     <View style={{ gap: 10 }}>
       <Text
@@ -68,10 +121,8 @@ const PhoneRow = ({ contact }: { contact: Contact }) => {
           justifyContent: "space-between",
         }}
       >
-        <Copyeable
-          textProps={{ onPress: () => Linking.openURL(`tel:${phone}`) }}
-        >
-          {phone}
+        <Copyeable textProps={{ onPress: handleCall }}>
+          {formatted.number?.international}
         </Copyeable>
         <View
           style={{
@@ -84,13 +135,13 @@ const PhoneRow = ({ contact }: { contact: Contact }) => {
             icon={faPhone}
             size="lg"
             iconStyle={{ color: theme.colors.accent }}
-            onPress={() => Linking.openURL(`tel:${phone}`)}
+            onPress={handleCall}
           />
           <IconButton
             icon={faComment}
             size="lg"
             iconStyle={{ color: theme.colors.accent }}
-            onPress={() => Linking.openURL(`sms:${phone}`)}
+            onPress={handleMessage}
           />
         </View>
       </View>

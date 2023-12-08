@@ -3184,6 +3184,11 @@ available-typed-arrays@^1.0.5:
   resolved "https://registry.yarnpkg.com/available-typed-arrays/-/available-typed-arrays-1.0.5.tgz#92f95616501069d07d10edb2fc37d3e1c65123b7"
   integrity sha512-DMD0KiN46eipeziST1LPP/STfDU0sufISXmjSgvVsoU2tqxctQeASejWcfNtxYKqETM1UxQ8sp2OrSBWpHY6sw==
 
+awesome-phonenumber@^6.2.0:
+  version "6.2.0"
+  resolved "https://registry.yarnpkg.com/awesome-phonenumber/-/awesome-phonenumber-6.2.0.tgz#f69c3fea06d92c928883960a03cea958c8a81441"
+  integrity sha512-JSFTjZhWxKHUWAOQU+oBJ86Xf89vJpF82w6iuE9lEybeQzYKFs+zVKjOwzevFBfLjiXf72DsWESA+daVUBrhHw==
+
 axios@1.6.0:
   version "1.6.0"
   resolved "https://registry.yarnpkg.com/axios/-/axios-1.6.0.tgz#f1e5292f26b2fd5c2e66876adc5b06cdbd7d2102"
@@ -8329,6 +8334,11 @@ react-is@^17.0.1:
   resolved "https://registry.yarnpkg.com/react-is/-/react-is-17.0.2.tgz#e691d4a8e9c789365655539ab372762b0efb54f0"
   integrity sha512-w2GsyukL62IJnlaff/nRegPQR94C/XXamvMWmSHRJ4y7Ts/4ocGRmTHvOs8PSE6pB3dWOrD/nueuU5sduBsQ4w==
 
+react-native-country-codes-picker@2.3.3:
+  version "2.3.3"
+  resolved "https://registry.yarnpkg.com/react-native-country-codes-picker/-/react-native-country-codes-picker-2.3.3.tgz#9fa97b7ea550a860099f6f8a02b75e82930fd3de"
+  integrity sha512-ENK7dXcQiAmQoHOImosO27Pf5yMfRi77yK7u+KD4EV5qaNBBK9/2RYYHt0naqd+E20VvHJqpZG7OVwWXptzGuw==
+
 react-native-element-dropdown@^2.10.0:
   version "2.10.0"
   resolved "https://registry.yarnpkg.com/react-native-element-dropdown/-/react-native-element-dropdown-2.10.0.tgz#f4ec2310b37ff3ba64927286ab775c0ed28b681e"
@@ -8346,6 +8356,13 @@ react-native-gesture-handler@~2.12.0:
     invariant "^2.2.4"
     lodash "^4.17.21"
     prop-types "^15.7.2"
+
+react-native-international-phone-number@^0.7.2:
+  version "0.7.2"
+  resolved "https://registry.yarnpkg.com/react-native-international-phone-number/-/react-native-international-phone-number-0.7.2.tgz#f0b35122147290bc1f27fbc6a76c40745cec0240"
+  integrity sha512-wqyFQtIpzYkIKvHOS3YKU+01s/yzXkoHq3NB4G/qm4aJf36FiGnMhJqxJQBBH/Arn1XvYOUIR+phUIdzeYeNlg==
+  dependencies:
+    react-native-country-codes-picker "2.3.3"
 
 react-native-iphone-x-helper@^1.0.3:
   version "1.3.1"

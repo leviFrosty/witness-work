@@ -27,7 +27,13 @@ const StepFour = ({ goNext, goBack }: Props) => {
 
   return (
     <Wrapper
-      style={{ flexGrow: 1, padding: 30, justifyContent: "space-between" }}
+      style={{
+        flexGrow: 1,
+        paddingHorizontal: 30,
+        paddingTop: 60,
+        paddingBottom: 60,
+        justifyContent: "space-between",
+      }}
     >
       <OnboardingNav noActions goBack={goBack} />
       <View>

@@ -222,5 +222,10 @@
   "tapToAddAConversation": "点击此处添加对话，或按上面的 + 按钮。",
   "todaysConversations": "今天的对话",
   "upcomingConversations": "即将进行的对话",
-  "noTopicProvided": "未提供主题。"
+  "noTopicProvided": "未提供主题。",
+  "customHourRequirement": "定制时间要求",
+  "custom": "风俗",
+  "pleaseDescribeYourIssue": "请详细描述您的问题",
+  "invalidPhone": "无效的电话号码",
+  "invalidPhone_description": "不是区域代码的有效号码："
 }

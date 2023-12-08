@@ -1,5 +1,11 @@
-import React, { useRef, useState, useCallback, useEffect } from "react";
-import { TextInput, View, Pressable } from "react-native";
+import React, {
+  useRef,
+  useState,
+  useCallback,
+  useEffect,
+  useMemo,
+} from "react";
+import { TextInput, View, Pressable, useColorScheme } from "react-native";
 import Text from "../components/MyText";
 import { RootStackParamList } from "../stacks/RootStack";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
@@ -13,14 +19,25 @@ import TextInputRow, { Errors } from "../components/inputs/TextInputRow";
 import Header from "../components/layout/Header";
 import i18n from "../lib/locales";
 import Wrapper from "../components/Wrapper";
+import PhoneInput, {
+  ICountry,
+  ITheme,
+  getCountryByCca2,
+} from "react-native-international-phone-number";
+import * as Localization from "expo-localization";
+import { ICountryCca2 } from "react-native-international-phone-number/lib/interfaces/countryCca2";
+import InputRowContainer from "../components/inputs/InputRowContainer";
+import IconButton from "../components/IconButton";
+import { faCaretDown } from "@fortawesome/free-solid-svg-icons";
+import { parsePhoneNumber } from "awesome-phonenumber";
 
 const PersonalContactSection = ({
   contact,
   nameInput,
-  phoneInput,
   setName,
   emailInput,
   setPhone,
+  setRegionCode,
   line1Input,
   setEmail,
   setErrors,
@@ -28,15 +45,49 @@ const PersonalContactSection = ({
 }: {
   contact: Contact;
   nameInput: React.RefObject<TextInput>;
-  phoneInput: React.RefObject<TextInput>;
   setName: (name: string) => void;
   emailInput: React.RefObject<TextInput>;
   setPhone: (phone: string) => void;
+  setRegionCode: (regionCode: string) => void;
   line1Input: React.RefObject<TextInput>;
   setEmail: (email: string) => void;
   errors: Errors;
   setErrors: React.Dispatch<React.SetStateAction<Errors>>;
 }) => {
+  const placeholder = useRef(contact.phone || "");
+  const locales = Localization.getLocales();
+
+  const colorScheme = useColorScheme();
+  const theme = useTheme();
+
+  const handleCountryChange = (country: ICountry) => {
+    if (!country) {
+      return; // Library has some very weird edge-case where it sometimes doesn't return a country.
+    }
+    setRegionCode(country.cca2);
+  };
+
+  const country = useMemo(
+    () => getCountryByCca2(contact.phoneRegionCode || "US"),
+    [contact.phoneRegionCode]
+  );
+
+  const formatted = useMemo(
+    () =>
+      parsePhoneNumber(placeholder.current, {
+        regionCode: contact.phoneRegionCode || locales[0].regionCode || "",
+      }),
+    [contact.phoneRegionCode, locales]
+  );
+
+  const defaultValue = useMemo(
+    () =>
+      formatted.regionCode && formatted.valid
+        ? formatted.number?.e164
+        : undefined,
+    [formatted.number?.e164, formatted.regionCode, formatted.valid]
+  );
+
   return (
     <Section>
       <TextInputRow
@@ -44,32 +95,93 @@ const PersonalContactSection = ({
         setErrors={setErrors}
         id="name"
         label={i18n.t("name")}
-        placeholder={i18n.t("name_placeholder")}
+        ref={nameInput}
         textInputProps={{
-          ref: nameInput,
-          onSubmitEditing: () => phoneInput.current?.focus(),
+          placeholder: i18n.t("name_placeholder"),
           onChangeText: (val: string) => setName(val),
           value: contact.name,
           autoCapitalize: "words",
           autoCorrect: false,
         }}
+        required
       />
-      <TextInputRow
-        label={i18n.t("phone")}
-        placeholder={i18n.t("phone_placeholder")}
-        textInputProps={{
-          ref: phoneInput,
-          onSubmitEditing: () => emailInput.current?.focus(),
-          onChangeText: (val: string) => setPhone(val),
-          value: contact.phone,
-        }}
-      />
+      <InputRowContainer>
+        <View style={{ flex: 1 }}>
+          <PhoneInput
+            hitSlop={{ top: 15, bottom: 15 }}
+            value={contact.phone || ""}
+            defaultValue={defaultValue}
+            onChangePhoneNumber={(phone: string) => setPhone(phone)}
+            defaultCountry={locales[0].regionCode as ICountryCca2}
+            selectedCountry={country}
+            placeholder={i18n.t("phone_placeholder")}
+            placeholderTextColor={theme.colors.textAlt}
+            popularCountries={["US", "DE", "IT", "KR", "CA", "GB"]}
+            onChangeSelectedCountry={handleCountryChange}
+            theme={colorScheme as ITheme}
+            inputMode="numeric"
+            clearButtonMode="while-editing"
+            customCaret={<IconButton icon={faCaretDown} />}
+            phoneInputStyles={{
+              container: {
+                borderWidth: 0,
+                backgroundColor: theme.colors.backgroundLighter,
+              },
+              flagContainer: {
+                backgroundColor: theme.colors.card,
+                borderRadius: theme.numbers.borderRadiusSm,
+              },
+              input: {
+                fontSize: theme.fontSize("md"),
+                textAlign: "right",
+                paddingHorizontal: 2,
+              },
+              callingCode: {
+                fontSize: theme.fontSize("md"),
+              },
+              divider: {
+                backgroundColor: theme.colors.border,
+              },
+              caret: {
+                fontSize: theme.fontSize("sm"),
+                color: theme.colors.textAlt,
+              },
+            }}
+            modalStyles={{
+              modal: {
+                backgroundColor: theme.colors.background,
+              },
+              searchInput: {
+                borderColor: theme.colors.border,
+              },
+              countryButton: {
+                borderColor: theme.colors.border,
+                backgroundColor: theme.colors.card,
+                shadowColor: theme.colors.shadow,
+                shadowOffset: { height: 1, width: 0 },
+                shadowOpacity: theme.numbers.shadowOpacity,
+              },
+            }}
+          />
+          {placeholder.current.length > 0 && !formatted.possible && (
+            <Text
+              style={{
+                textAlign: "right",
+                fontSize: theme.fontSize("sm"),
+                color: theme.colors.textAlt,
+              }}
+            >{`"${formatted.number?.input}" ${i18n.t("error")}: ${
+              formatted.possibility
+            }`}</Text>
+          )}
+        </View>
+      </InputRowContainer>
       <TextInputRow
         label={i18n.t("email")}
-        placeholder={i18n.t("email_placeholder")}
         lastInSection
+        ref={emailInput}
         textInputProps={{
-          ref: emailInput,
+          placeholder: i18n.t("email_placeholder"),
           onSubmitEditing: () => line1Input.current?.focus(),
           keyboardType: "email-address",
           onChangeText: (val: string) => setEmail(val),
@@ -114,9 +226,8 @@ const AddressSection = ({
     <Section>
       <TextInputRow
         label={i18n.t("addressLine1")}
-        placeholder=""
+        ref={line1Input}
         textInputProps={{
-          ref: line1Input,
           onSubmitEditing: () => line2Input.current?.focus(),
           onChangeText: (val: string) => setLine1(val),
           autoCapitalize: "words",
@@ -125,9 +236,8 @@ const AddressSection = ({
       />
       <TextInputRow
         label={i18n.t("addressLine2")}
-        placeholder=""
+        ref={line2Input}
         textInputProps={{
-          ref: line2Input,
           onSubmitEditing: () => cityInput.current?.focus(),
           onChangeText: (val: string) => setLine2(val),
           value: contact.address?.line2 || "",
@@ -143,9 +253,8 @@ const AddressSection = ({
         <View style={{ width: "50%" }}>
           <TextInputRow
             label={i18n.t("city")}
-            placeholder=""
+            ref={cityInput}
             textInputProps={{
-              ref: cityInput,
               onSubmitEditing: () => stateInput.current?.focus(),
               onChangeText: (val: string) => setCity(val),
               autoCapitalize: "words",
@@ -156,9 +265,8 @@ const AddressSection = ({
         <View style={{ width: "50%" }}>
           <TextInputRow
             label={i18n.t("state")}
-            placeholder=""
+            ref={stateInput}
             textInputProps={{
-              ref: stateInput,
               onSubmitEditing: () => zipInput.current?.focus(),
               onChangeText: (val: string) => setState(val),
               value: contact.address?.state || "",
@@ -176,10 +284,8 @@ const AddressSection = ({
         <View style={{ width: "50%" }}>
           <TextInputRow
             label={i18n.t("zip")}
-            placeholder=""
-            // lastInSection
+            ref={zipInput}
             textInputProps={{
-              ref: zipInput,
               onSubmitEditing: () => countryInput.current?.focus(),
               onChangeText: (val: string) => setZip(val),
               value: contact.address?.zip || "",
@@ -191,10 +297,8 @@ const AddressSection = ({
         <View style={{ width: "50%" }}>
           <TextInputRow
             label={i18n.t("country")}
-            placeholder=""
-            // lastInSection
+            ref={countryInput}
             textInputProps={{
-              ref: countryInput,
               onChangeText: (val: string) => setCountry(val),
               value: contact.address?.country || "",
               autoCapitalize: "words",
@@ -219,6 +323,8 @@ const ContactForm = ({ route, navigation }: Props) => {
   const contactToUpdate = editMode
     ? contacts.find((c) => c.id === route.params.id)
     : undefined;
+  const locales = Localization.getLocales();
+
   const [contact, setContact] = useState<Contact>(
     contactToUpdate || {
       id: route.params.id,
@@ -234,6 +340,7 @@ const ContactForm = ({ route, navigation }: Props) => {
       },
       email: "",
       phone: "",
+      phoneRegionCode: locales[0].regionCode || "",
     }
   );
 
@@ -243,12 +350,21 @@ const ContactForm = ({ route, navigation }: Props) => {
       name,
     });
   };
+
   const setPhone = (phone: string) => {
     setContact({
       ...contact,
       phone,
     });
   };
+
+  const setRegionCode = (regionCode: string) => {
+    setContact({
+      ...contact,
+      phoneRegionCode: regionCode,
+    });
+  };
+
   const setEmail = (email: string) => {
     setContact({
       ...contact,
@@ -311,7 +427,6 @@ const ContactForm = ({ route, navigation }: Props) => {
     });
   };
   const nameInput = useRef<TextInput>(null);
-  const phoneInput = useRef<TextInput>(null);
   const emailInput = useRef<TextInput>(null);
   const line1Input = useRef<TextInput>(null);
   const line2Input = useRef<TextInput>(null);
@@ -339,7 +454,9 @@ const ContactForm = ({ route, navigation }: Props) => {
         return resolve(false);
       }
       if (editMode) {
-        updateContact(contact);
+        updateContact({
+          ...contact,
+        });
       } else {
         addContact(contact);
       }
@@ -418,10 +535,10 @@ const ContactForm = ({ route, navigation }: Props) => {
           emailInput={emailInput}
           line1Input={line1Input}
           nameInput={nameInput}
-          phoneInput={phoneInput}
           setEmail={setEmail}
           setName={setName}
           setPhone={setPhone}
+          setRegionCode={setRegionCode}
           errors={errors}
           setErrors={setErrors}
         />

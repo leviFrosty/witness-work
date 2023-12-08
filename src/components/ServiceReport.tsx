@@ -2,7 +2,6 @@ import { View } from "react-native";
 import { useServiceReport } from "../stores/serviceReport";
 import useTheme from "../contexts/theme";
 import ProgressBar from "./ProgressBar";
-import { publisherHours } from "../constants/publisher";
 import { usePreferences } from "../stores/preferences";
 import {
   calculateHoursRemaining,
@@ -30,7 +29,7 @@ import Button from "./Button";
 
 const HourEntryCard = () => {
   const theme = useTheme();
-  const { publisher } = usePreferences();
+  const { publisher, publisherHours } = usePreferences();
   const { serviceReports } = useServiceReport();
   const navigation = useNavigation<RootStackNavigation>();
   const goalHours = publisherHours[publisher];

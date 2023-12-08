@@ -222,5 +222,10 @@
   "tapToAddAConversation": "Tik hier om een gesprek toe te voegen, of druk op de + knop hierboven.",
   "todaysConversations": "De gesprekken van vandaag",
   "upcomingConversations": "Aankomende gesprekken",
-  "noTopicProvided": "Geen onderwerp opgegeven."
+  "noTopicProvided": "Geen onderwerp opgegeven.",
+  "customHourRequirement": "Aangepaste uurvereiste",
+  "custom": "Aangepast",
+  "pleaseDescribeYourIssue": "Beschrijf uw probleem gedetailleerd",
+  "invalidPhone": "Ongeldig telefoonnummer",
+  "invalidPhone_description": "is geen geldig nummer voor de regiocode:"
 }

@@ -1,82 +1,83 @@
-import { TextInput, View } from "react-native";
+import React, { forwardRef, Ref } from "react";
+import { View, TextInput as RNTextInput } from "react-native";
 import useTheme from "../../contexts/theme";
 import Text from "../MyText";
 import InputRowContainer from "./InputRowContainer";
+import MyTextInput, { TextInputProps } from "../TextInput";
 
 export type Errors = Record<string, string>;
 
-interface Props {
-  /**
-   * Errors key should match param id.
-   * @example errors: { name: "" }
-   * id: 'name'
-   */
+interface TextInputRowProps {
   errors?: Errors;
   setErrors?: React.Dispatch<React.SetStateAction<Errors>>;
-  /**
-   * ID should also be used as key in error object
-   */
   id?: string;
   label: string;
-  placeholder?: string;
   lastInSection?: boolean;
   noHorizontalPadding?: boolean;
-  // eslint-disable-next-line
-  textInputProps?: any;
+  textInputProps?: TextInputProps;
+  required?: boolean;
 }
 
-const TextInputRow: React.FC<Props> = ({
-  id,
-  errors,
-  setErrors,
-  label,
-  placeholder,
-  lastInSection,
-  noHorizontalPadding,
-  textInputProps,
-}) => {
-  const theme = useTheme();
-  const error = id && errors ? errors[id] : undefined;
+const TextInputRow: React.ForwardRefExoticComponent<
+  TextInputRowProps & React.RefAttributes<RNTextInput>
+> = forwardRef<RNTextInput, TextInputRowProps>(
+  (
+    {
+      id,
+      errors,
+      setErrors,
+      label,
+      lastInSection,
+      noHorizontalPadding,
+      required,
+      textInputProps,
+    },
+    ref: Ref<RNTextInput>
+  ) => {
+    const theme = useTheme();
+    const error = id && errors ? errors[id] : undefined;
 
-  return (
-    <InputRowContainer
-      lastInSection={lastInSection}
-      noHorizontalPadding={noHorizontalPadding}
-      label={label}
-    >
-      <View style={{ flexGrow: 1, flex: 1, gap: 5 }}>
-        <TextInput
-          style={{
-            borderWidth: error ? 1 : 0,
-            padding: 3,
-            borderRadius: theme.numbers.borderRadiusSm,
-            borderColor: theme.colors.error,
-            color: theme.colors.text,
-          }}
-          placeholderTextColor={theme.colors.textAlt}
-          onChangeText={() => setErrors?.({ ...errors, id: "" })}
-          hitSlop={{ top: 20, bottom: 20 }}
-          placeholder={placeholder}
-          textAlign="right"
-          clearButtonMode="while-editing"
-          returnKeyType="next"
-          {...textInputProps}
-        />
-        {error && (
-          <Text
+    return (
+      <InputRowContainer
+        lastInSection={lastInSection}
+        noHorizontalPadding={noHorizontalPadding}
+        label={label}
+        required={required}
+      >
+        <View style={{ flexGrow: 1, flex: 1, gap: 5 }}>
+          <MyTextInput
+            ref={ref}
             style={{
-              color: theme.colors.error,
-              fontFamily: theme.fonts.semiBold,
-              textAlign: "right",
-              fontSize: 12,
+              borderWidth: error ? 1 : 0,
+              padding: 3,
+              borderRadius: theme.numbers.borderRadiusSm,
+              borderColor: theme.colors.error,
+              color: theme.colors.text,
             }}
-          >
-            {error}
-          </Text>
-        )}
-      </View>
-    </InputRowContainer>
-  );
-};
+            placeholderTextColor={theme.colors.textAlt}
+            onChangeText={() => setErrors?.({ ...errors, [id || ""]: "" })}
+            hitSlop={{ top: 20, bottom: 20 }}
+            textAlign="right"
+            clearButtonMode="while-editing"
+            returnKeyType="next"
+            {...textInputProps}
+          />
+          {error && (
+            <Text
+              style={{
+                color: theme.colors.error,
+                fontFamily: theme.fonts.semiBold,
+                textAlign: "right",
+                fontSize: 12,
+              }}
+            >
+              {error}
+            </Text>
+          )}
+        </View>
+      </InputRowContainer>
+    );
+  }
+);
 
 export default TextInputRow;

@@ -34,6 +34,7 @@ import IconButton from "../components/IconButton";
 import { faIdBadge } from "@fortawesome/free-solid-svg-icons";
 import _ from "lodash";
 import Button from "../components/Button";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 type Props = NativeStackScreenProps<RootStackParamList, "Conversation Form">;
 
@@ -118,6 +119,7 @@ const AssignmentSection = ({
 
 const ConversationForm = ({ route, navigation }: Props) => {
   const theme = useTheme();
+  const insets = useSafeAreaInsets();
   const { params } = route;
   const { contacts } = useContacts();
   const { conversations, addConversation, updateConversation } =
@@ -476,7 +478,10 @@ const ConversationForm = ({ route, navigation }: Props) => {
   return (
     <KeyboardAwareScrollView
       automaticallyAdjustKeyboardInsets
-      style={{ backgroundColor: theme.colors.background }}
+      contentContainerStyle={{ paddingBottom: insets.bottom }}
+      style={{
+        backgroundColor: theme.colors.background,
+      }}
     >
       <Wrapper noInsets style={{ gap: 30, marginTop: 20 }}>
         <View style={{ padding: 25, paddingBottom: 0, gap: 5 }}>
@@ -517,8 +522,8 @@ const ConversationForm = ({ route, navigation }: Props) => {
           </InputRowContainer>
           <TextInputRow
             label={i18n.t("note")}
-            placeholder={i18n.t("note_placeholder")}
             textInputProps={{
+              placeholder: i18n.t("note_placeholder"),
               multiline: true,
               defaultValue: conversation.note,
               textAlign: "left",
@@ -558,8 +563,8 @@ const ConversationForm = ({ route, navigation }: Props) => {
           </InputRowContainer>
           <TextInputRow
             label={i18n.t("topic")}
-            placeholder={i18n.t("topic_placeholder")}
             textInputProps={{
+              placeholder: i18n.t("topic_placeholder"),
               defaultValue: conversation.followUp?.topic,
               returnKeyType: "default",
               onChangeText: (topic: string) =>

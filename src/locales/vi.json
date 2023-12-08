@@ -222,5 +222,10 @@
   "tapToAddAConversation": "Nhấn vào đây để thêm cuộc trò chuyện hoặc nhấn nút + ở trên.",
   "todaysConversations": "Cuộc trò chuyện hôm nay",
   "upcomingConversations": "Cuộc trò chuyện sắp tới",
-  "noTopicProvided": "Không có chủ đề được cung cấp."
+  "noTopicProvided": "Không có chủ đề được cung cấp.",
+  "customHourRequirement": "Yêu cầu về giờ tùy chỉnh",
+  "custom": "Phong tục",
+  "pleaseDescribeYourIssue": "Vui lòng mô tả chi tiết vấn đề của bạn",
+  "invalidPhone": "Số điện thoại không hợp lệ",
+  "invalidPhone_description": "không phải là số hợp lệ cho mã vùng:"
 }

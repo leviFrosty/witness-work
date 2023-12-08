@@ -1,4 +1,4 @@
-import { View } from "react-native";
+import { View, TouchableWithoutFeedback, Keyboard } from "react-native";
 import { styles } from "../Onboarding.styles";
 import OnboardingNav from "../OnboardingNav";
 import Text from "../../MyText";
@@ -13,19 +13,34 @@ interface Props {
 }
 
 const StepTwo = ({ goBack, goNext }: Props) => {
+  const handlePress = () => {
+    Keyboard.dismiss();
+  };
   return (
-    <Wrapper
-      style={{ flexGrow: 1, padding: 30, justifyContent: "space-between" }}
-    >
-      <OnboardingNav goBack={goBack} />
-      <View style={styles.stepContentContainer}>
-        <Text style={styles.stepTitle}>
-          {i18n.t("whatTypePublisherAreYou")}
-        </Text>
-        <PublisherTypeSelector />
-      </View>
-      <ActionButton onPress={goNext}>{i18n.t("continue")}</ActionButton>
-    </Wrapper>
+    <View style={{ flex: 1 }}>
+      <TouchableWithoutFeedback onPress={handlePress}>
+        <View style={{ flex: 1 }}>
+          <Wrapper
+            style={{
+              flexGrow: 1,
+              paddingHorizontal: 30,
+              paddingTop: 60,
+              paddingBottom: 60,
+              justifyContent: "space-between",
+            }}
+          >
+            <OnboardingNav goBack={goBack} />
+            <View style={styles.stepContentContainer}>
+              <Text style={styles.stepTitle}>
+                {i18n.t("whatTypePublisherAreYou")}
+              </Text>
+              <PublisherTypeSelector />
+            </View>
+            <ActionButton onPress={goNext}>{i18n.t("continue")}</ActionButton>
+          </Wrapper>
+        </View>
+      </TouchableWithoutFeedback>
+    </View>
   );
 };
 

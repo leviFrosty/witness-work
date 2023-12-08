@@ -1,4 +1,4 @@
-import { View } from "react-native";
+import { Platform, View } from "react-native";
 import useTheme from "../../contexts/theme";
 import moment from "moment";
 import Text from "../MyText";
@@ -57,7 +57,7 @@ const Header = ({
     <View
       style={{
         backgroundColor: backgroundColor || theme.colors.background,
-        paddingTop: noInsets ? 10 : insets.top,
+        paddingTop: noInsets && Platform.OS === "ios" ? 10 : insets.top,
         borderBottomWidth: noBottomBorder ? 0 : 1,
         borderBottomColor: theme.colors.border,
       }}

@@ -222,5 +222,10 @@
   "tapToAddAConversation": "대화를 추가하려면 여기를 누르거나, 위의 + 버튼을 누르세요.",
   "todaysConversations": "오늘의 대화",
   "upcomingConversations": "다가오는 대화",
-  "noTopicProvided": "제공된 주제가 없습니다."
+  "noTopicProvided": "제공된 주제가 없습니다.",
+  "customHourRequirement": "맞춤형 시간 요구 사항",
+  "custom": "관습",
+  "pleaseDescribeYourIssue": "문제를 자세히 설명해 주세요.",
+  "invalidPhone": "유효하지 않은 전화 번호",
+  "invalidPhone_description": "지역 코드에 대한 유효한 숫자가 아닙니다:"
 }

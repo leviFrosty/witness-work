@@ -1,16 +1,8 @@
-import { PublisherHours } from "./../types/publisher";
 export const publishers = [
   "publisher",
   "regularAuxiliary",
   "regularPioneer",
   "circuitOverseer",
   "specialPioneer",
+  "custom",
 ] as const;
-
-export const publisherHours: PublisherHours = {
-  publisher: 0,
-  regularAuxiliary: 30,
-  regularPioneer: 50,
-  circuitOverseer: 50,
-  specialPioneer: 70,
-};

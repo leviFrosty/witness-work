@@ -12,7 +12,12 @@ interface Props {
 const StepOne = ({ goNext }: Props) => {
   return (
     <Wrapper
-      style={{ flexGrow: 1, paddingVertical: 50, paddingHorizontal: 30 }}
+      style={{
+        flexGrow: 1,
+        paddingHorizontal: 30,
+        paddingTop: 60,
+        paddingBottom: 60,
+      }}
     >
       <View style={styles.onboardingTitleWrapper}>
         <View style={styles.textContainer}>

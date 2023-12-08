@@ -16,7 +16,13 @@ interface Props {
 const StepThree = ({ goBack, goNext }: Props) => {
   return (
     <Wrapper
-      style={{ flexGrow: 1, padding: 30, justifyContent: "space-between" }}
+      style={{
+        flexGrow: 1,
+        paddingHorizontal: 30,
+        paddingTop: 60,
+        paddingBottom: 60,
+        justifyContent: "space-between",
+      }}
     >
       <OnboardingNav goBack={goBack} />
       <View>

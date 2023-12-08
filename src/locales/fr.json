@@ -222,5 +222,10 @@
   "tapToAddAConversation": "Appuyez ici pour ajouter une conversation ou appuyez sur le bouton + ci-dessus.",
   "todaysConversations": "Conversations d'aujourd'hui",
   "upcomingConversations": "Conversations à venir",
-  "noTopicProvided": "Aucun sujet fourni."
+  "noTopicProvided": "Aucun sujet fourni.",
+  "customHourRequirement": "Exigence d'heure personnalisée",
+  "custom": "Coutume",
+  "pleaseDescribeYourIssue": "Veuillez décrire votre problème en détail",
+  "invalidPhone": "Numéro de téléphone invalide",
+  "invalidPhone_description": "n'est pas un numéro valide pour le code de région :"
 }

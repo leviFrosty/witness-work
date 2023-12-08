@@ -30,7 +30,7 @@ import {
   faTools,
   faUndo,
 } from "@fortawesome/free-solid-svg-icons";
-
+import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 const Settings = () => {
   const theme = useTheme();
   const { set: setPreferences } = usePreferences();
@@ -103,17 +103,16 @@ const Settings = () => {
         justifyContent: "space-between",
       }}
     >
-      <View style={{ gap: 25 }}>
-        <Text
-          style={{
-            marginLeft: 20,
-            marginTop: 20,
-            fontSize: 16,
-            fontFamily: theme.fonts.semiBold,
-          }}
-        >
-          {i18n.t("settings")}
-        </Text>
+      <Text
+        style={{
+          margin: 20,
+          fontSize: 16,
+          fontFamily: theme.fonts.semiBold,
+        }}
+      >
+        {i18n.t("settings")}
+      </Text>
+      <KeyboardAwareScrollView contentContainerStyle={{ gap: 25 }}>
         <View style={{ gap: 3 }}>
           <Text
             style={{
@@ -227,7 +226,11 @@ const Settings = () => {
               onPress={async () => {
                 const email = "levi.wilkerson@proton.me";
                 const subjectText = "Bug Report";
-                const bodyText = `App Version: ${Constants.expoConfig?.version}, Device: ${Device.modelName}, OS: ${Device.osVersion}. Please describe your issue in detail: --------------`;
+                const bodyText = `App Version: v${
+                  Constants.expoConfig?.version
+                }, Device: ${Device.modelName}, OS: ${
+                  Device.osVersion
+                }. ${i18n.t("pleaseDescribeYourIssue")}: --------------`;
                 const subject = encodeURIComponent(subjectText);
                 const body = encodeURIComponent(bodyText);
                 try {
@@ -254,7 +257,7 @@ const Settings = () => {
             </InputRowButton>
           </Section>
         </View>
-      </View>
+      </KeyboardAwareScrollView>
       <View>
         <Text
           style={{

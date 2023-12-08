@@ -222,5 +222,10 @@
   "tapToAddAConversation": "ここをタップして会話を追加するか、上の + ボタンを押してください。",
   "todaysConversations": "今日の会話",
   "upcomingConversations": "今後の会話",
-  "noTopicProvided": "トピックが提供されていません。"
+  "noTopicProvided": "トピックが提供されていません。",
+  "customHourRequirement": "カスタム時間要件",
+  "custom": "カスタム",
+  "pleaseDescribeYourIssue": "問題を詳しく説明してください",
+  "invalidPhone": "無効な電話番号",
+  "invalidPhone_description": "は地域コードとして有効な数値ではありません:"
 }

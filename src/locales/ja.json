@@ -231,5 +231,6 @@
   "androidAppStoreReviewErrorTitle": "Playストアエラー",
   "appleAppStoreReviewErrorTitle": "アプリストアのエラー",
   "androidAppStoreReviewErrorMessage": "Play ストアのインストールが有効であることを確認してください。",
-  "appleAppStoreReviewErrorMessage": "利用可能な場合は、JW Time アプリを最新バージョンに更新して、もう一度お試しください。"
+  "appleAppStoreReviewErrorMessage": "利用可能な場合は、JW Time アプリを最新バージョンに更新して、もう一度お試しください。",
+  "internetNotAvailable": "インターネットは現在利用できません。安定したインターネットに接続してから再試行してください。"
 }

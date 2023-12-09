@@ -231,5 +231,6 @@
   "androidAppStoreReviewErrorTitle": "Ошибка Play Маркета",
   "appleAppStoreReviewErrorTitle": "Ошибка магазина приложений",
   "androidAppStoreReviewErrorMessage": "Пожалуйста, убедитесь, что ваша установка Play Store действительна.",
-  "appleAppStoreReviewErrorMessage": "Обновите приложение JW Time до последней версии, если она доступна, и повторите попытку."
+  "appleAppStoreReviewErrorMessage": "Обновите приложение JW Time до последней версии, если она доступна, и повторите попытку.",
+  "internetNotAvailable": "Интернет в данный момент недоступен. Пожалуйста, повторите попытку при подключении к стабильному Интернету."
 }

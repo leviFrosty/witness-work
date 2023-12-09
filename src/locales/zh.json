@@ -231,5 +231,6 @@
   "androidAppStoreReviewErrorTitle": "Play 商店错误",
   "appleAppStoreReviewErrorTitle": "应用商店错误",
   "androidAppStoreReviewErrorMessage": "请验证您的 Play 商店安装是否有效。",
-  "appleAppStoreReviewErrorMessage": "请将您的 JW Time 应用程序更新到最新版本（如果可用），然后重试。"
+  "appleAppStoreReviewErrorMessage": "请将您的 JW Time 应用程序更新到最新版本（如果可用），然后重试。",
+  "internetNotAvailable": "互联网当前不可用。请在连接到稳定的互联网后重试。"
 }

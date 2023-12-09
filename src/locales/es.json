@@ -231,5 +231,6 @@
   "androidAppStoreReviewErrorTitle": "Error de Play Store",
   "appleAppStoreReviewErrorTitle": "Error de la tienda de aplicaciones",
   "androidAppStoreReviewErrorMessage": "Verifique que la instalación de Play Store sea válida.",
-  "appleAppStoreReviewErrorMessage": "Actualice su aplicación JW Time a la última versión si está disponible y vuelva a intentarlo."
+  "appleAppStoreReviewErrorMessage": "Actualice su aplicación JW Time a la última versión si está disponible y vuelva a intentarlo.",
+  "internetNotAvailable": "Internet no está disponible actualmente. Vuelva a intentarlo cuando esté conectado a Internet estable."
 }

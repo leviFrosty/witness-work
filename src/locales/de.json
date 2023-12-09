@@ -231,5 +231,6 @@
   "androidAppStoreReviewErrorTitle": "Play Store-Fehler",
   "appleAppStoreReviewErrorTitle": "App Store-Fehler",
   "androidAppStoreReviewErrorMessage": "Bitte überprüfen Sie, ob Ihre Play Store-Installation gültig ist.",
-  "appleAppStoreReviewErrorMessage": "Bitte aktualisieren Sie Ihre JW Time-App auf die neueste Version, falls verfügbar, und versuchen Sie es erneut."
+  "appleAppStoreReviewErrorMessage": "Bitte aktualisieren Sie Ihre JW Time-App auf die neueste Version, falls verfügbar, und versuchen Sie es erneut.",
+  "internetNotAvailable": "Internet ist derzeit nicht verfügbar. Bitte versuchen Sie es erneut, wenn eine stabile Internetverbindung besteht."
 }

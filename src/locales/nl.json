@@ -231,5 +231,6 @@
   "androidAppStoreReviewErrorTitle": "Play Store-fout",
   "appleAppStoreReviewErrorTitle": "App Store-fout",
   "androidAppStoreReviewErrorMessage": "Controleer of uw Play Store-installatie geldig is.",
-  "appleAppStoreReviewErrorMessage": "Update uw JW Time-app naar de nieuwste versie, indien beschikbaar, en probeer het opnieuw."
+  "appleAppStoreReviewErrorMessage": "Update uw JW Time-app naar de nieuwste versie, indien beschikbaar, en probeer het opnieuw.",
+  "internetNotAvailable": "Internet momenteel niet beschikbaar. Probeer het opnieuw wanneer u verbonden bent met stabiel internet."
 }

@@ -214,6 +214,14 @@ const Settings = () => {
                     ? Linking.openURL(links.playStoreReview)
                     : Linking.openURL(links.appStoreReview);
                 } catch (error) {
+                  Alert.alert(
+                    Platform.OS === "android"
+                      ? i18n.t("androidAppStoreReviewErrorTitle")
+                      : i18n.t("appleAppStoreReviewErrorTitle"),
+                    Platform.OS === "android"
+                      ? i18n.t("androidAppStoreReviewErrorMessage")
+                      : i18n.t("appleAppStoreReviewErrorMessage")
+                  );
                   Sentry.Native.captureException(error);
                 }
               }}

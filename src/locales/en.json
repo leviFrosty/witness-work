@@ -227,5 +227,10 @@
   "custom": "Custom",
   "pleaseDescribeYourIssue": "Please describe your issue in detail",
   "invalidPhone": "Invalid Phone Number",
-  "invalidPhone_description": "is not a valid number for the region code:"
+  "invalidPhone_description": "is not a valid number for the region code:",
+  "androidAppStoreReviewErrorTitle": "Play Store Error",
+  "appleAppStoreReviewErrorTitle": "App Store Error",
+  "androidAppStoreReviewErrorMessage": "Please verify your Play Store installation is valid.",
+  "appleAppStoreReviewErrorMessage": "Please update your JW Time app to the latest version if available and try again.",
+  "internetNotAvailable": "Internet not currently available. Please retry when connected to stable internet."
 }

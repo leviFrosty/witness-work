@@ -227,5 +227,10 @@
   "custom": "Aangepast",
   "pleaseDescribeYourIssue": "Beschrijf uw probleem gedetailleerd",
   "invalidPhone": "Ongeldig telefoonnummer",
-  "invalidPhone_description": "is geen geldig nummer voor de regiocode:"
+  "invalidPhone_description": "is geen geldig nummer voor de regiocode:",
+  "androidAppStoreReviewErrorTitle": "Play Store-fout",
+  "appleAppStoreReviewErrorTitle": "App Store-fout",
+  "androidAppStoreReviewErrorMessage": "Controleer of uw Play Store-installatie geldig is.",
+  "appleAppStoreReviewErrorMessage": "Update uw JW Time-app naar de nieuwste versie, indien beschikbaar, en probeer het opnieuw.",
+  "internetNotAvailable": "Internet momenteel niet beschikbaar. Probeer het opnieuw wanneer u verbonden bent met stabiel internet."
 }

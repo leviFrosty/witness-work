@@ -8,11 +8,7 @@ import { createDrawerNavigator } from "@react-navigation/drawer";
 import Header from "../components/layout/Header";
 import Settings from "./Settings";
 import useTheme from "../contexts/theme";
-import { useEffect, useMemo } from "react";
-import { useNavigation } from "@react-navigation/native";
-import * as Updates from "expo-updates";
-import * as Sentry from "sentry-expo";
-import { RootStackNavigation } from "../stacks/RootStack";
+import { useMemo } from "react";
 import useConversations from "../stores/conversationStore";
 import { upcomingFollowUpConversations } from "../lib/conversations";
 import ApproachingConversations from "../components/ApproachingConversations";
@@ -66,23 +62,6 @@ const Dashboard = () => {
 
 const HomeScreen = () => {
   const Drawer = createDrawerNavigator();
-  const navigation = useNavigation<RootStackNavigation>();
-
-  useEffect(() => {
-    const checkForUpdate = async () => {
-      try {
-        const update = await Updates.checkForUpdateAsync();
-        if (update.isAvailable) {
-          navigation.navigate("Update");
-        }
-      } catch (error) {
-        Sentry.Native.captureException(error);
-      }
-    };
-    if (!__DEV__) {
-      checkForUpdate();
-    }
-  }, [navigation]);
 
   return (
     <Drawer.Navigator

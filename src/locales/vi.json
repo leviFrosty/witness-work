@@ -227,5 +227,10 @@
   "custom": "Phong tục",
   "pleaseDescribeYourIssue": "Vui lòng mô tả chi tiết vấn đề của bạn",
   "invalidPhone": "Số điện thoại không hợp lệ",
-  "invalidPhone_description": "không phải là số hợp lệ cho mã vùng:"
+  "invalidPhone_description": "không phải là số hợp lệ cho mã vùng:",
+  "androidAppStoreReviewErrorTitle": "Lỗi cửa hàng Play",
+  "appleAppStoreReviewErrorTitle": "Lỗi cửa hàng ứng dụng",
+  "androidAppStoreReviewErrorMessage": "Vui lòng xác minh cài đặt Cửa hàng Play của bạn là hợp lệ.",
+  "appleAppStoreReviewErrorMessage": "Vui lòng cập nhật ứng dụng JW Time của bạn lên phiên bản mới nhất nếu có và thử lại.",
+  "internetNotAvailable": "Internet hiện không có sẵn. Vui lòng thử lại khi kết nối với internet ổn định."
 }

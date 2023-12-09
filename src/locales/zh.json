@@ -227,5 +227,9 @@
   "custom": "风俗",
   "pleaseDescribeYourIssue": "请详细描述您的问题",
   "invalidPhone": "无效的电话号码",
-  "invalidPhone_description": "不是区域代码的有效号码："
+  "invalidPhone_description": "不是区域代码的有效号码：",
+  "androidAppStoreReviewErrorTitle": "Play 商店错误",
+  "appleAppStoreReviewErrorTitle": "应用商店错误",
+  "androidAppStoreReviewErrorMessage": "请验证您的 Play 商店安装是否有效。",
+  "appleAppStoreReviewErrorMessage": "请将您的 JW Time 应用程序更新到最新版本（如果可用），然后重试。"
 }

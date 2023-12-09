@@ -227,5 +227,9 @@
   "custom": "カスタム",
   "pleaseDescribeYourIssue": "問題を詳しく説明してください",
   "invalidPhone": "無効な電話番号",
-  "invalidPhone_description": "は地域コードとして有効な数値ではありません:"
+  "invalidPhone_description": "は地域コードとして有効な数値ではありません:",
+  "androidAppStoreReviewErrorTitle": "Playストアエラー",
+  "appleAppStoreReviewErrorTitle": "アプリストアのエラー",
+  "androidAppStoreReviewErrorMessage": "Play ストアのインストールが有効であることを確認してください。",
+  "appleAppStoreReviewErrorMessage": "利用可能な場合は、JW Time アプリを最新バージョンに更新して、もう一度お試しください。"
 }

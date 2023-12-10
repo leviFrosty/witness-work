@@ -244,6 +244,16 @@
   "copyToClipboard": "In die Zwischenablage kopieren",
   "export": "Export",
   "exportTo": "Export",
-  "exportReport": "Liste exportieren",
-  "message": "Nachricht"
+  "message": "Nachricht",
+  "hoursPerDayToGoal": "Stunden/Tag bis zum Ziel!",
+  "hoursRemaining": "Verbleibende Stunden",
+  "helpTranslate": "Helfen Sie beim Übersetzen",
+  "iWouldLikeToHelpTranslate": "Ich würde gerne bei der Übersetzung von JW Time helfen! Bitte geben Sie an, welche Sprachen Sie sprechen und wie Sie heißen. Danke schön!",
+  "helpTranslateTitle": "Helfen Sie beim Übersetzen?",
+  "helpTranslate_message": "JW Time ist mithilfe automatischer Übersetzungstools in über 10 Sprachen verfügbar. Manchmal sind diese Übersetzungen möglicherweise nicht immer korrekt. Möchten Sie dazu beitragen, sie genauer zu machen?",
+  "share": "Aktie",
+  "notes": "Anmerkungen",
+  "no": "NEIN",
+  "viewAllMonths": "Alle Monate anzeigen",
+  "support": "Unterstützung"
 }

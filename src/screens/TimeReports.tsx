@@ -1,4 +1,4 @@
-import { View, Alert, ScrollView, Platform } from "react-native";
+import { View, Alert, ScrollView } from "react-native";
 import Text from "../components/MyText";
 import useServiceReport from "../stores/serviceReport";
 import useTheme from "../contexts/theme";
@@ -19,122 +19,27 @@ import i18n from "../lib/locales";
 import IconButton from "../components/IconButton";
 import {
   faArrowUpFromBracket,
-  faComment,
-  faCopy,
-  faHourglass,
   faPersonDigging,
 } from "@fortawesome/free-solid-svg-icons";
 import { Swipeable } from "react-native-gesture-handler";
 import Haptics from "../lib/haptics";
 import SwipeableDelete from "../components/swipeableActions/Delete";
-import { Sheet } from "tamagui";
 import { useState } from "react";
-import Button from "../components/Button";
-import * as Clipboard from "expo-clipboard";
-import * as Linking from "expo-linking";
-import * as Sentry from "sentry-expo";
 
-type Sheet = {
-  open: boolean;
-  month?: number | undefined;
-  year?: number | undefined;
-  hours?: number;
-  studies?: number;
-  notes?: string;
-};
-
-interface ExportTimeSheetProps {
-  sheet: Sheet;
-  setSheet: React.Dispatch<React.SetStateAction<Sheet>>;
-}
-
-const ExportTimeSheet = ({ sheet, setSheet }: ExportTimeSheetProps) => {
-  const theme = useTheme();
-
-  const handleAction = async (action: "copy" | "hourglass" | "message") => {
-    switch (action) {
-      case "copy": {
-        Haptics.success();
-        await Clipboard.setStringAsync("");
-        break;
-      }
-      case "hourglass": {
-        try {
-          await Linking.openURL("https://expo.dev");
-        } catch (error) {
-          Sentry.Native.captureException(error);
-        }
-        break;
-      }
-    }
-
-    setSheet({ open: false });
-  };
-
-  return (
-    <Sheet
-      modal={Platform.OS === "ios" ? undefined : true}
-      open={sheet.open}
-      onOpenChange={(o: boolean) => setSheet({ ...sheet, open: o })}
-    >
-      <Sheet.Handle />
-      <Sheet.Overlay />
-      <Sheet.Frame>
-        <View style={{ padding: 30, gap: 15 }}>
-          <Text
-            style={{
-              fontSize: theme.fontSize("xl"),
-              fontFamily: theme.fonts.semiBold,
-              marginBottom: 10,
-            }}
-          >
-            {i18n.t("exportReport")}
-            {": "}
-            {sheet.month &&
-              sheet.year &&
-              moment().month(sheet.month).year(sheet.year).format("MMM, YYYY")}
-          </Text>
-
-          <Button onPress={() => handleAction("hourglass")} variant="solid">
-            <View
-              style={{ flexDirection: "row", gap: 10, alignItems: "center" }}
-            >
-              <IconButton icon={faHourglass} />
-              <Text>{i18n.t("hourglass")}</Text>
-            </View>
-          </Button>
-          <Button onPress={() => handleAction("copy")} variant="solid">
-            <View
-              style={{
-                flexDirection: "row",
-                gap: 10,
-                alignItems: "center",
-              }}
-            >
-              <IconButton icon={faCopy} />
-              <Text>{i18n.t("copyToClipboard")}</Text>
-            </View>
-          </Button>
-          <Button onPress={() => handleAction("message")} variant="solid">
-            <View
-              style={{ flexDirection: "row", gap: 10, alignItems: "center" }}
-            >
-              <IconButton icon={faComment} />
-              <Text>{i18n.t("message")}</Text>
-            </View>
-          </Button>
-        </View>
-      </Sheet.Frame>
-    </Sheet>
-  );
-};
+import ExportTimeSheet, {
+  ExportTimeSheetState,
+} from "../components/ExportTimeSheet";
 
 const TimeReports = () => {
   const theme = useTheme();
   const { serviceReports, deleteServiceReport } = useServiceReport();
   const navigation = useNavigation<RootStackNavigation>();
   const insets = useSafeAreaInsets();
-  const [sheet, setSheet] = useState<Sheet>({ open: false });
+  const [sheet, setSheet] = useState<ExportTimeSheetState>({
+    open: false,
+    month: 0,
+    year: 0,
+  });
 
   // Group service reports by year and then by month
   const reportsByYearAndMonth: {

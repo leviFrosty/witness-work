@@ -244,6 +244,16 @@
   "copyToClipboard": "Copia negli appunti",
   "export": "Esportare",
   "exportTo": "Esportare",
-  "exportReport": "Rapporto sull'esportazione",
-  "message": "Messaggio"
+  "message": "Messaggio",
+  "hoursPerDayToGoal": "ore/giorno all'obiettivo!",
+  "hoursRemaining": "Ore rimanenti",
+  "helpTranslate": "Aiuta a tradurre",
+  "iWouldLikeToHelpTranslate": "Vorrei aiutare a tradurre JW Time! Per favore indica quali lingue parli e qual è il tuo nome. Grazie!",
+  "helpTranslateTitle": "Aiutaci a tradurre?",
+  "helpTranslate_message": "JW Time è disponibile in oltre 10 lingue tramite strumenti di traduzione automatica. A volte, queste traduzioni potrebbero non essere sempre accurate. Vorresti contribuire a renderli più accurati?",
+  "share": "Condividere",
+  "notes": "Appunti",
+  "no": "NO",
+  "viewAllMonths": "Visualizza tutti i mesi",
+  "support": "Supporto"
 }

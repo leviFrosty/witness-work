@@ -27,6 +27,7 @@ import {
   faChevronRight,
   faDownload,
   faFileContract,
+  faGlobe,
   faTools,
   faUndo,
 } from "@fortawesome/free-solid-svg-icons";
@@ -212,7 +213,7 @@ const Settings = (props: DrawerContentComponentProps) => {
                 textTransform: "uppercase",
               }}
             >
-              {i18n.t("misc")}
+              {i18n.t("support")}
             </Text>
             <Section>
               <InputRowButton
@@ -243,11 +244,69 @@ const Settings = (props: DrawerContentComponentProps) => {
                 <IconButton icon={faChevronRight} />
               </InputRowButton>
               <InputRowButton
+                leftIcon={faGlobe}
+                label={i18n.t("helpTranslate")}
+                onPress={async () => {
+                  const emailMe = async () => {
+                    const email = "levi.wilkerson@proton.me";
+                    const subjectText = "[JW Time] Help Translate";
+                    const bodyText = `${i18n.t(
+                      "iWouldLikeToHelpTranslate"
+                    )}: --------------`;
+                    const subject = encodeURIComponent(subjectText);
+                    const body = encodeURIComponent(bodyText);
+                    try {
+                      await Linking.openURL(
+                        `mailto:${email}?subject=${subject}&body=${body}`
+                      );
+                    } catch (error) {
+                      Alert.alert(
+                        i18n.t("error"),
+                        i18n.t("failedToOpenMailApplication")
+                      );
+                    }
+                  };
+
+                  Alert.alert(
+                    i18n.t("helpTranslateTitle"),
+                    i18n.t("helpTranslate_message"),
+                    [
+                      {
+                        text: i18n.t("cancel"),
+                        style: "cancel",
+                      },
+                      {
+                        text: i18n.t("yes"),
+                        onPress: emailMe,
+                      },
+                    ]
+                  );
+                }}
+                lastInSection
+              >
+                <IconButton icon={faChevronRight} />
+              </InputRowButton>
+            </Section>
+          </View>
+          <View style={{ gap: 3 }}>
+            <Text
+              style={{
+                marginLeft: 20,
+                fontFamily: theme.fonts.semiBold,
+                fontSize: 12,
+                color: theme.colors.textAlt,
+                textTransform: "uppercase",
+              }}
+            >
+              {i18n.t("misc")}
+            </Text>
+            <Section>
+              <InputRowButton
                 leftIcon={faBug}
                 label={i18n.t("bugReport")}
                 onPress={async () => {
                   const email = "levi.wilkerson@proton.me";
-                  const subjectText = "Bug Report";
+                  const subjectText = "[JW Time] Bug Report";
                   const bodyText = `App Version: v${
                     Constants.expoConfig?.version
                   }, Device: ${Device.modelName}, OS: ${

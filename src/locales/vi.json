@@ -244,6 +244,16 @@
   "copyToClipboard": "Sao chép vào clipboard",
   "export": "Xuất khẩu",
   "exportTo": "Xuất khẩu",
-  "exportReport": "Báo cáo xuất khẩu",
-  "message": "Tin nhắn"
+  "message": "Tin nhắn",
+  "hoursPerDayToGoal": "giờ/ngày để đạt được mục tiêu!",
+  "hoursRemaining": "Số giờ còn lại",
+  "helpTranslate": "Trợ giúp Dịch",
+  "iWouldLikeToHelpTranslate": "Tôi muốn giúp dịch JW Time! Vui lòng cung cấp ngôn ngữ bạn nói và tên của bạn là gì. Cảm ơn!",
+  "helpTranslateTitle": "Trợ giúp Dịch?",
+  "helpTranslate_message": "JW Time có sẵn trên hơn 10 ngôn ngữ nhờ các công cụ dịch tự động. Đôi khi, những bản dịch này có thể không phải lúc nào cũng chính xác. Bạn có muốn giúp làm cho chúng chính xác hơn không?",
+  "share": "Chia sẻ",
+  "notes": "Ghi chú",
+  "no": "KHÔNG",
+  "viewAllMonths": "Xem tất cả các tháng",
+  "support": "Ủng hộ"
 }

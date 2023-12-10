@@ -1,5 +1,5 @@
 import moment from "moment";
-import { getTotalStudiesCount } from "../lib/contacts";
+import { getStudiesForGivenMonth } from "../lib/contacts";
 import { createFakeContacts } from "./__data__/contacts";
 import { Conversation } from "../types/conversation";
 
@@ -11,7 +11,7 @@ describe("lib/contacts", () => {
       const contacts = createFakeContacts();
       const conversations: Conversation[] = [];
 
-      const count = getTotalStudiesCount({
+      const count = getStudiesForGivenMonth({
         contacts,
         conversations,
         month: testDate,
@@ -32,7 +32,7 @@ describe("lib/contacts", () => {
         },
       ];
 
-      const count = getTotalStudiesCount({
+      const count = getStudiesForGivenMonth({
         contacts,
         conversations,
         month: testDate,
@@ -62,7 +62,7 @@ describe("lib/contacts", () => {
         },
       ];
 
-      const count = getTotalStudiesCount({
+      const count = getStudiesForGivenMonth({
         contacts,
         conversations,
         month: testDate,
@@ -92,7 +92,7 @@ describe("lib/contacts", () => {
         },
       ];
 
-      const count = getTotalStudiesCount({
+      const count = getStudiesForGivenMonth({
         contacts,
         conversations,
         month: testDate,
@@ -122,7 +122,7 @@ describe("lib/contacts", () => {
         },
       ];
 
-      const count = getTotalStudiesCount({
+      const count = getStudiesForGivenMonth({
         contacts,
         conversations,
         month: testDate,

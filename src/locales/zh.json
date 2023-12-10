@@ -244,6 +244,16 @@
   "copyToClipboard": "复制到剪贴板",
   "export": "出口",
   "exportTo": "出口",
-  "exportReport": "出口报告",
-  "message": "信息"
+  "message": "信息",
+  "hoursPerDayToGoal": "小时/天达到目标！",
+  "hoursRemaining": "剩余时间",
+  "helpTranslate": "帮助翻译",
+  "iWouldLikeToHelpTranslate": "我想帮忙翻译JW Time！请提供您使用的语言以及您的名字。谢谢你！",
+  "helpTranslateTitle": "帮忙翻译一下？",
+  "helpTranslate_message": "JW Time 通过自动翻译工具提供 10 多种语言版本。有时，这些翻译可能并不总是准确的。您愿意帮助使它们更加准确吗？",
+  "share": "分享",
+  "notes": "笔记",
+  "no": "不",
+  "viewAllMonths": "查看所有月份",
+  "support": "支持"
 }

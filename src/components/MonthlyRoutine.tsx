@@ -19,11 +19,16 @@ const Month = ({ month }: { month: number }) => {
   const navigation = useNavigation<RootStackNavigation>();
   const { installedOn, publisher } = usePreferences();
   const currentMonth = moment().month();
+
   const isCurrentMonth = currentMonth === month;
   const monthHasPassed = currentMonth > month;
   const monthInFuture = currentMonth < month;
   const { serviceReports } = useServiceReport();
-  const wentOutThisMonth = hasServiceReportsForMonth(serviceReports, month);
+  const wentOutThisMonth = hasServiceReportsForMonth(
+    serviceReports,
+    month,
+    moment().year()
+  );
   const monthWasBeforeInstalled = month < moment(installedOn).month();
 
   const didNotGoOutInService = monthHasPassed && !wentOutThisMonth;

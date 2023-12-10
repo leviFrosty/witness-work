@@ -27,4 +27,4 @@ If you wish to contribute to help cover the costs associated with app-store fees
 
 ## License
 
-JW Time © 2023 by Levi Wilkerson is licensed under [Fair Source License 0.9](./LICENSE)
+JW Time © 2023 by Levi Wilkerson is licensed under [Attribution-NonCommercial 4.0 International](./LICENSE)

@@ -239,5 +239,11 @@
   "addNotAtHome_description": "输入有关无法联系到此人的任何值得注意的信息。",
   "conversation": "进行了一次对话",
   "addToHistory": "发生了什么？",
-  "add_description": "添加“不在家”或“对话”联系人的历史记录。"
+  "add_description": "添加“不在家”或“对话”联系人的历史记录。",
+  "hourglass": "滴漏",
+  "copyToClipboard": "复制到剪贴板",
+  "export": "出口",
+  "exportTo": "出口",
+  "exportReport": "出口报告",
+  "message": "信息"
 }

@@ -239,5 +239,11 @@
   "addNotAtHome_description": "Voer eventuele opmerkelijke informatie in over het niet kunnen bereiken van deze persoon.",
   "conversation": "Een gesprek gehad",
   "addToHistory": "Wat is er gebeurd?",
-  "add_description": "Voeg een 'Niet thuis' of 'Gesprek' om contact op te nemen met de geschiedenis."
+  "add_description": "Voeg een 'Niet thuis' of 'Gesprek' om contact op te nemen met de geschiedenis.",
+  "hourglass": "Zandloper",
+  "copyToClipboard": "Kopieer naar klembord",
+  "export": "Exporteren",
+  "exportTo": "Exporteren",
+  "exportReport": "Rapport exporteren",
+  "message": "Bericht"
 }

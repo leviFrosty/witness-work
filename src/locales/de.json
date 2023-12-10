@@ -239,5 +239,11 @@
   "addNotAtHome_description": "Geben Sie alle wichtigen Informationen darüber ein, dass Sie diese Person nicht erreichen können.",
   "conversation": "Hatte ein Gespräch",
   "addToHistory": "Was ist passiert?",
-  "add_description": "Fügen Sie ein „Nicht zu Hause“ hinzu. oder „Konversation“ um Kontakt zur Geschichte aufzunehmen."
+  "add_description": "Fügen Sie ein „Nicht zu Hause“ hinzu. oder „Konversation“ um Kontakt zur Geschichte aufzunehmen.",
+  "hourglass": "Sanduhr",
+  "copyToClipboard": "In die Zwischenablage kopieren",
+  "export": "Export",
+  "exportTo": "Export",
+  "exportReport": "Liste exportieren",
+  "message": "Nachricht"
 }

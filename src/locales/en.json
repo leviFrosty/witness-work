@@ -239,5 +239,11 @@
   "addNotAtHome_description": "Enter any noteworthy information about not being able to reach this individual.",
   "conversation": "Had a Conversation",
   "addToHistory": "So, how'd it go?",
-  "add_description": "Add a 'Not at Home' or 'Conversation' to contact's history."
+  "add_description": "Add a 'Not at Home' or 'Conversation' to contact's history.",
+  "hourglass": "Hourglass",
+  "copyToClipboard": "Copy To Clipboard",
+  "export": "Export",
+  "exportTo": "Export",
+  "exportReport": "Export Report",
+  "message": "Message"
 }

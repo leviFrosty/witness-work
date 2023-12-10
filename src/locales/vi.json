@@ -239,5 +239,11 @@
   "addNotAtHome_description": "Nhập bất kỳ thông tin đáng chú ý nào về việc không thể liên lạc được với cá nhân này.",
   "conversation": "Đã có một cuộc trò chuyện",
   "addToHistory": "Chuyện gì đã xảy ra thế?",
-  "add_description": "Thêm tùy chọn 'Không có ở nhà' hoặc 'Cuộc trò chuyện' tới lịch sử của liên hệ."
+  "add_description": "Thêm tùy chọn 'Không có ở nhà' hoặc 'Cuộc trò chuyện' tới lịch sử của liên hệ.",
+  "hourglass": "Đồng hồ cát",
+  "copyToClipboard": "Sao chép vào clipboard",
+  "export": "Xuất khẩu",
+  "exportTo": "Xuất khẩu",
+  "exportReport": "Báo cáo xuất khẩu",
+  "message": "Tin nhắn"
 }

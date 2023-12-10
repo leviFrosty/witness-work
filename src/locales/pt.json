@@ -239,5 +239,11 @@
   "addNotAtHome_description": "Insira qualquer informação digna de nota sobre não conseguir entrar em contato com esse indivíduo.",
   "conversation": "Tive uma conversa",
   "addToHistory": "O que aconteceu?",
-  "add_description": "Adicione uma mensagem 'Não está em casa' ou 'Conversa' para acessar o histórico do contato."
+  "add_description": "Adicione uma mensagem 'Não está em casa' ou 'Conversa' para acessar o histórico do contato.",
+  "hourglass": "Ampulheta",
+  "copyToClipboard": "Copiar para área de transferência",
+  "export": "Exportar",
+  "exportTo": "Exportar",
+  "exportReport": "Exportar relatório",
+  "message": "Mensagem"
 }

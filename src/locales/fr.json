@@ -239,5 +239,11 @@
   "addNotAtHome_description": "Saisissez toute information importante indiquant que vous ne pourrez pas joindre cette personne.",
   "conversation": "J'ai eu une conversation",
   "addToHistory": "Ce qui s'est passé?",
-  "add_description": "Ajoutez un message « Pas à la maison » ou \"Conversation\" pour contacter l'historique."
+  "add_description": "Ajoutez un message « Pas à la maison » ou \"Conversation\" pour contacter l'historique.",
+  "hourglass": "Sablier",
+  "copyToClipboard": "Copier dans le presse-papier",
+  "export": "Exporter",
+  "exportTo": "Exporter",
+  "exportReport": "Rapport d'exportation",
+  "message": "Message"
 }

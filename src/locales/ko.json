@@ -239,5 +239,11 @@
   "addNotAtHome_description": "이 개인에게 연락할 수 없다는 중요한 정보를 입력하세요.",
   "conversation": "대화를 나누었습니다",
   "addToHistory": "무슨 일이에요?",
-  "add_description": "'집에 없음'을 추가하세요. 또는 '대화' 연락처 기록에."
+  "add_description": "'집에 없음'을 추가하세요. 또는 '대화' 연락처 기록에.",
+  "hourglass": "모래시계",
+  "copyToClipboard": "클립 보드에 복사",
+  "export": "내보내다",
+  "exportTo": "내보내다",
+  "exportReport": "보고서 내보내기",
+  "message": "메시지"
 }

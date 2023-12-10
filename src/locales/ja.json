@@ -239,5 +239,11 @@
   "addNotAtHome_description": "この個人に連絡できないことに関する注目すべき情報を入力します。",
   "conversation": "会話をしました",
   "addToHistory": "どうしたの？",
-  "add_description": "「不在」を追加します。または「会話」履歴に連絡します。"
+  "add_description": "「不在」を追加します。または「会話」履歴に連絡します。",
+  "hourglass": "砂時計",
+  "copyToClipboard": "クリップボードにコピー",
+  "export": "輸出",
+  "exportTo": "輸出",
+  "exportReport": "レポートのエクスポート",
+  "message": "メッセージ"
 }

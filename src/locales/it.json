@@ -239,5 +239,11 @@
   "addNotAtHome_description": "Inserisci eventuali informazioni degne di nota sull'impossibilità di raggiungere questa persona.",
   "conversation": "Ho avuto una conversazione",
   "addToHistory": "Quello che è successo?",
-  "add_description": "Aggiungi un messaggio \"Non a casa\" o \"Conversazione\" per visualizzare la cronologia dei contatti."
+  "add_description": "Aggiungi un messaggio \"Non a casa\" o \"Conversazione\" per visualizzare la cronologia dei contatti.",
+  "hourglass": "Clessidra",
+  "copyToClipboard": "Copia negli appunti",
+  "export": "Esportare",
+  "exportTo": "Esportare",
+  "exportReport": "Rapporto sull'esportazione",
+  "message": "Messaggio"
 }

@@ -9,6 +9,7 @@ on:
   pull_request:
     branches:
       - production
+      - development
 
 jobs:
   test:

@@ -3,7 +3,7 @@ import React, {
   useState,
   useCallback,
   useEffect,
-  useMemo,
+  useMemo
 } from "react";
 import { TextInput, View, Pressable, useColorScheme } from "react-native";
 import Text from "../components/MyText";
@@ -22,13 +22,13 @@ import Wrapper from "../components/Wrapper";
 import PhoneInput, {
   ICountry,
   ITheme,
-  getCountryByCca2,
+  getCountryByCca2
 } from "react-native-international-phone-number";
 import * as Localization from "expo-localization";
 import { ICountryCca2 } from "react-native-international-phone-number/lib/interfaces/countryCca2";
 import InputRowContainer from "../components/inputs/InputRowContainer";
 import IconButton from "../components/IconButton";
-import { faCaretDown } from "@fortawesome/free-solid-svg-icons";
+import { faCaretDown, faIdCard } from "@fortawesome/free-solid-svg-icons";
 import { parsePhoneNumber } from "awesome-phonenumber";
 
 const PersonalContactSection = ({
@@ -41,7 +41,7 @@ const PersonalContactSection = ({
   line1Input,
   setEmail,
   setErrors,
-  errors,
+  errors
 }: {
   contact: Contact;
   nameInput: React.RefObject<TextInput>;
@@ -75,7 +75,7 @@ const PersonalContactSection = ({
   const formatted = useMemo(
     () =>
       parsePhoneNumber(placeholder.current, {
-        regionCode: contact.phoneRegionCode || locales[0].regionCode || "",
+        regionCode: contact.phoneRegionCode || locales[0].regionCode || ""
       }),
     [contact.phoneRegionCode, locales]
   );
@@ -101,7 +101,7 @@ const PersonalContactSection = ({
           onChangeText: (val: string) => setName(val),
           value: contact.name,
           autoCapitalize: "words",
-          autoCorrect: false,
+          autoCorrect: false
         }}
         required
       />
@@ -125,42 +125,42 @@ const PersonalContactSection = ({
             phoneInputStyles={{
               container: {
                 borderWidth: 0,
-                backgroundColor: theme.colors.backgroundLighter,
+                backgroundColor: theme.colors.backgroundLighter
               },
               flagContainer: {
                 backgroundColor: theme.colors.card,
-                borderRadius: theme.numbers.borderRadiusSm,
+                borderRadius: theme.numbers.borderRadiusSm
               },
               input: {
                 fontSize: theme.fontSize("md"),
                 textAlign: "right",
-                paddingHorizontal: 2,
+                paddingHorizontal: 2
               },
               callingCode: {
-                fontSize: theme.fontSize("md"),
+                fontSize: theme.fontSize("md")
               },
               divider: {
-                backgroundColor: theme.colors.border,
+                backgroundColor: theme.colors.border
               },
               caret: {
                 fontSize: theme.fontSize("sm"),
-                color: theme.colors.textAlt,
-              },
+                color: theme.colors.textAlt
+              }
             }}
             modalStyles={{
               modal: {
-                backgroundColor: theme.colors.background,
+                backgroundColor: theme.colors.background
               },
               searchInput: {
-                borderColor: theme.colors.border,
+                borderColor: theme.colors.border
               },
               countryButton: {
                 borderColor: theme.colors.border,
                 backgroundColor: theme.colors.card,
                 shadowColor: theme.colors.shadow,
                 shadowOffset: { height: 1, width: 0 },
-                shadowOpacity: theme.numbers.shadowOpacity,
-              },
+                shadowOpacity: theme.numbers.shadowOpacity
+              }
             }}
           />
           {placeholder.current.length > 0 && !formatted.possible && (
@@ -168,7 +168,7 @@ const PersonalContactSection = ({
               style={{
                 textAlign: "right",
                 fontSize: theme.fontSize("sm"),
-                color: theme.colors.textAlt,
+                color: theme.colors.textAlt
               }}
             >{`"${formatted.number?.input}" ${i18n.t("error")}: ${
               formatted.possibility
@@ -186,7 +186,7 @@ const PersonalContactSection = ({
           keyboardType: "email-address",
           onChangeText: (val: string) => setEmail(val),
           value: contact.email,
-          autoCapitalize: "none",
+          autoCapitalize: "none"
         }}
       />
     </Section>
@@ -206,7 +206,7 @@ const AddressSection = ({
   zipInput,
   countryInput,
   setZip,
-  setCountry,
+  setCountry
 }: {
   contact: Contact;
   line1Input: React.RefObject<TextInput>;
@@ -231,7 +231,7 @@ const AddressSection = ({
           onSubmitEditing: () => line2Input.current?.focus(),
           onChangeText: (val: string) => setLine1(val),
           autoCapitalize: "words",
-          value: contact.address?.line1 || "",
+          value: contact.address?.line1 || ""
         }}
       />
       <TextInputRow
@@ -241,13 +241,13 @@ const AddressSection = ({
           onSubmitEditing: () => cityInput.current?.focus(),
           onChangeText: (val: string) => setLine2(val),
           value: contact.address?.line2 || "",
-          autoCapitalize: "words",
+          autoCapitalize: "words"
         }}
       />
       <View
         style={{
           flexDirection: "row",
-          justifyContent: "space-between",
+          justifyContent: "space-between"
         }}
       >
         <View style={{ width: "50%" }}>
@@ -258,7 +258,7 @@ const AddressSection = ({
               onSubmitEditing: () => stateInput.current?.focus(),
               onChangeText: (val: string) => setCity(val),
               autoCapitalize: "words",
-              value: contact.address?.city || "",
+              value: contact.address?.city || ""
             }}
           />
         </View>
@@ -270,7 +270,7 @@ const AddressSection = ({
               onSubmitEditing: () => zipInput.current?.focus(),
               onChangeText: (val: string) => setState(val),
               value: contact.address?.state || "",
-              autoCapitalize: "words",
+              autoCapitalize: "words"
             }}
           />
         </View>
@@ -278,7 +278,7 @@ const AddressSection = ({
       <View
         style={{
           flexDirection: "row",
-          justifyContent: "space-between",
+          justifyContent: "space-between"
         }}
       >
         <View style={{ width: "50%" }}>
@@ -289,7 +289,7 @@ const AddressSection = ({
               onSubmitEditing: () => countryInput.current?.focus(),
               onChangeText: (val: string) => setZip(val),
               value: contact.address?.zip || "",
-              keyboardType: "number-pad",
+              keyboardType: "number-pad"
             }}
             lastInSection
           />
@@ -301,7 +301,7 @@ const AddressSection = ({
             textInputProps={{
               onChangeText: (val: string) => setCountry(val),
               value: contact.address?.country || "",
-              autoCapitalize: "words",
+              autoCapitalize: "words"
             }}
             lastInSection
           />
@@ -318,7 +318,7 @@ const ContactForm = ({ route, navigation }: Props) => {
   const { addContact, contacts, updateContact } = useContacts();
   const editMode = route.params.edit;
   const [errors, setErrors] = useState<Errors>({
-    name: "",
+    name: ""
   });
   const contactToUpdate = editMode
     ? contacts.find((c) => c.id === route.params.id)
@@ -336,39 +336,39 @@ const ContactForm = ({ route, navigation }: Props) => {
         city: "",
         state: "",
         zip: "",
-        country: "",
+        country: ""
       },
       email: "",
       phone: "",
-      phoneRegionCode: locales[0].regionCode || "",
+      phoneRegionCode: locales[0].regionCode || ""
     }
   );
 
   const setName = (name: string) => {
     setContact({
       ...contact,
-      name,
+      name
     });
   };
 
   const setPhone = (phone: string) => {
     setContact({
       ...contact,
-      phone,
+      phone
     });
   };
 
   const setRegionCode = (regionCode: string) => {
     setContact({
       ...contact,
-      phoneRegionCode: regionCode,
+      phoneRegionCode: regionCode
     });
   };
 
   const setEmail = (email: string) => {
     setContact({
       ...contact,
-      email,
+      email
     });
   };
 
@@ -377,8 +377,8 @@ const ContactForm = ({ route, navigation }: Props) => {
       ...contact,
       address: {
         ...contact.address,
-        line1,
-      },
+        line1
+      }
     });
   };
   const setLine2 = (line2: string) => {
@@ -386,8 +386,8 @@ const ContactForm = ({ route, navigation }: Props) => {
       ...contact,
       address: {
         ...contact.address,
-        line2,
-      },
+        line2
+      }
     });
   };
   const setCity = (city: string) => {
@@ -395,8 +395,8 @@ const ContactForm = ({ route, navigation }: Props) => {
       ...contact,
       address: {
         ...contact.address,
-        city,
-      },
+        city
+      }
     });
   };
   const setState = (state: string) => {
@@ -404,8 +404,8 @@ const ContactForm = ({ route, navigation }: Props) => {
       ...contact,
       address: {
         ...contact.address,
-        state,
-      },
+        state
+      }
     });
   };
   const setZip = (zip: string) => {
@@ -413,8 +413,8 @@ const ContactForm = ({ route, navigation }: Props) => {
       ...contact,
       address: {
         ...contact.address,
-        zip,
-      },
+        zip
+      }
     });
   };
   const setCountry = (country: string) => {
@@ -422,8 +422,8 @@ const ContactForm = ({ route, navigation }: Props) => {
       ...contact,
       address: {
         ...contact.address,
-        country,
-      },
+        country
+      }
     });
   };
   const nameInput = useRef<TextInput>(null);
@@ -480,12 +480,12 @@ const ContactForm = ({ route, navigation }: Props) => {
                 }
                 if (editMode) {
                   navigation.replace("Contact Details", {
-                    id: (params as { id: string }).id,
+                    id: (params as { id: string }).id
                   });
                   return;
                 }
                 navigation.replace("Conversation Form", {
-                  contactId: (params as { id: string }).id,
+                  contactId: (params as { id: string }).id
                 });
               }}
             >
@@ -493,7 +493,7 @@ const ContactForm = ({ route, navigation }: Props) => {
                 style={{
                   color: theme.colors.text,
                   textDecorationLine: "underline",
-                  fontSize: 16,
+                  fontSize: 16
                 }}
               >
                 {editMode ? i18n.t("save") : i18n.t("continue")}
@@ -501,7 +501,7 @@ const ContactForm = ({ route, navigation }: Props) => {
             </Pressable>
           }
         />
-      ),
+      )
     });
   }, [
     editMode,
@@ -509,7 +509,7 @@ const ContactForm = ({ route, navigation }: Props) => {
     submit,
     theme.colors.text,
     theme.colors.textInverse,
-    validate,
+    validate
   ]);
 
   return (
@@ -519,11 +519,21 @@ const ContactForm = ({ route, navigation }: Props) => {
       automaticallyAdjustKeyboardInsets
       style={{ backgroundColor: theme.colors.background }}
     >
-      <Wrapper noInsets style={{ gap: 30, marginTop: 20 }}>
+      <Wrapper
+        noInsets
+        style={{ gap: 30, marginTop: 20 }}
+      >
         <View style={{ padding: 25, gap: 5 }}>
-          <Text style={{ fontSize: 32, fontFamily: theme.fonts.bold }}>
-            {editMode ? i18n.t("edit") : i18n.t("add")} {i18n.t("contact")}
-          </Text>
+          <View style={{ flexDirection: "row", gap: 10, alignItems: "center" }}>
+            <IconButton
+              icon={faIdCard}
+              iconStyle={{ color: theme.colors.text }}
+              size={20}
+            />
+            <Text style={{ fontSize: 32, fontFamily: theme.fonts.bold }}>
+              {editMode ? i18n.t("edit") : i18n.t("add")} {i18n.t("contact")}
+            </Text>
+          </View>
           <Text style={{ color: theme.colors.textAlt, fontSize: 12 }}>
             {i18n.t("enterContactInformation")}
           </Text>

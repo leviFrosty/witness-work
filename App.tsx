@@ -18,6 +18,8 @@ import { StatusBar } from "expo-status-bar"; // automatically switches bar style
 import getThemeFromColorScheme from "./src/constants/theme";
 import { ThemeContext } from "./src/contexts/theme";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
+import { TamaguiProvider } from "tamagui";
+import tamaguiConfig from "./tamagui.config";
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
@@ -38,29 +40,36 @@ export default function App() {
   const colorScheme = useColorScheme();
   const theme = getThemeFromColorScheme(colorScheme);
 
-  const [fontsLoaded, fontError] = useFonts({
+  const [fontsLoaded] = useFonts({
     Inter_400Regular,
     Inter_500Medium,
     Inter_600SemiBold,
     Inter_700Bold,
+    Inter: require("@tamagui/font-inter/otf/Inter-Medium.otf"),
+    InterBold: require("@tamagui/font-inter/otf/Inter-Bold.otf"),
   });
 
-  if (!fontsLoaded && !fontError) {
+  if (!fontsLoaded) {
     return null;
   }
 
   try {
     return (
-      <NavigationContainer>
-        <SafeAreaProvider>
-          <ThemeContext.Provider value={theme}>
-            <GestureHandlerRootView style={{ flex: 1 }}>
-              <StatusBar />
-              <RootStackComponent />
-            </GestureHandlerRootView>
-          </ThemeContext.Provider>
-        </SafeAreaProvider>
-      </NavigationContainer>
+      <TamaguiProvider
+        defaultTheme={colorScheme || undefined}
+        config={tamaguiConfig}
+      >
+        <NavigationContainer>
+          <SafeAreaProvider>
+            <ThemeContext.Provider value={theme}>
+              <GestureHandlerRootView style={{ flex: 1 }}>
+                <StatusBar />
+                <RootStackComponent />
+              </GestureHandlerRootView>
+            </ThemeContext.Provider>
+          </SafeAreaProvider>
+        </NavigationContainer>
+      </TamaguiProvider>
     );
   } catch (error) {
     Sentry.Native.captureException(error);

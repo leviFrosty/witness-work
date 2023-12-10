@@ -29,7 +29,6 @@
   "deleteConversation_description": "Wenn Sie diese Konversation löschen, werden sie und alle zugewiesenen Benachrichtigungen dauerhaft entfernt.",
   "cancel": "Stornieren",
   "delete": "Löschen",
-  "noConversationNotesSaved": "Keine Gesprächsnotizen gespeichert.",
   "followUpInformation": "Follow-up-Informationen",
   "upcoming": "bevorstehende",
   "past": "Vergangenheit",
@@ -232,5 +231,13 @@
   "appleAppStoreReviewErrorTitle": "App Store-Fehler",
   "androidAppStoreReviewErrorMessage": "Bitte überprüfen Sie, ob Ihre Play Store-Installation gültig ist.",
   "appleAppStoreReviewErrorMessage": "Bitte aktualisieren Sie Ihre JW Time-App auf die neueste Version, falls verfügbar, und versuchen Sie es erneut.",
-  "internetNotAvailable": "Internet ist derzeit nicht verfügbar. Bitte versuchen Sie es erneut, wenn eine stabile Internetverbindung besteht."
+  "internetNotAvailable": "Internet ist derzeit nicht verfügbar. Bitte versuchen Sie es erneut, wenn eine stabile Internetverbindung besteht.",
+  "noNotesSaved": "Keine Notiz gespeichert.",
+  "notAtHome": "Nicht zu Hause",
+  "editNotAtHome": "Bearbeiten Nicht zu Hause",
+  "addNotAtHome": "Nicht zu Hause",
+  "addNotAtHome_description": "Geben Sie alle wichtigen Informationen darüber ein, dass Sie diese Person nicht erreichen können.",
+  "conversation": "Hatte ein Gespräch",
+  "addToHistory": "Was ist passiert?",
+  "add_description": "Fügen Sie ein „Nicht zu Hause“ hinzu. oder „Konversation“ um Kontakt zur Geschichte aufzunehmen."
 }

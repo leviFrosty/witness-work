@@ -5,6 +5,7 @@
     "datetimepicker",
     "Haptics",
     "Pressable",
-    "Swipeable"
+    "Swipeable",
+    "tamagui"
   ]
 }

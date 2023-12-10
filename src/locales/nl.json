@@ -29,7 +29,6 @@
   "deleteConversation_description": "Als je dit gesprek verwijdert, worden het gesprek en eventuele toegewezen meldingen definitief verwijderd.",
   "cancel": "Annuleren",
   "delete": "Verwijderen",
-  "noConversationNotesSaved": "Geen gespreksnotities opgeslagen.",
   "followUpInformation": "Vervolginformatie",
   "upcoming": "aanstaande",
   "past": "verleden",
@@ -232,5 +231,13 @@
   "appleAppStoreReviewErrorTitle": "App Store-fout",
   "androidAppStoreReviewErrorMessage": "Controleer of uw Play Store-installatie geldig is.",
   "appleAppStoreReviewErrorMessage": "Update uw JW Time-app naar de nieuwste versie, indien beschikbaar, en probeer het opnieuw.",
-  "internetNotAvailable": "Internet momenteel niet beschikbaar. Probeer het opnieuw wanneer u verbonden bent met stabiel internet."
+  "internetNotAvailable": "Internet momenteel niet beschikbaar. Probeer het opnieuw wanneer u verbonden bent met stabiel internet.",
+  "noNotesSaved": "Geen notitie opgeslagen.",
+  "notAtHome": "Niet thuis",
+  "editNotAtHome": "Bewerken Niet thuis",
+  "addNotAtHome": "Niet thuis",
+  "addNotAtHome_description": "Voer eventuele opmerkelijke informatie in over het niet kunnen bereiken van deze persoon.",
+  "conversation": "Een gesprek gehad",
+  "addToHistory": "Wat is er gebeurd?",
+  "add_description": "Voeg een 'Niet thuis' of 'Gesprek' om contact op te nemen met de geschiedenis."
 }

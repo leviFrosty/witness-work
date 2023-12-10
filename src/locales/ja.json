@@ -29,7 +29,6 @@
   "deleteConversation_description": "この会話を削除すると、会話と割り当てられた通知が完全に削除されます。",
   "cancel": "キャンセル",
   "delete": "消去",
-  "noConversationNotesSaved": "会話メモは保存されませんでした。",
   "followUpInformation": "フォローアップ情報",
   "upcoming": "今後の",
   "past": "過去",
@@ -232,5 +231,13 @@
   "appleAppStoreReviewErrorTitle": "アプリストアのエラー",
   "androidAppStoreReviewErrorMessage": "Play ストアのインストールが有効であることを確認してください。",
   "appleAppStoreReviewErrorMessage": "利用可能な場合は、JW Time アプリを最新バージョンに更新して、もう一度お試しください。",
-  "internetNotAvailable": "インターネットは現在利用できません。安定したインターネットに接続してから再試行してください。"
+  "internetNotAvailable": "インターネットは現在利用できません。安定したインターネットに接続してから再試行してください。",
+  "noNotesSaved": "メモは保存されていません。",
+  "notAtHome": "家にいません",
+  "editNotAtHome": "編集が不在です",
+  "addNotAtHome": "家にいません",
+  "addNotAtHome_description": "この個人に連絡できないことに関する注目すべき情報を入力します。",
+  "conversation": "会話をしました",
+  "addToHistory": "どうしたの？",
+  "add_description": "「不在」を追加します。または「会話」履歴に連絡します。"
 }

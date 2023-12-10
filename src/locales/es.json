@@ -79,7 +79,6 @@
   "goalBasedOnPublisherType": "El objetivo se basa en el tipo de publicador",
   "hoursLeft": "Horas restantes",
   "monthlyRoutine": "Rutina Mensual",
-  "noConversationNotesSaved": "No hay conversaciones guardadas.",
   "past": "pasado",
   "followUpInformation": "",
   "searchForContact": "Buscar contacto...",
@@ -232,5 +231,13 @@
   "appleAppStoreReviewErrorTitle": "Error de la tienda de aplicaciones",
   "androidAppStoreReviewErrorMessage": "Verifique que la instalación de Play Store sea válida.",
   "appleAppStoreReviewErrorMessage": "Actualice su aplicación JW Time a la última versión si está disponible y vuelva a intentarlo.",
-  "internetNotAvailable": "Internet no está disponible actualmente. Vuelva a intentarlo cuando esté conectado a Internet estable."
+  "internetNotAvailable": "Internet no está disponible actualmente. Vuelva a intentarlo cuando esté conectado a Internet estable.",
+  "noNotesSaved": "No se guardó ninguna nota.",
+  "notAtHome": "No en casa",
+  "editNotAtHome": "Editar no en casa",
+  "addNotAtHome": "No en casa",
+  "addNotAtHome_description": "Ingrese cualquier información importante acerca de no poder comunicarse con esta persona.",
+  "conversation": "Tuve una conversación",
+  "addToHistory": "¿Qué pasó?",
+  "add_description": "Agregue un mensaje 'No en casa' o 'Conversación' para consultar el historial de contacto."
 }

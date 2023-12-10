@@ -21,7 +21,7 @@ export const lightModeColors = {
   errorAlt: "#FA6868",
   warn: "#FCC014",
   warnAlt: "#FFEAB8",
-  shadow: "#000000",
+  shadow: "#000000"
 };
 
 const darkModeColors: Colors = {
@@ -38,27 +38,27 @@ const darkModeColors: Colors = {
   card: "#242424",
   accent2: "#F19389",
   accent2Alt: "#FFF3F2",
-  accent3: "#5CC7D4",
+  accent3: "#159fb0",
   accent3Alt: "#003D46",
   error: "#E30909",
   errorAlt: "#FA6868",
   warn: "#FCC014",
   warnAlt: "#FFEAB8",
-  shadow: "#000000",
+  shadow: "#000000"
 };
 
 export const numbers = {
   borderRadiusSm: 5,
   borderRadiusMd: 10,
   borderRadiusLg: 15,
-  shadowOpacity: 0.1,
+  shadowOpacity: 0.1
 };
 
 export const fonts = {
   regular: "Inter_400Regular",
   medium: "Inter_500Medium",
   semiBold: "Inter_600SemiBold",
-  bold: "Inter_700Bold",
+  bold: "Inter_700Bold"
 };
 
 const fontSize = (size?: ThemeSizes) => {
@@ -81,19 +81,19 @@ const fontSize = (size?: ThemeSizes) => {
 const baseTheme = {
   numbers,
   fonts,
-  fontSize,
+  fontSize
 };
 
 const getThemeFromColorScheme = (colorScheme: ColorSchemeName): Theme => {
   if (colorScheme === "light") {
     return {
       ...baseTheme,
-      colors: lightModeColors,
+      colors: lightModeColors
     };
   }
   return {
     ...baseTheme,
-    colors: darkModeColors,
+    colors: darkModeColors
   };
 };
 

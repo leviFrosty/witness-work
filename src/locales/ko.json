@@ -29,7 +29,6 @@
   "deleteConversation_description": "이 대화를 삭제하면 해당 대화와 할당된 모든 알림이 영구적으로 제거됩니다.",
   "cancel": "취소",
   "delete": "삭제",
-  "noConversationNotesSaved": "저장된 대화 메모가 없습니다.",
   "followUpInformation": "후속 조치 정보",
   "upcoming": "다가오는",
   "past": "과거",
@@ -232,5 +231,13 @@
   "appleAppStoreReviewErrorTitle": "앱스토어 오류",
   "androidAppStoreReviewErrorMessage": "Play 스토어 설치가 유효한지 확인하세요.",
   "appleAppStoreReviewErrorMessage": "가능한 경우 JW Time 앱을 최신 버전으로 업데이트하고 다시 시도해 보세요.",
-  "internetNotAvailable": "현재 인터넷을 사용할 수 없습니다. 안정적인 인터넷에 연결되면 다시 시도해 주세요."
+  "internetNotAvailable": "현재 인터넷을 사용할 수 없습니다. 안정적인 인터넷에 연결되면 다시 시도해 주세요.",
+  "noNotesSaved": "저장된 메모가 없습니다.",
+  "notAtHome": "집에 없다",
+  "editNotAtHome": "편집 집에 없음",
+  "addNotAtHome": "집에 없다",
+  "addNotAtHome_description": "이 개인에게 연락할 수 없다는 중요한 정보를 입력하세요.",
+  "conversation": "대화를 나누었습니다",
+  "addToHistory": "무슨 일이에요?",
+  "add_description": "'집에 없음'을 추가하세요. 또는 '대화' 연락처 기록에."
 }

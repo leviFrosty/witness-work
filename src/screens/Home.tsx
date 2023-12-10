@@ -46,7 +46,7 @@ const Dashboard = () => {
         }}
       >
         <View style={{ gap: 30, paddingBottom: insets.bottom, flex: 1 }}>
-          {!!approachingConversations.length && (
+          {!!conversationsWithNotificationOrTopic.length && (
             <ApproachingConversations
               conversations={conversationsWithNotificationOrTopic}
             />

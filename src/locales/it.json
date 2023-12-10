@@ -29,7 +29,6 @@
   "deleteConversation_description": "L'eliminazione di questa conversazione la rimuoverà definitivamente insieme a tutte le notifiche assegnate.",
   "cancel": "Annulla",
   "delete": "Eliminare",
-  "noConversationNotesSaved": "Nessuna nota di conversazione salvata.",
   "followUpInformation": "Informazioni di follow-up",
   "upcoming": "imminente",
   "past": "passato",
@@ -232,5 +231,13 @@
   "appleAppStoreReviewErrorTitle": "Errore dell'App Store",
   "androidAppStoreReviewErrorMessage": "Verifica che l'installazione del Play Store sia valida.",
   "appleAppStoreReviewErrorMessage": "Aggiorna l'app JW Time all'ultima versione, se disponibile, e riprova.",
-  "internetNotAvailable": "Internet non attualmente disponibile. Riprova quando sei connesso a una rete Internet stabile."
+  "internetNotAvailable": "Internet non attualmente disponibile. Riprova quando sei connesso a una rete Internet stabile.",
+  "noNotesSaved": "Nessuna nota salvata.",
+  "notAtHome": "Non a casa",
+  "editNotAtHome": "Modifica Non a casa",
+  "addNotAtHome": "Non a casa",
+  "addNotAtHome_description": "Inserisci eventuali informazioni degne di nota sull'impossibilità di raggiungere questa persona.",
+  "conversation": "Ho avuto una conversazione",
+  "addToHistory": "Quello che è successo?",
+  "add_description": "Aggiungi un messaggio \"Non a casa\" o \"Conversazione\" per visualizzare la cronologia dei contatti."
 }

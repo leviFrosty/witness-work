@@ -1,6 +1,6 @@
 import {
   NativeStackNavigationProp,
-  createNativeStackNavigator,
+  createNativeStackNavigator
 } from "@react-navigation/native-stack";
 import ContactForm from "../screens/ContactForm";
 import Header from "../components/layout/Header";
@@ -23,6 +23,7 @@ export type RootStackParamList = {
   "Conversation Form": {
     contactId?: string;
     conversationToEditId?: string;
+    notAtHome?: boolean;
   };
   "Contact Details": { id: string; highlightedConversationId?: string }; // Contact ID
   "Contact Form": { id: string; edit?: boolean }; // Contact ID
@@ -69,21 +70,37 @@ const RootStackComponent = () => {
         name="Contact Details"
         component={ContactDetails}
       />
-      <RootStack.Screen name="Contact Form" component={ContactForm} />
-      <RootStack.Screen name="Conversation Form" component={ConversationForm} />
+      <RootStack.Screen
+        name="Contact Form"
+        component={ContactForm}
+      />
+      <RootStack.Screen
+        name="Conversation Form"
+        component={ConversationForm}
+      />
       <RootStack.Screen
         name="Contact Selector"
         component={ContactSelector}
         options={{
           presentation: "formSheet",
-          header: () => <Header noInsets buttonType="exit" />,
+          header: () => (
+            <Header
+              noInsets
+              buttonType="exit"
+            />
+          )
         }}
       />
       <RootStack.Screen
         name="Add Time"
         options={{
           presentation: "modal",
-          header: () => <Header noInsets buttonType="exit" />,
+          header: () => (
+            <Header
+              noInsets
+              buttonType="exit"
+            />
+          )
         }}
         component={AddTime}
       />
@@ -104,7 +121,7 @@ const RootStackComponent = () => {
                 />
               }
             />
-          ),
+          )
         }}
         name="Time Reports"
         component={TimeReports}
@@ -112,7 +129,12 @@ const RootStackComponent = () => {
       <RootStack.Screen
         options={{
           presentation: "modal",
-          header: () => <Header noInsets buttonType="exit" />,
+          header: () => (
+            <Header
+              noInsets
+              buttonType="exit"
+            />
+          )
         }}
         name="Recover Contacts"
         component={RecoverContacts}

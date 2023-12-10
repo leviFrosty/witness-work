@@ -29,7 +29,6 @@
   "deleteConversation_description": "Xóa cuộc trò chuyện này sẽ xóa vĩnh viễn cuộc trò chuyện đó và mọi thông báo đã chỉ định.",
   "cancel": "Hủy bỏ",
   "delete": "Xóa bỏ",
-  "noConversationNotesSaved": "Không có ghi chú cuộc trò chuyện nào được lưu.",
   "followUpInformation": "Theo dõi thông tin",
   "upcoming": "sắp tới",
   "past": "quá khứ",
@@ -232,5 +231,13 @@
   "appleAppStoreReviewErrorTitle": "Lỗi cửa hàng ứng dụng",
   "androidAppStoreReviewErrorMessage": "Vui lòng xác minh cài đặt Cửa hàng Play của bạn là hợp lệ.",
   "appleAppStoreReviewErrorMessage": "Vui lòng cập nhật ứng dụng JW Time của bạn lên phiên bản mới nhất nếu có và thử lại.",
-  "internetNotAvailable": "Internet hiện không có sẵn. Vui lòng thử lại khi kết nối với internet ổn định."
+  "internetNotAvailable": "Internet hiện không có sẵn. Vui lòng thử lại khi kết nối với internet ổn định.",
+  "noNotesSaved": "Không có ghi chú nào được lưu.",
+  "notAtHome": "Không có ở nhà",
+  "editNotAtHome": "Chỉnh sửa Không ở nhà",
+  "addNotAtHome": "không ở nhà",
+  "addNotAtHome_description": "Nhập bất kỳ thông tin đáng chú ý nào về việc không thể liên lạc được với cá nhân này.",
+  "conversation": "Đã có một cuộc trò chuyện",
+  "addToHistory": "Chuyện gì đã xảy ra thế?",
+  "add_description": "Thêm tùy chọn 'Không có ở nhà' hoặc 'Cuộc trò chuyện' tới lịch sử của liên hệ."
 }

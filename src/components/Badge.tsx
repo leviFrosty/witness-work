@@ -16,7 +16,7 @@ const Badge: React.FC<PropsWithChildren<Props>> = ({
   fullWidth,
   children,
   textStyle,
-  size = "md",
+  size = "md"
 }) => {
   const theme = useContext(ThemeContext);
   const color = _color || theme.colors.accent3;
@@ -30,7 +30,7 @@ const Badge: React.FC<PropsWithChildren<Props>> = ({
         backgroundColor: color,
         flex: fullWidth ? 1 : 0,
         justifyContent: "center",
-        alignItems: "center",
+        alignItems: "center"
       }}
     >
       {typeof children === "string" ? (
@@ -40,10 +40,10 @@ const Badge: React.FC<PropsWithChildren<Props>> = ({
               {
                 fontFamily: theme.fonts.semiBold,
                 textTransform: "uppercase",
-                fontSize: theme.fontSize(size),
-              },
+                fontSize: theme.fontSize(size)
+              }
             ],
-            [textStyle],
+            [textStyle]
           ]}
         >
           {children}

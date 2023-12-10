@@ -29,7 +29,6 @@
   "deleteConversation_description": "删除此对话将永久删除它以及任何分配的通知。",
   "cancel": "取消",
   "delete": "删除",
-  "noConversationNotesSaved": "没有保存对话笔记。",
   "followUpInformation": "跟进信息",
   "upcoming": "即将到来",
   "past": "过去的",
@@ -232,5 +231,13 @@
   "appleAppStoreReviewErrorTitle": "应用商店错误",
   "androidAppStoreReviewErrorMessage": "请验证您的 Play 商店安装是否有效。",
   "appleAppStoreReviewErrorMessage": "请将您的 JW Time 应用程序更新到最新版本（如果可用），然后重试。",
-  "internetNotAvailable": "互联网当前不可用。请在连接到稳定的互联网后重试。"
+  "internetNotAvailable": "互联网当前不可用。请在连接到稳定的互联网后重试。",
+  "noNotesSaved": "没有保存任何注释。",
+  "notAtHome": "不在家",
+  "editNotAtHome": "不在家编辑",
+  "addNotAtHome": "不在家",
+  "addNotAtHome_description": "输入有关无法联系到此人的任何值得注意的信息。",
+  "conversation": "进行了一次对话",
+  "addToHistory": "发生了什么？",
+  "add_description": "添加“不在家”或“对话”联系人的历史记录。"
 }

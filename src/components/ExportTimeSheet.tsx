@@ -38,9 +38,14 @@ export type ExportTimeSheetState = {
 interface ExportTimeSheetProps {
   sheet: ExportTimeSheetState;
   setSheet: React.Dispatch<React.SetStateAction<ExportTimeSheetState>>;
+  showViewAllMonthsButton?: boolean;
 }
 
-const ExportTimeSheet = ({ sheet, setSheet }: ExportTimeSheetProps) => {
+const ExportTimeSheet = ({
+  sheet,
+  setSheet,
+  showViewAllMonthsButton,
+}: ExportTimeSheetProps) => {
   const { publisher } = usePreferences();
   const theme = useTheme();
   const { serviceReports } = useServiceReport();
@@ -160,18 +165,20 @@ const ExportTimeSheet = ({ sheet, setSheet }: ExportTimeSheetProps) => {
       <Sheet.Frame>
         <View style={{ padding: 30, gap: 15 }}>
           <View style={{ marginBottom: 20 }}>
-            <Button onPress={() => navigation.navigate("Time Reports")}>
-              <Text
-                style={{
-                  fontSize: theme.fontSize("sm"),
-                  color: theme.colors.textAlt,
-                  textDecorationLine: "underline",
-                  marginBottom: 10,
-                }}
-              >
-                {i18n.t("viewAllMonths")}
-              </Text>
-            </Button>
+            {showViewAllMonthsButton && (
+              <Button onPress={() => navigation.navigate("Time Reports")}>
+                <Text
+                  style={{
+                    fontSize: theme.fontSize("sm"),
+                    color: theme.colors.textAlt,
+                    textDecorationLine: "underline",
+                    marginBottom: 10,
+                  }}
+                >
+                  {i18n.t("viewAllMonths")}
+                </Text>
+              </Button>
+            )}
             <View
               style={{
                 flexDirection: "row",

@@ -6,14 +6,18 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
 import { RootStackNavigation } from "../../stacks/RootStack";
 import IconButton from "../IconButton";
-import { faBars, faTimes } from "@fortawesome/free-solid-svg-icons";
+import {
+  faBars,
+  faChevronLeft,
+  faTimes,
+} from "@fortawesome/free-solid-svg-icons";
 import { IconProp } from "@fortawesome/fontawesome-svg-core";
 
 type Props = {
   backgroundColor?: string;
   inverseTextAndIconColor?: boolean;
   title?: string;
-  buttonType?: "exit" | "settings";
+  buttonType?: "exit" | "settings" | "back";
   onPressLeftIcon?: () => void;
   rightElement?: React.ReactNode;
   noBottomBorder?: boolean;
@@ -41,6 +45,9 @@ const Header = ({
     if (buttonType === "exit") {
       navigation.popToTop();
     }
+    if (buttonType === "back") {
+      navigation.goBack();
+    }
   };
 
   const iconName = (): IconProp => {
@@ -49,6 +56,9 @@ const Header = ({
     }
     if (buttonType === "exit") {
       return faTimes;
+    }
+    if (buttonType === "back") {
+      return faChevronLeft;
     }
     return faBars;
   };

@@ -64,7 +64,11 @@ const Dashboard = () => {
           <ContactsList />
         </View>
       </KeyboardAwareScrollView>
-      <ExportTimeSheet sheet={sheet} setSheet={setSheet} />
+      <ExportTimeSheet
+        sheet={sheet}
+        setSheet={setSheet}
+        showViewAllMonthsButton
+      />
     </View>
   );
 };

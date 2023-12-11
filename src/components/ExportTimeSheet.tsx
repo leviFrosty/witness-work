@@ -126,7 +126,6 @@ const ExportTimeSheet = ({ sheet, setSheet }: ExportTimeSheetProps) => {
         case "hourglass": {
           try {
             const hourglassSubmitLink = `https://app.hourglass-app.com/report/submit?month=${hourglassMonth}&year=${year}&minutes=${getTimeForHourglass()}&studies=${studiesForMonth}`;
-            console.log(hourglassSubmitLink);
             await Linking.openURL(hourglassSubmitLink);
           } catch (error) {
             Sentry.Native.captureException(error);

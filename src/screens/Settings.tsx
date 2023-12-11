@@ -238,7 +238,6 @@ const Settings = (props: DrawerContentComponentProps) => {
                         ? i18n.t('androidAppStoreReviewErrorMessage')
                         : i18n.t('appleAppStoreReviewErrorMessage')
                     )
-                    Sentry.Native.captureException(error)
                   }
                 }}
               >

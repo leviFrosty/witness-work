@@ -90,6 +90,14 @@ describe("lib/contacts", () => {
           id: "2",
           isBibleStudy: true,
         },
+        {
+          contact: {
+            id: contacts[0].id,
+          },
+          date: moment(testDate).subtract(1, "year").toDate(),
+          id: "3",
+          isBibleStudy: true,
+        },
       ];
 
       const count = getStudiesForGivenMonth({

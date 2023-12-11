@@ -149,7 +149,7 @@ const ExportTimeSheet = ({
     [hours, month, publisher, setSheet, studiesForMonth, wentOutForMonth, year]
   );
 
-  if (!month || !year) {
+  if (month === undefined || year === undefined) {
     return null;
   }
 

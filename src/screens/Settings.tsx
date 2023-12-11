@@ -25,6 +25,7 @@ import IconButton from "../components/IconButton";
 import {
   faBug,
   faChevronRight,
+  faCode,
   faDownload,
   faFileContract,
   faGlobe,
@@ -329,9 +330,28 @@ const Settings = (props: DrawerContentComponentProps) => {
                 <IconButton icon={faChevronRight} />
               </InputRowButton>
               <InputRowButton
+                leftIcon={faCode}
+                label={i18n.t("viewSource")}
+                onPress={() => {
+                  try {
+                    Linking.openURL(links.githubRepo);
+                  } catch (error) {
+                    Sentry.Native.captureException(error);
+                  }
+                }}
+              >
+                <IconButton icon={faChevronRight} />
+              </InputRowButton>
+              <InputRowButton
                 leftIcon={faFileContract}
                 label={i18n.t("privacyPolicy")}
-                onPress={() => Linking.openURL(links.privacyPolicy)}
+                onPress={() => {
+                  try {
+                    Linking.openURL(links.privacyPolicy);
+                  } catch (error) {
+                    Sentry.Native.captureException(error);
+                  }
+                }}
                 lastInSection
               >
                 <IconButton icon={faChevronRight} />

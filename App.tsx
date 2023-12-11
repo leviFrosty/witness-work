@@ -13,7 +13,7 @@ import {
   Inter_600SemiBold,
   Inter_700Bold,
 } from "@expo-google-fonts/inter";
-import { useColorScheme } from "react-native";
+import { LogBox, useColorScheme } from "react-native";
 import { StatusBar } from "expo-status-bar"; // automatically switches bar style based on theme!
 import getThemeFromColorScheme from "./src/constants/theme";
 import { ThemeContext } from "./src/contexts/theme";
@@ -28,6 +28,15 @@ Notifications.setNotificationHandler({
     shouldSetBadge: false,
   }),
 });
+
+/**
+ * Non-urgent.
+ * Warning comes from tamagui bug. Check back sometime in the future to see if still exists.
+ * Repro: Go to home screen => click contact =>  + => close tamagui sheet => go back to home => WARN
+ *  */
+LogBox.ignoreLogs([
+  "Sending `onAnimatedValueUpdate` with no listeners registered.",
+]);
 
 Sentry.init({
   dsn: "https://f9600209459a43d18c3d2c3a6ac2aa7b@o572512.ingest.sentry.io/4505271593074688",

@@ -6,7 +6,7 @@ import {
   ScrollView,
   useColorScheme,
 } from "react-native";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Text from "../components/MyText";
 import useTheme from "../contexts/theme";
 import { RootStackNavigation, RootStackParamList } from "../stacks/RootStack";
@@ -68,13 +68,9 @@ const PhoneRow = ({ contact }: { contact: Contact }) => {
     [contact.phoneRegionCode, locales, phone]
   );
 
-  if (!phone) {
-    return;
-  }
-
   const isValid = formatted.valid;
 
-  const alertInvalidPhone = () => {
+  const alertInvalidPhone = useCallback(() => {
     Alert.alert(
       i18n.t("invalidPhone"),
       `"${formatted.number?.input}" ${i18n.t("invalidPhone_description")} ${
@@ -93,8 +89,11 @@ const PhoneRow = ({ contact }: { contact: Contact }) => {
         },
       ]
     );
-  };
+  }, [contact.id, formatted.number?.input, formatted.regionCode, navigation]);
 
+  if (!phone) {
+    return;
+  }
   const handleCall = () => {
     if (isValid) {
       Linking.openURL(`tel:${formatted.number.e164}`);
@@ -233,11 +232,8 @@ const Hero = ({
 const AddressRow = ({ contact }: { contact: Contact }) => {
   const theme = useTheme();
   const { address } = contact;
-  if (!address) {
-    return null;
-  }
 
-  const navigateTo = (a: Address) => {
+  const navigateTo = useCallback((a: Address) => {
     const scheme = Platform.select({
       ios: "maps://0,0?q=",
       android: "geo:0,0?q=",
@@ -253,7 +249,11 @@ const AddressRow = ({ contact }: { contact: Contact }) => {
       return;
     }
     Linking.openURL(url);
-  };
+  }, []);
+
+  if (!address) {
+    return null;
+  }
 
   const addressAsSingleString = Object.keys(address).reduce(
     (prev, line, index) =>
@@ -450,6 +450,7 @@ const AddSheet = ({
   contact,
 }: AddSheetProps) => {
   const theme = useTheme();
+
   return (
     <Sheet
       open={sheetOpen}

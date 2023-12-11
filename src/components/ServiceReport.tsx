@@ -8,13 +8,14 @@ import {
   calculateProgress,
   totalHoursForCurrentMonth,
   hasServiceReportsForMonth,
+  getDaysLeftInCurrentMonth,
 } from "../lib/serviceReport";
 import Card from "./Card";
 import Text from "./MyText";
 import { useNavigation } from "@react-navigation/native";
 import { RootStackNavigation } from "../stacks/RootStack";
 import { useEffect, useMemo, useState, useCallback } from "react";
-import { getTotalStudiesCount } from "../lib/contacts";
+import { getStudiesForGivenMonth } from "../lib/contacts";
 import useContacts from "../stores/contactsStore";
 import moment from "moment";
 import LottieView from "lottie-react-native";
@@ -23,9 +24,13 @@ import i18n from "../lib/locales";
 import useConversations from "../stores/conversationStore";
 import ActionButton from "./ActionButton";
 import IconButton from "./IconButton";
-import { faChevronRight } from "@fortawesome/free-solid-svg-icons";
+import {
+  faArrowUpFromBracket,
+  faChevronRight,
+} from "@fortawesome/free-solid-svg-icons";
 import { faSquare } from "@fortawesome/free-regular-svg-icons";
 import Button from "./Button";
+import { ExportTimeSheetState } from "./ExportTimeSheet";
 
 const HourEntryCard = () => {
   const theme = useTheme();
@@ -98,6 +103,11 @@ const HourEntryCard = () => {
     [hours, goalHours]
   );
 
+  const hoursPerDayNeeded = useMemo(
+    () => (hoursRemaining / getDaysLeftInCurrentMonth()).toFixed(1),
+    [hoursRemaining]
+  );
+
   return (
     <View>
       <Button
@@ -151,19 +161,26 @@ const HourEntryCard = () => {
               </Text>
             </View>
           </View>
+
           <Text style={{ fontFamily: theme.fonts.bold, maxWidth: 200 }}>
             {encouragementPhrase}
           </Text>
           <View
             style={{
               borderRadius: theme.numbers.borderRadiusLg,
-              backgroundColor: theme.colors.accentAlt,
+              backgroundColor: theme.colors.accent3,
               paddingHorizontal: 25,
               paddingVertical: 5,
             }}
           >
-            <Text style={{ fontSize: 10 }}>
-              {hoursRemaining} {i18n.t("hoursLeft")}
+            <Text
+              style={{
+                fontSize: 10,
+                color: theme.colors.textInverse,
+                fontFamily: theme.fonts.semiBold,
+              }}
+            >
+              {hoursPerDayNeeded} {i18n.t("hoursPerDayToGoal")}
             </Text>
           </View>
           <Text style={{ fontSize: 8, color: theme.colors.textAlt }}>
@@ -191,7 +208,8 @@ const RightCard = () => {
   const { contacts } = useContacts();
   const { conversations } = useConversations();
   const studies = useMemo(
-    () => getTotalStudiesCount({ contacts, conversations, month: new Date() }),
+    () =>
+      getStudiesForGivenMonth({ contacts, conversations, month: new Date() }),
     [contacts, conversations]
   );
   const encouragementStudiesPhrase = (studies: number) => {
@@ -323,7 +341,8 @@ const StandardPublisherTimeEntry = () => {
   const { serviceReports, addServiceReport } = useServiceReport();
   const hasGoneOutInServiceThisMonth = hasServiceReportsForMonth(
     serviceReports,
-    moment().month()
+    moment().month(),
+    moment().year()
   );
 
   const handleSubmitDidService = () => {
@@ -390,21 +409,39 @@ const StandardPublisherTimeEntry = () => {
   );
 };
 
-const ServiceReport = () => {
+interface ServiceReportProps {
+  setSheet: React.Dispatch<React.SetStateAction<ExportTimeSheetState>>;
+}
+
+const ServiceReport = ({ setSheet }: ServiceReportProps) => {
   const theme = useTheme();
   const { publisher } = usePreferences();
   const navigation = useNavigation<RootStackNavigation>();
   return (
     <View style={{ gap: 10 }}>
-      <Text
-        style={{
-          fontSize: 14,
-          fontFamily: theme.fonts.semiBold,
-          marginLeft: 5,
-        }}
-      >
-        {i18n.t("serviceReport")}
-      </Text>
+      <View style={{ flexDirection: "row", alignItems: "center", gap: 5 }}>
+        <Text
+          style={{
+            fontSize: 14,
+            fontFamily: theme.fonts.semiBold,
+            marginLeft: 5,
+          }}
+        >
+          {i18n.t("serviceReport")}
+        </Text>
+        <IconButton
+          icon={faArrowUpFromBracket}
+          size="sm"
+          onPress={() =>
+            setSheet({
+              open: true,
+              month: moment().month(),
+              year: moment().year(),
+            })
+          }
+        />
+      </View>
+
       <Card>
         <View style={{ flexDirection: "row", gap: 5 }}>
           <View style={{ flexDirection: "column", gap: 5, flexGrow: 1 }}>

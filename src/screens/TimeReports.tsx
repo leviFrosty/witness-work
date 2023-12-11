@@ -17,16 +17,29 @@ import { useNavigation } from "@react-navigation/native";
 import { RootStackNavigation } from "../stacks/RootStack";
 import i18n from "../lib/locales";
 import IconButton from "../components/IconButton";
-import { faPersonDigging } from "@fortawesome/free-solid-svg-icons";
+import {
+  faArrowUpFromBracket,
+  faPersonDigging,
+} from "@fortawesome/free-solid-svg-icons";
 import { Swipeable } from "react-native-gesture-handler";
 import Haptics from "../lib/haptics";
 import SwipeableDelete from "../components/swipeableActions/Delete";
+import { useState } from "react";
+
+import ExportTimeSheet, {
+  ExportTimeSheetState,
+} from "../components/ExportTimeSheet";
 
 const TimeReports = () => {
   const theme = useTheme();
   const { serviceReports, deleteServiceReport } = useServiceReport();
   const navigation = useNavigation<RootStackNavigation>();
   const insets = useSafeAreaInsets();
+  const [sheet, setSheet] = useState<ExportTimeSheetState>({
+    open: false,
+    month: 0,
+    year: 0,
+  });
 
   // Group service reports by year and then by month
   const reportsByYearAndMonth: {
@@ -150,26 +163,43 @@ const TimeReports = () => {
 
                   return (
                     <View style={{ gap: 5 }} key={month}>
-                      <View
-                        style={{
-                          flexDirection: "row",
-                          gap: 10,
-                          justifyContent: "space-between",
-                          marginRight: 20,
-                        }}
-                      >
-                        <Text
+                      <View style={{ marginHorizontal: 20, gap: 3 }}>
+                        <View
                           style={{
-                            marginHorizontal: 20,
-                            fontSize: 14,
-                            fontFamily: theme.fonts.regular,
-                            color: theme.colors.textAlt,
+                            flexDirection: "row",
+                            gap: 10,
+                            alignItems: "center",
+                            marginBottom: 3,
                           }}
                         >
-                          {month}
-                          {` - ${totalHours} ${i18n.t("hours")}`}
-                        </Text>
-                        <View style={{ flexDirection: "row", gap: 5 }}>
+                          <Text
+                            style={{
+                              fontSize: theme.fontSize("lg"),
+                              fontFamily: theme.fonts.regular,
+                              color: theme.colors.text,
+                            }}
+                          >
+                            {month}
+                          </Text>
+                          <IconButton
+                            iconStyle={{ color: theme.colors.text }}
+                            onPress={() =>
+                              setSheet({
+                                open: true,
+                                month: moment(month, "MMMM YYYY").month(),
+                                year: parseInt(year),
+                              })
+                            }
+                            icon={faArrowUpFromBracket}
+                          />
+                        </View>
+                        <View
+                          style={{
+                            flexDirection: "row",
+                            gap: 10,
+                            justifyContent: "space-between",
+                          }}
+                        >
                           <Text
                             style={{
                               fontSize: 14,
@@ -177,17 +207,28 @@ const TimeReports = () => {
                               color: theme.colors.textAlt,
                             }}
                           >
-                            {i18n.t("standard")}: {nonLdcHours}
+                            {i18n.t("totalHours")}: {totalHours}
                           </Text>
-                          <Text
-                            style={{
-                              fontSize: 14,
-                              fontFamily: theme.fonts.regular,
-                              color: theme.colors.textAlt,
-                            }}
-                          >
-                            {i18n.t("ldc")}: {ldcHours}
-                          </Text>
+                          <View style={{ flexDirection: "row", gap: 5 }}>
+                            <Text
+                              style={{
+                                fontSize: 14,
+                                fontFamily: theme.fonts.regular,
+                                color: theme.colors.textAlt,
+                              }}
+                            >
+                              {i18n.t("standard")}: {nonLdcHours}
+                            </Text>
+                            <Text
+                              style={{
+                                fontSize: 14,
+                                fontFamily: theme.fonts.regular,
+                                color: theme.colors.textAlt,
+                              }}
+                            >
+                              {i18n.t("ldc")}: {ldcHours}
+                            </Text>
+                          </View>
                         </View>
                       </View>
                       <Section>
@@ -331,6 +372,7 @@ const TimeReports = () => {
           ))}
         </View>
       </ScrollView>
+      <ExportTimeSheet setSheet={setSheet} sheet={sheet} />
     </View>
   );
 };

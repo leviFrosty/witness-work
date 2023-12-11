@@ -36,7 +36,7 @@
     "awesome-phonenumber": "^6.2.0",
     "babel-plugin-transform-inline-environment-variables": "^0.4.4",
     "dotenv": "^16.3.1",
-    "expo": "~49.0.13",
+    "expo": "^49.0.21",
     "expo-application": "~5.3.0",
     "expo-blur": "~12.4.1",
     "expo-checkbox": "~2.4.0",

@@ -1,104 +1,104 @@
-import { View, Platform } from "react-native";
-import { useState } from "react";
-import Section from "../components/inputs/Section";
-import InputRowContainer from "../components/inputs/InputRowContainer";
-import useTheme from "../contexts/theme";
-import Text from "../components/MyText";
-import ActionButton from "../components/ActionButton";
-import useServiceReport from "../stores/serviceReport";
-import * as Crypto from "expo-crypto";
+import { View, Platform } from 'react-native'
+import { useState } from 'react'
+import Section from '../components/inputs/Section'
+import InputRowContainer from '../components/inputs/InputRowContainer'
+import useTheme from '../contexts/theme'
+import Text from '../components/MyText'
+import ActionButton from '../components/ActionButton'
+import useServiceReport from '../stores/serviceReport'
+import * as Crypto from 'expo-crypto'
 import RNDateTimePicker, {
   DateTimePickerEvent,
-} from "@react-native-community/datetimepicker";
-import moment from "moment";
-import { ServiceReport } from "../types/serviceReport";
-import { useNavigation } from "@react-navigation/native";
-import { RootStackNavigation } from "../stacks/RootStack";
-import i18n from "../lib/locales";
-import CheckboxWithLabel from "../components/inputs/CheckboxWithLabel";
-import AndroidDateTimePicker from "../components/AndroidDateTimePicker";
-import Wrapper from "../components/Wrapper";
-import Select from "../components/Select";
+} from '@react-native-community/datetimepicker'
+import moment from 'moment'
+import { ServiceReport } from '../types/serviceReport'
+import { useNavigation } from '@react-navigation/native'
+import { RootStackNavigation } from '../stacks/RootStack'
+import i18n from '../lib/locales'
+import CheckboxWithLabel from '../components/inputs/CheckboxWithLabel'
+import AndroidDateTimePicker from '../components/AndroidDateTimePicker'
+import Wrapper from '../components/Wrapper'
+import Select from '../components/Select'
 
 const AddTime = () => {
-  const theme = useTheme();
-  const navigation = useNavigation<RootStackNavigation>();
+  const theme = useTheme()
+  const navigation = useNavigation<RootStackNavigation>()
   const [serviceReport, setServiceReport] = useState<ServiceReport>({
     id: Crypto.randomUUID(),
     hours: 0,
     minutes: 0,
     date: new Date(),
     ldc: false,
-  });
+  })
   const setHours = (hours: number) => {
     setServiceReport({
       ...serviceReport,
       hours,
-    });
-  };
+    })
+  }
   const setMinutes = (minutes: number) => {
     setServiceReport({
       ...serviceReport,
       minutes,
-    });
-  };
+    })
+  }
   const handleDateChange = (_: DateTimePickerEvent, date: Date | undefined) => {
     if (!date) {
-      return;
+      return
     }
     setServiceReport({
       ...serviceReport,
       date,
-    });
-  };
+    })
+  }
   const handleLdcTimeChange = (ldc: boolean) => {
     setServiceReport({
       ...serviceReport,
       ldc,
-    });
-  };
+    })
+  }
   const minuteOptions = [0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55].map(
     (value) => ({
       label: `${value}`,
       value,
     })
-  );
+  )
   const hourOptions = [...Array(24).keys()].map((value) => ({
     label: `${value}`,
     value,
-  }));
-  const { addServiceReport } = useServiceReport();
+  }))
+  const { addServiceReport } = useServiceReport()
 
   const submit = () => {
-    addServiceReport(serviceReport);
-    navigation.popToTop();
-  };
+    addServiceReport(serviceReport)
+    navigation.popToTop()
+  }
 
-  const submittable = serviceReport.hours !== 0 || serviceReport.minutes !== 0;
+  const submittable = serviceReport.hours !== 0 || serviceReport.minutes !== 0
 
   return (
     <Wrapper
       style={{
         flex: 1,
         flexGrow: 1,
-        justifyContent: "space-between",
+        justifyContent: 'space-between',
       }}
     >
       <View style={{ gap: 30 }}>
         <View style={{ padding: 25, gap: 5 }}>
           <Text style={{ fontSize: 32, fontFamily: theme.fonts.bold }}>
-            {i18n.t("addTime")}
+            {i18n.t('addTime')}
           </Text>
           <Text style={{ color: theme.colors.textAlt, fontSize: 12 }}>
-            {i18n.t("addTime_description")}
+            {i18n.t('addTime_description')}
           </Text>
         </View>
         <Section>
           <InputRowContainer
-            label={i18n.t("date")}
-            justifyContent="space-between"
+            label={i18n.t('date')}
+            justifyContent='space-between'
           >
-            {Platform.OS !== "android" ? (
+            {Platform.OS !== 'android' ? (
               <RNDateTimePicker
                 maximumDate={moment().toDate()}
                 value={serviceReport.date}
@@ -112,9 +112,9 @@ const AddTime = () => {
               />
             )}
           </InputRowContainer>
-          <InputRowContainer lastInSection justifyContent="flex-end">
+          <InputRowContainer lastInSection justifyContent='flex-end'>
             <CheckboxWithLabel
-              label={i18n.t("ldcTime")}
+              label={i18n.t('ldcTime')}
               value={serviceReport.ldc!}
               setValue={handleLdcTimeChange}
             />
@@ -122,10 +122,10 @@ const AddTime = () => {
         </Section>
         <Section>
           <View
-            style={{ flexDirection: "row", justifyContent: "space-between" }}
+            style={{ flexDirection: 'row', justifyContent: 'space-between' }}
           >
-            <View style={{ width: "50%" }}>
-              <InputRowContainer label={i18n.t("hours")} lastInSection>
+            <View style={{ width: '50%' }}>
+              <InputRowContainer label={i18n.t('hours')} lastInSection>
                 <View style={{ flex: 1 }}>
                   <Select
                     data={hourOptions}
@@ -137,8 +137,8 @@ const AddTime = () => {
               </InputRowContainer>
             </View>
 
-            <View style={{ width: "50%" }}>
-              <InputRowContainer label={i18n.t("minutes")} lastInSection>
+            <View style={{ width: '50%' }}>
+              <InputRowContainer label={i18n.t('minutes')} lastInSection>
                 <View style={{ flex: 1 }}>
                   <Select
                     data={minuteOptions}
@@ -155,15 +155,15 @@ const AddTime = () => {
       <View style={{ paddingHorizontal: 20, gap: 10 }}>
         {!submittable && (
           <Text style={{ fontSize: 12, color: theme.colors.textAlt }}>
-            {i18n.t("timeNeeded")}
+            {i18n.t('timeNeeded')}
           </Text>
         )}
         <ActionButton disabled={!submittable} onPress={submit}>
-          {i18n.t("submit")}
+          {i18n.t('submit')}
         </ActionButton>
       </View>
     </Wrapper>
-  );
-};
+  )
+}
 
-export default AddTime;
+export default AddTime

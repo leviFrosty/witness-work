@@ -1,12 +1,12 @@
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import { create } from "zustand";
-import { persist, combine, createJSONStorage } from "zustand/middleware";
-import { Contact } from "../types/contact";
+import AsyncStorage from '@react-native-async-storage/async-storage'
+import { create } from 'zustand'
+import { persist, combine, createJSONStorage } from 'zustand/middleware'
+import { Contact } from '../types/contact'
 
 const initialState = {
   contacts: [] as Contact[],
   deletedContacts: [] as Contact[],
-};
+}
 
 export const useContacts = create(
   persist(
@@ -14,70 +14,70 @@ export const useContacts = create(
       set,
       addContact: (contact: Contact) =>
         set(({ contacts, deletedContacts }) => {
-          const foundCurrentContact = contacts.find((c) => c.id === contact.id);
+          const foundCurrentContact = contacts.find((c) => c.id === contact.id)
           const foundDeleteContact = deletedContacts.find(
             (delC) => delC.id === contact.id
-          );
+          )
 
           if (foundCurrentContact || foundDeleteContact) {
-            return {};
+            return {}
           }
 
           return {
             contacts: [...contacts, contact],
-          };
+          }
         }),
       deleteContact: (id: string) =>
         set(({ contacts, deletedContacts }) => {
-          const foundContact = contacts.find((contact) => contact.id === id);
+          const foundContact = contacts.find((contact) => contact.id === id)
           if (!foundContact) {
-            return {};
+            return {}
           }
           return {
             deletedContacts: [...deletedContacts, foundContact],
             contacts: contacts.filter((contact) => contact.id !== id),
-          };
+          }
         }),
       updateContact: (contact: Partial<Contact>) => {
         set(({ contacts }) => {
           return {
             contacts: contacts.map((c) => {
               if (c.id !== contact.id) {
-                return c;
+                return c
               }
-              return { ...c, ...contact };
+              return { ...c, ...contact }
             }),
-          };
-        });
+          }
+        })
       },
       recoverContact: (id: string) => {
         set(({ contacts, deletedContacts }) => {
-          const recoverContact = deletedContacts.find((dC) => dC.id === id);
+          const recoverContact = deletedContacts.find((dC) => dC.id === id)
           if (!recoverContact) {
-            return {};
+            return {}
           }
 
           return {
             deletedContacts: deletedContacts.filter((dC) => dC.id !== id),
             contacts: [...contacts, recoverContact],
-          };
-        });
+          }
+        })
       },
       removeDeletedContact: (id: string) => {
         set(({ deletedContacts }) => {
           return {
             deletedContacts: deletedContacts.filter((dC) => dC.id !== id),
-          };
-        });
+          }
+        })
       },
       _WARNING_forceDeleteContacts: () => set({ contacts: [] }),
       _WARNING_clearDeleted: () => set({ deletedContacts: [] }),
     })),
     {
-      name: "contacts",
+      name: 'contacts',
       storage: createJSONStorage(() => AsyncStorage),
     }
   )
-);
+)
 
-export default useContacts;
+export default useContacts

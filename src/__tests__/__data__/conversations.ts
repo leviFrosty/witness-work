@@ -1,5 +1,5 @@
-import { Conversation } from "../../types/conversation";
+import { Conversation } from '../../types/conversation'
 
-const conversations: Conversation[] = [];
+const conversations: Conversation[] = []
 
-export const createFakeConversations = () => [...conversations];
+export const createFakeConversations = () => [...conversations]

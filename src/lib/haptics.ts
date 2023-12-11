@@ -1,4 +1,4 @@
-import * as ExpoHaptics from "expo-haptics";
+import * as ExpoHaptics from 'expo-haptics'
 
 const Haptics = {
   light: () => ExpoHaptics.impactAsync(ExpoHaptics.ImpactFeedbackStyle.Light),
@@ -8,6 +8,6 @@ const Haptics = {
     ExpoHaptics.notificationAsync(ExpoHaptics.NotificationFeedbackType.Success),
   error: () =>
     ExpoHaptics.notificationAsync(ExpoHaptics.NotificationFeedbackType.Error),
-};
+}
 
-export default Haptics;
+export default Haptics

@@ -1,27 +1,27 @@
-import React, { PropsWithChildren, ReactNode } from "react";
-import { View } from "react-native";
-import useTheme from "../../contexts/theme";
-import { rowPaddingVertical } from "../../constants/Inputs";
-import Text from "../MyText";
-import IconButton from "../IconButton";
-import { IconProp } from "@fortawesome/fontawesome-svg-core";
+import React, { PropsWithChildren, ReactNode } from 'react'
+import { View } from 'react-native'
+import useTheme from '../../contexts/theme'
+import { rowPaddingVertical } from '../../constants/Inputs'
+import Text from '../MyText'
+import IconButton from '../IconButton'
+import { IconProp } from '@fortawesome/fontawesome-svg-core'
 
 interface Props {
-  children?: ReactNode;
-  leftIcon?: IconProp;
-  lastInSection?: boolean;
-  noHorizontalPadding?: boolean;
-  label?: string;
+  children?: ReactNode
+  leftIcon?: IconProp
+  lastInSection?: boolean
+  noHorizontalPadding?: boolean
+  label?: string
   justifyContent?:
-    | "flex-start"
-    | "flex-end"
-    | "center"
-    | "space-between"
-    | "space-around"
-    | "space-evenly"
-    | undefined;
-  gap?: number;
-  required?: boolean;
+    | 'flex-start'
+    | 'flex-end'
+    | 'center'
+    | 'space-between'
+    | 'space-around'
+    | 'space-evenly'
+    | undefined
+  gap?: number
+  required?: boolean
 }
 
 const InputRowContainer: React.FC<PropsWithChildren<Props>> = ({
@@ -34,30 +34,30 @@ const InputRowContainer: React.FC<PropsWithChildren<Props>> = ({
   gap,
   required,
 }: Props) => {
-  const theme = useTheme();
+  const theme = useTheme()
 
   return (
     <View
       style={{
-        flexDirection: "row",
+        flexDirection: 'row',
         borderColor: theme.colors.border,
         borderBottomWidth: lastInSection ? 0 : 1,
         paddingBottom: lastInSection ? 0 : rowPaddingVertical,
         paddingRight: noHorizontalPadding ? 0 : 20,
-        alignItems: "center",
+        alignItems: 'center',
         flexGrow: 1,
         justifyContent,
         gap: gap || 15,
       }}
     >
       {(leftIcon || label) && (
-        <View style={{ alignItems: "center", gap: 5, flexDirection: "row" }}>
+        <View style={{ alignItems: 'center', gap: 5, flexDirection: 'row' }}>
           {leftIcon && <IconButton icon={leftIcon} />}
           {label && (
             <Text
               style={{
                 fontFamily: theme.fonts.semiBold,
-                flexDirection: "column",
+                flexDirection: 'column',
                 gap: 10,
               }}
             >
@@ -68,7 +68,7 @@ const InputRowContainer: React.FC<PropsWithChildren<Props>> = ({
             <Text
               style={{
                 color: theme.colors.error,
-                fontSize: theme.fontSize("sm"),
+                fontSize: theme.fontSize('sm'),
               }}
             >
               *
@@ -78,7 +78,7 @@ const InputRowContainer: React.FC<PropsWithChildren<Props>> = ({
       )}
       {children}
     </View>
-  );
-};
+  )
+}
 
-export default InputRowContainer;
+export default InputRowContainer

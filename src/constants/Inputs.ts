@@ -1,1 +1,1 @@
-export const rowPaddingVertical = 15;
+export const rowPaddingVertical = 15

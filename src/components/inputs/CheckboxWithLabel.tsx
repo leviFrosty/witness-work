@@ -1,7 +1,7 @@
-import Checkbox from "expo-checkbox";
-import { View } from "react-native";
-import Text from "../MyText";
-import useTheme from "../../contexts/theme";
+import Checkbox from 'expo-checkbox'
+import { View } from 'react-native'
+import Text from '../MyText'
+import useTheme from '../../contexts/theme'
 
 const CheckboxWithLabel = ({
   value,
@@ -10,20 +10,20 @@ const CheckboxWithLabel = ({
   disabled,
   description,
   descriptionOnlyOnDisabled,
-  labelPosition = "left",
+  labelPosition = 'left',
 }: {
-  value: boolean;
-  setValue: (val: boolean) => void;
-  label: string;
-  disabled?: boolean;
-  description?: string;
-  descriptionOnlyOnDisabled?: boolean;
-  labelPosition?: "left" | "right";
+  value: boolean
+  setValue: (val: boolean) => void
+  label: string
+  disabled?: boolean
+  description?: string
+  descriptionOnlyOnDisabled?: boolean
+  labelPosition?: 'left' | 'right'
 }) => {
-  const theme = useTheme();
+  const theme = useTheme()
   const renderDescription = () => {
     if (!description) {
-      return null;
+      return null
     }
 
     if (
@@ -39,31 +39,31 @@ const CheckboxWithLabel = ({
         >
           {description}
         </Text>
-      );
+      )
     }
-  };
+  }
 
   return (
     <View style={{ gap: 5 }}>
       <View
         style={{
-          flexDirection: "row",
+          flexDirection: 'row',
           gap: 10,
-          alignItems: "center",
+          alignItems: 'center',
         }}
       >
-        {labelPosition === "left" && label && <Text>{label}</Text>}
+        {labelPosition === 'left' && label && <Text>{label}</Text>}
         <Checkbox
           hitSlop={{ top: 15, right: 15, bottom: 15, left: 15 }}
           disabled={disabled}
           value={value}
           onValueChange={(val: boolean) => setValue(val)}
         />
-        {labelPosition === "right" && label && <Text>{label}</Text>}
+        {labelPosition === 'right' && label && <Text>{label}</Text>}
       </View>
       {renderDescription()}
     </View>
-  );
-};
+  )
+}
 
-export default CheckboxWithLabel;
+export default CheckboxWithLabel

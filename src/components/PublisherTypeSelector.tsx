@@ -1,24 +1,24 @@
-import { View } from "react-native";
-import useTheme from "../contexts/theme";
-import Text from "./MyText";
-import i18n from "../lib/locales";
-import { usePreferences } from "../stores/preferences";
-import { publishers } from "../constants/publisher";
-import Select from "./Select";
-import TextInput from "./TextInput";
+import { View } from 'react-native'
+import useTheme from '../contexts/theme'
+import Text from './MyText'
+import i18n from '../lib/locales'
+import { usePreferences } from '../stores/preferences'
+import { publishers } from '../constants/publisher'
+import Select from './Select'
+import TextInput from './TextInput'
 
 const PublisherTypeSelector = () => {
-  const theme = useTheme();
+  const theme = useTheme()
   const items = [
-    { label: i18n.t("publisher"), value: publishers[0] },
-    { label: i18n.t("regularAuxiliary"), value: publishers[1] },
-    { label: i18n.t("regularPioneer"), value: publishers[2] },
-    { label: i18n.t("circuitOverseer"), value: publishers[3] },
-    { label: i18n.t("specialPioneer"), value: publishers[4] },
-    { label: i18n.t("custom"), value: publishers[5] },
-  ];
+    { label: i18n.t('publisher'), value: publishers[0] },
+    { label: i18n.t('regularAuxiliary'), value: publishers[1] },
+    { label: i18n.t('regularPioneer'), value: publishers[2] },
+    { label: i18n.t('circuitOverseer'), value: publishers[3] },
+    { label: i18n.t('specialPioneer'), value: publishers[4] },
+    { label: i18n.t('custom'), value: publishers[5] },
+  ]
 
-  const { publisherHours, publisher, setPublisher, set } = usePreferences();
+  const { publisherHours, publisher, setPublisher, set } = usePreferences()
 
   return (
     <View>
@@ -28,7 +28,7 @@ const PublisherTypeSelector = () => {
         value={publisher}
       />
 
-      {publisher === "custom" ? (
+      {publisher === 'custom' ? (
         <View>
           <Text
             style={{
@@ -36,10 +36,10 @@ const PublisherTypeSelector = () => {
               color: theme.colors.textAlt,
             }}
           >
-            {i18n.t("customHourRequirement")}
+            {i18n.t('customHourRequirement')}
           </Text>
           <TextInput
-            textAlign="left"
+            textAlign='left'
             style={{
               marginVertical: 5,
               borderColor: theme.colors.border,
@@ -60,19 +60,19 @@ const PublisherTypeSelector = () => {
               })
             }
             value={publisherHours.custom.toString()}
-            keyboardType="number-pad"
+            keyboardType='number-pad'
           />
         </View>
       ) : (
         <Text style={{ fontSize: 12, color: theme.colors.textAlt }}>
           {publisher === publishers[0]
-            ? i18n.t("noHourRequirement")
-            : i18n.t("hourMonthlyRequirement", {
+            ? i18n.t('noHourRequirement')
+            : i18n.t('hourMonthlyRequirement', {
                 count: publisherHours[publisher],
               })}
         </Text>
       )}
     </View>
-  );
-};
-export default PublisherTypeSelector;
+  )
+}
+export default PublisherTypeSelector

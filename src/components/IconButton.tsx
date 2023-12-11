@@ -1,21 +1,21 @@
-import { IconProp } from "@fortawesome/fontawesome-svg-core";
-import Button from "./Button";
-import { StyleProp, ViewStyle } from "react-native";
+import { IconProp } from '@fortawesome/fontawesome-svg-core'
+import Button from './Button'
+import { StyleProp, ViewStyle } from 'react-native'
 import {
   FontAwesomeIcon,
   FontAwesomeIconStyle,
-} from "@fortawesome/react-native-fontawesome";
-import { ThemeContext } from "../contexts/theme";
-import { useContext } from "react";
-import { ThemeSizes } from "../types/theme";
+} from '@fortawesome/react-native-fontawesome'
+import { ThemeContext } from '../contexts/theme'
+import { useContext } from 'react'
+import { ThemeSizes } from '../types/theme'
 
 type Props = {
-  icon: IconProp;
-  onPress?: () => void;
-  size?: ThemeSizes | number;
-  style?: StyleProp<ViewStyle>;
-  iconStyle?: FontAwesomeIconStyle;
-};
+  icon: IconProp
+  onPress?: () => void
+  size?: ThemeSizes | number
+  style?: StyleProp<ViewStyle>
+  iconStyle?: FontAwesomeIconStyle
+}
 
 const IconButton = ({
   onPress,
@@ -24,8 +24,8 @@ const IconButton = ({
   size: _size,
   iconStyle,
 }: Props) => {
-  const theme = useContext(ThemeContext);
-  const size = typeof _size === "number" ? _size : theme.fontSize(_size);
+  const theme = useContext(ThemeContext)
+  const size = typeof _size === 'number' ? _size : theme.fontSize(_size)
 
   return (
     <Button
@@ -40,7 +40,7 @@ const IconButton = ({
         size={size}
       />
     </Button>
-  );
-};
+  )
+}
 
-export default IconButton;
+export default IconButton

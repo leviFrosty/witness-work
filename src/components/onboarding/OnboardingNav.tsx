@@ -1,14 +1,14 @@
-import { View } from "react-native";
-import { styles } from "./Onboarding.styles";
-import Text from "../MyText";
-import i18n from "../../lib/locales";
-import IconButton from "../IconButton";
-import { faChevronLeft } from "@fortawesome/free-solid-svg-icons";
-import Button from "../Button";
+import { View } from 'react-native'
+import { styles } from './Onboarding.styles'
+import Text from '../MyText'
+import i18n from '../../lib/locales'
+import IconButton from '../IconButton'
+import { faChevronLeft } from '@fortawesome/free-solid-svg-icons'
+import Button from '../Button'
 
 interface Props {
-  noActions?: boolean;
-  goBack: () => void;
+  noActions?: boolean
+  goBack: () => void
 }
 
 const OnboardingNav = ({ noActions, goBack }: Props) => {
@@ -19,9 +19,9 @@ const OnboardingNav = ({ noActions, goBack }: Props) => {
           <IconButton icon={faChevronLeft} />
         </Button>
       ) : null}
-      <Text style={styles.navTitle}>{i18n.t("jwTime")}</Text>
+      <Text style={styles.navTitle}>{i18n.t('jwTime')}</Text>
     </View>
-  );
-};
+  )
+}
 
-export default OnboardingNav;
+export default OnboardingNav

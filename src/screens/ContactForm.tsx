@@ -1,35 +1,29 @@
-import React, {
-  useRef,
-  useState,
-  useCallback,
-  useEffect,
-  useMemo
-} from "react";
-import { TextInput, View, Pressable, useColorScheme } from "react-native";
-import Text from "../components/MyText";
-import { RootStackParamList } from "../stacks/RootStack";
-import { NativeStackScreenProps } from "@react-navigation/native-stack";
-import useContacts from "../stores/contactsStore";
-import useTheme from "../contexts/theme";
-import Divider from "../components/Divider";
-import { Contact } from "../types/contact";
-import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
-import Section from "../components/inputs/Section";
-import TextInputRow, { Errors } from "../components/inputs/TextInputRow";
-import Header from "../components/layout/Header";
-import i18n from "../lib/locales";
-import Wrapper from "../components/Wrapper";
+import React, { useRef, useState, useCallback, useEffect, useMemo } from 'react'
+import { TextInput, View, Pressable, useColorScheme } from 'react-native'
+import Text from '../components/MyText'
+import { RootStackParamList } from '../stacks/RootStack'
+import { NativeStackScreenProps } from '@react-navigation/native-stack'
+import useContacts from '../stores/contactsStore'
+import useTheme from '../contexts/theme'
+import Divider from '../components/Divider'
+import { Contact } from '../types/contact'
+import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
+import Section from '../components/inputs/Section'
+import TextInputRow, { Errors } from '../components/inputs/TextInputRow'
+import Header from '../components/layout/Header'
+import i18n from '../lib/locales'
+import Wrapper from '../components/Wrapper'
 import PhoneInput, {
   ICountry,
   ITheme,
-  getCountryByCca2
-} from "react-native-international-phone-number";
-import * as Localization from "expo-localization";
-import { ICountryCca2 } from "react-native-international-phone-number/lib/interfaces/countryCca2";
-import InputRowContainer from "../components/inputs/InputRowContainer";
-import IconButton from "../components/IconButton";
-import { faCaretDown, faIdCard } from "@fortawesome/free-solid-svg-icons";
-import { parsePhoneNumber } from "awesome-phonenumber";
+  getCountryByCca2,
+} from 'react-native-international-phone-number'
+import * as Localization from 'expo-localization'
+import { ICountryCca2 } from 'react-native-international-phone-number/lib/interfaces/countryCca2'
+import InputRowContainer from '../components/inputs/InputRowContainer'
+import IconButton from '../components/IconButton'
+import { faCaretDown, faIdCard } from '@fortawesome/free-solid-svg-icons'
+import { parsePhoneNumber } from 'awesome-phonenumber'
 
 const PersonalContactSection = ({
   contact,
@@ -41,44 +35,44 @@ const PersonalContactSection = ({
   line1Input,
   setEmail,
   setErrors,
-  errors
+  errors,
 }: {
-  contact: Contact;
-  nameInput: React.RefObject<TextInput>;
-  setName: (name: string) => void;
-  emailInput: React.RefObject<TextInput>;
-  setPhone: (phone: string) => void;
-  setRegionCode: (regionCode: string) => void;
-  line1Input: React.RefObject<TextInput>;
-  setEmail: (email: string) => void;
-  errors: Errors;
-  setErrors: React.Dispatch<React.SetStateAction<Errors>>;
+  contact: Contact
+  nameInput: React.RefObject<TextInput>
+  setName: (name: string) => void
+  emailInput: React.RefObject<TextInput>
+  setPhone: (phone: string) => void
+  setRegionCode: (regionCode: string) => void
+  line1Input: React.RefObject<TextInput>
+  setEmail: (email: string) => void
+  errors: Errors
+  setErrors: React.Dispatch<React.SetStateAction<Errors>>
 }) => {
-  const placeholder = useRef(contact.phone || "");
-  const locales = Localization.getLocales();
+  const placeholder = useRef(contact.phone || '')
+  const locales = Localization.getLocales()
 
-  const colorScheme = useColorScheme();
-  const theme = useTheme();
+  const colorScheme = useColorScheme()
+  const theme = useTheme()
 
   const handleCountryChange = (country: ICountry) => {
     if (!country) {
-      return; // Library has some very weird edge-case where it sometimes doesn't return a country.
+      return // Library has some very weird edge-case where it sometimes doesn't return a country.
     }
-    setRegionCode(country.cca2);
-  };
+    setRegionCode(country.cca2)
+  }
 
   const country = useMemo(
-    () => getCountryByCca2(contact.phoneRegionCode || "US"),
+    () => getCountryByCca2(contact.phoneRegionCode || 'US'),
     [contact.phoneRegionCode]
-  );
+  )
 
   const formatted = useMemo(
     () =>
       parsePhoneNumber(placeholder.current, {
-        regionCode: contact.phoneRegionCode || locales[0].regionCode || ""
+        regionCode: contact.phoneRegionCode || locales[0].regionCode || '',
       }),
     [contact.phoneRegionCode, locales]
-  );
+  )
 
   const defaultValue = useMemo(
     () =>
@@ -86,22 +80,22 @@ const PersonalContactSection = ({
         ? formatted.number?.e164
         : undefined,
     [formatted.number?.e164, formatted.regionCode, formatted.valid]
-  );
+  )
 
   return (
     <Section>
       <TextInputRow
         errors={errors}
         setErrors={setErrors}
-        id="name"
-        label={i18n.t("name")}
+        id='name'
+        label={i18n.t('name')}
         ref={nameInput}
         textInputProps={{
-          placeholder: i18n.t("name_placeholder"),
+          placeholder: i18n.t('name_placeholder'),
           onChangeText: (val: string) => setName(val),
           value: contact.name,
-          autoCapitalize: "words",
-          autoCorrect: false
+          autoCapitalize: 'words',
+          autoCorrect: false,
         }}
         required
       />
@@ -109,89 +103,89 @@ const PersonalContactSection = ({
         <View style={{ flex: 1 }}>
           <PhoneInput
             hitSlop={{ top: 15, bottom: 15 }}
-            value={contact.phone || ""}
+            value={contact.phone || ''}
             defaultValue={defaultValue}
             onChangePhoneNumber={(phone: string) => setPhone(phone)}
             defaultCountry={locales[0].regionCode as ICountryCca2}
             selectedCountry={country}
-            placeholder={i18n.t("phone_placeholder")}
+            placeholder={i18n.t('phone_placeholder')}
             placeholderTextColor={theme.colors.textAlt}
-            popularCountries={["US", "DE", "IT", "KR", "CA", "GB"]}
+            popularCountries={['US', 'DE', 'IT', 'KR', 'CA', 'GB']}
             onChangeSelectedCountry={handleCountryChange}
             theme={colorScheme as ITheme}
-            inputMode="numeric"
-            clearButtonMode="while-editing"
+            inputMode='numeric'
+            clearButtonMode='while-editing'
             customCaret={<IconButton icon={faCaretDown} />}
             phoneInputStyles={{
               container: {
                 borderWidth: 0,
-                backgroundColor: theme.colors.backgroundLighter
+                backgroundColor: theme.colors.backgroundLighter,
               },
               flagContainer: {
                 backgroundColor: theme.colors.card,
-                borderRadius: theme.numbers.borderRadiusSm
+                borderRadius: theme.numbers.borderRadiusSm,
               },
               input: {
-                fontSize: theme.fontSize("md"),
-                textAlign: "right",
-                paddingHorizontal: 2
+                fontSize: theme.fontSize('md'),
+                textAlign: 'right',
+                paddingHorizontal: 2,
               },
               callingCode: {
-                fontSize: theme.fontSize("md")
+                fontSize: theme.fontSize('md'),
               },
               divider: {
-                backgroundColor: theme.colors.border
+                backgroundColor: theme.colors.border,
               },
               caret: {
-                fontSize: theme.fontSize("sm"),
-                color: theme.colors.textAlt
-              }
+                fontSize: theme.fontSize('sm'),
+                color: theme.colors.textAlt,
+              },
             }}
             modalStyles={{
               modal: {
-                backgroundColor: theme.colors.background
+                backgroundColor: theme.colors.background,
               },
               searchInput: {
-                borderColor: theme.colors.border
+                borderColor: theme.colors.border,
               },
               countryButton: {
                 borderColor: theme.colors.border,
                 backgroundColor: theme.colors.card,
                 shadowColor: theme.colors.shadow,
                 shadowOffset: { height: 1, width: 0 },
-                shadowOpacity: theme.numbers.shadowOpacity
-              }
+                shadowOpacity: theme.numbers.shadowOpacity,
+              },
             }}
           />
           {placeholder.current.length > 0 && !formatted.possible && (
             <Text
               style={{
-                textAlign: "right",
-                fontSize: theme.fontSize("sm"),
-                color: theme.colors.textAlt
+                textAlign: 'right',
+                fontSize: theme.fontSize('sm'),
+                color: theme.colors.textAlt,
               }}
-            >{`"${formatted.number?.input}" ${i18n.t("error")}: ${
+            >{`"${formatted.number?.input}" ${i18n.t('error')}: ${
               formatted.possibility
             }`}</Text>
           )}
         </View>
       </InputRowContainer>
       <TextInputRow
-        label={i18n.t("email")}
+        label={i18n.t('email')}
         lastInSection
         ref={emailInput}
         textInputProps={{
-          placeholder: i18n.t("email_placeholder"),
+          placeholder: i18n.t('email_placeholder'),
           onSubmitEditing: () => line1Input.current?.focus(),
-          keyboardType: "email-address",
+          keyboardType: 'email-address',
           onChangeText: (val: string) => setEmail(val),
           value: contact.email,
-          autoCapitalize: "none"
+          autoCapitalize: 'none',
         }}
       />
     </Section>
-  );
-};
+  )
+}
 
 const AddressSection = ({
   contact,
@@ -206,311 +200,311 @@ const AddressSection = ({
   zipInput,
   countryInput,
   setZip,
-  setCountry
+  setCountry,
 }: {
-  contact: Contact;
-  line1Input: React.RefObject<TextInput>;
-  line2Input: React.RefObject<TextInput>;
-  setLine1: (line1: string) => void;
-  cityInput: React.RefObject<TextInput>;
-  setLine2: (line2: string) => void;
-  setCity: (city: string) => void;
-  stateInput: React.RefObject<TextInput>;
-  setState: (state: string) => void;
-  zipInput: React.RefObject<TextInput>;
-  countryInput: React.RefObject<TextInput>;
-  setZip: (zip: string) => void;
-  setCountry: (country: string) => void;
+  contact: Contact
+  line1Input: React.RefObject<TextInput>
+  line2Input: React.RefObject<TextInput>
+  setLine1: (line1: string) => void
+  cityInput: React.RefObject<TextInput>
+  setLine2: (line2: string) => void
+  setCity: (city: string) => void
+  stateInput: React.RefObject<TextInput>
+  setState: (state: string) => void
+  zipInput: React.RefObject<TextInput>
+  countryInput: React.RefObject<TextInput>
+  setZip: (zip: string) => void
+  setCountry: (country: string) => void
 }) => {
   return (
     <Section>
       <TextInputRow
-        label={i18n.t("addressLine1")}
+        label={i18n.t('addressLine1')}
         ref={line1Input}
         textInputProps={{
           onSubmitEditing: () => line2Input.current?.focus(),
           onChangeText: (val: string) => setLine1(val),
-          autoCapitalize: "words",
-          value: contact.address?.line1 || ""
+          autoCapitalize: 'words',
+          value: contact.address?.line1 || '',
         }}
       />
       <TextInputRow
-        label={i18n.t("addressLine2")}
+        label={i18n.t('addressLine2')}
         ref={line2Input}
         textInputProps={{
           onSubmitEditing: () => cityInput.current?.focus(),
           onChangeText: (val: string) => setLine2(val),
-          value: contact.address?.line2 || "",
-          autoCapitalize: "words"
+          value: contact.address?.line2 || '',
+          autoCapitalize: 'words',
         }}
       />
       <View
         style={{
-          flexDirection: "row",
-          justifyContent: "space-between"
+          flexDirection: 'row',
+          justifyContent: 'space-between',
         }}
       >
-        <View style={{ width: "50%" }}>
+        <View style={{ width: '50%' }}>
           <TextInputRow
-            label={i18n.t("city")}
+            label={i18n.t('city')}
             ref={cityInput}
             textInputProps={{
               onSubmitEditing: () => stateInput.current?.focus(),
               onChangeText: (val: string) => setCity(val),
-              autoCapitalize: "words",
-              value: contact.address?.city || ""
+              autoCapitalize: 'words',
+              value: contact.address?.city || '',
             }}
           />
         </View>
-        <View style={{ width: "50%" }}>
+        <View style={{ width: '50%' }}>
           <TextInputRow
-            label={i18n.t("state")}
+            label={i18n.t('state')}
             ref={stateInput}
             textInputProps={{
               onSubmitEditing: () => zipInput.current?.focus(),
               onChangeText: (val: string) => setState(val),
-              value: contact.address?.state || "",
-              autoCapitalize: "words"
+              value: contact.address?.state || '',
+              autoCapitalize: 'words',
             }}
           />
         </View>
       </View>
       <View
         style={{
-          flexDirection: "row",
-          justifyContent: "space-between"
+          flexDirection: 'row',
+          justifyContent: 'space-between',
         }}
       >
-        <View style={{ width: "50%" }}>
+        <View style={{ width: '50%' }}>
           <TextInputRow
-            label={i18n.t("zip")}
+            label={i18n.t('zip')}
             ref={zipInput}
             textInputProps={{
               onSubmitEditing: () => countryInput.current?.focus(),
               onChangeText: (val: string) => setZip(val),
-              value: contact.address?.zip || "",
-              keyboardType: "number-pad"
+              value: contact.address?.zip || '',
+              keyboardType: 'number-pad',
             }}
             lastInSection
           />
         </View>
-        <View style={{ width: "50%" }}>
+        <View style={{ width: '50%' }}>
           <TextInputRow
-            label={i18n.t("country")}
+            label={i18n.t('country')}
             ref={countryInput}
             textInputProps={{
               onChangeText: (val: string) => setCountry(val),
-              value: contact.address?.country || "",
-              autoCapitalize: "words"
+              value: contact.address?.country || '',
+              autoCapitalize: 'words',
             }}
             lastInSection
           />
         </View>
       </View>
     </Section>
-  );
-};
+  )
+}
 
-type Props = NativeStackScreenProps<RootStackParamList, "Contact Form">;
+type Props = NativeStackScreenProps<RootStackParamList, 'Contact Form'>
 
 const ContactForm = ({ route, navigation }: Props) => {
-  const theme = useTheme();
-  const { addContact, contacts, updateContact } = useContacts();
-  const editMode = route.params.edit;
+  const theme = useTheme()
+  const { addContact, contacts, updateContact } = useContacts()
+  const editMode = route.params.edit
   const [errors, setErrors] = useState<Errors>({
-    name: ""
-  });
+    name: '',
+  })
   const contactToUpdate = editMode
     ? contacts.find((c) => c.id === route.params.id)
-    : undefined;
-  const locales = Localization.getLocales();
+    : undefined
+  const locales = Localization.getLocales()
 
   const [contact, setContact] = useState<Contact>(
     contactToUpdate || {
       id: route.params.id,
       createdAt: new Date(),
-      name: "",
+      name: '',
       address: {
-        line1: "",
-        line2: "",
-        city: "",
-        state: "",
-        zip: "",
-        country: ""
+        line1: '',
+        line2: '',
+        city: '',
+        state: '',
+        zip: '',
+        country: '',
       },
-      email: "",
-      phone: "",
-      phoneRegionCode: locales[0].regionCode || ""
+      email: '',
+      phone: '',
+      phoneRegionCode: locales[0].regionCode || '',
     }
-  );
+  )
 
   const setName = (name: string) => {
     setContact({
       ...contact,
-      name
-    });
-  };
+      name,
+    })
+  }
 
   const setPhone = (phone: string) => {
     setContact({
       ...contact,
-      phone
-    });
-  };
+      phone,
+    })
+  }
 
   const setRegionCode = (regionCode: string) => {
     setContact({
       ...contact,
-      phoneRegionCode: regionCode
-    });
-  };
+      phoneRegionCode: regionCode,
+    })
+  }
 
   const setEmail = (email: string) => {
     setContact({
       ...contact,
-      email
-    });
-  };
+      email,
+    })
+  }
 
   const setLine1 = (line1: string) => {
     setContact({
       ...contact,
       address: {
         ...contact.address,
-        line1
-      }
-    });
-  };
+        line1,
+      },
+    })
+  }
   const setLine2 = (line2: string) => {
     setContact({
       ...contact,
       address: {
         ...contact.address,
-        line2
-      }
-    });
-  };
+        line2,
+      },
+    })
+  }
   const setCity = (city: string) => {
     setContact({
       ...contact,
       address: {
         ...contact.address,
-        city
-      }
-    });
-  };
+        city,
+      },
+    })
+  }
   const setState = (state: string) => {
     setContact({
       ...contact,
       address: {
         ...contact.address,
-        state
-      }
-    });
-  };
+        state,
+      },
+    })
+  }
   const setZip = (zip: string) => {
     setContact({
       ...contact,
       address: {
         ...contact.address,
-        zip
-      }
-    });
-  };
+        zip,
+      },
+    })
+  }
   const setCountry = (country: string) => {
     setContact({
       ...contact,
       address: {
         ...contact.address,
-        country
-      }
-    });
-  };
-  const nameInput = useRef<TextInput>(null);
-  const emailInput = useRef<TextInput>(null);
-  const line1Input = useRef<TextInput>(null);
-  const line2Input = useRef<TextInput>(null);
-  const cityInput = useRef<TextInput>(null);
-  const stateInput = useRef<TextInput>(null);
-  const zipInput = useRef<TextInput>(null);
-  const countryInput = useRef<TextInput>(null);
+        country,
+      },
+    })
+  }
+  const nameInput = useRef<TextInput>(null)
+  const emailInput = useRef<TextInput>(null)
+  const line1Input = useRef<TextInput>(null)
+  const line2Input = useRef<TextInput>(null)
+  const cityInput = useRef<TextInput>(null)
+  const stateInput = useRef<TextInput>(null)
+  const zipInput = useRef<TextInput>(null)
+  const countryInput = useRef<TextInput>(null)
 
   const validate = useCallback((): boolean => {
     if (!contact.name) {
-      nameInput.current?.focus();
-      setErrors({ name: i18n.t("name_error") });
-      return false;
+      nameInput.current?.focus()
+      setErrors({ name: i18n.t('name_error') })
+      return false
     }
     if (contact.name) {
-      setErrors({ name: "" });
+      setErrors({ name: '' })
     }
-    return true;
-  }, [contact.name]);
+    return true
+  }, [contact.name])
 
   const submit = useCallback(() => {
     return new Promise((resolve) => {
-      const passValidation = validate();
+      const passValidation = validate()
       if (!passValidation) {
-        return resolve(false);
+        return resolve(false)
       }
       if (editMode) {
-        updateContact(contact);
+        updateContact(contact)
       } else {
-        addContact(contact);
+        addContact(contact)
       }
-      resolve(contact);
-    });
-  }, [addContact, contact, editMode, updateContact, validate]);
+      resolve(contact)
+    })
+  }, [addContact, contact, editMode, updateContact, validate])
 
   useEffect(() => {
     navigation.setOptions({
       header: ({ route: { params }, navigation }) => (
         <Header
-          title=""
-          buttonType="exit"
+          title=''
+          buttonType='exit'
           rightElement={
             <Pressable
-              style={{ position: "absolute", right: 0 }}
+              style={{ position: 'absolute', right: 0 }}
               hitSlop={15}
               onPress={async () => {
-                const succeeded = await submit();
+                const succeeded = await submit()
                 if (!succeeded) {
                   // Failed validation if didn't submit
-                  return;
+                  return
                 }
                 if (editMode) {
-                  navigation.replace("Contact Details", {
-                    id: (params as { id: string }).id
-                  });
-                  return;
+                  navigation.replace('Contact Details', {
+                    id: (params as { id: string }).id,
+                  })
+                  return
                 }
-                navigation.replace("Conversation Form", {
-                  contactId: (params as { id: string }).id
-                });
+                navigation.replace('Conversation Form', {
+                  contactId: (params as { id: string }).id,
+                })
               }}
             >
               <Text
                 style={{
                   color: theme.colors.text,
-                  textDecorationLine: "underline",
-                  fontSize: 16
+                  textDecorationLine: 'underline',
+                  fontSize: 16,
                 }}
               >
-                {editMode ? i18n.t("save") : i18n.t("continue")}
+                {editMode ? i18n.t('save') : i18n.t('continue')}
               </Text>
             </Pressable>
           }
         />
-      )
-    });
+      ),
+    })
   }, [
     editMode,
     navigation,
     submit,
     theme.colors.text,
     theme.colors.textInverse,
-    validate
-  ]);
+    validate,
+  ])
 
   return (
     <KeyboardAwareScrollView
@@ -519,23 +513,20 @@ const ContactForm = ({ route, navigation }: Props) => {
       automaticallyAdjustKeyboardInsets
       style={{ backgroundColor: theme.colors.background }}
     >
-      <Wrapper
-        noInsets
-        style={{ gap: 30, marginTop: 20 }}
-      >
+      <Wrapper noInsets style={{ gap: 30, marginTop: 20 }}>
         <View style={{ padding: 25, gap: 5 }}>
-          <View style={{ flexDirection: "row", gap: 10, alignItems: "center" }}>
+          <View style={{ flexDirection: 'row', gap: 10, alignItems: 'center' }}>
             <IconButton
               icon={faIdCard}
               iconStyle={{ color: theme.colors.text }}
               size={20}
             />
             <Text style={{ fontSize: 32, fontFamily: theme.fonts.bold }}>
-              {editMode ? i18n.t("edit") : i18n.t("add")} {i18n.t("contact")}
+              {editMode ? i18n.t('edit') : i18n.t('add')} {i18n.t('contact')}
             </Text>
           </View>
           <Text style={{ color: theme.colors.textAlt, fontSize: 12 }}>
-            {i18n.t("enterContactInformation")}
+            {i18n.t('enterContactInformation')}
           </Text>
         </View>
         <PersonalContactSection
@@ -550,7 +541,7 @@ const ContactForm = ({ route, navigation }: Props) => {
           errors={errors}
           setErrors={setErrors}
         />
-        <Divider borderStyle="dashed" />
+        <Divider borderStyle='dashed' />
         <AddressSection
           contact={contact}
           cityInput={cityInput}
@@ -568,7 +559,7 @@ const ContactForm = ({ route, navigation }: Props) => {
         />
       </Wrapper>
     </KeyboardAwareScrollView>
-  );
-};
+  )
+}
 
-export default ContactForm;
+export default ContactForm

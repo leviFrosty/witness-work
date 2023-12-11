@@ -1,15 +1,15 @@
-import { PropsWithChildren } from "react";
-import { View, StyleProp, ViewStyle } from "react-native";
-import useTheme from "../contexts/theme";
+import { PropsWithChildren } from 'react'
+import { View, StyleProp, ViewStyle } from 'react-native'
+import useTheme from '../contexts/theme'
 
 interface Props {
   flexDirection?:
-    | "row"
-    | "column"
-    | "row-reverse"
-    | "column-reverse"
-    | undefined;
-  style?: StyleProp<ViewStyle>;
+    | 'row'
+    | 'column'
+    | 'row-reverse'
+    | 'column-reverse'
+    | undefined
+  style?: StyleProp<ViewStyle>
 }
 
 const Card: React.FC<PropsWithChildren<Props>> = ({
@@ -17,7 +17,7 @@ const Card: React.FC<PropsWithChildren<Props>> = ({
   flexDirection,
   style,
 }) => {
-  const theme = useTheme();
+  const theme = useTheme()
 
   return (
     <View
@@ -32,7 +32,7 @@ const Card: React.FC<PropsWithChildren<Props>> = ({
             shadowOffset: { width: 0, height: 1 },
             shadowColor: theme.colors.shadow,
             shadowOpacity: theme.numbers.shadowOpacity,
-            flexDirection: flexDirection || "column",
+            flexDirection: flexDirection || 'column',
           },
         ],
         [style],
@@ -40,7 +40,7 @@ const Card: React.FC<PropsWithChildren<Props>> = ({
     >
       {children}
     </View>
-  );
-};
+  )
+}
 
-export default Card;
+export default Card

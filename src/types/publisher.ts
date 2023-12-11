@@ -1,5 +1,5 @@
-import { publishers } from "../constants/publisher";
+import { publishers } from '../constants/publisher'
 
-export type Publisher = (typeof publishers)[number];
+export type Publisher = (typeof publishers)[number]
 
-export type PublisherHours = Record<Publisher, number>;
+export type PublisherHours = Record<Publisher, number>

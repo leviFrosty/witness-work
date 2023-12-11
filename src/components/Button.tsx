@@ -1,28 +1,28 @@
-import React, { PropsWithChildren } from "react";
+import React, { PropsWithChildren } from 'react'
 import {
   GestureResponderEvent,
   Pressable,
   StyleProp,
-  ViewStyle
-} from "react-native";
-import Haptics from "../lib/haptics";
+  ViewStyle,
+} from 'react-native'
+import Haptics from '../lib/haptics'
 import Animated, {
   Easing,
   useSharedValue,
-  withTiming
-} from "react-native-reanimated";
-import useTheme from "../contexts/theme";
+  withTiming,
+} from 'react-native-reanimated'
+import useTheme from '../contexts/theme'
 
 interface Props {
-  onPress?: (event: GestureResponderEvent) => void;
-  onLongPress?: (event: GestureResponderEvent) => void;
-  style?: StyleProp<ViewStyle>;
-  disabled?: boolean;
-  noTransform?: boolean;
-  variant?: "solid" | "outline";
+  onPress?: (event: GestureResponderEvent) => void
+  onLongPress?: (event: GestureResponderEvent) => void
+  style?: StyleProp<ViewStyle>
+  disabled?: boolean
+  noTransform?: boolean
+  variant?: 'solid' | 'outline'
 }
 
-const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
+const AnimatedPressable = Animated.createAnimatedComponent(Pressable)
 
 const Button: React.FC<PropsWithChildren<Props>> = ({
   children,
@@ -31,45 +31,45 @@ const Button: React.FC<PropsWithChildren<Props>> = ({
   style,
   disabled,
   noTransform,
-  variant
+  variant,
 }) => {
-  const translateY = useSharedValue(0);
-  const opacity = useSharedValue(1);
-  const theme = useTheme();
+  const translateY = useSharedValue(0)
+  const opacity = useSharedValue(1)
+  const theme = useTheme()
 
   const _onPress = (event: GestureResponderEvent) => {
-    Haptics.light();
-    onPress?.(event);
-  };
+    Haptics.light()
+    onPress?.(event)
+  }
 
   const _onLongPress = (event: GestureResponderEvent) => {
-    Haptics.medium();
-    onLongPress?.(event);
-  };
+    Haptics.medium()
+    onLongPress?.(event)
+  }
 
   const onPressIn = () => {
-    opacity.value = 0.7;
+    opacity.value = 0.7
     if (noTransform) {
-      return;
+      return
     }
     translateY.value = withTiming(1, {
       duration: 10,
-      easing: Easing.in(Easing.quad)
-    });
-  };
+      easing: Easing.in(Easing.quad),
+    })
+  }
 
   const onPressOut = () => {
-    opacity.value = 1;
+    opacity.value = 1
     if (noTransform) {
-      return;
+      return
     }
     translateY.value = withTiming(0, {
       duration: 20,
-      easing: Easing.in(Easing.quad)
-    });
-  };
+      easing: Easing.in(Easing.quad),
+    })
+  }
 
-  const styled = !!variant;
+  const styled = !!variant
 
   return (
     <AnimatedPressable
@@ -82,25 +82,25 @@ const Button: React.FC<PropsWithChildren<Props>> = ({
       style={[
         [
           {
-            borderWidth: variant === "outline" ? 1 : undefined,
+            borderWidth: variant === 'outline' ? 1 : undefined,
             borderColor: styled ? theme.colors.border : undefined,
             borderRadius: styled ? theme.numbers.borderRadiusMd : undefined,
             paddingHorizontal: styled ? 15 : undefined,
             paddingVertical: styled ? 20 : undefined,
-            flexDirection: styled ? "row" : undefined,
-            alignItems: styled ? "center" : undefined,
+            flexDirection: styled ? 'row' : undefined,
+            alignItems: styled ? 'center' : undefined,
             backgroundColor:
-              variant === "solid" ? theme.colors.card : undefined,
+              variant === 'solid' ? theme.colors.card : undefined,
             transform: [{ translateY: translateY }],
-            opacity
-          }
+            opacity,
+          },
         ],
-        [style]
+        [style],
       ]}
     >
       {children}
     </AnimatedPressable>
-  );
-};
+  )
+}
 
-export default Button;
+export default Button

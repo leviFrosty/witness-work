@@ -1,34 +1,34 @@
-import { Alert, ScrollView, View } from "react-native";
-import Text from "../components/MyText";
-import useTheme from "../contexts/theme";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
-import useContacts from "../stores/contactsStore";
-import moment from "moment";
-import Card from "../components/Card";
-import useConversations from "../stores/conversationStore";
-import { FlashList } from "@shopify/flash-list";
-import i18n from "../lib/locales";
-import { useMemo } from "react";
-import Wrapper from "../components/Wrapper";
-import IconButton from "../components/IconButton";
-import { faTrash, faUndo } from "@fortawesome/free-solid-svg-icons";
+import { Alert, ScrollView, View } from 'react-native'
+import Text from '../components/MyText'
+import useTheme from '../contexts/theme'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import useContacts from '../stores/contactsStore'
+import moment from 'moment'
+import Card from '../components/Card'
+import useConversations from '../stores/conversationStore'
+import { FlashList } from '@shopify/flash-list'
+import i18n from '../lib/locales'
+import { useMemo } from 'react'
+import Wrapper from '../components/Wrapper'
+import IconButton from '../components/IconButton'
+import { faTrash, faUndo } from '@fortawesome/free-solid-svg-icons'
 
 const RecoverContacts = () => {
-  const theme = useTheme();
-  const { conversations, deleteConversation } = useConversations();
+  const theme = useTheme()
+  const { conversations, deleteConversation } = useConversations()
   const { deletedContacts, recoverContact, removeDeletedContact } =
-    useContacts();
-  const insets = useSafeAreaInsets();
+    useContacts()
+  const insets = useSafeAreaInsets()
 
   const handleRemoveDeleted = (id: string) => {
-    removeDeletedContact(id);
+    removeDeletedContact(id)
     const conversationsToDelete = conversations.filter(
       (convo) => convo.contact.id === id
-    );
+    )
     conversationsToDelete.forEach((cToDelete) =>
       deleteConversation(cToDelete.id)
-    );
-  };
+    )
+  }
 
   const sortedContacts = useMemo(
     () =>
@@ -36,7 +36,7 @@ const RecoverContacts = () => {
         moment(a.createdAt).unix() < moment(b.createdAt).unix() ? 1 : -1
       ),
     [deletedContacts]
-  );
+  )
 
   return (
     <Wrapper
@@ -44,16 +44,16 @@ const RecoverContacts = () => {
       style={{
         flex: 1,
         flexGrow: 1,
-        justifyContent: "space-between",
+        justifyContent: 'space-between',
       }}
     >
       <View style={{ flexGrow: 1 }}>
         <View style={{ padding: 25, gap: 5 }}>
           <Text style={{ fontSize: 32, fontFamily: theme.fonts.bold }}>
-            {i18n.t("recoverContacts")}
+            {i18n.t('recoverContacts')}
           </Text>
           <Text style={{ color: theme.colors.textAlt, fontSize: 12 }}>
-            {i18n.t("recoverContacts_description")}
+            {i18n.t('recoverContacts_description')}
           </Text>
         </View>
         <ScrollView
@@ -74,7 +74,7 @@ const RecoverContacts = () => {
           >
             {deletedContacts.length === 0 && (
               <Text style={{ paddingHorizontal: 20 }}>
-                {i18n.t("deletedContactsWillAppearHere")}
+                {i18n.t('deletedContactsWillAppearHere')}
               </Text>
             )}
             <View style={{ minHeight: 2 }}>
@@ -86,9 +86,9 @@ const RecoverContacts = () => {
                     <Card
                       key={item.id}
                       style={{
-                        flexDirection: "row",
-                        justifyContent: "space-between",
-                        alignItems: "center",
+                        flexDirection: 'row',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
                       }}
                     >
                       <View style={{ gap: 5 }}>
@@ -99,15 +99,15 @@ const RecoverContacts = () => {
                             color: theme.colors.textAlt,
                           }}
                         >
-                          {`${i18n.t("created")} ${moment(
+                          {`${i18n.t('created')} ${moment(
                             item.createdAt
-                          ).format("LL")}`}
+                          ).format('LL')}`}
                         </Text>
                         <View
                           style={{
-                            flexDirection: "row",
+                            flexDirection: 'row',
                             gap: 10,
-                            alignItems: "center",
+                            alignItems: 'center',
                           }}
                         >
                           <IconButton
@@ -121,18 +121,18 @@ const RecoverContacts = () => {
                         icon={faTrash}
                         onPress={() =>
                           Alert.alert(
-                            i18n.t("permanentlyDelete"),
-                            i18n.t("permanentlyDeleteContact_warning"),
+                            i18n.t('permanentlyDelete'),
+                            i18n.t('permanentlyDeleteContact_warning'),
                             [
                               {
-                                text: i18n.t("cancel"),
-                                style: "cancel",
+                                text: i18n.t('cancel'),
+                                style: 'cancel',
                               },
                               {
-                                text: i18n.t("delete"),
-                                style: "destructive",
+                                text: i18n.t('delete'),
+                                style: 'destructive',
                                 onPress: () => {
-                                  handleRemoveDeleted(item.id);
+                                  handleRemoveDeleted(item.id)
                                 },
                               },
                             ]
@@ -148,7 +148,7 @@ const RecoverContacts = () => {
         </ScrollView>
       </View>
     </Wrapper>
-  );
-};
+  )
+}
 
-export default RecoverContacts;
+export default RecoverContacts

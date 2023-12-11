@@ -1,151 +1,151 @@
-import { View } from "react-native";
-import { useServiceReport } from "../stores/serviceReport";
-import useTheme from "../contexts/theme";
-import ProgressBar from "./ProgressBar";
-import { usePreferences } from "../stores/preferences";
+import { View } from 'react-native'
+import { useServiceReport } from '../stores/serviceReport'
+import useTheme from '../contexts/theme'
+import ProgressBar from './ProgressBar'
+import { usePreferences } from '../stores/preferences'
 import {
   calculateHoursRemaining,
   calculateProgress,
   totalHoursForCurrentMonth,
   hasServiceReportsForMonth,
   getDaysLeftInCurrentMonth,
-} from "../lib/serviceReport";
-import Card from "./Card";
-import Text from "./MyText";
-import { useNavigation } from "@react-navigation/native";
-import { RootStackNavigation } from "../stacks/RootStack";
-import { useEffect, useMemo, useState, useCallback } from "react";
-import { getStudiesForGivenMonth } from "../lib/contacts";
-import useContacts from "../stores/contactsStore";
-import moment from "moment";
-import LottieView from "lottie-react-native";
-import * as Crypto from "expo-crypto";
-import i18n from "../lib/locales";
-import useConversations from "../stores/conversationStore";
-import ActionButton from "./ActionButton";
-import IconButton from "./IconButton";
+} from '../lib/serviceReport'
+import Card from './Card'
+import Text from './MyText'
+import { useNavigation } from '@react-navigation/native'
+import { RootStackNavigation } from '../stacks/RootStack'
+import { useEffect, useMemo, useState, useCallback } from 'react'
+import { getStudiesForGivenMonth } from '../lib/contacts'
+import useContacts from '../stores/contactsStore'
+import moment from 'moment'
+import LottieView from 'lottie-react-native'
+import * as Crypto from 'expo-crypto'
+import i18n from '../lib/locales'
+import useConversations from '../stores/conversationStore'
+import ActionButton from './ActionButton'
+import IconButton from './IconButton'
 import {
   faArrowUpFromBracket,
   faChevronRight,
-} from "@fortawesome/free-solid-svg-icons";
-import { faSquare } from "@fortawesome/free-regular-svg-icons";
-import Button from "./Button";
-import { ExportTimeSheetState } from "./ExportTimeSheet";
+} from '@fortawesome/free-solid-svg-icons'
+import { faSquare } from '@fortawesome/free-regular-svg-icons'
+import Button from './Button'
+import { ExportTimeSheetState } from './ExportTimeSheet'
 
 const HourEntryCard = () => {
-  const theme = useTheme();
-  const { publisher, publisherHours } = usePreferences();
-  const { serviceReports } = useServiceReport();
-  const navigation = useNavigation<RootStackNavigation>();
-  const goalHours = publisherHours[publisher];
+  const theme = useTheme()
+  const { publisher, publisherHours } = usePreferences()
+  const { serviceReports } = useServiceReport()
+  const navigation = useNavigation<RootStackNavigation>()
+  const goalHours = publisherHours[publisher]
   const hours = useMemo(
     () => totalHoursForCurrentMonth(serviceReports),
     [serviceReports]
-  );
+  )
   const progress = useMemo(
     () => calculateProgress({ hours, goalHours }),
     [hours, goalHours]
-  );
+  )
 
   const encouragementHourPhrase = useCallback((progress: number) => {
-    let phrases: string[] = [];
+    let phrases: string[] = []
 
     if (progress < 0.6) {
       phrases = [
-        i18n.t("phrasesFar.keepGoing"),
-        i18n.t("phrasesFar.youCanDoThis"),
-        i18n.t("phrasesFar.neverGiveUp"),
-        i18n.t("phrasesFar.preachTheWord"),
-        i18n.t("phrasesFar.stayFocused"),
-        i18n.t("phrasesFar.haveFaith"),
-        i18n.t("phrasesFar.stayStrong"),
-      ];
+        i18n.t('phrasesFar.keepGoing'),
+        i18n.t('phrasesFar.youCanDoThis'),
+        i18n.t('phrasesFar.neverGiveUp'),
+        i18n.t('phrasesFar.preachTheWord'),
+        i18n.t('phrasesFar.stayFocused'),
+        i18n.t('phrasesFar.haveFaith'),
+        i18n.t('phrasesFar.stayStrong'),
+      ]
     }
     if (progress >= 0.6 && progress < 0.95) {
       phrases = [
-        i18n.t("phrasesClose.oneStepCloser"),
-        i18n.t("phrasesClose.almostThere"),
-        i18n.t("phrasesClose.keepMovingForward"),
-        i18n.t("phrasesClose.successOnTheHorizon"),
-        i18n.t("phrasesClose.momentumIsYours"),
-        i18n.t("phrasesClose.nearingAchievement"),
-        i18n.t("phrasesClose.youreClosingIn"),
-        i18n.t("phrasesClose.closerThanEver"),
-      ];
+        i18n.t('phrasesClose.oneStepCloser'),
+        i18n.t('phrasesClose.almostThere'),
+        i18n.t('phrasesClose.keepMovingForward'),
+        i18n.t('phrasesClose.successOnTheHorizon'),
+        i18n.t('phrasesClose.momentumIsYours'),
+        i18n.t('phrasesClose.nearingAchievement'),
+        i18n.t('phrasesClose.youreClosingIn'),
+        i18n.t('phrasesClose.closerThanEver'),
+      ]
     }
     if (progress > 0.95) {
       phrases = [
-        i18n.t("phrasesDone.youDidIt"),
-        i18n.t("phrasesDone.goalAchieved"),
-        i18n.t("phrasesDone.youNailedIt"),
-        i18n.t("phrasesDone.congratulations"),
-        i18n.t("phrasesDone.takeYourShoesOff"),
-        i18n.t("phrasesDone.hatsOffToYou"),
-        i18n.t("phrasesDone.missionComplete"),
-        i18n.t("phrasesDone.success"),
-      ];
+        i18n.t('phrasesDone.youDidIt'),
+        i18n.t('phrasesDone.goalAchieved'),
+        i18n.t('phrasesDone.youNailedIt'),
+        i18n.t('phrasesDone.congratulations'),
+        i18n.t('phrasesDone.takeYourShoesOff'),
+        i18n.t('phrasesDone.hatsOffToYou'),
+        i18n.t('phrasesDone.missionComplete'),
+        i18n.t('phrasesDone.success'),
+      ]
     }
 
-    const random = Math.floor(Math.random() * phrases.length);
-    return phrases[random];
-  }, []);
+    const random = Math.floor(Math.random() * phrases.length)
+    return phrases[random]
+  }, [])
 
   const [encouragementPhrase, setEncouragementPhrase] = useState(
     encouragementHourPhrase(progress)
-  );
+  )
 
   useEffect(() => {
-    setEncouragementPhrase(encouragementHourPhrase(progress));
-  }, [encouragementHourPhrase, progress]);
+    setEncouragementPhrase(encouragementHourPhrase(progress))
+  }, [encouragementHourPhrase, progress])
 
   const hoursRemaining = useMemo(
     () => calculateHoursRemaining({ hours, goalHours }),
     [hours, goalHours]
-  );
+  )
 
   const hoursPerDayNeeded = useMemo(
     () => (hoursRemaining / getDaysLeftInCurrentMonth()).toFixed(1),
     [hoursRemaining]
-  );
+  )
 
   return (
     <View>
       <Button
         style={{
-          flexDirection: "column",
+          flexDirection: 'column',
           paddingHorizontal: 10,
           paddingVertical: 10,
           borderRadius: theme.numbers.borderRadiusSm,
           backgroundColor: theme.colors.backgroundLighter,
           gap: 5,
-          position: "relative",
+          position: 'relative',
         }}
-        onPress={() => navigation.navigate("Time Reports")}
+        onPress={() => navigation.navigate('Time Reports')}
       >
         <View
           style={{
-            flexDirection: "row",
-            alignItems: "center",
-            justifyContent: "center",
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'center',
           }}
         >
           <ProgressBar />
         </View>
         <View
           style={{
-            justifyContent: "center",
-            alignItems: "center",
-            flexDirection: "column",
+            justifyContent: 'center',
+            alignItems: 'center',
+            flexDirection: 'column',
             gap: 10,
           }}
         >
-          <View style={{ position: "relative" }}>
+          <View style={{ position: 'relative' }}>
             <Text style={{ fontSize: 32, fontFamily: theme.fonts.bold }}>
               {hours}
             </Text>
             <View
               style={{
-                position: "absolute",
+                position: 'absolute',
                 right: -25,
                 bottom: 0,
               }}
@@ -180,80 +180,80 @@ const HourEntryCard = () => {
                 fontFamily: theme.fonts.semiBold,
               }}
             >
-              {hoursPerDayNeeded} {i18n.t("hoursPerDayToGoal")}
+              {hoursPerDayNeeded} {i18n.t('hoursPerDayToGoal')}
             </Text>
           </View>
           <Text style={{ fontSize: 8, color: theme.colors.textAlt }}>
-            {i18n.t("goalBasedOnPublisherType")}
+            {i18n.t('goalBasedOnPublisherType')}
           </Text>
         </View>
         <IconButton
           style={{
-            position: "absolute",
-            top: "50%",
+            position: 'absolute',
+            top: '50%',
             right: 5,
           }}
           icon={faChevronRight}
         />
       </Button>
-      <ActionButton onPress={() => navigation.navigate("Add Time")}>
-        {i18n.t("addTime")}
+      <ActionButton onPress={() => navigation.navigate('Add Time')}>
+        {i18n.t('addTime')}
       </ActionButton>
     </View>
-  );
-};
+  )
+}
 
 const RightCard = () => {
-  const theme = useTheme();
-  const { contacts } = useContacts();
-  const { conversations } = useConversations();
+  const theme = useTheme()
+  const { contacts } = useContacts()
+  const { conversations } = useConversations()
   const studies = useMemo(
     () =>
       getStudiesForGivenMonth({ contacts, conversations, month: new Date() }),
     [contacts, conversations]
-  );
+  )
   const encouragementStudiesPhrase = (studies: number) => {
-    let phrases: string[] = [];
+    let phrases: string[] = []
 
     if (studies === 0) {
       phrases = [
-        i18n.t("phrasesStudiesNone.keepGoing"),
-        i18n.t("phrasesStudiesNone.stayStrong"),
-        i18n.t("phrasesStudiesNone.stayPositive"),
-        i18n.t("phrasesStudiesNone.grindOn"),
-        i18n.t("phrasesStudiesNone.keepSearching"),
-        i18n.t("phrasesStudiesNone.stayResilient"),
-      ];
+        i18n.t('phrasesStudiesNone.keepGoing'),
+        i18n.t('phrasesStudiesNone.stayStrong'),
+        i18n.t('phrasesStudiesNone.stayPositive'),
+        i18n.t('phrasesStudiesNone.grindOn'),
+        i18n.t('phrasesStudiesNone.keepSearching'),
+        i18n.t('phrasesStudiesNone.stayResilient'),
+      ]
     }
     if (studies > 0 && studies <= 15) {
       phrases = [
-        i18n.t("phrasesStudiesDone.bravo"),
-        i18n.t("phrasesStudiesDone.wellDone"),
-        i18n.t("phrasesStudiesDone.amazingJob"),
-        i18n.t("phrasesStudiesDone.wayToGo"),
-        i18n.t("phrasesStudiesDone.victoryLap"),
-        i18n.t("phrasesStudiesDone.fantastic"),
-        i18n.t("phrasesStudiesDone.wow"),
-      ];
+        i18n.t('phrasesStudiesDone.bravo'),
+        i18n.t('phrasesStudiesDone.wellDone'),
+        i18n.t('phrasesStudiesDone.amazingJob'),
+        i18n.t('phrasesStudiesDone.wayToGo'),
+        i18n.t('phrasesStudiesDone.victoryLap'),
+        i18n.t('phrasesStudiesDone.fantastic'),
+        i18n.t('phrasesStudiesDone.wow'),
+      ]
     }
     if (studies > 15) {
-      phrases = ["🤩🤯🎉"];
+      phrases = ['🤩🤯🎉']
     }
 
-    const random = Math.floor(Math.random() * phrases.length);
-    return phrases[random];
-  };
+    const random = Math.floor(Math.random() * phrases.length)
+    return phrases[random]
+  }
   const [encouragementPhrase, setEncouragementPhrase] = useState(
     encouragementStudiesPhrase(studies)
-  );
+  )
 
   useEffect(() => {
-    setEncouragementPhrase(encouragementStudiesPhrase(studies));
-  }, [studies]);
+    setEncouragementPhrase(encouragementStudiesPhrase(studies))
+  }, [studies])
   return (
     <View
       style={{
-        flexDirection: "column",
+        flexDirection: 'column',
         paddingHorizontal: 10,
         paddingVertical: 10,
         backgroundColor: theme.colors.backgroundLighter,
@@ -264,8 +264,8 @@ const RightCard = () => {
       <View
         style={{
           gap: 10,
-          justifyContent: "center",
-          alignItems: "center",
+          justifyContent: 'center',
+          alignItems: 'center',
           flexGrow: 1,
         }}
       >
@@ -285,25 +285,25 @@ const RightCard = () => {
         style={{
           fontSize: 8,
           color: theme.colors.textAlt,
-          textAlign: "center",
+          textAlign: 'center',
         }}
       >
-        {i18n.t("basedOnContacts")}
+        {i18n.t('basedOnContacts')}
       </Text>
     </View>
-  );
-};
+  )
+}
 
 const CheckMarkAnimationComponent = ({ undoId }: { undoId?: string }) => {
-  const theme = useTheme();
-  const { deleteServiceReport } = useServiceReport();
+  const theme = useTheme()
+  const { deleteServiceReport } = useServiceReport()
 
   return (
     <View
       style={{
         backgroundColor: theme.colors.backgroundLighter,
-        alignItems: "center",
-        justifyContent: "center",
+        alignItems: 'center',
+        justifyContent: 'center',
         flex: 1,
       }}
     >
@@ -316,7 +316,7 @@ const CheckMarkAnimationComponent = ({ undoId }: { undoId?: string }) => {
           backgroundColor: theme.colors.backgroundLighter,
         }}
         // Find more Lottie files at https://lottiefiles.com/featured
-        source={require("./../assets/lottie/checkMark.json")}
+        source={require('./../assets/lottie/checkMark.json')}
       />
       {undoId && (
         <Button onPress={() => deleteServiceReport(undoId)}>
@@ -324,37 +324,37 @@ const CheckMarkAnimationComponent = ({ undoId }: { undoId?: string }) => {
             style={{
               fontSize: 10,
               color: theme.colors.textAlt,
-              textDecorationLine: "underline",
+              textDecorationLine: 'underline',
             }}
           >
-            {i18n.t("undo")}
+            {i18n.t('undo')}
           </Text>
         </Button>
       )}
     </View>
-  );
-};
+  )
+}
 
 const StandardPublisherTimeEntry = () => {
-  const theme = useTheme();
-  const [undoId, setUndoId] = useState<string>();
-  const { serviceReports, addServiceReport } = useServiceReport();
+  const theme = useTheme()
+  const [undoId, setUndoId] = useState<string>()
+  const { serviceReports, addServiceReport } = useServiceReport()
   const hasGoneOutInServiceThisMonth = hasServiceReportsForMonth(
     serviceReports,
     moment().month(),
     moment().year()
-  );
+  )
 
   const handleSubmitDidService = () => {
-    const id = Crypto.randomUUID();
+    const id = Crypto.randomUUID()
     addServiceReport({
       date: new Date(),
       hours: 0,
       minutes: 0,
       id,
-    });
-    setUndoId(id);
-  };
+    })
+    setUndoId(id)
+  }
 
   return (
     <View>
@@ -366,8 +366,8 @@ const StandardPublisherTimeEntry = () => {
               : theme.colors.accent,
             borderColor: theme.colors.border,
             paddingVertical: hasGoneOutInServiceThisMonth ? 5 : 46,
-            justifyContent: "center",
-            alignItems: "center",
+            justifyContent: 'center',
+            alignItems: 'center',
             borderRadius: theme.numbers.borderRadiusSm,
           }}
         >
@@ -381,16 +381,16 @@ const StandardPublisherTimeEntry = () => {
               : theme.colors.accent,
             borderColor: theme.colors.border,
             paddingVertical: hasGoneOutInServiceThisMonth ? 5 : 46,
-            justifyContent: "center",
-            alignItems: "center",
+            justifyContent: 'center',
+            alignItems: 'center',
             borderRadius: theme.numbers.borderRadiusSm,
           }}
           onPress={handleSubmitDidService}
         >
-          <View style={{ flexDirection: "row", gap: 10, alignItems: "center" }}>
+          <View style={{ flexDirection: 'row', gap: 10, alignItems: 'center' }}>
             <IconButton
               icon={faSquare}
-              size="xl"
+              size='xl'
               iconStyle={{ color: theme.colors.textInverse }}
             />
             <Text
@@ -400,26 +400,26 @@ const StandardPublisherTimeEntry = () => {
                 fontFamily: theme.fonts.semiBold,
               }}
             >
-              {i18n.t("sharedTheGoodNews")}
+              {i18n.t('sharedTheGoodNews')}
             </Text>
           </View>
         </Button>
       )}
     </View>
-  );
-};
+  )
+}
 
 interface ServiceReportProps {
-  setSheet: React.Dispatch<React.SetStateAction<ExportTimeSheetState>>;
+  setSheet: React.Dispatch<React.SetStateAction<ExportTimeSheetState>>
 }
 
 const ServiceReport = ({ setSheet }: ServiceReportProps) => {
-  const theme = useTheme();
-  const { publisher } = usePreferences();
-  const navigation = useNavigation<RootStackNavigation>();
+  const theme = useTheme()
+  const { publisher } = usePreferences()
+  const navigation = useNavigation<RootStackNavigation>()
   return (
     <View style={{ gap: 10 }}>
-      <View style={{ flexDirection: "row", alignItems: "center", gap: 5 }}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
         <Text
           style={{
             fontSize: 14,
@@ -427,11 +427,11 @@ const ServiceReport = ({ setSheet }: ServiceReportProps) => {
             marginLeft: 5,
           }}
         >
-          {i18n.t("serviceReport")}
+          {i18n.t('serviceReport')}
         </Text>
         <IconButton
           icon={faArrowUpFromBracket}
-          size="sm"
+          size='sm'
           onPress={() =>
             setSheet({
               open: true,
@@ -443,19 +443,19 @@ const ServiceReport = ({ setSheet }: ServiceReportProps) => {
       </View>
 
       <Card>
-        <View style={{ flexDirection: "row", gap: 5 }}>
-          <View style={{ flexDirection: "column", gap: 5, flexGrow: 1 }}>
-            <View style={{ flexDirection: "row" }}>
-              {publisher !== "publisher" ? (
-                <Button onPress={() => navigation.navigate("Time Reports")}>
+        <View style={{ flexDirection: 'row', gap: 5 }}>
+          <View style={{ flexDirection: 'column', gap: 5, flexGrow: 1 }}>
+            <View style={{ flexDirection: 'row' }}>
+              {publisher !== 'publisher' ? (
+                <Button onPress={() => navigation.navigate('Time Reports')}>
                   <Text
                     style={{
                       color: theme.colors.textAlt,
                       fontFamily: theme.fonts.semiBold,
-                      textDecorationLine: "underline",
+                      textDecorationLine: 'underline',
                     }}
                   >
-                    {i18n.t("viewHours")}
+                    {i18n.t('viewHours')}
                   </Text>
                 </Button>
               ) : (
@@ -465,31 +465,31 @@ const ServiceReport = ({ setSheet }: ServiceReportProps) => {
                     fontFamily: theme.fonts.semiBold,
                   }}
                 >
-                  {i18n.t("hours")}
+                  {i18n.t('hours')}
                 </Text>
               )}
             </View>
-            {publisher === "publisher" ? (
+            {publisher === 'publisher' ? (
               <StandardPublisherTimeEntry />
             ) : (
               <HourEntryCard />
             )}
           </View>
-          <View style={{ flexDirection: "column", gap: 5 }}>
+          <View style={{ flexDirection: 'column', gap: 5 }}>
             <Text
               style={{
                 color: theme.colors.textAlt,
                 fontFamily: theme.fonts.semiBold,
               }}
             >
-              {i18n.t("studies")}
+              {i18n.t('studies')}
             </Text>
             <RightCard />
           </View>
         </View>
       </Card>
     </View>
-  );
-};
+  )
+}
 
-export default ServiceReport;
+export default ServiceReport

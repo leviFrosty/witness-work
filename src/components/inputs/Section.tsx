@@ -1,12 +1,12 @@
-import { PropsWithChildren } from "react";
-import { View } from "react-native";
-import useTheme from "../../contexts/theme";
-import { rowPaddingVertical } from "../../constants/Inputs";
+import { PropsWithChildren } from 'react'
+import { View } from 'react-native'
+import useTheme from '../../contexts/theme'
+import { rowPaddingVertical } from '../../constants/Inputs'
 
 interface Props {}
 
 const Section: React.FC<PropsWithChildren<Props>> = ({ children }) => {
-  const theme = useTheme();
+  const theme = useTheme()
 
   return (
     <View
@@ -22,7 +22,7 @@ const Section: React.FC<PropsWithChildren<Props>> = ({ children }) => {
     >
       {children}
     </View>
-  );
-};
+  )
+}
 
-export default Section;
+export default Section

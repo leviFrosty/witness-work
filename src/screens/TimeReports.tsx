@@ -1,97 +1,97 @@
-import { View, Alert, ScrollView } from "react-native";
-import Text from "../components/MyText";
-import useServiceReport from "../stores/serviceReport";
-import useTheme from "../contexts/theme";
-import { ServiceReport } from "../types/serviceReport";
-import moment from "moment";
-import Section from "../components/inputs/Section";
+import { View, Alert, ScrollView } from 'react-native'
+import Text from '../components/MyText'
+import useServiceReport from '../stores/serviceReport'
+import useTheme from '../contexts/theme'
+import { ServiceReport } from '../types/serviceReport'
+import moment from 'moment'
+import Section from '../components/inputs/Section'
 import {
   ldcHoursForSpecificMonth,
   nonLdcHoursForSpecificMonth,
   totalHoursForSpecificMonth,
-} from "../lib/serviceReport";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
-import Card from "../components/Card";
-import ActionButton from "../components/ActionButton";
-import { useNavigation } from "@react-navigation/native";
-import { RootStackNavigation } from "../stacks/RootStack";
-import i18n from "../lib/locales";
-import IconButton from "../components/IconButton";
+} from '../lib/serviceReport'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import Card from '../components/Card'
+import ActionButton from '../components/ActionButton'
+import { useNavigation } from '@react-navigation/native'
+import { RootStackNavigation } from '../stacks/RootStack'
+import i18n from '../lib/locales'
+import IconButton from '../components/IconButton'
 import {
   faArrowUpFromBracket,
   faPersonDigging,
-} from "@fortawesome/free-solid-svg-icons";
-import { Swipeable } from "react-native-gesture-handler";
-import Haptics from "../lib/haptics";
-import SwipeableDelete from "../components/swipeableActions/Delete";
-import { useState } from "react";
+} from '@fortawesome/free-solid-svg-icons'
+import { Swipeable } from 'react-native-gesture-handler'
+import Haptics from '../lib/haptics'
+import SwipeableDelete from '../components/swipeableActions/Delete'
+import { useState } from 'react'
 
 import ExportTimeSheet, {
   ExportTimeSheetState,
-} from "../components/ExportTimeSheet";
+} from '../components/ExportTimeSheet'
 
 const TimeReports = () => {
-  const theme = useTheme();
-  const { serviceReports, deleteServiceReport } = useServiceReport();
-  const navigation = useNavigation<RootStackNavigation>();
-  const insets = useSafeAreaInsets();
+  const theme = useTheme()
+  const { serviceReports, deleteServiceReport } = useServiceReport()
+  const navigation = useNavigation<RootStackNavigation>()
+  const insets = useSafeAreaInsets()
   const [sheet, setSheet] = useState<ExportTimeSheetState>({
     open: false,
     month: 0,
     year: 0,
-  });
+  })
 
   // Group service reports by year and then by month
   const reportsByYearAndMonth: {
-    [year: string]: { [month: string]: ServiceReport[] };
-  } = {};
+    [year: string]: { [month: string]: ServiceReport[] }
+  } = {}
   serviceReports.forEach((report) => {
-    const yearKey = moment(report.date).format("YYYY");
-    const monthKey = moment(report.date).format("MMMM YYYY");
+    const yearKey = moment(report.date).format('YYYY')
+    const monthKey = moment(report.date).format('MMMM YYYY')
 
     if (!reportsByYearAndMonth[yearKey]) {
-      reportsByYearAndMonth[yearKey] = {};
+      reportsByYearAndMonth[yearKey] = {}
     }
 
     if (!reportsByYearAndMonth[yearKey][monthKey]) {
-      reportsByYearAndMonth[yearKey][monthKey] = [];
+      reportsByYearAndMonth[yearKey][monthKey] = []
     }
 
-    reportsByYearAndMonth[yearKey][monthKey].push(report);
-  });
+    reportsByYearAndMonth[yearKey][monthKey].push(report)
+  })
 
   // Convert the object keys to an array of years
   const years = Object.keys(reportsByYearAndMonth).sort(
     (a, b) => parseInt(b) - parseInt(a)
-  );
+  )
 
   const handleSwipeOpen = (
-    direction: "left" | "right",
+    direction: 'left' | 'right',
     swipeable: Swipeable,
     report: ServiceReport
   ) => {
-    if (direction === "right") {
+    if (direction === 'right') {
       Alert.alert(
-        i18n.t("deleteTime_title"),
-        i18n.t("deleteTime_description"),
+        i18n.t('deleteTime_title'),
+        i18n.t('deleteTime_description'),
         [
           {
-            text: i18n.t("cancel"),
-            style: "cancel",
+            text: i18n.t('cancel'),
+            style: 'cancel',
             onPress: () => swipeable.reset(),
           },
           {
-            text: i18n.t("delete"),
-            style: "destructive",
+            text: i18n.t('delete'),
+            style: 'destructive',
             onPress: () => {
-              swipeable.reset();
-              deleteServiceReport(report.id);
+              swipeable.reset()
+              deleteServiceReport(report.id)
             },
           },
         ]
-      );
+      )
     }
-  };
+  }
 
   return (
     <View
@@ -103,7 +103,7 @@ const TimeReports = () => {
     >
       <View style={{ padding: 20, paddingVertical: 30 }}>
         <Text style={{ fontSize: 32, fontFamily: theme.fonts.bold }}>
-          {i18n.t("allTimeEntries")}
+          {i18n.t('allTimeEntries')}
         </Text>
       </View>
       <ScrollView
@@ -120,10 +120,10 @@ const TimeReports = () => {
                   color: theme.colors.textAlt,
                 }}
               >
-                {i18n.t("noTimeEntriesYet")}
+                {i18n.t('noTimeEntriesYet')}
               </Text>
-              <ActionButton onPress={() => navigation.navigate("Add Time")}>
-                {i18n.t("addTime")}
+              <ActionButton onPress={() => navigation.navigate('Add Time')}>
+                {i18n.t('addTime')}
               </ActionButton>
             </Card>
           )}
@@ -141,40 +141,40 @@ const TimeReports = () => {
               {Object.keys(reportsByYearAndMonth[year])
                 .sort(
                   (a, b) =>
-                    moment(b, "MMMM YYYY").unix() -
-                    moment(a, "MMMM YYYY").unix()
+                    moment(b, 'MMMM YYYY').unix() -
+                    moment(a, 'MMMM YYYY').unix()
                 )
                 .map((month) => {
                   const totalHours = totalHoursForSpecificMonth(
                     reportsByYearAndMonth[year][month],
-                    moment(month, "MMMM YYYY").month(),
+                    moment(month, 'MMMM YYYY').month(),
                     parseInt(year)
-                  );
+                  )
                   const ldcHours = ldcHoursForSpecificMonth(
                     reportsByYearAndMonth[year][month],
-                    moment(month, "MMMM YYYY").month(),
+                    moment(month, 'MMMM YYYY').month(),
                     parseInt(year)
-                  );
+                  )
                   const nonLdcHours = nonLdcHoursForSpecificMonth(
                     reportsByYearAndMonth[year][month],
-                    moment(month, "MMMM YYYY").month(),
+                    moment(month, 'MMMM YYYY').month(),
                     parseInt(year)
-                  );
+                  )
 
                   return (
                     <View style={{ gap: 5 }} key={month}>
                       <View style={{ marginHorizontal: 20, gap: 3 }}>
                         <View
                           style={{
-                            flexDirection: "row",
+                            flexDirection: 'row',
                             gap: 10,
-                            alignItems: "center",
+                            alignItems: 'center',
                             marginBottom: 3,
                           }}
                         >
                           <Text
                             style={{
-                              fontSize: theme.fontSize("lg"),
+                              fontSize: theme.fontSize('lg'),
                               fontFamily: theme.fonts.regular,
                               color: theme.colors.text,
                             }}
@@ -186,7 +186,7 @@ const TimeReports = () => {
                             onPress={() =>
                               setSheet({
                                 open: true,
-                                month: moment(month, "MMMM YYYY").month(),
+                                month: moment(month, 'MMMM YYYY').month(),
                                 year: parseInt(year),
                               })
                             }
@@ -195,9 +195,9 @@ const TimeReports = () => {
                         </View>
                         <View
                           style={{
-                            flexDirection: "row",
+                            flexDirection: 'row',
                             gap: 10,
-                            justifyContent: "space-between",
+                            justifyContent: 'space-between',
                           }}
                         >
                           <Text
@@ -207,9 +207,9 @@ const TimeReports = () => {
                               color: theme.colors.textAlt,
                             }}
                           >
-                            {i18n.t("totalHours")}: {totalHours}
+                            {i18n.t('totalHours')}: {totalHours}
                           </Text>
-                          <View style={{ flexDirection: "row", gap: 5 }}>
+                          <View style={{ flexDirection: 'row', gap: 5 }}>
                             <Text
                               style={{
                                 fontSize: 14,
@@ -217,7 +217,7 @@ const TimeReports = () => {
                                 color: theme.colors.textAlt,
                               }}
                             >
-                              {i18n.t("standard")}: {nonLdcHours}
+                              {i18n.t('standard')}: {nonLdcHours}
                             </Text>
                             <Text
                               style={{
@@ -226,7 +226,7 @@ const TimeReports = () => {
                                 color: theme.colors.textAlt,
                               }}
                             >
-                              {i18n.t("ldc")}: {ldcHours}
+                              {i18n.t('ldc')}: {ldcHours}
                             </Text>
                           </View>
                         </View>
@@ -250,8 +250,8 @@ const TimeReports = () => {
                                 }}
                                 renderRightActions={() => (
                                   <SwipeableDelete
-                                    size="xs"
-                                    style={{ flexDirection: "row" }}
+                                    size='xs'
+                                    style={{ flexDirection: 'row' }}
                                   />
                                 )}
                                 onSwipeableOpen={(direction, swipeable) =>
@@ -260,8 +260,8 @@ const TimeReports = () => {
                               >
                                 <View
                                   style={{
-                                    flexDirection: "row",
-                                    justifyContent: "space-between",
+                                    flexDirection: 'row',
+                                    justifyContent: 'space-between',
                                     backgroundColor: theme.colors.card,
                                     padding: 15,
                                     borderRadius: theme.numbers.borderRadiusSm,
@@ -270,62 +270,62 @@ const TimeReports = () => {
                                 >
                                   <View
                                     style={{
-                                      flexDirection: "row",
+                                      flexDirection: 'row',
                                       flexGrow: 1,
                                     }}
                                   >
                                     <View
-                                      style={{ flexDirection: "row", gap: 10 }}
+                                      style={{ flexDirection: 'row', gap: 10 }}
                                     >
                                       <Text
                                         style={{
                                           fontFamily: theme.fonts.semiBold,
                                         }}
                                       >
-                                        {`${moment(report.date).format("L")}`}
+                                        {`${moment(report.date).format('L')}`}
                                       </Text>
                                       {report.ldc && (
                                         <View
                                           style={{
-                                            flexDirection: "row",
+                                            flexDirection: 'row',
                                             gap: 3,
-                                            alignItems: "center",
+                                            alignItems: 'center',
                                           }}
                                         >
                                           <IconButton icon={faPersonDigging} />
                                           <Text
                                             style={{
                                               color: theme.colors.textAlt,
-                                              flexDirection: "row",
+                                              flexDirection: 'row',
                                               gap: 10,
                                             }}
                                           >
-                                            {i18n.t("ldc")}
+                                            {i18n.t('ldc')}
                                           </Text>
                                         </View>
                                       )}
                                     </View>
                                     <View
                                       style={{
-                                        flexDirection: "row",
+                                        flexDirection: 'row',
                                         gap: 10,
                                         flexGrow: 1,
-                                        justifyContent: "flex-end",
-                                        alignItems: "center",
+                                        justifyContent: 'flex-end',
+                                        alignItems: 'center',
                                       }}
                                     >
                                       <View
                                         style={{
-                                          position: "relative",
+                                          position: 'relative',
                                           paddingLeft: 20,
                                         }}
                                       >
                                         <Text style={{ fontSize: 12 }}>
-                                          {i18n.t("hours")}
+                                          {i18n.t('hours')}
                                         </Text>
                                         <Text
                                           style={{
-                                            position: "absolute",
+                                            position: 'absolute',
                                             left: 0,
                                             fontSize: 12,
                                           }}
@@ -335,22 +335,22 @@ const TimeReports = () => {
                                       </View>
                                       <View
                                         style={{
-                                          position: "relative",
+                                          position: 'relative',
                                           paddingLeft: 20,
-                                          alignItems: "center",
+                                          alignItems: 'center',
                                         }}
                                       >
                                         <Text
                                           style={{
-                                            flexDirection: "row",
+                                            flexDirection: 'row',
                                             fontSize: 12,
                                           }}
                                         >
-                                          {i18n.t("minutes")}
+                                          {i18n.t('minutes')}
                                         </Text>
                                         <Text
                                           style={{
-                                            position: "absolute",
+                                            position: 'absolute',
                                             left: 0,
                                             fontSize: 12,
                                           }}
@@ -366,7 +366,7 @@ const TimeReports = () => {
                         </View>
                       </Section>
                     </View>
-                  );
+                  )
                 })}
             </View>
           ))}
@@ -374,6 +374,6 @@ const TimeReports = () => {
       </ScrollView>
       <ExportTimeSheet setSheet={setSheet} sheet={sheet} />
     </View>
-  );
-};
-export default TimeReports;
+  )
+}
+export default TimeReports

@@ -1,12 +1,12 @@
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import { create } from "zustand";
-import { persist, combine, createJSONStorage } from "zustand/middleware";
-import { Conversation } from "../types/conversation";
-import * as Notifications from "expo-notifications";
+import AsyncStorage from '@react-native-async-storage/async-storage'
+import { create } from 'zustand'
+import { persist, combine, createJSONStorage } from 'zustand/middleware'
+import { Conversation } from '../types/conversation'
+import * as Notifications from 'expo-notifications'
 
 const initialState = {
   conversations: [] as Conversation[],
-};
+}
 
 export const useConversations = create(
   persist(
@@ -16,55 +16,55 @@ export const useConversations = create(
         set(({ conversations }) => {
           const foundCurrentConversation = conversations.find(
             (c) => c.id === conversation.id
-          );
+          )
 
           if (foundCurrentConversation) {
-            return {};
+            return {}
           }
 
           return {
             conversations: [...conversations, conversation],
-          };
+          }
         }),
       deleteConversation: (id: string) =>
         set(({ conversations }) => {
           const foundConversation = conversations.find(
             (conversation) => conversation.id === id
-          );
+          )
           if (!foundConversation) {
-            return {};
+            return {}
           }
 
           foundConversation.followUp?.notifications?.forEach(
             async ({ id }) =>
               await Notifications.cancelScheduledNotificationAsync(id)
-          );
+          )
 
           return {
             conversations: conversations.filter(
               (conversation) => conversation.id !== id
             ),
-          };
+          }
         }),
       updateConversation: (conversation: Partial<Conversation>) => {
         set(({ conversations }) => {
           return {
             conversations: conversations.map((c) => {
               if (c.id !== conversation.id) {
-                return c;
+                return c
               }
-              return { ...c, ...conversation };
+              return { ...c, ...conversation }
             }),
-          };
-        });
+          }
+        })
       },
       _WARNING_forceDeleteConversations: () => set({ conversations: [] }),
     })),
     {
-      name: "conversations",
+      name: 'conversations',
       storage: createJSONStorage(() => AsyncStorage),
     }
   )
-);
+)
 
-export default useConversations;
+export default useConversations

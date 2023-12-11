@@ -1,6 +1,6 @@
-import { PropsWithChildren } from "react";
-import { Text as ReactNativeText, TextProps } from "react-native";
-import useTheme from "../contexts/theme";
+import { PropsWithChildren } from 'react'
+import { Text as ReactNativeText, TextProps } from 'react-native'
+import useTheme from '../contexts/theme'
 interface Props extends TextProps {}
 
 const Text: React.FC<PropsWithChildren<Props>> = ({
@@ -8,7 +8,7 @@ const Text: React.FC<PropsWithChildren<Props>> = ({
   style,
   ...props
 }) => {
-  const theme = useTheme();
+  const theme = useTheme()
 
   return (
     <ReactNativeText
@@ -20,7 +20,7 @@ const Text: React.FC<PropsWithChildren<Props>> = ({
     >
       {children}
     </ReactNativeText>
-  );
-};
+  )
+}
 
-export default Text;
+export default Text

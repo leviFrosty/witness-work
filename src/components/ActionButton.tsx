@@ -1,21 +1,21 @@
-import Text from "./MyText";
-import useTheme from "../contexts/theme";
-import Button from "./Button";
-import { ThemeSizes } from "../types/theme";
-import React, { PropsWithChildren } from "react";
+import Text from './MyText'
+import useTheme from '../contexts/theme'
+import Button from './Button'
+import { ThemeSizes } from '../types/theme'
+import React, { PropsWithChildren } from 'react'
 interface Props {
-  onPress: () => unknown;
-  disabled?: boolean;
-  size?: ThemeSizes;
+  onPress: () => unknown
+  disabled?: boolean
+  size?: ThemeSizes
 }
 
 const ActionButton: React.FC<PropsWithChildren<Props>> = ({
   onPress,
   children,
   disabled,
-  size = "lg",
+  size = 'lg',
 }) => {
-  const theme = useTheme();
+  const theme = useTheme()
 
   return (
     <Button
@@ -26,14 +26,14 @@ const ActionButton: React.FC<PropsWithChildren<Props>> = ({
         borderRadius: theme.numbers.borderRadiusSm,
         paddingVertical: 12,
         paddingHorizontal: 24,
-        flexDirection: "row",
-        alignItems: "center",
-        justifyContent: "center",
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
       }}
       onPress={onPress}
       disabled={disabled}
     >
-      {typeof children === "string" ? (
+      {typeof children === 'string' ? (
         <Text
           style={{
             fontSize: theme.fontSize(size),
@@ -47,7 +47,7 @@ const ActionButton: React.FC<PropsWithChildren<Props>> = ({
         children
       )}
     </Button>
-  );
-};
+  )
+}
 
-export default ActionButton;
+export default ActionButton

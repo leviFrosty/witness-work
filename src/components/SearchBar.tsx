@@ -2,22 +2,22 @@ import {
   TextInput,
   NativeSyntheticEvent,
   TextInputFocusEventData,
-} from "react-native";
-import useTheme from "../contexts/theme";
-import i18n from "../lib/locales";
+} from 'react-native'
+import useTheme from '../contexts/theme'
+import i18n from '../lib/locales'
 
 interface Props {
-  placeholder?: string;
-  value: string;
+  placeholder?: string
+  value: string
   setValue:
     | React.Dispatch<React.SetStateAction<string | undefined>>
-    | ((value: string) => unknown);
+    | ((value: string) => unknown)
   onFocus?:
     | ((e: NativeSyntheticEvent<TextInputFocusEventData>) => void)
-    | undefined;
+    | undefined
   onBlur?:
     | ((e: NativeSyntheticEvent<TextInputFocusEventData>) => void)
-    | undefined;
+    | undefined
 }
 
 const SearchBar = ({
@@ -27,7 +27,7 @@ const SearchBar = ({
   onFocus,
   onBlur,
 }: Props) => {
-  const theme = useTheme();
+  const theme = useTheme()
 
   return (
     <TextInput
@@ -45,12 +45,12 @@ const SearchBar = ({
         borderColor: theme.colors.border,
         borderWidth: 1,
         flexGrow: 1,
-        fontSize: theme.fontSize("lg"),
+        fontSize: theme.fontSize('lg'),
       }}
-      placeholder={placeholder ?? i18n.t("searchForContact")}
-      clearButtonMode="while-editing"
-      returnKeyType="search"
+      placeholder={placeholder ?? i18n.t('searchForContact')}
+      clearButtonMode='while-editing'
+      returnKeyType='search'
     />
-  );
-};
-export default SearchBar;
+  )
+}
+export default SearchBar

@@ -5,35 +5,35 @@ import {
   Alert,
   ScrollView,
   useColorScheme,
-} from "react-native";
-import { useCallback, useEffect, useMemo, useState } from "react";
-import Text from "../components/MyText";
-import useTheme from "../contexts/theme";
-import { RootStackNavigation, RootStackParamList } from "../stacks/RootStack";
+} from 'react-native'
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import Text from '../components/MyText'
+import useTheme from '../contexts/theme'
+import { RootStackNavigation, RootStackParamList } from '../stacks/RootStack'
 import {
   NativeStackNavigationProp,
   NativeStackScreenProps,
-} from "@react-navigation/native-stack";
-import useContacts from "../stores/contactsStore";
-import Header from "../components/layout/Header";
-import CardWithTitle from "../components/CardWithTitle";
-import { Address, Contact } from "../types/contact";
-import { FlashList } from "@shopify/flash-list";
-import ConversationRow from "../components/ConversationRow";
-import useConversations from "../stores/conversationStore";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
-import Divider from "../components/Divider";
-import moment from "moment";
-import i18n from "../lib/locales";
+} from '@react-navigation/native-stack'
+import useContacts from '../stores/contactsStore'
+import Header from '../components/layout/Header'
+import CardWithTitle from '../components/CardWithTitle'
+import { Address, Contact } from '../types/contact'
+import { FlashList } from '@shopify/flash-list'
+import ConversationRow from '../components/ConversationRow'
+import useConversations from '../stores/conversationStore'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import Divider from '../components/Divider'
+import moment from 'moment'
+import i18n from '../lib/locales'
 import {
   contactHasAtLeastOneStudy,
   contactMostRecentStudy,
   contactStudiedForGivenMonth,
-} from "../lib/conversations";
-import { Conversation } from "../types/conversation";
-import Wrapper from "../components/Wrapper";
-import { StatusBar } from "expo-status-bar";
-import IconButton from "../components/IconButton";
+} from '../lib/conversations'
+import { Conversation } from '../types/conversation'
+import Wrapper from '../components/Wrapper'
+import { StatusBar } from 'expo-status-bar'
+import IconButton from '../components/IconButton'
 import {
   faBook,
   faCaravan,
@@ -44,67 +44,67 @@ import {
   faPencil,
   faPhone,
   faPlus,
-} from "@fortawesome/free-solid-svg-icons";
-import Copyeable from "../components/Copyeable";
-import Button from "../components/Button";
-import { parsePhoneNumber } from "awesome-phonenumber";
-import { useNavigation } from "@react-navigation/native";
-import { getLocales } from "expo-localization";
-import { Sheet } from "tamagui";
+} from '@fortawesome/free-solid-svg-icons'
+import Copyeable from '../components/Copyeable'
+import Button from '../components/Button'
+import { parsePhoneNumber } from 'awesome-phonenumber'
+import { useNavigation } from '@react-navigation/native'
+import { getLocales } from 'expo-localization'
+import { Sheet } from 'tamagui'
 
-type Props = NativeStackScreenProps<RootStackParamList, "Contact Details">;
+type Props = NativeStackScreenProps<RootStackParamList, 'Contact Details'>
 
 const PhoneRow = ({ contact }: { contact: Contact }) => {
-  const theme = useTheme();
-  const navigation = useNavigation<RootStackNavigation>();
-  const { phone } = contact;
-  const locales = getLocales();
+  const theme = useTheme()
+  const navigation = useNavigation<RootStackNavigation>()
+  const { phone } = contact
+  const locales = getLocales()
 
   const formatted = useMemo(
     () =>
-      parsePhoneNumber(phone || "", {
-        regionCode: contact.phoneRegionCode || locales[0].regionCode || "",
+      parsePhoneNumber(phone || '', {
+        regionCode: contact.phoneRegionCode || locales[0].regionCode || '',
       }),
     [contact.phoneRegionCode, locales, phone]
-  );
+  )
 
-  const isValid = formatted.valid;
+  const isValid = formatted.valid
 
   const alertInvalidPhone = useCallback(() => {
     Alert.alert(
-      i18n.t("invalidPhone"),
-      `"${formatted.number?.input}" ${i18n.t("invalidPhone_description")} ${
+      i18n.t('invalidPhone'),
+      `"${formatted.number?.input}" ${i18n.t('invalidPhone_description')} ${
         formatted.regionCode
       }.`,
       [
-        { style: "cancel", text: i18n.t("cancel") },
+        { style: 'cancel', text: i18n.t('cancel') },
         {
-          style: "default",
-          text: i18n.t("edit"),
+          style: 'default',
+          text: i18n.t('edit'),
           onPress: () =>
-            navigation.replace("Contact Form", {
+            navigation.replace('Contact Form', {
               id: contact.id,
               edit: true,
             }),
         },
       ]
-    );
-  }, [contact.id, formatted.number?.input, formatted.regionCode, navigation]);
+    )
+  }, [contact.id, formatted.number?.input, formatted.regionCode, navigation])
 
   if (!phone) {
-    return;
+    return
   }
   const handleCall = () => {
     if (isValid) {
-      Linking.openURL(`tel:${formatted.number.e164}`);
-    } else alertInvalidPhone();
-  };
+      Linking.openURL(`tel:${formatted.number.e164}`)
+    } else alertInvalidPhone()
+  }
 
   const handleMessage = () => {
     if (isValid) {
-      Linking.openURL(`sms:${formatted.number.e164}`);
-    } else alertInvalidPhone();
-  };
+      Linking.openURL(`sms:${formatted.number.e164}`)
+    } else alertInvalidPhone()
+  }
 
   return (
     <View style={{ gap: 10 }}>
@@ -115,12 +115,12 @@ const PhoneRow = ({ contact }: { contact: Contact }) => {
           color: theme.colors.textAlt,
         }}
       >
-        {i18n.t("phone")}
+        {i18n.t('phone')}
       </Text>
       <View
         style={{
-          flexDirection: "row",
-          justifyContent: "space-between",
+          flexDirection: 'row',
+          justifyContent: 'space-between',
         }}
       >
         <Copyeable textProps={{ onPress: handleCall }}>
@@ -128,28 +128,28 @@ const PhoneRow = ({ contact }: { contact: Contact }) => {
         </Copyeable>
         <View
           style={{
-            flexDirection: "row",
+            flexDirection: 'row',
             gap: 25,
-            alignItems: "center",
+            alignItems: 'center',
           }}
         >
           <IconButton
             icon={faPhone}
-            size="lg"
+            size='lg'
             iconStyle={{ color: theme.colors.accent }}
             onPress={handleCall}
           />
           <IconButton
             icon={faComment}
-            size="lg"
+            size='lg'
             iconStyle={{ color: theme.colors.accent }}
             onPress={handleMessage}
           />
         </View>
       </View>
     </View>
-  );
-};
+  )
+}
 
 const Hero = ({
   name,
@@ -157,20 +157,20 @@ const Hero = ({
   hasStudiedPreviously,
   mostRecentStudy,
 }: {
-  name: string;
-  isBibleStudy?: boolean;
-  hasStudiedPreviously?: boolean;
-  mostRecentStudy: Conversation | null;
+  name: string
+  isBibleStudy?: boolean
+  hasStudiedPreviously?: boolean
+  mostRecentStudy: Conversation | null
 }) => {
-  const theme = useTheme();
+  const theme = useTheme()
 
   return (
     <View
       style={{
         paddingVertical: 100,
         gap: 8,
-        justifyContent: "center",
-        alignItems: "center",
+        justifyContent: 'center',
+        alignItems: 'center',
       }}
     >
       <Text
@@ -180,7 +180,7 @@ const Hero = ({
           color: theme.colors.textInverse,
         }}
       >
-        {i18n.t("contact")}
+        {i18n.t('contact')}
       </Text>
       <Copyeable
         textProps={{
@@ -194,7 +194,7 @@ const Hero = ({
         {name}
       </Copyeable>
       {hasStudiedPreviously && mostRecentStudy && (
-        <View style={{ flexDirection: "row", gap: 5, alignItems: "center" }}>
+        <View style={{ flexDirection: 'row', gap: 5, alignItems: 'center' }}>
           <Text
             style={{
               fontSize: 16,
@@ -203,9 +203,9 @@ const Hero = ({
             }}
           >
             {isActiveBibleStudy
-              ? i18n.t("isStudying")
-              : `${i18n.t("lastStudied")} ${moment(mostRecentStudy.date).format(
-                  "L"
+              ? i18n.t('isStudying')
+              : `${i18n.t('lastStudied')} ${moment(mostRecentStudy.date).format(
+                  'L'
                 )}`}
           </Text>
           <IconButton
@@ -217,53 +217,53 @@ const Hero = ({
       {!isActiveBibleStudy && hasStudiedPreviously && (
         <Text
           style={{
-            fontSize: theme.fontSize("sm"),
+            fontSize: theme.fontSize('sm'),
             color: theme.colors.textInverse,
             maxWidth: 250,
           }}
         >
-          {i18n.t("inactiveBibleStudiesDoNoCountTowardsMonthlyTotals")}
+          {i18n.t('inactiveBibleStudiesDoNoCountTowardsMonthlyTotals')}
         </Text>
       )}
     </View>
-  );
-};
+  )
+}
 
 const AddressRow = ({ contact }: { contact: Contact }) => {
-  const theme = useTheme();
-  const { address } = contact;
+  const theme = useTheme()
+  const { address } = contact
 
   const navigateTo = useCallback((a: Address) => {
     const scheme = Platform.select({
-      ios: "maps://0,0?q=",
-      android: "geo:0,0?q=",
-    });
+      ios: 'maps://0,0?q=',
+      android: 'geo:0,0?q=',
+    })
     const address = `${
       a.line1
-    }${` ${a.line2}`}${` ${a.city}`}${`, ${a.state}`}${` ${a.zip}`}`;
+    }${` ${a.line2}`}${` ${a.city}`}${`, ${a.state}`}${` ${a.zip}`}`
     const url = Platform.select({
       ios: `${scheme}${address}`,
       android: `${scheme}${address}`,
-    });
+    })
     if (!url) {
-      return;
+      return
     }
-    Linking.openURL(url);
-  }, []);
+    Linking.openURL(url)
+  }, [])
 
   if (!address) {
-    return null;
+    return null
   }
 
   const addressAsSingleString = Object.keys(address).reduce(
     (prev, line, index) =>
       !address[line as keyof Address]?.length
         ? prev
-        : (prev += `${index !== 0 ? " " : ""}${
+        : (prev += `${index !== 0 ? ' ' : ''}${
             address[line as keyof Address]
           }`),
-    ""
-  );
+    ''
+  )
 
   return (
     <View style={{ gap: 10 }}>
@@ -274,15 +274,15 @@ const AddressRow = ({ contact }: { contact: Contact }) => {
           color: theme.colors.textAlt,
         }}
       >
-        {i18n.t("address")}
+        {i18n.t('address')}
       </Text>
 
       <Button onPress={() => navigateTo(address)}>
         <View
           style={{
-            flexDirection: "row",
-            justifyContent: "space-between",
-            alignItems: "center",
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+            alignItems: 'center',
           }}
         >
           <Copyeable
@@ -291,43 +291,43 @@ const AddressRow = ({ contact }: { contact: Contact }) => {
           >
             <View
               style={{
-                flexDirection: "column",
-                justifyContent: "center",
+                flexDirection: 'column',
+                justifyContent: 'center',
                 gap: 5,
               }}
             >
               {Object.keys(address).map((key) => {
                 if (address[key as keyof Address]) {
-                  return <Text key={key}>{address[key as keyof Address]}</Text>;
+                  return <Text key={key}>{address[key as keyof Address]}</Text>
                 }
               })}
             </View>
           </Copyeable>
           <IconButton
-            size="lg"
+            size='lg'
             iconStyle={{ color: theme.colors.accent }}
             icon={faLocationDot}
           />
         </View>
       </Button>
     </View>
-  );
-};
+  )
+}
 
 const EmailRow = ({ contact }: { contact: Contact }) => {
-  const theme = useTheme();
-  const { email } = contact;
+  const theme = useTheme()
+  const { email } = contact
   if (!email) {
-    return null;
+    return null
   }
 
   const openMail = async () => {
     try {
-      await Linking.openURL(`mailTo:${email}`);
+      await Linking.openURL(`mailTo:${email}`)
     } catch (error) {
-      Alert.alert(i18n.t("error"), i18n.t("failedToOpenMailApplication"));
+      Alert.alert(i18n.t('error'), i18n.t('failedToOpenMailApplication'))
     }
-  };
+  }
 
   return (
     <View style={{ gap: 10 }}>
@@ -338,34 +338,34 @@ const EmailRow = ({ contact }: { contact: Contact }) => {
           color: theme.colors.textAlt,
         }}
       >
-        {i18n.t("email")}
+        {i18n.t('email')}
       </Text>
       <Button onPress={openMail}>
         <View
           style={{
-            flexDirection: "row",
-            justifyContent: "space-between",
-            alignItems: "center",
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+            alignItems: 'center',
           }}
         >
           <View
             style={{
-              flexDirection: "column",
-              justifyContent: "space-between",
+              flexDirection: 'column',
+              justifyContent: 'space-between',
             }}
           >
             <Copyeable>{email}</Copyeable>
           </View>
           <IconButton
-            size="lg"
+            size='lg'
             iconStyle={{ color: theme.colors.accent }}
             icon={faEnvelope}
           />
         </View>
       </Button>
     </View>
-  );
-};
+  )
+}
 
 const DeleteContactButton = ({
   contact,
@@ -373,35 +373,35 @@ const DeleteContactButton = ({
   navigation,
   contactId,
 }: {
-  deleteContact: (id: string) => void;
+  deleteContact: (id: string) => void
   navigation: NativeStackNavigationProp<
     RootStackParamList,
-    "Contact Details",
+    'Contact Details',
     undefined
-  >;
-  contactId: string;
-  contact: Contact;
+  >
+  contactId: string
+  contact: Contact
 }) => {
-  const theme = useTheme();
+  const theme = useTheme()
 
   return (
     <View style={{ gap: 5 }}>
       <Button
         onPress={() =>
           Alert.alert(
-            i18n.t("archiveContact_question"),
-            i18n.t("archiveContact_description"),
+            i18n.t('archiveContact_question'),
+            i18n.t('archiveContact_description'),
             [
               {
-                text: i18n.t("cancel"),
-                style: "cancel",
+                text: i18n.t('cancel'),
+                style: 'cancel',
               },
               {
-                text: i18n.t("delete"),
-                style: "destructive",
+                text: i18n.t('delete'),
+                style: 'destructive',
                 onPress: () => {
-                  deleteContact(contactId);
-                  navigation.popToTop();
+                  deleteContact(contactId)
+                  navigation.popToTop()
                 },
               },
             ]
@@ -411,36 +411,36 @@ const DeleteContactButton = ({
         <Text
           style={{
             fontFamily: theme.fonts.semiBold,
-            textAlign: "center",
+            textAlign: 'center',
             fontSize: 10,
-            textDecorationLine: "underline",
+            textDecorationLine: 'underline',
           }}
         >
-          {i18n.t("archiveContact")}
+          {i18n.t('archiveContact')}
         </Text>
       </Button>
       <Text
         style={{
           fontSize: 10,
           color: theme.colors.textAlt,
-          textAlign: "center",
+          textAlign: 'center',
         }}
       >
-        {i18n.t("created")} {moment(contact.createdAt).format("LL")}
+        {i18n.t('created')} {moment(contact.createdAt).format('LL')}
       </Text>
     </View>
-  );
-};
+  )
+}
 
 interface AddSheetProps {
-  sheetOpen: boolean;
-  setSheetOpen: React.Dispatch<React.SetStateAction<boolean>>;
+  sheetOpen: boolean
+  setSheetOpen: React.Dispatch<React.SetStateAction<boolean>>
   navigation: NativeStackNavigationProp<
     RootStackParamList,
-    "Contact Details",
+    'Contact Details',
     undefined
-  >;
-  contact: Contact;
+  >
+  contact: Contact
 }
 
 const AddSheet = ({
@@ -449,7 +449,7 @@ const AddSheet = ({
   navigation,
   contact,
 }: AddSheetProps) => {
-  const theme = useTheme();
+  const theme = useTheme()
 
   return (
     <Sheet
@@ -465,26 +465,26 @@ const AddSheet = ({
           <View style={{ gap: 10 }}>
             <Text
               style={{
-                fontSize: theme.fontSize("xl"),
+                fontSize: theme.fontSize('xl'),
                 fontFamily: theme.fonts.bold,
               }}
             >
-              {i18n.t("addToHistory")}
+              {i18n.t('addToHistory')}
             </Text>
             <Text
               style={{
-                fontSize: theme.fontSize("sm"),
+                fontSize: theme.fontSize('sm'),
                 marginBottom: 15,
               }}
             >
-              {i18n.t("add_description")}
+              {i18n.t('add_description')}
             </Text>
           </View>
           <Button
             style={{ gap: 10 }}
-            variant="outline"
+            variant='outline'
             onPress={async () =>
-              navigation.replace("Conversation Form", {
+              navigation.replace('Conversation Form', {
                 contactId: contact?.id,
                 notAtHome: true,
               })
@@ -497,17 +497,17 @@ const AddSheet = ({
             <Text
               style={{
                 color: theme.colors.text,
-                fontSize: theme.fontSize("md"),
+                fontSize: theme.fontSize('md'),
               }}
             >
-              {i18n.t("notAtHome")}
+              {i18n.t('notAtHome')}
             </Text>
           </Button>
           <Button
             style={{ gap: 10, backgroundColor: theme.colors.accent }}
-            variant="solid"
+            variant='solid'
             onPress={async () =>
-              navigation.replace("Conversation Form", {
+              navigation.replace('Conversation Form', {
                 contactId: contact?.id,
               })
             }
@@ -521,39 +521,39 @@ const AddSheet = ({
             <Text
               style={{
                 color: theme.colors.textInverse,
-                fontSize: theme.fontSize("md"),
+                fontSize: theme.fontSize('md'),
               }}
             >
-              {i18n.t("conversation")}
+              {i18n.t('conversation')}
             </Text>
           </Button>
         </View>
       </Sheet.Frame>
     </Sheet>
-  );
-};
+  )
+}
 
 const ContactDetails = ({ route, navigation }: Props) => {
-  const colorScheme = useColorScheme();
-  const theme = useTheme();
-  const { params } = route;
-  const insets = useSafeAreaInsets();
-  const { contacts, deleteContact } = useContacts();
+  const colorScheme = useColorScheme()
+  const theme = useTheme()
+  const { params } = route
+  const insets = useSafeAreaInsets()
+  const { contacts, deleteContact } = useContacts()
   const contact = useMemo(
     () => contacts.find((c) => c.id === params.id),
     [contacts, params.id]
-  );
-  const { conversations } = useConversations();
+  )
+  const { conversations } = useConversations()
 
   const highlightedConversation = useMemo(
     () => conversations.find((c) => c.id === params.highlightedConversationId),
     [conversations, params.highlightedConversationId]
-  );
+  )
 
   const contactConversations = useMemo(
     () => conversations.filter(({ contact: { id } }) => id === contact?.id),
     [contact?.id, conversations]
-  );
+  )
 
   const contactConversationsSorted = useMemo(
     () =>
@@ -561,9 +561,9 @@ const ContactDetails = ({ route, navigation }: Props) => {
         moment(a.date).unix() < moment(b.date).unix() ? 1 : -1
       ),
     [contactConversations]
-  );
+  )
 
-  const [sheetOpen, setSheetOpen] = useState(false);
+  const [sheetOpen, setSheetOpen] = useState(false)
 
   useEffect(() => {
     navigation.setOptions({
@@ -571,26 +571,26 @@ const ContactDetails = ({ route, navigation }: Props) => {
         <Header
           inverseTextAndIconColor
           noBottomBorder
-          title=""
-          buttonType="exit"
+          title=''
+          buttonType='exit'
           rightElement={
             <View
               style={{
-                flexDirection: "row",
-                alignItems: "center",
+                flexDirection: 'row',
+                alignItems: 'center',
                 gap: 20,
-                position: "absolute",
+                position: 'absolute',
                 right: 0,
               }}
             >
               <Button
                 onPress={async () => {
-                  navigation.replace("Contact Form", {
+                  navigation.replace('Contact Form', {
                     id: params.id,
                     edit: true,
-                  });
+                  })
                 }}
-                style={{ flexDirection: "row", gap: 5, alignItems: "center" }}
+                style={{ flexDirection: 'row', gap: 5, alignItems: 'center' }}
               >
                 <IconButton
                   icon={faPencil}
@@ -599,7 +599,7 @@ const ContactDetails = ({ route, navigation }: Props) => {
               </Button>
               <IconButton
                 onPress={() => {
-                  setSheetOpen(true);
+                  setSheetOpen(true)
                 }}
                 iconStyle={{ color: theme.colors.textInverse }}
                 icon={faPlus}
@@ -609,14 +609,14 @@ const ContactDetails = ({ route, navigation }: Props) => {
           backgroundColor={theme.colors.accent3}
         />
       ),
-    });
+    })
   }, [
     contact?.id,
     navigation,
     params.id,
     theme.colors.accent3,
     theme.colors.textInverse,
-  ]);
+  ])
 
   const isActiveBibleStudy = useMemo(
     () =>
@@ -628,7 +628,7 @@ const ContactDetails = ({ route, navigation }: Props) => {
           })
         : false,
     [contact, conversations]
-  );
+  )
 
   const hasStudiedPreviously = useMemo(
     () =>
@@ -639,37 +639,36 @@ const ContactDetails = ({ route, navigation }: Props) => {
           })
         : false,
     [contact, conversations]
-  );
+  )
 
   const mostRecentStudy = useMemo(
     () => (contact ? contactMostRecentStudy({ conversations, contact }) : null),
     [contact, conversations]
-  );
+  )
 
   if (!contact) {
     return (
       <Text style={{ fontSize: 18, marginTop: 15 }}>
-        {i18n.t("contactNotFoundForProvidedId")} {params.id}
+        {i18n.t('contactNotFoundForProvidedId')} {params.id}
       </Text>
-    );
+    )
   }
 
-  const { name, address, phone, email } = contact;
+  const { name, address, phone, email } = contact
 
-  const hasAddress =
-    address && Object.values(address).some((v) => v.length > 0);
+  const hasAddress = address && Object.values(address).some((v) => v.length > 0)
 
   return (
     <View>
       <ScrollView
         style={{
-          position: "relative",
+          position: 'relative',
           paddingTop: 100,
           marginTop: -100,
           backgroundColor: theme.colors.background,
         }}
       >
-        <StatusBar style={colorScheme === "light" ? "light" : "dark"} />
+        <StatusBar style={colorScheme === 'light' ? 'light' : 'dark'} />
 
         <Wrapper
           noInsets
@@ -687,15 +686,15 @@ const ContactDetails = ({ route, navigation }: Props) => {
           />
           <View style={{ gap: 30 }}>
             <CardWithTitle
-              titlePosition="inside"
-              title="Details"
+              titlePosition='inside'
+              title='Details'
               style={{ margin: 20 }}
             >
               <View style={{ gap: 15 }}>
                 {hasAddress && <AddressRow contact={contact} />}
                 {phone && <PhoneRow contact={contact} />}
                 {!hasAddress && !phone && !email && (
-                  <Text>{i18n.t("noPersonalInformationSaved")}</Text>
+                  <Text>{i18n.t('noPersonalInformationSaved')}</Text>
                 )}
                 {email && <EmailRow contact={contact} />}
               </View>
@@ -709,7 +708,7 @@ const ContactDetails = ({ route, navigation }: Props) => {
                   color: theme.colors.text,
                 }}
               >
-                {i18n.t("conversationHistory")}
+                {i18n.t('conversationHistory')}
               </Text>
               <View style={{ minHeight: 2 }}>
                 <FlashList
@@ -732,10 +731,10 @@ const ContactDetails = ({ route, navigation }: Props) => {
                         <Text
                           style={{
                             margin: 20,
-                            textDecorationLine: "underline",
+                            textDecorationLine: 'underline',
                           }}
                         >
-                          {i18n.t("tapToAddAConversation")}
+                          {i18n.t('tapToAddAConversation')}
                         </Text>
                       </Button>
                     </View>
@@ -753,19 +752,19 @@ const ContactDetails = ({ route, navigation }: Props) => {
           </View>
           <View
             style={{
-              position: "absolute",
+              position: 'absolute',
               height: 360,
-              width: "100%",
+              width: '100%',
               zIndex: -100,
               backgroundColor: theme.colors.accent3,
             }}
           />
-          {Platform.OS === "ios" && (
+          {Platform.OS === 'ios' && (
             <View
               style={{
                 backgroundColor: theme.colors.accent3,
                 height: 1000,
-                position: "absolute",
+                position: 'absolute',
                 top: -1000,
                 left: 0,
                 right: 0,
@@ -781,7 +780,7 @@ const ContactDetails = ({ route, navigation }: Props) => {
         sheetOpen={sheetOpen}
       />
     </View>
-  );
-};
+  )
+}
 
-export default ContactDetails;
+export default ContactDetails

@@ -1,7 +1,7 @@
 export type ServiceReport = {
-  id: string;
-  hours: number;
-  minutes: number;
-  date: Date;
-  ldc?: boolean;
-};
+  id: string
+  hours: number
+  minutes: number
+  date: Date
+  ldc?: boolean
+}

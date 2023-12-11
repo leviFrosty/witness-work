@@ -1,23 +1,23 @@
-import { View, DimensionValue, ColorValue } from "react-native";
-import { usePreferences } from "../stores/preferences";
-import { useServiceReport } from "../stores/serviceReport";
-import useTheme from "../contexts/theme";
+import { View, DimensionValue, ColorValue } from 'react-native'
+import { usePreferences } from '../stores/preferences'
+import { useServiceReport } from '../stores/serviceReport'
+import useTheme from '../contexts/theme'
 import {
   calculateProgress,
   totalHoursForCurrentMonth,
-} from "../lib/serviceReport";
-import { useMemo } from "react";
-import IconButton from "./IconButton";
-import { faCaretUp } from "@fortawesome/free-solid-svg-icons";
+} from '../lib/serviceReport'
+import { useMemo } from 'react'
+import IconButton from './IconButton'
+import { faCaretUp } from '@fortawesome/free-solid-svg-icons'
 
 const ProgressBarSegment = ({
   backgroundColor,
   width,
 }: {
-  backgroundColor: ColorValue | undefined;
-  width: DimensionValue;
+  backgroundColor: ColorValue | undefined
+  width: DimensionValue
 }) => {
-  const theme = useTheme();
+  const theme = useTheme()
 
   return (
     <View
@@ -28,72 +28,72 @@ const ProgressBarSegment = ({
         borderRadius: theme.numbers.borderRadiusLg,
       }}
     />
-  );
-};
+  )
+}
 
 const Bad = ({ active }: { active: boolean }) => {
-  const theme = useTheme();
+  const theme = useTheme()
 
   return (
     <ProgressBarSegment
       backgroundColor={active ? theme.colors.warn : theme.colors.warnAlt}
-      width={"60%"}
+      width={'60%'}
     />
-  );
-};
+  )
+}
 
 const Good = ({ active }: { active: boolean }) => {
-  const theme = useTheme();
+  const theme = useTheme()
 
   return (
     <ProgressBarSegment
       backgroundColor={active ? theme.colors.accent3 : theme.colors.accent3Alt}
-      width={"30%"}
+      width={'30%'}
     />
-  );
-};
+  )
+}
 
 const Success = ({ active }: { active: boolean }) => {
-  const theme = useTheme();
+  const theme = useTheme()
 
   return (
     <ProgressBarSegment
       backgroundColor={active ? theme.colors.accent : theme.colors.accentAlt}
-      width={"10%"}
+      width={'10%'}
     />
-  );
-};
+  )
+}
 
 const ProgressBar = () => {
-  const theme = useTheme();
-  const { serviceReports } = useServiceReport();
-  const hours = totalHoursForCurrentMonth(serviceReports);
-  const { publisher, publisherHours } = usePreferences();
-  const goalHours = publisherHours[publisher];
+  const theme = useTheme()
+  const { serviceReports } = useServiceReport()
+  const hours = totalHoursForCurrentMonth(serviceReports)
+  const { publisher, publisherHours } = usePreferences()
+  const goalHours = publisherHours[publisher]
   const progress = useMemo(
     () => calculateProgress({ hours, goalHours }),
     [hours, goalHours]
-  );
+  )
 
-  const arrowProgress: DimensionValue = `${progress * 100 - 2}%`; // Offsets slightly for arrow width;
+  const arrowProgress: DimensionValue = `${progress * 100 - 2}%` // Offsets slightly for arrow width;
 
-  const badProgress = progress < 0.6;
-  const goodProgress = progress >= 0.6 && progress < 0.95;
-  const successProgress = progress >= 0.95;
+  const badProgress = progress < 0.6
+  const goodProgress = progress >= 0.6 && progress < 0.95
+  const successProgress = progress >= 0.95
 
   const arrowColor = () =>
     badProgress
       ? theme.colors.warn
       : goodProgress
-      ? theme.colors.accent3
-      : theme.colors.accent;
+        ? theme.colors.accent3
+        : theme.colors.accent
 
   return (
     <View
       style={{
-        flexDirection: "row",
+        flexDirection: 'row',
         gap: 2,
-        position: "relative",
+        position: 'relative',
         maxWidth: 175,
         marginBottom: 15,
       }}
@@ -101,7 +101,7 @@ const ProgressBar = () => {
       <Bad active={badProgress} />
       <Good active={goodProgress} />
       <Success active={successProgress} />
-      <View style={{ position: "absolute", left: arrowProgress, top: 10 }}>
+      <View style={{ position: 'absolute', left: arrowProgress, top: 10 }}>
         <IconButton
           iconStyle={{ color: arrowColor() }}
           size={30}
@@ -109,7 +109,7 @@ const ProgressBar = () => {
         />
       </View>
     </View>
-  );
-};
+  )
+}
 
-export default ProgressBar;
+export default ProgressBar

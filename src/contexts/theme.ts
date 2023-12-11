@@ -1,11 +1,11 @@
-import { useContext, createContext } from "react";
-import getThemeFromColorScheme from "../constants/theme";
+import { useContext, createContext } from 'react'
+import getThemeFromColorScheme from '../constants/theme'
 
-export const ThemeContext = createContext(getThemeFromColorScheme("light"));
+export const ThemeContext = createContext(getThemeFromColorScheme('light'))
 
 const useTheme = () => {
-  const context = useContext(ThemeContext);
-  return context;
-};
+  const context = useContext(ThemeContext)
+  return context
+}
 
-export default useTheme;
+export default useTheme

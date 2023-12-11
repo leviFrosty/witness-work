@@ -1,21 +1,21 @@
-import React, { forwardRef, Ref } from "react";
-import { View, TextInput as RNTextInput } from "react-native";
-import useTheme from "../../contexts/theme";
-import Text from "../MyText";
-import InputRowContainer from "./InputRowContainer";
-import MyTextInput, { TextInputProps } from "../TextInput";
+import React, { forwardRef, Ref } from 'react'
+import { View, TextInput as RNTextInput } from 'react-native'
+import useTheme from '../../contexts/theme'
+import Text from '../MyText'
+import InputRowContainer from './InputRowContainer'
+import MyTextInput, { TextInputProps } from '../TextInput'
 
-export type Errors = Record<string, string>;
+export type Errors = Record<string, string>
 
 interface TextInputRowProps {
-  errors?: Errors;
-  setErrors?: React.Dispatch<React.SetStateAction<Errors>>;
-  id?: string;
-  label: string;
-  lastInSection?: boolean;
-  noHorizontalPadding?: boolean;
-  textInputProps?: TextInputProps;
-  required?: boolean;
+  errors?: Errors
+  setErrors?: React.Dispatch<React.SetStateAction<Errors>>
+  id?: string
+  label: string
+  lastInSection?: boolean
+  noHorizontalPadding?: boolean
+  textInputProps?: TextInputProps
+  required?: boolean
 }
 
 const TextInputRow: React.ForwardRefExoticComponent<
@@ -34,8 +34,8 @@ const TextInputRow: React.ForwardRefExoticComponent<
     },
     ref: Ref<RNTextInput>
   ) => {
-    const theme = useTheme();
-    const error = id && errors ? errors[id] : undefined;
+    const theme = useTheme()
+    const error = id && errors ? errors[id] : undefined
 
     return (
       <InputRowContainer
@@ -55,11 +55,11 @@ const TextInputRow: React.ForwardRefExoticComponent<
               color: theme.colors.text,
             }}
             placeholderTextColor={theme.colors.textAlt}
-            onChangeText={() => setErrors?.({ ...errors, [id || ""]: "" })}
+            onChangeText={() => setErrors?.({ ...errors, [id || '']: '' })}
             hitSlop={{ top: 20, bottom: 20 }}
-            textAlign="right"
-            clearButtonMode="while-editing"
-            returnKeyType="next"
+            textAlign='right'
+            clearButtonMode='while-editing'
+            returnKeyType='next'
             {...textInputProps}
           />
           {error && (
@@ -67,7 +67,7 @@ const TextInputRow: React.ForwardRefExoticComponent<
               style={{
                 color: theme.colors.error,
                 fontFamily: theme.fonts.semiBold,
-                textAlign: "right",
+                textAlign: 'right',
                 fontSize: 12,
               }}
             >
@@ -76,8 +76,8 @@ const TextInputRow: React.ForwardRefExoticComponent<
           )}
         </View>
       </InputRowContainer>
-    );
+    )
   }
-);
+)
 
-export default TextInputRow;
+export default TextInputRow

@@ -1,45 +1,45 @@
-import { Pressable, View } from "react-native";
-import { useContext } from "react";
-import moment from "moment";
-import useTheme, { ThemeContext } from "../contexts/theme";
-import Card from "./Card";
-import Text from "./MyText";
-import { FlashList } from "@shopify/flash-list";
-import { hasServiceReportsForMonth } from "../lib/serviceReport";
-import useServiceReport from "../stores/serviceReport";
-import { usePreferences } from "../stores/preferences";
-import { useNavigation } from "@react-navigation/native";
-import { RootStackNavigation } from "../stacks/RootStack";
-import i18n from "../lib/locales";
-import IconButton from "./IconButton";
-import { faCheck, faMinus, faTimes } from "@fortawesome/free-solid-svg-icons";
+import { Pressable, View } from 'react-native'
+import { useContext } from 'react'
+import moment from 'moment'
+import useTheme, { ThemeContext } from '../contexts/theme'
+import Card from './Card'
+import Text from './MyText'
+import { FlashList } from '@shopify/flash-list'
+import { hasServiceReportsForMonth } from '../lib/serviceReport'
+import useServiceReport from '../stores/serviceReport'
+import { usePreferences } from '../stores/preferences'
+import { useNavigation } from '@react-navigation/native'
+import { RootStackNavigation } from '../stacks/RootStack'
+import i18n from '../lib/locales'
+import IconButton from './IconButton'
+import { faCheck, faMinus, faTimes } from '@fortawesome/free-solid-svg-icons'
 
 const Month = ({ month }: { month: number }) => {
-  const theme = useTheme();
-  const navigation = useNavigation<RootStackNavigation>();
-  const { installedOn, publisher } = usePreferences();
-  const currentMonth = moment().month();
+  const theme = useTheme()
+  const navigation = useNavigation<RootStackNavigation>()
+  const { installedOn, publisher } = usePreferences()
+  const currentMonth = moment().month()
 
-  const isCurrentMonth = currentMonth === month;
-  const monthHasPassed = currentMonth > month;
-  const monthInFuture = currentMonth < month;
-  const { serviceReports } = useServiceReport();
+  const isCurrentMonth = currentMonth === month
+  const monthHasPassed = currentMonth > month
+  const monthInFuture = currentMonth < month
+  const { serviceReports } = useServiceReport()
   const wentOutThisMonth = hasServiceReportsForMonth(
     serviceReports,
     month,
     moment().year()
-  );
-  const monthWasBeforeInstalled = month < moment(installedOn).month();
+  )
+  const monthWasBeforeInstalled = month < moment(installedOn).month()
 
-  const didNotGoOutInService = monthHasPassed && !wentOutThisMonth;
-  const hasNotGoneOutTheCurrentMonth = isCurrentMonth && !wentOutThisMonth;
+  const didNotGoOutInService = monthHasPassed && !wentOutThisMonth
+  const hasNotGoneOutTheCurrentMonth = isCurrentMonth && !wentOutThisMonth
 
   return (
     <Pressable
       onPress={
-        publisher === "publisher"
+        publisher === 'publisher'
           ? undefined
-          : () => navigation.navigate("Time Reports")
+          : () => navigation.navigate('Time Reports')
       }
       style={{
         gap: 5,
@@ -53,8 +53,8 @@ const Month = ({ month }: { month: number }) => {
           backgroundColor: theme.colors.backgroundLighter,
           padding: 8,
           borderRadius: theme.numbers.borderRadiusSm,
-          justifyContent: "center",
-          alignItems: "center",
+          justifyContent: 'center',
+          alignItems: 'center',
         }}
       >
         <IconButton
@@ -62,36 +62,36 @@ const Month = ({ month }: { month: number }) => {
             color: wentOutThisMonth
               ? theme.colors.accent
               : hasNotGoneOutTheCurrentMonth ||
-                monthInFuture ||
-                monthWasBeforeInstalled
-              ? theme.colors.textAlt
-              : theme.colors.error,
+                  monthInFuture ||
+                  monthWasBeforeInstalled
+                ? theme.colors.textAlt
+                : theme.colors.error,
           }}
           icon={
             !didNotGoOutInService
               ? faCheck
               : monthWasBeforeInstalled
-              ? faMinus
-              : faTimes
+                ? faMinus
+                : faTimes
           }
         />
       </View>
       <Text
         style={{
-          textAlign: "center",
+          textAlign: 'center',
           color: isCurrentMonth
             ? theme.colors.textInverse
             : theme.colors.textAlt,
         }}
       >
-        {moment().month(month).format("MMM")}
+        {moment().month(month).format('MMM')}
       </Text>
     </Pressable>
-  );
-};
+  )
+}
 
 const MonthlyRoutine = () => {
-  const theme = useContext(ThemeContext);
+  const theme = useContext(ThemeContext)
 
   return (
     <View style={{ gap: 10 }}>
@@ -102,7 +102,7 @@ const MonthlyRoutine = () => {
           marginLeft: 5,
         }}
       >
-        {i18n.t("monthlyRoutine")}
+        {i18n.t('monthlyRoutine')}
       </Text>
       <Card>
         <FlashList
@@ -112,13 +112,13 @@ const MonthlyRoutine = () => {
           estimatedItemSize={45}
           data={[...Array(12).keys()]}
           renderItem={({ item: month }) => {
-            return <Month month={month} />;
+            return <Month month={month} />
           }}
           showsHorizontalScrollIndicator={false}
         />
       </Card>
     </View>
-  );
-};
+  )
+}
 
-export default MonthlyRoutine;
+export default MonthlyRoutine

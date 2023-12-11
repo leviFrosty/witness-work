@@ -61,6 +61,7 @@
     "lodash": "^4.17.21",
     "lottie-react-native": "5.1.6",
     "moment": "^2.29.4",
+    "prettier": "^3.1.1",
     "prop-types": "^15.8.1",
     "react": "18.2.0",
     "react-native": "0.72.6",

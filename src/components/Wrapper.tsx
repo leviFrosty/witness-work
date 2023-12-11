@@ -1,11 +1,11 @@
-import { PropsWithChildren } from "react";
-import { View, ViewStyle, StyleProp } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
-import useTheme from "../contexts/theme";
+import { PropsWithChildren } from 'react'
+import { View, ViewStyle, StyleProp } from 'react-native'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import useTheme from '../contexts/theme'
 
 interface Props {
-  style?: StyleProp<ViewStyle>;
-  noInsets?: boolean;
+  style?: StyleProp<ViewStyle>
+  noInsets?: boolean
 }
 
 const Wrapper: React.FC<PropsWithChildren<Props>> = ({
@@ -13,8 +13,8 @@ const Wrapper: React.FC<PropsWithChildren<Props>> = ({
   style,
   children,
 }) => {
-  const theme = useTheme();
-  const insets = useSafeAreaInsets();
+  const theme = useTheme()
+  const insets = useSafeAreaInsets()
 
   return (
     <View
@@ -31,6 +31,6 @@ const Wrapper: React.FC<PropsWithChildren<Props>> = ({
     >
       {children}
     </View>
-  );
-};
-export default Wrapper;
+  )
+}
+export default Wrapper

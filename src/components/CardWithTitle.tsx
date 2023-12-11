@@ -1,23 +1,17 @@
-import {
-  ColorValue,
-  StyleProp,
-  View,
-  ViewStyle,
-  TextStyle,
-} from "react-native";
-import Text from "./MyText";
-import Card from "./Card";
-import { PropsWithChildren, ReactNode } from "react";
-import useTheme from "../contexts/theme";
-import Divider from "./Divider";
+import { ColorValue, StyleProp, View, ViewStyle, TextStyle } from 'react-native'
+import Text from './MyText'
+import Card from './Card'
+import { PropsWithChildren, ReactNode } from 'react'
+import useTheme from '../contexts/theme'
+import Divider from './Divider'
 
 interface Props {
-  title: string | ReactNode;
-  titlePosition?: "inside";
-  titleColor?: ColorValue;
-  noPadding?: boolean;
-  style?: StyleProp<ViewStyle>;
-  titleStyle?: TextStyle;
+  title: string | ReactNode
+  titlePosition?: 'inside'
+  titleColor?: ColorValue
+  noPadding?: boolean
+  style?: StyleProp<ViewStyle>
+  titleStyle?: TextStyle
 }
 
 const CardWithTitle: React.FC<PropsWithChildren<Props>> = ({
@@ -29,10 +23,10 @@ const CardWithTitle: React.FC<PropsWithChildren<Props>> = ({
   style,
   titleStyle,
 }) => {
-  const theme = useTheme();
+  const theme = useTheme()
   return (
     <View style={[[{ gap: 10 }], [style]]}>
-      {!titlePosition && typeof title === "string" && (
+      {!titlePosition && typeof title === 'string' && (
         <Text
           style={[
             [
@@ -54,13 +48,13 @@ const CardWithTitle: React.FC<PropsWithChildren<Props>> = ({
           noPadding ? { paddingVertical: 0, paddingHorizontal: 0 } : undefined
         }
       >
-        {titlePosition === "inside" && typeof title === "string" ? (
+        {titlePosition === 'inside' && typeof title === 'string' ? (
           <View style={{ gap: 10 }}>
             <Text
               style={[
                 [
                   {
-                    fontSize: theme.fontSize("md"),
+                    fontSize: theme.fontSize('md'),
                     fontFamily: theme.fonts.semiBold,
                     color: titleColor || theme.colors.text,
                   },
@@ -78,7 +72,7 @@ const CardWithTitle: React.FC<PropsWithChildren<Props>> = ({
         {children}
       </Card>
     </View>
-  );
-};
+  )
+}
 
-export default CardWithTitle;
+export default CardWithTitle

@@ -1,27 +1,27 @@
-import { Platform, View, Alert } from "react-native";
-import Text from "../components/MyText";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
-import useTheme from "../contexts/theme";
-import Section from "../components/inputs/Section";
-import { usePreferences } from "../stores/preferences";
-import { useNavigation } from "@react-navigation/native";
-import { RootStackNavigation } from "../stacks/RootStack";
-import i18n from "../lib/locales";
-import InputRowButton from "../components/inputs/InputRowButton";
-import Constants from "expo-constants";
-import * as Linking from "expo-linking";
-import * as Sentry from "sentry-expo";
-import * as Device from "expo-device";
-import * as Notifications from "expo-notifications";
-import * as Updates from "expo-updates";
-import { useEffect, useState } from "react";
-import links from "../constants/links";
-import InputRowContainer from "../components/inputs/InputRowContainer";
-import PublisherTypeSelector from "../components/PublisherTypeSelector";
-import { faBell } from "@fortawesome/free-regular-svg-icons/faBell";
-import { faBellSlash } from "@fortawesome/free-solid-svg-icons/faBellSlash";
-import { faHeart, faHourglassHalf } from "@fortawesome/free-regular-svg-icons/";
-import IconButton from "../components/IconButton";
+import { Platform, View, Alert } from 'react-native'
+import Text from '../components/MyText'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import useTheme from '../contexts/theme'
+import Section from '../components/inputs/Section'
+import { usePreferences } from '../stores/preferences'
+import { useNavigation } from '@react-navigation/native'
+import { RootStackNavigation } from '../stacks/RootStack'
+import i18n from '../lib/locales'
+import InputRowButton from '../components/inputs/InputRowButton'
+import Constants from 'expo-constants'
+import * as Linking from 'expo-linking'
+import * as Sentry from 'sentry-expo'
+import * as Device from 'expo-device'
+import * as Notifications from 'expo-notifications'
+import * as Updates from 'expo-updates'
+import { useEffect, useState } from 'react'
+import links from '../constants/links'
+import InputRowContainer from '../components/inputs/InputRowContainer'
+import PublisherTypeSelector from '../components/PublisherTypeSelector'
+import { faBell } from '@fortawesome/free-regular-svg-icons/faBell'
+import { faBellSlash } from '@fortawesome/free-solid-svg-icons/faBellSlash'
+import { faHeart, faHourglassHalf } from '@fortawesome/free-regular-svg-icons/'
+import IconButton from '../components/IconButton'
 import {
   faBug,
   faChevronRight,
@@ -31,73 +31,73 @@ import {
   faGlobe,
   faTools,
   faUndo,
-} from "@fortawesome/free-solid-svg-icons";
+} from '@fortawesome/free-solid-svg-icons'
 import {
   DrawerContentComponentProps,
   DrawerContentScrollView,
-} from "@react-navigation/drawer";
+} from '@react-navigation/drawer'
 
 const Settings = (props: DrawerContentComponentProps) => {
-  const theme = useTheme();
-  const { set: setPreferences } = usePreferences();
-  const [notificationsEnabled, setNotificationsEnabled] = useState(false);
-  const insets = useSafeAreaInsets();
-  const navigation = useNavigation<RootStackNavigation>();
+  const theme = useTheme()
+  const { set: setPreferences } = usePreferences()
+  const [notificationsEnabled, setNotificationsEnabled] = useState(false)
+  const insets = useSafeAreaInsets()
+  const navigation = useNavigation<RootStackNavigation>()
 
   const resetToOnboarding = () => {
-    setPreferences({ onboardingComplete: false });
-  };
+    setPreferences({ onboardingComplete: false })
+  }
 
   useEffect(() => {
     const updateNotificationsStatus = async () => {
-      const settings = await Notifications.getPermissionsAsync();
+      const settings = await Notifications.getPermissionsAsync()
       if (!settings.granted) {
-        return;
+        return
       }
-      setNotificationsEnabled(true);
-    };
-    updateNotificationsStatus();
-  }, []);
+      setNotificationsEnabled(true)
+    }
+    updateNotificationsStatus()
+  }, [])
 
   const askToTakeToSettings = () => {
     Alert.alert(
-      i18n.t("notificationsDisabled"),
-      i18n.t("notificationsDisabled_description"),
+      i18n.t('notificationsDisabled'),
+      i18n.t('notificationsDisabled_description'),
       [
         {
-          text: i18n.t("cancel"),
-          style: "cancel",
+          text: i18n.t('cancel'),
+          style: 'cancel',
         },
         {
-          text: i18n.t("yes"),
-          style: "default",
+          text: i18n.t('yes'),
+          style: 'default',
           onPress: () => Linking.openSettings(),
         },
       ]
-    );
-  };
+    )
+  }
 
   const fetchUpdate = async () => {
     if (__DEV__) {
-      return Alert.alert("Cannot update in dev mode.");
+      return Alert.alert('Cannot update in dev mode.')
     }
 
     try {
-      const update = await Updates.checkForUpdateAsync();
+      const update = await Updates.checkForUpdateAsync()
       if (update.isAvailable) {
-        navigation.navigate("Update");
+        navigation.navigate('Update')
       }
-      Alert.alert(i18n.t("noUpdateAvailable"));
+      Alert.alert(i18n.t('noUpdateAvailable'))
     } catch (error) {
       Alert.alert(
-        `${i18n.t("updateViaThe")} ${
-          Platform.OS === "android" ? "Play Store" : "App Store"
+        `${i18n.t('updateViaThe')} ${
+          Platform.OS === 'android' ? 'Play Store' : 'App Store'
         }`,
-        `${i18n.t("update_error")} ${error}`
-      );
-      Sentry.Native.captureException(error);
+        `${i18n.t('update_error')} ${error}`
+      )
+      Sentry.Native.captureException(error)
     }
-  };
+  }
 
   return (
     <View
@@ -106,7 +106,7 @@ const Settings = (props: DrawerContentComponentProps) => {
         paddingBottom: insets.bottom,
         backgroundColor: theme.colors.background,
         flexGrow: 1,
-        justifyContent: "space-between",
+        justifyContent: 'space-between',
       }}
     >
       <Text
@@ -118,7 +118,7 @@ const Settings = (props: DrawerContentComponentProps) => {
           fontFamily: theme.fonts.semiBold,
         }}
       >
-        {i18n.t("settings")}
+        {i18n.t('settings')}
       </Text>
       <DrawerContentScrollView
         contentContainerStyle={{
@@ -136,13 +136,13 @@ const Settings = (props: DrawerContentComponentProps) => {
                 fontFamily: theme.fonts.semiBold,
                 fontSize: 12,
                 color: theme.colors.textAlt,
-                textTransform: "uppercase",
+                textTransform: 'uppercase',
               }}
             >
-              {i18n.t("publisher")}
+              {i18n.t('publisher')}
             </Text>
             <Section>
-              <InputRowContainer label={i18n.t("status")} lastInSection>
+              <InputRowContainer label={i18n.t('status')} lastInSection>
                 <View style={{ flex: 1 }}>
                   <PublisherTypeSelector />
                 </View>
@@ -156,18 +156,18 @@ const Settings = (props: DrawerContentComponentProps) => {
                 fontFamily: theme.fonts.semiBold,
                 fontSize: 12,
                 color: theme.colors.textAlt,
-                textTransform: "uppercase",
+                textTransform: 'uppercase',
               }}
             >
-              {i18n.t("app")}
+              {i18n.t('app')}
             </Text>
             <Section>
               <InputRowButton
                 leftIcon={notificationsEnabled ? faBell : faBellSlash}
                 label={
                   notificationsEnabled
-                    ? i18n.t("pushNotificationsEnabled")
-                    : i18n.t("pushNotificationsDisabled")
+                    ? i18n.t('pushNotificationsEnabled')
+                    : i18n.t('pushNotificationsDisabled')
                 }
                 onPress={notificationsEnabled ? undefined : askToTakeToSettings}
               >
@@ -175,28 +175,28 @@ const Settings = (props: DrawerContentComponentProps) => {
               </InputRowButton>
               <InputRowButton
                 leftIcon={faHourglassHalf}
-                label={i18n.t("viewHours")}
-                onPress={() => navigation.navigate("Time Reports")}
+                label={i18n.t('viewHours')}
+                onPress={() => navigation.navigate('Time Reports')}
               >
                 <IconButton icon={faChevronRight} />
               </InputRowButton>
               <InputRowButton
                 leftIcon={faUndo}
-                label={i18n.t("recoverContacts")}
-                onPress={() => navigation.navigate("Recover Contacts")}
+                label={i18n.t('recoverContacts')}
+                onPress={() => navigation.navigate('Recover Contacts')}
               >
                 <IconButton icon={faChevronRight} />
               </InputRowButton>
               <InputRowButton
                 leftIcon={faTools}
-                label={i18n.t("restartOnboarding")}
+                label={i18n.t('restartOnboarding')}
                 onPress={resetToOnboarding}
               >
                 <IconButton icon={faChevronRight} />
               </InputRowButton>
               <InputRowButton
                 leftIcon={faDownload}
-                label={i18n.t("checkForUpdate")}
+                label={i18n.t('checkForUpdate')}
                 onPress={fetchUpdate}
                 lastInSection
               >
@@ -211,34 +211,34 @@ const Settings = (props: DrawerContentComponentProps) => {
                 fontFamily: theme.fonts.semiBold,
                 fontSize: 12,
                 color: theme.colors.textAlt,
-                textTransform: "uppercase",
+                textTransform: 'uppercase',
               }}
             >
-              {i18n.t("support")}
+              {i18n.t('support')}
             </Text>
             <Section>
               <InputRowButton
                 leftIcon={faHeart}
                 label={
-                  Platform.OS === "android"
-                    ? i18n.t("rateJWTimeOnPlayStore")
-                    : i18n.t("rateJWTimeOnAppStore")
+                  Platform.OS === 'android'
+                    ? i18n.t('rateJWTimeOnPlayStore')
+                    : i18n.t('rateJWTimeOnAppStore')
                 }
                 onPress={() => {
                   try {
-                    Platform.OS === "android"
+                    Platform.OS === 'android'
                       ? Linking.openURL(links.playStoreReview)
-                      : Linking.openURL(links.appStoreReview);
+                      : Linking.openURL(links.appStoreReview)
                   } catch (error) {
                     Alert.alert(
-                      Platform.OS === "android"
-                        ? i18n.t("androidAppStoreReviewErrorTitle")
-                        : i18n.t("appleAppStoreReviewErrorTitle"),
-                      Platform.OS === "android"
-                        ? i18n.t("androidAppStoreReviewErrorMessage")
-                        : i18n.t("appleAppStoreReviewErrorMessage")
-                    );
-                    Sentry.Native.captureException(error);
+                      Platform.OS === 'android'
+                        ? i18n.t('androidAppStoreReviewErrorTitle')
+                        : i18n.t('appleAppStoreReviewErrorTitle'),
+                      Platform.OS === 'android'
+                        ? i18n.t('androidAppStoreReviewErrorMessage')
+                        : i18n.t('appleAppStoreReviewErrorMessage')
+                    )
+                    Sentry.Native.captureException(error)
                   }
                 }}
               >
@@ -246,42 +246,42 @@ const Settings = (props: DrawerContentComponentProps) => {
               </InputRowButton>
               <InputRowButton
                 leftIcon={faGlobe}
-                label={i18n.t("helpTranslate")}
+                label={i18n.t('helpTranslate')}
                 onPress={async () => {
                   const emailMe = async () => {
-                    const email = "levi.wilkerson@proton.me";
-                    const subjectText = "[JW Time] Help Translate";
+                    const email = 'levi.wilkerson@proton.me'
+                    const subjectText = '[JW Time] Help Translate'
                     const bodyText = `${i18n.t(
-                      "iWouldLikeToHelpTranslate"
-                    )}: --------------`;
-                    const subject = encodeURIComponent(subjectText);
-                    const body = encodeURIComponent(bodyText);
+                      'iWouldLikeToHelpTranslate'
+                    )}: --------------`
+                    const subject = encodeURIComponent(subjectText)
+                    const body = encodeURIComponent(bodyText)
                     try {
                       await Linking.openURL(
                         `mailto:${email}?subject=${subject}&body=${body}`
-                      );
+                      )
                     } catch (error) {
                       Alert.alert(
-                        i18n.t("error"),
-                        i18n.t("failedToOpenMailApplication")
-                      );
+                        i18n.t('error'),
+                        i18n.t('failedToOpenMailApplication')
+                      )
                     }
-                  };
+                  }
 
                   Alert.alert(
-                    i18n.t("helpTranslateTitle"),
-                    i18n.t("helpTranslate_message"),
+                    i18n.t('helpTranslateTitle'),
+                    i18n.t('helpTranslate_message'),
                     [
                       {
-                        text: i18n.t("cancel"),
-                        style: "cancel",
+                        text: i18n.t('cancel'),
+                        style: 'cancel',
                       },
                       {
-                        text: i18n.t("yes"),
+                        text: i18n.t('yes'),
                         onPress: emailMe,
                       },
                     ]
-                  );
+                  )
                 }}
                 lastInSection
               >
@@ -296,34 +296,33 @@ const Settings = (props: DrawerContentComponentProps) => {
                 fontFamily: theme.fonts.semiBold,
                 fontSize: 12,
                 color: theme.colors.textAlt,
-                textTransform: "uppercase",
+                textTransform: 'uppercase',
               }}
             >
-              {i18n.t("misc")}
+              {i18n.t('misc')}
             </Text>
             <Section>
               <InputRowButton
                 leftIcon={faBug}
-                label={i18n.t("bugReport")}
+                label={i18n.t('bugReport')}
                 onPress={async () => {
-                  const email = "levi.wilkerson@proton.me";
-                  const subjectText = "[JW Time] Bug Report";
-                  const bodyText = `App Version: v${
-                    Constants.expoConfig?.version
-                  }, Device: ${Device.modelName}, OS: ${
+                  const email = 'levi.wilkerson@proton.me'
+                  const subjectText = '[JW Time] Bug Report'
+                  const bodyText = `App Version: v${Constants.expoConfig
+                    ?.version}, Device: ${Device.modelName}, OS: ${
                     Device.osVersion
-                  }. ${i18n.t("pleaseDescribeYourIssue")}: --------------`;
-                  const subject = encodeURIComponent(subjectText);
-                  const body = encodeURIComponent(bodyText);
+                  }. ${i18n.t('pleaseDescribeYourIssue')}: --------------`
+                  const subject = encodeURIComponent(subjectText)
+                  const body = encodeURIComponent(bodyText)
                   try {
                     await Linking.openURL(
                       `mailto:${email}?subject=${subject}&body=${body}`
-                    );
+                    )
                   } catch (error) {
                     Alert.alert(
-                      i18n.t("error"),
-                      i18n.t("failedToOpenMailApplication")
-                    );
+                      i18n.t('error'),
+                      i18n.t('failedToOpenMailApplication')
+                    )
                   }
                 }}
               >
@@ -331,12 +330,12 @@ const Settings = (props: DrawerContentComponentProps) => {
               </InputRowButton>
               <InputRowButton
                 leftIcon={faCode}
-                label={i18n.t("viewSource")}
+                label={i18n.t('viewSource')}
                 onPress={() => {
                   try {
-                    Linking.openURL(links.githubRepo);
+                    Linking.openURL(links.githubRepo)
                   } catch (error) {
-                    Sentry.Native.captureException(error);
+                    Sentry.Native.captureException(error)
                   }
                 }}
               >
@@ -344,12 +343,12 @@ const Settings = (props: DrawerContentComponentProps) => {
               </InputRowButton>
               <InputRowButton
                 leftIcon={faFileContract}
-                label={i18n.t("privacyPolicy")}
+                label={i18n.t('privacyPolicy')}
                 onPress={() => {
                   try {
-                    Linking.openURL(links.privacyPolicy);
+                    Linking.openURL(links.privacyPolicy)
                   } catch (error) {
-                    Sentry.Native.captureException(error);
+                    Sentry.Native.captureException(error)
                   }
                 }}
                 lastInSection
@@ -361,11 +360,11 @@ const Settings = (props: DrawerContentComponentProps) => {
         </View>
       </DrawerContentScrollView>
       <View
-        style={{ padding: 10, alignItems: "center", justifyContent: "center" }}
+        style={{ padding: 10, alignItems: 'center', justifyContent: 'center' }}
       >
         <Text
           style={{
-            textAlign: "center",
+            textAlign: 'center',
             color: theme.colors.textAlt,
             fontFamily: theme.fonts.semiBold,
             fontSize: 14,
@@ -373,11 +372,11 @@ const Settings = (props: DrawerContentComponentProps) => {
         >
           {Constants.expoConfig?.version
             ? `v${Constants.expoConfig?.version}`
-            : i18n.t("versionUnknown")}
+            : i18n.t('versionUnknown')}
         </Text>
       </View>
     </View>
-  );
-};
+  )
+}
 
-export default Settings;
+export default Settings

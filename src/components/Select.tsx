@@ -1,12 +1,12 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { Dropdown } from "react-native-element-dropdown";
-import useTheme from "../contexts/theme";
-import { DropdownProps } from "react-native-element-dropdown/lib/typescript/components/Dropdown/model";
+import { Dropdown } from 'react-native-element-dropdown'
+import useTheme from '../contexts/theme'
+import { DropdownProps } from 'react-native-element-dropdown/lib/typescript/components/Dropdown/model'
 
 interface Props<T>
-  extends Omit<Omit<DropdownProps<T>, "labelField">, "valueField"> {
-  data: T[];
-  onChange: (item: T) => void;
+  extends Omit<Omit<DropdownProps<T>, 'labelField'>, 'valueField'> {
+  data: T[]
+  onChange: (item: T) => void
   /**
    * Actual value, usually stored in state.
    * @example
@@ -22,7 +22,7 @@ interface Props<T>
    *      />
    * })
    */
-  value: any;
+  value: any
 }
 
 const Select = <T extends { label: string; value: any }>({
@@ -31,13 +31,13 @@ const Select = <T extends { label: string; value: any }>({
   value,
   ...props
 }: Props<T>) => {
-  const theme = useTheme();
+  const theme = useTheme()
 
   return (
     <Dropdown
       data={data}
-      labelField={"label"}
-      valueField={"value"}
+      labelField={'label'}
+      valueField={'value'}
       style={{
         backgroundColor: theme.colors.background,
         borderColor: theme.colors.border,
@@ -66,7 +66,7 @@ const Select = <T extends { label: string; value: any }>({
       value={value}
       {...props}
     />
-  );
-};
+  )
+}
 
-export default Select;
+export default Select

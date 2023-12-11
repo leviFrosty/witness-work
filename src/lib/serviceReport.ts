@@ -118,11 +118,27 @@ export const nonLdcHoursForSpecificMonth = (
 
 export const hasServiceReportsForMonth = (
   serviceReports: ServiceReport[],
-  month: number
+  month: number,
+  year: number
 ): boolean => {
   const hasReportsForMonth = serviceReports.some(
-    (report) => moment(report.date).month() === month
+    (report) =>
+      moment(report.date).month() === month &&
+      moment(report.date).year() === year
   );
 
   return hasReportsForMonth;
+};
+
+export const getDaysLeftInCurrentMonth = () => {
+  // Get the current date
+  const currentDate = moment();
+
+  // Get the first day of the next month
+  const firstDayOfNextMonth = moment().add(1, "months").startOf("month");
+
+  // Calculate the number of days left in the current month
+  const daysLeftInMonth = firstDayOfNextMonth.diff(currentDate, "days");
+
+  return daysLeftInMonth;
 };

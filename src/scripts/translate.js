@@ -3,9 +3,10 @@ const fs = require("fs");
 const path = require("path");
 require("dotenv").config();
 const { exec } = require("child_process");
+console.log("[translate] - Starting auto translations...");
 
 if (!process.env.GOOGLE_TRANSLATE_API_KEY) {
-  return new Error(
+  throw new Error(
     "Google API key not provided. Please add GOOGLE_TRANSLATE_API_KEY to .env"
   );
 }
@@ -37,3 +38,5 @@ locales.forEach((locale) => {
     console.log(stdout);
   });
 });
+
+console.log("[translate] - Finished auto translations");

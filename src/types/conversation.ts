@@ -20,4 +20,5 @@ export type Conversation = {
     notifications?: Notification[]; // Changing to only one
   };
   isBibleStudy: boolean;
+  notAtHome?: boolean;
 };

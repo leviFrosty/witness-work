@@ -2,7 +2,7 @@ import { Contact } from "../types/contact";
 import { Conversation } from "../types/conversation";
 import { contactStudiedForGivenMonth } from "./conversations";
 
-export const getTotalStudiesCount = ({
+export const getStudiesForGivenMonth = ({
   contacts,
   conversations,
   month,

@@ -23,7 +23,7 @@ const Wrapper: React.FC<PropsWithChildren<Props>> = ({
           {
             backgroundColor: theme.colors.background,
             paddingTop: noInsets ? 0 : insets.top,
-            paddingBottom: noInsets ? 0 : insets.bottom,
+            paddingBottom: noInsets ? 0 : insets.bottom + 25,
           },
         ],
         [style],

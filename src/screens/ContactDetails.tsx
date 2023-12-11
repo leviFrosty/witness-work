@@ -6,7 +6,7 @@ import {
   ScrollView,
   useColorScheme,
 } from "react-native";
-import { useEffect, useMemo } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Text from "../components/MyText";
 import useTheme from "../contexts/theme";
 import { RootStackNavigation, RootStackParamList } from "../stacks/RootStack";
@@ -36,7 +36,9 @@ import { StatusBar } from "expo-status-bar";
 import IconButton from "../components/IconButton";
 import {
   faBook,
+  faCaravan,
   faComment,
+  faComments,
   faEnvelope,
   faLocationDot,
   faPencil,
@@ -48,6 +50,7 @@ import Button from "../components/Button";
 import { parsePhoneNumber } from "awesome-phonenumber";
 import { useNavigation } from "@react-navigation/native";
 import { getLocales } from "expo-localization";
+import { Sheet } from "tamagui";
 
 type Props = NativeStackScreenProps<RootStackParamList, "Contact Details">;
 
@@ -65,13 +68,9 @@ const PhoneRow = ({ contact }: { contact: Contact }) => {
     [contact.phoneRegionCode, locales, phone]
   );
 
-  if (!phone) {
-    return;
-  }
-
   const isValid = formatted.valid;
 
-  const alertInvalidPhone = () => {
+  const alertInvalidPhone = useCallback(() => {
     Alert.alert(
       i18n.t("invalidPhone"),
       `"${formatted.number?.input}" ${i18n.t("invalidPhone_description")} ${
@@ -90,8 +89,11 @@ const PhoneRow = ({ contact }: { contact: Contact }) => {
         },
       ]
     );
-  };
+  }, [contact.id, formatted.number?.input, formatted.regionCode, navigation]);
 
+  if (!phone) {
+    return;
+  }
   const handleCall = () => {
     if (isValid) {
       Linking.openURL(`tel:${formatted.number.e164}`);
@@ -214,7 +216,11 @@ const Hero = ({
       )}
       {!isActiveBibleStudy && hasStudiedPreviously && (
         <Text
-          style={{ fontSize: 12, color: theme.colors.textAlt, maxWidth: 250 }}
+          style={{
+            fontSize: theme.fontSize("sm"),
+            color: theme.colors.textInverse,
+            maxWidth: 250,
+          }}
         >
           {i18n.t("inactiveBibleStudiesDoNoCountTowardsMonthlyTotals")}
         </Text>
@@ -226,11 +232,8 @@ const Hero = ({
 const AddressRow = ({ contact }: { contact: Contact }) => {
   const theme = useTheme();
   const { address } = contact;
-  if (!address) {
-    return null;
-  }
 
-  const navigateTo = (a: Address) => {
+  const navigateTo = useCallback((a: Address) => {
     const scheme = Platform.select({
       ios: "maps://0,0?q=",
       android: "geo:0,0?q=",
@@ -246,7 +249,11 @@ const AddressRow = ({ contact }: { contact: Contact }) => {
       return;
     }
     Linking.openURL(url);
-  };
+  }, []);
+
+  if (!address) {
+    return null;
+  }
 
   const addressAsSingleString = Object.keys(address).reduce(
     (prev, line, index) =>
@@ -425,6 +432,107 @@ const DeleteContactButton = ({
   );
 };
 
+interface AddSheetProps {
+  sheetOpen: boolean;
+  setSheetOpen: React.Dispatch<React.SetStateAction<boolean>>;
+  navigation: NativeStackNavigationProp<
+    RootStackParamList,
+    "Contact Details",
+    undefined
+  >;
+  contact: Contact;
+}
+
+const AddSheet = ({
+  sheetOpen,
+  setSheetOpen,
+  navigation,
+  contact,
+}: AddSheetProps) => {
+  const theme = useTheme();
+
+  return (
+    <Sheet
+      open={sheetOpen}
+      onOpenChange={setSheetOpen}
+      dismissOnSnapToBottom
+      snapPoints={[55]}
+    >
+      <Sheet.Handle />
+      <Sheet.Overlay />
+      <Sheet.Frame>
+        <View style={{ gap: 15, padding: 30 }}>
+          <View style={{ gap: 10 }}>
+            <Text
+              style={{
+                fontSize: theme.fontSize("xl"),
+                fontFamily: theme.fonts.bold,
+              }}
+            >
+              {i18n.t("addToHistory")}
+            </Text>
+            <Text
+              style={{
+                fontSize: theme.fontSize("sm"),
+                marginBottom: 15,
+              }}
+            >
+              {i18n.t("add_description")}
+            </Text>
+          </View>
+          <Button
+            style={{ gap: 10 }}
+            variant="outline"
+            onPress={async () =>
+              navigation.replace("Conversation Form", {
+                contactId: contact?.id,
+                notAtHome: true,
+              })
+            }
+          >
+            <IconButton
+              iconStyle={{ color: theme.colors.text }}
+              icon={faCaravan}
+            />
+            <Text
+              style={{
+                color: theme.colors.text,
+                fontSize: theme.fontSize("md"),
+              }}
+            >
+              {i18n.t("notAtHome")}
+            </Text>
+          </Button>
+          <Button
+            style={{ gap: 10, backgroundColor: theme.colors.accent }}
+            variant="solid"
+            onPress={async () =>
+              navigation.replace("Conversation Form", {
+                contactId: contact?.id,
+              })
+            }
+          >
+            <IconButton
+              icon={faComments}
+              iconStyle={{
+                color: theme.colors.textInverse,
+              }}
+            />
+            <Text
+              style={{
+                color: theme.colors.textInverse,
+                fontSize: theme.fontSize("md"),
+              }}
+            >
+              {i18n.t("conversation")}
+            </Text>
+          </Button>
+        </View>
+      </Sheet.Frame>
+    </Sheet>
+  );
+};
+
 const ContactDetails = ({ route, navigation }: Props) => {
   const colorScheme = useColorScheme();
   const theme = useTheme();
@@ -454,6 +562,8 @@ const ContactDetails = ({ route, navigation }: Props) => {
       ),
     [contactConversations]
   );
+
+  const [sheetOpen, setSheetOpen] = useState(false);
 
   useEffect(() => {
     navigation.setOptions({
@@ -488,10 +598,8 @@ const ContactDetails = ({ route, navigation }: Props) => {
                 />
               </Button>
               <IconButton
-                onPress={async () => {
-                  navigation.replace("Conversation Form", {
-                    contactId: contact?.id,
-                  });
+                onPress={() => {
+                  setSheetOpen(true);
                 }}
                 iconStyle={{ color: theme.colors.textInverse }}
                 icon={faPlus}
@@ -552,121 +660,127 @@ const ContactDetails = ({ route, navigation }: Props) => {
     address && Object.values(address).some((v) => v.length > 0);
 
   return (
-    <ScrollView
-      style={{
-        position: "relative",
-        paddingTop: 100,
-        marginTop: -100,
-        backgroundColor: theme.colors.background,
-      }}
-    >
-      <StatusBar style={colorScheme === "light" ? "light" : "dark"} />
-      <Wrapper
-        noInsets
+    <View>
+      <ScrollView
         style={{
-          marginBottom: insets.bottom + 100,
-          flexGrow: 1,
-          flex: 1,
+          position: "relative",
+          paddingTop: 100,
+          marginTop: -100,
+          backgroundColor: theme.colors.background,
         }}
       >
-        <Hero
-          isBibleStudy={isActiveBibleStudy}
-          hasStudiedPreviously={hasStudiedPreviously}
-          mostRecentStudy={mostRecentStudy}
-          name={name}
-        />
-        <View style={{ gap: 30 }}>
-          <CardWithTitle
-            titlePosition="inside"
-            title="Details"
-            style={{ margin: 20 }}
-          >
-            <View style={{ gap: 15 }}>
-              {hasAddress && <AddressRow contact={contact} />}
-              {phone && <PhoneRow contact={contact} />}
-              {!hasAddress && !phone && !email && (
-                <Text>{i18n.t("noPersonalInformationSaved")}</Text>
-              )}
-              {email && <EmailRow contact={contact} />}
-            </View>
-          </CardWithTitle>
-          <View style={{ gap: 10 }}>
-            <Text
-              style={{
-                fontSize: 14,
-                fontFamily: theme.fonts.semiBold,
-                marginLeft: 10,
-                color: theme.colors.text,
-              }}
-            >
-              {i18n.t("conversationHistory")}
-            </Text>
-            <View style={{ minHeight: 2 }}>
-              <FlashList
-                renderItem={({ item }) => (
-                  <ConversationRow
-                    conversation={item}
-                    highlighted={item.id === highlightedConversation?.id}
-                  />
-                )}
-                ItemSeparatorComponent={() => <Divider borderWidth={2} />}
-                data={contactConversationsSorted}
-                ListEmptyComponent={
-                  <View
-                    style={{
-                      backgroundColor: theme.colors.backgroundLighter,
-                      paddingVertical: 10,
-                    }}
-                  >
-                    <Button
-                      onPress={() =>
-                        navigation.replace("Conversation Form", {
-                          contactId: contact.id,
-                        })
-                      }
-                    >
-                      <Text
-                        style={{ margin: 20, textDecorationLine: "underline" }}
-                      >
-                        {i18n.t("tapToAddAConversation")}
-                      </Text>
-                    </Button>
-                  </View>
-                }
-                estimatedItemSize={70}
-              />
-            </View>
-          </View>
-          <DeleteContactButton
-            contact={contact}
-            contactId={params.id}
-            deleteContact={deleteContact}
-            navigation={navigation}
-          />
-        </View>
-        <View
+        <StatusBar style={colorScheme === "light" ? "light" : "dark"} />
+
+        <Wrapper
+          noInsets
           style={{
-            position: "absolute",
-            height: 360,
-            width: "100%",
-            zIndex: -100,
-            backgroundColor: theme.colors.accent3,
+            marginBottom: insets.bottom + 125,
+            flexGrow: 1,
+            flex: 1,
           }}
-        />
-        {Platform.OS === "ios" && (
+        >
+          <Hero
+            isBibleStudy={isActiveBibleStudy}
+            hasStudiedPreviously={hasStudiedPreviously}
+            mostRecentStudy={mostRecentStudy}
+            name={name}
+          />
+          <View style={{ gap: 30 }}>
+            <CardWithTitle
+              titlePosition="inside"
+              title="Details"
+              style={{ margin: 20 }}
+            >
+              <View style={{ gap: 15 }}>
+                {hasAddress && <AddressRow contact={contact} />}
+                {phone && <PhoneRow contact={contact} />}
+                {!hasAddress && !phone && !email && (
+                  <Text>{i18n.t("noPersonalInformationSaved")}</Text>
+                )}
+                {email && <EmailRow contact={contact} />}
+              </View>
+            </CardWithTitle>
+            <View style={{ gap: 10 }}>
+              <Text
+                style={{
+                  fontSize: 14,
+                  fontFamily: theme.fonts.semiBold,
+                  marginLeft: 10,
+                  color: theme.colors.text,
+                }}
+              >
+                {i18n.t("conversationHistory")}
+              </Text>
+              <View style={{ minHeight: 2 }}>
+                <FlashList
+                  renderItem={({ item }) => (
+                    <ConversationRow
+                      conversation={item}
+                      highlighted={item.id === highlightedConversation?.id}
+                    />
+                  )}
+                  ItemSeparatorComponent={() => <Divider borderWidth={2} />}
+                  data={contactConversationsSorted}
+                  ListEmptyComponent={
+                    <View
+                      style={{
+                        backgroundColor: theme.colors.backgroundLighter,
+                        paddingVertical: 10,
+                      }}
+                    >
+                      <Button onPress={() => setSheetOpen(true)}>
+                        <Text
+                          style={{
+                            margin: 20,
+                            textDecorationLine: "underline",
+                          }}
+                        >
+                          {i18n.t("tapToAddAConversation")}
+                        </Text>
+                      </Button>
+                    </View>
+                  }
+                  estimatedItemSize={70}
+                />
+              </View>
+            </View>
+            <DeleteContactButton
+              contact={contact}
+              contactId={params.id}
+              deleteContact={deleteContact}
+              navigation={navigation}
+            />
+          </View>
           <View
             style={{
-              backgroundColor: theme.colors.accent3,
-              height: 1000,
               position: "absolute",
-              top: -1000,
-              left: 0,
-              right: 0,
+              height: 360,
+              width: "100%",
+              zIndex: -100,
+              backgroundColor: theme.colors.accent3,
             }}
           />
-        )}
-      </Wrapper>
-    </ScrollView>
+          {Platform.OS === "ios" && (
+            <View
+              style={{
+                backgroundColor: theme.colors.accent3,
+                height: 1000,
+                position: "absolute",
+                top: -1000,
+                left: 0,
+                right: 0,
+              }}
+            />
+          )}
+        </Wrapper>
+      </ScrollView>
+      <AddSheet
+        contact={contact}
+        navigation={navigation}
+        setSheetOpen={setSheetOpen}
+        sheetOpen={sheetOpen}
+      />
+    </View>
   );
 };
 

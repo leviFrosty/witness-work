@@ -6,7 +6,7 @@
 
 JW Time is the easy way for Jehovah's Witnesses to manage their field service priorities.
 
-### View it live!
+### View it live
 
 [![App Store](https://img.shields.io/badge/App_Store-0D96F6?style=for-the-badge&logo=app-store&logoColor=white)](https://apps.apple.com/us/app/jw-time/id6469723047)
 [![Play Store](https://img.shields.io/badge/Google_Play-414141?style=for-the-badge&logo=google-play&logoColor=white)](https://play.google.com/store/apps/details?id=com.leviwilkerson.jwtime)
@@ -27,4 +27,4 @@ If you wish to contribute to help cover the costs associated with app-store fees
 
 ## License
 
-JW Time © 2023 by Levi Wilkerson is licensed under [Fair Source License 0.9](./LICENSE)
+JW Time © 2023 by Levi Wilkerson is licensed under [Attribution-NonCommercial 4.0 International](./LICENSE)

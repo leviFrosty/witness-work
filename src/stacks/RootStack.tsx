@@ -23,6 +23,7 @@ export type RootStackParamList = {
   "Conversation Form": {
     contactId?: string;
     conversationToEditId?: string;
+    notAtHome?: boolean;
   };
   "Contact Details": { id: string; highlightedConversationId?: string }; // Contact ID
   "Contact Form": { id: string; edit?: boolean }; // Contact ID
@@ -89,11 +90,9 @@ const RootStackComponent = () => {
       />
       <RootStack.Screen
         options={{
-          presentation: "modal",
           header: ({ navigation }) => (
             <Header
-              noInsets
-              buttonType="exit"
+              buttonType="back"
               rightElement={
                 <IconButton
                   style={{ position: "absolute", right: 0 }}

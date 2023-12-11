@@ -31,7 +31,11 @@ import Checkbox from "expo-checkbox";
 import Select from "../components/Select";
 import Wrapper from "../components/Wrapper";
 import IconButton from "../components/IconButton";
-import { faIdBadge } from "@fortawesome/free-solid-svg-icons";
+import {
+  faCaravan,
+  faComments,
+  faIdCard,
+} from "@fortawesome/free-solid-svg-icons";
 import _ from "lodash";
 import Button from "../components/Button";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -76,7 +80,7 @@ const AssignmentSection = ({
                 gap: 10,
               }}
             >
-              <IconButton icon={faIdBadge} />
+              <IconButton icon={faIdCard} />
               <Text style={{ fontFamily: theme.fonts.semiBold, fontSize: 16 }}>
                 {selectedContact.name}
               </Text>
@@ -134,6 +138,8 @@ const ConversationForm = ({ route, navigation }: Props) => {
     params.contactId || conversationToUpdate?.contact.id || ""
   );
 
+  const notAtHome = params.notAtHome;
+
   const [errors, setErrors] = useState<Record<string, string>>({
     contact: "",
   });
@@ -162,6 +168,7 @@ const ConversationForm = ({ route, navigation }: Props) => {
           notifications: conversationToUpdate.followUp?.notifications,
         },
         note: conversationToUpdate.note,
+        notAtHome: conversationToUpdate.notAtHome,
       };
     }
     return {
@@ -177,6 +184,7 @@ const ConversationForm = ({ route, navigation }: Props) => {
         notifyMe: false,
       },
       isBibleStudy: false,
+      notAtHome: params.notAtHome,
     };
   };
 
@@ -475,23 +483,44 @@ const ConversationForm = ({ route, navigation }: Props) => {
     value: value as moment.unitOfTime.DurationConstructor,
   }));
 
+  const getTitle = () => {
+    if (params?.conversationToEditId) {
+      if (notAtHome) {
+        return i18n.t("editNotAtHome");
+      }
+      return i18n.t("editConversation");
+    }
+
+    if (notAtHome) {
+      return i18n.t("addNotAtHome");
+    }
+    return i18n.t("addConversation");
+  };
+
   return (
     <KeyboardAwareScrollView
       automaticallyAdjustKeyboardInsets
-      contentContainerStyle={{ paddingBottom: insets.bottom }}
+      contentContainerStyle={{ paddingBottom: insets.bottom + 50 }}
       style={{
         backgroundColor: theme.colors.background,
       }}
     >
       <Wrapper noInsets style={{ gap: 30, marginTop: 20 }}>
         <View style={{ padding: 25, paddingBottom: 0, gap: 5 }}>
-          <Text style={{ fontSize: 32, fontFamily: theme.fonts.bold }}>
-            {params?.conversationToEditId
-              ? i18n.t("editConversation")
-              : i18n.t("addConversation")}
-          </Text>
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
+            <IconButton
+              icon={conversation.notAtHome ? faCaravan : faComments}
+              size={20}
+              iconStyle={{ color: theme.colors.text }}
+            />
+            <Text style={{ fontSize: 32, fontFamily: theme.fonts.bold }}>
+              {getTitle()}
+            </Text>
+          </View>
           <Text style={{ color: theme.colors.textAlt, fontSize: 12 }}>
-            {i18n.t("addConversation_description")}
+            {notAtHome
+              ? i18n.t("addNotAtHome_description")
+              : i18n.t("addConversation_description")}
           </Text>
         </View>
         <AssignmentSection
@@ -511,12 +540,14 @@ const ConversationForm = ({ route, navigation }: Props) => {
                 maximumDate={moment().toDate()}
                 value={conversation.date}
                 onChange={handleDateChange}
+                timeAndDate
               />
             ) : (
               <RNDateTimePicker
                 maximumDate={moment().toDate()}
                 value={conversation.date}
                 onChange={handleDateChange}
+                mode="datetime"
               />
             )}
           </InputRowContainer>
@@ -531,14 +562,17 @@ const ConversationForm = ({ route, navigation }: Props) => {
               onChangeText: (note: string) =>
                 setConversation({ ...conversation, note }),
             }}
+            lastInSection={notAtHome}
           />
-          <InputRowContainer
-            label={i18n.t("conductedBibleStudy")}
-            justifyContent="space-between"
-            lastInSection
-          >
-            <IsBibleStudyCheckbox />
-          </InputRowContainer>
+          {!notAtHome && (
+            <InputRowContainer
+              label={i18n.t("conductedBibleStudy")}
+              justifyContent="space-between"
+              lastInSection
+            >
+              <IsBibleStudyCheckbox />
+            </InputRowContainer>
+          )}
         </Section>
         <Section>
           <InputRowContainer

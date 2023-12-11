@@ -25,13 +25,19 @@ import IconButton from "../components/IconButton";
 import {
   faBug,
   faChevronRight,
+  faCode,
   faDownload,
   faFileContract,
+  faGlobe,
   faTools,
   faUndo,
 } from "@fortawesome/free-solid-svg-icons";
-import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
-const Settings = () => {
+import {
+  DrawerContentComponentProps,
+  DrawerContentScrollView,
+} from "@react-navigation/drawer";
+
+const Settings = (props: DrawerContentComponentProps) => {
   const theme = useTheme();
   const { set: setPreferences } = usePreferences();
   const [notificationsEnabled, setNotificationsEnabled] = useState(false);
@@ -105,174 +111,263 @@ const Settings = () => {
     >
       <Text
         style={{
-          margin: 20,
+          marginHorizontal: 20,
+          marginTop: 20,
+          marginBottom: 10,
           fontSize: 16,
           fontFamily: theme.fonts.semiBold,
         }}
       >
         {i18n.t("settings")}
       </Text>
-      <KeyboardAwareScrollView contentContainerStyle={{ gap: 25 }}>
-        <View style={{ gap: 3 }}>
-          <Text
-            style={{
-              marginLeft: 20,
-              fontFamily: theme.fonts.semiBold,
-              fontSize: 12,
-              color: theme.colors.textAlt,
-              textTransform: "uppercase",
-            }}
-          >
-            {i18n.t("publisher")}
-          </Text>
-          <Section>
-            <InputRowContainer label={i18n.t("status")} lastInSection>
-              <View style={{ flex: 1 }}>
-                <PublisherTypeSelector />
-              </View>
-            </InputRowContainer>
-          </Section>
-        </View>
-        <View style={{ gap: 3 }}>
-          <Text
-            style={{
-              marginLeft: 20,
-              fontFamily: theme.fonts.semiBold,
-              fontSize: 12,
-              color: theme.colors.textAlt,
-              textTransform: "uppercase",
-            }}
-          >
-            {i18n.t("app")}
-          </Text>
-          <Section>
-            <InputRowButton
-              leftIcon={notificationsEnabled ? faBell : faBellSlash}
-              label={
-                notificationsEnabled
-                  ? i18n.t("pushNotificationsEnabled")
-                  : i18n.t("pushNotificationsDisabled")
-              }
-              onPress={notificationsEnabled ? undefined : askToTakeToSettings}
+      <DrawerContentScrollView
+        contentContainerStyle={{
+          paddingTop: 30,
+          paddingBottom: 30,
+          paddingStart: 0,
+        }}
+        {...props}
+      >
+        <View style={{ gap: 25 }}>
+          <View style={{ gap: 3 }}>
+            <Text
+              style={{
+                marginLeft: 20,
+                fontFamily: theme.fonts.semiBold,
+                fontSize: 12,
+                color: theme.colors.textAlt,
+                textTransform: "uppercase",
+              }}
             >
-              {!notificationsEnabled && <IconButton icon={faChevronRight} />}
-            </InputRowButton>
-            <InputRowButton
-              leftIcon={faHourglassHalf}
-              label={i18n.t("viewHours")}
-              onPress={() => navigation.navigate("Time Reports")}
+              {i18n.t("publisher")}
+            </Text>
+            <Section>
+              <InputRowContainer label={i18n.t("status")} lastInSection>
+                <View style={{ flex: 1 }}>
+                  <PublisherTypeSelector />
+                </View>
+              </InputRowContainer>
+            </Section>
+          </View>
+          <View style={{ gap: 3 }}>
+            <Text
+              style={{
+                marginLeft: 20,
+                fontFamily: theme.fonts.semiBold,
+                fontSize: 12,
+                color: theme.colors.textAlt,
+                textTransform: "uppercase",
+              }}
             >
-              <IconButton icon={faChevronRight} />
-            </InputRowButton>
-            <InputRowButton
-              leftIcon={faUndo}
-              label={i18n.t("recoverContacts")}
-              onPress={() => navigation.navigate("Recover Contacts")}
+              {i18n.t("app")}
+            </Text>
+            <Section>
+              <InputRowButton
+                leftIcon={notificationsEnabled ? faBell : faBellSlash}
+                label={
+                  notificationsEnabled
+                    ? i18n.t("pushNotificationsEnabled")
+                    : i18n.t("pushNotificationsDisabled")
+                }
+                onPress={notificationsEnabled ? undefined : askToTakeToSettings}
+              >
+                {!notificationsEnabled && <IconButton icon={faChevronRight} />}
+              </InputRowButton>
+              <InputRowButton
+                leftIcon={faHourglassHalf}
+                label={i18n.t("viewHours")}
+                onPress={() => navigation.navigate("Time Reports")}
+              >
+                <IconButton icon={faChevronRight} />
+              </InputRowButton>
+              <InputRowButton
+                leftIcon={faUndo}
+                label={i18n.t("recoverContacts")}
+                onPress={() => navigation.navigate("Recover Contacts")}
+              >
+                <IconButton icon={faChevronRight} />
+              </InputRowButton>
+              <InputRowButton
+                leftIcon={faTools}
+                label={i18n.t("restartOnboarding")}
+                onPress={resetToOnboarding}
+              >
+                <IconButton icon={faChevronRight} />
+              </InputRowButton>
+              <InputRowButton
+                leftIcon={faDownload}
+                label={i18n.t("checkForUpdate")}
+                onPress={fetchUpdate}
+                lastInSection
+              >
+                <IconButton icon={faChevronRight} />
+              </InputRowButton>
+            </Section>
+          </View>
+          <View style={{ gap: 3 }}>
+            <Text
+              style={{
+                marginLeft: 20,
+                fontFamily: theme.fonts.semiBold,
+                fontSize: 12,
+                color: theme.colors.textAlt,
+                textTransform: "uppercase",
+              }}
             >
-              <IconButton icon={faChevronRight} />
-            </InputRowButton>
-            <InputRowButton
-              leftIcon={faTools}
-              label={i18n.t("restartOnboarding")}
-              onPress={resetToOnboarding}
-            >
-              <IconButton icon={faChevronRight} />
-            </InputRowButton>
-            <InputRowButton
-              leftIcon={faDownload}
-              label={i18n.t("checkForUpdate")}
-              onPress={fetchUpdate}
-              lastInSection
-            >
-              <IconButton icon={faChevronRight} />
-            </InputRowButton>
-          </Section>
-        </View>
-        <View style={{ gap: 3 }}>
-          <Text
-            style={{
-              marginLeft: 20,
-              fontFamily: theme.fonts.semiBold,
-              fontSize: 12,
-              color: theme.colors.textAlt,
-              textTransform: "uppercase",
-            }}
-          >
-            {i18n.t("misc")}
-          </Text>
-          <Section>
-            <InputRowButton
-              leftIcon={faHeart}
-              label={
-                Platform.OS === "android"
-                  ? i18n.t("rateJWTimeOnPlayStore")
-                  : i18n.t("rateJWTimeOnAppStore")
-              }
-              onPress={() => {
-                try {
+              {i18n.t("support")}
+            </Text>
+            <Section>
+              <InputRowButton
+                leftIcon={faHeart}
+                label={
                   Platform.OS === "android"
-                    ? Linking.openURL(links.playStoreReview)
-                    : Linking.openURL(links.appStoreReview);
-                } catch (error) {
-                  Alert.alert(
-                    Platform.OS === "android"
-                      ? i18n.t("androidAppStoreReviewErrorTitle")
-                      : i18n.t("appleAppStoreReviewErrorTitle"),
-                    Platform.OS === "android"
-                      ? i18n.t("androidAppStoreReviewErrorMessage")
-                      : i18n.t("appleAppStoreReviewErrorMessage")
-                  );
-                  Sentry.Native.captureException(error);
+                    ? i18n.t("rateJWTimeOnPlayStore")
+                    : i18n.t("rateJWTimeOnAppStore")
                 }
+                onPress={() => {
+                  try {
+                    Platform.OS === "android"
+                      ? Linking.openURL(links.playStoreReview)
+                      : Linking.openURL(links.appStoreReview);
+                  } catch (error) {
+                    Alert.alert(
+                      Platform.OS === "android"
+                        ? i18n.t("androidAppStoreReviewErrorTitle")
+                        : i18n.t("appleAppStoreReviewErrorTitle"),
+                      Platform.OS === "android"
+                        ? i18n.t("androidAppStoreReviewErrorMessage")
+                        : i18n.t("appleAppStoreReviewErrorMessage")
+                    );
+                    Sentry.Native.captureException(error);
+                  }
+                }}
+              >
+                <IconButton icon={faChevronRight} />
+              </InputRowButton>
+              <InputRowButton
+                leftIcon={faGlobe}
+                label={i18n.t("helpTranslate")}
+                onPress={async () => {
+                  const emailMe = async () => {
+                    const email = "levi.wilkerson@proton.me";
+                    const subjectText = "[JW Time] Help Translate";
+                    const bodyText = `${i18n.t(
+                      "iWouldLikeToHelpTranslate"
+                    )}: --------------`;
+                    const subject = encodeURIComponent(subjectText);
+                    const body = encodeURIComponent(bodyText);
+                    try {
+                      await Linking.openURL(
+                        `mailto:${email}?subject=${subject}&body=${body}`
+                      );
+                    } catch (error) {
+                      Alert.alert(
+                        i18n.t("error"),
+                        i18n.t("failedToOpenMailApplication")
+                      );
+                    }
+                  };
+
+                  Alert.alert(
+                    i18n.t("helpTranslateTitle"),
+                    i18n.t("helpTranslate_message"),
+                    [
+                      {
+                        text: i18n.t("cancel"),
+                        style: "cancel",
+                      },
+                      {
+                        text: i18n.t("yes"),
+                        onPress: emailMe,
+                      },
+                    ]
+                  );
+                }}
+                lastInSection
+              >
+                <IconButton icon={faChevronRight} />
+              </InputRowButton>
+            </Section>
+          </View>
+          <View style={{ gap: 3 }}>
+            <Text
+              style={{
+                marginLeft: 20,
+                fontFamily: theme.fonts.semiBold,
+                fontSize: 12,
+                color: theme.colors.textAlt,
+                textTransform: "uppercase",
               }}
             >
-              <IconButton icon={faChevronRight} />
-            </InputRowButton>
-            <InputRowButton
-              leftIcon={faBug}
-              label={i18n.t("bugReport")}
-              onPress={async () => {
-                const email = "levi.wilkerson@proton.me";
-                const subjectText = "Bug Report";
-                const bodyText = `App Version: v${
-                  Constants.expoConfig?.version
-                }, Device: ${Device.modelName}, OS: ${
-                  Device.osVersion
-                }. ${i18n.t("pleaseDescribeYourIssue")}: --------------`;
-                const subject = encodeURIComponent(subjectText);
-                const body = encodeURIComponent(bodyText);
-                try {
-                  await Linking.openURL(
-                    `mailto:${email}?subject=${subject}&body=${body}`
-                  );
-                } catch (error) {
-                  Alert.alert(
-                    i18n.t("error"),
-                    i18n.t("failedToOpenMailApplication")
-                  );
-                }
-              }}
-            >
-              <IconButton icon={faChevronRight} />
-            </InputRowButton>
-            <InputRowButton
-              leftIcon={faFileContract}
-              label={i18n.t("privacyPolicy")}
-              onPress={() => Linking.openURL(links.privacyPolicy)}
-              lastInSection
-            >
-              <IconButton icon={faChevronRight} />
-            </InputRowButton>
-          </Section>
+              {i18n.t("misc")}
+            </Text>
+            <Section>
+              <InputRowButton
+                leftIcon={faBug}
+                label={i18n.t("bugReport")}
+                onPress={async () => {
+                  const email = "levi.wilkerson@proton.me";
+                  const subjectText = "[JW Time] Bug Report";
+                  const bodyText = `App Version: v${
+                    Constants.expoConfig?.version
+                  }, Device: ${Device.modelName}, OS: ${
+                    Device.osVersion
+                  }. ${i18n.t("pleaseDescribeYourIssue")}: --------------`;
+                  const subject = encodeURIComponent(subjectText);
+                  const body = encodeURIComponent(bodyText);
+                  try {
+                    await Linking.openURL(
+                      `mailto:${email}?subject=${subject}&body=${body}`
+                    );
+                  } catch (error) {
+                    Alert.alert(
+                      i18n.t("error"),
+                      i18n.t("failedToOpenMailApplication")
+                    );
+                  }
+                }}
+              >
+                <IconButton icon={faChevronRight} />
+              </InputRowButton>
+              <InputRowButton
+                leftIcon={faCode}
+                label={i18n.t("viewSource")}
+                onPress={() => {
+                  try {
+                    Linking.openURL(links.githubRepo);
+                  } catch (error) {
+                    Sentry.Native.captureException(error);
+                  }
+                }}
+              >
+                <IconButton icon={faChevronRight} />
+              </InputRowButton>
+              <InputRowButton
+                leftIcon={faFileContract}
+                label={i18n.t("privacyPolicy")}
+                onPress={() => {
+                  try {
+                    Linking.openURL(links.privacyPolicy);
+                  } catch (error) {
+                    Sentry.Native.captureException(error);
+                  }
+                }}
+                lastInSection
+              >
+                <IconButton icon={faChevronRight} />
+              </InputRowButton>
+            </Section>
+          </View>
         </View>
-      </KeyboardAwareScrollView>
-      <View>
+      </DrawerContentScrollView>
+      <View
+        style={{ padding: 10, alignItems: "center", justifyContent: "center" }}
+      >
         <Text
           style={{
             textAlign: "center",
             color: theme.colors.textAlt,
             fontFamily: theme.fonts.semiBold,
-            marginBottom: 5,
             fontSize: 14,
           }}
         >

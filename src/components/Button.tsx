@@ -3,14 +3,15 @@ import {
   GestureResponderEvent,
   Pressable,
   StyleProp,
-  ViewStyle,
+  ViewStyle
 } from "react-native";
 import Haptics from "../lib/haptics";
 import Animated, {
   Easing,
   useSharedValue,
-  withTiming,
+  withTiming
 } from "react-native-reanimated";
+import useTheme from "../contexts/theme";
 
 interface Props {
   onPress?: (event: GestureResponderEvent) => void;
@@ -18,6 +19,7 @@ interface Props {
   style?: StyleProp<ViewStyle>;
   disabled?: boolean;
   noTransform?: boolean;
+  variant?: "solid" | "outline";
 }
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
@@ -29,9 +31,11 @@ const Button: React.FC<PropsWithChildren<Props>> = ({
   style,
   disabled,
   noTransform,
+  variant
 }) => {
   const translateY = useSharedValue(0);
   const opacity = useSharedValue(1);
+  const theme = useTheme();
 
   const _onPress = (event: GestureResponderEvent) => {
     Haptics.light();
@@ -50,7 +54,7 @@ const Button: React.FC<PropsWithChildren<Props>> = ({
     }
     translateY.value = withTiming(1, {
       duration: 10,
-      easing: Easing.in(Easing.quad),
+      easing: Easing.in(Easing.quad)
     });
   };
 
@@ -61,9 +65,11 @@ const Button: React.FC<PropsWithChildren<Props>> = ({
     }
     translateY.value = withTiming(0, {
       duration: 20,
-      easing: Easing.in(Easing.quad),
+      easing: Easing.in(Easing.quad)
     });
   };
+
+  const styled = !!variant;
 
   return (
     <AnimatedPressable
@@ -76,11 +82,20 @@ const Button: React.FC<PropsWithChildren<Props>> = ({
       style={[
         [
           {
+            borderWidth: variant === "outline" ? 1 : undefined,
+            borderColor: styled ? theme.colors.border : undefined,
+            borderRadius: styled ? theme.numbers.borderRadiusMd : undefined,
+            paddingHorizontal: styled ? 15 : undefined,
+            paddingVertical: styled ? 20 : undefined,
+            flexDirection: styled ? "row" : undefined,
+            alignItems: styled ? "center" : undefined,
+            backgroundColor:
+              variant === "solid" ? theme.colors.card : undefined,
             transform: [{ translateY: translateY }],
-            opacity,
-          },
+            opacity
+          }
         ],
-        [style],
+        [style]
       ]}
     >
       {children}

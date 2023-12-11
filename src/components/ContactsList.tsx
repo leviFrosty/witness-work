@@ -110,7 +110,7 @@ const ContactsList = () => {
       >
         <Text
           style={{
-            fontSize: 12,
+            fontSize: 14,
             fontFamily: theme.fonts.semiBold,
             marginLeft: 5,
           }}

@@ -256,5 +256,6 @@
   "no": "いいえ",
   "viewAllMonths": "すべての月を表示",
   "support": "サポート",
-  "viewSource": "ソースを表示"
+  "viewSource": "ソースを表示",
+  "totalHours": "合計時間"
 }

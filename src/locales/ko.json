@@ -256,5 +256,6 @@
   "no": "아니요",
   "viewAllMonths": "모든 달 보기",
   "support": "지원하다",
-  "viewSource": "소스보기"
+  "viewSource": "소스보기",
+  "totalHours": "전체 시간"
 }

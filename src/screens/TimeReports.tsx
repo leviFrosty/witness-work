@@ -163,51 +163,26 @@ const TimeReports = () => {
 
                   return (
                     <View style={{ gap: 5 }} key={month}>
-                      <View
-                        style={{
-                          flexDirection: "row",
-                          gap: 10,
-                          justifyContent: "space-between",
-                          marginRight: 20,
-                        }}
-                      >
-                        <Text
-                          style={{
-                            marginHorizontal: 20,
-                            fontSize: 14,
-                            fontFamily: theme.fonts.regular,
-                            color: theme.colors.textAlt,
-                          }}
-                        >
-                          {month}
-                          {` - ${totalHours} ${i18n.t("hours")}`}
-                        </Text>
+                      <View style={{ marginHorizontal: 20, gap: 3 }}>
                         <View
                           style={{
                             flexDirection: "row",
                             gap: 10,
                             alignItems: "center",
+                            marginBottom: 3,
                           }}
                         >
                           <Text
                             style={{
-                              fontSize: 14,
+                              fontSize: theme.fontSize("lg"),
                               fontFamily: theme.fonts.regular,
-                              color: theme.colors.textAlt,
+                              color: theme.colors.text,
                             }}
                           >
-                            {i18n.t("standard")}: {nonLdcHours}
-                          </Text>
-                          <Text
-                            style={{
-                              fontSize: 14,
-                              fontFamily: theme.fonts.regular,
-                              color: theme.colors.textAlt,
-                            }}
-                          >
-                            {i18n.t("ldc")}: {ldcHours}
+                            {month}
                           </Text>
                           <IconButton
+                            iconStyle={{ color: theme.colors.text }}
                             onPress={() =>
                               setSheet({
                                 open: true,
@@ -217,6 +192,43 @@ const TimeReports = () => {
                             }
                             icon={faArrowUpFromBracket}
                           />
+                        </View>
+                        <View
+                          style={{
+                            flexDirection: "row",
+                            gap: 10,
+                            justifyContent: "space-between",
+                          }}
+                        >
+                          <Text
+                            style={{
+                              fontSize: 14,
+                              fontFamily: theme.fonts.regular,
+                              color: theme.colors.textAlt,
+                            }}
+                          >
+                            {i18n.t("totalHours")}: {totalHours}
+                          </Text>
+                          <View style={{ flexDirection: "row", gap: 5 }}>
+                            <Text
+                              style={{
+                                fontSize: 14,
+                                fontFamily: theme.fonts.regular,
+                                color: theme.colors.textAlt,
+                              }}
+                            >
+                              {i18n.t("standard")}: {nonLdcHours}
+                            </Text>
+                            <Text
+                              style={{
+                                fontSize: 14,
+                                fontFamily: theme.fonts.regular,
+                                color: theme.colors.textAlt,
+                              }}
+                            >
+                              {i18n.t("ldc")}: {ldcHours}
+                            </Text>
+                          </View>
                         </View>
                       </View>
                       <Section>

@@ -256,5 +256,6 @@
   "no": "NEIN",
   "viewAllMonths": "Alle Monate anzeigen",
   "support": "Unterstützung",
-  "viewSource": "Quelltext anzeigen"
+  "viewSource": "Quelltext anzeigen",
+  "totalHours": "Gesamtstunden"
 }

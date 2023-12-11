@@ -256,5 +256,6 @@
   "no": "不",
   "viewAllMonths": "查看所有月份",
   "support": "支持",
-  "viewSource": "查看源代码"
+  "viewSource": "查看源代码",
+  "totalHours": "全部小时数"
 }

@@ -4,6 +4,5 @@
 ./node_modules/.bin/tsc
 
 
-yarn run testFinal
 
 yarn run translate

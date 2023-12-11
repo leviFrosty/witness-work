@@ -15,11 +15,13 @@ import ApproachingConversations from "../components/ApproachingConversations";
 import ExportTimeSheet, {
   ExportTimeSheetState,
 } from "../components/ExportTimeSheet";
+import useContacts from "../stores/contactsStore";
 
 const Dashboard = () => {
   const theme = useTheme();
   const insets = useSafeAreaInsets();
   const { conversations } = useConversations();
+  const { contacts } = useContacts();
   const [sheet, setSheet] = useState<ExportTimeSheetState>({
     open: false,
     month: 0,
@@ -38,8 +40,23 @@ const Dashboard = () => {
     [conversations, now]
   );
 
-  const conversationsWithNotificationOrTopic = approachingConversations.filter(
-    (c) => c.followUp?.notifyMe || c.followUp?.topic
+  const conversationsWithNotificationOrTopic = useMemo(
+    () =>
+      approachingConversations.filter(
+        (c) => c.followUp?.notifyMe || c.followUp?.topic
+      ),
+    [approachingConversations]
+  );
+
+  const approachingConvosWithActiveContacts = useMemo(
+    () =>
+      conversationsWithNotificationOrTopic.filter((convo) => {
+        const contactIsActive = contacts.find((c) => c.id === convo.contact.id);
+        if (contactIsActive) {
+          return convo;
+        }
+      }),
+    [contacts, conversationsWithNotificationOrTopic]
   );
 
   return (
@@ -54,9 +71,9 @@ const Dashboard = () => {
         }}
       >
         <View style={{ gap: 30, paddingBottom: insets.bottom, flex: 1 }}>
-          {!!conversationsWithNotificationOrTopic.length && (
+          {!!approachingConvosWithActiveContacts.length && (
             <ApproachingConversations
-              conversations={conversationsWithNotificationOrTopic}
+              conversations={approachingConvosWithActiveContacts}
             />
           )}
           <MonthlyRoutine />

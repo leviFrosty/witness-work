@@ -7,7 +7,7 @@ import { usePreferences } from '../stores/preferences'
 import { getStudiesForGivenMonth } from '../lib/contacts'
 import useConversations from '../stores/conversationStore'
 import useContacts from '../stores/contactsStore'
-import { Platform, Share, View } from 'react-native'
+import { Share, View } from 'react-native'
 import IconButton from './IconButton'
 import i18n from '../lib/locales'
 import Text from './MyText'
@@ -155,18 +155,23 @@ const ExportTimeSheet = ({
 
   return (
     <Sheet
-      modal={Platform.OS === 'ios' ? undefined : true}
       open={sheet.open}
       onOpenChange={(o: boolean) => setSheet({ ...sheet, open: o })}
       dismissOnSnapToBottom
+      modal
     >
       <Sheet.Handle />
-      <Sheet.Overlay />
+      <Sheet.Overlay zIndex={100_000 - 1} />
       <Sheet.Frame>
         <View style={{ padding: 30, gap: 15 }}>
           <View style={{ marginBottom: 20 }}>
             {showViewAllMonthsButton && (
-              <Button onPress={() => navigation.navigate('Time Reports')}>
+              <Button
+                onPress={() => {
+                  navigation.navigate('Time Reports')
+                  setSheet({ open: false, month: 0, year: 0 })
+                }}
+              >
                 <Text
                   style={{
                     fontSize: theme.fontSize('sm'),
@@ -190,6 +195,7 @@ const ExportTimeSheet = ({
                 style={{
                   fontSize: theme.fontSize('xl'),
                   fontFamily: theme.fonts.semiBold,
+                  color: theme.colors.text,
                 }}
               >
                 {i18n.t('export')}{' '}
@@ -208,16 +214,26 @@ const ExportTimeSheet = ({
               />
             </View>
           </View>
-          <Button onPress={() => handleAction('hourglass')} variant='solid'>
+          <Button
+            onPress={() => handleAction('hourglass')}
+            variant='solid'
+            style={{ backgroundColor: theme.colors.card }}
+          >
             <View
               style={{ flexDirection: 'row', gap: 10, alignItems: 'center' }}
             >
               <IconButton icon={faHourglass} />
-              <Text>{i18n.t('hourglass')}</Text>
+              <Text style={{ color: theme.colors.text }}>
+                {i18n.t('hourglass')}
+              </Text>
             </View>
           </Button>
 
-          <Button onPress={() => handleAction('copy')} variant='solid'>
+          <Button
+            onPress={() => handleAction('copy')}
+            variant='solid'
+            style={{ backgroundColor: theme.colors.card }}
+          >
             <View
               style={{
                 flexDirection: 'row',
@@ -226,15 +242,23 @@ const ExportTimeSheet = ({
               }}
             >
               <IconButton icon={faCopy} />
-              <Text>{i18n.t('copyToClipboard')}</Text>
+              <Text style={{ color: theme.colors.text }}>
+                {i18n.t('copyToClipboard')}
+              </Text>
             </View>
           </Button>
-          <Button onPress={() => handleAction('share')} variant='solid'>
+          <Button
+            onPress={() => handleAction('share')}
+            variant='solid'
+            style={{ backgroundColor: theme.colors.card }}
+          >
             <View
               style={{ flexDirection: 'row', gap: 10, alignItems: 'center' }}
             >
               <IconButton icon={faArrowUpFromBracket} />
-              <Text>{i18n.t('share')}</Text>
+              <Text style={{ color: theme.colors.text }}>
+                {i18n.t('share')}
+              </Text>
             </View>
           </Button>
         </View>

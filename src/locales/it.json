@@ -257,5 +257,6 @@
   "viewAllMonths": "Visualizza tutti i mesi",
   "support": "Supporto",
   "viewSource": "Vedi la fonte",
-  "totalHours": "Ore totali"
+  "totalHours": "Ore totali",
+  "contactNotFoundForProvidedId": "Contatto non trovato per l'ID fornito."
 }

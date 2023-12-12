@@ -257,5 +257,6 @@
   "viewAllMonths": "查看所有月份",
   "support": "支持",
   "viewSource": "查看源代码",
-  "totalHours": "全部小时数"
+  "totalHours": "全部小时数",
+  "contactNotFoundForProvidedId": "找不到提供的 ID 的联系人。"
 }

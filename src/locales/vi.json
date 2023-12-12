@@ -257,5 +257,6 @@
   "viewAllMonths": "Xem tất cả các tháng",
   "support": "Ủng hộ",
   "viewSource": "Xem nguồn",
-  "totalHours": "Tổng số giờ"
+  "totalHours": "Tổng số giờ",
+  "contactNotFoundForProvidedId": "Không tìm thấy liên hệ cho ID được cung cấp."
 }

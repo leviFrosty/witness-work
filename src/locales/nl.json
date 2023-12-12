@@ -257,5 +257,6 @@
   "viewAllMonths": "Bekijk alle maanden",
   "support": "Steun",
   "viewSource": "Bron bekijken",
-  "totalHours": "Totaal aantal uren"
+  "totalHours": "Totaal aantal uren",
+  "contactNotFoundForProvidedId": "Contact niet gevonden voor opgegeven ID."
 }

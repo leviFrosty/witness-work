@@ -257,5 +257,6 @@
   "viewAllMonths": "Просмотреть все месяцы",
   "support": "Поддерживать",
   "viewSource": "Посмотреть источник",
-  "totalHours": "Все часы"
+  "totalHours": "Все часы",
+  "contactNotFoundForProvidedId": "Контакт не найден по указанному идентификатору."
 }

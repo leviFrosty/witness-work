@@ -65,11 +65,7 @@ const RootStackComponent = () => {
           component={OnBoarding}
         />
       )}
-      <RootStack.Screen
-        options={{ presentation: 'containedModal' }}
-        name='Contact Details'
-        component={ContactDetails}
-      />
+      <RootStack.Screen name='Contact Details' component={ContactDetails} />
       <RootStack.Screen name='Contact Form' component={ContactForm} />
       <RootStack.Screen name='Conversation Form' component={ConversationForm} />
       <RootStack.Screen

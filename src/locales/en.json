@@ -257,5 +257,6 @@
   "viewAllMonths": "View All Months",
   "support": "Support",
   "viewSource": "View Source",
-  "totalHours": "Total Hours"
+  "totalHours": "Total Hours",
+  "contactNotFoundForProvidedId": "Contact not found for provided ID."
 }

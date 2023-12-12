@@ -42,7 +42,8 @@ const ConversationRow = ({
     swipeable: Swipeable
   ) => {
     if (direction === 'left') {
-      navigation.replace('Conversation Form', {
+      navigation.navigate('Conversation Form', {
+        contactId: conversation.contact.id,
         conversationToEditId: conversation.id,
         notAtHome: conversation.notAtHome,
       })

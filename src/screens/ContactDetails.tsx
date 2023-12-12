@@ -451,15 +451,32 @@ const AddSheet = ({
 }: AddSheetProps) => {
   const theme = useTheme()
 
+  const handleAction = (action: 'notAtHome' | 'conversation') => {
+    if (action === 'notAtHome') {
+      navigation.replace('Conversation Form', {
+        contactId: contact?.id,
+        notAtHome: true,
+      })
+    }
+    if (action === 'conversation') {
+      navigation.replace('Conversation Form', {
+        contactId: contact?.id,
+      })
+    }
+
+    setSheetOpen(false)
+  }
+
   return (
     <Sheet
       open={sheetOpen}
       onOpenChange={setSheetOpen}
       dismissOnSnapToBottom
       snapPoints={[55]}
+      modal
     >
       <Sheet.Handle />
-      <Sheet.Overlay />
+      <Sheet.Overlay zIndex={100_000 - 1} />
       <Sheet.Frame>
         <View style={{ gap: 15, padding: 30 }}>
           <View style={{ gap: 10 }}>
@@ -467,6 +484,7 @@ const AddSheet = ({
               style={{
                 fontSize: theme.fontSize('xl'),
                 fontFamily: theme.fonts.bold,
+                color: theme.colors.text,
               }}
             >
               {i18n.t('addToHistory')}
@@ -475,6 +493,7 @@ const AddSheet = ({
               style={{
                 fontSize: theme.fontSize('sm'),
                 marginBottom: 15,
+                color: theme.colors.text,
               }}
             >
               {i18n.t('add_description')}
@@ -483,12 +502,7 @@ const AddSheet = ({
           <Button
             style={{ gap: 10 }}
             variant='outline'
-            onPress={async () =>
-              navigation.replace('Conversation Form', {
-                contactId: contact?.id,
-                notAtHome: true,
-              })
-            }
+            onPress={async () => handleAction('notAtHome')}
           >
             <IconButton
               iconStyle={{ color: theme.colors.text }}
@@ -506,11 +520,7 @@ const AddSheet = ({
           <Button
             style={{ gap: 10, backgroundColor: theme.colors.accent }}
             variant='solid'
-            onPress={async () =>
-              navigation.replace('Conversation Form', {
-                contactId: contact?.id,
-              })
-            }
+            onPress={async () => handleAction('conversation')}
           >
             <IconButton
               icon={faComments}
@@ -572,7 +582,7 @@ const ContactDetails = ({ route, navigation }: Props) => {
           inverseTextAndIconColor
           noBottomBorder
           title=''
-          buttonType='exit'
+          buttonType='back'
           rightElement={
             <View
               style={{
@@ -648,9 +658,11 @@ const ContactDetails = ({ route, navigation }: Props) => {
 
   if (!contact) {
     return (
-      <Text style={{ fontSize: 18, marginTop: 15 }}>
-        {i18n.t('contactNotFoundForProvidedId')} {params.id}
-      </Text>
+      <Wrapper style={{ flexGrow: 1, padding: 10 }}>
+        <Text style={{ fontSize: 18, marginTop: 15 }}>
+          {i18n.t('contactNotFoundForProvidedId')} {params.id}
+        </Text>
+      </Wrapper>
     )
   }
 

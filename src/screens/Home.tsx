@@ -5,6 +5,7 @@ import ContactsList from '../components/ContactsList'
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { createDrawerNavigator } from '@react-navigation/drawer'
+import { createBottomTabNavigator } from '@react-navigation/bottom-tabs'
 import Header from '../components/layout/Header'
 import Settings from './Settings'
 import useTheme from '../contexts/theme'
@@ -16,6 +17,8 @@ import ExportTimeSheet, {
   ExportTimeSheetState,
 } from '../components/ExportTimeSheet'
 import useContacts from '../stores/contactsStore'
+import Map from './Map'
+import TabBar from '../components/TabBar'
 
 const Dashboard = () => {
   const theme = useTheme()
@@ -62,12 +65,12 @@ const Dashboard = () => {
   return (
     <View style={{ flexGrow: 1, backgroundColor: theme.colors.background }}>
       <KeyboardAwareScrollView
-        contentContainerStyle={{ paddingBottom: insets.bottom + 30 }}
+        contentContainerStyle={{ paddingBottom: insets.bottom + 85 }}
         automaticallyAdjustKeyboardInsets
         style={{
           flexGrow: 1,
           padding: 15,
-          paddingBottom: insets.bottom,
+          paddingBottom: insets.bottom + 50,
         }}
       >
         <View style={{ gap: 30, paddingBottom: insets.bottom, flex: 1 }}>
@@ -90,6 +93,20 @@ const Dashboard = () => {
   )
 }
 
+const DashboardTabNavigator = () => {
+  const Tab = createBottomTabNavigator()
+  return (
+    <Tab.Navigator
+      initialRouteName='Name'
+      tabBar={(props) => <TabBar {...props} />}
+      screenOptions={{ header: () => null }}
+    >
+      <Tab.Screen name='Home' component={Dashboard} />
+      <Tab.Screen name='Map' component={Map} />
+    </Tab.Navigator>
+  )
+}
+
 const HomeScreen = () => {
   const Drawer = createDrawerNavigator()
 
@@ -103,7 +120,7 @@ const HomeScreen = () => {
       drawerContent={Settings}
       initialRouteName='Dashboard'
     >
-      <Drawer.Screen name='Dashboard' component={Dashboard} />
+      <Drawer.Screen name='Dashboard' component={DashboardTabNavigator} />
     </Drawer.Navigator>
   )
 }

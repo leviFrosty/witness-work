@@ -61,6 +61,12 @@ const FullMapView = ({ contactMarkers }: FullMapViewProps) => {
     fitToMarkers()
   }
 
+  const handleFitToMarker = (index: number) => {
+    if (contactMarkers[index]) {
+      mapRef.current?.fitToSuppliedMarkers([contactMarkers[index].id])
+    }
+  }
+
   useEffect(() => {
     const unsubscribe = navigation.addListener('tabPress', (e) => {
       if (e.target?.includes('Map')) {
@@ -116,9 +122,7 @@ const FullMapView = ({ contactMarkers }: FullMapViewProps) => {
         }}
       >
         <Carousel
-          onSnapToItem={(index) =>
-            mapRef.current?.fitToSuppliedMarkers([contactMarkers[index].id])
-          }
+          onSnapToItem={(index) => handleFitToMarker(index)}
           defaultIndex={0}
           ref={carouselRef}
           data={contactMarkers}

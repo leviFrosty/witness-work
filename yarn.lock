@@ -3866,6 +3866,11 @@
   dependencies:
     "@types/node" "*"
 
+"@types/geojson@^7946.0.10":
+  version "7946.0.13"
+  resolved "https://registry.yarnpkg.com/@types/geojson/-/geojson-7946.0.13.tgz#e6e77ea9ecf36564980a861e24e62a095988775e"
+  integrity sha512-bmrNrgKMOhM3WsafmbGmC+6dsF2Z308vLFsQ3a/bT8X8Sv5clVYpPars/UPq+sAaJP+5OoLAYgwbkS5QEJdLUQ==
+
 "@types/graceful-fs@^4.1.3":
   version "4.1.9"
   resolved "https://registry.yarnpkg.com/@types/graceful-fs/-/graceful-fs-4.1.9.tgz#2a06bc0f68a20ab37b3e36aa238be6abdf49e8b4"
@@ -4473,6 +4478,15 @@ axios@1.6.0:
   version "1.6.0"
   resolved "https://registry.yarnpkg.com/axios/-/axios-1.6.0.tgz#f1e5292f26b2fd5c2e66876adc5b06cdbd7d2102"
   integrity sha512-EZ1DYihju9pwVB+jg67ogm+Tmqc6JmhamRN6I4Zt8DfZu5lbcQGw3ozH9lFejSJgs/ibaef3A9PMXPLeefFGJg==
+  dependencies:
+    follow-redirects "^1.15.0"
+    form-data "^4.0.0"
+    proxy-from-env "^1.1.0"
+
+axios@^1.6.2:
+  version "1.6.2"
+  resolved "https://registry.yarnpkg.com/axios/-/axios-1.6.2.tgz#de67d42c755b571d3e698df1b6504cde9b0ee9f2"
+  integrity sha512-7i24Ri4pmDRfJTR7LDBhsOTtcm+9kjX5WiY1X3wIisx6G9So3pfMkEiU7emUBe46oceVImccTEM3k6C5dbVW8A==
   dependencies:
     follow-redirects "^1.15.0"
     form-data "^4.0.0"
@@ -6129,6 +6143,11 @@ expo-haptics@~12.4.0:
   resolved "https://registry.yarnpkg.com/expo-haptics/-/expo-haptics-12.4.0.tgz#99ad9d6a8eafb219aee022ec1412a998e1c90d71"
   integrity sha512-eELhZOO64oJa6AtEUxosatjSENE/tQgF2rVJxDsvRdx8Vgd3uFC+FRoM3nbMVJkxDgAaP3EKOPT1zVM41sNurw==
 
+expo-image@~1.3.5:
+  version "1.3.5"
+  resolved "https://registry.yarnpkg.com/expo-image/-/expo-image-1.3.5.tgz#426deca8cc9a8a3e72a649e9d98c5019efde0d37"
+  integrity sha512-yrIR2mnfIKbKcguoqWK3U5m3zvLPnonvSCabB2ErVGhws8zQs7ILYf+7T08j8U6eFcohjw0CoAFJ6RWNsX2EhA==
+
 expo-insights@~0.2.0:
   version "0.2.0"
   resolved "https://registry.yarnpkg.com/expo-insights/-/expo-insights-0.2.0.tgz#b31a1a6aee4e0f638bd097b237cf739e8dc41192"
@@ -6164,6 +6183,11 @@ expo-localization@~14.3.0:
   dependencies:
     rtl-detect "^1.0.2"
 
+expo-location@~16.1.0:
+  version "16.1.0"
+  resolved "https://registry.yarnpkg.com/expo-location/-/expo-location-16.1.0.tgz#251a465790d6622f828fd18f0edb2a73b9664b72"
+  integrity sha512-/jfRyYrXb9vjr8HoYmVHnzEqnw+0jaoRbHsxj6ePPAbevXmvXZqYHFRtfZtQ+q32SB4X6kUAXu28eBcLS+tqaA==
+
 expo-manifests@~0.7.0:
   version "0.7.2"
   resolved "https://registry.yarnpkg.com/expo-manifests/-/expo-manifests-0.7.2.tgz#77c2d9476e8130fc9ca6d4274fa1a5495d34358e"
@@ -6190,6 +6214,11 @@ expo-modules-core@1.5.12:
   dependencies:
     compare-versions "^3.4.0"
     invariant "^2.2.4"
+
+expo-network@~5.4.0:
+  version "5.4.0"
+  resolved "https://registry.yarnpkg.com/expo-network/-/expo-network-5.4.0.tgz#4eddde3e54a80b46c7cd2e4ce22a98e61aa97468"
+  integrity sha512-6Hdm6CRmt7KpEYSTp9Q0fH1V63Y3tLlgkZfJBqJHksxEP/ooOjBLsK8M09q+FiWsStByI/PKj6NO86+uymz5ig==
 
 expo-notifications@~0.20.1:
   version "0.20.1"
@@ -9893,10 +9922,22 @@ react-native-keyboard-aware-scroll-view@^0.9.5:
     prop-types "^15.6.2"
     react-native-iphone-x-helper "^1.0.3"
 
+react-native-maps@1.7.1:
+  version "1.7.1"
+  resolved "https://registry.yarnpkg.com/react-native-maps/-/react-native-maps-1.7.1.tgz#e0b9d68542b4b59b5ca3df375ada7c860fb41f2e"
+  integrity sha512-CHVLzL+Q2jiUGgbt4/vosxVI1SukWyaLGjD62VLgR/wZpnH4Umi9ql1bmKDPWcfj2C1QZwMU0Yc7rXTbvZUIiw==
+  dependencies:
+    "@types/geojson" "^7946.0.10"
+
 react-native-pager-view@6.2.0:
   version "6.2.0"
   resolved "https://registry.yarnpkg.com/react-native-pager-view/-/react-native-pager-view-6.2.0.tgz#51380d93fbe47f6380dc71d613a787bf27a4ca37"
   integrity sha512-pf9OnL/Tkr+5s4Gjmsn7xh91PtJLDa6qxYa/bmtUhd/+s4cQdWQ8DIFoOFghwZIHHHwVdWtoXkp6HtpjN+r20g==
+
+react-native-reanimated-carousel@^3.5.1:
+  version "3.5.1"
+  resolved "https://registry.yarnpkg.com/react-native-reanimated-carousel/-/react-native-reanimated-carousel-3.5.1.tgz#3605b9959ffc0aa1c6b8b8736d98f91f46e36b17"
+  integrity sha512-9BBQV6JAYSQm2lV7MFtT4mzapXmW4IZO6s38gfiJL84Jg23ivGB1UykcNQauKgtHyhtW2NuZJzItb1s42lM+hA==
 
 react-native-reanimated@~3.3.0:
   version "3.3.0"

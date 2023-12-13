@@ -50,6 +50,13 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     'sentry-expo',
     'expo-localization',
     ['expo-updates', { username: 'levi_frosty' }],
+    [
+      'expo-localization',
+      {
+        locationWhenInUsePermission:
+          'Allow $(PRODUCT_NAME) to use your location.',
+      },
+    ],
   ],
   hooks: {
     postPublish: [

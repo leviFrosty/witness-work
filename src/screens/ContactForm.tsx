@@ -1,5 +1,5 @@
 import React, { useRef, useState, useCallback, useEffect, useMemo } from 'react'
-import { TextInput, View, Pressable, useColorScheme } from 'react-native'
+import { TextInput, View, useColorScheme } from 'react-native'
 import Text from '../components/MyText'
 import { RootStackParamList } from '../stacks/RootStack'
 import { NativeStackScreenProps } from '@react-navigation/native-stack'
@@ -24,6 +24,11 @@ import InputRowContainer from '../components/inputs/InputRowContainer'
 import IconButton from '../components/IconButton'
 import { faCaretDown, faIdCard } from '@fortawesome/free-solid-svg-icons'
 import { parsePhoneNumber } from 'awesome-phonenumber'
+import { fetchCoordinateFromAddress } from '../lib/address'
+import Loader from '../components/Loader'
+import _ from 'lodash'
+import Button from '../components/Button'
+import { usePreferences } from '../stores/preferences'
 
 const PersonalContactSection = ({
   contact,
@@ -310,6 +315,7 @@ type Props = NativeStackScreenProps<RootStackParamList, 'Contact Form'>
 const ContactForm = ({ route, navigation }: Props) => {
   const theme = useTheme()
   const { addContact, contacts, updateContact } = useContacts()
+  const { incrementGeocodeApiCallCount } = usePreferences()
   const editMode = route.params.edit
   const [errors, setErrors] = useState<Errors>({
     name: '',
@@ -318,6 +324,8 @@ const ContactForm = ({ route, navigation }: Props) => {
     ? contacts.find((c) => c.id === route.params.id)
     : undefined
   const locales = Localization.getLocales()
+  const abortController = useRef<AbortController>()
+  const [fetching, setFetching] = useState(false)
 
   const [contact, setContact] = useState<Contact>(
     contactToUpdate || {
@@ -443,18 +451,94 @@ const ContactForm = ({ route, navigation }: Props) => {
 
   const submit = useCallback(() => {
     return new Promise((resolve) => {
+      abortController.current?.abort()
+
       const passValidation = validate()
+
       if (!passValidation) {
         return resolve(false)
       }
-      if (editMode) {
-        updateContact(contact)
-      } else {
-        addContact(contact)
+
+      const contactMaybeWithCoordinates = { ...contact }
+
+      const handleGetCoordinate = () => {
+        return new Promise<void>((innerResolve) => {
+          const handleFetch = async () => {
+            try {
+              setFetching(true)
+              const addressHasNotChanged = _.isEqual(
+                contactToUpdate?.address,
+                contact.address
+              )
+
+              if (addressHasNotChanged) {
+                return innerResolve()
+              }
+
+              const position = await fetchCoordinateFromAddress(
+                incrementGeocodeApiCallCount,
+                contact.address,
+                abortController.current
+              )
+
+              if (position) {
+                contactMaybeWithCoordinates.coordinate = position
+              } else {
+                contactMaybeWithCoordinates.coordinate = undefined
+              }
+
+              innerResolve()
+            } catch (error) {
+              innerResolve() // Resolve even in case of an error to continue the flow
+            }
+          }
+
+          if (
+            editMode &&
+            _.isEqual(contactToUpdate?.address, contact.address)
+          ) {
+            innerResolve()
+          }
+
+          handleFetch()
+        })
       }
-      resolve(contact)
+
+      handleGetCoordinate()
+        .then(() => {
+          setFetching(false)
+
+          if (editMode) {
+            updateContact(contactMaybeWithCoordinates)
+          } else {
+            addContact(contactMaybeWithCoordinates)
+          }
+
+          resolve(contactMaybeWithCoordinates)
+        })
+        .finally(() => {
+          abortController.current?.abort() // Cleanup function to cancel the request in the event the request is re-requested
+        })
     })
-  }, [addContact, contact, editMode, updateContact, validate])
+  }, [
+    addContact,
+    contact,
+    contactToUpdate?.address,
+    editMode,
+    incrementGeocodeApiCallCount,
+    updateContact,
+    validate,
+  ])
+
+  useEffect(() => {
+    // Cancels coordinate fetch request if user navigates away
+    const unsubscribe = navigation.addListener('transitionStart', () => {
+      abortController.current?.abort()
+      setFetching(false)
+    })
+
+    return unsubscribe
+  }, [navigation])
 
   useEffect(() => {
     navigation.setOptions({
@@ -463,42 +547,55 @@ const ContactForm = ({ route, navigation }: Props) => {
           title=''
           buttonType='exit'
           rightElement={
-            <Pressable
-              style={{ position: 'absolute', right: 0 }}
-              hitSlop={15}
-              onPress={async () => {
-                const succeeded = await submit()
-                if (!succeeded) {
-                  // Failed validation if didn't submit
-                  return
-                }
-                if (editMode) {
-                  navigation.replace('Contact Details', {
-                    id: (params as { id: string }).id,
-                  })
-                  return
-                }
-                navigation.replace('Conversation Form', {
-                  contactId: (params as { id: string }).id,
-                })
-              }}
-            >
-              <Text
+            fetching ? (
+              <View
                 style={{
-                  color: theme.colors.text,
-                  textDecorationLine: 'underline',
-                  fontSize: 16,
+                  flexDirection: 'row',
+                  justifyContent: 'flex-end',
+                  flex: 1,
                 }}
               >
-                {editMode ? i18n.t('save') : i18n.t('continue')}
-              </Text>
-            </Pressable>
+                <Loader style={{ height: 30, width: 30 }} />
+              </View>
+            ) : (
+              <Button
+                disabled={fetching}
+                style={{ position: 'absolute', right: 0 }}
+                onPress={async () => {
+                  const succeeded = await submit()
+                  if (!succeeded) {
+                    // Failed validation if didn't submit
+                    return
+                  }
+                  if (editMode) {
+                    navigation.replace('Contact Details', {
+                      id: (params as { id: string }).id,
+                    })
+                    return
+                  }
+                  navigation.replace('Conversation Form', {
+                    contactId: (params as { id: string }).id,
+                  })
+                }}
+              >
+                <Text
+                  style={{
+                    color: theme.colors.text,
+                    textDecorationLine: 'underline',
+                    fontSize: 16,
+                  }}
+                >
+                  {editMode ? i18n.t('save') : i18n.t('continue')}
+                </Text>
+              </Button>
+            )
           }
         />
       ),
     })
   }, [
     editMode,
+    fetching,
     navigation,
     submit,
     theme.colors.text,
@@ -511,7 +608,7 @@ const ContactForm = ({ route, navigation }: Props) => {
       extraHeight={100}
       automaticallyAdjustContentInsets
       automaticallyAdjustKeyboardInsets
-      style={{ backgroundColor: theme.colors.background }}
+      style={{ backgroundColor: theme.colors.background, position: 'relative' }}
     >
       <Wrapper noInsets style={{ gap: 30, marginTop: 20 }}>
         <View style={{ padding: 25, gap: 5 }}>

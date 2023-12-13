@@ -4,7 +4,10 @@
     "Convos",
     "copyeable",
     "datetimepicker",
+    "Geocode",
+    "Goecode",
     "Haptics",
+    "phonenumber",
     "Pressable",
     "Swipeable",
     "tamagui"

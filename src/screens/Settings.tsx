@@ -18,29 +18,36 @@ import { useEffect, useState } from 'react'
 import links from '../constants/links'
 import InputRowContainer from '../components/inputs/InputRowContainer'
 import PublisherTypeSelector from '../components/PublisherTypeSelector'
-import { faBell } from '@fortawesome/free-regular-svg-icons/faBell'
-import { faBellSlash } from '@fortawesome/free-solid-svg-icons/faBellSlash'
-import { faHeart, faHourglassHalf } from '@fortawesome/free-regular-svg-icons/'
 import IconButton from '../components/IconButton'
 import {
   faBug,
+  faBellSlash,
+  faBell,
   faChevronRight,
   faCode,
   faDownload,
   faFileContract,
   faGlobe,
+  faLocationArrow,
+  faLocationCrosshairs,
+  faHeart,
+  faHourglassHalf,
   faTools,
   faUndo,
+  faHand,
 } from '@fortawesome/free-solid-svg-icons'
 import {
   DrawerContentComponentProps,
   DrawerContentScrollView,
 } from '@react-navigation/drawer'
+import * as Location from 'expo-location'
+import { requestLocationPermission } from '../lib/address'
 
 const Settings = (props: DrawerContentComponentProps) => {
   const theme = useTheme()
   const { set: setPreferences } = usePreferences()
   const [notificationsEnabled, setNotificationsEnabled] = useState(false)
+  const [locationEnabled, setLocationEnabled] = useState(false)
   const insets = useSafeAreaInsets()
   const navigation = useNavigation<RootStackNavigation>()
 
@@ -49,6 +56,14 @@ const Settings = (props: DrawerContentComponentProps) => {
   }
 
   useEffect(() => {
+    const updateLocationStatus = async () => {
+      const { granted } = await Location.getForegroundPermissionsAsync()
+
+      if (granted) {
+        setLocationEnabled(true)
+      }
+    }
+
     const updateNotificationsStatus = async () => {
       const settings = await Notifications.getPermissionsAsync()
       if (!settings.granted) {
@@ -56,7 +71,9 @@ const Settings = (props: DrawerContentComponentProps) => {
       }
       setNotificationsEnabled(true)
     }
+
     updateNotificationsStatus()
+    updateLocationStatus()
   }, [])
 
   const askToTakeToSettings = () => {
@@ -172,6 +189,25 @@ const Settings = (props: DrawerContentComponentProps) => {
                 onPress={notificationsEnabled ? undefined : askToTakeToSettings}
               >
                 {!notificationsEnabled && <IconButton icon={faChevronRight} />}
+              </InputRowButton>
+              <InputRowButton
+                leftIcon={
+                  locationEnabled ? faLocationArrow : faLocationCrosshairs
+                }
+                label={
+                  locationEnabled
+                    ? i18n.t('locationEnabled')
+                    : i18n.t('locationDisabled')
+                }
+                onPress={() =>
+                  locationEnabled
+                    ? undefined
+                    : requestLocationPermission((status) =>
+                        setLocationEnabled(status)
+                      )
+                }
+              >
+                {!locationEnabled && <IconButton icon={faChevronRight} />}
               </InputRowButton>
               <InputRowButton
                 leftIcon={faHourglassHalf}
@@ -311,6 +347,34 @@ const Settings = (props: DrawerContentComponentProps) => {
                     ?.version}, Device: ${Device.modelName}, OS: ${
                     Device.osVersion
                   }. ${i18n.t('pleaseDescribeYourIssue')}: --------------`
+                  const subject = encodeURIComponent(subjectText)
+                  const body = encodeURIComponent(bodyText)
+                  try {
+                    await Linking.openURL(
+                      `mailto:${email}?subject=${subject}&body=${body}`
+                    )
+                  } catch (error) {
+                    Alert.alert(
+                      i18n.t('error'),
+                      i18n.t('failedToOpenMailApplication')
+                    )
+                  }
+                }}
+              >
+                <IconButton icon={faChevronRight} />
+              </InputRowButton>
+              <InputRowButton
+                leftIcon={faHand}
+                label={i18n.t('featureRequest')}
+                onPress={async () => {
+                  const email = 'levi.wilkerson@proton.me'
+                  const subjectText = '[JW Time] Feature Request'
+                  const bodyText = `App Version: v${Constants.expoConfig
+                    ?.version}, Device: ${Device.modelName}, OS: ${
+                    Device.osVersion
+                  }. ${i18n.t(
+                    'pleaseDescribeYourFeatureClearly'
+                  )}: --------------`
                   const subject = encodeURIComponent(subjectText)
                   const body = encodeURIComponent(bodyText)
                   try {

@@ -6,7 +6,7 @@ import {
   ScrollView,
   useColorScheme,
 } from 'react-native'
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import Text from '../components/MyText'
 import useTheme from '../contexts/theme'
 import { RootStackNavigation, RootStackParamList } from '../stacks/RootStack'
@@ -47,65 +47,28 @@ import {
 } from '@fortawesome/free-solid-svg-icons'
 import Copyeable from '../components/Copyeable'
 import Button from '../components/Button'
-import { parsePhoneNumber } from 'awesome-phonenumber'
-import { useNavigation } from '@react-navigation/native'
-import { getLocales } from 'expo-localization'
 import { Sheet } from 'tamagui'
+import {
+  addressToString,
+  fetchCoordinateFromAddress,
+  navigateTo,
+} from '../lib/address'
+import { parsePhoneNumber } from 'awesome-phonenumber'
+import { getLocales } from 'expo-localization'
+import { useNavigation } from '@react-navigation/native'
+import { usePreferences } from '../stores/preferences'
+import { handleCall, handleMessage } from '../lib/phone'
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Contact Details'>
 
 const PhoneRow = ({ contact }: { contact: Contact }) => {
   const theme = useTheme()
   const navigation = useNavigation<RootStackNavigation>()
-  const { phone } = contact
   const locales = getLocales()
 
-  const formatted = useMemo(
-    () =>
-      parsePhoneNumber(phone || '', {
-        regionCode: contact.phoneRegionCode || locales[0].regionCode || '',
-      }),
-    [contact.phoneRegionCode, locales, phone]
-  )
-
-  const isValid = formatted.valid
-
-  const alertInvalidPhone = useCallback(() => {
-    Alert.alert(
-      i18n.t('invalidPhone'),
-      `"${formatted.number?.input}" ${i18n.t('invalidPhone_description')} ${
-        formatted.regionCode
-      }.`,
-      [
-        { style: 'cancel', text: i18n.t('cancel') },
-        {
-          style: 'default',
-          text: i18n.t('edit'),
-          onPress: () =>
-            navigation.replace('Contact Form', {
-              id: contact.id,
-              edit: true,
-            }),
-        },
-      ]
-    )
-  }, [contact.id, formatted.number?.input, formatted.regionCode, navigation])
-
-  if (!phone) {
-    return
-  }
-  const handleCall = () => {
-    if (isValid) {
-      Linking.openURL(`tel:${formatted.number.e164}`)
-    } else alertInvalidPhone()
-  }
-
-  const handleMessage = () => {
-    if (isValid) {
-      Linking.openURL(`sms:${formatted.number.e164}`)
-    } else alertInvalidPhone()
-  }
-
+  const formatted = parsePhoneNumber(contact.phone || '', {
+    regionCode: contact.phoneRegionCode || locales[0].regionCode || '',
+  })
   return (
     <View style={{ gap: 10 }}>
       <Text
@@ -123,7 +86,11 @@ const PhoneRow = ({ contact }: { contact: Contact }) => {
           justifyContent: 'space-between',
         }}
       >
-        <Copyeable textProps={{ onPress: handleCall }}>
+        <Copyeable
+          textProps={{
+            onPress: () => handleCall(contact, formatted, navigation),
+          }}
+        >
           {formatted.number?.international}
         </Copyeable>
         <View
@@ -137,13 +104,13 @@ const PhoneRow = ({ contact }: { contact: Contact }) => {
             icon={faPhone}
             size='lg'
             iconStyle={{ color: theme.colors.accent }}
-            onPress={handleCall}
+            onPress={() => handleCall(contact, formatted, navigation)}
           />
           <IconButton
             icon={faComment}
             size='lg'
             iconStyle={{ color: theme.colors.accent }}
-            onPress={handleMessage}
+            onPress={() => handleMessage(contact, formatted, navigation)}
           />
         </View>
       </View>
@@ -231,39 +198,30 @@ const Hero = ({
 
 const AddressRow = ({ contact }: { contact: Contact }) => {
   const theme = useTheme()
+  const [hasTriedToGetCoordinates, setHasTriedToGetCoordinates] =
+    useState(false)
   const { address } = contact
-
-  const navigateTo = useCallback((a: Address) => {
-    const scheme = Platform.select({
-      ios: 'maps://0,0?q=',
-      android: 'geo:0,0?q=',
-    })
-    const address = `${
-      a.line1
-    }${` ${a.line2}`}${` ${a.city}`}${`, ${a.state}`}${` ${a.zip}`}`
-    const url = Platform.select({
-      ios: `${scheme}${address}`,
-      android: `${scheme}${address}`,
-    })
-    if (!url) {
-      return
-    }
-    Linking.openURL(url)
-  }, [])
+  const { updateContact } = useContacts()
+  const { incrementGeocodeApiCallCount } = usePreferences()
 
   if (!address) {
     return null
   }
 
-  const addressAsSingleString = Object.keys(address).reduce(
-    (prev, line, index) =>
-      !address[line as keyof Address]?.length
-        ? prev
-        : (prev += `${index !== 0 ? ' ' : ''}${
-            address[line as keyof Address]
-          }`),
-    ''
-  )
+  const coordinateAsString = () =>
+    `${contact.coordinate?.latitude}, ${contact.coordinate?.longitude}`
+
+  const attemptToGetCoordinates = async () => {
+    setHasTriedToGetCoordinates(true)
+    const position = await fetchCoordinateFromAddress(
+      incrementGeocodeApiCallCount,
+      contact.address
+    )
+    updateContact({
+      ...contact,
+      coordinate: position || undefined,
+    })
+  }
 
   return (
     <View style={{ gap: 10 }}>
@@ -286,7 +244,7 @@ const AddressRow = ({ contact }: { contact: Contact }) => {
           }}
         >
           <Copyeable
-            text={addressAsSingleString}
+            text={addressToString(address)}
             onPress={() => navigateTo(address)}
           >
             <View
@@ -310,6 +268,40 @@ const AddressRow = ({ contact }: { contact: Contact }) => {
           />
         </View>
       </Button>
+      {contact.coordinate === undefined &&
+      hasTriedToGetCoordinates === false ? (
+        <View style={{ gap: 3 }}>
+          <Button onPress={attemptToGetCoordinates}>
+            <Text
+              style={{
+                textDecorationLine: 'underline',
+                color: theme.colors.accent,
+              }}
+            >
+              {i18n.t('fetchCoordinates')}
+            </Text>
+          </Button>
+          <Text
+            style={{
+              fontSize: theme.fontSize('xs'),
+              color: theme.colors.textAlt,
+            }}
+          >
+            {i18n.t('coordinatesAllowMapView')}
+          </Text>
+        </View>
+      ) : (
+        <Copyeable text={coordinateAsString()}>
+          <Text
+            style={{
+              fontSize: theme.fontSize('xs'),
+              color: theme.colors.textAlt,
+            }}
+          >
+            {coordinateAsString()}
+          </Text>
+        </Copyeable>
+      )}
     </View>
   )
 }
@@ -671,7 +663,7 @@ const ContactDetails = ({ route, navigation }: Props) => {
   const hasAddress = address && Object.values(address).some((v) => v.length > 0)
 
   return (
-    <View>
+    <View style={{ flexGrow: 1 }}>
       <ScrollView
         style={{
           position: 'relative',

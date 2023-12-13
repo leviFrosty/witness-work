@@ -114,32 +114,34 @@ const FullMapView = ({ contactMarkers }: FullMapViewProps) => {
           />
         ))}
       </MapView>
-      <View
-        style={{
-          position: 'absolute',
-          bottom: 0,
-          zIndex: 1000,
-        }}
-      >
-        <Carousel
-          onSnapToItem={(index) => handleFitToMarker(index)}
-          defaultIndex={0}
-          ref={carouselRef}
-          data={contactMarkers}
-          renderItem={({ item }) => (
-            <MapCarouselCard contact={item} setSheet={setSheet} />
-          )}
-          scrollAnimationDuration={100}
-          mode='parallax'
-          modeConfig={{
-            parallaxScrollingScale: 0.9,
-            parallaxScrollingOffset: 50,
+      {contactMarkers.length !== 0 && (
+        <View
+          style={{
+            position: 'absolute',
+            bottom: 0,
+            zIndex: 1000,
           }}
-          loop
-          width={width}
-          height={280}
-        />
-      </View>
+        >
+          <Carousel
+            onSnapToItem={(index) => handleFitToMarker(index)}
+            defaultIndex={0}
+            ref={carouselRef}
+            data={contactMarkers}
+            renderItem={({ item }) => (
+              <MapCarouselCard contact={item} setSheet={setSheet} />
+            )}
+            scrollAnimationDuration={100}
+            mode='parallax'
+            modeConfig={{
+              parallaxScrollingScale: 0.9,
+              parallaxScrollingOffset: 50,
+            }}
+            loop
+            width={width}
+            height={280}
+          />
+        </View>
+      )}
       <ShareAddressSheet sheet={sheet} setSheet={setSheet} />
       <View style={{ position: 'absolute', top: 5, left: 5 }}>
         <Button

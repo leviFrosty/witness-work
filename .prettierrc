@@ -4,5 +4,6 @@
   "trailingComma": "es5",
   "printWidth": 80,
   "tabWidth": 2,
-  "jsxSingleQuote": true
+  "jsxSingleQuote": true,
+  "endOfLine": "lf"
 }

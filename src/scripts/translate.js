@@ -6,9 +6,9 @@ const { exec } = require('child_process')
 
 console.log('[translate] - Starting auto translations...')
 
-if (!process.env.GOOGLE_TRANSLATE_API_KEY) {
+if (!process.env.GOOGLE_CLOUD_API_KEY) {
   throw new Error(
-    'Google API key not provided. Please add GOOGLE_TRANSLATE_API_KEY to .env'
+    'Google API key not provided. Please add GOOGLE_CLOUD_API_KEY to .env'
   )
 }
 
@@ -29,7 +29,7 @@ const listFilesWithoutExtensions = (directoryPath) => {
 const directoryPath = 'src/locales/'
 const locales = listFilesWithoutExtensions(directoryPath)
 locales.forEach((locale) => {
-  const nodeCommand = `cd ${directoryPath} && i18n-auto-translation -k ${process.env.GOOGLE_TRANSLATE_API_KEY} -d ./ -f en -t ${locale}`
+  const nodeCommand = `cd ${directoryPath} && i18n-auto-translation -k ${process.env.GOOGLE_CLOUD_API_KEY} -d ./ -f en -t ${locale}`
 
   exec(nodeCommand, (error, stdout) => {
     if (error) {

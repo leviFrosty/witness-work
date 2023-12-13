@@ -8,4 +8,6 @@ export default {
   appStoreReview: `itms-apps://itunes.apple.com/app/viewContentsUserReviews/id${itunesItemId}?action=write-review`,
   playStoreReview: `market://details?id=${Application.applicationId}&showAllReviews=true`,
   githubRepo: 'https://github.com/leviFrosty/JW-Time',
+  appleMapsBase: 'http://maps.apple.com',
+  googleMapsBase: 'https://www.google.com/maps/search',
 }

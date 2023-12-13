@@ -48,6 +48,8 @@ const initialState = {
   onboardingComplete: false,
   installedOn: new Date(),
   contactSort: 'recentConversation',
+  hasCompletedMapOnboarding: false,
+  calledGoecodeApiTimes: 0,
 }
 
 export const usePreferences = create(
@@ -55,6 +57,10 @@ export const usePreferences = create(
     combine(initialState, (set) => ({
       set,
       setPublisher: (publisher: Publisher) => set({ publisher }),
+      incrementGeocodeApiCallCount: () =>
+        set(({ calledGoecodeApiTimes }) => ({
+          calledGoecodeApiTimes: calledGoecodeApiTimes + 1,
+        })),
       setContactSort: (contactSort: string) => set({ contactSort }),
     })),
     {

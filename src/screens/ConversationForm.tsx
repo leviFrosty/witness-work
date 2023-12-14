@@ -433,7 +433,9 @@ const ConversationForm = ({ route, navigation }: Props) => {
                     fontSize: 16,
                   }}
                 >
-                  {params.contactId ? i18n.t('add') : i18n.t('save')}
+                  {conversationToUpdate?.contact.id
+                    ? i18n.t('save')
+                    : i18n.t('add')}
                 </Text>
               </Button>
             </View>

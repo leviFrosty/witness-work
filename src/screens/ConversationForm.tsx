@@ -39,8 +39,8 @@ import {
 import _ from 'lodash'
 import Button from '../components/Button'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import * as StoreReview from 'expo-store-review'
 import { usePreferences } from '../stores/preferences'
+import { maybeRequestStoreReview } from '../lib/storeReview'
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Conversation Form'>
 
@@ -126,7 +126,12 @@ const AssignmentSection = ({
 const ConversationForm = ({ route, navigation }: Props) => {
   const theme = useTheme()
   const insets = useSafeAreaInsets()
-  const { calledGoecodeApiTimes, installedOn } = usePreferences()
+  const {
+    calledGoecodeApiTimes,
+    installedOn,
+    lastTimeRequestedAReview,
+    updateLastTimeRequestedStoreReview,
+  } = usePreferences()
   const { params } = route
   const { contacts } = useContacts()
   const { conversations, addConversation, updateConversation } =
@@ -421,14 +426,12 @@ const ConversationForm = ({ route, navigation }: Props) => {
                     return
                   }
 
-                  if (
-                    calledGoecodeApiTimes > 3 &&
-                    moment(installedOn).isBefore(moment().subtract(1, 'week'))
-                  ) {
-                    if (await StoreReview.hasAction()) {
-                      await StoreReview.requestReview()
-                    }
-                  }
+                  await maybeRequestStoreReview({
+                    calledGoecodeApiTimes,
+                    installedOn,
+                    lastTimeRequestedAReview,
+                    updateLastTimeRequestedStoreReview,
+                  })
 
                   if (params.contactId || conversationToUpdate?.contact.id) {
                     navigation.replace('Contact Details', {
@@ -460,11 +463,13 @@ const ConversationForm = ({ route, navigation }: Props) => {
     calledGoecodeApiTimes,
     conversationToUpdate?.contact.id,
     installedOn,
+    lastTimeRequestedAReview,
     navigation,
     params,
     submit,
     theme.colors.text,
     theme.colors.textInverse,
+    updateLastTimeRequestedStoreReview,
   ])
 
   const IsBibleStudyCheckbox = () => {

@@ -50,6 +50,7 @@ const initialState = {
   contactSort: 'recentConversation',
   hasCompletedMapOnboarding: false,
   calledGoecodeApiTimes: 0,
+  lastTimeRequestedAReview: null as Date | null,
 }
 
 export const usePreferences = create(
@@ -61,6 +62,8 @@ export const usePreferences = create(
         set(({ calledGoecodeApiTimes }) => ({
           calledGoecodeApiTimes: calledGoecodeApiTimes + 1,
         })),
+      updateLastTimeRequestedStoreReview: () =>
+        set({ lastTimeRequestedAReview: new Date() }),
       setContactSort: (contactSort: string) => set({ contactSort }),
     })),
     {

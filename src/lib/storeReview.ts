@@ -22,14 +22,14 @@ export const maybeRequestStoreReview = async ({
     moment().subtract(1, 'week')
   )
 
-  const lastReviewRequestMoreThanAMonthAgo =
+  const lastRequestWasSomeTimeAgo =
     lastTimeRequestedAReview === null ||
-    moment(lastTimeRequestedAReview).isBefore(moment().subtract(1, 'month'))
+    moment(lastTimeRequestedAReview).isBefore(moment().subtract(3, 'days'))
 
   if (
     calledGoecodeApiTimes > 3 &&
     installedAppMoreThanAWeekAgo &&
-    lastReviewRequestMoreThanAMonthAgo
+    lastRequestWasSomeTimeAgo
   ) {
     try {
       if (await StoreReview.hasAction()) {

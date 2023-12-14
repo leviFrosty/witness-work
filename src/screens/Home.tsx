@@ -1,8 +1,7 @@
 import { createDrawerNavigator } from '@react-navigation/drawer'
 import Header from '../components/layout/Header'
 import Settings from './Settings'
-
-import HomeTabStack from '../stacks/DashboardTabStack'
+import { Dashboard } from './Dashboard'
 
 const HomeScreen = () => {
   const Drawer = createDrawerNavigator()
@@ -17,7 +16,7 @@ const HomeScreen = () => {
       drawerContent={Settings}
       initialRouteName='Dashboard'
     >
-      <Drawer.Screen name='Dashboard' component={HomeTabStack} />
+      <Drawer.Screen name='Dashboard' component={Dashboard} />
     </Drawer.Navigator>
   )
 }

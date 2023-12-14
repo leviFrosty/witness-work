@@ -302,5 +302,7 @@
   "fit": "Fit",
   "thisWillBeConfigurableLater": "In einem zukünftigen Update werden diese Zeitrahmen konfigurierbar sein.",
   "featureRequest": "Featureanfrage",
-  "pleaseDescribeYourFeatureClearly": "Bitte beschreiben Sie sehr detailliert, welche Funktion Sie gerne hätten. Geben Sie einen Kontaktnamen und eine Telefonnummer an. Bitte zeichnen Sie gegebenenfalls ein Bild davon, wie die Funktion aussehen könnte. Senden Sie alternativ einen Screenshot einer App mit ähnlicher Funktionalität."
+  "pleaseDescribeYourFeatureClearly": "Bitte beschreiben Sie sehr detailliert, welche Funktion Sie gerne hätten. Geben Sie einen Kontaktnamen und eine Telefonnummer an. Bitte zeichnen Sie gegebenenfalls ein Bild davon, wie die Funktion aussehen könnte. Senden Sie alternativ einen Screenshot einer App mit ähnlicher Funktionalität.",
+  "Home": "Heim",
+  "Map": "Karte"
 }

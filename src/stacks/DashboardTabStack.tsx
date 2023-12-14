@@ -3,8 +3,8 @@ import {
   BottomTabNavigationProp,
 } from '@react-navigation/bottom-tabs'
 import TabBar from '../components/TabBar'
-import { Dashboard } from '../screens/Dashboard'
 import Map from '../screens/Map'
+import HomeScreen from '../screens/Home'
 
 export type HomeTabStackParamList = {
   Home: undefined
@@ -23,7 +23,7 @@ const HomeTabStack = () => {
       tabBar={(props) => <TabBar {...props} />}
       screenOptions={{ header: () => null }}
     >
-      <Tab.Screen name='Home' component={Dashboard} />
+      <Tab.Screen name='Home' component={HomeScreen} />
       <Tab.Screen name='Map' component={Map} />
     </Tab.Navigator>
   )

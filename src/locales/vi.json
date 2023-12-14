@@ -302,5 +302,7 @@
   "fit": "Phù hợp",
   "thisWillBeConfigurableLater": "Trong bản cập nhật trong tương lai, những khung thời gian này sẽ có thể được cấu hình.",
   "featureRequest": "Yêu cầu tính năng",
-  "pleaseDescribeYourFeatureClearly": "Vui lòng mô tả tính năng bạn muốn có thật chi tiết. Cung cấp tên liên lạc và số điện thoại. Nếu có thể, vui lòng vẽ hình ảnh đặc điểm này trông như thế nào. Ngoài ra, hãy gửi ảnh chụp màn hình của một ứng dụng có chức năng tương tự."
+  "pleaseDescribeYourFeatureClearly": "Vui lòng mô tả tính năng bạn muốn có thật chi tiết. Cung cấp tên liên lạc và số điện thoại. Nếu có thể, vui lòng vẽ hình ảnh đặc điểm này trông như thế nào. Ngoài ra, hãy gửi ảnh chụp màn hình của một ứng dụng có chức năng tương tự.",
+  "Home": "Trang chủ",
+  "Map": "Bản đồ"
 }

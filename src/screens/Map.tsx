@@ -44,6 +44,7 @@ const FullMapView = ({ contactMarkers }: FullMapViewProps) => {
   const navigation = useNavigation<HomeTabStackNavigation>()
   const width = Dimensions.get('window').width
   const mapRef = useRef<MapView>(null)
+  const insets = useSafeAreaInsets()
   const carouselRef = useRef<ICarouselInstance>(null)
   const [locationPermission, setLocationPermission] = useState(false)
   const [sheet, setSheet] = useState<MapShareSheet>({
@@ -143,7 +144,7 @@ const FullMapView = ({ contactMarkers }: FullMapViewProps) => {
         </View>
       )}
       <ShareAddressSheet sheet={sheet} setSheet={setSheet} />
-      <View style={{ position: 'absolute', top: 5, left: 5 }}>
+      <View style={{ position: 'absolute', top: insets.top, left: 5 }}>
         <Button
           variant='solid'
           onPress={fitToMarkers}
@@ -159,7 +160,6 @@ const FullMapView = ({ contactMarkers }: FullMapViewProps) => {
 const MapOnboarding = () => {
   const { incrementGeocodeApiCallCount, set } = usePreferences()
   const { contacts, updateContact } = useContacts()
-  const [step, setStep] = useState(0)
   const theme = useTheme()
   const navigation = useNavigation<HomeTabStackNavigation>()
   const abortController = useRef<AbortController>()
@@ -179,6 +179,10 @@ const MapOnboarding = () => {
         c.address && countTruthyValueStrings(c.address) !== 0 && !c.coordinate
     )
   }, [contacts])
+
+  const [step, setStep] = useState(
+    oldContactsWithAddressWithoutCoordinates.length === 0 ? 1 : 0
+  )
 
   const updateOldContacts = useCallback(
     async (oldContacts: Contact[]) => {
@@ -237,7 +241,7 @@ const MapOnboarding = () => {
       style={{
         flexGrow: 1,
         paddingHorizontal: 20,
-        paddingTop: 40,
+        paddingTop: insets.top + 60,
         paddingBottom: insets.bottom + 80,
       }}
     >

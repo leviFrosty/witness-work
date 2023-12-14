@@ -73,7 +73,7 @@ const Update = () => {
               </Text>
               <Button>
                 <Text
-                  onPress={() => navigation.replace('Home')}
+                  onPress={() => navigation.replace('Root')}
                   style={{ fontSize: 14, textDecorationLine: 'underline' }}
                 >
                   {i18n.t('cancel')}
@@ -125,7 +125,7 @@ const Update = () => {
               </Text>
             )}
           </View>
-          <ActionButton onPress={() => navigation.replace('Home')}>
+          <ActionButton onPress={() => navigation.replace('Root')}>
             {i18n.t('goHome')}
           </ActionButton>
         </View>

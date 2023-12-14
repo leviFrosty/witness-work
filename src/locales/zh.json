@@ -302,5 +302,7 @@
   "fit": "合身",
   "thisWillBeConfigurableLater": "在未来的更新中，这些时间范围将是可配置的。",
   "featureRequest": "功能要求",
-  "pleaseDescribeYourFeatureClearly": "请详细描述您希望拥有哪些功能。提供联系人姓名和电话。如果适用，请绘制该功能的图像。或者，发送具有类似功能的应用程序的屏幕截图。"
+  "pleaseDescribeYourFeatureClearly": "请详细描述您希望拥有哪些功能。提供联系人姓名和电话。如果适用，请绘制该功能的图像。或者，发送具有类似功能的应用程序的屏幕截图。",
+  "Home": "家",
+  "Map": "地图"
 }

@@ -302,5 +302,7 @@
   "fit": "Fit",
   "thisWillBeConfigurableLater": "In a future update, these time frames will be configurable.",
   "featureRequest": "Feature Request",
-  "pleaseDescribeYourFeatureClearly": "Please describe what feature you'd like to have extremely detailed. Provide a contact name and phone. If applicable, please draw an image of what the feature might look like. Alternatively, send a screenshot of an app that has similar functionality."
+  "pleaseDescribeYourFeatureClearly": "Please describe what feature you'd like to have extremely detailed. Provide a contact name and phone. If applicable, please draw an image of what the feature might look like. Alternatively, send a screenshot of an app that has similar functionality.",
+  "Home": "Home",
+  "Map": "Map"
 }

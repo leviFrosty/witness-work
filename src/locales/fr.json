@@ -302,5 +302,7 @@
   "fit": "Ajuster",
   "thisWillBeConfigurableLater": "Dans une prochaine mise à jour, ces délais seront configurables.",
   "featureRequest": "Demande de fonctionnalité",
-  "pleaseDescribeYourFeatureClearly": "Veuillez décrire la fonctionnalité que vous souhaiteriez voir extrêmement détaillée. Fournissez un nom et un téléphone de contact. Le cas échéant, veuillez dessiner une image de ce à quoi pourrait ressembler la fonctionnalité. Vous pouvez également envoyer une capture d’écran d’une application dotée de fonctionnalités similaires."
+  "pleaseDescribeYourFeatureClearly": "Veuillez décrire la fonctionnalité que vous souhaiteriez voir extrêmement détaillée. Fournissez un nom et un téléphone de contact. Le cas échéant, veuillez dessiner une image de ce à quoi pourrait ressembler la fonctionnalité. Vous pouvez également envoyer une capture d’écran d’une application dotée de fonctionnalités similaires.",
+  "Home": "Maison",
+  "Map": "Carte"
 }

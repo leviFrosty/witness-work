@@ -4,7 +4,6 @@ import {
 } from '@react-navigation/native-stack'
 import ContactForm from '../screens/ContactForm'
 import Header from '../components/layout/Header'
-import Home from '../screens/Home'
 import ConversationForm from '../screens/ConversationForm'
 import ContactSelector from '../screens/ContactSelector'
 import useTheme from '../contexts/theme'
@@ -17,9 +16,10 @@ import { usePreferences } from '../stores/preferences'
 import Update from '../screens/Update'
 import IconButton from '../components/IconButton'
 import { faPlus } from '@fortawesome/free-solid-svg-icons'
+import HomeTabStack from './DashboardTabStack'
 
 export type RootStackParamList = {
-  Home: undefined
+  Root: undefined
   'Conversation Form': {
     contactId?: string
     conversationToEditId?: string
@@ -55,8 +55,8 @@ const RootStackComponent = () => {
       {onboardingComplete ? (
         <RootStack.Screen
           options={{ header: () => undefined }}
-          name='Home'
-          component={Home}
+          name='Root'
+          component={HomeTabStack}
         />
       ) : (
         <RootStack.Screen

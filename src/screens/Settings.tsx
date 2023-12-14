@@ -421,23 +421,21 @@ const Settings = (props: DrawerContentComponentProps) => {
             </Section>
           </View>
         </View>
-      </DrawerContentScrollView>
-      <View
-        style={{ padding: 10, alignItems: 'center', justifyContent: 'center' }}
-      >
         <Text
           style={{
             textAlign: 'center',
             color: theme.colors.textAlt,
             fontFamily: theme.fonts.semiBold,
             fontSize: 14,
+            marginTop: 15,
+            marginBottom: 45,
           }}
         >
           {Constants.expoConfig?.version
             ? `v${Constants.expoConfig?.version}`
             : i18n.t('versionUnknown')}
         </Text>
-      </View>
+      </DrawerContentScrollView>
     </View>
   )
 }

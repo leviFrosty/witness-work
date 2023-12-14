@@ -302,5 +302,7 @@
   "fit": "Adatto",
   "thisWillBeConfigurableLater": "In un aggiornamento futuro, questi intervalli di tempo saranno configurabili.",
   "featureRequest": "Richiesta di funzionalità",
-  "pleaseDescribeYourFeatureClearly": "Descrivi quale funzionalità desideri che sia estremamente dettagliata. Fornire un nome e un telefono di contatto. Se applicabile, disegna un'immagine di come potrebbe apparire la funzione. In alternativa, invia uno screenshot di un'app con funzionalità simili."
+  "pleaseDescribeYourFeatureClearly": "Descrivi quale funzionalità desideri che sia estremamente dettagliata. Fornire un nome e un telefono di contatto. Se applicabile, disegna un'immagine di come potrebbe apparire la funzione. In alternativa, invia uno screenshot di un'app con funzionalità simili.",
+  "Home": "Casa",
+  "Map": "Carta geografica"
 }

@@ -27,9 +27,11 @@ JW Time is the easy way for Jehovah's Witnesses to manage their field service pr
 
 ### Help Translate 🌐
 
-JW Time is automatically translated into 10+ languages by means of Google Cloud Translate. These translations might not always be the highest quality. If you wish to contribute native translations, please contact me at levi.wilkerson@proton.me. Thank you!
+JW Time is automatically translated into 11 languages by means of Google Cloud Translate. These translations might not always be the highest quality. To help, proofread these translations on [Crowdin](https://crowdin.com/project/jw-time/). Thank you!
 
-Current translations: en, de, es, fr, it, ja, ko, nl, pt, ru, vi, zh
+[Not sure how to use Crowdin?](https://support.crowdin.com/enterprise/getting-started-for-translators/)
+
+Current translations: de, es, fr, it, ja, ko, nl, pt, ru, vi, zh
 
 ### Help Code ⌨️
 

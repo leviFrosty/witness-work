@@ -12,12 +12,12 @@ JW Time is the easy way for Jehovah's Witnesses to manage their field service pr
 [![Play Store](https://img.shields.io/badge/Google_Play-414141?style=for-the-badge&logo=google-play&logoColor=white)](https://play.google.com/store/apps/details?id=com.leviwilkerson.jwtime)
 
 <div float="left">
-<img src="./src/docs/screenshots/preview1.png" width="160">
-<img src="./src/docs/screenshots/preview2.png" width="160">
-<img src="./src/docs/screenshots/preview3.png" width="160">
-<img src="./src/docs/screenshots/preview4.png" width="160">
-<img src="./src/docs/screenshots/preview5.png" width="160">
-<img src="./src/docs/screenshots/preview6.png" width="160">
+<img src="./src/docs/screenshots/preview1.png" width="200">
+<img src="./src/docs/screenshots/preview2.png" width="200">
+<img src="./src/docs/screenshots/preview3.png" width="200">
+<img src="./src/docs/screenshots/preview4.png" width="200">
+<img src="./src/docs/screenshots/preview5.png" width="200">
+<img src="./src/docs/screenshots/preview6.png" width="200">
 </div>
 
 ## We Need Your Help Translating! 🌐

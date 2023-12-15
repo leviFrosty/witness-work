@@ -1,4 +1,4 @@
 files:
   - source: /src/locales/en.json
     translation: /src/locales/%two_letters_code%.json
-    ignore: ['**/en.json']
+    ignore: ['/**/en.json']

@@ -1,3 +1,5 @@
+commit_message: 'translation: new translations %original_file_name% from Crowdin'
+pull_request_title: 'translation: New Translations'
 files:
   - source: /src/locales/en.json
     translation: /%original_path%/%two_letters_code%.json

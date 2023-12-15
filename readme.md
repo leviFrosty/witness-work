@@ -1,6 +1,7 @@
 ![Expo](https://img.shields.io/badge/expo-1C1E24?style=flat&logo=expo&logoColor=#D04A37)
 ![Release Version](https://img.shields.io/github/package-json/v/leviFrosty/JW-Time/production?label=Release%20Version&color=%231BD15D)
 ![Issues](https://img.shields.io/github/issues/leviFrosty/JW-Time)
+[![Crowdin](https://badges.crowdin.net/jw-time/localized.svg)](https://crowdin.com/project/jw-time)
 
 # JW Time
 
@@ -27,6 +28,8 @@ JW Time is the easy way for Jehovah's Witnesses to manage their field service pr
 ### Help Translate 🌐
 
 JW Time is automatically translated into 10+ languages by means of Google Cloud Translate. These translations might not always be the highest quality. If you wish to contribute native translations, please contact me at levi.wilkerson@proton.me. Thank you!
+
+Current translations: en, de, es, fr, it, ja, ko, nl, pt, ru, vi, zh
 
 ### Help Code ⌨️
 

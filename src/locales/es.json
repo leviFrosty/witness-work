@@ -117,7 +117,7 @@
   "addressLine2": "Línea de dirección 2",
   "city": "Ciudad",
   "state": "Estado",
-  "zip": "CREMALLERA",
+  "zip": "Código postal",
   "country": "País",
   "name_error": "Se requiere un nombre.",
   "save": "Ahorrar",

@@ -22,10 +22,6 @@ JW Time is the easy way for Jehovah's Witnesses to manage their field service pr
 <img src="./src/docs/screenshots/preview6.png" width="200">
 </div>
 
-## We Need Your Help Translating!
-
-JW Time is available in over 10+ languages by means of automatic translation tools. At times, these translations may not always be accurate. If interested in contributing to high quality translations, [please open a PR](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests), or email me at levi.wilkerson@proton.me!
-
 ## Want to Contribute?
 
 ### Help Translate 🌐

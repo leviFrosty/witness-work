@@ -315,7 +315,12 @@
   "youCanChangeThisLaterInTheSettings": "나중에 설정에서 이를 변경할 수 있습니다.",
   "preferredMaps_description": "JW Time은 귀하가 선호하는 매핑 애플리케이션을 사용하여 귀하의 연락처 주소를 탐색합니다.",
   "waze": "웨이즈",
-  "organicMaps": "유기적 지도",
-  "osmAnd": "오스엠앤드",
-  "navigation": "항해"
+  "navigation": "항해",
+  "nextVisitOffset_description": "다음 방문은 대화를 시작할 때로부터 얼마나 떨어져 있어야 할까요?",
+  "nextVisitOffset": "다음 방문 오프셋",
+  "conversations": "대화",
+  "notificationOffset": "공고",
+  "followUpOffset": "기본 후속 조치",
+  "notificationOffset_description": "알림이 도착하면 다음 방문까지 남은 시간입니다.",
+  "alwaysNotify": "항상 알림"
 }

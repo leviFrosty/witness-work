@@ -315,7 +315,12 @@
   "youCanChangeThisLaterInTheSettings": "Mababago mo ito sa ibang pagkakataon sa mga setting.",
   "preferredMaps_description": "Gagamitin ng JW Time ang iyong gustong mapping application para mag-navigate sa address ng iyong contact.",
   "waze": "Waze",
-  "organicMaps": "Mga Organikong Mapa",
-  "osmAnd": "OsmAnd",
-  "navigation": "Pag-navigate"
+  "navigation": "Pag-navigate",
+  "nextVisitOffset_description": "Gaano kalayo dapat ang iyong susunod na pagbisita kapag gumawa ka ng isang pag-uusap.",
+  "nextVisitOffset": "Susunod na Bisitahin ang Offset",
+  "conversations": "Mga pag-uusap",
+  "notificationOffset": "Abiso",
+  "followUpOffset": "Default na Pagsubaybay",
+  "notificationOffset_description": "Ilang oras bago ang iyong susunod na pagbisita kapag dumating ang notification.",
+  "alwaysNotify": "Laging Abisuhan"
 }

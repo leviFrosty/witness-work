@@ -315,7 +315,12 @@
   "youCanChangeThisLaterInTheSettings": "Вы можете изменить это позже в настройках.",
   "preferredMaps_description": "JW Time будет использовать предпочитаемое вами картографическое приложение для перехода к адресу вашего контакта.",
   "waze": "Вейз",
-  "organicMaps": "Органические карты",
-  "osmAnd": "ОсмАнд",
-  "navigation": "Навигация"
+  "navigation": "Навигация",
+  "nextVisitOffset_description": "Насколько далеко должен пройти ваш следующий визит от момента начала разговора.",
+  "nextVisitOffset": "Смещение следующего посещения",
+  "conversations": "Разговоры",
+  "notificationOffset": "Уведомление",
+  "followUpOffset": "Последующие действия по умолчанию",
+  "notificationOffset_description": "Сколько времени осталось до вашего следующего визита, когда придет уведомление.",
+  "alwaysNotify": "Всегда уведомлять"
 }

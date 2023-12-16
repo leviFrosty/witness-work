@@ -1,5 +1,5 @@
 import React, { PropsWithChildren, ReactNode } from 'react'
-import { View } from 'react-native'
+import { StyleProp, View, ViewStyle } from 'react-native'
 import useTheme from '../../contexts/theme'
 import { rowPaddingVertical } from '../../constants/Inputs'
 import Text from '../MyText'
@@ -22,6 +22,7 @@ export interface InputRowContainerProps {
     | undefined
   gap?: number
   required?: boolean
+  style?: StyleProp<ViewStyle>
 }
 
 const InputRowContainer: React.FC<
@@ -35,22 +36,28 @@ const InputRowContainer: React.FC<
   justifyContent,
   gap,
   required,
+  style,
 }: InputRowContainerProps) => {
   const theme = useTheme()
 
   return (
     <View
-      style={{
-        flexDirection: 'row',
-        borderColor: theme.colors.border,
-        borderBottomWidth: lastInSection ? 0 : 1,
-        paddingBottom: lastInSection ? 0 : rowPaddingVertical,
-        paddingRight: noHorizontalPadding ? 0 : 20,
-        alignItems: 'center',
-        flexGrow: 1,
-        justifyContent,
-        gap: gap || 15,
-      }}
+      style={[
+        [
+          {
+            flexDirection: 'row',
+            borderColor: theme.colors.border,
+            borderBottomWidth: lastInSection ? 0 : 1,
+            paddingBottom: lastInSection ? 0 : rowPaddingVertical,
+            paddingRight: noHorizontalPadding ? 0 : 20,
+            alignItems: 'center',
+            flexGrow: 1,
+            justifyContent,
+            gap: gap || 15,
+          },
+        ],
+        [style],
+      ]}
     >
       {(leftIcon || label) && (
         <View style={{ alignItems: 'center', gap: 5, flexDirection: 'row' }}>

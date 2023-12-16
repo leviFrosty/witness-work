@@ -315,7 +315,12 @@
   "youCanChangeThisLaterInTheSettings": "Je kunt dit later wijzigen in de instellingen.",
   "preferredMaps_description": "JW Time gebruikt uw favoriete kaarttoepassing om naar het adres van uw contactpersoon te navigeren.",
   "waze": "Waze",
-  "organicMaps": "Organische kaarten",
-  "osmAnd": "OsmAnd",
-  "navigation": "Navigatie"
+  "navigation": "Navigatie",
+  "nextVisitOffset_description": "Hoe ver weg moet uw volgende bezoek verwijderd zijn van het moment waarop u een gesprek begint.",
+  "nextVisitOffset": "Offset volgend bezoek",
+  "conversations": "Gesprekken",
+  "notificationOffset": "Kennisgeving",
+  "followUpOffset": "Standaard follow-up",
+  "notificationOffset_description": "Hoeveel tijd vóór uw volgende bezoek wanneer de melding binnenkomt.",
+  "alwaysNotify": "Altijd op de hoogte stellen"
 }

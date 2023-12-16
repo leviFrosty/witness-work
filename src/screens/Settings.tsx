@@ -5,7 +5,7 @@ import useTheme from '../contexts/theme'
 import Section from '../components/inputs/Section'
 import { usePreferences } from '../stores/preferences'
 import { useNavigation } from '@react-navigation/native'
-import { RootStackNavigation } from '../stacks/RootStack'
+import { RootStackNavigation, RootStackParamList } from '../stacks/RootStack'
 import i18n from '../lib/locales'
 import InputRowButton from '../components/inputs/InputRowButton'
 import Constants from 'expo-constants'
@@ -53,7 +53,7 @@ const Settings = (props: DrawerContentComponentProps) => {
     try {
       const update = await Updates.checkForUpdateAsync()
       if (update.isAvailable) {
-        navigation.navigate('Update')
+        navigateAndCloseDrawer('Update')
       }
       Alert.alert(i18n.t('noUpdateAvailable'))
     } catch (error) {
@@ -65,6 +65,12 @@ const Settings = (props: DrawerContentComponentProps) => {
       )
       Sentry.Native.captureException(error)
     }
+  }
+
+  const navigateAndCloseDrawer = (destination: keyof RootStackParamList) => {
+    props.navigation.closeDrawer()
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    navigation.navigate(destination as any)
   }
 
   return (
@@ -91,7 +97,7 @@ const Settings = (props: DrawerContentComponentProps) => {
               <InputRowButton
                 leftIcon={faCog}
                 label={i18n.t('preferences')}
-                onPress={() => navigation.navigate('Preferences')}
+                onPress={() => navigateAndCloseDrawer('Preferences')}
                 lastInSection
               >
                 <IconButton icon={faChevronRight} />
@@ -114,14 +120,14 @@ const Settings = (props: DrawerContentComponentProps) => {
               <InputRowButton
                 leftIcon={faHourglassHalf}
                 label={i18n.t('viewHours')}
-                onPress={() => navigation.navigate('Time Reports')}
+                onPress={() => navigateAndCloseDrawer('Time Reports')}
               >
                 <IconButton icon={faChevronRight} />
               </InputRowButton>
               <InputRowButton
                 leftIcon={faUndo}
                 label={i18n.t('recoverContacts')}
-                onPress={() => navigation.navigate('Recover Contacts')}
+                onPress={() => navigateAndCloseDrawer('Recover Contacts')}
               >
                 <IconButton icon={faChevronRight} />
               </InputRowButton>

@@ -131,6 +131,9 @@ const ConversationForm = ({ route, navigation }: Props) => {
     installedOn,
     lastTimeRequestedAReview,
     updateLastTimeRequestedStoreReview,
+    returnVisitTimeOffset,
+    returnVisitNotificationOffset,
+    returnVisitAlwaysNotify,
   } = usePreferences()
   const { params } = route
   const { contacts } = useContacts()
@@ -156,8 +159,8 @@ const ConversationForm = ({ route, navigation }: Props) => {
     amount?: number
     unit?: moment.unitOfTime.DurationConstructor | undefined
   }>({
-    amount: 2,
-    unit: 'hours',
+    amount: returnVisitNotificationOffset?.amount || 2,
+    unit: returnVisitNotificationOffset?.unit || 'hours',
   })
 
   const getConversationDefaultValue = (): Conversation => {
@@ -187,9 +190,11 @@ const ConversationForm = ({ route, navigation }: Props) => {
       date: new Date(),
       note: '',
       followUp: {
-        date: new Date(),
+        date: moment()
+          .add(returnVisitTimeOffset?.amount, returnVisitTimeOffset?.unit)
+          .toDate(),
         topic: '',
-        notifyMe: false,
+        notifyMe: returnVisitAlwaysNotify,
       },
       isBibleStudy: false,
       notAtHome: params.notAtHome,

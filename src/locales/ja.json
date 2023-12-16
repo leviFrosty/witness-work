@@ -315,7 +315,12 @@
   "youCanChangeThisLaterInTheSettings": "これは後から設定で変更できます。",
   "preferredMaps_description": "JW Time は、お好みのマッピング アプリケーションを使用して、連絡先の住所に移動します。",
   "waze": "ワゼ",
-  "organicMaps": "オーガニックマップ",
-  "osmAnd": "オスムアンド",
-  "navigation": "ナビゲーション"
+  "navigation": "ナビゲーション",
+  "nextVisitOffset_description": "会話を作成するときに、次の訪問がどれくらい先になるべきか。",
+  "nextVisitOffset": "次の訪問オフセット",
+  "conversations": "会話",
+  "notificationOffset": "通知",
+  "followUpOffset": "デフォルトのフォローアップ",
+  "notificationOffset_description": "通知が届くのは次の訪問までのどれくらいの時間です。",
+  "alwaysNotify": "常に通知する"
 }

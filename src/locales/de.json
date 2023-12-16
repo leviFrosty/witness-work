@@ -315,7 +315,12 @@
   "youCanChangeThisLaterInTheSettings": "Sie können dies später in den Einstellungen ändern.",
   "preferredMaps_description": "JW Time verwendet Ihre bevorzugte Kartenanwendung, um zur Adresse Ihres Kontakts zu navigieren.",
   "waze": "Waze",
-  "organicMaps": "Organische Karten",
-  "osmAnd": "OsmAnd",
-  "navigation": "Navigation"
+  "navigation": "Navigation",
+  "nextVisitOffset_description": "Wie weit sollte Ihr nächster Besuch von dem Zeitpunkt entfernt sein, an dem Sie ein Gespräch beginnen?",
+  "nextVisitOffset": "Nächster Besuchsversatz",
+  "conversations": "Gespräche",
+  "notificationOffset": "Benachrichtigung",
+  "followUpOffset": "Standard-Follow-up",
+  "notificationOffset_description": "Wie lange dauert es bis zu Ihrem nächsten Besuch, wenn die Benachrichtigung eintrifft?",
+  "alwaysNotify": "Immer benachrichtigen"
 }

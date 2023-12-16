@@ -675,7 +675,7 @@ const ContactDetails = ({ route, navigation }: Props) => {
         <StatusBar style={colorScheme === 'light' ? 'light' : 'dark'} />
 
         <Wrapper
-          noInsets
+          insets='none'
           style={{
             marginBottom: insets.bottom + 125,
             flexGrow: 1,

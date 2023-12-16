@@ -27,7 +27,7 @@ const ContactSelector = () => {
 
   return (
     <Wrapper
-      noInsets
+      insets='none'
       style={{ flexGrow: 1, paddingTop: 20, paddingHorizontal: 20, gap: 20 }}
     >
       <View style={{ gap: 20 }}>

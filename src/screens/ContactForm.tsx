@@ -610,7 +610,7 @@ const ContactForm = ({ route, navigation }: Props) => {
       automaticallyAdjustKeyboardInsets
       style={{ backgroundColor: theme.colors.background, position: 'relative' }}
     >
-      <Wrapper noInsets style={{ gap: 30, marginTop: 20 }}>
+      <Wrapper insets='none' style={{ gap: 30, marginTop: 20 }}>
         <View style={{ padding: 25, gap: 5 }}>
           <View style={{ flexDirection: 'row', gap: 10, alignItems: 'center' }}>
             <IconButton

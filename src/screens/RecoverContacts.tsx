@@ -40,7 +40,7 @@ const RecoverContacts = () => {
 
   return (
     <Wrapper
-      noInsets
+      insets='none'
       style={{
         flex: 1,
         flexGrow: 1,

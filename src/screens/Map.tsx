@@ -238,7 +238,7 @@ const MapOnboarding = () => {
 
   return (
     <Wrapper
-      noInsets
+      insets='none'
       style={{
         flexGrow: 1,
         paddingHorizontal: 20,
@@ -564,9 +564,12 @@ const Map = () => {
     theme.colors.textAlt,
     theme.colors.warn,
   ])
+  const something = decodeURI('14640%2024%20Mile%20Rd%20Shelby%20Township%20MI')
+
+  console.log(something)
 
   return (
-    <Wrapper noInsets style={{ flexGrow: 1 }}>
+    <Wrapper insets='none' style={{ flexGrow: 1 }}>
       {!hasCompletedMapOnboarding ? (
         <MapOnboarding />
       ) : (

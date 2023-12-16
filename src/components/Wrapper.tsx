@@ -5,25 +5,42 @@ import useTheme from '../contexts/theme'
 
 interface Props {
   style?: StyleProp<ViewStyle>
-  noInsets?: boolean
+  insets?: 'top' | 'bottom' | 'both' | 'none'
 }
 
 const Wrapper: React.FC<PropsWithChildren<Props>> = ({
-  noInsets,
   style,
   children,
+  insets = 'both',
 }) => {
   const theme = useTheme()
-  const insets = useSafeAreaInsets()
+  const deviceInsets = useSafeAreaInsets()
+
+  const getInsets = () => {
+    if (insets === 'none') return
+    if (insets === 'top') {
+      return {
+        paddingTop: deviceInsets.top,
+      }
+    }
+    if (insets === 'bottom') {
+      return {
+        paddingBottom: deviceInsets.bottom,
+      }
+    }
+    return {
+      paddingTop: deviceInsets.top,
+      paddingBottom: deviceInsets.bottom,
+    }
+  }
 
   return (
     <View
       style={[
         [
           {
+            ...getInsets(),
             backgroundColor: theme.colors.background,
-            paddingTop: noInsets ? 0 : insets.top,
-            paddingBottom: noInsets ? 0 : insets.bottom + 25,
           },
         ],
         [style],

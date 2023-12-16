@@ -33,6 +33,7 @@ export type RootStackParamList = {
   'Recover Contacts': undefined
   Onboarding: undefined
   Update: undefined
+  Preferences: undefined
 }
 
 export type RootStackNavigation = NativeStackNavigationProp<RootStackParamList>
@@ -115,6 +116,11 @@ const RootStackComponent = () => {
       <RootStack.Screen
         options={{ header: () => undefined }}
         name='Update'
+        component={Update}
+      />
+      <RootStack.Screen
+        options={{ header: () => <Header buttonType='back' /> }}
+        name='Preferences'
         component={Update}
       />
     </RootStack.Navigator>

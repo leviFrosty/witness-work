@@ -527,7 +527,7 @@ const ConversationForm = ({ route, navigation }: Props) => {
         backgroundColor: theme.colors.background,
       }}
     >
-      <Wrapper noInsets style={{ gap: 30, marginTop: 20 }}>
+      <Wrapper insets='none' style={{ gap: 30, marginTop: 20 }}>
         <View style={{ padding: 25, paddingBottom: 0, gap: 5 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
             <IconButton

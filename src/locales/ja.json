@@ -304,5 +304,18 @@
   "featureRequest": "機能リクエスト",
   "pleaseDescribeYourFeatureClearly": "どの機能を搭載したいのかを詳しく説明してください。連絡先の名前と電話番号を入力します。該当する場合は、その機能がどのようなものかをイメージしてください。または、同様の機能を持つアプリのスクリーンショットを送信します。",
   "Home": "家",
-  "Map": "地図"
+  "Map": "地図",
+  "preferences": "環境設定",
+  "defaultNavigationApp": "デフォルトのナビゲーション アプリ",
+  "apple": "りんご",
+  "google": "グーグル",
+  "couldNotOpenMaps": "マップを開けませんでした",
+  "couldNotOpenMaps_description": "有効なマッピング アプリケーションがインストールされていることを確認してください。",
+  "preferredMaps": "優先マップ",
+  "youCanChangeThisLaterInTheSettings": "これは後から設定で変更できます。",
+  "preferredMaps_description": "JW Time は、お好みのマッピング アプリケーションを使用して、連絡先の住所に移動します。",
+  "waze": "ワゼ",
+  "organicMaps": "オーガニックマップ",
+  "osmAnd": "オスムアンド",
+  "navigation": "ナビゲーション"
 }

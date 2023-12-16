@@ -304,5 +304,18 @@
   "featureRequest": "Functieverzoek",
   "pleaseDescribeYourFeatureClearly": "Beschrijf welke functie u zeer gedetailleerd wilt hebben. Geef een contactnaam en telefoonnummer op. Maak, indien van toepassing, een afbeelding van hoe het kenmerk eruit zou kunnen zien. U kunt ook een screenshot sturen van een app die vergelijkbare functionaliteit heeft.",
   "Home": "Thuis",
-  "Map": "Kaart"
+  "Map": "Kaart",
+  "preferences": "Voorkeuren",
+  "defaultNavigationApp": "Standaard navigatie-app",
+  "apple": "Appel",
+  "google": "Googlen",
+  "couldNotOpenMaps": "Kan kaarten niet openen",
+  "couldNotOpenMaps_description": "Controleer of er een geldige kaarttoepassing is geïnstalleerd.",
+  "preferredMaps": "Voorkeurskaarten",
+  "youCanChangeThisLaterInTheSettings": "Je kunt dit later wijzigen in de instellingen.",
+  "preferredMaps_description": "JW Time gebruikt uw favoriete kaarttoepassing om naar het adres van uw contactpersoon te navigeren.",
+  "waze": "Waze",
+  "organicMaps": "Organische kaarten",
+  "osmAnd": "OsmAnd",
+  "navigation": "Navigatie"
 }

@@ -304,5 +304,18 @@
   "featureRequest": "Richiesta di funzionalità",
   "pleaseDescribeYourFeatureClearly": "Descrivi quale funzionalità desideri che sia estremamente dettagliata. Fornire un nome e un telefono di contatto. Se applicabile, disegna un'immagine di come potrebbe apparire la funzione. In alternativa, invia uno screenshot di un'app con funzionalità simili.",
   "Home": "Casa",
-  "Map": "Carta geografica"
+  "Map": "Carta geografica",
+  "preferences": "Preferenze",
+  "defaultNavigationApp": "App di navigazione predefinita",
+  "apple": "Mela",
+  "google": "Google",
+  "couldNotOpenMaps": "Impossibile aprire le mappe",
+  "couldNotOpenMaps_description": "Verifica di avere installato un'applicazione di mappatura valida.",
+  "preferredMaps": "Mappe preferite",
+  "youCanChangeThisLaterInTheSettings": "Puoi modificarlo in seguito nelle impostazioni.",
+  "preferredMaps_description": "JW Time utilizzerà la tua applicazione di mappatura preferita per raggiungere l'indirizzo del tuo contatto.",
+  "waze": "Waze",
+  "organicMaps": "Mappe organiche",
+  "osmAnd": "OsmAnd",
+  "navigation": "Navigazione"
 }

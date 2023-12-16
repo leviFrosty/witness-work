@@ -304,5 +304,18 @@
   "featureRequest": "기능 요청",
   "pleaseDescribeYourFeatureClearly": "어떤 기능을 매우 자세하게 설명하고 싶은지 설명해 주세요. 연락처 이름과 전화번호를 제공하세요. 해당하는 경우 해당 기능이 어떤 모습일지 이미지로 그려주세요. 또는 비슷한 기능을 가진 앱의 스크린샷을 보내주세요.",
   "Home": "집",
-  "Map": "지도"
+  "Map": "지도",
+  "preferences": "환경설정",
+  "defaultNavigationApp": "기본 내비게이션 앱",
+  "apple": "사과",
+  "google": "Google",
+  "couldNotOpenMaps": "지도를 열 수 없습니다",
+  "couldNotOpenMaps_description": "유효한 매핑 애플리케이션이 설치되어 있는지 확인하세요.",
+  "preferredMaps": "선호하는 지도",
+  "youCanChangeThisLaterInTheSettings": "나중에 설정에서 이를 변경할 수 있습니다.",
+  "preferredMaps_description": "JW Time은 귀하가 선호하는 매핑 애플리케이션을 사용하여 귀하의 연락처 주소를 탐색합니다.",
+  "waze": "웨이즈",
+  "organicMaps": "유기적 지도",
+  "osmAnd": "오스엠앤드",
+  "navigation": "항해"
 }

@@ -4,18 +4,37 @@ import Text from './MyText'
 import i18n from '../lib/locales'
 import { usePreferences } from '../stores/preferences'
 import { publishers } from '../constants/publisher'
-import Select from './Select'
+import Select, { SelectData } from './Select'
 import TextInput from './TextInput'
+import { Publisher } from '../types/publisher'
 
 const PublisherTypeSelector = () => {
   const theme = useTheme()
-  const items = [
-    { label: i18n.t('publisher'), value: publishers[0] },
-    { label: i18n.t('regularAuxiliary'), value: publishers[1] },
-    { label: i18n.t('regularPioneer'), value: publishers[2] },
-    { label: i18n.t('circuitOverseer'), value: publishers[3] },
-    { label: i18n.t('specialPioneer'), value: publishers[4] },
-    { label: i18n.t('custom'), value: publishers[5] },
+  const items: SelectData<Publisher> = [
+    {
+      label: i18n.t('publisher'),
+      value: publishers[0],
+    },
+    {
+      label: i18n.t('regularAuxiliary'),
+      value: publishers[1],
+    },
+    {
+      label: i18n.t('regularPioneer'),
+      value: publishers[2],
+    },
+    {
+      label: i18n.t('circuitOverseer'),
+      value: publishers[3],
+    },
+    {
+      label: i18n.t('specialPioneer'),
+      value: publishers[4],
+    },
+    {
+      label: i18n.t('custom'),
+      value: publishers[5],
+    },
   ]
 
   const { publisherHours, publisher, setPublisher, set } = usePreferences()
@@ -26,6 +45,7 @@ const PublisherTypeSelector = () => {
         data={items}
         onChange={({ value }) => setPublisher(value)}
         value={publisher}
+        style={{ marginBottom: 10 }}
       />
 
       {publisher === 'custom' ? (

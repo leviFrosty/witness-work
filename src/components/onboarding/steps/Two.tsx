@@ -25,7 +25,7 @@ const StepTwo = ({ goBack, goNext }: Props) => {
               flexGrow: 1,
               paddingHorizontal: 30,
               paddingTop: 60,
-              paddingBottom: 60,
+              paddingBottom: 100,
               justifyContent: 'space-between',
             }}
           >

@@ -564,9 +564,6 @@ const Map = () => {
     theme.colors.textAlt,
     theme.colors.warn,
   ])
-  const something = decodeURI('14640%2024%20Mile%20Rd%20Shelby%20Township%20MI')
-
-  console.log(something)
 
   return (
     <Wrapper insets='none' style={{ flexGrow: 1 }}>

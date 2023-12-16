@@ -40,6 +40,7 @@ const Wrapper: React.FC<PropsWithChildren<Props>> = ({
         [
           {
             ...getInsets(),
+            flexGrow: 1,
             backgroundColor: theme.colors.background,
           },
         ],

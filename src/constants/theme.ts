@@ -17,7 +17,7 @@ export const lightModeColors = {
   accent2: '#F19389',
   accent2Alt: '#FFF3F2',
   accent3: '#003D46',
-  accent3Alt: '#EBFCFF',
+  accent3Alt: '#9fb9d1',
   error: '#E30909',
   errorAlt: '#FA6868',
   warn: '#FCC014',
@@ -74,7 +74,11 @@ const fontSize = (size?: ThemeSizes) => {
     case 'lg':
       return 16
     case 'xl':
-      return 18
+      return 20
+    case '2xl':
+      return 24
+    case '3xl':
+      return 28
     default:
       return 14
   }

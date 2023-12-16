@@ -37,6 +37,13 @@ const publisherHours: PublisherHours = {
   custom: 50,
 }
 
+/**
+ * Each platform has specific options available.
+ * @platform iOS: All Supported
+ * @platform Android: Only 'google' is supported
+ */
+export type DefaultNavigationMapProvider = 'apple' | 'waze' | 'google' | null
+
 const initialState = {
   publisher: 'publisher' as Publisher,
   publisherHours: publisherHours,
@@ -51,6 +58,13 @@ const initialState = {
   hasCompletedMapOnboarding: false,
   calledGoecodeApiTimes: 0,
   lastTimeRequestedAReview: null as Date | null,
+
+  /**
+   *
+   * @platform iOS: Supported
+   * @platform Android: Not Supported
+   */
+  defaultNavigationMapProvider: null as DefaultNavigationMapProvider,
 }
 
 export const usePreferences = create(

@@ -6,7 +6,7 @@ import Text from '../MyText'
 import IconButton from '../IconButton'
 import { IconProp } from '@fortawesome/fontawesome-svg-core'
 
-interface Props {
+export interface InputRowContainerProps {
   children?: ReactNode
   leftIcon?: IconProp
   lastInSection?: boolean
@@ -24,7 +24,9 @@ interface Props {
   required?: boolean
 }
 
-const InputRowContainer: React.FC<PropsWithChildren<Props>> = ({
+const InputRowContainer: React.FC<
+  PropsWithChildren<InputRowContainerProps>
+> = ({
   children,
   leftIcon,
   lastInSection,
@@ -33,7 +35,7 @@ const InputRowContainer: React.FC<PropsWithChildren<Props>> = ({
   justifyContent,
   gap,
   required,
-}: Props) => {
+}: InputRowContainerProps) => {
   const theme = useTheme()
 
   return (

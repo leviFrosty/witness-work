@@ -304,5 +304,18 @@
   "featureRequest": "Yêu cầu tính năng",
   "pleaseDescribeYourFeatureClearly": "Vui lòng mô tả tính năng bạn muốn có thật chi tiết. Cung cấp tên liên lạc và số điện thoại. Nếu có thể, vui lòng vẽ hình ảnh đặc điểm này trông như thế nào. Ngoài ra, hãy gửi ảnh chụp màn hình của một ứng dụng có chức năng tương tự.",
   "Home": "Trang chủ",
-  "Map": "Bản đồ"
+  "Map": "Bản đồ",
+  "preferences": "Sở thích",
+  "defaultNavigationApp": "Ứng dụng điều hướng mặc định",
+  "apple": "Quả táo",
+  "google": "Google",
+  "couldNotOpenMaps": "Không thể mở bản đồ",
+  "couldNotOpenMaps_description": "Vui lòng xác minh rằng bạn đã cài đặt ứng dụng bản đồ hợp lệ.",
+  "preferredMaps": "Bản đồ ưa thích",
+  "youCanChangeThisLaterInTheSettings": "Bạn có thể thay đổi điều này sau trong cài đặt.",
+  "preferredMaps_description": "JW Time sẽ sử dụng ứng dụng bản đồ ưa thích của bạn để điều hướng đến địa chỉ liên hệ của bạn.",
+  "waze": "Waze",
+  "organicMaps": "Bản đồ hữu cơ",
+  "osmAnd": "OsmAnd",
+  "navigation": "dẫn đường"
 }

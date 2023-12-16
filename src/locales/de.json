@@ -304,5 +304,18 @@
   "featureRequest": "Featureanfrage",
   "pleaseDescribeYourFeatureClearly": "Bitte beschreiben Sie sehr detailliert, welche Funktion Sie gerne hätten. Geben Sie einen Kontaktnamen und eine Telefonnummer an. Bitte zeichnen Sie gegebenenfalls ein Bild davon, wie die Funktion aussehen könnte. Senden Sie alternativ einen Screenshot einer App mit ähnlicher Funktionalität.",
   "Home": "Heim",
-  "Map": "Karte"
+  "Map": "Karte",
+  "preferences": "Präferenzen",
+  "defaultNavigationApp": "Standard-Navigations-App",
+  "apple": "Apfel",
+  "google": "Google",
+  "couldNotOpenMaps": "Karten konnten nicht geöffnet werden",
+  "couldNotOpenMaps_description": "Bitte stellen Sie sicher, dass eine gültige Kartenanwendung installiert ist.",
+  "preferredMaps": "Bevorzugte Karten",
+  "youCanChangeThisLaterInTheSettings": "Sie können dies später in den Einstellungen ändern.",
+  "preferredMaps_description": "JW Time verwendet Ihre bevorzugte Kartenanwendung, um zur Adresse Ihres Kontakts zu navigieren.",
+  "waze": "Waze",
+  "organicMaps": "Organische Karten",
+  "osmAnd": "OsmAnd",
+  "navigation": "Navigation"
 }

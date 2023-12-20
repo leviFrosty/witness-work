@@ -31,11 +31,11 @@ const StepFour = ({ goNext, goBack }: Props) => {
         flexGrow: 1,
         paddingHorizontal: 30,
         paddingTop: 60,
-        paddingBottom: 60,
+        paddingBottom: 100,
         justifyContent: 'space-between',
       }}
     >
-      <OnboardingNav noActions goBack={goBack} />
+      <OnboardingNav goBack={goBack} />
       <View>
         <Text style={styles.stepTitle}>{i18n.t('youreAllSet')}</Text>
         <Text style={styles.description}>

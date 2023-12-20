@@ -238,7 +238,7 @@ const MapOnboarding = () => {
 
   return (
     <Wrapper
-      noInsets
+      insets='none'
       style={{
         flexGrow: 1,
         paddingHorizontal: 20,
@@ -566,7 +566,7 @@ const Map = () => {
   ])
 
   return (
-    <Wrapper noInsets style={{ flexGrow: 1 }}>
+    <Wrapper insets='none' style={{ flexGrow: 1 }}>
       {!hasCompletedMapOnboarding ? (
         <MapOnboarding />
       ) : (

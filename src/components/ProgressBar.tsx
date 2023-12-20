@@ -75,7 +75,7 @@ const ProgressBar = () => {
     [hours, goalHours]
   )
 
-  const arrowProgress: DimensionValue = `${progress * 100 - 2}%` // Offsets slightly for arrow width;
+  const arrowProgress: DimensionValue = `${progress * 100 - 8}%` // Offsets slightly for arrow width;
 
   const badProgress = progress < 0.6
   const goodProgress = progress >= 0.6 && progress < 0.95

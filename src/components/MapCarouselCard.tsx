@@ -24,6 +24,7 @@ import { MapShareSheet } from './ShareAddressSheet'
 import { parsePhoneNumber } from 'awesome-phonenumber'
 import { getLocales } from 'expo-localization'
 import { handleCall, handleMessage } from '../lib/phone'
+import { usePreferences } from '../stores/preferences'
 
 interface Props {
   contact: ContactMarker
@@ -35,6 +36,7 @@ const MapCarouselCard = ({ contact, setSheet }: Props) => {
   const theme = useTheme()
   const navigation = useNavigation<RootStackNavigation>()
   const locales = getLocales()
+  const { defaultNavigationMapProvider } = usePreferences()
 
   const formatted = parsePhoneNumber(contact.phone || '', {
     regionCode: contact.phoneRegionCode || locales[0].regionCode || '',
@@ -137,7 +139,9 @@ const MapCarouselCard = ({ contact, setSheet }: Props) => {
         }}
       >
         <Button
-          onPress={() => navigateTo(contact.address!)}
+          onPress={() =>
+            navigateTo(contact.address!, defaultNavigationMapProvider)
+          }
           style={{
             paddingHorizontal: 20,
             paddingVertical: 20,

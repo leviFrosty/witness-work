@@ -1,12 +1,13 @@
 import { useEffect, useState } from 'react'
-import { View } from 'react-native'
+import { Platform, View } from 'react-native'
 import StepOne from './steps/One'
 import StepTwo from './steps/Two'
 import StepThree from './steps/Three'
 import StepFour from './steps/Four'
 import { usePreferences } from '../../stores/preferences'
+import StepDefaultNav from './steps/DefaultNav'
 
-const steps = [StepOne, StepTwo, StepThree, StepFour]
+const steps = [StepOne, StepTwo, StepThree, StepDefaultNav, StepFour]
 
 const OnBoarding = () => {
   const { set, onboardingComplete } = usePreferences()
@@ -19,10 +20,17 @@ const OnBoarding = () => {
   }, [onboardingComplete])
 
   const goNext = () => {
+    // Skips default navigation step on Android. Android does not have configuration default navigation.
+    if (Platform.OS === 'android' && onboardingStep === 2) {
+      setOnboardingStep(onboardingStep + 2)
+      return
+    }
+
     if (onboardingStep === steps.length - 1) {
       set({ onboardingComplete: true })
       return
     }
+
     setOnboardingStep(onboardingStep + 1)
   }
 
@@ -34,16 +42,8 @@ const OnBoarding = () => {
   }
 
   const renderStep = () => {
-    switch (onboardingStep) {
-      case 0:
-        return <StepOne goNext={goNext} />
-      case 1:
-        return <StepTwo goBack={goBack} goNext={goNext} />
-      case 2:
-        return <StepThree goBack={goBack} goNext={goNext} />
-      case 3:
-        return <StepFour goNext={goNext} goBack={goBack} />
-    }
+    const SelectedStep = steps[onboardingStep]
+    return <SelectedStep goBack={goBack} goNext={goNext} />
   }
 
   return (

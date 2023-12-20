@@ -17,6 +17,8 @@ import Update from '../screens/Update'
 import IconButton from '../components/IconButton'
 import { faPlus } from '@fortawesome/free-solid-svg-icons'
 import HomeTabStack from './DashboardTabStack'
+import Preferences from '../screens/Preferences'
+import i18n from '../lib/locales'
 
 export type RootStackParamList = {
   Root: undefined
@@ -33,6 +35,7 @@ export type RootStackParamList = {
   'Recover Contacts': undefined
   Onboarding: undefined
   Update: undefined
+  Preferences: undefined
 }
 
 export type RootStackNavigation = NativeStackNavigationProp<RootStackParamList>
@@ -116,6 +119,15 @@ const RootStackComponent = () => {
         options={{ header: () => undefined }}
         name='Update'
         component={Update}
+      />
+      <RootStack.Screen
+        options={{
+          header: () => (
+            <Header buttonType='back' title={i18n.t('preferences')} />
+          ),
+        }}
+        name='Preferences'
+        component={Preferences}
       />
     </RootStack.Navigator>
   )

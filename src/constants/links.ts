@@ -11,6 +11,4 @@ export default {
   appleMapsBase: 'http://maps.apple.com/?q=',
   googleMapsBase: 'https://www.google.com/maps/search/?api=1&query=',
   wazeMapsBase: 'https://waze.com/ul?q=',
-  openSourceMapBase: 'https://www.openstreetmap.org/search?query=',
-  organicMapsBase: 'https://omaps.app/search?query=',
 }

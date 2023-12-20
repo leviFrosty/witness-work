@@ -175,7 +175,7 @@ const HourEntryCard = () => {
           >
             <Text
               style={{
-                fontSize: 10,
+                fontSize: theme.fontSize('xs'),
                 color: theme.colors.textInverse,
                 fontFamily: theme.fonts.semiBold,
               }}

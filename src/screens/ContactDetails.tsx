@@ -717,6 +717,7 @@ const ContactDetails = ({ route, navigation }: Props) => {
               </Text>
               <View style={{ minHeight: 2 }}>
                 <FlashList
+                  scrollEnabled={false}
                   renderItem={({ item }) => (
                     <ConversationRow
                       conversation={item}

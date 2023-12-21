@@ -5,6 +5,11 @@ import {
 import TabBar from '../components/TabBar'
 import Map from '../screens/Map'
 import HomeScreen from '../screens/Home'
+import { usePreferences } from '../stores/preferences'
+import Constants from 'expo-constants'
+import { View } from 'react-native'
+import WhatsNew from '../components/WhatsNew'
+import { useEffect, useState } from 'react'
 
 export type HomeTabStackParamList = {
   Home: undefined
@@ -13,19 +18,38 @@ export type HomeTabStackParamList = {
 
 export type HomeTabStackNavigation =
   BottomTabNavigationProp<HomeTabStackParamList>
-
 const HomeTabStack = () => {
   const Tab = createBottomTabNavigator<HomeTabStackParamList>()
+  const { lastAppVersion, set } = usePreferences()
+  const [lastVersion] = useState(lastAppVersion)
+  const [showWhatsNew, setShowWhatsNew] = useState(true)
+
+  useEffect(() => {
+    const currentVersion = Constants.expoConfig?.version
+    if (currentVersion !== lastAppVersion) {
+      setShowWhatsNew(true)
+      set({ lastAppVersion: currentVersion })
+    }
+  }, [lastAppVersion, set])
 
   return (
-    <Tab.Navigator
-      initialRouteName='Home'
-      tabBar={(props) => <TabBar {...props} />}
-      screenOptions={{ header: () => null }}
-    >
-      <Tab.Screen name='Home' component={HomeScreen} />
-      <Tab.Screen name='Map' component={Map} />
-    </Tab.Navigator>
+    <View style={{ flexGrow: 1 }}>
+      {lastVersion && (
+        <WhatsNew
+          lastVersion={lastVersion}
+          show={showWhatsNew}
+          setShow={setShowWhatsNew}
+        />
+      )}
+      <Tab.Navigator
+        initialRouteName='Home'
+        tabBar={(props) => <TabBar {...props} />}
+        screenOptions={{ header: () => null }}
+      >
+        <Tab.Screen name='Home' component={HomeScreen} />
+        <Tab.Screen name='Map' component={Map} />
+      </Tab.Navigator>
+    </View>
   )
 }
 

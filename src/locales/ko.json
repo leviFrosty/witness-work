@@ -322,5 +322,19 @@
   "notificationOffset": "공고",
   "followUpOffset": "기본 후속 조치",
   "notificationOffset_description": "알림이 도착하면 다음 방문까지 남은 시간입니다.",
-  "alwaysNotify": "항상 알림"
+  "alwaysNotify": "항상 알림",
+  "whatsNew": "새로운 소식",
+  "new": "새로운",
+  "bugFixes": "버그 수정",
+  "updates": {
+    "182": {
+      "c1": "현재 로케일을 반영하도록 항상 업데이트되었습니다."
+    },
+    "190": {
+      "c1": "설정에 기본 설정이 추가되었습니다.",
+      "c2": "[iOS] 환경설정에서 Google, Apple, Waze 중에서 기본 내비게이션 앱을 선택하세요.",
+      "c3": "이제 기본 설정에서 후속 작업 및 알림 시간에 대한 기본값을 구성하세요.",
+      "c4": "'새로운 소식' 화면"
+    }
+  }
 }

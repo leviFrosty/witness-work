@@ -322,5 +322,19 @@
   "notificationOffset": "Kennisgeving",
   "followUpOffset": "Standaard follow-up",
   "notificationOffset_description": "Hoeveel tijd vóór uw volgende bezoek wanneer de melding binnenkomt.",
-  "alwaysNotify": "Altijd op de hoogte stellen"
+  "alwaysNotify": "Altijd op de hoogte stellen",
+  "whatsNew": "Wat is er nieuw",
+  "new": "Nieuw",
+  "bugFixes": "Bugfixes",
+  "updates": {
+    "182": {
+      "c1": "Altijd bijgewerkt om de huidige landinstelling weer te geven"
+    },
+    "190": {
+      "c1": "Voorkeuren toegevoegd in de instellingen",
+      "c2": "[iOS] Kies in voorkeuren tussen Google, Apple en Waze als je standaardnavigatie-app.",
+      "c3": "Configureer nu standaardwaarden voor uw follow-up- en meldingstijden in voorkeuren.",
+      "c4": "'Wat is er nieuw' scherm"
+    }
+  }
 }

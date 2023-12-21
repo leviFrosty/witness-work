@@ -322,5 +322,19 @@
   "notificationOffset": "Notification",
   "followUpOffset": "Default Follow Up",
   "notificationOffset_description": "How much time before your next visit when the notification arrives.",
-  "alwaysNotify": "Always Notify"
+  "alwaysNotify": "Always Notify",
+  "whatsNew": "What's New",
+  "new": "New",
+  "bugFixes": "Bug Fixes",
+  "updates": {
+    "190": {
+      "c1": "Added preferences in the settings",
+      "c2": "[iOS] Select between Google, Apple, and Waze as your default navigation app in preferences.",
+      "c3": "Now configure default values for your follow up and notification times in preferences.",
+      "c4": "'What's new' screen"
+    },
+    "182": {
+      "c1": "Updated all time to reflect the current locale"
+    }
+  }
 }

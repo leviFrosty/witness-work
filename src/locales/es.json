@@ -322,5 +322,19 @@
   "notificationOffset": "Notificación",
   "followUpOffset": "Seguimiento predeterminado",
   "notificationOffset_description": "Cuánto falta para tu próxima visita cuando llegue la notificación.",
-  "alwaysNotify": "Siempre avisar"
+  "alwaysNotify": "Siempre avisar",
+  "whatsNew": "¿Qué hay de nuevo?",
+  "new": "Nuevo",
+  "bugFixes": "Corrección de errores",
+  "updates": {
+    "182": {
+      "c1": "Actualizado todo el tiempo para reflejar la ubicación actual"
+    },
+    "190": {
+      "c1": "Preferencias añadidas en la configuración.",
+      "c2": "[iOS] Seleccione entre Google, Apple y Waze como su aplicación de navegación predeterminada en las preferencias.",
+      "c3": "Ahora configure valores predeterminados para sus tiempos de seguimiento y notificación en preferencias.",
+      "c4": "'Qué hay de nuevo' pantalla"
+    }
+  }
 }

@@ -322,5 +322,19 @@
   "notificationOffset": "Thông báo",
   "followUpOffset": "Theo dõi mặc định",
   "notificationOffset_description": "Bao nhiêu thời gian trước chuyến thăm tiếp theo của bạn khi có thông báo.",
-  "alwaysNotify": "Luôn luôn thông báo"
+  "alwaysNotify": "Luôn luôn thông báo",
+  "whatsNew": "Có gì mới",
+  "new": "Mới",
+  "bugFixes": "Sửa lỗi",
+  "updates": {
+    "182": {
+      "c1": "Cập nhật mọi lúc để phản ánh ngôn ngữ hiện tại"
+    },
+    "190": {
+      "c1": "Đã thêm tùy chọn trong cài đặt",
+      "c2": "[iOS] Chọn giữa Google, Apple và Waze làm ứng dụng điều hướng mặc định của bạn trong tùy chọn.",
+      "c3": "Bây giờ hãy định cấu hình các giá trị mặc định cho thời gian theo dõi và thông báo của bạn trong tùy chọn.",
+      "c4": "'Có gì mới' màn hình"
+    }
+  }
 }

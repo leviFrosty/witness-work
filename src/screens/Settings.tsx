@@ -28,6 +28,7 @@ import {
   faUndo,
   faHand,
   faCog,
+  faTag,
 } from '@fortawesome/free-solid-svg-icons'
 import {
   DrawerContentComponentProps,
@@ -316,6 +317,13 @@ const Settings = (props: DrawerContentComponentProps) => {
               {i18n.t('misc')}
             </Text>
             <Section>
+              <InputRowButton
+                leftIcon={faTag}
+                label={i18n.t('whatsNew')}
+                onPress={() => navigation.navigate('Whats New')}
+              >
+                <IconButton icon={faChevronRight} />
+              </InputRowButton>
               <InputRowButton
                 leftIcon={faCode}
                 label={i18n.t('viewSource')}

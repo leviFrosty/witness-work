@@ -327,6 +327,33 @@
   "new": "Novo",
   "bugFixes": "Correções de bugs",
   "updates": {
+    "160": {
+      "c1": "As conversas agora são editáveis. As notificações são configuráveis",
+      "c2": "Deslize os gestos para editar ou excluir conversas, contatos, etc.",
+      "c3": "Adicionado feedback tátil para várias ações importantes"
+    },
+    "161": {
+      "c1": "Adicionadas mais opções de minutos para entradas de tempo"
+    },
+    "162": {
+      "c1": "Requisito de horas de pioneiro especial ajustado de 70 para 100"
+    },
+    "163": {
+      "c1": "Resolva problemas de atualização automatizada"
+    },
+    "170": {
+      "c1": "Adicione vários métodos de exportação de horário",
+      "c2": "Adicione 'Não em casa'"
+    },
+    "180": {
+      "c1": "Adicionada geocodificação automática para contatos",
+      "c2": "Visualização de mapa adicionada"
+    },
+    "181": {
+      "c1": "Visualização de mapa expandida",
+      "c2": "Adicionada solicitação de revisão da loja após determinados critérios serem atendidos",
+      "c3": "Pequenas correções de bugs"
+    },
     "182": {
       "c1": "Atualizado o tempo todo para refletir a localidade atual"
     },
@@ -336,5 +363,6 @@
       "c3": "Agora configure os valores padrão para seus tempos de acompanhamento e notificação nas preferências.",
       "c4": "'Novidades' tela"
     }
-  }
+  },
+  "installed": "Instalado"
 }

@@ -327,6 +327,33 @@
   "new": "Bago",
   "bugFixes": "Mga Pag-aayos ng Bug",
   "updates": {
+    "160": {
+      "c1": "Mae-edit na ngayon ang mga pag-uusap. Nako-configure ang mga notification",
+      "c2": "Mag-swipe ng mga galaw para i-edit o tanggalin ang mga pag-uusap, contact, atbp.",
+      "c3": "Nagdagdag ng haptic feedback sa iba't ibang mahahalagang aksyon"
+    },
+    "161": {
+      "c1": "Nagdagdag ng higit pang mga minutong opsyon para sa mga entry ng oras"
+    },
+    "162": {
+      "c1": "Inayos ang kinakailangan sa oras ng special pioneer mula 70 hanggang 100"
+    },
+    "163": {
+      "c1": "Lutasin ang mga isyu sa awtomatikong pag-update"
+    },
+    "170": {
+      "c1": "Magdagdag ng iba't ibang paraan ng pag-export ng oras",
+      "c2": "Magdagdag ng 'Not At Homes'"
+    },
+    "180": {
+      "c1": "Nagdagdag ng awtomatikong geocoding para sa mga contact",
+      "c2": "Nagdagdag ng view ng mapa"
+    },
+    "181": {
+      "c1": "Pinalawak na view ng mapa",
+      "c2": "Nagdagdag ng kahilingan sa pagsusuri ng tindahan pagkatapos matugunan ang ilang partikular na pamantayan",
+      "c3": "Maliit na pag-aayos ng bug"
+    },
     "182": {
       "c1": "Na-update sa lahat ng oras upang ipakita ang kasalukuyang lokal"
     },
@@ -336,5 +363,6 @@
       "c3": "Ngayon ay i-configure ang mga default na halaga para sa iyong pag-follow up at mga oras ng notification sa mga kagustuhan.",
       "c4": "'Ano'ng bago' screen"
     }
-  }
+  },
+  "installed": "Naka-install"
 }

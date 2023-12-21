@@ -8,7 +8,7 @@ import HomeScreen from '../screens/Home'
 import { usePreferences } from '../stores/preferences'
 import Constants from 'expo-constants'
 import { View } from 'react-native'
-import WhatsNew from '../components/WhatsNew'
+import WhatsNewSheet from '../components/WhatsNewSheet'
 import { useEffect, useState } from 'react'
 
 export type HomeTabStackParamList = {
@@ -22,7 +22,7 @@ const HomeTabStack = () => {
   const Tab = createBottomTabNavigator<HomeTabStackParamList>()
   const { lastAppVersion, set } = usePreferences()
   const [lastVersion] = useState(lastAppVersion)
-  const [showWhatsNew, setShowWhatsNew] = useState(true)
+  const [showWhatsNew, setShowWhatsNew] = useState(false)
 
   useEffect(() => {
     const currentVersion = Constants.expoConfig?.version
@@ -35,7 +35,7 @@ const HomeTabStack = () => {
   return (
     <View style={{ flexGrow: 1 }}>
       {lastVersion && (
-        <WhatsNew
+        <WhatsNewSheet
           lastVersion={lastVersion}
           show={showWhatsNew}
           setShow={setShowWhatsNew}

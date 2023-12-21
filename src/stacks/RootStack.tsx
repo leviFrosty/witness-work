@@ -19,6 +19,7 @@ import { faPlus } from '@fortawesome/free-solid-svg-icons'
 import HomeTabStack from './DashboardTabStack'
 import Preferences from '../screens/Preferences'
 import i18n from '../lib/locales'
+import WhatsNewScreen from '../screens/WhatsNew'
 
 export type RootStackParamList = {
   Root: undefined
@@ -36,6 +37,7 @@ export type RootStackParamList = {
   Onboarding: undefined
   Update: undefined
   Preferences: undefined
+  'Whats New': undefined
 }
 
 export type RootStackNavigation = NativeStackNavigationProp<RootStackParamList>
@@ -128,6 +130,13 @@ const RootStackComponent = () => {
         }}
         name='Preferences'
         component={Preferences}
+      />
+      <RootStack.Screen
+        options={{
+          header: () => <Header buttonType='back' title={i18n.t('whatsNew')} />,
+        }}
+        name='Whats New'
+        component={WhatsNewScreen}
       />
     </RootStack.Navigator>
   )

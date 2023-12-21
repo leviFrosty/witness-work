@@ -37,3 +37,6 @@ yarn-error.*
 
 # google
 googleServiceAccount.json
+
+# Windows
+%ProgramData%/

@@ -305,64 +305,64 @@
   "pleaseDescribeYourFeatureClearly": "请详细描述您希望拥有哪些功能。提供联系人姓名和电话。如果适用，请绘制该功能的图像。或者，发送具有类似功能的应用程序的屏幕截图。",
   "Home": "家",
   "Map": "地图",
-  "preferences": "Preferences",
-  "defaultNavigationApp": "Default Navigation App",
-  "apple": "Apple",
-  "google": "Google",
-  "couldNotOpenMaps": "Could Not Open Maps",
-  "couldNotOpenMaps_description": "Please verify you have a valid mapping application installed.",
-  "preferredMaps": "Preferred Maps",
-  "youCanChangeThisLaterInTheSettings": "You can change this later in the settings.",
-  "preferredMaps_description": "JW Time will use your preferred mapping application to navigate to your contact's address.",
-  "waze": "Waze",
-  "navigation": "Navigation",
-  "nextVisitOffset_description": "How far out your next visit should be from when you create a conversation.",
-  "nextVisitOffset": "Next Visit Offset",
-  "conversations": "Conversations",
-  "notificationOffset": "Notification",
-  "followUpOffset": "Default Follow Up",
-  "notificationOffset_description": "How much time before your next visit when the notification arrives.",
-  "alwaysNotify": "Always Notify",
-  "whatsNew": "What's New",
-  "new": "New",
-  "bugFixes": "Bug Fixes",
+  "preferences": "优先",
+  "defaultNavigationApp": "默认导航应用程序",
+  "apple": "苹果",
+  "google": "谷歌",
+  "couldNotOpenMaps": "无法打开地图",
+  "couldNotOpenMaps_description": "请验证您是否安装了有效的地图应用程序。",
+  "preferredMaps": "首选地图",
+  "youCanChangeThisLaterInTheSettings": "您可以稍后在设置中更改此设置。",
+  "preferredMaps_description": "JW Time 将使用您首选的地图应用程序导航至您的联系人地址。",
+  "waze": "位智",
+  "navigation": "导航",
+  "nextVisitOffset_description": "您下次访问距离您创建对话的时间应该有多远。",
+  "nextVisitOffset": "下次访问偏移量",
+  "conversations": "对话",
+  "notificationOffset": "通知",
+  "followUpOffset": "默认跟进",
+  "notificationOffset_description": "通知到达时距离您下次访问还有多少时间。",
+  "alwaysNotify": "始终通知",
+  "whatsNew": "最新消息",
+  "new": "新的",
+  "bugFixes": "Bug修复",
   "updates": {
-    "190": {
-      "c1": "Added preferences in the settings",
-      "c2": "[iOS] Select between Google, Apple, and Waze as your default navigation app in preferences.",
-      "c3": "Now configure default values for your follow up and notification times in preferences.",
-      "c4": "'What's New' screen"
-    },
-    "182": {
-      "c1": "Updated all time to reflect the current locale"
-    },
-    "181": {
-      "c1": "Expanded map view",
-      "c2": "Added store review request after certain criteria is met",
-      "c3": "Small bug fixes"
-    },
-    "180": {
-      "c1": "Added automatic geocoding for contacts",
-      "c2": "Added map view"
-    },
-    "170": {
-      "c1": "Add various time export methods",
-      "c2": "Add 'Not At Homes'"
-    },
-    "163": {
-      "c1": "Resolve automated update issues"
-    },
-    "162": {
-      "c1": "Adjusted special pioneer hour requirement from 70 to 100"
+    "160": {
+      "c1": "对话现在可以编辑。通知是可配置的",
+      "c2": "滑动手势即可编辑或删除对话、联系人等。",
+      "c3": "为各种重要操作添加了触觉反馈"
     },
     "161": {
-      "c1": "Added more minute options for time entries"
+      "c1": "为时间条目添加了更多分钟选项"
     },
-    "160": {
-      "c1": "Conversations are now editable. Notifications are configurable",
-      "c2": "Swipe gestures to edit or delete conversations, contacts, etc.",
-      "c3": "Added haptic feedback to various important actions"
+    "162": {
+      "c1": "将特别先驱的时间要求从 70 小时调整为 100 小时"
+    },
+    "163": {
+      "c1": "解决自动更新问题"
+    },
+    "170": {
+      "c1": "添加多种时间导出方式",
+      "c2": "添加“不在家”"
+    },
+    "180": {
+      "c1": "添加了联系人的自动地理编码",
+      "c2": "添加了地图视图"
+    },
+    "181": {
+      "c1": "扩展地图视图",
+      "c2": "满足特定条件后添加商店审核请求",
+      "c3": "小错误修复"
+    },
+    "182": {
+      "c1": "始终更新以反映当前区域设置"
+    },
+    "190": {
+      "c1": "在设置中添加了首选项",
+      "c2": "[iOS] 在首选项中选择 Google、Apple 和 Waze 作为默认导航应用程序。",
+      "c3": "现在，在首选项中配置跟进和通知时间的默认值。",
+      "c4": "‘有什么新鲜事’屏幕"
     }
   },
-  "installed": "Installed"
+  "installed": "已安装"
 }

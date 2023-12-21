@@ -316,53 +316,53 @@
   "preferredMaps_description": "JW Time will use your preferred mapping application to navigate to your contact's address.",
   "waze": "Waze",
   "navigation": "Navigation",
-  "nextVisitOffset_description": "How far out your next visit should be from when you create a conversation.",
-  "nextVisitOffset": "Next Visit Offset",
-  "conversations": "Conversations",
-  "notificationOffset": "Notification",
-  "followUpOffset": "Default Follow Up",
-  "notificationOffset_description": "How much time before your next visit when the notification arrives.",
-  "alwaysNotify": "Always Notify",
-  "whatsNew": "What's New",
-  "new": "New",
-  "bugFixes": "Bug Fixes",
+  "nextVisitOffset_description": "Wie weit sollte Ihr nächster Besuch von dem Zeitpunkt entfernt sein, an dem Sie ein Gespräch beginnen?",
+  "nextVisitOffset": "Nächster Besuchsversatz",
+  "conversations": "Gespräche",
+  "notificationOffset": "Benachrichtigung",
+  "followUpOffset": "Standard-Follow-up",
+  "notificationOffset_description": "Wie lange dauert es bis zu Ihrem nächsten Besuch, wenn die Benachrichtigung eintrifft?",
+  "alwaysNotify": "Immer benachrichtigen",
+  "whatsNew": "Was ist neu?",
+  "new": "Neu",
+  "bugFixes": "Fehlerbehebung",
   "updates": {
-    "190": {
-      "c1": "Added preferences in the settings",
-      "c2": "[iOS] Select between Google, Apple, and Waze as your default navigation app in preferences.",
-      "c3": "Now configure default values for your follow up and notification times in preferences.",
-      "c4": "'What's New' screen"
-    },
-    "182": {
-      "c1": "Updated all time to reflect the current locale"
-    },
-    "181": {
-      "c1": "Expanded map view",
-      "c2": "Added store review request after certain criteria is met",
-      "c3": "Small bug fixes"
-    },
-    "180": {
-      "c1": "Added automatic geocoding for contacts",
-      "c2": "Added map view"
-    },
-    "170": {
-      "c1": "Add various time export methods",
-      "c2": "Add 'Not At Homes'"
-    },
-    "163": {
-      "c1": "Resolve automated update issues"
-    },
-    "162": {
-      "c1": "Adjusted special pioneer hour requirement from 70 to 100"
+    "160": {
+      "c1": "Gespräche können jetzt bearbeitet werden. Benachrichtigungen sind konfigurierbar",
+      "c2": "Wischen Sie mit Gesten, um Konversationen, Kontakte usw. zu bearbeiten oder zu löschen.",
+      "c3": "Haptisches Feedback zu verschiedenen wichtigen Aktionen hinzugefügt"
     },
     "161": {
-      "c1": "Added more minute options for time entries"
+      "c1": "Weitere Minutenoptionen für Zeiteinträge hinzugefügt"
     },
-    "160": {
-      "c1": "Conversations are now editable. Notifications are configurable",
-      "c2": "Swipe gestures to edit or delete conversations, contacts, etc.",
-      "c3": "Added haptic feedback to various important actions"
+    "162": {
+      "c1": "Die Stundenanforderungen für Sonderpioniere wurden von 70 auf 100 angepasst"
+    },
+    "163": {
+      "c1": "Beheben Sie Probleme mit automatischen Updates"
+    },
+    "170": {
+      "c1": "Fügen Sie verschiedene Zeitexportmethoden hinzu",
+      "c2": "Fügen Sie „Not At Homes“ hinzu."
+    },
+    "180": {
+      "c1": "Automatische Geokodierung für Kontakte hinzugefügt",
+      "c2": "Kartenansicht hinzugefügt"
+    },
+    "181": {
+      "c1": "Erweiterte Kartenansicht",
+      "c2": "Anfrage zur Store-Bewertung hinzugefügt, nachdem bestimmte Kriterien erfüllt sind",
+      "c3": "Kleine Fehlerbehebungen"
+    },
+    "182": {
+      "c1": "Ständig aktualisiert, um das aktuelle Gebietsschema widerzuspiegeln"
+    },
+    "190": {
+      "c1": "Präferenzen in den Einstellungen hinzugefügt",
+      "c2": "[iOS] Wählen Sie in den Einstellungen zwischen Google, Apple und Waze als Standard-Navigations-App.",
+      "c3": "Konfigurieren Sie nun in den Einstellungen Standardwerte für Ihre Nachverfolgungs- und Benachrichtigungszeiten.",
+      "c4": "„Was gibt’s Neues“ Bildschirm"
     }
   },
-  "installed": "Installed"
+  "installed": "Eingerichtet"
 }

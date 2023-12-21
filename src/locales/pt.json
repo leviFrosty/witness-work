@@ -315,12 +315,54 @@
   "youCanChangeThisLaterInTheSettings": "You can change this later in the settings.",
   "preferredMaps_description": "JW Time will use your preferred mapping application to navigate to your contact's address.",
   "waze": "Waze",
-  "navigation": "Navigation",
-  "nextVisitOffset_description": "How far out your next visit should be from when you create a conversation.",
-  "nextVisitOffset": "Next Visit Offset",
-  "conversations": "Conversations",
-  "notificationOffset": "Notification",
-  "followUpOffset": "Default Follow Up",
-  "notificationOffset_description": "How much time before your next visit when the notification arrives.",
-  "alwaysNotify": "Always Notify"
+  "navigation": "Navegação",
+  "nextVisitOffset_description": "A que distância deve estar sua próxima visita quando você cria uma conversa.",
+  "nextVisitOffset": "Compensação da próxima visita",
+  "conversations": "Conversas",
+  "notificationOffset": "Notificação",
+  "followUpOffset": "Acompanhamento padrão",
+  "notificationOffset_description": "Quanto tempo antes da sua próxima visita quando a notificação chegar.",
+  "alwaysNotify": "Notificar sempre",
+  "whatsNew": "Novidades",
+  "new": "Novo",
+  "bugFixes": "Correções de bugs",
+  "updates": {
+    "160": {
+      "c1": "As conversas agora são editáveis. As notificações são configuráveis",
+      "c2": "Deslize os gestos para editar ou excluir conversas, contatos, etc.",
+      "c3": "Adicionado feedback tátil para várias ações importantes"
+    },
+    "161": {
+      "c1": "Adicionadas mais opções de minutos para entradas de tempo"
+    },
+    "162": {
+      "c1": "Requisito de horas de pioneiro especial ajustado de 70 para 100"
+    },
+    "163": {
+      "c1": "Resolva problemas de atualização automatizada"
+    },
+    "170": {
+      "c1": "Adicione vários métodos de exportação de horário",
+      "c2": "Adicione 'Não em casa'"
+    },
+    "180": {
+      "c1": "Adicionada geocodificação automática para contatos",
+      "c2": "Visualização de mapa adicionada"
+    },
+    "181": {
+      "c1": "Visualização de mapa expandida",
+      "c2": "Adicionada solicitação de revisão da loja após determinados critérios serem atendidos",
+      "c3": "Pequenas correções de bugs"
+    },
+    "182": {
+      "c1": "Atualizado o tempo todo para refletir a localidade atual"
+    },
+    "190": {
+      "c1": "Preferências adicionadas nas configurações",
+      "c2": "[iOS] Selecione entre Google, Apple e Waze como seu aplicativo de navegação padrão nas preferências.",
+      "c3": "Agora configure os valores padrão para seus tempos de acompanhamento e notificação nas preferências.",
+      "c4": "'Novidades' tela"
+    }
+  },
+  "installed": "Instalado"
 }

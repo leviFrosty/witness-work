@@ -309,60 +309,60 @@
   "defaultNavigationApp": "Default Navigation App",
   "apple": "Apple",
   "google": "Google",
-  "couldNotOpenMaps": "지도를 열 수 없습니다",
-  "couldNotOpenMaps_description": "유효한 매핑 애플리케이션이 설치되어 있는지 확인하세요.",
-  "preferredMaps": "선호하는 지도",
-  "youCanChangeThisLaterInTheSettings": "나중에 설정에서 이를 변경할 수 있습니다.",
-  "preferredMaps_description": "JW Time은 귀하가 선호하는 매핑 애플리케이션을 사용하여 귀하의 연락처 주소를 탐색합니다.",
-  "waze": "웨이즈",
-  "navigation": "항해",
-  "nextVisitOffset_description": "다음 방문은 대화를 시작할 때로부터 얼마나 떨어져 있어야 할까요?",
-  "nextVisitOffset": "다음 방문 오프셋",
-  "conversations": "대화",
-  "notificationOffset": "공고",
-  "followUpOffset": "기본 후속 조치",
-  "notificationOffset_description": "알림이 도착하면 다음 방문까지 남은 시간입니다.",
-  "alwaysNotify": "항상 알림",
-  "whatsNew": "새로운 소식",
-  "new": "새로운",
-  "bugFixes": "버그 수정",
+  "couldNotOpenMaps": "Could Not Open Maps",
+  "couldNotOpenMaps_description": "Please verify you have a valid mapping application installed.",
+  "preferredMaps": "Preferred Maps",
+  "youCanChangeThisLaterInTheSettings": "You can change this later in the settings.",
+  "preferredMaps_description": "JW Time will use your preferred mapping application to navigate to your contact's address.",
+  "waze": "Waze",
+  "navigation": "Navigation",
+  "nextVisitOffset_description": "How far out your next visit should be from when you create a conversation.",
+  "nextVisitOffset": "Next Visit Offset",
+  "conversations": "Conversations",
+  "notificationOffset": "Notification",
+  "followUpOffset": "Default Follow Up",
+  "notificationOffset_description": "How much time before your next visit when the notification arrives.",
+  "alwaysNotify": "Always Notify",
+  "whatsNew": "What's New",
+  "new": "New",
+  "bugFixes": "Bug Fixes",
   "updates": {
-    "160": {
-      "c1": "이제 대화를 편집할 수 있습니다. 알림을 구성할 수 있습니다.",
-      "c2": "스와이프 동작으로 대화, 연락처 등을 편집하거나 삭제하세요.",
-      "c3": "다양한 중요한 작업에 햅틱 피드백을 추가했습니다."
-    },
-    "161": {
-      "c1": "시간 항목에 대해 더 많은 분 옵션을 추가했습니다."
-    },
-    "162": {
-      "c1": "특별 파이오니아 시간 요구 사항을 70시간에서 100시간으로 조정했습니다."
-    },
-    "163": {
-      "c1": "자동 업데이트 문제 해결"
-    },
-    "170": {
-      "c1": "다양한 시간 내보내기 방법 추가",
-      "c2": "'집이 아닌 곳'을 추가하세요."
-    },
-    "180": {
-      "c1": "연락처에 대한 자동 지오코딩이 추가되었습니다.",
-      "c2": "지도 보기가 추가되었습니다."
-    },
-    "181": {
-      "c1": "확장된 지도 보기",
-      "c2": "특정 기준이 충족되면 매장 리뷰 요청이 추가되었습니다.",
-      "c3": "작은 버그 수정"
+    "190": {
+      "c1": "Added preferences in the settings",
+      "c2": "[iOS] Select between Google, Apple, and Waze as your default navigation app in preferences.",
+      "c3": "Now configure default values for your follow up and notification times in preferences.",
+      "c4": "'What's New' screen"
     },
     "182": {
-      "c1": "현재 로케일을 반영하도록 항상 업데이트되었습니다."
+      "c1": "Updated all time to reflect the current locale"
     },
-    "190": {
-      "c1": "설정에 기본 설정이 추가되었습니다.",
-      "c2": "[iOS] 환경설정에서 Google, Apple, Waze 중에서 기본 내비게이션 앱을 선택하세요.",
-      "c3": "이제 기본 설정에서 후속 작업 및 알림 시간에 대한 기본값을 구성하세요.",
-      "c4": "'새로운 소식' 화면"
+    "181": {
+      "c1": "Expanded map view",
+      "c2": "Added store review request after certain criteria is met",
+      "c3": "Small bug fixes"
+    },
+    "180": {
+      "c1": "Added automatic geocoding for contacts",
+      "c2": "Added map view"
+    },
+    "170": {
+      "c1": "Add various time export methods",
+      "c2": "Add 'Not At Homes'"
+    },
+    "163": {
+      "c1": "Resolve automated update issues"
+    },
+    "162": {
+      "c1": "Adjusted special pioneer hour requirement from 70 to 100"
+    },
+    "161": {
+      "c1": "Added more minute options for time entries"
+    },
+    "160": {
+      "c1": "Conversations are now editable. Notifications are configurable",
+      "c2": "Swipe gestures to edit or delete conversations, contacts, etc.",
+      "c3": "Added haptic feedback to various important actions"
     }
   },
-  "installed": "설치됨"
+  "installed": "Installed"
 }

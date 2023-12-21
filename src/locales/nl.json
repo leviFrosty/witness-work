@@ -327,41 +327,41 @@
   "new": "Nieuw",
   "bugFixes": "Bugfixes",
   "updates": {
-    "160": {
-      "c1": "Gesprekken kunnen nu worden bewerkt. Meldingen zijn configureerbaar",
-      "c2": "Veeggebaren om gesprekken, contacten, enz. te bewerken of te verwijderen.",
-      "c3": "Haptische feedback toegevoegd aan verschillende belangrijke acties"
+    "190": {
+      "c1": "Voorkeuren toegevoegd in de instellingen",
+      "c2": "[iOS] Kies in voorkeuren tussen Google, Apple en Waze als je standaardnavigatie-app.",
+      "c3": "Configureer nu standaardwaarden voor uw follow-up- en meldingstijden in voorkeuren.",
+      "c4": "'Wat is er nieuw' scherm"
     },
-    "161": {
-      "c1": "Meer minuutopties toegevoegd voor tijdinvoer"
-    },
-    "162": {
-      "c1": "Eis voor speciaal pioniersuur aangepast van 70 naar 100"
-    },
-    "163": {
-      "c1": "Los problemen met automatische updates op"
-    },
-    "170": {
-      "c1": "Voeg verschillende tijdexportmethoden toe",
-      "c2": "Voeg 'Niet thuis' toe"
-    },
-    "180": {
-      "c1": "Automatische geocodering voor contacten toegevoegd",
-      "c2": "Kaartweergave toegevoegd"
+    "182": {
+      "c1": "Altijd bijgewerkt om de huidige landinstelling weer te geven"
     },
     "181": {
       "c1": "Uitgebreide kaartweergave",
       "c2": "Winkelbeoordelingsverzoek toegevoegd nadat aan bepaalde criteria is voldaan",
       "c3": "Kleine bugfixes"
     },
-    "182": {
-      "c1": "Altijd bijgewerkt om de huidige landinstelling weer te geven"
+    "180": {
+      "c1": "Automatische geocodering voor contacten toegevoegd",
+      "c2": "Kaartweergave toegevoegd"
     },
-    "190": {
-      "c1": "Voorkeuren toegevoegd in de instellingen",
-      "c2": "[iOS] Kies in voorkeuren tussen Google, Apple en Waze als je standaardnavigatie-app.",
-      "c3": "Configureer nu standaardwaarden voor uw follow-up- en meldingstijden in voorkeuren.",
-      "c4": "'Wat is er nieuw' scherm"
+    "170": {
+      "c1": "Voeg verschillende tijdexportmethoden toe",
+      "c2": "Voeg 'Niet thuis' toe"
+    },
+    "163": {
+      "c1": "Los problemen met automatische updates op"
+    },
+    "162": {
+      "c1": "Eis voor speciaal pioniersuur aangepast van 70 naar 100"
+    },
+    "161": {
+      "c1": "Meer minuutopties toegevoegd voor tijdinvoer"
+    },
+    "160": {
+      "c1": "Gesprekken kunnen nu worden bewerkt. Meldingen zijn configureerbaar",
+      "c2": "Veeggebaren om gesprekken, contacten, enz. te bewerken of te verwijderen.",
+      "c3": "Haptische feedback toegevoegd aan verschillende belangrijke acties"
     }
   },
   "installed": "Geïnstalleerd"

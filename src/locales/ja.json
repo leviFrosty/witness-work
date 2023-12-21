@@ -305,64 +305,64 @@
   "pleaseDescribeYourFeatureClearly": "どの機能を搭載したいのかを詳しく説明してください。連絡先の名前と電話番号を入力します。該当する場合は、その機能がどのようなものかをイメージしてください。または、同様の機能を持つアプリのスクリーンショットを送信します。",
   "Home": "家",
   "Map": "地図",
-  "preferences": "Preferences",
-  "defaultNavigationApp": "Default Navigation App",
-  "apple": "Apple",
-  "google": "Google",
-  "couldNotOpenMaps": "Could Not Open Maps",
-  "couldNotOpenMaps_description": "Please verify you have a valid mapping application installed.",
-  "preferredMaps": "Preferred Maps",
-  "youCanChangeThisLaterInTheSettings": "You can change this later in the settings.",
-  "preferredMaps_description": "JW Time will use your preferred mapping application to navigate to your contact's address.",
-  "waze": "Waze",
-  "navigation": "Navigation",
-  "nextVisitOffset_description": "How far out your next visit should be from when you create a conversation.",
-  "nextVisitOffset": "Next Visit Offset",
-  "conversations": "Conversations",
-  "notificationOffset": "Notification",
-  "followUpOffset": "Default Follow Up",
-  "notificationOffset_description": "How much time before your next visit when the notification arrives.",
-  "alwaysNotify": "Always Notify",
-  "whatsNew": "What's New",
-  "new": "New",
-  "bugFixes": "Bug Fixes",
+  "preferences": "環境設定",
+  "defaultNavigationApp": "デフォルトのナビゲーション アプリ",
+  "apple": "りんご",
+  "google": "グーグル",
+  "couldNotOpenMaps": "マップを開けませんでした",
+  "couldNotOpenMaps_description": "有効なマッピング アプリケーションがインストールされていることを確認してください。",
+  "preferredMaps": "優先マップ",
+  "youCanChangeThisLaterInTheSettings": "これは後から設定で変更できます。",
+  "preferredMaps_description": "JW Time は、お好みのマッピング アプリケーションを使用して、連絡先の住所に移動します。",
+  "waze": "ワゼ",
+  "navigation": "ナビゲーション",
+  "nextVisitOffset_description": "会話を作成するときに、次の訪問がどれくらい先になるべきか。",
+  "nextVisitOffset": "次の訪問オフセット",
+  "conversations": "会話",
+  "notificationOffset": "通知",
+  "followUpOffset": "デフォルトのフォローアップ",
+  "notificationOffset_description": "通知が届くのは次の訪問までのどれくらいの時間です。",
+  "alwaysNotify": "常に通知する",
+  "whatsNew": "新機能",
+  "new": "新しい",
+  "bugFixes": "バグの修正",
   "updates": {
     "190": {
-      "c1": "Added preferences in the settings",
-      "c2": "[iOS] Select between Google, Apple, and Waze as your default navigation app in preferences.",
-      "c3": "Now configure default values for your follow up and notification times in preferences.",
-      "c4": "'What's New' screen"
+      "c1": "設定に設定を追加しました",
+      "c2": "[iOS] 設定でデフォルトのナビゲーション アプリとして Google、Apple、Waze のいずれかを選択します。",
+      "c3": "ここで、環境設定でフォローアップ時間と通知時間のデフォルト値を設定します。",
+      "c4": "「新機能」画面"
     },
     "182": {
-      "c1": "Updated all time to reflect the current locale"
+      "c1": "現在のロケールを反映するために常に更新されます"
     },
     "181": {
-      "c1": "Expanded map view",
-      "c2": "Added store review request after certain criteria is met",
-      "c3": "Small bug fixes"
+      "c1": "拡大された地図ビュー",
+      "c2": "特定の条件を満たした場合にストアレビューリクエストを追加しました",
+      "c3": "小さなバグ修正"
     },
     "180": {
-      "c1": "Added automatic geocoding for contacts",
-      "c2": "Added map view"
+      "c1": "連絡先の自動ジオコーディングを追加しました",
+      "c2": "マップビューを追加しました"
     },
     "170": {
-      "c1": "Add various time export methods",
-      "c2": "Add 'Not At Homes'"
+      "c1": "さまざまな時間エクスポート方法を追加する",
+      "c2": "「自宅ではありません」を追加"
     },
     "163": {
-      "c1": "Resolve automated update issues"
+      "c1": "自動アップデートの問題を解決する"
     },
     "162": {
-      "c1": "Adjusted special pioneer hour requirement from 70 to 100"
+      "c1": "特別開拓者の時間要件を70時間から100時間に調整しました"
     },
     "161": {
-      "c1": "Added more minute options for time entries"
+      "c1": "時間エントリの分オプションを追加しました"
     },
     "160": {
-      "c1": "Conversations are now editable. Notifications are configurable",
-      "c2": "Swipe gestures to edit or delete conversations, contacts, etc.",
-      "c3": "Added haptic feedback to various important actions"
+      "c1": "会話が編集可能になりました。通知は構成可能です",
+      "c2": "スワイプジェスチャーで会話や連絡先などを編集または削除します。",
+      "c3": "さまざまな重要なアクションに触覚フィードバックを追加しました"
     }
   },
-  "installed": "Installed"
+  "installed": "インストール済み"
 }

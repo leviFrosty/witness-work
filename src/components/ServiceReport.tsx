@@ -118,6 +118,8 @@ const HourEntryCard = () => {
           borderRadius: theme.numbers.borderRadiusSm,
           backgroundColor: theme.colors.backgroundLighter,
           gap: 5,
+          paddingTop: 10,
+          paddingHorizontal: 10,
           position: 'relative',
         }}
         onPress={() =>
@@ -127,13 +129,11 @@ const HourEntryCard = () => {
           })
         }
       >
-        <View style={{ padding: 10 }}>
-          <ProgressBar
-            month={moment().month()}
-            year={moment().year()}
-            minimal={!displayDetailsOnProgressBarHomeScreen}
-          />
-        </View>
+        <ProgressBar
+          month={moment().month()}
+          year={moment().year()}
+          minimal={!displayDetailsOnProgressBarHomeScreen}
+        />
         <View style={{ marginBottom: 10 }}>
           <View
             style={{
@@ -252,7 +252,7 @@ const RightCard = () => {
     <View
       style={{
         flexDirection: 'column',
-        paddingHorizontal: 10,
+        paddingHorizontal: 15,
         paddingVertical: 10,
         backgroundColor: theme.colors.backgroundLighter,
         borderRadius: theme.numbers.borderRadiusSm,
@@ -445,7 +445,7 @@ const ServiceReport = ({ setSheet }: ServiceReportProps) => {
 
       <Card>
         <View style={{ flexDirection: 'row', gap: 5 }}>
-          <View style={{ flexDirection: 'column', gap: 5, flexShrink: 1 }}>
+          <View style={{ flexDirection: 'column', gap: 5, flexGrow: 1 }}>
             <View style={{ flexDirection: 'row' }}>
               {publisher !== 'publisher' ? (
                 <Button
@@ -483,7 +483,13 @@ const ServiceReport = ({ setSheet }: ServiceReportProps) => {
               <HourEntryCard />
             )}
           </View>
-          <View style={{ flexDirection: 'column', gap: 5, flexGrow: 1 }}>
+          <View
+            style={{
+              flexDirection: 'column',
+              gap: 5,
+              flexShrink: 1,
+            }}
+          >
             <Text
               style={{
                 color: theme.colors.textAlt,

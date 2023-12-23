@@ -32,7 +32,7 @@ export type RootStackParamList = {
   'Contact Form': { id: string; edit?: boolean } // Contact ID
   'Contact Selector': undefined
   'Add Time': undefined
-  'Time Reports': { month: number; year: number }
+  'Time Reports': { month?: number; year?: number }
   'Recover Contacts': undefined
   Onboarding: undefined
   Update: undefined

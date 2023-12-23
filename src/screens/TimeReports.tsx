@@ -30,8 +30,8 @@ const TimeReports = ({ route, navigation }: Props) => {
   const theme = useTheme()
   const { serviceReports } = useServiceReport()
   const insets = useSafeAreaInsets()
-  const [year, setYear] = useState(route.params.year)
-  const [month, setMonth] = useState(route.params.month)
+  const [year, setYear] = useState(route.params?.year || moment().year())
+  const [month, setMonth] = useState(route.params?.month || moment().month())
   const [sheet, setSheet] = useState<ExportTimeSheetState>({
     open: false,
     month,

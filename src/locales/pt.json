@@ -327,36 +327,6 @@
   "new": "Novo",
   "bugFixes": "Correções de bugs",
   "updates": {
-    "160": {
-      "c1": "As conversas agora são editáveis. As notificações são configuráveis",
-      "c2": "Deslize os gestos para editar ou excluir conversas, contatos, etc.",
-      "c3": "Adicionado feedback tátil para várias ações importantes"
-    },
-    "161": {
-      "c1": "Adicionadas mais opções de minutos para entradas de tempo"
-    },
-    "162": {
-      "c1": "Requisito de horas de pioneiro especial ajustado de 70 para 100"
-    },
-    "163": {
-      "c1": "Resolva problemas de atualização automatizada"
-    },
-    "170": {
-      "c1": "Adicione vários métodos de exportação de horário",
-      "c2": "Adicione 'Não em casa'"
-    },
-    "180": {
-      "c1": "Adicionada geocodificação automática para contatos",
-      "c2": "Visualização de mapa adicionada"
-    },
-    "181": {
-      "c1": "Visualização de mapa expandida",
-      "c2": "Adicionada solicitação de revisão da loja após determinados critérios serem atendidos",
-      "c3": "Pequenas correções de bugs"
-    },
-    "182": {
-      "c1": "Atualizado o tempo todo para refletir a localidade atual"
-    },
     "190": {
       "c1": "Preferências adicionadas nas configurações",
       "c2": "[iOS] Selecione entre Google, Apple e Waze como seu aplicativo de navegação padrão nas preferências.",
@@ -365,6 +335,36 @@
       "c5": "A nova barra de progresso organiza suas entradas de tempo por categoria",
       "c6": "Agora adicione tags personalizadas às suas entradas de tempo",
       "c7": "Tela de Relatórios de Tempo atualizada para ser melhor organizada e separada por mês"
+    },
+    "182": {
+      "c1": "Atualizado o tempo todo para refletir a localidade atual"
+    },
+    "181": {
+      "c1": "Visualização de mapa expandida",
+      "c2": "Adicionada solicitação de revisão da loja após determinados critérios serem atendidos",
+      "c3": "Pequenas correções de bugs"
+    },
+    "180": {
+      "c1": "Adicionada geocodificação automática para contatos",
+      "c2": "Visualização de mapa adicionada"
+    },
+    "170": {
+      "c1": "Adicione vários métodos de exportação de horário",
+      "c2": "Adicione 'Não em casa'"
+    },
+    "163": {
+      "c1": "Resolva problemas de atualização automatizada"
+    },
+    "162": {
+      "c1": "Requisito de horas de pioneiro especial ajustado de 70 para 100"
+    },
+    "161": {
+      "c1": "Adicionadas mais opções de minutos para entradas de tempo"
+    },
+    "160": {
+      "c1": "As conversas agora são editáveis. As notificações são configuráveis",
+      "c2": "Deslize os gestos para editar ou excluir conversas, contatos, etc.",
+      "c3": "Adicionado feedback tátil para várias ações importantes"
     }
   },
   "installed": "Instalado",
@@ -386,5 +386,5 @@
   "homeScreen": "Tela inicial",
   "detailedProgressBar": "Barra de progresso detalhada",
   "theHoursBelowAreAlreadyIncludedInMyTotalHours": "As categorias abaixo já estão incluídas no meu total de horas.",
-  "otherHours": "Outros (já incluídos no total)"
+  "otherHours": "(Below is already included in total)"
 }

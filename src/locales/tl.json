@@ -386,5 +386,5 @@
   "homeScreen": "Home screen",
   "detailedProgressBar": "Detalyadong Progress Bar",
   "theHoursBelowAreAlreadyIncludedInMyTotalHours": "Ang mga kategorya sa ibaba ay kasama na sa aking kabuuang oras.",
-  "otherHours": "Iba pa (kasama na sa kabuuan)"
+  "otherHoursDescription": "Sa ibaba ay kasama na sa kabuuan"
 }

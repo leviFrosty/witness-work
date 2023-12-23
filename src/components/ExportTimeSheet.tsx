@@ -104,7 +104,7 @@ const ExportTimeSheet = ({
                 }`
               )
             },
-            `\n${i18n.t('otherHours')}\n`
+            `\n${i18n.t('otherHoursDescription')}\n`
           )
         }
         return ''

@@ -153,7 +153,7 @@
   "restartOnboarding": "Restart Onboarding",
   "basedOnContacts": "Based on contacts",
   "allTimeEntries": "All Time Entries",
-  "noTimeEntriesYet": "No time entries yet.. 🕒",
+  "noTimeEntriesYet": "No time entries yet...",
   "deleteTime_title": "Delete Time Report?",
   "deleteTime_description": "Deleting this time report will permanently remove it.",
   "ldcTime": "LDC Time",
@@ -331,7 +331,10 @@
       "c1": "Added preferences in the settings",
       "c2": "[iOS] Select between Google, Apple, and Waze as your default navigation app in preferences.",
       "c3": "Now configure default values for your follow up and notification times in preferences.",
-      "c4": "'What's New' screen"
+      "c4": "'What's New' screen",
+      "c5": "New progress bar organizes your time entries by category",
+      "c6": "Now add custom tags to your time entries",
+      "c7": "Updated Time Reports screen to be better organized and separated by month"
     },
     "182": {
       "c1": "Updated all time to reflect the current locale"
@@ -364,5 +367,24 @@
       "c3": "Added haptic feedback to various important actions"
     }
   },
-  "installed": "Installed"
+  "installed": "Installed",
+  "progress": "Progress",
+  "type": "Type",
+  "other": "Other",
+  "enterCustomCategory": "Enter Custom Category",
+  "categoryNeeded": "You must select an existing category or add a custom category.",
+  "categories": "Categories",
+  "tag": "Tag",
+  "showOtherCategories": "Show Other Categories",
+  "of": "of",
+  "hoursToGoal": "hours to goal",
+  "removeCategory": "Remove Category",
+  "noReportsThisMonthYet": "No reports this month yet.",
+  "timeReports": "Time Reports",
+  "monthDetails": "Month Details",
+  "entries": "Entries",
+  "homeScreen": "Home Screen",
+  "detailedProgressBar": "Detailed Progress Bar",
+  "theHoursBelowAreAlreadyIncludedInMyTotalHours": "The categories below are already included in my total hours.",
+  "otherHours": "Other (already included in total)"
 }

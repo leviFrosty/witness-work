@@ -327,42 +327,64 @@
   "new": "Novo",
   "bugFixes": "Correções de bugs",
   "updates": {
-    "190": {
-      "c1": "Preferências adicionadas nas configurações",
-      "c2": "[iOS] Selecione entre Google, Apple e Waze como seu aplicativo de navegação padrão nas preferências.",
-      "c3": "Agora configure os valores padrão para seus tempos de acompanhamento e notificação nas preferências.",
-      "c4": "'Novidades' tela"
+    "160": {
+      "c1": "As conversas agora são editáveis. As notificações são configuráveis",
+      "c2": "Deslize os gestos para editar ou excluir conversas, contatos, etc.",
+      "c3": "Adicionado feedback tátil para várias ações importantes"
     },
-    "182": {
-      "c1": "Atualizado o tempo todo para refletir a localidade atual"
+    "161": {
+      "c1": "Adicionadas mais opções de minutos para entradas de tempo"
+    },
+    "162": {
+      "c1": "Requisito de horas de pioneiro especial ajustado de 70 para 100"
+    },
+    "163": {
+      "c1": "Resolva problemas de atualização automatizada"
+    },
+    "170": {
+      "c1": "Adicione vários métodos de exportação de horário",
+      "c2": "Adicione 'Não em casa'"
+    },
+    "180": {
+      "c1": "Adicionada geocodificação automática para contatos",
+      "c2": "Visualização de mapa adicionada"
     },
     "181": {
       "c1": "Visualização de mapa expandida",
       "c2": "Adicionada solicitação de revisão da loja após determinados critérios serem atendidos",
       "c3": "Pequenas correções de bugs"
     },
-    "180": {
-      "c1": "Adicionada geocodificação automática para contatos",
-      "c2": "Visualização de mapa adicionada"
+    "182": {
+      "c1": "Atualizado o tempo todo para refletir a localidade atual"
     },
-    "170": {
-      "c1": "Adicione vários métodos de exportação de horário",
-      "c2": "Adicione 'Não em casa'"
-    },
-    "163": {
-      "c1": "Resolva problemas de atualização automatizada"
-    },
-    "162": {
-      "c1": "Requisito de horas de pioneiro especial ajustado de 70 para 100"
-    },
-    "161": {
-      "c1": "Adicionadas mais opções de minutos para entradas de tempo"
-    },
-    "160": {
-      "c1": "As conversas agora são editáveis. As notificações são configuráveis",
-      "c2": "Deslize os gestos para editar ou excluir conversas, contatos, etc.",
-      "c3": "Adicionado feedback tátil para várias ações importantes"
+    "190": {
+      "c1": "Preferências adicionadas nas configurações",
+      "c2": "[iOS] Selecione entre Google, Apple e Waze como seu aplicativo de navegação padrão nas preferências.",
+      "c3": "Agora configure os valores padrão para seus tempos de acompanhamento e notificação nas preferências.",
+      "c4": "'Novidades' tela",
+      "c5": "A nova barra de progresso organiza suas entradas de tempo por categoria",
+      "c6": "Agora adicione tags personalizadas às suas entradas de tempo",
+      "c7": "Tela de Relatórios de Tempo atualizada para ser melhor organizada e separada por mês"
     }
   },
-  "installed": "Instalado"
+  "installed": "Instalado",
+  "progress": "Progresso",
+  "type": "Tipo",
+  "other": "Outro",
+  "enterCustomCategory": "Insira a categoria personalizada",
+  "categoryNeeded": "Você deve selecionar uma categoria existente ou adicionar uma categoria personalizada.",
+  "categories": "Categorias",
+  "tag": "Marcação",
+  "showOtherCategories": "Mostrar outras categorias",
+  "of": "de",
+  "hoursToGoal": "horas para meta",
+  "removeCategory": "Remover categoria",
+  "noReportsThisMonthYet": "Ainda não há relatórios este mês.",
+  "timeReports": "Relatórios de tempo",
+  "monthDetails": "Detalhes do mês",
+  "entries": "Entradas",
+  "homeScreen": "Tela inicial",
+  "detailedProgressBar": "Barra de progresso detalhada",
+  "theHoursBelowAreAlreadyIncludedInMyTotalHours": "As categorias abaixo já estão incluídas no meu total de horas.",
+  "otherHours": "Outros (já incluídos no total)"
 }

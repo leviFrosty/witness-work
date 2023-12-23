@@ -24,24 +24,24 @@ import i18n from '../lib/locales'
 import useConversations from '../stores/conversationStore'
 import ActionButton from './ActionButton'
 import IconButton from './IconButton'
-import {
-  faArrowUpFromBracket,
-  faChevronRight,
-} from '@fortawesome/free-solid-svg-icons'
+import { faArrowUpFromBracket } from '@fortawesome/free-solid-svg-icons'
 import { faSquare } from '@fortawesome/free-regular-svg-icons'
 import Button from './Button'
 import { ExportTimeSheetState } from './ExportTimeSheet'
 
 const HourEntryCard = () => {
   const theme = useTheme()
-  const { publisher, publisherHours } = usePreferences()
+  const { publisher, publisherHours, displayDetailsOnProgressBarHomeScreen } =
+    usePreferences()
   const { serviceReports } = useServiceReport()
   const navigation = useNavigation<RootStackNavigation>()
   const goalHours = publisherHours[publisher]
+
   const hours = useMemo(
     () => totalHoursForCurrentMonth(serviceReports),
     [serviceReports]
   )
+
   const progress = useMemo(
     () => calculateProgress({ hours, goalHours }),
     [hours, goalHours]
@@ -61,6 +61,7 @@ const HourEntryCard = () => {
         i18n.t('phrasesFar.stayStrong'),
       ]
     }
+
     if (progress >= 0.6 && progress < 0.95) {
       phrases = [
         i18n.t('phrasesClose.oneStepCloser'),
@@ -73,6 +74,7 @@ const HourEntryCard = () => {
         i18n.t('phrasesClose.closerThanEver'),
       ]
     }
+
     if (progress > 0.95) {
       phrases = [
         i18n.t('phrasesDone.youDidIt'),
@@ -113,88 +115,84 @@ const HourEntryCard = () => {
       <Button
         style={{
           flexDirection: 'column',
-          paddingHorizontal: 10,
-          paddingVertical: 10,
           borderRadius: theme.numbers.borderRadiusSm,
           backgroundColor: theme.colors.backgroundLighter,
           gap: 5,
           position: 'relative',
         }}
-        onPress={() => navigation.navigate('Time Reports')}
+        onPress={() =>
+          navigation.navigate('Time Reports', {
+            month: moment().month(),
+            year: moment().year(),
+          })
+        }
       >
-        <View
-          style={{
-            flexDirection: 'row',
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}
-        >
-          <ProgressBar />
+        <View style={{ padding: 10 }}>
+          <ProgressBar
+            month={moment().month()}
+            year={moment().year()}
+            minimal={!displayDetailsOnProgressBarHomeScreen}
+          />
         </View>
-        <View
-          style={{
-            justifyContent: 'center',
-            alignItems: 'center',
-            flexDirection: 'column',
-            gap: 10,
-          }}
-        >
-          <View style={{ position: 'relative' }}>
-            <Text style={{ fontSize: 32, fontFamily: theme.fonts.bold }}>
-              {hours}
+        <View style={{ marginBottom: 10 }}>
+          <View
+            style={{
+              justifyContent: 'center',
+              alignItems: 'center',
+              flexDirection: 'column',
+              gap: 10,
+            }}
+          >
+            <View>
+              <Text style={{ fontSize: 32, fontFamily: theme.fonts.bold }}>
+                {hours}
+              </Text>
+              <View
+                style={{
+                  position: 'absolute',
+                  right: -25,
+                  bottom: 0,
+                }}
+              >
+                <Text
+                  style={{
+                    fontSize: 12,
+                    color: theme.colors.textAlt,
+                    fontFamily: theme.fonts.semiBold,
+                  }}
+                >
+                  /{goalHours}
+                </Text>
+              </View>
+            </View>
+
+            <Text style={{ fontFamily: theme.fonts.bold, maxWidth: 200 }}>
+              {encouragementPhrase}
             </Text>
             <View
               style={{
-                position: 'absolute',
-                right: -25,
-                bottom: 0,
+                borderRadius: theme.numbers.borderRadiusLg,
+                backgroundColor: theme.colors.accent3,
+                paddingHorizontal: 20,
+                marginHorizontal: 15,
+                paddingVertical: 5,
               }}
             >
               <Text
                 style={{
-                  fontSize: 12,
-                  color: theme.colors.textAlt,
+                  fontSize: theme.fontSize('xs'),
+                  color: theme.colors.textInverse,
                   fontFamily: theme.fonts.semiBold,
                 }}
               >
-                /{goalHours}
+                {hoursPerDayNeeded} {i18n.t('hoursPerDayToGoal')}
               </Text>
             </View>
-          </View>
-
-          <Text style={{ fontFamily: theme.fonts.bold, maxWidth: 200 }}>
-            {encouragementPhrase}
-          </Text>
-          <View
-            style={{
-              borderRadius: theme.numbers.borderRadiusLg,
-              backgroundColor: theme.colors.accent3,
-              paddingHorizontal: 25,
-              paddingVertical: 5,
-            }}
-          >
-            <Text
-              style={{
-                fontSize: theme.fontSize('xs'),
-                color: theme.colors.textInverse,
-                fontFamily: theme.fonts.semiBold,
-              }}
-            >
-              {hoursPerDayNeeded} {i18n.t('hoursPerDayToGoal')}
+            <Text style={{ fontSize: 8, color: theme.colors.textAlt }}>
+              {i18n.t('goalBasedOnPublisherType')}
             </Text>
           </View>
-          <Text style={{ fontSize: 8, color: theme.colors.textAlt }}>
-            {i18n.t('goalBasedOnPublisherType')}
-          </Text>
         </View>
-        <IconButton
-          style={{
-            position: 'absolute',
-            top: '50%',
-            right: 5,
-          }}
-          icon={faChevronRight}
-        />
       </Button>
       <ActionButton onPress={() => navigation.navigate('Add Time')}>
         {i18n.t('addTime')}
@@ -369,6 +367,8 @@ const StandardPublisherTimeEntry = () => {
             justifyContent: 'center',
             alignItems: 'center',
             borderRadius: theme.numbers.borderRadiusSm,
+            paddingHorizontal: 20,
+            overflow: 'hidden',
           }}
         >
           <CheckMarkAnimationComponent undoId={undoId} />
@@ -384,6 +384,7 @@ const StandardPublisherTimeEntry = () => {
             justifyContent: 'center',
             alignItems: 'center',
             borderRadius: theme.numbers.borderRadiusSm,
+            paddingHorizontal: 25,
           }}
           onPress={handleSubmitDidService}
         >
@@ -444,10 +445,17 @@ const ServiceReport = ({ setSheet }: ServiceReportProps) => {
 
       <Card>
         <View style={{ flexDirection: 'row', gap: 5 }}>
-          <View style={{ flexDirection: 'column', gap: 5, flexGrow: 1 }}>
+          <View style={{ flexDirection: 'column', gap: 5, flexShrink: 1 }}>
             <View style={{ flexDirection: 'row' }}>
               {publisher !== 'publisher' ? (
-                <Button onPress={() => navigation.navigate('Time Reports')}>
+                <Button
+                  onPress={() =>
+                    navigation.navigate('Time Reports', {
+                      month: moment().month(),
+                      year: moment().year(),
+                    })
+                  }
+                >
                   <Text
                     style={{
                       color: theme.colors.textAlt,
@@ -475,7 +483,7 @@ const ServiceReport = ({ setSheet }: ServiceReportProps) => {
               <HourEntryCard />
             )}
           </View>
-          <View style={{ flexDirection: 'column', gap: 5 }}>
+          <View style={{ flexDirection: 'column', gap: 5, flexGrow: 1 }}>
             <Text
               style={{
                 color: theme.colors.textAlt,

@@ -1,6 +1,6 @@
 import { createDrawerNavigator } from '@react-navigation/drawer'
 import Header from '../components/layout/Header'
-import Settings from './Settings'
+import Settings from './settings/Settings'
 import { Dashboard } from './Dashboard'
 
 const HomeScreen = () => {

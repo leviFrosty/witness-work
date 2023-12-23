@@ -361,8 +361,30 @@
       "c1": "Nagdagdag ng mga kagustuhan sa mga setting",
       "c2": "[iOS] Pumili sa pagitan ng Google, Apple, at Waze bilang iyong default na navigation app sa mga kagustuhan.",
       "c3": "Ngayon ay i-configure ang mga default na halaga para sa iyong pag-follow up at mga oras ng notification sa mga kagustuhan.",
-      "c4": "'Ano'ng bago' screen"
+      "c4": "'Ano'ng bago' screen",
+      "c5": "Inaayos ng bagong progress bar ang iyong mga entry sa oras ayon sa kategorya",
+      "c6": "Ngayon magdagdag ng mga custom na tag sa iyong mga entry sa oras",
+      "c7": "Na-update ang screen ng Mga Ulat sa Oras upang maging mas maayos at paghiwalayin ayon sa buwan"
     }
   },
-  "installed": "Naka-install"
+  "installed": "Naka-install",
+  "progress": "Pag-unlad",
+  "type": "Uri",
+  "other": "Iba pa",
+  "enterCustomCategory": "Ipasok ang Custom na Kategorya",
+  "categoryNeeded": "Dapat kang pumili ng kasalukuyang kategorya o magdagdag ng custom na kategorya.",
+  "categories": "Mga kategorya",
+  "tag": "Tag",
+  "showOtherCategories": "Ipakita ang Iba Pang Mga Kategorya",
+  "of": "ng",
+  "hoursToGoal": "oras sa layunin",
+  "removeCategory": "Alisin ang Kategorya",
+  "noReportsThisMonthYet": "Wala pang ulat ngayong buwan.",
+  "timeReports": "Mga Ulat sa Oras",
+  "monthDetails": "Mga Detalye ng Buwan",
+  "entries": "Mga entry",
+  "homeScreen": "Home screen",
+  "detailedProgressBar": "Detalyadong Progress Bar",
+  "theHoursBelowAreAlreadyIncludedInMyTotalHours": "Ang mga kategorya sa ibaba ay kasama na sa aking kabuuang oras.",
+  "otherHours": "Iba pa (kasama na sa kabuuan)"
 }

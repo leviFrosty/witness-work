@@ -1,10 +1,5 @@
 import React, { PropsWithChildren } from 'react'
-import {
-  GestureResponderEvent,
-  Pressable,
-  StyleProp,
-  ViewStyle,
-} from 'react-native'
+import { GestureResponderEvent, Pressable, PressableProps } from 'react-native'
 import Haptics from '../lib/haptics'
 import Animated, {
   Easing,
@@ -13,10 +8,9 @@ import Animated, {
 } from 'react-native-reanimated'
 import useTheme from '../contexts/theme'
 
-interface Props {
+export interface ButtonProps extends PressableProps {
   onPress?: (event: GestureResponderEvent) => void
   onLongPress?: (event: GestureResponderEvent) => void
-  style?: StyleProp<ViewStyle>
   disabled?: boolean
   noTransform?: boolean
   variant?: 'solid' | 'outline'
@@ -24,7 +18,7 @@ interface Props {
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable)
 
-const Button: React.FC<PropsWithChildren<Props>> = ({
+const Button: React.FC<PropsWithChildren<ButtonProps>> = ({
   children,
   onPress,
   onLongPress,
@@ -32,6 +26,7 @@ const Button: React.FC<PropsWithChildren<Props>> = ({
   disabled,
   noTransform,
   variant,
+  ...props
 }) => {
   const translateY = useSharedValue(0)
   const opacity = useSharedValue(1)
@@ -97,6 +92,7 @@ const Button: React.FC<PropsWithChildren<Props>> = ({
         ],
         [style],
       ]}
+      {...props}
     >
       {children}
     </AnimatedPressable>

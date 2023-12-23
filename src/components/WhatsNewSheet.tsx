@@ -1,6 +1,6 @@
 import { View } from 'react-native'
 import { Sheet, XStack } from 'tamagui'
-import i18n from '../lib/locales'
+import i18n, { TranslationKey } from '../lib/locales'
 import Text from './MyText'
 import useTheme from '../contexts/theme'
 import IconButton from './IconButton'
@@ -23,9 +23,11 @@ interface Props {
 
 interface Props {
   /**
-   * If referenced directly from preferences, will may updated automatically when the component mounts.
+   * If referenced directly from preferences, this value may be
+   * inaccurate because it will get changed when WhatsNew mounts.
    *
-   * Likely should use a ref to the value in preferences.
+   * Should temporarily store initial value in a useRef outside
+   * of this component so it doesn't update when comparing semver.
    */
   lastVersion: string
 }
@@ -100,7 +102,10 @@ export const WhatsNewContent = ({ lastVersion }: { lastVersion: string }) => {
             {item.content.map((c, index) => {
               return (
                 <Text key={index}>{`- ${i18n.t(
-                  `updates.${item.version.replaceAll('.', '')}.${c}`
+                  `updates.${item.version.replaceAll(
+                    '.',
+                    ''
+                  )}.${c}` as TranslationKey
                 )}`}</Text>
               )
             })}
@@ -130,7 +135,6 @@ const WhatsNewSheet: React.FC<Props> = ({ show, setShow }) => {
       lastAppVersion: Constants.expoConfig?.version,
     })
 
-    // Only runs on mount
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
@@ -174,7 +178,7 @@ const WhatsNewSheet: React.FC<Props> = ({ show, setShow }) => {
               gap: 20,
             }}
           >
-            {/* Prevents rendering unneeded components at the home screen if not needed to save performance. */}
+            {/* Prevents rendering unneeded components at the home screen to save performance. */}
             {show && (
               <WhatsNewContent lastVersion={lastVersion.current || '1.0.0'} />
             )}

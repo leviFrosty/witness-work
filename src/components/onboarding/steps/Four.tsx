@@ -5,7 +5,7 @@ import OnboardingNav from '../OnboardingNav'
 import * as Notifications from 'expo-notifications'
 import Text from '../../MyText'
 import i18n from '../../../lib/locales'
-import Wrapper from '../../Wrapper'
+import Wrapper from '../../layout/Wrapper'
 import ActionButton from '../../ActionButton'
 
 interface Props {

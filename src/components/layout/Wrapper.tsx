@@ -1,7 +1,7 @@
 import { PropsWithChildren } from 'react'
 import { View, ViewStyle, StyleProp } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import useTheme from '../contexts/theme'
+import useTheme from '../../contexts/theme'
 
 interface Props {
   style?: StyleProp<ViewStyle>

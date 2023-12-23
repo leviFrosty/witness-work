@@ -76,6 +76,8 @@ const initialState = {
   returnVisitTimeOffset: null as TimeOffset | null,
   returnVisitNotificationOffset: null as TimeOffset | null,
   returnVisitAlwaysNotify: false,
+  serviceReportTags: [] as string[],
+  displayDetailsOnProgressBarHomeScreen: false,
 }
 
 export const usePreferences = create(

@@ -9,7 +9,7 @@ import useConversations from '../stores/conversationStore'
 import { FlashList } from '@shopify/flash-list'
 import i18n from '../lib/locales'
 import { useMemo } from 'react'
-import Wrapper from '../components/Wrapper'
+import Wrapper from '../components/layout/Wrapper'
 import IconButton from '../components/IconButton'
 import { faTrash, faUndo } from '@fortawesome/free-solid-svg-icons'
 

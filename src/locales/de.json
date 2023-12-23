@@ -327,42 +327,64 @@
   "new": "Neu",
   "bugFixes": "Fehlerbehebung",
   "updates": {
-    "190": {
-      "c1": "Präferenzen in den Einstellungen hinzugefügt",
-      "c2": "[iOS] Wählen Sie in den Einstellungen zwischen Google, Apple und Waze als Standard-Navigations-App.",
-      "c3": "Konfigurieren Sie nun in den Einstellungen Standardwerte für Ihre Nachverfolgungs- und Benachrichtigungszeiten.",
-      "c4": "„Was gibt’s Neues“ Bildschirm"
+    "160": {
+      "c1": "Gespräche können jetzt bearbeitet werden. Benachrichtigungen sind konfigurierbar",
+      "c2": "Wischen Sie mit Gesten, um Konversationen, Kontakte usw. zu bearbeiten oder zu löschen.",
+      "c3": "Haptisches Feedback zu verschiedenen wichtigen Aktionen hinzugefügt"
     },
-    "182": {
-      "c1": "Ständig aktualisiert, um das aktuelle Gebietsschema widerzuspiegeln"
+    "161": {
+      "c1": "Weitere Minutenoptionen für Zeiteinträge hinzugefügt"
+    },
+    "162": {
+      "c1": "Die Stundenanforderungen für Sonderpioniere wurden von 70 auf 100 angepasst"
+    },
+    "163": {
+      "c1": "Beheben Sie Probleme mit automatischen Updates"
+    },
+    "170": {
+      "c1": "Fügen Sie verschiedene Zeitexportmethoden hinzu",
+      "c2": "Fügen Sie „Not At Homes“ hinzu."
+    },
+    "180": {
+      "c1": "Automatische Geokodierung für Kontakte hinzugefügt",
+      "c2": "Kartenansicht hinzugefügt"
     },
     "181": {
       "c1": "Erweiterte Kartenansicht",
       "c2": "Anfrage zur Store-Bewertung hinzugefügt, nachdem bestimmte Kriterien erfüllt sind",
       "c3": "Kleine Fehlerbehebungen"
     },
-    "180": {
-      "c1": "Automatische Geokodierung für Kontakte hinzugefügt",
-      "c2": "Kartenansicht hinzugefügt"
+    "182": {
+      "c1": "Ständig aktualisiert, um das aktuelle Gebietsschema widerzuspiegeln"
     },
-    "170": {
-      "c1": "Fügen Sie verschiedene Zeitexportmethoden hinzu",
-      "c2": "Fügen Sie „Not At Homes“ hinzu."
-    },
-    "163": {
-      "c1": "Beheben Sie Probleme mit automatischen Updates"
-    },
-    "162": {
-      "c1": "Die Stundenanforderungen für Sonderpioniere wurden von 70 auf 100 angepasst"
-    },
-    "161": {
-      "c1": "Weitere Minutenoptionen für Zeiteinträge hinzugefügt"
-    },
-    "160": {
-      "c1": "Gespräche können jetzt bearbeitet werden. Benachrichtigungen sind konfigurierbar",
-      "c2": "Wischen Sie mit Gesten, um Konversationen, Kontakte usw. zu bearbeiten oder zu löschen.",
-      "c3": "Haptisches Feedback zu verschiedenen wichtigen Aktionen hinzugefügt"
+    "190": {
+      "c1": "Präferenzen in den Einstellungen hinzugefügt",
+      "c2": "[iOS] Wählen Sie in den Einstellungen zwischen Google, Apple und Waze als Standard-Navigations-App.",
+      "c3": "Konfigurieren Sie nun in den Einstellungen Standardwerte für Ihre Nachverfolgungs- und Benachrichtigungszeiten.",
+      "c4": "„Was gibt’s Neues“ Bildschirm",
+      "c5": "Der neue Fortschrittsbalken organisiert Ihre Zeiteinträge nach Kategorien",
+      "c6": "Fügen Sie nun benutzerdefinierte Tags zu Ihren Zeiteinträgen hinzu",
+      "c7": "Der Bildschirm „Zeitberichte“ wurde aktualisiert, um besser organisiert und nach Monaten getrennt zu sein"
     }
   },
-  "installed": "Eingerichtet"
+  "installed": "Eingerichtet",
+  "progress": "Fortschritt",
+  "type": "Typ",
+  "other": "Andere",
+  "enterCustomCategory": "Geben Sie die benutzerdefinierte Kategorie ein",
+  "categoryNeeded": "Sie müssen eine vorhandene Kategorie auswählen oder eine benutzerdefinierte Kategorie hinzufügen.",
+  "categories": "Kategorien",
+  "tag": "Etikett",
+  "showOtherCategories": "Andere Kategorien anzeigen",
+  "of": "von",
+  "hoursToGoal": "Stunden bis zum Ziel",
+  "removeCategory": "Kategorie entfernen",
+  "noReportsThisMonthYet": "Diesen Monat gibt es noch keine Berichte.",
+  "timeReports": "Zeitberichte",
+  "monthDetails": "Monatsdetails",
+  "entries": "Einträge",
+  "homeScreen": "Startbildschirm",
+  "detailedProgressBar": "Detaillierter Fortschrittsbalken",
+  "theHoursBelowAreAlreadyIncludedInMyTotalHours": "Die folgenden Kategorien sind in meinen Gesamtstunden bereits enthalten.",
+  "otherHours": "Sonstiges (in Summe bereits enthalten)"
 }

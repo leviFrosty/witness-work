@@ -1,113 +1,272 @@
-import { View, DimensionValue, ColorValue } from 'react-native'
+import { View, ViewProps } from 'react-native'
 import { usePreferences } from '../stores/preferences'
 import { useServiceReport } from '../stores/serviceReport'
 import useTheme from '../contexts/theme'
 import {
   calculateProgress,
-  totalHoursForCurrentMonth,
+  getTotalHoursDetailedForSpecificMonth,
+  totalHoursForSpecificMonth,
 } from '../lib/serviceReport'
-import { useMemo } from 'react'
-import IconButton from './IconButton'
-import { faCaretUp } from '@fortawesome/free-solid-svg-icons'
+import { useCallback, useMemo } from 'react'
+import Text from './MyText'
+import i18n from '../lib/locales'
+import Circle from './Circle'
+
+interface ProgressBarSegmentBaseProps extends ViewProps {
+  borderRadiusLeft?: boolean
+  borderRadiusRight?: boolean
+}
 
 const ProgressBarSegment = ({
-  backgroundColor,
-  width,
-}: {
-  backgroundColor: ColorValue | undefined
-  width: DimensionValue
-}) => {
+  style,
+  borderRadiusLeft,
+  borderRadiusRight,
+  ...props
+}: ProgressBarSegmentBaseProps) => {
   const theme = useTheme()
 
   return (
     <View
+      style={[
+        [
+          {
+            borderTopLeftRadius: borderRadiusLeft
+              ? theme.numbers.borderRadiusSm
+              : 0,
+            borderBottomLeftRadius: borderRadiusLeft
+              ? theme.numbers.borderRadiusSm
+              : 0,
+            borderTopRightRadius: borderRadiusRight
+              ? theme.numbers.borderRadiusSm
+              : 0,
+            borderBottomRightRadius: borderRadiusRight
+              ? theme.numbers.borderRadiusSm
+              : 0,
+            height: 20,
+          },
+        ],
+        [style],
+      ]}
+      {...props}
+    />
+  )
+}
+
+type ProgressBarSegmentProps = {
+  percentage: number
+  color?: string
+}
+
+const StandardHours = ({ percentage, color }: ProgressBarSegmentProps) => {
+  return (
+    <ProgressBarSegment
       style={{
-        backgroundColor,
-        width,
-        height: 18,
-        borderRadius: theme.numbers.borderRadiusLg,
+        backgroundColor: color,
+        width: `${percentage * 100}%`,
+      }}
+      borderRadiusLeft
+    />
+  )
+}
+
+const LdcHours = ({ percentage, color }: ProgressBarSegmentProps) => {
+  return (
+    <ProgressBarSegment
+      style={{
+        backgroundColor: color,
+        width: `${percentage * 100}%`,
+      }}
+    />
+  )
+}
+const OtherHours = ({ percentage, color }: ProgressBarSegmentProps) => {
+  return (
+    <ProgressBarSegment
+      style={{
+        backgroundColor: color,
+        width: `${percentage * 100}%`,
       }}
     />
   )
 }
 
-const Bad = ({ active }: { active: boolean }) => {
+interface ProgressBarKeyProps {
+  color: string
+  label: string
+}
+const ProgressBarKey = ({ color, label }: ProgressBarKeyProps) => {
   const theme = useTheme()
-
   return (
-    <ProgressBarSegment
-      backgroundColor={active ? theme.colors.warn : theme.colors.warnAlt}
-      width={'60%'}
-    />
+    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 2 }}>
+      <Circle color={color} />
+      <Text style={{ fontSize: theme.fontSize('sm') }}>{label}</Text>
+    </View>
   )
 }
 
-const Good = ({ active }: { active: boolean }) => {
-  const theme = useTheme()
-
-  return (
-    <ProgressBarSegment
-      backgroundColor={active ? theme.colors.accent3 : theme.colors.accent3Alt}
-      width={'30%'}
-    />
-  )
+interface ProgressBarProps {
+  month: number
+  year: number
+  minimal?: boolean
 }
 
-const Success = ({ active }: { active: boolean }) => {
-  const theme = useTheme()
-
-  return (
-    <ProgressBarSegment
-      backgroundColor={active ? theme.colors.accent : theme.colors.accentAlt}
-      width={'10%'}
-    />
-  )
-}
-
-const ProgressBar = () => {
+const ProgressBar = ({ month, year, minimal }: ProgressBarProps) => {
   const theme = useTheme()
   const { serviceReports } = useServiceReport()
-  const hours = totalHoursForCurrentMonth(serviceReports)
   const { publisher, publisherHours } = usePreferences()
   const goalHours = publisherHours[publisher]
-  const progress = useMemo(
-    () => calculateProgress({ hours, goalHours }),
-    [hours, goalHours]
+
+  const totalHours = useMemo(
+    () => totalHoursForSpecificMonth(serviceReports, month, year),
+    [month, serviceReports, year]
   )
 
-  const arrowProgress: DimensionValue = `${progress * 100 - 8}%` // Offsets slightly for arrow width;
+  const progress = useMemo(
+    () => calculateProgress({ hours: totalHours, goalHours }),
+    [totalHours, goalHours]
+  )
 
-  const badProgress = progress < 0.6
-  const goodProgress = progress >= 0.6 && progress < 0.95
-  const successProgress = progress >= 0.95
+  const hoursDetailed = useMemo(
+    () => getTotalHoursDetailedForSpecificMonth(serviceReports, month, year),
+    [month, serviceReports, year]
+  )
 
-  const arrowColor = () =>
-    badProgress
-      ? theme.colors.warn
-      : goodProgress
-        ? theme.colors.accent3
-        : theme.colors.accent
+  const hasStandardHours = useMemo(
+    () => hoursDetailed.standard > 0,
+    [hoursDetailed.standard]
+  )
+  const hasLdcHours = useMemo(() => hoursDetailed.ldc > 0, [hoursDetailed.ldc])
+
+  const otherColors = useMemo(
+    () =>
+      minimal
+        ? [theme.colors.accent]
+        : [
+            theme.colors.accent2,
+            theme.colors.accent2Alt,
+            theme.colors.warn,
+            theme.colors.warnAlt,
+            theme.colors.accent3,
+            theme.colors.accent3Alt,
+          ],
+    [
+      minimal,
+      theme.colors.accent,
+      theme.colors.accent2,
+      theme.colors.accent2Alt,
+      theme.colors.accent3,
+      theme.colors.accent3Alt,
+      theme.colors.warn,
+      theme.colors.warnAlt,
+    ]
+  )
+
+  const renderOtherHours = useCallback(() => {
+    let currentIndex = 0
+    return hoursDetailed.other.map((report, index) => {
+      if (currentIndex > otherColors.length - 1) {
+        currentIndex = 0
+      }
+
+      const color = otherColors[currentIndex]
+      currentIndex += 1
+
+      return (
+        <OtherHours
+          key={`${report.tag}-${index}`}
+          color={color}
+          percentage={report.hours / totalHours}
+        />
+      )
+    })
+  }, [hoursDetailed.other, otherColors, totalHours])
+
+  const renderOtherHoursColorKeys = useCallback(() => {
+    let currentIndex = 0
+    return hoursDetailed.other.map((report, index) => {
+      if (currentIndex > otherColors.length - 1) {
+        currentIndex = 0
+      }
+
+      const color = otherColors[currentIndex]
+      currentIndex += 1
+
+      return (
+        <ProgressBarKey
+          key={`${report.tag}-${index}`}
+          color={color}
+          label={report.tag}
+        />
+      )
+    })
+  }, [hoursDetailed.other, otherColors])
 
   return (
     <View
       style={{
-        flexDirection: 'row',
-        gap: 2,
-        position: 'relative',
-        maxWidth: 175,
-        marginBottom: 15,
+        gap: 3,
+        backgroundColor: theme.colors.card,
+        borderRadius: theme.numbers.borderRadiusSm,
+        padding: 10,
       }}
     >
-      <Bad active={badProgress} />
-      <Good active={goodProgress} />
-      <Success active={successProgress} />
-      <View style={{ position: 'absolute', left: arrowProgress, top: 10 }}>
-        <IconButton
-          iconStyle={{ color: arrowColor() }}
-          size={30}
-          icon={faCaretUp}
-        />
+      <View
+        style={{
+          flexDirection: 'row',
+          gap: 2,
+          position: 'relative',
+          width: '100%',
+          backgroundColor: theme.colors.background,
+          borderRadius: theme.numbers.borderRadiusSm,
+          overflow: 'hidden',
+        }}
+      >
+        <View
+          style={{
+            width: `${progress * 100}%`,
+            flexDirection: 'row',
+            alignItems: 'center',
+          }}
+        >
+          {hasStandardHours && (
+            <StandardHours
+              percentage={hoursDetailed.standard / totalHours}
+              color={theme.colors.accent}
+            />
+          )}
+          {hasLdcHours && (
+            <LdcHours
+              percentage={hoursDetailed.ldc / totalHours}
+              color={minimal ? theme.colors.accent : theme.colors.accentAlt}
+            />
+          )}
+          {renderOtherHours()}
+        </View>
       </View>
+      {!minimal && (
+        <View
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: 7,
+            flexWrap: 'wrap',
+          }}
+        >
+          {hasStandardHours && (
+            <ProgressBarKey
+              color={theme.colors.accent}
+              label={i18n.t('standard')}
+            />
+          )}
+          {hasLdcHours && (
+            <ProgressBarKey
+              color={theme.colors.accentAlt}
+              label={i18n.t('ldc')}
+            />
+          )}
+          {renderOtherHoursColorKeys()}
+        </View>
+      )}
     </View>
   )
 }

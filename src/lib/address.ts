@@ -113,7 +113,7 @@ export const navigateTo = (
   } catch (error) {
     Alert.alert(
       i18n.t('couldNotOpenMaps'),
-      i18n.t('couldNotOpenMaps_Description')
+      i18n.t('couldNotOpenMaps_description')
     )
   }
 }

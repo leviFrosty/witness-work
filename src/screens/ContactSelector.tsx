@@ -11,7 +11,7 @@ import { RootStackNavigation } from '../stacks/RootStack'
 import Divider from '../components/Divider'
 import ContactRow from '../components/ContactRow'
 import i18n from '../lib/locales'
-import Wrapper from '../components/Wrapper'
+import Wrapper from '../components/layout/Wrapper'
 import { ThemeContext } from '../contexts/theme'
 
 const ContactSelector = () => {

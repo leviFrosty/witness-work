@@ -31,7 +31,7 @@ import {
   contactStudiedForGivenMonth,
 } from '../lib/conversations'
 import { Conversation } from '../types/conversation'
-import Wrapper from '../components/Wrapper'
+import Wrapper from '../components/layout/Wrapper'
 import { StatusBar } from 'expo-status-bar'
 import IconButton from '../components/IconButton'
 import {

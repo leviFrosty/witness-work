@@ -1,5 +1,5 @@
 import { getLocales } from 'expo-localization'
-import { I18n } from 'i18n-js'
+import { I18n, TranslateOptions } from 'i18n-js'
 import de from '../locales/de.json'
 import es from '../locales/es.json'
 import en from '../locales/en.json'
@@ -39,7 +39,7 @@ import 'moment/locale/zh-hk'
 import 'moment/locale/zh-tw'
 import 'moment/locale/zh-mo'
 
-const i18n = new I18n({
+const _i18n = new I18n({
   de,
   en,
   es,
@@ -56,8 +56,26 @@ const i18n = new I18n({
 
 const locale = getLocales()[0].languageCode
 
-i18n.locale = locale
-i18n.enableFallback = true
+_i18n.locale = locale
+_i18n.enableFallback = true
 moment.locale(locale)
+
+type IsObject<T> = T extends object ? true : false
+
+type DeepKeyOf<T> = T extends object
+  ? {
+      [K in keyof T]: `${K & string}${IsObject<T[K]> extends true
+        ? '.'
+        : ''}${DeepKeyOf<T[K]>}`
+    }[keyof T]
+  : ''
+
+export type TranslationKey = DeepKeyOf<typeof en>
+
+const i18n = {
+  t: (key: TranslationKey, options?: TranslateOptions | undefined) => {
+    return _i18n.t(key, options)
+  },
+}
 
 export default i18n

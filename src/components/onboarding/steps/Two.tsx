@@ -4,7 +4,7 @@ import OnboardingNav from '../OnboardingNav'
 import Text from '../../MyText'
 import i18n from '../../../lib/locales'
 import PublisherTypeSelector from '../../PublisherTypeSelector'
-import Wrapper from '../../Wrapper'
+import Wrapper from '../../layout/Wrapper'
 import ActionButton from '../../ActionButton'
 
 interface Props {

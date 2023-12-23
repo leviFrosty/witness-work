@@ -25,11 +25,11 @@ import CheckboxWithLabel from '../components/inputs/CheckboxWithLabel'
 import { Contact } from '../types/contact'
 import moment from 'moment'
 import useConversations from '../stores/conversationStore'
-import i18n from '../lib/locales'
+import i18n, { TranslationKey } from '../lib/locales'
 import AndroidDateTimePicker from '../components/AndroidDateTimePicker'
 import Checkbox from 'expo-checkbox'
 import Select from '../components/Select'
-import Wrapper from '../components/Wrapper'
+import Wrapper from '../components/layout/Wrapper'
 import IconButton from '../components/IconButton'
 import {
   faCaravan,
@@ -94,7 +94,7 @@ const AssignmentSection = ({
             onPress={() =>
               selectedContact
                 ? set_selectedContactId('')
-                : navigation.navigate('Contact Selector')
+                : navigation.replace('Contact Selector')
             }
           >
             <Text
@@ -506,7 +506,7 @@ const ConversationForm = ({ route, navigation }: Props) => {
     label: string
     value: moment.unitOfTime.DurationConstructor
   }[] = ['minutes', 'hours', 'days', 'weeks'].map((value) => ({
-    label: i18n.t(`${value}_lowercase`),
+    label: i18n.t(`${value}_lowercase` as TranslationKey),
     value: value as moment.unitOfTime.DurationConstructor,
   }))
 

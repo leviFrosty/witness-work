@@ -327,42 +327,64 @@
   "new": "Nuevo",
   "bugFixes": "Corrección de errores",
   "updates": {
-    "190": {
-      "c1": "Preferencias añadidas en la configuración.",
-      "c2": "[iOS] Seleccione entre Google, Apple y Waze como su aplicación de navegación predeterminada en las preferencias.",
-      "c3": "Ahora configure valores predeterminados para sus tiempos de seguimiento y notificación en preferencias.",
-      "c4": "'Qué hay de nuevo' pantalla"
+    "160": {
+      "c1": "Las conversaciones ahora son editables. Las notificaciones son configurables.",
+      "c2": "Desliza gestos para editar o eliminar conversaciones, contactos, etc.",
+      "c3": "Se agregó retroalimentación háptica a varias acciones importantes."
     },
-    "182": {
-      "c1": "Actualizado todo el tiempo para reflejar la ubicación actual"
+    "161": {
+      "c1": "Se agregaron más opciones de minutos para entradas de tiempo."
+    },
+    "162": {
+      "c1": "Se ajustó el requisito de horas de precursor especial de 70 a 100"
+    },
+    "163": {
+      "c1": "Resolver problemas de actualización automática"
+    },
+    "170": {
+      "c1": "Agregue varios métodos de exportación de tiempo",
+      "c2": "Agregue 'No en hogares'"
+    },
+    "180": {
+      "c1": "Se agregó codificación geográfica automática para contactos.",
+      "c2": "Vista de mapa agregada"
     },
     "181": {
       "c1": "Vista de mapa ampliada",
       "c2": "Se agregó una solicitud de revisión de la tienda después de que se cumplan ciertos criterios.",
       "c3": "Pequeñas correcciones de errores"
     },
-    "180": {
-      "c1": "Se agregó codificación geográfica automática para contactos.",
-      "c2": "Vista de mapa agregada"
+    "182": {
+      "c1": "Actualizado todo el tiempo para reflejar la ubicación actual"
     },
-    "170": {
-      "c1": "Agregue varios métodos de exportación de tiempo",
-      "c2": "Agregue 'No en hogares'"
-    },
-    "163": {
-      "c1": "Resolver problemas de actualización automática"
-    },
-    "162": {
-      "c1": "Se ajustó el requisito de horas de precursor especial de 70 a 100"
-    },
-    "161": {
-      "c1": "Se agregaron más opciones de minutos para entradas de tiempo."
-    },
-    "160": {
-      "c1": "Las conversaciones ahora son editables. Las notificaciones son configurables.",
-      "c2": "Desliza gestos para editar o eliminar conversaciones, contactos, etc.",
-      "c3": "Se agregó retroalimentación háptica a varias acciones importantes."
+    "190": {
+      "c1": "Preferencias añadidas en la configuración.",
+      "c2": "[iOS] Seleccione entre Google, Apple y Waze como su aplicación de navegación predeterminada en las preferencias.",
+      "c3": "Ahora configure valores predeterminados para sus tiempos de seguimiento y notificación en preferencias.",
+      "c4": "'Qué hay de nuevo' pantalla",
+      "c5": "La nueva barra de progreso organiza tus entradas de tiempo por categoría",
+      "c6": "Ahora agregue etiquetas personalizadas a sus entradas de tiempo",
+      "c7": "Pantalla de informes de tiempo actualizada para estar mejor organizada y separada por mes"
     }
   },
-  "installed": "Instalado"
+  "installed": "Instalado",
+  "progress": "Progreso",
+  "type": "Tipo",
+  "other": "Otro",
+  "enterCustomCategory": "Ingresar categoría personalizada",
+  "categoryNeeded": "Debe seleccionar una categoría existente o agregar una categoría personalizada.",
+  "categories": "Categorías",
+  "tag": "Etiqueta",
+  "showOtherCategories": "Mostrar otras categorías",
+  "of": "de",
+  "hoursToGoal": "horas hasta el objetivo",
+  "removeCategory": "Eliminar categoría",
+  "noReportsThisMonthYet": "No hay informes este mes todavía.",
+  "timeReports": "Informes de tiempo",
+  "monthDetails": "Detalles del mes",
+  "entries": "Entradas",
+  "homeScreen": "Pantalla de inicio",
+  "detailedProgressBar": "Barra de progreso detallada",
+  "theHoursBelowAreAlreadyIncludedInMyTotalHours": "Las categorías siguientes ya están incluidas en mi total de horas.",
+  "otherHours": "Otros (ya incluidos en total)"
 }

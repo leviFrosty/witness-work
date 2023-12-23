@@ -11,4 +11,5 @@ export default {
   appleMapsBase: 'http://maps.apple.com/?q=',
   googleMapsBase: 'https://www.google.com/maps/search/?api=1&query=',
   wazeMapsBase: 'https://waze.com/ul?q=',
+  hourglassBase: 'https://app.hourglass-app.com/report/submit?',
 }

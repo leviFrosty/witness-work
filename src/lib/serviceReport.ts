@@ -1,3 +1,4 @@
+import { Publisher } from '../types/publisher'
 import { ServiceReport } from '../types/serviceReport'
 import moment from 'moment'
 
@@ -54,6 +55,26 @@ export const totalHoursForCurrentMonth = (
   return totalHoursRoundedDown
 }
 
+export const getTotalHoursDetailedForSpecificMonth = (
+  serviceReports: ServiceReport[],
+  month: number,
+  year: number
+) => {
+  const standardHours = standardHoursForSpecificMonth(
+    serviceReports,
+    month,
+    year
+  )
+  const ldcHours = ldcHoursForSpecificMonth(serviceReports, month, year)
+  const otherHours = otherHoursForSpecificMonth(serviceReports, month, year)
+
+  return {
+    standard: standardHours,
+    ldc: ldcHours,
+    other: otherHours,
+  }
+}
+
 export const totalHoursForSpecificMonth = (
   serviceReports: ServiceReport[],
   targetMonth: number,
@@ -95,7 +116,47 @@ export const ldcHoursForSpecificMonth = (
   return totalHoursRoundedDown
 }
 
-export const nonLdcHoursForSpecificMonth = (
+type OtherReportsWithMinutes = { tag: string; minutes: number }[]
+type OtherReports = { tag: string; hours: number }[]
+
+export const otherHoursForSpecificMonth = (
+  serviceReports: ServiceReport[],
+  targetMonth: number,
+  targetYear: number
+): OtherReports => {
+  const reportsForMonth = serviceReports.filter((report) => {
+    return (
+      moment(report.date).month() === targetMonth &&
+      moment(report.date).year() === targetYear
+    )
+  })
+  const taggedReports = reportsForMonth.filter((report) => report.tag)
+
+  const otherReportsTotalMinutes =
+    taggedReports.reduce<OtherReportsWithMinutes>((accumulator, report) => {
+      if (!report.tag) return accumulator
+
+      const existingTag = accumulator.find((item) => item.tag === report.tag)
+      if (existingTag) {
+        existingTag.minutes += report.hours * 60 + report.minutes
+      } else {
+        const minutes = report.hours * 60 + report.minutes
+        accumulator.push({ tag: report.tag, minutes: minutes })
+      }
+      return accumulator
+    }, [])
+
+  const totalHoursRoundedDown: OtherReports = otherReportsTotalMinutes.map(
+    (report) => ({
+      tag: report.tag,
+      hours: Math.floor(report.minutes / 60),
+    })
+  )
+
+  return totalHoursRoundedDown
+}
+
+export const standardHoursForSpecificMonth = (
   serviceReports: ServiceReport[],
   targetMonth: number,
   targetYear: number
@@ -105,7 +166,8 @@ export const nonLdcHoursForSpecificMonth = (
       (report) =>
         moment(report.date).month() === targetMonth &&
         moment(report.date).year() === targetYear &&
-        !report.ldc
+        !report.ldc &&
+        !report.tag
     )
     .reduce((accumulator, report) => {
       return accumulator + report.hours * 60 + report.minutes
@@ -141,4 +203,19 @@ export const getDaysLeftInCurrentMonth = () => {
   const daysLeftInMonth = firstDayOfNextMonth.diff(currentDate, 'days')
 
   return daysLeftInMonth
+}
+
+export const getTimeAsMinutesForHourglass = (
+  publisher: Publisher,
+  wentOutForMonth: boolean | null,
+  hours: number | null
+) => {
+  if (publisher === 'publisher') {
+    if (wentOutForMonth) {
+      return 1
+    }
+    return 0
+  }
+  const minutes = (hours || 0) * 60
+  return minutes
 }

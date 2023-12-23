@@ -1,11 +1,18 @@
-import { ColorValue, StyleProp, View, ViewStyle, TextStyle } from 'react-native'
+import {
+  ColorValue,
+  StyleProp,
+  View,
+  ViewStyle,
+  TextStyle,
+  ViewProps,
+} from 'react-native'
 import Text from './MyText'
 import Card from './Card'
 import { PropsWithChildren, ReactNode } from 'react'
 import useTheme from '../contexts/theme'
 import Divider from './Divider'
 
-interface Props {
+interface Props extends ViewProps {
   title: string | ReactNode
   titlePosition?: 'inside'
   titleColor?: ColorValue
@@ -22,10 +29,11 @@ const CardWithTitle: React.FC<PropsWithChildren<Props>> = ({
   noPadding,
   style,
   titleStyle,
+  ...rest
 }) => {
   const theme = useTheme()
   return (
-    <View style={[[{ gap: 10 }], [style]]}>
+    <View style={[[{ gap: 10 }], [style]]} {...rest}>
       {!titlePosition && typeof title === 'string' && (
         <Text
           style={[

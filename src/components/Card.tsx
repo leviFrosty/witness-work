@@ -1,15 +1,14 @@
 import { PropsWithChildren } from 'react'
-import { View, StyleProp, ViewStyle } from 'react-native'
+import { View, ViewProps } from 'react-native'
 import useTheme from '../contexts/theme'
 
-interface Props {
+interface Props extends ViewProps {
   flexDirection?:
     | 'row'
     | 'column'
     | 'row-reverse'
     | 'column-reverse'
     | undefined
-  style?: StyleProp<ViewStyle>
 }
 
 const Card: React.FC<PropsWithChildren<Props>> = ({

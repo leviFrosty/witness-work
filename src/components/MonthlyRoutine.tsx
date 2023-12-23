@@ -39,7 +39,11 @@ const Month = ({ month }: { month: number }) => {
       onPress={
         publisher === 'publisher'
           ? undefined
-          : () => navigation.navigate('Time Reports')
+          : () =>
+              navigation.navigate('Time Reports', {
+                month: moment().month(),
+                year: moment().year(),
+              })
       }
       style={{
         gap: 5,

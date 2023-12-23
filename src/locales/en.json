@@ -386,5 +386,5 @@
   "homeScreen": "Home Screen",
   "detailedProgressBar": "Detailed Progress Bar",
   "theHoursBelowAreAlreadyIncludedInMyTotalHours": "The categories below are already included in my total hours.",
-  "otherHours": "Other (already included in total)"
+  "otherHours": "(Below is already included in total)"
 }

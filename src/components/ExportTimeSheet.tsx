@@ -96,10 +96,15 @@ const ExportTimeSheet = ({
 
         if (otherHours.length > 1) {
           return otherHours.reduce(
-            (acc, curr) => {
-              return acc + `${curr.tag}: ${curr.hours}\n`
+            (acc, curr, index) => {
+              return (
+                acc +
+                `${curr.tag}: ${curr.hours}${
+                  index !== otherHours.length - 1 ? '\n' : ''
+                }`
+              )
             },
-            i18n.t('otherHours') + ':\n\n'
+            `\n${i18n.t('otherHours')}\n`
           )
         }
         return ''
@@ -127,7 +132,7 @@ const ExportTimeSheet = ({
           'hours'
         )}: ${hoursForPublisherOrPioneer()}\n${i18n.t(
           'studies'
-        )}: ${studiesForMonth}\n${i18n.t('notes')}:\n\n${otherHoursAsString()}`
+        )}: ${studiesForMonth}\n${i18n.t('notes')}:\n${otherHoursAsString()}`
       }
 
       switch (action) {
@@ -147,7 +152,9 @@ const ExportTimeSheet = ({
               publisher,
               wentOutForMonth,
               hours
-            )}&studies=${studiesForMonth}remarks=${''}`
+            )}&studies=${studiesForMonth}&remarks=${encodeURI(
+              otherHoursAsString()
+            )}`
             await Linking.openURL(hourglassSubmitLink)
           } catch (error) {
             Sentry.Native.captureException(error)

@@ -94,7 +94,7 @@ const MonthSummary = ({
               {i18n.t('monthDetails')}
             </Text>
             <IconButton
-              iconStyle={{ color: theme.colors.textAlt }}
+              iconStyle={{ color: theme.colors.accent }}
               onPress={() =>
                 setSheet({
                   open: true,

@@ -327,36 +327,6 @@
   "new": "Nouveau",
   "bugFixes": "Corrections de bugs",
   "updates": {
-    "160": {
-      "c1": "Les conversations sont désormais modifiables. Les notifications sont configurables",
-      "c2": "Faites glisser les gestes pour modifier ou supprimer des conversations, des contacts, etc.",
-      "c3": "Ajout d'un retour haptique à diverses actions importantes"
-    },
-    "161": {
-      "c1": "Ajout de plus d'options de minutes pour les entrées de temps"
-    },
-    "162": {
-      "c1": "L’exigence d’heures de pionnier spécial a été ajustée de 70 à 100"
-    },
-    "163": {
-      "c1": "Résoudre les problèmes de mise à jour automatique"
-    },
-    "170": {
-      "c1": "Ajouter diverses méthodes d'exportation de temps",
-      "c2": "Ajoutez « Pas à la maison »"
-    },
-    "180": {
-      "c1": "Ajout du géocodage automatique pour les contacts",
-      "c2": "Vue cartographique ajoutée"
-    },
-    "181": {
-      "c1": "Vue de la carte étendue",
-      "c2": "Ajout d'une demande d'examen du magasin une fois que certains critères sont remplis",
-      "c3": "Petites corrections de bugs"
-    },
-    "182": {
-      "c1": "Mis à jour à tout moment pour refléter les paramètres régionaux actuels"
-    },
     "190": {
       "c1": "Préférences ajoutées dans les paramètres",
       "c2": "[iOS] Choisissez entre Google, Apple et Waze comme application de navigation par défaut dans les préférences.",
@@ -365,6 +335,36 @@
       "c5": "La nouvelle barre de progression organise vos entrées de temps par catégorie",
       "c6": "Ajoutez maintenant des balises personnalisées à vos entrées de temps",
       "c7": "Écran des rapports de temps mis à jour pour être mieux organisé et séparé par mois"
+    },
+    "182": {
+      "c1": "Mis à jour à tout moment pour refléter les paramètres régionaux actuels"
+    },
+    "181": {
+      "c1": "Vue de la carte étendue",
+      "c2": "Ajout d'une demande d'examen du magasin une fois que certains critères sont remplis",
+      "c3": "Petites corrections de bugs"
+    },
+    "180": {
+      "c1": "Ajout du géocodage automatique pour les contacts",
+      "c2": "Vue cartographique ajoutée"
+    },
+    "170": {
+      "c1": "Ajouter diverses méthodes d'exportation de temps",
+      "c2": "Ajoutez « Pas à la maison »"
+    },
+    "163": {
+      "c1": "Résoudre les problèmes de mise à jour automatique"
+    },
+    "162": {
+      "c1": "L’exigence d’heures de pionnier spécial a été ajustée de 70 à 100"
+    },
+    "161": {
+      "c1": "Ajout de plus d'options de minutes pour les entrées de temps"
+    },
+    "160": {
+      "c1": "Les conversations sont désormais modifiables. Les notifications sont configurables",
+      "c2": "Faites glisser les gestes pour modifier ou supprimer des conversations, des contacts, etc.",
+      "c3": "Ajout d'un retour haptique à diverses actions importantes"
     }
   },
   "installed": "installée",
@@ -386,5 +386,5 @@
   "homeScreen": "Écran d'accueil",
   "detailedProgressBar": "Barre de progression détaillée",
   "theHoursBelowAreAlreadyIncludedInMyTotalHours": "Les catégories ci-dessous sont déjà incluses dans mon total d'heures.",
-  "otherHours": "Autres (déjà inclus dans le total)"
+  "otherHours": "(Below is already included in total)"
 }

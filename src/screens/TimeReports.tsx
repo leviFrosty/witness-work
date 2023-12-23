@@ -21,6 +21,8 @@ import { faArrowLeft, faArrowRight } from '@fortawesome/free-solid-svg-icons'
 import { NativeStackScreenProps } from '@react-navigation/native-stack'
 import Wrapper from '../components/layout/Wrapper'
 import Divider from '../components/Divider'
+import Button from '../components/Button'
+import { FlashList } from '@shopify/flash-list'
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Time Reports'>
 
@@ -113,6 +115,8 @@ const TimeReports = ({ route, navigation }: Props) => {
     }
   }
 
+  const selectedMonth = moment().month(month).year(year)
+
   return (
     <View
       style={{
@@ -136,28 +140,38 @@ const TimeReports = ({ route, navigation }: Props) => {
             justifyContent: 'space-between',
           }}
         >
-          <IconButton
-            icon={faArrowLeft}
-            size={20}
-            onPress={() => handleArrowNavigate('back')}
-          />
+          <Button onPress={() => handleArrowNavigate('back')}>
+            <View
+              style={{ flexDirection: 'row', gap: 5, alignItems: 'center' }}
+            >
+              <IconButton icon={faArrowLeft} size={15} />
+              <Text style={{ color: theme.colors.textAlt }}>
+                {moment(selectedMonth).subtract(1, 'month').format('MMM')}
+              </Text>
+            </View>
+          </Button>
           <Text style={{ fontSize: theme.fontSize('xl') }}>
-            {moment().month(month).year(year).format('MMMM YYYY')}
+            {moment(selectedMonth).format('MMMM YYYY')}
           </Text>
-          {moment().isAfter(moment().month(month).year(year), 'month') ? (
-            <IconButton
-              icon={faArrowRight}
-              size={20}
-              onPress={() => handleArrowNavigate('forward')}
-            />
+          {moment().isAfter(selectedMonth, 'month') ? (
+            <Button onPress={() => handleArrowNavigate('forward')}>
+              <View
+                style={{ flexDirection: 'row', gap: 5, alignItems: 'center' }}
+              >
+                <Text style={{ color: theme.colors.textAlt }}>
+                  {moment(selectedMonth).add(1, 'month').format('MMM')}
+                </Text>
+                <IconButton icon={faArrowRight} size={15} />
+              </View>
+            </Button>
           ) : (
-            <View style={{ width: 20 }} />
+            <View style={{ width: 50 }} />
           )}
         </View>
       </View>
       <ScrollView
         contentContainerStyle={{
-          paddingBottom: insets.bottom + 300,
+          paddingBottom: insets.bottom + 30,
         }}
         contentInset={{ top: 0, right: 0, bottom: insets.bottom + 30, left: 0 }}
       >
@@ -181,18 +195,22 @@ const TimeReports = ({ route, navigation }: Props) => {
           >
             {i18n.t('entries')}
           </Text>
-          <View style={{ gap: 10 }}>
-            {thisMonthsReports ? (
-              thisMonthsReports
-                .sort((a, b) =>
-                  moment(a.date).unix() < moment(b.date).unix() ? 1 : -1
-                )
-                .map((report) => (
-                  <TimeReportRow key={report.id} report={report} />
-                ))
-            ) : (
-              <Text>{i18n.t('noReportsThisMonthYet')}</Text>
-            )}
+          <View style={{ gap: 10, flex: 1, minHeight: 10 }}>
+            <FlashList
+              data={
+                thisMonthsReports
+                  ? thisMonthsReports.sort((a, b) =>
+                      moment(a.date).unix() < moment(b.date).unix() ? 1 : -1
+                    )
+                  : undefined
+              }
+              ItemSeparatorComponent={() => <View style={{ height: 10 }} />}
+              renderItem={({ item }) => <TimeReportRow report={item} />}
+              estimatedItemSize={66}
+              ListEmptyComponent={
+                <Text>{i18n.t('noReportsThisMonthYet')}</Text>
+              }
+            />
           </View>
         </View>
       </ScrollView>

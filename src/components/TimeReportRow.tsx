@@ -86,7 +86,7 @@ const TimeReportRow = ({ report }: TimeReportRowProps) => {
                 fontFamily: theme.fonts.semiBold,
               }}
             >
-              {`${moment(report.date).format('L')}`}
+              {`${moment(report.date).format('ddd L')}`}
             </Text>
           </View>
           <View

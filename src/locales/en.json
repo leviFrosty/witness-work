@@ -327,6 +327,9 @@
   "new": "New",
   "bugFixes": "Bug Fixes",
   "updates": {
+    "191": {
+      "c1": "Resolves an issue navigating to time screens."
+    },
     "190": {
       "c1": "Added preferences in the settings",
       "c2": "[iOS] Select between Google, Apple, and Waze as your default navigation app in preferences.",

@@ -365,6 +365,9 @@
       "c5": "Inaayos ng bagong progress bar ang iyong mga entry sa oras ayon sa kategorya",
       "c6": "Ngayon magdagdag ng mga custom na tag sa iyong mga entry sa oras",
       "c7": "Na-update ang screen ng Mga Ulat sa Oras upang maging mas maayos at paghiwalayin ayon sa buwan"
+    },
+    "191": {
+      "c1": "Malulutas ang isang isyu sa pag-navigate sa mga screen ng oras."
     }
   },
   "installed": "Naka-install",

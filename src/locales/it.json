@@ -327,35 +327,8 @@
   "new": "Nuovo",
   "bugFixes": "Correzioni di bug",
   "updates": {
-    "160": {
-      "c1": "Le conversazioni sono ora modificabili. Le notifiche sono configurabili",
-      "c2": "Scorri i gesti per modificare o eliminare conversazioni, contatti, ecc.",
-      "c3": "Aggiunto feedback tattile a varie azioni importanti"
-    },
-    "161": {
-      "c1": "Aggiunte più opzioni relative ai minuti per gli inserimenti dell'ora"
-    },
-    "162": {
-      "c1": "Requisito di ore di pioniere speciale modificato da 70 a 100"
-    },
-    "163": {
-      "c1": "Risolvi i problemi di aggiornamento automatico"
-    },
-    "170": {
-      "c1": "Aggiungi vari metodi di esportazione del tempo",
-      "c2": "Aggiungi \"Non in casa\""
-    },
-    "180": {
-      "c1": "Aggiunta la geocodifica automatica per i contatti",
-      "c2": "Aggiunta la visualizzazione della mappa"
-    },
-    "181": {
-      "c1": "Visualizzazione mappa estesa",
-      "c2": "Aggiunta richiesta di revisione del negozio dopo aver soddisfatto determinati criteri",
-      "c3": "Piccole correzioni di bug"
-    },
-    "182": {
-      "c1": "Aggiornato sempre per riflettere la locale corrente"
+    "191": {
+      "c1": "Risolve un problema relativo alla navigazione nelle schermate temporali."
     },
     "190": {
       "c1": "Aggiunte preferenze nelle impostazioni",
@@ -366,8 +339,35 @@
       "c6": "Ora aggiungi tag personalizzati alle tue voci di tempo",
       "c7": "Schermata Rapporti temporali aggiornata per essere meglio organizzata e separata per mese"
     },
-    "191": {
-      "c1": "Risolve un problema relativo alla navigazione nelle schermate temporali."
+    "182": {
+      "c1": "Aggiornato sempre per riflettere la locale corrente"
+    },
+    "181": {
+      "c1": "Visualizzazione mappa estesa",
+      "c2": "Aggiunta richiesta di revisione del negozio dopo aver soddisfatto determinati criteri",
+      "c3": "Piccole correzioni di bug"
+    },
+    "180": {
+      "c1": "Aggiunta la geocodifica automatica per i contatti",
+      "c2": "Aggiunta la visualizzazione della mappa"
+    },
+    "170": {
+      "c1": "Aggiungi vari metodi di esportazione del tempo",
+      "c2": "Aggiungi \"Non in casa\""
+    },
+    "163": {
+      "c1": "Risolvi i problemi di aggiornamento automatico"
+    },
+    "162": {
+      "c1": "Requisito di ore di pioniere speciale modificato da 70 a 100"
+    },
+    "161": {
+      "c1": "Aggiunte più opzioni relative ai minuti per gli inserimenti dell'ora"
+    },
+    "160": {
+      "c1": "Le conversazioni sono ora modificabili. Le notifiche sono configurabili",
+      "c2": "Scorri i gesti per modificare o eliminare conversazioni, contatti, ecc.",
+      "c3": "Aggiunto feedback tattile a varie azioni importanti"
     }
   },
   "installed": "Installato",

@@ -327,35 +327,8 @@
   "new": "Nuevo",
   "bugFixes": "Corrección de errores",
   "updates": {
-    "160": {
-      "c1": "Las conversaciones ahora son editables. Las notificaciones son configurables.",
-      "c2": "Desliza gestos para editar o eliminar conversaciones, contactos, etc.",
-      "c3": "Se agregó retroalimentación háptica a varias acciones importantes."
-    },
-    "161": {
-      "c1": "Se agregaron más opciones de minutos para entradas de tiempo."
-    },
-    "162": {
-      "c1": "Se ajustó el requisito de horas de precursor especial de 70 a 100"
-    },
-    "163": {
-      "c1": "Resolver problemas de actualización automática"
-    },
-    "170": {
-      "c1": "Agregue varios métodos de exportación de tiempo",
-      "c2": "Agregue 'No en hogares'"
-    },
-    "180": {
-      "c1": "Se agregó codificación geográfica automática para contactos.",
-      "c2": "Vista de mapa agregada"
-    },
-    "181": {
-      "c1": "Vista de mapa ampliada",
-      "c2": "Se agregó una solicitud de revisión de la tienda después de que se cumplan ciertos criterios.",
-      "c3": "Pequeñas correcciones de errores"
-    },
-    "182": {
-      "c1": "Actualizado todo el tiempo para reflejar la ubicación actual"
+    "191": {
+      "c1": "Resuelve un problema al navegar a las pantallas de tiempo."
     },
     "190": {
       "c1": "Preferencias añadidas en la configuración.",
@@ -366,8 +339,35 @@
       "c6": "Ahora agregue etiquetas personalizadas a sus entradas de tiempo",
       "c7": "Pantalla de informes de tiempo actualizada para estar mejor organizada y separada por mes"
     },
-    "191": {
-      "c1": "Resuelve un problema al navegar a las pantallas de tiempo."
+    "182": {
+      "c1": "Actualizado todo el tiempo para reflejar la ubicación actual"
+    },
+    "181": {
+      "c1": "Vista de mapa ampliada",
+      "c2": "Se agregó una solicitud de revisión de la tienda después de que se cumplan ciertos criterios.",
+      "c3": "Pequeñas correcciones de errores"
+    },
+    "180": {
+      "c1": "Se agregó codificación geográfica automática para contactos.",
+      "c2": "Vista de mapa agregada"
+    },
+    "170": {
+      "c1": "Agregue varios métodos de exportación de tiempo",
+      "c2": "Agregue 'No en hogares'"
+    },
+    "163": {
+      "c1": "Resolver problemas de actualización automática"
+    },
+    "162": {
+      "c1": "Se ajustó el requisito de horas de precursor especial de 70 a 100"
+    },
+    "161": {
+      "c1": "Se agregaron más opciones de minutos para entradas de tiempo."
+    },
+    "160": {
+      "c1": "Las conversaciones ahora son editables. Las notificaciones son configurables.",
+      "c2": "Desliza gestos para editar o eliminar conversaciones, contactos, etc.",
+      "c3": "Se agregó retroalimentación háptica a varias acciones importantes."
     }
   },
   "installed": "Instalado",

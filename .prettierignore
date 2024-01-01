@@ -2,4 +2,5 @@
 # Lottie minified assets
 src/assets/lottie/**
 
+# TODO: make this only exluded when using husky and prettier cli
 src/locales/**

@@ -1,12 +1,12 @@
-import React, { useEffect, useState } from 'react'
+import React from 'react'
 import { View } from 'react-native'
 import { styles } from '../Onboarding.styles'
 import OnboardingNav from '../OnboardingNav'
-import * as Notifications from 'expo-notifications'
 import Text from '../../MyText'
 import i18n from '../../../lib/locales'
 import Wrapper from '../../layout/Wrapper'
 import ActionButton from '../../ActionButton'
+import useNotifications from '../../../hooks/notifications'
 
 interface Props {
   goNext: () => void
@@ -14,16 +14,7 @@ interface Props {
 }
 
 const StepFour = ({ goNext, goBack }: Props) => {
-  const [notificationsAllowed, setNotificationsAllowed] =
-    useState<boolean>(false)
-
-  useEffect(() => {
-    const fetchNotificationsSetting = async () => {
-      const { granted } = await Notifications.getPermissionsAsync()
-      setNotificationsAllowed(granted)
-    }
-    fetchNotificationsSetting()
-  }, [])
+  const notifications = useNotifications()
 
   return (
     <Wrapper
@@ -39,7 +30,7 @@ const StepFour = ({ goNext, goBack }: Props) => {
       <View>
         <Text style={styles.stepTitle}>{i18n.t('youreAllSet')}</Text>
         <Text style={styles.description}>
-          {notificationsAllowed
+          {notifications.allowed
             ? i18n.t('youreAllSet_description')
             : i18n.t('optInNotificationsLater')}
         </Text>

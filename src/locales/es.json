@@ -395,5 +395,7 @@
   "theHoursBelowAreAlreadyIncludedInMyTotalHours": "Las categorías siguientes ya están incluidas en mi total de horas.",
   "otherHoursDescription": "A continuación ya está incluido en total.",
   "failedToOpenLink": "No se pudo abrir la URL",
-  "failedToOpenLink_description": "Verifique que tenga una solicitud válida para el enlace proporcionado. Este error normalmente significa que no tienes un navegador instalado en tu dispositivo."
+  "failedToOpenLink_description": "Verifique que tenga una solicitud válida para el enlace proporcionado. Este error normalmente significa que no tienes un navegador instalado en tu dispositivo.",
+  "noTimeReports": "Aún no hay ningún resumen disponible para este mes.",
+  "noTimeReports_description": "Agregue al menos una entrada de tiempo para ver más detalles."
 }

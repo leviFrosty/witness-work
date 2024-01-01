@@ -12,6 +12,7 @@
     "phonenumber",
     "Pressable",
     "Swipeable",
-    "tamagui"
+    "tamagui",
+    "zustand"
   ]
 }

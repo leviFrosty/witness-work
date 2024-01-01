@@ -1,4 +1,4 @@
-import { Pressable, View } from 'react-native'
+import { View } from 'react-native'
 import { useContext } from 'react'
 import moment from 'moment'
 import useTheme, { ThemeContext } from '../contexts/theme'
@@ -13,6 +13,7 @@ import { RootStackNavigation } from '../stacks/RootStack'
 import i18n from '../lib/locales'
 import IconButton from './IconButton'
 import { faCheck, faMinus, faTimes } from '@fortawesome/free-solid-svg-icons'
+import Button from './Button'
 
 const Month = ({ month }: { month: number }) => {
   const theme = useTheme()
@@ -35,13 +36,13 @@ const Month = ({ month }: { month: number }) => {
   const hasNotGoneOutTheCurrentMonth = isCurrentMonth && !wentOutThisMonth
 
   return (
-    <Pressable
+    <Button
       onPress={
         publisher === 'publisher'
           ? undefined
           : () =>
               navigation.navigate('Time Reports', {
-                month: moment().month(),
+                month,
                 year: moment().year(),
               })
       }
@@ -90,7 +91,7 @@ const Month = ({ month }: { month: number }) => {
       >
         {moment().month(month).format('MMM')}
       </Text>
-    </Pressable>
+    </Button>
   )
 }
 
@@ -113,7 +114,7 @@ const MonthlyRoutine = () => {
           horizontal
           initialScrollIndex={moment().month()}
           keyExtractor={(item) => item.toString()}
-          estimatedItemSize={45}
+          estimatedItemSize={44}
           data={[...Array(12).keys()]}
           renderItem={({ item: month }) => {
             return <Month month={month} />

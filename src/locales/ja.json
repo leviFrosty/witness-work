@@ -395,5 +395,7 @@
   "theHoursBelowAreAlreadyIncludedInMyTotalHours": "以下のカテゴリは、私の合計時間にすでに含まれています。",
   "otherHoursDescription": "以下はすでに合計に含まれています",
   "failedToOpenLink": "URLを開けませんでした",
-  "failedToOpenLink_description": "提供されたリンクに有効なアプリケーションがあることを確認してください。このエラーは通常、デバイスにブラウザがインストールされていないことを意味します。"
+  "failedToOpenLink_description": "提供されたリンクに有効なアプリケーションがあることを確認してください。このエラーは通常、デバイスにブラウザがインストールされていないことを意味します。",
+  "noTimeReports": "今月の概要はまだありません。",
+  "noTimeReports_description": "詳細を表示するには、少なくとも 1 つのタイム エントリを追加します。"
 }

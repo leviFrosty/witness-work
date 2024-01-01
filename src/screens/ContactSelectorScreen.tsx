@@ -14,7 +14,7 @@ import i18n from '../lib/locales'
 import Wrapper from '../components/layout/Wrapper'
 import { ThemeContext } from '../contexts/theme'
 
-const ContactSelector = () => {
+const ContactSelectorScreen = () => {
   const theme = useContext(ThemeContext)
   const navigation = useNavigation<RootStackNavigation>()
   const { contacts } = useContacts()
@@ -68,4 +68,4 @@ const ContactSelector = () => {
   )
 }
 
-export default ContactSelector
+export default ContactSelectorScreen

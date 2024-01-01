@@ -395,5 +395,7 @@
   "theHoursBelowAreAlreadyIncludedInMyTotalHours": "以下类别已包含在我的总时间中。",
   "otherHoursDescription": "以下已包含在总数中",
   "failedToOpenLink": "无法打开网址",
-  "failedToOpenLink_description": "请验证您对所提供的链接有有效的申请。此错误通常意味着您的设备上没有安装浏览器。"
+  "failedToOpenLink_description": "请验证您对所提供的链接有有效的申请。此错误通常意味着您的设备上没有安装浏览器。",
+  "noTimeReports": "本月尚无可用摘要。",
+  "noTimeReports_description": "至少添加一个时间条目以查看更多详细信息。"
 }

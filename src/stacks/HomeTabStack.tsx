@@ -3,8 +3,8 @@ import {
   BottomTabNavigationProp,
 } from '@react-navigation/bottom-tabs'
 import TabBar from '../components/TabBar'
-import Map from '../screens/Map'
-import HomeScreen from '../screens/Home'
+import Map from '../screens/MapScreen'
+import HomeScreen from '../screens/HomeScreen'
 import { usePreferences } from '../stores/preferences'
 import Constants from 'expo-constants'
 import { View } from 'react-native'

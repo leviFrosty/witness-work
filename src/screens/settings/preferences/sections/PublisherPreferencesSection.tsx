@@ -1,10 +1,10 @@
 import { View } from 'react-native'
-import Text from '../../../components/MyText'
-import useTheme from '../../../contexts/theme'
-import i18n from '../../../lib/locales'
-import Section from '../../../components/inputs/Section'
-import InputRowContainer from '../../../components/inputs/InputRowContainer'
-import PublisherTypeSelector from '../../../components/PublisherTypeSelector'
+import Text from '../../../../components/MyText'
+import useTheme from '../../../../contexts/theme'
+import i18n from '../../../../lib/locales'
+import Section from '../../../../components/inputs/Section'
+import InputRowContainer from '../../../../components/inputs/InputRowContainer'
+import PublisherTypeSelector from '../../../../components/PublisherTypeSelector'
 
 const PublisherPreferencesSection = () => {
   const theme = useTheme()

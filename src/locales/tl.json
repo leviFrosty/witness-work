@@ -395,5 +395,7 @@
   "theHoursBelowAreAlreadyIncludedInMyTotalHours": "Ang mga kategorya sa ibaba ay kasama na sa aking kabuuang oras.",
   "otherHoursDescription": "Sa ibaba ay kasama na sa kabuuan",
   "failedToOpenLink": "Nabigong Buksan ang URL",
-  "failedToOpenLink_description": "Paki-verify na mayroon kang wastong aplikasyon para sa ibinigay na link. Ang error na ito ay karaniwang nangangahulugan na wala kang browser na naka-install sa iyong device."
+  "failedToOpenLink_description": "Paki-verify na mayroon kang wastong aplikasyon para sa ibinigay na link. Ang error na ito ay karaniwang nangangahulugan na wala kang browser na naka-install sa iyong device.",
+  "noTimeReports": "Wala pang available na buod para sa buwang ito.",
+  "noTimeReports_description": "Magdagdag ng kahit isang beses na entry para tingnan ang higit pang mga detalye."
 }

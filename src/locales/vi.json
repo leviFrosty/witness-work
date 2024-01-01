@@ -395,5 +395,7 @@
   "theHoursBelowAreAlreadyIncludedInMyTotalHours": "Các danh mục bên dưới đã được tính vào tổng số giờ của tôi.",
   "otherHoursDescription": "Dưới đây đã được bao gồm trong tổng số",
   "failedToOpenLink": "Không thể mở URL",
-  "failedToOpenLink_description": "Vui lòng xác minh rằng bạn có đơn đăng ký hợp lệ cho liên kết được cung cấp. Lỗi này thường có nghĩa là bạn chưa cài đặt trình duyệt trên thiết bị của mình."
+  "failedToOpenLink_description": "Vui lòng xác minh rằng bạn có đơn đăng ký hợp lệ cho liên kết được cung cấp. Lỗi này thường có nghĩa là bạn chưa cài đặt trình duyệt trên thiết bị của mình.",
+  "noTimeReports": "Chưa có bản tóm tắt nào cho tháng này.",
+  "noTimeReports_description": "Thêm ít nhất một mục thời gian để xem thêm chi tiết."
 }

@@ -26,7 +26,7 @@ import { FlashList } from '@shopify/flash-list'
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Time Reports'>
 
-const TimeReports = ({ route, navigation }: Props) => {
+const TimeReportsScreen = ({ route, navigation }: Props) => {
   const theme = useTheme()
   const { serviceReports } = useServiceReport()
   const insets = useSafeAreaInsets()
@@ -129,7 +129,6 @@ const TimeReports = ({ route, navigation }: Props) => {
         style={{
           paddingHorizontal: 15,
           paddingTop: 20,
-          paddingBottom: 25,
           gap: 30,
         }}
       >
@@ -171,6 +170,7 @@ const TimeReports = ({ route, navigation }: Props) => {
       </View>
       <ScrollView
         contentContainerStyle={{
+          paddingTop: 30,
           paddingBottom: insets.bottom + 30,
         }}
         contentInset={{ top: 0, right: 0, bottom: insets.bottom + 30, left: 0 }}
@@ -218,4 +218,4 @@ const TimeReports = ({ route, navigation }: Props) => {
     </View>
   )
 }
-export default TimeReports
+export default TimeReportsScreen

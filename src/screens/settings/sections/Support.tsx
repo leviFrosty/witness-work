@@ -9,13 +9,13 @@ import {
 } from '@fortawesome/free-solid-svg-icons'
 import links from '../../../constants/links'
 import IconButton from '../../../components/IconButton'
-import SettingsSectionTitle from '../shared/SettingsSectionTitle'
+import SectionTitle from '../shared/SectionTitle'
 import { openURL } from '../../../lib/links'
 
 const SupportSection = () => {
   return (
     <View style={{ gap: 3 }}>
-      <SettingsSectionTitle text={i18n.t('support')} />
+      <SectionTitle text={i18n.t('support')} />
       <Section>
         <InputRowButton
           leftIcon={faHeart}

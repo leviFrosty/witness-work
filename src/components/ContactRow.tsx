@@ -29,18 +29,25 @@ const ContactRow = ({
   const theme = useTheme()
   const { deleteContact } = useContacts()
   const { conversations } = useConversations()
-  const { name } = contact
 
-  const isActiveBibleStudy = contactStudiedForGivenMonth({
-    contact,
-    conversations,
-    month: new Date(),
-  })
+  const isActiveBibleStudy = useMemo(
+    () =>
+      contactStudiedForGivenMonth({
+        contact,
+        conversations,
+        month: new Date(),
+      }),
+    [contact, conversations]
+  )
 
-  const hasStudiedPreviously = contactHasAtLeastOneStudy({
-    conversations,
-    contact,
-  })
+  const hasStudiedPreviously = useMemo(
+    () =>
+      contactHasAtLeastOneStudy({
+        conversations,
+        contact,
+      }),
+    [contact, conversations]
+  )
 
   const mostRecentConversation = useMemo(() => {
     const filteredConversations = conversations.filter(
@@ -95,7 +102,7 @@ const ContactRow = ({
         >
           <View style={{ alignItems: 'center', flexDirection: 'row' }}>
             <View style={{ flexGrow: 1, gap: 2 }}>
-              <Text style={{ fontSize: 18 }}>{name}</Text>
+              <Text style={{ fontSize: 18 }}>{contact.name}</Text>
               <Text style={{ color: theme.colors.textAlt, fontSize: 10 }}>
                 {mostRecentConversation
                   ? moment(mostRecentConversation.date).fromNow()

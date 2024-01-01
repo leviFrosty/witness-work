@@ -14,7 +14,7 @@
   "specialPioneer": "Pioneiro Especial",
   "continue": "Continuar",
   "neverForgetAReturnVisit": "Nunca se esqueça de uma revisita",
-  "neverForgetAReturnVisit_description": "O JW Time irá notificá-lo sobre as próximas visitas e lembrá-lo de enviar seu relatório de serviço. Você pode alterar isso mais tarde nas configurações.",
+  "neverForgetAReturnVisit_description": "JW Time will notify you about upcoming return visits or studies. You can change this later in the settings.",
   "skip": "Pular",
   "allowNotifications": "Permitir notificações",
   "youreAllSet": "Está tudo pronto!",
@@ -268,7 +268,7 @@
   "appleMaps": "Mapas da Apple",
   "googleMaps": "Google Mapas",
   "shareFrom": "Compartilhar de",
-  "generateAUrlFromYourPreferredMappingService": "Compartilhe um link do seu serviço de mapeamento preferido.",
+  "generateAUrlFromYourPreferredMappingService": "Share a link from different mapping services.",
   "introducingMapView": "Configuração do mapa",
   "mapViewOnboarding1": "Para começar, atualize seu",
   "mapViewOnboarding2": "contato existente que não possui coordenadas.",
@@ -304,5 +304,90 @@
   "featureRequest": "Solicitação de recurso",
   "pleaseDescribeYourFeatureClearly": "Descreva qual recurso você gostaria que fosse extremamente detalhado. Forneça um nome de contato e telefone. Se aplicável, desenhe uma imagem da aparência do recurso. Como alternativa, envie uma captura de tela de um aplicativo com funcionalidade semelhante.",
   "Home": "Lar",
-  "Map": "Mapa"
+  "Map": "Mapa",
+  "preferences": "Preferences",
+  "defaultNavigationApp": "Default Navigation App",
+  "apple": "Apple",
+  "google": "Google",
+  "couldNotOpenMaps": "Could Not Open Maps",
+  "couldNotOpenMaps_description": "Please verify you have a valid mapping application installed.",
+  "preferredMaps": "Preferred Maps",
+  "youCanChangeThisLaterInTheSettings": "You can change this later in the settings.",
+  "preferredMaps_description": "JW Time will use your preferred mapping application to navigate to your contact's address.",
+  "waze": "Waze",
+  "navigation": "Navegação",
+  "nextVisitOffset_description": "A que distância deve estar sua próxima visita quando você cria uma conversa.",
+  "nextVisitOffset": "Compensação da próxima visita",
+  "conversations": "Conversas",
+  "notificationOffset": "Notificação",
+  "followUpOffset": "Acompanhamento padrão",
+  "notificationOffset_description": "Quanto tempo antes da sua próxima visita quando a notificação chegar.",
+  "alwaysNotify": "Notificar sempre",
+  "whatsNew": "Novidades",
+  "new": "Novo",
+  "bugFixes": "Correções de bugs",
+  "updates": {
+    "191": {
+      "c1": "Resolve um problema ao navegar pelas telas de tempo."
+    },
+    "190": {
+      "c1": "Preferências adicionadas nas configurações",
+      "c2": "[iOS] Selecione entre Google, Apple e Waze como seu aplicativo de navegação padrão nas preferências.",
+      "c3": "Agora configure os valores padrão para seus tempos de acompanhamento e notificação nas preferências.",
+      "c4": "'Novidades' tela",
+      "c5": "A nova barra de progresso organiza suas entradas de tempo por categoria",
+      "c6": "Agora adicione tags personalizadas às suas entradas de tempo",
+      "c7": "Tela de Relatórios de Tempo atualizada para ser melhor organizada e separada por mês"
+    },
+    "182": {
+      "c1": "Atualizado o tempo todo para refletir a localidade atual"
+    },
+    "181": {
+      "c1": "Visualização de mapa expandida",
+      "c2": "Adicionada solicitação de revisão da loja após determinados critérios serem atendidos",
+      "c3": "Pequenas correções de bugs"
+    },
+    "180": {
+      "c1": "Adicionada geocodificação automática para contatos",
+      "c2": "Visualização de mapa adicionada"
+    },
+    "170": {
+      "c1": "Adicione vários métodos de exportação de horário",
+      "c2": "Adicione 'Não em casa'"
+    },
+    "163": {
+      "c1": "Resolva problemas de atualização automatizada"
+    },
+    "162": {
+      "c1": "Requisito de horas de pioneiro especial ajustado de 70 para 100"
+    },
+    "161": {
+      "c1": "Adicionadas mais opções de minutos para entradas de tempo"
+    },
+    "160": {
+      "c1": "As conversas agora são editáveis. As notificações são configuráveis",
+      "c2": "Deslize os gestos para editar ou excluir conversas, contatos, etc.",
+      "c3": "Adicionado feedback tátil para várias ações importantes"
+    }
+  },
+  "installed": "Instalado",
+  "progress": "Progresso",
+  "type": "Tipo",
+  "other": "Outro",
+  "enterCustomCategory": "Insira a categoria personalizada",
+  "categoryNeeded": "Você deve selecionar uma categoria existente ou adicionar uma categoria personalizada.",
+  "categories": "Categorias",
+  "tag": "Marcação",
+  "showOtherCategories": "Mostrar outras categorias",
+  "of": "de",
+  "hoursToGoal": "horas para meta",
+  "removeCategory": "Remover categoria",
+  "noReportsThisMonthYet": "Ainda não há relatórios este mês.",
+  "timeReports": "Relatórios de tempo",
+  "monthDetails": "Detalhes do mês",
+  "entries": "Entradas",
+  "homeScreen": "Tela inicial",
+  "detailedProgressBar": "Barra de progresso detalhada",
+  "theHoursBelowAreAlreadyIncludedInMyTotalHours": "As categorias abaixo já estão incluídas no meu total de horas.",
+  "otherHoursDescription": "Abaixo já está incluso no total"
 }

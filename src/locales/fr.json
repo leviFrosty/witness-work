@@ -14,7 +14,7 @@
   "specialPioneer": "Pionnier spécial",
   "continue": "Continuer",
   "neverForgetAReturnVisit": "N'oubliez jamais une nouvelle visite",
-  "neverForgetAReturnVisit_description": "JW Time vous informera des visites à venir et vous rappellera de soumettre votre rapport de service. Vous pourrez modifier cela ultérieurement dans les paramètres.",
+  "neverForgetAReturnVisit_description": "JW Time will notify you about upcoming return visits or studies. You can change this later in the settings.",
   "skip": "Sauter",
   "allowNotifications": "Autoriser les notifications",
   "youreAllSet": "Vous êtes prêt !",
@@ -268,7 +268,7 @@
   "appleMaps": "Cartes Apple",
   "googleMaps": "Google Maps",
   "shareFrom": "Partager depuis",
-  "generateAUrlFromYourPreferredMappingService": "Partagez un lien de votre service de cartographie préféré.",
+  "generateAUrlFromYourPreferredMappingService": "Share a link from different mapping services.",
   "introducingMapView": "Configuration de la carte",
   "mapViewOnboarding1": "Pour commencer, mettez à jour votre",
   "mapViewOnboarding2": "contact existant pour lequel il manque des coordonnées.",
@@ -304,5 +304,90 @@
   "featureRequest": "Demande de fonctionnalité",
   "pleaseDescribeYourFeatureClearly": "Veuillez décrire la fonctionnalité que vous souhaiteriez voir extrêmement détaillée. Fournissez un nom et un téléphone de contact. Le cas échéant, veuillez dessiner une image de ce à quoi pourrait ressembler la fonctionnalité. Vous pouvez également envoyer une capture d’écran d’une application dotée de fonctionnalités similaires.",
   "Home": "Maison",
-  "Map": "Carte"
+  "Map": "Carte",
+  "preferences": "Preferences",
+  "defaultNavigationApp": "Default Navigation App",
+  "apple": "Apple",
+  "google": "Google",
+  "couldNotOpenMaps": "Could Not Open Maps",
+  "couldNotOpenMaps_description": "Please verify you have a valid mapping application installed.",
+  "preferredMaps": "Preferred Maps",
+  "youCanChangeThisLaterInTheSettings": "You can change this later in the settings.",
+  "preferredMaps_description": "JW Time will use your preferred mapping application to navigate to your contact's address.",
+  "waze": "Waze",
+  "navigation": "Navigation",
+  "nextVisitOffset_description": "How far out your next visit should be from when you create a conversation.",
+  "nextVisitOffset": "Next Visit Offset",
+  "conversations": "Conversations",
+  "notificationOffset": "Notification",
+  "followUpOffset": "Suivi par défaut",
+  "notificationOffset_description": "Combien de temps avant votre prochaine visite lorsque la notification arrive.",
+  "alwaysNotify": "Toujours aviser",
+  "whatsNew": "Quoi de neuf",
+  "new": "Nouveau",
+  "bugFixes": "Corrections de bugs",
+  "updates": {
+    "160": {
+      "c1": "Les conversations sont désormais modifiables. Les notifications sont configurables",
+      "c2": "Faites glisser les gestes pour modifier ou supprimer des conversations, des contacts, etc.",
+      "c3": "Ajout d'un retour haptique à diverses actions importantes"
+    },
+    "161": {
+      "c1": "Ajout de plus d'options de minutes pour les entrées de temps"
+    },
+    "162": {
+      "c1": "L’exigence d’heures de pionnier spécial a été ajustée de 70 à 100"
+    },
+    "163": {
+      "c1": "Résoudre les problèmes de mise à jour automatique"
+    },
+    "170": {
+      "c1": "Ajouter diverses méthodes d'exportation de temps",
+      "c2": "Ajoutez « Pas à la maison »"
+    },
+    "180": {
+      "c1": "Ajout du géocodage automatique pour les contacts",
+      "c2": "Vue cartographique ajoutée"
+    },
+    "181": {
+      "c1": "Vue de la carte étendue",
+      "c2": "Ajout d'une demande d'examen du magasin une fois que certains critères sont remplis",
+      "c3": "Petites corrections de bugs"
+    },
+    "182": {
+      "c1": "Mis à jour à tout moment pour refléter les paramètres régionaux actuels"
+    },
+    "190": {
+      "c1": "Préférences ajoutées dans les paramètres",
+      "c2": "[iOS] Choisissez entre Google, Apple et Waze comme application de navigation par défaut dans les préférences.",
+      "c3": "Configurez maintenant les valeurs par défaut pour vos heures de suivi et de notification dans les préférences.",
+      "c4": "\"Quoi de neuf\" ? écran",
+      "c5": "La nouvelle barre de progression organise vos entrées de temps par catégorie",
+      "c6": "Ajoutez maintenant des balises personnalisées à vos entrées de temps",
+      "c7": "Écran des rapports de temps mis à jour pour être mieux organisé et séparé par mois"
+    },
+    "191": {
+      "c1": "Résout un problème de navigation vers les écrans horaires."
+    }
+  },
+  "installed": "installée",
+  "progress": "Progrès",
+  "type": "Taper",
+  "other": "Autre",
+  "enterCustomCategory": "Entrez une catégorie personnalisée",
+  "categoryNeeded": "Vous devez sélectionner une catégorie existante ou ajouter une catégorie personnalisée.",
+  "categories": "Catégories",
+  "tag": "Étiqueter",
+  "showOtherCategories": "Afficher les autres catégories",
+  "of": "de",
+  "hoursToGoal": "heures avant l'objectif",
+  "removeCategory": "Supprimer la catégorie",
+  "noReportsThisMonthYet": "Aucun rapport ce mois-ci pour l'instant.",
+  "timeReports": "Rapports de temps",
+  "monthDetails": "Détails du mois",
+  "entries": "Entrées",
+  "homeScreen": "Écran d'accueil",
+  "detailedProgressBar": "Barre de progression détaillée",
+  "theHoursBelowAreAlreadyIncludedInMyTotalHours": "Les catégories ci-dessous sont déjà incluses dans mon total d'heures.",
+  "otherHoursDescription": "Ci-dessous est déjà inclus dans le total"
 }

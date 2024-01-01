@@ -3,7 +3,10 @@ import { Dropdown } from 'react-native-element-dropdown'
 import useTheme from '../contexts/theme'
 import { DropdownProps } from 'react-native-element-dropdown/lib/typescript/components/Dropdown/model'
 
-interface Props<T>
+export type SelectDataItem<T> = { label: string; value: T }
+export type SelectData<T> = SelectDataItem<T>[]
+
+export interface SelectProps<T>
   extends Omit<Omit<DropdownProps<T>, 'labelField'>, 'valueField'> {
   data: T[]
   onChange: (item: T) => void
@@ -25,27 +28,30 @@ interface Props<T>
   value: any
 }
 
-const Select = <T extends { label: string; value: any }>({
+const Select = <T,>({
   data,
   onChange,
   value,
+  style,
   ...props
-}: Props<T>) => {
+}: SelectProps<T>) => {
   const theme = useTheme()
 
   return (
     <Dropdown
       data={data}
-      labelField={'label'}
-      valueField={'value'}
-      style={{
-        backgroundColor: theme.colors.background,
-        borderColor: theme.colors.border,
-        borderWidth: 1,
-        paddingHorizontal: 10,
-        borderRadius: theme.numbers.borderRadiusSm,
-        marginBottom: 10,
-      }}
+      labelField={'label' as keyof T}
+      valueField={'value' as keyof T}
+      style={[
+        {
+          backgroundColor: theme.colors.background,
+          borderColor: theme.colors.border,
+          borderWidth: 1,
+          paddingHorizontal: 10,
+          borderRadius: theme.numbers.borderRadiusSm,
+        },
+        [style],
+      ]}
       selectedTextStyle={{
         color: theme.colors.text,
         fontSize: 14,

@@ -8,6 +8,8 @@ import { Alert, Linking, Platform } from 'react-native'
 import i18n from './locales'
 import { countTruthyValueStrings } from './objects'
 import * as Location from 'expo-location'
+import { DefaultNavigationMapProvider } from '../stores/preferences'
+import links from '../constants/links'
 
 export const addressToString = (address?: Address) => {
   if (!address) {
@@ -82,20 +84,38 @@ export const fetchCoordinateFromAddress = async (
   }
 }
 
-export const navigateTo = (a: Address) => {
-  const scheme = Platform.select({
-    ios: 'maps://0,0?q=',
-    android: 'geo:0,0?q=',
-  })
-  const address = encodeURI(addressToString(a))
-  const url = Platform.select({
-    ios: `${scheme}${address}`,
-    android: `${scheme}${address}`,
-  })
-  if (!url) {
-    return
+export const navigateTo = (
+  a: Address,
+  provider: DefaultNavigationMapProvider
+) => {
+  const getScheme = () => {
+    switch (provider) {
+      case 'apple':
+        return links.appleMapsBase
+      case 'google':
+        return links.googleMapsBase
+      case 'waze':
+        return links.wazeMapsBase
+      default:
+        if (Platform.OS === 'android') {
+          return links.googleMapsBase
+        }
+        return links.appleMapsBase
+    }
   }
-  Linking.openURL(url)
+
+  const address = encodeURI(addressToString(a))
+
+  const url = `${getScheme()}${address}`
+
+  try {
+    Linking.openURL(url)
+  } catch (error) {
+    Alert.alert(
+      i18n.t('couldNotOpenMaps'),
+      i18n.t('couldNotOpenMaps_description')
+    )
+  }
 }
 
 export const requestLocationPermission = async (

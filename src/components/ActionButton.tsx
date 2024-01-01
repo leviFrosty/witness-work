@@ -1,9 +1,9 @@
 import Text from './MyText'
 import useTheme from '../contexts/theme'
-import Button from './Button'
+import Button, { ButtonProps } from './Button'
 import { ThemeSizes } from '../types/theme'
 import React, { PropsWithChildren } from 'react'
-interface Props {
+interface Props extends ButtonProps {
   onPress: () => unknown
   disabled?: boolean
   size?: ThemeSizes
@@ -14,24 +14,28 @@ const ActionButton: React.FC<PropsWithChildren<Props>> = ({
   children,
   disabled,
   size = 'lg',
+  ...props
 }) => {
   const theme = useTheme()
 
   return (
     <Button
-      style={{
-        backgroundColor: disabled
-          ? theme.colors.accentAlt
-          : theme.colors.accent,
-        borderRadius: theme.numbers.borderRadiusSm,
-        paddingVertical: 12,
-        paddingHorizontal: 24,
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'center',
-      }}
+      style={[
+        {
+          backgroundColor: disabled
+            ? theme.colors.accentAlt
+            : theme.colors.accent,
+          borderRadius: theme.numbers.borderRadiusSm,
+          paddingVertical: 12,
+          paddingHorizontal: 24,
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'center',
+        },
+      ]}
       onPress={onPress}
       disabled={disabled}
+      {...props}
     >
       {typeof children === 'string' ? (
         <Text

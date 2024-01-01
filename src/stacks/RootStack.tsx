@@ -17,6 +17,9 @@ import Update from '../screens/Update'
 import IconButton from '../components/IconButton'
 import { faPlus } from '@fortawesome/free-solid-svg-icons'
 import HomeTabStack from './DashboardTabStack'
+import Preferences from '../screens/preferences/Preferences'
+import i18n from '../lib/locales'
+import WhatsNewScreen from '../screens/WhatsNew'
 
 export type RootStackParamList = {
   Root: undefined
@@ -29,10 +32,12 @@ export type RootStackParamList = {
   'Contact Form': { id: string; edit?: boolean } // Contact ID
   'Contact Selector': undefined
   'Add Time': undefined
-  'Time Reports': undefined
+  'Time Reports': { month?: number; year?: number }
   'Recover Contacts': undefined
   Onboarding: undefined
   Update: undefined
+  Preferences: undefined
+  'Whats New': undefined
 }
 
 export type RootStackNavigation = NativeStackNavigationProp<RootStackParamList>
@@ -89,6 +94,7 @@ const RootStackComponent = () => {
           header: ({ navigation }) => (
             <Header
               buttonType='back'
+              title={i18n.t('timeReports')}
               rightElement={
                 <IconButton
                   style={{ position: 'absolute', right: 0 }}
@@ -116,6 +122,22 @@ const RootStackComponent = () => {
         options={{ header: () => undefined }}
         name='Update'
         component={Update}
+      />
+      <RootStack.Screen
+        options={{
+          header: () => (
+            <Header buttonType='back' title={i18n.t('preferences')} />
+          ),
+        }}
+        name='Preferences'
+        component={Preferences}
+      />
+      <RootStack.Screen
+        options={{
+          header: () => <Header buttonType='back' title={i18n.t('whatsNew')} />,
+        }}
+        name='Whats New'
+        component={WhatsNewScreen}
       />
     </RootStack.Navigator>
   )

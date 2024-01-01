@@ -6,7 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import IconButton from './IconButton'
 import { faHome, faMapLocation } from '@fortawesome/free-solid-svg-icons'
 import Text from './MyText'
-import i18n from '../lib/locales'
+import i18n, { TranslationKey } from '../lib/locales'
 
 const TabBar = ({ state, descriptors, navigation }: BottomTabBarProps) => {
   const theme = useTheme()
@@ -73,7 +73,7 @@ const TabBar = ({ state, descriptors, navigation }: BottomTabBarProps) => {
               size={18}
             />
             <Text style={{ color, fontSize: theme.fontSize('sm') }}>
-              {i18n.t(label)}
+              {i18n.t(label as TranslationKey)}
             </Text>
           </TouchableOpacity>
         )

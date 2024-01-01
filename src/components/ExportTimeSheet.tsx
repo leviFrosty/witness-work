@@ -21,13 +21,16 @@ import moment from 'moment'
 import Haptics from '../lib/haptics'
 import { useCallback, useMemo } from 'react'
 import {
+  getTimeAsMinutesForHourglass,
   hasServiceReportsForMonth,
+  otherHoursForSpecificMonth,
   totalHoursForSpecificMonth,
 } from '../lib/serviceReport'
 import useTheme from '../contexts/theme'
 import useServiceReport from '../stores/serviceReport'
 import { useNavigation } from '@react-navigation/native'
 import { RootStackNavigation } from '../stacks/RootStack'
+import links from '../constants/links'
 
 export type ExportTimeSheetState = {
   open: boolean
@@ -84,6 +87,29 @@ const ExportTimeSheet = ({
 
   const handleAction = useCallback(
     async (action: 'copy' | 'hourglass' | 'share') => {
+      const otherHoursAsString = () => {
+        const otherHours = otherHoursForSpecificMonth(
+          serviceReports,
+          month || 0,
+          year || 0
+        )
+
+        if (otherHours.length > 1) {
+          return otherHours.reduce(
+            (acc, curr, index) => {
+              return (
+                acc +
+                `${curr.tag}: ${curr.hours}${
+                  index !== otherHours.length - 1 ? '\n' : ''
+                }`
+              )
+            },
+            `\n${i18n.t('otherHoursDescription')}\n`
+          )
+        }
+        return ''
+      }
+
       const reportAsString = () => {
         if (!month || !year) {
           return ''
@@ -106,20 +132,8 @@ const ExportTimeSheet = ({
           'hours'
         )}: ${hoursForPublisherOrPioneer()}\n${i18n.t(
           'studies'
-        )}: ${studiesForMonth}\n${i18n.t('notes')}:\n`
+        )}: ${studiesForMonth}\n${i18n.t('notes')}:\n${otherHoursAsString()}`
       }
-
-      const getTimeForHourglass = () => {
-        if (publisher === 'publisher') {
-          if (wentOutForMonth) {
-            return 1
-          }
-          return 0
-        }
-        const minutes = (hours || 0) * 60
-        return minutes
-      }
-      const hourglassMonth = (month || 0) + 1
 
       switch (action) {
         case 'copy': {
@@ -129,8 +143,18 @@ const ExportTimeSheet = ({
         }
 
         case 'hourglass': {
+          const hourglassMonth = (month || 0) + 1
+
           try {
-            const hourglassSubmitLink = `https://app.hourglass-app.com/report/submit?month=${hourglassMonth}&year=${year}&minutes=${getTimeForHourglass()}&studies=${studiesForMonth}`
+            const hourglassSubmitLink = `${
+              links.hourglassBase
+            }month=${hourglassMonth}&year=${year}&minutes=${getTimeAsMinutesForHourglass(
+              publisher,
+              wentOutForMonth,
+              hours
+            )}&studies=${studiesForMonth}&remarks=${encodeURI(
+              otherHoursAsString()
+            )}`
             await Linking.openURL(hourglassSubmitLink)
           } catch (error) {
             Sentry.Native.captureException(error)
@@ -146,7 +170,16 @@ const ExportTimeSheet = ({
 
       setSheet({ open: false, month: 0, year: 0 })
     },
-    [hours, month, publisher, setSheet, studiesForMonth, wentOutForMonth, year]
+    [
+      hours,
+      month,
+      publisher,
+      serviceReports,
+      setSheet,
+      studiesForMonth,
+      wentOutForMonth,
+      year,
+    ]
   )
 
   if (month === undefined || year === undefined) {
@@ -168,7 +201,10 @@ const ExportTimeSheet = ({
             {showViewAllMonthsButton && (
               <Button
                 onPress={() => {
-                  navigation.navigate('Time Reports')
+                  navigation.navigate('Time Reports', {
+                    month: moment().month(),
+                    year: moment().year(),
+                  })
                   setSheet({ open: false, month: 0, year: 0 })
                 }}
               >

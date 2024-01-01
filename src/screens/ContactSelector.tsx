@@ -11,7 +11,7 @@ import { RootStackNavigation } from '../stacks/RootStack'
 import Divider from '../components/Divider'
 import ContactRow from '../components/ContactRow'
 import i18n from '../lib/locales'
-import Wrapper from '../components/Wrapper'
+import Wrapper from '../components/layout/Wrapper'
 import { ThemeContext } from '../contexts/theme'
 
 const ContactSelector = () => {
@@ -27,7 +27,7 @@ const ContactSelector = () => {
 
   return (
     <Wrapper
-      noInsets
+      insets='none'
       style={{ flexGrow: 1, paddingTop: 20, paddingHorizontal: 20, gap: 20 }}
     >
       <View style={{ gap: 20 }}>

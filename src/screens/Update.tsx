@@ -9,7 +9,7 @@ import * as Sentry from 'sentry-expo'
 import ActionButton from '../components/ActionButton'
 import { useNavigation } from '@react-navigation/native'
 import { RootStackNavigation } from '../stacks/RootStack'
-import Wrapper from '../components/Wrapper'
+import Wrapper from '../components/layout/Wrapper'
 import Button from '../components/Button'
 
 const Update = () => {

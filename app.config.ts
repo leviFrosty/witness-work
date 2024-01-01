@@ -4,7 +4,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   ...config,
   name: 'JW Time',
   slug: 'jw-time',
-  version: '1.8.2',
+  version: '1.9.1',
   owner: 'levi_frosty',
   orientation: 'portrait',
   icon: './src/assets/icon.png',
@@ -38,9 +38,6 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
         apiKey: process.env.GOOGLE_MAPS_ANDROID_SDK_API_KEY,
       },
     },
-  },
-  web: {
-    favicon: './src/assets/favicon.png',
   },
   extra: {
     eas: {

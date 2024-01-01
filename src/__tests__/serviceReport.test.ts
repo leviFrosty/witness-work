@@ -2,10 +2,12 @@ import moment from 'moment'
 import {
   calculateHoursRemaining,
   calculateProgress,
+  getTimeAsMinutesForHourglass,
   totalHoursForCurrentMonth,
   totalHoursForSpecificMonth,
 } from '../lib/serviceReport'
 import { ServiceReport } from '../types/serviceReport'
+import { Publisher } from '../types/publisher'
 
 describe('service report', () => {
   describe('calculateProgress', () => {
@@ -290,6 +292,40 @@ describe('service report', () => {
       )
 
       expect(hours).toBe(1001)
+    })
+  })
+
+  describe('getTimeAsMinutesForHourglass', () => {
+    it('should return 1 if you are a publisher and went out for the month', () => {
+      const publisher: Publisher = 'publisher'
+
+      const minutes = getTimeAsMinutesForHourglass(publisher, true, 0)
+
+      expect(minutes).toBe(1)
+    })
+
+    it('should return 0 if you are a publisher and did not go out for the month', () => {
+      const publisher: Publisher = 'publisher'
+
+      const minutes = getTimeAsMinutesForHourglass(publisher, false, 0)
+
+      expect(minutes).toBe(0)
+    })
+
+    it('should return your hours as minutes if you are a non-publisher', () => {
+      const publisher: Publisher = 'regularPioneer'
+
+      const minutes = getTimeAsMinutesForHourglass(publisher, true, 10)
+
+      expect(minutes).toBe(600)
+    })
+
+    it('should not return hours', () => {
+      const publisher: Publisher = 'regularPioneer'
+
+      const minutes = getTimeAsMinutesForHourglass(publisher, true, 10)
+
+      expect(minutes).not.toBe(10)
     })
   })
 })

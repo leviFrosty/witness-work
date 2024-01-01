@@ -4,7 +4,7 @@ import OnboardingNav from '../OnboardingNav'
 import Text from '../../MyText'
 import i18n from '../../../lib/locales'
 import PublisherTypeSelector from '../../PublisherTypeSelector'
-import Wrapper from '../../Wrapper'
+import Wrapper from '../../layout/Wrapper'
 import ActionButton from '../../ActionButton'
 
 interface Props {
@@ -25,7 +25,7 @@ const StepTwo = ({ goBack, goNext }: Props) => {
               flexGrow: 1,
               paddingHorizontal: 30,
               paddingTop: 60,
-              paddingBottom: 60,
+              paddingBottom: 100,
               justifyContent: 'space-between',
             }}
           >

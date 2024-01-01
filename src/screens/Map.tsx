@@ -1,4 +1,4 @@
-import Wrapper from '../components/Wrapper'
+import Wrapper from '../components/layout/Wrapper'
 import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps'
 import useContacts from '../stores/contactsStore'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
@@ -31,6 +31,7 @@ import { Progress } from 'tamagui'
 import AnimatedLottieView from 'lottie-react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import Card from '../components/Card'
+import Circle from '../components/Circle'
 
 export interface ContactMarker extends Contact {
   pinColor: string
@@ -238,7 +239,7 @@ const MapOnboarding = () => {
 
   return (
     <Wrapper
-      noInsets
+      insets='none'
       style={{
         flexGrow: 1,
         paddingHorizontal: 20,
@@ -446,53 +447,25 @@ const MapOnboarding = () => {
               <View
                 style={{ flexDirection: 'row', gap: 15, alignItems: 'center' }}
               >
-                <View
-                  style={{
-                    height: 30,
-                    width: 30,
-                    backgroundColor: theme.colors.textAlt,
-                    borderRadius: 100,
-                  }}
-                />
+                <Circle size={30} color={theme.colors.textAlt} />
                 <Text>{i18n.t('noConversations')}</Text>
               </View>
               <View
                 style={{ flexDirection: 'row', gap: 15, alignItems: 'center' }}
               >
-                <View
-                  style={{
-                    height: 30,
-                    width: 30,
-                    backgroundColor: theme.colors.error,
-                    borderRadius: 100,
-                  }}
-                />
+                <Circle size={30} color={theme.colors.error} />
                 <Text>{i18n.t('longerThanAMonthAgo')}</Text>
               </View>
               <View
                 style={{ flexDirection: 'row', gap: 15, alignItems: 'center' }}
               >
-                <View
-                  style={{
-                    height: 30,
-                    width: 30,
-                    backgroundColor: theme.colors.warn,
-                    borderRadius: 100,
-                  }}
-                />
+                <Circle size={30} color={theme.colors.warn} />
                 <Text>{i18n.t('longerThanAWeekAgo')}</Text>
               </View>
               <View
                 style={{ flexDirection: 'row', gap: 15, alignItems: 'center' }}
               >
-                <View
-                  style={{
-                    height: 30,
-                    width: 30,
-                    backgroundColor: theme.colors.accent,
-                    borderRadius: 100,
-                  }}
-                />
+                <Circle size={30} color={theme.colors.accent} />
                 <Text>{i18n.t('withinThePastWeek')}</Text>
               </View>
             </Card>
@@ -566,7 +539,7 @@ const Map = () => {
   ])
 
   return (
-    <Wrapper noInsets style={{ flexGrow: 1 }}>
+    <Wrapper insets='none' style={{ flexGrow: 1 }}>
       {!hasCompletedMapOnboarding ? (
         <MapOnboarding />
       ) : (

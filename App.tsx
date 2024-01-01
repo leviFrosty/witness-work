@@ -15,11 +15,10 @@ import {
 } from '@expo-google-fonts/inter'
 import { LogBox, useColorScheme } from 'react-native'
 import { StatusBar } from 'expo-status-bar' // automatically switches bar style based on theme!
-import getThemeFromColorScheme from './src/constants/theme'
-import { ThemeContext } from './src/contexts/theme'
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
 import { TamaguiProvider } from 'tamagui'
 import tamaguiConfig from './tamagui.config'
+import ThemeProvider from './src/providers/ThemeProvider'
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
@@ -47,7 +46,6 @@ Sentry.init({
 
 export default function App() {
   const colorScheme = useColorScheme()
-  const theme = getThemeFromColorScheme(colorScheme)
 
   const [fontsLoaded] = useFonts({
     Inter_400Regular,
@@ -64,21 +62,21 @@ export default function App() {
 
   try {
     return (
-      <TamaguiProvider
-        defaultTheme={colorScheme || undefined}
-        config={tamaguiConfig}
-      >
-        <NavigationContainer>
-          <SafeAreaProvider>
-            <ThemeContext.Provider value={theme}>
+      <ThemeProvider>
+        <TamaguiProvider
+          defaultTheme={colorScheme || undefined}
+          config={tamaguiConfig}
+        >
+          <NavigationContainer>
+            <SafeAreaProvider>
               <GestureHandlerRootView style={{ flex: 1 }}>
                 <StatusBar />
                 <RootStackComponent />
               </GestureHandlerRootView>
-            </ThemeContext.Provider>
-          </SafeAreaProvider>
-        </NavigationContainer>
-      </TamaguiProvider>
+            </SafeAreaProvider>
+          </NavigationContainer>
+        </TamaguiProvider>
+      </ThemeProvider>
     )
   } catch (error) {
     Sentry.Native.captureException(error)

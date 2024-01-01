@@ -1,6 +1,7 @@
 import { PropsWithChildren } from 'react'
-import { Text as ReactNativeText, TextProps } from 'react-native'
 import useTheme from '../contexts/theme'
+import { Text as ReactNativeText, TextProps } from 'react-native'
+
 interface Props extends TextProps {}
 
 const Text: React.FC<PropsWithChildren<Props>> = ({

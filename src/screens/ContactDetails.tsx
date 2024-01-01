@@ -31,7 +31,7 @@ import {
   contactStudiedForGivenMonth,
 } from '../lib/conversations'
 import { Conversation } from '../types/conversation'
-import Wrapper from '../components/Wrapper'
+import Wrapper from '../components/layout/Wrapper'
 import { StatusBar } from 'expo-status-bar'
 import IconButton from '../components/IconButton'
 import {
@@ -202,7 +202,8 @@ const AddressRow = ({ contact }: { contact: Contact }) => {
     useState(false)
   const { address } = contact
   const { updateContact } = useContacts()
-  const { incrementGeocodeApiCallCount } = usePreferences()
+  const { incrementGeocodeApiCallCount, defaultNavigationMapProvider } =
+    usePreferences()
 
   if (!address) {
     return null
@@ -235,7 +236,7 @@ const AddressRow = ({ contact }: { contact: Contact }) => {
         {i18n.t('address')}
       </Text>
 
-      <Button onPress={() => navigateTo(address)}>
+      <Button onPress={() => navigateTo(address, defaultNavigationMapProvider)}>
         <View
           style={{
             flexDirection: 'row',
@@ -245,7 +246,7 @@ const AddressRow = ({ contact }: { contact: Contact }) => {
         >
           <Copyeable
             text={addressToString(address)}
-            onPress={() => navigateTo(address)}
+            onPress={() => navigateTo(address, defaultNavigationMapProvider)}
           >
             <View
               style={{
@@ -675,7 +676,7 @@ const ContactDetails = ({ route, navigation }: Props) => {
         <StatusBar style={colorScheme === 'light' ? 'light' : 'dark'} />
 
         <Wrapper
-          noInsets
+          insets='none'
           style={{
             marginBottom: insets.bottom + 125,
             flexGrow: 1,
@@ -716,6 +717,7 @@ const ContactDetails = ({ route, navigation }: Props) => {
               </Text>
               <View style={{ minHeight: 2 }}>
                 <FlashList
+                  scrollEnabled={false}
                   renderItem={({ item }) => (
                     <ConversationRow
                       conversation={item}
@@ -743,7 +745,7 @@ const ContactDetails = ({ route, navigation }: Props) => {
                       </Button>
                     </View>
                   }
-                  estimatedItemSize={70}
+                  estimatedItemSize={175}
                 />
               </View>
             </View>

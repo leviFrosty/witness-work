@@ -14,7 +14,7 @@
   "specialPioneer": "Speciale pionier",
   "continue": "Doorgaan",
   "neverForgetAReturnVisit": "Vergeet nooit een volgend bezoek",
-  "neverForgetAReturnVisit_description": "JW Time informeert u over komende bezoeken en herinnert u eraan uw servicerapport in te dienen. Je kunt dit later wijzigen in de instellingen.",
+  "neverForgetAReturnVisit_description": "JW Time will notify you about upcoming return visits or studies. You can change this later in the settings.",
   "skip": "Overslaan",
   "allowNotifications": "Meldingen toestaan",
   "youreAllSet": "Je bent helemaal klaar!",
@@ -268,7 +268,7 @@
   "appleMaps": "Apple-kaarten",
   "googleMaps": "Google Maps",
   "shareFrom": "Delen van",
-  "generateAUrlFromYourPreferredMappingService": "Deel een link van uw favoriete kaartservice.",
+  "generateAUrlFromYourPreferredMappingService": "Share a link from different mapping services.",
   "introducingMapView": "Kaart instellen",
   "mapViewOnboarding1": "Update uw",
   "mapViewOnboarding2": "bestaand contact waarbij coördinaten ontbreken.",
@@ -304,5 +304,90 @@
   "featureRequest": "Functieverzoek",
   "pleaseDescribeYourFeatureClearly": "Beschrijf welke functie u zeer gedetailleerd wilt hebben. Geef een contactnaam en telefoonnummer op. Maak, indien van toepassing, een afbeelding van hoe het kenmerk eruit zou kunnen zien. U kunt ook een screenshot sturen van een app die vergelijkbare functionaliteit heeft.",
   "Home": "Thuis",
-  "Map": "Kaart"
+  "Map": "Kaart",
+  "preferences": "Preferences",
+  "defaultNavigationApp": "Default Navigation App",
+  "apple": "Apple",
+  "google": "Google",
+  "couldNotOpenMaps": "Could Not Open Maps",
+  "couldNotOpenMaps_description": "Please verify you have a valid mapping application installed.",
+  "preferredMaps": "Preferred Maps",
+  "youCanChangeThisLaterInTheSettings": "You can change this later in the settings.",
+  "preferredMaps_description": "JW Time will use your preferred mapping application to navigate to your contact's address.",
+  "waze": "Waze",
+  "navigation": "Navigatie",
+  "nextVisitOffset_description": "Hoe ver weg moet uw volgende bezoek verwijderd zijn van het moment waarop u een gesprek begint.",
+  "nextVisitOffset": "Offset volgend bezoek",
+  "conversations": "Gesprekken",
+  "notificationOffset": "Kennisgeving",
+  "followUpOffset": "Standaard follow-up",
+  "notificationOffset_description": "Hoeveel tijd vóór uw volgende bezoek wanneer de melding binnenkomt.",
+  "alwaysNotify": "Altijd op de hoogte stellen",
+  "whatsNew": "Wat is er nieuw",
+  "new": "Nieuw",
+  "bugFixes": "Bugfixes",
+  "updates": {
+    "191": {
+      "c1": "Lost een probleem op bij het navigeren naar tijdschermen."
+    },
+    "190": {
+      "c1": "Voorkeuren toegevoegd in de instellingen",
+      "c2": "[iOS] Kies in voorkeuren tussen Google, Apple en Waze als je standaardnavigatie-app.",
+      "c3": "Configureer nu standaardwaarden voor uw follow-up- en meldingstijden in voorkeuren.",
+      "c4": "'Wat is er nieuw' scherm",
+      "c5": "Nieuwe voortgangsbalk organiseert uw tijdinvoer per categorie",
+      "c6": "Voeg nu aangepaste tags toe aan uw tijdinvoer",
+      "c7": "Bijgewerkt tijdrapportenscherm om beter georganiseerd en gescheiden te zijn per maand"
+    },
+    "182": {
+      "c1": "Altijd bijgewerkt om de huidige landinstelling weer te geven"
+    },
+    "181": {
+      "c1": "Uitgebreide kaartweergave",
+      "c2": "Winkelbeoordelingsverzoek toegevoegd nadat aan bepaalde criteria is voldaan",
+      "c3": "Kleine bugfixes"
+    },
+    "180": {
+      "c1": "Automatische geocodering voor contacten toegevoegd",
+      "c2": "Kaartweergave toegevoegd"
+    },
+    "170": {
+      "c1": "Voeg verschillende tijdexportmethoden toe",
+      "c2": "Voeg 'Niet thuis' toe"
+    },
+    "163": {
+      "c1": "Los problemen met automatische updates op"
+    },
+    "162": {
+      "c1": "Eis voor speciaal pioniersuur aangepast van 70 naar 100"
+    },
+    "161": {
+      "c1": "Meer minuutopties toegevoegd voor tijdinvoer"
+    },
+    "160": {
+      "c1": "Gesprekken kunnen nu worden bewerkt. Meldingen zijn configureerbaar",
+      "c2": "Veeggebaren om gesprekken, contacten, enz. te bewerken of te verwijderen.",
+      "c3": "Haptische feedback toegevoegd aan verschillende belangrijke acties"
+    }
+  },
+  "installed": "Geïnstalleerd",
+  "progress": "Voortgang",
+  "type": "Type",
+  "other": "Ander",
+  "enterCustomCategory": "Voer aangepaste categorie in",
+  "categoryNeeded": "U moet een bestaande categorie selecteren of een aangepaste categorie toevoegen.",
+  "categories": "Categorieën",
+  "tag": "Label",
+  "showOtherCategories": "Toon andere categorieën",
+  "of": "van",
+  "hoursToGoal": "uur tot doel",
+  "removeCategory": "Categorie verwijderen",
+  "noReportsThisMonthYet": "Nog geen meldingen deze maand.",
+  "timeReports": "Tijdrapporten",
+  "monthDetails": "Maanddetails",
+  "entries": "Inzendingen",
+  "homeScreen": "Thuis scherm",
+  "detailedProgressBar": "Gedetailleerde voortgangsbalk",
+  "theHoursBelowAreAlreadyIncludedInMyTotalHours": "Onderstaande categorieën zijn al opgenomen in mijn totaal uren.",
+  "otherHoursDescription": "Hieronder is in totaal al opgenomen"
 }

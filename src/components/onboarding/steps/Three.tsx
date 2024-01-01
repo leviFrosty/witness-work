@@ -4,7 +4,7 @@ import OnboardingNav from '../OnboardingNav'
 import { registerForPushNotificationsAsync } from '../../../lib/notifications'
 import Text from '../../MyText'
 import i18n from '../../../lib/locales'
-import Wrapper from '../../Wrapper'
+import Wrapper from '../../layout/Wrapper'
 import ActionButton from '../../ActionButton'
 import Button from '../../Button'
 
@@ -20,7 +20,7 @@ const StepThree = ({ goBack, goNext }: Props) => {
         flexGrow: 1,
         paddingHorizontal: 30,
         paddingTop: 60,
-        paddingBottom: 60,
+        paddingBottom: 100,
         justifyContent: 'space-between',
       }}
     >

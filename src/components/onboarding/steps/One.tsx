@@ -2,11 +2,12 @@ import { View } from 'react-native'
 import { styles } from '../Onboarding.styles'
 import Text from '../../MyText'
 import i18n from '../../../lib/locales'
-import Wrapper from '../../Wrapper'
+import Wrapper from '../../layout/Wrapper'
 import ActionButton from '../../ActionButton'
 
 interface Props {
   goNext: () => void
+  goBack?: () => void
 }
 
 const StepOne = ({ goNext }: Props) => {
@@ -16,7 +17,7 @@ const StepOne = ({ goNext }: Props) => {
         flexGrow: 1,
         paddingHorizontal: 30,
         paddingTop: 60,
-        paddingBottom: 60,
+        paddingBottom: 100,
       }}
     >
       <View style={styles.onboardingTitleWrapper}>

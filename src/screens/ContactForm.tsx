@@ -12,7 +12,7 @@ import Section from '../components/inputs/Section'
 import TextInputRow, { Errors } from '../components/inputs/TextInputRow'
 import Header from '../components/layout/Header'
 import i18n from '../lib/locales'
-import Wrapper from '../components/Wrapper'
+import Wrapper from '../components/layout/Wrapper'
 import PhoneInput, {
   ICountry,
   ITheme,
@@ -324,7 +324,7 @@ const ContactForm = ({ route, navigation }: Props) => {
     ? contacts.find((c) => c.id === route.params.id)
     : undefined
   const locales = Localization.getLocales()
-  const abortController = useRef<AbortController>()
+  const geocodeAbortController = useRef<AbortController>()
   const [fetching, setFetching] = useState(false)
 
   const [contact, setContact] = useState<Contact>(
@@ -437,7 +437,7 @@ const ContactForm = ({ route, navigation }: Props) => {
   const zipInput = useRef<TextInput>(null)
   const countryInput = useRef<TextInput>(null)
 
-  const validate = useCallback((): boolean => {
+  const validateForm = useCallback((): boolean => {
     if (!contact.name) {
       nameInput.current?.focus()
       setErrors({ name: i18n.t('name_error') })
@@ -451,25 +451,25 @@ const ContactForm = ({ route, navigation }: Props) => {
 
   const submit = useCallback(() => {
     return new Promise((resolve) => {
-      abortController.current?.abort()
+      geocodeAbortController.current?.abort()
 
-      const passValidation = validate()
+      const passesValidation = validateForm()
 
-      if (!passValidation) {
+      if (!passesValidation) {
         return resolve(false)
       }
 
       const contactMaybeWithCoordinates = { ...contact }
+      const addressHasNotChanged = _.isEqual(
+        contactToUpdate?.address,
+        contact.address
+      )
 
       const handleGetCoordinate = () => {
         return new Promise<void>((innerResolve) => {
           const handleFetch = async () => {
             try {
               setFetching(true)
-              const addressHasNotChanged = _.isEqual(
-                contactToUpdate?.address,
-                contact.address
-              )
 
               if (addressHasNotChanged) {
                 return innerResolve()
@@ -478,7 +478,7 @@ const ContactForm = ({ route, navigation }: Props) => {
               const position = await fetchCoordinateFromAddress(
                 incrementGeocodeApiCallCount,
                 contact.address,
-                abortController.current
+                geocodeAbortController.current
               )
 
               if (position) {
@@ -487,17 +487,17 @@ const ContactForm = ({ route, navigation }: Props) => {
                 contactMaybeWithCoordinates.coordinate = undefined
               }
 
-              innerResolve()
+              return innerResolve()
             } catch (error) {
-              innerResolve() // Resolve even in case of an error to continue the flow
+              // If there was an error fetching the geocode, we just silently ignore.
+              // The user likely input an invalid address.
+              // Given we have no address suggestions / validation, we can't do much here.
+              return innerResolve()
             }
           }
 
-          if (
-            editMode &&
-            _.isEqual(contactToUpdate?.address, contact.address)
-          ) {
-            innerResolve()
+          if (editMode && addressHasNotChanged) {
+            return innerResolve()
           }
 
           handleFetch()
@@ -517,7 +517,7 @@ const ContactForm = ({ route, navigation }: Props) => {
           resolve(contactMaybeWithCoordinates)
         })
         .finally(() => {
-          abortController.current?.abort() // Cleanup function to cancel the request in the event the request is re-requested
+          geocodeAbortController.current?.abort()
         })
     })
   }, [
@@ -527,17 +527,20 @@ const ContactForm = ({ route, navigation }: Props) => {
     editMode,
     incrementGeocodeApiCallCount,
     updateContact,
-    validate,
+    validateForm,
   ])
 
   useEffect(() => {
     // Cancels coordinate fetch request if user navigates away
-    const unsubscribe = navigation.addListener('transitionStart', () => {
-      abortController.current?.abort()
-      setFetching(false)
-    })
+    const unsubscribeFromNavListener = navigation.addListener(
+      'transitionStart',
+      () => {
+        geocodeAbortController.current?.abort()
+        setFetching(false)
+      }
+    )
 
-    return unsubscribe
+    return unsubscribeFromNavListener
   }, [navigation])
 
   useEffect(() => {
@@ -600,7 +603,7 @@ const ContactForm = ({ route, navigation }: Props) => {
     submit,
     theme.colors.text,
     theme.colors.textInverse,
-    validate,
+    validateForm,
   ])
 
   return (
@@ -610,7 +613,7 @@ const ContactForm = ({ route, navigation }: Props) => {
       automaticallyAdjustKeyboardInsets
       style={{ backgroundColor: theme.colors.background, position: 'relative' }}
     >
-      <Wrapper noInsets style={{ gap: 30, marginTop: 20 }}>
+      <Wrapper insets='none' style={{ gap: 30, marginTop: 20 }}>
         <View style={{ padding: 25, gap: 5 }}>
           <View style={{ flexDirection: 'row', gap: 10, alignItems: 'center' }}>
             <IconButton

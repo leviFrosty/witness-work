@@ -7,43 +7,43 @@
   "whatTypePublisherAreYou": "您是哪种类型的传道员？",
   "noHourRequirement": "无时间要求",
   "hourMonthlyRequirement": "每月要求 {{count}} 小时",
-  "publisher": "出版商",
-  "regularAuxiliary": "常规辅助",
-  "regularPioneer": "常规先锋",
-  "circuitOverseer": "巡回监督",
-  "specialPioneer": "特别先锋",
+  "publisher": "传道员",
+  "regularAuxiliary": "连续做辅助先驱",
+  "regularPioneer": "正规先驱",
+  "circuitOverseer": "分区监督",
+  "specialPioneer": "特别先驱",
   "continue": "继续",
-  "neverForgetAReturnVisit": "永远不要忘记回访",
-  "neverForgetAReturnVisit_description": "JW Time 将通知您即将到来的访问，并提醒您提交服务报告。您可以稍后在设置中更改此设置。",
+  "neverForgetAReturnVisit": "永远不要忘记续访",
+  "neverForgetAReturnVisit_description": "JW Time will notify you about upcoming return visits or studies. You can change this later in the settings.",
   "skip": "跳过",
   "allowNotifications": "允许通知",
   "youreAllSet": "你已经准备好了！",
-  "youreAllSet_description": "JW Time 将通知您已安排的对话。",
+  "youreAllSet_description": "JW Time 会通知您已安排的对话。",
   "optInNotificationsLater": "您可以稍后在设置中选择接收通知。",
   "completeSetup": "完成设置",
   "noRecentConversation": "最近没有对话",
   "noRecentConversation_plural": "最近没有对话",
-  "returnVisitContacts": "回访联系方式",
+  "returnVisitContacts": "续访联系方式",
   "noContactsSaved": "没有保存联系人。点击加号按钮添加联系人。",
   "deleteConversation": "删除对话？",
   "deleteConversation_description": "删除此对话将永久删除它以及任何分配的通知。",
   "cancel": "取消",
   "delete": "删除",
   "noNotesSaved": "没有保存任何注释。",
-  "followUpInformation": "跟进信息",
+  "followUpInformation": "跟进资料",
   "upcoming": "即将到来",
   "past": "过去的",
-  "topic": "话题：",
-  "monthlyRoutine": "每月例行公事",
+  "topic": "话题",
+  "monthlyRoutine": "每月常规",
   "searchForContact": "搜索联系人...",
   "phrasesFar": {
     "keepGoing": "继续前进！",
-    "youCanDoThis": "你可以这样做！",
+    "youCanDoThis": "你可以做得到！",
     "neverGiveUp": "永不放弃！",
     "preachTheWord": "传道！",
     "stayFocused": "保持专注！",
-    "haveFaith": "有信心！",
-    "stayStrong": "坚强点！"
+    "haveFaith": "要有信心！",
+    "stayStrong": "坚强起来！"
   },
   "phrasesClose": {
     "oneStepCloser": "更近了一步！",
@@ -57,7 +57,7 @@
   },
   "phrasesDone": {
     "youDidIt": "你做到了！",
-    "goalAchieved": "目标达到了！",
+    "goalAchieved": "达到目标了！",
     "youNailedIt": "你成功了！",
     "congratulations": "恭喜！",
     "takeYourShoesOff": "脱鞋！",
@@ -66,20 +66,20 @@
     "success": "成功！"
   },
   "hoursLeft": "还剩几个小时",
-  "goalBasedOnPublisherType": "目标取决于您的发布商类型",
+  "goalBasedOnPublisherType": "目标取决于您的传道员类型",
   "addTime": "添加时间",
   "phrasesStudiesNone": {
     "keepGoing": "继续前进！",
-    "stayStrong": "坚强点！",
+    "stayStrong": "要坚强！",
     "stayPositive": "保持乐观！",
-    "grindOn": "继续磨！",
+    "grindOn": "继续努力！",
     "keepSearching": "不停寻找！",
     "stayResilient": "保持弹性！"
   },
   "phrasesStudiesDone": {
     "bravo": "太棒了！",
     "wellDone": "做得好！",
-    "amazingJob": "了不起的工作！",
+    "amazingJob": "很了不起！",
     "wayToGo": "干得好！",
     "victoryLap": "胜利一圈！",
     "fantastic": "极好的！",
@@ -268,7 +268,7 @@
   "appleMaps": "苹果地图",
   "googleMaps": "谷歌地图",
   "shareFrom": "分享自",
-  "generateAUrlFromYourPreferredMappingService": "分享您首选地图服务的链接。",
+  "generateAUrlFromYourPreferredMappingService": "Share a link from different mapping services.",
   "introducingMapView": "地图设置",
   "mapViewOnboarding1": "首先，请更新您的",
   "mapViewOnboarding2": "缺少坐标的现有联系人。",
@@ -304,5 +304,90 @@
   "featureRequest": "功能要求",
   "pleaseDescribeYourFeatureClearly": "请详细描述您希望拥有哪些功能。提供联系人姓名和电话。如果适用，请绘制该功能的图像。或者，发送具有类似功能的应用程序的屏幕截图。",
   "Home": "家",
-  "Map": "地图"
+  "Map": "地图",
+  "preferences": "优先",
+  "defaultNavigationApp": "默认导航应用程序",
+  "apple": "苹果",
+  "google": "谷歌",
+  "couldNotOpenMaps": "无法打开地图",
+  "couldNotOpenMaps_description": "请验证您是否安装了有效的地图应用程序。",
+  "preferredMaps": "首选地图",
+  "youCanChangeThisLaterInTheSettings": "您可以稍后在设置中更改此设置。",
+  "preferredMaps_description": "JW Time 将使用您首选的地图应用程序导航至您的联系人地址。",
+  "waze": "位智",
+  "navigation": "导航",
+  "nextVisitOffset_description": "您下次访问距离您创建对话的时间应该有多远。",
+  "nextVisitOffset": "下次访问偏移量",
+  "conversations": "对话",
+  "notificationOffset": "通知",
+  "followUpOffset": "默认跟进",
+  "notificationOffset_description": "通知到达时距离您下次访问还有多少时间。",
+  "alwaysNotify": "始终通知",
+  "whatsNew": "最新消息",
+  "new": "新的",
+  "bugFixes": "Bug修复",
+  "updates": {
+    "191": {
+      "c1": "解决了导航到时间屏幕的问题。"
+    },
+    "190": {
+      "c1": "在设置中添加了首选项",
+      "c2": "[iOS] 在首选项中选择 Google、Apple 和 Waze 作为默认导航应用程序。",
+      "c3": "现在，在首选项中配置跟进和通知时间的默认值。",
+      "c4": "‘有什么新鲜事’屏幕",
+      "c5": "新的进度栏按类别组织您的时间条目",
+      "c6": "现在将自定义标签添加到您的时间条目中",
+      "c7": "更新了时间报告屏幕，以便更好地组织并按月分隔"
+    },
+    "182": {
+      "c1": "始终更新以反映当前区域设置"
+    },
+    "181": {
+      "c1": "扩展地图视图",
+      "c2": "满足特定条件后添加商店审核请求",
+      "c3": "小错误修复"
+    },
+    "180": {
+      "c1": "添加了联系人的自动地理编码",
+      "c2": "添加了地图视图"
+    },
+    "170": {
+      "c1": "添加多种时间导出方式",
+      "c2": "添加“不在家”"
+    },
+    "163": {
+      "c1": "解决自动更新问题"
+    },
+    "162": {
+      "c1": "将特别先驱的时间要求从 70 小时调整为 100 小时"
+    },
+    "161": {
+      "c1": "为时间条目添加了更多分钟选项"
+    },
+    "160": {
+      "c1": "对话现在可以编辑。通知是可配置的",
+      "c2": "滑动手势即可编辑或删除对话、联系人等。",
+      "c3": "为各种重要操作添加了触觉反馈"
+    }
+  },
+  "installed": "已安装",
+  "progress": "进步",
+  "type": "类型",
+  "other": "其他",
+  "enterCustomCategory": "输入自定义类别",
+  "categoryNeeded": "您必须选择现有类别或添加自定义类别。",
+  "categories": "类别",
+  "tag": "标签",
+  "showOtherCategories": "显示其他类别",
+  "of": "的",
+  "hoursToGoal": "达到目标的小时数",
+  "removeCategory": "删除类别",
+  "noReportsThisMonthYet": "本月还没有报告。",
+  "timeReports": "时间报告",
+  "monthDetails": "月份详情",
+  "entries": "参赛作品",
+  "homeScreen": "主屏幕",
+  "detailedProgressBar": "详细进度条",
+  "theHoursBelowAreAlreadyIncludedInMyTotalHours": "以下类别已包含在我的总时间中。",
+  "otherHoursDescription": "以下已包含在总数中"
 }

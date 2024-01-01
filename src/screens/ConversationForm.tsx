@@ -25,11 +25,11 @@ import CheckboxWithLabel from '../components/inputs/CheckboxWithLabel'
 import { Contact } from '../types/contact'
 import moment from 'moment'
 import useConversations from '../stores/conversationStore'
-import i18n from '../lib/locales'
+import i18n, { TranslationKey } from '../lib/locales'
 import AndroidDateTimePicker from '../components/AndroidDateTimePicker'
 import Checkbox from 'expo-checkbox'
 import Select from '../components/Select'
-import Wrapper from '../components/Wrapper'
+import Wrapper from '../components/layout/Wrapper'
 import IconButton from '../components/IconButton'
 import {
   faCaravan,
@@ -94,7 +94,7 @@ const AssignmentSection = ({
             onPress={() =>
               selectedContact
                 ? set_selectedContactId('')
-                : navigation.navigate('Contact Selector')
+                : navigation.replace('Contact Selector')
             }
           >
             <Text
@@ -131,6 +131,9 @@ const ConversationForm = ({ route, navigation }: Props) => {
     installedOn,
     lastTimeRequestedAReview,
     updateLastTimeRequestedStoreReview,
+    returnVisitTimeOffset,
+    returnVisitNotificationOffset,
+    returnVisitAlwaysNotify,
   } = usePreferences()
   const { params } = route
   const { contacts } = useContacts()
@@ -156,8 +159,8 @@ const ConversationForm = ({ route, navigation }: Props) => {
     amount?: number
     unit?: moment.unitOfTime.DurationConstructor | undefined
   }>({
-    amount: 2,
-    unit: 'hours',
+    amount: returnVisitNotificationOffset?.amount || 2,
+    unit: returnVisitNotificationOffset?.unit || 'hours',
   })
 
   const getConversationDefaultValue = (): Conversation => {
@@ -187,9 +190,11 @@ const ConversationForm = ({ route, navigation }: Props) => {
       date: new Date(),
       note: '',
       followUp: {
-        date: new Date(),
+        date: moment()
+          .add(returnVisitTimeOffset?.amount, returnVisitTimeOffset?.unit)
+          .toDate(),
         topic: '',
-        notifyMe: false,
+        notifyMe: returnVisitAlwaysNotify,
       },
       isBibleStudy: false,
       notAtHome: params.notAtHome,
@@ -501,7 +506,7 @@ const ConversationForm = ({ route, navigation }: Props) => {
     label: string
     value: moment.unitOfTime.DurationConstructor
   }[] = ['minutes', 'hours', 'days', 'weeks'].map((value) => ({
-    label: i18n.t(`${value}_lowercase`),
+    label: i18n.t(`${value}_lowercase` as TranslationKey),
     value: value as moment.unitOfTime.DurationConstructor,
   }))
 
@@ -527,7 +532,7 @@ const ConversationForm = ({ route, navigation }: Props) => {
         backgroundColor: theme.colors.background,
       }}
     >
-      <Wrapper noInsets style={{ gap: 30, marginTop: 20 }}>
+      <Wrapper insets='none' style={{ gap: 30, marginTop: 20 }}>
         <View style={{ padding: 25, paddingBottom: 0, gap: 5 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
             <IconButton

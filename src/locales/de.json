@@ -14,7 +14,7 @@
   "specialPioneer": "Besonderer Pionier",
   "continue": "Weitermachen",
   "neverForgetAReturnVisit": "Vergessen Sie niemals einen Gegenbesuch",
-  "neverForgetAReturnVisit_description": "JW Time benachrichtigt Sie über bevorstehende Besuche und erinnert Sie daran, Ihren Servicebericht einzureichen. Sie können dies später in den Einstellungen ändern.",
+  "neverForgetAReturnVisit_description": "JW Time will notify you about upcoming return visits or studies. You can change this later in the settings.",
   "skip": "Überspringen",
   "allowNotifications": "Benachrichtigungen zulassen",
   "youreAllSet": "Sie sind bereit!",
@@ -102,7 +102,7 @@
   "isStudying": "lernt",
   "lastStudied": "zuletzt studiert",
   "address": "Adresse",
-  "email": "Email",
+  "email": "Email ",
   "deleteContact": "Kontakt löschen",
   "created": "Erstellt:",
   "edit": "Bearbeiten",
@@ -179,7 +179,7 @@
   "checkForUpdate": "Auf Update überprüfen",
   "update": "Update verfügbar",
   "update_description": "Möchtest du jetzt updaten?",
-  "ok": "OK",
+  "ok": "Das ist in Ordnung",
   "noUpdateAvailable": "Derzeit ist kein Update verfügbar.",
   "updateViaThe": "Versuchen Sie, über das zu aktualisieren",
   "update_error": "Fehler beim Abrufen des neuesten Updates.",
@@ -268,7 +268,7 @@
   "appleMaps": "Apple Maps",
   "googleMaps": "Google Maps",
   "shareFrom": "Geteilt von",
-  "generateAUrlFromYourPreferredMappingService": "Teilen Sie einen Link von Ihrem bevorzugten Kartendienst.",
+  "generateAUrlFromYourPreferredMappingService": "Share a link from different mapping services.",
   "introducingMapView": "Karteneinrichtung",
   "mapViewOnboarding1": "Aktualisieren Sie zunächst Ihre",
   "mapViewOnboarding2": "vorhandener Kontakt, dem Koordinaten fehlen.",
@@ -304,5 +304,90 @@
   "featureRequest": "Featureanfrage",
   "pleaseDescribeYourFeatureClearly": "Bitte beschreiben Sie sehr detailliert, welche Funktion Sie gerne hätten. Geben Sie einen Kontaktnamen und eine Telefonnummer an. Bitte zeichnen Sie gegebenenfalls ein Bild davon, wie die Funktion aussehen könnte. Senden Sie alternativ einen Screenshot einer App mit ähnlicher Funktionalität.",
   "Home": "Heim",
-  "Map": "Karte"
+  "Map": "Karte",
+  "preferences": "Preferences",
+  "defaultNavigationApp": "Default Navigation App",
+  "apple": "Apple",
+  "google": "Google",
+  "couldNotOpenMaps": "Could Not Open Maps",
+  "couldNotOpenMaps_description": "Please verify you have a valid mapping application installed.",
+  "preferredMaps": "Preferred Maps",
+  "youCanChangeThisLaterInTheSettings": "You can change this later in the settings.",
+  "preferredMaps_description": "JW Time will use your preferred mapping application to navigate to your contact's address.",
+  "waze": "Waze",
+  "navigation": "Navigation",
+  "nextVisitOffset_description": "Wie weit sollte Ihr nächster Besuch von dem Zeitpunkt entfernt sein, an dem Sie ein Gespräch beginnen?",
+  "nextVisitOffset": "Nächster Besuchsversatz",
+  "conversations": "Gespräche",
+  "notificationOffset": "Benachrichtigung",
+  "followUpOffset": "Standard-Follow-up",
+  "notificationOffset_description": "Wie lange dauert es bis zu Ihrem nächsten Besuch, wenn die Benachrichtigung eintrifft?",
+  "alwaysNotify": "Immer benachrichtigen",
+  "whatsNew": "Was ist neu?",
+  "new": "Neu",
+  "bugFixes": "Fehlerbehebung",
+  "updates": {
+    "191": {
+      "c1": "Behebt ein Problem beim Navigieren zu Zeitbildschirmen."
+    },
+    "190": {
+      "c1": "Präferenzen in den Einstellungen hinzugefügt",
+      "c2": "[iOS] Wählen Sie in den Einstellungen zwischen Google, Apple und Waze als Standard-Navigations-App.",
+      "c3": "Konfigurieren Sie nun in den Einstellungen Standardwerte für Ihre Nachverfolgungs- und Benachrichtigungszeiten.",
+      "c4": "„Was gibt’s Neues“ Bildschirm",
+      "c5": "Der neue Fortschrittsbalken organisiert Ihre Zeiteinträge nach Kategorien",
+      "c6": "Fügen Sie nun benutzerdefinierte Tags zu Ihren Zeiteinträgen hinzu",
+      "c7": "Der Bildschirm „Zeitberichte“ wurde aktualisiert, um besser organisiert und nach Monaten getrennt zu sein"
+    },
+    "182": {
+      "c1": "Ständig aktualisiert, um das aktuelle Gebietsschema widerzuspiegeln"
+    },
+    "181": {
+      "c1": "Erweiterte Kartenansicht",
+      "c2": "Anfrage zur Store-Bewertung hinzugefügt, nachdem bestimmte Kriterien erfüllt sind",
+      "c3": "Kleine Fehlerbehebungen"
+    },
+    "180": {
+      "c1": "Automatische Geokodierung für Kontakte hinzugefügt",
+      "c2": "Kartenansicht hinzugefügt"
+    },
+    "170": {
+      "c1": "Fügen Sie verschiedene Zeitexportmethoden hinzu",
+      "c2": "Fügen Sie „Not At Homes“ hinzu."
+    },
+    "163": {
+      "c1": "Beheben Sie Probleme mit automatischen Updates"
+    },
+    "162": {
+      "c1": "Die Stundenanforderungen für Sonderpioniere wurden von 70 auf 100 angepasst"
+    },
+    "161": {
+      "c1": "Weitere Minutenoptionen für Zeiteinträge hinzugefügt"
+    },
+    "160": {
+      "c1": "Gespräche können jetzt bearbeitet werden. Benachrichtigungen sind konfigurierbar",
+      "c2": "Wischen Sie mit Gesten, um Konversationen, Kontakte usw. zu bearbeiten oder zu löschen.",
+      "c3": "Haptisches Feedback zu verschiedenen wichtigen Aktionen hinzugefügt"
+    }
+  },
+  "installed": "Eingerichtet",
+  "progress": "Fortschritt",
+  "type": "Typ",
+  "other": "Andere",
+  "enterCustomCategory": "Geben Sie die benutzerdefinierte Kategorie ein",
+  "categoryNeeded": "Sie müssen eine vorhandene Kategorie auswählen oder eine benutzerdefinierte Kategorie hinzufügen.",
+  "categories": "Kategorien",
+  "tag": "Etikett",
+  "showOtherCategories": "Andere Kategorien anzeigen",
+  "of": "von",
+  "hoursToGoal": "Stunden bis zum Ziel",
+  "removeCategory": "Kategorie entfernen",
+  "noReportsThisMonthYet": "Diesen Monat gibt es noch keine Berichte.",
+  "timeReports": "Zeitberichte",
+  "monthDetails": "Monatsdetails",
+  "entries": "Einträge",
+  "homeScreen": "Startbildschirm",
+  "detailedProgressBar": "Detaillierter Fortschrittsbalken",
+  "theHoursBelowAreAlreadyIncludedInMyTotalHours": "Die folgenden Kategorien sind in meinen Gesamtstunden bereits enthalten.",
+  "otherHoursDescription": "Unten ist bereits die Gesamtsumme enthalten"
 }

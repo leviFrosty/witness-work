@@ -397,5 +397,7 @@
   "failedToOpenLink": "Impossibile aprire l'URL",
   "failedToOpenLink_description": "Verifica di avere un'applicazione valida per il collegamento fornito. Questo errore in genere significa che non hai un browser installato sul tuo dispositivo.",
   "noTimeReports": "Nessun riepilogo ancora disponibile per questo mese.",
-  "noTimeReports_description": "Aggiungi almeno una voce per visualizzare maggiori dettagli."
+  "noTimeReports_description": "Aggiungi almeno una voce per visualizzare maggiori dettagli.",
+  "cannotNavigateToFutureMonth": "Impossibile passare al mese futuro",
+  "cannotNavigateToFutureMonth_description": "Seleziona il mese corrente o quello precedente."
 }

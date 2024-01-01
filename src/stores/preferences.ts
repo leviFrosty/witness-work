@@ -81,6 +81,7 @@ const initialState = {
   returnVisitAlwaysNotify: false,
   serviceReportTags: [] as string[],
   displayDetailsOnProgressBarHomeScreen: false,
+  monthlyRoutineHasShownInvalidMonthAlert: false,
 }
 
 export const usePreferences = create(

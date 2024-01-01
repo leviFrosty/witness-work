@@ -397,5 +397,7 @@
   "failedToOpenLink": "Kan URL niet openen",
   "failedToOpenLink_description": "Controleer of u een geldige aanvraag heeft voor de verstrekte link. Deze fout betekent meestal dat er geen browser op uw apparaat is geïnstalleerd.",
   "noTimeReports": "Er is nog geen overzicht beschikbaar voor deze maand.",
-  "noTimeReports_description": "Voeg ten minste één tijdinvoer toe om meer details te bekijken."
+  "noTimeReports_description": "Voeg ten minste één tijdinvoer toe om meer details te bekijken.",
+  "cannotNavigateToFutureMonth": "Kan niet naar de toekomstige maand navigeren",
+  "cannotNavigateToFutureMonth_description": "Selecteer de huidige of vorige maand."
 }

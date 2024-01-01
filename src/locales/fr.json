@@ -397,5 +397,7 @@
   "failedToOpenLink": "Échec de l'ouverture de l'URL",
   "failedToOpenLink_description": "Veuillez vérifier que vous disposez d'une candidature valide pour le lien fourni. Cette erreur signifie généralement qu'aucun navigateur n'est installé sur votre appareil.",
   "noTimeReports": "Aucun résumé disponible pour l'instant pour ce mois-ci.",
-  "noTimeReports_description": "Ajoutez au moins une entrée de temps pour afficher plus de détails."
+  "noTimeReports_description": "Ajoutez au moins une entrée de temps pour afficher plus de détails.",
+  "cannotNavigateToFutureMonth": "Impossible d'accéder au mois suivant",
+  "cannotNavigateToFutureMonth_description": "Sélectionnez le mois en cours ou précédent."
 }

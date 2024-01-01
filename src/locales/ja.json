@@ -397,5 +397,7 @@
   "failedToOpenLink": "URLを開けませんでした",
   "failedToOpenLink_description": "提供されたリンクに有効なアプリケーションがあることを確認してください。このエラーは通常、デバイスにブラウザがインストールされていないことを意味します。",
   "noTimeReports": "今月の概要はまだありません。",
-  "noTimeReports_description": "詳細を表示するには、少なくとも 1 つのタイム エントリを追加します。"
+  "noTimeReports_description": "詳細を表示するには、少なくとも 1 つのタイム エントリを追加します。",
+  "cannotNavigateToFutureMonth": "将来の月に移動できません",
+  "cannotNavigateToFutureMonth_description": "現在または前月を選択します。"
 }

@@ -397,5 +397,7 @@
   "failedToOpenLink": "Nabigong Buksan ang URL",
   "failedToOpenLink_description": "Paki-verify na mayroon kang wastong aplikasyon para sa ibinigay na link. Ang error na ito ay karaniwang nangangahulugan na wala kang browser na naka-install sa iyong device.",
   "noTimeReports": "Wala pang available na buod para sa buwang ito.",
-  "noTimeReports_description": "Magdagdag ng kahit isang beses na entry para tingnan ang higit pang mga detalye."
+  "noTimeReports_description": "Magdagdag ng kahit isang beses na entry para tingnan ang higit pang mga detalye.",
+  "cannotNavigateToFutureMonth": "Hindi Maka-navigate Sa Hinaharap na Buwan",
+  "cannotNavigateToFutureMonth_description": "Piliin ang kasalukuyan o nakaraang buwan."
 }

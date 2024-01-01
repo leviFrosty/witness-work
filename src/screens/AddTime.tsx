@@ -128,20 +128,21 @@ const AddTime = () => {
 
   const typeOptions = timeEntryCategories.map((value) => ({
     /**
-     * This allows i18n to translate to provided keys automatically. If the user inputs
-     * their own custom category that doesn't have a valid translation, it will default to the
-     * to the user input value instead of saying "missing translation".
+     * This allows i18n to translate to provided keys automatically. If the user
+     * inputs their own custom category that doesn't have a valid translation,
+     * it will default to the to the user input value instead of saying "missing
+     * translation".
      *
      * @example
-     * ```ts
+     *   ;```ts
      *
-     * const timeEntryCategories = ['custom', 'Bethel'] // Bethel is user input
-     * const typeOptions = timeEntryCategories.map((value) => ({
-     *  label: i18n.t(value as TranslationKey, { defaultValue: value }),
-     * value,
-     * })) // [{ label: 'custom', value: 'custom' }, { label: 'Bethel', value: 'Bethel' } ]
+     *   const timeEntryCategories = ['custom', 'Bethel'] // Bethel is user input
+     *   const typeOptions = timeEntryCategories.map((value) => ({
+     *    label: i18n.t(value as TranslationKey, { defaultValue: value }),
+     *   value,
+     *   })) // [{ label: 'custom', value: 'custom' }, { label: 'Bethel', value: 'Bethel' } ]
      *
-     * ```
+     *   ```
      */
     label: i18n.t(value as TranslationKey, { defaultValue: value }),
     value,

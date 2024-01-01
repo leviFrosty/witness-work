@@ -7,10 +7,10 @@ import {
   faGlobe,
   faHeart,
 } from '@fortawesome/free-solid-svg-icons'
-import * as Linking from 'expo-linking'
 import links from '../../../constants/links'
 import IconButton from '../../../components/IconButton'
 import SettingsSectionTitle from '../shared/SettingsSectionTitle'
+import { openURL } from '../../../lib/links'
 
 const SupportSection = () => {
   return (
@@ -27,8 +27,8 @@ const SupportSection = () => {
           onPress={() => {
             try {
               Platform.OS === 'android'
-                ? Linking.openURL(links.playStoreReview)
-                : Linking.openURL(links.appStoreReview)
+                ? openURL(links.playStoreReview)
+                : openURL(links.appStoreReview)
             } catch (error) {
               Alert.alert(
                 Platform.OS === 'android'
@@ -56,16 +56,12 @@ const SupportSection = () => {
               )}: --------------`
               const subject = encodeURIComponent(subjectText)
               const body = encodeURIComponent(bodyText)
-              try {
-                await Linking.openURL(
-                  `mailto:${email}?subject=${subject}&body=${body}`
-                )
-              } catch (error) {
-                Alert.alert(
-                  i18n.t('error'),
-                  i18n.t('failedToOpenMailApplication')
-                )
-              }
+
+              openURL(`mailto:${email}?subject=${subject}&body=${body}`, {
+                alert: {
+                  description: i18n.t('failedToOpenMailApplication'),
+                },
+              })
             }
 
             Alert.alert(

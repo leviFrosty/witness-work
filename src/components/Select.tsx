@@ -12,18 +12,19 @@ export interface SelectProps<T>
   onChange: (item: T) => void
   /**
    * Actual value, usually stored in state.
-   * @example
-   * const counter = () => {
-   *    const [incrementBy, setIncrementBy] = useState(1)
-   *    const options = [{label: "1", value: 1}, {label: "2": value: 2}]
    *
-   *    return (
-   *      <Select
-   *       data={options}
-   *       onChange={({value} => setIncrementBy(value))}
-   *       value={incrementBy}
-   *      />
-   * })
+   * @example
+   *   const counter = () => {
+   *   const [incrementBy, setIncrementBy] = useState(1)
+   *   const options = [{label: "1", value: 1}, {label: "2": value: 2}]
+   *
+   *   return (
+   *   <Select
+   *   data={options}
+   *   onChange={({value} => setIncrementBy(value))}
+   *   value={incrementBy}
+   *   />
+   *   })
    */
   value: any
 }

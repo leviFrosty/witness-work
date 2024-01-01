@@ -327,8 +327,35 @@
   "new": "Nieuw",
   "bugFixes": "Bugfixes",
   "updates": {
-    "191": {
-      "c1": "Lost een probleem op bij het navigeren naar tijdschermen."
+    "160": {
+      "c1": "Gesprekken kunnen nu worden bewerkt. Meldingen zijn configureerbaar",
+      "c2": "Veeggebaren om gesprekken, contacten, enz. te bewerken of te verwijderen.",
+      "c3": "Haptische feedback toegevoegd aan verschillende belangrijke acties"
+    },
+    "161": {
+      "c1": "Meer minuutopties toegevoegd voor tijdinvoer"
+    },
+    "162": {
+      "c1": "Eis voor speciaal pioniersuur aangepast van 70 naar 100"
+    },
+    "163": {
+      "c1": "Los problemen met automatische updates op"
+    },
+    "170": {
+      "c1": "Voeg verschillende tijdexportmethoden toe",
+      "c2": "Voeg 'Niet thuis' toe"
+    },
+    "180": {
+      "c1": "Automatische geocodering voor contacten toegevoegd",
+      "c2": "Kaartweergave toegevoegd"
+    },
+    "181": {
+      "c1": "Uitgebreide kaartweergave",
+      "c2": "Winkelbeoordelingsverzoek toegevoegd nadat aan bepaalde criteria is voldaan",
+      "c3": "Kleine bugfixes"
+    },
+    "182": {
+      "c1": "Altijd bijgewerkt om de huidige landinstelling weer te geven"
     },
     "190": {
       "c1": "Voorkeuren toegevoegd in de instellingen",
@@ -339,35 +366,12 @@
       "c6": "Voeg nu aangepaste tags toe aan uw tijdinvoer",
       "c7": "Bijgewerkt tijdrapportenscherm om beter georganiseerd en gescheiden te zijn per maand"
     },
-    "182": {
-      "c1": "Altijd bijgewerkt om de huidige landinstelling weer te geven"
+    "191": {
+      "c1": "Lost een probleem op bij het navigeren naar tijdschermen."
     },
-    "181": {
-      "c1": "Uitgebreide kaartweergave",
-      "c2": "Winkelbeoordelingsverzoek toegevoegd nadat aan bepaalde criteria is voldaan",
-      "c3": "Kleine bugfixes"
-    },
-    "180": {
-      "c1": "Automatische geocodering voor contacten toegevoegd",
-      "c2": "Kaartweergave toegevoegd"
-    },
-    "170": {
-      "c1": "Voeg verschillende tijdexportmethoden toe",
-      "c2": "Voeg 'Niet thuis' toe"
-    },
-    "163": {
-      "c1": "Los problemen met automatische updates op"
-    },
-    "162": {
-      "c1": "Eis voor speciaal pioniersuur aangepast van 70 naar 100"
-    },
-    "161": {
-      "c1": "Meer minuutopties toegevoegd voor tijdinvoer"
-    },
-    "160": {
-      "c1": "Gesprekken kunnen nu worden bewerkt. Meldingen zijn configureerbaar",
-      "c2": "Veeggebaren om gesprekken, contacten, enz. te bewerken of te verwijderen.",
-      "c3": "Haptische feedback toegevoegd aan verschillende belangrijke acties"
+    "192": {
+      "c1": "Er is een probleem opgelost waarbij sommige apparaten een overvolle voortgangsbalk hebben.",
+      "c2": "Voegt een uitgebreidere afhandeling van verbindingsfouten toe voor apparaten waarop de vereiste applicaties ontbreken."
     }
   },
   "installed": "Geïnstalleerd",
@@ -389,5 +393,7 @@
   "homeScreen": "Thuis scherm",
   "detailedProgressBar": "Gedetailleerde voortgangsbalk",
   "theHoursBelowAreAlreadyIncludedInMyTotalHours": "Onderstaande categorieën zijn al opgenomen in mijn totaal uren.",
-  "otherHoursDescription": "Hieronder is in totaal al opgenomen"
+  "otherHoursDescription": "Hieronder is in totaal al opgenomen",
+  "failedToOpenLink": "Kan URL niet openen",
+  "failedToOpenLink_description": "Controleer of u een geldige aanvraag heeft voor de verstrekte link. Deze fout betekent meestal dat er geen browser op uw apparaat is geïnstalleerd."
 }

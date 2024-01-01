@@ -3,13 +3,16 @@ import moment from 'moment'
 export type ReleaseNote = {
   version: string
   date: Date
-  /**
-   * i18n translation key array
-   */
+  /** I18n translation key array */
   content: string[]
 }
 
 export const releaseNotes: ReleaseNote[] = [
+  {
+    version: '1.9.2',
+    date: moment('2023-01-01').toDate(),
+    content: ['c1'],
+  },
   {
     version: '1.9.1',
     date: moment('2023-12-24').toDate(),

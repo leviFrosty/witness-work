@@ -5,7 +5,6 @@ import * as StoreReview from 'expo-store-review'
  * Can be called safely from any major app action.
  *
  * Will only request a review if user has reached certain usage criteria.
- *
  */
 export const maybeRequestStoreReview = async ({
   installedOn,

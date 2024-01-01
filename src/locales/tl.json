@@ -368,6 +368,10 @@
     },
     "191": {
       "c1": "Malulutas ang isang isyu sa pag-navigate sa mga screen ng oras."
+    },
+    "192": {
+      "c1": "Nag-aayos ng isyu kung saan ang ilang device ay may umaapaw na progress bar.",
+      "c2": "Nagdaragdag ng higit pang verbose na pangangasiwa ng mga error sa link para sa mga device na kulang sa mga kinakailangang application."
     }
   },
   "installed": "Naka-install",
@@ -389,5 +393,7 @@
   "homeScreen": "Home screen",
   "detailedProgressBar": "Detalyadong Progress Bar",
   "theHoursBelowAreAlreadyIncludedInMyTotalHours": "Ang mga kategorya sa ibaba ay kasama na sa aking kabuuang oras.",
-  "otherHoursDescription": "Sa ibaba ay kasama na sa kabuuan"
+  "otherHoursDescription": "Sa ibaba ay kasama na sa kabuuan",
+  "failedToOpenLink": "Nabigong Buksan ang URL",
+  "failedToOpenLink_description": "Paki-verify na mayroon kang wastong aplikasyon para sa ibinigay na link. Ang error na ito ay karaniwang nangangahulugan na wala kang browser na naka-install sa iyong device."
 }

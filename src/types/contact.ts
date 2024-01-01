@@ -18,7 +18,8 @@ export type Contact = {
   phone?: string
 
   /**
-   * If the phone number is on national form, this region code specifies the region of the phone number, e.g. "SE" for Sweden.
+   * If the phone number is on national form, this region code specifies the
+   * region of the phone number, e.g. "SE" for Sweden.
    */
   phoneRegionCode?: string
   email?: string
@@ -27,9 +28,11 @@ export type Contact = {
   /**
    * Used primarily for map markers.
    *
-   * This may not always accurate as it uses a user input address as the search query to determine coordinate.
+   * This may not always accurate as it uses a user input address as the search
+   * query to determine coordinate.
    *
-   * Coordinate is fetched as geocode from address from Here api: https://www.here.com/docs/bundle/geocoding-and-search-api-v7-api-reference/page/index.html#/paths/~1geocode/get
+   * Coordinate is fetched as geocode from address from Here api:
+   * https://www.here.com/docs/bundle/geocoding-and-search-api-v7-api-reference/page/index.html#/paths/~1geocode/get
    */
   coordinate?: Coordinate
   createdAt: Date

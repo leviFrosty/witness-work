@@ -1,8 +1,6 @@
 import { Sheet } from 'tamagui'
 import Button from '../components/Button'
 import * as Clipboard from 'expo-clipboard'
-import * as Linking from 'expo-linking'
-import * as Sentry from 'sentry-expo'
 import { usePreferences } from '../stores/preferences'
 import { getStudiesForGivenMonth } from '../lib/contacts'
 import useConversations from '../stores/conversationStore'
@@ -31,6 +29,7 @@ import useServiceReport from '../stores/serviceReport'
 import { useNavigation } from '@react-navigation/native'
 import { RootStackNavigation } from '../stacks/RootStack'
 import links from '../constants/links'
+import { openURL } from '../lib/links'
 
 export type ExportTimeSheetState = {
   open: boolean
@@ -145,20 +144,18 @@ const ExportTimeSheet = ({
         case 'hourglass': {
           const hourglassMonth = (month || 0) + 1
 
-          try {
-            const hourglassSubmitLink = `${
-              links.hourglassBase
-            }month=${hourglassMonth}&year=${year}&minutes=${getTimeAsMinutesForHourglass(
-              publisher,
-              wentOutForMonth,
-              hours
-            )}&studies=${studiesForMonth}&remarks=${encodeURI(
-              otherHoursAsString()
-            )}`
-            await Linking.openURL(hourglassSubmitLink)
-          } catch (error) {
-            Sentry.Native.captureException(error)
-          }
+          const hourglassSubmitLink = `${
+            links.hourglassBase
+          }month=${hourglassMonth}&year=${year}&minutes=${getTimeAsMinutesForHourglass(
+            publisher,
+            wentOutForMonth,
+            hours
+          )}&studies=${studiesForMonth}&remarks=${encodeURI(
+            otherHoursAsString()
+          )}`
+
+          openURL(hourglassSubmitLink)
+
           break
         }
 

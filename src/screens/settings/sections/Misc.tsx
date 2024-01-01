@@ -10,10 +10,9 @@ import {
   faTag,
 } from '@fortawesome/free-solid-svg-icons'
 import IconButton from '../../../components/IconButton'
-import * as Linking from 'expo-linking'
 import links from '../../../constants/links'
-import * as Sentry from 'sentry-expo'
 import SettingsSectionTitle from '../shared/SettingsSectionTitle'
+import { openURL } from '../../../lib/links'
 
 const MiscSection = ({ handleNavigate }: SettingsSectionProps) => {
   return (
@@ -31,26 +30,14 @@ const MiscSection = ({ handleNavigate }: SettingsSectionProps) => {
         <InputRowButton
           leftIcon={faCode}
           label={i18n.t('viewSource')}
-          onPress={() => {
-            try {
-              Linking.openURL(links.githubRepo)
-            } catch (error) {
-              Sentry.Native.captureException(error)
-            }
-          }}
+          onPress={() => openURL(links.githubRepo)}
         >
           <IconButton icon={faChevronRight} />
         </InputRowButton>
         <InputRowButton
           leftIcon={faFileContract}
           label={i18n.t('privacyPolicy')}
-          onPress={() => {
-            try {
-              Linking.openURL(links.privacyPolicy)
-            } catch (error) {
-              Sentry.Native.captureException(error)
-            }
-          }}
+          onPress={() => openURL(links.privacyPolicy)}
           lastInSection
         >
           <IconButton icon={faChevronRight} />

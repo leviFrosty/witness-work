@@ -368,6 +368,10 @@
     },
     "191": {
       "c1": "Résout un problème de navigation vers les écrans horaires."
+    },
+    "192": {
+      "c1": "Résout un problème où certains appareils ont une barre de progression débordante.",
+      "c2": "Ajoute une gestion plus détaillée des erreurs de lien pour les appareils dépourvus des applications requises."
     }
   },
   "installed": "installée",
@@ -389,5 +393,7 @@
   "homeScreen": "Écran d'accueil",
   "detailedProgressBar": "Barre de progression détaillée",
   "theHoursBelowAreAlreadyIncludedInMyTotalHours": "Les catégories ci-dessous sont déjà incluses dans mon total d'heures.",
-  "otherHoursDescription": "Ci-dessous est déjà inclus dans le total"
+  "otherHoursDescription": "Ci-dessous est déjà inclus dans le total",
+  "failedToOpenLink": "Échec de l'ouverture de l'URL",
+  "failedToOpenLink_description": "Veuillez vérifier que vous disposez d'une candidature valide pour le lien fourni. Cette erreur signifie généralement qu'aucun navigateur n'est installé sur votre appareil."
 }

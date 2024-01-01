@@ -41,6 +41,7 @@ const publisherHours: PublisherHours = {
 
 /**
  * Each platform has specific options available.
+ *
  * @platform iOS: All Supported
  * @platform Android: Only 'google' is supported
  */
@@ -55,9 +56,7 @@ const initialState = {
   publisher: 'publisher' as Publisher,
   publisherHours: publisherHours,
 
-  /**
-   * Overrides publisherHours hour requirement for given month.
-   */
+  /** Overrides publisherHours hour requirement for given month. */
   oneOffGoalHours: [] as GoalHours[],
   onboardingComplete: false,
   installedOn: new Date(),
@@ -67,7 +66,6 @@ const initialState = {
   lastTimeRequestedAReview: null as Date | null,
 
   /**
-   *
    * @platform iOS: Supported
    * @platform Android: Not Supported
    */

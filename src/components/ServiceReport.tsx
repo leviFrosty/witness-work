@@ -105,9 +105,16 @@ const HourEntryCard = () => {
     [hours, goalHours]
   )
 
+  const daysLeftInMonth = useMemo(() => getDaysLeftInCurrentMonth(), [])
+
+  // Returns hours remaining if the last day of the month because x/0 = infinity.
+  // Which we don't want to display to the user
   const hoursPerDayNeeded = useMemo(
-    () => (hoursRemaining / getDaysLeftInCurrentMonth()).toFixed(1),
-    [hoursRemaining]
+    () =>
+      daysLeftInMonth === 0
+        ? hoursRemaining
+        : (hoursRemaining / daysLeftInMonth).toFixed(1),
+    [daysLeftInMonth, hoursRemaining]
   )
 
   return (
@@ -445,7 +452,14 @@ const ServiceReport = ({ setSheet }: ServiceReportProps) => {
 
       <Card>
         <View style={{ flexDirection: 'row', gap: 5 }}>
-          <View style={{ flexDirection: 'column', gap: 5, flexGrow: 1 }}>
+          <View
+            style={{
+              flexDirection: 'column',
+              gap: 5,
+              flexGrow: 1,
+              maxWidth: 200,
+            }}
+          >
             <View style={{ flexDirection: 'row' }}>
               {publisher !== 'publisher' ? (
                 <Button
@@ -487,7 +501,7 @@ const ServiceReport = ({ setSheet }: ServiceReportProps) => {
             style={{
               flexDirection: 'column',
               gap: 5,
-              flexShrink: 1,
+              flexGrow: 1,
             }}
           >
             <Text

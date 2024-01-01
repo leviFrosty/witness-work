@@ -404,5 +404,5 @@
   "noTimeReports_description": "Add at least one time entry for this month to view details.",
   "cannotNavigateToFutureMonth": "Cannot Navigate To Future Month",
   "cannotNavigateToFutureMonth_description": "Select the current or previous month.",
-  "test": "Test"
+  "addATimeEntryToViewReport": "Add a time entry to view your monthly report."
 }

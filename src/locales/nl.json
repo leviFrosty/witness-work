@@ -404,5 +404,5 @@
   "noTimeReports_description": "Voeg ten minste één tijdinvoer toe om meer details te bekijken.",
   "cannotNavigateToFutureMonth": "Kan niet naar de toekomstige maand navigeren",
   "cannotNavigateToFutureMonth_description": "Selecteer de huidige of vorige maand.",
-  "test": "Test"
+  "addATimeEntryToViewReport": "Voeg een tijdsinvoer toe om uw maandrapport te bekijken."
 }

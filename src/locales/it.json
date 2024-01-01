@@ -404,5 +404,5 @@
   "noTimeReports_description": "Aggiungi almeno una voce per visualizzare maggiori dettagli.",
   "cannotNavigateToFutureMonth": "Impossibile passare al mese futuro",
   "cannotNavigateToFutureMonth_description": "Seleziona il mese corrente o quello precedente.",
-  "test": "Test"
+  "addATimeEntryToViewReport": "Aggiungi una voce temporale per visualizzare il tuo rapporto mensile."
 }

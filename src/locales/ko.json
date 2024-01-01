@@ -404,5 +404,5 @@
   "noTimeReports_description": "자세한 내용을 보려면 시간 항목을 하나 이상 추가하세요.",
   "cannotNavigateToFutureMonth": "다음 달로 이동할 수 없습니다.",
   "cannotNavigateToFutureMonth_description": "이번 달 또는 이전 달을 선택합니다.",
-  "test": "시험"
+  "addATimeEntryToViewReport": "월별 보고서를 보려면 시간 항목을 추가하세요."
 }

@@ -404,5 +404,5 @@
   "noTimeReports_description": "Добавьте хотя бы одну запись времени, чтобы просмотреть более подробную информацию.",
   "cannotNavigateToFutureMonth": "Невозможно перейти к будущему месяцу",
   "cannotNavigateToFutureMonth_description": "Выберите текущий или предыдущий месяц.",
-  "test": "Тест"
+  "addATimeEntryToViewReport": "Добавьте запись времени, чтобы просмотреть ежемесячный отчет."
 }

@@ -404,5 +404,5 @@
   "noTimeReports_description": "Agregue al menos una entrada de tiempo para ver más detalles.",
   "cannotNavigateToFutureMonth": "No se puede navegar al mes futuro",
   "cannotNavigateToFutureMonth_description": "Seleccione el mes actual o anterior.",
-  "test": "Prueba"
+  "addATimeEntryToViewReport": "Agregue una entrada de tiempo para ver su informe mensual."
 }

@@ -404,5 +404,5 @@
   "noTimeReports_description": "Magdagdag ng kahit isang beses na entry para tingnan ang higit pang mga detalye.",
   "cannotNavigateToFutureMonth": "Hindi Maka-navigate Sa Hinaharap na Buwan",
   "cannotNavigateToFutureMonth_description": "Piliin ang kasalukuyan o nakaraang buwan.",
-  "test": "Pagsusulit"
+  "addATimeEntryToViewReport": "Magdagdag ng entry ng oras upang tingnan ang iyong buwanang ulat."
 }

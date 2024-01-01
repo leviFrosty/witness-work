@@ -79,15 +79,22 @@ const TimeReportsScreen = ({ route, navigation }: Props) => {
   if (!years.length) {
     return (
       <Wrapper>
-        <Card style={{ marginHorizontal: 20 }}>
+        <Card style={{ marginHorizontal: 15 }}>
           <Text
             style={{
-              padding: 20,
-              fontSize: 16,
-              color: theme.colors.textAlt,
+              fontSize: theme.fontSize('lg'),
+              fontFamily: theme.fonts.semiBold,
             }}
           >
             {i18n.t('noTimeEntriesYet')}
+          </Text>
+          <Text
+            style={{
+              fontSize: theme.fontSize('sm'),
+              color: theme.colors.textAlt,
+            }}
+          >
+            {i18n.t('addATimeEntryToViewReport')}
           </Text>
           <ActionButton onPress={() => navigation.navigate('Add Time')}>
             {i18n.t('addTime')}

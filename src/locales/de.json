@@ -404,5 +404,5 @@
   "noTimeReports_description": "Fügen Sie mindestens einen Zeiteintrag hinzu, um weitere Details anzuzeigen.",
   "cannotNavigateToFutureMonth": "Die Navigation zum zukünftigen Monat ist nicht möglich",
   "cannotNavigateToFutureMonth_description": "Wählen Sie den aktuellen oder vorherigen Monat aus.",
-  "test": "Prüfen"
+  "addATimeEntryToViewReport": "Fügen Sie einen Zeiteintrag hinzu, um Ihren Monatsbericht anzuzeigen."
 }

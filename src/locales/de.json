@@ -327,35 +327,12 @@
   "new": "Neu",
   "bugFixes": "Fehlerbehebung",
   "updates": {
-    "160": {
-      "c1": "Gespräche können jetzt bearbeitet werden. Benachrichtigungen sind konfigurierbar",
-      "c2": "Wischen Sie mit Gesten, um Konversationen, Kontakte usw. zu bearbeiten oder zu löschen.",
-      "c3": "Haptisches Feedback zu verschiedenen wichtigen Aktionen hinzugefügt"
+    "192": {
+      "c1": "Behebt ein Problem, bei dem einige Geräte einen überlaufenden Fortschrittsbalken haben.",
+      "c2": "Fügt eine ausführlichere Behandlung von Verbindungsfehlern für Geräte hinzu, für die keine erforderlichen Anwendungen erforderlich sind."
     },
-    "161": {
-      "c1": "Weitere Minutenoptionen für Zeiteinträge hinzugefügt"
-    },
-    "162": {
-      "c1": "Die Stundenanforderungen für Sonderpioniere wurden von 70 auf 100 angepasst"
-    },
-    "163": {
-      "c1": "Beheben Sie Probleme mit automatischen Updates"
-    },
-    "170": {
-      "c1": "Fügen Sie verschiedene Zeitexportmethoden hinzu",
-      "c2": "Fügen Sie „Not At Homes“ hinzu."
-    },
-    "180": {
-      "c1": "Automatische Geokodierung für Kontakte hinzugefügt",
-      "c2": "Kartenansicht hinzugefügt"
-    },
-    "181": {
-      "c1": "Erweiterte Kartenansicht",
-      "c2": "Anfrage zur Store-Bewertung hinzugefügt, nachdem bestimmte Kriterien erfüllt sind",
-      "c3": "Kleine Fehlerbehebungen"
-    },
-    "182": {
-      "c1": "Ständig aktualisiert, um das aktuelle Gebietsschema widerzuspiegeln"
+    "191": {
+      "c1": "Behebt ein Problem beim Navigieren zu Zeitbildschirmen."
     },
     "190": {
       "c1": "Präferenzen in den Einstellungen hinzugefügt",
@@ -366,12 +343,35 @@
       "c6": "Fügen Sie nun benutzerdefinierte Tags zu Ihren Zeiteinträgen hinzu",
       "c7": "Der Bildschirm „Zeitberichte“ wurde aktualisiert, um besser organisiert und nach Monaten getrennt zu sein"
     },
-    "191": {
-      "c1": "Behebt ein Problem beim Navigieren zu Zeitbildschirmen."
+    "182": {
+      "c1": "Ständig aktualisiert, um das aktuelle Gebietsschema widerzuspiegeln"
     },
-    "192": {
-      "c1": "Behebt ein Problem, bei dem einige Geräte einen überlaufenden Fortschrittsbalken haben.",
-      "c2": "Fügt eine ausführlichere Behandlung von Verbindungsfehlern für Geräte hinzu, für die keine erforderlichen Anwendungen erforderlich sind."
+    "181": {
+      "c1": "Erweiterte Kartenansicht",
+      "c2": "Anfrage zur Store-Bewertung hinzugefügt, nachdem bestimmte Kriterien erfüllt sind",
+      "c3": "Kleine Fehlerbehebungen"
+    },
+    "180": {
+      "c1": "Automatische Geokodierung für Kontakte hinzugefügt",
+      "c2": "Kartenansicht hinzugefügt"
+    },
+    "170": {
+      "c1": "Fügen Sie verschiedene Zeitexportmethoden hinzu",
+      "c2": "Fügen Sie „Not At Homes“ hinzu."
+    },
+    "163": {
+      "c1": "Beheben Sie Probleme mit automatischen Updates"
+    },
+    "162": {
+      "c1": "Die Stundenanforderungen für Sonderpioniere wurden von 70 auf 100 angepasst"
+    },
+    "161": {
+      "c1": "Weitere Minutenoptionen für Zeiteinträge hinzugefügt"
+    },
+    "160": {
+      "c1": "Gespräche können jetzt bearbeitet werden. Benachrichtigungen sind konfigurierbar",
+      "c2": "Wischen Sie mit Gesten, um Konversationen, Kontakte usw. zu bearbeiten oder zu löschen.",
+      "c3": "Haptisches Feedback zu verschiedenen wichtigen Aktionen hinzugefügt"
     }
   },
   "installed": "Eingerichtet",

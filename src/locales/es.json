@@ -371,7 +371,11 @@
     },
     "192": {
       "c1": "Soluciona un problema por el cual algunos dispositivos tienen una barra de progreso desbordada.",
-      "c2": "Agrega un manejo más detallado de errores de enlace para dispositivos que carecen de las aplicaciones requeridas."
+      "c2": "Agrega un manejo más detallado de errores de enlace para dispositivos que carecen de las aplicaciones requeridas.",
+      "c3": "Agrega un manejo más detallado de errores de enlace para ciertos dispositivos que carecen de las aplicaciones requeridas.",
+      "c4": "Navegue directamente a un mes desde la sección de rutina mensual de la pantalla de inicio.",
+      "c5": "La pantalla Informes de tiempo maneja mejor los meses vacíos y futuros.",
+      "c6": "Correcciones de errores menores."
     }
   },
   "installed": "Instalado",
@@ -399,5 +403,6 @@
   "noTimeReports": "Aún no hay ningún resumen disponible para este mes.",
   "noTimeReports_description": "Agregue al menos una entrada de tiempo para ver más detalles.",
   "cannotNavigateToFutureMonth": "No se puede navegar al mes futuro",
-  "cannotNavigateToFutureMonth_description": "Seleccione el mes actual o anterior."
+  "cannotNavigateToFutureMonth_description": "Seleccione el mes actual o anterior.",
+  "test": "Prueba"
 }

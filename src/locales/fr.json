@@ -371,7 +371,11 @@
     },
     "192": {
       "c1": "Résout un problème où certains appareils ont une barre de progression débordante.",
-      "c2": "Ajoute une gestion plus détaillée des erreurs de lien pour les appareils dépourvus des applications requises."
+      "c2": "Ajoute une gestion plus détaillée des erreurs de lien pour les appareils dépourvus des applications requises.",
+      "c3": "Ajoute une gestion plus détaillée des erreurs de lien pour certains appareils dépourvus des applications requises.",
+      "c4": "Accédez directement à un mois à partir de la section de routine mensuelle de l'écran d'accueil.",
+      "c5": "L’écran des rapports de temps gère mieux les mois vides et futurs.",
+      "c6": "Corrections de bugs mineurs."
     }
   },
   "installed": "installée",
@@ -399,5 +403,6 @@
   "noTimeReports": "Aucun résumé disponible pour l'instant pour ce mois-ci.",
   "noTimeReports_description": "Ajoutez au moins une entrée de temps pour afficher plus de détails.",
   "cannotNavigateToFutureMonth": "Impossible d'accéder au mois suivant",
-  "cannotNavigateToFutureMonth_description": "Sélectionnez le mois en cours ou précédent."
+  "cannotNavigateToFutureMonth_description": "Sélectionnez le mois en cours ou précédent.",
+  "test": "Test"
 }

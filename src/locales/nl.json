@@ -371,7 +371,11 @@
     },
     "192": {
       "c1": "Er is een probleem opgelost waarbij sommige apparaten een overvolle voortgangsbalk hebben.",
-      "c2": "Voegt een uitgebreidere afhandeling van verbindingsfouten toe voor apparaten waarop de vereiste applicaties ontbreken."
+      "c2": "Voegt een uitgebreidere afhandeling van verbindingsfouten toe voor apparaten waarop de vereiste applicaties ontbreken.",
+      "c3": "Voegt een uitgebreidere afhandeling van verbindingsfouten toe voor bepaalde apparaten waarop de vereiste applicaties ontbreken.",
+      "c4": "Navigeer rechtstreeks naar een maand vanuit het maandelijkse routinegedeelte van het startscherm.",
+      "c5": "Het scherm Tijdrapporten kan beter omgaan met lege en toekomstige maanden.",
+      "c6": "Kleine bugfixes."
     }
   },
   "installed": "Geïnstalleerd",
@@ -399,5 +403,6 @@
   "noTimeReports": "Er is nog geen overzicht beschikbaar voor deze maand.",
   "noTimeReports_description": "Voeg ten minste één tijdinvoer toe om meer details te bekijken.",
   "cannotNavigateToFutureMonth": "Kan niet naar de toekomstige maand navigeren",
-  "cannotNavigateToFutureMonth_description": "Selecteer de huidige of vorige maand."
+  "cannotNavigateToFutureMonth_description": "Selecteer de huidige of vorige maand.",
+  "test": "Test"
 }

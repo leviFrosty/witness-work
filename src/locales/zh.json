@@ -371,7 +371,11 @@
     },
     "192": {
       "c1": "修复了某些设备进度条溢出的问题。",
-      "c2": "为缺乏所需应用程序的设备添加更详细的链接错误处理。"
+      "c2": "为缺乏所需应用程序的设备添加更详细的链接错误处理。",
+      "c3": "为缺少所需应用程序的某些设备添加更详细的链接错误处理。",
+      "c4": "从主屏幕的每月例行部分直接导航到一个月。",
+      "c5": "时间报告屏幕可以更好地处理空月和未来月份。",
+      "c6": "修正了一些小错误。"
     }
   },
   "installed": "已安装",
@@ -399,5 +403,6 @@
   "noTimeReports": "本月尚无可用摘要。",
   "noTimeReports_description": "至少添加一个时间条目以查看更多详细信息。",
   "cannotNavigateToFutureMonth": "无法导航到未来月份",
-  "cannotNavigateToFutureMonth_description": "选择当前或上个月。"
+  "cannotNavigateToFutureMonth_description": "选择当前或上个月。",
+  "test": "测试"
 }

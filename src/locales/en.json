@@ -328,8 +328,12 @@
   "bugFixes": "Bug Fixes",
   "updates": {
     "192": {
-      "c1": "Fixes an issue where some devices have an overflowing progress bar.",
-      "c2": "Adds more verbose handling of link errors for devices lacking required applications."
+      "c1": "Now tap on a conversation row to edit, or swipe left as before.",
+      "c2": "Fixes an issue where some devices have an overflowing progress bar.",
+      "c3": "Adds more verbose handling of link errors for certain devices lacking required applications.",
+      "c4": "Navigate directly to a month from the monthly routine section of the home screen.",
+      "c5": "Time Reports screen better handles empty and future months.",
+      "c6": "Minor bug fixes."
     },
     "191": {
       "c1": "Resolves an issue navigating to time screens."
@@ -399,5 +403,6 @@
   "noTimeReports": "No Summary Available",
   "noTimeReports_description": "Add at least one time entry for this month to view details.",
   "cannotNavigateToFutureMonth": "Cannot Navigate To Future Month",
-  "cannotNavigateToFutureMonth_description": "Select the current or previous month."
+  "cannotNavigateToFutureMonth_description": "Select the current or previous month.",
+  "test": "Test"
 }

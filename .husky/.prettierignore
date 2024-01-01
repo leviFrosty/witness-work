@@ -1,0 +1,7 @@
+# Files ignored only when running prettier cli via husky 
+
+# Lottie minified assets
+src/assets/lottie/**
+
+# Locales
+src/locales/**

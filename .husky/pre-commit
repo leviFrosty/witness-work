@@ -2,6 +2,6 @@
 . "$(dirname -- "$0")/_/husky.sh"
 
 ./node_modules/.bin/tsc
-./node_modules/.bin/prettier --write . --ignore-path .husky/.prettierignore
+./node_modules/.bin/prettier --write . 
 
 yarn run translate

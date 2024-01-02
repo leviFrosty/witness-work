@@ -3,7 +3,7 @@ import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps'
 import useContacts from '../stores/contactsStore'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigation } from '@react-navigation/native'
-import { HomeTabStackNavigation } from '../stacks/DashboardTabStack'
+import { HomeTabStackNavigation } from '../stacks/HomeTabStack'
 import useTheme from '../contexts/theme'
 import useConversations from '../stores/conversationStore'
 import moment from 'moment'
@@ -486,7 +486,7 @@ const MapOnboarding = () => {
   )
 }
 
-const Map = () => {
+const MapScreen = () => {
   const { contacts } = useContacts()
   const { conversations } = useConversations()
   const theme = useTheme()
@@ -549,4 +549,4 @@ const Map = () => {
   )
 }
 
-export default Map
+export default MapScreen

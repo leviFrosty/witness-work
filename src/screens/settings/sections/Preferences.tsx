@@ -4,7 +4,7 @@ import InputRowButton from '../../../components/inputs/InputRowButton'
 import { faChevronRight, faCog } from '@fortawesome/free-solid-svg-icons'
 import i18n from '../../../lib/locales'
 import IconButton from '../../../components/IconButton'
-import { SettingsSectionProps } from '../Settings'
+import { SettingsSectionProps } from '../SettingsScreen'
 
 const PreferencesSection = ({ handleNavigate }: SettingsSectionProps) => {
   return (

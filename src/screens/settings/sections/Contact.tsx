@@ -10,13 +10,13 @@ import {
 import Constants from 'expo-constants'
 import * as Device from 'expo-device'
 import IconButton from '../../../components/IconButton'
-import SettingsSectionTitle from '../shared/SettingsSectionTitle'
+import SectionTitle from '../shared/SectionTitle'
 import { openURL } from '../../../lib/links'
 
 const ContactSection = () => {
   return (
     <View style={{ gap: 3 }}>
-      <SettingsSectionTitle text={i18n.t('contact')} />
+      <SectionTitle text={i18n.t('contact')} />
       <Section>
         <InputRowButton
           leftIcon={faBug}

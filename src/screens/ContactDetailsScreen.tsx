@@ -530,7 +530,7 @@ const AddSheet = ({
   )
 }
 
-const ContactDetails = ({ route, navigation }: Props) => {
+const ContactDetailsScreen = ({ route, navigation }: Props) => {
   const colorScheme = useColorScheme()
   const theme = useTheme()
   const { params } = route
@@ -783,4 +783,4 @@ const ContactDetails = ({ route, navigation }: Props) => {
   )
 }
 
-export default ContactDetails
+export default ContactDetailsScreen

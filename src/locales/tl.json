@@ -371,7 +371,11 @@
     },
     "192": {
       "c1": "Nag-aayos ng isyu kung saan ang ilang device ay may umaapaw na progress bar.",
-      "c2": "Nagdaragdag ng higit pang verbose na pangangasiwa ng mga error sa link para sa mga device na kulang sa mga kinakailangang application."
+      "c2": "Nagdaragdag ng higit pang verbose na pangangasiwa ng mga error sa link para sa mga device na kulang sa mga kinakailangang application.",
+      "c3": "Nagdaragdag ng higit pang verbose na pangangasiwa ng mga error sa link para sa ilang partikular na device na kulang sa mga kinakailangang application.",
+      "c4": "Direktang mag-navigate sa isang buwan mula sa buwanang routine na seksyon ng home screen.",
+      "c5": "Mas mahusay na pinangangasiwaan ng screen ng Time Reports ang mga walang laman at mga buwan sa hinaharap.",
+      "c6": "Mga menor de edad na pag-aayos ng bug."
     }
   },
   "installed": "Naka-install",
@@ -395,5 +399,10 @@
   "theHoursBelowAreAlreadyIncludedInMyTotalHours": "Ang mga kategorya sa ibaba ay kasama na sa aking kabuuang oras.",
   "otherHoursDescription": "Sa ibaba ay kasama na sa kabuuan",
   "failedToOpenLink": "Nabigong Buksan ang URL",
-  "failedToOpenLink_description": "Paki-verify na mayroon kang wastong aplikasyon para sa ibinigay na link. Ang error na ito ay karaniwang nangangahulugan na wala kang browser na naka-install sa iyong device."
+  "failedToOpenLink_description": "Paki-verify na mayroon kang wastong aplikasyon para sa ibinigay na link. Ang error na ito ay karaniwang nangangahulugan na wala kang browser na naka-install sa iyong device.",
+  "noTimeReports": "Wala pang available na buod para sa buwang ito.",
+  "noTimeReports_description": "Magdagdag ng kahit isang beses na entry para tingnan ang higit pang mga detalye.",
+  "cannotNavigateToFutureMonth": "Hindi Maka-navigate Sa Hinaharap na Buwan",
+  "cannotNavigateToFutureMonth_description": "Piliin ang kasalukuyan o nakaraang buwan.",
+  "addATimeEntryToViewReport": "Magdagdag ng entry ng oras upang tingnan ang iyong buwanang ulat."
 }

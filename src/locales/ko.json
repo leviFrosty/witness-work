@@ -371,7 +371,11 @@
     },
     "192": {
       "c1": "일부 장치에서 진행률 표시줄이 넘쳐나는 문제를 해결합니다.",
-      "c2": "필수 애플리케이션이 부족한 장치에 대한 링크 오류 처리를 더욱 자세하게 추가합니다."
+      "c2": "필수 애플리케이션이 부족한 장치에 대한 링크 오류 처리를 더욱 자세하게 추가합니다.",
+      "c3": "필수 응용 프로그램이 부족한 특정 장치에 대한 링크 오류에 대한 보다 자세한 처리를 추가합니다.",
+      "c4": "홈 화면의 월간 루틴 섹션에서 한 달로 바로 이동하세요.",
+      "c5": "시간 보고서 화면은 비어 있는 달과 향후 달을 더 잘 처리합니다.",
+      "c6": "사소한 버그 수정."
     }
   },
   "installed": "설치됨",
@@ -395,5 +399,10 @@
   "theHoursBelowAreAlreadyIncludedInMyTotalHours": "아래 카테고리는 내 총 시간에 이미 포함되어 있습니다.",
   "otherHoursDescription": "아래 항목은 이미 전체 항목에 포함되어 있습니다.",
   "failedToOpenLink": "URL을 열지 못했습니다.",
-  "failedToOpenLink_description": "제공된 링크에 대한 유효한 애플리케이션이 있는지 확인하세요. 이 오류는 일반적으로 장치에 브라우저가 설치되어 있지 않음을 의미합니다."
+  "failedToOpenLink_description": "제공된 링크에 대한 유효한 애플리케이션이 있는지 확인하세요. 이 오류는 일반적으로 장치에 브라우저가 설치되어 있지 않음을 의미합니다.",
+  "noTimeReports": "이번 달에는 아직 요약이 없습니다.",
+  "noTimeReports_description": "자세한 내용을 보려면 시간 항목을 하나 이상 추가하세요.",
+  "cannotNavigateToFutureMonth": "다음 달로 이동할 수 없습니다.",
+  "cannotNavigateToFutureMonth_description": "이번 달 또는 이전 달을 선택합니다.",
+  "addATimeEntryToViewReport": "월별 보고서를 보려면 시간 항목을 추가하세요."
 }

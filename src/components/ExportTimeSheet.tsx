@@ -232,7 +232,7 @@ const ExportTimeSheet = ({
                 }}
               >
                 {i18n.t('export')}{' '}
-                {sheet.month &&
+                {sheet.month !== undefined &&
                   sheet.year &&
                   moment()
                     .month(sheet.month)

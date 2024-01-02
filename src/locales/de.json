@@ -371,7 +371,11 @@
     },
     "192": {
       "c1": "Behebt ein Problem, bei dem einige Geräte einen überlaufenden Fortschrittsbalken haben.",
-      "c2": "Fügt eine ausführlichere Behandlung von Verbindungsfehlern für Geräte hinzu, für die keine erforderlichen Anwendungen erforderlich sind."
+      "c2": "Fügt eine ausführlichere Behandlung von Verbindungsfehlern für Geräte hinzu, für die keine erforderlichen Anwendungen erforderlich sind.",
+      "c3": "Fügt eine ausführlichere Behandlung von Verbindungsfehlern für bestimmte Geräte hinzu, für die keine erforderlichen Anwendungen erforderlich sind.",
+      "c4": "Navigieren Sie im Abschnitt „Monatsroutine“ des Startbildschirms direkt zu einem Monat.",
+      "c5": "Der Bildschirm „Zeitberichte“ verarbeitet leere und zukünftige Monate besser.",
+      "c6": "Kleinere Fehlerbehebungen."
     }
   },
   "installed": "Eingerichtet",
@@ -395,5 +399,10 @@
   "theHoursBelowAreAlreadyIncludedInMyTotalHours": "Die folgenden Kategorien sind in meinen Gesamtstunden bereits enthalten.",
   "otherHoursDescription": "Unten ist bereits die Gesamtsumme enthalten",
   "failedToOpenLink": "URL konnte nicht geöffnet werden",
-  "failedToOpenLink_description": "Bitte überprüfen Sie, ob Sie über eine gültige Bewerbung für den angegebenen Link verfügen. Dieser Fehler bedeutet normalerweise, dass auf Ihrem Gerät kein Browser installiert ist."
+  "failedToOpenLink_description": "Bitte überprüfen Sie, ob Sie über eine gültige Bewerbung für den angegebenen Link verfügen. Dieser Fehler bedeutet normalerweise, dass auf Ihrem Gerät kein Browser installiert ist.",
+  "noTimeReports": "Für diesen Monat ist noch keine Zusammenfassung verfügbar.",
+  "noTimeReports_description": "Fügen Sie mindestens einen Zeiteintrag hinzu, um weitere Details anzuzeigen.",
+  "cannotNavigateToFutureMonth": "Die Navigation zum zukünftigen Monat ist nicht möglich",
+  "cannotNavigateToFutureMonth_description": "Wählen Sie den aktuellen oder vorherigen Monat aus.",
+  "addATimeEntryToViewReport": "Fügen Sie einen Zeiteintrag hinzu, um Ihren Monatsbericht anzuzeigen."
 }

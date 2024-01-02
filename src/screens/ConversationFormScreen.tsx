@@ -41,8 +41,104 @@ import Button from '../components/Button'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { usePreferences } from '../stores/preferences'
 import { maybeRequestStoreReview } from '../lib/storeReview'
+import useNotifications from '../hooks/notifications'
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Conversation Form'>
+type MomentOffset = {
+  amount?: number | undefined
+  unit?: moment.unitOfTime.DurationConstructor | undefined
+}
+
+const NotificationSection = (props: {
+  conversation: Conversation
+  setConversation: React.Dispatch<React.SetStateAction<Conversation>>
+  setNotifyMeOffset: React.Dispatch<React.SetStateAction<MomentOffset>>
+  notificationsAllowed: boolean
+  notifyMeOffset: MomentOffset
+}) => {
+  const {
+    conversation,
+    notificationsAllowed,
+    notifyMeOffset,
+    setConversation,
+    setNotifyMeOffset,
+  } = props
+  const theme = useTheme()
+
+  const setNotifyMe = (notifyMe: boolean) => {
+    setConversation({
+      ...conversation,
+      followUp: {
+        ...conversation.followUp!,
+        notifyMe,
+      },
+    })
+  }
+
+  const amountOptions = [...Array(1000).keys()].map((value) => ({
+    label: `${value}`,
+    value,
+  }))
+
+  const unitOptions: {
+    label: string
+    value: moment.unitOfTime.DurationConstructor
+  }[] = ['minutes', 'hours', 'days', 'weeks'].map((value) => ({
+    label: i18n.t(`${value}_lowercase` as TranslationKey),
+    value: value as moment.unitOfTime.DurationConstructor,
+  }))
+
+  return (
+    <InputRowContainer label={i18n.t('notification')} lastInSection>
+      <View style={{ gap: 15, flex: 1 }}>
+        <View
+          style={{
+            justifyContent: 'flex-end',
+            flex: 1,
+            flexDirection: 'row',
+          }}
+        >
+          <CheckboxWithLabel
+            label={i18n.t('notifyMe')}
+            value={conversation.followUp?.notifyMe || false}
+            setValue={setNotifyMe}
+            disabled={!notificationsAllowed}
+            description={i18n.t('notifyMe_description')}
+            descriptionOnlyOnDisabled
+          />
+        </View>
+        {notificationsAllowed && (
+          <View style={{ flexDirection: 'row', gap: 10, alignItems: 'center' }}>
+            <View style={{ flex: 1 }}>
+              <Select
+                data={amountOptions}
+                dropdownPosition='top'
+                onChange={({ value: amount }) =>
+                  setNotifyMeOffset({ ...notifyMeOffset, amount })
+                }
+                placeholder={notifyMeOffset.amount?.toString()}
+                value={notifyMeOffset.amount?.toString()}
+              />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Select
+                data={unitOptions}
+                dropdownPosition='top'
+                onChange={({ value: unit }) =>
+                  setNotifyMeOffset({ ...notifyMeOffset, unit })
+                }
+                value={notifyMeOffset.unit}
+              />
+            </View>
+            <Text style={{ color: theme.colors.textAlt }}>
+              {i18n.t('before')}
+            </Text>
+          </View>
+        )}
+      </View>
+    </InputRowContainer>
+  )
+}
 
 const AssignmentSection = ({
   selectedContact,
@@ -123,7 +219,7 @@ const AssignmentSection = ({
   )
 }
 
-const ConversationForm = ({ route, navigation }: Props) => {
+const ConversationFormScreen = ({ route, navigation }: Props) => {
   const theme = useTheme()
   const insets = useSafeAreaInsets()
   const {
@@ -155,10 +251,7 @@ const ConversationForm = ({ route, navigation }: Props) => {
     contact: '',
   })
 
-  const [notifyMeOffset, setNotifyMeOffset] = useState<{
-    amount?: number
-    unit?: moment.unitOfTime.DurationConstructor | undefined
-  }>({
+  const [notifyMeOffset, setNotifyMeOffset] = useState<MomentOffset>({
     amount: returnVisitNotificationOffset?.amount || 2,
     unit: returnVisitNotificationOffset?.unit || 'hours',
   })
@@ -205,27 +298,9 @@ const ConversationForm = ({ route, navigation }: Props) => {
     getConversationDefaultValue()
   )
 
-  const setNotifyMe = (notifyMe: boolean) => {
-    setConversation({
-      ...conversation,
-      followUp: {
-        ...conversation.followUp!,
-        notifyMe,
-      },
-    })
-  }
-
   const selectedContact = contacts.find((c) => c.id === assignedContactId)
-  const [notificationsAllowed, setNotificationsAllowed] =
-    useState<boolean>(false)
 
-  useEffect(() => {
-    const fetchNotificationsSetting = async () => {
-      const { granted } = await Notifications.getPermissionsAsync()
-      setNotificationsAllowed(granted)
-    }
-    fetchNotificationsSetting()
-  }, [])
+  const { allowed: notificationsAllowed } = useNotifications()
 
   const handleDateChange = (_: DateTimePickerEvent, date: Date | undefined) => {
     if (!date) {
@@ -498,18 +573,6 @@ const ConversationForm = ({ route, navigation }: Props) => {
     )
   }
 
-  const amountOptions = [...Array(1000).keys()].map((value) => ({
-    label: `${value}`,
-    value,
-  }))
-  const unitOptions: {
-    label: string
-    value: moment.unitOfTime.DurationConstructor
-  }[] = ['minutes', 'hours', 'days', 'weeks'].map((value) => ({
-    label: i18n.t(`${value}_lowercase` as TranslationKey),
-    value: value as moment.unitOfTime.DurationConstructor,
-  }))
-
   const getTitle = () => {
     if (params?.conversationToEditId) {
       if (notAtHome) {
@@ -638,59 +701,17 @@ const ConversationForm = ({ route, navigation }: Props) => {
                 }),
             }}
           />
-
-          <InputRowContainer label={i18n.t('notification')} lastInSection>
-            <View style={{ gap: 15, flex: 1 }}>
-              <View
-                style={{
-                  justifyContent: 'flex-end',
-                  flex: 1,
-                  flexDirection: 'row',
-                }}
-              >
-                <CheckboxWithLabel
-                  label={i18n.t('notifyMe')}
-                  value={conversation.followUp?.notifyMe || false}
-                  setValue={setNotifyMe}
-                  disabled={!notificationsAllowed}
-                  description={i18n.t('notifyMe_description')}
-                  descriptionOnlyOnDisabled
-                />
-              </View>
-              <View
-                style={{ flexDirection: 'row', gap: 10, alignItems: 'center' }}
-              >
-                <View style={{ flex: 1 }}>
-                  <Select
-                    data={amountOptions}
-                    dropdownPosition='top'
-                    onChange={({ value: amount }) =>
-                      setNotifyMeOffset({ ...notifyMeOffset, amount })
-                    }
-                    placeholder={notifyMeOffset.amount?.toString()}
-                    value={notifyMeOffset.amount?.toString()}
-                  />
-                </View>
-                <View style={{ flex: 1 }}>
-                  <Select
-                    data={unitOptions}
-                    dropdownPosition='top'
-                    onChange={({ value: unit }) =>
-                      setNotifyMeOffset({ ...notifyMeOffset, unit })
-                    }
-                    value={notifyMeOffset.unit}
-                  />
-                </View>
-                <Text style={{ color: theme.colors.textAlt }}>
-                  {i18n.t('before')}
-                </Text>
-              </View>
-            </View>
-          </InputRowContainer>
+          <NotificationSection
+            conversation={conversation}
+            notificationsAllowed={notificationsAllowed}
+            notifyMeOffset={notifyMeOffset}
+            setConversation={setConversation}
+            setNotifyMeOffset={setNotifyMeOffset}
+          />
         </Section>
       </Wrapper>
     </KeyboardAwareScrollView>
   )
 }
 
-export default ConversationForm
+export default ConversationFormScreen

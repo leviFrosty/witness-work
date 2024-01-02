@@ -371,7 +371,11 @@
     },
     "192": {
       "c1": "Risolve un problema per cui alcuni dispositivi presentano una barra di avanzamento traboccante.",
-      "c2": "Aggiunge una gestione più dettagliata degli errori di collegamento per i dispositivi privi delle applicazioni richieste."
+      "c2": "Aggiunge una gestione più dettagliata degli errori di collegamento per i dispositivi privi delle applicazioni richieste.",
+      "c3": "Aggiunge una gestione più dettagliata degli errori di collegamento per alcuni dispositivi privi delle applicazioni richieste.",
+      "c4": "Passa direttamente al mese dalla sezione della routine mensile della schermata iniziale.",
+      "c5": "La schermata Rapporti temporali gestisce meglio i mesi vuoti e futuri.",
+      "c6": "Correzioni di bug minori."
     }
   },
   "installed": "Installato",
@@ -395,5 +399,10 @@
   "theHoursBelowAreAlreadyIncludedInMyTotalHours": "Le categorie seguenti sono già incluse nelle mie ore totali.",
   "otherHoursDescription": "Di seguito è già incluso in totale",
   "failedToOpenLink": "Impossibile aprire l'URL",
-  "failedToOpenLink_description": "Verifica di avere un'applicazione valida per il collegamento fornito. Questo errore in genere significa che non hai un browser installato sul tuo dispositivo."
+  "failedToOpenLink_description": "Verifica di avere un'applicazione valida per il collegamento fornito. Questo errore in genere significa che non hai un browser installato sul tuo dispositivo.",
+  "noTimeReports": "Nessun riepilogo ancora disponibile per questo mese.",
+  "noTimeReports_description": "Aggiungi almeno una voce per visualizzare maggiori dettagli.",
+  "cannotNavigateToFutureMonth": "Impossibile passare al mese futuro",
+  "cannotNavigateToFutureMonth_description": "Seleziona il mese corrente o quello precedente.",
+  "addATimeEntryToViewReport": "Aggiungi una voce temporale per visualizzare il tuo rapporto mensile."
 }

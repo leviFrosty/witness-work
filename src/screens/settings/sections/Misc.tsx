@@ -1,5 +1,5 @@
 import { View } from 'react-native'
-import { SettingsSectionProps } from '../Settings'
+import { SettingsSectionProps } from '../SettingsScreen'
 import i18n from '../../../lib/locales'
 import Section from '../../../components/inputs/Section'
 import InputRowButton from '../../../components/inputs/InputRowButton'
@@ -11,13 +11,13 @@ import {
 } from '@fortawesome/free-solid-svg-icons'
 import IconButton from '../../../components/IconButton'
 import links from '../../../constants/links'
-import SettingsSectionTitle from '../shared/SettingsSectionTitle'
+import SectionTitle from '../shared/SectionTitle'
 import { openURL } from '../../../lib/links'
 
 const MiscSection = ({ handleNavigate }: SettingsSectionProps) => {
   return (
     <View style={{ gap: 3 }}>
-      <SettingsSectionTitle text={i18n.t('misc')} />
+      <SectionTitle text={i18n.t('misc')} />
 
       <Section>
         <InputRowButton

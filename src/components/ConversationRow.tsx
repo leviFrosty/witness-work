@@ -20,6 +20,7 @@ import {
   faCaravan,
 } from '@fortawesome/free-solid-svg-icons'
 import Copyeable from './Copyeable'
+import Button from './Button'
 
 const ConversationRow = ({
   conversation,
@@ -37,16 +38,20 @@ const ConversationRow = ({
 
   const hasNoConversationDetails = !conversation.note?.length
 
+  const handleNavigateEdit = () => {
+    navigation.navigate('Conversation Form', {
+      contactId: conversation.contact.id,
+      conversationToEditId: conversation.id,
+      notAtHome: conversation.notAtHome,
+    })
+  }
+
   const handleSwipeOpen = (
     direction: 'left' | 'right',
     swipeable: Swipeable
   ) => {
     if (direction === 'left') {
-      navigation.navigate('Conversation Form', {
-        contactId: conversation.contact.id,
-        conversationToEditId: conversation.id,
-        notAtHome: conversation.notAtHome,
-      })
+      handleNavigateEdit()
     } else {
       Alert.alert(
         i18n.t('deleteConversation'),
@@ -80,7 +85,8 @@ const ConversationRow = ({
       renderRightActions={() => <SwipeableDelete />}
       onSwipeableOpen={handleSwipeOpen}
     >
-      <View
+      <Button
+        onPress={handleNavigateEdit}
         style={{
           paddingHorizontal: 5,
           paddingVertical: 10,
@@ -272,7 +278,7 @@ const ConversationRow = ({
             )}
           </View>
         </View>
-      </View>
+      </Button>
     </Swipeable>
   )
 }

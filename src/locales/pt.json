@@ -371,7 +371,11 @@
     },
     "192": {
       "c1": "Corrige um problema em que alguns dispositivos apresentam uma barra de progresso transbordante.",
-      "c2": "Adiciona tratamento mais detalhado de erros de link para dispositivos sem aplicativos necessários."
+      "c2": "Adiciona tratamento mais detalhado de erros de link para dispositivos sem aplicativos necessários.",
+      "c3": "Adiciona tratamento mais detalhado de erros de link para determinados dispositivos sem aplicativos necessários.",
+      "c4": "Navegue diretamente para um mês na seção de rotina mensal da tela inicial.",
+      "c5": "A tela Relatórios de Tempo lida melhor com meses vazios e futuros.",
+      "c6": "Pequenas correções de bugs."
     }
   },
   "installed": "Instalado",
@@ -395,5 +399,10 @@
   "theHoursBelowAreAlreadyIncludedInMyTotalHours": "As categorias abaixo já estão incluídas no meu total de horas.",
   "otherHoursDescription": "Abaixo já está incluso no total",
   "failedToOpenLink": "Falha ao abrir URL",
-  "failedToOpenLink_description": "Verifique se você tem uma inscrição válida para o link fornecido. Este erro normalmente significa que você não tem um navegador instalado no seu dispositivo."
+  "failedToOpenLink_description": "Verifique se você tem uma inscrição válida para o link fornecido. Este erro normalmente significa que você não tem um navegador instalado no seu dispositivo.",
+  "noTimeReports": "Ainda não há resumo disponível para este mês.",
+  "noTimeReports_description": "Adicione pelo menos uma entrada de tempo para ver mais detalhes.",
+  "cannotNavigateToFutureMonth": "Não é possível navegar para o mês futuro",
+  "cannotNavigateToFutureMonth_description": "Selecione o mês atual ou anterior.",
+  "addATimeEntryToViewReport": "Adicione uma entrada de tempo para visualizar seu relatório mensal."
 }

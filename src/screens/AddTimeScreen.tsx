@@ -13,7 +13,7 @@ import RNDateTimePicker, {
 import moment from 'moment'
 import { ServiceReport } from '../types/serviceReport'
 import { useNavigation } from '@react-navigation/native'
-import { RootStackNavigation } from '../stacks/RootStack'
+import { RootStackNavigation, RootStackParamList } from '../stacks/RootStack'
 import i18n, { TranslationKey } from '../lib/locales'
 import AndroidDateTimePicker from '../components/AndroidDateTimePicker'
 import Wrapper from '../components/layout/Wrapper'
@@ -23,8 +23,11 @@ import TextInput from '../components/TextInput'
 import Button from '../components/Button'
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import { NativeStackScreenProps } from '@react-navigation/native-stack'
 
-const AddTime = () => {
+type AddTimeScreenProps = NativeStackScreenProps<RootStackParamList, 'Add Time'>
+
+const AddTimeScreen = ({ route }: AddTimeScreenProps) => {
   const theme = useTheme()
   const insets = useSafeAreaInsets()
   const navigation = useNavigation<RootStackNavigation>()
@@ -41,7 +44,10 @@ const AddTime = () => {
     id: Crypto.randomUUID(),
     hours: 0,
     minutes: 0,
-    date: new Date(),
+    date: moment()
+      .month(route.params?.month || moment().month())
+      .year(route.params?.year || moment().year())
+      .toDate(),
     ldc: false,
   })
 
@@ -333,4 +339,4 @@ const AddTime = () => {
   )
 }
 
-export default AddTime
+export default AddTimeScreen

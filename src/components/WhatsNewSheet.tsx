@@ -23,11 +23,11 @@ interface Props {
 
 interface Props {
   /**
-   * If referenced directly from preferences, this value may be
-   * inaccurate because it will get changed when WhatsNew mounts.
+   * If referenced directly from preferences, this value may be inaccurate
+   * because it will get changed when WhatsNew mounts.
    *
-   * Should temporarily store initial value in a useRef outside
-   * of this component so it doesn't update when comparing semver.
+   * Should temporarily store initial value in a useRef outside of this
+   * component so it doesn't update when comparing semver.
    */
   lastVersion: string
 }
@@ -121,8 +121,8 @@ export const WhatsNewContent = ({ lastVersion }: { lastVersion: string }) => {
 /**
  * Displays release notes for new versions.
  *
- * Handles setting new version for preferences after mounts. Do not set lastVersion outside of this component.
- *
+ * Handles setting new version for preferences after mounts. Do not set
+ * lastVersion outside of this component.
  */
 const WhatsNewSheet: React.FC<Props> = ({ show, setShow }) => {
   const theme = useTheme()

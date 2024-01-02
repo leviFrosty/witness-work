@@ -4,8 +4,6 @@ export type ServiceReport = {
   minutes: number
   date: Date
   ldc?: boolean
-  /**
-   * User input tag, solely for the purpose of displaying on the UI.
-   */
+  /** User input tag, solely for the purpose of displaying on the UI. */
   tag?: string
 }

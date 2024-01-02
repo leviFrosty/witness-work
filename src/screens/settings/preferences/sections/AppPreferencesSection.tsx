@@ -1,10 +1,10 @@
 import { Alert, View } from 'react-native'
 import * as Linking from 'expo-linking'
-import i18n from '../../../lib/locales'
-import Section from '../../../components/inputs/Section'
-import InputRowButton from '../../../components/inputs/InputRowButton'
-import { requestLocationPermission } from '../../../lib/address'
-import IconButton from '../../../components/IconButton'
+import i18n from '../../../../lib/locales'
+import Section from '../../../../components/inputs/Section'
+import InputRowButton from '../../../../components/inputs/InputRowButton'
+import { requestLocationPermission } from '../../../../lib/address'
+import IconButton from '../../../../components/IconButton'
 import {
   faBell,
   faBellSlash,
@@ -14,11 +14,11 @@ import {
 } from '@fortawesome/free-solid-svg-icons'
 import { useEffect, useState } from 'react'
 import * as Location from 'expo-location'
-import * as Notifications from 'expo-notifications'
-import SettingsSectionTitle from '../../settings/shared/SettingsSectionTitle'
+import useNotifications from '../../../../hooks/notifications'
+import SectionTitle from '../../shared/SectionTitle'
 
 const AppPreferencesSection = () => {
-  const [notificationsEnabled, setNotificationsEnabled] = useState(false)
+  const notifications = useNotifications()
   const [locationEnabled, setLocationEnabled] = useState(false)
 
   useEffect(() => {
@@ -30,15 +30,6 @@ const AppPreferencesSection = () => {
       }
     }
 
-    const updateNotificationsStatus = async () => {
-      const settings = await Notifications.getPermissionsAsync()
-      if (!settings.granted) {
-        return
-      }
-      setNotificationsEnabled(true)
-    }
-
-    updateNotificationsStatus()
     updateLocationStatus()
   }, [])
 
@@ -62,18 +53,18 @@ const AppPreferencesSection = () => {
 
   return (
     <View style={{ gap: 3 }}>
-      <SettingsSectionTitle text={i18n.t('app')} />
+      <SectionTitle text={i18n.t('app')} />
       <Section>
         <InputRowButton
-          leftIcon={notificationsEnabled ? faBell : faBellSlash}
+          leftIcon={notifications.allowed ? faBell : faBellSlash}
           label={
-            notificationsEnabled
+            notifications.allowed
               ? i18n.t('pushNotificationsEnabled')
               : i18n.t('pushNotificationsDisabled')
           }
-          onPress={notificationsEnabled ? undefined : askToTakeToSettings}
+          onPress={notifications.allowed ? undefined : askToTakeToSettings}
         >
-          {!notificationsEnabled && <IconButton icon={faChevronRight} />}
+          {!notifications.allowed && <IconButton icon={faChevronRight} />}
         </InputRowButton>
         <InputRowButton
           lastInSection

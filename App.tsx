@@ -14,7 +14,7 @@ import {
   Inter_700Bold,
 } from '@expo-google-fonts/inter'
 import { LogBox, useColorScheme } from 'react-native'
-import { StatusBar } from 'expo-status-bar' // automatically switches bar style based on theme!
+import { StatusBar } from 'expo-status-bar'
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
 import { TamaguiProvider } from 'tamagui'
 import tamaguiConfig from './tamagui.config'
@@ -29,10 +29,13 @@ Notifications.setNotificationHandler({
 })
 
 /**
- * Non-urgent.
- * Warning comes from tamagui bug. Check back sometime in the future to see if still exists.
- * Repro: Go to home screen => click contact =>  + => close tamagui sheet => go back to home => WARN
- *  */
+ * Non-urgent. Warning comes from tamagui bug.
+ *
+ * Check back sometime in the future to see if still exists.
+ *
+ * Repro: Go to home screen => click contact => + => close tamagui sheet => go
+ * back to home => WARN
+ */
 LogBox.ignoreLogs([
   'Sending `onAnimatedValueUpdate` with no listeners registered.',
 ])
@@ -63,19 +66,19 @@ export default function App() {
   try {
     return (
       <ThemeProvider>
-        <TamaguiProvider
-          defaultTheme={colorScheme || undefined}
-          config={tamaguiConfig}
-        >
-          <NavigationContainer>
-            <SafeAreaProvider>
+        <SafeAreaProvider>
+          <TamaguiProvider
+            defaultTheme={colorScheme || undefined}
+            config={tamaguiConfig}
+          >
+            <NavigationContainer>
               <GestureHandlerRootView style={{ flex: 1 }}>
                 <StatusBar />
                 <RootStackComponent />
               </GestureHandlerRootView>
-            </SafeAreaProvider>
-          </NavigationContainer>
-        </TamaguiProvider>
+            </NavigationContainer>
+          </TamaguiProvider>
+        </SafeAreaProvider>
       </ThemeProvider>
     )
   } catch (error) {

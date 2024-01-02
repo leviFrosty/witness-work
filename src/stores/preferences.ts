@@ -6,22 +6,29 @@ import i18n from '../lib/locales'
 import Constants from 'expo-constants'
 import moment from 'moment'
 
+const SortOptionValues = [
+  'recentConversation',
+  'az',
+  'za',
+  'bibleStudy',
+] as const
+
 export const contactSortOptions = [
   {
     label: i18n.t('recentConversation'),
-    value: 'recentConversation',
+    value: SortOptionValues[0],
   },
   {
     label: i18n.t('alphabeticalAsc'),
-    value: 'az',
+    value: SortOptionValues[1],
   },
   {
     label: i18n.t('alphabeticalDesc'),
-    value: 'za',
+    value: SortOptionValues[2],
   },
   {
     label: i18n.t('bibleStudy'),
-    value: 'bibleStudy',
+    value: SortOptionValues[3],
   },
 ]
 
@@ -40,7 +47,6 @@ const publisherHours: PublisherHours = {
 }
 
 /**
- * Each platform has specific options available.
  * @platform iOS: All Supported
  * @platform Android: Only 'google' is supported
  */
@@ -55,19 +61,16 @@ const initialState = {
   publisher: 'publisher' as Publisher,
   publisherHours: publisherHours,
 
-  /**
-   * Overrides publisherHours hour requirement for given month.
-   */
+  /** Overrides publisherHours hour requirement for given month. */
   oneOffGoalHours: [] as GoalHours[],
   onboardingComplete: false,
   installedOn: new Date(),
-  contactSort: 'recentConversation',
+  contactSort: 'recentConversation' as (typeof SortOptionValues)[number],
   hasCompletedMapOnboarding: false,
   calledGoecodeApiTimes: 0,
   lastTimeRequestedAReview: null as Date | null,
 
   /**
-   *
    * @platform iOS: Supported
    * @platform Android: Not Supported
    */
@@ -78,6 +81,7 @@ const initialState = {
   returnVisitAlwaysNotify: false,
   serviceReportTags: [] as string[],
   displayDetailsOnProgressBarHomeScreen: false,
+  monthlyRoutineHasShownInvalidMonthAlert: false,
 }
 
 export const usePreferences = create(
@@ -91,7 +95,8 @@ export const usePreferences = create(
         })),
       updateLastTimeRequestedStoreReview: () =>
         set({ lastTimeRequestedAReview: new Date() }),
-      setContactSort: (contactSort: string) => set({ contactSort }),
+      setContactSort: (contactSort: (typeof SortOptionValues)[number]) =>
+        set({ contactSort }),
     })),
     {
       name: 'preferences',

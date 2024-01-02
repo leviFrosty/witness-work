@@ -1,5 +1,5 @@
 import { View } from 'react-native'
-import { SettingsSectionProps } from '../Settings'
+import { SettingsSectionProps } from '../SettingsScreen'
 import i18n from '../../../lib/locales'
 import Section from '../../../components/inputs/Section'
 import InputRowButton from '../../../components/inputs/InputRowButton'
@@ -10,15 +10,14 @@ import {
   faTag,
 } from '@fortawesome/free-solid-svg-icons'
 import IconButton from '../../../components/IconButton'
-import * as Linking from 'expo-linking'
 import links from '../../../constants/links'
-import * as Sentry from 'sentry-expo'
-import SettingsSectionTitle from '../shared/SettingsSectionTitle'
+import SectionTitle from '../shared/SectionTitle'
+import { openURL } from '../../../lib/links'
 
 const MiscSection = ({ handleNavigate }: SettingsSectionProps) => {
   return (
     <View style={{ gap: 3 }}>
-      <SettingsSectionTitle text={i18n.t('misc')} />
+      <SectionTitle text={i18n.t('misc')} />
 
       <Section>
         <InputRowButton
@@ -31,26 +30,14 @@ const MiscSection = ({ handleNavigate }: SettingsSectionProps) => {
         <InputRowButton
           leftIcon={faCode}
           label={i18n.t('viewSource')}
-          onPress={() => {
-            try {
-              Linking.openURL(links.githubRepo)
-            } catch (error) {
-              Sentry.Native.captureException(error)
-            }
-          }}
+          onPress={() => openURL(links.githubRepo)}
         >
           <IconButton icon={faChevronRight} />
         </InputRowButton>
         <InputRowButton
           leftIcon={faFileContract}
           label={i18n.t('privacyPolicy')}
-          onPress={() => {
-            try {
-              Linking.openURL(links.privacyPolicy)
-            } catch (error) {
-              Sentry.Native.captureException(error)
-            }
-          }}
+          onPress={() => openURL(links.privacyPolicy)}
           lastInSection
         >
           <IconButton icon={faChevronRight} />

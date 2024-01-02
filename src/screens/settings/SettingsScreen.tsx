@@ -19,7 +19,7 @@ export type SettingsSectionProps = {
   handleNavigate: (destination: keyof RootStackParamList) => void
 }
 
-const Settings = (props: DrawerContentComponentProps) => {
+const SettingsScreen = (props: DrawerContentComponentProps) => {
   const theme = useTheme()
   const insets = useSafeAreaInsets()
   const navigation = useNavigation<RootStackNavigation>()
@@ -73,4 +73,4 @@ const Settings = (props: DrawerContentComponentProps) => {
   )
 }
 
-export default Settings
+export default SettingsScreen

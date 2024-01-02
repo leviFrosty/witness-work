@@ -13,7 +13,7 @@ import RNDateTimePicker, {
 import moment from 'moment'
 import { ServiceReport } from '../types/serviceReport'
 import { useNavigation } from '@react-navigation/native'
-import { RootStackNavigation } from '../stacks/RootStack'
+import { RootStackNavigation, RootStackParamList } from '../stacks/RootStack'
 import i18n, { TranslationKey } from '../lib/locales'
 import AndroidDateTimePicker from '../components/AndroidDateTimePicker'
 import Wrapper from '../components/layout/Wrapper'
@@ -23,8 +23,11 @@ import TextInput from '../components/TextInput'
 import Button from '../components/Button'
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import { NativeStackScreenProps } from '@react-navigation/native-stack'
 
-const AddTime = () => {
+type AddTimeScreenProps = NativeStackScreenProps<RootStackParamList, 'Add Time'>
+
+const AddTimeScreen = ({ route }: AddTimeScreenProps) => {
   const theme = useTheme()
   const insets = useSafeAreaInsets()
   const navigation = useNavigation<RootStackNavigation>()
@@ -41,7 +44,10 @@ const AddTime = () => {
     id: Crypto.randomUUID(),
     hours: 0,
     minutes: 0,
-    date: new Date(),
+    date: moment()
+      .month(route.params?.month || moment().month())
+      .year(route.params?.year || moment().year())
+      .toDate(),
     ldc: false,
   })
 
@@ -128,20 +134,21 @@ const AddTime = () => {
 
   const typeOptions = timeEntryCategories.map((value) => ({
     /**
-     * This allows i18n to translate to provided keys automatically. If the user inputs
-     * their own custom category that doesn't have a valid translation, it will default to the
-     * to the user input value instead of saying "missing translation".
+     * This allows i18n to translate to provided keys automatically. If the user
+     * inputs their own custom category that doesn't have a valid translation,
+     * it will default to the to the user input value instead of saying "missing
+     * translation".
      *
      * @example
-     * ```ts
+     *   ;```ts
      *
-     * const timeEntryCategories = ['custom', 'Bethel'] // Bethel is user input
-     * const typeOptions = timeEntryCategories.map((value) => ({
-     *  label: i18n.t(value as TranslationKey, { defaultValue: value }),
-     * value,
-     * })) // [{ label: 'custom', value: 'custom' }, { label: 'Bethel', value: 'Bethel' } ]
+     *   const timeEntryCategories = ['custom', 'Bethel'] // Bethel is user input
+     *   const typeOptions = timeEntryCategories.map((value) => ({
+     *    label: i18n.t(value as TranslationKey, { defaultValue: value }),
+     *   value,
+     *   })) // [{ label: 'custom', value: 'custom' }, { label: 'Bethel', value: 'Bethel' } ]
      *
-     * ```
+     *   ```
      */
     label: i18n.t(value as TranslationKey, { defaultValue: value }),
     value,
@@ -332,4 +339,4 @@ const AddTime = () => {
   )
 }
 
-export default AddTime
+export default AddTimeScreen

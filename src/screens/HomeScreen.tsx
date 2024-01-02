@@ -1,7 +1,7 @@
 import { createDrawerNavigator } from '@react-navigation/drawer'
 import Header from '../components/layout/Header'
-import Settings from './settings/Settings'
-import { Dashboard } from './Dashboard'
+import SettingsScreen from './settings/SettingsScreen'
+import { DashboardScreen } from './DashboardScreen'
 
 const HomeScreen = () => {
   const Drawer = createDrawerNavigator()
@@ -13,10 +13,10 @@ const HomeScreen = () => {
           <Header onPressLeftIcon={() => navigation.toggleDrawer()} />
         ),
       }}
-      drawerContent={Settings}
+      drawerContent={SettingsScreen}
       initialRouteName='Dashboard'
     >
-      <Drawer.Screen name='Dashboard' component={Dashboard} />
+      <Drawer.Screen name='Dashboard' component={DashboardScreen} />
     </Drawer.Navigator>
   )
 }

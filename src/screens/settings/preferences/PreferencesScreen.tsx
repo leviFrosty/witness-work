@@ -1,4 +1,4 @@
-import Wrapper from '../../components/layout/Wrapper'
+import Wrapper from '../../../components/layout/Wrapper'
 import PublisherPreferencesSection from './sections/PublisherPreferencesSection'
 import ConversationsPreferencesSection from './sections/ConversationsPreferencesSection'
 import NavigationPreferencesSection from './sections/NavigationPreferencesSection'
@@ -6,7 +6,7 @@ import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view
 import AppPreferencesSection from './sections/AppPreferencesSection'
 import HomeScreenPreferencesSection from './sections/HomeScreenPreferencesSection'
 
-const Preferences = () => {
+const PreferencesScreen = () => {
   return (
     <Wrapper insets='bottom'>
       <KeyboardAwareScrollView
@@ -22,4 +22,4 @@ const Preferences = () => {
   )
 }
 
-export default Preferences
+export default PreferencesScreen

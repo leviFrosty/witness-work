@@ -327,8 +327,35 @@
   "new": "Neu",
   "bugFixes": "Fehlerbehebung",
   "updates": {
-    "191": {
-      "c1": "Behebt ein Problem beim Navigieren zu Zeitbildschirmen."
+    "160": {
+      "c1": "Gespräche können jetzt bearbeitet werden. Benachrichtigungen sind konfigurierbar",
+      "c2": "Wischen Sie mit Gesten, um Konversationen, Kontakte usw. zu bearbeiten oder zu löschen.",
+      "c3": "Haptisches Feedback zu verschiedenen wichtigen Aktionen hinzugefügt"
+    },
+    "161": {
+      "c1": "Weitere Minutenoptionen für Zeiteinträge hinzugefügt"
+    },
+    "162": {
+      "c1": "Die Stundenanforderungen für Sonderpioniere wurden von 70 auf 100 angepasst"
+    },
+    "163": {
+      "c1": "Beheben Sie Probleme mit automatischen Updates"
+    },
+    "170": {
+      "c1": "Fügen Sie verschiedene Zeitexportmethoden hinzu",
+      "c2": "Fügen Sie „Not At Homes“ hinzu."
+    },
+    "180": {
+      "c1": "Automatische Geokodierung für Kontakte hinzugefügt",
+      "c2": "Kartenansicht hinzugefügt"
+    },
+    "181": {
+      "c1": "Erweiterte Kartenansicht",
+      "c2": "Anfrage zur Store-Bewertung hinzugefügt, nachdem bestimmte Kriterien erfüllt sind",
+      "c3": "Kleine Fehlerbehebungen"
+    },
+    "182": {
+      "c1": "Ständig aktualisiert, um das aktuelle Gebietsschema widerzuspiegeln"
     },
     "190": {
       "c1": "Präferenzen in den Einstellungen hinzugefügt",
@@ -339,35 +366,16 @@
       "c6": "Fügen Sie nun benutzerdefinierte Tags zu Ihren Zeiteinträgen hinzu",
       "c7": "Der Bildschirm „Zeitberichte“ wurde aktualisiert, um besser organisiert und nach Monaten getrennt zu sein"
     },
-    "182": {
-      "c1": "Ständig aktualisiert, um das aktuelle Gebietsschema widerzuspiegeln"
+    "191": {
+      "c1": "Behebt ein Problem beim Navigieren zu Zeitbildschirmen."
     },
-    "181": {
-      "c1": "Erweiterte Kartenansicht",
-      "c2": "Anfrage zur Store-Bewertung hinzugefügt, nachdem bestimmte Kriterien erfüllt sind",
-      "c3": "Kleine Fehlerbehebungen"
-    },
-    "180": {
-      "c1": "Automatische Geokodierung für Kontakte hinzugefügt",
-      "c2": "Kartenansicht hinzugefügt"
-    },
-    "170": {
-      "c1": "Fügen Sie verschiedene Zeitexportmethoden hinzu",
-      "c2": "Fügen Sie „Not At Homes“ hinzu."
-    },
-    "163": {
-      "c1": "Beheben Sie Probleme mit automatischen Updates"
-    },
-    "162": {
-      "c1": "Die Stundenanforderungen für Sonderpioniere wurden von 70 auf 100 angepasst"
-    },
-    "161": {
-      "c1": "Weitere Minutenoptionen für Zeiteinträge hinzugefügt"
-    },
-    "160": {
-      "c1": "Gespräche können jetzt bearbeitet werden. Benachrichtigungen sind konfigurierbar",
-      "c2": "Wischen Sie mit Gesten, um Konversationen, Kontakte usw. zu bearbeiten oder zu löschen.",
-      "c3": "Haptisches Feedback zu verschiedenen wichtigen Aktionen hinzugefügt"
+    "192": {
+      "c1": "Behebt ein Problem, bei dem einige Geräte einen überlaufenden Fortschrittsbalken haben.",
+      "c2": "Fügt eine ausführlichere Behandlung von Verbindungsfehlern für Geräte hinzu, für die keine erforderlichen Anwendungen erforderlich sind.",
+      "c3": "Fügt eine ausführlichere Behandlung von Verbindungsfehlern für bestimmte Geräte hinzu, für die keine erforderlichen Anwendungen erforderlich sind.",
+      "c4": "Navigieren Sie im Abschnitt „Monatsroutine“ des Startbildschirms direkt zu einem Monat.",
+      "c5": "Der Bildschirm „Zeitberichte“ verarbeitet leere und zukünftige Monate besser.",
+      "c6": "Kleinere Fehlerbehebungen."
     }
   },
   "installed": "Eingerichtet",
@@ -389,5 +397,12 @@
   "homeScreen": "Startbildschirm",
   "detailedProgressBar": "Detaillierter Fortschrittsbalken",
   "theHoursBelowAreAlreadyIncludedInMyTotalHours": "Die folgenden Kategorien sind in meinen Gesamtstunden bereits enthalten.",
-  "otherHoursDescription": "Unten ist bereits die Gesamtsumme enthalten"
+  "otherHoursDescription": "Unten ist bereits die Gesamtsumme enthalten",
+  "failedToOpenLink": "URL konnte nicht geöffnet werden",
+  "failedToOpenLink_description": "Bitte überprüfen Sie, ob Sie über eine gültige Bewerbung für den angegebenen Link verfügen. Dieser Fehler bedeutet normalerweise, dass auf Ihrem Gerät kein Browser installiert ist.",
+  "noTimeReports": "Für diesen Monat ist noch keine Zusammenfassung verfügbar.",
+  "noTimeReports_description": "Fügen Sie mindestens einen Zeiteintrag hinzu, um weitere Details anzuzeigen.",
+  "cannotNavigateToFutureMonth": "Die Navigation zum zukünftigen Monat ist nicht möglich",
+  "cannotNavigateToFutureMonth_description": "Wählen Sie den aktuellen oder vorherigen Monat aus.",
+  "addATimeEntryToViewReport": "Fügen Sie einen Zeiteintrag hinzu, um Ihren Monatsbericht anzuzeigen."
 }

@@ -1,8 +1,9 @@
-import { Alert, Linking } from 'react-native'
+import { Alert } from 'react-native'
 import i18n from './locales'
 import { RootStackNavigation } from '../stacks/RootStack'
 import { ParsedPhoneNumber } from 'awesome-phonenumber'
 import { Contact } from '../types/contact'
+import { openURL } from './links'
 
 const alertInvalidPhone = (
   contact: Contact,
@@ -36,7 +37,7 @@ export const handleCall = (
   const isValid = formatted.valid
 
   if (isValid) {
-    Linking.openURL(`tel:${formatted.number.e164}`)
+    openURL(`tel:${formatted.number.e164}`)
   } else alertInvalidPhone(contact, navigation, formatted)
 }
 
@@ -48,6 +49,6 @@ export const handleMessage = (
   const isValid = formatted.valid
 
   if (isValid) {
-    Linking.openURL(`sms:${formatted.number.e164}`)
+    openURL(`sms:${formatted.number.e164}`)
   } else alertInvalidPhone(contact, navigation, formatted)
 }

@@ -14,7 +14,7 @@ import ContactsList from '../components/ContactsList'
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
-export const Dashboard = () => {
+export const DashboardScreen = () => {
   const theme = useTheme()
   const insets = useSafeAreaInsets()
   const { conversations } = useConversations()

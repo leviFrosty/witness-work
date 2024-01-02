@@ -1,11 +1,4 @@
-import {
-  View,
-  Linking,
-  Platform,
-  Alert,
-  ScrollView,
-  useColorScheme,
-} from 'react-native'
+import { View, Platform, Alert, ScrollView, useColorScheme } from 'react-native'
 import { useEffect, useMemo, useState } from 'react'
 import Text from '../components/MyText'
 import useTheme from '../contexts/theme'
@@ -58,6 +51,7 @@ import { getLocales } from 'expo-localization'
 import { useNavigation } from '@react-navigation/native'
 import { usePreferences } from '../stores/preferences'
 import { handleCall, handleMessage } from '../lib/phone'
+import { openURL } from '../lib/links'
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Contact Details'>
 
@@ -315,11 +309,11 @@ const EmailRow = ({ contact }: { contact: Contact }) => {
   }
 
   const openMail = async () => {
-    try {
-      await Linking.openURL(`mailTo:${email}`)
-    } catch (error) {
-      Alert.alert(i18n.t('error'), i18n.t('failedToOpenMailApplication'))
-    }
+    openURL(`mailTo:${email}`, {
+      alert: {
+        description: i18n.t('failedToOpenMailApplication'),
+      },
+    })
   }
 
   return (
@@ -536,7 +530,7 @@ const AddSheet = ({
   )
 }
 
-const ContactDetails = ({ route, navigation }: Props) => {
+const ContactDetailsScreen = ({ route, navigation }: Props) => {
   const colorScheme = useColorScheme()
   const theme = useTheme()
   const { params } = route
@@ -789,4 +783,4 @@ const ContactDetails = ({ route, navigation }: Props) => {
   )
 }
 
-export default ContactDetails
+export default ContactDetailsScreen

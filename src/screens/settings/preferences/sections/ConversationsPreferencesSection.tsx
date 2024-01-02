@@ -1,12 +1,12 @@
 import { Switch, View } from 'react-native'
-import Text from '../../../components/MyText'
-import useTheme from '../../../contexts/theme'
-import i18n, { TranslationKey } from '../../../lib/locales'
-import Section from '../../../components/inputs/Section'
-import InputRowContainer from '../../../components/inputs/InputRowContainer'
-import Select from '../../../components/Select'
-import { usePreferences } from '../../../stores/preferences'
-import SettingsSectionTitle from '../../settings/shared/SettingsSectionTitle'
+import Text from '../../../../components/MyText'
+import useTheme from '../../../../contexts/theme'
+import i18n, { TranslationKey } from '../../../../lib/locales'
+import Section from '../../../../components/inputs/Section'
+import InputRowContainer from '../../../../components/inputs/InputRowContainer'
+import Select from '../../../../components/Select'
+import { usePreferences } from '../../../../stores/preferences'
+import SectionTitle from '../../shared/SectionTitle'
 
 const ConversationsPreferencesSection = () => {
   const theme = useTheme()
@@ -32,7 +32,7 @@ const ConversationsPreferencesSection = () => {
 
   return (
     <View style={{ gap: 3 }}>
-      <SettingsSectionTitle text={i18n.t('conversations')} />
+      <SectionTitle text={i18n.t('conversations')} />
       <Section>
         <InputRowContainer
           style={{

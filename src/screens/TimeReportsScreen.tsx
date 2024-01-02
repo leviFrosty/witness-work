@@ -26,7 +26,7 @@ import { FlashList } from '@shopify/flash-list'
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Time Reports'>
 
-const TimeReports = ({ route, navigation }: Props) => {
+const TimeReportsScreen = ({ route, navigation }: Props) => {
   const theme = useTheme()
   const { serviceReports } = useServiceReport()
   const insets = useSafeAreaInsets()
@@ -79,15 +79,22 @@ const TimeReports = ({ route, navigation }: Props) => {
   if (!years.length) {
     return (
       <Wrapper>
-        <Card style={{ marginHorizontal: 20 }}>
+        <Card style={{ marginHorizontal: 15 }}>
           <Text
             style={{
-              padding: 20,
-              fontSize: 16,
-              color: theme.colors.textAlt,
+              fontSize: theme.fontSize('lg'),
+              fontFamily: theme.fonts.semiBold,
             }}
           >
             {i18n.t('noTimeEntriesYet')}
+          </Text>
+          <Text
+            style={{
+              fontSize: theme.fontSize('sm'),
+              color: theme.colors.textAlt,
+            }}
+          >
+            {i18n.t('addATimeEntryToViewReport')}
           </Text>
           <ActionButton onPress={() => navigation.navigate('Add Time')}>
             {i18n.t('addTime')}
@@ -129,7 +136,6 @@ const TimeReports = ({ route, navigation }: Props) => {
         style={{
           paddingHorizontal: 15,
           paddingTop: 20,
-          paddingBottom: 25,
           gap: 30,
         }}
       >
@@ -171,6 +177,7 @@ const TimeReports = ({ route, navigation }: Props) => {
       </View>
       <ScrollView
         contentContainerStyle={{
+          paddingTop: 30,
           paddingBottom: insets.bottom + 30,
         }}
         contentInset={{ top: 0, right: 0, bottom: insets.bottom + 30, left: 0 }}
@@ -218,4 +225,4 @@ const TimeReports = ({ route, navigation }: Props) => {
     </View>
   )
 }
-export default TimeReports
+export default TimeReportsScreen

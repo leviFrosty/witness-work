@@ -4,12 +4,13 @@ import { HereGeocodeResponse } from '../types/here'
 import apis from '../constants/apis'
 import * as Network from 'expo-network'
 import * as Sentry from 'sentry-expo'
-import { Alert, Linking, Platform } from 'react-native'
+import { Alert, Platform } from 'react-native'
 import i18n from './locales'
 import { countTruthyValueStrings } from './objects'
 import * as Location from 'expo-location'
 import { DefaultNavigationMapProvider } from '../stores/preferences'
 import links from '../constants/links'
+import { openURL } from './links'
 
 export const addressToString = (address?: Address) => {
   if (!address) {
@@ -108,14 +109,12 @@ export const navigateTo = (
 
   const url = `${getScheme()}${address}`
 
-  try {
-    Linking.openURL(url)
-  } catch (error) {
-    Alert.alert(
-      i18n.t('couldNotOpenMaps'),
-      i18n.t('couldNotOpenMaps_description')
-    )
-  }
+  openURL(url, {
+    alert: {
+      title: i18n.t('couldNotOpenMaps'),
+      description: i18n.t('couldNotOpenMaps_description'),
+    },
+  })
 }
 
 export const requestLocationPermission = async (

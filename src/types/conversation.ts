@@ -15,7 +15,8 @@ export type Conversation = {
     notifyMe: boolean
     topic?: string
     /**
-     * TODO: Refactor where there is only one notification enabled. Also simplifies ConversationForm.tsx submit function.
+     * TODO: Refactor where there is only one notification enabled. Also
+     * simplifies ConversationForm.tsx submit function.
      */
     notifications?: Notification[] // Changing to only one
   }

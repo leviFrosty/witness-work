@@ -12,7 +12,7 @@ import { RootStackNavigation } from '../stacks/RootStack'
 import Wrapper from '../components/layout/Wrapper'
 import Button from '../components/Button'
 
-const Update = () => {
+const UpdateScreen = () => {
   const theme = useTheme()
   const loadingAnimation = useRef<LottieView>(null)
   const errorAnimation = useRef<LottieView>(null)
@@ -133,4 +133,4 @@ const Update = () => {
     </Wrapper>
   )
 }
-export default Update
+export default UpdateScreen

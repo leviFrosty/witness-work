@@ -1,9 +1,9 @@
 import { Platform, View } from 'react-native'
-import useTheme from '../../../contexts/theme'
-import Text from '../../../components/MyText'
-import i18n from '../../../lib/locales'
-import Section from '../../../components/inputs/Section'
-import DefaultNavigationSelector from '../../../components/DefaultNavigationSelector'
+import useTheme from '../../../../contexts/theme'
+import Text from '../../../../components/MyText'
+import i18n from '../../../../lib/locales'
+import Section from '../../../../components/inputs/Section'
+import DefaultNavigationSelector from '../../../../components/DefaultNavigationSelector'
 
 const NavigationPreferencesSection = () => {
   const theme = useTheme()

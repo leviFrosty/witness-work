@@ -1,4 +1,4 @@
-import { Alert, View } from 'react-native'
+import { View } from 'react-native'
 import i18n from '../../../lib/locales'
 import Section from '../../../components/inputs/Section'
 import InputRowButton from '../../../components/inputs/InputRowButton'
@@ -9,14 +9,14 @@ import {
 } from '@fortawesome/free-solid-svg-icons'
 import Constants from 'expo-constants'
 import * as Device from 'expo-device'
-import * as Linking from 'expo-linking'
 import IconButton from '../../../components/IconButton'
-import SettingsSectionTitle from '../shared/SettingsSectionTitle'
+import SectionTitle from '../shared/SectionTitle'
+import { openURL } from '../../../lib/links'
 
 const ContactSection = () => {
   return (
     <View style={{ gap: 3 }}>
-      <SettingsSectionTitle text={i18n.t('contact')} />
+      <SectionTitle text={i18n.t('contact')} />
       <Section>
         <InputRowButton
           leftIcon={faBug}
@@ -30,16 +30,12 @@ const ContactSection = () => {
             }. ${i18n.t('pleaseDescribeYourIssue')}: --------------`
             const subject = encodeURIComponent(subjectText)
             const body = encodeURIComponent(bodyText)
-            try {
-              await Linking.openURL(
-                `mailto:${email}?subject=${subject}&body=${body}`
-              )
-            } catch (error) {
-              Alert.alert(
-                i18n.t('error'),
-                i18n.t('failedToOpenMailApplication')
-              )
-            }
+
+            openURL(`mailto:${email}?subject=${subject}&body=${body}`, {
+              alert: {
+                description: i18n.t('failedToOpenMailApplication'),
+              },
+            })
           }}
         >
           <IconButton icon={faChevronRight} />
@@ -57,16 +53,12 @@ const ContactSection = () => {
             }. ${i18n.t('pleaseDescribeYourFeatureClearly')}: --------------`
             const subject = encodeURIComponent(subjectText)
             const body = encodeURIComponent(bodyText)
-            try {
-              await Linking.openURL(
-                `mailto:${email}?subject=${subject}&body=${body}`
-              )
-            } catch (error) {
-              Alert.alert(
-                i18n.t('error'),
-                i18n.t('failedToOpenMailApplication')
-              )
-            }
+
+            openURL(`mailto:${email}?subject=${subject}&body=${body}`, {
+              alert: {
+                description: i18n.t('failedToOpenMailApplication'),
+              },
+            })
           }}
         >
           <IconButton icon={faChevronRight} />

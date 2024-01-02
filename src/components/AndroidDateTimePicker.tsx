@@ -16,18 +16,20 @@ interface Props {
   value: Date
   onChange: (event: DateTimePickerEvent, date?: Date | undefined) => void
   /**
-   * Mode provides the first picker's mode. If you need both date and time, Native Android UI does not support this functionality.
-   * Use the timeAndDate prop to enable two separate selectors.
-   * These selectors edit the same incoming value (Date)
+   * Mode provides the first picker's mode. If you need both date and time,
+   * Native Android UI does not support this functionality. Use the timeAndDate
+   * prop to enable two separate selectors. These selectors edit the same
+   * incoming value (Date)
+   *
    * @example
-   * <AndroidDateTimePicker
-   *  value={date}
-   *  onChange={handleDateChange}
-   *  timeAndDate={true}
-   * />
-   * // value: 10/28/2023 10:00:00 AM
-   * // First selector changes date -> 10/10/2023 10:00:00 AM
-   * // Second selector changes time -> 10/10/2023 02:00:00 PM
+   *   ;<AndroidDateTimePicker
+   *     value={date}
+   *     onChange={handleDateChange}
+   *     timeAndDate={true}
+   *   />
+   *   // value: 10/28/2023 10:00:00 AM
+   *   // First selector changes date -> 10/10/2023 10:00:00 AM
+   *   // Second selector changes time -> 10/10/2023 02:00:00 PM
    */
   mode?: AndroidMode
   maximumDate?: Date | undefined

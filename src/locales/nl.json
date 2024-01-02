@@ -329,7 +329,11 @@
   "updates": {
     "192": {
       "c1": "Er is een probleem opgelost waarbij sommige apparaten een overvolle voortgangsbalk hebben.",
-      "c2": "Voegt een uitgebreidere afhandeling van verbindingsfouten toe voor apparaten waarop de vereiste applicaties ontbreken."
+      "c2": "Voegt een uitgebreidere afhandeling van verbindingsfouten toe voor apparaten waarop de vereiste applicaties ontbreken.",
+      "c3": "Voegt een uitgebreidere afhandeling van verbindingsfouten toe voor bepaalde apparaten waarop de vereiste applicaties ontbreken.",
+      "c4": "Navigeer rechtstreeks naar een maand vanuit het maandelijkse routinegedeelte van het startscherm.",
+      "c5": "Het scherm Tijdrapporten kan beter omgaan met lege en toekomstige maanden.",
+      "c6": "Kleine bugfixes."
     },
     "191": {
       "c1": "Lost een probleem op bij het navigeren naar tijdschermen."
@@ -395,5 +399,10 @@
   "theHoursBelowAreAlreadyIncludedInMyTotalHours": "Onderstaande categorieën zijn al opgenomen in mijn totaal uren.",
   "otherHoursDescription": "Hieronder is in totaal al opgenomen",
   "failedToOpenLink": "Kan URL niet openen",
-  "failedToOpenLink_description": "Controleer of u een geldige aanvraag heeft voor de verstrekte link. Deze fout betekent meestal dat er geen browser op uw apparaat is geïnstalleerd."
+  "failedToOpenLink_description": "Controleer of u een geldige aanvraag heeft voor de verstrekte link. Deze fout betekent meestal dat er geen browser op uw apparaat is geïnstalleerd.",
+  "noTimeReports": "Er is nog geen overzicht beschikbaar voor deze maand.",
+  "noTimeReports_description": "Voeg ten minste één tijdinvoer toe om meer details te bekijken.",
+  "cannotNavigateToFutureMonth": "Kan niet naar de toekomstige maand navigeren",
+  "cannotNavigateToFutureMonth_description": "Selecteer de huidige of vorige maand.",
+  "addATimeEntryToViewReport": "Voeg een tijdsinvoer toe om uw maandrapport te bekijken."
 }

@@ -49,7 +49,7 @@ If you find something you'd like to help with, please let me know you've began w
 - [`.tamagui`](/.tamagui) Configuration files for [tamagui](https://tamagui.dev/), a component library used in only portions of the project.
 - [`.vscode`](/.vscode) VSCode configuration files for extension.
 
-- [**`src`**](/react-native-lab) This is where all of the project source code lives.
+- [**`src`**](/src) This is where all of the project source code lives.
 
   - [`__tests__`](/src/__tests__) Where all of the tests for the project lives.
   - [`assets`](/src/assets) Where local assets such a images, icons, and [lottie](https://lottiefiles.com/) animations are stored.

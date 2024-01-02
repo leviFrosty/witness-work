@@ -15,12 +15,12 @@ JW Time is the easy way for Jehovah's Witnesses to manage their field service pr
 ### Preview
 
 <div float="left">
-<img src="./src/docs/screenshots/preview1.png" width="200">
-<img src="./src/docs/screenshots/preview2.png" width="200">
-<img src="./src/docs/screenshots/preview3.png" width="200">
-<img src="./src/docs/screenshots/preview4.png" width="200">
-<img src="./src/docs/screenshots/preview5.png" width="200">
-<img src="./src/docs/screenshots/preview6.png" width="200">
+<img src="./src/docs/screenshots/preview1.png" width="150">
+<img src="./src/docs/screenshots/preview2.png" width="150">
+<img src="./src/docs/screenshots/preview3.png" width="150">
+<img src="./src/docs/screenshots/preview4.png" width="150">
+<img src="./src/docs/screenshots/preview5.png" width="150">
+<img src="./src/docs/screenshots/preview6.png" width="150">
 </div>
 
 ## Want to Contribute?
@@ -41,6 +41,31 @@ Any assistance is welcome! Look at the following and see if anything looks inter
 2. [Project board](https://github.com/users/leviFrosty/projects/2)
 
 If you find something you'd like to help with, please let me know you've began work on it so it doesn't become double-worked. Thank you!
+
+#### Project Structure
+
+- [`.github`](/.github) Configuration files for Github actions.
+- [`.husky`](/.husky) Configuration files for [husky](https://typicode.github.io/husky/), a git hooks library.
+- [`.tamagui`](/.tamagui) Configuration files for [tamagui](https://tamagui.dev/), a component library used in only portions of the project.
+- [`.vscode`](/.vscode) VSCode configuration files for extension.
+
+- [**`src`**](/react-native-lab) This is where all of the project source code lives.
+
+  - [`__tests__`](/src/__tests__) Where all of the tests for the project lives.
+  - [`assets`](/src/assets) Where local assets such a images, icons, and [lottie](https://lottiefiles.com/) animations are stored.
+  - [`components`](/src/components) All of the components of the project.
+  - [`constants`](/src/constants) Variables that are constant throughout the app and do not change.
+  - [`contexts`](/src/contexts) Stores the [React Contexts](https://react.dev/learn/passing-data-deeply-with-context) that do not come from external dependencies.
+  - [`docs`](/src/docs) The documentation for this repository.
+  - [`hooks`](/src/hooks) Contains the custom [React Hooks](https://react.dev/learn/reusing-logic-with-custom-hooks#hook-names-always-start-with-use) for this project.
+  - [`lib`](/src/lib) Contains many functions that are useful for app functionality. Generally, shared functions should come from a `lib` instead of directly from a `component`.
+  - [`locales`](/src/locales) The translations files for each locale - `en` is the master.
+  - [`providers`](/src/providers) The [React Providers](https://react.dev/reference/react/createContext#provider) for the [`contexts`](/src/contexts).
+  - [`screens`](/src/screens) Contains all [screens](https://reactnative.dev/docs/navigation) that the app can display.
+  - [`scripts`](/src/scripts) Local CLI scripts for various CI/CD functions.
+  - [`stacks`](/src/stacks) All [native stacks](https://reactnavigation.org/docs/native-stack-navigator) of used for [React Native Navigation](https://reactnavigation.org/).
+  - [`stores`](/src/stores) The [AsyncStorage](https://github.com/react-native-async-storage/async-storage) APIs for all app data.
+  - [`types`](/src/types) Type definitions.
 
 ### Help Financially 💖
 

@@ -329,7 +329,11 @@
   "updates": {
     "192": {
       "c1": "Soluciona un problema por el cual algunos dispositivos tienen una barra de progreso desbordada.",
-      "c2": "Agrega un manejo más detallado de errores de enlace para dispositivos que carecen de las aplicaciones requeridas."
+      "c2": "Agrega un manejo más detallado de errores de enlace para dispositivos que carecen de las aplicaciones requeridas.",
+      "c3": "Agrega un manejo más detallado de errores de enlace para ciertos dispositivos que carecen de las aplicaciones requeridas.",
+      "c4": "Navegue directamente a un mes desde la sección de rutina mensual de la pantalla de inicio.",
+      "c5": "La pantalla Informes de tiempo maneja mejor los meses vacíos y futuros.",
+      "c6": "Correcciones de errores menores."
     },
     "191": {
       "c1": "Resuelve un problema al navegar a las pantallas de tiempo."
@@ -395,5 +399,10 @@
   "theHoursBelowAreAlreadyIncludedInMyTotalHours": "Las categorías siguientes ya están incluidas en mi total de horas.",
   "otherHoursDescription": "A continuación ya está incluido en total.",
   "failedToOpenLink": "No se pudo abrir la URL",
-  "failedToOpenLink_description": "Verifique que tenga una solicitud válida para el enlace proporcionado. Este error normalmente significa que no tienes un navegador instalado en tu dispositivo."
+  "failedToOpenLink_description": "Verifique que tenga una solicitud válida para el enlace proporcionado. Este error normalmente significa que no tienes un navegador instalado en tu dispositivo.",
+  "noTimeReports": "Aún no hay ningún resumen disponible para este mes.",
+  "noTimeReports_description": "Agregue al menos una entrada de tiempo para ver más detalles.",
+  "cannotNavigateToFutureMonth": "No se puede navegar al mes futuro",
+  "cannotNavigateToFutureMonth_description": "Seleccione el mes actual o anterior.",
+  "addATimeEntryToViewReport": "Agregue una entrada de tiempo para ver su informe mensual."
 }

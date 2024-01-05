@@ -23,6 +23,7 @@ import Wrapper from '../components/layout/Wrapper'
 import Divider from '../components/Divider'
 import Button from '../components/Button'
 import { FlashList } from '@shopify/flash-list'
+import AnnualServiceReportSummary from '../components/AnnualServiceReportSummary'
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Time Reports'>
 
@@ -123,6 +124,7 @@ const TimeReportsScreen = ({ route, navigation }: Props) => {
   }
 
   const selectedMonth = moment().month(month).year(year)
+  const serviceYear = month < 8 ? year - 1 : year
 
   return (
     <View
@@ -132,10 +134,16 @@ const TimeReportsScreen = ({ route, navigation }: Props) => {
         paddingBottom: insets.bottom,
       }}
     >
+      <AnnualServiceReportSummary
+        serviceYear={serviceYear}
+        month={month}
+        year={year}
+      />
       <View
         style={{
           paddingHorizontal: 15,
           paddingTop: 20,
+          paddingBottom: 10,
           gap: 30,
         }}
       >
@@ -177,7 +185,7 @@ const TimeReportsScreen = ({ route, navigation }: Props) => {
       </View>
       <ScrollView
         contentContainerStyle={{
-          paddingTop: 30,
+          paddingTop: 20,
           paddingBottom: insets.bottom + 30,
         }}
         contentInset={{ top: 0, right: 0, bottom: insets.bottom + 30, left: 0 }}

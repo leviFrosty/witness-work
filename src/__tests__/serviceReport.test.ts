@@ -3,6 +3,7 @@ import {
   calculateHoursRemaining,
   calculateProgress,
   getTimeAsMinutesForHourglass,
+  serviceReportHoursPerMonthToGoal,
   totalHoursForCurrentMonth,
   totalHoursForSpecificMonth,
 } from '../lib/serviceReport'
@@ -326,6 +327,26 @@ describe('service report', () => {
       const minutes = getTimeAsMinutesForHourglass(publisher, true, 10)
 
       expect(minutes).not.toBe(10)
+    })
+  })
+
+  describe('serviceYearHoursPerMonthToGoal', () => {
+    it('should be the publishers goal hours if 0 entries for year', () => {
+      const serviceReports: ServiceReport[] = []
+
+      const goalHours = 50
+
+      const hoursPerMonthToGoal = serviceReportHoursPerMonthToGoal({
+        serviceReports,
+        currentDate: {
+          month: 0,
+          year: 2023,
+        },
+        goalHours: 50,
+        serviceYear: 2022,
+      })
+
+      expect(hoursPerMonthToGoal).toBe(goalHours)
     })
   })
 })

@@ -219,3 +219,86 @@ export const getTimeAsMinutesForHourglass = (
   const minutes = (hours || 0) * 60
   return minutes
 }
+
+export const serviceReportHoursPerMonthToGoal = ({
+  currentDate,
+  goalHours,
+  serviceReports,
+  serviceYear,
+}: {
+  serviceReports: ServiceReport[]
+  currentDate: {
+    month: number
+    year: number
+  }
+  goalHours: number
+  serviceYear: number
+}) => {
+  const { minDate, maxDate } = serviceYearsDateRange(serviceYear)
+  const annualGoalHours = goalHours * 12
+  // const currentMoment = moment().year(currentDate.year).month(currentDate.month)
+  const monthsRemaining = moment(maxDate).diff(currentDate, 'months')
+
+  const totalServiceHours = totalHoursForServiceYear(
+    serviceReports,
+    serviceYear
+  )
+
+  const minutesUpToCurrentMonth = serviceReports.reduce((prev, current) => {
+    const date = moment(current.date)
+    if (
+      date.isBetween(
+        minDate,
+        moment()
+          .year(currentDate.year)
+          .month(currentDate.month + 1),
+        'day',
+        '[]'
+      )
+    ) {
+      return prev + current.hours * 60
+    }
+    return prev
+  }, 0)
+
+  const hoursUpToCurrentMonth = Math.floor(minutesUpToCurrentMonth / 60)
+
+  console.log('Hours So Far This Service Year', hoursUpToCurrentMonth)
+
+  const remainingGoalHours = annualGoalHours - monthsRemaining * goalHours
+  return Math.round((remainingGoalHours - totalServiceHours) / monthsRemaining)
+}
+
+export const serviceYearsDateRange = (serviceYear: number) => {
+  const minDate = moment().year(serviceYear).month(8).day(1)
+  const maxDate = moment()
+    .year(serviceYear + 1)
+    .month(7)
+    .day(31)
+
+  return { minDate, maxDate }
+}
+
+export const reportsForServiceYear = (
+  serviceReports: ServiceReport[],
+  serviceYear: number
+) => {
+  const { minDate, maxDate } = serviceYearsDateRange(serviceYear)
+
+  return serviceReports.filter((report) => {
+    return moment(report.date).isBetween(minDate, maxDate, 'day', '[]')
+  })
+}
+
+export const totalHoursForServiceYear = (
+  serviceReports: ServiceReport[],
+  serviceYear: number
+) => {
+  const reports = reportsForServiceYear(serviceReports, serviceYear)
+
+  const minutes = reports.reduce((prev, current) => {
+    return prev + current.hours * 60
+  }, 0)
+
+  return Math.floor(minutes / 60)
+}

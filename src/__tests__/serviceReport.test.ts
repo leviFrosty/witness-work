@@ -339,8 +339,8 @@ describe('service report', () => {
       const hoursPerMonthToGoal = serviceReportHoursPerMonthToGoal({
         serviceReports,
         currentDate: {
-          month: 0,
-          year: 2023,
+          month: 7,
+          year: 2022,
         },
         goalHours: 50,
         serviceYear: 2022,

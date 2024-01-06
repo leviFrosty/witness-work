@@ -58,7 +58,7 @@ const ExportTimeSheet = ({
 
   const hours = useMemo(
     () =>
-      month && year
+      month !== undefined && year !== undefined
         ? totalHoursForSpecificMonth(serviceReports, month, year)
         : null,
     [month, serviceReports, year]
@@ -66,7 +66,7 @@ const ExportTimeSheet = ({
 
   const studiesForMonth = useMemo(
     () =>
-      month && year
+      month !== undefined && year !== undefined
         ? getStudiesForGivenMonth({
             contacts,
             conversations,
@@ -78,7 +78,7 @@ const ExportTimeSheet = ({
 
   const wentOutForMonth = useMemo(
     () =>
-      month && year
+      month !== undefined && year !== undefined
         ? hasServiceReportsForMonth(serviceReports, month, year)
         : null,
     [month, serviceReports, year]
@@ -110,7 +110,7 @@ const ExportTimeSheet = ({
       }
 
       const reportAsString = () => {
-        if (!month || !year) {
+        if (month === undefined || year === undefined) {
           return ''
         }
 

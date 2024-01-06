@@ -404,5 +404,7 @@
   "noTimeReports_description": "Aggiungi almeno una voce per visualizzare maggiori dettagli.",
   "cannotNavigateToFutureMonth": "Impossibile passare al mese futuro",
   "cannotNavigateToFutureMonth_description": "Seleziona il mese corrente o quello precedente.",
-  "addATimeEntryToViewReport": "Aggiungi una voce temporale per visualizzare il tuo rapporto mensile."
+  "addATimeEntryToViewReport": "Aggiungi una voce temporale per visualizzare il tuo rapporto mensile.",
+  "serviceYear": "Anno di servizio",
+  "hoursPerMonthToGoal": "ore al mese rispetto all'obiettivo annuale"
 }

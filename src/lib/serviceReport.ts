@@ -234,47 +234,32 @@ export const serviceReportHoursPerMonthToGoal = ({
   goalHours: number
   serviceYear: number
 }) => {
-  const { minDate, maxDate } = serviceYearsDateRange(serviceYear)
+  const { maxDate } = serviceYearsDateRange(serviceYear)
   const annualGoalHours = goalHours * 12
-  // const currentMoment = moment().year(currentDate.year).month(currentDate.month)
-  const monthsRemaining = moment(maxDate).diff(currentDate, 'months')
 
-  const totalServiceHours = totalHoursForServiceYear(
+  const month = moment().month(currentDate.month).year(currentDate.year)
+
+  const monthsRemaining =
+    moment(maxDate).diff(month, 'months') === 0
+      ? 1
+      : moment(maxDate).diff(month, 'months')
+
+  const totalHoursForServiceYear = getTotalHoursForServiceYear(
     serviceReports,
     serviceYear
   )
 
-  const minutesUpToCurrentMonth = serviceReports.reduce((prev, current) => {
-    const date = moment(current.date)
-    if (
-      date.isBetween(
-        minDate,
-        moment()
-          .year(currentDate.year)
-          .month(currentDate.month + 1),
-        'day',
-        '[]'
-      )
-    ) {
-      return prev + current.hours * 60
-    }
-    return prev
-  }, 0)
-
-  const hoursUpToCurrentMonth = Math.floor(minutesUpToCurrentMonth / 60)
-
-  console.log('Hours So Far This Service Year', hoursUpToCurrentMonth)
-
-  const remainingGoalHours = annualGoalHours - monthsRemaining * goalHours
-  return Math.round((remainingGoalHours - totalServiceHours) / monthsRemaining)
+  return Math.round(
+    (annualGoalHours - totalHoursForServiceYear) / monthsRemaining
+  )
 }
 
 export const serviceYearsDateRange = (serviceYear: number) => {
-  const minDate = moment().year(serviceYear).month(8).day(1)
+  const minDate = moment().month(8).year(serviceYear).startOf('month')
   const maxDate = moment()
-    .year(serviceYear + 1)
     .month(7)
-    .day(31)
+    .year(serviceYear + 1)
+    .endOf('month')
 
   return { minDate, maxDate }
 }
@@ -290,7 +275,7 @@ export const reportsForServiceYear = (
   })
 }
 
-export const totalHoursForServiceYear = (
+export const getTotalHoursForServiceYear = (
   serviceReports: ServiceReport[],
   serviceYear: number
 ) => {

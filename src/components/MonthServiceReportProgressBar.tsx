@@ -110,7 +110,11 @@ interface ProgressBarProps {
   minimal?: boolean
 }
 
-const ProgressBar = ({ month, year, minimal }: ProgressBarProps) => {
+const MonthServiceReportProgressBar = ({
+  month,
+  year,
+  minimal,
+}: ProgressBarProps) => {
   const theme = useTheme()
   const { serviceReports } = useServiceReport()
   const { publisher, publisherHours } = usePreferences()
@@ -271,4 +275,4 @@ const ProgressBar = ({ month, year, minimal }: ProgressBarProps) => {
   )
 }
 
-export default ProgressBar
+export default MonthServiceReportProgressBar

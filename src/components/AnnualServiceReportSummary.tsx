@@ -2,9 +2,18 @@ import { useMemo } from 'react'
 import useServiceReport from '../stores/serviceReport'
 import Card from './Card'
 import Text from './MyText'
-import moment from 'moment'
 import usePublisher from '../hooks/usePublisher'
-import { serviceYearsDateRange } from '../lib/serviceReport'
+import {
+  getTotalHoursForServiceYear,
+  serviceReportHoursPerMonthToGoal,
+} from '../lib/serviceReport'
+import SimpleProgressBar from './SimpleProgressBar'
+import { View } from 'react-native'
+import i18n from '../lib/locales'
+import useTheme from '../contexts/theme'
+import Badge from './Badge'
+import IconButton from './IconButton'
+import { faStopwatch } from '@fortawesome/free-solid-svg-icons'
 
 /** Renders all service reports for the given year as a summary. */
 interface AnnualServiceReportSummaryProps {
@@ -28,21 +37,85 @@ const AnnualServiceReportSummary = ({
   year,
   month,
 }: AnnualServiceReportSummaryProps) => {
+  const theme = useTheme()
   const { annualGoalHours, goalHours } = usePublisher()
-  const { minDate, maxDate } = serviceYearsDateRange(serviceYear)
+  // const { minDate, maxDate } = serviceYearsDateRange(serviceYear)
+  const { serviceReports } = useServiceReport()
+
+  const totalHoursForServiceYear = getTotalHoursForServiceYear(
+    serviceReports,
+    serviceYear
+  )
 
   const percentage = useMemo(() => {
-    return (totalServiceHours / annualGoalHours).toFixed(2)
-  }, [totalServiceHours, annualGoalHours])
+    return parseFloat(
+      (totalHoursForServiceYear / annualGoalHours).toPrecision(3)
+    )
+  }, [totalHoursForServiceYear, annualGoalHours])
+
+  const hoursPerMonthToGoal = useMemo(() => {
+    return serviceReportHoursPerMonthToGoal({
+      currentDate: {
+        month,
+        year,
+      },
+      goalHours,
+      serviceReports,
+      serviceYear,
+    })
+  }, [goalHours, month, serviceReports, serviceYear, year])
 
   return (
     <Card>
-      <Text>Service Year: {serviceYear}</Text>
-      <Text>Reports: {reports.length}</Text>
-      <Text>Hours: {totalServiceHours}</Text>
-      <Text>Goal Hours: {annualGoalHours}</Text>
-      <Text>Percentage: {percentage}</Text>
-      <Text>Hours Per Month To Goal: {hoursPerMonthToGoal}</Text>
+      <View
+        style={{
+          flexDirection: 'row',
+          gap: 5,
+          alignItems: 'center',
+          justifyContent: 'space-between',
+        }}
+      >
+        <Text
+          style={{
+            fontSize: theme.fontSize('md'),
+            fontFamily: theme.fonts.semiBold,
+          }}
+        >
+          {serviceYear}-{serviceYear + 1}
+        </Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
+          <Text
+            style={{
+              fontSize: theme.fontSize('sm'),
+              color: theme.colors.textAlt,
+              fontFamily: theme.fonts.semiBold,
+            }}
+          >
+            {`${totalHoursForServiceYear} ${i18n.t(
+              'of'
+            )} ${annualGoalHours} ${i18n.t('hours')}`}
+          </Text>
+        </View>
+      </View>
+      <SimpleProgressBar
+        percentage={percentage}
+        height={10}
+        color={theme.colors.textAlt}
+      />
+      <View style={{ flexDirection: 'row' }}>
+        <Badge color={theme.colors.backgroundLighter}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
+            <IconButton icon={faStopwatch} size={10} />
+            <Text
+              style={{
+                fontSize: theme.fontSize('sm'),
+              }}
+            >
+              {hoursPerMonthToGoal} {i18n.t('hoursPerMonthToGoal')}
+            </Text>
+          </View>
+        </Badge>
+      </View>
     </Card>
   )
 }

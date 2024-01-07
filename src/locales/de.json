@@ -327,6 +327,11 @@
   "new": "Neu",
   "bugFixes": "Fehlerbehebung",
   "updates": {
+    "1100": {
+      "c1": "Fügt einen Jahresbericht zum Bildschirm „Zeitberichte“ hinzu! Verfolgen Sie den Fortschritt Ihres Dienstjahres auf einen Blick.",
+      "c2": "Beim Hinzufügen von Zeit über den Bildschirm „Zeitberichte“ wird der Bericht jetzt standardmäßig auf den ausgewählten Monat eingestellt.",
+      "c3": "Behebt ein Problem beim Exportieren des Januar-Serviceberichts."
+    },
     "192": {
       "c1": "Behebt ein Problem, bei dem einige Geräte einen überlaufenden Fortschrittsbalken haben.",
       "c2": "Fügt eine ausführlichere Behandlung von Verbindungsfehlern für Geräte hinzu, für die keine erforderlichen Anwendungen erforderlich sind.",
@@ -404,5 +409,7 @@
   "noTimeReports_description": "Fügen Sie mindestens einen Zeiteintrag hinzu, um weitere Details anzuzeigen.",
   "cannotNavigateToFutureMonth": "Die Navigation zum zukünftigen Monat ist nicht möglich",
   "cannotNavigateToFutureMonth_description": "Wählen Sie den aktuellen oder vorherigen Monat aus.",
-  "addATimeEntryToViewReport": "Fügen Sie einen Zeiteintrag hinzu, um Ihren Monatsbericht anzuzeigen."
+  "addATimeEntryToViewReport": "Fügen Sie einen Zeiteintrag hinzu, um Ihren Monatsbericht anzuzeigen.",
+  "serviceYear": "Dienstjahr",
+  "hoursPerMonthToGoal": "Stunden pro Monat bis zum Jahresziel"
 }

@@ -376,6 +376,11 @@
       "c4": "Passa direttamente al mese dalla sezione della routine mensile della schermata iniziale.",
       "c5": "La schermata Rapporti temporali gestisce meglio i mesi vuoti e futuri.",
       "c6": "Correzioni di bug minori."
+    },
+    "1100": {
+      "c1": "Aggiunge il rapporto annuale alla schermata Rapporti temporali! Tieni traccia dei progressi del tuo anno di servizio a colpo d'occhio.",
+      "c2": "L'aggiunta di tempo dalla schermata Rapporti temporali ora imposta automaticamente il rapporto sul mese selezionato.",
+      "c3": "Risolve un problema durante l'esportazione del rapporto di servizio di gennaio."
     }
   },
   "installed": "Installato",

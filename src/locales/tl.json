@@ -376,6 +376,11 @@
       "c4": "Direktang mag-navigate sa isang buwan mula sa buwanang routine na seksyon ng home screen.",
       "c5": "Mas mahusay na pinangangasiwaan ng screen ng Time Reports ang mga walang laman at mga buwan sa hinaharap.",
       "c6": "Mga menor de edad na pag-aayos ng bug."
+    },
+    "1100": {
+      "c1": "Nagdaragdag ng taunang ulat sa screen ng Time Reports! Subaybayan ang iyong pag-unlad sa taon ng paglilingkod sa isang sulyap.",
+      "c2": "Ang pagdaragdag ng oras mula sa screen ng Time Reports ay magde-default na ngayon ng ulat sa napiling buwan.",
+      "c3": "Inaayos ang isang isyu sa pag-export ng ulat ng serbisyo sa Enero."
     }
   },
   "installed": "Naka-install",

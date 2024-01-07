@@ -327,6 +327,11 @@
   "new": "New",
   "bugFixes": "Bug Fixes",
   "updates": {
+    "1100": {
+      "c1": "Adds annual report to Time Reports screen! Keep track of your service year progress at a glance.",
+      "c2": "Adding time from Time Reports screen now defaults the report to the selected month.",
+      "c3": "Fixes an issue exporting January service report."
+    },
     "192": {
       "c1": "Now tap on a conversation row to edit, or swipe left as before.",
       "c2": "Fixes an issue where some devices have an overflowing progress bar.",

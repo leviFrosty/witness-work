@@ -376,6 +376,11 @@
       "c4": "Accédez directement à un mois à partir de la section de routine mensuelle de l'écran d'accueil.",
       "c5": "L’écran des rapports de temps gère mieux les mois vides et futurs.",
       "c6": "Corrections de bugs mineurs."
+    },
+    "1100": {
+      "c1": "Ajoute le rapport annuel à l'écran Time Reports ! Gardez une trace de la progression de votre année de service en un coup d’œil.",
+      "c2": "L'ajout de temps à partir de l'écran Rapports de temps définit désormais par défaut le rapport sur le mois sélectionné.",
+      "c3": "Résout un problème lors de l’exportation du rapport de service de janvier."
     }
   },
   "installed": "installée",

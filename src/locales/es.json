@@ -327,6 +327,11 @@
   "new": "Nuevo",
   "bugFixes": "Corrección de errores",
   "updates": {
+    "1100": {
+      "c1": "¡Agrega el informe anual a la pantalla Informes de tiempo! Realice un seguimiento del progreso de su año de servicio de un vistazo.",
+      "c2": "Al agregar tiempo desde la pantalla Informes de tiempo, el informe ahora se establece de forma predeterminada en el mes seleccionado.",
+      "c3": "Soluciona un problema al exportar el informe de servicio de enero."
+    },
     "192": {
       "c1": "Soluciona un problema por el cual algunos dispositivos tienen una barra de progreso desbordada.",
       "c2": "Agrega un manejo más detallado de errores de enlace para dispositivos que carecen de las aplicaciones requeridas.",
@@ -404,5 +409,7 @@
   "noTimeReports_description": "Agregue al menos una entrada de tiempo para ver más detalles.",
   "cannotNavigateToFutureMonth": "No se puede navegar al mes futuro",
   "cannotNavigateToFutureMonth_description": "Seleccione el mes actual o anterior.",
-  "addATimeEntryToViewReport": "Agregue una entrada de tiempo para ver su informe mensual."
+  "addATimeEntryToViewReport": "Agregue una entrada de tiempo para ver su informe mensual.",
+  "serviceYear": "Año de servicio",
+  "hoursPerMonthToGoal": "horas por mes a meta anual"
 }

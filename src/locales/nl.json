@@ -327,6 +327,11 @@
   "new": "Nieuw",
   "bugFixes": "Bugfixes",
   "updates": {
+    "1100": {
+      "c1": "Voegt een jaarverslag toe aan het tijdrapportenscherm! Houd in één oogopslag de voortgang van uw servicejaar bij.",
+      "c2": "Als u tijd toevoegt vanuit het scherm Tijdrapporten, wordt het rapport nu standaard ingesteld op de geselecteerde maand.",
+      "c3": "Er is een probleem opgelost bij het exporteren van het servicerapport van januari."
+    },
     "192": {
       "c1": "Er is een probleem opgelost waarbij sommige apparaten een overvolle voortgangsbalk hebben.",
       "c2": "Voegt een uitgebreidere afhandeling van verbindingsfouten toe voor apparaten waarop de vereiste applicaties ontbreken.",
@@ -404,5 +409,7 @@
   "noTimeReports_description": "Voeg ten minste één tijdinvoer toe om meer details te bekijken.",
   "cannotNavigateToFutureMonth": "Kan niet naar de toekomstige maand navigeren",
   "cannotNavigateToFutureMonth_description": "Selecteer de huidige of vorige maand.",
-  "addATimeEntryToViewReport": "Voeg een tijdsinvoer toe om uw maandrapport te bekijken."
+  "addATimeEntryToViewReport": "Voeg een tijdsinvoer toe om uw maandrapport te bekijken.",
+  "serviceYear": "Dienstjaar",
+  "hoursPerMonthToGoal": "uur per maand naar jaardoel"
 }

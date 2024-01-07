@@ -327,6 +327,11 @@
   "new": "Novo",
   "bugFixes": "Correções de bugs",
   "updates": {
+    "1100": {
+      "c1": "Adiciona relatório anual à tela Relatórios de Tempo! Acompanhe rapidamente o progresso do seu ano de serviço.",
+      "c2": "Adicionar tempo na tela Relatórios de tempo agora padroniza o relatório para o mês selecionado.",
+      "c3": "Corrige um problema ao exportar o relatório de serviço de janeiro."
+    },
     "192": {
       "c1": "Corrige um problema em que alguns dispositivos apresentam uma barra de progresso transbordante.",
       "c2": "Adiciona tratamento mais detalhado de erros de link para dispositivos sem aplicativos necessários.",
@@ -404,5 +409,7 @@
   "noTimeReports_description": "Adicione pelo menos uma entrada de tempo para ver mais detalhes.",
   "cannotNavigateToFutureMonth": "Não é possível navegar para o mês futuro",
   "cannotNavigateToFutureMonth_description": "Selecione o mês atual ou anterior.",
-  "addATimeEntryToViewReport": "Adicione uma entrada de tempo para visualizar seu relatório mensal."
+  "addATimeEntryToViewReport": "Adicione uma entrada de tempo para visualizar seu relatório mensal.",
+  "serviceYear": "Ano de serviço",
+  "hoursPerMonthToGoal": "horas por mês para meta anual"
 }

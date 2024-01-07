@@ -327,6 +327,11 @@
   "new": "Nouveau",
   "bugFixes": "Corrections de bugs",
   "updates": {
+    "1100": {
+      "c1": "Ajoute le rapport annuel à l'écran Time Reports ! Gardez une trace de la progression de votre année de service en un coup d’œil.",
+      "c2": "L'ajout de temps à partir de l'écran Rapports de temps définit désormais par défaut le rapport sur le mois sélectionné.",
+      "c3": "Résout un problème lors de l’exportation du rapport de service de janvier."
+    },
     "192": {
       "c1": "Résout un problème où certains appareils ont une barre de progression débordante.",
       "c2": "Ajoute une gestion plus détaillée des erreurs de lien pour les appareils dépourvus des applications requises.",
@@ -404,5 +409,7 @@
   "noTimeReports_description": "Ajoutez au moins une entrée de temps pour afficher plus de détails.",
   "cannotNavigateToFutureMonth": "Impossible d'accéder au mois suivant",
   "cannotNavigateToFutureMonth_description": "Sélectionnez le mois en cours ou précédent.",
-  "addATimeEntryToViewReport": "Ajoutez une entrée de temps pour afficher votre rapport mensuel."
+  "addATimeEntryToViewReport": "Ajoutez une entrée de temps pour afficher votre rapport mensuel.",
+  "serviceYear": "Année de service",
+  "hoursPerMonthToGoal": "heures par mois par rapport à l'objectif annuel"
 }

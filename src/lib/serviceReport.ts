@@ -229,6 +229,7 @@ export const serviceReportHoursPerMonthToGoal = ({
   serviceReports: ServiceReport[]
   currentDate: {
     month: number
+
     year: number
   }
   goalHours: number
@@ -239,10 +240,19 @@ export const serviceReportHoursPerMonthToGoal = ({
 
   const month = moment().month(currentDate.month).year(currentDate.year)
 
+  const monthHasReports = hasServiceReportsForMonth(
+    serviceReports,
+    currentDate.month,
+    currentDate.year
+  )
+
+  const monthsRemainingOffset = !monthHasReports ? 1 : 0
+
+  const actualMonthsRemaining =
+    moment(maxDate).diff(month, 'months') + monthsRemainingOffset
+
   const monthsRemaining =
-    moment(maxDate).diff(month, 'months') === 0
-      ? 1
-      : moment(maxDate).diff(month, 'months')
+    actualMonthsRemaining === 0 ? 1 : actualMonthsRemaining
 
   const totalHoursForServiceYear = getTotalHoursForServiceYear(
     serviceReports,

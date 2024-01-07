@@ -331,7 +331,7 @@ describe('service report', () => {
   })
 
   describe('serviceYearHoursPerMonthToGoal', () => {
-    it('should be the publishers goal hours if 0 entries for year', () => {
+    it("should be the publisher's goal hours if 0 entries for year", () => {
       const serviceReports: ServiceReport[] = []
 
       const goalHours = 50
@@ -339,14 +339,146 @@ describe('service report', () => {
       const hoursPerMonthToGoal = serviceReportHoursPerMonthToGoal({
         serviceReports,
         currentDate: {
-          month: 7,
+          month: 8,
           year: 2022,
         },
-        goalHours: 50,
+        goalHours,
         serviceYear: 2022,
       })
 
       expect(hoursPerMonthToGoal).toBe(goalHours)
+    })
+
+    it('the hours/mo should increase if the user has less than the goal hours for the first month', () => {
+      const serviceReports: ServiceReport[] = [
+        {
+          date: moment().month(8).year(2022).toDate(),
+          hours: 25,
+          id: '1',
+          minutes: 0,
+        },
+      ]
+
+      const goalHours = 50
+
+      const hoursPerMonthToGoal = serviceReportHoursPerMonthToGoal({
+        serviceReports,
+        currentDate: {
+          month: 8,
+          year: 2022,
+        },
+        goalHours,
+        serviceYear: 2022,
+      })
+
+      expect(hoursPerMonthToGoal).toBeGreaterThan(goalHours)
+    })
+
+    it("the hours/mo should stay at goal hour if they hit exactly the goal last month and they're on the second month", () => {
+      const serviceReports: ServiceReport[] = [
+        {
+          date: moment().month(8).year(2022).toDate(),
+          hours: 50,
+          id: '1',
+          minutes: 0,
+        },
+      ]
+
+      const goalHours = 50
+
+      const hoursPerMonthToGoal = serviceReportHoursPerMonthToGoal({
+        serviceReports,
+        currentDate: {
+          month: 9,
+          year: 2022,
+        },
+        goalHours,
+        serviceYear: 2022,
+      })
+
+      expect(hoursPerMonthToGoal).toBe(goalHours)
+    })
+
+    it("should return exactly the annual goal hours if you're on the last month and haven't got out the entire service year", () => {
+      const serviceReports: ServiceReport[] = []
+
+      const goalHours = 50
+      const annualGoalHours = goalHours * 12
+
+      const hoursPerMonthToGoal = serviceReportHoursPerMonthToGoal({
+        serviceReports,
+        currentDate: {
+          month: 7,
+          year: 2023,
+        },
+        goalHours,
+        serviceYear: 2022,
+      })
+
+      expect(hoursPerMonthToGoal).toBe(annualGoalHours)
+    })
+
+    it("should return only the hours remaining if you're on the last month", () => {
+      const hours = 500
+      const serviceReports: ServiceReport[] = [
+        {
+          date: moment().month(8).year(2022).toDate(),
+          hours,
+          id: '1',
+          minutes: 0,
+        },
+      ]
+
+      const goalHours = 50
+      const annualGoalHours = goalHours * 12
+
+      const hoursPerMonthToGoal = serviceReportHoursPerMonthToGoal({
+        serviceReports,
+        currentDate: {
+          month: 7,
+          year: 2023,
+        },
+        goalHours,
+        serviceYear: 2022,
+      })
+
+      expect(hoursPerMonthToGoal).toBe(annualGoalHours - hours)
+    })
+
+    it("should return only the hours remaining if you're on the last month and made a report on the last month", () => {
+      const report1Hours = 500
+      const report2Hours = 20
+      const serviceReports: ServiceReport[] = [
+        {
+          date: moment().month(8).year(2022).toDate(),
+          hours: report1Hours,
+          id: '1',
+          minutes: 0,
+        },
+        {
+          date: moment().month(7).year(2023).toDate(),
+          hours: report2Hours,
+          id: '2',
+          minutes: 0,
+        },
+      ]
+
+      const goalHours = 50
+      const annualGoalHours = goalHours * 12
+
+      const hoursPerMonthToGoal = serviceReportHoursPerMonthToGoal({
+        serviceReports,
+        currentDate: {
+          month: 7,
+          year: 2023,
+        },
+        goalHours,
+        serviceYear: 2022,
+      })
+
+      expect(hoursPerMonthToGoal).toBe(
+        annualGoalHours - report1Hours - report2Hours
+      )
     })
   })
 })

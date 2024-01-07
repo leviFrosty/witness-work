@@ -327,6 +327,11 @@
   "new": "Mới",
   "bugFixes": "Sửa lỗi",
   "updates": {
+    "1100": {
+      "c1": "Thêm báo cáo hàng năm vào màn hình Báo cáo Thời gian! Theo dõi nhanh tiến độ năm dịch vụ của bạn.",
+      "c2": "Việc thêm thời gian từ màn hình Báo cáo thời gian giờ đây sẽ mặc định báo cáo cho tháng đã chọn.",
+      "c3": "Khắc phục sự cố khi xuất báo cáo dịch vụ tháng 1."
+    },
     "192": {
       "c1": "Khắc phục sự cố trong đó một số thiết bị có thanh tiến trình tràn.",
       "c2": "Bổ sung thêm cách xử lý chi tiết hơn về lỗi liên kết cho các thiết bị thiếu ứng dụng cần thiết.",
@@ -404,5 +409,7 @@
   "noTimeReports_description": "Thêm ít nhất một mục thời gian để xem thêm chi tiết.",
   "cannotNavigateToFutureMonth": "Không thể điều hướng đến tháng trong tương lai",
   "cannotNavigateToFutureMonth_description": "Chọn tháng hiện tại hoặc tháng trước.",
-  "addATimeEntryToViewReport": "Thêm mục thời gian để xem báo cáo hàng tháng của bạn."
+  "addATimeEntryToViewReport": "Thêm mục thời gian để xem báo cáo hàng tháng của bạn.",
+  "serviceYear": "Năm phục vụ",
+  "hoursPerMonthToGoal": "giờ mỗi tháng cho mục tiêu hàng năm"
 }

@@ -404,5 +404,7 @@
   "noTimeReports_description": "至少添加一个时间条目以查看更多详细信息。",
   "cannotNavigateToFutureMonth": "无法导航到未来月份",
   "cannotNavigateToFutureMonth_description": "选择当前或上个月。",
-  "addATimeEntryToViewReport": "添加时间条目以查看您的月度报告。"
+  "addATimeEntryToViewReport": "添加时间条目以查看您的月度报告。",
+  "serviceYear": "服务年限",
+  "hoursPerMonthToGoal": "每月工作小时数达到年度目标"
 }

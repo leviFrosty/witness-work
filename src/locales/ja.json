@@ -404,5 +404,7 @@
   "noTimeReports_description": "詳細を表示するには、少なくとも 1 つのタイム エントリを追加します。",
   "cannotNavigateToFutureMonth": "将来の月に移動できません",
   "cannotNavigateToFutureMonth_description": "現在または前月を選択します。",
-  "addATimeEntryToViewReport": "月次レポートを表示するには、時間エントリを追加します。"
+  "addATimeEntryToViewReport": "月次レポートを表示するには、時間エントリを追加します。",
+  "serviceYear": "勤務年",
+  "hoursPerMonthToGoal": "年間目標までの月あたりの時間数"
 }

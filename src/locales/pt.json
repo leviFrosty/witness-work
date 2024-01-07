@@ -404,5 +404,7 @@
   "noTimeReports_description": "Adicione pelo menos uma entrada de tempo para ver mais detalhes.",
   "cannotNavigateToFutureMonth": "Não é possível navegar para o mês futuro",
   "cannotNavigateToFutureMonth_description": "Selecione o mês atual ou anterior.",
-  "addATimeEntryToViewReport": "Adicione uma entrada de tempo para visualizar seu relatório mensal."
+  "addATimeEntryToViewReport": "Adicione uma entrada de tempo para visualizar seu relatório mensal.",
+  "serviceYear": "Ano de serviço",
+  "hoursPerMonthToGoal": "horas por mês para meta anual"
 }

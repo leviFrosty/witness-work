@@ -3,7 +3,7 @@ import Button from './Button'
 import Text from './MyText'
 import i18n from '../lib/locales'
 import Divider from './Divider'
-import ProgressBar from './ProgressBar'
+import MonthServiceReportProgressBar from './MonthServiceReportProgressBar'
 import { faArrowUpFromBracket } from '@fortawesome/free-solid-svg-icons'
 import IconButton from './IconButton'
 import {
@@ -119,7 +119,12 @@ const MonthSummary = ({
               marginBottom: 3,
             }}
           >
-            <Text style={{ fontFamily: theme.fonts.semiBold }}>
+            <Text
+              style={{
+                fontFamily: theme.fonts.semiBold,
+                fontSize: theme.fontSize('xl'),
+              }}
+            >
               {i18n.t('monthDetails')}
             </Text>
             <IconButton
@@ -147,7 +152,7 @@ const MonthSummary = ({
                 'hoursToGoal'
               )}`}{' '}
             </Text>
-            <ProgressBar month={month} year={year} />
+            <MonthServiceReportProgressBar month={month} year={year} />
           </View>
         </View>
         <View style={{ gap: 5 }}>

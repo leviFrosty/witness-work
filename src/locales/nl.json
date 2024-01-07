@@ -376,6 +376,11 @@
       "c4": "Navigeer rechtstreeks naar een maand vanuit het maandelijkse routinegedeelte van het startscherm.",
       "c5": "Het scherm Tijdrapporten kan beter omgaan met lege en toekomstige maanden.",
       "c6": "Kleine bugfixes."
+    },
+    "1100": {
+      "c1": "Voegt een jaarverslag toe aan het tijdrapportenscherm! Houd in één oogopslag de voortgang van uw servicejaar bij.",
+      "c2": "Als u tijd toevoegt vanuit het scherm Tijdrapporten, wordt het rapport nu standaard ingesteld op de geselecteerde maand.",
+      "c3": "Er is een probleem opgelost bij het exporteren van het servicerapport van januari."
     }
   },
   "installed": "Geïnstalleerd",
@@ -404,5 +409,7 @@
   "noTimeReports_description": "Voeg ten minste één tijdinvoer toe om meer details te bekijken.",
   "cannotNavigateToFutureMonth": "Kan niet naar de toekomstige maand navigeren",
   "cannotNavigateToFutureMonth_description": "Selecteer de huidige of vorige maand.",
-  "addATimeEntryToViewReport": "Voeg een tijdsinvoer toe om uw maandrapport te bekijken."
+  "addATimeEntryToViewReport": "Voeg een tijdsinvoer toe om uw maandrapport te bekijken.",
+  "serviceYear": "Dienstjaar",
+  "hoursPerMonthToGoal": "uur per maand naar jaardoel"
 }

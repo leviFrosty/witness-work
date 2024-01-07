@@ -376,6 +376,11 @@
       "c4": "홈 화면의 월간 루틴 섹션에서 한 달로 바로 이동하세요.",
       "c5": "시간 보고서 화면은 비어 있는 달과 향후 달을 더 잘 처리합니다.",
       "c6": "사소한 버그 수정."
+    },
+    "1100": {
+      "c1": "시간 보고서 화면에 연간 보고서를 추가합니다! 봉사 연도 진행 상황을 한눈에 추적하세요.",
+      "c2": "이제 시간 보고서 화면에서 시간을 추가하면 보고서가 선택한 달로 기본 설정됩니다.",
+      "c3": "1월 서비스 보고서를 내보내는 문제를 해결합니다."
     }
   },
   "installed": "설치됨",
@@ -404,5 +409,7 @@
   "noTimeReports_description": "자세한 내용을 보려면 시간 항목을 하나 이상 추가하세요.",
   "cannotNavigateToFutureMonth": "다음 달로 이동할 수 없습니다.",
   "cannotNavigateToFutureMonth_description": "이번 달 또는 이전 달을 선택합니다.",
-  "addATimeEntryToViewReport": "월별 보고서를 보려면 시간 항목을 추가하세요."
+  "addATimeEntryToViewReport": "월별 보고서를 보려면 시간 항목을 추가하세요.",
+  "serviceYear": "봉사연도",
+  "hoursPerMonthToGoal": "연간 목표까지 월별 시간"
 }

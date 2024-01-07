@@ -42,7 +42,7 @@ const darkModeColors: Colors = {
   accent2Alt: '#FFF3F2',
   accent3: '#159fb0',
   accent3Alt: '#003D46',
-  error: '#E30909',
+  error: '#F20A0A',
   errorAlt: '#FA6868',
   warn: '#FCC014',
   warnAlt: '#FFEAB8',

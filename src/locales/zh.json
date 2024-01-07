@@ -376,6 +376,11 @@
       "c4": "从主屏幕的每月例行部分直接导航到一个月。",
       "c5": "时间报告屏幕可以更好地处理空月和未来月份。",
       "c6": "修正了一些小错误。"
+    },
+    "1100": {
+      "c1": "将年度报告添加到时间报告屏幕！一目了然地跟踪您的服务年度进度。",
+      "c2": "现在，从时间报告屏幕添加时间会将报告默认为所选月份。",
+      "c3": "修复了导出一月服务报告的问题。"
     }
   },
   "installed": "已安装",
@@ -404,5 +409,7 @@
   "noTimeReports_description": "至少添加一个时间条目以查看更多详细信息。",
   "cannotNavigateToFutureMonth": "无法导航到未来月份",
   "cannotNavigateToFutureMonth_description": "选择当前或上个月。",
-  "addATimeEntryToViewReport": "添加时间条目以查看您的月度报告。"
+  "addATimeEntryToViewReport": "添加时间条目以查看您的月度报告。",
+  "serviceYear": "服务年限",
+  "hoursPerMonthToGoal": "每月工作小时数达到年度目标"
 }

@@ -376,6 +376,11 @@
       "c4": "Navegue diretamente para um mês na seção de rotina mensal da tela inicial.",
       "c5": "A tela Relatórios de Tempo lida melhor com meses vazios e futuros.",
       "c6": "Pequenas correções de bugs."
+    },
+    "1100": {
+      "c1": "Adiciona relatório anual à tela Relatórios de Tempo! Acompanhe rapidamente o progresso do seu ano de serviço.",
+      "c2": "Adicionar tempo na tela Relatórios de tempo agora padroniza o relatório para o mês selecionado.",
+      "c3": "Corrige um problema ao exportar o relatório de serviço de janeiro."
     }
   },
   "installed": "Instalado",
@@ -404,5 +409,7 @@
   "noTimeReports_description": "Adicione pelo menos uma entrada de tempo para ver mais detalhes.",
   "cannotNavigateToFutureMonth": "Não é possível navegar para o mês futuro",
   "cannotNavigateToFutureMonth_description": "Selecione o mês atual ou anterior.",
-  "addATimeEntryToViewReport": "Adicione uma entrada de tempo para visualizar seu relatório mensal."
+  "addATimeEntryToViewReport": "Adicione uma entrada de tempo para visualizar seu relatório mensal.",
+  "serviceYear": "Ano de serviço",
+  "hoursPerMonthToGoal": "horas por mês para meta anual"
 }

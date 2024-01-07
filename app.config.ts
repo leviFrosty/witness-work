@@ -4,7 +4,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   ...config,
   name: 'JW Time',
   slug: 'jw-time',
-  version: '1.9.2',
+  version: '1.10.0',
   owner: 'levi_frosty',
   orientation: 'portrait',
   icon: './src/assets/icon.png',

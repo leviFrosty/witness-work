@@ -1,7 +1,7 @@
 import { View } from 'react-native'
 import { useServiceReport } from '../stores/serviceReport'
 import useTheme from '../contexts/theme'
-import ProgressBar from './ProgressBar'
+import MonthServiceReportProgressBar from './MonthServiceReportProgressBar'
 import { usePreferences } from '../stores/preferences'
 import {
   calculateHoursRemaining,
@@ -136,7 +136,7 @@ const HourEntryCard = () => {
           })
         }
       >
-        <ProgressBar
+        <MonthServiceReportProgressBar
           month={moment().month()}
           year={moment().year()}
           minimal={!displayDetailsOnProgressBarHomeScreen}

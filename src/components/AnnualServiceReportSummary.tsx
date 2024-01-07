@@ -13,7 +13,11 @@ import i18n from '../lib/locales'
 import useTheme from '../contexts/theme'
 import Badge from './Badge'
 import IconButton from './IconButton'
-import { faStopwatch } from '@fortawesome/free-solid-svg-icons'
+import {
+  faCaretDown,
+  faCaretUp,
+  faMinus,
+} from '@fortawesome/free-solid-svg-icons'
 
 /** Renders all service reports for the given year as a summary. */
 interface AnnualServiceReportSummaryProps {
@@ -39,7 +43,6 @@ const AnnualServiceReportSummary = ({
 }: AnnualServiceReportSummaryProps) => {
   const theme = useTheme()
   const { annualGoalHours, goalHours } = usePublisher()
-  // const { minDate, maxDate } = serviceYearsDateRange(serviceYear)
   const { serviceReports } = useServiceReport()
 
   const totalHoursForServiceYear = getTotalHoursForServiceYear(
@@ -64,6 +67,13 @@ const AnnualServiceReportSummary = ({
       serviceYear,
     })
   }, [goalHours, month, serviceReports, serviceYear, year])
+
+  const isFasterThanMonthlyGoalHours =
+    hoursPerMonthToGoal === goalHours
+      ? undefined
+      : hoursPerMonthToGoal < goalHours
+        ? true
+        : false
 
   return (
     <Card>
@@ -103,12 +113,38 @@ const AnnualServiceReportSummary = ({
         color={theme.colors.textAlt}
       />
       <View style={{ flexDirection: 'row' }}>
-        <Badge color={theme.colors.backgroundLighter}>
+        <Badge
+          color={
+            isFasterThanMonthlyGoalHours === undefined
+              ? theme.colors.backgroundLighter
+              : isFasterThanMonthlyGoalHours
+                ? theme.colors.accent
+                : theme.colors.error
+          }
+        >
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
-            <IconButton icon={faStopwatch} size={10} />
+            <IconButton
+              color={
+                isFasterThanMonthlyGoalHours === undefined
+                  ? theme.colors.text
+                  : theme.colors.textInverse
+              }
+              icon={
+                isFasterThanMonthlyGoalHours === undefined
+                  ? faMinus
+                  : isFasterThanMonthlyGoalHours
+                    ? faCaretUp
+                    : faCaretDown
+              }
+              size={12}
+            />
             <Text
               style={{
                 fontSize: theme.fontSize('sm'),
+                color:
+                  isFasterThanMonthlyGoalHours === undefined
+                    ? theme.colors.text
+                    : theme.colors.textInverse,
               }}
             >
               {hoursPerMonthToGoal} {i18n.t('hoursPerMonthToGoal')}

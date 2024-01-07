@@ -119,7 +119,12 @@ const MonthSummary = ({
               marginBottom: 3,
             }}
           >
-            <Text style={{ fontFamily: theme.fonts.semiBold }}>
+            <Text
+              style={{
+                fontFamily: theme.fonts.semiBold,
+                fontSize: theme.fontSize('xl'),
+              }}
+            >
               {i18n.t('monthDetails')}
             </Text>
             <IconButton

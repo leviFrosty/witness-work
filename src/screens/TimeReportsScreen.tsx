@@ -24,7 +24,6 @@ import {
 } from '@fortawesome/free-solid-svg-icons'
 import { NativeStackScreenProps } from '@react-navigation/native-stack'
 import Wrapper from '../components/layout/Wrapper'
-import Divider from '../components/Divider'
 import Button from '../components/Button'
 import { FlashList } from '@shopify/flash-list'
 import AnnualServiceReportSummary from '../components/AnnualServiceReportSummary'
@@ -225,7 +224,9 @@ const TimeReportsScreen = ({ route, navigation }: Props) => {
             />
           </View>
         )}
-        <View style={{ paddingHorizontal: 15, paddingTop: 15 }}>
+        <View
+          style={{ paddingHorizontal: 15, paddingTop: 15, paddingBottom: 30 }}
+        >
           <MonthSummary
             month={month}
             year={year}
@@ -233,7 +234,6 @@ const TimeReportsScreen = ({ route, navigation }: Props) => {
             setSheet={setSheet}
           />
         </View>
-        <Divider marginVertical={30} />
         <View style={{ paddingHorizontal: 15, gap: 7 }}>
           <Text
             style={{

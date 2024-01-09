@@ -374,7 +374,7 @@ const StandardPublisherTimeEntry = () => {
             paddingVertical: hasGoneOutInServiceThisMonth ? 5 : 46,
             justifyContent: 'center',
             alignItems: 'center',
-            borderRadius: theme.numbers.borderRadiusSm,
+            borderRadius: theme.numbers.borderRadiusLg,
             paddingHorizontal: 20,
             overflow: 'hidden',
           }}

@@ -327,6 +327,11 @@
   "new": "Novo",
   "bugFixes": "Correções de bugs",
   "updates": {
+    "1110": {
+      "c1": "Adicionado suporte para iPads e iPads. Comprimidos!",
+      "c2": "Vários estilos ajustados para melhor caber em telas maiores.",
+      "c3": "Ajustou o método de envio de relatórios de bugs e solicitações de recursos ao Github."
+    },
     "1100": {
       "c1": "Adiciona relatório anual à tela Relatórios de Tempo! Acompanhe rapidamente o progresso do seu ano de serviço.",
       "c2": "Adicionar tempo na tela Relatórios de tempo agora padroniza o relatório para o mês selecionado.",

@@ -384,7 +384,8 @@
     },
     "1110": {
       "c1": "Se agregó soporte para iPads y iPad. ¡Tabletas!",
-      "c2": "Se ajustaron varios estilos para adaptarse mejor a pantallas más grandes."
+      "c2": "Se ajustaron varios estilos para adaptarse mejor a pantallas más grandes.",
+      "c3": "Se ajustó el método para enviar informes de errores y solicitudes de funciones a Github."
     }
   },
   "installed": "Instalado",

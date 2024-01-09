@@ -384,7 +384,8 @@
     },
     "1110": {
       "c1": "Unterstützung für iPads & Tablets!",
-      "c2": "Verschiedene Stile wurden angepasst, um sie besser an größere Bildschirme anzupassen."
+      "c2": "Verschiedene Stile wurden angepasst, um sie besser an größere Bildschirme anzupassen.",
+      "c3": "Die Methode zum Senden von Fehlerberichten und Funktionsanfragen an Github wurde angepasst."
     }
   },
   "installed": "Eingerichtet",

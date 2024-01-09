@@ -329,7 +329,8 @@
   "updates": {
     "1110": {
       "c1": "Adds native support for iPad & tablets!",
-      "c2": "Adjusted various styles to better fit larger screens."
+      "c2": "Adjusted various styles to better fit larger screens.",
+      "c3": "Adjusted the method of submitting Bug Reports and Feature Requests to Github."
     },
     "1100": {
       "c1": "Adds annual report to Time Reports screen! Keep track of your service year progress at a glance.",

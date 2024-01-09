@@ -384,7 +384,8 @@
     },
     "1110": {
       "c1": "Ondersteuning toegevoegd voor iPads & Tabletten!",
-      "c2": "Verschillende stijlen aangepast om beter op grotere schermen te passen."
+      "c2": "Verschillende stijlen aangepast om beter op grotere schermen te passen.",
+      "c3": "De methode voor het indienen van bugrapporten en functieverzoeken bij Github aangepast."
     }
   },
   "installed": "Geïnstalleerd",

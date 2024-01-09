@@ -384,7 +384,8 @@
     },
     "1110": {
       "c1": "Aggiunto supporto per iPad e amp; Tablet!",
-      "c2": "Vari stili modificati per adattarsi meglio agli schermi più grandi."
+      "c2": "Vari stili modificati per adattarsi meglio agli schermi più grandi.",
+      "c3": "Modificato il metodo di invio di segnalazioni di bug e richieste di funzionalità a Github."
     }
   },
   "installed": "Installato",

@@ -384,7 +384,8 @@
     },
     "1110": {
       "c1": "Đã thêm hỗ trợ cho iPad & Máy tính bảng!",
-      "c2": "Điều chỉnh nhiều kiểu khác nhau để phù hợp hơn với màn hình lớn hơn."
+      "c2": "Điều chỉnh nhiều kiểu khác nhau để phù hợp hơn với màn hình lớn hơn.",
+      "c3": "Đã điều chỉnh phương thức gửi Báo cáo lỗi và Yêu cầu tính năng tới Github."
     }
   },
   "installed": "Cài đặt",

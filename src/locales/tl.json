@@ -384,7 +384,8 @@
     },
     "1110": {
       "c1": "Nagdagdag ng suporta para sa mga iPad & Mga tablet!",
-      "c2": "Inayos ang iba't ibang istilo para mas magkasya sa mas malalaking screen."
+      "c2": "Inayos ang iba't ibang istilo para mas magkasya sa mas malalaking screen.",
+      "c3": "Inayos ang paraan ng pagsusumite ng Mga Ulat ng Bug at Mga Kahilingan sa Tampok sa Github."
     }
   },
   "installed": "Naka-install",

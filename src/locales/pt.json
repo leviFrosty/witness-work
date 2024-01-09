@@ -384,7 +384,8 @@
     },
     "1110": {
       "c1": "Adicionado suporte para iPads e iPads. Comprimidos!",
-      "c2": "Vários estilos ajustados para melhor caber em telas maiores."
+      "c2": "Vários estilos ajustados para melhor caber em telas maiores.",
+      "c3": "Ajustou o método de envio de relatórios de bugs e solicitações de recursos ao Github."
     }
   },
   "installed": "Instalado",

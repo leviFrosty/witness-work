@@ -384,7 +384,8 @@
     },
     "1110": {
       "c1": "Ajout de la prise en charge des iPad et des versions ultérieures. Comprimés!",
-      "c2": "Ajustement de différents styles pour mieux s'adapter aux écrans plus grands."
+      "c2": "Ajustement de différents styles pour mieux s'adapter aux écrans plus grands.",
+      "c3": "Ajustement de la méthode de soumission des rapports de bogues et des demandes de fonctionnalités à Github."
     }
   },
   "installed": "installée",

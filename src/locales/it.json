@@ -411,5 +411,6 @@
   "cannotNavigateToFutureMonth_description": "Seleziona il mese corrente o quello precedente.",
   "addATimeEntryToViewReport": "Aggiungi una voce temporale per visualizzare il tuo rapporto mensile.",
   "serviceYear": "Anno di servizio",
-  "hoursPerMonthToGoal": "ore al mese rispetto all'obiettivo annuale"
+  "hoursPerMonthToGoal": "ore al mese rispetto all'obiettivo annuale",
+  "serviceYearSummary": "Riepilogo dell'anno di servizio"
 }

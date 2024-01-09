@@ -327,6 +327,11 @@
   "new": "Nuevo",
   "bugFixes": "Corrección de errores",
   "updates": {
+    "1110": {
+      "c1": "Se agregó soporte para iPads y iPad. ¡Tabletas!",
+      "c2": "Se ajustaron varios estilos para adaptarse mejor a pantallas más grandes.",
+      "c3": "Se ajustó el método para enviar informes de errores y solicitudes de funciones a Github."
+    },
     "1100": {
       "c1": "¡Agrega el informe anual a la pantalla Informes de tiempo! Realice un seguimiento del progreso de su año de servicio de un vistazo.",
       "c2": "Al agregar tiempo desde la pantalla Informes de tiempo, el informe ahora se establece de forma predeterminada en el mes seleccionado.",

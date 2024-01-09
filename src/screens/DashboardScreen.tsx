@@ -86,35 +86,50 @@ export const DashboardScreen = () => {
               conversations={approachingConvosWithActiveContacts}
             />
           )}
-          <XView style={{ flex: 1 }}>
+          <XView style={{ flex: 1, justifyContent: 'space-between' }}>
             <MonthlyRoutine />
             {isTablet && hasAnnualGoal && (
-              <Button
-                onPress={() =>
-                  navigation.navigate('Time Reports', {
-                    month: moment().month(),
-                    year: moment().year(),
-                  })
-                }
-                style={{ gap: 10, flexGrow: 1, maxWidth: '50%' }}
+              <View
+                style={{
+                  flexDirection: 'row',
+                  flexGrow: 1,
+                  maxWidth: '50%',
+                }}
               >
-                <Text
+                <View
                   style={{
-                    fontSize: 14,
-                    fontFamily: theme.fonts.semiBold,
-                    marginLeft: 5,
+                    gap: 10,
+                    flexGrow: 1,
                   }}
                 >
-                  {i18n.t('serviceYearSummary')}
-                </Text>
-                <XView>
-                  <AnnualServiceReportSummary
-                    serviceYear={serviceYear}
-                    month={moment().month()}
-                    year={moment().year()}
-                  />
-                </XView>
-              </Button>
+                  <Text
+                    style={{
+                      fontSize: 14,
+                      fontFamily: theme.fonts.semiBold,
+                      marginLeft: 5,
+                    }}
+                  >
+                    {i18n.t('serviceYearSummary')}
+                  </Text>
+                  <XView>
+                    <Button
+                      style={{ flex: 1 }}
+                      onPress={() =>
+                        navigation.navigate('Time Reports', {
+                          month: moment().month(),
+                          year: moment().year(),
+                        })
+                      }
+                    >
+                      <AnnualServiceReportSummary
+                        serviceYear={serviceYear}
+                        month={moment().month()}
+                        year={moment().year()}
+                      />
+                    </Button>
+                  </XView>
+                </View>
+              </View>
             )}
           </XView>
           <ServiceReport setSheet={setSheet} />

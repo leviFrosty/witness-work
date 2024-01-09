@@ -411,5 +411,6 @@
   "cannotNavigateToFutureMonth_description": "Chọn tháng hiện tại hoặc tháng trước.",
   "addATimeEntryToViewReport": "Thêm mục thời gian để xem báo cáo hàng tháng của bạn.",
   "serviceYear": "Năm phục vụ",
-  "hoursPerMonthToGoal": "giờ mỗi tháng cho mục tiêu hàng năm"
+  "hoursPerMonthToGoal": "giờ mỗi tháng cho mục tiêu hàng năm",
+  "serviceYearSummary": "Tóm tắt năm phục vụ"
 }

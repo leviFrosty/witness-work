@@ -1,5 +1,6 @@
 import { ColorSchemeName } from 'react-native'
 import { Colors, Theme, ThemeSizes } from '../types/theme'
+import * as Device from 'expo-device'
 
 export const lightModeColors = {
   text: '#373737',
@@ -64,23 +65,32 @@ export const fonts = {
 }
 
 const fontSize = (size?: ThemeSizes) => {
+  const defaultSize = 14
+  const isTablet = Device.deviceType === Device.DeviceType.TABLET
+  // Slightly increases default font size for readability on large devices
+  const deviceTypeOffset = isTablet ? 2 : 0
+
+  const sizeFromDefault = (offset: number) => {
+    return defaultSize + deviceTypeOffset + offset
+  }
+
   switch (size) {
     case 'xs':
-      return 10
+      return sizeFromDefault(-4)
     case 'sm':
-      return 12
+      return sizeFromDefault(-2)
     case 'md':
-      return 14
+      return sizeFromDefault(0)
     case 'lg':
-      return 16
+      return sizeFromDefault(2)
     case 'xl':
-      return 20
+      return sizeFromDefault(6)
     case '2xl':
-      return 24
+      return sizeFromDefault(10)
     case '3xl':
-      return 28
+      return sizeFromDefault(14)
     default:
-      return 14
+      return sizeFromDefault(0)
   }
 }
 

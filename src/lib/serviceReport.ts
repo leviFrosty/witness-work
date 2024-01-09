@@ -297,3 +297,14 @@ export const getTotalHoursForServiceYear = (
 
   return Math.floor(minutes / 60)
 }
+
+export const getServiceYearFromDate = (moment: moment.Moment) => {
+  const month = moment.month()
+  const year = moment.year()
+
+  if (month < 8) {
+    return year - 1
+  }
+
+  return year
+}

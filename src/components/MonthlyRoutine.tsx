@@ -132,7 +132,7 @@ const MonthlyRoutine = () => {
       >
         {i18n.t('monthlyRoutine')}
       </Text>
-      <Card>
+      <Card style={{ flexGrow: 1, justifyContent: 'center' }}>
         <FlashList
           horizontal
           initialScrollIndex={moment().month()}

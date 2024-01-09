@@ -411,5 +411,6 @@
   "cannotNavigateToFutureMonth_description": "Piliin ang kasalukuyan o nakaraang buwan.",
   "addATimeEntryToViewReport": "Magdagdag ng entry ng oras upang tingnan ang iyong buwanang ulat.",
   "serviceYear": "Taon ng Paglilingkod",
-  "hoursPerMonthToGoal": "oras bawat buwan hanggang taunang layunin"
+  "hoursPerMonthToGoal": "oras bawat buwan hanggang taunang layunin",
+  "serviceYearSummary": "Buod ng Taon ng Paglilingkod"
 }

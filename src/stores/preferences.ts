@@ -5,6 +5,7 @@ import { Publisher, PublisherHours } from '../types/publisher'
 import i18n from '../lib/locales'
 import Constants from 'expo-constants'
 import moment from 'moment'
+import * as Device from 'expo-device'
 
 const SortOptionValues = [
   'recentConversation',
@@ -80,7 +81,8 @@ const initialState = {
   returnVisitNotificationOffset: null as TimeOffset | null,
   returnVisitAlwaysNotify: false,
   serviceReportTags: [] as string[],
-  displayDetailsOnProgressBarHomeScreen: false,
+  displayDetailsOnProgressBarHomeScreen:
+    Device.deviceType === Device.DeviceType.TABLET,
   monthlyRoutineHasShownInvalidMonthAlert: false,
 }
 

@@ -76,7 +76,7 @@ const AnnualServiceReportSummary = ({
         : false
 
   return (
-    <Card>
+    <Card style={{ flexGrow: 1 }}>
       <View
         style={{
           flexDirection: 'row',

@@ -548,7 +548,7 @@ const ContactFormScreen = ({ route, navigation }: Props) => {
       header: ({ route: { params }, navigation }) => (
         <Header
           title=''
-          buttonType='exit'
+          buttonType='back'
           rightElement={
             fetching ? (
               <View

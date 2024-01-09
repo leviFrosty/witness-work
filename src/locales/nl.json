@@ -411,5 +411,6 @@
   "cannotNavigateToFutureMonth_description": "Selecteer de huidige of vorige maand.",
   "addATimeEntryToViewReport": "Voeg een tijdsinvoer toe om uw maandrapport te bekijken.",
   "serviceYear": "Dienstjaar",
-  "hoursPerMonthToGoal": "uur per maand naar jaardoel"
+  "hoursPerMonthToGoal": "uur per maand naar jaardoel",
+  "serviceYearSummary": "Samenvatting dienstjaar"
 }

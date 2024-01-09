@@ -411,5 +411,6 @@
   "cannotNavigateToFutureMonth_description": "Select the current or previous month.",
   "addATimeEntryToViewReport": "Add a time entry to view your monthly report.",
   "serviceYear": "Service Year",
-  "hoursPerMonthToGoal": "hours per month to annual goal"
+  "hoursPerMonthToGoal": "hours per month to annual goal",
+  "serviceYearSummary": "Service Year Summary"
 }

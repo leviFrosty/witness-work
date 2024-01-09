@@ -411,5 +411,6 @@
   "cannotNavigateToFutureMonth_description": "이번 달 또는 이전 달을 선택합니다.",
   "addATimeEntryToViewReport": "월별 보고서를 보려면 시간 항목을 추가하세요.",
   "serviceYear": "봉사연도",
-  "hoursPerMonthToGoal": "연간 목표까지 월별 시간"
+  "hoursPerMonthToGoal": "연간 목표까지 월별 시간",
+  "serviceYearSummary": "봉사연도 요약"
 }

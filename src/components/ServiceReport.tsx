@@ -28,6 +28,7 @@ import { faArrowUpFromBracket } from '@fortawesome/free-solid-svg-icons'
 import { faSquare } from '@fortawesome/free-regular-svg-icons'
 import Button from './Button'
 import { ExportTimeSheetState } from './ExportTimeSheet'
+import useDevice from '../hooks/useDevice'
 
 const HourEntryCard = () => {
   const theme = useTheme()
@@ -118,24 +119,24 @@ const HourEntryCard = () => {
   )
 
   return (
-    <View>
-      <Button
-        style={{
-          flexDirection: 'column',
-          borderRadius: theme.numbers.borderRadiusSm,
-          backgroundColor: theme.colors.backgroundLighter,
-          gap: 5,
-          paddingTop: 10,
-          paddingHorizontal: 10,
-          position: 'relative',
-        }}
-        onPress={() =>
-          navigation.navigate('Time Reports', {
-            month: moment().month(),
-            year: moment().year(),
-          })
-        }
-      >
+    <Button
+      style={{
+        flexDirection: 'column',
+        borderRadius: theme.numbers.borderRadiusLg,
+        backgroundColor: theme.colors.backgroundLighter,
+        gap: 5,
+        paddingTop: 10,
+        overflow: 'hidden',
+        position: 'relative',
+      }}
+      onPress={() =>
+        navigation.navigate('Time Reports', {
+          month: moment().month(),
+          year: moment().year(),
+        })
+      }
+    >
+      <View style={{ paddingHorizontal: 10, gap: 10 }}>
         <MonthServiceReportProgressBar
           month={moment().month()}
           year={moment().year()}
@@ -200,11 +201,11 @@ const HourEntryCard = () => {
             </Text>
           </View>
         </View>
-      </Button>
+      </View>
       <ActionButton onPress={() => navigation.navigate('Add Time')}>
         {i18n.t('addTime')}
       </ActionButton>
-    </View>
+    </Button>
   )
 }
 
@@ -262,7 +263,7 @@ const RightCard = () => {
         paddingHorizontal: 15,
         paddingVertical: 10,
         backgroundColor: theme.colors.backgroundLighter,
-        borderRadius: theme.numbers.borderRadiusSm,
+        borderRadius: theme.numbers.borderRadiusLg,
         flexGrow: 1,
       }}
     >
@@ -390,7 +391,7 @@ const StandardPublisherTimeEntry = () => {
             paddingVertical: hasGoneOutInServiceThisMonth ? 5 : 46,
             justifyContent: 'center',
             alignItems: 'center',
-            borderRadius: theme.numbers.borderRadiusSm,
+            borderRadius: theme.numbers.borderRadiusLg,
             paddingHorizontal: 25,
           }}
           onPress={handleSubmitDidService}
@@ -417,6 +418,28 @@ const StandardPublisherTimeEntry = () => {
   )
 }
 
+const RowSectionTitle = ({
+  title,
+  underline,
+}: {
+  title: string
+  underline?: boolean
+}) => {
+  const theme = useTheme()
+
+  return (
+    <Text
+      style={{
+        color: theme.colors.textAlt,
+        fontFamily: theme.fonts.semiBold,
+        textDecorationLine: underline ? 'underline' : 'none',
+      }}
+    >
+      {title}
+    </Text>
+  )
+}
+
 interface ServiceReportProps {
   setSheet: React.Dispatch<React.SetStateAction<ExportTimeSheetState>>
 }
@@ -425,6 +448,8 @@ const ServiceReport = ({ setSheet }: ServiceReportProps) => {
   const theme = useTheme()
   const { publisher } = usePreferences()
   const navigation = useNavigation<RootStackNavigation>()
+  const { isTablet } = useDevice()
+
   return (
     <View style={{ gap: 10 }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
@@ -457,7 +482,7 @@ const ServiceReport = ({ setSheet }: ServiceReportProps) => {
               flexDirection: 'column',
               gap: 5,
               flexGrow: 1,
-              maxWidth: 200,
+              maxWidth: isTablet ? 800 : 200,
             }}
           >
             <View style={{ flexDirection: 'row' }}>
@@ -470,25 +495,13 @@ const ServiceReport = ({ setSheet }: ServiceReportProps) => {
                     })
                   }
                 >
-                  <Text
-                    style={{
-                      color: theme.colors.textAlt,
-                      fontFamily: theme.fonts.semiBold,
-                      textDecorationLine: 'underline',
-                    }}
-                  >
-                    {i18n.t('viewHours')}
-                  </Text>
+                  <RowSectionTitle
+                    title={i18n.t('viewHours')}
+                    underline={true}
+                  />
                 </Button>
               ) : (
-                <Text
-                  style={{
-                    color: theme.colors.textAlt,
-                    fontFamily: theme.fonts.semiBold,
-                  }}
-                >
-                  {i18n.t('hours')}
-                </Text>
+                <RowSectionTitle title={i18n.t('hours')} />
               )}
             </View>
             {publisher === 'publisher' ? (
@@ -504,14 +517,7 @@ const ServiceReport = ({ setSheet }: ServiceReportProps) => {
               flexGrow: 1,
             }}
           >
-            <Text
-              style={{
-                color: theme.colors.textAlt,
-                fontFamily: theme.fonts.semiBold,
-              }}
-            >
-              {i18n.t('studies')}
-            </Text>
+            <RowSectionTitle title={i18n.t('studies')} />
             <RightCard />
           </View>
         </View>

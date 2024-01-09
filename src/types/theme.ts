@@ -7,6 +7,7 @@ export type Fonts = typeof fonts
 export type Theme = {
   numbers: typeof numbers
   colors: Colors
+  /** Use with `fontFamily` to set Text font weight. */
   fonts: Fonts
   fontSize: (size?: ThemeSizes) => number
 }

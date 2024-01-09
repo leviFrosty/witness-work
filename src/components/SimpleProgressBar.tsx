@@ -28,7 +28,7 @@ const SimpleProgressBar = ({
       style={{
         backgroundColor: theme.colors.background,
         overflow: 'hidden',
-        borderRadius: theme.numbers.borderRadiusSm,
+        borderRadius: theme.numbers.borderRadiusMd,
         width: width ?? '100%',
       }}
     >

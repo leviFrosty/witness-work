@@ -91,7 +91,7 @@ const RootStackComponent = () => {
         name='Add Time'
         options={{
           presentation: 'modal',
-          header: () => <Header noInsets buttonType='exit' />,
+          header: () => <Header noInsets buttonType='back' />,
         }}
         component={AddTimeScreen}
       />
@@ -119,7 +119,7 @@ const RootStackComponent = () => {
       <RootStack.Screen
         options={{
           presentation: 'modal',
-          header: () => <Header noInsets buttonType='exit' />,
+          header: () => <Header noInsets buttonType='back' title='' />,
         }}
         name='Recover Contacts'
         component={RecoverContactsScreen}

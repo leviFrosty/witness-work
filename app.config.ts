@@ -55,10 +55,10 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     'expo-localization',
     ['expo-updates', { username: 'levi_frosty' }],
     [
-      'expo-localization',
+      'expo-location',
       {
         locationWhenInUsePermission:
-          'Allow $(PRODUCT_NAME) to use your location.',
+          '$(PRODUCT_NAME) will use your location to display where you are on the map, useful for finding nearby contacts.',
       },
     ],
   ],

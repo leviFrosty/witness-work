@@ -411,5 +411,6 @@
   "cannotNavigateToFutureMonth_description": "Wählen Sie den aktuellen oder vorherigen Monat aus.",
   "addATimeEntryToViewReport": "Fügen Sie einen Zeiteintrag hinzu, um Ihren Monatsbericht anzuzeigen.",
   "serviceYear": "Dienstjahr",
-  "hoursPerMonthToGoal": "Stunden pro Monat bis zum Jahresziel"
+  "hoursPerMonthToGoal": "Stunden pro Monat bis zum Jahresziel",
+  "serviceYearSummary": "Zusammenfassung des Dienstjahres"
 }

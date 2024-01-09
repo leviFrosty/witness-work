@@ -327,6 +327,10 @@
   "new": "New",
   "bugFixes": "Bug Fixes",
   "updates": {
+    "1110": {
+      "c1": "Added support for iPads & Tablets!",
+      "c2": "Adjusted various styles to better fit larger screens."
+    },
     "1100": {
       "c1": "Adds annual report to Time Reports screen! Keep track of your service year progress at a glance.",
       "c2": "Adding time from Time Reports screen now defaults the report to the selected month.",

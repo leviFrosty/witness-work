@@ -381,6 +381,10 @@
       "c1": "¡Agrega el informe anual a la pantalla Informes de tiempo! Realice un seguimiento del progreso de su año de servicio de un vistazo.",
       "c2": "Al agregar tiempo desde la pantalla Informes de tiempo, el informe ahora se establece de forma predeterminada en el mes seleccionado.",
       "c3": "Soluciona un problema al exportar el informe de servicio de enero."
+    },
+    "1110": {
+      "c1": "Se agregó soporte para iPads y iPad. ¡Tabletas!",
+      "c2": "Se ajustaron varios estilos para adaptarse mejor a pantallas más grandes."
     }
   },
   "installed": "Instalado",

@@ -381,6 +381,10 @@
       "c1": "Nagdaragdag ng taunang ulat sa screen ng Time Reports! Subaybayan ang iyong pag-unlad sa taon ng paglilingkod sa isang sulyap.",
       "c2": "Ang pagdaragdag ng oras mula sa screen ng Time Reports ay magde-default na ngayon ng ulat sa napiling buwan.",
       "c3": "Inaayos ang isang isyu sa pag-export ng ulat ng serbisyo sa Enero."
+    },
+    "1110": {
+      "c1": "Nagdagdag ng suporta para sa mga iPad & Mga tablet!",
+      "c2": "Inayos ang iba't ibang istilo para mas magkasya sa mas malalaking screen."
     }
   },
   "installed": "Naka-install",

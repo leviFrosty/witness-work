@@ -381,6 +381,10 @@
       "c1": "Thêm báo cáo hàng năm vào màn hình Báo cáo Thời gian! Theo dõi nhanh tiến độ năm dịch vụ của bạn.",
       "c2": "Việc thêm thời gian từ màn hình Báo cáo thời gian giờ đây sẽ mặc định báo cáo cho tháng đã chọn.",
       "c3": "Khắc phục sự cố khi xuất báo cáo dịch vụ tháng 1."
+    },
+    "1110": {
+      "c1": "Đã thêm hỗ trợ cho iPad & Máy tính bảng!",
+      "c2": "Điều chỉnh nhiều kiểu khác nhau để phù hợp hơn với màn hình lớn hơn."
     }
   },
   "installed": "Cài đặt",

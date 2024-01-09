@@ -381,6 +381,10 @@
       "c1": "Voegt een jaarverslag toe aan het tijdrapportenscherm! Houd in één oogopslag de voortgang van uw servicejaar bij.",
       "c2": "Als u tijd toevoegt vanuit het scherm Tijdrapporten, wordt het rapport nu standaard ingesteld op de geselecteerde maand.",
       "c3": "Er is een probleem opgelost bij het exporteren van het servicerapport van januari."
+    },
+    "1110": {
+      "c1": "Ondersteuning toegevoegd voor iPads & Tabletten!",
+      "c2": "Verschillende stijlen aangepast om beter op grotere schermen te passen."
     }
   },
   "installed": "Geïnstalleerd",

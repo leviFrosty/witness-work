@@ -327,6 +327,11 @@
   "new": "Neu",
   "bugFixes": "Fehlerbehebung",
   "updates": {
+    "1110": {
+      "c1": "Unterstützung für iPads & Tablets!",
+      "c2": "Verschiedene Stile wurden angepasst, um sie besser an größere Bildschirme anzupassen.",
+      "c3": "Die Methode zum Senden von Fehlerberichten und Funktionsanfragen an Github wurde angepasst."
+    },
     "1100": {
       "c1": "Fügt einen Jahresbericht zum Bildschirm „Zeitberichte“ hinzu! Verfolgen Sie den Fortschritt Ihres Dienstjahres auf einen Blick.",
       "c2": "Beim Hinzufügen von Zeit über den Bildschirm „Zeitberichte“ wird der Bericht jetzt standardmäßig auf den ausgewählten Monat eingestellt.",

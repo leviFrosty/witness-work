@@ -327,6 +327,11 @@
   "new": "Nouveau",
   "bugFixes": "Corrections de bugs",
   "updates": {
+    "1110": {
+      "c1": "Ajout de la prise en charge des iPad et des versions ultérieures. Comprimés!",
+      "c2": "Ajustement de différents styles pour mieux s'adapter aux écrans plus grands.",
+      "c3": "Ajustement de la méthode de soumission des rapports de bogues et des demandes de fonctionnalités à Github."
+    },
     "1100": {
       "c1": "Ajoute le rapport annuel à l'écran Time Reports ! Gardez une trace de la progression de votre année de service en un coup d’œil.",
       "c2": "L'ajout de temps à partir de l'écran Rapports de temps définit désormais par défaut le rapport sur le mois sélectionné.",

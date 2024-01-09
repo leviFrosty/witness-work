@@ -327,6 +327,11 @@
   "new": "Nuovo",
   "bugFixes": "Correzioni di bug",
   "updates": {
+    "1110": {
+      "c1": "Aggiunto supporto per iPad e amp; Tablet!",
+      "c2": "Vari stili modificati per adattarsi meglio agli schermi più grandi.",
+      "c3": "Modificato il metodo di invio di segnalazioni di bug e richieste di funzionalità a Github."
+    },
     "1100": {
       "c1": "Aggiunge il rapporto annuale alla schermata Rapporti temporali! Tieni traccia dei progressi del tuo anno di servizio a colpo d'occhio.",
       "c2": "L'aggiunta di tempo dalla schermata Rapporti temporali ora imposta automaticamente il rapporto sul mese selezionato.",

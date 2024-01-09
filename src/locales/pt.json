@@ -411,5 +411,6 @@
   "cannotNavigateToFutureMonth_description": "Selecione o mês atual ou anterior.",
   "addATimeEntryToViewReport": "Adicione uma entrada de tempo para visualizar seu relatório mensal.",
   "serviceYear": "Ano de serviço",
-  "hoursPerMonthToGoal": "horas por mês para meta anual"
+  "hoursPerMonthToGoal": "horas por mês para meta anual",
+  "serviceYearSummary": "Resumo do ano de serviço"
 }

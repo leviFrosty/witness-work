@@ -411,5 +411,6 @@
   "cannotNavigateToFutureMonth_description": "Выберите текущий или предыдущий месяц.",
   "addATimeEntryToViewReport": "Добавьте запись времени, чтобы просмотреть ежемесячный отчет.",
   "serviceYear": "Год обслуживания",
-  "hoursPerMonthToGoal": "часов в месяц к годовой цели"
+  "hoursPerMonthToGoal": "часов в месяц к годовой цели",
+  "serviceYearSummary": "Сводка года обслуживания"
 }

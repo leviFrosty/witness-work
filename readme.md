@@ -25,6 +25,16 @@ JW Time is the easy way for Jehovah's Witnesses to manage their field service pr
 
 ## Want to Contribute?
 
+### Help Financially 💖
+
+Donations are never expected but greatly appreciated! These donations are used to offset the costs of:
+
+- [App Store Fees](https://developer.apple.com/support/compare-memberships/#:~:text=**%20The%20Apple%20Developer%20Program%20is%2099%20USD%20per%20membership%20year%20or%20in%20local%20currency%20where%20available.%20Your%20nonprofit%2C%20educational%20institution%2C%20or%20government%20entity%20may%20be%20eligible%20for%20a%20fee%20waiver.) ($100/yr)
+- [Here API Calls](https://www.here.com/platform/geocoding) (Currently $0/mo)
+- [Google Cloud Translation](https://cloud.google.com/translate/pricing) (<$5/mo)
+
+These expenses are kept up to date here. Thank you!
+
 ### Help Translate 🌐
 
 JW Time is automatically translated into 12 languages by means of Google Cloud Translate. These translations might not always be the highest quality. To help, proofread these translations on [Crowdin](https://crowdin.com/project/jw-time/). Thank you!
@@ -66,16 +76,6 @@ If you find something you'd like to help with, please let me know you've began w
   - [`stacks`](/src/stacks) All [native stacks](https://reactnavigation.org/docs/native-stack-navigator) of used for [React Native Navigation](https://reactnavigation.org/).
   - [`stores`](/src/stores) The [AsyncStorage](https://github.com/react-native-async-storage/async-storage) APIs for all app data.
   - [`types`](/src/types) Type definitions.
-
-### Help Financially 💖
-
-Donations are never expected but greatly appreciated! These donations are used to offset the costs of:
-
-- [App Store Fees](https://developer.apple.com/support/compare-memberships/#:~:text=**%20The%20Apple%20Developer%20Program%20is%2099%20USD%20per%20membership%20year%20or%20in%20local%20currency%20where%20available.%20Your%20nonprofit%2C%20educational%20institution%2C%20or%20government%20entity%20may%20be%20eligible%20for%20a%20fee%20waiver.) ($100/yr)
-- [Here API Calls](https://www.here.com/platform/geocoding) (Currently $0/mo)
-- [Google Cloud Translation](https://cloud.google.com/translate/pricing) (<$5/mo)
-
-These expenses are kept up to date here. Thank you!
 
 [![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/leviwilkerson)
 

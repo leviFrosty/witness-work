@@ -122,7 +122,7 @@ const MonthlyRoutine = () => {
   }
 
   return (
-    <View style={{ gap: 10 }}>
+    <View style={{ gap: 10, flexShrink: 1 }}>
       <Text
         style={{
           fontSize: 14,

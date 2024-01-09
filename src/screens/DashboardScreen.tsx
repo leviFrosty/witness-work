@@ -23,6 +23,7 @@ import Text from '../components/MyText'
 import Button from '../components/Button'
 import { useNavigation } from '@react-navigation/native'
 import { RootStackNavigation } from '../stacks/RootStack'
+import usePublisher from '../hooks/usePublisher'
 
 export const DashboardScreen = () => {
   const theme = useTheme()
@@ -30,6 +31,7 @@ export const DashboardScreen = () => {
   const { conversations } = useConversations()
   const { contacts } = useContacts()
   const { isTablet } = useDevice()
+  const { hasAnnualGoal } = usePublisher()
   const navigation = useNavigation<RootStackNavigation>()
   const serviceYear = getServiceYearFromDate(moment())
   const [sheet, setSheet] = useState<ExportTimeSheetState>({
@@ -84,9 +86,9 @@ export const DashboardScreen = () => {
               conversations={approachingConvosWithActiveContacts}
             />
           )}
-          <XView>
+          <XView style={{ flex: 1 }}>
             <MonthlyRoutine />
-            {isTablet && (
+            {isTablet && hasAnnualGoal && (
               <Button
                 onPress={() =>
                   navigation.navigate('Time Reports', {
@@ -94,7 +96,7 @@ export const DashboardScreen = () => {
                     year: moment().year(),
                   })
                 }
-                style={{ gap: 10, flex: 1 }}
+                style={{ gap: 10, flexGrow: 1, maxWidth: '50%' }}
               >
                 <Text
                   style={{

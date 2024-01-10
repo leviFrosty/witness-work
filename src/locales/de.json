@@ -327,9 +327,6 @@
   "new": "Neu",
   "bugFixes": "Fehlerbehebung",
   "updates": {
-    "1111": {
-      "c1": "Fügen Sie in den Einstellungen eine Spendenseite für diejenigen hinzu, die einen Beitrag leisten möchten."
-    },
     "1110": {
       "c1": "Unterstützung für iPads & Tablets!",
       "c2": "Verschiedene Stile wurden angepasst, um sie besser an größere Bildschirme anzupassen.",
@@ -413,21 +410,12 @@
   "otherHoursDescription": "Unten ist bereits die Gesamtsumme enthalten",
   "failedToOpenLink": "URL konnte nicht geöffnet werden",
   "failedToOpenLink_description": "Bitte überprüfen Sie, ob Sie über eine gültige Bewerbung für den angegebenen Link verfügen. Dieser Fehler bedeutet normalerweise, dass auf Ihrem Gerät kein Browser installiert ist.",
-  "noTimeReports_description": "Fügen Sie mindestens einen Zeiteintrag hinzu, um weitere Details anzuzeigen.",
   "noTimeReports": "Für diesen Monat ist noch keine Zusammenfassung verfügbar.",
+  "noTimeReports_description": "Fügen Sie mindestens einen Zeiteintrag hinzu, um weitere Details anzuzeigen.",
   "cannotNavigateToFutureMonth": "Die Navigation zum zukünftigen Monat ist nicht möglich",
   "cannotNavigateToFutureMonth_description": "Wählen Sie den aktuellen oder vorherigen Monat aus.",
   "addATimeEntryToViewReport": "Fügen Sie einen Zeiteintrag hinzu, um Ihren Monatsbericht anzuzeigen.",
   "serviceYear": "Dienstjahr",
   "hoursPerMonthToGoal": "Stunden pro Monat bis zum Jahresziel",
-  "serviceYearSummary": "Zusammenfassung des Dienstjahres",
-  "donate": "Spenden",
-  "donate_thankYou": "Vielen Dank, dass Sie über eine Spende nachdenken!",
-  "donate_description": "Aus Gründen der Transparenz sind alle getätigten Spenden freiwillig und Sie erhalten im Gegenzug keine Produkte, digitalen Güter oder Dienstleistungen. Bitte spenden Sie nicht, wenn Sie finanziell nicht in einer stabilen Lage sind. Teilen Sie die App stattdessen mit Ihren Brüdern und Schwestern, damit auch sie Spaß daran haben!",
-  "donate_faq1": "Warum nehmen Sie Spenden an?",
-  "donate_faqAnswer1": "Als Bruder im Saal betrachte ich es als Privileg, meine Fähigkeiten einsetzen zu können, um anderen in der Gemeinde zu helfen. Obwohl die Entwicklung, Ausführung und Wartung dieser Anwendung für jedermann kostenlos ist, kostet sie leider viel Geld und Zeit. Für mich ist eine Spende mit der Art und Weise vergleichbar, wie man für das Benzin eines anderen bezahlt, nachdem man bei ihm gedient hat – es ist eine liebevolle Geste, die sehr geschätzt wird.",
-  "donate_faq2": "Wofür werden die Spenden verwendet?",
-  "donate_faqAnswer2": "Spenden werden zur Deckung der Entwicklungskosten verwendet. Es entstehen Kosten durch den Kauf realer Geräte als Testausrüstung, durch die Bezahlung der Standort-API-Servicegebühren, App-Store-Gebühren und Opportunitätskosten für die vielen Stunden, die ich für die Entwicklung dieser App aufgewendet habe.",
-  "openDonationPage": "Öffnen Sie die Spendenseite",
-  "shareApp": "App teilen"
+  "serviceYearSummary": "Zusammenfassung des Dienstjahres"
 }

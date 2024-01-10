@@ -327,9 +327,6 @@
   "new": "Mới",
   "bugFixes": "Sửa lỗi",
   "updates": {
-    "1111": {
-      "c1": "Thêm trang quyên góp trong phần cài đặt cho những ai muốn đóng góp."
-    },
     "1110": {
       "c1": "Đã thêm hỗ trợ cho iPad & Máy tính bảng!",
       "c2": "Điều chỉnh nhiều kiểu khác nhau để phù hợp hơn với màn hình lớn hơn.",
@@ -413,21 +410,12 @@
   "otherHoursDescription": "Dưới đây đã được bao gồm trong tổng số",
   "failedToOpenLink": "Không thể mở URL",
   "failedToOpenLink_description": "Vui lòng xác minh rằng bạn có đơn đăng ký hợp lệ cho liên kết được cung cấp. Lỗi này thường có nghĩa là bạn chưa cài đặt trình duyệt trên thiết bị của mình.",
-  "noTimeReports_description": "Thêm ít nhất một mục thời gian để xem thêm chi tiết.",
   "noTimeReports": "Chưa có bản tóm tắt nào cho tháng này.",
+  "noTimeReports_description": "Thêm ít nhất một mục thời gian để xem thêm chi tiết.",
   "cannotNavigateToFutureMonth": "Không thể điều hướng đến tháng trong tương lai",
   "cannotNavigateToFutureMonth_description": "Chọn tháng hiện tại hoặc tháng trước.",
   "addATimeEntryToViewReport": "Thêm mục thời gian để xem báo cáo hàng tháng của bạn.",
   "serviceYear": "Năm phục vụ",
   "hoursPerMonthToGoal": "giờ mỗi tháng cho mục tiêu hàng năm",
-  "serviceYearSummary": "Tóm tắt năm phục vụ",
-  "donate": "Quyên tặng",
-  "donate_thankYou": "Cảm ơn bạn đã cân nhắc quyên góp!",
-  "donate_description": "Để minh bạch, mọi khoản đóng góp được thực hiện đều là tự nguyện và bạn sẽ không nhận được bất kỳ sản phẩm, hàng hóa hoặc dịch vụ kỹ thuật số nào để trao đổi. Vui lòng không quyên góp nếu bạn không ở tình trạng tài chính ổn định. Thay vào đó, hãy chia sẻ ứng dụng với anh chị em của bạn để họ cũng có thể thưởng thức nó!",
-  "donate_faq1": "Tại sao bạn lại chấp nhận quyên góp?",
-  "donate_faqAnswer1": "Với tư cách là một anh trong hội thánh, tôi coi việc có thể sử dụng kỹ năng của mình để giúp đỡ người khác trong hội thánh là một đặc ân. Mặc dù miễn phí cho tất cả mọi người, việc phát triển, chạy và duy trì ứng dụng này nhưng tiếc là lại tốn một khoản tiền và thời gian đáng kể. Tôi coi việc quyên góp cũng tương tự như cách một người có thể trả tiền xăng cho người khác sau khi làm việc cùng họ - đó là một cử chỉ yêu thương được đánh giá rất cao.",
-  "donate_faq2": "Số tiền quyên góp được sử dụng để làm gì?",
-  "donate_faqAnswer2": "Khoản quyên góp được sử dụng để giúp bù đắp chi phí phát triển. Sẽ có những chi phí khi mua thiết bị thực làm thiết bị thử nghiệm, trả phí dịch vụ API vị trí, phí cửa hàng ứng dụng và chi phí cơ hội cho nhiều giờ tôi dành để phát triển ứng dụng này.",
-  "openDonationPage": "Mở trang quyên góp",
-  "shareApp": "Chia sẻ ứng dụng"
+  "serviceYearSummary": "Tóm tắt năm phục vụ"
 }

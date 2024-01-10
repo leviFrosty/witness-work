@@ -327,6 +327,9 @@
   "new": "Nuovo",
   "bugFixes": "Correzioni di bug",
   "updates": {
+    "1111": {
+      "c1": "Aggiungi la pagina delle donazioni nelle impostazioni per coloro che desiderano contribuire."
+    },
     "1110": {
       "c1": "Aggiunto supporto per iPad e amp; Tablet!",
       "c2": "Vari stili modificati per adattarsi meglio agli schermi più grandi.",
@@ -410,12 +413,21 @@
   "otherHoursDescription": "Di seguito è già incluso in totale",
   "failedToOpenLink": "Impossibile aprire l'URL",
   "failedToOpenLink_description": "Verifica di avere un'applicazione valida per il collegamento fornito. Questo errore in genere significa che non hai un browser installato sul tuo dispositivo.",
-  "noTimeReports": "Nessun riepilogo ancora disponibile per questo mese.",
   "noTimeReports_description": "Aggiungi almeno una voce per visualizzare maggiori dettagli.",
+  "noTimeReports": "Nessun riepilogo ancora disponibile per questo mese.",
   "cannotNavigateToFutureMonth": "Impossibile passare al mese futuro",
   "cannotNavigateToFutureMonth_description": "Seleziona il mese corrente o quello precedente.",
   "addATimeEntryToViewReport": "Aggiungi una voce temporale per visualizzare il tuo rapporto mensile.",
   "serviceYear": "Anno di servizio",
   "hoursPerMonthToGoal": "ore al mese rispetto all'obiettivo annuale",
-  "serviceYearSummary": "Riepilogo dell'anno di servizio"
+  "serviceYearSummary": "Riepilogo dell'anno di servizio",
+  "donate": "Donare",
+  "donate_thankYou": "Grazie per aver considerato la donazione!",
+  "donate_description": "Per trasparenza, tutte le donazioni effettuate sono volontarie e non riceverai in cambio alcun prodotto, bene digitale o servizio. Per favore non donare se non sei in una posizione finanziariamente stabile. Condividi invece l'app con i tuoi fratelli e sorelle in modo che anche loro possano divertirsi!",
+  "donate_faq1": "Perché accetti donazioni?",
+  "donate_faqAnswer1": "Come fratello in sala, considero un privilegio poter usare le mie capacità per aiutare gli altri nella congregazione. Sebbene sia gratuita per tutti, sviluppare, eseguire e mantenere questa applicazione, purtroppo costa una notevole quantità di tempo e denaro. Considero la donazione simile al modo in cui si potrebbe pagare la benzina di un altro dopo essere andato in servizio con lui: è un gesto amorevole che viene molto apprezzato.",
+  "donate_faq2": "A cosa servono le donazioni?",
+  "donate_faqAnswer2": "Le donazioni vengono utilizzate per aiutare a compensare i costi di sviluppo. Ci sono costi con l'acquisto di dispositivi reali come apparecchiature di prova, il pagamento delle tariffe del servizio API di localizzazione, delle tariffe dell'app store e del costo opportunità delle mie molte ore trascorse a sviluppare questa app.",
+  "openDonationPage": "Apri la pagina delle donazioni",
+  "shareApp": "Condividi app"
 }

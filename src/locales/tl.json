@@ -386,9 +386,6 @@
       "c1": "Nagdagdag ng suporta para sa mga iPad & Mga tablet!",
       "c2": "Inayos ang iba't ibang istilo para mas magkasya sa mas malalaking screen.",
       "c3": "Inayos ang paraan ng pagsusumite ng Mga Ulat ng Bug at Mga Kahilingan sa Tampok sa Github."
-    },
-    "1111": {
-      "c1": "Magdagdag ng pahina ng donasyon sa mga setting para sa mga nais mag-ambag."
     }
   },
   "installed": "Naka-install",
@@ -420,14 +417,5 @@
   "addATimeEntryToViewReport": "Magdagdag ng entry ng oras upang tingnan ang iyong buwanang ulat.",
   "serviceYear": "Taon ng Paglilingkod",
   "hoursPerMonthToGoal": "oras bawat buwan hanggang taunang layunin",
-  "serviceYearSummary": "Buod ng Taon ng Paglilingkod",
-  "donate": "Mag-donate",
-  "donate_thankYou": "Salamat sa pagsasaalang-alang sa pagbibigay ng donasyon!",
-  "donate_description": "Para sa transparency, ang anumang donasyon na ginawa ay boluntaryo at hindi ka makakatanggap ng kapalit ng anumang produkto, digital na produkto, o serbisyo. Mangyaring huwag mag-donate kung wala ka sa isang matatag na posisyon sa pananalapi. Sa halip, ibahagi ang app sa iyong mga kapatid para ma-enjoy din nila ito!",
-  "donate_faq1": "Bakit ka tumatanggap ng donasyon?",
-  "donate_faqAnswer1": "Bilang isang kapatid sa bulwagan, itinuturing kong isang pribilehiyo na magamit ang aking mga kakayahan para tulungan ang iba sa kongregasyon. Bagama't libre sa lahat, pagbuo, pagpapatakbo, at pagpapanatili ng application na ito, sa kasamaang-palad ay nagkakahalaga ng malaking halaga ng pera at oras. Itinuturing kong ang pagbibigay ng donasyon ay katulad ng kung paano maaaring magbayad ang isa para sa gas ng iba pagkatapos nilang maglingkod sa kanila - ito ay isang mapagmahal na kilos na lubos na pinahahalagahan.",
-  "donate_faq2": "Ano ang ginagamit ng mga donasyon?",
-  "donate_faqAnswer2": "Ang donasyon ay ginagamit upang makatulong na mabawi ang mga gastos sa pagpapaunlad. May mga gastos sa pagbili ng mga totoong device bilang pansubok na kagamitan, pagbabayad para sa mga bayarin sa serbisyo ng API ng lokasyon, mga bayarin sa app store, at gastos sa pagkakataon ng aking maraming oras na ginugol sa pagbuo ng app na ito.",
-  "openDonationPage": "Buksan ang Pahina ng Donasyon",
-  "shareApp": "Ibahagi ang App"
+  "serviceYearSummary": "Buod ng Taon ng Paglilingkod"
 }

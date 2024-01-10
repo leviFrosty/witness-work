@@ -20,7 +20,6 @@ import HomeTabStack from './HomeTabStack'
 import PreferencesScreen from '../screens/settings/preferences/PreferencesScreen'
 import i18n from '../lib/locales'
 import WhatsNewScreen from '../screens/WhatsNewScreen'
-import DonationScreen from '../screens/DonationScreen'
 
 export type RootStackParamList = {
   Root: undefined
@@ -39,7 +38,6 @@ export type RootStackParamList = {
   Update: undefined
   Preferences: undefined
   'Whats New': undefined
-  Donate: undefined
 }
 
 export type RootStackNavigation = NativeStackNavigationProp<RootStackParamList>
@@ -146,13 +144,6 @@ const RootStackComponent = () => {
         }}
         name='Whats New'
         component={WhatsNewScreen}
-      />
-      <RootStack.Screen
-        options={{
-          header: () => <Header buttonType='back' title={i18n.t('donate')} />,
-        }}
-        name='Donate'
-        component={DonationScreen}
       />
     </RootStack.Navigator>
   )

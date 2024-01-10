@@ -327,6 +327,9 @@
   "new": "Nuevo",
   "bugFixes": "Corrección de errores",
   "updates": {
+    "1111": {
+      "c1": "Agregue la página de donación en la configuración para aquellos que deseen contribuir."
+    },
     "1110": {
       "c1": "Se agregó soporte para iPads y iPad. ¡Tabletas!",
       "c2": "Se ajustaron varios estilos para adaptarse mejor a pantallas más grandes.",
@@ -410,12 +413,21 @@
   "otherHoursDescription": "A continuación ya está incluido en total.",
   "failedToOpenLink": "No se pudo abrir la URL",
   "failedToOpenLink_description": "Verifique que tenga una solicitud válida para el enlace proporcionado. Este error normalmente significa que no tienes un navegador instalado en tu dispositivo.",
-  "noTimeReports": "Aún no hay ningún resumen disponible para este mes.",
   "noTimeReports_description": "Agregue al menos una entrada de tiempo para ver más detalles.",
+  "noTimeReports": "Aún no hay ningún resumen disponible para este mes.",
   "cannotNavigateToFutureMonth": "No se puede navegar al mes futuro",
   "cannotNavigateToFutureMonth_description": "Seleccione el mes actual o anterior.",
   "addATimeEntryToViewReport": "Agregue una entrada de tiempo para ver su informe mensual.",
   "serviceYear": "Año de servicio",
   "hoursPerMonthToGoal": "horas por mes a meta anual",
-  "serviceYearSummary": "Resumen del año de servicio"
+  "serviceYearSummary": "Resumen del año de servicio",
+  "donate": "Donar",
+  "donate_thankYou": "¡Gracias por considerar donar!",
+  "donate_description": "Para mayor transparencia, cualquier donación realizada es voluntaria y no recibirá a cambio ningún producto, bien digital o servicio. No done si no se encuentra en una posición financieramente estable. En su lugar, comparte la aplicación con tus hermanos y hermanas para que ellos también puedan disfrutarla.",
+  "donate_faq1": "¿Por qué aceptas donaciones?",
+  "donate_faqAnswer1": "Como hermano en el salón, considero un privilegio poder usar mis habilidades para ayudar a otros en la congregación. Aunque es gratuito para todos, desarrollar, ejecutar y mantener esta aplicación, desafortunadamente cuesta una cantidad significativa de dinero y tiempo. Considero que la donación es similar a cómo uno podría pagar la gasolina de otra persona después de entrar en servicio con esa persona: es un gesto amoroso que se agradece mucho.",
+  "donate_faq2": "¿Para qué se utilizan las donaciones?",
+  "donate_faqAnswer2": "Las donaciones se utilizan para ayudar a compensar los costos de desarrollo. Hay costos por la compra de dispositivos reales como equipos de prueba, el pago de tarifas de servicio de API de ubicación, tarifas de la tienda de aplicaciones y el costo de oportunidad de las muchas horas que dediqué a desarrollar esta aplicación.",
+  "openDonationPage": "Abrir página de donación",
+  "shareApp": "Compartir aplicación"
 }

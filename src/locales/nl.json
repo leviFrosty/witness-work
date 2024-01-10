@@ -327,6 +327,9 @@
   "new": "Nieuw",
   "bugFixes": "Bugfixes",
   "updates": {
+    "1111": {
+      "c1": "Voeg een donatiepagina toe in de instellingen voor degenen die willen bijdragen."
+    },
     "1110": {
       "c1": "Ondersteuning toegevoegd voor iPads & Tabletten!",
       "c2": "Verschillende stijlen aangepast om beter op grotere schermen te passen.",
@@ -410,12 +413,21 @@
   "otherHoursDescription": "Hieronder is in totaal al opgenomen",
   "failedToOpenLink": "Kan URL niet openen",
   "failedToOpenLink_description": "Controleer of u een geldige aanvraag heeft voor de verstrekte link. Deze fout betekent meestal dat er geen browser op uw apparaat is geïnstalleerd.",
-  "noTimeReports": "Er is nog geen overzicht beschikbaar voor deze maand.",
   "noTimeReports_description": "Voeg ten minste één tijdinvoer toe om meer details te bekijken.",
+  "noTimeReports": "Er is nog geen overzicht beschikbaar voor deze maand.",
   "cannotNavigateToFutureMonth": "Kan niet naar de toekomstige maand navigeren",
   "cannotNavigateToFutureMonth_description": "Selecteer de huidige of vorige maand.",
   "addATimeEntryToViewReport": "Voeg een tijdsinvoer toe om uw maandrapport te bekijken.",
   "serviceYear": "Dienstjaar",
   "hoursPerMonthToGoal": "uur per maand naar jaardoel",
-  "serviceYearSummary": "Samenvatting dienstjaar"
+  "serviceYearSummary": "Samenvatting dienstjaar",
+  "donate": "Doneer",
+  "donate_thankYou": "Bedankt dat je overweegt om te doneren!",
+  "donate_description": "Voor de transparantie zijn alle donaties vrijwillig en ontvangt u in ruil geen producten, digitale goederen of diensten. Doneer alstublieft niet als u zich niet in een financieel stabiele positie bevindt. Deel in plaats daarvan de app met je broers en zussen, zodat zij er ook van kunnen genieten!",
+  "donate_faq1": "Waarom accepteren jullie donaties?",
+  "donate_faqAnswer1": "Als broeder in de zaal beschouw ik het als een voorrecht mijn vaardigheden te kunnen gebruiken om anderen in de gemeente te helpen. Hoewel het voor iedereen gratis is, kost het ontwikkelen, uitvoeren en onderhouden van deze applicatie helaas een aanzienlijke hoeveelheid geld en tijd. Ik beschouw doneren als vergelijkbaar met hoe iemand zou kunnen betalen voor de benzine van iemand anders nadat hij bij hem in dienst is geweest - het is een liefdevol gebaar dat enorm wordt gewaardeerd.",
+  "donate_faq2": "Waar worden de donaties voor gebruikt?",
+  "donate_faqAnswer2": "Donaties worden gebruikt om de ontwikkelingskosten te compenseren. Er zijn kosten verbonden aan het kopen van echte apparaten als testapparatuur, het betalen voor locatie-API-servicekosten, app store-kosten en alternatieve kosten van de vele uren die ik heb besteed aan het ontwikkelen van deze app.",
+  "openDonationPage": "Open de donatiepagina",
+  "shareApp": "Deel app"
 }

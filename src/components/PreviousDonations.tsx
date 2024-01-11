@@ -1,4 +1,5 @@
 import { View } from 'react-native'
+import * as Sentry from 'sentry-expo'
 import Purchases, {
   CustomerInfo,
   PurchasesStoreProduct,
@@ -30,7 +31,7 @@ const PreviousDonations = ({ customer }: PreviousDonationsProps) => {
       setProducts(products)
     }
 
-    getProducts()
+    getProducts().catch((error) => Sentry.Native.captureException(error))
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])

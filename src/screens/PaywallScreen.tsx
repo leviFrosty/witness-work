@@ -1,4 +1,5 @@
 import { Alert, Dimensions, ScrollView, View } from 'react-native'
+import * as Sentry from 'sentry-expo'
 import Text from '../components/MyText'
 import useTheme from '../contexts/theme'
 import i18n from '../lib/locales'
@@ -109,9 +110,10 @@ const PaywallScreen = () => {
       }
     }
 
-    getOfferings().catch(() =>
+    getOfferings().catch((error) => {
       Alert.alert(i18n.t('errorFetchingOfferings'), i18n.t('tryAgainLater'))
-    )
+      Sentry.Native.captureException(error)
+    })
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
@@ -128,9 +130,11 @@ const PaywallScreen = () => {
       if (productIdentifier) {
         setJustPurchasedSomething(true) // wahoo!
       }
-    } catch (e: unknown) {
-      if (!(e as PurchasesError).userCancelled) {
-        Alert.alert(i18n.t('error'), JSON.stringify(e, null, 2))
+    } catch (error: unknown) {
+      if (!(error as PurchasesError).userCancelled) {
+        Alert.alert(i18n.t('error'), JSON.stringify(error, null, 2))
+      } else {
+        Sentry.Native.captureException(error)
       }
     }
   }, [selectedOffering])

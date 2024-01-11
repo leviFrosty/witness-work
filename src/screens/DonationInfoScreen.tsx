@@ -1,4 +1,5 @@
 import AnimatedLottieView from 'lottie-react-native'
+import * as Sentry from 'sentry-expo'
 import Text from '../components/MyText'
 import Wrapper from '../components/layout/Wrapper'
 import i18n from '../lib/locales'
@@ -41,7 +42,7 @@ const DonationInfoScreen = () => {
       setCustomer(customerInfo)
     }
 
-    getCustomerInfo().catch(console.log)
+    getCustomerInfo().catch((error) => Sentry.Native.captureException(error)) // There is nothing we can do here...
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
@@ -50,9 +51,9 @@ const DonationInfoScreen = () => {
     try {
       const restored = await Purchases.restorePurchases()
       setCustomer(restored)
-      console.log(JSON.stringify(restored, null, 2))
-    } catch (e: unknown) {
-      Alert.alert(i18n.t('error_restoring_account'), JSON.stringify(e, null, 2))
+    } catch (error: unknown) {
+      Sentry.Native.captureException(error)
+      Alert.alert(i18n.t('error_restoring_account'))
     }
   }, [])
 

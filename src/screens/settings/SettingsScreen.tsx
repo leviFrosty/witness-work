@@ -14,6 +14,7 @@ import PreferencesSection from './sections/Preferences'
 import AppSection from './sections/App'
 import ContactSection from './sections/Contact'
 import MiscSection from './sections/Misc'
+import SupportSection from './sections/Support'
 
 export type SettingsSectionProps = {
   handleNavigate: (destination: keyof RootStackParamList) => void
@@ -52,6 +53,7 @@ const SettingsScreen = (props: DrawerContentComponentProps) => {
           <PreferencesSection handleNavigate={navigateAndCloseDrawer} />
           <AppSection handleNavigate={navigateAndCloseDrawer} />
           <ContactSection />
+          <SupportSection />
           <MiscSection handleNavigate={navigateAndCloseDrawer} />
         </View>
         <Text

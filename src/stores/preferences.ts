@@ -6,6 +6,7 @@ import i18n from '../lib/locales'
 import Constants from 'expo-constants'
 import moment from 'moment'
 import * as Device from 'expo-device'
+import { Platform } from 'react-native'
 
 const SortOptionValues = [
   'recentConversation',
@@ -75,7 +76,10 @@ const initialState = {
    * @platform iOS: Supported
    * @platform Android: Not Supported
    */
-  defaultNavigationMapProvider: null as DefaultNavigationMapProvider,
+  defaultNavigationMapProvider:
+    Platform.OS === 'ios'
+      ? 'apple'
+      : ('google' as DefaultNavigationMapProvider),
   lastAppVersion: Constants.expoConfig?.version || null,
   returnVisitTimeOffset: null as TimeOffset | null,
   returnVisitNotificationOffset: null as TimeOffset | null,

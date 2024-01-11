@@ -8,6 +8,7 @@ export const lightModeColors = {
   textInverse: '#FFFFFF',
   textInverseAlt: '#E2E2E2',
   accent: '#1BD15D',
+  accentTranslucent: '#1BD15D33',
   accentBackground: '#4BD27C',
   accentAlt: '#B7DDC5',
   background: '#E9E9E9',
@@ -32,6 +33,7 @@ const darkModeColors: Colors = {
   textInverse: '#141414',
   textInverseAlt: '#373737',
   accent: '#1BD15D',
+  accentTranslucent: '#1BD15D33',
   accentBackground: '#4BD27C',
   accentAlt: '#99BFA7',
   background: '#121212',
@@ -54,6 +56,7 @@ export const numbers = {
   borderRadiusSm: 5,
   borderRadiusMd: 10,
   borderRadiusLg: 15,
+  borderRadiusXl: 25,
   shadowOpacity: 0.1,
 }
 

@@ -3,6 +3,7 @@ import { ExpoConfig, ConfigContext } from 'expo/config'
 export default ({ config }: ConfigContext): ExpoConfig => ({
   ...config,
   name: 'JW Time',
+  developmentClient: {},
   slug: 'jw-time',
   version: '1.11.1',
   owner: 'levi_frosty',

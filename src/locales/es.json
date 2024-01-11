@@ -456,5 +456,7 @@
   "monthlyDonation": "Donación Mensual",
   "active": "Activo",
   "inactive": "Inactivo",
-  "yourDonations": "Tus donaciones"
+  "yourDonations": "Tus donaciones",
+  "thankYou": "¡Gracias!",
+  "thankYou_description": "No merezco tanta amabilidad. Tu generosidad es muy apreciada."
 }

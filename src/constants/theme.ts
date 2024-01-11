@@ -92,6 +92,8 @@ const fontSize = (size?: ThemeSizes) => {
       return sizeFromDefault(10)
     case '3xl':
       return sizeFromDefault(14)
+    case '4xl':
+      return sizeFromDefault(18)
     default:
       return sizeFromDefault(0)
   }

@@ -456,5 +456,7 @@
   "monthlyDonation": "每月捐款",
   "active": "积极的",
   "inactive": "不活跃",
-  "yourDonations": "您的捐款"
+  "yourDonations": "您的捐款",
+  "thankYou": "谢谢你！",
+  "thankYou_description": "我不值得这样的善意。非常感谢您的慷慨。"
 }

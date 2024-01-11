@@ -456,5 +456,7 @@
   "monthlyDonation": "Monthly Donation",
   "active": "Active",
   "inactive": "Inactive",
-  "yourDonations": "Your donations"
+  "yourDonations": "Your donations",
+  "thankYou": "Thank you!",
+  "thankYou_description": "I am undeserving of such kindness. Your generosity is greatly appreciated."
 }

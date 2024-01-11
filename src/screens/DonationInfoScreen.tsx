@@ -149,7 +149,7 @@ const DonationInfoScreen = () => {
               </Copyeable>
             </Button>
           </Card>
-          <View style={{ gap: 5 }}>
+          <View style={{ gap: 5, paddingHorizontal: 10 }}>
             <Text
               style={{
                 fontSize: theme.fontSize('sm'),

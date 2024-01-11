@@ -456,5 +456,7 @@
   "monthlyDonation": "毎月の寄付",
   "active": "アクティブ",
   "inactive": "非活性",
-  "yourDonations": "あなたの寄付"
+  "yourDonations": "あなたの寄付",
+  "thankYou": "ありがとう！",
+  "thankYou_description": "私にはそのような親切を受ける資格はありません。皆様のご寛大なご厚情に深く感謝申し上げます。"
 }

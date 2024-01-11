@@ -10,6 +10,7 @@ import { faHeart as faHeartRegular } from '@fortawesome/free-regular-svg-icons'
 import { View } from 'react-native'
 import useTheme from '../contexts/theme'
 import { faHeart } from '@fortawesome/free-solid-svg-icons'
+import * as Sentry from 'sentry-expo'
 
 const HomeScreen = () => {
   const Drawer = createDrawerNavigator()
@@ -37,7 +38,7 @@ const HomeScreen = () => {
       setCustomer(customerInfo)
     }
 
-    setup().catch(console.log)
+    setup().catch((error) => Sentry.Native.captureException(error))
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])

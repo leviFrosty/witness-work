@@ -11,7 +11,7 @@ import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import XView from '../components/layout/XView'
 import Button from '../components/Button'
-import Purchases, { CustomerInfo, LOG_LEVEL } from 'react-native-purchases'
+import Purchases, { CustomerInfo } from 'react-native-purchases'
 import { useCallback, useEffect, useState } from 'react'
 import Accordion from '../components/Accordion'
 import { useNavigation } from '@react-navigation/native'
@@ -35,27 +35,13 @@ const DonationInfoScreen = () => {
       ? Object.keys(customer.allPurchaseDates).length
       : 0) > 0
 
-  // Sets up RevenueCat SDK to be used later in paywall screen as well
-  // Fetches customer info for previous purchases
-  // We do not want to load this at app startup to save performance
-  // This also improves performance on paywall because the SDK is already loaded.
   useEffect(() => {
-    const setup = async () => {
-      if (isAndroid) {
-        return
-        // For now, android does not support donations.
-      } else {
-        Purchases.setLogLevel(LOG_LEVEL.DEBUG)
-        await Purchases.configure({
-          apiKey: process.env.REVENUECAT_APPLE_API_KEY || '',
-        })
-      }
-
+    const getCustomerInfo = async () => {
       const customerInfo = await Purchases.getCustomerInfo()
       setCustomer(customerInfo)
     }
 
-    setup().catch(console.log)
+    getCustomerInfo().catch(console.log)
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])

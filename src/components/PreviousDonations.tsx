@@ -36,16 +36,18 @@ const PreviousDonations = ({ customer }: PreviousDonationsProps) => {
   }, [])
 
   const nonSubscriptions = useMemo(() => {
-    return customer.nonSubscriptionTransactions.map((transaction) => {
-      const matchingProduct = products.find(
-        (p) => p.identifier === transaction.productIdentifier
-      )
+    return customer.nonSubscriptionTransactions
+      .map((transaction) => {
+        const matchingProduct = products.find(
+          (p) => p.identifier === transaction.productIdentifier
+        )
 
-      return {
-        ...transaction,
-        name: matchingProduct?.priceString,
-      }
-    })
+        return {
+          ...transaction,
+          name: matchingProduct?.priceString,
+        }
+      })
+      .sort((a, b) => moment(b.purchaseDate).diff(a.purchaseDate))
   }, [customer.nonSubscriptionTransactions, products])
 
   const monthlyDonatorEntitlement =

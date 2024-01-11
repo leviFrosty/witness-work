@@ -125,7 +125,6 @@ const PaywallScreen = () => {
       const { productIdentifier } = await Purchases.purchasePackage(
         selectedOffering.availablePackages[0]
       )
-
       if (productIdentifier) {
         setJustPurchasedSomething(true) // wahoo!
       }

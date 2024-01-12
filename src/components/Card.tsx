@@ -15,6 +15,7 @@ const Card: React.FC<PropsWithChildren<Props>> = ({
   children,
   flexDirection,
   style,
+  ...props
 }) => {
   const theme = useTheme()
 
@@ -36,6 +37,7 @@ const Card: React.FC<PropsWithChildren<Props>> = ({
         ],
         [style],
       ]}
+      {...props}
     >
       {children}
     </View>

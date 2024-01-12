@@ -20,6 +20,9 @@ import HomeTabStack from './HomeTabStack'
 import PreferencesScreen from '../screens/settings/preferences/PreferencesScreen'
 import i18n from '../lib/locales'
 import WhatsNewScreen from '../screens/WhatsNewScreen'
+import DonationInfoScreen from '../screens/DonationInfoScreen'
+import PaywallScreen from '../screens/PaywallScreen'
+import PaywallThankYouScreen from '../screens/PaywallThankYouScreen'
 
 export type RootStackParamList = {
   Root: undefined
@@ -38,6 +41,9 @@ export type RootStackParamList = {
   Update: undefined
   Preferences: undefined
   'Whats New': undefined
+  Donate: undefined
+  Paywall: undefined
+  'Thank You': undefined
 }
 
 export type RootStackNavigation = NativeStackNavigationProp<RootStackParamList>
@@ -125,7 +131,7 @@ const RootStackComponent = () => {
         component={RecoverContactsScreen}
       />
       <RootStack.Screen
-        options={{ header: () => undefined }}
+        options={{ header: () => null }}
         name='Update'
         component={UpdateScreen}
       />
@@ -144,6 +150,27 @@ const RootStackComponent = () => {
         }}
         name='Whats New'
         component={WhatsNewScreen}
+      />
+      <RootStack.Screen
+        options={{
+          header: () => <Header buttonType='back' title={''} />,
+        }}
+        name='Donate'
+        component={DonationInfoScreen}
+      />
+      <RootStack.Screen
+        options={{
+          header: () => <Header buttonType='back' title={i18n.t('donate')} />,
+        }}
+        name='Paywall'
+        component={PaywallScreen}
+      />
+      <RootStack.Screen
+        options={{
+          header: () => null,
+        }}
+        name='Thank You'
+        component={PaywallThankYouScreen}
       />
     </RootStack.Navigator>
   )

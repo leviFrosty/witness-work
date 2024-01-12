@@ -1,7 +1,8 @@
 import { usePreferences } from '../stores/preferences'
+import { Publisher } from '../types/publisher'
 
 type PublisherDetails = {
-  status: string
+  status: Publisher
   goalHours: number
   annualGoalHours: number
   hasAnnualGoal: boolean

@@ -4,6 +4,7 @@ import i18n from '../../../lib/locales'
 import Section from '../../../components/inputs/Section'
 import InputRowButton from '../../../components/inputs/InputRowButton'
 import {
+  faArrowUpRightFromSquare,
   faChevronRight,
   faCode,
   faFileContract,
@@ -32,7 +33,7 @@ const MiscSection = ({ handleNavigate }: SettingsSectionProps) => {
           label={i18n.t('viewSource')}
           onPress={() => openURL(links.githubRepo)}
         >
-          <IconButton icon={faChevronRight} />
+          <IconButton icon={faArrowUpRightFromSquare} />
         </InputRowButton>
         <InputRowButton
           leftIcon={faFileContract}
@@ -40,7 +41,7 @@ const MiscSection = ({ handleNavigate }: SettingsSectionProps) => {
           onPress={() => openURL(links.privacyPolicy)}
           lastInSection
         >
-          <IconButton icon={faChevronRight} />
+          <IconButton icon={faArrowUpRightFromSquare} />
         </InputRowButton>
       </Section>
     </View>

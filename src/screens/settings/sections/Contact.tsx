@@ -3,8 +3,8 @@ import i18n from '../../../lib/locales'
 import Section from '../../../components/inputs/Section'
 import InputRowButton from '../../../components/inputs/InputRowButton'
 import {
+  faArrowUpRightFromSquare,
   faBug,
-  faChevronRight,
   faHand,
 } from '@fortawesome/free-solid-svg-icons'
 import IconButton from '../../../components/IconButton'
@@ -24,7 +24,7 @@ const ContactSection = () => {
             openURL(links.bugReport)
           }}
         >
-          <IconButton icon={faChevronRight} />
+          <IconButton icon={faArrowUpRightFromSquare} />
         </InputRowButton>
         <InputRowButton
           lastInSection
@@ -34,7 +34,7 @@ const ContactSection = () => {
             openURL(links.featureRequest)
           }}
         >
-          <IconButton icon={faChevronRight} />
+          <IconButton icon={faArrowUpRightFromSquare} />
         </InputRowButton>
       </Section>
     </View>

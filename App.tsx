@@ -19,6 +19,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler'
 import { TamaguiProvider } from 'tamagui'
 import tamaguiConfig from './tamagui.config'
 import ThemeProvider from './src/providers/ThemeProvider'
+import CustomerProvider from './src/providers/CustomerProvider'
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
@@ -67,17 +68,19 @@ export default function App() {
     return (
       <ThemeProvider>
         <SafeAreaProvider>
-          <TamaguiProvider
-            defaultTheme={colorScheme || undefined}
-            config={tamaguiConfig}
-          >
-            <NavigationContainer>
-              <GestureHandlerRootView style={{ flex: 1 }}>
-                <StatusBar />
-                <RootStackComponent />
-              </GestureHandlerRootView>
-            </NavigationContainer>
-          </TamaguiProvider>
+          <CustomerProvider>
+            <TamaguiProvider
+              defaultTheme={colorScheme || undefined}
+              config={tamaguiConfig}
+            >
+              <NavigationContainer>
+                <GestureHandlerRootView style={{ flex: 1 }}>
+                  <StatusBar />
+                  <RootStackComponent />
+                </GestureHandlerRootView>
+              </NavigationContainer>
+            </TamaguiProvider>
+          </CustomerProvider>
         </SafeAreaProvider>
       </ThemeProvider>
     )

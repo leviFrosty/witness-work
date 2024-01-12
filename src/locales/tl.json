@@ -464,5 +464,6 @@
   "hideDonateHeart": "Itago ang Donate Heart",
   "noPurchasesFound": "Walang Nahanap na Mga Pagbili",
   "errorCheckingOut": "Nagkaroon ng error noong nag-check out. Malamang na ito ay dahil sa kawalang-tatag ng network, pakisubukang muli.",
-  "goToAppStoreToUpdateSubscriptions": "Upang kanselahin o i-edit ang iyong subscription, pakibisita ang App Store."
+  "goToAppStoreToUpdateSubscriptions": "Upang kanselahin o i-edit ang iyong subscription, pakibisita ang App Store.",
+  "termsOfUse": "Mga Tuntunin ng Paggamit"
 }

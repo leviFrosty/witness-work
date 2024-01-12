@@ -464,5 +464,6 @@
   "hideDonateHeart": "Nascondi Dona cuore",
   "noPurchasesFound": "Nessun acquisto trovato",
   "errorCheckingOut": "Si è verificato un errore durante il check-out. Probabilmente è dovuto all'instabilità della rete, riprova.",
-  "goToAppStoreToUpdateSubscriptions": "Per annullare o modificare il tuo abbonamento, visita l'App Store."
+  "goToAppStoreToUpdateSubscriptions": "Per annullare o modificare il tuo abbonamento, visita l'App Store.",
+  "termsOfUse": "Termini di utilizzo"
 }

@@ -464,5 +464,6 @@
   "hideDonateHeart": "Hide Donate Heart",
   "noPurchasesFound": "No Purchases Found",
   "errorCheckingOut": "There was an error when checking out. It likely is due to network instability, please try again.",
-  "goToAppStoreToUpdateSubscriptions": "To cancel or edit your subscription, please visit the App Store."
+  "goToAppStoreToUpdateSubscriptions": "To cancel or edit your subscription, please visit the App Store.",
+  "termsOfUse": "Terms of Use"
 }

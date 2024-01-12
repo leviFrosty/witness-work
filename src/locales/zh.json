@@ -464,5 +464,6 @@
   "hideDonateHeart": "隐藏捐赠爱心",
   "noPurchasesFound": "没有找到购买的商品",
   "errorCheckingOut": "结帐时出现错误。可能是网络不稳定，请重试。",
-  "goToAppStoreToUpdateSubscriptions": "要取消或编辑您的订阅，请访问 App Store。"
+  "goToAppStoreToUpdateSubscriptions": "要取消或编辑您的订阅，请访问 App Store。",
+  "termsOfUse": "使用条款"
 }

@@ -19,4 +19,6 @@ export default {
   bugReport: `${githubRepo}/issues/new?assignees=&labels=bug&projects=&template=bug_report.md&title=%5BBUG%5D`,
   featureRequest: `${githubRepo}/issues/new?assignees=&labels=enhancement&projects=&template=feature_request.md&title=%5BFEATURE%5D`,
   donate: 'https://ko-fi.com/leviwilkerson',
+  termsOfUse:
+    'https://www.apple.com/legal/internet-services/itunes/dev/stdeula/',
 }

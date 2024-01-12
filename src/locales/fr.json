@@ -464,5 +464,6 @@
   "hideDonateHeart": "Masquer Faire un don de cœur",
   "noPurchasesFound": "Aucun achat trouvé",
   "errorCheckingOut": "Une erreur s'est produite lors du paiement. Cela est probablement dû à une instabilité du réseau, veuillez réessayer.",
-  "goToAppStoreToUpdateSubscriptions": "Pour annuler ou modifier votre abonnement, veuillez visiter l'App Store."
+  "goToAppStoreToUpdateSubscriptions": "Pour annuler ou modifier votre abonnement, veuillez visiter l'App Store.",
+  "termsOfUse": "Conditions d'utilisation"
 }

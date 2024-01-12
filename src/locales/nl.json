@@ -464,5 +464,6 @@
   "hideDonateHeart": "Doneer hart verbergen",
   "noPurchasesFound": "Geen aankopen gevonden",
   "errorCheckingOut": "Er is een fout opgetreden bij het uitchecken. Dit komt waarschijnlijk door netwerkinstabiliteit. Probeer het opnieuw.",
-  "goToAppStoreToUpdateSubscriptions": "Om uw abonnement op te zeggen of te bewerken, gaat u naar de App Store."
+  "goToAppStoreToUpdateSubscriptions": "Om uw abonnement op te zeggen of te bewerken, gaat u naar de App Store.",
+  "termsOfUse": "Gebruiksvoorwaarden"
 }

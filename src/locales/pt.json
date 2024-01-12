@@ -464,5 +464,6 @@
   "hideDonateHeart": "Ocultar Doar Coração",
   "noPurchasesFound": "Nenhuma compra encontrada",
   "errorCheckingOut": "Ocorreu um erro durante o check-out. Provavelmente é devido à instabilidade da rede. Tente novamente.",
-  "goToAppStoreToUpdateSubscriptions": "Para cancelar ou editar sua assinatura, visite a App Store."
+  "goToAppStoreToUpdateSubscriptions": "Para cancelar ou editar sua assinatura, visite a App Store.",
+  "termsOfUse": "Termos de uso"
 }

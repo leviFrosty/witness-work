@@ -464,5 +464,6 @@
   "hideDonateHeart": "Giấu trái tim hiến tặng",
   "noPurchasesFound": "Không tìm thấy giao dịch mua nào",
   "errorCheckingOut": "Đã xảy ra lỗi khi kiểm tra. Có thể là do mạng không ổn định, vui lòng thử lại.",
-  "goToAppStoreToUpdateSubscriptions": "Để hủy hoặc chỉnh sửa đăng ký của bạn, vui lòng truy cập App Store."
+  "goToAppStoreToUpdateSubscriptions": "Để hủy hoặc chỉnh sửa đăng ký của bạn, vui lòng truy cập App Store.",
+  "termsOfUse": "Điều khoản sử dụng"
 }

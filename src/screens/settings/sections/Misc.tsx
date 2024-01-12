@@ -39,6 +39,13 @@ const MiscSection = ({ handleNavigate }: SettingsSectionProps) => {
           leftIcon={faFileContract}
           label={i18n.t('privacyPolicy')}
           onPress={() => openURL(links.privacyPolicy)}
+        >
+          <IconButton icon={faArrowUpRightFromSquare} />
+        </InputRowButton>
+        <InputRowButton
+          leftIcon={faFileContract}
+          label={i18n.t('termsOfUse')}
+          onPress={() => openURL(links.termsOfUse)}
           lastInSection
         >
           <IconButton icon={faArrowUpRightFromSquare} />

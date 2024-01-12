@@ -464,5 +464,6 @@
   "hideDonateHeart": "Herz spenden ausblenden",
   "noPurchasesFound": "Keine Käufe gefunden",
   "errorCheckingOut": "Beim Auschecken ist ein Fehler aufgetreten. Es liegt wahrscheinlich an einer Netzwerkinstabilität. Bitte versuchen Sie es erneut.",
-  "goToAppStoreToUpdateSubscriptions": "Um Ihr Abonnement zu kündigen oder zu bearbeiten, besuchen Sie bitte den App Store."
+  "goToAppStoreToUpdateSubscriptions": "Um Ihr Abonnement zu kündigen oder zu bearbeiten, besuchen Sie bitte den App Store.",
+  "termsOfUse": "Nutzungsbedingungen"
 }

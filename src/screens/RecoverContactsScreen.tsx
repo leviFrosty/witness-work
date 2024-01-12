@@ -57,7 +57,7 @@ const RecoverContactsScreen = () => {
           </Text>
         </View>
         <ScrollView
-          style={{ marginBottom: insets.bottom + 60 }}
+          style={{ paddingBottom: insets.bottom + 60 }}
           contentInset={{
             top: 0,
             right: 0,

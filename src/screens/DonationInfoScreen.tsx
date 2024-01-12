@@ -158,7 +158,7 @@ const DonationInfoScreen = () => {
               style={{
                 fontSize: theme.fontSize('lg'),
                 fontFamily: theme.fonts.semiBold,
-                marginBottom: 15,
+                paddingBottom: 15,
               }}
             >
               {i18n.t('frequentlyAskedQuestions')}

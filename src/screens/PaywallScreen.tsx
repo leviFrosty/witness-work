@@ -181,7 +181,7 @@ const PaywallScreen = () => {
     [selectNearestOfferingFromOtherPaymentMethod]
   )
 
-  if (!justPurchasedSomething) {
+  if (justPurchasedSomething) {
     return <PaywallThankYou />
   }
 

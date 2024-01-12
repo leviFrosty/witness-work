@@ -35,13 +35,28 @@ Donations are never expected but greatly appreciated! These donations are used t
 
 These expenses are kept up to date here. Thank you!
 
+[![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/leviwilkerson)
+
 ### Help Translate 🌐
 
 JW Time is automatically translated into 12 languages by means of Google Cloud Translate. These translations might not always be the highest quality. To help, proofread these translations on [Crowdin](https://crowdin.com/project/jw-time/). Thank you!
 
 [Not sure how to use Crowdin?](https://support.crowdin.com/crowdin-intro/)
 
-Current translations: de, es, fr, it, ja, ko, nl, pt, ru, vi, zh, tl
+Current translations:
+
+1. German
+1. Spanish
+1. French
+1. Italian
+1. Japanese
+1. Korean
+1. Dutch
+1. Portuguese
+1. Russian
+1. Vietnamese
+1. Chinese
+1. Tagalog
 
 ### Help Code ⌨️
 
@@ -76,8 +91,6 @@ If you find something you'd like to help with, please let me know you've began w
   - [`stacks`](/src/stacks) All [native stacks](https://reactnavigation.org/docs/native-stack-navigator) of used for [React Native Navigation](https://reactnavigation.org/).
   - [`stores`](/src/stores) The [AsyncStorage](https://github.com/react-native-async-storage/async-storage) APIs for all app data.
   - [`types`](/src/types) Type definitions.
-
-[![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/leviwilkerson)
 
 ## License
 

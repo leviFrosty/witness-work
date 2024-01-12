@@ -7,6 +7,7 @@ import {
   NativeStackNavigationProp,
   NativeStackScreenProps,
 } from '@react-navigation/native-stack'
+import * as Sentry from 'sentry-expo'
 import { RootStackParamList } from '../stacks/RootStack'
 import useContacts from '../stores/contactsStore'
 import { useEffect, useState } from 'react'
@@ -420,7 +421,7 @@ const ConversationFormScreen = ({ route, navigation }: Props) => {
               id,
             })
           } catch (error) {
-            console.error(error)
+            Sentry.Native.captureException(error)
           }
         }
 
@@ -443,7 +444,7 @@ const ConversationFormScreen = ({ route, navigation }: Props) => {
             resolve(conversation)
           })
           .catch((error) => {
-            console.error(error)
+            Sentry.Native.captureException(error)
             resolve(false)
           })
       } else {

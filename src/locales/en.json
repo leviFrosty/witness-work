@@ -328,7 +328,8 @@
   "bugFixes": "Bug Fixes",
   "updates": {
     "1111": {
-      "c1": "Add donate page in the settings for those who wish to contribute."
+      "c1": "Add donate page in the settings for those who wish to contribute.",
+      "c2": "Includes various minor improvements and bug fixes"
     },
     "1110": {
       "c1": "Adds native support for iPad & tablets!",
@@ -444,7 +445,7 @@
   "firstOfAll": "First of all...",
   "restorePurchase": "Restore Purchases",
   "showAll": "Show More Options",
-  "donate_letter": "Dear Brothers and Sisters,\n\nI am very honored that you have chosen my app to use in the sea of other amazing choices. I started working on this app when I was pioneering - I just couldn't find a clear and concise place to keep my notes. For me, it felt like I would always lose my paper notes and somehow forget my return visits. I knew a lot of other people felt the same way. My goal when creating this app was to focus on high utility but also simplicity. Anyone should be able to use this app, no matter their age or publisher experience. I hope my app has been a useful tool for you and your service to Jehovah. I have spent countless hours developing this app, and I am very happy to see it being used by so many brothers and sisters around the world. If you haven't already, please let others know about JW Time - it's a labor of love. Regardless if you choose to donate, I hope you continue to enjoy the app and the future updates.\n\nThank you,\n\nLevi Wilkerson",
+  "donate_letter": "Dear Brother or Sister,\n\nI am very honored that you have chosen my app to use in the sea of other amazing choices. I started working on this app when I was pioneering - I just couldn't find a clear and concise place to keep my notes. For me, it felt like I would always lose my paper notes and somehow forget my return visits. I knew a lot of other people felt the same way. My goal when creating this app was to focus on high utility but also simplicity. Anyone should be able to use this app, no matter their age or publisher experience. I hope my app has been a useful tool for you and your service to Jehovah. I have spent countless hours developing this app, and I am very happy to see it being used by so many brothers and sisters around the world. If you haven't already, please let others know about JW Time - it's a labor of love. Regardless if you choose to donate, I hope you continue to enjoy the app and the future updates.\n\nThank you,\n\nLevi Wilkerson",
   "donate_letter_ps": "P.S. I'm always available to talk about anything - personal questions, app questions, or other concerns. Feel free to reach out to me at my personal email below." ,
   "emailMe": "Email me!",
   "aLetterForYou": "A letter to you.",
@@ -459,5 +460,9 @@
   "yourDonations": "Your donations",
   "thankYou": "Thank you!",
   "thankYou_description": "I am undeserving of such kindness. Your generosity is greatly appreciated.",
-  "failedToOpenMailApplication_description": "Please verify you have a valid mail application installed."
+  "failedToOpenMailApplication_description": "Please verify you have a valid mail application installed.",
+  "hideDonateHeart": "Hide Donate Heart",
+  "noPurchasesFound": "No Purchases Found",
+  "errorCheckingOut": "There was an error when checking out. It likely is due to network instability, please try again.",
+  "goToAppStoreToUpdateSubscriptions": "To cancel or edit your subscription, please visit the App Store."
 }

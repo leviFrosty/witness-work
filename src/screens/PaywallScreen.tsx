@@ -17,7 +17,9 @@ import { faCheck } from '@fortawesome/free-solid-svg-icons'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import ActionButton from '../components/ActionButton'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import PaywallThankYou from '../components/PaywallThankYou'
+import useCustomer from '../hooks/useCustomer'
+import { useNavigation } from '@react-navigation/native'
+import { RootStackNavigation } from '../stacks/RootStack'
 
 interface OfferButtonProps {
   offering: PurchasesOffering
@@ -63,8 +65,9 @@ const PaywallScreen = () => {
     useState<PurchasesOffering | null>(null)
   const [currentOfferings, setCurrentOfferings] =
     useState<PurchasesOfferings | null>(null)
+  const { revalidate } = useCustomer()
   const [oneTimePurchaseMethod, setOneTimePurchaseMethod] = useState(false)
-  const [justPurchasedSomething, setJustPurchasedSomething] = useState(false)
+  const navigation = useNavigation<RootStackNavigation>()
 
   const monthlyOfferings = useMemo(() => {
     if (!currentOfferings) return []
@@ -125,16 +128,17 @@ const PaywallScreen = () => {
         selectedOffering.availablePackages[0]
       )
       if (productIdentifier) {
-        setJustPurchasedSomething(true) // wahoo!
+        revalidate()
+        navigation.replace('Thank You')
       }
     } catch (error: unknown) {
       if (!(error as PurchasesError).userCancelled) {
-        Alert.alert(i18n.t('error'), JSON.stringify(error, null, 2))
+        Alert.alert(i18n.t('error'), i18n.t('errorCheckingOut'))
       } else {
         Sentry.Native.captureException(error)
       }
     }
-  }, [selectedOffering])
+  }, [navigation, revalidate, selectedOffering])
 
   const selectNearestOfferingFromOtherPaymentMethod = useCallback(
     (oneTime: boolean) => {
@@ -181,10 +185,6 @@ const PaywallScreen = () => {
     [selectNearestOfferingFromOtherPaymentMethod]
   )
 
-  if (justPurchasedSomething) {
-    return <PaywallThankYou />
-  }
-
   if (!currentOfferings) {
     return (
       <Wrapper>
@@ -219,7 +219,7 @@ const PaywallScreen = () => {
               fontFamily: theme.fonts.semiBold,
             }}
           >
-            {i18n.t('support')} Levi Wilkerson
+            {i18n.t('support')} JW Time
           </Text>
           <View style={{ gap: 15 }}>
             <XView

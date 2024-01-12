@@ -88,6 +88,7 @@ const initialState = {
   displayDetailsOnProgressBarHomeScreen:
     Device.deviceType === Device.DeviceType.TABLET,
   monthlyRoutineHasShownInvalidMonthAlert: false,
+  hideDonateHeart: false,
 }
 
 export const usePreferences = create(

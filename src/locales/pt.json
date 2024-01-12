@@ -388,7 +388,8 @@
       "c3": "Ajustou o método de envio de relatórios de bugs e solicitações de recursos ao Github."
     },
     "1111": {
-      "c1": "Adicione a página de doações nas configurações para quem deseja contribuir."
+      "c1": "Adicione a página de doações nas configurações para quem deseja contribuir.",
+      "c2": "Inclui várias pequenas melhorias e correções de bugs"
     }
   },
   "installed": "Instalado",
@@ -444,7 +445,6 @@
   "firstOfAll": "Em primeiro lugar...",
   "restorePurchase": "Restaurar compras",
   "showAll": "Mostrar mais opções",
-  "donate_letter": "Queridos irmãos e irmãs,\n\nEstou muito honrado por você ter escolhido meu aplicativo para usar em um mar de outras opções incríveis. Comecei a trabalhar neste aplicativo quando era pioneiro - simplesmente não conseguia encontrar um local claro e conciso para manter minhas anotações. Para mim, parecia que sempre perderia minhas anotações de papel e de alguma forma esqueceria minhas revisitas. Eu sabia que muitas outras pessoas sentiam o mesmo. Meu objetivo ao criar este aplicativo foi focar na alta utilidade, mas também na simplicidade. Qualquer pessoa deve poder usar este aplicativo, independentemente da idade ou experiência como editor. Espero que meu aplicativo tenha sido uma ferramenta útil para você e seu serviço a Jeová. Passei inúmeras horas desenvolvendo este aplicativo e estou muito feliz em vê-lo sendo usado por tantos irmãos e irmãs ao redor do mundo. Se ainda não o fez, informe outras pessoas sobre o JW Time - é um trabalho de amor. Independentemente de você optar por doar, espero que continue aproveitando o aplicativo e as atualizações futuras.\n\nObrigado,\n\nLevi Wilkerson",
   "donate_letter_ps": "P.S. Estou sempre disponível para conversar sobre qualquer coisa: dúvidas pessoais, dúvidas sobre aplicativos ou outras preocupações. Sinta-se à vontade para entrar em contato comigo pelo e-mail abaixo.",
   "emailMe": "Me mande um e-mail!",
   "aLetterForYou": "Uma carta para você.",
@@ -459,5 +459,10 @@
   "yourDonations": "Suas doações",
   "thankYou": "Obrigado!",
   "thankYou_description": "Não sou merecedor de tanta gentileza. Sua generosidade é muito apreciada.",
-  "failedToOpenMailApplication_description": "Verifique se você possui um aplicativo de e-mail válido instalado."
+  "failedToOpenMailApplication_description": "Verifique se você possui um aplicativo de e-mail válido instalado.",
+  "donate_letter": "Querido irmão ou irmã,\n\nEstou muito honrado por você ter escolhido meu aplicativo para usar em um mar de outras opções incríveis. Comecei a trabalhar neste aplicativo quando era pioneiro - simplesmente não conseguia encontrar um local claro e conciso para manter minhas anotações. Para mim, parecia que sempre perderia minhas anotações de papel e de alguma forma esqueceria minhas revisitas. Eu sabia que muitas outras pessoas sentiam o mesmo. Meu objetivo ao criar este aplicativo foi focar na alta utilidade, mas também na simplicidade. Qualquer pessoa deve poder usar este aplicativo, independentemente da idade ou experiência como editor. Espero que meu aplicativo tenha sido uma ferramenta útil para você e seu serviço a Jeová. Passei inúmeras horas desenvolvendo este aplicativo e estou muito feliz em vê-lo sendo usado por tantos irmãos e irmãs ao redor do mundo. Se ainda não o fez, informe outras pessoas sobre o JW Time - é um trabalho de amor. Independentemente de você optar por doar, espero que continue aproveitando o aplicativo e as atualizações futuras.\n\nObrigado,\n\nLevi Wilkerson",
+  "hideDonateHeart": "Ocultar Doar Coração",
+  "noPurchasesFound": "Nenhuma compra encontrada",
+  "errorCheckingOut": "Ocorreu um erro durante o check-out. Provavelmente é devido à instabilidade da rede. Tente novamente.",
+  "goToAppStoreToUpdateSubscriptions": "Para cancelar ou editar sua assinatura, visite a App Store."
 }

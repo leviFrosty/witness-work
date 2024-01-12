@@ -388,7 +388,8 @@
       "c3": "Ajustement de la méthode de soumission des rapports de bogues et des demandes de fonctionnalités à Github."
     },
     "1111": {
-      "c1": "Ajoutez une page de don dans les paramètres pour ceux qui souhaitent contribuer."
+      "c1": "Ajoutez une page de don dans les paramètres pour ceux qui souhaitent contribuer.",
+      "c2": "Comprend diverses améliorations mineures et corrections de bugs"
     }
   },
   "installed": "installée",
@@ -444,7 +445,6 @@
   "firstOfAll": "Tout d'abord...",
   "restorePurchase": "Restaurer les achats",
   "showAll": "Afficher plus d'options",
-  "donate_letter": "Chers frères et sœurs,\n\nJe suis très honoré que vous ayez choisi mon application pour l'utiliser parmi une mer d'autres choix incroyables. J'ai commencé à travailler sur cette application lorsque j'étais pionnier. Je n'arrivais tout simplement pas à trouver un endroit clair et concis pour conserver mes notes. Pour moi, j’avais l’impression que je perdrais toujours mes notes papier et que j’oublierais d’une manière ou d’une autre mes nouvelles visites. Je savais que beaucoup d’autres personnes ressentaient la même chose. Mon objectif lors de la création de cette application était de me concentrer sur une grande utilité mais aussi sur la simplicité. Tout le monde devrait pouvoir utiliser cette application, quel que soit son âge ou son expérience en tant qu'éditeur. J'espère que mon application a été un outil utile pour vous et votre service envers Jéhovah. J'ai passé d'innombrables heures à développer cette application et je suis très heureux de la voir utilisée par tant de frères et sœurs à travers le monde. Si vous ne l'avez pas déjà fait, faites connaître JW Time aux autres - c'est un travail d'amour. Peu importe si vous choisissez de faire un don, j'espère que vous continuerez à profiter de l'application et des futures mises à jour.\n\nMerci,\n\nLévi Wilkerson",
   "donate_letter_ps": "P.S. Je suis toujours disponible pour parler de tout : de questions personnelles, de questions sur les applications ou d'autres préoccupations. N'hésitez pas à me contacter à mon email ci-dessous.",
   "emailMe": "Envoyez moi un email!",
   "aLetterForYou": "Une lettre pour vous.",
@@ -459,5 +459,10 @@
   "yourDonations": "Vos dons",
   "thankYou": "Merci!",
   "thankYou_description": "Je ne mérite pas une telle gentillesse. Votre générosité est grandement appréciée.",
-  "failedToOpenMailApplication_description": "Veuillez vérifier qu'une application de messagerie valide est installée."
+  "failedToOpenMailApplication_description": "Veuillez vérifier qu'une application de messagerie valide est installée.",
+  "donate_letter": "Cher frère ou sœur,\n\nJe suis très honoré que vous ayez choisi mon application pour l'utiliser parmi une mer d'autres choix incroyables. J'ai commencé à travailler sur cette application lorsque j'étais pionnier. Je n'arrivais tout simplement pas à trouver un endroit clair et concis pour conserver mes notes. Pour moi, j’avais l’impression que je perdrais toujours mes notes papier et que j’oublierais d’une manière ou d’une autre mes nouvelles visites. Je savais que beaucoup d’autres personnes ressentaient la même chose. Mon objectif lors de la création de cette application était de me concentrer sur une grande utilité mais aussi sur la simplicité. Tout le monde devrait pouvoir utiliser cette application, quel que soit son âge ou son expérience en tant qu'éditeur. J'espère que mon application a été un outil utile pour vous et votre service envers Jéhovah. J'ai passé d'innombrables heures à développer cette application et je suis très heureux de la voir utilisée par tant de frères et sœurs à travers le monde. Si vous ne l'avez pas déjà fait, faites connaître JW Time aux autres - c'est un travail d'amour. Peu importe si vous choisissez de faire un don, j'espère que vous continuerez à profiter de l'application et des futures mises à jour.\n\nMerci,\n\nLévi Wilkerson",
+  "hideDonateHeart": "Masquer Faire un don de cœur",
+  "noPurchasesFound": "Aucun achat trouvé",
+  "errorCheckingOut": "Une erreur s'est produite lors du paiement. Cela est probablement dû à une instabilité du réseau, veuillez réessayer.",
+  "goToAppStoreToUpdateSubscriptions": "Pour annuler ou modifier votre abonnement, veuillez visiter l'App Store."
 }

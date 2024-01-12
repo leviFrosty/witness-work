@@ -8,18 +8,24 @@ import Text from './MyText'
 import i18n from '../lib/locales'
 import XView from './layout/XView'
 import moment from 'moment'
-import { useEffect, useMemo, useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import Card from './Card'
 import useTheme from '../contexts/theme'
 import Badge from './Badge'
+import IconButton from './IconButton'
+import { faRefresh } from '@fortawesome/free-solid-svg-icons'
 
 const MONTHLY_DONATOR_ENTITLEMENT = 'Monthly Donator'
 
 interface PreviousDonationsProps {
   customer: CustomerInfo
+  revalidate: () => Promise<void>
 }
 
-const PreviousDonations = ({ customer }: PreviousDonationsProps) => {
+const PreviousDonations = ({
+  customer,
+  revalidate,
+}: PreviousDonationsProps) => {
   const theme = useTheme()
   const [products, setProducts] = useState<PurchasesStoreProduct[]>([])
 
@@ -32,9 +38,7 @@ const PreviousDonations = ({ customer }: PreviousDonationsProps) => {
     }
 
     getProducts().catch((error) => Sentry.Native.captureException(error))
-
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, [customer.allPurchaseDates])
 
   const nonSubscriptions = useMemo(() => {
     return customer.nonSubscriptionTransactions
@@ -52,56 +56,74 @@ const PreviousDonations = ({ customer }: PreviousDonationsProps) => {
   }, [customer.nonSubscriptionTransactions, products])
 
   const monthlyDonatorEntitlement =
-    customer.entitlements.all[MONTHLY_DONATOR_ENTITLEMENT]
+    MONTHLY_DONATOR_ENTITLEMENT in customer.entitlements.all
+      ? customer.entitlements.all[MONTHLY_DONATOR_ENTITLEMENT]
+      : undefined
 
   const monthlyDonationEntitlementProduct = useMemo(() => {
     const matchingProduct = products.find(
-      (p) => p.identifier === monthlyDonatorEntitlement.productIdentifier
+      (p) => p.identifier === monthlyDonatorEntitlement?.productIdentifier
     )
 
     return matchingProduct
-  }, [monthlyDonatorEntitlement.productIdentifier, products])
+  }, [monthlyDonatorEntitlement?.productIdentifier, products])
 
   return (
-    <View style={{ gap: 10 }}>
-      <Text
-        style={{
-          fontSize: theme.fontSize('lg'),
-          fontFamily: theme.fonts.semiBold,
-          marginBottom: 15,
-        }}
-      >
-        {i18n.t('yourDonations')}
-      </Text>
+    <View style={{ gap: 20 }}>
+      <XView style={{ paddingBottom: 15, gap: 10 }}>
+        <Text
+          style={{
+            fontSize: theme.fontSize('lg'),
+            fontFamily: theme.fonts.semiBold,
+          }}
+        >
+          {i18n.t('yourDonations')}
+        </Text>
+        <IconButton
+          icon={faRefresh}
+          onPress={revalidate}
+          color={theme.colors.textAlt}
+        />
+      </XView>
       {monthlyDonatorEntitlement && (
-        <Card>
-          <Text
-            style={{
-              fontFamily: theme.fonts.semiBold,
-              fontSize: theme.fontSize('lg'),
-            }}
-          >
-            {i18n.t('monthlyDonation')}
-          </Text>
-          <XView style={{ gap: 10 }}>
-            <Text style={{ fontFamily: theme.fonts.bold }}>
-              {monthlyDonationEntitlementProduct?.priceString}{' '}
-              {i18n.t('eachMonth')}
-            </Text>
-            <Badge
-              color={
-                monthlyDonatorEntitlement.isActive
-                  ? theme.colors.accentTranslucent
-                  : theme.colors.backgroundLighter
-              }
-              size='sm'
+        <View style={{ gap: 10 }}>
+          <Card>
+            <Text
+              style={{
+                fontFamily: theme.fonts.semiBold,
+                fontSize: theme.fontSize('lg'),
+              }}
             >
-              {monthlyDonatorEntitlement.isActive
-                ? i18n.t('active')
-                : i18n.t('inactive')}
-            </Badge>
-          </XView>
-        </Card>
+              {i18n.t('monthlyDonation')}
+            </Text>
+            <XView style={{ gap: 10 }}>
+              <Text style={{ fontFamily: theme.fonts.bold }}>
+                {monthlyDonationEntitlementProduct?.priceString}{' '}
+                {i18n.t('eachMonth')}
+              </Text>
+              <Badge
+                color={
+                  monthlyDonatorEntitlement.isActive
+                    ? theme.colors.accentTranslucent
+                    : theme.colors.backgroundLighter
+                }
+                size='sm'
+              >
+                {monthlyDonatorEntitlement.isActive
+                  ? i18n.t('active')
+                  : i18n.t('inactive')}
+              </Badge>
+            </XView>
+            <Text
+              style={{
+                fontSize: theme.fontSize('sm'),
+                color: theme.colors.textAlt,
+              }}
+            >
+              {i18n.t('goToAppStoreToUpdateSubscriptions')}
+            </Text>
+          </Card>
+        </View>
       )}
       {nonSubscriptions.length > 0 && (
         <Card>

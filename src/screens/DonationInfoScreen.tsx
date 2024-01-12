@@ -12,8 +12,8 @@ import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import XView from '../components/layout/XView'
 import Button from '../components/Button'
-import Purchases, { CustomerInfo } from 'react-native-purchases'
-import { useCallback, useEffect, useState } from 'react'
+import Purchases from 'react-native-purchases'
+import React, { useCallback } from 'react'
 import Accordion from '../components/Accordion'
 import { useNavigation } from '@react-navigation/native'
 import { RootStackNavigation } from '../stacks/RootStack'
@@ -24,40 +24,30 @@ import Card from '../components/Card'
 import ShareAppButton from '../components/ShareAppButton'
 import Divider from '../components/Divider'
 import PreviousDonations from '../components/PreviousDonations'
+import useCustomer from '../hooks/useCustomer'
 
 const DonationInfoScreen = () => {
   const theme = useTheme()
   const { isAndroid } = useDevice()
   const insets = useSafeAreaInsets()
   const navigation = useNavigation<RootStackNavigation>()
-  const [customer, setCustomer] = useState<CustomerInfo>()
-  const hasPurchasedBefore =
-    (customer?.allPurchaseDates
-      ? Object.keys(customer.allPurchaseDates).length
-      : 0) > 0
-
-  useEffect(() => {
-    const getCustomerInfo = async () => {
-      const customerInfo = await Purchases.getCustomerInfo()
-      setCustomer(customerInfo)
-    }
-
-    getCustomerInfo().catch((error) => Sentry.Native.captureException(error)) // There is nothing we can do here...
-
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  const { customer, setCustomer, hasPurchasedBefore, revalidate } =
+    useCustomer()
 
   const handleRestore = useCallback(async () => {
     try {
       const restored = await Purchases.restorePurchases()
+      if (Object.keys(restored.allPurchaseDates).length === 0) {
+        Alert.alert(i18n.t('noPurchasesFound'))
+      }
       setCustomer(restored)
     } catch (error: unknown) {
       Sentry.Native.captureException(error)
       Alert.alert(i18n.t('error_restoring_account'))
     }
-  }, [])
+  }, [setCustomer])
 
-  const handleEmail = () => {
+  const handleEmail = useCallback(() => {
     const subject = encodeURIComponent('[JW Time]')
     openURL(`mailto:${email}?subject=${subject}`, {
       alert: {
@@ -65,7 +55,41 @@ const DonationInfoScreen = () => {
         description: i18n.t('failedToOpenMailApplication_description'),
       },
     })
-  }
+  }, [])
+
+  const renderPreviousDonations = useCallback(() => {
+    if (isAndroid) {
+      return null
+    }
+
+    return (
+      <React.Fragment>
+        <Divider />
+        {hasPurchasedBefore && customer ? (
+          <PreviousDonations customer={customer} revalidate={revalidate} />
+        ) : (
+          <Button onPress={handleRestore}>
+            <Text
+              style={{
+                fontSize: theme.fontSize('sm'),
+                textDecorationLine: 'underline',
+                textAlign: 'center',
+              }}
+            >
+              {i18n.t('restorePurchase')}
+            </Text>
+          </Button>
+        )}
+      </React.Fragment>
+    )
+  }, [
+    customer,
+    handleRestore,
+    hasPurchasedBefore,
+    isAndroid,
+    revalidate,
+    theme,
+  ])
 
   return (
     <Wrapper
@@ -193,23 +217,7 @@ const DonationInfoScreen = () => {
             </Accordion>
           </View>
 
-          <Divider />
-
-          {hasPurchasedBefore && customer && !isAndroid ? (
-            <PreviousDonations customer={customer} />
-          ) : (
-            <Button onPress={handleRestore}>
-              <Text
-                style={{
-                  fontSize: theme.fontSize('sm'),
-                  textDecorationLine: 'underline',
-                  textAlign: 'center',
-                }}
-              >
-                {i18n.t('restorePurchase')}
-              </Text>
-            </Button>
-          )}
+          {renderPreviousDonations()}
         </View>
       </KeyboardAwareScrollView>
 

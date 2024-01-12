@@ -13,7 +13,7 @@ const ShareAppButton = () => {
     <Button
       onPress={() =>
         Share.share({
-          url: isAndroid ? links.playStore : links.appStore,
+          message: isAndroid ? links.playStore : links.appStore,
         })
       }
     >

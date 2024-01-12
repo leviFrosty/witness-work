@@ -388,7 +388,8 @@
       "c3": "Die Methode zum Senden von Fehlerberichten und Funktionsanfragen an Github wurde angepasst."
     },
     "1111": {
-      "c1": "Fügen Sie in den Einstellungen eine Spendenseite für diejenigen hinzu, die einen Beitrag leisten möchten."
+      "c1": "Fügen Sie in den Einstellungen eine Spendenseite für diejenigen hinzu, die einen Beitrag leisten möchten.",
+      "c2": "Enthält verschiedene kleinere Verbesserungen und Fehlerbehebungen"
     }
   },
   "installed": "Eingerichtet",
@@ -444,7 +445,6 @@
   "firstOfAll": "Erstens...",
   "restorePurchase": "Einkäufe wiederherstellen",
   "showAll": "Weitere Optionen anzeigen",
-  "donate_letter": "Liebe Brüder und Schwestern,\n\nIch fühle mich sehr geehrt, dass Sie meine App ausgewählt haben, um sie in der Fülle anderer erstaunlicher Möglichkeiten zu nutzen. Ich habe mit der Arbeit an dieser App begonnen, als ich Pionier war – ich konnte einfach keinen klaren und übersichtlichen Ort finden, an dem ich meine Notizen aufbewahren konnte. Für mich fühlte es sich an, als würde ich ständig meine Notizen verlieren und meine Rückbesuche irgendwie vergessen. Ich wusste, dass es vielen anderen Menschen genauso ging. Mein Ziel bei der Erstellung dieser App war es, den Schwerpunkt auf einen hohen Nutzen, aber auch auf Einfachheit zu legen. Jeder sollte diese App nutzen können, unabhängig von Alter oder Publisher-Erfahrung. Ich hoffe, meine App war ein nützliches Werkzeug für Sie und Ihren Dienst für Jehova. Ich habe unzählige Stunden damit verbracht, diese App zu entwickeln, und ich freue mich sehr, dass sie von so vielen Brüdern und Schwestern auf der ganzen Welt verwendet wird. Wenn Sie es noch nicht getan haben, informieren Sie bitte andere über JW Time – es ist eine Arbeit voller Liebe. Unabhängig davon, ob Sie sich für eine Spende entscheiden, hoffe ich, dass Sie weiterhin Freude an der App und den zukünftigen Updates haben.\n\nDanke schön,\n\nLevi Wilkerson",
   "donate_letter_ps": "P.S. Ich stehe jederzeit für Gespräche zur Verfügung – persönliche Fragen, Fragen zur App oder andere Anliegen. Sie können mich gerne über meine E-Mail-Adresse unten erreichen.",
   "emailMe": "Maile mir!",
   "aLetterForYou": "Ein Brief an Dich.",
@@ -459,5 +459,10 @@
   "yourDonations": "Ihre Spenden",
   "thankYou": "Danke schön!",
   "thankYou_description": "Ich verdiene solche Freundlichkeit nicht. Ihre Großzügigkeit wird sehr geschätzt.",
-  "failedToOpenMailApplication_description": "Bitte stellen Sie sicher, dass Sie eine gültige E-Mail-Anwendung installiert haben."
+  "failedToOpenMailApplication_description": "Bitte stellen Sie sicher, dass Sie eine gültige E-Mail-Anwendung installiert haben.",
+  "donate_letter": "Lieber Bruder oder Schwester,\n\nIch fühle mich sehr geehrt, dass Sie meine App ausgewählt haben, um sie in der Fülle anderer erstaunlicher Möglichkeiten zu nutzen. Ich habe mit der Arbeit an dieser App begonnen, als ich Pionier war – ich konnte einfach keinen klaren und übersichtlichen Ort finden, an dem ich meine Notizen aufbewahren konnte. Für mich fühlte es sich an, als würde ich ständig meine Notizen verlieren und meine Rückbesuche irgendwie vergessen. Ich wusste, dass es vielen anderen Menschen genauso ging. Mein Ziel bei der Erstellung dieser App war es, den Schwerpunkt auf einen hohen Nutzen, aber auch auf Einfachheit zu legen. Jeder sollte diese App nutzen können, unabhängig von Alter oder Publisher-Erfahrung. Ich hoffe, meine App war ein nützliches Werkzeug für Sie und Ihren Dienst für Jehova. Ich habe unzählige Stunden damit verbracht, diese App zu entwickeln, und ich freue mich sehr, dass sie von so vielen Brüdern und Schwestern auf der ganzen Welt verwendet wird. Wenn Sie es noch nicht getan haben, informieren Sie bitte andere über JW Time – es ist eine Arbeit voller Liebe. Unabhängig davon, ob Sie sich für eine Spende entscheiden, hoffe ich, dass Sie weiterhin Freude an der App und den zukünftigen Updates haben.\n\nDanke schön,\n\nLevi Wilkerson",
+  "hideDonateHeart": "Herz spenden ausblenden",
+  "noPurchasesFound": "Keine Käufe gefunden",
+  "errorCheckingOut": "Beim Auschecken ist ein Fehler aufgetreten. Es liegt wahrscheinlich an einer Netzwerkinstabilität. Bitte versuchen Sie es erneut.",
+  "goToAppStoreToUpdateSubscriptions": "Um Ihr Abonnement zu kündigen oder zu bearbeiten, besuchen Sie bitte den App Store."
 }

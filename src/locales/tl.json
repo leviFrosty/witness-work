@@ -388,7 +388,8 @@
       "c3": "Inayos ang paraan ng pagsusumite ng Mga Ulat ng Bug at Mga Kahilingan sa Tampok sa Github."
     },
     "1111": {
-      "c1": "Magdagdag ng pahina ng donasyon sa mga setting para sa mga nais mag-ambag."
+      "c1": "Magdagdag ng pahina ng donasyon sa mga setting para sa mga nais mag-ambag.",
+      "c2": "May kasamang iba't ibang maliliit na pagpapabuti at pag-aayos ng bug"
     }
   },
   "installed": "Naka-install",
@@ -444,7 +445,6 @@
   "firstOfAll": "Una sa lahat...",
   "restorePurchase": "Ibalik ang Mga Pagbili",
   "showAll": "Magpakita ng Higit pang mga Opsyon",
-  "donate_letter": "Mahal na mga Kapatid,\n\nLubos akong ikinararangal na pinili mo ang aking app na gagamitin sa dagat ng iba pang kamangha-manghang mga pagpipilian. Nagsimula akong magtrabaho sa app na ito noong ako ay nagpapayunir - hindi lang ako makahanap ng malinaw at maigsi na lugar upang itago ang aking mga tala. Para sa akin, parang lagi kong nawawala ang aking mga tala sa papel at kahit papaano ay nakakalimutan ko ang aking mga pagdalaw-muli. Alam kong marami pang ibang tao ang nakadama ng parehong paraan. Ang layunin ko sa paggawa ng app na ito ay mag-focus sa mataas na utility ngunit pagiging simple din. Dapat ay magagamit ng sinuman ang app na ito, anuman ang kanilang edad o karanasan sa publisher. Umaasa ako na ang aking app ay naging isang kapaki-pakinabang na tool para sa iyo at sa iyong paglilingkod kay Jehova. Gumugol ako ng hindi mabilang na oras sa pagbuo ng app na ito, at napakasaya kong makitang ginagamit ito ng napakaraming kapatid sa buong mundo. Kung hindi mo pa nagagawa, mangyaring ipaalam sa iba ang tungkol sa JW Time - ito ay isang labor of love. Hindi alintana kung pipiliin mong mag-donate, sana ay patuloy mong tangkilikin ang app at ang mga update sa hinaharap.\n\nSalamat,\n\nLevi Wilkerson",
   "donate_letter_ps": "P.S. Palagi akong available upang pag-usapan ang anumang bagay - mga personal na tanong, tanong sa app, o iba pang alalahanin. Huwag mag-atubiling makipag-ugnayan sa akin sa aking email sa ibaba.",
   "emailMe": "I-email ako!",
   "aLetterForYou": "Isang sulat sa iyo.",
@@ -459,5 +459,10 @@
   "yourDonations": "Iyong mga donasyon",
   "thankYou": "Salamat!",
   "thankYou_description": "Ako ay hindi karapat-dapat sa gayong kabaitan. Ang iyong kabutihang-loob ay lubos na pinahahalagahan.",
-  "failedToOpenMailApplication_description": "Paki-verify na mayroon kang naka-install na valid na mail application."
+  "failedToOpenMailApplication_description": "Paki-verify na mayroon kang naka-install na valid na mail application.",
+  "donate_letter": "Mahal na kapatid na lalaki o kapatid na babae,\n\nLubos akong ikinararangal na pinili mo ang aking app na gagamitin sa dagat ng iba pang kamangha-manghang mga pagpipilian. Nagsimula akong magtrabaho sa app na ito noong ako ay nagpapayunir - hindi lang ako makahanap ng malinaw at maigsi na lugar upang itago ang aking mga tala. Para sa akin, parang lagi kong nawawala ang aking mga tala sa papel at kahit papaano ay nakakalimutan ko ang aking mga pagdalaw-muli. Alam kong marami pang ibang tao ang nakakaramdam ng ganoon din. Ang layunin ko sa paggawa ng app na ito ay mag-focus sa mataas na utility ngunit pagiging simple din. Dapat ay magagamit ng sinuman ang app na ito, anuman ang kanilang edad o karanasan sa publisher. Umaasa ako na ang aking app ay naging isang kapaki-pakinabang na tool para sa iyo at sa iyong paglilingkod kay Jehova. Gumugol ako ng hindi mabilang na oras sa pagbuo ng app na ito, at napakasaya kong makitang ginagamit ito ng napakaraming kapatid sa buong mundo. Kung hindi mo pa nagagawa, mangyaring ipaalam sa iba ang tungkol sa JW Time - ito ay isang labor of love. Hindi alintana kung pipiliin mong mag-donate, sana ay patuloy mong tangkilikin ang app at ang mga update sa hinaharap.\n\nSalamat,\n\nLevi Wilkerson",
+  "hideDonateHeart": "Itago ang Donate Heart",
+  "noPurchasesFound": "Walang Nahanap na Mga Pagbili",
+  "errorCheckingOut": "Nagkaroon ng error noong nag-check out. Malamang na ito ay dahil sa kawalang-tatag ng network, pakisubukang muli.",
+  "goToAppStoreToUpdateSubscriptions": "Upang kanselahin o i-edit ang iyong subscription, pakibisita ang App Store."
 }

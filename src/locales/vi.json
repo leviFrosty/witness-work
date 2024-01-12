@@ -388,7 +388,8 @@
       "c3": "Đã điều chỉnh phương thức gửi Báo cáo lỗi và Yêu cầu tính năng tới Github."
     },
     "1111": {
-      "c1": "Thêm trang quyên góp trong phần cài đặt cho những ai muốn đóng góp."
+      "c1": "Thêm trang quyên góp trong phần cài đặt cho những ai muốn đóng góp.",
+      "c2": "Bao gồm nhiều cải tiến nhỏ và sửa lỗi"
     }
   },
   "installed": "Cài đặt",
@@ -444,7 +445,6 @@
   "firstOfAll": "Đầu tiên...",
   "restorePurchase": "Khôi phục mua hàng",
   "showAll": "Hiển thị thêm tùy chọn",
-  "donate_letter": "Anh chị em thân mến,\n\nTôi rất vinh dự vì bạn đã chọn ứng dụng của tôi để sử dụng trong vô số lựa chọn tuyệt vời khác. Tôi bắt đầu làm việc với ứng dụng này khi còn là người tiên phong - tôi không thể tìm được một nơi rõ ràng và ngắn gọn để ghi chú. Đối với tôi, tôi có cảm giác như mình sẽ luôn đánh mất những tờ giấy ghi chú và bằng cách nào đó quên mất những chuyến thăm trở lại. Tôi biết rất nhiều người khác cũng cảm thấy như vậy. Mục tiêu của tôi khi tạo ứng dụng này là tập trung vào tính tiện ích cao nhưng cũng phải đơn giản. Bất kỳ ai cũng có thể sử dụng ứng dụng này, bất kể tuổi tác hay kinh nghiệm của nhà xuất bản. Tôi hy vọng ứng dụng của tôi là một công cụ hữu ích cho bạn và cho việc phụng sự Đức Giê-hô-va. Tôi đã dành vô số thời gian để phát triển ứng dụng này và tôi rất vui khi thấy nó được rất nhiều anh chị em trên khắp thế giới sử dụng. Nếu bạn chưa làm vậy, hãy cho người khác biết về JW Time - đó là lao động của tình yêu. Bất kể bạn có chọn quyên góp hay không, tôi hy vọng bạn sẽ tiếp tục tận hưởng ứng dụng này và các bản cập nhật trong tương lai.\n\nCảm ơn,\n\nLevi Wilkerson",
   "donate_letter_ps": "tái bút Tôi luôn sẵn sàng trao đổi về mọi vấn đề - câu hỏi cá nhân, câu hỏi về ứng dụng hoặc các mối quan tâm khác. Vui lòng liên hệ với tôi theo địa chỉ email bên dưới.",
   "emailMe": "Gửi thư điện tử cho tôi!",
   "aLetterForYou": "Một lá thư cho bạn.",
@@ -459,5 +459,10 @@
   "yourDonations": "Đóng góp của bạn",
   "thankYou": "Cảm ơn!",
   "thankYou_description": "Tôi không xứng đáng với lòng tốt như vậy. Sự hào phóng của bạn được đánh giá rất cao.",
-  "failedToOpenMailApplication_description": "Vui lòng xác minh rằng bạn đã cài đặt ứng dụng thư hợp lệ."
+  "failedToOpenMailApplication_description": "Vui lòng xác minh rằng bạn đã cài đặt ứng dụng thư hợp lệ.",
+  "donate_letter": "Anh chị em thân mến,\n\nTôi rất vinh dự vì bạn đã chọn ứng dụng của tôi để sử dụng trong vô số lựa chọn tuyệt vời khác. Tôi bắt đầu làm việc trên ứng dụng này khi còn là người tiên phong - tôi không thể tìm được một nơi rõ ràng và ngắn gọn để ghi chú. Đối với tôi, tôi có cảm giác như mình sẽ luôn đánh mất những tờ giấy ghi chú và bằng cách nào đó quên mất những chuyến thăm trở lại. Tôi biết rất nhiều người khác cũng cảm thấy như vậy. Mục tiêu của tôi khi tạo ứng dụng này là tập trung vào tính tiện ích cao nhưng cũng phải đơn giản. Bất kỳ ai cũng có thể sử dụng ứng dụng này, bất kể tuổi tác hay kinh nghiệm của nhà xuất bản. Tôi hy vọng ứng dụng của tôi là một công cụ hữu ích cho bạn và việc phụng sự Đức Giê-hô-va. Tôi đã dành vô số thời gian để phát triển ứng dụng này và tôi rất vui khi thấy nó được rất nhiều anh chị em trên khắp thế giới sử dụng. Nếu bạn chưa làm vậy, hãy cho người khác biết về JW Time - đó là lao động của tình yêu. Bất kể bạn có chọn quyên góp hay không, tôi hy vọng bạn sẽ tiếp tục tận hưởng ứng dụng này và các bản cập nhật trong tương lai.\n\nCảm ơn,\n\nLevi Wilkerson",
+  "hideDonateHeart": "Giấu trái tim hiến tặng",
+  "noPurchasesFound": "Không tìm thấy giao dịch mua nào",
+  "errorCheckingOut": "Đã xảy ra lỗi khi kiểm tra. Có thể là do mạng không ổn định, vui lòng thử lại.",
+  "goToAppStoreToUpdateSubscriptions": "Để hủy hoặc chỉnh sửa đăng ký của bạn, vui lòng truy cập App Store."
 }

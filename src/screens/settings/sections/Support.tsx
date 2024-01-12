@@ -3,6 +3,7 @@ import Section from '../../../components/inputs/Section'
 import i18n from '../../../lib/locales'
 import InputRowButton from '../../../components/inputs/InputRowButton'
 import {
+  faArrowUpRightFromSquare,
   faChevronRight,
   faGlobe,
   faHeart,
@@ -55,7 +56,7 @@ const SupportSection = () => {
             }
           }}
         >
-          <IconButton icon={faChevronRight} />
+          <IconButton icon={faArrowUpRightFromSquare} />
         </InputRowButton>
 
         <InputRowButton
@@ -94,7 +95,7 @@ const SupportSection = () => {
           }}
           lastInSection
         >
-          <IconButton icon={faChevronRight} />
+          <IconButton icon={faArrowUpRightFromSquare} />
         </InputRowButton>
       </Section>
     </View>

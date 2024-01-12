@@ -1,8 +1,10 @@
 import { ExpoConfig, ConfigContext } from 'expo/config'
+/** Passed in from `env` property in profile `./eas.json` to eas build */
+const IS_DEV = process.env.APP_VARIANT === 'development'
 
 export default ({ config }: ConfigContext): ExpoConfig => ({
   ...config,
-  name: 'JW Time',
+  name: IS_DEV ? 'JW Time Dev' : 'JW Time',
   developmentClient: {},
   slug: 'jw-time',
   version: '1.11.1',

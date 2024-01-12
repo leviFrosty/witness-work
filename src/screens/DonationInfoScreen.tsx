@@ -137,7 +137,7 @@ const DonationInfoScreen = () => {
                   },
                 }}
               >
-                {`${i18n.t('heresMyPersonalEmail')} ${email}`}
+                {email}
               </Copyeable>
             </Button>
           </Card>

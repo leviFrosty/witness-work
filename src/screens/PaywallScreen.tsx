@@ -1,4 +1,4 @@
-import { Alert, Dimensions, ScrollView, View } from 'react-native'
+import { Alert, ScrollView, View } from 'react-native'
 import * as Sentry from 'sentry-expo'
 import Text from '../components/MyText'
 import useTheme from '../contexts/theme'
@@ -17,9 +17,7 @@ import { faCheck } from '@fortawesome/free-solid-svg-icons'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import ActionButton from '../components/ActionButton'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import LottieView from 'lottie-react-native'
-import { useNavigation } from '@react-navigation/native'
-import { RootStackNavigation } from '../stacks/RootStack'
+import PaywallThankYou from '../components/PaywallThankYou'
 
 interface OfferButtonProps {
   offering: PurchasesOffering
@@ -65,7 +63,6 @@ const PaywallScreen = () => {
     useState<PurchasesOffering | null>(null)
   const [currentOfferings, setCurrentOfferings] =
     useState<PurchasesOfferings | null>(null)
-  const navigation = useNavigation<RootStackNavigation>()
   const [oneTimePurchaseMethod, setOneTimePurchaseMethod] = useState(false)
   const [justPurchasedSomething, setJustPurchasedSomething] = useState(false)
 
@@ -184,72 +181,8 @@ const PaywallScreen = () => {
     [selectNearestOfferingFromOtherPaymentMethod]
   )
 
-  if (justPurchasedSomething) {
-    return (
-      <Wrapper
-        style={{
-          paddingTop: 0,
-          gap: 10,
-          justifyContent: 'space-between',
-          position: 'relative',
-        }}
-      >
-        <View style={{ paddingTop: 30, flexGrow: 1 }}>
-          <View
-            style={{
-              alignItems: 'center',
-              gap: 20,
-              flexGrow: 1,
-              justifyContent: 'center',
-            }}
-          >
-            <View style={{ position: 'relative' }}>
-              <Text
-                style={{
-                  fontSize: theme.fontSize('4xl'),
-                  fontFamily: theme.fonts.bold,
-                }}
-              >
-                {i18n.t('thankYou')}
-              </Text>
-              <LottieView
-                autoPlay
-                loop={true}
-                style={{
-                  position: 'absolute',
-                  width: 100,
-                  top: -10,
-                  right: -5,
-                }}
-                source={require('./../assets/lottie/confetti.json')}
-              />
-            </View>
-
-            <Text style={{ textAlign: 'center', maxWidth: 250 }}>
-              {i18n.t('thankYou_description')}
-            </Text>
-          </View>
-          <LottieView
-            source={require('../assets/lottie/floatingHearts.json')}
-            style={{
-              position: 'absolute',
-              right: 5,
-              opacity: 0.4,
-              zIndex: -100,
-              height: Dimensions.get('screen').height,
-            }}
-            autoPlay
-            autoSize
-            loop
-          />
-        </View>
-        <View style={{ paddingHorizontal: 15 }}>
-          <ActionButton onPress={() => navigation.popToTop()}>
-            {i18n.t('goHome')}
-          </ActionButton>
-        </View>
-      </Wrapper>
-    )
+  if (!justPurchasedSomething) {
+    return <PaywallThankYou />
   }
 
   if (!currentOfferings) {

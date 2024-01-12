@@ -458,5 +458,7 @@
   "inactive": "非活性",
   "yourDonations": "あなたの寄付",
   "thankYou": "ありがとう！",
-  "thankYou_description": "私にはそのような親切を受ける資格はありません。皆様のご寛大なご厚情に深く感謝申し上げます。"
+  "thankYou_description": "私にはそのような親切を受ける資格はありません。皆様のご寛大なご厚情に深く感謝申し上げます。",
+  "heresMyPersonalEmail": "私の個人的なメールアドレス -",
+  "failedToOpenMailApplication_description": "有効なメール アプリケーションがインストールされていることを確認してください。"
 }

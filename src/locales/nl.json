@@ -458,5 +458,7 @@
   "inactive": "Inactief",
   "yourDonations": "Jouw donaties",
   "thankYou": "Bedankt!",
-  "thankYou_description": "Ik verdien zulke vriendelijkheid niet. Uw vrijgevigheid wordt enorm op prijs gesteld."
+  "thankYou_description": "Ik verdien zulke vriendelijkheid niet. Uw vrijgevigheid wordt enorm op prijs gesteld.",
+  "heresMyPersonalEmail": "Mijn persoonlijke e-mail -",
+  "failedToOpenMailApplication_description": "Controleer of er een geldige e-mailtoepassing is geïnstalleerd."
 }

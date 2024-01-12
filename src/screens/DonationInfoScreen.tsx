@@ -27,7 +27,7 @@ import PreviousDonations from '../components/PreviousDonations'
 
 const DonationInfoScreen = () => {
   const theme = useTheme()
-  const { isTablet, isAndroid } = useDevice()
+  const { isAndroid } = useDevice()
   const insets = useSafeAreaInsets()
   const navigation = useNavigation<RootStackNavigation>()
   const [customer, setCustomer] = useState<CustomerInfo>()
@@ -59,7 +59,12 @@ const DonationInfoScreen = () => {
 
   const handleEmail = () => {
     const subject = encodeURIComponent('[JW Time]')
-    openURL(`mailto:${email}?subject=${subject}`)
+    openURL(`mailto:${email}?subject=${subject}`, {
+      alert: {
+        title: i18n.t('failedToOpenMailApplication'),
+        description: i18n.t('failedToOpenMailApplication_description'),
+      },
+    })
   }
 
   return (
@@ -132,7 +137,7 @@ const DonationInfoScreen = () => {
                   },
                 }}
               >
-                {`${i18n.t('emailMe')} ${email}`}
+                {`${i18n.t('heresMyPersonalEmail')} ${email}`}
               </Copyeable>
             </Button>
           </Card>
@@ -148,7 +153,7 @@ const DonationInfoScreen = () => {
             <ShareAppButton />
           </View>
           <Divider />
-          <View style={{ flexDirection: isTablet ? 'row' : 'column', gap: 10 }}>
+          <View style={{ gap: 10 }}>
             <Text
               style={{
                 fontSize: theme.fontSize('lg'),

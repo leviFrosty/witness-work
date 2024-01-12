@@ -458,5 +458,7 @@
   "inactive": "Inactivo",
   "yourDonations": "Tus donaciones",
   "thankYou": "¡Gracias!",
-  "thankYou_description": "No merezco tanta amabilidad. Tu generosidad es muy apreciada."
+  "thankYou_description": "No merezco tanta amabilidad. Tu generosidad es muy apreciada.",
+  "heresMyPersonalEmail": "Mi correo electrónico personal -",
+  "failedToOpenMailApplication_description": "Verifique que tenga instalada una aplicación de correo válida."
 }

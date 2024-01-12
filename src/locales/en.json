@@ -458,5 +458,7 @@
   "inactive": "Inactive",
   "yourDonations": "Your donations",
   "thankYou": "Thank you!",
-  "thankYou_description": "I am undeserving of such kindness. Your generosity is greatly appreciated."
+  "heresMyPersonalEmail": "My personal email -",
+  "thankYou_description": "I am undeserving of such kindness. Your generosity is greatly appreciated.",
+  "failedToOpenMailApplication_description": "Please verify you have a valid mail application installed."
 }

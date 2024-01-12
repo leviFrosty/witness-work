@@ -464,5 +464,6 @@
   "hideDonateHeart": "심장 기부 숨기기",
   "noPurchasesFound": "구매 내역이 없습니다.",
   "errorCheckingOut": "체크아웃하는 동안 오류가 발생했습니다. 네트워크 불안정으로 인한 것일 수 있으니 다시 시도해 주세요.",
-  "goToAppStoreToUpdateSubscriptions": "구독을 취소하거나 편집하려면 App Store를 방문하세요."
+  "goToAppStoreToUpdateSubscriptions": "구독을 취소하거나 편집하려면 App Store를 방문하세요.",
+  "termsOfUse": "이용약관"
 }

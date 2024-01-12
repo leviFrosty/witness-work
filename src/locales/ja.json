@@ -464,5 +464,6 @@
   "hideDonateHeart": "ハートを寄付するを隠す",
   "noPurchasesFound": "購入したものが見つかりませんでした",
   "errorCheckingOut": "チェックアウト時にエラーが発生しました。ネットワークが不安定なことが原因である可能性があります。もう一度お試しください。",
-  "goToAppStoreToUpdateSubscriptions": "サブスクリプションをキャンセルまたは編集するには、App Store にアクセスしてください。"
+  "goToAppStoreToUpdateSubscriptions": "サブスクリプションをキャンセルまたは編集するには、App Store にアクセスしてください。",
+  "termsOfUse": "利用規約"
 }

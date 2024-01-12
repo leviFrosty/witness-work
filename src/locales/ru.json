@@ -464,5 +464,6 @@
   "hideDonateHeart": "Скрыть Пожертвовать сердце",
   "noPurchasesFound": "Покупки не найдены",
   "errorCheckingOut": "При выезде произошла ошибка. Вероятно, это связано с нестабильностью сети. Повторите попытку.",
-  "goToAppStoreToUpdateSubscriptions": "Чтобы отменить или изменить подписку, посетите App Store."
+  "goToAppStoreToUpdateSubscriptions": "Чтобы отменить или изменить подписку, посетите App Store.",
+  "termsOfUse": "Условия эксплуатации"
 }

@@ -390,6 +390,9 @@
     "1111": {
       "c1": "Adicione a página de doações nas configurações para quem deseja contribuir.",
       "c2": "Inclui várias pequenas melhorias e correções de bugs"
+    },
+    "1120": {
+      "c1": "Adiciona funcionalidade de backup e restauração. Agora você pode fazer backup de seus dados na nuvem e restaurá-los mais tarde. Você pode transferir seus dados para outro dispositivo. Você também pode transferi-lo para outra plataforma. Encontre esse novo recurso nas configurações."
     }
   },
   "installed": "Instalado",

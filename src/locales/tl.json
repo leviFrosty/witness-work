@@ -390,6 +390,9 @@
     "1111": {
       "c1": "Magdagdag ng pahina ng donasyon sa mga setting para sa mga nais mag-ambag.",
       "c2": "May kasamang iba't ibang maliliit na pagpapabuti at pag-aayos ng bug"
+    },
+    "1120": {
+      "c1": "Nagdaragdag ng pag-andar ng backup at pagpapanumbalik. Ngayon ay maaari mong i-backup ang iyong data sa cloud at i-restore ito sa ibang pagkakataon. Maaari mong ilipat ang iyong data sa ibang device. Maaari mo ring ilipat ito sa ibang platform. Hanapin ang bagong feature na ito sa mga setting."
     }
   },
   "installed": "Naka-install",

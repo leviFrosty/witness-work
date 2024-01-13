@@ -390,6 +390,9 @@
     "1111": {
       "c1": "Agregue la página de donación en la configuración para aquellos que deseen contribuir.",
       "c2": "Incluye varias mejoras menores y correcciones de errores."
+    },
+    "1120": {
+      "c1": "Agrega funcionalidad de copia de seguridad y restauración. Ahora puedes hacer una copia de seguridad de tus datos en la nube y restaurarlos más tarde. Puede transferir sus datos a otro dispositivo. También puedes transferirlo a otra plataforma. Encuentre esta nueva característica en la configuración."
     }
   },
   "installed": "Instalado",

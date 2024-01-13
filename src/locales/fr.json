@@ -390,6 +390,9 @@
     "1111": {
       "c1": "Ajoutez une page de don dans les paramètres pour ceux qui souhaitent contribuer.",
       "c2": "Comprend diverses améliorations mineures et corrections de bugs"
+    },
+    "1120": {
+      "c1": "Ajoute des fonctionnalités de sauvegarde et de restauration. Vous pouvez désormais sauvegarder vos données sur le cloud et les restaurer plus tard. Vous pouvez transférer vos données vers un autre appareil. Vous pouvez également le transférer vers une autre plateforme. Retrouvez cette nouvelle fonctionnalité dans les paramètres."
     }
   },
   "installed": "installée",

@@ -390,6 +390,9 @@
     "1111": {
       "c1": "Thêm trang quyên góp trong phần cài đặt cho những ai muốn đóng góp.",
       "c2": "Bao gồm nhiều cải tiến nhỏ và sửa lỗi"
+    },
+    "1120": {
+      "c1": "Thêm chức năng sao lưu và khôi phục. Bây giờ bạn có thể sao lưu dữ liệu của mình lên đám mây và khôi phục dữ liệu đó sau. Bạn có thể chuyển dữ liệu của mình sang thiết bị khác. Bạn cũng có thể chuyển nó sang nền tảng khác. Tìm tính năng mới này trong cài đặt."
     }
   },
   "installed": "Cài đặt",

@@ -390,6 +390,9 @@
     "1111": {
       "c1": "Aggiungi la pagina delle donazioni nelle impostazioni per coloro che desiderano contribuire.",
       "c2": "Include vari miglioramenti minori e correzioni di bug"
+    },
+    "1120": {
+      "c1": "Aggiunge funzionalità di backup e ripristino. Ora puoi eseguire il backup dei tuoi dati sul cloud e ripristinarli in seguito. Puoi trasferire i tuoi dati su un altro dispositivo. Puoi anche trasferirlo su un'altra piattaforma. Trovi questa nuova funzionalità nelle impostazioni."
     }
   },
   "installed": "Installato",

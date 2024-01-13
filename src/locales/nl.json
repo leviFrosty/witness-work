@@ -390,6 +390,9 @@
     "1111": {
       "c1": "Voeg een donatiepagina toe in de instellingen voor degenen die willen bijdragen.",
       "c2": "Bevat verschillende kleine verbeteringen en bugfixes"
+    },
+    "1120": {
+      "c1": "Voegt back-up- en herstelfunctionaliteit toe. Nu kunt u een back-up van uw gegevens maken in de cloud en deze later herstellen. U kunt uw gegevens overbrengen naar een ander apparaat. Je kunt het ook overzetten naar een ander platform. Zoek deze nieuwe functie in de instellingen."
     }
   },
   "installed": "Geïnstalleerd",

@@ -390,6 +390,9 @@
     "1111": {
       "c1": "Fügen Sie in den Einstellungen eine Spendenseite für diejenigen hinzu, die einen Beitrag leisten möchten.",
       "c2": "Enthält verschiedene kleinere Verbesserungen und Fehlerbehebungen"
+    },
+    "1120": {
+      "c1": "Fügt Sicherungs- und Wiederherstellungsfunktionen hinzu. Jetzt können Sie Ihre Daten in der Cloud sichern und später wiederherstellen. Sie können Ihre Daten auf ein anderes Gerät übertragen. Sie können es auch auf eine andere Plattform übertragen. Finden Sie diese neue Funktion in den Einstellungen."
     }
   },
   "installed": "Eingerichtet",

@@ -327,6 +327,12 @@
   "new": "Nieuw",
   "bugFixes": "Bugfixes",
   "updates": {
+    "1200": {
+      "c1": "Voegt back-up- en herstelfunctionaliteit toe. Nu kunt u een back-up van uw gegevens maken in de cloud en deze later herstellen, zodat u uw gegevens naar een ander apparaat kunt overbrengen. Je kunt het ook overzetten naar een ander platform. Zoek deze nieuwe functie in de instellingen."
+    },
+    "1120": {
+      "c1": "Voegt back-up- en herstelfunctionaliteit toe. Nu kunt u een back-up van uw gegevens maken in de cloud en deze later herstellen. U kunt uw gegevens overbrengen naar een ander apparaat. Je kunt het ook overzetten naar een ander platform. Zoek deze nieuwe functie in de instellingen."
+    },
     "1111": {
       "c1": "Voeg een donatiepagina toe in de instellingen voor degenen die willen bijdragen.",
       "c2": "Bevat verschillende kleine verbeteringen en bugfixes"
@@ -390,11 +396,6 @@
       "c1": "Gesprekken kunnen nu worden bewerkt. Meldingen zijn configureerbaar",
       "c2": "Veeggebaren om gesprekken, contacten, enz. te bewerken of te verwijderen.",
       "c3": "Haptische feedback toegevoegd aan verschillende belangrijke acties"
-    
-    
-    },
-    "1120": {
-      "c1": "Voegt back-up- en herstelfunctionaliteit toe. Nu kunt u een back-up van uw gegevens maken in de cloud en deze later herstellen. U kunt uw gegevens overbrengen naar een ander apparaat. Je kunt het ook overzetten naar een ander platform. Zoek deze nieuwe functie in de instellingen."
     }
   },
   "installed": "Geïnstalleerd",
@@ -419,8 +420,8 @@
   "otherHoursDescription": "Hieronder is in totaal al opgenomen",
   "failedToOpenLink": "Kan URL niet openen",
   "failedToOpenLink_description": "Controleer of u een geldige aanvraag heeft voor de verstrekte link. Deze fout betekent meestal dat er geen browser op uw apparaat is geïnstalleerd.",
-  "noTimeReports": "Er is nog geen overzicht beschikbaar voor deze maand.",
   "noTimeReports_description": "Voeg ten minste één tijdinvoer toe om meer details te bekijken.",
+  "noTimeReports": "Er is nog geen overzicht beschikbaar voor deze maand.",
   "cannotNavigateToFutureMonth": "Kan niet naar de toekomstige maand navigeren",
   "cannotNavigateToFutureMonth_description": "Selecteer de huidige of vorige maand.",
   "addATimeEntryToViewReport": "Voeg een tijdsinvoer toe om uw maandrapport te bekijken.",
@@ -434,6 +435,7 @@
   "donate_faq1": "Waarom accepteren jullie donaties?",
   "donate_faqAnswer1": "Als broeder in de zaal beschouw ik het als een voorrecht mijn vaardigheden te kunnen gebruiken om anderen in de gemeente te helpen. Hoewel het voor iedereen gratis is, kost het ontwikkelen, uitvoeren en onderhouden van deze applicatie helaas een aanzienlijke hoeveelheid geld en tijd. Ik beschouw doneren als vergelijkbaar met hoe iemand zou kunnen betalen voor de benzine van iemand anders nadat hij bij hem in dienst is geweest - het is een liefdevol gebaar dat enorm wordt gewaardeerd.",
   "donate_faq2": "Waar worden de donaties voor gebruikt?",
+  "donate_faqAnswer2": "Jouw donatie helpt deze app draaiende te houden! Er zijn kosten verbonden aan de aanschaf van echte apparaten als ontwikkelingsapparatuur, het betalen voor locatie-API-servicekosten, API-kosten voor bouwservices, app store-kosten en de alternatieve kosten van mijn vele uren die ik heb besteed aan het ontwikkelen van deze app. Elk stukje steun wordt zeer gewaardeerd!",
   "openDonationPage": "Open de donatiepagina",
   "shareApp": "Deel app",
   "couldNotFindOffer": "Kan aanbieding niet vinden. Probeer het later opnieuw.",
@@ -449,6 +451,7 @@
   "firstOfAll": "Allereerst...",
   "restorePurchase": "Aankopen herstellen",
   "showAll": "Toon meer opties",
+  "donate_letter": "Beste broer of zus,\n\nIk ben zeer vereerd dat je mijn app hebt gekozen om te gebruiken in de zee van andere geweldige keuzes. Ik begon aan deze app te werken toen ik aan het pionieren was - ik kon gewoon geen duidelijke en beknopte plek vinden om mijn aantekeningen te bewaren. Voor mij voelde het alsof ik altijd mijn papieren aantekeningen zou verliezen en op de een of andere manier mijn volgende bezoeken zou vergeten. Ik wist dat veel andere mensen hetzelfde voelden. Mijn doel bij het maken van deze app was om me te concentreren op een hoog nut, maar ook op eenvoud. Iedereen zou deze app moeten kunnen gebruiken, ongeacht leeftijd of uitgeverservaring. Ik hoop dat mijn app een nuttig hulpmiddel is geweest voor jou en je dienst voor Jehovah. Ik heb talloze uren besteed aan de ontwikkeling van deze app, en ik ben erg blij om te zien dat deze door zoveel broeders en zusters over de hele wereld wordt gebruikt. Als je dat nog niet hebt gedaan, laat anderen dan weten over JW Time - het is een werk van liefde. Ongeacht of je ervoor kiest om te doneren, ik hoop dat je blijft genieten van de app en de toekomstige updates.\n\nBedankt,\n\nLevi Wilkerson",
   "donate_letter_ps": "P.S. Ik ben altijd beschikbaar om over alles te praten: persoonlijke vragen, app-vragen of andere problemen. Neem gerust contact met mij op via mijn onderstaande e-mailadres.",
   "emailMe": "Email mij!",
   "aLetterForYou": "Een brief aan jou.",
@@ -464,13 +467,11 @@
   "thankYou": "Bedankt!",
   "thankYou_description": "Ik verdien zulke vriendelijkheid niet. Uw vrijgevigheid wordt enorm op prijs gesteld.",
   "failedToOpenMailApplication_description": "Controleer of er een geldige e-mailtoepassing is geïnstalleerd.",
-  "donate_letter": "Beste broer of zus,\n\nIk ben zeer vereerd dat je mijn app hebt gekozen om te gebruiken in de zee van andere geweldige keuzes. Ik begon aan deze app te werken toen ik aan het pionieren was - ik kon gewoon geen duidelijke en beknopte plek vinden om mijn aantekeningen te bewaren. Voor mij voelde het alsof ik altijd mijn papieren aantekeningen zou verliezen en op de een of andere manier mijn volgende bezoeken zou vergeten. Ik wist dat veel andere mensen hetzelfde voelden. Mijn doel bij het maken van deze app was om me te concentreren op een hoog nut, maar ook op eenvoud. Iedereen zou deze app moeten kunnen gebruiken, ongeacht leeftijd of uitgeverservaring. Ik hoop dat mijn app een nuttig hulpmiddel is geweest voor jou en je dienst voor Jehovah. Ik heb talloze uren besteed aan de ontwikkeling van deze app, en ik ben erg blij om te zien dat deze door zoveel broeders en zusters over de hele wereld wordt gebruikt. Als je dat nog niet hebt gedaan, laat anderen dan weten over JW Time - het is een werk van liefde. Ongeacht of je ervoor kiest om te doneren, ik hoop dat je blijft genieten van de app en de toekomstige updates.\n\nBedankt,\n\nLevi Wilkerson",
   "hideDonateHeart": "Doneer hart verbergen",
   "noPurchasesFound": "Geen aankopen gevonden",
   "errorCheckingOut": "Er is een fout opgetreden bij het uitchecken. Dit komt waarschijnlijk door netwerkinstabiliteit. Probeer het opnieuw.",
   "goToAppStoreToUpdateSubscriptions": "Om uw abonnement op te zeggen of te bewerken, gaat u naar de App Store.",
   "termsOfUse": "Gebruiksvoorwaarden",
-  "donate_faqAnswer2": "Jouw donatie helpt deze app draaiende te houden! Er zijn kosten verbonden aan de aanschaf van echte apparaten als ontwikkelingsapparatuur, het betalen voor locatie-API-servicekosten, API-kosten voor bouwservices, app store-kosten en de alternatieve kosten van mijn vele uren die ik heb besteed aan het ontwikkelen van deze app. Elk stukje steun wordt zeer gewaardeerd!",
   "importAndExport": "Importeren & Exporteren",
   "import": "Importeren",
   "importAndExport_description": "Importeer en exporteer uw gegevens van en naar JW Time. Dit is handig als u van apparaat wisselt of een back-up van uw gegevens wilt maken.",

@@ -390,6 +390,9 @@
     "1111": {
       "c1": "Agregue la página de donación en la configuración para aquellos que deseen contribuir.",
       "c2": "Incluye varias mejoras menores y correcciones de errores."
+    },
+    "1120": {
+      "c1": "Agrega funcionalidad de copia de seguridad y restauración. Ahora puedes hacer una copia de seguridad de tus datos en la nube y restaurarlos más tarde. Puede transferir sus datos a otro dispositivo. También puedes transferirlo a otra plataforma. Encuentre esta nueva característica en la configuración."
     }
   },
   "installed": "Instalado",
@@ -429,7 +432,6 @@
   "donate_faq1": "¿Por qué aceptas donaciones?",
   "donate_faqAnswer1": "Como hermano en el salón, considero un privilegio poder usar mis habilidades para ayudar a otros en la congregación. Aunque es gratuito para todos, desarrollar, ejecutar y mantener esta aplicación, desafortunadamente cuesta una cantidad significativa de dinero y tiempo. Considero que la donación es similar a cómo uno podría pagar la gasolina de otra persona después de entrar en servicio con esa persona: es un gesto amoroso que se agradece mucho.",
   "donate_faq2": "¿Para qué se utilizan las donaciones?",
-  "donate_faqAnswer2": "¡Tu donación ayuda a que esta aplicación siga funcionando! Hay costos por la compra de dispositivos reales como equipo de desarrollo, el pago de tarifas de servicio de API de ubicación, tarifas de la tienda de aplicaciones y el costo de oportunidad de las muchas horas que dediqué a desarrollar esta aplicación. ¡Cada pieza de apoyo es muy apreciada!",
   "openDonationPage": "Abrir página de donación",
   "shareApp": "Compartir aplicación",
   "couldNotFindOffer": "No se pudo encontrar la oferta. Por favor, inténtelo de nuevo más tarde.",
@@ -465,5 +467,22 @@
   "noPurchasesFound": "No se encontraron compras",
   "errorCheckingOut": "Hubo un error al realizar el check-out. Probablemente se deba a una inestabilidad de la red. Inténtelo de nuevo.",
   "goToAppStoreToUpdateSubscriptions": "Para cancelar o editar su suscripción, visite la App Store.",
-  "termsOfUse": "Condiciones de uso"
+  "termsOfUse": "Condiciones de uso",
+  "donate_faqAnswer2": "¡Tu donación ayuda a que esta aplicación siga funcionando! Hay costos por la compra de dispositivos reales como equipo de desarrollo, el pago de tarifas de servicio de API de ubicación, tarifas de API de servicio de creación, tarifas de tienda de aplicaciones y el costo de oportunidad de las muchas horas que dediqué a desarrollar esta aplicación. ¡Cada pieza de apoyo es muy apreciada!",
+  "importAndExport": "Importar y actualizar Exportar",
+  "import": "Importar",
+  "importAndExport_description": "Importe y exporte sus datos hacia y desde JW Time. Esto es útil si está cambiando de dispositivo o desea hacer una copia de seguridad de sus datos.",
+  "importError_title": "Error de importación",
+  "importError_description": "Se produjo un error al importar su archivo. Verifique que su archivo sea válido e inténtelo nuevamente.",
+  "importErrorInvalidFile_title": "Archivo inválido",
+  "importErrorInvalidFile_description": "El archivo que está intentando importar no es válido. Utilice el archivo exportado de JW Time e inténtelo de nuevo.",
+  "backupRecommendations": "Se recomienda almacenar su copia de seguridad en el almacenamiento en la nube. Esto asegurará que no pierda sus datos en caso de que su dispositivo se rompa.\n\nEsta característica también funciona al transferir hacia y desde Android o iOS.",
+  "backupReasoning": "Debido a que sus datos nunca se almacenarán en servidores, la aplicación nunca tendrá una sincronización ' funcionalidad. En su lugar, debe importar y exportar sus datos manualmente. Esta es una característica de seguridad para garantizar que sus datos nunca se vean comprometidos.",
+  "backup": "Respaldo",
+  "successfulImport": "Importado exitosamente",
+  "successfulExport": "Exportado exitosamente",
+  "sharingIsNotAvailable": "Compartir no está disponible en esta plataforma.",
+  "backup_lowercase": "respaldo",
+  "errorExporting": "Error al exportar",
+  "errorExporting_description": "Se produjo un error al exportar sus datos. Asegúrese de que su dispositivo tenga suficiente almacenamiento y de que el uso compartido esté disponible, luego inténtelo nuevamente."
 }

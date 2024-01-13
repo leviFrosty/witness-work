@@ -23,6 +23,7 @@ import WhatsNewScreen from '../screens/WhatsNewScreen'
 import DonationInfoScreen from '../screens/DonationInfoScreen'
 import PaywallScreen from '../screens/PaywallScreen'
 import PaywallThankYouScreen from '../screens/PaywallThankYouScreen'
+import ImportAndExportScreen from '../screens/ImportAndExportScreen'
 
 export type RootStackParamList = {
   Root: undefined
@@ -44,6 +45,7 @@ export type RootStackParamList = {
   Donate: undefined
   Paywall: undefined
   'Thank You': undefined
+  'Import and Export': undefined
 }
 
 export type RootStackNavigation = NativeStackNavigationProp<RootStackParamList>
@@ -171,6 +173,15 @@ const RootStackComponent = () => {
         }}
         name='Thank You'
         component={PaywallThankYouScreen}
+      />
+      <RootStack.Screen
+        options={{
+          header: () => (
+            <Header buttonType='back' title={i18n.t('importAndExport')} />
+          ),
+        }}
+        name='Import and Export'
+        component={ImportAndExportScreen}
       />
     </RootStack.Navigator>
   )

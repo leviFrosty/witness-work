@@ -390,6 +390,9 @@
     "1111": {
       "c1": "Magdagdag ng pahina ng donasyon sa mga setting para sa mga nais mag-ambag.",
       "c2": "May kasamang iba't ibang maliliit na pagpapabuti at pag-aayos ng bug"
+    },
+    "1120": {
+      "c1": "Nagdaragdag ng pag-andar ng backup at pagpapanumbalik. Ngayon ay maaari mong i-backup ang iyong data sa cloud at i-restore ito sa ibang pagkakataon. Maaari mong ilipat ang iyong data sa ibang device. Maaari mo ring ilipat ito sa ibang platform. Hanapin ang bagong feature na ito sa mga setting."
     }
   },
   "installed": "Naka-install",
@@ -429,7 +432,6 @@
   "donate_faq1": "Bakit ka tumatanggap ng donasyon?",
   "donate_faqAnswer1": "Bilang isang kapatid sa bulwagan, itinuturing kong isang pribilehiyo na magamit ang aking mga kakayahan para tulungan ang iba sa kongregasyon. Bagama't libre sa lahat, pagbuo, pagpapatakbo, at pagpapanatili ng application na ito, sa kasamaang-palad ay nagkakahalaga ng malaking halaga ng pera at oras. Itinuturing kong ang pagbibigay ng donasyon ay katulad ng kung paano maaaring magbayad ang isa para sa gas ng iba pagkatapos nilang maglingkod sa kanila - ito ay isang mapagmahal na kilos na lubos na pinahahalagahan.",
   "donate_faq2": "Ano ang ginagamit ng mga donasyon?",
-  "donate_faqAnswer2": "Nakakatulong ang iyong donasyon na mapanatiling tumatakbo ang app na ito! May mga gastos sa pagbili ng mga tunay na device bilang kagamitan sa pag-develop, pagbabayad para sa mga bayarin sa serbisyo ng API ng lokasyon, mga bayarin sa app store, at gastos sa pagkakataon ng aking maraming oras na ginugol sa pagbuo ng app na ito. Ang bawat piraso ng suporta ay lubos na pinahahalagahan!",
   "openDonationPage": "Buksan ang Pahina ng Donasyon",
   "shareApp": "Ibahagi ang App",
   "couldNotFindOffer": "Hindi Makahanap ng alok. Subukang muli mamaya.",
@@ -465,5 +467,22 @@
   "noPurchasesFound": "Walang Nahanap na Mga Pagbili",
   "errorCheckingOut": "Nagkaroon ng error noong nag-check out. Malamang na ito ay dahil sa kawalang-tatag ng network, pakisubukang muli.",
   "goToAppStoreToUpdateSubscriptions": "Upang kanselahin o i-edit ang iyong subscription, pakibisita ang App Store.",
-  "termsOfUse": "Mga Tuntunin ng Paggamit"
+  "termsOfUse": "Mga Tuntunin ng Paggamit",
+  "donate_faqAnswer2": "Nakakatulong ang iyong donasyon na mapanatiling tumatakbo ang app na ito! May mga gastos sa pagbili ng mga tunay na device bilang kagamitan sa pag-develop, pagbabayad para sa mga bayarin sa serbisyo ng API ng lokasyon, mga bayarin sa pagbuo ng serbisyo sa API, mga bayarin sa app store, at gastos sa pagkakataon ng aking maraming oras na ginugol sa pagbuo ng app na ito. Ang bawat piraso ng suporta ay lubos na pinahahalagahan!",
+  "importAndExport": "Mag-import & I-export",
+  "import": "Angkat",
+  "importAndExport_description": "I-import at i-export ang iyong data papunta at mula sa JW Time. Kapaki-pakinabang ito kung nagpapalit ka ng mga device o gusto mong i-backup ang iyong data.",
+  "importError_title": "Error sa Pag-import",
+  "importError_description": "Nagkaroon ng error sa pag-import ng iyong file. Paki-verify na wasto ang iyong file at subukang muli.",
+  "importErrorInvalidFile_title": "Di-wastong File",
+  "importErrorInvalidFile_description": "Ang file na sinusubukan mong i-import ay hindi wasto. Pakigamit ang na-export na file mula sa JW Time at subukang muli.",
+  "backupRecommendations": "Inirerekomenda na iimbak ang iyong backup sa cloud storage. Titiyakin nito na hindi mo mawawala ang iyong data sakaling masira ang iyong device.\n\nGumagana rin ang feature na ito kapag naglilipat sa at mula sa Android o iOS.",
+  "backupReasoning": "Dahil hindi kailanman maiimbak ang iyong data sa mga server, hindi kailanman magkakaroon ng 'sync' functionality. Sa halip, dapat mong manual na i-import at i-export ang iyong data. Ito ay isang tampok na panseguridad upang matiyak na ang iyong data ay hindi kailanman nakompromiso.",
+  "backup": "Backup",
+  "successfulImport": "Matagumpay na na-import",
+  "successfulExport": "Matagumpay na na-export",
+  "sharingIsNotAvailable": "Ang pagbabahagi ay hindi magagamit sa platform na ito.",
+  "backup_lowercase": "backup",
+  "errorExporting": "Error sa Pag-export",
+  "errorExporting_description": "Nagkaroon ng error sa pag-export ng iyong data. Pakitiyak na may sapat na storage ang iyong device at available ang pagbabahagi, pagkatapos ay subukang muli."
 }

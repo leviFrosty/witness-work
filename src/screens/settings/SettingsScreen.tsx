@@ -52,8 +52,8 @@ const SettingsScreen = (props: DrawerContentComponentProps) => {
         <View style={{ gap: 25 }}>
           <PreferencesSection handleNavigate={navigateAndCloseDrawer} />
           <AppSection handleNavigate={navigateAndCloseDrawer} />
-          <ContactSection />
           <SupportSection />
+          <ContactSection />
           <MiscSection handleNavigate={navigateAndCloseDrawer} />
         </View>
         <Text

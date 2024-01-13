@@ -390,6 +390,9 @@
     "1111": {
       "c1": "在设置中为那些希望捐款的人添加捐赠页面。",
       "c2": "包括各种小改进和错误修复"
+    },
+    "1120": {
+      "c1": "添加备份和恢复功能。现在您可以将数据备份到云端并在以后恢复。您可以将数据传输到另一台设备。您也可以将其转移到其他平台。在设置中找到这个新功能。"
     }
   },
   "installed": "已安装",
@@ -429,7 +432,6 @@
   "donate_faq1": "你为什么接受捐款？",
   "donate_faqAnswer1": "作为会堂里的弟兄，我认为能够利用自己的技能帮助会众中的其他人是一种荣幸。尽管该应用程序对所有人免费，但不幸的是，开发、运行和维护需要花费大量金钱和时间。我认为捐赠就像一个人在为他人服务后为他人支付汽油费一样——这是一种值得高度赞赏的充满爱心的举动。",
   "donate_faq2": "捐款用途是什么？",
-  "donate_faqAnswer2": "您的捐赠有助于保持这个应用程序的运行！购买真实设备作为开发设备、支付位置 API 服务费、应用程序商店费用以及我花费大量时间开发此应用程序的机会成本都是有成本的。非常感谢每一份支持！",
   "openDonationPage": "打开捐赠页面",
   "shareApp": "分享应用程序",
   "couldNotFindOffer": "找不到报价。请稍后再试。",
@@ -465,5 +467,22 @@
   "noPurchasesFound": "没有找到购买的商品",
   "errorCheckingOut": "结帐时出现错误。可能是网络不稳定，请重试。",
   "goToAppStoreToUpdateSubscriptions": "要取消或编辑您的订阅，请访问 App Store。",
-  "termsOfUse": "使用条款"
+  "termsOfUse": "使用条款",
+  "donate_faqAnswer2": "您的捐赠有助于保持这个应用程序的运行！购买真实设备作为开发设备、支付位置 API 服务费、构建服务 API 费、应用程序商店费用以及我花费大量时间开发此应用程序的机会成本都是有成本的。非常感谢每一份支持！",
+  "importAndExport": "进口及出口",
+  "import": "进口",
+  "importAndExport_description": "将数据导入 JW Time 或从 JW Time 导出数据。如果您要切换设备或想要备份数据，这非常有用。",
+  "importError_title": "导入错误",
+  "importError_description": "导入您的文件时出错。请验证您的文件是否有效，然后重试。",
+  "importErrorInvalidFile_title": "无效文件",
+  "importErrorInvalidFile_description": "您尝试导入的文件无效。请使用 JW Time 导出的文件并重试。",
+  "backupRecommendations": "建议将备份存储在云存储中。这将确保您在设备损坏时不会丢失数据。\n\n此功能在与 Android 或 iOS 之间传输时也适用。",
+  "backupReasoning": "由于您的数据永远不会存储在服务器上，因此该应用程序永远不会有“同步”功能。功能。相反，您必须手动导入和导出数据。这是一项安全功能，可确保您的数据永远不会受到损害。",
+  "backup": "备份",
+  "successfulImport": "导入成功",
+  "successfulExport": "导出成功",
+  "sharingIsNotAvailable": "此平台不支持共享。",
+  "backup_lowercase": "备份",
+  "errorExporting": "导出时出错",
+  "errorExporting_description": "导出您的数据时出错。请确保您的设备有足够的存储空间并且可以共享，然后重试。"
 }

@@ -7,7 +7,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   name: IS_DEV ? 'JW Time Dev' : 'JW Time',
   developmentClient: {},
   slug: 'jw-time',
-  version: '1.11.1',
+  version: '1.20.0',
   owner: 'levi_frosty',
   orientation: 'portrait',
   icon: './src/assets/icon.png',
@@ -62,6 +62,12 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
       {
         locationWhenInUsePermission:
           '$(PRODUCT_NAME) will use your location to display where you are on the map, useful for finding nearby contacts.',
+      },
+    ],
+    [
+      'expo-document-picker',
+      {
+        iCloudContainerEnvironment: IS_DEV ? 'Development' : 'Production',
       },
     ],
   ],

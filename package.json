@@ -1,6 +1,6 @@
 {
   "name": "jw-time",
-  "version": "1.11.1",
+  "version": "1.12.0",
   "main": "node_modules/expo/AppEntry.js",
   "scripts": {
     "dev": "APP_VARIANT=development expo start",
@@ -47,6 +47,8 @@
     "expo-crypto": "~12.4.1",
     "expo-dev-client": "~2.4.12",
     "expo-device": "~5.4.0",
+    "expo-document-picker": "~11.5.4",
+    "expo-file-system": "~15.4.5",
     "expo-font": "~11.4.0",
     "expo-haptics": "~12.4.0",
     "expo-insights": "~0.2.0",
@@ -55,6 +57,7 @@
     "expo-location": "~16.1.0",
     "expo-network": "~5.4.0",
     "expo-notifications": "~0.20.1",
+    "expo-sharing": "~11.5.0",
     "expo-splash-screen": "~0.20.5",
     "expo-status-bar": "~1.6.0",
     "expo-store-review": "~6.4.0",

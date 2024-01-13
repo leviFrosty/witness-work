@@ -327,6 +327,9 @@
   "new": "Nouveau",
   "bugFixes": "Corrections de bugs",
   "updates": {
+    "1120": {
+      "c1": "Ajoute des fonctionnalités de sauvegarde et de restauration. Vous pouvez désormais sauvegarder vos données sur le cloud et les restaurer plus tard. Vous pouvez transférer vos données vers un autre appareil. Vous pouvez également le transférer vers une autre plateforme. Retrouvez cette nouvelle fonctionnalité dans les paramètres."
+    },
     "1111": {
       "c1": "Ajoutez une page de don dans les paramètres pour ceux qui souhaitent contribuer.",
       "c2": "Comprend diverses améliorations mineures et corrections de bugs"
@@ -429,7 +432,7 @@
   "donate_faq1": "Pourquoi acceptez-vous les dons ?",
   "donate_faqAnswer1": "En tant que frère de salle, je considère comme un privilège de pouvoir utiliser mes compétences pour aider les autres membres de la congrégation. Bien que gratuit pour tous, le développement, l’exécution et la maintenance de cette application coûtent malheureusement beaucoup d’argent et de temps. Je considère que faire un don est similaire à la façon dont on pourrait payer l'essence d'un autre après être entré en service avec lui - c'est un geste d'amour qui est grandement apprécié.",
   "donate_faq2": "A quoi servent les dons ?",
-  "donate_faqAnswer2": "Votre don aide à faire fonctionner cette application ! Il y a des coûts liés à l'achat d'appareils réels comme équipement de développement, au paiement des frais de service de l'API de localisation, des frais de magasin d'applications et du coût d'opportunité de mes nombreuses heures passées à développer cette application. Chaque soutien est grandement apprécié !",
+  "donate_faqAnswer2": "Votre don aide à faire fonctionner cette application ! Il y a des coûts liés à l'achat d'appareils réels comme équipement de développement, au paiement des frais de service d'API de localisation, aux frais d'API de service de création, aux frais de magasin d'applications et au coût d'opportunité de mes nombreuses heures passées à développer cette application. Chaque soutien est grandement apprécié !",
   "openDonationPage": "Ouvrir la page de don",
   "shareApp": "Partager l'application",
   "couldNotFindOffer": "Offre introuvable. Veuillez réessayer plus tard.",
@@ -465,5 +468,21 @@
   "noPurchasesFound": "Aucun achat trouvé",
   "errorCheckingOut": "Une erreur s'est produite lors du paiement. Cela est probablement dû à une instabilité du réseau, veuillez réessayer.",
   "goToAppStoreToUpdateSubscriptions": "Pour annuler ou modifier votre abonnement, veuillez visiter l'App Store.",
-  "termsOfUse": "Conditions d'utilisation"
+  "termsOfUse": "Conditions d'utilisation",
+  "importAndExport": "Importer et amp; Exporter",
+  "import": "Importer",
+  "importAndExport_description": "Importez et exportez vos données vers et depuis JW Time. Ceci est utile si vous changez d'appareil ou si vous souhaitez sauvegarder vos données.",
+  "importError_title": "Erreur d'importation",
+  "importError_description": "Une erreur s'est produite lors de l'importation de votre fichier. Veuillez vérifier que votre fichier est valide et réessayer.",
+  "importErrorInvalidFile_title": "Fichier non valide",
+  "importErrorInvalidFile_description": "Le fichier que vous essayez d'importer n'est pas valide. Veuillez utiliser le fichier exporté depuis JW Time et réessayer.",
+  "backupRecommendations": "Il est recommandé de stocker votre sauvegarde dans le stockage cloud. Cela garantira que vous ne perdrez pas vos données en cas de panne de votre appareil.\n\nCette fonctionnalité fonctionne également lors du transfert vers et depuis Android ou iOS.",
+  "backupReasoning": "Étant donné que vos données ne seront jamais stockées sur des serveurs, l'application n'aura jamais de fonction de « synchronisation ». Fonctionnalité. Au lieu de cela, vous devez importer et exporter manuellement vos données. Il s'agit d'une fonction de sécurité permettant de garantir que vos données ne soient jamais compromises.",
+  "backup": "Sauvegarde",
+  "successfulImport": "Importation réussie",
+  "successfulExport": "Exporté avec succès",
+  "sharingIsNotAvailable": "Le partage n'est pas disponible sur cette plateforme.",
+  "backup_lowercase": "sauvegarde",
+  "errorExporting": "Erreur lors de l'exportation",
+  "errorExporting_description": "Une erreur s'est produite lors de l'exportation de vos données. Veuillez vous assurer que votre appareil dispose de suffisamment de stockage et que le partage est disponible, puis réessayez."
 }

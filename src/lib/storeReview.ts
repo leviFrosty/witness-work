@@ -17,8 +17,8 @@ export const maybeRequestStoreReview = async ({
   calledGoecodeApiTimes: number
   updateLastTimeRequestedStoreReview: () => void
 }) => {
-  const installedAppMoreThanAWeekAgo = moment(installedOn).isBefore(
-    moment().subtract(1, 'week')
+  const installedAppMoreThanADayAgo = moment(installedOn).isBefore(
+    moment().subtract(1, 'day')
   )
 
   const lastRequestWasSomeTimeAgo =
@@ -26,8 +26,8 @@ export const maybeRequestStoreReview = async ({
     moment(lastTimeRequestedAReview).isBefore(moment().subtract(3, 'days'))
 
   if (
-    calledGoecodeApiTimes > 3 &&
-    installedAppMoreThanAWeekAgo &&
+    calledGoecodeApiTimes > 1 &&
+    installedAppMoreThanADayAgo &&
     lastRequestWasSomeTimeAgo
   ) {
     try {

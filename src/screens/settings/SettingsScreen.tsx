@@ -14,12 +14,13 @@ import PreferencesSection from './sections/Preferences'
 import AppSection from './sections/App'
 import ContactSection from './sections/Contact'
 import MiscSection from './sections/Misc'
+import SupportSection from './sections/Support'
 
 export type SettingsSectionProps = {
   handleNavigate: (destination: keyof RootStackParamList) => void
 }
 
-const Settings = (props: DrawerContentComponentProps) => {
+const SettingsScreen = (props: DrawerContentComponentProps) => {
   const theme = useTheme()
   const insets = useSafeAreaInsets()
   const navigation = useNavigation<RootStackNavigation>()
@@ -51,6 +52,7 @@ const Settings = (props: DrawerContentComponentProps) => {
         <View style={{ gap: 25 }}>
           <PreferencesSection handleNavigate={navigateAndCloseDrawer} />
           <AppSection handleNavigate={navigateAndCloseDrawer} />
+          <SupportSection />
           <ContactSection />
           <MiscSection handleNavigate={navigateAndCloseDrawer} />
         </View>
@@ -73,4 +75,4 @@ const Settings = (props: DrawerContentComponentProps) => {
   )
 }
 
-export default Settings
+export default SettingsScreen

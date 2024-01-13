@@ -9,9 +9,29 @@ export type ReleaseNote = {
 
 export const releaseNotes: ReleaseNote[] = [
   {
-    version: '1.9.2',
-    date: moment('2023-01-01').toDate(),
+    version: '1.20.0',
+    date: moment('2024-01-13').toDate(),
     content: ['c1'],
+  },
+  {
+    version: '1.11.1',
+    date: moment('2024-01-12').toDate(),
+    content: ['c1', 'c2'],
+  },
+  {
+    version: '1.11.0',
+    date: moment('2024-01-09').toDate(),
+    content: ['c1', 'c2', 'c3'],
+  },
+  {
+    version: '1.10.0',
+    date: moment('2024-01-06').toDate(),
+    content: ['c1', 'c2', 'c3'],
+  },
+  {
+    version: '1.9.2',
+    date: moment('2024-01-01').toDate(),
+    content: ['c1', 'c2', 'c3', 'c4', 'c5', 'c6'],
   },
   {
     version: '1.9.1',

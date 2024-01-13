@@ -312,7 +312,7 @@ const AddressSection = ({
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Contact Form'>
 
-const ContactForm = ({ route, navigation }: Props) => {
+const ContactFormScreen = ({ route, navigation }: Props) => {
   const theme = useTheme()
   const { addContact, contacts, updateContact } = useContacts()
   const { incrementGeocodeApiCallCount } = usePreferences()
@@ -548,7 +548,7 @@ const ContactForm = ({ route, navigation }: Props) => {
       header: ({ route: { params }, navigation }) => (
         <Header
           title=''
-          buttonType='exit'
+          buttonType='back'
           rightElement={
             fetching ? (
               <View
@@ -662,4 +662,4 @@ const ContactForm = ({ route, navigation }: Props) => {
   )
 }
 
-export default ContactForm
+export default ContactFormScreen

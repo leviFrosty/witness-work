@@ -1,5 +1,6 @@
 import { ColorSchemeName } from 'react-native'
 import { Colors, Theme, ThemeSizes } from '../types/theme'
+import * as Device from 'expo-device'
 
 export const lightModeColors = {
   text: '#373737',
@@ -7,6 +8,7 @@ export const lightModeColors = {
   textInverse: '#FFFFFF',
   textInverseAlt: '#E2E2E2',
   accent: '#1BD15D',
+  accentTranslucent: '#1BD15D33',
   accentBackground: '#4BD27C',
   accentAlt: '#B7DDC5',
   background: '#E9E9E9',
@@ -31,6 +33,7 @@ const darkModeColors: Colors = {
   textInverse: '#141414',
   textInverseAlt: '#373737',
   accent: '#1BD15D',
+  accentTranslucent: '#1BD15D33',
   accentBackground: '#4BD27C',
   accentAlt: '#99BFA7',
   background: '#121212',
@@ -42,7 +45,7 @@ const darkModeColors: Colors = {
   accent2Alt: '#FFF3F2',
   accent3: '#159fb0',
   accent3Alt: '#003D46',
-  error: '#E30909',
+  error: '#F20A0A',
   errorAlt: '#FA6868',
   warn: '#FCC014',
   warnAlt: '#FFEAB8',
@@ -53,6 +56,7 @@ export const numbers = {
   borderRadiusSm: 5,
   borderRadiusMd: 10,
   borderRadiusLg: 15,
+  borderRadiusXl: 25,
   shadowOpacity: 0.1,
 }
 
@@ -64,23 +68,34 @@ export const fonts = {
 }
 
 const fontSize = (size?: ThemeSizes) => {
+  const defaultSize = 14
+  const isTablet = Device.deviceType === Device.DeviceType.TABLET
+  // Slightly increases default font size for readability on large devices
+  const deviceTypeOffset = isTablet ? 2 : 0
+
+  const sizeFromDefault = (offset: number) => {
+    return defaultSize + deviceTypeOffset + offset
+  }
+
   switch (size) {
     case 'xs':
-      return 10
+      return sizeFromDefault(-4)
     case 'sm':
-      return 12
+      return sizeFromDefault(-2)
     case 'md':
-      return 14
+      return sizeFromDefault(0)
     case 'lg':
-      return 16
+      return sizeFromDefault(2)
     case 'xl':
-      return 20
+      return sizeFromDefault(6)
     case '2xl':
-      return 24
+      return sizeFromDefault(10)
     case '3xl':
-      return 28
+      return sizeFromDefault(14)
+    case '4xl':
+      return sizeFromDefault(18)
     default:
-      return 14
+      return sizeFromDefault(0)
   }
 }
 

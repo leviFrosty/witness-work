@@ -15,32 +15,15 @@ JW Time is the easy way for Jehovah's Witnesses to manage their field service pr
 ### Preview
 
 <div float="left">
-<img src="./src/docs/screenshots/preview1.png" width="200">
-<img src="./src/docs/screenshots/preview2.png" width="200">
-<img src="./src/docs/screenshots/preview3.png" width="200">
-<img src="./src/docs/screenshots/preview4.png" width="200">
-<img src="./src/docs/screenshots/preview5.png" width="200">
-<img src="./src/docs/screenshots/preview6.png" width="200">
+<img src="./src/docs/screenshots/preview1.png" width="150">
+<img src="./src/docs/screenshots/preview2.png" width="150">
+<img src="./src/docs/screenshots/preview3.png" width="150">
+<img src="./src/docs/screenshots/preview4.png" width="150">
+<img src="./src/docs/screenshots/preview5.png" width="150">
+<img src="./src/docs/screenshots/preview6.png" width="150">
 </div>
 
 ## Want to Contribute?
-
-### Help Translate 🌐
-
-JW Time is automatically translated into 12 languages by means of Google Cloud Translate. These translations might not always be the highest quality. To help, proofread these translations on [Crowdin](https://crowdin.com/project/jw-time/). Thank you!
-
-[Not sure how to use Crowdin?](https://support.crowdin.com/crowdin-intro/)
-
-Current translations: de, es, fr, it, ja, ko, nl, pt, ru, vi, zh, tl
-
-### Help Code ⌨️
-
-Any assistance is welcome! Look at the following and see if anything looks interesting to you:
-
-1. [Open issues](https://github.com/leviFrosty/JW-Time/issues)
-2. [Project board](https://github.com/users/leviFrosty/projects/2)
-
-If you find something you'd like to help with, please let me know you've began work on it so it doesn't become double-worked. Thank you!
 
 ### Help Financially 💖
 
@@ -53,6 +36,61 @@ Donations are never expected but greatly appreciated! These donations are used t
 These expenses are kept up to date here. Thank you!
 
 [![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/leviwilkerson)
+
+### Help Translate 🌐
+
+JW Time is automatically translated into 12 languages by means of Google Cloud Translate. These translations might not always be the highest quality. To help, proofread these translations on [Crowdin](https://crowdin.com/project/jw-time/). Thank you!
+
+[Not sure how to use Crowdin?](https://support.crowdin.com/crowdin-intro/)
+
+Current translations:
+
+1. German
+1. Spanish
+1. French
+1. Italian
+1. Japanese
+1. Korean
+1. Dutch
+1. Portuguese
+1. Russian
+1. Vietnamese
+1. Chinese
+1. Tagalog
+
+### Help Code ⌨️
+
+Any assistance is welcome! Look at the following and see if anything looks interesting to you:
+
+1. [Open issues](https://github.com/leviFrosty/JW-Time/issues)
+2. [Project board](https://github.com/users/leviFrosty/projects/2)
+
+If you find something you'd like to help with, please let me know you've began work on it so it doesn't become double-worked. Thank you!
+
+#### Project Structure
+
+- [`.github`](/.github) Configuration files for Github actions.
+- [`.husky`](/.husky) Configuration files for [husky](https://typicode.github.io/husky/), a git hooks library.
+- [`.tamagui`](/.tamagui) Configuration files for [tamagui](https://tamagui.dev/), a component library used in only portions of the project.
+- [`.vscode`](/.vscode) VSCode configuration files for extensions.
+
+- [**`src`**](/src) This is where all of the project source code lives.
+
+  - [`__tests__`](/src/__tests__) Where all of the tests for the project lives.
+  - [`assets`](/src/assets) Where local assets such a images, icons, and [lottie](https://lottiefiles.com/) animations are stored.
+  - [`components`](/src/components) All of the components of the project.
+  - [`constants`](/src/constants) Variables that are constant throughout the app and do not change.
+  - [`contexts`](/src/contexts) Stores the [React Contexts](https://react.dev/learn/passing-data-deeply-with-context) that do not come from external dependencies.
+  - [`docs`](/src/docs) The documentation for this repository.
+  - [`hooks`](/src/hooks) Contains the custom [React Hooks](https://react.dev/learn/reusing-logic-with-custom-hooks#hook-names-always-start-with-use) for this project.
+  - [`lib`](/src/lib) Contains many functions that are useful for app functionality. Generally, shared functions should come from a `lib` instead of directly from a `component`.
+  - [`locales`](/src/locales) The translations files for each locale - `en` is the master.
+  - [`providers`](/src/providers) The [React Providers](https://react.dev/reference/react/createContext#provider) for the [`contexts`](/src/contexts).
+  - [`screens`](/src/screens) Contains all [screens](https://reactnative.dev/docs/navigation) that the app can display.
+  - [`scripts`](/src/scripts) Local CLI scripts for various CI/CD functions.
+  - [`stacks`](/src/stacks) All [native stacks](https://reactnavigation.org/docs/native-stack-navigator) of used for [React Native Navigation](https://reactnavigation.org/).
+  - [`stores`](/src/stores) The [AsyncStorage](https://github.com/react-native-async-storage/async-storage) APIs for all app data.
+  - [`types`](/src/types) Type definitions.
 
 ## License
 

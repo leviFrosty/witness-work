@@ -1,4 +1,4 @@
-import { Pressable, View } from 'react-native'
+import { Alert, View } from 'react-native'
 import { useContext } from 'react'
 import moment from 'moment'
 import useTheme, { ThemeContext } from '../contexts/theme'
@@ -13,13 +13,21 @@ import { RootStackNavigation } from '../stacks/RootStack'
 import i18n from '../lib/locales'
 import IconButton from './IconButton'
 import { faCheck, faMinus, faTimes } from '@fortawesome/free-solid-svg-icons'
+import Button from './Button'
 
-const Month = ({ month }: { month: number }) => {
+const Month = ({
+  month,
+  setHasShownInvalidMonthAlert,
+  hasShownInvalidMonthAlert,
+}: {
+  month: number
+  setHasShownInvalidMonthAlert: () => void
+  hasShownInvalidMonthAlert?: boolean
+}) => {
   const theme = useTheme()
   const navigation = useNavigation<RootStackNavigation>()
   const { installedOn, publisher } = usePreferences()
   const currentMonth = moment().month()
-
   const isCurrentMonth = currentMonth === month
   const monthHasPassed = currentMonth > month
   const monthInFuture = currentMonth < month
@@ -34,16 +42,27 @@ const Month = ({ month }: { month: number }) => {
   const didNotGoOutInService = monthHasPassed && !wentOutThisMonth
   const hasNotGoneOutTheCurrentMonth = isCurrentMonth && !wentOutThisMonth
 
+  const handleInvalidMonthPress = () => {
+    setHasShownInvalidMonthAlert()
+    Alert.alert(
+      i18n.t('cannotNavigateToFutureMonth'),
+      i18n.t('cannotNavigateToFutureMonth_description')
+    )
+  }
+
   return (
-    <Pressable
+    <Button
+      disabled={monthInFuture && hasShownInvalidMonthAlert}
       onPress={
         publisher === 'publisher'
           ? undefined
           : () =>
-              navigation.navigate('Time Reports', {
-                month: moment().month(),
-                year: moment().year(),
-              })
+              monthInFuture
+                ? handleInvalidMonthPress()
+                : navigation.navigate('Time Reports', {
+                    month,
+                    year: moment().year(),
+                  })
       }
       style={{
         gap: 5,
@@ -90,15 +109,20 @@ const Month = ({ month }: { month: number }) => {
       >
         {moment().month(month).format('MMM')}
       </Text>
-    </Pressable>
+    </Button>
   )
 }
 
 const MonthlyRoutine = () => {
   const theme = useContext(ThemeContext)
+  const { monthlyRoutineHasShownInvalidMonthAlert, set } = usePreferences()
+
+  const setHasShownInvalidMonthAlert = () => {
+    set({ monthlyRoutineHasShownInvalidMonthAlert: true })
+  }
 
   return (
-    <View style={{ gap: 10 }}>
+    <View style={{ gap: 10, flexShrink: 1 }}>
       <Text
         style={{
           fontSize: 14,
@@ -108,15 +132,23 @@ const MonthlyRoutine = () => {
       >
         {i18n.t('monthlyRoutine')}
       </Text>
-      <Card>
+      <Card style={{ flexGrow: 1, justifyContent: 'center' }}>
         <FlashList
           horizontal
           initialScrollIndex={moment().month()}
           keyExtractor={(item) => item.toString()}
-          estimatedItemSize={45}
+          estimatedItemSize={44}
           data={[...Array(12).keys()]}
           renderItem={({ item: month }) => {
-            return <Month month={month} />
+            return (
+              <Month
+                month={month}
+                hasShownInvalidMonthAlert={
+                  monthlyRoutineHasShownInvalidMonthAlert
+                }
+                setHasShownInvalidMonthAlert={setHasShownInvalidMonthAlert}
+              />
+            )
           }}
           showsHorizontalScrollIndicator={false}
         />

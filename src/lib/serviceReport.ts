@@ -219,3 +219,92 @@ export const getTimeAsMinutesForHourglass = (
   const minutes = (hours || 0) * 60
   return minutes
 }
+
+export const serviceReportHoursPerMonthToGoal = ({
+  currentDate,
+  goalHours,
+  serviceReports,
+  serviceYear,
+}: {
+  serviceReports: ServiceReport[]
+  currentDate: {
+    month: number
+
+    year: number
+  }
+  goalHours: number
+  serviceYear: number
+}) => {
+  const { maxDate } = serviceYearsDateRange(serviceYear)
+  const annualGoalHours = goalHours * 12
+
+  const month = moment().month(currentDate.month).year(currentDate.year)
+
+  const monthHasReports = hasServiceReportsForMonth(
+    serviceReports,
+    currentDate.month,
+    currentDate.year
+  )
+
+  const monthsRemainingOffset = !monthHasReports ? 1 : 0
+
+  const actualMonthsRemaining =
+    moment(maxDate).diff(month, 'months') + monthsRemainingOffset
+
+  const monthsRemaining =
+    actualMonthsRemaining === 0 ? 1 : actualMonthsRemaining
+
+  const totalHoursForServiceYear = getTotalHoursForServiceYear(
+    serviceReports,
+    serviceYear
+  )
+
+  return Math.round(
+    (annualGoalHours - totalHoursForServiceYear) / monthsRemaining
+  )
+}
+
+export const serviceYearsDateRange = (serviceYear: number) => {
+  const minDate = moment().month(8).year(serviceYear).startOf('month')
+  const maxDate = moment()
+    .month(7)
+    .year(serviceYear + 1)
+    .endOf('month')
+
+  return { minDate, maxDate }
+}
+
+export const reportsForServiceYear = (
+  serviceReports: ServiceReport[],
+  serviceYear: number
+) => {
+  const { minDate, maxDate } = serviceYearsDateRange(serviceYear)
+
+  return serviceReports.filter((report) => {
+    return moment(report.date).isBetween(minDate, maxDate, 'day', '[]')
+  })
+}
+
+export const getTotalHoursForServiceYear = (
+  serviceReports: ServiceReport[],
+  serviceYear: number
+) => {
+  const reports = reportsForServiceYear(serviceReports, serviceYear)
+
+  const minutes = reports.reduce((prev, current) => {
+    return prev + current.hours * 60
+  }, 0)
+
+  return Math.floor(minutes / 60)
+}
+
+export const getServiceYearFromDate = (moment: moment.Moment) => {
+  const month = moment.month()
+  const year = moment.year()
+
+  if (month < 8) {
+    return year - 1
+  }
+
+  return year
+}

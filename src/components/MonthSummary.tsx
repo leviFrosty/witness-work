@@ -3,7 +3,7 @@ import Button from './Button'
 import Text from './MyText'
 import i18n from '../lib/locales'
 import Divider from './Divider'
-import ProgressBar from './ProgressBar'
+import MonthServiceReportProgressBar from './MonthServiceReportProgressBar'
 import { faArrowUpFromBracket } from '@fortawesome/free-solid-svg-icons'
 import IconButton from './IconButton'
 import {
@@ -18,6 +18,10 @@ import { ExportTimeSheetState } from './ExportTimeSheet'
 import { ServiceReport } from '../types/serviceReport'
 import TimeCategoryTableRow from './TimeCategoryTableRow'
 import { usePreferences } from '../stores/preferences'
+import Card from './Card'
+import ActionButton from './ActionButton'
+import { useNavigation } from '@react-navigation/native'
+import { RootStackNavigation } from '../stacks/RootStack'
 
 interface MonthSummaryProps {
   monthsReports: ServiceReport[] | null
@@ -36,6 +40,7 @@ const MonthSummary = ({
   const { publisher, publisherHours } = usePreferences()
   const [expandOtherCategories, setExpandOtherCategories] = useState(false)
   const goalHours = publisherHours[publisher]
+  const navigation = useNavigation<RootStackNavigation>()
 
   const totalHours = useMemo(
     () =>
@@ -68,19 +73,43 @@ const MonthSummary = ({
   )
 
   if (!monthsReports) {
-    return null
+    return (
+      <Card>
+        <Text
+          style={{
+            fontFamily: theme.fonts.semiBold,
+          }}
+        >
+          {i18n.t('noTimeReports')}
+        </Text>
+        <Text
+          style={{
+            fontSize: theme.fontSize('sm'),
+            color: theme.colors.textAlt,
+          }}
+        >
+          {i18n.t('noTimeReports_description')}
+        </Text>
+        <ActionButton
+          onPress={() => navigation.navigate('Add Time', { month, year })}
+        >
+          <Text
+            style={{
+              textAlign: 'center',
+              flex: 1,
+              color: theme.colors.textInverse,
+            }}
+          >
+            {i18n.t('addTime')}
+          </Text>
+        </ActionButton>
+      </Card>
+    )
   }
 
   return (
     <View style={{ gap: 3 }}>
-      <View
-        style={{
-          backgroundColor: theme.colors.backgroundLighter,
-          borderRadius: theme.numbers.borderRadiusSm,
-          padding: 20,
-          gap: 25,
-        }}
-      >
+      <Card>
         <View style={{ gap: 10 }}>
           <View
             style={{
@@ -90,7 +119,12 @@ const MonthSummary = ({
               marginBottom: 3,
             }}
           >
-            <Text style={{ fontFamily: theme.fonts.semiBold }}>
+            <Text
+              style={{
+                fontFamily: theme.fonts.semiBold,
+                fontSize: theme.fontSize('xl'),
+              }}
+            >
               {i18n.t('monthDetails')}
             </Text>
             <IconButton
@@ -118,7 +152,7 @@ const MonthSummary = ({
                 'hoursToGoal'
               )}`}{' '}
             </Text>
-            <ProgressBar month={month} year={year} />
+            <MonthServiceReportProgressBar month={month} year={year} />
           </View>
         </View>
         <View style={{ gap: 5 }}>
@@ -180,7 +214,7 @@ const MonthSummary = ({
             )}
           </View>
         </View>
-      </View>
+      </Card>
     </View>
   )
 }

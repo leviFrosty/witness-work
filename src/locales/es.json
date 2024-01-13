@@ -327,33 +327,35 @@
   "new": "Nuevo",
   "bugFixes": "Corrección de errores",
   "updates": {
-    "1120": {
-      "c1": "Agrega funcionalidad de copia de seguridad y restauración. Ahora puedes hacer una copia de seguridad de tus datos en la nube y restaurarlos más tarde. Puede transferir sus datos a otro dispositivo. También puedes transferirlo a otra plataforma. Encuentre esta nueva característica en la configuración."
+    "160": {
+      "c1": "Las conversaciones ahora son editables. Las notificaciones son configurables.",
+      "c2": "Desliza gestos para editar o eliminar conversaciones, contactos, etc.",
+      "c3": "Se agregó retroalimentación háptica a varias acciones importantes."
     },
-    "1111": {
-      "c1": "Agregue la página de donación en la configuración para aquellos que deseen contribuir.",
-      "c2": "Incluye varias mejoras menores y correcciones de errores."
+    "161": {
+      "c1": "Se agregaron más opciones de minutos para entradas de tiempo."
     },
-    "1110": {
-      "c1": "Se agregó soporte para iPads y iPad. ¡Tabletas!",
-      "c2": "Se ajustaron varios estilos para adaptarse mejor a pantallas más grandes.",
-      "c3": "Se ajustó el método para enviar informes de errores y solicitudes de funciones a Github."
+    "162": {
+      "c1": "Se ajustó el requisito de horas de precursor especial de 70 a 100"
     },
-    "1100": {
-      "c1": "¡Agrega el informe anual a la pantalla Informes de tiempo! Realice un seguimiento del progreso de su año de servicio de un vistazo.",
-      "c2": "Al agregar tiempo desde la pantalla Informes de tiempo, el informe ahora se establece de forma predeterminada en el mes seleccionado.",
-      "c3": "Soluciona un problema al exportar el informe de servicio de enero."
+    "163": {
+      "c1": "Resolver problemas de actualización automática"
     },
-    "192": {
-      "c1": "Soluciona un problema por el cual algunos dispositivos tienen una barra de progreso desbordada.",
-      "c2": "Agrega un manejo más detallado de errores de enlace para dispositivos que carecen de las aplicaciones requeridas.",
-      "c3": "Agrega un manejo más detallado de errores de enlace para ciertos dispositivos que carecen de las aplicaciones requeridas.",
-      "c4": "Navegue directamente a un mes desde la sección de rutina mensual de la pantalla de inicio.",
-      "c5": "La pantalla Informes de tiempo maneja mejor los meses vacíos y futuros.",
-      "c6": "Correcciones de errores menores."
+    "170": {
+      "c1": "Agregue varios métodos de exportación de tiempo",
+      "c2": "Agregue 'No en hogares'"
     },
-    "191": {
-      "c1": "Resuelve un problema al navegar a las pantallas de tiempo."
+    "180": {
+      "c1": "Se agregó codificación geográfica automática para contactos.",
+      "c2": "Vista de mapa agregada"
+    },
+    "181": {
+      "c1": "Vista de mapa ampliada",
+      "c2": "Se agregó una solicitud de revisión de la tienda después de que se cumplan ciertos criterios.",
+      "c3": "Pequeñas correcciones de errores"
+    },
+    "182": {
+      "c1": "Actualizado todo el tiempo para reflejar la ubicación actual"
     },
     "190": {
       "c1": "Preferencias añadidas en la configuración.",
@@ -364,35 +366,33 @@
       "c6": "Ahora agregue etiquetas personalizadas a sus entradas de tiempo",
       "c7": "Pantalla de informes de tiempo actualizada para estar mejor organizada y separada por mes"
     },
-    "182": {
-      "c1": "Actualizado todo el tiempo para reflejar la ubicación actual"
+    "191": {
+      "c1": "Resuelve un problema al navegar a las pantallas de tiempo."
     },
-    "181": {
-      "c1": "Vista de mapa ampliada",
-      "c2": "Se agregó una solicitud de revisión de la tienda después de que se cumplan ciertos criterios.",
-      "c3": "Pequeñas correcciones de errores"
+    "192": {
+      "c1": "Soluciona un problema por el cual algunos dispositivos tienen una barra de progreso desbordada.",
+      "c2": "Agrega un manejo más detallado de errores de enlace para dispositivos que carecen de las aplicaciones requeridas.",
+      "c3": "Agrega un manejo más detallado de errores de enlace para ciertos dispositivos que carecen de las aplicaciones requeridas.",
+      "c4": "Navegue directamente a un mes desde la sección de rutina mensual de la pantalla de inicio.",
+      "c5": "La pantalla Informes de tiempo maneja mejor los meses vacíos y futuros.",
+      "c6": "Correcciones de errores menores."
     },
-    "180": {
-      "c1": "Se agregó codificación geográfica automática para contactos.",
-      "c2": "Vista de mapa agregada"
+    "1100": {
+      "c1": "¡Agrega el informe anual a la pantalla Informes de tiempo! Realice un seguimiento del progreso de su año de servicio de un vistazo.",
+      "c2": "Al agregar tiempo desde la pantalla Informes de tiempo, el informe ahora se establece de forma predeterminada en el mes seleccionado.",
+      "c3": "Soluciona un problema al exportar el informe de servicio de enero."
     },
-    "170": {
-      "c1": "Agregue varios métodos de exportación de tiempo",
-      "c2": "Agregue 'No en hogares'"
+    "1110": {
+      "c1": "Se agregó soporte para iPads y iPad. ¡Tabletas!",
+      "c2": "Se ajustaron varios estilos para adaptarse mejor a pantallas más grandes.",
+      "c3": "Se ajustó el método para enviar informes de errores y solicitudes de funciones a Github."
     },
-    "163": {
-      "c1": "Resolver problemas de actualización automática"
+    "1111": {
+      "c1": "Agregue la página de donación en la configuración para aquellos que deseen contribuir.",
+      "c2": "Incluye varias mejoras menores y correcciones de errores."
     },
-    "162": {
-      "c1": "Se ajustó el requisito de horas de precursor especial de 70 a 100"
-    },
-    "161": {
-      "c1": "Se agregaron más opciones de minutos para entradas de tiempo."
-    },
-    "160": {
-      "c1": "Las conversaciones ahora son editables. Las notificaciones son configurables.",
-      "c2": "Desliza gestos para editar o eliminar conversaciones, contactos, etc.",
-      "c3": "Se agregó retroalimentación háptica a varias acciones importantes."
+    "1120": {
+      "c1": "Agrega funcionalidad de copia de seguridad y restauración. Ahora puedes hacer una copia de seguridad de tus datos en la nube y restaurarlos más tarde. Puede transferir sus datos a otro dispositivo. También puedes transferirlo a otra plataforma. Encuentre esta nueva característica en la configuración."
     }
   },
   "installed": "Instalado",
@@ -417,8 +417,8 @@
   "otherHoursDescription": "A continuación ya está incluido en total.",
   "failedToOpenLink": "No se pudo abrir la URL",
   "failedToOpenLink_description": "Verifique que tenga una solicitud válida para el enlace proporcionado. Este error normalmente significa que no tienes un navegador instalado en tu dispositivo.",
-  "noTimeReports_description": "Agregue al menos una entrada de tiempo para ver más detalles.",
   "noTimeReports": "Aún no hay ningún resumen disponible para este mes.",
+  "noTimeReports_description": "Agregue al menos una entrada de tiempo para ver más detalles.",
   "cannotNavigateToFutureMonth": "No se puede navegar al mes futuro",
   "cannotNavigateToFutureMonth_description": "Seleccione el mes actual o anterior.",
   "addATimeEntryToViewReport": "Agregue una entrada de tiempo para ver su informe mensual.",
@@ -448,7 +448,6 @@
   "firstOfAll": "En primer lugar...",
   "restorePurchase": "Restaurar las compras",
   "showAll": "Mostrar más opciones",
-  "donate_letter": "Querido hermano o hermana,\n\nMe siento muy honrado de que hayas elegido mi aplicación para usarla entre un mar de otras opciones increíbles. Empecé a trabajar en esta aplicación cuando era pionero; simplemente no podía encontrar un lugar claro y conciso para guardar mis notas. Para mí, sentí como si siempre perdiera mis notas en papel y de alguna manera olvidara mis visitas posteriores. Sabía que muchas otras personas sentían lo mismo. Mi objetivo al crear esta aplicación era centrarme en la alta utilidad pero también en la simplicidad. Cualquiera debería poder utilizar esta aplicación, sin importar su edad o experiencia como editor. Espero que mi aplicación haya sido una herramienta útil para ti y tu servicio a Jehová. He pasado innumerables horas desarrollando esta aplicación y estoy muy feliz de ver que tantos hermanos y hermanas en todo el mundo la utilizan. Si aún no lo ha hecho, informe a otros sobre JW Time: es un trabajo de amor. Independientemente de si eliges donar, espero que sigas disfrutando de la aplicación y de las futuras actualizaciones.\n\nGracias,\n\nLevi Wilkerson",
   "donate_letter_ps": "PD Siempre estoy disponible para hablar sobre cualquier tema: preguntas personales, preguntas sobre aplicaciones u otras inquietudes. No dude en comunicarse conmigo a mi correo electrónico a continuación.",
   "emailMe": "¡Envíeme un correo electrónico!",
   "aLetterForYou": "Una carta para ti.",
@@ -464,6 +463,7 @@
   "thankYou": "¡Gracias!",
   "thankYou_description": "No merezco tanta amabilidad. Tu generosidad es muy apreciada.",
   "failedToOpenMailApplication_description": "Verifique que tenga instalada una aplicación de correo válida.",
+  "donate_letter": "Querido hermano o hermana,\n\nMe siento muy honrado de que hayas elegido mi aplicación para usarla entre un mar de otras opciones increíbles. Empecé a trabajar en esta aplicación cuando era pionero; simplemente no podía encontrar un lugar claro y conciso para guardar mis notas. Para mí, sentí como si siempre perdiera mis notas en papel y de alguna manera olvidara mis visitas posteriores. Sabía que muchas otras personas sentían lo mismo. Mi objetivo al crear esta aplicación era centrarme en la alta utilidad pero también en la simplicidad. Cualquiera debería poder utilizar esta aplicación, sin importar su edad o experiencia como editor. Espero que mi aplicación haya sido una herramienta útil para ti y tu servicio a Jehová. He pasado innumerables horas desarrollando esta aplicación y estoy muy feliz de ver que tantos hermanos y hermanas en todo el mundo la utilizan. Si aún no lo ha hecho, informe a otros sobre JW Time: es un trabajo de amor. Independientemente de si eliges donar, espero que sigas disfrutando de la aplicación y de las futuras actualizaciones.\n\nGracias,\n\nLevi Wilkerson",
   "hideDonateHeart": "Ocultar Donar Corazón",
   "noPurchasesFound": "No se encontraron compras",
   "errorCheckingOut": "Hubo un error al realizar el check-out. Probablemente se deba a una inestabilidad de la red. Inténtelo de nuevo.",

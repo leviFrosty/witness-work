@@ -1,10 +1,13 @@
 import { ExpoConfig, ConfigContext } from 'expo/config'
+/** Passed in from `env` property in profile `./eas.json` to eas build */
+const IS_DEV = process.env.APP_VARIANT === 'development'
 
 export default ({ config }: ConfigContext): ExpoConfig => ({
   ...config,
-  name: 'JW Time',
+  name: IS_DEV ? 'JW Time Dev' : 'JW Time',
+  developmentClient: {},
   slug: 'jw-time',
-  version: '1.9.2',
+  version: '1.20.0',
   owner: 'levi_frosty',
   orientation: 'portrait',
   icon: './src/assets/icon.png',
@@ -16,7 +19,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   },
   assetBundlePatterns: ['**/*'],
   ios: {
-    supportsTablet: false,
+    supportsTablet: true,
     bundleIdentifier: 'com.leviwilkerson.jwtime',
     infoPlist: {
       RCTAsyncStorageExcludeFromBackup: false,
@@ -55,10 +58,16 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     'expo-localization',
     ['expo-updates', { username: 'levi_frosty' }],
     [
-      'expo-localization',
+      'expo-location',
       {
         locationWhenInUsePermission:
-          'Allow $(PRODUCT_NAME) to use your location.',
+          '$(PRODUCT_NAME) will use your location to display where you are on the map, useful for finding nearby contacts.',
+      },
+    ],
+    [
+      'expo-document-picker',
+      {
+        iCloudContainerEnvironment: IS_DEV ? 'Development' : 'Production',
       },
     ],
   ],

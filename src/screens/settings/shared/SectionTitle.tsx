@@ -1,7 +1,7 @@
 import Text from '../../../components/MyText'
 import useTheme from '../../../contexts/theme'
 
-export const SettingsSectionTitle = ({ text }: { text: string }) => {
+export const SectionTitle = ({ text }: { text: string }) => {
   const theme = useTheme()
 
   return (
@@ -19,4 +19,4 @@ export const SettingsSectionTitle = ({ text }: { text: string }) => {
   )
 }
 
-export default SettingsSectionTitle
+export default SectionTitle

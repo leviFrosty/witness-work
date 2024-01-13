@@ -13,28 +13,41 @@ import ServiceReport from '../components/ServiceReport'
 import ContactsList from '../components/ContactsList'
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import XView from '../components/layout/XView'
+import AnnualServiceReportSummary from '../components/AnnualServiceReportSummary'
+import moment from 'moment'
+import useDevice from '../hooks/useDevice'
+import { getServiceYearFromDate } from '../lib/serviceReport'
+import i18n from '../lib/locales'
+import Text from '../components/MyText'
+import Button from '../components/Button'
+import { useNavigation } from '@react-navigation/native'
+import { RootStackNavigation } from '../stacks/RootStack'
+import usePublisher from '../hooks/usePublisher'
 
-export const Dashboard = () => {
+export const DashboardScreen = () => {
   const theme = useTheme()
   const insets = useSafeAreaInsets()
   const { conversations } = useConversations()
   const { contacts } = useContacts()
+  const { isTablet } = useDevice()
+  const { hasAnnualGoal } = usePublisher()
+  const navigation = useNavigation<RootStackNavigation>()
+  const serviceYear = getServiceYearFromDate(moment())
   const [sheet, setSheet] = useState<ExportTimeSheetState>({
     open: false,
     month: 0,
     year: 0,
   })
 
-  const now = useMemo(() => new Date(), [])
-
   const approachingConversations = useMemo(
     () =>
       upcomingFollowUpConversations({
-        currentTime: now,
+        currentTime: new Date(),
         conversations,
         withinNextDays: 1,
       }),
-    [conversations, now]
+    [conversations]
   )
 
   const conversationsWithNotificationOrTopic = useMemo(
@@ -73,7 +86,52 @@ export const Dashboard = () => {
               conversations={approachingConvosWithActiveContacts}
             />
           )}
-          <MonthlyRoutine />
+          <XView style={{ flex: 1, justifyContent: 'space-between' }}>
+            <MonthlyRoutine />
+            {isTablet && hasAnnualGoal && (
+              <View
+                style={{
+                  flexDirection: 'row',
+                  flexGrow: 1,
+                  maxWidth: '50%',
+                }}
+              >
+                <View
+                  style={{
+                    gap: 10,
+                    flexGrow: 1,
+                  }}
+                >
+                  <Text
+                    style={{
+                      fontSize: 14,
+                      fontFamily: theme.fonts.semiBold,
+                      marginLeft: 5,
+                    }}
+                  >
+                    {i18n.t('serviceYearSummary')}
+                  </Text>
+                  <XView>
+                    <Button
+                      style={{ flex: 1 }}
+                      onPress={() =>
+                        navigation.navigate('Time Reports', {
+                          month: moment().month(),
+                          year: moment().year(),
+                        })
+                      }
+                    >
+                      <AnnualServiceReportSummary
+                        serviceYear={serviceYear}
+                        month={moment().month()}
+                        year={moment().year()}
+                      />
+                    </Button>
+                  </XView>
+                </View>
+              </View>
+            )}
+          </XView>
           <ServiceReport setSheet={setSheet} />
           <ContactsList />
         </View>

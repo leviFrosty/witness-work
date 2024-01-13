@@ -11,7 +11,9 @@
     "Haptics",
     "phonenumber",
     "Pressable",
+    "REVENUECAT",
     "Swipeable",
-    "tamagui"
+    "tamagui",
+    "zustand"
   ]
 }

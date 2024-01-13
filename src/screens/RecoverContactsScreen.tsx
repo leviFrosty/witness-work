@@ -13,7 +13,7 @@ import Wrapper from '../components/layout/Wrapper'
 import IconButton from '../components/IconButton'
 import { faTrash, faUndo } from '@fortawesome/free-solid-svg-icons'
 
-const RecoverContacts = () => {
+const RecoverContactsScreen = () => {
   const theme = useTheme()
   const { conversations, deleteConversation } = useConversations()
   const { deletedContacts, recoverContact, removeDeletedContact } =
@@ -57,7 +57,7 @@ const RecoverContacts = () => {
           </Text>
         </View>
         <ScrollView
-          style={{ marginBottom: insets.bottom + 60 }}
+          style={{ paddingBottom: insets.bottom + 60 }}
           contentInset={{
             top: 0,
             right: 0,
@@ -151,4 +151,4 @@ const RecoverContacts = () => {
   )
 }
 
-export default RecoverContacts
+export default RecoverContactsScreen

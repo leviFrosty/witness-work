@@ -3,22 +3,37 @@ import Section from '../../../components/inputs/Section'
 import i18n from '../../../lib/locales'
 import InputRowButton from '../../../components/inputs/InputRowButton'
 import {
+  faArrowUpRightFromSquare,
   faChevronRight,
   faGlobe,
   faHeart,
+  faRankingStar,
 } from '@fortawesome/free-solid-svg-icons'
 import links from '../../../constants/links'
 import IconButton from '../../../components/IconButton'
-import SettingsSectionTitle from '../shared/SettingsSectionTitle'
+import SectionTitle from '../shared/SectionTitle'
 import { openURL } from '../../../lib/links'
+import { useNavigation } from '@react-navigation/native'
+import { RootStackNavigation } from '../../../stacks/RootStack'
+import { email } from '../../../constants/contactInformation'
 
 const SupportSection = () => {
+  const navigation = useNavigation<RootStackNavigation>()
+
   return (
     <View style={{ gap: 3 }}>
-      <SettingsSectionTitle text={i18n.t('support')} />
+      <SectionTitle text={i18n.t('support')} />
+
       <Section>
         <InputRowButton
           leftIcon={faHeart}
+          label={i18n.t('donate')}
+          onPress={() => navigation.navigate('Donate')}
+        >
+          <IconButton icon={faChevronRight} />
+        </InputRowButton>
+        <InputRowButton
+          leftIcon={faRankingStar}
           label={
             Platform.OS === 'android'
               ? i18n.t('rateJWTimeOnPlayStore')
@@ -41,7 +56,7 @@ const SupportSection = () => {
             }
           }}
         >
-          <IconButton icon={faChevronRight} />
+          <IconButton icon={faArrowUpRightFromSquare} />
         </InputRowButton>
 
         <InputRowButton
@@ -49,7 +64,6 @@ const SupportSection = () => {
           label={i18n.t('helpTranslate')}
           onPress={async () => {
             const emailMe = async () => {
-              const email = 'levi.wilkerson@proton.me'
               const subjectText = '[JW Time] Help Translate'
               const bodyText = `${i18n.t(
                 'iWouldLikeToHelpTranslate'
@@ -81,7 +95,7 @@ const SupportSection = () => {
           }}
           lastInSection
         >
-          <IconButton icon={faChevronRight} />
+          <IconButton icon={faArrowUpRightFromSquare} />
         </InputRowButton>
       </Section>
     </View>

@@ -1,4 +1,4 @@
-import { View, ScrollView } from 'react-native'
+import { View } from 'react-native'
 import Text from '../components/MyText'
 import useServiceReport from '../stores/serviceReport'
 import useTheme from '../contexts/theme'
@@ -9,7 +9,7 @@ import Card from '../components/Card'
 import ActionButton from '../components/ActionButton'
 import { RootStackParamList } from '../stacks/RootStack'
 import i18n from '../lib/locales'
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 
 import ExportTimeSheet, {
   ExportTimeSheetState,
@@ -17,18 +17,26 @@ import ExportTimeSheet, {
 import MonthSummary from '../components/MonthSummary'
 import TimeReportRow from '../components/TimeReportRow'
 import IconButton from '../components/IconButton'
-import { faArrowLeft, faArrowRight } from '@fortawesome/free-solid-svg-icons'
+import {
+  faArrowLeft,
+  faArrowRight,
+  faPlus,
+} from '@fortawesome/free-solid-svg-icons'
 import { NativeStackScreenProps } from '@react-navigation/native-stack'
 import Wrapper from '../components/layout/Wrapper'
-import Divider from '../components/Divider'
 import Button from '../components/Button'
 import { FlashList } from '@shopify/flash-list'
+import AnnualServiceReportSummary from '../components/AnnualServiceReportSummary'
+import Header from '../components/layout/Header'
+import usePublisher from '../hooks/usePublisher'
+import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Time Reports'>
 
-const TimeReports = ({ route, navigation }: Props) => {
+const TimeReportsScreen = ({ route, navigation }: Props) => {
   const theme = useTheme()
   const { serviceReports } = useServiceReport()
+  const { hasAnnualGoal } = usePublisher()
   const insets = useSafeAreaInsets()
   const [year, setYear] = useState(route.params?.year || moment().year())
   const [month, setMonth] = useState(route.params?.month || moment().month())
@@ -37,6 +45,36 @@ const TimeReports = ({ route, navigation }: Props) => {
     month,
     year,
   })
+  const selectedMonth = moment().month(month).year(year)
+  const serviceYear = month < 8 ? year - 1 : year
+
+  useEffect(() => {
+    navigation.setOptions({
+      header: ({ navigation }) => (
+        <Header
+          title={selectedMonth.format('MMMM YYYY')}
+          buttonType='back'
+          rightElement={
+            <IconButton
+              style={{ position: 'absolute', right: 0 }}
+              icon={faPlus}
+              onPress={() => navigation.navigate('Add Time', { month, year })}
+              size='xl'
+              iconStyle={{ color: theme.colors.text }}
+            />
+          }
+        />
+      ),
+    })
+  }, [
+    month,
+    navigation,
+    selectedMonth,
+    theme.colors.accent3,
+    theme.colors.text,
+    theme.colors.textInverse,
+    year,
+  ])
 
   const reportsByYearAndMonth = useMemo(() => {
     const reports: {
@@ -79,15 +117,22 @@ const TimeReports = ({ route, navigation }: Props) => {
   if (!years.length) {
     return (
       <Wrapper>
-        <Card style={{ marginHorizontal: 20 }}>
+        <Card style={{ marginHorizontal: 15 }}>
           <Text
             style={{
-              padding: 20,
-              fontSize: 16,
-              color: theme.colors.textAlt,
+              fontSize: theme.fontSize('lg'),
+              fontFamily: theme.fonts.semiBold,
             }}
           >
             {i18n.t('noTimeEntriesYet')}
+          </Text>
+          <Text
+            style={{
+              fontSize: theme.fontSize('sm'),
+              color: theme.colors.textAlt,
+            }}
+          >
+            {i18n.t('addATimeEntryToViewReport')}
           </Text>
           <ActionButton onPress={() => navigation.navigate('Add Time')}>
             {i18n.t('addTime')}
@@ -115,8 +160,6 @@ const TimeReports = ({ route, navigation }: Props) => {
     }
   }
 
-  const selectedMonth = moment().month(month).year(year)
-
   return (
     <View
       style={{
@@ -127,9 +170,9 @@ const TimeReports = ({ route, navigation }: Props) => {
     >
       <View
         style={{
+          paddingTop: 15,
           paddingHorizontal: 15,
-          paddingTop: 20,
-          paddingBottom: 25,
+          paddingBottom: 10,
           gap: 30,
         }}
       >
@@ -150,9 +193,6 @@ const TimeReports = ({ route, navigation }: Props) => {
               </Text>
             </View>
           </Button>
-          <Text style={{ fontSize: theme.fontSize('xl') }}>
-            {moment(selectedMonth).format('MMMM YYYY')}
-          </Text>
           {moment().isAfter(selectedMonth, 'month') ? (
             <Button onPress={() => handleArrowNavigate('forward')}>
               <View
@@ -169,13 +209,24 @@ const TimeReports = ({ route, navigation }: Props) => {
           )}
         </View>
       </View>
-      <ScrollView
+      <KeyboardAwareScrollView
         contentContainerStyle={{
-          paddingBottom: insets.bottom + 30,
+          paddingBottom: insets.bottom + 100,
         }}
         contentInset={{ top: 0, right: 0, bottom: insets.bottom + 30, left: 0 }}
       >
-        <View style={{ paddingHorizontal: 15 }}>
+        {hasAnnualGoal && (
+          <View style={{ paddingHorizontal: 15, paddingTop: 15 }}>
+            <AnnualServiceReportSummary
+              serviceYear={serviceYear}
+              month={month}
+              year={year}
+            />
+          </View>
+        )}
+        <View
+          style={{ paddingHorizontal: 15, paddingTop: 15, paddingBottom: 30 }}
+        >
           <MonthSummary
             month={month}
             year={year}
@@ -183,7 +234,6 @@ const TimeReports = ({ route, navigation }: Props) => {
             setSheet={setSheet}
           />
         </View>
-        <Divider marginVertical={30} />
         <View style={{ paddingHorizontal: 15, gap: 7 }}>
           <Text
             style={{
@@ -197,6 +247,7 @@ const TimeReports = ({ route, navigation }: Props) => {
           </Text>
           <View style={{ gap: 10, flex: 1, minHeight: 10 }}>
             <FlashList
+              scrollEnabled={false}
               data={
                 thisMonthsReports
                   ? thisMonthsReports.sort((a, b) =>
@@ -213,9 +264,9 @@ const TimeReports = ({ route, navigation }: Props) => {
             />
           </View>
         </View>
-      </ScrollView>
+      </KeyboardAwareScrollView>
       <ExportTimeSheet setSheet={setSheet} sheet={sheet} />
     </View>
   )
 }
-export default TimeReports
+export default TimeReportsScreen

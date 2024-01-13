@@ -6,25 +6,17 @@ import {
   faChevronRight,
   faDownload,
   faHourglassHalf,
-  faTools,
   faUndo,
 } from '@fortawesome/free-solid-svg-icons'
 import IconButton from '../../../components/IconButton'
 import { fetchUpdate } from '../../../lib/updates'
-import { usePreferences } from '../../../stores/preferences'
-import { SettingsSectionProps } from '../Settings'
-import SettingsSectionTitle from '../shared/SettingsSectionTitle'
+import { SettingsSectionProps } from '../SettingsScreen'
+import SectionTitle from '../shared/SectionTitle'
 
 const AppSection = ({ handleNavigate }: SettingsSectionProps) => {
-  const { set } = usePreferences()
-
-  const resetToOnboarding = () => {
-    set({ onboardingComplete: false })
-  }
-
   return (
     <View style={{ gap: 3 }}>
-      <SettingsSectionTitle text={i18n.t('app')} />
+      <SectionTitle text={i18n.t('app')} />
       <Section>
         <InputRowButton
           leftIcon={faHourglassHalf}
@@ -37,13 +29,6 @@ const AppSection = ({ handleNavigate }: SettingsSectionProps) => {
           leftIcon={faUndo}
           label={i18n.t('recoverContacts')}
           onPress={() => handleNavigate('Recover Contacts')}
-        >
-          <IconButton icon={faChevronRight} />
-        </InputRowButton>
-        <InputRowButton
-          leftIcon={faTools}
-          label={i18n.t('restartOnboarding')}
-          onPress={resetToOnboarding}
         >
           <IconButton icon={faChevronRight} />
         </InputRowButton>

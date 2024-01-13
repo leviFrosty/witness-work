@@ -393,6 +393,9 @@
     },
     "1120": {
       "c1": "Fügt Sicherungs- und Wiederherstellungsfunktionen hinzu. Jetzt können Sie Ihre Daten in der Cloud sichern und später wiederherstellen. Sie können Ihre Daten auf ein anderes Gerät übertragen. Sie können es auch auf eine andere Plattform übertragen. Finden Sie diese neue Funktion in den Einstellungen."
+    },
+    "1200": {
+      "c1": "Fügt Sicherungs- und Wiederherstellungsfunktionen hinzu. Jetzt können Sie Ihre Daten in der Cloud sichern und später wiederherstellen. Dadurch können Sie Ihre Daten auf ein anderes Gerät übertragen. Sie können es auch auf eine andere Plattform übertragen. Finden Sie diese neue Funktion in den Einstellungen."
     }
   },
   "installed": "Eingerichtet",

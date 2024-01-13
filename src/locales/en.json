@@ -327,6 +327,9 @@
   "new": "New",
   "bugFixes": "Bug Fixes",
   "updates": {
+    "1200": {
+      "c1": "Adds backup and restore functionality. Now you can backup your data to the cloud and restore it later, this allows you to transfer your data to another device. You can also transfer it to another platform. Find this new feature in settings."
+    },
     "1120": {
       "c1": "Adds backup and restore functionality. Now you can backup your data to the cloud and restore it later. You can transfer your data to another device. You can also transfer it to another platform. Find this new feature in the settings."
     },

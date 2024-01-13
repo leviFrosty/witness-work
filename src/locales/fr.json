@@ -393,6 +393,9 @@
     },
     "1120": {
       "c1": "Ajoute des fonctionnalités de sauvegarde et de restauration. Vous pouvez désormais sauvegarder vos données sur le cloud et les restaurer plus tard. Vous pouvez transférer vos données vers un autre appareil. Vous pouvez également le transférer vers une autre plateforme. Retrouvez cette nouvelle fonctionnalité dans les paramètres."
+    },
+    "1200": {
+      "c1": "Ajoute des fonctionnalités de sauvegarde et de restauration. Vous pouvez désormais sauvegarder vos données sur le cloud et les restaurer plus tard, cela vous permet de transférer vos données vers un autre appareil. Vous pouvez également le transférer vers une autre plateforme. Retrouvez cette nouvelle fonctionnalité dans les paramètres."
     }
   },
   "installed": "installée",

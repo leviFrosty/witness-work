@@ -327,6 +327,9 @@
   "new": "Mới",
   "bugFixes": "Sửa lỗi",
   "updates": {
+    "1120": {
+      "c1": "Thêm chức năng sao lưu và khôi phục. Bây giờ bạn có thể sao lưu dữ liệu của mình lên đám mây và khôi phục dữ liệu đó sau. Bạn có thể chuyển dữ liệu của mình sang thiết bị khác. Bạn cũng có thể chuyển nó sang nền tảng khác. Tìm tính năng mới này trong cài đặt."
+    },
     "1111": {
       "c1": "Thêm trang quyên góp trong phần cài đặt cho những ai muốn đóng góp.",
       "c2": "Bao gồm nhiều cải tiến nhỏ và sửa lỗi"
@@ -429,7 +432,7 @@
   "donate_faq1": "Tại sao bạn lại chấp nhận quyên góp?",
   "donate_faqAnswer1": "Với tư cách là một anh trong hội thánh, tôi coi việc có thể sử dụng kỹ năng của mình để giúp đỡ người khác trong hội thánh là một đặc ân. Mặc dù miễn phí cho tất cả mọi người, việc phát triển, chạy và duy trì ứng dụng này nhưng tiếc là lại tốn một khoản tiền và thời gian đáng kể. Tôi coi việc quyên góp cũng tương tự như cách một người có thể trả tiền xăng cho người khác sau khi làm việc cùng họ - đó là một cử chỉ yêu thương được đánh giá rất cao.",
   "donate_faq2": "Số tiền quyên góp được sử dụng để làm gì?",
-  "donate_faqAnswer2": "Khoản đóng góp của bạn giúp ứng dụng này tiếp tục hoạt động! Sẽ có những chi phí khi mua thiết bị thực làm thiết bị phát triển, trả phí dịch vụ API vị trí, phí cửa hàng ứng dụng và chi phí cơ hội cho nhiều giờ tôi dành để phát triển ứng dụng này. Mỗi phần hỗ trợ đều được đánh giá cao!",
+  "donate_faqAnswer2": "Khoản đóng góp của bạn giúp ứng dụng này tiếp tục hoạt động! Tôi sẽ phải trả các chi phí khi mua thiết bị thực làm thiết bị phát triển, trả phí dịch vụ API vị trí, phí API dịch vụ xây dựng, phí cửa hàng ứng dụng và chi phí cơ hội cho nhiều giờ tôi dành để phát triển ứng dụng này. Mỗi phần hỗ trợ đều được đánh giá cao!",
   "openDonationPage": "Mở trang quyên góp",
   "shareApp": "Chia sẻ ứng dụng",
   "couldNotFindOffer": "Không thể tìm thấy ưu đãi. Vui lòng thử lại sau.",
@@ -465,5 +468,21 @@
   "noPurchasesFound": "Không tìm thấy giao dịch mua nào",
   "errorCheckingOut": "Đã xảy ra lỗi khi kiểm tra. Có thể là do mạng không ổn định, vui lòng thử lại.",
   "goToAppStoreToUpdateSubscriptions": "Để hủy hoặc chỉnh sửa đăng ký của bạn, vui lòng truy cập App Store.",
-  "termsOfUse": "Điều khoản sử dụng"
+  "termsOfUse": "Điều khoản sử dụng",
+  "importAndExport": "Nhập khẩu & Xuất khẩu",
+  "import": "Nhập khẩu",
+  "importAndExport_description": "Nhập và xuất dữ liệu của bạn đến và đi từ JW Time. Điều này hữu ích nếu bạn đang chuyển đổi thiết bị hoặc muốn sao lưu dữ liệu của mình.",
+  "importError_title": "Lỗi nhập",
+  "importError_description": "Đã xảy ra lỗi khi nhập tệp của bạn. Vui lòng xác minh rằng tệp của bạn hợp lệ và thử lại.",
+  "importErrorInvalidFile_title": "Tập tin không hợp lệ",
+  "importErrorInvalidFile_description": "Tệp bạn đang cố gắng nhập không hợp lệ. Vui lòng sử dụng tệp đã xuất từ JW Time và thử lại.",
+  "backupRecommendations": "Bạn nên lưu trữ bản sao lưu của mình trong bộ lưu trữ đám mây. Điều này sẽ đảm bảo bạn không bị mất dữ liệu trong trường hợp thiết bị của bạn bị hỏng.\n\nTính năng này cũng hoạt động khi chuyển đến và đi từ Android hoặc iOS.",
+  "backupReasoning": "Vì dữ liệu của bạn sẽ không bao giờ được lưu trữ trên máy chủ nên ứng dụng sẽ không bao giờ có chế độ 'đồng bộ hóa' chức năng. Thay vào đó, bạn phải nhập và xuất dữ liệu của mình theo cách thủ công. Đây là một tính năng bảo mật để đảm bảo dữ liệu của bạn không bao giờ bị xâm phạm.",
+  "backup": "Hỗ trợ",
+  "successfulImport": "Đã nhập thành công",
+  "successfulExport": "Đã xuất thành công",
+  "sharingIsNotAvailable": "Chia sẻ không có sẵn trên nền tảng này.",
+  "backup_lowercase": "hỗ trợ",
+  "errorExporting": "Lỗi xuất",
+  "errorExporting_description": "Đã xảy ra lỗi khi xuất dữ liệu của bạn. Hãy đảm bảo thiết bị của bạn có đủ bộ nhớ và tính năng chia sẻ có sẵn, sau đó thử lại."
 }

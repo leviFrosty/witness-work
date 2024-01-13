@@ -8,6 +8,7 @@ import {
   faChevronRight,
   faCode,
   faFileContract,
+  faFileExport,
   faTag,
 } from '@fortawesome/free-solid-svg-icons'
 import IconButton from '../../../components/IconButton'
@@ -25,6 +26,13 @@ const MiscSection = ({ handleNavigate }: SettingsSectionProps) => {
           leftIcon={faTag}
           label={i18n.t('whatsNew')}
           onPress={() => handleNavigate('Whats New')}
+        >
+          <IconButton icon={faChevronRight} />
+        </InputRowButton>
+        <InputRowButton
+          leftIcon={faFileExport}
+          label={i18n.t('importAndExport')}
+          onPress={() => handleNavigate('Import and Export')}
         >
           <IconButton icon={faChevronRight} />
         </InputRowButton>

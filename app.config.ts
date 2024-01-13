@@ -64,6 +64,12 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
           '$(PRODUCT_NAME) will use your location to display where you are on the map, useful for finding nearby contacts.',
       },
     ],
+    [
+      'expo-document-picker',
+      {
+        iCloudContainerEnvironment: IS_DEV ? 'Development' : 'Production',
+      },
+    ],
   ],
   hooks: {
     postPublish: [

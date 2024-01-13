@@ -327,6 +327,9 @@
   "new": "Nuovo",
   "bugFixes": "Correzioni di bug",
   "updates": {
+    "1120": {
+      "c1": "Aggiunge funzionalità di backup e ripristino. Ora puoi eseguire il backup dei tuoi dati sul cloud e ripristinarli in seguito. Puoi trasferire i tuoi dati su un altro dispositivo. Puoi anche trasferirlo su un'altra piattaforma. Trovi questa nuova funzionalità nelle impostazioni."
+    },
     "1111": {
       "c1": "Aggiungi la pagina delle donazioni nelle impostazioni per coloro che desiderano contribuire.",
       "c2": "Include vari miglioramenti minori e correzioni di bug"
@@ -429,7 +432,7 @@
   "donate_faq1": "Perché accetti donazioni?",
   "donate_faqAnswer1": "Come fratello in sala, considero un privilegio poter usare le mie capacità per aiutare gli altri nella congregazione. Sebbene sia gratuita per tutti, sviluppare, eseguire e mantenere questa applicazione, purtroppo costa una notevole quantità di tempo e denaro. Considero la donazione simile al modo in cui si potrebbe pagare la benzina di un altro dopo essere andato in servizio con lui: è un gesto amorevole che viene molto apprezzato.",
   "donate_faq2": "A cosa servono le donazioni?",
-  "donate_faqAnswer2": "La tua donazione aiuta a mantenere attiva questa app! Ci sono dei costi legati all'acquisto di dispositivi reali come apparecchiature di sviluppo, al pagamento delle tariffe del servizio API di localizzazione, delle tariffe dell'app store e del costo opportunità delle molte ore trascorse a sviluppare questa app. Ogni supporto è molto apprezzato!",
+  "donate_faqAnswer2": "La tua donazione aiuta a mantenere attiva questa app! Ci sono costi con l'acquisto di dispositivi reali come apparecchiature di sviluppo, il pagamento delle tariffe del servizio API di localizzazione, delle tariffe dell'API del servizio di creazione, delle tariffe dell'app store e del costo opportunità delle mie molte ore trascorse a sviluppare questa app. Ogni supporto è molto apprezzato!",
   "openDonationPage": "Apri la pagina delle donazioni",
   "shareApp": "Condividi app",
   "couldNotFindOffer": "Impossibile trovare l'offerta. Per favore riprova più tardi.",
@@ -465,5 +468,21 @@
   "noPurchasesFound": "Nessun acquisto trovato",
   "errorCheckingOut": "Si è verificato un errore durante il check-out. Probabilmente è dovuto all'instabilità della rete, riprova.",
   "goToAppStoreToUpdateSubscriptions": "Per annullare o modificare il tuo abbonamento, visita l'App Store.",
-  "termsOfUse": "Termini di utilizzo"
+  "termsOfUse": "Termini di utilizzo",
+  "importAndExport": "Importa e Esportare",
+  "import": "Importare",
+  "importAndExport_description": "Importa ed esporta i tuoi dati da e verso JW Time. Ciò è utile se stai cambiando dispositivo o desideri eseguire il backup dei tuoi dati.",
+  "importError_title": "Errore di importazione",
+  "importError_description": "Si è verificato un errore durante l'importazione del file. Verifica che il file sia valido e riprova.",
+  "importErrorInvalidFile_title": "File non valido",
+  "importErrorInvalidFile_description": "Il file che stai tentando di importare non è valido. Utilizza il file esportato da JW Time e riprova.",
+  "backupRecommendations": "Si consiglia di archiviare il backup nell'archivio cloud. Ciò ti garantirà di non perdere i tuoi dati nel caso in cui il tuo dispositivo si rompa.\n\nQuesta funzione funziona anche durante il trasferimento da e verso Android o iOS.",
+  "backupReasoning": "Poiché i tuoi dati non verranno mai archiviati sui server, l'app non avrà mai una funzione di 'sincronizzazione' funzionalità. È invece necessario importare ed esportare manualmente i dati. Questa è una funzionalità di sicurezza per garantire che i tuoi dati non vengano mai compromessi.",
+  "backup": "Backup",
+  "successfulImport": "Importazione riuscita",
+  "successfulExport": "Esportato con successo",
+  "sharingIsNotAvailable": "La condivisione non è disponibile su questa piattaforma.",
+  "backup_lowercase": "backup",
+  "errorExporting": "Errore durante l'esportazione",
+  "errorExporting_description": "Si è verificato un errore durante l'esportazione dei tuoi dati. Assicurati che il tuo dispositivo disponga di spazio di archiviazione sufficiente e che la condivisione sia disponibile, quindi riprova."
 }

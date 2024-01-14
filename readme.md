@@ -73,7 +73,7 @@ If you find something you'd like to help with, please let me know you've began w
 - [`.husky`](/.husky) Configuration files for [husky](https://typicode.github.io/husky/), a git hooks library.
 - [`.tamagui`](/.tamagui) Configuration files for [tamagui](https://tamagui.dev/), a component library used in only portions of the project.
 - [`.vscode`](/.vscode) VSCode configuration files for extensions.
-
+- [`App.tsx`](/App.tsx) Application entry point.
 - [**`src`**](/src) This is where all of the project source code lives.
 
   - [`__tests__`](/src/__tests__) Where all of the tests for the project lives.

@@ -12,6 +12,11 @@ import * as Sentry from 'sentry-expo'
 
 interface Props {}
 
+/**
+ * Handles initialization and fetching of customer info in-app-purchases
+ *
+ * Uses [RevenueCat](https://www.revenuecat.com/docs/reactnative) SDK.
+ */
 const CustomerProvider: React.FC<PropsWithChildren<Props>> = ({ children }) => {
   const [customer, setCustomer] = useState<CustomerInfo | null>(null)
   const { isAndroid } = useDevice()

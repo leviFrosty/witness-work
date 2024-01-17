@@ -70,6 +70,26 @@ type DeepKeyOf<T> = T extends object
     }[keyof T]
   : ''
 
+/**
+ * Key or deep key of translation object.
+ *
+ * `en.json`:
+ *
+ * ```json
+ * {
+ *   "key1": {
+ *     "key2": {
+ *       "key3": "Hello World"
+ *     },
+ *     "foo": "bar"
+ *   }
+ * }
+ * ```
+ *
+ * @example
+ *   i18n.t('key1.key2.key3') // returns "Hello World"
+ *   i18n.t('key1.foo') // returns "bar"
+ */
 export type TranslationKey = DeepKeyOf<typeof en>
 
 const i18n = {

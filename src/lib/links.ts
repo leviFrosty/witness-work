@@ -3,11 +3,7 @@ import { Alert, AlertButton } from 'react-native'
 import * as Sentry from 'sentry-expo'
 import i18n from './locales'
 
-/**
- * Opens a URI or URL and handles when it cannot be opened.
- *
- * @param options
- */
+/** Opens a URI or URL and handles when it cannot be opened. */
 export const openURL = async (
   url: string,
   options?: {

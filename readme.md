@@ -67,6 +67,20 @@ Any assistance is welcome! Look at the following and see if anything looks inter
 
 If you find something you'd like to help with, please let me know you've began work on it so it doesn't become double-worked. Thank you!
 
+#### Environment
+
+To start the Expo Dev server, begin with `yarn install` & `yarn run dev`.
+
+> **Note**: Local environment variables set in [`./package.json`](./package.json) rely on a unix based environment variable assignments. If your system is Windows, try using [WSL](https://learn.microsoft.com/en-us/windows/wsl/install) to start development of this project.
+
+You must use a [development build](https://docs.expo.dev/develop/development-builds/introduction/), not [Expo Go](https://docs.expo.dev/get-started/expo-go/).
+
+In order to get a development build, you can compile the application with [EAS](https://docs.expo.dev/eas/) `eas build -p [ios/android] --profile development --local`.
+
+After that, open the compiled development build in your simulator/device and connect to the local Expo Dev Server.
+
+🎉 You did it! _(Hopefully)_
+
 #### Project Structure
 
 - [`.github`](/.github) Configuration files for Github actions.
@@ -80,8 +94,8 @@ If you find something you'd like to help with, please let me know you've began w
   - [`assets`](/src/assets) Where local assets such a images, icons, and [lottie](https://lottiefiles.com/) animations are stored.
   - [`components`](/src/components) All of the components of the project.
   - [`constants`](/src/constants) Variables that are constant throughout the app and do not change.
-  - [`contexts`](/src/contexts) Stores the [React Contexts](https://react.dev/learn/passing-data-deeply-with-context) that do not come from external dependencies.
-  - [`docs`](/src/docs) The documentation for this repository.
+  - [`contexts`](/src/contexts) Stores the internal [React Contexts](https://react.dev/learn/passing-data-deeply-with-context).
+  - [`docs`](/src/docs) The documentation and related assets for this repository.
   - [`hooks`](/src/hooks) Contains the custom [React Hooks](https://react.dev/learn/reusing-logic-with-custom-hooks#hook-names-always-start-with-use) for this project.
   - [`lib`](/src/lib) Contains many functions that are useful for app functionality. Generally, shared functions should come from a `lib` instead of directly from a `component`.
   - [`locales`](/src/locales) The translations files for each locale - `en` is the master.
@@ -89,9 +103,9 @@ If you find something you'd like to help with, please let me know you've began w
   - [`screens`](/src/screens) Contains all [screens](https://reactnative.dev/docs/navigation) that the app can display.
   - [`scripts`](/src/scripts) Local CLI scripts for various CI/CD functions.
   - [`stacks`](/src/stacks) All [native stacks](https://reactnavigation.org/docs/native-stack-navigator) of used for [React Native Navigation](https://reactnavigation.org/).
-  - [`stores`](/src/stores) The [AsyncStorage](https://github.com/react-native-async-storage/async-storage) APIs for all app data.
-  - [`types`](/src/types) Type definitions.
+  - [`stores`](/src/stores) The [AsyncStorage](https://github.com/react-native-async-storage/async-storage) APIs for CRUD operations of app data using the device's storage.
+  - [`types`](/src/types) Shared type definitions.
 
 ## License
 
-JW Time © 2023 by Levi Wilkerson is licensed under [Attribution-NonCommercial 4.0 International](./LICENSE)
+JW Time © 2024 by Levi Wilkerson is licensed under [Attribution-NonCommercial 4.0 International](./LICENSE)

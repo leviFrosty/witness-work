@@ -327,6 +327,9 @@
   "new": "Nuevo",
   "bugFixes": "Corrección de errores",
   "updates": {
+    "1201": {
+      "c1": "Correcciones de errores menores."
+    },
     "1200": {
       "c1": "Agrega funcionalidad de copia de seguridad y restauración. Ahora puedes hacer una copia de seguridad de tus datos en la nube y restaurarlos más tarde, esto te permite transferir tus datos a otro dispositivo. También puedes transferirlo a otra plataforma. Encuentre esta nueva característica en la configuración."
     },

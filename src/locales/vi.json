@@ -396,6 +396,9 @@
     },
     "1200": {
       "c1": "Thêm chức năng sao lưu và khôi phục. Giờ đây, bạn có thể sao lưu dữ liệu của mình lên đám mây và khôi phục dữ liệu sau, điều này cho phép bạn chuyển dữ liệu của mình sang thiết bị khác. Bạn cũng có thể chuyển nó sang nền tảng khác. Tìm tính năng mới này trong cài đặt."
+    },
+    "1201": {
+      "c1": "Sửa lỗi nhỏ."
     }
   },
   "installed": "Cài đặt",

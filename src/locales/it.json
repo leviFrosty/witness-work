@@ -396,6 +396,9 @@
     },
     "1200": {
       "c1": "Aggiunge funzionalità di backup e ripristino. Ora puoi eseguire il backup dei tuoi dati sul cloud e ripristinarli in seguito, questo ti consente di trasferire i tuoi dati su un altro dispositivo. Puoi anche trasferirlo su un'altra piattaforma. Trova questa nuova funzionalità nelle impostazioni."
+    },
+    "1201": {
+      "c1": "Correzioni di bug minori."
     }
   },
   "installed": "Installato",

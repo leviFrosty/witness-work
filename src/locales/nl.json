@@ -327,6 +327,9 @@
   "new": "Nieuw",
   "bugFixes": "Bugfixes",
   "updates": {
+    "1201": {
+      "c1": "Kleine bugfixes."
+    },
     "1200": {
       "c1": "Voegt back-up- en herstelfunctionaliteit toe. Nu kunt u een back-up van uw gegevens maken in de cloud en deze later herstellen, zodat u uw gegevens naar een ander apparaat kunt overbrengen. Je kunt het ook overzetten naar een ander platform. Zoek deze nieuwe functie in de instellingen."
     },

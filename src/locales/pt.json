@@ -327,6 +327,9 @@
   "new": "Novo",
   "bugFixes": "Correções de bugs",
   "updates": {
+    "1201": {
+      "c1": "Pequenas correções de bugs."
+    },
     "1200": {
       "c1": "Adiciona funcionalidade de backup e restauração. Agora você pode fazer backup de seus dados na nuvem e restaurá-los mais tarde, o que permite transferir seus dados para outro dispositivo. Você também pode transferi-lo para outra plataforma. Encontre esse novo recurso nas configurações."
     },

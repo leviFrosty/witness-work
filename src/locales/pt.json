@@ -327,35 +327,39 @@
   "new": "Novo",
   "bugFixes": "Correções de bugs",
   "updates": {
-    "160": {
-      "c1": "As conversas agora são editáveis. As notificações são configuráveis",
-      "c2": "Deslize os gestos para editar ou excluir conversas, contatos, etc.",
-      "c3": "Adicionado feedback tátil para várias ações importantes"
+    "1201": {
+      "c1": "Pequenas correções de bugs."
     },
-    "161": {
-      "c1": "Adicionadas mais opções de minutos para entradas de tempo"
+    "1200": {
+      "c1": "Adiciona funcionalidade de backup e restauração. Agora você pode fazer backup de seus dados na nuvem e restaurá-los mais tarde, o que permite transferir seus dados para outro dispositivo. Você também pode transferi-lo para outra plataforma. Encontre esse novo recurso nas configurações."
     },
-    "162": {
-      "c1": "Requisito de horas de pioneiro especial ajustado de 70 para 100"
+    "1120": {
+      "c1": "Adiciona funcionalidade de backup e restauração. Agora você pode fazer backup de seus dados na nuvem e restaurá-los mais tarde. Você pode transferir seus dados para outro dispositivo. Você também pode transferi-lo para outra plataforma. Encontre esse novo recurso nas configurações."
     },
-    "163": {
-      "c1": "Resolva problemas de atualização automatizada"
+    "1111": {
+      "c1": "Adicione a página de doações nas configurações para quem deseja contribuir.",
+      "c2": "Inclui várias pequenas melhorias e correções de bugs"
     },
-    "170": {
-      "c1": "Adicione vários métodos de exportação de horário",
-      "c2": "Adicione 'Não em casa'"
+    "1110": {
+      "c1": "Adicionado suporte para iPads e iPads. Comprimidos!",
+      "c2": "Vários estilos ajustados para melhor caber em telas maiores.",
+      "c3": "Ajustou o método de envio de relatórios de bugs e solicitações de recursos ao Github."
     },
-    "180": {
-      "c1": "Adicionada geocodificação automática para contatos",
-      "c2": "Visualização de mapa adicionada"
+    "1100": {
+      "c1": "Adiciona relatório anual à tela Relatórios de Tempo! Acompanhe rapidamente o progresso do seu ano de serviço.",
+      "c2": "Adicionar tempo na tela Relatórios de tempo agora padroniza o relatório para o mês selecionado.",
+      "c3": "Corrige um problema ao exportar o relatório de serviço de janeiro."
     },
-    "181": {
-      "c1": "Visualização de mapa expandida",
-      "c2": "Adicionada solicitação de revisão da loja após determinados critérios serem atendidos",
-      "c3": "Pequenas correções de bugs"
+    "192": {
+      "c1": "Corrige um problema em que alguns dispositivos apresentam uma barra de progresso transbordante.",
+      "c2": "Adiciona tratamento mais detalhado de erros de link para dispositivos sem aplicativos necessários.",
+      "c3": "Adiciona tratamento mais detalhado de erros de link para determinados dispositivos sem aplicativos necessários.",
+      "c4": "Navegue diretamente para um mês na seção de rotina mensal da tela inicial.",
+      "c5": "A tela Relatórios de Tempo lida melhor com meses vazios e futuros.",
+      "c6": "Pequenas correções de bugs."
     },
-    "182": {
-      "c1": "Atualizado o tempo todo para refletir a localidade atual"
+    "191": {
+      "c1": "Resolve um problema ao navegar pelas telas de tempo."
     },
     "190": {
       "c1": "Preferências adicionadas nas configurações",
@@ -366,39 +370,35 @@
       "c6": "Agora adicione tags personalizadas às suas entradas de tempo",
       "c7": "Tela de Relatórios de Tempo atualizada para ser melhor organizada e separada por mês"
     },
-    "191": {
-      "c1": "Resolve um problema ao navegar pelas telas de tempo."
+    "182": {
+      "c1": "Atualizado o tempo todo para refletir a localidade atual"
     },
-    "192": {
-      "c1": "Corrige um problema em que alguns dispositivos apresentam uma barra de progresso transbordante.",
-      "c2": "Adiciona tratamento mais detalhado de erros de link para dispositivos sem aplicativos necessários.",
-      "c3": "Adiciona tratamento mais detalhado de erros de link para determinados dispositivos sem aplicativos necessários.",
-      "c4": "Navegue diretamente para um mês na seção de rotina mensal da tela inicial.",
-      "c5": "A tela Relatórios de Tempo lida melhor com meses vazios e futuros.",
-      "c6": "Pequenas correções de bugs."
+    "181": {
+      "c1": "Visualização de mapa expandida",
+      "c2": "Adicionada solicitação de revisão da loja após determinados critérios serem atendidos",
+      "c3": "Pequenas correções de bugs"
     },
-    "1100": {
-      "c1": "Adiciona relatório anual à tela Relatórios de Tempo! Acompanhe rapidamente o progresso do seu ano de serviço.",
-      "c2": "Adicionar tempo na tela Relatórios de tempo agora padroniza o relatório para o mês selecionado.",
-      "c3": "Corrige um problema ao exportar o relatório de serviço de janeiro."
+    "180": {
+      "c1": "Adicionada geocodificação automática para contatos",
+      "c2": "Visualização de mapa adicionada"
     },
-    "1110": {
-      "c1": "Adicionado suporte para iPads e iPads. Comprimidos!",
-      "c2": "Vários estilos ajustados para melhor caber em telas maiores.",
-      "c3": "Ajustou o método de envio de relatórios de bugs e solicitações de recursos ao Github."
+    "170": {
+      "c1": "Adicione vários métodos de exportação de horário",
+      "c2": "Adicione 'Não em casa'"
     },
-    "1111": {
-      "c1": "Adicione a página de doações nas configurações para quem deseja contribuir.",
-      "c2": "Inclui várias pequenas melhorias e correções de bugs"
+    "163": {
+      "c1": "Resolva problemas de atualização automatizada"
     },
-    "1120": {
-      "c1": "Adiciona funcionalidade de backup e restauração. Agora você pode fazer backup de seus dados na nuvem e restaurá-los mais tarde. Você pode transferir seus dados para outro dispositivo. Você também pode transferi-lo para outra plataforma. Encontre esse novo recurso nas configurações."
+    "162": {
+      "c1": "Requisito de horas de pioneiro especial ajustado de 70 para 100"
     },
-    "1200": {
-      "c1": "Adiciona funcionalidade de backup e restauração. Agora você pode fazer backup de seus dados na nuvem e restaurá-los mais tarde, o que permite transferir seus dados para outro dispositivo. Você também pode transferi-lo para outra plataforma. Encontre esse novo recurso nas configurações."
+    "161": {
+      "c1": "Adicionadas mais opções de minutos para entradas de tempo"
     },
-    "1201": {
-      "c1": "Pequenas correções de bugs."
+    "160": {
+      "c1": "As conversas agora são editáveis. As notificações são configuráveis",
+      "c2": "Deslize os gestos para editar ou excluir conversas, contatos, etc.",
+      "c3": "Adicionado feedback tátil para várias ações importantes"
     }
   },
   "installed": "Instalado",
@@ -423,8 +423,8 @@
   "otherHoursDescription": "Abaixo já está incluso no total",
   "failedToOpenLink": "Falha ao abrir URL",
   "failedToOpenLink_description": "Verifique se você tem uma inscrição válida para o link fornecido. Este erro normalmente significa que você não tem um navegador instalado no seu dispositivo.",
-  "noTimeReports": "Ainda não há resumo disponível para este mês.",
   "noTimeReports_description": "Adicione pelo menos uma entrada de tempo para ver mais detalhes.",
+  "noTimeReports": "Ainda não há resumo disponível para este mês.",
   "cannotNavigateToFutureMonth": "Não é possível navegar para o mês futuro",
   "cannotNavigateToFutureMonth_description": "Selecione o mês atual ou anterior.",
   "addATimeEntryToViewReport": "Adicione uma entrada de tempo para visualizar seu relatório mensal.",
@@ -438,6 +438,7 @@
   "donate_faq1": "Por que você está aceitando doações?",
   "donate_faqAnswer1": "Como irmão de salão, considero um privilégio poder usar minhas habilidades para ajudar outros na congregação. Embora seja gratuito para todos, desenvolver, executar e manter este aplicativo infelizmente custa uma quantia significativa de dinheiro e tempo. Vejo a doação como algo semelhante a como alguém pode pagar pela gasolina de outra pessoa depois de trabalhar com ela - é um gesto de amor que é muito apreciado.",
   "donate_faq2": "Para que servem as doações?",
+  "donate_faqAnswer2": "Sua doação ajuda a manter este aplicativo funcionando! Há custos com a compra de dispositivos reais como equipamentos de desenvolvimento, pagamento de taxas de serviço de API de localização, taxas de loja de aplicativos e custo de oportunidade de muitas horas gastas desenvolvendo este aplicativo. Cada peça de apoio é muito apreciada!",
   "openDonationPage": "Abrir página de doações",
   "shareApp": "Compartilhe o aplicativo",
   "couldNotFindOffer": "Não foi possível encontrar a oferta. Por favor, tente novamente mais tarde.",
@@ -453,6 +454,7 @@
   "firstOfAll": "Em primeiro lugar...",
   "restorePurchase": "Restaurar compras",
   "showAll": "Mostrar mais opções",
+  "donate_letter": "Querido irmão ou irmã,\n\nEstou muito honrado por você ter escolhido meu aplicativo para usar em um mar de outras opções incríveis. Comecei a trabalhar neste aplicativo quando era pioneiro - simplesmente não conseguia encontrar um local claro e conciso para manter minhas anotações. Para mim, parecia que sempre perderia minhas anotações de papel e de alguma forma esqueceria minhas revisitas. Eu sabia que muitas outras pessoas sentiam o mesmo. Meu objetivo ao criar este aplicativo foi focar na alta utilidade, mas também na simplicidade. Qualquer pessoa deve poder usar este aplicativo, independentemente da idade ou experiência como editor. Espero que meu aplicativo tenha sido uma ferramenta útil para você e seu serviço a Jeová. Passei inúmeras horas desenvolvendo este aplicativo e estou muito feliz em vê-lo sendo usado por tantos irmãos e irmãs ao redor do mundo. Se ainda não o fez, informe outras pessoas sobre o JW Time - é um trabalho de amor. Independentemente de você optar por doar, espero que continue aproveitando o aplicativo e as atualizações futuras.\n\nObrigado,\n\nLevi Wilkerson",
   "donate_letter_ps": "P.S. Estou sempre disponível para conversar sobre qualquer coisa: dúvidas pessoais, dúvidas sobre aplicativos ou outras preocupações. Sinta-se à vontade para entrar em contato comigo pelo e-mail abaixo.",
   "emailMe": "Me mande um e-mail!",
   "aLetterForYou": "Uma carta para você.",
@@ -468,14 +470,14 @@
   "thankYou": "Obrigado!",
   "thankYou_description": "Não sou merecedor de tanta gentileza. Sua generosidade é muito apreciada.",
   "failedToOpenMailApplication_description": "Verifique se você possui um aplicativo de e-mail válido instalado.",
-  "donate_letter": "Querido irmão ou irmã,\n\nEstou muito honrado por você ter escolhido meu aplicativo para usar em um mar de outras opções incríveis. Comecei a trabalhar neste aplicativo quando era pioneiro - simplesmente não conseguia encontrar um local claro e conciso para manter minhas anotações. Para mim, parecia que sempre perderia minhas anotações de papel e de alguma forma esqueceria minhas revisitas. Eu sabia que muitas outras pessoas sentiam o mesmo. Meu objetivo ao criar este aplicativo foi focar na alta utilidade, mas também na simplicidade. Qualquer pessoa deve poder usar este aplicativo, independentemente da idade ou experiência como editor. Espero que meu aplicativo tenha sido uma ferramenta útil para você e seu serviço a Jeová. Passei inúmeras horas desenvolvendo este aplicativo e estou muito feliz em vê-lo sendo usado por tantos irmãos e irmãs ao redor do mundo. Se ainda não o fez, informe outras pessoas sobre o JW Time - é um trabalho de amor. Independentemente de você optar por doar, espero que continue aproveitando o aplicativo e as atualizações futuras.\n\nObrigado,\n\nLevi Wilkerson",
   "hideDonateHeart": "Ocultar Doar Coração",
   "noPurchasesFound": "Nenhuma compra encontrada",
   "errorCheckingOut": "Ocorreu um erro durante o check-out. Provavelmente é devido à instabilidade da rede. Tente novamente.",
   "goToAppStoreToUpdateSubscriptions": "Para cancelar ou editar sua assinatura, visite a App Store.",
   "termsOfUse": "Termos de uso",
-  "donate_faqAnswer2": "Sua doação ajuda a manter este aplicativo funcionando! Há custos com a compra de dispositivos reais como equipamentos de desenvolvimento, pagamento de taxas de serviço de API de localização, taxas de API de serviço de construção, taxas de loja de aplicativos e custo de oportunidade de minhas muitas horas gastas desenvolvendo este aplicativo. Cada peça de apoio é muito apreciada!",
+  "importAndExport": "Importar e Exportar",
   "import": "Importar",
+  "importAndExport_description": "Importe e exporte seus dados de e para o JW Time. Isso é útil se você estiver trocando de dispositivo ou quiser fazer backup de seus dados.",
   "importError_title": "Erro de importação",
   "importError_description": "Ocorreu um erro ao importar seu arquivo. Verifique se o seu arquivo é válido e tente novamente.",
   "importErrorInvalidFile_title": "Arquivo inválido",
@@ -488,7 +490,5 @@
   "sharingIsNotAvailable": "O compartilhamento não está disponível nesta plataforma.",
   "backup_lowercase": "cópia de segurança",
   "errorExporting": "Erro ao exportar",
-  "errorExporting_description": "Ocorreu um erro ao exportar seus dados. Certifique-se de que seu dispositivo tenha armazenamento suficiente e que o compartilhamento esteja disponível e tente novamente.",
-  "importAndExport": "Importar e Exportar",
-  "importAndExport_description": "Importe e exporte seus dados de e para o JW Time. Isso é útil se você estiver trocando de dispositivo ou quiser fazer backup de seus dados."
+  "errorExporting_description": "Ocorreu um erro ao exportar seus dados. Certifique-se de que seu dispositivo tenha armazenamento suficiente e que o compartilhamento esteja disponível e tente novamente."
 }

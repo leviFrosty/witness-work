@@ -327,35 +327,39 @@
   "new": "Nuovo",
   "bugFixes": "Correzioni di bug",
   "updates": {
-    "160": {
-      "c1": "Le conversazioni sono ora modificabili. Le notifiche sono configurabili",
-      "c2": "Scorri i gesti per modificare o eliminare conversazioni, contatti, ecc.",
-      "c3": "Aggiunto feedback tattile a varie azioni importanti"
+    "1201": {
+      "c1": "Correzioni di bug minori."
     },
-    "161": {
-      "c1": "Aggiunte più opzioni relative ai minuti per gli inserimenti dell'ora"
+    "1200": {
+      "c1": "Aggiunge funzionalità di backup e ripristino. Ora puoi eseguire il backup dei tuoi dati sul cloud e ripristinarli in seguito, questo ti consente di trasferire i tuoi dati su un altro dispositivo. Puoi anche trasferirlo su un'altra piattaforma. Trova questa nuova funzionalità nelle impostazioni."
     },
-    "162": {
-      "c1": "Requisito di ore di pioniere speciale modificato da 70 a 100"
+    "1120": {
+      "c1": "Aggiunge funzionalità di backup e ripristino. Ora puoi eseguire il backup dei tuoi dati sul cloud e ripristinarli in seguito. Puoi trasferire i tuoi dati su un altro dispositivo. Puoi anche trasferirlo su un'altra piattaforma. Trovi questa nuova funzionalità nelle impostazioni."
     },
-    "163": {
-      "c1": "Risolvi i problemi di aggiornamento automatico"
+    "1111": {
+      "c1": "Aggiungi la pagina delle donazioni nelle impostazioni per coloro che desiderano contribuire.",
+      "c2": "Include vari miglioramenti minori e correzioni di bug"
     },
-    "170": {
-      "c1": "Aggiungi vari metodi di esportazione del tempo",
-      "c2": "Aggiungi \"Non in casa\""
+    "1110": {
+      "c1": "Aggiunto supporto per iPad e amp; Tablet!",
+      "c2": "Vari stili modificati per adattarsi meglio agli schermi più grandi.",
+      "c3": "Modificato il metodo di invio di segnalazioni di bug e richieste di funzionalità a Github."
     },
-    "180": {
-      "c1": "Aggiunta la geocodifica automatica per i contatti",
-      "c2": "Aggiunta la visualizzazione della mappa"
+    "1100": {
+      "c1": "Aggiunge il rapporto annuale alla schermata Rapporti temporali! Tieni traccia dei progressi del tuo anno di servizio a colpo d'occhio.",
+      "c2": "L'aggiunta di tempo dalla schermata Rapporti temporali ora imposta automaticamente il rapporto sul mese selezionato.",
+      "c3": "Risolve un problema durante l'esportazione del rapporto di servizio di gennaio."
     },
-    "181": {
-      "c1": "Visualizzazione mappa estesa",
-      "c2": "Aggiunta richiesta di revisione del negozio dopo aver soddisfatto determinati criteri",
-      "c3": "Piccole correzioni di bug"
+    "192": {
+      "c1": "Risolve un problema per cui alcuni dispositivi presentano una barra di avanzamento traboccante.",
+      "c2": "Aggiunge una gestione più dettagliata degli errori di collegamento per i dispositivi privi delle applicazioni richieste.",
+      "c3": "Aggiunge una gestione più dettagliata degli errori di collegamento per alcuni dispositivi privi delle applicazioni richieste.",
+      "c4": "Passa direttamente al mese dalla sezione della routine mensile della schermata iniziale.",
+      "c5": "La schermata Rapporti temporali gestisce meglio i mesi vuoti e futuri.",
+      "c6": "Correzioni di bug minori."
     },
-    "182": {
-      "c1": "Aggiornato sempre per riflettere la locale corrente"
+    "191": {
+      "c1": "Risolve un problema relativo alla navigazione nelle schermate temporali."
     },
     "190": {
       "c1": "Aggiunte preferenze nelle impostazioni",
@@ -366,39 +370,35 @@
       "c6": "Ora aggiungi tag personalizzati alle tue voci di tempo",
       "c7": "Schermata Rapporti temporali aggiornata per essere meglio organizzata e separata per mese"
     },
-    "191": {
-      "c1": "Risolve un problema relativo alla navigazione nelle schermate temporali."
+    "182": {
+      "c1": "Aggiornato sempre per riflettere la locale corrente"
     },
-    "192": {
-      "c1": "Risolve un problema per cui alcuni dispositivi presentano una barra di avanzamento traboccante.",
-      "c2": "Aggiunge una gestione più dettagliata degli errori di collegamento per i dispositivi privi delle applicazioni richieste.",
-      "c3": "Aggiunge una gestione più dettagliata degli errori di collegamento per alcuni dispositivi privi delle applicazioni richieste.",
-      "c4": "Passa direttamente al mese dalla sezione della routine mensile della schermata iniziale.",
-      "c5": "La schermata Rapporti temporali gestisce meglio i mesi vuoti e futuri.",
-      "c6": "Correzioni di bug minori."
+    "181": {
+      "c1": "Visualizzazione mappa estesa",
+      "c2": "Aggiunta richiesta di revisione del negozio dopo aver soddisfatto determinati criteri",
+      "c3": "Piccole correzioni di bug"
     },
-    "1100": {
-      "c1": "Aggiunge il rapporto annuale alla schermata Rapporti temporali! Tieni traccia dei progressi del tuo anno di servizio a colpo d'occhio.",
-      "c2": "L'aggiunta di tempo dalla schermata Rapporti temporali ora imposta automaticamente il rapporto sul mese selezionato.",
-      "c3": "Risolve un problema durante l'esportazione del rapporto di servizio di gennaio."
+    "180": {
+      "c1": "Aggiunta la geocodifica automatica per i contatti",
+      "c2": "Aggiunta la visualizzazione della mappa"
     },
-    "1110": {
-      "c1": "Aggiunto supporto per iPad e amp; Tablet!",
-      "c2": "Vari stili modificati per adattarsi meglio agli schermi più grandi.",
-      "c3": "Modificato il metodo di invio di segnalazioni di bug e richieste di funzionalità a Github."
+    "170": {
+      "c1": "Aggiungi vari metodi di esportazione del tempo",
+      "c2": "Aggiungi \"Non in casa\""
     },
-    "1111": {
-      "c1": "Aggiungi la pagina delle donazioni nelle impostazioni per coloro che desiderano contribuire.",
-      "c2": "Include vari miglioramenti minori e correzioni di bug"
+    "163": {
+      "c1": "Risolvi i problemi di aggiornamento automatico"
     },
-    "1120": {
-      "c1": "Aggiunge funzionalità di backup e ripristino. Ora puoi eseguire il backup dei tuoi dati sul cloud e ripristinarli in seguito. Puoi trasferire i tuoi dati su un altro dispositivo. Puoi anche trasferirlo su un'altra piattaforma. Trovi questa nuova funzionalità nelle impostazioni."
+    "162": {
+      "c1": "Requisito di ore di pioniere speciale modificato da 70 a 100"
     },
-    "1200": {
-      "c1": "Aggiunge funzionalità di backup e ripristino. Ora puoi eseguire il backup dei tuoi dati sul cloud e ripristinarli in seguito, questo ti consente di trasferire i tuoi dati su un altro dispositivo. Puoi anche trasferirlo su un'altra piattaforma. Trova questa nuova funzionalità nelle impostazioni."
+    "161": {
+      "c1": "Aggiunte più opzioni relative ai minuti per gli inserimenti dell'ora"
     },
-    "1201": {
-      "c1": "Correzioni di bug minori."
+    "160": {
+      "c1": "Le conversazioni sono ora modificabili. Le notifiche sono configurabili",
+      "c2": "Scorri i gesti per modificare o eliminare conversazioni, contatti, ecc.",
+      "c3": "Aggiunto feedback tattile a varie azioni importanti"
     }
   },
   "installed": "Installato",
@@ -423,8 +423,8 @@
   "otherHoursDescription": "Di seguito è già incluso in totale",
   "failedToOpenLink": "Impossibile aprire l'URL",
   "failedToOpenLink_description": "Verifica di avere un'applicazione valida per il collegamento fornito. Questo errore in genere significa che non hai un browser installato sul tuo dispositivo.",
-  "noTimeReports": "Nessun riepilogo ancora disponibile per questo mese.",
   "noTimeReports_description": "Aggiungi almeno una voce per visualizzare maggiori dettagli.",
+  "noTimeReports": "Nessun riepilogo ancora disponibile per questo mese.",
   "cannotNavigateToFutureMonth": "Impossibile passare al mese futuro",
   "cannotNavigateToFutureMonth_description": "Seleziona il mese corrente o quello precedente.",
   "addATimeEntryToViewReport": "Aggiungi una voce temporale per visualizzare il tuo rapporto mensile.",
@@ -438,6 +438,7 @@
   "donate_faq1": "Perché accetti donazioni?",
   "donate_faqAnswer1": "Come fratello in sala, considero un privilegio poter usare le mie capacità per aiutare gli altri nella congregazione. Sebbene sia gratuita per tutti, sviluppare, eseguire e mantenere questa applicazione, purtroppo costa una notevole quantità di tempo e denaro. Considero la donazione simile al modo in cui si potrebbe pagare la benzina di un altro dopo essere andato in servizio con lui: è un gesto amorevole che viene molto apprezzato.",
   "donate_faq2": "A cosa servono le donazioni?",
+  "donate_faqAnswer2": "La tua donazione aiuta a mantenere attiva questa app! Ci sono dei costi legati all'acquisto di dispositivi reali come apparecchiature di sviluppo, al pagamento delle tariffe del servizio API di localizzazione, delle tariffe dell'app store e del costo opportunità delle molte ore trascorse a sviluppare questa app. Ogni supporto è molto apprezzato!",
   "openDonationPage": "Apri la pagina delle donazioni",
   "shareApp": "Condividi app",
   "couldNotFindOffer": "Impossibile trovare l'offerta. Per favore riprova più tardi.",
@@ -453,6 +454,7 @@
   "firstOfAll": "Prima di tutto...",
   "restorePurchase": "Ripristinare gli acquisti",
   "showAll": "Mostra più opzioni",
+  "donate_letter": "Caro fratello o sorella,\n\nSono molto onorato che tu abbia scelto la mia app da utilizzare in un mare di altre fantastiche scelte. Ho iniziato a lavorare su questa app quando ero pioniere: non riuscivo a trovare un posto chiaro e conciso in cui conservare i miei appunti. Per me, mi sentivo come se avrei sempre perso i miei appunti cartacei e in qualche modo avrei dimenticato le mie visite successive. Sapevo che molte altre persone la pensavano allo stesso modo. Il mio obiettivo durante la creazione di questa app era concentrarmi sull'elevata utilità ma anche sulla semplicità. Chiunque dovrebbe essere in grado di utilizzare questa app, indipendentemente dall'età o dall'esperienza dell'editore. Spero che la mia app sia stata uno strumento utile per te e per il tuo servizio a Geova. Ho passato innumerevoli ore a sviluppare questa app e sono molto felice di vederla utilizzata da così tanti fratelli e sorelle in tutto il mondo. Se non l'hai già fatto, fai conoscere agli altri JW Time: è un lavoro d'amore. Indipendentemente dal fatto che tu scelga di donare, spero che continuerai a goderti l'app e i futuri aggiornamenti.\n\nGrazie,\n\nLevi Wilkerson",
   "donate_letter_ps": "PS Sono sempre disponibile per parlare di qualsiasi cosa: domande personali, domande sull'app o altre preoccupazioni. Sentiti libero di contattarmi alla mia email qui sotto.",
   "emailMe": "Mandami un'email!",
   "aLetterForYou": "Una lettera per te.",
@@ -468,14 +470,14 @@
   "thankYou": "Grazie!",
   "thankYou_description": "Non merito tanta gentilezza. La tua generosità è molto apprezzata.",
   "failedToOpenMailApplication_description": "Verifica di avere installato un'applicazione di posta valida.",
-  "donate_letter": "Caro fratello o sorella,\n\nSono molto onorato che tu abbia scelto la mia app da utilizzare in un mare di altre fantastiche scelte. Ho iniziato a lavorare su questa app quando ero pioniere: non riuscivo a trovare un posto chiaro e conciso in cui conservare i miei appunti. Per me, mi sentivo come se avrei sempre perso i miei appunti cartacei e in qualche modo avrei dimenticato le mie visite successive. Sapevo che molte altre persone la pensavano allo stesso modo. Il mio obiettivo durante la creazione di questa app era concentrarmi sull'elevata utilità ma anche sulla semplicità. Chiunque dovrebbe essere in grado di utilizzare questa app, indipendentemente dall'età o dall'esperienza dell'editore. Spero che la mia app sia stata uno strumento utile per te e per il tuo servizio a Geova. Ho passato innumerevoli ore a sviluppare questa app e sono molto felice di vederla utilizzata da così tanti fratelli e sorelle in tutto il mondo. Se non l'hai già fatto, fai conoscere agli altri JW Time: è un lavoro d'amore. Indipendentemente dal fatto che tu scelga di donare, spero che continuerai a goderti l'app e i futuri aggiornamenti.\n\nGrazie,\n\nLevi Wilkerson",
   "hideDonateHeart": "Nascondi Dona cuore",
   "noPurchasesFound": "Nessun acquisto trovato",
   "errorCheckingOut": "Si è verificato un errore durante il check-out. Probabilmente è dovuto all'instabilità della rete, riprova.",
   "goToAppStoreToUpdateSubscriptions": "Per annullare o modificare il tuo abbonamento, visita l'App Store.",
   "termsOfUse": "Termini di utilizzo",
-  "donate_faqAnswer2": "La tua donazione aiuta a mantenere attiva questa app! Ci sono costi con l'acquisto di dispositivi reali come apparecchiature di sviluppo, il pagamento delle tariffe del servizio API di localizzazione, delle tariffe dell'API del servizio di creazione, delle tariffe dell'app store e del costo opportunità delle mie molte ore trascorse a sviluppare questa app. Ogni supporto è molto apprezzato!",
+  "importAndExport": "Importa e Esportare",
   "import": "Importare",
+  "importAndExport_description": "Importa ed esporta i tuoi dati da e verso JW Time. Ciò è utile se stai cambiando dispositivo o desideri eseguire il backup dei tuoi dati.",
   "importError_title": "Errore di importazione",
   "importError_description": "Si è verificato un errore durante l'importazione del file. Verifica che il file sia valido e riprova.",
   "importErrorInvalidFile_title": "File non valido",
@@ -488,7 +490,5 @@
   "sharingIsNotAvailable": "La condivisione non è disponibile su questa piattaforma.",
   "backup_lowercase": "backup",
   "errorExporting": "Errore durante l'esportazione",
-  "errorExporting_description": "Si è verificato un errore durante l'esportazione dei tuoi dati. Assicurati che il tuo dispositivo disponga di spazio di archiviazione sufficiente e che la condivisione sia disponibile, quindi riprova.",
-  "importAndExport": "Importa e Esportare",
-  "importAndExport_description": "Importa ed esporta i tuoi dati da e verso JW Time. Ciò è utile se stai cambiando dispositivo o desideri eseguire il backup dei tuoi dati."
+  "errorExporting_description": "Si è verificato un errore durante l'esportazione dei tuoi dati. Assicurati che il tuo dispositivo disponga di spazio di archiviazione sufficiente e che la condivisione sia disponibile, quindi riprova."
 }

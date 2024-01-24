@@ -475,9 +475,7 @@
   "goToAppStoreToUpdateSubscriptions": "Para cancelar ou editar sua assinatura, visite a App Store.",
   "termsOfUse": "Termos de uso",
   "donate_faqAnswer2": "Sua doação ajuda a manter este aplicativo funcionando! Há custos com a compra de dispositivos reais como equipamentos de desenvolvimento, pagamento de taxas de serviço de API de localização, taxas de API de serviço de construção, taxas de loja de aplicativos e custo de oportunidade de minhas muitas horas gastas desenvolvendo este aplicativo. Cada peça de apoio é muito apreciada!",
-  "importAndExport": "Importar e Exportar",
   "import": "Importar",
-  "importAndExport_description": "Importe e exporte seus dados de e para o JW Time. Isso é útil se você estiver trocando de dispositivo ou quiser fazer backup de seus dados.",
   "importError_title": "Erro de importação",
   "importError_description": "Ocorreu um erro ao importar seu arquivo. Verifique se o seu arquivo é válido e tente novamente.",
   "importErrorInvalidFile_title": "Arquivo inválido",
@@ -490,5 +488,7 @@
   "sharingIsNotAvailable": "O compartilhamento não está disponível nesta plataforma.",
   "backup_lowercase": "cópia de segurança",
   "errorExporting": "Erro ao exportar",
-  "errorExporting_description": "Ocorreu um erro ao exportar seus dados. Certifique-se de que seu dispositivo tenha armazenamento suficiente e que o compartilhamento esteja disponível e tente novamente."
+  "errorExporting_description": "Ocorreu um erro ao exportar seus dados. Certifique-se de que seu dispositivo tenha armazenamento suficiente e que o compartilhamento esteja disponível e tente novamente.",
+  "importAndExport": "Importar e Exportar",
+  "importAndExport_description": "Importe e exporte seus dados de e para o JW Time. Isso é útil se você estiver trocando de dispositivo ou quiser fazer backup de seus dados."
 }

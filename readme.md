@@ -67,6 +67,12 @@ Any assistance is welcome! Look at the following and see if anything looks inter
 
 If you find something you'd like to help with, please let me know you've began work on it so it doesn't become double-worked. Thank you!
 
+# <<<<<<< HEAD
+
+# <<<<<<< HEAD
+
+> > > > > > > l10n_development
+
 #### Environment
 
 To start the Expo Dev server, begin with `yarn install` & `yarn run dev`.

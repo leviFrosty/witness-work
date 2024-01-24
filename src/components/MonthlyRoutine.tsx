@@ -1,5 +1,5 @@
 import { Alert, View } from 'react-native'
-import { useContext } from 'react'
+import { useCallback, useContext } from 'react'
 import moment from 'moment'
 import useTheme, { ThemeContext } from '../contexts/theme'
 import Card from './Card'
@@ -15,29 +15,26 @@ import IconButton from './IconButton'
 import { faCheck, faMinus, faTimes } from '@fortawesome/free-solid-svg-icons'
 import Button from './Button'
 
-const Month = ({
-  month,
-  setHasShownInvalidMonthAlert,
-  hasShownInvalidMonthAlert,
-}: {
-  month: number
-  setHasShownInvalidMonthAlert: () => void
-  hasShownInvalidMonthAlert?: boolean
-}) => {
+const Month = ({ month, year }: { month: number; year: number }) => {
+  const { monthlyRoutineHasShownInvalidMonthAlert, set } = usePreferences()
+  const setHasShownInvalidMonthAlert = () => {
+    set({ monthlyRoutineHasShownInvalidMonthAlert: true })
+  }
   const theme = useTheme()
   const navigation = useNavigation<RootStackNavigation>()
   const { installedOn, publisher } = usePreferences()
-  const currentMonth = moment().month()
-  const isCurrentMonth = currentMonth === month
-  const monthHasPassed = currentMonth > month
-  const monthInFuture = currentMonth < month
+  const current = moment()
+  const toDisplay = moment().month(month).year(year)
+  const isCurrentMonth = current.isSame(toDisplay, 'month')
+  const monthHasPassed = current.isAfter(toDisplay)
+  const monthInFuture = current.isBefore(toDisplay)
   const { serviceReports } = useServiceReport()
   const wentOutThisMonth = hasServiceReportsForMonth(
     serviceReports,
     month,
-    moment().year()
+    year
   )
-  const monthWasBeforeInstalled = month < moment(installedOn).month()
+  const monthWasBeforeInstalled = toDisplay.isBefore(installedOn)
 
   const didNotGoOutInService = monthHasPassed && !wentOutThisMonth
   const hasNotGoneOutTheCurrentMonth = isCurrentMonth && !wentOutThisMonth
@@ -52,7 +49,7 @@ const Month = ({
 
   return (
     <Button
-      disabled={monthInFuture && hasShownInvalidMonthAlert}
+      disabled={monthInFuture && monthlyRoutineHasShownInvalidMonthAlert}
       onPress={
         publisher === 'publisher'
           ? undefined
@@ -61,7 +58,7 @@ const Month = ({
                 ? handleInvalidMonthPress()
                 : navigation.navigate('Time Reports', {
                     month,
-                    year: moment().year(),
+                    year,
                   })
       }
       style={{
@@ -121,6 +118,20 @@ const MonthlyRoutine = () => {
     set({ monthlyRoutineHasShownInvalidMonthAlert: true })
   }
 
+  const surroundingMonths = useCallback(() => {
+    const now = moment()
+    const currentMonth = now.month()
+
+    const months = [now]
+    for (let i = 1; i < 6; i++) {
+      const nextMonth = moment().month(currentMonth + i)
+      const previousMonth = moment().month(currentMonth - i)
+      months.push(nextMonth)
+      months.unshift(previousMonth)
+    }
+    return months
+  }, [])
+
   return (
     <View style={{ gap: 10, flexShrink: 1 }}>
       <Text
@@ -135,20 +146,14 @@ const MonthlyRoutine = () => {
       <Card style={{ flexGrow: 1, justifyContent: 'center' }}>
         <FlashList
           horizontal
-          initialScrollIndex={moment().month()}
-          keyExtractor={(item) => item.toString()}
+          initialScrollIndex={5}
+          keyExtractor={(item) => item.format()}
           estimatedItemSize={44}
-          data={[...Array(12).keys()]}
-          renderItem={({ item: month }) => {
-            return (
-              <Month
-                month={month}
-                hasShownInvalidMonthAlert={
-                  monthlyRoutineHasShownInvalidMonthAlert
-                }
-                setHasShownInvalidMonthAlert={setHasShownInvalidMonthAlert}
-              />
-            )
+          data={surroundingMonths()}
+          renderItem={({ item }) => {
+            const month = item.month()
+            const year = item.year()
+            return <Month month={month} year={year} />
           }}
           showsHorizontalScrollIndicator={false}
         />

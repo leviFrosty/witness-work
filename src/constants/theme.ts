@@ -60,6 +60,10 @@ export const numbers = {
   shadowOpacity: 0.1,
 }
 
+/**
+ * In reality, these are also used to set the font weight. Setting the font
+ * weight directly does not work due to custom font being used.
+ */
 export const fonts = {
   regular: 'Inter_400Regular',
   medium: 'Inter_500Medium',

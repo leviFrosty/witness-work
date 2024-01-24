@@ -1,13 +1,34 @@
 import moment from 'moment'
 
 export type ReleaseNote = {
+  /** Semantic version number in format `x.y.z` */
   version: string
   date: Date
-  /** I18n translation key array */
+  /**
+   * I18n translation key array
+   *
+   * @example
+   *   You're adding release notes for version 1.20.0.
+   *
+   *
+   *   File `en.json` has the following content in `"1200"` key:
+   *   ```json
+   *   {
+   *   "c1": "Content 1",
+   *   "c2": "Content 2",
+   *   }
+   *   ```
+   *   Then the `content` array should be `['c1', 'c2']`
+   */
   content: string[]
 }
 
 export const releaseNotes: ReleaseNote[] = [
+  {
+    version: '1.20.1',
+    date: moment('2024-01-21').toDate(),
+    content: ['c1'],
+  },
   {
     version: '1.20.0',
     date: moment('2024-01-13').toDate(),
@@ -78,4 +99,5 @@ export const releaseNotes: ReleaseNote[] = [
     date: moment('2023-11-15').toDate(),
     content: ['c1', 'c2', 'c3'],
   },
+  // Older versions are omitted because they were released before the release notes version tracking feature was added.
 ]

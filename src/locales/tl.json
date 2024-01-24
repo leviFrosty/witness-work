@@ -393,6 +393,12 @@
     },
     "1120": {
       "c1": "Nagdaragdag ng pag-andar ng backup at pagpapanumbalik. Ngayon ay maaari mong i-backup ang iyong data sa cloud at i-restore ito sa ibang pagkakataon. Maaari mong ilipat ang iyong data sa ibang device. Maaari mo ring ilipat ito sa ibang platform. Hanapin ang bagong feature na ito sa mga setting."
+    },
+    "1200": {
+      "c1": "Nagdaragdag ng pag-andar ng backup at pagpapanumbalik. Ngayon ay maaari mong i-backup ang iyong data sa cloud at i-restore ito sa ibang pagkakataon, pinapayagan ka nitong ilipat ang iyong data sa isa pang device. Maaari mo ring ilipat ito sa ibang platform. Hanapin ang bagong feature na ito sa mga setting."
+    },
+    "1201": {
+      "c1": "Mga menor de edad na pag-aayos ng bug."
     }
   },
   "installed": "Naka-install",

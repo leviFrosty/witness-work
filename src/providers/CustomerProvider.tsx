@@ -12,6 +12,11 @@ import * as Sentry from 'sentry-expo'
 
 interface Props {}
 
+/**
+ * Handles initialization and fetching of customer info in-app-purchases
+ *
+ * Uses [RevenueCat](https://www.revenuecat.com/docs/reactnative) SDK.
+ */
 const CustomerProvider: React.FC<PropsWithChildren<Props>> = ({ children }) => {
   const [customer, setCustomer] = useState<CustomerInfo | null>(null)
   const { isAndroid } = useDevice()
@@ -55,7 +60,8 @@ const CustomerProvider: React.FC<PropsWithChildren<Props>> = ({ children }) => {
       const customerInfo = await Purchases.getCustomerInfo()
       setCustomer(customerInfo)
     } catch (error) {
-      Sentry.Native.captureException(error)
+      // Do nothing, the user does not have a internet connection or is not able to connect to RevenueCat servers at launch.
+      // Regardless, we are not able to resolve these issues.
     }
   }, [isAndroid])
 

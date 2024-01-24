@@ -10,7 +10,7 @@ import {
 import { ServiceReport } from '../types/serviceReport'
 import { Publisher } from '../types/publisher'
 
-describe('service report', () => {
+describe('lib/serviceReport', () => {
   describe('calculateProgress', () => {
     it('should not return less than 0', () => {
       const progress = calculateProgress({ hours: -10, goalHours: 10 })

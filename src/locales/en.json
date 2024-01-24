@@ -328,7 +328,9 @@
   "bugFixes": "Bug Fixes",
   "updates": {
     "1201": {
-      "c1": "Minor bug fixes."
+      "c1": "Updates monthly routine section of home screen to show surrounding months.",
+      "c2": "Significantly improved Korean translations - thank you brother Paul. If you'd like to help translate your own language, please visit the settings.",
+      "c3": "Minor bug fixes."
     },
     "1200": {
       "c1": "Adds backup and restore functionality. Now you can backup your data to the cloud and restore it later, this allows you to transfer your data to another device. You can also transfer it to another platform. Find this new feature in settings."

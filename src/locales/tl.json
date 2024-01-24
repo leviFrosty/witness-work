@@ -398,7 +398,9 @@
       "c1": "Nagdaragdag ng pag-andar ng backup at pagpapanumbalik. Ngayon ay maaari mong i-backup ang iyong data sa cloud at i-restore ito sa ibang pagkakataon, pinapayagan ka nitong ilipat ang iyong data sa isa pang device. Maaari mo ring ilipat ito sa ibang platform. Hanapin ang bagong feature na ito sa mga setting."
     },
     "1201": {
-      "c1": "Mga menor de edad na pag-aayos ng bug."
+      "c1": "Mga menor de edad na pag-aayos ng bug.",
+      "c2": "Napakahusay na pinahusay na mga pagsasalin sa Korean - salamat kapatid na si Paul. Kung gusto mong tumulong sa pagsasalin ng iyong sariling wika, pakibisita ang mga setting.",
+      "c3": "Mga menor de edad na pag-aayos ng bug."
     }
   },
   "installed": "Naka-install",

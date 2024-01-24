@@ -327,39 +327,35 @@
   "new": "Novo",
   "bugFixes": "Correções de bugs",
   "updates": {
-    "1201": {
-      "c1": "Pequenas correções de bugs."
+    "160": {
+      "c1": "As conversas agora são editáveis. As notificações são configuráveis",
+      "c2": "Deslize os gestos para editar ou excluir conversas, contatos, etc.",
+      "c3": "Adicionado feedback tátil para várias ações importantes"
     },
-    "1200": {
-      "c1": "Adiciona funcionalidade de backup e restauração. Agora você pode fazer backup de seus dados na nuvem e restaurá-los mais tarde, o que permite transferir seus dados para outro dispositivo. Você também pode transferi-lo para outra plataforma. Encontre esse novo recurso nas configurações."
+    "161": {
+      "c1": "Adicionadas mais opções de minutos para entradas de tempo"
     },
-    "1120": {
-      "c1": "Adiciona funcionalidade de backup e restauração. Agora você pode fazer backup de seus dados na nuvem e restaurá-los mais tarde. Você pode transferir seus dados para outro dispositivo. Você também pode transferi-lo para outra plataforma. Encontre esse novo recurso nas configurações."
+    "162": {
+      "c1": "Requisito de horas de pioneiro especial ajustado de 70 para 100"
     },
-    "1111": {
-      "c1": "Adicione a página de doações nas configurações para quem deseja contribuir.",
-      "c2": "Inclui várias pequenas melhorias e correções de bugs"
+    "163": {
+      "c1": "Resolva problemas de atualização automatizada"
     },
-    "1110": {
-      "c1": "Adicionado suporte para iPads e iPads. Comprimidos!",
-      "c2": "Vários estilos ajustados para melhor caber em telas maiores.",
-      "c3": "Ajustou o método de envio de relatórios de bugs e solicitações de recursos ao Github."
+    "170": {
+      "c1": "Adicione vários métodos de exportação de horário",
+      "c2": "Adicione 'Não em casa'"
     },
-    "1100": {
-      "c1": "Adiciona relatório anual à tela Relatórios de Tempo! Acompanhe rapidamente o progresso do seu ano de serviço.",
-      "c2": "Adicionar tempo na tela Relatórios de tempo agora padroniza o relatório para o mês selecionado.",
-      "c3": "Corrige um problema ao exportar o relatório de serviço de janeiro."
+    "180": {
+      "c1": "Adicionada geocodificação automática para contatos",
+      "c2": "Visualização de mapa adicionada"
     },
-    "192": {
-      "c1": "Corrige um problema em que alguns dispositivos apresentam uma barra de progresso transbordante.",
-      "c2": "Adiciona tratamento mais detalhado de erros de link para dispositivos sem aplicativos necessários.",
-      "c3": "Adiciona tratamento mais detalhado de erros de link para determinados dispositivos sem aplicativos necessários.",
-      "c4": "Navegue diretamente para um mês na seção de rotina mensal da tela inicial.",
-      "c5": "A tela Relatórios de Tempo lida melhor com meses vazios e futuros.",
-      "c6": "Pequenas correções de bugs."
+    "181": {
+      "c1": "Visualização de mapa expandida",
+      "c2": "Adicionada solicitação de revisão da loja após determinados critérios serem atendidos",
+      "c3": "Pequenas correções de bugs"
     },
-    "191": {
-      "c1": "Resolve um problema ao navegar pelas telas de tempo."
+    "182": {
+      "c1": "Atualizado o tempo todo para refletir a localidade atual"
     },
     "190": {
       "c1": "Preferências adicionadas nas configurações",
@@ -370,35 +366,41 @@
       "c6": "Agora adicione tags personalizadas às suas entradas de tempo",
       "c7": "Tela de Relatórios de Tempo atualizada para ser melhor organizada e separada por mês"
     },
-    "182": {
-      "c1": "Atualizado o tempo todo para refletir a localidade atual"
+    "191": {
+      "c1": "Resolve um problema ao navegar pelas telas de tempo."
     },
-    "181": {
-      "c1": "Visualização de mapa expandida",
-      "c2": "Adicionada solicitação de revisão da loja após determinados critérios serem atendidos",
-      "c3": "Pequenas correções de bugs"
+    "192": {
+      "c1": "Corrige um problema em que alguns dispositivos apresentam uma barra de progresso transbordante.",
+      "c2": "Adiciona tratamento mais detalhado de erros de link para dispositivos sem aplicativos necessários.",
+      "c3": "Adiciona tratamento mais detalhado de erros de link para determinados dispositivos sem aplicativos necessários.",
+      "c4": "Navegue diretamente para um mês na seção de rotina mensal da tela inicial.",
+      "c5": "A tela Relatórios de Tempo lida melhor com meses vazios e futuros.",
+      "c6": "Pequenas correções de bugs."
     },
-    "180": {
-      "c1": "Adicionada geocodificação automática para contatos",
-      "c2": "Visualização de mapa adicionada"
+    "1100": {
+      "c1": "Adiciona relatório anual à tela Relatórios de Tempo! Acompanhe rapidamente o progresso do seu ano de serviço.",
+      "c2": "Adicionar tempo na tela Relatórios de tempo agora padroniza o relatório para o mês selecionado.",
+      "c3": "Corrige um problema ao exportar o relatório de serviço de janeiro."
     },
-    "170": {
-      "c1": "Adicione vários métodos de exportação de horário",
-      "c2": "Adicione 'Não em casa'"
+    "1110": {
+      "c1": "Adicionado suporte para iPads e iPads. Comprimidos!",
+      "c2": "Vários estilos ajustados para melhor caber em telas maiores.",
+      "c3": "Ajustou o método de envio de relatórios de bugs e solicitações de recursos ao Github."
     },
-    "163": {
-      "c1": "Resolva problemas de atualização automatizada"
+    "1111": {
+      "c1": "Adicione a página de doações nas configurações para quem deseja contribuir.",
+      "c2": "Inclui várias pequenas melhorias e correções de bugs"
     },
-    "162": {
-      "c1": "Requisito de horas de pioneiro especial ajustado de 70 para 100"
+    "1120": {
+      "c1": "Adiciona funcionalidade de backup e restauração. Agora você pode fazer backup de seus dados na nuvem e restaurá-los mais tarde. Você pode transferir seus dados para outro dispositivo. Você também pode transferi-lo para outra plataforma. Encontre esse novo recurso nas configurações."
     },
-    "161": {
-      "c1": "Adicionadas mais opções de minutos para entradas de tempo"
+    "1200": {
+      "c1": "Adiciona funcionalidade de backup e restauração. Agora você pode fazer backup de seus dados na nuvem e restaurá-los mais tarde, o que permite transferir seus dados para outro dispositivo. Você também pode transferi-lo para outra plataforma. Encontre esse novo recurso nas configurações."
     },
-    "160": {
-      "c1": "As conversas agora são editáveis. As notificações são configuráveis",
-      "c2": "Deslize os gestos para editar ou excluir conversas, contatos, etc.",
-      "c3": "Adicionado feedback tátil para várias ações importantes"
+    "1201": {
+      "c1": "Pequenas correções de bugs.",
+      "c2": "Traduções coreanas significativamente melhoradas - obrigado, irmão Paul. Se você quiser ajudar a traduzir seu próprio idioma, visite as configurações.",
+      "c3": "Pequenas correções de bugs."
     }
   },
   "installed": "Instalado",

@@ -1,5 +1,5 @@
 ![Expo](https://img.shields.io/badge/expo-1C1E24?style=flat&logo=expo&logoColor=#D04A37)
-![Release Version](https://img.shields.io/github/package-json/v/leviFrosty/JW-Time/production?label=Release%20Version&color=%231BD15D)
+![Release Version](https://img.shields.io/github/package-json/v/leviFrosty/JW-Time/production?label=Release%20Version)
 ![Issues](https://img.shields.io/github/issues/leviFrosty/JW-Time)
 [![Crowdin](https://badges.crowdin.net/jw-time/localized.svg)](https://crowdin.com/project/jw-time)
 
@@ -66,12 +66,6 @@ Any assistance is welcome! Look at the following and see if anything looks inter
 2. [Project board](https://github.com/users/leviFrosty/projects/2)
 
 If you find something you'd like to help with, please let me know you've began work on it so it doesn't become double-worked. Thank you!
-
-# <<<<<<< HEAD
-
-# <<<<<<< HEAD
-
-> > > > > > > l10n_development
 
 #### Environment
 

@@ -20,7 +20,9 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   assetBundlePatterns: ['**/*'],
   ios: {
     supportsTablet: true,
-    bundleIdentifier: 'com.leviwilkerson.jwtime',
+    bundleIdentifier: IS_DEV
+      ? 'com.leviwilkerson.jwtimedev'
+      : 'com.leviwilkerson.jwtime',
     infoPlist: {
       RCTAsyncStorageExcludeFromBackup: false,
     },

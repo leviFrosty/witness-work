@@ -1,5 +1,5 @@
 ![Expo](https://img.shields.io/badge/expo-1C1E24?style=flat&logo=expo&logoColor=#D04A37)
-![Release Version](https://img.shields.io/github/package-json/v/leviFrosty/JW-Time/production?label=Release%20Version)
+![Release Version](https://img.shields.io/github/v/release/leviFrosty/JW-Time)
 ![Issues](https://img.shields.io/github/issues/leviFrosty/JW-Time)
 [![Crowdin](https://badges.crowdin.net/jw-time/localized.svg)](https://crowdin.com/project/jw-time)
 

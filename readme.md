@@ -35,6 +35,8 @@ Donations are never expected but greatly appreciated! These donations are used t
 
 These expenses are kept up to date here. Thank you!
 
+You may wish to donate in the app by pressing on the heart icon or more directly at Ko-Fi, without Apple's 30% cut, below:
+
 [![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/leviwilkerson)
 
 ### Help Translate 🌐

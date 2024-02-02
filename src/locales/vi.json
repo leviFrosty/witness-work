@@ -327,6 +327,12 @@
   "new": "Mới",
   "bugFixes": "Sửa lỗi",
   "updates": {
+    "1210": {
+      "c1": "Cải thiện đáng kể độ chính xác của hiển thị thời gian.",
+      "c2": "Cải thiện độ chính xác của thanh tiến trình thời gian.",
+      "c3": "Đã thêm các gợi ý hữu ích cho những hành động có thể không được chú ý ngay lập tức.",
+      "c4": "Cải thiện chất lượng cuộc sống trên màn hình bản đồ với thông tin phù hợp hơn và nút thêm nhanh."
+    },
     "1201": {
       "c1": "Sửa lỗi nhỏ.",
       "c2": "Bản dịch tiếng Hàn được cải thiện đáng kể - cảm ơn anh Paul. Nếu bạn muốn giúp dịch ngôn ngữ của mình, vui lòng truy cập cài đặt.",
@@ -492,5 +498,7 @@
   "sharingIsNotAvailable": "Chia sẻ không có sẵn trên nền tảng này.",
   "backup_lowercase": "hỗ trợ",
   "errorExporting": "Lỗi xuất",
-  "errorExporting_description": "Đã xảy ra lỗi khi xuất dữ liệu của bạn. Hãy đảm bảo thiết bị của bạn có đủ bộ nhớ và tính năng chia sẻ có sẵn, sau đó thử lại."
+  "errorExporting_description": "Đã xảy ra lỗi khi xuất dữ liệu của bạn. Hãy đảm bảo thiết bị của bạn có đủ bộ nhớ và tính năng chia sẻ có sẵn, sau đó thử lại.",
+  "map_noContactsWithGeocodes": "Bạn chưa có bất kỳ liên hệ nào có tọa độ. Hãy thử thêm liên hệ hoặc cập nhật liên hệ hiện có của bạn để bao gồm tọa độ.",
+  "noContactsToDisplay": "Không có liên hệ nào để hiển thị"
 }

@@ -401,6 +401,12 @@
       "c1": "Corrections de bugs mineurs.",
       "c2": "Traductions coréennes considérablement améliorées - merci frère Paul. Si vous souhaitez aider à traduire votre propre langue, veuillez visiter les paramètres.",
       "c3": "Corrections de bugs mineurs."
+    },
+    "1202": {
+      "c1": "Précision grandement améliorée de l’affichage de l’heure.",
+      "c2": "Amélioration de la précision des barres de progression temporelle.",
+      "c3": "Ajout de conseils utiles pour les actions qui peuvent ne pas être immédiatement perceptibles.",
+      "c4": "Qualité de vie améliorée sur l'écran des cartes avec des informations plus pertinentes et un bouton d'ajout rapide."
     }
   },
   "installed": "installée",
@@ -492,5 +498,7 @@
   "sharingIsNotAvailable": "Le partage n'est pas disponible sur cette plateforme.",
   "backup_lowercase": "sauvegarde",
   "errorExporting": "Erreur lors de l'exportation",
-  "errorExporting_description": "Une erreur s'est produite lors de l'exportation de vos données. Veuillez vous assurer que votre appareil dispose de suffisamment de stockage et que le partage est disponible, puis réessayez."
+  "errorExporting_description": "Une erreur s'est produite lors de l'exportation de vos données. Veuillez vous assurer que votre appareil dispose de suffisamment de stockage et que le partage est disponible, puis réessayez.",
+  "map_noContactsWithGeocodes": "Vous n'avez pas encore de contacts avec des coordonnées. Essayez d'ajouter un contact ou de mettre à jour vos contacts existants pour inclure une coordonnée.",
+  "noContactsToDisplay": "Aucun contact à afficher"
 }

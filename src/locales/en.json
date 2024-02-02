@@ -330,7 +330,8 @@
     "1202": {
       "c1": "Greatly improved accuracy of time displays.",
       "c2": "Improved accuracy of time progress bars.",
-      "c3": "Added helpful hints for actions that may not be immediately noticeable."
+      "c3": "Added helpful hints for actions that may not be immediately noticeable.",
+      "c4": "Improved quality of life on the maps screen with more relevant information and a quick-add button."
     },
     "1201": {
       "c1": "Updates monthly routine section of home screen to show surrounding months.",
@@ -497,5 +498,7 @@
   "sharingIsNotAvailable": "Sharing is not available on this platform.",
   "backup_lowercase": "backup",
   "errorExporting": "Error Exporting",
-  "errorExporting_description": "There was an error exporting your data. Please ensure your device has enough storage and that sharing is available, then try again."
+  "errorExporting_description": "There was an error exporting your data. Please ensure your device has enough storage and that sharing is available, then try again.",
+  "map_noContactsWithGeocodes": "You do not have any contacts with coordinates yet. Try to add a contact or update your existing contacts to include a coordinate.",
+  "noContactsToDisplay": "No contacts to display"
 }

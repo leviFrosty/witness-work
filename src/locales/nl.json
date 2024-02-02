@@ -401,6 +401,12 @@
       "c1": "Kleine bugfixes.",
       "c2": "Aanzienlijk verbeterde Koreaanse vertalingen - bedankt broeder Paul. Als je wilt helpen met het vertalen van je eigen taal, ga dan naar de instellingen.",
       "c3": "Kleine bugfixes."
+    },
+    "1202": {
+      "c1": "Sterk verbeterde nauwkeurigheid van tijdweergaven.",
+      "c2": "Verbeterde nauwkeurigheid van tijdvoortgangsbalken.",
+      "c3": "Nuttige tips toegevoegd voor acties die misschien niet meteen opvallen.",
+      "c4": "Verbeterde levenskwaliteit op het kaartenscherm met meer relevante informatie en een knop voor snel toevoegen."
     }
   },
   "installed": "Geïnstalleerd",
@@ -492,5 +498,7 @@
   "sharingIsNotAvailable": "Delen is niet beschikbaar op dit platform.",
   "backup_lowercase": "back-up",
   "errorExporting": "Fout bij exporteren",
-  "errorExporting_description": "Er is een fout opgetreden bij het exporteren van uw gegevens. Zorg ervoor dat uw apparaat voldoende opslagruimte heeft en dat delen beschikbaar is, en probeer het vervolgens opnieuw."
+  "errorExporting_description": "Er is een fout opgetreden bij het exporteren van uw gegevens. Zorg ervoor dat uw apparaat voldoende opslagruimte heeft en dat delen beschikbaar is, en probeer het vervolgens opnieuw.",
+  "map_noContactsWithGeocodes": "U heeft nog geen contacten met coördinaten. Probeer een contactpersoon toe te voegen of update uw bestaande contactpersonen met een coördinaat.",
+  "noContactsToDisplay": "Geen contacten om weer te geven"
 }

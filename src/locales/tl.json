@@ -401,6 +401,12 @@
       "c1": "Mga menor de edad na pag-aayos ng bug.",
       "c2": "Napakahusay na pinahusay na mga pagsasalin sa Korean - salamat kapatid na si Paul. Kung gusto mong tumulong sa pagsasalin ng iyong sariling wika, pakibisita ang mga setting.",
       "c3": "Mga menor de edad na pag-aayos ng bug."
+    },
+    "1202": {
+      "c1": "Lubos na pinabuting katumpakan ng mga pagpapakita ng oras.",
+      "c2": "Pinahusay na katumpakan ng mga time progress bar.",
+      "c3": "Nagdagdag ng mga kapaki-pakinabang na pahiwatig para sa mga pagkilos na maaaring hindi agad mapansin.",
+      "c4": "Pinahusay na kalidad ng buhay sa screen ng mga mapa na may higit na nauugnay na impormasyon at isang button na mabilis na magdagdag."
     }
   },
   "installed": "Naka-install",
@@ -492,5 +498,7 @@
   "sharingIsNotAvailable": "Ang pagbabahagi ay hindi magagamit sa platform na ito.",
   "backup_lowercase": "backup",
   "errorExporting": "Error sa Pag-export",
-  "errorExporting_description": "Nagkaroon ng error sa pag-export ng iyong data. Pakitiyak na may sapat na storage ang iyong device at available ang pagbabahagi, pagkatapos ay subukang muli."
+  "errorExporting_description": "Nagkaroon ng error sa pag-export ng iyong data. Pakitiyak na may sapat na storage ang iyong device at available ang pagbabahagi, pagkatapos ay subukang muli.",
+  "map_noContactsWithGeocodes": "Wala ka pang anumang mga contact na may mga coordinate. Subukang magdagdag ng contact o i-update ang iyong mga kasalukuyang contact para magsama ng coordinate.",
+  "noContactsToDisplay": "Walang mga contact na ipapakita"
 }

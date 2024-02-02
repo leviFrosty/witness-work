@@ -12,7 +12,7 @@ import Carousel, { ICarouselInstance } from 'react-native-reanimated-carousel'
 import MapCarouselCard from '../components/MapCarouselCard'
 import { Contact } from '../types/contact'
 import * as Location from 'expo-location'
-
+import * as Crypto from 'expo-crypto'
 import ShareAddressSheet, {
   MapShareSheet,
 } from '../components/ShareAddressSheet'
@@ -32,6 +32,10 @@ import AnimatedLottieView from 'lottie-react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import Card from '../components/Card'
 import Circle from '../components/Circle'
+import { RootStackNavigation } from '../stacks/RootStack'
+import IconButton from '../components/IconButton'
+import { faPlus } from '@fortawesome/free-solid-svg-icons'
+import useDevice from '../hooks/useDevice'
 
 export interface ContactMarker extends Contact {
   pinColor: string
@@ -44,6 +48,7 @@ interface FullMapViewProps {
 const FullMapView = ({ contactMarkers }: FullMapViewProps) => {
   const navigation = useNavigation<HomeTabStackNavigation>()
   const width = Dimensions.get('window').width
+  const { isAndroid } = useDevice()
   const mapRef = useRef<MapView>(null)
   const insets = useSafeAreaInsets()
   const carouselRef = useRef<ICarouselInstance>(null)
@@ -96,6 +101,8 @@ const FullMapView = ({ contactMarkers }: FullMapViewProps) => {
     getLocation()
   }, [])
 
+  const cardHeight = 280
+
   return (
     <>
       <MapView
@@ -117,14 +124,48 @@ const FullMapView = ({ contactMarkers }: FullMapViewProps) => {
           />
         ))}
       </MapView>
-      {contactMarkers.length !== 0 && (
-        <View
-          style={{
-            position: 'absolute',
-            bottom: 0,
-            zIndex: 1000,
-          }}
-        >
+
+      <View
+        style={{
+          position: 'absolute',
+          bottom: 0,
+          zIndex: 1000,
+        }}
+      >
+        {contactMarkers.length === 0 ? (
+          <View
+            style={{
+              height: 200,
+              width: width,
+              marginBottom: 100,
+              padding: 10,
+            }}
+          >
+            <Card>
+              <Text
+                style={{
+                  fontSize: theme.fontSize('xl'),
+                  fontFamily: theme.fonts.semiBold,
+                }}
+              >
+                {i18n.t('noContactsToDisplay')}
+              </Text>
+              <Text>{i18n.t('map_noContactsWithGeocodes')}</Text>
+              <ActionButton
+                onPress={() =>
+                  (navigation as unknown as RootStackNavigation).navigate(
+                    'Contact Form',
+                    {
+                      id: Crypto.randomUUID(),
+                    }
+                  )
+                }
+              >
+                {i18n.t('addContact')}
+              </ActionButton>
+            </Card>
+          </View>
+        ) : (
           <Carousel
             onSnapToItem={(index) => handleFitToMarker(index)}
             defaultIndex={0}
@@ -141,20 +182,44 @@ const FullMapView = ({ contactMarkers }: FullMapViewProps) => {
             }}
             loop
             width={width}
-            height={280}
+            height={cardHeight}
           />
+        )}
+      </View>
+      <ShareAddressSheet sheet={sheet} setSheet={setSheet} />
+      {contactMarkers.length > 1 && (
+        <View style={{ position: 'absolute', top: insets.top, left: 5 }}>
+          <Button
+            variant='solid'
+            onPress={fitToMarkers}
+            style={{ paddingVertical: 10, paddingHorizontal: 25 }}
+          >
+            <Text style={{ fontFamily: theme.fonts.bold }}>
+              {i18n.t('fit')}
+            </Text>
+          </Button>
         </View>
       )}
-      <ShareAddressSheet sheet={sheet} setSheet={setSheet} />
-      <View style={{ position: 'absolute', top: insets.top, left: 5 }}>
-        <Button
-          variant='solid'
-          onPress={fitToMarkers}
-          style={{ paddingVertical: 10, paddingHorizontal: 25 }}
-        >
-          <Text style={{ fontFamily: theme.fonts.bold }}>{i18n.t('fit')}</Text>
-        </Button>
-      </View>
+
+      {!isAndroid && (
+        <View style={{ position: 'absolute', top: insets.top, right: 5 }}>
+          <Button
+            variant='solid'
+            style={{ paddingVertical: 10, paddingHorizontal: 25 }}
+          >
+            <IconButton
+              icon={faPlus}
+              color={theme.colors.text}
+              onPress={() =>
+                (navigation as unknown as RootStackNavigation).navigate(
+                  'Contact Form',
+                  { id: Crypto.randomUUID() }
+                )
+              }
+            />
+          </Button>
+        </View>
+      )}
     </>
   )
 }

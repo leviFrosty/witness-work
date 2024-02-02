@@ -108,6 +108,17 @@ After that, open the compiled development build in your simulator/device and con
   - [`stores`](/src/stores) The [AsyncStorage](https://github.com/react-native-async-storage/async-storage) APIs for CRUD operations of app data using the device's storage.
   - [`types`](/src/types) Shared type definitions.
 
+#### [.env Keys](./.env)
+
+- `GOOGLE_CLOUD_API_KEY` Used for cloud translation API calls in CLI
+- `HERE_API_KEY` Used for geocoding api calls when users create address to fetch coordinates
+- `GOOGLE_MAPS_ANDROID_SDK_API_KEY` [Android Only] Maps SDK Api allows use of Google Maps within application
+- `REVENUECAT_APPLE_API_KEY` [iOS] Allows use of revenuecat service for in-app purchases for donations
+- `SENTRY_AUTH_TOKEN` Token that enables Sentry application error logging
+- `EXPO_PUBLIC_SENTRY_PROJECT` Configuration for sentry's project
+- `EXPO_PUBLIC_SENTRY_ORG` Configuration for sentry's organization
+- `APP_VARIANT` Set to `development` when working locally, targets the eas build to create the `JW Time Dev` bundle instead of production `JW Time`
+
 ## License
 
 JW Time © 2024 by Levi Wilkerson is licensed under [Attribution-NonCommercial 4.0 International](./LICENSE)

@@ -7,10 +7,10 @@ import MonthServiceReportProgressBar from './MonthServiceReportProgressBar'
 import { faArrowUpFromBracket } from '@fortawesome/free-solid-svg-icons'
 import IconButton from './IconButton'
 import {
-  ldcHoursForSpecificMonth,
-  otherHoursForSpecificMonth,
-  standardHoursForSpecificMonth,
-  totalHoursForSpecificMonth,
+  ldcMinutesForSpecificMonth,
+  otherMinutesForSpecificMonth,
+  standardMinutesForSpecificMonth,
+  totalMinutesForSpecificMonth,
 } from '../lib/serviceReport'
 import { useMemo, useState } from 'react'
 import useTheme from '../contexts/theme'
@@ -22,6 +22,7 @@ import Card from './Card'
 import ActionButton from './ActionButton'
 import { useNavigation } from '@react-navigation/native'
 import { RootStackNavigation } from '../stacks/RootStack'
+import _ from 'lodash'
 
 interface MonthSummaryProps {
   monthsReports: ServiceReport[] | null
@@ -42,32 +43,34 @@ const MonthSummary = ({
   const goalHours = publisherHours[publisher]
   const navigation = useNavigation<RootStackNavigation>()
 
-  const totalHours = useMemo(
+  const totalMinutes = useMemo(
     () =>
       monthsReports
-        ? totalHoursForSpecificMonth(monthsReports, month, year)
+        ? totalMinutesForSpecificMonth(monthsReports, month, year)
         : 0,
     [month, monthsReports, year]
   )
 
-  const ldcHours = useMemo(
-    () =>
-      monthsReports ? ldcHoursForSpecificMonth(monthsReports, month, year) : 0,
-    [month, monthsReports, year]
-  )
-
-  const standardHours = useMemo(
+  const ldcMinutes = useMemo(
     () =>
       monthsReports
-        ? standardHoursForSpecificMonth(monthsReports, month, year)
+        ? ldcMinutesForSpecificMonth(monthsReports, month, year)
         : 0,
     [month, monthsReports, year]
   )
 
-  const otherHours = useMemo(
+  const standardMinutes = useMemo(
     () =>
       monthsReports
-        ? otherHoursForSpecificMonth(monthsReports, month, year)
+        ? standardMinutesForSpecificMonth(monthsReports, month, year)
+        : 0,
+    [month, monthsReports, year]
+  )
+
+  const otherMinutes = useMemo(
+    () =>
+      monthsReports
+        ? otherMinutesForSpecificMonth(monthsReports, month, year)
         : null,
     [month, monthsReports, year]
   )
@@ -148,9 +151,9 @@ const MonthSummary = ({
               }}
             >
               {' '}
-              {`${totalHours} ${i18n.t('of')} ${goalHours} ${i18n.t(
-                'hoursToGoal'
-              )}`}{' '}
+              {`${_.round(totalMinutes / 60, 1)} ${i18n.t(
+                'of'
+              )} ${goalHours} ${i18n.t('hoursToGoal')}`}{' '}
             </Text>
             <MonthServiceReportProgressBar month={month} year={year} />
           </View>
@@ -184,10 +187,13 @@ const MonthSummary = ({
           <View style={{ gap: 10 }}>
             <TimeCategoryTableRow
               title={i18n.t('standard')}
-              number={standardHours}
+              number={_.round(standardMinutes / 60, 1)}
             />
-            <TimeCategoryTableRow title={i18n.t('ldc')} number={ldcHours} />
-            {otherHours && otherHours.length > 0 && (
+            <TimeCategoryTableRow
+              title={i18n.t('ldc')}
+              number={_.round(ldcMinutes / 60, 1)}
+            />
+            {otherMinutes && otherMinutes.length > 0 && (
               <>
                 {!expandOtherCategories && (
                   <Button onPress={() => setExpandOtherCategories(true)}>
@@ -203,11 +209,11 @@ const MonthSummary = ({
                   </Button>
                 )}
                 {expandOtherCategories &&
-                  otherHours.map((report, index) => (
+                  otherMinutes.map((report, index) => (
                     <TimeCategoryTableRow
                       key={index}
                       title={report.tag}
-                      number={report.hours}
+                      number={_.round(report.minutes / 60, 1)}
                     />
                   ))}
               </>

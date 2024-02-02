@@ -4,9 +4,9 @@ import useTheme from '../contexts/theme'
 import MonthServiceReportProgressBar from './MonthServiceReportProgressBar'
 import { usePreferences } from '../stores/preferences'
 import {
-  calculateHoursRemaining,
+  calculateMinutesRemaining,
   calculateProgress,
-  totalHoursForCurrentMonth,
+  totalMinutesForCurrentMonth,
   hasServiceReportsForMonth,
   getDaysLeftInCurrentMonth,
 } from '../lib/serviceReport'
@@ -29,6 +29,7 @@ import { faSquare } from '@fortawesome/free-regular-svg-icons'
 import Button from './Button'
 import { ExportTimeSheetState } from './ExportTimeSheet'
 import useDevice from '../hooks/useDevice'
+import _ from 'lodash'
 
 const HourEntryCard = () => {
   const theme = useTheme()
@@ -38,14 +39,14 @@ const HourEntryCard = () => {
   const navigation = useNavigation<RootStackNavigation>()
   const goalHours = publisherHours[publisher]
 
-  const hours = useMemo(
-    () => totalHoursForCurrentMonth(serviceReports),
+  const minutes = useMemo(
+    () => totalMinutesForCurrentMonth(serviceReports),
     [serviceReports]
   )
 
   const progress = useMemo(
-    () => calculateProgress({ hours, goalHours }),
-    [hours, goalHours]
+    () => calculateProgress({ minutes, goalHours }),
+    [minutes, goalHours]
   )
 
   const encouragementHourPhrase = useCallback((progress: number) => {
@@ -63,7 +64,7 @@ const HourEntryCard = () => {
       ]
     }
 
-    if (progress >= 0.6 && progress < 0.95) {
+    if (progress >= 0.7 && progress < 1) {
       phrases = [
         i18n.t('phrasesClose.oneStepCloser'),
         i18n.t('phrasesClose.almostThere'),
@@ -76,7 +77,7 @@ const HourEntryCard = () => {
       ]
     }
 
-    if (progress > 0.95) {
+    if (progress >= 1) {
       phrases = [
         i18n.t('phrasesDone.youDidIt'),
         i18n.t('phrasesDone.goalAchieved'),
@@ -101,9 +102,9 @@ const HourEntryCard = () => {
     setEncouragementPhrase(encouragementHourPhrase(progress))
   }, [encouragementHourPhrase, progress])
 
-  const hoursRemaining = useMemo(
-    () => calculateHoursRemaining({ hours, goalHours }),
-    [hours, goalHours]
+  const minutesRemaining = useMemo(
+    () => calculateMinutesRemaining({ minutes, goalHours }),
+    [minutes, goalHours]
   )
 
   const daysLeftInMonth = useMemo(() => getDaysLeftInCurrentMonth(), [])
@@ -113,9 +114,9 @@ const HourEntryCard = () => {
   const hoursPerDayNeeded = useMemo(
     () =>
       daysLeftInMonth === 0
-        ? hoursRemaining
-        : (hoursRemaining / daysLeftInMonth).toFixed(1),
-    [daysLeftInMonth, hoursRemaining]
+        ? minutesRemaining
+        : _.round(minutesRemaining / 60 / daysLeftInMonth, 1),
+    [daysLeftInMonth, minutesRemaining]
   )
 
   return (
@@ -153,7 +154,10 @@ const HourEntryCard = () => {
           >
             <View>
               <Text style={{ fontSize: 32, fontFamily: theme.fonts.bold }}>
-                {hours}
+                {_.round(
+                  minutes / 60,
+                  displayDetailsOnProgressBarHomeScreen ? 1 : 0
+                )}
               </Text>
               <View
                 style={{
@@ -177,25 +181,27 @@ const HourEntryCard = () => {
             <Text style={{ fontFamily: theme.fonts.bold, maxWidth: 200 }}>
               {encouragementPhrase}
             </Text>
-            <View
-              style={{
-                borderRadius: theme.numbers.borderRadiusLg,
-                backgroundColor: theme.colors.accent3,
-                paddingHorizontal: 20,
-                marginHorizontal: 15,
-                paddingVertical: 5,
-              }}
-            >
-              <Text
+            {hoursPerDayNeeded > 0 && (
+              <View
                 style={{
-                  fontSize: theme.fontSize('xs'),
-                  color: theme.colors.textInverse,
-                  fontFamily: theme.fonts.semiBold,
+                  borderRadius: theme.numbers.borderRadiusLg,
+                  backgroundColor: theme.colors.accent3,
+                  paddingHorizontal: 20,
+                  marginHorizontal: 15,
+                  paddingVertical: 5,
                 }}
               >
-                {hoursPerDayNeeded} {i18n.t('hoursPerDayToGoal')}
-              </Text>
-            </View>
+                <Text
+                  style={{
+                    fontSize: theme.fontSize('xs'),
+                    color: theme.colors.textInverse,
+                    fontFamily: theme.fonts.semiBold,
+                  }}
+                >
+                  {hoursPerDayNeeded} {i18n.t('hoursPerDayToGoal')}
+                </Text>
+              </View>
+            )}
             <Text style={{ fontSize: 8, color: theme.colors.textAlt }}>
               {i18n.t('goalBasedOnPublisherType')}
             </Text>

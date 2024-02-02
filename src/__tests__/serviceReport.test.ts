@@ -1,11 +1,11 @@
 import moment from 'moment'
 import {
-  calculateHoursRemaining,
+  calculateMinutesRemaining,
   calculateProgress,
   getTimeAsMinutesForHourglass,
   serviceReportHoursPerMonthToGoal,
-  totalHoursForCurrentMonth,
-  totalHoursForSpecificMonth,
+  totalMinutesForCurrentMonth,
+  totalMinutesForSpecificMonth,
 } from '../lib/serviceReport'
 import { ServiceReport } from '../types/serviceReport'
 import { Publisher } from '../types/publisher'
@@ -13,51 +13,51 @@ import { Publisher } from '../types/publisher'
 describe('lib/serviceReport', () => {
   describe('calculateProgress', () => {
     it('should not return less than 0', () => {
-      const progress = calculateProgress({ hours: -10, goalHours: 10 })
+      const progress = calculateProgress({ minutes: -10 * 60, goalHours: 10 })
       expect(progress).toBe(0)
     })
 
     it('should not return more than 1', () => {
-      const progress = calculateProgress({ hours: 1000, goalHours: 10 })
+      const progress = calculateProgress({ minutes: 1000 * 60, goalHours: 10 })
       expect(progress).toBe(1)
     })
 
     it('should return the percentage', () => {
-      const progress = calculateProgress({ hours: 5, goalHours: 10 })
+      const progress = calculateProgress({ minutes: 5 * 60, goalHours: 10 })
       expect(progress).toBe(0.5)
-      const progressTwo = calculateProgress({ hours: 3, goalHours: 10 })
+      const progressTwo = calculateProgress({ minutes: 3 * 60, goalHours: 10 })
       expect(progressTwo).toBe(0.3)
     })
   })
 
-  describe('calculateHoursRemaining', () => {
+  describe('calculateMinutesRemaining', () => {
     it('should not return less than 0', () => {
-      const hoursRemaining = calculateHoursRemaining({
-        hours: 100,
+      const minutesRemaining = calculateMinutesRemaining({
+        minutes: 100 * 60,
         goalHours: 10,
       })
-      expect(hoursRemaining).toBe(0)
+      expect(minutesRemaining).toBe(0)
     })
 
     it('should not return more than goalHours', () => {
-      const hoursRemaining = calculateHoursRemaining({
-        hours: 0,
+      const minutesRemaining = calculateMinutesRemaining({
+        minutes: 0,
         goalHours: 10,
       })
-      expect(hoursRemaining).toBe(10)
+      expect(minutesRemaining).toBe(10 * 60)
     })
 
-    it('should return the correct amount of hours remaining', () => {
-      const hoursRemaining = calculateHoursRemaining({
-        hours: 3,
+    it('should return the correct amount of minutes remaining', () => {
+      const hoursRemaining = calculateMinutesRemaining({
+        minutes: 3 * 60,
         goalHours: 10,
       })
-      expect(hoursRemaining).toBe(7)
+      expect(hoursRemaining).toBe(7 * 60)
     })
   })
 
-  describe('totalHoursForCurrentMonth', () => {
-    it('should return the number of hours in the month', () => {
+  describe('totalMinutesForCurrentMonth', () => {
+    it('should return the number of minutes in the month', () => {
       const serviceReports: ServiceReport[] = [
         {
           id: '1',
@@ -85,53 +85,20 @@ describe('lib/serviceReport', () => {
         },
       ]
 
-      const hours = totalHoursForCurrentMonth(serviceReports)
+      const minutes = totalMinutesForCurrentMonth(serviceReports)
 
-      expect(hours).toBe(2)
-    })
-
-    it('should round down time to nearest hour', () => {
-      const serviceReports: ServiceReport[] = [
-        {
-          id: '1',
-          date: new Date(),
-          hours: 1,
-          minutes: 0,
-        },
-        {
-          id: '2',
-          date: new Date(),
-          hours: 0,
-          minutes: 14,
-        },
-        {
-          id: '3',
-          date: new Date(),
-          hours: 0,
-          minutes: 15,
-        },
-        {
-          id: '4',
-          date: new Date(),
-          hours: 0,
-          minutes: 30,
-        },
-      ]
-
-      const hours = totalHoursForCurrentMonth(serviceReports)
-
-      expect(hours).toBe(1)
+      expect(minutes).toBe(2 * 60)
     })
 
     it('should return 0 if no reports provided', () => {
       const serviceReports: ServiceReport[] = []
 
-      const hours = totalHoursForCurrentMonth(serviceReports)
+      const minutes = totalMinutesForCurrentMonth(serviceReports)
 
-      expect(hours).toBe(0)
+      expect(minutes).toBe(0)
     })
 
-    it('should not include hours from previous or upcoming months', () => {
+    it('should not include minutes from previous or upcoming months', () => {
       const serviceReports: ServiceReport[] = [
         {
           id: '1',
@@ -159,14 +126,14 @@ describe('lib/serviceReport', () => {
         },
       ]
 
-      const hours = totalHoursForCurrentMonth(serviceReports)
+      const minutes = totalMinutesForCurrentMonth(serviceReports)
 
-      expect(hours).toBe(0)
+      expect(minutes).toBe(0)
     })
   })
 
-  describe('totalHoursForSpecificMonth', () => {
-    it('should return the number of hours in the month', () => {
+  describe('totalMinutesForSpecificMonth', () => {
+    it('should return the number of minutes in the month', () => {
       const serviceReports: ServiceReport[] = [
         {
           id: '1',
@@ -194,65 +161,28 @@ describe('lib/serviceReport', () => {
         },
       ]
 
-      const thisMonthsHours = totalHoursForSpecificMonth(
+      const thisMonthsMinutes = totalMinutesForSpecificMonth(
         serviceReports,
         moment().month(),
         moment().year()
       )
 
-      expect(thisMonthsHours).toBe(2)
-    })
-
-    it('should round down time to nearest hour', () => {
-      const serviceReports: ServiceReport[] = [
-        {
-          id: '1',
-          date: new Date(),
-          hours: 1,
-          minutes: 0,
-        },
-        {
-          id: '2',
-          date: new Date(),
-          hours: 0,
-          minutes: 14,
-        },
-        {
-          id: '3',
-          date: new Date(),
-          hours: 0,
-          minutes: 15,
-        },
-        {
-          id: '4',
-          date: new Date(),
-          hours: 0,
-          minutes: 30,
-        },
-      ]
-
-      const hours = totalHoursForSpecificMonth(
-        serviceReports,
-        moment().month(),
-        moment().year()
-      )
-
-      expect(hours).toBe(1)
+      expect(thisMonthsMinutes).toBe(2 * 60)
     })
 
     it('should return 0 if no reports provided', () => {
       const serviceReports: ServiceReport[] = []
 
-      const hours = totalHoursForSpecificMonth(
+      const minutes = totalMinutesForSpecificMonth(
         serviceReports,
         moment().month(),
         moment().year()
       )
 
-      expect(hours).toBe(0)
+      expect(minutes).toBe(0)
     })
 
-    it('should not include hours from previous or upcoming months', () => {
+    it('should not include minutes from previous or upcoming months', () => {
       const serviceReports: ServiceReport[] = [
         {
           id: '1',
@@ -286,13 +216,13 @@ describe('lib/serviceReport', () => {
         },
       ]
 
-      const hours = totalHoursForSpecificMonth(
+      const minutes = totalMinutesForSpecificMonth(
         serviceReports,
         moment().month(),
         moment().year()
       )
 
-      expect(hours).toBe(1001)
+      expect(minutes).toBe(1001 * 60)
     })
   })
 
@@ -313,25 +243,17 @@ describe('lib/serviceReport', () => {
       expect(minutes).toBe(0)
     })
 
-    it('should return your hours as minutes if you are a non-publisher', () => {
+    it('should return your minutes if you are a non-publisher', () => {
       const publisher: Publisher = 'regularPioneer'
 
-      const minutes = getTimeAsMinutesForHourglass(publisher, true, 10)
+      const minutes = getTimeAsMinutesForHourglass(publisher, true, 600)
 
       expect(minutes).toBe(600)
     })
-
-    it('should not return hours', () => {
-      const publisher: Publisher = 'regularPioneer'
-
-      const minutes = getTimeAsMinutesForHourglass(publisher, true, 10)
-
-      expect(minutes).not.toBe(10)
-    })
   })
 
-  describe('serviceYearHoursPerMonthToGoal', () => {
-    it("should be the publisher's goal hours if 0 entries for year", () => {
+  describe('serviceYearMinutesPerMonthToGoal', () => {
+    it("should be the publisher's goal minutes if 0 entries for year", () => {
       const serviceReports: ServiceReport[] = []
 
       const goalHours = 50

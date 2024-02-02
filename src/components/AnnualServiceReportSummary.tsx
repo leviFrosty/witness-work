@@ -4,7 +4,7 @@ import Card from './Card'
 import Text from './MyText'
 import usePublisher from '../hooks/usePublisher'
 import {
-  getTotalHoursForServiceYear,
+  getTotalMinutesForServiceYear,
   serviceReportHoursPerMonthToGoal,
 } from '../lib/serviceReport'
 import SimpleProgressBar from './SimpleProgressBar'
@@ -18,6 +18,7 @@ import {
   faCaretUp,
   faMinus,
 } from '@fortawesome/free-solid-svg-icons'
+import _ from 'lodash'
 
 /** Renders all service reports for the given year as a summary. */
 interface AnnualServiceReportSummaryProps {
@@ -45,16 +46,14 @@ const AnnualServiceReportSummary = ({
   const { annualGoalHours, goalHours } = usePublisher()
   const { serviceReports } = useServiceReport()
 
-  const totalHoursForServiceYear = getTotalHoursForServiceYear(
+  const totalMinutesForServiceYear = getTotalMinutesForServiceYear(
     serviceReports,
     serviceYear
   )
 
   const percentage = useMemo(() => {
-    return parseFloat(
-      (totalHoursForServiceYear / annualGoalHours).toPrecision(3)
-    )
-  }, [totalHoursForServiceYear, annualGoalHours])
+    return _.round(totalMinutesForServiceYear / 60 / annualGoalHours, 6)
+  }, [totalMinutesForServiceYear, annualGoalHours])
 
   const hoursPerMonthToGoal = useMemo(() => {
     return serviceReportHoursPerMonthToGoal({
@@ -101,7 +100,7 @@ const AnnualServiceReportSummary = ({
               fontFamily: theme.fonts.semiBold,
             }}
           >
-            {`${totalHoursForServiceYear} ${i18n.t(
+            {`${_.round(totalMinutesForServiceYear / 60, 1)} ${i18n.t(
               'of'
             )} ${annualGoalHours} ${i18n.t('hours')}`}
           </Text>
@@ -110,7 +109,7 @@ const AnnualServiceReportSummary = ({
       <SimpleProgressBar
         percentage={percentage}
         height={10}
-        color={theme.colors.textAlt}
+        color={percentage >= 1 ? theme.colors.accent : theme.colors.textAlt}
       />
       <View style={{ flexDirection: 'row' }}>
         <Badge

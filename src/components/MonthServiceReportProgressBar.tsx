@@ -4,8 +4,8 @@ import { useServiceReport } from '../stores/serviceReport'
 import useTheme from '../contexts/theme'
 import {
   calculateProgress,
-  getTotalHoursDetailedForSpecificMonth,
-  totalHoursForSpecificMonth,
+  getTotalMinutesDetailedForSpecificMonth,
+  totalMinutesForSpecificMonth,
 } from '../lib/serviceReport'
 import { useCallback, useMemo } from 'react'
 import Text from './MyText'
@@ -120,26 +120,29 @@ const MonthServiceReportProgressBar = ({
   const { publisher, publisherHours } = usePreferences()
   const goalHours = publisherHours[publisher]
 
-  const totalHours = useMemo(
-    () => totalHoursForSpecificMonth(serviceReports, month, year),
+  const totalMinutes = useMemo(
+    () => totalMinutesForSpecificMonth(serviceReports, month, year),
     [month, serviceReports, year]
   )
 
   const progress = useMemo(
-    () => calculateProgress({ hours: totalHours, goalHours }),
-    [totalHours, goalHours]
+    () => calculateProgress({ minutes: totalMinutes, goalHours }),
+    [totalMinutes, goalHours]
   )
 
-  const hoursDetailed = useMemo(
-    () => getTotalHoursDetailedForSpecificMonth(serviceReports, month, year),
+  const minutesDetailed = useMemo(
+    () => getTotalMinutesDetailedForSpecificMonth(serviceReports, month, year),
     [month, serviceReports, year]
   )
 
-  const hasStandardHours = useMemo(
-    () => hoursDetailed.standard > 0,
-    [hoursDetailed.standard]
+  const hasStandardMinutes = useMemo(
+    () => minutesDetailed.standard > 0,
+    [minutesDetailed.standard]
   )
-  const hasLdcHours = useMemo(() => hoursDetailed.ldc > 0, [hoursDetailed.ldc])
+  const hasLdcMinutes = useMemo(
+    () => minutesDetailed.ldc > 0,
+    [minutesDetailed.ldc]
+  )
 
   const otherColors = useMemo(
     () =>
@@ -167,7 +170,7 @@ const MonthServiceReportProgressBar = ({
 
   const renderOtherHours = useCallback(() => {
     let currentIndex = 0
-    return hoursDetailed.other.map((report, index) => {
+    return minutesDetailed.other.map((report, index) => {
       if (currentIndex > otherColors.length - 1) {
         currentIndex = 0
       }
@@ -179,15 +182,15 @@ const MonthServiceReportProgressBar = ({
         <OtherHours
           key={`${report.tag}-${index}`}
           color={color}
-          percentage={report.hours / totalHours}
+          percentage={report.minutes / totalMinutes}
         />
       )
     })
-  }, [hoursDetailed.other, otherColors, totalHours])
+  }, [minutesDetailed.other, otherColors, totalMinutes])
 
   const renderOtherHoursColorKeys = useCallback(() => {
     let currentIndex = 0
-    return hoursDetailed.other.map((report, index) => {
+    return minutesDetailed.other.map((report, index) => {
       if (currentIndex > otherColors.length - 1) {
         currentIndex = 0
       }
@@ -203,7 +206,7 @@ const MonthServiceReportProgressBar = ({
         />
       )
     })
-  }, [hoursDetailed.other, otherColors])
+  }, [minutesDetailed.other, otherColors])
 
   return (
     <View
@@ -232,15 +235,15 @@ const MonthServiceReportProgressBar = ({
             alignItems: 'center',
           }}
         >
-          {hasStandardHours && (
+          {hasStandardMinutes && (
             <StandardHours
-              percentage={hoursDetailed.standard / totalHours}
+              percentage={minutesDetailed.standard / totalMinutes}
               color={theme.colors.accent}
             />
           )}
-          {hasLdcHours && (
+          {hasLdcMinutes && (
             <LdcHours
-              percentage={hoursDetailed.ldc / totalHours}
+              percentage={minutesDetailed.ldc / totalMinutes}
               color={minimal ? theme.colors.accent : theme.colors.accentAlt}
             />
           )}
@@ -256,13 +259,13 @@ const MonthServiceReportProgressBar = ({
             flexWrap: 'wrap',
           }}
         >
-          {hasStandardHours && (
+          {hasStandardMinutes && (
             <ProgressBarKey
               color={theme.colors.accent}
               label={i18n.t('standard')}
             />
           )}
-          {hasLdcHours && (
+          {hasLdcMinutes && (
             <ProgressBarKey
               color={theme.colors.accentAlt}
               label={i18n.t('ldc')}

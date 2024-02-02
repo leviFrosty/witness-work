@@ -327,6 +327,11 @@
   "new": "New",
   "bugFixes": "Bug Fixes",
   "updates": {
+    "1202": {
+      "c1": "Greatly improved accuracy of time displays.",
+      "c2": "Improved accuracy of time progress bars.",
+      "c3": "Added helpful hints for actions that may not be immediately noticeable."
+    },
     "1201": {
       "c1": "Updates monthly routine section of home screen to show surrounding months.",
       "c2": "Significantly improved Korean translations - thank you brother Paul. If you'd like to help translate your own language, please visit the settings.",

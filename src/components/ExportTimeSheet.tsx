@@ -21,8 +21,8 @@ import { useCallback, useMemo } from 'react'
 import {
   getTimeAsMinutesForHourglass,
   hasServiceReportsForMonth,
-  otherHoursForSpecificMonth,
-  totalHoursForSpecificMonth,
+  otherMinutesForSpecificMonth,
+  totalMinutesForSpecificMonth,
 } from '../lib/serviceReport'
 import useTheme from '../contexts/theme'
 import useServiceReport from '../stores/serviceReport'
@@ -30,6 +30,7 @@ import { useNavigation } from '@react-navigation/native'
 import { RootStackNavigation } from '../stacks/RootStack'
 import links from '../constants/links'
 import { openURL } from '../lib/links'
+import _ from 'lodash'
 
 export type ExportTimeSheetState = {
   open: boolean
@@ -56,10 +57,10 @@ const ExportTimeSheet = ({
   const { month, year } = sheet
   const navigation = useNavigation<RootStackNavigation>()
 
-  const hours = useMemo(
+  const minutes = useMemo(
     () =>
       month !== undefined && year !== undefined
-        ? totalHoursForSpecificMonth(serviceReports, month, year)
+        ? totalMinutesForSpecificMonth(serviceReports, month, year)
         : null,
     [month, serviceReports, year]
   )
@@ -87,19 +88,23 @@ const ExportTimeSheet = ({
   const handleAction = useCallback(
     async (action: 'copy' | 'hourglass' | 'share') => {
       const otherHoursAsString = () => {
-        const otherHours = otherHoursForSpecificMonth(
+        const otherMinutes = otherMinutesForSpecificMonth(
           serviceReports,
           month || 0,
           year || 0
         )
 
-        if (otherHours.length > 1) {
-          return otherHours.reduce(
+        const otherMinutesWithAtLeastOneHour = otherMinutes.filter((item) =>
+          Math.floor(item.minutes / 60)
+        )
+
+        if (otherMinutesWithAtLeastOneHour.length > 0) {
+          return otherMinutes.reduce(
             (acc, curr, index) => {
               return (
                 acc +
-                `${curr.tag}: ${curr.hours}${
-                  index !== otherHours.length - 1 ? '\n' : ''
+                `${curr.tag}: ${Math.floor(curr.minutes / 60)}${
+                  index !== otherMinutes.length - 1 ? '\n' : ''
                 }`
               )
             },
@@ -122,7 +127,7 @@ const ExportTimeSheet = ({
               return i18n.t('no')
             }
           }
-          return hours
+          return Math.floor((minutes || 0) / 60)
         }
 
         return `${i18n.t('serviceReport')} - ${moment()
@@ -149,7 +154,7 @@ const ExportTimeSheet = ({
           }month=${hourglassMonth}&year=${year}&minutes=${getTimeAsMinutesForHourglass(
             publisher,
             wentOutForMonth,
-            hours
+            minutes
           )}&studies=${studiesForMonth}&remarks=${encodeURI(
             otherHoursAsString()
           )}`
@@ -168,7 +173,7 @@ const ExportTimeSheet = ({
       setSheet({ open: false, month: 0, year: 0 })
     },
     [
-      hours,
+      minutes,
       month,
       publisher,
       serviceReports,

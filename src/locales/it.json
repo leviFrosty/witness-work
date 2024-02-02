@@ -327,6 +327,12 @@
   "new": "Nuovo",
   "bugFixes": "Correzioni di bug",
   "updates": {
+    "1210": {
+      "c1": "Precisione notevolmente migliorata della visualizzazione dell'ora.",
+      "c2": "Migliorata la precisione delle barre di avanzamento del tempo.",
+      "c3": "Aggiunti suggerimenti utili per azioni che potrebbero non essere immediatamente evidenti.",
+      "c4": "Miglioramento della qualità della vita nella schermata delle mappe con informazioni più pertinenti e un pulsante di aggiunta rapida."
+    },
     "1201": {
       "c1": "Correzioni di bug minori.",
       "c2": "Traduzioni coreane notevolmente migliorate: grazie fratello Paul. Se desideri aiutare a tradurre la tua lingua, visita le impostazioni.",
@@ -492,5 +498,7 @@
   "sharingIsNotAvailable": "La condivisione non è disponibile su questa piattaforma.",
   "backup_lowercase": "backup",
   "errorExporting": "Errore durante l'esportazione",
-  "errorExporting_description": "Si è verificato un errore durante l'esportazione dei tuoi dati. Assicurati che il tuo dispositivo disponga di spazio di archiviazione sufficiente e che la condivisione sia disponibile, quindi riprova."
+  "errorExporting_description": "Si è verificato un errore durante l'esportazione dei tuoi dati. Assicurati che il tuo dispositivo disponga di spazio di archiviazione sufficiente e che la condivisione sia disponibile, quindi riprova.",
+  "map_noContactsWithGeocodes": "Non hai ancora nessun contatto con le coordinate. Prova ad aggiungere un contatto o ad aggiornare i tuoi contatti esistenti per includere una coordinata.",
+  "noContactsToDisplay": "Nessun contatto da visualizzare"
 }

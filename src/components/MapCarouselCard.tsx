@@ -59,7 +59,7 @@ const MapCarouselCard = ({ contact, setSheet }: Props) => {
 
   const addressUriEncoded = encodeURI(address)
   const appleMapsLink = `${links.appleMapsBase}/?q=${addressUriEncoded}`
-  const googleMapsLink = `${links.googleMapsBase}/?api=1&query=${addressUriEncoded}`
+  const googleMapsLink = `${links.googleMapsBase}${addressUriEncoded}`
 
   return (
     <Button

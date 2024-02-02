@@ -45,8 +45,8 @@ const AddTimeScreen = ({ route }: AddTimeScreenProps) => {
     hours: 0,
     minutes: 0,
     date: moment()
-      .month(route.params?.month || moment().month())
-      .year(route.params?.year || moment().year())
+      .month(route.params?.month ?? moment().month())
+      .year(route.params?.year ?? moment().year())
       .toDate(),
     ldc: false,
   })

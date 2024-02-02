@@ -327,7 +327,7 @@
   "new": "New",
   "bugFixes": "Bug Fixes",
   "updates": {
-    "1202": {
+    "1210": {
       "c1": "Greatly improved accuracy of time displays.",
       "c2": "Improved accuracy of time progress bars.",
       "c3": "Added helpful hints for actions that may not be immediately noticeable.",

@@ -327,6 +327,9 @@
   "new": "Nuovo",
   "bugFixes": "Correzioni di bug",
   "updates": {
+    "1211": {
+      "c1": "Aggiunti suggerimenti una tantum più utili quando appropriato."
+    },
     "1210": {
       "c1": "Precisione notevolmente migliorata della visualizzazione dell'ora.",
       "c2": "Migliorata la precisione delle barre di avanzamento del tempo.",
@@ -500,5 +503,10 @@
   "errorExporting": "Errore durante l'esportazione",
   "errorExporting_description": "Si è verificato un errore durante l'esportazione dei tuoi dati. Assicurati che il tuo dispositivo disponga di spazio di archiviazione sufficiente e che la condivisione sia disponibile, quindi riprova.",
   "map_noContactsWithGeocodes": "Non hai ancora nessun contatto con le coordinate. Prova ad aggiungere un contatto o ad aggiornare i tuoi contatti esistenti per includere una coordinata.",
-  "noContactsToDisplay": "Nessun contatto da visualizzare"
+  "noContactsToDisplay": "Nessun contatto da visualizzare",
+  "gotIt": "Fatto!",
+  "hint": "Suggerimento",
+  "howToDeleteTime": "Elimina un inserimento temporale scorrendo su di esso da destra, provalo!",
+  "howToArchiveContact": "Archivia i vecchi contatti scorrendo da destra. I contatti archiviati possono essere ripristinati in seguito dalle impostazioni.",
+  "howToEditAndDeleteConversation": "Modifica una conversazione toccandola o scorrendola da sinistra.\n\nPer eliminarlo, scorrilo da destra."
 }

@@ -500,5 +500,10 @@
   "errorExporting": "Fout bij exporteren",
   "errorExporting_description": "Er is een fout opgetreden bij het exporteren van uw gegevens. Zorg ervoor dat uw apparaat voldoende opslagruimte heeft en dat delen beschikbaar is, en probeer het vervolgens opnieuw.",
   "map_noContactsWithGeocodes": "U heeft nog geen contacten met coördinaten. Probeer een contactpersoon toe te voegen of update uw bestaande contactpersonen met een coördinaat.",
-  "noContactsToDisplay": "Geen contacten om weer te geven"
+  "noContactsToDisplay": "Geen contacten om weer te geven",
+  "gotIt": "Begrepen!",
+  "hint": "Tip",
+  "howToDeleteTime": "Verwijder een tijdsinvoer door er vanaf de rechterkant over te vegen, probeer het!",
+  "howToEditAndDeleteConversation": "Bewerk een gesprek door erop te tikken of er vanaf de linkerkant over te vegen.\n\nOm te verwijderen, veegt u er vanaf de rechterkant over.",
+  "howToArchiveContact": "Archiveer oude contacten door er vanaf de rechterkant over te vegen. Gearchiveerde contacten kunnen later vanuit de instellingen worden hersteld."
 }

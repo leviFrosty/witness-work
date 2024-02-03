@@ -500,5 +500,10 @@
   "errorExporting": "エクスポート中にエラーが発生しました",
   "errorExporting_description": "データのエクスポート中にエラーが発生しました。デバイスに十分なストレージがあり、共有が利用可能であることを確認してから、もう一度お試しください。",
   "map_noContactsWithGeocodes": "まだ座標との連絡先がありません。連絡先を追加するか、既存の連絡先を更新して座標を含めてみてください。",
-  "noContactsToDisplay": "表示する連絡先がありません"
+  "noContactsToDisplay": "表示する連絡先がありません",
+  "gotIt": "わかった！",
+  "hint": "ヒント",
+  "howToDeleteTime": "時間エントリを右からスワイプして削除します。試してみてください。",
+  "howToEditAndDeleteConversation": "会話を編集するには、会話をタップするか、左からスワイプします。\n\n削除するには、右からスワイプします。",
+  "howToArchiveContact": "古い連絡先を右からスワイプしてアーカイブします。アーカイブされた連絡先は、後で設定から復元できます。"
 }

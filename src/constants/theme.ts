@@ -23,6 +23,7 @@ export const lightModeColors = {
   error: '#E30909',
   errorAlt: '#FA6868',
   warn: '#FCC014',
+  warnTranslucent: '#FCC01433',
   warnAlt: '#FFEAB8',
   shadow: '#000000',
 }
@@ -48,6 +49,7 @@ const darkModeColors: Colors = {
   error: '#F20A0A',
   errorAlt: '#FA6868',
   warn: '#FCC014',
+  warnTranslucent: '#FCC01433',
   warnAlt: '#FFEAB8',
   shadow: '#000000',
 }

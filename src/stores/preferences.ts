@@ -59,6 +59,16 @@ interface TimeOffset {
   unit?: moment.unitOfTime.DurationConstructor
 }
 
+/**
+ * These hints are enabled if true, and dismissed if false. See
+ * `usePreferences.removeHint()` to set a hint to false.
+ */
+export const hints = {
+  howToDeleteTime: true,
+  howToArchiveContact: true,
+  howToEditAndDeleteConversation: true,
+}
+
 const initialState = {
   publisher: 'publisher' as Publisher,
   publisherHours: publisherHours,
@@ -89,6 +99,7 @@ const initialState = {
     Device.deviceType === Device.DeviceType.TABLET,
   monthlyRoutineHasShownInvalidMonthAlert: false,
   hideDonateHeart: false,
+  ...hints,
 }
 
 export const usePreferences = create(
@@ -104,6 +115,12 @@ export const usePreferences = create(
         set({ lastTimeRequestedAReview: new Date() }),
       setContactSort: (contactSort: (typeof SortOptionValues)[number]) =>
         set({ contactSort }),
+      removeHint: (hint: keyof typeof hints) =>
+        set((preferences) => {
+          const updatedPreferences = { ...preferences }
+          updatedPreferences[hint] = false
+          return updatedPreferences
+        }),
     })),
     {
       name: 'preferences',

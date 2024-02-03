@@ -500,5 +500,10 @@
   "errorExporting": "导出时出错",
   "errorExporting_description": "导出您的数据时出错。请确保您的设备有足够的存储空间并且可以共享，然后重试。",
   "map_noContactsWithGeocodes": "您还没有任何坐标联系人。尝试添加联系人或更新现有联系人以包含坐标。",
-  "noContactsToDisplay": "没有可显示的联系人"
+  "noContactsToDisplay": "没有可显示的联系人",
+  "gotIt": "知道了！",
+  "hint": "暗示",
+  "howToDeleteTime": "从右侧滑动即可删除时间条目，试试吧！",
+  "howToEditAndDeleteConversation": "通过点击或从左侧滑动来编辑对话。\n\n要删除，请从右侧滑动。",
+  "howToArchiveContact": "从右侧滑动即可存档旧联系人。存档的联系人可以稍后从设置中恢复。"
 }

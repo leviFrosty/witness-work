@@ -500,5 +500,10 @@
   "errorExporting": "Error sa Pag-export",
   "errorExporting_description": "Nagkaroon ng error sa pag-export ng iyong data. Pakitiyak na may sapat na storage ang iyong device at available ang pagbabahagi, pagkatapos ay subukang muli.",
   "map_noContactsWithGeocodes": "Wala ka pang anumang mga contact na may mga coordinate. Subukang magdagdag ng contact o i-update ang iyong mga kasalukuyang contact para magsama ng coordinate.",
-  "noContactsToDisplay": "Walang mga contact na ipapakita"
+  "noContactsToDisplay": "Walang mga contact na ipapakita",
+  "gotIt": "Nakuha ko!",
+  "hint": "Pahiwatig",
+  "howToDeleteTime": "Magtanggal ng time entry sa pamamagitan ng pag-swipe dito mula sa kanan, subukan ito!",
+  "howToEditAndDeleteConversation": "I-edit ang isang pag-uusap sa pamamagitan ng pag-tap dito o mag-swipe dito mula sa kaliwa.\n\nUpang tanggalin, mag-swipe dito mula sa kanan.",
+  "howToArchiveContact": "I-archive ang mga lumang contact sa pamamagitan ng pag-swipe dito mula sa kanan. Ang mga naka-archive na contact ay maaaring maibalik sa ibang pagkakataon mula sa mga setting."
 }

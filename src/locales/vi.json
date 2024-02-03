@@ -500,5 +500,10 @@
   "errorExporting": "Lỗi xuất",
   "errorExporting_description": "Đã xảy ra lỗi khi xuất dữ liệu của bạn. Hãy đảm bảo thiết bị của bạn có đủ bộ nhớ và tính năng chia sẻ có sẵn, sau đó thử lại.",
   "map_noContactsWithGeocodes": "Bạn chưa có bất kỳ liên hệ nào có tọa độ. Hãy thử thêm liên hệ hoặc cập nhật liên hệ hiện có của bạn để bao gồm tọa độ.",
-  "noContactsToDisplay": "Không có liên hệ nào để hiển thị"
+  "noContactsToDisplay": "Không có liên hệ nào để hiển thị",
+  "gotIt": "Hiểu rồi!",
+  "hint": "Gợi ý",
+  "howToDeleteTime": "Xóa mục thời gian bằng cách vuốt từ bên phải vào mục đó, hãy thử!",
+  "howToEditAndDeleteConversation": "Chỉnh sửa cuộc trò chuyện bằng cách nhấn vào cuộc trò chuyện đó hoặc vuốt từ bên trái.\n\nĐể xóa, hãy vuốt vào nó từ bên phải.",
+  "howToArchiveContact": "Lưu trữ danh bạ cũ bằng cách vuốt từ bên phải. Danh bạ đã lưu trữ có thể được khôi phục sau từ cài đặt."
 }

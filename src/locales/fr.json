@@ -500,5 +500,10 @@
   "errorExporting": "Erreur lors de l'exportation",
   "errorExporting_description": "Une erreur s'est produite lors de l'exportation de vos données. Veuillez vous assurer que votre appareil dispose de suffisamment de stockage et que le partage est disponible, puis réessayez.",
   "map_noContactsWithGeocodes": "Vous n'avez pas encore de contacts avec des coordonnées. Essayez d'ajouter un contact ou de mettre à jour vos contacts existants pour inclure une coordonnée.",
-  "noContactsToDisplay": "Aucun contact à afficher"
+  "noContactsToDisplay": "Aucun contact à afficher",
+  "gotIt": "J'ai compris!",
+  "hint": "Indice",
+  "howToDeleteTime": "Supprimez une entrée de temps en la faisant glisser depuis la droite, essayez-la !",
+  "howToEditAndDeleteConversation": "Modifiez une conversation en appuyant dessus ou en faisant glisser votre doigt vers la gauche.\n\nPour supprimer, faites glisser votre doigt dessus depuis la droite.",
+  "howToArchiveContact": "Archivez les anciens contacts en les faisant glisser depuis la droite. Les contacts archivés peuvent être restaurés ultérieurement à partir des paramètres."
 }

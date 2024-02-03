@@ -52,6 +52,7 @@ import { useNavigation } from '@react-navigation/native'
 import { usePreferences } from '../stores/preferences'
 import { handleCall, handleMessage } from '../lib/phone'
 import { openURL } from '../lib/links'
+import HintCard from '../components/HintCard'
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Contact Details'>
 
@@ -535,6 +536,7 @@ const ContactDetailsScreen = ({ route, navigation }: Props) => {
   const theme = useTheme()
   const { params } = route
   const insets = useSafeAreaInsets()
+  const { howToEditAndDeleteConversation } = usePreferences()
   const { contacts, deleteContact } = useContacts()
   const contact = useMemo(
     () => contacts.find((c) => c.id === params.id),
@@ -709,6 +711,14 @@ const ContactDetailsScreen = ({ route, navigation }: Props) => {
               >
                 {i18n.t('conversationHistory')}
               </Text>
+              {howToEditAndDeleteConversation &&
+                contactConversationsSorted.length > 0 && (
+                  <View style={{ paddingHorizontal: 10 }}>
+                    <HintCard hintKey='howToEditAndDeleteConversation'>
+                      <Text>{i18n.t('howToEditAndDeleteConversation')}</Text>
+                    </HintCard>
+                  </View>
+                )}
               <View style={{ minHeight: 2 }}>
                 <FlashList
                   scrollEnabled={false}

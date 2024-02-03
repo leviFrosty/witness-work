@@ -52,6 +52,7 @@ const ConversationRow = ({
   ) => {
     if (direction === 'left') {
       handleNavigateEdit()
+      swipeable.reset()
     } else {
       Alert.alert(
         i18n.t('deleteConversation'),

@@ -30,6 +30,8 @@ import AnnualServiceReportSummary from '../components/AnnualServiceReportSummary
 import Header from '../components/layout/Header'
 import usePublisher from '../hooks/usePublisher'
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
+import { usePreferences } from '../stores/preferences'
+import HintCard from '../components/HintCard'
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Time Reports'>
 
@@ -37,6 +39,7 @@ const TimeReportsScreen = ({ route, navigation }: Props) => {
   const theme = useTheme()
   const { serviceReports } = useServiceReport()
   const { hasAnnualGoal } = usePublisher()
+  const { howToDeleteTime } = usePreferences()
   const insets = useSafeAreaInsets()
   const [year, setYear] = useState(route.params?.year || moment().year())
   const [month, setMonth] = useState(route.params?.month || moment().month())
@@ -245,6 +248,13 @@ const TimeReportsScreen = ({ route, navigation }: Props) => {
           >
             {i18n.t('entries')}
           </Text>
+          {howToDeleteTime &&
+            thisMonthsReports &&
+            thisMonthsReports.length > 0 && (
+              <HintCard hintKey='howToDeleteTime'>
+                <Text>{i18n.t('howToDeleteTime')}</Text>
+              </HintCard>
+            )}
           <View style={{ gap: 10, flex: 1, minHeight: 10 }}>
             <FlashList
               scrollEnabled={false}

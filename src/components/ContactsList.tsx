@@ -20,11 +20,12 @@ import Select from './Select'
 import ActionButton from './ActionButton'
 import IconButton from './IconButton'
 import { faPlus, faSort } from '@fortawesome/free-solid-svg-icons'
+import HintCard from './HintCard'
 
 const ContactsList = () => {
   const theme = useTheme()
   const [search, setSearch] = useState('')
-  const { contactSort, setContactSort } = usePreferences()
+  const { contactSort, setContactSort, howToArchiveContact } = usePreferences()
   const { conversations } = useConversations()
   const { contacts } = useContacts()
   const navigation = useNavigation<RootStackNavigation>()
@@ -183,7 +184,12 @@ const ContactsList = () => {
             </View>
           </ActionButton>
         </View>
-        <View style={{ flex: 1, minHeight: 10 }}>
+        <View style={{ flex: 1, minHeight: 10, gap: 10 }}>
+          {howToArchiveContact && (
+            <HintCard hintKey='howToArchiveContact'>
+              <Text>{i18n.t('howToArchiveContact')}</Text>
+            </HintCard>
+          )}
           <FlashList
             data={searchResultsSorted}
             renderItem={({ item }) => (

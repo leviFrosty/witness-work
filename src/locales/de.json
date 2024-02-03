@@ -500,5 +500,10 @@
   "errorExporting": "Fehler beim Exportieren",
   "errorExporting_description": "Beim Exportieren Ihrer Daten ist ein Fehler aufgetreten. Bitte stellen Sie sicher, dass Ihr Gerät über genügend Speicherplatz verfügt und die Freigabe verfügbar ist, und versuchen Sie es dann erneut.",
   "map_noContactsWithGeocodes": "Sie haben noch keine Kontakte mit Koordinaten. Versuchen Sie, einen Kontakt hinzuzufügen oder aktualisieren Sie Ihre vorhandenen Kontakte, um eine Koordinate hinzuzufügen.",
-  "noContactsToDisplay": "Keine Kontakte zum Anzeigen vorhanden"
+  "noContactsToDisplay": "Keine Kontakte zum Anzeigen vorhanden",
+  "gotIt": "Habe es!",
+  "hint": "Hinweis",
+  "howToDeleteTime": "Löschen Sie einen Zeiteintrag, indem Sie von rechts darüber wischen, probieren Sie es aus!",
+  "howToEditAndDeleteConversation": "Bearbeiten Sie eine Konversation, indem Sie darauf tippen oder von links darüber wischen.\n\nZum Löschen wischen Sie von rechts darüber.",
+  "howToArchiveContact": "Archivieren Sie alte Kontakte, indem Sie von rechts darüber wischen. Archivierte Kontakte können später über die Einstellungen wiederhergestellt werden."
 }

@@ -407,6 +407,9 @@
       "c2": "Verbesserte Genauigkeit der Zeitfortschrittsbalken.",
       "c3": "Hilfreiche Hinweise für Aktionen hinzugefügt, die möglicherweise nicht sofort erkennbar sind.",
       "c4": "Verbesserte Lebensqualität auf dem Kartenbildschirm mit relevanteren Informationen und einer Schaltfläche zum schnellen Hinzufügen."
+    },
+    "1211": {
+      "c1": "Gegebenenfalls wurden weitere hilfreiche einmalige Hinweise hinzugefügt."
     }
   },
   "installed": "Eingerichtet",

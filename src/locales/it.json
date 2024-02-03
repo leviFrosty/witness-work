@@ -407,6 +407,9 @@
       "c2": "Migliorata la precisione delle barre di avanzamento del tempo.",
       "c3": "Aggiunti suggerimenti utili per azioni che potrebbero non essere immediatamente evidenti.",
       "c4": "Miglioramento della qualità della vita nella schermata delle mappe con informazioni più pertinenti e un pulsante di aggiunta rapida."
+    },
+    "1211": {
+      "c1": "Aggiunti suggerimenti una tantum più utili quando appropriato."
     }
   },
   "installed": "Installato",

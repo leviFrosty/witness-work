@@ -407,6 +407,9 @@
       "c2": "Amélioration de la précision des barres de progression temporelle.",
       "c3": "Ajout de conseils utiles pour les actions qui peuvent ne pas être immédiatement perceptibles.",
       "c4": "Qualité de vie améliorée sur l'écran des cartes avec des informations plus pertinentes et un bouton d'ajout rapide."
+    },
+    "1211": {
+      "c1": "Ajout d'indices ponctuels plus utiles, le cas échéant."
     }
   },
   "installed": "installée",

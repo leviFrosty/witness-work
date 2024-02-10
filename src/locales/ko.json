@@ -508,5 +508,6 @@
   "hint": "힌트",
   "howToDeleteTime": "시간 항목을 오른쪽에서 스와이프하여 삭제해 보세요!",
   "howToArchiveContact": "오른쪽에서 스와이프하여 오래된 연락처를 보관하세요. 보관된 연락처는 나중에 설정에서 복원할 수 있습니다.",
-  "howToEditAndDeleteConversation": "대화를 탭하거나 왼쪽에서 스와이프하여 편집하세요.\n\n삭제하려면 오른쪽에서 스와이프하세요."
+  "howToEditAndDeleteConversation": "대화를 탭하거나 왼쪽에서 스와이프하여 편집하세요.\n\n삭제하려면 오른쪽에서 스와이프하세요.",
+  "detailedProgressBar_description": "홈 화면 진행 표시줄을 업데이트하고 시간 항목을 범주별로 분류합니다. 또한 시간을 십진수로 표시하므로 더 정확합니다."
 }

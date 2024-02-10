@@ -1,21 +1,63 @@
 import Wrapper from '../../../components/layout/Wrapper'
-import PublisherPreferencesSection from './sections/PublisherPreferencesSection'
-import ConversationsPreferencesSection from './sections/ConversationsPreferencesSection'
-import NavigationPreferencesSection from './sections/NavigationPreferencesSection'
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
 import AppPreferencesSection from './sections/AppPreferencesSection'
-import HomeScreenPreferencesSection from './sections/HomeScreenPreferencesSection'
+import Section from '../../../components/inputs/Section'
+import InputRowButton from '../../../components/inputs/InputRowButton'
+import {
+  faChevronRight,
+  faComments,
+  faHome,
+  faRoute,
+  faUser,
+} from '@fortawesome/free-solid-svg-icons'
+import i18n from '../../../lib/locales'
+import { useNavigation } from '@react-navigation/native'
+import { RootStackNavigation } from '../../../stacks/RootStack'
+import IconButton from '../../../components/IconButton'
+import { View } from 'react-native'
 
 const PreferencesScreen = () => {
+  const navigation = useNavigation<RootStackNavigation>()
+
   return (
     <Wrapper insets='bottom'>
       <KeyboardAwareScrollView
         contentContainerStyle={{ gap: 30, paddingTop: 30, paddingBottom: 30 }}
       >
-        <PublisherPreferencesSection />
-        <ConversationsPreferencesSection />
-        <NavigationPreferencesSection />
-        <HomeScreenPreferencesSection />
+        <View style={{ gap: 5 }}>
+          <Section>
+            <InputRowButton
+              leftIcon={faUser}
+              label={i18n.t('publisher')}
+              onPress={() => navigation.navigate('PreferencesPublisher')}
+            >
+              <IconButton icon={faChevronRight} />
+            </InputRowButton>
+            <InputRowButton
+              leftIcon={faComments}
+              label={i18n.t('conversations')}
+              onPress={() => navigation.navigate('PreferencesConversation')}
+            >
+              <IconButton icon={faChevronRight} />
+            </InputRowButton>
+            <InputRowButton
+              leftIcon={faRoute}
+              label={i18n.t('navigation')}
+              onPress={() => navigation.navigate('PreferencesNavigation')}
+            >
+              <IconButton icon={faChevronRight} />
+            </InputRowButton>
+            <InputRowButton
+              leftIcon={faHome}
+              label={i18n.t('homeScreen')}
+              onPress={() => navigation.navigate('PreferencesHomeScreen')}
+              lastInSection
+            >
+              <IconButton icon={faChevronRight} />
+            </InputRowButton>
+          </Section>
+        </View>
+
         <AppPreferencesSection />
       </KeyboardAwareScrollView>
     </Wrapper>

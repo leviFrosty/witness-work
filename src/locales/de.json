@@ -508,5 +508,6 @@
   "hint": "Hinweis",
   "howToDeleteTime": "Löschen Sie einen Zeiteintrag, indem Sie von rechts darüber wischen, probieren Sie es aus!",
   "howToEditAndDeleteConversation": "Bearbeiten Sie eine Konversation, indem Sie darauf tippen oder von links darüber wischen.\n\nZum Löschen wischen Sie von rechts darüber.",
-  "howToArchiveContact": "Archivieren Sie alte Kontakte, indem Sie von rechts darüber wischen. Archivierte Kontakte können später über die Einstellungen wiederhergestellt werden."
+  "howToArchiveContact": "Archivieren Sie alte Kontakte, indem Sie von rechts darüber wischen. Archivierte Kontakte können später über die Einstellungen wiederhergestellt werden.",
+  "detailedProgressBar_description": "Aktualisiert den Fortschrittsbalken des Startbildschirms und schlüsselt Ihre Zeiteinträge nach Kategorien auf. Außerdem wird Ihre Zeit als Dezimalzahl angezeigt, sodass sie genauer ist."
 }

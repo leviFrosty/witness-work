@@ -508,5 +508,6 @@
   "hint": "暗示",
   "howToDeleteTime": "从右侧滑动即可删除时间条目，试试吧！",
   "howToEditAndDeleteConversation": "通过点击或从左侧滑动来编辑对话。\n\n要删除，请从右侧滑动。",
-  "howToArchiveContact": "从右侧滑动即可存档旧联系人。存档的联系人可以稍后从设置中恢复。"
+  "howToArchiveContact": "从右侧滑动即可存档旧联系人。存档的联系人可以稍后从设置中恢复。",
+  "detailedProgressBar_description": "更新主屏幕进度条并按类别细分您的时间条目。它还将您的时间显示为十进制，因此更加准确。"
 }

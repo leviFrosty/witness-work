@@ -508,5 +508,6 @@
   "hint": "Tip",
   "howToDeleteTime": "Verwijder een tijdsinvoer door er vanaf de rechterkant over te vegen, probeer het!",
   "howToEditAndDeleteConversation": "Bewerk een gesprek door erop te tikken of er vanaf de linkerkant over te vegen.\n\nOm te verwijderen, veegt u er vanaf de rechterkant over.",
-  "howToArchiveContact": "Archiveer oude contacten door er vanaf de rechterkant over te vegen. Gearchiveerde contacten kunnen later vanuit de instellingen worden hersteld."
+  "howToArchiveContact": "Archiveer oude contacten door er vanaf de rechterkant over te vegen. Gearchiveerde contacten kunnen later vanuit de instellingen worden hersteld.",
+  "detailedProgressBar_description": "Werkt de voortgangsbalk van het startscherm bij en verdeelt uw tijdsinvoer per categorie. Het toont ook uw tijd als decimaal, zodat het nauwkeuriger is."
 }

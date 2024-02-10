@@ -508,5 +508,6 @@
   "hint": "Gợi ý",
   "howToDeleteTime": "Xóa mục thời gian bằng cách vuốt từ bên phải vào mục đó, hãy thử!",
   "howToEditAndDeleteConversation": "Chỉnh sửa cuộc trò chuyện bằng cách nhấn vào cuộc trò chuyện đó hoặc vuốt từ bên trái.\n\nĐể xóa, hãy vuốt vào nó từ bên phải.",
-  "howToArchiveContact": "Lưu trữ danh bạ cũ bằng cách vuốt từ bên phải. Danh bạ đã lưu trữ có thể được khôi phục sau từ cài đặt."
+  "howToArchiveContact": "Lưu trữ danh bạ cũ bằng cách vuốt từ bên phải. Danh bạ đã lưu trữ có thể được khôi phục sau từ cài đặt.",
+  "detailedProgressBar_description": "Cập nhật thanh tiến trình của màn hình chính và chia nhỏ các mục thời gian của bạn theo danh mục. Nó cũng hiển thị thời gian của bạn dưới dạng thập phân để chính xác hơn."
 }

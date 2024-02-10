@@ -24,6 +24,10 @@ import DonationInfoScreen from '../screens/DonationInfoScreen'
 import PaywallScreen from '../screens/PaywallScreen'
 import PaywallThankYouScreen from '../screens/PaywallThankYouScreen'
 import ImportAndExportScreen from '../screens/ImportAndExportScreen'
+import PreferencesPublisherScreen from '../screens/settings/preferences/screens/PreferencesPublisherScreen'
+import PreferencesConversationScreen from '../screens/settings/preferences/screens/PreferencesConversationScreen'
+import PreferencesNavigationScreen from '../screens/settings/preferences/screens/PreferencesNavigationScreen'
+import PreferencesHomeScreen from '../screens/settings/preferences/screens/PreferencesHomeScreen'
 
 export type RootStackParamList = {
   Root: undefined
@@ -46,6 +50,10 @@ export type RootStackParamList = {
   Paywall: undefined
   'Thank You': undefined
   'Import and Export': undefined
+  PreferencesPublisher: undefined
+  PreferencesConversation: undefined
+  PreferencesNavigation: undefined
+  PreferencesHomeScreen: undefined
 }
 
 export type RootStackNavigation = NativeStackNavigationProp<RootStackParamList>
@@ -182,6 +190,42 @@ const RootStackComponent = () => {
         }}
         name='Import and Export'
         component={ImportAndExportScreen}
+      />
+      <RootStack.Screen
+        options={{
+          header: () => (
+            <Header buttonType='back' title={i18n.t('publisher')} />
+          ),
+        }}
+        name='PreferencesPublisher'
+        component={PreferencesPublisherScreen}
+      />
+      <RootStack.Screen
+        options={{
+          header: () => (
+            <Header buttonType='back' title={i18n.t('conversations')} />
+          ),
+        }}
+        name='PreferencesConversation'
+        component={PreferencesConversationScreen}
+      />
+      <RootStack.Screen
+        options={{
+          header: () => (
+            <Header buttonType='back' title={i18n.t('navigation')} />
+          ),
+        }}
+        name='PreferencesNavigation'
+        component={PreferencesNavigationScreen}
+      />
+      <RootStack.Screen
+        options={{
+          header: () => (
+            <Header buttonType='back' title={i18n.t('homeScreen')} />
+          ),
+        }}
+        name='PreferencesHomeScreen'
+        component={PreferencesHomeScreen}
       />
     </RootStack.Navigator>
   )

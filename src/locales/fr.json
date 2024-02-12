@@ -509,5 +509,7 @@
   "howToDeleteTime": "Supprimez une entrée de temps en la faisant glisser depuis la droite, essayez-la !",
   "howToEditAndDeleteConversation": "Modifiez une conversation en appuyant dessus ou en faisant glisser votre doigt vers la gauche.\n\nPour supprimer, faites glisser votre doigt dessus depuis la droite.",
   "howToArchiveContact": "Archivez les anciens contacts en les faisant glisser depuis la droite. Les contacts archivés peuvent être restaurés ultérieurement à partir des paramètres.",
-  "detailedProgressBar_description": "Met à jour la barre de progression de l’écran d’accueil et répartit vos entrées de temps par catégorie. Il affiche également votre heure sous forme décimale, ce qui la rend plus précise."
+  "detailedProgressBar_description": "Met à jour la barre de progression de l’écran d’accueil et répartit vos entrées de temps par catégorie. Il affiche également votre heure sous forme décimale, ce qui la rend plus précise.",
+  "createBackup": "Créer une sauvegarde",
+  "restoreFromBackup": "Restore depuis une sauvergarde"
 }

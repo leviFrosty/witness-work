@@ -509,5 +509,7 @@
   "howToDeleteTime": "Elimina un inserimento temporale scorrendo su di esso da destra, provalo!",
   "howToEditAndDeleteConversation": "Modifica una conversazione toccandola o scorrendola da sinistra.\n\nPer eliminarlo, scorrilo da destra.",
   "howToArchiveContact": "Archivia i vecchi contatti scorrendo da destra. I contatti archiviati possono essere ripristinati in seguito dalle impostazioni.",
-  "detailedProgressBar_description": "Aggiorna la barra di avanzamento della schermata iniziale e suddivide le voci relative al tempo per categoria. Mostra anche il tuo tempo come decimale quindi è più preciso."
+  "detailedProgressBar_description": "Aggiorna la barra di avanzamento della schermata iniziale e suddivide le voci relative al tempo per categoria. Mostra anche il tuo tempo come decimale quindi è più preciso.",
+  "createBackup": "Creare il backup",
+  "restoreFromBackup": "Ripristinare dal backup"
 }

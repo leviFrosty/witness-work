@@ -100,6 +100,7 @@ const initialState = {
   monthlyRoutineHasShownInvalidMonthAlert: false,
   hideDonateHeart: false,
   ...hints,
+  lastBackupDate: null as Date | null,
 }
 
 export const usePreferences = create(

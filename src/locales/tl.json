@@ -509,5 +509,7 @@
   "howToDeleteTime": "Magtanggal ng time entry sa pamamagitan ng pag-swipe dito mula sa kanan, subukan ito!",
   "howToEditAndDeleteConversation": "I-edit ang isang pag-uusap sa pamamagitan ng pag-tap dito o mag-swipe dito mula sa kaliwa.\n\nUpang tanggalin, mag-swipe dito mula sa kanan.",
   "howToArchiveContact": "I-archive ang mga lumang contact sa pamamagitan ng pag-swipe dito mula sa kanan. Ang mga naka-archive na contact ay maaaring maibalik sa ibang pagkakataon mula sa mga setting.",
-  "detailedProgressBar_description": "Ina-update ang progress bar ng home screen at pinaghiwa-hiwalay ang iyong mga entry sa oras ayon sa kategorya. Ipinapakita rin nito ang iyong oras bilang decimal kaya ito ay mas tumpak."
+  "detailedProgressBar_description": "Ina-update ang progress bar ng home screen at pinaghiwa-hiwalay ang iyong mga entry sa oras ayon sa kategorya. Ipinapakita rin nito ang iyong oras bilang decimal kaya ito ay mas tumpak.",
+  "createBackup": "Gumawa ng backup",
+  "restoreFromBackup": "I-restore Mula sa Backup"
 }

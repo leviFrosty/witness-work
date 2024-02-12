@@ -114,6 +114,8 @@ const ImportAndExportScreen = () => {
       return
     }
 
+    preferencesStore.set({ lastBackupDate: new Date() })
+
     try {
       FileSystem.writeAsStringAsync(exportFileUri, JSON.stringify(data))
         .then(async () => {
@@ -146,7 +148,13 @@ const ImportAndExportScreen = () => {
         <View style={{ gap: 10 }}>
           <Text>{i18n.t('backupRecommendations')}</Text>
         </View>
+        <Card>
+          <ActionButton disabled={loading} onPress={handleExport}>
+            {loading ? <Spinner /> : i18n.t('createBackup')}
+          </ActionButton>
+        </Card>
 
+        <Divider />
         <Card>
           {successfulImport && (
             <XView>
@@ -156,10 +164,7 @@ const ImportAndExportScreen = () => {
             </XView>
           )}
           <ActionButton disabled={loading} onPress={handleImport}>
-            {loading ? <Spinner /> : i18n.t('import')}
-          </ActionButton>
-          <ActionButton disabled={loading} onPress={handleExport}>
-            {loading ? <Spinner /> : i18n.t('export')}
+            {loading ? <Spinner /> : i18n.t('restoreFromBackup')}
           </ActionButton>
         </Card>
         <Divider />

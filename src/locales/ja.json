@@ -509,5 +509,7 @@
   "howToDeleteTime": "時間エントリを右からスワイプして削除します。試してみてください。",
   "howToEditAndDeleteConversation": "会話を編集するには、会話をタップするか、左からスワイプします。\n\n削除するには、右からスワイプします。",
   "howToArchiveContact": "古い連絡先を右からスワイプしてアーカイブします。アーカイブされた連絡先は、後で設定から復元できます。",
-  "detailedProgressBar_description": "ホーム画面の進行状況バーを更新し、時間エントリをカテゴリ別に分類します。時間も小数として表示されるため、より正確になります。"
+  "detailedProgressBar_description": "ホーム画面の進行状況バーを更新し、時間エントリをカテゴリ別に分類します。時間も小数として表示されるため、より正確になります。",
+  "createBackup": "バックアップを作成する",
+  "restoreFromBackup": "バックアップから復元"
 }

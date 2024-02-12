@@ -509,6 +509,7 @@
   "howToDeleteTime": "Delete a time entry by swiping on it from the right, try it!",
   "howToArchiveContact": "Archive old contacts by swiping on it from the right. Archived contacts can be restored later from the settings.",
   "howToEditAndDeleteConversation": "Edit a conversation by tapping on it or swipe on it from the left.\n\nTo delete, swipe on it from the right.",
-  "detailedProgressBar_description": "Updates the home screen progress bar and breaks down your time entries by category. It also shows your time as decimal so it is more accurate."
-
+  "detailedProgressBar_description": "Updates the home screen progress bar and breaks down your time entries by category. It also shows your time as decimal so it is more accurate.",
+  "createBackup": "Create Backup",
+  "restoreFromBackup": "Restore From Backup"
 }

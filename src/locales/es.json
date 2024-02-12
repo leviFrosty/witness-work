@@ -509,5 +509,7 @@
   "howToDeleteTime": "Elimina una entrada de tiempo deslizándola desde la derecha, ¡pruébalo!",
   "howToEditAndDeleteConversation": "Edite una conversación tocándola o deslizándola desde la izquierda.\n\nPara eliminarlo, deslízalo desde la derecha.",
   "howToArchiveContact": "Archive contactos antiguos deslizándolos desde la derecha. Los contactos archivados se pueden restaurar más tarde desde la configuración.",
-  "detailedProgressBar_description": "Actualiza la barra de progreso de la pantalla de inicio y desglosa las entradas de tiempo por categoría. También muestra tu tiempo como decimal para que sea más preciso."
+  "detailedProgressBar_description": "Actualiza la barra de progreso de la pantalla de inicio y desglosa las entradas de tiempo por categoría. También muestra tu tiempo como decimal para que sea más preciso.",
+  "createBackup": "Crear copia de seguridad",
+  "restoreFromBackup": "Reinstalar desde el respaldo"
 }

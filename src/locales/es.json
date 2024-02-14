@@ -410,6 +410,10 @@
       "c1": "Las conversaciones ahora son editables. Las notificaciones son configurables.",
       "c2": "Desliza gestos para editar o eliminar conversaciones, contactos, etc.",
       "c3": "Se agregó retroalimentación háptica a varias acciones importantes."
+    },
+    "1212": {
+      "c1": "Las preferencias ahora están mejor organizadas por categoría.",
+      "c2": "Importación y procesamiento mejorados. Exportar pantalla para que sea visualmente más clara."
     }
   },
   "installed": "Instalado",

@@ -19,6 +19,8 @@ import Divider from '../components/Divider'
 import Badge from '../components/Badge'
 import XView from '../components/layout/XView'
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
+import IconButton from '../components/IconButton'
+import { faFileImport, faUpload } from '@fortawesome/free-solid-svg-icons'
 
 /**
  * Any new stores should be added to this type to be included in the
@@ -150,7 +152,21 @@ const ImportAndExportScreen = () => {
         </View>
         <Card>
           <ActionButton disabled={loading} onPress={handleExport}>
-            {loading ? <Spinner /> : i18n.t('createBackup')}
+            {loading ? (
+              <Spinner />
+            ) : (
+              <XView>
+                <IconButton icon={faUpload} color={theme.colors.textInverse} />
+                <Text
+                  style={{
+                    color: theme.colors.textInverse,
+                    fontFamily: theme.fonts.bold,
+                  }}
+                >
+                  {i18n.t('createBackup')}
+                </Text>
+              </XView>
+            )}
           </ActionButton>
         </Card>
 
@@ -164,7 +180,24 @@ const ImportAndExportScreen = () => {
             </XView>
           )}
           <ActionButton disabled={loading} onPress={handleImport}>
-            {loading ? <Spinner /> : i18n.t('restoreFromBackup')}
+            {loading ? (
+              <Spinner />
+            ) : (
+              <XView>
+                <IconButton
+                  icon={faFileImport}
+                  color={theme.colors.textInverse}
+                />
+                <Text
+                  style={{
+                    color: theme.colors.textInverse,
+                    fontFamily: theme.fonts.bold,
+                  }}
+                >
+                  {i18n.t('restoreFromBackup')}
+                </Text>
+              </XView>
+            )}
           </ActionButton>
         </Card>
         <Divider />

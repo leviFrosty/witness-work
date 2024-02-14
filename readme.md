@@ -83,7 +83,7 @@ After that, open the compiled development build in your simulator/device and con
 
 🎉 You did it! _(Hopefully)_
 
-#### Project Structure
+## Project Structure
 
 - [`.github`](/.github) Configuration files for Github actions.
 - [`.husky`](/.husky) Configuration files for [husky](https://typicode.github.io/husky/), a git hooks library.
@@ -108,7 +108,7 @@ After that, open the compiled development build in your simulator/device and con
   - [`stores`](/src/stores) The [AsyncStorage](https://github.com/react-native-async-storage/async-storage) APIs for CRUD operations of app data using the device's storage.
   - [`types`](/src/types) Shared type definitions.
 
-#### [.env Keys](./.env)
+### [.env Keys](./.env)
 
 - `GOOGLE_CLOUD_API_KEY` Used for cloud translation API calls in CLI
 - `HERE_API_KEY` Used for geocoding api calls when users create address to fetch coordinates

@@ -410,6 +410,10 @@
     },
     "1211": {
       "c1": "Waar nodig meer nuttige eenmalige tips toegevoegd."
+    },
+    "1212": {
+      "c1": "Voorkeuren zijn nu beter georganiseerd per categorie.",
+      "c2": "Verbeterde import & exportscherm om visueel duidelijker te zijn."
     }
   },
   "installed": "Geïnstalleerd",

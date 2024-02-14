@@ -410,6 +410,10 @@
     },
     "1211": {
       "c1": "Adicionadas dicas únicas mais úteis quando apropriado."
+    },
+    "1212": {
+      "c1": "As preferências agora estão melhor organizadas por categoria.",
+      "c2": "Importação e importação aprimoradas. tela de exportação para ser visualmente mais clara."
     }
   },
   "installed": "Instalado",

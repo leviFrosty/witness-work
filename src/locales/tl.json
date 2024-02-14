@@ -410,6 +410,10 @@
     },
     "1211": {
       "c1": "Nagdagdag ng higit pang kapaki-pakinabang na minsanang mga pahiwatig kung naaangkop."
+    },
+    "1212": {
+      "c1": "Mas maayos na ngayon ang mga kagustuhan ayon sa kategorya.",
+      "c2": "Pinahusay na pag-import & i-export ang screen upang maging mas malinaw."
     }
   },
   "installed": "Naka-install",

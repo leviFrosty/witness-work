@@ -410,6 +410,10 @@
       "c1": "Conversations are now editable. Notifications are configurable",
       "c2": "Swipe gestures to edit or delete conversations, contacts, etc.",
       "c3": "Added haptic feedback to various important actions"
+    },
+    "1212": {
+      "c1": "Preferences are now better organized by category.",
+      "c2": "Improved import & export screen to be visually clearer."
     }
   },
   "installed": "Installed",

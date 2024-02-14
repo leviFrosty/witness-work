@@ -410,6 +410,10 @@
       "c1": "Les conversations sont désormais modifiables. Les notifications sont configurables",
       "c2": "Faites glisser les gestes pour modifier ou supprimer des conversations, des contacts, etc.",
       "c3": "Ajout d'un retour haptique à diverses actions importantes"
+    },
+    "1212": {
+      "c1": "Les préférences sont désormais mieux organisées par catégorie.",
+      "c2": "Importation et amélioration améliorées. écran d'exportation pour être visuellement plus clair."
     }
   },
   "installed": "installée",

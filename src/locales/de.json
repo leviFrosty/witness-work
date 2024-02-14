@@ -410,6 +410,10 @@
       "c1": "Gespräche können jetzt bearbeitet werden. Benachrichtigungen sind konfigurierbar",
       "c2": "Wischen Sie mit Gesten, um Konversationen, Kontakte usw. zu bearbeiten oder zu löschen.",
       "c3": "Haptisches Feedback zu verschiedenen wichtigen Aktionen hinzugefügt"
+    },
+    "1212": {
+      "c1": "Die Einstellungen sind jetzt besser nach Kategorien organisiert.",
+      "c2": "Verbesserter Import & Der Exportbildschirm soll optisch klarer sein."
     }
   },
   "installed": "Eingerichtet",

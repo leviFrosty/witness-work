@@ -414,7 +414,8 @@
     "1220": {
       "c3": "Ajout du calendrier à l'écran des rapports de temps.",
       "c1": "Les préférences sont désormais mieux organisées par catégorie.",
-      "c2": "Importation et amélioration améliorées. écran d'exportation pour être visuellement plus clair."
+      "c2": "Importation et amélioration améliorées. écran d'exportation pour être visuellement plus clair.",
+      "c4": "Vous informe occasionnellement de créer une nouvelle sauvegarde. Ceci est configurable dans les paramètres."
     }
   },
   "installed": "installée",
@@ -518,5 +519,12 @@
   "createBackup": "Créer une sauvegarde",
   "restoreFromBackup": "Restore depuis une sauvergarde",
   "viewTimeReportsForThisDate": "Consultez tous les rapports de cette journée. Faites glisser votre doigt sur un rapport pour le supprimer.",
-  "noReportsThisDay": "Aucun relevé de temps pour cette journée pour l'instant."
+  "noReportsThisDay": "Aucun relevé de temps pour cette journée pour l'instant.",
+  "remindMeToBackup": "Rappelle-moi de sauvegarder",
+  "backups": "Sauvegardes",
+  "daysSinceLastBackup": "Jours depuis la dernière sauvegarde",
+  "daysSinceLastBackup_description": "JW Time vous avertira après ce nombre de jours depuis votre dernière sauvegarde pour créer une nouvelle sauvegarde de vos données.",
+  "recommendedBackup": "Sauvegarde recommandée",
+  "recommendedBackup_description": "Plus de {{count}} jours se sont écoulés depuis votre dernière sauvegarde. Il est recommandé de créer une nouvelle sauvegarde maintenant.",
+  "backupNow": "Sauvegarder maintenant"
 }

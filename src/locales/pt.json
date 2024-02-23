@@ -414,7 +414,8 @@
     "1220": {
       "c1": "As preferências agora estão melhor organizadas por categoria.",
       "c2": "Importação e importação aprimoradas. tela de exportação para ser visualmente mais clara.",
-      "c3": "Adicionado calendário à tela de relatórios de tempo."
+      "c3": "Adicionado calendário à tela de relatórios de tempo.",
+      "c4": "Ocasionalmente, notifica você para criar um novo backup. Isso é configurável nas configurações."
     }
   },
   "installed": "Instalado",
@@ -518,5 +519,9 @@
   "createBackup": "Criar backup",
   "restoreFromBackup": "Restaurar do backup",
   "viewTimeReportsForThisDate": "Veja todos os relatórios deste dia. Deslize um relatório para excluí-lo.",
-  "noReportsThisDay": "Ainda não há relatórios de tempo para este dia."
+  "noReportsThisDay": "Ainda não há relatórios de tempo para este dia.",
+  "remindMeToBackup": "Lembre-me de fazer backup",
+  "backups": "Cópias de segurança",
+  "daysSinceLastBackup": "Dias desde o último backup",
+  "daysSinceLastBackup_description": "O JW Time irá notificá-lo após tantos dias desde seu último backup para criar um novo backup de seus dados."
 }

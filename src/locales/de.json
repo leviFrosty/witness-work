@@ -414,7 +414,8 @@
     "1220": {
       "c1": "Die Einstellungen sind jetzt besser nach Kategorien organisiert.",
       "c2": "Verbesserter Import & Der Exportbildschirm soll optisch klarer sein.",
-      "c3": "Kalender zum Zeitberichtsbildschirm hinzugefügt."
+      "c3": "Kalender zum Zeitberichtsbildschirm hinzugefügt.",
+      "c4": "Fordert Sie gelegentlich auf, ein neues Backup zu erstellen. Dies ist in den Einstellungen konfigurierbar."
     }
   },
   "installed": "Eingerichtet",
@@ -518,5 +519,9 @@
   "createBackup": "Ein Backup erstellen",
   "restoreFromBackup": "Von der Sicherung wiederherstellen",
   "viewTimeReportsForThisDate": "Alle Berichte für diesen Tag anzeigen. Wischen Sie über einen Bericht, um ihn zu löschen.",
-  "noReportsThisDay": "Für diesen Tag liegen noch keine Zeitangaben vor."
+  "noReportsThisDay": "Für diesen Tag liegen noch keine Zeitangaben vor.",
+  "remindMeToBackup": "Erinnern Sie mich an ein Backup",
+  "backups": "Backups",
+  "daysSinceLastBackup": "Tage seit der letzten Sicherung",
+  "daysSinceLastBackup_description": "JW Time benachrichtigt Sie nach Ablauf dieser vielen Tage seit Ihrer letzten Sicherung, um eine neue Sicherung Ihrer Daten zu erstellen."
 }

@@ -414,7 +414,8 @@
     "1220": {
       "c1": "现在可以更好地按类别组织偏好设置。",
       "c2": "改进的导入和导出导出屏幕视觉上更加清晰。",
-      "c3": "将日历添加到时间报告屏幕。"
+      "c3": "将日历添加到时间报告屏幕。",
+      "c4": "偶尔会通知您创建新备份。这可以在设置中配置。"
     }
   },
   "installed": "已安装",
@@ -518,5 +519,9 @@
   "createBackup": "创建备份",
   "restoreFromBackup": "从备份恢复",
   "viewTimeReportsForThisDate": "查看当天的所有报告。滑动报告即可将其删除。",
-  "noReportsThisDay": "尚未报告这一天的时间。"
+  "noReportsThisDay": "尚未报告这一天的时间。",
+  "remindMeToBackup": "提醒我备份",
+  "backups": "备份",
+  "daysSinceLastBackup": "自上次备份以来的天数",
+  "daysSinceLastBackup_description": "JW Time 将在您上次备份后的许多天后通知您创建新的数据备份。"
 }

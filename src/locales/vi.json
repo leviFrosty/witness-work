@@ -414,7 +414,8 @@
     "1220": {
       "c1": "Tùy chọn hiện được sắp xếp tốt hơn theo danh mục.",
       "c2": "Cải thiện tính năng nhập & màn hình xuất sẽ rõ ràng hơn.",
-      "c3": "Đã thêm Lịch vào màn hình báo cáo thời gian."
+      "c3": "Đã thêm Lịch vào màn hình báo cáo thời gian.",
+      "c4": "Thỉnh thoảng thông báo cho bạn để tạo bản sao lưu mới. Điều này có thể được cấu hình trong cài đặt."
     }
   },
   "installed": "Cài đặt",
@@ -518,5 +519,9 @@
   "createBackup": "Tạo bản sao",
   "restoreFromBackup": "Khôi phục lại từ bản sao lưu",
   "viewTimeReportsForThisDate": "Xem tất cả các báo cáo cho ngày này. Vuốt trên một báo cáo để xóa nó.",
-  "noReportsThisDay": "Chưa có báo cáo thời gian cho ngày này."
+  "noReportsThisDay": "Chưa có báo cáo thời gian cho ngày này.",
+  "remindMeToBackup": "Nhắc tôi sao lưu",
+  "backups": "Sao lưu",
+  "daysSinceLastBackup": "Số ngày kể từ lần sao lưu cuối cùng",
+  "daysSinceLastBackup_description": "JW Time sẽ thông báo cho bạn sau nhiều ngày kể từ lần sao lưu cuối cùng của bạn để tạo bản sao lưu mới cho dữ liệu của bạn."
 }

@@ -101,6 +101,8 @@ const initialState = {
   hideDonateHeart: false,
   ...hints,
   lastBackupDate: null as Date | null,
+  remindMeAboutBackups: true,
+  backupNotificationFrequencyAsDays: 60,
 }
 
 export const usePreferences = create(

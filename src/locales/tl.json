@@ -414,7 +414,8 @@
     "1220": {
       "c1": "Mas maayos na ngayon ang mga kagustuhan ayon sa kategorya.",
       "c2": "Pinahusay na pag-import & i-export ang screen upang maging mas malinaw.",
-      "c3": "Idinagdag ang Kalendaryo sa screen ng mga ulat sa oras."
+      "c3": "Idinagdag ang Kalendaryo sa screen ng mga ulat sa oras.",
+      "c4": "Paminsan-minsan ay inaabisuhan ka na gumawa ng bagong backup. Ito ay maaaring i-configure sa mga setting."
     }
   },
   "installed": "Naka-install",
@@ -518,5 +519,9 @@
   "createBackup": "Gumawa ng backup",
   "restoreFromBackup": "I-restore Mula sa Backup",
   "viewTimeReportsForThisDate": "Tingnan ang lahat ng mga ulat para sa araw na ito. Mag-swipe sa isang ulat para tanggalin ito.",
-  "noReportsThisDay": "Wala pang oras na ulat para sa araw na ito."
+  "noReportsThisDay": "Wala pang oras na ulat para sa araw na ito.",
+  "remindMeToBackup": "Paalalahanan Ako Upang Mag-backup",
+  "backups": "Mga backup",
+  "daysSinceLastBackup": "Mga Araw Mula Noong Huling Pag-backup",
+  "daysSinceLastBackup_description": "Aabisuhan ka ng JW Time pagkatapos nitong maraming araw mula noong huli mong backup para gumawa ng bagong backup ng iyong data."
 }

@@ -6,6 +6,7 @@ import InputRowButton from '../../../components/inputs/InputRowButton'
 import {
   faChevronRight,
   faComments,
+  faFileExport,
   faHome,
   faRoute,
   faUser,
@@ -51,6 +52,13 @@ const PreferencesScreen = () => {
               leftIcon={faHome}
               label={i18n.t('homeScreen')}
               onPress={() => navigation.navigate('PreferencesHomeScreen')}
+            >
+              <IconButton icon={faChevronRight} />
+            </InputRowButton>
+            <InputRowButton
+              leftIcon={faFileExport}
+              label={i18n.t('backups')}
+              onPress={() => navigation.navigate('PreferencesBackups')}
               lastInSection
             >
               <IconButton icon={faChevronRight} />

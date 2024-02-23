@@ -414,7 +414,8 @@
     "1220": {
       "c1": "Le preferenze sono ora meglio organizzate per categoria.",
       "c2": "Importazione e ottimizzazione migliorate schermata di esportazione per essere visivamente più chiara.",
-      "c3": "Aggiunto Calendario alla schermata dei rapporti temporali."
+      "c3": "Aggiunto Calendario alla schermata dei rapporti temporali.",
+      "c4": "Occasionalmente ti avvisa di creare un nuovo backup. Questo è configurabile nelle impostazioni."
     }
   },
   "installed": "Installato",
@@ -518,5 +519,9 @@
   "createBackup": "Creare il backup",
   "restoreFromBackup": "Ripristinare dal backup",
   "viewTimeReportsForThisDate": "Visualizza tutti i rapporti per questa giornata. Scorri su un report per eliminarlo.",
-  "noReportsThisDay": "Non ci sono ancora rapporti sull'orario per questo giorno."
+  "noReportsThisDay": "Non ci sono ancora rapporti sull'orario per questo giorno.",
+  "remindMeToBackup": "Ricordami di eseguire il backup",
+  "backups": "Backup",
+  "daysSinceLastBackup": "Giorni dall'ultimo backup",
+  "daysSinceLastBackup_description": "JW Time ti avviserà dopo tanti giorni dall'ultimo backup per creare un nuovo backup dei tuoi dati."
 }

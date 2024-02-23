@@ -28,6 +28,7 @@ import PreferencesPublisherScreen from '../screens/settings/preferences/screens/
 import PreferencesConversationScreen from '../screens/settings/preferences/screens/PreferencesConversationScreen'
 import PreferencesNavigationScreen from '../screens/settings/preferences/screens/PreferencesNavigationScreen'
 import PreferencesHomeScreen from '../screens/settings/preferences/screens/PreferencesHomeScreen'
+import PreferencesBackupsScreen from '../screens/settings/preferences/screens/PreferencesBackupsScreen'
 
 export type RootStackParamList = {
   Root: undefined
@@ -54,6 +55,7 @@ export type RootStackParamList = {
   PreferencesConversation: undefined
   PreferencesNavigation: undefined
   PreferencesHomeScreen: undefined
+  PreferencesBackups: undefined
 }
 
 export type RootStackNavigation = NativeStackNavigationProp<RootStackParamList>
@@ -228,6 +230,13 @@ const RootStackComponent = () => {
         }}
         name='PreferencesHomeScreen'
         component={PreferencesHomeScreen}
+      />
+      <RootStack.Screen
+        options={{
+          header: () => <Header buttonType='back' title={i18n.t('backups')} />,
+        }}
+        name='PreferencesBackups'
+        component={PreferencesBackupsScreen}
       />
     </RootStack.Navigator>
   )

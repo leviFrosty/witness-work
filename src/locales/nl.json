@@ -414,7 +414,8 @@
     "1220": {
       "c1": "Voorkeuren zijn nu beter georganiseerd per categorie.",
       "c2": "Verbeterde import & exportscherm om visueel duidelijker te zijn.",
-      "c3": "Kalender toegevoegd aan het tijdrapportscherm."
+      "c3": "Kalender toegevoegd aan het tijdrapportscherm.",
+      "c4": "Geeft af en toe een melding dat u een nieuwe back-up moet maken. Dit is configureerbaar in de instellingen."
     }
   },
   "installed": "Geïnstalleerd",
@@ -518,5 +519,9 @@
   "createBackup": "Een backup maken",
   "restoreFromBackup": "Herstellen van backup",
   "viewTimeReportsForThisDate": "Bekijk alle rapporten van deze dag. Veeg over een rapport om het te verwijderen.",
-  "noReportsThisDay": "Er zijn nog geen tijdrapporten voor deze dag."
+  "noReportsThisDay": "Er zijn nog geen tijdrapporten voor deze dag.",
+  "remindMeToBackup": "Herinner mij eraan een back-up te maken",
+  "backups": "Back-ups",
+  "daysSinceLastBackup": "Dagen sinds de laatste back-up",
+  "daysSinceLastBackup_description": "JW Time zal u na zoveel dagen sinds uw laatste back-up op de hoogte stellen om een nieuwe back-up van uw gegevens te maken."
 }

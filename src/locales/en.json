@@ -414,7 +414,8 @@
     "1220": {
       "c3": "Added Calendar to time reports screen.",
       "c1": "Preferences are now better organized by category.",
-      "c2": "Improved import & export screen to be visually clearer."
+      "c2": "Improved import & export screen to be visually clearer.",
+      "c4": "Occasionally notifies you to create a new backup. This is configurable in the settings."
     }
   },
   "installed": "Installed",
@@ -518,5 +519,9 @@
   "createBackup": "Create Backup",
   "restoreFromBackup": "Restore From Backup",
   "viewTimeReportsForThisDate": "View all reports for this day. Swipe on a report to delete it.",
-  "noReportsThisDay": "No time reports for this day yet."
+  "noReportsThisDay": "No time reports for this day yet.",
+  "remindMeToBackup": "Remind Me To Backup",
+  "backups": "Backups",
+  "daysSinceLastBackup": "Days Since Last Backup",
+  "daysSinceLastBackup_description": "JW Time will notify you after this many days since your last backup to create a new backup of your data."
 }

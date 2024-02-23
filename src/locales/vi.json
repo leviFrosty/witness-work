@@ -412,6 +412,7 @@
       "c3": "Đã thêm phản hồi xúc giác cho các hành động quan trọng khác nhau"
     },
     "1220": {
+      "c3": "Đã thêm Lịch vào màn hình báo cáo thời gian.",
       "c1": "Tùy chọn hiện được sắp xếp tốt hơn theo danh mục.",
       "c2": "Cải thiện tính năng nhập & màn hình xuất sẽ rõ ràng hơn."
     }
@@ -515,5 +516,7 @@
   "howToEditAndDeleteConversation": "Chỉnh sửa cuộc trò chuyện bằng cách nhấn vào cuộc trò chuyện đó hoặc vuốt từ bên trái.\n\nĐể xóa, hãy vuốt vào nó từ bên phải.",
   "detailedProgressBar_description": "Cập nhật thanh tiến trình của màn hình chính và chia nhỏ các mục thời gian của bạn theo danh mục. Nó cũng hiển thị thời gian của bạn dưới dạng thập phân để chính xác hơn.",
   "createBackup": "Tạo bản sao",
-  "restoreFromBackup": "Khôi phục lại từ bản sao lưu"
+  "restoreFromBackup": "Khôi phục lại từ bản sao lưu",
+  "viewTimeReportsForThisDate": "Xem tất cả các báo cáo cho ngày này. Vuốt trên một báo cáo để xóa nó.",
+  "noReportsThisDay": "Chưa có báo cáo thời gian cho ngày này."
 }

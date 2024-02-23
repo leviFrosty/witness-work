@@ -23,6 +23,7 @@ import ActionButton from './ActionButton'
 import { useNavigation } from '@react-navigation/native'
 import { RootStackNavigation } from '../stacks/RootStack'
 import _ from 'lodash'
+import moment from 'moment'
 
 interface MonthSummaryProps {
   monthsReports: ServiceReport[] | null
@@ -94,7 +95,11 @@ const MonthSummary = ({
           {i18n.t('noTimeReports_description')}
         </Text>
         <ActionButton
-          onPress={() => navigation.navigate('Add Time', { month, year })}
+          onPress={() =>
+            navigation.navigate('Add Time', {
+              date: moment().month(month).year(year).toISOString(),
+            })
+          }
         >
           <Text
             style={{

@@ -39,7 +39,7 @@ export type RootStackParamList = {
   'Contact Details': { id: string; highlightedConversationId?: string } // Contact ID
   'Contact Form': { id: string; edit?: boolean } // Contact ID
   'Contact Selector': undefined
-  'Add Time': { month?: number; year?: number } | undefined
+  'Add Time': { date?: string } | undefined
   'Time Reports': { month?: number; year?: number }
   'Recover Contacts': undefined
   Onboarding: undefined
@@ -107,7 +107,9 @@ const RootStackComponent = () => {
         name='Add Time'
         options={{
           presentation: 'modal',
-          header: () => <Header noInsets buttonType='back' />,
+          header: () => (
+            <Header noInsets buttonType='back' title={i18n.t('addTime')} />
+          ),
         }}
         component={AddTimeScreen}
       />

@@ -10,7 +10,6 @@ import ActionButton from '../components/ActionButton'
 import { RootStackParamList } from '../stacks/RootStack'
 import i18n from '../lib/locales'
 import { useEffect, useMemo, useState } from 'react'
-
 import ExportTimeSheet, {
   ExportTimeSheetState,
 } from '../components/ExportTimeSheet'
@@ -32,6 +31,10 @@ import usePublisher from '../hooks/usePublisher'
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
 import { usePreferences } from '../stores/preferences'
 import HintCard from '../components/HintCard'
+import MonthTimeReportsCalendar from '../components/MonthTimeReportsCalendar'
+import SelectedDateSheet, {
+  SelectedDateSheetState,
+} from '../components/SelectedDateSheet'
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Time Reports'>
 
@@ -48,6 +51,11 @@ const TimeReportsScreen = ({ route, navigation }: Props) => {
     month,
     year,
   })
+  const [selectedDateSheet, setSelectedDateSheet] =
+    useState<SelectedDateSheetState>({
+      open: false,
+      date: new Date(),
+    })
   const selectedMonth = moment().month(month).year(year)
   const serviceYear = month < 8 ? year - 1 : year
 
@@ -61,7 +69,11 @@ const TimeReportsScreen = ({ route, navigation }: Props) => {
             <IconButton
               style={{ position: 'absolute', right: 0 }}
               icon={faPlus}
-              onPress={() => navigation.navigate('Add Time', { month, year })}
+              onPress={() =>
+                navigation.navigate('Add Time', {
+                  date: selectedMonth.toISOString(),
+                })
+              }
               size='xl'
               iconStyle={{ color: theme.colors.text }}
             />
@@ -228,13 +240,24 @@ const TimeReportsScreen = ({ route, navigation }: Props) => {
           </View>
         )}
         <View
-          style={{ paddingHorizontal: 15, paddingTop: 15, paddingBottom: 30 }}
+          style={{
+            paddingHorizontal: 15,
+            paddingTop: 15,
+            paddingBottom: 30,
+            gap: 15,
+          }}
         >
           <MonthSummary
             month={month}
             year={year}
             monthsReports={thisMonthsReports}
             setSheet={setSheet}
+          />
+          <MonthTimeReportsCalendar
+            month={month}
+            year={year}
+            monthsReports={thisMonthsReports}
+            setSheet={setSelectedDateSheet}
           />
         </View>
         <View style={{ paddingHorizontal: 15, gap: 7 }}>
@@ -269,13 +292,20 @@ const TimeReportsScreen = ({ route, navigation }: Props) => {
               renderItem={({ item }) => <TimeReportRow report={item} />}
               estimatedItemSize={66}
               ListEmptyComponent={
-                <Text>{i18n.t('noReportsThisMonthYet')}</Text>
+                <Card>
+                  <Text>{i18n.t('noReportsThisMonthYet')}</Text>
+                </Card>
               }
             />
           </View>
         </View>
       </KeyboardAwareScrollView>
       <ExportTimeSheet setSheet={setSheet} sheet={sheet} />
+      <SelectedDateSheet
+        sheet={selectedDateSheet}
+        setSheet={setSelectedDateSheet}
+        thisMonthsReports={thisMonthsReports}
+      />
     </View>
   )
 }

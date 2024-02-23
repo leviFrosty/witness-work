@@ -185,7 +185,7 @@ const ContactsList = () => {
           </ActionButton>
         </View>
         <View style={{ flex: 1, minHeight: 10, gap: 10 }}>
-          {howToArchiveContact && (
+          {howToArchiveContact && !!searchResultsSorted.length && (
             <HintCard hintKey='howToArchiveContact'>
               <Text>{i18n.t('howToArchiveContact')}</Text>
             </HintCard>

@@ -413,7 +413,8 @@
     },
     "1220": {
       "c1": "现在可以更好地按类别组织偏好设置。",
-      "c2": "改进的导入和导出导出屏幕视觉上更加清晰。"
+      "c2": "改进的导入和导出导出屏幕视觉上更加清晰。",
+      "c3": "将日历添加到时间报告屏幕。"
     }
   },
   "installed": "已安装",
@@ -515,5 +516,7 @@
   "howToArchiveContact": "从右侧滑动即可存档旧联系人。存档的联系人可以稍后从设置中恢复。",
   "detailedProgressBar_description": "更新主屏幕进度条并按类别细分您的时间条目。它还将您的时间显示为十进制，因此更加准确。",
   "createBackup": "创建备份",
-  "restoreFromBackup": "从备份恢复"
+  "restoreFromBackup": "从备份恢复",
+  "viewTimeReportsForThisDate": "查看当天的所有报告。滑动报告即可将其删除。",
+  "noReportsThisDay": "尚未报告这一天的时间。"
 }

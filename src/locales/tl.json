@@ -413,7 +413,8 @@
     },
     "1220": {
       "c1": "Mas maayos na ngayon ang mga kagustuhan ayon sa kategorya.",
-      "c2": "Pinahusay na pag-import & i-export ang screen upang maging mas malinaw."
+      "c2": "Pinahusay na pag-import & i-export ang screen upang maging mas malinaw.",
+      "c3": "Idinagdag ang Kalendaryo sa screen ng mga ulat sa oras."
     }
   },
   "installed": "Naka-install",
@@ -515,5 +516,7 @@
   "howToArchiveContact": "I-archive ang mga lumang contact sa pamamagitan ng pag-swipe dito mula sa kanan. Ang mga naka-archive na contact ay maaaring maibalik sa ibang pagkakataon mula sa mga setting.",
   "detailedProgressBar_description": "Ina-update ang progress bar ng home screen at pinaghiwa-hiwalay ang iyong mga entry sa oras ayon sa kategorya. Ipinapakita rin nito ang iyong oras bilang decimal kaya ito ay mas tumpak.",
   "createBackup": "Gumawa ng backup",
-  "restoreFromBackup": "I-restore Mula sa Backup"
+  "restoreFromBackup": "I-restore Mula sa Backup",
+  "viewTimeReportsForThisDate": "Tingnan ang lahat ng mga ulat para sa araw na ito. Mag-swipe sa isang ulat para tanggalin ito.",
+  "noReportsThisDay": "Wala pang oras na ulat para sa araw na ito."
 }

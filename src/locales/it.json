@@ -413,7 +413,8 @@
     },
     "1220": {
       "c1": "Le preferenze sono ora meglio organizzate per categoria.",
-      "c2": "Importazione e ottimizzazione migliorate schermata di esportazione per essere visivamente più chiara."
+      "c2": "Importazione e ottimizzazione migliorate schermata di esportazione per essere visivamente più chiara.",
+      "c3": "Aggiunto Calendario alla schermata dei rapporti temporali."
     }
   },
   "installed": "Installato",
@@ -515,5 +516,7 @@
   "howToArchiveContact": "Archivia i vecchi contatti scorrendo da destra. I contatti archiviati possono essere ripristinati in seguito dalle impostazioni.",
   "detailedProgressBar_description": "Aggiorna la barra di avanzamento della schermata iniziale e suddivide le voci relative al tempo per categoria. Mostra anche il tuo tempo come decimale quindi è più preciso.",
   "createBackup": "Creare il backup",
-  "restoreFromBackup": "Ripristinare dal backup"
+  "restoreFromBackup": "Ripristinare dal backup",
+  "viewTimeReportsForThisDate": "Visualizza tutti i rapporti per questa giornata. Scorri su un report per eliminarlo.",
+  "noReportsThisDay": "Non ci sono ancora rapporti sull'orario per questo giorno."
 }

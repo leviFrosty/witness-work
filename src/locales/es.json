@@ -413,7 +413,8 @@
     },
     "1220": {
       "c1": "Las preferencias ahora están mejor organizadas por categoría.",
-      "c2": "Importación y procesamiento mejorados. Exportar pantalla para que sea visualmente más clara."
+      "c2": "Importación y procesamiento mejorados. Exportar pantalla para que sea visualmente más clara.",
+      "c3": "Se agregó Calendario a la pantalla de informes de tiempo."
     }
   },
   "installed": "Instalado",
@@ -515,5 +516,7 @@
   "howToArchiveContact": "Archive contactos antiguos deslizándolos desde la derecha. Los contactos archivados se pueden restaurar más tarde desde la configuración.",
   "detailedProgressBar_description": "Actualiza la barra de progreso de la pantalla de inicio y desglosa las entradas de tiempo por categoría. También muestra tu tiempo como decimal para que sea más preciso.",
   "createBackup": "Crear copia de seguridad",
-  "restoreFromBackup": "Reinstalar desde el respaldo"
+  "restoreFromBackup": "Reinstalar desde el respaldo",
+  "viewTimeReportsForThisDate": "Ver todos los informes de este día. Desliza el dedo sobre un informe para eliminarlo.",
+  "noReportsThisDay": "Aún no hay informes de tiempo para este día."
 }

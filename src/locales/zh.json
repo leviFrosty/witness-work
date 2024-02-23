@@ -412,6 +412,7 @@
       "c3": "为各种重要操作添加了触觉反馈"
     },
     "1220": {
+      "c3": "将日历添加到时间报告屏幕。",
       "c1": "现在可以更好地按类别组织偏好设置。",
       "c2": "改进的导入和导出导出屏幕视觉上更加清晰。"
     }
@@ -515,5 +516,7 @@
   "howToEditAndDeleteConversation": "通过点击或从左侧滑动来编辑对话。\n\n要删除，请从右侧滑动。",
   "detailedProgressBar_description": "更新主屏幕进度条并按类别细分您的时间条目。它还将您的时间显示为十进制，因此更加准确。",
   "createBackup": "创建备份",
-  "restoreFromBackup": "从备份恢复"
+  "restoreFromBackup": "从备份恢复",
+  "viewTimeReportsForThisDate": "查看当天的所有报告。滑动报告即可将其删除。",
+  "noReportsThisDay": "尚未报告这一天的时间。"
 }

@@ -412,6 +412,7 @@
       "c3": "Ajout d'un retour haptique à diverses actions importantes"
     },
     "1220": {
+      "c3": "Ajout du calendrier à l'écran des rapports de temps.",
       "c1": "Les préférences sont désormais mieux organisées par catégorie.",
       "c2": "Importation et amélioration améliorées. écran d'exportation pour être visuellement plus clair."
     }
@@ -515,5 +516,7 @@
   "howToEditAndDeleteConversation": "Modifiez une conversation en appuyant dessus ou en faisant glisser votre doigt vers la gauche.\n\nPour supprimer, faites glisser votre doigt dessus depuis la droite.",
   "detailedProgressBar_description": "Met à jour la barre de progression de l’écran d’accueil et répartit vos entrées de temps par catégorie. Il affiche également votre heure sous forme décimale, ce qui la rend plus précise.",
   "createBackup": "Créer une sauvegarde",
-  "restoreFromBackup": "Restore depuis une sauvergarde"
+  "restoreFromBackup": "Restore depuis une sauvergarde",
+  "viewTimeReportsForThisDate": "Consultez tous les rapports de cette journée. Faites glisser votre doigt sur un rapport pour le supprimer.",
+  "noReportsThisDay": "Aucun relevé de temps pour cette journée pour l'instant."
 }

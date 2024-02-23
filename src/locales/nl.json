@@ -412,6 +412,7 @@
       "c3": "Haptische feedback toegevoegd aan verschillende belangrijke acties"
     },
     "1220": {
+      "c3": "Kalender toegevoegd aan het tijdrapportscherm.",
       "c1": "Voorkeuren zijn nu beter georganiseerd per categorie.",
       "c2": "Verbeterde import & exportscherm om visueel duidelijker te zijn."
     }
@@ -515,5 +516,7 @@
   "howToEditAndDeleteConversation": "Bewerk een gesprek door erop te tikken of er vanaf de linkerkant over te vegen.\n\nOm te verwijderen, veegt u er vanaf de rechterkant over.",
   "detailedProgressBar_description": "Werkt de voortgangsbalk van het startscherm bij en verdeelt uw tijdsinvoer per categorie. Het toont ook uw tijd als decimaal, zodat het nauwkeuriger is.",
   "createBackup": "Een backup maken",
-  "restoreFromBackup": "Herstellen van backup"
+  "restoreFromBackup": "Herstellen van backup",
+  "viewTimeReportsForThisDate": "Bekijk alle rapporten van deze dag. Veeg over een rapport om het te verwijderen.",
+  "noReportsThisDay": "Er zijn nog geen tijdrapporten voor deze dag."
 }

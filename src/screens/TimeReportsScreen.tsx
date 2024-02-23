@@ -10,7 +10,6 @@ import ActionButton from '../components/ActionButton'
 import { RootStackParamList } from '../stacks/RootStack'
 import i18n from '../lib/locales'
 import { useEffect, useMemo, useState } from 'react'
-
 import ExportTimeSheet, {
   ExportTimeSheetState,
 } from '../components/ExportTimeSheet'
@@ -32,6 +31,7 @@ import usePublisher from '../hooks/usePublisher'
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
 import { usePreferences } from '../stores/preferences'
 import HintCard from '../components/HintCard'
+import MonthTimeReportsCalendar from '../components/MonthTimeReportsCalendar'
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Time Reports'>
 
@@ -228,13 +228,23 @@ const TimeReportsScreen = ({ route, navigation }: Props) => {
           </View>
         )}
         <View
-          style={{ paddingHorizontal: 15, paddingTop: 15, paddingBottom: 30 }}
+          style={{
+            paddingHorizontal: 15,
+            paddingTop: 15,
+            paddingBottom: 30,
+            gap: 15,
+          }}
         >
           <MonthSummary
             month={month}
             year={year}
             monthsReports={thisMonthsReports}
             setSheet={setSheet}
+          />
+          <MonthTimeReportsCalendar
+            month={month}
+            year={year}
+            monthsReports={thisMonthsReports}
           />
         </View>
         <View style={{ paddingHorizontal: 15, gap: 7 }}>

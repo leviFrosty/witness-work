@@ -412,6 +412,7 @@
       "c3": "Adicionado feedback tátil para várias ações importantes"
     },
     "1220": {
+      "c3": "Adicionado calendário à tela de relatórios de tempo.",
       "c1": "As preferências agora estão melhor organizadas por categoria.",
       "c2": "Importação e importação aprimoradas. tela de exportação para ser visualmente mais clara."
     }
@@ -515,5 +516,7 @@
   "howToEditAndDeleteConversation": "Edite uma conversa tocando nela ou deslizando da esquerda para a esquerda.\n\nPara excluir, deslize da direita para cima.",
   "detailedProgressBar_description": "Atualiza a barra de progresso da tela inicial e divide suas entradas de tempo por categoria. Ele também mostra seu tempo como decimal, por isso é mais preciso.",
   "createBackup": "Criar backup",
-  "restoreFromBackup": "Restaurar do backup"
+  "restoreFromBackup": "Restaurar do backup",
+  "viewTimeReportsForThisDate": "Veja todos os relatórios deste dia. Deslize um relatório para excluí-lo.",
+  "noReportsThisDay": "Ainda não há relatórios de tempo para este dia."
 }

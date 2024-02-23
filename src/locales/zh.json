@@ -523,5 +523,8 @@
   "remindMeToBackup": "提醒我备份",
   "backups": "备份",
   "daysSinceLastBackup": "自上次备份以来的天数",
-  "daysSinceLastBackup_description": "JW Time 将在您上次备份后的许多天后通知您创建新的数据备份。"
+  "daysSinceLastBackup_description": "JW Time 将在您上次备份后的许多天后通知您创建新的数据备份。",
+  "recommendedBackup": "推荐备份",
+  "recommendedBackup_description": "自您上次备份以来已经超过 {{count}} 天了。建议立即创建新备份。",
+  "backupNow": "立即备份"
 }

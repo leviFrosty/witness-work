@@ -523,5 +523,8 @@
   "remindMeToBackup": "Paalalahanan Ako Upang Mag-backup",
   "backups": "Mga backup",
   "daysSinceLastBackup": "Mga Araw Mula Noong Huling Pag-backup",
-  "daysSinceLastBackup_description": "Aabisuhan ka ng JW Time pagkatapos nitong maraming araw mula noong huli mong backup para gumawa ng bagong backup ng iyong data."
+  "daysSinceLastBackup_description": "Aabisuhan ka ng JW Time pagkatapos nitong maraming araw mula noong huli mong backup para gumawa ng bagong backup ng iyong data.",
+  "recommendedBackup": "Inirerekomenda ang Pag-backup",
+  "recommendedBackup_description": "Mahigit {{count}} na araw na ang nakalipas mula noong huli mong backup. Inirerekomenda na gumawa ng bagong backup ngayon.",
+  "backupNow": "I-backup Ngayon"
 }

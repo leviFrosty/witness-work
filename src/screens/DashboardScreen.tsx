@@ -24,10 +24,18 @@ import Button from '../components/Button'
 import { useNavigation } from '@react-navigation/native'
 import { RootStackNavigation } from '../stacks/RootStack'
 import usePublisher from '../hooks/usePublisher'
+import { usePreferences } from '../stores/preferences'
+import BackupReminder from '../components/BackupReminder'
 
 export const DashboardScreen = () => {
   const theme = useTheme()
   const insets = useSafeAreaInsets()
+  const {
+    backupNotificationFrequencyAsDays,
+    remindMeAboutBackups,
+    lastBackupDate,
+    installedOn,
+  } = usePreferences()
   const { conversations } = useConversations()
   const { contacts } = useContacts()
   const { isTablet } = useDevice()
@@ -69,6 +77,33 @@ export const DashboardScreen = () => {
     [contacts, conversationsWithNotificationOrTopic]
   )
 
+  const shouldRemindToBackup = useMemo(() => {
+    if (!remindMeAboutBackups) return false
+
+    const installedMoreThanNotificationFrequencyAgo = moment(installedOn)
+      .add(backupNotificationFrequencyAsDays, 'days')
+      .isBefore(moment())
+
+    if (lastBackupDate === null && installedMoreThanNotificationFrequencyAgo) {
+      return true
+    }
+
+    if (
+      moment(lastBackupDate)
+        .add(backupNotificationFrequencyAsDays, 'days')
+        .isBefore(moment())
+    ) {
+      return true
+    }
+
+    return false
+  }, [
+    backupNotificationFrequencyAsDays,
+    installedOn,
+    lastBackupDate,
+    remindMeAboutBackups,
+  ])
+
   return (
     <View style={{ flexGrow: 1, backgroundColor: theme.colors.background }}>
       <KeyboardAwareScrollView
@@ -86,6 +121,7 @@ export const DashboardScreen = () => {
               conversations={approachingConvosWithActiveContacts}
             />
           )}
+          {shouldRemindToBackup && <BackupReminder />}
           <XView style={{ flex: 1, justifyContent: 'space-between' }}>
             <MonthlyRoutine />
             {isTablet && hasAnnualGoal && (

@@ -523,5 +523,8 @@
   "remindMeToBackup": "Lembre-me de fazer backup",
   "backups": "Cópias de segurança",
   "daysSinceLastBackup": "Dias desde o último backup",
-  "daysSinceLastBackup_description": "O JW Time irá notificá-lo após tantos dias desde seu último backup para criar um novo backup de seus dados."
+  "daysSinceLastBackup_description": "O JW Time irá notificá-lo após tantos dias desde seu último backup para criar um novo backup de seus dados.",
+  "recommendedBackup": "Backup recomendado",
+  "recommendedBackup_description": "Já se passaram mais de {{count}} dias desde seu último backup. Recomenda-se criar um novo backup agora.",
+  "backupNow": "Faça backup agora"
 }

@@ -523,5 +523,8 @@
   "remindMeToBackup": "バックアップを通知する",
   "backups": "バックアップ",
   "daysSinceLastBackup": "前回のバックアップからの日数",
-  "daysSinceLastBackup_description": "前回のバックアップからこの日数が経過すると、JW Time からデータの新しいバックアップを作成するよう通知されます。"
+  "daysSinceLastBackup_description": "前回のバックアップからこの日数が経過すると、JW Time からデータの新しいバックアップを作成するよう通知されます。",
+  "recommendedBackup": "バックアップを推奨",
+  "recommendedBackup_description": "前回のバックアップから {{count}} 日以上経過しています。今すぐ新しいバックアップを作成することをお勧めします。",
+  "backupNow": "今すぐバックアップ"
 }

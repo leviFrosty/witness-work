@@ -106,7 +106,13 @@ const SelectedDateSheet: React.FC<Props> = ({
               })
             }
           >
-            <Text style={{ color: theme.colors.textInverse }}>
+            <Text
+              style={{
+                color: theme.colors.textInverse,
+                fontSize: theme.fontSize('lg'),
+                fontFamily: theme.fonts.semiBold,
+              }}
+            >
               {i18n.t('addTime')}
             </Text>
           </ActionButton>

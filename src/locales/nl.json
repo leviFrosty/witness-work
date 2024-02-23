@@ -523,5 +523,8 @@
   "remindMeToBackup": "Herinner mij eraan een back-up te maken",
   "backups": "Back-ups",
   "daysSinceLastBackup": "Dagen sinds de laatste back-up",
-  "daysSinceLastBackup_description": "JW Time zal u na zoveel dagen sinds uw laatste back-up op de hoogte stellen om een nieuwe back-up van uw gegevens te maken."
+  "daysSinceLastBackup_description": "JW Time zal u na zoveel dagen sinds uw laatste back-up op de hoogte stellen om een nieuwe back-up van uw gegevens te maken.",
+  "recommendedBackup": "Back-up aanbevolen",
+  "recommendedBackup_description": "Het is meer dan {{count}} dagen geleden sinds uw laatste back-up. Het wordt aanbevolen om nu een nieuwe back-up te maken.",
+  "backupNow": "Nu backuppen"
 }

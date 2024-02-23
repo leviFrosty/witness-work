@@ -1,19 +1,31 @@
-import { Calendar } from 'react-native-calendars'
+import { Calendar, LocaleConfig } from 'react-native-calendars'
 import { ServiceReport } from '../types/serviceReport'
 import moment from 'moment'
 import useTheme from '../contexts/theme'
 import { MarkedDates } from 'react-native-calendars/src/types'
+import { SelectedDateSheetState } from './SelectedDateSheet'
 
 type MonthTimeReportsCalendarProps = {
   month: number
   year: number
   monthsReports: ServiceReport[] | null
+  setSheet: React.Dispatch<React.SetStateAction<SelectedDateSheetState>>
 }
+
+LocaleConfig.locales['default'] = {
+  monthNames: moment.months(),
+  monthNamesShort: moment.monthsShort(),
+  dayNames: moment.weekdays(),
+  dayNamesShort: moment.weekdaysShort(),
+}
+
+LocaleConfig.defaultLocale = 'default'
 
 const MonthTimeReportsCalendar: React.FC<MonthTimeReportsCalendarProps> = ({
   month,
   year,
   monthsReports,
+  setSheet,
 }) => {
   const theme = useTheme()
   const monthToView = moment().month(month).year(year).format('YYYY-MM-DD')
@@ -40,6 +52,16 @@ const MonthTimeReportsCalendar: React.FC<MonthTimeReportsCalendarProps> = ({
       disableMonthChange
       hideArrows
       renderHeader={() => undefined}
+      onDayPress={(day) => {
+        const date = moment(day.dateString).toDate()
+
+        const dateInFuture = moment().isBefore(date)
+        if (dateInFuture) {
+          return
+        }
+
+        setSheet({ open: true, date })
+      }}
       style={{
         borderRadius: theme.numbers.borderRadiusLg,
         paddingBottom: 10,

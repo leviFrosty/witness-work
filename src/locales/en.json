@@ -515,5 +515,7 @@
   "howToEditAndDeleteConversation": "Edit a conversation by tapping on it or swipe on it from the left.\n\nTo delete, swipe on it from the right.",
   "detailedProgressBar_description": "Updates the home screen progress bar and breaks down your time entries by category. It also shows your time as decimal so it is more accurate.",
   "createBackup": "Create Backup",
-  "restoreFromBackup": "Restore From Backup"
+  "restoreFromBackup": "Restore From Backup",
+  "viewTimeReportsForThisDate": "View all reports for this day. Swipe on a report to delete it.",
+  "noReportsThisDay": "No time reports for this day yet."
 }

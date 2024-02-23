@@ -44,10 +44,7 @@ const AddTimeScreen = ({ route }: AddTimeScreenProps) => {
     id: Crypto.randomUUID(),
     hours: 0,
     minutes: 0,
-    date: moment()
-      .month(route.params?.month ?? moment().month())
-      .year(route.params?.year ?? moment().year())
-      .toDate(),
+    date: moment(route.params?.date).toDate(),
     ldc: false,
   })
 

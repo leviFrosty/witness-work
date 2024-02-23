@@ -412,6 +412,7 @@
       "c3": "Se agregó retroalimentación háptica a varias acciones importantes."
     },
     "1220": {
+      "c3": "Se agregó Calendario a la pantalla de informes de tiempo.",
       "c1": "Las preferencias ahora están mejor organizadas por categoría.",
       "c2": "Importación y procesamiento mejorados. Exportar pantalla para que sea visualmente más clara."
     }
@@ -515,5 +516,7 @@
   "howToEditAndDeleteConversation": "Edite una conversación tocándola o deslizándola desde la izquierda.\n\nPara eliminarlo, deslízalo desde la derecha.",
   "detailedProgressBar_description": "Actualiza la barra de progreso de la pantalla de inicio y desglosa las entradas de tiempo por categoría. También muestra tu tiempo como decimal para que sea más preciso.",
   "createBackup": "Crear copia de seguridad",
-  "restoreFromBackup": "Reinstalar desde el respaldo"
+  "restoreFromBackup": "Reinstalar desde el respaldo",
+  "viewTimeReportsForThisDate": "Ver todos los informes de este día. Desliza el dedo sobre un informe para eliminarlo.",
+  "noReportsThisDay": "Aún no hay informes de tiempo para este día."
 }

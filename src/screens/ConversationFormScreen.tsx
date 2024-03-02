@@ -3,10 +3,7 @@ import { View, Platform } from 'react-native'
 import Text from '../components/MyText'
 import * as Notifications from 'expo-notifications'
 import * as Crypto from 'expo-crypto'
-import {
-  NativeStackNavigationProp,
-  NativeStackScreenProps,
-} from '@react-navigation/native-stack'
+import { NativeStackScreenProps } from '@react-navigation/native-stack'
 import * as Sentry from 'sentry-expo'
 import { RootStackParamList } from '../stacks/RootStack'
 import useContacts from '../stores/contactsStore'
@@ -141,80 +138,31 @@ const NotificationSection = (props: {
   )
 }
 
-const AssignmentSection = ({
-  selectedContact,
-  set_selectedContactId,
-  navigation,
-  errors,
-}: {
-  selectedContact: Contact | undefined
-  set_selectedContactId: React.Dispatch<React.SetStateAction<string>>
-  errors: Record<string, string>
-  navigation: NativeStackNavigationProp<
-    RootStackParamList,
-    'Conversation Form',
-    undefined
-  >
-}) => {
+const ContactRow = ({ selectedContact }: { selectedContact: Contact }) => {
   const theme = useTheme()
 
   return (
     <Section>
-      <View style={{ gap: 10 }}>
+      <View
+        style={{
+          gap: 10,
+          flexDirection: 'row',
+          justifyContent: 'space-between',
+          paddingRight: 20,
+        }}
+      >
         <View
           style={{
             flexDirection: 'row',
-            justifyContent: 'space-between',
-            gap: 15,
-            paddingRight: 20,
-            borderColor: theme.colors.error,
-            borderWidth: errors['contact'] ? 1 : 0,
+            alignItems: 'center',
+            gap: 10,
           }}
         >
-          {selectedContact ? (
-            <View
-              style={{
-                flexDirection: 'row',
-                alignItems: 'center',
-                gap: 10,
-              }}
-            >
-              <IconButton icon={faIdCard} />
-              <Text style={{ fontFamily: theme.fonts.semiBold, fontSize: 16 }}>
-                {selectedContact.name}
-              </Text>
-            </View>
-          ) : (
-            <Text>{i18n.t('noContactAssigned')}</Text>
-          )}
-          <Button
-            onPress={() =>
-              selectedContact
-                ? set_selectedContactId('')
-                : navigation.replace('Contact Selector')
-            }
-          >
-            <Text
-              style={{
-                color: theme.colors.textAlt,
-                textDecorationLine: 'underline',
-              }}
-            >
-              {selectedContact ? i18n.t('unassign') : i18n.t('assign')}
-            </Text>
-          </Button>
-        </View>
-        {errors['contact'] && (
-          <Text
-            style={{
-              textAlign: 'right',
-              paddingRight: 20,
-              color: theme.colors.error,
-            }}
-          >
-            {errors['contact']}
+          <IconButton icon={faIdCard} />
+          <Text style={{ fontFamily: theme.fonts.semiBold, fontSize: 16 }}>
+            {selectedContact?.name}
           </Text>
-        )}
+        </View>
       </View>
     </Section>
   )
@@ -242,15 +190,9 @@ const ConversationFormScreen = ({ route, navigation }: Props) => {
     ? [...conversations].find((c) => c.id === conversationToEditViaProps)
     : undefined
 
-  const [assignedContactId, set_selectedContactId] = useState<string>(
-    params.contactId || conversationToUpdate?.contact.id || ''
-  )
+  const contactId = params.contactId || conversationToUpdate?.contact.id || ''
 
   const notAtHome = params.notAtHome
-
-  const [errors, setErrors] = useState<Record<string, string>>({
-    contact: '',
-  })
 
   const [notifyMeOffset, setNotifyMeOffset] = useState<MomentOffset>({
     amount: returnVisitNotificationOffset?.amount || 2,
@@ -279,7 +221,7 @@ const ConversationFormScreen = ({ route, navigation }: Props) => {
     return {
       id: Crypto.randomUUID(),
       contact: {
-        id: assignedContactId || '',
+        id: contactId || '',
       },
       date: new Date(),
       note: '',
@@ -299,7 +241,8 @@ const ConversationFormScreen = ({ route, navigation }: Props) => {
     getConversationDefaultValue()
   )
 
-  const selectedContact = contacts.find((c) => c.id === assignedContactId)
+  const selectedContact = contacts.find((c) => c.id === contactId)
+  const isEditing = conversationToUpdate?.contact.id
 
   const { allowed: notificationsAllowed } = useNotifications()
 
@@ -329,24 +272,8 @@ const ConversationFormScreen = ({ route, navigation }: Props) => {
     })
   }
 
-  const validate = useCallback((): boolean => {
-    if (!conversation.contact.id) {
-      setErrors({ contact: i18n.t('youMustAssignAConversationToContact') })
-      return false
-    }
-    if (conversation.contact.id) {
-      setErrors({ contact: '' })
-    }
-    return true
-  }, [conversation])
-
   const submit = useCallback(() => {
     return new Promise((resolve) => {
-      const passValidation = validate()
-      if (!passValidation) {
-        return resolve(false)
-      }
-
       const cancelExistingNotification = () => {
         conversationToUpdate?.followUp?.notifications?.forEach(
           async ({ id }) => {
@@ -464,7 +391,6 @@ const ConversationFormScreen = ({ route, navigation }: Props) => {
     params.conversationToEditId,
     selectedContact,
     updateConversation,
-    validate,
   ])
 
   useEffect(() => {
@@ -514,13 +440,15 @@ const ConversationFormScreen = ({ route, navigation }: Props) => {
                     updateLastTimeRequestedStoreReview,
                   })
 
-                  if (params.contactId || conversationToUpdate?.contact.id) {
+                  if (isEditing) {
+                    navigation.pop()
+                  } else if (params.contactId) {
                     navigation.replace('Contact Details', {
-                      id: params.contactId || conversationToUpdate?.contact.id,
+                      id: params.contactId,
                     })
-                    return
+                  } else {
+                    navigation.popToTop()
                   }
-                  navigation.popToTop()
                 }}
               >
                 <Text
@@ -530,9 +458,7 @@ const ConversationFormScreen = ({ route, navigation }: Props) => {
                     fontSize: 16,
                   }}
                 >
-                  {conversationToUpdate?.contact.id
-                    ? i18n.t('save')
-                    : i18n.t('add')}
+                  {isEditing ? i18n.t('save') : i18n.t('add')}
                 </Text>
               </Button>
             </View>
@@ -544,6 +470,7 @@ const ConversationFormScreen = ({ route, navigation }: Props) => {
     calledGoecodeApiTimes,
     conversationToUpdate?.contact.id,
     installedOn,
+    isEditing,
     lastTimeRequestedAReview,
     navigation,
     params,
@@ -614,12 +541,7 @@ const ConversationFormScreen = ({ route, navigation }: Props) => {
               : i18n.t('addConversation_description')}
           </Text>
         </View>
-        <AssignmentSection
-          errors={errors}
-          navigation={navigation}
-          selectedContact={selectedContact}
-          set_selectedContactId={set_selectedContactId}
-        />
+        {selectedContact && <ContactRow selectedContact={selectedContact} />}
         <Divider borderStyle='dashed' />
         <Section>
           <InputRowContainer

@@ -12,7 +12,8 @@
     "test": "jest --watch --coverage=false",
     "testDebug": "jest -o --watch --coverage=false",
     "testFinal": "jest",
-    "updateSnapshots": "jest -u --coverage=false"
+    "updateSnapshots": "jest -u --coverage=false",
+    "lint": "yarn tsc"
   },
   "dependencies": {
     "@expo-google-fonts/inter": "^0.2.3",

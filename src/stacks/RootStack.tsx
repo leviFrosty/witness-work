@@ -5,7 +5,6 @@ import {
 import ContactFormScreen from '../screens/ContactFormScreen'
 import Header from '../components/layout/Header'
 import ConversationFormScreen from '../screens/ConversationFormScreen'
-import ContactSelectorScreen from '../screens/ContactSelectorScreen'
 import useTheme from '../contexts/theme'
 import ContactDetailsScreen from '../screens/ContactDetailsScreen'
 import AddTimeScreen from '../screens/AddTimeScreen'
@@ -96,14 +95,6 @@ const RootStackComponent = () => {
       <RootStack.Screen
         name='Conversation Form'
         component={ConversationFormScreen}
-      />
-      <RootStack.Screen
-        name='Contact Selector'
-        component={ContactSelectorScreen}
-        options={{
-          presentation: 'formSheet',
-          header: () => <Header noInsets buttonType='exit' />,
-        }}
       />
       <RootStack.Screen
         name='Add Time'

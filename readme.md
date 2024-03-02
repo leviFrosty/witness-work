@@ -112,7 +112,7 @@ After that, open the compiled development build in your simulator/device and con
 
 - `GOOGLE_CLOUD_API_KEY` Used for cloud translation API calls in CLI
 - `HERE_API_KEY` Used for geocoding api calls when users create address to fetch coordinates
-- `GOOGLE_MAPS_ANDROID_SDK_API_KEY` [Android Only] Maps SDK Api allows use of Google Maps within application
+- `GOOGLE_MAPS_ANDROID_SDK_API_KEY` [Android] Maps SDK Api allows use of Google Maps within application
 - `REVENUECAT_APPLE_API_KEY` [iOS] Allows use of revenuecat service for in-app purchases for donations
 - `SENTRY_AUTH_TOKEN` Token that enables Sentry application error logging
 - `EXPO_PUBLIC_SENTRY_PROJECT` Configuration for sentry's project

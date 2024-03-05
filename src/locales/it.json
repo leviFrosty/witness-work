@@ -416,6 +416,11 @@
       "c1": "Le preferenze sono ora meglio organizzate per categoria.",
       "c2": "Importazione e ottimizzazione migliorate schermata di esportazione per essere visivamente più chiara.",
       "c4": "Occasionalmente ti avvisa di creare un nuovo backup. Questo è configurabile nelle impostazioni."
+    },
+    "1221": {
+      "c1": "[iOS] I selettori di data e ora ora utilizzano le impostazioni internazionali corrette",
+      "c2": "Risolto un problema per cui la modifica di una conversazione veniva navigata in modo errato.",
+      "c3": "Altre correzioni di bug minori e miglioramenti delle prestazioni."
     }
   },
   "installed": "Installato",

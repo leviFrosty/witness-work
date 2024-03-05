@@ -416,6 +416,11 @@
       "c1": "Tùy chọn hiện được sắp xếp tốt hơn theo danh mục.",
       "c2": "Cải thiện tính năng nhập & màn hình xuất sẽ rõ ràng hơn.",
       "c4": "Thỉnh thoảng thông báo cho bạn để tạo bản sao lưu mới. Điều này có thể được cấu hình trong cài đặt."
+    },
+    "1221": {
+      "c1": "[iOS] Bộ chọn ngày và giờ hiện sử dụng ngôn ngữ chính xác",
+      "c2": "Đã khắc phục sự cố trong đó việc chỉnh sửa cuộc trò chuyện sẽ điều hướng không chính xác.",
+      "c3": "Sửa lỗi nhỏ khác và cải thiện hiệu suất."
     }
   },
   "installed": "Cài đặt",

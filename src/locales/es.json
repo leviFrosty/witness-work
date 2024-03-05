@@ -1,11 +1,11 @@
 {
   "hello": "Hola",
-  "goodBye": "Adios",
+  "goodBye": "Adiós",
   "welcomeTo": "Bienvenido a",
   "jwTime": "JW Time",
   "getStarted": "Empieza",
-  "whatTypePublisherAreYou": "Qué tipo de publicador eres?",
-  "noHourRequirement": "No se requiere hora",
+  "whatTypePublisherAreYou": "¿Qué tipo de publicador eres?",
+  "noHourRequirement": "No hay requisito de horas",
   "hourMonthlyRequirement": "Requisito mensual de {{count}} horas",
   "publisher": "Publicador",
   "regularAuxiliary": "Auxiliar Regular",
@@ -13,32 +13,32 @@
   "circuitOverseer": "Superintendente de Circuito",
   "specialPioneer": "Precursor Especial",
   "continue": "Continuar",
-  "neverForgetAReturnVisit": "Nunca Olvida una Revisita",
-  "neverForgetAReturnVisit_description": "JW Time will notify you about upcoming return visits or studies. You can change this later in the settings.",
+  "neverForgetAReturnVisit": "Nunca Olvides una Revisita",
+  "neverForgetAReturnVisit_description": "JW Time te notificará sobre las próximas revisitas o estudios. Puedes cambiar esto más tarde en los ajustes.",
   "skip": "Omitir",
   "allowNotifications": "Permitir Notificaciones",
   "youreAllSet": "¡Estás listo!",
-  "youreAllSet_description": "JW Time le notificará las conversaciones que haya anotado.",
-  "optInNotificationsLater": "Puede optar por recibir notificaciones en la configuración más adelante.",
+  "youreAllSet_description": "JW Time le notificará de las conversaciones que haya programado.",
+  "optInNotificationsLater": "Puede optar por recibir notificaciones en los ajustes más adelante.",
   "completeSetup": "Configuración Completa",
-  "noRecentConversation": "No Hay Conversacione Reciente",
+  "noRecentConversation": "No Hay una Conversación Reciente",
   "noRecentConversation_plural": "No Hay Conversaciones Recientes",
-  "returnVisitContacts": "Contactos De Revisitas",
-  "noContactsSaved": "No Hay Contactos Guardados",
-  "deleteConversation": "Borrar Conversacion",
-  "deleteConversation_description": "Borrar esta conversacion eliminara permanente cualquier notificacion.",
-  "cancel": "Cancela",
+  "returnVisitContacts": "Contactos de Revisitas",
+  "noContactsSaved": "No Hay Contactos Guardados. Toque el botón + para añadir un contacto.",
+  "deleteConversation": "¿Borrar la Conversación?",
+  "deleteConversation_description": "Borrar esta conversación la eliminará permanente y también cualquier notificación asignada a esta.",
+  "cancel": "Cancelar",
   "delete": "Borrar",
   "noNotesSaved": "No se guardó ninguna nota.",
-  "followUpInformation": "Follow Up Information",
-  "upcoming": "seguimiento",
+  "followUpInformation": "Información de seguimiento",
+  "upcoming": "próxima",
   "past": "pasado",
-  "topic": "Tema:",
+  "topic": "Tema",
   "monthlyRoutine": "Rutina Mensual",
-  "searchForContact": "Buscar contacto...",
+  "searchForContact": "Buscar un contacto...",
   "phrasesFar": {
     "keepGoing": "¡Sigue adelante!",
-    "youCanDoThis": "¡Tu puedes hacerlo!",
+    "youCanDoThis": "¡Puedes hacerlo!",
     "neverGiveUp": "¡Nunca te rindas!",
     "preachTheWord": "¡Predica la palabra!",
     "stayFocused": "¡Mantente enfocado!",
@@ -268,7 +268,7 @@
   "appleMaps": "Mapas de Apple",
   "googleMaps": "mapas de Google",
   "shareFrom": "Compartir desde",
-  "generateAUrlFromYourPreferredMappingService": "Share a link from different mapping services.",
+  "generateAUrlFromYourPreferredMappingService": "Comparta un enlace de los diferentes servicios de mapas.",
   "introducingMapView": "Configuración del mapa",
   "mapViewOnboarding1": "Para comenzar, actualice su",
   "mapViewOnboarding2": "contacto existente al que le faltan coordenadas.",
@@ -305,8 +305,8 @@
   "pleaseDescribeYourFeatureClearly": "Describa con gran detalle qué característica le gustaría tener. Proporcione un nombre de contacto y un teléfono. Si corresponde, dibuje una imagen de cómo se vería la función. Alternativamente, envíe una captura de pantalla de una aplicación que tenga una funcionalidad similar.",
   "Home": "Hogar",
   "Map": "Mapa",
-  "preferences": "Preferences",
-  "defaultNavigationApp": "Default Navigation App",
+  "preferences": "Ajustes",
+  "defaultNavigationApp": "Aplicación de Navegación Predeterminada",
   "apple": "Apple",
   "google": "Google",
   "couldNotOpenMaps": "No se pudieron abrir mapas",
@@ -327,35 +327,50 @@
   "new": "Nuevo",
   "bugFixes": "Corrección de errores",
   "updates": {
-    "160": {
-      "c1": "Las conversaciones ahora son editables. Las notificaciones son configurables.",
-      "c2": "Desliza gestos para editar o eliminar conversaciones, contactos, etc.",
-      "c3": "Se agregó retroalimentación háptica a varias acciones importantes."
+    "1211": {
+      "c1": "Se agregaron sugerencias únicas más útiles cuando corresponda."
     },
-    "161": {
-      "c1": "Se agregaron más opciones de minutos para entradas de tiempo."
+    "1210": {
+      "c1": "Precisión enormemente mejorada de las visualizaciones de tiempo.",
+      "c2": "Precisión mejorada de las barras de progreso del tiempo.",
+      "c3": "Se agregaron sugerencias útiles para acciones que pueden no notarse de inmediato.",
+      "c4": "Calidad de vida mejorada en la pantalla de mapas con información más relevante y un botón para agregar rápidamente."
     },
-    "162": {
-      "c1": "Se ajustó el requisito de horas de precursor especial de 70 a 100"
+    "1201": {
+      "c1": "Correcciones de errores menores.",
+      "c2": "Traducciones al coreano significativamente mejoradas: gracias hermano Paul. Si desea ayudar a traducir su propio idioma, visite la configuración.",
+      "c3": "Correcciones de errores menores."
     },
-    "163": {
-      "c1": "Resolver problemas de actualización automática"
+    "1200": {
+      "c1": "Agrega funcionalidad de copia de seguridad y restauración. Ahora puedes hacer una copia de seguridad de tus datos en la nube y restaurarlos más tarde, esto te permite transferir tus datos a otro dispositivo. También puedes transferirlo a otra plataforma. Encuentre esta nueva característica en la configuración."
     },
-    "170": {
-      "c1": "Agregue varios métodos de exportación de tiempo",
-      "c2": "Agregue 'No en hogares'"
+    "1120": {
+      "c1": "Agrega funcionalidad de copia de seguridad y restauración. Ahora puedes hacer una copia de seguridad de tus datos en la nube y restaurarlos más tarde. Puede transferir sus datos a otro dispositivo. También puedes transferirlo a otra plataforma. Encuentre esta nueva característica en la configuración."
     },
-    "180": {
-      "c1": "Se agregó codificación geográfica automática para contactos.",
-      "c2": "Vista de mapa agregada"
+    "1111": {
+      "c1": "Agregue la página de donación en la configuración para aquellos que deseen contribuir.",
+      "c2": "Incluye varias mejoras menores y correcciones de errores."
     },
-    "181": {
-      "c1": "Vista de mapa ampliada",
-      "c2": "Se agregó una solicitud de revisión de la tienda después de que se cumplan ciertos criterios.",
-      "c3": "Pequeñas correcciones de errores"
+    "1110": {
+      "c1": "Se agregó soporte para iPads y iPad. ¡Tabletas!",
+      "c2": "Se ajustaron varios estilos para adaptarse mejor a pantallas más grandes.",
+      "c3": "Se ajustó el método para enviar informes de errores y solicitudes de funciones a Github."
     },
-    "182": {
-      "c1": "Actualizado todo el tiempo para reflejar la ubicación actual"
+    "1100": {
+      "c1": "¡Agrega el informe anual a la pantalla Informes de tiempo! Realice un seguimiento del progreso de su año de servicio de un vistazo.",
+      "c2": "Al agregar tiempo desde la pantalla Informes de tiempo, el informe ahora se establece de forma predeterminada en el mes seleccionado.",
+      "c3": "Soluciona un problema al exportar el informe de servicio de enero."
+    },
+    "192": {
+      "c1": "Soluciona un problema por el cual algunos dispositivos tienen una barra de progreso desbordada.",
+      "c2": "Agrega un manejo más detallado de errores de enlace para dispositivos que carecen de las aplicaciones requeridas.",
+      "c3": "Agrega un manejo más detallado de errores de enlace para ciertos dispositivos que carecen de las aplicaciones requeridas.",
+      "c4": "Navegue directamente a un mes desde la sección de rutina mensual de la pantalla de inicio.",
+      "c5": "La pantalla Informes de tiempo maneja mejor los meses vacíos y futuros.",
+      "c6": "Correcciones de errores menores."
+    },
+    "191": {
+      "c1": "Resuelve un problema al navegar a las pantallas de tiempo."
     },
     "190": {
       "c1": "Preferencias añadidas en la configuración.",
@@ -366,55 +381,40 @@
       "c6": "Ahora agregue etiquetas personalizadas a sus entradas de tiempo",
       "c7": "Pantalla de informes de tiempo actualizada para estar mejor organizada y separada por mes"
     },
-    "191": {
-      "c1": "Resuelve un problema al navegar a las pantallas de tiempo."
+    "182": {
+      "c1": "Actualizado todo el tiempo para reflejar la ubicación actual"
     },
-    "192": {
-      "c1": "Soluciona un problema por el cual algunos dispositivos tienen una barra de progreso desbordada.",
-      "c2": "Agrega un manejo más detallado de errores de enlace para dispositivos que carecen de las aplicaciones requeridas.",
-      "c3": "Agrega un manejo más detallado de errores de enlace para ciertos dispositivos que carecen de las aplicaciones requeridas.",
-      "c4": "Navegue directamente a un mes desde la sección de rutina mensual de la pantalla de inicio.",
-      "c5": "La pantalla Informes de tiempo maneja mejor los meses vacíos y futuros.",
-      "c6": "Correcciones de errores menores."
+    "181": {
+      "c1": "Vista de mapa ampliada",
+      "c2": "Se agregó una solicitud de revisión de la tienda después de que se cumplan ciertos criterios.",
+      "c3": "Pequeñas correcciones de errores"
     },
-    "1100": {
-      "c1": "¡Agrega el informe anual a la pantalla Informes de tiempo! Realice un seguimiento del progreso de su año de servicio de un vistazo.",
-      "c2": "Al agregar tiempo desde la pantalla Informes de tiempo, el informe ahora se establece de forma predeterminada en el mes seleccionado.",
-      "c3": "Soluciona un problema al exportar el informe de servicio de enero."
+    "180": {
+      "c1": "Se agregó codificación geográfica automática para contactos.",
+      "c2": "Vista de mapa agregada"
     },
-    "1110": {
-      "c1": "Se agregó soporte para iPads y iPad. ¡Tabletas!",
-      "c2": "Se ajustaron varios estilos para adaptarse mejor a pantallas más grandes.",
-      "c3": "Se ajustó el método para enviar informes de errores y solicitudes de funciones a Github."
+    "170": {
+      "c1": "Agregue varios métodos de exportación de tiempo",
+      "c2": "Agregue 'No en hogares'"
     },
-    "1111": {
-      "c1": "Agregue la página de donación en la configuración para aquellos que deseen contribuir.",
-      "c2": "Incluye varias mejoras menores y correcciones de errores."
+    "163": {
+      "c1": "Resolver problemas de actualización automática"
     },
-    "1120": {
-      "c1": "Agrega funcionalidad de copia de seguridad y restauración. Ahora puedes hacer una copia de seguridad de tus datos en la nube y restaurarlos más tarde. Puede transferir sus datos a otro dispositivo. También puedes transferirlo a otra plataforma. Encuentre esta nueva característica en la configuración."
+    "162": {
+      "c1": "Se ajustó el requisito de horas de precursor especial de 70 a 100"
     },
-    "1200": {
-      "c1": "Agrega funcionalidad de copia de seguridad y restauración. Ahora puedes hacer una copia de seguridad de tus datos en la nube y restaurarlos más tarde, esto te permite transferir tus datos a otro dispositivo. También puedes transferirlo a otra plataforma. Encuentre esta nueva característica en la configuración."
+    "161": {
+      "c1": "Se agregaron más opciones de minutos para entradas de tiempo."
     },
-    "1201": {
-      "c1": "Correcciones de errores menores.",
-      "c2": "Traducciones al coreano significativamente mejoradas: gracias hermano Paul. Si desea ayudar a traducir su propio idioma, visite la configuración.",
-      "c3": "Correcciones de errores menores."
-    },
-    "1210": {
-      "c1": "Precisión enormemente mejorada de las visualizaciones de tiempo.",
-      "c2": "Precisión mejorada de las barras de progreso del tiempo.",
-      "c3": "Se agregaron sugerencias útiles para acciones que pueden no notarse de inmediato.",
-      "c4": "Calidad de vida mejorada en la pantalla de mapas con información más relevante y un botón para agregar rápidamente."
-    },
-    "1211": {
-      "c1": "Se agregaron sugerencias únicas más útiles cuando corresponda."
+    "160": {
+      "c1": "Las conversaciones ahora son editables. Las notificaciones son configurables.",
+      "c2": "Desliza gestos para editar o eliminar conversaciones, contactos, etc.",
+      "c3": "Se agregó retroalimentación háptica a varias acciones importantes."
     },
     "1220": {
+      "c3": "Se agregó Calendario a la pantalla de informes de tiempo.",
       "c1": "Las preferencias ahora están mejor organizadas por categoría.",
       "c2": "Importación y procesamiento mejorados. Exportar pantalla para que sea visualmente más clara.",
-      "c3": "Se agregó Calendario a la pantalla de informes de tiempo.",
       "c4": "De vez en cuando le notifica que cree una nueva copia de seguridad. Esto es configurable en la configuración."
     },
     "1221": {
@@ -518,8 +518,8 @@
   "gotIt": "¡Entiendo!",
   "hint": "Pista",
   "howToDeleteTime": "Elimina una entrada de tiempo deslizándola desde la derecha, ¡pruébalo!",
-  "howToEditAndDeleteConversation": "Edite una conversación tocándola o deslizándola desde la izquierda.\n\nPara eliminarlo, deslízalo desde la derecha.",
   "howToArchiveContact": "Archive contactos antiguos deslizándolos desde la derecha. Los contactos archivados se pueden restaurar más tarde desde la configuración.",
+  "howToEditAndDeleteConversation": "Edite una conversación tocándola o deslizándola desde la izquierda.\n\nPara eliminarlo, deslízalo desde la derecha.",
   "detailedProgressBar_description": "Actualiza la barra de progreso de la pantalla de inicio y desglosa las entradas de tiempo por categoría. También muestra tu tiempo como decimal para que sea más preciso.",
   "createBackup": "Crear copia de seguridad",
   "restoreFromBackup": "Reinstalar desde el respaldo",

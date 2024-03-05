@@ -15,12 +15,12 @@ JW Time is the easy way for Jehovah's Witnesses to manage their field service pr
 ### Preview
 
 <div float="left">
-<img src="./src/docs/screenshots/preview1.png" width="150">
-<img src="./src/docs/screenshots/preview2.png" width="150">
-<img src="./src/docs/screenshots/preview3.png" width="150">
-<img src="./src/docs/screenshots/preview4.png" width="150">
-<img src="./src/docs/screenshots/preview5.png" width="150">
-<img src="./src/docs/screenshots/preview6.png" width="150">
+<img src="./src/docs/screenshots/preview1.jpg" width="150">
+<img src="./src/docs/screenshots/preview2.jpg" width="150">
+<img src="./src/docs/screenshots/preview3.jpg" width="150">
+<img src="./src/docs/screenshots/preview4.jpg" width="150">
+<img src="./src/docs/screenshots/preview5.jpg" width="150">
+<img src="./src/docs/screenshots/preview6.jpg" width="150">
 </div>
 
 ## Want to Contribute?

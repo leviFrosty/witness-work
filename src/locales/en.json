@@ -420,7 +420,8 @@
     "1221": {
       "c1": "[iOS] Date and Time pickers now use the correct locale",
       "c2": "Fixed an issue where editing a conversation would incorrectly navigate.",
-      "c3": "Other minor bug fixes and performance improvements."
+      "c3": "Other minor bug fixes and performance improvements.",
+      "c4": "Improved Spanish translation - thank you brother Cleen. If you'd like to help translate your own language, see 'Help Translate' in the settings."
     }
   },
   "installed": "Installed",

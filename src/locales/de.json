@@ -416,6 +416,11 @@
       "c1": "Die Einstellungen sind jetzt besser nach Kategorien organisiert.",
       "c2": "Verbesserter Import & Der Exportbildschirm soll optisch klarer sein.",
       "c4": "Fordert Sie gelegentlich auf, ein neues Backup zu erstellen. Dies ist in den Einstellungen konfigurierbar."
+    },
+    "1221": {
+      "c1": "[iOS] Die Datums- und Uhrzeitauswahl verwendet jetzt das richtige Gebietsschema",
+      "c2": "Es wurde ein Problem behoben, bei dem es beim Bearbeiten einer Konversation zu einer falschen Navigation kam.",
+      "c3": "Weitere kleinere Fehlerbehebungen und Leistungsverbesserungen."
     }
   },
   "installed": "Eingerichtet",

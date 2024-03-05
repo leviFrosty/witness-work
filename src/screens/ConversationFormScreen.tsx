@@ -40,6 +40,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { usePreferences } from '../stores/preferences'
 import { maybeRequestStoreReview } from '../lib/storeReview'
 import useNotifications from '../hooks/notifications'
+import { getLocales } from 'expo-localization'
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Conversation Form'>
 type MomentOffset = {
@@ -557,6 +558,7 @@ const ConversationFormScreen = ({ route, navigation }: Props) => {
               />
             ) : (
               <RNDateTimePicker
+                locale={getLocales()[0].languageCode}
                 maximumDate={moment().toDate()}
                 value={conversation.date}
                 onChange={handleDateChange}
@@ -601,6 +603,7 @@ const ConversationFormScreen = ({ route, navigation }: Props) => {
               />
             ) : (
               <RNDateTimePicker
+                locale={getLocales()[0].languageCode}
                 mode='datetime'
                 minimumDate={moment().toDate()}
                 value={conversation.followUp!.date}

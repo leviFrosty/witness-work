@@ -416,6 +416,11 @@
       "c2": "Pinahusay na pag-import & i-export ang screen upang maging mas malinaw.",
       "c3": "Idinagdag ang Kalendaryo sa screen ng mga ulat sa oras.",
       "c4": "Paminsan-minsan ay inaabisuhan ka na gumawa ng bagong backup. Ito ay maaaring i-configure sa mga setting."
+    },
+    "1221": {
+      "c1": "Ginagamit na ngayon ng mga tagapili ng Petsa at Oras ang tamang locale",
+      "c2": "Inayos ang isang isyu kung saan mali ang pag-navigate sa pag-edit ng isang pag-uusap.",
+      "c3": "Iba pang maliliit na pag-aayos ng bug at pagpapahusay sa pagganap."
     }
   },
   "installed": "Naka-install",

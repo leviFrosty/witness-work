@@ -24,6 +24,7 @@ import Button from '../components/Button'
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { NativeStackScreenProps } from '@react-navigation/native-stack'
+import { getLocales } from 'expo-localization'
 
 type AddTimeScreenProps = NativeStackScreenProps<RootStackParamList, 'Add Time'>
 
@@ -198,6 +199,7 @@ const AddTimeScreen = ({ route }: AddTimeScreenProps) => {
             >
               {Platform.OS !== 'android' ? (
                 <RNDateTimePicker
+                  locale={getLocales()[0].languageCode}
                   maximumDate={moment().toDate()}
                   value={serviceReport.date}
                   onChange={handleDateChange}

@@ -416,6 +416,11 @@
       "c2": "Importación y procesamiento mejorados. Exportar pantalla para que sea visualmente más clara.",
       "c3": "Se agregó Calendario a la pantalla de informes de tiempo.",
       "c4": "De vez en cuando le notifica que cree una nueva copia de seguridad. Esto es configurable en la configuración."
+    },
+    "1221": {
+      "c1": "[iOS] Los selectores de fecha y hora ahora usan la configuración regional correcta",
+      "c2": "Se solucionó un problema por el cual editar una conversación navegaba incorrectamente.",
+      "c3": "Otras correcciones de errores menores y mejoras de rendimiento."
     }
   },
   "installed": "Instalado",

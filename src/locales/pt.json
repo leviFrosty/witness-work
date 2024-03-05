@@ -416,6 +416,11 @@
       "c2": "Importação e importação aprimoradas. tela de exportação para ser visualmente mais clara.",
       "c3": "Adicionado calendário à tela de relatórios de tempo.",
       "c4": "Ocasionalmente, notifica você para criar um novo backup. Isso é configurável nas configurações."
+    },
+    "1221": {
+      "c1": "[iOS] Os seletores de data e hora agora usam a localidade correta",
+      "c2": "Corrigido um problema em que a edição de uma conversa navegava incorretamente.",
+      "c3": "Outras pequenas correções de bugs e melhorias de desempenho."
     }
   },
   "installed": "Instalado",

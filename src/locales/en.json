@@ -416,6 +416,11 @@
       "c1": "Preferences are now better organized by category.",
       "c2": "Improved import & export screen to be visually clearer.",
       "c4": "Occasionally notifies you to create a new backup. This is configurable in the settings."
+    }, 
+    "1221": {
+      "c1": "[iOS] Date and Time pickers now use the correct locale",
+      "c2": "Fixed an issue where editing a conversation would incorrectly navigate.",
+      "c3": "Other minor bug fixes and performance improvements."
     }
   },
   "installed": "Installed",

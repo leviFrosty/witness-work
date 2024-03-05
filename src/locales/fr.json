@@ -416,6 +416,11 @@
       "c2": "Importation et amélioration améliorées. écran d'exportation pour être visuellement plus clair.",
       "c3": "Ajout du calendrier à l'écran des rapports de temps.",
       "c4": "Vous informe occasionnellement de créer une nouvelle sauvegarde. Ceci est configurable dans les paramètres."
+    },
+    "1221": {
+      "c1": "[iOS] Les sélecteurs de date et d'heure utilisent désormais les paramètres régionaux corrects",
+      "c2": "Correction d'un problème où la modification d'une conversation entraînait une navigation incorrecte.",
+      "c3": "Autres corrections de bugs mineurs et améliorations des performances."
     }
   },
   "installed": "installée",

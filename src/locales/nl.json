@@ -416,6 +416,11 @@
       "c1": "Voorkeuren zijn nu beter georganiseerd per categorie.",
       "c2": "Verbeterde import & exportscherm om visueel duidelijker te zijn.",
       "c4": "Geeft af en toe een melding dat u een nieuwe back-up moet maken. Dit is configureerbaar in de instellingen."
+    },
+    "1221": {
+      "c1": "[iOS] Datum- en tijdkiezers gebruiken nu de juiste landinstelling",
+      "c2": "Er is een probleem opgelost waarbij het bewerken van een gesprek onjuist navigeerde.",
+      "c3": "Andere kleine bugfixes en prestatieverbeteringen."
     }
   },
   "installed": "Geïnstalleerd",

@@ -23,7 +23,7 @@ JW Time is the easy way for Jehovah's Witnesses to manage their field service pr
 <img src="./src/docs/screenshots/preview6.jpg" width="150">
 </div>
 
-## Want to Contribute?
+## Want to Contribute?!
 
 ### Help Financially 💖
 

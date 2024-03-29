@@ -425,7 +425,10 @@
     },
     "1230": {
       "c1": "Se agregó una nueva pantalla de descripción general anual para ver el progreso de su año de servicio por mes.",
-      "c2": "Se agregó 'Hoy' para navegar rápidamente hacia atrás al mes actual al ver meses o años anteriores."
+      "c2": "Se agregó 'Hoy' para navegar rápidamente hacia atrás al mes actual al ver meses o años anteriores.",
+      "c3": "Se actualizaron los Pioneros especiales para que no tengan una meta anual predeterminada.",
+      "c4": "Se agregó la \"meta anual\" configuración de las preferencias del editor. Esto le permite anular la configuración predeterminada para su tipo de editor.",
+      "c5": "Traducciones al italiano muy mejoradas, ¡gracias hermano Giuseppe!"
     }
   },
   "installed": "Instalado",
@@ -537,5 +540,7 @@
   "recommendedBackup": "Copia de seguridad recomendada",
   "recommendedBackup_description": "Han pasado más de {{count}} días desde su última copia de seguridad. Se recomienda crear una nueva copia de seguridad ahora.",
   "backupNow": "Copia ahora",
-  "today": "Hoy"
+  "today": "Hoy",
+  "annualGoal": "Meta Anual",
+  "default": "Por defecto"
 }

@@ -425,7 +425,10 @@
     },
     "1230": {
       "c1": "Ajout d'un nouvel écran d'aperçu annuel pour visualiser la progression de votre année de service par mois.",
-      "c2": "Ajout de « Aujourd'hui » pour revenir rapidement au mois en cours lors de l'affichage des mois ou des années précédentes."
+      "c2": "Ajout de « Aujourd'hui » pour revenir rapidement au mois en cours lors de l'affichage des mois ou des années précédentes.",
+      "c3": "Mise à jour des Pionniers spéciaux pour ne pas avoir d'objectif annuel par défaut.",
+      "c4": "Ajout d'un «objectif annuel» réglage des préférences de l'éditeur. Cela vous permet de remplacer le paramètre par défaut de votre type d'éditeur.",
+      "c5": "Traductions italiennes grandement améliorées, merci frère Giuseppe !"
     }
   },
   "installed": "installée",
@@ -537,5 +540,7 @@
   "recommendedBackup": "Sauvegarde recommandée",
   "recommendedBackup_description": "Plus de {{count}} jours se sont écoulés depuis votre dernière sauvegarde. Il est recommandé de créer une nouvelle sauvegarde maintenant.",
   "backupNow": "Sauvegarder maintenant",
-  "today": "Aujourd'hui"
+  "today": "Aujourd'hui",
+  "annualGoal": "Objectif annuel",
+  "default": "Défaut"
 }

@@ -425,7 +425,10 @@
     },
     "1230": {
       "c1": "Nagdagdag ng bagong screen ng Taunang Pangkalahatang-ideya upang tingnan ang pag-unlad ng iyong taon ng serbisyo ayon sa buwan.",
-      "c2": "Idinagdag 'Ngayon' button upang mabilis na mag-navigate pabalik sa kasalukuyang buwan kapag tinitingnan ang mga nakaraang buwan o taon."
+      "c2": "Idinagdag 'Ngayon' button upang mabilis na mag-navigate pabalik sa kasalukuyang buwan kapag tinitingnan ang mga nakaraang buwan o taon.",
+      "c3": "Na-update ang mga Special Pioneer upang hindi magkaroon ng taunang layunin bilang default.",
+      "c4": "Idinagdag ang 'Taunang Layunin' pagtatakda sa mga kagustuhan ng publisher. Nagbibigay-daan ito sa iyong i-override ang default na setting para sa uri ng iyong publisher.",
+      "c5": "Napakahusay na mga pagsasalin ng Italyano, salamat kapatid na Giuseppe!"
     }
   },
   "installed": "Naka-install",
@@ -537,5 +540,7 @@
   "recommendedBackup": "Inirerekomenda ang Pag-backup",
   "recommendedBackup_description": "Mahigit {{count}} na araw na ang nakalipas mula noong huli mong backup. Inirerekomenda na gumawa ng bagong backup ngayon.",
   "backupNow": "I-backup Ngayon",
-  "today": "Ngayong araw"
+  "today": "Ngayong araw",
+  "annualGoal": "Taunang Layunin",
+  "default": "Default"
 }

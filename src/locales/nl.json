@@ -425,7 +425,10 @@
     },
     "1230": {
       "c1": "Nieuw jaaroverzichtscherm toegevoegd om de voortgang van uw servicejaar per maand te bekijken.",
-      "c2": "'Vandaag' toegevoegd knop om snel terug te navigeren naar de huidige maand wanneer u voorgaande maanden of jaren bekijkt."
+      "c2": "'Vandaag' toegevoegd knop om snel terug te navigeren naar de huidige maand wanneer u voorgaande maanden of jaren bekijkt.",
+      "c3": "Speciale Pioniers bijgewerkt zodat ze niet standaard een jaarlijks doel hebben.",
+      "c4": "'Jaarlijksdoel' toegevoegd instellen op uitgeversvoorkeuren. Hiermee kunt u de standaardinstelling voor uw uitgeverstype overschrijven.",
+      "c5": "Sterk verbeterde Italiaanse vertalingen, bedankt broeder Giuseppe!"
     }
   },
   "installed": "Geïnstalleerd",
@@ -537,5 +540,7 @@
   "recommendedBackup": "Back-up aanbevolen",
   "recommendedBackup_description": "Het is meer dan {{count}} dagen geleden sinds uw laatste back-up. Het wordt aanbevolen om nu een nieuwe back-up te maken.",
   "backupNow": "Nu backuppen",
-  "today": "Vandaag"
+  "today": "Vandaag",
+  "annualGoal": "Jaarlijks doel",
+  "default": "Standaard"
 }

@@ -425,7 +425,10 @@
     },
     "1230": {
       "c1": "Đã thêm màn hình Tổng quan hàng năm mới để xem tiến trình dịch vụ của bạn theo tháng.",
-      "c2": "Đã thêm 'Hôm nay' để nhanh chóng điều hướng trở lại tháng hiện tại khi xem các tháng hoặc năm trước đó."
+      "c2": "Đã thêm 'Hôm nay' để nhanh chóng điều hướng trở lại tháng hiện tại khi xem các tháng hoặc năm trước đó.",
+      "c3": "Đã cập nhật Đội tiên phong đặc biệt để không có mục tiêu hàng năm theo mặc định.",
+      "c4": "Đã thêm 'Mục tiêu hàng năm' cài đặt theo sở thích của nhà xuất bản. Điều này cho phép bạn ghi đè cài đặt mặc định cho loại nhà xuất bản của mình.",
+      "c5": "Bản dịch tiếng Ý được cải thiện rất nhiều, cảm ơn anh Giuseppe!"
     }
   },
   "installed": "Cài đặt",
@@ -537,5 +540,7 @@
   "recommendedBackup": "Khuyến nghị sao lưu",
   "recommendedBackup_description": "Đã hơn {{count}} ngày kể từ lần sao lưu cuối cùng của bạn. Nên tạo bản sao lưu mới ngay bây giờ.",
   "backupNow": "Sao lưu ngay",
-  "today": "Hôm nay"
+  "today": "Hôm nay",
+  "annualGoal": "Mục tiêu hàng năm",
+  "default": "Mặc định"
 }

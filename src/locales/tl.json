@@ -532,5 +532,6 @@
   "daysSinceLastBackup_description": "Aabisuhan ka ng JW Time pagkatapos nitong maraming araw mula noong huli mong backup para gumawa ng bagong backup ng iyong data.",
   "recommendedBackup": "Inirerekomenda ang Pag-backup",
   "recommendedBackup_description": "Mahigit {{count}} na araw na ang nakalipas mula noong huli mong backup. Inirerekomenda na gumawa ng bagong backup ngayon.",
-  "backupNow": "I-backup Ngayon"
+  "backupNow": "I-backup Ngayon",
+  "today": "Ngayong araw"
 }

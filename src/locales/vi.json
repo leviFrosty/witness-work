@@ -532,5 +532,6 @@
   "daysSinceLastBackup_description": "JW Time sẽ thông báo cho bạn sau nhiều ngày kể từ lần sao lưu cuối cùng của bạn để tạo bản sao lưu mới cho dữ liệu của bạn.",
   "recommendedBackup": "Khuyến nghị sao lưu",
   "recommendedBackup_description": "Đã hơn {{count}} ngày kể từ lần sao lưu cuối cùng của bạn. Nên tạo bản sao lưu mới ngay bây giờ.",
-  "backupNow": "Sao lưu ngay"
+  "backupNow": "Sao lưu ngay",
+  "today": "Hôm nay"
 }

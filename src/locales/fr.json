@@ -532,5 +532,6 @@
   "daysSinceLastBackup_description": "JW Time vous avertira après ce nombre de jours depuis votre dernière sauvegarde pour créer une nouvelle sauvegarde de vos données.",
   "recommendedBackup": "Sauvegarde recommandée",
   "recommendedBackup_description": "Plus de {{count}} jours se sont écoulés depuis votre dernière sauvegarde. Il est recommandé de créer une nouvelle sauvegarde maintenant.",
-  "backupNow": "Sauvegarder maintenant"
+  "backupNow": "Sauvegarder maintenant",
+  "today": "Aujourd'hui"
 }

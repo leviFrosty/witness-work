@@ -532,5 +532,6 @@
   "daysSinceLastBackup_description": "JW Time le notificará después de tantos días desde su última copia de seguridad para crear una nueva copia de seguridad de sus datos.",
   "recommendedBackup": "Copia de seguridad recomendada",
   "recommendedBackup_description": "Han pasado más de {{count}} días desde su última copia de seguridad. Se recomienda crear una nueva copia de seguridad ahora.",
-  "backupNow": "Copia ahora"
+  "backupNow": "Copia ahora",
+  "today": "Hoy"
 }

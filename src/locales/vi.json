@@ -422,6 +422,10 @@
       "c2": "Đã khắc phục sự cố trong đó việc chỉnh sửa cuộc trò chuyện sẽ điều hướng không chính xác.",
       "c3": "Sửa lỗi nhỏ khác và cải thiện hiệu suất.",
       "c4": "Bản dịch tiếng Tây Ban Nha được cải thiện - cảm ơn anh trai Cleen. Nếu bạn muốn giúp dịch ngôn ngữ của mình, hãy xem 'Trợ giúp Dịch' trong cài đặt."
+    },
+    "1230": {
+      "c1": "Đã thêm màn hình Tổng quan hàng năm mới để xem tiến trình dịch vụ của bạn theo tháng.",
+      "c2": "Đã thêm 'Hôm nay' để nhanh chóng điều hướng trở lại tháng hiện tại khi xem các tháng hoặc năm trước đó."
     }
   },
   "installed": "Cài đặt",

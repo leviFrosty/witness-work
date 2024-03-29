@@ -422,6 +422,10 @@
       "c2": "Corrigido um problema em que a edição de uma conversa navegava incorretamente.",
       "c3": "Outras pequenas correções de bugs e melhorias de desempenho.",
       "c4": "Tradução melhorada para o espanhol - obrigado irmão Cleen. Se você quiser ajudar a traduzir seu próprio idioma, consulte 'Ajudar a Traduzir' nas configurações."
+    },
+    "1230": {
+      "c1": "Adicionada nova tela Visão geral anual para visualizar o progresso do ano de serviço por mês.",
+      "c2": "Adicionado 'Hoje' botão para navegar rapidamente de volta ao mês atual ao visualizar meses ou anos anteriores."
     }
   },
   "installed": "Instalado",

@@ -422,6 +422,10 @@
       "c2": "Fixed an issue where editing a conversation would incorrectly navigate.",
       "c3": "Other minor bug fixes and performance improvements.",
       "c4": "Improved Spanish translation - thank you brother Cleen. If you'd like to help translate your own language, see 'Help Translate' in the settings."
+    },
+    "1230": {
+      "c1": "Added new Annual Overview screen to view your service year progress by month.",
+      "c2": "Added 'Today' button to quickly navigate back to current month when viewing previous months or years."
     }
   },
   "installed": "Installed",

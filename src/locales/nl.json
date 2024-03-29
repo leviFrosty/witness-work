@@ -422,6 +422,10 @@
       "c2": "Er is een probleem opgelost waarbij het bewerken van een gesprek onjuist navigeerde.",
       "c3": "Andere kleine bugfixes en prestatieverbeteringen.",
       "c4": "Verbeterde Spaanse vertaling - bedankt broeder Cleen. Als je wilt helpen met het vertalen van je eigen taal, ga dan naar 'Help Vertalen' in de instellingen."
+    },
+    "1230": {
+      "c1": "Nieuw jaaroverzichtscherm toegevoegd om de voortgang van uw servicejaar per maand te bekijken.",
+      "c2": "'Vandaag' toegevoegd knop om snel terug te navigeren naar de huidige maand wanneer u voorgaande maanden of jaren bekijkt."
     }
   },
   "installed": "Geïnstalleerd",

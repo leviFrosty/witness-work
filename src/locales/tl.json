@@ -422,6 +422,10 @@
       "c2": "Inayos ang isang isyu kung saan mali ang pag-navigate sa pag-edit ng isang pag-uusap.",
       "c3": "Iba pang maliliit na pag-aayos ng bug at pagpapahusay sa pagganap.",
       "c4": "Mas pinahusay na pagsasalin sa Espanyol - salamat kuya Cleen. Kung gusto mong tumulong sa pagsasalin ng iyong sariling wika, tingnan ang 'Tulong sa Pagsasalin' sa mga setting."
+    },
+    "1230": {
+      "c1": "Nagdagdag ng bagong screen ng Taunang Pangkalahatang-ideya upang tingnan ang pag-unlad ng iyong taon ng serbisyo ayon sa buwan.",
+      "c2": "Idinagdag 'Ngayon' button upang mabilis na mag-navigate pabalik sa kasalukuyang buwan kapag tinitingnan ang mga nakaraang buwan o taon."
     }
   },
   "installed": "Naka-install",

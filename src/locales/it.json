@@ -422,6 +422,10 @@
       "c2": "Risolto un problema per cui la modifica di una conversazione veniva navigata in modo errato.",
       "c3": "Altre correzioni di bug minori e miglioramenti delle prestazioni.",
       "c4": "Traduzione spagnola migliorata: grazie fratello Cleen. Se desideri aiutare a tradurre la tua lingua, consulta la sezione \"Aiuta a tradurre\" nelle impostazioni."
+    },
+    "1230": {
+      "c1": "Aggiunta una nuova schermata Panoramica annuale per visualizzare i progressi dell'anno di servizio per mese.",
+      "c2": "Aggiunto \"Oggi\" pulsante per tornare rapidamente al mese corrente quando si visualizzano i mesi o gli anni precedenti."
     }
   },
   "installed": "Installato",
@@ -532,5 +536,6 @@
   "daysSinceLastBackup_description": "JW Time ti avviserà dopo tanti giorni dall'ultimo backup per creare un nuovo backup dei tuoi dati.",
   "recommendedBackup": "Backup consigliato",
   "recommendedBackup_description": "Sono trascorsi più di {{count}} giorni dal tuo ultimo backup. Si consiglia di creare subito un nuovo backup.",
-  "backupNow": "Esegui il backup ora"
+  "backupNow": "Esegui il backup ora",
+  "today": "Oggi"
 }

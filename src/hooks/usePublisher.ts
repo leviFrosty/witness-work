@@ -24,7 +24,7 @@ const usePublisher = (): PublisherDetails => {
       case 'regularPioneer':
         return true
       case 'specialPioneer':
-        return true
+        return false
       default:
         return true
     }

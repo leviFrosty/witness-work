@@ -422,6 +422,13 @@
       "c2": "Fixed an issue where editing a conversation would incorrectly navigate.",
       "c3": "Other minor bug fixes and performance improvements.",
       "c4": "Improved Spanish translation - thank you brother Cleen. If you'd like to help translate your own language, see 'Help Translate' in the settings."
+    },
+    "1230": {
+      "c1": "Added new Annual Overview screen to view your service year progress by month.",
+      "c2": "Added 'Today' button to quickly navigate back to current month when viewing previous months or years.",
+      "c3": "Updated Special Pioneers to not have an annual goal by default.",
+      "c4": "Added 'Annual Goal' setting to publisher preferences. This allows you to override the default setting for your publisher type.",
+      "c5": "Greatly improved Italian translations, thank you brother Giuseppe!"
     }
   },
   "installed": "Installed",
@@ -532,5 +539,8 @@
   "daysSinceLastBackup_description": "JW Time will notify you after this many days since your last backup to create a new backup of your data.",
   "recommendedBackup": "Backup Recommended",
   "recommendedBackup_description": "It has been over {{count}} days since your last backup. It is recommended to create a new backup now.",
-  "backupNow": "Backup Now"
+  "backupNow": "Backup Now",
+  "today": "Today",
+  "annualGoal": "Annual Goal",
+  "default": "Default"
 }

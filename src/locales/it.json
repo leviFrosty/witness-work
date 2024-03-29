@@ -425,7 +425,10 @@
     },
     "1230": {
       "c1": "Aggiunta una nuova schermata Panoramica annuale per visualizzare i progressi dell'anno di servizio per mese.",
-      "c2": "Aggiunto \"Oggi\" pulsante per tornare rapidamente al mese corrente quando si visualizzano i mesi o gli anni precedenti."
+      "c2": "Aggiunto \"Oggi\" pulsante per tornare rapidamente al mese corrente quando si visualizzano i mesi o gli anni precedenti.",
+      "c3": "Pionieri speciali aggiornati in modo che non abbiano un obiettivo annuale per impostazione predefinita.",
+      "c4": "Aggiunto \"Obiettivo annuale\" impostazione delle preferenze dell'editore. Ciò ti consente di ignorare l'impostazione predefinita per il tuo tipo di editore.",
+      "c5": "Traduzioni italiane notevolmente migliorate, grazie fratello Giuseppe!"
     }
   },
   "installed": "Installato",
@@ -537,5 +540,7 @@
   "recommendedBackup": "Backup consigliato",
   "recommendedBackup_description": "Sono trascorsi più di {{count}} giorni dal tuo ultimo backup. Si consiglia di creare subito un nuovo backup.",
   "backupNow": "Esegui il backup ora",
-  "today": "Oggi"
+  "today": "Oggi",
+  "annualGoal": "Obiettivo annuale",
+  "default": "Predefinito"
 }

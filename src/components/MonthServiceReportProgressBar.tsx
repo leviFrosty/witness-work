@@ -223,6 +223,7 @@ const MonthServiceReportProgressBar = ({
           gap: 2,
           position: 'relative',
           width: '100%',
+          height: 20,
           backgroundColor: theme.colors.background,
           borderRadius: theme.numbers.borderRadiusSm,
           overflow: 'hidden',

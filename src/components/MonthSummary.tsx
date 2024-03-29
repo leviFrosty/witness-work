@@ -29,7 +29,10 @@ interface MonthSummaryProps {
   monthsReports: ServiceReport[] | null
   month: number
   year: number
-  setSheet: React.Dispatch<React.SetStateAction<ExportTimeSheetState>>
+  setSheet?: React.Dispatch<React.SetStateAction<ExportTimeSheetState>>
+  title?: string
+  noDetails?: boolean
+  highlightAsCurrentMonth?: boolean
 }
 
 const MonthSummary = ({
@@ -37,6 +40,9 @@ const MonthSummary = ({
   month,
   year,
   setSheet,
+  title,
+  noDetails,
+  highlightAsCurrentMonth,
 }: MonthSummaryProps) => {
   const theme = useTheme()
   const { publisher, publisherHours } = usePreferences()
@@ -116,25 +122,30 @@ const MonthSummary = ({
   }
 
   return (
-    <View style={{ gap: 3 }}>
-      <Card>
-        <View style={{ gap: 10 }}>
-          <View
+    <Card
+      style={{
+        borderColor: theme.colors.accent,
+        borderWidth: highlightAsCurrentMonth ? 2 : 0,
+      }}
+    >
+      <View style={{ gap: 10 }}>
+        <View
+          style={{
+            flexDirection: 'row',
+            gap: 10,
+            justifyContent: 'space-between',
+            marginBottom: 3,
+          }}
+        >
+          <Text
             style={{
-              flexDirection: 'row',
-              gap: 10,
-              justifyContent: 'space-between',
-              marginBottom: 3,
+              fontFamily: theme.fonts.semiBold,
+              fontSize: theme.fontSize('xl'),
             }}
           >
-            <Text
-              style={{
-                fontFamily: theme.fonts.semiBold,
-                fontSize: theme.fontSize('xl'),
-              }}
-            >
-              {i18n.t('monthDetails')}
-            </Text>
+            {title ?? i18n.t('monthDetails')}
+          </Text>
+          {setSheet !== undefined && (
             <IconButton
               iconStyle={{ color: theme.colors.accent }}
               onPress={() =>
@@ -146,23 +157,25 @@ const MonthSummary = ({
               }
               icon={faArrowUpFromBracket}
             />
-          </View>
-          <View style={{ gap: 5 }}>
-            <Text
-              style={{
-                textAlign: 'right',
-                color: theme.colors.textAlt,
-                fontFamily: theme.fonts.semiBold,
-              }}
-            >
-              {' '}
-              {`${_.round(totalMinutes / 60, 1)} ${i18n.t(
-                'of'
-              )} ${goalHours} ${i18n.t('hoursToGoal')}`}{' '}
-            </Text>
-            <MonthServiceReportProgressBar month={month} year={year} />
-          </View>
+          )}
         </View>
+        <View style={{ gap: 5 }}>
+          <Text
+            style={{
+              textAlign: 'right',
+              color: theme.colors.textAlt,
+              fontFamily: theme.fonts.semiBold,
+            }}
+          >
+            {' '}
+            {`${_.round(totalMinutes / 60, 1)} ${i18n.t(
+              'of'
+            )} ${goalHours} ${i18n.t('hoursToGoal')}`}{' '}
+          </Text>
+          <MonthServiceReportProgressBar month={month} year={year} />
+        </View>
+      </View>
+      {!noDetails && (
         <View style={{ gap: 5 }}>
           <View
             style={{
@@ -225,8 +238,8 @@ const MonthSummary = ({
             )}
           </View>
         </View>
-      </Card>
-    </View>
+      )}
+    </Card>
   )
 }
 export default MonthSummary

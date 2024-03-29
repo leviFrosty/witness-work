@@ -425,7 +425,10 @@
     },
     "1230": {
       "c1": "Neuer Jahresübersichtsbildschirm hinzugefügt, um Ihren Dienstjahresfortschritt monatsweise anzuzeigen.",
-      "c2": "Schaltfläche „Heute“ hinzugefügt, um bei der Anzeige vorheriger Monate oder Jahre schnell zum aktuellen Monat zurückzunavigieren."
+      "c2": "Schaltfläche „Heute“ hinzugefügt, um bei der Anzeige vorheriger Monate oder Jahre schnell zum aktuellen Monat zurückzunavigieren.",
+      "c3": "Spezialpioniere wurden aktualisiert und haben nun standardmäßig kein Jahresziel.",
+      "c4": "„Jahresziel“ hinzugefügt Einstellung auf Herausgebereinstellungen. Dadurch können Sie die Standardeinstellung für Ihren Herausgebertyp überschreiben.",
+      "c5": "Deutlich verbesserte italienische Übersetzungen, danke Bruder Giuseppe!"
     }
   },
   "installed": "Eingerichtet",
@@ -537,5 +540,7 @@
   "recommendedBackup": "Sicherung empfohlen",
   "recommendedBackup_description": "Seit Ihrer letzten Sicherung sind mehr als {{count}} Tage vergangen. Es wird empfohlen, jetzt ein neues Backup zu erstellen.",
   "backupNow": "Jetzt sichern",
-  "today": "Heute"
+  "today": "Heute",
+  "annualGoal": "Jahresziel",
+  "default": "Standard"
 }

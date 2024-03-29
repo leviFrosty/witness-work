@@ -9,9 +9,14 @@ type PublisherDetails = {
 }
 
 const usePublisher = (): PublisherDetails => {
-  const { publisher, publisherHours } = usePreferences()
+  const { publisher, publisherHours, userSpecifiedHasAnnualGoal } =
+    usePreferences()
 
   const hasAnnualGoal = () => {
+    if (userSpecifiedHasAnnualGoal !== 'default') {
+      return userSpecifiedHasAnnualGoal
+    }
+
     switch (publisher) {
       case 'publisher':
         return false
@@ -24,7 +29,7 @@ const usePublisher = (): PublisherDetails => {
       case 'regularPioneer':
         return true
       case 'specialPioneer':
-        return true
+        return false
       default:
         return true
     }

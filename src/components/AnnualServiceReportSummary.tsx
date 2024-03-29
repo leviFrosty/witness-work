@@ -35,12 +35,14 @@ interface AnnualServiceReportSummaryProps {
   serviceYear: number
   year: number
   month: number
+  hidePerMonthToGoal?: boolean
 }
 
 const AnnualServiceReportSummary = ({
   serviceYear,
   year,
   month,
+  hidePerMonthToGoal,
 }: AnnualServiceReportSummaryProps) => {
   const theme = useTheme()
   const { annualGoalHours, goalHours } = usePublisher()
@@ -111,46 +113,50 @@ const AnnualServiceReportSummary = ({
         height={10}
         color={percentage >= 1 ? theme.colors.accent : theme.colors.textAlt}
       />
-      <View style={{ flexDirection: 'row' }}>
-        <Badge
-          color={
-            isFasterThanMonthlyGoalHours === undefined
-              ? theme.colors.backgroundLighter
-              : isFasterThanMonthlyGoalHours
-                ? theme.colors.accent
-                : theme.colors.error
-          }
-        >
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
-            <IconButton
-              color={
-                isFasterThanMonthlyGoalHours === undefined
-                  ? theme.colors.text
-                  : theme.colors.textInverse
-              }
-              icon={
-                isFasterThanMonthlyGoalHours === undefined
-                  ? faMinus
-                  : isFasterThanMonthlyGoalHours
-                    ? faCaretUp
-                    : faCaretDown
-              }
-              size={12}
-            />
-            <Text
-              style={{
-                fontSize: theme.fontSize('sm'),
-                color:
+      {!hidePerMonthToGoal && (
+        <View style={{ flexDirection: 'row' }}>
+          <Badge
+            color={
+              isFasterThanMonthlyGoalHours === undefined
+                ? theme.colors.backgroundLighter
+                : isFasterThanMonthlyGoalHours
+                  ? theme.colors.accent
+                  : theme.colors.error
+            }
+          >
+            <View
+              style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}
+            >
+              <IconButton
+                color={
                   isFasterThanMonthlyGoalHours === undefined
                     ? theme.colors.text
-                    : theme.colors.textInverse,
-              }}
-            >
-              {hoursPerMonthToGoal} {i18n.t('hoursPerMonthToGoal')}
-            </Text>
-          </View>
-        </Badge>
-      </View>
+                    : theme.colors.textInverse
+                }
+                icon={
+                  isFasterThanMonthlyGoalHours === undefined
+                    ? faMinus
+                    : isFasterThanMonthlyGoalHours
+                      ? faCaretUp
+                      : faCaretDown
+                }
+                size={12}
+              />
+              <Text
+                style={{
+                  fontSize: theme.fontSize('sm'),
+                  color:
+                    isFasterThanMonthlyGoalHours === undefined
+                      ? theme.colors.text
+                      : theme.colors.textInverse,
+                }}
+              >
+                {hoursPerMonthToGoal} {i18n.t('hoursPerMonthToGoal')}
+              </Text>
+            </View>
+          </Badge>
+        </View>
+      )}
     </Card>
   )
 }

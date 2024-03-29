@@ -103,6 +103,7 @@ const initialState = {
   lastBackupDate: null as Date | null,
   remindMeAboutBackups: true,
   backupNotificationFrequencyAsDays: 60,
+  userSpecifiedHasAnnualGoal: 'default' as boolean | 'default',
 }
 
 export const usePreferences = create(

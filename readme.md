@@ -57,7 +57,7 @@ If you find something you'd like to help with, please let me know you've began w
 
 To start the Expo Dev server, begin with `yarn install` & `yarn run dev`.
 
-> **Note**: Local environment variables set in [`./package.json`](./package.json) rely on a unix based environment variable assignments. If your system is Windows, try using [WSL](https://learn.microsoft.com/en-us/windows/wsl/install) to start development of this project.
+> **Note**: Local environment variables set in [`./package.json`](./package.json) scripts rely on a unix based environment variable assignments. If your system is Windows, try using [WSL](https://learn.microsoft.com/en-us/windows/wsl/install) to start development of this project.
 
 You must use a [development build](https://docs.expo.dev/develop/development-builds/introduction/), not [Expo Go](https://docs.expo.dev/get-started/expo-go/).
 

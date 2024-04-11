@@ -32,16 +32,16 @@ JW Time is automatically translated into 12 languages by means of Google Cloud T
 Current translations:
 
 1. German
-1. Spanish
+1. Spanish - Professionally translated
 1. French
-1. Italian
+1. Italian - Professionally translated
 1. Japanese
-1. Korean
+1. Korean - Professionally translated
 1. Dutch
 1. Portuguese
 1. Russian
 1. Vietnamese
-1. Chinese
+1. Chinese - Partially Professionally translated
 1. Tagalog
 
 ## Help Code ⌨️

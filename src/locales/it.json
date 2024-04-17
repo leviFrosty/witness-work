@@ -429,6 +429,11 @@
       "c3": "Pionieri speciali aggiornati in modo che non abbiano un obiettivo annuale per impostazione predefinita.",
       "c4": "Aggiunto \"Obiettivo annuale\" impostazione delle preferenze dell'editore. Ciò ti consente di ignorare l'impostazione predefinita per il tuo tipo di editore.",
       "c5": "Traduzioni italiane notevolmente migliorate, grazie fratello Giuseppe!"
+    },
+    "1240": {
+      "c1": "Aggiunta la possibilità di regolare manualmente la posizione del segnaposto di contatto su tutte le visualizzazioni della mappa. Basta toccare, tenere premuto e trascinare il segnaposto.",
+      "c2": "Aggiunta una piccola visualizzazione della mappa alla schermata dei dettagli del contatto e risolti errori relativi a coordinate non valide",
+      "c3": "Risolto un problema visivo di overflow che a volte si verifica su schermi piccoli durante la visualizzazione delle schede dei contatti della mappa."
     }
   },
   "installed": "Installato",

@@ -55,6 +55,7 @@ export type RootStackParamList = {
   PreferencesNavigation: undefined
   PreferencesHomeScreen: undefined
   PreferencesBackups: undefined
+  'Edit Coordinate': { id: string }
 }
 
 export type RootStackNavigation = NativeStackNavigationProp<RootStackParamList>
@@ -227,6 +228,13 @@ const RootStackComponent = () => {
           header: () => <Header buttonType='back' title={i18n.t('backups')} />,
         }}
         name='PreferencesBackups'
+        component={PreferencesBackupsScreen}
+      />
+      <RootStack.Screen
+        options={{
+          header: () => <Header buttonType='back' title={i18n.t('backups')} />,
+        }}
+        name='Edit Coordinate'
         component={PreferencesBackupsScreen}
       />
     </RootStack.Navigator>

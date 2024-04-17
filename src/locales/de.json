@@ -429,6 +429,11 @@
       "c3": "Spezialpioniere wurden aktualisiert und haben nun standardmäßig kein Jahresziel.",
       "c4": "„Jahresziel“ hinzugefügt Einstellung auf Herausgebereinstellungen. Dadurch können Sie die Standardeinstellung für Ihren Herausgebertyp überschreiben.",
       "c5": "Deutlich verbesserte italienische Übersetzungen, danke Bruder Giuseppe!"
+    },
+    "1240": {
+      "c1": "Möglichkeit hinzugefügt, die Position der Kontaktnadel in allen Kartenansichten manuell anzupassen. Berühren, halten und ziehen Sie die Nadel einfach.",
+      "c2": "Kleine Kartenansicht zum Bildschirm mit den Kontaktdaten hinzugefügt und Fehler im Zusammenhang mit ungültigen Koordinaten behoben",
+      "c3": "Ein visuelles Überlaufproblem behoben, das manchmal auf kleinen Bildschirmen beim Anzeigen von Kartenkontaktkarten auftritt."
     }
   },
   "installed": "Eingerichtet",

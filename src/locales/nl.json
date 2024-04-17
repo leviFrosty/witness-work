@@ -429,6 +429,11 @@
       "c3": "Speciale Pioniers bijgewerkt zodat ze niet standaard een jaarlijks doel hebben.",
       "c4": "'Jaarlijksdoel' toegevoegd instellen op uitgeversvoorkeuren. Hiermee kunt u de standaardinstelling voor uw uitgeverstype overschrijven.",
       "c5": "Sterk verbeterde Italiaanse vertalingen, bedankt broeder Giuseppe!"
+    },
+    "1240": {
+      "c1": "Mogelijkheid toegevoegd om de locatie van de contactpin handmatig aan te passen op alle kaartweergaven. Gewoon de pin aanraken, vasthouden en verslepen.",
+      "c2": "Kleine kaartweergave toegevoegd aan het scherm met contactgegevens en fouten rond ongeldige coördinaten opgelost",
+      "c3": "Een visueel overloopprobleem opgelost dat soms op kleine schermen optreedt bij het bekijken van kaartcontactkaarten."
     }
   },
   "installed": "Geïnstalleerd",

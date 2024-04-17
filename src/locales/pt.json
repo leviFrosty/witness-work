@@ -429,6 +429,11 @@
       "c3": "Atualizados os Pioneiros Especiais para não terem uma meta anual por padrão.",
       "c4": "Adicionado 'meta anual' configuração de acordo com as preferências do editor. Isso permite que você substitua a configuração padrão do seu tipo de editor.",
       "c5": "Traduções italianas muito melhoradas, obrigado irmão Giuseppe!"
+    },
+    "1240": {
+      "c1": "Adicionada capacidade de ajustar manualmente a localização do pino de contato em todas as visualizações do mapa. Basta tocar, segurar e arrastar o alfinete.",
+      "c2": "Adicionada visualização de mapa pequeno à tela de detalhes de contato e erros resolvidos em torno de coordenadas inválidas",
+      "c3": "Resolvido um problema visual de estouro que às vezes ocorre em telas pequenas ao visualizar cartões de contato no mapa."
     }
   },
   "installed": "Instalado",

@@ -429,6 +429,11 @@
       "c3": "Mise à jour des Pionniers spéciaux pour ne pas avoir d'objectif annuel par défaut.",
       "c4": "Ajout d'un «objectif annuel» réglage des préférences de l'éditeur. Cela vous permet de remplacer le paramètre par défaut de votre type d'éditeur.",
       "c5": "Traductions italiennes grandement améliorées, merci frère Giuseppe !"
+    },
+    "1240": {
+      "c1": "Ajout de la possibilité d'ajuster manuellement l'emplacement des broches de contact sur toutes les vues de carte. Touchez simplement, maintenez et faites glisser l'épingle.",
+      "c2": "Ajout d'une petite vue cartographique à l'écran des coordonnées et résolution des erreurs autour de coordonnées non valides",
+      "c3": "Résolution d'un problème visuel de débordement qui se produit parfois sur les petits écrans lors de l'affichage des fiches de contact de la carte."
     }
   },
   "installed": "installée",

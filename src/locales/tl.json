@@ -429,6 +429,11 @@
       "c3": "Na-update ang mga Special Pioneer upang hindi magkaroon ng taunang layunin bilang default.",
       "c4": "Idinagdag ang 'Taunang Layunin' pagtatakda sa mga kagustuhan ng publisher. Nagbibigay-daan ito sa iyong i-override ang default na setting para sa uri ng iyong publisher.",
       "c5": "Napakahusay na mga pagsasalin ng Italyano, salamat kapatid na Giuseppe!"
+    },
+    "1240": {
+      "c1": "Nagdagdag ng kakayahang manu-manong ayusin ang lokasyon ng contact pin sa lahat ng view ng mapa. Pindutin, hawakan, at i-drag lamang ang pin.",
+      "c2": "Nagdagdag ng maliit na view ng mapa sa screen ng mga detalye ng contact at niresolba ang mga error sa mga di-wastong coordinate",
+      "c3": "Nalutas ang isang overflow na visual na isyu na kung minsan ay nangyayari sa maliliit na screen kapag tinitingnan ang mga contact card sa mapa."
     }
   },
   "installed": "Naka-install",

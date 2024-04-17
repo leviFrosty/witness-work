@@ -429,6 +429,11 @@
       "c3": "Updated Special Pioneers to not have an annual goal by default.",
       "c4": "Added 'Annual Goal' setting to publisher preferences. This allows you to override the default setting for your publisher type.",
       "c5": "Greatly improved Italian translations, thank you brother Giuseppe!"
+    },
+    "1240": {
+      "c1": "Added ability to manually adjust contact pin location on all map views. Simply touch, hold, and drag the pin.",
+      "c2": "Added small map view to contact details screen and resolved errors for invalid coordinates.",
+      "c3": "Resolved an overflow visual issue that sometimes occurs on small screens when viewing map contact cards."
     }
   },
   "installed": "Installed",

@@ -429,6 +429,11 @@
       "c3": "Đã cập nhật Đội tiên phong đặc biệt để không có mục tiêu hàng năm theo mặc định.",
       "c4": "Đã thêm 'Mục tiêu hàng năm' cài đặt theo sở thích của nhà xuất bản. Điều này cho phép bạn ghi đè cài đặt mặc định cho loại nhà xuất bản của mình.",
       "c5": "Bản dịch tiếng Ý được cải thiện rất nhiều, cảm ơn anh Giuseppe!"
+    },
+    "1240": {
+      "c1": "Đã thêm khả năng điều chỉnh thủ công vị trí ghim liên hệ trên tất cả các chế độ xem bản đồ. Chỉ cần chạm, giữ và kéo ghim.",
+      "c2": "Đã thêm chế độ xem bản đồ nhỏ vào màn hình chi tiết liên hệ và giải quyết các lỗi xung quanh tọa độ không hợp lệ",
+      "c3": "Đã giải quyết vấn đề tràn hình ảnh đôi khi xảy ra trên màn hình nhỏ khi xem thẻ liên hệ trên bản đồ."
     }
   },
   "installed": "Cài đặt",

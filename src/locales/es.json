@@ -429,6 +429,11 @@
       "c3": "Se actualizaron los Pioneros especiales para que no tengan una meta anual predeterminada.",
       "c4": "Se agregó la \"meta anual\" configuración de las preferencias del editor. Esto le permite anular la configuración predeterminada para su tipo de editor.",
       "c5": "Traducciones al italiano muy mejoradas, ¡gracias hermano Giuseppe!"
+    },
+    "1240": {
+      "c1": "Se agregó la capacidad de ajustar manualmente la ubicación del pin de contacto en todas las vistas del mapa. Simplemente toque, mantenga presionado y arrastre el marcador.",
+      "c2": "Se agregó una vista de mapa pequeña a la pantalla de detalles de contacto y se resolvieron errores relacionados con coordenadas no válidas.",
+      "c3": "Se resolvió un problema visual de desbordamiento que a veces ocurre en pantallas pequeñas al ver tarjetas de contacto del mapa."
     }
   },
   "installed": "Instalado",

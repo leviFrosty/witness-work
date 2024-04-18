@@ -547,5 +547,8 @@
   "backupNow": "Jetzt sichern",
   "today": "Heute",
   "annualGoal": "Jahresziel",
-  "default": "Standard"
+  "default": "Standard",
+  "appearance": "Aussehen",
+  "fontSizeOffset": "Schriftgrößen-Offset",
+  "thisGloballyOffsetsTextSize": "Es wird empfohlen, die Textgröße Ihres Geräts zu ändern, wenn Sie Probleme beim Lesen der App haben. Diese Einstellung wirkt sich auf die Schriftgröße der gesamten App aus."
 }

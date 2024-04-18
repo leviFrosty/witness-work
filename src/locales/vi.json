@@ -547,5 +547,8 @@
   "backupNow": "Sao lưu ngay",
   "today": "Hôm nay",
   "annualGoal": "Mục tiêu hàng năm",
-  "default": "Mặc định"
+  "default": "Mặc định",
+  "appearance": "Vẻ bề ngoài",
+  "fontSizeOffset": "Bù cỡ chữ",
+  "thisGloballyOffsetsTextSize": "Bạn nên thay đổi kích thước văn bản của thiết bị nếu bạn gặp khó khăn khi đọc ứng dụng. Cài đặt này sẽ ảnh hưởng đến kích thước phông chữ của toàn bộ ứng dụng."
 }

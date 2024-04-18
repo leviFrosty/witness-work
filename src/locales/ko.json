@@ -547,5 +547,8 @@
   "backupNow": "백업 지금",
   "today": "오늘",
   "annualGoal": "연간 목표",
-  "default": "기본"
+  "default": "기본",
+  "appearance": "모습",
+  "fontSizeOffset": "글꼴 크기 오프셋",
+  "thisGloballyOffsetsTextSize": "앱을 읽는 데 문제가 있는 경우 기기의 텍스트 크기를 변경하는 것이 좋습니다. 이 설정은 전체 앱의 글꼴 크기에 영향을 미칩니다."
 }

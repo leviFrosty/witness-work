@@ -547,5 +547,8 @@
   "backupNow": "Backup Now",
   "today": "Today",
   "annualGoal": "Annual Goal",
-  "default": "Default"
+  "default": "Default",
+  "appearance": "Appearance",
+  "fontSizeOffset": "Font Size Offset",
+  "thisGloballyOffsetsTextSize": "It is recommended to change your device's text size if you are having trouble reading the app. This setting will affect the entire apps's font size."
 }

@@ -547,5 +547,8 @@
   "backupNow": "今すぐバックアップ",
   "today": "今日",
   "annualGoal": "年間目標",
-  "default": "デフォルト"
+  "default": "デフォルト",
+  "appearance": "外観",
+  "fontSizeOffset": "フォント サイズのオフセット",
+  "thisGloballyOffsetsTextSize": "アプリの読み取りに問題がある場合は、デバイスのテキスト サイズを変更することをお勧めします。この設定は、アプリ全体のフォント サイズに影響します。"
 }

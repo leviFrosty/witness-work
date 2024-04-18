@@ -547,5 +547,8 @@
   "backupNow": "I-backup Ngayon",
   "today": "Ngayong araw",
   "annualGoal": "Taunang Layunin",
-  "default": "Default"
+  "default": "Default",
+  "appearance": "Hitsura",
+  "fontSizeOffset": "Laki ng Font Offset",
+  "thisGloballyOffsetsTextSize": "Inirerekomenda na baguhin ang laki ng text ng iyong device kung nagkakaproblema ka sa pagbabasa ng app. Maaapektuhan ng setting na ito ang laki ng font ng buong app."
 }

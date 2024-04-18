@@ -547,5 +547,8 @@
   "backupNow": "Esegui il backup ora",
   "today": "Oggi",
   "annualGoal": "Obiettivo annuale",
-  "default": "Predefinito"
+  "default": "Predefinito",
+  "appearance": "Aspetto",
+  "fontSizeOffset": "Scostamento dimensione carattere",
+  "thisGloballyOffsetsTextSize": "Si consiglia di modificare la dimensione del testo del dispositivo se si riscontrano problemi nella lettura dell'app. Questa impostazione influenzerà la dimensione del carattere dell'intera app."
 }

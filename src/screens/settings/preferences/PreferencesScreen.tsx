@@ -8,6 +8,7 @@ import {
   faComments,
   faFileExport,
   faHome,
+  faPalette,
   faRoute,
   faUser,
 } from '@fortawesome/free-solid-svg-icons'
@@ -27,6 +28,13 @@ const PreferencesScreen = () => {
       >
         <View style={{ gap: 5 }}>
           <Section>
+            <InputRowButton
+              leftIcon={faPalette}
+              label={i18n.t('appearance')}
+              onPress={() => navigation.navigate('PreferencesAppearance')}
+            >
+              <IconButton icon={faChevronRight} />
+            </InputRowButton>
             <InputRowButton
               leftIcon={faUser}
               label={i18n.t('publisher')}

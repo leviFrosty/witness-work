@@ -28,6 +28,7 @@ import PreferencesConversationScreen from '../screens/settings/preferences/scree
 import PreferencesNavigationScreen from '../screens/settings/preferences/screens/PreferencesNavigationScreen'
 import PreferencesHomeScreen from '../screens/settings/preferences/screens/PreferencesHomeScreen'
 import PreferencesBackupsScreen from '../screens/settings/preferences/screens/PreferencesBackupsScreen'
+import PreferencesAppearanceScreen from '../screens/settings/preferences/screens/PreferencesAppearanceScreen'
 
 export type RootStackParamList = {
   Root: undefined
@@ -55,6 +56,7 @@ export type RootStackParamList = {
   PreferencesNavigation: undefined
   PreferencesHomeScreen: undefined
   PreferencesBackups: undefined
+  PreferencesAppearance: undefined
   'Edit Coordinate': { id: string }
 }
 
@@ -236,6 +238,13 @@ const RootStackComponent = () => {
         }}
         name='Edit Coordinate'
         component={PreferencesBackupsScreen}
+      />
+      <RootStack.Screen
+        options={{
+          header: () => <Header buttonType='back' title={i18n.t('backups')} />,
+        }}
+        name='PreferencesAppearance'
+        component={PreferencesAppearanceScreen}
       />
     </RootStack.Navigator>
   )

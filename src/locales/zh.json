@@ -547,5 +547,8 @@
   "backupNow": "立即备份",
   "today": "今天",
   "annualGoal": "年度目标",
-  "default": "默认"
+  "default": "默认",
+  "appearance": "外观",
+  "fontSizeOffset": "字体大小偏移",
+  "thisGloballyOffsetsTextSize": "如果您在阅读应用程序时遇到困难，建议更改设备的文本大小。此设置将影响整个应用程序的字体大小。"
 }

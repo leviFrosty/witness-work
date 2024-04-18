@@ -104,6 +104,7 @@ const initialState = {
   remindMeAboutBackups: true,
   backupNotificationFrequencyAsDays: 60,
   userSpecifiedHasAnnualGoal: 'default' as boolean | 'default',
+  fontSizeOffset: 0,
 }
 
 export const usePreferences = create(

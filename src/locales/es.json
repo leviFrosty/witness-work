@@ -547,5 +547,8 @@
   "backupNow": "Copia ahora",
   "today": "Hoy",
   "annualGoal": "Meta Anual",
-  "default": "Por defecto"
+  "default": "Por defecto",
+  "appearance": "Apariencia",
+  "fontSizeOffset": "Desplazamiento del tamaño de fuente",
+  "thisGloballyOffsetsTextSize": "Se recomienda cambiar el tamaño del texto de su dispositivo si tiene problemas para leer la aplicación. Esta configuración afectará el tamaño de fuente de todas las aplicaciones."
 }

@@ -547,5 +547,8 @@
   "backupNow": "Sauvegarder maintenant",
   "today": "Aujourd'hui",
   "annualGoal": "Objectif annuel",
-  "default": "Défaut"
+  "default": "Défaut",
+  "appearance": "Apparence",
+  "fontSizeOffset": "Décalage de la taille de la police",
+  "thisGloballyOffsetsTextSize": "Il est recommandé de modifier la taille du texte de votre appareil si vous rencontrez des difficultés pour lire l'application. Ce paramètre affectera la taille de police de l'ensemble des applications."
 }

@@ -547,5 +547,8 @@
   "backupNow": "Nu backuppen",
   "today": "Vandaag",
   "annualGoal": "Jaarlijks doel",
-  "default": "Standaard"
+  "default": "Standaard",
+  "appearance": "Verschijning",
+  "fontSizeOffset": "Verschuiving van de lettergrootte",
+  "thisGloballyOffsetsTextSize": "Het wordt aanbevolen om de tekstgrootte van uw apparaat te wijzigen als u problemen ondervindt bij het lezen van de app. Deze instelling heeft invloed op de lettergrootte van de gehele app."
 }

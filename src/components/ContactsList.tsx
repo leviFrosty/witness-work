@@ -32,7 +32,9 @@ const ContactsList = () => {
   const [focusingSearchBar, setFocusingSearchBar] = useState(false)
 
   const searchResultsSorted = useMemo(() => {
-    const filteredContacts = contacts.filter((c) => c.name.includes(search))
+    const filteredContacts = contacts.filter((c) =>
+      c.name.toLocaleUpperCase().includes(search.toLocaleUpperCase())
+    )
 
     return filteredContacts.sort((a, b) => {
       const getMostRecentConversation = (contact: Contact) => {

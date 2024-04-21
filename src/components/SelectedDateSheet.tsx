@@ -97,7 +97,7 @@ const SelectedDateSheet: React.FC<Props> = ({
       onOpenChange={(o: boolean) => setSheet({ ...sheet, open: o })}
       dismissOnSnapToBottom
       modal
-      snapPoints={[70]}
+      snapPoints={[85]}
     >
       <Sheet.Handle />
       <Sheet.Overlay zIndex={100_000 - 1} />

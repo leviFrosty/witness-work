@@ -8,6 +8,7 @@ import { useNavigation } from '@react-navigation/native'
 import { RootStackNavigation } from '../stacks/RootStack'
 import IconButton from './IconButton'
 import { faUpRightFromSquare } from '@fortawesome/free-solid-svg-icons'
+import moment from 'moment'
 
 const size = 15
 
@@ -33,6 +34,12 @@ const CalendarKey = (props: {
 }) => {
   const theme = useTheme()
   const navigation = useNavigation<RootStackNavigation>()
+  const currentMonth =
+    props.showPlanSchedule?.month && props.showPlanSchedule.year
+      ? moment()
+          .month(props.showPlanSchedule.month)
+          .year(props.showPlanSchedule.year)
+      : undefined
 
   return (
     <View
@@ -54,43 +61,44 @@ const CalendarKey = (props: {
         >
           {i18n.t('colorKey')}
         </Text>
-        {props.showPlanSchedule && (
-          <Button
-            style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              gap: 5,
-              backgroundColor: theme.colors.accentTranslucent,
-              borderColor: theme.colors.accent,
-              borderWidth: 1,
-              paddingHorizontal: 15,
-              paddingVertical: 5,
-              borderRadius: theme.numbers.borderRadiusLg,
-            }}
-            onPress={() =>
-              navigation.navigate('PlanSchedule', {
-                month: props.showPlanSchedule!.month,
-                year: props.showPlanSchedule!.year,
-              })
-            }
-          >
-            <Text
+        {props.showPlanSchedule &&
+          moment().isSameOrBefore(currentMonth, 'month') && (
+            <Button
               style={{
-                color: theme.colors.accent,
-                fontSize: theme.fontSize('sm'),
-                fontFamily: theme.fonts.medium,
-                textDecorationLine: 'underline',
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: 5,
+                backgroundColor: theme.colors.accentTranslucent,
+                borderColor: theme.colors.accent,
+                borderWidth: 1,
+                paddingHorizontal: 15,
+                paddingVertical: 5,
+                borderRadius: theme.numbers.borderRadiusLg,
               }}
+              onPress={() =>
+                navigation.navigate('PlanSchedule', {
+                  month: props.showPlanSchedule!.month,
+                  year: props.showPlanSchedule!.year,
+                })
+              }
             >
-              {i18n.t('planSchedule')}
-            </Text>
-            <IconButton
-              icon={faUpRightFromSquare}
-              size={9}
-              color={theme.colors.accent}
-            />
-          </Button>
-        )}
+              <Text
+                style={{
+                  color: theme.colors.accent,
+                  fontSize: theme.fontSize('sm'),
+                  fontFamily: theme.fonts.medium,
+                  textDecorationLine: 'underline',
+                }}
+              >
+                {i18n.t('planSchedule')}
+              </Text>
+              <IconButton
+                icon={faUpRightFromSquare}
+                size={9}
+                color={theme.colors.accent}
+              />
+            </Button>
+          )}
       </XView>
       <XView style={{ gap: 15 }}>
         <XView>

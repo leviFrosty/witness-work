@@ -33,8 +33,6 @@ const NonPlannedDay = (
   const disabled = props.state === 'disabled'
   const isToday = moment().isSame(props.date.dateString, 'day')
 
-  // console.log('went in service', props.serviceReports)
-
   return (
     <View
       style={{
@@ -213,7 +211,6 @@ const CalendarDay = (
             removeHint('howToAddPlan')
           }
         }}
-        disabled={props.state === 'disabled'}
         style={{ opacity: props.state === 'disabled' ? 0.4 : 1 }}
       >
         {dayPlan ?? !!recurringPlansForDay?.length ? (

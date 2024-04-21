@@ -79,14 +79,16 @@ const DayPlanRow = (props: { plan: DayPlan }) => {
           </Text>
           <XView style={{ gap: 15 }}>
             <XView style={{ gap: 5 }}>
-              <Text style={{ fontSize: theme.fontSize('sm') }}>{hours}</Text>
-              <Text style={{ fontSize: theme.fontSize('sm') }}>
+              <Text style={{ fontFamily: theme.fonts.semiBold }}>{hours}</Text>
+              <Text style={{ fontFamily: theme.fonts.semiBold }}>
                 {i18n.t('hours')}
               </Text>
             </XView>
             <XView style={{ gap: 5 }}>
-              <Text style={{ fontSize: theme.fontSize('sm') }}>{minutes}</Text>
-              <Text style={{ fontSize: theme.fontSize('sm') }}>
+              <Text style={{ fontFamily: theme.fonts.semiBold }}>
+                {minutes}
+              </Text>
+              <Text style={{ fontFamily: theme.fonts.semiBold }}>
                 {i18n.t('minutes')}
               </Text>
             </XView>

@@ -87,7 +87,8 @@ const MonthSummary = ({
       <Card>
         <Text
           style={{
-            fontFamily: theme.fonts.semiBold,
+            fontSize: theme.fontSize('xl'),
+            fontFamily: theme.fonts.bold,
           }}
         >
           {i18n.t('noTimeReports')}

@@ -101,13 +101,6 @@ const PlanScheduleScreen = ({ route, navigation }: PlanScheduleScreenProps) => {
           (a, b) => b.minutes - a.minutes
         )[0]
 
-        console.log(
-          'Day',
-          day.format('YYYY-MM-DD'),
-          dayPlan,
-          highestRecurringPlanForDay
-        )
-
         if (dayPlan) {
           count += dayPlan.minutes
         } else if (highestRecurringPlanForDay) {
@@ -138,39 +131,43 @@ const PlanScheduleScreen = ({ route, navigation }: PlanScheduleScreenProps) => {
             padding: 20,
           }}
         >
-          <Button
-            onPress={() => handleArrowNavigate('back')}
-            style={{
-              borderColor: theme.colors.accent,
-              borderWidth: 1,
-              borderRadius: theme.numbers.borderRadiusLg,
-              paddingHorizontal: 15,
-              paddingVertical: 5,
-            }}
-          >
-            <View
+          {selectedMonth.isAfter(moment(), 'month') ? (
+            <Button
+              onPress={() => handleArrowNavigate('back')}
               style={{
-                flexDirection: 'row',
-                gap: 5,
-                alignItems: 'center',
+                borderColor: theme.colors.accent,
+                borderWidth: 1,
+                borderRadius: theme.numbers.borderRadiusLg,
+                paddingHorizontal: 15,
+                paddingVertical: 5,
               }}
             >
-              <IconButton
-                icon={faArrowLeft}
-                size={15}
-                color={theme.colors.accent}
-              />
-              <Text
+              <View
                 style={{
-                  color: theme.colors.accent,
-                  fontFamily: theme.fonts.semiBold,
-                  textDecorationLine: 'underline',
+                  flexDirection: 'row',
+                  gap: 5,
+                  alignItems: 'center',
                 }}
               >
-                {moment(selectedMonth).subtract(1, 'month').format('MMM')}
-              </Text>
-            </View>
-          </Button>
+                <IconButton
+                  icon={faArrowLeft}
+                  size={15}
+                  color={theme.colors.accent}
+                />
+                <Text
+                  style={{
+                    color: theme.colors.accent,
+                    fontFamily: theme.fonts.semiBold,
+                    textDecorationLine: 'underline',
+                  }}
+                >
+                  {moment(selectedMonth).subtract(1, 'month').format('MMM')}
+                </Text>
+              </View>
+            </Button>
+          ) : (
+            <View style={{ width: 50 }} />
+          )}
           {(month !== moment().month() || year !== moment().year()) && (
             <Button
               style={{

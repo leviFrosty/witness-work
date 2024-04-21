@@ -207,7 +207,7 @@ const CalendarDay = (
           if (props.planMode && moment().isAfter(props.date?.dateString, 'day'))
             return
           props.onPress?.(props.date)
-          if (howToAddPlan) {
+          if (props.planMode && howToAddPlan) {
             removeHint('howToAddPlan')
           }
         }}

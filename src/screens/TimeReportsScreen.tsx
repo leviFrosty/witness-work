@@ -6,7 +6,6 @@ import { ServiceReport } from '../types/serviceReport'
 import moment from 'moment'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import Card from '../components/Card'
-import ActionButton from '../components/ActionButton'
 import { RootStackParamList } from '../stacks/RootStack'
 import i18n from '../lib/locales'
 import { useCallback, useEffect, useMemo, useState } from 'react'
@@ -24,7 +23,6 @@ import {
   faPlus,
 } from '@fortawesome/free-solid-svg-icons'
 import { NativeStackScreenProps } from '@react-navigation/native-stack'
-import Wrapper from '../components/layout/Wrapper'
 import Button from '../components/Button'
 import { FlashList } from '@shopify/flash-list'
 import AnnualServiceReportSummary from '../components/AnnualServiceReportSummary'
@@ -154,14 +152,6 @@ const TimeReportsScreen = ({ route, navigation }: Props) => {
     return reports
   }, [serviceReports])
 
-  const years = useMemo(
-    () =>
-      Object.keys(reportsByYearAndMonth).sort(
-        (a, b) => parseInt(b) - parseInt(a)
-      ),
-    [reportsByYearAndMonth]
-  )
-
   const thisMonthsReports = reportsByYearAndMonth[year]
     ? reportsByYearAndMonth[year][month] &&
       reportsByYearAndMonth[year][month].length > 0
@@ -227,7 +217,16 @@ const TimeReportsScreen = ({ route, navigation }: Props) => {
                   justifyContent: 'space-between',
                 }}
               >
-                <Button onPress={() => handleArrowNavigate('back')}>
+                <Button
+                  onPress={() => handleArrowNavigate('back')}
+                  style={{
+                    borderColor: theme.colors.border,
+                    borderWidth: 1,
+                    borderRadius: theme.numbers.borderRadiusLg,
+                    paddingHorizontal: 15,
+                    paddingVertical: 5,
+                  }}
+                >
                   <View
                     style={{
                       flexDirection: 'row',
@@ -259,24 +258,29 @@ const TimeReportsScreen = ({ route, navigation }: Props) => {
                     </Text>
                   </Button>
                 )}
-                {moment().isAfter(selectedMonth, 'month') ? (
-                  <Button onPress={() => handleArrowNavigate('forward')}>
-                    <View
-                      style={{
-                        flexDirection: 'row',
-                        gap: 5,
-                        alignItems: 'center',
-                      }}
-                    >
-                      <Text style={{ color: theme.colors.textAlt }}>
-                        {moment(selectedMonth).add(1, 'month').format('MMM')}
-                      </Text>
-                      <IconButton icon={faArrowRight} size={15} />
-                    </View>
-                  </Button>
-                ) : (
-                  <View style={{ width: 50 }} />
-                )}
+                <Button
+                  onPress={() => handleArrowNavigate('forward')}
+                  style={{
+                    borderColor: theme.colors.border,
+                    borderWidth: 1,
+                    borderRadius: theme.numbers.borderRadiusLg,
+                    paddingHorizontal: 15,
+                    paddingVertical: 5,
+                  }}
+                >
+                  <View
+                    style={{
+                      flexDirection: 'row',
+                      gap: 5,
+                      alignItems: 'center',
+                    }}
+                  >
+                    <Text style={{ color: theme.colors.textAlt }}>
+                      {moment(selectedMonth).add(1, 'month').format('MMM')}
+                    </Text>
+                    <IconButton icon={faArrowRight} size={15} />
+                  </View>
+                </Button>
               </View>
             </View>
             <KeyboardAwareScrollView
@@ -390,34 +394,6 @@ const TimeReportsScreen = ({ route, navigation }: Props) => {
     thisMonthsReports,
     year,
   ])
-
-  if (!years.length) {
-    return (
-      <Wrapper>
-        <Card style={{ marginHorizontal: 15 }}>
-          <Text
-            style={{
-              fontSize: theme.fontSize('lg'),
-              fontFamily: theme.fonts.semiBold,
-            }}
-          >
-            {i18n.t('noTimeEntriesYet')}
-          </Text>
-          <Text
-            style={{
-              fontSize: theme.fontSize('sm'),
-              color: theme.colors.textAlt,
-            }}
-          >
-            {i18n.t('addATimeEntryToViewReport')}
-          </Text>
-          <ActionButton onPress={() => navigation.navigate('Add Time')}>
-            {i18n.t('addTime')}
-          </ActionButton>
-        </Card>
-      </Wrapper>
-    )
-  }
 
   return (
     <>

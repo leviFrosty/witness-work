@@ -1,36 +1,27 @@
+import { Alert, View } from 'react-native'
+import Text from './MyText'
+import useServiceReport, { DayPlan } from '../stores/serviceReport'
+import { useCallback } from 'react'
 import { Swipeable } from 'react-native-gesture-handler'
+import i18n from '../lib/locales'
 import useTheme from '../contexts/theme'
 import Haptics from '../lib/haptics'
-import { ServiceReport } from '../types/serviceReport'
 import SwipeableDelete from './swipeableActions/Delete'
-import { Alert, View } from 'react-native'
-import i18n from '../lib/locales'
-import useServiceReport from '../stores/serviceReport'
-import Text from './MyText'
-import moment from 'moment'
-import IconButton from './IconButton'
-import { faPersonDigging } from '@fortawesome/free-solid-svg-icons'
-import { useCallback } from 'react'
 import XView from './layout/XView'
 
-interface TimeReportRowProps {
-  report: ServiceReport
-}
-
-const TimeReportRow = ({ report }: TimeReportRowProps) => {
+const DayPlanRow = (props: { plan: DayPlan }) => {
   const theme = useTheme()
-  const { deleteServiceReport } = useServiceReport()
+  const { deleteDayPlan } = useServiceReport()
+
+  const hours = Math.floor(props.plan.minutes / 60)
+  const minutes = props.plan.minutes % 60
 
   const handleSwipeOpen = useCallback(
-    (
-      direction: 'left' | 'right',
-      swipeable: Swipeable,
-      report: ServiceReport
-    ) => {
+    (direction: 'left' | 'right', swipeable: Swipeable, plan: DayPlan) => {
       if (direction === 'right') {
         Alert.alert(
-          i18n.t('deleteTime_title'),
-          i18n.t('deleteTime_description'),
+          i18n.t('deletePlan_title'),
+          i18n.t('deletePlan_description'),
           [
             {
               text: i18n.t('cancel'),
@@ -42,19 +33,19 @@ const TimeReportRow = ({ report }: TimeReportRowProps) => {
               style: 'destructive',
               onPress: () => {
                 swipeable.reset()
-                deleteServiceReport(report.id)
+                deleteDayPlan(plan.id)
               },
             },
           ]
         )
       }
     },
-    [deleteServiceReport]
+    [deleteDayPlan]
   )
 
   return (
     <Swipeable
-      key={report.id}
+      key={props.plan.id}
       onSwipeableWillOpen={() => Haptics.light()}
       containerStyle={{
         backgroundColor: theme.colors.background,
@@ -64,7 +55,7 @@ const TimeReportRow = ({ report }: TimeReportRowProps) => {
         <SwipeableDelete size='xs' style={{ flexDirection: 'row' }} />
       )}
       onSwipeableOpen={(direction, swipeable) =>
-        handleSwipeOpen(direction, swipeable, report)
+        handleSwipeOpen(direction, swipeable, props.plan)
       }
     >
       <View
@@ -79,56 +70,41 @@ const TimeReportRow = ({ report }: TimeReportRowProps) => {
           style={{
             flexDirection: 'row',
             justifyContent: 'space-between',
-            flexGrow: 1,
+            gap: 10,
+            alignItems: 'center',
           }}
         >
-          <View style={{ flexDirection: 'row', gap: 10 }}>
-            <Text
-              style={{
-                fontFamily: theme.fonts.semiBold,
-              }}
-            >
-              {`${moment(report.date).format('ddd L')}`}
-            </Text>
-          </View>
+          <Text style={{ fontFamily: theme.fonts.semiBold }}>
+            {i18n.t('oneTime')}
+          </Text>
           <XView style={{ gap: 15 }}>
             <XView style={{ gap: 5 }}>
-              <Text style={{ fontSize: theme.fontSize('sm') }}>
-                {report.hours}
-              </Text>
+              <Text style={{ fontSize: theme.fontSize('sm') }}>{hours}</Text>
               <Text style={{ fontSize: theme.fontSize('sm') }}>
                 {i18n.t('hours')}
               </Text>
             </XView>
             <XView style={{ gap: 5 }}>
-              <Text style={{ fontSize: theme.fontSize('sm') }}>
-                {report.minutes}
-              </Text>
+              <Text style={{ fontSize: theme.fontSize('sm') }}>{minutes}</Text>
               <Text style={{ fontSize: theme.fontSize('sm') }}>
                 {i18n.t('minutes')}
               </Text>
             </XView>
           </XView>
         </View>
-        {(report.ldc || report.tag) && (
-          <View>
-            <View
+        {props.plan.note && (
+          <View style={{ gap: 2 }}>
+            <Text
               style={{
-                flexDirection: 'row',
-                gap: 3,
-                alignItems: 'center',
+                fontSize: theme.fontSize('sm'),
+                color: theme.colors.textAlt,
               }}
             >
-              {report.ldc && <IconButton icon={faPersonDigging} />}
-              <Text
-                style={{
-                  color: theme.colors.textAlt,
-                  fontSize: theme.fontSize('xs'),
-                }}
-              >
-                {report.ldc ? i18n.t('ldc') : report.tag}
-              </Text>
-            </View>
+              {i18n.t('note')}
+            </Text>
+            <Text style={{ fontFamily: theme.fonts.semiBold }}>
+              {props.plan.note}
+            </Text>
           </View>
         )}
       </View>
@@ -136,4 +112,4 @@ const TimeReportRow = ({ report }: TimeReportRowProps) => {
   )
 }
 
-export default TimeReportRow
+export default DayPlanRow

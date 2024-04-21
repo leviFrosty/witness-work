@@ -112,6 +112,7 @@ const MonthSummary = ({
               textAlign: 'center',
               flex: 1,
               color: theme.colors.textInverse,
+              fontFamily: theme.fonts.bold,
             }}
           >
             {i18n.t('addTime')}
@@ -239,6 +240,24 @@ const MonthSummary = ({
           </View>
         </View>
       )}
+      <ActionButton
+        onPress={() =>
+          navigation.navigate('Add Time', {
+            date: moment().month(month).year(year).toISOString(),
+          })
+        }
+      >
+        <Text
+          style={{
+            textAlign: 'center',
+            flex: 1,
+            color: theme.colors.textInverse,
+            fontFamily: theme.fonts.bold,
+          }}
+        >
+          {i18n.t('addTime')}
+        </Text>
+      </ActionButton>
     </Card>
   )
 }

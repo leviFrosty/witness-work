@@ -288,3 +288,62 @@ export const getServiceYearFromDate = (moment: moment.Moment) => {
 
   return year
 }
+
+export enum RecurringPlanFrequencies {
+  WEEKLY,
+  BI_WEEKLY,
+  MONTHLY,
+}
+
+export type RecurringPlan = {
+  id: string
+  startDate: Date
+  minutes: number
+  recurrence: {
+    frequency: RecurringPlanFrequencies
+    interval: number
+    endDate: Date | null
+  }
+  note?: string
+}
+
+export const getPlansIntersectingDay = (
+  day: Date,
+  plans: RecurringPlan[]
+): RecurringPlan[] => {
+  return plans.filter((plan) => {
+    const { startDate, recurrence } = plan
+    const { frequency, interval, endDate } = recurrence
+
+    // Convert dates to Moment.js objects for easier manipulation
+    const momentDay = moment(day)
+    const momentStartDate = moment(startDate)
+
+    // Calculate the difference in days between the start date and the given day
+    const daysDiff = momentDay.diff(momentStartDate, 'days')
+
+    // Check if the given day falls within the recurrence pattern
+    switch (frequency) {
+      case RecurringPlanFrequencies.WEEKLY:
+        return (
+          daysDiff % (interval * 7) === 0 &&
+          momentDay.isSameOrAfter(momentStartDate) &&
+          (!endDate || momentDay.isSameOrBefore(endDate))
+        )
+      case RecurringPlanFrequencies.BI_WEEKLY:
+        return (
+          daysDiff % (interval * 14) === 0 &&
+          momentDay.isSameOrAfter(momentStartDate) &&
+          (!endDate || momentDay.isSameOrBefore(endDate))
+        )
+      case RecurringPlanFrequencies.MONTHLY:
+        return (
+          momentDay.date() === startDate.getDate() &&
+          momentDay.isSameOrAfter(momentStartDate) &&
+          (!endDate || momentDay.isSameOrBefore(endDate))
+        )
+      default:
+        return false
+    }
+  })
+}

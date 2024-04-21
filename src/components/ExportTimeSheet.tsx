@@ -30,7 +30,6 @@ import { useNavigation } from '@react-navigation/native'
 import { RootStackNavigation } from '../stacks/RootStack'
 import links from '../constants/links'
 import { openURL } from '../lib/links'
-import _ from 'lodash'
 
 export type ExportTimeSheetState = {
   open: boolean

@@ -25,6 +25,11 @@ export type ReleaseNote = {
 
 export const releaseNotes: ReleaseNote[] = [
   {
+    version: '1.25.0',
+    date: moment('2024-04-20').toDate(),
+    content: ['c1', 'c2', 'c3', 'c4'],
+  },
+  {
     version: '1.24.0',
     date: moment('2024-04-17').toDate(),
     content: ['c1', 'c2', 'c3'],

@@ -67,6 +67,7 @@ export const hints = {
   howToDeleteTime: true,
   howToArchiveContact: true,
   howToEditAndDeleteConversation: true,
+  howToAddPlan: true,
 }
 
 const initialState = {

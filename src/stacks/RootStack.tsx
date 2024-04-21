@@ -29,6 +29,8 @@ import PreferencesNavigationScreen from '../screens/settings/preferences/screens
 import PreferencesHomeScreen from '../screens/settings/preferences/screens/PreferencesHomeScreen'
 import PreferencesBackupsScreen from '../screens/settings/preferences/screens/PreferencesBackupsScreen'
 import PreferencesAppearanceScreen from '../screens/settings/preferences/screens/PreferencesAppearanceScreen'
+import PlanScheduleScreen from '../screens/PlanScheduleScreen'
+import PlanDayScreen from '../screens/PlanDayScreen'
 
 export type RootStackParamList = {
   Root: undefined
@@ -57,7 +59,8 @@ export type RootStackParamList = {
   PreferencesHomeScreen: undefined
   PreferencesBackups: undefined
   PreferencesAppearance: undefined
-  'Edit Coordinate': { id: string }
+  PlanSchedule: { month: number; year: number }
+  PlanDay: { date?: string }
 }
 
 export type RootStackNavigation = NativeStackNavigationProp<RootStackParamList>
@@ -236,15 +239,28 @@ const RootStackComponent = () => {
         options={{
           header: () => <Header buttonType='back' title={i18n.t('backups')} />,
         }}
-        name='Edit Coordinate'
-        component={PreferencesBackupsScreen}
+        name='PreferencesAppearance'
+        component={PreferencesAppearanceScreen}
       />
       <RootStack.Screen
         options={{
-          header: () => <Header buttonType='back' title={i18n.t('backups')} />,
+          header: () => (
+            <Header buttonType='back' title={i18n.t('planSchedule')} noInsets />
+          ),
+          presentation: 'modal',
         }}
-        name='PreferencesAppearance'
-        component={PreferencesAppearanceScreen}
+        name='PlanSchedule'
+        component={PlanScheduleScreen}
+      />
+      <RootStack.Screen
+        options={{
+          header: () => (
+            <Header buttonType='back' title={i18n.t('createPlan')} noInsets />
+          ),
+          presentation: 'modal',
+        }}
+        name='PlanDay'
+        component={PlanDayScreen}
       />
     </RootStack.Navigator>
   )

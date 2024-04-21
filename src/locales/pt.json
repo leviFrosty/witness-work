@@ -439,7 +439,8 @@
       "c1": "Grande atualização! Adicionado agendamento e agendamento planos! 🚀 Agora você pode criar planos únicos, planos recorrentes e visualizar a programação do seu mês.",
       "c2": "Maior clareza adicionando 'toast' notificações para ações notáveis do aplicativo.",
       "c3": "Atualizadas várias seções da tela de relatórios de tempo para ter mais informações e navegação mais fácil.",
-      "c4": "Resolvidos pequenos problemas visuais e outros bugs."
+      "c4": "Resolvidos pequenos problemas visuais e outros bugs.",
+      "c5": "Adicionada configuração de deslocamento do tamanho da fonte às preferências. Isso permite ajustar o tamanho da fonte do aplicativo."
     }
   },
   "installed": "Instalado",

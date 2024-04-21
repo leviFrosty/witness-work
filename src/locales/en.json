@@ -439,7 +439,8 @@
       "c1": "Big update! Added scheduling & plans! 🚀 You can now create one-time plans, recurring plans, and view your month's schedule.",
       "c2": "Improved clarity by adding 'toast' notifications for notable app actions.",
       "c3": "Updated various sections of time reports screen to have more information and easier navigation.",
-      "c4": "Resolved minor visual issues and other bugs."
+      "c4": "Resolved minor visual issues and other bugs.",
+      "c5": "Added font size offset setting to preferences. This allows you to adjust the font size of the app."
     }
   },
   "installed": "Installed",

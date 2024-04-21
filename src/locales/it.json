@@ -439,7 +439,8 @@
       "c1": "Grande aggiornamento! Aggiunta pianificazione & piani! 🚀 Ora puoi creare piani una tantum, piani ricorrenti e visualizzare il programma del tuo mese.",
       "c2": "Chiarezza migliorata aggiungendo \"toast\"; notifiche per azioni importanti dell'app.",
       "c3": "Aggiornate varie sezioni della schermata dei resoconti temporali per avere più informazioni e una navigazione più semplice.",
-      "c4": "Risolti problemi visivi minori e altri bug."
+      "c4": "Risolti problemi visivi minori e altri bug.",
+      "c5": "Aggiunta l'impostazione dell'offset della dimensione del carattere alle preferenze. Ciò ti consente di regolare la dimensione del carattere dell'app."
     }
   },
   "installed": "Installato",

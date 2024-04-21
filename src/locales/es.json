@@ -439,7 +439,8 @@
       "c1": "¡Gran actualización! Se agregó programación y control. planes! 🚀 Ahora puedes crear planes únicos, planes recurrentes y ver el calendario de tu mes.",
       "c2": "Claridad mejorada al agregar 'toast' Notificaciones de acciones notables de la aplicación.",
       "c3": "Se actualizaron varias secciones de la pantalla de informes de tiempo para tener más información y una navegación más sencilla.",
-      "c4": "Se resolvieron problemas visuales menores y otros errores."
+      "c4": "Se resolvieron problemas visuales menores y otros errores.",
+      "c5": "Se agregó la configuración de desplazamiento del tamaño de fuente a las preferencias. Esto le permite ajustar el tamaño de fuente de la aplicación."
     }
   },
   "installed": "Instalado",

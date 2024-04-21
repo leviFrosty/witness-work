@@ -439,7 +439,8 @@
       "c1": "Grosse mise à jour ! Ajout de la planification et du suivi. des plans! 🚀 Vous pouvez désormais créer des forfaits ponctuels, des forfaits récurrents et consulter le planning de votre mois.",
       "c2": "Clarté améliorée grâce à l'ajout de \"toast\" notifications pour les actions notables de l'application.",
       "c3": "Mise à jour de diverses sections de l'écran des rapports de temps pour avoir plus d'informations et une navigation plus facile.",
-      "c4": "Problèmes visuels mineurs résolus et autres bugs."
+      "c4": "Problèmes visuels mineurs résolus et autres bugs.",
+      "c5": "Ajout du paramètre de décalage de la taille de police aux préférences. Cela vous permet d'ajuster la taille de la police de l'application."
     }
   },
   "installed": "installée",

@@ -271,8 +271,43 @@ export const getTotalMinutesForServiceYear = (
 ) => {
   const reports = reportsForServiceYear(serviceReports, serviceYear)
 
+  let ldcMinutesPerMonth: Record<string, number> = {}
+
   const minutes = reports.reduce((prev, current) => {
-    return prev + current.hours * 60 + current.minutes
+    const month = moment(current.date).format('MMYY')
+    const currentMinutes = current.hours * 60 + current.minutes
+
+    const maxLdcMinutesPerMonth = 50 * 60
+
+    if (!current.ldc) {
+      // Only LDC has a month capacity, just return the time total here.
+      return prev + currentMinutes
+    }
+
+    if (ldcMinutesPerMonth[month] === undefined) {
+      ldcMinutesPerMonth[month] = currentMinutes
+      if (currentMinutes > maxLdcMinutesPerMonth) {
+        return prev + maxLdcMinutesPerMonth
+      } else {
+        return prev + currentMinutes
+      }
+    } else {
+      if (ldcMinutesPerMonth[month] + currentMinutes > maxLdcMinutesPerMonth) {
+        const maxTimeAvailableToAdd =
+          maxLdcMinutesPerMonth - ldcMinutesPerMonth[month]
+        ldcMinutesPerMonth[month] += currentMinutes
+        return prev + maxTimeAvailableToAdd
+      } else {
+        ldcMinutesPerMonth[month] += currentMinutes
+        if (currentMinutes > maxLdcMinutesPerMonth) {
+          prev + maxLdcMinutesPerMonth
+        } else {
+          return prev + currentMinutes
+        }
+      }
+    }
+
+    return prev + currentMinutes
   }, 0)
 
   return minutes

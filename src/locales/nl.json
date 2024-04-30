@@ -441,6 +441,10 @@
       "c3": "Verschillende secties van het tijdrapportscherm bijgewerkt voor meer informatie en eenvoudigere navigatie.",
       "c4": "Kleine visuele problemen en andere bugs opgelost.",
       "c5": "De instelling voor de offset van de lettergrootte is toegevoegd aan de voorkeuren. Hiermee kun je de lettergrootte van de app aanpassen."
+    },
+    "1260": {
+      "c1": "Er is een probleem opgelost waarbij de scrollpositie verloren ging op TimeReportsScreen. Andere problemen met betrekking tot het scherm met tijdrapporten opgelost.",
+      "c2": "LDC-uren dragen niet meer bij aan het jaarlijkse doel dan 55 uur voor een bepaalde maand."
     }
   },
   "installed": "Geïnstalleerd",

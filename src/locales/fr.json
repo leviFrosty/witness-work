@@ -441,6 +441,10 @@
       "c3": "Mise à jour de diverses sections de l'écran des rapports de temps pour avoir plus d'informations et une navigation plus facile.",
       "c4": "Problèmes visuels mineurs résolus et autres bugs.",
       "c5": "Ajout du paramètre de décalage de la taille de police aux préférences. Cela vous permet d'ajuster la taille de la police de l'application."
+    },
+    "1260": {
+      "c1": "Correction d'un problème où la position de défilement serait perdue sur TimeReportsScreen. Résolution d'autres problèmes liés à l'écran des rapports de temps.",
+      "c2": "Les heures de PMA ne contribuent pas davantage à l'objectif annuel au-delà de 55 heures pour un mois donné."
     }
   },
   "installed": "installée",

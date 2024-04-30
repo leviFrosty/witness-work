@@ -441,6 +441,10 @@
       "c3": "Na-update ang iba't ibang mga seksyon ng screen ng mga ulat ng oras upang magkaroon ng higit pang impormasyon at mas madaling pag-navigate.",
       "c4": "Nalutas ang maliliit na visual na isyu at iba pang mga bug.",
       "c5": "Idinagdag ang laki ng font offset na setting sa mga kagustuhan. Binibigyang-daan ka nitong ayusin ang laki ng font ng app."
+    },
+    "1260": {
+      "c1": "Inayos ang isyu kung saan mawawala ang posisyon ng pag-scroll sa TimeReportsScreen. Nalutas ang iba pang mga isyu na nauugnay sa screen ng mga ulat sa oras.",
+      "c2": "Ang mga oras ng LDC ay hindi nakakatulong nang higit pa sa taunang layunin sa nakalipas na 55 oras para sa anumang partikular na buwan."
     }
   },
   "installed": "Naka-install",

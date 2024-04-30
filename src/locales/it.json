@@ -441,6 +441,10 @@
       "c3": "Aggiornate varie sezioni della schermata dei resoconti temporali per avere più informazioni e una navigazione più semplice.",
       "c4": "Risolti problemi visivi minori e altri bug.",
       "c5": "Aggiunta l'impostazione dell'offset della dimensione del carattere alle preferenze. Ciò ti consente di regolare la dimensione del carattere dell'app."
+    },
+    "1260": {
+      "c1": "Risolto il problema per cui la posizione di scorrimento veniva persa su TimeReportsScreen. Risolti altri problemi relativi alla schermata dei resoconti temporali.",
+      "c2": "Le ore LDC non contribuiscono maggiormente all'obiettivo annuale oltre le 55 ore per un dato mese."
     }
   },
   "installed": "Installato",

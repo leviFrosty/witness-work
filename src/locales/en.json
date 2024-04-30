@@ -441,6 +441,10 @@
       "c3": "Updated various sections of time reports screen to have more information and easier navigation.",
       "c4": "Resolved minor visual issues and other bugs.",
       "c5": "Added font size offset setting to preferences. This allows you to adjust the font size of the app."
+    },
+    "1260": {
+      "c1": "Fixed issue where scroll position would be lost on TimeReportsScreen. Resolved other issues related to time reports screen.",
+      "c2": "LDC hours do not contribute more towards annual goal past 55 hours for any given month."
     }
   },
   "installed": "Installed",

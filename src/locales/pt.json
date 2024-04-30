@@ -441,6 +441,10 @@
       "c3": "Atualizadas várias seções da tela de relatórios de tempo para ter mais informações e navegação mais fácil.",
       "c4": "Resolvidos pequenos problemas visuais e outros bugs.",
       "c5": "Adicionada configuração de deslocamento do tamanho da fonte às preferências. Isso permite ajustar o tamanho da fonte do aplicativo."
+    },
+    "1260": {
+      "c1": "Corrigido o problema em que a posição de rolagem era perdida no TimeReportsScreen. Resolvidos outros problemas relacionados à tela de relatórios de horas.",
+      "c2": "As horas do LDC não contribuem mais para a meta anual além das 55 horas em um determinado mês."
     }
   },
   "installed": "Instalado",

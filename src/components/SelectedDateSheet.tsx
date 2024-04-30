@@ -269,25 +269,27 @@ const SelectedDateSheet: React.FC<Props> = ({
             )}
           </KeyboardAwareScrollView>
           <XView style={{ maxHeight: 70 }}>
-            <View style={{ flex: 1 }}>
-              <ActionButton
-                onPress={() =>
-                  navigation.navigate('Add Time', {
-                    date: sheet.date.toISOString(),
-                  })
-                }
-              >
-                <Text
-                  style={{
-                    color: theme.colors.textInverse,
-                    fontSize: theme.fontSize('lg'),
-                    fontFamily: theme.fonts.semiBold,
-                  }}
+            {moment().isSameOrAfter(sheet.date, 'day') && (
+              <View style={{ flexGrow: 1 }}>
+                <ActionButton
+                  onPress={() =>
+                    navigation.navigate('Add Time', {
+                      date: sheet.date.toISOString(),
+                    })
+                  }
                 >
-                  {i18n.t('addTime')}
-                </Text>
-              </ActionButton>
-            </View>
+                  <Text
+                    style={{
+                      color: theme.colors.textInverse,
+                      fontSize: theme.fontSize('lg'),
+                      fontFamily: theme.fonts.semiBold,
+                    }}
+                  >
+                    {i18n.t('addTime')}
+                  </Text>
+                </ActionButton>
+              </View>
+            )}
             {moment().isSameOrBefore(sheet.date, 'day') && (
               <Button
                 onPress={() =>
@@ -298,9 +300,11 @@ const SelectedDateSheet: React.FC<Props> = ({
                 style={{
                   paddingHorizontal: 40,
                   borderColor: theme.colors.border,
+                  backgroundColor: theme.colors.background,
                   borderWidth: 1,
                   borderRadius: theme.numbers.borderRadiusSm,
                   height: '100%',
+                  flexGrow: 1,
                   alignItems: 'center',
                   justifyContent: 'center',
                 }}

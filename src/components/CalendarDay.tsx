@@ -61,6 +61,7 @@ const NonPlannedDay = (
   if (!props.date) return null
   const disabled = props.state === 'disabled'
   const isToday = moment().isSame(props.date.dateString, 'day')
+  const wentInService = !!props.serviceReports?.length
 
   return (
     <View
@@ -73,14 +74,20 @@ const NonPlannedDay = (
         borderRadius: theme.numbers.borderRadiusSm,
         borderWidth: isToday ? 1 : 0,
         borderColor: theme.colors.accent,
-        backgroundColor: props.serviceReports?.length
-          ? theme.colors.accentTranslucent
-          : undefined,
+        backgroundColor: disabled
+          ? undefined
+          : wentInService
+            ? theme.colors.accent
+            : undefined,
       }}
     >
       <Text
         style={{
-          color: disabled ? theme.colors.textAlt : theme.colors.text,
+          color: disabled
+            ? theme.colors.textAlt
+            : wentInService
+              ? theme.colors.textInverse
+              : theme.colors.text,
           fontFamily: theme.fonts.semiBold,
           fontSize: theme.fontSize('lg'),
         }}
@@ -135,13 +142,12 @@ const PlannedDay = (
   )
   const isToday = moment().isSame(props.date?.dateString, 'day')
 
-  const statusColor = getDateStatusColor(
-    theme,
-    wentInService,
-    isToday,
-    dateInPast,
-    hitGoal
-  )
+  const statusColor = disabled
+    ? {
+        bg: undefined,
+        text: theme.colors.textAlt,
+      }
+    : getDateStatusColor(theme, wentInService, isToday, dateInPast, hitGoal)
 
   return (
     <View

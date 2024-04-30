@@ -100,30 +100,30 @@ const CalendarKey = (props: {
             </Button>
           )}
       </XView>
-      <XView style={{ gap: 15 }}>
+      <XView style={{ gap: 8, flexWrap: 'wrap' }}>
         <XView>
           <Text style={{ fontSize: theme.fontSize('sm') }}>
             {i18n.t('missed')}
           </Text>
-          <Box color={theme.colors.errorTranslucent} />
+          <Box color={theme.colors.error} />
         </XView>
         <XView>
           <Text style={{ fontSize: theme.fontSize('sm') }}>
             {i18n.t('partial')}
           </Text>
-          <Box color={theme.colors.warnTranslucent} />
+          <Box color={theme.colors.warn} />
         </XView>
         <XView>
           <Text style={{ fontSize: theme.fontSize('sm') }}>
             {i18n.t('completed')}
           </Text>
-          <Box color={theme.colors.accentTranslucent} />
+          <Box color={theme.colors.accent} />
         </XView>
         <XView>
           <Text style={{ fontSize: theme.fontSize('sm') }}>
             {i18n.t('planned')}
           </Text>
-          <Box color={theme.colors.backgroundLighter} />
+          <Box color={theme.colors.background} />
         </XView>
       </XView>
     </View>

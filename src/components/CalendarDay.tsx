@@ -18,8 +18,37 @@ import Animated, {
 import IconButton from './IconButton'
 import { faArrowUp } from '@fortawesome/free-solid-svg-icons'
 import { usePreferences } from '../stores/preferences'
+import { Theme } from '../types/theme'
 
 const boxSize = 40
+
+export const getDateStatusColor = (
+  theme: Theme,
+  wentInService: boolean,
+  isToday: boolean,
+  dateInPast: boolean,
+  hitGoal: boolean
+): { bg: string; text: string } => {
+  if (!dateInPast || (isToday && !wentInService))
+    return {
+      bg: theme.colors.background,
+      text: theme.colors.text,
+    }
+  if (!wentInService)
+    return {
+      bg: theme.colors.error,
+      text: theme.colors.textInverse,
+    }
+  if (hitGoal)
+    return {
+      bg: theme.colors.accent,
+      text: theme.colors.textInverse,
+    }
+  return {
+    bg: theme.colors.warn,
+    text: theme.colors.textInverse,
+  }
+}
 
 const NonPlannedDay = (
   props: DayProps & {
@@ -100,15 +129,19 @@ const PlannedDay = (
     minutesForDay >= highestRecurringPlanMinutes
 
   const hitGoal = !!hitDayPlanGoal || !!hitRecurringPlanGoal
-  const dateInPast = moment(props.date?.dateString).isBefore(moment(), 'day')
+  const dateInPast = moment(props.date?.dateString).isSameOrBefore(
+    moment(),
+    'day'
+  )
   const isToday = moment().isSame(props.date?.dateString, 'day')
 
-  const backgroundColor = (() => {
-    if (!dateInPast) return theme.colors.backgroundLighter
-    if (!wentInService) return theme.colors.errorTranslucent
-    if (hitGoal) return theme.colors.accentTranslucent
-    return theme.colors.warnTranslucent
-  })()
+  const statusColor = getDateStatusColor(
+    theme,
+    wentInService,
+    isToday,
+    dateInPast,
+    hitGoal
+  )
 
   return (
     <View
@@ -122,12 +155,12 @@ const PlannedDay = (
         borderRadius: theme.numbers.borderRadiusSm,
         borderWidth: isToday ? 1 : 0,
         borderColor: theme.colors.accent,
-        backgroundColor,
+        backgroundColor: statusColor.bg,
       }}
     >
       <Text
         style={{
-          color: disabled ? theme.colors.textAlt : theme.colors.text,
+          color: disabled ? theme.colors.textAlt : statusColor.text,
           fontSize: theme.fontSize('lg'),
           fontFamily: theme.fonts.semiBold,
         }}
@@ -136,7 +169,7 @@ const PlannedDay = (
       </Text>
       {hasAPlan && (
         <Text
-          style={{ fontSize: theme.fontSize('xs') }}
+          style={{ fontSize: theme.fontSize('xs'), color: statusColor.text }}
           numberOfLines={1}
           ellipsizeMode='tail'
         >

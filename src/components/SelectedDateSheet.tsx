@@ -21,6 +21,7 @@ import { getPlansIntersectingDay } from '../lib/serviceReport'
 import DayPlanRow from './DayPlanRow'
 import RecurringPlanRow from './RecurringPlanRow'
 import Circle from './Circle'
+import { getDateStatusColor } from './CalendarDay'
 
 export type SelectedDateSheetState = {
   open: boolean
@@ -91,6 +92,19 @@ const SelectedDateSheet: React.FC<Props> = ({
     )
   }, [dayPlans, recurringPlansForToday, sheet.date])
 
+  const wentInService = !!thisDaysReports?.length
+  const isToday = moment().isSame(sheet.date, 'day')
+  const dateInPast = moment(sheet.date).isSameOrBefore(moment(), 'day')
+  const hitGoal = actualHours >= (goalHours || 0)
+
+  const statusColor = getDateStatusColor(
+    theme,
+    wentInService,
+    isToday,
+    dateInPast,
+    hitGoal
+  )
+
   return (
     <Sheet
       open={sheet.open}
@@ -126,17 +140,7 @@ const SelectedDateSheet: React.FC<Props> = ({
               <XView>
                 {goalHours && (
                   <>
-                    <Circle
-                      color={
-                        moment().isSameOrAfter(sheet.date, 'day')
-                          ? actualHours === 0
-                            ? theme.colors.error
-                            : actualHours < goalHours
-                              ? theme.colors.warn
-                              : theme.colors.accent
-                          : theme.colors.textAlt
-                      }
-                    />
+                    <Circle color={statusColor.bg} />
                     <Text
                       style={{
                         color: theme.colors.textAlt,

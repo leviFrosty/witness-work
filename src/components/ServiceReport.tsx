@@ -114,7 +114,7 @@ const HourEntryCard = () => {
   const hoursPerDayNeeded = useMemo(
     () =>
       daysLeftInMonth === 0
-        ? minutesRemaining
+        ? minutesRemaining / 60
         : _.round(minutesRemaining / 60 / daysLeftInMonth, 1),
     [daysLeftInMonth, minutesRemaining]
   )

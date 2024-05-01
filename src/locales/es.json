@@ -446,7 +446,8 @@
       "c1": "Se solucionó el problema por el cual la posición de desplazamiento se perdía en TimeReportsScreen. Se resolvieron otros problemas relacionados con la pantalla de informes de tiempo.",
       "c2": "Las horas de los PMA no contribuyen más al objetivo anual más allá de las 55 horas en un mes determinado.",
       "c3": "Los planes recurrentes se pueden eliminar por evento único o por evento único y todos los eventos futuros.",
-      "c4": "¡Nuevos campos personalizados para contactos! Puede crear cualquier cantidad de campos personalizados que desee."
+      "c4": "¡Nuevos campos personalizados para contactos! Puede crear cualquier cantidad de campos personalizados que desee.",
+      "c5": "¡Ahora puede compartir su tiempo directamente con NW Publisher!"
     }
   },
   "installed": "Instalado",

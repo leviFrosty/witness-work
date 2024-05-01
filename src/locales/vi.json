@@ -446,7 +446,8 @@
       "c1": "Đã khắc phục sự cố khiến vị trí cuộn bị mất trên TimeReportsScreen. Đã giải quyết các vấn đề khác liên quan đến màn hình báo cáo thời gian.",
       "c2": "Số giờ ở LDC không đóng góp nhiều hơn vào mục tiêu hàng năm vượt quá 55 giờ trong bất kỳ tháng cụ thể nào.",
       "c3": "Kế hoạch định kỳ có thể bị xóa bởi một sự kiện hoặc một sự kiện và tất cả các sự kiện trong tương lai.",
-      "c4": "Các trường tùy chỉnh mới cho danh bạ! Bạn có thể tạo bất kỳ số lượng trường tùy chỉnh nào bạn muốn."
+      "c4": "Các trường tùy chỉnh mới cho danh bạ! Bạn có thể tạo bất kỳ số lượng trường tùy chỉnh nào bạn muốn.",
+      "c5": "Bây giờ bạn có thể chia sẻ thời gian của mình trực tiếp với Nhà xuất bản NW!"
     }
   },
   "installed": "Cài đặt",

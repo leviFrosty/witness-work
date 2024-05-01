@@ -446,7 +446,8 @@
       "c1": "Corrigido o problema em que a posição de rolagem era perdida no TimeReportsScreen. Resolvidos outros problemas relacionados à tela de relatórios de horas.",
       "c2": "As horas do LDC não contribuem mais para a meta anual além das 55 horas em um determinado mês.",
       "c3": "Os planos recorrentes podem ser excluídos por evento único ou evento único e todos os eventos futuros.",
-      "c4": "Novos campos personalizados para contatos! Você pode criar quantos campos personalizados desejar."
+      "c4": "Novos campos personalizados para contatos! Você pode criar quantos campos personalizados desejar.",
+      "c5": "Agora você pode compartilhar seu tempo diretamente com o NW Publisher!"
     }
   },
   "installed": "Instalado",

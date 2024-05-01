@@ -257,7 +257,7 @@ const PersonalContactSection = ({
                   setCustomField(field, val)
                 },
                 value: customFields[field],
-                autoCapitalize: 'none',
+                autoCapitalize: 'words',
               }}
             />
           </XView>

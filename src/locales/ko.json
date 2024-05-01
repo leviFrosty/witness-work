@@ -609,5 +609,8 @@
   "youCannotCreateAPlanForAPreviousDay": "이전 날짜에 대해서는 계획을 생성할 수 없습니다.",
   "nwPublisher": "NW출판사",
   "nwPublisherOnlyAllowsLastMonth": "NW 게시자는 전월 보고서만 제출할 수 있습니다.",
-  "submitLastMonth": "지난달 제출"
+  "submitLastMonth": "지난달 제출",
+  "deleteThisPlan": "이 계획 삭제",
+  "deleteThisAndFollowingPlans": "이 계획 및 다음 계획 삭제",
+  "deleteAllPlans": "모든 계획 삭제"
 }

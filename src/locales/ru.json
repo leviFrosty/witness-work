@@ -609,5 +609,8 @@
   "youCannotCreateAPlanForAPreviousDay": "Вы не можете создать план на предыдущую дату.",
   "nwPublisher": "СЗ Издатель",
   "nwPublisherOnlyAllowsLastMonth": "NW Publisher позволяет вам отправлять отчет только за предыдущий месяц.",
-  "submitLastMonth": "Отправить в прошлом месяце"
+  "submitLastMonth": "Отправить в прошлом месяце",
+  "deleteThisPlan": "Удалить этот план",
+  "deleteThisAndFollowingPlans": "Удалить этот и следующие планы",
+  "deleteAllPlans": "Удалить все планы"
 }

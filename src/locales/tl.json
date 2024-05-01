@@ -609,5 +609,8 @@
   "youCannotCreateAPlanForAPreviousDay": "Hindi ka makakagawa ng plano para sa nakaraang petsa.",
   "nwPublisher": "NW Publisher",
   "nwPublisherOnlyAllowsLastMonth": "Pinapayagan ka lamang ng NW Publisher na isumite ang ulat ng nakaraang buwan.",
-  "submitLastMonth": "Isumite noong nakaraang buwan"
+  "submitLastMonth": "Isumite noong nakaraang buwan",
+  "deleteThisPlan": "Tanggalin ang Planong Ito",
+  "deleteThisAndFollowingPlans": "Tanggalin Ito At Sumusunod sa Mga Plano",
+  "deleteAllPlans": "Tanggalin ang Lahat ng Plano"
 }

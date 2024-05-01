@@ -609,5 +609,8 @@
   "youCannotCreateAPlanForAPreviousDay": "Non è possibile creare un piano per una data precedente.",
   "nwPublisher": "Editore NO",
   "nwPublisherOnlyAllowsLastMonth": "NW Publisher consente solo di inviare il rapporto del mese precedente.",
-  "submitLastMonth": "Invia il mese scorso"
+  "submitLastMonth": "Invia il mese scorso",
+  "deleteThisPlan": "Elimina questo piano",
+  "deleteThisAndFollowingPlans": "Elimina questo e segui i piani",
+  "deleteAllPlans": "Elimina tutti i piani"
 }

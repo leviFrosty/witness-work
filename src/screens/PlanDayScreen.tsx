@@ -574,7 +574,9 @@ const PlanDayScreen = ({ route, navigation }: PlanDayScreenProps) => {
                     ItemSeparatorComponent={() => (
                       <View style={{ height: 10 }} />
                     )}
-                    renderItem={({ item }) => <RecurringPlanRow plan={item} />}
+                    renderItem={({ item }) => (
+                      <RecurringPlanRow plan={item} date={date} />
+                    )}
                     estimatedItemSize={66}
                     ListEmptyComponent={
                       <Card

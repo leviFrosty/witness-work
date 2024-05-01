@@ -340,6 +340,7 @@ export type RecurringPlan = {
     endDate: Date | null
   }
   note?: string
+  deletedDates?: Date[]
 }
 
 export const getPlansIntersectingDay = (
@@ -352,6 +353,15 @@ export const getPlansIntersectingDay = (
 
     // Convert dates to Moment.js objects for easier manipulation
     const momentDay = moment(day)
+
+    if (
+      plan.deletedDates?.some((deletedDate) =>
+        moment(deletedDate).isSame(momentDay, 'day')
+      )
+    ) {
+      return false
+    }
+
     const momentStartDate = moment(startDate)
 
     // Calculate the difference in days between the start date and the given day

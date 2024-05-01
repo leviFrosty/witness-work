@@ -121,6 +121,39 @@ export const useServiceReport = create(
           }
         })
       },
+      deleteSingleEventFromRecurringPlan: (id: string, date: Date) => {
+        set(({ recurringPlans }) => {
+          return {
+            recurringPlans: recurringPlans.map((c) => {
+              if (c.id !== id) {
+                return c
+              }
+              const deleted = c.deletedDates || []
+              return { ...c, deletedDates: [...deleted, date] }
+            }),
+          }
+        })
+      },
+      deleteEventAndFutureEvents: (id: string, date: Date) => {
+        set(({ recurringPlans }) => {
+          return {
+            recurringPlans: recurringPlans.map((c) => {
+              if (c.id !== id) {
+                return c
+              }
+              const deleted = c.deletedDates || []
+              return {
+                ...c,
+                deletedDates: [...deleted, date],
+                recurrence: {
+                  ...c.recurrence,
+                  endDate: date,
+                },
+              }
+            }),
+          }
+        })
+      },
       deleteRecurringPlan: (id: string) =>
         set(({ recurringPlans }) => {
           const foundRecurringPlan = recurringPlans.find(

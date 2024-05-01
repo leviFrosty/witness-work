@@ -609,5 +609,8 @@
   "youCannotCreateAPlanForAPreviousDay": "以前の日付のプランを作成することはできません。",
   "nwPublisher": "NW Publisher",
   "nwPublisherOnlyAllowsLastMonth": "NW Publisher では、前月のレポートのみを送信できます。",
-  "submitLastMonth": "先月を送信"
+  "submitLastMonth": "先月を送信",
+  "deleteThisPlan": "このプランを削除",
+  "deleteThisAndFollowingPlans": "このプランと次のプランを削除",
+  "deleteAllPlans": "すべてのプランを削除"
 }

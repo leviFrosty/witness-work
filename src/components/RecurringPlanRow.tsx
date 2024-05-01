@@ -11,9 +11,13 @@ import XView from './layout/XView'
 import { RecurringPlan, RecurringPlanFrequencies } from '../lib/serviceReport'
 import moment from 'moment'
 
-const RecurringPlanRow = (props: { plan: RecurringPlan }) => {
+const RecurringPlanRow = (props: { plan: RecurringPlan; date: Date }) => {
   const theme = useTheme()
-  const { deleteRecurringPlan } = useServiceReport()
+  const {
+    deleteRecurringPlan,
+    deleteSingleEventFromRecurringPlan,
+    deleteEventAndFutureEvents,
+  } = useServiceReport()
 
   const hours = Math.floor(props.plan.minutes / 60)
   const minutes = props.plan.minutes % 60
@@ -46,8 +50,21 @@ const RecurringPlanRow = (props: { plan: RecurringPlan }) => {
               onPress: () => swipeable.reset(),
             },
             {
-              text: i18n.t('delete'),
-              style: 'destructive',
+              text: i18n.t('deleteThisPlan'),
+              onPress: () => {
+                swipeable.reset()
+                deleteSingleEventFromRecurringPlan(plan.id, props.date)
+              },
+            },
+            {
+              text: i18n.t('deleteThisAndFollowingPlans'),
+              onPress: () => {
+                swipeable.reset()
+                deleteEventAndFutureEvents(plan.id, props.date)
+              },
+            },
+            {
+              text: i18n.t('deleteAllPlans'),
               onPress: () => {
                 swipeable.reset()
                 deleteRecurringPlan(plan.id)
@@ -57,7 +74,12 @@ const RecurringPlanRow = (props: { plan: RecurringPlan }) => {
         )
       }
     },
-    [deleteRecurringPlan]
+    [
+      deleteEventAndFutureEvents,
+      deleteRecurringPlan,
+      deleteSingleEventFromRecurringPlan,
+      props.date,
+    ]
   )
 
   return (

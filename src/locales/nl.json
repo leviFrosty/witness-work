@@ -609,5 +609,8 @@
   "youCannotCreateAPlanForAPreviousDay": "U kunt geen plan maken voor een eerdere datum.",
   "nwPublisher": "NW-uitgever",
   "nwPublisherOnlyAllowsLastMonth": "Met NW Publisher kunt u alleen het rapport van de voorgaande maand indienen.",
-  "submitLastMonth": "Vorige maand indienen"
+  "submitLastMonth": "Vorige maand indienen",
+  "deleteThisPlan": "Verwijder dit plan",
+  "deleteThisAndFollowingPlans": "Verwijder dit en volgende plannen",
+  "deleteAllPlans": "Verwijder alle plannen"
 }

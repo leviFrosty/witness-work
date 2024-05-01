@@ -82,6 +82,11 @@ const MonthSummary = ({
     [month, monthsReports, year]
   )
 
+  const monthInFuture = moment().isBefore(
+    moment().month(month).year(year),
+    'month'
+  )
+
   if (!monthsReports) {
     return (
       <Card>
@@ -101,24 +106,39 @@ const MonthSummary = ({
         >
           {i18n.t('noTimeReports_description')}
         </Text>
-        <ActionButton
-          onPress={() =>
-            navigation.navigate('Add Time', {
-              date: moment().month(month).year(year).toISOString(),
-            })
-          }
-        >
-          <Text
-            style={{
-              textAlign: 'center',
-              flex: 1,
-              color: theme.colors.textInverse,
-              fontFamily: theme.fonts.bold,
-            }}
+        {monthInFuture ? (
+          <ActionButton
+            onPress={() => navigation.navigate('PlanSchedule', { month, year })}
           >
-            {i18n.t('addTime')}
-          </Text>
-        </ActionButton>
+            <Text
+              style={{
+                color: theme.colors.textInverse,
+                fontFamily: theme.fonts.bold,
+              }}
+            >
+              {i18n.t('createPlan')}
+            </Text>
+          </ActionButton>
+        ) : (
+          <ActionButton
+            onPress={() =>
+              navigation.navigate('Add Time', {
+                date: moment().month(month).year(year).toISOString(),
+              })
+            }
+          >
+            <Text
+              style={{
+                textAlign: 'center',
+                flex: 1,
+                color: theme.colors.textInverse,
+                fontFamily: theme.fonts.bold,
+              }}
+            >
+              {i18n.t('addTime')}
+            </Text>
+          </ActionButton>
+        )}
       </Card>
     )
   }
@@ -241,24 +261,39 @@ const MonthSummary = ({
           </View>
         </View>
       )}
-      <ActionButton
-        onPress={() =>
-          navigation.navigate('Add Time', {
-            date: moment().month(month).year(year).toISOString(),
-          })
-        }
-      >
-        <Text
-          style={{
-            textAlign: 'center',
-            flex: 1,
-            color: theme.colors.textInverse,
-            fontFamily: theme.fonts.bold,
-          }}
+      {monthInFuture ? (
+        <ActionButton
+          onPress={() => navigation.navigate('PlanSchedule', { month, year })}
         >
-          {i18n.t('addTime')}
-        </Text>
-      </ActionButton>
+          <Text
+            style={{
+              color: theme.colors.textInverse,
+              fontFamily: theme.fonts.bold,
+            }}
+          >
+            {i18n.t('createPlan')}
+          </Text>
+        </ActionButton>
+      ) : (
+        <ActionButton
+          onPress={() =>
+            navigation.navigate('Add Time', {
+              date: moment().month(month).year(year).toISOString(),
+            })
+          }
+        >
+          <Text
+            style={{
+              textAlign: 'center',
+              flex: 1,
+              color: theme.colors.textInverse,
+              fontFamily: theme.fonts.bold,
+            }}
+          >
+            {i18n.t('addTime')}
+          </Text>
+        </ActionButton>
+      )}
     </Card>
   )
 }

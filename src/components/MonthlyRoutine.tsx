@@ -1,4 +1,4 @@
-import { Alert, View } from 'react-native'
+import { View } from 'react-native'
 import { useCallback, useContext } from 'react'
 import moment from 'moment'
 import useTheme, { ThemeContext } from '../contexts/theme'
@@ -16,13 +16,9 @@ import { faCheck, faMinus, faTimes } from '@fortawesome/free-solid-svg-icons'
 import Button from './Button'
 
 const Month = ({ month, year }: { month: number; year: number }) => {
-  const { monthlyRoutineHasShownInvalidMonthAlert, set } = usePreferences()
-  const setHasShownInvalidMonthAlert = () => {
-    set({ monthlyRoutineHasShownInvalidMonthAlert: true })
-  }
   const theme = useTheme()
   const navigation = useNavigation<RootStackNavigation>()
-  const { installedOn, publisher } = usePreferences()
+  const { installedOn } = usePreferences()
   const current = moment()
   const toDisplay = moment().month(month).year(year)
   const isCurrentMonth = current.isSame(toDisplay, 'month')
@@ -39,27 +35,13 @@ const Month = ({ month, year }: { month: number; year: number }) => {
   const didNotGoOutInService = monthHasPassed && !wentOutThisMonth
   const hasNotGoneOutTheCurrentMonth = isCurrentMonth && !wentOutThisMonth
 
-  const handleInvalidMonthPress = () => {
-    setHasShownInvalidMonthAlert()
-    Alert.alert(
-      i18n.t('cannotNavigateToFutureMonth'),
-      i18n.t('cannotNavigateToFutureMonth_description')
-    )
-  }
-
   return (
     <Button
-      disabled={monthInFuture && monthlyRoutineHasShownInvalidMonthAlert}
-      onPress={
-        publisher === 'publisher'
-          ? undefined
-          : () =>
-              monthInFuture
-                ? handleInvalidMonthPress()
-                : navigation.navigate('Time Reports', {
-                    month,
-                    year,
-                  })
+      onPress={() =>
+        navigation.navigate('Time Reports', {
+          month,
+          year,
+        })
       }
       style={{
         gap: 5,

@@ -447,23 +447,6 @@
       "c2": "LDC-Stunden tragen nicht mehr als 55 Stunden für einen bestimmten Monat zum Jahresziel bei.",
       "c3": "Wiederkehrende Pläne können einzeln oder einzeln und mit allen zukünftigen Ereignissen gelöscht werden.",
       "c4": "Neue benutzerdefinierte Felder für Kontakte! Sie können beliebig viele benutzerdefinierte Felder erstellen."
-    },
-    "1240": {
-      "c1": "Möglichkeit hinzugefügt, die Position der Kontaktnadel in allen Kartenansichten manuell anzupassen. Berühren, halten und ziehen Sie die Nadel einfach.",
-      "c2": "Kleine Kartenansicht zum Bildschirm mit den Kontaktdaten hinzugefügt und Fehler im Zusammenhang mit ungültigen Koordinaten behoben",
-      "c3": "Ein visuelles Überlaufproblem behoben, das manchmal auf kleinen Bildschirmen beim Anzeigen von Kartenkontaktkarten auftritt."
-    },
-    "1250": {
-      "c1": "Großes Update! Zeitplanung und Pläne hinzugefügt! 🚀 Sie können jetzt einmalige Pläne und wiederkehrende Pläne erstellen und Ihren Monatsplan anzeigen.",
-      "c2": "Verbesserte Übersichtlichkeit durch Hinzufügen von „Toast“-Benachrichtigungen für wichtige App-Aktionen.",
-      "c3": "Verschiedene Abschnitte des Zeitberichtsbildschirms wurden aktualisiert, um mehr Informationen und eine einfachere Navigation zu bieten.",
-      "c4": "Kleinere visuelle Probleme und andere Bugs behoben.",
-      "c5": "Den Einstellungen wurde eine Einstellung für den Schriftgrößenversatz hinzugefügt. Damit können Sie die Schriftgröße der App anpassen."
-    },
-    "1260": {
-      "c1": "Problem behoben, bei dem die Scrollposition auf dem TimeReportsScreen verloren ging. Andere Probleme im Zusammenhang mit dem Time Reports-Bildschirm behoben.",
-      "c2": "LDC-Stunden tragen nicht mehr als 55 Stunden für einen bestimmten Monat zum Jahresziel bei.",
-      "c3": "Wiederkehrende Pläne können einzeln oder einzeln und mit allen zukünftigen Ereignissen gelöscht werden."
     }
   },
   "installed": "Eingerichtet",

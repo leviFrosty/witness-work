@@ -3,6 +3,8 @@ import { Publisher } from '../types/publisher'
 import { ServiceReport } from '../types/serviceReport'
 import moment from 'moment'
 
+export const ldcMinutesPerMonthCap = 55 * 60
+
 export const calculateProgress = ({
   minutes,
   goalHours,
@@ -277,8 +279,6 @@ export const getTotalMinutesForServiceYear = (
     const month = moment(current.date).format('MMYY')
     const currentMinutes = current.hours * 60 + current.minutes
 
-    const maxLdcMinutesPerMonth = 55 * 60
-
     if (!current.ldc) {
       // Only LDC has a month capacity, just return the time total here.
       return prev + currentMinutes
@@ -286,21 +286,21 @@ export const getTotalMinutesForServiceYear = (
 
     if (ldcMinutesPerMonth[month] === undefined) {
       ldcMinutesPerMonth[month] = currentMinutes
-      if (currentMinutes > maxLdcMinutesPerMonth) {
-        return prev + maxLdcMinutesPerMonth
+      if (currentMinutes > ldcMinutesPerMonthCap) {
+        return prev + ldcMinutesPerMonthCap
       } else {
         return prev + currentMinutes
       }
     } else {
-      if (ldcMinutesPerMonth[month] + currentMinutes > maxLdcMinutesPerMonth) {
+      if (ldcMinutesPerMonth[month] + currentMinutes > ldcMinutesPerMonthCap) {
         const maxTimeAvailableToAdd =
-          maxLdcMinutesPerMonth - ldcMinutesPerMonth[month]
+          ldcMinutesPerMonthCap - ldcMinutesPerMonth[month]
         ldcMinutesPerMonth[month] += currentMinutes
         return prev + maxTimeAvailableToAdd
       } else {
         ldcMinutesPerMonth[month] += currentMinutes
-        if (currentMinutes > maxLdcMinutesPerMonth) {
-          prev + maxLdcMinutesPerMonth
+        if (currentMinutes > ldcMinutesPerMonthCap) {
+          prev + ldcMinutesPerMonthCap
         } else {
           return prev + currentMinutes
         }

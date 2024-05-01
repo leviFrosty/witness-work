@@ -444,7 +444,8 @@
     },
     "1260": {
       "c1": "Er is een probleem opgelost waarbij de scrollpositie verloren ging op TimeReportsScreen. Andere problemen met betrekking tot het scherm met tijdrapporten opgelost.",
-      "c2": "LDC-uren dragen niet meer bij aan het jaarlijkse doel dan 55 uur voor een bepaalde maand."
+      "c2": "LDC-uren dragen niet meer bij aan het jaarlijkse doel dan 55 uur voor een bepaalde maand.",
+      "c3": "Terugkerende plannen kunnen per afzonderlijke gebeurtenis of per afzonderlijke gebeurtenis en alle toekomstige gebeurtenissen worden verwijderd."
     }
   },
   "installed": "Geïnstalleerd",

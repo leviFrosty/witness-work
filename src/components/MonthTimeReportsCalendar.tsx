@@ -4,6 +4,8 @@ import moment from 'moment'
 import useTheme from '../contexts/theme'
 import { MarkedDates } from 'react-native-calendars/src/types'
 import { SelectedDateSheetState } from './SelectedDateSheet'
+import CalendarDay from './CalendarDay'
+import CalendarKey from './CalendarKey'
 
 type MonthTimeReportsCalendarProps = {
   month: number
@@ -51,15 +53,9 @@ const MonthTimeReportsCalendar: React.FC<MonthTimeReportsCalendarProps> = ({
       current={monthToView}
       disableMonthChange
       hideArrows
-      renderHeader={() => undefined}
+      renderHeader={() => <CalendarKey showPlanSchedule={{ month, year }} />}
       onDayPress={(day) => {
         const date = moment(day.dateString).toDate()
-
-        const dateInFuture = moment().isBefore(date)
-        if (dateInFuture) {
-          return
-        }
-
         setSheet({ open: true, date })
       }}
       style={{
@@ -71,6 +67,7 @@ const MonthTimeReportsCalendar: React.FC<MonthTimeReportsCalendarProps> = ({
       }}
       markedDates={markedDates}
       markingType='custom'
+      dayComponent={(props) => <CalendarDay {...props} />}
       theme={{
         backgroundColor: theme.colors.card,
         calendarBackground: theme.colors.card,

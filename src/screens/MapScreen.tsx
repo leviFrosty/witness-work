@@ -1,5 +1,5 @@
 import Wrapper from '../components/layout/Wrapper'
-import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps'
+import MapView, { LatLng, Marker, PROVIDER_GOOGLE } from 'react-native-maps'
 import useContacts from '../stores/contactsStore'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigation } from '@react-navigation/native'
@@ -59,6 +59,14 @@ const FullMapView = ({ contactMarkers }: FullMapViewProps) => {
     googleMapsUri: '',
   })
   const theme = useTheme()
+  const { contacts, updateContact } = useContacts()
+
+  const handleDragContactPin = (id: string, coordinate: LatLng) => {
+    updateContact({
+      ...contacts.find((c) => c.id === id),
+      coordinate,
+    })
+  }
 
   const fitToMarkers = useCallback(() => {
     mapRef.current?.fitToSuppliedMarkers(contactMarkers.map((c) => c.id))
@@ -121,6 +129,10 @@ const FullMapView = ({ contactMarkers }: FullMapViewProps) => {
             key={c.id}
             coordinate={c.coordinate!}
             pinColor={c.pinColor}
+            draggable
+            onDragEnd={(e) =>
+              handleDragContactPin(c.id, e.nativeEvent.coordinate)
+            }
           />
         ))}
       </MapView>
@@ -130,6 +142,7 @@ const FullMapView = ({ contactMarkers }: FullMapViewProps) => {
           position: 'absolute',
           bottom: 0,
           zIndex: 1000,
+          paddingBottom: 15,
         }}
       >
         {contactMarkers.length === 0 ? (

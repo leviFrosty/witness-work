@@ -12,6 +12,7 @@ import Text from './MyText'
 import {
   faArrowUpFromBracket,
   faCopy,
+  faGlobeAmericas,
   faHourglass,
   faTimes,
 } from '@fortawesome/free-solid-svg-icons'
@@ -20,6 +21,7 @@ import Haptics from '../lib/haptics'
 import { useCallback, useMemo } from 'react'
 import {
   getTimeAsMinutesForHourglass,
+  getTotalMinutesDetailedForSpecificMonth,
   hasServiceReportsForMonth,
   otherMinutesForSpecificMonth,
   totalMinutesForSpecificMonth,
@@ -30,7 +32,6 @@ import { useNavigation } from '@react-navigation/native'
 import { RootStackNavigation } from '../stacks/RootStack'
 import links from '../constants/links'
 import { openURL } from '../lib/links'
-import _ from 'lodash'
 
 export type ExportTimeSheetState = {
   open: boolean
@@ -81,12 +82,23 @@ const ExportTimeSheet = ({
     () =>
       month !== undefined && year !== undefined
         ? hasServiceReportsForMonth(serviceReports, month, year)
-        : null,
+        : false,
     [month, serviceReports, year]
   )
 
+  const isLastMonth = (() => {
+    if (!month || !year) {
+      return false
+    }
+    const providedMonth = moment().month(month).year(year)
+    const isLastMonth = moment()
+      .subtract(1, 'month')
+      .isSame(providedMonth, 'month')
+    return isLastMonth
+  })()
+
   const handleAction = useCallback(
-    async (action: 'copy' | 'hourglass' | 'share') => {
+    async (action: 'copy' | 'hourglass' | 'share' | 'nwpublisher') => {
       const otherHoursAsString = () => {
         const otherMinutes = otherMinutesForSpecificMonth(
           serviceReports,
@@ -164,6 +176,47 @@ const ExportTimeSheet = ({
           break
         }
 
+        case 'nwpublisher': {
+          if (!month || !year) {
+            return
+          }
+          if (!isLastMonth) {
+            // NW Publisher only allows usbmission for the previous month
+            return
+          }
+
+          let nwPublisherLink = `${links.nwpublisherSubmitReport}sharedInMinistry=${wentOutForMonth}`
+
+          const allMinutesForMonth = getTotalMinutesDetailedForSpecificMonth(
+            serviceReports,
+            month,
+            year
+          )
+          const otherMinutes = allMinutesForMonth.other.reduce(
+            (acc, curr) => acc + curr.minutes,
+            0
+          )
+
+          const nonLdcMinutes = allMinutesForMonth.standard + otherMinutes
+
+          if (nonLdcMinutes !== null && nonLdcMinutes > 0) {
+            nwPublisherLink += `:hours=${Math.floor(nonLdcMinutes / 60)}`
+          }
+
+          if (allMinutesForMonth.ldc !== null && allMinutesForMonth.ldc > 0) {
+            nwPublisherLink += `:credit=${Math.floor(
+              allMinutesForMonth.ldc / 60
+            )}`
+          }
+
+          if (studiesForMonth !== null && studiesForMonth > 0) {
+            nwPublisherLink += `:bibleStudies=${studiesForMonth}`
+          }
+
+          openURL(nwPublisherLink)
+          break
+        }
+
         case 'share': {
           await Share.share({ message: reportAsString() })
           break
@@ -181,6 +234,7 @@ const ExportTimeSheet = ({
       studiesForMonth,
       wentOutForMonth,
       year,
+      isLastMonth,
     ]
   )
 
@@ -251,6 +305,55 @@ const ExportTimeSheet = ({
                 onPress={() => setSheet({ open: false, month: 0, year: 0 })}
               />
             </View>
+          </View>
+          <View style={{ gap: 5 }}>
+            <Button
+              onPress={() => handleAction('nwpublisher')}
+              variant={isLastMonth ? 'solid' : 'outline'}
+              style={{
+                backgroundColor: isLastMonth ? theme.colors.card : undefined,
+              }}
+              disabled={!isLastMonth}
+            >
+              <View
+                style={{ flexDirection: 'row', gap: 10, alignItems: 'center' }}
+              >
+                <IconButton icon={faGlobeAmericas} />
+                <Text style={{ color: theme.colors.text }}>
+                  {i18n.t('nwPublisher')}
+                </Text>
+              </View>
+            </Button>
+            {!isLastMonth && (
+              <View>
+                <Text
+                  style={{
+                    fontSize: theme.fontSize('sm'),
+                    color: theme.colors.textAlt,
+                  }}
+                >
+                  {i18n.t('nwPublisherOnlyAllowsLastMonth')}
+                </Text>
+                <Button
+                  onPress={() => {
+                    if (month === 0) {
+                      setSheet({ open: true, month: 11, year: year - 1 })
+                    } else {
+                      setSheet({ open: true, month: month - 1, year })
+                    }
+                  }}
+                >
+                  <Text
+                    style={{
+                      textDecorationLine: 'underline',
+                      fontFamily: theme.fonts.semiBold,
+                    }}
+                  >
+                    {i18n.t('submitLastMonth')}
+                  </Text>
+                </Button>
+              </View>
+            )}
           </View>
           <Button
             onPress={() => handleAction('hourglass')}

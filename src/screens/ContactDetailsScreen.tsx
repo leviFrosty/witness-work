@@ -1,5 +1,5 @@
 import { View, Platform, Alert, ScrollView, useColorScheme } from 'react-native'
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import Text from '../components/MyText'
 import useTheme from '../contexts/theme'
 import { RootStackNavigation, RootStackParamList } from '../stacks/RootStack'
@@ -33,7 +33,6 @@ import {
   faComment,
   faComments,
   faEnvelope,
-  faLocationDot,
   faPencil,
   faPhone,
   faPlus,
@@ -53,6 +52,8 @@ import { usePreferences } from '../stores/preferences'
 import { handleCall, handleMessage } from '../lib/phone'
 import { openURL } from '../lib/links'
 import HintCard from '../components/HintCard'
+import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps'
+import useLocation from '../hooks/useLocation'
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Contact Details'>
 
@@ -199,6 +200,15 @@ const AddressRow = ({ contact }: { contact: Contact }) => {
   const { updateContact } = useContacts()
   const { incrementGeocodeApiCallCount, defaultNavigationMapProvider } =
     usePreferences()
+  const mapRef = useRef<MapView>(null)
+  const { locationPermission } = useLocation()
+
+  const fitToMarkers = useCallback(() => {
+    if (!contact.coordinate) {
+      return
+    }
+    mapRef.current?.fitToCoordinates([contact.coordinate])
+  }, [contact.coordinate])
 
   if (!address) {
     return null
@@ -219,6 +229,10 @@ const AddressRow = ({ contact }: { contact: Contact }) => {
     })
   }
 
+  const handleMapLayout = () => {
+    fitToMarkers()
+  }
+
   return (
     <View style={{ gap: 10 }}>
       <Text
@@ -234,8 +248,8 @@ const AddressRow = ({ contact }: { contact: Contact }) => {
       <Button onPress={() => navigateTo(address, defaultNavigationMapProvider)}>
         <View
           style={{
+            display: 'flex',
             flexDirection: 'row',
-            justifyContent: 'space-between',
             alignItems: 'center',
           }}
         >
@@ -245,8 +259,8 @@ const AddressRow = ({ contact }: { contact: Contact }) => {
           >
             <View
               style={{
-                flexDirection: 'column',
-                justifyContent: 'center',
+                flexDirection: 'row',
+                flexWrap: 'wrap',
                 gap: 5,
               }}
             >
@@ -257,15 +271,12 @@ const AddressRow = ({ contact }: { contact: Contact }) => {
               })}
             </View>
           </Copyeable>
-          <IconButton
-            size='lg'
-            iconStyle={{ color: theme.colors.accent }}
-            icon={faLocationDot}
-          />
         </View>
       </Button>
-      {contact.coordinate === undefined &&
-      hasTriedToGetCoordinates === false ? (
+      {(contact.coordinate && contact.coordinate.latitude === undefined) ||
+      (contact.coordinate && contact.coordinate.longitude === undefined) ||
+      (contact.coordinate === undefined &&
+        hasTriedToGetCoordinates === false) ? (
         <View style={{ gap: 3 }}>
           <Button onPress={attemptToGetCoordinates}>
             <Text
@@ -286,20 +297,74 @@ const AddressRow = ({ contact }: { contact: Contact }) => {
             {i18n.t('coordinatesAllowMapView')}
           </Text>
         </View>
-      ) : (
-        <Copyeable text={coordinateAsString()}>
-          <Text
+      ) : contact.coordinate?.latitude && contact.coordinate?.longitude ? (
+        <>
+          <Copyeable text={coordinateAsString()}>
+            <Text
+              style={{
+                fontSize: theme.fontSize('xs'),
+                color: theme.colors.textAlt,
+              }}
+            >
+              {coordinateAsString()}
+            </Text>
+          </Copyeable>
+          <MapView
+            showsUserLocation={locationPermission}
+            ref={mapRef}
+            onLayout={handleMapLayout}
             style={{
-              fontSize: theme.fontSize('xs'),
-              color: theme.colors.textAlt,
+              height: 140,
+              width: '100%',
+              borderRadius: theme.numbers.borderRadiusSm,
             }}
+            provider={Platform.OS === 'android' ? PROVIDER_GOOGLE : undefined}
+            minZoomLevel={4}
+            maxZoomLevel={16}
+            onPress={() => navigateTo(address, defaultNavigationMapProvider)}
           >
-            {coordinateAsString()}
-          </Text>
-        </Copyeable>
-      )}
+            <Marker
+              identifier={contact.id}
+              key={contact.id}
+              coordinate={contact.coordinate!}
+              pinColor={theme.colors.accent}
+              draggable
+              onDragEnd={(e) =>
+                updateContact({
+                  ...contact,
+                  coordinate: e.nativeEvent.coordinate,
+                })
+              }
+            />
+          </MapView>
+        </>
+      ) : null}
     </View>
   )
+}
+
+const CustomFieldsRow = (props: { contact: Contact }) => {
+  const theme = useTheme()
+  const { customFields } = props.contact
+
+  if (!customFields) {
+    return null
+  }
+
+  return Object.keys(customFields).map((key) => (
+    <View style={{ gap: 10 }} key={key}>
+      <Text
+        style={{
+          fontSize: 14,
+          fontFamily: theme.fonts.semiBold,
+          color: theme.colors.textAlt,
+        }}
+      >
+        {key}
+      </Text>
+      <Copyeable>{customFields[key]}</Copyeable>
+    </View>
+  ))
 }
 
 const EmailRow = ({ contact }: { contact: Contact }) => {
@@ -655,9 +720,12 @@ const ContactDetailsScreen = ({ route, navigation }: Props) => {
     )
   }
 
-  const { name, address, phone, email } = contact
+  const { name, address, phone, email, customFields } = contact
 
   const hasAddress = address && Object.values(address).some((v) => v.length > 0)
+  const hasCustomFields =
+    customFields !== undefined &&
+    Object.values(customFields).some((f) => !!f.length)
 
   return (
     <View style={{ flexGrow: 1 }}>
@@ -694,10 +762,11 @@ const ContactDetailsScreen = ({ route, navigation }: Props) => {
               <View style={{ gap: 15 }}>
                 {hasAddress && <AddressRow contact={contact} />}
                 {phone && <PhoneRow contact={contact} />}
-                {!hasAddress && !phone && !email && (
+                {email && <EmailRow contact={contact} />}
+                {hasCustomFields && <CustomFieldsRow contact={contact} />}
+                {!hasAddress && !phone && !email && !hasCustomFields && (
                   <Text>{i18n.t('noPersonalInformationSaved')}</Text>
                 )}
-                {email && <EmailRow contact={contact} />}
               </View>
             </CardWithTitle>
             <View style={{ gap: 10 }}>

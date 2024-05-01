@@ -67,6 +67,7 @@ export const hints = {
   howToDeleteTime: true,
   howToArchiveContact: true,
   howToEditAndDeleteConversation: true,
+  howToAddPlan: true,
 }
 
 const initialState = {
@@ -104,6 +105,8 @@ const initialState = {
   remindMeAboutBackups: true,
   backupNotificationFrequencyAsDays: 60,
   userSpecifiedHasAnnualGoal: 'default' as boolean | 'default',
+  fontSizeOffset: 0,
+  customContactFields: [] as string[],
 }
 
 export const usePreferences = create(

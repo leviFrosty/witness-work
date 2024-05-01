@@ -41,6 +41,7 @@ import { usePreferences } from '../stores/preferences'
 import { maybeRequestStoreReview } from '../lib/storeReview'
 import useNotifications from '../hooks/notifications'
 import { getLocales } from 'expo-localization'
+import { useToastController } from '@tamagui/toast'
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Conversation Form'>
 type MomentOffset = {
@@ -185,6 +186,7 @@ const ConversationFormScreen = ({ route, navigation }: Props) => {
   const { contacts } = useContacts()
   const { conversations, addConversation, updateConversation } =
     useConversations()
+  const toast = useToastController()
 
   const conversationToEditViaProps = params.conversationToEditId
   const conversationToUpdate = conversationToEditViaProps
@@ -381,6 +383,12 @@ const ConversationFormScreen = ({ route, navigation }: Props) => {
           : addConversation(conversation)
         resolve(conversation)
       }
+      toast.show(i18n.t('success'), {
+        message: i18n.t(
+          conversation.notAtHome ? 'addedNotAtHome' : 'addedConversation'
+        ),
+        native: true,
+      })
     })
   }, [
     addConversation,
@@ -391,6 +399,7 @@ const ConversationFormScreen = ({ route, navigation }: Props) => {
     notifyMeOffset.unit,
     params.conversationToEditId,
     selectedContact,
+    toast,
     updateConversation,
   ])
 

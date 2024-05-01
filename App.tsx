@@ -20,6 +20,7 @@ import { TamaguiProvider } from 'tamagui'
 import tamaguiConfig from './tamagui.config'
 import ThemeProvider from './src/providers/ThemeProvider'
 import CustomerProvider from './src/providers/CustomerProvider'
+import { ToastProvider, ToastViewport } from '@tamagui/toast'
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
@@ -73,12 +74,15 @@ export default function App() {
               defaultTheme={colorScheme || undefined}
               config={tamaguiConfig}
             >
-              <NavigationContainer>
-                <GestureHandlerRootView style={{ flex: 1 }}>
-                  <StatusBar />
-                  <RootStackComponent />
-                </GestureHandlerRootView>
-              </NavigationContainer>
+              <ToastProvider>
+                <NavigationContainer>
+                  <GestureHandlerRootView style={{ flex: 1 }}>
+                    <StatusBar />
+                    <ToastViewport />
+                    <RootStackComponent />
+                  </GestureHandlerRootView>
+                </NavigationContainer>
+              </ToastProvider>
             </TamaguiProvider>
           </CustomerProvider>
         </SafeAreaProvider>

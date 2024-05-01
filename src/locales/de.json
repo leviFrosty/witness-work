@@ -327,50 +327,35 @@
   "new": "Neu",
   "bugFixes": "Fehlerbehebung",
   "updates": {
-    "1211": {
-      "c1": "Gegebenenfalls wurden weitere hilfreiche einmalige Hinweise hinzugefügt."
+    "160": {
+      "c1": "Gespräche können jetzt bearbeitet werden. Benachrichtigungen sind konfigurierbar",
+      "c2": "Wischen Sie mit Gesten, um Konversationen, Kontakte usw. zu bearbeiten oder zu löschen.",
+      "c3": "Haptisches Feedback zu verschiedenen wichtigen Aktionen hinzugefügt"
     },
-    "1210": {
-      "c1": "Deutlich verbesserte Genauigkeit der Zeitanzeigen.",
-      "c2": "Verbesserte Genauigkeit der Zeitfortschrittsbalken.",
-      "c3": "Hilfreiche Hinweise für Aktionen hinzugefügt, die möglicherweise nicht sofort erkennbar sind.",
-      "c4": "Verbesserte Lebensqualität auf dem Kartenbildschirm mit relevanteren Informationen und einer Schaltfläche zum schnellen Hinzufügen."
+    "161": {
+      "c1": "Weitere Minutenoptionen für Zeiteinträge hinzugefügt"
     },
-    "1201": {
-      "c1": "Kleinere Fehlerbehebungen.",
-      "c2": "Deutlich verbesserte koreanische Übersetzungen – vielen Dank, Bruder Paul. Wenn Sie bei der Übersetzung Ihrer eigenen Sprache helfen möchten, besuchen Sie bitte die Einstellungen.",
-      "c3": "Kleinere Fehlerbehebungen."
+    "162": {
+      "c1": "Die Stundenanforderungen für Sonderpioniere wurden von 70 auf 100 angepasst"
     },
-    "1200": {
-      "c1": "Fügt Sicherungs- und Wiederherstellungsfunktionen hinzu. Jetzt können Sie Ihre Daten in der Cloud sichern und später wiederherstellen. Dadurch können Sie Ihre Daten auf ein anderes Gerät übertragen. Sie können es auch auf eine andere Plattform übertragen. Finden Sie diese neue Funktion in den Einstellungen."
+    "163": {
+      "c1": "Beheben Sie Probleme mit automatischen Updates"
     },
-    "1120": {
-      "c1": "Fügt Sicherungs- und Wiederherstellungsfunktionen hinzu. Jetzt können Sie Ihre Daten in der Cloud sichern und später wiederherstellen. Sie können Ihre Daten auf ein anderes Gerät übertragen. Sie können es auch auf eine andere Plattform übertragen. Finden Sie diese neue Funktion in den Einstellungen."
+    "170": {
+      "c1": "Fügen Sie verschiedene Zeitexportmethoden hinzu",
+      "c2": "Fügen Sie „Not At Homes“ hinzu."
     },
-    "1111": {
-      "c1": "Fügen Sie in den Einstellungen eine Spendenseite für diejenigen hinzu, die einen Beitrag leisten möchten.",
-      "c2": "Enthält verschiedene kleinere Verbesserungen und Fehlerbehebungen"
+    "180": {
+      "c1": "Automatische Geokodierung für Kontakte hinzugefügt",
+      "c2": "Kartenansicht hinzugefügt"
     },
-    "1110": {
-      "c1": "Unterstützung für iPads & Tablets!",
-      "c2": "Verschiedene Stile wurden angepasst, um sie besser an größere Bildschirme anzupassen.",
-      "c3": "Die Methode zum Senden von Fehlerberichten und Funktionsanfragen an Github wurde angepasst."
+    "181": {
+      "c1": "Erweiterte Kartenansicht",
+      "c2": "Anfrage zur Store-Bewertung hinzugefügt, nachdem bestimmte Kriterien erfüllt sind",
+      "c3": "Kleine Fehlerbehebungen"
     },
-    "1100": {
-      "c1": "Fügt einen Jahresbericht zum Bildschirm „Zeitberichte“ hinzu! Verfolgen Sie den Fortschritt Ihres Dienstjahres auf einen Blick.",
-      "c2": "Beim Hinzufügen von Zeit über den Bildschirm „Zeitberichte“ wird der Bericht jetzt standardmäßig auf den ausgewählten Monat eingestellt.",
-      "c3": "Behebt ein Problem beim Exportieren des Januar-Serviceberichts."
-    },
-    "192": {
-      "c1": "Behebt ein Problem, bei dem einige Geräte einen überlaufenden Fortschrittsbalken haben.",
-      "c2": "Fügt eine ausführlichere Behandlung von Verbindungsfehlern für Geräte hinzu, für die keine erforderlichen Anwendungen erforderlich sind.",
-      "c3": "Fügt eine ausführlichere Behandlung von Verbindungsfehlern für bestimmte Geräte hinzu, für die keine erforderlichen Anwendungen erforderlich sind.",
-      "c4": "Navigieren Sie im Abschnitt „Monatsroutine“ des Startbildschirms direkt zu einem Monat.",
-      "c5": "Der Bildschirm „Zeitberichte“ verarbeitet leere und zukünftige Monate besser.",
-      "c6": "Kleinere Fehlerbehebungen."
-    },
-    "191": {
-      "c1": "Behebt ein Problem beim Navigieren zu Zeitbildschirmen."
+    "182": {
+      "c1": "Ständig aktualisiert, um das aktuelle Gebietsschema widerzuspiegeln"
     },
     "190": {
       "c1": "Präferenzen in den Einstellungen hinzugefügt",
@@ -381,35 +366,50 @@
       "c6": "Fügen Sie nun benutzerdefinierte Tags zu Ihren Zeiteinträgen hinzu",
       "c7": "Der Bildschirm „Zeitberichte“ wurde aktualisiert, um besser organisiert und nach Monaten getrennt zu sein"
     },
-    "182": {
-      "c1": "Ständig aktualisiert, um das aktuelle Gebietsschema widerzuspiegeln"
+    "191": {
+      "c1": "Behebt ein Problem beim Navigieren zu Zeitbildschirmen."
     },
-    "181": {
-      "c1": "Erweiterte Kartenansicht",
-      "c2": "Anfrage zur Store-Bewertung hinzugefügt, nachdem bestimmte Kriterien erfüllt sind",
-      "c3": "Kleine Fehlerbehebungen"
+    "192": {
+      "c1": "Behebt ein Problem, bei dem einige Geräte einen überlaufenden Fortschrittsbalken haben.",
+      "c2": "Fügt eine ausführlichere Behandlung von Verbindungsfehlern für Geräte hinzu, für die keine erforderlichen Anwendungen erforderlich sind.",
+      "c3": "Fügt eine ausführlichere Behandlung von Verbindungsfehlern für bestimmte Geräte hinzu, für die keine erforderlichen Anwendungen erforderlich sind.",
+      "c4": "Navigieren Sie im Abschnitt „Monatsroutine“ des Startbildschirms direkt zu einem Monat.",
+      "c5": "Der Bildschirm „Zeitberichte“ verarbeitet leere und zukünftige Monate besser.",
+      "c6": "Kleinere Fehlerbehebungen."
     },
-    "180": {
-      "c1": "Automatische Geokodierung für Kontakte hinzugefügt",
-      "c2": "Kartenansicht hinzugefügt"
+    "1100": {
+      "c1": "Fügt einen Jahresbericht zum Bildschirm „Zeitberichte“ hinzu! Verfolgen Sie den Fortschritt Ihres Dienstjahres auf einen Blick.",
+      "c2": "Beim Hinzufügen von Zeit über den Bildschirm „Zeitberichte“ wird der Bericht jetzt standardmäßig auf den ausgewählten Monat eingestellt.",
+      "c3": "Behebt ein Problem beim Exportieren des Januar-Serviceberichts."
     },
-    "170": {
-      "c1": "Fügen Sie verschiedene Zeitexportmethoden hinzu",
-      "c2": "Fügen Sie „Not At Homes“ hinzu."
+    "1110": {
+      "c1": "Unterstützung für iPads & Tablets!",
+      "c2": "Verschiedene Stile wurden angepasst, um sie besser an größere Bildschirme anzupassen.",
+      "c3": "Die Methode zum Senden von Fehlerberichten und Funktionsanfragen an Github wurde angepasst."
     },
-    "163": {
-      "c1": "Beheben Sie Probleme mit automatischen Updates"
+    "1111": {
+      "c1": "Fügen Sie in den Einstellungen eine Spendenseite für diejenigen hinzu, die einen Beitrag leisten möchten.",
+      "c2": "Enthält verschiedene kleinere Verbesserungen und Fehlerbehebungen"
     },
-    "162": {
-      "c1": "Die Stundenanforderungen für Sonderpioniere wurden von 70 auf 100 angepasst"
+    "1120": {
+      "c1": "Fügt Sicherungs- und Wiederherstellungsfunktionen hinzu. Jetzt können Sie Ihre Daten in der Cloud sichern und später wiederherstellen. Sie können Ihre Daten auf ein anderes Gerät übertragen. Sie können es auch auf eine andere Plattform übertragen. Finden Sie diese neue Funktion in den Einstellungen."
     },
-    "161": {
-      "c1": "Weitere Minutenoptionen für Zeiteinträge hinzugefügt"
+    "1200": {
+      "c1": "Fügt Sicherungs- und Wiederherstellungsfunktionen hinzu. Jetzt können Sie Ihre Daten in der Cloud sichern und später wiederherstellen. Dadurch können Sie Ihre Daten auf ein anderes Gerät übertragen. Sie können es auch auf eine andere Plattform übertragen. Finden Sie diese neue Funktion in den Einstellungen."
     },
-    "160": {
-      "c1": "Gespräche können jetzt bearbeitet werden. Benachrichtigungen sind konfigurierbar",
-      "c2": "Wischen Sie mit Gesten, um Konversationen, Kontakte usw. zu bearbeiten oder zu löschen.",
-      "c3": "Haptisches Feedback zu verschiedenen wichtigen Aktionen hinzugefügt"
+    "1201": {
+      "c1": "Kleinere Fehlerbehebungen.",
+      "c2": "Deutlich verbesserte koreanische Übersetzungen – vielen Dank, Bruder Paul. Wenn Sie bei der Übersetzung Ihrer eigenen Sprache helfen möchten, besuchen Sie bitte die Einstellungen.",
+      "c3": "Kleinere Fehlerbehebungen."
+    },
+    "1210": {
+      "c1": "Deutlich verbesserte Genauigkeit der Zeitanzeigen.",
+      "c2": "Verbesserte Genauigkeit der Zeitfortschrittsbalken.",
+      "c3": "Hilfreiche Hinweise für Aktionen hinzugefügt, die möglicherweise nicht sofort erkennbar sind.",
+      "c4": "Verbesserte Lebensqualität auf dem Kartenbildschirm mit relevanteren Informationen und einer Schaltfläche zum schnellen Hinzufügen."
+    },
+    "1211": {
+      "c1": "Gegebenenfalls wurden weitere hilfreiche einmalige Hinweise hinzugefügt."
     },
     "1220": {
       "c3": "Kalender zum Zeitberichtsbildschirm hinzugefügt.",
@@ -429,6 +429,24 @@
       "c3": "Spezialpioniere wurden aktualisiert und haben nun standardmäßig kein Jahresziel.",
       "c4": "„Jahresziel“ hinzugefügt Einstellung auf Herausgebereinstellungen. Dadurch können Sie die Standardeinstellung für Ihren Herausgebertyp überschreiben.",
       "c5": "Deutlich verbesserte italienische Übersetzungen, danke Bruder Giuseppe!"
+    },
+    "1240": {
+      "c1": "Möglichkeit hinzugefügt, die Position der Kontaktnadel in allen Kartenansichten manuell anzupassen. Berühren, halten und ziehen Sie die Nadel einfach.",
+      "c2": "Kleine Kartenansicht zum Bildschirm mit den Kontaktdaten hinzugefügt und Fehler im Zusammenhang mit ungültigen Koordinaten behoben",
+      "c3": "Ein visuelles Überlaufproblem behoben, das manchmal auf kleinen Bildschirmen beim Anzeigen von Kartenkontaktkarten auftritt."
+    },
+    "1250": {
+      "c1": "Großes Update! Zeitplanung und Pläne hinzugefügt! 🚀 Sie können jetzt einmalige Pläne und wiederkehrende Pläne erstellen und Ihren Monatsplan anzeigen.",
+      "c2": "Verbesserte Übersichtlichkeit durch Hinzufügen von „Toast“-Benachrichtigungen für wichtige App-Aktionen.",
+      "c3": "Verschiedene Abschnitte des Zeitberichtsbildschirms wurden aktualisiert, um mehr Informationen und eine einfachere Navigation zu bieten.",
+      "c4": "Kleinere visuelle Probleme und andere Bugs behoben.",
+      "c5": "Den Einstellungen wurde eine Einstellung für den Schriftgrößenversatz hinzugefügt. Damit können Sie die Schriftgröße der App anpassen."
+    },
+    "1260": {
+      "c1": "Problem behoben, bei dem die Scrollposition auf dem TimeReportsScreen verloren ging. Andere Probleme im Zusammenhang mit dem Time Reports-Bildschirm behoben.",
+      "c2": "LDC-Stunden tragen nicht mehr als 55 Stunden für einen bestimmten Monat zum Jahresziel bei.",
+      "c3": "Wiederkehrende Pläne können einzeln oder einzeln und mit allen zukünftigen Ereignissen gelöscht werden.",
+      "c4": "Neue benutzerdefinierte Felder für Kontakte! Sie können beliebig viele benutzerdefinierte Felder erstellen."
     },
     "1240": {
       "c1": "Möglichkeit hinzugefügt, die Position der Kontaktnadel in allen Kartenansichten manuell anzupassen. Berühren, halten und ziehen Sie die Nadel einfach.",
@@ -613,5 +631,11 @@
   "submitLastMonth": "Letzten Monat einreichen",
   "deleteThisPlan": "Diesen Plan löschen",
   "deleteThisAndFollowingPlans": "Diesen und folgende Pläne löschen",
-  "deleteAllPlans": "Alle Pläne löschen"
+  "deleteAllPlans": "Alle Pläne löschen",
+  "customField": "Benutzerdefiniertes Feld",
+  "customField_placeholder": "Neuen Feldnamen eingeben",
+  "goesHere": "Details eingeben",
+  "deleteField_description": "Möchten Sie dieses benutzerdefinierte Feld wirklich löschen?",
+  "clearForThisContact": "Für diesen Kontakt löschen",
+  "deleteFieldOnAllContacts": "Feld für alle Kontakte löschen"
 }

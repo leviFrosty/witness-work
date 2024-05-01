@@ -100,7 +100,16 @@ const AnnualTimeOverviewScreen = ({
             justifyContent: 'space-between',
           }}
         >
-          <Button onPress={() => setYear(year - 1)}>
+          <Button
+            onPress={() => setYear(year - 1)}
+            style={{
+              borderColor: theme.colors.border,
+              borderWidth: 1,
+              borderRadius: theme.numbers.borderRadiusLg,
+              paddingHorizontal: 15,
+              paddingVertical: 5,
+            }}
+          >
             <View
               style={{
                 flexDirection: 'row',
@@ -139,7 +148,16 @@ const AnnualTimeOverviewScreen = ({
             </Button>
           )}
           {year !== moment().year() ? (
-            <Button onPress={() => setYear(year + 1)}>
+            <Button
+              onPress={() => setYear(year + 1)}
+              style={{
+                borderColor: theme.colors.border,
+                borderWidth: 1,
+                borderRadius: theme.numbers.borderRadiusLg,
+                paddingHorizontal: 15,
+                paddingVertical: 5,
+              }}
+            >
               <View
                 style={{
                   flexDirection: 'row',

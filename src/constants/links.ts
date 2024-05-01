@@ -21,4 +21,5 @@ export default {
   donate: 'https://ko-fi.com/leviwilkerson',
   termsOfUse:
     'https://www.apple.com/legal/internet-services/itunes/dev/stdeula/',
+  nwpublisherSubmitReport: 'https://nwpublisher.com/report/',
 }

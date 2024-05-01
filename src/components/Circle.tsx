@@ -19,7 +19,7 @@ const Circle = ({ color, style, size, ...props }: CircleProps) => {
           height:
             typeof size === 'string' ? theme.fontSize(size) : size ? size : 8,
           backgroundColor: color,
-          borderRadius: 100,
+          borderRadius: 999999,
         },
         [style],
       ]}

@@ -1,5 +1,5 @@
 import React, { useRef, useState, useCallback, useEffect, useMemo } from 'react'
-import { TextInput, View, useColorScheme } from 'react-native'
+import { Alert, TextInput, View, useColorScheme } from 'react-native'
 import Text from '../components/MyText'
 import { RootStackParamList } from '../stacks/RootStack'
 import { NativeStackScreenProps } from '@react-navigation/native-stack'
@@ -22,13 +22,19 @@ import * as Localization from 'expo-localization'
 import { ICountryCca2 } from 'react-native-international-phone-number/lib/interfaces/countryCca2'
 import InputRowContainer from '../components/inputs/InputRowContainer'
 import IconButton from '../components/IconButton'
-import { faCaretDown, faIdCard } from '@fortawesome/free-solid-svg-icons'
+import {
+  faCaretDown,
+  faIdCard,
+  faMinus,
+} from '@fortawesome/free-solid-svg-icons'
 import { parsePhoneNumber } from 'awesome-phonenumber'
 import { fetchCoordinateFromAddress } from '../lib/address'
 import Loader from '../components/Loader'
 import _ from 'lodash'
 import Button from '../components/Button'
 import { usePreferences } from '../stores/preferences'
+import XView from '../components/layout/XView'
+import ActionButton from '../components/ActionButton'
 
 const PersonalContactSection = ({
   contact,
@@ -41,6 +47,9 @@ const PersonalContactSection = ({
   setEmail,
   setErrors,
   errors,
+  customFields,
+  setCustomField,
+  clearCustomField,
 }: {
   contact: Contact
   nameInput: React.RefObject<TextInput>
@@ -52,10 +61,15 @@ const PersonalContactSection = ({
   setEmail: (email: string) => void
   errors: Errors
   setErrors: React.Dispatch<React.SetStateAction<Errors>>
+  customFields?: Record<string, string>
+  setCustomField: (key: string, value: string) => void
+  clearCustomField: (key: string) => void
 }) => {
+  const { customContactFields, set } = usePreferences()
+  const { deleteFieldFromAllContacts } = useContacts()
   const placeholder = useRef(contact.phone || '')
   const locales = Localization.getLocales()
-
+  const [customFieldName, setCustomFieldName] = useState('')
   const colorScheme = useColorScheme()
   const theme = useTheme()
 
@@ -86,6 +100,43 @@ const PersonalContactSection = ({
         : undefined,
     [formatted.number?.e164, formatted.regionCode, formatted.valid]
   )
+
+  const handleAddNewCustomField = () => {
+    set({
+      customContactFields: [...customContactFields, customFieldName],
+    })
+    setCustomFieldName('')
+  }
+
+  const handleDeletePrompt = (field: string) => {
+    Alert.alert(i18n.t('delete'), i18n.t('deleteField_description'), [
+      {
+        text: i18n.t('cancel'),
+        style: 'cancel',
+        onPress: () => {},
+      },
+      {
+        text: i18n.t('clearForThisContact'),
+        onPress: () => handleClearCustomFieldForContact(field),
+      },
+      {
+        text: i18n.t('deleteFieldOnAllContacts'),
+        style: 'destructive',
+        onPress: () => handleDeleteCustomFieldAcrossAllContacts(field),
+      },
+    ])
+  }
+
+  const handleDeleteCustomFieldAcrossAllContacts = (field: string) => {
+    set({
+      customContactFields: customContactFields.filter((f) => f !== field),
+    })
+    deleteFieldFromAllContacts(field)
+  }
+
+  const handleClearCustomFieldForContact = (field: string) => {
+    clearCustomField(field)
+  }
 
   return (
     <Section>
@@ -177,7 +228,6 @@ const PersonalContactSection = ({
       </InputRowContainer>
       <TextInputRow
         label={i18n.t('email')}
-        lastInSection
         ref={emailInput}
         textInputProps={{
           placeholder: i18n.t('email_placeholder'),
@@ -188,6 +238,54 @@ const PersonalContactSection = ({
           autoCapitalize: 'none',
         }}
       />
+      {!!customContactFields.length &&
+        customFields &&
+        customContactFields.map((field) => (
+          <XView key={field}>
+            <IconButton
+              icon={faMinus}
+              color={theme.colors.error}
+              onPress={() => handleDeletePrompt(field)}
+              style={{ paddingBottom: 15 }}
+            />
+            <TextInputRow
+              label={field}
+              style={{ flex: 1 }}
+              textInputProps={{
+                placeholder: `${i18n.t('goesHere')}`,
+                onChangeText: (val: string) => {
+                  setCustomField(field, val)
+                },
+                value: customFields[field],
+                autoCapitalize: 'none',
+              }}
+            />
+          </XView>
+        ))}
+      <XView style={{ paddingRight: 20 }}>
+        <TextInputRow
+          label={i18n.t('customField')}
+          textInputProps={{
+            onChangeText: (val: string) => {
+              setCustomFieldName(val)
+            },
+            placeholder: i18n.t('customField_placeholder'),
+            value: customFieldName,
+            autoCapitalize: 'words',
+            maxLength: 14,
+          }}
+          style={{ flex: 1 }}
+          lastInSection
+        />
+        <ActionButton
+          disabled={!customFieldName.length}
+          onPress={handleAddNewCustomField}
+        >
+          <Text style={{ color: theme.colors.textInverse }}>
+            {i18n.t('add')}
+          </Text>
+        </ActionButton>
+      </XView>
     </Section>
   )
 }
@@ -343,6 +441,7 @@ const ContactFormScreen = ({ route, navigation }: Props) => {
       email: '',
       phone: '',
       phoneRegionCode: locales[0].regionCode || '',
+      customFields: {},
     }
   )
 
@@ -428,6 +527,28 @@ const ContactFormScreen = ({ route, navigation }: Props) => {
       },
     })
   }
+  const setCustomField = (key: string, value: string) => {
+    setContact({
+      ...contact,
+      customFields: {
+        ...contact.customFields,
+        [key]: value,
+      },
+    })
+  }
+
+  const clearCustomField = (key: string) => {
+    const customFields = { ...contact.customFields }
+    if (customFields[key] !== undefined) {
+      delete customFields[key]
+    }
+
+    setContact({
+      ...contact,
+      customFields: customFields,
+    })
+  }
+
   const nameInput = useRef<TextInput>(null)
   const emailInput = useRef<TextInput>(null)
   const line1Input = useRef<TextInput>(null)
@@ -640,6 +761,9 @@ const ContactFormScreen = ({ route, navigation }: Props) => {
           setRegionCode={setRegionCode}
           errors={errors}
           setErrors={setErrors}
+          customFields={contact.customFields || {}}
+          setCustomField={setCustomField}
+          clearCustomField={clearCustomField}
         />
         <Divider borderStyle='dashed' />
         <AddressSection

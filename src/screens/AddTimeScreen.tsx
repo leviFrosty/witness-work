@@ -25,6 +25,7 @@ import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { NativeStackScreenProps } from '@react-navigation/native-stack'
 import { getLocales } from 'expo-localization'
+import { useToastController } from '@tamagui/toast'
 
 type AddTimeScreenProps = NativeStackScreenProps<RootStackParamList, 'Add Time'>
 
@@ -48,6 +49,7 @@ const AddTimeScreen = ({ route }: AddTimeScreenProps) => {
     date: moment(route.params?.date).toDate(),
     ldc: false,
   })
+  const toast = useToastController()
 
   const handleSetCategory = (type: string) => {
     switch (type) {
@@ -160,6 +162,10 @@ const AddTimeScreen = ({ route }: AddTimeScreenProps) => {
 
   const submit = () => {
     addServiceReport(serviceReport)
+    toast.show(i18n.t('success'), {
+      message: i18n.t('timeAdded'),
+      native: true,
+    })
     navigation.goBack()
   }
 

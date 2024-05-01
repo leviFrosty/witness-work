@@ -1,11 +1,16 @@
 import moment from 'moment'
 import {
+  RecurringPlan,
+  RecurringPlanFrequencies,
   calculateMinutesRemaining,
   calculateProgress,
+  getPlansIntersectingDay,
   getTimeAsMinutesForHourglass,
+  getTotalMinutesForServiceYear,
   serviceReportHoursPerMonthToGoal,
   totalMinutesForCurrentMonth,
   totalMinutesForSpecificMonth,
+  ldcMinutesPerMonthCap,
 } from '../lib/serviceReport'
 import { ServiceReport } from '../types/serviceReport'
 import { Publisher } from '../types/publisher'
@@ -402,5 +407,275 @@ describe('lib/serviceReport', () => {
         annualGoalHours - report1Hours - report2Hours
       )
     })
+  })
+
+  describe('getPlansIntersectingDay', () => {
+    it('should return the plans that intersect with the day', () => {
+      const plans: RecurringPlan[] = [
+        {
+          id: '00',
+          minutes: 60,
+          recurrence: {
+            frequency: RecurringPlanFrequencies.MONTHLY,
+            interval: 1,
+            endDate: null,
+          },
+          startDate: moment().subtract(1, 'year').subtract(1, 'month').toDate(),
+        },
+        {
+          id: '0',
+          minutes: 60,
+          recurrence: {
+            frequency: RecurringPlanFrequencies.MONTHLY,
+            interval: 1,
+            endDate: null,
+          },
+          startDate: moment().subtract(1, 'month').toDate(),
+        },
+        {
+          id: '1',
+          minutes: 60,
+          recurrence: {
+            frequency: RecurringPlanFrequencies.MONTHLY,
+            interval: 1,
+            endDate: null,
+          },
+          startDate: moment().toDate(),
+        },
+        {
+          id: '2',
+          minutes: 60,
+          recurrence: {
+            frequency: RecurringPlanFrequencies.WEEKLY,
+            interval: 1,
+            endDate: null,
+          },
+          startDate: moment().toDate(),
+        },
+        {
+          id: '3',
+          minutes: 60,
+          recurrence: {
+            frequency: RecurringPlanFrequencies.WEEKLY,
+            interval: 1,
+            endDate: null,
+          },
+          startDate: moment().subtract(3, 'weeks').toDate(),
+        },
+        {
+          id: '4',
+          minutes: 60,
+          recurrence: {
+            frequency: RecurringPlanFrequencies.BI_WEEKLY,
+            interval: 1,
+            endDate: null,
+          },
+          startDate: moment().toDate(),
+        },
+        {
+          id: '5',
+          minutes: 60,
+          recurrence: {
+            frequency: RecurringPlanFrequencies.BI_WEEKLY,
+            interval: 1,
+            endDate: null,
+          },
+          startDate: moment().subtract(2, 'week').toDate(),
+        },
+      ]
+
+      const intersectingPlans = getPlansIntersectingDay(
+        moment().toDate(),
+        plans
+      )
+
+      expect(intersectingPlans).toEqual(plans)
+    })
+
+    it('should not return plans that do not intersect with the day', () => {
+      const plans: RecurringPlan[] = [
+        {
+          id: '00',
+          minutes: 60,
+          recurrence: {
+            frequency: RecurringPlanFrequencies.MONTHLY,
+            interval: 1,
+            endDate: null,
+          },
+          startDate: moment().subtract(1, 'year').subtract(1, 'month').toDate(),
+        },
+        {
+          id: '0',
+          minutes: 60,
+          recurrence: {
+            frequency: RecurringPlanFrequencies.MONTHLY,
+            interval: 1,
+            endDate: null,
+          },
+          startDate: moment().subtract(1, 'month').toDate(),
+        },
+        {
+          id: '1',
+          minutes: 60,
+          recurrence: {
+            frequency: RecurringPlanFrequencies.MONTHLY,
+            interval: 1,
+            endDate: null,
+          },
+          startDate: moment().toDate(),
+        },
+        {
+          id: '2',
+          minutes: 60,
+          recurrence: {
+            frequency: RecurringPlanFrequencies.WEEKLY,
+            interval: 1,
+            endDate: null,
+          },
+          startDate: moment().toDate(),
+        },
+        {
+          id: '3',
+          minutes: 60,
+          recurrence: {
+            frequency: RecurringPlanFrequencies.WEEKLY,
+            interval: 1,
+            endDate: null,
+          },
+          startDate: moment().subtract(3, 'weeks').toDate(),
+        },
+        {
+          id: '4',
+          minutes: 60,
+          recurrence: {
+            frequency: RecurringPlanFrequencies.BI_WEEKLY,
+            interval: 1,
+            endDate: null,
+          },
+          startDate: moment().toDate(),
+        },
+        {
+          id: '5',
+          minutes: 60,
+          recurrence: {
+            frequency: RecurringPlanFrequencies.BI_WEEKLY,
+            interval: 1,
+            endDate: null,
+          },
+          startDate: moment().subtract(2, 'week').toDate(),
+        },
+      ]
+
+      const intersectingPlans = getPlansIntersectingDay(
+        moment().subtract(1, 'day').toDate(),
+        plans
+      )
+
+      const containsNoneOfThePlans = intersectingPlans.every((plan) => {
+        return !plans.includes(plan)
+      })
+      expect(containsNoneOfThePlans).toBe(true)
+    })
+  })
+
+  describe('getTotalMinutesForServiceYear', () => {
+    it('should not allow more than 55 hours per month of LDC for a single entry', () => {
+      const year = 2023
+      const reports: ServiceReport[] = [
+        {
+          minutes: 0,
+          ldc: true,
+          date: moment().year(year).month(10).toDate(),
+          hours: 70,
+          id: '0',
+        },
+      ]
+
+      const minutes = getTotalMinutesForServiceYear(reports, year)
+      expect(minutes).toBe(ldcMinutesPerMonthCap)
+    })
+  })
+
+  it('should not allow multiple entries to sum to more than 55', () => {
+    const year = 2023
+    const reports: ServiceReport[] = [
+      {
+        minutes: 0,
+        ldc: true,
+        date: moment().year(year).month(10).toDate(),
+        hours: 50,
+        id: '0',
+      },
+      {
+        minutes: 0,
+        ldc: true,
+        date: moment().year(year).month(10).toDate(),
+        hours: 10,
+        id: '0',
+      },
+    ]
+
+    const minutes = getTotalMinutesForServiceYear(reports, year)
+    expect(minutes).toBe(ldcMinutesPerMonthCap)
+  })
+
+  it('should properly add different months together, but not exceeding the ldc month cap', () => {
+    const year = 2023
+    const reports: ServiceReport[] = [
+      {
+        minutes: 0,
+        ldc: true,
+        date: moment().year(year).month(10).toDate(),
+        hours: 50,
+        id: '0',
+      },
+      {
+        minutes: 0,
+        ldc: true,
+        date: moment().year(year).month(10).toDate(),
+        hours: 50,
+        id: '0',
+      },
+      {
+        minutes: 0,
+        ldc: true,
+        date: moment().year(year).month(11).toDate(),
+        hours: 70,
+        id: '0',
+      },
+      {
+        minutes: 0,
+        ldc: true,
+        date: moment()
+          .year(year + 1)
+          .month(0)
+          .toDate(),
+        hours: 55,
+        id: '0',
+      },
+      {
+        minutes: 0,
+        ldc: true,
+        date: moment()
+          .year(year + 1)
+          .month(1)
+          .toDate(),
+        hours: 55,
+        id: '0',
+      },
+      {
+        minutes: 0,
+        ldc: true,
+        date: moment()
+          .year(year + 1)
+          .month(1)
+          .toDate(),
+        hours: 55,
+        id: '0',
+      },
+    ]
+
+    const minutes = getTotalMinutesForServiceYear(reports, year)
+    expect(minutes).toBe(ldcMinutesPerMonthCap * 4)
   })
 })

@@ -23,23 +23,7 @@ JW Time is the easy way for Jehovah's Witnesses to manage their field service pr
 <img src="./src/docs/screenshots/preview6.jpg" width="130">
 </div>
 
-## Want to Contribute?!
-
-### Help Financially 💖
-
-Donations are never expected but greatly appreciated! These donations are used to offset the costs of:
-
-- [App Store Fees](https://developer.apple.com/support/compare-memberships/#:~:text=**%20The%20Apple%20Developer%20Program%20is%2099%20USD%20per%20membership%20year%20or%20in%20local%20currency%20where%20available.%20Your%20nonprofit%2C%20educational%20institution%2C%20or%20government%20entity%20may%20be%20eligible%20for%20a%20fee%20waiver.) ($100/yr)
-- [Here API Calls](https://www.here.com/platform/geocoding) (Currently $0/mo)
-- [Google Cloud Translation](https://cloud.google.com/translate/pricing) (<$5/mo)
-
-These expenses are kept up to date here. Thank you!
-
-You may wish to donate in the app by pressing on the heart icon or more directly at Ko-Fi, without Apple's 30% cut, below:
-
-[![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/leviwilkerson)
-
-### Help Translate 🌐
+## Help Translate 🌐
 
 JW Time is automatically translated into 12 languages by means of Google Cloud Translate. These translations might not always be the highest quality. To help, proofread these translations on [Crowdin](https://crowdin.com/project/jw-time/). Thank you!
 
@@ -47,20 +31,20 @@ JW Time is automatically translated into 12 languages by means of Google Cloud T
 
 Current translations:
 
-1. German
-1. Spanish
-1. French
-1. Italian
-1. Japanese
-1. Korean
-1. Dutch
-1. Portuguese
-1. Russian
-1. Vietnamese
-1. Chinese
-1. Tagalog
+1. German - Machine Translated
+1. Spanish - Manually Reviewed
+1. French - Machine Translated
+1. Italian - Manually Reviewed
+1. Japanese - Machine Translated
+1. Korean - Manually Reviewed
+1. Dutch - Machine Translated
+1. Portuguese - Machine Translated
+1. Russian - Machine Translated
+1. Vietnamese - Machine Translated
+1. Chinese - Partially Manually Reviewed
+1. Tagalog - Machine Translated
 
-### Help Code ⌨️
+## Help Code ⌨️
 
 Any assistance is welcome! Look at the following and see if anything looks interesting to you:
 
@@ -73,7 +57,7 @@ If you find something you'd like to help with, please let me know you've began w
 
 To start the Expo Dev server, begin with `yarn install` & `yarn run dev`.
 
-> **Note**: Local environment variables set in [`./package.json`](./package.json) rely on a unix based environment variable assignments. If your system is Windows, try using [WSL](https://learn.microsoft.com/en-us/windows/wsl/install) to start development of this project.
+> **Note**: Local environment variables set in [`./package.json`](./package.json) scripts rely on a unix based environment variable assignments. If your system is Windows, try using [WSL](https://learn.microsoft.com/en-us/windows/wsl/install) to start development of this project.
 
 You must use a [development build](https://docs.expo.dev/develop/development-builds/introduction/), not [Expo Go](https://docs.expo.dev/get-started/expo-go/).
 
@@ -83,7 +67,7 @@ After that, open the compiled development build in your simulator/device and con
 
 🎉 You did it! _(Hopefully)_
 
-## Project Structure
+### Project Structure
 
 - [`.github`](/.github) Configuration files for Github actions.
 - [`.husky`](/.husky) Configuration files for [husky](https://typicode.github.io/husky/), a git hooks library.
@@ -118,6 +102,20 @@ After that, open the compiled development build in your simulator/device and con
 - `EXPO_PUBLIC_SENTRY_PROJECT` Configuration for sentry's project
 - `EXPO_PUBLIC_SENTRY_ORG` Configuration for sentry's organization
 - `APP_VARIANT` Set to `development` when working locally, targets the eas build to create the `JW Time Dev` bundle instead of production `JW Time`
+
+## Help Financially 💖
+
+Donations are never expected but greatly appreciated! These donations are used to offset the costs of:
+
+- [App Store Fees](https://developer.apple.com/support/compare-memberships/#:~:text=**%20The%20Apple%20Developer%20Program%20is%2099%20USD%20per%20membership%20year%20or%20in%20local%20currency%20where%20available.%20Your%20nonprofit%2C%20educational%20institution%2C%20or%20government%20entity%20may%20be%20eligible%20for%20a%20fee%20waiver.) ($100/yr)
+- [Here API Calls](https://www.here.com/platform/geocoding) (Currently $0/mo)
+- [Google Cloud Translation](https://cloud.google.com/translate/pricing) (<$5/mo)
+
+These expenses are kept up to date here. Thank you!
+
+You may wish to donate in the app by pressing on the heart icon or more directly at Ko-Fi, without Apple's 30% cut, below:
+
+[![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/leviwilkerson)
 
 ## License
 

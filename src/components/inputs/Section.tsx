@@ -18,6 +18,7 @@ const Section: React.FC<PropsWithChildren<Props>> = ({ children }) => {
         paddingVertical: rowPaddingVertical,
         paddingLeft: 25,
         gap: 10,
+        paddingRight: 3,
       }}
     >
       {children}

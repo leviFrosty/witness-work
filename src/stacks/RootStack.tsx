@@ -28,6 +28,9 @@ import PreferencesConversationScreen from '../screens/settings/preferences/scree
 import PreferencesNavigationScreen from '../screens/settings/preferences/screens/PreferencesNavigationScreen'
 import PreferencesHomeScreen from '../screens/settings/preferences/screens/PreferencesHomeScreen'
 import PreferencesBackupsScreen from '../screens/settings/preferences/screens/PreferencesBackupsScreen'
+import PreferencesAppearanceScreen from '../screens/settings/preferences/screens/PreferencesAppearanceScreen'
+import PlanScheduleScreen from '../screens/PlanScheduleScreen'
+import PlanDayScreen from '../screens/PlanDayScreen'
 
 export type RootStackParamList = {
   Root: undefined
@@ -55,6 +58,9 @@ export type RootStackParamList = {
   PreferencesNavigation: undefined
   PreferencesHomeScreen: undefined
   PreferencesBackups: undefined
+  PreferencesAppearance: undefined
+  PlanSchedule: { month: number; year: number }
+  PlanDay: { date?: string }
 }
 
 export type RootStackNavigation = NativeStackNavigationProp<RootStackParamList>
@@ -228,6 +234,33 @@ const RootStackComponent = () => {
         }}
         name='PreferencesBackups'
         component={PreferencesBackupsScreen}
+      />
+      <RootStack.Screen
+        options={{
+          header: () => <Header buttonType='back' title={i18n.t('backups')} />,
+        }}
+        name='PreferencesAppearance'
+        component={PreferencesAppearanceScreen}
+      />
+      <RootStack.Screen
+        options={{
+          header: () => (
+            <Header buttonType='back' title={i18n.t('planSchedule')} noInsets />
+          ),
+          presentation: 'modal',
+        }}
+        name='PlanSchedule'
+        component={PlanScheduleScreen}
+      />
+      <RootStack.Screen
+        options={{
+          header: () => (
+            <Header buttonType='back' title={i18n.t('createPlan')} noInsets />
+          ),
+          presentation: 'modal',
+        }}
+        name='PlanDay'
+        component={PlanDayScreen}
       />
     </RootStack.Navigator>
   )

@@ -444,7 +444,8 @@
     },
     "1260": {
       "c1": "Fixed issue where scroll position would be lost on TimeReportsScreen. Resolved other issues related to time reports screen.",
-      "c2": "LDC hours do not contribute more towards annual goal past 55 hours for any given month."
+      "c2": "LDC hours do not contribute more towards annual goal past 55 hours for any given month.",
+      "c3": "Recurring plans can be deleted by single event or single event and all future events."
     }
   },
   "installed": "Installed",

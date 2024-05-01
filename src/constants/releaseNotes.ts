@@ -27,7 +27,7 @@ export const releaseNotes: ReleaseNote[] = [
   {
     version: '1.26.0',
     date: moment('2024-05-01').toDate(),
-    content: ['c1', 'c2'],
+    content: ['c3', 'c2', 'c1'],
   },
   {
     version: '1.25.0',

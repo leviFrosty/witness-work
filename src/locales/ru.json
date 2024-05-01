@@ -606,5 +606,8 @@
   "optional": "Примечание (необязательно)",
   "addedConversation": "Добавлен разговор",
   "addedNotAtHome": "Добавлено «Не дома»",
-  "youCannotCreateAPlanForAPreviousDay": "Вы не можете создать план на предыдущую дату."
+  "youCannotCreateAPlanForAPreviousDay": "Вы не можете создать план на предыдущую дату.",
+  "nwPublisher": "СЗ Издатель",
+  "nwPublisherOnlyAllowsLastMonth": "NW Publisher позволяет вам отправлять отчет только за предыдущий месяц.",
+  "submitLastMonth": "Отправить в прошлом месяце"
 }

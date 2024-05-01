@@ -606,5 +606,8 @@
   "optional": "Tandaan (Opsyonal)",
   "addedConversation": "Nagdagdag ng Pag-uusap",
   "addedNotAtHome": "Idinagdag Wala Sa Bahay",
-  "youCannotCreateAPlanForAPreviousDay": "Hindi ka makakagawa ng plano para sa nakaraang petsa."
+  "youCannotCreateAPlanForAPreviousDay": "Hindi ka makakagawa ng plano para sa nakaraang petsa.",
+  "nwPublisher": "NW Publisher",
+  "nwPublisherOnlyAllowsLastMonth": "Pinapayagan ka lamang ng NW Publisher na isumite ang ulat ng nakaraang buwan.",
+  "submitLastMonth": "Isumite noong nakaraang buwan"
 }

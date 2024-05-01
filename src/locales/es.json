@@ -606,5 +606,8 @@
   "optional": "Nota (opcional)",
   "addedConversation": "Conversación agregada",
   "addedNotAtHome": "Agregado no en casa",
-  "youCannotCreateAPlanForAPreviousDay": "No se puede crear un plan para una fecha anterior."
+  "youCannotCreateAPlanForAPreviousDay": "No se puede crear un plan para una fecha anterior.",
+  "nwPublisher": "Editor del noroeste",
+  "nwPublisherOnlyAllowsLastMonth": "NW Publisher solo le permite enviar el informe del mes anterior.",
+  "submitLastMonth": "Enviar el mes pasado"
 }

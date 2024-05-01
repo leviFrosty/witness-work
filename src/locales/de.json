@@ -606,5 +606,8 @@
   "optional": "Hinweis (optional)",
   "addedConversation": "Konversation hinzugefügt",
   "addedNotAtHome": "Nicht zu Hause hinzugefügt",
-  "youCannotCreateAPlanForAPreviousDay": "Sie können keinen Plan für ein vorheriges Datum erstellen."
+  "youCannotCreateAPlanForAPreviousDay": "Sie können keinen Plan für ein vorheriges Datum erstellen.",
+  "nwPublisher": "NW Publisher",
+  "nwPublisherOnlyAllowsLastMonth": "NW Publisher erlaubt Ihnen nur, den Bericht des Vormonats einzureichen.",
+  "submitLastMonth": "Letzten Monat einreichen"
 }

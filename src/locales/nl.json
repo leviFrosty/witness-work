@@ -606,5 +606,8 @@
   "optional": "Opmerking (optioneel)",
   "addedConversation": "Gesprek toegevoegd",
   "addedNotAtHome": "Niet thuis toegevoegd",
-  "youCannotCreateAPlanForAPreviousDay": "U kunt geen plan maken voor een eerdere datum."
+  "youCannotCreateAPlanForAPreviousDay": "U kunt geen plan maken voor een eerdere datum.",
+  "nwPublisher": "NW-uitgever",
+  "nwPublisherOnlyAllowsLastMonth": "Met NW Publisher kunt u alleen het rapport van de voorgaande maand indienen.",
+  "submitLastMonth": "Vorige maand indienen"
 }

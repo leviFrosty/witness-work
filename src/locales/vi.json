@@ -606,5 +606,8 @@
   "optional": "Lưu ý (Tùy chọn)",
   "addedConversation": "Đã thêm cuộc trò chuyện",
   "addedNotAtHome": "Đã thêm Không ở nhà",
-  "youCannotCreateAPlanForAPreviousDay": "Bạn không thể tạo kế hoạch cho ngày trước đó."
+  "youCannotCreateAPlanForAPreviousDay": "Bạn không thể tạo kế hoạch cho ngày trước đó.",
+  "nwPublisher": "Nhà xuất bản Tây Bắc",
+  "nwPublisherOnlyAllowsLastMonth": "Nhà xuất bản NW chỉ cho phép bạn gửi báo cáo của tháng trước.",
+  "submitLastMonth": "Gửi tháng trước"
 }

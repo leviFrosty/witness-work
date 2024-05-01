@@ -606,5 +606,8 @@
   "optional": "メモ (オプション)",
   "addedConversation": "追加された会話",
   "addedNotAtHome": "追加された不在",
-  "youCannotCreateAPlanForAPreviousDay": "以前の日付のプランを作成することはできません。"
+  "youCannotCreateAPlanForAPreviousDay": "以前の日付のプランを作成することはできません。",
+  "nwPublisher": "NW Publisher",
+  "nwPublisherOnlyAllowsLastMonth": "NW Publisher では、前月のレポートのみを送信できます。",
+  "submitLastMonth": "先月を送信"
 }

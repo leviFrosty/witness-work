@@ -606,5 +606,8 @@
   "optional": "Nota (facoltativo)",
   "addedConversation": "Aggiunta conversazione",
   "addedNotAtHome": "Aggiunto Non a casa",
-  "youCannotCreateAPlanForAPreviousDay": "Non è possibile creare un piano per una data precedente."
+  "youCannotCreateAPlanForAPreviousDay": "Non è possibile creare un piano per una data precedente.",
+  "nwPublisher": "Editore NO",
+  "nwPublisherOnlyAllowsLastMonth": "NW Publisher consente solo di inviare il rapporto del mese precedente.",
+  "submitLastMonth": "Invia il mese scorso"
 }

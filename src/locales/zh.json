@@ -606,5 +606,8 @@
   "optional": "注释（可选）",
   "addedConversation": "已添加对话",
   "addedNotAtHome": "已添加不在家",
-  "youCannotCreateAPlanForAPreviousDay": "您无法为之前的日期创建计划。"
+  "youCannotCreateAPlanForAPreviousDay": "您无法为之前的日期创建计划。",
+  "nwPublisher": "NW Publisher",
+  "nwPublisherOnlyAllowsLastMonth": "NW Publisher 仅允许您提交上个月的报告。",
+  "submitLastMonth": "提交上个月的报告"
 }

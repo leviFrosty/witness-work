@@ -606,5 +606,8 @@
   "optional": "Note (Optional)",
   "addedConversation": "Added Conversation",
   "addedNotAtHome": "Added Not At Home",
-  "youCannotCreateAPlanForAPreviousDay": "You cannot create a plan for a previous date."
+  "youCannotCreateAPlanForAPreviousDay": "You cannot create a plan for a previous date.",
+  "nwPublisher": "NW Publisher",
+  "nwPublisherOnlyAllowsLastMonth": "NW Publisher only allows you to submit the previous month's report.",
+  "submitLastMonth": "Submit Last Month"
 }

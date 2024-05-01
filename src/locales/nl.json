@@ -613,5 +613,11 @@
   "submitLastMonth": "Vorige maand indienen",
   "deleteThisPlan": "Verwijder dit plan",
   "deleteThisAndFollowingPlans": "Verwijder dit en volgende plannen",
-  "deleteAllPlans": "Verwijder alle plannen"
+  "deleteAllPlans": "Verwijder alle plannen",
+  "customField": "Aangepast veld",
+  "customField_placeholder": "Voer een nieuwe veldnaam in",
+  "goesHere": "Voer details in",
+  "deleteField_description": "Weet u zeker dat u dit aangepaste veld wilt verwijderen?",
+  "clearForThisContact": "Duidelijk voor dit contact",
+  "deleteFieldOnAllContacts": "Veld voor alle contactpersonen verwijderen"
 }

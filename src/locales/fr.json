@@ -613,5 +613,11 @@
   "submitLastMonth": "Soumettre le mois dernier",
   "deleteThisPlan": "Supprimer ce forfait",
   "deleteThisAndFollowingPlans": "Supprimer ce plan et les plans suivants",
-  "deleteAllPlans": "Supprimer tous les forfaits"
+  "deleteAllPlans": "Supprimer tous les forfaits",
+  "customField": "Champ personnalisé",
+  "customField_placeholder": "Entrez le nouveau nom du champ",
+  "goesHere": "Entrez les détails",
+  "deleteField_description": "Êtes-vous sûr de vouloir supprimer ce champ personnalisé ?",
+  "clearForThisContact": "Effacer pour ce contact",
+  "deleteFieldOnAllContacts": "Supprimer le champ pour tous les contacts"
 }

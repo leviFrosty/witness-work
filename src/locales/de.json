@@ -613,5 +613,11 @@
   "submitLastMonth": "Letzten Monat einreichen",
   "deleteThisPlan": "Diesen Plan löschen",
   "deleteThisAndFollowingPlans": "Diesen und folgende Pläne löschen",
-  "deleteAllPlans": "Alle Pläne löschen"
+  "deleteAllPlans": "Alle Pläne löschen",
+  "customField": "Benutzerdefiniertes Feld",
+  "customField_placeholder": "Neuen Feldnamen eingeben",
+  "goesHere": "Details eingeben",
+  "deleteField_description": "Möchten Sie dieses benutzerdefinierte Feld wirklich löschen?",
+  "clearForThisContact": "Für diesen Kontakt löschen",
+  "deleteFieldOnAllContacts": "Feld für alle Kontakte löschen"
 }

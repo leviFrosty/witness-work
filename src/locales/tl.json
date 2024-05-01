@@ -613,5 +613,11 @@
   "submitLastMonth": "Isumite noong nakaraang buwan",
   "deleteThisPlan": "Tanggalin ang Planong Ito",
   "deleteThisAndFollowingPlans": "Tanggalin Ito At Sumusunod sa Mga Plano",
-  "deleteAllPlans": "Tanggalin ang Lahat ng Plano"
+  "deleteAllPlans": "Tanggalin ang Lahat ng Plano",
+  "customField": "Custom na Field",
+  "customField_placeholder": "Maglagay ng bagong pangalan ng field",
+  "goesHere": "Ipasok ang mga detalye",
+  "deleteField_description": "Sigurado ka bang gusto mong tanggalin ang custom na field na ito?",
+  "clearForThisContact": "Clear For This Contact",
+  "deleteFieldOnAllContacts": "Tanggalin ang Field Para sa Lahat ng Mga Contact"
 }

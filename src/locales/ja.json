@@ -613,5 +613,11 @@
   "submitLastMonth": "先月を送信",
   "deleteThisPlan": "このプランを削除",
   "deleteThisAndFollowingPlans": "このプランと次のプランを削除",
-  "deleteAllPlans": "すべてのプランを削除"
+  "deleteAllPlans": "すべてのプランを削除",
+  "customField": "カスタム フィールド",
+  "customField_placeholder": "新しいフィールド名を入力",
+  "goesHere": "詳細を入力",
+  "deleteField_description": "このカスタム フィールドを削除してもよろしいですか?",
+  "clearForThisContact": "この連絡先をクリア",
+  "deleteFieldOnAllContacts": "すべての連絡先のフィールドを削除"
 }

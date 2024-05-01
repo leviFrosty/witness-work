@@ -36,4 +36,5 @@ export type Contact = {
    */
   coordinate?: Coordinate
   createdAt: Date
+  customFields?: Record<string, string>
 }

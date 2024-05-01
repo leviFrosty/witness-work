@@ -613,5 +613,11 @@
   "submitLastMonth": "Gửi tháng trước",
   "deleteThisPlan": "Xóa kế hoạch này",
   "deleteThisAndFollowingPlans": "Xóa kế hoạch này và kế hoạch sau",
-  "deleteAllPlans": "Xóa tất cả các gói"
+  "deleteAllPlans": "Xóa tất cả các gói",
+  "customField": "Trường tùy chỉnh",
+  "customField_placeholder": "Nhập tên trường mới",
+  "goesHere": "Nhập chi tiết",
+  "deleteField_description": "Bạn có chắc chắn muốn xóa trường tùy chỉnh này không?",
+  "clearForThisContact": "Xóa cho liên hệ này",
+  "deleteFieldOnAllContacts": "Xóa trường cho tất cả liên hệ"
 }

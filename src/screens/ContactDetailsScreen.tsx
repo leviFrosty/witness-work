@@ -343,6 +343,30 @@ const AddressRow = ({ contact }: { contact: Contact }) => {
   )
 }
 
+const CustomFieldsRow = (props: { contact: Contact }) => {
+  const theme = useTheme()
+  const { customFields } = props.contact
+
+  if (!customFields) {
+    return null
+  }
+
+  return Object.keys(customFields).map((key) => (
+    <View style={{ gap: 10 }} key={key}>
+      <Text
+        style={{
+          fontSize: 14,
+          fontFamily: theme.fonts.semiBold,
+          color: theme.colors.textAlt,
+        }}
+      >
+        {key}
+      </Text>
+      <Copyeable>{customFields[key]}</Copyeable>
+    </View>
+  ))
+}
+
 const EmailRow = ({ contact }: { contact: Contact }) => {
   const theme = useTheme()
   const { email } = contact
@@ -696,9 +720,12 @@ const ContactDetailsScreen = ({ route, navigation }: Props) => {
     )
   }
 
-  const { name, address, phone, email } = contact
+  const { name, address, phone, email, customFields } = contact
 
   const hasAddress = address && Object.values(address).some((v) => v.length > 0)
+  const hasCustomFields =
+    customFields !== undefined &&
+    Object.values(customFields).some((f) => !!f.length)
 
   return (
     <View style={{ flexGrow: 1 }}>
@@ -735,10 +762,11 @@ const ContactDetailsScreen = ({ route, navigation }: Props) => {
               <View style={{ gap: 15 }}>
                 {hasAddress && <AddressRow contact={contact} />}
                 {phone && <PhoneRow contact={contact} />}
-                {!hasAddress && !phone && !email && (
+                {email && <EmailRow contact={contact} />}
+                {hasCustomFields && <CustomFieldsRow contact={contact} />}
+                {!hasAddress && !phone && !email && !hasCustomFields && (
                   <Text>{i18n.t('noPersonalInformationSaved')}</Text>
                 )}
-                {email && <EmailRow contact={contact} />}
               </View>
             </CardWithTitle>
             <View style={{ gap: 10 }}>

@@ -613,5 +613,11 @@
   "submitLastMonth": "Submit Last Month",
   "deleteThisPlan": "Delete This Plan",
   "deleteThisAndFollowingPlans": "Delete This And Following Plans",
-  "deleteAllPlans": "Delete All Plans"
+  "deleteAllPlans": "Delete All Plans",
+  "customField": "Custom Field",
+  "customField_placeholder": "Enter new field name",
+  "goesHere": "Enter details",
+  "deleteField_description": "Are you sure you want to delete this custom field?",
+  "clearForThisContact": "Clear For This Contact",
+  "deleteFieldOnAllContacts": "Delete Field For All Contacts"
 }

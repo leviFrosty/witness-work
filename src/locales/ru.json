@@ -613,5 +613,11 @@
   "submitLastMonth": "Отправить в прошлом месяце",
   "deleteThisPlan": "Удалить этот план",
   "deleteThisAndFollowingPlans": "Удалить этот и следующие планы",
-  "deleteAllPlans": "Удалить все планы"
+  "deleteAllPlans": "Удалить все планы",
+  "customField": "Пользовательское поле",
+  "customField_placeholder": "Введите новое имя поля",
+  "goesHere": "Введите детали",
+  "deleteField_description": "Вы уверены, что хотите удалить это настраиваемое поле?",
+  "clearForThisContact": "Очистить для этого контакта",
+  "deleteFieldOnAllContacts": "Удалить поле для всех контактов"
 }

@@ -613,5 +613,11 @@
   "submitLastMonth": "Invia il mese scorso",
   "deleteThisPlan": "Elimina questo piano",
   "deleteThisAndFollowingPlans": "Elimina questo e segui i piani",
-  "deleteAllPlans": "Elimina tutti i piani"
+  "deleteAllPlans": "Elimina tutti i piani",
+  "customField": "Campo personalizzato",
+  "customField_placeholder": "Inserisci il nuovo nome del campo",
+  "goesHere": "Inserisci i dettagli",
+  "deleteField_description": "Sei sicuro di voler eliminare questo campo personalizzato?",
+  "clearForThisContact": "Cancella per questo contatto",
+  "deleteFieldOnAllContacts": "Elimina campo per tutti i contatti"
 }

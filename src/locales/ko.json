@@ -613,5 +613,11 @@
   "submitLastMonth": "지난달 제출",
   "deleteThisPlan": "이 계획 삭제",
   "deleteThisAndFollowingPlans": "이 계획 및 다음 계획 삭제",
-  "deleteAllPlans": "모든 계획 삭제"
+  "deleteAllPlans": "모든 계획 삭제",
+  "customField": "사용자 정의 필드",
+  "customField_placeholder": "새 필드 이름을 입력하세요.",
+  "goesHere": "세부정보 입력",
+  "deleteField_description": "이 사용자 정의 필드를 삭제하시겠습니까?",
+  "clearForThisContact": "이 연락처 지우기",
+  "deleteFieldOnAllContacts": "모든 연락처의 필드 삭제"
 }

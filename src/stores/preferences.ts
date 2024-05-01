@@ -106,6 +106,7 @@ const initialState = {
   backupNotificationFrequencyAsDays: 60,
   userSpecifiedHasAnnualGoal: 'default' as boolean | 'default',
   fontSizeOffset: 0,
+  customContactFields: [] as string[],
 }
 
 export const usePreferences = create(

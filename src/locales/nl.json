@@ -445,7 +445,8 @@
     "1260": {
       "c1": "Er is een probleem opgelost waarbij de scrollpositie verloren ging op TimeReportsScreen. Andere problemen met betrekking tot het scherm met tijdrapporten opgelost.",
       "c2": "LDC-uren dragen niet meer bij aan het jaarlijkse doel dan 55 uur voor een bepaalde maand.",
-      "c3": "Terugkerende plannen kunnen per afzonderlijke gebeurtenis of per afzonderlijke gebeurtenis en alle toekomstige gebeurtenissen worden verwijderd."
+      "c3": "Terugkerende plannen kunnen per afzonderlijke gebeurtenis of per afzonderlijke gebeurtenis en alle toekomstige gebeurtenissen worden verwijderd.",
+      "c4": "Nieuwe aangepaste velden voor contacten! U kunt een onbeperkt aantal aangepaste velden maken die u wenst."
     }
   },
   "installed": "Geïnstalleerd",

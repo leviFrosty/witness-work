@@ -445,7 +445,8 @@
     "1260": {
       "c1": "Inayos ang isyu kung saan mawawala ang posisyon ng pag-scroll sa TimeReportsScreen. Nalutas ang iba pang mga isyu na nauugnay sa screen ng mga ulat sa oras.",
       "c2": "Ang mga oras ng LDC ay hindi nakakatulong nang higit pa sa taunang layunin sa nakalipas na 55 oras para sa anumang partikular na buwan.",
-      "c3": "Ang mga umuulit na plano ay maaaring tanggalin ng isang kaganapan o isang kaganapan at lahat ng mga kaganapan sa hinaharap."
+      "c3": "Ang mga umuulit na plano ay maaaring tanggalin ng isang kaganapan o isang kaganapan at lahat ng mga kaganapan sa hinaharap.",
+      "c4": "Mga bagong custom na field para sa mga contact! Maaari kang lumikha ng anumang bilang ng mga custom na field na gusto mo."
     }
   },
   "installed": "Naka-install",

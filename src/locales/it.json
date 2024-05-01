@@ -445,7 +445,8 @@
     "1260": {
       "c1": "Risolto il problema per cui la posizione di scorrimento veniva persa su TimeReportsScreen. Risolti altri problemi relativi alla schermata dei resoconti temporali.",
       "c2": "Le ore LDC non contribuiscono maggiormente all'obiettivo annuale oltre le 55 ore per un dato mese.",
-      "c3": "I piani ricorrenti possono essere eliminati per singolo evento o per singolo evento e tutti gli eventi futuri."
+      "c3": "I piani ricorrenti possono essere eliminati per singolo evento o per singolo evento e tutti gli eventi futuri.",
+      "c4": "Nuovi campi personalizzati per i contatti! Puoi creare qualsiasi numero di campi personalizzati desideri."
     }
   },
   "installed": "Installato",

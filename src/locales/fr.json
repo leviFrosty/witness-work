@@ -446,7 +446,8 @@
       "c1": "Correction d'un problème où la position de défilement serait perdue sur TimeReportsScreen. Résolution d'autres problèmes liés à l'écran des rapports de temps.",
       "c2": "Les heures de PMA ne contribuent pas davantage à l'objectif annuel au-delà de 55 heures pour un mois donné.",
       "c3": "Les plans récurrents peuvent être supprimés par événement unique ou par événement unique et tous les événements futurs.",
-      "c4": "Nouveaux champs personnalisés pour les contacts ! Vous pouvez créer autant de champs personnalisés que vous le souhaitez."
+      "c4": "Nouveaux champs personnalisés pour les contacts ! Vous pouvez créer autant de champs personnalisés que vous le souhaitez.",
+      "c5": "Vous pouvez désormais partager votre temps directement avec NW Publisher !"
     }
   },
   "installed": "installée",

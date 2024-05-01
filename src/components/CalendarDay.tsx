@@ -135,7 +135,7 @@ const PlannedDay = (
     highestRecurringPlanMinutes &&
     minutesForDay >= highestRecurringPlanMinutes
 
-  const hitGoal = !!hitDayPlanGoal || !!hitRecurringPlanGoal
+  const hitGoal = props.dayPlan ? !!hitDayPlanGoal : !!hitRecurringPlanGoal
   const dateInPast = moment(props.date?.dateString).isSameOrBefore(
     moment(),
     'day'

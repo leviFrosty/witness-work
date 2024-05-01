@@ -441,6 +441,10 @@
       "c3": "Verschiedene Abschnitte des Zeitberichtsbildschirms wurden aktualisiert, um mehr Informationen und eine einfachere Navigation zu bieten.",
       "c4": "Kleinere visuelle Probleme und andere Bugs behoben.",
       "c5": "Den Einstellungen wurde eine Einstellung für den Schriftgrößenversatz hinzugefügt. Damit können Sie die Schriftgröße der App anpassen."
+    },
+    "1260": {
+      "c1": "Problem behoben, bei dem die Scrollposition auf dem TimeReportsScreen verloren ging. Andere Probleme im Zusammenhang mit dem Time Reports-Bildschirm behoben.",
+      "c2": "LDC-Stunden tragen nicht mehr als 55 Stunden für einen bestimmten Monat zum Jahresziel bei."
     }
   },
   "installed": "Eingerichtet",
@@ -602,5 +606,8 @@
   "optional": "Hinweis (optional)",
   "addedConversation": "Konversation hinzugefügt",
   "addedNotAtHome": "Nicht zu Hause hinzugefügt",
-  "youCannotCreateAPlanForAPreviousDay": "Sie können keinen Plan für ein vorheriges Datum erstellen."
+  "youCannotCreateAPlanForAPreviousDay": "Sie können keinen Plan für ein vorheriges Datum erstellen.",
+  "nwPublisher": "NW Publisher",
+  "nwPublisherOnlyAllowsLastMonth": "NW Publisher erlaubt Ihnen nur, den Bericht des Vormonats einzureichen.",
+  "submitLastMonth": "Letzten Monat einreichen"
 }

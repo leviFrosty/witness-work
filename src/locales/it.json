@@ -621,5 +621,11 @@
   "goesHere": "Inserisci i dettagli",
   "deleteField_description": "Sei sicuro di voler eliminare questo campo personalizzato?",
   "clearForThisContact": "Cancella per questo contatto",
-  "deleteFieldOnAllContacts": "Elimina campo per tutti i contatti"
+  "deleteFieldOnAllContacts": "Elimina campo per tutti i contatti",
+  "timer": "Timer",
+  "resetTimer": "Reimposta timer",
+  "resetTimer_description": "Perderai l'ora corrente se reimposti il timer. Vuoi reimpostare?",
+  "reset": "Ripristina",
+  "notEnoughTime": "Non abbastanza tempo",
+  "notEnoughTime_description": "Non è trascorso abbastanza tempo. È necessario disporre di almeno 5 minuti per inviare un inserimento dell'orario."
 }

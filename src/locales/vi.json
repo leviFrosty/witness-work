@@ -621,5 +621,6 @@
   "goesHere": "Nhập chi tiết",
   "deleteField_description": "Bạn có chắc chắn muốn xóa trường tùy chỉnh này không?",
   "clearForThisContact": "Xóa cho liên hệ này",
-  "deleteFieldOnAllContacts": "Xóa trường cho tất cả liên hệ"
+  "deleteFieldOnAllContacts": "Xóa trường cho tất cả liên hệ",
+  "timer": "hẹn giờ"
 }

@@ -621,5 +621,6 @@
   "goesHere": "Введите детали",
   "deleteField_description": "Вы уверены, что хотите удалить это настраиваемое поле?",
   "clearForThisContact": "Очистить для этого контакта",
-  "deleteFieldOnAllContacts": "Удалить поле для всех контактов"
+  "deleteFieldOnAllContacts": "Удалить поле для всех контактов",
+  "timer": "Таймер"
 }

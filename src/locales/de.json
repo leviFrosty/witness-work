@@ -621,5 +621,6 @@
   "goesHere": "Details eingeben",
   "deleteField_description": "Möchten Sie dieses benutzerdefinierte Feld wirklich löschen?",
   "clearForThisContact": "Für diesen Kontakt löschen",
-  "deleteFieldOnAllContacts": "Feld für alle Kontakte löschen"
+  "deleteFieldOnAllContacts": "Feld für alle Kontakte löschen",
+  "timer": "Timer"
 }

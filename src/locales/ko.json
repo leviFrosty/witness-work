@@ -621,5 +621,6 @@
   "goesHere": "세부정보 입력",
   "deleteField_description": "이 사용자 정의 필드를 삭제하시겠습니까?",
   "clearForThisContact": "이 연락처 지우기",
-  "deleteFieldOnAllContacts": "모든 연락처의 필드 삭제"
+  "deleteFieldOnAllContacts": "모든 연락처의 필드 삭제",
+  "timer": "시간제 노동자"
 }

@@ -621,5 +621,6 @@
   "goesHere": "Enter details",
   "deleteField_description": "Are you sure you want to delete this custom field?",
   "clearForThisContact": "Clear For This Contact",
-  "deleteFieldOnAllContacts": "Delete Field For All Contacts"
+  "deleteFieldOnAllContacts": "Delete Field For All Contacts",
+  "timer": "Timer"
 }

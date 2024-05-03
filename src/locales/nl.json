@@ -621,5 +621,6 @@
   "goesHere": "Voer details in",
   "deleteField_description": "Weet u zeker dat u dit aangepaste veld wilt verwijderen?",
   "clearForThisContact": "Duidelijk voor dit contact",
-  "deleteFieldOnAllContacts": "Veld voor alle contactpersonen verwijderen"
+  "deleteFieldOnAllContacts": "Veld voor alle contactpersonen verwijderen",
+  "timer": "Timer"
 }

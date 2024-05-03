@@ -621,5 +621,6 @@
   "goesHere": "输入详细信息",
   "deleteField_description": "您确定要删除此自定义字段吗？",
   "clearForThisContact": "清除此联系人",
-  "deleteFieldOnAllContacts": "删除所有联系人的字段"
+  "deleteFieldOnAllContacts": "删除所有联系人的字段",
+  "timer": "计时器"
 }

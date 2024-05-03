@@ -621,5 +621,6 @@
   "goesHere": "Ipasok ang mga detalye",
   "deleteField_description": "Sigurado ka bang gusto mong tanggalin ang custom na field na ito?",
   "clearForThisContact": "Clear For This Contact",
-  "deleteFieldOnAllContacts": "Tanggalin ang Field Para sa Lahat ng Mga Contact"
+  "deleteFieldOnAllContacts": "Tanggalin ang Field Para sa Lahat ng Mga Contact",
+  "timer": "Timer"
 }

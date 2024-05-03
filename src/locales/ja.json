@@ -621,5 +621,6 @@
   "goesHere": "詳細を入力",
   "deleteField_description": "このカスタム フィールドを削除してもよろしいですか?",
   "clearForThisContact": "この連絡先をクリア",
-  "deleteFieldOnAllContacts": "すべての連絡先のフィールドを削除"
+  "deleteFieldOnAllContacts": "すべての連絡先のフィールドを削除",
+  "timer": "タイマー"
 }

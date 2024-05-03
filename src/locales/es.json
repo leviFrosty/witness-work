@@ -621,5 +621,6 @@
   "goesHere": "Introduce los detalles",
   "deleteField_description": "¿Está seguro de que desea eliminar este campo personalizado?",
   "clearForThisContact": "Borrar para este contacto",
-  "deleteFieldOnAllContacts": "Eliminar campo para todos los contactos"
+  "deleteFieldOnAllContacts": "Eliminar campo para todos los contactos",
+  "timer": "Temporizador"
 }

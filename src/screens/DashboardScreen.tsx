@@ -26,6 +26,7 @@ import { RootStackNavigation } from '../stacks/RootStack'
 import usePublisher from '../hooks/usePublisher'
 import { usePreferences } from '../stores/preferences'
 import BackupReminder from '../components/BackupReminder'
+import { TimerSection } from '../components/TimerSection'
 
 export const DashboardScreen = () => {
   const theme = useTheme()
@@ -169,6 +170,7 @@ export const DashboardScreen = () => {
             )}
           </XView>
           <ServiceReport setSheet={setSheet} />
+          <TimerSection />
           <ContactsList />
         </View>
       </KeyboardAwareScrollView>

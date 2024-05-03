@@ -42,10 +42,11 @@ const AddTimeScreen = ({ route }: AddTimeScreenProps) => {
   ]
   const [category, setCategory] = useState(timeEntryCategories[0])
   const [customCategory, setCustomCategory] = useState<string>('')
+  const nearestFiveMinutes = Math.floor((route.params?.minutes || 0) / 5) * 5
   const [serviceReport, setServiceReport] = useState<ServiceReport>({
     id: Crypto.randomUUID(),
-    hours: 0,
-    minutes: 0,
+    hours: route.params?.hours || 0,
+    minutes: nearestFiveMinutes,
     date: moment(route.params?.date).toDate(),
     ldc: false,
   })

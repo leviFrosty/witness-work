@@ -621,5 +621,11 @@
   "goesHere": "输入详细信息",
   "deleteField_description": "您确定要删除此自定义字段吗？",
   "clearForThisContact": "清除此联系人",
-  "deleteFieldOnAllContacts": "删除所有联系人的字段"
+  "deleteFieldOnAllContacts": "删除所有联系人的字段",
+  "timer": "计时器",
+  "resetTimer": "重置计时器",
+  "resetTimer_description": "如果重置计时器，您将丢失当前的时间条目。要重置吗？",
+  "reset": "重置",
+  "notEnoughTime": "时间不足",
+  "notEnoughTime_description": "时间不足。您必须至少有 5 分钟的时间才能提交时间条目。"
 }

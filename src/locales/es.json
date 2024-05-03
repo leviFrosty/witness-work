@@ -621,5 +621,11 @@
   "goesHere": "Introduce los detalles",
   "deleteField_description": "¿Está seguro de que desea eliminar este campo personalizado?",
   "clearForThisContact": "Borrar para este contacto",
-  "deleteFieldOnAllContacts": "Eliminar campo para todos los contactos"
+  "deleteFieldOnAllContacts": "Eliminar campo para todos los contactos",
+  "timer": "Temporizador",
+  "resetTimer": "Reiniciar temporizador",
+  "resetTimer_description": "Perderá su entrada de tiempo actual si reinicia el temporizador. ¿Quieres restablecer?",
+  "reset": "Reiniciar",
+  "notEnoughTime": "No hay tiempo suficiente",
+  "notEnoughTime_description": "No ha transcurrido suficiente tiempo. Debe tener al menos 5 minutos para enviar una entrada de tiempo."
 }

@@ -68,6 +68,7 @@ export const hints = {
   howToArchiveContact: true,
   howToEditAndDeleteConversation: true,
   howToAddPlan: true,
+  mustHaveAtLeastFiveMinutesOnStopwatch: true,
 }
 
 const initialState = {

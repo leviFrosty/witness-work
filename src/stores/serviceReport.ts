@@ -16,6 +16,11 @@ const initialState = {
   serviceReports: [] as ServiceReport[],
   dayPlans: [] as DayPlan[],
   recurringPlans: [] as RecurringPlan[],
+  persistedStopwatch: {
+    startTime: 0,
+    isRunning: false,
+    timeWhenLastStopped: 0,
+  },
 }
 
 export const useServiceReport = create(

@@ -621,5 +621,11 @@
   "goesHere": "Voer details in",
   "deleteField_description": "Weet u zeker dat u dit aangepaste veld wilt verwijderen?",
   "clearForThisContact": "Duidelijk voor dit contact",
-  "deleteFieldOnAllContacts": "Veld voor alle contactpersonen verwijderen"
+  "deleteFieldOnAllContacts": "Veld voor alle contactpersonen verwijderen",
+  "timer": "Timer",
+  "resetTimer": "Timer opnieuw instellen",
+  "resetTimer_description": "Als u de timer opnieuw instelt, raakt u uw huidige tijdsinvoer kwijt. Wil je resetten?",
+  "reset": "Opnieuw instellen",
+  "notEnoughTime": "Niet genoeg tijd",
+  "notEnoughTime_description": "Er is niet genoeg tijd verstreken. U moet minimaal 5 minuten de tijd hebben om een tijdvermelding in te dienen."
 }

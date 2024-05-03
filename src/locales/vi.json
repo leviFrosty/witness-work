@@ -622,5 +622,10 @@
   "deleteField_description": "Bạn có chắc chắn muốn xóa trường tùy chỉnh này không?",
   "clearForThisContact": "Xóa cho liên hệ này",
   "deleteFieldOnAllContacts": "Xóa trường cho tất cả liên hệ",
-  "timer": "hẹn giờ"
+  "timer": "hẹn giờ",
+  "resetTimer": "Đặt lại bộ hẹn giờ",
+  "resetTimer_description": "Bạn sẽ mất mục nhập thời gian hiện tại nếu đặt lại bộ hẹn giờ. Bạn có muốn thiết lập lại không?",
+  "reset": "Cài lại",
+  "notEnoughTime": "Không đủ thời gian",
+  "notEnoughTime_description": "Không đủ thời gian trôi qua. Bạn phải có ít nhất 5 phút để gửi mục nhập thời gian."
 }

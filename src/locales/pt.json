@@ -622,5 +622,10 @@
   "deleteField_description": "Tem certeza de que deseja excluir este campo personalizado?",
   "clearForThisContact": "Limpar para este contato",
   "deleteFieldOnAllContacts": "Excluir campo para todos os contatos",
-  "timer": "Cronômetro"
+  "timer": "Cronômetro",
+  "resetTimer": "Redefinir temporizador",
+  "resetTimer_description": "Você perderá a entrada da hora atual se redefinir o cronômetro. Você quer redefinir?",
+  "reset": "Reiniciar",
+  "notEnoughTime": "Não há tempo suficiente",
+  "notEnoughTime_description": "Não decorreu tempo suficiente. Você deve ter pelo menos 5 minutos para enviar uma entrada de tempo."
 }

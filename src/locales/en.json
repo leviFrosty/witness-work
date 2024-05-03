@@ -622,5 +622,10 @@
   "deleteField_description": "Are you sure you want to delete this custom field?",
   "clearForThisContact": "Clear For This Contact",
   "deleteFieldOnAllContacts": "Delete Field For All Contacts",
-  "timer": "Timer"
+  "timer": "Timer",
+  "resetTimer": "Reset Timer",
+  "resetTimer_description": "You will lose your current time entry if you reset the timer. Do you want to reset?",
+  "reset": "Reset",
+  "notEnoughTime": "Not Enough Time",
+  "notEnoughTime_description": "Not enough time has elapsed. You must have at least 5 minutes to submit a time entry."
 }

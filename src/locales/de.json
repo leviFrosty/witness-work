@@ -622,5 +622,10 @@
   "deleteField_description": "Möchten Sie dieses benutzerdefinierte Feld wirklich löschen?",
   "clearForThisContact": "Für diesen Kontakt löschen",
   "deleteFieldOnAllContacts": "Feld für alle Kontakte löschen",
-  "timer": "Timer"
+  "timer": "Timer",
+  "resetTimer": "Timer zurücksetzen",
+  "resetTimer_description": "Wenn Sie den Timer zurücksetzen, geht Ihr aktueller Zeiteintrag verloren. Möchten Sie ihn zurücksetzen?",
+  "reset": "Zurücksetzen",
+  "notEnoughTime": "Nicht genug Zeit",
+  "notEnoughTime_description": "Es ist nicht genug Zeit vergangen. Sie müssen mindestens 5 Minuten Zeit haben, um einen Zeiteintrag abzugeben."
 }

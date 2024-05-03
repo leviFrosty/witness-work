@@ -20,47 +20,35 @@ const formatMs = (ms: number) => {
 }
 
 export const useStopWatch = () => {
-  const [time, setTime] = useState(0)
-  const [isRunning, setIsRunning] = useState(false)
-  const [startTime, setStartTime] = useState<number>(0)
-  const [timeWhenLastStopped, setTimeWhenLastStopped] = useState<number>(0)
-  const [dataLoaded, setDataLoaded] = useState(false)
   const { persistedStopwatch, set } = useServiceReport()
+  const [time, setTime] = useState(persistedStopwatch.timeWhenLastStopped)
+  const [isRunning, setIsRunning] = useState(persistedStopwatch.isRunning)
+  const [startTime, setStartTime] = useState<number>(
+    persistedStopwatch.startTime
+  )
+  const [timeWhenLastStopped, setTimeWhenLastStopped] = useState<number>(
+    persistedStopwatch.timeWhenLastStopped
+  )
 
   const interval = useRef<NodeJS.Timeout>()
 
   useEffect(() => {
-    // Loads in persisted data from async storage
-    setTimeWhenLastStopped(persistedStopwatch.timeWhenLastStopped)
-    setIsRunning(persistedStopwatch.isRunning)
-    setStartTime(persistedStopwatch.startTime)
-    setDataLoaded(true)
-
-    // Only load on mount
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
-
-  useEffect(() => {
     // Persist the latest data to async storage to be used later, if needed
-    const latestData = {
-      timeWhenLastStopped,
-      isRunning,
-      startTime,
-    }
-
-    if (dataLoaded) {
-      set({
-        persistedStopwatch: latestData,
-      })
-    }
-  }, [timeWhenLastStopped, isRunning, startTime, dataLoaded, set])
+    set({
+      persistedStopwatch: {
+        timeWhenLastStopped,
+        isRunning,
+        startTime,
+      },
+    })
+  }, [timeWhenLastStopped, isRunning, startTime, set])
 
   useEffect(() => {
     // If the stopwatch is running, we want to update the time every second
     if (startTime > 0) {
       interval.current = setInterval(() => {
         setTime(() => Date.now() - startTime + timeWhenLastStopped)
-      }, 5)
+      }, 1000)
     } else {
       if (interval.current) {
         clearInterval(interval.current)
@@ -94,6 +82,6 @@ export const useStopWatch = () => {
     isRunning,
     time: formatMs(time),
     hasStarted: time > 0,
-    dataLoaded,
+    ms: time,
   }
 }

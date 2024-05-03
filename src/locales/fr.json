@@ -622,5 +622,10 @@
   "deleteField_description": "Êtes-vous sûr de vouloir supprimer ce champ personnalisé ?",
   "clearForThisContact": "Effacer pour ce contact",
   "deleteFieldOnAllContacts": "Supprimer le champ pour tous les contacts",
-  "timer": "Minuteur"
+  "timer": "Minuteur",
+  "resetTimer": "Réinitialiser la minuterie",
+  "resetTimer_description": "Vous perdrez votre entrée de temps actuelle si vous réinitialisez la minuterie. Voulez-vous réinitialiser ?",
+  "reset": "Réinitialiser",
+  "notEnoughTime": "Pas assez de temps",
+  "notEnoughTime_description": "Trop peu de temps s'est écoulé. Vous devez disposer d'au moins 5 minutes pour soumettre une entrée de temps."
 }

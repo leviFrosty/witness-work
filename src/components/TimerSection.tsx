@@ -37,11 +37,11 @@ export const TimerSection = () => {
       }
       return
     }
+    reset()
     navigation.navigate('Add Time', {
       minutes,
       hours,
     })
-    reset()
   }
 
   return (

@@ -319,8 +319,6 @@ const AddressRow = ({ contact }: { contact: Contact }) => {
               borderRadius: theme.numbers.borderRadiusSm,
             }}
             provider={Platform.OS === 'android' ? PROVIDER_GOOGLE : undefined}
-            minZoomLevel={4}
-            maxZoomLevel={16}
             onPress={() => navigateTo(address, defaultNavigationMapProvider)}
           >
             <Marker

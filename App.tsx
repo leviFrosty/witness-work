@@ -5,6 +5,8 @@ import RootStackComponent from './src/stacks/RootStack'
 import { SafeAreaProvider } from 'react-native-safe-area-context'
 import * as Notifications from 'expo-notifications'
 import * as Sentry from '@sentry/react-native'
+import * as Updates from 'expo-updates'
+import Constants from 'expo-constants'
 import './src/lib/locales'
 import {
   useFonts,
@@ -48,6 +50,13 @@ Sentry.init({
   debug: __DEV__,
   attachScreenshot: true,
 })
+
+Sentry.setTag('deviceId', Constants.sessionId)
+Sentry.setTag('appOwnership', Constants.appOwnership || 'N/A')
+if (Constants.appOwnership === 'expo' && Constants.expoVersion) {
+  Sentry.setTag('expoAppVersion', Constants.expoVersion)
+}
+Sentry.setTag('expoChannel', Updates.channel)
 
 export default function App() {
   const colorScheme = useColorScheme()

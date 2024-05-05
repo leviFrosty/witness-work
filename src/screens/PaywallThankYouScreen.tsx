@@ -67,7 +67,6 @@ const PaywallThankYouScreen = () => {
             width: Dimensions.get('screen').width,
           }}
           autoPlay
-          autoSize
           loop
         />
       </View>

@@ -54,7 +54,7 @@ const _i18n = new I18n({
   zh,
 })
 
-const locale = getLocales()[0].languageCode
+const locale = getLocales()[0].languageCode! // Guaranteed to return at least one element
 
 _i18n.locale = locale
 _i18n.enableFallback = true

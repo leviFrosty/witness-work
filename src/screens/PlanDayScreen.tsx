@@ -63,7 +63,7 @@ const OneTimePlan = (props: {
         {Platform.OS !== 'android' ? (
           <RNDateTimePicker
             minimumDate={new Date()}
-            locale={getLocales()[0].languageCode}
+            locale={getLocales()[0].languageCode || undefined}
             value={props.date}
             onChange={(_, newDate) => newDate && props.setDate(newDate)}
           />
@@ -180,7 +180,7 @@ const RecurringPlan = (props: {
         {Platform.OS !== 'android' ? (
           <RNDateTimePicker
             minimumDate={new Date()}
-            locale={getLocales()[0].languageCode}
+            locale={getLocales()[0].languageCode || undefined}
             value={props.date}
             onChange={(_, newDate) => newDate && props.setDate(newDate)}
           />
@@ -214,7 +214,7 @@ const RecurringPlan = (props: {
             props.endDate &&
             (Platform.OS !== 'android' ? (
               <RNDateTimePicker
-                locale={getLocales()[0].languageCode}
+                locale={getLocales()[0].languageCode || undefined}
                 value={props.endDate}
                 onChange={(_, newDate) => newDate && props.setEndDate(newDate)}
               />

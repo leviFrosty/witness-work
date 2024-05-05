@@ -1,6 +1,6 @@
-import LottieView, { AnimatedLottieViewProps } from 'lottie-react-native'
+import LottieView, { LottieViewProps } from 'lottie-react-native'
 
-interface Props extends Omit<AnimatedLottieViewProps, 'source'> {}
+interface Props extends Omit<LottieViewProps, 'source'> {}
 
 const Loader = ({ style, ...props }: Props) => {
   return (

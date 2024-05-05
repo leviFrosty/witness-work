@@ -93,12 +93,9 @@ export const TimerSection = () => {
               flex: 1,
               justifyContent: 'center',
             }}
+            onPress={reset}
           >
-            <IconButton
-              icon={faArrowRotateLeft}
-              onPress={reset}
-              size={theme.fontSize('lg')}
-            />
+            <IconButton icon={faArrowRotateLeft} size={theme.fontSize('lg')} />
           </Button>
 
           <Button

@@ -322,10 +322,9 @@ const PaywallScreen = () => {
               fontFamily: theme.fonts.bold,
             }}
           >
-            {`${i18n.t('donate')} ${selectedOffering?.availablePackages[0]
-              .product.priceString} ${
-              !selectedOffering?.monthly ? '' : i18n.t('eachMonth')
-            }`}
+            {`${i18n.t('donate')} ${
+              selectedOffering?.availablePackages[0].product.priceString
+            } ${!selectedOffering?.monthly ? '' : i18n.t('eachMonth')}`}
           </Text>
         </ActionButton>
       </View>

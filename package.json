@@ -13,7 +13,7 @@
     "testDebug": "jest -o --watch --coverage=false",
     "testFinal": "jest",
     "updateSnapshots": "jest -u --coverage=false",
-    "lint": "yarn tsc"
+    "lint": "yarn tsc && yarn eslint ."
   },
   "dependencies": {
     "@expo-google-fonts/inter": "^0.2.3",

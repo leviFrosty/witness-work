@@ -1,5 +1,5 @@
 import AnimatedLottieView from 'lottie-react-native'
-import * as Sentry from 'sentry-expo'
+import * as Sentry from '@sentry/react-native'
 import Text from '../components/MyText'
 import Wrapper from '../components/layout/Wrapper'
 import i18n from '../lib/locales'
@@ -42,7 +42,7 @@ const DonationInfoScreen = () => {
       }
       setCustomer(restored)
     } catch (error: unknown) {
-      Sentry.Native.captureException(error)
+      Sentry.captureException(error)
       Alert.alert(i18n.t('error_restoring_account'))
     }
   }, [setCustomer])
@@ -130,7 +130,6 @@ const DonationInfoScreen = () => {
                   height: 100,
                 }}
                 autoPlay
-                autoSize
                 loop
               />
             </XView>

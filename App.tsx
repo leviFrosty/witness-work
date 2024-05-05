@@ -4,7 +4,7 @@ import { NavigationContainer } from '@react-navigation/native'
 import RootStackComponent from './src/stacks/RootStack'
 import { SafeAreaProvider } from 'react-native-safe-area-context'
 import * as Notifications from 'expo-notifications'
-import * as Sentry from 'sentry-expo'
+import * as Sentry from '@sentry/react-native'
 import './src/lib/locales'
 import {
   useFonts,
@@ -44,7 +44,7 @@ LogBox.ignoreLogs([
 
 Sentry.init({
   dsn: 'https://f9600209459a43d18c3d2c3a6ac2aa7b@o572512.ingest.sentry.io/4505271593074688',
-  enableInExpoDevelopment: false,
+  enabled: !__DEV__,
   debug: __DEV__,
   attachScreenshot: true,
 })
@@ -89,6 +89,6 @@ export default function App() {
       </ThemeProvider>
     )
   } catch (error) {
-    Sentry.Native.captureException(error)
+    Sentry.captureException(error)
   }
 }

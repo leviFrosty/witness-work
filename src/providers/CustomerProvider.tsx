@@ -8,7 +8,7 @@ import {
 import { CustomerContext, CustomerCtx } from '../contexts/customer'
 import Purchases, { CustomerInfo, LOG_LEVEL } from 'react-native-purchases'
 import useDevice from '../hooks/useDevice'
-import * as Sentry from 'sentry-expo'
+import * as Sentry from '@sentry/react-native'
 
 interface Props {}
 
@@ -42,7 +42,7 @@ const CustomerProvider: React.FC<PropsWithChildren<Props>> = ({ children }) => {
       const customerInfo = await Purchases.getCustomerInfo()
       setCustomer(customerInfo)
     } catch (error) {
-      Sentry.Native.captureException(error)
+      Sentry.captureException(error)
     }
   }, [])
 

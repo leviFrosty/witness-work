@@ -43,5 +43,9 @@ googleServiceAccount.json
 
 ios/
 
+# Compiled tamagui config
+.tamagui/
+
 # Local Builds
 build-*
+

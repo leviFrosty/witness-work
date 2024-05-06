@@ -448,6 +448,12 @@
       "c3": "Los planes recurrentes se pueden eliminar por evento único o por evento único y todos los eventos futuros.",
       "c4": "¡Nuevos campos personalizados para contactos! Puede crear cualquier cantidad de campos personalizados que desee.",
       "c5": "¡Ahora puede compartir su tiempo directamente con NW Publisher!"
+    },
+    "1270": {
+      "c1": "¡Temporizador añadido! ⏱️ (Cronómetro). Ahora puedes iniciar y detener un temporizador para realizar un seguimiento de tu tiempo directamente desde la aplicación.",
+      "c2": "Se resolvió el problema de bloqueo de algunos dispositivos al navegar a la pantalla Detalles de contacto.",
+      "c3": "Dependencias actualizadas. [iOS] Nueva versión mínima: 13.4",
+      "c4": "Otras mejoras y correcciones de errores menores."
     }
   },
   "installed": "Instalado",

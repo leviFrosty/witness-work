@@ -448,6 +448,12 @@
       "c3": "Kế hoạch định kỳ có thể bị xóa bởi một sự kiện hoặc một sự kiện và tất cả các sự kiện trong tương lai.",
       "c4": "Các trường tùy chỉnh mới cho danh bạ! Bạn có thể tạo bất kỳ số lượng trường tùy chỉnh nào bạn muốn.",
       "c5": "Bây giờ bạn có thể chia sẻ thời gian của mình trực tiếp với Nhà xuất bản NW!"
+    },
+    "1270": {
+      "c1": "Đã thêm bộ hẹn giờ! ⏱️ (Đồng hồ bấm giờ). Giờ đây, bạn có thể bắt đầu và dừng đồng hồ hẹn giờ để theo dõi thời gian của mình ngay trong ứng dụng.",
+      "c2": "Đã giải quyết sự cố xảy ra đối với một số thiết bị khi điều hướng tới màn hình Chi tiết liên hệ.",
+      "c3": "Đã cập nhật các phụ thuộc. [iOS] Phiên bản tối thiểu mới: 13.4",
+      "c4": "Sửa lỗi nhỏ và cải tiến khác."
     }
   },
   "installed": "Cài đặt",

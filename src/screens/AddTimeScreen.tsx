@@ -206,7 +206,7 @@ const AddTimeScreen = ({ route }: AddTimeScreenProps) => {
             >
               {Platform.OS !== 'android' ? (
                 <RNDateTimePicker
-                  locale={getLocales()[0].languageCode}
+                  locale={getLocales()[0].languageCode || undefined}
                   maximumDate={moment().toDate()}
                   value={serviceReport.date}
                   onChange={handleDateChange}

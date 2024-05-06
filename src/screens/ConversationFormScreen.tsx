@@ -4,7 +4,7 @@ import Text from '../components/MyText'
 import * as Notifications from 'expo-notifications'
 import * as Crypto from 'expo-crypto'
 import { NativeStackScreenProps } from '@react-navigation/native-stack'
-import * as Sentry from 'sentry-expo'
+import * as Sentry from '@sentry/react-native'
 import { RootStackParamList } from '../stacks/RootStack'
 import useContacts from '../stores/contactsStore'
 import { useEffect, useState } from 'react'
@@ -351,7 +351,7 @@ const ConversationFormScreen = ({ route, navigation }: Props) => {
               id,
             })
           } catch (error) {
-            Sentry.Native.captureException(error)
+            Sentry.captureException(error)
           }
         }
 
@@ -374,7 +374,7 @@ const ConversationFormScreen = ({ route, navigation }: Props) => {
             resolve(conversation)
           })
           .catch((error) => {
-            Sentry.Native.captureException(error)
+            Sentry.captureException(error)
             resolve(false)
           })
       } else {
@@ -567,7 +567,7 @@ const ConversationFormScreen = ({ route, navigation }: Props) => {
               />
             ) : (
               <RNDateTimePicker
-                locale={getLocales()[0].languageCode}
+                locale={getLocales()[0].languageCode || undefined}
                 maximumDate={moment().toDate()}
                 value={conversation.date}
                 onChange={handleDateChange}
@@ -612,7 +612,7 @@ const ConversationFormScreen = ({ route, navigation }: Props) => {
               />
             ) : (
               <RNDateTimePicker
-                locale={getLocales()[0].languageCode}
+                locale={getLocales()[0].languageCode || undefined}
                 mode='datetime'
                 minimumDate={moment().toDate()}
                 value={conversation.followUp!.date}

@@ -324,7 +324,7 @@ const AddressRow = ({ contact }: { contact: Contact }) => {
             <Marker
               identifier={contact.id}
               key={contact.id}
-              coordinate={contact.coordinate!}
+              coordinate={contact.coordinate}
               pinColor={theme.colors.accent}
               draggable
               onDragEnd={(e) =>

@@ -8,7 +8,7 @@ import useConversations from '../stores/conversationStore'
 import { usePreferences } from '../stores/preferences'
 import useServiceReport from '../stores/serviceReport'
 import * as FileSystem from 'expo-file-system'
-import * as Sentry from 'sentry-expo'
+import * as Sentry from '@sentry/react-native'
 import * as Sharing from 'expo-sharing'
 import * as DocumentPicker from 'expo-document-picker'
 import { Alert, View } from 'react-native'
@@ -93,7 +93,7 @@ const ImportAndExportScreen = () => {
           setLoading(false)
         })
     } catch (error) {
-      Sentry.Native.captureException(error)
+      Sentry.captureException(error)
       setLoading(false)
       Alert.alert(
         i18n.t('importError_title'),
@@ -127,7 +127,7 @@ const ImportAndExportScreen = () => {
           setLoading(false)
         })
     } catch (error) {
-      Sentry.Native.captureException(error)
+      Sentry.captureException(error)
       setLoading(false)
       Alert.alert(
         i18n.t('errorExporting'),

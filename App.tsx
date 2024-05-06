@@ -4,7 +4,9 @@ import { NavigationContainer } from '@react-navigation/native'
 import RootStackComponent from './src/stacks/RootStack'
 import { SafeAreaProvider } from 'react-native-safe-area-context'
 import * as Notifications from 'expo-notifications'
-import * as Sentry from 'sentry-expo'
+import * as Sentry from '@sentry/react-native'
+import * as Updates from 'expo-updates'
+import Constants from 'expo-constants'
 import './src/lib/locales'
 import {
   useFonts,
@@ -21,6 +23,7 @@ import tamaguiConfig from './tamagui.config'
 import ThemeProvider from './src/providers/ThemeProvider'
 import CustomerProvider from './src/providers/CustomerProvider'
 import { ToastProvider, ToastViewport } from '@tamagui/toast'
+import './env'
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
@@ -44,10 +47,18 @@ LogBox.ignoreLogs([
 
 Sentry.init({
   dsn: 'https://f9600209459a43d18c3d2c3a6ac2aa7b@o572512.ingest.sentry.io/4505271593074688',
-  enableInExpoDevelopment: false,
+  enabled: !__DEV__,
   debug: __DEV__,
   attachScreenshot: true,
 })
+
+Sentry.setTag('deviceId', Constants.sessionId)
+Sentry.setTag('appOwnership', Constants.appOwnership || 'N/A')
+if (Constants.appOwnership === 'expo' && Constants.expoVersion) {
+  Sentry.setTag('expoAppVersion', Constants.expoVersion)
+}
+Sentry.setTag('expoChannel', Updates.channel)
+Sentry.setTag('expoUpdateVersion', Updates.updateId)
 
 export default function App() {
   const colorScheme = useColorScheme()
@@ -89,6 +100,6 @@ export default function App() {
       </ThemeProvider>
     )
   } catch (error) {
-    Sentry.Native.captureException(error)
+    Sentry.captureException(error)
   }
 }

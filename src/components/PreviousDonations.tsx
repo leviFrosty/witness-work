@@ -1,5 +1,5 @@
 import { View } from 'react-native'
-import * as Sentry from 'sentry-expo'
+import * as Sentry from '@sentry/react-native'
 import Purchases, {
   CustomerInfo,
   PurchasesStoreProduct,
@@ -37,7 +37,7 @@ const PreviousDonations = ({
       setProducts(products)
     }
 
-    getProducts().catch((error) => Sentry.Native.captureException(error))
+    getProducts().catch((error) => Sentry.captureException(error))
   }, [customer.allPurchaseDates])
 
   const nonSubscriptions = useMemo(() => {

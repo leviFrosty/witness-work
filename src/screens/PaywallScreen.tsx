@@ -1,5 +1,5 @@
 import { Alert, ScrollView, View } from 'react-native'
-import * as Sentry from 'sentry-expo'
+import * as Sentry from '@sentry/react-native'
 import Text from '../components/MyText'
 import useTheme from '../contexts/theme'
 import i18n from '../lib/locales'
@@ -112,7 +112,7 @@ const PaywallScreen = () => {
 
     getOfferings().catch((error) => {
       Alert.alert(i18n.t('errorFetchingOfferings'), i18n.t('tryAgainLater'))
-      Sentry.Native.captureException(error)
+      Sentry.captureException(error)
     })
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -135,7 +135,7 @@ const PaywallScreen = () => {
       if (!(error as PurchasesError).userCancelled) {
         Alert.alert(i18n.t('error'), i18n.t('errorCheckingOut'))
       } else {
-        Sentry.Native.captureException(error)
+        Sentry.captureException(error)
       }
     }
   }, [navigation, revalidate, selectedOffering])
@@ -322,10 +322,9 @@ const PaywallScreen = () => {
               fontFamily: theme.fonts.bold,
             }}
           >
-            {`${i18n.t('donate')} ${selectedOffering?.availablePackages[0]
-              .product.priceString} ${
-              !selectedOffering?.monthly ? '' : i18n.t('eachMonth')
-            }`}
+            {`${i18n.t('donate')} ${
+              selectedOffering?.availablePackages[0].product.priceString
+            } ${!selectedOffering?.monthly ? '' : i18n.t('eachMonth')}`}
           </Text>
         </ActionButton>
       </View>

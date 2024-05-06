@@ -448,6 +448,12 @@
       "c3": "Terugkerende plannen kunnen per afzonderlijke gebeurtenis of per afzonderlijke gebeurtenis en alle toekomstige gebeurtenissen worden verwijderd.",
       "c4": "Nieuwe aangepaste velden voor contacten! U kunt een onbeperkt aantal aangepaste velden maken die u wenst.",
       "c5": "U kunt uw tijd nu rechtstreeks delen met NW Publisher!"
+    },
+    "1270": {
+      "c1": "Timer toegevoegd! ⏱️ (Stopwatch). U kunt nu een timer starten en stoppen om uw tijd rechtstreeks in de app bij te houden.",
+      "c2": "Crashprobleem opgelost voor sommige apparaten bij het navigeren naar het scherm Contactgegevens.",
+      "c3": "Bijgewerkte afhankelijkheden. [iOS] Nieuwe minimumversie: 13.4",
+      "c4": "Andere kleine bugfixes en verbeteringen."
     }
   },
   "installed": "Geïnstalleerd",

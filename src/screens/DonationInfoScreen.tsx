@@ -114,7 +114,6 @@ const DonationInfoScreen = () => {
               style={{
                 justifyContent: 'space-between',
                 paddingHorizontal: 15,
-                backgroundColor: 'orange',
                 position: 'relative',
               }}
             >

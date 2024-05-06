@@ -23,6 +23,7 @@ import tamaguiConfig from './tamagui.config'
 import ThemeProvider from './src/providers/ThemeProvider'
 import CustomerProvider from './src/providers/CustomerProvider'
 import { ToastProvider, ToastViewport } from '@tamagui/toast'
+import './env'
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({

@@ -42,3 +42,6 @@ googleServiceAccount.json
 %ProgramData%/
 
 ios/
+
+# Local Builds
+build-*

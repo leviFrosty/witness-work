@@ -111,7 +111,12 @@ const DonationInfoScreen = () => {
         <View style={{ gap: 30 }}>
           <View>
             <XView
-              style={{ justifyContent: 'space-between', paddingHorizontal: 15 }}
+              style={{
+                justifyContent: 'space-between',
+                paddingHorizontal: 15,
+                backgroundColor: 'orange',
+                position: 'relative',
+              }}
             >
               <Text
                 style={{
@@ -128,6 +133,7 @@ const DonationInfoScreen = () => {
                   right: 5,
                   zIndex: -100,
                   height: 100,
+                  width: 50,
                 }}
                 autoPlay
                 loop

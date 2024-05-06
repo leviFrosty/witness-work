@@ -381,7 +381,6 @@ const MapOnboarding = () => {
                   width: 160,
                   height: 160,
                 }}
-                // Find more Lottie files at https://lottiefiles.com/featured
                 source={require('./../assets/lottie/checkMark.json')}
               />
               <Text

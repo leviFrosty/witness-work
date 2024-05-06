@@ -8,7 +8,7 @@
     "ios": "expo start --ios",
     "web": "expo start --web",
     "translate": "node ./src/scripts/translate.js",
-    "prepare": "husky install",
+    "prepare": "husky",
     "test": "jest --watch --coverage=false",
     "testDebug": "jest -o --watch --coverage=false",
     "testFinal": "jest",

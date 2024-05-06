@@ -1,5 +1,5 @@
 yarn run translate
+./node_modules/.bin/prettier --write . 
 yarn run lint
 
-./node_modules/.bin/prettier --write . 
 

@@ -1,4 +1,2 @@
 yarn run translate
-./node_modules/.bin/prettier --write . 
-
-
+yarn run prettier

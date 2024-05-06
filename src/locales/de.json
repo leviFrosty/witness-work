@@ -448,6 +448,12 @@
       "c3": "Wiederkehrende Pläne können einzeln oder einzeln und mit allen zukünftigen Ereignissen gelöscht werden.",
       "c4": "Neue benutzerdefinierte Felder für Kontakte! Sie können beliebig viele benutzerdefinierte Felder erstellen.",
       "c5": "Sie können Ihre Zeit jetzt direkt mit NW Publisher teilen!"
+    },
+    "1270": {
+      "c1": "Timer hinzugefügt! ⏱️ (Stoppuhr). Sie können jetzt einen Timer starten und stoppen, um Ihre Zeit direkt in der App zu verfolgen.",
+      "c2": "Absturzproblem bei einigen Geräten beim Navigieren zum Bildschirm „Kontaktdaten“ behoben.",
+      "c3": "Abhängigkeiten aktualisiert. [iOS] Neue Mindestversion: 13.4",
+      "c4": "Weitere kleinere Fehlerbehebungen und Verbesserungen."
     }
   },
   "installed": "Eingerichtet",

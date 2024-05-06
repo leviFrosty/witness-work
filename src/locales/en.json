@@ -448,6 +448,12 @@
       "c3": "Recurring plans can be deleted by single event or single event and all future events.",
       "c4": "New custom fields for contacts! You can create any number of custom fields you wish.",
       "c5": "You can now share your time directly with NW Publisher!"
+    },
+    "1270": {
+      "c1": "Added Timer! ⏱️ (Stopwatch). You can now start and stop a timer to track your time directly within the app.",
+      "c2": "Resolved crashing issue for some devices when navigating to the Contact Details screen.",
+      "c3": "Updated dependencies. [iOS] New minimum version: 13.4",
+      "c4": "Other minor bug fixes and improvements."
     }
   },
   "installed": "Installed",

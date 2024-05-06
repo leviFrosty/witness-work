@@ -448,6 +448,12 @@
       "c3": "Os planos recorrentes podem ser excluídos por evento único ou evento único e todos os eventos futuros.",
       "c4": "Novos campos personalizados para contatos! Você pode criar quantos campos personalizados desejar.",
       "c5": "Agora você pode compartilhar seu tempo diretamente com o NW Publisher!"
+    },
+    "1270": {
+      "c1": "Adicionado temporizador! ⏱️ (Cronômetro). Agora você pode iniciar e parar um cronômetro para monitorar seu tempo diretamente no aplicativo.",
+      "c2": "Resolvido problema de travamento de alguns dispositivos ao navegar para a tela Detalhes do contato.",
+      "c3": "Dependências atualizadas. [iOS] Nova versão mínima: 13.4",
+      "c4": "Outras pequenas correções de bugs e melhorias."
     }
   },
   "installed": "Instalado",

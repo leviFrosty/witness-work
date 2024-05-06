@@ -448,6 +448,12 @@
       "c3": "Ang mga umuulit na plano ay maaaring tanggalin ng isang kaganapan o isang kaganapan at lahat ng mga kaganapan sa hinaharap.",
       "c4": "Mga bagong custom na field para sa mga contact! Maaari kang lumikha ng anumang bilang ng mga custom na field na gusto mo.",
       "c5": "Maaari mo na ngayong direktang ibahagi ang iyong oras sa NW Publisher!"
+    },
+    "1270": {
+      "c1": "Nagdagdag ng Timer! ⏱️ (Stopwatch). Maaari mo na ngayong simulan at ihinto ang isang timer upang direktang subaybayan ang iyong oras sa loob ng app.",
+      "c2": "Nalutas ang isyu sa pag-crash para sa ilang device kapag nagna-navigate sa screen ng Mga Detalye ng Contact.",
+      "c3": "Na-update na mga dependency. [iOS] Bagong minimum na bersyon: 13.4",
+      "c4": "Iba pang mga menor de edad na pag-aayos at pagpapahusay ng bug."
     }
   },
   "installed": "Naka-install",

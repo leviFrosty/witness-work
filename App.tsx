@@ -57,6 +57,7 @@ if (Constants.appOwnership === 'expo' && Constants.expoVersion) {
   Sentry.setTag('expoAppVersion', Constants.expoVersion)
 }
 Sentry.setTag('expoChannel', Updates.channel)
+Sentry.setTag('expoUpdateVersion', Updates.updateId)
 
 export default function App() {
   const colorScheme = useColorScheme()

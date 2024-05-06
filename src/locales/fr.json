@@ -448,6 +448,12 @@
       "c3": "Les plans récurrents peuvent être supprimés par événement unique ou par événement unique et tous les événements futurs.",
       "c4": "Nouveaux champs personnalisés pour les contacts ! Vous pouvez créer autant de champs personnalisés que vous le souhaitez.",
       "c5": "Vous pouvez désormais partager votre temps directement avec NW Publisher !"
+    },
+    "1270": {
+      "c1": "Minuterie ajoutée ! ⏱️ (Chronomètre). Vous pouvez désormais démarrer et arrêter un chronomètre pour suivre votre temps directement dans l'application.",
+      "c2": "Problème de plantage résolu pour certains appareils lors de la navigation vers l'écran Détails du contact.",
+      "c3": "Dépendances mises à jour. [iOS] Nouvelle version minimale : 13.4",
+      "c4": "Autres corrections de bugs mineurs et améliorations."
     }
   },
   "installed": "installée",

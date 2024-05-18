@@ -16,13 +16,7 @@ export const openURL = async (
   }
 ) => {
   try {
-    const canOpen = await Linking.canOpenURL(url)
-
-    if (canOpen) {
-      await Linking.openURL(url)
-    } else {
-      throw new Error()
-    }
+    await Linking.openURL(url)
   } catch (error) {
     Alert.alert(
       options?.alert?.title ?? i18n.t('failedToOpenLink'),

@@ -1,4 +1,4 @@
-name: Tests
+name: Lint
 
 on:
   push:
@@ -30,6 +30,3 @@ jobs:
 
       - name: Run Jest tests
         run: yarn run testFinal
-
-      - name: Lint
-        run: yarn run lint

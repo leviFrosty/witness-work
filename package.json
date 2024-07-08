@@ -13,7 +13,7 @@
     "testDebug": "jest -o --watch --coverage=false",
     "testFinal": "jest",
     "updateSnapshots": "jest -u --coverage=false",
-    "format": "npx prettier --write . --log-level warn --cache",
+    "format": "yarn prettier --write . --log-level warn --cache",
     "lint": "yarn tsc && yarn eslint ."
   },
   "dependencies": {

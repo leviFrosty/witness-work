@@ -58,6 +58,7 @@ export default ({ config }: ConfigContext): ExpoConfig => {
       url: 'https://u.expo.dev/a67257dc-2fb8-4942-97f2-e9364b80d318',
     },
     plugins: [
+      'expo-font',
       'expo-localization',
       ['expo-updates', { username: 'levi_frosty' }],
       [
@@ -74,17 +75,6 @@ export default ({ config }: ConfigContext): ExpoConfig => {
         },
       ],
     ],
-    hooks: {
-      postPublish: [
-        {
-          file: 'sentry-expo/upload-sourcemaps',
-          config: {
-            organization: 'levi-wilkerson',
-            project: 'jw-time',
-          },
-        },
-      ],
-    },
   }
 
   return withSentry(expoConfig, {

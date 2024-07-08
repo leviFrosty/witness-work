@@ -327,35 +327,50 @@
   "new": "Mới",
   "bugFixes": "Sửa lỗi",
   "updates": {
-    "160": {
-      "c1": "Cuộc trò chuyện bây giờ có thể chỉnh sửa được. Thông báo có thể cấu hình",
-      "c2": "Cử chỉ vuốt để chỉnh sửa hoặc xóa cuộc trò chuyện, danh bạ, v.v.",
-      "c3": "Đã thêm phản hồi xúc giác cho các hành động quan trọng khác nhau"
+    "1211": {
+      "c1": "Đã thêm các gợi ý một lần hữu ích hơn khi thích hợp."
     },
-    "161": {
-      "c1": "Đã thêm nhiều tùy chọn phút hơn cho các mục thời gian"
+    "1210": {
+      "c1": "Cải thiện đáng kể độ chính xác của hiển thị thời gian.",
+      "c2": "Cải thiện độ chính xác của thanh tiến trình thời gian.",
+      "c3": "Đã thêm các gợi ý hữu ích cho những hành động có thể không được chú ý ngay lập tức.",
+      "c4": "Cải thiện chất lượng cuộc sống trên màn hình bản đồ với thông tin phù hợp hơn và nút thêm nhanh."
     },
-    "162": {
-      "c1": "Điều chỉnh yêu cầu về số giờ tiên phong đặc biệt từ 70 lên 100"
+    "1201": {
+      "c1": "Sửa lỗi nhỏ.",
+      "c2": "Bản dịch tiếng Hàn được cải thiện đáng kể - cảm ơn anh Paul. Nếu bạn muốn giúp dịch ngôn ngữ của mình, vui lòng truy cập cài đặt.",
+      "c3": "Sửa lỗi nhỏ."
     },
-    "163": {
-      "c1": "Giải quyết các vấn đề cập nhật tự động"
+    "1200": {
+      "c1": "Thêm chức năng sao lưu và khôi phục. Giờ đây, bạn có thể sao lưu dữ liệu của mình lên đám mây và khôi phục dữ liệu sau, điều này cho phép bạn chuyển dữ liệu của mình sang thiết bị khác. Bạn cũng có thể chuyển nó sang nền tảng khác. Tìm tính năng mới này trong cài đặt."
     },
-    "170": {
-      "c1": "Thêm các phương thức xuất thời gian khác nhau",
-      "c2": "Thêm 'Không ở nhà'"
+    "1120": {
+      "c1": "Thêm chức năng sao lưu và khôi phục. Bây giờ bạn có thể sao lưu dữ liệu của mình lên đám mây và khôi phục dữ liệu đó sau. Bạn có thể chuyển dữ liệu của mình sang thiết bị khác. Bạn cũng có thể chuyển nó sang nền tảng khác. Tìm tính năng mới này trong cài đặt."
     },
-    "180": {
-      "c1": "Đã thêm mã hóa địa lý tự động cho danh bạ",
-      "c2": "Đã thêm chế độ xem bản đồ"
+    "1111": {
+      "c1": "Thêm trang quyên góp trong phần cài đặt cho những ai muốn đóng góp.",
+      "c2": "Bao gồm nhiều cải tiến nhỏ và sửa lỗi"
     },
-    "181": {
-      "c1": "Chế độ xem bản đồ mở rộng",
-      "c2": "Đã thêm yêu cầu đánh giá cửa hàng sau khi đáp ứng một số tiêu chí nhất định",
-      "c3": "Sửa lỗi nhỏ"
+    "1110": {
+      "c1": "Đã thêm hỗ trợ cho iPad & Máy tính bảng!",
+      "c2": "Điều chỉnh nhiều kiểu khác nhau để phù hợp hơn với màn hình lớn hơn.",
+      "c3": "Đã điều chỉnh phương thức gửi Báo cáo lỗi và Yêu cầu tính năng tới Github."
     },
-    "182": {
-      "c1": "Cập nhật mọi lúc để phản ánh ngôn ngữ hiện tại"
+    "1100": {
+      "c1": "Thêm báo cáo hàng năm vào màn hình Báo cáo Thời gian! Theo dõi nhanh tiến độ năm dịch vụ của bạn.",
+      "c2": "Việc thêm thời gian từ màn hình Báo cáo thời gian giờ đây sẽ mặc định báo cáo cho tháng đã chọn.",
+      "c3": "Khắc phục sự cố khi xuất báo cáo dịch vụ tháng 1."
+    },
+    "192": {
+      "c1": "Khắc phục sự cố trong đó một số thiết bị có thanh tiến trình tràn.",
+      "c2": "Bổ sung thêm cách xử lý chi tiết hơn về lỗi liên kết cho các thiết bị thiếu ứng dụng cần thiết.",
+      "c3": "Bổ sung thêm cách xử lý chi tiết hơn về lỗi liên kết đối với một số thiết bị thiếu ứng dụng cần thiết.",
+      "c4": "Điều hướng trực tiếp đến một tháng từ phần thói quen hàng tháng của màn hình chính.",
+      "c5": "Màn hình Báo cáo Thời gian xử lý tốt hơn các tháng trống và các tháng trong tương lai.",
+      "c6": "Sửa lỗi nhỏ."
+    },
+    "191": {
+      "c1": "Giải quyết vấn đề điều hướng đến màn hình thời gian."
     },
     "190": {
       "c1": "Đã thêm tùy chọn trong cài đặt",
@@ -366,50 +381,35 @@
       "c6": "Bây giờ hãy thêm thẻ tùy chỉnh vào mục thời gian của bạn",
       "c7": "Màn hình Báo cáo thời gian được cập nhật để được sắp xếp và phân tách theo tháng tốt hơn"
     },
-    "191": {
-      "c1": "Giải quyết vấn đề điều hướng đến màn hình thời gian."
+    "182": {
+      "c1": "Cập nhật mọi lúc để phản ánh ngôn ngữ hiện tại"
     },
-    "192": {
-      "c1": "Khắc phục sự cố trong đó một số thiết bị có thanh tiến trình tràn.",
-      "c2": "Bổ sung thêm cách xử lý chi tiết hơn về lỗi liên kết cho các thiết bị thiếu ứng dụng cần thiết.",
-      "c3": "Bổ sung thêm cách xử lý chi tiết hơn về lỗi liên kết đối với một số thiết bị thiếu ứng dụng cần thiết.",
-      "c4": "Điều hướng trực tiếp đến một tháng từ phần thói quen hàng tháng của màn hình chính.",
-      "c5": "Màn hình Báo cáo Thời gian xử lý tốt hơn các tháng trống và các tháng trong tương lai.",
-      "c6": "Sửa lỗi nhỏ."
+    "181": {
+      "c1": "Chế độ xem bản đồ mở rộng",
+      "c2": "Đã thêm yêu cầu đánh giá cửa hàng sau khi đáp ứng một số tiêu chí nhất định",
+      "c3": "Sửa lỗi nhỏ"
     },
-    "1100": {
-      "c1": "Thêm báo cáo hàng năm vào màn hình Báo cáo Thời gian! Theo dõi nhanh tiến độ năm dịch vụ của bạn.",
-      "c2": "Việc thêm thời gian từ màn hình Báo cáo thời gian giờ đây sẽ mặc định báo cáo cho tháng đã chọn.",
-      "c3": "Khắc phục sự cố khi xuất báo cáo dịch vụ tháng 1."
+    "180": {
+      "c1": "Đã thêm mã hóa địa lý tự động cho danh bạ",
+      "c2": "Đã thêm chế độ xem bản đồ"
     },
-    "1110": {
-      "c1": "Đã thêm hỗ trợ cho iPad & Máy tính bảng!",
-      "c2": "Điều chỉnh nhiều kiểu khác nhau để phù hợp hơn với màn hình lớn hơn.",
-      "c3": "Đã điều chỉnh phương thức gửi Báo cáo lỗi và Yêu cầu tính năng tới Github."
+    "170": {
+      "c1": "Thêm các phương thức xuất thời gian khác nhau",
+      "c2": "Thêm 'Không ở nhà'"
     },
-    "1111": {
-      "c1": "Thêm trang quyên góp trong phần cài đặt cho những ai muốn đóng góp.",
-      "c2": "Bao gồm nhiều cải tiến nhỏ và sửa lỗi"
+    "163": {
+      "c1": "Giải quyết các vấn đề cập nhật tự động"
     },
-    "1120": {
-      "c1": "Thêm chức năng sao lưu và khôi phục. Bây giờ bạn có thể sao lưu dữ liệu của mình lên đám mây và khôi phục dữ liệu đó sau. Bạn có thể chuyển dữ liệu của mình sang thiết bị khác. Bạn cũng có thể chuyển nó sang nền tảng khác. Tìm tính năng mới này trong cài đặt."
+    "162": {
+      "c1": "Điều chỉnh yêu cầu về số giờ tiên phong đặc biệt từ 70 lên 100"
     },
-    "1200": {
-      "c1": "Thêm chức năng sao lưu và khôi phục. Giờ đây, bạn có thể sao lưu dữ liệu của mình lên đám mây và khôi phục dữ liệu sau, điều này cho phép bạn chuyển dữ liệu của mình sang thiết bị khác. Bạn cũng có thể chuyển nó sang nền tảng khác. Tìm tính năng mới này trong cài đặt."
+    "161": {
+      "c1": "Đã thêm nhiều tùy chọn phút hơn cho các mục thời gian"
     },
-    "1201": {
-      "c1": "Sửa lỗi nhỏ.",
-      "c2": "Bản dịch tiếng Hàn được cải thiện đáng kể - cảm ơn anh Paul. Nếu bạn muốn giúp dịch ngôn ngữ của mình, vui lòng truy cập cài đặt.",
-      "c3": "Sửa lỗi nhỏ."
-    },
-    "1210": {
-      "c1": "Cải thiện đáng kể độ chính xác của hiển thị thời gian.",
-      "c2": "Cải thiện độ chính xác của thanh tiến trình thời gian.",
-      "c3": "Đã thêm các gợi ý hữu ích cho những hành động có thể không được chú ý ngay lập tức.",
-      "c4": "Cải thiện chất lượng cuộc sống trên màn hình bản đồ với thông tin phù hợp hơn và nút thêm nhanh."
-    },
-    "1211": {
-      "c1": "Đã thêm các gợi ý một lần hữu ích hơn khi thích hợp."
+    "160": {
+      "c1": "Cuộc trò chuyện bây giờ có thể chỉnh sửa được. Thông báo có thể cấu hình",
+      "c2": "Cử chỉ vuốt để chỉnh sửa hoặc xóa cuộc trò chuyện, danh bạ, v.v.",
+      "c3": "Đã thêm phản hồi xúc giác cho các hành động quan trọng khác nhau"
     },
     "1220": {
       "c3": "Đã thêm Lịch vào màn hình báo cáo thời gian.",

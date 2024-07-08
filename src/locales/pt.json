@@ -2,25 +2,25 @@
   "hello": "Olá",
   "goodBye": "Adeus",
   "welcomeTo": "Bem-vindo ao",
-  "jwTime": "Horário JW",
-  "getStarted": "Iniciar",
-  "whatTypePublisherAreYou": "Que tipo de editor você é?",
-  "noHourRequirement": "Sem exigência de hora",
+  "jwTime": "JW Time",
+  "getStarted": "Começar",
+  "whatTypePublisherAreYou": "Que tipo de publicador você é?",
+  "noHourRequirement": "Sem requisito de horas",
   "hourMonthlyRequirement": "Requisito mensal de {{count}} horas",
-  "publisher": "Editor",
-  "regularAuxiliary": "Auxiliar Regular",
-  "regularPioneer": "Pioneiro regular",
+  "publisher": "Publicador",
+  "regularAuxiliary": "Auxiliar por Tempo Indeterminado",
+  "regularPioneer": "Pioneiro Regular",
   "circuitOverseer": "Superintendente de Circuito",
   "specialPioneer": "Pioneiro Especial",
-  "continue": "Continuar",
-  "neverForgetAReturnVisit": "Nunca se esqueça de uma revisita",
-  "neverForgetAReturnVisit_description": "JW Time will notify you about upcoming return visits or studies. You can change this later in the settings.",
+  "continue": "Avançar",
+  "neverForgetAReturnVisit": "Nunca mais se esqueça de uma revisita",
+  "neverForgetAReturnVisit_description": "O JW Time vai notificar você sobre as próximas revisitas e estudos. Você pode alterar isso depois, em Configurações.",
   "skip": "Pular",
   "allowNotifications": "Permitir notificações",
-  "youreAllSet": "Está tudo pronto!",
-  "youreAllSet_description": "O JW Time irá notificá-lo sobre as conversas que você agendou.",
-  "optInNotificationsLater": "Você pode ativar as notificações nas configurações posteriormente.",
-  "completeSetup": "Configuração completa",
+  "youreAllSet": "Tudo pronto!",
+  "youreAllSet_description": "O JW Time vai notificar você sobre as visitas que você programou.",
+  "optInNotificationsLater": "Depois você pode ativar as notificações em Configurações.",
+  "completeSetup": "Tudo pronto",
   "noRecentConversation": "Nenhuma conversa recente",
   "noRecentConversation_plural": "Nenhuma conversa recente",
   "returnVisitContacts": "Contatos para Revisita",
@@ -34,8 +34,8 @@
   "upcoming": "por vir",
   "past": "passado",
   "topic": "Tema:",
-  "monthlyRoutine": "Rotina Mensal",
-  "searchForContact": "Procure contato...",
+  "monthlyRoutine": "Programação Mensal",
+  "searchForContact": "Buscar um contato...",
   "phrasesFar": {
     "keepGoing": "Continue!",
     "youCanDoThis": "Você consegue fazer isso!",
@@ -48,33 +48,33 @@
   "phrasesClose": {
     "oneStepCloser": "Um passo mais perto!",
     "almostThere": "Quase lá!",
-    "keepMovingForward": "Siga em Frente!",
-    "successOnTheHorizon": "Sucesso no horizonte!",
+    "keepMovingForward": "Siga em frente!",
+    "successOnTheHorizon": "Sucesso à vista!",
     "momentumIsYours": "O impulso é seu!",
     "nearingAchievement": "Aproximando-se da conquista!",
     "youreClosingIn": "Você está se aproximando!",
     "closerThanEver": "Mais perto do que nunca!"
   },
   "phrasesDone": {
-    "youDidIt": "Você fez isso!",
+    "youDidIt": "Você conseguiu!",
     "goalAchieved": "Objetivo alcançado!",
     "youNailedIt": "Você acertou em cheio!",
     "congratulations": "Parabéns!",
     "takeYourShoesOff": "Tire seus sapatos!",
     "hatsOffToYou": "Tiro o chapéu para você!",
-    "missionComplete": "Missão completa!",
+    "missionComplete": "Missão cumprida!",
     "success": "Sucesso!"
   },
   "hoursLeft": "horas restantes",
-  "goalBasedOnPublisherType": "A meta é baseada no seu tipo de editor",
-  "addTime": "Tempo extra",
+  "goalBasedOnPublisherType": "A meta é baseada no seu perfil de publicador",
+  "addTime": "Adicionar",
   "phrasesStudiesNone": {
     "keepGoing": "Continue!",
     "stayStrong": "Aguente firme!",
-    "stayPositive": "Se mantenha positivo!",
+    "stayPositive": "Continue positivo!",
     "grindOn": "Moer em!",
-    "keepSearching": "Continue procurando!",
-    "stayResilient": "Mantenha-se resiliente!"
+    "keepSearching": "Continue buscando!",
+    "stayResilient": "Continue paciente!"
   },
   "phrasesStudiesDone": {
     "bravo": "Bravo!",
@@ -87,12 +87,12 @@
   },
   "basedOnConcacts": "Baseado em contatos",
   "undo": "Desfazer",
-  "sharedTheGoodNews": "Compartilhou o\nBoas notícias",
-  "serviceReport": "Relatório de serviço",
+  "sharedTheGoodNews": "Compartilhou Boas Novas",
+  "serviceReport": "Relatório de Serviço de Campo",
   "hours_lowercase": "horas",
   "hours": "Horas",
   "studies": "Estudos",
-  "addTime_description": "Inserir as informações de horário abaixo registrará o tempo de serviço daquele dia",
+  "addTime_description": "Inserir o tempo gasto no ministério abaixo vai gerar um registro das suas atividades no dia selecionado",
   "minutes": "Minutos",
   "minutes_lowercase": "minutos",
   "submit": "Enviar",
@@ -100,7 +100,7 @@
   "phone": "Telefone",
   "contact": "Contato",
   "isStudying": "está estudando",
-  "lastStudied": "último estudado",
+  "lastStudied": "último estudo",
   "address": "Endereço",
   "email": "E-mail",
   "deleteContact": "Excluir contato",
@@ -108,43 +108,43 @@
   "edit": "Editar",
   "contactNotFoundForId": "Contato não encontrado para o ID fornecido:",
   "noPersonalInformationSaved": "Nenhuma informação pessoal salva. 🧐",
-  "tapPlusToAddConvo": "Toque no ícone de adição acima para adicionar uma conversa.",
-  "name_placeholder": "Qual é o nome deles?",
+  "tapPlusToAddConvo": "Toque no ícone de mais \"+\" acima para adicionar uma conversa.",
+  "name_placeholder": "Qual o nome da pessoa?",
   "name": "Nome",
-  "phone_placeholder": "+x (xxx) xxx-xxxx",
-  "email_placeholder": "exemplo@acme.com",
-  "addressLine1": "Endereço Linha 1",
-  "addressLine2": "endereço linha 2",
+  "phone_placeholder": "Qual o telefone dela?",
+  "email_placeholder": "email@exemplo.com",
+  "addressLine1": "Endereço",
+  "addressLine2": "Complemento",
   "city": "Cidade",
   "state": "Estado",
-  "zip": "fecho eclair",
+  "zip": "CEP",
   "country": "País",
-  "name_error": "É necessário um nome.",
+  "name_error": "O nome é obrigatório.",
   "save": "Salvar",
-  "isBibleStudy": "é estudo bíblico",
+  "isBibleStudy": "é um estudo bíblico",
   "add": "Adicionar",
-  "enterContactInformation": "Insira as informações de contato abaixo da pessoa que você adicionará ao JW Time.",
+  "enterContactInformation": "Insira abaixo as informações de contato da pessoa que você quer adicionar.",
   "assignContact": "Atribuir contato",
   "noContactAssigned": "Nenhum contato atribuído",
   "assign": "Atribuir",
   "unassign": "Cancelar atribuição",
   "youMustAssignAConversationToContact": "Você deve atribuir uma conversa a um contato.",
   "reminder_title": "Lembrete de conversa",
-  "reminderTwoHours_part1": "Ei! Seu bate-papo com",
+  "reminderTwoHours_part1": "Ei! Sua conversa com ",
   "reminderTwoHours_part2": "é amanhã às",
-  "reminder_topic": "Tema:",
-  "reminderFifteenMinutes_part1": "⏰ Seu bate-papo com",
-  "reminderFifteenMinutes_part2": "é em 15 minutos. Prepare-se e prepare-se para uma conversa frutífera!🚀📖",
-  "addConversation": "Adicionar conversa",
-  "addConversation_description": "Insira as informações de contato abaixo da pessoa que você adicionará ao JW Time.",
-  "note": "Observação",
-  "note_placeholder": "Anote informações sobre sua conversa. Certifique-se de ser descritivo!",
-  "followUp": "Seguir",
-  "topic_placeholder": "Insira o tópico, por exemplo, Aproveite a vida para sempre, cap. 1",
-  "notifyMe": "Me avise",
-  "notifyMe_description": "As notificações estão desativadas. Habilite-os nas configurações do dispositivo para usar este recurso.",
-  "notifyMe_notice": "Você será notificado 1 dia antes e 15 minutos antes do horário desejado.",
-  "deletedContactsWillAppearHere": "Os contatos excluídos aparecerão aqui.",
+  "reminder_topic": "\nAssunto: ",
+  "reminderFifteenMinutes_part1": "⏰ Sua conversa com ",
+  "reminderFifteenMinutes_part2": " é em 15 minutos. Prepare-se e esteja pronto para uma conversa frutífera!🚀📖",
+  "addConversation": "Adicionar Visita",
+  "addConversation_description": "Insira abaixo as informações da visita.",
+  "note": "Observações",
+  "note_placeholder": "Anote aqui informações sobre sua conversa!",
+  "followUp": "Próxima visita",
+  "topic_placeholder": "Insira o assunto, por exemplo, Seja Feliz, cap. 1",
+  "notifyMe": "Avise-me",
+  "notifyMe_description": "As notificações estão desativadas. Ative-as nas configurações do dispositivo para usar este recurso.",
+  "notifyMe_notice": "Você será notificado 1 dia antes, e 15 minutos antes do horário desejado.",
+  "deletedContactsWillAppearHere": "Os contatos arquivados aparecerão aqui.",
   "recoverContacts_description": "Pressione desfazer abaixo para recuperar um contato. Excluir contatos desta página irá excluí-los permanentemente, bem como as conversas correspondentes.",
   "recoverContacts": "Recuperar contatos",
   "permanentlyDelete": "Excluir permanentemente?",
@@ -194,7 +194,7 @@
   "addContact": "Adicionar contato",
   "search": "Procurar...",
   "privacyPolicy": "política de Privacidade",
-  "status": "Status",
+  "status": "Perfil",
   "before": "antes",
   "days_lowercase": "dias",
   "weeks_lowercase": "semanas",
@@ -268,7 +268,7 @@
   "appleMaps": "Mapas da Apple",
   "googleMaps": "Google Mapas",
   "shareFrom": "Compartilhar de",
-  "generateAUrlFromYourPreferredMappingService": "Share a link from different mapping services.",
+  "generateAUrlFromYourPreferredMappingService": "Compartilhe o link de um app de mapas diferente.",
   "introducingMapView": "Configuração do mapa",
   "mapViewOnboarding1": "Para começar, atualize seu",
   "mapViewOnboarding2": "contato existente que não possui coordenadas.",
@@ -305,15 +305,15 @@
   "pleaseDescribeYourFeatureClearly": "Descreva qual recurso você gostaria que fosse extremamente detalhado. Forneça um nome de contato e telefone. Se aplicável, desenhe uma imagem da aparência do recurso. Como alternativa, envie uma captura de tela de um aplicativo com funcionalidade semelhante.",
   "Home": "Lar",
   "Map": "Mapa",
-  "preferences": "Preferences",
-  "defaultNavigationApp": "Default Navigation App",
+  "preferences": "Configurações",
+  "defaultNavigationApp": "App padrão de navegação",
   "apple": "Apple",
   "google": "Google",
-  "couldNotOpenMaps": "Could Not Open Maps",
-  "couldNotOpenMaps_description": "Please verify you have a valid mapping application installed.",
-  "preferredMaps": "Preferred Maps",
-  "youCanChangeThisLaterInTheSettings": "You can change this later in the settings.",
-  "preferredMaps_description": "JW Time will use your preferred mapping application to navigate to your contact's address.",
+  "couldNotOpenMaps": "Não foi possível abrir o mapa",
+  "couldNotOpenMaps_description": "Por favor, verifique se você tem um app de mapas válido instalado.",
+  "preferredMaps": "App de Mapas",
+  "youCanChangeThisLaterInTheSettings": "Você pode alterar essa opção depois, em \"Configurações\".",
+  "preferredMaps_description": "O JW Time usará seu app de mapas preferido para navegar até o endereço das revisitas e estudos.",
   "waze": "Waze",
   "navigation": "Navegação",
   "nextVisitOffset_description": "A que distância deve estar sua próxima visita quando você cria uma conversa.",
@@ -327,35 +327,50 @@
   "new": "Novo",
   "bugFixes": "Correções de bugs",
   "updates": {
-    "160": {
-      "c1": "As conversas agora são editáveis. As notificações são configuráveis",
-      "c2": "Deslize os gestos para editar ou excluir conversas, contatos, etc.",
-      "c3": "Adicionado feedback tátil para várias ações importantes"
+    "1211": {
+      "c1": "Adicionadas dicas únicas mais úteis quando apropriado."
     },
-    "161": {
-      "c1": "Adicionadas mais opções de minutos para entradas de tempo"
+    "1210": {
+      "c1": "Precisão bastante melhorada das exibições de tempo.",
+      "c2": "Precisão aprimorada das barras de progresso do tempo.",
+      "c3": "Adicionadas dicas úteis para ações que podem não ser imediatamente perceptíveis.",
+      "c4": "Melhor qualidade de vida na tela de mapas com informações mais relevantes e botão de adição rápida."
     },
-    "162": {
-      "c1": "Requisito de horas de pioneiro especial ajustado de 70 para 100"
+    "1201": {
+      "c1": "Pequenas correções de bugs.",
+      "c2": "Traduções coreanas significativamente melhoradas - obrigado, irmão Paul. Se você quiser ajudar a traduzir seu próprio idioma, visite as configurações.",
+      "c3": "Pequenas correções de bugs."
     },
-    "163": {
-      "c1": "Resolva problemas de atualização automatizada"
+    "1200": {
+      "c1": "Adiciona funcionalidade de backup e restauração. Agora você pode fazer backup de seus dados na nuvem e restaurá-los mais tarde, o que permite transferir seus dados para outro dispositivo. Você também pode transferi-lo para outra plataforma. Encontre esse novo recurso nas configurações."
     },
-    "170": {
-      "c1": "Adicione vários métodos de exportação de horário",
-      "c2": "Adicione 'Não em casa'"
+    "1120": {
+      "c1": "Adiciona funcionalidade de backup e restauração. Agora você pode fazer backup de seus dados na nuvem e restaurá-los mais tarde. Você pode transferir seus dados para outro dispositivo. Você também pode transferi-lo para outra plataforma. Encontre esse novo recurso nas configurações."
     },
-    "180": {
-      "c1": "Adicionada geocodificação automática para contatos",
-      "c2": "Visualização de mapa adicionada"
+    "1111": {
+      "c1": "Adicione a página de doações nas configurações para quem deseja contribuir.",
+      "c2": "Inclui várias pequenas melhorias e correções de bugs"
     },
-    "181": {
-      "c1": "Visualização de mapa expandida",
-      "c2": "Adicionada solicitação de revisão da loja após determinados critérios serem atendidos",
-      "c3": "Pequenas correções de bugs"
+    "1110": {
+      "c1": "Adicionado suporte para iPads e iPads. Comprimidos!",
+      "c2": "Vários estilos ajustados para melhor caber em telas maiores.",
+      "c3": "Ajustou o método de envio de relatórios de bugs e solicitações de recursos ao Github."
     },
-    "182": {
-      "c1": "Atualizado o tempo todo para refletir a localidade atual"
+    "1100": {
+      "c1": "Adiciona relatório anual à tela Relatórios de Tempo! Acompanhe rapidamente o progresso do seu ano de serviço.",
+      "c2": "Adicionar tempo na tela Relatórios de tempo agora padroniza o relatório para o mês selecionado.",
+      "c3": "Corrige um problema ao exportar o relatório de serviço de janeiro."
+    },
+    "192": {
+      "c1": "Corrige um problema em que alguns dispositivos apresentam uma barra de progresso transbordante.",
+      "c2": "Adiciona tratamento mais detalhado de erros de link para dispositivos sem aplicativos necessários.",
+      "c3": "Adiciona tratamento mais detalhado de erros de link para determinados dispositivos sem aplicativos necessários.",
+      "c4": "Navegue diretamente para um mês na seção de rotina mensal da tela inicial.",
+      "c5": "A tela Relatórios de Tempo lida melhor com meses vazios e futuros.",
+      "c6": "Pequenas correções de bugs."
+    },
+    "191": {
+      "c1": "Resolve um problema ao navegar pelas telas de tempo."
     },
     "190": {
       "c1": "Preferências adicionadas nas configurações",
@@ -366,50 +381,35 @@
       "c6": "Agora adicione tags personalizadas às suas entradas de tempo",
       "c7": "Tela de Relatórios de Tempo atualizada para ser melhor organizada e separada por mês"
     },
-    "191": {
-      "c1": "Resolve um problema ao navegar pelas telas de tempo."
+    "182": {
+      "c1": "Atualizado o tempo todo para refletir a localidade atual"
     },
-    "192": {
-      "c1": "Corrige um problema em que alguns dispositivos apresentam uma barra de progresso transbordante.",
-      "c2": "Adiciona tratamento mais detalhado de erros de link para dispositivos sem aplicativos necessários.",
-      "c3": "Adiciona tratamento mais detalhado de erros de link para determinados dispositivos sem aplicativos necessários.",
-      "c4": "Navegue diretamente para um mês na seção de rotina mensal da tela inicial.",
-      "c5": "A tela Relatórios de Tempo lida melhor com meses vazios e futuros.",
-      "c6": "Pequenas correções de bugs."
+    "181": {
+      "c1": "Visualização de mapa expandida",
+      "c2": "Adicionada solicitação de revisão da loja após determinados critérios serem atendidos",
+      "c3": "Pequenas correções de bugs"
     },
-    "1100": {
-      "c1": "Adiciona relatório anual à tela Relatórios de Tempo! Acompanhe rapidamente o progresso do seu ano de serviço.",
-      "c2": "Adicionar tempo na tela Relatórios de tempo agora padroniza o relatório para o mês selecionado.",
-      "c3": "Corrige um problema ao exportar o relatório de serviço de janeiro."
+    "180": {
+      "c1": "Adicionada geocodificação automática para contatos",
+      "c2": "Visualização de mapa adicionada"
     },
-    "1110": {
-      "c1": "Adicionado suporte para iPads e iPads. Comprimidos!",
-      "c2": "Vários estilos ajustados para melhor caber em telas maiores.",
-      "c3": "Ajustou o método de envio de relatórios de bugs e solicitações de recursos ao Github."
+    "170": {
+      "c1": "Adicione vários métodos de exportação de horário",
+      "c2": "Adicione 'Não em casa'"
     },
-    "1111": {
-      "c1": "Adicione a página de doações nas configurações para quem deseja contribuir.",
-      "c2": "Inclui várias pequenas melhorias e correções de bugs"
+    "163": {
+      "c1": "Resolva problemas de atualização automatizada"
     },
-    "1120": {
-      "c1": "Adiciona funcionalidade de backup e restauração. Agora você pode fazer backup de seus dados na nuvem e restaurá-los mais tarde. Você pode transferir seus dados para outro dispositivo. Você também pode transferi-lo para outra plataforma. Encontre esse novo recurso nas configurações."
+    "162": {
+      "c1": "Requisito de horas de pioneiro especial ajustado de 70 para 100"
     },
-    "1200": {
-      "c1": "Adiciona funcionalidade de backup e restauração. Agora você pode fazer backup de seus dados na nuvem e restaurá-los mais tarde, o que permite transferir seus dados para outro dispositivo. Você também pode transferi-lo para outra plataforma. Encontre esse novo recurso nas configurações."
+    "161": {
+      "c1": "Adicionadas mais opções de minutos para entradas de tempo"
     },
-    "1201": {
-      "c1": "Pequenas correções de bugs.",
-      "c2": "Traduções coreanas significativamente melhoradas - obrigado, irmão Paul. Se você quiser ajudar a traduzir seu próprio idioma, visite as configurações.",
-      "c3": "Pequenas correções de bugs."
-    },
-    "1210": {
-      "c1": "Precisão bastante melhorada das exibições de tempo.",
-      "c2": "Precisão aprimorada das barras de progresso do tempo.",
-      "c3": "Adicionadas dicas úteis para ações que podem não ser imediatamente perceptíveis.",
-      "c4": "Melhor qualidade de vida na tela de mapas com informações mais relevantes e botão de adição rápida."
-    },
-    "1211": {
-      "c1": "Adicionadas dicas únicas mais úteis quando apropriado."
+    "160": {
+      "c1": "As conversas agora são editáveis. As notificações são configuráveis",
+      "c2": "Deslize os gestos para editar ou excluir conversas, contatos, etc.",
+      "c3": "Adicionado feedback tátil para várias ações importantes"
     },
     "1220": {
       "c3": "Adicionado calendário à tela de relatórios de tempo.",

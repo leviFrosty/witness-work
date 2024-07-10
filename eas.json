@@ -21,7 +21,8 @@
       "distribution": "internal",
       "env": {
         "APP_VARIANT": "development"
-      }
+      },
+      "node": "20.14.0"
     },
     "preview": {
       "distribution": "internal",

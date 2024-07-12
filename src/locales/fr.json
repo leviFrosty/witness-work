@@ -454,6 +454,12 @@
       "c2": "Problème de plantage résolu pour certains appareils lors de la navigation vers l'écran Détails du contact.",
       "c3": "Dépendances mises à jour. [iOS] Nouvelle version minimale : 13.4",
       "c4": "Autres corrections de bugs mineurs et améliorations."
+    },
+    "1280": {
+      "c1": "Résolution de divers problèmes avec la minuterie (chronomètre)",
+      "c3": "Mettez à jour les dépendances et ajoutez des mises à jour de sécurité.",
+      "c2": "Traductions portugaises mises à jour, merci frère Sérgio !",
+      "c4": "📝 Une petite note personnelle : j'ai été très occupé par les responsabilités et la vie de la congrégation récemment. Après ma prochaine convention la semaine prochaine, les choses reviendront à la normale. Je travaillerai sur de nombreuses autres mises à jour dans les semaines à venir ! Merci de votre patience et d'avoir choisi JW Time ! ❤️"
     }
   },
   "installed": "installée",

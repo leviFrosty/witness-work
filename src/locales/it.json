@@ -454,6 +454,12 @@
       "c2": "Risolto il problema di arresto anomalo di alcuni dispositivi durante la navigazione nella schermata Dettagli contatto.",
       "c3": "Dipendenze aggiornate. [iOS] Nuova versione minima: 13.4",
       "c4": "Altre correzioni di bug e miglioramenti minori."
+    },
+    "1280": {
+      "c1": "Risolti vari problemi con il timer (cronometro)",
+      "c3": "Aggiorna le dipendenze e aggiungi aggiornamenti di sicurezza.",
+      "c2": "Traduzioni portoghesi aggiornate, grazie fratello Sérgio!",
+      "c4": "📝 Una piccola nota personale: recentemente sono stato molto impegnato con le responsabilità e la vita della congregazione. Dopo la mia prossima convention la prossima settimana, le cose torneranno alla normalità. Lavorerò su molti altri aggiornamenti nelle prossime settimane! Grazie per la pazienza e per aver scelto JW Time! ❤️"
     }
   },
   "installed": "Installato",

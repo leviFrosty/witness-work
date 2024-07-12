@@ -454,6 +454,12 @@
       "c2": "Nalutas ang isyu sa pag-crash para sa ilang device kapag nagna-navigate sa screen ng Mga Detalye ng Contact.",
       "c3": "Na-update na mga dependency. [iOS] Bagong minimum na bersyon: 13.4",
       "c4": "Iba pang mga menor de edad na pag-aayos at pagpapahusay ng bug."
+    },
+    "1280": {
+      "c1": "Nalutas ang iba't ibang isyu sa timer (stopwatch)",
+      "c3": "I-update ang mga dependency at magdagdag ng mga update sa seguridad.",
+      "c2": "Na-update ang mga pagsasaling Portuges, salamat kapatid na Sérgio!",
+      "c4": "📝 Isang maliit na personal na tala: Naging abala ako sa mga responsibilidad at buhay sa kongregasyon kamakailan. Pagkatapos ng aking paparating na kombensiyon sa susunod na linggo, mas babalik sa normal ang mga bagay. Gagawa ako ng marami pang update sa mga darating na linggo! Salamat sa iyong pasensya at sa pagpili ng JW Time! ❤️"
     }
   },
   "installed": "Naka-install",

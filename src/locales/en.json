@@ -454,6 +454,12 @@
       "c2": "Resolved crashing issue for some devices when navigating to the Contact Details screen.",
       "c3": "Updated dependencies. [iOS] New minimum version: 13.4",
       "c4": "Other minor bug fixes and improvements."
+    },
+    "1280": {
+      "c1": "Resolved various issues with timer (stopwatch)",
+      "c3": "Update dependencies and add security updates.",
+      "c2": "Updated Portuguese translations, thank you brother Sérgio!",
+      "c4": "📝 A little personal note: I have been very busy with congregation responsibilities and life recently. After my upcoming convention next week, things will return more back to normal. I will be working on many more updates in the coming weeks! Thank you for your patience and for choosing JW Time! ❤️"
     }
   },
   "installed": "Installed",

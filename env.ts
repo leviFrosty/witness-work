@@ -17,7 +17,7 @@ const envVariables = z.object({
 if (__DEV__) {
   // Only runtime checks environment variables for dev mode.
   // Ensures production still launches always.
-  envVariables.parse(process.env)
+  // envVariables.parse(process.env)
 }
 
 declare global {

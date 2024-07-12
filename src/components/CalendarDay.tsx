@@ -243,8 +243,6 @@ const CalendarDay = (
     <View style={{ position: 'relative' }}>
       <Button
         onPress={() => {
-          if (props.planMode && moment().isAfter(props.date?.dateString, 'day'))
-            return
           props.onPress?.(props.date)
           if (props.planMode && howToAddPlan) {
             removeHint('howToAddPlan')

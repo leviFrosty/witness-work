@@ -292,28 +292,26 @@ const SelectedDateSheet: React.FC<Props> = ({
                 </ActionButton>
               </View>
             )}
-            {moment().isSameOrBefore(sheet.date, 'day') && (
-              <Button
-                onPress={() =>
-                  navigation.navigate('PlanDay', {
-                    date: sheet.date.toISOString(),
-                  })
-                }
-                style={{
-                  paddingHorizontal: 40,
-                  borderColor: theme.colors.border,
-                  backgroundColor: theme.colors.background,
-                  borderWidth: 1,
-                  borderRadius: theme.numbers.borderRadiusSm,
-                  height: '100%',
-                  flexGrow: 1,
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}
-              >
-                <Text style={{ textAlign: 'center' }}>{i18n.t('planDay')}</Text>
-              </Button>
-            )}
+            <Button
+              onPress={() =>
+                navigation.navigate('PlanDay', {
+                  date: sheet.date.toISOString(),
+                })
+              }
+              style={{
+                paddingHorizontal: 40,
+                borderColor: theme.colors.border,
+                backgroundColor: theme.colors.background,
+                borderWidth: 1,
+                borderRadius: theme.numbers.borderRadiusSm,
+                height: '100%',
+                flexGrow: 1,
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <Text style={{ textAlign: 'center' }}>{i18n.t('planDay')}</Text>
+            </Button>
           </XView>
         </View>
       </Sheet.Frame>

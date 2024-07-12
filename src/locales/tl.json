@@ -633,5 +633,6 @@
   "resetTimer_description": "Mawawala ang iyong kasalukuyang entry sa oras kung i-reset mo ang timer. Gusto mo bang i-reset?",
   "reset": "I-reset",
   "notEnoughTime": "Hindi Sapat na Oras",
-  "notEnoughTime_description": "Hindi sapat na oras ang lumipas. Dapat mayroon kang hindi bababa sa 5 minuto upang magsumite ng entry sa oras."
+  "notEnoughTime_description": "Hindi sapat na oras ang lumipas. Dapat mayroon kang hindi bababa sa 5 minuto upang magsumite ng entry sa oras.",
+  "providedTimeIsLessThanFiveMinutes": "Ang ibinigay na oras ay mas mababa sa 5 minuto."
 }

@@ -295,6 +295,15 @@ const AddTimeScreen = ({ route }: AddTimeScreenProps) => {
             </InputRowContainer>
           </Section>
           <Section>
+            {!route.params?.hours &&
+            route.params?.minutes !== undefined &&
+            route.params.minutes < 5 &&
+            serviceReport.hours === 0 &&
+            serviceReport.minutes < 5 ? (
+              <Text style={{ color: theme.colors.warn }}>
+                {i18n.t('providedTimeIsLessThanFiveMinutes')}
+              </Text>
+            ) : null}
             <View
               style={{ flexDirection: 'row', justifyContent: 'space-between' }}
             >

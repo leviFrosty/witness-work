@@ -633,5 +633,6 @@
   "resetTimer_description": "You will lose your current time entry if you reset the timer. Do you want to reset?",
   "reset": "Reset",
   "notEnoughTime": "Not Enough Time",
-  "notEnoughTime_description": "Not enough time has elapsed. You must have at least 5 minutes to submit a time entry."
+  "notEnoughTime_description": "Not enough time has elapsed. You must have at least 5 minutes to submit a time entry.",
+  "providedTimeIsLessThanFiveMinutes": "Provided time is less than 5 minutes."
 }

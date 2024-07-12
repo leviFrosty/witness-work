@@ -1,5 +1,5 @@
 import React from 'react'
-import { Alert, View } from 'react-native'
+import { View } from 'react-native'
 import Text from './MyText'
 import Card from './Card'
 import IconButton from './IconButton'
@@ -15,11 +15,9 @@ import useTheme from '../contexts/theme'
 import Button from './Button'
 import { useNavigation } from '@react-navigation/native'
 import { RootStackNavigation } from '../stacks/RootStack'
-import { usePreferences } from '../stores/preferences'
 
 export const TimerSection = () => {
   const { start, stop, reset, isRunning, time, ms } = useStopWatch()
-  const { mustHaveAtLeastFiveMinutesOnStopwatch, removeHint } = usePreferences()
   const navigation = useNavigation<RootStackNavigation>()
   const theme = useTheme()
   const minutes = Math.floor(ms / 60000) % 60
@@ -27,16 +25,6 @@ export const TimerSection = () => {
   const notEnoughTimeToSave = minutes < 5
 
   const handleSave = () => {
-    if (notEnoughTimeToSave) {
-      if (mustHaveAtLeastFiveMinutesOnStopwatch) {
-        Alert.alert(
-          i18n.t('notEnoughTime'),
-          i18n.t('notEnoughTime_description')
-        )
-        removeHint('mustHaveAtLeastFiveMinutesOnStopwatch')
-      }
-      return
-    }
     reset()
     navigation.navigate('Add Time', {
       minutes,
@@ -84,7 +72,6 @@ export const TimerSection = () => {
               size={theme.fontSize('lg')}
             />
           </Button>
-
           <Button
             variant='outline'
             style={{
@@ -101,9 +88,6 @@ export const TimerSection = () => {
           <Button
             onPress={handleSave}
             variant='outline'
-            disabled={
-              !mustHaveAtLeastFiveMinutesOnStopwatch && notEnoughTimeToSave
-            }
             style={{
               paddingVertical: 12,
               borderRadius: theme.numbers.borderRadiusSm,
@@ -113,7 +97,7 @@ export const TimerSection = () => {
           >
             <Text
               style={{
-                textDecorationLine: notEnoughTimeToSave ? 'none' : 'underline',
+                textDecorationLine: 'underline',
                 color: notEnoughTimeToSave
                   ? theme.colors.textAlt
                   : theme.colors.text,

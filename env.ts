@@ -1,17 +1,39 @@
 import { z } from 'zod'
 
 const envVariables = z.object({
-  GOOGLE_CLOUD_API_KEY: z.string(),
-  HERE_API_KEY: z.string(),
-  GOOGLE_MAPS_ANDROID_SDK_API_KEY: z.string(),
-  REVENUECAT_APPLE_API_KEY: z.string(),
-  SENTRY_AUTH_TOKEN: z.string(),
-  EXPO_PUBLIC_SENTRY_PROJECT: z.string(),
-  EXPO_PUBLIC_SENTRY_ORG: z.string(),
+  GOOGLE_CLOUD_API_KEY: z
+    .string()
+    .describe('Used for cloud translation API calls in CLI'),
+  HERE_API_KEY: z
+    .string()
+    .describe(
+      'Used for geocoding api calls when users create address to fetch coordinates'
+    ),
+  GOOGLE_MAPS_ANDROID_SDK_API_KEY: z
+    .string()
+    .describe(
+      '[Android] Maps SDK Api allows use of Google Maps within application'
+    ),
+  REVENUECAT_APPLE_API_KEY: z
+    .string()
+    .describe(
+      '[iOS] Allows use of revenuecat service for in-app purchases for donations'
+    ),
+  SENTRY_AUTH_TOKEN: z
+    .string()
+    .describe('Token that enables Sentry application error logging'),
+  EXPO_PUBLIC_SENTRY_PROJECT: z
+    .string()
+    .describe("Configuration for sentry's project"),
+  EXPO_PUBLIC_SENTRY_ORG: z
+    .string()
+    .describe("Configuration for sentry's organization"),
   APP_VARIANT: z
     .string()
     .optional()
-    .describe('`development` is used to run the app in development mode.'),
+    .describe(
+      'Set to `development` when working locally, targets the eas build to create the `JW Time Dev` bundle instead of production `JW Time`'
+    ),
 })
 
 if (__DEV__) {

@@ -463,7 +463,11 @@
     },
     "1290": {
       "c1": "На экран сводной информации за месяц добавлен новый раздел расписания, который поможет вам отслеживать темп вашего времени.",
-      "c2": "На главном экране решены проблемы с перекрытием, которые иногда возникают на экранах небольших размеров."
+      "c2": "На главном экране решены проблемы с перекрытием, которые иногда возникают на экранах небольших размеров.",
+      "c3": "You can now edit time entries! Tap on them!",
+      "c4": "Many improvements have been made to clarity of how to add, update, and delete various items across JW Time. Hints have been removed as they're no longer necessary.",
+      "c5": "I'm looking for 2 volunteers who have experience in Software QA to assist in testing releases before they reach the public. If you have interest in spending a few hours a month testing, your support would be greatly appreciated. Please contact me: levi@leviwilkerson.com. In the future and as expenses allows, a portion of donations will go to QA for their time.",
+      "c6": "Annual time overview screen now is compressed for better readability."
     }
   },
   "installed": "Установлен",

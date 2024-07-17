@@ -148,7 +148,7 @@ const HourEntryCard = () => {
         })
       }
     >
-      <View style={{ paddingHorizontal: 10, gap: 10 }}>
+      <View style={{ paddingHorizontal: 6, gap: 10 }}>
         <MonthServiceReportProgressBar
           month={moment().month()}
           year={moment().year()}
@@ -292,7 +292,7 @@ const RightCard = () => {
     <View
       style={{
         flexDirection: 'column',
-        paddingHorizontal: 15,
+        paddingHorizontal: 6,
         paddingVertical: 10,
         backgroundColor: theme.colors.backgroundLighter,
         borderRadius: theme.numbers.borderRadiusLg,
@@ -508,7 +508,7 @@ const ServiceReport = ({ setSheet }: ServiceReportProps) => {
       </View>
 
       <Card>
-        <View style={{ flexDirection: 'row', gap: 5 }}>
+        <View style={{ flexDirection: 'row', gap: 3 }}>
           <View
             style={{
               flexDirection: 'column',

@@ -640,5 +640,13 @@
   "reset": "Opnieuw instellen",
   "notEnoughTime": "Niet genoeg tijd",
   "notEnoughTime_description": "Er is niet genoeg tijd verstreken. U moet minimaal 5 minuten de tijd hebben om een tijdvermelding in te dienen.",
-  "providedTimeIsLessThanFiveMinutes": "De opgegeven tijd bedraagt minder dan 5 minuten."
+  "providedTimeIsLessThanFiveMinutes": "De opgegeven tijd bedraagt minder dan 5 minuten.",
+  "aheadOfSchedule": "Voor op schema!",
+  "behindSchedule": "Achter op schema",
+  "hour": "Uur",
+  "expected": "Verwacht",
+  "actual": "Werkelijk",
+  "schedule": "Schema",
+  "onSchedule": "Op schema!",
+  "tryToPlanAtLeast100Percent": "Probeer minimaal 100% van je doel te plannen."
 }

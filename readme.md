@@ -3,7 +3,7 @@
 ![Issues](https://img.shields.io/github/issues/leviFrosty/JW-Time)
 [![Crowdin](https://badges.crowdin.net/jw-time/localized.svg)](https://crowdin.com/project/jw-time)
 
-# About
+# JW Time
 
 JW Time is the easy way for Jehovah's Witnesses to manage their field service priorities.
 
@@ -23,7 +23,7 @@ It is written in Typescript using React Native and Expo.
 <img src="./src/docs/screenshots/preview6.jpg" width="130">
 </div>
 
-## Build
+# Build
 
 Building Android & iOS is similar, for this example we will build an iOS simulator.
 
@@ -45,7 +45,7 @@ Build dependencies: [XCode](https://docs.expo.dev/workflow/ios-simulator/#instal
 
 Learn about the [file and project structure](./src/docs/project-structure.md).
 
-## Sponsor 💖
+# Sponsor 💖
 
 Sponsors & Donations are never expected but greatly appreciated! These donations are used to offset the costs of:
 
@@ -55,12 +55,12 @@ Sponsors & Donations are never expected but greatly appreciated! These donations
 
 [![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/leviwilkerson)
 
-## Help Translate 🌐
+# Help Translate 🌐
 
 JW Time is automatically translated into 12 languages by means of Google Cloud Translate. These translations might not always be the highest quality. To help, proofread these translations on [Crowdin](https://crowdin.com/project/jw-time/). Thank you!
 
 [Not sure how to use Crowdin?](https://support.crowdin.com/crowdin-intro/)
 
-## License
+# License
 
 JW Time © 2024 by Levi Wilkerson is licensed under [Attribution-NonCommercial 4.0 International](./LICENSE)

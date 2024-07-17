@@ -52,7 +52,6 @@ import { useNavigation } from '@react-navigation/native'
 import { usePreferences } from '../stores/preferences'
 import { handleCall, handleMessage } from '../lib/phone'
 import { openURL } from '../lib/links'
-import HintCard from '../components/HintCard'
 import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps'
 import useLocation from '../hooks/useLocation'
 import { useToastController } from '@tamagui/toast'
@@ -566,7 +565,6 @@ const ContactDetailsScreen = ({ route, navigation }: Props) => {
   const theme = useTheme()
   const { params } = route
   const insets = useSafeAreaInsets()
-  const { howToEditAndDeleteConversation } = usePreferences()
   const { contacts, deleteContact } = useContacts()
   const contact = useMemo(
     () => contacts.find((c) => c.id === params.id),
@@ -827,14 +825,6 @@ const ContactDetailsScreen = ({ route, navigation }: Props) => {
                   </XView>
                 </Button>
               </XView>
-              {howToEditAndDeleteConversation &&
-                contactConversationsSorted.length > 0 && (
-                  <View style={{ paddingHorizontal: 10 }}>
-                    <HintCard hintKey='howToEditAndDeleteConversation'>
-                      <Text>{i18n.t('howToEditAndDeleteConversation')}</Text>
-                    </HintCard>
-                  </View>
-                )}
               <View style={{ minHeight: 2 }}>
                 <FlashList
                   scrollEnabled={false}

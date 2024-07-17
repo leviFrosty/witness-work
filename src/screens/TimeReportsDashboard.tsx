@@ -1,7 +1,6 @@
 import React from 'react'
 import { View } from 'react-native'
 import usePublisher from '../hooks/usePublisher'
-import { usePreferences } from '../stores/preferences'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import useTheme from '../contexts/theme'
 import Button from '../components/Button'
@@ -12,7 +11,6 @@ import moment from 'moment'
 import i18n from '../lib/locales'
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
 import AnnualServiceReportSummary from '../components/AnnualServiceReportSummary'
-import HintCard from '../components/HintCard'
 import { FlashList } from '@shopify/flash-list'
 import TimeReportRow from '../components/TimeReportRow'
 import Card from '../components/Card'
@@ -55,7 +53,6 @@ const TimeReportsDashboard = (props: TimeReportsDashboardProps) => {
     setSelectedDateSheet,
   } = props
   const { hasAnnualGoal } = usePublisher()
-  const { howToDeleteTime } = usePreferences()
   const insets = useSafeAreaInsets()
   const theme = useTheme()
   const serviceYear = month < 8 ? year - 1 : year
@@ -207,13 +204,6 @@ const TimeReportsDashboard = (props: TimeReportsDashboardProps) => {
           >
             {i18n.t('entries')}
           </Text>
-          {howToDeleteTime &&
-            thisMonthsReports &&
-            thisMonthsReports.length > 0 && (
-              <HintCard hintKey='howToDeleteTime'>
-                <Text>{i18n.t('howToDeleteTime')}</Text>
-              </HintCard>
-            )}
           <View style={{ gap: 10, flex: 1, minHeight: 10 }}>
             <FlashList
               scrollEnabled={false}

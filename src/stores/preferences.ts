@@ -64,11 +64,7 @@ interface TimeOffset {
  * `usePreferences.removeHint()` to set a hint to false.
  */
 export const hints = {
-  howToDeleteTime: true,
-  howToArchiveContact: true,
-  howToEditAndDeleteConversation: true,
   howToAddPlan: true,
-  mustHaveAtLeastFiveMinutesOnStopwatch: true,
 }
 
 const initialState = {

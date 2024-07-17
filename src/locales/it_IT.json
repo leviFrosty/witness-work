@@ -658,5 +658,6 @@
   "updateTime_description": "Modifica o elimina un rapporto di servizio precedente",
   "deleted": "Eliminato",
   "archived": "Archiviato",
-  "recovered": "Recuperato"
+  "recovered": "Recuperato",
+  "thisContactHasNoConversations": "This contact has no conversations yet."
 }

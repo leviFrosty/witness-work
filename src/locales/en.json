@@ -460,6 +460,10 @@
       "c3": "Update dependencies and add security updates.",
       "c2": "Updated Portuguese translations, thank you brother Sérgio!",
       "c4": "📝 A little personal note: I have been very busy with congregation responsibilities and life recently. After my upcoming convention next week, things will return more back to normal. I will be working on many more updates in the coming weeks! Thank you for your patience and for choosing JW Time! ❤️"
+    },
+    "1290": {
+      "c1": "Added new schedule section to month summary screen which helps you keep track of your time pacing.",
+      "c2": "On home screen, resolved overlapping issues that sometimes happen on small screen sizes."
     }
   },
   "installed": "Installed",

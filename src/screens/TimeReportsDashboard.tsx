@@ -22,6 +22,7 @@ import { ActiveScreen } from '../constants/timeScreen'
 import MonthSummary from '../components/MonthSummary'
 import MonthTimeReportsCalendar from '../components/MonthTimeReportsCalendar'
 import { SelectedDateSheetState } from '../components/SelectedDateSheet'
+import MonthScheduleSection from '../components/MonthScheduleSection'
 
 type TimeReportsDashboardProps = {
   month: number
@@ -160,8 +161,15 @@ const TimeReportsDashboard = (props: TimeReportsDashboardProps) => {
           left: 0,
         }}
       >
-        {hasAnnualGoal && (
-          <View style={{ paddingHorizontal: 15, paddingTop: 15 }}>
+        <View
+          style={{
+            paddingHorizontal: 15,
+            paddingTop: 15,
+            paddingBottom: 30,
+            gap: 10,
+          }}
+        >
+          {hasAnnualGoal && (
             <Button
               onPress={() =>
                 handleSetActiveScreen(month, year, ActiveScreen.AnnualOverview)
@@ -173,22 +181,14 @@ const TimeReportsDashboard = (props: TimeReportsDashboardProps) => {
                 year={year}
               />
             </Button>
-          </View>
-        )}
-        <View
-          style={{
-            paddingHorizontal: 15,
-            paddingTop: 15,
-            paddingBottom: 30,
-            gap: 15,
-          }}
-        >
+          )}
           <MonthSummary
             month={month}
             year={year}
             monthsReports={thisMonthsReports}
             setSheet={setSheet}
           />
+          <MonthScheduleSection month={month} year={year} />
           <MonthTimeReportsCalendar
             month={month}
             year={year}
@@ -196,7 +196,7 @@ const TimeReportsDashboard = (props: TimeReportsDashboardProps) => {
             setSheet={setSelectedDateSheet}
           />
         </View>
-        <View style={{ paddingHorizontal: 15, gap: 7 }}>
+        <View style={{ paddingHorizontal: 15, gap: 5 }}>
           <Text
             style={{
               color: theme.colors.textAlt,

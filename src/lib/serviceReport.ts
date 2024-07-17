@@ -2,6 +2,7 @@ import _ from 'lodash'
 import { Publisher } from '../types/publisher'
 import { ServiceReport } from '../types/serviceReport'
 import moment from 'moment'
+import { DayPlan } from '../stores/serviceReport'
 
 export const ldcMinutesPerMonthCap = 55 * 60
 
@@ -93,6 +94,25 @@ export const totalMinutesForSpecificMonth = (
   return totalMinutesForMonth
 }
 
+export const totalMinutesForSpecificMonthUpToDayOfMonth = (
+  serviceReports: ServiceReport[],
+  targetDay: number,
+  targetMonth: number,
+  targetYear: number
+): number => {
+  const totalMinutesForMonth = serviceReports
+    .filter(
+      (report) =>
+        moment(report.date).month() === targetMonth &&
+        moment(report.date).year() === targetYear &&
+        moment(report.date).date() <= targetDay
+    )
+    .reduce((accumulator, report) => {
+      return accumulator + report.hours * 60 + report.minutes
+    }, 0)
+
+  return totalMinutesForMonth
+}
 export const ldcMinutesForSpecificMonth = (
   serviceReports: ServiceReport[],
   targetMonth: number,
@@ -391,4 +411,45 @@ export const getPlansIntersectingDay = (
         return false
     }
   })
+}
+
+export const plannedMinutesToCurrentDayForMonth = (
+  month: number,
+  year: number,
+  dayPlans: DayPlan[],
+  recurringPlans: RecurringPlan[]
+) => {
+  const selectedMonth = moment().month(month).year(year)
+
+  const dayOfMonth = selectedMonth.isBefore(moment(), 'month')
+    ? selectedMonth.daysInMonth()
+    : moment().date()
+
+  let count = 0
+  Array(dayOfMonth)
+    .fill(1)
+    .forEach((_, i) => {
+      const day = selectedMonth.clone().date(i + 1)
+
+      const dayPlan = dayPlans.find((plan) =>
+        moment(plan.date).isSame(day, 'day')
+      )
+
+      const recurringPlansForDay = getPlansIntersectingDay(
+        day.toDate(),
+        recurringPlans
+      )
+
+      const highestRecurringPlanForDay = recurringPlansForDay.sort(
+        (a, b) => b.minutes - a.minutes
+      )[0]
+
+      if (dayPlan) {
+        count += dayPlan.minutes
+      } else if (highestRecurringPlanForDay) {
+        count += highestRecurringPlanForDay.minutes
+      }
+    })
+
+  return count
 }

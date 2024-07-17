@@ -9,6 +9,7 @@ import {
   totalMinutesForCurrentMonth,
   hasServiceReportsForMonth,
   getDaysLeftInCurrentMonth,
+  plannedMinutesToCurrentDayForMonth,
 } from '../lib/serviceReport'
 import Card from './Card'
 import Text from './MyText'
@@ -30,12 +31,13 @@ import Button from './Button'
 import { ExportTimeSheetState } from './ExportTimeSheet'
 import useDevice from '../hooks/useDevice'
 import _ from 'lodash'
+import AheadOrBehindOfMonthSchedule from './AheadOrBehindOfSchedule'
 
 const HourEntryCard = () => {
   const theme = useTheme()
   const { publisher, publisherHours, displayDetailsOnProgressBarHomeScreen } =
     usePreferences()
-  const { serviceReports } = useServiceReport()
+  const { serviceReports, dayPlans, recurringPlans } = useServiceReport()
   const navigation = useNavigation<RootStackNavigation>()
   const goalHours = publisherHours[publisher]
 
@@ -109,6 +111,15 @@ const HourEntryCard = () => {
 
   const daysLeftInMonth = useMemo(() => getDaysLeftInCurrentMonth(), [])
 
+  const plannedMinutesToCurrentDay = useMemo(() => {
+    return plannedMinutesToCurrentDayForMonth(
+      moment().month(),
+      moment().year(),
+      dayPlans,
+      recurringPlans
+    )
+  }, [dayPlans, recurringPlans])
+
   // Returns hours remaining if the last day of the month because x/0 = infinity.
   // Which we don't want to display to the user
   const hoursPerDayNeeded = useMemo(
@@ -181,30 +192,45 @@ const HourEntryCard = () => {
             <Text style={{ fontFamily: theme.fonts.bold, maxWidth: 200 }}>
               {encouragementPhrase}
             </Text>
-            {hoursPerDayNeeded > 0 && (
-              <View
-                style={{
-                  borderRadius: theme.numbers.borderRadiusLg,
-                  backgroundColor: theme.colors.accent3,
-                  paddingHorizontal: 20,
-                  marginHorizontal: 15,
-                  paddingVertical: 5,
-                }}
-              >
-                <Text
+            {plannedMinutesToCurrentDay !== 0 ? (
+              <AheadOrBehindOfMonthSchedule
+                month={moment().month()}
+                year={moment().year()}
+                fontSize='sm'
+              />
+            ) : hoursPerDayNeeded > 0 ? (
+              <View style={{ gap: 5 }}>
+                <View
                   style={{
-                    fontSize: theme.fontSize('xs'),
-                    color: theme.colors.textInverse,
-                    fontFamily: theme.fonts.semiBold,
+                    borderRadius: theme.numbers.borderRadiusLg,
+                    backgroundColor: theme.colors.accent3,
+                    paddingHorizontal: 20,
+                    marginHorizontal: 15,
+                    paddingVertical: 5,
                   }}
                 >
-                  {hoursPerDayNeeded} {i18n.t('hoursPerDayToGoal')}
+                  <Text
+                    style={{
+                      fontSize: theme.fontSize('xs'),
+                      color: theme.colors.textInverse,
+                      fontFamily: theme.fonts.semiBold,
+                      display: 'flex',
+                    }}
+                  >
+                    {hoursPerDayNeeded} {i18n.t('hoursPerDayToGoal')}
+                  </Text>
+                </View>
+                <Text
+                  style={{
+                    fontSize: 8,
+                    color: theme.colors.textAlt,
+                    textAlign: 'center',
+                  }}
+                >
+                  {i18n.t('goalBasedOnPublisherType')}
                 </Text>
               </View>
-            )}
-            <Text style={{ fontSize: 8, color: theme.colors.textAlt }}>
-              {i18n.t('goalBasedOnPublisherType')}
-            </Text>
+            ) : null}
           </View>
         </View>
       </View>

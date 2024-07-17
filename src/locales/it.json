@@ -640,5 +640,13 @@
   "reset": "Ripristina",
   "notEnoughTime": "Non abbastanza tempo",
   "notEnoughTime_description": "Non è trascorso abbastanza tempo. È necessario disporre di almeno 5 minuti per inviare un inserimento dell'orario.",
-  "providedTimeIsLessThanFiveMinutes": "Il tempo fornito è inferiore a 5 minuti."
+  "providedTimeIsLessThanFiveMinutes": "Il tempo fornito è inferiore a 5 minuti.",
+  "aheadOfSchedule": "Prima del previsto!",
+  "behindSchedule": "In ritardo",
+  "hour": "Ora",
+  "expected": "Previsto",
+  "actual": "Effettivo",
+  "schedule": "Programma",
+  "onSchedule": "In orario!",
+  "tryToPlanAtLeast100Percent": "Prova a pianificare almeno il 100% del tuo obiettivo."
 }

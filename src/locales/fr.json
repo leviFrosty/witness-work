@@ -640,5 +640,13 @@
   "reset": "Réinitialiser",
   "notEnoughTime": "Pas assez de temps",
   "notEnoughTime_description": "Trop peu de temps s'est écoulé. Vous devez disposer d'au moins 5 minutes pour soumettre une entrée de temps.",
-  "providedTimeIsLessThanFiveMinutes": "Le temps fourni est inférieur à 5 minutes."
+  "providedTimeIsLessThanFiveMinutes": "Le temps fourni est inférieur à 5 minutes.",
+  "aheadOfSchedule": "En avance sur le programme!",
+  "behindSchedule": "En retard",
+  "hour": "Heure",
+  "expected": "Attendu",
+  "actual": "Réel",
+  "schedule": "Calendrier",
+  "onSchedule": "Dans les délais !",
+  "tryToPlanAtLeast100Percent": "Essayez de planifier au moins 100 % de votre objectif."
 }

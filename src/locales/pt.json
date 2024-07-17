@@ -640,5 +640,13 @@
   "reset": "Reiniciar",
   "notEnoughTime": "Não há tempo suficiente",
   "notEnoughTime_description": "Não decorreu tempo suficiente. Você deve ter pelo menos 5 minutos para enviar uma entrada de tempo.",
-  "providedTimeIsLessThanFiveMinutes": "Desde que o tempo seja inferior a 5 minutos."
+  "providedTimeIsLessThanFiveMinutes": "Desde que o tempo seja inferior a 5 minutos.",
+  "aheadOfSchedule": "Antes do previsto!",
+  "behindSchedule": "Atrasado",
+  "hour": "Hora",
+  "expected": "Esperado",
+  "actual": "Real",
+  "schedule": "Agendar",
+  "onSchedule": "Dentro do cronograma!",
+  "tryToPlanAtLeast100Percent": "Tente planejar pelo menos 100% do seu objetivo."
 }

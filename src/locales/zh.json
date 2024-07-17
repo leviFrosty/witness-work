@@ -640,5 +640,13 @@
   "reset": "重置",
   "notEnoughTime": "时间不足",
   "notEnoughTime_description": "时间不足。您必须至少有 5 分钟的时间才能提交时间条目。",
-  "providedTimeIsLessThanFiveMinutes": "提供的时间少于5分钟。"
+  "providedTimeIsLessThanFiveMinutes": "提供的时间少于5分钟。",
+  "aheadOfSchedule": "提前完成！",
+  "behindSchedule": "落后于计划",
+  "hour": "小时",
+  "expected": "预计",
+  "actual": "实际",
+  "schedule": "时间表",
+  "onSchedule": "按计划完成！",
+  "tryToPlanAtLeast100Percent": "尽量规划至少 100% 的目标。"
 }

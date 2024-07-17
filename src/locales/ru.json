@@ -640,5 +640,13 @@
   "reset": "Перезагрузить",
   "notEnoughTime": "Недостаточно времени",
   "notEnoughTime_description": "Прошло недостаточно времени. Чтобы отправить запись о времени, у вас должно быть не менее 5 минут.",
-  "providedTimeIsLessThanFiveMinutes": "Указанное время не более 5 минут."
+  "providedTimeIsLessThanFiveMinutes": "Указанное время не более 5 минут.",
+  "aheadOfSchedule": "Досрочно!",
+  "behindSchedule": "Отставать от графика",
+  "hour": "Час",
+  "expected": "Ожидал",
+  "actual": "Действительный",
+  "schedule": "Расписание",
+  "onSchedule": "По расписанию!",
+  "tryToPlanAtLeast100Percent": "Постарайтесь спланировать хотя бы 100% своей цели."
 }

@@ -294,7 +294,8 @@ const PlanScheduleScreen = ({ route, navigation }: PlanScheduleScreenProps) => {
               current={monthToView}
               disableMonthChange
               hideArrows
-              onDayPress={(day) => {
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              onDayPress={(day: any) => {
                 navigation.navigate('PlanDay', {
                   date: moment(day.dateString).toISOString(),
                 })
@@ -307,7 +308,8 @@ const PlanScheduleScreen = ({ route, navigation }: PlanScheduleScreenProps) => {
                 paddingLeft: 10,
                 paddingRight: 10,
               }}
-              dayComponent={(props) => (
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              dayComponent={(props: any) => (
                 <CalendarDay {...props} planMode={true} />
               )}
               theme={{
@@ -321,9 +323,6 @@ const PlanScheduleScreen = ({ route, navigation }: PlanScheduleScreenProps) => {
                 todayBackgroundColor: theme.colors.accentTranslucent,
               }}
             />
-            <Text style={{ color: theme.colors.textAlt }}>
-              {i18n.t('youCannotCreateAPlanForAPreviousDay')}
-            </Text>
           </View>
         </ScrollView>
       </View>

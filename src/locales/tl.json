@@ -640,5 +640,13 @@
   "reset": "I-reset",
   "notEnoughTime": "Hindi Sapat na Oras",
   "notEnoughTime_description": "Hindi sapat na oras ang lumipas. Dapat mayroon kang hindi bababa sa 5 minuto upang magsumite ng entry sa oras.",
-  "providedTimeIsLessThanFiveMinutes": "Ang ibinigay na oras ay mas mababa sa 5 minuto."
+  "providedTimeIsLessThanFiveMinutes": "Ang ibinigay na oras ay mas mababa sa 5 minuto.",
+  "aheadOfSchedule": "Maaga!",
+  "behindSchedule": "Sa likod ng Iskedyul",
+  "hour": "Oras",
+  "expected": "Inaasahan",
+  "actual": "Aktwal",
+  "schedule": "Iskedyul",
+  "onSchedule": "Nasa tamang oras!",
+  "tryToPlanAtLeast100Percent": "Subukang magplano ng hindi bababa sa 100% ng iyong layunin."
 }

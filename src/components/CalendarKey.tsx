@@ -3,12 +3,6 @@ import i18n from '../lib/locales'
 import Text from './MyText'
 import XView from './layout/XView'
 import useTheme from '../contexts/theme'
-import Button from './Button'
-import { useNavigation } from '@react-navigation/native'
-import { RootStackNavigation } from '../stacks/RootStack'
-import IconButton from './IconButton'
-import { faUpRightFromSquare } from '@fortawesome/free-solid-svg-icons'
-import moment from 'moment'
 
 const size = 15
 
@@ -26,20 +20,8 @@ const Box = (props: { color: string }) => {
   )
 }
 
-const CalendarKey = (props: {
-  showPlanSchedule?: {
-    month: number
-    year: number
-  }
-}) => {
+const CalendarKey = () => {
   const theme = useTheme()
-  const navigation = useNavigation<RootStackNavigation>()
-  const currentMonth =
-    props.showPlanSchedule?.month && props.showPlanSchedule.year
-      ? moment()
-          .month(props.showPlanSchedule.month)
-          .year(props.showPlanSchedule.year)
-      : undefined
 
   return (
     <View
@@ -61,44 +43,6 @@ const CalendarKey = (props: {
         >
           {i18n.t('colorKey')}
         </Text>
-        {props.showPlanSchedule &&
-          moment().isSameOrBefore(currentMonth, 'month') && (
-            <Button
-              style={{
-                flexDirection: 'row',
-                alignItems: 'center',
-                gap: 5,
-                backgroundColor: theme.colors.accentTranslucent,
-                borderColor: theme.colors.accent,
-                borderWidth: 1,
-                paddingHorizontal: 15,
-                paddingVertical: 5,
-                borderRadius: theme.numbers.borderRadiusLg,
-              }}
-              onPress={() =>
-                navigation.navigate('PlanSchedule', {
-                  month: props.showPlanSchedule!.month,
-                  year: props.showPlanSchedule!.year,
-                })
-              }
-            >
-              <Text
-                style={{
-                  color: theme.colors.accent,
-                  fontSize: theme.fontSize('sm'),
-                  fontFamily: theme.fonts.medium,
-                  textDecorationLine: 'underline',
-                }}
-              >
-                {i18n.t('planSchedule')}
-              </Text>
-              <IconButton
-                icon={faUpRightFromSquare}
-                size={9}
-                color={theme.colors.accent}
-              />
-            </Button>
-          )}
       </XView>
       <XView style={{ gap: 8, flexWrap: 'wrap' }}>
         <XView>

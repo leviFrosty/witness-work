@@ -72,8 +72,8 @@ const NonPlannedDay = (
         justifyContent: 'center',
         alignItems: 'center',
         borderRadius: theme.numbers.borderRadiusSm,
-        borderWidth: isToday ? 1 : 0,
-        borderColor: theme.colors.accent,
+        borderWidth: isToday ? 3 : 0,
+        borderColor: theme.colors.text,
         backgroundColor: disabled
           ? undefined
           : wentInService

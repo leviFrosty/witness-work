@@ -640,5 +640,13 @@
   "reset": "リセット",
   "notEnoughTime": "時間が足りません",
   "notEnoughTime_description": "時間が足りません。時間入力を送信するには、少なくとも 5 分必要です。",
-  "providedTimeIsLessThanFiveMinutes": "提供時間は5分未満です。"
+  "providedTimeIsLessThanFiveMinutes": "提供時間は5分未満です。",
+  "aheadOfSchedule": "予定より早い！",
+  "behindSchedule": "予定より遅れている",
+  "hour": "時間",
+  "expected": "予想",
+  "actual": "実際",
+  "schedule": "スケジュール",
+  "onSchedule": "予定通り！",
+  "tryToPlanAtLeast100Percent": "目標の少なくとも 100% を計画するようにしてください。"
 }

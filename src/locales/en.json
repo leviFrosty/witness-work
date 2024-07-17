@@ -640,5 +640,13 @@
   "reset": "Reset",
   "notEnoughTime": "Not Enough Time",
   "notEnoughTime_description": "Not enough time has elapsed. You must have at least 5 minutes to submit a time entry.",
-  "providedTimeIsLessThanFiveMinutes": "Provided time is less than 5 minutes."
+  "providedTimeIsLessThanFiveMinutes": "Provided time is less than 5 minutes.",
+  "aheadOfSchedule": "Ahead Of Schedule!",
+  "behindSchedule": "Behind Schedule",
+  "hour": "Hour",
+  "expected": "Expected",
+  "actual": "Actual",
+  "schedule": "Schedule",
+  "onSchedule": "On Schedule!",
+  "tryToPlanAtLeast100Percent": "Try to plan at least 100% of your goal."
 }

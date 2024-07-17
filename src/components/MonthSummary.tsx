@@ -150,7 +150,7 @@ const MonthSummary = ({
         borderWidth: highlightAsCurrentMonth ? 2 : 0,
       }}
     >
-      <View style={{ gap: 10 }}>
+      <View style={{ gap: noDetails ? 3 : 10 }}>
         <View
           style={{
             flexDirection: 'row',
@@ -185,14 +185,13 @@ const MonthSummary = ({
           <Text
             style={{
               textAlign: 'right',
-              color: theme.colors.textAlt,
+              color: theme.colors.text,
               fontFamily: theme.fonts.semiBold,
             }}
           >
-            {' '}
             {`${_.round(totalMinutes / 60, 1)} ${i18n.t(
               'of'
-            )} ${goalHours} ${i18n.t('hoursToGoal')}`}{' '}
+            )} ${goalHours} ${i18n.t('hoursToGoal')}`}
           </Text>
           <MonthServiceReportProgressBar month={month} year={year} />
         </View>

@@ -640,5 +640,13 @@
   "reset": "Zurücksetzen",
   "notEnoughTime": "Nicht genug Zeit",
   "notEnoughTime_description": "Es ist nicht genug Zeit vergangen. Sie müssen mindestens 5 Minuten Zeit haben, um einen Zeiteintrag abzugeben.",
-  "providedTimeIsLessThanFiveMinutes": "Die vorausgesetzte Zeit beträgt weniger als 5 Minuten."
+  "providedTimeIsLessThanFiveMinutes": "Die vorausgesetzte Zeit beträgt weniger als 5 Minuten.",
+  "aheadOfSchedule": "Vor dem Zeitplan!",
+  "behindSchedule": "Hinter dem Zeitplan",
+  "hour": "Stunde",
+  "expected": "Erwartet",
+  "actual": "Tatsächlich",
+  "schedule": "Zeitplan",
+  "onSchedule": "Im Zeitplan!",
+  "tryToPlanAtLeast100Percent": "Versuchen Sie, mindestens 100 % Ihres Ziels zu planen."
 }

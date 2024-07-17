@@ -53,8 +53,9 @@ const MonthTimeReportsCalendar: React.FC<MonthTimeReportsCalendarProps> = ({
       current={monthToView}
       disableMonthChange
       hideArrows
-      renderHeader={() => <CalendarKey showPlanSchedule={{ month, year }} />}
-      onDayPress={(day) => {
+      renderHeader={() => <CalendarKey />}
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      onDayPress={(day: any) => {
         const date = moment(day.dateString).toDate()
         setSheet({ open: true, date })
       }}
@@ -67,7 +68,8 @@ const MonthTimeReportsCalendar: React.FC<MonthTimeReportsCalendarProps> = ({
       }}
       markedDates={markedDates}
       markingType='custom'
-      dayComponent={(props) => <CalendarDay {...props} />}
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      dayComponent={(props: any) => <CalendarDay {...props} />}
       theme={{
         backgroundColor: theme.colors.card,
         calendarBackground: theme.colors.card,

@@ -460,6 +460,10 @@
       "c3": "Mettez à jour les dépendances et ajoutez des mises à jour de sécurité.",
       "c2": "Traductions portugaises mises à jour, merci frère Sérgio !",
       "c4": "📝 Une petite note personnelle : j'ai été très occupé par les responsabilités et la vie de la congrégation récemment. Après ma prochaine convention la semaine prochaine, les choses reviendront à la normale. Je travaillerai sur de nombreuses autres mises à jour dans les semaines à venir ! Merci de votre patience et d'avoir choisi JW Time ! ❤️"
+    },
+    "1290": {
+      "c1": "Ajout d'une nouvelle section de calendrier à l'écran de résumé du mois qui vous aide à suivre votre rythme.",
+      "c2": "Sur l'écran d'accueil, résolution des problèmes de chevauchement qui surviennent parfois sur les petites tailles d'écran."
     }
   },
   "installed": "installée",

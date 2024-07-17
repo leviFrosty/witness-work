@@ -1,5 +1,5 @@
 import { useCallback } from 'react'
-import { View, Platform } from 'react-native'
+import { View, Platform, Alert } from 'react-native'
 import Text from '../components/MyText'
 import * as Notifications from 'expo-notifications'
 import * as Crypto from 'expo-crypto'
@@ -33,6 +33,7 @@ import {
   faCaravan,
   faComments,
   faIdCard,
+  faTrash,
 } from '@fortawesome/free-solid-svg-icons'
 import _ from 'lodash'
 import Button from '../components/Button'
@@ -184,8 +185,12 @@ const ConversationFormScreen = ({ route, navigation }: Props) => {
   } = usePreferences()
   const { params } = route
   const { contacts } = useContacts()
-  const { conversations, addConversation, updateConversation } =
-    useConversations()
+  const {
+    conversations,
+    addConversation,
+    updateConversation,
+    deleteConversation,
+  } = useConversations()
   const toast = useToastController()
 
   const conversationToEditViaProps = params.conversationToEditId
@@ -435,6 +440,36 @@ const ConversationFormScreen = ({ route, navigation }: Props) => {
                   </Text>
                 </Button>
               )}
+              {isEditing && (
+                <IconButton
+                  icon={faTrash}
+                  color={theme.colors.text}
+                  onPress={() =>
+                    Alert.alert(
+                      i18n.t('deleteConversation'),
+                      i18n.t('deleteConversation_description'),
+                      [
+                        {
+                          text: i18n.t('cancel'),
+                          style: 'cancel',
+                        },
+                        {
+                          text: i18n.t('delete'),
+                          style: 'destructive',
+                          onPress: () => {
+                            deleteConversation(conversation.id)
+                            toast.show(i18n.t('success'), {
+                              message: i18n.t('deleted'),
+                              native: true,
+                            })
+                            navigation.goBack()
+                          },
+                        },
+                      ]
+                    )
+                  }
+                />
+              )}
               <Button
                 onPress={async () => {
                   const succeeded = await submit()
@@ -478,7 +513,9 @@ const ConversationFormScreen = ({ route, navigation }: Props) => {
     })
   }, [
     calledGoecodeApiTimes,
+    conversation.id,
     conversationToUpdate?.contact.id,
+    deleteConversation,
     installedOn,
     isEditing,
     lastTimeRequestedAReview,
@@ -487,6 +524,7 @@ const ConversationFormScreen = ({ route, navigation }: Props) => {
     submit,
     theme.colors.text,
     theme.colors.textInverse,
+    toast,
     updateLastTimeRequestedStoreReview,
   ])
 

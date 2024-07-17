@@ -460,6 +460,10 @@
       "c3": "Atualize dependências e adicione atualizações de segurança.",
       "c2": "Traduções atualizadas para o português, obrigado irmão Sérgio!",
       "c4": "📝 Uma pequena nota pessoal: ultimamente tenho estado muito ocupado com as responsabilidades e a vida congregacional. Depois da minha próxima convenção na próxima semana, as coisas voltarão ao normal. Estarei trabalhando em muitas outras atualizações nas próximas semanas! Obrigado pela sua paciência e por escolher o JW Time! ❤️"
+    },
+    "1290": {
+      "c1": "Adicionada nova seção de programação à tela de resumo do mês, que ajuda você a acompanhar o ritmo do seu tempo.",
+      "c2": "Na tela inicial, foram resolvidos problemas de sobreposição que às vezes acontecem em telas pequenas."
     }
   },
   "installed": "Instalado",

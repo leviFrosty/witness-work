@@ -658,5 +658,6 @@
   "updateTime_description": "Chỉnh sửa hoặc xóa báo cáo dịch vụ trước đó",
   "deleted": "Đã xóa",
   "archived": "Đã lưu trữ",
-  "recovered": "Đã phục hồi"
+  "recovered": "Đã phục hồi",
+  "thisContactHasNoConversations": "Liên hệ này chưa có cuộc trò chuyện nào."
 }

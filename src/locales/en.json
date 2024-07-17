@@ -658,5 +658,6 @@
   "updateTime_description": "Edit or delete a previous service report",
   "deleted": "Deleted",
   "archived": "Archived",
-  "recovered": "Recovered"
+  "recovered": "Recovered",
+  "thisContactHasNoConversations": "This contact has no conversations yet."
 }

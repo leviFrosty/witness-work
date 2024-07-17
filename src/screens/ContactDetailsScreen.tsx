@@ -850,18 +850,12 @@ const ContactDetailsScreen = ({ route, navigation }: Props) => {
                     <View
                       style={{
                         backgroundColor: theme.colors.backgroundLighter,
-                        paddingVertical: 10,
+                        paddingVertical: 30,
+                        paddingHorizontal: 20,
                       }}
                     >
-                      <Button onPress={() => setSheetOpen(true)}>
-                        <Text
-                          style={{
-                            margin: 20,
-                            textDecorationLine: 'underline',
-                          }}
-                        >
-                          {i18n.t('tapToAddAConversation')}
-                        </Text>
+                      <Button>
+                        <Text>{i18n.t('thisContactHasNoConversations')}</Text>
                       </Button>
                     </View>
                   }

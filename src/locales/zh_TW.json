@@ -658,5 +658,6 @@
   "updateTime_description": "編輯或刪除先前的服務報告",
   "deleted": "已刪除",
   "archived": "已存檔",
-  "recovered": "已恢復"
+  "recovered": "已恢復",
+  "thisContactHasNoConversations": "該聯絡人還沒有對話。"
 }

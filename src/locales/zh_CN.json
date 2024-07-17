@@ -658,5 +658,6 @@
   "updateTime_description": "编辑或删除之前的服务报告",
   "deleted": "已删除",
   "archived": "已归档",
-  "recovered": "已恢复"
+  "recovered": "已恢复",
+  "thisContactHasNoConversations": "此联系人尚未有任何对话。"
 }

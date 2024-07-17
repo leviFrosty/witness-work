@@ -9,7 +9,10 @@ import { RootStackNavigation } from '../stacks/RootStack'
 import { useMemo } from 'react'
 import moment from 'moment'
 import useServiceReport from '../stores/serviceReport'
-import { getPlansIntersectingDay } from '../lib/serviceReport'
+import {
+  getPlansIntersectingDay,
+  plannedMinutesToCurrentDayForMonth,
+} from '../lib/serviceReport'
 import usePublisher from '../hooks/usePublisher'
 import Circle from './Circle'
 import XView from './layout/XView'
@@ -62,6 +65,15 @@ export default function MonthScheduleSection(props: MonthScheduleSectionProps) {
 
   const percentPlanned = plannedMinutes / 60 / goalHours
 
+  const plannedMinutesToCurrentDay = useMemo(() => {
+    return plannedMinutesToCurrentDayForMonth(
+      month,
+      year,
+      dayPlans,
+      recurringPlans
+    )
+  }, [dayPlans, month, recurringPlans, year])
+
   return (
     <Card>
       <XView>
@@ -75,18 +87,20 @@ export default function MonthScheduleSection(props: MonthScheduleSectionProps) {
         </Text>
         <XView></XView>
       </XView>
-      <View style={{ gap: 3 }}>
-        <Text
-          style={{
-            fontFamily: theme.fonts.semiBold,
-            color: theme.colors.textAlt,
-            fontSize: theme.fontSize('sm'),
-          }}
-        >
-          {i18n.t('today')}
-        </Text>
-        <AheadOrBehindOfMonthSchedule month={month} year={year} />
-      </View>
+      {plannedMinutesToCurrentDay !== 0 && (
+        <View style={{ gap: 3 }}>
+          <Text
+            style={{
+              fontFamily: theme.fonts.semiBold,
+              color: theme.colors.textAlt,
+              fontSize: theme.fontSize('sm'),
+            }}
+          >
+            {i18n.t('today')}
+          </Text>
+          <AheadOrBehindOfMonthSchedule month={month} year={year} />
+        </View>
+      )}
       <View style={{ gap: 3 }}>
         <Text
           style={{
@@ -104,7 +118,11 @@ export default function MonthScheduleSection(props: MonthScheduleSectionProps) {
           </Text>
           <Circle
             color={
-              percentPlanned >= 1 ? theme.colors.accent : theme.colors.warn
+              !percentPlanned
+                ? theme.colors.textAlt
+                : percentPlanned >= 1
+                  ? theme.colors.accent
+                  : theme.colors.warn
             }
           />
         </XView>

@@ -656,5 +656,7 @@
   "updated": "Bijgewerkt",
   "updateTime": "Update tijd",
   "updateTime_description": "Bewerk of verwijder een eerder servicerapport",
-  "deleted": "Verwijderd"
+  "deleted": "Verwijderd",
+  "archived": "Gearchiveerd",
+  "recovered": "Hersteld"
 }

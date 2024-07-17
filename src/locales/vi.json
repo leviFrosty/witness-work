@@ -640,5 +640,13 @@
   "reset": "Cài lại",
   "notEnoughTime": "Không đủ thời gian",
   "notEnoughTime_description": "Không đủ thời gian trôi qua. Bạn phải có ít nhất 5 phút để gửi mục nhập thời gian.",
-  "providedTimeIsLessThanFiveMinutes": "Thời gian được cung cấp là ít hơn 5 phút."
+  "providedTimeIsLessThanFiveMinutes": "Thời gian được cung cấp là ít hơn 5 phút.",
+  "aheadOfSchedule": "Trước thời hạn!",
+  "behindSchedule": "Chậm tiến độ",
+  "hour": "Giờ",
+  "expected": "Hy vọng",
+  "actual": "Thật sự",
+  "schedule": "Lịch trình",
+  "onSchedule": "Đúng tiến độ!",
+  "tryToPlanAtLeast100Percent": "Cố gắng lập kế hoạch ít nhất 100% mục tiêu của bạn."
 }

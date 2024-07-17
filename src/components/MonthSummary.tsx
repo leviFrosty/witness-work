@@ -148,9 +148,11 @@ const MonthSummary = ({
       style={{
         borderColor: theme.colors.accent,
         borderWidth: highlightAsCurrentMonth ? 2 : 0,
+        gap: noDetails ? 3 : 15,
+        paddingVertical: noDetails ? 15 : 20,
       }}
     >
-      <View style={{ gap: noDetails ? 3 : 10 }}>
+      <View style={{ gap: noDetails ? 2 : 10 }}>
         <View
           style={{
             flexDirection: 'row',

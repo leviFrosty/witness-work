@@ -92,7 +92,7 @@ const AnnualTimeOverviewScreen = ({
 
   return (
     <Wrapper insets='bottom'>
-      <View style={{ gap: 25, paddingHorizontal: 15, paddingVertical: 15 }}>
+      <View style={{ gap: 5, paddingHorizontal: 15, paddingVertical: 15 }}>
         <View
           style={{
             flexDirection: 'row',
@@ -189,10 +189,9 @@ const AnnualTimeOverviewScreen = ({
       </View>
       <KeyboardAwareScrollView
         contentContainerStyle={{
-          paddingTop: 20,
           paddingBottom: 250,
           paddingHorizontal: 15,
-          gap: 40,
+          gap: 25,
         }}
       >
         {Object.keys(reportsByYearAndMonth).map((year) => {

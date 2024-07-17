@@ -8,23 +8,23 @@
   "noHourRequirement": "No hay requisito de horas",
   "hourMonthlyRequirement": "Requisito mensual de {{count}} horas",
   "publisher": "Publicador",
-  "regularAuxiliary": "Auxiliar Regular",
-  "regularPioneer": "Precursor Regular",
-  "circuitOverseer": "Superintendente de Circuito",
-  "specialPioneer": "Precursor Especial",
+  "regularAuxiliary": "Auxiliar de continúo",
+  "regularPioneer": "Precursor regular",
+  "circuitOverseer": "Superintendente de circuito",
+  "specialPioneer": "Precursor especial",
   "continue": "Continuar",
-  "neverForgetAReturnVisit": "Nunca Olvides una Revisita",
+  "neverForgetAReturnVisit": "Nunca olvides una revisita",
   "neverForgetAReturnVisit_description": "JW Time te notificará sobre las próximas revisitas o estudios. Puedes cambiar esto más tarde en los ajustes.",
   "skip": "Omitir",
-  "allowNotifications": "Permitir Notificaciones",
+  "allowNotifications": "Permitir notificaciones",
   "youreAllSet": "¡Estás listo!",
   "youreAllSet_description": "JW Time le notificará de las conversaciones que haya programado.",
   "optInNotificationsLater": "Puede optar por recibir notificaciones en los ajustes más adelante.",
-  "completeSetup": "Configuración Completa",
+  "completeSetup": "Configuración completa",
   "noRecentConversation": "No Hay una Conversación Reciente",
   "noRecentConversation_plural": "No Hay Conversaciones Recientes",
   "returnVisitContacts": "Contactos de Revisitas",
-  "noContactsSaved": "No Hay Contactos Guardados. Toque el botón + para añadir un contacto.",
+  "noContactsSaved": "No hay contactos guardados. Pulse el botón \"+\" para añadir un contacto.",
   "deleteConversation": "¿Borrar la Conversación?",
   "deleteConversation_description": "Borrar esta conversación la eliminará permanente y también cualquier notificación asignada a esta.",
   "cancel": "Cancelar",
@@ -42,7 +42,7 @@
     "neverGiveUp": "¡Nunca te rindas!",
     "preachTheWord": "¡Predica la palabra!",
     "stayFocused": "¡Mantente enfocado!",
-    "haveFaith": "¡Ten Fe!",
+    "haveFaith": "¡Ten Fé!",
     "stayStrong": "¡Mantente fuerte!"
   },
   "phrasesClose": {
@@ -62,7 +62,7 @@
     "congratulations": "¡Felicidades!",
     "takeYourShoesOff": "¡Mereces un descanso!",
     "hatsOffToYou": "¡Felicitaciones a usted!",
-    "missionComplete": "¡Mission completa!",
+    "missionComplete": "¡Misión cumplida!",
     "success": "¡Éxito!"
   },
   "hoursLeft": "Horas restantes",
@@ -82,7 +82,7 @@
     "amazingJob": "¡Excelente trabajo!",
     "wayToGo": "¡Así se hace!",
     "victoryLap": "¡Victoria!",
-    "fantastic": "¡Fantisco!",
+    "fantastic": "¡Fantástico!",
     "wow": "¡Guao!"
   },
   "basedOnConcacts": "Basado en contactos",
@@ -95,13 +95,13 @@
   "addTime_description": "Al ingresar la información de tiempo a continuación se registrará el tiempo de servicio para ese día.",
   "minutes": "Minutos",
   "minutes_lowercase": "minutos",
-  "submit": "Entregar",
+  "submit": "Agregar",
   "date": "Fecha",
   "phone": "Teléfono",
   "contact": "Contacto",
-  "isStudying": "esta estudiando",
+  "isStudying": "está estudiando",
   "lastStudied": "último estudiado",
-  "address": "DIRECCIÓN",
+  "address": "Dirección",
   "email": "Correo electrónico",
   "deleteContact": "Borrar contacto",
   "created": "Creado:",
@@ -109,18 +109,18 @@
   "contactNotFoundForId": "Contacto no encontrado para la identificación proporcionada:",
   "noPersonalInformationSaved": "No se guarda ninguna información personal. 🧐",
   "tapPlusToAddConvo": "Toque el ícono más arriba para agregar una conversación.",
-  "name_placeholder": "¿Cómo se llaman?",
+  "name_placeholder": "¿Cómo se llama?",
   "name": "Nombre",
   "phone_placeholder": "+x (xxx) xxx-xxxx",
   "email_placeholder": "ejemplo@acme.com",
-  "addressLine1": "Dirección Línea 1",
-  "addressLine2": "Línea de dirección 2",
+  "addressLine1": "Dirección línea 1",
+  "addressLine2": "Dirección línea 2",
   "city": "Ciudad",
   "state": "Estado",
   "zip": "Código postal",
   "country": "País",
   "name_error": "Se requiere un nombre.",
-  "save": "Ahorrar",
+  "save": "Guardar",
   "isBibleStudy": "es estudio bíblico",
   "add": "Agregar",
   "enterContactInformation": "Ingrese la información de contacto a continuación para la persona que agregará a JW Time.",
@@ -129,12 +129,12 @@
   "assign": "Asignar",
   "unassign": "Desasignar",
   "youMustAssignAConversationToContact": "Debes asignar una conversación a un contacto.",
-  "reminder_title": "Recordatorio de conversación",
-  "reminderTwoHours_part1": "¡Ey! Tu charla con",
+  "reminder_title": "Recordatorio de revisita",
+  "reminderTwoHours_part1": "¡Ey! Tu revisita con ",
   "reminderTwoHours_part2": "es mañana a las",
   "reminder_topic": "Tema:",
-  "reminderFifteenMinutes_part1": "⏰ Tu chat con",
-  "reminderFifteenMinutes_part2": "es en 15 min. ¡Prepárate y prepárate para una conversación fructífera! 🚀📖",
+  "reminderFifteenMinutes_part1": "⏰ Tu revisita con ",
+  "reminderFifteenMinutes_part2": " es en 15 min. ¡Prepárate y ponte en marcha para una conversación fructífera! 🚀📖",
   "addConversation": "Agregar conversación",
   "addConversation_description": "Ingrese la información de contacto a continuación para la persona que agregará a JW Time.",
   "note": "Nota",
@@ -156,19 +156,19 @@
   "noTimeEntriesYet": "Aún no hay entradas de tiempo.. 🕒",
   "deleteTime_title": "¿Eliminar informe de tiempo?",
   "deleteTime_description": "Al eliminar este informe de tiempo, se eliminará permanentemente.",
-  "ldcTime": "Hora de los PMA",
-  "selectDate": "Seleccione fecha",
-  "selectTime": "Seleccionar hora",
-  "ldc": "PMA",
+  "ldcTime": "Tiempo en LDC",
+  "selectDate": "Seleccionar la fecha",
+  "selectTime": "Seleccionar la hora",
+  "ldc": "LDC",
   "total": "Total",
   "standard": "Estándar",
   "viewTime": "Ver hora",
   "view": "Vista",
-  "viewHours": "Ver Horarios",
+  "viewHours": "Ver mi tiempo",
   "versionUnknown": "Versión desconocida",
-  "rateJWTimeOnAppStore": "Califica el tiempo de JW",
-  "rateJWTimeOnPlayStore": "Califica el tiempo de JW",
-  "bugReport": "Informe de error",
+  "rateJWTimeOnAppStore": "Califique a JW Time",
+  "rateJWTimeOnPlayStore": "Califique a JW Time",
+  "bugReport": "Informe de un error",
   "app": "Aplicación",
   "misc": "Varios",
   "pushNotificationsEnabled": "Notificaciones habilitadas",
@@ -185,7 +185,7 @@
   "update_error": "Error al obtener la última actualización.",
   "conductedBibleStudy": "Estudio bíblico dirigido",
   "inactiveBibleStudiesDoNoCountTowardsMonthlyTotals": "Los estudios bíblicos no contribuirán a los totales mensuales a menos que se realicen al menos una vez durante el mes en curso.",
-  "bibleStudy": "Estudio Bíblico",
+  "bibleStudy": "Estudio bíblico",
   "study": "Estudiar",
   "recentConversation": "Conversación reciente",
   "alphabeticalAsc": "Alfabético (A-Z)",
@@ -193,12 +193,12 @@
   "sort": "Clasificar",
   "addContact": "Agregar contacto",
   "search": "Buscar...",
-  "privacyPolicy": "política de privacidad",
+  "privacyPolicy": "Política de privacidad",
   "status": "Estado",
   "before": "antes",
   "days_lowercase": "días",
   "weeks_lowercase": "semanas",
-  "notification_part1": "¡Ey! Tu charla con",
+  "notification_part1": "¡Ey! Tu revisita con",
   "notification_part2": "está llegando en",
   "notify": "Notificar",
   "notification": "Notificación",
@@ -209,43 +209,43 @@
   "failedToOpenMailApplication": "No se pudo abrir la aplicación de correo.",
   "loadingSlowly": "Esto está tardando más de lo habitual...",
   "loadingSlowly_description": "Vuelve a intentarlo más tarde cuando estés conectado a WIFI o cuando tengas Internet estable.",
-  "quit": "Abandonar",
-  "goHome": "Vete a casa",
-  "timeNeeded": "Agregue horas o minutos arriba para enviar su entrada de tiempo.",
+  "quit": "Salir",
+  "goHome": "Ir a Inicio",
+  "timeNeeded": "Agregue horas o minutos arriba para agregar su entrada de tiempo.",
   "editConversation": "Editar conversación",
   "conversationHistory": "Historial de conversación",
   "copied": "¡Copiado!",
   "archive": "Archivo",
-  "archiveContact": "Archivo Contacto",
-  "archiveContact_question": "Archivo ¿Contacto?",
+  "archiveContact": "Contacto archivado",
+  "archiveContact_question": "¿Archivar contacto?",
   "archiveContact_description": "Archivar este contacto lo eliminará. Puedes recuperarlo desde la configuración.",
   "tapToAddAConversation": "Toque aquí para agregar una conversación o presione el botón + arriba.",
   "todaysConversations": "Conversaciones de hoy",
   "upcomingConversations": "Próximas conversaciones",
   "noTopicProvided": "No se proporcionó ningún tema.",
   "customHourRequirement": "Requisito de hora personalizado",
-  "custom": "Costumbre",
+  "custom": "Personalizado",
   "pleaseDescribeYourIssue": "Por favor describe tu problema detalladamente",
-  "invalidPhone": "Numero de telefono invalido",
+  "invalidPhone": "Número de teléfono inválido",
   "invalidPhone_description": "no es un número válido para el código de región:",
   "androidAppStoreReviewErrorTitle": "Error de Play Store",
   "appleAppStoreReviewErrorTitle": "Error de la tienda de aplicaciones",
   "androidAppStoreReviewErrorMessage": "Verifique que la instalación de Play Store sea válida.",
   "appleAppStoreReviewErrorMessage": "Actualice su aplicación JW Time a la última versión si está disponible y vuelva a intentarlo.",
-  "internetNotAvailable": "Internet no está disponible actualmente. Vuelva a intentarlo cuando esté conectado a Internet estable.",
+  "internetNotAvailable": "El Internet no está disponible actualmente. Vuelva a intentarlo cuando esté conectado a un Internet estable.",
   "notAtHome": "No en casa",
-  "editNotAtHome": "Editar no en casa",
+  "editNotAtHome": "Editar \"no en casa\"",
   "addNotAtHome": "No en casa",
   "addNotAtHome_description": "Ingrese cualquier información importante acerca de no poder comunicarse con esta persona.",
   "conversation": "Tuve una conversación",
   "addToHistory": "¿Qué pasó?",
   "add_description": "Agregue un mensaje 'No en casa' o 'Conversación' para consultar el historial de contacto.",
-  "hourglass": "Reloj de arena",
+  "hourglass": "Hourglass",
   "copyToClipboard": "Copiar al portapapeles",
   "export": "Exportar",
   "exportTo": "Exportar",
   "message": "Mensaje",
-  "hoursPerDayToGoal": "horas/día hasta la meta!",
+  "hoursPerDayToGoal": "hrs/día para llegar hasta la meta!",
   "hoursRemaining": "Horas faltantes",
   "helpTranslate": "Ayuda a traducir",
   "iWouldLikeToHelpTranslate": "¡Me gustaría ayudar a traducir JW Time! Indique qué idiomas habla y cuál es su nombre. ¡Gracias!",
@@ -255,8 +255,8 @@
   "notes": "Notas",
   "no": "No",
   "viewAllMonths": "Ver todos los meses",
-  "support": "Apoyo",
-  "viewSource": "Ver fuente",
+  "support": "Apoyar",
+  "viewSource": "Ver código fuente",
   "totalHours": "Horas totales",
   "contactNotFoundForProvidedId": "Contacto no encontrado para la identificación proporcionada.",
   "internetUnavailable": "Internet no disponible",
@@ -265,8 +265,8 @@
   "navigate": "Navegar",
   "call": "Llamar",
   "shareAddress": "Compartir dirección",
-  "appleMaps": "Mapas de Apple",
-  "googleMaps": "mapas de Google",
+  "appleMaps": "Apple Maps",
+  "googleMaps": "Google Maps",
   "shareFrom": "Compartir desde",
   "generateAUrlFromYourPreferredMappingService": "Comparta un enlace de los diferentes servicios de mapas.",
   "introducingMapView": "Configuración del mapa",
@@ -301,20 +301,20 @@
   "withinThePastWeek": "Durante la semana pasada",
   "fit": "Adaptar",
   "thisWillBeConfigurableLater": "En una actualización futura, estos plazos serán configurables.",
-  "featureRequest": "Solicitud de función",
+  "featureRequest": "Solicitar una función",
   "pleaseDescribeYourFeatureClearly": "Describa con gran detalle qué característica le gustaría tener. Proporcione un nombre de contacto y un teléfono. Si corresponde, dibuje una imagen de cómo se vería la función. Alternativamente, envíe una captura de pantalla de una aplicación que tenga una funcionalidad similar.",
-  "Home": "Hogar",
+  "Home": "Inicio",
   "Map": "Mapa",
   "preferences": "Ajustes",
-  "defaultNavigationApp": "Aplicación de Navegación Predeterminada",
+  "defaultNavigationApp": "Aplicación de navegación predeterminada",
   "apple": "Apple",
   "google": "Google",
-  "couldNotOpenMaps": "No se pudieron abrir mapas",
+  "couldNotOpenMaps": "No se pudo abrir el mapa",
   "couldNotOpenMaps_description": "Verifique que tenga instalada una aplicación de mapas válida.",
   "preferredMaps": "Mapas preferidos",
   "youCanChangeThisLaterInTheSettings": "Puedes cambiar esto más adelante en la configuración.",
   "preferredMaps_description": "JW Time utilizará su aplicación de mapas preferida para navegar hasta la dirección de su contacto.",
-  "waze": "waze",
+  "waze": "Waze",
   "navigation": "Navegación",
   "nextVisitOffset_description": "Qué tan lejos debe estar su próxima visita cuando cree una conversación.",
   "nextVisitOffset": "Compensación de próxima visita",
@@ -327,35 +327,50 @@
   "new": "Nuevo",
   "bugFixes": "Corrección de errores",
   "updates": {
-    "160": {
-      "c1": "Las conversaciones ahora son editables. Las notificaciones son configurables.",
-      "c2": "Desliza gestos para editar o eliminar conversaciones, contactos, etc.",
-      "c3": "Se agregó retroalimentación háptica a varias acciones importantes."
+    "1211": {
+      "c1": "Se agregaron sugerencias únicas más útiles cuando corresponda."
     },
-    "161": {
-      "c1": "Se agregaron más opciones de minutos para entradas de tiempo."
+    "1210": {
+      "c1": "Precisión enormemente mejorada de las visualizaciones de tiempo.",
+      "c2": "Precisión mejorada de las barras de progreso del tiempo.",
+      "c3": "Se agregaron sugerencias útiles para acciones que pueden no notarse de inmediato.",
+      "c4": "Calidad de vida mejorada en la pantalla de mapas con información más relevante y un botón para agregar rápidamente."
     },
-    "162": {
-      "c1": "Se ajustó el requisito de horas de precursor especial de 70 a 100"
+    "1201": {
+      "c1": "Correcciones de errores menores.",
+      "c2": "Traducciones al coreano significativamente mejoradas: gracias hermano Paul. Si desea ayudar a traducir su propio idioma, visite la configuración.",
+      "c3": "Correcciones de errores menores."
     },
-    "163": {
-      "c1": "Resolver problemas de actualización automática"
+    "1200": {
+      "c1": "Agrega funcionalidad de copia de seguridad y restauración. Ahora puedes hacer una copia de seguridad de tus datos en la nube y restaurarlos más tarde, esto te permite transferir tus datos a otro dispositivo. También puedes transferirlo a otra plataforma. Encuentre esta nueva característica en la configuración."
     },
-    "170": {
-      "c1": "Agregue varios métodos de exportación de tiempo",
-      "c2": "Agregue 'No en hogares'"
+    "1120": {
+      "c1": "Agrega funcionalidad de copia de seguridad y restauración. Ahora puedes hacer una copia de seguridad de tus datos en la nube y restaurarlos más tarde. Puede transferir sus datos a otro dispositivo. También puedes transferirlo a otra plataforma. Encuentre esta nueva característica en la configuración."
     },
-    "180": {
-      "c1": "Se agregó codificación geográfica automática para contactos.",
-      "c2": "Vista de mapa agregada"
+    "1111": {
+      "c1": "Agregue la página de donación en la configuración para aquellos que deseen contribuir.",
+      "c2": "Incluye varias mejoras menores y correcciones de errores."
     },
-    "181": {
-      "c1": "Vista de mapa ampliada",
-      "c2": "Se agregó una solicitud de revisión de la tienda después de que se cumplan ciertos criterios.",
-      "c3": "Pequeñas correcciones de errores"
+    "1110": {
+      "c1": "Se agregó soporte para iPads y iPad. ¡Tabletas!",
+      "c2": "Se ajustaron varios estilos para adaptarse mejor a pantallas más grandes.",
+      "c3": "Se ajustó el método para enviar informes de errores y solicitudes de funciones a Github."
     },
-    "182": {
-      "c1": "Actualizado todo el tiempo para reflejar la ubicación actual"
+    "1100": {
+      "c1": "¡Agrega el informe anual a la pantalla Informes de tiempo! Realice un seguimiento del progreso de su año de servicio de un vistazo.",
+      "c2": "Al agregar tiempo desde la pantalla Informes de tiempo, el informe ahora se establece de forma predeterminada en el mes seleccionado.",
+      "c3": "Soluciona un problema al exportar el informe de servicio de enero."
+    },
+    "192": {
+      "c1": "Soluciona un problema por el cual algunos dispositivos tienen una barra de progreso desbordada.",
+      "c2": "Agrega un manejo más detallado de errores de enlace para dispositivos que carecen de las aplicaciones requeridas.",
+      "c3": "Agrega un manejo más detallado de errores de enlace para ciertos dispositivos que carecen de las aplicaciones requeridas.",
+      "c4": "Navegue directamente a un mes desde la sección de rutina mensual de la pantalla de inicio.",
+      "c5": "La pantalla Informes de tiempo maneja mejor los meses vacíos y futuros.",
+      "c6": "Correcciones de errores menores."
+    },
+    "191": {
+      "c1": "Resuelve un problema al navegar a las pantallas de tiempo."
     },
     "190": {
       "c1": "Preferencias añadidas en la configuración.",
@@ -366,50 +381,35 @@
       "c6": "Ahora agregue etiquetas personalizadas a sus entradas de tiempo",
       "c7": "Pantalla de informes de tiempo actualizada para estar mejor organizada y separada por mes"
     },
-    "191": {
-      "c1": "Resuelve un problema al navegar a las pantallas de tiempo."
+    "182": {
+      "c1": "Actualizado todo el tiempo para reflejar la ubicación actual"
     },
-    "192": {
-      "c1": "Soluciona un problema por el cual algunos dispositivos tienen una barra de progreso desbordada.",
-      "c2": "Agrega un manejo más detallado de errores de enlace para dispositivos que carecen de las aplicaciones requeridas.",
-      "c3": "Agrega un manejo más detallado de errores de enlace para ciertos dispositivos que carecen de las aplicaciones requeridas.",
-      "c4": "Navegue directamente a un mes desde la sección de rutina mensual de la pantalla de inicio.",
-      "c5": "La pantalla Informes de tiempo maneja mejor los meses vacíos y futuros.",
-      "c6": "Correcciones de errores menores."
+    "181": {
+      "c1": "Vista de mapa ampliada",
+      "c2": "Se agregó una solicitud de revisión de la tienda después de que se cumplan ciertos criterios.",
+      "c3": "Pequeñas correcciones de errores"
     },
-    "1100": {
-      "c1": "¡Agrega el informe anual a la pantalla Informes de tiempo! Realice un seguimiento del progreso de su año de servicio de un vistazo.",
-      "c2": "Al agregar tiempo desde la pantalla Informes de tiempo, el informe ahora se establece de forma predeterminada en el mes seleccionado.",
-      "c3": "Soluciona un problema al exportar el informe de servicio de enero."
+    "180": {
+      "c1": "Se agregó codificación geográfica automática para contactos.",
+      "c2": "Vista de mapa agregada"
     },
-    "1110": {
-      "c1": "Se agregó soporte para iPads y iPad. ¡Tabletas!",
-      "c2": "Se ajustaron varios estilos para adaptarse mejor a pantallas más grandes.",
-      "c3": "Se ajustó el método para enviar informes de errores y solicitudes de funciones a Github."
+    "170": {
+      "c1": "Agregue varios métodos de exportación de tiempo",
+      "c2": "Agregue 'No en casa'"
     },
-    "1111": {
-      "c1": "Agregue la página de donación en la configuración para aquellos que deseen contribuir.",
-      "c2": "Incluye varias mejoras menores y correcciones de errores."
+    "163": {
+      "c1": "Resolver problemas de actualización automática"
     },
-    "1120": {
-      "c1": "Agrega funcionalidad de copia de seguridad y restauración. Ahora puedes hacer una copia de seguridad de tus datos en la nube y restaurarlos más tarde. Puede transferir sus datos a otro dispositivo. También puedes transferirlo a otra plataforma. Encuentre esta nueva característica en la configuración."
+    "162": {
+      "c1": "Se ajustó el requisito de horas de precursor especial de 70 a 100"
     },
-    "1200": {
-      "c1": "Agrega funcionalidad de copia de seguridad y restauración. Ahora puedes hacer una copia de seguridad de tus datos en la nube y restaurarlos más tarde, esto te permite transferir tus datos a otro dispositivo. También puedes transferirlo a otra plataforma. Encuentre esta nueva característica en la configuración."
+    "161": {
+      "c1": "Se agregaron más opciones de minutos para entradas de tiempo."
     },
-    "1201": {
-      "c1": "Correcciones de errores menores.",
-      "c2": "Traducciones al coreano significativamente mejoradas: gracias hermano Paul. Si desea ayudar a traducir su propio idioma, visite la configuración.",
-      "c3": "Correcciones de errores menores."
-    },
-    "1210": {
-      "c1": "Precisión enormemente mejorada de las visualizaciones de tiempo.",
-      "c2": "Precisión mejorada de las barras de progreso del tiempo.",
-      "c3": "Se agregaron sugerencias útiles para acciones que pueden no notarse de inmediato.",
-      "c4": "Calidad de vida mejorada en la pantalla de mapas con información más relevante y un botón para agregar rápidamente."
-    },
-    "1211": {
-      "c1": "Se agregaron sugerencias únicas más útiles cuando corresponda."
+    "160": {
+      "c1": "Las conversaciones ahora son editables. Las notificaciones son configurables.",
+      "c2": "Desliza gestos para editar o eliminar conversaciones, contactos, etc.",
+      "c3": "Se agregó retroalimentación háptica a varias acciones importantes."
     },
     "1220": {
       "c3": "Se agregó Calendario a la pantalla de informes de tiempo.",
@@ -494,7 +494,7 @@
   "cannotNavigateToFutureMonth_description": "Seleccione el mes actual o anterior.",
   "addATimeEntryToViewReport": "Agregue una entrada de tiempo para ver su informe mensual.",
   "serviceYear": "Año de servicio",
-  "hoursPerMonthToGoal": "horas por mes a meta anual",
+  "hoursPerMonthToGoal": "horas para alcanzar la meta anual",
   "serviceYearSummary": "Resumen del año de servicio",
   "donate": "Donar",
   "donate_thankYou": "¡Gracias por considerar donar!",
@@ -515,9 +515,9 @@
   "monthly": "Mensual",
   "eachMonth": "/ mes",
   "chooseYourDonationAmount": "Elige el monto de tu donación",
-  "thanksForUsingJwTime": "¡Gracias por amar JW Time!",
+  "thanksForUsingJwTime": "¡Gracias por amar a JW Time!",
   "firstOfAll": "En primer lugar...",
-  "restorePurchase": "Restaurar las compras",
+  "restorePurchase": "Restaurar compras",
   "showAll": "Mostrar más opciones",
   "donate_letter": "Querido hermano o hermana,\n\nMe siento muy honrado de que hayas elegido mi aplicación para usarla entre un mar de otras opciones increíbles. Empecé a trabajar en esta aplicación cuando era pionero; simplemente no podía encontrar un lugar claro y conciso para guardar mis notas. Para mí, sentí como si siempre perdiera mis notas en papel y de alguna manera olvidara mis visitas posteriores. Sabía que muchas otras personas sentían lo mismo. Mi objetivo al crear esta aplicación era centrarme en la alta utilidad pero también en la simplicidad. Cualquiera debería poder utilizar esta aplicación, sin importar su edad o experiencia como editor. Espero que mi aplicación haya sido una herramienta útil para ti y tu servicio a Jehová. He pasado innumerables horas desarrollando esta aplicación y estoy muy feliz de ver que tantos hermanos y hermanas en todo el mundo la utilizan. Si aún no lo ha hecho, informe a otros sobre JW Time: es un trabajo de amor. Independientemente de si eliges donar, espero que sigas disfrutando de la aplicación y de las futuras actualizaciones.\n\nGracias,\n\nLevi Wilkerson",
   "donate_letter_ps": "PD Siempre estoy disponible para hablar sobre cualquier tema: preguntas personales, preguntas sobre aplicaciones u otras inquietudes. No dude en comunicarse conmigo a mi correo electrónico a continuación.",
@@ -528,19 +528,19 @@
   "errorFetchingOfferings": "Error al obtener ofertas",
   "tryAgainLater": "Por favor, inténtelo de nuevo más tarde.",
   "oneTimeDonations": "Donaciones únicas",
-  "monthlyDonation": "Donación Mensual",
+  "monthlyDonation": "Donación mensual",
   "active": "Activo",
   "inactive": "Inactivo",
   "yourDonations": "Tus donaciones",
   "thankYou": "¡Gracias!",
   "thankYou_description": "No merezco tanta amabilidad. Tu generosidad es muy apreciada.",
   "failedToOpenMailApplication_description": "Verifique que tenga instalada una aplicación de correo válida.",
-  "hideDonateHeart": "Ocultar Donar Corazón",
+  "hideDonateHeart": "Ocultar \"Corazón de donación\"",
   "noPurchasesFound": "No se encontraron compras",
   "errorCheckingOut": "Hubo un error al realizar el check-out. Probablemente se deba a una inestabilidad de la red. Inténtelo de nuevo.",
   "goToAppStoreToUpdateSubscriptions": "Para cancelar o editar su suscripción, visite la App Store.",
   "termsOfUse": "Condiciones de uso",
-  "importAndExport": "Importar y actualizar Exportar",
+  "importAndExport": "Importar o exportar",
   "import": "Importar",
   "importAndExport_description": "Importe y exporte sus datos hacia y desde JW Time. Esto es útil si está cambiando de dispositivo o desea hacer una copia de seguridad de sus datos.",
   "importError_title": "Error de importación",
@@ -576,12 +576,12 @@
   "recommendedBackup_description": "Han pasado más de {{count}} días desde su última copia de seguridad. Se recomienda crear una nueva copia de seguridad ahora.",
   "backupNow": "Copia ahora",
   "today": "Hoy",
-  "annualGoal": "Meta Anual",
+  "annualGoal": "Meta anual",
   "default": "Por defecto",
   "appearance": "Apariencia",
-  "fontSizeOffset": "Desplazamiento del tamaño de fuente",
+  "fontSizeOffset": "Tamaño de letra",
   "thisGloballyOffsetsTextSize": "Se recomienda cambiar el tamaño del texto de su dispositivo si tiene problemas para leer la aplicación. Esta configuración afectará el tamaño de fuente de todas las aplicaciones.",
-  "planSchedule": "Calendario del plan",
+  "planSchedule": "Planificar predicar",
   "recurring": "Periódico",
   "planSchedule_description": "Programar sus días de servicio le ayudará a visualizar su mes de servicio. Esto es especialmente útil para quienes tienen una meta mensual.",
   "newPlan": "Nuevo plan",
@@ -608,10 +608,10 @@
   "endDate": "Fecha final",
   "missed": "Omitido",
   "plans": "Planes",
-  "dayPlans": "Planes diurnos",
-  "dayPlan": "plan de día",
+  "dayPlans": "Planes diaros",
+  "dayPlan": "Plan diario",
   "recurringPlans": "Planes recurrentes",
-  "noDayPlans": "Sin planes diurnos",
+  "noDayPlans": "Sin planes diarios",
   "noRecurringPlans": "Sin planes recurrentes",
   "deletePlan_title": "¿Eliminar plan?",
   "deletePlan_description": "Eliminar este plan lo eliminará permanentemente.",
@@ -626,7 +626,7 @@
   "addedConversation": "Conversación agregada",
   "addedNotAtHome": "Agregado no en casa",
   "youCannotCreateAPlanForAPreviousDay": "No se puede crear un plan para una fecha anterior.",
-  "nwPublisher": "Editor del noroeste",
+  "nwPublisher": "NW Publisher",
   "nwPublisherOnlyAllowsLastMonth": "NW Publisher solo le permite enviar el informe del mes anterior.",
   "submitLastMonth": "Enviar el mes pasado",
   "deleteThisPlan": "Eliminar este plan",
@@ -638,9 +638,9 @@
   "deleteField_description": "¿Está seguro de que desea eliminar este campo personalizado?",
   "clearForThisContact": "Borrar para este contacto",
   "deleteFieldOnAllContacts": "Eliminar campo para todos los contactos",
-  "timer": "Temporizador",
-  "resetTimer": "Reiniciar temporizador",
-  "resetTimer_description": "Perderá su entrada de tiempo actual si reinicia el temporizador. ¿Quieres restablecer?",
+  "timer": "Cronómetro",
+  "resetTimer": "Reiniciar cronómetro",
+  "resetTimer_description": "Perderá su tiempo actual si reinicia el cronómetro. ¿Quieres reiniciarlo?",
   "reset": "Reiniciar",
   "notEnoughTime": "No hay tiempo suficiente",
   "notEnoughTime_description": "No ha transcurrido suficiente tiempo. Debe tener al menos 5 minutos para enviar una entrada de tiempo.",

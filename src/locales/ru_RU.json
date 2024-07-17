@@ -658,5 +658,6 @@
   "updateTime_description": "Редактировать или удалить предыдущий отчет об обслуживании",
   "deleted": "Удалено",
   "archived": "В архиве",
-  "recovered": "Восстановлено"
+  "recovered": "Восстановлено",
+  "thisContactHasNoConversations": "This contact has no conversations yet."
 }

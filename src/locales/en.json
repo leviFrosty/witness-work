@@ -652,5 +652,9 @@
   "actual": "Actual",
   "schedule": "Schedule",
   "onSchedule": "On Schedule!",
-  "tryToPlanAtLeast100Percent": "Try to plan at least 100% of your goal."
+  "tryToPlanAtLeast100Percent": "Try to plan at least 100% of your goal.",
+  "updated": "Updated",
+  "updateTime": "Update Time",
+  "updateTime_description": "Edit or delete a previous service report",
+  "deleted": "Deleted"
 }

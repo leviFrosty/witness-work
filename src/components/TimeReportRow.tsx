@@ -12,6 +12,10 @@ import IconButton from './IconButton'
 import { faPersonDigging } from '@fortawesome/free-solid-svg-icons'
 import { useCallback } from 'react'
 import XView from './layout/XView'
+import Button from './Button'
+import { useNavigation } from '@react-navigation/native'
+import { RootStackNavigation } from '../stacks/RootStack'
+import { useToastController } from '@tamagui/toast'
 
 interface TimeReportRowProps {
   report: ServiceReport
@@ -20,6 +24,8 @@ interface TimeReportRowProps {
 const TimeReportRow = ({ report }: TimeReportRowProps) => {
   const theme = useTheme()
   const { deleteServiceReport } = useServiceReport()
+  const navigation = useNavigation<RootStackNavigation>()
+  const toast = useToastController()
 
   const handleSwipeOpen = useCallback(
     (
@@ -42,6 +48,10 @@ const TimeReportRow = ({ report }: TimeReportRowProps) => {
               style: 'destructive',
               onPress: () => {
                 swipeable.reset()
+                toast.show(i18n.t('success'), {
+                  message: i18n.t('deleted'),
+                  native: true,
+                })
                 deleteServiceReport(report.id)
               },
             },
@@ -49,7 +59,7 @@ const TimeReportRow = ({ report }: TimeReportRowProps) => {
         )
       }
     },
-    [deleteServiceReport]
+    [deleteServiceReport, toast]
   )
 
   return (
@@ -67,7 +77,8 @@ const TimeReportRow = ({ report }: TimeReportRowProps) => {
         handleSwipeOpen(direction, swipeable, report)
       }
     >
-      <View
+      <Button
+        onPress={() => navigation.navigate('Add Time', { id: report.id })}
         style={{
           backgroundColor: theme.colors.card,
           padding: 15,
@@ -131,7 +142,7 @@ const TimeReportRow = ({ report }: TimeReportRowProps) => {
             </View>
           </View>
         )}
-      </View>
+      </Button>
     </Swipeable>
   )
 }

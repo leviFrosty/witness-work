@@ -1,4 +1,4 @@
-import { View, Platform } from 'react-native'
+import { View, Platform, Alert } from 'react-native'
 import { useState } from 'react'
 import Section from '../components/inputs/Section'
 import InputRowContainer from '../components/inputs/InputRowContainer'
@@ -40,15 +40,29 @@ const AddTimeScreen = ({ route }: AddTimeScreenProps) => {
     ...serviceReportTags,
     'custom',
   ]
-  const [category, setCategory] = useState(timeEntryCategories[0])
+
+  const {
+    addServiceReport,
+    serviceReports,
+    updateServiceReport,
+    deleteServiceReport,
+  } = useServiceReport()
+  const existingServiceReport = serviceReports.find(
+    (r) => r.id === route.params?.id
+  )
+  const [category, setCategory] = useState(
+    existingServiceReport?.ldc
+      ? timeEntryCategories[1]
+      : existingServiceReport?.tag ?? timeEntryCategories[0]
+  )
   const [customCategory, setCustomCategory] = useState<string>('')
   const nearestFiveMinutes = Math.floor((route.params?.minutes || 0) / 5) * 5
   const [serviceReport, setServiceReport] = useState<ServiceReport>({
-    id: Crypto.randomUUID(),
-    hours: route.params?.hours || 0,
-    minutes: nearestFiveMinutes,
-    date: moment(route.params?.date).toDate(),
-    ldc: false,
+    id: existingServiceReport?.id ?? Crypto.randomUUID(),
+    hours: existingServiceReport?.hours || route.params?.hours || 0,
+    minutes: existingServiceReport?.minutes ?? nearestFiveMinutes,
+    date: moment(existingServiceReport?.date ?? route.params?.date).toDate(),
+    ldc: existingServiceReport?.ldc ?? false,
   })
   const toast = useToastController()
 
@@ -131,6 +145,10 @@ const AddTimeScreen = ({ route }: AddTimeScreenProps) => {
       serviceReportTags: [...serviceReportTags].filter((t) => t !== category),
     })
     setCategory(presetCategories[0])
+    setServiceReport({
+      ...serviceReport,
+      tag: undefined,
+    })
   }
 
   const typeOptions = timeEntryCategories.map((value) => ({
@@ -159,7 +177,6 @@ const AddTimeScreen = ({ route }: AddTimeScreenProps) => {
     label: `${value}`,
     value,
   }))
-  const { addServiceReport } = useServiceReport()
 
   const submit = () => {
     addServiceReport(serviceReport)
@@ -168,6 +185,36 @@ const AddTimeScreen = ({ route }: AddTimeScreenProps) => {
       native: true,
     })
     navigation.goBack()
+  }
+
+  const save = () => {
+    updateServiceReport(serviceReport)
+    toast.show(i18n.t('success'), {
+      message: i18n.t('updated'),
+      native: true,
+    })
+    navigation.goBack()
+  }
+
+  const handleRequestDelete = () => {
+    Alert.alert(i18n.t('deleteTime_title'), i18n.t('deleteTime_description'), [
+      {
+        text: i18n.t('cancel'),
+        style: 'cancel',
+      },
+      {
+        text: i18n.t('delete'),
+        style: 'destructive',
+        onPress: () => {
+          deleteServiceReport(serviceReport.id)
+          toast.show(i18n.t('success'), {
+            message: i18n.t('deleted'),
+            native: true,
+          })
+          navigation.goBack()
+        },
+      },
+    ])
   }
 
   const hasEnteredTime =
@@ -193,10 +240,14 @@ const AddTimeScreen = ({ route }: AddTimeScreenProps) => {
         <View style={{ gap: 30 }}>
           <View style={{ padding: 25, gap: 5 }}>
             <Text style={{ fontSize: 32, fontFamily: theme.fonts.bold }}>
-              {i18n.t('addTime')}
+              {i18n.t(existingServiceReport ? 'updateTime' : 'addTime')}
             </Text>
             <Text style={{ color: theme.colors.textAlt, fontSize: 12 }}>
-              {i18n.t('addTime_description')}
+              {i18n.t(
+                existingServiceReport
+                  ? 'updateTime_description'
+                  : 'addTime_description'
+              )}
             </Text>
           </View>
           <Section>
@@ -253,12 +304,16 @@ const AddTimeScreen = ({ route }: AddTimeScreenProps) => {
                     </View>
                     <Button
                       style={{
-                        backgroundColor: theme.colors.accent,
+                        backgroundColor:
+                          customCategory.length === 0
+                            ? theme.colors.accentAlt
+                            : theme.colors.accent,
                         borderRadius: theme.numbers.borderRadiusSm,
                         paddingVertical: 15,
                       }}
                       variant='outline'
                       onPress={handleAddCustomCategory}
+                      disabled={customCategory.length === 0}
                     >
                       <Text
                         style={{
@@ -345,9 +400,29 @@ const AddTimeScreen = ({ route }: AddTimeScreenProps) => {
               {i18n.t('categoryNeeded')}
             </Text>
           )}
-          <ActionButton disabled={!submittable} onPress={submit}>
-            {i18n.t('submit')}
+          <ActionButton
+            disabled={!submittable}
+            onPress={existingServiceReport ? save : submit}
+          >
+            {i18n.t(existingServiceReport ? 'save' : 'submit')}
           </ActionButton>
+          {existingServiceReport && (
+            <Button
+              style={{
+                paddingVertical: 12,
+                paddingHorizontal: 24,
+                backgroundColor: theme.colors.errorTranslucent,
+                borderColor: theme.colors.error,
+                borderWidth: 1,
+                borderRadius: theme.numbers.borderRadiusSm,
+              }}
+              onPress={handleRequestDelete}
+            >
+              <Text style={{ color: theme.colors.error, textAlign: 'center' }}>
+                {i18n.t('delete')}
+              </Text>
+            </Button>
+          )}
         </View>
       </KeyboardAwareScrollView>
     </Wrapper>

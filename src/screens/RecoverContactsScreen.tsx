@@ -12,12 +12,14 @@ import { useMemo } from 'react'
 import Wrapper from '../components/layout/Wrapper'
 import IconButton from '../components/IconButton'
 import { faTrash, faUndo } from '@fortawesome/free-solid-svg-icons'
+import { useToastController } from '@tamagui/toast'
 
 const RecoverContactsScreen = () => {
   const theme = useTheme()
   const { conversations, deleteConversation } = useConversations()
   const { deletedContacts, recoverContact, removeDeletedContact } =
     useContacts()
+  const toast = useToastController()
   const insets = useSafeAreaInsets()
 
   const handleRemoveDeleted = (id: string) => {
@@ -28,6 +30,18 @@ const RecoverContactsScreen = () => {
     conversationsToDelete.forEach((cToDelete) =>
       deleteConversation(cToDelete.id)
     )
+    toast.show(i18n.t('success'), {
+      message: i18n.t('deleted'),
+      native: true,
+    })
+  }
+
+  const recover = (id: string) => {
+    recoverContact(id)
+    toast.show(i18n.t('success'), {
+      message: i18n.t('recovered'),
+      native: true,
+    })
   }
 
   const sortedContacts = useMemo(
@@ -111,7 +125,7 @@ const RecoverContactsScreen = () => {
                           }}
                         >
                           <IconButton
-                            onPress={() => recoverContact(item.id)}
+                            onPress={() => recover(item.id)}
                             icon={faUndo}
                           />
                           <Text>{item.name}</Text>

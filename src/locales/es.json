@@ -656,5 +656,7 @@
   "updated": "Actualizado",
   "updateTime": "Tiempo de actualizacion",
   "updateTime_description": "Editar o eliminar un informe de servicio anterior",
-  "deleted": "Eliminado"
+  "deleted": "Eliminado",
+  "archived": "Archivado",
+  "recovered": "Recuperado"
 }

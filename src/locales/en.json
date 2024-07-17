@@ -656,5 +656,7 @@
   "updated": "Updated",
   "updateTime": "Update Time",
   "updateTime_description": "Edit or delete a previous service report",
-  "deleted": "Deleted"
+  "deleted": "Deleted",
+  "archived": "Archived",
+  "recovered": "Recovered"
 }

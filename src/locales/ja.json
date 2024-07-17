@@ -656,5 +656,7 @@
   "updated": "更新済み",
   "updateTime": "更新時間",
   "updateTime_description": "以前のサービス レポートを編集または削除",
-  "deleted": "削除済み"
+  "deleted": "削除済み",
+  "archived": "アーカイブ済み",
+  "recovered": "回復済み"
 }

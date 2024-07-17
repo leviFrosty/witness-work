@@ -54,6 +54,7 @@ import { openURL } from '../lib/links'
 import HintCard from '../components/HintCard'
 import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps'
 import useLocation from '../hooks/useLocation'
+import { useToastController } from '@tamagui/toast'
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Contact Details'>
 
@@ -434,6 +435,7 @@ const DeleteContactButton = ({
   contact: Contact
 }) => {
   const theme = useTheme()
+  const toast = useToastController()
 
   return (
     <View style={{ gap: 5 }}>
@@ -452,6 +454,10 @@ const DeleteContactButton = ({
                 style: 'destructive',
                 onPress: () => {
                   deleteContact(contactId)
+                  toast.show(i18n.t('success'), {
+                    message: i18n.t('archived'),
+                    native: true,
+                  })
                   navigation.popToTop()
                 },
               },

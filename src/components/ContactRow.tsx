@@ -18,6 +18,7 @@ import { Swipeable } from 'react-native-gesture-handler'
 import Haptics from '../lib/haptics'
 import useContacts from '../stores/contactsStore'
 import SwipeableArchive from './swipeableActions/Archive'
+import { useToastController } from '@tamagui/toast'
 
 const ContactRow = ({
   contact,
@@ -29,6 +30,7 @@ const ContactRow = ({
   const theme = useTheme()
   const { deleteContact } = useContacts()
   const { conversations } = useConversations()
+  const toast = useToastController()
 
   const isActiveBibleStudy = useMemo(
     () =>
@@ -79,6 +81,10 @@ const ContactRow = ({
             style: 'destructive',
             onPress: () => {
               swipeable.reset()
+              toast.show(i18n.t('success'), {
+                message: i18n.t('archived'),
+                native: true,
+              })
               deleteContact(contact.id)
             },
           },

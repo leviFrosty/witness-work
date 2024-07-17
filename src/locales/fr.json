@@ -656,5 +656,7 @@
   "updated": "Mis à jour",
   "updateTime": "Temps de mise à jour",
   "updateTime_description": "Modifier ou supprimer un rapport de service précédent",
-  "deleted": "Supprimé"
+  "deleted": "Supprimé",
+  "archived": "Archivé",
+  "recovered": "Rétabli"
 }

@@ -656,5 +656,7 @@
   "updated": "Đã cập nhật",
   "updateTime": "Cập nhật thời gian",
   "updateTime_description": "Chỉnh sửa hoặc xóa báo cáo dịch vụ trước đó",
-  "deleted": "Đã xóa"
+  "deleted": "Đã xóa",
+  "archived": "Đã lưu trữ",
+  "recovered": "Đã phục hồi"
 }

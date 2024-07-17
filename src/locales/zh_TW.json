@@ -656,5 +656,7 @@
   "updated": "更新",
   "updateTime": "更新時間",
   "updateTime_description": "編輯或刪除先前的服務報告",
-  "deleted": "已刪除"
+  "deleted": "已刪除",
+  "archived": "已存檔",
+  "recovered": "已恢復"
 }

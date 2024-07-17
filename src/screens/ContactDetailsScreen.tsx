@@ -36,6 +36,7 @@ import {
   faPencil,
   faPhone,
   faPlus,
+  faTrash,
 } from '@fortawesome/free-solid-svg-icons'
 import Copyeable from '../components/Copyeable'
 import Button from '../components/Button'
@@ -55,6 +56,7 @@ import HintCard from '../components/HintCard'
 import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps'
 import useLocation from '../hooks/useLocation'
 import { useToastController } from '@tamagui/toast'
+import XView from '../components/layout/XView'
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Contact Details'>
 
@@ -419,11 +421,8 @@ const EmailRow = ({ contact }: { contact: Contact }) => {
   )
 }
 
-const DeleteContactButton = ({
+const CreatedAt = ({
   contact,
-  deleteContact,
-  navigation,
-  contactId,
 }: {
   deleteContact: (id: string) => void
   navigation: NativeStackNavigationProp<
@@ -435,47 +434,9 @@ const DeleteContactButton = ({
   contact: Contact
 }) => {
   const theme = useTheme()
-  const toast = useToastController()
 
   return (
     <View style={{ gap: 5 }}>
-      <Button
-        onPress={() =>
-          Alert.alert(
-            i18n.t('archiveContact_question'),
-            i18n.t('archiveContact_description'),
-            [
-              {
-                text: i18n.t('cancel'),
-                style: 'cancel',
-              },
-              {
-                text: i18n.t('delete'),
-                style: 'destructive',
-                onPress: () => {
-                  deleteContact(contactId)
-                  toast.show(i18n.t('success'), {
-                    message: i18n.t('archived'),
-                    native: true,
-                  })
-                  navigation.popToTop()
-                },
-              },
-            ]
-          )
-        }
-      >
-        <Text
-          style={{
-            fontFamily: theme.fonts.semiBold,
-            textAlign: 'center',
-            fontSize: 10,
-            textDecorationLine: 'underline',
-          }}
-        >
-          {i18n.t('archiveContact')}
-        </Text>
-      </Button>
       <Text
         style={{
           fontSize: 10,
@@ -611,6 +572,7 @@ const ContactDetailsScreen = ({ route, navigation }: Props) => {
     () => contacts.find((c) => c.id === params.id),
     [contacts, params.id]
   )
+  const toast = useToastController()
   const { conversations } = useConversations()
 
   const highlightedConversation = useMemo(
@@ -651,6 +613,37 @@ const ContactDetailsScreen = ({ route, navigation }: Props) => {
                 right: 0,
               }}
             >
+              <IconButton
+                icon={faTrash}
+                color={theme.colors.textInverse}
+                onPress={() =>
+                  Alert.alert(
+                    i18n.t('archiveContact_question'),
+                    i18n.t('archiveContact_description'),
+                    [
+                      {
+                        text: i18n.t('cancel'),
+                        style: 'cancel',
+                      },
+                      {
+                        text: i18n.t('delete'),
+                        style: 'destructive',
+                        onPress: () => {
+                          if (!contact) {
+                            return
+                          }
+                          deleteContact(contact.id)
+                          toast.show(i18n.t('success'), {
+                            message: i18n.t('archived'),
+                            native: true,
+                          })
+                          navigation.popToTop()
+                        },
+                      },
+                    ]
+                  )
+                }
+              />
               <Button
                 onPress={async () => {
                   navigation.replace('Contact Form', {
@@ -665,13 +658,26 @@ const ContactDetailsScreen = ({ route, navigation }: Props) => {
                   iconStyle={{ color: theme.colors.textInverse }}
                 />
               </Button>
-              <IconButton
-                onPress={() => {
-                  setSheetOpen(true)
-                }}
-                iconStyle={{ color: theme.colors.textInverse }}
-                icon={faPlus}
-              />
+
+              <Button onPress={() => setSheetOpen(true)}>
+                <XView
+                  style={{
+                    borderColor: theme.colors.textInverse,
+                    borderWidth: 1,
+                    paddingVertical: 5,
+                    paddingHorizontal: 10,
+                    borderRadius: theme.numbers.borderRadiusSm,
+                  }}
+                >
+                  <IconButton
+                    iconStyle={{ color: theme.colors.textInverse }}
+                    icon={faPlus}
+                  />
+                  <Text style={{ color: theme.colors.textInverse }}>
+                    {i18n.t('add')}
+                  </Text>
+                </XView>
+              </Button>
             </View>
           }
           backgroundColor={theme.colors.accent3}
@@ -679,11 +685,17 @@ const ContactDetailsScreen = ({ route, navigation }: Props) => {
       ),
     })
   }, [
+    contact,
     contact?.id,
+    deleteContact,
     navigation,
     params.id,
+    theme.colors.accent,
     theme.colors.accent3,
+    theme.colors.accentTranslucent,
     theme.colors.textInverse,
+    theme.numbers.borderRadiusSm,
+    toast,
   ])
 
   const isActiveBibleStudy = useMemo(
@@ -774,16 +786,47 @@ const ContactDetailsScreen = ({ route, navigation }: Props) => {
               </View>
             </CardWithTitle>
             <View style={{ gap: 10 }}>
-              <Text
+              <XView
                 style={{
-                  fontSize: 14,
-                  fontFamily: theme.fonts.semiBold,
-                  marginLeft: 10,
-                  color: theme.colors.text,
+                  justifyContent: 'space-between',
+                  paddingHorizontal: 15,
                 }}
               >
-                {i18n.t('conversationHistory')}
-              </Text>
+                <Text
+                  style={{
+                    fontSize: 14,
+                    fontFamily: theme.fonts.semiBold,
+                    color: theme.colors.text,
+                  }}
+                >
+                  {i18n.t('conversationHistory')}
+                </Text>
+                <Button onPress={() => setSheetOpen(true)}>
+                  <XView
+                    style={{
+                      borderColor: theme.colors.text,
+                      borderWidth: 1,
+                      paddingVertical: 5,
+                      paddingHorizontal: 10,
+                      borderRadius: theme.numbers.borderRadiusSm,
+                    }}
+                  >
+                    <IconButton
+                      iconStyle={{ color: theme.colors.text }}
+                      icon={faPlus}
+                      size={'sm'}
+                    />
+                    <Text
+                      style={{
+                        color: theme.colors.text,
+                        fontSize: theme.fontSize('sm'),
+                      }}
+                    >
+                      {i18n.t('add')}
+                    </Text>
+                  </XView>
+                </Button>
+              </XView>
               {howToEditAndDeleteConversation &&
                 contactConversationsSorted.length > 0 && (
                   <View style={{ paddingHorizontal: 10 }}>
@@ -826,7 +869,7 @@ const ContactDetailsScreen = ({ route, navigation }: Props) => {
                 />
               </View>
             </View>
-            <DeleteContactButton
+            <CreatedAt
               contact={contact}
               contactId={params.id}
               deleteContact={deleteContact}

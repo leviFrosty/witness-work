@@ -658,5 +658,6 @@
   "updateTime_description": "Vorherigen Servicebericht bearbeiten oder löschen",
   "deleted": "Gelöscht",
   "archived": "Archiviert",
-  "recovered": "Wiederhergestellt"
+  "recovered": "Wiederhergestellt",
+  "thisContactHasNoConversations": "This contact has no conversations yet."
 }

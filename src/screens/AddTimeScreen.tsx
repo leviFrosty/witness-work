@@ -1,5 +1,5 @@
 import { View, Platform, Alert } from 'react-native'
-import { useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import Section from '../components/inputs/Section'
 import InputRowContainer from '../components/inputs/InputRowContainer'
 import useTheme from '../contexts/theme'
@@ -26,6 +26,9 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { NativeStackScreenProps } from '@react-navigation/native-stack'
 import { getLocales } from 'expo-localization'
 import { useToastController } from '@tamagui/toast'
+import Header from '../components/layout/Header'
+import { faTrash } from '@fortawesome/free-solid-svg-icons'
+import IconButton from '../components/IconButton'
 
 type AddTimeScreenProps = NativeStackScreenProps<RootStackParamList, 'Add Time'>
 
@@ -196,7 +199,7 @@ const AddTimeScreen = ({ route }: AddTimeScreenProps) => {
     navigation.goBack()
   }
 
-  const handleRequestDelete = () => {
+  const handleRequestDelete = useCallback(() => {
     Alert.alert(i18n.t('deleteTime_title'), i18n.t('deleteTime_description'), [
       {
         text: i18n.t('cancel'),
@@ -215,7 +218,44 @@ const AddTimeScreen = ({ route }: AddTimeScreenProps) => {
         },
       },
     ])
-  }
+  }, [deleteServiceReport, navigation, serviceReport.id, toast])
+
+  useEffect(() => {
+    navigation.setOptions({
+      header: () => (
+        <Header
+          noInsets
+          buttonType='back'
+          title={i18n.t(existingServiceReport ? 'updateTime' : 'addTime')}
+          rightElement={
+            existingServiceReport ? (
+              <View
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  gap: 20,
+                  position: 'absolute',
+                  right: 10,
+                }}
+              >
+                <IconButton
+                  icon={faTrash}
+                  color={theme.colors.text}
+                  onPress={handleRequestDelete}
+                />
+              </View>
+            ) : undefined
+          }
+        />
+      ),
+    })
+  }, [
+    existingServiceReport,
+    handleRequestDelete,
+    navigation,
+    theme.colors.text,
+    theme.colors.textInverse,
+  ])
 
   const hasEnteredTime =
     serviceReport.hours !== 0 || serviceReport.minutes !== 0
@@ -406,23 +446,6 @@ const AddTimeScreen = ({ route }: AddTimeScreenProps) => {
           >
             {i18n.t(existingServiceReport ? 'save' : 'submit')}
           </ActionButton>
-          {existingServiceReport && (
-            <Button
-              style={{
-                paddingVertical: 12,
-                paddingHorizontal: 24,
-                backgroundColor: theme.colors.errorTranslucent,
-                borderColor: theme.colors.error,
-                borderWidth: 1,
-                borderRadius: theme.numbers.borderRadiusSm,
-              }}
-              onPress={handleRequestDelete}
-            >
-              <Text style={{ color: theme.colors.error, textAlign: 'center' }}>
-                {i18n.t('delete')}
-              </Text>
-            </Button>
-          )}
         </View>
       </KeyboardAwareScrollView>
     </Wrapper>

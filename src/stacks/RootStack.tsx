@@ -5,7 +5,6 @@ import {
 import ContactFormScreen from '../screens/ContactFormScreen'
 import Header from '../components/layout/Header'
 import ConversationFormScreen from '../screens/ConversationFormScreen'
-import useTheme from '../contexts/theme'
 import ContactDetailsScreen from '../screens/ContactDetailsScreen'
 import AddTimeScreen from '../screens/AddTimeScreen'
 import TimeReportsScreen from '../screens/TimeReportsScreen'
@@ -13,8 +12,6 @@ import RecoverContactsScreen from '../screens/RecoverContactsScreen'
 import OnBoarding from '../components/onboarding/Onboarding'
 import { usePreferences } from '../stores/preferences'
 import UpdateScreen from '../screens/UpdateScreen'
-import IconButton from '../components/IconButton'
-import { faPlus } from '@fortawesome/free-solid-svg-icons'
 import HomeTabStack from './HomeTabStack'
 import PreferencesScreen from '../screens/settings/preferences/PreferencesScreen'
 import i18n from '../lib/locales'
@@ -75,7 +72,6 @@ export type RootStackNavigation = NativeStackNavigationProp<RootStackParamList>
 const RootStack = createNativeStackNavigator<RootStackParamList>()
 
 const RootStackComponent = () => {
-  const theme = useTheme()
   const { onboardingComplete } = usePreferences()
 
   return (
@@ -120,27 +116,7 @@ const RootStackComponent = () => {
         }}
         component={AddTimeScreen}
       />
-      <RootStack.Screen
-        options={{
-          header: ({ navigation }) => (
-            <Header
-              buttonType='back'
-              title={i18n.t('timeReports')}
-              rightElement={
-                <IconButton
-                  style={{ position: 'absolute', right: 0 }}
-                  icon={faPlus}
-                  onPress={() => navigation.navigate('Add Time')}
-                  size='xl'
-                  iconStyle={{ color: theme.colors.text }}
-                />
-              }
-            />
-          ),
-        }}
-        name='Time Reports'
-        component={TimeReportsScreen}
-      />
+      <RootStack.Screen name='Time Reports' component={TimeReportsScreen} />
       <RootStack.Screen
         options={{
           presentation: 'modal',

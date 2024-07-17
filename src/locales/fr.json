@@ -463,7 +463,11 @@
     },
     "1290": {
       "c1": "Ajout d'une nouvelle section de calendrier à l'écran de résumé du mois qui vous aide à suivre votre rythme.",
-      "c2": "Sur l'écran d'accueil, résolution des problèmes de chevauchement qui surviennent parfois sur les petites tailles d'écran."
+      "c2": "Sur l'écran d'accueil, résolution des problèmes de chevauchement qui surviennent parfois sur les petites tailles d'écran.",
+      "c3": "Vous pouvez désormais modifier les entrées de temps ! Appuyez dessus !",
+      "c4": "De nombreuses améliorations ont été apportées pour clarifier la façon d'ajouter, de mettre à jour et de supprimer divers éléments dans JW Time. Les indices ont été supprimés car ils ne sont plus nécessaires.",
+      "c5": "Je recherche 2 bénévoles ayant de l'expérience en assurance qualité logicielle pour aider à tester les versions avant qu'elles ne soient rendues publiques. Si vous souhaitez passer quelques heures par mois à tester, votre soutien serait grandement apprécié. Veuillez me contacter : levi@leviwilkerson.com. À l'avenir et dans la mesure où les dépenses le permettent, une partie des dons sera reversée à QA pour leur temps.",
+      "c6": "L’écran d’aperçu du temps annuel est désormais compressé pour une meilleure lisibilité."
     }
   },
   "installed": "installée",

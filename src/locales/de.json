@@ -463,7 +463,11 @@
     },
     "1290": {
       "c1": "Dem Monatsübersichtsbildschirm wurde ein neuer Zeitplanabschnitt hinzugefügt, der Ihnen hilft, den Überblick über Ihr Zeitverhalten zu behalten.",
-      "c2": "Auf dem Startbildschirm wurden Überlappungsprobleme behoben, die manchmal bei kleinen Bildschirmgrößen auftreten."
+      "c2": "Auf dem Startbildschirm wurden Überlappungsprobleme behoben, die manchmal bei kleinen Bildschirmgrößen auftreten.",
+      "c3": "Du kannst nun Zeiteinträge bearbeiten! Tippe darauf!",
+      "c4": "Viele Verbesserungen wurden vorgenommen, um die Übersichtlichkeit zu verbessern, wie verschiedene Elemente in JW Time hinzugefügt, aktualisiert und gelöscht werden können. Hinweise wurden entfernt, da sie nicht mehr erforderlich sind.",
+      "c5": "Ich suche 2 Freiwillige mit Erfahrung in der Software-Qualitätssicherung, die beim Testen von Releases helfen, bevor diese veröffentlicht werden. Wenn Sie Interesse daran haben, ein paar Stunden im Monat mit dem Testen zu verbringen, wäre Ihre Unterstützung sehr willkommen. Bitte kontaktieren Sie mich: levi@leviwilkerson.com. In Zukunft wird, sofern die Ausgaben es erlauben, ein Teil der Spenden für ihre Zeit an die Qualitätssicherung gehen.",
+      "c6": "Der jährliche Zeitübersichtsbildschirm ist jetzt zur besseren Lesbarkeit komprimiert."
     }
   },
   "installed": "Eingerichtet",

@@ -463,7 +463,11 @@
     },
     "1290": {
       "c1": "Adicionada nova seção de programação à tela de resumo do mês, que ajuda você a acompanhar o ritmo do seu tempo.",
-      "c2": "Na tela inicial, foram resolvidos problemas de sobreposição que às vezes acontecem em telas pequenas."
+      "c2": "Na tela inicial, foram resolvidos problemas de sobreposição que às vezes acontecem em telas pequenas.",
+      "c3": "Agora você pode editar entradas de tempo! Toque neles!",
+      "c4": "Muitas melhorias foram feitas para esclarecer como adicionar, atualizar e excluir vários itens no JW Time. As dicas foram removidas porque não são mais necessárias.",
+      "c5": "Estou procurando 2 voluntários com experiência em controle de qualidade de software para auxiliar nos testes de versões antes que cheguem ao público. Se você tiver interesse em passar algumas horas por mês testando, seu apoio será muito apreciado. Por favor, entre em contato comigo: levi@leviwilkerson.com. No futuro e conforme as despesas permitirem, uma parte das doações irá para o QA pelo seu tempo.",
+      "c6": "A tela de visão geral do tempo anual agora está compactada para melhor legibilidade."
     }
   },
   "installed": "Instalado",

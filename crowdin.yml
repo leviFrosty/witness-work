@@ -1,5 +1,5 @@
 commit_message: 'translation: new %language% translations from Crowdin'
-append_commit_message: 
+append_commit_message:
 pull_request_title: 'translation: New Translations'
 files:
   - source: /src/locales/en.json

@@ -640,5 +640,13 @@
   "reset": "초기화",
   "notEnoughTime": "충분하지 않은 시간",
   "notEnoughTime_description": "시간이 충분하지 않습니다. 시간 항목을 제출하려면 최소 5분의 시간이 있어야 합니다.",
-  "providedTimeIsLessThanFiveMinutes": "제공시간은 5분 이내입니다."
+  "providedTimeIsLessThanFiveMinutes": "제공시간은 5분 이내입니다.",
+  "aheadOfSchedule": "일정보다 앞서!",
+  "behindSchedule": "일정이 늦어짐",
+  "hour": "시간",
+  "expected": "예상되는",
+  "actual": "실제",
+  "schedule": "일정",
+  "onSchedule": "일정에!",
+  "tryToPlanAtLeast100Percent": "목표의 적어도 100%를 계획하도록 노력하십시오."
 }

@@ -116,7 +116,7 @@ export const DashboardScreen = () => {
           paddingBottom: insets.bottom + 50,
         }}
       >
-        <View style={{ gap: 30, paddingBottom: insets.bottom, flex: 1 }}>
+        <View style={{ gap: 20, paddingBottom: insets.bottom, flex: 1 }}>
           {!!approachingConvosWithActiveContacts.length && (
             <ApproachingConversations
               conversations={approachingConvosWithActiveContacts}

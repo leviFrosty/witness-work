@@ -25,7 +25,7 @@ It is written in Typescript using React Native and Expo.
 
 ## Build
 
-To build iOS (or Android)
+Building Android & iOS is similar, for this example we will build an iOS simulator.
 
 Build dependencies: [XCode](https://docs.expo.dev/workflow/ios-simulator/#install-xcode), XCode latest iOS version, [XCode cli](https://docs.expo.dev/workflow/ios-simulator/#install-xcode-command-line-tools), [Watchman](https://facebook.github.io/watchman/docs/install#macos), [Node](https://nodejs.org/en/download/package-manager), [Yarn](https://classic.yarnpkg.com/lang/en/docs/install/#mac-stable), and [EAS cli](https://docs.expo.dev/eas-update/getting-started/)
 

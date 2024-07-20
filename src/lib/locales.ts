@@ -11,8 +11,7 @@ import nl from '../locales/nl.json'
 import ru from '../locales/ru.json'
 import pt from '../locales/pt.json'
 import vi from '../locales/vi.json'
-import zh_CN from '../locales/zh_CN.json'
-import zh_TW from '../locales/zh_TW.json'
+import zh from '../locales/zh.json'
 import moment from 'moment'
 import 'moment/locale/de-at'
 import 'moment/locale/de-ch'
@@ -52,8 +51,7 @@ const _i18n = new I18n({
   pt,
   ru,
   vi,
-  zh_CN,
-  zh_TW,
+  zh,
 })
 
 const locale = getLocales()[0].languageCode! // Guaranteed to return at least one element

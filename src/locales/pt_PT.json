@@ -468,6 +468,9 @@
       "c4": "Foram introduzidas muitas melhorias para explicar como adicionar, atualizar e excluir vários itens no JW Time. As dicas foram removidas porque elas não são mais necessárias.",
       "c5": "Estou a procurar por 2 voluntários com experiência em Software QA para ajudar no teste de lançamentos antes que eles sejam públicos. Se tiver interesse em passar algumas horas por mês em testes, o seu apoio será muito apreciado. Entre em contacto comigo: levi@leviwilkerson.com. No futuro e como as despesas permitirem, uma porção de doações vai para o controle de qualidade pelo seu tempo.",
       "c6": "O ecrã de visão geral do tempo anual agora é comprimido para melhor leitura."
+    },
+    "1291": {
+      "c1": "[ANDROID] Resolved crashes that occurred when editing time."
     }
   },
   "installed": "Instalado",

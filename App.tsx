@@ -81,20 +81,20 @@ export default function App() {
       <ThemeProvider>
         <SafeAreaProvider>
           <CustomerProvider>
-            <TamaguiProvider
-              defaultTheme={colorScheme || undefined}
-              config={tamaguiConfig}
-            >
-              <ToastProvider>
-                <NavigationContainer>
+            <NavigationContainer>
+              <TamaguiProvider
+                defaultTheme={colorScheme || undefined}
+                config={tamaguiConfig}
+              >
+                <ToastProvider>
                   <GestureHandlerRootView style={{ flex: 1 }}>
                     <StatusBar />
                     <ToastViewport />
                     <RootStackComponent />
                   </GestureHandlerRootView>
-                </NavigationContainer>
-              </ToastProvider>
-            </TamaguiProvider>
+                </ToastProvider>
+              </TamaguiProvider>
+            </NavigationContainer>
           </CustomerProvider>
         </SafeAreaProvider>
       </ThemeProvider>

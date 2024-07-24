@@ -463,7 +463,18 @@
     },
     "1290": {
       "c1": "Se agregó una nueva sección de programación a la pantalla de resumen mensual que le ayuda a realizar un seguimiento de su ritmo de tiempo.",
-      "c2": "En la pantalla de inicio, se resolvieron problemas superpuestos que a veces ocurren en pantallas pequeñas."
+      "c2": "En la pantalla de inicio, se resolvieron problemas superpuestos que a veces ocurren en pantallas pequeñas.",
+      "c3": "¡Ahora puedes editar entradas de tiempo! ¡Toca sobre ellos!",
+      "c4": "Se han realizado muchas mejoras para aclarar cómo agregar, actualizar y eliminar varios elementos en JW Time. Las sugerencias se han eliminado porque ya no son necesarias.",
+      "c5": "Estoy buscando 2 voluntarios que tengan experiencia en control de calidad de software para ayudar en las pruebas de las versiones antes de que lleguen al público. Si tiene interés en dedicar unas horas al mes a realizar pruebas, agradeceríamos mucho su apoyo. Por favor contácteme: levi@leviwilkerson.com. En el futuro y según lo permitan los gastos, una parte de las donaciones se destinará a QA por su tiempo.",
+      "c6": "La pantalla de resumen del tiempo anual ahora está comprimida para una mejor legibilidad."
+    },
+    "1291": {
+      "c1": "[ANDROID] Se resolvieron fallas que ocurrían al editar el tiempo."
+    },
+    "1300": {
+      "c1": "Oculta 'hoy' vista de programación cuando el mes es en el futuro porque no es aplicable.",
+      "c2": "Oculta 'hoy' vista de programación cuando el mes es en el futuro porque no es aplicable."
     }
   },
   "installed": "Instalado",
@@ -658,5 +669,7 @@
   "updateTime_description": "Editar o eliminar un informe de servicio anterior",
   "deleted": "Eliminado",
   "archived": "Archivado",
-  "recovered": "Recuperado"
+  "recovered": "Recuperado",
+  "thisContactHasNoConversations": "Este contacto aún no tiene conversaciones.",
+  "annualSchedule": "Calendario Anual"
 }

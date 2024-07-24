@@ -463,7 +463,18 @@
     },
     "1290": {
       "c1": "Aggiunta una nuova sezione di pianificazione alla schermata di riepilogo del mese che ti aiuta a tenere traccia del ritmo del tuo tempo.",
-      "c2": "Nella schermata iniziale, risolti i problemi di sovrapposizione che a volte si verificano su schermi di piccole dimensioni."
+      "c2": "Nella schermata iniziale, risolti i problemi di sovrapposizione che a volte si verificano su schermi di piccole dimensioni.",
+      "c3": "Ora puoi modificare le voci dell'orario! Toccali!",
+      "c4": "Sono stati apportati molti miglioramenti alla chiarezza su come aggiungere, aggiornare ed eliminare vari elementi in JW Time. I suggerimenti sono stati rimossi poiché non sono più necessari.",
+      "c5": "Sto cercando 2 volontari con esperienza nel QA del software per assistere nel test delle versioni prima che raggiungano il pubblico. Se sei interessato a dedicare qualche ora al mese ai test, il tuo supporto sarebbe molto apprezzato. Per favore contattami: levi@leviwilkerson.com. In futuro e quando le spese lo consentiranno, una parte delle donazioni andrà al QA per il loro tempo.",
+      "c6": "La schermata panoramica del tempo annuale ora è compressa per una migliore leggibilità."
+    },
+    "1291": {
+      "c1": "[ANDROID] Risolti i crash che si verificavano durante la modifica dell'ora."
+    },
+    "1300": {
+      "c1": "Nasconde \"oggi\" visualizzazione pianificata quando il mese è futuro perché non è applicabile.",
+      "c2": "Nasconde \"oggi\" visualizzazione pianificata quando il mese è futuro perché non è applicabile."
     }
   },
   "installed": "Installato",
@@ -658,5 +669,7 @@
   "updateTime_description": "Modifica o elimina un rapporto di servizio precedente",
   "deleted": "Eliminato",
   "archived": "Archiviato",
-  "recovered": "Recuperato"
+  "recovered": "Recuperato",
+  "thisContactHasNoConversations": "Questo contatto non ha ancora conversazioni.",
+  "annualSchedule": "Programma annuale"
 }

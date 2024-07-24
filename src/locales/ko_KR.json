@@ -471,6 +471,10 @@
     },
     "1291": {
       "c1": "[ANDROID] Resolved crashes that occurred when editing time."
+    },
+    "1300": {
+      "c1": "Add 'Annual Schedule' to Plan Schedule screen for those with an annual goal, allowing you to easily see if you have planned enough time for your entire service year.",
+      "c2": "Hides 'today' schedule view when the month is in the future because it's not applicable."
     }
   },
   "installed": "설치됨",
@@ -666,5 +670,6 @@
   "deleted": "삭제됨",
   "archived": "보관됨",
   "recovered": "회복 된",
-  "thisContactHasNoConversations": "This contact has no conversations yet."
+  "thisContactHasNoConversations": "This contact has no conversations yet.",
+  "annualSchedule": "Annual Schedule"
 }

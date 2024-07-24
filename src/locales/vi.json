@@ -463,7 +463,18 @@
     },
     "1290": {
       "c1": "Đã thêm phần lịch trình mới vào màn hình tóm tắt tháng để giúp bạn theo dõi nhịp độ thời gian của mình.",
-      "c2": "Trên màn hình chính, giải quyết các vấn đề chồng chéo đôi khi xảy ra trên màn hình kích thước nhỏ."
+      "c2": "Trên màn hình chính, giải quyết các vấn đề chồng chéo đôi khi xảy ra trên màn hình kích thước nhỏ.",
+      "c3": "Bây giờ bạn có thể chỉnh sửa các mục thời gian! Hãy chạm vào chúng!",
+      "c4": "Nhiều cải tiến đã được thực hiện để làm rõ cách thêm, cập nhật và xóa các mục khác nhau trong Giờ JW. Các gợi ý đã bị xóa vì chúng không còn cần thiết nữa.",
+      "c5": "Tôi đang tìm 2 tình nguyện viên có kinh nghiệm về QA phần mềm để hỗ trợ thử nghiệm các bản phát hành trước khi chúng ra mắt công chúng. Nếu bạn quan tâm đến việc dành vài giờ mỗi tháng để thử nghiệm, sự hỗ trợ của bạn sẽ được đánh giá rất cao. Vui lòng liên hệ với tôi: levi@leviwilkerson.com. Trong tương lai và khi chi phí cho phép, một phần tiền quyên góp sẽ được chuyển đến QA trong thời gian của họ.",
+      "c6": "Màn hình tổng quan về thời gian hàng năm hiện đã được nén để dễ đọc hơn."
+    },
+    "1291": {
+      "c1": "[ANDROID] Đã giải quyết các sự cố xảy ra khi chỉnh sửa thời gian."
+    },
+    "1300": {
+      "c1": "Ẩn 'hôm nay' xem lịch trình khi tháng ở trong tương lai vì nó không áp dụng được.",
+      "c2": "Ẩn 'hôm nay' xem lịch trình khi tháng ở trong tương lai vì nó không áp dụng được."
     }
   },
   "installed": "Cài đặt",
@@ -658,5 +669,7 @@
   "updateTime_description": "Chỉnh sửa hoặc xóa báo cáo dịch vụ trước đó",
   "deleted": "Đã xóa",
   "archived": "Đã lưu trữ",
-  "recovered": "Đã phục hồi"
+  "recovered": "Đã phục hồi",
+  "thisContactHasNoConversations": "Liên hệ này chưa có cuộc trò chuyện nào.",
+  "annualSchedule": "Lịch trình hàng năm"
 }

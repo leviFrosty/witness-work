@@ -473,7 +473,8 @@
       "c1": "[ANDROID] Resolvidos travamentos que ocorriam na hora da edição."
     },
     "1300": {
-      "c1": "Oculta o 'hoje' visualização de programação quando o mês estiver no futuro porque não é aplicável."
+      "c1": "Oculta o 'hoje' visualização de programação quando o mês estiver no futuro porque não é aplicável.",
+      "c2": "Oculta o 'hoje' visualizar a programação quando o mês estiver no futuro porque não é aplicável."
     }
   },
   "installed": "Instalado",

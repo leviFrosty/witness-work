@@ -473,7 +473,8 @@
       "c1": "[ANDROID] Crashes opgelost die optraden tijdens het bewerken van de tijd."
     },
     "1300": {
-      "c1": "Verbergt 'vandaag' schemaweergave wanneer de maand in de toekomst ligt, omdat dit niet van toepassing is."
+      "c1": "Verbergt 'vandaag' schemaweergave wanneer de maand in de toekomst ligt, omdat dit niet van toepassing is.",
+      "c2": "Verbergt 'vandaag' schemaweergave wanneer de maand in de toekomst ligt, omdat dit niet van toepassing is."
     }
   },
   "installed": "Geïnstalleerd",

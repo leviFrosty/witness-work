@@ -473,7 +473,8 @@
       "c1": "[ANDROID] Se resolvieron fallas que ocurrían al editar el tiempo."
     },
     "1300": {
-      "c1": "Oculta 'hoy' vista de programación cuando el mes es en el futuro porque no es aplicable."
+      "c1": "Oculta 'hoy' vista de programación cuando el mes es en el futuro porque no es aplicable.",
+      "c2": "Oculta 'hoy' vista de programación cuando el mes es en el futuro porque no es aplicable."
     }
   },
   "installed": "Instalado",

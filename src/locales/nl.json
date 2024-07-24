@@ -463,7 +463,18 @@
     },
     "1290": {
       "c1": "Er is een nieuwe planningssectie toegevoegd aan het maandoverzichtsscherm, waarmee u uw tijdsverloop kunt bijhouden.",
-      "c2": "Op het startscherm zijn overlappende problemen opgelost die soms voorkomen op kleine schermformaten."
+      "c2": "Op het startscherm zijn overlappende problemen opgelost die soms voorkomen op kleine schermformaten.",
+      "c3": "U kunt nu tijdinvoer bewerken! Tik op ze!",
+      "c4": "Er zijn veel verbeteringen aangebracht in de duidelijkheid over het toevoegen, bijwerken en verwijderen van verschillende items in JW Time. Tips zijn verwijderd omdat ze niet langer nodig zijn.",
+      "c5": "Ik ben op zoek naar 2 vrijwilligers die ervaring hebben met Software QA om te helpen bij het testen van releases voordat ze het publiek bereiken. Als u interesse heeft om een paar uur per maand te testen, wordt uw steun zeer op prijs gesteld. Neem contact met mij op: levi@leviwilkerson.com. In de toekomst, en als de kosten het toelaten, zal een deel van de donaties voor hun tijd naar QA gaan.",
+      "c6": "Het jaarlijkse tijdoverzichtscherm is nu gecomprimeerd voor een betere leesbaarheid."
+    },
+    "1291": {
+      "c1": "[ANDROID] Crashes opgelost die optraden tijdens het bewerken van de tijd."
+    },
+    "1300": {
+      "c1": "Verbergt 'vandaag' schemaweergave wanneer de maand in de toekomst ligt, omdat dit niet van toepassing is.",
+      "c2": "Verbergt 'vandaag' schemaweergave wanneer de maand in de toekomst ligt, omdat dit niet van toepassing is."
     }
   },
   "installed": "Geïnstalleerd",
@@ -658,5 +669,7 @@
   "updateTime_description": "Bewerk of verwijder een eerder servicerapport",
   "deleted": "Verwijderd",
   "archived": "Gearchiveerd",
-  "recovered": "Hersteld"
+  "recovered": "Hersteld",
+  "thisContactHasNoConversations": "Dit contact heeft nog geen gesprekken.",
+  "annualSchedule": "Jaarlijks schema"
 }

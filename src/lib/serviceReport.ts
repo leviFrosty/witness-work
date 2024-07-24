@@ -426,6 +426,11 @@ export const plannedMinutesToCurrentDayForMonth = (
     : moment().date()
 
   let count = 0
+
+  if (selectedMonth.isAfter(moment(), 'month')) {
+    return 0
+  }
+
   Array(dayOfMonth)
     .fill(1)
     .forEach((_, i) => {

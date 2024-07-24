@@ -471,6 +471,9 @@
     },
     "1291": {
       "c1": "[ANDROID] Abstürze behoben, die beim Bearbeiten der Zeit auftraten."
+    },
+    "1300": {
+      "c1": "Blendet die Zeitplanansicht „Heute“ aus, wenn der Monat in der Zukunft liegt, da sie nicht anwendbar ist."
     }
   },
   "installed": "Eingerichtet",

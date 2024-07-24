@@ -471,6 +471,9 @@
     },
     "1291": {
       "c1": "[ANDROID] Risolti i crash che si verificavano durante la modifica dell'ora."
+    },
+    "1300": {
+      "c1": "Nasconde \"oggi\" visualizzazione pianificata quando il mese è futuro perché non è applicabile."
     }
   },
   "installed": "Installato",

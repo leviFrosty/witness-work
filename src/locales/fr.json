@@ -471,6 +471,9 @@
     },
     "1291": {
       "c1": "[ANDROID] Correction de plantages survenus lors de la modification de l'heure."
+    },
+    "1300": {
+      "c1": "Masque \"aujourd'hui\" l'affichage planifié lorsque le mois est dans le futur, car il n'est pas applicable."
     }
   },
   "installed": "installée",

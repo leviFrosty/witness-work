@@ -471,6 +471,9 @@
     },
     "1291": {
       "c1": "[ANDROID] Đã giải quyết các sự cố xảy ra khi chỉnh sửa thời gian."
+    },
+    "1300": {
+      "c1": "Ẩn 'hôm nay' xem lịch trình khi tháng ở trong tương lai vì nó không áp dụng được."
     }
   },
   "installed": "Cài đặt",

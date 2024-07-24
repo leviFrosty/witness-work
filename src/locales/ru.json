@@ -669,5 +669,6 @@
   "deleted": "Удалено",
   "archived": "В архиве",
   "recovered": "Восстановлено",
-  "thisContactHasNoConversations": "У этого контакта еще нет разговоров."
+  "thisContactHasNoConversations": "У этого контакта еще нет разговоров.",
+  "annualSchedule": "Годовой график"
 }

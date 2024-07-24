@@ -5,7 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import i18n from '../lib/locales'
 import Wrapper from '../components/layout/Wrapper'
 import XView from '../components/layout/XView'
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { memo, useCallback, useEffect, useMemo, useState } from 'react'
 import moment from 'moment'
 import { Calendar } from 'react-native-calendars'
 import { NativeStackScreenProps } from '@react-navigation/native-stack'
@@ -17,7 +17,11 @@ import _ from 'lodash'
 import CalendarKey from '../components/CalendarKey'
 import useServiceReport from '../stores/serviceReport'
 import usePublisher from '../hooks/usePublisher'
-import { getPlansIntersectingDay } from '../lib/serviceReport'
+import {
+  getPlansIntersectingDay,
+  getServiceYearFromDate,
+  serviceYearsDateRange,
+} from '../lib/serviceReport'
 import Header from '../components/layout/Header'
 import Button from '../components/Button'
 import IconButton from '../components/IconButton'
@@ -31,12 +35,11 @@ type PlanScheduleScreenProps = NativeStackScreenProps<
 const PlanScheduleScreen = ({ route, navigation }: PlanScheduleScreenProps) => {
   const theme = useTheme()
   const insets = useSafeAreaInsets()
-  const { dayPlans, recurringPlans } = useServiceReport()
+
   const [month, setMonth] = useState(route.params.month)
   const [year, setYear] = useState(route.params.year)
   const selectedMonth = moment().month(month).year(year)
   const monthToView = selectedMonth.format('YYYY-MM-DD')
-  const { goalHours } = usePublisher()
 
   const handleArrowNavigate = useCallback(
     (direction: 'forward' | 'back') => {
@@ -79,39 +82,6 @@ const PlanScheduleScreen = ({ route, navigation }: PlanScheduleScreenProps) => {
     year,
   ])
 
-  const plannedMinutes = useMemo(() => {
-    const dayOfMonth = selectedMonth.daysInMonth()
-
-    let count = 0
-    Array(dayOfMonth)
-      .fill(1)
-      .forEach((_, i) => {
-        const day = selectedMonth.clone().date(i + 1)
-
-        const dayPlan = dayPlans.find((plan) =>
-          moment(plan.date).isSame(day, 'day')
-        )
-
-        const recurringPlansForDay = getPlansIntersectingDay(
-          day.toDate(),
-          recurringPlans
-        )
-
-        const highestRecurringPlanForDay = recurringPlansForDay.sort(
-          (a, b) => b.minutes - a.minutes
-        )[0]
-
-        if (dayPlan) {
-          count += dayPlan.minutes
-        } else if (highestRecurringPlanForDay) {
-          count += highestRecurringPlanForDay.minutes
-        }
-      })
-    return count
-  }, [selectedMonth, dayPlans, recurringPlans])
-
-  const percentPlanned = plannedMinutes / goalHours / 60
-
   return (
     <Wrapper
       style={{
@@ -128,7 +98,8 @@ const PlanScheduleScreen = ({ route, navigation }: PlanScheduleScreenProps) => {
             flexDirection: 'row',
             alignItems: 'center',
             justifyContent: 'space-between',
-            padding: 20,
+            paddingHorizontal: 15,
+            paddingVertical: 10,
           }}
         >
           {selectedMonth.isAfter(moment(), 'month') ? (
@@ -233,58 +204,10 @@ const PlanScheduleScreen = ({ route, navigation }: PlanScheduleScreenProps) => {
           }}
         >
           <View
-            style={{ flexDirection: 'column', gap: 5, paddingHorizontal: 10 }}
+            style={{ flexDirection: 'column', gap: 10, paddingHorizontal: 10 }}
           >
-            <CardWithTitle
-              title={
-                <View
-                  style={{
-                    flexDirection: 'row',
-                    gap: 5,
-                    alignItems: 'center',
-                  }}
-                >
-                  <Text
-                    style={{
-                      fontSize: theme.fontSize('xl'),
-                      fontFamily: theme.fonts.bold,
-                    }}
-                  >
-                    {i18n.t('monthSchedule')}
-                  </Text>
-                </View>
-              }
-            >
-              <XView style={{ justifyContent: 'flex-end' }}>
-                <XView>
-                  <Text
-                    style={{
-                      fontFamily: theme.fonts.semiBold,
-                      color: theme.colors.textAlt,
-                    }}
-                  >
-                    {`${i18n.t('planned')} ${_.round(
-                      plannedMinutes / 60,
-                      1
-                    )} ${i18n.t('of')} ${goalHours} ${i18n.t('hours')}`}
-                  </Text>
-                </XView>
-              </XView>
-              <SimpleProgressBar
-                percentage={percentPlanned}
-                color={
-                  percentPlanned < 1 ? theme.colors.warn : theme.colors.accent
-                }
-              />
-              <Text
-                style={{
-                  color: theme.colors.textAlt,
-                  fontSize: theme.fontSize('xs'),
-                }}
-              >
-                {i18n.t('timePlanned_description')}
-              </Text>
-            </CardWithTitle>
+            <AnnualScheduleSection month={month} year={year} />
+            <MonthScheduleSection month={month} year={year} />
           </View>
           <View
             style={{ paddingHorizontal: 10, position: 'relative', gap: 10 }}
@@ -327,6 +250,183 @@ const PlanScheduleScreen = ({ route, navigation }: PlanScheduleScreenProps) => {
         </ScrollView>
       </View>
     </Wrapper>
+  )
+}
+
+const AnnualScheduleSection = memo((props: { month: number; year: number }) => {
+  const { month, year } = props
+  const theme = useTheme()
+  const { dayPlans, recurringPlans } = useServiceReport()
+  const { annualGoalHours, hasAnnualGoal } = usePublisher()
+  const serviceYear = getServiceYearFromDate(moment().month(month).year(year))
+
+  const annualPlannedMinutes = useMemo(() => {
+    const { minDate, maxDate } = serviceYearsDateRange(serviceYear)
+    let minutes = 0
+    const now = minDate.clone()
+
+    while (now.isSameOrBefore(maxDate)) {
+      const dayPlan = dayPlans.find((plan) =>
+        moment(plan.date).isSame(now, 'day')
+      )
+
+      const recurringPlansForDay = getPlansIntersectingDay(
+        now.toDate(),
+        recurringPlans
+      )
+
+      const highestRecurringPlanForDay = recurringPlansForDay.sort(
+        (a, b) => b.minutes - a.minutes
+      )[0]
+
+      if (dayPlan) {
+        minutes += dayPlan.minutes
+      } else if (highestRecurringPlanForDay) {
+        minutes += highestRecurringPlanForDay.minutes
+      }
+
+      now.add(1, 'd')
+    }
+
+    return minutes
+  }, [dayPlans, recurringPlans, serviceYear])
+
+  const percentPlanned = annualPlannedMinutes / (annualGoalHours * 60)
+
+  if (!hasAnnualGoal) {
+    return null
+  }
+
+  return (
+    <CardWithTitle
+      title={
+        <View
+          style={{
+            flexDirection: 'row',
+            gap: 5,
+            alignItems: 'center',
+          }}
+        >
+          <Text
+            style={{
+              fontSize: theme.fontSize('xl'),
+              fontFamily: theme.fonts.bold,
+            }}
+          >
+            {i18n.t('annualSchedule')}
+          </Text>
+        </View>
+      }
+    >
+      <XView style={{ justifyContent: 'flex-end' }}>
+        <XView>
+          <Text
+            style={{
+              fontFamily: theme.fonts.semiBold,
+              color: theme.colors.textAlt,
+            }}
+          >
+            {`${i18n.t('planned')} ${_.round(
+              annualPlannedMinutes / 60,
+              1
+            )} ${i18n.t('of')} ${annualGoalHours} ${i18n.t('hours')}`}
+          </Text>
+        </XView>
+      </XView>
+      <SimpleProgressBar
+        percentage={percentPlanned}
+        color={percentPlanned < 1 ? theme.colors.warn : theme.colors.accent}
+      />
+    </CardWithTitle>
+  )
+})
+
+const MonthScheduleSection = (props: { month: number; year: number }) => {
+  const theme = useTheme()
+  const { dayPlans, recurringPlans } = useServiceReport()
+  const { goalHours } = usePublisher()
+  const plannedMinutes = useMemo(() => {
+    const selectedMonth = moment().month(props.month).year(props.year)
+    const dayOfMonth = selectedMonth.daysInMonth()
+
+    let count = 0
+    Array(dayOfMonth)
+      .fill(1)
+      .forEach((_, i) => {
+        const day = selectedMonth.clone().date(i + 1)
+
+        const dayPlan = dayPlans.find((plan) =>
+          moment(plan.date).isSame(day, 'day')
+        )
+
+        const recurringPlansForDay = getPlansIntersectingDay(
+          day.toDate(),
+          recurringPlans
+        )
+
+        const highestRecurringPlanForDay = recurringPlansForDay.sort(
+          (a, b) => b.minutes - a.minutes
+        )[0]
+
+        if (dayPlan) {
+          count += dayPlan.minutes
+        } else if (highestRecurringPlanForDay) {
+          count += highestRecurringPlanForDay.minutes
+        }
+      })
+    return count
+  }, [props.month, props.year, dayPlans, recurringPlans])
+
+  const percentPlanned = plannedMinutes / goalHours / 60
+  return (
+    <CardWithTitle
+      title={
+        <View
+          style={{
+            flexDirection: 'row',
+            gap: 5,
+            alignItems: 'center',
+          }}
+        >
+          <Text
+            style={{
+              fontSize: theme.fontSize('xl'),
+              fontFamily: theme.fonts.bold,
+            }}
+          >
+            {i18n.t('monthSchedule')}
+          </Text>
+        </View>
+      }
+    >
+      <XView style={{ justifyContent: 'flex-end' }}>
+        <XView>
+          <Text
+            style={{
+              fontFamily: theme.fonts.semiBold,
+              color: theme.colors.textAlt,
+            }}
+          >
+            {`${i18n.t('planned')} ${_.round(
+              plannedMinutes / 60,
+              1
+            )} ${i18n.t('of')} ${goalHours} ${i18n.t('hours')}`}
+          </Text>
+        </XView>
+      </XView>
+      <SimpleProgressBar
+        percentage={percentPlanned}
+        color={percentPlanned < 1 ? theme.colors.warn : theme.colors.accent}
+      />
+      <Text
+        style={{
+          color: theme.colors.textAlt,
+          fontSize: theme.fontSize('xs'),
+        }}
+      >
+        {i18n.t('timePlanned_description')}
+      </Text>
+    </CardWithTitle>
   )
 }
 

@@ -669,5 +669,6 @@
   "deleted": "Deleted",
   "archived": "Archived",
   "recovered": "Recovered",
-  "thisContactHasNoConversations": "This contact has no conversations yet."
+  "thisContactHasNoConversations": "This contact has no conversations yet.",
+  "annualSchedule": "Annual Schedule"
 }

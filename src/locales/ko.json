@@ -669,5 +669,6 @@
   "deleted": "삭제됨",
   "archived": "보관됨",
   "recovered": "회복 된",
-  "thisContactHasNoConversations": "이 연락처에는 아직 대화가 없습니다."
+  "thisContactHasNoConversations": "이 연락처에는 아직 대화가 없습니다.",
+  "annualSchedule": "연간 일정"
 }

@@ -669,5 +669,6 @@
   "deleted": "Verwijderd",
   "archived": "Gearchiveerd",
   "recovered": "Hersteld",
-  "thisContactHasNoConversations": "Dit contact heeft nog geen gesprekken."
+  "thisContactHasNoConversations": "Dit contact heeft nog geen gesprekken.",
+  "annualSchedule": "Jaarlijks schema"
 }

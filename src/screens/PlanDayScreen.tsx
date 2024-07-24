@@ -149,7 +149,7 @@ const RecurringPlan = (props: {
 
   const handleSetWillEnd = () => {
     if (!willEnd === true) {
-      props.setEndDate(new Date())
+      props.setEndDate(props.date)
     } else {
       props.setEndDate(null)
     }

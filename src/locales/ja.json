@@ -669,5 +669,6 @@
   "deleted": "削除済み",
   "archived": "アーカイブ済み",
   "recovered": "回復済み",
-  "thisContactHasNoConversations": "この連絡先にはまだ会話がありません。"
+  "thisContactHasNoConversations": "この連絡先にはまだ会話がありません。",
+  "annualSchedule": "年間スケジュール"
 }

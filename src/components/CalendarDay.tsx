@@ -159,8 +159,8 @@ const PlannedDay = (
         alignItems: 'center',
         paddingHorizontal: 2,
         borderRadius: theme.numbers.borderRadiusSm,
-        borderWidth: isToday ? 1 : 0,
-        borderColor: theme.colors.accent,
+        borderWidth: isToday ? 3 : 0,
+        borderColor: theme.colors.text,
         backgroundColor: statusColor.bg,
       }}
     >

@@ -327,35 +327,50 @@
   "new": "Nuovo",
   "bugFixes": "Correzioni di bug",
   "updates": {
-    "160": {
-      "c1": "Le conversazioni sono ora modificabili. Le notifiche sono configurabili",
-      "c2": "Scorri i gesti per modificare o eliminare conversazioni, contatti, ecc.",
-      "c3": "Aggiunto feedback tattile a varie azioni importanti"
+    "1211": {
+      "c1": "Aggiunti suggerimenti una tantum più utili quando appropriato."
     },
-    "161": {
-      "c1": "Aggiunte più opzioni relative ai minuti per gli inserimenti dell'ora"
+    "1210": {
+      "c1": "Precisione notevolmente migliorata della visualizzazione dell'ora.",
+      "c2": "Migliorata la precisione delle barre di avanzamento del tempo.",
+      "c3": "Aggiunti suggerimenti utili per azioni che potrebbero non essere immediatamente evidenti.",
+      "c4": "Miglioramento della qualità della vita nella schermata delle mappe con informazioni più pertinenti e un pulsante di aggiunta rapida."
     },
-    "162": {
-      "c1": "Requisito di ore di pioniere speciale modificato da 70 a 100"
+    "1201": {
+      "c1": "Correzioni di bug minori.",
+      "c2": "Traduzioni coreane notevolmente migliorate: grazie fratello Paul. Se desideri aiutare a tradurre la tua lingua, visita le impostazioni.",
+      "c3": "Correzioni di bug minori."
     },
-    "163": {
-      "c1": "Risolvi i problemi di aggiornamento automatico"
+    "1200": {
+      "c1": "Aggiunge funzionalità di backup e ripristino. Ora puoi eseguire il backup dei tuoi dati sul cloud e ripristinarli in seguito, questo ti consente di trasferire i tuoi dati su un altro dispositivo. Puoi anche trasferirlo su un'altra piattaforma. Trova questa nuova funzionalità nelle impostazioni."
     },
-    "170": {
-      "c1": "Aggiungi vari metodi di esportazione del tempo",
-      "c2": "Aggiungi \"Non in casa\""
+    "1120": {
+      "c1": "Aggiunge funzionalità di backup e ripristino. Ora puoi eseguire il backup dei tuoi dati sul cloud e ripristinarli in seguito. Puoi trasferire i tuoi dati su un altro dispositivo. Puoi anche trasferirlo su un'altra piattaforma. Trovi questa nuova funzionalità nelle impostazioni."
     },
-    "180": {
-      "c1": "Aggiunta la geocodifica automatica per i contatti",
-      "c2": "Aggiunta la visualizzazione della mappa"
+    "1111": {
+      "c1": "Aggiungi la pagina delle donazioni nelle impostazioni per coloro che desiderano contribuire.",
+      "c2": "Include vari miglioramenti minori e correzioni di bug"
     },
-    "181": {
-      "c1": "Visualizzazione mappa estesa",
-      "c2": "Aggiunta richiesta di revisione del negozio dopo aver soddisfatto determinati criteri",
-      "c3": "Piccole correzioni di bug"
+    "1110": {
+      "c1": "Aggiunto supporto per iPad e amp; Tablet!",
+      "c2": "Vari stili modificati per adattarsi meglio agli schermi più grandi.",
+      "c3": "Modificato il metodo di invio di segnalazioni di bug e richieste di funzionalità a Github."
     },
-    "182": {
-      "c1": "Aggiornato sempre per riflettere la locale corrente"
+    "1100": {
+      "c1": "Aggiunge il rapporto annuale alla schermata Rapporti temporali! Tieni traccia dei progressi del tuo anno di servizio a colpo d'occhio.",
+      "c2": "L'aggiunta di tempo dalla schermata Rapporti temporali ora imposta automaticamente il rapporto sul mese selezionato.",
+      "c3": "Risolve un problema durante l'esportazione del rapporto di servizio di gennaio."
+    },
+    "192": {
+      "c1": "Risolve un problema per cui alcuni dispositivi presentano una barra di avanzamento traboccante.",
+      "c2": "Aggiunge una gestione più dettagliata degli errori di collegamento per i dispositivi privi delle applicazioni richieste.",
+      "c3": "Aggiunge una gestione più dettagliata degli errori di collegamento per alcuni dispositivi privi delle applicazioni richieste.",
+      "c4": "Passa direttamente al mese dalla sezione della routine mensile della schermata iniziale.",
+      "c5": "La schermata Rapporti temporali gestisce meglio i mesi vuoti e futuri.",
+      "c6": "Correzioni di bug minori."
+    },
+    "191": {
+      "c1": "Risolve un problema relativo alla navigazione nelle schermate temporali."
     },
     "190": {
       "c1": "Aggiunte preferenze nelle impostazioni",
@@ -366,50 +381,35 @@
       "c6": "Ora aggiungi tag personalizzati alle tue voci di tempo",
       "c7": "Schermata Rapporti temporali aggiornata per essere meglio organizzata e separata per mese"
     },
-    "191": {
-      "c1": "Risolve un problema relativo alla navigazione nelle schermate temporali."
+    "182": {
+      "c1": "Aggiornato sempre per riflettere la locale corrente"
     },
-    "192": {
-      "c1": "Risolve un problema per cui alcuni dispositivi presentano una barra di avanzamento traboccante.",
-      "c2": "Aggiunge una gestione più dettagliata degli errori di collegamento per i dispositivi privi delle applicazioni richieste.",
-      "c3": "Aggiunge una gestione più dettagliata degli errori di collegamento per alcuni dispositivi privi delle applicazioni richieste.",
-      "c4": "Passa direttamente al mese dalla sezione della routine mensile della schermata iniziale.",
-      "c5": "La schermata Rapporti temporali gestisce meglio i mesi vuoti e futuri.",
-      "c6": "Correzioni di bug minori."
+    "181": {
+      "c1": "Visualizzazione mappa estesa",
+      "c2": "Aggiunta richiesta di revisione del negozio dopo aver soddisfatto determinati criteri",
+      "c3": "Piccole correzioni di bug"
     },
-    "1100": {
-      "c1": "Aggiunge il rapporto annuale alla schermata Rapporti temporali! Tieni traccia dei progressi del tuo anno di servizio a colpo d'occhio.",
-      "c2": "L'aggiunta di tempo dalla schermata Rapporti temporali ora imposta automaticamente il rapporto sul mese selezionato.",
-      "c3": "Risolve un problema durante l'esportazione del rapporto di servizio di gennaio."
+    "180": {
+      "c1": "Aggiunta la geocodifica automatica per i contatti",
+      "c2": "Aggiunta la visualizzazione della mappa"
     },
-    "1110": {
-      "c1": "Aggiunto supporto per iPad e amp; Tablet!",
-      "c2": "Vari stili modificati per adattarsi meglio agli schermi più grandi.",
-      "c3": "Modificato il metodo di invio di segnalazioni di bug e richieste di funzionalità a Github."
+    "170": {
+      "c1": "Aggiungi vari metodi di esportazione del tempo",
+      "c2": "Aggiungi \"Non in casa\""
     },
-    "1111": {
-      "c1": "Aggiungi la pagina delle donazioni nelle impostazioni per coloro che desiderano contribuire.",
-      "c2": "Include vari miglioramenti minori e correzioni di bug"
+    "163": {
+      "c1": "Risolvi i problemi di aggiornamento automatico"
     },
-    "1120": {
-      "c1": "Aggiunge funzionalità di backup e ripristino. Ora puoi eseguire il backup dei tuoi dati sul cloud e ripristinarli in seguito. Puoi trasferire i tuoi dati su un altro dispositivo. Puoi anche trasferirlo su un'altra piattaforma. Trovi questa nuova funzionalità nelle impostazioni."
+    "162": {
+      "c1": "Requisito di ore di pioniere speciale modificato da 70 a 100"
     },
-    "1200": {
-      "c1": "Aggiunge funzionalità di backup e ripristino. Ora puoi eseguire il backup dei tuoi dati sul cloud e ripristinarli in seguito, questo ti consente di trasferire i tuoi dati su un altro dispositivo. Puoi anche trasferirlo su un'altra piattaforma. Trova questa nuova funzionalità nelle impostazioni."
+    "161": {
+      "c1": "Aggiunte più opzioni relative ai minuti per gli inserimenti dell'ora"
     },
-    "1201": {
-      "c1": "Correzioni di bug minori.",
-      "c2": "Traduzioni coreane notevolmente migliorate: grazie fratello Paul. Se desideri aiutare a tradurre la tua lingua, visita le impostazioni.",
-      "c3": "Correzioni di bug minori."
-    },
-    "1210": {
-      "c1": "Precisione notevolmente migliorata della visualizzazione dell'ora.",
-      "c2": "Migliorata la precisione delle barre di avanzamento del tempo.",
-      "c3": "Aggiunti suggerimenti utili per azioni che potrebbero non essere immediatamente evidenti.",
-      "c4": "Miglioramento della qualità della vita nella schermata delle mappe con informazioni più pertinenti e un pulsante di aggiunta rapida."
-    },
-    "1211": {
-      "c1": "Aggiunti suggerimenti una tantum più utili quando appropriato."
+    "160": {
+      "c1": "Le conversazioni sono ora modificabili. Le notifiche sono configurabili",
+      "c2": "Scorri i gesti per modificare o eliminare conversazioni, contatti, ecc.",
+      "c3": "Aggiunto feedback tattile a varie azioni importanti"
     },
     "1220": {
       "c3": "Aggiunto Calendario alla schermata dei rapporti temporali.",

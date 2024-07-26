@@ -474,7 +474,8 @@
     },
     "1300": {
       "c1": "Add 'Annual Schedule' to Plan Schedule screen for those with an annual goal, allowing you to easily see if you have planned enough time for your entire service year.",
-      "c2": "Hides 'today' schedule view when the month is in the future because it's not applicable."
+      "c2": "Hides 'today' schedule view when the month is in the future because it's not applicable.",
+      "c3": "Added Swahili translation."
     }
   },
   "installed": "Installed",

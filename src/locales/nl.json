@@ -474,7 +474,8 @@
     },
     "1300": {
       "c1": "Verbergt 'vandaag' schemaweergave wanneer de maand in de toekomst ligt, omdat dit niet van toepassing is.",
-      "c2": "Verbergt 'vandaag' schemaweergave wanneer de maand in de toekomst ligt, omdat dit niet van toepassing is."
+      "c2": "Verbergt 'vandaag' schemaweergave wanneer de maand in de toekomst ligt, omdat dit niet van toepassing is.",
+      "c3": "Swahili vertaling toegevoegd."
     }
   },
   "installed": "Geïnstalleerd",

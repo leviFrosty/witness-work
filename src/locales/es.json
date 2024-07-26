@@ -474,7 +474,8 @@
     },
     "1300": {
       "c1": "Oculta 'hoy' vista de programación cuando el mes es en el futuro porque no es aplicable.",
-      "c2": "Oculta 'hoy' vista de programación cuando el mes es en el futuro porque no es aplicable."
+      "c2": "Oculta 'hoy' vista de programación cuando el mes es en el futuro porque no es aplicable.",
+      "c3": "Se agregó traducción al swahili."
     }
   },
   "installed": "Instalado",

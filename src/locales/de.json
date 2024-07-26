@@ -474,7 +474,8 @@
     },
     "1300": {
       "c1": "Blendet die Zeitplanansicht „Heute“ aus, wenn der Monat in der Zukunft liegt, da sie nicht anwendbar ist.",
-      "c2": "Blendet die Zeitplanansicht „Heute“ aus, wenn der Monat in der Zukunft liegt, da sie nicht anwendbar ist."
+      "c2": "Blendet die Zeitplanansicht „Heute“ aus, wenn der Monat in der Zukunft liegt, da sie nicht anwendbar ist.",
+      "c3": "Swahili-Übersetzung hinzugefügt."
     }
   },
   "installed": "Eingerichtet",

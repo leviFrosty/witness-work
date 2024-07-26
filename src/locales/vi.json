@@ -474,7 +474,8 @@
     },
     "1300": {
       "c1": "Ẩn 'hôm nay' xem lịch trình khi tháng ở trong tương lai vì nó không áp dụng được.",
-      "c2": "Ẩn 'hôm nay' xem lịch trình khi tháng ở trong tương lai vì nó không áp dụng được."
+      "c2": "Ẩn 'hôm nay' xem lịch trình khi tháng ở trong tương lai vì nó không áp dụng được.",
+      "c3": "Đã thêm bản dịch tiếng Swahili."
     }
   },
   "installed": "Cài đặt",

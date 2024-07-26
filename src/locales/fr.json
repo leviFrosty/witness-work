@@ -474,7 +474,8 @@
     },
     "1300": {
       "c1": "Masque \"aujourd'hui\" l'affichage planifié lorsque le mois est dans le futur, car il n'est pas applicable.",
-      "c2": "Masque \"aujourd'hui\" l'affichage planifié lorsque le mois est dans le futur, car il n'est pas applicable."
+      "c2": "Masque \"aujourd'hui\" l'affichage planifié lorsque le mois est dans le futur, car il n'est pas applicable.",
+      "c3": "Ajout de la traduction en swahili."
     }
   },
   "installed": "installée",

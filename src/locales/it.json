@@ -474,7 +474,8 @@
     },
     "1300": {
       "c1": "Nasconde \"oggi\" visualizzazione pianificata quando il mese è futuro perché non è applicabile.",
-      "c2": "Nasconde \"oggi\" visualizzazione pianificata quando il mese è futuro perché non è applicabile."
+      "c2": "Nasconde \"oggi\" visualizzazione pianificata quando il mese è futuro perché non è applicabile.",
+      "c3": "Aggiunta la traduzione swahili."
     }
   },
   "installed": "Installato",

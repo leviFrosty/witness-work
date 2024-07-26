@@ -474,7 +474,8 @@
     },
     "1300": {
       "c1": "Oculta o 'hoje' visualização de programação quando o mês estiver no futuro porque não é aplicável.",
-      "c2": "Oculta o 'hoje' visualizar a programação quando o mês estiver no futuro porque não é aplicável."
+      "c2": "Oculta o 'hoje' visualizar a programação quando o mês estiver no futuro porque não é aplicável.",
+      "c3": "Adicionada tradução para suaíli."
     }
   },
   "installed": "Instalado",

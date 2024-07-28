@@ -476,7 +476,8 @@
       "c1": "Add 'Annual Schedule' to Plan Schedule screen for those with an annual goal, allowing you to easily see if you have planned enough time for your entire service year.",
       "c2": "Hides 'today' schedule view when the month is in the future because it's not applicable.",
       "c3": "Added Swahili translation.",
-      "c4": "If a contact pin was dragged for a contact, navigation will now prioritize the manually adjusted pin over their address. Editing a contact's address will return the address to priority."
+      "c4": "If a contact pin was dragged for a contact, navigation will now prioritize the manually adjusted pin over their address. Editing a contact's address will return the address to priority.",
+      "c5": "Contact pins on Contact Details Screen now matches the map screen."
     }
   },
   "installed": "Installed",

@@ -3,4 +3,4 @@ append_commit_message:
 pull_request_title: 'translation: New Translations'
 files:
   - source: /src/locales/en.json
-    translation: /%original_path%/%original_file_name%
+    translation: /src/locales/%two_letters_code%.json

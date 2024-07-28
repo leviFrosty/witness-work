@@ -201,6 +201,7 @@ const AddressRow = ({ contact }: { contact: Contact }) => {
     useState(false)
   const { address } = contact
   const { updateContact } = useContacts()
+  const { conversations } = useConversations()
   const { incrementGeocodeApiCallCount, defaultNavigationMapProvider } =
     usePreferences()
   const mapRef = useRef<MapView>(null)
@@ -212,6 +213,40 @@ const AddressRow = ({ contact }: { contact: Contact }) => {
     }
     mapRef.current?.fitToCoordinates([contact.coordinate])
   }, [contact.coordinate])
+
+  const pinColor = useMemo(() => {
+    const contactConvos = conversations.filter(
+      (convo) => convo.contact.id === contact.id
+    )
+
+    if (contactConvos.length === 0) {
+      return theme.colors.textAlt
+    }
+    const today = moment()
+
+    const conversationsSorted = [...contactConvos].sort(
+      (a, b) => moment(b.date).unix() - moment(a.date).unix()
+    )
+    const mostRecentDate = moment(conversationsSorted[0].date)
+
+    let color: string = theme.colors.accent
+
+    if (mostRecentDate.isBefore(today.subtract(1, 'week'))) {
+      color = theme.colors.warn
+    }
+
+    if (mostRecentDate.isBefore(today.subtract(1, 'month'))) {
+      color = theme.colors.error
+    }
+    return color
+  }, [
+    contact.id,
+    conversations,
+    theme.colors.accent,
+    theme.colors.error,
+    theme.colors.textAlt,
+    theme.colors.warn,
+  ])
 
   if (!address) {
     return null
@@ -325,7 +360,7 @@ const AddressRow = ({ contact }: { contact: Contact }) => {
               identifier={contact.id}
               key={contact.id}
               coordinate={contact.coordinate}
-              pinColor={theme.colors.accent}
+              pinColor={pinColor}
               draggable
               onDragEnd={(e) =>
                 updateContact({

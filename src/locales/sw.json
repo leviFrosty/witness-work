@@ -327,35 +327,50 @@
   "new": "Mpya",
   "bugFixes": "Marekebisho ya Hitilafu",
   "updates": {
-    "160": {
-      "c1": "Mazungumzo sasa yanaweza kuhaririwa. Arifa zinaweza kusanidiwa",
-      "c2": "Telezesha kidole kwa ishara ili kuhariri au kufuta mazungumzo, anwani, n.k.",
-      "c3": "Aliongeza maoni haptic kwa vitendo mbalimbali muhimu"
+    "1211": {
+      "c1": "Aliongeza vidokezo muhimu zaidi vya wakati mmoja inapofaa."
     },
-    "161": {
-      "c1": "Imeongeza chaguo zaidi za dakika kwa maingizo ya muda"
+    "1210": {
+      "c1": "Usahihi ulioboreshwa sana wa maonyesho ya wakati.",
+      "c2": "Usahihi ulioboreshwa wa pau za maendeleo ya wakati.",
+      "c3": "Aliongeza vidokezo muhimu kwa vitendo ambavyo vinaweza kutoonekana mara moja.",
+      "c4": "Ubora wa maisha ulioboreshwa kwenye skrini ya ramani na maelezo muhimu zaidi na kitufe cha kuongeza haraka."
     },
-    "162": {
-      "c1": "Ilirekebisha takwa la saa za painia wa pekee kutoka 70 hadi 100"
+    "1201": {
+      "c1": "Husasisha sehemu ya utaratibu wa kila mwezi ya skrini ya kwanza ili kuonyesha miezi inayozunguka.",
+      "c2": "Tafsiri za Kikorea zilizoboreshwa sana - asante kaka Paul. Ikiwa ungependa kusaidia kutafsiri lugha yako mwenyewe, tafadhali tembelea mipangilio.",
+      "c3": "Marekebisho madogo ya hitilafu."
     },
-    "163": {
-      "c1": "Suluhisha masuala ya sasisho otomatiki"
+    "1200": {
+      "c1": "Inaongeza utendakazi chelezo na kurejesha. Sasa unaweza kuhifadhi data yako kwenye wingu na kuirejesha baadaye, hii hukuruhusu kuhamisha data yako kwa kifaa kingine. Unaweza pia kuihamisha hadi kwenye jukwaa lingine. Pata kipengele hiki kipya katika mipangilio."
     },
-    "170": {
-      "c1": "Ongeza njia mbalimbali za kuhamisha za wakati",
-      "c2": "Ongeza 'Sio Nyumbani'"
+    "1120": {
+      "c1": "Inaongeza utendakazi chelezo na kurejesha. Sasa unaweza kuhifadhi data yako kwenye wingu na kuirejesha baadaye. Unaweza kuhamisha data yako kwa kifaa kingine. Unaweza pia kuihamisha hadi kwenye jukwaa lingine. Pata kipengele hiki kipya katika mipangilio."
     },
-    "180": {
-      "c1": "Imeongeza uwekaji misimbo otomatiki kwa anwani",
-      "c2": "Aliongeza mwonekano wa ramani"
+    "1111": {
+      "c1": "Ongeza ukurasa wa mchango katika mipangilio kwa wale wanaotaka kuchangia.",
+      "c2": "Inajumuisha uboreshaji mbalimbali mdogo na marekebisho ya hitilafu"
     },
-    "181": {
-      "c1": "Mwonekano wa ramani uliopanuliwa",
-      "c2": "Ombi la ukaguzi wa duka limeongezwa baada ya vigezo fulani kutimizwa",
-      "c3": "Marekebisho ya hitilafu ndogo"
+    "1110": {
+      "c1": "Huongeza usaidizi asilia kwa iPad & vidonge!",
+      "c2": "Ilirekebisha mitindo mbalimbali ili kutoshea vyema skrini kubwa.",
+      "c3": "Ilirekebisha mbinu ya kuwasilisha Ripoti za Mdudu na Maombi ya Kipengele kwa Github."
     },
-    "182": {
-      "c1": "Imesasishwa kila wakati ili kuonyesha eneo la sasa"
+    "1100": {
+      "c1": "Inaongeza ripoti ya kila mwaka kwenye skrini ya Ripoti za Wakati! Fuatilia kwa haraka maendeleo yako ya mwaka wa utumishi.",
+      "c2": "Kuongeza muda kutoka kwa skrini ya Ripoti za Wakati sasa kunabadilisha ripoti kuwa mwezi uliochaguliwa.",
+      "c3": "Hurekebisha suala la kuhamisha ripoti ya huduma ya Januari."
+    },
+    "192": {
+      "c1": "Sasa gusa safu mlalo ya mazungumzo ili kuhariri, au telezesha kidole kushoto kama hapo awali.",
+      "c2": "Hurekebisha tatizo ambapo baadhi ya vifaa vina upau wa maendeleo unaofurika.",
+      "c3": "Huongeza ushughulikiaji zaidi wa kitenzi wa hitilafu za kiungo kwa vifaa fulani visivyo na programu zinazohitajika.",
+      "c4": "Nenda moja kwa moja hadi mwezi kutoka kwa sehemu ya utaratibu wa kila mwezi ya skrini ya kwanza.",
+      "c5": "Skrini ya Ripoti za Wakati hushughulikia vyema miezi tupu na ijayo.",
+      "c6": "Marekebisho madogo ya hitilafu."
+    },
+    "191": {
+      "c1": "Husuluhisha suala la kusogeza kwenye skrini za saa."
     },
     "190": {
       "c1": "Aliongeza mapendeleo katika mipangilio",
@@ -366,50 +381,35 @@
       "c6": "Sasa ongeza lebo maalum kwenye maingizo yako ya wakati",
       "c7": "Skrini ya Ripoti za Muda Iliyosasishwa ili kupangwa vyema na kutengwa kwa mwezi"
     },
-    "191": {
-      "c1": "Husuluhisha suala la kusogeza kwenye skrini za saa."
+    "182": {
+      "c1": "Imesasishwa kila wakati ili kuonyesha eneo la sasa"
     },
-    "192": {
-      "c1": "Sasa gusa safu mlalo ya mazungumzo ili kuhariri, au telezesha kidole kushoto kama hapo awali.",
-      "c2": "Hurekebisha tatizo ambapo baadhi ya vifaa vina upau wa maendeleo unaofurika.",
-      "c3": "Huongeza ushughulikiaji zaidi wa kitenzi wa hitilafu za kiungo kwa vifaa fulani visivyo na programu zinazohitajika.",
-      "c4": "Nenda moja kwa moja hadi mwezi kutoka kwa sehemu ya utaratibu wa kila mwezi ya skrini ya kwanza.",
-      "c5": "Skrini ya Ripoti za Wakati hushughulikia vyema miezi tupu na ijayo.",
-      "c6": "Marekebisho madogo ya hitilafu."
+    "181": {
+      "c1": "Mwonekano wa ramani uliopanuliwa",
+      "c2": "Ombi la ukaguzi wa duka limeongezwa baada ya vigezo fulani kutimizwa",
+      "c3": "Marekebisho ya hitilafu ndogo"
     },
-    "1100": {
-      "c1": "Inaongeza ripoti ya kila mwaka kwenye skrini ya Ripoti za Wakati! Fuatilia kwa haraka maendeleo yako ya mwaka wa utumishi.",
-      "c2": "Kuongeza muda kutoka kwa skrini ya Ripoti za Wakati sasa kunabadilisha ripoti kuwa mwezi uliochaguliwa.",
-      "c3": "Hurekebisha suala la kuhamisha ripoti ya huduma ya Januari."
+    "180": {
+      "c1": "Imeongeza uwekaji misimbo otomatiki kwa anwani",
+      "c2": "Aliongeza mwonekano wa ramani"
     },
-    "1110": {
-      "c1": "Huongeza usaidizi asilia kwa iPad & vidonge!",
-      "c2": "Ilirekebisha mitindo mbalimbali ili kutoshea vyema skrini kubwa.",
-      "c3": "Ilirekebisha mbinu ya kuwasilisha Ripoti za Mdudu na Maombi ya Kipengele kwa Github."
+    "170": {
+      "c1": "Ongeza njia mbalimbali za kuhamisha za wakati",
+      "c2": "Ongeza 'Sio Nyumbani'"
     },
-    "1111": {
-      "c1": "Ongeza ukurasa wa mchango katika mipangilio kwa wale wanaotaka kuchangia.",
-      "c2": "Inajumuisha uboreshaji mbalimbali mdogo na marekebisho ya hitilafu"
+    "163": {
+      "c1": "Suluhisha masuala ya sasisho otomatiki"
     },
-    "1120": {
-      "c1": "Inaongeza utendakazi chelezo na kurejesha. Sasa unaweza kuhifadhi data yako kwenye wingu na kuirejesha baadaye. Unaweza kuhamisha data yako kwa kifaa kingine. Unaweza pia kuihamisha hadi kwenye jukwaa lingine. Pata kipengele hiki kipya katika mipangilio."
+    "162": {
+      "c1": "Ilirekebisha takwa la saa za painia wa pekee kutoka 70 hadi 100"
     },
-    "1200": {
-      "c1": "Inaongeza utendakazi chelezo na kurejesha. Sasa unaweza kuhifadhi data yako kwenye wingu na kuirejesha baadaye, hii hukuruhusu kuhamisha data yako kwa kifaa kingine. Unaweza pia kuihamisha hadi kwenye jukwaa lingine. Pata kipengele hiki kipya katika mipangilio."
+    "161": {
+      "c1": "Imeongeza chaguo zaidi za dakika kwa maingizo ya muda"
     },
-    "1201": {
-      "c1": "Husasisha sehemu ya utaratibu wa kila mwezi ya skrini ya kwanza ili kuonyesha miezi inayozunguka.",
-      "c2": "Tafsiri za Kikorea zilizoboreshwa sana - asante kaka Paul. Ikiwa ungependa kusaidia kutafsiri lugha yako mwenyewe, tafadhali tembelea mipangilio.",
-      "c3": "Marekebisho madogo ya hitilafu."
-    },
-    "1210": {
-      "c1": "Usahihi ulioboreshwa sana wa maonyesho ya wakati.",
-      "c2": "Usahihi ulioboreshwa wa pau za maendeleo ya wakati.",
-      "c3": "Aliongeza vidokezo muhimu kwa vitendo ambavyo vinaweza kutoonekana mara moja.",
-      "c4": "Ubora wa maisha ulioboreshwa kwenye skrini ya ramani na maelezo muhimu zaidi na kitufe cha kuongeza haraka."
-    },
-    "1211": {
-      "c1": "Aliongeza vidokezo muhimu zaidi vya wakati mmoja inapofaa."
+    "160": {
+      "c1": "Mazungumzo sasa yanaweza kuhaririwa. Arifa zinaweza kusanidiwa",
+      "c2": "Telezesha kidole kwa ishara ili kuhariri au kufuta mazungumzo, anwani, n.k.",
+      "c3": "Aliongeza maoni haptic kwa vitendo mbalimbali muhimu"
     },
     "1220": {
       "c3": "Kalenda imeongezwa kwenye skrini ya ripoti za saa.",

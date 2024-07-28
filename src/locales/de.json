@@ -477,7 +477,8 @@
       "c2": "Blendet die Zeitplanansicht „Heute“ aus, wenn der Monat in der Zukunft liegt, da sie nicht anwendbar ist.",
       "c3": "Swahili-Übersetzung hinzugefügt.",
       "c4": "Wenn für einen Kontakt eine Kontaktnadel gezogen wurde, priorisiert die Navigation nun die manuell angepasste Nadel gegenüber der Adresse des Kontakts. Durch Bearbeiten der Adresse eines Kontakts wird die Adresse wieder priorisiert.",
-      "c5": "Die Kontakt-Pins auf dem Bildschirm „Kontaktdetails“ stimmen jetzt mit dem Kartenbildschirm überein."
+      "c7": "Contact pin colors on Contact Details Screen now matches the map screen.",
+      "c8": "Added Ukrainian translation."
     }
   },
   "installed": "Eingerichtet",

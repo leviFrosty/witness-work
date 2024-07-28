@@ -475,7 +475,8 @@
     "1300": {
       "c1": "Nasconde \"oggi\" visualizzazione pianificata quando il mese è futuro perché non è applicabile.",
       "c2": "Nasconde \"oggi\" visualizzazione pianificata quando il mese è futuro perché non è applicabile.",
-      "c3": "Aggiunta la traduzione swahili."
+      "c3": "Aggiunta la traduzione swahili.",
+      "c4": "Se un segnaposto è stato trascinato per un contatto, la navigazione ora darà la priorità al segnaposto regolato manualmente rispetto al suo indirizzo. La modifica dell'indirizzo di un contatto riporterà la priorità all'indirizzo."
     }
   },
   "installed": "Installato",

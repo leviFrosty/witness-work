@@ -45,16 +45,6 @@ Build dependencies: [XCode](https://docs.expo.dev/workflow/ios-simulator/#instal
 
 Learn about the [file and project structure](./src/docs/project-structure.md).
 
-# Sponsor 💖
-
-Sponsors & Donations are never expected but greatly appreciated! These donations are used to offset the costs of:
-
-- App Store Fees
-- Here API Calls
-- Google Cloud Translation
-
-[![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/leviwilkerson)
-
 # Help Translate 🌐
 
 JW Time is automatically translated into 12 languages by means of Google Cloud Translate. These translations might not always be the highest quality. To help, proofread these translations on [Crowdin](https://crowdin.com/project/jw-time/). Thank you!
@@ -64,3 +54,8 @@ JW Time is automatically translated into 12 languages by means of Google Cloud T
 # License
 
 JW Time © 2024 by Levi Wilkerson is licensed under [Attribution-NonCommercial 4.0 International](./LICENSE)
+
+# Sponsor
+
+Sponsors & Donations are never expected but greatly appreciated.
+[![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/leviwilkerson)

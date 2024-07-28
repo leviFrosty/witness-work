@@ -477,7 +477,8 @@
       "c2": "Masque \"aujourd'hui\" l'affichage planifié lorsque le mois est dans le futur, car il n'est pas applicable.",
       "c3": "Ajout de la traduction en swahili.",
       "c4": "Si une épingle de contact a été déplacée pour un contact, la navigation donnera désormais la priorité à l'épingle ajustée manuellement par rapport à son adresse. La modification de l'adresse d'un contact rendra l'adresse prioritaire.",
-      "c5": "Les épingles de contact sur l’écran des détails du contact correspondent désormais à l’écran de la carte."
+      "c7": "Contact pin colors on Contact Details Screen now matches the map screen.",
+      "c8": "Added Ukrainian translation."
     }
   },
   "installed": "installée",

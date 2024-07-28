@@ -476,7 +476,8 @@
       "c1": "Oculta 'hoy' vista de programación cuando el mes es en el futuro porque no es aplicable.",
       "c2": "Oculta 'hoy' vista de programación cuando el mes es en el futuro porque no es aplicable.",
       "c3": "Se agregó traducción al swahili.",
-      "c4": "Si se arrastró un pin de contacto para un contacto, la navegación ahora priorizará el pin ajustado manualmente sobre su dirección. Al editar la dirección de un contacto, la dirección volverá a tener prioridad."
+      "c4": "Si se arrastró un pin de contacto para un contacto, la navegación ahora priorizará el pin ajustado manualmente sobre su dirección. Al editar la dirección de un contacto, la dirección volverá a tener prioridad.",
+      "c5": "Los pines de contacto en la pantalla de detalles de contacto ahora coinciden con la pantalla del mapa."
     }
   },
   "installed": "Instalado",

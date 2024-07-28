@@ -604,8 +604,10 @@ const ContactFormScreen = ({ route, navigation }: Props) => {
 
               if (position) {
                 contactMaybeWithCoordinates.coordinate = position
+                contactMaybeWithCoordinates.userDraggedCoordinate = undefined
               } else {
                 contactMaybeWithCoordinates.coordinate = undefined
+                contactMaybeWithCoordinates.userDraggedCoordinate = undefined
               }
 
               return innerResolve()

@@ -139,9 +139,7 @@ const MapCarouselCard = ({ contact, setSheet }: Props) => {
         }}
       >
         <Button
-          onPress={() =>
-            navigateTo(contact.address!, defaultNavigationMapProvider)
-          }
+          onPress={() => navigateTo(contact, defaultNavigationMapProvider)}
           style={{
             paddingHorizontal: 20,
             paddingVertical: 20,

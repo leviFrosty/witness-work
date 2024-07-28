@@ -65,6 +65,7 @@ const FullMapView = ({ contactMarkers }: FullMapViewProps) => {
     updateContact({
       ...contacts.find((c) => c.id === id),
       coordinate,
+      userDraggedCoordinate: true,
     })
   }
 

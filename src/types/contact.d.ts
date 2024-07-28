@@ -35,6 +35,7 @@ export type Contact = {
    * https://www.here.com/docs/bundle/geocoding-and-search-api-v7-api-reference/page/index.html#/paths/~1geocode/get
    */
   coordinate?: Coordinate
+  userDraggedCoordinate?: boolean
   createdAt: Date
   customFields?: Record<string, string>
 }

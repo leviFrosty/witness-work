@@ -43,6 +43,7 @@ import Button from '../components/Button'
 import { Sheet } from 'tamagui'
 import {
   addressToString,
+  coordinateAsString,
   fetchCoordinateFromAddress,
   navigateTo,
 } from '../lib/address'
@@ -216,9 +217,6 @@ const AddressRow = ({ contact }: { contact: Contact }) => {
     return null
   }
 
-  const coordinateAsString = () =>
-    `${contact.coordinate?.latitude}, ${contact.coordinate?.longitude}`
-
   const attemptToGetCoordinates = async () => {
     setHasTriedToGetCoordinates(true)
     const position = await fetchCoordinateFromAddress(
@@ -247,7 +245,7 @@ const AddressRow = ({ contact }: { contact: Contact }) => {
         {i18n.t('address')}
       </Text>
 
-      <Button onPress={() => navigateTo(address, defaultNavigationMapProvider)}>
+      <Button onPress={() => navigateTo(contact, defaultNavigationMapProvider)}>
         <View
           style={{
             display: 'flex',
@@ -257,7 +255,7 @@ const AddressRow = ({ contact }: { contact: Contact }) => {
         >
           <Copyeable
             text={addressToString(address)}
-            onPress={() => navigateTo(address, defaultNavigationMapProvider)}
+            onPress={() => navigateTo(contact, defaultNavigationMapProvider)}
           >
             <View
               style={{
@@ -301,14 +299,14 @@ const AddressRow = ({ contact }: { contact: Contact }) => {
         </View>
       ) : contact.coordinate?.latitude && contact.coordinate?.longitude ? (
         <>
-          <Copyeable text={coordinateAsString()}>
+          <Copyeable text={coordinateAsString(contact)}>
             <Text
               style={{
                 fontSize: theme.fontSize('xs'),
                 color: theme.colors.textAlt,
               }}
             >
-              {coordinateAsString()}
+              {coordinateAsString(contact)}
             </Text>
           </Copyeable>
           <MapView
@@ -321,7 +319,7 @@ const AddressRow = ({ contact }: { contact: Contact }) => {
               borderRadius: theme.numbers.borderRadiusSm,
             }}
             provider={Platform.OS === 'android' ? PROVIDER_GOOGLE : undefined}
-            onPress={() => navigateTo(address, defaultNavigationMapProvider)}
+            onPress={() => navigateTo(contact, defaultNavigationMapProvider)}
           >
             <Marker
               identifier={contact.id}
@@ -333,6 +331,7 @@ const AddressRow = ({ contact }: { contact: Contact }) => {
                 updateContact({
                   ...contact,
                   coordinate: e.nativeEvent.coordinate,
+                  userDraggedCoordinate: true,
                 })
               }
             />

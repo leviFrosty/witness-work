@@ -1,4 +1,4 @@
-import { Address, Coordinate } from '../types/contact'
+import { Address, Contact, Coordinate } from '../types/contact'
 import axios from 'axios'
 import { HereGeocodeResponse } from '../types/here'
 import apis from '../constants/apis'
@@ -86,7 +86,7 @@ export const fetchCoordinateFromAddress = async (
 }
 
 export const navigateTo = (
-  a: Address,
+  contact: Contact,
   provider: DefaultNavigationMapProvider
 ) => {
   const getScheme = () => {
@@ -105,9 +105,12 @@ export const navigateTo = (
     }
   }
 
-  const address = encodeURI(addressToString(a))
-
-  const url = `${getScheme()}${address}`
+  let url = getScheme()
+  if (contact.userDraggedCoordinate) {
+    url += encodeURI(coordinateAsString(contact))
+  } else {
+    url += encodeURI(addressToString(contact.address))
+  }
 
   openURL(url, {
     alert: {
@@ -123,3 +126,6 @@ export const requestLocationPermission = async (
   const { granted } = await Location.requestForegroundPermissionsAsync()
   callBack?.(granted)
 }
+
+export const coordinateAsString = (contact: Contact) =>
+  `${contact.coordinate?.latitude}, ${contact.coordinate?.longitude}`

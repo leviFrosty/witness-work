@@ -475,7 +475,8 @@
     "1300": {
       "c1": "Verbergt 'vandaag' schemaweergave wanneer de maand in de toekomst ligt, omdat dit niet van toepassing is.",
       "c2": "Verbergt 'vandaag' schemaweergave wanneer de maand in de toekomst ligt, omdat dit niet van toepassing is.",
-      "c3": "Swahili vertaling toegevoegd."
+      "c3": "Swahili vertaling toegevoegd.",
+      "c4": "Als een contactpincode voor een contact is versleept, geeft de navigatie nu voorrang aan de handmatig aangepaste pincode boven het adres. Als u het adres van een contactpersoon bewerkt, krijgt het adres weer prioriteit."
     }
   },
   "installed": "Geïnstalleerd",

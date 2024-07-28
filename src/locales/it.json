@@ -477,8 +477,8 @@
       "c2": "Nasconde \"oggi\" visualizzazione pianificata quando il mese è futuro perché non è applicabile.",
       "c3": "Aggiunta la traduzione swahili.",
       "c4": "Se un segnaposto è stato trascinato per un contatto, la navigazione ora darà la priorità al segnaposto regolato manualmente rispetto al suo indirizzo. La modifica dell'indirizzo di un contatto riporterà la priorità all'indirizzo.",
-      "c5": "I segnaposti di contatto nella schermata Dettagli contatto ora corrispondono alla schermata della mappa.",
-      "c6": "Aggiunta la traduzione in ucraino."
+      "c7": "I colori dei segnaposto nella schermata dei dettagli del contatto ora corrispondono alla schermata della mappa.",
+      "c8": "Aggiunta la traduzione ucraina."
     }
   },
   "installed": "Installato",

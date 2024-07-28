@@ -475,7 +475,8 @@
     "1300": {
       "c1": "Masque \"aujourd'hui\" l'affichage planifié lorsque le mois est dans le futur, car il n'est pas applicable.",
       "c2": "Masque \"aujourd'hui\" l'affichage planifié lorsque le mois est dans le futur, car il n'est pas applicable.",
-      "c3": "Ajout de la traduction en swahili."
+      "c3": "Ajout de la traduction en swahili.",
+      "c4": "Si une épingle de contact a été déplacée pour un contact, la navigation donnera désormais la priorité à l'épingle ajustée manuellement par rapport à son adresse. La modification de l'adresse d'un contact rendra l'adresse prioritaire."
     }
   },
   "installed": "installée",

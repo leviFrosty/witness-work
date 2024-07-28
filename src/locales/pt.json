@@ -475,7 +475,8 @@
     "1300": {
       "c1": "Oculta o 'hoje' visualização de programação quando o mês estiver no futuro porque não é aplicável.",
       "c2": "Oculta o 'hoje' visualizar a programação quando o mês estiver no futuro porque não é aplicável.",
-      "c3": "Adicionada tradução para suaíli."
+      "c3": "Adicionada tradução para suaíli.",
+      "c4": "Se um alfinete de contato foi arrastado para um contato, a navegação agora priorizará o alfinete ajustado manualmente em vez do endereço. Editar o endereço de um contato retornará o endereço à prioridade."
     }
   },
   "installed": "Instalado",

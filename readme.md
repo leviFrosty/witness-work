@@ -58,4 +58,5 @@ JW Time © 2024 by Levi Wilkerson is licensed under [Attribution-NonCommercial 4
 # Sponsor
 
 Sponsors & Donations are never expected but greatly appreciated.
+
 [![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/leviwilkerson)

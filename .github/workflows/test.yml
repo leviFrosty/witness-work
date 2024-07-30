@@ -25,6 +25,9 @@ jobs:
           node-version: 18.x
           cache: yarn
 
+      - name: Run Expo Doctor
+        run: yarn run doctor
+
       - name: Install dependencies
         run: yarn install
 

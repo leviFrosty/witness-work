@@ -1,3 +1,4 @@
+yarn run doctor
 yarn run format
 yarn run lint
 yarn run testFinal

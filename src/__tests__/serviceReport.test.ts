@@ -441,6 +441,7 @@ describe('lib/serviceReport', () => {
 
   describe('getPlansIntersectingDay', () => {
     it('should return the plans that intersect with the day', () => {
+      const date = moment('2024-05-10')
       const plans: RecurringPlan[] = [
         {
           id: '00',
@@ -450,7 +451,10 @@ describe('lib/serviceReport', () => {
             interval: 1,
             endDate: null,
           },
-          startDate: moment().subtract(1, 'year').subtract(1, 'month').toDate(),
+          startDate: moment(date)
+            .subtract(1, 'year')
+            .subtract(1, 'month')
+            .toDate(),
         },
         {
           id: '0',
@@ -460,7 +464,7 @@ describe('lib/serviceReport', () => {
             interval: 1,
             endDate: null,
           },
-          startDate: moment().subtract(1, 'month').toDate(),
+          startDate: moment(date).subtract(1, 'month').toDate(),
         },
         {
           id: '1',
@@ -470,7 +474,7 @@ describe('lib/serviceReport', () => {
             interval: 1,
             endDate: null,
           },
-          startDate: moment().toDate(),
+          startDate: moment(date).toDate(),
         },
         {
           id: '2',
@@ -480,7 +484,7 @@ describe('lib/serviceReport', () => {
             interval: 1,
             endDate: null,
           },
-          startDate: moment().toDate(),
+          startDate: moment(date).toDate(),
         },
         {
           id: '3',
@@ -490,7 +494,7 @@ describe('lib/serviceReport', () => {
             interval: 1,
             endDate: null,
           },
-          startDate: moment().subtract(3, 'weeks').toDate(),
+          startDate: moment(date).subtract(3, 'weeks').toDate(),
         },
         {
           id: '4',
@@ -500,7 +504,7 @@ describe('lib/serviceReport', () => {
             interval: 1,
             endDate: null,
           },
-          startDate: moment().toDate(),
+          startDate: moment(date).toDate(),
         },
         {
           id: '5',
@@ -510,12 +514,12 @@ describe('lib/serviceReport', () => {
             interval: 1,
             endDate: null,
           },
-          startDate: moment().subtract(2, 'week').toDate(),
+          startDate: moment(date).subtract(2, 'week').toDate(),
         },
       ]
 
       const intersectingPlans = getPlansIntersectingDay(
-        moment().toDate(),
+        moment(date).toDate(),
         plans
       )
 
@@ -523,6 +527,7 @@ describe('lib/serviceReport', () => {
     })
 
     it('should not return plans that do not intersect with the day', () => {
+      const date = moment('2024-05-15')
       const plans: RecurringPlan[] = [
         {
           id: '00',
@@ -532,7 +537,10 @@ describe('lib/serviceReport', () => {
             interval: 1,
             endDate: null,
           },
-          startDate: moment().subtract(1, 'year').subtract(1, 'month').toDate(),
+          startDate: moment(date)
+            .subtract(1, 'year')
+            .subtract(1, 'month')
+            .toDate(),
         },
         {
           id: '0',
@@ -542,7 +550,7 @@ describe('lib/serviceReport', () => {
             interval: 1,
             endDate: null,
           },
-          startDate: moment().subtract(1, 'month').toDate(),
+          startDate: moment(date).subtract(1, 'month').toDate(),
         },
         {
           id: '1',
@@ -552,7 +560,7 @@ describe('lib/serviceReport', () => {
             interval: 1,
             endDate: null,
           },
-          startDate: moment().toDate(),
+          startDate: moment(date).toDate(),
         },
         {
           id: '2',
@@ -562,7 +570,7 @@ describe('lib/serviceReport', () => {
             interval: 1,
             endDate: null,
           },
-          startDate: moment().toDate(),
+          startDate: moment(date).toDate(),
         },
         {
           id: '3',
@@ -572,7 +580,7 @@ describe('lib/serviceReport', () => {
             interval: 1,
             endDate: null,
           },
-          startDate: moment().subtract(3, 'weeks').toDate(),
+          startDate: moment(date).subtract(3, 'weeks').toDate(),
         },
         {
           id: '4',
@@ -582,7 +590,7 @@ describe('lib/serviceReport', () => {
             interval: 1,
             endDate: null,
           },
-          startDate: moment().toDate(),
+          startDate: moment(date).toDate(),
         },
         {
           id: '5',
@@ -592,12 +600,12 @@ describe('lib/serviceReport', () => {
             interval: 1,
             endDate: null,
           },
-          startDate: moment().subtract(2, 'week').toDate(),
+          startDate: moment(date).subtract(2, 'week').toDate(),
         },
       ]
 
       const intersectingPlans = getPlansIntersectingDay(
-        moment().subtract(1, 'day').toDate(),
+        moment(date).subtract(1, 'day').toDate(),
         plans
       )
 

@@ -624,113 +624,113 @@ describe('lib/serviceReport', () => {
       const minutes = getTotalMinutesForServiceYear(reports, year)
       expect(minutes).toBe(ldcMinutesPerMonthCap)
     })
-  })
 
-  it('should not allow multiple entries to sum to more than 55', () => {
-    const year = 2023
-    const reports: ServiceReport[] = [
-      {
-        minutes: 0,
-        ldc: true,
-        date: moment().year(year).month(10).toDate(),
-        hours: 50,
-        id: '0',
-      },
-      {
-        minutes: 0,
-        ldc: true,
-        date: moment().year(year).month(10).toDate(),
-        hours: 10,
-        id: '0',
-      },
-    ]
+    it('should not allow multiple entries to sum to more than 55', () => {
+      const year = 2023
+      const reports: ServiceReport[] = [
+        {
+          minutes: 0,
+          ldc: true,
+          date: moment().year(year).month(10).toDate(),
+          hours: 50,
+          id: '0',
+        },
+        {
+          minutes: 0,
+          ldc: true,
+          date: moment().year(year).month(10).toDate(),
+          hours: 10,
+          id: '0',
+        },
+      ]
 
-    const minutes = getTotalMinutesForServiceYear(reports, year)
-    expect(minutes).toBe(ldcMinutesPerMonthCap)
-  })
+      const minutes = getTotalMinutesForServiceYear(reports, year)
+      expect(minutes).toBe(ldcMinutesPerMonthCap)
+    })
 
-  it('should properly add different months together, but not exceeding the ldc month cap', () => {
-    const year = 2023
-    const reports: ServiceReport[] = [
-      {
-        minutes: 0,
-        ldc: true,
-        date: moment().year(year).month(10).toDate(),
-        hours: 50,
-        id: '0',
-      },
-      {
-        minutes: 0,
-        ldc: true,
-        date: moment().year(year).month(10).toDate(),
-        hours: 50,
-        id: '0',
-      },
-      {
-        minutes: 0,
-        ldc: true,
-        date: moment().year(year).month(11).toDate(),
-        hours: 70,
-        id: '0',
-      },
-      {
-        minutes: 0,
-        ldc: true,
-        date: moment()
-          .year(year + 1)
-          .month(0)
-          .toDate(),
-        hours: 55,
-        id: '0',
-      },
-      {
-        minutes: 0,
-        ldc: true,
-        date: moment()
-          .year(year + 1)
-          .month(1)
-          .toDate(),
-        hours: 55,
-        id: '0',
-      },
-      {
-        minutes: 0,
-        ldc: true,
-        date: moment()
-          .year(year + 1)
-          .month(1)
-          .toDate(),
-        hours: 55,
-        id: '0',
-      },
-    ]
+    it('should properly add different months together, but not exceeding the ldc month cap', () => {
+      const year = 2023
+      const reports: ServiceReport[] = [
+        {
+          minutes: 0,
+          ldc: true,
+          date: moment().year(year).month(10).toDate(),
+          hours: 50,
+          id: '0',
+        },
+        {
+          minutes: 0,
+          ldc: true,
+          date: moment().year(year).month(10).toDate(),
+          hours: 50,
+          id: '0',
+        },
+        {
+          minutes: 0,
+          ldc: true,
+          date: moment().year(year).month(11).toDate(),
+          hours: 70,
+          id: '0',
+        },
+        {
+          minutes: 0,
+          ldc: true,
+          date: moment()
+            .year(year + 1)
+            .month(0)
+            .toDate(),
+          hours: 55,
+          id: '0',
+        },
+        {
+          minutes: 0,
+          ldc: true,
+          date: moment()
+            .year(year + 1)
+            .month(1)
+            .toDate(),
+          hours: 55,
+          id: '0',
+        },
+        {
+          minutes: 0,
+          ldc: true,
+          date: moment()
+            .year(year + 1)
+            .month(1)
+            .toDate(),
+          hours: 55,
+          id: '0',
+        },
+      ]
 
-    const minutes = getTotalMinutesForServiceYear(reports, year)
-    expect(minutes).toBe(ldcMinutesPerMonthCap * 4)
-  })
+      const minutes = getTotalMinutesForServiceYear(reports, year)
+      expect(minutes).toBe(ldcMinutesPerMonthCap * 4)
+    })
 
-  it('should include time from the first day of the service year to the last day', () => {
-    const year = 2023
-    const reports: ServiceReport[] = [
-      {
-        minutes: 0,
-        date: moment().year(year).month(8).startOf('month').toDate(),
-        hours: 10,
-        id: '0',
-      },
-      {
-        minutes: 0,
-        date: moment()
-          .year(year + 1)
-          .month(7)
-          .endOf('month')
-          .toDate(),
-        hours: 10,
-        id: '0',
-      },
-    ]
+    it('should include time from the first day of the service year to the last day', () => {
+      const year = 2023
+      const reports: ServiceReport[] = [
+        {
+          minutes: 0,
+          date: moment().year(year).month(8).startOf('month').toDate(),
+          hours: 10,
+          id: '0',
+        },
+        {
+          minutes: 0,
+          date: moment()
+            .year(year + 1)
+            .month(7)
+            .endOf('month')
+            .toDate(),
+          hours: 10,
+          id: '0',
+        },
+      ]
 
-    const minutes = getTotalMinutesForServiceYear(reports, year)
-    expect(minutes).toBe(20 * 60)
+      const minutes = getTotalMinutesForServiceYear(reports, year)
+      expect(minutes).toBe(20 * 60)
+    })
   })
 })

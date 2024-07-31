@@ -478,7 +478,8 @@
       "c3": "添加了斯瓦希里语翻译。",
       "c4": "如果为联系人拖动了联系人图钉，导航现在将优先考虑手动调整的图钉，而不是其地址。编辑联系人的地址将使该地址恢复优先。",
       "c7": "Contact pin colors on Contact Details Screen now matches the map screen.",
-      "c8": "Added Ukrainian translation."
+      "c8": "Added Ukrainian translation.",
+      "c9": "Month and annual total calculations now properly limit your credit time to 55 hours per month. Standard time is not affected by this rule. If you exceed this time using credit, you'll have overage displayed on your month's details screen."
     }
   },
   "installed": "已安装",
@@ -675,5 +676,6 @@
   "archived": "已归档",
   "recovered": "已恢复",
   "thisContactHasNoConversations": "此联系人尚未有任何对话。",
-  "annualSchedule": "年度计划"
+  "annualSchedule": "年度计划",
+  "youHaveCreditOverage": "You have credit overage in the amount of {{count}} hours"
 }

@@ -33,33 +33,6 @@ export const calculateMinutesRemaining = ({
       : minutesRemaining
 }
 
-export const getTotalMinutes = (serviceReports: ServiceReport[]): number => {
-  const totalMinutes = serviceReports.reduce((accumulator, report) => {
-    return accumulator + report.hours * 60 + report.minutes // Convert hours to minutes and accumulate
-  }, 0)
-
-  return totalMinutes
-}
-
-export const totalMinutesForCurrentMonth = (
-  serviceReports: ServiceReport[]
-): number => {
-  const currentMonth = moment().month()
-  const currentYear = moment().year()
-
-  const totalMinutesForMonth = serviceReports
-    .filter(
-      (report) =>
-        moment(report.date).month() === currentMonth &&
-        moment(report.date).year() === currentYear
-    )
-    .reduce((accumulator, report) => {
-      return accumulator + report.hours * 60 + report.minutes
-    }, 0)
-
-  return totalMinutesForMonth
-}
-
 export const getTotalMinutesDetailedForSpecificMonth = (
   serviceReports: ServiceReport[],
   month: number,
@@ -76,22 +49,58 @@ export const getTotalMinutesDetailedForSpecificMonth = (
   }
 }
 
-export const totalMinutesForSpecificMonth = (
+export type AdjustedMinutes = {
+  value: number
+  creditOverage: number
+}
+
+/**
+ * Returns minutes for specific month, taking into account potential overage
+ * that could occur with credit hours.
+ *
+ * For example, a user has 50 standard hours and 30 credit hours for January.
+ * Their adjusted hours would be 55, since they can only have up to 55 hours of
+ * time including their credit.
+ *
+ * If a user has 70 standard hours and 30 credit hours, they will result with 70
+ * hours - because standard has higher priority.
+ */
+export const adjustedMinutesForSpecificMonth = (
   serviceReports: ServiceReport[],
   targetMonth: number,
   targetYear: number
-): number => {
-  const totalMinutesForMonth = serviceReports
-    .filter(
-      (report) =>
-        moment(report.date).month() === targetMonth &&
-        moment(report.date).year() === targetYear
-    )
-    .reduce((accumulator, report) => {
-      return accumulator + report.hours * 60 + report.minutes
-    }, 0)
+): AdjustedMinutes => {
+  const detailed = getTotalMinutesDetailedForSpecificMonth(
+    serviceReports,
+    targetMonth,
+    targetYear
+  )
 
-  return totalMinutesForMonth
+  const creditMinutes = detailed.ldc
+  const creditCap = 55 * 60 // in minutes
+
+  let minutes = 0
+  let creditOverage = 0
+
+  if (detailed.standard > creditCap) {
+    minutes = detailed.standard
+    if (creditMinutes) {
+      creditOverage = creditMinutes
+    }
+  } else {
+    const standardWithCredit = detailed.standard + creditMinutes
+    if (standardWithCredit > creditCap) {
+      minutes = creditCap
+      creditOverage = standardWithCredit - creditCap
+    } else {
+      minutes = standardWithCredit
+    }
+  }
+
+  return {
+    value: minutes,
+    creditOverage: creditOverage,
+  }
 }
 
 export const totalMinutesForSpecificMonthUpToDayOfMonth = (
@@ -276,59 +285,44 @@ export const serviceYearsDateRange = (serviceYear: number) => {
   return { minDate, maxDate }
 }
 
-export const reportsForServiceYear = (
-  serviceReports: ServiceReport[],
-  serviceYear: number
-) => {
-  const { minDate, maxDate } = serviceYearsDateRange(serviceYear)
+const monthsInServiceYear = (year: number): Date[] => {
+  const months = []
 
-  return serviceReports.filter((report) => {
-    return moment(report.date).isBetween(minDate, maxDate, 'day', '[]')
-  })
+  for (let i = 8; i < 12; i++) {
+    months.push(moment().startOf('month').month(i).year(year).toDate())
+  }
+  for (let i = 0; i < 8; i++) {
+    months.push(
+      moment()
+        .startOf('month')
+        .month(i)
+        .year(year + 1)
+        .toDate()
+    )
+  }
+
+  return months
 }
 
 export const getTotalMinutesForServiceYear = (
   serviceReports: ServiceReport[],
   serviceYear: number
 ) => {
-  const reports = reportsForServiceYear(serviceReports, serviceYear)
+  serviceReports
+  serviceYear
+  const months = monthsInServiceYear(serviceYear)
+  let minutes = 0
 
-  const ldcMinutesPerMonth: Record<string, number> = {}
+  for (const month of months) {
+    const current = moment(month)
+    const currentMinutes = adjustedMinutesForSpecificMonth(
+      serviceReports,
+      current.month(),
+      current.year()
+    ).value
 
-  const minutes = reports.reduce((prev, current) => {
-    const month = moment(current.date).format('MMYY')
-    const currentMinutes = current.hours * 60 + current.minutes
-
-    if (!current.ldc) {
-      // Only LDC has a month capacity, just return the time total here.
-      return prev + currentMinutes
-    }
-
-    if (ldcMinutesPerMonth[month] === undefined) {
-      ldcMinutesPerMonth[month] = currentMinutes
-      if (currentMinutes > ldcMinutesPerMonthCap) {
-        return prev + ldcMinutesPerMonthCap
-      } else {
-        return prev + currentMinutes
-      }
-    } else {
-      if (ldcMinutesPerMonth[month] + currentMinutes > ldcMinutesPerMonthCap) {
-        const maxTimeAvailableToAdd =
-          ldcMinutesPerMonthCap - ldcMinutesPerMonth[month]
-        ldcMinutesPerMonth[month] += currentMinutes
-        return prev + maxTimeAvailableToAdd
-      } else {
-        ldcMinutesPerMonth[month] += currentMinutes
-        if (currentMinutes > ldcMinutesPerMonthCap) {
-          prev + ldcMinutesPerMonthCap
-        } else {
-          return prev + currentMinutes
-        }
-      }
-    }
-
-    return prev + currentMinutes
-  }, 0)
+    minutes += currentMinutes
+  }
 
   return minutes
 }

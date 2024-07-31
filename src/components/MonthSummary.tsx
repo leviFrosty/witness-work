@@ -7,10 +7,11 @@ import MonthServiceReportProgressBar from './MonthServiceReportProgressBar'
 import { faArrowUpFromBracket } from '@fortawesome/free-solid-svg-icons'
 import IconButton from './IconButton'
 import {
+  AdjustedMinutes,
+  adjustedMinutesForSpecificMonth,
   ldcMinutesForSpecificMonth,
   otherMinutesForSpecificMonth,
   standardMinutesForSpecificMonth,
-  totalMinutesForSpecificMonth,
 } from '../lib/serviceReport'
 import { useMemo, useState } from 'react'
 import useTheme from '../contexts/theme'
@@ -50,13 +51,9 @@ const MonthSummary = ({
   const goalHours = publisherHours[publisher]
   const navigation = useNavigation<RootStackNavigation>()
 
-  const totalMinutes = useMemo(
-    () =>
-      monthsReports
-        ? totalMinutesForSpecificMonth(monthsReports, month, year)
-        : 0,
-    [month, monthsReports, year]
-  )
+  const adjustedMinutes: AdjustedMinutes = monthsReports
+    ? adjustedMinutesForSpecificMonth(monthsReports, month, year)
+    : { value: 0, creditOverage: 0 }
 
   const ldcMinutes = useMemo(
     () =>
@@ -191,10 +188,23 @@ const MonthSummary = ({
               fontFamily: theme.fonts.semiBold,
             }}
           >
-            {`${_.round(totalMinutes / 60, 1)} ${i18n.t(
+            {`${_.round(adjustedMinutes.value / 60, 1)} ${i18n.t(
               'of'
             )} ${goalHours} ${i18n.t('hoursToGoal')}`}
           </Text>
+          {!!adjustedMinutes.creditOverage && (
+            <Text
+              style={{
+                fontSize: theme.fontSize('xs'),
+                color: theme.colors.warn,
+                textAlign: 'right',
+              }}
+            >
+              {i18n.t('youHaveCreditOverage', {
+                count: _.round(adjustedMinutes.creditOverage / 60, 1),
+              })}
+            </Text>
+          )}
           <MonthServiceReportProgressBar month={month} year={year} />
         </View>
       </View>

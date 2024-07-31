@@ -8,9 +8,8 @@ import {
   getTimeAsMinutesForHourglass,
   getTotalMinutesForServiceYear,
   serviceReportHoursPerMonthToGoal,
-  totalMinutesForCurrentMonth,
-  totalMinutesForSpecificMonth,
   ldcMinutesPerMonthCap,
+  adjustedMinutesForSpecificMonth,
 } from '../lib/serviceReport'
 import { ServiceReport } from '../types/serviceReport'
 import { Publisher } from '../types/publisher'
@@ -61,7 +60,7 @@ describe('lib/serviceReport', () => {
     })
   })
 
-  describe('totalMinutesForCurrentMonth', () => {
+  describe('adjustedMinutesForSpecificMonth ', () => {
     it('should return the number of minutes in the month', () => {
       const serviceReports: ServiceReport[] = [
         {
@@ -88,103 +87,33 @@ describe('lib/serviceReport', () => {
           hours: 0,
           minutes: 30,
         },
-      ]
-
-      const minutes = totalMinutesForCurrentMonth(serviceReports)
-
-      expect(minutes).toBe(2 * 60)
-    })
-
-    it('should return 0 if no reports provided', () => {
-      const serviceReports: ServiceReport[] = []
-
-      const minutes = totalMinutesForCurrentMonth(serviceReports)
-
-      expect(minutes).toBe(0)
-    })
-
-    it('should not include minutes from previous or upcoming months', () => {
-      const serviceReports: ServiceReport[] = [
         {
-          id: '1',
-          date: moment().subtract(1, 'month').toDate(),
-          hours: 10,
-          minutes: 0,
-        },
-        {
-          id: '2',
-          date: moment().subtract(1, 'years').toDate(),
-          hours: 5,
-          minutes: 0,
-        },
-        {
-          id: '3',
+          id: '5',
           date: moment().add(1, 'month').toDate(),
-          hours: 100,
-          minutes: 0,
-        },
-        {
-          id: '4',
-          date: moment().add(1, 'year').toDate(),
-          hours: 50,
-          minutes: 0,
-        },
-      ]
-
-      const minutes = totalMinutesForCurrentMonth(serviceReports)
-
-      expect(minutes).toBe(0)
-    })
-  })
-
-  describe('totalMinutesForSpecificMonth', () => {
-    it('should return the number of minutes in the month', () => {
-      const serviceReports: ServiceReport[] = [
-        {
-          id: '1',
-          date: new Date(),
           hours: 1,
           minutes: 0,
         },
-        {
-          id: '2',
-          date: new Date(),
-          hours: 0,
-          minutes: 15,
-        },
-        {
-          id: '3',
-          date: new Date(),
-          hours: 0,
-          minutes: 15,
-        },
-        {
-          id: '4',
-          date: new Date(),
-          hours: 0,
-          minutes: 30,
-        },
       ]
 
-      const thisMonthsMinutes = totalMinutesForSpecificMonth(
+      const adjustedMinutes = adjustedMinutesForSpecificMonth(
         serviceReports,
         moment().month(),
         moment().year()
       )
 
-      expect(thisMonthsMinutes).toBe(2 * 60)
+      expect(adjustedMinutes.value).toBe(2 * 60)
     })
 
     it('should return 0 if no reports provided', () => {
       const serviceReports: ServiceReport[] = []
 
-      const minutes = totalMinutesForSpecificMonth(
+      const adjustedMinutes = adjustedMinutesForSpecificMonth(
         serviceReports,
         moment().month(),
         moment().year()
       )
 
-      expect(minutes).toBe(0)
+      expect(adjustedMinutes.value).toBe(0)
     })
 
     it('should not include minutes from previous or upcoming months', () => {
@@ -221,13 +150,114 @@ describe('lib/serviceReport', () => {
         },
       ]
 
-      const minutes = totalMinutesForSpecificMonth(
+      const adjustedMinutes = adjustedMinutesForSpecificMonth(
         serviceReports,
         moment().month(),
         moment().year()
       )
 
-      expect(minutes).toBe(1001 * 60)
+      expect(adjustedMinutes.value).toBe(1001 * 60)
+    })
+
+    it("shouldn't allow a user to have greater than 55 hours solely of credit time", () => {
+      const serviceReports: ServiceReport[] = [
+        {
+          id: '1',
+          date: moment().toDate(),
+          hours: 60,
+          minutes: 0,
+          ldc: true,
+        },
+      ]
+
+      const adjustedMinutes = adjustedMinutesForSpecificMonth(
+        serviceReports,
+        moment().month(),
+        moment().year()
+      )
+
+      expect(adjustedMinutes.value).toBe(55 * 60)
+    })
+
+    it('should result in 55 hours if you have both standard and credit time', () => {
+      const serviceReports: ServiceReport[] = [
+        {
+          id: '1',
+          date: moment().toDate(),
+          hours: 30,
+          minutes: 0,
+          ldc: true,
+        },
+        {
+          id: '2',
+          date: moment().toDate(),
+          hours: 30,
+          minutes: 0,
+        },
+      ]
+
+      const adjustedMinutes = adjustedMinutesForSpecificMonth(
+        serviceReports,
+        moment().month(),
+        moment().year()
+      )
+
+      expect(adjustedMinutes.value).toBe(55 * 60)
+      expect(adjustedMinutes.creditOverage).toBe(5 * 60)
+    })
+
+    it('should result in sum if you have both standard and credit time, but less than 55 hours', () => {
+      const serviceReports: ServiceReport[] = [
+        {
+          id: '1',
+          date: moment().toDate(),
+          hours: 20,
+          minutes: 0,
+          ldc: true,
+        },
+        {
+          id: '2',
+          date: moment().toDate(),
+          hours: 20,
+          minutes: 0,
+        },
+      ]
+
+      const adjustedMinutes = adjustedMinutesForSpecificMonth(
+        serviceReports,
+        moment().month(),
+        moment().year()
+      )
+
+      expect(adjustedMinutes.value).toBe(40 * 60)
+      expect(adjustedMinutes.creditOverage).toBe(0)
+    })
+
+    it("should return as many standard hours even if it's over the credit cap", () => {
+      const serviceReports: ServiceReport[] = [
+        {
+          id: '1',
+          date: moment().toDate(),
+          hours: 100,
+          minutes: 0,
+        },
+        {
+          id: '2',
+          date: moment().toDate(),
+          hours: 20,
+          minutes: 0,
+          ldc: true,
+        },
+      ]
+
+      const adjustedMinutes = adjustedMinutesForSpecificMonth(
+        serviceReports,
+        moment().month(),
+        moment().year()
+      )
+
+      expect(adjustedMinutes.value).toBe(100 * 60)
+      expect(adjustedMinutes.creditOverage).toBe(20 * 60)
     })
   })
 
@@ -579,7 +609,7 @@ describe('lib/serviceReport', () => {
   })
 
   describe('getTotalMinutesForServiceYear', () => {
-    it('should not allow more than 55 hours per month of LDC for a single entry', () => {
+    it('should not allow more than 55 hours per month of LDC for a single month', () => {
       const year = 2023
       const reports: ServiceReport[] = [
         {
@@ -677,5 +707,30 @@ describe('lib/serviceReport', () => {
 
     const minutes = getTotalMinutesForServiceYear(reports, year)
     expect(minutes).toBe(ldcMinutesPerMonthCap * 4)
+  })
+
+  it('should include time from the first day of the service year to the last day', () => {
+    const year = 2023
+    const reports: ServiceReport[] = [
+      {
+        minutes: 0,
+        date: moment().year(year).month(8).startOf('month').toDate(),
+        hours: 10,
+        id: '0',
+      },
+      {
+        minutes: 0,
+        date: moment()
+          .year(year + 1)
+          .month(7)
+          .endOf('month')
+          .toDate(),
+        hours: 10,
+        id: '0',
+      },
+    ]
+
+    const minutes = getTotalMinutesForServiceYear(reports, year)
+    expect(minutes).toBe(20 * 60)
   })
 })

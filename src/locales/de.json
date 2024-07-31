@@ -478,7 +478,8 @@
       "c3": "Swahili-Übersetzung hinzugefügt.",
       "c4": "Wenn für einen Kontakt eine Kontaktnadel gezogen wurde, priorisiert die Navigation nun die manuell angepasste Nadel gegenüber der Adresse des Kontakts. Durch Bearbeiten der Adresse eines Kontakts wird die Adresse wieder priorisiert.",
       "c7": "Die Kontakt-Pin-Farben auf dem Bildschirm mit den Kontaktdetails stimmen jetzt mit denen auf dem Kartenbildschirm überein.",
-      "c8": "Ukrainische Übersetzung hinzugefügt."
+      "c8": "Ukrainische Übersetzung hinzugefügt.",
+      "c9": "Monats- und Jahresgesamtberechnungen begrenzen Ihre Kreditzeit jetzt ordnungsgemäß auf 55 Stunden pro Monat. Die Standardzeit ist von dieser Regel nicht betroffen. Wenn Sie diese Zeit mit Kredit überschreiten, wird Ihnen der Überschuss auf dem Detailbildschirm Ihres Monats angezeigt."
     }
   },
   "installed": "Eingerichtet",
@@ -675,5 +676,6 @@
   "archived": "Archiviert",
   "recovered": "Wiederhergestellt",
   "thisContactHasNoConversations": "Mit diesem Kontakt gibt es noch keine Unterhaltungen.",
-  "annualSchedule": "Jahresplan"
+  "annualSchedule": "Jahresplan",
+  "youHaveCreditOverage": "Sie haben ein Guthabenüberschuss von {{count}} Stunden"
 }

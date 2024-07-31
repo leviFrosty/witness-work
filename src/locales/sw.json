@@ -478,7 +478,8 @@
       "c3": "Imeongezwa tafsiri ya Kiswahili.",
       "c4": "Ikiwa pini ya mwasiliani iliburutwa kwa mtu anayewasiliana naye, urambazaji sasa utatanguliza pini iliyorekebishwa mwenyewe juu ya anwani yake. Kuhariri anwani ya mwasiliani kutarudisha anwani kwa kipaumbele.",
       "c7": "Rangi za pini za anwani kwenye Skrini ya Maelezo ya Mawasiliano sasa zinalingana na skrini ya ramani.",
-      "c8": "Imeongeza tafsiri ya Kiukreni."
+      "c8": "Imeongeza tafsiri ya Kiukreni.",
+      "c9": "Hesabu za jumla za mwezi na mwaka sasa ziweke kikomo cha muda wako wa mkopo hadi saa 55 kwa mwezi. Muda wa kawaida hauathiriwi na sheria hii. Ukizidisha muda huu kwa kutumia mkopo, utakuwa umezidisha kuonyeshwa kwenye skrini ya maelezo ya mwezi wako."
     }
   },
   "installed": "Imesakinishwa",
@@ -675,5 +676,6 @@
   "archived": "Imehifadhiwa",
   "recovered": "Imepona",
   "thisContactHasNoConversations": "Mtu huyu bado hana mazungumzo.",
-  "annualSchedule": "Ratiba ya Mwaka"
+  "annualSchedule": "Ratiba ya Mwaka",
+  "youHaveCreditOverage": "Una ziada ya mkopo katika muda wa saa {{count}}"
 }

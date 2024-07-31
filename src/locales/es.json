@@ -478,7 +478,8 @@
       "c3": "Se agregó traducción al swahili.",
       "c4": "Si se arrastró un pin de contacto para un contacto, la navegación ahora priorizará el pin ajustado manualmente sobre su dirección. Al editar la dirección de un contacto, la dirección volverá a tener prioridad.",
       "c7": "Los colores de los pines de contacto en la pantalla Detalles de contacto ahora coinciden con los de la pantalla del mapa.",
-      "c8": "Se agregó traducción al ucraniano."
+      "c8": "Se agregó traducción al ucraniano.",
+      "c9": "Los cálculos totales mensuales y anuales ahora limitan adecuadamente su tiempo de crédito a 55 horas por mes. El horario estándar no se ve afectado por esta regla. Si excede este tiempo usando crédito, se mostrará el excedente en la pantalla de detalles de su mes."
     }
   },
   "installed": "Instalado",
@@ -675,5 +676,6 @@
   "archived": "Archivado",
   "recovered": "Recuperado",
   "thisContactHasNoConversations": "Este contacto aún no tiene conversaciones.",
-  "annualSchedule": "Calendario Anual"
+  "annualSchedule": "Calendario Anual",
+  "youHaveCreditOverage": "Tienes un exceso de crédito por la cantidad de {{count}} horas"
 }

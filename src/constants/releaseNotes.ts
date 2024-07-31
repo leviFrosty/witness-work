@@ -27,14 +27,18 @@ export const releaseNotes: ReleaseNote[] = [
   {
     version: '1.30.0',
     date: moment('2024-07-24').toDate(),
-    content: ['c1', 'c2', 'c3', 'c4', 'c7', 'c8'],
+    content: ['c1', 'c2', 'c3', 'c4', 'c7', 'c8', 'c9'],
   },
   {
     version: '1.29.1',
     date: moment('2024-07-18').toDate(),
     content: ['c1'],
   },
-
+  {
+    version: '1.29.0',
+    date: moment('2024-07-15').toDate(),
+    content: ['c1', 'c2', 'c3', 'c4', 'c5', 'c6'],
+  },
   {
     version: '1.28.0',
     date: moment('2024-07-12').toDate(),

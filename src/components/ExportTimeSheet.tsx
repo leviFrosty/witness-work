@@ -20,11 +20,11 @@ import moment from 'moment'
 import Haptics from '../lib/haptics'
 import { useCallback, useMemo } from 'react'
 import {
+  adjustedMinutesForSpecificMonth,
   getTimeAsMinutesForHourglass,
   getTotalMinutesDetailedForSpecificMonth,
   hasServiceReportsForMonth,
   otherMinutesForSpecificMonth,
-  totalMinutesForSpecificMonth,
 } from '../lib/serviceReport'
 import useTheme from '../contexts/theme'
 import useServiceReport from '../stores/serviceReport'
@@ -58,11 +58,11 @@ const ExportTimeSheet = ({
   const { month, year } = sheet
   const navigation = useNavigation<RootStackNavigation>()
 
-  const minutes = useMemo(
+  const adjustedMinutes = useMemo(
     () =>
       month !== undefined && year !== undefined
-        ? totalMinutesForSpecificMonth(serviceReports, month, year)
-        : null,
+        ? adjustedMinutesForSpecificMonth(serviceReports, month, year)
+        : { value: 0, creditOverage: 0 },
     [month, serviceReports, year]
   )
 
@@ -139,7 +139,7 @@ const ExportTimeSheet = ({
               return i18n.t('no')
             }
           }
-          return Math.floor((minutes || 0) / 60)
+          return Math.floor(adjustedMinutes.value / 60)
         }
 
         return `${i18n.t('serviceReport')} - ${moment()
@@ -166,7 +166,7 @@ const ExportTimeSheet = ({
           }month=${hourglassMonth}&year=${year}&minutes=${getTimeAsMinutesForHourglass(
             publisher,
             wentOutForMonth,
-            minutes
+            adjustedMinutes.value
           )}&studies=${studiesForMonth}&remarks=${encodeURI(
             otherHoursAsString()
           )}`
@@ -226,7 +226,7 @@ const ExportTimeSheet = ({
       setSheet({ open: false, month: 0, year: 0 })
     },
     [
-      minutes,
+      adjustedMinutes,
       month,
       publisher,
       serviceReports,

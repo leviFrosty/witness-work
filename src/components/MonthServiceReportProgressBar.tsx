@@ -3,9 +3,9 @@ import { usePreferences } from '../stores/preferences'
 import { useServiceReport } from '../stores/serviceReport'
 import useTheme from '../contexts/theme'
 import {
+  adjustedMinutesForSpecificMonth,
   calculateProgress,
   getTotalMinutesDetailedForSpecificMonth,
-  totalMinutesForSpecificMonth,
 } from '../lib/serviceReport'
 import { useCallback, useMemo } from 'react'
 import Text from './MyText'
@@ -120,14 +120,14 @@ const MonthServiceReportProgressBar = ({
   const { publisher, publisherHours } = usePreferences()
   const goalHours = publisherHours[publisher]
 
-  const totalMinutes = useMemo(
-    () => totalMinutesForSpecificMonth(serviceReports, month, year),
+  const adjustedMinutes = useMemo(
+    () => adjustedMinutesForSpecificMonth(serviceReports, month, year),
     [month, serviceReports, year]
   )
 
   const progress = useMemo(
-    () => calculateProgress({ minutes: totalMinutes, goalHours }),
-    [totalMinutes, goalHours]
+    () => calculateProgress({ minutes: adjustedMinutes.value, goalHours }),
+    [adjustedMinutes, goalHours]
   )
 
   const minutesDetailed = useMemo(
@@ -182,11 +182,11 @@ const MonthServiceReportProgressBar = ({
         <OtherHours
           key={`${report.tag}-${index}`}
           color={color}
-          percentage={report.minutes / totalMinutes}
+          percentage={report.minutes / adjustedMinutes.value}
         />
       )
     })
-  }, [minutesDetailed.other, otherColors, totalMinutes])
+  }, [minutesDetailed.other, otherColors, adjustedMinutes.value])
 
   const renderOtherHoursColorKeys = useCallback(() => {
     let currentIndex = 0
@@ -238,13 +238,13 @@ const MonthServiceReportProgressBar = ({
         >
           {hasStandardMinutes && (
             <StandardHours
-              percentage={minutesDetailed.standard / totalMinutes}
+              percentage={minutesDetailed.standard / adjustedMinutes.value}
               color={theme.colors.accent}
             />
           )}
           {hasLdcMinutes && (
             <LdcHours
-              percentage={minutesDetailed.ldc / totalMinutes}
+              percentage={minutesDetailed.ldc / adjustedMinutes.value}
               color={minimal ? theme.colors.accent : theme.colors.accentAlt}
             />
           )}

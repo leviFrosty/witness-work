@@ -478,7 +478,8 @@
       "c3": "Aggiunta la traduzione swahili.",
       "c4": "Se un segnaposto è stato trascinato per un contatto, la navigazione ora darà la priorità al segnaposto regolato manualmente rispetto al suo indirizzo. La modifica dell'indirizzo di un contatto riporterà la priorità all'indirizzo.",
       "c7": "I colori dei segnaposto nella schermata dei dettagli del contatto ora corrispondono alla schermata della mappa.",
-      "c8": "Aggiunta la traduzione ucraina."
+      "c8": "Aggiunta la traduzione ucraina.",
+      "c9": "I calcoli mensili e annuali totali ora limitano correttamente il tempo di credito a 55 ore al mese. L'ora solare non è influenzata da questa regola. Se superi questo tempo utilizzando il credito, l'eccedenza verrà visualizzata nella schermata dei dettagli del mese."
     }
   },
   "installed": "Installato",
@@ -675,5 +676,6 @@
   "archived": "Archiviato",
   "recovered": "Recuperato",
   "thisContactHasNoConversations": "Questo contatto non ha ancora conversazioni.",
-  "annualSchedule": "Programma annuale"
+  "annualSchedule": "Programma annuale",
+  "youHaveCreditOverage": "Hai un credito in eccesso per un importo di {{count}} ore"
 }

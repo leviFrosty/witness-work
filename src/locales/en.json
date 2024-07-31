@@ -478,7 +478,8 @@
       "c3": "Added Swahili translation.",
       "c4": "If a contact pin was dragged for a contact, navigation will now prioritize the manually adjusted pin over their address. Editing a contact's address will return the address to priority.",
       "c7": "Contact pin colors on Contact Details Screen now matches the map screen.",
-      "c8": "Added Ukrainian translation."
+      "c8": "Added Ukrainian translation.",
+      "c9": "Month and annual total calculations now properly limit your credit time to 55 hours per month. Standard time is not affected by this rule. If you exceed this time using credit, you'll have overage displayed on your month's details screen."
     }
   },
   "installed": "Installed",
@@ -675,5 +676,6 @@
   "archived": "Archived",
   "recovered": "Recovered",
   "thisContactHasNoConversations": "This contact has no conversations yet.",
-  "annualSchedule": "Annual Schedule"
+  "annualSchedule": "Annual Schedule",
+  "youHaveCreditOverage": "You have credit overage in the amount of {{count}} hours"
 }

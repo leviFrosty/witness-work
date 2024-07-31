@@ -6,10 +6,10 @@ import { usePreferences } from '../stores/preferences'
 import {
   calculateMinutesRemaining,
   calculateProgress,
-  totalMinutesForCurrentMonth,
   hasServiceReportsForMonth,
   getDaysLeftInCurrentMonth,
   plannedMinutesToCurrentDayForMonth,
+  adjustedMinutesForSpecificMonth,
 } from '../lib/serviceReport'
 import Card from './Card'
 import Text from './MyText'
@@ -41,14 +41,19 @@ const HourEntryCard = () => {
   const navigation = useNavigation<RootStackNavigation>()
   const goalHours = publisherHours[publisher]
 
-  const minutes = useMemo(
-    () => totalMinutesForCurrentMonth(serviceReports),
+  const adjustedMinutes = useMemo(
+    () =>
+      adjustedMinutesForSpecificMonth(
+        serviceReports,
+        moment().month(),
+        moment().year()
+      ),
     [serviceReports]
   )
 
   const progress = useMemo(
-    () => calculateProgress({ minutes, goalHours }),
-    [minutes, goalHours]
+    () => calculateProgress({ minutes: adjustedMinutes.value, goalHours }),
+    [adjustedMinutes, goalHours]
   )
 
   const encouragementHourPhrase = useCallback((progress: number) => {
@@ -105,8 +110,9 @@ const HourEntryCard = () => {
   }, [encouragementHourPhrase, progress])
 
   const minutesRemaining = useMemo(
-    () => calculateMinutesRemaining({ minutes, goalHours }),
-    [minutes, goalHours]
+    () =>
+      calculateMinutesRemaining({ minutes: adjustedMinutes.value, goalHours }),
+    [adjustedMinutes, goalHours]
   )
 
   const daysLeftInMonth = useMemo(() => getDaysLeftInCurrentMonth(), [])
@@ -166,7 +172,7 @@ const HourEntryCard = () => {
             <View>
               <Text style={{ fontSize: 32, fontFamily: theme.fonts.bold }}>
                 {_.round(
-                  minutes / 60,
+                  adjustedMinutes.value / 60,
                   displayDetailsOnProgressBarHomeScreen ? 1 : 0
                 )}
               </Text>

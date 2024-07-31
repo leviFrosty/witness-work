@@ -478,7 +478,8 @@
       "c3": "スワヒリ語の翻訳を追加しました。",
       "c4": "連絡先の連絡先ピンがドラッグされた場合、ナビゲーションでは手動で調整されたピンがアドレスよりも優先されるようになりました。連絡先のアドレスを編集すると、アドレスが優先されます。",
       "c7": "Contact pin colors on Contact Details Screen now matches the map screen.",
-      "c8": "Added Ukrainian translation."
+      "c8": "Added Ukrainian translation.",
+      "c9": "Month and annual total calculations now properly limit your credit time to 55 hours per month. Standard time is not affected by this rule. If you exceed this time using credit, you'll have overage displayed on your month's details screen."
     }
   },
   "installed": "インストール済み",
@@ -675,5 +676,6 @@
   "archived": "アーカイブ済み",
   "recovered": "回復済み",
   "thisContactHasNoConversations": "この連絡先にはまだ会話がありません。",
-  "annualSchedule": "年間スケジュール"
+  "annualSchedule": "年間スケジュール",
+  "youHaveCreditOverage": "You have credit overage in the amount of {{count}} hours"
 }

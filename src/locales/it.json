@@ -478,7 +478,8 @@
       "c3": "Aggiunta la traduzione swahili.",
       "c4": "Se un segnaposto è stato trascinato per un contatto, la navigazione ora darà la priorità al segnaposto regolato manualmente rispetto al suo indirizzo. La modifica dell'indirizzo di un contatto riporterà la priorità all'indirizzo.",
       "c7": "Contact pin colors on Contact Details Screen now matches the map screen.",
-      "c8": "Added Ukrainian translation."
+      "c8": "Added Ukrainian translation.",
+      "c9": "Month and annual total calculations now properly limit your credit time to 55 hours per month. Standard time is not affected by this rule. If you exceed this time using credit, you'll have overage displayed on your month's details screen."
     }
   },
   "installed": "Installato",
@@ -675,5 +676,6 @@
   "archived": "Archiviato",
   "recovered": "Recuperato",
   "thisContactHasNoConversations": "Questo contatto non ha ancora conversazioni.",
-  "annualSchedule": "Programma annuale"
+  "annualSchedule": "Programma annuale",
+  "youHaveCreditOverage": "You have credit overage in the amount of {{count}} hours"
 }

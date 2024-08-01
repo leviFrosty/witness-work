@@ -480,7 +480,8 @@
       "c7": "Die Kontakt-Pin-Farben auf dem Bildschirm mit den Kontaktdetails stimmen jetzt mit denen auf dem Kartenbildschirm überein.",
       "c8": "Ukrainische Übersetzung hinzugefügt.",
       "c9": "Monats- und Jahresgesamtberechnungen begrenzen Ihre Kreditzeit jetzt ordnungsgemäß auf 55 Stunden pro Monat. Die Standardzeit ist von dieser Regel nicht betroffen. Wenn Sie diese Zeit mit Kredit überschreiten, wird Ihnen der Überschuss auf dem Detailbildschirm Ihres Monats angezeigt.",
-      "c10": "Unterstützung für Zeitguthaben hinzugefügt. Bestehende Benutzer können ihre alten Zeiteinträge automatisch aktualisieren."
+      "c10": "Unterstützung für Zeitguthaben hinzugefügt. Bestehende Benutzer können ihre alten Zeiteinträge automatisch aktualisieren.",
+      "c11": "Problem mit der Schaltfläche „Hinzufügen“, die den Kompass unter iOS überlappt, behoben."
     }
   },
   "installed": "Eingerichtet",

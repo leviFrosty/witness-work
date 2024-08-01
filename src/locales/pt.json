@@ -480,7 +480,8 @@
       "c7": "As cores dos pinos de contato na tela de detalhes do contato agora correspondem à tela do mapa.",
       "c8": "Adicionada tradução ucraniana.",
       "c9": "Os cálculos totais mensais e anuais agora limitam adequadamente seu tempo de crédito a 55 horas por mês. O horário padrão não é afetado por esta regra. Se você exceder esse tempo usando crédito, o excedente será exibido na tela de detalhes do seu mês.",
-      "c10": "Adicionado suporte de crédito de tempo. Os usuários existentes poderão atualizar automaticamente suas entradas de horário antigo."
+      "c10": "Adicionado suporte de crédito de tempo. Os usuários existentes poderão atualizar automaticamente suas entradas de horário antigo.",
+      "c11": "Problema resolvido com botão adicionar bússola sobreposta no iOS."
     }
   },
   "installed": "Instalado",

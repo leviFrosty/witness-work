@@ -480,7 +480,8 @@
       "c7": "Les couleurs des broches de contact sur l’écran des détails du contact correspondent désormais à l’écran de la carte.",
       "c8": "Ajout de la traduction ukrainienne.",
       "c9": "Les calculs du total mensuel et annuel limitent désormais correctement votre temps de crédit à 55 heures par mois. L’heure standard n’est pas affectée par cette règle. Si vous dépassez ce délai en utilisant le crédit, le dépassement sera affiché sur l'écran des détails de votre mois.",
-      "c10": "Ajout du support du crédit de temps. Les utilisateurs existants pourront mettre à jour automatiquement leurs anciennes entrées de temps."
+      "c10": "Ajout du support du crédit de temps. Les utilisateurs existants pourront mettre à jour automatiquement leurs anciennes entrées de temps.",
+      "c11": "Problème résolu avec l'ajout d'une boussole qui se chevauche sur iOS."
     }
   },
   "installed": "installée",

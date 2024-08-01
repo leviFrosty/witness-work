@@ -480,7 +480,8 @@
       "c7": "Los colores de los pines de contacto en la pantalla Detalles de contacto ahora coinciden con los de la pantalla del mapa.",
       "c8": "Se agregó traducción al ucraniano.",
       "c9": "Los cálculos totales mensuales y anuales ahora limitan adecuadamente su tiempo de crédito a 55 horas por mes. El horario estándar no se ve afectado por esta regla. Si excede este tiempo usando crédito, se mostrará el excedente en la pantalla de detalles de su mes.",
-      "c10": "Soporte de crédito de tiempo agregado. Los usuarios existentes podrán actualizar sus entradas antiguas automáticamente."
+      "c10": "Soporte de crédito de tiempo agregado. Los usuarios existentes podrán actualizar sus entradas antiguas automáticamente.",
+      "c11": "Se resolvió el problema con el botón Agregar superposición de la brújula en iOS."
     }
   },
   "installed": "Instalado",

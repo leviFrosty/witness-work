@@ -480,7 +480,8 @@
       "c7": "I colori dei segnaposto nella schermata dei dettagli del contatto ora corrispondono alla schermata della mappa.",
       "c8": "Aggiunta la traduzione ucraina.",
       "c9": "I calcoli mensili e annuali totali ora limitano correttamente il tempo di credito a 55 ore al mese. L'ora solare non è influenzata da questa regola. Se superi questo tempo utilizzando il credito, l'eccedenza verrà visualizzata nella schermata dei dettagli del mese.",
-      "c10": "Aggiunto supporto per il credito temporale. Gli utenti esistenti potranno aggiornare automaticamente i loro vecchi orari."
+      "c10": "Aggiunto supporto per il credito temporale. Gli utenti esistenti potranno aggiornare automaticamente i loro vecchi orari.",
+      "c11": "Risolto il problema con la bussola sovrapposta del pulsante Aggiungi su iOS."
     }
   },
   "installed": "Installato",

@@ -120,7 +120,7 @@ const ConversationRow = ({
                   color: theme.colors.textAlt,
                 }}
               >
-                {moment(conversation.date).format('LL')}
+                {moment(conversation.date).format('dddd, L')}
               </Text>
 
               <Text

@@ -479,7 +479,8 @@
       "c4": "Si une épingle de contact a été déplacée pour un contact, la navigation donnera désormais la priorité à l'épingle ajustée manuellement par rapport à son adresse. La modification de l'adresse d'un contact rendra l'adresse prioritaire.",
       "c7": "Les couleurs des broches de contact sur l’écran des détails du contact correspondent désormais à l’écran de la carte.",
       "c8": "Ajout de la traduction ukrainienne.",
-      "c9": "Les calculs du total mensuel et annuel limitent désormais correctement votre temps de crédit à 55 heures par mois. L’heure standard n’est pas affectée par cette règle. Si vous dépassez ce délai en utilisant le crédit, le dépassement sera affiché sur l'écran des détails de votre mois."
+      "c9": "Les calculs du total mensuel et annuel limitent désormais correctement votre temps de crédit à 55 heures par mois. L’heure standard n’est pas affectée par cette règle. Si vous dépassez ce délai en utilisant le crédit, le dépassement sera affiché sur l'écran des détails de votre mois.",
+      "c10": "Ajout du support du crédit de temps. Les utilisateurs existants pourront mettre à jour automatiquement leurs anciennes entrées de temps."
     }
   },
   "installed": "installée",

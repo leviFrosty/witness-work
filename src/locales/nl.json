@@ -479,7 +479,8 @@
       "c4": "Als een contactpincode voor een contact is versleept, geeft de navigatie nu voorrang aan de handmatig aangepaste pincode boven het adres. Als u het adres van een contactpersoon bewerkt, krijgt het adres weer prioriteit.",
       "c7": "De kleuren van de contactpin op het scherm met contactgegevens komen nu overeen met het kaartscherm.",
       "c8": "Oekraïense vertaling toegevoegd.",
-      "c9": "Maand- en jaarlijkse totaalberekeningen beperken uw krediettijd nu correct tot 55 uur per maand. De standaardtijd wordt niet beïnvloed door deze regel. Als u deze tijd overschrijdt met tegoed, wordt het overschot weergegeven op het scherm met uw maandgegevens."
+      "c9": "Maand- en jaarlijkse totaalberekeningen beperken uw krediettijd nu correct tot 55 uur per maand. De standaardtijd wordt niet beïnvloed door deze regel. Als u deze tijd overschrijdt met tegoed, wordt het overschot weergegeven op het scherm met uw maandgegevens.",
+      "c10": "Ondersteuning voor tijdskrediet toegevoegd. Bestaande gebruikers kunnen hun oude tijdgegevens automatisch bijwerken."
     }
   },
   "installed": "Geïnstalleerd",

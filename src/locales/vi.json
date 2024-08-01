@@ -479,7 +479,8 @@
       "c4": "Nếu ghim liên hệ được kéo cho một liên hệ, điều hướng giờ đây sẽ ưu tiên ghim được điều chỉnh thủ công hơn địa chỉ của họ. Việc chỉnh sửa địa chỉ của liên hệ sẽ đưa địa chỉ đó về mức độ ưu tiên.",
       "c7": "Màu ghim liên hệ trên Màn hình chi tiết liên hệ hiện khớp với màn hình bản đồ.",
       "c8": "Đã thêm bản dịch tiếng Ukraina.",
-      "c9": "Các phép tính tổng hàng tháng và hàng năm hiện giới hạn chính xác thời gian tín dụng của bạn ở mức 55 giờ mỗi tháng. Giờ chuẩn không bị ảnh hưởng bởi quy tắc này. Nếu bạn sử dụng tín dụng vượt quá thời gian này, số tiền vượt quá sẽ được hiển thị trên màn hình chi tiết trong tháng của bạn."
+      "c9": "Các phép tính tổng hàng tháng và hàng năm hiện giới hạn chính xác thời gian tín dụng của bạn ở mức 55 giờ mỗi tháng. Giờ chuẩn không bị ảnh hưởng bởi quy tắc này. Nếu bạn sử dụng tín dụng vượt quá thời gian này, số tiền vượt quá sẽ được hiển thị trên màn hình chi tiết trong tháng của bạn.",
+      "c10": "Đã thêm hỗ trợ tín dụng thời gian. Người dùng hiện tại sẽ có thể tự động cập nhật các mục nhập thời gian cũ của họ."
     }
   },
   "installed": "Cài đặt",

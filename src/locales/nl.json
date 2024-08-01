@@ -680,5 +680,9 @@
   "youHaveCreditOverage": "U heeft een kredietoverschot van {{count}} uur",
   "credit": "Credit",
   "credit_description": "Tegoed wordt meegeteld voor de maand als uw standaardtijd plus tegoed niet meer dan 55 uur bedraagt.",
-  "creditOverageInTheAmountOf": "Kredietoverschrijding voor een bedrag van {{count}} uur."
+  "creditOverageInTheAmountOf": "Kredietoverschrijding voor een bedrag van {{count}} uur.",
+  "updateCategories": "Categorieën bijwerken",
+  "jwTimeNowSupportsCredits": "JW Time ondersteunt nu op de juiste manier credits voor mensen met een jaarlijks servicedoel. Zodra u een bestaande tag heeft bijgewerkt, worden al uw servicerapporten ook bijgewerkt.",
+  "credits": "Kredieten",
+  "done": "Klaar"
 }

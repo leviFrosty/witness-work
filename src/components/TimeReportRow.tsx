@@ -16,6 +16,7 @@ import Button from './Button'
 import { useNavigation } from '@react-navigation/native'
 import { RootStackNavigation } from '../stacks/RootStack'
 import { useToastController } from '@tamagui/toast'
+import CreditBadge from './CreditBadge'
 
 interface TimeReportRowProps {
   report: ServiceReport
@@ -99,7 +100,7 @@ const TimeReportRow = ({ report }: TimeReportRowProps) => {
                 fontFamily: theme.fonts.semiBold,
               }}
             >
-              {`${moment(report.date).format('ddd L')}`}
+              {`${moment(report.date).format('dddd, L')}`}
             </Text>
           </View>
           <XView style={{ gap: 15 }}>
@@ -139,22 +140,7 @@ const TimeReportRow = ({ report }: TimeReportRowProps) => {
               >
                 {report.ldc ? i18n.t('ldc') : report.tag}
               </Text>
-              {report.credit && (
-                <Text
-                  style={{
-                    borderColor: theme.colors.textAlt,
-                    borderWidth: 1,
-                    color: theme.colors.textAlt,
-                    borderRadius: theme.numbers.borderRadiusSm,
-                    paddingVertical: 1,
-                    paddingHorizontal: 6,
-                    fontFamily: theme.fonts.semiBold,
-                    fontSize: theme.fontSize('xs'),
-                  }}
-                >
-                  {i18n.t('credit')}
-                </Text>
-              )}
+              {(report.credit || report.ldc) && <CreditBadge />}
             </View>
           </View>
         )}

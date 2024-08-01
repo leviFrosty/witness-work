@@ -680,5 +680,9 @@
   "youHaveCreditOverage": "{{count}} 時間のクレジット超過があります",
   "credit": "クレジット",
   "credit_description": "標準時間とクレジットの合計が 55 時間を超えない場合、クレジットはその月にカウントされます。",
-  "creditOverageInTheAmountOf": "クレジット超過分は {{count}} 時間です。"
+  "creditOverageInTheAmountOf": "クレジット超過分は {{count}} 時間です。",
+  "updateCategories": "カテゴリの更新",
+  "jwTimeNowSupportsCredits": "JW Time は、年間サービス目標を持つユーザー向けのクレジットを適切にサポートするようになりました。既存のタグを更新すると、すべてのサービス レポートも更新されます。",
+  "credits": "クレジット",
+  "done": "完了"
 }

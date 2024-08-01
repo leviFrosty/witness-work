@@ -680,5 +680,9 @@
   "youHaveCreditOverage": "Hai un credito in eccesso per un importo di {{count}} ore",
   "credit": "Credito",
   "credit_description": "Il credito verrà conteggiato nel mese se il tempo standard più il credito non supera le 55 ore.",
-  "creditOverageInTheAmountOf": "Eccesso di credito per un importo di {{count}} ore."
+  "creditOverageInTheAmountOf": "Eccesso di credito per un importo di {{count}} ore.",
+  "updateCategories": "Aggiorna categorie",
+  "jwTimeNowSupportsCredits": "JW Time ora supporta correttamente i crediti per coloro che hanno un obiettivo di servizio annuale. Una volta aggiornato un tag esistente, verranno aggiornati anche tutti i rapporti sui servizi.",
+  "credits": "Crediti",
+  "done": "Fatto"
 }

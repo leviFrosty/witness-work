@@ -3,9 +3,14 @@ import { View } from 'react-native'
 import useTheme from '../../contexts/theme'
 import { rowPaddingVertical } from '../../constants/Inputs'
 
-interface Props {}
+interface Props {
+  noPadding?: boolean
+}
 
-const Section: React.FC<PropsWithChildren<Props>> = ({ children }) => {
+const Section: React.FC<PropsWithChildren<Props>> = ({
+  children,
+  noPadding,
+}) => {
   const theme = useTheme()
 
   return (
@@ -16,9 +21,9 @@ const Section: React.FC<PropsWithChildren<Props>> = ({ children }) => {
         borderBottomWidth: 2,
         backgroundColor: theme.colors.backgroundLighter,
         paddingVertical: rowPaddingVertical,
-        paddingLeft: 25,
+        paddingLeft: noPadding ? 0 : 25,
         gap: 10,
-        paddingRight: 3,
+        paddingRight: noPadding ? 0 : 3,
       }}
     >
       {children}

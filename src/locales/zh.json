@@ -680,5 +680,9 @@
   "youHaveCreditOverage": "您的信用超额量为 {{count}} 小时",
   "credit": "学分",
   "credit_description": "如果您的标准时间加上学分不超过 55 小时，则学分将计入当月。",
-  "creditOverageInTheAmountOf": "学分超额为 {{count}} 小时。"
+  "creditOverageInTheAmountOf": "学分超额为 {{count}} 小时。",
+  "updateCategories": "更新类别",
+  "jwTimeNowSupportsCredits": "JW Time 现在可以正确支持具有年度服务目标的人员的积分。一旦您更新现有标签，您的所有服务报告也将更新。",
+  "credits": "积分",
+  "done": "完成"
 }

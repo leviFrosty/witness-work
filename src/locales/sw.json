@@ -680,5 +680,9 @@
   "youHaveCreditOverage": "Una ziada ya mkopo katika muda wa saa {{count}}",
   "credit": "Mikopo",
   "credit_description": "Salio litahesabiwa kuelekea mwezi ikiwa muda wako wa kawaida pamoja na mkopo hauzidi saa 55.",
-  "creditOverageInTheAmountOf": "Kiwango cha juu cha salio katika muda wa saa {{count}}."
+  "creditOverageInTheAmountOf": "Kiwango cha juu cha salio katika muda wa saa {{count}}.",
+  "updateCategories": "Sasisha Jamii",
+  "jwTimeNowSupportsCredits": "Saa ya JW sasa inasaidia ipasavyo mikopo kwa wale walio na lengo la utumishi la kila mwaka. Mara tu unaposasisha lebo iliyopo, ripoti zako zote za huduma zitasasishwa pia.",
+  "credits": "Mikopo",
+  "done": "Imekamilika"
 }

@@ -43,7 +43,10 @@ const AddTimeScreen = ({ route }: AddTimeScreenProps) => {
   const navigation = useNavigation<RootStackNavigation>()
   const { serviceReportTags, set } = usePreferences()
   const { hasAnnualGoal } = usePublisher()
-  const presetCategories: TranslationKey[] = ['standard', 'ldc']
+  const presetCategories: ServiceReportTag[] = [
+    { value: 'standard', credit: false },
+    { value: 'ldc', credit: true },
+  ]
   const timeEntryTags: (TranslationKey | string | ServiceReportTag)[] = [
     ...presetCategories,
     ...serviceReportTags,
@@ -110,7 +113,6 @@ const AddTimeScreen = ({ route }: AddTimeScreenProps) => {
         break
 
       default: {
-        setTag(type)
         const savedTag = serviceReportTags.find((tag) => {
           if (typeof tag === 'string') {
             return tag === type
@@ -123,6 +125,7 @@ const AddTimeScreen = ({ route }: AddTimeScreenProps) => {
           credit = savedTag.credit
         }
 
+        setTag({ value: type, credit })
         setServiceReport({
           ...serviceReport,
           ldc: false,
@@ -209,7 +212,12 @@ const AddTimeScreen = ({ route }: AddTimeScreenProps) => {
   }
 
   const handleAddCustomTag = () => {
-    set({ serviceReportTags: [...serviceReportTags, customTag] })
+    set({
+      serviceReportTags: [
+        ...serviceReportTags,
+        { value: customTag, credit: false },
+      ],
+    })
     handleSetTag(customTag)
   }
 
@@ -453,7 +461,8 @@ const AddTimeScreen = ({ route }: AddTimeScreenProps) => {
                     </Button>
                   </View>
                 ) : (
-                  !presetCategories.includes(tag as TranslationKey) && (
+                  typeof tag === 'object' &&
+                  !presetCategories.includes(tag) && (
                     <View
                       style={{
                         gap: 5,
@@ -464,7 +473,7 @@ const AddTimeScreen = ({ route }: AddTimeScreenProps) => {
                         <View
                           style={{
                             borderWidth: 1,
-                            borderRadius: theme.numbers.borderRadiusMd,
+                            borderRadius: theme.numbers.borderRadiusSm,
                             padding: 10,
                             borderColor: theme.colors.border,
                             gap: 10,
@@ -493,14 +502,12 @@ const AddTimeScreen = ({ route }: AddTimeScreenProps) => {
                                   : serviceReport.credit ?? false
                               }
                               onValueChange={(val) => setCredit(val)}
-                              disabled={presetCategories.includes(
-                                tag as TranslationKey
-                              )}
+                              disabled={presetCategories.includes(tag)}
                             />
                           </View>
                           <Text
                             style={{
-                              fontSize: theme.fontSize('xs'),
+                              fontSize: theme.fontSize('sm'),
                               color: theme.colors.textAlt,
                             }}
                           >

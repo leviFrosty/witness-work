@@ -3,8 +3,7 @@ import { Publisher } from '../types/publisher'
 import { ServiceReport } from '../types/serviceReport'
 import moment from 'moment'
 import { DayPlan } from '../stores/serviceReport'
-
-export const ldcMinutesPerMonthCap = 55 * 60
+import { monthCreditMaxMinutes } from '../constants/serviceReports'
 
 export const calculateProgress = ({
   minutes,
@@ -112,21 +111,20 @@ export const adjustedMinutesForSpecificMonth = (
     targetMonth,
     targetYear
   )
-  const creditCap = 55 * 60 // in minutes
 
   let minutes = 0
   let creditOverage = 0
 
-  if (standard > creditCap) {
+  if (standard > monthCreditMaxMinutes) {
     minutes = standard
     if (credit) {
       creditOverage = credit
     }
   } else {
     const standardWithCredit = standard + credit
-    if (standardWithCredit > creditCap) {
-      minutes = creditCap
-      creditOverage = standardWithCredit - creditCap
+    if (standardWithCredit > monthCreditMaxMinutes) {
+      minutes = monthCreditMaxMinutes
+      creditOverage = standardWithCredit - monthCreditMaxMinutes
     } else {
       minutes = standardWithCredit
     }
@@ -136,10 +134,10 @@ export const adjustedMinutesForSpecificMonth = (
     value: minutes,
     standard,
     credit:
-      standard < creditCap
-        ? credit < creditCap - standard
+      standard < monthCreditMaxMinutes
+        ? credit < monthCreditMaxMinutes - standard
           ? credit
-          : creditCap - standard
+          : monthCreditMaxMinutes - standard
         : 0,
     creditOverage: creditOverage,
   }

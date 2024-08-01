@@ -680,5 +680,9 @@
   "youHaveCreditOverage": "Sie haben ein Guthabenüberschuss von {{count}} Stunden",
   "credit": "Guthaben",
   "credit_description": "Guthaben wird auf den Monat angerechnet, wenn Ihre Regelzeit plus Guthaben 55 Stunden nicht übersteigt.",
-  "creditOverageInTheAmountOf": "Guthabenüberschuss in Höhe von {{count}} Stunden."
+  "creditOverageInTheAmountOf": "Guthabenüberschuss in Höhe von {{count}} Stunden.",
+  "updateCategories": "Kategorien aktualisieren",
+  "jwTimeNowSupportsCredits": "JW Time unterstützt jetzt ordnungsgemäß Gutschriften für diejenigen mit einem jährlichen Dienstziel. Sobald Sie ein vorhandenes Tag aktualisieren, werden auch alle Ihre Dienstberichte aktualisiert.",
+  "credits": "Gutschriften",
+  "done": "Fertig"
 }

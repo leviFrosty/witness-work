@@ -27,6 +27,7 @@ import usePublisher from '../hooks/usePublisher'
 import { usePreferences } from '../stores/preferences'
 import BackupReminder from '../components/BackupReminder'
 import { TimerSection } from '../components/TimerSection'
+import UpgradeLegacyTimeReportsSheet from '../components/UpgradeLegacyTimeReportsSheet'
 
 export const DashboardScreen = () => {
   const theme = useTheme()
@@ -41,9 +42,16 @@ export const DashboardScreen = () => {
   const { contacts } = useContacts()
   const { isTablet } = useDevice()
   const { hasAnnualGoal } = usePublisher()
+  const { serviceReportTags } = usePreferences()
   const navigation = useNavigation<RootStackNavigation>()
   const serviceYear = getServiceYearFromDate(moment())
-  const [sheet, setSheet] = useState<ExportTimeSheetState>({
+  const hasLegacyReports = useMemo(() => {
+    return serviceReportTags.some((t) => typeof t === 'string')
+  }, [serviceReportTags])
+  const [upgradeReportsSheet, setUpgradeReportSheet] = useState(
+    hasLegacyReports && hasAnnualGoal
+  )
+  const [exportTimeSheet, setExportTimeSheet] = useState<ExportTimeSheetState>({
     open: false,
     month: 0,
     year: 0,
@@ -116,6 +124,9 @@ export const DashboardScreen = () => {
           paddingBottom: insets.bottom + 50,
         }}
       >
+        <Button onPress={() => setUpgradeReportSheet(true)}>
+          <Text>OPEN</Text>
+        </Button>
         <View style={{ gap: 20, paddingBottom: insets.bottom, flex: 1 }}>
           {!!approachingConvosWithActiveContacts.length && (
             <ApproachingConversations
@@ -169,14 +180,18 @@ export const DashboardScreen = () => {
               </View>
             )}
           </XView>
-          <ServiceReport setSheet={setSheet} />
+          <ServiceReport setSheet={setExportTimeSheet} />
           <TimerSection />
           <ContactsList />
         </View>
       </KeyboardAwareScrollView>
+      <UpgradeLegacyTimeReportsSheet
+        sheet={upgradeReportsSheet}
+        setSheet={setUpgradeReportSheet}
+      />
       <ExportTimeSheet
-        sheet={sheet}
-        setSheet={setSheet}
+        sheet={exportTimeSheet}
+        setSheet={setExportTimeSheet}
         showViewAllMonthsButton
       />
     </View>

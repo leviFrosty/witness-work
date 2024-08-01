@@ -8,11 +8,11 @@ import {
   getTimeAsMinutesForHourglass,
   getTotalMinutesForServiceYear,
   serviceReportHoursPerMonthToGoal,
-  ldcMinutesPerMonthCap,
   adjustedMinutesForSpecificMonth,
 } from '../lib/serviceReport'
 import { ServiceReport } from '../types/serviceReport'
 import { Publisher } from '../types/publisher'
+import { monthCreditMaxMinutes } from '../constants/serviceReports'
 
 describe('lib/serviceReport', () => {
   describe('calculateProgress', () => {
@@ -630,7 +630,7 @@ describe('lib/serviceReport', () => {
       ]
 
       const minutes = getTotalMinutesForServiceYear(reports, year)
-      expect(minutes).toBe(ldcMinutesPerMonthCap)
+      expect(minutes).toBe(monthCreditMaxMinutes)
     })
 
     it('should not allow multiple entries to sum to more than 55', () => {
@@ -653,7 +653,7 @@ describe('lib/serviceReport', () => {
       ]
 
       const minutes = getTotalMinutesForServiceYear(reports, year)
-      expect(minutes).toBe(ldcMinutesPerMonthCap)
+      expect(minutes).toBe(monthCreditMaxMinutes)
     })
 
     it('should properly add different months together, but not exceeding the ldc month cap', () => {
@@ -713,7 +713,7 @@ describe('lib/serviceReport', () => {
       ]
 
       const minutes = getTotalMinutesForServiceYear(reports, year)
-      expect(minutes).toBe(ldcMinutesPerMonthCap * 4)
+      expect(minutes).toBe(monthCreditMaxMinutes * 4)
     })
 
     it('should include time from the first day of the service year to the last day', () => {

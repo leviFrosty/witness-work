@@ -20,11 +20,10 @@ import moment from 'moment'
 import Haptics from '../lib/haptics'
 import { useCallback, useMemo } from 'react'
 import {
+  AdjustedMinutes,
   adjustedMinutesForSpecificMonth,
   getTimeAsMinutesForHourglass,
-  getTotalMinutesDetailedForSpecificMonth,
   hasServiceReportsForMonth,
-  otherMinutesForSpecificMonth,
 } from '../lib/serviceReport'
 import useTheme from '../contexts/theme'
 import useServiceReport from '../stores/serviceReport'
@@ -58,11 +57,11 @@ const ExportTimeSheet = ({
   const { month, year } = sheet
   const navigation = useNavigation<RootStackNavigation>()
 
-  const adjustedMinutes = useMemo(
+  const { creditOverage, value, credit, standard }: AdjustedMinutes = useMemo(
     () =>
       month !== undefined && year !== undefined
         ? adjustedMinutesForSpecificMonth(serviceReports, month, year)
-        : { value: 0, creditOverage: 0 },
+        : { value: 0, creditOverage: 0, credit: 0, standard: 0 },
     [month, serviceReports, year]
   )
 
@@ -99,38 +98,10 @@ const ExportTimeSheet = ({
 
   const handleAction = useCallback(
     async (action: 'copy' | 'hourglass' | 'share' | 'nwpublisher') => {
-      const otherHoursAsString = () => {
-        const otherMinutes = otherMinutesForSpecificMonth(
-          serviceReports,
-          month || 0,
-          year || 0
-        )
-
-        const otherMinutesWithAtLeastOneHour = otherMinutes.filter((item) =>
-          Math.floor(item.minutes / 60)
-        )
-
-        if (otherMinutesWithAtLeastOneHour.length > 0) {
-          return otherMinutes.reduce(
-            (acc, curr, index) => {
-              return (
-                acc +
-                `${curr.tag}: ${Math.floor(curr.minutes / 60)}${
-                  index !== otherMinutes.length - 1 ? '\n' : ''
-                }`
-              )
-            },
-            `\n${i18n.t('otherHoursDescription')}\n`
-          )
-        }
-        return ''
-      }
-
       const reportAsString = () => {
         if (month === undefined || year === undefined) {
           return ''
         }
-
         const hoursForPublisherOrPioneer = () => {
           if (publisher === 'publisher') {
             if (wentOutForMonth) {
@@ -139,16 +110,22 @@ const ExportTimeSheet = ({
               return i18n.t('no')
             }
           }
-          return Math.floor(adjustedMinutes.value / 60)
+          return Math.floor(standard / 60)
         }
 
         return `${i18n.t('serviceReport')} - ${moment()
           .month(month)
           .format('MMM')} ${year}\n\n---\n\n${i18n.t(
           'hours'
-        )}: ${hoursForPublisherOrPioneer()}\n${i18n.t(
+        )}: ${hoursForPublisherOrPioneer()}\n${i18n.t('credit')}: ${Math.floor(credit / 60)}\n${i18n.t(
           'studies'
-        )}: ${studiesForMonth}\n${i18n.t('notes')}:\n${otherHoursAsString()}`
+        )}: ${studiesForMonth}\n${i18n.t('notes')}:\n${
+          creditOverage
+            ? `\n${i18n.t('creditOverageInTheAmountOf', {
+                count: Math.floor(creditOverage / 60),
+              })}`
+            : ''
+        }`
       }
 
       switch (action) {
@@ -166,9 +143,11 @@ const ExportTimeSheet = ({
           }month=${hourglassMonth}&year=${year}&minutes=${getTimeAsMinutesForHourglass(
             publisher,
             wentOutForMonth,
-            adjustedMinutes.value
+            value
           )}&studies=${studiesForMonth}&remarks=${encodeURI(
-            otherHoursAsString()
+            i18n.t('creditOverageInTheAmountOf', {
+              count: Math.floor(creditOverage / 60),
+            })
           )}`
 
           openURL(hourglassSubmitLink)
@@ -181,38 +160,38 @@ const ExportTimeSheet = ({
             return
           }
           if (!isLastMonth) {
-            // NW Publisher only allows usbmission for the previous month
+            // NW Publisher only allows submissions for the previous month
             return
           }
 
           let nwPublisherLink = `${links.nwpublisherSubmitReport}sharedInMinistry=${wentOutForMonth}`
 
-          const allMinutesForMonth = getTotalMinutesDetailedForSpecificMonth(
-            serviceReports,
-            month,
-            year
-          )
-          const otherMinutes = allMinutesForMonth.other.reduce(
-            (acc, curr) => acc + curr.minutes,
-            0
-          )
+          const { creditOverage, credit, standard } =
+            adjustedMinutesForSpecificMonth(serviceReports, month, year)
 
-          const nonLdcMinutes = allMinutesForMonth.standard + otherMinutes
-
-          if (nonLdcMinutes !== null && nonLdcMinutes > 0) {
-            nwPublisherLink += `:hours=${Math.floor(nonLdcMinutes / 60)}`
+          if (standard > 0) {
+            nwPublisherLink += `:hours=${Math.floor(standard / 60)}`
           }
 
-          if (allMinutesForMonth.ldc !== null && allMinutesForMonth.ldc > 0) {
-            nwPublisherLink += `:credit=${Math.floor(
-              allMinutesForMonth.ldc / 60
-            )}`
+          if (credit) {
+            nwPublisherLink += `:credit=${Math.floor(credit / 60)}`
           }
 
           if (studiesForMonth !== null && studiesForMonth > 0) {
             nwPublisherLink += `:bibleStudies=${studiesForMonth}`
           }
 
+          const remarks = i18n
+            .t('creditOverageInTheAmountOf', {
+              count: Math.floor(creditOverage / 60),
+            })
+            .replaceAll(':', '-') // NW Publisher uses : as a delimiter, remove this.
+          if (creditOverage) {
+            nwPublisherLink += `:remarks=${encodeURI(remarks)}`
+          }
+
+          console.log('link: ', nwPublisherLink)
+          break
           openURL(nwPublisherLink)
           break
         }
@@ -226,15 +205,18 @@ const ExportTimeSheet = ({
       setSheet({ open: false, month: 0, year: 0 })
     },
     [
-      adjustedMinutes,
-      month,
-      publisher,
-      serviceReports,
       setSheet,
-      studiesForMonth,
-      wentOutForMonth,
+      month,
       year,
+      credit,
+      studiesForMonth,
+      creditOverage,
+      publisher,
+      standard,
+      wentOutForMonth,
+      value,
       isLastMonth,
+      serviceReports,
     ]
   )
 

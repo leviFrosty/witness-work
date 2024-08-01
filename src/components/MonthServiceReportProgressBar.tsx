@@ -136,8 +136,8 @@ const MonthServiceReportProgressBar = ({
   )
 
   const hasStandardMinutes = useMemo(
-    () => minutesDetailed.standard > 0,
-    [minutesDetailed.standard]
+    () => minutesDetailed.standardWithoutOtherMinutes > 0,
+    [minutesDetailed.standardWithoutOtherMinutes]
   )
   const hasLdcMinutes = useMemo(
     () => minutesDetailed.ldc > 0,
@@ -170,7 +170,7 @@ const MonthServiceReportProgressBar = ({
 
   const renderOtherHours = useCallback(() => {
     let currentIndex = 0
-    return minutesDetailed.other.map((report, index) => {
+    return minutesDetailed.other.reports.map((report, index) => {
       if (currentIndex > otherColors.length - 1) {
         currentIndex = 0
       }
@@ -190,7 +190,7 @@ const MonthServiceReportProgressBar = ({
 
   const renderOtherHoursColorKeys = useCallback(() => {
     let currentIndex = 0
-    return minutesDetailed.other.map((report, index) => {
+    return minutesDetailed.other.reports.map((report, index) => {
       if (currentIndex > otherColors.length - 1) {
         currentIndex = 0
       }

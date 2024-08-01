@@ -677,5 +677,8 @@
   "recovered": "Восстановлено",
   "thisContactHasNoConversations": "У этого контакта еще нет разговоров.",
   "annualSchedule": "Годовой график",
-  "youHaveCreditOverage": "У вас есть избыток кредита на сумму {{count}} часов."
+  "youHaveCreditOverage": "У вас есть избыток кредита на сумму {{count}} часов.",
+  "credit": "Кредит",
+  "credit_description": "Кредит будет засчитан в счет месяца, если ваше стандартное время плюс кредит не превышает 55 часов.",
+  "creditOverageInTheAmountOf": "Превышение кредита на сумму {{count}} часов."
 }

@@ -42,15 +42,52 @@ export const getTotalMinutesDetailedForSpecificMonth = (
   const ldc = ldcMinutesForSpecificMonth(serviceReports, month, year)
   const other = otherMinutesForSpecificMonth(serviceReports, month, year)
 
+  const reportsForMonth = serviceReports.filter((report) => {
+    return (
+      moment(report.date).month() === month &&
+      moment(report.date).year() === year
+    )
+  })
+  const otherWithNonCreditMinutes = reportsForMonth.reduce((prev, report) => {
+    if (report.tag && !report.credit) {
+      return prev + report.hours * 60 + report.minutes
+    }
+    return prev
+  }, 0)
+
+  const otherWithCreditMinutes = reportsForMonth.reduce((prev, report) => {
+    if (report.tag && report.credit) {
+      return prev + report.hours * 60 + report.minutes
+    }
+    return prev
+  }, 0)
+
+  const totalOtherMinutes = other.reduce((p, c) => p + c.minutes, 0)
+
   return {
-    standard: standard,
-    ldc: ldc,
-    other: other,
+    standard: standard + otherWithNonCreditMinutes,
+    credit: ldc + otherWithCreditMinutes,
+    standardWithoutOtherMinutes: standard,
+    ldc,
+    other: {
+      totalMinutes: totalOtherMinutes,
+      minutesWithCredits: otherWithCreditMinutes,
+      minutesWithoutCredit: otherWithNonCreditMinutes,
+      reports: other,
+    },
   }
 }
 
 export type AdjustedMinutes = {
+  /**
+   * Total adjusted hours possible to submit to report, including all possible
+   * credit that can be applied.
+   */
   value: number
+  /** The amount of standard time in the value. */
+  standard: number
+  /** The amount of credit in the value. */
+  credit: number
   creditOverage: number
 }
 
@@ -70,25 +107,23 @@ export const adjustedMinutesForSpecificMonth = (
   targetMonth: number,
   targetYear: number
 ): AdjustedMinutes => {
-  const detailed = getTotalMinutesDetailedForSpecificMonth(
+  const { credit, standard } = getTotalMinutesDetailedForSpecificMonth(
     serviceReports,
     targetMonth,
     targetYear
   )
-
-  const creditMinutes = detailed.ldc
   const creditCap = 55 * 60 // in minutes
 
   let minutes = 0
   let creditOverage = 0
 
-  if (detailed.standard > creditCap) {
-    minutes = detailed.standard
-    if (creditMinutes) {
-      creditOverage = creditMinutes
+  if (standard > creditCap) {
+    minutes = standard
+    if (credit) {
+      creditOverage = credit
     }
   } else {
-    const standardWithCredit = detailed.standard + creditMinutes
+    const standardWithCredit = standard + credit
     if (standardWithCredit > creditCap) {
       minutes = creditCap
       creditOverage = standardWithCredit - creditCap
@@ -99,6 +134,13 @@ export const adjustedMinutesForSpecificMonth = (
 
   return {
     value: minutes,
+    standard,
+    credit:
+      standard < creditCap
+        ? credit < creditCap - standard
+          ? credit
+          : creditCap - standard
+        : 0,
     creditOverage: creditOverage,
   }
 }
@@ -141,7 +183,7 @@ export const ldcMinutesForSpecificMonth = (
   return totalMinutesForMonth
 }
 
-type OtherReports = { tag: string; minutes: number }[]
+type OtherReports = { tag: string; minutes: number; credit?: boolean }[]
 
 export const otherMinutesForSpecificMonth = (
   serviceReports: ServiceReport[],
@@ -165,7 +207,11 @@ export const otherMinutesForSpecificMonth = (
         existingTag.minutes += report.hours * 60 + report.minutes
       } else {
         const minutes = report.hours * 60 + report.minutes
-        accumulator.push({ tag: report.tag, minutes: minutes })
+        accumulator.push({
+          tag: report.tag,
+          minutes: minutes,
+          credit: report.credit,
+        })
       }
       return accumulator
     },

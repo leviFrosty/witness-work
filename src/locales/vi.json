@@ -677,5 +677,8 @@
   "recovered": "Đã phục hồi",
   "thisContactHasNoConversations": "Liên hệ này chưa có cuộc trò chuyện nào.",
   "annualSchedule": "Lịch trình hàng năm",
-  "youHaveCreditOverage": "Bạn có khoản tín dụng dư thừa trong số lượng {{count}} giờ"
+  "youHaveCreditOverage": "Bạn có khoản tín dụng dư thừa trong số lượng {{count}} giờ",
+  "credit": "Tín dụng",
+  "credit_description": "Tín dụng sẽ được tính vào tháng nếu thời gian tiêu chuẩn cộng với tín dụng của bạn không vượt quá 55 giờ.",
+  "creditOverageInTheAmountOf": "Tín dụng dư thừa trong số lượng {{count}} giờ."
 }

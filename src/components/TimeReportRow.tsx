@@ -126,7 +126,7 @@ const TimeReportRow = ({ report }: TimeReportRowProps) => {
             <View
               style={{
                 flexDirection: 'row',
-                gap: 3,
+                gap: 5,
                 alignItems: 'center',
               }}
             >
@@ -134,11 +134,27 @@ const TimeReportRow = ({ report }: TimeReportRowProps) => {
               <Text
                 style={{
                   color: theme.colors.textAlt,
-                  fontSize: theme.fontSize('xs'),
+                  fontSize: theme.fontSize('sm'),
                 }}
               >
                 {report.ldc ? i18n.t('ldc') : report.tag}
               </Text>
+              {report.credit && (
+                <Text
+                  style={{
+                    borderColor: theme.colors.textAlt,
+                    borderWidth: 1,
+                    color: theme.colors.textAlt,
+                    borderRadius: theme.numbers.borderRadiusSm,
+                    paddingVertical: 1,
+                    paddingHorizontal: 6,
+                    fontFamily: theme.fonts.semiBold,
+                    fontSize: theme.fontSize('xs'),
+                  }}
+                >
+                  {i18n.t('credit')}
+                </Text>
+              )}
             </View>
           </View>
         )}

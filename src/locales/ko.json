@@ -677,5 +677,8 @@
   "recovered": "회복 된",
   "thisContactHasNoConversations": "이 연락처에는 아직 대화가 없습니다.",
   "annualSchedule": "연간 일정",
-  "youHaveCreditOverage": "{{count}}시간의 크레딧 초과가 있습니다."
+  "youHaveCreditOverage": "{{count}}시간의 크레딧 초과가 있습니다.",
+  "credit": "신용 거래",
+  "credit_description": "표준 시간에 크레딧을 더한 시간이 55시간을 초과하지 않는 경우 해당 월에 크레딧이 계산됩니다.",
+  "creditOverageInTheAmountOf": "{{count}}시간의 크레딧 초과입니다."
 }

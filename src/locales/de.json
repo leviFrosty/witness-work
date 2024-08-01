@@ -677,5 +677,8 @@
   "recovered": "Wiederhergestellt",
   "thisContactHasNoConversations": "Mit diesem Kontakt gibt es noch keine Unterhaltungen.",
   "annualSchedule": "Jahresplan",
-  "youHaveCreditOverage": "Sie haben ein Guthabenüberschuss von {{count}} Stunden"
+  "youHaveCreditOverage": "Sie haben ein Guthabenüberschuss von {{count}} Stunden",
+  "credit": "Guthaben",
+  "credit_description": "Guthaben wird auf den Monat angerechnet, wenn Ihre Regelzeit plus Guthaben 55 Stunden nicht übersteigt.",
+  "creditOverageInTheAmountOf": "Guthabenüberschuss in Höhe von {{count}} Stunden."
 }

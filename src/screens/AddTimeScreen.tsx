@@ -1,4 +1,4 @@
-import { View, Platform, Alert } from 'react-native'
+import { View, Platform, Alert, Switch } from 'react-native'
 import { useCallback, useEffect, useState } from 'react'
 import Section from '../components/inputs/Section'
 import InputRowContainer from '../components/inputs/InputRowContainer'
@@ -18,7 +18,11 @@ import i18n, { TranslationKey } from '../lib/locales'
 import AndroidDateTimePicker from '../components/AndroidDateTimePicker'
 import Wrapper from '../components/layout/Wrapper'
 import Select from '../components/Select'
-import { usePreferences } from '../stores/preferences'
+import {
+  getTagName,
+  ServiceReportTag,
+  usePreferences,
+} from '../stores/preferences'
 import TextInput from '../components/TextInput'
 import Button from '../components/Button'
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
@@ -29,6 +33,7 @@ import { useToastController } from '@tamagui/toast'
 import Header from '../components/layout/Header'
 import { faTrash } from '@fortawesome/free-solid-svg-icons'
 import IconButton from '../components/IconButton'
+import usePublisher from '../hooks/usePublisher'
 
 type AddTimeScreenProps = NativeStackScreenProps<RootStackParamList, 'Add Time'>
 
@@ -37,8 +42,9 @@ const AddTimeScreen = ({ route }: AddTimeScreenProps) => {
   const insets = useSafeAreaInsets()
   const navigation = useNavigation<RootStackNavigation>()
   const { serviceReportTags, set } = usePreferences()
+  const { hasAnnualGoal } = usePublisher()
   const presetCategories: TranslationKey[] = ['standard', 'ldc']
-  const timeEntryCategories: TranslationKey | string[] = [
+  const timeEntryTags: (TranslationKey | string | ServiceReportTag)[] = [
     ...presetCategories,
     ...serviceReportTags,
     'custom',
@@ -49,16 +55,17 @@ const AddTimeScreen = ({ route }: AddTimeScreenProps) => {
     serviceReports,
     updateServiceReport,
     deleteServiceReport,
+    set: setServiceReportStore,
   } = useServiceReport()
   const existingServiceReport = serviceReports.find(
     (r) => r.id === route.params?.id
   )
-  const [category, setCategory] = useState(
+  const [tag, setTag] = useState(
     existingServiceReport?.ldc
-      ? timeEntryCategories[1]
-      : existingServiceReport?.tag ?? timeEntryCategories[0]
+      ? timeEntryTags[1]
+      : existingServiceReport?.tag ?? timeEntryTags[0]
   )
-  const [customCategory, setCustomCategory] = useState<string>('')
+  const [customTag, setCustomTag] = useState<string>('')
   const nearestFiveMinutes = Math.floor((route.params?.minutes || 0) / 5) * 5
   const [serviceReport, setServiceReport] = useState<ServiceReport>({
     id: existingServiceReport?.id ?? Crypto.randomUUID(),
@@ -66,45 +73,63 @@ const AddTimeScreen = ({ route }: AddTimeScreenProps) => {
     minutes: existingServiceReport?.minutes ?? nearestFiveMinutes,
     date: moment(existingServiceReport?.date ?? route.params?.date).toDate(),
     ldc: existingServiceReport?.ldc ?? false,
+    credit: existingServiceReport?.credit ?? false,
   })
   const toast = useToastController()
 
-  const handleSetCategory = (type: string) => {
+  const handleSetTag = (type: string) => {
     switch (type) {
       case 'standard':
-        setCategory(type)
+        setTag(type)
         setServiceReport({
           ...serviceReport,
           ldc: false,
           tag: undefined,
+          credit: false,
         })
         break
 
       case 'ldc':
-        setCategory(type)
+        setTag(type)
         setServiceReport({
           ...serviceReport,
           ldc: true,
           tag: undefined,
+          credit: true,
         })
         break
 
       case 'custom':
-        setCategory(type)
+        setTag(type)
         setServiceReport({
           ...serviceReport,
           ldc: false,
-          tag: customCategory,
+          tag: customTag,
+          credit: false,
         })
         break
 
-      default:
-        setCategory(type)
+      default: {
+        setTag(type)
+        const savedTag = serviceReportTags.find((tag) => {
+          if (typeof tag === 'string') {
+            return tag === type
+          }
+          return tag.value === type
+        })
+
+        let credit = false
+        if (typeof savedTag === 'object') {
+          credit = savedTag.credit
+        }
+
         setServiceReport({
           ...serviceReport,
           ldc: false,
           tag: type,
+          credit,
         })
+      }
     }
   }
 
@@ -114,6 +139,58 @@ const AddTimeScreen = ({ route }: AddTimeScreenProps) => {
       hours,
     })
   }
+
+  const updateExistingServiceReportsTags = (tag: ServiceReportTag) => {
+    const reports = [...serviceReports]
+
+    const reportsWithUpdatedCreditTag = reports.map((r) => {
+      if (r.tag === tag.value) {
+        return {
+          ...r,
+          credit: tag.credit,
+        }
+      }
+      return r
+    })
+
+    setServiceReportStore({ serviceReports: reportsWithUpdatedCreditTag })
+  }
+
+  const setCredit = (credit: boolean) => {
+    setServiceReport({
+      ...serviceReport,
+      credit,
+    })
+
+    // Updates according tag to be credit / or not in preferences
+    const tags: (string | ServiceReportTag)[] = [...serviceReportTags].map(
+      (t) => {
+        if (typeof t === 'string') {
+          if (t === serviceReport.tag) {
+            return {
+              value: t,
+              credit,
+            }
+          }
+          return t
+        }
+        if (t.value === serviceReport.tag) {
+          return {
+            value: t.value,
+            credit,
+          }
+        }
+        return t
+      }
+    )
+
+    if (serviceReport.tag) {
+      updateExistingServiceReportsTags({ credit, value: serviceReport.tag })
+    }
+
+    set({ serviceReportTags: tags })
+  }
+
   const setMinutes = (minutes: number) => {
     setServiceReport({
       ...serviceReport,
@@ -131,9 +208,9 @@ const AddTimeScreen = ({ route }: AddTimeScreenProps) => {
     })
   }
 
-  const handleAddCustomCategory = () => {
-    set({ serviceReportTags: [...serviceReportTags, customCategory] })
-    handleSetCategory(customCategory)
+  const handleAddCustomTag = () => {
+    set({ serviceReportTags: [...serviceReportTags, customTag] })
+    handleSetTag(customTag)
   }
 
   const minuteOptions = [0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55].map(
@@ -143,22 +220,24 @@ const AddTimeScreen = ({ route }: AddTimeScreenProps) => {
     })
   )
 
-  const handleDeleteCustomCategory = () => {
+  const handleDeleteCustomTag = () => {
     set({
-      serviceReportTags: [...serviceReportTags].filter((t) => t !== category),
+      serviceReportTags: [...serviceReportTags].filter(
+        (t) => getTagName(t) !== tag
+      ),
     })
-    setCategory(presetCategories[0])
+    setTag(presetCategories[0])
     setServiceReport({
       ...serviceReport,
       tag: undefined,
     })
   }
 
-  const typeOptions = timeEntryCategories.map((value) => ({
+  const typeOptions = timeEntryTags.map((tag) => ({
     /**
      * This allows i18n to translate to provided keys automatically. If the user
-     * inputs their own custom category that doesn't have a valid translation,
-     * it will default to the to the user input value instead of saying "missing
+     * inputs their own custom tag that doesn't have a valid translation, it
+     * will default to the to the user input value instead of saying "missing
      * translation".
      *
      * @example
@@ -172,11 +251,13 @@ const AddTimeScreen = ({ route }: AddTimeScreenProps) => {
      *
      *   ```
      */
-    label: i18n.t(value as TranslationKey, { defaultValue: value }),
-    value,
+    label: i18n.t(getTagName(tag) as TranslationKey, {
+      defaultValue: getTagName(tag),
+    }),
+    value: getTagName(tag),
   }))
 
-  const hourOptions = [...Array(24).keys()].map((value) => ({
+  const hourOptions = [...Array(100).keys()].map((value) => ({
     label: `${value}`,
     value,
   }))
@@ -259,7 +340,7 @@ const AddTimeScreen = ({ route }: AddTimeScreenProps) => {
 
   const hasEnteredTime =
     serviceReport.hours !== 0 || serviceReport.minutes !== 0
-  const hasSelectedCategory = category !== 'custom'
+  const hasSelectedCategory = tag !== 'custom'
   const submittable = hasEnteredTime && hasSelectedCategory
 
   return (
@@ -315,16 +396,22 @@ const AddTimeScreen = ({ route }: AddTimeScreenProps) => {
               lastInSection
               justifyContent='space-between'
             >
-              <View style={{ gap: 5, flexGrow: 1 }}>
-                <View style={{ flexGrow: 1 }}>
-                  <Select
-                    data={typeOptions}
-                    onChange={({ value }) => handleSetCategory(value)}
-                    value={category}
-                  />
-                </View>
-
-                {category === 'custom' ? (
+              <View
+                style={{
+                  gap: 5,
+                  width: '100%',
+                  flexShrink: 1,
+                }}
+              >
+                <Select
+                  data={typeOptions}
+                  style={{ width: '100%', flex: 1 }}
+                  onChange={({ value: c }) => {
+                    handleSetTag(c)
+                  }}
+                  value={getTagName(tag)}
+                />
+                {getTagName(tag) === 'custom' ? (
                   <View style={{ flexDirection: 'row', gap: 5 }}>
                     <View style={{ flex: 1, flexGrow: 1 }}>
                       <TextInput
@@ -337,23 +424,23 @@ const AddTimeScreen = ({ route }: AddTimeScreenProps) => {
                           paddingHorizontal: 10,
                           color: theme.colors.text,
                         }}
-                        value={customCategory}
-                        onChangeText={(c) => setCustomCategory(c)}
+                        onChangeText={(c) => setCustomTag(c)}
+                        value={customTag}
                         placeholder={i18n.t('enterCustomCategory')}
                       />
                     </View>
                     <Button
                       style={{
                         backgroundColor:
-                          customCategory.length === 0
+                          customTag.length === 0
                             ? theme.colors.accentAlt
                             : theme.colors.accent,
                         borderRadius: theme.numbers.borderRadiusSm,
                         paddingVertical: 15,
                       }}
                       variant='outline'
-                      onPress={handleAddCustomCategory}
-                      disabled={customCategory.length === 0}
+                      onPress={handleAddCustomTag}
+                      disabled={customTag.length === 0}
                     >
                       <Text
                         style={{
@@ -366,23 +453,78 @@ const AddTimeScreen = ({ route }: AddTimeScreenProps) => {
                     </Button>
                   </View>
                 ) : (
-                  !presetCategories.includes(category as TranslationKey) && (
+                  !presetCategories.includes(tag as TranslationKey) && (
                     <View
                       style={{
-                        flexDirection: 'row',
-                        justifyContent: 'flex-end',
+                        gap: 5,
+                        flexShrink: 1,
                       }}
                     >
-                      <Button onPress={handleDeleteCustomCategory}>
-                        <Text
+                      {hasAnnualGoal && (
+                        <View
                           style={{
-                            color: theme.colors.textAlt,
-                            textDecorationLine: 'underline',
+                            borderWidth: 1,
+                            borderRadius: theme.numbers.borderRadiusMd,
+                            padding: 10,
+                            borderColor: theme.colors.border,
+                            gap: 10,
                           }}
                         >
-                          {i18n.t('removeCategory')}
-                        </Text>
-                      </Button>
+                          <View
+                            style={{
+                              flexDirection: 'row',
+                              flexShrink: 1,
+                              alignItems: 'center',
+                              justifyContent: 'space-between',
+                            }}
+                          >
+                            <Text
+                              style={{
+                                fontFamily: theme.fonts.semiBold,
+                                fontSize: theme.fontSize('lg'),
+                              }}
+                            >
+                              {i18n.t('credit')}
+                            </Text>
+                            <Switch
+                              value={
+                                serviceReport.ldc
+                                  ? true
+                                  : serviceReport.credit ?? false
+                              }
+                              onValueChange={(val) => setCredit(val)}
+                              disabled={presetCategories.includes(
+                                tag as TranslationKey
+                              )}
+                            />
+                          </View>
+                          <Text
+                            style={{
+                              fontSize: theme.fontSize('xs'),
+                              color: theme.colors.textAlt,
+                            }}
+                          >
+                            {i18n.t('credit_description')}
+                          </Text>
+                        </View>
+                      )}
+                      <View
+                        style={{
+                          flexDirection: 'row',
+                          justifyContent: 'flex-end',
+                        }}
+                      >
+                        <Button onPress={handleDeleteCustomTag}>
+                          <Text
+                            style={{
+                              color: theme.colors.textAlt,
+                              textDecorationLine: 'underline',
+                            }}
+                          >
+                            {i18n.t('removeCategory')}
+                          </Text>
+                        </Button>
+                      </View>
                     </View>
                   )
                 )}
@@ -429,7 +571,7 @@ const AddTimeScreen = ({ route }: AddTimeScreenProps) => {
             </View>
           </Section>
         </View>
-        <View style={{ paddingHorizontal: 20, gap: 10 }}>
+        <View style={{ paddingHorizontal: 20, gap: 8, paddingTop: 20 }}>
           {!submittable && !hasEnteredTime && (
             <Text style={{ fontSize: 12, color: theme.colors.textAlt }}>
               {i18n.t('timeNeeded')}

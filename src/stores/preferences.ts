@@ -67,6 +67,15 @@ export const hints = {
   howToAddPlan: true,
 }
 
+export function getTagName(tag: string | ServiceReportTag) {
+  return typeof tag === 'string' ? tag : tag.value
+}
+
+export type ServiceReportTag = {
+  value: string
+  credit: boolean
+}
+
 const initialState = {
   publisher: 'publisher' as Publisher,
   publisherHours: publisherHours,
@@ -92,7 +101,13 @@ const initialState = {
   returnVisitTimeOffset: null as TimeOffset | null,
   returnVisitNotificationOffset: null as TimeOffset | null,
   returnVisitAlwaysNotify: false,
-  serviceReportTags: [] as string[],
+  /**
+   * Tags were originally only strings, like "Bethel Service". Later, tags
+   * needed more metadata - like whether or not a tag is a credit hour or not.
+   * Example: {value: 'Bethel Service', credit: true}. This is why later the
+   * data structure was changed to an object.
+   */
+  serviceReportTags: [] as (string | ServiceReportTag)[],
   displayDetailsOnProgressBarHomeScreen:
     Device.deviceType === Device.DeviceType.TABLET,
   monthlyRoutineHasShownInvalidMonthAlert: false,

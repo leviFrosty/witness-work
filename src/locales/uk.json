@@ -677,5 +677,8 @@
   "recovered": "Одужав",
   "thisContactHasNoConversations": "Цей контакт ще не спілкувався.",
   "annualSchedule": "Річний розклад",
-  "youHaveCreditOverage": "Ви маєте надлишок кредиту на суму {{count}} годин"
+  "youHaveCreditOverage": "Ви маєте надлишок кредиту на суму {{count}} годин",
+  "credit": "Кредит",
+  "credit_description": "Кредит буде зараховано до місяця, якщо ваш стандартний час плюс кредит не перевищує 55 годин.",
+  "creditOverageInTheAmountOf": "Перевищення кредиту на суму {{count}} год."
 }

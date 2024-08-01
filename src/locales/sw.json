@@ -677,5 +677,8 @@
   "recovered": "Imepona",
   "thisContactHasNoConversations": "Mtu huyu bado hana mazungumzo.",
   "annualSchedule": "Ratiba ya Mwaka",
-  "youHaveCreditOverage": "Una ziada ya mkopo katika muda wa saa {{count}}"
+  "youHaveCreditOverage": "Una ziada ya mkopo katika muda wa saa {{count}}",
+  "credit": "Mikopo",
+  "credit_description": "Salio litahesabiwa kuelekea mwezi ikiwa muda wako wa kawaida pamoja na mkopo hauzidi saa 55.",
+  "creditOverageInTheAmountOf": "Kiwango cha juu cha salio katika muda wa saa {{count}}."
 }

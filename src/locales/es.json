@@ -677,5 +677,8 @@
   "recovered": "Recuperado",
   "thisContactHasNoConversations": "Este contacto aún no tiene conversaciones.",
   "annualSchedule": "Calendario Anual",
-  "youHaveCreditOverage": "Tienes un exceso de crédito por la cantidad de {{count}} horas"
+  "youHaveCreditOverage": "Tienes un exceso de crédito por la cantidad de {{count}} horas",
+  "credit": "Crédito",
+  "credit_description": "El crédito se contará para el mes si su tiempo estándar más el crédito no supera las 55 horas.",
+  "creditOverageInTheAmountOf": "Exceso de crédito por la cantidad de {{count}} horas."
 }

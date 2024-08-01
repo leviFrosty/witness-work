@@ -1,5 +1,4 @@
 import { View } from 'react-native'
-import Button from './Button'
 import Text from './MyText'
 import i18n from '../lib/locales'
 import Divider from './Divider'
@@ -13,7 +12,7 @@ import {
   otherMinutesForSpecificMonth,
   standardMinutesForSpecificMonth,
 } from '../lib/serviceReport'
-import { useMemo, useState } from 'react'
+import { useMemo } from 'react'
 import useTheme from '../contexts/theme'
 import { ExportTimeSheetState } from './ExportTimeSheet'
 import { ServiceReport } from '../types/serviceReport'
@@ -47,13 +46,12 @@ const MonthSummary = ({
 }: MonthSummaryProps) => {
   const theme = useTheme()
   const { publisher, publisherHours } = usePreferences()
-  const [expandOtherCategories, setExpandOtherCategories] = useState(false)
   const goalHours = publisherHours[publisher]
   const navigation = useNavigation<RootStackNavigation>()
 
   const adjustedMinutes: AdjustedMinutes = monthsReports
     ? adjustedMinutesForSpecificMonth(monthsReports, month, year)
-    : { value: 0, creditOverage: 0 }
+    : { value: 0, credit: 0, standard: 0, creditOverage: 0 }
 
   const ldcMinutes = useMemo(
     () =>
@@ -243,32 +241,18 @@ const MonthSummary = ({
             <TimeCategoryTableRow
               title={i18n.t('ldc')}
               number={_.round(ldcMinutes / 60, 1)}
+              credit
             />
-            {otherMinutes && otherMinutes.length > 0 && (
-              <>
-                {!expandOtherCategories && (
-                  <Button onPress={() => setExpandOtherCategories(true)}>
-                    <Text
-                      style={{
-                        textDecorationLine: 'underline',
-                        color: theme.colors.textAlt,
-                        fontSize: theme.fontSize('sm'),
-                      }}
-                    >
-                      {i18n.t('showOtherCategories')}
-                    </Text>
-                  </Button>
-                )}
-                {expandOtherCategories &&
-                  otherMinutes.map((report, index) => (
-                    <TimeCategoryTableRow
-                      key={index}
-                      title={report.tag}
-                      number={_.round(report.minutes / 60, 1)}
-                    />
-                  ))}
-              </>
-            )}
+            {otherMinutes &&
+              otherMinutes.length > 0 &&
+              otherMinutes.map((report, index) => (
+                <TimeCategoryTableRow
+                  key={index}
+                  title={report.tag}
+                  number={_.round(report.minutes / 60, 1)}
+                  credit={report.credit}
+                />
+              ))}
           </View>
         </View>
       )}

@@ -677,5 +677,8 @@
   "recovered": "已恢复",
   "thisContactHasNoConversations": "此联系人尚未有任何对话。",
   "annualSchedule": "年度计划",
-  "youHaveCreditOverage": "您的信用超额量为 {{count}} 小时"
+  "youHaveCreditOverage": "您的信用超额量为 {{count}} 小时",
+  "credit": "学分",
+  "credit_description": "如果您的标准时间加上学分不超过 55 小时，则学分将计入当月。",
+  "creditOverageInTheAmountOf": "学分超额为 {{count}} 小时。"
 }

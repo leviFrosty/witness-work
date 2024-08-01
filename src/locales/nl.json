@@ -677,5 +677,8 @@
   "recovered": "Hersteld",
   "thisContactHasNoConversations": "Dit contact heeft nog geen gesprekken.",
   "annualSchedule": "Jaarlijks schema",
-  "youHaveCreditOverage": "U heeft een kredietoverschot van {{count}} uur"
+  "youHaveCreditOverage": "U heeft een kredietoverschot van {{count}} uur",
+  "credit": "Credit",
+  "credit_description": "Tegoed wordt meegeteld voor de maand als uw standaardtijd plus tegoed niet meer dan 55 uur bedraagt.",
+  "creditOverageInTheAmountOf": "Kredietoverschrijding voor een bedrag van {{count}} uur."
 }

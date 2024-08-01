@@ -680,5 +680,9 @@
   "youHaveCreditOverage": "You have credit overage in the amount of {{count}} hours",
   "credit": "Credit",
   "credit_description": "Credit will be counted towards the month if your standard time plus credit doesn't exceed 55 hours.",
-  "creditOverageInTheAmountOf": "Credit overage in the amount of {{count}} hours."
+  "creditOverageInTheAmountOf": "Credit overage in the amount of {{count}} hours.",
+  "updateCategories": "Update Categories",
+  "jwTimeNowSupportsCredits": "JW Time now properly supports credits for those with an annual service goal. Once your update an existing tag, all of your service reports will update as well.",
+  "credits": "Credits",
+  "done": "Done"
 }

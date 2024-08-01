@@ -3,6 +3,7 @@ import useTheme from '../contexts/theme'
 import Text from './MyText'
 import moment from 'moment'
 import {
+  adjustedMinutesForSpecificMonth,
   plannedMinutesToCurrentDayForMonth,
   totalMinutesForSpecificMonthUpToDayOfMonth,
 } from '../lib/serviceReport'
@@ -48,12 +49,21 @@ export default function AheadOrBehindOfMonthSchedule(
     )
   }, [month, serviceReports, year])
 
+  const adjustedMinutesForMonth = useMemo(() => {
+    return adjustedMinutesForSpecificMonth(serviceReports, month, year)
+  }, [month, serviceReports, year])
+
   const hoursDiffToSchedule = useMemo(() => {
-    return _.round(
-      (actualMinutesToCurrentDay - plannedMinutesToCurrentDay) / 60,
-      1
-    )
-  }, [actualMinutesToCurrentDay, plannedMinutesToCurrentDay])
+    const minutesForMonth =
+      adjustedMinutesForMonth.value < actualMinutesToCurrentDay
+        ? adjustedMinutesForMonth.value
+        : actualMinutesToCurrentDay
+    return _.round((minutesForMonth - plannedMinutesToCurrentDay) / 60, 1)
+  }, [
+    actualMinutesToCurrentDay,
+    adjustedMinutesForMonth.value,
+    plannedMinutesToCurrentDay,
+  ])
 
   /** Previous month has no plans or the */
   if (plannedMinutesToCurrentDay === 0) {

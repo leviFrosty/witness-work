@@ -677,5 +677,8 @@
   "recovered": "Одужав",
   "thisContactHasNoConversations": "Цей контакт ще не спілкувався.",
   "annualSchedule": "Річний розклад",
-  "youHaveCreditOverage": "You have credit overage in the amount of {{count}} hours"
+  "youHaveCreditOverage": "You have credit overage in the amount of {{count}} hours",
+  "credit": "Credit",
+  "credit_description": "Credit will be counted towards the month if your standard time plus credit doesn't exceed 55 hours.",
+  "creditOverageInTheAmountOf": "Credit overage in the amount of {{count}} hours."
 }

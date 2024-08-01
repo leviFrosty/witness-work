@@ -124,9 +124,6 @@ export const DashboardScreen = () => {
           paddingBottom: insets.bottom + 50,
         }}
       >
-        <Button onPress={() => setUpgradeReportSheet(true)}>
-          <Text>OPEN</Text>
-        </Button>
         <View style={{ gap: 20, paddingBottom: insets.bottom, flex: 1 }}>
           {!!approachingConvosWithActiveContacts.length && (
             <ApproachingConversations

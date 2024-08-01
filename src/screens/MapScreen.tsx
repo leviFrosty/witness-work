@@ -36,6 +36,7 @@ import { RootStackNavigation } from '../stacks/RootStack'
 import IconButton from '../components/IconButton'
 import { faPlus } from '@fortawesome/free-solid-svg-icons'
 import useDevice from '../hooks/useDevice'
+import XView from '../components/layout/XView'
 
 export interface ContactMarker extends Contact {
   pinColor: string
@@ -202,35 +203,55 @@ const FullMapView = ({ contactMarkers }: FullMapViewProps) => {
       </View>
       <ShareAddressSheet sheet={sheet} setSheet={setSheet} />
       {contactMarkers.length > 1 && (
-        <View style={{ position: 'absolute', top: insets.top, left: 5 }}>
-          <Button
-            variant='solid'
-            onPress={fitToMarkers}
-            style={{ paddingVertical: 10, paddingHorizontal: 25 }}
-          >
-            <Text style={{ fontFamily: theme.fonts.bold }}>
-              {i18n.t('fit')}
-            </Text>
-          </Button>
-        </View>
-      )}
-
-      {!isAndroid && (
-        <View style={{ position: 'absolute', top: insets.top, right: 5 }}>
-          <Button
-            variant='solid'
-            style={{ paddingVertical: 10, paddingHorizontal: 25 }}
-          >
-            <IconButton
-              icon={faPlus}
-              color={theme.colors.text}
+        <View
+          style={{
+            position: 'absolute',
+            top: insets.top + 8,
+            left: 8,
+            gap: 10,
+          }}
+        >
+          {!isAndroid && (
+            <Button
+              variant='solid'
+              style={{
+                paddingVertical: 10,
+                paddingHorizontal: 15,
+                backgroundColor: theme.colors.accent,
+                justifyContent: 'center',
+              }}
               onPress={() =>
                 (navigation as unknown as RootStackNavigation).navigate(
                   'Contact Form',
                   { id: Crypto.randomUUID() }
                 )
               }
-            />
+            >
+              <XView>
+                <IconButton icon={faPlus} color={theme.colors.textInverse} />
+                <Text
+                  style={{
+                    fontFamily: theme.fonts.semiBold,
+                    color: theme.colors.textInverse,
+                  }}
+                >
+                  {i18n.t('contact')}
+                </Text>
+              </XView>
+            </Button>
+          )}
+          <Button
+            variant='solid'
+            onPress={fitToMarkers}
+            style={{
+              paddingVertical: 10,
+              paddingHorizontal: 25,
+              justifyContent: 'center',
+            }}
+          >
+            <Text style={{ fontFamily: theme.fonts.bold, textAlign: 'center' }}>
+              {i18n.t('fit')}
+            </Text>
           </Button>
         </View>
       )}

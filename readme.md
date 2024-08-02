@@ -47,7 +47,7 @@ Learn about the [file and project structure](./src/docs/project-structure.md).
 
 # Help Translate 🌐
 
-JW Time is automatically translated into 13 languages. Some of these translations are done by machine, which may not be of the highest quality. To help, proofread these translations on [Crowdin](https://crowdin.com/project/jw-time/). Thank you!
+JW Time is available in 13 languages. Some of these translations are done by AI, which may not be of the highest quality. To help, proofread these translations on [Crowdin](https://crowdin.com/project/jw-time/). Thank you!
 
 [Not sure how to use Crowdin?](https://support.crowdin.com/crowdin-intro/)
 

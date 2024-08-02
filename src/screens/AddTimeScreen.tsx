@@ -462,7 +462,7 @@ const AddTimeScreen = ({ route }: AddTimeScreenProps) => {
                   </View>
                 ) : (
                   typeof tag === 'object' &&
-                  !presetCategories.includes(tag) && (
+                  !presetCategories.map((c) => c.value).includes(tag.value) && (
                     <View
                       style={{
                         gap: 5,

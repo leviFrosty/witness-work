@@ -479,7 +479,9 @@
       "c4": "如果为联系人拖动了联系人图钉，导航现在将优先考虑手动调整的图钉，而不是其地址。编辑联系人的地址将使该地址恢复优先。",
       "c7": "Contact pin colors on Contact Details Screen now matches the map screen.",
       "c8": "Added Ukrainian translation.",
-      "c9": "Month and annual total calculations now properly limit your credit time to 55 hours per month. Standard time is not affected by this rule. If you exceed this time using credit, you'll have overage displayed on your month's details screen."
+      "c9": "Month and annual total calculations now properly limit your credit time to 55 hours per month. Standard time is not affected by this rule. If you exceed this time using credit, you'll have overage displayed on your month's details screen.",
+      "c10": "Added time credit support. Existing users will be able to update their old time entries automatically.",
+      "c11": "Resolved issue with add button overlapping compass on iOS."
     }
   },
   "installed": "已安装",

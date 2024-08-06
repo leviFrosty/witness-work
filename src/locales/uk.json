@@ -684,7 +684,7 @@
   "credit_description": "Кредити будуть підраховуватися в місяць, якщо твій звичайний час плюс кредит не перевищить 55 годин.",
   "creditOverageInTheAmountOf": "Надлишок кредитних годин {{count}}.",
   "updateCategories": "Оновити категорії",
-  "jwTimeNowSupportsCredits": "JW Time now properly supports credits for those with an annual service goal. Once your update an existing tag, all of your service reports will update as well.",
+  "jwTimeNowSupportsCredits": "Тепер JW Time повноцінно підтримує кредитний час для тих, хто має щорічну ціль годин служіння. Після оновлення наявного тегу, всі твої звіти про служіння також будуть оновлюватися.",
   "credits": "Кредити",
   "done": "Готово"
 }

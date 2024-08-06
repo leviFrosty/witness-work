@@ -478,10 +478,10 @@
       "c3": "Adicionada tradução para suaíli.",
       "c4": "Se um alfinete de contato foi arrastado para um contato, a navegação agora priorizará o alfinete ajustado manualmente em vez do endereço. Editar o endereço de um contato retornará o endereço à prioridade.",
       "c7": "Contact pin colors on Contact Details Screen now matches the map screen.",
-      "c8": "Added Ukrainian translation.",
-      "c9": "Month and annual total calculations now properly limit your credit time to 55 hours per month. Standard time is not affected by this rule. If you exceed this time using credit, you'll have overage displayed on your month's details screen.",
-      "c10": "Added time credit support. Existing users will be able to update their old time entries automatically.",
-      "c11": "Resolved issue with add button overlapping compass on iOS."
+      "c8": "Adicionado tradução ucraniana.",
+      "c9": "Cálculos do mês e do total anual agora limitam corretamente seu tempo de crédito a 55 horas por mês. O horário padrão não é afetado por esta regra. Se exceder este tempo usando créditos, você terá sobreposto na tela de detalhes do seu mês.",
+      "c10": "Suporte de crédito de tempo adicionado. Os usuários existentes poderão atualizar automaticamente suas entradas de tempo antigas.",
+      "c11": "Resolvido problema com sobreposição de botão Adicionar em iOS."
     }
   },
   "installed": "Instalado",
@@ -679,12 +679,12 @@
   "recovered": "Recuperado",
   "thisContactHasNoConversations": "Este contato ainda não tem conversas.",
   "annualSchedule": "Cronograma Anual",
-  "youHaveCreditOverage": "You have credit overage in the amount of {{count}} hours",
-  "credit": "Credit",
+  "youHaveCreditOverage": "Você tem excesso de crédito no valor de {{count}} horas",
+  "credit": "Crédito",
   "credit_description": "Credit will be counted towards the month if your standard time plus credit doesn't exceed 55 hours.",
   "creditOverageInTheAmountOf": "Credit overage in the amount of {{count}} hours.",
-  "updateCategories": "Update Categories",
-  "jwTimeNowSupportsCredits": "JW Time now properly supports credits for those with an annual service goal. Once your update an existing tag, all of your service reports will update as well.",
-  "credits": "Credits",
-  "done": "Done"
+  "updateCategories": "Atualizar Categorias",
+  "jwTimeNowSupportsCredits": "JW Time agora suporta corretamente créditos para aqueles com um objetivo de serviço anual. Assim que atualizar uma tag existente, todos os seus relatórios de serviço também serão atualizados.",
+  "credits": "Créditos",
+  "done": "Concluído"
 }

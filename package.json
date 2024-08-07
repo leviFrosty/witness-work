@@ -40,7 +40,7 @@
     "babel-plugin-transform-inline-environment-variables": "^0.4.4",
     "burnt": "^0.12.2",
     "dotenv": "^16.4.5",
-    "expo": "~51.0.24",
+    "expo": "~51.0.25",
     "expo-application": "~5.9.1",
     "expo-blur": "~13.0.2",
     "expo-checkbox": "~3.0.0",

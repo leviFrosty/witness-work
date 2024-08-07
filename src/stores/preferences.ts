@@ -7,6 +7,7 @@ import Constants from 'expo-constants'
 import moment from 'moment'
 import * as Device from 'expo-device'
 import { Platform } from 'react-native'
+import { hasMigratedFromAsyncStorage, MmkvStorage } from './mmkv'
 
 const SortOptionValues = [
   'recentConversation',
@@ -119,6 +120,7 @@ const initialState = {
   userSpecifiedHasAnnualGoal: 'default' as boolean | 'default',
   fontSizeOffset: 0,
   customContactFields: [] as string[],
+  hasAttemptedToMigrateToMmkv: false,
 }
 
 export const usePreferences = create(
@@ -143,7 +145,9 @@ export const usePreferences = create(
     })),
     {
       name: 'preferences',
-      storage: createJSONStorage(() => AsyncStorage),
+      storage: createJSONStorage(() =>
+        hasMigratedFromAsyncStorage ? MmkvStorage : AsyncStorage
+      ),
     }
   )
 )

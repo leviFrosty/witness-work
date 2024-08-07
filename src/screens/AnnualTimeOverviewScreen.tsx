@@ -1,8 +1,6 @@
 import Wrapper from '../components/layout/Wrapper'
 import useServiceReport from '../stores/serviceReport'
-import { useMemo } from 'react'
 import moment from 'moment'
-import { ServiceReport } from '../types/serviceReport'
 import MonthSummary from '../components/MonthSummary'
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
 import Button from '../components/Button'
@@ -16,6 +14,12 @@ import { ActiveScreen } from '../constants/timeScreen'
 import i18n from '../lib/locales'
 import usePublisher from '../hooks/usePublisher'
 import AnnualServiceReportSummary from '../components/AnnualServiceReportSummary'
+import { useMemo } from 'react'
+import { getServiceYearReports } from '../lib/serviceReport'
+import { FlashList } from '@shopify/flash-list'
+import ActionButton from '../components/ActionButton'
+import { useNavigation } from '@react-navigation/native'
+import { RootStackNavigation } from '../stacks/RootStack'
 
 type AnnualTimeOverviewScreenProps = {
   handleSetActiveScreen: (
@@ -40,55 +44,13 @@ const AnnualTimeOverviewScreen = ({
 }: AnnualTimeOverviewScreenProps) => {
   const { serviceReports } = useServiceReport()
   const { hasAnnualGoal } = usePublisher()
+  const navigation = useNavigation<RootStackNavigation>()
   const theme = useTheme()
 
-  const reportsByYearAndMonth = useMemo(() => {
-    const reports: {
-      [year: string]: { [month: string]: ServiceReport[] }
-    } = {
-      [year - 1]: {
-        8: [],
-        9: [],
-        10: [],
-        11: [],
-      },
-      [year]: {
-        0: [],
-        1: [],
-        2: [],
-        3: [],
-        4: [],
-        5: [],
-        6: [],
-        7: [],
-      },
-    }
-
-    for (const report of serviceReports) {
-      const yearKey = moment(report.date).year()
-      const monthKey = moment(report.date).month()
-
-      const reportInServiceYear =
-        (yearKey === year && monthKey < 8) ||
-        (yearKey === year - 1 && monthKey >= 8)
-
-      if (!reportInServiceYear) {
-        continue
-      }
-
-      if (!reports[yearKey]) {
-        reports[yearKey] = {}
-      }
-
-      if (!reports[yearKey][monthKey]) {
-        reports[yearKey][monthKey] = []
-      }
-
-      reports[yearKey][monthKey].push(report)
-    }
-
-    return reports
-  }, [serviceReports, year])
+  const reportsForServiceYear = useMemo(
+    () => getServiceYearReports(serviceReports, year - 1),
+    [serviceReports, year]
+  )
 
   return (
     <Wrapper insets='bottom'>
@@ -194,9 +156,9 @@ const AnnualTimeOverviewScreen = ({
           gap: 25,
         }}
       >
-        {Object.keys(reportsByYearAndMonth).map((year) => {
+        {Object.keys(reportsForServiceYear).map((year) => {
           return (
-            <View style={{ gap: 15 }} key={year}>
+            <View style={{ gap: 8 }} key={year}>
               <Text
                 style={{
                   fontSize: theme.fontSize('2xl'),
@@ -205,37 +167,65 @@ const AnnualTimeOverviewScreen = ({
               >
                 {year}
               </Text>
-              <View style={{ gap: 15 }}>
-                {Object.keys(reportsByYearAndMonth[year]).map((month) => (
-                  <Button
-                    key={month}
-                    onPress={
-                      (moment().year() === parseInt(year) &&
-                        moment().month() >= parseInt(month)) ||
-                      moment().year() > parseInt(year)
-                        ? () =>
-                            handleSetActiveScreen(
-                              parseInt(month),
-                              parseInt(year),
-                              ActiveScreen.MonthDetails
-                            )
-                        : undefined
-                    }
-                  >
-                    <MonthSummary
-                      month={parseInt(month)}
-                      monthsReports={reportsByYearAndMonth[year][month]}
-                      year={parseInt(year)}
-                      setSheet={setSheet}
-                      title={moment().month(parseInt(month)).format('MMMM')}
-                      noDetails
-                      highlightAsCurrentMonth={
-                        parseInt(month) === moment().month() &&
-                        parseInt(year) === moment().year()
-                      }
-                    />
-                  </Button>
-                ))}
+              <View style={{ minHeight: 2 }}>
+                <FlashList
+                  data={Object.keys(reportsForServiceYear[year])}
+                  renderItem={({ item: month }) => {
+                    return (
+                      <Button
+                        key={month}
+                        onPress={
+                          (moment().year() === parseInt(year) &&
+                            moment().month() >= parseInt(month)) ||
+                          moment().year() > parseInt(year)
+                            ? () =>
+                                handleSetActiveScreen(
+                                  parseInt(month),
+                                  parseInt(year),
+                                  ActiveScreen.MonthDetails
+                                )
+                            : undefined
+                        }
+                      >
+                        <MonthSummary
+                          month={parseInt(month)}
+                          monthsReports={reportsForServiceYear[year]?.[month]}
+                          year={parseInt(year)}
+                          setSheet={setSheet}
+                          title={moment().month(parseInt(month)).format('MMMM')}
+                          noDetails
+                          highlightAsCurrentMonth={
+                            parseInt(month) === moment().month() &&
+                            parseInt(year) === moment().year()
+                          }
+                        />
+                      </Button>
+                    )
+                  }}
+                  ItemSeparatorComponent={() => <View style={{ height: 8 }} />}
+                  estimatedItemSize={183}
+                  ListEmptyComponent={
+                    <View style={{ gap: 5 }}>
+                      <Text>
+                        {i18n.t('noReportsForThisYear', {
+                          count: parseInt(year),
+                        })}
+                      </Text>
+                      <ActionButton
+                        onPress={() =>
+                          navigation.navigate('Add Time', {
+                            date: moment()
+                              .month(month)
+                              .year(parseInt(year))
+                              .toISOString(),
+                          })
+                        }
+                      >
+                        {i18n.t('addTime')}
+                      </ActionButton>
+                    </View>
+                  }
+                />
               </View>
             </View>
           )

@@ -22,8 +22,8 @@ import { useCallback, useMemo } from 'react'
 import {
   AdjustedMinutes,
   adjustedMinutesForSpecificMonth,
+  getMonthsReports,
   getTimeAsMinutesForHourglass,
-  hasServiceReportsForMonth,
 } from '../lib/serviceReport'
 import useTheme from '../contexts/theme'
 import useServiceReport from '../stores/serviceReport'
@@ -56,13 +56,17 @@ const ExportTimeSheet = ({
   const { contacts } = useContacts()
   const { month, year } = sheet
   const navigation = useNavigation<RootStackNavigation>()
+  const monthReports = useMemo(
+    () => getMonthsReports(serviceReports, month, year),
+    [month, serviceReports, year]
+  )
 
   const { creditOverage, value, credit, standard }: AdjustedMinutes = useMemo(
     () =>
       month !== undefined && year !== undefined
-        ? adjustedMinutesForSpecificMonth(serviceReports, month, year)
+        ? adjustedMinutesForSpecificMonth(monthReports, month, year)
         : { value: 0, creditOverage: 0, credit: 0, standard: 0 },
-    [month, serviceReports, year]
+    [month, monthReports, year]
   )
 
   const studiesForMonth = useMemo(
@@ -75,14 +79,6 @@ const ExportTimeSheet = ({
           })
         : null,
     [contacts, conversations, month, year]
-  )
-
-  const wentOutForMonth = useMemo(
-    () =>
-      month !== undefined && year !== undefined
-        ? hasServiceReportsForMonth(serviceReports, month, year)
-        : false,
-    [month, serviceReports, year]
   )
 
   const isLastMonth = (() => {
@@ -104,7 +100,7 @@ const ExportTimeSheet = ({
         }
         const hoursForPublisherOrPioneer = () => {
           if (publisher === 'publisher') {
-            if (wentOutForMonth) {
+            if (monthReports.length) {
               return i18n.t('yes')
             } else {
               return i18n.t('no')
@@ -142,7 +138,7 @@ const ExportTimeSheet = ({
             links.hourglassBase
           }month=${hourglassMonth}&year=${year}&minutes=${getTimeAsMinutesForHourglass(
             publisher,
-            wentOutForMonth,
+            !!monthReports.length,
             value
           )}&studies=${studiesForMonth}&remarks=${encodeURI(
             i18n.t('creditOverageInTheAmountOf', {
@@ -164,10 +160,10 @@ const ExportTimeSheet = ({
             return
           }
 
-          let nwPublisherLink = `${links.nwpublisherSubmitReport}sharedInMinistry=${wentOutForMonth}`
+          let nwPublisherLink = `${links.nwpublisherSubmitReport}sharedInMinistry=${!!monthReports.length}`
 
           const { creditOverage, credit, standard } =
-            adjustedMinutesForSpecificMonth(serviceReports, month, year)
+            adjustedMinutesForSpecificMonth(monthReports, month, year)
 
           if (standard > 0) {
             nwPublisherLink += `:hours=${Math.floor(standard / 60)}`
@@ -190,7 +186,6 @@ const ExportTimeSheet = ({
             nwPublisherLink += `:remarks=${encodeURI(remarks)}`
           }
 
-          console.log('link: ', nwPublisherLink)
           break
           openURL(nwPublisherLink)
           break
@@ -213,10 +208,9 @@ const ExportTimeSheet = ({
       creditOverage,
       publisher,
       standard,
-      wentOutForMonth,
+      monthReports,
       value,
       isLastMonth,
-      serviceReports,
     ]
   )
 

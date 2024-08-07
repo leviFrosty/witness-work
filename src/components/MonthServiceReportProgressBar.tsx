@@ -5,6 +5,7 @@ import useTheme from '../contexts/theme'
 import {
   adjustedMinutesForSpecificMonth,
   calculateProgress,
+  getMonthsReports,
   getTotalMinutesDetailedForSpecificMonth,
 } from '../lib/serviceReport'
 import { useCallback, useMemo } from 'react'
@@ -118,11 +119,15 @@ const MonthServiceReportProgressBar = ({
   const theme = useTheme()
   const { serviceReports } = useServiceReport()
   const { publisher, publisherHours } = usePreferences()
+  const monthReports = useMemo(
+    () => getMonthsReports(serviceReports, month, year),
+    [month, serviceReports, year]
+  )
   const goalHours = publisherHours[publisher]
 
   const adjustedMinutes = useMemo(
-    () => adjustedMinutesForSpecificMonth(serviceReports, month, year),
-    [month, serviceReports, year]
+    () => adjustedMinutesForSpecificMonth(monthReports, month, year),
+    [month, monthReports, year]
   )
 
   const progress = useMemo(
@@ -131,8 +136,8 @@ const MonthServiceReportProgressBar = ({
   )
 
   const minutesDetailed = useMemo(
-    () => getTotalMinutesDetailedForSpecificMonth(serviceReports, month, year),
-    [month, serviceReports, year]
+    () => getTotalMinutesDetailedForSpecificMonth(monthReports, month, year),
+    [month, monthReports, year]
   )
 
   const hasStandardMinutes = useMemo(

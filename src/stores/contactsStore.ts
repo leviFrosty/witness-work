@@ -2,6 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage'
 import { create } from 'zustand'
 import { persist, combine, createJSONStorage } from 'zustand/middleware'
 import { Contact } from '../types/contact'
+import { hasMigratedFromAsyncStorage, MmkvStorage } from './mmkv'
 
 const initialState = {
   contacts: [] as Contact[],
@@ -93,7 +94,9 @@ export const useContacts = create(
     })),
     {
       name: 'contacts',
-      storage: createJSONStorage(() => AsyncStorage),
+      storage: createJSONStorage(() =>
+        hasMigratedFromAsyncStorage ? MmkvStorage : AsyncStorage
+      ),
     }
   )
 )

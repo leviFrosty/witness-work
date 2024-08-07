@@ -16,6 +16,7 @@ import Badge from './Badge'
 import ActionButton from './ActionButton'
 import Divider from './Divider'
 import Card from './Card'
+import { getMonthsReports } from '../lib/serviceReport'
 
 type UpgradeLegacyTimeReportsTagsSheetProps = {
   sheet: boolean
@@ -108,19 +109,28 @@ export default function UpgradeLegacyTimeReportsSheet({
   const { set: setServiceReportStore, serviceReports } = useServiceReport()
 
   const updateExistingServiceReportsTags = (tag: ServiceReportTag) => {
-    const reports = [...serviceReports]
-
-    const reportsWithUpdatedCreditTag = reports.map((r) => {
-      if (r.tag === tag.value) {
-        return {
-          ...r,
-          credit: tag.credit,
-        }
+    const reports = { ...serviceReports }
+    for (const year in reports) {
+      for (const month in reports[year]) {
+        const monthReports = getMonthsReports(
+          reports,
+          parseInt(month),
+          parseInt(year)
+        )
+        const reportsWithUpdatedCreditTag = monthReports.map((r) => {
+          if (r.tag === tag.value) {
+            return {
+              ...r,
+              credit: tag.credit,
+            }
+          }
+          return r
+        })
+        reports[year][month] = reportsWithUpdatedCreditTag
       }
-      return r
-    })
+    }
 
-    setServiceReportStore({ serviceReports: reportsWithUpdatedCreditTag })
+    setServiceReportStore({ serviceReports: reports })
   }
 
   return (

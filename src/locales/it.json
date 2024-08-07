@@ -686,5 +686,6 @@
   "updateCategories": "Aggiorna categorie",
   "jwTimeNowSupportsCredits": "JW Time ora supporta correttamente i crediti per coloro che hanno un obiettivo di servizio annuale. Una volta aggiornato un tag esistente, verranno aggiornati anche tutti i rapporti sui servizi.",
   "credits": "Crediti",
-  "done": "Fatto"
+  "done": "Fatto",
+  "noReportsForThisYear": "Non sono presenti voci di servizio per {{count}}."
 }

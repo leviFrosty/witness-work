@@ -6,10 +6,10 @@ import { usePreferences } from '../stores/preferences'
 import {
   calculateMinutesRemaining,
   calculateProgress,
-  hasServiceReportsForMonth,
   getDaysLeftInCurrentMonth,
   plannedMinutesToCurrentDayForMonth,
   adjustedMinutesForSpecificMonth,
+  getMonthsReports,
 } from '../lib/serviceReport'
 import Card from './Card'
 import Text from './MyText'
@@ -32,6 +32,7 @@ import { ExportTimeSheetState } from './ExportTimeSheet'
 import useDevice from '../hooks/useDevice'
 import _ from 'lodash'
 import AheadOrBehindOfMonthSchedule from './AheadOrBehindOfSchedule'
+import { ServiceReport as ServiceReportType } from '../types/serviceReport'
 
 const HourEntryCard = () => {
   const theme = useTheme()
@@ -40,15 +41,19 @@ const HourEntryCard = () => {
   const { serviceReports, dayPlans, recurringPlans } = useServiceReport()
   const navigation = useNavigation<RootStackNavigation>()
   const goalHours = publisherHours[publisher]
+  const monthReports = useMemo(
+    () => getMonthsReports(serviceReports, moment().month(), moment().year()),
+    [serviceReports]
+  )
 
   const adjustedMinutes = useMemo(
     () =>
       adjustedMinutesForSpecificMonth(
-        serviceReports,
+        monthReports,
         moment().month(),
         moment().year()
       ),
-    [serviceReports]
+    [monthReports]
   )
 
   const progress = useMemo(
@@ -338,7 +343,11 @@ const RightCard = () => {
   )
 }
 
-const CheckMarkAnimationComponent = ({ undoId }: { undoId?: string }) => {
+const CheckMarkAnimationComponent = ({
+  undoReport,
+}: {
+  undoReport?: ServiceReportType
+}) => {
   const theme = useTheme()
   const { deleteServiceReport } = useServiceReport()
 
@@ -362,8 +371,8 @@ const CheckMarkAnimationComponent = ({ undoId }: { undoId?: string }) => {
         // Find more Lottie files at https://lottiefiles.com/featured
         source={require('./../assets/lottie/checkMark.json')}
       />
-      {undoId && (
-        <Button onPress={() => deleteServiceReport(undoId)}>
+      {undoReport && (
+        <Button onPress={() => deleteServiceReport(undoReport)}>
           <Text
             style={{
               fontSize: 10,
@@ -381,23 +390,24 @@ const CheckMarkAnimationComponent = ({ undoId }: { undoId?: string }) => {
 
 const StandardPublisherTimeEntry = () => {
   const theme = useTheme()
-  const [undoId, setUndoId] = useState<string>()
+  const [undoReport, setUndoReport] = useState<ServiceReportType>()
   const { serviceReports, addServiceReport } = useServiceReport()
-  const hasGoneOutInServiceThisMonth = hasServiceReportsForMonth(
-    serviceReports,
-    moment().month(),
-    moment().year()
+  const monthReports = useMemo(
+    () => getMonthsReports(serviceReports, moment().month(), moment().year()),
+    [serviceReports]
   )
+  const hasGoneOutInServiceThisMonth = !!monthReports.length
 
   const handleSubmitDidService = () => {
     const id = Crypto.randomUUID()
-    addServiceReport({
+    const report: ServiceReportType = {
       date: new Date(),
       hours: 0,
       minutes: 0,
       id,
-    })
-    setUndoId(id)
+    }
+    addServiceReport(report)
+    setUndoReport(report)
   }
 
   return (
@@ -417,7 +427,7 @@ const StandardPublisherTimeEntry = () => {
             overflow: 'hidden',
           }}
         >
-          <CheckMarkAnimationComponent undoId={undoId} />
+          <CheckMarkAnimationComponent undoReport={undoReport} />
         </View>
       ) : (
         <Button

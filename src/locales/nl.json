@@ -327,35 +327,50 @@
   "new": "Nieuw",
   "bugFixes": "Bugfixes",
   "updates": {
-    "160": {
-      "c1": "Gesprekken kunnen nu worden bewerkt. Meldingen zijn configureerbaar",
-      "c2": "Veeggebaren om gesprekken, contacten, enz. te bewerken of te verwijderen.",
-      "c3": "Haptische feedback toegevoegd aan verschillende belangrijke acties"
+    "1211": {
+      "c1": "Waar nodig meer nuttige eenmalige tips toegevoegd."
     },
-    "161": {
-      "c1": "Meer minuutopties toegevoegd voor tijdinvoer"
+    "1210": {
+      "c1": "Sterk verbeterde nauwkeurigheid van tijdweergaven.",
+      "c2": "Verbeterde nauwkeurigheid van tijdvoortgangsbalken.",
+      "c3": "Nuttige tips toegevoegd voor acties die misschien niet meteen opvallen.",
+      "c4": "Verbeterde levenskwaliteit op het kaartenscherm met meer relevante informatie en een knop voor snel toevoegen."
     },
-    "162": {
-      "c1": "Eis voor speciaal pioniersuur aangepast van 70 naar 100"
+    "1201": {
+      "c1": "Kleine bugfixes.",
+      "c2": "Aanzienlijk verbeterde Koreaanse vertalingen - bedankt broeder Paul. Als je wilt helpen met het vertalen van je eigen taal, ga dan naar de instellingen.",
+      "c3": "Kleine bugfixes."
     },
-    "163": {
-      "c1": "Los problemen met automatische updates op"
+    "1200": {
+      "c1": "Voegt back-up- en herstelfunctionaliteit toe. Nu kunt u een back-up van uw gegevens maken in de cloud en deze later herstellen, zodat u uw gegevens naar een ander apparaat kunt overbrengen. Je kunt het ook overzetten naar een ander platform. Zoek deze nieuwe functie in de instellingen."
     },
-    "170": {
-      "c1": "Voeg verschillende tijdexportmethoden toe",
-      "c2": "Voeg 'Niet thuis' toe"
+    "1120": {
+      "c1": "Voegt back-up- en herstelfunctionaliteit toe. Nu kunt u een back-up van uw gegevens maken in de cloud en deze later herstellen. U kunt uw gegevens overbrengen naar een ander apparaat. Je kunt het ook overzetten naar een ander platform. Zoek deze nieuwe functie in de instellingen."
     },
-    "180": {
-      "c1": "Automatische geocodering voor contacten toegevoegd",
-      "c2": "Kaartweergave toegevoegd"
+    "1111": {
+      "c1": "Voeg een donatiepagina toe in de instellingen voor degenen die willen bijdragen.",
+      "c2": "Bevat verschillende kleine verbeteringen en bugfixes"
     },
-    "181": {
-      "c1": "Uitgebreide kaartweergave",
-      "c2": "Winkelbeoordelingsverzoek toegevoegd nadat aan bepaalde criteria is voldaan",
-      "c3": "Kleine bugfixes"
+    "1110": {
+      "c1": "Ondersteuning toegevoegd voor iPads & Tabletten!",
+      "c2": "Verschillende stijlen aangepast om beter op grotere schermen te passen.",
+      "c3": "De methode voor het indienen van bugrapporten en functieverzoeken bij Github aangepast."
     },
-    "182": {
-      "c1": "Altijd bijgewerkt om de huidige landinstelling weer te geven"
+    "1100": {
+      "c1": "Voegt een jaarverslag toe aan het tijdrapportenscherm! Houd in één oogopslag de voortgang van uw servicejaar bij.",
+      "c2": "Als u tijd toevoegt vanuit het scherm Tijdrapporten, wordt het rapport nu standaard ingesteld op de geselecteerde maand.",
+      "c3": "Er is een probleem opgelost bij het exporteren van het servicerapport van januari."
+    },
+    "192": {
+      "c1": "Er is een probleem opgelost waarbij sommige apparaten een overvolle voortgangsbalk hebben.",
+      "c2": "Voegt een uitgebreidere afhandeling van verbindingsfouten toe voor apparaten waarop de vereiste applicaties ontbreken.",
+      "c3": "Voegt een uitgebreidere afhandeling van verbindingsfouten toe voor bepaalde apparaten waarop de vereiste applicaties ontbreken.",
+      "c4": "Navigeer rechtstreeks naar een maand vanuit het maandelijkse routinegedeelte van het startscherm.",
+      "c5": "Het scherm Tijdrapporten kan beter omgaan met lege en toekomstige maanden.",
+      "c6": "Kleine bugfixes."
+    },
+    "191": {
+      "c1": "Lost een probleem op bij het navigeren naar tijdschermen."
     },
     "190": {
       "c1": "Voorkeuren toegevoegd in de instellingen",
@@ -366,50 +381,35 @@
       "c6": "Voeg nu aangepaste tags toe aan uw tijdinvoer",
       "c7": "Bijgewerkt tijdrapportenscherm om beter georganiseerd en gescheiden te zijn per maand"
     },
-    "191": {
-      "c1": "Lost een probleem op bij het navigeren naar tijdschermen."
+    "182": {
+      "c1": "Altijd bijgewerkt om de huidige landinstelling weer te geven"
     },
-    "192": {
-      "c1": "Er is een probleem opgelost waarbij sommige apparaten een overvolle voortgangsbalk hebben.",
-      "c2": "Voegt een uitgebreidere afhandeling van verbindingsfouten toe voor apparaten waarop de vereiste applicaties ontbreken.",
-      "c3": "Voegt een uitgebreidere afhandeling van verbindingsfouten toe voor bepaalde apparaten waarop de vereiste applicaties ontbreken.",
-      "c4": "Navigeer rechtstreeks naar een maand vanuit het maandelijkse routinegedeelte van het startscherm.",
-      "c5": "Het scherm Tijdrapporten kan beter omgaan met lege en toekomstige maanden.",
-      "c6": "Kleine bugfixes."
+    "181": {
+      "c1": "Uitgebreide kaartweergave",
+      "c2": "Winkelbeoordelingsverzoek toegevoegd nadat aan bepaalde criteria is voldaan",
+      "c3": "Kleine bugfixes"
     },
-    "1100": {
-      "c1": "Voegt een jaarverslag toe aan het tijdrapportenscherm! Houd in één oogopslag de voortgang van uw servicejaar bij.",
-      "c2": "Als u tijd toevoegt vanuit het scherm Tijdrapporten, wordt het rapport nu standaard ingesteld op de geselecteerde maand.",
-      "c3": "Er is een probleem opgelost bij het exporteren van het servicerapport van januari."
+    "180": {
+      "c1": "Automatische geocodering voor contacten toegevoegd",
+      "c2": "Kaartweergave toegevoegd"
     },
-    "1110": {
-      "c1": "Ondersteuning toegevoegd voor iPads & Tabletten!",
-      "c2": "Verschillende stijlen aangepast om beter op grotere schermen te passen.",
-      "c3": "De methode voor het indienen van bugrapporten en functieverzoeken bij Github aangepast."
+    "170": {
+      "c1": "Voeg verschillende tijdexportmethoden toe",
+      "c2": "Voeg 'Niet thuis' toe"
     },
-    "1111": {
-      "c1": "Voeg een donatiepagina toe in de instellingen voor degenen die willen bijdragen.",
-      "c2": "Bevat verschillende kleine verbeteringen en bugfixes"
+    "163": {
+      "c1": "Los problemen met automatische updates op"
     },
-    "1120": {
-      "c1": "Voegt back-up- en herstelfunctionaliteit toe. Nu kunt u een back-up van uw gegevens maken in de cloud en deze later herstellen. U kunt uw gegevens overbrengen naar een ander apparaat. Je kunt het ook overzetten naar een ander platform. Zoek deze nieuwe functie in de instellingen."
+    "162": {
+      "c1": "Eis voor speciaal pioniersuur aangepast van 70 naar 100"
     },
-    "1200": {
-      "c1": "Voegt back-up- en herstelfunctionaliteit toe. Nu kunt u een back-up van uw gegevens maken in de cloud en deze later herstellen, zodat u uw gegevens naar een ander apparaat kunt overbrengen. Je kunt het ook overzetten naar een ander platform. Zoek deze nieuwe functie in de instellingen."
+    "161": {
+      "c1": "Meer minuutopties toegevoegd voor tijdinvoer"
     },
-    "1201": {
-      "c1": "Kleine bugfixes.",
-      "c2": "Aanzienlijk verbeterde Koreaanse vertalingen - bedankt broeder Paul. Als je wilt helpen met het vertalen van je eigen taal, ga dan naar de instellingen.",
-      "c3": "Kleine bugfixes."
-    },
-    "1210": {
-      "c1": "Sterk verbeterde nauwkeurigheid van tijdweergaven.",
-      "c2": "Verbeterde nauwkeurigheid van tijdvoortgangsbalken.",
-      "c3": "Nuttige tips toegevoegd voor acties die misschien niet meteen opvallen.",
-      "c4": "Verbeterde levenskwaliteit op het kaartenscherm met meer relevante informatie en een knop voor snel toevoegen."
-    },
-    "1211": {
-      "c1": "Waar nodig meer nuttige eenmalige tips toegevoegd."
+    "160": {
+      "c1": "Gesprekken kunnen nu worden bewerkt. Meldingen zijn configureerbaar",
+      "c2": "Veeggebaren om gesprekken, contacten, enz. te bewerken of te verwijderen.",
+      "c3": "Haptische feedback toegevoegd aan verschillende belangrijke acties"
     },
     "1220": {
       "c3": "Kalender toegevoegd aan het tijdrapportscherm.",

@@ -482,6 +482,11 @@
       "c9": "Month and annual total calculations now properly limit your credit time to 55 hours per month. Standard time is not affected by this rule. If you exceed this time using credit, you'll have overage displayed on your month's details screen.",
       "c10": "Added time credit support. Existing users will be able to update their old time entries automatically.",
       "c11": "Resolved issue with add button overlapping compass on iOS."
+    },
+    "1310": {
+      "c1": "Greatly improved performance when navigating to time related screens.",
+      "c2": "Added Chinese Traditional language.",
+      "c3": "Resolve date localization issue occurred in some regions."
     }
   },
   "installed": "Installed",

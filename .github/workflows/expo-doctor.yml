@@ -1,4 +1,4 @@
-name: Test
+name: Expo Doctor
 
 on:
   push:
@@ -28,5 +28,5 @@ jobs:
       - name: Install dependencies
         run: yarn install
 
-      - name: Run Jest tests
-        run: yarn run testFinal
+      - name: Run Expo Doctor
+        run: yarn run doctor

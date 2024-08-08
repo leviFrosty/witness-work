@@ -482,6 +482,11 @@
       "c9": "Monats- und Jahresgesamtberechnungen begrenzen Ihre Kreditzeit jetzt ordnungsgemäß auf 55 Stunden pro Monat. Die Standardzeit ist von dieser Regel nicht betroffen. Wenn Sie diese Zeit mit Kredit überschreiten, wird Ihnen der Überschuss auf dem Detailbildschirm Ihres Monats angezeigt.",
       "c10": "Unterstützung für Zeitguthaben hinzugefügt. Bestehende Benutzer können ihre alten Zeiteinträge automatisch aktualisieren.",
       "c11": "Problem mit der Schaltfläche „Hinzufügen“, die den Kompass unter iOS überlappt, behoben."
+    },
+    "1310": {
+      "c1": "Greatly improved performance when navigating to time related screens.",
+      "c2": "Added Chinese Traditional language.",
+      "c3": "Resolve date localization issue occurred in some regions."
     }
   },
   "installed": "Eingerichtet",
@@ -686,5 +691,6 @@
   "updateCategories": "Kategorien aktualisieren",
   "jwTimeNowSupportsCredits": "JW Time unterstützt jetzt ordnungsgemäß Gutschriften für diejenigen mit einem jährlichen Dienstziel. Sobald Sie ein vorhandenes Tag aktualisieren, werden auch alle Ihre Dienstberichte aktualisiert.",
   "credits": "Gutschriften",
-  "done": "Fertig"
+  "done": "Fertig",
+  "noReportsForThisYear": "Es sind keine Serviceeinträge für {{count}} vorhanden."
 }

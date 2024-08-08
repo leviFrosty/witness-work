@@ -76,7 +76,7 @@ const HourEntryCard = () => {
       ]
     }
 
-    if (progress >= 0.7 && progress < 1) {
+    if (progress >= 0.6 && progress < 1) {
       phrases = [
         i18n.t('phrasesClose.oneStepCloser'),
         i18n.t('phrasesClose.almostThere'),

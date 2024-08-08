@@ -24,6 +24,34 @@ const initialState = {
   },
 }
 
+/**
+ * Migrates legacy service report data: `ServiceReport[]` ->
+ * `ServiceReportsByYears`
+ */
+export const migrateServiceReports = (
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  oldServiceReports: any
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+): any => {
+  const years: ServiceReportsByYears = {}
+
+  for (const report of oldServiceReports) {
+    const month = moment(report.date).month()
+    const year = moment(report.date).year()
+    if (!years[year]) {
+      years[year] = {}
+    }
+
+    if (!years[year][month]) {
+      years[year][month] = []
+    }
+
+    years[year][month].push(report)
+  }
+
+  return years
+}
+
 export const useServiceReport = create(
   persist(
     combine(initialState, (set) => ({
@@ -235,21 +263,8 @@ export const useServiceReport = create(
             persistedState as { serviceReports: ServiceReport[] }
           ).serviceReports
 
-          const years: ServiceReportsByYears = {}
+          const years = migrateServiceReports(previousReports)
 
-          for (const report of previousReports) {
-            const month = moment(report.date).month()
-            const year = moment(report.date).year()
-            if (!years[year]) {
-              years[year] = {}
-            }
-
-            if (!years[year][month]) {
-              years[year][month] = []
-            }
-
-            years[year][month].push(report)
-          }
           // @ts-expect-error This cannot be type checked because legacy data
           persistedState.serviceReports = years
         }

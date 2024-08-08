@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState } from 'react'
 import ActionButton from '../components/ActionButton'
 import Text from '../components/MyText'
@@ -6,7 +7,9 @@ import i18n from '../lib/locales'
 import useContacts from '../stores/contactsStore'
 import useConversations from '../stores/conversationStore'
 import { usePreferences } from '../stores/preferences'
-import useServiceReport from '../stores/serviceReport'
+import useServiceReport, {
+  migrateServiceReports,
+} from '../stores/serviceReport'
 import * as FileSystem from 'expo-file-system'
 import * as Sentry from '@sentry/react-native'
 import * as Sharing from 'expo-sharing'
@@ -79,6 +82,17 @@ const ImportAndExportScreen = () => {
               i18n.t('importErrorInvalidFile_description')
             )
             return
+          }
+
+          // If importFile has old serviceReport data structure, update to new before importing.
+          if (
+            data.serviceReportStore &&
+            Array.isArray((data.serviceReportStore as any).serviceReports)
+          ) {
+            const years: any = migrateServiceReports(
+              (data.serviceReportStore as any).serviceReports
+            )
+            ;(data.serviceReportStore as any).serviceReports = years
           }
 
           data.serviceReportStore &&

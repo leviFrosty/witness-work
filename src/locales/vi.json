@@ -482,6 +482,11 @@
       "c9": "Các phép tính tổng hàng tháng và hàng năm hiện giới hạn chính xác thời gian tín dụng của bạn ở mức 55 giờ mỗi tháng. Giờ chuẩn không bị ảnh hưởng bởi quy tắc này. Nếu bạn sử dụng tín dụng vượt quá thời gian này, số tiền vượt quá sẽ được hiển thị trên màn hình chi tiết trong tháng của bạn.",
       "c10": "Đã thêm hỗ trợ tín dụng thời gian. Người dùng hiện tại sẽ có thể tự động cập nhật các mục nhập thời gian cũ của họ.",
       "c11": "Đã giải quyết vấn đề về la bàn thêm nút chồng chéo trên iOS."
+    },
+    "1310": {
+      "c1": "Greatly improved performance when navigating to time related screens.",
+      "c2": "Added Chinese Traditional language.",
+      "c3": "Resolve date localization issue occurred in some regions."
     }
   },
   "installed": "Cài đặt",
@@ -686,5 +691,6 @@
   "updateCategories": "Cập nhật danh mục",
   "jwTimeNowSupportsCredits": "JW Time hiện hỗ trợ tín dụng hợp lý cho những người có mục tiêu phục vụ hàng năm. Sau khi bạn cập nhật thẻ hiện có, tất cả các báo cáo dịch vụ của bạn cũng sẽ cập nhật.",
   "credits": "Tín dụng",
-  "done": "Xong"
+  "done": "Xong",
+  "noReportsForThisYear": "Không có mục dịch vụ nào cho {{count}}."
 }

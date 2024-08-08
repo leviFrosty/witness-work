@@ -482,6 +482,11 @@
       "c9": "Maand- en jaarlijkse totaalberekeningen beperken uw krediettijd nu correct tot 55 uur per maand. De standaardtijd wordt niet beïnvloed door deze regel. Als u deze tijd overschrijdt met tegoed, wordt het overschot weergegeven op het scherm met uw maandgegevens.",
       "c10": "Ondersteuning voor tijdskrediet toegevoegd. Bestaande gebruikers kunnen hun oude tijdgegevens automatisch bijwerken.",
       "c11": "Probleem opgelost met het overlappende kompas van de add-knop op iOS."
+    },
+    "1310": {
+      "c1": "Greatly improved performance when navigating to time related screens.",
+      "c2": "Added Chinese Traditional language.",
+      "c3": "Resolve date localization issue occurred in some regions."
     }
   },
   "installed": "Geïnstalleerd",
@@ -686,5 +691,6 @@
   "updateCategories": "Categorieën bijwerken",
   "jwTimeNowSupportsCredits": "JW Time ondersteunt nu op de juiste manier credits voor mensen met een jaarlijks servicedoel. Zodra u een bestaande tag heeft bijgewerkt, worden al uw servicerapporten ook bijgewerkt.",
   "credits": "Kredieten",
-  "done": "Klaar"
+  "done": "Klaar",
+  "noReportsForThisYear": "Er zijn geen servicegegevens voor {{count}}."
 }

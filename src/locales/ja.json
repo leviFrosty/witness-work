@@ -482,6 +482,11 @@
       "c9": "月間および年間の合計計算で、クレジット時間が 1 か月あたり 55 時間に適切に制限されるようになりました。標準時間はこのルールの影響を受けません。クレジットを使用してこの時間を超過すると、月の詳細画面に超過分が表示されます。",
       "c10": "時間クレジットのサポートを追加しました。既存のユーザーは古い時間エントリを自動的に更新できるようになります。",
       "c11": "iOS で追加ボタンがコンパスと重なる問題を解決しました。"
+    },
+    "1310": {
+      "c1": "Greatly improved performance when navigating to time related screens.",
+      "c2": "Added Chinese Traditional language.",
+      "c3": "Resolve date localization issue occurred in some regions."
     }
   },
   "installed": "インストール済み",
@@ -686,5 +691,6 @@
   "updateCategories": "カテゴリの更新",
   "jwTimeNowSupportsCredits": "JW Time は、年間サービス目標を持つユーザー向けのクレジットを適切にサポートするようになりました。既存のタグを更新すると、すべてのサービス レポートも更新されます。",
   "credits": "クレジット",
-  "done": "完了"
+  "done": "完了",
+  "noReportsForThisYear": "{{count}} のサービス エントリはありません。"
 }

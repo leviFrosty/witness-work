@@ -482,6 +482,11 @@
       "c9": "Os cálculos totais mensais e anuais agora limitam adequadamente seu tempo de crédito a 55 horas por mês. O horário padrão não é afetado por esta regra. Se você exceder esse tempo usando crédito, o excedente será exibido na tela de detalhes do seu mês.",
       "c10": "Adicionado suporte de crédito de tempo. Os usuários existentes poderão atualizar automaticamente suas entradas de horário antigo.",
       "c11": "Problema resolvido com botão adicionar bússola sobreposta no iOS."
+    },
+    "1310": {
+      "c1": "Greatly improved performance when navigating to time related screens.",
+      "c2": "Added Chinese Traditional language.",
+      "c3": "Resolve date localization issue occurred in some regions."
     }
   },
   "installed": "Instalado",
@@ -686,5 +691,6 @@
   "updateCategories": "Atualizar categorias",
   "jwTimeNowSupportsCredits": "O JW Time agora oferece suporte adequado a créditos para aqueles com uma meta de serviço anual. Depois de atualizar uma tag existente, todos os seus relatórios de serviço também serão atualizados.",
   "credits": "Créditos",
-  "done": "Feito"
+  "done": "Feito",
+  "noReportsForThisYear": "Não há entradas de serviço para {{count}}."
 }

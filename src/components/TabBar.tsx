@@ -4,7 +4,12 @@ import { BottomTabBarProps } from '@react-navigation/bottom-tabs'
 import useTheme from '../contexts/theme'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import IconButton from './IconButton'
-import { faHome, faMapLocation } from '@fortawesome/free-solid-svg-icons'
+import {
+  faHome,
+  faMapLocation,
+  faQuestion,
+  faWrench,
+} from '@fortawesome/free-solid-svg-icons'
 import Text from './MyText'
 import i18n, { TranslationKey } from '../lib/locales'
 
@@ -52,6 +57,19 @@ const TabBar = ({ state, descriptors, navigation }: BottomTabBarProps) => {
           })
         }
 
+        const icon = (() => {
+          switch (label) {
+            case 'Home':
+              return faHome
+            case 'Map':
+              return faMapLocation
+            case 'Tools':
+              return faWrench
+            default:
+              return faQuestion
+          }
+        })()
+
         const color = isFocused ? theme.colors.text : theme.colors.textAlt
 
         return (
@@ -69,7 +87,7 @@ const TabBar = ({ state, descriptors, navigation }: BottomTabBarProps) => {
               iconStyle={{
                 color,
               }}
-              icon={label === 'Home' ? faHome : faMapLocation}
+              icon={icon}
               size={18}
             />
             <Text style={{ color, fontSize: theme.fontSize('sm') }}>

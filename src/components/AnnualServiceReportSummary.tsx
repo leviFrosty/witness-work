@@ -1,4 +1,4 @@
-import { memo, useMemo } from 'react'
+import { useMemo } from 'react'
 import useServiceReport from '../stores/serviceReport'
 import Card from './Card'
 import Text from './MyText'
@@ -39,150 +39,138 @@ interface AnnualServiceReportSummaryProps {
   hidePerMonthToGoal?: boolean
 }
 
-const AnnualServiceReportSummary = memo(
-  ({
-    serviceYear,
-    year,
-    month,
-    hidePerMonthToGoal,
-  }: AnnualServiceReportSummaryProps) => {
-    const theme = useTheme()
-    const { annualGoalHours, goalHours } = usePublisher()
-    const { serviceReports } = useServiceReport()
+const AnnualServiceReportSummary = ({
+  serviceYear,
+  year,
+  month,
+  hidePerMonthToGoal,
+}: AnnualServiceReportSummaryProps) => {
+  const theme = useTheme()
+  const { annualGoalHours, goalHours } = usePublisher()
+  const { serviceReports } = useServiceReport()
 
-    const totalMinutesForServiceYear = useMemo(() => {
-      const serviceYearsReports = getServiceYearReports(
-        serviceReports,
-        year - 1
-      )
-      const total = getTotalMinutesForServiceYear(
-        serviceYearsReports,
-        serviceYear
-      )
+  const totalMinutesForServiceYear = useMemo(() => {
+    const serviceYearsReports = getServiceYearReports(serviceReports, year - 1)
+    const total = getTotalMinutesForServiceYear(
+      serviceYearsReports,
+      serviceYear
+    )
 
-      return total
-    }, [serviceReports, serviceYear, year])
+    return total
+  }, [serviceReports, serviceYear, year])
 
-    const percentage = useMemo(() => {
-      return _.round(totalMinutesForServiceYear / 60 / annualGoalHours, 6)
-    }, [totalMinutesForServiceYear, annualGoalHours])
+  const percentage = useMemo(() => {
+    return _.round(totalMinutesForServiceYear / 60 / annualGoalHours, 6)
+  }, [totalMinutesForServiceYear, annualGoalHours])
 
-    const hoursPerMonthToGoal = useMemo(() => {
-      if (hidePerMonthToGoal) {
-        return
-      }
+  const hoursPerMonthToGoal = useMemo(() => {
+    if (hidePerMonthToGoal) {
+      return
+    }
 
-      const hoursPerMonth = serviceReportHoursPerMonthToGoal({
-        currentDate: {
-          month,
-          year,
-        },
-        goalHours,
-        serviceReports,
-        serviceYear,
-      })
-
-      return hoursPerMonth
-    }, [
+    const hoursPerMonth = serviceReportHoursPerMonthToGoal({
+      currentDate: {
+        month,
+        year,
+      },
       goalHours,
-      hidePerMonthToGoal,
-      month,
       serviceReports,
       serviceYear,
-      year,
-    ])
+    })
 
-    const isFasterThanMonthlyGoalHours =
-      hoursPerMonthToGoal === goalHours || !hoursPerMonthToGoal
-        ? undefined
-        : hoursPerMonthToGoal < goalHours
-          ? true
-          : false
+    return hoursPerMonth
+  }, [goalHours, hidePerMonthToGoal, month, serviceReports, serviceYear, year])
 
-    return (
-      <Card style={{ flexGrow: 1 }}>
-        <View
+  const isFasterThanMonthlyGoalHours =
+    hoursPerMonthToGoal === goalHours || !hoursPerMonthToGoal
+      ? undefined
+      : hoursPerMonthToGoal < goalHours
+        ? true
+        : false
+
+  return (
+    <Card style={{ flexGrow: 1 }}>
+      <View
+        style={{
+          flexDirection: 'row',
+          gap: 5,
+          alignItems: 'center',
+          justifyContent: 'space-between',
+        }}
+      >
+        <Text
           style={{
-            flexDirection: 'row',
-            gap: 5,
-            alignItems: 'center',
-            justifyContent: 'space-between',
+            fontSize: theme.fontSize('md'),
+            fontFamily: theme.fonts.semiBold,
           }}
         >
+          {serviceYear}-{serviceYear + 1}
+        </Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
           <Text
             style={{
-              fontSize: theme.fontSize('md'),
+              fontSize: theme.fontSize('sm'),
+              color: theme.colors.textAlt,
               fontFamily: theme.fonts.semiBold,
             }}
           >
-            {serviceYear}-{serviceYear + 1}
+            {`${_.round(totalMinutesForServiceYear / 60, 1)} ${i18n.t(
+              'of'
+            )} ${annualGoalHours} ${i18n.t('hours')}`}
           </Text>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
-            <Text
-              style={{
-                fontSize: theme.fontSize('sm'),
-                color: theme.colors.textAlt,
-                fontFamily: theme.fonts.semiBold,
-              }}
-            >
-              {`${_.round(totalMinutesForServiceYear / 60, 1)} ${i18n.t(
-                'of'
-              )} ${annualGoalHours} ${i18n.t('hours')}`}
-            </Text>
-          </View>
         </View>
-        <SimpleProgressBar
-          percentage={percentage}
-          height={10}
-          color={percentage >= 1 ? theme.colors.accent : theme.colors.textAlt}
-        />
-        {!hidePerMonthToGoal && (
-          <View style={{ flexDirection: 'row' }}>
-            <Badge
-              color={
-                isFasterThanMonthlyGoalHours === undefined
-                  ? theme.colors.backgroundLighter
-                  : isFasterThanMonthlyGoalHours
-                    ? theme.colors.accent
-                    : theme.colors.error
-              }
+      </View>
+      <SimpleProgressBar
+        percentage={percentage}
+        height={10}
+        color={percentage >= 1 ? theme.colors.accent : theme.colors.textAlt}
+      />
+      {!hidePerMonthToGoal && (
+        <View style={{ flexDirection: 'row' }}>
+          <Badge
+            color={
+              isFasterThanMonthlyGoalHours === undefined
+                ? theme.colors.backgroundLighter
+                : isFasterThanMonthlyGoalHours
+                  ? theme.colors.accent
+                  : theme.colors.error
+            }
+          >
+            <View
+              style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}
             >
-              <View
-                style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}
-              >
-                <IconButton
-                  color={
+              <IconButton
+                color={
+                  isFasterThanMonthlyGoalHours === undefined
+                    ? theme.colors.text
+                    : theme.colors.textInverse
+                }
+                icon={
+                  isFasterThanMonthlyGoalHours === undefined
+                    ? faMinus
+                    : isFasterThanMonthlyGoalHours
+                      ? faCaretUp
+                      : faCaretDown
+                }
+                size={12}
+              />
+              <Text
+                style={{
+                  fontSize: theme.fontSize('sm'),
+                  color:
                     isFasterThanMonthlyGoalHours === undefined
                       ? theme.colors.text
-                      : theme.colors.textInverse
-                  }
-                  icon={
-                    isFasterThanMonthlyGoalHours === undefined
-                      ? faMinus
-                      : isFasterThanMonthlyGoalHours
-                        ? faCaretUp
-                        : faCaretDown
-                  }
-                  size={12}
-                />
-                <Text
-                  style={{
-                    fontSize: theme.fontSize('sm'),
-                    color:
-                      isFasterThanMonthlyGoalHours === undefined
-                        ? theme.colors.text
-                        : theme.colors.textInverse,
-                  }}
-                >
-                  {hoursPerMonthToGoal} {i18n.t('hoursPerMonthToGoal')}
-                </Text>
-              </View>
-            </Badge>
-          </View>
-        )}
-      </Card>
-    )
-  }
-)
+                      : theme.colors.textInverse,
+                }}
+              >
+                {hoursPerMonthToGoal} {i18n.t('hoursPerMonthToGoal')}
+              </Text>
+            </View>
+          </Badge>
+        </View>
+      )}
+    </Card>
+  )
+}
 
 export default AnnualServiceReportSummary

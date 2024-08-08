@@ -1,5 +1,5 @@
 import { View } from 'react-native'
-import { useCallback, useContext } from 'react'
+import { useCallback, useContext, useMemo } from 'react'
 import moment from 'moment'
 import useTheme, { ThemeContext } from '../contexts/theme'
 import Card from './Card'
@@ -25,7 +25,10 @@ const Month = ({ month, year }: { month: number; year: number }) => {
   const monthHasPassed = current.isAfter(toDisplay)
   const monthInFuture = current.isBefore(toDisplay)
   const { serviceReports } = useServiceReport()
-  const monthReports = getMonthsReports(serviceReports, month, year)
+  const monthReports = useMemo(
+    () => getMonthsReports(serviceReports, month, year),
+    [month, serviceReports, year]
+  )
 
   const monthWasBeforeInstalled = toDisplay.isBefore(installedOn)
 

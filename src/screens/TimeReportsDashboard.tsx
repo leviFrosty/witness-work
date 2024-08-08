@@ -1,4 +1,4 @@
-import React, { memo } from 'react'
+import React from 'react'
 import { View } from 'react-native'
 import usePublisher from '../hooks/usePublisher'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
@@ -40,7 +40,7 @@ type TimeReportsDashboardProps = {
   >
 }
 
-const TimeReportsDashboard = memo((props: TimeReportsDashboardProps) => {
+const TimeReportsDashboard = (props: TimeReportsDashboardProps) => {
   const {
     month,
     year,
@@ -228,6 +228,6 @@ const TimeReportsDashboard = memo((props: TimeReportsDashboardProps) => {
       </KeyboardAwareScrollView>
     </View>
   )
-})
+}
 
 export default TimeReportsDashboard

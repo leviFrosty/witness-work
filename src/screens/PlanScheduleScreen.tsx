@@ -5,7 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import i18n from '../lib/locales'
 import Wrapper from '../components/layout/Wrapper'
 import XView from '../components/layout/XView'
-import { memo, useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import moment from 'moment'
 import { Calendar } from 'react-native-calendars'
 import { NativeStackScreenProps } from '@react-navigation/native-stack'
@@ -253,7 +253,7 @@ const PlanScheduleScreen = ({ route, navigation }: PlanScheduleScreenProps) => {
   )
 }
 
-const AnnualScheduleSection = memo((props: { month: number; year: number }) => {
+const AnnualScheduleSection = (props: { month: number; year: number }) => {
   const { month, year } = props
   const theme = useTheme()
   const { dayPlans, recurringPlans } = useServiceReport()
@@ -339,7 +339,7 @@ const AnnualScheduleSection = memo((props: { month: number; year: number }) => {
       />
     </CardWithTitle>
   )
-})
+}
 
 const MonthScheduleSection = (props: { month: number; year: number }) => {
   const theme = useTheme()

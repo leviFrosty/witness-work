@@ -2,7 +2,7 @@ import useServiceReport from '../stores/serviceReport'
 import useTheme from '../contexts/theme'
 import moment from 'moment'
 import { RootStackParamList } from '../stacks/RootStack'
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import ExportTimeSheet, {
   ExportTimeSheetState,
 } from '../components/ExportTimeSheet'
@@ -109,7 +109,10 @@ const TimeReportsScreen = ({ route, navigation }: Props) => {
     year,
   ])
 
-  const thisMonthsReports = getMonthsReports(serviceReports, month, year)
+  const thisMonthsReports = useMemo(
+    () => getMonthsReports(serviceReports, month, year),
+    [month, serviceReports, year]
+  )
 
   const handleArrowNavigate = useCallback(
     (direction: 'forward' | 'back') => {

@@ -121,6 +121,8 @@ const initialState = {
   fontSizeOffset: 0,
   customContactFields: [] as string[],
   hasAttemptedToMigrateToMmkv: false,
+  /** Hidden dev tools for diagnosing issues */
+  developerTools: false,
 }
 
 export const usePreferences = create(

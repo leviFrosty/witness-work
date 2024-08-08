@@ -10,17 +10,19 @@ import Constants from 'expo-constants'
 import { View } from 'react-native'
 import WhatsNewSheet from '../components/WhatsNewSheet'
 import { useEffect, useState } from 'react'
+import DeveloperToolsScreen from '../screens/DeveloperToolsScreen'
 
 export type HomeTabStackParamList = {
   Home: undefined
   Map: undefined
+  Tools: undefined
 }
 
 export type HomeTabStackNavigation =
   BottomTabNavigationProp<HomeTabStackParamList>
 const HomeTabStack = () => {
   const Tab = createBottomTabNavigator<HomeTabStackParamList>()
-  const { lastAppVersion, set } = usePreferences()
+  const { lastAppVersion, developerTools, set } = usePreferences()
   const [lastVersion] = useState(lastAppVersion)
   const [showWhatsNew, setShowWhatsNew] = useState(false)
 
@@ -48,6 +50,9 @@ const HomeTabStack = () => {
       >
         <Tab.Screen name='Home' component={HomeScreen} />
         <Tab.Screen name='Map' component={Map} />
+        {developerTools && (
+          <Tab.Screen name='Tools' component={DeveloperToolsScreen} />
+        )}
       </Tab.Navigator>
     </View>
   )

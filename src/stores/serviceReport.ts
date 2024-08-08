@@ -58,20 +58,21 @@ export const useServiceReport = create(
       set,
       addServiceReport: (report: ServiceReport) =>
         set(({ serviceReports }) => {
+          const reports = { ...serviceReports }
           const month = moment(report.date).month()
           const year = moment(report.date).year()
-          if (!serviceReports[year]) {
-            serviceReports[year] = {}
+          if (!reports[year]) {
+            reports[year] = {}
           }
 
-          if (!serviceReports[year][month]) {
-            serviceReports[year][month] = []
+          if (!reports[year][month]) {
+            reports[year][month] = []
           }
 
-          serviceReports[year][month].push(report)
+          reports[year][month].push(report)
 
           return {
-            serviceReports,
+            serviceReports: reports,
           }
         }),
       addDayPlan: (dayPlan: DayPlan) =>

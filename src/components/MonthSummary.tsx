@@ -49,9 +49,13 @@ const MonthSummary = ({
   const goalHours = publisherHours[publisher]
   const navigation = useNavigation<RootStackNavigation>()
 
-  const adjustedMinutes: AdjustedMinutes = monthsReports
-    ? adjustedMinutesForSpecificMonth(monthsReports, month, year)
-    : { value: 0, credit: 0, standard: 0, creditOverage: 0 }
+  const adjustedMinutes: AdjustedMinutes = useMemo(
+    () =>
+      monthsReports
+        ? adjustedMinutesForSpecificMonth(monthsReports, month, year)
+        : { value: 0, credit: 0, standard: 0, creditOverage: 0 },
+    [month, monthsReports, year]
+  )
 
   const ldcMinutes = useMemo(
     () =>

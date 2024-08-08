@@ -524,11 +524,12 @@ export const getMonthsReports = (
   if (_year === undefined || month === undefined) {
     return []
   }
+
   const year = getYearsReports(serviceReports, _year)
   if (!year || !year[month]) {
     return []
   }
-  return year[month]
+  return [...year[month]] // Need to return new array so memoization functions doesn't reference existing array
 }
 
 export const getServiceYearReports = (

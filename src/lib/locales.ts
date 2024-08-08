@@ -81,7 +81,6 @@ if (locale.startsWith('zh')) {
     locale = 'zh-cn'
   }
 }
-console.log(locale)
 _i18n.locale = locale
 _i18n.enableFallback = true
 moment.locale(locale)

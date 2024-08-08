@@ -482,6 +482,11 @@
       "c9": "I calcoli mensili e annuali totali ora limitano correttamente il tempo di credito a 55 ore al mese. L'ora solare non è influenzata da questa regola. Se superi questo tempo utilizzando il credito, l'eccedenza verrà visualizzata nella schermata dei dettagli del mese.",
       "c10": "Aggiunto supporto per il credito temporale. Gli utenti esistenti potranno aggiornare automaticamente i loro vecchi orari.",
       "c11": "Risolto il problema con la bussola sovrapposta del pulsante Aggiungi su iOS."
+    },
+    "1310": {
+      "c1": "Greatly improved performance when navigating to time related screens.",
+      "c2": "Added Chinese Traditional language.",
+      "c3": "Resolve date localization issue occurred in some regions."
     }
   },
   "installed": "Installato",
@@ -686,5 +691,6 @@
   "updateCategories": "Aggiorna categorie",
   "jwTimeNowSupportsCredits": "JW Time ora supporta correttamente i crediti per coloro che hanno un obiettivo di servizio annuale. Una volta aggiornato un tag esistente, verranno aggiornati anche tutti i rapporti sui servizi.",
   "credits": "Crediti",
-  "done": "Fatto"
+  "done": "Fatto",
+  "noReportsForThisYear": "Non sono presenti voci di servizio per {{count}}."
 }

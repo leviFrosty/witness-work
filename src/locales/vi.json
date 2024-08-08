@@ -686,5 +686,6 @@
   "updateCategories": "Cập nhật danh mục",
   "jwTimeNowSupportsCredits": "JW Time hiện hỗ trợ tín dụng hợp lý cho những người có mục tiêu phục vụ hàng năm. Sau khi bạn cập nhật thẻ hiện có, tất cả các báo cáo dịch vụ của bạn cũng sẽ cập nhật.",
   "credits": "Tín dụng",
-  "done": "Xong"
+  "done": "Xong",
+  "noReportsForThisYear": "Không có mục dịch vụ nào cho {{count}}."
 }

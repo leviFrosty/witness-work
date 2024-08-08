@@ -4,6 +4,7 @@ import Text from './MyText'
 import moment from 'moment'
 import {
   adjustedMinutesForSpecificMonth,
+  getMonthsReports,
   plannedMinutesToCurrentDayForMonth,
   totalMinutesForSpecificMonthUpToDayOfMonth,
 } from '../lib/serviceReport'
@@ -34,6 +35,11 @@ export default function AheadOrBehindOfMonthSchedule(
     )
   }, [dayPlans, month, recurringPlans, year])
 
+  const monthReports = useMemo(
+    () => getMonthsReports(serviceReports, month, year) ?? [],
+    [month, serviceReports, year]
+  )
+
   const actualMinutesToCurrentDay = useMemo(() => {
     const selectedMonth = moment().month(month).year(year)
 
@@ -42,16 +48,16 @@ export default function AheadOrBehindOfMonthSchedule(
       : moment().date()
 
     return totalMinutesForSpecificMonthUpToDayOfMonth(
-      serviceReports,
+      monthReports,
       dayOfMonth,
       month,
       year
     )
-  }, [month, serviceReports, year])
+  }, [month, monthReports, year])
 
   const adjustedMinutesForMonth = useMemo(() => {
-    return adjustedMinutesForSpecificMonth(serviceReports, month, year)
-  }, [month, serviceReports, year])
+    return adjustedMinutesForSpecificMonth(monthReports, month, year)
+  }, [month, monthReports, year])
 
   const hoursDiffToSchedule = useMemo(() => {
     const minutesForMonth =

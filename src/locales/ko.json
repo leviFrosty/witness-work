@@ -686,5 +686,6 @@
   "updateCategories": "카테고리 업데이트",
   "jwTimeNowSupportsCredits": "JW Time은 이제 연간 봉사 목표가 있는 사람들에게 크레딧을 제대로 지원합니다. 기존 태그를 업데이트하면 모든 서비스 보고서도 업데이트됩니다.",
   "credits": "크레딧",
-  "done": "완료"
+  "done": "완료",
+  "noReportsForThisYear": "{{count}}에 대한 서비스 항목이 없습니다."
 }

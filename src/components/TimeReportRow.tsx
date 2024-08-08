@@ -53,7 +53,7 @@ const TimeReportRow = ({ report }: TimeReportRowProps) => {
                   message: i18n.t('deleted'),
                   native: true,
                 })
-                deleteServiceReport(report.id)
+                deleteServiceReport(report)
               },
             },
           ]
@@ -79,7 +79,11 @@ const TimeReportRow = ({ report }: TimeReportRowProps) => {
       }
     >
       <Button
-        onPress={() => navigation.navigate('Add Time', { id: report.id })}
+        onPress={() =>
+          navigation.navigate('Add Time', {
+            existingReport: JSON.stringify(report),
+          })
+        }
         style={{
           backgroundColor: theme.colors.card,
           padding: 15,
@@ -100,11 +104,11 @@ const TimeReportRow = ({ report }: TimeReportRowProps) => {
                 fontFamily: theme.fonts.semiBold,
               }}
             >
-              {`${moment(report.date).format('dddd, L')}`}
+              {`${moment(report.date).format('LL')}`}
             </Text>
           </View>
-          <XView style={{ gap: 15 }}>
-            <XView style={{ gap: 5 }}>
+          <XView style={{ gap: 6 }}>
+            <XView style={{ gap: 4 }}>
               <Text style={{ fontFamily: theme.fonts.semiBold }}>
                 {report.hours}
               </Text>
@@ -112,7 +116,7 @@ const TimeReportRow = ({ report }: TimeReportRowProps) => {
                 {i18n.t('hours')}
               </Text>
             </XView>
-            <XView style={{ gap: 5 }}>
+            <XView style={{ gap: 4 }}>
               <Text style={{ fontFamily: theme.fonts.semiBold }}>
                 {report.minutes}
               </Text>

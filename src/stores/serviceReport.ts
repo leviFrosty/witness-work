@@ -1,9 +1,10 @@
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { create } from 'zustand'
 import { persist, combine, createJSONStorage } from 'zustand/middleware'
-import { ServiceReport } from '../types/serviceReport'
+import { ServiceReport, ServiceReportsByYears } from '../types/serviceReport'
 import moment from 'moment'
-import { RecurringPlan } from '../lib/serviceReport'
+import { getReport, RecurringPlan } from '../lib/serviceReport'
+import { hasMigratedFromAsyncStorage, MmkvStorage } from './mmkv'
 
 export type DayPlan = {
   id: string
@@ -13,7 +14,7 @@ export type DayPlan = {
 }
 
 const initialState = {
-  serviceReports: [] as ServiceReport[],
+  serviceReports: {} as ServiceReportsByYears,
   dayPlans: [] as DayPlan[],
   recurringPlans: [] as RecurringPlan[],
   persistedStopwatch: {
@@ -23,22 +24,54 @@ const initialState = {
   },
 }
 
+/**
+ * Migrates legacy service report data: `ServiceReport[]` ->
+ * `ServiceReportsByYears`
+ */
+export const migrateServiceReports = (
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  oldServiceReports: any
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+): any => {
+  const years: ServiceReportsByYears = {}
+
+  for (const report of oldServiceReports) {
+    const month = moment(report.date).month()
+    const year = moment(report.date).year()
+    if (!years[year]) {
+      years[year] = {}
+    }
+
+    if (!years[year][month]) {
+      years[year][month] = []
+    }
+
+    years[year][month].push(report)
+  }
+
+  return years
+}
+
 export const useServiceReport = create(
   persist(
     combine(initialState, (set) => ({
       set,
-      addServiceReport: (serviceReport: ServiceReport) =>
+      addServiceReport: (report: ServiceReport) =>
         set(({ serviceReports }) => {
-          const foundCurrentServiceReport = serviceReports.find(
-            (c) => c.id === serviceReport.id
-          )
-
-          if (foundCurrentServiceReport) {
-            return {}
+          const month = moment(report.date).month()
+          const year = moment(report.date).year()
+          if (!serviceReports[year]) {
+            serviceReports[year] = {}
           }
 
+          if (!serviceReports[year][month]) {
+            serviceReports[year][month] = []
+          }
+
+          serviceReports[year][month].push(report)
+
           return {
-            serviceReports: [...serviceReports, serviceReport],
+            serviceReports,
           }
         }),
       addDayPlan: (dayPlan: DayPlan) =>
@@ -172,40 +205,72 @@ export const useServiceReport = create(
             recurringPlans: recurringPlans.filter((plan) => plan.id !== id),
           }
         }),
-      deleteServiceReport: (id: string) =>
-        set(({ serviceReports: serviceReport }) => {
-          const foundServiceReport = serviceReport.find(
-            (serviceReport) => serviceReport.id === id
-          )
-          if (!foundServiceReport) {
+      deleteServiceReport: (_report: ServiceReport) =>
+        set(({ serviceReports }) => {
+          const reports = { ...serviceReports }
+          const foundReport = getReport(reports, _report)
+
+          if (!foundReport) {
             return {}
           }
 
+          const { month, year, report } = foundReport
+          const monthWithRemovedReport = reports[year][month].filter(
+            (r) => r.id !== report.id
+          )
+
+          reports[year][month] = monthWithRemovedReport
+
           return {
-            serviceReports: serviceReport.filter(
-              (serviceReport) => serviceReport.id !== id
-            ),
+            serviceReports: reports,
           }
         }),
-      updateServiceReport: (serviceReport: Partial<ServiceReport>) => {
+      updateServiceReport: (serviceReport: ServiceReport) => {
         set(({ serviceReports }) => {
+          const reports = { ...serviceReports }
+          const foundReport = getReport(reports, serviceReport)
+          if (!foundReport) {
+            return {}
+          }
+          const { month, year } = foundReport
+          const updatedMonth = serviceReports[year][month].map((c) => {
+            if (c.id !== serviceReport.id) {
+              return c
+            }
+            return { ...c, ...serviceReport }
+          })
+
+          reports[year][month] = updatedMonth
+
           return {
-            serviceReports: serviceReports.map((c) => {
-              if (c.id !== serviceReport.id) {
-                return c
-              }
-              return { ...c, ...serviceReport }
-            }),
+            serviceReports: reports,
           }
         })
       },
-      _WARNING_forceDeleteServiceReports: () => set({ serviceReports: [] }),
+      _WARNING_forceDeleteServiceReports: () => set({ serviceReports: {} }),
       _WARNING_forceDeleteDayPlans: () => set({ dayPlans: [] }),
       _WARNING_forceDeleteRecurringPlans: () => set({ recurringPlans: [] }),
     })),
     {
       name: 'serviceReports',
-      storage: createJSONStorage(() => AsyncStorage),
+      storage: createJSONStorage(() =>
+        hasMigratedFromAsyncStorage ? MmkvStorage : AsyncStorage
+      ),
+      version: 1,
+      migrate: (persistedState, version) => {
+        if (version === 0) {
+          const previousReports = (
+            persistedState as { serviceReports: ServiceReport[] }
+          ).serviceReports
+
+          const years = migrateServiceReports(previousReports)
+
+          // @ts-expect-error This cannot be type checked because legacy data
+          persistedState.serviceReports = years
+        }
+
+        return persistedState
+      },
     }
   )
 )

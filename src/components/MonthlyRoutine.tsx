@@ -5,7 +5,6 @@ import useTheme, { ThemeContext } from '../contexts/theme'
 import Card from './Card'
 import Text from './MyText'
 import { FlashList } from '@shopify/flash-list'
-import { hasServiceReportsForMonth } from '../lib/serviceReport'
 import useServiceReport from '../stores/serviceReport'
 import { usePreferences } from '../stores/preferences'
 import { useNavigation } from '@react-navigation/native'
@@ -14,6 +13,7 @@ import i18n from '../lib/locales'
 import IconButton from './IconButton'
 import { faCheck, faMinus, faTimes } from '@fortawesome/free-solid-svg-icons'
 import Button from './Button'
+import { getMonthsReports } from '../lib/serviceReport'
 
 const Month = ({ month, year }: { month: number; year: number }) => {
   const theme = useTheme()
@@ -25,15 +25,12 @@ const Month = ({ month, year }: { month: number; year: number }) => {
   const monthHasPassed = current.isAfter(toDisplay)
   const monthInFuture = current.isBefore(toDisplay)
   const { serviceReports } = useServiceReport()
-  const wentOutThisMonth = hasServiceReportsForMonth(
-    serviceReports,
-    month,
-    year
-  )
+  const monthReports = getMonthsReports(serviceReports, month, year)
+
   const monthWasBeforeInstalled = toDisplay.isBefore(installedOn)
 
-  const didNotGoOutInService = monthHasPassed && !wentOutThisMonth
-  const hasNotGoneOutTheCurrentMonth = isCurrentMonth && !wentOutThisMonth
+  const didNotGoOutInService = monthHasPassed && !monthReports.length
+  const hasNotGoneOutTheCurrentMonth = isCurrentMonth && !monthReports.length
 
   return (
     <Button
@@ -61,7 +58,7 @@ const Month = ({ month, year }: { month: number; year: number }) => {
       >
         <IconButton
           iconStyle={{
-            color: wentOutThisMonth
+            color: monthReports.length
               ? theme.colors.accent
               : hasNotGoneOutTheCurrentMonth ||
                   monthInFuture ||

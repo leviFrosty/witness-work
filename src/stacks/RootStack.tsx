@@ -45,7 +45,7 @@ export type RootStackParamList = {
         hours?: number
         minutes?: number
         /** Entering an existing service report ID will enter 'edit' mode. */
-        id?: string
+        existingReport?: string
       }
     | undefined
   'Time Reports': { month?: number; year?: number }

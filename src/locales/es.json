@@ -686,5 +686,6 @@
   "updateCategories": "Actualizar categorías",
   "jwTimeNowSupportsCredits": "JW Time ahora respalda adecuadamente los créditos para quienes tienen una meta de servicio anual. Una vez que actualice una etiqueta existente, todos sus informes de servicio también se actualizarán.",
   "credits": "Créditos",
-  "done": "Hecho"
+  "done": "Hecho",
+  "noReportsForThisYear": "No hay entradas de servicio para {{count}}."
 }

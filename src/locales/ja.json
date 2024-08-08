@@ -686,5 +686,6 @@
   "updateCategories": "カテゴリの更新",
   "jwTimeNowSupportsCredits": "JW Time は、年間サービス目標を持つユーザー向けのクレジットを適切にサポートするようになりました。既存のタグを更新すると、すべてのサービス レポートも更新されます。",
   "credits": "クレジット",
-  "done": "完了"
+  "done": "完了",
+  "noReportsForThisYear": "{{count}} のサービス エントリはありません。"
 }

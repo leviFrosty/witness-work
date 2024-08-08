@@ -686,5 +686,6 @@
   "updateCategories": "更新类别",
   "jwTimeNowSupportsCredits": "JW Time 现在可以正确支持具有年度服务目标的人员的积分。一旦您更新现有标签，您的所有服务报告也将更新。",
   "credits": "积分",
-  "done": "完成"
+  "done": "完成",
+  "noReportsForThisYear": "{{count}} 没有服务条目。"
 }

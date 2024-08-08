@@ -6,6 +6,7 @@ import { MarkedDates } from 'react-native-calendars/src/types'
 import { SelectedDateSheetState } from './SelectedDateSheet'
 import CalendarDay from './CalendarDay'
 import CalendarKey from './CalendarKey'
+import { useMemo } from 'react'
 
 type MonthTimeReportsCalendarProps = {
   month: number
@@ -32,7 +33,7 @@ const MonthTimeReportsCalendar: React.FC<MonthTimeReportsCalendarProps> = ({
   const theme = useTheme()
   const monthToView = moment().month(month).year(year).format('YYYY-MM-DD')
 
-  const markedDates: MarkedDates = (() => {
+  const markedDates: MarkedDates = useMemo(() => {
     if (monthsReports === null) {
       return {}
     }
@@ -45,7 +46,7 @@ const MonthTimeReportsCalendar: React.FC<MonthTimeReportsCalendarProps> = ({
     })
 
     return markedDates
-  })()
+  }, [monthsReports, theme.colors.accent])
 
   return (
     <Calendar
@@ -69,7 +70,9 @@ const MonthTimeReportsCalendar: React.FC<MonthTimeReportsCalendarProps> = ({
       markedDates={markedDates}
       markingType='custom'
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      dayComponent={(props: any) => <CalendarDay {...props} />}
+      dayComponent={(props: any) => (
+        <CalendarDay monthsReports={monthsReports} {...props} />
+      )}
       theme={{
         backgroundColor: theme.colors.card,
         calendarBackground: theme.colors.card,

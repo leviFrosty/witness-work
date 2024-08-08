@@ -34,6 +34,7 @@ import Header from '../components/layout/Header'
 import { faTrash } from '@fortawesome/free-solid-svg-icons'
 import IconButton from '../components/IconButton'
 import usePublisher from '../hooks/usePublisher'
+import { getMonthsReports, getReport } from '../lib/serviceReport'
 
 type AddTimeScreenProps = NativeStackScreenProps<RootStackParamList, 'Add Time'>
 
@@ -60,23 +61,26 @@ const AddTimeScreen = ({ route }: AddTimeScreenProps) => {
     deleteServiceReport,
     set: setServiceReportStore,
   } = useServiceReport()
-  const existingServiceReport = serviceReports.find(
-    (r) => r.id === route.params?.id
-  )
+  const existingServiceReport = route.params?.existingReport
+    ? getReport(serviceReports, JSON.parse(route.params.existingReport))
+    : undefined
+
   const [tag, setTag] = useState(
-    existingServiceReport?.ldc
+    existingServiceReport && existingServiceReport?.report.ldc
       ? timeEntryTags[1]
-      : existingServiceReport?.tag ?? timeEntryTags[0]
+      : existingServiceReport?.report.tag ?? timeEntryTags[0]
   )
   const [customTag, setCustomTag] = useState<string>('')
   const nearestFiveMinutes = Math.floor((route.params?.minutes || 0) / 5) * 5
   const [serviceReport, setServiceReport] = useState<ServiceReport>({
-    id: existingServiceReport?.id ?? Crypto.randomUUID(),
-    hours: existingServiceReport?.hours || route.params?.hours || 0,
-    minutes: existingServiceReport?.minutes ?? nearestFiveMinutes,
-    date: moment(existingServiceReport?.date ?? route.params?.date).toDate(),
-    ldc: existingServiceReport?.ldc ?? false,
-    credit: existingServiceReport?.credit ?? false,
+    id: existingServiceReport?.report.id ?? Crypto.randomUUID(),
+    hours: existingServiceReport?.report.hours || route.params?.hours || 0,
+    minutes: existingServiceReport?.report.minutes ?? nearestFiveMinutes,
+    date: moment(
+      existingServiceReport?.report.date ?? route.params?.date
+    ).toDate(),
+    ldc: existingServiceReport?.report.ldc ?? false,
+    credit: existingServiceReport?.report.credit ?? false,
   })
   const toast = useToastController()
 
@@ -144,19 +148,28 @@ const AddTimeScreen = ({ route }: AddTimeScreenProps) => {
   }
 
   const updateExistingServiceReportsTags = (tag: ServiceReportTag) => {
-    const reports = [...serviceReports]
-
-    const reportsWithUpdatedCreditTag = reports.map((r) => {
-      if (r.tag === tag.value) {
-        return {
-          ...r,
-          credit: tag.credit,
-        }
+    const reports = { ...serviceReports }
+    for (const year in reports) {
+      for (const month in reports[year]) {
+        const monthReports = getMonthsReports(
+          reports,
+          parseInt(month),
+          parseInt(year)
+        )
+        const reportsWithUpdatedCreditTag = monthReports.map((r) => {
+          if (r.tag === tag.value) {
+            return {
+              ...r,
+              credit: tag.credit,
+            }
+          }
+          return r
+        })
+        reports[year][month] = reportsWithUpdatedCreditTag
       }
-      return r
-    })
+    }
 
-    setServiceReportStore({ serviceReports: reportsWithUpdatedCreditTag })
+    setServiceReportStore({ serviceReports: reports })
   }
 
   const setCredit = (credit: boolean) => {
@@ -298,7 +311,7 @@ const AddTimeScreen = ({ route }: AddTimeScreenProps) => {
         text: i18n.t('delete'),
         style: 'destructive',
         onPress: () => {
-          deleteServiceReport(serviceReport.id)
+          deleteServiceReport(serviceReport)
           toast.show(i18n.t('success'), {
             message: i18n.t('deleted'),
             native: true,
@@ -307,7 +320,7 @@ const AddTimeScreen = ({ route }: AddTimeScreenProps) => {
         },
       },
     ])
-  }, [deleteServiceReport, navigation, serviceReport.id, toast])
+  }, [deleteServiceReport, navigation, serviceReport, toast])
 
   useEffect(() => {
     navigation.setOptions({

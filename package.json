@@ -80,6 +80,7 @@
     "react-native-international-phone-number": "^0.7.6",
     "react-native-keyboard-aware-scroll-view": "^0.9.5",
     "react-native-maps": "1.14.0",
+    "react-native-mmkv": "^2.12.2",
     "react-native-pager-view": "6.3.0",
     "react-native-purchases": "^7.27.1",
     "react-native-reanimated": "~3.10.1",

@@ -190,9 +190,10 @@ const CalendarDay = (
   props: DayProps & {
     date?: DateData | undefined
     planMode?: boolean
+    monthsReports: ServiceReport[] | null
   }
 ) => {
-  const { serviceReports, dayPlans, recurringPlans } = useServiceReport()
+  const { dayPlans, recurringPlans } = useServiceReport()
   const translateY = useSharedValue(0)
   const theme = useTheme()
   const { howToAddPlan, removeHint } = usePreferences()
@@ -210,14 +211,18 @@ const CalendarDay = (
   })
 
   const reportsForDay = useMemo(() => {
-    if (props.date === undefined || !props.date?.dateString) {
+    if (
+      props.date === undefined ||
+      !props.date?.dateString ||
+      !props.monthsReports
+    ) {
       return []
     }
 
-    return serviceReports.filter((report) =>
+    return props.monthsReports.filter((report) =>
       moment(report.date).isSame(props.date?.dateString, 'day')
     )
-  }, [props.date, serviceReports])
+  }, [props.date, props.monthsReports])
 
   const dayPlan = useMemo(
     () =>

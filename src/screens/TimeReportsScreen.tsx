@@ -1,9 +1,8 @@
 import useServiceReport from '../stores/serviceReport'
 import useTheme from '../contexts/theme'
-import { ServiceReport } from '../types/serviceReport'
 import moment from 'moment'
 import { RootStackParamList } from '../stacks/RootStack'
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import ExportTimeSheet, {
   ExportTimeSheetState,
 } from '../components/ExportTimeSheet'
@@ -22,6 +21,7 @@ import AnnualTimeOverviewScreen from './AnnualTimeOverviewScreen'
 import { ActiveScreen } from '../constants/timeScreen'
 import XView from '../components/layout/XView'
 import TimeReportsDashboard from './TimeReportsDashboard'
+import { getMonthsReports } from '../lib/serviceReport'
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Time Reports'>
 
@@ -109,35 +109,7 @@ const TimeReportsScreen = ({ route, navigation }: Props) => {
     year,
   ])
 
-  const reportsByYearAndMonth = useMemo(() => {
-    const reports: {
-      [year: string]: { [month: string]: ServiceReport[] }
-    } = {}
-
-    for (const report of serviceReports) {
-      const yearKey = moment(report.date).year()
-      const monthKey = moment(report.date).month()
-
-      if (!reports[yearKey]) {
-        reports[yearKey] = {}
-      }
-
-      if (!reports[yearKey][monthKey]) {
-        reports[yearKey][monthKey] = []
-      }
-
-      reports[yearKey][monthKey].push(report)
-    }
-
-    return reports
-  }, [serviceReports])
-
-  const thisMonthsReports = reportsByYearAndMonth[year]
-    ? reportsByYearAndMonth[year][month] &&
-      reportsByYearAndMonth[year][month].length > 0
-      ? reportsByYearAndMonth[year][month]
-      : null
-    : null
+  const thisMonthsReports = getMonthsReports(serviceReports, month, year)
 
   const handleArrowNavigate = useCallback(
     (direction: 'forward' | 'back') => {

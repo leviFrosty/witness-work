@@ -1,6 +1,10 @@
 import _ from 'lodash'
 import { Publisher } from '../types/publisher'
-import { ServiceReport } from '../types/serviceReport'
+import {
+  ServiceReport,
+  ServiceReportsByYears,
+  ServiceYear,
+} from '../types/serviceReport'
 import moment from 'moment'
 import { DayPlan } from '../stores/serviceReport'
 import { monthCreditMaxMinutes } from '../constants/serviceReports'
@@ -33,15 +37,15 @@ export const calculateMinutesRemaining = ({
 }
 
 export const getTotalMinutesDetailedForSpecificMonth = (
-  serviceReports: ServiceReport[],
+  monthsReports: ServiceReport[],
   month: number,
   year: number
 ) => {
-  const standard = standardMinutesForSpecificMonth(serviceReports, month, year)
-  const ldc = ldcMinutesForSpecificMonth(serviceReports, month, year)
-  const other = otherMinutesForSpecificMonth(serviceReports, month, year)
+  const standard = standardMinutesForSpecificMonth(monthsReports, month, year)
+  const ldc = ldcMinutesForSpecificMonth(monthsReports, month, year)
+  const other = otherMinutesForSpecificMonth(monthsReports, month, year)
 
-  const reportsForMonth = serviceReports.filter((report) => {
+  const reportsForMonth = monthsReports.filter((report) => {
     return (
       moment(report.date).month() === month &&
       moment(report.date).year() === year
@@ -102,12 +106,12 @@ export type AdjustedMinutes = {
  * hours - because standard has higher priority.
  */
 export const adjustedMinutesForSpecificMonth = (
-  serviceReports: ServiceReport[],
+  monthsReports: ServiceReport[],
   targetMonth: number,
   targetYear: number
 ): AdjustedMinutes => {
   const { credit, standard } = getTotalMinutesDetailedForSpecificMonth(
-    serviceReports,
+    monthsReports,
     targetMonth,
     targetYear
   )
@@ -163,11 +167,11 @@ export const totalMinutesForSpecificMonthUpToDayOfMonth = (
   return totalMinutesForMonth
 }
 export const ldcMinutesForSpecificMonth = (
-  serviceReports: ServiceReport[],
+  monthsReports: ServiceReport[],
   targetMonth: number,
   targetYear: number
 ): number => {
-  const totalMinutesForMonth = serviceReports
+  const totalMinutesForMonth = monthsReports
     .filter(
       (report) =>
         moment(report.date).month() === targetMonth &&
@@ -184,11 +188,11 @@ export const ldcMinutesForSpecificMonth = (
 type OtherReports = { tag: string; minutes: number; credit?: boolean }[]
 
 export const otherMinutesForSpecificMonth = (
-  serviceReports: ServiceReport[],
+  monthsReports: ServiceReport[],
   targetMonth: number,
   targetYear: number
 ): OtherReports => {
-  const reportsForMonth = serviceReports.filter((report) => {
+  const reportsForMonth = monthsReports.filter((report) => {
     return (
       moment(report.date).month() === targetMonth &&
       moment(report.date).year() === targetYear
@@ -220,11 +224,11 @@ export const otherMinutesForSpecificMonth = (
 }
 
 export const standardMinutesForSpecificMonth = (
-  serviceReports: ServiceReport[],
+  monthsReports: ServiceReport[],
   targetMonth: number,
   targetYear: number
 ): number => {
-  const totalMinutesForMonth = serviceReports
+  const totalMinutesForMonth = monthsReports
     .filter(
       (report) =>
         moment(report.date).month() === targetMonth &&
@@ -237,20 +241,6 @@ export const standardMinutesForSpecificMonth = (
     }, 0)
 
   return totalMinutesForMonth
-}
-
-export const hasServiceReportsForMonth = (
-  serviceReports: ServiceReport[],
-  month: number,
-  year: number
-): boolean => {
-  const hasReportsForMonth = serviceReports.some(
-    (report) =>
-      moment(report.date).month() === month &&
-      moment(report.date).year() === year
-  )
-
-  return hasReportsForMonth
 }
 
 export const getDaysLeftInCurrentMonth = () => {
@@ -280,7 +270,7 @@ export const serviceReportHoursPerMonthToGoal = ({
   serviceReports,
   serviceYear,
 }: {
-  serviceReports: ServiceReport[]
+  serviceReports: ServiceReportsByYears
   currentDate: {
     month: number
 
@@ -292,24 +282,25 @@ export const serviceReportHoursPerMonthToGoal = ({
   const { maxDate } = serviceYearsDateRange(serviceYear)
   const annualGoalHours = goalHours * 12
 
-  const month = moment().month(currentDate.month).year(currentDate.year)
+  const now = moment().month(currentDate.month).year(currentDate.year)
 
-  const monthHasReports = hasServiceReportsForMonth(
+  const monthReports = getMonthsReports(
     serviceReports,
     currentDate.month,
     currentDate.year
   )
 
-  const monthsRemainingOffset = !monthHasReports ? 1 : 0
+  const monthsRemainingOffset = !monthReports.length ? 1 : 0
 
   const actualMonthsRemaining =
-    moment(maxDate).diff(month, 'months') + monthsRemainingOffset
+    moment(maxDate).diff(now, 'months') + monthsRemainingOffset
 
   const monthsRemaining =
     actualMonthsRemaining === 0 ? 1 : actualMonthsRemaining
 
+  const serviceYearReports = getServiceYearReports(serviceReports, serviceYear)
   const totalMinutesForServiceYear = getTotalMinutesForServiceYear(
-    serviceReports,
+    serviceYearReports,
     serviceYear
   )
 
@@ -329,43 +320,30 @@ export const serviceYearsDateRange = (serviceYear: number) => {
   return { minDate, maxDate }
 }
 
-const monthsInServiceYear = (year: number): Date[] => {
-  const months = []
-
-  for (let i = 8; i < 12; i++) {
-    months.push(moment().startOf('month').month(i).year(year).toDate())
-  }
-  for (let i = 0; i < 8; i++) {
-    months.push(
-      moment()
-        .startOf('month')
-        .month(i)
-        .year(year + 1)
-        .toDate()
-    )
-  }
-
-  return months
-}
-
 export const getTotalMinutesForServiceYear = (
-  serviceReports: ServiceReport[],
+  serviceYearReports: ServiceReportsByYears,
   serviceYear: number
 ) => {
-  serviceReports
+  serviceYearReports
   serviceYear
-  const months = monthsInServiceYear(serviceYear)
   let minutes = 0
 
-  for (const month of months) {
-    const current = moment(month)
-    const currentMinutes = adjustedMinutesForSpecificMonth(
-      serviceReports,
-      current.month(),
-      current.year()
-    ).value
+  for (const year in serviceYearReports) {
+    for (const month in serviceYearReports[year]) {
+      const current = moment().month(parseInt(month)).year(parseInt(year))
+      const monthReports = getMonthsReports(
+        serviceYearReports,
+        parseInt(month),
+        parseInt(year)
+      )
+      const currentMinutes = adjustedMinutesForSpecificMonth(
+        monthReports,
+        current.month(),
+        current.year()
+      ).value
 
-    minutes += currentMinutes
+      minutes += currentMinutes
+    }
   }
 
   return minutes
@@ -495,4 +473,87 @@ export const plannedMinutesToCurrentDayForMonth = (
     })
 
   return count
+}
+
+type ReportQueryResult = {
+  month: number
+  year: number
+  report: ServiceReport
+}
+
+export const getReport = (
+  years: ServiceReportsByYears,
+  report: ServiceReport | undefined
+): ReportQueryResult | undefined => {
+  if (!report) {
+    return
+  }
+  const month = moment(report.date).month()
+  const year = moment(report.date).year()
+  if (!years[year] || !years[year][month]) {
+    return
+  }
+
+  const found = years[year][month].find((r) => r.id === report.id)
+  if (!found) {
+    return
+  }
+
+  return {
+    month,
+    year,
+    report: found,
+  }
+}
+
+export const getYearsReports = (
+  serviceReports: ServiceReportsByYears,
+  year: number
+): ServiceYear => {
+  if (!serviceReports[year]) {
+    return {}
+  }
+  return serviceReports[year]
+}
+
+export const getMonthsReports = (
+  serviceReports: ServiceReportsByYears,
+  month: number | undefined,
+  _year: number | undefined
+): ServiceReport[] => {
+  if (_year === undefined || month === undefined) {
+    return []
+  }
+  const year = getYearsReports(serviceReports, _year)
+  if (!year || !year[month]) {
+    return []
+  }
+  return year[month]
+}
+
+export const getServiceYearReports = (
+  serviceReports: ServiceReportsByYears,
+  serviceYear: number
+): ServiceReportsByYears => {
+  const result: ServiceReportsByYears = {}
+  const first = getYearsReports(serviceReports, serviceYear)
+  const firstYear: ServiceYear = {}
+
+  for (let month = 8; month < 12; month++) {
+    if (first[month]) {
+      firstYear[month] = first[month]
+    }
+  }
+  result[serviceYear] = firstYear
+
+  const second = getYearsReports(serviceReports, serviceYear + 1)
+  const secondYear: ServiceYear = {}
+  for (let month = 0; month < 8; month++) {
+    if (second[month]) {
+      secondYear[month] = second[month]
+    }
+  }
+  result[serviceYear + 1] = secondYear
+
+  return result
 }

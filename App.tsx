@@ -1,5 +1,5 @@
 import 'react-native-gesture-handler'
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import { NavigationContainer } from '@react-navigation/native'
 import RootStackComponent from './src/stacks/RootStack'
 import { SafeAreaProvider } from 'react-native-safe-area-context'
@@ -15,7 +15,13 @@ import {
   Inter_600SemiBold,
   Inter_700Bold,
 } from '@expo-google-fonts/inter'
-import { LogBox, useColorScheme } from 'react-native'
+import {
+  ActivityIndicator,
+  InteractionManager,
+  LogBox,
+  useColorScheme,
+  View,
+} from 'react-native'
 import { StatusBar } from 'expo-status-bar'
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
 import { TamaguiProvider } from 'tamagui'
@@ -24,6 +30,10 @@ import ThemeProvider from './src/providers/ThemeProvider'
 import CustomerProvider from './src/providers/CustomerProvider'
 import { ToastProvider, ToastViewport } from '@tamagui/toast'
 import './env'
+import {
+  hasMigratedFromAsyncStorage,
+  migrateFromAsyncStorage,
+} from './src/stores/mmkv'
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
@@ -71,6 +81,30 @@ export default function App() {
     Inter: require('@tamagui/font-inter/otf/Inter-Medium.otf'),
     InterBold: require('@tamagui/font-inter/otf/Inter-Bold.otf'),
   })
+  const [hasMigrated, setHasMigrated] = useState(hasMigratedFromAsyncStorage)
+
+  useEffect(() => {
+    if (!hasMigratedFromAsyncStorage) {
+      InteractionManager.runAfterInteractions(async () => {
+        try {
+          await migrateFromAsyncStorage()
+        } catch (e) {
+          // Falls back to async storage
+          // Allows user to continue using app regardless.
+        }
+        setHasMigrated(true)
+      })
+    }
+  }, [])
+
+  if (!hasMigrated) {
+    return (
+      <View style={{ justifyContent: 'center', alignItems: 'center', flex: 1 }}>
+        {/* show loading indicator while app is migrating storage... */}
+        <ActivityIndicator />
+      </View>
+    )
+  }
 
   if (!fontsLoaded) {
     return null

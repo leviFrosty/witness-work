@@ -686,5 +686,6 @@
   "updateCategories": "Kategorien aktualisieren",
   "jwTimeNowSupportsCredits": "JW Time unterstützt jetzt ordnungsgemäß Gutschriften für diejenigen mit einem jährlichen Dienstziel. Sobald Sie ein vorhandenes Tag aktualisieren, werden auch alle Ihre Dienstberichte aktualisiert.",
   "credits": "Gutschriften",
-  "done": "Fertig"
+  "done": "Fertig",
+  "noReportsForThisYear": "Es sind keine Serviceeinträge für {{count}} vorhanden."
 }

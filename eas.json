@@ -12,7 +12,8 @@
         "simulator": true
       },
       "env": {
-        "APP_VARIANT": "development"
+        "APP_VARIANT": "development",
+        "ANDROID_SDK_ROOT": "/Users/leviw/Library/Android/sdk"
       },
       "node": "20.14.0"
     },

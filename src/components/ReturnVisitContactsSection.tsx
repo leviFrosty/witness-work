@@ -17,18 +17,17 @@ import { contactSortOptions, usePreferences } from '../stores/preferences'
 import { Contact } from '../types/contact'
 import { contactMostRecentStudy } from '../lib/conversations'
 import Select from './Select'
-import ActionButton from './ActionButton'
 import IconButton from './IconButton'
 import { faPlus, faSort } from '@fortawesome/free-solid-svg-icons'
+import XView from './layout/XView'
 
-const ContactsList = () => {
+const ReturnVisitContactsSection = () => {
   const theme = useTheme()
   const [search, setSearch] = useState('')
   const { contactSort, setContactSort } = usePreferences()
   const { conversations } = useConversations()
   const { contacts } = useContacts()
   const navigation = useNavigation<RootStackNavigation>()
-  const [focusingSearchBar, setFocusingSearchBar] = useState(false)
 
   const searchResultsSorted = useMemo(() => {
     const filteredContacts = contacts.filter((c) =>
@@ -139,78 +138,59 @@ const ContactsList = () => {
         </View>
       </View>
       <Card>
-        <View style={{ flexDirection: 'row', gap: 5 }}>
-          <SearchBar
-            placeholder={
-              focusingSearchBar ? i18n.t('searchForContact') : i18n.t('search')
-            }
-            value={search}
-            setValue={setSearch}
-            onFocus={() => setFocusingSearchBar(true)}
-            onBlur={() => setFocusingSearchBar(false)}
-          />
-          <ActionButton
-            onPress={() =>
-              navigation.navigate('Contact Form', { id: Crypto.randomUUID() })
-            }
-          >
-            <View
+        <View
+          style={{
+            gap: 10,
+            borderRadius: theme.numbers.borderRadiusSm,
+          }}
+        >
+          <XView>
+            <SearchBar
+              placeholder={i18n.t('searchForContact')}
+              value={search}
+              setValue={setSearch}
+            />
+            <IconButton
+              icon={faPlus}
+              size='lg'
               style={{
-                flexGrow: focusingSearchBar ? undefined : 1,
-                alignItems: 'center',
+                backgroundColor: theme.colors.accentTranslucent,
                 justifyContent: 'center',
-                flexDirection: 'row',
-                gap: 10,
+                alignItems: 'center',
+                padding: 17,
+                borderRadius: theme.numbers.borderRadiusSm,
               }}
-            >
-              {!focusingSearchBar && (
-                <Text
-                  style={{
-                    textAlign: 'center',
-                    fontFamily: theme.fonts.bold,
-                    fontSize: theme.fontSize('lg'),
-                    color: theme.colors.textInverse,
-                  }}
-                >
-                  {i18n.t('addContact')}
+              color={theme.colors.accent}
+              onPress={() =>
+                navigation.navigate('Contact Form', { id: Crypto.randomUUID() })
+              }
+            />
+          </XView>
+          <View style={{ flex: 1, minHeight: 10 }}>
+            <FlashList
+              data={searchResultsSorted}
+              renderItem={({ item }) => (
+                <ContactRow
+                  key={item.id}
+                  contact={item}
+                  onPress={() =>
+                    navigation.navigate('Contact Details', { id: item.id })
+                  }
+                />
+              )}
+              ListEmptyComponent={() => (
+                <Text style={{ color: theme.colors.textAlt, fontSize: 12 }}>
+                  {i18n.t('noContactsSaved')}
                 </Text>
               )}
-              <IconButton
-                icon={faPlus}
-                size='lg'
-                iconStyle={{
-                  color: theme.colors.textInverse,
-                }}
-              />
-            </View>
-          </ActionButton>
-        </View>
-        <View style={{ flex: 1, minHeight: 10, gap: 10 }}>
-          <FlashList
-            data={searchResultsSorted}
-            renderItem={({ item }) => (
-              <ContactRow
-                key={item.id}
-                contact={item}
-                onPress={() =>
-                  navigation.navigate('Contact Details', { id: item.id })
-                }
-              />
-            )}
-            ListEmptyComponent={() => (
-              <Text style={{ color: theme.colors.textAlt, fontSize: 12 }}>
-                {i18n.t('noContactsSaved')}
-              </Text>
-            )}
-            estimatedItemSize={84}
-            ItemSeparatorComponent={() => (
-              <View style={{ marginVertical: 6 }} />
-            )}
-          />
+              estimatedItemSize={84}
+              ItemSeparatorComponent={() => <View style={{ marginTop: 8 }} />}
+            />
+          </View>
         </View>
       </Card>
     </View>
   )
 }
 
-export default ContactsList
+export default ReturnVisitContactsSection

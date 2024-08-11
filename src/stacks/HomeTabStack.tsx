@@ -4,13 +4,13 @@ import {
 } from '@react-navigation/bottom-tabs'
 import TabBar from '../components/TabBar'
 import Map from '../screens/MapScreen'
-import HomeScreen from '../screens/HomeScreen'
+import DrawerNavigator from '../screens/DrawerNavigator'
 import { usePreferences } from '../stores/preferences'
 import Constants from 'expo-constants'
 import { View } from 'react-native'
 import WhatsNewSheet from '../components/WhatsNewSheet'
 import { useEffect, useState } from 'react'
-import DeveloperToolsScreen from '../screens/DeveloperToolsScreen'
+import ToolsScreen from '../screens/ToolsScreen'
 import MonthScreen from '../screens/MonthScreen'
 import YearScreen from '../screens/YearScreen'
 import usePublisher from '../hooks/usePublisher'
@@ -54,10 +54,8 @@ const HomeTabStack = () => {
         tabBar={(props) => <TabBar {...props} />}
         screenOptions={{ header: () => null }}
       >
-        <Tab.Screen name='Home' component={HomeScreen} />
-        {developerTools && (
-          <Tab.Screen name='Tools' component={DeveloperToolsScreen} />
-        )}
+        <Tab.Screen name='Home' component={DrawerNavigator} />
+        {developerTools && <Tab.Screen name='Tools' component={ToolsScreen} />}
         {publisher !== 'publisher' && (
           <Tab.Screen name='Month' component={MonthScreen} />
         )}

@@ -34,10 +34,10 @@ const CheckMarkAnimationComponent = ({
         autoPlay={true}
         loop={false}
         style={{
-          width: 110,
-          height: 110,
-          backgroundColor: theme.colors.backgroundLighter,
+          width: 140,
+          height: 120,
         }}
+        speed={0.875}
         // Find more Lottie files at https://lottiefiles.com/featured
         source={require('./../assets/lottie/checkMark.json')}
       />
@@ -92,8 +92,7 @@ export default function PublisherCheckBoxCard() {
             paddingVertical: hasGoneOutInServiceThisMonth ? 5 : 46,
             justifyContent: 'center',
             alignItems: 'center',
-            borderRadius: theme.numbers.borderRadiusLg,
-            paddingHorizontal: 20,
+            borderRadius: theme.numbers.borderRadiusSm,
             overflow: 'hidden',
           }}
         >

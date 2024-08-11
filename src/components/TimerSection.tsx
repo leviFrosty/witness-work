@@ -59,8 +59,8 @@ export const TimerSection = () => {
               paddingHorizontal: 24,
               borderRadius: theme.numbers.borderRadiusSm,
               backgroundColor: isRunning
-                ? theme.colors.error
-                : theme.colors.accent,
+                ? theme.colors.errorTranslucent
+                : theme.colors.accentTranslucent,
               flex: 1,
               alignItems: 'center',
             }}
@@ -68,7 +68,7 @@ export const TimerSection = () => {
           >
             <IconButton
               icon={isRunning ? faPause : faPlay}
-              color={theme.colors.textInverse}
+              color={isRunning ? theme.colors.error : theme.colors.accent}
               size={theme.fontSize('lg')}
             />
           </Button>

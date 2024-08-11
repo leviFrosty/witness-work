@@ -121,7 +121,10 @@ const initialState = {
   fontSizeOffset: 0,
   customContactFields: [] as string[],
   hasAttemptedToMigrateToMmkv: false,
-  /** Hidden dev tools for diagnosing issues */
+  /**
+   * Hidden dev tools for diagnosing issues. To enable/disable, navigate to
+   * drawer (settings) -> tap version number 5 times.
+   */
   developerTools: false,
 }
 

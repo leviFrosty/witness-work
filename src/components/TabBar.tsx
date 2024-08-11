@@ -35,8 +35,9 @@ const TabBar = ({ state, descriptors, ...props }: BottomTabBarProps) => {
         backgroundColor: theme.colors.backgroundLightest,
         paddingBottom: insets.bottom,
         shadowColor: theme.colors.shadow,
-        justifyContent: 'space-evenly',
+        justifyContent: 'space-around',
         position: 'absolute',
+        paddingHorizontal: 20,
         bottom: 0,
         right: 0,
         width: '100%',
@@ -100,15 +101,17 @@ const TabBar = ({ state, descriptors, ...props }: BottomTabBarProps) => {
                   style={{
                     backgroundColor: theme.colors.accent,
                     borderRadius: theme.numbers.borderRadiusSm,
-                    paddingHorizontal: 10,
-                    paddingVertical: 10,
+                    paddingHorizontal: 15,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    height: '100%',
                   }}
                   onPress={() => setSheetOpen(true)}
                 >
                   <IconButton
                     icon={faPlus}
                     color={theme.colors.backgroundLightest}
-                    size='xl'
+                    size='lg'
                   />
                 </Button>
               </View>
@@ -119,10 +122,14 @@ const TabBar = ({ state, descriptors, ...props }: BottomTabBarProps) => {
               accessibilityLabel={options.tabBarAccessibilityLabel}
               onPress={onPress}
               onLongPress={onLongPress}
-              style={{ alignItems: 'center', paddingTop: 10, paddingBottom: 5 }}
+              style={{
+                alignItems: 'center',
+                paddingTop: 10,
+                flex: 1,
+                gap: 1,
+              }}
             >
               <IconButton
-                style={{ paddingHorizontal: 30 }}
                 iconStyle={{
                   color,
                 }}

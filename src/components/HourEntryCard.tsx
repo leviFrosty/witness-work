@@ -2,7 +2,6 @@ import useTheme from '../contexts/theme'
 import { HomeTabStackNavigation } from '../stacks/HomeTabStack'
 import AheadOrBehindOfMonthSchedule from './AheadOrBehindOfSchedule'
 import _ from 'lodash'
-import ActionButton from './ActionButton'
 import { useNavigation } from '@react-navigation/native'
 import { RootStackNavigation } from '../stacks/RootStack'
 import MonthServiceReportProgressBar from './MonthServiceReportProgressBar'
@@ -133,36 +132,37 @@ export default function HourEntryCard() {
   )
 
   return (
-    <Button
-      style={{
-        flexDirection: 'column',
-        borderRadius: theme.numbers.borderRadiusLg,
-        backgroundColor: theme.colors.backgroundLighter,
-        gap: 5,
-        paddingTop: 10,
-        overflow: 'hidden',
-        position: 'relative',
-      }}
-      onPress={() =>
-        navigation.navigate('Month', {
-          month: moment().month(),
-          year: moment().year(),
-        })
-      }
-    >
-      <View style={{ paddingHorizontal: 6, gap: 10 }}>
-        <MonthServiceReportProgressBar
-          month={moment().month()}
-          year={moment().year()}
-          minimal={!displayDetailsOnProgressBarHomeScreen}
-        />
-        <View style={{ marginBottom: 10 }}>
+    <View>
+      <Button
+        style={{
+          flexDirection: 'column',
+          borderRadius: theme.numbers.borderRadiusSm,
+          backgroundColor: theme.colors.backgroundLighter,
+          gap: 5,
+          paddingTop: 5,
+          // overflow: 'hidden',
+          position: 'relative',
+        }}
+        onPress={() =>
+          navigation.navigate('Month', {
+            month: moment().month(),
+            year: moment().year(),
+          })
+        }
+      >
+        <View style={{ paddingHorizontal: 5, gap: 7 }}>
+          <MonthServiceReportProgressBar
+            month={moment().month()}
+            year={moment().year()}
+            minimal={!displayDetailsOnProgressBarHomeScreen}
+          />
           <View
             style={{
               justifyContent: 'center',
               alignItems: 'center',
               flexDirection: 'column',
-              gap: 10,
+              gap: 7,
+              paddingBottom: 10,
             }}
           >
             <View>
@@ -198,7 +198,7 @@ export default function HourEntryCard() {
               <AheadOrBehindOfMonthSchedule
                 month={moment().month()}
                 year={moment().year()}
-                fontSize='sm'
+                fontSize='xs'
               />
             ) : hoursPerDayNeeded > 0 ? (
               <View style={{ gap: 5 }}>
@@ -235,10 +235,25 @@ export default function HourEntryCard() {
             ) : null}
           </View>
         </View>
-      </View>
-      <ActionButton onPress={() => navigation.navigate('Add Time')}>
-        {i18n.t('addTime')}
-      </ActionButton>
-    </Button>
+      </Button>
+      <Button
+        onPress={() => navigation.navigate('Add Time')}
+        style={{
+          alignItems: 'center',
+          backgroundColor: theme.colors.accentTranslucent,
+          paddingVertical: 10,
+          borderRadius: theme.numbers.borderRadiusSm,
+        }}
+      >
+        <Text
+          style={{
+            color: theme.colors.accent,
+            fontFamily: theme.fonts.bold,
+          }}
+        >
+          {i18n.t('addTime')}
+        </Text>
+      </Button>
+    </View>
   )
 }

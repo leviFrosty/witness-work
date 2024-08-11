@@ -18,7 +18,7 @@ import { HomeTabStackNavigation } from '../stacks/HomeTabStack'
 const Month = ({ month, year }: { month: number; year: number }) => {
   const theme = useTheme()
   const navigation = useNavigation<HomeTabStackNavigation>()
-  const { installedOn } = usePreferences()
+  const { installedOn, publisher } = usePreferences()
   const current = moment()
   const toDisplay = moment().month(month).year(year)
   const isCurrentMonth = current.isSame(toDisplay, 'month')
@@ -37,15 +37,18 @@ const Month = ({ month, year }: { month: number; year: number }) => {
 
   return (
     <Button
-      onPress={() =>
-        navigation.navigate('Month', {
-          month,
-          year,
-        })
+      onPress={
+        publisher !== 'publisher'
+          ? () =>
+              navigation.navigate('Month', {
+                month,
+                year,
+              })
+          : undefined
       }
       style={{
         gap: 5,
-        backgroundColor: isCurrentMonth ? theme.colors.accent3 : undefined,
+        backgroundColor: isCurrentMonth ? theme.colors.text : undefined,
         borderRadius: theme.numbers.borderRadiusSm,
         padding: 7,
       }}

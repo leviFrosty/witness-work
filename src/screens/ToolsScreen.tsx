@@ -19,7 +19,7 @@ import { RecurringPlanFrequencies } from '../lib/serviceReport'
 import { useState } from 'react'
 import Button from '../components/Button'
 
-export default function DeveloperToolsScreen() {
+export default function ToolsScreen() {
   const theme = useTheme()
   const insets = useSafeAreaInsets()
   const {

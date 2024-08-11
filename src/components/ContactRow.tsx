@@ -97,6 +97,9 @@ const ContactRow = ({
     <Button onPress={onPress}>
       <Card
         style={{
+          paddingHorizontal: 18,
+          paddingVertical: 16,
+          borderRadius: theme.numbers.borderRadiusSm,
           backgroundColor: theme.colors.backgroundLighter,
         }}
       >

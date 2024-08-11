@@ -61,7 +61,7 @@ export default function StudiesCard() {
         paddingHorizontal: 6,
         paddingVertical: 10,
         backgroundColor: theme.colors.backgroundLighter,
-        borderRadius: theme.numbers.borderRadiusLg,
+        borderRadius: theme.numbers.borderRadiusSm,
         flexGrow: 1,
       }}
     >

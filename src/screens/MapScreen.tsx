@@ -201,6 +201,7 @@ const FullMapView = ({ contactMarkers }: FullMapViewProps) => {
               paddingVertical: 10,
               paddingHorizontal: 25,
               justifyContent: 'center',
+              borderRadius: theme.numbers.borderRadiusSm,
             }}
           >
             <Text style={{ fontFamily: theme.fonts.bold, textAlign: 'center' }}>

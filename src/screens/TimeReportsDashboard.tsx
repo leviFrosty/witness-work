@@ -1,6 +1,5 @@
 import React from 'react'
 import { View } from 'react-native'
-import usePublisher from '../hooks/usePublisher'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import useTheme from '../contexts/theme'
 import Button from '../components/Button'
@@ -10,7 +9,6 @@ import IconButton from '../components/IconButton'
 import moment from 'moment'
 import i18n from '../lib/locales'
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
-import AnnualServiceReportSummary from '../components/AnnualServiceReportSummary'
 import { FlashList } from '@shopify/flash-list'
 import TimeReportRow from '../components/TimeReportRow'
 import Card from '../components/Card'
@@ -20,8 +18,6 @@ import MonthSummary from '../components/MonthSummary'
 import MonthTimeReportsCalendar from '../components/MonthTimeReportsCalendar'
 import { SelectedDateSheetState } from '../components/SelectedDateSheet'
 import MonthScheduleSection from '../components/MonthScheduleSection'
-import { useNavigation } from '@react-navigation/native'
-import { HomeTabStackNavigation } from '../stacks/HomeTabStack'
 
 type TimeReportsDashboardProps = {
   month: number
@@ -47,11 +43,8 @@ const TimeReportsDashboard = (props: TimeReportsDashboardProps) => {
     handleArrowNavigate,
     setSelectedDateSheet,
   } = props
-  const { hasAnnualGoal } = usePublisher()
   const insets = useSafeAreaInsets()
   const theme = useTheme()
-  const serviceYear = month < 8 ? year - 1 : year
-  const navigation = useNavigation<HomeTabStackNavigation>()
   const selectedMonth = moment().month(month).year(year)
 
   return (
@@ -162,23 +155,6 @@ const TimeReportsDashboard = (props: TimeReportsDashboardProps) => {
             gap: 10,
           }}
         >
-          {hasAnnualGoal && (
-            <Button
-              onPress={() => {
-                const toYear = month < 8 ? year : year + 1
-                console.log('navigatin to year', toYear)
-                navigation.navigate('Year', {
-                  year: toYear,
-                })
-              }}
-            >
-              <AnnualServiceReportSummary
-                serviceYear={serviceYear}
-                month={month}
-                year={year}
-              />
-            </Button>
-          )}
           <MonthSummary
             month={month}
             year={year}

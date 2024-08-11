@@ -9,7 +9,7 @@ import ExportTimeSheet, {
 import useContacts from '../stores/contactsStore'
 import { View } from 'react-native'
 import MonthlyRoutine from '../components/MonthlyRoutine'
-import ServiceReport from '../components/ServiceReport'
+import ServiceReportSection from '../components/ServiceReportSection'
 import ContactsList from '../components/ContactsList'
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
@@ -177,7 +177,7 @@ export const DashboardScreen = () => {
               </View>
             )}
           </XView>
-          <ServiceReport setSheet={setExportTimeSheet} />
+          <ServiceReportSection setSheet={setExportTimeSheet} />
           <TimerSection />
           <ContactsList />
         </View>

@@ -712,5 +712,11 @@
   "generated": "Đã tạo",
   "data": "Dữ liệu",
   "show": "Hiển thị",
-  "hide": "Ẩn"
+  "hide": "Ẩn",
+  "Month": "Tháng",
+  "Year": "Năm",
+  "lookingForViewHours": "Bạn đang tìm giờ?",
+  "lookingForViewHours_description": "Nếu bạn là nhà xuất bản tiêu chuẩn, nhưng bạn muốn ghi lại giờ của mình vì lý do cá nhân - hãy thay đổi trạng thái nhà xuất bản của bạn thành 'Tùy chỉnh'. Sau đó, tab tháng sẽ khả dụng với bạn từ màn hình chính.",
+  "dontWantGoal": "Bạn không muốn mục tiêu?",
+  "dontWantGoal_description": "Đặt yêu cầu giờ của bạn thành 0. Điều này sẽ cho phép bạn ghi lại thời gian của mình, giống như những người tiên phong, mà không cần mục tiêu."
 }

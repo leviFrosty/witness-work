@@ -712,5 +712,11 @@
   "generated": "Imetolewa",
   "data": "Data",
   "show": "Onyesha",
-  "hide": "Ficha"
+  "hide": "Ficha",
+  "Month": "Mwezi",
+  "Year": "Mwaka",
+  "lookingForViewHours": "Unatafuta saa?",
+  "lookingForViewHours_description": "Ikiwa wewe' ni mchapishaji wa kawaida, lakini ungependa kurekodi saa zako kwa sababu za kibinafsi - badilisha hali ya mchapishaji wako kuwa 'Custom'. Kisha, kichupo cha mwezi kitapatikana kwako kutoka kwa skrini ya kwanza.",
+  "dontWantGoal": "Je! hutaki' lengo?",
+  "dontWantGoal_description": "Weka hitaji lako la saa kuwa 0. Hii itakuruhusu kurekodi wakati wako, kama waanzilishi, bila lengo."
 }

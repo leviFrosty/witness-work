@@ -4,47 +4,55 @@ import moment from 'moment'
 import MonthSummary from '../components/MonthSummary'
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
 import Button from '../components/Button'
-import { ExportTimeSheetState } from '../components/ExportTimeSheet'
 import { View } from 'react-native'
 import IconButton from '../components/IconButton'
 import { faArrowLeft, faArrowRight } from '@fortawesome/free-solid-svg-icons'
 import Text from '../components/MyText'
 import useTheme from '../contexts/theme'
-import { ActiveScreen } from '../constants/timeScreen'
 import i18n from '../lib/locales'
 import usePublisher from '../hooks/usePublisher'
 import AnnualServiceReportSummary from '../components/AnnualServiceReportSummary'
-import { useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { getServiceYearReports } from '../lib/serviceReport'
 import { FlashList } from '@shopify/flash-list'
 import ActionButton from '../components/ActionButton'
 import { useNavigation } from '@react-navigation/native'
 import { RootStackNavigation } from '../stacks/RootStack'
+import { NativeStackScreenProps } from '@react-navigation/native-stack'
+import {
+  HomeTabStackNavigation,
+  HomeTabStackParamList,
+} from '../stacks/HomeTabStack'
+import Header from '../components/layout/Header'
 
-type AnnualTimeOverviewScreenProps = {
-  handleSetActiveScreen: (
-    month: number,
-    year: number,
-    screen: ActiveScreen
-  ) => void
-  setSheet: React.Dispatch<React.SetStateAction<ExportTimeSheetState>>
-  year: number
-  month: number
-  setYear: React.Dispatch<React.SetStateAction<number>>
-  setMonth: React.Dispatch<React.SetStateAction<number>>
-}
+type ServiceYearScreenProps = NativeStackScreenProps<
+  HomeTabStackParamList,
+  'Year'
+>
 
-const AnnualTimeOverviewScreen = ({
-  setSheet,
-  year,
-  month,
-  handleSetActiveScreen,
-  setYear,
-  setMonth,
-}: AnnualTimeOverviewScreenProps) => {
+/** Service Year screen */
+const YearScreen = ({ route }: ServiceYearScreenProps) => {
   const { serviceReports } = useServiceReport()
   const { hasAnnualGoal } = usePublisher()
-  const navigation = useNavigation<RootStackNavigation>()
+  const navigation = useNavigation<
+    HomeTabStackNavigation & RootStackNavigation
+  >()
+  const [year, setYear] = useState(route.params?.year ?? moment().year())
+
+  useEffect(() => {
+    if (route.params?.year) {
+      console.log('params', route.params.year)
+      setYear(route.params.year)
+    }
+  }, [route.params?.year])
+
+  useEffect(() => {
+    const serviceYearAsString = `${year - 1}-${year}`
+
+    navigation.setOptions({
+      header: () => <Header title={serviceYearAsString} buttonType='none' />,
+    })
+  }, [navigation, year])
   const theme = useTheme()
 
   const reportsForServiceYear = useMemo(
@@ -101,7 +109,6 @@ const AnnualTimeOverviewScreen = ({
               }}
               onPress={() => {
                 setYear(moment().year())
-                setMonth(moment().month())
               }}
             >
               <Text style={{ textDecorationLine: 'underline' }}>
@@ -143,7 +150,7 @@ const AnnualTimeOverviewScreen = ({
         {hasAnnualGoal && (
           <AnnualServiceReportSummary
             serviceYear={year - 1}
-            month={month}
+            month={moment().month()}
             year={year}
             hidePerMonthToGoal
           />
@@ -179,11 +186,10 @@ const AnnualTimeOverviewScreen = ({
                             moment().month() >= parseInt(month)) ||
                           moment().year() > parseInt(year)
                             ? () =>
-                                handleSetActiveScreen(
-                                  parseInt(month),
-                                  parseInt(year),
-                                  ActiveScreen.MonthDetails
-                                )
+                                navigation.navigate('Month', {
+                                  month: parseInt(month),
+                                  year: parseInt(year),
+                                })
                             : undefined
                         }
                       >
@@ -191,7 +197,6 @@ const AnnualTimeOverviewScreen = ({
                           month={parseInt(month)}
                           monthsReports={reportsForServiceYear[year]?.[month]}
                           year={parseInt(year)}
-                          setSheet={setSheet}
                           title={moment().month(parseInt(month)).format('MMMM')}
                           noDetails
                           highlightAsCurrentMonth={
@@ -214,10 +219,7 @@ const AnnualTimeOverviewScreen = ({
                       <ActionButton
                         onPress={() =>
                           navigation.navigate('Add Time', {
-                            date: moment()
-                              .month(month)
-                              .year(parseInt(year))
-                              .toISOString(),
+                            date: moment().year(parseInt(year)).toISOString(),
                           })
                         }
                       >
@@ -235,4 +237,4 @@ const AnnualTimeOverviewScreen = ({
   )
 }
 
-export default AnnualTimeOverviewScreen
+export default YearScreen

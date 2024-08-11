@@ -84,9 +84,13 @@ const SettingsScreen = (props: DrawerContentComponentProps) => {
               : i18n.t('versionUnknown')}
           </Text>
           {developerTools && (
-            <Badge>
-              <Text>{i18n.t('devToolsEnabled')}</Text>
-            </Badge>
+            <View style={{ paddingHorizontal: 20 }}>
+              <Badge>
+                <Text style={{ color: theme.colors.textInverse }}>
+                  {i18n.t('devToolsEnabled')}
+                </Text>
+              </Badge>
+            </View>
           )}
         </View>
       </DrawerContentScrollView>

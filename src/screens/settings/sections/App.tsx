@@ -5,7 +5,6 @@ import InputRowButton from '../../../components/inputs/InputRowButton'
 import {
   faChevronRight,
   faDownload,
-  faHourglassHalf,
   faUndo,
 } from '@fortawesome/free-solid-svg-icons'
 import IconButton from '../../../components/IconButton'
@@ -18,13 +17,6 @@ const AppSection = ({ handleNavigate }: SettingsSectionProps) => {
     <View style={{ gap: 3 }}>
       <SectionTitle text={i18n.t('app')} />
       <Section>
-        <InputRowButton
-          leftIcon={faHourglassHalf}
-          label={i18n.t('viewHours')}
-          onPress={() => handleNavigate('Time Reports')}
-        >
-          <IconButton icon={faChevronRight} />
-        </InputRowButton>
         <InputRowButton
           leftIcon={faUndo}
           label={i18n.t('recoverContacts')}

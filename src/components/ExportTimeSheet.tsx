@@ -28,9 +28,9 @@ import {
 import useTheme from '../contexts/theme'
 import useServiceReport from '../stores/serviceReport'
 import { useNavigation } from '@react-navigation/native'
-import { RootStackNavigation } from '../stacks/RootStack'
 import links from '../constants/links'
 import { openURL } from '../lib/links'
+import { HomeTabStackNavigation } from '../stacks/HomeTabStack'
 
 export type ExportTimeSheetState = {
   open: boolean
@@ -55,7 +55,7 @@ const ExportTimeSheet = ({
   const { conversations } = useConversations()
   const { contacts } = useContacts()
   const { month, year } = sheet
-  const navigation = useNavigation<RootStackNavigation>()
+  const navigation = useNavigation<HomeTabStackNavigation>()
   const monthReports = useMemo(
     () => getMonthsReports(serviceReports, month, year),
     [month, serviceReports, year]
@@ -233,7 +233,7 @@ const ExportTimeSheet = ({
             {showViewAllMonthsButton && (
               <Button
                 onPress={() => {
-                  navigation.navigate('Time Reports', {
+                  navigation.navigate('Month', {
                     month: moment().month(),
                     year: moment().year(),
                   })

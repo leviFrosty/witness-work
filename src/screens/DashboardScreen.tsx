@@ -22,12 +22,12 @@ import i18n from '../lib/locales'
 import Text from '../components/MyText'
 import Button from '../components/Button'
 import { useNavigation } from '@react-navigation/native'
-import { RootStackNavigation } from '../stacks/RootStack'
 import usePublisher from '../hooks/usePublisher'
 import { usePreferences } from '../stores/preferences'
 import BackupReminder from '../components/BackupReminder'
 import { TimerSection } from '../components/TimerSection'
 import UpgradeLegacyTimeReportsSheet from '../components/UpgradeLegacyTimeReportsSheet'
+import { HomeTabStackNavigation } from '../stacks/HomeTabStack'
 
 export const DashboardScreen = () => {
   const theme = useTheme()
@@ -43,7 +43,7 @@ export const DashboardScreen = () => {
   const { isTablet } = useDevice()
   const { hasAnnualGoal } = usePublisher()
   const { serviceReportTags } = usePreferences()
-  const navigation = useNavigation<RootStackNavigation>()
+  const navigation = useNavigation<HomeTabStackNavigation>()
   const serviceYear = getServiceYearFromDate(moment())
   const hasLegacyReports = useMemo(() => {
     return serviceReportTags.some((t) => typeof t === 'string')
@@ -160,7 +160,7 @@ export const DashboardScreen = () => {
                     <Button
                       style={{ flex: 1 }}
                       onPress={() =>
-                        navigation.navigate('Time Reports', {
+                        navigation.navigate('Month', {
                           month: moment().month(),
                           year: moment().year(),
                         })

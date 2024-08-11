@@ -712,5 +712,11 @@
   "generated": "Generiert",
   "data": "Daten",
   "show": "Anzeigen",
-  "hide": "Ausblenden"
+  "hide": "Ausblenden",
+  "Month": "Monat",
+  "Year": "Jahr",
+  "lookingForViewHours": "Suchen Sie nach Stunden?",
+  "lookingForViewHours_description": "Wenn Sie ein Standard-Publisher sind, aber Ihre Stunden aus persönlichen Gründen aufzeichnen möchten, ändern Sie Ihren Publisher-Status in „Benutzerdefiniert“. Dann steht Ihnen die Registerkarte „Monat“ auf dem Startbildschirm zur Verfügung.",
+  "dontWantGoal": "Sie möchten kein Ziel?",
+  "dontWantGoal_description": "Setzen Sie Ihren Stundenbedarf auf 0. So können Sie Ihre Zeit wie Pioniere ohne Ziel aufzeichnen."
 }

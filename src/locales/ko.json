@@ -712,5 +712,11 @@
   "generated": "생성됨",
   "data": "데이터",
   "show": "표시",
-  "hide": "숨기기"
+  "hide": "숨기기",
+  "Month": "월",
+  "Year": "년",
+  "lookingForViewHours": "시간을 찾고 계신가요?",
+  "lookingForViewHours_description": "일반 퍼블리셔이지만 개인적인 이유로 시간을 기록하고 싶다면 퍼블리셔 상태를 '사용자 지정'으로 변경하세요. 그러면 홈 화면에서 월 탭을 사용할 수 있습니다.",
+  "dontWantGoal": "목표를 원하지 않으세요?",
+  "dontWantGoal_description": "시간 요구 사항을 0으로 설정하세요. 그러면 개척자처럼 목표 없이 시간을 기록할 수 있습니다."
 }

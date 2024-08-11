@@ -16,11 +16,12 @@ import TimeReportRow from '../components/TimeReportRow'
 import Card from '../components/Card'
 import { ExportTimeSheetState } from '../components/ExportTimeSheet'
 import { ServiceReport } from '../types/serviceReport'
-import { ActiveScreen } from '../constants/timeScreen'
 import MonthSummary from '../components/MonthSummary'
 import MonthTimeReportsCalendar from '../components/MonthTimeReportsCalendar'
 import { SelectedDateSheetState } from '../components/SelectedDateSheet'
 import MonthScheduleSection from '../components/MonthScheduleSection'
+import { useNavigation } from '@react-navigation/native'
+import { HomeTabStackNavigation } from '../stacks/HomeTabStack'
 
 type TimeReportsDashboardProps = {
   month: number
@@ -30,11 +31,6 @@ type TimeReportsDashboardProps = {
   setYear: React.Dispatch<React.SetStateAction<number>>
   setMonth: React.Dispatch<React.SetStateAction<number>>
   thisMonthsReports: ServiceReport[] | null
-  handleSetActiveScreen: (
-    month: number,
-    year: number,
-    screen: ActiveScreen
-  ) => void
   setSelectedDateSheet: React.Dispatch<
     React.SetStateAction<SelectedDateSheetState>
   >
@@ -49,13 +45,13 @@ const TimeReportsDashboard = (props: TimeReportsDashboardProps) => {
     setMonth,
     thisMonthsReports,
     handleArrowNavigate,
-    handleSetActiveScreen,
     setSelectedDateSheet,
   } = props
   const { hasAnnualGoal } = usePublisher()
   const insets = useSafeAreaInsets()
   const theme = useTheme()
   const serviceYear = month < 8 ? year - 1 : year
+  const navigation = useNavigation<HomeTabStackNavigation>()
   const selectedMonth = moment().month(month).year(year)
 
   return (
@@ -168,9 +164,13 @@ const TimeReportsDashboard = (props: TimeReportsDashboardProps) => {
         >
           {hasAnnualGoal && (
             <Button
-              onPress={() =>
-                handleSetActiveScreen(month, year, ActiveScreen.AnnualOverview)
-              }
+              onPress={() => {
+                const toYear = month < 8 ? year : year + 1
+                console.log('navigatin to year', toYear)
+                navigation.navigate('Year', {
+                  year: toYear,
+                })
+              }}
             >
               <AnnualServiceReportSummary
                 serviceYear={serviceYear}

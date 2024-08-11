@@ -8,16 +8,16 @@ import { FlashList } from '@shopify/flash-list'
 import useServiceReport from '../stores/serviceReport'
 import { usePreferences } from '../stores/preferences'
 import { useNavigation } from '@react-navigation/native'
-import { RootStackNavigation } from '../stacks/RootStack'
 import i18n from '../lib/locales'
 import IconButton from './IconButton'
 import { faCheck, faMinus, faTimes } from '@fortawesome/free-solid-svg-icons'
 import Button from './Button'
 import { getMonthsReports } from '../lib/serviceReport'
+import { HomeTabStackNavigation } from '../stacks/HomeTabStack'
 
 const Month = ({ month, year }: { month: number; year: number }) => {
   const theme = useTheme()
-  const navigation = useNavigation<RootStackNavigation>()
+  const navigation = useNavigation<HomeTabStackNavigation>()
   const { installedOn } = usePreferences()
   const current = moment()
   const toDisplay = moment().month(month).year(year)
@@ -38,7 +38,7 @@ const Month = ({ month, year }: { month: number; year: number }) => {
   return (
     <Button
       onPress={() =>
-        navigation.navigate('Time Reports', {
+        navigation.navigate('Month', {
           month,
           year,
         })

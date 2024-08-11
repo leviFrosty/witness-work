@@ -712,5 +712,11 @@
   "generated": "產生",
   "data": "數據",
   "show": "展示",
-  "hide": "隱藏"
+  "hide": "隱藏",
+  "Month": "月",
+  "Year": "年",
+  "lookingForViewHours": "尋找時間？",
+  "lookingForViewHours_description": "如果您是標準發布商，但出於個人原因想要記錄您的工作時間 - 將您的發布商狀態變更為「自訂」。然後，您將可以從主畫面使用月份選項卡。",
+  "dontWantGoal": "不想進球？",
+  "dontWantGoal_description": "將您的時間要求設為 0。"
 }

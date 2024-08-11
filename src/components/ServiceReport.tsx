@@ -33,13 +33,16 @@ import useDevice from '../hooks/useDevice'
 import _ from 'lodash'
 import AheadOrBehindOfMonthSchedule from './AheadOrBehindOfSchedule'
 import { ServiceReport as ServiceReportType } from '../types/serviceReport'
+import { HomeTabStackNavigation } from '../stacks/HomeTabStack'
 
 const HourEntryCard = () => {
   const theme = useTheme()
   const { publisher, publisherHours, displayDetailsOnProgressBarHomeScreen } =
     usePreferences()
   const { serviceReports, dayPlans, recurringPlans } = useServiceReport()
-  const navigation = useNavigation<RootStackNavigation>()
+  const navigation = useNavigation<
+    HomeTabStackNavigation & RootStackNavigation
+  >()
   const goalHours = publisherHours[publisher]
   const monthReports = useMemo(
     () => getMonthsReports(serviceReports, moment().month(), moment().year()),
@@ -153,7 +156,7 @@ const HourEntryCard = () => {
         position: 'relative',
       }}
       onPress={() =>
-        navigation.navigate('Time Reports', {
+        navigation.navigate('Month', {
           month: moment().month(),
           year: moment().year(),
         })
@@ -495,7 +498,7 @@ interface ServiceReportProps {
 const ServiceReport = ({ setSheet }: ServiceReportProps) => {
   const theme = useTheme()
   const { publisher } = usePreferences()
-  const navigation = useNavigation<RootStackNavigation>()
+  const navigation = useNavigation<HomeTabStackNavigation>()
   const { isTablet } = useDevice()
 
   return (
@@ -537,7 +540,7 @@ const ServiceReport = ({ setSheet }: ServiceReportProps) => {
               {publisher !== 'publisher' ? (
                 <Button
                   onPress={() =>
-                    navigation.navigate('Time Reports', {
+                    navigation.navigate('Month', {
                       month: moment().month(),
                       year: moment().year(),
                     })

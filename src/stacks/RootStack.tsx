@@ -7,7 +7,6 @@ import Header from '../components/layout/Header'
 import ConversationFormScreen from '../screens/ConversationFormScreen'
 import ContactDetailsScreen from '../screens/ContactDetailsScreen'
 import AddTimeScreen from '../screens/AddTimeScreen'
-import TimeReportsScreen from '../screens/TimeReportsScreen'
 import RecoverContactsScreen from '../screens/RecoverContactsScreen'
 import OnBoarding from '../components/onboarding/Onboarding'
 import { usePreferences } from '../stores/preferences'
@@ -48,7 +47,6 @@ export type RootStackParamList = {
         existingReport?: string
       }
     | undefined
-  'Time Reports': { month?: number; year?: number }
   'Recover Contacts': undefined
   Onboarding: undefined
   Update: undefined
@@ -116,7 +114,6 @@ const RootStackComponent = () => {
         }}
         component={AddTimeScreen}
       />
-      <RootStack.Screen name='Time Reports' component={TimeReportsScreen} />
       <RootStack.Screen
         options={{
           presentation: 'modal',

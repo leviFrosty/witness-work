@@ -17,7 +17,7 @@ type Props = {
   backgroundColor?: string
   inverseTextAndIconColor?: boolean
   title?: string
-  buttonType?: 'exit' | 'settings' | 'back'
+  buttonType?: 'exit' | 'settings' | 'back' | 'none'
   onPressLeftIcon?: () => void
   rightElement?: React.ReactNode
   noBottomBorder?: boolean
@@ -60,6 +60,7 @@ const Header = ({
     if (buttonType === 'back') {
       return faChevronLeft
     }
+
     return faBars
   }
 
@@ -83,17 +84,19 @@ const Header = ({
           paddingVertical: 12,
         }}
       >
-        <IconButton
-          style={{ position: 'absolute', left: 0 }}
-          onPress={handleButtonAction}
-          icon={iconName()}
-          iconStyle={{
-            color: inverseTextAndIconColor
-              ? theme.colors.textInverse
-              : theme.colors.text,
-          }}
-          size={'xl'}
-        />
+        {buttonType !== 'none' && (
+          <IconButton
+            style={{ position: 'absolute', left: 0 }}
+            onPress={handleButtonAction}
+            icon={iconName()}
+            iconStyle={{
+              color: inverseTextAndIconColor
+                ? theme.colors.textInverse
+                : theme.colors.text,
+            }}
+            size={'xl'}
+          />
+        )}
         <Text
           style={{
             fontSize: 18,

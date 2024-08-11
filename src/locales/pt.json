@@ -712,5 +712,11 @@
   "generated": "Gerado",
   "data": "Dados",
   "show": "Mostrar",
-  "hide": "Ocultar"
+  "hide": "Ocultar",
+  "Month": "Mês",
+  "Year": "Ano",
+  "lookingForViewHours": "Procurando por horas?",
+  "lookingForViewHours_description": "Se você é um publicador padrão, mas quer registrar suas horas por motivos pessoais - altere seu status de publicador para 'Personalizado'. Então, a aba mês ficará disponível para você na tela inicial.",
+  "dontWantGoal": "Não quer uma meta?",
+  "dontWantGoal_description": "Defina seu requisito de horas como 0. Isso permitirá que você registre seu tempo, como pioneiros, sem uma meta."
 }

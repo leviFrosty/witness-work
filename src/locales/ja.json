@@ -712,5 +712,11 @@
   "generated": "生成済み",
   "data": "データ",
   "show": "表示",
-  "hide": "非表示"
+  "hide": "非表示",
+  "Month": "月",
+  "Year": "年",
+  "lookingForViewHours": "時間をお探しですか?",
+  "lookingForViewHours_description": "標準のパブリッシャーですが、個人的な理由で時間を記録したい場合は、パブリッシャーのステータスを「カスタム」に変更してください。そうすると、ホーム画面から月タブが利用できるようになります。",
+  "dontWantGoal": "目標は不要ですか?",
+  "dontWantGoal_description": "時間要件を 0 に設定してください。これにより、パイオニアのように目標なしで時間を記録できます。"
 }

@@ -1,33 +1,26 @@
 import useServiceReport from '../stores/serviceReport'
 import useTheme from '../contexts/theme'
 import moment from 'moment'
-import { RootStackParamList } from '../stacks/RootStack'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import ExportTimeSheet, {
   ExportTimeSheetState,
 } from '../components/ExportTimeSheet'
 import IconButton from '../components/IconButton'
-import {
-  faCalendarDay,
-  faListUl,
-  faPlus,
-} from '@fortawesome/free-solid-svg-icons'
+import { faPlus } from '@fortawesome/free-solid-svg-icons'
 import { NativeStackScreenProps } from '@react-navigation/native-stack'
 import Header from '../components/layout/Header'
 import SelectedDateSheet, {
   SelectedDateSheetState,
 } from '../components/SelectedDateSheet'
-import AnnualTimeOverviewScreen from './AnnualTimeOverviewScreen'
-import { ActiveScreen } from '../constants/timeScreen'
 import XView from '../components/layout/XView'
 import TimeReportsDashboard from './TimeReportsDashboard'
 import { getMonthsReports } from '../lib/serviceReport'
+import { HomeTabStackParamList } from '../stacks/HomeTabStack'
 
-type Props = NativeStackScreenProps<RootStackParamList, 'Time Reports'>
+type Props = NativeStackScreenProps<HomeTabStackParamList, 'Month'>
 
-const TimeReportsScreen = ({ route, navigation }: Props) => {
+const MonthScreen = ({ route, navigation }: Props) => {
   const theme = useTheme()
-  const [activeScreen, setActiveScreen] = useState(ActiveScreen.MonthDetails)
   const { serviceReports } = useServiceReport()
   const [year, setYear] = useState(route.params?.year || moment().year())
   const [month, setMonth] = useState(route.params?.month || moment().month())
@@ -43,46 +36,23 @@ const TimeReportsScreen = ({ route, navigation }: Props) => {
     })
   const selectedMonth = moment().month(month).year(year)
 
-  const handleSetActiveScreen = (
-    month: number,
-    year: number,
-    screen: ActiveScreen
-  ) => {
-    setMonth(month)
-    setYear(year)
-    setActiveScreen(screen)
-  }
+  useEffect(() => {
+    if (route.params?.month) {
+      setMonth(route.params.month)
+    }
+    if (route.params?.year) {
+      setYear(route.params.year)
+    }
+  }, [route.params?.month, route.params?.year])
 
   useEffect(() => {
-    const serviceYearAsString = `${year - 1}-${year}`
-
     navigation.setOptions({
       header: ({ navigation }) => (
         <Header
-          title={
-            activeScreen === ActiveScreen.MonthDetails
-              ? selectedMonth.format('MMMM YYYY')
-              : serviceYearAsString
-          }
-          buttonType='back'
+          title={selectedMonth.format('MMMM YYYY')}
+          buttonType='none'
           rightElement={
             <XView style={{ position: 'absolute', right: 0, gap: 20 }}>
-              <IconButton
-                icon={
-                  activeScreen === ActiveScreen.AnnualOverview
-                    ? faCalendarDay
-                    : faListUl
-                }
-                onPress={() => {
-                  const nextScreen =
-                    activeScreen === ActiveScreen.AnnualOverview
-                      ? ActiveScreen.MonthDetails
-                      : ActiveScreen.AnnualOverview
-                  handleSetActiveScreen(month, year, nextScreen)
-                }}
-                size='xl'
-                iconStyle={{ color: theme.colors.text }}
-              />
               <IconButton
                 icon={faPlus}
                 onPress={() =>
@@ -99,7 +69,6 @@ const TimeReportsScreen = ({ route, navigation }: Props) => {
       ),
     })
   }, [
-    activeScreen,
     month,
     navigation,
     selectedMonth,
@@ -137,28 +106,16 @@ const TimeReportsScreen = ({ route, navigation }: Props) => {
 
   return (
     <>
-      {activeScreen === ActiveScreen.AnnualOverview ? (
-        <AnnualTimeOverviewScreen
-          handleSetActiveScreen={handleSetActiveScreen}
-          setSheet={setSheet}
-          year={year}
-          month={month}
-          setYear={setYear}
-          setMonth={setMonth}
-        />
-      ) : (
-        <TimeReportsDashboard
-          setSheet={setSheet}
-          year={year}
-          month={month}
-          setYear={setYear}
-          setMonth={setMonth}
-          handleArrowNavigate={handleArrowNavigate}
-          thisMonthsReports={thisMonthsReports}
-          handleSetActiveScreen={handleSetActiveScreen}
-          setSelectedDateSheet={setSelectedDateSheet}
-        />
-      )}
+      <TimeReportsDashboard
+        setSheet={setSheet}
+        year={year}
+        month={month}
+        setYear={setYear}
+        setMonth={setMonth}
+        handleArrowNavigate={handleArrowNavigate}
+        thisMonthsReports={thisMonthsReports}
+        setSelectedDateSheet={setSelectedDateSheet}
+      />
       <ExportTimeSheet setSheet={setSheet} sheet={sheet} />
       <SelectedDateSheet
         sheet={selectedDateSheet}
@@ -168,4 +125,4 @@ const TimeReportsScreen = ({ route, navigation }: Props) => {
     </>
   )
 }
-export default TimeReportsScreen
+export default MonthScreen

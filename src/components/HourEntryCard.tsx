@@ -140,7 +140,6 @@ export default function HourEntryCard() {
           backgroundColor: theme.colors.backgroundLighter,
           gap: 5,
           paddingTop: 5,
-          // overflow: 'hidden',
           position: 'relative',
         }}
         onPress={() =>
@@ -243,6 +242,8 @@ export default function HourEntryCard() {
           backgroundColor: theme.colors.accentTranslucent,
           paddingVertical: 10,
           borderRadius: theme.numbers.borderRadiusSm,
+          borderWidth: 1,
+          borderColor: theme.colors.accent,
         }}
       >
         <Text

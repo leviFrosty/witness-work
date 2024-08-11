@@ -272,7 +272,7 @@ const ExportTimeSheet = ({
                   moment()
                     .month(sheet.month)
                     .year(sheet.year)
-                    .format('MMM, YYYY')}
+                    .format('MMMM, YYYY')}
               </Text>
 
               <IconButton

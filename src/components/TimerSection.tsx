@@ -58,6 +58,8 @@ export const TimerSection = () => {
               paddingVertical: 12,
               paddingHorizontal: 24,
               borderRadius: theme.numbers.borderRadiusSm,
+              borderColor: isRunning ? theme.colors.error : theme.colors.accent,
+              borderWidth: 1,
               backgroundColor: isRunning
                 ? theme.colors.errorTranslucent
                 : theme.colors.accentTranslucent,

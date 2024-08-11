@@ -189,7 +189,7 @@ export const HomeScreen = () => {
       <ExportTimeSheet
         sheet={exportTimeSheet}
         setSheet={setExportTimeSheet}
-        showViewAllMonthsButton
+        showViewAllMonthsButton={publisher !== 'publisher'}
       />
     </View>
   )

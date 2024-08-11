@@ -1,40 +1,29 @@
-import Wrapper from '../components/layout/Wrapper'
-import MapView, { LatLng, Marker, PROVIDER_GOOGLE } from 'react-native-maps'
-import useContacts from '../stores/contactsStore'
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigation } from '@react-navigation/native'
-import { HomeTabStackNavigation } from '../stacks/HomeTabStack'
-import useTheme from '../contexts/theme'
-import useConversations from '../stores/conversationStore'
-import moment from 'moment'
-import { Dimensions, Platform, View } from 'react-native'
 import Carousel, { ICarouselInstance } from 'react-native-reanimated-carousel'
-import MapCarouselCard from '../components/MapCarouselCard'
-import { Contact } from '../types/contact'
-import * as Location from 'expo-location'
-import * as Crypto from 'expo-crypto'
-import ShareAddressSheet, {
-  MapShareSheet,
-} from '../components/ShareAddressSheet'
-import { usePreferences } from '../stores/preferences'
-import Text from '../components/MyText'
-import Button from '../components/Button'
-import i18n from '../lib/locales'
-import ActionButton from '../components/ActionButton'
+import { ContactMarker } from '../screens/MapScreen'
+import { HomeTabStackNavigation } from '../stacks/HomeTabStack'
+import { Dimensions, Platform, View } from 'react-native'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import MapView, { LatLng, Marker, PROVIDER_GOOGLE } from 'react-native-maps'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import Card from '../components/Card'
+import useTheme from '../contexts/theme'
+import ShareAddressSheet, { MapShareSheet } from './ShareAddressSheet'
+import useContacts from '../stores/contactsStore'
+import * as Location from 'expo-location'
+import Card from './Card'
+import Text from './MyText'
+import i18n from '../lib/locales'
+import ActionButton from './ActionButton'
 import { RootStackNavigation } from '../stacks/RootStack'
-import MapOnboarding from '../components/MapOnboarding'
-
-export interface ContactMarker extends Contact {
-  pinColor: string
-}
+import * as Crypto from 'expo-crypto'
+import MapCarouselCard from './MapCarouselCard'
+import Button from './Button'
 
 interface FullMapViewProps {
   contactMarkers: ContactMarker[]
 }
 
-const FullMapView = ({ contactMarkers }: FullMapViewProps) => {
+export default function FullMapView({ contactMarkers }: FullMapViewProps) {
   const navigation = useNavigation<HomeTabStackNavigation>()
   const width = Dimensions.get('window').width
   const mapRef = useRef<MapView>(null)
@@ -216,72 +205,3 @@ const FullMapView = ({ contactMarkers }: FullMapViewProps) => {
     </>
   )
 }
-
-const MapScreen = () => {
-  const { contacts } = useContacts()
-  const { conversations } = useConversations()
-  const theme = useTheme()
-  const { hasCompletedMapOnboarding } = usePreferences()
-
-  const contactMarkers: ContactMarker[] = useMemo(() => {
-    const contactsWithCoords = contacts.filter(
-      (c) => c.coordinate?.latitude && c.coordinate.longitude
-    )
-    return contactsWithCoords.map((c) => {
-      const today = moment()
-      const contactConvos = conversations.filter(
-        (convo) => convo.contact.id === c.id
-      )
-
-      if (contactConvos.length === 0) {
-        return {
-          ...c,
-          pinColor: theme.colors.textAlt,
-        }
-      }
-
-      const conversationsSorted = [...contactConvos].sort(
-        (a, b) => moment(b.date).unix() - moment(a.date).unix()
-      )
-      const mostRecentDate = moment(conversationsSorted[0].date)
-
-      let pinColor: string = theme.colors.accent
-
-      if (mostRecentDate.isBefore(today.subtract(1, 'week'))) {
-        pinColor = theme.colors.warn
-      }
-
-      if (mostRecentDate.isBefore(today.subtract(1, 'month'))) {
-        pinColor = theme.colors.error
-      }
-
-      return {
-        ...c,
-        pinColor: pinColor,
-      }
-    })
-  }, [
-    contacts,
-    conversations,
-    theme.colors.accent,
-    theme.colors.error,
-    theme.colors.textAlt,
-    theme.colors.warn,
-  ])
-
-  if (!hasCompletedMapOnboarding) {
-    return (
-      <Wrapper insets='none' style={{ flexGrow: 1 }}>
-        <MapOnboarding />
-      </Wrapper>
-    )
-  }
-
-  return (
-    <Wrapper insets='none' style={{ flexGrow: 1 }}>
-      <FullMapView contactMarkers={contactMarkers} />
-    </Wrapper>
-  )
-}
-
-export default MapScreen

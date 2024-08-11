@@ -40,7 +40,7 @@ const MonthScreen = ({ route, navigation }: Props) => {
     if (route.params?.year) {
       setYear(route.params.year)
     }
-  }, [route.params.month, route.params.year])
+  }, [route.params?.month, route.params?.year])
 
   useEffect(() => {
     navigation.setOptions({

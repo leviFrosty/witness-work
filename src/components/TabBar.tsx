@@ -21,7 +21,7 @@ import QuickActionSheet from './QuickActionSheet'
 import { RootStackNavigation } from '../stacks/RootStack'
 import { HomeTabStackNavigation } from '../stacks/HomeTabStack'
 
-export const TAB_BAR_HEIGHT = 55
+export const TAB_BAR_HEIGHT = 50
 
 const TabBar = ({ state, descriptors, ...props }: BottomTabBarProps) => {
   const [sheetOpen, setSheetOpen] = useState(false)

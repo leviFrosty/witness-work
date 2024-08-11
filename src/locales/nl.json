@@ -718,5 +718,7 @@
   "lookingForViewHours": "Zoekt u uren?",
   "lookingForViewHours_description": "Als u een standaarduitgever bent, maar u wilt uw uren om persoonlijke redenen registreren, wijzig dan uw uitgeversstatus naar 'Aangepast'. Vervolgens wordt het tabblad Maand voor u beschikbaar vanaf het startscherm.",
   "dontWantGoal": "Wilt u geen doel?",
-  "dontWantGoal_description": "Stel uw urenvereiste in op 0. Hiermee kunt u uw tijd registreren, net als pioniers, zonder doel."
+  "dontWantGoal_description": "Stel uw urenvereiste in op 0. Hiermee kunt u uw tijd registreren, net als pioniers, zonder doel.",
+  "quickAction": "Snelle actie",
+  "time": "Tijd"
 }

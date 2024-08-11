@@ -498,7 +498,6 @@ interface ServiceReportProps {
 const ServiceReport = ({ setSheet }: ServiceReportProps) => {
   const theme = useTheme()
   const { publisher } = usePreferences()
-  const navigation = useNavigation<HomeTabStackNavigation>()
   const { isTablet } = useDevice()
 
   return (
@@ -537,23 +536,7 @@ const ServiceReport = ({ setSheet }: ServiceReportProps) => {
             }}
           >
             <View style={{ flexDirection: 'row' }}>
-              {publisher !== 'publisher' ? (
-                <Button
-                  onPress={() =>
-                    navigation.navigate('Month', {
-                      month: moment().month(),
-                      year: moment().year(),
-                    })
-                  }
-                >
-                  <RowSectionTitle
-                    title={i18n.t('viewHours')}
-                    underline={true}
-                  />
-                </Button>
-              ) : (
-                <RowSectionTitle title={i18n.t('hours')} />
-              )}
+              <RowSectionTitle title={i18n.t('hours')} />
             </View>
             {publisher === 'publisher' ? (
               <StandardPublisherTimeEntry />

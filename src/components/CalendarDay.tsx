@@ -201,7 +201,7 @@ const CalendarDay = (
   const isToday = moment().isSame(props.date?.dateString, 'day')
 
   useEffect(() => {
-    translateY.value = withRepeat(withTiming(-15, { duration: 500 }), -1, true)
+    translateY.value = withRepeat(withTiming(-10, { duration: 600 }), 0, true)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
   const animatedStyle = useAnimatedStyle(() => {
@@ -249,7 +249,7 @@ const CalendarDay = (
       <Button
         onPress={() => {
           props.onPress?.(props.date)
-          if (props.planMode && howToAddPlan) {
+          if (howToAddPlan) {
             removeHint('howToAddPlan')
           }
         }}
@@ -272,7 +272,7 @@ const CalendarDay = (
             {
               position: 'absolute',
               right: 5,
-              bottom: -35,
+              bottom: -25,
             },
             animatedStyle,
           ]}

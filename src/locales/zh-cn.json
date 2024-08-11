@@ -718,5 +718,7 @@
   "lookingForViewHours": "寻找小时数？",
   "lookingForViewHours_description": "如果您是标准发布者，但出于个人原因想要记录您的小时数 - 请将您的发布者状态更改为“自定义”。然后，月份选项卡将从主屏幕变为可用。",
   "dontWantGoal": "不想要目标？",
-  "dontWantGoal_description": "将您的小时数要求设置为 0。这将允许您像先驱者一样记录您的时间，而无需目标。"
+  "dontWantGoal_description": "将您的小时数要求设置为 0。这将允许您像先驱者一样记录您的时间，而无需目标。",
+  "quickAction": "快速行动",
+  "time": "时间"
 }

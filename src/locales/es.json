@@ -718,5 +718,7 @@
   "lookingForViewHours": "¿Buscas horas?",
   "lookingForViewHours_description": "Si eres un editor estándar, pero quieres registrar tus horas por motivos personales, cambia tu estado de editor a \"Personalizado\". Luego, la pestaña de mes estará disponible para ti en la pantalla de inicio.",
   "dontWantGoal": "¿No quieres un objetivo?",
-  "dontWantGoal_description": "Establece tu requisito de horas en 0. Esto te permitirá registrar tu tiempo, como los pioneros, sin un objetivo."
+  "dontWantGoal_description": "Establece tu requisito de horas en 0. Esto te permitirá registrar tu tiempo, como los pioneros, sin un objetivo.",
+  "quickAction": "Acción rápida",
+  "time": "Tiempo"
 }

@@ -5,14 +5,11 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import ExportTimeSheet, {
   ExportTimeSheetState,
 } from '../components/ExportTimeSheet'
-import IconButton from '../components/IconButton'
-import { faPlus } from '@fortawesome/free-solid-svg-icons'
 import { NativeStackScreenProps } from '@react-navigation/native-stack'
 import Header from '../components/layout/Header'
 import SelectedDateSheet, {
   SelectedDateSheetState,
 } from '../components/SelectedDateSheet'
-import XView from '../components/layout/XView'
 import TimeReportsDashboard from './TimeReportsDashboard'
 import { getMonthsReports } from '../lib/serviceReport'
 import { HomeTabStackParamList } from '../stacks/HomeTabStack'
@@ -43,29 +40,12 @@ const MonthScreen = ({ route, navigation }: Props) => {
     if (route.params?.year) {
       setYear(route.params.year)
     }
-  }, [route.params?.month, route.params?.year])
+  }, [route.params.month, route.params.year])
 
   useEffect(() => {
     navigation.setOptions({
-      header: ({ navigation }) => (
-        <Header
-          title={selectedMonth.format('MMMM YYYY')}
-          buttonType='none'
-          rightElement={
-            <XView style={{ position: 'absolute', right: 0, gap: 20 }}>
-              <IconButton
-                icon={faPlus}
-                onPress={() =>
-                  navigation.navigate('Add Time', {
-                    date: selectedMonth.toISOString(),
-                  })
-                }
-                size='xl'
-                iconStyle={{ color: theme.colors.text }}
-              />
-            </XView>
-          }
-        />
+      header: () => (
+        <Header title={selectedMonth.format('MMMM YYYY')} buttonType='none' />
       ),
     })
   }, [

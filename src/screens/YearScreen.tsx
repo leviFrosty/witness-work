@@ -41,7 +41,6 @@ const YearScreen = ({ route }: ServiceYearScreenProps) => {
 
   useEffect(() => {
     if (route.params?.year) {
-      console.log('params', route.params.year)
       setYear(route.params.year)
     }
   }, [route.params?.year])

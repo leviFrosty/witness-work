@@ -718,5 +718,7 @@
   "lookingForViewHours": "Vous recherchez des heures ?",
   "lookingForViewHours_description": "Si vous êtes un éditeur standard, mais que vous souhaitez enregistrer vos heures pour des raisons personnelles, modifiez votre statut d'éditeur en « Personnalisé ». L'onglet Mois sera alors disponible sur l'écran d'accueil.",
   "dontWantGoal": "Vous ne voulez pas d'objectif ?",
-  "dontWantGoal_description": "Définissez votre exigence en heures sur 0. Cela vous permettra d'enregistrer votre temps, comme les pionniers, sans objectif."
+  "dontWantGoal_description": "Définissez votre exigence en heures sur 0. Cela vous permettra d'enregistrer votre temps, comme les pionniers, sans objectif.",
+  "quickAction": "Action rapide",
+  "time": "Heure"
 }

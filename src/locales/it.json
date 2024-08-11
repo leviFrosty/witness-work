@@ -718,5 +718,7 @@
   "lookingForViewHours": "Cerchi ore?",
   "lookingForViewHours_description": "Se sei un editore standard, ma vuoi registrare le tue ore per motivi personali, modifica il tuo stato di editore in \"Personalizzato\". Quindi, la scheda del mese diventerà disponibile dalla schermata iniziale.",
   "dontWantGoal": "Non vuoi un obiettivo?",
-  "dontWantGoal_description": "Imposta il tuo requisito di ore su 0. Ciò ti consentirà di registrare il tuo tempo, come i pionieri, senza un obiettivo."
+  "dontWantGoal_description": "Imposta il tuo requisito di ore su 0. Ciò ti consentirà di registrare il tuo tempo, come i pionieri, senza un obiettivo.",
+  "quickAction": "Azione rapida",
+  "time": "Tempo"
 }

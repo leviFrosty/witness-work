@@ -22,11 +22,7 @@ import * as Localization from 'expo-localization'
 import { ICountryCca2 } from 'react-native-international-phone-number/lib/interfaces/countryCca2'
 import InputRowContainer from '../components/inputs/InputRowContainer'
 import IconButton from '../components/IconButton'
-import {
-  faCaretDown,
-  faIdCard,
-  faMinus,
-} from '@fortawesome/free-solid-svg-icons'
+import { faCaretDown, faMinus } from '@fortawesome/free-solid-svg-icons'
 import { parsePhoneNumber } from 'awesome-phonenumber'
 import { fetchCoordinateFromAddress } from '../lib/address'
 import Loader from '../components/Loader'
@@ -35,6 +31,7 @@ import Button from '../components/Button'
 import { usePreferences } from '../stores/preferences'
 import XView from '../components/layout/XView'
 import ActionButton from '../components/ActionButton'
+import { faIdCard } from '@fortawesome/free-regular-svg-icons'
 
 const PersonalContactSection = ({
   contact,

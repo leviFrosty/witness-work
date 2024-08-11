@@ -25,6 +25,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import Card from '../components/Card'
 import { RootStackNavigation } from '../stacks/RootStack'
 import MapOnboarding from '../components/MapOnboarding'
+import { TAB_BAR_HEIGHT } from '../components/TabBar'
 
 export interface ContactMarker extends Contact {
   pinColor: string
@@ -48,6 +49,7 @@ const FullMapView = ({ contactMarkers }: FullMapViewProps) => {
   })
   const theme = useTheme()
   const { contacts, updateContact } = useContacts()
+  const CARD_HEIGHT = 210
 
   const handleDragContactPin = (id: string, coordinate: LatLng) => {
     updateContact({
@@ -98,8 +100,6 @@ const FullMapView = ({ contactMarkers }: FullMapViewProps) => {
     getLocation()
   }, [])
 
-  const cardHeight = 280
-
   return (
     <>
       <MapView
@@ -126,68 +126,64 @@ const FullMapView = ({ contactMarkers }: FullMapViewProps) => {
         ))}
       </MapView>
 
-      <View
-        style={{
-          position: 'absolute',
-          bottom: 0,
-          zIndex: 1000,
-          paddingBottom: 15,
-        }}
-      >
-        {contactMarkers.length === 0 ? (
-          <View
-            style={{
-              height: 200,
-              width: width,
-              marginBottom: 100,
-              padding: 10,
-            }}
-          >
-            <Card>
-              <Text
-                style={{
-                  fontSize: theme.fontSize('xl'),
-                  fontFamily: theme.fonts.semiBold,
-                }}
-              >
-                {i18n.t('noContactsToDisplay')}
-              </Text>
-              <Text>{i18n.t('map_noContactsWithGeocodes')}</Text>
-              <ActionButton
-                onPress={() =>
-                  (navigation as unknown as RootStackNavigation).navigate(
-                    'Contact Form',
-                    {
-                      id: Crypto.randomUUID(),
-                    }
-                  )
-                }
-              >
-                {i18n.t('addContact')}
-              </ActionButton>
-            </Card>
-          </View>
-        ) : (
-          <Carousel
-            onSnapToItem={(index) => handleFitToMarker(index)}
-            defaultIndex={0}
-            ref={carouselRef}
-            data={contactMarkers}
-            renderItem={({ item }) => (
-              <MapCarouselCard contact={item} setSheet={setSheet} />
-            )}
-            scrollAnimationDuration={100}
-            mode='parallax'
-            modeConfig={{
-              parallaxScrollingScale: 0.9,
-              parallaxScrollingOffset: 50,
-            }}
-            loop
-            width={width}
-            height={cardHeight}
-          />
-        )}
-      </View>
+      {contactMarkers.length === 0 ? (
+        <View
+          style={{
+            position: 'absolute',
+            bottom: insets.bottom + TAB_BAR_HEIGHT + 4,
+            height: 200,
+            width: width,
+            padding: 10,
+          }}
+        >
+          <Card>
+            <Text
+              style={{
+                fontSize: theme.fontSize('xl'),
+                fontFamily: theme.fonts.semiBold,
+              }}
+            >
+              {i18n.t('noContactsToDisplay')}
+            </Text>
+            <Text>{i18n.t('map_noContactsWithGeocodes')}</Text>
+            <ActionButton
+              onPress={() =>
+                (navigation as unknown as RootStackNavigation).navigate(
+                  'Contact Form',
+                  {
+                    id: Crypto.randomUUID(),
+                  }
+                )
+              }
+            >
+              {i18n.t('addContact')}
+            </ActionButton>
+          </Card>
+        </View>
+      ) : (
+        <Carousel
+          onSnapToItem={(index) => handleFitToMarker(index)}
+          defaultIndex={0}
+          ref={carouselRef}
+          data={contactMarkers}
+          renderItem={({ item }) => (
+            <MapCarouselCard contact={item} setSheet={setSheet} />
+          )}
+          scrollAnimationDuration={125}
+          mode='parallax'
+          modeConfig={{
+            parallaxScrollingScale: 0.925,
+            parallaxScrollingOffset: 35,
+          }}
+          loop
+          width={width}
+          height={CARD_HEIGHT}
+          style={{
+            position: 'absolute',
+            bottom: insets.bottom + TAB_BAR_HEIGHT,
+          }}
+        />
+      )}
       <ShareAddressSheet sheet={sheet} setSheet={setSheet} />
       {contactMarkers.length > 1 && (
         <View
@@ -278,7 +274,7 @@ const MapScreen = () => {
   }
 
   return (
-    <Wrapper insets='none' style={{ flexGrow: 1 }}>
+    <Wrapper insets='none' style={{ flexGrow: 1, position: 'relative' }}>
       <FullMapView contactMarkers={contactMarkers} />
     </Wrapper>
   )

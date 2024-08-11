@@ -69,6 +69,8 @@ const MapCarouselCard = ({ contact, setSheet }: Props) => {
         borderRadius: theme.numbers.borderRadiusLg,
         padding: 15,
         gap: 10,
+        flex: 1,
+        justifyContent: 'space-between',
       }}
     >
       <View
@@ -76,6 +78,7 @@ const MapCarouselCard = ({ contact, setSheet }: Props) => {
           flexDirection: 'row',
           justifyContent: 'space-between',
           alignItems: 'center',
+          flexGrow: 1,
         }}
       >
         <Text
@@ -175,7 +178,6 @@ const MapCarouselCard = ({ contact, setSheet }: Props) => {
             style={{ gap: 10, paddingHorizontal: 20 }}
           >
             <IconButton icon={faPhone} />
-            <Text>{i18n.t('call')}</Text>
           </Button>
         )}
         {contact.phone && (
@@ -185,7 +187,6 @@ const MapCarouselCard = ({ contact, setSheet }: Props) => {
             style={{ gap: 10, paddingHorizontal: 20 }}
           >
             <IconButton icon={faMessage} />
-            <Text>{i18n.t('message')}</Text>
           </Button>
         )}
       </View>

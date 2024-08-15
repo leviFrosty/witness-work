@@ -20,5 +20,5 @@
   - [`screens`](/src/screens) Contains all [screens](https://reactnative.dev/docs/navigation) that the app can display.
   - [`scripts`](/src/scripts) Local CLI scripts for various CI/CD functions.
   - [`stacks`](/src/stacks) All [native stacks](https://reactnavigation.org/docs/native-stack-navigator) of used for [React Native Navigation](https://reactnavigation.org/).
-  - [`stores`](/src/stores) The [AsyncStorage](https://github.com/react-native-async-storage/async-storage) APIs for CRUD operations of app data using the device's storage.
+  - [`stores`](/src/stores) The [MMKV](https://github.com/mrousavy/react-native-mmkv) stores and legacy [AsyncStorage](https://github.com/react-native-async-storage/async-storage) APIs for CRUD operations of app data using the device's storage.
   - [`types`](/src/types) Shared type definitions.

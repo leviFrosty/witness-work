@@ -720,5 +720,7 @@
   "dontWantGoal": "Não quer uma meta?",
   "dontWantGoal_description": "Defina seu requisito de horas como 0. Isso permitirá que você registre seu tempo, como pioneiros, sem uma meta.",
   "quickAction": "Ação rápida",
-  "time": "Tempo"
+  "time": "Tempo",
+  "deleteDayPlans": "Excluir Planos Diários",
+  "deleteRecurringPlans": "Excluir Planos Recorrentes"
 }

@@ -20,6 +20,7 @@ import Button from './Button'
 import QuickActionSheet from './QuickActionSheet'
 import { RootStackNavigation } from '../stacks/RootStack'
 import { HomeTabStackNavigation } from '../stacks/HomeTabStack'
+import XView from './layout/XView'
 
 export const TAB_BAR_HEIGHT = 50
 
@@ -35,114 +36,120 @@ const TabBar = ({ state, descriptors, ...props }: BottomTabBarProps) => {
         backgroundColor: theme.colors.backgroundLightest,
         paddingBottom: insets.bottom,
         shadowColor: theme.colors.shadow,
-        justifyContent: 'space-around',
         position: 'absolute',
         paddingHorizontal: 20,
-        bottom: 0,
         right: 0,
+        bottom: 0,
         width: '100%',
-        height: TAB_BAR_HEIGHT,
       }}
     >
-      {state.routes.map((route, index) => {
-        const { options } = descriptors[route.key]
-        const label = route.name
+      <XView
+        style={{
+          height: TAB_BAR_HEIGHT,
+          justifyContent: 'space-around',
+          flex: 1,
+        }}
+      >
+        {state.routes.map((route, index) => {
+          const { options } = descriptors[route.key]
+          const label = route.name
 
-        const isFocused = state.index === index
+          const isFocused = state.index === index
 
-        const onPress = () => {
-          const event = props.navigation.emit({
-            type: 'tabPress',
-            target: route.key,
-            canPreventDefault: true,
-          })
+          const onPress = () => {
+            const event = props.navigation.emit({
+              type: 'tabPress',
+              target: route.key,
+              canPreventDefault: true,
+            })
 
-          if (!isFocused && !event.defaultPrevented) {
-            props.navigation.navigate(route.name, route.params)
+            if (!isFocused && !event.defaultPrevented) {
+              props.navigation.navigate(route.name, route.params)
+            }
           }
-        }
 
-        const onLongPress = () => {
-          props.navigation.emit({
-            type: 'tabLongPress',
-            target: route.key,
-          })
-        }
-
-        const icon = (() => {
-          switch (label) {
-            case 'Home':
-              return faHome
-            case 'Map':
-              return faMapLocation
-            case 'Tools':
-              return faWrench
-            case 'Month':
-              return faCalendarDays
-            case 'Year':
-              return faListUl
-            default:
-              return faQuestion
+          const onLongPress = () => {
+            props.navigation.emit({
+              type: 'tabLongPress',
+              target: route.key,
+            })
           }
-        })()
 
-        const color = isFocused ? theme.colors.text : theme.colors.textAlt
+          const icon = (() => {
+            switch (label) {
+              case 'Home':
+                return faHome
+              case 'Map':
+                return faMapLocation
+              case 'Tools':
+                return faWrench
+              case 'Month':
+                return faCalendarDays
+              case 'Year':
+                return faListUl
+              default:
+                return faQuestion
+            }
+          })()
 
-        return (
-          <React.Fragment key={index}>
-            {Math.ceil(state.routes.length / 2) === index && (
-              <View
+          const color = isFocused ? theme.colors.text : theme.colors.textAlt
+
+          return (
+            <React.Fragment key={index}>
+              {Math.ceil(state.routes.length / 2) === index && (
+                <View
+                  style={{
+                    paddingVertical: 5,
+                    justifyContent: 'center',
+                  }}
+                >
+                  <Button
+                    style={{
+                      backgroundColor: theme.colors.accent,
+                      borderRadius: theme.numbers.borderRadiusSm,
+                      paddingHorizontal: 15,
+                      alignItems: 'center',
+                      flex: 1,
+                      justifyContent: 'center',
+                    }}
+                    onPress={() => setSheetOpen(true)}
+                  >
+                    <IconButton
+                      icon={faPlus}
+                      color={theme.colors.backgroundLightest}
+                      size='lg'
+                    />
+                  </Button>
+                </View>
+              )}
+              <TouchableOpacity
+                accessibilityRole='button'
+                accessibilityState={isFocused ? { selected: true } : {}}
+                accessibilityLabel={options.tabBarAccessibilityLabel}
+                onPress={onPress}
+                onLongPress={onLongPress}
                 style={{
-                  paddingVertical: 5,
-                  justifyContent: 'center',
+                  alignItems: 'center',
+                  paddingTop: 10,
+                  flex: 1,
+                  gap: 1,
                 }}
               >
-                <Button
-                  style={{
-                    backgroundColor: theme.colors.accent,
-                    borderRadius: theme.numbers.borderRadiusSm,
-                    paddingHorizontal: 15,
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    height: '100%',
+                <IconButton
+                  iconStyle={{
+                    color,
                   }}
-                  onPress={() => setSheetOpen(true)}
-                >
-                  <IconButton
-                    icon={faPlus}
-                    color={theme.colors.backgroundLightest}
-                    size='lg'
-                  />
-                </Button>
-              </View>
-            )}
-            <TouchableOpacity
-              accessibilityRole='button'
-              accessibilityState={isFocused ? { selected: true } : {}}
-              accessibilityLabel={options.tabBarAccessibilityLabel}
-              onPress={onPress}
-              onLongPress={onLongPress}
-              style={{
-                alignItems: 'center',
-                paddingTop: 10,
-                flex: 1,
-                gap: 1,
-              }}
-            >
-              <IconButton
-                iconStyle={{
-                  color,
-                }}
-                icon={icon}
-                size={18}
-              />
-              <Text style={{ color, fontSize: theme.fontSize('sm') }}>
-                {i18n.t(label as TranslationKey)}
-              </Text>
-            </TouchableOpacity>
-          </React.Fragment>
-        )
-      })}
+                  icon={icon}
+                  size={18}
+                />
+                <Text style={{ color, fontSize: theme.fontSize('sm') }}>
+                  {i18n.t(label as TranslationKey)}
+                </Text>
+              </TouchableOpacity>
+            </React.Fragment>
+          )
+        })}
+      </XView>
       <QuickActionSheet
         navigation={
           props.navigation as unknown as RootStackNavigation &

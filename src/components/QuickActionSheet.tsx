@@ -46,7 +46,7 @@ export default function QuickActionSheet({
     <Sheet
       open={sheetOpen}
       modal
-      snapPoints={[40]}
+      snapPoints={[30]}
       onOpenChange={(o: boolean) => setSheetOpen(o)}
       dismissOnSnapToBottom
       animation='quick'

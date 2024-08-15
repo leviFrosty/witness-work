@@ -720,5 +720,7 @@
   "dontWantGoal": "Je! hutaki' lengo?",
   "dontWantGoal_description": "Weka hitaji lako la saa kuwa 0. Hii itakuruhusu kurekodi wakati wako, kama waanzilishi, bila lengo.",
   "quickAction": "Hatua ya Haraka",
-  "time": "Muda"
+  "time": "Muda",
+  "deleteDayPlans": "Futa Mipango ya Siku",
+  "deleteRecurringPlans": "Futa Mipango ya Mara kwa Mara"
 }

@@ -720,5 +720,7 @@
   "dontWantGoal": "목표를 원하지 않으세요?",
   "dontWantGoal_description": "시간 요구 사항을 0으로 설정하세요. 그러면 개척자처럼 목표 없이 시간을 기록할 수 있습니다.",
   "quickAction": "빠른 조치",
-  "time": "시간"
+  "time": "시간",
+  "deleteDayPlans": "일일 계획 삭제",
+  "deleteRecurringPlans": "반복 계획 삭제"
 }

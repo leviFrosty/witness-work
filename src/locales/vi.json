@@ -720,5 +720,7 @@
   "dontWantGoal": "Bạn không muốn mục tiêu?",
   "dontWantGoal_description": "Đặt yêu cầu giờ của bạn thành 0. Điều này sẽ cho phép bạn ghi lại thời gian của mình, giống như những người tiên phong, mà không cần mục tiêu.",
   "quickAction": "Hành động nhanh",
-  "time": "Thời gian"
+  "time": "Thời gian",
+  "deleteDayPlans": "Xóa Kế hoạch Ngày",
+  "deleteRecurringPlans": "Xóa Kế hoạch Định kỳ"
 }

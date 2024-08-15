@@ -30,6 +30,7 @@ export default function ToolsScreen() {
     addServiceReport,
     addDayPlan,
     addRecurringPlan,
+    set: setServiceReports,
   } = useServiceReport()
   const {
     contacts,
@@ -207,7 +208,22 @@ export default function ToolsScreen() {
           >
             {i18n.t('deleteReports')}
           </ActionButton>
-
+          <ActionButton
+            onPress={() => {
+              setServiceReports({ dayPlans: [] })
+              toast.show(i18n.t('deleted'), { message: '', native: true })
+            }}
+          >
+            {i18n.t('deleteDayPlans')}
+          </ActionButton>
+          <ActionButton
+            onPress={() => {
+              setServiceReports({ recurringPlans: [] })
+              toast.show(i18n.t('deleted'), { message: '', native: true })
+            }}
+          >
+            {i18n.t('deleteRecurringPlans')}
+          </ActionButton>
           <ActionButton
             onPress={() => {
               _WARNING_clearDeleted()

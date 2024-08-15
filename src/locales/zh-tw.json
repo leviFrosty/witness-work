@@ -720,5 +720,7 @@
   "dontWantGoal": "不想進球？",
   "dontWantGoal_description": "將您的時間要求設為 0。",
   "quickAction": "快速行動",
-  "time": "時間"
+  "time": "時間",
+  "deleteDayPlans": "刪除每日計劃",
+  "deleteRecurringPlans": "刪除重複計劃"
 }

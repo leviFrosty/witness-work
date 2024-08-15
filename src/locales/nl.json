@@ -720,5 +720,7 @@
   "dontWantGoal": "Wilt u geen doel?",
   "dontWantGoal_description": "Stel uw urenvereiste in op 0. Hiermee kunt u uw tijd registreren, net als pioniers, zonder doel.",
   "quickAction": "Snelle actie",
-  "time": "Tijd"
+  "time": "Tijd",
+  "deleteDayPlans": "Verwijder dagplannen",
+  "deleteRecurringPlans": "Verwijder terugkerende plannen"
 }

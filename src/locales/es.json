@@ -720,5 +720,7 @@
   "dontWantGoal": "¿No quieres un objetivo?",
   "dontWantGoal_description": "Establece tu requisito de horas en 0. Esto te permitirá registrar tu tiempo, como los pioneros, sin un objetivo.",
   "quickAction": "Acción rápida",
-  "time": "Tiempo"
+  "time": "Tiempo",
+  "deleteDayPlans": "Eliminar planes diarios",
+  "deleteRecurringPlans": "Eliminar planes recurrentes"
 }

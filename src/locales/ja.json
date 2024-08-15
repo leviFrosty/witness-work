@@ -720,5 +720,7 @@
   "dontWantGoal": "目標は不要ですか?",
   "dontWantGoal_description": "時間要件を 0 に設定してください。これにより、パイオニアのように目標なしで時間を記録できます。",
   "quickAction": "クイックアクション",
-  "time": "時間"
+  "time": "時間",
+  "deleteDayPlans": "日次プランを削除",
+  "deleteRecurringPlans": "定期プランを削除"
 }

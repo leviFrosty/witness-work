@@ -486,7 +486,9 @@
     "1310": {
       "c1": "Hiệu suất được cải thiện đáng kể khi điều hướng đến các màn hình liên quan đến thời gian.",
       "c2": "Đã thêm ngôn ngữ truyền thống Trung Quốc.",
-      "c3": "Giải quyết vấn đề bản địa hóa ngày xảy ra ở một số khu vực."
+      "c3": "Giải quyết vấn đề bản địa hóa ngày xảy ra ở một số khu vực.",
+      "c4": "Cập nhật kiểu dáng và vị trí của các mục thường dùng. Có thể dễ dàng truy cập báo cáo Tháng và Năm dịch vụ trong thanh tab ở cuối màn hình.",
+      "c5": "Đã giải quyết các sự cố tràn kiểu dáng xảy ra trên một số kích thước màn hình nhất định cho màn hình bản đồ."
     }
   },
   "installed": "Cài đặt",
@@ -722,5 +724,8 @@
   "quickAction": "Hành động nhanh",
   "time": "Thời gian",
   "deleteDayPlans": "Xóa Kế hoạch Ngày",
-  "deleteRecurringPlans": "Xóa Kế hoạch Định kỳ"
+  "deleteRecurringPlans": "Xóa Kế hoạch Định kỳ",
+  "month": "Tháng",
+  "year": "Năm",
+  "timePlanned_description2": "Mục tiêu của bạn được xác định bởi loại nhà xuất bản của bạn. Cố gắng lập kế hoạch cho ít nhất 100% mục tiêu của bạn."
 }

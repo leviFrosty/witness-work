@@ -486,7 +486,9 @@
     "1310": {
       "c1": "Sterk verbeterde prestaties bij het navigeren naar tijdgerelateerde schermen.",
       "c2": "Traditionele Chinese taal toegevoegd.",
-      "c3": "Het probleem met de datumlokalisatie oplossen dat zich in sommige regio's heeft voorgedaan."
+      "c3": "Het probleem met de datumlokalisatie oplossen dat zich in sommige regio's heeft voorgedaan.",
+      "c4": "Bijgewerkte stijlen en locaties van veelgebruikte items. Maand- en servicejaarrapporten zijn eenvoudig toegankelijk via de tabbladbalk onder aan het scherm.",
+      "c5": "Style overflow-problemen opgelost die optraden op bepaalde schermformaten voor het kaartscherm."
     }
   },
   "installed": "Geïnstalleerd",
@@ -722,5 +724,8 @@
   "quickAction": "Snelle actie",
   "time": "Tijd",
   "deleteDayPlans": "Verwijder dagplannen",
-  "deleteRecurringPlans": "Verwijder terugkerende plannen"
+  "deleteRecurringPlans": "Verwijder terugkerende plannen",
+  "month": "Maand",
+  "year": "Jaar",
+  "timePlanned_description2": "Uw doel wordt bepaald door uw uitgeverstype. Probeer te plannen voor ten minste 100% van uw doel."
 }

@@ -12,7 +12,6 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack'
 import { RootStackParamList } from '../stacks/RootStack'
 import CalendarDay from '../components/CalendarDay'
 import SimpleProgressBar from '../components/SimpleProgressBar'
-import CardWithTitle from '../components/CardWithTitle'
 import _ from 'lodash'
 import CalendarKey from '../components/CalendarKey'
 import useServiceReport from '../stores/serviceReport'
@@ -26,6 +25,7 @@ import Header from '../components/layout/Header'
 import Button from '../components/Button'
 import IconButton from '../components/IconButton'
 import { faArrowLeft, faArrowRight } from '@fortawesome/free-solid-svg-icons'
+import Card from '../components/Card'
 
 type PlanScheduleScreenProps = NativeStackScreenProps<
   RootStackParamList,
@@ -200,14 +200,34 @@ const PlanScheduleScreen = ({ route, navigation }: PlanScheduleScreenProps) => {
           }}
           contentContainerStyle={{
             paddingBottom: 200,
-            gap: 15,
+            gap: 10,
           }}
         >
-          <View
-            style={{ flexDirection: 'column', gap: 10, paddingHorizontal: 10 }}
-          >
-            <AnnualScheduleSection month={month} year={year} />
-            <MonthScheduleSection month={month} year={year} />
+          <View style={{ paddingHorizontal: 10 }}>
+            <Card>
+              <View style={{ gap: 3 }}>
+                <Text
+                  style={{
+                    fontFamily: theme.fonts.bold,
+                    fontSize: theme.fontSize('xl'),
+                  }}
+                >
+                  {i18n.t('plannedHours')}
+                </Text>
+                <Text
+                  style={{
+                    color: theme.colors.textAlt,
+                    fontSize: theme.fontSize('xs'),
+                  }}
+                >
+                  {i18n.t('timePlanned_description2')}
+                </Text>
+              </View>
+              <XView style={{ flex: 1, gap: 10 }}>
+                <MonthScheduleSection month={month} year={year} />
+                <AnnualScheduleSection month={month} year={year} />
+              </XView>
+            </Card>
           </View>
           <View
             style={{ paddingHorizontal: 10, position: 'relative', gap: 10 }}
@@ -298,46 +318,33 @@ const AnnualScheduleSection = (props: { month: number; year: number }) => {
   }
 
   return (
-    <CardWithTitle
-      title={
-        <View
+    <View style={{ gap: 5, flex: 1 }}>
+      <XView style={{ justifyContent: 'space-between' }}>
+        <Text
           style={{
-            flexDirection: 'row',
-            gap: 5,
-            alignItems: 'center',
+            fontFamily: theme.fonts.semiBold,
           }}
         >
-          <Text
-            style={{
-              fontSize: theme.fontSize('xl'),
-              fontFamily: theme.fonts.bold,
-            }}
-          >
-            {i18n.t('annualSchedule')}
-          </Text>
-        </View>
-      }
-    >
-      <XView style={{ justifyContent: 'flex-end' }}>
-        <XView>
-          <Text
-            style={{
-              fontFamily: theme.fonts.semiBold,
-              color: theme.colors.textAlt,
-            }}
-          >
-            {`${i18n.t('planned')} ${_.round(
-              annualPlannedMinutes / 60,
-              1
-            )} ${i18n.t('of')} ${annualGoalHours} ${i18n.t('hours')}`}
-          </Text>
-        </XView>
+          {i18n.t('year')}
+        </Text>
+        <Text
+          style={{
+            fontFamily: theme.fonts.semiBold,
+            color: theme.colors.textAlt,
+            fontSize: theme.fontSize('xs'),
+          }}
+        >
+          {`${_.round(
+            annualPlannedMinutes / 60,
+            1
+          )} ${i18n.t('of')} ${annualGoalHours} ${i18n.t('hours')}`}
+        </Text>
       </XView>
       <SimpleProgressBar
         percentage={percentPlanned}
         color={percentPlanned < 1 ? theme.colors.warn : theme.colors.accent}
       />
-    </CardWithTitle>
+    </View>
   )
 }
 
@@ -379,35 +386,24 @@ const MonthScheduleSection = (props: { month: number; year: number }) => {
 
   const percentPlanned = plannedMinutes / goalHours / 60
   return (
-    <CardWithTitle
-      title={
-        <View
+    <View style={{ gap: 5, flex: 1 }}>
+      <XView style={{ justifyContent: 'space-between' }}>
+        <Text
           style={{
-            flexDirection: 'row',
-            gap: 5,
-            alignItems: 'center',
+            fontFamily: theme.fonts.semiBold,
           }}
         >
-          <Text
-            style={{
-              fontSize: theme.fontSize('xl'),
-              fontFamily: theme.fonts.bold,
-            }}
-          >
-            {i18n.t('monthSchedule')}
-          </Text>
-        </View>
-      }
-    >
-      <XView style={{ justifyContent: 'flex-end' }}>
+          {i18n.t('month')}
+        </Text>
         <XView>
           <Text
             style={{
               fontFamily: theme.fonts.semiBold,
               color: theme.colors.textAlt,
+              fontSize: theme.fontSize('xs'),
             }}
           >
-            {`${i18n.t('planned')} ${_.round(
+            {`${_.round(
               plannedMinutes / 60,
               1
             )} ${i18n.t('of')} ${goalHours} ${i18n.t('hours')}`}
@@ -418,15 +414,7 @@ const MonthScheduleSection = (props: { month: number; year: number }) => {
         percentage={percentPlanned}
         color={percentPlanned < 1 ? theme.colors.warn : theme.colors.accent}
       />
-      <Text
-        style={{
-          color: theme.colors.textAlt,
-          fontSize: theme.fontSize('xs'),
-        }}
-      >
-        {i18n.t('timePlanned_description')}
-      </Text>
-    </CardWithTitle>
+    </View>
   )
 }
 

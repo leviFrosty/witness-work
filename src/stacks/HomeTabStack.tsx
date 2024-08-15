@@ -11,7 +11,7 @@ import { View } from 'react-native'
 import WhatsNewSheet from '../components/WhatsNewSheet'
 import { useEffect, useState } from 'react'
 import ToolsScreen from '../screens/ToolsScreen'
-import MonthScreen from '../screens/MonthScreen'
+import MonthScreen from '../screens/MonthScreen/MonthScreen'
 import YearScreen from '../screens/YearScreen'
 import usePublisher from '../hooks/usePublisher'
 

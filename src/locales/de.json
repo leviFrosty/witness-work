@@ -486,7 +486,9 @@
     "1310": {
       "c1": "Deutlich verbesserte Leistung beim Navigieren zu zeitbezogenen Bildschirmen.",
       "c2": "Traditionelle chinesische Sprache hinzugefügt.",
-      "c3": "In einigen Regionen ist ein Problem mit der Datumslokalisierung aufgetreten."
+      "c3": "In einigen Regionen ist ein Problem mit der Datumslokalisierung aufgetreten.",
+      "c4": "Aktualisierte Stile und Standorte häufig verwendeter Elemente. Monats- und Servicejahresberichte können einfach über die Registerkartenleiste am unteren Bildschirmrand aufgerufen werden.",
+      "c5": "Behobene Stilüberlaufprobleme, die bei bestimmten Bildschirmgrößen für den Kartenbildschirm auftraten."
     }
   },
   "installed": "Eingerichtet",
@@ -722,5 +724,8 @@
   "quickAction": "Schnelle Aktion",
   "time": "Zeit",
   "deleteDayPlans": "Tagespläne löschen",
-  "deleteRecurringPlans": "Wiederkehrende Pläne löschen"
+  "deleteRecurringPlans": "Wiederkehrende Pläne löschen",
+  "month": "Monat",
+  "year": "Jahr",
+  "timePlanned_description2": "Ihr Ziel wird durch Ihren Herausgebertyp bestimmt. Versuchen Sie, mindestens 100 % Ihres Ziels einzuplanen."
 }

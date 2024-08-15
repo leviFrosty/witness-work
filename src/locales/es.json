@@ -486,7 +486,9 @@
     "1310": {
       "c1": "Rendimiento muy mejorado al navegar a pantallas relacionadas con el tiempo.",
       "c2": "Se agregó el idioma tradicional chino.",
-      "c3": "Resolver el problema de localización de la fecha que ocurrió en algunas regiones."
+      "c3": "Resolver el problema de localización de la fecha que ocurrió en algunas regiones.",
+      "c4": "Se actualizaron los estilos y las ubicaciones de los elementos más utilizados. Se puede acceder fácilmente a los informes de mes y año de servicio en la barra de pestañas en la parte inferior de la pantalla.",
+      "c5": "Se resolvieron los problemas de desbordamiento de estilo que ocurrían en ciertos tamaños de pantalla para la pantalla del mapa."
     }
   },
   "installed": "Instalado",
@@ -722,5 +724,8 @@
   "quickAction": "Acción rápida",
   "time": "Tiempo",
   "deleteDayPlans": "Eliminar planes diarios",
-  "deleteRecurringPlans": "Eliminar planes recurrentes"
+  "deleteRecurringPlans": "Eliminar planes recurrentes",
+  "month": "Mes",
+  "year": "Año",
+  "timePlanned_description2": "Su objetivo está determinado por su tipo de editor. Intente planificar al menos el 100 % de su objetivo."
 }

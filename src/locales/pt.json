@@ -486,7 +486,9 @@
     "1310": {
       "c1": "Desempenho bastante melhorado ao navegar em telas relacionadas ao tempo.",
       "c2": "Adicionado idioma tradicional chinês.",
-      "c3": "Resolva o problema de localização de data que ocorreu em algumas regiões."
+      "c3": "Resolva o problema de localização de data que ocorreu em algumas regiões.",
+      "c4": "Estilos e locais atualizados de itens comumente usados. Os relatórios de mês e ano de serviço podem ser acessados facilmente na barra de guias na parte inferior da tela.",
+      "c5": "Resolvidos problemas de estouro de estilo que ocorriam em certos tamanhos de tela para a tela do mapa."
     }
   },
   "installed": "Instalado",
@@ -722,5 +724,8 @@
   "quickAction": "Ação rápida",
   "time": "Tempo",
   "deleteDayPlans": "Excluir Planos Diários",
-  "deleteRecurringPlans": "Excluir Planos Recorrentes"
+  "deleteRecurringPlans": "Excluir Planos Recorrentes",
+  "month": "Mês",
+  "year": "Ano",
+  "timePlanned_description2": "Sua meta é determinada pelo seu tipo de publicador. Tente planejar pelo menos 100% da sua meta."
 }

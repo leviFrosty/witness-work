@@ -166,7 +166,7 @@ const MonthSummary = ({
               fontSize: theme.fontSize('xl'),
             }}
           >
-            {title ?? i18n.t('monthDetails')}
+            {title ?? moment().month(month).year(year).format('MMMM YYYY')}
           </Text>
           {setSheet !== undefined && (
             <IconButton

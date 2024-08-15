@@ -486,7 +486,9 @@
     "1310": {
       "c1": "Performances considérablement améliorées lors de la navigation vers les écrans liés au temps.",
       "c2": "Ajout de la langue chinoise traditionnelle.",
-      "c3": "Résoudre le problème de localisation de la date survenu dans certaines régions."
+      "c3": "Résoudre le problème de localisation de la date survenu dans certaines régions.",
+      "c4": "Mise à jour des styles et des emplacements des éléments fréquemment utilisés. Les rapports mensuels et annuels sont facilement accessibles dans la barre d'onglets en bas de l'écran.",
+      "c5": "Problèmes de dépassement de style résolus survenant sur certaines tailles d'écran pour l'écran de carte."
     }
   },
   "installed": "installée",
@@ -722,5 +724,8 @@
   "quickAction": "Action rapide",
   "time": "Heure",
   "deleteDayPlans": "Supprimer les plans de la journée",
-  "deleteRecurringPlans": "Supprimer les plans récurrents"
+  "deleteRecurringPlans": "Supprimer les plans récurrents",
+  "month": "Mois",
+  "year": "Année",
+  "timePlanned_description2": "Votre objectif est déterminé par votre type d'éditeur. Essayez de planifier au moins 100 % de votre objectif."
 }

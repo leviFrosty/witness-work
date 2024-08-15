@@ -1,7 +1,6 @@
 import useTheme from '../contexts/theme'
 import i18n from '../lib/locales'
 import AheadOrBehindOfMonthSchedule from './AheadOrBehindOfSchedule'
-import Card from './Card'
 import Text from './MyText'
 import Button from './Button'
 import { useNavigation } from '@react-navigation/native'
@@ -75,18 +74,11 @@ export default function MonthScheduleSection(props: MonthScheduleSectionProps) {
   }, [dayPlans, month, recurringPlans, year])
 
   return (
-    <Card>
-      <XView>
-        <Text
-          style={{
-            fontSize: theme.fontSize('xl'),
-            fontFamily: theme.fonts.semiBold,
-          }}
-        >
-          {i18n.t('monthSchedule')}
-        </Text>
-        <XView></XView>
-      </XView>
+    <View
+      style={{
+        gap: 8,
+      }}
+    >
       {plannedMinutesToCurrentDay !== 0 && (
         <View style={{ gap: 3 }}>
           <Text
@@ -166,6 +158,6 @@ export default function MonthScheduleSection(props: MonthScheduleSectionProps) {
           {i18n.t('planSchedule')}
         </Text>
       </Button>
-    </Card>
+    </View>
   )
 }

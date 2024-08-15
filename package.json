@@ -36,7 +36,7 @@
     "@tamagui/config": "^1.96.0",
     "@tamagui/toast": "^1.96.0",
     "awesome-phonenumber": "^6.8.0",
-    "axios": "^1.6.8",
+    "axios": "^1.7.4",
     "babel-plugin-transform-inline-environment-variables": "^0.4.4",
     "burnt": "^0.12.2",
     "dotenv": "^16.4.5",

@@ -76,10 +76,27 @@ export default function MonthScheduleSection(props: MonthScheduleSectionProps) {
   return (
     <View
       style={{
-        gap: 8,
+        borderTopWidth: 1,
+        borderTopColor: theme.colors.border,
+        paddingTop: 10,
+        gap: 15,
       }}
     >
-      {plannedMinutesToCurrentDay !== 0 && (
+      <View style={{ gap: 10 }}>
+        {plannedMinutesToCurrentDay !== 0 && (
+          <View style={{ gap: 3 }}>
+            <Text
+              style={{
+                fontFamily: theme.fonts.semiBold,
+                color: theme.colors.textAlt,
+                fontSize: theme.fontSize('sm'),
+              }}
+            >
+              {i18n.t('today')}
+            </Text>
+            <AheadOrBehindOfMonthSchedule month={month} year={year} />
+          </View>
+        )}
         <View style={{ gap: 3 }}>
           <Text
             style={{
@@ -88,46 +105,34 @@ export default function MonthScheduleSection(props: MonthScheduleSectionProps) {
               fontSize: theme.fontSize('sm'),
             }}
           >
-            {i18n.t('today')}
+            {i18n.t('planned')}
           </Text>
-          <AheadOrBehindOfMonthSchedule month={month} year={year} />
+          <XView>
+            <Text style={{ fontFamily: theme.fonts.semiBold }}>
+              {_.round(plannedMinutes / 60, 1)} {i18n.t('of')}{' '}
+              {_.round(goalHours, 1)} {i18n.t('hours')}
+            </Text>
+            <Circle
+              color={
+                !percentPlanned
+                  ? theme.colors.textAlt
+                  : percentPlanned >= 1
+                    ? theme.colors.accent
+                    : theme.colors.warn
+              }
+            />
+          </XView>
+          {percentPlanned < 1 && (
+            <Text
+              style={{
+                fontSize: theme.fontSize('xs'),
+                color: theme.colors.textAlt,
+              }}
+            >
+              {i18n.t('tryToPlanAtLeast100Percent')}
+            </Text>
+          )}
         </View>
-      )}
-      <View style={{ gap: 3 }}>
-        <Text
-          style={{
-            fontFamily: theme.fonts.semiBold,
-            color: theme.colors.textAlt,
-            fontSize: theme.fontSize('sm'),
-          }}
-        >
-          {i18n.t('planned')}
-        </Text>
-        <XView>
-          <Text style={{ fontFamily: theme.fonts.semiBold }}>
-            {_.round(plannedMinutes / 60, 1)} {i18n.t('of')}{' '}
-            {_.round(goalHours, 1)} {i18n.t('hours')}
-          </Text>
-          <Circle
-            color={
-              !percentPlanned
-                ? theme.colors.textAlt
-                : percentPlanned >= 1
-                  ? theme.colors.accent
-                  : theme.colors.warn
-            }
-          />
-        </XView>
-        {percentPlanned < 1 && (
-          <Text
-            style={{
-              fontSize: theme.fontSize('xs'),
-              color: theme.colors.textAlt,
-            }}
-          >
-            {i18n.t('tryToPlanAtLeast100Percent')}
-          </Text>
-        )}
       </View>
       <Button
         style={{

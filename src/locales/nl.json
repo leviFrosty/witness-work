@@ -486,7 +486,9 @@
     "1310": {
       "c1": "Greatly improved performance when navigating to time related screens.",
       "c2": "Added Chinese Traditional language.",
-      "c3": "Resolve date localization issue occurred in some regions."
+      "c3": "Resolve date localization issue that occurred in some regions.",
+      "c4": "Updated styles and locations of commonly used items. Month and Service Year reports can be easily accessed in the tab bar at the bottom of the screen.",
+      "c5": "Resolved style overflow issues that occurred on certain screen sizes for the map screen."
     }
   },
   "installed": "Geïnstalleerd",
@@ -722,5 +724,8 @@
   "quickAction": "Quick Action",
   "time": "Time",
   "deleteDayPlans": "Delete Day Plans",
-  "deleteRecurringPlans": "Delete Recurring Plans"
+  "deleteRecurringPlans": "Delete Recurring Plans",
+  "month": "Month",
+  "year": "Year",
+  "timePlanned_description2": "Your goal is determined by your publisher type. Try to plan for at least 100% of your goal."
 }

@@ -27,6 +27,7 @@ export default ({ config }: ConfigContext): ExpoConfig => {
         : 'com.leviwilkerson.jwtime',
       infoPlist: {
         RCTAsyncStorageExcludeFromBackup: false,
+        ITSAppUsesNonExemptEncryption: false,
       },
       appStoreUrl: 'https://apps.apple.com/us/app/jw-time/id6469723047',
     },

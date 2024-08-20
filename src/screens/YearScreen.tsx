@@ -23,7 +23,8 @@ import {
   HomeTabStackNavigation,
   HomeTabStackParamList,
 } from '../stacks/HomeTabStack'
-import Header from '../components/layout/Header'
+import XView from '../components/layout/XView'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 type ServiceYearScreenProps = NativeStackScreenProps<
   HomeTabStackParamList,
@@ -38,6 +39,8 @@ const YearScreen = ({ route }: ServiceYearScreenProps) => {
     HomeTabStackNavigation & RootStackNavigation
   >()
   const [year, setYear] = useState(route.params?.year ?? moment().year())
+  const insets = useSafeAreaInsets()
+  const theme = useTheme()
 
   useEffect(() => {
     if (route.params?.year) {
@@ -46,27 +49,15 @@ const YearScreen = ({ route }: ServiceYearScreenProps) => {
   }, [route.params?.year])
 
   useEffect(() => {
-    const serviceYearAsString = `${year - 1}-${year}`
-
     navigation.setOptions({
-      header: () => <Header title={serviceYearAsString} buttonType='none' />,
-    })
-  }, [navigation, year])
-  const theme = useTheme()
-
-  const reportsForServiceYear = useMemo(
-    () => getServiceYearReports(serviceReports, year - 1),
-    [serviceReports, year]
-  )
-
-  return (
-    <Wrapper insets='bottom'>
-      <View style={{ gap: 5, paddingHorizontal: 15, paddingVertical: 15 }}>
-        <View
+      header: () => (
+        <XView
           style={{
-            flexDirection: 'row',
-            alignItems: 'center',
+            backgroundColor: theme.colors.background,
+            paddingTop: insets.top + 10,
+            paddingBottom: 10,
             justifyContent: 'space-between',
+            paddingHorizontal: 15,
           }}
         >
           <Button
@@ -145,29 +136,54 @@ const YearScreen = ({ route }: ServiceYearScreenProps) => {
           ) : (
             <View style={{ width: 50 }} />
           )}
-        </View>
-        {hasAnnualGoal && (
-          <AnnualServiceReportSummary
-            serviceYear={year - 1}
-            month={moment().month()}
-            year={year}
-            hidePerMonthToGoal
-          />
-        )}
-      </View>
+        </XView>
+      ),
+    })
+  }, [
+    insets.top,
+    navigation,
+    theme.colors.accent3,
+    theme.colors.accentTranslucent,
+    theme.colors.background,
+    theme.colors.border,
+    theme.colors.text,
+    theme.colors.textAlt,
+    theme.colors.textInverse,
+    theme.numbers.borderRadiusLg,
+    theme.numbers.borderRadiusSm,
+    year,
+  ])
+
+  const reportsForServiceYear = useMemo(
+    () => getServiceYearReports(serviceReports, year - 1),
+    [serviceReports, year]
+  )
+
+  return (
+    <Wrapper insets='bottom'>
       <KeyboardAwareScrollView
         contentContainerStyle={{
           paddingBottom: 250,
           paddingHorizontal: 15,
-          gap: 25,
+          gap: 10,
         }}
       >
+        <View style={{ gap: 5, paddingVertical: 15 }}>
+          {hasAnnualGoal && (
+            <AnnualServiceReportSummary
+              serviceYear={year - 1}
+              month={moment().month()}
+              year={year}
+              hidePerMonthToGoal
+            />
+          )}
+        </View>
         {Object.keys(reportsForServiceYear).map((year) => {
           return (
             <View style={{ gap: 8 }} key={year}>
               <Text
                 style={{
-                  fontSize: theme.fontSize('2xl'),
+                  fontSize: theme.fontSize('xl'),
                   fontFamily: theme.fonts.bold,
                 }}
               >

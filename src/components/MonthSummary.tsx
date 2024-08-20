@@ -49,13 +49,9 @@ const MonthSummary = ({
   const goalHours = publisherHours[publisher]
   const navigation = useNavigation<RootStackNavigation>()
 
-  const adjustedMinutes: AdjustedMinutes = useMemo(
-    () =>
-      monthsReports
-        ? adjustedMinutesForSpecificMonth(monthsReports, month, year)
-        : { value: 0, credit: 0, standard: 0, creditOverage: 0 },
-    [month, monthsReports, year]
-  )
+  const adjustedMinutes: AdjustedMinutes = monthsReports
+    ? adjustedMinutesForSpecificMonth(monthsReports, month, year)
+    : { value: 0, credit: 0, standard: 0, creditOverage: 0 }
 
   const ldcMinutes = useMemo(
     () =>
@@ -148,7 +144,7 @@ const MonthSummary = ({
         borderColor: theme.colors.accent,
         borderWidth: highlightAsCurrentMonth ? 2 : 0,
         gap: noDetails ? 3 : 15,
-        paddingVertical: noDetails ? 15 : 20,
+        paddingVertical: noDetails ? 10 : 20,
       }}
     >
       <View style={{ gap: noDetails ? 2 : 10 }}>
@@ -207,7 +203,11 @@ const MonthSummary = ({
               })}
             </Text>
           )}
-          <MonthServiceReportProgressBar month={month} year={year} />
+          <MonthServiceReportProgressBar
+            month={month}
+            year={year}
+            minimal={noDetails}
+          />
         </View>
       </View>
       {!noDetails && (
@@ -273,7 +273,7 @@ const MonthSummary = ({
             {i18n.t('createPlan')}
           </Text>
         </ActionButton>
-      ) : (
+      ) : !noDetails ? (
         <ActionButton
           onPress={() =>
             navigation.navigate('Add Time', {
@@ -292,7 +292,7 @@ const MonthSummary = ({
             {i18n.t('addTime')}
           </Text>
         </ActionButton>
-      )}
+      ) : null}
     </Card>
   )
 }

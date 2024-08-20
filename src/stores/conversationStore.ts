@@ -64,7 +64,7 @@ export const useConversations = create(
     {
       name: 'conversations',
       storage: createJSONStorage(() =>
-        hasMigratedFromAsyncStorage ? MmkvStorage : AsyncStorage
+        hasMigratedFromAsyncStorage() ? MmkvStorage : AsyncStorage
       ),
     }
   )

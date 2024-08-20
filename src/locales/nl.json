@@ -727,5 +727,6 @@
   "deleteRecurringPlans": "Verwijder terugkerende plannen",
   "month": "Maand",
   "year": "Jaar",
-  "timePlanned_description2": "Uw doel wordt bepaald door uw uitgeverstype. Probeer te plannen voor ten minste 100% van uw doel."
+  "timePlanned_description2": "Uw doel wordt bepaald door uw uitgeverstype. Probeer te plannen voor ten minste 100% van uw doel.",
+  "updatedStorage": "Bijgewerkte opslag"
 }

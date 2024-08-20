@@ -81,18 +81,18 @@ export default function App() {
     Inter: require('@tamagui/font-inter/otf/Inter-Medium.otf'),
     InterBold: require('@tamagui/font-inter/otf/Inter-Bold.otf'),
   })
-  const [hasMigrated, setHasMigrated] = useState(hasMigratedFromAsyncStorage)
+  const [hasMigrated, setHasMigrated] = useState(hasMigratedFromAsyncStorage())
 
   useEffect(() => {
-    if (!hasMigratedFromAsyncStorage) {
+    if (!hasMigratedFromAsyncStorage()) {
       InteractionManager.runAfterInteractions(async () => {
         try {
           await migrateFromAsyncStorage()
+          await Updates.reloadAsync() // Reloads JS and causes stores to point to new MMKV store
         } catch (e) {
           // Falls back to async storage
-          // Allows user to continue using app regardless.
         }
-        setHasMigrated(true)
+        setHasMigrated(true) // Allows app to continue regardless
       })
     }
   }, [])

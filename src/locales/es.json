@@ -727,5 +727,6 @@
   "deleteRecurringPlans": "Eliminar planes recurrentes",
   "month": "Mes",
   "year": "Año",
-  "timePlanned_description2": "Su objetivo está determinado por su tipo de editor. Intente planificar al menos el 100 % de su objetivo."
+  "timePlanned_description2": "Su objetivo está determinado por su tipo de editor. Intente planificar al menos el 100 % de su objetivo.",
+  "updatedStorage": "Almacenamiento actualizado"
 }

@@ -727,5 +727,6 @@
   "deleteRecurringPlans": "刪除重複計劃",
   "month": "月",
   "year": "年",
-  "timePlanned_description2": "您的目標取決於您的發布商類型。嘗試為至少 100% 的目標制定計劃。"
+  "timePlanned_description2": "您的目標取決於您的發布商類型。嘗試為至少 100% 的目標制定計劃。",
+  "updatedStorage": "更新儲存"
 }

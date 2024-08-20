@@ -727,5 +727,6 @@
   "deleteRecurringPlans": "Xóa Kế hoạch Định kỳ",
   "month": "Tháng",
   "year": "Năm",
-  "timePlanned_description2": "Mục tiêu của bạn được xác định bởi loại nhà xuất bản của bạn. Cố gắng lập kế hoạch cho ít nhất 100% mục tiêu của bạn."
+  "timePlanned_description2": "Mục tiêu của bạn được xác định bởi loại nhà xuất bản của bạn. Cố gắng lập kế hoạch cho ít nhất 100% mục tiêu của bạn.",
+  "updatedStorage": "Lưu trữ được cập nhật"
 }

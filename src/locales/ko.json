@@ -727,5 +727,6 @@
   "deleteRecurringPlans": "반복 계획 삭제",
   "month": "월",
   "year": "년",
-  "timePlanned_description2": "목표는 게시자 유형에 따라 결정됩니다. 목표의 최소 100%를 계획해 보세요."
+  "timePlanned_description2": "목표는 게시자 유형에 따라 결정됩니다. 목표의 최소 100%를 계획해 보세요.",
+  "updatedStorage": "업데이트된 저장소"
 }

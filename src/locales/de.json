@@ -727,5 +727,6 @@
   "deleteRecurringPlans": "Wiederkehrende Pläne löschen",
   "month": "Monat",
   "year": "Jahr",
-  "timePlanned_description2": "Ihr Ziel wird durch Ihren Herausgebertyp bestimmt. Versuchen Sie, mindestens 100 % Ihres Ziels einzuplanen."
+  "timePlanned_description2": "Ihr Ziel wird durch Ihren Herausgebertyp bestimmt. Versuchen Sie, mindestens 100 % Ihres Ziels einzuplanen.",
+  "updatedStorage": "Aktualisierter Speicher"
 }

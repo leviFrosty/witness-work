@@ -727,5 +727,6 @@
   "deleteRecurringPlans": "Elimina piani ricorrenti",
   "month": "Mese",
   "year": "Anno",
-  "timePlanned_description2": "Il tuo obiettivo è determinato dal tipo di editore. Cerca di pianificare almeno il 100% del tuo obiettivo."
+  "timePlanned_description2": "Il tuo obiettivo è determinato dal tipo di editore. Cerca di pianificare almeno il 100% del tuo obiettivo.",
+  "updatedStorage": "Archiviazione aggiornata"
 }

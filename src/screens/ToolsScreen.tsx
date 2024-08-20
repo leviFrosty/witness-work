@@ -156,7 +156,7 @@ export default function ToolsScreen() {
               <Text style={{ fontFamily: theme.fonts.bold }}>
                 {i18n.t('migratedToMmkv')}:
               </Text>
-              <Text>{`${hasMigratedFromAsyncStorage}`}</Text>
+              <Text>{`${hasMigratedFromAsyncStorage()}`}</Text>
             </XView>
           </View>
         </Card>

@@ -95,7 +95,7 @@ export const useContacts = create(
     {
       name: 'contacts',
       storage: createJSONStorage(() =>
-        hasMigratedFromAsyncStorage ? MmkvStorage : AsyncStorage
+        hasMigratedFromAsyncStorage() ? MmkvStorage : AsyncStorage
       ),
     }
   )

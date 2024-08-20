@@ -727,5 +727,6 @@
   "deleteRecurringPlans": "定期プランを削除",
   "month": "月",
   "year": "年",
-  "timePlanned_description2": "目標はパブリッシャーの種類によって決まります。目標の 100% 以上を計画するようにしてください。"
+  "timePlanned_description2": "目標はパブリッシャーの種類によって決まります。目標の 100% 以上を計画するようにしてください。",
+  "updatedStorage": "ストレージの更新"
 }

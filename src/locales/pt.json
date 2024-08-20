@@ -727,5 +727,6 @@
   "deleteRecurringPlans": "Excluir Planos Recorrentes",
   "month": "Mês",
   "year": "Ano",
-  "timePlanned_description2": "Sua meta é determinada pelo seu tipo de publicador. Tente planejar pelo menos 100% da sua meta."
+  "timePlanned_description2": "Sua meta é determinada pelo seu tipo de publicador. Tente planejar pelo menos 100% da sua meta.",
+  "updatedStorage": "Armazenamento atualizado"
 }

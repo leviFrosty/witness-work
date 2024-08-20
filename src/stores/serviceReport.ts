@@ -255,7 +255,7 @@ export const useServiceReport = create(
     {
       name: 'serviceReports',
       storage: createJSONStorage(() =>
-        hasMigratedFromAsyncStorage ? MmkvStorage : AsyncStorage
+        hasMigratedFromAsyncStorage() ? MmkvStorage : AsyncStorage
       ),
       version: 1,
       migrate: (persistedState, version) => {

@@ -727,5 +727,6 @@
   "deleteRecurringPlans": "删除定期计划",
   "month": "月份",
   "year": "年份",
-  "timePlanned_description2": "您的目标由您的发布者类型决定。尽量至少为 100% 的目标制定计划。"
+  "timePlanned_description2": "您的目标由您的发布者类型决定。尽量至少为 100% 的目标制定计划。",
+  "updatedStorage": "更新存储"
 }

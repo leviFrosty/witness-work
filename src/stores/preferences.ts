@@ -151,7 +151,7 @@ export const usePreferences = create(
     {
       name: 'preferences',
       storage: createJSONStorage(() =>
-        hasMigratedFromAsyncStorage ? MmkvStorage : AsyncStorage
+        hasMigratedFromAsyncStorage() ? MmkvStorage : AsyncStorage
       ),
     }
   )

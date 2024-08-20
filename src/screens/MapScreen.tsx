@@ -26,6 +26,7 @@ import Card from '../components/Card'
 import { RootStackNavigation } from '../stacks/RootStack'
 import MapOnboarding from '../components/MapOnboarding'
 import { TAB_BAR_HEIGHT } from '../components/TabBar'
+import useDevice from '../hooks/useDevice'
 
 export interface ContactMarker extends Contact {
   pinColor: string
@@ -37,10 +38,11 @@ interface FullMapViewProps {
 
 const FullMapView = ({ contactMarkers }: FullMapViewProps) => {
   const navigation = useNavigation<HomeTabStackNavigation>()
-  const width = Dimensions.get('window').width
+  const { width } = Dimensions.get('window')
   const mapRef = useRef<MapView>(null)
   const insets = useSafeAreaInsets()
   const carouselRef = useRef<ICarouselInstance>(null)
+  const { isTablet } = useDevice()
   const [locationPermission, setLocationPermission] = useState(false)
   const [sheet, setSheet] = useState<MapShareSheet>({
     open: false,
@@ -99,6 +101,8 @@ const FullMapView = ({ contactMarkers }: FullMapViewProps) => {
 
     getLocation()
   }, [])
+
+  const parallaxScrollingScale = isTablet ? 0.92 : 0.8025
 
   return (
     <>
@@ -172,15 +176,14 @@ const FullMapView = ({ contactMarkers }: FullMapViewProps) => {
           scrollAnimationDuration={125}
           mode='parallax'
           modeConfig={{
-            parallaxScrollingScale: 0.925,
-            parallaxScrollingOffset: 35,
+            parallaxScrollingScale,
           }}
           loop
           width={width}
           height={CARD_HEIGHT}
           style={{
             position: 'absolute',
-            bottom: insets.bottom + TAB_BAR_HEIGHT,
+            bottom: insets.bottom + TAB_BAR_HEIGHT - 5,
           }}
         />
       )}

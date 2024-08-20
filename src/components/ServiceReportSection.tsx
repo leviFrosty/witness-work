@@ -70,13 +70,18 @@ const ServiceReportSection = ({ setSheet }: ServiceReportProps) => {
       </View>
 
       <Card>
-        <View style={{ flexDirection: 'row', gap: 3 }}>
+        <View
+          style={{
+            flexDirection: 'row',
+            gap: 3,
+          }}
+        >
           <View
             style={{
               flexDirection: 'column',
               gap: 5,
-              flexGrow: 1,
-              maxWidth: isTablet ? 800 : 200,
+              flexGrow: isTablet ? 1 : undefined,
+              maxWidth: isTablet ? 800 : '60%',
             }}
           >
             <View style={{ flexDirection: 'row' }}>
@@ -93,6 +98,7 @@ const ServiceReportSection = ({ setSheet }: ServiceReportProps) => {
               flexDirection: 'column',
               gap: 5,
               flexGrow: 1,
+              maxWidth: '40%',
             }}
           >
             <RowSectionTitle title={i18n.t('studies')} />

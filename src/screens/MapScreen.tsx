@@ -189,29 +189,23 @@ const FullMapView = ({ contactMarkers }: FullMapViewProps) => {
       )}
       <ShareAddressSheet sheet={sheet} setSheet={setSheet} />
       {contactMarkers.length > 1 && (
-        <View
+        <Button
+          variant='solid'
+          onPress={fitToMarkers}
           style={{
+            paddingVertical: 10,
+            paddingHorizontal: 25,
+            justifyContent: 'center',
+            borderRadius: theme.numbers.borderRadiusSm,
             position: 'absolute',
-            top: insets.top + 8,
+            top: insets.top + 5,
             left: 8,
-            gap: 10,
           }}
         >
-          <Button
-            variant='solid'
-            onPress={fitToMarkers}
-            style={{
-              paddingVertical: 10,
-              paddingHorizontal: 25,
-              justifyContent: 'center',
-              borderRadius: theme.numbers.borderRadiusSm,
-            }}
-          >
-            <Text style={{ fontFamily: theme.fonts.bold, textAlign: 'center' }}>
-              {i18n.t('fit')}
-            </Text>
-          </Button>
-        </View>
+          <Text style={{ fontFamily: theme.fonts.bold, textAlign: 'center' }}>
+            {i18n.t('fit')}
+          </Text>
+        </Button>
       )}
     </>
   )

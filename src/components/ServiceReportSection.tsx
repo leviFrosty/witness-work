@@ -80,7 +80,7 @@ const ServiceReportSection = ({ setSheet }: ServiceReportProps) => {
             style={{
               flexDirection: 'column',
               gap: 5,
-              flexGrow: isTablet ? 1 : undefined,
+              width: '100%',
               maxWidth: isTablet ? 800 : '60%',
             }}
           >

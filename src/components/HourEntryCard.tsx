@@ -132,7 +132,7 @@ export default function HourEntryCard() {
   )
 
   return (
-    <View>
+    <View style={{ width: '100%' }}>
       <Button
         style={{
           flexDirection: 'column',

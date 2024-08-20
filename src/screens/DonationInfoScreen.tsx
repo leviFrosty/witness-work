@@ -48,7 +48,7 @@ const DonationInfoScreen = () => {
   }, [setCustomer])
 
   const handleEmail = useCallback(() => {
-    const subject = encodeURIComponent('[JW Time]')
+    const subject = encodeURIComponent('[WitnessWork]')
     openURL(`mailto:${email}?subject=${subject}`, {
       alert: {
         title: i18n.t('failedToOpenMailApplication'),
@@ -146,7 +146,7 @@ const DonationInfoScreen = () => {
             </Text>
             <Button
               onPress={() => {
-                const subject = encodeURIComponent('[JW Time]')
+                const subject = encodeURIComponent('[WitnessWork]')
                 openURL(`mailto:${email}?subject=${subject}`, {
                   alert: {
                     description: i18n.t('failedToOpenMailApplication'),

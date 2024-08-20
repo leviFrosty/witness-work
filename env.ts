@@ -32,7 +32,7 @@ const envVariables = z.object({
     .string()
     .optional()
     .describe(
-      'Set to `development` when working locally, targets the eas build to create the `JW Time Dev` bundle instead of production `JW Time`'
+      'Set to `development` when working locally, targets the eas build to create the `WitnessWork Dev` bundle instead of production `WitnessWork`'
     ),
 })
 

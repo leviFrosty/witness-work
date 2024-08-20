@@ -6,7 +6,7 @@ const IS_DEV = process.env.APP_VARIANT === 'development'
 export default ({ config }: ConfigContext): ExpoConfig => {
   const expoConfig: ExpoConfig = {
     ...config,
-    name: IS_DEV ? 'JW Time Dev' : 'JW Time',
+    name: IS_DEV ? 'WitnessWork Dev' : 'WitnessWork',
     developmentClient: {},
     slug: 'jw-time',
     version: '1.31.0',

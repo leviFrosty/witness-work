@@ -3,9 +3,9 @@
 ![Issues](https://img.shields.io/github/issues/leviFrosty/JW-Time)
 [![Crowdin](https://badges.crowdin.net/jw-time/localized.svg)](https://crowdin.com/project/jw-time)
 
-# JW Time
+# WitnessWork
 
-JW Time is the easy way for Jehovah's Witnesses to manage their field service priorities.
+WitnessWork is the easy way for Jehovah's Witnesses to manage their field service priorities.
 
 It is written in Typescript using React Native and Expo.
 
@@ -47,13 +47,13 @@ Learn about the [file and project structure](./src/docs/project-structure.md).
 
 # Help Translate 🌐
 
-JW Time is available in 13 languages. Some of these translations are done by AI, which may not be of the highest quality. To help, proofread these translations on [Crowdin](https://crowdin.com/project/jw-time/). Thank you!
+WitnessWork is available in 13 languages. Some of these translations are done by AI, which may not be of the highest quality. To help, proofread these translations on [Crowdin](https://crowdin.com/project/jw-time/). Thank you!
 
 [Not sure how to use Crowdin?](https://support.crowdin.com/crowdin-intro/)
 
 # License
 
-JW Time © 2024 by Levi Wilkerson is licensed under [Attribution-NonCommercial 4.0 International](./LICENSE)
+WitnessWork © 2024 by Levi Wilkerson is licensed under [Attribution-NonCommercial 4.0 International](./LICENSE)
 
 # Sponsor
 

@@ -219,7 +219,7 @@ const PaywallScreen = () => {
               fontFamily: theme.fonts.semiBold,
             }}
           >
-            {i18n.t('support')} JW Time
+            {i18n.t('support')} WitnessWork
           </Text>
           <View style={{ gap: 15 }}>
             <XView

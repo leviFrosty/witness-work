@@ -64,7 +64,7 @@ const SupportSection = () => {
           label={i18n.t('helpTranslate')}
           onPress={async () => {
             const emailMe = async () => {
-              const subjectText = '[JW Time] Help Translate'
+              const subjectText = '[WitnessWork] Help Translate'
               const bodyText = `${i18n.t(
                 'iWouldLikeToHelpTranslate'
               )}: --------------`

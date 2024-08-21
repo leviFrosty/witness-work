@@ -486,7 +486,8 @@
       "c3": "Risolvi il problema di localizzazione della data che si è verificato in alcune regioni.",
       "c4": "Stili e posizioni aggiornati degli elementi comunemente usati. I report di mese e anno di servizio sono facilmente accessibili nella barra delle schede in fondo allo schermo.",
       "c5": "Risolti i problemi di overflow di stile che si verificavano su determinate dimensioni dello schermo per la schermata della mappa.",
-      "c6": "Ora vengono precompilati automaticamente gli indirizzi utilizzati di recente quando si creano più contatti nello stesso giorno."
+      "c6": "Ora vengono precompilati automaticamente gli indirizzi utilizzati di recente quando si creano più contatti nello stesso giorno.",
+      "c7": "Ora puoi alternare la visibilità delle sezioni della schermata iniziale. Vai a Preferenze > Schermata iniziale."
     }
   },
   "installed": "Installato",

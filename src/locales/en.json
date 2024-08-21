@@ -489,7 +489,8 @@
       "c3": "Resolve date localization issue that occurred in some regions.",
       "c4": "Updated styles and locations of commonly used items. Month and Service Year reports can be easily accessed in the tab bar at the bottom of the screen.",
       "c5": "Resolved style overflow issues that occurred on certain screen sizes for the map screen.",
-      "c6": "Now automatically prefills recently used addresses when creating multiple contacts on the same day."
+      "c6": "Now automatically prefills recently used addresses when creating multiple contacts on the same day.",
+      "c7": "You can now toggle visibility of the home screen sections. Visit Preferences > Home Screen."
     }
   },
   "installed": "Installed",
@@ -735,5 +736,5 @@
   "sectionsVisibility": "Sections Visibility",
   "sectionsVisibility_description": "Toggle visibility on sections of the home screen to reduce clutter.",
   "approachingConversations": "Approaching Conversations",
-  "approachingConversations_description": "This section appears only when you have a follow-up conversation scheduled later in the same day."
+  "approachingConversations_description": "This section appears only when you have a follow-up conversation scheduled later in the same day." 
 }

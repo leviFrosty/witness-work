@@ -485,7 +485,8 @@
       "c3": "In einigen Regionen ist ein Problem mit der Datumslokalisierung aufgetreten.",
       "c4": "Aktualisierte Stile und Standorte häufig verwendeter Elemente. Monats- und Servicejahresberichte können einfach über die Registerkartenleiste am unteren Bildschirmrand aufgerufen werden.",
       "c5": "Behobene Stilüberlaufprobleme, die bei bestimmten Bildschirmgrößen für den Kartenbildschirm auftraten.",
-      "c6": "Füllt jetzt beim Erstellen mehrerer Kontakte am selben Tag automatisch zuletzt verwendete Adressen aus."
+      "c6": "Füllt jetzt beim Erstellen mehrerer Kontakte am selben Tag automatisch zuletzt verwendete Adressen aus.",
+      "c7": "Sie können jetzt die Sichtbarkeit der Home-Bildschirmabschnitte umschalten. Gehen Sie zu Einstellungen > Home-Bildschirm."
     }
   },
   "installed": "Eingerichtet",

@@ -3,7 +3,7 @@
 ![Expo](https://img.shields.io/badge/expo-1C1E24?style=flat&logo=expo&logoColor=#D04A37)
 ![Release Version](https://img.shields.io/github/v/release/leviFrosty/witness-work)
 ![Issues](https://img.shields.io/github/issues/leviFrosty/witness-work)
-[![Crowdin](https://badges.crowdin.net/witness-work/localized.svg)](https://crowdin.com/project/witness-work)
+[![Crowdin](https://badges.crowdin.net/witness-work/localized.svg)](https://crowdin.com/project/jw-time)
 
 # WitnessWork
 
@@ -49,7 +49,7 @@ Learn about the [file and project structure](./src/docs/project-structure.md).
 
 # Help Translate 🌐
 
-WitnessWork is available in 13 languages. Some of these translations are done by AI, which may not be of the highest quality. To help, proofread these translations on [Crowdin](https://crowdin.com/project/witness-work/). Thank you!
+WitnessWork is available in 13 languages. Some of these translations are done by AI, which may not be of the highest quality. To help, proofread these translations on [Crowdin](https://crowdin.com/project/jw-time/). Thank you!
 
 [Not sure how to use Crowdin?](https://support.crowdin.com/crowdin-intro/)
 

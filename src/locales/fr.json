@@ -486,7 +486,8 @@
       "c4": "Mise à jour des styles et des emplacements des éléments fréquemment utilisés. Les rapports mensuels et annuels sont facilement accessibles dans la barre d'onglets en bas de l'écran.",
       "c5": "Problèmes de dépassement de style résolus survenant sur certaines tailles d'écran pour l'écran de carte.",
       "c6": "Préremplit désormais automatiquement les adresses récemment utilisées lors de la création de plusieurs contacts le même jour.",
-      "c7": "Vous pouvez désormais activer ou désactiver la visibilité des sections de l'écran d'accueil. Accédez à Préférences > Écran d'accueil."
+      "c7": "Vous pouvez désormais activer ou désactiver la visibilité des sections de l'écran d'accueil. Accédez à Préférences > Écran d'accueil.",
+      "c8": "L'application s'appelle désormais WitnessWork, anciennement « JW Time » pour des raisons juridiques."
     }
   },
   "installed": "installée",

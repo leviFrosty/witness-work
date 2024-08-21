@@ -487,7 +487,8 @@
       "c4": "Se actualizaron los estilos y las ubicaciones de los elementos más utilizados. Se puede acceder fácilmente a los informes de mes y año de servicio en la barra de pestañas en la parte inferior de la pantalla.",
       "c5": "Se resolvieron los problemas de desbordamiento de estilo que ocurrían en ciertos tamaños de pantalla para la pantalla del mapa.",
       "c6": "Ahora rellena automáticamente las direcciones utilizadas recientemente al crear varios contactos en el mismo día.",
-      "c7": "Ahora puedes alternar la visibilidad de las secciones de la pantalla de inicio. Visita Preferencias > Pantalla de inicio."
+      "c7": "Ahora puedes alternar la visibilidad de las secciones de la pantalla de inicio. Visita Preferencias > Pantalla de inicio.",
+      "c8": "La aplicación ahora se llama WitnessWork, anteriormente \"JW Time\" debido a razones legales."
     }
   },
   "installed": "Instalado",

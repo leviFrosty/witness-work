@@ -728,5 +728,7 @@
   "month": "Month",
   "year": "Year",
   "timePlanned_description2": "Your goal is determined by your publisher type. Try to plan for at least 100% of your goal.",
-  "updatedStorage": "Updated Storage"
+  "updatedStorage": "Updated Storage",
+  "prefilledAddress": "Prefilled Address",
+  "clear": "Clear"
 }

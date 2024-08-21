@@ -728,5 +728,7 @@
   "rateWitnessWorkOnPlayStore": "Califica WitnessWork",
   "witnessWorkWillShowYouYourLocation": "¿Quieres compartir tu ubicación?",
   "thanksForUsingWitnessWork": "¡Gracias por amar WitnessWork!",
-  "witnessWorkNowSupportsCredits": "WitnessWork ahora admite créditos para aquellos con un objetivo de servicio anual. Una vez que actualices una etiqueta existente, todos tus informes de servicio también se actualizarán."
+  "witnessWorkNowSupportsCredits": "WitnessWork ahora admite créditos para aquellos con un objetivo de servicio anual. Una vez que actualices una etiqueta existente, todos tus informes de servicio también se actualizarán.",
+  "prefilledAddress": "Dirección precargada",
+  "clear": "Borrar"
 }

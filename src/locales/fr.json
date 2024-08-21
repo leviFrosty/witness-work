@@ -728,5 +728,7 @@
   "rateWitnessWorkOnPlayStore": "Évaluer WitnessWork",
   "witnessWorkWillShowYouYourLocation": "Partager votre position ?",
   "thanksForUsingWitnessWork": "Merci d'aimer WitnessWork !",
-  "witnessWorkNowSupportsCredits": "WitnessWork prend désormais correctement en charge les crédits pour ceux qui ont un objectif de service annuel. Une fois que vous avez mis à jour une balise existante, tous vos rapports de service seront également mis à jour."
+  "witnessWorkNowSupportsCredits": "WitnessWork prend désormais correctement en charge les crédits pour ceux qui ont un objectif de service annuel. Une fois que vous avez mis à jour une balise existante, tous vos rapports de service seront également mis à jour.",
+  "prefilledAddress": "Adresse préremplie",
+  "clear": "Effacer"
 }

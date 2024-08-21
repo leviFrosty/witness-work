@@ -728,5 +728,7 @@
   "rateWitnessWorkOnPlayStore": "Đánh giá WitnessWork",
   "witnessWorkWillShowYouYourLocation": "Chia sẻ vị trí của bạn?",
   "thanksForUsingWitnessWork": "Cảm ơn bạn đã yêu thích WitnessWork!",
-  "witnessWorkNowSupportsCredits": "WitnessWork hiện hỗ trợ đúng cách các khoản tín dụng cho những người có mục tiêu dịch vụ hàng năm. Sau khi bạn cập nhật thẻ hiện có, tất cả các báo cáo dịch vụ của bạn cũng sẽ được cập nhật."
+  "witnessWorkNowSupportsCredits": "WitnessWork hiện hỗ trợ đúng cách các khoản tín dụng cho những người có mục tiêu dịch vụ hàng năm. Sau khi bạn cập nhật thẻ hiện có, tất cả các báo cáo dịch vụ của bạn cũng sẽ được cập nhật.",
+  "prefilledAddress": "Địa chỉ đã điền sẵn",
+  "clear": "Xóa"
 }

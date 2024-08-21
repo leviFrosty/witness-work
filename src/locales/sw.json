@@ -728,5 +728,7 @@
   "rateWitnessWorkOnPlayStore": "Kiwango cha WitnessWork",
   "witnessWorkWillShowYouYourLocation": "Shiriki Mahali Ulipo?",
   "thanksForUsingWitnessWork": "Asante kwa kupenda WitnessWork!",
-  "witnessWorkNowSupportsCredits": "WitnessWork sasa inasaidia vyema mikopo kwa wale walio na lengo la huduma la kila mwaka. Mara tu unaposasisha lebo iliyopo, ripoti zako zote za huduma zitasasishwa pia."
+  "witnessWorkNowSupportsCredits": "WitnessWork sasa inasaidia vyema mikopo kwa wale walio na lengo la huduma la kila mwaka. Mara tu unaposasisha lebo iliyopo, ripoti zako zote za huduma zitasasishwa pia.",
+  "prefilledAddress": "Anwani Iliyojazwa Awali",
+  "clear": "Wazi"
 }

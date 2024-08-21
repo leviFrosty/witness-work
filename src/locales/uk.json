@@ -728,5 +728,7 @@
   "rateWitnessWorkOnPlayStore": "Оцініть WitnessWork",
   "witnessWorkWillShowYouYourLocation": "Поділитися своїм місцезнаходженням?",
   "thanksForUsingWitnessWork": "Дякуємо за любов до WitnessWork!",
-  "witnessWorkNowSupportsCredits": "WitnessWork тепер належним чином підтримує кредити для тих, хто має цільове річне обслуговування. Щойно ви оновите наявний тег, усі ваші звіти про обслуговування також оновляться."
+  "witnessWorkNowSupportsCredits": "WitnessWork тепер належним чином підтримує кредити для тих, хто має цільове річне обслуговування. Щойно ви оновите наявний тег, усі ваші звіти про обслуговування також оновляться.",
+  "prefilledAddress": "Попередньо заповнена адреса",
+  "clear": "ясно"
 }

@@ -728,5 +728,7 @@
   "rateWitnessWorkOnPlayStore": "GetuigeWerk beoordelen",
   "witnessWorkWillShowYouYourLocation": "Uw locatie delen?",
   "thanksForUsingWitnessWork": "Bedankt voor uw waardering voor WitnessWork!",
-  "witnessWorkNowSupportsCredits": "WitnessWork ondersteunt nu correct credits voor degenen met een jaarlijks servicedoel. Zodra u een bestaande tag bijwerkt, worden al uw servicerapporten ook bijgewerkt."
+  "witnessWorkNowSupportsCredits": "WitnessWork ondersteunt nu correct credits voor degenen met een jaarlijks servicedoel. Zodra u een bestaande tag bijwerkt, worden al uw servicerapporten ook bijgewerkt.",
+  "prefilledAddress": "Vooraf ingevuld adres",
+  "clear": "Wissen"
 }

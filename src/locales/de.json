@@ -728,5 +728,7 @@
   "rateWitnessWorkOnPlayStore": "WitnessWork bewerten",
   "witnessWorkWillShowYouYourLocation": "Ihren Standort teilen?",
   "thanksForUsingWitnessWork": "Danke, dass Sie WitnessWork mögen!",
-  "witnessWorkNowSupportsCredits": "WitnessWork unterstützt jetzt ordnungsgemäß Gutschriften für diejenigen mit einem jährlichen Serviceziel. Sobald Sie ein vorhandenes Tag aktualisieren, werden auch alle Ihre Serviceberichte aktualisiert."
+  "witnessWorkNowSupportsCredits": "WitnessWork unterstützt jetzt ordnungsgemäß Gutschriften für diejenigen mit einem jährlichen Serviceziel. Sobald Sie ein vorhandenes Tag aktualisieren, werden auch alle Ihre Serviceberichte aktualisiert.",
+  "prefilledAddress": "Vorab ausgefüllte Adresse",
+  "clear": "Löschen"
 }

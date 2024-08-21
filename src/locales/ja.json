@@ -728,5 +728,7 @@
   "rateWitnessWorkOnAppStore": "WitnessWork を評価する",
   "rateWitnessWorkOnPlayStore": "WitnessWork を評価する",
   "thanksForUsingWitnessWork": "WitnessWork を気に入っていただきありがとうございます!",
-  "witnessWorkNowSupportsCredits": "WitnessWork は、年間サービス目標を持つユーザー向けのクレジットを適切にサポートするようになりました。既存のタグを更新すると、すべてのサービス レポートも更新されます。"
+  "witnessWorkNowSupportsCredits": "WitnessWork は、年間サービス目標を持つユーザー向けのクレジットを適切にサポートするようになりました。既存のタグを更新すると、すべてのサービス レポートも更新されます。",
+  "prefilledAddress": "事前入力された住所",
+  "clear": "クリア"
 }

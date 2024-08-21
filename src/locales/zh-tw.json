@@ -728,5 +728,7 @@
   "rateWitnessWorkOnPlayStore": "評價見證工作",
   "witnessWorkWillShowYouYourLocation": "分享您的位置？",
   "thanksForUsingWitnessWork": "感謝您對見證工作的熱愛！",
-  "witnessWorkNowSupportsCredits": "WitnessWork 現在可以為那些具有年度服務目標的人提供適當的積分支援。更新現有標籤後，所有服務報告也會更新。"
+  "witnessWorkNowSupportsCredits": "WitnessWork 現在可以為那些具有年度服務目標的人提供適當的積分支援。更新現有標籤後，所有服務報告也會更新。",
+  "prefilledAddress": "預填地址",
+  "clear": "清除"
 }

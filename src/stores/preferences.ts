@@ -8,6 +8,7 @@ import moment from 'moment'
 import * as Device from 'expo-device'
 import { Platform } from 'react-native'
 import { hasMigratedFromAsyncStorage, MmkvStorage } from './mmkv'
+import { Address } from '../types/contact'
 
 const SortOptionValues = [
   'recentConversation',
@@ -77,6 +78,15 @@ export type ServiceReportTag = {
   credit: boolean
 }
 
+export type PrefillAddress = {
+  /** Whether or not prefill address is enabled. */
+  enabled: boolean
+  /** Most recently entered address from existing contact creation. */
+  address?: Address
+  /** When an address was last entered */
+  lastUpdated?: Date
+}
+
 const initialState = {
   publisher: 'publisher' as Publisher,
   publisherHours: publisherHours,
@@ -126,6 +136,11 @@ const initialState = {
    * drawer (settings) -> tap version number 5 times.
    */
   developerTools: false,
+  prefillAddress: {
+    address: undefined,
+    enabled: true,
+    lastUpdated: undefined,
+  } as PrefillAddress,
 }
 
 export const usePreferences = create(
@@ -147,6 +162,25 @@ export const usePreferences = create(
           updatedPreferences[hint] = false
           return updatedPreferences
         }),
+      /**
+       * Will not update lastUpdated property or address if address param is
+       * undefined.
+       */
+      updatePrefillAddress: (address?: Address) => {
+        if (!address) {
+          return
+        }
+
+        set(({ prefillAddress }) => {
+          return {
+            prefillAddress: {
+              ...prefillAddress,
+              address,
+              lastUpdated: new Date(),
+            },
+          }
+        })
+      },
     })),
     {
       name: 'preferences',

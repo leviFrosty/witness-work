@@ -728,5 +728,7 @@
   "rateWitnessWorkOnPlayStore": "Valuta WitnessWork",
   "witnessWorkWillShowYouYourLocation": "Condividi la tua posizione?",
   "thanksForUsingWitnessWork": "Grazie per aver apprezzato WitnessWork!",
-  "witnessWorkNowSupportsCredits": "WitnessWork ora supporta correttamente i crediti per coloro che hanno un obiettivo di servizio annuale. Una volta aggiornato un tag esistente, verranno aggiornati anche tutti i report di servizio."
+  "witnessWorkNowSupportsCredits": "WitnessWork ora supporta correttamente i crediti per coloro che hanno un obiettivo di servizio annuale. Una volta aggiornato un tag esistente, verranno aggiornati anche tutti i report di servizio.",
+  "prefilledAddress": "Indirizzo precompilato",
+  "clear": "Cancella"
 }

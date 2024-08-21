@@ -728,5 +728,7 @@
   "updatedStorage": "업데이트된 저장소",
   "witnessWorkWillShowYouYourLocation": "위치 공유?",
   "thanksForUsingWitnessWork": "WitnessWork를 사랑해주셔서 감사합니다!",
-  "witnessWorkNowSupportsCredits": "WitnessWork는 이제 연간 봉사 목표가 있는 사람들에게 크레딧을 제대로 지원합니다. 기존 태그를 업데이트하면 모든 봉사 보고서도 업데이트됩니다."
+  "witnessWorkNowSupportsCredits": "WitnessWork는 이제 연간 봉사 목표가 있는 사람들에게 크레딧을 제대로 지원합니다. 기존 태그를 업데이트하면 모든 봉사 보고서도 업데이트됩니다.",
+  "prefilledAddress": "미리 채워진 주소",
+  "clear": "지우기"
 }

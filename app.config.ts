@@ -23,8 +23,8 @@ export default ({ config }: ConfigContext): ExpoConfig => {
     ios: {
       supportsTablet: true,
       bundleIdentifier: IS_DEV
-        ? 'com.leviwilkerson.WitnessWorkdev'
-        : 'com.leviwilkerson.WitnessWork',
+        ? 'com.leviwilkerson.jwtimedev'
+        : 'com.leviwilkerson.jwtime',
       infoPlist: {
         RCTAsyncStorageExcludeFromBackup: false,
         ITSAppUsesNonExemptEncryption: false,

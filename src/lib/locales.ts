@@ -15,6 +15,7 @@ import zhTW from '../locales/zh-tw.json'
 import zhCN from '../locales/zh-cn.json'
 import sw from '../locales/sw.json'
 import uk from '../locales/uk.json'
+import bemZM from '../locales/bem-zm.json'
 
 import moment from 'moment'
 import 'moment/locale/en-au'
@@ -66,6 +67,7 @@ const _i18n = new I18n({
   'zh-cn': zhCN, // Simplified
   sw,
   uk,
+  'bem-zm': bemZM, // Bemba
 })
 
 let locale = getLocales()[0] // Guaranteed to return at least one element

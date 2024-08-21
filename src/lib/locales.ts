@@ -1,21 +1,23 @@
 import { getLocales } from 'expo-localization'
 import { I18n, TranslateOptions } from 'i18n-js'
-import de from '../locales/de.json'
-import es from '../locales/es.json'
-import en from '../locales/en.json'
-import fr from '../locales/fr.json'
-import it from '../locales/it.json'
-import ja from '../locales/ja.json'
-import ko from '../locales/ko.json'
-import nl from '../locales/nl.json'
-import ru from '../locales/ru.json'
-import pt from '../locales/pt.json'
-import vi from '../locales/vi.json'
-import zhTW from '../locales/zh-tw.json'
-import zhCN from '../locales/zh-cn.json'
-import sw from '../locales/sw.json'
-import uk from '../locales/uk.json'
-import bemZM from '../locales/bem-zm.json'
+import deDE from '../locales/de-DE.json'
+import esES from '../locales/es-ES.json'
+import esMX from '../locales/es-MX.json'
+import enUS from '../locales/en-US.json'
+import frFR from '../locales/fr-FR.json'
+import itIT from '../locales/it-IT.json'
+import jaJP from '../locales/ja-JP.json'
+import koKR from '../locales/ko-KR.json'
+import nlNL from '../locales/nl-NL.json'
+import ruRU from '../locales/ru-RU.json'
+import ptBR from '../locales/pt-BR.json'
+import ptPT from '../locales/pt-PT.json'
+import viVN from '../locales/vi-VN.json'
+import zhTW from '../locales/zh-TW.json'
+import zhCN from '../locales/zh-CN.json'
+import swKE from '../locales/sw-KE.json'
+import ukUA from '../locales/uk-UA.json'
+import bemZM from '../locales/bem-ZM.json'
 
 import moment from 'moment'
 import 'moment/locale/en-au'
@@ -51,41 +53,59 @@ import 'moment/locale/es'
 import 'moment/locale/sw'
 import 'moment/locale/uk'
 
-const _i18n = new I18n({
-  de,
-  en,
-  es,
-  fr,
-  it,
-  ja,
-  ko,
-  nl,
-  pt,
-  ru,
-  vi,
-  'zh-tw': zhTW, // Traditional
-  'zh-cn': zhCN, // Simplified
-  sw,
-  uk,
+const translations = {
+  'en-us': enUS,
+  'de-de': deDE,
+  'es-mx': esMX,
+  'es-es': esES,
+  'fr-fr': frFR,
+  'it-it': itIT,
+  'ja-jp': jaJP,
+  'ko-kr': koKR,
+  'nl-nl': nlNL,
+  'pt-br': ptBR,
+  'pt-pt': ptPT,
+  'ru-ru': ruRU,
+  'vi-vn': viVN,
+  'zh-hant-tw': zhTW, // Traditional
+  'zh-hans-cn': zhCN, // Simplified
+  'sw-ke': swKE,
+  'uk-ua': ukUA,
   'bem-zm': bemZM, // Bemba
-})
+}
+
+const _i18n = new I18n(translations)
 
 let locale = getLocales()[0] // Guaranteed to return at least one element
   .languageTag!.toLowerCase()
-  .replace('zh-hans', 'zh') // i18n or moment aren't expecting -han[s/t]
-  .replace('zh-hant', 'zh') // i18n or moment aren't expecting -han[s/t]
 
-if (locale.startsWith('zh')) {
-  if (locale.endsWith('tw') || locale.endsWith('cn')) {
-    // User's region correctly matches one of Chinese speaking lands
-  } else {
-    // User's region is something like zh-us, so we convert it to 'zh-cn' which defaults back to Simplified Chinese.
-    locale = 'zh-cn'
+const userLanguage = locale.slice(0, locale.lastIndexOf('-')) // Guaranteed
+const validTranslationLocales = Object.keys(translations)
+
+if (validTranslationLocales.includes(locale)) {
+  // Locale is valid.
+} else if (validTranslationLocales.some((t) => t.includes(userLanguage))) {
+  const languageWithMismatchRegion = validTranslationLocales.find((t) =>
+    t.includes(userLanguage)
+  )
+  // Locale is invalid -- but we found a translation with the same language. The region is incorrect.
+  if (languageWithMismatchRegion) {
+    locale = languageWithMismatchRegion
   }
+} else {
+  // No locale translation, or fallback language was found. Falling back to en-us.
+  // locale = 'en-us'
 }
+// If doesn't exist, see if user's language exists
+
 _i18n.locale = locale
 _i18n.enableFallback = true
-moment.locale(locale)
+_i18n.defaultLocale = 'en-us'
+const momentLocale = locale
+  .replace('zh-hans', 'zh') // moment isn't expecting -han[s/t]
+  .replace('zh-hant', 'zh') // moment isn't expecting -han[s/t]
+
+moment.locale(momentLocale)
 
 type IsObject<T> = T extends object ? true : false
 
@@ -117,7 +137,7 @@ type DeepKeyOf<T> = T extends object
  *   i18n.t('key1.key2.key3') // returns "Hello World"
  *   i18n.t('key1.foo') // returns "bar"
  */
-export type TranslationKey = DeepKeyOf<typeof en>
+export type TranslationKey = DeepKeyOf<typeof enUS>
 
 const i18n = {
   t: (key: TranslationKey, options?: TranslateOptions | undefined) => {

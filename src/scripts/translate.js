@@ -32,7 +32,7 @@ const locales = listFilesWithoutExtensions(directoryPath)
 
 const translationPromises = locales.map((locale) => {
   return new Promise((resolve, reject) => {
-    const nodeCommand = `cd ${directoryPath} && i18n-auto-translation -k ${process.env.GOOGLE_CLOUD_API_KEY} -d ./ -f en -t ${locale}`
+    const nodeCommand = `cd ${directoryPath} && i18n-auto-translation -k ${process.env.GOOGLE_CLOUD_API_KEY} -d ./ -f en-US -t ${locale}`
 
     exec(nodeCommand, (error, stdout) => {
       if (error) {

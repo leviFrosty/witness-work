@@ -1,7 +1,9 @@
+### Due to potential trademark infringement, JW Time was rebranded to WitnessWork in August 2024.
+
 ![Expo](https://img.shields.io/badge/expo-1C1E24?style=flat&logo=expo&logoColor=#D04A37)
-![Release Version](https://img.shields.io/github/v/release/leviFrosty/JW-Time)
-![Issues](https://img.shields.io/github/issues/leviFrosty/JW-Time)
-[![Crowdin](https://badges.crowdin.net/jw-time/localized.svg)](https://crowdin.com/project/jw-time)
+![Release Version](https://img.shields.io/github/v/release/leviFrosty/witness-work)
+![Issues](https://img.shields.io/github/issues/leviFrosty/witness-work)
+[![Crowdin](https://badges.crowdin.net/witness-work/localized.svg)](https://crowdin.com/prowitness-work-time)
 
 # WitnessWork
 
@@ -12,7 +14,7 @@ It is written in Typescript using React Native and Expo.
 ## View it live
 
 [![App Store](https://img.shields.io/badge/App_Store-0D96F6?style=for-the-badge&logo=app-store&logoColor=white)](https://apps.apple.com/us/app/jw-time/id6469723047)
-[![Play Store](https://img.shields.io/badge/Google_Play-414141?style=for-the-badge&logo=google-play&logoColor=white)](https://play.google.com/store/apps/details?id=com.leviwilkerson.jwtime)
+[![Play Store](https://img.shields.io/badge/Google_Play-414141?style=for-the-badge&logo=google-play&logoColor=white)](https://play.google.com/store/apps/details?id=com.leviwilkerson.witnesswork)
 
 <div float="left">
 <img src="./src/docs/screenshots/preview1.jpg" width="130">
@@ -47,7 +49,7 @@ Learn about the [file and project structure](./src/docs/project-structure.md).
 
 # Help Translate 🌐
 
-WitnessWork is available in 13 languages. Some of these translations are done by AI, which may not be of the highest quality. To help, proofread these translations on [Crowdin](https://crowdin.com/project/jw-time/). Thank you!
+WitnessWork is available in 13 languages. Some of these translations are done by AI, which may not be of the highest quality. To help, proofread these translations on [Crowdin](https://crowdin.com/project/witness-work/). Thank you!
 
 [Not sure how to use Crowdin?](https://support.crowdin.com/crowdin-intro/)
 

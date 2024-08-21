@@ -23,7 +23,7 @@ const StepOne = ({ goNext }: Props) => {
       <View style={styles.onboardingTitleWrapper}>
         <View style={styles.textContainer}>
           <Text style={styles.subTitle}>{i18n.t('welcomeTo')}</Text>
-          <Text style={styles.title}>{i18n.t('jwTime')}</Text>
+          <Text style={styles.title}>{i18n.t('witnessWork')}</Text>
         </View>
       </View>
       <ActionButton onPress={goNext}>{i18n.t('getStarted')}</ActionButton>

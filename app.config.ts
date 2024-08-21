@@ -23,8 +23,8 @@ export default ({ config }: ConfigContext): ExpoConfig => {
     ios: {
       supportsTablet: true,
       bundleIdentifier: IS_DEV
-        ? 'com.leviwilkerson.jwtimedev'
-        : 'com.leviwilkerson.jwtime',
+        ? 'com.leviwilkerson.WitnessWorkdev'
+        : 'com.leviwilkerson.WitnessWork',
       infoPlist: {
         RCTAsyncStorageExcludeFromBackup: false,
         ITSAppUsesNonExemptEncryption: false,
@@ -38,9 +38,9 @@ export default ({ config }: ConfigContext): ExpoConfig => {
         monochromeImage: './src/assets/adaptive-icon-monochrome.png',
         backgroundColor: '#ffffff',
       },
-      package: 'com.leviwilkerson.jwtime',
+      package: 'com.leviwilkerson.witnesswork',
       playStoreUrl:
-        'https://play.google.com/store/apps/details?id=com.leviwilkerson.jwtime',
+        'https://play.google.com/store/apps/details?id=com.leviwilkerson.witnesswork',
       config: {
         googleMaps: {
           apiKey: process.env.GOOGLE_MAPS_ANDROID_SDK_API_KEY,

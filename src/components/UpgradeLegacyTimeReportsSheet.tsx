@@ -166,7 +166,7 @@ export default function UpgradeLegacyTimeReportsSheet({
               color: theme.colors.textAlt,
             }}
           >
-            {i18n.t('jwTimeNowSupportsCredits')}
+            {i18n.t('witnessWorkNowSupportsCredits')}
           </Text>
         </View>
         <Sheet.ScrollView

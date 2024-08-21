@@ -36,8 +36,8 @@ const SupportSection = () => {
           leftIcon={faRankingStar}
           label={
             Platform.OS === 'android'
-              ? i18n.t('rateJWTimeOnPlayStore')
-              : i18n.t('rateJWTimeOnAppStore')
+              ? i18n.t('rateWitnessWorkOnPlayStore')
+              : i18n.t('rateWitnessWorkOnAppStore')
           }
           onPress={() => {
             try {

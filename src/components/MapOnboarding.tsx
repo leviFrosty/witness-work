@@ -228,7 +228,7 @@ export default function MapOnboarding() {
                 fontFamily: theme.fonts.bold,
               }}
             >
-              {i18n.t('jwTimeWillShowYouYourLocation')}
+              {i18n.t('witnessWorkWillShowYouYourLocation')}
             </Text>
             <Text>{i18n.t('thisMayHelpYouLocateWhereYouAre')}</Text>
           </View>

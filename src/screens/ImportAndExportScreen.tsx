@@ -44,7 +44,7 @@ const ImportAndExportScreen = () => {
 
   const [loading, setLoading] = useState(false)
   const [successfulImport, setSuccessfulImport] = useState(false)
-  const exportFileUri = FileSystem.cacheDirectory + `jw-time-backup.json`
+  const exportFileUri = FileSystem.cacheDirectory + `witness-work-backup.json`
   const theme = useTheme()
 
   const validImportFile = (data: unknown): boolean => {

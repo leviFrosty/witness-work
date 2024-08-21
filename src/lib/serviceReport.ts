@@ -419,7 +419,7 @@ export const getPlansIntersectingDay = (
         )
       case RecurringPlanFrequencies.MONTHLY:
         return (
-          momentDay.date() === startDate.getDate() &&
+          momentDay.date() === momentStartDate.date() &&
           momentDay.isSameOrAfter(momentStartDate) &&
           (!endDate || momentDay.isSameOrBefore(endDate))
         )

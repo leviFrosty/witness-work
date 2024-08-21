@@ -487,7 +487,9 @@
       "c5": "Resolvidos problemas de estouro de estilo que ocorriam em certos tamanhos de tela para a tela do mapa.",
       "c6": "Agora preenche automaticamente endereços usados recentemente ao criar vários contatos no mesmo dia.",
       "c7": "Agora você pode alternar a visibilidade das seções da tela inicial. Visite Preferências > Tela inicial.",
-      "c8": "O aplicativo agora se chama WitnessWork, anteriormente 'JW Time' devido a questões legais."
+      "c8": "O aplicativo agora se chama WitnessWork, anteriormente 'JW Time' devido a questões legais.",
+      "c9": "Os idiomas agora tentam encontrar sua região exata, caso contrário, ele retorna para qualquer localidade com seu idioma. Se nada puder ser encontrado, o padrão é inglês.",
+      "c10": "Idioma Bemba adicionado! Precisamos da sua ajuda para traduzir. Visite Configurações > Ajuda Traduzir"
     }
   },
   "installed": "Instalado",

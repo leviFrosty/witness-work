@@ -3,7 +3,7 @@
 ![Expo](https://img.shields.io/badge/expo-1C1E24?style=flat&logo=expo&logoColor=#D04A37)
 ![Release Version](https://img.shields.io/github/v/release/leviFrosty/witness-work)
 ![Issues](https://img.shields.io/github/issues/leviFrosty/witness-work)
-[![Crowdin](https://badges.crowdin.net/witness-work/localized.svg)](https://crowdin.com/prowitness-work-time)
+[![Crowdin](https://badges.crowdin.net/witness-work/localized.svg)](https://crowdin.com/project/witness-work)
 
 # WitnessWork
 

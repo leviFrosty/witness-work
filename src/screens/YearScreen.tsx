@@ -1,7 +1,6 @@
 import Wrapper from '../components/layout/Wrapper'
 import useServiceReport from '../stores/serviceReport'
 import moment from 'moment'
-import MonthSummary from '../components/MonthSummary'
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
 import Button from '../components/Button'
 import { View } from 'react-native'
@@ -25,6 +24,7 @@ import {
 } from '../stacks/HomeTabStack'
 import XView from '../components/layout/XView'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import YearScreenMonthRow from '../components/YearScreenMonthRow'
 
 type ServiceYearScreenProps = NativeStackScreenProps<
   HomeTabStackParamList,
@@ -208,16 +208,10 @@ const YearScreen = ({ route }: ServiceYearScreenProps) => {
                             : undefined
                         }
                       >
-                        <MonthSummary
+                        <YearScreenMonthRow
                           month={parseInt(month)}
-                          monthsReports={reportsForServiceYear[year]?.[month]}
                           year={parseInt(year)}
-                          title={moment().month(parseInt(month)).format('MMMM')}
-                          noDetails
-                          highlightAsCurrentMonth={
-                            parseInt(month) === moment().month() &&
-                            parseInt(year) === moment().year()
-                          }
+                          monthsReports={reportsForServiceYear[year]?.[month]}
                         />
                       </Button>
                     )

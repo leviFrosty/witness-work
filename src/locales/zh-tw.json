@@ -731,5 +731,9 @@
   "thanksForUsingWitnessWork": "感謝您對見證工作的熱愛！",
   "witnessWorkNowSupportsCredits": "WitnessWork 現在可以為那些具有年度服務目標的人提供適當的積分支援。更新現有標籤後，所有服務報告也會更新。",
   "prefilledAddress": "預填地址",
-  "clear": "清除"
+  "clear": "清除",
+  "sectionsVisibility": "部分可見性",
+  "sectionsVisibility_description": "切換主螢幕各部分的可見度以減少混亂。",
+  "approachingConversations": "接近對話",
+  "approachingConversations_description": "只有當您在當天晚些時候安排了後續對話時，此部分才會出現。"
 }

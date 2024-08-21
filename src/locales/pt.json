@@ -731,5 +731,9 @@
   "thanksForUsingWitnessWork": "Obrigado por amar WitnessWork!",
   "witnessWorkNowSupportsCredits": "WitnessWork agora suporta corretamente créditos para aqueles com uma meta de serviço anual. Depois que você atualizar uma tag existente, todos os seus relatórios de serviço também serão atualizados.",
   "prefilledAddress": "Endereço pré-preenchido",
-  "clear": "Limpar"
+  "clear": "Limpar",
+  "sectionsVisibility": "Visibilidade das Seções",
+  "sectionsVisibility_description": "Alterne a visibilidade nas seções da tela inicial para reduzir a desordem.",
+  "approachingConversations": "Conversas de Aproximação",
+  "approachingConversations_description": "Esta seção aparece somente quando você tem uma conversa de acompanhamento agendada para mais tarde no mesmo dia."
 }

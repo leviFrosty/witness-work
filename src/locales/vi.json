@@ -731,5 +731,9 @@
   "thanksForUsingWitnessWork": "Cảm ơn bạn đã yêu thích WitnessWork!",
   "witnessWorkNowSupportsCredits": "WitnessWork hiện hỗ trợ đúng cách các khoản tín dụng cho những người có mục tiêu dịch vụ hàng năm. Sau khi bạn cập nhật thẻ hiện có, tất cả các báo cáo dịch vụ của bạn cũng sẽ được cập nhật.",
   "prefilledAddress": "Địa chỉ đã điền sẵn",
-  "clear": "Xóa"
+  "clear": "Xóa",
+  "sectionsVisibility": "Hiển thị các mục",
+  "sectionsVisibility_description": "Chuyển đổi chế độ hiển thị trên các mục của màn hình chính để giảm sự lộn xộn.",
+  "approachingConversations": "Đang tiếp cận các cuộc trò chuyện",
+  "approachingConversations_description": "Mục này chỉ xuất hiện khi bạn có cuộc trò chuyện tiếp theo được lên lịch vào cuối ngày."
 }

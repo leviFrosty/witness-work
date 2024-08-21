@@ -42,7 +42,7 @@ export const HomeScreen = () => {
   const { contacts } = useContacts()
   const { isTablet } = useDevice()
   const { hasAnnualGoal } = usePublisher()
-  const { serviceReportTags, publisher } = usePreferences()
+  const { serviceReportTags, publisher, homeScreenElements } = usePreferences()
   const navigation = useNavigation<HomeTabStackNavigation>()
   const serviceYear = getServiceYearFromDate(moment())
   const hasLegacyReports = useMemo(() => {
@@ -125,61 +125,73 @@ export const HomeScreen = () => {
         }}
       >
         <View style={{ gap: 20, paddingBottom: insets.bottom, flex: 1 }}>
-          {!!approachingConvosWithActiveContacts.length && (
-            <ApproachingConversations
-              conversations={approachingConvosWithActiveContacts}
-            />
-          )}
+          {!!approachingConvosWithActiveContacts.length &&
+            homeScreenElements.approachingConversations && (
+              <ApproachingConversations
+                conversations={approachingConvosWithActiveContacts}
+              />
+            )}
           {shouldRemindToBackup && <BackupReminder />}
-          <XView style={{ flex: 1, justifyContent: 'space-between' }}>
-            <MonthlyRoutine />
-            {isTablet && hasAnnualGoal && (
-              <View
-                style={{
-                  flexDirection: 'row',
-                  flexGrow: 1,
-                  maxWidth: '50%',
-                }}
-              >
-                <View
-                  style={{
-                    gap: 10,
-                    flexGrow: 1,
-                  }}
-                >
-                  <Text
+          {(homeScreenElements.monthlyRoutine ||
+            (homeScreenElements.tabletServiceYearSummary &&
+              isTablet &&
+              hasAnnualGoal)) && (
+            <XView style={{ flex: 1, justifyContent: 'space-between' }}>
+              {homeScreenElements.monthlyRoutine && <MonthlyRoutine />}
+              {isTablet &&
+                hasAnnualGoal &&
+                homeScreenElements.tabletServiceYearSummary && (
+                  <View
                     style={{
-                      fontSize: 14,
-                      fontFamily: theme.fonts.semiBold,
-                      marginLeft: 5,
+                      flexDirection: 'row',
+                      flexGrow: 1,
+                      maxWidth: '50%',
                     }}
                   >
-                    {i18n.t('serviceYearSummary')}
-                  </Text>
-                  <XView>
-                    <Button
-                      style={{ flex: 1 }}
-                      onPress={() =>
-                        navigation.navigate('Month', {
-                          month: moment().month(),
-                          year: moment().year(),
-                        })
-                      }
+                    <View
+                      style={{
+                        gap: 10,
+                        flexGrow: 1,
+                      }}
                     >
-                      <AnnualServiceReportSummary
-                        serviceYear={serviceYear}
-                        month={moment().month()}
-                        year={moment().year()}
-                      />
-                    </Button>
-                  </XView>
-                </View>
-              </View>
-            )}
-          </XView>
-          <ServiceReportSection setSheet={setExportTimeSheet} />
-          {publisher !== 'publisher' && <TimerSection />}
-          <ReturnVisitContactsSection />
+                      <Text
+                        style={{
+                          fontSize: 14,
+                          fontFamily: theme.fonts.semiBold,
+                          marginLeft: 5,
+                        }}
+                      >
+                        {i18n.t('serviceYearSummary')}
+                      </Text>
+                      <XView>
+                        <Button
+                          style={{ flex: 1 }}
+                          onPress={() =>
+                            navigation.navigate('Month', {
+                              month: moment().month(),
+                              year: moment().year(),
+                            })
+                          }
+                        >
+                          <AnnualServiceReportSummary
+                            serviceYear={serviceYear}
+                            month={moment().month()}
+                            year={moment().year()}
+                          />
+                        </Button>
+                      </XView>
+                    </View>
+                  </View>
+                )}
+            </XView>
+          )}
+          {homeScreenElements.serviceReport && (
+            <ServiceReportSection setSheet={setExportTimeSheet} />
+          )}
+          {publisher !== 'publisher' && homeScreenElements.timer && (
+            <TimerSection />
+          )}
+          {homeScreenElements.contacts && <ReturnVisitContactsSection />}
         </View>
       </KeyboardAwareScrollView>
       <UpgradeLegacyTimeReportsSheet

@@ -731,5 +731,9 @@
   "thanksForUsingWitnessWork": "Danke, dass Sie WitnessWork mögen!",
   "witnessWorkNowSupportsCredits": "WitnessWork unterstützt jetzt ordnungsgemäß Gutschriften für diejenigen mit einem jährlichen Serviceziel. Sobald Sie ein vorhandenes Tag aktualisieren, werden auch alle Ihre Serviceberichte aktualisiert.",
   "prefilledAddress": "Vorab ausgefüllte Adresse",
-  "clear": "Löschen"
+  "clear": "Löschen",
+  "sectionsVisibility": "Sichtbarkeit von Abschnitten",
+  "sectionsVisibility_description": "Schalten Sie die Sichtbarkeit von Abschnitten des Startbildschirms um, um Unordnung zu vermeiden.",
+  "approachingConversations": "Anstehende Gespräche",
+  "approachingConversations_description": "Dieser Abschnitt wird nur angezeigt, wenn Sie für später am selben Tag ein Folgegespräch geplant haben."
 }

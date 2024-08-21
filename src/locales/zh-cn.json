@@ -731,5 +731,9 @@
   "thanksForUsingWitnessWork": "感谢您对 WitnessWork 的喜爱！",
   "witnessWorkNowSupportsCredits": "WitnessWork 现已正确支持具有年度服务目标的用户的积分。一旦您更新现有标签，您的所有服务报告也将更新。",
   "prefilledAddress": "预填地址",
-  "clear": "清除"
+  "clear": "清除",
+  "sectionsVisibility": "部分可见性",
+  "sectionsVisibility_description": "切换主屏幕各部分的可见性以减少混乱。",
+  "approachingConversations": "接近对话",
+  "approachingConversations_description": "仅当您在同一天晚些时候安排了后续对话时，此部分才会出现。"
 }

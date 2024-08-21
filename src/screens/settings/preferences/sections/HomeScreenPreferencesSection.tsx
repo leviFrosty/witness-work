@@ -6,6 +6,9 @@ import { usePreferences } from '../../../../stores/preferences'
 import usePublisher from '../../../../hooks/usePublisher'
 import Text from '../../../../components/MyText'
 import useTheme from '../../../../contexts/theme'
+import XView from '../../../../components/layout/XView'
+import { rowPaddingVertical } from '../../../../constants/Inputs'
+import useDevice from '../../../../hooks/useDevice'
 
 const DetailedProgressBar = () => {
   const { displayDetailsOnProgressBarHomeScreen, publisher, set } =
@@ -79,10 +82,144 @@ const HideDonateHeart = () => {
   )
 }
 
+const HomeElements = () => {
+  const { homeScreenElements, set } = usePreferences()
+  const { status, hasAnnualGoal } = usePublisher()
+  const { isTablet } = useDevice()
+  const theme = useTheme()
+
+  return (
+    <View
+      style={{
+        paddingRight: 20,
+        borderBottomColor: theme.colors.border,
+        borderBottomWidth: 1,
+        paddingVertical: rowPaddingVertical,
+      }}
+    >
+      <View style={{ paddingBottom: 15, gap: 5 }}>
+        <Text style={{ fontFamily: theme.fonts.semiBold }}>
+          {i18n.t('sectionsVisibility')}
+        </Text>
+        <Text
+          style={{
+            fontSize: theme.fontSize('xs'),
+            color: theme.colors.textAlt,
+          }}
+        >
+          {i18n.t('sectionsVisibility_description')}
+        </Text>
+      </View>
+      <View style={{ paddingLeft: 20, gap: 12 }}>
+        <View>
+          <XView style={{ justifyContent: 'space-between' }}>
+            <Text>{i18n.t('approachingConversations')}</Text>
+            <Switch
+              value={homeScreenElements.approachingConversations}
+              onValueChange={(value) =>
+                set({
+                  homeScreenElements: {
+                    ...homeScreenElements,
+                    approachingConversations: value,
+                  },
+                })
+              }
+            />
+          </XView>
+          <Text
+            style={{
+              fontSize: theme.fontSize('xs'),
+              color: theme.colors.textAlt,
+            }}
+          >
+            {i18n.t('approachingConversations_description')}
+          </Text>
+        </View>
+        <XView style={{ justifyContent: 'space-between' }}>
+          <Text>{i18n.t('monthlyRoutine')}</Text>
+          <Switch
+            value={homeScreenElements.monthlyRoutine}
+            onValueChange={(value) =>
+              set({
+                homeScreenElements: {
+                  ...homeScreenElements,
+                  monthlyRoutine: value,
+                },
+              })
+            }
+          />
+        </XView>
+        {isTablet && hasAnnualGoal && (
+          <XView style={{ justifyContent: 'space-between' }}>
+            <Text>{i18n.t('serviceYearSummary')}</Text>
+            <Switch
+              value={homeScreenElements.tabletServiceYearSummary}
+              onValueChange={(value) =>
+                set({
+                  homeScreenElements: {
+                    ...homeScreenElements,
+                    tabletServiceYearSummary: value,
+                  },
+                })
+              }
+            />
+          </XView>
+        )}
+        <XView style={{ justifyContent: 'space-between' }}>
+          <Text>{i18n.t('serviceReport')}</Text>
+          <Switch
+            value={homeScreenElements.serviceReport}
+            onValueChange={(value) =>
+              set({
+                homeScreenElements: {
+                  ...homeScreenElements,
+                  serviceReport: value,
+                },
+              })
+            }
+          />
+        </XView>
+        {status !== 'publisher' && (
+          <XView style={{ justifyContent: 'space-between' }}>
+            <Text>{i18n.t('timer')}</Text>
+            <Switch
+              value={homeScreenElements.timer}
+              onValueChange={(value) =>
+                set({
+                  homeScreenElements: {
+                    ...homeScreenElements,
+                    timer: value,
+                  },
+                })
+              }
+            />
+          </XView>
+        )}
+        <XView style={{ justifyContent: 'space-between' }}>
+          <Text>{i18n.t('contacts')}</Text>
+          <Switch
+            disabled
+            value={homeScreenElements.contacts}
+            onValueChange={(value) =>
+              set({
+                homeScreenElements: {
+                  ...homeScreenElements,
+                  contacts: value,
+                },
+              })
+            }
+          />
+        </XView>
+      </View>
+    </View>
+  )
+}
+
 const HomeScreenPreferencesSection = () => {
   return (
-    <View style={{ gap: 3 }}>
+    <View>
       <Section>
+        <HomeElements />
         <HideDonateHeart />
         <DetailedProgressBar />
       </Section>

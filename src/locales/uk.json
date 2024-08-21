@@ -731,5 +731,9 @@
   "thanksForUsingWitnessWork": "Дякуємо за любов до WitnessWork!",
   "witnessWorkNowSupportsCredits": "WitnessWork тепер належним чином підтримує кредити для тих, хто має цільове річне обслуговування. Щойно ви оновите наявний тег, усі ваші звіти про обслуговування також оновляться.",
   "prefilledAddress": "Попередньо заповнена адреса",
-  "clear": "ясно"
+  "clear": "ясно",
+  "sectionsVisibility": "Видимість розділів",
+  "sectionsVisibility_description": "Перемикайте видимість на розділах головного екрана, щоб зменшити безлад.",
+  "approachingConversations": "Наближення до розмов",
+  "approachingConversations_description": "Цей розділ з’являється лише тоді, коли у вас запланована подальша розмова пізніше того самого дня."
 }

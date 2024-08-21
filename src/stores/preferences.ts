@@ -141,6 +141,14 @@ const initialState = {
     enabled: true,
     lastUpdated: undefined,
   } as PrefillAddress,
+  homeScreenElements: {
+    approachingConversations: true,
+    monthlyRoutine: true,
+    tabletServiceYearSummary: true,
+    serviceReport: true,
+    timer: true,
+    contacts: true,
+  },
 }
 
 export const usePreferences = create(

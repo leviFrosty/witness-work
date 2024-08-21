@@ -731,5 +731,9 @@
   "thanksForUsingWitnessWork": "WitnessWork を気に入っていただきありがとうございます!",
   "witnessWorkNowSupportsCredits": "WitnessWork は、年間サービス目標を持つユーザー向けのクレジットを適切にサポートするようになりました。既存のタグを更新すると、すべてのサービス レポートも更新されます。",
   "prefilledAddress": "事前入力された住所",
-  "clear": "クリア"
+  "clear": "クリア",
+  "sectionsVisibility": "セクションの表示",
+  "sectionsVisibility_description": "ホーム画面のセクションの表示を切り替えて、混乱を減らします。",
+  "approachingConversations": "会話のアプローチ",
+  "approachingConversations_description": "このセクションは、同じ日に後ほどフォローアップの会話が予定されている場合にのみ表示されます。"
 }

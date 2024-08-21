@@ -731,5 +731,9 @@
   "thanksForUsingWitnessWork": "Bedankt voor uw waardering voor WitnessWork!",
   "witnessWorkNowSupportsCredits": "WitnessWork ondersteunt nu correct credits voor degenen met een jaarlijks servicedoel. Zodra u een bestaande tag bijwerkt, worden al uw servicerapporten ook bijgewerkt.",
   "prefilledAddress": "Vooraf ingevuld adres",
-  "clear": "Wissen"
+  "clear": "Wissen",
+  "sectionsVisibility": "Secties zichtbaarheid",
+  "sectionsVisibility_description": "Schakel zichtbaarheid van secties van het startscherm in of uit om rommel te verminderen.",
+  "approachingConversations": "Gesprekken benaderen",
+  "approachingConversations_description": "Deze sectie wordt alleen weergegeven als u later op dezelfde dag een vervolggesprek hebt gepland."
 }

@@ -731,5 +731,9 @@
   "thanksForUsingWitnessWork": "Спасибо за любовь к WitnessWork!",
   "witnessWorkNowSupportsCredits": "Теперь WitnessWork должным образом поддерживает кредиты для тех, у кого есть годовая цель обслуживания. После обновления существующего тега все ваши отчеты об обслуживании также обновятся.",
   "prefilledAddress": "Предварительно заполненный адрес",
-  "clear": "Очистить"
+  "clear": "Очистить",
+  "sectionsVisibility": "Видимость разделов",
+  "sectionsVisibility_description": "Включайте видимость разделов главного экрана, чтобы уменьшить беспорядок.",
+  "approachingConversations": "Приближение разговоров",
+  "approachingConversations_description": "Этот раздел отображается только тогда, когда у вас запланирован следующий разговор на тот же день."
 }

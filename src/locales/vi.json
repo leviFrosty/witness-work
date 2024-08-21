@@ -484,7 +484,8 @@
       "c2": "Đã thêm ngôn ngữ truyền thống Trung Quốc.",
       "c3": "Giải quyết vấn đề bản địa hóa ngày xảy ra ở một số khu vực.",
       "c4": "Cập nhật kiểu dáng và vị trí của các mục thường dùng. Có thể dễ dàng truy cập báo cáo Tháng và Năm dịch vụ trong thanh tab ở cuối màn hình.",
-      "c5": "Đã giải quyết các sự cố tràn kiểu dáng xảy ra trên một số kích thước màn hình nhất định cho màn hình bản đồ."
+      "c5": "Đã giải quyết các sự cố tràn kiểu dáng xảy ra trên một số kích thước màn hình nhất định cho màn hình bản đồ.",
+      "c6": "Bây giờ tự động điền trước các địa chỉ đã sử dụng gần đây khi tạo nhiều liên hệ trong cùng một ngày."
     }
   },
   "installed": "Cài đặt",

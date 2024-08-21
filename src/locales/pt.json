@@ -484,7 +484,8 @@
       "c2": "Adicionado idioma tradicional chinês.",
       "c3": "Resolva o problema de localização de data que ocorreu em algumas regiões.",
       "c4": "Estilos e locais atualizados de itens comumente usados. Os relatórios de mês e ano de serviço podem ser acessados facilmente na barra de guias na parte inferior da tela.",
-      "c5": "Resolvidos problemas de estouro de estilo que ocorriam em certos tamanhos de tela para a tela do mapa."
+      "c5": "Resolvidos problemas de estouro de estilo que ocorriam em certos tamanhos de tela para a tela do mapa.",
+      "c6": "Agora preenche automaticamente endereços usados recentemente ao criar vários contatos no mesmo dia."
     }
   },
   "installed": "Instalado",

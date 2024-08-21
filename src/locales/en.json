@@ -488,7 +488,8 @@
       "c2": "Added Chinese Traditional language.",
       "c3": "Resolve date localization issue that occurred in some regions.",
       "c4": "Updated styles and locations of commonly used items. Month and Service Year reports can be easily accessed in the tab bar at the bottom of the screen.",
-      "c5": "Resolved style overflow issues that occurred on certain screen sizes for the map screen."
+      "c5": "Resolved style overflow issues that occurred on certain screen sizes for the map screen.",
+      "c6": "Now automatically prefills recently used addresses when creating multiple contacts on the same day."
     }
   },
   "installed": "Installed",

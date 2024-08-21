@@ -484,7 +484,8 @@
       "c2": "Traditionelle chinesische Sprache hinzugefügt.",
       "c3": "In einigen Regionen ist ein Problem mit der Datumslokalisierung aufgetreten.",
       "c4": "Aktualisierte Stile und Standorte häufig verwendeter Elemente. Monats- und Servicejahresberichte können einfach über die Registerkartenleiste am unteren Bildschirmrand aufgerufen werden.",
-      "c5": "Behobene Stilüberlaufprobleme, die bei bestimmten Bildschirmgrößen für den Kartenbildschirm auftraten."
+      "c5": "Behobene Stilüberlaufprobleme, die bei bestimmten Bildschirmgrößen für den Kartenbildschirm auftraten.",
+      "c6": "Füllt jetzt beim Erstellen mehrerer Kontakte am selben Tag automatisch zuletzt verwendete Adressen aus."
     }
   },
   "installed": "Eingerichtet",

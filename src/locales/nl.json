@@ -484,7 +484,8 @@
       "c2": "Traditionele Chinese taal toegevoegd.",
       "c3": "Het probleem met de datumlokalisatie oplossen dat zich in sommige regio's heeft voorgedaan.",
       "c4": "Bijgewerkte stijlen en locaties van veelgebruikte items. Maand- en servicejaarrapporten zijn eenvoudig toegankelijk via de tabbladbalk onder aan het scherm.",
-      "c5": "Style overflow-problemen opgelost die optraden op bepaalde schermformaten voor het kaartscherm."
+      "c5": "Style overflow-problemen opgelost die optraden op bepaalde schermformaten voor het kaartscherm.",
+      "c6": "Vul nu automatisch recent gebruikte adressen in wanneer u meerdere contactpersonen op dezelfde dag aanmaakt."
     }
   },
   "installed": "Geïnstalleerd",

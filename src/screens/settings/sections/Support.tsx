@@ -15,7 +15,6 @@ import SectionTitle from '../shared/SectionTitle'
 import { openURL } from '../../../lib/links'
 import { useNavigation } from '@react-navigation/native'
 import { RootStackNavigation } from '../../../stacks/RootStack'
-import { email } from '../../../constants/contactInformation'
 
 const SupportSection = () => {
   const navigation = useNavigation<RootStackNavigation>()
@@ -63,21 +62,6 @@ const SupportSection = () => {
           leftIcon={faGlobe}
           label={i18n.t('helpTranslate')}
           onPress={async () => {
-            const emailMe = async () => {
-              const subjectText = '[WitnessWork] Help Translate'
-              const bodyText = `${i18n.t(
-                'iWouldLikeToHelpTranslate'
-              )}: --------------`
-              const subject = encodeURIComponent(subjectText)
-              const body = encodeURIComponent(bodyText)
-
-              openURL(`mailto:${email}?subject=${subject}&body=${body}`, {
-                alert: {
-                  description: i18n.t('failedToOpenMailApplication'),
-                },
-              })
-            }
-
             Alert.alert(
               i18n.t('helpTranslateTitle'),
               i18n.t('helpTranslate_message'),
@@ -88,7 +72,7 @@ const SupportSection = () => {
                 },
                 {
                   text: i18n.t('yes'),
-                  onPress: emailMe,
+                  onPress: () => openURL(links.crowdin),
                 },
               ]
             )

@@ -22,4 +22,5 @@ export default {
   termsOfUse:
     'https://www.apple.com/legal/internet-services/itunes/dev/stdeula/',
   nwpublisherSubmitReport: 'https://nwpublisher.com/report/',
+  crowdin: 'https://crowdin.com/project/jw-time',
 }

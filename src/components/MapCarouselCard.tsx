@@ -68,17 +68,15 @@ const MapCarouselCard = ({ contact, setSheet }: Props) => {
         backgroundColor: theme.colors.card,
         borderRadius: theme.numbers.borderRadiusLg,
         padding: 15,
-        gap: 10,
+        gap: 5,
         flex: 1,
-        justifyContent: 'space-between',
       }}
     >
       <View
         style={{
           flexDirection: 'row',
           justifyContent: 'space-between',
-          alignItems: 'center',
-          flexGrow: 1,
+          alignItems: 'flex-start',
         }}
       >
         <Text
@@ -109,7 +107,14 @@ const MapCarouselCard = ({ contact, setSheet }: Props) => {
           />
         </Button>
       </View>
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
+      <View
+        style={{
+          flexDirection: 'row',
+          alignItems: 'center',
+          gap: 5,
+          flexGrow: 1,
+        }}
+      >
         <View
           style={{
             width: 12,
@@ -129,6 +134,7 @@ const MapCarouselCard = ({ contact, setSheet }: Props) => {
           style={{
             color: theme.colors.textAlt,
           }}
+          numberOfLines={2}
         >
           {address}
         </Text>

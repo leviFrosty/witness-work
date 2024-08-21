@@ -51,7 +51,7 @@ const FullMapView = ({ contactMarkers }: FullMapViewProps) => {
   })
   const theme = useTheme()
   const { contacts, updateContact } = useContacts()
-  const CARD_HEIGHT = 210
+  const CARD_HEIGHT = 200
 
   const handleDragContactPin = (id: string, coordinate: LatLng) => {
     updateContact({

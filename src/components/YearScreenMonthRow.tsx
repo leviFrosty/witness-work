@@ -34,7 +34,7 @@ export default function YearScreenMonthRow(props: {
         backgroundColor: theme.colors.card,
         paddingHorizontal: 15,
         paddingVertical: 12,
-        gap: 3,
+        gap: 5,
       }}
     >
       <XView
@@ -54,7 +54,7 @@ export default function YearScreenMonthRow(props: {
       {!!adjustedMinutes.creditOverage && (
         <Text
           style={{
-            fontSize: theme.fontSize('xs'),
+            fontSize: theme.fontSize('sm'),
             color: theme.colors.warn,
             textAlign: 'right',
           }}

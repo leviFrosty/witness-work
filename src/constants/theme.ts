@@ -23,8 +23,8 @@ export const lightModeColors = {
   error: '#E30909',
   errorTranslucent: '#E3090933',
   errorAlt: '#FA6868',
-  warn: '#FCC014',
-  warnTranslucent: '#FCC01433',
+  warn: '#d19b00',
+  warnTranslucent: '#d19b0033',
   warnAlt: '#FFEAB8',
   shadow: '#000000',
 }

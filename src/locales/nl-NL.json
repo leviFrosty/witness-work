@@ -739,5 +739,6 @@
   "sectionsVisibility": "Secties zichtbaarheid",
   "sectionsVisibility_description": "Schakel zichtbaarheid van secties van het startscherm in of uit om rommel te verminderen.",
   "approachingConversations": "Gesprekken benaderen",
-  "approachingConversations_description": "Deze sectie wordt alleen weergegeven als u later op dezelfde dag een vervolggesprek hebt gepland."
+  "approachingConversations_description": "Deze sectie wordt alleen weergegeven als u later op dezelfde dag een vervolggesprek hebt gepland.",
+  "backupAndRestore": "Backup & Restore"
 }

@@ -739,5 +739,6 @@
   "sectionsVisibility": "Видимість розділів",
   "sectionsVisibility_description": "Перемикайте видимість на розділах головного екрана, щоб зменшити безлад.",
   "approachingConversations": "Наближення до розмов",
-  "approachingConversations_description": "Цей розділ з’являється лише тоді, коли у вас запланована подальша розмова пізніше того самого дня."
+  "approachingConversations_description": "Цей розділ з’являється лише тоді, коли у вас запланована подальша розмова пізніше того самого дня.",
+  "backupAndRestore": "Backup & Restore"
 }

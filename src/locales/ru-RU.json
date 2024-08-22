@@ -739,5 +739,6 @@
   "sectionsVisibility": "Видимость разделов",
   "sectionsVisibility_description": "Включайте видимость разделов главного экрана, чтобы уменьшить беспорядок.",
   "approachingConversations": "Приближение разговоров",
-  "approachingConversations_description": "Этот раздел отображается только тогда, когда у вас запланирован следующий разговор на тот же день."
+  "approachingConversations_description": "Этот раздел отображается только тогда, когда у вас запланирован следующий разговор на тот же день.",
+  "backupAndRestore": "Резервное копирование и восстановление"
 }

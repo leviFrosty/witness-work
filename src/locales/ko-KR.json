@@ -739,5 +739,6 @@
   "sectionsVisibility": "섹션 가시성",
   "sectionsVisibility_description": "홈 화면의 섹션 가시성을 토글하여 잡동사니를 줄입니다.",
   "approachingConversations": "대화 접근",
-  "approachingConversations_description": "이 섹션은 같은 날 나중에 후속 대화를 예약한 경우에만 나타납니다."
+  "approachingConversations_description": "이 섹션은 같은 날 나중에 후속 대화를 예약한 경우에만 나타납니다.",
+  "backupAndRestore": "백업 및 복원"
 }

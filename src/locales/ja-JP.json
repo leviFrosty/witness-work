@@ -739,5 +739,6 @@
   "sectionsVisibility": "セクションの表示",
   "sectionsVisibility_description": "ホーム画面のセクションの表示を切り替えて、混乱を減らします。",
   "approachingConversations": "会話のアプローチ",
-  "approachingConversations_description": "このセクションは、同じ日に後ほどフォローアップの会話が予定されている場合にのみ表示されます。"
+  "approachingConversations_description": "このセクションは、同じ日に後ほどフォローアップの会話が予定されている場合にのみ表示されます。",
+  "backupAndRestore": "バックアップと復元"
 }

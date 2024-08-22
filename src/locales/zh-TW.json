@@ -739,5 +739,6 @@
   "sectionsVisibility": "部分可見性",
   "sectionsVisibility_description": "切換主螢幕各部分的可見度以減少混亂。",
   "approachingConversations": "接近對話",
-  "approachingConversations_description": "只有當您在當天晚些時候安排了後續對話時，此部分才會出現。"
+  "approachingConversations_description": "只有當您在當天晚些時候安排了後續對話時，此部分才會出現。",
+  "backupAndRestore": "備份與備份恢復"
 }

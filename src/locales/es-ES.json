@@ -739,5 +739,6 @@
   "sectionsVisibility": "Visibilidad de secciones",
   "sectionsVisibility_description": "Activa o desactiva la visibilidad de secciones de la pantalla de inicio para reducir el desorden.",
   "approachingConversations": "Conversaciones próximas",
-  "approachingConversations_description": "Esta sección aparece solo cuando tienes una conversación de seguimiento programada para más tarde en el mismo día."
+  "approachingConversations_description": "Esta sección aparece solo cuando tienes una conversación de seguimiento programada para más tarde en el mismo día.",
+  "backupAndRestore": "Copia de seguridad y restauración"
 }

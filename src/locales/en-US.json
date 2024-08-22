@@ -739,5 +739,6 @@
   "sectionsVisibility": "Sections Visibility",
   "sectionsVisibility_description": "Toggle visibility on sections of the home screen to reduce clutter.",
   "approachingConversations": "Approaching Conversations",
-  "approachingConversations_description": "This section appears only when you have a follow-up conversation scheduled later in the same day."
+  "approachingConversations_description": "This section appears only when you have a follow-up conversation scheduled later in the same day.",
+  "backupAndRestore": "Backup & Restore"
 }

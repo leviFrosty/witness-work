@@ -739,5 +739,6 @@
   "sectionsVisibility": "部分可见性",
   "sectionsVisibility_description": "切换主屏幕各部分的可见性以减少混乱。",
   "approachingConversations": "接近对话",
-  "approachingConversations_description": "仅当您在同一天晚些时候安排了后续对话时，此部分才会出现。"
+  "approachingConversations_description": "仅当您在同一天晚些时候安排了后续对话时，此部分才会出现。",
+  "backupAndRestore": "备份与恢复"
 }

@@ -739,5 +739,6 @@
   "sectionsVisibility": "Visibilità sezioni",
   "sectionsVisibility_description": "Attiva/disattiva la visibilità delle sezioni della schermata iniziale per ridurre l'ingombro.",
   "approachingConversations": "Avvicinamento alle conversazioni",
-  "approachingConversations_description": "Questa sezione viene visualizzata solo quando hai una conversazione di follow-up programmata più avanti nello stesso giorno."
+  "approachingConversations_description": "Questa sezione viene visualizzata solo quando hai una conversazione di follow-up programmata più avanti nello stesso giorno.",
+  "backupAndRestore": "Backup e ripristino"
 }

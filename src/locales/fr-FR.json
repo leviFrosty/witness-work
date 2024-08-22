@@ -739,5 +739,6 @@
   "sectionsVisibility": "Visibilité des sections",
   "sectionsVisibility_description": "Activez/désactivez la visibilité des sections de l'écran d'accueil pour réduire l'encombrement.",
   "approachingConversations": "Approche des conversations",
-  "approachingConversations_description": "Cette section n'apparaît que lorsque vous avez une conversation de suivi prévue plus tard dans la même journée."
+  "approachingConversations_description": "Cette section n'apparaît que lorsque vous avez une conversation de suivi prévue plus tard dans la même journée.",
+  "backupAndRestore": "Backup & Restore"
 }

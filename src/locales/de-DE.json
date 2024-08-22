@@ -739,5 +739,6 @@
   "sectionsVisibility": "Sichtbarkeit von Abschnitten",
   "sectionsVisibility_description": "Schalten Sie die Sichtbarkeit von Abschnitten des Startbildschirms um, um Unordnung zu vermeiden.",
   "approachingConversations": "Anstehende Gespräche",
-  "approachingConversations_description": "Dieser Abschnitt wird nur angezeigt, wenn Sie für später am selben Tag ein Folgegespräch geplant haben."
+  "approachingConversations_description": "Dieser Abschnitt wird nur angezeigt, wenn Sie für später am selben Tag ein Folgegespräch geplant haben.",
+  "backupAndRestore": "Backup & Restore"
 }

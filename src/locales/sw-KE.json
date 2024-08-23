@@ -740,5 +740,17 @@
   "sectionsVisibility_description": "Geuza mwonekano kwenye sehemu za skrini ya kwanza ili kupunguza msongamano.",
   "approachingConversations": "Kukaribia Mazungumzo",
   "approachingConversations_description": "Sehemu hii inaonekana tu wakati una mazungumzo ya kufuatilia yaliyoratibiwa baadaye katika siku hiyo hiyo.",
-  "backupAndRestore": "Hifadhi nakala & Rejesha"
+  "backupAndRestore": "Hifadhi nakala & Rejesha",
+  "pinLocation": "Bandika Mahali",
+  "chooseLocation": "Chagua Mahali",
+  "remove": "Ondoa",
+  "coordinateSaved": "Uratibu Umehifadhiwa",
+  "saved": "Imehifadhiwa",
+  "locationDisabled_description": "Kushiriki eneo lako kumezimwa. Ramani haitaweza kuvuta kiotomatiki eneo lako.",
+  "locationDisabled_callToAction": "Fungua mipangilio ya programu",
+  "overrideCoordinate": "Batilisha Kuratibu",
+  "overrideCoordinate_description": "Umebainisha kiratibu chako mwenyewe. Kwa kuwa umebadilisha anwani, ungependa kuleta kiotomatiki kiratibu kilichosasishwa kulingana na anwani mpya?",
+  "fetchCoordinate": "Leta Kuratibu",
+  "keepExisting": "Endelea Kuwepo",
+  "pinLocation_description": "Pini itaundwa kiotomatiki kulingana na anwani utakayoingiza. Ukipenda, unaweza kuongeza eneo maalum la siri hapa chini."
 }

@@ -1,5 +1,5 @@
-import React, { useRef, useState, useCallback, useEffect, useMemo } from 'react'
-import { Alert, TextInput, View, useColorScheme } from 'react-native'
+import React, { useRef, useState, useCallback, useEffect } from 'react'
+import { Alert, TextInput, View } from 'react-native'
 import Text from '../components/MyText'
 import { RootStackParamList } from '../stacks/RootStack'
 import { NativeStackScreenProps } from '@react-navigation/native-stack'
@@ -8,477 +8,22 @@ import useTheme from '../contexts/theme'
 import Divider from '../components/Divider'
 import { Address, Contact } from '../types/contact'
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
-import Section from '../components/inputs/Section'
-import TextInputRow, { Errors } from '../components/inputs/TextInputRow'
+import { Errors } from '../components/inputs/TextInputRow'
 import Header from '../components/layout/Header'
 import i18n from '../lib/locales'
 import Wrapper from '../components/layout/Wrapper'
-import PhoneInput, {
-  ICountry,
-  ITheme,
-  getCountryByCca2,
-} from 'react-native-international-phone-number'
 import * as Localization from 'expo-localization'
-import { ICountryCca2 } from 'react-native-international-phone-number/lib/interfaces/countryCca2'
-import InputRowContainer from '../components/inputs/InputRowContainer'
 import IconButton from '../components/IconButton'
-import { faCaretDown, faMinus } from '@fortawesome/free-solid-svg-icons'
-import { parsePhoneNumber } from 'awesome-phonenumber'
 import { fetchCoordinateFromAddress } from '../lib/address'
 import Loader from '../components/Loader'
 import _ from 'lodash'
 import Button from '../components/Button'
 import { usePreferences } from '../stores/preferences'
-import XView from '../components/layout/XView'
-import ActionButton from '../components/ActionButton'
 import { faIdCard } from '@fortawesome/free-regular-svg-icons'
 import moment from 'moment'
-import Card from '../components/Card'
 
-const PersonalContactSection = ({
-  contact,
-  nameInput,
-  setName,
-  emailInput,
-  setPhone,
-  setRegionCode,
-  line1Input,
-  setEmail,
-  setErrors,
-  errors,
-  customFields,
-  setCustomField,
-  clearCustomField,
-}: {
-  contact: Contact
-  nameInput: React.RefObject<TextInput>
-  setName: (name: string) => void
-  emailInput: React.RefObject<TextInput>
-  setPhone: (phone: string) => void
-  setRegionCode: (regionCode: string) => void
-  line1Input: React.RefObject<TextInput>
-  setEmail: (email: string) => void
-  errors: Errors
-  setErrors: React.Dispatch<React.SetStateAction<Errors>>
-  customFields?: Record<string, string>
-  setCustomField: (key: string, value: string) => void
-  clearCustomField: (key: string) => void
-}) => {
-  const { customContactFields, set } = usePreferences()
-  const { deleteFieldFromAllContacts } = useContacts()
-  const placeholder = useRef(contact.phone || '')
-  const locales = Localization.getLocales()
-  const [customFieldName, setCustomFieldName] = useState('')
-  const colorScheme = useColorScheme()
-  const theme = useTheme()
-
-  const handleCountryChange = (country: ICountry) => {
-    if (!country) {
-      return // Library has some very weird edge-case where it sometimes doesn't return a country.
-    }
-    setRegionCode(country.cca2)
-  }
-
-  const country = useMemo(
-    () => getCountryByCca2(contact.phoneRegionCode || 'US'),
-    [contact.phoneRegionCode]
-  )
-
-  const formatted = useMemo(
-    () =>
-      parsePhoneNumber(placeholder.current, {
-        regionCode: contact.phoneRegionCode || locales[0].regionCode || '',
-      }),
-    [contact.phoneRegionCode, locales]
-  )
-
-  const defaultValue = useMemo(
-    () =>
-      formatted.regionCode && formatted.valid
-        ? formatted.number?.e164
-        : undefined,
-    [formatted.number?.e164, formatted.regionCode, formatted.valid]
-  )
-
-  const handleAddNewCustomField = () => {
-    set({
-      customContactFields: [...customContactFields, customFieldName],
-    })
-    setCustomFieldName('')
-  }
-
-  const handleDeletePrompt = (field: string) => {
-    Alert.alert(i18n.t('delete'), i18n.t('deleteField_description'), [
-      {
-        text: i18n.t('cancel'),
-        style: 'cancel',
-        onPress: () => {},
-      },
-      {
-        text: i18n.t('clearForThisContact'),
-        onPress: () => handleClearCustomFieldForContact(field),
-      },
-      {
-        text: i18n.t('deleteFieldOnAllContacts'),
-        style: 'destructive',
-        onPress: () => handleDeleteCustomFieldAcrossAllContacts(field),
-      },
-    ])
-  }
-
-  const handleDeleteCustomFieldAcrossAllContacts = (field: string) => {
-    set({
-      customContactFields: customContactFields.filter((f) => f !== field),
-    })
-    deleteFieldFromAllContacts(field)
-  }
-
-  const handleClearCustomFieldForContact = (field: string) => {
-    clearCustomField(field)
-  }
-
-  return (
-    <Section>
-      <TextInputRow
-        errors={errors}
-        setErrors={setErrors}
-        id='name'
-        label={i18n.t('name')}
-        ref={nameInput}
-        textInputProps={{
-          placeholder: i18n.t('name_placeholder'),
-          onChangeText: (val: string) => setName(val),
-          value: contact.name,
-          autoCapitalize: 'words',
-          autoCorrect: false,
-        }}
-        required
-      />
-      <InputRowContainer>
-        <View style={{ flex: 1 }}>
-          <PhoneInput
-            hitSlop={{ top: 15, bottom: 15 }}
-            value={contact.phone || ''}
-            defaultValue={defaultValue}
-            onChangePhoneNumber={(phone: string) => setPhone(phone)}
-            defaultCountry={locales[0].regionCode as ICountryCca2}
-            selectedCountry={country}
-            placeholder={i18n.t('phone_placeholder')}
-            placeholderTextColor={theme.colors.textAlt}
-            popularCountries={['US', 'KR', 'BR', 'JP', 'MX', 'CA']}
-            onChangeSelectedCountry={handleCountryChange}
-            theme={colorScheme as ITheme}
-            inputMode='numeric'
-            clearButtonMode='while-editing'
-            customCaret={<IconButton icon={faCaretDown} />}
-            phoneInputStyles={{
-              container: {
-                borderWidth: 0,
-                backgroundColor: theme.colors.backgroundLighter,
-              },
-              flagContainer: {
-                backgroundColor: theme.colors.card,
-                borderRadius: theme.numbers.borderRadiusSm,
-              },
-              input: {
-                fontSize: theme.fontSize('md'),
-                textAlign: 'right',
-                paddingHorizontal: 2,
-              },
-              callingCode: {
-                fontSize: theme.fontSize('md'),
-              },
-              divider: {
-                backgroundColor: theme.colors.border,
-              },
-              caret: {
-                fontSize: theme.fontSize('sm'),
-                color: theme.colors.textAlt,
-              },
-            }}
-            modalStyles={{
-              modal: {
-                backgroundColor: theme.colors.background,
-              },
-              searchInput: {
-                borderColor: theme.colors.border,
-              },
-              countryButton: {
-                borderColor: theme.colors.border,
-                backgroundColor: theme.colors.card,
-                shadowColor: theme.colors.shadow,
-                shadowOffset: { height: 1, width: 0 },
-                shadowOpacity: theme.numbers.shadowOpacity,
-              },
-            }}
-          />
-          {placeholder.current.length > 0 && !formatted.possible && (
-            <Text
-              style={{
-                textAlign: 'right',
-                fontSize: theme.fontSize('sm'),
-                color: theme.colors.textAlt,
-              }}
-            >{`"${formatted.number?.input}" ${i18n.t('error')}: ${
-              formatted.possibility
-            }`}</Text>
-          )}
-        </View>
-      </InputRowContainer>
-      <TextInputRow
-        label={i18n.t('email')}
-        ref={emailInput}
-        textInputProps={{
-          placeholder: i18n.t('email_placeholder'),
-          onSubmitEditing: () => line1Input.current?.focus(),
-          keyboardType: 'email-address',
-          onChangeText: (val: string) => setEmail(val),
-          value: contact.email,
-          autoCapitalize: 'none',
-        }}
-      />
-      {!!customContactFields.length &&
-        customFields &&
-        customContactFields.map((field) => (
-          <XView key={field}>
-            <IconButton
-              icon={faMinus}
-              color={theme.colors.error}
-              onPress={() => handleDeletePrompt(field)}
-              style={{ paddingBottom: 15 }}
-            />
-            <TextInputRow
-              label={field}
-              style={{ flex: 1 }}
-              textInputProps={{
-                placeholder: `${i18n.t('goesHere')}`,
-                onChangeText: (val: string) => {
-                  setCustomField(field, val)
-                },
-                value: customFields[field],
-                autoCapitalize: 'words',
-              }}
-            />
-          </XView>
-        ))}
-      <XView style={{ paddingRight: 20 }}>
-        <TextInputRow
-          label={i18n.t('customField')}
-          textInputProps={{
-            onChangeText: (val: string) => {
-              setCustomFieldName(val)
-            },
-            placeholder: i18n.t('customField_placeholder'),
-            value: customFieldName,
-            autoCapitalize: 'words',
-            maxLength: 14,
-          }}
-          style={{ flex: 1 }}
-          lastInSection
-        />
-        <ActionButton
-          disabled={!customFieldName.length}
-          onPress={handleAddNewCustomField}
-        >
-          <Text style={{ color: theme.colors.textInverse }}>
-            {i18n.t('add')}
-          </Text>
-        </ActionButton>
-      </XView>
-    </Section>
-  )
-}
-
-const AddressSection = ({
-  contact,
-  setContact,
-  line1Input,
-  line2Input,
-  setLine1,
-  cityInput,
-  setLine2,
-  setCity,
-  stateInput,
-  setState,
-  zipInput,
-  countryInput,
-  setZip,
-  setCountry,
-  prefill,
-}: {
-  contact: Contact
-  setContact: (value: React.SetStateAction<Contact>) => void
-  line1Input: React.RefObject<TextInput>
-  line2Input: React.RefObject<TextInput>
-  setLine1: (line1: string) => void
-  cityInput: React.RefObject<TextInput>
-  setLine2: (line2: string) => void
-  setCity: (city: string) => void
-  stateInput: React.RefObject<TextInput>
-  setState: (state: string) => void
-  zipInput: React.RefObject<TextInput>
-  countryInput: React.RefObject<TextInput>
-  setZip: (zip: string) => void
-  setCountry: (country: string) => void
-  prefill:
-    | {
-        readonly address: Address
-        readonly enabled: true
-      }
-    | {
-        readonly address: undefined
-        readonly enabled: false
-      }
-}) => {
-  const theme = useTheme()
-  const [hasCleared, setHasCleared] = useState(false)
-  const keysSameAsPrefill = (): (keyof Address)[] => {
-    if (!contact.address || !prefill.address) {
-      return []
-    }
-    const keys: (keyof Address)[] = []
-    Object.keys(contact.address).forEach((k) => {
-      const key = k as keyof Address
-      if (
-        prefill.address[key] !== undefined &&
-        contact.address![key] !== undefined &&
-        contact.address![key] === prefill.address[key]
-      ) {
-        keys.push(key)
-      }
-    })
-
-    return keys
-  }
-
-  const clearPrefill = () => {
-    const clearedPrefill: Address = { ...contact.address }
-    for (const key of keysSameAsPrefill()) {
-      if (clearedPrefill) {
-        delete clearedPrefill[key]
-      }
-    }
-    setHasCleared(true)
-    setContact({ ...contact, address: clearedPrefill })
-  }
-
-  return (
-    <View style={{ paddingBottom: 80 }}>
-      {prefill.enabled && !!keysSameAsPrefill().length && !hasCleared && (
-        <XView
-          style={{
-            marginRight: 10,
-            marginBottom: 10,
-            justifyContent: 'flex-end',
-          }}
-        >
-          <Card
-            style={{
-              paddingHorizontal: 20,
-              paddingVertical: 5,
-              flexDirection: 'row',
-              gap: 10,
-            }}
-          >
-            <Text style={{ fontFamily: theme.fonts.semiBold }}>
-              {i18n.t('prefilledAddress')}
-            </Text>
-            <Button onPress={clearPrefill}>
-              <Text style={{ textDecorationLine: 'underline' }}>
-                {i18n.t('clear')}
-              </Text>
-            </Button>
-          </Card>
-        </XView>
-      )}
-      <Section>
-        <TextInputRow
-          label={i18n.t('addressLine1')}
-          ref={line1Input}
-          textInputProps={{
-            onSubmitEditing: () => line2Input.current?.focus(),
-            onChangeText: (val: string) => setLine1(val),
-            autoCapitalize: 'words',
-            value: contact.address?.line1 || '',
-          }}
-        />
-        <TextInputRow
-          label={i18n.t('addressLine2')}
-          ref={line2Input}
-          textInputProps={{
-            onSubmitEditing: () => cityInput.current?.focus(),
-            onChangeText: (val: string) => setLine2(val),
-            value: contact.address?.line2 || '',
-            autoCapitalize: 'words',
-          }}
-        />
-        <View
-          style={{
-            flexDirection: 'row',
-            justifyContent: 'space-between',
-          }}
-        >
-          <View style={{ width: '50%' }}>
-            <TextInputRow
-              label={i18n.t('city')}
-              ref={cityInput}
-              textInputProps={{
-                onSubmitEditing: () => stateInput.current?.focus(),
-                onChangeText: (val: string) => setCity(val),
-                autoCapitalize: 'words',
-                value: contact.address?.city || '',
-              }}
-            />
-          </View>
-          <View style={{ width: '50%' }}>
-            <TextInputRow
-              label={i18n.t('state')}
-              ref={stateInput}
-              textInputProps={{
-                onSubmitEditing: () => zipInput.current?.focus(),
-                onChangeText: (val: string) => setState(val),
-                value: contact.address?.state || '',
-                autoCapitalize: 'words',
-              }}
-            />
-          </View>
-        </View>
-        <View
-          style={{
-            flexDirection: 'row',
-            justifyContent: 'space-between',
-          }}
-        >
-          <View style={{ width: '50%' }}>
-            <TextInputRow
-              label={i18n.t('zip')}
-              ref={zipInput}
-              textInputProps={{
-                onSubmitEditing: () => countryInput.current?.focus(),
-                onChangeText: (val: string) => setZip(val),
-                value: contact.address?.zip || '',
-                keyboardType: 'number-pad',
-              }}
-              lastInSection
-            />
-          </View>
-          <View style={{ width: '50%' }}>
-            <TextInputRow
-              label={i18n.t('country')}
-              ref={countryInput}
-              textInputProps={{
-                onChangeText: (val: string) => setCountry(val),
-                value: contact.address?.country || '',
-                autoCapitalize: 'words',
-              }}
-              lastInSection
-            />
-          </View>
-        </View>
-      </Section>
-    </View>
-  )
-}
+import PersonalContactSection from '../components/PersonalContactSection'
+import AddressSection from '../components/AddressSection'
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Contact Form'>
 
@@ -662,90 +207,131 @@ const ContactFormScreen = ({ route, navigation }: Props) => {
     return true
   }, [contact.name])
 
-  const submit = useCallback(() => {
-    return new Promise((resolve) => {
-      geocodeAbortController.current?.abort()
-
-      const passesValidation = validateForm()
-
-      if (!passesValidation) {
-        return resolve(false)
+  /** Mutates provided contact */
+  const handleFetchCoordinate = useCallback(
+    async (c: Contact): Promise<Contact> => {
+      setFetching(true)
+      const position = await fetchCoordinateFromAddress(
+        incrementGeocodeApiCallCount,
+        c.address,
+        geocodeAbortController.current
+      )
+      if (position) {
+        c.coordinate = position
+        c.userDraggedCoordinate = undefined
       }
+      console.log('Fetched coordinate', c)
+      return c
+    },
+    [incrementGeocodeApiCallCount]
+  )
 
-      const contactMaybeWithCoordinates = { ...contact }
-      const addressHasNotChanged = _.isEqual(
+  const askUserToUpdateCoordinatesAutomatically = useCallback(
+    async (contact: Contact, resolve: (value: unknown) => void) => {
+      setFetching(true)
+      Alert.alert(
+        i18n.t('overrideCoordinate'),
+        i18n.t('overrideCoordinate_description'),
+        [
+          {
+            style: 'cancel',
+            text: i18n.t('keepExisting'),
+            onPress: () => {
+              updateContact(contact)
+              setFetching(false)
+              resolve(contact)
+            },
+          },
+          {
+            style: 'destructive',
+            text: i18n.t('fetchCoordinate'),
+            onPress: () =>
+              handleFetchCoordinate(contact).finally(() => {
+                updateContact(contact)
+                setFetching(false)
+                resolve(contact)
+              }),
+          },
+        ]
+      )
+    },
+    [handleFetchCoordinate, updateContact]
+  )
+
+  const handleUpdateContact = useCallback(
+    async (resolve: (value: unknown) => void) => {
+      /** This gets mutated in the conditionals below. */
+      const newContact = { ...contact }
+      const addressChanged = !_.isEqual(
         contactToUpdate?.address,
         contact.address
       )
-
-      const handleGetCoordinate = () => {
-        return new Promise<void>((innerResolve) => {
-          const handleFetch = async () => {
-            try {
-              setFetching(true)
-
-              if (addressHasNotChanged) {
-                return innerResolve()
-              }
-
-              const position = await fetchCoordinateFromAddress(
-                incrementGeocodeApiCallCount,
-                contact.address,
-                geocodeAbortController.current
-              )
-
-              if (position) {
-                contactMaybeWithCoordinates.coordinate = position
-                contactMaybeWithCoordinates.userDraggedCoordinate = undefined
-              } else {
-                contactMaybeWithCoordinates.coordinate = undefined
-                contactMaybeWithCoordinates.userDraggedCoordinate = undefined
-              }
-
-              return innerResolve()
-            } catch (error) {
-              // If there was an error fetching the geocode, we just silently ignore.
-              // The user likely input an invalid address.
-              // Given we have no address suggestions / validation, we can't do much here.
-              return innerResolve()
-            }
-          }
-
-          if (editMode && addressHasNotChanged) {
-            return innerResolve()
-          }
-
-          handleFetch()
-        })
+      console.log('Updating contact, ', newContact)
+      if (contact.userDraggedCoordinate && addressChanged) {
+        console.log("User's address changed & they had a custom coordinate!")
+        // Ask the user if they wanna update their coordinate automatically
+        await askUserToUpdateCoordinatesAutomatically(newContact, resolve)
+      } else {
+        if (addressChanged || !contact.coordinate) {
+          handleFetchCoordinate(newContact).finally(() => {
+            updateContact(newContact)
+            resolve(newContact)
+          })
+          return
+        }
+        updateContact(newContact)
+        console.log('Updated contact.', newContact)
+        resolve(newContact)
       }
+    },
+    [
+      askUserToUpdateCoordinatesAutomatically,
+      contact,
+      contactToUpdate?.address,
+      handleFetchCoordinate,
+      updateContact,
+    ]
+  )
 
-      handleGetCoordinate()
-        .then(() => {
+  const handleAddContact = useCallback(
+    (resolve: (value: unknown) => void) => {
+      const newContact = { ...contact }
+      // console.log('Adding contact...', newContact)
+      updatePrefillAddress(newContact.address)
+      console.log('Updated prefill.')
+      if (
+        !newContact.userDraggedCoordinate &&
+        newContact.address &&
+        !!Object.keys(newContact.address)
+      ) {
+        console.log('Fetching coords...')
+        handleFetchCoordinate(newContact).finally(() => {
+          console.log('Finally...')
+          addContact(newContact)
+          console.log('Added contact!', newContact)
           setFetching(false)
-
-          if (editMode) {
-            updateContact(contactMaybeWithCoordinates)
-          } else {
-            updatePrefillAddress(contactMaybeWithCoordinates.address)
-            addContact(contactMaybeWithCoordinates)
-          }
-
-          resolve(contactMaybeWithCoordinates)
+          console.log('Resolving...')
+          resolve(newContact)
         })
-        .finally(() => {
-          geocodeAbortController.current?.abort()
-        })
+      } else {
+        // User input custom coordinate
+        addContact(newContact)
+        resolve(newContact)
+        console.log('Added contact!', newContact)
+      }
+    },
+    [addContact, contact, handleFetchCoordinate, updatePrefillAddress]
+  )
+
+  const submit = useCallback(() => {
+    return new Promise((resolve) => {
+      if (editMode) {
+        handleUpdateContact(resolve)
+      } else {
+        handleAddContact(resolve)
+      }
     })
-  }, [
-    addContact,
-    contact,
-    contactToUpdate?.address,
-    editMode,
-    incrementGeocodeApiCallCount,
-    updateContact,
-    updatePrefillAddress,
-    validateForm,
-  ])
+  }, [editMode, handleAddContact, handleUpdateContact])
 
   useEffect(() => {
     // Cancels coordinate fetch request if user navigates away
@@ -782,11 +368,10 @@ const ContactFormScreen = ({ route, navigation }: Props) => {
                 disabled={fetching}
                 style={{ position: 'absolute', right: 0 }}
                 onPress={async () => {
-                  const succeeded = await submit()
-                  if (!succeeded) {
-                    // Failed validation if didn't submit
-                    return
+                  if (!validateForm()) {
+                    return false
                   }
+                  await submit()
                   if (editMode) {
                     navigation.replace('Contact Details', {
                       id: (params as { id: string }).id,
@@ -805,7 +390,7 @@ const ContactFormScreen = ({ route, navigation }: Props) => {
                     fontSize: 16,
                   }}
                 >
-                  {editMode ? i18n.t('save') : i18n.t('continue')}
+                  {i18n.t('save')}
                 </Text>
               </Button>
             )
@@ -829,6 +414,7 @@ const ContactFormScreen = ({ route, navigation }: Props) => {
       automaticallyAdjustContentInsets
       automaticallyAdjustKeyboardInsets
       style={{ backgroundColor: theme.colors.background, position: 'relative' }}
+      contentContainerStyle={{ paddingBottom: 100 }}
     >
       <Wrapper insets='none' style={{ gap: 30, marginTop: 20 }}>
         <View style={{ padding: 25, gap: 5 }}>

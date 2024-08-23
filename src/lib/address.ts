@@ -127,5 +127,9 @@ export const requestLocationPermission = async (
   callBack?.(granted)
 }
 
-export const coordinateAsString = (contact: Contact) =>
-  `${contact.coordinate?.latitude}, ${contact.coordinate?.longitude}`
+export const coordinateAsString = (contact?: Contact) => {
+  if (!contact) {
+    return ''
+  }
+  return `${contact.coordinate?.latitude}, ${contact.coordinate?.longitude}`
+}

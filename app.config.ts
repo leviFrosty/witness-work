@@ -38,9 +38,9 @@ export default ({ config }: ConfigContext): ExpoConfig => {
         monochromeImage: './src/assets/adaptive-icon-monochrome.png',
         backgroundColor: '#ffffff',
       },
-      package: 'com.leviwilkerson.witnesswork',
+      package: 'com.leviwilkerson.jwtime',
       playStoreUrl:
-        'https://play.google.com/store/apps/details?id=com.leviwilkerson.witnesswork',
+        'https://play.google.com/store/apps/details?id=com.leviwilkerson.jwtime',
       config: {
         googleMaps: {
           apiKey: process.env.GOOGLE_MAPS_ANDROID_SDK_API_KEY,

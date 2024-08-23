@@ -740,5 +740,17 @@
   "sectionsVisibility_description": "Attiva/disattiva la visibilità delle sezioni della schermata iniziale per ridurre l'ingombro.",
   "approachingConversations": "Avvicinamento alle conversazioni",
   "approachingConversations_description": "Questa sezione viene visualizzata solo quando hai una conversazione di follow-up programmata più avanti nello stesso giorno.",
-  "backupAndRestore": "Backup e ripristino"
+  "backupAndRestore": "Backup e ripristino",
+  "pinLocation": "Posizione pin",
+  "chooseLocation": "Scegli posizione",
+  "remove": "Rimuovi",
+  "coordinateSaved": "Coordinate salvate",
+  "saved": "Salvate",
+  "locationDisabled_description": "La condivisione della tua posizione è disattivata. La mappa non sarà in grado di ingrandire automaticamente la tua posizione.",
+  "locationDisabled_callToAction": "Apri impostazioni app",
+  "overrideCoordinate": "Ignora coordinate",
+  "overrideCoordinate_description": "Hai specificato le tue coordinate. Dal momento che hai appena cambiato indirizzo, vuoi recuperare automaticamente una coordinata aggiornata in base al nuovo indirizzo?",
+  "fetchCoordinate": "Recupera coordinate",
+  "keepExisting": "Mantieni esistente",
+  "pinLocation_description": "Verrà creato automaticamente un pin in base a un indirizzo inserito. Se lo desideri, puoi aggiungere una posizione pin personalizzata qui sotto."
 }

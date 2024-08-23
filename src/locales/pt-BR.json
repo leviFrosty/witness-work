@@ -740,5 +740,17 @@
   "sectionsVisibility_description": "Alterne a visibilidade nas seções da tela inicial para reduzir a desordem.",
   "approachingConversations": "Conversas de Aproximação",
   "approachingConversations_description": "Esta seção aparece somente quando você tem uma conversa de acompanhamento agendada para mais tarde no mesmo dia.",
-  "backupAndRestore": "Backup e restauração"
+  "backupAndRestore": "Backup e restauração",
+  "pinLocation": "Localização do Pin",
+  "chooseLocation": "Escolher Localização",
+  "remove": "Remover",
+  "coordinateSaved": "Coordenada Salva",
+  "saved": "Salvo",
+  "locationDisabled_description": "Seu compartilhamento de localização está desabilitado. O mapa não poderá ampliar automaticamente sua localização.",
+  "locationDisabled_callToAction": "Abrir configurações do aplicativo",
+  "overrideCoordinate": "Substituir Coordenada",
+  "overrideCoordinate_description": "Você especificou sua própria coordenada. Como você acabou de alterar o endereço, deseja buscar automaticamente uma coordenada atualizada com base no novo endereço?",
+  "fetchCoordinate": "Buscar Coordenada",
+  "keepExisting": "Manter Existente",
+  "pinLocation_description": "Um pin será criado automaticamente com base em um endereço que você inserir. Se desejar, você pode adicionar um local de pin personalizado abaixo."
 }

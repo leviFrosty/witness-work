@@ -740,5 +740,17 @@
   "sectionsVisibility_description": "ホーム画面のセクションの表示を切り替えて、混乱を減らします。",
   "approachingConversations": "会話のアプローチ",
   "approachingConversations_description": "このセクションは、同じ日に後ほどフォローアップの会話が予定されている場合にのみ表示されます。",
-  "backupAndRestore": "バックアップと復元"
+  "backupAndRestore": "バックアップと復元",
+  "pinLocation": "ピンの位置",
+  "chooseLocation": "場所を選択",
+  "remove": "削除",
+  "coordinateSaved": "座標を保存しました",
+  "saved": "保存しました",
+  "locationDisabled_description": "現在地の共有が無効になっています。マップはあなたの現在地を自動的にズームインできません。",
+  "locationDisabled_callToAction": "アプリの設定を開く",
+  "overrideCoordinate": "座標を上書き",
+  "overrideCoordinate_description": "独自の座標を指定しました。住所を変更したばかりなので、新しい住所に基づいて更新された座標を自動的に取得しますか?",
+  "fetchCoordinate": "座標を取得",
+  "keepExisting": "既存のものを保持",
+  "pinLocation_description": "入力した住所に基づいてピンが自動的に作成されます。必要に応じて、以下にカスタムのピンの位置を追加できます。"
 }

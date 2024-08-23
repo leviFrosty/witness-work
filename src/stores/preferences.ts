@@ -175,7 +175,7 @@ export const usePreferences = create(
        * undefined.
        */
       updatePrefillAddress: (address?: Address) => {
-        if (!address) {
+        if (!address || !Object.keys(address)) {
           return
         }
 

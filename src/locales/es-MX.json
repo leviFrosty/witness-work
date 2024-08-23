@@ -740,5 +740,17 @@
   "sectionsVisibility_description": "Activa o desactiva la visibilidad de las secciones de la pantalla de inicio para reducir el desorden.",
   "approachingConversations": "Conversaciones próximas",
   "approachingConversations_description": "Esta sección aparece solo cuando tienes una conversación de seguimiento programada más tarde en el mismo día.",
-  "backupAndRestore": "Copia de seguridad y restauración"
+  "backupAndRestore": "Copia de seguridad y restauración",
+  "pinLocation": "Ubicación del pin",
+  "chooseLocation": "Elegir ubicación",
+  "remove": "Eliminar",
+  "coordinateSaved": "Coordenada guardada",
+  "saved": "Guardada",
+  "locationDisabled_description": "La función para compartir tu ubicación está deshabilitada. El mapa no podrá hacer zoom automáticamente en tu ubicación.",
+  "locationDisabled_callToAction": "Abrir configuración de la aplicación",
+  "overrideCoordinate": "Anular coordenada",
+  "overrideCoordinate_description": "Especificaste tu propia coordenada. Como acabas de cambiar la dirección, ¿quieres obtener automáticamente una coordenada actualizada en función de la nueva dirección?",
+  "fetchCoordinate": "Obtener coordenada",
+  "keepExisting": "Mantener existente",
+  "pinLocation_description": "Se creará automáticamente un pin en función de la dirección que ingreses. Si lo deseas, puedes agregar una ubicación de pin personalizada a continuación."
 }

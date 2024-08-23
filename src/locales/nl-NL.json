@@ -740,5 +740,17 @@
   "sectionsVisibility_description": "Schakel zichtbaarheid van secties van het startscherm in of uit om rommel te verminderen.",
   "approachingConversations": "Gesprekken benaderen",
   "approachingConversations_description": "Deze sectie wordt alleen weergegeven als u later op dezelfde dag een vervolggesprek hebt gepland.",
-  "backupAndRestore": "Back-up en herstel"
+  "backupAndRestore": "Back-up en herstel",
+  "pinLocation": "Pinlocatie",
+  "chooseLocation": "Locatie kiezen",
+  "remove": "Verwijderen",
+  "coordinateSaved": "Coördinaat opgeslagen",
+  "saved": "Opgeslagen",
+  "locationDisabled_description": "Uw locatie delen is uitgeschakeld. De kaart kan niet automatisch inzoomen op uw locatie.",
+  "locationDisabled_callToAction": "App-instellingen openen",
+  "overrideCoordinate": "Coördinaat overschrijven",
+  "overrideCoordinate_description": "U hebt uw eigen coördinaat opgegeven. Omdat u zojuist het adres hebt gewijzigd, wilt u dan automatisch een bijgewerkte coördinaat ophalen op basis van het nieuwe adres?",
+  "fetchCoordinate": "Coördinaat ophalen",
+  "keepExisting": "Bestaande behouden",
+  "pinLocation_description": "Er wordt automatisch een pin gemaakt op basis van een adres dat u invoert. Als u dat wilt, kunt u hieronder een aangepaste pinlocatie toevoegen."
 }

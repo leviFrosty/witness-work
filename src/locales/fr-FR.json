@@ -740,5 +740,17 @@
   "sectionsVisibility_description": "Activez/désactivez la visibilité des sections de l'écran d'accueil pour réduire l'encombrement.",
   "approachingConversations": "Approche des conversations",
   "approachingConversations_description": "Cette section n'apparaît que lorsque vous avez une conversation de suivi prévue plus tard dans la même journée.",
-  "backupAndRestore": "Sauvegarde et restauration"
+  "backupAndRestore": "Sauvegarde et restauration",
+  "pinLocation": "Emplacement de l'épingle",
+  "chooseLocation": "Choisir l'emplacement",
+  "remove": "Supprimer",
+  "coordinateSaved": "Coordonnées enregistrées",
+  "saved": "Enregistrées",
+  "locationDisabled_description": "Le partage de votre position est désactivé. La carte ne pourra pas zoomer automatiquement sur votre position.",
+  "locationDisabled_callToAction": "Ouvrir les paramètres de l'application",
+  "overrideCoordinate": "Remplacer les coordonnées",
+  "overrideCoordinate_description": "Vous avez spécifié vos propres coordonnées. Puisque vous venez de modifier l'adresse, souhaitez-vous récupérer automatiquement une coordonnée mise à jour en fonction de la nouvelle adresse ?",
+  "fetchCoordinate": "Récupérer les coordonnées",
+  "keepExisting": "Conserver l'existant",
+  "pinLocation_description": "Une épingle sera automatiquement créée en fonction de l'adresse que vous saisissez. Si vous le souhaitez, vous pouvez ajouter un emplacement d'épingle personnalisé ci-dessous."
 }

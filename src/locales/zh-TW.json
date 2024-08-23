@@ -740,5 +740,17 @@
   "sectionsVisibility_description": "切換主螢幕各部分的可見度以減少混亂。",
   "approachingConversations": "接近對話",
   "approachingConversations_description": "只有當您在當天晚些時候安排了後續對話時，此部分才會出現。",
-  "backupAndRestore": "備份與備份恢復"
+  "backupAndRestore": "備份與備份恢復",
+  "pinLocation": "引腳位置",
+  "chooseLocation": "選擇地點",
+  "remove": "消除",
+  "coordinateSaved": "座標已儲存",
+  "saved": "已儲存",
+  "locationDisabled_description": "您的位置共享已被停用。地圖將無法自動放大您的位置。",
+  "locationDisabled_callToAction": "打開應用程式設定",
+  "overrideCoordinate": "覆蓋座標",
+  "overrideCoordinate_description": "您指定了自己的座標。由於您剛剛更改了地址，是否希望根據新地址自動獲取更新的座標？",
+  "fetchCoordinate": "取得座標",
+  "keepExisting": "保持現有",
+  "pinLocation_description": "系統將根據您輸入的地址自動建立 PIN 碼。如果您願意，您可以在下面新增自訂引腳位置。"
 }

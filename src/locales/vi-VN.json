@@ -740,5 +740,17 @@
   "sectionsVisibility_description": "Chuyển đổi chế độ hiển thị trên các mục của màn hình chính để giảm sự lộn xộn.",
   "approachingConversations": "Đang tiếp cận các cuộc trò chuyện",
   "approachingConversations_description": "Mục này chỉ xuất hiện khi bạn có cuộc trò chuyện tiếp theo được lên lịch vào cuối ngày.",
-  "backupAndRestore": "Sao lưu & Phục hồi"
+  "backupAndRestore": "Sao lưu & Phục hồi",
+  "pinLocation": "Vị trí ghim",
+  "chooseLocation": "Chọn vị trí",
+  "remove": "Xóa",
+  "coordinateSaved": "Tọa độ đã lưu",
+  "saved": "Đã lưu",
+  "locationDisabled_description": "Chia sẻ vị trí của bạn đã bị vô hiệu hóa. Bản đồ sẽ không thể tự động phóng to vị trí của bạn.",
+  "locationDisabled_callToAction": "Mở cài đặt ứng dụng",
+  "overrideCoordinate": "Ghi đè tọa độ",
+  "overrideCoordinate_description": "Bạn đã chỉ định tọa độ của riêng mình. Vì bạn vừa thay đổi địa chỉ, bạn có muốn tự động lấy tọa độ đã cập nhật dựa trên địa chỉ mới không?",
+  "fetchCoordinate": "Lấy tọa độ",
+  "keepExisting": "Giữ nguyên tọa độ hiện có",
+  "pinLocation_description": "Một ghim sẽ tự động được tạo dựa trên địa chỉ bạn nhập. Nếu muốn, bạn có thể thêm vị trí ghim tùy chỉnh bên dưới."
 }

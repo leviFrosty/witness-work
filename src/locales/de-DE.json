@@ -740,5 +740,17 @@
   "sectionsVisibility_description": "Schalten Sie die Sichtbarkeit von Abschnitten des Startbildschirms um, um Unordnung zu vermeiden.",
   "approachingConversations": "Anstehende Gespräche",
   "approachingConversations_description": "Dieser Abschnitt wird nur angezeigt, wenn Sie für später am selben Tag ein Folgegespräch geplant haben.",
-  "backupAndRestore": "Sichern und Wiederherstellen"
+  "backupAndRestore": "Sichern und Wiederherstellen",
+  "pinLocation": "Pin-Standort",
+  "chooseLocation": "Standort auswählen",
+  "remove": "Entfernen",
+  "coordinateSaved": "Koordinate gespeichert",
+  "saved": "Gespeichert",
+  "locationDisabled_description": "Ihre Standortfreigabe ist deaktiviert. Die Karte kann nicht automatisch auf Ihren Standort zoomen.",
+  "locationDisabled_callToAction": "App-Einstellungen öffnen",
+  "overrideCoordinate": "Koordinate überschreiben",
+  "overrideCoordinate_description": "Sie haben Ihre eigene Koordinate angegeben. Da Sie gerade die Adresse geändert haben, möchten Sie automatisch eine aktualisierte Koordinate basierend auf der neuen Adresse abrufen?",
+  "fetchCoordinate": "Koordinate abrufen",
+  "keepExisting": "Vorhandene beibehalten",
+  "pinLocation_description": "Eine Stecknadel wird automatisch basierend auf einer von Ihnen eingegebenen Adresse erstellt. Wenn Sie möchten, können Sie unten eine benutzerdefinierte Stecknadelposition hinzufügen."
 }

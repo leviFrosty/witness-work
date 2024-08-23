@@ -494,6 +494,9 @@
       "c8": "Тепер програма називається WitnessWork, раніше «JW Time». через законні причини.",
       "c9": "Languages now attempt to find your exact region, otherwise it falls back to any locale with your language. If nothing can be found, it defaults to English.",
       "c10": "Bemba language added! We need your help to translate. Please visit Settings > Help Translate"
+    },
+    "1320": {
+      "c1": "Now create coordinate only contacts. If your territory is very rural or with bad mapping information, there is now no need to rely on an address."
     }
   },
   "installed": "встановлено",

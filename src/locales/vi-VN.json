@@ -494,6 +494,9 @@
       "c8": "Ứng dụng này hiện được đổi tên thành WitnessWork, trước đây là 'JW Time' vì lý do pháp lý.",
       "c9": "Ngôn ngữ hiện cố gắng tìm vùng chính xác của bạn, nếu không, nó sẽ chuyển sang bất kỳ ngôn ngữ nào có ngôn ngữ của bạn. Nếu không tìm thấy gì, nó sẽ mặc định là tiếng Anh.",
       "c10": "Đã thêm ngôn ngữ Bemba! Chúng tôi cần sự giúp đỡ của bạn để dịch. Vui lòng truy cập Cài đặt > Trợ giúp dịch"
+    },
+    "1320": {
+      "c1": "Bây giờ hãy tạo các liên hệ chỉ có tọa độ. Nếu lãnh thổ của bạn rất nông thôn hoặc có thông tin bản đồ kém, thì bây giờ không cần phải dựa vào địa chỉ nữa."
     }
   },
   "installed": "Cài đặt",

@@ -494,6 +494,9 @@
       "c8": "Aus rechtlichen Gründen heißt die App jetzt WitnessWork, früher „JW Time“.",
       "c9": "Sprachen versuchen jetzt, Ihre genaue Region zu finden, andernfalls wird auf ein beliebiges Gebietsschema mit Ihrer Sprache zurückgegriffen. Wenn nichts gefunden werden kann, wird standardmäßig Englisch verwendet.",
       "c10": "Bemba-Sprache hinzugefügt! Wir brauchen Ihre Hilfe beim Übersetzen. Bitte gehen Sie zu Einstellungen > Hilfe beim Übersetzen"
+    },
+    "1320": {
+      "c1": "Erstellen Sie jetzt nur noch Koordinatenkontakte. Wenn Ihr Gebiet sehr ländlich ist oder schlechte Karteninformationen aufweist, müssen Sie sich jetzt nicht mehr auf eine Adresse verlassen."
     }
   },
   "installed": "Eingerichtet",

@@ -494,6 +494,9 @@
       "c8": "Vanwege juridische redenen heet de app nu WitnessWork, voorheen 'JW Time'.",
       "c9": "Talen proberen nu uw exacte regio te vinden, anders valt het terug op een willekeurige locale met uw taal. Als er niets kan worden gevonden, wordt standaard Engels gebruikt.",
       "c10": "Bemba-taal toegevoegd! We hebben uw hulp nodig om te vertalen. Ga naar Instellingen > Help Vertalen"
+    },
+    "1320": {
+      "c1": "Maak nu alleen coördinatencontacten. Als uw gebied erg landelijk is of slechte kaartinformatie heeft, hoeft u nu niet meer op een adres te vertrouwen."
     }
   },
   "installed": "Geïnstalleerd",

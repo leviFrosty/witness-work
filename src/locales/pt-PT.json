@@ -494,6 +494,9 @@
       "c8": "O aplicativo agora é chamado WitnessWork, anteriormente 'JW Time' devido a razões legais.",
       "c9": "Os idiomas agora tentam encontrar sua região exata, caso contrário, ele retorna para qualquer localidade com seu idioma. Se nada puder ser encontrado, o padrão é inglês.",
       "c10": "Idioma Bemba adicionado! Precisamos da sua ajuda para traduzir. Visite Configurações > Ajuda Traduzir"
+    },
+    "1320": {
+      "c1": "Agora crie contatos somente de coordenadas. Se seu território for muito rural ou com informações de mapeamento ruins, agora não há necessidade de depender de um endereço."
     }
   },
   "installed": "Instalado",

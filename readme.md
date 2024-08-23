@@ -1,4 +1,4 @@
-### Due to potential trademark infringement, JW Time was rebranded to WitnessWork in August 2024.
+### JW Time was rebranded to WitnessWork in August 2024.
 
 ![Expo](https://img.shields.io/badge/expo-1C1E24?style=flat&logo=expo&logoColor=#D04A37)
 ![Release Version](https://img.shields.io/github/v/release/leviFrosty/witness-work)

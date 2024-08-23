@@ -220,7 +220,11 @@ export const useServiceReport = create(
             (r) => r.id !== report.id
           )
 
-          reports[year][month] = monthWithRemovedReport
+          if (!monthWithRemovedReport.length) {
+            delete reports[year]?.[month]
+          } else {
+            reports[year][month] = monthWithRemovedReport
+          }
 
           return {
             serviceReports: reports,

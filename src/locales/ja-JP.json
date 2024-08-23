@@ -740,5 +740,17 @@
   "sectionsVisibility_description": "ホーム画面のセクションの表示を切り替えて、混乱を減らします。",
   "approachingConversations": "会話のアプローチ",
   "approachingConversations_description": "このセクションは、同じ日に後ほどフォローアップの会話が予定されている場合にのみ表示されます。",
-  "backupAndRestore": "Backup & Restore"
+  "backupAndRestore": "Backup & Restore",
+  "pinLocation": "Pin Location",
+  "chooseLocation": "Choose Location",
+  "remove": "Remove",
+  "coordinateSaved": "Coordinate Saved",
+  "saved": "Saved",
+  "locationDisabled_description": "Your location sharing is disabled. The map will not be able to automatically zoom into your location.",
+  "locationDisabled_callToAction": "Open app settings",
+  "overrideCoordinate": "Override Coordinate",
+  "overrideCoordinate_description": "You specified your own coordinate. Since you just changed the address, do you want to automatically fetch an updated coordinate based on the new address?",
+  "fetchCoordinate": "Fetch Coordinate",
+  "keepExisting": "Keep Existing",
+  "pinLocation_description": "A pin will automatically be created based on an address you enter. If you wish, you can add a custom pin location below."
 }

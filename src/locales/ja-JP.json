@@ -492,11 +492,11 @@
       "c6": "同じ日に複数の連絡先を作成するときに、最近使用したアドレスが自動的に事前入力されるようになりました。",
       "c7": "ホーム画面のセクションの表示を切り替えることができるようになりました。[環境設定] > [ホーム画面] にアクセスしてください。",
       "c8": "このアプリは現在、法的な理由により「WitnessWork」という名前になっていますが、以前は「JW Time」という名前でした。",
-      "c9": "Languages now attempt to find your exact region, otherwise it falls back to any locale with your language. If nothing can be found, it defaults to English.",
-      "c10": "Bemba language added! We need your help to translate. Please visit Settings > Help Translate"
+      "c9": "言語は、正確な地域を検索しようとします。そうでない場合は、言語が設定されているロケールにフォールバックします。何も見つからない場合は、デフォルトで英語になります。",
+      "c10": "ベンバ語が追加されました。翻訳にはあなたの協力が必要です。[設定] > [翻訳のヘルプ] にアクセスしてください。"
     },
     "1320": {
-      "c1": "Now create coordinate only contacts. If your territory is very rural or with bad mapping information, there is now no need to rely on an address."
+      "c1": "座標のみの連絡先を作成できるようになりました。管轄地域が非常に田舎であったり、地図情報が不十分な場合でも、住所に頼る必要がなくなりました。"
     }
   },
   "installed": "インストール済み",
@@ -743,17 +743,17 @@
   "sectionsVisibility_description": "ホーム画面のセクションの表示を切り替えて、混乱を減らします。",
   "approachingConversations": "会話のアプローチ",
   "approachingConversations_description": "このセクションは、同じ日に後ほどフォローアップの会話が予定されている場合にのみ表示されます。",
-  "backupAndRestore": "Backup & Restore",
-  "pinLocation": "Pin Location",
-  "chooseLocation": "Choose Location",
-  "remove": "Remove",
-  "coordinateSaved": "Coordinate Saved",
-  "saved": "Saved",
-  "locationDisabled_description": "Your location sharing is disabled. The map will not be able to automatically zoom into your location.",
-  "locationDisabled_callToAction": "Open app settings",
-  "overrideCoordinate": "Override Coordinate",
-  "overrideCoordinate_description": "You specified your own coordinate. Since you just changed the address, do you want to automatically fetch an updated coordinate based on the new address?",
-  "fetchCoordinate": "Fetch Coordinate",
-  "keepExisting": "Keep Existing",
-  "pinLocation_description": "A pin will automatically be created based on an address you enter. If you wish, you can add a custom pin location below."
+  "backupAndRestore": "バックアップと復元",
+  "pinLocation": "ピンの位置",
+  "chooseLocation": "場所を選択",
+  "remove": "削除",
+  "coordinateSaved": "座標を保存しました",
+  "saved": "保存しました",
+  "locationDisabled_description": "現在地の共有が無効になっています。マップはあなたの現在地を自動的にズームインできません。",
+  "locationDisabled_callToAction": "アプリの設定を開く",
+  "overrideCoordinate": "座標を上書き",
+  "overrideCoordinate_description": "独自の座標を指定しました。住所を変更したばかりなので、新しい住所に基づいて更新された座標を自動的に取得しますか?",
+  "fetchCoordinate": "座標を取得",
+  "keepExisting": "既存のものを保持",
+  "pinLocation_description": "入力した住所に基づいてピンが自動的に作成されます。必要に応じて、以下にカスタムのピンの位置を追加できます。"
 }

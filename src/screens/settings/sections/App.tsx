@@ -5,6 +5,7 @@ import InputRowButton from '../../../components/inputs/InputRowButton'
 import {
   faChevronRight,
   faDownload,
+  faFileExport,
   faUndo,
 } from '@fortawesome/free-solid-svg-icons'
 import IconButton from '../../../components/IconButton'
@@ -21,6 +22,13 @@ const AppSection = ({ handleNavigate }: SettingsSectionProps) => {
           leftIcon={faUndo}
           label={i18n.t('recoverContacts')}
           onPress={() => handleNavigate('Recover Contacts')}
+        >
+          <IconButton icon={faChevronRight} />
+        </InputRowButton>
+        <InputRowButton
+          leftIcon={faFileExport}
+          label={i18n.t('backupAndRestore')}
+          onPress={() => handleNavigate('Import and Export')}
         >
           <IconButton icon={faChevronRight} />
         </InputRowButton>

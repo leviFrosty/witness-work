@@ -17,7 +17,7 @@ import {
 } from '@fortawesome/free-solid-svg-icons'
 import { useNavigation } from '@react-navigation/native'
 import { RootStackNavigation } from '../stacks/RootStack'
-import { addressToString, navigateTo } from '../lib/address'
+import { addressToString, coordinateAsString, navigateTo } from '../lib/address'
 import Copyeable from './Copyeable'
 import links from '../constants/links'
 import { MapShareSheet } from './ShareAddressSheet'
@@ -52,12 +52,15 @@ const MapCarouselCard = ({ contact, setSheet }: Props) => {
   }
 
   const address = addressToString(contact.address)
+  const coord = coordinateAsString(contact)
 
   const mostRecentDate = mostRecentConversation
     ? moment(mostRecentConversation.date)
     : null
 
-  const addressUriEncoded = encodeURI(address)
+  const addressUriEncoded = encodeURI(
+    contact.userDraggedCoordinate ? coord : address
+  )
   const appleMapsLink = `${links.appleMapsBase}/?q=${addressUriEncoded}`
   const googleMapsLink = `${links.googleMapsBase}${addressUriEncoded}`
 
@@ -136,7 +139,7 @@ const MapCarouselCard = ({ contact, setSheet }: Props) => {
           }}
           numberOfLines={2}
         >
-          {address}
+          {address ? address : coord}
         </Text>
       </Copyeable>
       <View

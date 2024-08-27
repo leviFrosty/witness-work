@@ -492,11 +492,11 @@
       "c6": "Agora preenche automaticamente endereços usados recentemente ao criar vários contatos no mesmo dia.",
       "c7": "Agora você pode alternar a visibilidade das seções da tela inicial. Visite Preferências > Tela inicial.",
       "c8": "O aplicativo agora é chamado WitnessWork, anteriormente 'JW Time' devido a razões legais.",
-      "c9": "Agora o idioma tentam encontrar sua região exata, caso contrário, ela voltará para qualquer localidade com o seu idioma. Se nada for encontrado, o valor padrão é inglês.",
-      "c10": "Idioma Bemba adicionado! Precisamos da sua ajuda para traduzir. Por favor, visite Configurações > Ajude a traduzir"
+      "c9": "Os idiomas agora tentam encontrar sua região exata, caso contrário, ele retorna para qualquer localidade com seu idioma. Se nada puder ser encontrado, o padrão é inglês.",
+      "c10": "Idioma Bemba adicionado! Precisamos da sua ajuda para traduzir. Visite Configurações > Ajuda Traduzir"
     },
     "1320": {
-      "c1": "Agora, crie contatos apenas com coordenadas. Se o seu território for muito rural ou tiver informações de mapeamento ruins, não é necessário depender de um endereço."
+      "c1": "Agora crie contatos somente de coordenadas. Se seu território for muito rural ou com informações de mapeamento ruins, agora não há necessidade de depender de um endereço."
     }
   },
   "installed": "Instalado",
@@ -743,17 +743,17 @@
   "sectionsVisibility_description": "Alterne a visibilidade nas seções da tela inicial para reduzir a desordem.",
   "approachingConversations": "Conversas de aproximação",
   "approachingConversations_description": "Esta seção aparece somente quando você tem uma conversa de acompanhamento agendada para mais tarde no mesmo dia.",
-  "backupAndRestore": "Cópia de Segurança & Restauração",
-  "pinLocation": "Fixar Localização",
-  "chooseLocation": "Escolher a Localização",
-  "remove": "Excluir",
+  "backupAndRestore": "Backup e restauração",
+  "pinLocation": "Localização do Pin",
+  "chooseLocation": "Escolher Localização",
+  "remove": "Remover",
   "coordinateSaved": "Coordenada Salva",
   "saved": "Salvo",
-  "locationDisabled_description": "O compartilhamento de sua localização está desativado. O mapa não conseguirá fazer zoom automaticamente na sua localização.",
+  "locationDisabled_description": "Seu compartilhamento de localização está desabilitado. O mapa não poderá ampliar automaticamente sua localização.",
   "locationDisabled_callToAction": "Abrir configurações do aplicativo",
-  "overrideCoordinate": "Substituir coordenada",
+  "overrideCoordinate": "Substituir Coordenada",
   "overrideCoordinate_description": "Você especificou sua própria coordenada. Como você acabou de alterar o endereço, deseja buscar automaticamente uma coordenada atualizada com base no novo endereço?",
   "fetchCoordinate": "Buscar Coordenada",
   "keepExisting": "Manter Existente",
-  "pinLocation_description": "Um marcador será criado automaticamente com base no endereço que você inserir. Se desejar, você pode adicionar uma localização personalizada para o marcador abaixo."
+  "pinLocation_description": "Um pin será criado automaticamente com base em um endereço que você inserir. Se desejar, você pode adicionar um local de pin personalizado abaixo."
 }

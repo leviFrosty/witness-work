@@ -492,11 +492,11 @@
       "c6": "Ora vengono precompilati automaticamente gli indirizzi utilizzati di recente quando si creano più contatti nello stesso giorno.",
       "c7": "Ora puoi alternare la visibilità delle sezioni della schermata iniziale. Vai a Preferenze > Schermata iniziale.",
       "c8": "Per motivi legali, l'app ora si chiama WitnessWork, in precedenza \"JW Time\".",
-      "c9": "Languages now attempt to find your exact region, otherwise it falls back to any locale with your language. If nothing can be found, it defaults to English.",
-      "c10": "Bemba language added! We need your help to translate. Please visit Settings > Help Translate"
+      "c9": "Le lingue ora tentano di trovare la tua regione esatta, altrimenti tornano a qualsiasi locale con la tua lingua. Se non viene trovato nulla, il valore predefinito è l'inglese.",
+      "c10": "Lingua Bemba aggiunta! Abbiamo bisogno del tuo aiuto per tradurre. Visita Impostazioni > Aiuto Traduci"
     },
     "1320": {
-      "c1": "Now create coordinate only contacts. If your territory is very rural or with bad mapping information, there is now no need to rely on an address."
+      "c1": "Ora crea contatti solo coordinate. Se il tuo territorio è molto rurale o con informazioni di mappatura scadenti, non c'è più bisogno di fare affidamento su un indirizzo."
     }
   },
   "installed": "Installato",
@@ -743,17 +743,17 @@
   "sectionsVisibility_description": "Attiva/disattiva la visibilità delle sezioni della schermata iniziale per ridurre l'ingombro.",
   "approachingConversations": "Avvicinamento alle conversazioni",
   "approachingConversations_description": "Questa sezione viene visualizzata solo quando hai una conversazione di follow-up programmata più avanti nello stesso giorno.",
-  "backupAndRestore": "Backup & Restore",
-  "pinLocation": "Pin Location",
-  "chooseLocation": "Choose Location",
-  "remove": "Remove",
-  "coordinateSaved": "Coordinate Saved",
-  "saved": "Saved",
-  "locationDisabled_description": "Your location sharing is disabled. The map will not be able to automatically zoom into your location.",
-  "locationDisabled_callToAction": "Open app settings",
-  "overrideCoordinate": "Override Coordinate",
-  "overrideCoordinate_description": "You specified your own coordinate. Since you just changed the address, do you want to automatically fetch an updated coordinate based on the new address?",
-  "fetchCoordinate": "Fetch Coordinate",
-  "keepExisting": "Keep Existing",
-  "pinLocation_description": "A pin will automatically be created based on an address you enter. If you wish, you can add a custom pin location below."
+  "backupAndRestore": "Backup e ripristino",
+  "pinLocation": "Posizione pin",
+  "chooseLocation": "Scegli posizione",
+  "remove": "Rimuovi",
+  "coordinateSaved": "Coordinate salvate",
+  "saved": "Salvate",
+  "locationDisabled_description": "La condivisione della tua posizione è disattivata. La mappa non sarà in grado di ingrandire automaticamente la tua posizione.",
+  "locationDisabled_callToAction": "Apri impostazioni app",
+  "overrideCoordinate": "Ignora coordinate",
+  "overrideCoordinate_description": "Hai specificato le tue coordinate. Dal momento che hai appena cambiato indirizzo, vuoi recuperare automaticamente una coordinata aggiornata in base al nuovo indirizzo?",
+  "fetchCoordinate": "Recupera coordinate",
+  "keepExisting": "Mantieni esistente",
+  "pinLocation_description": "Verrà creato automaticamente un pin in base a un indirizzo inserito. Se lo desideri, puoi aggiungere una posizione pin personalizzata qui sotto."
 }

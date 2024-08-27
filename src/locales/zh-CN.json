@@ -492,11 +492,11 @@
       "c6": "现在，在同一天创建多个联系人时会自动预填充最近使用的地址。",
       "c7": "您现在可以切换主屏幕部分的可见性。访问“首选项”>“主屏幕”。",
       "c8": "由于法律原因，该应用程序现名为WitnessWork，以前名为“JW Time”。",
-      "c9": "Languages now attempt to find your exact region, otherwise it falls back to any locale with your language. If nothing can be found, it defaults to English.",
-      "c10": "Bemba language added! We need your help to translate. Please visit Settings > Help Translate"
+      "c9": "语言现在会尝试查找您的确切地区，否则会返回到任何具有您语言的区域设置。如果找不到任何内容，则默认为英语。",
+      "c10": "已添加 Bemba 语言！我们需要您的帮助来翻译。请访问设置 > 帮助翻译"
     },
     "1320": {
-      "c1": "Now create coordinate only contacts. If your territory is very rural or with bad mapping information, there is now no need to rely on an address."
+      "c1": "现在创建仅坐标联系人。如果您的地区非常偏远或地图信息不充分，现在就无需依赖地址。"
     }
   },
   "installed": "已安装",
@@ -743,17 +743,17 @@
   "sectionsVisibility_description": "切换主屏幕各部分的可见性以减少混乱。",
   "approachingConversations": "接近对话",
   "approachingConversations_description": "仅当您在同一天晚些时候安排了后续对话时，此部分才会出现。",
-  "backupAndRestore": "Backup & Restore",
-  "pinLocation": "Pin Location",
-  "chooseLocation": "Choose Location",
-  "remove": "Remove",
-  "coordinateSaved": "Coordinate Saved",
-  "saved": "Saved",
-  "locationDisabled_description": "Your location sharing is disabled. The map will not be able to automatically zoom into your location.",
-  "locationDisabled_callToAction": "Open app settings",
-  "overrideCoordinate": "Override Coordinate",
-  "overrideCoordinate_description": "You specified your own coordinate. Since you just changed the address, do you want to automatically fetch an updated coordinate based on the new address?",
-  "fetchCoordinate": "Fetch Coordinate",
-  "keepExisting": "Keep Existing",
-  "pinLocation_description": "A pin will automatically be created based on an address you enter. If you wish, you can add a custom pin location below."
+  "backupAndRestore": "备份与恢复",
+  "pinLocation": "图钉位置",
+  "chooseLocation": "选择位置",
+  "remove": "移除",
+  "coordinateSaved": "坐标已保存",
+  "saved": "已保存",
+  "locationDisabled_description": "您的位置共享已禁用。地图将无法自动放大到您的位置。",
+  "locationDisabled_callToAction": "打开应用设置",
+  "overrideCoordinate": "覆盖坐标",
+  "overrideCoordinate_description": "您指定了自己的坐标。由于您刚刚更改了地址，是否要根据新地址自动获取更新的坐标？",
+  "fetchCoordinate": "获取坐标",
+  "keepExisting": "保留现有",
+  "pinLocation_description": "将根据您输入的地址自动创建图钉。如果您愿意，可以在下面添加自定义图钉位置。"
 }

@@ -1,4 +1,4 @@
-### Due to potential trademark infringement, JW Time was rebranded to WitnessWork in August 2024.
+### JW Time was rebranded to WitnessWork in August 2024.
 
 ![Expo](https://img.shields.io/badge/expo-1C1E24?style=flat&logo=expo&logoColor=#D04A37)
 ![Release Version](https://img.shields.io/github/v/release/leviFrosty/witness-work)
@@ -29,7 +29,7 @@ It is written in Typescript using React Native and Expo.
 
 Building Android & iOS is similar, for this example we will build an iOS simulator.
 
-Build dependencies: [XCode](https://docs.expo.dev/workflow/ios-simulator/#install-xcode), XCode latest iOS version, [XCode cli](https://docs.expo.dev/workflow/ios-simulator/#install-xcode-command-line-tools), [Watchman](https://facebook.github.io/watchman/docs/install#macos), [Node](https://nodejs.org/en/download/package-manager), [Yarn](https://classic.yarnpkg.com/lang/en/docs/install/#mac-stable), and [EAS cli](https://docs.expo.dev/eas-update/getting-started/)
+Build dependencies: [XCode](https://docs.expo.dev/workflow/ios-simulator/#install-xcode), XCode latest iOS version, [XCode cli](https://docs.expo.dev/workflow/ios-simulator/#install-xcode-command-line-tools), [Watchman](https://facebook.github.io/watchman/docs/install#macos), [Fastlane](https://docs.fastlane.tools/), [Node](https://nodejs.org/en/download/package-manager), [Yarn](https://classic.yarnpkg.com/lang/en/docs/install/#mac-stable), and [EAS cli](https://docs.expo.dev/eas-update/getting-started/)
 
 1. Clone repository
 

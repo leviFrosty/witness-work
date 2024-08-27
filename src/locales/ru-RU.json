@@ -492,11 +492,11 @@
       "c6": "Теперь автоматически подставляет недавно использованные адреса при создании нескольких контактов в один день.",
       "c7": "Теперь вы можете переключать видимость разделов главного экрана. Посетите Настройки > Главный экран.",
       "c8": "Теперь приложение называется WitnessWork, ранее — «JW Time» по юридическим причинам.",
-      "c9": "Languages now attempt to find your exact region, otherwise it falls back to any locale with your language. If nothing can be found, it defaults to English.",
-      "c10": "Bemba language added! We need your help to translate. Please visit Settings > Help Translate"
+      "c9": "Языки теперь пытаются найти ваш точный регион, в противном случае он возвращается к любой локали с вашим языком. Если ничего не найдено, по умолчанию используется английский.",
+      "c10": "Добавлен язык бемба! Нам нужна ваша помощь в переводе. Пожалуйста, перейдите на страницу Настройки > Помощь с переводом"
     },
     "1320": {
-      "c1": "Now create coordinate only contacts. If your territory is very rural or with bad mapping information, there is now no need to rely on an address."
+      "c1": "Теперь создайте только координатные контакты. Если ваша территория очень сельская или с плохой картографической информацией, теперь нет необходимости полагаться на адрес."
     }
   },
   "installed": "Установлен",
@@ -743,17 +743,17 @@
   "sectionsVisibility_description": "Включайте видимость разделов главного экрана, чтобы уменьшить беспорядок.",
   "approachingConversations": "Приближение разговоров",
   "approachingConversations_description": "Этот раздел отображается только тогда, когда у вас запланирован следующий разговор на тот же день.",
-  "backupAndRestore": "Backup & Restore",
-  "pinLocation": "Pin Location",
-  "chooseLocation": "Choose Location",
-  "remove": "Remove",
-  "coordinateSaved": "Coordinate Saved",
-  "saved": "Saved",
-  "locationDisabled_description": "Your location sharing is disabled. The map will not be able to automatically zoom into your location.",
-  "locationDisabled_callToAction": "Open app settings",
-  "overrideCoordinate": "Override Coordinate",
-  "overrideCoordinate_description": "You specified your own coordinate. Since you just changed the address, do you want to automatically fetch an updated coordinate based on the new address?",
-  "fetchCoordinate": "Fetch Coordinate",
-  "keepExisting": "Keep Existing",
-  "pinLocation_description": "A pin will automatically be created based on an address you enter. If you wish, you can add a custom pin location below."
+  "backupAndRestore": "Резервное копирование и восстановление",
+  "pinLocation": "Местоположение метки",
+  "chooseLocation": "Выбрать местоположение",
+  "remove": "Удалить",
+  "coordinateSaved": "Координата сохранена",
+  "saved": "Сохранено",
+  "locationDisabled_description": "Обмен местоположением отключен. Карта не сможет автоматически приближаться к вашему местоположению.",
+  "locationDisabled_callToAction": "Открыть настройки приложения",
+  "overrideCoordinate": "Переопределить координату",
+  "overrideCoordinate_description": "Вы указали собственную координату. Поскольку вы только что изменили адрес, хотите ли вы автоматически получить обновленную координату на основе нового адреса?",
+  "fetchCoordinate": "Получить координату",
+  "keepExisting": "Сохранить существующую",
+  "pinLocation_description": "Пин-код будет автоматически создан на основе введенного вами адреса. При желании вы можете добавить пользовательское местоположение пина ниже."
 }

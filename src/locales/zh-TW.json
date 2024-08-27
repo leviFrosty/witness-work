@@ -493,7 +493,7 @@
       "c7": "現在您可以切換主螢幕部分的可見性。訪問首選項>主螢幕。",
       "c8": "該應用程式現在名為 WitnessWork，以前稱為“JW Time”。由於法律原因。",
       "c9": "語言現在會嘗試找到您的確切區域，否則它將回退到使用您的語言的任何區域設定。如果找不到任何內容，則預設為英語。",
-      "c10": "新增了本巴語！我們需要您的幫助來翻譯。請造訪“設定”>“幫助翻譯”"
+      "c10": "新增了本巴語！我們需要您的幫助來翻譯。請造訪設定>幫助翻譯"
     },
     "1320": {
       "c1": "現在建立僅座標聯絡人。如果您所在的地區非常鄉村或地圖資訊不良，現在無需依賴地址。"
@@ -743,10 +743,10 @@
   "sectionsVisibility_description": "切換主螢幕各部分的可見度以減少混亂。",
   "approachingConversations": "接近對話",
   "approachingConversations_description": "只有當您在當天晚些時候安排了後續對話時，此部分才會出現。",
-  "backupAndRestore": "備份與復原",
-  "pinLocation": "選擇位置",
-  "chooseLocation": "選擇位置",
-  "remove": "刪除",
+  "backupAndRestore": "備份與備份恢復",
+  "pinLocation": "引腳位置",
+  "chooseLocation": "選擇地點",
+  "remove": "消除",
   "coordinateSaved": "座標已儲存",
   "saved": "已儲存",
   "locationDisabled_description": "您的位置共享已被停用。地圖將無法自動放大您的位置。",
@@ -755,5 +755,5 @@
   "overrideCoordinate_description": "您指定了自己的座標。由於您剛剛更改了地址，是否希望根據新地址自動獲取更新的座標？",
   "fetchCoordinate": "取得座標",
   "keepExisting": "保持現有",
-  "pinLocation_description": "系統將根據您輸入的地址自動建立 Pin 碼。如果您願意，您可以在下面新增自訂座標位置。"
+  "pinLocation_description": "系統將根據您輸入的地址自動建立 PIN 碼。如果您願意，您可以在下面新增自訂引腳位置。"
 }

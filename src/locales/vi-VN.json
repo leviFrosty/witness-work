@@ -755,5 +755,6 @@
   "overrideCoordinate_description": "Bạn đã chỉ định tọa độ của riêng mình. Vì bạn vừa thay đổi địa chỉ, bạn có muốn tự động lấy tọa độ đã cập nhật dựa trên địa chỉ mới không?",
   "fetchCoordinate": "Lấy tọa độ",
   "keepExisting": "Giữ nguyên tọa độ hiện có",
-  "pinLocation_description": "Một ghim sẽ tự động được tạo dựa trên địa chỉ bạn nhập. Nếu muốn, bạn có thể thêm vị trí ghim tùy chỉnh bên dưới."
+  "pinLocation_description": "Một ghim sẽ tự động được tạo dựa trên địa chỉ bạn nhập. Nếu muốn, bạn có thể thêm vị trí ghim tùy chỉnh bên dưới.",
+  "providedTimeIsLessThanOneMinute": "Thời gian cung cấp ít hơn một phút."
 }

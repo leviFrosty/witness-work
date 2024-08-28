@@ -71,11 +71,11 @@ const AddTimeScreen = ({ route }: AddTimeScreenProps) => {
       : existingServiceReport?.report.tag ?? timeEntryTags[0]
   )
   const [customTag, setCustomTag] = useState<string>('')
-  const nearestFiveMinutes = Math.floor((route.params?.minutes || 0) / 5) * 5
   const [serviceReport, setServiceReport] = useState<ServiceReport>({
     id: existingServiceReport?.report.id ?? Crypto.randomUUID(),
     hours: existingServiceReport?.report.hours || route.params?.hours || 0,
-    minutes: existingServiceReport?.report.minutes ?? nearestFiveMinutes,
+    minutes:
+      existingServiceReport?.report.minutes ?? (route.params?.minutes || 0),
     date: moment(
       existingServiceReport?.report.date ?? route.params?.date
     ).toDate(),
@@ -234,13 +234,6 @@ const AddTimeScreen = ({ route }: AddTimeScreenProps) => {
     handleSetTag(customTag)
   }
 
-  const minuteOptions = [0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55].map(
-    (value) => ({
-      label: `${value}`,
-      value,
-    })
-  )
-
   const handleDeleteCustomTag = () => {
     set({
       serviceReportTags: [...serviceReportTags].filter(
@@ -279,6 +272,11 @@ const AddTimeScreen = ({ route }: AddTimeScreenProps) => {
   }))
 
   const hourOptions = [...Array(100).keys()].map((value) => ({
+    label: `${value}`,
+    value,
+  }))
+
+  const minuteOptions = [...Array(60).keys()].map((value) => ({
     label: `${value}`,
     value,
   }))
@@ -554,11 +552,11 @@ const AddTimeScreen = ({ route }: AddTimeScreenProps) => {
           <Section>
             {!route.params?.hours &&
             route.params?.minutes !== undefined &&
-            route.params.minutes < 5 &&
+            route.params.minutes < 1 &&
             serviceReport.hours === 0 &&
-            serviceReport.minutes < 5 ? (
+            serviceReport.minutes < 1 ? (
               <Text style={{ color: theme.colors.warn }}>
-                {i18n.t('providedTimeIsLessThanFiveMinutes')}
+                {i18n.t('providedTimeIsLessThanOneMinute')}
               </Text>
             ) : null}
             <View

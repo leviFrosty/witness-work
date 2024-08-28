@@ -755,5 +755,6 @@
   "overrideCoordinate_description": "Mwalondolwele uko mulefwaya. Apo mwacinja fye akeyala, bushe mulefwaya ukubwesha fye akeyala akapya ukulingana na akeyala akapya?",
   "fetchCoordinate": "Buleni Ubutantiko",
   "keepExisting": "Twalilileni ukubako",
-  "pinLocation_description": "Pini ikapangwa ukulingana ne keyala mwalemba. Nga mulefwaya, kuti mwalundako icifulo ca pin icalinga pesamba."
+  "pinLocation_description": "Pini ikapangwa ukulingana ne keyala mwalemba. Nga mulefwaya, kuti mwalundako icifulo ca pin icalinga pesamba.",
+  "providedTimeIsLessThanOneMinute": "Inshita yapeelwa tayacilile pali mineti imo."
 }

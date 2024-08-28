@@ -755,5 +755,6 @@
   "overrideCoordinate_description": "You specified your own coordinate. Since you just changed the address, do you want to automatically fetch an updated coordinate based on the new address?",
   "fetchCoordinate": "Fetch Coordinate",
   "keepExisting": "Keep Existing",
-  "pinLocation_description": "A pin will automatically be created based on an address you enter. If you wish, you can add a custom pin location below."
+  "pinLocation_description": "A pin will automatically be created based on an address you enter. If you wish, you can add a custom pin location below.",
+  "providedTimeIsLessThanOneMinute": "Provided time is less than one minute."
 }

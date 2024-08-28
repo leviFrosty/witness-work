@@ -755,5 +755,6 @@
   "overrideCoordinate_description": "U hebt uw eigen coördinaat opgegeven. Omdat u zojuist het adres hebt gewijzigd, wilt u dan automatisch een bijgewerkte coördinaat ophalen op basis van het nieuwe adres?",
   "fetchCoordinate": "Coördinaat ophalen",
   "keepExisting": "Bestaande behouden",
-  "pinLocation_description": "Er wordt automatisch een pin gemaakt op basis van een adres dat u invoert. Als u dat wilt, kunt u hieronder een aangepaste pinlocatie toevoegen."
+  "pinLocation_description": "Er wordt automatisch een pin gemaakt op basis van een adres dat u invoert. Als u dat wilt, kunt u hieronder een aangepaste pinlocatie toevoegen.",
+  "providedTimeIsLessThanOneMinute": "Mits de tijd korter is dan één minuut."
 }

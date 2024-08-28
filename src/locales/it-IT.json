@@ -756,5 +756,9 @@
   "fetchCoordinate": "Recupera coordinate",
   "keepExisting": "Mantieni esistente",
   "pinLocation_description": "Verrà creato automaticamente un pin in base a un indirizzo inserito. Se lo desideri, puoi aggiungere una posizione pin personalizzata qui sotto.",
-  "providedTimeIsLessThanOneMinute": "Il tempo fornito è inferiore a un minuto."
+  "providedTimeIsLessThanOneMinute": "Il tempo fornito è inferiore a un minuto.",
+  "dark": "Scuro",
+  "light": "Chiaro",
+  "device": "Dispositivo",
+  "colorScheme": "Schema colori"
 }

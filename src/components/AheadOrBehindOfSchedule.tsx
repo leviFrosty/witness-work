@@ -11,12 +11,12 @@ import {
 import _ from 'lodash'
 import useServiceReport from '../stores/serviceReport'
 import i18n from '../lib/locales'
-import { ThemeSizes } from '../types/theme'
+import { ThemeSize } from '../types/theme'
 
 type AheadOrBehindOfMonthScheduleProps = {
   month: number
   year: number
-  fontSize?: ThemeSizes
+  fontSize?: ThemeSize
 }
 
 export default function AheadOrBehindOfMonthSchedule(

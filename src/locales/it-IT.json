@@ -758,5 +758,14 @@
   "pinLocation_description": "Verrà creato automaticamente un pin in base a un indirizzo inserito. Se lo desideri, puoi aggiungere una posizione pin personalizzata qui sotto.",
   "contacts_publisher_feature_card": "Contatti per studiosi, studenti e interessati semplificati.",
   "features": "Caratteristiche",
-  "alwaysFree": "Sempre gratis"
+  "alwaysFree": "Sempre gratis",
+  "features_title": "Caratteristiche",
+  "map": "Mappa",
+  "contact_pins": "Pin di contatto",
+  "check": "Controlla",
+  "autofill": "Compilazione automatica",
+  "translated": "Tradotto",
+  "reminders": "Promemoria",
+  "freeUpdates": "Aggiornamenti gratuiti",
+  "foreverFree": "Sempre gratuito"
 }

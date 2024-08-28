@@ -757,6 +757,26 @@
   "keepExisting": "Keep Existing",
   "pinLocation_description": "A pin will automatically be created based on an address you enter. If you wish, you can add a custom pin location below.",
   "contacts_publisher_feature_card": "Contacts for studies, students, and interested ones made easy.",
-  "features": "Features",
-  "alwaysFree": "Always Free"
+  "features_title": "Features",
+  "alwaysFree": "Always Free",
+  "features": {
+    "contact": "Create contacts for each student and potentially interested person.",
+    "pins": "Easily find nearby contacts, share their address to your driver, or navigate to them!",
+    "check": "Check off your monthly activity with a little animated reward!",
+    "monthlyRoutine": "Gamified monthly routine checks off months as you progress. Try to get them all!",
+    "autofill": "Autofills recently used addresses. Useful for quickly recording multiple contacts in door-to-door territory.",
+    "backup": "Save backups and quickly restore them. Works across iOS and Android. Occasional reminders make sure you don't forget!",
+    "translated": "14+ languages are available thanks to your contributions.",
+    "updates": "Forever free and open source. WitnessWork has already received over 40 free updates thanks to your support.",
+    "reminders": "Create return visit appointments with reminders, topics, and customizable alerts!"
+  },
+  "map": "Map",
+  "contact_pins": "Contact Pins",
+  "check": "Check",
+  "autofill": "Autofill",
+  "translated": "Translated",
+  "reminders": "Reminders",
+  "freeUpdates": "Free Updates",
+  "foreverFree": "Forever Free"
+  
 }

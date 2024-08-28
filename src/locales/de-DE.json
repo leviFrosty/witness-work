@@ -758,5 +758,14 @@
   "pinLocation_description": "Eine Stecknadel wird automatisch basierend auf einer von Ihnen eingegebenen Adresse erstellt. Wenn Sie möchten, können Sie unten eine benutzerdefinierte Stecknadelposition hinzufügen.",
   "contacts_publisher_feature_card": "Kontakte für Studierende, Studenten und Interessierte leicht gemacht.",
   "features": "Features",
-  "alwaysFree": "Immer kostenlos"
+  "alwaysFree": "Immer kostenlos",
+  "features_title": "Funktionen",
+  "map": "Karte",
+  "contact_pins": "Kontakt-Pins",
+  "check": "Prüfen",
+  "autofill": "Automatisch ausfüllen",
+  "translated": "Übersetzt",
+  "reminders": "Erinnerungen",
+  "freeUpdates": "Kostenlose Updates",
+  "foreverFree": "Für immer kostenlos"
 }

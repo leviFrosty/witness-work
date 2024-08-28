@@ -758,5 +758,14 @@
   "pinLocation_description": "Pini ikapangwa ukulingana ne keyala mwalemba. Nga mulefwaya, kuti mwalundako icifulo ca pin icalinga pesamba.",
   "contacts_publisher_feature_card": "Ukulanshanya pa lwa masambililo, abasambi, na bafwaisha kwalengele ukwayanguka.",
   "features": "Ifishibilo",
-  "alwaysFree": "Lyonse Ukwabula"
+  "alwaysFree": "Lyonse Ukwabula",
+  "features_title": "Ifishibilo",
+  "map": "Mapu",
+  "contact_pins": "Amapini ya kulanshanya",
+  "check": "Ceceta",
+  "autofill": "Ukuisula",
+  "translated": "Icapilibulwa",
+  "reminders": "Ifibukisho",
+  "freeUpdates": "Ifyakubwekeshapo ifyabula",
+  "foreverFree": "Ubuntungwa bwa Muyayaya"
 }

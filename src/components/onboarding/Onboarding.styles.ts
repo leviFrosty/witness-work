@@ -30,16 +30,7 @@ export const styles = StyleSheet.create({
     color: '#fff',
     fontFamily: 'Inter_700Bold',
   },
-  navContainer: {
-    position: 'relative',
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  navBack: {
-    position: 'absolute',
-    left: 0,
-  },
+
   chevronLeft: {
     color: '#9B9B9B',
     fontSize: 15,

@@ -1,5 +1,5 @@
 import { ColorSchemeName } from 'react-native'
-import { Colors, Theme, ThemeSizes } from '../types/theme'
+import { Colors, Theme, ThemeSize } from '../types/theme'
 import * as Device from 'expo-device'
 
 export const lightModeColors = {
@@ -75,7 +75,7 @@ export const fonts = {
   bold: 'Inter_700Bold',
 }
 
-const fontSize = (size?: ThemeSizes) => {
+const fontSize = (size?: ThemeSize) => {
   const defaultSize = 14
   const isTablet = Device.deviceType === Device.DeviceType.TABLET
   // Slightly increases default font size for readability on large devices

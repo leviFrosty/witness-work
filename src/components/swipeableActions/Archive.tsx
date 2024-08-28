@@ -5,9 +5,9 @@ import Text from '../MyText'
 import i18n from '../../lib/locales'
 import IconButton from '../IconButton'
 import { faArchive } from '@fortawesome/free-solid-svg-icons'
-import { ThemeSizes } from '../../types/theme'
+import { ThemeSize } from '../../types/theme'
 
-const SwipeableArchive = ({ size }: { size?: ThemeSizes }) => {
+const SwipeableArchive = ({ size }: { size?: ThemeSize }) => {
   const theme = useContext(ThemeContext)
 
   return (

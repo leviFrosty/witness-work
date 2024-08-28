@@ -4,26 +4,38 @@ import Card from '../../../Card'
 import IconButton from '../../../IconButton'
 import Text from '../../../MyText'
 import i18n, { TranslationKey } from '../../../../lib/locales'
+import { View } from 'react-native'
 
 export default function FeatureCard(props: {
   icon: IconProp
   title: TranslationKey
   text: TranslationKey
+  selected?: boolean
 }) {
   const theme = useTheme()
+
   return (
     <Card
       style={{
         borderRadius: theme.numbers.borderRadiusSm,
+        borderWidth: props.selected ? 2 : 0,
+        borderColor: theme.colors.accent,
         flex: 1,
         minWidth: '45%',
-        gap: 10,
-        // width: '50%',
+        gap: 15,
+        paddingHorizontal: 12,
+        paddingVertical: 15,
       }}
     >
       <IconButton icon={props.icon} color={theme.colors.text} size={'2xl'} />
-      <Text>{i18n.t(props.title)}</Text>
-      <Text>{i18n.t(props.text)}</Text>
+      <View style={{ gap: 5 }}>
+        <Text style={{ fontFamily: theme.fonts.bold }}>
+          {i18n.t(props.title)}
+        </Text>
+        <Text style={{ fontSize: theme.fontSize('sm') }}>
+          {i18n.t(props.text)}
+        </Text>
+      </View>
     </Card>
   )
 }

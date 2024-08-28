@@ -758,5 +758,14 @@
   "pinLocation_description": "入力した住所に基づいてピンが自動的に作成されます。必要に応じて、以下にカスタムのピンの位置を追加できます。",
   "contacts_publisher_feature_card": "研究、学生、関心のある人への連絡が簡単になりました。",
   "features": "機能",
-  "alwaysFree": "常に無料"
+  "alwaysFree": "常に無料",
+  "features_title": "機能",
+  "map": "マップ",
+  "contact_pins": "連絡先ピン",
+  "check": "チェック",
+  "autofill": "自動入力",
+  "translated": "翻訳済み",
+  "reminders": "リマインダー",
+  "freeUpdates": "無料アップデート",
+  "foreverFree": "永久無料"
 }

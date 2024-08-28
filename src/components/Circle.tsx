@@ -1,10 +1,10 @@
 import { View, ViewProps } from 'react-native'
-import { ThemeSizes } from '../types/theme'
+import { ThemeSize } from '../types/theme'
 import useTheme from '../contexts/theme'
 
 interface CircleProps extends ViewProps {
   color: string
-  size?: ThemeSizes | number
+  size?: ThemeSize | number
 }
 
 const Circle = ({ color, style, size, ...props }: CircleProps) => {

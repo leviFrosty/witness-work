@@ -5,14 +5,14 @@ import Text from '../MyText'
 import i18n from '../../lib/locales'
 import IconButton from '../IconButton'
 import { faTrash } from '@fortawesome/free-solid-svg-icons'
-import { ThemeSizes } from '../../types/theme'
+import { ThemeSize } from '../../types/theme'
 
 const SwipeableDelete = ({
   size,
   noText,
   style,
 }: {
-  size?: ThemeSizes
+  size?: ThemeSize
   noText?: boolean
   style?: ViewStyle
 }) => {

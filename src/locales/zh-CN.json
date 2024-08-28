@@ -758,5 +758,14 @@
   "pinLocation_description": "将根据您输入的地址自动创建图钉。如果您愿意，可以在下面添加自定义图钉位置。",
   "contacts_publisher_feature_card": "轻松联系研究、学生和感兴趣的人。",
   "features": "功能",
-  "alwaysFree": "始终免费"
+  "alwaysFree": "始终免费",
+  "features_title": "功能",
+  "map": "地图",
+  "contact_pins": "联系人图钉",
+  "check": "检查",
+  "autofill": "自动填充",
+  "translated": "翻译",
+  "reminders": "提醒",
+  "freeUpdates": "免费更新",
+  "foreverFree": "永久免费"
 }

@@ -6,8 +6,9 @@ import StepThree from './steps/Three'
 import StepFour from './steps/Four'
 import { usePreferences } from '../../stores/preferences'
 import StepDefaultNav from './steps/DefaultNav'
+import Features from './steps/Features'
 
-const steps = [StepOne, StepTwo, StepThree, StepDefaultNav, StepFour]
+const steps = [StepOne, StepTwo, Features, StepThree, StepDefaultNav, StepFour]
 
 const OnBoarding = () => {
   const { set, onboardingComplete } = usePreferences()

@@ -1,12 +1,14 @@
 import Text from './MyText'
 import useTheme from '../contexts/theme'
 import Button, { ButtonProps } from './Button'
-import { ThemeSizes } from '../types/theme'
+import { ThemeSize } from '../types/theme'
 import React, { PropsWithChildren } from 'react'
+import { StyleProp, ViewStyle } from 'react-native'
 interface Props extends ButtonProps {
   onPress: () => unknown
   disabled?: boolean
-  size?: ThemeSizes
+  style?: StyleProp<ViewStyle>
+  size?: ThemeSize
 }
 
 const ActionButton: React.FC<PropsWithChildren<Props>> = ({
@@ -14,6 +16,7 @@ const ActionButton: React.FC<PropsWithChildren<Props>> = ({
   children,
   disabled,
   size = 'lg',
+  style,
   ...props
 }) => {
   const theme = useTheme()
@@ -21,17 +24,20 @@ const ActionButton: React.FC<PropsWithChildren<Props>> = ({
   return (
     <Button
       style={[
-        {
-          backgroundColor: disabled
-            ? theme.colors.accentAlt
-            : theme.colors.accent,
-          borderRadius: theme.numbers.borderRadiusSm,
-          paddingVertical: 12,
-          paddingHorizontal: 24,
-          flexDirection: 'row',
-          alignItems: 'center',
-          justifyContent: 'center',
-        },
+        [
+          {
+            backgroundColor: disabled
+              ? theme.colors.accentAlt
+              : theme.colors.accent,
+            borderRadius: theme.numbers.borderRadiusSm,
+            paddingVertical: 12,
+            paddingHorizontal: 24,
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'center',
+          },
+        ],
+        [style],
       ]}
       onPress={onPress}
       disabled={disabled}

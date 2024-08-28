@@ -758,5 +758,14 @@
   "pinLocation_description": "系統將根據您輸入的地址自動建立 PIN 碼。如果您願意，您可以在下面新增自訂引腳位置。",
   "contacts_publisher_feature_card": "研究人員、學生和有興趣的人的聯繫變得容易。",
   "features": "特徵",
-  "alwaysFree": "永遠免費"
+  "alwaysFree": "永遠免費",
+  "features_title": "特徵",
+  "map": "地圖",
+  "contact_pins": "接觸針",
+  "check": "查看",
+  "autofill": "自動填充",
+  "translated": "已翻譯",
+  "reminders": "提醒事項",
+  "freeUpdates": "免費更新",
+  "foreverFree": "永遠免費"
 }

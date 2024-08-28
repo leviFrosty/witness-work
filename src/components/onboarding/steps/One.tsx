@@ -12,15 +12,7 @@ interface Props {
 
 const StepOne = ({ goNext }: Props) => {
   return (
-    <Wrapper
-      style={{
-        flexGrow: 1,
-        paddingHorizontal: 30,
-        paddingTop: 60,
-        paddingBottom: 100,
-        position: 'relative',
-      }}
-    >
+    <Wrapper style={{ padding: 20, paddingBottom: 20 }}>
       <View style={styles.onboardingTitleWrapper}>
         <View style={styles.textContainer}>
           <Text style={styles.subTitle}>{i18n.t('welcomeTo')}</Text>

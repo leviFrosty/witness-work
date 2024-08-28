@@ -758,5 +758,14 @@
   "pinLocation_description": "입력한 주소를 기반으로 핀이 자동으로 생성됩니다. 원하는 경우 아래에서 사용자 지정 핀 위치를 추가할 수 있습니다.",
   "contacts_publisher_feature_card": "학업, 학생 및 관심 있는 사람들을 위한 연락처가 간편해졌습니다.",
   "features": "기능",
-  "alwaysFree": "항상 무료"
+  "alwaysFree": "항상 무료",
+  "features_title": "기능",
+  "map": "지도",
+  "contact_pins": "연락처 핀",
+  "check": "확인",
+  "autofill": "자동 채우기",
+  "translated": "번역",
+  "reminders": "알림",
+  "freeUpdates": "무료 업데이트",
+  "foreverFree": "영구 무료"
 }

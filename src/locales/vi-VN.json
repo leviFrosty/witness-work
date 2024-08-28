@@ -758,5 +758,14 @@
   "pinLocation_description": "Một ghim sẽ tự động được tạo dựa trên địa chỉ bạn nhập. Nếu muốn, bạn có thể thêm vị trí ghim tùy chỉnh bên dưới.",
   "contacts_publisher_feature_card": "Liên hệ cho các nghiên cứu, sinh viên và những người quan tâm được thực hiện dễ dàng.",
   "features": "Tính năng",
-  "alwaysFree": "Luôn miễn phí"
+  "alwaysFree": "Luôn miễn phí",
+  "features_title": "Tính năng",
+  "map": "Bản đồ",
+  "contact_pins": "Ghim liên hệ",
+  "check": "Kiểm tra",
+  "autofill": "Tự động điền",
+  "translated": "Đã dịch",
+  "reminders": "Nhắc nhở",
+  "freeUpdates": "Cập nhật miễn phí",
+  "foreverFree": "Miễn phí mãi mãi"
 }

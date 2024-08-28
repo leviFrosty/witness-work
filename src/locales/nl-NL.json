@@ -758,5 +758,14 @@
   "pinLocation_description": "Er wordt automatisch een pin gemaakt op basis van een adres dat u invoert. Als u dat wilt, kunt u hieronder een aangepaste pinlocatie toevoegen.",
   "contacts_publisher_feature_card": "Contacten voor studies, studenten en geïnteresseerden eenvoudig gemaakt.",
   "features": "Functies",
-  "alwaysFree": "Altijd gratis"
+  "alwaysFree": "Altijd gratis",
+  "features_title": "Functies",
+  "map": "Kaart",
+  "contact_pins": "Contact Pins",
+  "check": "Controle",
+  "autofill": "Automatisch invullen",
+  "translated": "Vertaald",
+  "reminders": "Herinneringen",
+  "freeUpdates": "Gratis updates",
+  "foreverFree": "Voor altijd gratis"
 }

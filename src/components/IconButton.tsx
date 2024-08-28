@@ -7,12 +7,12 @@ import {
 } from '@fortawesome/react-native-fontawesome'
 import { ThemeContext } from '../contexts/theme'
 import { useContext } from 'react'
-import { ThemeSizes } from '../types/theme'
+import { ThemeSize } from '../types/theme'
 
 type Props = {
   icon: IconProp
   onPress?: () => void
-  size?: ThemeSizes | number
+  size?: ThemeSize | number
   style?: StyleProp<ViewStyle>
   iconStyle?: FontAwesomeIconStyle
   color?: string

@@ -1,11 +1,10 @@
 import { View } from 'react-native'
-import { styles } from './Onboarding.styles'
 import Text from '../MyText'
 import i18n from '../../lib/locales'
 import IconButton from '../IconButton'
 import { faChevronLeft } from '@fortawesome/free-solid-svg-icons'
-import Button from '../Button'
 import useTheme from '../../contexts/theme'
+import { ThemeSize } from '../../types/theme'
 
 interface Props {
   noActions?: boolean
@@ -14,12 +13,20 @@ interface Props {
 
 const OnboardingNav = ({ noActions, goBack }: Props) => {
   const theme = useTheme()
+  const size: ThemeSize = 'md'
+
   return (
-    <View style={styles.navContainer}>
+    <View
+      style={{
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        paddingBottom: 20,
+        paddingHorizontal: 20,
+      }}
+    >
       {!noActions ? (
-        <Button style={styles.navBack} onPress={goBack}>
-          <IconButton icon={faChevronLeft} />
-        </Button>
+        <IconButton size={size} icon={faChevronLeft} onPress={goBack} />
       ) : null}
       <Text
         style={{
@@ -30,6 +37,7 @@ const OnboardingNav = ({ noActions, goBack }: Props) => {
       >
         {i18n.t('witnessWork')}
       </Text>
+      <View style={{ width: theme.fontSize(size) }} />
     </View>
   )
 }

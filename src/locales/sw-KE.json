@@ -758,5 +758,14 @@
   "pinLocation_description": "Pini itaundwa kiotomatiki kulingana na anwani utakayoingiza. Ukipenda, unaweza kuongeza eneo maalum la siri hapa chini.",
   "contacts_publisher_feature_card": "Anwani za masomo, wanafunzi, na watu wanaopendezwa zimerahisishwa.",
   "features": "Vipengele",
-  "alwaysFree": "Daima Bure"
+  "alwaysFree": "Daima Bure",
+  "features_title": "Vipengele",
+  "map": "Ramani",
+  "contact_pins": "Pini za Mawasiliano",
+  "check": "Angalia",
+  "autofill": "Jaza kiotomatiki",
+  "translated": "Imetafsiriwa",
+  "reminders": "Vikumbusho",
+  "freeUpdates": "Sasisho za Bure",
+  "foreverFree": "Milele Bure"
 }

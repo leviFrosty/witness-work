@@ -758,5 +758,14 @@
   "pinLocation_description": "Une épingle sera automatiquement créée en fonction de l'adresse que vous saisissez. Si vous le souhaitez, vous pouvez ajouter un emplacement d'épingle personnalisé ci-dessous.",
   "contacts_publisher_feature_card": "Contacts pour les études, les étudiants et les personnes intéressées simplifiés.",
   "features": "Fonctionnalités",
-  "alwaysFree": "Toujours gratuit"
+  "alwaysFree": "Toujours gratuit",
+  "features_title": "Fonctionnalités",
+  "map": "Carte",
+  "contact_pins": "Épingles de contact",
+  "check": "Vérification",
+  "autofill": "Remplissage automatique",
+  "translated": "Traduit",
+  "reminders": "Rappels",
+  "freeUpdates": "Mises à jour gratuites",
+  "foreverFree": "Gratuit pour toujours"
 }

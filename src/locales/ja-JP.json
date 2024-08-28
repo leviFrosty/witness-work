@@ -755,5 +755,6 @@
   "overrideCoordinate_description": "独自の座標を指定しました。住所を変更したばかりなので、新しい住所に基づいて更新された座標を自動的に取得しますか?",
   "fetchCoordinate": "座標を取得",
   "keepExisting": "既存のものを保持",
-  "pinLocation_description": "入力した住所に基づいてピンが自動的に作成されます。必要に応じて、以下にカスタムのピンの位置を追加できます。"
+  "pinLocation_description": "入力した住所に基づいてピンが自動的に作成されます。必要に応じて、以下にカスタムのピンの位置を追加できます。",
+  "providedTimeIsLessThanOneMinute": "提供時間は1分未満です。"
 }

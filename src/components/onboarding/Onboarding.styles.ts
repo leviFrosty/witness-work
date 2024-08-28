@@ -13,9 +13,9 @@ export const styles = StyleSheet.create({
     fontSize: 25,
   },
   title: {
-    fontSize: 75,
-    lineHeight: 85,
+    fontSize: 50,
     fontFamily: 'Inter_700Bold',
+    letterSpacing: -3,
   },
   actionButton: {
     backgroundColor: '#1BD15D',
@@ -44,10 +44,6 @@ export const styles = StyleSheet.create({
     color: '#9B9B9B',
     fontSize: 15,
   },
-  navTitle: {
-    fontSize: 24,
-    fontFamily: 'Inter_700Bold',
-  },
   navSkip: {
     color: '#9B9B9B',
     textDecorationLine: 'underline',
@@ -63,9 +59,6 @@ export const styles = StyleSheet.create({
     fontSize: 32,
     fontFamily: 'Inter_700Bold',
     marginBottom: 20,
-  },
-  stepContentContainer: {
-    marginRight: 60,
   },
   description: {
     fontSize: 12,

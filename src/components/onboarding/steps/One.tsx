@@ -18,6 +18,7 @@ const StepOne = ({ goNext }: Props) => {
         paddingHorizontal: 30,
         paddingTop: 60,
         paddingBottom: 100,
+        position: 'relative',
       }}
     >
       <View style={styles.onboardingTitleWrapper}>

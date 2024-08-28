@@ -755,5 +755,8 @@
   "overrideCoordinate_description": "Mwalondolwele uko mulefwaya. Apo mwacinja fye akeyala, bushe mulefwaya ukubwesha fye akeyala akapya ukulingana na akeyala akapya?",
   "fetchCoordinate": "Buleni Ubutantiko",
   "keepExisting": "Twalilileni ukubako",
-  "pinLocation_description": "Pini ikapangwa ukulingana ne keyala mwalemba. Nga mulefwaya, kuti mwalundako icifulo ca pin icalinga pesamba."
+  "pinLocation_description": "Pini ikapangwa ukulingana ne keyala mwalemba. Nga mulefwaya, kuti mwalundako icifulo ca pin icalinga pesamba.",
+  "contacts_publisher_feature_card": "Ukulanshanya pa lwa masambililo, abasambi, na bafwaisha kwalengele ukwayanguka.",
+  "features": "Ifishibilo",
+  "alwaysFree": "Lyonse Ukwabula"
 }

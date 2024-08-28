@@ -755,5 +755,8 @@
   "overrideCoordinate_description": "Vous avez spécifié vos propres coordonnées. Puisque vous venez de modifier l'adresse, souhaitez-vous récupérer automatiquement une coordonnée mise à jour en fonction de la nouvelle adresse ?",
   "fetchCoordinate": "Récupérer les coordonnées",
   "keepExisting": "Conserver l'existant",
-  "pinLocation_description": "Une épingle sera automatiquement créée en fonction de l'adresse que vous saisissez. Si vous le souhaitez, vous pouvez ajouter un emplacement d'épingle personnalisé ci-dessous."
+  "pinLocation_description": "Une épingle sera automatiquement créée en fonction de l'adresse que vous saisissez. Si vous le souhaitez, vous pouvez ajouter un emplacement d'épingle personnalisé ci-dessous.",
+  "contacts_publisher_feature_card": "Contacts pour les études, les étudiants et les personnes intéressées simplifiés.",
+  "features": "Fonctionnalités",
+  "alwaysFree": "Toujours gratuit"
 }

@@ -755,5 +755,8 @@
   "overrideCoordinate_description": "Você especificou sua própria coordenada. Como você acabou de alterar o endereço, deseja buscar automaticamente uma coordenada atualizada com base no novo endereço?",
   "fetchCoordinate": "Buscar Coordenada",
   "keepExisting": "Manter Existente",
-  "pinLocation_description": "Um pin será criado automaticamente com base em um endereço que você inserir. Se desejar, você pode adicionar um local de pin personalizado abaixo."
+  "pinLocation_description": "Um pin será criado automaticamente com base em um endereço que você inserir. Se desejar, você pode adicionar um local de pin personalizado abaixo.",
+  "contacts_publisher_feature_card": "Contatos para estudos, estudantes e interessados facilitados.",
+  "features": "Características",
+  "alwaysFree": "Sempre grátis"
 }

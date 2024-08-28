@@ -45,7 +45,7 @@ const PublisherTypeSelector = () => {
         data={items}
         onChange={({ value }) => setPublisher(value)}
         value={publisher}
-        style={{ marginBottom: 10 }}
+        style={{ marginBottom: 5 }}
       />
 
       {publisher === 'custom' ? (

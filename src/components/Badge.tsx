@@ -9,6 +9,7 @@ type Props = {
   fullWidth?: boolean
   size?: ThemeSizes
   textStyle?: StyleProp<TextStyle>
+  style?: StyleProp<TextStyle>
 }
 
 const Badge: React.FC<PropsWithChildren<Props>> = ({
@@ -17,6 +18,7 @@ const Badge: React.FC<PropsWithChildren<Props>> = ({
   children,
   textStyle,
   size = 'md',
+  style,
 }) => {
   const theme = useContext(ThemeContext)
   const color = _color || theme.colors.accent3
@@ -40,10 +42,11 @@ const Badge: React.FC<PropsWithChildren<Props>> = ({
               {
                 fontFamily: theme.fonts.semiBold,
                 textTransform: 'uppercase',
+                color: 'white' ?? theme.colors.textInverse,
                 fontSize: theme.fontSize(size),
               },
             ],
-            [textStyle],
+            [style],
           ]}
         >
           {children}

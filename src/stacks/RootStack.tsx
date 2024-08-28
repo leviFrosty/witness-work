@@ -82,7 +82,7 @@ const RootStackComponent = () => {
       You must update the variable instead. 
       See: https://github.com/react-navigation/react-navigation/discussions/10346
       */}
-      {onboardingComplete ? (
+      {!onboardingComplete ? (
         <RootStack.Screen
           options={{ header: () => undefined }}
           name='Root'

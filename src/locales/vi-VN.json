@@ -756,5 +756,9 @@
   "fetchCoordinate": "Lấy tọa độ",
   "keepExisting": "Giữ nguyên tọa độ hiện có",
   "pinLocation_description": "Một ghim sẽ tự động được tạo dựa trên địa chỉ bạn nhập. Nếu muốn, bạn có thể thêm vị trí ghim tùy chỉnh bên dưới.",
-  "providedTimeIsLessThanOneMinute": "Thời gian cung cấp ít hơn một phút."
+  "providedTimeIsLessThanOneMinute": "Thời gian cung cấp ít hơn một phút.",
+  "dark": "Tối",
+  "light": "Sáng",
+  "device": "Thiết bị",
+  "colorScheme": "Bảng màu"
 }

@@ -756,5 +756,9 @@
   "fetchCoordinate": "Koordinate abrufen",
   "keepExisting": "Vorhandene beibehalten",
   "pinLocation_description": "Eine Stecknadel wird automatisch basierend auf einer von Ihnen eingegebenen Adresse erstellt. Wenn Sie möchten, können Sie unten eine benutzerdefinierte Stecknadelposition hinzufügen.",
-  "providedTimeIsLessThanOneMinute": "Die vorausgesetzte Zeit beträgt weniger als eine Minute."
+  "providedTimeIsLessThanOneMinute": "Die vorausgesetzte Zeit beträgt weniger als eine Minute.",
+  "dark": "Dunkel",
+  "light": "Hell",
+  "device": "Gerät",
+  "colorScheme": "Farbschema"
 }

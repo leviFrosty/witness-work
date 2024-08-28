@@ -756,5 +756,9 @@
   "fetchCoordinate": "Leta Kuratibu",
   "keepExisting": "Endelea Kuwepo",
   "pinLocation_description": "Pini itaundwa kiotomatiki kulingana na anwani utakayoingiza. Ukipenda, unaweza kuongeza eneo maalum la siri hapa chini.",
-  "providedTimeIsLessThanOneMinute": "Muda uliotolewa ni chini ya dakika moja."
+  "providedTimeIsLessThanOneMinute": "Muda uliotolewa ni chini ya dakika moja.",
+  "dark": "Giza",
+  "light": "Mwanga",
+  "device": "Kifaa",
+  "colorScheme": "Mpango wa Rangi"
 }

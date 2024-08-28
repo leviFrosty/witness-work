@@ -48,9 +48,6 @@ export default function PinLocation(props: {
   }
 
   function handleAddOrRemove() {
-    console.log('add or remove')
-    console.log('region: ', region)
-    console.log('coordinate: ', coordinate)
     if (region && !coordinate) {
       setCoordinate({ latitude: region.latitude, longitude: region.longitude })
     } else {
@@ -173,9 +170,7 @@ export default function PinLocation(props: {
                   borderRadius: theme.numbers.borderRadiusSm,
                 }}
                 onPress={() => {
-                  console.log('clearing...')
                   setCoordinate(undefined)
-                  console.log('userlocation ', userLocation)
                   if (userLocation) {
                     setRegion(userLocation)
                     mapRef.current?.animateToRegion(userLocation)
@@ -185,7 +180,6 @@ export default function PinLocation(props: {
                       coordinate: undefined,
                       userDraggedCoordinate: undefined,
                     })
-                    console.log('cleared contacts coords')
                   }
                 }}
               >
@@ -281,7 +275,6 @@ export default function PinLocation(props: {
                       longitude: coordinate.longitude,
                     }}
                     key={coordinate.latitude % 1337}
-                    identifier={'Test'}
                   />
                 )}
               </MapView>

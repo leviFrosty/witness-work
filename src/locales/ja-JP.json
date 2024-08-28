@@ -756,5 +756,9 @@
   "fetchCoordinate": "座標を取得",
   "keepExisting": "既存のものを保持",
   "pinLocation_description": "入力した住所に基づいてピンが自動的に作成されます。必要に応じて、以下にカスタムのピンの位置を追加できます。",
-  "providedTimeIsLessThanOneMinute": "提供時間は1分未満です。"
+  "providedTimeIsLessThanOneMinute": "提供時間は1分未満です。",
+  "dark": "暗い",
+  "light": "明るい",
+  "device": "デバイス",
+  "colorScheme": "カラースキーム"
 }

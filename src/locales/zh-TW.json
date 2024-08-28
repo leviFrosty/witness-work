@@ -756,5 +756,9 @@
   "fetchCoordinate": "取得座標",
   "keepExisting": "保持現有",
   "pinLocation_description": "系統將根據您輸入的地址自動建立 PIN 碼。如果您願意，您可以在下面新增自訂引腳位置。",
-  "providedTimeIsLessThanOneMinute": "規定時間少於一分鐘。"
+  "providedTimeIsLessThanOneMinute": "規定時間少於一分鐘。",
+  "dark": "黑暗的",
+  "light": "光",
+  "device": "裝置",
+  "colorScheme": "配色方案"
 }

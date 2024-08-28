@@ -6,7 +6,7 @@ import i18n from '../lib/locales'
 import Constants from 'expo-constants'
 import moment from 'moment'
 import * as Device from 'expo-device'
-import { Platform } from 'react-native'
+import { ColorSchemeName, Platform } from 'react-native'
 import { hasMigratedFromAsyncStorage, MmkvStorage } from './mmkv'
 import { Address } from '../types/contact'
 
@@ -149,6 +149,7 @@ const initialState = {
     timer: true,
     contacts: true,
   },
+  colorScheme: undefined as ColorSchemeName,
 }
 
 export const usePreferences = create(

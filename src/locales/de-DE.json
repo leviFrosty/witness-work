@@ -755,5 +755,6 @@
   "overrideCoordinate_description": "Sie haben Ihre eigene Koordinate angegeben. Da Sie gerade die Adresse geändert haben, möchten Sie automatisch eine aktualisierte Koordinate basierend auf der neuen Adresse abrufen?",
   "fetchCoordinate": "Koordinate abrufen",
   "keepExisting": "Vorhandene beibehalten",
-  "pinLocation_description": "Eine Stecknadel wird automatisch basierend auf einer von Ihnen eingegebenen Adresse erstellt. Wenn Sie möchten, können Sie unten eine benutzerdefinierte Stecknadelposition hinzufügen."
+  "pinLocation_description": "Eine Stecknadel wird automatisch basierend auf einer von Ihnen eingegebenen Adresse erstellt. Wenn Sie möchten, können Sie unten eine benutzerdefinierte Stecknadelposition hinzufügen.",
+  "providedTimeIsLessThanOneMinute": "Die vorausgesetzte Zeit beträgt weniger als eine Minute."
 }

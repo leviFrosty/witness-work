@@ -755,5 +755,6 @@
   "overrideCoordinate_description": "Você especificou sua própria coordenada. Como você acabou de alterar o endereço, deseja buscar automaticamente uma coordenada atualizada com base no novo endereço?",
   "fetchCoordinate": "Buscar Coordenada",
   "keepExisting": "Manter Existente",
-  "pinLocation_description": "Um marcador será criado automaticamente com base no endereço que você inserir. Se desejar, você pode adicionar uma localização personalizada para o marcador abaixo."
+  "pinLocation_description": "Um marcador será criado automaticamente com base no endereço que você inserir. Se desejar, você pode adicionar uma localização personalizada para o marcador abaixo.",
+  "providedTimeIsLessThanOneMinute": "O tempo fornecido é inferior a um minuto."
 }

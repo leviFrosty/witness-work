@@ -756,5 +756,9 @@
   "fetchCoordinate": "Buleni Ubutantiko",
   "keepExisting": "Twalilileni ukubako",
   "pinLocation_description": "Pini ikapangwa ukulingana ne keyala mwalemba. Nga mulefwaya, kuti mwalundako icifulo ca pin icalinga pesamba.",
-  "providedTimeIsLessThanOneMinute": "Inshita yapeelwa tayacilile pali mineti imo."
+  "providedTimeIsLessThanOneMinute": "Inshita yapeelwa tayacilile pali mineti imo.",
+  "dark": "Icafita",
+  "light": "Ulubuuto",
+  "device": "Icintu",
+  "colorScheme": "Imisango ya Malangi"
 }

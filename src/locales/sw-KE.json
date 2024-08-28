@@ -755,5 +755,6 @@
   "overrideCoordinate_description": "Umebainisha kiratibu chako mwenyewe. Kwa kuwa umebadilisha anwani, ungependa kuleta kiotomatiki kiratibu kilichosasishwa kulingana na anwani mpya?",
   "fetchCoordinate": "Leta Kuratibu",
   "keepExisting": "Endelea Kuwepo",
-  "pinLocation_description": "Pini itaundwa kiotomatiki kulingana na anwani utakayoingiza. Ukipenda, unaweza kuongeza eneo maalum la siri hapa chini."
+  "pinLocation_description": "Pini itaundwa kiotomatiki kulingana na anwani utakayoingiza. Ukipenda, unaweza kuongeza eneo maalum la siri hapa chini.",
+  "providedTimeIsLessThanOneMinute": "Muda uliotolewa ni chini ya dakika moja."
 }

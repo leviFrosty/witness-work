@@ -756,5 +756,9 @@
   "fetchCoordinate": "获取坐标",
   "keepExisting": "保留现有",
   "pinLocation_description": "将根据您输入的地址自动创建图钉。如果您愿意，可以在下面添加自定义图钉位置。",
-  "providedTimeIsLessThanOneMinute": "提供的时间少于一分钟。"
+  "providedTimeIsLessThanOneMinute": "提供的时间少于一分钟。",
+  "dark": "深色",
+  "light": "浅色",
+  "device": "设备",
+  "colorScheme": "配色方案"
 }

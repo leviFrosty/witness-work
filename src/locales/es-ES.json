@@ -755,5 +755,6 @@
   "overrideCoordinate_description": "Especificaste tu propia coordenada. Como acabas de cambiar la dirección, ¿quieres obtener automáticamente una coordenada actualizada en función de la nueva dirección?",
   "fetchCoordinate": "Obtener coordenada",
   "keepExisting": "Mantener existente",
-  "pinLocation_description": "Se creará automáticamente un pin en función de la dirección que ingreses. Si lo deseas, puedes agregar una ubicación de pin personalizada a continuación."
+  "pinLocation_description": "Se creará automáticamente un pin en función de la dirección que ingreses. Si lo deseas, puedes agregar una ubicación de pin personalizada a continuación.",
+  "providedTimeIsLessThanOneMinute": "El tiempo proporcionado es inferior a un minuto."
 }

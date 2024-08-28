@@ -756,5 +756,9 @@
   "fetchCoordinate": "Coördinaat ophalen",
   "keepExisting": "Bestaande behouden",
   "pinLocation_description": "Er wordt automatisch een pin gemaakt op basis van een adres dat u invoert. Als u dat wilt, kunt u hieronder een aangepaste pinlocatie toevoegen.",
-  "providedTimeIsLessThanOneMinute": "Mits de tijd korter is dan één minuut."
+  "providedTimeIsLessThanOneMinute": "Mits de tijd korter is dan één minuut.",
+  "dark": "Donker",
+  "light": "Licht",
+  "device": "Apparaat",
+  "colorScheme": "Kleurenschema"
 }

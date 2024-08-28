@@ -755,5 +755,6 @@
   "overrideCoordinate_description": "您指定了自己的坐标。由于您刚刚更改了地址，是否要根据新地址自动获取更新的坐标？",
   "fetchCoordinate": "获取坐标",
   "keepExisting": "保留现有",
-  "pinLocation_description": "将根据您输入的地址自动创建图钉。如果您愿意，可以在下面添加自定义图钉位置。"
+  "pinLocation_description": "将根据您输入的地址自动创建图钉。如果您愿意，可以在下面添加自定义图钉位置。",
+  "providedTimeIsLessThanOneMinute": "提供的时间少于一分钟。"
 }

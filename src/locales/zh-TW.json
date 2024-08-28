@@ -755,5 +755,6 @@
   "overrideCoordinate_description": "您指定了自己的座標。由於您剛剛更改了地址，是否希望根據新地址自動獲取更新的座標？",
   "fetchCoordinate": "取得座標",
   "keepExisting": "保持現有",
-  "pinLocation_description": "系統將根據您輸入的地址自動建立 PIN 碼。如果您願意，您可以在下面新增自訂引腳位置。"
+  "pinLocation_description": "系統將根據您輸入的地址自動建立 PIN 碼。如果您願意，您可以在下面新增自訂引腳位置。",
+  "providedTimeIsLessThanOneMinute": "規定時間少於一分鐘。"
 }

@@ -10,7 +10,6 @@ export default function FeatureCard(props: {
   icon: IconProp
   title: TranslationKey
   text: TranslationKey
-  selected?: boolean
 }) {
   const theme = useTheme()
 
@@ -18,7 +17,6 @@ export default function FeatureCard(props: {
     <Card
       style={{
         borderRadius: theme.numbers.borderRadiusSm,
-        borderWidth: props.selected ? 2 : 0,
         borderColor: theme.colors.accent,
         flex: 1,
         minWidth: '45%',

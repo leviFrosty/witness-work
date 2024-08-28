@@ -31,7 +31,7 @@ export default function Features(props: {
         style={{ flex: 1 }}
         contentContainerStyle={{
           paddingHorizontal: 20,
-          paddingVertical: 40,
+          paddingTop: 20,
           paddingBottom: 100,
         }}
       >
@@ -41,14 +41,17 @@ export default function Features(props: {
             paddingBottom: 15,
           }}
         >
-          <Text
-            style={{
-              fontSize: theme.fontSize('3xl'),
-              fontFamily: theme.fonts.bold,
-            }}
-          >
-            {i18n.t('features_title')}
-          </Text>
+          <View style={{ flex: 1 }}>
+            <Text
+              style={{
+                fontSize: theme.fontSize('3xl'),
+                fontFamily: theme.fonts.bold,
+              }}
+            >
+              {i18n.t('features_title')}
+            </Text>
+            <Text>{i18n.t('features_description')}</Text>
+          </View>
           <Badge color={theme.colors.accent} size='xs'>
             {i18n.t(publisher)}
           </Badge>

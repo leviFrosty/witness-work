@@ -775,8 +775,10 @@
   "check": "Check",
   "autofill": "Autofill",
   "translated": "Translated",
-  "reminders": "Reminders",
+  "reminders": "Schedule Visits",
   "freeUpdates": "Free Updates",
-  "foreverFree": "Forever Free"
+  "foreverFree": "Forever Free",
+  "features_description": "Get to know what's possible in WitnessWork.",
+  "onboardingComplete": "Onboarding Complete"
   
 }

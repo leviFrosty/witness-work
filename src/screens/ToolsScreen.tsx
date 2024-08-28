@@ -18,6 +18,7 @@ import { useToastController } from '@tamagui/toast'
 import { RecurringPlanFrequencies } from '../lib/serviceReport'
 import { useState } from 'react'
 import Button from '../components/Button'
+import { usePreferences } from '../stores/preferences'
 
 export default function ToolsScreen() {
   const theme = useTheme()
@@ -39,6 +40,7 @@ export default function ToolsScreen() {
     addContact,
   } = useContacts()
   const { _WARNING_forceDeleteConversations } = useConversations()
+  const { onboardingComplete, set: setPreferences } = usePreferences()
   const toast = useToastController()
   const [showContacts, setShowContacts] = useState(false)
   const [showReports, setShowReports] = useState(false)
@@ -157,6 +159,19 @@ export default function ToolsScreen() {
                 {i18n.t('migratedToMmkv')}:
               </Text>
               <Text>{`${hasMigratedFromAsyncStorage()}`}</Text>
+            </XView>
+            <XView>
+              <Text style={{ fontFamily: theme.fonts.bold }}>
+                {i18n.t('onboardingComplete')}
+              </Text>
+              <Text>{`${onboardingComplete}`}</Text>
+              <Button
+                onPress={() => setPreferences({ onboardingComplete: false })}
+              >
+                <Text style={{ textDecorationLine: 'underline' }}>
+                  {i18n.t('reset')}
+                </Text>
+              </Button>
             </XView>
           </View>
         </Card>

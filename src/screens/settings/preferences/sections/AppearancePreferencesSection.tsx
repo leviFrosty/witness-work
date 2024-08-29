@@ -1,4 +1,4 @@
-import { View } from 'react-native'
+import { ColorSchemeName, View } from 'react-native'
 import Section from '../../../../components/inputs/Section'
 import InputRowContainer from '../../../../components/inputs/InputRowContainer'
 import i18n from '../../../../lib/locales'
@@ -9,7 +9,7 @@ import { useContext } from 'react'
 import { ThemeContext } from '../../../../contexts/theme'
 
 const AppearancePreferencesSection = () => {
-  const { set, fontSizeOffset } = usePreferences()
+  const { set, fontSizeOffset, colorScheme } = usePreferences()
   const theme = useContext(ThemeContext)
   const fontSizeOffsetOptions = [
     { label: '-1', value: -1 },
@@ -20,9 +20,27 @@ const AppearancePreferencesSection = () => {
     { label: '+4', value: 4 },
   ]
 
+  const darkModeOptions: { label: string; value: ColorSchemeName }[] = [
+    { label: i18n.t('device'), value: undefined },
+    { label: i18n.t('dark'), value: 'dark' },
+    { label: i18n.t('light'), value: 'light' },
+  ]
+
   return (
     <View style={{ gap: 3 }}>
       <Section>
+        <InputRowContainer
+          label={i18n.t('colorScheme')}
+          style={{ justifyContent: 'space-between' }}
+        >
+          <View style={{ flex: 1 }}>
+            <Select
+              data={darkModeOptions}
+              value={colorScheme}
+              onChange={({ value }) => set({ colorScheme: value })}
+            />
+          </View>
+        </InputRowContainer>
         <InputRowContainer
           label={i18n.t('fontSizeOffset')}
           style={{ justifyContent: 'space-between' }}

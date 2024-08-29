@@ -16,6 +16,7 @@ const StepTwo = ({ goBack, goNext }: Props) => {
   const handlePress = () => {
     Keyboard.dismiss()
   }
+
   return (
     <View style={{ flex: 1 }}>
       <TouchableWithoutFeedback onPress={handlePress}>

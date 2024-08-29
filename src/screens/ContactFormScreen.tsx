@@ -220,7 +220,6 @@ const ContactFormScreen = ({ route, navigation }: Props) => {
         c.coordinate = position
         c.userDraggedCoordinate = undefined
       }
-      console.log('Fetched coordinate', c)
       return c
     },
     [incrementGeocodeApiCallCount]
@@ -266,9 +265,7 @@ const ContactFormScreen = ({ route, navigation }: Props) => {
         contactToUpdate?.address,
         contact.address
       )
-      console.log('Updating contact, ', newContact)
       if (contact.userDraggedCoordinate && addressChanged) {
-        console.log("User's address changed & they had a custom coordinate!")
         // Ask the user if they wanna update their coordinate automatically
         await askUserToUpdateCoordinatesAutomatically(newContact, resolve)
       } else {
@@ -280,7 +277,6 @@ const ContactFormScreen = ({ route, navigation }: Props) => {
           return
         }
         updateContact(newContact)
-        console.log('Updated contact.', newContact)
         resolve(newContact)
       }
     },
@@ -296,28 +292,21 @@ const ContactFormScreen = ({ route, navigation }: Props) => {
   const handleAddContact = useCallback(
     (resolve: (value: unknown) => void) => {
       const newContact = { ...contact }
-      // console.log('Adding contact...', newContact)
       updatePrefillAddress(newContact.address)
-      console.log('Updated prefill.')
       if (
         !newContact.userDraggedCoordinate &&
         newContact.address &&
         !!Object.keys(newContact.address)
       ) {
-        console.log('Fetching coords...')
         handleFetchCoordinate(newContact).finally(() => {
-          console.log('Finally...')
           addContact(newContact)
-          console.log('Added contact!', newContact)
           setFetching(false)
-          console.log('Resolving...')
           resolve(newContact)
         })
       } else {
         // User input custom coordinate
         addContact(newContact)
         resolve(newContact)
-        console.log('Added contact!', newContact)
       }
     },
     [addContact, contact, handleFetchCoordinate, updatePrefillAddress]

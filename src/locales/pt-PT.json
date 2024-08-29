@@ -496,7 +496,10 @@
       "c10": "Idioma Bemba adicionado! Precisamos da sua ajuda para traduzir. Por favor, visite Configurações > Ajude a traduzir"
     },
     "1320": {
-      "c1": "Agora, crie contatos apenas com coordenadas. Se o seu território for muito rural ou tiver informações de mapeamento ruins, não é necessário depender de um endereço."
+      "c1": "Agora, crie contatos apenas com coordenadas. Se o seu território for muito rural ou tiver informações de mapeamento ruins, não é necessário depender de um endereço.",
+      "c2": "Alterne facilmente entre o esquema de cores do dispositivo, escuro e claro. Visite Preferências > Aparência.",
+      "c3": "Adicionado idioma Kinyarwanda. Você fala Kinyarwanda? Precisamos da sua ajuda para traduzir (bemba também)! Visite Configurações > Ajuda Traduzir",
+      "c4": "A tela \"Adicionar tempo\" agora permite incrementos de 1 minuto."
     }
   },
   "installed": "Instalado",

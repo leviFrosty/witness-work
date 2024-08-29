@@ -496,7 +496,10 @@
       "c10": "¡Se agregó el idioma bemba! Necesitamos tu ayuda para traducir. Visita Configuración > Ayuda para traducir"
     },
     "1320": {
-      "c1": "Ahora puedes crear contactos solo con coordenadas. Si tu territorio es muy rural o la información cartográfica es deficiente, ya no tendrás que depender de una dirección."
+      "c1": "Ahora puedes crear contactos solo con coordenadas. Si tu territorio es muy rural o la información cartográfica es deficiente, ya no tendrás que depender de una dirección.",
+      "c2": "Cambia fácilmente entre los esquemas de colores del dispositivo, los modos oscuro y claro. Visita Preferencias > Apariencia.",
+      "c3": "Se agregó el idioma kinyarwanda. ¿Hablas kinyarwanda? Necesitamos tu ayuda para traducir (¡también bemba!). Visita Configuración > Ayuda para traducir",
+      "c4": "La pantalla \"Agregar tiempo\" ahora permite incrementos de 1 minuto."
     }
   },
   "installed": "Instalado",

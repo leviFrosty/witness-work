@@ -496,7 +496,10 @@
       "c10": "Langue bemba ajoutée ! Nous avons besoin de votre aide pour traduire. Veuillez visiter Paramètres > Aide à la traduction"
     },
     "1320": {
-      "c1": "Créez maintenant des contacts avec coordonnées uniquement. Si votre territoire est très rural ou que les informations cartographiques sont mauvaises, il n'est désormais plus nécessaire de se fier à une adresse."
+      "c1": "Créez maintenant des contacts avec coordonnées uniquement. Si votre territoire est très rural ou que les informations cartographiques sont mauvaises, il n'est désormais plus nécessaire de se fier à une adresse.",
+      "c2": "Basculez facilement entre les couleurs de l'appareil, du mode sombre et du mode clair. Accédez à Préférences > Apparence.",
+      "c3": "Ajout de la langue kinyarwanda. Parlez-vous kinyarwanda ? Nous avons besoin de votre aide pour traduire (en bemba aussi) ! Veuillez accéder à Paramètres > Aide à la traduction",
+      "c4": "L'écran « Ajouter du temps » permet désormais des incréments d'une minute."
     }
   },
   "installed": "installée",

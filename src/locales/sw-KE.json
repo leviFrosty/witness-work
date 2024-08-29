@@ -496,7 +496,10 @@
       "c10": "Lugha ya Kibemba imeongezwa! Tunahitaji usaidizi wako kutafsiri. Tafadhali tembelea Mipangilio > Saidia Kutafsiri"
     },
     "1320": {
-      "c1": "Sasa unda kuratibu anwani pekee. Ikiwa eneo lako ni la mashambani sana au lenye maelezo mabaya ya ramani, sasa hakuna haja ya kutegemea anwani."
+      "c1": "Sasa unda kuratibu anwani pekee. Ikiwa eneo lako ni la mashambani sana au lenye maelezo mabaya ya ramani, sasa hakuna haja ya kutegemea anwani.",
+      "c2": "Geuza kwa urahisi kati ya mpango wa rangi ya kifaa, giza na mwanga. Tembelea Mapendeleo > Muonekano.",
+      "c3": "Lugha ya Kinyarwanda imeongezwa. Je, unazungumza Kinyarwanda? Tunahitaji usaidizi wako kutafsiri (bemba pia)! Tafadhali tembelea Mipangilio > Saidia Kutafsiri",
+      "c4": "'Ongeza Wakati' skrini sasa inaruhusu nyongeza za dakika 1."
     }
   },
   "installed": "Imesakinishwa",

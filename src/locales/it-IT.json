@@ -496,7 +496,10 @@
       "c10": "Lingua Bemba aggiunta! Abbiamo bisogno del tuo aiuto per tradurre. Visita Impostazioni > Aiuto Traduci"
     },
     "1320": {
-      "c1": "Ora crea contatti solo coordinate. Se il tuo territorio è molto rurale o con informazioni di mappatura scadenti, non c'è più bisogno di fare affidamento su un indirizzo."
+      "c1": "Ora crea contatti solo coordinate. Se il tuo territorio è molto rurale o con informazioni di mappatura scadenti, non c'è più bisogno di fare affidamento su un indirizzo.",
+      "c2": "Passa facilmente tra la modalità dispositivo, scura e chiara. Visita Preferenze > Aspetto.",
+      "c3": "Aggiunta lingua kinyarwanda. Parli kinyarwanda? Abbiamo bisogno del tuo aiuto per tradurre (anche bemba)! Visita Impostazioni > Aiuto per tradurre",
+      "c4": "La schermata \"Aggiungi tempo\" ora consente incrementi di 1 minuto."
     }
   },
   "installed": "Installato",

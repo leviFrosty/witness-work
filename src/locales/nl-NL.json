@@ -496,7 +496,10 @@
       "c10": "Bemba-taal toegevoegd! We hebben uw hulp nodig om te vertalen. Ga naar Instellingen > Help Vertalen"
     },
     "1320": {
-      "c1": "Maak nu alleen coördinatencontacten. Als uw gebied erg landelijk is of slechte kaartinformatie heeft, hoeft u nu niet meer op een adres te vertrouwen."
+      "c1": "Maak nu alleen coördinatencontacten. Als uw gebied erg landelijk is of slechte kaartinformatie heeft, hoeft u nu niet meer op een adres te vertrouwen.",
+      "c2": "Schakel eenvoudig tussen het kleurenschema van het apparaat, de donkere en de lichte modus. Ga naar Voorkeuren > Weergave.",
+      "c3": "Kinyarwanda toegevoegd. Spreekt u Kinyarwanda? We hebben uw hulp nodig om te vertalen (ook bemba)! Ga naar Instellingen > Help vertalen",
+      "c4": "Het scherm 'Tijd toevoegen' staat nu stappen van 1 minuut toe."
     }
   },
   "installed": "Geïnstalleerd",

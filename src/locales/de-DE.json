@@ -496,7 +496,10 @@
       "c10": "Bemba-Sprache hinzugefügt! Wir brauchen Ihre Hilfe beim Übersetzen. Bitte gehen Sie zu Einstellungen > Hilfe beim Übersetzen"
     },
     "1320": {
-      "c1": "Erstellen Sie jetzt nur noch Koordinatenkontakte. Wenn Ihr Gebiet sehr ländlich ist oder schlechte Karteninformationen aufweist, müssen Sie sich jetzt nicht mehr auf eine Adresse verlassen."
+      "c1": "Erstellen Sie jetzt nur noch Koordinatenkontakte. Wenn Ihr Gebiet sehr ländlich ist oder schlechte Karteninformationen aufweist, müssen Sie sich jetzt nicht mehr auf eine Adresse verlassen.",
+      "c2": "Wechseln Sie einfach zwischen den Farbschemata für Geräte-, Dunkel- und Hellmodus. Gehen Sie zu Einstellungen > Darstellung.",
+      "c3": "Sprache Kinyarwanda hinzugefügt. Sprechen Sie Kinyarwanda? Wir brauchen Ihre Hilfe beim Übersetzen (auch Bemba)! Gehen Sie bitte zu Einstellungen > Beim Übersetzen helfen",
+      "c4": "Der Bildschirm „Zeit hinzufügen“ ermöglicht jetzt 1-Minuten-Schritte."
     }
   },
   "installed": "Eingerichtet",

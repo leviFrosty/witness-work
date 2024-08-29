@@ -496,7 +496,10 @@
       "c10": "Đã thêm ngôn ngữ Bemba! Chúng tôi cần sự giúp đỡ của bạn để dịch. Vui lòng truy cập Cài đặt > Trợ giúp dịch"
     },
     "1320": {
-      "c1": "Bây giờ hãy tạo các liên hệ chỉ có tọa độ. Nếu lãnh thổ của bạn rất nông thôn hoặc có thông tin bản đồ kém, thì bây giờ không cần phải dựa vào địa chỉ nữa."
+      "c1": "Bây giờ hãy tạo các liên hệ chỉ có tọa độ. Nếu lãnh thổ của bạn rất nông thôn hoặc có thông tin bản đồ kém, thì bây giờ không cần phải dựa vào địa chỉ nữa.",
+      "c2": "Dễ dàng chuyển đổi giữa chế độ thiết bị, chế độ tối và chế độ sáng. Truy cập Tùy chọn > Giao diện.",
+      "c3": "Đã thêm ngôn ngữ Kinyarwanda. Bạn có nói tiếng Kinyarwanda không? Chúng tôi cần sự trợ giúp của bạn để dịch (cũng là bemba)! Vui lòng truy cập Cài đặt > Trợ giúp dịch",
+      "c4": "Màn hình 'Thêm thời gian' hiện cho phép tăng dần theo từng phút."
     }
   },
   "installed": "Cài đặt",

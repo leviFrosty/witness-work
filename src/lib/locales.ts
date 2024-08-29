@@ -17,6 +17,7 @@ import zhTW from '../locales/zh-TW.json'
 import zhCN from '../locales/zh-CN.json'
 import swKE from '../locales/sw-KE.json'
 import ukUA from '../locales/uk-UA.json'
+import rwRW from '../locales/rw-RW.json'
 import bemZM from '../locales/bem-ZM.json'
 
 import moment from 'moment'
@@ -72,6 +73,7 @@ const translations = {
   'sw-ke': swKE,
   'uk-ua': ukUA,
   'bem-zm': bemZM, // Bemba
+  'rw-rw': rwRW,
 }
 
 const _i18n = new I18n(translations)

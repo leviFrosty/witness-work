@@ -496,7 +496,10 @@
       "c10": "Bemba language added! We need your help to translate. Please visit Settings > Help Translate"
     },
     "1320": {
-      "c1": "Now create coordinate only contacts. If your territory is very rural or with bad mapping information, there is now no need to rely on an address."
+      "c1": "Now create coordinate only contacts. If your territory is very rural or with bad mapping information, there is now no need to rely on an address.",
+      "c2": "Easily toggle between device, dark, and light mode color scheme. Visit Preferences > Appearance.",
+      "c3": "Added Kinyarwanda language. Do you speak Kinyarwanda? We need your help to translate (bemba too)! Please visit Settings > Help Translate",
+      "c4": "'Add Time' screen now allows for increments of 1 minute."
     }
   },
   "installed": "Installed",

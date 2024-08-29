@@ -498,7 +498,7 @@
     "1320": {
       "c1": "Now create coordinate only contacts. If your territory is very rural or with bad mapping information, there is now no need to rely on an address.",
       "c2": "Easily toggle between device, dark, and light mode color scheme. Visit Preferences > Appearance.",
-      "c3": "Added Kinyarwanda language. Do you speak Kinyarwanda? We need your help to translate (bemba too)! Please visit Settings > Help Translate",
+      "c3": "Hongewemo ururimi rw'ikinyarwanda. Ese uvuga ikinyarwanda? Dukeneye ubufasha bwawe mu buhinduzi! Reba Settings > Help Translate",
       "c4": "'Add Time' screen now allows for increments of 1 minute."
     }
   },
@@ -735,7 +735,7 @@
   "quickAction": "Ibikorwa byihuse",
   "time": "Igihe",
   "deleteDayPlans": "Siba igengo y'iminsi",
-  "deleteRecurringPlans": "Siba ingengo zisubiramo",
+  "deleteRecurringPlans": "Siba gahunda zisubiramo",
   "month": "Ukwezi",
   "year": "Umwaka",
   "timePlanned_description2": "Intego yawe igaragazwa n'umubwiriza uri we. Gerageza kugena nibura 100% y'intego yawe.",

@@ -37,7 +37,7 @@ Build dependencies: [XCode](https://docs.expo.dev/workflow/ios-simulator/#instal
 
 1. Install dependencies, `yarn install`
 
-1. Build iOS, run `eas build -p ios --profile development-simulator --local`
+1. Build iOS, run `yarn build:ios`
 
 1. Install new build to simulator, (replace path) `eas build:run -p ios --path [path].tar.gz`
 

@@ -13,7 +13,7 @@
       },
       "env": {
         "APP_VARIANT": "development",
-        "ANDROID_SDK_ROOT": "/Users/leviw/Library/Android/sdk"
+        "ANDROID_SDK_ROOT": "/Users/levi/Library/Android/sdk"
       },
       "node": "20.14.0"
     },

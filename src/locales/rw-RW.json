@@ -327,35 +327,50 @@
   "new": "Ibishya",
   "bugFixes": "Gukosora amakosa",
   "updates": {
-    "160": {
-      "c1": "Conversations are now editable. Notifications are configurable",
-      "c2": "Swipe gestures to edit or delete conversations, contacts, etc.",
-      "c3": "Added haptic feedback to various important actions"
+    "1211": {
+      "c1": "Hongewe izindi ngingo z'ingenzi inshuro imwe aho bikenewe."
     },
-    "161": {
-      "c1": "Added more minute options for time entries"
+    "1210": {
+      "c1": "Byanonosowe neza kugaragazwa kw'igihe.",
+      "c2": "Hanonosowe neza ku dukoni tw'iterambere.",
+      "c3": "Hongewemo udufasha tw'ibikorwa tutagaragara cyane.",
+      "c4": "Hanonosowe ubuziranenge kuri ekara y'ikarita harimo n'amakuru akenewe ndetse na buto yo kongeramo byihuse."
     },
-    "162": {
-      "c1": "Adjusted special pioneer hour requirement from 70 to 100"
+    "1201": {
+      "c1": "Huza n'igihe igice cya buri kwezi ahabanza kugira ngo ubone amezi abanza n'akurikira.",
+      "c2": "Hanonosowe ubuhinduzi bwo mu rurimi rwa Korean - Muvandimwe Paul, wakoze. Niba ushaka gufasha guhindura mu rurimi rwawe, reba mu igenamiterere.",
+      "c3": "Gukosora udukosa duto."
     },
-    "163": {
-      "c1": "Resolve automated update issues"
+    "1200": {
+      "c1": "Hongewemo ubryo bwo kugarura no kubika amakuru bwite ya application. Ushobora kubika kuri Cloud, ukabigarura nyuma no mu bindi bikoresho bya elegitoroniki. Wabyohereza no ku zindi platform. Reba iyi miterere mishya mu igenamiterere."
     },
-    "170": {
-      "c1": "Add various time export methods",
-      "c2": "Shiraho 'Ntabwo ari mu rugo'"
+    "1120": {
+      "c1": "Hongewemo ubryo bwo kugarura no kubika amakuru bwite ya application. Ushobora kubika kuri Cloud, ukabigarura nyuma no mu bindi bikoresho bya elegitoroniki. Wabyohereza no ku zindi platform. Reba iyi miterere mishya mu igenamiterere."
     },
-    "180": {
-      "c1": "Added automatic geocoding for contacts",
-      "c2": "Added map view"
+    "1111": {
+      "c1": "Hongewemo i paji yo gutanga impano kubifuza gutanga impano. Reba mu igenamiterere.",
+      "c2": "Harimo gukosora udukosa duto n'ibindi"
     },
-    "181": {
-      "c1": "Expanded map view",
-      "c2": "Added store review request after certain criteria is met",
-      "c3": "Small bug fixes"
+    "1110": {
+      "c1": "Hongewemo gukoreshwa na iPad na Tablet neza!",
+      "c2": "Hahinduwe imiterere imwe n'imwe kugira ngo ikore neza muri ekara nini.",
+      "c3": "Adjusted the method of submitting Bug Reports and Feature Requests to Github."
     },
-    "182": {
-      "c1": "Updated all time to reflect the current locale"
+    "1100": {
+      "c1": "Adds annual report to Time Reports screen! Keep track of your service year progress at a glance.",
+      "c2": "Adding time from Time Reports screen now defaults the report to the selected month.",
+      "c3": "Fixes an issue exporting January service report."
+    },
+    "192": {
+      "c1": "Ubu wa kanda ku kiganiro kugira ngo ugire ibyo uhindura, cyangwa ushobora gusunika ibumoso nka mbere.",
+      "c2": "Fixes an issue where some devices have an overflowing progress bar.",
+      "c3": "Adds more verbose handling of link errors for certain devices lacking required applications.",
+      "c4": "Navigate directly to a month from the monthly routine section of the home screen.",
+      "c5": "Time Reports screen better handles empty and future months.",
+      "c6": "Minor bug fixes."
+    },
+    "191": {
+      "c1": "Resolves an issue navigating to time screens."
     },
     "190": {
       "c1": "Added preferences in the settings",
@@ -366,50 +381,35 @@
       "c6": "Now add custom tags to your time entries",
       "c7": "Updated Time Reports screen to be better organized and separated by month"
     },
-    "191": {
-      "c1": "Resolves an issue navigating to time screens."
+    "182": {
+      "c1": "Updated all time to reflect the current locale"
     },
-    "192": {
-      "c1": "Ubu wa kanda ku kiganiro kugira ngo ugire ibyo uhindura, cyangwa ushobora gusunika ibumoso nka mbere.",
-      "c2": "Fixes an issue where some devices have an overflowing progress bar.",
-      "c3": "Adds more verbose handling of link errors for certain devices lacking required applications.",
-      "c4": "Navigate directly to a month from the monthly routine section of the home screen.",
-      "c5": "Time Reports screen better handles empty and future months.",
-      "c6": "Minor bug fixes."
+    "181": {
+      "c1": "Expanded map view",
+      "c2": "Added store review request after certain criteria is met",
+      "c3": "Small bug fixes"
     },
-    "1100": {
-      "c1": "Adds annual report to Time Reports screen! Keep track of your service year progress at a glance.",
-      "c2": "Adding time from Time Reports screen now defaults the report to the selected month.",
-      "c3": "Fixes an issue exporting January service report."
+    "180": {
+      "c1": "Added automatic geocoding for contacts",
+      "c2": "Added map view"
     },
-    "1110": {
-      "c1": "Hongewemo gukoreshwa na iPad na Tablet neza!",
-      "c2": "Hahinduwe imiterere imwe n'imwe kugira ngo ikore neza muri ekara nini.",
-      "c3": "Adjusted the method of submitting Bug Reports and Feature Requests to Github."
+    "170": {
+      "c1": "Add various time export methods",
+      "c2": "Shiraho 'Ntabwo ari mu rugo'"
     },
-    "1111": {
-      "c1": "Hongewemo i paji yo gutanga impano kubifuza gutanga impano. Reba mu igenamiterere.",
-      "c2": "Harimo gukosora udukosa duto n'ibindi"
+    "163": {
+      "c1": "Resolve automated update issues"
     },
-    "1120": {
-      "c1": "Hongewemo ubryo bwo kugarura no kubika amakuru bwite ya application. Ushobora kubika kuri Cloud, ukabigarura nyuma no mu bindi bikoresho bya elegitoroniki. Wabyohereza no ku zindi platform. Reba iyi miterere mishya mu igenamiterere."
+    "162": {
+      "c1": "Adjusted special pioneer hour requirement from 70 to 100"
     },
-    "1200": {
-      "c1": "Hongewemo ubryo bwo kugarura no kubika amakuru bwite ya application. Ushobora kubika kuri Cloud, ukabigarura nyuma no mu bindi bikoresho bya elegitoroniki. Wabyohereza no ku zindi platform. Reba iyi miterere mishya mu igenamiterere."
+    "161": {
+      "c1": "Added more minute options for time entries"
     },
-    "1201": {
-      "c1": "Huza n'igihe igice cya buri kwezi ahabanza kugira ngo ubone amezi abanza n'akurikira.",
-      "c2": "Hanonosowe ubuhinduzi bwo mu rurimi rwa Korean - Muvandimwe Paul, wakoze. Niba ushaka gufasha guhindura mu rurimi rwawe, reba mu igenamiterere.",
-      "c3": "Gukosora udukosa duto."
-    },
-    "1210": {
-      "c1": "Byanonosowe neza kugaragazwa kw'igihe.",
-      "c2": "Hanonosowe neza ku dukoni tw'iterambere.",
-      "c3": "Hongewemo udufasha tw'ibikorwa tutagaragara cyane.",
-      "c4": "Hanonosowe ubuziranenge kuri ekara y'ikarita harimo n'amakuru akenewe ndetse na buto yo kongeramo byihuse."
-    },
-    "1211": {
-      "c1": "Hongewe izindi ngingo z'ingenzi inshuro imwe aho bikenewe."
+    "160": {
+      "c1": "Conversations are now editable. Notifications are configurable",
+      "c2": "Swipe gestures to edit or delete conversations, contacts, etc.",
+      "c3": "Added haptic feedback to various important actions"
     },
     "1220": {
       "c3": "Added Calendar to time reports screen.",

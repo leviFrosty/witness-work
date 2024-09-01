@@ -42,12 +42,19 @@ const ContactFormScreen = ({ route, navigation }: Props) => {
   const locales = Localization.getLocales()
   const geocodeAbortController = useRef<AbortController>()
   const [fetching, setFetching] = useState(false)
+  const prefillKeys = prefillAddress.address
+    ? Object.keys(prefillAddress.address)
+    : null
+  const prefillHasMinOneVal = (prefillKeys as (keyof Address)[] | null)?.some(
+    (k) => !!prefillAddress.address?.[k]?.length
+  )
 
   /** Whether or not address should be prefilled based on state. */
   const prefill =
     prefillAddress?.enabled &&
     moment().isSame(prefillAddress.lastUpdated, 'day') &&
     prefillAddress.address &&
+    prefillHasMinOneVal &&
     !editMode
       ? ({
           address: prefillAddress.address,

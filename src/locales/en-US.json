@@ -499,7 +499,8 @@
       "c1": "Now create coordinate only contacts. If your territory is very rural or with bad mapping information, there is now no need to rely on an address.",
       "c2": "Easily toggle between device, dark, and light mode color scheme. Visit Preferences > Appearance.",
       "c4": "'Add Time' screen now allows for increments of 1 minute.",
-      "c5": "Added Kinyarwanda language, fully translated by Semana D. Thank you so much for your help!"
+      "c5": "Added Kinyarwanda language, fully translated by Semana D. Thank you so much for your help!",
+      "c6": "You can now select how your time is displayed. Choose between decimal like: 13.5 or choose 13 Hrs 30 Mins. Visit Preferences > Appearance."
     }
   },
   "installed": "Installed",

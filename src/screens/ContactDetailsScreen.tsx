@@ -248,10 +248,6 @@ const AddressRow = ({ contact }: { contact: Contact }) => {
     theme.colors.warn,
   ])
 
-  if (!address) {
-    return null
-  }
-
   const attemptToGetCoordinates = async () => {
     setHasTriedToGetCoordinates(true)
     const position = await fetchCoordinateFromAddress(
@@ -262,10 +258,6 @@ const AddressRow = ({ contact }: { contact: Contact }) => {
       ...contact,
       coordinate: position || undefined,
     })
-  }
-
-  const handleMapLayout = () => {
-    fitToMarkers()
   }
 
   return (
@@ -292,19 +284,23 @@ const AddressRow = ({ contact }: { contact: Contact }) => {
             text={addressToString(address)}
             onPress={() => navigateTo(contact, defaultNavigationMapProvider)}
           >
-            <View
-              style={{
-                flexDirection: 'row',
-                flexWrap: 'wrap',
-                gap: 5,
-              }}
-            >
-              {Object.keys(address).map((key) => {
-                if (address[key as keyof Address]) {
-                  return <Text key={key}>{address[key as keyof Address]}</Text>
-                }
-              })}
-            </View>
+            {address && (
+              <View
+                style={{
+                  flexDirection: 'row',
+                  flexWrap: 'wrap',
+                  gap: 5,
+                }}
+              >
+                {Object.keys(address).map((key) => {
+                  if (address[key as keyof Address]) {
+                    return (
+                      <Text key={key}>{address[key as keyof Address]}</Text>
+                    )
+                  }
+                })}
+              </View>
+            )}
           </Copyeable>
         </View>
       </Button>
@@ -347,7 +343,7 @@ const AddressRow = ({ contact }: { contact: Contact }) => {
           <MapView
             showsUserLocation={locationPermission}
             ref={mapRef}
-            onLayout={handleMapLayout}
+            onLayout={fitToMarkers}
             style={{
               height: 140,
               width: '100%',
@@ -768,7 +764,7 @@ const ContactDetailsScreen = ({ route, navigation }: Props) => {
     )
   }
 
-  const { name, address, phone, email, customFields } = contact
+  const { name, address, phone, email, customFields, coordinate } = contact
 
   const hasAddress = address && Object.values(address).some((v) => v.length > 0)
   const hasCustomFields =
@@ -808,7 +804,7 @@ const ContactDetailsScreen = ({ route, navigation }: Props) => {
               style={{ margin: 20 }}
             >
               <View style={{ gap: 15 }}>
-                {hasAddress && <AddressRow contact={contact} />}
+                {(hasAddress || coordinate) && <AddressRow contact={contact} />}
                 {phone && <PhoneRow contact={contact} />}
                 {email && <EmailRow contact={contact} />}
                 {hasCustomFields && <CustomFieldsRow contact={contact} />}

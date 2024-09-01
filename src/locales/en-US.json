@@ -763,5 +763,6 @@
   "dark": "Dark",
   "light": "Light",
   "device": "Device",
-  "colorScheme": "Color Scheme"
+  "colorScheme": "Color Scheme",
+  "pinLocationHelp": "Long press on map or press 'Add' to create. Touch & hold to move."
 }

@@ -1,12 +1,17 @@
 import Card from '../components/Card'
 import { Sheet, Spinner } from 'tamagui'
-import MapView, { Marker, PROVIDER_GOOGLE, Region } from 'react-native-maps'
+import MapView, {
+  LongPressEvent,
+  Marker,
+  PROVIDER_GOOGLE,
+  Region,
+} from 'react-native-maps'
 import { useToastController } from '@tamagui/toast'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import MapWarningLocationSharingDisabled from '../components/MapWarningLocationSharingDisabled'
 import * as Location from 'expo-location'
 import { Contact, Coordinate } from '../types/contact'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import useTheme from '../contexts/theme'
 import i18n from '../lib/locales'
 import XView from './layout/XView'
@@ -15,12 +20,14 @@ import Text from './MyText'
 import { Platform, View } from 'react-native'
 import IconButton from './IconButton'
 import { faTimes } from '@fortawesome/free-solid-svg-icons'
+import useContacts from '../stores/contactsStore'
 
 export default function PinLocation(props: {
   contact: Contact
   setContact: (value: React.SetStateAction<Contact>) => void
 }) {
   const { contact, setContact } = props
+  const { contacts } = useContacts()
   const [open, setOpen] = useState(false)
   const [hasLocationPermission, setHasLocationPermission] = useState(false)
   const [userLocation, setUserLocation] = useState<Region | null>()
@@ -79,6 +86,17 @@ export default function PinLocation(props: {
 
     getLocation()
   }, [])
+
+  const otherContacts = useMemo(
+    () =>
+      contacts.filter(
+        (c) =>
+          c.id !== contact.id &&
+          c.coordinate?.latitude &&
+          c.coordinate.longitude
+      ),
+    [contact.id, contacts]
+  )
 
   return (
     <>
@@ -216,11 +234,16 @@ export default function PinLocation(props: {
         <Sheet.Frame>
           <XView
             style={{
-              justifyContent: 'flex-end',
-              paddingVertical: 10,
+              justifyContent: 'space-between',
+              alignItems: 'flex-start',
+              paddingVertical: 15,
               paddingHorizontal: 20,
+              gap: 10,
             }}
           >
+            <Text style={{ fontSize: theme.fontSize('md'), flex: 1 }}>
+              {i18n.t('pinLocationHelp')}
+            </Text>
             <IconButton
               icon={faTimes}
               color={theme.colors.text}
@@ -249,6 +272,12 @@ export default function PinLocation(props: {
                 ref={mapRef}
                 showsUserLocation={hasLocationPermission}
                 style={{ height: '100%', width: '100%' }}
+                onLongPress={(e: LongPressEvent) => {
+                  setCoordinate({
+                    latitude: e.nativeEvent.coordinate.latitude,
+                    longitude: e.nativeEvent.coordinate.longitude,
+                  })
+                }}
                 provider={
                   Platform.OS === 'android' ? PROVIDER_GOOGLE : undefined
                 }
@@ -264,6 +293,8 @@ export default function PinLocation(props: {
                 {coordinate?.latitude && coordinate.longitude && (
                   <Marker
                     draggable
+                    identifier={contact.id}
+                    pinColor={theme.colors.accent}
                     onDragEnd={(e) =>
                       setCoordinate({
                         latitude: e.nativeEvent.coordinate.latitude,
@@ -277,6 +308,14 @@ export default function PinLocation(props: {
                     key={coordinate.latitude % 1337}
                   />
                 )}
+                {otherContacts.map((c) => (
+                  <Marker
+                    identifier={c.id}
+                    key={c.id}
+                    coordinate={c.coordinate!}
+                    pinColor={theme.colors.textAlt}
+                  />
+                ))}
               </MapView>
             )}
 

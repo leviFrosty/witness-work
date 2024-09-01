@@ -1,5 +1,5 @@
 import { useCallback } from 'react'
-import { View, Platform, Alert } from 'react-native'
+import { View, Alert } from 'react-native'
 import Text from '../components/MyText'
 import * as Notifications from 'expo-notifications'
 import * as Crypto from 'expo-crypto'
@@ -15,16 +15,14 @@ import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view
 import Section from '../components/inputs/Section'
 import { Conversation, Notification } from '../types/conversation'
 import InputRowContainer from '../components/inputs/InputRowContainer'
-import RNDateTimePicker, {
-  DateTimePickerEvent,
-} from '@react-native-community/datetimepicker'
+import { DateTimePickerEvent } from '@react-native-community/datetimepicker'
 import TextInputRow from '../components/inputs/TextInputRow'
 import CheckboxWithLabel from '../components/inputs/CheckboxWithLabel'
 import { Contact } from '../types/contact'
 import moment from 'moment'
 import useConversations from '../stores/conversationStore'
 import i18n, { TranslationKey } from '../lib/locales'
-import AndroidDateTimePicker from '../components/AndroidDateTimePicker'
+import DateTimePicker from '../components/DateTimePicker'
 import Checkbox from 'expo-checkbox'
 import Select from '../components/Select'
 import Wrapper from '../components/layout/Wrapper'
@@ -41,7 +39,6 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { usePreferences } from '../stores/preferences'
 import { maybeRequestStoreReview } from '../lib/storeReview'
 import useNotifications from '../hooks/notifications'
-import { getLocales } from 'expo-localization'
 import { useToastController } from '@tamagui/toast'
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Conversation Form'>
@@ -182,7 +179,6 @@ const ConversationFormScreen = ({ route, navigation }: Props) => {
     returnVisitTimeOffset,
     returnVisitNotificationOffset,
     returnVisitAlwaysNotify,
-    colorScheme,
   } = usePreferences()
   const { params } = route
   const { contacts } = useContacts()
@@ -597,23 +593,13 @@ const ConversationFormScreen = ({ route, navigation }: Props) => {
             label={i18n.t('date')}
             justifyContent='space-between'
           >
-            {Platform.OS === 'android' ? (
-              <AndroidDateTimePicker
-                maximumDate={moment().toDate()}
-                value={conversation.date}
-                onChange={handleDateChange}
-                timeAndDate
-              />
-            ) : (
-              <RNDateTimePicker
-                themeVariant={colorScheme ? colorScheme : undefined}
-                locale={getLocales()[0].languageCode || undefined}
-                maximumDate={moment().toDate()}
-                value={conversation.date}
-                onChange={handleDateChange}
-                mode='datetime'
-              />
-            )}
+            <DateTimePicker
+              maximumDate={moment().toDate()}
+              value={conversation.date}
+              onChange={handleDateChange}
+              timeAndDate
+              iOSMode='datetime'
+            />
           </InputRowContainer>
           <TextInputRow
             label={i18n.t('note')}
@@ -643,22 +629,13 @@ const ConversationFormScreen = ({ route, navigation }: Props) => {
             label={i18n.t('followUp')}
             justifyContent='space-between'
           >
-            {Platform.OS === 'android' ? (
-              <AndroidDateTimePicker
-                minimumDate={moment().toDate()}
-                value={conversation.followUp!.date}
-                onChange={handleFollowUpDateChange}
-                timeAndDate
-              />
-            ) : (
-              <RNDateTimePicker
-                locale={getLocales()[0].languageCode || undefined}
-                mode='datetime'
-                minimumDate={moment().toDate()}
-                value={conversation.followUp!.date}
-                onChange={handleFollowUpDateChange}
-              />
-            )}
+            <DateTimePicker
+              minimumDate={moment().toDate()}
+              value={conversation.followUp!.date}
+              onChange={handleFollowUpDateChange}
+              timeAndDate
+              iOSMode='datetime'
+            />
           </InputRowContainer>
           <TextInputRow
             label={i18n.t('topic')}

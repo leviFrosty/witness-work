@@ -15,7 +15,7 @@ import Button from '../components/Button'
 import IconButton from '../components/IconButton'
 import { faCalendarDay, faRepeat } from '@fortawesome/free-solid-svg-icons'
 import RNDateTimePicker from '@react-native-community/datetimepicker'
-import AndroidDateTimePicker from '../components/AndroidDateTimePicker'
+import DateTimePicker from '../components/DateTimePicker'
 import Select from '../components/Select'
 import { getLocales } from 'expo-localization'
 import Wrapper from '../components/layout/Wrapper'
@@ -60,20 +60,11 @@ const OneTimePlan = (props: {
   return (
     <>
       <InputRowContainer label={i18n.t('date')} justifyContent='space-between'>
-        {Platform.OS !== 'android' ? (
-          <RNDateTimePicker
-            minimumDate={new Date()}
-            locale={getLocales()[0].languageCode || undefined}
-            value={props.date}
-            onChange={(_, newDate) => newDate && props.setDate(newDate)}
-          />
-        ) : (
-          <AndroidDateTimePicker
-            minimumDate={new Date()}
-            value={props.date}
-            onChange={(_, newDate) => newDate && props.setDate(newDate)}
-          />
-        )}
+        <DateTimePicker
+          minimumDate={new Date()}
+          value={props.date}
+          onChange={(_, newDate) => newDate && props.setDate(newDate)}
+        />
       </InputRowContainer>
       <InputRowContainer label={i18n.t('note')}>
         <View style={{ flex: 1 }}>
@@ -185,7 +176,7 @@ const RecurringPlan = (props: {
             onChange={(_, newDate) => newDate && props.setDate(newDate)}
           />
         ) : (
-          <AndroidDateTimePicker
+          <DateTimePicker
             minimumDate={new Date()}
             value={props.date}
             onChange={(_, newDate) => newDate && props.setDate(newDate)}
@@ -219,7 +210,7 @@ const RecurringPlan = (props: {
                 onChange={(_, newDate) => newDate && props.setEndDate(newDate)}
               />
             ) : (
-              <AndroidDateTimePicker
+              <DateTimePicker
                 value={props.endDate}
                 onChange={(_, newDate) => newDate && props.setEndDate(newDate)}
               />

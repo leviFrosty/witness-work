@@ -1,7 +1,7 @@
 import { Platform, View } from 'react-native'
 import Text from './MyText'
 import moment from 'moment'
-import {
+import RNDateTimePicker, {
   DateTimePickerAndroid,
   DateTimePickerEvent,
 } from '@react-native-community/datetimepicker'
@@ -9,12 +9,19 @@ import i18n from '../lib/locales'
 import Button from './Button'
 import { useContext } from 'react'
 import { ThemeContext } from '../contexts/theme'
+import { getLocales } from 'expo-localization'
+import { usePreferences } from '../stores/preferences'
 
+type IOSMode = 'date' | 'time' | 'datetime' | 'countdown'
 type AndroidMode = 'date' | 'time'
 
-interface Props {
+type Props = {
   value: Date
   onChange: (event: DateTimePickerEvent, date?: Date | undefined) => void
+  maximumDate?: Date | undefined
+  minimumDate?: Date | undefined
+  /** Renders second picker for Android, so a time can be selected. */
+  timeAndDate?: boolean
   /**
    * Mode provides the first picker's mode. If you need both date and time,
    * Native Android UI does not support this functionality. Use the timeAndDate
@@ -31,25 +38,35 @@ interface Props {
    *   // First selector changes date -> 10/10/2023 10:00:00 AM
    *   // Second selector changes time -> 10/10/2023 02:00:00 PM
    */
-  mode?: AndroidMode
-  maximumDate?: Date | undefined
-  minimumDate?: Date | undefined
-  timeAndDate?: boolean
+  androidFirstPickerMode?: AndroidMode
+  iOSMode?: IOSMode
 }
 
-const AndroidDateTimePicker = ({
+const DateTimePicker = ({
   value,
   onChange,
-  mode,
   maximumDate,
   minimumDate,
   timeAndDate,
+  androidFirstPickerMode,
+  iOSMode,
 }: Props) => {
   const theme = useContext(ThemeContext)
+  const { colorScheme } = usePreferences()
 
   if (Platform.OS !== 'android') {
-    return null
+    return (
+      <RNDateTimePicker
+        themeVariant={colorScheme || undefined}
+        locale={getLocales()[0].languageCode || undefined}
+        maximumDate={moment().toDate()}
+        value={value}
+        onChange={onChange}
+        mode={iOSMode}
+      />
+    )
   }
+
   return (
     <View style={{ flexDirection: timeAndDate ? 'column' : 'row', gap: 10 }}>
       <Text style={{ fontFamily: theme.fonts.semiBold }}>
@@ -59,7 +76,7 @@ const AndroidDateTimePicker = ({
         <Button
           onPress={() => {
             DateTimePickerAndroid.open({
-              mode,
+              mode: androidFirstPickerMode,
               minimumDate,
               maximumDate,
               value,
@@ -101,4 +118,4 @@ const AndroidDateTimePicker = ({
   )
 }
 
-export default AndroidDateTimePicker
+export default DateTimePicker

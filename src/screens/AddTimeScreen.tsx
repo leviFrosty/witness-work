@@ -1,4 +1,4 @@
-import { View, Platform, Alert, Switch } from 'react-native'
+import { View, Alert, Switch } from 'react-native'
 import { useCallback, useEffect, useState } from 'react'
 import Section from '../components/inputs/Section'
 import InputRowContainer from '../components/inputs/InputRowContainer'
@@ -7,15 +7,13 @@ import Text from '../components/MyText'
 import ActionButton from '../components/ActionButton'
 import useServiceReport from '../stores/serviceReport'
 import * as Crypto from 'expo-crypto'
-import RNDateTimePicker, {
-  DateTimePickerEvent,
-} from '@react-native-community/datetimepicker'
+import { DateTimePickerEvent } from '@react-native-community/datetimepicker'
 import moment from 'moment'
 import { ServiceReport } from '../types/serviceReport'
 import { useNavigation } from '@react-navigation/native'
 import { RootStackNavigation, RootStackParamList } from '../stacks/RootStack'
 import i18n, { TranslationKey } from '../lib/locales'
-import AndroidDateTimePicker from '../components/AndroidDateTimePicker'
+import DateTimePicker from '../components/DateTimePicker'
 import Wrapper from '../components/layout/Wrapper'
 import Select from '../components/Select'
 import {
@@ -28,7 +26,6 @@ import Button from '../components/Button'
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { NativeStackScreenProps } from '@react-navigation/native-stack'
-import { getLocales } from 'expo-localization'
 import { useToastController } from '@tamagui/toast'
 import Header from '../components/layout/Header'
 import { faTrash } from '@fortawesome/free-solid-svg-icons'
@@ -395,20 +392,11 @@ const AddTimeScreen = ({ route }: AddTimeScreenProps) => {
               label={i18n.t('date')}
               justifyContent='space-between'
             >
-              {Platform.OS !== 'android' ? (
-                <RNDateTimePicker
-                  locale={getLocales()[0].languageCode || undefined}
-                  maximumDate={moment().toDate()}
-                  value={serviceReport.date}
-                  onChange={handleDateChange}
-                />
-              ) : (
-                <AndroidDateTimePicker
-                  value={serviceReport.date}
-                  onChange={handleDateChange}
-                  maximumDate={moment().toDate()}
-                />
-              )}
+              <DateTimePicker
+                maximumDate={moment().toDate()}
+                value={serviceReport.date}
+                onChange={handleDateChange}
+              />
             </InputRowContainer>
             <InputRowContainer
               label={i18n.t('type')}

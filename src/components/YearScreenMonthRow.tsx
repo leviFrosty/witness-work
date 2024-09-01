@@ -9,8 +9,9 @@ import {
 import { ServiceReport } from '../types/serviceReport'
 import { usePreferences } from '../stores/preferences'
 import _ from 'lodash'
-import i18n, { useFormattedMinutes } from '../lib/locales'
+import i18n from '../lib/locales'
 import { View } from 'react-native'
+import { useFormattedMinutes } from '../lib/minutes'
 
 export default function YearScreenMonthRow(props: {
   month: number

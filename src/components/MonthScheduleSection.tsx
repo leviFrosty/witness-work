@@ -1,5 +1,5 @@
 import useTheme from '../contexts/theme'
-import i18n, { useFormattedMinutes } from '../lib/locales'
+import i18n from '../lib/locales'
 import AheadOrBehindOfMonthSchedule from './AheadOrBehindOfSchedule'
 import Text from './MyText'
 import Button from './Button'
@@ -17,6 +17,7 @@ import Circle from './Circle'
 import XView from './layout/XView'
 import { View } from 'react-native'
 import _ from 'lodash'
+import { useFormattedMinutes } from '../lib/minutes'
 
 type MonthScheduleSectionProps = {
   month: number

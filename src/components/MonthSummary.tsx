@@ -1,6 +1,6 @@
 import { View } from 'react-native'
 import Text from './MyText'
-import i18n, { useFormattedMinutes } from '../lib/locales'
+import i18n from '../lib/locales'
 import Divider from './Divider'
 import MonthServiceReportProgressBar from './MonthServiceReportProgressBar'
 import { faArrowUpFromBracket } from '@fortawesome/free-solid-svg-icons'
@@ -24,6 +24,7 @@ import { useNavigation } from '@react-navigation/native'
 import { RootStackNavigation } from '../stacks/RootStack'
 import _ from 'lodash'
 import moment from 'moment'
+import { useFormattedMinutes } from '../lib/minutes'
 
 interface MonthSummaryProps {
   monthsReports: ServiceReport[] | null

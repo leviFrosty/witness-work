@@ -17,10 +17,11 @@ import {
   plannedMinutesToCurrentDayForMonth,
 } from '../lib/serviceReport'
 import moment from 'moment'
-import i18n, { formatMinutes } from '../lib/locales'
+import i18n from '../lib/locales'
 import Button from './Button'
 import { View } from 'react-native'
 import Text from './MyText'
+import { formatMinutes } from '../lib/minutes'
 
 export default function HourEntryCard() {
   const theme = useTheme()

@@ -10,7 +10,7 @@ import {
 } from '../lib/serviceReport'
 import SimpleProgressBar from './SimpleProgressBar'
 import { View } from 'react-native'
-import i18n, { useFormattedMinutes } from '../lib/locales'
+import i18n from '../lib/locales'
 import useTheme from '../contexts/theme'
 import Badge from './Badge'
 import IconButton from './IconButton'
@@ -20,6 +20,7 @@ import {
   faMinus,
 } from '@fortawesome/free-solid-svg-icons'
 import _ from 'lodash'
+import { useFormattedMinutes } from '../lib/minutes'
 
 /** Renders all service reports for the given year as a summary. */
 interface AnnualServiceReportSummaryProps {

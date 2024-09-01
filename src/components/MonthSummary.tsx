@@ -1,6 +1,6 @@
 import { View } from 'react-native'
 import Text from './MyText'
-import i18n from '../lib/locales'
+import i18n, { useFormattedMinutes } from '../lib/locales'
 import Divider from './Divider'
 import MonthServiceReportProgressBar from './MonthServiceReportProgressBar'
 import { faArrowUpFromBracket } from '@fortawesome/free-solid-svg-icons'
@@ -11,7 +11,6 @@ import {
   ldcMinutesForSpecificMonth,
   otherMinutesForSpecificMonth,
   standardMinutesForSpecificMonth,
-  useFormattedMinutes,
 } from '../lib/serviceReport'
 import { useMemo } from 'react'
 import useTheme from '../contexts/theme'

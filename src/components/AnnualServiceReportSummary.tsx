@@ -7,11 +7,10 @@ import {
   getServiceYearReports,
   getTotalMinutesForServiceYear,
   serviceReportHoursPerMonthToGoal,
-  useFormattedMinutes,
 } from '../lib/serviceReport'
 import SimpleProgressBar from './SimpleProgressBar'
 import { View } from 'react-native'
-import i18n from '../lib/locales'
+import i18n, { useFormattedMinutes } from '../lib/locales'
 import useTheme from '../contexts/theme'
 import Badge from './Badge'
 import IconButton from './IconButton'

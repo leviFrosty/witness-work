@@ -1,5 +1,5 @@
 import useTheme from '../contexts/theme'
-import i18n from '../lib/locales'
+import i18n, { useFormattedMinutes } from '../lib/locales'
 import AheadOrBehindOfMonthSchedule from './AheadOrBehindOfSchedule'
 import Text from './MyText'
 import Button from './Button'
@@ -11,7 +11,6 @@ import useServiceReport from '../stores/serviceReport'
 import {
   getPlansIntersectingDay,
   plannedMinutesToCurrentDayForMonth,
-  useFormattedMinutes,
 } from '../lib/serviceReport'
 import usePublisher from '../hooks/usePublisher'
 import Circle from './Circle'

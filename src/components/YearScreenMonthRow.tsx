@@ -5,12 +5,11 @@ import Text from './MyText'
 import {
   AdjustedMinutes,
   adjustedMinutesForSpecificMonth,
-  useFormattedMinutes,
 } from '../lib/serviceReport'
 import { ServiceReport } from '../types/serviceReport'
 import { usePreferences } from '../stores/preferences'
 import _ from 'lodash'
-import i18n from '../lib/locales'
+import i18n, { useFormattedMinutes } from '../lib/locales'
 import { View } from 'react-native'
 
 export default function YearScreenMonthRow(props: {

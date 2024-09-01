@@ -2,7 +2,7 @@ import { View } from 'react-native'
 import Text from './MyText'
 import XView from './layout/XView'
 import CreditBadge from './CreditBadge'
-import { useFormattedMinutes } from '../lib/serviceReport'
+import { useFormattedMinutes } from '../lib/locales'
 
 const TimeCategoryTableRow = ({
   title,

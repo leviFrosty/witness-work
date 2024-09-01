@@ -12,13 +12,12 @@ import {
   adjustedMinutesForSpecificMonth,
   calculateMinutesRemaining,
   calculateProgress,
-  formatMinutes,
   getDaysLeftInCurrentMonth,
   getMonthsReports,
   plannedMinutesToCurrentDayForMonth,
 } from '../lib/serviceReport'
 import moment from 'moment'
-import i18n from '../lib/locales'
+import i18n, { formatMinutes } from '../lib/locales'
 import Button from './Button'
 import { View } from 'react-native'
 import Text from './MyText'

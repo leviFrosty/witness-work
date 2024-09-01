@@ -53,6 +53,9 @@ import 'moment/locale/es-us'
 import 'moment/locale/es'
 import 'moment/locale/sw'
 import 'moment/locale/uk'
+import { usePreferences } from '../stores/preferences'
+import { MinuteDisplayFormat } from '../types/serviceReport'
+import _ from 'lodash'
 
 const translations = {
   'en-us': enUS,
@@ -148,3 +151,47 @@ const i18n = {
 }
 
 export default i18n
+
+/**
+ * Formats minutes for display based on user preference.
+ *
+ * @example
+ *   const formattedTime = formatMinute(minutes, preference)
+ *
+ *   return (<View>
+ *   <Text>{formattedTime.long}</Text>
+ *   <Text>{formattedTime.short}</Text>
+ *   </View>)
+ */
+export const useFormattedMinutes = (minutes: number) => {
+  const { timeDisplayFormat } = usePreferences()
+  return formatMinutes(minutes, timeDisplayFormat)
+}
+
+export const formatMinutes = (
+  totalMinutes: number,
+  format: MinuteDisplayFormat
+) => {
+  let formatted: string
+  const hours = Math.floor(totalMinutes / 60)
+  const minutes = totalMinutes % 60
+
+  switch (format) {
+    case 'decimal':
+      formatted = _.round(totalMinutes / 60, 1).toString()
+      break
+    // case 'long':
+    //   // @ts-expect-error TranslationKey doesn't handle keys that contain objects.
+    //   formatted = `${i18n.t('hoursLong', { count: hours })} ${i18n.t('minutesLong', { count: minutes })}`
+    //   break
+    case 'short':
+      // @ts-expect-error TranslationKey doesn't handle keys that contain objects.
+      formatted = `${i18n.t('hoursShort', { count: hours })} ${i18n.t('minutesShort', { count: minutes })}`
+  }
+
+  return {
+    formatted,
+    minutes,
+    hours,
+  }
+}

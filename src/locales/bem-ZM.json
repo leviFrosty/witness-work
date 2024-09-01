@@ -327,35 +327,50 @@
   "new": "New",
   "bugFixes": "Bug Fixes",
   "updates": {
-    "160": {
-      "c1": "Conversations are now editable. Notifications are configurable",
-      "c2": "Swipe gestures to edit or delete conversations, contacts, etc.",
-      "c3": "Added haptic feedback to various important actions"
+    "1211": {
+      "c1": "Added more helpful one-time hints when appropriate."
     },
-    "161": {
-      "c1": "Added more minute options for time entries"
+    "1210": {
+      "c1": "Greatly improved accuracy of time displays.",
+      "c2": "Improved accuracy of time progress bars.",
+      "c3": "Added helpful hints for actions that may not be immediately noticeable.",
+      "c4": "Improved quality of life on the maps screen with more relevant information and a quick-add button."
     },
-    "162": {
-      "c1": "Adjusted special pioneer hour requirement from 70 to 100"
+    "1201": {
+      "c1": "Updates monthly routine section of home screen to show surrounding months.",
+      "c2": "Significantly improved Korean translations - thank you brother Paul. If you'd like to help translate your own language, please visit the settings.",
+      "c3": "Minor bug fixes."
     },
-    "163": {
-      "c1": "Resolve automated update issues"
+    "1200": {
+      "c1": "Adds backup and restore functionality. Now you can backup your data to the cloud and restore it later, this allows you to transfer your data to another device. You can also transfer it to another platform. Find this new feature in settings."
     },
-    "170": {
-      "c1": "Add various time export methods",
-      "c2": "Add 'Not At Homes'"
+    "1120": {
+      "c1": "Adds backup and restore functionality. Now you can backup your data to the cloud and restore it later. You can transfer your data to another device. You can also transfer it to another platform. Find this new feature in the settings."
     },
-    "180": {
-      "c1": "Added automatic geocoding for contacts",
-      "c2": "Added map view"
+    "1111": {
+      "c1": "Add donate page in the settings for those who wish to contribute.",
+      "c2": "Includes various minor improvements and bug fixes"
     },
-    "181": {
-      "c1": "Expanded map view",
-      "c2": "Added store review request after certain criteria is met",
-      "c3": "Small bug fixes"
+    "1110": {
+      "c1": "Adds native support for iPad & tablets!",
+      "c2": "Adjusted various styles to better fit larger screens.",
+      "c3": "Adjusted the method of submitting Bug Reports and Feature Requests to Github."
     },
-    "182": {
-      "c1": "Updated all time to reflect the current locale"
+    "1100": {
+      "c1": "Adds annual report to Time Reports screen! Keep track of your service year progress at a glance.",
+      "c2": "Adding time from Time Reports screen now defaults the report to the selected month.",
+      "c3": "Fixes an issue exporting January service report."
+    },
+    "192": {
+      "c1": "Now tap on a conversation row to edit, or swipe left as before.",
+      "c2": "Fixes an issue where some devices have an overflowing progress bar.",
+      "c3": "Adds more verbose handling of link errors for certain devices lacking required applications.",
+      "c4": "Navigate directly to a month from the monthly routine section of the home screen.",
+      "c5": "Time Reports screen better handles empty and future months.",
+      "c6": "Minor bug fixes."
+    },
+    "191": {
+      "c1": "Resolves an issue navigating to time screens."
     },
     "190": {
       "c1": "Added preferences in the settings",
@@ -366,50 +381,35 @@
       "c6": "Now add custom tags to your time entries",
       "c7": "Updated Time Reports screen to be better organized and separated by month"
     },
-    "191": {
-      "c1": "Resolves an issue navigating to time screens."
+    "182": {
+      "c1": "Updated all time to reflect the current locale"
     },
-    "192": {
-      "c1": "Now tap on a conversation row to edit, or swipe left as before.",
-      "c2": "Fixes an issue where some devices have an overflowing progress bar.",
-      "c3": "Adds more verbose handling of link errors for certain devices lacking required applications.",
-      "c4": "Navigate directly to a month from the monthly routine section of the home screen.",
-      "c5": "Time Reports screen better handles empty and future months.",
-      "c6": "Minor bug fixes."
+    "181": {
+      "c1": "Expanded map view",
+      "c2": "Added store review request after certain criteria is met",
+      "c3": "Small bug fixes"
     },
-    "1100": {
-      "c1": "Adds annual report to Time Reports screen! Keep track of your service year progress at a glance.",
-      "c2": "Adding time from Time Reports screen now defaults the report to the selected month.",
-      "c3": "Fixes an issue exporting January service report."
+    "180": {
+      "c1": "Added automatic geocoding for contacts",
+      "c2": "Added map view"
     },
-    "1110": {
-      "c1": "Adds native support for iPad & tablets!",
-      "c2": "Adjusted various styles to better fit larger screens.",
-      "c3": "Adjusted the method of submitting Bug Reports and Feature Requests to Github."
+    "170": {
+      "c1": "Add various time export methods",
+      "c2": "Add 'Not At Homes'"
     },
-    "1111": {
-      "c1": "Add donate page in the settings for those who wish to contribute.",
-      "c2": "Includes various minor improvements and bug fixes"
+    "163": {
+      "c1": "Resolve automated update issues"
     },
-    "1120": {
-      "c1": "Adds backup and restore functionality. Now you can backup your data to the cloud and restore it later. You can transfer your data to another device. You can also transfer it to another platform. Find this new feature in the settings."
+    "162": {
+      "c1": "Adjusted special pioneer hour requirement from 70 to 100"
     },
-    "1200": {
-      "c1": "Adds backup and restore functionality. Now you can backup your data to the cloud and restore it later, this allows you to transfer your data to another device. You can also transfer it to another platform. Find this new feature in settings."
+    "161": {
+      "c1": "Added more minute options for time entries"
     },
-    "1201": {
-      "c1": "Updates monthly routine section of home screen to show surrounding months.",
-      "c2": "Significantly improved Korean translations - thank you brother Paul. If you'd like to help translate your own language, please visit the settings.",
-      "c3": "Minor bug fixes."
-    },
-    "1210": {
-      "c1": "Greatly improved accuracy of time displays.",
-      "c2": "Improved accuracy of time progress bars.",
-      "c3": "Added helpful hints for actions that may not be immediately noticeable.",
-      "c4": "Improved quality of life on the maps screen with more relevant information and a quick-add button."
-    },
-    "1211": {
-      "c1": "Added more helpful one-time hints when appropriate."
+    "160": {
+      "c1": "Conversations are now editable. Notifications are configurable",
+      "c2": "Swipe gestures to edit or delete conversations, contacts, etc.",
+      "c3": "Added haptic feedback to various important actions"
     },
     "1220": {
       "c3": "Added Calendar to time reports screen.",

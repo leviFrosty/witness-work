@@ -499,7 +499,8 @@
       "c1": "Créez maintenant des contacts avec coordonnées uniquement. Si votre territoire est très rural ou que les informations cartographiques sont mauvaises, il n'est désormais plus nécessaire de se fier à une adresse.",
       "c2": "Basculez facilement entre les couleurs de l'appareil, du mode sombre et du mode clair. Accédez à Préférences > Apparence.",
       "c4": "L'écran « Ajouter du temps » permet désormais des incréments d'une minute.",
-      "c5": "Ajout de la langue kinyarwanda, entièrement traduite par Semana D. Merci beaucoup pour votre aide !"
+      "c5": "Ajout de la langue kinyarwanda, entièrement traduite par Semana D. Merci beaucoup pour votre aide !",
+      "c6": "Vous pouvez maintenant sélectionner le mode d'affichage de votre heure. Choisissez entre un format décimal comme : 13,5 ou choisissez 13 heures 30 minutes. Accédez à Préférences > Apparence."
     }
   },
   "installed": "installée",

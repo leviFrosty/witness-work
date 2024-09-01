@@ -102,7 +102,14 @@ const FullMapView = ({ contactMarkers }: FullMapViewProps) => {
     getLocation()
   }, [])
 
-  const parallaxScrollingScale = isTablet ? 0.92 : 0.8025
+  const contactsWithCoords = useMemo(() => {
+    return contacts.filter(
+      (c) => c.coordinate?.latitude && c.coordinate.longitude
+    )
+  }, [contacts])
+
+  const parallaxScrollingScale =
+    contactsWithCoords.length === 1 ? 0.9 : isTablet ? 0.92 : 0.8025
 
   return (
     <>
@@ -178,7 +185,7 @@ const FullMapView = ({ contactMarkers }: FullMapViewProps) => {
           modeConfig={{
             parallaxScrollingScale,
           }}
-          loop
+          loop={contactsWithCoords.length !== 1}
           width={width}
           height={CARD_HEIGHT}
           style={{

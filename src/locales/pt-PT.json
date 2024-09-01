@@ -499,7 +499,8 @@
       "c1": "Agora, crie contatos apenas com coordenadas. Se o seu território for muito rural ou tiver informações de mapeamento ruins, não é necessário depender de um endereço.",
       "c2": "Alterne facilmente entre o esquema de cores do dispositivo, escuro e claro. Visite Preferências > Aparência.",
       "c4": "A tela \"Adicionar tempo\" agora permite incrementos de 1 minuto.",
-      "c5": "Adicionado idioma Kinyarwanda, totalmente traduzido por Semana D. Muito obrigado pela sua ajuda!"
+      "c5": "Adicionado idioma Kinyarwanda, totalmente traduzido por Semana D. Muito obrigado pela sua ajuda!",
+      "c6": "Agora você pode selecionar como seu tempo é exibido. Escolha entre decimal como: 13,5 ou escolha 13 Hrs 30 Mins. Visite Preferences > Appearance."
     }
   },
   "installed": "Instalado",

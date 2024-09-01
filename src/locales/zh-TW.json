@@ -498,8 +498,8 @@
     "1320": {
       "c1": "現在建立僅座標聯絡人。如果您所在的地區非常鄉村或地圖資訊不良，現在無需依賴地址。",
       "c2": "在裝置、深色和淺色模式配色方案之間輕鬆切換。訪問首選項>外貌。",
-      "c3": "新增了基尼亞盧安達語。你會說基尼亞盧安達語嗎？我們需要您的幫助來翻譯（也需要本巴）！請造訪設定>幫助翻譯",
-      "c4": "‘添加時間’螢幕現在允許增量為 1 分鐘。"
+      "c4": "‘添加時間’螢幕現在允許增量為 1 分鐘。",
+      "c5": "添加了盧安達語，由 Semana D 完全翻譯。"
     }
   },
   "installed": "已安装",
@@ -764,5 +764,29 @@
   "light": "光",
   "device": "裝置",
   "colorScheme": "配色方案",
-  "pinLocationHelp": "長按地圖或按“新增”創造。觸摸&按住即可移動。"
+  "pinLocationHelp": "長按地圖或按“新增”創造。觸摸&按住即可移動。",
+  "hoursLong": {
+    "zero": "{{count}} 小時",
+    "one": "{{count}}小時",
+    "other": "{{2小時"
+  },
+  "hoursShort": {
+    "zero": "{{count}} 小時",
+    "one": "{{count}} 小時",
+    "other": "{{count}} 小時"
+  },
+  "minutesLong": {
+    "zero": "{{count}} 分鐘",
+    "one": "{{count}} 分鐘",
+    "other": "{{count}} 分鐘"
+  },
+  "minutesShort": {
+    "zero": "{{count}} 分鐘",
+    "one": "{{count}} 分鐘",
+    "other": "{{count}} 分鐘"
+  },
+  "decimalExample": "15.5",
+  "longExample": "15小時30分鐘",
+  "shortExample": "15 小時 30 分鐘",
+  "timeDisplayFormat": "時間顯示格式"
 }

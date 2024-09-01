@@ -39,6 +39,7 @@ interface FullMapViewProps {
 const FullMapView = ({ contactMarkers }: FullMapViewProps) => {
   const navigation = useNavigation<HomeTabStackNavigation>()
   const { width } = Dimensions.get('window')
+  const { colorScheme } = usePreferences()
   const mapRef = useRef<MapView>(null)
   const insets = useSafeAreaInsets()
   const carouselRef = useRef<ICarouselInstance>(null)
@@ -114,6 +115,7 @@ const FullMapView = ({ contactMarkers }: FullMapViewProps) => {
   return (
     <>
       <MapView
+        userInterfaceStyle={colorScheme ? colorScheme : undefined}
         showsUserLocation={locationPermission}
         ref={mapRef}
         onLayout={handleMapLayout}

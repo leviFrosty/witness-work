@@ -21,6 +21,7 @@ import { Platform, View } from 'react-native'
 import IconButton from './IconButton'
 import { faTimes } from '@fortawesome/free-solid-svg-icons'
 import useContacts from '../stores/contactsStore'
+import { usePreferences } from '../stores/preferences'
 
 export default function PinLocation(props: {
   contact: Contact
@@ -30,6 +31,7 @@ export default function PinLocation(props: {
   const { contacts } = useContacts()
   const [open, setOpen] = useState(false)
   const [hasLocationPermission, setHasLocationPermission] = useState(false)
+  const { colorScheme } = usePreferences()
   const [userLocation, setUserLocation] = useState<Region | null>()
   const mapRef = useRef<MapView>(null)
   const initialRegion: Region | undefined = contact.coordinate
@@ -269,6 +271,7 @@ export default function PinLocation(props: {
               </View>
             ) : (
               <MapView
+                userInterfaceStyle={colorScheme ? colorScheme : undefined}
                 ref={mapRef}
                 showsUserLocation={hasLocationPermission}
                 style={{ height: '100%', width: '100%' }}

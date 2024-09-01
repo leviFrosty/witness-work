@@ -201,6 +201,7 @@ const AddressRow = ({ contact }: { contact: Contact }) => {
     useState(false)
   const { address } = contact
   const { updateContact } = useContacts()
+  const { colorScheme } = usePreferences()
   const { conversations } = useConversations()
   const { incrementGeocodeApiCallCount, defaultNavigationMapProvider } =
     usePreferences()
@@ -341,6 +342,7 @@ const AddressRow = ({ contact }: { contact: Contact }) => {
             </Text>
           </Copyeable>
           <MapView
+            userInterfaceStyle={colorScheme ? colorScheme : undefined}
             showsUserLocation={locationPermission}
             ref={mapRef}
             onLayout={fitToMarkers}

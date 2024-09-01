@@ -34,6 +34,7 @@ import {
   hasMigratedFromAsyncStorage,
   migrateFromAsyncStorage,
 } from './src/stores/mmkv'
+import { usePreferences } from './src/stores/preferences'
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
@@ -71,7 +72,8 @@ Sentry.setTag('expoChannel', Updates.channel)
 Sentry.setTag('expoUpdateVersion', Updates.updateId)
 
 export default function App() {
-  const colorScheme = useColorScheme()
+  const systemColorScheme = useColorScheme()
+  const { colorScheme } = usePreferences()
 
   const [fontsLoaded] = useFonts({
     Inter_400Regular,
@@ -117,7 +119,9 @@ export default function App() {
           <CustomerProvider>
             <NavigationContainer>
               <TamaguiProvider
-                defaultTheme={colorScheme || undefined}
+                defaultTheme={
+                  colorScheme ? colorScheme : systemColorScheme || undefined
+                }
                 config={tamaguiConfig}
               >
                 <ToastProvider>

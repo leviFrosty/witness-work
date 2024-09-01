@@ -327,35 +327,50 @@
   "new": "Novedades",
   "bugFixes": "Corrección de errores",
   "updates": {
-    "160": {
-      "c1": "Las conversaciones ahora se pueden editar. Las notificaciones son configurables",
-      "c2": "Gestos de deslizamiento para editar o eliminar conversaciones, contactos, etc.",
-      "c3": "Se agregó respuesta háptica a varias acciones importantes"
+    "1211": {
+      "c1": "Se agregaron más sugerencias útiles de una sola vez cuando corresponde."
     },
-    "161": {
-      "c1": "Se agregaron más opciones de minutos para las entradas de tiempo"
+    "1210": {
+      "c1": "Se mejoró considerablemente la precisión de las visualizaciones de la hora.",
+      "c2": "Se mejoró la precisión de las barras de progreso de la hora.",
+      "c3": "Se agregaron sugerencias útiles para acciones que pueden no notarse de inmediato.",
+      "c4": "Se mejoró la calidad de vida en la pantalla de mapas con información más relevante y un botón de adición rápida."
     },
-    "162": {
-      "c1": "Se ajustó el requisito de horas especiales de pioneros de 70 a 100"
+    "1201": {
+      "c1": "Actualiza la sección de rutina mensual de la pantalla de inicio para mostrar los meses circundantes.",
+      "c2": "Se mejoraron significativamente las traducciones al coreano. Gracias, hermano Paul. Si desea ayudar a traducir su propio idioma, visite la configuración.",
+      "c3": "Correcciones de errores menores."
     },
-    "163": {
-      "c1": "Resolver problemas de actualización automática"
+    "1200": {
+      "c1": "Agrega la funcionalidad de copia de seguridad y restauración. Ahora puede hacer una copia de seguridad de sus datos en la nube y restaurarlos más tarde, esto le permite transferir sus datos a otro dispositivo. También puede transferirlos a otra plataforma. Encuentre esta nueva característica en la configuración."
     },
-    "170": {
-      "c1": "Agregar varios métodos de exportación de tiempo",
-      "c2": "Agregar 'No en casa'"
+    "1120": {
+      "c1": "Agrega la funcionalidad de copia de seguridad y restauración. Ahora puede hacer una copia de seguridad de sus datos en la nube y restaurarlos más tarde. Puede transferir sus datos a otro dispositivo. También puede transferirlos a otra plataforma. Encuentre esta nueva característica en la configuración."
     },
-    "180": {
-      "c1": "Se agregó geocodificación automática para contactos",
-      "c2": "Se agregó vista de mapa"
+    "1111": {
+      "c1": "Agrega una página de donaciones en la configuración para quienes deseen contribuir.",
+      "c2": "Incluye varias mejoras menores y correcciones de errores"
     },
-    "181": {
-      "c1": "Vista de mapa expandida",
-      "c2": "Se agregó solicitud de revisión de la tienda después de que se cumplan ciertos criterios",
-      "c3": "Pequeñas correcciones de errores"
+    "1110": {
+      "c1": "¡Agrega compatibilidad nativa para iPad y tabletas!",
+      "c2": "Se ajustaron varios estilos para que se adapten mejor a pantallas más grandes.",
+      "c3": "Se ajustó el método para enviar informes de errores y solicitudes de funciones a Github."
     },
-    "182": {
-      "c1": "Se actualizó todo el tiempo para reflejar la configuración regional actual"
+    "1100": {
+      "c1": "¡Agrega un informe anual a la pantalla Informes de tiempo! Realice un seguimiento del progreso de su año de servicio de un vistazo.",
+      "c2": "Al agregar tiempo desde la pantalla Informes de tiempo, ahora el informe se establece de manera predeterminada en el mes seleccionado.",
+      "c3": "Corrige un problema al exportar el informe de servicio de enero."
+    },
+    "192": {
+      "c1": "Ahora toque una fila de conversación para editarla o deslícese hacia la izquierda como antes.",
+      "c2": "Resuelve un problema en el que algunos dispositivos tienen una barra de progreso desbordada.",
+      "c3": "Agrega un manejo más detallado de los errores de enlace para ciertos dispositivos que carecen de las aplicaciones requeridas.",
+      "c4": "Navegue directamente a un mes desde la sección de rutina mensual de la pantalla de inicio.",
+      "c5": "La pantalla Informes de tiempo maneja mejor los meses vacíos y futuros.",
+      "c6": "Correcciones de errores menores."
+    },
+    "191": {
+      "c1": "Resuelve un problema al navegar a las pantallas de tiempo."
     },
     "190": {
       "c1": "Se agregaron preferencias en la configuración",
@@ -366,50 +381,35 @@
       "c6": "Ahora puede agregar etiquetas personalizadas a sus entradas de tiempo",
       "c7": "Se actualizó la pantalla Informes de tiempo para que esté mejor organizada y separada por mes"
     },
-    "191": {
-      "c1": "Resuelve un problema al navegar a las pantallas de tiempo."
+    "182": {
+      "c1": "Se actualizó todo el tiempo para reflejar la configuración regional actual"
     },
-    "192": {
-      "c1": "Ahora toque una fila de conversación para editarla o deslícese hacia la izquierda como antes.",
-      "c2": "Resuelve un problema en el que algunos dispositivos tienen una barra de progreso desbordada.",
-      "c3": "Agrega un manejo más detallado de los errores de enlace para ciertos dispositivos que carecen de las aplicaciones requeridas.",
-      "c4": "Navegue directamente a un mes desde la sección de rutina mensual de la pantalla de inicio.",
-      "c5": "La pantalla Informes de tiempo maneja mejor los meses vacíos y futuros.",
-      "c6": "Correcciones de errores menores."
+    "181": {
+      "c1": "Vista de mapa expandida",
+      "c2": "Se agregó solicitud de revisión de la tienda después de que se cumplan ciertos criterios",
+      "c3": "Pequeñas correcciones de errores"
     },
-    "1100": {
-      "c1": "¡Agrega un informe anual a la pantalla Informes de tiempo! Realice un seguimiento del progreso de su año de servicio de un vistazo.",
-      "c2": "Al agregar tiempo desde la pantalla Informes de tiempo, ahora el informe se establece de manera predeterminada en el mes seleccionado.",
-      "c3": "Corrige un problema al exportar el informe de servicio de enero."
+    "180": {
+      "c1": "Se agregó geocodificación automática para contactos",
+      "c2": "Se agregó vista de mapa"
     },
-    "1110": {
-      "c1": "¡Agrega compatibilidad nativa para iPad y tabletas!",
-      "c2": "Se ajustaron varios estilos para que se adapten mejor a pantallas más grandes.",
-      "c3": "Se ajustó el método para enviar informes de errores y solicitudes de funciones a Github."
+    "170": {
+      "c1": "Agregar varios métodos de exportación de tiempo",
+      "c2": "Agregar 'No en casa'"
     },
-    "1111": {
-      "c1": "Agrega una página de donaciones en la configuración para quienes deseen contribuir.",
-      "c2": "Incluye varias mejoras menores y correcciones de errores"
+    "163": {
+      "c1": "Resolver problemas de actualización automática"
     },
-    "1120": {
-      "c1": "Agrega la funcionalidad de copia de seguridad y restauración. Ahora puede hacer una copia de seguridad de sus datos en la nube y restaurarlos más tarde. Puede transferir sus datos a otro dispositivo. También puede transferirlos a otra plataforma. Encuentre esta nueva característica en la configuración."
+    "162": {
+      "c1": "Se ajustó el requisito de horas especiales de pioneros de 70 a 100"
     },
-    "1200": {
-      "c1": "Agrega la funcionalidad de copia de seguridad y restauración. Ahora puede hacer una copia de seguridad de sus datos en la nube y restaurarlos más tarde, esto le permite transferir sus datos a otro dispositivo. También puede transferirlos a otra plataforma. Encuentre esta nueva característica en la configuración."
+    "161": {
+      "c1": "Se agregaron más opciones de minutos para las entradas de tiempo"
     },
-    "1201": {
-      "c1": "Actualiza la sección de rutina mensual de la pantalla de inicio para mostrar los meses circundantes.",
-      "c2": "Se mejoraron significativamente las traducciones al coreano. Gracias, hermano Paul. Si desea ayudar a traducir su propio idioma, visite la configuración.",
-      "c3": "Correcciones de errores menores."
-    },
-    "1210": {
-      "c1": "Se mejoró considerablemente la precisión de las visualizaciones de la hora.",
-      "c2": "Se mejoró la precisión de las barras de progreso de la hora.",
-      "c3": "Se agregaron sugerencias útiles para acciones que pueden no notarse de inmediato.",
-      "c4": "Se mejoró la calidad de vida en la pantalla de mapas con información más relevante y un botón de adición rápida."
-    },
-    "1211": {
-      "c1": "Se agregaron más sugerencias útiles de una sola vez cuando corresponde."
+    "160": {
+      "c1": "Las conversaciones ahora se pueden editar. Las notificaciones son configurables",
+      "c2": "Gestos de deslizamiento para editar o eliminar conversaciones, contactos, etc.",
+      "c3": "Se agregó respuesta háptica a varias acciones importantes"
     },
     "1220": {
       "c3": "Se agregó Calendario a la pantalla de informes de tiempo.",

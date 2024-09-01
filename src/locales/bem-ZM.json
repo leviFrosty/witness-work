@@ -498,8 +498,8 @@
     "1320": {
       "c1": "Nomba pangani fye abakulanshanya. Nga ca kuti icifulo cenu ca mu mishi nga nshi nelyo cakwata amashiwi yabipa aya kupanga amapu, nomba takuli ukukabila ukushintilila pa keyala.",
       "c2": "Mwayanguka ukupilibula pakati ka cibombelo, icafiita, na icabuuta. Ukutandalila Ifyo Mulefwaya > Imimonekele.",
-      "c3": "Ululundwako ululimi lwa ciKinyarwanda. Bushe mwalishiba iciNyarwanda? Tulekabila ukwafwilisha kwenu ukwa kupilibula (bemba na kabili)! Mukwai kabiyeni ku Fibikilo > Ubwafwilisho bwakupilibula",
-      "c4": "'Ukulundako Inshita' icikope nomba cilasuminisha ukulundako kwa mineti imo."
+      "c4": "'Ukulundako Inshita' icikope nomba cilasuminisha ukulundako kwa mineti imo.",
+      "c5": "Ululundwako Ululimi lwa Kinyarwanda, ulwapilibulwa fyonse na Semana D. Natasha sana pa kwafwilisha kwenu!"
     }
   },
   "installed": "Installed",
@@ -764,5 +764,29 @@
   "light": "Ulubuuto",
   "device": "Icintu",
   "colorScheme": "Imisango ya Malangi",
-  "pinLocationHelp": "Tinikeni inshita itali pali mapu nangula tinikeni 'Lundapo' ukupanga. Ukukuma & ukusenda pa kuti uleenda."
+  "pinLocationHelp": "Tinikeni inshita itali pali mapu nangula tinikeni 'Lundapo' ukupanga. Ukukuma & ukusenda pa kuti uleenda.",
+  "hoursLong": {
+    "zero": "{{count}} Insa",
+    "one": "{{count}} Insa",
+    "other": "{{count}} Insa"
+  },
+  "hoursShort": {
+    "zero": "{{count}} Ama-awala",
+    "one": "{{count}} Inshita",
+    "other": "{{count}} Ama-awala"
+  },
+  "minutesLong": {
+    "zero": "{{count}} Amamineti",
+    "one": "{{count}} Iminiti",
+    "other": "{{count}} Amaminiti"
+  },
+  "minutesShort": {
+    "zero": "{{count}} Amaminiti",
+    "one": "{{count}} Iminiti",
+    "other": "{{count}} Amaminiti"
+  },
+  "decimalExample": "15.5",
+  "longExample": "Ama-awala 15 na Amamineti 30",
+  "shortExample": "Ama-awala 15 na Amamineti 30",
+  "timeDisplayFormat": "Inshita ya Kulangisha Imipangile"
 }

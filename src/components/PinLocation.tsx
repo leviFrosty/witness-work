@@ -1,11 +1,6 @@
 import Card from '../components/Card'
 import { Sheet, Spinner } from 'tamagui'
-import MapView, {
-  LongPressEvent,
-  Marker,
-  PROVIDER_GOOGLE,
-  Region,
-} from 'react-native-maps'
+import MapView, { Marker, PROVIDER_GOOGLE, Region } from 'react-native-maps'
 import { useToastController } from '@tamagui/toast'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import MapWarningLocationSharingDisabled from '../components/MapWarningLocationSharingDisabled'
@@ -275,7 +270,13 @@ export default function PinLocation(props: {
                 ref={mapRef}
                 showsUserLocation={hasLocationPermission}
                 style={{ height: '100%', width: '100%' }}
-                onLongPress={(e: LongPressEvent) => {
+                onPress={(e) => {
+                  setCoordinate({
+                    latitude: e.nativeEvent.coordinate.latitude,
+                    longitude: e.nativeEvent.coordinate.longitude,
+                  })
+                }}
+                onLongPress={(e) => {
                   setCoordinate({
                     latitude: e.nativeEvent.coordinate.latitude,
                     longitude: e.nativeEvent.coordinate.longitude,

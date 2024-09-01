@@ -498,8 +498,8 @@
     "1320": {
       "c1": "现在创建仅坐标联系人。如果您的地区非常偏远或地图信息不充分，现在就无需依赖地址。",
       "c2": "轻松切换设备、深色和浅色模式配色方案。访问首选项 > 外观。",
-      "c3": "添加了卢旺达语。你会说卢旺达语吗？我们需要你的帮助来翻译（bemba 也一样）！请访问设置 > 帮助翻译",
-      "c4": "‘添加时间’屏幕现在允许以 1 分钟为增量。"
+      "c4": "‘添加时间’屏幕现在允许以 1 分钟为增量。",
+      "c5": "添加了 Kinyarwanda 语言，由 Semana D 完整翻译。非常感谢您的帮助！"
     }
   },
   "installed": "已安装",
@@ -764,5 +764,29 @@
   "light": "浅色",
   "device": "设备",
   "colorScheme": "配色方案",
-  "pinLocationHelp": "长按地图或按“添加”即可创建。触摸并按住即可移动。"
+  "pinLocationHelp": "长按地图或按“添加”即可创建。触摸并按住即可移动。",
+  "hoursLong": {
+    "zero": "{{count}} 小时",
+    "one": "{{count}} 小时",
+    "other": "{{count}} 小时"
+  },
+  "hoursShort": {
+    "zero": "{{count}} 小时",
+    "one": "{{count}} 小时",
+    "other": "{{count}} 小时"
+  },
+  "minutesLong": {
+    "zero": "{{count}} 分钟",
+    "one": "{{count}} 分钟",
+    "other": "{{count}} 分钟"
+  },
+  "minutesShort": {
+    "zero": "{{count}} 分钟",
+    "one": "{{count}} 分钟",
+    "other": "{{count}} 分钟"
+  },
+  "decimalExample": "15.5",
+  "longExample": "15 小时 30 分钟",
+  "shortExample": "15 小时 30 分钟",
+  "timeDisplayFormat": "时间显示格式"
 }

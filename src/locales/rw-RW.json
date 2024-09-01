@@ -498,8 +498,8 @@
     "1320": {
       "c1": "Now create coordinate only contacts. If your territory is very rural or with bad mapping information, there is now no need to rely on an address.",
       "c2": "Easily toggle between device, dark, and light mode color scheme. Visit Preferences > Appearance.",
-      "c3": "Hongewemo ururimi rw'ikinyarwanda. Ese uvuga ikinyarwanda? Dukeneye ubufasha bwawe mu buhinduzi! Reba Settings > Help Translate",
-      "c4": "'Add Time' screen now allows for increments of 1 minute."
+      "c4": "'Add Time' screen now allows for increments of 1 minute.",
+      "c5": "Wongeyeho ururimi rwa Kinyarwanda, rwahinduwe byuzuye na Semana D. Urakoze cyane kubufasha bwawe!"
     }
   },
   "installed": "Yagiye mu gikoresho cyawe",
@@ -764,5 +764,29 @@
   "light": "Byera",
   "device": "Igikoresho",
   "colorScheme": "Itsinda ry'amabara",
-  "pinLocationHelp": "Kanda cyane ku ikarita cyangwa ukande & apos; Ongeraho & apos; kurema. Gukoraho & amp; Komeza kwimuka."
+  "pinLocationHelp": "Kanda cyane ku ikarita cyangwa ukande & apos; Ongeraho & apos; kurema. Gukoraho & amp; Komeza kwimuka.",
+  "hoursLong": {
+    "zero": "{{count}} Amasaha",
+    "one": "{{count}} Isaha",
+    "other": "{{count}} Amasaha"
+  },
+  "hoursShort": {
+    "zero": "{{count}} Amasaha",
+    "one": "{{count}} Hr",
+    "other": "{{count}} Amasaha"
+  },
+  "minutesLong": {
+    "zero": "{{count}} iminota",
+    "one": "{{count}} iminota",
+    "other": "{{count}} iminota"
+  },
+  "minutesShort": {
+    "zero": "{{count}} Mins",
+    "one": "{{count}} Min",
+    "other": "{{count}} Mins"
+  },
+  "decimalExample": "15.5",
+  "longExample": "Amasaha 15 Iminota 30",
+  "shortExample": "15 Isaha 30 Imin",
+  "timeDisplayFormat": "Imiterere Yigihe"
 }

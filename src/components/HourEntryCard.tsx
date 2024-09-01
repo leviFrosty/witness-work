@@ -12,6 +12,7 @@ import {
   adjustedMinutesForSpecificMonth,
   calculateMinutesRemaining,
   calculateProgress,
+  formatMinutes,
   getDaysLeftInCurrentMonth,
   getMonthsReports,
   plannedMinutesToCurrentDayForMonth,
@@ -24,8 +25,12 @@ import Text from './MyText'
 
 export default function HourEntryCard() {
   const theme = useTheme()
-  const { publisher, publisherHours, displayDetailsOnProgressBarHomeScreen } =
-    usePreferences()
+  const {
+    publisher,
+    publisherHours,
+    displayDetailsOnProgressBarHomeScreen,
+    timeDisplayFormat,
+  } = usePreferences()
   const { serviceReports, dayPlans, recurringPlans } = useServiceReport()
   const navigation = useNavigation<
     HomeTabStackNavigation & RootStackNavigation
@@ -131,6 +136,11 @@ export default function HourEntryCard() {
     [daysLeftInMonth, minutesRemaining]
   )
 
+  const minutesWithFormat = formatMinutes(
+    adjustedMinutes.value,
+    timeDisplayFormat
+  )
+
   return (
     <View style={{ width: '100%' }}>
       <Button
@@ -165,11 +175,16 @@ export default function HourEntryCard() {
             }}
           >
             <View>
-              <Text style={{ fontSize: 32, fontFamily: theme.fonts.bold }}>
-                {_.round(
-                  adjustedMinutes.value / 60,
-                  displayDetailsOnProgressBarHomeScreen ? 1 : 0
-                )}
+              <Text
+                style={{
+                  fontSize:
+                    timeDisplayFormat !== 'decimal'
+                      ? theme.fontSize('lg')
+                      : theme.fontSize('4xl'),
+                  fontFamily: theme.fonts.bold,
+                }}
+              >
+                {minutesWithFormat.formatted}
               </Text>
               <View
                 style={{

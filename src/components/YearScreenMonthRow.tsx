@@ -5,6 +5,7 @@ import Text from './MyText'
 import {
   AdjustedMinutes,
   adjustedMinutesForSpecificMonth,
+  useFormattedMinutes,
 } from '../lib/serviceReport'
 import { ServiceReport } from '../types/serviceReport'
 import { usePreferences } from '../stores/preferences'
@@ -27,6 +28,8 @@ export default function YearScreenMonthRow(props: {
     ? adjustedMinutesForSpecificMonth(monthsReports, month, year)
     : { value: 0, credit: 0, standard: 0, creditOverage: 0 }
 
+  const adjustedMinutesWithFormat = useFormattedMinutes(adjustedMinutes.value)
+
   return (
     <View
       style={{
@@ -45,8 +48,8 @@ export default function YearScreenMonthRow(props: {
         <Text style={{ fontFamily: theme.fonts.semiBold }}>
           {moment().month(month).format('MMMM')}
         </Text>
-        <Text style={{ fontFamily: theme.fonts.semiBold }}>
-          {`${_.round(adjustedMinutes.value / 60, 1)} ${i18n.t(
+        <Text style={{ fontFamily: theme.fonts.semiBold, letterSpacing: -0.5 }}>
+          {`${adjustedMinutesWithFormat.formatted} ${i18n.t(
             'of'
           )} ${goalHours} ${i18n.t('hoursToGoal')}`}
         </Text>

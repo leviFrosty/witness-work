@@ -19,3 +19,11 @@ export type ServiceYear = {
 export type ServiceReportsByYears = {
   [year: string]: ServiceYear
 }
+
+/**
+ * Choose how to display formatted minutes.
+ *
+ * @short 13 Hrs 30 Mins
+ * @decimal 13.5
+ */
+export type MinuteDisplayFormat = 'short' | 'decimal'

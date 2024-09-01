@@ -11,6 +11,7 @@ import {
   ldcMinutesForSpecificMonth,
   otherMinutesForSpecificMonth,
   standardMinutesForSpecificMonth,
+  useFormattedMinutes,
 } from '../lib/serviceReport'
 import { useMemo } from 'react'
 import useTheme from '../contexts/theme'
@@ -52,6 +53,8 @@ const MonthSummary = ({
   const adjustedMinutes: AdjustedMinutes = monthsReports
     ? adjustedMinutesForSpecificMonth(monthsReports, month, year)
     : { value: 0, credit: 0, standard: 0, creditOverage: 0 }
+
+  const minutesWithFormat = useFormattedMinutes(adjustedMinutes.value)
 
   const ldcMinutes = useMemo(
     () =>
@@ -186,7 +189,7 @@ const MonthSummary = ({
               fontFamily: theme.fonts.semiBold,
             }}
           >
-            {`${_.round(adjustedMinutes.value / 60, 1)} ${i18n.t(
+            {`${minutesWithFormat.formatted} ${i18n.t(
               'of'
             )} ${goalHours} ${i18n.t('hoursToGoal')}`}
           </Text>
@@ -240,11 +243,11 @@ const MonthSummary = ({
           <View style={{ gap: 10 }}>
             <TimeCategoryTableRow
               title={i18n.t('standard')}
-              number={_.round(standardMinutes / 60, 1)}
+              number={standardMinutes}
             />
             <TimeCategoryTableRow
               title={i18n.t('ldc')}
-              number={_.round(ldcMinutes / 60, 1)}
+              number={ldcMinutes}
               credit
             />
             {otherMinutes &&
@@ -253,7 +256,7 @@ const MonthSummary = ({
                 <TimeCategoryTableRow
                   key={index}
                   title={report.tag}
-                  number={_.round(report.minutes / 60, 1)}
+                  number={report.minutes}
                   credit={report.credit}
                 />
               ))}

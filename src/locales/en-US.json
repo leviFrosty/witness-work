@@ -498,8 +498,8 @@
     "1320": {
       "c1": "Now create coordinate only contacts. If your territory is very rural or with bad mapping information, there is now no need to rely on an address.",
       "c2": "Easily toggle between device, dark, and light mode color scheme. Visit Preferences > Appearance.",
-      "c3": "Added Kinyarwanda language. Do you speak Kinyarwanda? We need your help to translate (bemba too)! Please visit Settings > Help Translate",
-      "c4": "'Add Time' screen now allows for increments of 1 minute."
+      "c4": "'Add Time' screen now allows for increments of 1 minute.",
+      "c5": "Added Kinyarwanda language, fully translated by Semana D. Thank you so much for your help!"
     }
   },
   "installed": "Installed",
@@ -764,5 +764,29 @@
   "light": "Light",
   "device": "Device",
   "colorScheme": "Color Scheme",
-  "pinLocationHelp": "Long press on map or press 'Add' to create. Touch & hold to move."
+  "pinLocationHelp": "Long press on map or press 'Add' to create. Touch & hold to move.",
+  "hoursLong": {
+    "zero": "{{count}} Hours",
+    "one": "{{count}} Hour",
+    "other": "{{count}} Hours"
+  },
+  "hoursShort": {
+    "zero": "{{count}} Hrs",
+    "one": "{{count}} Hr",
+    "other": "{{count}} Hrs"
+  },
+  "minutesLong": {
+    "zero": "{{count}} Minutes",
+    "one": "{{count}} Minute",
+    "other": "{{count}} Minutes"
+  },
+  "minutesShort": {
+    "zero": "{{count}} Mins",
+    "one": "{{count}} Min",
+    "other": "{{count}} Mins"
+  },
+  "decimalExample": "15.5",
+  "longExample": "15 Hours 30 Minutes",
+  "shortExample": "15 Hrs 30 Mins",
+  "timeDisplayFormat": "Time Display Format"
 }

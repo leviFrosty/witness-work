@@ -73,7 +73,12 @@ export default function StudiesCard() {
           flexGrow: 1,
         }}
       >
-        <Text style={{ fontSize: 32, fontFamily: theme.fonts.bold }}>
+        <Text
+          style={{
+            fontSize: theme.fontSize('4xl'),
+            fontFamily: theme.fonts.bold,
+          }}
+        >
           {studies}
         </Text>
         <Text

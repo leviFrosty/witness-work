@@ -498,8 +498,8 @@
     "1320": {
       "c1": "Créez maintenant des contacts avec coordonnées uniquement. Si votre territoire est très rural ou que les informations cartographiques sont mauvaises, il n'est désormais plus nécessaire de se fier à une adresse.",
       "c2": "Basculez facilement entre les couleurs de l'appareil, du mode sombre et du mode clair. Accédez à Préférences > Apparence.",
-      "c3": "Ajout de la langue kinyarwanda. Parlez-vous kinyarwanda ? Nous avons besoin de votre aide pour traduire (en bemba aussi) ! Veuillez accéder à Paramètres > Aide à la traduction",
-      "c4": "L'écran « Ajouter du temps » permet désormais des incréments d'une minute."
+      "c4": "L'écran « Ajouter du temps » permet désormais des incréments d'une minute.",
+      "c5": "Ajout de la langue kinyarwanda, entièrement traduite par Semana D. Merci beaucoup pour votre aide !"
     }
   },
   "installed": "installée",
@@ -764,5 +764,29 @@
   "light": "Clair",
   "device": "Appareil",
   "colorScheme": "Schéma de couleurs",
-  "pinLocationHelp": "Appuyez longuement sur la carte ou appuyez sur « Ajouter » pour créer. Appuyez et maintenez pour vous déplacer."
+  "pinLocationHelp": "Appuyez longuement sur la carte ou appuyez sur « Ajouter » pour créer. Appuyez et maintenez pour vous déplacer.",
+  "hoursLong": {
+    "zero": "{{count}} Heures",
+    "one": "{{count}} Heure",
+    "other": "{{count}} Heures"
+  },
+  "hoursShort": {
+    "zero": "{{count}} Heures",
+    "one": "{{count}} Heures",
+    "other": "{{count}} Heures"
+  },
+  "minutesLong": {
+    "zero": "{{count}} Minutes",
+    "one": "{{count}} Minutes",
+    "other": "{{count}} Minutes"
+  },
+  "minutesShort": {
+    "zero": "{{count}} Mins",
+    "one": "{{count}} Min",
+    "other": "{{count}} Mins"
+  },
+  "decimalExample": "15.5",
+  "longExample": "15 Hours 30 Minutes",
+  "shortExample": "15 Hrs 30 Mins",
+  "timeDisplayFormat": "Format d'affichage de l'heure"
 }

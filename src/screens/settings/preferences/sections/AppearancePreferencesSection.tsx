@@ -7,9 +7,11 @@ import { usePreferences } from '../../../../stores/preferences'
 import Text from '../../../../components/MyText'
 import { useContext } from 'react'
 import { ThemeContext } from '../../../../contexts/theme'
+import { MinuteDisplayFormat } from '../../../../types/serviceReport'
 
 const AppearancePreferencesSection = () => {
-  const { set, fontSizeOffset, colorScheme } = usePreferences()
+  const { set, fontSizeOffset, colorScheme, timeDisplayFormat } =
+    usePreferences()
   const theme = useContext(ThemeContext)
   const fontSizeOffsetOptions = [
     { label: '-1', value: -1 },
@@ -24,6 +26,12 @@ const AppearancePreferencesSection = () => {
     { label: i18n.t('device'), value: undefined },
     { label: i18n.t('dark'), value: 'dark' },
     { label: i18n.t('light'), value: 'light' },
+  ]
+
+  const timeDisplayOptions: { label: string; value: MinuteDisplayFormat }[] = [
+    { label: i18n.t('decimalExample'), value: 'decimal' },
+    // { label: i18n.t('longExample'), value: 'long' },
+    { label: i18n.t('shortExample'), value: 'short' },
   ]
 
   return (
@@ -41,6 +49,19 @@ const AppearancePreferencesSection = () => {
             />
           </View>
         </InputRowContainer>
+        <InputRowContainer
+          label={i18n.t('timeDisplayFormat')}
+          style={{ justifyContent: 'space-between' }}
+        >
+          <View style={{ flex: 1 }}>
+            <Select
+              data={timeDisplayOptions}
+              value={timeDisplayFormat}
+              onChange={({ value }) => set({ timeDisplayFormat: value })}
+            />
+          </View>
+        </InputRowContainer>
+
         <InputRowContainer
           label={i18n.t('fontSizeOffset')}
           style={{ justifyContent: 'space-between' }}

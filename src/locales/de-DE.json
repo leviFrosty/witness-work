@@ -498,8 +498,8 @@
     "1320": {
       "c1": "Erstellen Sie jetzt nur noch Koordinatenkontakte. Wenn Ihr Gebiet sehr ländlich ist oder schlechte Karteninformationen aufweist, müssen Sie sich jetzt nicht mehr auf eine Adresse verlassen.",
       "c2": "Wechseln Sie einfach zwischen den Farbschemata für Geräte-, Dunkel- und Hellmodus. Gehen Sie zu Einstellungen > Darstellung.",
-      "c3": "Sprache Kinyarwanda hinzugefügt. Sprechen Sie Kinyarwanda? Wir brauchen Ihre Hilfe beim Übersetzen (auch Bemba)! Gehen Sie bitte zu Einstellungen > Beim Übersetzen helfen",
-      "c4": "Der Bildschirm „Zeit hinzufügen“ ermöglicht jetzt 1-Minuten-Schritte."
+      "c4": "Der Bildschirm „Zeit hinzufügen“ ermöglicht jetzt 1-Minuten-Schritte.",
+      "c5": "Kinyarwanda-Sprache hinzugefügt, vollständig übersetzt von Semana D. Vielen Dank für Ihre Hilfe!"
     }
   },
   "installed": "Eingerichtet",
@@ -764,5 +764,29 @@
   "light": "Hell",
   "device": "Gerät",
   "colorScheme": "Farbschema",
-  "pinLocationHelp": "Drücken Sie lange auf die Karte oder drücken Sie „Hinzufügen“, um sie zu erstellen. Berühren und halten Sie, um zu verschieben."
+  "pinLocationHelp": "Drücken Sie lange auf die Karte oder drücken Sie „Hinzufügen“, um sie zu erstellen. Berühren und halten Sie, um zu verschieben.",
+  "hoursLong": {
+    "zero": "{{count}} Stunden",
+    "one": "{{count}} Stunde",
+    "other": "{{count}} Stunden"
+  },
+  "hoursShort": {
+    "zero": "{{count}} Std.",
+    "one": "{{count}} Std.",
+    "other": "{{count}} Std."
+  },
+  "minutesLong": {
+    "zero": "{{count}} Minuten",
+    "one": "{{count}} Minute",
+    "other": "{{count}} Minuten"
+  },
+  "minutesShort": {
+    "zero": "{{count}} Min.",
+    "one": "{{count}} Min.",
+    "other": "{{count}} Min."
+  },
+  "decimalExample": "15,5",
+  "longExample": "15 Stunden 30 Minuten",
+  "shortExample": "15 Std. 30 Min.",
+  "timeDisplayFormat": "Zeitanzeigeformat"
 }

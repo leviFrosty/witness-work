@@ -11,6 +11,7 @@ import useServiceReport from '../stores/serviceReport'
 import {
   getPlansIntersectingDay,
   plannedMinutesToCurrentDayForMonth,
+  useFormattedMinutes,
 } from '../lib/serviceReport'
 import usePublisher from '../hooks/usePublisher'
 import Circle from './Circle'
@@ -62,6 +63,8 @@ export default function MonthScheduleSection(props: MonthScheduleSectionProps) {
     return count
   }, [selectedMonth, dayPlans, recurringPlans])
 
+  const plannedMinutesWithFormat = useFormattedMinutes(plannedMinutes)
+
   const percentPlanned = plannedMinutes / 60 / goalHours
 
   const plannedMinutesToCurrentDay = useMemo(() => {
@@ -109,7 +112,7 @@ export default function MonthScheduleSection(props: MonthScheduleSectionProps) {
           </Text>
           <XView>
             <Text style={{ fontFamily: theme.fonts.semiBold }}>
-              {_.round(plannedMinutes / 60, 1)} {i18n.t('of')}{' '}
+              {plannedMinutesWithFormat.formatted} {i18n.t('of')}{' '}
               {_.round(goalHours, 1)} {i18n.t('hours')}
             </Text>
             <Circle

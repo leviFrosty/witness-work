@@ -8049,10 +8049,10 @@ hyphenate-style-name@^1.0.3:
   resolved "https://registry.npmjs.org/hyphenate-style-name/-/hyphenate-style-name-1.0.4.tgz"
   integrity sha512-ygGZLjmXfPHj+ZWh6LwbC37l43MhfztxetbFCoYTM2VjkIUpeHgSNn7QIyVFj7YQ1Wl9Cbw5sholVJPzWvC2MQ==
 
-i18n-auto-translation@^1.8.0:
-  version "1.8.0"
-  resolved "https://registry.yarnpkg.com/i18n-auto-translation/-/i18n-auto-translation-1.8.0.tgz#f4c0a5b4ea5213f6e3bc1230bd947698ed63c92b"
-  integrity sha512-UcHQjJMMGhNUbYruwig2CwBll0DHYPOEqUpDQL4g0x+K5KMGcKdPcUe/qnLowTg/KszRPEQ+o2VjvnqJeBw9sA==
+i18n-auto-translation@^1.8.1:
+  version "1.8.1"
+  resolved "https://registry.yarnpkg.com/i18n-auto-translation/-/i18n-auto-translation-1.8.1.tgz#25313062b66b9f9b421575dffe62fad36d95f363"
+  integrity sha512-qQAmhoWDOy01INn8BpUFFQRU2tYrsKG12kt8AI1qLVzfo4ZNq7VXEkx9nplCd4+eRLJKtrg7XQzP2QZCryOq9g==
   dependencies:
     "@google-cloud/translate" "8.5.0"
     axios "1.7.5"

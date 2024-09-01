@@ -182,6 +182,7 @@ const ConversationFormScreen = ({ route, navigation }: Props) => {
     returnVisitTimeOffset,
     returnVisitNotificationOffset,
     returnVisitAlwaysNotify,
+    colorScheme,
   } = usePreferences()
   const { params } = route
   const { contacts } = useContacts()
@@ -605,6 +606,7 @@ const ConversationFormScreen = ({ route, navigation }: Props) => {
               />
             ) : (
               <RNDateTimePicker
+                themeVariant={colorScheme ? colorScheme : undefined}
                 locale={getLocales()[0].languageCode || undefined}
                 maximumDate={moment().toDate()}
                 value={conversation.date}

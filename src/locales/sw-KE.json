@@ -498,8 +498,8 @@
     "1320": {
       "c1": "Sasa unda kuratibu anwani pekee. Ikiwa eneo lako ni la mashambani sana au lenye maelezo mabaya ya ramani, sasa hakuna haja ya kutegemea anwani.",
       "c2": "Geuza kwa urahisi kati ya mpango wa rangi ya kifaa, giza na mwanga. Tembelea Mapendeleo > Muonekano.",
-      "c3": "Lugha ya Kinyarwanda imeongezwa. Je, unazungumza Kinyarwanda? Tunahitaji usaidizi wako kutafsiri (bemba pia)! Tafadhali tembelea Mipangilio > Saidia Kutafsiri",
-      "c4": "'Ongeza Wakati' skrini sasa inaruhusu nyongeza za dakika 1."
+      "c4": "'Ongeza Wakati' skrini sasa inaruhusu nyongeza za dakika 1.",
+      "c5": "Lugha ya Kinyarwanda iliyoongezwa, iliyotafsiriwa kikamilifu na Semana D. Asante sana kwa msaada wako!"
     }
   },
   "installed": "Imesakinishwa",
@@ -764,5 +764,29 @@
   "light": "Mwanga",
   "device": "Kifaa",
   "colorScheme": "Mpango wa Rangi",
-  "pinLocationHelp": "Bonyeza kwa muda mrefu kwenye ramani au bonyeza 'Ongeza' kuunda. Gusa & shikilia kusonga."
+  "pinLocationHelp": "Bonyeza kwa muda mrefu kwenye ramani au bonyeza 'Ongeza' kuunda. Gusa & shikilia kusonga.",
+  "hoursLong": {
+    "zero": "{{count}} Saa",
+    "one": "{{count}} Saa",
+    "other": "{{count}} Saa"
+  },
+  "hoursShort": {
+    "zero": "{{count}} Saa",
+    "one": "{{count}} Saa",
+    "other": "Saa {{count}}"
+  },
+  "minutesLong": {
+    "zero": "Dakika {{count}}",
+    "one": "Dakika {{count}}",
+    "other": "{{count}} Dakika"
+  },
+  "minutesShort": {
+    "zero": "Dakika {{count}}",
+    "one": "Dak {{count}}",
+    "other": "Dak {{count}}"
+  },
+  "decimalExample": "15.5",
+  "longExample": "Saa 15 Dakika 30",
+  "shortExample": "Saa 15 Dakika 30",
+  "timeDisplayFormat": "Umbizo la Onyesho la Wakati"
 }

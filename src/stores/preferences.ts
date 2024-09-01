@@ -9,6 +9,7 @@ import * as Device from 'expo-device'
 import { ColorSchemeName, Platform } from 'react-native'
 import { hasMigratedFromAsyncStorage, MmkvStorage } from './mmkv'
 import { Address } from '../types/contact'
+import { MinuteDisplayFormat } from '../types/serviceReport'
 
 const SortOptionValues = [
   'recentConversation',
@@ -150,6 +151,7 @@ const initialState = {
     contacts: true,
   },
   colorScheme: undefined as ColorSchemeName,
+  timeDisplayFormat: 'decimal' as MinuteDisplayFormat,
 }
 
 export const usePreferences = create(

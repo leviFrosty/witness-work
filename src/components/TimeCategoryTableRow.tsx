@@ -2,6 +2,7 @@ import { View } from 'react-native'
 import Text from './MyText'
 import XView from './layout/XView'
 import CreditBadge from './CreditBadge'
+import { useFormattedMinutes } from '../lib/serviceReport'
 
 const TimeCategoryTableRow = ({
   title,
@@ -12,6 +13,7 @@ const TimeCategoryTableRow = ({
   number: number
   credit?: boolean
 }) => {
+  const minutesWithFormat = useFormattedMinutes(number)
   return (
     <View
       style={{
@@ -24,7 +26,7 @@ const TimeCategoryTableRow = ({
         {credit && <CreditBadge />}
       </XView>
       <View style={{ flexDirection: 'row', gap: 5 }}>
-        <Text>{number}</Text>
+        <Text>{minutesWithFormat.formatted}</Text>
       </View>
     </View>
   )

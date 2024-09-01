@@ -7,6 +7,7 @@ import {
   getServiceYearReports,
   getTotalMinutesForServiceYear,
   serviceReportHoursPerMonthToGoal,
+  useFormattedMinutes,
 } from '../lib/serviceReport'
 import SimpleProgressBar from './SimpleProgressBar'
 import { View } from 'react-native'
@@ -58,6 +59,10 @@ const AnnualServiceReportSummary = ({
 
     return total
   }, [serviceReports, serviceYear, year])
+
+  const totalMinutesForServiceYearWithFormat = useFormattedMinutes(
+    totalMinutesForServiceYear
+  )
 
   const percentage = useMemo(() => {
     return _.round(totalMinutesForServiceYear / 60 / annualGoalHours, 6)
@@ -114,7 +119,7 @@ const AnnualServiceReportSummary = ({
               fontFamily: theme.fonts.semiBold,
             }}
           >
-            {`${_.round(totalMinutesForServiceYear / 60, 1)} ${i18n.t(
+            {`${totalMinutesForServiceYearWithFormat.formatted} ${i18n.t(
               'of'
             )} ${annualGoalHours} ${i18n.t('hours')}`}
           </Text>

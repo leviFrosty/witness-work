@@ -38,7 +38,14 @@ const YearScreen = ({ route }: ServiceYearScreenProps) => {
   const navigation = useNavigation<
     HomeTabStackNavigation & RootStackNavigation
   >()
-  const [year, setYear] = useState(route.params?.year ?? moment().year())
+
+  const currentYear = moment().year()
+  const currentMonth = moment().month()
+  const serviceYear = currentMonth < 8 ? currentYear : currentYear + 1
+  const [year, setYear] = useState(route.params?.year ?? serviceYear)
+  const isCurrentServiceYear =
+    (currentMonth < 8 && currentYear === year) ||
+    (currentMonth >= 8 && currentYear + 1 === year)
   const insets = useSafeAreaInsets()
   const theme = useTheme()
 
@@ -89,7 +96,7 @@ const YearScreen = ({ route }: ServiceYearScreenProps) => {
               </Text>
             </View>
           </Button>
-          {year !== moment().year() && (
+          {!isCurrentServiceYear && (
             <Button
               style={{
                 backgroundColor: theme.colors.accentTranslucent,
@@ -98,7 +105,7 @@ const YearScreen = ({ route }: ServiceYearScreenProps) => {
                 borderRadius: theme.numbers.borderRadiusSm,
               }}
               onPress={() => {
-                setYear(moment().year())
+                setYear(serviceYear)
               }}
             >
               <Text style={{ textDecorationLine: 'underline' }}>
@@ -106,7 +113,7 @@ const YearScreen = ({ route }: ServiceYearScreenProps) => {
               </Text>
             </Button>
           )}
-          {year !== moment().year() ? (
+          {!isCurrentServiceYear ? (
             <Button
               onPress={() => setYear(year + 1)}
               style={{
@@ -141,7 +148,9 @@ const YearScreen = ({ route }: ServiceYearScreenProps) => {
     })
   }, [
     insets.top,
+    isCurrentServiceYear,
     navigation,
+    serviceYear,
     theme.colors.accent3,
     theme.colors.accentTranslucent,
     theme.colors.background,

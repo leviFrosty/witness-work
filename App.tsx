@@ -35,6 +35,7 @@ import {
   migrateFromAsyncStorage,
 } from './src/stores/mmkv'
 import { usePreferences } from './src/stores/preferences'
+import AnimationViewProvider from './src/providers/AnimationViewProvider'
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
@@ -128,7 +129,9 @@ export default function App() {
                   <ToastProvider>
                     <StatusBar />
                     <ToastViewport />
-                    <RootStackComponent />
+                    <AnimationViewProvider>
+                      <RootStackComponent />
+                    </AnimationViewProvider>
                   </ToastProvider>
                 </TamaguiProvider>
               </NavigationContainer>

@@ -32,6 +32,7 @@ import { faTrash } from '@fortawesome/free-solid-svg-icons'
 import IconButton from '../components/IconButton'
 import usePublisher from '../hooks/usePublisher'
 import { getMonthsReports, getReport } from '../lib/serviceReport'
+import useAnimation from '../hooks/useAnimation'
 
 type AddTimeScreenProps = NativeStackScreenProps<RootStackParamList, 'Add Time'>
 
@@ -41,6 +42,7 @@ const AddTimeScreen = ({ route }: AddTimeScreenProps) => {
   const navigation = useNavigation<RootStackNavigation>()
   const { serviceReportTags, set } = usePreferences()
   const { hasAnnualGoal } = usePublisher()
+  const { playConfetti } = useAnimation()
   const presetCategories: ServiceReportTag[] = [
     { value: 'standard', credit: false },
     { value: 'ldc', credit: true },
@@ -279,6 +281,7 @@ const AddTimeScreen = ({ route }: AddTimeScreenProps) => {
   }))
 
   const submit = () => {
+    playConfetti()
     addServiceReport(serviceReport)
     toast.show(i18n.t('success'), {
       message: i18n.t('timeAdded'),
@@ -293,6 +296,7 @@ const AddTimeScreen = ({ route }: AddTimeScreenProps) => {
       message: i18n.t('updated'),
       native: true,
     })
+
     navigation.goBack()
   }
 

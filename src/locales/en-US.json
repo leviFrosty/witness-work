@@ -789,5 +789,7 @@
   "decimalExample": "15.5",
   "longExample": "15 Hours 30 Minutes",
   "shortExample": "15 Hrs 30 Mins",
-  "timeDisplayFormat": "Time Display Format"
+  "timeDisplayFormat": "Time Display Format",
+  "contactActions": "Contact Actions",
+  "archiveContact_descriptionShort": "Contacts can be restored in the settings"
 }

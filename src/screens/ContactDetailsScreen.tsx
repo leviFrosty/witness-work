@@ -1,4 +1,4 @@
-import { View, Platform, Alert, ScrollView, useColorScheme } from 'react-native'
+import { View, Platform, ScrollView, Alert } from 'react-native'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import Text from '../components/MyText'
 import useTheme from '../contexts/theme'
@@ -27,16 +27,16 @@ import { Conversation } from '../types/conversation'
 import Wrapper from '../components/layout/Wrapper'
 import { StatusBar } from 'expo-status-bar'
 import IconButton from '../components/IconButton'
+import { MenuView } from '@react-native-menu/menu'
 import {
   faBook,
   faCaravan,
   faComment,
   faComments,
+  faEllipsis,
   faEnvelope,
-  faPencil,
   faPhone,
   faPlus,
-  faTrash,
 } from '@fortawesome/free-solid-svg-icons'
 import Copyeable from '../components/Copyeable'
 import Button from '../components/Button'
@@ -593,10 +593,10 @@ const AddSheet = ({
 }
 
 const ContactDetailsScreen = ({ route, navigation }: Props) => {
-  const colorScheme = useColorScheme()
   const theme = useTheme()
   const { params } = route
   const insets = useSafeAreaInsets()
+  const { colorScheme } = usePreferences()
   const { contacts, deleteContact } = useContacts()
   const contact = useMemo(
     () => contacts.find((c) => c.id === params.id),
@@ -634,61 +634,65 @@ const ContactDetailsScreen = ({ route, navigation }: Props) => {
           title=''
           buttonType='back'
           rightElement={
-            <View
-              style={{
-                flexDirection: 'row',
-                alignItems: 'center',
-                gap: 20,
-                position: 'absolute',
-                right: 0,
-              }}
-            >
-              <IconButton
-                icon={faTrash}
-                color={theme.colors.textInverse}
-                onPress={() =>
-                  Alert.alert(
-                    i18n.t('archiveContact_question'),
-                    i18n.t('archiveContact_description'),
-                    [
-                      {
-                        text: i18n.t('cancel'),
-                        style: 'cancel',
-                      },
-                      {
-                        text: i18n.t('delete'),
-                        style: 'destructive',
-                        onPress: () => {
-                          if (!contact) {
-                            return
-                          }
-                          deleteContact(contact.id)
-                          toast.show(i18n.t('success'), {
-                            message: i18n.t('archived'),
-                            native: true,
-                          })
-                          navigation.popToTop()
-                        },
-                      },
-                    ]
-                  )
-                }
-              />
-              <Button
-                onPress={async () => {
-                  navigation.replace('Contact Form', {
-                    id: params.id,
-                    edit: true,
-                  })
+            <XView style={{ justifyContent: 'flex-end', width: '100%' }}>
+              <MenuView
+                onPressAction={({ nativeEvent: { event } }) => {
+                  switch (event) {
+                    case 'edit':
+                      navigation.replace('Contact Form', {
+                        id: params.id,
+                        edit: true,
+                      })
+                      break
+                    case 'archive':
+                      Alert.alert(
+                        i18n.t('archiveContact_question'),
+                        i18n.t('archiveContact_description'),
+                        [
+                          {
+                            text: i18n.t('cancel'),
+                            style: 'cancel',
+                          },
+                          {
+                            text: i18n.t('delete'),
+                            style: 'destructive',
+                            onPress: () => {
+                              if (!contact) {
+                                return
+                              }
+                              deleteContact(contact.id)
+                              toast.show(i18n.t('success'), {
+                                message: i18n.t('archived'),
+                                native: true,
+                              })
+                              navigation.popToTop()
+                            },
+                          },
+                        ]
+                      )
+                      break
+                  }
                 }}
-                style={{ flexDirection: 'row', gap: 5, alignItems: 'center' }}
+                actions={[
+                  { title: i18n.t('edit'), id: 'edit', image: 'pencil' },
+                  {
+                    title: i18n.t('archive'),
+                    subtitle: i18n.t('archiveContact_descriptionShort'),
+                    id: 'archive',
+                    image: 'trash',
+                    attributes: {
+                      destructive: true,
+                    },
+                  },
+                ]}
+                themeVariant={colorScheme || undefined}
               >
                 <IconButton
-                  icon={faPencil}
-                  iconStyle={{ color: theme.colors.textInverse }}
+                  icon={faEllipsis}
+                  color={theme.colors.textInverse}
+                  style={{ padding: 10 }}
                 />
-              </Button>
-
+              </MenuView>
               <Button onPress={() => setSheetOpen(true)}>
                 <XView
                   style={{
@@ -708,13 +712,14 @@ const ContactDetailsScreen = ({ route, navigation }: Props) => {
                   </Text>
                 </XView>
               </Button>
-            </View>
+            </XView>
           }
           backgroundColor={theme.colors.accent3}
         />
       ),
     })
   }, [
+    colorScheme,
     contact,
     contact?.id,
     deleteContact,

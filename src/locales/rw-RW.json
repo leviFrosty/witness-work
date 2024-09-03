@@ -773,7 +773,7 @@
   },
   "hoursShort": {
     "zero": "{{count}} Amasaha",
-    "one": "{{count}} Hr",
+    "one": "Amasaha {{count}}",
     "other": "{{count}} Amasaha"
   },
   "minutesLong": {
@@ -782,9 +782,9 @@
     "other": "{{count}} iminota"
   },
   "minutesShort": {
-    "zero": "{{count}} Mins",
-    "one": "{{count}} Min",
-    "other": "{{count}} Mins"
+    "zero": "Iminota {{count}}",
+    "one": "Iminota {{count}}",
+    "other": "Iminota {{count}}"
   },
   "decimalExample": "15.5",
   "longExample": "Amasaha 15 Iminota 30",

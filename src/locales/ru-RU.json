@@ -791,5 +791,9 @@
   "shortExample": "15 часов 30 минут",
   "timeDisplayFormat": "Формат отображения времени",
   "tapDayToSchedule": "Нажмите «День», чтобы создать план",
-  "tapDayToSchedule_description": "Начните создавать или изменять одноразовый или повторяющийся план, выбрав дату ниже."
+  "tapDayToSchedule_description": "Начните создавать или изменять одноразовый или повторяющийся план, выбрав дату ниже.",
+  "languageFoundButIsFallbackLocale": "WitnessWork поддерживает ваш язык. Ваша точная локаль, {{original}}, не поддерживается, поэтому она вернулась к {{fallback}}.",
+  "languageWasNotFound": "Witness Work не поддерживает язык вашего устройства, {{original}}. Она вернулась к своему языку по умолчанию.",
+  "deviceDefault": "Устройство по умолчанию",
+  "language": "Язык"
 }

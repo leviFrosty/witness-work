@@ -59,7 +59,8 @@ const DateTimePicker = ({
       <RNDateTimePicker
         themeVariant={colorScheme || undefined}
         locale={getLocales()[0].languageCode || undefined}
-        maximumDate={moment().toDate()}
+        maximumDate={maximumDate}
+        minimumDate={minimumDate}
         value={value}
         onChange={onChange}
         mode={iOSMode}

@@ -61,7 +61,6 @@ const OneTimePlan = (props: {
     <>
       <InputRowContainer label={i18n.t('date')} justifyContent='space-between'>
         <DateTimePicker
-          minimumDate={new Date()}
           value={props.date}
           onChange={(_, newDate) => newDate && props.setDate(newDate)}
         />
@@ -168,20 +167,11 @@ const RecurringPlan = (props: {
         label={i18n.t('startDate')}
         justifyContent='space-between'
       >
-        {Platform.OS !== 'android' ? (
-          <RNDateTimePicker
-            minimumDate={new Date()}
-            locale={getLocales()[0].languageCode || undefined}
-            value={props.date}
-            onChange={(_, newDate) => newDate && props.setDate(newDate)}
-          />
-        ) : (
-          <DateTimePicker
-            minimumDate={new Date()}
-            value={props.date}
-            onChange={(_, newDate) => newDate && props.setDate(newDate)}
-          />
-        )}
+        <DateTimePicker
+          minimumDate={new Date()}
+          value={props.date}
+          onChange={(_, newDate) => newDate && props.setDate(newDate)}
+        />
       </InputRowContainer>
       <InputRowContainer label={i18n.t('frequency')}>
         <View style={{ flex: 1 }}>

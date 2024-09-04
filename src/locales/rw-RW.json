@@ -791,5 +791,9 @@
   "shortExample": "15 Isaha 30 Imin",
   "timeDisplayFormat": "Imiterere Yigihe",
   "tapDayToSchedule": "Kanda umunsi wo gukora gahunda",
-  "tapDayToSchedule_description": "Tangira kurema cyangwa guhindura gahunda imwe cyangwa gusubiramo gahunda uhitamo itariki hepfo."
+  "tapDayToSchedule_description": "Tangira kurema cyangwa guhindura gahunda imwe cyangwa gusubiramo gahunda uhitamo itariki hepfo.",
+  "languageFoundButIsFallbackLocale": "WitnessWork ishyigikira ururimi rwawe. Ahantu nyako, {{original}}, ntabwo ashyigikiwe kuburyo yaguye kuri {{fallback}}.",
+  "languageWasNotFound": "Igikorwa cyabatangabuhamya ntigishyigikira igikoresho cyawe & {apos; ururimi, {{original}}. Yagarutse kuri & apos; ururimi rusanzwe.",
+  "deviceDefault": "Igikoresho gisanzwe",
+  "language": "Ururimi"
 }

@@ -789,5 +789,7 @@
   "decimalExample": "15.5",
   "longExample": "15 Ore 30 Minuti",
   "shortExample": "15 Ore 30 Minuti",
-  "timeDisplayFormat": "Formato di visualizzazione dell'ora"
+  "timeDisplayFormat": "Formato di visualizzazione dell'ora",
+  "tapDayToSchedule": "Tocca Giorno per creare un piano",
+  "tapDayToSchedule_description": "Inizia a creare o modificare un piano una tantum o ricorrente selezionando una data qui sotto."
 }

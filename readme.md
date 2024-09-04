@@ -75,7 +75,7 @@ WitnessWork is available in 16 languages. Some of these translations are done by
 
 # License
 
-WitnessWork © 2024 by Levi Wilkerson is licensed under [Attribution-NonCommercial 4.0 International](./LICENSE)
+WitnessWork © 2023-2024 by Levi Wilkerson is licensed under [Attribution-NonCommercial 4.0 International](./LICENSE)
 
 # Sponsor
 

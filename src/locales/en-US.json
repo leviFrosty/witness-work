@@ -789,5 +789,7 @@
   "decimalExample": "15.5",
   "longExample": "15 Hours 30 Minutes",
   "shortExample": "15 Hrs 30 Mins",
-  "timeDisplayFormat": "Time Display Format"
+  "timeDisplayFormat": "Time Display Format",
+  "tapDayToSchedule": "Tap Day To Create Plan",
+  "tapDayToSchedule_description": "Start creating or modifying a one-time or recurring plan by selecting a date below."
 }

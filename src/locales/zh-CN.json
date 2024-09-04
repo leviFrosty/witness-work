@@ -789,5 +789,7 @@
   "decimalExample": "15.5",
   "longExample": "15 小时 30 分钟",
   "shortExample": "15 小时 30 分钟",
-  "timeDisplayFormat": "时间显示格式"
+  "timeDisplayFormat": "时间显示格式",
+  "tapDayToSchedule": "点击日期创建计划",
+  "tapDayToSchedule_description": "选择下面的日期开始创建或修改一次性或定期计划。"
 }

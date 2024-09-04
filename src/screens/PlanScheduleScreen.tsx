@@ -204,8 +204,8 @@ const PlanScheduleScreen = ({ route, navigation }: PlanScheduleScreenProps) => {
           }}
         >
           <View style={{ paddingHorizontal: 10 }}>
-            <Card>
-              <View style={{ gap: 3 }}>
+            <Card style={{ gap: 10 }}>
+              <View style={{ gap: 4 }}>
                 <Text
                   style={{
                     fontFamily: theme.fonts.bold,
@@ -217,7 +217,7 @@ const PlanScheduleScreen = ({ route, navigation }: PlanScheduleScreenProps) => {
                 <Text
                   style={{
                     color: theme.colors.textAlt,
-                    fontSize: theme.fontSize('xs'),
+                    fontSize: theme.fontSize('sm'),
                   }}
                 >
                   {i18n.t('timePlanned_description2')}
@@ -243,7 +243,29 @@ const PlanScheduleScreen = ({ route, navigation }: PlanScheduleScreenProps) => {
                   date: moment(day.dateString).toISOString(),
                 })
               }}
-              renderHeader={() => <CalendarKey />}
+              renderHeader={() => (
+                <View style={{ width: '100%', gap: 10 }}>
+                  <View style={{ gap: 4 }}>
+                    <Text
+                      style={{
+                        fontSize: theme.fontSize('lg'),
+                        fontFamily: theme.fonts.semiBold,
+                      }}
+                    >
+                      {i18n.t('tapDayToSchedule')}
+                    </Text>
+                    <Text
+                      style={{
+                        color: theme.colors.textAlt,
+                        fontSize: theme.fontSize('sm'),
+                      }}
+                    >
+                      {i18n.t('tapDayToSchedule_description')}
+                    </Text>
+                  </View>
+                  <CalendarKey />
+                </View>
+              )}
               style={{
                 borderRadius: theme.numbers.borderRadiusLg,
                 paddingBottom: 10,

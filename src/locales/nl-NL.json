@@ -789,5 +789,7 @@
   "decimalExample": "15.5",
   "longExample": "15 Uren 30 Minuten",
   "shortExample": "15 Uren 30 Min",
-  "timeDisplayFormat": "Tijdweergaveformaat"
+  "timeDisplayFormat": "Tijdweergaveformaat",
+  "tapDayToSchedule": "Tik op Dag om Plan te Maken",
+  "tapDayToSchedule_description": "Begin met het maken of wijzigen van een eenmalig of terugkerend plan door hieronder een datum te selecteren."
 }

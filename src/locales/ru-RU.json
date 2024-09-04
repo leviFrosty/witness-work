@@ -789,5 +789,7 @@
   "decimalExample": "15.5",
   "longExample": "15 часов 30 минут",
   "shortExample": "15 часов 30 минут",
-  "timeDisplayFormat": "Формат отображения времени"
+  "timeDisplayFormat": "Формат отображения времени",
+  "tapDayToSchedule": "Нажмите «День», чтобы создать план",
+  "tapDayToSchedule_description": "Начните создавать или изменять одноразовый или повторяющийся план, выбрав дату ниже."
 }

@@ -789,5 +789,7 @@
   "decimalExample": "15.5",
   "longExample": "Amasaha 15 Iminota 30",
   "shortExample": "15 Isaha 30 Imin",
-  "timeDisplayFormat": "Imiterere Yigihe"
+  "timeDisplayFormat": "Imiterere Yigihe",
+  "tapDayToSchedule": "Kanda umunsi wo gukora gahunda",
+  "tapDayToSchedule_description": "Tangira kurema cyangwa guhindura gahunda imwe cyangwa gusubiramo gahunda uhitamo itariki hepfo."
 }

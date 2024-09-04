@@ -789,5 +789,7 @@
   "decimalExample": "15,5",
   "longExample": "15 Stunden 30 Minuten",
   "shortExample": "15 Std. 30 Min.",
-  "timeDisplayFormat": "Zeitanzeigeformat"
+  "timeDisplayFormat": "Zeitanzeigeformat",
+  "tapDayToSchedule": "Tippen Sie auf den Tag, um den Plan zu erstellen",
+  "tapDayToSchedule_description": "Beginnen Sie mit der Erstellung oder Änderung eines einmaligen oder wiederkehrenden Plans, indem Sie unten ein Datum auswählen."
 }

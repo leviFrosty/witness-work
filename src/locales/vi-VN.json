@@ -789,5 +789,7 @@
   "decimalExample": "15.5",
   "longExample": "15 Giờ 30 Phút",
   "shortExample": "15 Giờ 30 Phút",
-  "timeDisplayFormat": "Định dạng Hiển thị Thời gian"
+  "timeDisplayFormat": "Định dạng Hiển thị Thời gian",
+  "tapDayToSchedule": "Nhấn vào Ngày để tạo Kế hoạch",
+  "tapDayToSchedule_description": "Bắt đầu tạo hoặc sửa đổi kế hoạch một lần hoặc định kỳ bằng cách chọn ngày bên dưới."
 }

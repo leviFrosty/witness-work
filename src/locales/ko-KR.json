@@ -789,5 +789,7 @@
   "decimalExample": "15.5",
   "longExample": "15시간 30분",
   "shortExample": "15시간 30분",
-  "timeDisplayFormat": "시간 표시 형식"
+  "timeDisplayFormat": "시간 표시 형식",
+  "tapDayToSchedule": "날짜를 탭하여 계획 만들기",
+  "tapDayToSchedule_description": "아래 날짜를 선택하여 일회성 또는 반복 계획을 만들거나 수정하기 시작하세요."
 }

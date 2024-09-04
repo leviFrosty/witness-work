@@ -35,7 +35,7 @@
     "@sentry/react-native": "~5.22.0",
     "@shopify/flash-list": "1.6.4",
     "@tamagui/babel-plugin": "^1.96.0",
-    "@tamagui/config": "^1.96.0",
+    "@tamagui/config": "^1.108.3",
     "@tamagui/toast": "^1.96.0",
     "awesome-phonenumber": "^6.8.0",
     "axios": "^1.7.5",

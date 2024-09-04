@@ -27,7 +27,7 @@ It is written in Typescript using React Native and Expo.
 
 # Build
 
-Building Android & iOS is similar, for this example we will build an iOS simulator.
+The build process for iOS and Android is similar. Ensure you have all dependencies installed.
 
 ### iOS
 

@@ -791,5 +791,9 @@
   "shortExample": "Saa 15 Dakika 30",
   "timeDisplayFormat": "Umbizo la Onyesho la Wakati",
   "tapDayToSchedule": "Gonga Siku Ili Unda Mpango",
-  "tapDayToSchedule_description": "Anza kuunda au kurekebisha mpango wa mara moja au unaojirudia kwa kuchagua tarehe hapa chini."
+  "tapDayToSchedule_description": "Anza kuunda au kurekebisha mpango wa mara moja au unaojirudia kwa kuchagua tarehe hapa chini.",
+  "languageFoundButIsFallbackLocale": "WitnessWork inasaidia lugha yako. Eneo lako halisi, {{original}}, halitumiki kwa hivyo limerejea kwa {{fallback}}.",
+  "languageWasNotFound": "Kazi ya ushuhuda haitumii lugha ya kifaa chako, {{original}}. Imeanguka nyuma yake' lugha chaguo-msingi.",
+  "deviceDefault": "Chaguomsingi ya Kifaa",
+  "language": "Lugha"
 }

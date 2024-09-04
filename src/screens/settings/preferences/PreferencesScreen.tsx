@@ -17,6 +17,7 @@ import { useNavigation } from '@react-navigation/native'
 import { RootStackNavigation } from '../../../stacks/RootStack'
 import IconButton from '../../../components/IconButton'
 import { View } from 'react-native'
+import LanguageSelector from '../sections/LanguageSelector'
 
 const PreferencesScreen = () => {
   const navigation = useNavigation<RootStackNavigation>()
@@ -26,6 +27,9 @@ const PreferencesScreen = () => {
       <KeyboardAwareScrollView
         contentContainerStyle={{ gap: 30, paddingTop: 30, paddingBottom: 30 }}
       >
+        <Section>
+          <LanguageSelector />
+        </Section>
         <View style={{ gap: 5 }}>
           <Section>
             <InputRowButton

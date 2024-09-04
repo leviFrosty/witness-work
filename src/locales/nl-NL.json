@@ -791,5 +791,9 @@
   "shortExample": "15 Uren 30 Min",
   "timeDisplayFormat": "Tijdweergaveformaat",
   "tapDayToSchedule": "Tik op Dag om Plan te Maken",
-  "tapDayToSchedule_description": "Begin met het maken of wijzigen van een eenmalig of terugkerend plan door hieronder een datum te selecteren."
+  "tapDayToSchedule_description": "Begin met het maken of wijzigen van een eenmalig of terugkerend plan door hieronder een datum te selecteren.",
+  "languageFoundButIsFallbackLocale": "WitnessWork ondersteunt uw taal. Uw exacte locale, {{original}}, wordt niet ondersteund, dus is het teruggevallen op {{fallback}}.",
+  "languageWasNotFound": "Witness Work ondersteunt de taal van uw apparaat, {{original}}, niet. Het is teruggevallen op de standaardtaal.",
+  "deviceDefault": "Standaardapparaat",
+  "language": "Taal"
 }

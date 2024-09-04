@@ -35,6 +35,7 @@ import {
   migrateFromAsyncStorage,
 } from './src/stores/mmkv'
 import { usePreferences } from './src/stores/preferences'
+import useUserLocalePrefs from './src/hooks/useLocale'
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
@@ -74,6 +75,7 @@ Sentry.setTag('expoUpdateVersion', Updates.updateId)
 export default function App() {
   const systemColorScheme = useColorScheme()
   const { colorScheme } = usePreferences()
+  useUserLocalePrefs()
 
   const [fontsLoaded] = useFonts({
     Inter_400Regular,

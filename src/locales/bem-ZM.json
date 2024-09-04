@@ -791,5 +791,9 @@
   "shortExample": "Ama-awala 15 na Amamineti 30",
   "timeDisplayFormat": "Inshita ya Kulangisha Imipangile",
   "tapDayToSchedule": "Tinikeni pa Bushiku Pakupanga Ipulani",
-  "tapDayToSchedule_description": "Tampa ukupanga nangu ukwalula ubupekanyo bwa nshita imo nangu ubwabwekeshiwapo ukupitila mu kusala ubushiku ubuli pesamba."
+  "tapDayToSchedule_description": "Tampa ukupanga nangu ukwalula ubupekanyo bwa nshita imo nangu ubwabwekeshiwapo ukupitila mu kusala ubushiku ubuli pesamba.",
+  "languageFoundButIsFallbackLocale": "Umulimo wa bumboni ulatungilila ululimi lwenu. Icifulo cenu ica cine cine, {{original}}, tacisuminishiwe kanshi cabwelele kuli {{fallback}}.",
+  "languageWasNotFound": "Umulimo wa Nte tausuminisha ululimi lwa cibombelo cenu, {{original}}. Cabwelele ku numa ku ca iko' ululimi lwa lyonse.",
+  "deviceDefault": "Icibombelo icabako",
+  "language": "Ululimi"
 }

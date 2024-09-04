@@ -791,5 +791,9 @@
   "shortExample": "15시간 30분",
   "timeDisplayFormat": "시간 표시 형식",
   "tapDayToSchedule": "날짜를 탭하여 계획 만들기",
-  "tapDayToSchedule_description": "아래 날짜를 선택하여 일회성 또는 반복 계획을 만들거나 수정하기 시작하세요."
+  "tapDayToSchedule_description": "아래 날짜를 선택하여 일회성 또는 반복 계획을 만들거나 수정하기 시작하세요.",
+  "languageFoundButIsFallbackLocale": "WitnessWork는 귀하의 언어를 지원합니다. 귀하의 정확한 로캘인 {{original}}은 지원되지 않으므로 {{fallback}}로 폴백되었습니다.",
+  "languageWasNotFound": "Witness Work는 귀하의 기기 언어인 {{original}}을 지원하지 않습니다. 기본 언어로 폴백되었습니다.",
+  "deviceDefault": "기기 기본",
+  "language": "언어"
 }

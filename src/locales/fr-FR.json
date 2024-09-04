@@ -791,5 +791,9 @@
   "shortExample": "15 Hrs 30 Mins",
   "timeDisplayFormat": "Format d'affichage de l'heure",
   "tapDayToSchedule": "Appuyez sur le jour pour créer un plan",
-  "tapDayToSchedule_description": "Commencez à créer ou à modifier un plan ponctuel ou récurrent en sélectionnant une date ci-dessous."
+  "tapDayToSchedule_description": "Commencez à créer ou à modifier un plan ponctuel ou récurrent en sélectionnant une date ci-dessous.",
+  "languageFoundButIsFallbackLocale": "WitnessWork prend en charge votre langue. Votre langue locale exacte, {{original}}, n'est pas prise en charge, elle est donc revenue à {{fallback}}.",
+  "languageWasNotFound": "Witness Work ne prend pas en charge la langue de votre appareil, {{original}}. Il est revenu à sa langue par défaut.",
+  "deviceDefault": "Paramètres par défaut de l'appareil",
+  "language": "Langue"
 }

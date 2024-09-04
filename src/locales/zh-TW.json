@@ -791,5 +791,9 @@
   "shortExample": "15 小時 30 分鐘",
   "timeDisplayFormat": "時間顯示格式",
   "tapDayToSchedule": "點擊日期建立計劃",
-  "tapDayToSchedule_description": "透過選擇下面的日期開始建立或修改一次性或定期計劃。"
+  "tapDayToSchedule_description": "透過選擇下面的日期開始建立或修改一次性或定期計劃。",
+  "languageFoundButIsFallbackLocale": "WitnessWork 支援您的語言。您的確切區域設定 {{original}} 不受支持，因此已回退到 {{fallback}}。",
+  "languageWasNotFound": "見證工作不支援您裝置的語言 {{original}}。它已經回到了原來的狀態。預設語言。",
+  "deviceDefault": "設備預設值",
+  "language": "語言"
 }

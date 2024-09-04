@@ -791,5 +791,9 @@
   "shortExample": "15 Horas e 30 Minutos",
   "timeDisplayFormat": "Formato de Exibição de Hora",
   "tapDayToSchedule": "Toque em Dia para Criar Plano",
-  "tapDayToSchedule_description": "Comece a criar ou modificar um plano único ou recorrente selecionando uma data abaixo."
+  "tapDayToSchedule_description": "Comece a criar ou modificar um plano único ou recorrente selecionando uma data abaixo.",
+  "languageFoundButIsFallbackLocale": "WitnessWork suporta seu idioma. Sua localidade exata, {{original}}, não é suportada, então ela voltou para {{fallback}}.",
+  "languageWasNotFound": "Witness Work não suporta o idioma do seu dispositivo, {{original}}. Ele voltou para seu idioma padrão.",
+  "deviceDefault": "Padrão do dispositivo",
+  "language": "Linguagem"
 }

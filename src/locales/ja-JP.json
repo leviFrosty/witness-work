@@ -789,5 +789,7 @@
   "decimalExample": "15.5",
   "longExample": "15 時間 30 分",
   "shortExample": "15 時間 30 分",
-  "timeDisplayFormat": "時間表示形式"
+  "timeDisplayFormat": "時間表示形式",
+  "tapDayToSchedule": "プランを作成するには日をタップしてください",
+  "tapDayToSchedule_description": "以下の日付を選択して、1 回限りのプランまたは定期的なプランの作成または変更を開始します。"
 }

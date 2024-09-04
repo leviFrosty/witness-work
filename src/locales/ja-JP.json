@@ -791,5 +791,9 @@
   "shortExample": "15 時間 30 分",
   "timeDisplayFormat": "時間表示形式",
   "tapDayToSchedule": "プランを作成するには日をタップしてください",
-  "tapDayToSchedule_description": "以下の日付を選択して、1 回限りのプランまたは定期的なプランの作成または変更を開始します。"
+  "tapDayToSchedule_description": "以下の日付を選択して、1 回限りのプランまたは定期的なプランの作成または変更を開始します。",
+  "languageFoundButIsFallbackLocale": "WitnessWork はあなたの言語をサポートしています。正確なロケール {{original}} はサポートされていないため、{{fallback}} にフォールバックしました。",
+  "languageWasNotFound": "Witness Work はあなたのデバイスの言語 {{original}} をサポートしていません。デフォルトの言語にフォールバックしました。",
+  "deviceDefault": "デバイスのデフォルト",
+  "language": "言語"
 }

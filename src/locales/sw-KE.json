@@ -789,5 +789,7 @@
   "decimalExample": "15.5",
   "longExample": "Saa 15 Dakika 30",
   "shortExample": "Saa 15 Dakika 30",
-  "timeDisplayFormat": "Umbizo la Onyesho la Wakati"
+  "timeDisplayFormat": "Umbizo la Onyesho la Wakati",
+  "tapDayToSchedule": "Gonga Siku Ili Unda Mpango",
+  "tapDayToSchedule_description": "Anza kuunda au kurekebisha mpango wa mara moja au unaojirudia kwa kuchagua tarehe hapa chini."
 }

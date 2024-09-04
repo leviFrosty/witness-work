@@ -789,5 +789,7 @@
   "decimalExample": "15.5",
   "longExample": "Ama-awala 15 na Amamineti 30",
   "shortExample": "Ama-awala 15 na Amamineti 30",
-  "timeDisplayFormat": "Inshita ya Kulangisha Imipangile"
+  "timeDisplayFormat": "Inshita ya Kulangisha Imipangile",
+  "tapDayToSchedule": "Tinikeni pa Bushiku Pakupanga Ipulani",
+  "tapDayToSchedule_description": "Tampa ukupanga nangu ukwalula ubupekanyo bwa nshita imo nangu ubwabwekeshiwapo ukupitila mu kusala ubushiku ubuli pesamba."
 }

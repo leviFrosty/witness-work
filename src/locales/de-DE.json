@@ -791,5 +791,9 @@
   "shortExample": "15 Std. 30 Min.",
   "timeDisplayFormat": "Zeitanzeigeformat",
   "tapDayToSchedule": "Tippen Sie auf den Tag, um den Plan zu erstellen",
-  "tapDayToSchedule_description": "Beginnen Sie mit der Erstellung oder Änderung eines einmaligen oder wiederkehrenden Plans, indem Sie unten ein Datum auswählen."
+  "tapDayToSchedule_description": "Beginnen Sie mit der Erstellung oder Änderung eines einmaligen oder wiederkehrenden Plans, indem Sie unten ein Datum auswählen.",
+  "languageFoundButIsFallbackLocale": "WitnessWork unterstützt Ihre Sprache. Ihre genaue Sprache, {{original}}, wird nicht unterstützt, daher wurde auf {{fallback}} zurückgegriffen.",
+  "languageWasNotFound": "WitnessWork unterstützt die Sprache Ihres Geräts, {{original}}, nicht. Es wurde auf die Standardsprache zurückgegriffen.",
+  "deviceDefault": "Gerätestandard",
+  "language": "Sprache"
 }

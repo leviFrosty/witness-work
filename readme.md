@@ -50,7 +50,7 @@ Build dependencies: [XCode](https://docs.expo.dev/workflow/ios-simulator/#instal
 
 ### Android
 
-Build dependencies: [Android Studio](https://developer.android.com/studio), [JDK](https://openjdk.org/), [Yarn](https://classic.yarnpkg.com/lang/en/docs/install/#mac-stable), and [EAS cli](https://docs.expo.dev/eas-update/getting-started/), [Watchman](https://facebook.github.io/watchman/docs/install#macos), [Fastlane](https://docs.fastlane.tools/)
+Build dependencies: [Android Studio](https://developer.android.com/studio), [JDK](https://openjdk.org/), [Yarn](https://classic.yarnpkg.com/lang/en/docs/install/#mac-stable), [EAS cli](https://docs.expo.dev/eas-update/getting-started/), [Watchman](https://facebook.github.io/watchman/docs/install#macos), and [Fastlane](https://docs.fastlane.tools/)
 
 1. Clone repository
 
@@ -70,7 +70,7 @@ Learn about the [file and project structure](./src/docs/project-structure.md).
 
 # Help Translate 🌐
 
-WitnessWork is available in 13 languages. Some of these translations are done by AI, which may not be of the highest quality. To help, proofread these translations on [Crowdin](https://crowdin.com/project/jw-time/). Thank you!
+WitnessWork is available in 16 languages. Some of these translations are done by AI, which may not be of the highest quality. To help, proofread these translations on [Crowdin](https://crowdin.com/project/jw-time/). Thank you!
 
 [Not sure how to use Crowdin?](https://support.crowdin.com/crowdin-intro/)
 

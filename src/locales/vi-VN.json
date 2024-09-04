@@ -791,5 +791,9 @@
   "shortExample": "15 Giờ 30 Phút",
   "timeDisplayFormat": "Định dạng Hiển thị Thời gian",
   "tapDayToSchedule": "Nhấn vào Ngày để tạo Kế hoạch",
-  "tapDayToSchedule_description": "Bắt đầu tạo hoặc sửa đổi kế hoạch một lần hoặc định kỳ bằng cách chọn ngày bên dưới."
+  "tapDayToSchedule_description": "Bắt đầu tạo hoặc sửa đổi kế hoạch một lần hoặc định kỳ bằng cách chọn ngày bên dưới.",
+  "languageFoundButIsFallbackLocale": "WitnessWork hỗ trợ ngôn ngữ của bạn. Ngôn ngữ chính xác của bạn, {{original}}, không được hỗ trợ nên nó đã trở lại {{fallback}}.",
+  "languageWasNotFound": "Witness Work không hỗ trợ ngôn ngữ của thiết bị của bạn, {{original}}. Nó đã trở lại ngôn ngữ mặc định của thiết bị.",
+  "deviceDefault": "Mặc định của thiết bị",
+  "language": "Ngôn ngữ"
 }

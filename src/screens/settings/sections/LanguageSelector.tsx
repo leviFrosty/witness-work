@@ -15,7 +15,7 @@ import * as Updates from 'expo-updates'
 import { faLanguage } from '@fortawesome/free-solid-svg-icons'
 
 export default function LanguageSelector() {
-  const { set } = usePreferences()
+  const { set, locale } = usePreferences()
   const theme = useTheme()
   const languageOptions: {
     label: string
@@ -45,7 +45,7 @@ export default function LanguageSelector() {
       <View style={{ flex: 1 }}>
         <Select
           data={languageOptions}
-          value={loadedLocale}
+          value={locale}
           onChange={({ value }) => handleChange(value)}
           placeholder={translationsLabels[loadedLocale as TranslatedLocale]}
         />

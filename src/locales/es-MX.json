@@ -501,6 +501,10 @@
       "c4": "La pantalla \"Agregar tiempo\" ahora permite incrementos de 1 minuto.",
       "c5": "Se agregó el idioma kinyarwanda, traducido completamente por Semana D. ¡Muchas gracias por tu ayuda!",
       "c6": "Ahora puedes seleccionar cómo se muestra tu tiempo. Elige entre decimales como: 13,5 o elige 13 horas 30 minutos. Visita Preferencias > Apariencia."
+    },
+    "1330": {
+      "c1": "Se agregó un selector de idioma. Consulta las Preferencias para ajustar manualmente tu idioma.",
+      "c2": "Se resolvió el problema con el plan de un solo uso que tenía una fecha máxima incorrecta."
     }
   },
   "installed": "Instalado",

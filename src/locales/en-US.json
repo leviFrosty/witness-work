@@ -504,7 +504,8 @@
     },
     "1330": {
       "c1": "Added language selector. See Preferences to manually adjust your language.",
-      "c2": "Resolved issue with one-time plan having an inaccurate maximum date."
+      "c2": "Resolved issue with one-time plan having an inaccurate maximum date.",
+      "c3": "Resolve issue deleting time categories."
 
     }
   },

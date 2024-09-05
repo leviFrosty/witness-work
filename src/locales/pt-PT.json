@@ -504,7 +504,8 @@
     },
     "1330": {
       "c1": "Adicionado seletor de idioma. Veja Preferências para ajustar manualmente seu idioma.",
-      "c2": "Resolvido problema com plano único com data máxima imprecisa."
+      "c2": "Resolvido problema com plano único com data máxima imprecisa.",
+      "c3": "Resolver problema de exclusão de categorias de tempo."
     }
   },
   "installed": "Instalado",

@@ -504,7 +504,8 @@
     },
     "1330": {
       "c1": "Aggiunto selettore di lingua. Consulta Preferenze per regolare manualmente la lingua.",
-      "c2": "Risolto il problema con il piano monouso con una data massima non corretta."
+      "c2": "Risolto il problema con il piano monouso con una data massima non corretta.",
+      "c3": "Risolvi il problema relativo all'eliminazione delle categorie di tempo."
     }
   },
   "installed": "Installato",

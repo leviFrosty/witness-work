@@ -504,7 +504,8 @@
     },
     "1330": {
       "c1": "Taalselector toegevoegd. Zie Voorkeuren om uw taal handmatig aan te passen.",
-      "c2": "Probleem opgelost met eenmalig plan met een onjuiste maximumdatum."
+      "c2": "Probleem opgelost met eenmalig plan met een onjuiste maximumdatum.",
+      "c3": "Probleem met het verwijderen van tijdscategorieën opgelost."
     }
   },
   "installed": "Geïnstalleerd",

@@ -504,7 +504,8 @@
     },
     "1330": {
       "c1": "Sprachauswahl hinzugefügt. Siehe Einstellungen, um Ihre Sprache manuell anzupassen.",
-      "c2": "Problem mit einmaligem Plan mit ungenauem Höchstdatum behoben."
+      "c2": "Problem mit einmaligem Plan mit ungenauem Höchstdatum behoben.",
+      "c3": "Beheben Sie das Problem beim Löschen von Zeitkategorien."
     }
   },
   "installed": "Eingerichtet",

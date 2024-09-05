@@ -504,7 +504,8 @@
     },
     "1330": {
       "c1": "Ajout d'un sélecteur de langue. Consultez les préférences pour ajuster manuellement votre langue.",
-      "c2": "Problème résolu avec un forfait unique ayant une date maximale inexacte."
+      "c2": "Problème résolu avec un forfait unique ayant une date maximale inexacte.",
+      "c3": "Résoudre le problème de suppression des catégories de temps."
     }
   },
   "installed": "installée",

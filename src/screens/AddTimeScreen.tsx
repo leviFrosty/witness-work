@@ -222,19 +222,26 @@ const AddTimeScreen = ({ route }: AddTimeScreenProps) => {
   }
 
   const handleAddCustomTag = () => {
+    const alreadyExists = serviceReportTags.some(
+      (t) => getTagName(t) === getTagName(customTag)
+    )
+    handleSetTag(customTag)
+    if (alreadyExists) {
+      return
+    }
+
     set({
       serviceReportTags: [
         ...serviceReportTags,
         { value: customTag, credit: false },
       ],
     })
-    handleSetTag(customTag)
   }
 
   const handleDeleteCustomTag = () => {
     set({
       serviceReportTags: [...serviceReportTags].filter(
-        (t) => getTagName(t) !== tag
+        (t) => getTagName(t) !== getTagName(tag)
       ),
     })
     setTag(presetCategories[0])

@@ -501,6 +501,10 @@
       "c4": "Der Bildschirm „Zeit hinzufügen“ ermöglicht jetzt 1-Minuten-Schritte.",
       "c5": "Kinyarwanda-Sprache hinzugefügt, vollständig übersetzt von Semana D. Vielen Dank für Ihre Hilfe!",
       "c6": "Sie können jetzt auswählen, wie Ihre Zeit angezeigt wird. Wählen Sie zwischen Dezimalzahlen wie: 13,5 oder 13 Std. 30 Min. Gehen Sie zu Einstellungen > Darstellung."
+    },
+    "1330": {
+      "c1": "Sprachauswahl hinzugefügt. Siehe Einstellungen, um Ihre Sprache manuell anzupassen.",
+      "c2": "Problem mit einmaligem Plan mit ungenauem Höchstdatum behoben."
     }
   },
   "installed": "Eingerichtet",

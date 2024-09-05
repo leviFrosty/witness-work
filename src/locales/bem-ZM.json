@@ -504,7 +504,8 @@
     },
     "1330": {
       "c1": "Icakusalapo ululimi icalundwako. Moneni Ifyo mwatemwa pakuti mulungike ululimi lwenu.",
-      "c2": "Ubwafya bwapwishishiwe ne pulani ya nshita imo iyakwata ubushiku ubushalungama."
+      "c2": "Ubwafya bwapwishishiwe ne pulani ya nshita imo iyakwata ubushiku ubushalungama.",
+      "c3": "Ukupwisha ubwafya bwa kufumyapo ifiputulwa fya nshita."
     }
   },
   "installed": "Installed",

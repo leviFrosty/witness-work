@@ -31,7 +31,7 @@ export const releaseNotes: ReleaseNote[] = [
   },
   {
     version: '1.32.0',
-    date: moment('2024-8-29').toDate(),
+    date: moment('2024-08-29').toDate(),
     content: ['c1', 'c2', 'c5', 'c6'],
   },
   {

@@ -9,6 +9,7 @@ import {
 } from '../lib/locales'
 import moment from 'moment'
 import { usePreferences } from '../stores/preferences'
+import { LocaleConfig } from 'react-native-calendars'
 
 export default function useUserLocalePrefs() {
   const { locale } = usePreferences()
@@ -29,8 +30,16 @@ export default function useUserLocalePrefs() {
     setLanguageFound(languageFound)
     setIsFallback(fallback)
     setLoadedLocale(localeOrFallback)
-    _i18n.locale = localeOrFallback
+
     moment.locale(formatLocaleForMoment(localeOrFallback))
+    LocaleConfig.locales[localeOrFallback] = {
+      monthNames: moment.months(),
+      monthNamesShort: moment.monthsShort(),
+      dayNames: moment.weekdays(),
+      dayNamesShort: moment.weekdaysShort(),
+    }
+    LocaleConfig.defaultLocale = localeOrFallback
+    _i18n.locale = localeOrFallback
   }, [locale])
 
   return { loadedLocale, languageFound, isFallback }

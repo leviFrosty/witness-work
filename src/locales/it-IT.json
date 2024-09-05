@@ -501,6 +501,10 @@
       "c4": "La schermata \"Aggiungi tempo\" ora consente incrementi di 1 minuto.",
       "c5": "Aggiunta la lingua Kinyarwanda, completamente tradotta da Semana D. Grazie mille per il tuo aiuto!",
       "c6": "Ora puoi selezionare come visualizzare il tuo tempo. Scegli tra decimali come: 13.5 o scegli 13 ore e 30 minuti. Visita Preferenze > Aspetto."
+    },
+    "1330": {
+      "c1": "Aggiunto selettore di lingua. Consulta Preferenze per regolare manualmente la lingua.",
+      "c2": "Risolto il problema con il piano monouso con una data massima non corretta."
     }
   },
   "installed": "Installato",

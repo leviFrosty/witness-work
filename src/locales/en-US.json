@@ -501,6 +501,11 @@
       "c4": "'Add Time' screen now allows for increments of 1 minute.",
       "c5": "Added Kinyarwanda language, fully translated by Semana D. Thank you so much for your help!",
       "c6": "You can now select how your time is displayed. Choose between decimal like: 13.5 or choose 13 Hrs 30 Mins. Visit Preferences > Appearance."
+    },
+    "1330": {
+      "c1": "Added language selector. See Preferences to manually adjust your language.",
+      "c2": "Resolved issue with one-time plan having an inaccurate maximum date."
+
     }
   },
   "installed": "Installed",

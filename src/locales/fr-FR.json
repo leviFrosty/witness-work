@@ -501,6 +501,10 @@
       "c4": "L'écran « Ajouter du temps » permet désormais des incréments d'une minute.",
       "c5": "Ajout de la langue kinyarwanda, entièrement traduite par Semana D. Merci beaucoup pour votre aide !",
       "c6": "Vous pouvez maintenant sélectionner le mode d'affichage de votre heure. Choisissez entre un format décimal comme : 13,5 ou choisissez 13 heures 30 minutes. Accédez à Préférences > Apparence."
+    },
+    "1330": {
+      "c1": "Ajout d'un sélecteur de langue. Consultez les préférences pour ajuster manuellement votre langue.",
+      "c2": "Problème résolu avec un forfait unique ayant une date maximale inexacte."
     }
   },
   "installed": "installée",

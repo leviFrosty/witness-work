@@ -501,6 +501,10 @@
       "c4": "Màn hình 'Thêm thời gian' hiện cho phép tăng dần theo từng phút.",
       "c5": "Đã thêm ngôn ngữ Kinyarwanda, được dịch đầy đủ bởi Semana D. Cảm ơn bạn rất nhiều vì đã giúp đỡ!",
       "c6": "Bây giờ bạn có thể chọn cách hiển thị thời gian của mình. Chọn giữa số thập phân như: 13,5 hoặc chọn 13 giờ 30 phút. Truy cập Tùy chọn > Giao diện."
+    },
+    "1330": {
+      "c1": "Đã thêm trình chọn ngôn ngữ. Xem Tùy chọn để điều chỉnh ngôn ngữ của bạn theo cách thủ công.",
+      "c2": "Đã giải quyết vấn đề với gói một lần có ngày tối đa không chính xác."
     }
   },
   "installed": "Cài đặt",

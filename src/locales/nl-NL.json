@@ -501,6 +501,10 @@
       "c4": "Het scherm 'Tijd toevoegen' staat nu stappen van 1 minuut toe.",
       "c5": "Kinyarwanda taal toegevoegd, volledig vertaald door Semana D. Hartelijk dank voor uw hulp!",
       "c6": "U kunt nu selecteren hoe uw tijd wordt weergegeven. Kies tussen decimalen zoals: 13,5 of kies 13 uur 30 minuten. Ga naar Voorkeuren > Weergave."
+    },
+    "1330": {
+      "c1": "Taalselector toegevoegd. Zie Voorkeuren om uw taal handmatig aan te passen.",
+      "c2": "Probleem opgelost met eenmalig plan met een onjuiste maximumdatum."
     }
   },
   "installed": "Geïnstalleerd",

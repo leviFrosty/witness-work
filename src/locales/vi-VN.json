@@ -504,7 +504,8 @@
     },
     "1330": {
       "c1": "Đã thêm trình chọn ngôn ngữ. Xem Tùy chọn để điều chỉnh ngôn ngữ của bạn theo cách thủ công.",
-      "c2": "Đã giải quyết vấn đề với gói một lần có ngày tối đa không chính xác."
+      "c2": "Đã giải quyết vấn đề với gói một lần có ngày tối đa không chính xác.",
+      "c3": "Giải quyết sự cố xóa danh mục thời gian."
     }
   },
   "installed": "Cài đặt",

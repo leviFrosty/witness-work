@@ -174,10 +174,10 @@ const YearScreen = ({ route }: ServiceYearScreenProps) => {
         contentContainerStyle={{
           paddingBottom: 250,
           paddingHorizontal: 15,
-          gap: 10,
+          gap: 20,
         }}
       >
-        <View style={{ gap: 5, paddingVertical: 15 }}>
+        <View style={{ gap: 5, paddingVertical: 10 }}>
           {hasAnnualGoal && (
             <AnnualServiceReportSummary
               serviceYear={year - 1}
@@ -234,15 +234,17 @@ const YearScreen = ({ route }: ServiceYearScreenProps) => {
                           count: parseInt(year),
                         })}
                       </Text>
-                      <ActionButton
-                        onPress={() =>
-                          navigation.navigate('Add Time', {
-                            date: moment().year(parseInt(year)).toISOString(),
-                          })
-                        }
-                      >
-                        {i18n.t('addTime')}
-                      </ActionButton>
+                      {moment().year() >= parseInt(year) ? (
+                        <ActionButton
+                          onPress={() =>
+                            navigation.navigate('Add Time', {
+                              date: moment().year(parseInt(year)).toISOString(),
+                            })
+                          }
+                        >
+                          {i18n.t('addTime')}
+                        </ActionButton>
+                      ) : undefined}
                     </View>
                   }
                 />

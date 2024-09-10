@@ -8,6 +8,7 @@
     "ios": "expo run:ios",
     "web": "expo start --web",
     "build:ios": "eas build -p ios --profile development-simulator --local",
+    "build:ios-production": "eas build -p ios --profile production-simulator --local",
     "build:android": "eas build -p android --profile development-simulator --local",
     "translate": "node ./src/scripts/translate.js",
     "prepare": "husky",

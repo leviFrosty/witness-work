@@ -17,7 +17,7 @@
     "testFinal": "jest",
     "updateSnapshots": "jest -u --coverage=false",
     "format": "yarn prettier --write . --log-level warn --cache",
-    "lint": "yarn tsc && yarn eslint .",
+    "lint": "yarn tsc -p ./tsconfig.json && yarn eslint .",
     "doctor": "yarn expo-doctor",
     "deps": "madge --ts-config ./tsconfig.json App.tsx -c"
   },

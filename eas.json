@@ -37,11 +37,9 @@
     },
     "production-simulator": {
       "distribution": "internal",
+      "channel": "production",
       "ios": {
         "simulator": true
-      },
-      "env": {
-        "ANDROID_SDK_ROOT": "/Users/levi/Library/Android/sdk"
       },
       "node": "20.14.0"
     }

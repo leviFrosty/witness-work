@@ -18,7 +18,8 @@
     "updateSnapshots": "jest -u --coverage=false",
     "format": "yarn prettier --write . --log-level warn --cache",
     "lint": "yarn tsc && yarn eslint .",
-    "doctor": "yarn expo-doctor"
+    "doctor": "yarn expo-doctor",
+    "deps": "madge --ts-config ./tsconfig.json App.tsx -c"
   },
   "dependencies": {
     "@expo-google-fonts/inter": "^0.2.3",
@@ -73,6 +74,7 @@
     "jest-expo": "~51.0.4",
     "lodash": "^4.17.21",
     "lottie-react-native": "6.7.0",
+    "madge": "^8.0.0",
     "moment": "^2.30.1",
     "prop-types": "^15.8.1",
     "react": "18.2.0",

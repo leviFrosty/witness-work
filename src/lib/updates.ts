@@ -2,7 +2,7 @@ import { Alert, Platform } from 'react-native'
 import * as Updates from 'expo-updates'
 import i18n from './locales'
 import * as Sentry from '@sentry/react-native'
-import { RootStackParamList } from '../stacks/RootStack'
+import { RootStackParamList } from '../types/rootStack'
 
 export const fetchUpdate = async (
   handleNavigation: (destination: keyof RootStackParamList) => void

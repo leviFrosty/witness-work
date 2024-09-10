@@ -11,7 +11,6 @@ import { DateTimePickerEvent } from '@react-native-community/datetimepicker'
 import moment from 'moment'
 import { ServiceReport } from '../types/serviceReport'
 import { useNavigation } from '@react-navigation/native'
-import { RootStackNavigation, RootStackParamList } from '../stacks/RootStack'
 import i18n, { TranslationKey } from '../lib/locales'
 import DateTimePicker from '../components/DateTimePicker'
 import Wrapper from '../components/layout/Wrapper'
@@ -32,6 +31,7 @@ import { faTrash } from '@fortawesome/free-solid-svg-icons'
 import IconButton from '../components/IconButton'
 import usePublisher from '../hooks/usePublisher'
 import { getMonthsReports, getReport } from '../lib/serviceReport'
+import { RootStackNavigation, RootStackParamList } from '../types/rootStack'
 
 type AddTimeScreenProps = NativeStackScreenProps<RootStackParamList, 'Add Time'>
 

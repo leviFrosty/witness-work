@@ -1,6 +1,6 @@
 import { Alert, View } from 'react-native'
 import Text from './MyText'
-import useServiceReport, { DayPlan } from '../stores/serviceReport'
+import useServiceReport from '../stores/serviceReport'
 import { useCallback } from 'react'
 import { Swipeable } from 'react-native-gesture-handler'
 import i18n from '../lib/locales'
@@ -8,6 +8,7 @@ import useTheme from '../contexts/theme'
 import Haptics from '../lib/haptics'
 import SwipeableDelete from './swipeableActions/Delete'
 import XView from './layout/XView'
+import { DayPlan } from '../types/serviceReport'
 
 const DayPlanRow = (props: { plan: DayPlan }) => {
   const theme = useTheme()

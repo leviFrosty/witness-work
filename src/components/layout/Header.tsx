@@ -4,7 +4,6 @@ import moment from 'moment'
 import Text from '../MyText'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useNavigation } from '@react-navigation/native'
-import { RootStackNavigation } from '../../stacks/RootStack'
 import IconButton from '../IconButton'
 import {
   faBars,
@@ -12,6 +11,7 @@ import {
   faTimes,
 } from '@fortawesome/free-solid-svg-icons'
 import { IconProp } from '@fortawesome/fontawesome-svg-core'
+import { RootStackNavigation } from '../../types/rootStack'
 
 type Props = {
   backgroundColor?: string

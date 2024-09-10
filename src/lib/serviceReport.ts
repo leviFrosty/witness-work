@@ -1,12 +1,12 @@
 import _ from 'lodash'
 import { Publisher } from '../types/publisher'
 import {
+  DayPlan,
   ServiceReport,
   ServiceReportsByYears,
   ServiceYear,
 } from '../types/serviceReport'
 import moment from 'moment'
-import { DayPlan } from '../stores/serviceReport'
 import { monthCreditMaxMinutes } from '../constants/serviceReports'
 
 export const calculateProgress = ({

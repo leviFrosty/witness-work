@@ -1,5 +1,4 @@
 import { ColorSchemeName } from 'react-native'
-import { Colors, Theme, ThemeSizes } from '../types/theme'
 import * as Device from 'expo-device'
 
 export const lightModeColors = {
@@ -127,3 +126,24 @@ const getThemeFromColorScheme = (colorScheme: ColorSchemeName): Theme => {
 }
 
 export default getThemeFromColorScheme
+
+export type ThemeSizes =
+  | 'xs'
+  | 'sm'
+  | 'md'
+  | 'lg'
+  | 'xl'
+  | '2xl'
+  | '3xl'
+  | '4xl'
+
+export type Colors = typeof lightModeColors
+export type Fonts = typeof fonts
+
+export type Theme = {
+  numbers: typeof numbers
+  colors: Colors
+  /** Use with `fontFamily` to set Text font weight. */
+  fonts: Fonts
+  fontSize: (size?: ThemeSizes) => number
+}

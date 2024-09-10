@@ -3,14 +3,12 @@ import MapView, { LatLng, Marker, PROVIDER_GOOGLE } from 'react-native-maps'
 import useContacts from '../stores/contactsStore'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigation } from '@react-navigation/native'
-import { HomeTabStackNavigation } from '../stacks/HomeTabStack'
 import useTheme from '../contexts/theme'
 import useConversations from '../stores/conversationStore'
 import moment from 'moment'
 import { Dimensions, Platform, View } from 'react-native'
 import Carousel, { ICarouselInstance } from 'react-native-reanimated-carousel'
 import MapCarouselCard from '../components/MapCarouselCard'
-import { Contact } from '../types/contact'
 import * as Location from 'expo-location'
 import * as Crypto from 'expo-crypto'
 import ShareAddressSheet, {
@@ -23,14 +21,12 @@ import i18n from '../lib/locales'
 import ActionButton from '../components/ActionButton'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import Card from '../components/Card'
-import { RootStackNavigation } from '../stacks/RootStack'
 import MapOnboarding from '../components/MapOnboarding'
 import { TAB_BAR_HEIGHT } from '../components/TabBar'
 import useDevice from '../hooks/useDevice'
-
-export interface ContactMarker extends Contact {
-  pinColor: string
-}
+import { RootStackNavigation } from '../types/rootStack'
+import { HomeTabStackNavigation } from '../types/homeStack'
+import { ContactMarker } from '../types/map'
 
 interface FullMapViewProps {
   contactMarkers: ContactMarker[]

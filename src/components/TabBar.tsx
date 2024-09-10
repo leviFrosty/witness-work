@@ -18,9 +18,9 @@ import i18n, { TranslationKey } from '../lib/locales'
 import React, { useState } from 'react'
 import Button from './Button'
 import QuickActionSheet from './QuickActionSheet'
-import { RootStackNavigation } from '../stacks/RootStack'
-import { HomeTabStackNavigation } from '../stacks/HomeTabStack'
 import XView from './layout/XView'
+import { RootStackNavigation } from '../types/rootStack'
+import { HomeTabStackNavigation } from '../types/homeStack'
 
 export const TAB_BAR_HEIGHT = 50
 

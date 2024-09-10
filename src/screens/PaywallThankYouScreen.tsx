@@ -3,10 +3,10 @@ import useTheme from '../contexts/theme'
 import i18n from '../lib/locales'
 import AnimatedLottieView from 'lottie-react-native'
 import { useNavigation } from '@react-navigation/native'
-import { RootStackNavigation } from '../stacks/RootStack'
 import Wrapper from '../components/layout/Wrapper'
 import Text from '../components/MyText'
 import ActionButton from '../components/ActionButton'
+import { RootStackNavigation } from '../types/rootStack'
 
 const PaywallThankYouScreen = () => {
   const theme = useTheme()

@@ -5,9 +5,9 @@ import { DayProps } from 'react-native-calendars/src/calendar/day'
 import Text from './MyText'
 import useTheme from '../contexts/theme'
 import Button from './Button'
-import useServiceReport, { DayPlan } from '../stores/serviceReport'
+import useServiceReport from '../stores/serviceReport'
 import moment from 'moment'
-import { ServiceReport } from '../types/serviceReport'
+import { DayPlan, ServiceReport } from '../types/serviceReport'
 import { RecurringPlan, getPlansIntersectingDay } from '../lib/serviceReport'
 import Animated, {
   useAnimatedStyle,

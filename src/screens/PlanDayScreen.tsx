@@ -23,7 +23,6 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import moment from 'moment'
 import Checkbox from 'expo-checkbox'
 import { NativeStackScreenProps } from '@react-navigation/native-stack'
-import { RootStackParamList } from '../stacks/RootStack'
 import {
   RecurringPlanFrequencies,
   getPlansIntersectingDay,
@@ -33,6 +32,7 @@ import DayPlanRow from '../components/DayPlanRow'
 import Card from '../components/Card'
 import RecurringPlanRow from '../components/RecurringPlanRow'
 import TextInput from '../components/TextInput'
+import { RootStackParamList } from '../types/rootStack'
 
 const hourOptions = [...Array(24).keys()].map((value) => ({
   label: `${value}`,

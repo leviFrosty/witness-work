@@ -5,7 +5,6 @@ import Card from './Card'
 import Text from './MyText'
 import ContactRow from './ContactRow'
 import { useNavigation } from '@react-navigation/native'
-import { RootStackNavigation } from '../stacks/RootStack'
 import * as Crypto from 'expo-crypto'
 import useContacts from '../stores/contactsStore'
 import SearchBar from './SearchBar'
@@ -20,6 +19,7 @@ import Select from './Select'
 import IconButton from './IconButton'
 import { faPlus, faSort } from '@fortawesome/free-solid-svg-icons'
 import XView from './layout/XView'
+import { RootStackNavigation } from '../types/rootStack'
 
 const ReturnVisitContactsSection = () => {
   const theme = useTheme()

@@ -2,7 +2,6 @@ import { View, Platform, Alert, ScrollView, useColorScheme } from 'react-native'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import Text from '../components/MyText'
 import useTheme from '../contexts/theme'
-import { RootStackNavigation, RootStackParamList } from '../stacks/RootStack'
 import {
   NativeStackNavigationProp,
   NativeStackScreenProps,
@@ -57,6 +56,7 @@ import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps'
 import useLocation from '../hooks/useLocation'
 import { useToastController } from '@tamagui/toast'
 import XView from '../components/layout/XView'
+import { RootStackNavigation, RootStackParamList } from '../types/rootStack'
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Contact Details'>
 

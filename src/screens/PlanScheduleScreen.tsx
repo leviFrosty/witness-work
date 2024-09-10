@@ -9,7 +9,6 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import moment from 'moment'
 import { Calendar } from 'react-native-calendars'
 import { NativeStackScreenProps } from '@react-navigation/native-stack'
-import { RootStackParamList } from '../stacks/RootStack'
 import CalendarDay from '../components/CalendarDay'
 import SimpleProgressBar from '../components/SimpleProgressBar'
 import _ from 'lodash'
@@ -26,6 +25,7 @@ import Button from '../components/Button'
 import IconButton from '../components/IconButton'
 import { faArrowLeft, faArrowRight } from '@fortawesome/free-solid-svg-icons'
 import Card from '../components/Card'
+import { RootStackParamList } from '../types/rootStack'
 
 type PlanScheduleScreenProps = NativeStackScreenProps<
   RootStackParamList,

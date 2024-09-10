@@ -3,7 +3,6 @@ import Text from '../../components/MyText'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import useTheme from '../../contexts/theme'
 import { useNavigation } from '@react-navigation/native'
-import { RootStackNavigation, RootStackParamList } from '../../stacks/RootStack'
 import i18n from '../../lib/locales'
 import Constants from 'expo-constants'
 import {
@@ -18,10 +17,7 @@ import SupportSection from './sections/Support'
 import { usePreferences } from '../../stores/preferences'
 import { useState } from 'react'
 import Badge from '../../components/Badge'
-
-export type SettingsSectionProps = {
-  handleNavigate: (destination: keyof RootStackParamList) => void
-}
+import { RootStackNavigation, RootStackParamList } from '../../types/rootStack'
 
 const SettingsScreen = (props: DrawerContentComponentProps) => {
   const theme = useTheme()

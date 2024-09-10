@@ -9,7 +9,7 @@ import { parsePhoneNumber } from 'awesome-phonenumber'
 import ActionButton from '../components/ActionButton'
 import { Contact } from '../types/contact'
 import { Alert, TextInput, useColorScheme, View } from 'react-native'
-import TextInputRow, { Errors } from './inputs/TextInputRow'
+import TextInputRow from './inputs/TextInputRow'
 import { usePreferences } from '../stores/preferences'
 import useContacts from '../stores/contactsStore'
 import { useMemo, useRef, useState } from 'react'
@@ -21,6 +21,7 @@ import IconButton from './IconButton'
 import { faCaretDown, faMinus } from '@fortawesome/free-solid-svg-icons'
 import Text from './MyText'
 import XView from './layout/XView'
+import { Errors } from '../types/textInput'
 
 export default function PersonalContactSection({
   contact,

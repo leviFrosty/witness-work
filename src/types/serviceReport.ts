@@ -27,3 +27,10 @@ export type ServiceReportsByYears = {
  * @decimal 13.5
  */
 export type MinuteDisplayFormat = 'short' | 'decimal'
+
+export type DayPlan = {
+  id: string
+  date: Date
+  minutes: number
+  note?: string
+}

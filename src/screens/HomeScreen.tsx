@@ -27,7 +27,7 @@ import { usePreferences } from '../stores/preferences'
 import BackupReminder from '../components/BackupReminder'
 import { TimerSection } from '../components/TimerSection'
 import UpgradeLegacyTimeReportsSheet from '../components/UpgradeLegacyTimeReportsSheet'
-import { HomeTabStackNavigation } from '../stacks/HomeTabStack'
+import { HomeTabStackNavigation } from '../types/homeStack'
 
 export const HomeScreen = () => {
   const theme = useTheme()

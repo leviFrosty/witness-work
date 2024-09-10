@@ -1,9 +1,7 @@
 import useTheme from '../contexts/theme'
-import { HomeTabStackNavigation } from '../stacks/HomeTabStack'
 import AheadOrBehindOfMonthSchedule from './AheadOrBehindOfSchedule'
 import _ from 'lodash'
 import { useNavigation } from '@react-navigation/native'
-import { RootStackNavigation } from '../stacks/RootStack'
 import MonthServiceReportProgressBar from './MonthServiceReportProgressBar'
 import { usePreferences } from '../stores/preferences'
 import useServiceReport from '../stores/serviceReport'
@@ -22,6 +20,8 @@ import Button from './Button'
 import { View } from 'react-native'
 import Text from './MyText'
 import { formatMinutes } from '../lib/minutes'
+import { RootStackNavigation } from '../types/rootStack'
+import { HomeTabStackNavigation } from '../types/homeStack'
 
 export default function HourEntryCard() {
   const theme = useTheme()

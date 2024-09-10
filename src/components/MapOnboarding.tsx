@@ -13,7 +13,6 @@ import { usePreferences } from '../stores/preferences'
 import useContacts from '../stores/contactsStore'
 import useTheme from '../contexts/theme'
 import { useNavigation } from '@react-navigation/native'
-import { HomeTabStackNavigation } from '../stacks/HomeTabStack'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Contact } from '../types/contact'
@@ -23,6 +22,7 @@ import Text from './MyText'
 import ActionButton from './ActionButton'
 import Button from './Button'
 import Card from './Card'
+import { HomeTabStackNavigation } from '../types/homeStack'
 
 export default function MapOnboarding() {
   const { incrementGeocodeApiCallCount, set } = usePreferences()

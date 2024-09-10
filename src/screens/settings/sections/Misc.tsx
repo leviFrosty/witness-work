@@ -1,5 +1,4 @@
 import { View } from 'react-native'
-import { SettingsSectionProps } from '../SettingsScreen'
 import i18n from '../../../lib/locales'
 import Section from '../../../components/inputs/Section'
 import InputRowButton from '../../../components/inputs/InputRowButton'
@@ -14,6 +13,7 @@ import IconButton from '../../../components/IconButton'
 import links from '../../../constants/links'
 import SectionTitle from '../shared/SectionTitle'
 import { openURL } from '../../../lib/links'
+import { SettingsSectionProps } from '../settingScreen'
 
 const MiscSection = ({ handleNavigate }: SettingsSectionProps) => {
   return (

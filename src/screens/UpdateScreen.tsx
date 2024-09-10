@@ -8,9 +8,9 @@ import * as Updates from 'expo-updates'
 import * as Sentry from '@sentry/react-native'
 import ActionButton from '../components/ActionButton'
 import { useNavigation } from '@react-navigation/native'
-import { RootStackNavigation } from '../stacks/RootStack'
 import Wrapper from '../components/layout/Wrapper'
 import Button from '../components/Button'
+import { RootStackNavigation } from '../types/rootStack'
 
 const UpdateScreen = () => {
   const theme = useTheme()

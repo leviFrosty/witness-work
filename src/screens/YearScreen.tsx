@@ -16,15 +16,15 @@ import { getServiceYearReports } from '../lib/serviceReport'
 import { FlashList } from '@shopify/flash-list'
 import ActionButton from '../components/ActionButton'
 import { useNavigation } from '@react-navigation/native'
-import { RootStackNavigation } from '../stacks/RootStack'
 import { NativeStackScreenProps } from '@react-navigation/native-stack'
-import {
-  HomeTabStackNavigation,
-  HomeTabStackParamList,
-} from '../stacks/HomeTabStack'
 import XView from '../components/layout/XView'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import YearScreenMonthRow from '../components/YearScreenMonthRow'
+import { RootStackNavigation } from '../types/rootStack'
+import {
+  HomeTabStackNavigation,
+  HomeTabStackParamList,
+} from '../types/homeStack'
 
 type ServiceYearScreenProps = NativeStackScreenProps<
   HomeTabStackParamList,

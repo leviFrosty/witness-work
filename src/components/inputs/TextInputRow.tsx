@@ -9,8 +9,7 @@ import useTheme from '../../contexts/theme'
 import Text from '../MyText'
 import InputRowContainer from './InputRowContainer'
 import MyTextInput, { TextInputProps } from '../TextInput'
-
-export type Errors = Record<string, string>
+import { Errors } from '../../types/textInput'
 
 interface TextInputRowProps {
   errors?: Errors

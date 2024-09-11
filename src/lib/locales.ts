@@ -51,6 +51,9 @@ import 'moment/locale/es-us'
 import 'moment/locale/es'
 import 'moment/locale/sw'
 import 'moment/locale/uk'
+import moment from 'moment'
+import { mmkvStorage } from '../stores/mmkv'
+import { getLocales } from 'expo-localization'
 
 export const translations = {
   'en-us': enUS,
@@ -101,6 +104,17 @@ export const _i18n = new I18n(translations)
 _i18n.enableFallback = true
 export const DEFAULT_LOCALE = 'en-us'
 _i18n.defaultLocale = DEFAULT_LOCALE
+
+try {
+  const preferences = JSON.parse(mmkvStorage.getString('preferences') || '')
+  const rawLocale =
+    preferences.state.locale ?? getLocales()[0].languageTag.toLowerCase() // Guaranteed to return at least one element
+  const { locale: localeOrFallback } = handleLangFallback(rawLocale)
+  const locale = formatLocaleForMoment(localeOrFallback)
+  moment.locale(locale)
+} catch (err) {
+  // Either the mmkvStorage get is invalid, or disk is unavailable
+}
 
 export function handleLangFallback(locale: string): {
   locale: TranslatedLocale

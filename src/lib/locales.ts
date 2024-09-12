@@ -113,7 +113,7 @@ try {
   const locale = formatLocaleForMoment(localeOrFallback)
   moment.locale(locale)
 } catch (err) {
-  // Either the mmkvStorage get is invalid, or disk is unavailable
+  moment.locale(DEFAULT_LOCALE)
 }
 
 export function handleLangFallback(locale: string): {

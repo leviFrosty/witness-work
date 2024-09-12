@@ -503,8 +503,8 @@
       "c6": "Urashobora noneho guhitamo uburyo igihe cyawe cyerekanwa. Hitamo hagati ya cumi nka: 13.5 cyangwa uhitemo 13 Hrs 30 Mins. Sura Ibyifuzo & gt; Kugaragara."
     },
     "1330": {
-      "c1": "Wongeyeho abatoranya ururimi. Reba Ibyatoranijwe kugirango uhindure intoki ururimi rwawe.",
-      "c2": "Ikibazo cyakemutse hamwe na gahunda yigihe kimwe ifite itariki ntarengwa.",
+      "c1": "Hongewemo gutoranya ururimi. Reba Ibyatoranijwe kugirango uhindure ururimi.",
+      "c2": "Ikibazo cyakemutse kuri gahunda y'umusi umwe ifite itariki ntarengwa.",
       "c3": "Gukemura ikibazo cyo gusiba ibyiciro."
     }
   },
@@ -518,7 +518,7 @@
   "tag": "Tagi",
   "showOtherCategories": "Erekana ibindi byiciro",
   "of": "mu",
-  "hoursToGoal": "mu masaha y'intego",
+  "hoursToGoal": "ku masaha y'intego",
   "removeCategory": "Vanaho ikiciro",
   "noReportsThisMonthYet": "Nta raporo y'uku kwezi kugeza ubu.",
   "timeReports": "Raporo z'amasaha",

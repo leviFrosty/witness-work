@@ -800,5 +800,6 @@
   "languageFoundButIsFallbackLocale": "WitnessWork はあなたの言語をサポートしています。正確なロケール {{original}} はサポートされていないため、{{fallback}} にフォールバックしました。",
   "languageWasNotFound": "Witness Work はあなたのデバイスの言語 {{original}} をサポートしていません。デフォルトの言語にフォールバックしました。",
   "deviceDefault": "デバイスのデフォルト",
-  "language": "言語"
+  "language": "言語",
+  "enterAddress": "住所を入力"
 }

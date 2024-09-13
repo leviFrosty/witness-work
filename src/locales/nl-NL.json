@@ -800,5 +800,6 @@
   "languageFoundButIsFallbackLocale": "WitnessWork ondersteunt uw taal. Uw exacte locale, {{original}}, wordt niet ondersteund, dus is het teruggevallen op {{fallback}}.",
   "languageWasNotFound": "Witness Work ondersteunt de taal van uw apparaat, {{original}}, niet. Het is teruggevallen op de standaardtaal.",
   "deviceDefault": "Standaardapparaat",
-  "language": "Taal"
+  "language": "Taal",
+  "enterAddress": "Adres invoeren"
 }

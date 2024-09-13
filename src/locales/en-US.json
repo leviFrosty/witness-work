@@ -801,5 +801,6 @@
   "languageFoundButIsFallbackLocale": "WitnessWork supports your language. Your exact locale, {{original}}, is not supported so it has fallen back to {{fallback}}.",
   "languageWasNotFound": "Witness work doesn't support your device's language, {{original}}. It has fallen back to its' default language.",
   "deviceDefault": "Device Default",
-  "language": "Language"
+  "language": "Language",
+  "enterAddress": "Enter Address"
 }

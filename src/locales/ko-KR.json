@@ -800,5 +800,6 @@
   "languageFoundButIsFallbackLocale": "WitnessWork는 귀하의 언어를 지원합니다. 귀하의 정확한 로캘인 {{original}}은 지원되지 않으므로 {{fallback}}로 폴백되었습니다.",
   "languageWasNotFound": "Witness Work는 귀하의 기기 언어인 {{original}}을 지원하지 않습니다. 기본 언어로 폴백되었습니다.",
   "deviceDefault": "기기 기본",
-  "language": "언어"
+  "language": "언어",
+  "enterAddress": "주소를 입력하세요"
 }

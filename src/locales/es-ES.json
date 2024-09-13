@@ -800,5 +800,6 @@
   "languageFoundButIsFallbackLocale": "WitnessWork admite su idioma. Su configuración regional exacta, {{original}}, no es compatible, por lo que ha vuelto a {{fallback}}.",
   "languageWasNotFound": "Witness Work no admite el idioma de su dispositivo, {{original}}. Ha vuelto a su idioma predeterminado.",
   "deviceDefault": "Predeterminado del dispositivo",
-  "language": "Idioma"
+  "language": "Idioma",
+  "enterAddress": "Introducir dirección"
 }

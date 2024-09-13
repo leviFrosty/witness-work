@@ -800,5 +800,6 @@
   "languageFoundButIsFallbackLocale": "WitnessWork inasaidia lugha yako. Eneo lako halisi, {{original}}, halitumiki kwa hivyo limerejea kwa {{fallback}}.",
   "languageWasNotFound": "Kazi ya ushuhuda haitumii lugha ya kifaa chako, {{original}}. Imeanguka nyuma yake' lugha chaguo-msingi.",
   "deviceDefault": "Chaguomsingi ya Kifaa",
-  "language": "Lugha"
+  "language": "Lugha",
+  "enterAddress": "Weka Anwani"
 }

@@ -800,5 +800,6 @@
   "languageFoundButIsFallbackLocale": "WitnessWork prend en charge votre langue. Votre langue locale exacte, {{original}}, n'est pas prise en charge, elle est donc revenue à {{fallback}}.",
   "languageWasNotFound": "Witness Work ne prend pas en charge la langue de votre appareil, {{original}}. Il est revenu à sa langue par défaut.",
   "deviceDefault": "Paramètres par défaut de l'appareil",
-  "language": "Langue"
+  "language": "Langue",
+  "enterAddress": "Entrez l'adresse"
 }

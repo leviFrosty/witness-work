@@ -10,6 +10,8 @@ import Button from './Button'
 import Section from './inputs/Section'
 import TextInputRow from './inputs/TextInputRow'
 import PinLocation from './PinLocation'
+import AddressAutocomplete from './AddressAutocomplete'
+import { addressToString } from '../lib/address'
 
 export default function AddressSection({
   contact,
@@ -84,6 +86,22 @@ export default function AddressSection({
     setContact({ ...contact, address: clearedPrefill })
   }
 
+  const handleAddressSelect = (selectedAddress: Address) => {
+    console.log('Handling address', selectedAddress)
+    setContact((prevContact) => ({
+      ...prevContact,
+      address: selectedAddress,
+    }))
+    setLine1(selectedAddress.line1 || '')
+    setLine2(selectedAddress.line2 || '')
+    setCity(selectedAddress.city || '')
+    setState(selectedAddress.state || '')
+    setZip(selectedAddress.zip || '')
+    setCountry(selectedAddress.country || '')
+  }
+
+  console.log('Address', contact.address)
+
   return (
     <View style={{ paddingBottom: 80 }}>
       {prefill.enabled && !!keysSameAsPrefill().length && !hasCleared && (
@@ -114,6 +132,10 @@ export default function AddressSection({
         </XView>
       )}
       <Section>
+        <AddressAutocomplete
+          onSelect={handleAddressSelect}
+          initialValue={addressToString(contact.address)}
+        />
         <TextInputRow
           label={i18n.t('addressLine1')}
           ref={line1Input}

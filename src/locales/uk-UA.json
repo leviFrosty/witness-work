@@ -800,5 +800,6 @@
   "languageFoundButIsFallbackLocale": "WitnessWork підтримує вашу мову. Ваша точна мова, {{original}}, не підтримується, тому вона повернулася до {{fallback}}.",
   "languageWasNotFound": "Робота зі свідками не підтримує мову вашого пристрою, {{original}}. Він повернувся до свого' мова за замовчуванням.",
   "deviceDefault": "Пристрій за замовчуванням",
-  "language": "Мова"
+  "language": "Мова",
+  "enterAddress": "Введіть адресу"
 }

@@ -800,5 +800,6 @@
   "languageFoundButIsFallbackLocale": "Umulimo wa bumboni ulatungilila ululimi lwenu. Icifulo cenu ica cine cine, {{original}}, tacisuminishiwe kanshi cabwelele kuli {{fallback}}.",
   "languageWasNotFound": "Umulimo wa Nte tausuminisha ululimi lwa cibombelo cenu, {{original}}. Cabwelele ku numa ku ca iko' ululimi lwa lyonse.",
   "deviceDefault": "Icibombelo icabako",
-  "language": "Ululimi"
+  "language": "Ululimi",
+  "enterAddress": "Ingisha akeyala"
 }

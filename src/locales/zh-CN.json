@@ -800,5 +800,6 @@
   "languageFoundButIsFallbackLocale": "WitnessWork 支持您的语言。您的确切语言环境 {{original}} 不受支持，因此已恢复为 {{fallback}}。",
   "languageWasNotFound": "Witness work 不支持您设备的语言 {{original}}。它已恢复为默认语言。",
   "deviceDefault": "设备默认",
-  "language": "语言"
+  "language": "语言",
+  "enterAddress": "输入地址"
 }

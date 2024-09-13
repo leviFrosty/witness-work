@@ -59,7 +59,7 @@ export const fetchCoordinateFromAddress = async (
 
     incrementGeocodeApiCallCount()
     const { data } = await axios.get<HereGeocodeResponse>(
-      `${apis.hereGeocode}?apiKey=${hereApiKey}&q=${addressString}`,
+      `${apis.hereAutocomplete}?apiKey=${hereApiKey}&q=${addressString}&limit=1`,
       {
         signal: abortController?.signal,
       }
@@ -69,8 +69,7 @@ export const fetchCoordinateFromAddress = async (
       return null
     }
 
-    const position = data.items[0]?.position ? data.items[0].position : null
-
+    const position = data.items[0]?.position
     if (!position) {
       return null
     }

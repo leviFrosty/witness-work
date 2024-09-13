@@ -800,5 +800,6 @@
   "languageFoundButIsFallbackLocale": "WitnessWork ishyigikira ururimi rwawe. Ahantu nyako, {{original}}, ntabwo ashyigikiwe kuburyo yaguye kuri {{fallback}}.",
   "languageWasNotFound": "Igikorwa cyabatangabuhamya ntigishyigikira igikoresho cyawe & {apos; ururimi, {{original}}. Yagarutse kuri & apos; ururimi rusanzwe.",
   "deviceDefault": "Igikoresho gisanzwe",
-  "language": "Ururimi"
+  "language": "Ururimi",
+  "enterAddress": "Injira Aderesi"
 }

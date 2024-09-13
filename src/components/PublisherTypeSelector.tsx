@@ -7,6 +7,7 @@ import { publishers } from '../constants/publisher'
 import Select, { SelectData } from './Select'
 import TextInput from './TextInput'
 import { Publisher } from '../types/publisher'
+import { useState } from 'react'
 
 const PublisherTypeSelector = () => {
   const theme = useTheme()
@@ -38,6 +39,7 @@ const PublisherTypeSelector = () => {
   ]
 
   const { publisherHours, publisher, setPublisher, set } = usePreferences()
+  const [goalHours, setGoalHours] = useState(publisherHours.custom.toString())
 
   return (
     <View>
@@ -69,18 +71,21 @@ const PublisherTypeSelector = () => {
               paddingHorizontal: 10,
               color: theme.colors.text,
             }}
-            maxLength={3}
+            maxLength={5}
             placeholder={publisherHours.custom.toString()}
-            onChangeText={(val: string) =>
-              set({
-                publisherHours: {
-                  ...publisherHours,
-                  custom: val ? parseInt(val) : 0,
-                },
-              })
-            }
-            value={publisherHours.custom.toString()}
-            keyboardType='number-pad'
+            onChangeText={(val: string) => setGoalHours(val)}
+            onBlur={() => {
+              if (goalHours) {
+                set({
+                  publisherHours: {
+                    ...publisherHours,
+                    custom: parseFloat(goalHours) ?? 0,
+                  },
+                })
+              }
+            }}
+            value={goalHours.toString()}
+            keyboardType='decimal-pad'
           />
         </View>
       ) : (

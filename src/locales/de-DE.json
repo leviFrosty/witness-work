@@ -506,6 +506,10 @@
       "c1": "Sprachauswahl hinzugefügt. Siehe Einstellungen, um Ihre Sprache manuell anzupassen.",
       "c2": "Problem mit einmaligem Plan mit ungenauem Höchstdatum behoben.",
       "c3": "Beheben Sie das Problem beim Löschen von Zeitkategorien."
+    },
+    "1340": {
+      "c1": "Eine besondere Belohnung wurde hinzugefügt, wenn Sie Ihr Zeitfeld abhaken oder Zeit hinzufügen!",
+      "c2": "Sie können jetzt beim Publisher-Typ „benutzerdefiniert“ einen Dezimalwert für Stundenziele festlegen."
     }
   },
   "installed": "Eingerichtet",

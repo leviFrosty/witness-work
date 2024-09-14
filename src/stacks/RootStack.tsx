@@ -66,7 +66,6 @@ const RootStackComponent = () => {
       <RootStack.Screen
         name='Add Time'
         options={{
-          presentation: 'modal',
           header: () => (
             <Header noInsets buttonType='back' title={i18n.t('addTime')} />
           ),

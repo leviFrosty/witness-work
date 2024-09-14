@@ -10,13 +10,15 @@ import confetti from '../assets/lottie/confetti.json'
 
 interface Props {}
 
+export const CONFETTI_ANIMATE_DURATION = 3000
+
 const AnimationViewProvider: React.FC<PropsWithChildren<Props>> = ({
   children,
 }) => {
   const lottieViewRef = useRef<LottieView>(null)
 
   const playConfetti = useCallback(() => {
-    lottieViewRef.current?.play()
+    lottieViewRef.current?.play(100, 1000)
     Haptics.success()
   }, [])
 
@@ -31,7 +33,7 @@ const AnimationViewProvider: React.FC<PropsWithChildren<Props>> = ({
         <LottieView
           autoPlay={false}
           loop={false}
-          speed={1.25}
+          duration={4000}
           onAnimationFinish={lottieViewRef.current?.reset}
           resizeMode='cover'
           ref={lottieViewRef}

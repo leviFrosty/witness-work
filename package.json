@@ -46,6 +46,7 @@
     "dotenv": "^16.4.5",
     "expo": "~51.0.31",
     "expo-application": "~5.9.1",
+    "expo-av": "~14.0.7",
     "expo-blur": "~13.0.2",
     "expo-checkbox": "~3.0.0",
     "expo-clipboard": "~6.0.3",

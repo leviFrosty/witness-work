@@ -34,6 +34,7 @@ import { getMonthsReports, getReport } from '../lib/serviceReport'
 import useAnimation from '../hooks/useAnimation'
 import { RootStackNavigation, RootStackParamList } from '../types/rootStack'
 import Haptics from '../lib/haptics'
+import { CONFETTI_DELAY_MS } from '../providers/AnimationViewProvider'
 
 type AddTimeScreenProps = NativeStackScreenProps<RootStackParamList, 'Add Time'>
 
@@ -293,7 +294,7 @@ const AddTimeScreen = ({ route }: AddTimeScreenProps) => {
     Haptics.heavy()
     setTimeout(() => {
       Haptics.success()
-    }, 350)
+    }, CONFETTI_DELAY_MS + 100)
     addServiceReport(serviceReport)
     toast.show(i18n.t('success'), {
       message: i18n.t('timeAdded'),

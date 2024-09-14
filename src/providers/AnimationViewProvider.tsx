@@ -18,7 +18,8 @@ import chime from '../assets/audio/success-chime.mp3'
 
 interface Props {}
 
-export const CONFETTI_ANIMATE_DURATION = 3000
+export const CONFETTI_DURATION = 3000
+export const CONFETTI_DELAY_MS = 150
 
 const AnimationViewProvider: React.FC<PropsWithChildren<Props>> = ({
   children,
@@ -45,7 +46,7 @@ const AnimationViewProvider: React.FC<PropsWithChildren<Props>> = ({
     setTimeout(() => {
       playSound()
       lottieViewRef.current?.play(100, 180)
-    }, 200)
+    }, CONFETTI_DELAY_MS)
   }, [])
 
   const ctx: AnimationViewCtx = {

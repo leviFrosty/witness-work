@@ -12,6 +12,9 @@ import { View } from 'react-native'
 import { useMemo, useState } from 'react'
 import moment from 'moment'
 import IconButton from './IconButton'
+import Haptics from '../lib/haptics'
+import useAnimation from '../hooks/useAnimation'
+import { CONFETTI_DELAY_MS } from '../providers/AnimationViewProvider'
 
 const CheckMarkAnimationComponent = ({
   undoReport,
@@ -62,6 +65,8 @@ export default function PublisherCheckBoxCard() {
   const theme = useTheme()
   const [undoReport, setUndoReport] = useState<ServiceReportType>()
   const { serviceReports, addServiceReport } = useServiceReport()
+
+  const { playConfetti } = useAnimation()
   const monthReports = useMemo(
     () => getMonthsReports(serviceReports, moment().month(), moment().year()),
     [serviceReports]
@@ -78,6 +83,11 @@ export default function PublisherCheckBoxCard() {
     }
     addServiceReport(report)
     setUndoReport(report)
+    Haptics.heavy()
+    setTimeout(() => {
+      Haptics.success()
+    }, CONFETTI_DELAY_MS + 100)
+    playConfetti()
   }
 
   return (

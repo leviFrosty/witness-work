@@ -506,6 +506,10 @@
       "c1": "Ajout d'un sélecteur de langue. Consultez les préférences pour ajuster manuellement votre langue.",
       "c2": "Problème résolu avec un forfait unique ayant une date maximale inexacte.",
       "c3": "Résoudre le problème de suppression des catégories de temps."
+    },
+    "1340": {
+      "c1": "Ajout d'une récompense spéciale lorsque vous cochez votre case de temps ou ajoutez du temps !",
+      "c2": "Vous pouvez désormais définir une valeur décimale pour les objectifs horaires sur le type d'éditeur « personnalisé »."
     }
   },
   "installed": "installée",

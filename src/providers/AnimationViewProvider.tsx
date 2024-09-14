@@ -1,12 +1,20 @@
 import LottieView from 'lottie-react-native'
-import { PropsWithChildren, useCallback, useRef } from 'react'
+import {
+  PropsWithChildren,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from 'react'
 import { View } from 'react-native'
 import {
   AnimationViewContext,
   AnimationViewCtx,
 } from '../contexts/AnimationView'
-import Haptics from '../lib/haptics'
 import confetti from '../assets/lottie/confetti.json'
+import { Audio } from 'expo-av'
+// @ts-expect-error MP3 doesn't export module
+import chime from '../assets/audio/success-chime.mp3'
 
 interface Props {}
 
@@ -16,10 +24,28 @@ const AnimationViewProvider: React.FC<PropsWithChildren<Props>> = ({
   children,
 }) => {
   const lottieViewRef = useRef<LottieView>(null)
+  const [sound, setSound] = useState<Audio.Sound>()
+
+  async function playSound() {
+    const { sound } = await Audio.Sound.createAsync(chime)
+    setSound(sound)
+    await sound.playAsync()
+  }
+
+  useEffect(() => {
+    return sound
+      ? () => {
+          sound.unloadAsync()
+        }
+      : undefined
+  }, [sound])
 
   const playConfetti = useCallback(() => {
-    lottieViewRef.current?.play(100, 1000)
-    Haptics.success()
+    lottieViewRef.current?.reset()
+    setTimeout(() => {
+      playSound()
+      lottieViewRef.current?.play(100, 180)
+    }, 200)
   }, [])
 
   const ctx: AnimationViewCtx = {
@@ -33,7 +59,6 @@ const AnimationViewProvider: React.FC<PropsWithChildren<Props>> = ({
         <LottieView
           autoPlay={false}
           loop={false}
-          duration={4000}
           onAnimationFinish={lottieViewRef.current?.reset}
           resizeMode='cover'
           ref={lottieViewRef}

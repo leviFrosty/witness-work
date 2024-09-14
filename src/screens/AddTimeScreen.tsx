@@ -33,6 +33,7 @@ import usePublisher from '../hooks/usePublisher'
 import { getMonthsReports, getReport } from '../lib/serviceReport'
 import useAnimation from '../hooks/useAnimation'
 import { RootStackNavigation, RootStackParamList } from '../types/rootStack'
+import Haptics from '../lib/haptics'
 
 type AddTimeScreenProps = NativeStackScreenProps<RootStackParamList, 'Add Time'>
 
@@ -289,6 +290,10 @@ const AddTimeScreen = ({ route }: AddTimeScreenProps) => {
 
   const submit = () => {
     playConfetti()
+    Haptics.heavy()
+    setTimeout(() => {
+      Haptics.success()
+    }, 350)
     addServiceReport(serviceReport)
     toast.show(i18n.t('success'), {
       message: i18n.t('timeAdded'),

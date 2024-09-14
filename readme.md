@@ -13,7 +13,6 @@ It is written in Typescript using React Native and Expo.
 
 ## View it live
 
-Test
 [![App Store](https://img.shields.io/badge/App_Store-0D96F6?style=for-the-badge&logo=app-store&logoColor=white)](https://apps.apple.com/us/app/jw-time/id6469723047)
 [![Play Store](https://img.shields.io/badge/Google_Play-414141?style=for-the-badge&logo=google-play&logoColor=white)](https://play.google.com/store/apps/details?id=com.leviwilkerson.witnesswork)
 
@@ -28,7 +27,7 @@ Test
 
 # Build
 
-Building Android & iOS is similar, for this example we will build an iOS simulator.
+The build process for iOS and Android is similar. Ensure you have all dependencies installed.
 
 ### iOS
 
@@ -50,7 +49,7 @@ Build dependencies: [XCode](https://docs.expo.dev/workflow/ios-simulator/#instal
 
 ### Android
 
-Build dependencies: [Android Studio](https://developer.android.com/studio), [JDK](https://openjdk.org/), [Yarn](https://classic.yarnpkg.com/lang/en/docs/install/#mac-stable), and [EAS cli](https://docs.expo.dev/eas-update/getting-started/), [Watchman](https://facebook.github.io/watchman/docs/install#macos), [Fastlane](https://docs.fastlane.tools/)
+Build dependencies: [Android Studio](https://developer.android.com/studio), [JDK](https://openjdk.org/), [Yarn](https://classic.yarnpkg.com/lang/en/docs/install/#mac-stable), [EAS cli](https://docs.expo.dev/eas-update/getting-started/), [Watchman](https://facebook.github.io/watchman/docs/install#macos), and [Fastlane](https://docs.fastlane.tools/)
 
 1. Clone repository
 
@@ -70,13 +69,13 @@ Learn about the [file and project structure](./src/docs/project-structure.md).
 
 # Help Translate 🌐
 
-WitnessWork is available in 13 languages. Some of these translations are done by AI, which may not be of the highest quality. To help, proofread these translations on [Crowdin](https://crowdin.com/project/jw-time/). Thank you!
+WitnessWork is available in 16 languages. Some of these translations are done by AI, which may not be of the highest quality. To help, proofread these translations on [Crowdin](https://crowdin.com/project/jw-time/). Thank you!
 
 [Not sure how to use Crowdin?](https://support.crowdin.com/crowdin-intro/)
 
 # License
 
-WitnessWork © 2024 by Levi Wilkerson is licensed under [Attribution-NonCommercial 4.0 International](./LICENSE)
+WitnessWork © 2023-2024 by Levi Wilkerson is licensed under [Attribution-NonCommercial 4.0 International](./LICENSE)
 
 # Sponsor
 

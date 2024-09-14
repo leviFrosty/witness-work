@@ -14,7 +14,7 @@ import IconButton from '../../../components/IconButton'
 import SectionTitle from '../shared/SectionTitle'
 import { openURL } from '../../../lib/links'
 import { useNavigation } from '@react-navigation/native'
-import { RootStackNavigation } from '../../../stacks/RootStack'
+import { RootStackNavigation } from '../../../types/rootStack'
 
 const SupportSection = () => {
   const navigation = useNavigation<RootStackNavigation>()

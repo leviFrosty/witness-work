@@ -10,8 +10,8 @@ import {
 } from '@fortawesome/free-solid-svg-icons'
 import IconButton from '../../../components/IconButton'
 import { fetchUpdate } from '../../../lib/updates'
-import { SettingsSectionProps } from '../SettingsScreen'
 import SectionTitle from '../shared/SectionTitle'
+import { SettingsSectionProps } from '../settingScreen'
 
 const AppSection = ({ handleNavigate }: SettingsSectionProps) => {
   return (

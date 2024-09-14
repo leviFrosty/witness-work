@@ -501,6 +501,11 @@
       "c4": "L'écran « Ajouter du temps » permet désormais des incréments d'une minute.",
       "c5": "Ajout de la langue kinyarwanda, entièrement traduite par Semana D. Merci beaucoup pour votre aide !",
       "c6": "Vous pouvez maintenant sélectionner le mode d'affichage de votre heure. Choisissez entre un format décimal comme : 13,5 ou choisissez 13 heures 30 minutes. Accédez à Préférences > Apparence."
+    },
+    "1330": {
+      "c1": "Ajout d'un sélecteur de langue. Consultez les préférences pour ajuster manuellement votre langue.",
+      "c2": "Problème résolu avec un forfait unique ayant une date maximale inexacte.",
+      "c3": "Résoudre le problème de suppression des catégories de temps."
     }
   },
   "installed": "installée",
@@ -789,5 +794,11 @@
   "decimalExample": "15.5",
   "longExample": "15 Hours 30 Minutes",
   "shortExample": "15 Hrs 30 Mins",
-  "timeDisplayFormat": "Format d'affichage de l'heure"
+  "timeDisplayFormat": "Format d'affichage de l'heure",
+  "tapDayToSchedule": "Appuyez sur le jour pour créer un plan",
+  "tapDayToSchedule_description": "Commencez à créer ou à modifier un plan ponctuel ou récurrent en sélectionnant une date ci-dessous.",
+  "languageFoundButIsFallbackLocale": "WitnessWork prend en charge votre langue. Votre langue locale exacte, {{original}}, n'est pas prise en charge, elle est donc revenue à {{fallback}}.",
+  "languageWasNotFound": "Witness Work ne prend pas en charge la langue de votre appareil, {{original}}. Il est revenu à sa langue par défaut.",
+  "deviceDefault": "Paramètres par défaut de l'appareil",
+  "language": "Langue"
 }

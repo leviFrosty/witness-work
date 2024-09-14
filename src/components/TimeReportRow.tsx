@@ -14,9 +14,9 @@ import { useCallback } from 'react'
 import XView from './layout/XView'
 import Button from './Button'
 import { useNavigation } from '@react-navigation/native'
-import { RootStackNavigation } from '../stacks/RootStack'
 import { useToastController } from '@tamagui/toast'
 import CreditBadge from './CreditBadge'
+import { RootStackNavigation } from '../types/rootStack'
 
 interface TimeReportRowProps {
   report: ServiceReport

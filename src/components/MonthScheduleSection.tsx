@@ -4,7 +4,6 @@ import AheadOrBehindOfMonthSchedule from './AheadOrBehindOfSchedule'
 import Text from './MyText'
 import Button from './Button'
 import { useNavigation } from '@react-navigation/native'
-import { RootStackNavigation } from '../stacks/RootStack'
 import { useMemo } from 'react'
 import moment from 'moment'
 import useServiceReport from '../stores/serviceReport'
@@ -18,6 +17,7 @@ import XView from './layout/XView'
 import { View } from 'react-native'
 import _ from 'lodash'
 import { useFormattedMinutes } from '../lib/minutes'
+import { RootStackNavigation } from '../types/rootStack'
 
 type MonthScheduleSectionProps = {
   month: number

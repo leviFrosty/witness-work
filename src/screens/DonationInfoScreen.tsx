@@ -16,7 +16,6 @@ import Purchases from 'react-native-purchases'
 import React, { useCallback } from 'react'
 import Accordion from '../components/Accordion'
 import { useNavigation } from '@react-navigation/native'
-import { RootStackNavigation } from '../stacks/RootStack'
 import Copyeable from '../components/Copyeable'
 import { email } from '../constants/contactInformation'
 import { openURL } from '../lib/links'
@@ -25,6 +24,7 @@ import ShareAppButton from '../components/ShareAppButton'
 import Divider from '../components/Divider'
 import PreviousDonations from '../components/PreviousDonations'
 import useCustomer from '../hooks/useCustomer'
+import { RootStackNavigation } from '../types/rootStack'
 
 const DonationInfoScreen = () => {
   const theme = useTheme()

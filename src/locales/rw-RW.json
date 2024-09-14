@@ -501,6 +501,11 @@
       "c4": "'Add Time' screen now allows for increments of 1 minute.",
       "c5": "Wongeyeho ururimi rwa Kinyarwanda, rwahinduwe byuzuye na Semana D. Urakoze cyane kubufasha bwawe!",
       "c6": "Urashobora noneho guhitamo uburyo igihe cyawe cyerekanwa. Hitamo hagati ya cumi nka: 13.5 cyangwa uhitemo 13 Hrs 30 Mins. Sura Ibyifuzo & gt; Kugaragara."
+    },
+    "1330": {
+      "c1": "Wongeyeho abatoranya ururimi. Reba Ibyatoranijwe kugirango uhindure intoki ururimi rwawe.",
+      "c2": "Ikibazo cyakemutse hamwe na gahunda yigihe kimwe ifite itariki ntarengwa.",
+      "c3": "Gukemura ikibazo cyo gusiba ibyiciro."
     }
   },
   "installed": "Yagiye mu gikoresho cyawe",
@@ -789,5 +794,11 @@
   "decimalExample": "15.5",
   "longExample": "Amasaha 15 Iminota 30",
   "shortExample": "15 Isaha 30 Imin",
-  "timeDisplayFormat": "Imiterere Yigihe"
+  "timeDisplayFormat": "Imiterere Yigihe",
+  "tapDayToSchedule": "Kanda umunsi wo gukora gahunda",
+  "tapDayToSchedule_description": "Tangira kurema cyangwa guhindura gahunda imwe cyangwa gusubiramo gahunda uhitamo itariki hepfo.",
+  "languageFoundButIsFallbackLocale": "WitnessWork ishyigikira ururimi rwawe. Ahantu nyako, {{original}}, ntabwo ashyigikiwe kuburyo yaguye kuri {{fallback}}.",
+  "languageWasNotFound": "Igikorwa cyabatangabuhamya ntigishyigikira igikoresho cyawe & {apos; ururimi, {{original}}. Yagarutse kuri & apos; ururimi rusanzwe.",
+  "deviceDefault": "Igikoresho gisanzwe",
+  "language": "Ururimi"
 }

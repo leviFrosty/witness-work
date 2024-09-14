@@ -30,7 +30,7 @@ import useServiceReport from '../stores/serviceReport'
 import { useNavigation } from '@react-navigation/native'
 import links from '../constants/links'
 import { openURL } from '../lib/links'
-import { HomeTabStackNavigation } from '../stacks/HomeTabStack'
+import { HomeTabStackNavigation } from '../types/homeStack'
 
 export type ExportTimeSheetState = {
   open: boolean

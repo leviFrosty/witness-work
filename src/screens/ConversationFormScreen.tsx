@@ -5,7 +5,6 @@ import * as Notifications from 'expo-notifications'
 import * as Crypto from 'expo-crypto'
 import { NativeStackScreenProps } from '@react-navigation/native-stack'
 import * as Sentry from '@sentry/react-native'
-import { RootStackParamList } from '../stacks/RootStack'
 import useContacts from '../stores/contactsStore'
 import { useEffect, useState } from 'react'
 import Header from '../components/layout/Header'
@@ -40,6 +39,7 @@ import { usePreferences } from '../stores/preferences'
 import { maybeRequestStoreReview } from '../lib/storeReview'
 import useNotifications from '../hooks/notifications'
 import { useToastController } from '@tamagui/toast'
+import { RootStackParamList } from '../types/rootStack'
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Conversation Form'>
 type MomentOffset = {

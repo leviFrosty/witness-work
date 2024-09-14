@@ -8,7 +8,7 @@ import XView from './layout/XView'
 import IconButton from './IconButton'
 import { faTimes, faWarning } from '@fortawesome/free-solid-svg-icons'
 import { useNavigation } from '@react-navigation/native'
-import { RootStackNavigation } from '../stacks/RootStack'
+import { RootStackNavigation } from '../types/rootStack'
 
 const BackupReminder = () => {
   const theme = useTheme()

@@ -30,3 +30,6 @@ jobs:
 
       - name: Lint
         run: yarn run lint
+
+      - name: Check for circular dependencies
+        run: yarn run deps

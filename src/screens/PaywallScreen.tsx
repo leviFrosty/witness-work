@@ -19,7 +19,7 @@ import ActionButton from '../components/ActionButton'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import useCustomer from '../hooks/useCustomer'
 import { useNavigation } from '@react-navigation/native'
-import { RootStackNavigation } from '../stacks/RootStack'
+import { RootStackNavigation } from '../types/rootStack'
 
 interface OfferButtonProps {
   offering: PurchasesOffering

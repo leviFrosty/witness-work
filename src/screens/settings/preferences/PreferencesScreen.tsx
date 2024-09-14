@@ -14,9 +14,10 @@ import {
 } from '@fortawesome/free-solid-svg-icons'
 import i18n from '../../../lib/locales'
 import { useNavigation } from '@react-navigation/native'
-import { RootStackNavigation } from '../../../stacks/RootStack'
 import IconButton from '../../../components/IconButton'
 import { View } from 'react-native'
+import LanguageSelector from '../sections/LanguageSelector'
+import { RootStackNavigation } from '../../../types/rootStack'
 
 const PreferencesScreen = () => {
   const navigation = useNavigation<RootStackNavigation>()
@@ -26,6 +27,9 @@ const PreferencesScreen = () => {
       <KeyboardAwareScrollView
         contentContainerStyle={{ gap: 30, paddingTop: 30, paddingBottom: 30 }}
       >
+        <Section>
+          <LanguageSelector />
+        </Section>
         <View style={{ gap: 5 }}>
           <Section>
             <InputRowButton

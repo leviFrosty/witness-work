@@ -501,6 +501,11 @@
       "c4": "Het scherm 'Tijd toevoegen' staat nu stappen van 1 minuut toe.",
       "c5": "Kinyarwanda taal toegevoegd, volledig vertaald door Semana D. Hartelijk dank voor uw hulp!",
       "c6": "U kunt nu selecteren hoe uw tijd wordt weergegeven. Kies tussen decimalen zoals: 13,5 of kies 13 uur 30 minuten. Ga naar Voorkeuren > Weergave."
+    },
+    "1330": {
+      "c1": "Taalselector toegevoegd. Zie Voorkeuren om uw taal handmatig aan te passen.",
+      "c2": "Probleem opgelost met eenmalig plan met een onjuiste maximumdatum.",
+      "c3": "Probleem met het verwijderen van tijdscategorieën opgelost."
     }
   },
   "installed": "Geïnstalleerd",
@@ -789,5 +794,11 @@
   "decimalExample": "15.5",
   "longExample": "15 Uren 30 Minuten",
   "shortExample": "15 Uren 30 Min",
-  "timeDisplayFormat": "Tijdweergaveformaat"
+  "timeDisplayFormat": "Tijdweergaveformaat",
+  "tapDayToSchedule": "Tik op Dag om Plan te Maken",
+  "tapDayToSchedule_description": "Begin met het maken of wijzigen van een eenmalig of terugkerend plan door hieronder een datum te selecteren.",
+  "languageFoundButIsFallbackLocale": "WitnessWork ondersteunt uw taal. Uw exacte locale, {{original}}, wordt niet ondersteund, dus is het teruggevallen op {{fallback}}.",
+  "languageWasNotFound": "Witness Work ondersteunt de taal van uw apparaat, {{original}}, niet. Het is teruggevallen op de standaardtaal.",
+  "deviceDefault": "Standaardapparaat",
+  "language": "Taal"
 }

@@ -21,10 +21,10 @@ import { usePreferences } from '../stores/preferences'
 import Card from './Card'
 import ActionButton from './ActionButton'
 import { useNavigation } from '@react-navigation/native'
-import { RootStackNavigation } from '../stacks/RootStack'
 import _ from 'lodash'
 import moment from 'moment'
 import { useFormattedMinutes } from '../lib/minutes'
+import { RootStackNavigation } from '../types/rootStack'
 
 interface MonthSummaryProps {
   monthsReports: ServiceReport[] | null

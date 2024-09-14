@@ -5,7 +5,6 @@ import moment from 'moment'
 import useTheme from '../contexts/theme'
 import useConversations from '../stores/conversationStore'
 import i18n from '../lib/locales'
-import { RootStackNavigation } from '../stacks/RootStack'
 import { useNavigation } from '@react-navigation/native'
 import { Swipeable } from 'react-native-gesture-handler'
 import Badge from './Badge'
@@ -21,6 +20,7 @@ import {
 } from '@fortawesome/free-solid-svg-icons'
 import Copyeable from './Copyeable'
 import Button from './Button'
+import { RootStackNavigation } from '../types/rootStack'
 
 const ConversationRow = ({
   conversation,

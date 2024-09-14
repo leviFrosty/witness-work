@@ -501,6 +501,11 @@
       "c4": "Màn hình 'Thêm thời gian' hiện cho phép tăng dần theo từng phút.",
       "c5": "Đã thêm ngôn ngữ Kinyarwanda, được dịch đầy đủ bởi Semana D. Cảm ơn bạn rất nhiều vì đã giúp đỡ!",
       "c6": "Bây giờ bạn có thể chọn cách hiển thị thời gian của mình. Chọn giữa số thập phân như: 13,5 hoặc chọn 13 giờ 30 phút. Truy cập Tùy chọn > Giao diện."
+    },
+    "1330": {
+      "c1": "Đã thêm trình chọn ngôn ngữ. Xem Tùy chọn để điều chỉnh ngôn ngữ của bạn theo cách thủ công.",
+      "c2": "Đã giải quyết vấn đề với gói một lần có ngày tối đa không chính xác.",
+      "c3": "Giải quyết sự cố xóa danh mục thời gian."
     }
   },
   "installed": "Cài đặt",
@@ -789,5 +794,11 @@
   "decimalExample": "15.5",
   "longExample": "15 Giờ 30 Phút",
   "shortExample": "15 Giờ 30 Phút",
-  "timeDisplayFormat": "Định dạng Hiển thị Thời gian"
+  "timeDisplayFormat": "Định dạng Hiển thị Thời gian",
+  "tapDayToSchedule": "Nhấn vào Ngày để tạo Kế hoạch",
+  "tapDayToSchedule_description": "Bắt đầu tạo hoặc sửa đổi kế hoạch một lần hoặc định kỳ bằng cách chọn ngày bên dưới.",
+  "languageFoundButIsFallbackLocale": "WitnessWork hỗ trợ ngôn ngữ của bạn. Ngôn ngữ chính xác của bạn, {{original}}, không được hỗ trợ nên nó đã trở lại {{fallback}}.",
+  "languageWasNotFound": "Witness Work không hỗ trợ ngôn ngữ của thiết bị của bạn, {{original}}. Nó đã trở lại ngôn ngữ mặc định của thiết bị.",
+  "deviceDefault": "Mặc định của thiết bị",
+  "language": "Ngôn ngữ"
 }

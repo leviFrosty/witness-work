@@ -501,6 +501,11 @@
       "c4": "‘添加時間’螢幕現在允許增量為 1 分鐘。",
       "c5": "添加了盧安達語，由 Semana D 完全翻譯。",
       "c6": "現在您可以選擇時間的顯示方式。在小數之間選擇，如：13.5 或選擇 13 小時 30 分鐘。訪問首選項>外貌。"
+    },
+    "1330": {
+      "c1": "新增了語言選擇器。請參閱首選項來手動調整您的語言。",
+      "c2": "解決了一次性計劃的最長日期不準確的問題。",
+      "c3": "解決刪除時間類別的問題。"
     }
   },
   "installed": "已安装",
@@ -789,5 +794,11 @@
   "decimalExample": "15.5",
   "longExample": "15小時30分鐘",
   "shortExample": "15 小時 30 分鐘",
-  "timeDisplayFormat": "時間顯示格式"
+  "timeDisplayFormat": "時間顯示格式",
+  "tapDayToSchedule": "點擊日期建立計劃",
+  "tapDayToSchedule_description": "透過選擇下面的日期開始建立或修改一次性或定期計劃。",
+  "languageFoundButIsFallbackLocale": "WitnessWork 支援您的語言。您的確切區域設定 {{original}} 不受支持，因此已回退到 {{fallback}}。",
+  "languageWasNotFound": "見證工作不支援您裝置的語言 {{original}}。它已經回到了原來的狀態。預設語言。",
+  "deviceDefault": "設備預設值",
+  "language": "語言"
 }

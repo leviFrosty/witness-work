@@ -501,6 +501,11 @@
       "c4": "‘添加时间’屏幕现在允许以 1 分钟为增量。",
       "c5": "添加了 Kinyarwanda 语言，由 Semana D 完整翻译。非常感谢您的帮助！",
       "c6": "您现在可以选择时间的显示方式。选择小数形式，例如：13.5，或选择 13 小时 30 分钟。访问首选项 > 外观。"
+    },
+    "1330": {
+      "c1": "添加了语言选择器。请参阅“首选项”以手动调整语言。",
+      "c2": "解决了一次性计划的最大日期不准确的问题。",
+      "c3": "解决删除时间类别的问题。"
     }
   },
   "installed": "已安装",
@@ -789,5 +794,11 @@
   "decimalExample": "15.5",
   "longExample": "15 小时 30 分钟",
   "shortExample": "15 小时 30 分钟",
-  "timeDisplayFormat": "时间显示格式"
+  "timeDisplayFormat": "时间显示格式",
+  "tapDayToSchedule": "点击日期创建计划",
+  "tapDayToSchedule_description": "选择下面的日期开始创建或修改一次性或定期计划。",
+  "languageFoundButIsFallbackLocale": "WitnessWork 支持您的语言。您的确切语言环境 {{original}} 不受支持，因此已恢复为 {{fallback}}。",
+  "languageWasNotFound": "Witness work 不支持您设备的语言 {{original}}。它已恢复为默认语言。",
+  "deviceDefault": "设备默认",
+  "language": "语言"
 }

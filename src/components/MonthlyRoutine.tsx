@@ -13,7 +13,7 @@ import IconButton from './IconButton'
 import { faCheck, faMinus, faTimes } from '@fortawesome/free-solid-svg-icons'
 import Button from './Button'
 import { getMonthsReports } from '../lib/serviceReport'
-import { HomeTabStackNavigation } from '../stacks/HomeTabStack'
+import { HomeTabStackNavigation } from '../types/homeStack'
 
 const Month = ({ month, year }: { month: number; year: number }) => {
   const theme = useTheme()

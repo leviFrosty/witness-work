@@ -14,7 +14,7 @@ import { useStopWatch } from '../hooks/useStopWatch'
 import useTheme from '../contexts/theme'
 import Button from './Button'
 import { useNavigation } from '@react-navigation/native'
-import { RootStackNavigation } from '../stacks/RootStack'
+import { RootStackNavigation } from '../types/rootStack'
 
 export const TimerSection = () => {
   const { start, stop, reset, isRunning, time, ms } = useStopWatch()

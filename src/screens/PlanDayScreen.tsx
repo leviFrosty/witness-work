@@ -23,7 +23,6 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import moment from 'moment'
 import Checkbox from 'expo-checkbox'
 import { NativeStackScreenProps } from '@react-navigation/native-stack'
-import { RootStackParamList } from '../stacks/RootStack'
 import {
   RecurringPlanFrequencies,
   getPlansIntersectingDay,
@@ -33,6 +32,7 @@ import DayPlanRow from '../components/DayPlanRow'
 import Card from '../components/Card'
 import RecurringPlanRow from '../components/RecurringPlanRow'
 import TextInput from '../components/TextInput'
+import { RootStackParamList } from '../types/rootStack'
 
 const hourOptions = [...Array(24).keys()].map((value) => ({
   label: `${value}`,
@@ -61,7 +61,6 @@ const OneTimePlan = (props: {
     <>
       <InputRowContainer label={i18n.t('date')} justifyContent='space-between'>
         <DateTimePicker
-          minimumDate={new Date()}
           value={props.date}
           onChange={(_, newDate) => newDate && props.setDate(newDate)}
         />
@@ -168,20 +167,11 @@ const RecurringPlan = (props: {
         label={i18n.t('startDate')}
         justifyContent='space-between'
       >
-        {Platform.OS !== 'android' ? (
-          <RNDateTimePicker
-            minimumDate={new Date()}
-            locale={getLocales()[0].languageCode || undefined}
-            value={props.date}
-            onChange={(_, newDate) => newDate && props.setDate(newDate)}
-          />
-        ) : (
-          <DateTimePicker
-            minimumDate={new Date()}
-            value={props.date}
-            onChange={(_, newDate) => newDate && props.setDate(newDate)}
-          />
-        )}
+        <DateTimePicker
+          minimumDate={new Date()}
+          value={props.date}
+          onChange={(_, newDate) => newDate && props.setDate(newDate)}
+        />
       </InputRowContainer>
       <InputRowContainer label={i18n.t('frequency')}>
         <View style={{ flex: 1 }}>

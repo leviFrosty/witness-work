@@ -4,7 +4,7 @@ import {
   TextInputProps as RNTextInputProps,
 } from 'react-native'
 import useTheme from '../contexts/theme'
-import { Errors } from './inputs/TextInputRow'
+import { Errors } from '../types/textInput'
 
 export interface TextInputProps extends RNTextInputProps {
   error?: string

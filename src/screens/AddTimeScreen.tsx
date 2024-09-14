@@ -11,7 +11,6 @@ import { DateTimePickerEvent } from '@react-native-community/datetimepicker'
 import moment from 'moment'
 import { ServiceReport } from '../types/serviceReport'
 import { useNavigation } from '@react-navigation/native'
-import { RootStackNavigation, RootStackParamList } from '../stacks/RootStack'
 import i18n, { TranslationKey } from '../lib/locales'
 import DateTimePicker from '../components/DateTimePicker'
 import Wrapper from '../components/layout/Wrapper'
@@ -33,6 +32,7 @@ import IconButton from '../components/IconButton'
 import usePublisher from '../hooks/usePublisher'
 import { getMonthsReports, getReport } from '../lib/serviceReport'
 import useAnimation from '../hooks/useAnimation'
+import { RootStackNavigation, RootStackParamList } from '../types/rootStack'
 
 type AddTimeScreenProps = NativeStackScreenProps<RootStackParamList, 'Add Time'>
 
@@ -224,19 +224,26 @@ const AddTimeScreen = ({ route }: AddTimeScreenProps) => {
   }
 
   const handleAddCustomTag = () => {
+    const alreadyExists = serviceReportTags.some(
+      (t) => getTagName(t) === getTagName(customTag)
+    )
+    handleSetTag(customTag)
+    if (alreadyExists) {
+      return
+    }
+
     set({
       serviceReportTags: [
         ...serviceReportTags,
         { value: customTag, credit: false },
       ],
     })
-    handleSetTag(customTag)
   }
 
   const handleDeleteCustomTag = () => {
     set({
       serviceReportTags: [...serviceReportTags].filter(
-        (t) => getTagName(t) !== tag
+        (t) => getTagName(t) !== getTagName(tag)
       ),
     })
     setTag(presetCategories[0])

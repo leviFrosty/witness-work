@@ -1,3 +1,5 @@
+import './env'
+import './src/lib/locales'
 import 'react-native-gesture-handler'
 import React, { useEffect, useState } from 'react'
 import { NavigationContainer } from '@react-navigation/native'
@@ -7,7 +9,6 @@ import * as Notifications from 'expo-notifications'
 import * as Sentry from '@sentry/react-native'
 import * as Updates from 'expo-updates'
 import Constants from 'expo-constants'
-import './src/lib/locales'
 import {
   useFonts,
   Inter_400Regular,
@@ -29,13 +30,13 @@ import tamaguiConfig from './tamagui.config'
 import ThemeProvider from './src/providers/ThemeProvider'
 import CustomerProvider from './src/providers/CustomerProvider'
 import { ToastProvider, ToastViewport } from '@tamagui/toast'
-import './env'
 import {
   hasMigratedFromAsyncStorage,
   migrateFromAsyncStorage,
 } from './src/stores/mmkv'
 import { usePreferences } from './src/stores/preferences'
 import AnimationViewProvider from './src/providers/AnimationViewProvider'
+import useUserLocalePrefs from './src/hooks/useLocale'
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
@@ -75,6 +76,7 @@ Sentry.setTag('expoUpdateVersion', Updates.updateId)
 export default function App() {
   const systemColorScheme = useColorScheme()
   const { colorScheme } = usePreferences()
+  useUserLocalePrefs()
 
   const [fontsLoaded] = useFonts({
     Inter_400Regular,

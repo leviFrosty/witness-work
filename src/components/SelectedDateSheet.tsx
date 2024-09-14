@@ -5,7 +5,6 @@ import i18n from '../lib/locales'
 import useTheme from '../contexts/theme'
 import moment from 'moment'
 import { useNavigation } from '@react-navigation/native'
-import { RootStackNavigation } from '../stacks/RootStack'
 import { FlashList } from '@shopify/flash-list'
 import { ServiceReport } from '../types/serviceReport'
 import TimeReportRow from './TimeReportRow'
@@ -22,6 +21,7 @@ import DayPlanRow from './DayPlanRow'
 import RecurringPlanRow from './RecurringPlanRow'
 import Circle from './Circle'
 import { getDateStatusColor } from './CalendarDay'
+import { RootStackNavigation } from '../types/rootStack'
 
 export type SelectedDateSheetState = {
   open: boolean

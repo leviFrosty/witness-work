@@ -4,7 +4,6 @@ import useConversations from '../stores/conversationStore'
 import moment from 'moment'
 import { useMemo } from 'react'
 import Text from './MyText'
-import { ContactMarker } from '../screens/MapScreen'
 import { getMostRecentConversationForContact } from '../lib/contacts'
 import i18n from '../lib/locales'
 import Button from './Button'
@@ -16,7 +15,6 @@ import {
   faPhone,
 } from '@fortawesome/free-solid-svg-icons'
 import { useNavigation } from '@react-navigation/native'
-import { RootStackNavigation } from '../stacks/RootStack'
 import { addressToString, coordinateAsString, navigateTo } from '../lib/address'
 import Copyeable from './Copyeable'
 import links from '../constants/links'
@@ -25,6 +23,8 @@ import { parsePhoneNumber } from 'awesome-phonenumber'
 import { getLocales } from 'expo-localization'
 import { handleCall, handleMessage } from '../lib/phone'
 import { usePreferences } from '../stores/preferences'
+import { RootStackNavigation } from '../types/rootStack'
+import { ContactMarker } from '../types/map'
 
 interface Props {
   contact: ContactMarker

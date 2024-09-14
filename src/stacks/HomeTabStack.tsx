@@ -1,7 +1,4 @@
-import {
-  createBottomTabNavigator,
-  BottomTabNavigationProp,
-} from '@react-navigation/bottom-tabs'
+import { createBottomTabNavigator } from '@react-navigation/bottom-tabs'
 import TabBar from '../components/TabBar'
 import Map from '../screens/MapScreen'
 import DrawerNavigator from '../screens/DrawerNavigator'
@@ -14,17 +11,8 @@ import ToolsScreen from '../screens/ToolsScreen'
 import MonthScreen from '../screens/MonthScreen/MonthScreen'
 import YearScreen from '../screens/YearScreen'
 import usePublisher from '../hooks/usePublisher'
+import { HomeTabStackParamList } from '../types/homeStack'
 
-export type HomeTabStackParamList = {
-  Home: undefined
-  Tools: undefined
-  Month: { month?: number; year?: number }
-  Year: { year?: number }
-  Map: undefined
-}
-
-export type HomeTabStackNavigation =
-  BottomTabNavigationProp<HomeTabStackParamList>
 const HomeTabStack = () => {
   const Tab = createBottomTabNavigator<HomeTabStackParamList>()
   const { lastAppVersion, developerTools, set, publisher } = usePreferences()

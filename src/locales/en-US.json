@@ -501,6 +501,12 @@
       "c4": "'Add Time' screen now allows for increments of 1 minute.",
       "c5": "Added Kinyarwanda language, fully translated by Semana D. Thank you so much for your help!",
       "c6": "You can now select how your time is displayed. Choose between decimal like: 13.5 or choose 13 Hrs 30 Mins. Visit Preferences > Appearance."
+    },
+    "1330": {
+      "c1": "Added language selector. See Preferences to manually adjust your language.",
+      "c2": "Resolved issue with one-time plan having an inaccurate maximum date.",
+      "c3": "Resolve issue deleting time categories."
+
     }
   },
   "installed": "Installed",
@@ -789,5 +795,11 @@
   "decimalExample": "15.5",
   "longExample": "15 Hours 30 Minutes",
   "shortExample": "15 Hrs 30 Mins",
-  "timeDisplayFormat": "Time Display Format"
+  "timeDisplayFormat": "Time Display Format",
+  "tapDayToSchedule": "Tap Day To Create Plan",
+  "tapDayToSchedule_description": "Start creating or modifying a one-time or recurring plan by selecting a date below.",
+  "languageFoundButIsFallbackLocale": "WitnessWork supports your language. Your exact locale, {{original}}, is not supported so it has fallen back to {{fallback}}.",
+  "languageWasNotFound": "Witness work doesn't support your device's language, {{original}}. It has fallen back to its' default language.",
+  "deviceDefault": "Device Default",
+  "language": "Language"
 }

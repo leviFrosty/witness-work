@@ -1,14 +1,12 @@
 import React, { useRef, useState, useCallback, useEffect } from 'react'
 import { Alert, TextInput, View } from 'react-native'
 import Text from '../components/MyText'
-import { RootStackParamList } from '../stacks/RootStack'
 import { NativeStackScreenProps } from '@react-navigation/native-stack'
 import useContacts from '../stores/contactsStore'
 import useTheme from '../contexts/theme'
 import Divider from '../components/Divider'
 import { Address, Contact } from '../types/contact'
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
-import { Errors } from '../components/inputs/TextInputRow'
 import Header from '../components/layout/Header'
 import i18n from '../lib/locales'
 import Wrapper from '../components/layout/Wrapper'
@@ -24,6 +22,8 @@ import moment from 'moment'
 
 import PersonalContactSection from '../components/PersonalContactSection'
 import AddressSection from '../components/AddressSection'
+import { RootStackParamList } from '../types/rootStack'
+import { Errors } from '../types/textInput'
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Contact Form'>
 

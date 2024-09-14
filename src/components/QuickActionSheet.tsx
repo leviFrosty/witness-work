@@ -1,7 +1,5 @@
 import { Sheet, XStack } from 'tamagui'
 import { usePreferences } from '../stores/preferences'
-import { RootStackNavigation } from '../stacks/RootStack'
-import { HomeTabStackNavigation } from '../stacks/HomeTabStack'
 import * as Crypto from 'expo-crypto'
 import XView from './layout/XView'
 import { faIdCard } from '@fortawesome/free-regular-svg-icons'
@@ -13,6 +11,8 @@ import IconButton from './IconButton'
 import { View } from 'react-native'
 import Button from './Button'
 import { IconProp } from '@fortawesome/fontawesome-svg-core'
+import { RootStackNavigation } from '../types/rootStack'
+import { HomeTabStackNavigation } from '../types/homeStack'
 
 export type QuickActionSheetProps = {
   navigation: RootStackNavigation & HomeTabStackNavigation

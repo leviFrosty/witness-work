@@ -1,4 +1,3 @@
-import { getLocales } from 'expo-localization'
 import { I18n, TranslateOptions } from 'i18n-js'
 import deDE from '../locales/de-DE.json'
 import esES from '../locales/es-ES.json'
@@ -20,7 +19,6 @@ import ukUA from '../locales/uk-UA.json'
 import rwRW from '../locales/rw-RW.json'
 import bemZM from '../locales/bem-ZM.json'
 
-import moment from 'moment'
 import 'moment/locale/en-au'
 import 'moment/locale/en-ca'
 import 'moment/locale/en-gb'
@@ -53,8 +51,11 @@ import 'moment/locale/es-us'
 import 'moment/locale/es'
 import 'moment/locale/sw'
 import 'moment/locale/uk'
+import moment from 'moment'
+import { mmkvStorage } from '../stores/mmkv'
+import { getLocales } from 'expo-localization'
 
-const translations = {
+export const translations = {
   'en-us': enUS,
   'de-de': deDE,
   'es-mx': esMX,
@@ -74,40 +75,84 @@ const translations = {
   'uk-ua': ukUA,
   'bem-zm': bemZM, // Bemba
   'rw-rw': rwRW,
-}
+} as const
+export type TranslatedLocale = keyof typeof translations
 
-const _i18n = new I18n(translations)
+export const translationsLabels: { [K in TranslatedLocale]: string } = {
+  'en-us': 'English',
+  'de-de': 'Deutsch',
+  'es-mx': 'Español (Mexico)',
+  'es-es': 'Español (España)',
+  'fr-fr': 'Français',
+  'it-it': 'Italiano',
+  'ja-jp': '日本語',
+  'ko-kr': '한국인',
+  'nl-nl': 'Nederlands',
+  'pt-br': 'Português (Brasil)',
+  'pt-pt': 'Português (Portugal)',
+  'ru-ru': 'Русский',
+  'vi-vn': 'Tiếng Việt',
+  'zh-hant-tw': '中文（繁體）',
+  'zh-hans-cn': '简体中文',
+  'sw-ke': 'kiswahili',
+  'uk-ua': 'українська',
+  'bem-zm': 'Ichibemba',
+  'rw-rw': 'Kinyarwanda',
+} as const
 
-let locale = getLocales()[0] // Guaranteed to return at least one element
-  .languageTag!.toLowerCase()
-
-const userLanguage = locale.slice(0, locale.lastIndexOf('-')) // Guaranteed
-const validTranslationLocales = Object.keys(translations)
-
-if (validTranslationLocales.includes(locale)) {
-  // Locale is valid.
-} else if (validTranslationLocales.some((t) => t.includes(userLanguage))) {
-  const languageWithMismatchRegion = validTranslationLocales.find((t) =>
-    t.includes(userLanguage)
-  )
-  // Locale is invalid -- but we found a translation with the same language. The region is incorrect.
-  if (languageWithMismatchRegion) {
-    locale = languageWithMismatchRegion
-  }
-} else {
-  // No locale translation, or fallback language was found. Falling back to en-us.
-  // locale = 'en-us'
-}
-// If doesn't exist, see if user's language exists
-
-_i18n.locale = locale
+export const _i18n = new I18n(translations)
 _i18n.enableFallback = true
-_i18n.defaultLocale = 'en-us'
-const momentLocale = locale
-  .replace('zh-hans', 'zh') // moment isn't expecting -han[s/t]
-  .replace('zh-hant', 'zh') // moment isn't expecting -han[s/t]
+export const DEFAULT_LOCALE = 'en-us'
+_i18n.defaultLocale = DEFAULT_LOCALE
 
-moment.locale(momentLocale)
+try {
+  const preferences = JSON.parse(mmkvStorage.getString('preferences') || '')
+  const rawLocale =
+    preferences.state.locale ?? getLocales()[0].languageTag.toLowerCase() // Guaranteed to return at least one element
+  const { locale: localeOrFallback } = handleLangFallback(rawLocale)
+  const locale = formatLocaleForMoment(localeOrFallback)
+  moment.locale(locale)
+} catch (err) {
+  moment.locale(DEFAULT_LOCALE)
+}
+
+export function handleLangFallback(locale: string): {
+  locale: TranslatedLocale
+  languageFound: boolean
+  fallback: boolean
+} {
+  const userLanguage = locale.slice(0, locale.lastIndexOf('-')) // Guaranteed
+  const validTranslationLocales = Object.keys(translations)
+  let languageFound = false
+  let fallback = false
+
+  if (validTranslationLocales.includes(locale)) {
+    languageFound = true
+  } else if (validTranslationLocales.some((t) => t.includes(userLanguage))) {
+    const languageWithMismatchRegion = validTranslationLocales.find((t) =>
+      t.includes(userLanguage)
+    )
+    // Locale is invalid -- but we found a translation with the same language. The region is incorrect.
+    if (languageWithMismatchRegion) {
+      languageFound = true
+      fallback = true
+      locale = languageWithMismatchRegion
+    }
+  } else {
+    // No locale translation, or fallback language was found. Falling back to en-us.
+    fallback = true
+    locale = 'en-us'
+  }
+
+  const guaranteedLocale = locale as TranslatedLocale // Because we check all conditions or fallback to a valid locale, this is guaranteed to return a locale that is valid.
+  return { locale: guaranteedLocale, languageFound, fallback }
+}
+
+export function formatLocaleForMoment(locale: string) {
+  return locale
+    .replace('zh-hans', 'zh') // moment isn't expecting -han[s/t]
+    .replace('zh-hant', 'zh') // moment isn't expecting -han[s/t]
+}
 
 type IsObject<T> = T extends object ? true : false
 

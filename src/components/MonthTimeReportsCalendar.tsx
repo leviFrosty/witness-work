@@ -1,4 +1,4 @@
-import { Calendar, LocaleConfig } from 'react-native-calendars'
+import { Calendar } from 'react-native-calendars'
 import { ServiceReport } from '../types/serviceReport'
 import moment from 'moment'
 import useTheme from '../contexts/theme'
@@ -13,15 +13,6 @@ type MonthTimeReportsCalendarProps = {
   monthsReports: ServiceReport[] | null
   setSheet: React.Dispatch<React.SetStateAction<SelectedDateSheetState>>
 }
-
-LocaleConfig.locales['default'] = {
-  monthNames: moment.months(),
-  monthNamesShort: moment.monthsShort(),
-  dayNames: moment.weekdays(),
-  dayNamesShort: moment.weekdaysShort(),
-}
-
-LocaleConfig.defaultLocale = 'default'
 
 const MonthTimeReportsCalendar: React.FC<MonthTimeReportsCalendarProps> = ({
   month,

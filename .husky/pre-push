@@ -1,3 +1,4 @@
+yarn run deps
 yarn run lint
 yarn run testFinal
 yarn run format

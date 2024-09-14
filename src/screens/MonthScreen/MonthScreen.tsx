@@ -11,7 +11,6 @@ import SelectedDateSheet, {
 } from '../../components/SelectedDateSheet'
 import TimeReportsDashboard from '../TimeReportsDashboard'
 import { getMonthsReports } from '../../lib/serviceReport'
-import { HomeTabStackParamList } from '../../stacks/HomeTabStack'
 import XView from '../../components/layout/XView'
 import Button from '../../components/Button'
 import { View } from 'react-native'
@@ -20,6 +19,7 @@ import { faArrowLeft, faArrowRight } from '@fortawesome/free-solid-svg-icons'
 import Text from '../../components/MyText'
 import i18n from '../../lib/locales'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import { HomeTabStackParamList } from '../../types/homeStack'
 
 type Props = NativeStackScreenProps<HomeTabStackParamList, 'Month'>
 

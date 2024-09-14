@@ -501,6 +501,11 @@
       "c4": "La pantalla \"Agregar tiempo\" ahora permite incrementos de 1 minuto.",
       "c5": "Se agregó el idioma kinyarwanda, traducido completamente por Semana D. ¡Muchas gracias por tu ayuda!",
       "c6": "Ahora puedes seleccionar cómo se muestra tu tiempo. Elige entre decimales como: 13,5 o elige 13 horas 30 minutos. Visita Preferencias > Apariencia."
+    },
+    "1330": {
+      "c1": "Se agregó un selector de idioma. Consulta las Preferencias para ajustar manualmente tu idioma.",
+      "c2": "Se resolvió el problema con el plan de un solo uso que tenía una fecha máxima incorrecta.",
+      "c3": "Resolver el problema al eliminar categorías de tiempo."
     }
   },
   "installed": "Instalada",
@@ -789,5 +794,11 @@
   "decimalExample": "15.5",
   "longExample": "15 Horas 30 Minutos",
   "shortExample": "15 Horas 30 Minutos",
-  "timeDisplayFormat": "Formato de visualización de la hora"
+  "timeDisplayFormat": "Formato de visualización de la hora",
+  "tapDayToSchedule": "Toque el día para crear un plan",
+  "tapDayToSchedule_description": "Comience a crear o modificar un plan único o recurrente seleccionando una fecha a continuación.",
+  "languageFoundButIsFallbackLocale": "WitnessWork admite su idioma. Su configuración regional exacta, {{original}}, no es compatible, por lo que ha vuelto a {{fallback}}.",
+  "languageWasNotFound": "Witness Work no admite el idioma de su dispositivo, {{original}}. Ha vuelto a su idioma predeterminado.",
+  "deviceDefault": "Predeterminado del dispositivo",
+  "language": "Idioma"
 }

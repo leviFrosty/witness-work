@@ -2,7 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage'
 import { create } from 'zustand'
 import { persist, combine, createJSONStorage } from 'zustand/middleware'
 import { Publisher, PublisherHours } from '../types/publisher'
-import i18n from '../lib/locales'
+import i18n, { TranslatedLocale } from '../lib/locales'
 import Constants from 'expo-constants'
 import moment from 'moment'
 import * as Device from 'expo-device'
@@ -70,11 +70,14 @@ export const hints = {
   howToAddPlan: true,
 }
 
-export function getTagName(tag: string | ServiceReportTag) {
+type LegacyServiceReportTag = string
+
+export function getTagName(tag: LegacyServiceReportTag | ServiceReportTag) {
   return typeof tag === 'string' ? tag : tag.value
 }
 
 export type ServiceReportTag = {
+  /** Also acts as ID */
   value: string
   credit: boolean
 }
@@ -117,9 +120,9 @@ const initialState = {
    * Tags were originally only strings, like "Bethel Service". Later, tags
    * needed more metadata - like whether or not a tag is a credit hour or not.
    * Example: {value: 'Bethel Service', credit: true}. This is why later the
-   * data structure was changed to an object.
+   * data structure was changed to an object. The value also doubles as the id.
    */
-  serviceReportTags: [] as (string | ServiceReportTag)[],
+  serviceReportTags: [] as (LegacyServiceReportTag | ServiceReportTag)[],
   displayDetailsOnProgressBarHomeScreen:
     Device.deviceType === Device.DeviceType.TABLET,
   monthlyRoutineHasShownInvalidMonthAlert: false,
@@ -152,6 +155,7 @@ const initialState = {
   },
   colorScheme: undefined as ColorSchemeName,
   timeDisplayFormat: 'decimal' as MinuteDisplayFormat,
+  locale: undefined as TranslatedLocale | undefined,
 }
 
 export const usePreferences = create(

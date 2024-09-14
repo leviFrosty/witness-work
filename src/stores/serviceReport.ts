@@ -1,17 +1,14 @@
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { create } from 'zustand'
 import { persist, combine, createJSONStorage } from 'zustand/middleware'
-import { ServiceReport, ServiceReportsByYears } from '../types/serviceReport'
+import {
+  DayPlan,
+  ServiceReport,
+  ServiceReportsByYears,
+} from '../types/serviceReport'
 import moment from 'moment'
 import { getReport, RecurringPlan } from '../lib/serviceReport'
 import { hasMigratedFromAsyncStorage, MmkvStorage } from './mmkv'
-
-export type DayPlan = {
-  id: string
-  date: Date
-  minutes: number
-  note?: string
-}
 
 const initialState = {
   serviceReports: {} as ServiceReportsByYears,

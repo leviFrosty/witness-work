@@ -11,6 +11,12 @@ import moment from 'moment'
 import IconButton from './IconButton'
 import { faPersonDigging } from '@fortawesome/free-solid-svg-icons'
 import { useCallback } from 'react'
+import XView from './layout/XView'
+import Button from './Button'
+import { useNavigation } from '@react-navigation/native'
+import { useToastController } from '@tamagui/toast'
+import CreditBadge from './CreditBadge'
+import { RootStackNavigation } from '../types/rootStack'
 
 interface TimeReportRowProps {
   report: ServiceReport
@@ -19,6 +25,8 @@ interface TimeReportRowProps {
 const TimeReportRow = ({ report }: TimeReportRowProps) => {
   const theme = useTheme()
   const { deleteServiceReport } = useServiceReport()
+  const navigation = useNavigation<RootStackNavigation>()
+  const toast = useToastController()
 
   const handleSwipeOpen = useCallback(
     (
@@ -41,14 +49,18 @@ const TimeReportRow = ({ report }: TimeReportRowProps) => {
               style: 'destructive',
               onPress: () => {
                 swipeable.reset()
-                deleteServiceReport(report.id)
+                toast.show(i18n.t('success'), {
+                  message: i18n.t('deleted'),
+                  native: true,
+                })
+                deleteServiceReport(report)
               },
             },
           ]
         )
       }
     },
-    [deleteServiceReport]
+    [deleteServiceReport, toast]
   )
 
   return (
@@ -66,7 +78,12 @@ const TimeReportRow = ({ report }: TimeReportRowProps) => {
         handleSwipeOpen(direction, swipeable, report)
       }
     >
-      <View
+      <Button
+        onPress={() =>
+          navigation.navigate('Add Time', {
+            existingReport: JSON.stringify(report),
+          })
+        }
         style={{
           backgroundColor: theme.colors.card,
           padding: 15,
@@ -77,6 +94,7 @@ const TimeReportRow = ({ report }: TimeReportRowProps) => {
         <View
           style={{
             flexDirection: 'row',
+            justifyContent: 'space-between',
             flexGrow: 1,
           }}
         >
@@ -86,68 +104,34 @@ const TimeReportRow = ({ report }: TimeReportRowProps) => {
                 fontFamily: theme.fonts.semiBold,
               }}
             >
-              {`${moment(report.date).format('ddd L')}`}
+              {`${moment(report.date).format('LL')}`}
             </Text>
           </View>
-          <View
-            style={{
-              flexDirection: 'row',
-              gap: 10,
-              flexGrow: 1,
-              justifyContent: 'flex-end',
-              alignItems: 'center',
-            }}
-          >
-            <View
-              style={{
-                position: 'relative',
-                paddingLeft: 20,
-              }}
-            >
-              <Text style={{ fontSize: 12 }}>{i18n.t('hours')}</Text>
-              <Text
-                style={{
-                  position: 'absolute',
-                  left: 0,
-                  fontSize: 12,
-                }}
-              >
+          <XView style={{ gap: 6 }}>
+            <XView style={{ gap: 4 }}>
+              <Text style={{ fontFamily: theme.fonts.semiBold }}>
                 {report.hours}
               </Text>
-            </View>
-            <View
-              style={{
-                position: 'relative',
-                paddingLeft: 20,
-                alignItems: 'center',
-              }}
-            >
-              <Text
-                style={{
-                  flexDirection: 'row',
-                  fontSize: 12,
-                }}
-              >
-                {i18n.t('minutes')}
+              <Text style={{ fontFamily: theme.fonts.semiBold }}>
+                {i18n.t('hours')}
               </Text>
-              <Text
-                style={{
-                  position: 'absolute',
-                  left: 0,
-                  fontSize: 12,
-                }}
-              >
+            </XView>
+            <XView style={{ gap: 4 }}>
+              <Text style={{ fontFamily: theme.fonts.semiBold }}>
                 {report.minutes}
               </Text>
-            </View>
-          </View>
+              <Text style={{ fontFamily: theme.fonts.semiBold }}>
+                {i18n.t('minutes')}
+              </Text>
+            </XView>
+          </XView>
         </View>
         {(report.ldc || report.tag) && (
           <View>
             <View
               style={{
                 flexDirection: 'row',
-                gap: 3,
+                gap: 5,
                 alignItems: 'center',
               }}
             >
@@ -155,15 +139,16 @@ const TimeReportRow = ({ report }: TimeReportRowProps) => {
               <Text
                 style={{
                   color: theme.colors.textAlt,
-                  fontSize: theme.fontSize('xs'),
+                  fontSize: theme.fontSize('sm'),
                 }}
               >
                 {report.ldc ? i18n.t('ldc') : report.tag}
               </Text>
+              {(report.credit || report.ldc) && <CreditBadge />}
             </View>
           </View>
         )}
-      </View>
+      </Button>
     </Swipeable>
   )
 }

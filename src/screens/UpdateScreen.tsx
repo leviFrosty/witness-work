@@ -5,12 +5,12 @@ import { useEffect, useRef, useState } from 'react'
 import useTheme from '../contexts/theme'
 import i18n from '../lib/locales'
 import * as Updates from 'expo-updates'
-import * as Sentry from 'sentry-expo'
+import * as Sentry from '@sentry/react-native'
 import ActionButton from '../components/ActionButton'
 import { useNavigation } from '@react-navigation/native'
-import { RootStackNavigation } from '../stacks/RootStack'
 import Wrapper from '../components/layout/Wrapper'
 import Button from '../components/Button'
+import { RootStackNavigation } from '../types/rootStack'
 
 const UpdateScreen = () => {
   const theme = useTheme()
@@ -31,7 +31,7 @@ const UpdateScreen = () => {
         }
       } catch (err) {
         setError(err)
-        Sentry.Native.captureException(err)
+        Sentry.captureException(err)
       }
     }
 

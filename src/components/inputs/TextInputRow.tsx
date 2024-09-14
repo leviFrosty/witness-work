@@ -1,11 +1,15 @@
 import React, { forwardRef, Ref } from 'react'
-import { View, TextInput as RNTextInput } from 'react-native'
+import {
+  View,
+  TextInput as RNTextInput,
+  ViewStyle,
+  StyleProp,
+} from 'react-native'
 import useTheme from '../../contexts/theme'
 import Text from '../MyText'
 import InputRowContainer from './InputRowContainer'
 import MyTextInput, { TextInputProps } from '../TextInput'
-
-export type Errors = Record<string, string>
+import { Errors } from '../../types/textInput'
 
 interface TextInputRowProps {
   errors?: Errors
@@ -16,6 +20,7 @@ interface TextInputRowProps {
   noHorizontalPadding?: boolean
   textInputProps?: TextInputProps
   required?: boolean
+  style?: StyleProp<ViewStyle>
 }
 
 const TextInputRow: React.ForwardRefExoticComponent<
@@ -30,6 +35,7 @@ const TextInputRow: React.ForwardRefExoticComponent<
       lastInSection,
       noHorizontalPadding,
       required,
+      style,
       textInputProps,
     },
     ref: Ref<RNTextInput>
@@ -43,6 +49,7 @@ const TextInputRow: React.ForwardRefExoticComponent<
         noHorizontalPadding={noHorizontalPadding}
         label={label}
         required={required}
+        style={style}
       >
         <View style={{ flexGrow: 1, flex: 1, gap: 5 }}>
           <MyTextInput

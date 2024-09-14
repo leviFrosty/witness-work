@@ -1,8 +1,7 @@
 import { View, Platform, Alert, ScrollView, useColorScheme } from 'react-native'
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import Text from '../components/MyText'
 import useTheme from '../contexts/theme'
-import { RootStackNavigation, RootStackParamList } from '../stacks/RootStack'
 import {
   NativeStackNavigationProp,
   NativeStackScreenProps,
@@ -33,16 +32,17 @@ import {
   faComment,
   faComments,
   faEnvelope,
-  faLocationDot,
   faPencil,
   faPhone,
   faPlus,
+  faTrash,
 } from '@fortawesome/free-solid-svg-icons'
 import Copyeable from '../components/Copyeable'
 import Button from '../components/Button'
 import { Sheet } from 'tamagui'
 import {
   addressToString,
+  coordinateAsString,
   fetchCoordinateFromAddress,
   navigateTo,
 } from '../lib/address'
@@ -52,6 +52,11 @@ import { useNavigation } from '@react-navigation/native'
 import { usePreferences } from '../stores/preferences'
 import { handleCall, handleMessage } from '../lib/phone'
 import { openURL } from '../lib/links'
+import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps'
+import useLocation from '../hooks/useLocation'
+import { useToastController } from '@tamagui/toast'
+import XView from '../components/layout/XView'
+import { RootStackNavigation, RootStackParamList } from '../types/rootStack'
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Contact Details'>
 
@@ -196,15 +201,53 @@ const AddressRow = ({ contact }: { contact: Contact }) => {
     useState(false)
   const { address } = contact
   const { updateContact } = useContacts()
+  const { colorScheme } = usePreferences()
+  const { conversations } = useConversations()
   const { incrementGeocodeApiCallCount, defaultNavigationMapProvider } =
     usePreferences()
+  const mapRef = useRef<MapView>(null)
+  const { locationPermission } = useLocation()
 
-  if (!address) {
-    return null
-  }
+  const fitToMarkers = useCallback(() => {
+    if (!contact.coordinate) {
+      return
+    }
+    mapRef.current?.fitToCoordinates([contact.coordinate])
+  }, [contact.coordinate])
 
-  const coordinateAsString = () =>
-    `${contact.coordinate?.latitude}, ${contact.coordinate?.longitude}`
+  const pinColor = useMemo(() => {
+    const contactConvos = conversations.filter(
+      (convo) => convo.contact.id === contact.id
+    )
+
+    if (contactConvos.length === 0) {
+      return theme.colors.textAlt
+    }
+    const today = moment()
+
+    const conversationsSorted = [...contactConvos].sort(
+      (a, b) => moment(b.date).unix() - moment(a.date).unix()
+    )
+    const mostRecentDate = moment(conversationsSorted[0].date)
+
+    let color: string = theme.colors.accent
+
+    if (mostRecentDate.isBefore(today.subtract(1, 'week'))) {
+      color = theme.colors.warn
+    }
+
+    if (mostRecentDate.isBefore(today.subtract(1, 'month'))) {
+      color = theme.colors.error
+    }
+    return color
+  }, [
+    contact.id,
+    conversations,
+    theme.colors.accent,
+    theme.colors.error,
+    theme.colors.textAlt,
+    theme.colors.warn,
+  ])
 
   const attemptToGetCoordinates = async () => {
     setHasTriedToGetCoordinates(true)
@@ -230,41 +273,42 @@ const AddressRow = ({ contact }: { contact: Contact }) => {
         {i18n.t('address')}
       </Text>
 
-      <Button onPress={() => navigateTo(address, defaultNavigationMapProvider)}>
+      <Button onPress={() => navigateTo(contact, defaultNavigationMapProvider)}>
         <View
           style={{
+            display: 'flex',
             flexDirection: 'row',
-            justifyContent: 'space-between',
             alignItems: 'center',
           }}
         >
           <Copyeable
             text={addressToString(address)}
-            onPress={() => navigateTo(address, defaultNavigationMapProvider)}
+            onPress={() => navigateTo(contact, defaultNavigationMapProvider)}
           >
-            <View
-              style={{
-                flexDirection: 'column',
-                justifyContent: 'center',
-                gap: 5,
-              }}
-            >
-              {Object.keys(address).map((key) => {
-                if (address[key as keyof Address]) {
-                  return <Text key={key}>{address[key as keyof Address]}</Text>
-                }
-              })}
-            </View>
+            {address && (
+              <View
+                style={{
+                  flexDirection: 'row',
+                  flexWrap: 'wrap',
+                  gap: 5,
+                }}
+              >
+                {Object.keys(address).map((key) => {
+                  if (address[key as keyof Address]) {
+                    return (
+                      <Text key={key}>{address[key as keyof Address]}</Text>
+                    )
+                  }
+                })}
+              </View>
+            )}
           </Copyeable>
-          <IconButton
-            size='lg'
-            iconStyle={{ color: theme.colors.accent }}
-            icon={faLocationDot}
-          />
         </View>
       </Button>
-      {contact.coordinate === undefined &&
-      hasTriedToGetCoordinates === false ? (
+      {(contact.coordinate && contact.coordinate.latitude === undefined) ||
+      (contact.coordinate && contact.coordinate.longitude === undefined) ||
+      (contact.coordinate === undefined &&
+        hasTriedToGetCoordinates === false) ? (
         <View style={{ gap: 3 }}>
           <Button onPress={attemptToGetCoordinates}>
             <Text
@@ -285,20 +329,74 @@ const AddressRow = ({ contact }: { contact: Contact }) => {
             {i18n.t('coordinatesAllowMapView')}
           </Text>
         </View>
-      ) : (
-        <Copyeable text={coordinateAsString()}>
-          <Text
+      ) : contact.coordinate?.latitude && contact.coordinate?.longitude ? (
+        <>
+          <Copyeable text={coordinateAsString(contact)}>
+            <Text
+              style={{
+                fontSize: theme.fontSize('xs'),
+                color: theme.colors.textAlt,
+              }}
+            >
+              {coordinateAsString(contact)}
+            </Text>
+          </Copyeable>
+          <MapView
+            userInterfaceStyle={colorScheme ? colorScheme : undefined}
+            showsUserLocation={locationPermission}
+            ref={mapRef}
+            onLayout={fitToMarkers}
             style={{
-              fontSize: theme.fontSize('xs'),
-              color: theme.colors.textAlt,
+              height: 140,
+              width: '100%',
+              borderRadius: theme.numbers.borderRadiusSm,
             }}
+            provider={Platform.OS === 'android' ? PROVIDER_GOOGLE : undefined}
+            onPress={() => navigateTo(contact, defaultNavigationMapProvider)}
           >
-            {coordinateAsString()}
-          </Text>
-        </Copyeable>
-      )}
+            <Marker
+              identifier={contact.id}
+              key={contact.id}
+              coordinate={contact.coordinate}
+              pinColor={pinColor}
+              draggable
+              onDragEnd={(e) =>
+                updateContact({
+                  ...contact,
+                  coordinate: e.nativeEvent.coordinate,
+                  userDraggedCoordinate: true,
+                })
+              }
+            />
+          </MapView>
+        </>
+      ) : null}
     </View>
   )
+}
+
+const CustomFieldsRow = (props: { contact: Contact }) => {
+  const theme = useTheme()
+  const { customFields } = props.contact
+
+  if (!customFields) {
+    return null
+  }
+
+  return Object.keys(customFields).map((key) => (
+    <View style={{ gap: 10 }} key={key}>
+      <Text
+        style={{
+          fontSize: 14,
+          fontFamily: theme.fonts.semiBold,
+          color: theme.colors.textAlt,
+        }}
+      >
+        {key}
+      </Text>
+      <Copyeable>{customFields[key]}</Copyeable>
+    </View>
+  ))
 }
 
 const EmailRow = ({ contact }: { contact: Contact }) => {
@@ -354,11 +452,8 @@ const EmailRow = ({ contact }: { contact: Contact }) => {
   )
 }
 
-const DeleteContactButton = ({
+const CreatedAt = ({
   contact,
-  deleteContact,
-  navigation,
-  contactId,
 }: {
   deleteContact: (id: string) => void
   navigation: NativeStackNavigationProp<
@@ -373,39 +468,6 @@ const DeleteContactButton = ({
 
   return (
     <View style={{ gap: 5 }}>
-      <Button
-        onPress={() =>
-          Alert.alert(
-            i18n.t('archiveContact_question'),
-            i18n.t('archiveContact_description'),
-            [
-              {
-                text: i18n.t('cancel'),
-                style: 'cancel',
-              },
-              {
-                text: i18n.t('delete'),
-                style: 'destructive',
-                onPress: () => {
-                  deleteContact(contactId)
-                  navigation.popToTop()
-                },
-              },
-            ]
-          )
-        }
-      >
-        <Text
-          style={{
-            fontFamily: theme.fonts.semiBold,
-            textAlign: 'center',
-            fontSize: 10,
-            textDecorationLine: 'underline',
-          }}
-        >
-          {i18n.t('archiveContact')}
-        </Text>
-      </Button>
       <Text
         style={{
           fontSize: 10,
@@ -540,6 +602,7 @@ const ContactDetailsScreen = ({ route, navigation }: Props) => {
     () => contacts.find((c) => c.id === params.id),
     [contacts, params.id]
   )
+  const toast = useToastController()
   const { conversations } = useConversations()
 
   const highlightedConversation = useMemo(
@@ -580,6 +643,37 @@ const ContactDetailsScreen = ({ route, navigation }: Props) => {
                 right: 0,
               }}
             >
+              <IconButton
+                icon={faTrash}
+                color={theme.colors.textInverse}
+                onPress={() =>
+                  Alert.alert(
+                    i18n.t('archiveContact_question'),
+                    i18n.t('archiveContact_description'),
+                    [
+                      {
+                        text: i18n.t('cancel'),
+                        style: 'cancel',
+                      },
+                      {
+                        text: i18n.t('delete'),
+                        style: 'destructive',
+                        onPress: () => {
+                          if (!contact) {
+                            return
+                          }
+                          deleteContact(contact.id)
+                          toast.show(i18n.t('success'), {
+                            message: i18n.t('archived'),
+                            native: true,
+                          })
+                          navigation.popToTop()
+                        },
+                      },
+                    ]
+                  )
+                }
+              />
               <Button
                 onPress={async () => {
                   navigation.replace('Contact Form', {
@@ -594,13 +688,26 @@ const ContactDetailsScreen = ({ route, navigation }: Props) => {
                   iconStyle={{ color: theme.colors.textInverse }}
                 />
               </Button>
-              <IconButton
-                onPress={() => {
-                  setSheetOpen(true)
-                }}
-                iconStyle={{ color: theme.colors.textInverse }}
-                icon={faPlus}
-              />
+
+              <Button onPress={() => setSheetOpen(true)}>
+                <XView
+                  style={{
+                    borderColor: theme.colors.textInverse,
+                    borderWidth: 1,
+                    paddingVertical: 5,
+                    paddingHorizontal: 10,
+                    borderRadius: theme.numbers.borderRadiusSm,
+                  }}
+                >
+                  <IconButton
+                    iconStyle={{ color: theme.colors.textInverse }}
+                    icon={faPlus}
+                  />
+                  <Text style={{ color: theme.colors.textInverse }}>
+                    {i18n.t('add')}
+                  </Text>
+                </XView>
+              </Button>
             </View>
           }
           backgroundColor={theme.colors.accent3}
@@ -608,11 +715,17 @@ const ContactDetailsScreen = ({ route, navigation }: Props) => {
       ),
     })
   }, [
+    contact,
     contact?.id,
+    deleteContact,
     navigation,
     params.id,
+    theme.colors.accent,
     theme.colors.accent3,
+    theme.colors.accentTranslucent,
     theme.colors.textInverse,
+    theme.numbers.borderRadiusSm,
+    toast,
   ])
 
   const isActiveBibleStudy = useMemo(
@@ -653,9 +766,12 @@ const ContactDetailsScreen = ({ route, navigation }: Props) => {
     )
   }
 
-  const { name, address, phone, email } = contact
+  const { name, address, phone, email, customFields, coordinate } = contact
 
   const hasAddress = address && Object.values(address).some((v) => v.length > 0)
+  const hasCustomFields =
+    customFields !== undefined &&
+    Object.values(customFields).some((f) => !!f.length)
 
   return (
     <View style={{ flexGrow: 1 }}>
@@ -690,25 +806,57 @@ const ContactDetailsScreen = ({ route, navigation }: Props) => {
               style={{ margin: 20 }}
             >
               <View style={{ gap: 15 }}>
-                {hasAddress && <AddressRow contact={contact} />}
+                {(hasAddress || coordinate) && <AddressRow contact={contact} />}
                 {phone && <PhoneRow contact={contact} />}
-                {!hasAddress && !phone && !email && (
+                {email && <EmailRow contact={contact} />}
+                {hasCustomFields && <CustomFieldsRow contact={contact} />}
+                {!hasAddress && !phone && !email && !hasCustomFields && (
                   <Text>{i18n.t('noPersonalInformationSaved')}</Text>
                 )}
-                {email && <EmailRow contact={contact} />}
               </View>
             </CardWithTitle>
             <View style={{ gap: 10 }}>
-              <Text
+              <XView
                 style={{
-                  fontSize: 14,
-                  fontFamily: theme.fonts.semiBold,
-                  marginLeft: 10,
-                  color: theme.colors.text,
+                  justifyContent: 'space-between',
+                  paddingHorizontal: 15,
                 }}
               >
-                {i18n.t('conversationHistory')}
-              </Text>
+                <Text
+                  style={{
+                    fontSize: 14,
+                    fontFamily: theme.fonts.semiBold,
+                    color: theme.colors.text,
+                  }}
+                >
+                  {i18n.t('conversationHistory')}
+                </Text>
+                <Button onPress={() => setSheetOpen(true)}>
+                  <XView
+                    style={{
+                      borderColor: theme.colors.text,
+                      borderWidth: 1,
+                      paddingVertical: 5,
+                      paddingHorizontal: 10,
+                      borderRadius: theme.numbers.borderRadiusSm,
+                    }}
+                  >
+                    <IconButton
+                      iconStyle={{ color: theme.colors.text }}
+                      icon={faPlus}
+                      size={'sm'}
+                    />
+                    <Text
+                      style={{
+                        color: theme.colors.text,
+                        fontSize: theme.fontSize('sm'),
+                      }}
+                    >
+                      {i18n.t('add')}
+                    </Text>
+                  </XView>
+                </Button>
+              </XView>
               <View style={{ minHeight: 2 }}>
                 <FlashList
                   scrollEnabled={false}
@@ -724,18 +872,12 @@ const ContactDetailsScreen = ({ route, navigation }: Props) => {
                     <View
                       style={{
                         backgroundColor: theme.colors.backgroundLighter,
-                        paddingVertical: 10,
+                        paddingVertical: 30,
+                        paddingHorizontal: 20,
                       }}
                     >
-                      <Button onPress={() => setSheetOpen(true)}>
-                        <Text
-                          style={{
-                            margin: 20,
-                            textDecorationLine: 'underline',
-                          }}
-                        >
-                          {i18n.t('tapToAddAConversation')}
-                        </Text>
+                      <Button>
+                        <Text>{i18n.t('thisContactHasNoConversations')}</Text>
                       </Button>
                     </View>
                   }
@@ -743,7 +885,7 @@ const ContactDetailsScreen = ({ route, navigation }: Props) => {
                 />
               </View>
             </View>
-            <DeleteContactButton
+            <CreatedAt
               contact={contact}
               contactId={params.id}
               deleteContact={deleteContact}

@@ -15,7 +15,6 @@ import {
 import { useEffect, useState } from 'react'
 import * as Location from 'expo-location'
 import useNotifications from '../../../../hooks/notifications'
-import SectionTitle from '../../shared/SectionTitle'
 
 const AppPreferencesSection = () => {
   const notifications = useNotifications()
@@ -53,7 +52,6 @@ const AppPreferencesSection = () => {
 
   return (
     <View style={{ gap: 3 }}>
-      <SectionTitle text={i18n.t('app')} />
       <Section>
         <InputRowButton
           leftIcon={notifications.allowed ? faBell : faBellSlash}

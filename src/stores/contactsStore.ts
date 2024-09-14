@@ -2,6 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage'
 import { create } from 'zustand'
 import { persist, combine, createJSONStorage } from 'zustand/middleware'
 import { Contact } from '../types/contact'
+import { hasMigratedFromAsyncStorage, MmkvStorage } from './mmkv'
 
 const initialState = {
   contacts: [] as Contact[],
@@ -50,6 +51,24 @@ export const useContacts = create(
           }
         })
       },
+      deleteFieldFromAllContacts: (field: string) => {
+        set(({ contacts }) => {
+          return {
+            contacts: contacts.map((c) => {
+              if (
+                c.customFields === undefined ||
+                c.customFields[field] === undefined
+              ) {
+                return c // If customFields or selected field doesn't exist, return original contact
+              }
+
+              const fields = { ...c.customFields }
+              delete fields[field]
+              return { ...c, customFields: fields } // Otherwise delete field and set object value
+            }),
+          }
+        })
+      },
       recoverContact: (id: string) => {
         set(({ contacts, deletedContacts }) => {
           const recoverContact = deletedContacts.find((dC) => dC.id === id)
@@ -75,7 +94,9 @@ export const useContacts = create(
     })),
     {
       name: 'contacts',
-      storage: createJSONStorage(() => AsyncStorage),
+      storage: createJSONStorage(() =>
+        hasMigratedFromAsyncStorage() ? MmkvStorage : AsyncStorage
+      ),
     }
   )
 )

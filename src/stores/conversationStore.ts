@@ -3,6 +3,7 @@ import { create } from 'zustand'
 import { persist, combine, createJSONStorage } from 'zustand/middleware'
 import { Conversation } from '../types/conversation'
 import * as Notifications from 'expo-notifications'
+import { hasMigratedFromAsyncStorage, MmkvStorage } from './mmkv'
 
 const initialState = {
   conversations: [] as Conversation[],
@@ -62,7 +63,9 @@ export const useConversations = create(
     })),
     {
       name: 'conversations',
-      storage: createJSONStorage(() => AsyncStorage),
+      storage: createJSONStorage(() =>
+        hasMigratedFromAsyncStorage() ? MmkvStorage : AsyncStorage
+      ),
     }
   )
 )

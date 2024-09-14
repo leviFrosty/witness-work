@@ -19,7 +19,7 @@ const OnboardingNav = ({ noActions, goBack }: Props) => {
           <IconButton icon={faChevronLeft} />
         </Button>
       ) : null}
-      <Text style={styles.navTitle}>{i18n.t('jwTime')}</Text>
+      <Text style={styles.navTitle}>{i18n.t('witnessWork')}</Text>
     </View>
   )
 }

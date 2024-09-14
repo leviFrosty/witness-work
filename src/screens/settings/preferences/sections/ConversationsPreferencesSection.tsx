@@ -6,7 +6,6 @@ import Section from '../../../../components/inputs/Section'
 import InputRowContainer from '../../../../components/inputs/InputRowContainer'
 import Select from '../../../../components/Select'
 import { usePreferences } from '../../../../stores/preferences'
-import SectionTitle from '../../shared/SectionTitle'
 
 const ConversationsPreferencesSection = () => {
   const theme = useTheme()
@@ -32,7 +31,6 @@ const ConversationsPreferencesSection = () => {
 
   return (
     <View style={{ gap: 3 }}>
-      <SectionTitle text={i18n.t('conversations')} />
       <Section>
         <InputRowContainer
           style={{

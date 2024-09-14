@@ -1,13 +1,10 @@
 import { useCallback } from 'react'
-import { View, Platform } from 'react-native'
+import { View, Alert } from 'react-native'
 import Text from '../components/MyText'
 import * as Notifications from 'expo-notifications'
 import * as Crypto from 'expo-crypto'
-import {
-  NativeStackNavigationProp,
-  NativeStackScreenProps,
-} from '@react-navigation/native-stack'
-import { RootStackParamList } from '../stacks/RootStack'
+import { NativeStackScreenProps } from '@react-navigation/native-stack'
+import * as Sentry from '@sentry/react-native'
 import useContacts from '../stores/contactsStore'
 import { useEffect, useState } from 'react'
 import Header from '../components/layout/Header'
@@ -17,16 +14,14 @@ import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view
 import Section from '../components/inputs/Section'
 import { Conversation, Notification } from '../types/conversation'
 import InputRowContainer from '../components/inputs/InputRowContainer'
-import RNDateTimePicker, {
-  DateTimePickerEvent,
-} from '@react-native-community/datetimepicker'
+import { DateTimePickerEvent } from '@react-native-community/datetimepicker'
 import TextInputRow from '../components/inputs/TextInputRow'
 import CheckboxWithLabel from '../components/inputs/CheckboxWithLabel'
 import { Contact } from '../types/contact'
 import moment from 'moment'
 import useConversations from '../stores/conversationStore'
 import i18n, { TranslationKey } from '../lib/locales'
-import AndroidDateTimePicker from '../components/AndroidDateTimePicker'
+import DateTimePicker from '../components/DateTimePicker'
 import Checkbox from 'expo-checkbox'
 import Select from '../components/Select'
 import Wrapper from '../components/layout/Wrapper'
@@ -35,6 +30,7 @@ import {
   faCaravan,
   faComments,
   faIdCard,
+  faTrash,
 } from '@fortawesome/free-solid-svg-icons'
 import _ from 'lodash'
 import Button from '../components/Button'
@@ -42,6 +38,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { usePreferences } from '../stores/preferences'
 import { maybeRequestStoreReview } from '../lib/storeReview'
 import useNotifications from '../hooks/notifications'
+import { useToastController } from '@tamagui/toast'
+import { RootStackParamList } from '../types/rootStack'
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Conversation Form'>
 type MomentOffset = {
@@ -140,80 +138,31 @@ const NotificationSection = (props: {
   )
 }
 
-const AssignmentSection = ({
-  selectedContact,
-  set_selectedContactId,
-  navigation,
-  errors,
-}: {
-  selectedContact: Contact | undefined
-  set_selectedContactId: React.Dispatch<React.SetStateAction<string>>
-  errors: Record<string, string>
-  navigation: NativeStackNavigationProp<
-    RootStackParamList,
-    'Conversation Form',
-    undefined
-  >
-}) => {
+const ContactRow = ({ selectedContact }: { selectedContact: Contact }) => {
   const theme = useTheme()
 
   return (
     <Section>
-      <View style={{ gap: 10 }}>
+      <View
+        style={{
+          gap: 10,
+          flexDirection: 'row',
+          justifyContent: 'space-between',
+          paddingRight: 20,
+        }}
+      >
         <View
           style={{
             flexDirection: 'row',
-            justifyContent: 'space-between',
-            gap: 15,
-            paddingRight: 20,
-            borderColor: theme.colors.error,
-            borderWidth: errors['contact'] ? 1 : 0,
+            alignItems: 'center',
+            gap: 10,
           }}
         >
-          {selectedContact ? (
-            <View
-              style={{
-                flexDirection: 'row',
-                alignItems: 'center',
-                gap: 10,
-              }}
-            >
-              <IconButton icon={faIdCard} />
-              <Text style={{ fontFamily: theme.fonts.semiBold, fontSize: 16 }}>
-                {selectedContact.name}
-              </Text>
-            </View>
-          ) : (
-            <Text>{i18n.t('noContactAssigned')}</Text>
-          )}
-          <Button
-            onPress={() =>
-              selectedContact
-                ? set_selectedContactId('')
-                : navigation.replace('Contact Selector')
-            }
-          >
-            <Text
-              style={{
-                color: theme.colors.textAlt,
-                textDecorationLine: 'underline',
-              }}
-            >
-              {selectedContact ? i18n.t('unassign') : i18n.t('assign')}
-            </Text>
-          </Button>
-        </View>
-        {errors['contact'] && (
-          <Text
-            style={{
-              textAlign: 'right',
-              paddingRight: 20,
-              color: theme.colors.error,
-            }}
-          >
-            {errors['contact']}
+          <IconButton icon={faIdCard} />
+          <Text style={{ fontFamily: theme.fonts.semiBold, fontSize: 16 }}>
+            {selectedContact?.name}
           </Text>
-        )}
+        </View>
       </View>
     </Section>
   )
@@ -233,23 +182,22 @@ const ConversationFormScreen = ({ route, navigation }: Props) => {
   } = usePreferences()
   const { params } = route
   const { contacts } = useContacts()
-  const { conversations, addConversation, updateConversation } =
-    useConversations()
+  const {
+    conversations,
+    addConversation,
+    updateConversation,
+    deleteConversation,
+  } = useConversations()
+  const toast = useToastController()
 
   const conversationToEditViaProps = params.conversationToEditId
   const conversationToUpdate = conversationToEditViaProps
     ? [...conversations].find((c) => c.id === conversationToEditViaProps)
     : undefined
 
-  const [assignedContactId, set_selectedContactId] = useState<string>(
-    params.contactId || conversationToUpdate?.contact.id || ''
-  )
+  const contactId = params.contactId || conversationToUpdate?.contact.id || ''
 
   const notAtHome = params.notAtHome
-
-  const [errors, setErrors] = useState<Record<string, string>>({
-    contact: '',
-  })
 
   const [notifyMeOffset, setNotifyMeOffset] = useState<MomentOffset>({
     amount: returnVisitNotificationOffset?.amount || 2,
@@ -278,7 +226,7 @@ const ConversationFormScreen = ({ route, navigation }: Props) => {
     return {
       id: Crypto.randomUUID(),
       contact: {
-        id: assignedContactId || '',
+        id: contactId || '',
       },
       date: new Date(),
       note: '',
@@ -298,7 +246,8 @@ const ConversationFormScreen = ({ route, navigation }: Props) => {
     getConversationDefaultValue()
   )
 
-  const selectedContact = contacts.find((c) => c.id === assignedContactId)
+  const selectedContact = contacts.find((c) => c.id === contactId)
+  const isEditing = conversationToUpdate?.contact.id
 
   const { allowed: notificationsAllowed } = useNotifications()
 
@@ -328,24 +277,8 @@ const ConversationFormScreen = ({ route, navigation }: Props) => {
     })
   }
 
-  const validate = useCallback((): boolean => {
-    if (!conversation.contact.id) {
-      setErrors({ contact: i18n.t('youMustAssignAConversationToContact') })
-      return false
-    }
-    if (conversation.contact.id) {
-      setErrors({ contact: '' })
-    }
-    return true
-  }, [conversation])
-
   const submit = useCallback(() => {
     return new Promise((resolve) => {
-      const passValidation = validate()
-      if (!passValidation) {
-        return resolve(false)
-      }
-
       const cancelExistingNotification = () => {
         conversationToUpdate?.followUp?.notifications?.forEach(
           async ({ id }) => {
@@ -420,7 +353,7 @@ const ConversationFormScreen = ({ route, navigation }: Props) => {
               id,
             })
           } catch (error) {
-            console.error(error)
+            Sentry.captureException(error)
           }
         }
 
@@ -443,7 +376,7 @@ const ConversationFormScreen = ({ route, navigation }: Props) => {
             resolve(conversation)
           })
           .catch((error) => {
-            console.error(error)
+            Sentry.captureException(error)
             resolve(false)
           })
       } else {
@@ -452,6 +385,12 @@ const ConversationFormScreen = ({ route, navigation }: Props) => {
           : addConversation(conversation)
         resolve(conversation)
       }
+      toast.show(i18n.t('success'), {
+        message: i18n.t(
+          conversation.notAtHome ? 'addedNotAtHome' : 'addedConversation'
+        ),
+        native: true,
+      })
     })
   }, [
     addConversation,
@@ -462,8 +401,8 @@ const ConversationFormScreen = ({ route, navigation }: Props) => {
     notifyMeOffset.unit,
     params.conversationToEditId,
     selectedContact,
+    toast,
     updateConversation,
-    validate,
   ])
 
   useEffect(() => {
@@ -498,6 +437,36 @@ const ConversationFormScreen = ({ route, navigation }: Props) => {
                   </Text>
                 </Button>
               )}
+              {isEditing && (
+                <IconButton
+                  icon={faTrash}
+                  color={theme.colors.text}
+                  onPress={() =>
+                    Alert.alert(
+                      i18n.t('deleteConversation'),
+                      i18n.t('deleteConversation_description'),
+                      [
+                        {
+                          text: i18n.t('cancel'),
+                          style: 'cancel',
+                        },
+                        {
+                          text: i18n.t('delete'),
+                          style: 'destructive',
+                          onPress: () => {
+                            deleteConversation(conversation.id)
+                            toast.show(i18n.t('success'), {
+                              message: i18n.t('deleted'),
+                              native: true,
+                            })
+                            navigation.goBack()
+                          },
+                        },
+                      ]
+                    )
+                  }
+                />
+              )}
               <Button
                 onPress={async () => {
                   const succeeded = await submit()
@@ -513,13 +482,15 @@ const ConversationFormScreen = ({ route, navigation }: Props) => {
                     updateLastTimeRequestedStoreReview,
                   })
 
-                  if (params.contactId || conversationToUpdate?.contact.id) {
+                  if (isEditing) {
+                    navigation.pop()
+                  } else if (params.contactId) {
                     navigation.replace('Contact Details', {
-                      id: params.contactId || conversationToUpdate?.contact.id,
+                      id: params.contactId,
                     })
-                    return
+                  } else {
+                    navigation.popToTop()
                   }
-                  navigation.popToTop()
                 }}
               >
                 <Text
@@ -529,9 +500,7 @@ const ConversationFormScreen = ({ route, navigation }: Props) => {
                     fontSize: 16,
                   }}
                 >
-                  {conversationToUpdate?.contact.id
-                    ? i18n.t('save')
-                    : i18n.t('add')}
+                  {isEditing ? i18n.t('save') : i18n.t('add')}
                 </Text>
               </Button>
             </View>
@@ -541,14 +510,18 @@ const ConversationFormScreen = ({ route, navigation }: Props) => {
     })
   }, [
     calledGoecodeApiTimes,
+    conversation.id,
     conversationToUpdate?.contact.id,
+    deleteConversation,
     installedOn,
+    isEditing,
     lastTimeRequestedAReview,
     navigation,
     params,
     submit,
     theme.colors.text,
     theme.colors.textInverse,
+    toast,
     updateLastTimeRequestedStoreReview,
   ])
 
@@ -613,33 +586,20 @@ const ConversationFormScreen = ({ route, navigation }: Props) => {
               : i18n.t('addConversation_description')}
           </Text>
         </View>
-        <AssignmentSection
-          errors={errors}
-          navigation={navigation}
-          selectedContact={selectedContact}
-          set_selectedContactId={set_selectedContactId}
-        />
+        {selectedContact && <ContactRow selectedContact={selectedContact} />}
         <Divider borderStyle='dashed' />
         <Section>
           <InputRowContainer
             label={i18n.t('date')}
             justifyContent='space-between'
           >
-            {Platform.OS === 'android' ? (
-              <AndroidDateTimePicker
-                maximumDate={moment().toDate()}
-                value={conversation.date}
-                onChange={handleDateChange}
-                timeAndDate
-              />
-            ) : (
-              <RNDateTimePicker
-                maximumDate={moment().toDate()}
-                value={conversation.date}
-                onChange={handleDateChange}
-                mode='datetime'
-              />
-            )}
+            <DateTimePicker
+              maximumDate={moment().toDate()}
+              value={conversation.date}
+              onChange={handleDateChange}
+              timeAndDate
+              iOSMode='datetime'
+            />
           </InputRowContainer>
           <TextInputRow
             label={i18n.t('note')}
@@ -669,21 +629,13 @@ const ConversationFormScreen = ({ route, navigation }: Props) => {
             label={i18n.t('followUp')}
             justifyContent='space-between'
           >
-            {Platform.OS === 'android' ? (
-              <AndroidDateTimePicker
-                minimumDate={moment().toDate()}
-                value={conversation.followUp!.date}
-                onChange={handleFollowUpDateChange}
-                timeAndDate
-              />
-            ) : (
-              <RNDateTimePicker
-                mode='datetime'
-                minimumDate={moment().toDate()}
-                value={conversation.followUp!.date}
-                onChange={handleFollowUpDateChange}
-              />
-            )}
+            <DateTimePicker
+              minimumDate={moment().toDate()}
+              value={conversation.followUp!.date}
+              onChange={handleFollowUpDateChange}
+              timeAndDate
+              iOSMode='datetime'
+            />
           </InputRowContainer>
           <TextInputRow
             label={i18n.t('topic')}

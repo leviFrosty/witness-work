@@ -4,7 +4,8 @@ import Card from './Card'
 import Text from './MyText'
 import usePublisher from '../hooks/usePublisher'
 import {
-  getTotalHoursForServiceYear,
+  getServiceYearReports,
+  getTotalMinutesForServiceYear,
   serviceReportHoursPerMonthToGoal,
 } from '../lib/serviceReport'
 import SimpleProgressBar from './SimpleProgressBar'
@@ -18,6 +19,8 @@ import {
   faCaretUp,
   faMinus,
 } from '@fortawesome/free-solid-svg-icons'
+import _ from 'lodash'
+import { useFormattedMinutes } from '../lib/minutes'
 
 /** Renders all service reports for the given year as a summary. */
 interface AnnualServiceReportSummaryProps {
@@ -34,30 +37,43 @@ interface AnnualServiceReportSummaryProps {
   serviceYear: number
   year: number
   month: number
+  hidePerMonthToGoal?: boolean
 }
 
 const AnnualServiceReportSummary = ({
   serviceYear,
   year,
   month,
+  hidePerMonthToGoal,
 }: AnnualServiceReportSummaryProps) => {
   const theme = useTheme()
   const { annualGoalHours, goalHours } = usePublisher()
   const { serviceReports } = useServiceReport()
 
-  const totalHoursForServiceYear = getTotalHoursForServiceYear(
-    serviceReports,
-    serviceYear
+  const totalMinutesForServiceYear = useMemo(() => {
+    const serviceYearsReports = getServiceYearReports(serviceReports, year - 1)
+    const total = getTotalMinutesForServiceYear(
+      serviceYearsReports,
+      serviceYear
+    )
+
+    return total
+  }, [serviceReports, serviceYear, year])
+
+  const totalMinutesForServiceYearWithFormat = useFormattedMinutes(
+    totalMinutesForServiceYear
   )
 
   const percentage = useMemo(() => {
-    return parseFloat(
-      (totalHoursForServiceYear / annualGoalHours).toPrecision(3)
-    )
-  }, [totalHoursForServiceYear, annualGoalHours])
+    return _.round(totalMinutesForServiceYear / 60 / annualGoalHours, 6)
+  }, [totalMinutesForServiceYear, annualGoalHours])
 
   const hoursPerMonthToGoal = useMemo(() => {
-    return serviceReportHoursPerMonthToGoal({
+    if (hidePerMonthToGoal) {
+      return
+    }
+
+    const hoursPerMonth = serviceReportHoursPerMonthToGoal({
       currentDate: {
         month,
         year,
@@ -66,17 +82,19 @@ const AnnualServiceReportSummary = ({
       serviceReports,
       serviceYear,
     })
-  }, [goalHours, month, serviceReports, serviceYear, year])
+
+    return hoursPerMonth
+  }, [goalHours, hidePerMonthToGoal, month, serviceReports, serviceYear, year])
 
   const isFasterThanMonthlyGoalHours =
-    hoursPerMonthToGoal === goalHours
+    hoursPerMonthToGoal === goalHours || !hoursPerMonthToGoal
       ? undefined
       : hoursPerMonthToGoal < goalHours
         ? true
         : false
 
   return (
-    <Card>
+    <Card style={{ flexGrow: 1 }}>
       <View
         style={{
           flexDirection: 'row',
@@ -101,7 +119,7 @@ const AnnualServiceReportSummary = ({
               fontFamily: theme.fonts.semiBold,
             }}
           >
-            {`${totalHoursForServiceYear} ${i18n.t(
+            {`${totalMinutesForServiceYearWithFormat.formatted} ${i18n.t(
               'of'
             )} ${annualGoalHours} ${i18n.t('hours')}`}
           </Text>
@@ -110,48 +128,52 @@ const AnnualServiceReportSummary = ({
       <SimpleProgressBar
         percentage={percentage}
         height={10}
-        color={theme.colors.textAlt}
+        color={percentage >= 1 ? theme.colors.accent : theme.colors.textAlt}
       />
-      <View style={{ flexDirection: 'row' }}>
-        <Badge
-          color={
-            isFasterThanMonthlyGoalHours === undefined
-              ? theme.colors.backgroundLighter
-              : isFasterThanMonthlyGoalHours
-                ? theme.colors.accent
-                : theme.colors.error
-          }
-        >
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
-            <IconButton
-              color={
-                isFasterThanMonthlyGoalHours === undefined
-                  ? theme.colors.text
-                  : theme.colors.textInverse
-              }
-              icon={
-                isFasterThanMonthlyGoalHours === undefined
-                  ? faMinus
-                  : isFasterThanMonthlyGoalHours
-                    ? faCaretUp
-                    : faCaretDown
-              }
-              size={12}
-            />
-            <Text
-              style={{
-                fontSize: theme.fontSize('sm'),
-                color:
+      {!hidePerMonthToGoal && (
+        <View style={{ flexDirection: 'row' }}>
+          <Badge
+            color={
+              isFasterThanMonthlyGoalHours === undefined
+                ? theme.colors.backgroundLighter
+                : isFasterThanMonthlyGoalHours
+                  ? theme.colors.accent
+                  : theme.colors.error
+            }
+          >
+            <View
+              style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}
+            >
+              <IconButton
+                color={
                   isFasterThanMonthlyGoalHours === undefined
                     ? theme.colors.text
-                    : theme.colors.textInverse,
-              }}
-            >
-              {hoursPerMonthToGoal} {i18n.t('hoursPerMonthToGoal')}
-            </Text>
-          </View>
-        </Badge>
-      </View>
+                    : theme.colors.textInverse
+                }
+                icon={
+                  isFasterThanMonthlyGoalHours === undefined
+                    ? faMinus
+                    : isFasterThanMonthlyGoalHours
+                      ? faCaretUp
+                      : faCaretDown
+                }
+                size={12}
+              />
+              <Text
+                style={{
+                  fontSize: theme.fontSize('sm'),
+                  color:
+                    isFasterThanMonthlyGoalHours === undefined
+                      ? theme.colors.text
+                      : theme.colors.textInverse,
+                }}
+              >
+                {hoursPerMonthToGoal} {i18n.t('hoursPerMonthToGoal')}
+              </Text>
+            </View>
+          </Badge>
+        </View>
+      )}
     </Card>
   )
 }

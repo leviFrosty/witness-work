@@ -75,7 +75,11 @@ export const WhatsNewContent = ({ lastVersion }: { lastVersion: string }) => {
                 </Text>
 
                 {semver.lt(lastVersion, item.version) && (
-                  <Badge size='sm'>{i18n.t('new')}</Badge>
+                  <Badge size='sm'>
+                    <Text style={{ color: theme.colors.textInverse }}>
+                      {i18n.t('new')}
+                    </Text>
+                  </Badge>
                 )}
                 {semver.eq(
                   item.version,

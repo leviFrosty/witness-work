@@ -4,7 +4,6 @@ import useConversations from '../stores/conversationStore'
 import moment from 'moment'
 import { useMemo } from 'react'
 import Text from './MyText'
-import { ContactMarker } from '../screens/MapScreen'
 import { getMostRecentConversationForContact } from '../lib/contacts'
 import i18n from '../lib/locales'
 import Button from './Button'
@@ -16,8 +15,7 @@ import {
   faPhone,
 } from '@fortawesome/free-solid-svg-icons'
 import { useNavigation } from '@react-navigation/native'
-import { RootStackNavigation } from '../stacks/RootStack'
-import { addressToString, navigateTo } from '../lib/address'
+import { addressToString, coordinateAsString, navigateTo } from '../lib/address'
 import Copyeable from './Copyeable'
 import links from '../constants/links'
 import { MapShareSheet } from './ShareAddressSheet'
@@ -25,6 +23,8 @@ import { parsePhoneNumber } from 'awesome-phonenumber'
 import { getLocales } from 'expo-localization'
 import { handleCall, handleMessage } from '../lib/phone'
 import { usePreferences } from '../stores/preferences'
+import { RootStackNavigation } from '../types/rootStack'
+import { ContactMarker } from '../types/map'
 
 interface Props {
   contact: ContactMarker
@@ -52,14 +52,17 @@ const MapCarouselCard = ({ contact, setSheet }: Props) => {
   }
 
   const address = addressToString(contact.address)
+  const coord = coordinateAsString(contact)
 
   const mostRecentDate = mostRecentConversation
     ? moment(mostRecentConversation.date)
     : null
 
-  const addressUriEncoded = encodeURI(address)
+  const addressUriEncoded = encodeURI(
+    contact.userDraggedCoordinate ? coord : address
+  )
   const appleMapsLink = `${links.appleMapsBase}/?q=${addressUriEncoded}`
-  const googleMapsLink = `${links.googleMapsBase}/?api=1&query=${addressUriEncoded}`
+  const googleMapsLink = `${links.googleMapsBase}${addressUriEncoded}`
 
   return (
     <Button
@@ -68,14 +71,15 @@ const MapCarouselCard = ({ contact, setSheet }: Props) => {
         backgroundColor: theme.colors.card,
         borderRadius: theme.numbers.borderRadiusLg,
         padding: 15,
-        gap: 10,
+        gap: 5,
+        flex: 1,
       }}
     >
       <View
         style={{
           flexDirection: 'row',
           justifyContent: 'space-between',
-          alignItems: 'center',
+          alignItems: 'flex-start',
         }}
       >
         <Text
@@ -106,7 +110,14 @@ const MapCarouselCard = ({ contact, setSheet }: Props) => {
           />
         </Button>
       </View>
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
+      <View
+        style={{
+          flexDirection: 'row',
+          alignItems: 'center',
+          gap: 5,
+          flexGrow: 1,
+        }}
+      >
         <View
           style={{
             width: 12,
@@ -126,8 +137,9 @@ const MapCarouselCard = ({ contact, setSheet }: Props) => {
           style={{
             color: theme.colors.textAlt,
           }}
+          numberOfLines={2}
         >
-          {address}
+          {address ? address : coord}
         </Text>
       </Copyeable>
       <View
@@ -139,9 +151,7 @@ const MapCarouselCard = ({ contact, setSheet }: Props) => {
         }}
       >
         <Button
-          onPress={() =>
-            navigateTo(contact.address!, defaultNavigationMapProvider)
-          }
+          onPress={() => navigateTo(contact, defaultNavigationMapProvider)}
           style={{
             paddingHorizontal: 20,
             paddingVertical: 20,
@@ -177,7 +187,6 @@ const MapCarouselCard = ({ contact, setSheet }: Props) => {
             style={{ gap: 10, paddingHorizontal: 20 }}
           >
             <IconButton icon={faPhone} />
-            <Text>{i18n.t('call')}</Text>
           </Button>
         )}
         {contact.phone && (
@@ -187,7 +196,6 @@ const MapCarouselCard = ({ contact, setSheet }: Props) => {
             style={{ gap: 10, paddingHorizontal: 20 }}
           >
             <IconButton icon={faMessage} />
-            <Text>{i18n.t('message')}</Text>
           </Button>
         )}
       </View>

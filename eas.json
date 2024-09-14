@@ -5,9 +5,26 @@
     "appVersionSource": "remote"
   },
   "build": {
+    "development-simulator": {
+      "developmentClient": true,
+      "distribution": "internal",
+      "ios": {
+        "simulator": true
+      },
+      "env": {
+        "APP_VARIANT": "development",
+        "ANDROID_SDK_ROOT": "/Users/levi/Library/Android/sdk"
+      },
+      "node": "20.14.0"
+    },
+
     "development": {
       "developmentClient": true,
-      "distribution": "internal"
+      "distribution": "internal",
+      "env": {
+        "APP_VARIANT": "development"
+      },
+      "node": "20.14.0"
     },
     "preview": {
       "distribution": "internal",
@@ -15,7 +32,16 @@
     },
     "production": {
       "channel": "production",
-      "autoIncrement": true
+      "autoIncrement": true,
+      "node": "20.14.0"
+    },
+    "production-simulator": {
+      "distribution": "internal",
+      "channel": "production",
+      "ios": {
+        "simulator": true
+      },
+      "node": "20.14.0"
     }
   },
   "submit": {

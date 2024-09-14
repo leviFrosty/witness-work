@@ -1,17 +1,18 @@
 import { ColorSchemeName } from 'react-native'
-import { Colors, Theme, ThemeSizes } from '../types/theme'
+import * as Device from 'expo-device'
 
 export const lightModeColors = {
   text: '#373737',
   textAlt: '#9B9B9B',
   textInverse: '#FFFFFF',
   textInverseAlt: '#E2E2E2',
-  accent: '#1BD15D',
+  accent: '#08cc50',
+  accentTranslucent: '#1BD15D33',
   accentBackground: '#4BD27C',
   accentAlt: '#B7DDC5',
   background: '#E9E9E9',
   backgroundLightest: '#F0F0F0',
-  border: '#E1E1E1',
+  border: '#dbdbdb',
   backgroundLighter: '#F8F8F8',
   card: '#FFFFFF',
   accent2: '#F19389',
@@ -19,8 +20,10 @@ export const lightModeColors = {
   accent3: '#003D46',
   accent3Alt: '#9fb9d1',
   error: '#E30909',
+  errorTranslucent: '#E3090933',
   errorAlt: '#FA6868',
-  warn: '#FCC014',
+  warn: '#d19b00',
+  warnTranslucent: '#d19b0033',
   warnAlt: '#FFEAB8',
   shadow: '#000000',
 }
@@ -31,6 +34,7 @@ const darkModeColors: Colors = {
   textInverse: '#141414',
   textInverseAlt: '#373737',
   accent: '#1BD15D',
+  accentTranslucent: '#1BD15D33',
   accentBackground: '#4BD27C',
   accentAlt: '#99BFA7',
   background: '#121212',
@@ -43,8 +47,10 @@ const darkModeColors: Colors = {
   accent3: '#159fb0',
   accent3Alt: '#003D46',
   error: '#F20A0A',
+  errorTranslucent: '#F20A0A33',
   errorAlt: '#FA6868',
   warn: '#FCC014',
+  warnTranslucent: '#FCC01433',
   warnAlt: '#FFEAB8',
   shadow: '#000000',
 }
@@ -53,9 +59,14 @@ export const numbers = {
   borderRadiusSm: 5,
   borderRadiusMd: 10,
   borderRadiusLg: 15,
+  borderRadiusXl: 25,
   shadowOpacity: 0.1,
 }
 
+/**
+ * In reality, these are also used to set the font weight. Setting the font
+ * weight directly does not work due to custom font being used.
+ */
 export const fonts = {
   regular: 'Inter_400Regular',
   medium: 'Inter_500Medium',
@@ -64,23 +75,34 @@ export const fonts = {
 }
 
 const fontSize = (size?: ThemeSizes) => {
+  const defaultSize = 14
+  const isTablet = Device.deviceType === Device.DeviceType.TABLET
+  // Slightly increases default font size for readability on large devices
+  const deviceTypeOffset = isTablet ? 2 : 0
+
+  const sizeFromDefault = (offset: number) => {
+    return defaultSize + deviceTypeOffset + offset
+  }
+
   switch (size) {
     case 'xs':
-      return 10
+      return sizeFromDefault(-4)
     case 'sm':
-      return 12
+      return sizeFromDefault(-2)
     case 'md':
-      return 14
+      return sizeFromDefault(0)
     case 'lg':
-      return 16
+      return sizeFromDefault(2)
     case 'xl':
-      return 20
+      return sizeFromDefault(6)
     case '2xl':
-      return 24
+      return sizeFromDefault(10)
     case '3xl':
-      return 28
+      return sizeFromDefault(14)
+    case '4xl':
+      return sizeFromDefault(18)
     default:
-      return 14
+      return sizeFromDefault(0)
   }
 }
 
@@ -104,3 +126,24 @@ const getThemeFromColorScheme = (colorScheme: ColorSchemeName): Theme => {
 }
 
 export default getThemeFromColorScheme
+
+export type ThemeSizes =
+  | 'xs'
+  | 'sm'
+  | 'md'
+  | 'lg'
+  | 'xl'
+  | '2xl'
+  | '3xl'
+  | '4xl'
+
+export type Colors = typeof lightModeColors
+export type Fonts = typeof fonts
+
+export type Theme = {
+  numbers: typeof numbers
+  colors: Colors
+  /** Use with `fontFamily` to set Text font weight. */
+  fonts: Fonts
+  fontSize: (size?: ThemeSizes) => number
+}

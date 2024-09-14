@@ -1,72 +1,54 @@
-import { Alert, View } from 'react-native'
-import { useContext } from 'react'
+import { View } from 'react-native'
+import { useCallback, useContext, useMemo } from 'react'
 import moment from 'moment'
 import useTheme, { ThemeContext } from '../contexts/theme'
 import Card from './Card'
 import Text from './MyText'
 import { FlashList } from '@shopify/flash-list'
-import { hasServiceReportsForMonth } from '../lib/serviceReport'
 import useServiceReport from '../stores/serviceReport'
 import { usePreferences } from '../stores/preferences'
 import { useNavigation } from '@react-navigation/native'
-import { RootStackNavigation } from '../stacks/RootStack'
 import i18n from '../lib/locales'
 import IconButton from './IconButton'
 import { faCheck, faMinus, faTimes } from '@fortawesome/free-solid-svg-icons'
 import Button from './Button'
+import { getMonthsReports } from '../lib/serviceReport'
+import { HomeTabStackNavigation } from '../types/homeStack'
 
-const Month = ({
-  month,
-  setHasShownInvalidMonthAlert,
-  hasShownInvalidMonthAlert,
-}: {
-  month: number
-  setHasShownInvalidMonthAlert: () => void
-  hasShownInvalidMonthAlert?: boolean
-}) => {
+const Month = ({ month, year }: { month: number; year: number }) => {
   const theme = useTheme()
-  const navigation = useNavigation<RootStackNavigation>()
+  const navigation = useNavigation<HomeTabStackNavigation>()
   const { installedOn, publisher } = usePreferences()
-  const currentMonth = moment().month()
-  const isCurrentMonth = currentMonth === month
-  const monthHasPassed = currentMonth > month
-  const monthInFuture = currentMonth < month
+  const current = moment()
+  const toDisplay = moment().month(month).year(year)
+  const isCurrentMonth = current.isSame(toDisplay, 'month')
+  const monthHasPassed = current.isAfter(toDisplay)
+  const monthInFuture = current.isBefore(toDisplay)
   const { serviceReports } = useServiceReport()
-  const wentOutThisMonth = hasServiceReportsForMonth(
-    serviceReports,
-    month,
-    moment().year()
+  const monthReports = useMemo(
+    () => getMonthsReports(serviceReports, month, year),
+    [month, serviceReports, year]
   )
-  const monthWasBeforeInstalled = month < moment(installedOn).month()
 
-  const didNotGoOutInService = monthHasPassed && !wentOutThisMonth
-  const hasNotGoneOutTheCurrentMonth = isCurrentMonth && !wentOutThisMonth
+  const monthWasBeforeInstalled = toDisplay.isBefore(installedOn)
 
-  const handleInvalidMonthPress = () => {
-    setHasShownInvalidMonthAlert()
-    Alert.alert(
-      i18n.t('cannotNavigateToFutureMonth'),
-      i18n.t('cannotNavigateToFutureMonth_description')
-    )
-  }
+  const didNotGoOutInService = monthHasPassed && !monthReports.length
+  const hasNotGoneOutTheCurrentMonth = isCurrentMonth && !monthReports.length
 
   return (
     <Button
-      disabled={monthInFuture && hasShownInvalidMonthAlert}
       onPress={
-        publisher === 'publisher'
-          ? undefined
-          : () =>
-              monthInFuture
-                ? handleInvalidMonthPress()
-                : navigation.navigate('Time Reports', {
-                    month,
-                    year: moment().year(),
-                  })
+        publisher !== 'publisher'
+          ? () =>
+              navigation.navigate('Month', {
+                month,
+                year,
+              })
+          : undefined
       }
       style={{
         gap: 5,
-        backgroundColor: isCurrentMonth ? theme.colors.accent3 : undefined,
+        backgroundColor: isCurrentMonth ? theme.colors.text : undefined,
         borderRadius: theme.numbers.borderRadiusSm,
         padding: 7,
       }}
@@ -82,7 +64,7 @@ const Month = ({
       >
         <IconButton
           iconStyle={{
-            color: wentOutThisMonth
+            color: monthReports.length
               ? theme.colors.accent
               : hasNotGoneOutTheCurrentMonth ||
                   monthInFuture ||
@@ -115,14 +97,23 @@ const Month = ({
 
 const MonthlyRoutine = () => {
   const theme = useContext(ThemeContext)
-  const { monthlyRoutineHasShownInvalidMonthAlert, set } = usePreferences()
 
-  const setHasShownInvalidMonthAlert = () => {
-    set({ monthlyRoutineHasShownInvalidMonthAlert: true })
-  }
+  const surroundingMonths = useCallback(() => {
+    const now = moment()
+    const currentMonth = now.month()
+
+    const months = [now]
+    for (let i = 1; i < 6; i++) {
+      const nextMonth = moment().month(currentMonth + i)
+      const previousMonth = moment().month(currentMonth - i)
+      months.push(nextMonth)
+      months.unshift(previousMonth)
+    }
+    return months
+  }, [])
 
   return (
-    <View style={{ gap: 10 }}>
+    <View style={{ gap: 10, flexShrink: 1 }}>
       <Text
         style={{
           fontSize: 14,
@@ -132,23 +123,17 @@ const MonthlyRoutine = () => {
       >
         {i18n.t('monthlyRoutine')}
       </Text>
-      <Card>
+      <Card style={{ flexGrow: 1, justifyContent: 'center' }}>
         <FlashList
           horizontal
-          initialScrollIndex={moment().month()}
-          keyExtractor={(item) => item.toString()}
+          initialScrollIndex={5}
+          keyExtractor={(item) => item.format()}
           estimatedItemSize={44}
-          data={[...Array(12).keys()]}
-          renderItem={({ item: month }) => {
-            return (
-              <Month
-                month={month}
-                hasShownInvalidMonthAlert={
-                  monthlyRoutineHasShownInvalidMonthAlert
-                }
-                setHasShownInvalidMonthAlert={setHasShownInvalidMonthAlert}
-              />
-            )
+          data={surroundingMonths()}
+          renderItem={({ item }) => {
+            const month = item.month()
+            const year = item.year()
+            return <Month month={month} year={year} />
           }}
           showsHorizontalScrollIndicator={false}
         />

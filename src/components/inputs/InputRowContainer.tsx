@@ -60,7 +60,13 @@ const InputRowContainer: React.FC<
       ]}
     >
       {(leftIcon || label) && (
-        <View style={{ alignItems: 'center', gap: 5, flexDirection: 'row' }}>
+        <View
+          style={{
+            alignItems: 'center',
+            gap: 5,
+            flexDirection: 'row',
+          }}
+        >
           {leftIcon && <IconButton icon={leftIcon} />}
           {label && (
             <Text

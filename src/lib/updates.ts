@@ -1,8 +1,8 @@
 import { Alert, Platform } from 'react-native'
 import * as Updates from 'expo-updates'
 import i18n from './locales'
-import * as Sentry from 'sentry-expo'
-import { RootStackParamList } from '../stacks/RootStack'
+import * as Sentry from '@sentry/react-native'
+import { RootStackParamList } from '../types/rootStack'
 
 export const fetchUpdate = async (
   handleNavigation: (destination: keyof RootStackParamList) => void
@@ -24,6 +24,6 @@ export const fetchUpdate = async (
       }`,
       `${i18n.t('update_error')} ${error}`
     )
-    Sentry.Native.captureException(error)
+    Sentry.captureException(error)
   }
 }

@@ -9,13 +9,13 @@ import moment from 'moment'
 import i18n from '../lib/locales'
 import Button from './Button'
 import { useNavigation } from '@react-navigation/native'
-import { RootStackNavigation } from '../stacks/RootStack'
 import IconButton from './IconButton'
 import {
   faBell,
   faBellSlash,
   faChevronRight,
 } from '@fortawesome/free-solid-svg-icons'
+import { RootStackNavigation } from '../types/rootStack'
 
 const ApproachingConversationRow = ({
   conversation,

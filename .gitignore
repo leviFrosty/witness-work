@@ -40,3 +40,12 @@ googleServiceAccount.json
 
 # Windows
 %ProgramData%/
+
+ios/
+
+# Compiled tamagui config
+.tamagui/
+
+# Local Builds
+build-*
+

@@ -1,5 +1,4 @@
 import { View } from 'react-native'
-import Button from './Button'
 import Text from './MyText'
 import i18n from '../lib/locales'
 import Divider from './Divider'
@@ -7,12 +6,13 @@ import MonthServiceReportProgressBar from './MonthServiceReportProgressBar'
 import { faArrowUpFromBracket } from '@fortawesome/free-solid-svg-icons'
 import IconButton from './IconButton'
 import {
-  ldcHoursForSpecificMonth,
-  otherHoursForSpecificMonth,
-  standardHoursForSpecificMonth,
-  totalHoursForSpecificMonth,
+  AdjustedMinutes,
+  adjustedMinutesForSpecificMonth,
+  ldcMinutesForSpecificMonth,
+  otherMinutesForSpecificMonth,
+  standardMinutesForSpecificMonth,
 } from '../lib/serviceReport'
-import { useMemo, useState } from 'react'
+import { useMemo } from 'react'
 import useTheme from '../contexts/theme'
 import { ExportTimeSheetState } from './ExportTimeSheet'
 import { ServiceReport } from '../types/serviceReport'
@@ -21,13 +21,19 @@ import { usePreferences } from '../stores/preferences'
 import Card from './Card'
 import ActionButton from './ActionButton'
 import { useNavigation } from '@react-navigation/native'
-import { RootStackNavigation } from '../stacks/RootStack'
+import _ from 'lodash'
+import moment from 'moment'
+import { useFormattedMinutes } from '../lib/minutes'
+import { RootStackNavigation } from '../types/rootStack'
 
 interface MonthSummaryProps {
   monthsReports: ServiceReport[] | null
   month: number
   year: number
-  setSheet: React.Dispatch<React.SetStateAction<ExportTimeSheetState>>
+  setSheet?: React.Dispatch<React.SetStateAction<ExportTimeSheetState>>
+  title?: string
+  noDetails?: boolean
+  highlightAsCurrentMonth?: boolean
 }
 
 const MonthSummary = ({
@@ -35,41 +41,48 @@ const MonthSummary = ({
   month,
   year,
   setSheet,
+  title,
+  noDetails,
+  highlightAsCurrentMonth,
 }: MonthSummaryProps) => {
   const theme = useTheme()
   const { publisher, publisherHours } = usePreferences()
-  const [expandOtherCategories, setExpandOtherCategories] = useState(false)
   const goalHours = publisherHours[publisher]
   const navigation = useNavigation<RootStackNavigation>()
 
-  const totalHours = useMemo(
+  const adjustedMinutes: AdjustedMinutes = monthsReports
+    ? adjustedMinutesForSpecificMonth(monthsReports, month, year)
+    : { value: 0, credit: 0, standard: 0, creditOverage: 0 }
+
+  const minutesWithFormat = useFormattedMinutes(adjustedMinutes.value)
+
+  const ldcMinutes = useMemo(
     () =>
       monthsReports
-        ? totalHoursForSpecificMonth(monthsReports, month, year)
+        ? ldcMinutesForSpecificMonth(monthsReports, month, year)
         : 0,
     [month, monthsReports, year]
   )
 
-  const ldcHours = useMemo(
-    () =>
-      monthsReports ? ldcHoursForSpecificMonth(monthsReports, month, year) : 0,
-    [month, monthsReports, year]
-  )
-
-  const standardHours = useMemo(
+  const standardMinutes = useMemo(
     () =>
       monthsReports
-        ? standardHoursForSpecificMonth(monthsReports, month, year)
+        ? standardMinutesForSpecificMonth(monthsReports, month, year)
         : 0,
     [month, monthsReports, year]
   )
 
-  const otherHours = useMemo(
+  const otherMinutes = useMemo(
     () =>
       monthsReports
-        ? otherHoursForSpecificMonth(monthsReports, month, year)
+        ? otherMinutesForSpecificMonth(monthsReports, month, year)
         : null,
     [month, monthsReports, year]
+  )
+
+  const monthInFuture = moment().isBefore(
+    moment().month(month).year(year),
+    'month'
   )
 
   if (!monthsReports) {
@@ -77,7 +90,8 @@ const MonthSummary = ({
       <Card>
         <Text
           style={{
-            fontFamily: theme.fonts.semiBold,
+            fontSize: theme.fontSize('xl'),
+            fontFamily: theme.fonts.bold,
           }}
         >
           {i18n.t('noTimeReports')}
@@ -90,43 +104,70 @@ const MonthSummary = ({
         >
           {i18n.t('noTimeReports_description')}
         </Text>
-        <ActionButton
-          onPress={() => navigation.navigate('Add Time', { month, year })}
-        >
-          <Text
-            style={{
-              textAlign: 'center',
-              flex: 1,
-              color: theme.colors.textInverse,
-            }}
+        {monthInFuture ? (
+          <ActionButton
+            onPress={() => navigation.navigate('PlanSchedule', { month, year })}
           >
-            {i18n.t('addTime')}
-          </Text>
-        </ActionButton>
+            <Text
+              style={{
+                color: theme.colors.textInverse,
+                fontFamily: theme.fonts.bold,
+              }}
+            >
+              {i18n.t('createPlan')}
+            </Text>
+          </ActionButton>
+        ) : (
+          <ActionButton
+            onPress={() =>
+              navigation.navigate('Add Time', {
+                date: moment().month(month).year(year).toISOString(),
+              })
+            }
+          >
+            <Text
+              style={{
+                textAlign: 'center',
+                flex: 1,
+                color: theme.colors.textInverse,
+                fontFamily: theme.fonts.bold,
+              }}
+            >
+              {i18n.t('addTime')}
+            </Text>
+          </ActionButton>
+        )}
       </Card>
     )
   }
 
   return (
-    <View style={{ gap: 3 }}>
-      <Card>
-        <View style={{ gap: 10 }}>
-          <View
+    <Card
+      style={{
+        borderColor: theme.colors.accent,
+        borderWidth: highlightAsCurrentMonth ? 2 : 0,
+        gap: noDetails ? 3 : 15,
+        paddingVertical: noDetails ? 10 : 20,
+      }}
+    >
+      <View style={{ gap: noDetails ? 2 : 10 }}>
+        <View
+          style={{
+            flexDirection: 'row',
+            gap: 10,
+            justifyContent: 'space-between',
+            marginBottom: 3,
+          }}
+        >
+          <Text
             style={{
-              flexDirection: 'row',
-              gap: 10,
-              justifyContent: 'space-between',
-              marginBottom: 3,
+              fontFamily: theme.fonts.semiBold,
+              fontSize: theme.fontSize('xl'),
             }}
           >
-            <Text
-              style={{
-                fontFamily: theme.fonts.semiBold,
-                fontSize: theme.fontSize('xl'),
-              }}
-            >
-              {i18n.t('monthDetails')}
-            </Text>
+            {title ?? moment().month(month).year(year).format('MMMM YYYY')}
+          </Text>
+          {setSheet !== undefined && (
             <IconButton
               iconStyle={{ color: theme.colors.accent }}
               onPress={() =>
@@ -138,23 +179,41 @@ const MonthSummary = ({
               }
               icon={faArrowUpFromBracket}
             />
-          </View>
-          <View style={{ gap: 5 }}>
+          )}
+        </View>
+        <View style={{ gap: 5 }}>
+          <Text
+            style={{
+              textAlign: 'right',
+              color: theme.colors.text,
+              fontFamily: theme.fonts.semiBold,
+            }}
+          >
+            {`${minutesWithFormat.formatted} ${i18n.t(
+              'of'
+            )} ${goalHours} ${i18n.t('hoursToGoal')}`}
+          </Text>
+          {!!adjustedMinutes.creditOverage && (
             <Text
               style={{
+                fontSize: theme.fontSize('xs'),
+                color: theme.colors.warn,
                 textAlign: 'right',
-                color: theme.colors.textAlt,
-                fontFamily: theme.fonts.semiBold,
               }}
             >
-              {' '}
-              {`${totalHours} ${i18n.t('of')} ${goalHours} ${i18n.t(
-                'hoursToGoal'
-              )}`}{' '}
+              {i18n.t('youHaveCreditOverage', {
+                count: _.round(adjustedMinutes.creditOverage / 60, 1),
+              })}
             </Text>
-            <MonthServiceReportProgressBar month={month} year={year} />
-          </View>
+          )}
+          <MonthServiceReportProgressBar
+            month={month}
+            year={year}
+            minimal={noDetails}
+          />
         </View>
+      </View>
+      {!noDetails && (
         <View style={{ gap: 5 }}>
           <View
             style={{
@@ -184,38 +243,60 @@ const MonthSummary = ({
           <View style={{ gap: 10 }}>
             <TimeCategoryTableRow
               title={i18n.t('standard')}
-              number={standardHours}
+              number={standardMinutes}
             />
-            <TimeCategoryTableRow title={i18n.t('ldc')} number={ldcHours} />
-            {otherHours && otherHours.length > 0 && (
-              <>
-                {!expandOtherCategories && (
-                  <Button onPress={() => setExpandOtherCategories(true)}>
-                    <Text
-                      style={{
-                        textDecorationLine: 'underline',
-                        color: theme.colors.textAlt,
-                        fontSize: theme.fontSize('sm'),
-                      }}
-                    >
-                      {i18n.t('showOtherCategories')}
-                    </Text>
-                  </Button>
-                )}
-                {expandOtherCategories &&
-                  otherHours.map((report, index) => (
-                    <TimeCategoryTableRow
-                      key={index}
-                      title={report.tag}
-                      number={report.hours}
-                    />
-                  ))}
-              </>
-            )}
+            <TimeCategoryTableRow
+              title={i18n.t('ldc')}
+              number={ldcMinutes}
+              credit
+            />
+            {otherMinutes &&
+              otherMinutes.length > 0 &&
+              otherMinutes.map((report, index) => (
+                <TimeCategoryTableRow
+                  key={index}
+                  title={report.tag}
+                  number={report.minutes}
+                  credit={report.credit}
+                />
+              ))}
           </View>
         </View>
-      </Card>
-    </View>
+      )}
+      {monthInFuture ? (
+        <ActionButton
+          onPress={() => navigation.navigate('PlanSchedule', { month, year })}
+        >
+          <Text
+            style={{
+              color: theme.colors.textInverse,
+              fontFamily: theme.fonts.bold,
+            }}
+          >
+            {i18n.t('createPlan')}
+          </Text>
+        </ActionButton>
+      ) : !noDetails ? (
+        <ActionButton
+          onPress={() =>
+            navigation.navigate('Add Time', {
+              date: moment().month(month).year(year).toISOString(),
+            })
+          }
+        >
+          <Text
+            style={{
+              textAlign: 'center',
+              flex: 1,
+              color: theme.colors.textInverse,
+              fontFamily: theme.fonts.bold,
+            }}
+          >
+            {i18n.t('addTime')}
+          </Text>
+        </ActionButton>
+      ) : null}
+    </Card>
   )
 }
 export default MonthSummary

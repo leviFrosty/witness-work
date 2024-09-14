@@ -1,9 +1,9 @@
 import { View } from 'react-native'
-import { SettingsSectionProps } from '../SettingsScreen'
 import i18n from '../../../lib/locales'
 import Section from '../../../components/inputs/Section'
 import InputRowButton from '../../../components/inputs/InputRowButton'
 import {
+  faArrowUpRightFromSquare,
   faChevronRight,
   faCode,
   faFileContract,
@@ -13,6 +13,7 @@ import IconButton from '../../../components/IconButton'
 import links from '../../../constants/links'
 import SectionTitle from '../shared/SectionTitle'
 import { openURL } from '../../../lib/links'
+import { SettingsSectionProps } from '../settingScreen'
 
 const MiscSection = ({ handleNavigate }: SettingsSectionProps) => {
   return (
@@ -32,15 +33,22 @@ const MiscSection = ({ handleNavigate }: SettingsSectionProps) => {
           label={i18n.t('viewSource')}
           onPress={() => openURL(links.githubRepo)}
         >
-          <IconButton icon={faChevronRight} />
+          <IconButton icon={faArrowUpRightFromSquare} />
         </InputRowButton>
         <InputRowButton
           leftIcon={faFileContract}
           label={i18n.t('privacyPolicy')}
           onPress={() => openURL(links.privacyPolicy)}
+        >
+          <IconButton icon={faArrowUpRightFromSquare} />
+        </InputRowButton>
+        <InputRowButton
+          leftIcon={faFileContract}
+          label={i18n.t('termsOfUse')}
+          onPress={() => openURL(links.termsOfUse)}
           lastInSection
         >
-          <IconButton icon={faChevronRight} />
+          <IconButton icon={faArrowUpRightFromSquare} />
         </InputRowButton>
       </Section>
     </View>

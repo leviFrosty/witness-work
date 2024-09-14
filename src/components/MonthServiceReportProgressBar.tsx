@@ -3,9 +3,10 @@ import { usePreferences } from '../stores/preferences'
 import { useServiceReport } from '../stores/serviceReport'
 import useTheme from '../contexts/theme'
 import {
+  adjustedMinutesForSpecificMonth,
   calculateProgress,
-  getTotalHoursDetailedForSpecificMonth,
-  totalHoursForSpecificMonth,
+  getMonthsReports,
+  getTotalMinutesDetailedForSpecificMonth,
 } from '../lib/serviceReport'
 import { useCallback, useMemo } from 'react'
 import Text from './MyText'
@@ -118,28 +119,35 @@ const MonthServiceReportProgressBar = ({
   const theme = useTheme()
   const { serviceReports } = useServiceReport()
   const { publisher, publisherHours } = usePreferences()
+  const monthReports = useMemo(
+    () => getMonthsReports(serviceReports, month, year),
+    [month, serviceReports, year]
+  )
   const goalHours = publisherHours[publisher]
 
-  const totalHours = useMemo(
-    () => totalHoursForSpecificMonth(serviceReports, month, year),
-    [month, serviceReports, year]
+  const adjustedMinutes = useMemo(
+    () => adjustedMinutesForSpecificMonth(monthReports, month, year),
+    [month, monthReports, year]
   )
 
   const progress = useMemo(
-    () => calculateProgress({ hours: totalHours, goalHours }),
-    [totalHours, goalHours]
+    () => calculateProgress({ minutes: adjustedMinutes.value, goalHours }),
+    [adjustedMinutes, goalHours]
   )
 
-  const hoursDetailed = useMemo(
-    () => getTotalHoursDetailedForSpecificMonth(serviceReports, month, year),
-    [month, serviceReports, year]
+  const minutesDetailed = useMemo(
+    () => getTotalMinutesDetailedForSpecificMonth(monthReports, month, year),
+    [month, monthReports, year]
   )
 
-  const hasStandardHours = useMemo(
-    () => hoursDetailed.standard > 0,
-    [hoursDetailed.standard]
+  const hasStandardMinutes = useMemo(
+    () => minutesDetailed.standardWithoutOtherMinutes > 0,
+    [minutesDetailed.standardWithoutOtherMinutes]
   )
-  const hasLdcHours = useMemo(() => hoursDetailed.ldc > 0, [hoursDetailed.ldc])
+  const hasLdcMinutes = useMemo(
+    () => minutesDetailed.ldc > 0,
+    [minutesDetailed.ldc]
+  )
 
   const otherColors = useMemo(
     () =>
@@ -167,7 +175,7 @@ const MonthServiceReportProgressBar = ({
 
   const renderOtherHours = useCallback(() => {
     let currentIndex = 0
-    return hoursDetailed.other.map((report, index) => {
+    return minutesDetailed.other.reports.map((report, index) => {
       if (currentIndex > otherColors.length - 1) {
         currentIndex = 0
       }
@@ -179,15 +187,15 @@ const MonthServiceReportProgressBar = ({
         <OtherHours
           key={`${report.tag}-${index}`}
           color={color}
-          percentage={report.hours / totalHours}
+          percentage={report.minutes / adjustedMinutes.value}
         />
       )
     })
-  }, [hoursDetailed.other, otherColors, totalHours])
+  }, [minutesDetailed.other, otherColors, adjustedMinutes.value])
 
   const renderOtherHoursColorKeys = useCallback(() => {
     let currentIndex = 0
-    return hoursDetailed.other.map((report, index) => {
+    return minutesDetailed.other.reports.map((report, index) => {
       if (currentIndex > otherColors.length - 1) {
         currentIndex = 0
       }
@@ -203,7 +211,7 @@ const MonthServiceReportProgressBar = ({
         />
       )
     })
-  }, [hoursDetailed.other, otherColors])
+  }, [minutesDetailed.other, otherColors])
 
   return (
     <View
@@ -220,6 +228,7 @@ const MonthServiceReportProgressBar = ({
           gap: 2,
           position: 'relative',
           width: '100%',
+          height: 20,
           backgroundColor: theme.colors.background,
           borderRadius: theme.numbers.borderRadiusSm,
           overflow: 'hidden',
@@ -232,15 +241,15 @@ const MonthServiceReportProgressBar = ({
             alignItems: 'center',
           }}
         >
-          {hasStandardHours && (
+          {hasStandardMinutes && (
             <StandardHours
-              percentage={hoursDetailed.standard / totalHours}
+              percentage={minutesDetailed.standard / adjustedMinutes.value}
               color={theme.colors.accent}
             />
           )}
-          {hasLdcHours && (
+          {hasLdcMinutes && (
             <LdcHours
-              percentage={hoursDetailed.ldc / totalHours}
+              percentage={minutesDetailed.ldc / adjustedMinutes.value}
               color={minimal ? theme.colors.accent : theme.colors.accentAlt}
             />
           )}
@@ -256,13 +265,13 @@ const MonthServiceReportProgressBar = ({
             flexWrap: 'wrap',
           }}
         >
-          {hasStandardHours && (
+          {hasStandardMinutes && (
             <ProgressBarKey
               color={theme.colors.accent}
               label={i18n.t('standard')}
             />
           )}
-          {hasLdcHours && (
+          {hasLdcMinutes && (
             <ProgressBarKey
               color={theme.colors.accentAlt}
               label={i18n.t('ldc')}

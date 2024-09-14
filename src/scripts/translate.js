@@ -4,13 +4,14 @@ const path = require('path')
 require('dotenv').config()
 const { exec } = require('child_process')
 
-console.log('[translate] - Starting auto translations...')
-
-if (!process.env.GOOGLE_CLOUD_API_KEY) {
-  throw new Error(
-    'Google API key not provided. Please add GOOGLE_CLOUD_API_KEY to .env'
-  )
+const log = (...stringArrays) => {
+  console.log('[translate] - ' + stringArrays)
 }
+const logError = (...stringArrays) => {
+  console.error('[translate] - ' + stringArrays)
+}
+
+log('✅ Starting auto translations...')
 
 const listFilesWithoutExtensions = (directoryPath) => {
   try {
@@ -21,23 +22,34 @@ const listFilesWithoutExtensions = (directoryPath) => {
 
     return fileNamesWithoutExtensions
   } catch (error) {
-    console.error('Error reading directory:', error)
+    logError('Error reading directory:', error)
     return []
   }
 }
 
 const directoryPath = 'src/locales/'
 const locales = listFilesWithoutExtensions(directoryPath)
-locales.forEach((locale) => {
-  const nodeCommand = `cd ${directoryPath} && i18n-auto-translation -k ${process.env.GOOGLE_CLOUD_API_KEY} -d ./ -f en -t ${locale}`
 
-  exec(nodeCommand, (error, stdout) => {
-    if (error) {
-      console.error(`Error executing the command: ${error}`)
-      return
-    }
-    console.log(stdout)
+const translationPromises = locales.map((locale) => {
+  return new Promise((resolve, reject) => {
+    const nodeCommand = `cd ${directoryPath} && i18n-auto-translation -k ${process.env.GOOGLE_CLOUD_API_KEY} -d ./ -f en-US -t ${locale}`
+
+    exec(nodeCommand, (error, stdout) => {
+      if (error) {
+        logError(`Error executing the command: ${error}`)
+        reject(error)
+      } else {
+        log(stdout)
+        resolve()
+      }
+    })
   })
 })
 
-console.log('[translate] - Finished auto translations')
+Promise.all(translationPromises)
+  .then(() => {
+    log('✅ Finished auto translations')
+  })
+  .catch((error) => {
+    logError('Error during translations:', error)
+  })

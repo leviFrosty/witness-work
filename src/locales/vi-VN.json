@@ -506,6 +506,10 @@
       "c1": "Đã thêm trình chọn ngôn ngữ. Xem Tùy chọn để điều chỉnh ngôn ngữ của bạn theo cách thủ công.",
       "c2": "Đã giải quyết vấn đề với gói một lần có ngày tối đa không chính xác.",
       "c3": "Giải quyết sự cố xóa danh mục thời gian."
+    },
+    "1340": {
+      "c1": "Đã thêm phần thưởng đặc biệt khi bạn đánh dấu vào ô thời gian hoặc thêm thời gian!",
+      "c2": "Bây giờ bạn có thể đặt giá trị thập phân cho mục tiêu giờ trên loại nhà xuất bản 'tùy chỉnh'."
     }
   },
   "installed": "Cài đặt",

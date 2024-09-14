@@ -506,6 +506,10 @@
       "c1": "Adicionado seletor de idioma. Veja Preferências para ajustar manualmente seu idioma.",
       "c2": "Resolvido problema com plano único com data máxima imprecisa.",
       "c3": "Resolver problema de exclusão de categorias de tempo."
+    },
+    "1340": {
+      "c1": "Adicionada uma recompensa especial para quando você marca sua caixa de tempo ou adiciona tempo!",
+      "c2": "Agora você pode definir um valor decimal para metas de hora no tipo de publicador 'personalizado'."
     }
   },
   "installed": "Instalado",

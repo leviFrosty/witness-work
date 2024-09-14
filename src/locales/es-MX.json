@@ -506,6 +506,10 @@
       "c1": "Se agregó un selector de idioma. Consulta las Preferencias para ajustar manualmente tu idioma.",
       "c2": "Se resolvió el problema con el plan de un solo uso que tenía una fecha máxima incorrecta.",
       "c3": "Resolver el problema al eliminar categorías de tiempo."
+    },
+    "1340": {
+      "c1": "¡Se agregó una recompensa especial por marcar la casilla de tiempo o agregar tiempo!",
+      "c2": "Ahora puede establecer un valor decimal para los objetivos de horas en el tipo de editor \"personalizado\"."
     }
   },
   "installed": "Instalada",

@@ -338,7 +338,6 @@ const AddTimeScreen = ({ route }: AddTimeScreenProps) => {
     navigation.setOptions({
       header: () => (
         <Header
-          noInsets
           buttonType='back'
           title={i18n.t(existingServiceReport ? 'updateTime' : 'addTime')}
           rightElement={

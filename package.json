@@ -34,7 +34,7 @@
     "@react-navigation/drawer": "^6.6.15",
     "@react-navigation/native": "^6.1.17",
     "@react-navigation/native-stack": "^6.9.26",
-    "@sentry/react-native": "~5.22.0",
+    "@sentry/react-native": "~5.24.3",
     "@shopify/flash-list": "1.6.4",
     "@tamagui/babel-plugin": "^1.96.0",
     "@tamagui/config": "^1.96.0",

@@ -255,7 +255,7 @@ const CalendarDay = (
         }}
         style={{ opacity: props.state === 'disabled' ? 0.4 : 1 }}
       >
-        {dayPlan ?? !!recurringPlansForDay?.length ? (
+        {(dayPlan ?? !!recurringPlansForDay?.length) ? (
           <PlannedDay
             {...props}
             serviceReports={reportsForDay}

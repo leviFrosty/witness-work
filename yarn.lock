@@ -2844,7 +2844,7 @@
   dependencies:
     "@babel/core" "^7.25.2"
 
-"@tamagui/babel-plugin@^1.96.0":
+"@tamagui/babel-plugin@^1.116.12":
   version "1.116.12"
   resolved "https://registry.yarnpkg.com/@tamagui/babel-plugin/-/babel-plugin-1.116.12.tgz#b259c9f8802653dd02e2a0830bd01352234819be"
   integrity sha512-fpz3UMsMpu+kSegk3A1psvCm5rXnP9gKut1DDm83CIBKkE3O8F0RKIcR1DC8o3R0WtzsmQllXuDtbfw2j5wOnA==
@@ -2982,7 +2982,7 @@
     "@tamagui/core" "1.116.12"
     "@tamagui/shorthands" "1.116.12"
 
-"@tamagui/config@^1.96.0":
+"@tamagui/config@^1.116.12":
   version "1.116.12"
   resolved "https://registry.yarnpkg.com/@tamagui/config/-/config-1.116.12.tgz#c428e85f2fc6b56fcfa4e4ab2e6a2281aa4de4d7"
   integrity sha512-1wYBw/0VapC/tS4s5EzY1nPgdrIrRSKb+zARgxzBwS30g0eGnUMMuXdM/JbCK8Yk2/2g920KYhGfzbBbWkVs0Q==
@@ -3670,7 +3670,7 @@
   resolved "https://registry.yarnpkg.com/@tamagui/timer/-/timer-1.116.12.tgz#0a78f9176bd179bd70da3d5d8ba56e9266c9350a"
   integrity sha512-P5R0fd3j3Q3UlgMO3SgRVvJ38iSCEg/eLXz6KNQBxvQ1R33gHYAVojOelE+6GgU5cMsU9OZdXt9n5AjBFgGiYw==
 
-"@tamagui/toast@^1.96.0":
+"@tamagui/toast@^1.116.12":
   version "1.116.12"
   resolved "https://registry.yarnpkg.com/@tamagui/toast/-/toast-1.116.12.tgz#b9167c0ea04259c0e3b443fa01b68885defb80ee"
   integrity sha512-bKiX9ZEtXKmAejexue1QqOIw86eSRp9z8sPNcsfAZDfIZjEBtfm9DOE+zZIf37zKCb98lOCC4xrQTdbQgqKpPQ==
@@ -4684,12 +4684,12 @@ available-typed-arrays@^1.0.7:
   dependencies:
     possible-typed-array-names "^1.0.0"
 
-awesome-phonenumber@^6.8.0:
-  version "6.12.0"
-  resolved "https://registry.yarnpkg.com/awesome-phonenumber/-/awesome-phonenumber-6.12.0.tgz#333cc3b393490dfa2b2c3b4461b442dad52d5af3"
-  integrity sha512-17Ts/ceWeWXzWZqTIRKA48y3+OyxYsAXYzuxYCn4n0+By+W0dcHk3fHszW6lLxAlCZt3VmVKY6n9AxOCU84qNw==
+awesome-phonenumber@^7.2.0:
+  version "7.2.0"
+  resolved "https://registry.yarnpkg.com/awesome-phonenumber/-/awesome-phonenumber-7.2.0.tgz#009ec06cebfdf8a41b60cfb421ac2c842dbf3a35"
+  integrity sha512-CqH0TyDMHiMhqGRg/kaJDiV5KRok5AdrJKvUsED9/QRQdiCjUzp32+NqEEnY+OWEDTeeqlyLsLs7SLR/sPQU2A==
 
-axios@1.7.7, axios@^1.7.5:
+axios@1.7.7, axios@^1.7.7:
   version "1.7.7"
   resolved "https://registry.yarnpkg.com/axios/-/axios-1.7.7.tgz#2f554296f9892a72ac8d8e4c5b79c14a91d0a47f"
   integrity sha512-S4kL7XrjgBmvdGut0sN3yJxqYzrDOnivkBiN0OFs6hLiUam3UPvswUo0kqGyhqUZGEOytHyumEdXsAkgCOUf3Q==
@@ -6527,39 +6527,39 @@ expo-crypto@~13.0.2:
   dependencies:
     base64-js "^1.3.0"
 
-expo-dev-client@~4.0.26:
-  version "4.0.28"
-  resolved "https://registry.yarnpkg.com/expo-dev-client/-/expo-dev-client-4.0.28.tgz#3a345662ca2b2dfd7d0fa18e537cb75abd9a563c"
-  integrity sha512-wz5G4vY3Gbk5GuQTyijdqY4Hwr/NDt5OUTErbOu1vd4XRIAsI+8IkK5hsBUhGmqrdkYnP5NxxOxC/soFzX/9+w==
+expo-dev-client@~4.0.29:
+  version "4.0.29"
+  resolved "https://registry.yarnpkg.com/expo-dev-client/-/expo-dev-client-4.0.29.tgz#86683c584db6b787828b10e2a049f810a246441d"
+  integrity sha512-aANlw9dC4PJEPaRNpe+X5xwyYI+aCIcbZklAAsFlkv2/05gLrsvAFgmQpRtowAzF+VggHWde1eKUOeUccAYIEg==
   dependencies:
-    expo-dev-launcher "4.0.28"
-    expo-dev-menu "5.0.22"
-    expo-dev-menu-interface "1.8.3"
+    expo-dev-launcher "4.0.29"
+    expo-dev-menu "5.0.23"
+    expo-dev-menu-interface "1.8.4"
     expo-manifests "~0.14.0"
     expo-updates-interface "~0.16.2"
 
-expo-dev-launcher@4.0.28:
-  version "4.0.28"
-  resolved "https://registry.yarnpkg.com/expo-dev-launcher/-/expo-dev-launcher-4.0.28.tgz#6097f4beb4d000bcc201f1b69dcd516e2b10247c"
-  integrity sha512-goE7jcaGVA2zu4gV3/hQ9RXqGhUZZAu339VYNLbwPdaNCzFaG6A8MZHg18gytCUnZ5QkRJsYi4q/8YcwUCASlQ==
+expo-dev-launcher@4.0.29:
+  version "4.0.29"
+  resolved "https://registry.yarnpkg.com/expo-dev-launcher/-/expo-dev-launcher-4.0.29.tgz#c655d842802f696ad6a5e446c60d20c1e453d175"
+  integrity sha512-0a0SL8mc4FrqPeGxJHe9kf0kG+Di+38Gd+HP5DEL9dcOa8m2qffKnk22UcyujCT6+Qk0OUK1s53nnfqFB26uVw==
   dependencies:
     ajv "8.11.0"
-    expo-dev-menu "5.0.22"
+    expo-dev-menu "5.0.23"
     expo-manifests "~0.14.0"
     resolve-from "^5.0.0"
     semver "^7.6.0"
 
-expo-dev-menu-interface@1.8.3:
-  version "1.8.3"
-  resolved "https://registry.yarnpkg.com/expo-dev-menu-interface/-/expo-dev-menu-interface-1.8.3.tgz#8c1262e29e0124fc5932a129c95b36de56656b20"
-  integrity sha512-QM0LRozeFT5Ek0N7XpV93M+HMdEKRLEOXn0aW5M3uoUlnqC1+PLtF3HMy3k3hMKTTE/kJ1y1Z7akH07T0lunCQ==
+expo-dev-menu-interface@1.8.4:
+  version "1.8.4"
+  resolved "https://registry.yarnpkg.com/expo-dev-menu-interface/-/expo-dev-menu-interface-1.8.4.tgz#fa23bf3228ea51cf412599fcb715c27259ffdd84"
+  integrity sha512-FpYI57EUu9qTSOOi+FZJ58xkCGJK7QD0mTiXK/y1I8lRdZGjCmdBqVvC4dAx2GcbIT78EPxaVf4/90tK/KRK6A==
 
-expo-dev-menu@5.0.22:
-  version "5.0.22"
-  resolved "https://registry.yarnpkg.com/expo-dev-menu/-/expo-dev-menu-5.0.22.tgz#30e16b6709759edb027e492fc96d262ee063b0c8"
-  integrity sha512-VzpdQReAtjbI1qIuwOf0sUzf91HsfGThojgJD9Ez0eca12qY5tTGYzHa1EM9V+zIcNuNZ7+A8bHJJdmZ4zvU6g==
+expo-dev-menu@5.0.23:
+  version "5.0.23"
+  resolved "https://registry.yarnpkg.com/expo-dev-menu/-/expo-dev-menu-5.0.23.tgz#7e6d6fd93c54ca955e8a69601a0b1991b64389b3"
+  integrity sha512-ztDvrSdFGkRbMoQlGLyKMS6CslMGylonVW4kQHUrBQApCL0c2NtRwLlr2bA1SXF0S7qYdPPg/ayLnj7DDR5X2w==
   dependencies:
-    expo-dev-menu-interface "1.8.3"
+    expo-dev-menu-interface "1.8.4"
     semver "^7.5.4"
 
 expo-device@~6.0.2:
@@ -6746,7 +6746,7 @@ expo-updates@~0.25.24:
     ignore "^5.3.1"
     resolve-from "^5.0.0"
 
-expo@~51.0.31:
+expo@~51.0.38:
   version "51.0.38"
   resolved "https://registry.yarnpkg.com/expo/-/expo-51.0.38.tgz#e4127b230454a34a507cfb9f1a2e4b3855cb0579"
   integrity sha512-/B9npFkOPmv6WMIhdjQXEY0Z9k/67UZIVkodW8JxGIXwKUZAGHL+z1R5hTtWimpIrvVhyHUFU3f8uhfEKYhHNQ==
@@ -7628,7 +7628,7 @@ i18n-auto-translation@^1.8.1:
     just-extend "6.2.0"
     yargs "17.7.2"
 
-i18n-js@^4.4.3:
+i18n-js@^4.5.0:
   version "4.5.0"
   resolved "https://registry.yarnpkg.com/i18n-js/-/i18n-js-4.5.0.tgz#c2cc98df71746fecf2c8831f90eb9b6a5a4566c5"
   integrity sha512-eiT3ZzK+k1VUR/oDz0Nne3dWU6DE+4P3FxtHXgHMZyzW1lKAHsjEYaOPZClU4QA9rI+uoeE71zq1QzLnZ6LDJQ==
@@ -12041,7 +12041,7 @@ table@^6.8.1:
     string-width "^4.2.3"
     strip-ansi "^6.0.1"
 
-tamagui@^1.96.0:
+tamagui@^1.116.12:
   version "1.116.12"
   resolved "https://registry.yarnpkg.com/tamagui/-/tamagui-1.116.12.tgz#496851cd0446bb567649af395e6d4f7eece68bdc"
   integrity sha512-YIN6Hy9pmU6/ekCaXzrO2VXsBgReyg5/68L5NDqtXE+ZSUgQ+9QGf+Yj361X8qfr40ngLvYA5kv4wIeB7Uo+GA==
@@ -13078,7 +13078,7 @@ zod-validation-error@^2.1.0:
   resolved "https://registry.yarnpkg.com/zod-validation-error/-/zod-validation-error-2.1.0.tgz#208eac75237dfed47c0018d2fe8fd03501bfc9ac"
   integrity sha512-VJh93e2wb4c3tWtGgTa0OF/dTt/zoPCPzXq4V11ZjxmEAFaPi/Zss1xIZdEB5RD8GD00U0/iVXgqkF77RV7pdQ==
 
-zod@^3.22.4, zod@^3.23.6:
+zod@^3.22.4, zod@^3.23.8:
   version "3.23.8"
   resolved "https://registry.yarnpkg.com/zod/-/zod-3.23.8.tgz#e37b957b5d52079769fb8097099b592f0ef4067d"
   integrity sha512-XBx9AXhXktjUqnepgTiE5flcKIYWi/rme0Eaj+5Y0lftuGBq+jyRu/md4WnuxqgP1ubdpNCsYEYPxrzVHD8d6g==

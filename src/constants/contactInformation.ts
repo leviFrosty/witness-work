@@ -1,1 +1,1 @@
-export const email = 'levi.wilkerson@proton.me'
+export const email = 'support@leviwilkerson.com'

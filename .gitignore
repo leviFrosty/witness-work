@@ -48,4 +48,5 @@ ios/
 
 # Local Builds
 build-*
+*.apk
 

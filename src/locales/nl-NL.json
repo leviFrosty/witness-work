@@ -506,6 +506,13 @@
       "c1": "Taalselector toegevoegd. Zie Voorkeuren om uw taal handmatig aan te passen.",
       "c2": "Probleem opgelost met eenmalig plan met een onjuiste maximumdatum.",
       "c3": "Probleem met het verwijderen van tijdscategorieën opgelost."
+    },
+    "1340": {
+      "c1": "Een speciale beloning toegevoegd voor wanneer je je tijdvak afvinkt of tijd toevoegt!",
+      "c2": "Je kunt nu een decimale waarde instellen voor uurdoelen op het type 'aangepaste' uitgever."
+    },
+    "1341": {
+      "c1": "Probleem opgelost waarbij het dagoverzicht niet automatisch werd gesloten bij het toevoegen van tijd aan een dag van de maand."
     }
   },
   "installed": "Geïnstalleerd",

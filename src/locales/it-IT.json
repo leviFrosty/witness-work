@@ -506,6 +506,13 @@
       "c1": "Aggiunto selettore di lingua. Consulta Preferenze per regolare manualmente la lingua.",
       "c2": "Risolto il problema con il piano monouso con una data massima non corretta.",
       "c3": "Risolvi il problema relativo all'eliminazione delle categorie di tempo."
+    },
+    "1340": {
+      "c1": "Aggiunta una ricompensa speciale quando selezioni la casella del tempo o aggiungi tempo!",
+      "c2": "Ora puoi impostare un valore decimale per gli obiettivi orari sul tipo di editore \"personalizzato\"."
+    },
+    "1341": {
+      "c1": "Risolto il problema per cui il foglio giornaliero non si chiudeva automaticamente quando si aggiungeva un orario a un giorno del mese."
     }
   },
   "installed": "Installato",

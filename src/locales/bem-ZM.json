@@ -506,6 +506,13 @@
       "c1": "Icakusalapo ululimi icalundwako. Moneni Ifyo mwatemwa pakuti mulungike ululimi lwenu.",
       "c2": "Ubwafya bwapwishishiwe ne pulani ya nshita imo iyakwata ubushiku ubushalungama.",
       "c3": "Ukupwisha ubwafya bwa kufumyapo ifiputulwa fya nshita."
+    },
+    "1340": {
+      "c1": "Ukulundapo icilambu ca pa lwakwe ilyo mwafumyapo akabokoshi kenu aka nshita nelyo ukulundako inshita!",
+      "c2": "Kuti nomba wabika umutengo wa cikumi pa fishinte fya maawala pa 'ifyalinga' umusango wa kasabankanya."
+    },
+    "1341": {
+      "c1": "Ubwafya bwapwishiwe apo ibuula lya bushiku talyaisala ilyo mwalundako inshita ku bushiku bwa mweshi."
     }
   },
   "installed": "Installed",

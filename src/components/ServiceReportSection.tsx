@@ -78,7 +78,7 @@ const ServiceReportSection = ({ setSheet }: ServiceReportProps) => {
         >
           <View
             style={{
-              flexDirection: 'column',
+              flex: 2,
               gap: 5,
               width: '100%',
               maxWidth: isTablet ? 800 : '60%',

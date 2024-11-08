@@ -506,7 +506,13 @@
       "c1": "Added language selector. See Preferences to manually adjust your language.",
       "c2": "Resolved issue with one-time plan having an inaccurate maximum date.",
       "c3": "Resolve issue deleting time categories."
-
+    },
+    "1340": {
+      "c1": "Added a special reward for when you check off your time box or add time!",
+      "c2": "You can now set a decimal value for hour goals on 'custom' publisher type."
+    },
+    "1341": {
+      "c1": "Resolved issue where day sheet would not close automatically when adding time to a day of month."
     }
   },
   "installed": "Installed",

@@ -510,6 +510,9 @@
     "1340": {
       "c1": "Ajout d'une récompense spéciale lorsque vous cochez votre case de temps ou ajoutez du temps !",
       "c2": "Vous pouvez désormais définir une valeur décimale pour les objectifs horaires sur le type d'éditeur « personnalisé »."
+    },
+    "1341": {
+      "c1": "Problème résolu où la feuille de journée ne se fermait pas automatiquement lors de l'ajout de temps à un jour du mois."
     }
   },
   "installed": "installée",

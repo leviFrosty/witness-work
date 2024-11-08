@@ -809,5 +809,6 @@
   "deviceDefault": "Пристрій за замовчуванням",
   "language": "Мова",
   "enterAddress": "Введіть адресу",
-  "errorFetchingAddress": "Помилка пошуку адреси. Спробуйте пізніше."
+  "errorFetchingAddress": "Помилка пошуку адреси. Спробуйте пізніше.",
+  "manuallyEnter": "Або ввести вручну"
 }

@@ -809,5 +809,6 @@
   "deviceDefault": "기기 기본",
   "language": "언어",
   "enterAddress": "주소를 입력하세요",
-  "errorFetchingAddress": "주소 검색 오류. 나중에 다시 시도하세요."
+  "errorFetchingAddress": "주소 검색 오류. 나중에 다시 시도하세요.",
+  "manuallyEnter": "또는 수동으로 입력"
 }

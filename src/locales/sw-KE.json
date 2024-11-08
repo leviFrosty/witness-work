@@ -809,5 +809,6 @@
   "deviceDefault": "Chaguomsingi ya Kifaa",
   "language": "Lugha",
   "enterAddress": "Weka Anwani",
-  "errorFetchingAddress": "Hitilafu katika kutafuta anwani. Tafadhali jaribu tena baadaye."
+  "errorFetchingAddress": "Hitilafu katika kutafuta anwani. Tafadhali jaribu tena baadaye.",
+  "manuallyEnter": "Au Ingiza wewe mwenyewe"
 }

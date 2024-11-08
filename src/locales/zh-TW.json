@@ -809,5 +809,6 @@
   "deviceDefault": "設備預設值",
   "language": "語言",
   "enterAddress": "輸入地址",
-  "errorFetchingAddress": "搜尋地址時發生錯誤。請稍後重試。"
+  "errorFetchingAddress": "搜尋地址時發生錯誤。請稍後重試。",
+  "manuallyEnter": "或手動輸入"
 }

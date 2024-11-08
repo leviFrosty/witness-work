@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react'
+import React, { useEffect, useCallback, useRef } from 'react'
 import { View, TouchableOpacity, TextInput } from 'react-native'
 import axios from 'axios'
 import apis from '../constants/apis'
@@ -9,14 +9,20 @@ import i18n from '../lib/locales'
 import { FlashList } from '@shopify/flash-list'
 import TextInputRow from './inputs/TextInputRow'
 import useLocation from '../hooks/useLocation'
-import Section from './inputs/Section'
 
 interface AddressAutocompleteProps {
   onSelect: (address: Address) => void
-  initialValue?: string
+  query: string
+  setQuery: React.Dispatch<React.SetStateAction<string>>
+  isResult: boolean
+  setIsResult: React.Dispatch<React.SetStateAction<boolean>>
+  suggestions: Suggestion[]
+  setSuggestions: React.Dispatch<React.SetStateAction<Suggestion[]>>
+  error: boolean
+  setError: React.Dispatch<React.SetStateAction<boolean>>
 }
 
-interface Suggestion {
+export interface Suggestion {
   title: string
   highlightedTitle: React.ReactNode
   address: Address
@@ -27,11 +33,16 @@ const DEBOUNCE_TIMEOUT = 200
 const MAX_SUGGESTIONS = 5
 
 const AddressAutocomplete: React.FC<AddressAutocompleteProps> = ({
+  query,
+  setQuery,
+  isResult,
+  setIsResult,
+  suggestions,
+  setSuggestions,
+  error,
+  setError,
   onSelect,
 }) => {
-  const [query, setQuery] = useState('')
-  const [suggestions, setSuggestions] = useState<Suggestion[]>([])
-  const [error, setError] = useState(false)
   const textInputRef = useRef<TextInput>(null)
   const { location } = useLocation()
   const theme = useTheme()
@@ -83,7 +94,7 @@ const AddressAutocomplete: React.FC<AddressAutocompleteProps> = ({
 
   useEffect(() => {
     const fetchSuggestions = async () => {
-      if (query.length < 3) {
+      if (query.length < 3 || isResult) {
         setSuggestions([])
         return
       }
@@ -128,16 +139,20 @@ const AddressAutocomplete: React.FC<AddressAutocompleteProps> = ({
 
     const debounce = setTimeout(fetchSuggestions, DEBOUNCE_TIMEOUT)
     return () => clearTimeout(debounce)
-  }, [getHighlightedText, location, query])
+  }, [getHighlightedText, isResult, location, query, setError, setSuggestions])
 
   return (
-    <Section>
+    <View>
       <TextInputRow
         ref={textInputRef}
         label={i18n.t('search')}
         textInputProps={{
-          onChangeText: setQuery,
+          onChangeText: (text: string) => {
+            setQuery(text)
+            setIsResult(false)
+          },
           placeholder: i18n.t('enterAddress'),
+          value: query,
         }}
         style={{ marginTop: 8 }}
         lastInSection
@@ -161,6 +176,8 @@ const AddressAutocomplete: React.FC<AddressAutocompleteProps> = ({
               <TouchableOpacity
                 onPress={() => {
                   onSelect(item.address)
+                  setQuery(item.title)
+                  setIsResult(true)
                   textInputRef.current?.blur()
                   setSuggestions([])
                 }}
@@ -176,7 +193,7 @@ const AddressAutocomplete: React.FC<AddressAutocompleteProps> = ({
           />
         </View>
       )}
-    </Section>
+    </View>
   )
 }
 

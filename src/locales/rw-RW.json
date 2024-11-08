@@ -809,5 +809,6 @@
   "deviceDefault": "Igikoresho gisanzwe",
   "language": "Ururimi",
   "enterAddress": "Injira Aderesi",
-  "errorFetchingAddress": "Ikosa ryo gushakisha aderesi. Nyamuneka gerageza nyuma."
+  "errorFetchingAddress": "Ikosa ryo gushakisha aderesi. Nyamuneka gerageza nyuma.",
+  "manuallyEnter": "Cyangwa Intoki"
 }

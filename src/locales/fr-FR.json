@@ -809,5 +809,6 @@
   "deviceDefault": "Paramètres par défaut de l'appareil",
   "language": "Langue",
   "enterAddress": "Entrez l'adresse",
-  "errorFetchingAddress": "Erreur lors de la recherche d'adresse. Veuillez réessayer ultérieurement."
+  "errorFetchingAddress": "Erreur lors de la recherche d'adresse. Veuillez réessayer ultérieurement.",
+  "manuallyEnter": "Ou entrez manuellement"
 }

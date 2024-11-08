@@ -809,5 +809,6 @@
   "deviceDefault": "Standaardapparaat",
   "language": "Taal",
   "enterAddress": "Adres invoeren",
-  "errorFetchingAddress": "Fout bij het zoeken naar adres. Probeer het later opnieuw."
+  "errorFetchingAddress": "Fout bij het zoeken naar adres. Probeer het later opnieuw.",
+  "manuallyEnter": "Of handmatig invoeren"
 }

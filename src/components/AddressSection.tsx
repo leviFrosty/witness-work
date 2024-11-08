@@ -9,10 +9,11 @@ import Button from './Button'
 import Section from './inputs/Section'
 import TextInputRow from './inputs/TextInputRow'
 import PinLocation from './PinLocation'
-import AddressAutocomplete from './AddressAutocomplete'
+import AddressAutocomplete, { Suggestion } from './AddressAutocomplete'
 import Divider from './Divider'
 import IconButton from './IconButton'
 import { faBolt } from '@fortawesome/free-solid-svg-icons'
+import { addressToString } from '../lib/address'
 
 export default function AddressSection({
   contact,
@@ -56,6 +57,11 @@ export default function AddressSection({
       }
 }) {
   const theme = useTheme()
+  const [query, setQuery] = useState(addressToString(contact.address))
+  const [isResult, setIsResult] = useState(!!contact.address)
+  const [suggestions, setSuggestions] = useState<Suggestion[]>([])
+  const [error, setError] = useState(false)
+  const [manuallyEnteringAddress, setManuallyEnteringAddress] = useState(false)
   const [hasCleared, setHasCleared] = useState(false)
   const keysSameAsPrefill = (): (keyof Address)[] => {
     if (!contact.address || !prefill.address) {
@@ -84,11 +90,12 @@ export default function AddressSection({
       }
     }
     setHasCleared(true)
+    setQuery('')
+    setSuggestions([])
     setContact({ ...contact, address: clearedPrefill })
   }
 
   const handleAddressSelect = (selectedAddress: Address) => {
-    console.log('Handling address', selectedAddress)
     setContact((prevContact) => ({
       ...prevContact,
       address: selectedAddress,
@@ -97,8 +104,6 @@ export default function AddressSection({
 
   return (
     <View style={{ paddingBottom: 80 }}>
-      <AddressAutocomplete onSelect={handleAddressSelect} />
-      <Divider marginVertical={20} />
       {prefill.enabled && !!keysSameAsPrefill().length && !hasCleared && (
         <XView
           style={{
@@ -144,90 +149,121 @@ export default function AddressSection({
         </XView>
       )}
       <Section>
-        <TextInputRow
-          label={i18n.t('addressLine1')}
-          ref={line1Input}
-          textInputProps={{
-            onSubmitEditing: () => line2Input.current?.focus(),
-            onChangeText: (val: string) => setLine1(val),
-            autoCapitalize: 'words',
-            value: contact.address?.line1 || '',
-          }}
-        />
-        <TextInputRow
-          label={i18n.t('addressLine2')}
-          ref={line2Input}
-          textInputProps={{
-            onSubmitEditing: () => cityInput.current?.focus(),
-            onChangeText: (val: string) => setLine2(val),
-            value: contact.address?.line2 || '',
-            autoCapitalize: 'words',
-          }}
-        />
-        <View
-          style={{
-            flexDirection: 'row',
-            justifyContent: 'space-between',
-          }}
+        {!manuallyEnteringAddress ? (
+          <AddressAutocomplete
+            onSelect={handleAddressSelect}
+            error={error}
+            query={query}
+            setQuery={setQuery}
+            isResult={isResult}
+            setIsResult={setIsResult}
+            suggestions={suggestions}
+            setSuggestions={setSuggestions}
+            setError={setError}
+          />
+        ) : (
+          <>
+            <TextInputRow
+              label={i18n.t('addressLine1')}
+              ref={line1Input}
+              textInputProps={{
+                onSubmitEditing: () => line2Input.current?.focus(),
+                onChangeText: (val: string) => setLine1(val),
+                autoCapitalize: 'words',
+                value: contact.address?.line1 || '',
+              }}
+            />
+            <TextInputRow
+              label={i18n.t('addressLine2')}
+              ref={line2Input}
+              textInputProps={{
+                onSubmitEditing: () => cityInput.current?.focus(),
+                onChangeText: (val: string) => setLine2(val),
+                value: contact.address?.line2 || '',
+                autoCapitalize: 'words',
+              }}
+            />
+            <View
+              style={{
+                flexDirection: 'row',
+                justifyContent: 'space-between',
+              }}
+            >
+              <View style={{ width: '50%' }}>
+                <TextInputRow
+                  label={i18n.t('city')}
+                  ref={cityInput}
+                  textInputProps={{
+                    onSubmitEditing: () => stateInput.current?.focus(),
+                    onChangeText: (val: string) => setCity(val),
+                    autoCapitalize: 'words',
+                    value: contact.address?.city || '',
+                  }}
+                />
+              </View>
+              <View style={{ width: '50%' }}>
+                <TextInputRow
+                  label={i18n.t('state')}
+                  ref={stateInput}
+                  textInputProps={{
+                    onSubmitEditing: () => zipInput.current?.focus(),
+                    onChangeText: (val: string) => setState(val),
+                    value: contact.address?.state || '',
+                    autoCapitalize: 'words',
+                  }}
+                />
+              </View>
+            </View>
+            <View
+              style={{
+                flexDirection: 'row',
+                justifyContent: 'space-between',
+              }}
+            >
+              <View style={{ width: '50%' }}>
+                <TextInputRow
+                  label={i18n.t('zip')}
+                  ref={zipInput}
+                  textInputProps={{
+                    onSubmitEditing: () => countryInput.current?.focus(),
+                    onChangeText: (val: string) => setZip(val),
+                    value: contact.address?.zip || '',
+                    keyboardType: 'number-pad',
+                  }}
+                  lastInSection
+                />
+              </View>
+              <View style={{ width: '50%' }}>
+                <TextInputRow
+                  label={i18n.t('country')}
+                  ref={countryInput}
+                  textInputProps={{
+                    onChangeText: (val: string) => setCountry(val),
+                    value: contact.address?.country || '',
+                    autoCapitalize: 'words',
+                  }}
+                  lastInSection
+                />
+              </View>
+            </View>
+          </>
+        )}
+        <Button
+          style={{ marginTop: 10 }}
+          onPress={() => setManuallyEnteringAddress(!manuallyEnteringAddress)}
         >
-          <View style={{ width: '50%' }}>
-            <TextInputRow
-              label={i18n.t('city')}
-              ref={cityInput}
-              textInputProps={{
-                onSubmitEditing: () => stateInput.current?.focus(),
-                onChangeText: (val: string) => setCity(val),
-                autoCapitalize: 'words',
-                value: contact.address?.city || '',
-              }}
-            />
-          </View>
-          <View style={{ width: '50%' }}>
-            <TextInputRow
-              label={i18n.t('state')}
-              ref={stateInput}
-              textInputProps={{
-                onSubmitEditing: () => zipInput.current?.focus(),
-                onChangeText: (val: string) => setState(val),
-                value: contact.address?.state || '',
-                autoCapitalize: 'words',
-              }}
-            />
-          </View>
-        </View>
-        <View
-          style={{
-            flexDirection: 'row',
-            justifyContent: 'space-between',
-          }}
-        >
-          <View style={{ width: '50%' }}>
-            <TextInputRow
-              label={i18n.t('zip')}
-              ref={zipInput}
-              textInputProps={{
-                onSubmitEditing: () => countryInput.current?.focus(),
-                onChangeText: (val: string) => setZip(val),
-                value: contact.address?.zip || '',
-                keyboardType: 'number-pad',
-              }}
-              lastInSection
-            />
-          </View>
-          <View style={{ width: '50%' }}>
-            <TextInputRow
-              label={i18n.t('country')}
-              ref={countryInput}
-              textInputProps={{
-                onChangeText: (val: string) => setCountry(val),
-                value: contact.address?.country || '',
-                autoCapitalize: 'words',
-              }}
-              lastInSection
-            />
-          </View>
-        </View>
+          <Text
+            style={{
+              textDecorationLine: 'underline',
+              color: theme.colors.textAlt,
+              fontSize: theme.fontSize('sm'),
+            }}
+          >
+            {i18n.t(manuallyEnteringAddress ? 'search' : 'manuallyEnter')}
+          </Text>
+        </Button>
       </Section>
+
       <Divider marginVertical={20} />
       <Section>
         <PinLocation setContact={setContact} contact={contact} />

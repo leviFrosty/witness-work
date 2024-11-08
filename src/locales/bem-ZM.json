@@ -809,5 +809,6 @@
   "deviceDefault": "Icibombelo icabako",
   "language": "Ululimi",
   "enterAddress": "Ingisha akeyala",
-  "errorFetchingAddress": "Ubwafya mukufwaya akeyala. Mukwai esheniko nakabili panuma."
+  "errorFetchingAddress": "Ubwafya mukufwaya akeyala. Mukwai esheniko nakabili panuma.",
+  "manuallyEnter": "Nangu Ingila mu Kuboko"
 }

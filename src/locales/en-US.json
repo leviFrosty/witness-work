@@ -809,5 +809,6 @@
   "deviceDefault": "Device Default",
   "language": "Language",
   "enterAddress": "Enter Address",
-  "errorFetchingAddress": "Error searching for address. Please try again later."
+  "errorFetchingAddress": "Error searching for address. Please try again later.",
+  "manuallyEnter": "Or Manually Enter"
 }

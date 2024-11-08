@@ -102,8 +102,6 @@ export default function PinLocation(props: {
           paddingVertical: 15,
           marginRight: 20,
           marginTop: 5,
-          borderTopColor: theme.colors.border,
-          borderTopWidth: 1,
           gap: 10,
         }}
       >

@@ -808,5 +808,6 @@
   "languageWasNotFound": "Witness Work ondersteunt de taal van uw apparaat, {{original}}, niet. Het is teruggevallen op de standaardtaal.",
   "deviceDefault": "Standaardapparaat",
   "language": "Taal",
-  "enterAddress": "Adres invoeren"
+  "enterAddress": "Adres invoeren",
+  "errorFetchingAddress": "Fout bij het zoeken naar adres. Probeer het later opnieuw."
 }

@@ -3,7 +3,6 @@ import { Address, Contact } from '../types/contact'
 import useTheme from '../contexts/theme'
 import { useState } from 'react'
 import XView from './layout/XView'
-import Card from './Card'
 import Text from './MyText'
 import i18n from '../lib/locales'
 import Button from './Button'
@@ -11,7 +10,9 @@ import Section from './inputs/Section'
 import TextInputRow from './inputs/TextInputRow'
 import PinLocation from './PinLocation'
 import AddressAutocomplete from './AddressAutocomplete'
-import { addressToString } from '../lib/address'
+import Divider from './Divider'
+import IconButton from './IconButton'
+import { faBolt } from '@fortawesome/free-solid-svg-icons'
 
 export default function AddressSection({
   contact,
@@ -92,18 +93,12 @@ export default function AddressSection({
       ...prevContact,
       address: selectedAddress,
     }))
-    setLine1(selectedAddress.line1 || '')
-    setLine2(selectedAddress.line2 || '')
-    setCity(selectedAddress.city || '')
-    setState(selectedAddress.state || '')
-    setZip(selectedAddress.zip || '')
-    setCountry(selectedAddress.country || '')
   }
-
-  console.log('Address', contact.address)
 
   return (
     <View style={{ paddingBottom: 80 }}>
+      <AddressAutocomplete onSelect={handleAddressSelect} />
+      <Divider marginVertical={20} />
       {prefill.enabled && !!keysSameAsPrefill().length && !hasCleared && (
         <XView
           style={{
@@ -112,30 +107,43 @@ export default function AddressSection({
             justifyContent: 'flex-end',
           }}
         >
-          <Card
+          <View
             style={{
+              borderRadius: theme.numbers.borderRadiusLg,
               paddingHorizontal: 20,
               paddingVertical: 5,
+              borderColor: theme.colors.accent,
+              backgroundColor: theme.colors.accentTranslucent,
+              borderWidth: 1,
               flexDirection: 'row',
               gap: 10,
             }}
           >
-            <Text style={{ fontFamily: theme.fonts.semiBold }}>
-              {i18n.t('prefilledAddress')}
-            </Text>
+            <View
+              style={{
+                flexDirection: 'row',
+                gap: 3,
+                alignItems: 'center',
+              }}
+            >
+              <Text
+                style={{
+                  fontFamily: theme.fonts.semiBold,
+                }}
+              >
+                {i18n.t('prefilledAddress')}
+              </Text>
+              <IconButton icon={faBolt} color={theme.colors.accent} />
+            </View>
             <Button onPress={clearPrefill}>
               <Text style={{ textDecorationLine: 'underline' }}>
                 {i18n.t('clear')}
               </Text>
             </Button>
-          </Card>
+          </View>
         </XView>
       )}
       <Section>
-        <AddressAutocomplete
-          onSelect={handleAddressSelect}
-          initialValue={addressToString(contact.address)}
-        />
         <TextInputRow
           label={i18n.t('addressLine1')}
           ref={line1Input}
@@ -219,6 +227,9 @@ export default function AddressSection({
             />
           </View>
         </View>
+      </Section>
+      <Divider marginVertical={20} />
+      <Section>
         <PinLocation setContact={setContact} contact={contact} />
       </Section>
     </View>

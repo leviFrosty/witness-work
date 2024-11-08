@@ -808,5 +808,6 @@
   "languageWasNotFound": "Kazi ya ushuhuda haitumii lugha ya kifaa chako, {{original}}. Imeanguka nyuma yake' lugha chaguo-msingi.",
   "deviceDefault": "Chaguomsingi ya Kifaa",
   "language": "Lugha",
-  "enterAddress": "Weka Anwani"
+  "enterAddress": "Weka Anwani",
+  "errorFetchingAddress": "Hitilafu katika kutafuta anwani. Tafadhali jaribu tena baadaye."
 }

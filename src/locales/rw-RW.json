@@ -808,5 +808,6 @@
   "languageWasNotFound": "Igikorwa cyabatangabuhamya ntigishyigikira igikoresho cyawe & {apos; ururimi, {{original}}. Yagarutse kuri & apos; ururimi rusanzwe.",
   "deviceDefault": "Igikoresho gisanzwe",
   "language": "Ururimi",
-  "enterAddress": "Injira Aderesi"
+  "enterAddress": "Injira Aderesi",
+  "errorFetchingAddress": "Ikosa ryo gushakisha aderesi. Nyamuneka gerageza nyuma."
 }

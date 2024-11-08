@@ -808,5 +808,6 @@
   "languageWasNotFound": "Umulimo wa Nte tausuminisha ululimi lwa cibombelo cenu, {{original}}. Cabwelele ku numa ku ca iko' ululimi lwa lyonse.",
   "deviceDefault": "Icibombelo icabako",
   "language": "Ululimi",
-  "enterAddress": "Ingisha akeyala"
+  "enterAddress": "Ingisha akeyala",
+  "errorFetchingAddress": "Ubwafya mukufwaya akeyala. Mukwai esheniko nakabili panuma."
 }

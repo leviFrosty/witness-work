@@ -808,5 +808,6 @@
   "languageWasNotFound": "WitnessWork unterstützt die Sprache Ihres Geräts, {{original}}, nicht. Es wurde auf die Standardsprache zurückgegriffen.",
   "deviceDefault": "Gerätestandard",
   "language": "Sprache",
-  "enterAddress": "Adresse eingeben"
+  "enterAddress": "Adresse eingeben",
+  "errorFetchingAddress": "Fehler bei der Suche nach Adresse. Bitte versuchen Sie es später erneut."
 }

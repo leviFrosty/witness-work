@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useCallback } from 'react'
-import { View, TouchableOpacity } from 'react-native'
+import React, { useState, useEffect, useCallback, useRef } from 'react'
+import { View, TouchableOpacity, TextInput } from 'react-native'
 import axios from 'axios'
 import apis from '../constants/apis'
 import Text from './MyText'
@@ -8,8 +8,8 @@ import { Address } from '../types/contact'
 import i18n from '../lib/locales'
 import { FlashList } from '@shopify/flash-list'
 import TextInputRow from './inputs/TextInputRow'
-import * as Localization from 'expo-localization'
 import useLocation from '../hooks/useLocation'
+import Section from './inputs/Section'
 
 interface AddressAutocompleteProps {
   onSelect: (address: Address) => void
@@ -23,24 +23,62 @@ interface Suggestion {
 }
 
 const SEARCH_RADIUS = 1000000
+const DEBOUNCE_TIMEOUT = 200
+const MAX_SUGGESTIONS = 5
 
 const AddressAutocomplete: React.FC<AddressAutocompleteProps> = ({
   onSelect,
-  initialValue = '',
 }) => {
-  const [query, setQuery] = useState(initialValue)
+  const [query, setQuery] = useState('')
   const [suggestions, setSuggestions] = useState<Suggestion[]>([])
+  const [error, setError] = useState(false)
+  const textInputRef = useRef<TextInput>(null)
   const { location } = useLocation()
   const theme = useTheme()
 
-  const createHighlightedTitle = useCallback(
-    (title: string, highlights: { start: number; length: number }[]) => {
-      console.log('highlights', highlights)
+  const getHighlightedText = useCallback(
+    (
+      text: string,
+      highlights: { start: number; end: number }[]
+    ): React.ReactNode => {
       if (!highlights || highlights.length === 0) {
-        return <Text>{title}</Text>
+        return <Text>{text}</Text>
       }
+
+      const result: React.ReactNode[] = []
+      let lastIndex = 0
+
+      highlights.forEach((highlight, index) => {
+        if (highlight.start > lastIndex) {
+          result.push(
+            <Text
+              key={`normal-${index}`}
+              style={{ color: theme.colors.textAlt }}
+            >
+              {text.slice(lastIndex, highlight.start)}
+            </Text>
+          )
+        }
+
+        result.push(
+          <Text key={`highlight-${index}`} style={{ fontWeight: 'bold' }}>
+            {text.slice(highlight.start, highlight.end)}
+          </Text>
+        )
+        lastIndex = highlight.end
+      })
+
+      if (lastIndex < text.length) {
+        result.push(
+          <Text key='normal-end' style={{ color: theme.colors.textAlt }}>
+            {text.slice(lastIndex)}
+          </Text>
+        )
+      }
+
+      return <React.Fragment>{result}</React.Fragment>
     },
-    []
+    [theme.colors.textAlt]
   )
 
   useEffect(() => {
@@ -49,80 +87,96 @@ const AddressAutocomplete: React.FC<AddressAutocompleteProps> = ({
         setSuggestions([])
         return
       }
-      console.log('Requesting', query)
 
       try {
         const hereApiKey = process.env.HERE_API_KEY
-        const autocompleteUrl = `${apis.hereAutocomplete}?apiKey=${hereApiKey}&q=${encodeURIComponent(query)}&limit=5&in=${location ? `circle:${location.coords.latitude},${location.coords.longitude};r=${SEARCH_RADIUS}` : `countryCode:${Localization.getLocales()[0].languageCode}`}`
-        console.log('queryString', autocompleteUrl)
+        const autocompleteUrl = `${apis.hereAutocomplete}?apiKey=${hereApiKey}&q=${encodeURIComponent(query)}&limit=${MAX_SUGGESTIONS}${location ? `&in=circle:${location.coords.latitude},${location.coords.longitude};r=${SEARCH_RADIUS}` : ''}`
         const response = await axios.get(autocompleteUrl)
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const results = response.data.items.map((item: any) => {
-          console.log('item', item)
 
-          const address: Address = {
-            line1: item.address.houseNumber
-              ? `${item.address.houseNumber} ${item.address.street}`
-              : item.address.street,
-            city: item.address.city,
-            state: item.address.state,
-            zip: item.address.postalCode,
-            country: item.address.countryName,
-          }
+        if (response.status !== 200) {
+          throw new Error('Error fetching address suggestions')
+        }
 
-          return {
-            title: item.address.label,
-            highlightedTitle: createHighlightedTitle(
-              item.title,
-              item.highlights
-            ),
-            address,
-          }
-        })
+        const results = response.data.items
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          .map((item: any) => {
+            const address: Address = {
+              line1: item.address.houseNumber
+                ? `${item.address.houseNumber} ${item.address.street}`
+                : item.address.street,
+              city: item.address.city,
+              state: item.address.state,
+              zip: item.address.postalCode,
+              country: item.address.countryName,
+            }
+
+            return {
+              title: item.address.label,
+              highlightedTitle: getHighlightedText(
+                item.address.label,
+                item.highlights.address.label
+              ),
+              address,
+            }
+          })
         setSuggestions(results)
       } catch (error) {
-        console.error('Error fetching address suggestions:', error)
+        setError(true)
+        setSuggestions([])
       }
     }
 
-    const debounce = setTimeout(fetchSuggestions, 400)
+    const debounce = setTimeout(fetchSuggestions, DEBOUNCE_TIMEOUT)
     return () => clearTimeout(debounce)
-  }, [createHighlightedTitle, location, query])
+  }, [getHighlightedText, location, query])
 
   return (
-    <View>
+    <Section>
       <TextInputRow
+        ref={textInputRef}
         label={i18n.t('search')}
         textInputProps={{
           onChangeText: setQuery,
           placeholder: i18n.t('enterAddress'),
         }}
+        style={{ marginTop: 8 }}
+        lastInSection
       />
-      <View style={{ minHeight: 2 }}>
-        <FlashList
-          data={suggestions}
-          keyExtractor={(_, index) => index.toString()}
-          estimatedItemSize={100}
-          renderItem={({ item }) => (
-            <TouchableOpacity
-              onPress={() => {
-                console.log('Selected!', item.address)
-                setQuery(item.title)
-                onSelect(item.address)
-                setSuggestions([])
-              }}
-              style={{
-                padding: 10,
-                borderBottomWidth: 1,
-                borderBottomColor: theme.colors.border,
-              }}
-            >
-              <Text>{item.title}</Text>
-            </TouchableOpacity>
-          )}
-        />
-      </View>
-    </View>
+      {error ? (
+        <Text
+          style={{
+            color: theme.colors.error,
+            fontFamily: theme.fonts.semiBold,
+          }}
+        >
+          {i18n.t('errorFetchingAddress')}
+        </Text>
+      ) : (
+        <View style={{ minHeight: 2 }}>
+          <FlashList
+            data={suggestions}
+            keyExtractor={(_, index) => index.toString()}
+            estimatedItemSize={100}
+            renderItem={({ item }) => (
+              <TouchableOpacity
+                onPress={() => {
+                  onSelect(item.address)
+                  textInputRef.current?.blur()
+                  setSuggestions([])
+                }}
+                style={{
+                  padding: 10,
+                  borderBottomWidth: 1,
+                  borderBottomColor: theme.colors.border,
+                }}
+              >
+                <Text>{item.highlightedTitle}</Text>
+              </TouchableOpacity>
+            )}
+          />
+        </View>
+      )}
+    </Section>
   )
 }
 

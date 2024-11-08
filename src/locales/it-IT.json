@@ -808,5 +808,6 @@
   "languageWasNotFound": "Witness Work non supporta la lingua del tuo dispositivo, {{original}}. È tornato alla sua lingua predefinita.",
   "deviceDefault": "Predefinito dispositivo",
   "language": "Lingua",
-  "enterAddress": "Inserisci l'indirizzo"
+  "enterAddress": "Inserisci l'indirizzo",
+  "errorFetchingAddress": "Errore nella ricerca dell'indirizzo. Riprova più tardi."
 }

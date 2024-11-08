@@ -808,5 +808,6 @@
   "languageWasNotFound": "Witness work 不支持您设备的语言 {{original}}。它已恢复为默认语言。",
   "deviceDefault": "设备默认",
   "language": "语言",
-  "enterAddress": "输入地址"
+  "enterAddress": "输入地址",
+  "errorFetchingAddress": "搜索地址时出错。请稍后重试。"
 }

@@ -118,6 +118,7 @@ const ContactFormScreen = ({ route, navigation }: Props) => {
   }
 
   const setLine1 = (line1: string) => {
+    console.log('setLine1', line1)
     setContact({
       ...contact,
       address: {

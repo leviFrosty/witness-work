@@ -511,8 +511,10 @@
       "c1": "Ajout d'une récompense spéciale lorsque vous cochez votre case de temps ou ajoutez du temps !",
       "c2": "Vous pouvez désormais définir une valeur décimale pour les objectifs horaires sur le type d'éditeur « personnalisé »."
     },
-    "1341": {
-      "c1": "Problème résolu où la feuille de journée ne se fermait pas automatiquement lors de l'ajout de temps à un jour du mois."
+    "1350": {
+      "c1": "Vous pouvez désormais utiliser la saisie semi-automatique pour rechercher une adresse ! Commencez simplement à saisir du texte pour voir les suggestions. Cette fonctionnalité n'est possible que grâce à vos dons généreux. Merci pour votre soutien !",
+      "c2": "Problème résolu où la feuille de calcul du jour ne se fermait pas automatiquement lors de l'ajout d'heures à un jour du mois.",
+      "c3": "Problème de débordement résolu sur l'écran d'accueil des tablettes."
     }
   },
   "installed": "installée",

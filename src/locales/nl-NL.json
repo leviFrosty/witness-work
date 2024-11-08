@@ -511,8 +511,10 @@
       "c1": "Een speciale beloning toegevoegd voor wanneer je je tijdvak afvinkt of tijd toevoegt!",
       "c2": "Je kunt nu een decimale waarde instellen voor uurdoelen op het type 'aangepaste' uitgever."
     },
-    "1341": {
-      "c1": "Probleem opgelost waarbij het dagoverzicht niet automatisch werd gesloten bij het toevoegen van tijd aan een dag van de maand."
+    "1350": {
+      "c1": "U kunt nu automatisch aanvullen gebruiken om naar een adres te zoeken! Begin gewoon met typen om suggesties te zien. Deze functie is alleen mogelijk door uw genereuze donaties. Bedankt voor uw steun!",
+      "c2": "Probleem opgelost waarbij het dagblad niet automatisch sloot bij het toevoegen van tijd aan een dag van de maand.",
+      "c3": "Probleem opgelost met overloop op startscherm voor tablets."
     }
   },
   "installed": "Geïnstalleerd",

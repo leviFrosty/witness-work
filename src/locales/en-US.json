@@ -511,8 +511,10 @@
       "c1": "Added a special reward for when you check off your time box or add time!",
       "c2": "You can now set a decimal value for hour goals on 'custom' publisher type."
     },
-    "1341": {
-      "c1": "Resolved issue where day sheet would not close automatically when adding time to a day of month."
+    "1350": {
+      "c1": "You can now use autocomplete to search for an address! Just start typing to see suggestions. This feature is only possible by your generous donations. Thank you for your support!",
+      "c2": "Resolved issue where day sheet would not close automatically when adding time to a day of month.",
+      "c3": "Resolved overflow issue on home screen for tablets."
     }
   },
   "installed": "Installed",

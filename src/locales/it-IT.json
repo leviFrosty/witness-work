@@ -511,8 +511,10 @@
       "c1": "Aggiunta una ricompensa speciale quando selezioni la casella del tempo o aggiungi tempo!",
       "c2": "Ora puoi impostare un valore decimale per gli obiettivi orari sul tipo di editore \"personalizzato\"."
     },
-    "1341": {
-      "c1": "Risolto il problema per cui il foglio giornaliero non si chiudeva automaticamente quando si aggiungeva un orario a un giorno del mese."
+    "1350": {
+      "c1": "Ora puoi usare il completamento automatico per cercare un indirizzo! Inizia a digitare per vedere i suggerimenti. Questa funzionalità è possibile solo grazie alle tue generose donazioni. Grazie per il tuo supporto!",
+      "c2": "Risolto il problema per cui il foglio giornaliero non si chiudeva automaticamente quando si aggiungeva un orario a un giorno del mese.",
+      "c3": "Risolto il problema di overflow nella schermata iniziale per tablet."
     }
   },
   "installed": "Installato",

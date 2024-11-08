@@ -511,8 +511,10 @@
       "c1": "Wongeyeho ibihembo bidasanzwe mugihe ugenzuye igihe cyawe cyangwa wongeyeho umwanya!",
       "c2": "Urashobora noneho gushiraho agaciro ka cumi kumigambi yisaha kuri & apos; gakondo & apos; ubwoko bw'abamamaza."
     },
-    "1341": {
-      "c1": "Ikibazo cyakemutse aho urupapuro rwumunsi rudafunga byikora mugihe wongeyeho umwanya kumunsi wukwezi."
+    "1350": {
+      "c1": "Urashobora noneho gukoresha autocomplete kugirango ushakishe adresse! Gusa tangira wandika kugirango ubone ibyifuzo. Iyi ngingo irashoboka gusa nimpano zawe nyinshi. Urakoze ku nkunga yawe!",
+      "c2": "Ikibazo cyakemutse aho urupapuro rwumunsi rudafunga byikora mugihe wongeyeho umwanya kumunsi wukwezi.",
+      "c3": "Gukemura ikibazo cyuzuye hejuru murugo murugo rwa tableti."
     }
   },
   "installed": "Yagiye mu gikoresho cyawe",

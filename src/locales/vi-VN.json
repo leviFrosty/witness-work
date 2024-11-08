@@ -511,8 +511,10 @@
       "c1": "Đã thêm phần thưởng đặc biệt khi bạn đánh dấu vào ô thời gian hoặc thêm thời gian!",
       "c2": "Bây giờ bạn có thể đặt giá trị thập phân cho mục tiêu giờ trên loại nhà xuất bản 'tùy chỉnh'."
     },
-    "1341": {
-      "c1": "Đã giải quyết sự cố bảng ngày không tự động đóng khi thêm thời gian vào một ngày trong tháng."
+    "1350": {
+      "c1": "Bây giờ bạn có thể sử dụng tính năng tự động hoàn thành để tìm kiếm địa chỉ! Chỉ cần bắt đầu nhập để xem các gợi ý. Tính năng này chỉ khả thi khi bạn quyên góp hào phóng. Cảm ơn sự ủng hộ của bạn!",
+      "c2": "Đã giải quyết sự cố khiến bảng ngày không tự động đóng khi thêm thời gian vào một ngày trong tháng.",
+      "c3": "Đã giải quyết sự cố tràn trên màn hình chính cho máy tính bảng."
     }
   },
   "installed": "Cài đặt",

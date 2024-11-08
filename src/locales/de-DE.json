@@ -511,8 +511,10 @@
       "c1": "Eine besondere Belohnung wurde hinzugefügt, wenn Sie Ihr Zeitfeld abhaken oder Zeit hinzufügen!",
       "c2": "Sie können jetzt beim Publisher-Typ „benutzerdefiniert“ einen Dezimalwert für Stundenziele festlegen."
     },
-    "1341": {
-      "c1": "Das Problem wurde behoben, bei dem das Tagesblatt beim Hinzufügen einer Zeit zu einem Tag im Monat nicht automatisch geschlossen wurde."
+    "1350": {
+      "c1": "Sie können jetzt die automatische Vervollständigung verwenden, um nach einer Adresse zu suchen! Beginnen Sie einfach mit der Eingabe, um Vorschläge zu sehen. Diese Funktion ist nur durch Ihre großzügigen Spenden möglich. Vielen Dank für Ihre Unterstützung!",
+      "c2": "Problem behoben, bei dem das Tagesblatt nicht automatisch geschlossen wurde, wenn einem Tag im Monat Zeit hinzugefügt wurde.",
+      "c3": "Überlaufproblem auf dem Startbildschirm für Tablets behoben."
     }
   },
   "installed": "Eingerichtet",

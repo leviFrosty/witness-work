@@ -511,8 +511,10 @@
       "c1": "Ukulundapo icilambu ca pa lwakwe ilyo mwafumyapo akabokoshi kenu aka nshita nelyo ukulundako inshita!",
       "c2": "Kuti nomba wabika umutengo wa cikumi pa fishinte fya maawala pa 'ifyalinga' umusango wa kasabankanya."
     },
-    "1341": {
-      "c1": "Ubwafya bwapwishiwe apo ibuula lya bushiku talyaisala ilyo mwalundako inshita ku bushiku bwa mweshi."
+    "1350": {
+      "c1": "Nomba kuti wabomfya ukupwisha ukwaibeela pakufwaya akeyala! Tampa fye ukutaipa pakuti umone ifyakupanda amano. Ici cintu kuti cacitika fye pa mulandu wa fya kusangwilako fyenu ifya kuitemenwa. Twatasha pa kwafwilisha kwenu!",
+      "c2": "Ubwafya bwapwishiwe apo ibuula lya bushiku talyaisala ilyo mwalundako inshita ku bushiku bwa mweshi.",
+      "c3": "Ubwafya bwa kupongomoka bwapwishiwe pa cibuno ca pa ng'anda ica ma tablet."
     }
   },
   "installed": "Installed",

@@ -274,11 +274,15 @@ const SelectedDateSheet: React.FC<Props> = ({
             {moment().isSameOrAfter(sheet.date, 'day') && (
               <View style={{ flexGrow: 1 }}>
                 <ActionButton
-                  onPress={() =>
+                  onPress={() => {
+                    setSheet({
+                      ...sheet,
+                      open: false,
+                    })
                     navigation.navigate('Add Time', {
                       date: sheet.date.toISOString(),
                     })
-                  }
+                  }}
                 >
                   <Text
                     style={{

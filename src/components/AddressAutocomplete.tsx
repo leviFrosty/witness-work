@@ -29,7 +29,7 @@ export interface Suggestion {
 }
 
 const SEARCH_RADIUS = 1000000
-const DEBOUNCE_TIMEOUT = 200
+const DEBOUNCE_TIMEOUT_MS = 300
 const MAX_SUGGESTIONS = 5
 
 const AddressAutocomplete: React.FC<AddressAutocompleteProps> = ({
@@ -137,7 +137,7 @@ const AddressAutocomplete: React.FC<AddressAutocompleteProps> = ({
       }
     }
 
-    const debounce = setTimeout(fetchSuggestions, DEBOUNCE_TIMEOUT)
+    const debounce = setTimeout(fetchSuggestions, DEBOUNCE_TIMEOUT_MS)
     return () => clearTimeout(debounce)
   }, [getHighlightedText, isResult, location, query, setError, setSuggestions])
 

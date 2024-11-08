@@ -510,6 +510,9 @@
     "1340": {
       "c1": "Adicionada uma recompensa especial para quando você marca sua caixa de tempo ou adiciona tempo!",
       "c2": "Agora você pode definir um valor decimal para metas de hora no tipo de publicador 'personalizado'."
+    },
+    "1341": {
+      "c1": "Foi resolvido o problema em que a planilha diária não fechava automaticamente ao adicionar tempo a um dia do mês."
     }
   },
   "installed": "Instalado",

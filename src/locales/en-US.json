@@ -510,6 +510,9 @@
     "1340": {
       "c1": "Added a special reward for when you check off your time box or add time!",
       "c2": "You can now set a decimal value for hour goals on 'custom' publisher type."
+    },
+    "1341": {
+      "c1": "Resolved issue where day sheet would not close automatically when adding time to a day of month."
     }
   },
   "installed": "Installed",

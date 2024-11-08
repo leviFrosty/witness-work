@@ -1,6 +1,6 @@
 {
   "name": "witness-work",
-  "version": "1.34.0",
+  "version": "1.34.1",
   "main": "node_modules/expo/AppEntry.js",
   "scripts": {
     "dev": "APP_VARIANT=development expo start",

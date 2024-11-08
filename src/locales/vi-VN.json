@@ -510,6 +510,9 @@
     "1340": {
       "c1": "Đã thêm phần thưởng đặc biệt khi bạn đánh dấu vào ô thời gian hoặc thêm thời gian!",
       "c2": "Bây giờ bạn có thể đặt giá trị thập phân cho mục tiêu giờ trên loại nhà xuất bản 'tùy chỉnh'."
+    },
+    "1341": {
+      "c1": "Đã giải quyết sự cố bảng ngày không tự động đóng khi thêm thời gian vào một ngày trong tháng."
     }
   },
   "installed": "Cài đặt",

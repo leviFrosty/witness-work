@@ -510,6 +510,9 @@
     "1340": {
       "c1": "¡Se agregó una recompensa especial por marcar la casilla de tiempo o agregar tiempo!",
       "c2": "Ahora puede establecer un valor decimal para los objetivos de horas en el tipo de editor \"personalizado\"."
+    },
+    "1341": {
+      "c1": "Se resolvió el problema donde la hoja de día no se cerraba automáticamente al agregar tiempo a un día del mes."
     }
   },
   "installed": "Instalado",

@@ -69,7 +69,7 @@ const AddTimeScreen = ({ route }: AddTimeScreenProps) => {
   const [tag, setTag] = useState(
     existingServiceReport && existingServiceReport?.report.ldc
       ? timeEntryTags[1]
-      : existingServiceReport?.report.tag ?? timeEntryTags[0]
+      : (existingServiceReport?.report.tag ?? timeEntryTags[0])
   )
   const [customTag, setCustomTag] = useState<string>('')
   const [serviceReport, setServiceReport] = useState<ServiceReport>({
@@ -514,7 +514,7 @@ const AddTimeScreen = ({ route }: AddTimeScreenProps) => {
                               value={
                                 serviceReport.ldc
                                   ? true
-                                  : serviceReport.credit ?? false
+                                  : (serviceReport.credit ?? false)
                               }
                               onValueChange={(val) => setCredit(val)}
                               disabled={presetCategories.includes(tag)}

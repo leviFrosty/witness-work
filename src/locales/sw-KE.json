@@ -511,8 +511,10 @@
       "c1": "Umeongeza zawadi maalum unapoondoa saa kwenye kisanduku chako au kuongeza muda!",
       "c2": "Sasa unaweza kuweka thamani ya desimali kwa malengo ya saa kwenye 'desturi' aina ya mchapishaji."
     },
-    "1341": {
-      "c1": "Suala lililotatuliwa ambapo laha ya siku haingejifunga kiotomatiki wakati wa kuongeza muda kwa siku ya mwezi."
+    "1350": {
+      "c1": "Sasa unaweza kutumia kipengele cha kukamilisha kiotomatiki kutafuta anwani! Anza tu kuandika ili kuona mapendekezo. Kipengele hiki kinawezekana tu kwa michango yako ya ukarimu. Asante kwa msaada wako!",
+      "c2": "Suala lililotatuliwa ambapo laha ya siku haingejifunga kiotomatiki wakati wa kuongeza muda kwa siku ya mwezi.",
+      "c3": "Suala la kufurika limetatuliwa kwenye skrini ya kwanza ya kompyuta kibao."
     }
   },
   "installed": "Imesakinishwa",
@@ -807,5 +809,8 @@
   "languageFoundButIsFallbackLocale": "WitnessWork inasaidia lugha yako. Eneo lako halisi, {{original}}, halitumiki kwa hivyo limerejea kwa {{fallback}}.",
   "languageWasNotFound": "Kazi ya ushuhuda haitumii lugha ya kifaa chako, {{original}}. Imeanguka nyuma yake' lugha chaguo-msingi.",
   "deviceDefault": "Chaguomsingi ya Kifaa",
-  "language": "Lugha"
+  "language": "Lugha",
+  "enterAddress": "Weka Anwani",
+  "errorFetchingAddress": "Hitilafu katika kutafuta anwani. Tafadhali jaribu tena baadaye.",
+  "manuallyEnter": "Au Ingiza wewe mwenyewe"
 }

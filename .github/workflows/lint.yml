@@ -1,4 +1,4 @@
-name: Lint
+name: Lint and Typecheck
 
 on:
   push:
@@ -9,6 +9,7 @@ on:
   pull_request:
     branches:
       - production
+      - preview
       - development
 
 jobs:
@@ -19,17 +20,20 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Set up Node.js and Yarn
+      - name: Set up Node.js and pnpm
         uses: actions/setup-node@v3
         with:
           node-version: 20.x
-          cache: yarn
+          cache: pnpm
 
       - name: Install dependencies
-        run: yarn install
+        run: pnpm install
 
       - name: Lint
-        run: yarn run lint
+        run: pnpm run lint
+
+      - name: Typecheck
+        run: pnpm run typecheck
 
       - name: Check for circular dependencies
-        run: yarn run deps
+        run: pnpm run deps

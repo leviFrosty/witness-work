@@ -19,14 +19,14 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Set up Node.js and Yarn
+      - name: Set up Node.js and pnpm
         uses: actions/setup-node@v3
         with:
           node-version: 20.x
-          cache: yarn
+          cache: pnpm
 
       - name: Install dependencies
-        run: yarn install
+        run: pnpm install
 
       - name: Run Jest tests
-        run: yarn run testFinal
+        run: pnpm run testFinal

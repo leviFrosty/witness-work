@@ -29,37 +29,37 @@ The build process for iOS and Android is similar. Ensure you have all dependenci
 
 ### iOS
 
-Build dependencies: [XCode](https://docs.expo.dev/workflow/ios-simulator/#install-xcode), XCode latest iOS version, [XCode cli](https://docs.expo.dev/workflow/ios-simulator/#install-xcode-command-line-tools), [Watchman](https://facebook.github.io/watchman/docs/install#macos), [Fastlane](https://docs.fastlane.tools/), [Cocoapods](https://cocoapods.org/), [Node](https://nodejs.org/en/download/package-manager), [Yarn](https://classic.yarnpkg.com/lang/en/docs/install/#mac-stable), and [EAS cli](https://docs.expo.dev/eas-update/getting-started/)
+Build dependencies: [XCode](https://docs.expo.dev/workflow/ios-simulator/#install-xcode), XCode latest iOS version, [XCode cli](https://docs.expo.dev/workflow/ios-simulator/#install-xcode-command-line-tools), [Watchman](https://facebook.github.io/watchman/docs/install#macos), [Fastlane](https://docs.fastlane.tools/), [Cocoapods](https://cocoapods.org/), [Node](https://nodejs.org/en/download/package-manager), [pnpm](https://pnpm.io/), and [EAS cli](https://docs.expo.dev/eas-update/getting-started/)
 
 1. Clone repository
 
 1. Switch to workspace node version, `nvm use`
 
-1. Install dependencies, `yarn install`
+1. Install dependencies, `pnpm install`
 
-1. Build iOS, run `yarn build:ios`
+1. Build iOS, run `pnpm run build:ios`
 
 1. Install new build to simulator, (replace path) `eas build:run -p ios --path [path].tar.gz`
 
-1. Run development server, `yarn run dev`
+1. Run development server, `pnpm run dev`
 
 1. Develop 🚀
 
 ### Android
 
-Build dependencies: [Android Studio](https://developer.android.com/studio), [JDK](https://openjdk.org/), [Yarn](https://classic.yarnpkg.com/lang/en/docs/install/#mac-stable), [EAS cli](https://docs.expo.dev/eas-update/getting-started/), [Watchman](https://facebook.github.io/watchman/docs/install#macos), and [Fastlane](https://docs.fastlane.tools/)
+Build dependencies: [Android Studio](https://developer.android.com/studio), [JDK](https://openjdk.org/), [pnpm](https://pnpm.io/), [EAS cli](https://docs.expo.dev/eas-update/getting-started/), [Watchman](https://facebook.github.io/watchman/docs/install#macos), and [Fastlane](https://docs.fastlane.tools/)
 
 1. Clone repository
 
 1. Switch to workspace node version, `nvm use`
 
-1. Install dependencies, `yarn install`
+1. Install dependencies, `pnpm install`
 
-1. Build iOS, run `yarn build:android`
+1. Build iOS, run `pnpm build:android`
 
 1. Install new build to simulator, (replace path) `eas build:run -p android --path [path].apk`
 
-1. Run development server, `yarn run dev`
+1. Run development server, `pnpm run dev`
 
 1. Develop
 

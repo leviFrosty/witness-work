@@ -21,8 +21,6 @@ web-build/
 
 # debug
 npm-debug.*
-yarn-debug.*
-yarn-error.*
 
 # macOS
 .DS_Store
@@ -49,4 +47,7 @@ ios/
 # Local Builds
 build-*
 *.apk
+
+# Cache
+.cache
 

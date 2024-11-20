@@ -511,8 +511,10 @@
       "c1": "Adicionada uma recompensa especial para quando você marca sua caixa de tempo ou adiciona tempo!",
       "c2": "Agora você pode definir um valor decimal para metas de hora no tipo de publicador 'personalizado'."
     },
-    "1341": {
-      "c1": "Foi resolvido o problema em que a planilha diária não fechava automaticamente ao adicionar tempo a um dia do mês."
+    "1350": {
+      "c1": "Agora você pode usar o preenchimento automático para pesquisar um endereço! Basta começar a digitar para ver sugestões. Esse recurso só é possível com suas generosas doações. Obrigado pelo seu apoio!",
+      "c2": "Resolvido o problema em que a planilha diária não fechava automaticamente ao adicionar tempo a um dia do mês.",
+      "c3": "Resolvido o problema de estouro na tela inicial para tablets."
     }
   },
   "installed": "Instalado",
@@ -807,5 +809,8 @@
   "languageFoundButIsFallbackLocale": "WitnessWork suporta seu idioma. Sua localidade exata, {{original}}, não é suportada, então ela voltou para {{fallback}}.",
   "languageWasNotFound": "Witness Work não suporta o idioma do seu dispositivo, {{original}}. Ele voltou para seu idioma padrão.",
   "deviceDefault": "Padrão do dispositivo",
-  "language": "Linguagem"
+  "language": "Linguagem",
+  "enterAddress": "Digite o endereço",
+  "errorFetchingAddress": "Erro ao procurar endereço. Tente novamente mais tarde.",
+  "manuallyEnter": "Ou insira manualmente"
 }

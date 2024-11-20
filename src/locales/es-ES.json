@@ -511,8 +511,10 @@
       "c1": "¡Se agregó una recompensa especial por marcar la casilla de tiempo o agregar tiempo!",
       "c2": "Ahora puede establecer un valor decimal para los objetivos de horas en el tipo de editor \"personalizado\"."
     },
-    "1341": {
-      "c1": "Se resolvió el problema donde la hoja de día no se cerraba automáticamente al agregar tiempo a un día del mes."
+    "1350": {
+      "c1": "¡Ahora puedes usar la función de autocompletar para buscar una dirección! Simplemente comienza a escribir para ver las sugerencias. Esta función solo es posible gracias a tus generosas donaciones. ¡Gracias por tu apoyo!",
+      "c2": "Se resolvió el problema por el cual la hoja de día no se cerraba automáticamente al agregar tiempo a un día del mes.",
+      "c3": "Se resolvió el problema de desbordamiento en la pantalla de inicio para tabletas."
     }
   },
   "installed": "Instalado",
@@ -807,5 +809,8 @@
   "languageFoundButIsFallbackLocale": "WitnessWork admite su idioma. Su configuración regional exacta, {{original}}, no es compatible, por lo que ha vuelto a {{fallback}}.",
   "languageWasNotFound": "Witness Work no admite el idioma de su dispositivo, {{original}}. Ha vuelto a su idioma predeterminado.",
   "deviceDefault": "Predeterminado del dispositivo",
-  "language": "Idioma"
+  "language": "Idioma",
+  "enterAddress": "Introducir dirección",
+  "errorFetchingAddress": "Error al buscar la dirección. Inténtalo de nuevo más tarde.",
+  "manuallyEnter": "O ingrese manualmente"
 }

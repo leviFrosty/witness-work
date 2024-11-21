@@ -260,6 +260,9 @@ importers:
       '@types/react-test-renderer':
         specifier: ^18.3.0
         version: 18.3.0
+      '@types/semver':
+        specifier: ^7.5.8
+        version: 7.5.8
       '@typescript-eslint/eslint-plugin':
         specifier: ^7.8.0
         version: 7.18.0(@typescript-eslint/parser@7.18.0(eslint@8.51.0)(typescript@5.3.3))(eslint@8.51.0)(typescript@5.3.3)
@@ -4063,6 +4066,12 @@ packages:
     resolution:
       {
         integrity: sha512-G3sY+NpsA9jnwm0ixhAFQSJ3Q9JkpLZpJbI3GMv0mIAT0y3mRabYeINzal5WOChIiaTEGQYlHOKgkaM9EisWHw==,
+      }
+
+  '@types/semver@7.5.8':
+    resolution:
+      {
+        integrity: sha512-I8EUhyrgfLrcTkzV3TSsGyl1tSuPrEDzr0yd5m90UgNxQkyDXULk3b6MlQqTCpZpNtWe1K0hzclnZkTcLBe2UQ==,
       }
 
   '@types/stack-utils@2.0.3':
@@ -15998,6 +16007,8 @@ snapshots:
       '@types/node': 22.9.1
       '@types/tough-cookie': 4.0.5
       form-data: 2.5.2
+
+  '@types/semver@7.5.8': {}
 
   '@types/stack-utils@2.0.3': {}
 

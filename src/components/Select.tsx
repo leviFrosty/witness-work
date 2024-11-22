@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Dropdown } from 'react-native-element-dropdown'
 import useTheme from '../contexts/theme'
 import { DropdownProps } from 'react-native-element-dropdown/lib/typescript/components/Dropdown/model'
@@ -26,6 +25,7 @@ export interface SelectProps<T>
    *   />
    *   })
    */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   value: any
 }
 

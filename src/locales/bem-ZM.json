@@ -812,5 +812,9 @@
   "language": "Ululimi",
   "enterAddress": "Ingisha akeyala",
   "errorFetchingAddress": "Ubwafya mukufwaya akeyala. Mukwai esheniko nakabili panuma.",
-  "manuallyEnter": "Nangu Ingila mu Kuboko"
+  "manuallyEnter": "Nangu Ingila mu Kuboko",
+  "moreInfo": "Amashiwi nayambi",
+  "map": "Mapu",
+  "editColor": "Yalula Ilangi",
+  "close": "Ukwisala"
 }

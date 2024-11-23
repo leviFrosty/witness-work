@@ -8,7 +8,6 @@ import {
 import Loader from '../components/Loader'
 import { Progress } from 'tamagui'
 import AnimatedLottieView from 'lottie-react-native'
-import Circle from '../components/Circle'
 import { usePreferences } from '../stores/preferences'
 import useContacts from '../stores/contactsStore'
 import useTheme from '../contexts/theme'
@@ -21,8 +20,8 @@ import Wrapper from './layout/Wrapper'
 import Text from './MyText'
 import ActionButton from './ActionButton'
 import Button from './Button'
-import Card from './Card'
 import { HomeTabStackNavigation } from '../types/homeStack'
+import MapKey from './MapColorKey'
 
 export default function MapOnboarding() {
   const { incrementGeocodeApiCallCount, set } = usePreferences()
@@ -294,45 +293,7 @@ export default function MapOnboarding() {
               </Text>
               <Text>{i18n.t('markers_description')}</Text>
             </View>
-            <Card style={{ gap: 25 }}>
-              <View style={{ gap: 5 }}>
-                <Text
-                  style={{
-                    fontSize: theme.fontSize('lg'),
-                    fontFamily: theme.fonts.semiBold,
-                  }}
-                >
-                  {i18n.t('colorKey')}
-                </Text>
-                <Text style={{ color: theme.colors.textAlt }}>
-                  {i18n.t('pinsAreBasedOnYourMostRecentConversation')}
-                </Text>
-              </View>
-              <View
-                style={{ flexDirection: 'row', gap: 15, alignItems: 'center' }}
-              >
-                <Circle size={30} color={theme.colors.textAlt} />
-                <Text>{i18n.t('noConversations')}</Text>
-              </View>
-              <View
-                style={{ flexDirection: 'row', gap: 15, alignItems: 'center' }}
-              >
-                <Circle size={30} color={theme.colors.error} />
-                <Text>{i18n.t('longerThanAMonthAgo')}</Text>
-              </View>
-              <View
-                style={{ flexDirection: 'row', gap: 15, alignItems: 'center' }}
-              >
-                <Circle size={30} color={theme.colors.warn} />
-                <Text>{i18n.t('longerThanAWeekAgo')}</Text>
-              </View>
-              <View
-                style={{ flexDirection: 'row', gap: 15, alignItems: 'center' }}
-              >
-                <Circle size={30} color={theme.colors.accent} />
-                <Text>{i18n.t('withinThePastWeek')}</Text>
-              </View>
-            </Card>
+            <MapKey />
           </View>
 
           <View>

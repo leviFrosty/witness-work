@@ -27,6 +27,10 @@ import useDevice from '../hooks/useDevice'
 import { RootStackNavigation } from '../types/rootStack'
 import { HomeTabStackNavigation } from '../types/homeStack'
 import { ContactMarker } from '../types/map'
+import IconButton from '../components/IconButton'
+import { faInfo, faTimes } from '@fortawesome/free-solid-svg-icons'
+import { Sheet } from 'tamagui'
+import MapKey from '../components/MapColorKey'
 
 interface FullMapViewProps {
   contactMarkers: ContactMarker[]
@@ -46,6 +50,7 @@ const FullMapView = ({ contactMarkers }: FullMapViewProps) => {
     appleMapsUri: '',
     googleMapsUri: '',
   })
+  const [showInfo, setShowInfo] = useState(false)
   const theme = useTheme()
   const { contacts, updateContact } = useContacts()
   const CARD_HEIGHT = 200
@@ -134,6 +139,19 @@ const FullMapView = ({ contactMarkers }: FullMapViewProps) => {
           />
         ))}
       </MapView>
+      <Button
+        onPress={() => setShowInfo(!showInfo)}
+        style={{
+          backgroundColor: theme.colors.background,
+          padding: 10,
+          borderRadius: theme.numbers.borderRadiusMd,
+          position: 'absolute',
+          top: insets.top + 25,
+          left: 20,
+        }}
+      >
+        <IconButton icon={faInfo} iconStyle={{ color: theme.colors.textAlt }} />
+      </Button>
 
       {contactMarkers.length === 0 ? (
         <View
@@ -193,6 +211,28 @@ const FullMapView = ({ contactMarkers }: FullMapViewProps) => {
         />
       )}
       <ShareAddressSheet sheet={sheet} setSheet={setSheet} />
+      <Sheet
+        open={showInfo}
+        onOpenChange={(o: boolean) => setShowInfo(o)}
+        dismissOnSnapToBottom
+        modal
+        snapPoints={[65]}
+      >
+        <Sheet.Handle />
+        <Sheet.Overlay zIndex={100_000 - 1} />
+        <Sheet.Frame>
+          <View style={{ padding: 30, gap: 10 }}>
+            <IconButton
+              icon={faTimes}
+              color={theme.colors.text}
+              onPress={() => setShowInfo(false)}
+              size='xl'
+              style={{ marginLeft: 'auto', marginBottom: 10 }}
+            />
+            <MapKey />
+          </View>
+        </Sheet.Frame>
+      </Sheet>
       {contactMarkers.length > 1 && (
         <Button
           variant='solid'

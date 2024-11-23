@@ -812,5 +812,9 @@
   "language": "Ururimi",
   "enterAddress": "Injira Aderesi",
   "errorFetchingAddress": "Ikosa ryo gushakisha aderesi. Nyamuneka gerageza nyuma.",
-  "manuallyEnter": "Cyangwa Intoki"
+  "manuallyEnter": "Cyangwa Intoki",
+  "moreInfo": "Andi Makuru",
+  "map": "Ikarita",
+  "editColor": "Hindura ibara",
+  "close": "Funga"
 }

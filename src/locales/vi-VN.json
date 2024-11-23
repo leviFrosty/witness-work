@@ -812,5 +812,9 @@
   "language": "Ngôn ngữ",
   "enterAddress": "Nhập Địa Chỉ",
   "errorFetchingAddress": "Có lỗi khi tìm kiếm địa chỉ. Vui lòng thử lại sau.",
-  "manuallyEnter": "Hoặc nhập thủ công"
+  "manuallyEnter": "Hoặc nhập thủ công",
+  "moreInfo": "Thông tin thêm",
+  "map": "Bản đồ",
+  "editColor": "Chỉnh sửa màu sắc",
+  "close": "Đóng"
 }

@@ -98,6 +98,7 @@
     "react-native-screens": "3.31.1",
     "react-native-svg": "15.2.0",
     "react-test-renderer": "^18.3.1",
+    "reanimated-color-picker": "^3.0.5",
     "semver": "^7.6.3",
     "tamagui": "^1.116.14",
     "zod": "^3.23.8",

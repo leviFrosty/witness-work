@@ -812,5 +812,9 @@
   "language": "語言",
   "enterAddress": "輸入地址",
   "errorFetchingAddress": "搜尋地址時發生錯誤。請稍後重試。",
-  "manuallyEnter": "或手動輸入"
+  "manuallyEnter": "或手動輸入",
+  "moreInfo": "更多資訊",
+  "map": "地圖",
+  "editColor": "編輯顏色",
+  "close": "關閉"
 }

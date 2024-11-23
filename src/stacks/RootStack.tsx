@@ -176,7 +176,9 @@ const RootStackComponent = () => {
       />
       <RootStack.Screen
         options={{
-          header: () => <Header buttonType='back' title={i18n.t('backups')} />,
+          header: () => (
+            <Header buttonType='back' title={i18n.t('appearance')} />
+          ),
         }}
         name='PreferencesAppearance'
         component={PreferencesAppearanceScreen}

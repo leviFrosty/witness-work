@@ -812,5 +812,9 @@
   "language": "Language",
   "enterAddress": "Enter Address",
   "errorFetchingAddress": "Error searching for address. Please try again later.",
-  "manuallyEnter": "Or Manually Enter"
+  "manuallyEnter": "Or Manually Enter",
+  "moreInfo": "More Info",
+  "map": "Map",
+  "editColor": "Edit Color",
+  "close": "Close"
 }

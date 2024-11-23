@@ -8,6 +8,8 @@ import Text from '../../../../components/MyText'
 import { useContext } from 'react'
 import { ThemeContext } from '../../../../contexts/theme'
 import { MinuteDisplayFormat } from '../../../../types/serviceReport'
+import MapKey from '../../../../components/MapColorKey'
+import Divider from '../../../../components/Divider'
 
 const AppearancePreferencesSection = () => {
   const { set, fontSizeOffset, colorScheme, timeDisplayFormat } =
@@ -30,7 +32,6 @@ const AppearancePreferencesSection = () => {
 
   const timeDisplayOptions: { label: string; value: MinuteDisplayFormat }[] = [
     { label: i18n.t('decimalExample'), value: 'decimal' },
-    // { label: i18n.t('longExample'), value: 'long' },
     { label: i18n.t('shortExample'), value: 'short' },
   ]
 
@@ -83,6 +84,18 @@ const AppearancePreferencesSection = () => {
         >
           {i18n.t('thisGloballyOffsetsTextSize')}
         </Text>
+      </Section>
+      <Divider marginVertical={20} />
+      <Section style={{ paddingLeft: 20, paddingRight: 20 }} noPadding>
+        <Text
+          style={{
+            fontFamily: theme.fonts.semiBold,
+            fontSize: theme.fontSize('lg'),
+          }}
+        >
+          {i18n.t('map')}
+        </Text>
+        <MapKey />
       </Section>
     </View>
   )

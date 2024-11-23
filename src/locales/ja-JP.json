@@ -812,5 +812,9 @@
   "language": "言語",
   "enterAddress": "住所を入力",
   "errorFetchingAddress": "住所の検索中にエラーが発生しました。しばらくしてからもう一度お試しください。",
-  "manuallyEnter": "または手動で入力"
+  "manuallyEnter": "または手動で入力",
+  "moreInfo": "詳細情報",
+  "map": "マップ",
+  "editColor": "色を編集",
+  "close": "閉じる"
 }

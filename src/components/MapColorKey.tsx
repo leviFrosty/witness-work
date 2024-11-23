@@ -146,7 +146,6 @@ export default function MapKey() {
                 ref={pickerRef}
                 value={currentColorToEdit.color}
                 onComplete={({ hex }) => {
-                  console.log('Selecting color', hex)
                   set({
                     mapKeyColors: {
                       ...colors,

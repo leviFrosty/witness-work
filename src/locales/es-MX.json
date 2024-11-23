@@ -515,6 +515,11 @@
       "c1": "¡Ahora puedes usar la función de autocompletar para buscar una dirección! Simplemente comienza a escribir para ver las sugerencias. Esta función solo es posible gracias a tus generosas donaciones. ¡Gracias por tu apoyo!",
       "c2": "Se resolvió el problema por el cual la hoja de día no se cerraba automáticamente al agregar tiempo a un día del mes.",
       "c3": "Se resolvió el problema de desbordamiento en la pantalla de inicio para tabletas."
+    },
+    "1360": {
+      "c1": "¡Se agregó una nueva clave de color a la vista del mapa! Ahora puedes personalizar los colores de los puntos del mapa.",
+      "c2": "Se agregó un nuevo botón \"más información\" a la vista del mapa. Haz clic en él para ver más información sobre la aplicación.",
+      "c3": "Se solucionó el problema con el formato de los números de teléfono en coreano."
     }
   },
   "installed": "Instalada",

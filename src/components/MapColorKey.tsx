@@ -1,11 +1,11 @@
 import { Modal, View } from 'react-native'
 import Card from './Card'
 import Text from './MyText'
-import i18n, { TranslationKey } from '../lib/locales'
+import i18n from '../lib/locales'
 import useTheme from '../contexts/theme'
 import Circle from './Circle'
 import Button from './Button'
-import { MapKeyColors, usePreferences } from '../stores/preferences'
+import { MarkerColors, usePreferences } from '../stores/preferences'
 import { useRef, useState } from 'react'
 import ColorPicker, {
   ColorPickerRef,
@@ -14,13 +14,14 @@ import ColorPicker, {
 } from 'reanimated-color-picker'
 import ActionButton from './ActionButton'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import { useMarkerColors } from '../hooks/useMarkerColors'
 
 type MapKeyRow = {
-  name: TranslationKey
+  name: keyof MarkerColors
   color: string
 }
 
-const getPinTypes = (colors: MapKeyColors): MapKeyRow[] => [
+const getPinTypes = (colors: MarkerColors): MapKeyRow[] => [
   {
     name: 'noConversations',
     color: colors.noConversations!,
@@ -40,15 +41,16 @@ const getPinTypes = (colors: MapKeyColors): MapKeyRow[] => [
 ]
 
 export default function MapKey() {
-  const { mapKeyColors, set } = usePreferences()
+  const { set } = usePreferences()
   const theme = useTheme()
   const [showModal, setShowModal] = useState(false)
   const pickerRef = useRef<ColorPickerRef>(null)
   const insets = useSafeAreaInsets()
   const [currentColorToEdit, setCurrentColorToEdit] = useState<{
-    name: TranslationKey
+    name: keyof MarkerColors
     color: string
   }>()
+  const colors = useMarkerColors()
 
   const reset = (currentColorKey: keyof typeof colors) => {
     set({
@@ -61,14 +63,6 @@ export default function MapKey() {
     setTimeout(() => {
       pickerRef.current?.setColor(colors[currentColorKey]!)
     }, 100)
-  }
-
-  const colors: MapKeyColors = {
-    noConversations: mapKeyColors?.noConversations ?? theme.colors.textAlt,
-    longerThanAMonthAgo:
-      mapKeyColors?.longerThanAMonthAgo ?? theme.colors.error,
-    longerThanAWeekAgo: mapKeyColors?.longerThanAWeekAgo ?? theme.colors.warn,
-    withinThePastWeek: mapKeyColors?.withinThePastWeek ?? theme.colors.accent,
   }
 
   return (

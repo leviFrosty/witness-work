@@ -31,6 +31,7 @@ import IconButton from '../components/IconButton'
 import { faInfo, faTimes } from '@fortawesome/free-solid-svg-icons'
 import { Sheet } from 'tamagui'
 import MapKey from '../components/MapColorKey'
+import { useMarkerColors } from '../hooks/useMarkerColors'
 
 interface FullMapViewProps {
   contactMarkers: ContactMarker[]
@@ -259,8 +260,8 @@ const FullMapView = ({ contactMarkers }: FullMapViewProps) => {
 const MapScreen = () => {
   const { contacts } = useContacts()
   const { conversations } = useConversations()
-  const theme = useTheme()
   const { hasCompletedMapOnboarding } = usePreferences()
+  const colors = useMarkerColors()
 
   const contactMarkers: ContactMarker[] = useMemo(() => {
     const contactsWithCoords = contacts.filter(
@@ -275,7 +276,7 @@ const MapScreen = () => {
       if (contactConvos.length === 0) {
         return {
           ...c,
-          pinColor: theme.colors.textAlt,
+          pinColor: colors.noConversations,
         }
       }
 
@@ -284,14 +285,14 @@ const MapScreen = () => {
       )
       const mostRecentDate = moment(conversationsSorted[0].date)
 
-      let pinColor: string = theme.colors.accent
+      let pinColor: string = colors.withinThePastWeek
 
       if (mostRecentDate.isBefore(today.subtract(1, 'week'))) {
-        pinColor = theme.colors.warn
+        pinColor = colors.longerThanAWeekAgo
       }
 
       if (mostRecentDate.isBefore(today.subtract(1, 'month'))) {
-        pinColor = theme.colors.error
+        pinColor = colors.longerThanAMonthAgo
       }
 
       return {
@@ -300,12 +301,12 @@ const MapScreen = () => {
       }
     })
   }, [
+    colors.longerThanAMonthAgo,
+    colors.longerThanAWeekAgo,
+    colors.noConversations,
+    colors.withinThePastWeek,
     contacts,
     conversations,
-    theme.colors.accent,
-    theme.colors.error,
-    theme.colors.textAlt,
-    theme.colors.warn,
   ])
 
   if (!hasCompletedMapOnboarding) {

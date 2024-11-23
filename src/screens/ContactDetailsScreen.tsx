@@ -57,6 +57,7 @@ import useLocation from '../hooks/useLocation'
 import { useToastController } from '@tamagui/toast'
 import XView from '../components/layout/XView'
 import { RootStackNavigation, RootStackParamList } from '../types/rootStack'
+import { useMarkerColors } from '../hooks/useMarkerColors'
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Contact Details'>
 
@@ -206,6 +207,7 @@ const AddressRow = ({ contact }: { contact: Contact }) => {
   const { incrementGeocodeApiCallCount, defaultNavigationMapProvider } =
     usePreferences()
   const mapRef = useRef<MapView>(null)
+  const colors = useMarkerColors()
   const { locationPermission } = useLocation()
 
   const fitToMarkers = useCallback(() => {
@@ -221,7 +223,7 @@ const AddressRow = ({ contact }: { contact: Contact }) => {
     )
 
     if (contactConvos.length === 0) {
-      return theme.colors.textAlt
+      return colors.noConversations
     }
     const today = moment()
 
@@ -230,23 +232,23 @@ const AddressRow = ({ contact }: { contact: Contact }) => {
     )
     const mostRecentDate = moment(conversationsSorted[0].date)
 
-    let color: string = theme.colors.accent
+    let color: string = colors.withinThePastWeek
 
     if (mostRecentDate.isBefore(today.subtract(1, 'week'))) {
-      color = theme.colors.warn
+      color = colors.longerThanAWeekAgo
     }
 
     if (mostRecentDate.isBefore(today.subtract(1, 'month'))) {
-      color = theme.colors.error
+      color = colors.longerThanAMonthAgo
     }
     return color
   }, [
+    colors.longerThanAMonthAgo,
+    colors.longerThanAWeekAgo,
+    colors.noConversations,
+    colors.withinThePastWeek,
     contact.id,
     conversations,
-    theme.colors.accent,
-    theme.colors.error,
-    theme.colors.textAlt,
-    theme.colors.warn,
   ])
 
   const attemptToGetCoordinates = async () => {

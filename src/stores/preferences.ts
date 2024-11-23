@@ -2,7 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage'
 import { create } from 'zustand'
 import { persist, combine, createJSONStorage } from 'zustand/middleware'
 import { Publisher, PublisherHours } from '../types/publisher'
-import i18n, { TranslatedLocale, TranslationKey } from '../lib/locales'
+import i18n, { TranslatedLocale } from '../lib/locales'
 import Constants from 'expo-constants'
 import moment from 'moment'
 import * as Device from 'expo-device'
@@ -82,8 +82,11 @@ export type ServiceReportTag = {
   credit: boolean
 }
 
-export type MapKeyColors = {
-  [K in TranslationKey]?: string
+export type MarkerColors = {
+  noConversations: string
+  longerThanAMonthAgo: string
+  longerThanAWeekAgo: string
+  withinThePastWeek: string
 }
 
 export type PrefillAddress = {
@@ -160,7 +163,7 @@ const initialState = {
   colorScheme: undefined as ColorSchemeName,
   timeDisplayFormat: 'decimal' as MinuteDisplayFormat,
   locale: undefined as TranslatedLocale | undefined,
-  mapKeyColors: undefined as MapKeyColors | undefined,
+  mapKeyColors: undefined as MarkerColors | undefined,
 }
 
 export const usePreferences = create(

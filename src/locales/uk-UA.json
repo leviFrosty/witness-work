@@ -812,5 +812,9 @@
   "language": "Мова",
   "enterAddress": "Введіть адресу",
   "errorFetchingAddress": "Помилка пошуку адреси. Спробуйте пізніше.",
-  "manuallyEnter": "Або ввести вручну"
+  "manuallyEnter": "Або ввести вручну",
+  "moreInfo": "Більше інформації",
+  "map": "Карта",
+  "editColor": "Редагувати колір",
+  "close": "Закрити"
 }

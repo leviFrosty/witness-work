@@ -515,6 +515,11 @@
       "c1": "Ora puoi usare il completamento automatico per cercare un indirizzo! Inizia a digitare per vedere i suggerimenti. Questa funzionalità è possibile solo grazie alle tue generose donazioni. Grazie per il tuo supporto!",
       "c2": "Risolto il problema per cui il foglio giornaliero non si chiudeva automaticamente quando si aggiungeva un orario a un giorno del mese.",
       "c3": "Risolto il problema di overflow nella schermata iniziale per tablet."
+    },
+    "1360": {
+      "c1": "Aggiunta una nuova chiave colore alla vista mappa! Ora puoi personalizzare i colori dei pin sulla mappa.",
+      "c2": "Aggiunto un nuovo pulsante \"ulteriori informazioni\" alla vista mappa. Cliccaci sopra per vedere maggiori informazioni sull'app.",
+      "c3": "Risolve il problema con la formattazione dei numeri di telefono coreani."
     }
   },
   "installed": "Installato",

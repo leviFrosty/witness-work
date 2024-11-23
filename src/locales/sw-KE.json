@@ -812,5 +812,9 @@
   "language": "Lugha",
   "enterAddress": "Weka Anwani",
   "errorFetchingAddress": "Hitilafu katika kutafuta anwani. Tafadhali jaribu tena baadaye.",
-  "manuallyEnter": "Au Ingiza wewe mwenyewe"
+  "manuallyEnter": "Au Ingiza wewe mwenyewe",
+  "moreInfo": "Maelezo Zaidi",
+  "map": "Ramani",
+  "editColor": "Badilisha Rangi",
+  "close": "Funga"
 }

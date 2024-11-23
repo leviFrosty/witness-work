@@ -515,6 +515,11 @@
       "c1": "Sie können jetzt die automatische Vervollständigung verwenden, um nach einer Adresse zu suchen! Beginnen Sie einfach mit der Eingabe, um Vorschläge zu sehen. Diese Funktion ist nur durch Ihre großzügigen Spenden möglich. Vielen Dank für Ihre Unterstützung!",
       "c2": "Problem behoben, bei dem das Tagesblatt nicht automatisch geschlossen wurde, wenn einem Tag im Monat Zeit hinzugefügt wurde.",
       "c3": "Überlaufproblem auf dem Startbildschirm für Tablets behoben."
+    },
+    "1360": {
+      "c1": "Der Kartenansicht wurde ein neuer Farbschlüssel hinzugefügt! Sie können jetzt die Farben der Stecknadeln auf der Karte anpassen.",
+      "c2": "Der Kartenansicht wurde eine neue Schaltfläche „Weitere Informationen“ hinzugefügt. Klicken Sie darauf, um weitere Informationen zur App anzuzeigen.",
+      "c3": "Behebt ein Problem mit der Formatierung koreanischer Telefonnummern."
     }
   },
   "installed": "Eingerichtet",

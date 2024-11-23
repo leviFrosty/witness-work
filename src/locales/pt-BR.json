@@ -515,6 +515,11 @@
       "c1": "Agora você pode usar o preenchimento automático para pesquisar um endereço! Basta começar a digitar para ver sugestões. Esse recurso só é possível com suas generosas doações. Obrigado pelo seu apoio!",
       "c2": "Resolvido o problema em que a planilha diária não fechava automaticamente ao adicionar tempo a um dia do mês.",
       "c3": "Resolvido o problema de estouro na tela inicial para tablets."
+    },
+    "1360": {
+      "c1": "Adicionada uma nova chave de cor à visualização do mapa! Agora você pode personalizar as cores dos pinos no mapa.",
+      "c2": "Adicionado um novo botão 'mais informações' à visualização do mapa. Clique nele para ver mais informações sobre o aplicativo.",
+      "c3": "Resolve o problema com a formatação de números de telefone coreanos."
     }
   },
   "installed": "Instalado",

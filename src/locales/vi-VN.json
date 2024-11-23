@@ -515,6 +515,11 @@
       "c1": "Bây giờ bạn có thể sử dụng tính năng tự động hoàn thành để tìm kiếm địa chỉ! Chỉ cần bắt đầu nhập để xem các gợi ý. Tính năng này chỉ khả thi khi bạn quyên góp hào phóng. Cảm ơn sự ủng hộ của bạn!",
       "c2": "Đã giải quyết sự cố khiến bảng ngày không tự động đóng khi thêm thời gian vào một ngày trong tháng.",
       "c3": "Đã giải quyết sự cố tràn trên màn hình chính cho máy tính bảng."
+    },
+    "1360": {
+      "c1": "Đã thêm một khóa màu mới vào chế độ xem bản đồ! Bây giờ bạn có thể tùy chỉnh màu của các ghim trên bản đồ.",
+      "c2": "Đã thêm nút 'thông tin thêm' mới vào chế độ xem bản đồ. Nhấp vào nút đó để xem thêm thông tin về ứng dụng.",
+      "c3": "Giải quyết vấn đề về định dạng số điện thoại Hàn Quốc."
     }
   },
   "installed": "Cài đặt",

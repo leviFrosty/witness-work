@@ -694,7 +694,7 @@
   "deleteField_description": "이 사용자 정의 필드를 삭제하시겠습니까?",
   "clearForThisContact": "이 연락처 지우기",
   "deleteFieldOnAllContacts": "모든 연락처의 필드 삭제",
-  "timer": "시간제 노동자",
+  "timer": "타이머",
   "resetTimer": "타이머 재설정",
   "resetTimer_description": "타이머를 재설정하면 현재 시간 항목이 손실됩니다. 재설정하시겠습니까?",
   "reset": "초기화",

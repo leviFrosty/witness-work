@@ -517,9 +517,12 @@
       "c3": "Вирішено проблему переповнення на головному екрані планшетів."
     },
     "1360": {
-      "c1": "Додано нову кольорову клавішу до перегляду карти! Тепер ви можете налаштувати кольори шпильок на карті.",
+      "c1": "Added a color key to the map view! You can now customize the colors of the pins on the map.",
       "c2": "Додано нову 'більше інформації' кнопку перегляду карти. Натисніть її, щоб переглянути більше інформації про програму.",
-      "c3": "Вирішує проблему з корейським форматуванням номера телефону."
+      "c3": "Вирішує проблему з корейським форматуванням номера телефону.",
+      "c4": "Resolves issue with Panama phone number formatting.",
+      "c5": "Improves visibility of Map on Contacts Details screen.",
+      "c6": "You can now change your calendar's first day of the week. Visit Preferences > Appearance."
     }
   },
   "installed": "встановлено",
@@ -821,5 +824,6 @@
   "moreInfo": "Більше інформації",
   "map": "Карта",
   "editColor": "Редагувати колір",
-  "close": "Закрити"
+  "close": "Закрити",
+  "startOfWeek": "Start of Week"
 }

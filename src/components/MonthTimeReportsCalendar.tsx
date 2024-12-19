@@ -6,6 +6,7 @@ import { MarkedDates } from 'react-native-calendars/src/types'
 import { SelectedDateSheetState } from './SelectedDateSheet'
 import CalendarDay from './CalendarDay'
 import { useMemo } from 'react'
+import { usePreferences } from '../stores/preferences'
 
 type MonthTimeReportsCalendarProps = {
   month: number
@@ -20,6 +21,7 @@ const MonthTimeReportsCalendar: React.FC<MonthTimeReportsCalendarProps> = ({
   monthsReports,
   setSheet,
 }) => {
+  const { startOfWeek } = usePreferences()
   const theme = useTheme()
   const monthToView = moment().month(month).year(year).format('YYYY-MM-DD')
 
@@ -42,6 +44,7 @@ const MonthTimeReportsCalendar: React.FC<MonthTimeReportsCalendarProps> = ({
     <Calendar
       key={monthToView}
       current={monthToView}
+      firstDay={startOfWeek}
       disableMonthChange
       hideArrows
       renderHeader={() => null}

@@ -12,7 +12,7 @@ import MapKey from '../../../../components/MapColorKey'
 import Divider from '../../../../components/Divider'
 
 const AppearancePreferencesSection = () => {
-  const { set, fontSizeOffset, colorScheme, timeDisplayFormat } =
+  const { set, fontSizeOffset, colorScheme, timeDisplayFormat, startOfWeek } =
     usePreferences()
   const theme = useContext(ThemeContext)
   const fontSizeOffsetOptions = [
@@ -28,6 +28,16 @@ const AppearancePreferencesSection = () => {
     { label: i18n.t('device'), value: undefined },
     { label: i18n.t('dark'), value: 'dark' },
     { label: i18n.t('light'), value: 'light' },
+  ]
+
+  const startOfWeekOptions = [
+    { label: 'Sunday', value: 0 },
+    { label: 'Monday', value: 1 },
+    { label: 'Tuesday', value: 2 },
+    { label: 'Wednesday', value: 3 },
+    { label: 'Thursday', value: 4 },
+    { label: 'Friday', value: 5 },
+    { label: 'Saturday', value: 6 },
   ]
 
   const timeDisplayOptions: { label: string; value: MinuteDisplayFormat }[] = [
@@ -47,6 +57,18 @@ const AppearancePreferencesSection = () => {
               data={darkModeOptions}
               value={colorScheme}
               onChange={({ value }) => set({ colorScheme: value })}
+            />
+          </View>
+        </InputRowContainer>
+        <InputRowContainer
+          label={i18n.t('startOfWeek')}
+          style={{ justifyContent: 'space-between' }}
+        >
+          <View style={{ flex: 1 }}>
+            <Select
+              data={startOfWeekOptions}
+              value={startOfWeek}
+              onChange={({ value }) => set({ startOfWeek: value })}
             />
           </View>
         </InputRowContainer>

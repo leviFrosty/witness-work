@@ -164,6 +164,11 @@ const initialState = {
   timeDisplayFormat: 'decimal' as MinuteDisplayFormat,
   locale: undefined as TranslatedLocale | undefined,
   mapKeyColors: undefined as MarkerColors | undefined,
+  /**
+   * Start of week for localization. 0 starts on Sunday, 1 starts on Monday,
+   * etc.
+   */
+  startOfWeek: 0,
 }
 
 export const usePreferences = create(

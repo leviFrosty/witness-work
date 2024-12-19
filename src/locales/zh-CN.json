@@ -517,9 +517,12 @@
       "c3": "解决了平板电脑主屏幕上的溢出问题。"
     },
     "1360": {
-      "c1": "地图视图中添加了新的颜色键！您现在可以自定义地图上图钉的颜色。",
+      "c1": "Added a color key to the map view! You can now customize the colors of the pins on the map.",
       "c2": "地图视图中添加了新的“更多信息”按钮。单击它可查看有关该应用的更多信息。",
-      "c3": "解决韩语电话号码格式问题。"
+      "c3": "解决韩语电话号码格式问题。",
+      "c4": "Resolves issue with Panama phone number formatting.",
+      "c5": "Improves visibility of Map on Contacts Details screen.",
+      "c6": "You can now change your calendar's first day of the week. Visit Preferences > Appearance."
     }
   },
   "installed": "已安装",
@@ -821,5 +824,6 @@
   "moreInfo": "更多信息",
   "map": "地图",
   "editColor": "编辑颜色",
-  "close": "关闭"
+  "close": "关闭",
+  "startOfWeek": "Start of Week"
 }

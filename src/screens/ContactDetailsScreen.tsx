@@ -211,11 +211,13 @@ const AddressRow = ({ contact }: { contact: Contact }) => {
   const { locationPermission } = useLocation()
 
   const fitToMarkers = useCallback(() => {
-    if (!contact.coordinate) {
-      return
-    }
-    mapRef.current?.fitToCoordinates([contact.coordinate])
-  }, [contact.coordinate])
+    setTimeout(() => {
+      if (!contact.coordinate) {
+        return
+      }
+      mapRef.current?.fitToSuppliedMarkers([contact.id])
+    }, 0)
+  }, [contact.coordinate, contact.id])
 
   const pinColor = useMemo(() => {
     const contactConvos = conversations.filter(
@@ -349,7 +351,7 @@ const AddressRow = ({ contact }: { contact: Contact }) => {
             ref={mapRef}
             onLayout={fitToMarkers}
             style={{
-              height: 140,
+              height: 180,
               width: '100%',
               borderRadius: theme.numbers.borderRadiusSm,
             }}

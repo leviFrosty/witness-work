@@ -32,6 +32,7 @@ import { faInfo, faTimes } from '@fortawesome/free-solid-svg-icons'
 import { Sheet } from 'tamagui'
 import MapKey from '../components/MapColorKey'
 import { useMarkerColors } from '../hooks/useMarkerColors'
+import React from 'react'
 
 interface FullMapViewProps {
   contactMarkers: ContactMarker[]
@@ -140,19 +141,6 @@ const FullMapView = ({ contactMarkers }: FullMapViewProps) => {
           />
         ))}
       </MapView>
-      <Button
-        onPress={() => setShowInfo(!showInfo)}
-        style={{
-          backgroundColor: theme.colors.background,
-          padding: 10,
-          borderRadius: theme.numbers.borderRadiusMd,
-          position: 'absolute',
-          top: insets.top + 25,
-          left: 20,
-        }}
-      >
-        <IconButton icon={faInfo} iconStyle={{ color: theme.colors.textAlt }} />
-      </Button>
 
       {contactMarkers.length === 0 ? (
         <View
@@ -234,25 +222,43 @@ const FullMapView = ({ contactMarkers }: FullMapViewProps) => {
           </View>
         </Sheet.Frame>
       </Sheet>
-      {contactMarkers.length > 1 && (
+      <View
+        style={{
+          position: 'absolute',
+          top: insets.top + 5,
+          left: 8,
+          gap: 5,
+        }}
+      >
+        {contactMarkers.length > 1 && (
+          <Button
+            variant='solid'
+            onPress={fitToMarkers}
+            style={{
+              paddingVertical: 10,
+              paddingHorizontal: 25,
+              justifyContent: 'center',
+              borderRadius: theme.numbers.borderRadiusSm,
+            }}
+          >
+            <Text style={{ fontFamily: theme.fonts.bold, textAlign: 'center' }}>
+              {i18n.t('fit')}
+            </Text>
+          </Button>
+        )}
         <Button
           variant='solid'
-          onPress={fitToMarkers}
+          onPress={() => setShowInfo(!showInfo)}
           style={{
             paddingVertical: 10,
             paddingHorizontal: 25,
             justifyContent: 'center',
             borderRadius: theme.numbers.borderRadiusSm,
-            position: 'absolute',
-            top: insets.top + 5,
-            left: 8,
           }}
         >
-          <Text style={{ fontFamily: theme.fonts.bold, textAlign: 'center' }}>
-            {i18n.t('fit')}
-          </Text>
+          <IconButton icon={faInfo} iconStyle={{ color: theme.colors.text }} />
         </Button>
-      )}
+      </View>
     </>
   )
 }

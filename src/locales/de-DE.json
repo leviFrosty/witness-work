@@ -517,9 +517,12 @@
       "c3": "Überlaufproblem auf dem Startbildschirm für Tablets behoben."
     },
     "1360": {
-      "c1": "Der Kartenansicht wurde ein neuer Farbschlüssel hinzugefügt! Sie können jetzt die Farben der Stecknadeln auf der Karte anpassen.",
+      "c1": "Added a color key to the map view! You can now customize the colors of the pins on the map.",
       "c2": "Der Kartenansicht wurde eine neue Schaltfläche „Weitere Informationen“ hinzugefügt. Klicken Sie darauf, um weitere Informationen zur App anzuzeigen.",
-      "c3": "Behebt ein Problem mit der Formatierung koreanischer Telefonnummern."
+      "c3": "Behebt ein Problem mit der Formatierung koreanischer Telefonnummern.",
+      "c4": "Resolves issue with Panama phone number formatting.",
+      "c5": "Improves visibility of Map on Contacts Details screen.",
+      "c6": "You can now change your calendar's first day of the week. Visit Preferences > Appearance."
     }
   },
   "installed": "Eingerichtet",
@@ -821,5 +824,6 @@
   "moreInfo": "Mehr Infos",
   "map": "Karte",
   "editColor": "Farbe bearbeiten",
-  "close": "Schließen"
+  "close": "Schließen",
+  "startOfWeek": "Start of Week"
 }

@@ -517,9 +517,12 @@
       "c3": "Suala la kufurika limetatuliwa kwenye skrini ya kwanza ya kompyuta kibao."
     },
     "1360": {
-      "c1": "Imeongeza ufunguo mpya wa rangi kwenye mwonekano wa ramani! Sasa unaweza kubinafsisha rangi za pini kwenye ramani.",
+      "c1": "Added a color key to the map view! You can now customize the colors of the pins on the map.",
       "c2": "Aliongeza 'maelezo zaidi' kitufe cha mwonekano wa ramani. Bofya ili kuona maelezo zaidi kuhusu programu.",
-      "c3": "Husuluhisha suala na uumbizaji wa nambari ya simu ya Kikorea."
+      "c3": "Husuluhisha suala na uumbizaji wa nambari ya simu ya Kikorea.",
+      "c4": "Resolves issue with Panama phone number formatting.",
+      "c5": "Improves visibility of Map on Contacts Details screen.",
+      "c6": "You can now change your calendar's first day of the week. Visit Preferences > Appearance."
     }
   },
   "installed": "Imesakinishwa",
@@ -821,5 +824,6 @@
   "moreInfo": "Maelezo Zaidi",
   "map": "Ramani",
   "editColor": "Badilisha Rangi",
-  "close": "Funga"
+  "close": "Funga",
+  "startOfWeek": "Start of Week"
 }

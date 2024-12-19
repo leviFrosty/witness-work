@@ -32,7 +32,6 @@ import { faInfo, faTimes } from '@fortawesome/free-solid-svg-icons'
 import { Sheet } from 'tamagui'
 import MapKey from '../components/MapColorKey'
 import { useMarkerColors } from '../hooks/useMarkerColors'
-import React from 'react'
 
 interface FullMapViewProps {
   contactMarkers: ContactMarker[]

@@ -517,9 +517,12 @@
       "c3": "タブレットのホーム画面のオーバーフローの問題を解決しました。"
     },
     "1360": {
-      "c1": "マップ ビューに新しいカラー キーを追加しました。マップ上のピンの色をカスタマイズできるようになりました。",
+      "c1": "Added a color key to the map view! You can now customize the colors of the pins on the map.",
       "c2": "マップ ビューに新しい [詳細情報] ボタンを追加しました。クリックすると、アプリの詳細情報が表示されます。",
-      "c3": "韓国語の電話番号の書式設定に関する問題を解決しました。"
+      "c3": "韓国語の電話番号の書式設定に関する問題を解決しました。",
+      "c4": "Resolves issue with Panama phone number formatting.",
+      "c5": "Improves visibility of Map on Contacts Details screen.",
+      "c6": "You can now change your calendar's first day of the week. Visit Preferences > Appearance."
     }
   },
   "installed": "インストール済み",
@@ -821,5 +824,6 @@
   "moreInfo": "詳細情報",
   "map": "マップ",
   "editColor": "色を編集",
-  "close": "閉じる"
+  "close": "閉じる",
+  "startOfWeek": "Start of Week"
 }

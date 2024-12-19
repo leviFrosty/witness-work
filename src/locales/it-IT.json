@@ -517,9 +517,12 @@
       "c3": "Risolto il problema di overflow nella schermata iniziale per tablet."
     },
     "1360": {
-      "c1": "Aggiunta una nuova chiave colore alla vista mappa! Ora puoi personalizzare i colori dei pin sulla mappa.",
+      "c1": "Added a color key to the map view! You can now customize the colors of the pins on the map.",
       "c2": "Aggiunto un nuovo pulsante \"ulteriori informazioni\" alla vista mappa. Cliccaci sopra per vedere maggiori informazioni sull'app.",
-      "c3": "Risolve il problema con la formattazione dei numeri di telefono coreani."
+      "c3": "Risolve il problema con la formattazione dei numeri di telefono coreani.",
+      "c4": "Resolves issue with Panama phone number formatting.",
+      "c5": "Improves visibility of Map on Contacts Details screen.",
+      "c6": "You can now change your calendar's first day of the week. Visit Preferences > Appearance."
     }
   },
   "installed": "Installato",
@@ -821,5 +824,6 @@
   "moreInfo": "Ulteriori informazioni",
   "map": "Mappa",
   "editColor": "Modifica colore",
-  "close": "Chiudi"
+  "close": "Chiudi",
+  "startOfWeek": "Start of Week"
 }

@@ -517,9 +517,12 @@
       "c3": "태블릿 홈 화면에서 오버플로 문제가 해결되었습니다."
     },
     "1360": {
-      "c1": "지도 보기에 새로운 색상 키를 추가했습니다! 이제 지도의 핀 색상을 사용자 지정할 수 있습니다.",
+      "c1": "Added a color key to the map view! You can now customize the colors of the pins on the map.",
       "c2": "지도 보기에 새로운 '자세한 정보' 버튼을 추가했습니다. 클릭하면 앱에 대한 자세한 정보를 볼 수 있습니다.",
-      "c3": "한국어 전화번호 서식 문제를 해결합니다."
+      "c3": "한국어 전화번호 서식 문제를 해결합니다.",
+      "c4": "Resolves issue with Panama phone number formatting.",
+      "c5": "Improves visibility of Map on Contacts Details screen.",
+      "c6": "You can now change your calendar's first day of the week. Visit Preferences > Appearance."
     }
   },
   "installed": "설치됨",
@@ -821,5 +824,6 @@
   "moreInfo": "자세한 정보",
   "map": "지도",
   "editColor": "색상 편집",
-  "close": "닫기"
+  "close": "닫기",
+  "startOfWeek": "Start of Week"
 }

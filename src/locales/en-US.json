@@ -517,9 +517,12 @@
       "c3": "Resolved overflow issue on home screen for tablets."
     },
     "1360": {
-      "c1": "Added a new color key to the map view! You can now customize the colors of the pins on the map.",
+      "c1": "Added a color key to the map view! You can now customize the colors of the pins on the map.",
       "c2": "Added a new 'more info' button to the map view. Click it to see more information about the app.",
-      "c3": "Resolves issue with Korean phone number formatting."
+      "c3": "Resolves issue with Korean phone number formatting.",
+      "c4": "Resolves issue with Panama phone number formatting.",
+      "c5": "Improves visibility of Map on Contacts Details screen.",
+      "c6": "You can now change your calendar's first day of the week. Visit Preferences > Appearance."
     }
   },
   "installed": "Installed",

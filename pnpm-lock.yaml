@@ -194,8 +194,8 @@ importers:
         specifier: ~2.16.1
         version: 2.16.2(react-native@0.74.5(@babel/core@7.26.0)(@babel/preset-env@7.26.0(@babel/core@7.26.0))(@types/react@18.2.79)(react@18.3.1))(react@18.3.1)
       react-native-international-phone-number:
-        specifier: ^0.8.2
-        version: 0.8.2(react-native@0.74.5(@babel/core@7.26.0)(@babel/preset-env@7.26.0(@babel/core@7.26.0))(@types/react@18.2.79)(react@18.3.1))(react@18.3.1)
+        specifier: ^0.8.4
+        version: 0.8.4(react-native@0.74.5(@babel/core@7.26.0)(@babel/preset-env@7.26.0(@babel/core@7.26.0))(@types/react@18.2.79)(react@18.3.1))(react@18.3.1)
       react-native-keyboard-aware-scroll-view:
         specifier: ^0.9.5
         version: 0.9.5(react-native@0.74.5(@babel/core@7.26.0)(@babel/preset-env@7.26.0(@babel/core@7.26.0))(@types/react@18.2.79)(react@18.3.1))
@@ -10114,10 +10114,10 @@ packages:
       react: '*'
       react-native: '*'
 
-  react-native-international-phone-number@0.8.2:
+  react-native-international-phone-number@0.8.4:
     resolution:
       {
-        integrity: sha512-02yCzJKGFDC4CVQxtREtT9alx9aja+V9z+3mbjlTuUNUXkrvSHILue1p9e9pTRf+J+MuHcl1V1TjqMx1A5Lwyg==,
+        integrity: sha512-CzZypyehOs+/TNtN/9BZaE8XMfx06mC2Qzqbfi7DxCQ7a3tYtjqHKJRL6EeF/r1OBI+eGpcz1E52FYdsMqs71w==,
       }
     peerDependencies:
       react: '*'
@@ -20320,7 +20320,7 @@ snapshots:
       react: 18.3.1
       react-native: 0.74.5(@babel/core@7.26.0)(@babel/preset-env@7.26.0(@babel/core@7.26.0))(@types/react@18.2.79)(react@18.3.1)
 
-  react-native-international-phone-number@0.8.2(react-native@0.74.5(@babel/core@7.26.0)(@babel/preset-env@7.26.0(@babel/core@7.26.0))(@types/react@18.2.79)(react@18.3.1))(react@18.3.1):
+  react-native-international-phone-number@0.8.4(react-native@0.74.5(@babel/core@7.26.0)(@babel/preset-env@7.26.0(@babel/core@7.26.0))(@types/react@18.2.79)(react@18.3.1))(react@18.3.1):
     dependencies:
       react: 18.3.1
       react-native: 0.74.5(@babel/core@7.26.0)(@babel/preset-env@7.26.0(@babel/core@7.26.0))(@types/react@18.2.79)(react@18.3.1)

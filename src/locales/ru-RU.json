@@ -517,9 +517,12 @@
       "c3": "Решена проблема переполнения на главном экране для планшетов."
     },
     "1360": {
-      "c1": "Добавлен новый цветовой ключ для вида карты! Теперь вы можете настраивать цвета меток на карте.",
+      "c1": "Added a color key to the map view! You can now customize the colors of the pins on the map.",
       "c2": "Добавлена новая кнопка «Подробнее» для вида карты. Нажмите ее, чтобы увидеть больше информации о приложении.",
-      "c3": "Решает проблему с форматированием корейских телефонных номеров."
+      "c3": "Решает проблему с форматированием корейских телефонных номеров.",
+      "c4": "Resolves issue with Panama phone number formatting.",
+      "c5": "Improves visibility of Map on Contacts Details screen.",
+      "c6": "You can now change your calendar's first day of the week. Visit Preferences > Appearance."
     }
   },
   "installed": "Установлен",
@@ -821,5 +824,6 @@
   "moreInfo": "Дополнительная информация",
   "map": "Карта",
   "editColor": "Изменить цвет",
-  "close": "Закрыть"
+  "close": "Закрыть",
+  "startOfWeek": "Start of Week"
 }

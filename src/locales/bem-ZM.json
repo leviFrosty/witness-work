@@ -517,9 +517,12 @@
       "c3": "Ubwafya bwa kupongomoka bwapwishiwe pa cibuno ca pa ng'anda ica ma tablet."
     },
     "1360": {
-      "c1": "Ukulundapo ulufungulo ulupya ulwa langi ku kumona kwa mapu! Nomba kuti mwapanga amalangi ya mapini pali mapu.",
+      "c1": "Added a color key to the map view! You can now customize the colors of the pins on the map.",
       "c2": "Ukulundapo ifipya 'amashiwi nayambi' batani ku kumona kwa mapu. Tinikeni pakuti mumone ifyebo nafimbi pa app.",
-      "c3": "Ipwisha ubwafya bwa kupanga inambala ya foni iya ku Korea."
+      "c3": "Ipwisha ubwafya bwa kupanga inambala ya foni iya ku Korea.",
+      "c4": "Resolves issue with Panama phone number formatting.",
+      "c5": "Improves visibility of Map on Contacts Details screen.",
+      "c6": "You can now change your calendar's first day of the week. Visit Preferences > Appearance."
     }
   },
   "installed": "Installed",
@@ -821,5 +824,6 @@
   "moreInfo": "Amashiwi nayambi",
   "map": "Mapu",
   "editColor": "Yalula Ilangi",
-  "close": "Ukwisala"
+  "close": "Ukwisala",
+  "startOfWeek": "Start of Week"
 }

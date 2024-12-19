@@ -517,9 +517,12 @@
       "c3": "Probleem opgelost met overloop op startscherm voor tablets."
     },
     "1360": {
-      "c1": "Een nieuwe kleurensleutel toegevoegd aan de kaartweergave! U kunt nu de kleuren van de pinnen op de kaart aanpassen.",
+      "c1": "Added a color key to the map view! You can now customize the colors of the pins on the map.",
       "c2": "Een nieuwe knop 'meer info' toegevoegd aan de kaartweergave. Klik erop om meer informatie over de app te zien.",
-      "c3": "Lost probleem met Koreaanse telefoonnummeropmaak op."
+      "c3": "Lost probleem met Koreaanse telefoonnummeropmaak op.",
+      "c4": "Resolves issue with Panama phone number formatting.",
+      "c5": "Improves visibility of Map on Contacts Details screen.",
+      "c6": "You can now change your calendar's first day of the week. Visit Preferences > Appearance."
     }
   },
   "installed": "Geïnstalleerd",
@@ -821,5 +824,6 @@
   "moreInfo": "Meer info",
   "map": "Kaart",
   "editColor": "Kleur bewerken",
-  "close": "Sluiten"
+  "close": "Sluiten",
+  "startOfWeek": "Start of Week"
 }

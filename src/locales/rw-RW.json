@@ -517,9 +517,12 @@
       "c3": "Gukemura ikibazo cyuzuye hejuru murugo murugo rwa tableti."
     },
     "1360": {
-      "c1": "Wongeyeho urufunguzo rushya rw'urufunguzo rwo kureba ikarita! Urashobora noneho guhitamo amabara ya pin kurikarita.",
+      "c1": "Added a color key to the map view! You can now customize the colors of the pins on the map.",
       "c2": "Wongeyeho & apos; amakuru menshi & apos; Akabuto Kuri Ikarita Reba. Kanda kugirango ubone ibisobanuro birambuye kuri porogaramu.",
-      "c3": "Gukemura ikibazo hamwe nimero ya terefone ya koreya."
+      "c3": "Gukemura ikibazo hamwe nimero ya terefone ya koreya.",
+      "c4": "Resolves issue with Panama phone number formatting.",
+      "c5": "Improves visibility of Map on Contacts Details screen.",
+      "c6": "You can now change your calendar's first day of the week. Visit Preferences > Appearance."
     }
   },
   "installed": "Yagiye mu gikoresho cyawe",
@@ -821,5 +824,6 @@
   "moreInfo": "Andi Makuru",
   "map": "Ikarita",
   "editColor": "Hindura ibara",
-  "close": "Funga"
+  "close": "Funga",
+  "startOfWeek": "Start of Week"
 }

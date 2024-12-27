@@ -1,7 +1,7 @@
 {
   "hello": "你好",
-  "goodBye": "再见",
-  "welcomeTo": "歡迎光臨",
+  "goodBye": "再見",
+  "welcomeTo": "歡迎來到",
   "witnessWork": "見證工作",
   "getStarted": "開始使用",
   "whatTypePublisherAreYou": "您的傳道員身份是？",
@@ -32,16 +32,16 @@
   "noNotesSaved": "沒有保存任何註釋。",
   "followUpInformation": "跟進資料",
   "upcoming": "即將到來",
-  "past": "过去的",
+  "past": "過去的",
   "topic": "话题",
-  "monthlyRoutine": "每月常规",
-  "searchForContact": "搜索联系人...",
+  "monthlyRoutine": "每月常規",
+  "searchForContact": "搜索聯繫人...",
   "phrasesFar": {
-    "keepGoing": "继续前进！",
+    "keepGoing": "繼續加油！",
     "youCanDoThis": "你可以做得到！",
-    "neverGiveUp": "永不放弃！",
+    "neverGiveUp": "永不放棄！",
     "preachTheWord": "要传道！",
-    "stayFocused": "保持专注！",
+    "stayFocused": "保持專心。",
     "haveFaith": "要有信心！",
     "stayStrong": "堅强起来！"
   },
@@ -517,12 +517,12 @@
       "c3": "解決了平板電腦主螢幕上的溢出問題。"
     },
     "1360": {
-      "c1": "Added a color key to the map view! You can now customize the colors of the pins on the map.",
+      "c1": "為地圖視圖新增了新的顏色鍵！現在您可以自訂地圖上圖釘的顏色。",
       "c2": "新增了新的“更多資訊”按鈕到地圖視圖。單擊它以查看有關該應用程式的更多資訊。",
       "c3": "解決了韓國電話號碼格式的問題。",
-      "c4": "Resolves issue with Panama phone number formatting.",
-      "c5": "Improves visibility of Map on Contacts Details screen.",
-      "c6": "You can now change your calendar's first day of the week. Visit Preferences > Appearance."
+      "c4": "解決了巴拿馬電話號碼格式的問題。",
+      "c5": "提高了聯絡人詳細資訊螢幕上地圖的可見性。",
+      "c6": "您現在可以更改日曆一週的第一天。存取首選項 > 外觀。"
     }
   },
   "installed": "已安装",
@@ -825,5 +825,5 @@
   "map": "地圖",
   "editColor": "編輯顏色",
   "close": "關閉",
-  "startOfWeek": "Start of Week"
+  "startOfWeek": "一週的開始"
 }

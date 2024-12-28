@@ -41,8 +41,8 @@
     "youCanDoThis": "Ти впораєшся!",
     "neverGiveUp": "Ніколи не здавайся!",
     "preachTheWord": "Проповідуйте слово!",
-    "stayFocused": "Бути зосередженим!",
-    "haveFaith": "Мати віру!",
+    "stayFocused": "Будь зосередженим!",
+    "haveFaith": "Май віру!",
     "stayStrong": "Будь мужнім!"
   },
   "phrasesClose": {
@@ -91,7 +91,7 @@
   "serviceReport": "Звіт про обслуговування",
   "hours_lowercase": "години",
   "hours": "години",
-  "studies": "Дослідження",
+  "studies": "Вивчення",
   "addTime_description": "Якщо ввести інформацію про час нижче, буде зареєстровано час обслуговування за цей день",
   "minutes": "хвилин",
   "minutes_lowercase": "хвилин",

@@ -5,21 +5,21 @@
   "witnessWork": "WitnessWork",
   "getStarted": "Comece",
   "whatTypePublisherAreYou": "Que tipo de publicador você é?",
-  "noHourRequirement": "Sem Requisito de Hora",
+  "noHourRequirement": "Sem Requisito de Horas",
   "hourMonthlyRequirement": "Requisito Mensal de {{count}} Hora",
   "publisher": "Publicador",
-  "regularAuxiliary": "Auxiliar Contínuo",
+  "regularAuxiliary": "Pioneiro Auxiliar",
   "regularPioneer": "Pioneiro Regular",
   "circuitOverseer": "Superintendente de Circuito",
   "specialPioneer": "Pioneiro Especial",
   "continue": "Continuar",
-  "neverForgetAReturnVisit": "Nunca Esqueça de uma Revisita",
-  "neverForgetAReturnVisit_description": "O WitnessWork notificará você sobre as próximas revisitas ou estudos. Você pode alterar isso mais tarde nas configurações.",
-  "skip": "Pular",
+  "neverForgetAReturnVisit": "Nunca se Esqueça de uma Revisita",
+  "neverForgetAReturnVisit_description": "WitnessWork vai notificá-lo sobre as próximas revisitas ou estudos. Pode alterar isso mais tarde nas definições.",
+  "skip": "Saltar",
   "allowNotifications": "Permitir Notificações",
   "youreAllSet": "Tudo pronto!",
-  "youreAllSet_description": "O WitnessWork notificará você sobre as conversas que você agendou.",
-  "optInNotificationsLater": "Você pode optar por receber notificações nas configurações mais tarde.",
+  "youreAllSet_description": "O WitnessWork irá notificá-lo sobre as conversas que programou.",
+  "optInNotificationsLater": "Pode optar por receber notificações nas definições mais tarde.",
   "completeSetup": "Configuração Completa",
   "noRecentConversation": "Nenhuma Conversa Recente",
   "noRecentConversation_plural": "Nenhuma Conversa Recente",
@@ -517,12 +517,12 @@
       "c3": "Resolvido o problema de estouro na tela inicial para tablets."
     },
     "1360": {
-      "c1": "Added a color key to the map view! You can now customize the colors of the pins on the map.",
+      "c1": "Adicionar um código de cor à vista de mapa. Poderá personalizar a cor nos pins do mapa.",
       "c2": "Adicionado um novo botão 'mais informações' à visualização do mapa. Clique nele para ver mais informações sobre o aplicativo.",
       "c3": "Resolve o problema com a formatação de números de telefone coreanos.",
-      "c4": "Resolves issue with Panama phone number formatting.",
-      "c5": "Improves visibility of Map on Contacts Details screen.",
-      "c6": "You can now change your calendar's first day of the week. Visit Preferences > Appearance."
+      "c4": "Resolver o problema com a formação dos números de telefone.",
+      "c5": "Melhorar a visibilidade do Mapa no ecrã de Detalhes de Contacto",
+      "c6": "Poderá ajustar o primeiro dia do calendário da semana. Aceda a Preferências > Aparência."
     }
   },
   "installed": "Instalado",
@@ -825,5 +825,5 @@
   "map": "Mapa",
   "editColor": "Editar cor",
   "close": "Fechar",
-  "startOfWeek": "Start of Week"
+  "startOfWeek": "Início da Semana"
 }

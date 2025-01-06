@@ -8,7 +8,7 @@
   "noHourRequirement": "無小時定額",
   "hourMonthlyRequirement": "每月 {{count}} 小時定額",
   "publisher": "傳道員",
-  "regularAuxiliary": "辅助先驱",
+  "regularAuxiliary": "輔助先驅",
   "regularPioneer": "正規先驅",
   "circuitOverseer": "分區監督",
   "specialPioneer": "特別先驅",
@@ -40,7 +40,7 @@
     "keepGoing": "繼續加油！",
     "youCanDoThis": "你可以做得到！",
     "neverGiveUp": "永不放棄！",
-    "preachTheWord": "要传道！",
+    "preachTheWord": "要傳道！",
     "stayFocused": "保持專心。",
     "haveFaith": "要有信心！",
     "stayStrong": "堅强起来！"

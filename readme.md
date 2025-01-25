@@ -7,12 +7,13 @@
 
 WitnessWork is the easy way for Jehovah's Witnesses to manage their field service priorities.
 
-It is written in Typescript using React Native and Expo.
+It is written in Typescript using React Native and Expo and is available on iOS and Android. Android is currently unavailable in the USA due legacy trademark restrictions. I am working to resolve this issue with Google.
 
 ## View it live
 
 [![App Store](https://img.shields.io/badge/App_Store-0D96F6?style=for-the-badge&logo=app-store&logoColor=white)](https://apps.apple.com/us/app/jw-time/id6469723047)
-[![Play Store](https://img.shields.io/badge/Google_Play-414141?style=for-the-badge&logo=google-play&logoColor=white)](https://play.google.com/store/apps/details?id=com.leviwilkerson.witnesswork)
+
+<!-- [![Play Store](https://img.shields.io/badge/Google_Play-414141?style=for-the-badge&logo=google-play&logoColor=white)](https://play.google.com/store/apps/details?id=com.leviwilkerson.witnesswork) -->
 
 <div float="left">
 <img src="./src/docs/screenshots/preview1.jpg" width="130">

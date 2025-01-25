@@ -33,5 +33,5 @@ jobs:
       - name: Install dependencies
         run: pnpm install
 
-      - name: Run Jest tests
+      - name: Run tests
         run: pnpm run testFinal

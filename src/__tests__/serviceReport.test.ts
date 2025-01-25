@@ -13,6 +13,7 @@ import {
 import { ServiceReport, ServiceReportsByYears } from '../types/serviceReport'
 import { Publisher } from '../types/publisher'
 import { monthCreditMaxMinutes } from '../constants/serviceReports'
+import { describe, expect, it } from 'vitest'
 
 describe('lib/serviceReport', () => {
   describe('calculateProgress', () => {

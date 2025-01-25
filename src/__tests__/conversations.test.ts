@@ -7,6 +7,7 @@ import {
   upcomingFollowUpConversations,
 } from '../lib/conversations'
 import { Conversation } from '../types/conversation'
+import { describe, expect, it } from 'vitest'
 
 const testDate = moment({ year: 2023, month: 10 }).toDate()
 const contact = createFakeContact()

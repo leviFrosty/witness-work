@@ -2,6 +2,7 @@ import moment from 'moment'
 import { getStudiesForGivenMonth } from '../lib/contacts'
 import { createFakeContacts } from './__data__/contacts'
 import { Conversation } from '../types/conversation'
+import { describe, expect, it } from 'vitest'
 
 const testDate = moment({ year: 2023, month: 10 }).toDate()
 

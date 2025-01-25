@@ -2,16 +2,33 @@
 const fs = require('fs')
 const path = require('path')
 require('dotenv').config()
-const { exec } = require('child_process')
+const { execSync, exec } = require('child_process')
 
 const log = (...stringArrays) => {
-  console.log('[translate] - ' + stringArrays)
+  console.log('[translate] - 🈂️ ' + stringArrays)
 }
 const logError = (...stringArrays) => {
-  console.error('[translate] - ' + stringArrays)
+  console.error('[translate] - ❌ ' + stringArrays)
 }
 
-log('✅ Starting auto translations...')
+log('Detecting if translations changed...')
+
+try {
+  execSync(`git diff --cached --name-only | grep -e 'src/locales*'`, {
+    encoding: 'utf8',
+  })
+  log('Found changed files!')
+} catch (error) {
+  // Handle case when no match is found (grep returns non-zero exit code)
+  if (error.status !== 0) {
+    log('🆗 No translations changed, exiting...')
+  } else {
+    logError('Failed to detect changes: ', error)
+  }
+  return
+}
+
+log('Starting auto translations...')
 
 const listFilesWithoutExtensions = (directoryPath) => {
   try {
@@ -48,7 +65,7 @@ const translationPromises = locales.map((locale) => {
 
 Promise.all(translationPromises)
   .then(() => {
-    log('✅ Finished auto translations')
+    log('Finished auto translations!')
   })
   .catch((error) => {
     logError('Error during translations:', error)

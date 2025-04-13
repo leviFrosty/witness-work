@@ -2,7 +2,7 @@
   "hello": "Hola",
   "goodBye": "Adiós",
   "welcomeTo": "Bienvenido a",
-  "witnessWork": "Obra de Testimonio",
+  "witnessWork": "WitnessWork",
   "getStarted": "Empieza",
   "whatTypePublisherAreYou": "¿Qué tipo de publicador eres?",
   "noHourRequirement": "No hay requisito de horas",
@@ -517,12 +517,12 @@
       "c3": "Se resolvió el problema de desbordamiento en la pantalla de inicio para tabletas."
     },
     "1360": {
-      "c1": "Added a color key to the map view! You can now customize the colors of the pins on the map.",
+      "c1": "¡Se ha añadido una opción de color a la vista de mapa! Ahora puedes personalizar los colores de los pines en el mapa.",
       "c2": "Se agregó un nuevo botón \"más información\" a la vista del mapa. Haz clic en él para ver más información sobre la aplicación.",
       "c3": "Se solucionó el problema con el formato de los números de teléfono en coreano.",
-      "c4": "Resolves issue with Panama phone number formatting.",
-      "c5": "Improves visibility of Map on Contacts Details screen.",
-      "c6": "You can now change your calendar's first day of the week. Visit Preferences > Appearance."
+      "c4": "Se resolvió un problema con el formato de los números de teléfono de Panamá.",
+      "c5": "Mejora la visibilidad del Mapa en la pantalla de Detalles de Contactos.",
+      "c6": "Ahora puedes cambiar el primer día de la semana de tu calendario. Visita Preferencias > Apariencia."
     }
   },
   "installed": "Instalado",
@@ -685,7 +685,7 @@
   "addedConversation": "Conversación agregada",
   "addedNotAtHome": "Agregado no en casa",
   "youCannotCreateAPlanForAPreviousDay": "No se puede crear un plan para una fecha anterior.",
-  "nwPublisher": "NW Publisher",
+  "nwPublisher": "Publicador NW",
   "nwPublisherOnlyAllowsLastMonth": "NW Publisher solo le permite enviar el informe del mes anterior.",
   "submitLastMonth": "Enviar el mes pasado",
   "deleteThisPlan": "Eliminar este plan",
@@ -825,5 +825,5 @@
   "map": "Mapa",
   "editColor": "Editar color",
   "close": "Cerrar",
-  "startOfWeek": "Start of Week"
+  "startOfWeek": "Inicio de semana"
 }

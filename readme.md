@@ -7,7 +7,29 @@
 
 WitnessWork is the easy way for Jehovah's Witnesses to manage their field service priorities.
 
-It is written in Typescript using React Native and Expo and is available on iOS and Android. Android is currently unavailable in the USA due legacy trademark restrictions. I am working to resolve this issue with Google.
+It is written in Typescript using React Native and Expo and is available on iOS and Android. Android is currently unavailable in the USA due legacy trademark restrictions. ~I am working to resolve this issue with Google.~ I have given up on working with Google on resolving this. Unfortunately this app will not be available on Android in the US.
+
+## State of Development
+
+I am considering WitnessWork "feature complete" for now. It is currently being maintained to ensure that it functions and does not have major bugs.
+
+If you have a feature request, please still send it -- I may still consider adding the feature if I consider it to be something extremely valuable to the userbase.
+If you have a bug, please report it. Eventually I will resolve the issues in order of severity and scope. There are no promises that each bug will be resolved, or even that it'll be handled in a timely manner.
+
+### Goals
+
+- Maintain valid App Store status
+- Provide bug fixes
+
+### Non Goals
+
+- Add features to WitnessWork
+- Expand WitnessWork's integrations
+
+### What the future looks like
+
+I do not guarantee that this software will be maintained forever -- as Apple and Google's App Stores are very annoying to deal with.
+At some point, if my free time becomes more readily available, I might consider rewriting this into an [PWA](https://developer.mozilla.org/en-US/docs/Web/Progressive_web_apps) in the future so I can bypass App Stores and remove the complexity of cross platform native development.
 
 ## View it live
 
@@ -24,7 +46,23 @@ It is written in Typescript using React Native and Expo and is available on iOS 
 <img src="./src/docs/screenshots/preview6.jpg" width="130">
 </div>
 
-# Build
+## Help Translate 🌐
+
+WitnessWork is available in 16 languages. Some of these translations are done by AI, which may not be of the highest quality. To help, proofread these translations on [Crowdin](https://crowdin.com/project/jw-time/). Thank you!
+
+[Not sure how to use Crowdin?](https://support.crowdin.com/crowdin-intro/)
+
+## License
+
+WitnessWork © 2023-2025 by Levi Wilkerson is licensed under [Attribution-NonCommercial 4.0 International](./LICENSE)
+
+## Sponsor
+
+Sponsors & Donations are never expected but greatly appreciated.
+
+[![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/leviwilkerson)
+
+## Build
 
 The build process for iOS and Android is similar. Ensure you have all dependencies installed.
 
@@ -66,18 +104,4 @@ Build dependencies: [Android Studio](https://developer.android.com/studio), [JDK
 
 Learn about the [file and project structure](./src/docs/project-structure.md).
 
-# Help Translate 🌐
 
-WitnessWork is available in 16 languages. Some of these translations are done by AI, which may not be of the highest quality. To help, proofread these translations on [Crowdin](https://crowdin.com/project/jw-time/). Thank you!
-
-[Not sure how to use Crowdin?](https://support.crowdin.com/crowdin-intro/)
-
-# License
-
-WitnessWork © 2023-2025 by Levi Wilkerson is licensed under [Attribution-NonCommercial 4.0 International](./LICENSE)
-
-# Sponsor
-
-Sponsors & Donations are never expected but greatly appreciated.
-
-[![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/leviwilkerson)

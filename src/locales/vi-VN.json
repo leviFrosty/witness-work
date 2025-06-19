@@ -305,7 +305,7 @@
   "pleaseDescribeYourFeatureClearly": "Vui lòng mô tả tính năng bạn muốn có thật chi tiết. Cung cấp tên liên lạc và số điện thoại. Nếu có thể, vui lòng vẽ hình ảnh đặc điểm này trông như thế nào. Ngoài ra, hãy gửi ảnh chụp màn hình của một ứng dụng có chức năng tương tự.",
   "Home": "Trang chủ",
   "Map": "Bản đồ",
-  "preferences": "Preferences",
+  "preferences": "Cài đặt",
   "defaultNavigationApp": "Default Navigation App",
   "apple": "Apple",
   "google": "Google",
@@ -787,7 +787,7 @@
   "light": "Sáng",
   "device": "Thiết bị",
   "colorScheme": "Bảng màu",
-  "pinLocationHelp": "Nhấn và giữ trên bản đồ hoặc nhấn 'Thêm' để tạo. Chạm và giữ để di chuyển.",
+  "pinLocationHelp": "Nhấn và giữ trên bản đồ hoặc nhấn 'Thêm' để tạo ghim. Chạm và giữ để di chuyển.",
   "hoursLong": {
     "zero": "{{count}} Giờ",
     "one": "{{count}} Giờ",

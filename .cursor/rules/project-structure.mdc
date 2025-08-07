@@ -1,0 +1,694 @@
+---
+alwaysApply: true
+---
+
+## Project Overview
+
+**WitnessWork** is a mobile application designed for Jehovah's Witnesses to manage their field service activities. Built with TypeScript, React Native, and Expo, it's available on iOS and Android (with some US restrictions due to legacy trademark issues).
+
+## Technology Stack
+
+- **Framework**: React Native with Expo (v51.0.39)
+- **Language**: TypeScript
+- **UI Libraries**: Tamagui, React Native components, FontAwesome icons
+- **Navigation**: React Navigation v6 (Native Stack, Bottom Tabs, Drawer)
+- **State Management**: Zustand with persistence
+- **Storage**: MMKV (migrating from AsyncStorage)
+- **Maps**: React Native Maps with Google Maps integration
+- **Internationalization**: i18n-js with 16+ languages
+- **Testing**: Vitest, React Native Testing Library
+- **Build**: EAS (Expo Application Services)
+- **Analytics**: Sentry for error tracking
+
+## Key Commands (from package.json & readme.md)
+
+```bash
+# Development
+pnpm install          # Install dependencies
+pnpm run dev          # Start development server
+nvm use              # Switch to workspace node version
+
+# Development Tools
+pnpm run testFinal   # Run tests once
+pnpm run format      # Prettier formatting
+pnpm run lint        # ESLint
+pnpm run typecheck   # TypeScript checking
+pnpm run translate   # Auto-translation script
+```
+
+## Architecture & File Structure
+
+### Core Application Flow
+
+```
+App.tsx → RootStack → HomeTabStack → DrawerNavigator → HomeScreen
+```
+
+1. **App.tsx**: Entry point with providers and initialization
+2. **RootStack**: Main navigation with onboarding conditional rendering
+3. **HomeTabStack**: Bottom tab navigation (Home, Tools, Month, Year, Map)
+4. **DrawerNavigator**: Sidebar navigation containing settings
+5. **HomeScreen**: Main dashboard with service management widgets
+
+## Key Data Models
+
+### Contact
+
+- Core fields: name, phone, email, address
+- Geographic: coordinates with user override capability
+- Extensible: customFields for user-defined data
+- Lifecycle: soft delete with recovery option
+
+### Service Report
+
+- Time tracking with stopwatch functionality
+- Organized by year/month hierarchy
+- Day planning and recurring schedule support
+- Migration system for legacy data formats
+
+### Conversation
+
+- Linked to contacts for follow-up tracking
+- Notification system for scheduled follow-ups
+- Topic and note management
+
+## Core Features
+
+1. **Contact Management**: Full CRUD with geographic mapping
+2. **Time Tracking**: Stopwatch with service hour reporting
+3. **Territory Mapping**: Visual contact management with Google Maps
+4. **Schedule Planning**: Day and recurring schedule management
+5. **Internationalization**: 16+ language support via Crowdin
+6. **Data Export**: Time sheet and report generation
+7. **Backup System**: Data migration and backup reminders
+8. **Onboarding**: Progressive user setup flow
+
+## State Architecture
+
+- **Zustand stores** with persistence layer
+- **Migration system** from AsyncStorage to MMKV
+- **Atomic updates** with optimistic UI patterns
+- **Background state** for stopwatch functionality
+
+## Navigation Hierarchy
+
+```
+RootStack (handles onboarding conditional)
+├── HomeTabStack (bottom tabs)
+│   ├── Home (DrawerNavigator)
+│   │   └── Dashboard (HomeScreen)
+│   ├── Tools (development features)
+│   ├── Month (time reports)
+│   ├── Year (annual summaries)
+│   └── Map (geographic view)
+└── Modal screens (forms, preferences, etc.)
+```
+
+This architecture supports a complex field service management application with offline-first data storage, comprehensive user preferences, and international deployment capabilities.
+
+# WitnessWork - React Native Mobile Application
+
+## Project Overview
+
+**WitnessWork** is a mobile application designed for Jehovah's Witnesses to manage their field service activities. Built with TypeScript, React Native, and Expo, it's available on iOS and Android (with some US restrictions due to legacy trademark issues).
+
+## Technology Stack
+
+- **Framework**: React Native with Expo (v51.0.39)
+- **Language**: TypeScript
+- **UI Libraries**: Tamagui, React Native components, FontAwesome icons
+- **Navigation**: React Navigation v6 (Native Stack, Bottom Tabs, Drawer)
+- **State Management**: Zustand with persistence
+- **Storage**: MMKV (migrating from AsyncStorage)
+- **Maps**: React Native Maps with Google Maps integration
+- **Internationalization**: i18n-js with 16+ languages
+- **Testing**: Vitest, React Native Testing Library
+- **Build**: EAS (Expo Application Services)
+- **Analytics**: Sentry for error tracking
+
+## Key Commands (from package.json & readme.md)
+
+```bash
+# Development
+pnpm install          # Install dependencies
+pnpm run dev          # Start development server
+nvm use              # Switch to workspace node version
+
+# Building
+pnpm run build:ios           # Build iOS (development-simulator)
+pnpm run build:ios-production  # Build iOS (production-simulator)
+pnpm run build:android       # Build Android (development-simulator)
+
+# Development Tools
+pnpm run test        # Run tests with Vitest
+pnpm run testFinal   # Run tests once
+pnpm run format      # Prettier formatting
+pnpm run lint        # ESLint
+pnpm run typecheck   # TypeScript checking
+pnpm run translate   # Auto-translation script
+
+# Installation after build
+eas build:run -p ios --path [path].tar.gz
+eas build:run -p android --path [path].apk
+```
+
+## Architecture & File Structure
+
+### Core Application Flow
+
+```
+App.tsx → RootStack → HomeTabStack → DrawerNavigator → HomeScreen
+```
+
+1. **App.tsx**: Entry point with providers and initialization
+2. **RootStack**: Main navigation with onboarding conditional rendering
+3. **HomeTabStack**: Bottom tab navigation (Home, Tools, Month, Year, Map)
+4. **DrawerNavigator**: Sidebar navigation containing settings
+5. **HomeScreen**: Main dashboard with service management widgets
+
+### Directory Structure
+
+#### `/src/components/` (60+ components)
+
+- **Layout**: `Header.tsx`, `Wrapper.tsx`, `XView.tsx`
+- **Inputs**: Form components, text inputs, selectors
+- **Business Logic**: Contact management, service reports, calendar components
+- **UI Elements**: Buttons, cards, loaders, animations
+
+#### `/src/screens/` (20+ screens)
+
+- **Core Screens**: HomeScreen, MapScreen, ContactDetailsScreen
+- **Forms**: ContactFormScreen, ConversationFormScreen, AddTimeScreen
+- **Settings**: Comprehensive preferences system with sub-screens
+- **Time Management**: MonthScreen, YearScreen, TimeReportsDashboard
+- **Utilities**: ToolsScreen, ImportAndExportScreen, PaywallScreen
+
+#### `/src/stores/` - Zustand State Management
+
+- **`contactsStore.ts`**: Contact CRUD operations with soft delete
+- **`serviceReport.ts`**: Time tracking, day plans, recurring plans
+- **`conversationStore.ts`**: Follow-up conversations and notes
+- **`preferences.ts`**: User settings and app configuration
+- **`mmkv.ts`**: High-performance storage migration from AsyncStorage
+
+#### `/src/types/` - TypeScript Definitions
+
+- **`contact.ts`**: Contact model with address, coordinates, custom fields
+- **`conversation.ts`**: Conversation tracking with follow-ups
+- **`serviceReport.ts`**: Time reporting and planning structures
+- **Navigation types**: `rootStack.ts`, `homeStack.ts`
+
+#### `/src/lib/` - Business Logic
+
+- **Core Functions**: contacts, conversations, serviceReport, address handling
+- **Utilities**: locales, notifications, phone number formatting
+- **External APIs**: location services, address autocomplete
+
+#### `/src/hooks/` - Custom React Hooks
+
+- Device detection, location services, publisher settings
+- Custom animations, stopwatch functionality
+- Localization and theme management
+
+#### `/src/providers/` & `/src/contexts/`
+
+- **ThemeProvider**: Dark/light mode management
+- **CustomerProvider**: In-app purchase management
+- **AnimationViewProvider**: Lottie animation state
+
+## Key Data Models
+
+### Contact
+
+- Core fields: name, phone, email, address
+- Geographic: coordinates with user override capability
+- Extensible: customFields for user-defined data
+- Lifecycle: soft delete with recovery option
+
+### Service Report
+
+- Time tracking with stopwatch functionality
+- Organized by year/month hierarchy
+- Day planning and recurring schedule support
+- Migration system for legacy data formats
+
+### Conversation
+
+- Linked to contacts for follow-up tracking
+- Notification system for scheduled follow-ups
+- Topic and note management
+
+## Core Features
+
+1. **Contact Management**: Full CRUD with geographic mapping
+2. **Time Tracking**: Stopwatch with service hour reporting
+3. **Territory Mapping**: Visual contact management with Google Maps
+4. **Schedule Planning**: Day and recurring schedule management
+5. **Internationalization**: 16+ language support via Crowdin
+6. **Data Export**: Time sheet and report generation
+7. **Backup System**: Data migration and backup reminders
+8. **Onboarding**: Progressive user setup flow
+
+## State Architecture
+
+- **Zustand stores** with persistence layer
+- **Migration system** from AsyncStorage to MMKV
+- **Atomic updates** with optimistic UI patterns
+- **Background state** for stopwatch functionality
+
+## Navigation Hierarchy
+
+```
+RootStack (handles onboarding conditional)
+├── HomeTabStack (bottom tabs)
+│   ├── Home (DrawerNavigator)
+│   │   └── Dashboard (HomeScreen)
+│   ├── Tools (development features)
+│   ├── Month (time reports)
+│   ├── Year (annual summaries)
+│   └── Map (geographic view)
+└── Modal screens (forms, preferences, etc.)
+```
+
+This architecture supports a complex field service management application with offline-first data storage, comprehensive user preferences, and international deployment capabilities.
+
+## Complete Folder Structure & Descriptions
+
+**Terminal command to generate folder list:**
+
+```bash
+find . -type d -not -path '*/node_modules*' -not -path '*/.git*' -not -path '*/.expo*' -not -path '*/.cache*' -not -path '*/.tamagui*' -not -path '*/.vscode*' -not -path '*/.husky*' | sed 's|^\./||' | grep -v '^$' | sort
+```
+
+### Directory Structure with Descriptions
+
+- **`.`** - Project root containing configuration files (package.json, tsconfig.json, app.config.ts, etc.)
+- **`src`** - Main source code directory containing all application logic
+- **`src/__tests__`** - Test files using Vitest and React Native Testing Library
+- **`src/__tests__/__data__`** - Mock data and test fixtures for unit tests
+- **`src/assets`** - Static assets including images, audio files, and animations
+- **`src/assets/audio`** - Audio files (success-chime.mp3 for UI feedback)
+- **`src/assets/lottie`** - Lottie animation JSON files (checkMark, confetti, doggie, error, floatingHearts, loading)
+- **`src/components`** - Reusable React components (60+ components for UI, forms, business logic)
+- **`src/components/inputs`** - Form input components (CheckboxWithLabel, TextInputRow, InputRowSelect, etc.)
+- **`src/components/layout`** - Layout components (Header, Wrapper, XView for consistent app structure)
+- **`src/components/onboarding`** - Components for user onboarding flow with styles and navigation
+- **`src/components/onboarding/steps`** - Individual onboarding step components (One, Two, Three, Four, DefaultNav)
+- **`src/components/swipeableActions`** - Swipeable action components (Archive, Delete, Edit for lists)
+- **`src/constants`** - Application constants (APIs, themes, publisher settings, release notes, etc.)
+- **`src/contexts`** - React context definitions (AnimationView, customer, theme management)
+- **`src/docs`** - Project documentation and architecture notes
+- **`src/docs/screenshots`** - Application preview screenshots (6 preview images for documentation)
+- **`src/hooks`** - Custom React hooks (device detection, location services, animations, stopwatch)
+- **`src/lib`** - Utility functions and business logic (contacts, conversations, serviceReport, address handling)
+- **`src/locales`** - Internationalization files supporting 16+ languages via Crowdin
+- **`src/locales/test`** - Test locale files directory (currently empty)
+- **`src/providers`** - React context providers (ThemeProvider, CustomerProvider, AnimationViewProvider)
+- **`src/screens`** - Screen components for navigation (20+ screens including forms, dashboards, utilities)
+- **`src/screens/MonthScreen`** - Monthly time report screen with calendar and progress tracking
+- **`src/screens/settings`** - Settings screen hierarchy with preferences and configuration options
+- **`src/screens/settings/preferences`** - User preferences screens (main PreferencesScreen entry point)
+- **`src/screens/settings/preferences/screens`** - Individual preference screens (Appearance, Backups, Conversation, Home, Navigation, Publisher)
+- **`src/screens/settings/preferences/sections`** - Reusable preference section components matching the preference screens
+- **`src/screens/settings/sections`** - Main settings section components (App, Contact, Language, Misc, Preferences, Support)
+- **`src/screens/settings/shared`** - Shared settings components (SectionTitle for consistent styling)
+- **`src/scripts`** - Build and development scripts (translate.js for auto-translation via Google Cloud API)
+- **`src/stacks`** - Navigation stack configurations (HomeTabStack, RootStack for React Navigation)
+- **`src/stores`** - Zustand state management stores (contacts, conversations, service reports, preferences, MMKV)
+- **`src/types`** - TypeScript type definitions (contact, conversation, serviceReport, navigation, theme, etc.)
+
+# WitnessWork - React Native Mobile Application
+
+## Project Overview
+
+**WitnessWork** is a mobile application designed for Jehovah's Witnesses to manage their field service activities. Built with TypeScript, React Native, and Expo, it's available on iOS and Android (with some US restrictions due to legacy trademark issues).
+
+## Technology Stack
+
+- **Framework**: React Native with Expo (v51.0.39)
+- **Language**: TypeScript
+- **UI Libraries**: Tamagui, React Native components, FontAwesome icons
+- **Navigation**: React Navigation v6 (Native Stack, Bottom Tabs, Drawer)
+- **State Management**: Zustand with persistence
+- **Storage**: MMKV (migrating from AsyncStorage)
+- **Maps**: React Native Maps with Google Maps integration
+- **Internationalization**: i18n-js with 16+ languages
+- **Testing**: Vitest, React Native Testing Library
+- **Build**: EAS (Expo Application Services)
+- **Analytics**: Sentry for error tracking
+
+## Key Commands (from package.json & readme.md)
+
+```bash
+# Development
+pnpm install          # Install dependencies
+pnpm run dev          # Start development server
+nvm use              # Switch to workspace node version
+
+# Building
+pnpm run build:ios           # Build iOS (development-simulator)
+pnpm run build:ios-production  # Build iOS (production-simulator)
+pnpm run build:android       # Build Android (development-simulator)
+
+# Development Tools
+pnpm run testFinal   # Run tests once
+pnpm run format      # Prettier formatting
+pnpm run lint        # ESLint
+pnpm run typecheck   # TypeScript checking
+pnpm run translate   # Auto-translation script
+
+# Installation after build
+eas build:run -p ios --path [path].tar.gz
+eas build:run -p android --path [path].apk
+```
+
+## Architecture & File Structure
+
+### Core Application Flow
+
+```
+App.tsx → RootStack → HomeTabStack → DrawerNavigator → HomeScreen
+```
+
+1. **App.tsx**: Entry point with providers and initialization
+2. **RootStack**: Main navigation with onboarding conditional rendering
+3. **HomeTabStack**: Bottom tab navigation (Home, Tools, Month, Year, Map)
+4. **DrawerNavigator**: Sidebar navigation containing settings
+5. **HomeScreen**: Main dashboard with service management widgets
+
+### Directory Structure
+
+#### `/src/components/` (60+ components)
+
+- **Layout**: `Header.tsx`, `Wrapper.tsx`, `XView.tsx`
+- **Inputs**: Form components, text inputs, selectors
+- **Business Logic**: Contact management, service reports, calendar components
+- **UI Elements**: Buttons, cards, loaders, animations
+
+#### `/src/screens/` (20+ screens)
+
+- **Core Screens**: HomeScreen, MapScreen, ContactDetailsScreen
+- **Forms**: ContactFormScreen, ConversationFormScreen, AddTimeScreen
+- **Settings**: Comprehensive preferences system with sub-screens
+- **Time Management**: MonthScreen, YearScreen, TimeReportsDashboard
+- **Utilities**: ToolsScreen, ImportAndExportScreen, PaywallScreen
+
+#### `/src/stores/` - Zustand State Management
+
+- **`contactsStore.ts`**: Contact CRUD operations with soft delete
+- **`serviceReport.ts`**: Time tracking, day plans, recurring plans
+- **`conversationStore.ts`**: Follow-up conversations and notes
+- **`preferences.ts`**: User settings and app configuration
+- **`mmkv.ts`**: High-performance storage migration from AsyncStorage
+
+#### `/src/types/` - TypeScript Definitions
+
+- **`contact.ts`**: Contact model with address, coordinates, custom fields
+- **`conversation.ts`**: Conversation tracking with follow-ups
+- **`serviceReport.ts`**: Time reporting and planning structures
+- **Navigation types**: `rootStack.ts`, `homeStack.ts`
+
+#### `/src/lib/` - Business Logic
+
+- **Core Functions**: contacts, conversations, serviceReport, address handling
+- **Utilities**: locales, notifications, phone number formatting
+- **External APIs**: location services, address autocomplete
+
+#### `/src/hooks/` - Custom React Hooks
+
+- Device detection, location services, publisher settings
+- Custom animations, stopwatch functionality
+- Localization and theme management
+
+#### `/src/providers/` & `/src/contexts/`
+
+- **ThemeProvider**: Dark/light mode management
+- **CustomerProvider**: In-app purchase management
+- **AnimationViewProvider**: Lottie animation state
+
+## Key Data Models
+
+### Contact
+
+- Core fields: name, phone, email, address
+- Geographic: coordinates with user override capability
+- Extensible: customFields for user-defined data
+- Lifecycle: soft delete with recovery option
+
+### Service Report
+
+- Time tracking with stopwatch functionality
+- Organized by year/month hierarchy
+- Day planning and recurring schedule support
+- Migration system for legacy data formats
+
+### Conversation
+
+- Linked to contacts for follow-up tracking
+- Notification system for scheduled follow-ups
+- Topic and note management
+
+## Core Features
+
+1. **Contact Management**: Full CRUD with geographic mapping
+2. **Time Tracking**: Stopwatch with service hour reporting
+3. **Territory Mapping**: Visual contact management with Google Maps
+4. **Schedule Planning**: Day and recurring schedule management
+5. **Internationalization**: 16+ language support via Crowdin
+6. **Data Export**: Time sheet and report generation
+7. **Backup System**: Data migration and backup reminders
+8. **Onboarding**: Progressive user setup flow
+
+## State Architecture
+
+- **Zustand stores** with persistence layer
+- **Migration system** from AsyncStorage to MMKV
+- **Atomic updates** with optimistic UI patterns
+- **Background state** for stopwatch functionality
+
+## Navigation Hierarchy
+
+```
+RootStack (handles onboarding conditional)
+├── HomeTabStack (bottom tabs)
+│   ├── Home (DrawerNavigator)
+│   │   └── Dashboard (HomeScreen)
+│   ├── Tools (development features)
+│   ├── Month (time reports)
+│   ├── Year (annual summaries)
+│   └── Map (geographic view)
+└── Modal screens (forms, preferences, etc.)
+```
+
+This architecture supports a complex field service management application with offline-first data storage, comprehensive user preferences, and international deployment capabilities.
+
+# WitnessWork - React Native Mobile Application
+
+## Project Overview
+
+**WitnessWork** is a mobile application designed for Jehovah's Witnesses to manage their field service activities. Built with TypeScript, React Native, and Expo, it's available on iOS and Android (with some US restrictions due to legacy trademark issues).
+
+## Technology Stack
+
+- **Framework**: React Native with Expo (v51.0.39)
+- **Language**: TypeScript
+- **UI Libraries**: Tamagui, React Native components, FontAwesome icons
+- **Navigation**: React Navigation v6 (Native Stack, Bottom Tabs, Drawer)
+- **State Management**: Zustand with persistence
+- **Storage**: MMKV (migrating from AsyncStorage)
+- **Maps**: React Native Maps with Google Maps integration
+- **Internationalization**: i18n-js with 16+ languages
+- **Testing**: Vitest, React Native Testing Library
+- **Build**: EAS (Expo Application Services)
+- **Analytics**: Sentry for error tracking
+
+## Key Commands (from package.json & readme.md)
+
+```bash
+# Development
+pnpm install          # Install dependencies
+pnpm run dev          # Start development server
+nvm use              # Switch to workspace node version
+
+# Building
+pnpm run build:ios           # Build iOS (development-simulator)
+pnpm run build:ios-production  # Build iOS (production-simulator)
+pnpm run build:android       # Build Android (development-simulator)
+
+# Development Tools
+pnpm run test        # Run tests with Vitest
+pnpm run testFinal   # Run tests once
+pnpm run format      # Prettier formatting
+pnpm run lint        # ESLint
+pnpm run typecheck   # TypeScript checking
+pnpm run translate   # Auto-translation script
+
+# Installation after build
+eas build:run -p ios --path [path].tar.gz
+eas build:run -p android --path [path].apk
+```
+
+## Architecture & File Structure
+
+### Core Application Flow
+
+```
+App.tsx → RootStack → HomeTabStack → DrawerNavigator → HomeScreen
+```
+
+1. **App.tsx**: Entry point with providers and initialization
+2. **RootStack**: Main navigation with onboarding conditional rendering
+3. **HomeTabStack**: Bottom tab navigation (Home, Tools, Month, Year, Map)
+4. **DrawerNavigator**: Sidebar navigation containing settings
+5. **HomeScreen**: Main dashboard with service management widgets
+
+### Directory Structure
+
+#### `/src/components/` (60+ components)
+
+- **Layout**: `Header.tsx`, `Wrapper.tsx`, `XView.tsx`
+- **Inputs**: Form components, text inputs, selectors
+- **Business Logic**: Contact management, service reports, calendar components
+- **UI Elements**: Buttons, cards, loaders, animations
+
+#### `/src/screens/` (20+ screens)
+
+- **Core Screens**: HomeScreen, MapScreen, ContactDetailsScreen
+- **Forms**: ContactFormScreen, ConversationFormScreen, AddTimeScreen
+- **Settings**: Comprehensive preferences system with sub-screens
+- **Time Management**: MonthScreen, YearScreen, TimeReportsDashboard
+- **Utilities**: ToolsScreen, ImportAndExportScreen, PaywallScreen
+
+#### `/src/stores/` - Zustand State Management
+
+- **`contactsStore.ts`**: Contact CRUD operations with soft delete
+- **`serviceReport.ts`**: Time tracking, day plans, recurring plans
+- **`conversationStore.ts`**: Follow-up conversations and notes
+- **`preferences.ts`**: User settings and app configuration
+- **`mmkv.ts`**: High-performance storage migration from AsyncStorage
+
+#### `/src/types/` - TypeScript Definitions
+
+- **`contact.ts`**: Contact model with address, coordinates, custom fields
+- **`conversation.ts`**: Conversation tracking with follow-ups
+- **`serviceReport.ts`**: Time reporting and planning structures
+- **Navigation types**: `rootStack.ts`, `homeStack.ts`
+
+#### `/src/lib/` - Business Logic
+
+- **Core Functions**: contacts, conversations, serviceReport, address handling
+- **Utilities**: locales, notifications, phone number formatting
+- **External APIs**: location services, address autocomplete
+
+#### `/src/hooks/` - Custom React Hooks
+
+- Device detection, location services, publisher settings
+- Custom animations, stopwatch functionality
+- Localization and theme management
+
+#### `/src/providers/` & `/src/contexts/`
+
+- **ThemeProvider**: Dark/light mode management
+- **CustomerProvider**: In-app purchase management
+- **AnimationViewProvider**: Lottie animation state
+
+## Key Data Models
+
+### Contact
+
+- Core fields: name, phone, email, address
+- Geographic: coordinates with user override capability
+- Extensible: customFields for user-defined data
+- Lifecycle: soft delete with recovery option
+
+### Service Report
+
+- Time tracking with stopwatch functionality
+- Organized by year/month hierarchy
+- Day planning and recurring schedule support
+- Migration system for legacy data formats
+
+### Conversation
+
+- Linked to contacts for follow-up tracking
+- Notification system for scheduled follow-ups
+- Topic and note management
+
+## Core Features
+
+1. **Contact Management**: Full CRUD with geographic mapping
+2. **Time Tracking**: Stopwatch with service hour reporting
+3. **Territory Mapping**: Visual contact management with Google Maps
+4. **Schedule Planning**: Day and recurring schedule management
+5. **Internationalization**: 16+ language support via Crowdin
+6. **Data Export**: Time sheet and report generation
+7. **Backup System**: Data migration and backup reminders
+8. **Onboarding**: Progressive user setup flow
+
+## State Architecture
+
+- **Zustand stores** with persistence layer
+- **Migration system** from AsyncStorage to MMKV
+- **Atomic updates** with optimistic UI patterns
+- **Background state** for stopwatch functionality
+
+## Navigation Hierarchy
+
+```
+RootStack (handles onboarding conditional)
+├── HomeTabStack (bottom tabs)
+│   ├── Home (DrawerNavigator)
+│   │   └── Dashboard (HomeScreen)
+│   ├── Tools (development features)
+│   ├── Month (time reports)
+│   ├── Year (annual summaries)
+│   └── Map (geographic view)
+└── Modal screens (forms, preferences, etc.)
+```
+
+This architecture supports a complex field service management application with offline-first data storage, comprehensive user preferences, and international deployment capabilities.
+
+## Complete Folder Structure & Descriptions
+
+**Terminal command to generate folder list:**
+
+```bash
+find . -type d -not -path '*/node_modules*' -not -path '*/.git*' -not -path '*/.expo*' -not -path '*/.cache*' -not -path '*/.tamagui*' -not -path '*/.vscode*' -not -path '*/.husky*' | sed 's|^\./||' | grep -v '^$' | sort
+```
+
+### Directory Structure with Descriptions
+
+- **`.`** - Project root containing configuration files (package.json, tsconfig.json, app.config.ts, etc.)
+- **`src`** - Main source code directory containing all application logic
+- **`src/__tests__`** - Test files using Vitest and React Native Testing Library
+- **`src/__tests__/__data__`** - Mock data and test fixtures for unit tests
+- **`src/assets`** - Static assets including images, audio files, and animations
+- **`src/assets/audio`** - Audio files (success-chime.mp3 for UI feedback)
+- **`src/assets/lottie`** - Lottie animation JSON files (checkMark, confetti, doggie, error, floatingHearts, loading)
+- **`src/components`** - Reusable React components (60+ components for UI, forms, business logic)
+- **`src/components/inputs`** - Form input components (CheckboxWithLabel, TextInputRow, InputRowSelect, etc.)
+- **`src/components/layout`** - Layout components (Header, Wrapper, XView for consistent app structure)
+- **`src/components/onboarding`** - Components for user onboarding flow with styles and navigation
+- **`src/components/onboarding/steps`** - Individual onboarding step components (One, Two, Three, Four, DefaultNav)
+- **`src/components/swipeableActions`** - Swipeable action components (Archive, Delete, Edit for lists)
+- **`src/constants`** - Application constants (APIs, themes, publisher settings, release notes, etc.)
+- **`src/contexts`** - React context definitions (AnimationView, customer, theme management)
+- **`src/docs`** - Project documentation and architecture notes
+- **`src/docs/screenshots`** - Application preview screenshots (6 preview images for documentation)
+- **`src/hooks`** - Custom React hooks (device detection, location services, animations, stopwatch)
+- **`src/lib`** - Utility functions and business logic (contacts, conversations, serviceReport, address handling)
+- **`src/locales`** - Internationalization files supporting 16+ languages via Crowdin
+- **`src/locales/test`** - Test locale files directory (currently empty)
+- **`src/providers`** - React context providers (ThemeProvider, CustomerProvider, AnimationViewProvider)
+- **`src/screens`** - Screen components for navigation (20+ screens including forms, dashboards, utilities)
+- **`src/screens/MonthScreen`** - Monthly time report screen with calendar and progress tracking
+- **`src/screens/settings`** - Settings screen hierarchy with preferences and configuration options
+- **`src/screens/settings/preferences`** - User preferences screens (main PreferencesScreen entry point)
+- **`src/screens/settings/preferences/screens`** - Individual preference screens (Appearance, Backups, Conversation, Home, Navigation, Publisher)
+- **`src/screens/settings/preferences/sections`** - Reusable preference section components matching the preference screens
+- **`src/screens/settings/sections`** - Main settings section components (App, Contact, Language, Misc, Preferences, Support)
+- **`src/screens/settings/shared`** - Shared settings components (SectionTitle for consistent styling)
+- **`src/scripts`** - Build and development scripts (translate.js for auto-translation via Google Cloud API)
+- **`src/stacks`** - Navigation stack configurations (HomeTabStack, RootStack for React Navigation)
+- **`src/stores`** - Zustand state management stores (contacts, conversations, service reports, preferences, MMKV)
+- **`src/types`** - TypeScript type definitions (contact, conversation, serviceReport, navigation, theme, etc.)

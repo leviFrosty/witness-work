@@ -68,6 +68,8 @@
   "hoursLeft": "残り時間",
   "goalBasedOnPublisherType": "目標はサイト運営者のタイプに基づいています",
   "addTime": "時間を追加する",
+  "updatedPlan": "Updated Plan",
+  "editPlan": "Edit Plan",
   "phrasesStudiesNone": {
     "keepGoing": "続けて！",
     "stayStrong": "強くありなさい！",
@@ -831,5 +833,8 @@
   "map": "マップ",
   "editColor": "色を編集",
   "close": "閉じる",
-  "startOfWeek": "Start of Week"
+  "startOfWeek": "Start of Week",
+  "noPlansScheduledForThisMonth": "No plans scheduled for this month.",
+  "scheduledPlans": "Scheduled Plans",
+  "scheduledPlans_description": "Tap any plan to edit or view details. Swipe to delete."
 }

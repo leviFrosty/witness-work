@@ -517,7 +517,7 @@
       "c3": "タブレットのホーム画面のオーバーフローの問題を解決しました。"
     },
     "1360": {
-      "c1": "Added a color key to the map view! You can now customize the colors of the pins on the map.",
+      "c1": "マップ ビューに新しいカラー キーを追加しました。マップ上のピンの色をカスタマイズできるようになりました。",
       "c2": "マップ ビューに新しい [詳細情報] ボタンを追加しました。クリックすると、アプリの詳細情報が表示されます。",
       "c3": "韓国語の電話番号の書式設定に関する問題を解決しました。",
       "c4": "Resolves issue with Panama phone number formatting.",
@@ -812,6 +812,8 @@
     "one": "{{count}} 分",
     "other": "{{count}} 分"
   },
+  "hoursCompact": "時",
+  "minutesCompact": "分",
   "decimalExample": "15.5",
   "longExample": "15 時間 30 分",
   "shortExample": "15 時間 30 分",

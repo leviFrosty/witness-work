@@ -118,7 +118,12 @@ const MonthServiceReportProgressBar = ({
 }: ProgressBarProps) => {
   const theme = useTheme()
   const { serviceReports } = useServiceReport()
-  const { publisher, publisherHours } = usePreferences()
+  const {
+    publisher,
+    publisherHours,
+    overrideCreditLimit,
+    customCreditLimitHours,
+  } = usePreferences()
   const monthReports = useMemo(
     () => getMonthsReports(serviceReports, month, year),
     [month, serviceReports, year]
@@ -126,8 +131,19 @@ const MonthServiceReportProgressBar = ({
   const goalHours = publisherHours[publisher]
 
   const adjustedMinutes = useMemo(
-    () => adjustedMinutesForSpecificMonth(monthReports, month, year),
-    [month, monthReports, year]
+    () =>
+      adjustedMinutesForSpecificMonth(monthReports, month, year, publisher, {
+        enabled: overrideCreditLimit,
+        customLimitHours: customCreditLimitHours,
+      }),
+    [
+      month,
+      monthReports,
+      year,
+      publisher,
+      overrideCreditLimit,
+      customCreditLimitHours,
+    ]
   )
 
   const progress = useMemo(

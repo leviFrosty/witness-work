@@ -46,12 +46,20 @@ const MonthSummary = ({
   highlightAsCurrentMonth,
 }: MonthSummaryProps) => {
   const theme = useTheme()
-  const { publisher, publisherHours } = usePreferences()
+  const {
+    publisher,
+    publisherHours,
+    overrideCreditLimit,
+    customCreditLimitHours,
+  } = usePreferences()
   const goalHours = publisherHours[publisher]
   const navigation = useNavigation<RootStackNavigation>()
 
   const adjustedMinutes: AdjustedMinutes = monthsReports
-    ? adjustedMinutesForSpecificMonth(monthsReports, month, year)
+    ? adjustedMinutesForSpecificMonth(monthsReports, month, year, publisher, {
+        enabled: overrideCreditLimit,
+        customLimitHours: customCreditLimitHours,
+      })
     : { value: 0, credit: 0, standard: 0, creditOverage: 0 }
 
   const minutesWithFormat = useFormattedMinutes(adjustedMinutes.value)

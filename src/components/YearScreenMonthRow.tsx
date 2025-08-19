@@ -20,12 +20,20 @@ export default function YearScreenMonthRow(props: {
 }) {
   const { month, year, monthsReports } = props
 
-  const { publisher, publisherHours } = usePreferences()
+  const {
+    publisher,
+    publisherHours,
+    overrideCreditLimit,
+    customCreditLimitHours,
+  } = usePreferences()
   const goalHours = publisherHours[publisher]
   const theme = useTheme()
 
   const adjustedMinutes: AdjustedMinutes = monthsReports
-    ? adjustedMinutesForSpecificMonth(monthsReports, month, year)
+    ? adjustedMinutesForSpecificMonth(monthsReports, month, year, publisher, {
+        enabled: overrideCreditLimit,
+        customLimitHours: customCreditLimitHours,
+      })
     : { value: 0, credit: 0, standard: 0, creditOverage: 0 }
 
   const adjustedMinutesWithFormat = useFormattedMinutes(adjustedMinutes.value)

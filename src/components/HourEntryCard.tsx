@@ -30,6 +30,8 @@ export default function HourEntryCard() {
     publisherHours,
     displayDetailsOnProgressBarHomeScreen,
     timeDisplayFormat,
+    overrideCreditLimit,
+    customCreditLimitHours,
   } = usePreferences()
   const { serviceReports, dayPlans, recurringPlans } = useServiceReport()
   const navigation = useNavigation<
@@ -46,9 +48,14 @@ export default function HourEntryCard() {
       adjustedMinutesForSpecificMonth(
         monthReports,
         moment().month(),
-        moment().year()
+        moment().year(),
+        publisher,
+        {
+          enabled: overrideCreditLimit,
+          customLimitHours: customCreditLimitHours,
+        }
       ),
-    [monthReports]
+    [monthReports, publisher, overrideCreditLimit, customCreditLimitHours]
   )
 
   const progress = useMemo(

@@ -104,11 +104,16 @@ export type AdjustedMinutes = {
  *
  * If a user has 70 standard hours and 30 credit hours, they will result with 70
  * hours - because standard has higher priority.
+ *
+ * Special pioneers and circuit overseers have no credit limit applied by
+ * default. Users can override the default credit limit through preferences.
  */
 export const adjustedMinutesForSpecificMonth = (
   monthsReports: ServiceReport[],
   targetMonth: number,
-  targetYear: number
+  targetYear: number,
+  publisher?: Publisher,
+  creditLimitOverride?: { enabled: boolean; customLimitHours: number }
 ): AdjustedMinutes => {
   const { credit, standard } = getTotalMinutesDetailedForSpecificMonth(
     monthsReports,
@@ -119,30 +124,62 @@ export const adjustedMinutesForSpecificMonth = (
   let minutes = 0
   let creditOverage = 0
 
-  if (standard > monthCreditMaxMinutes) {
-    minutes = standard
-    if (credit) {
-      creditOverage = credit
-    }
+  // Determine effective credit limit based on preferences and publisher type
+  let effectiveCreditLimitMinutes: number | null = monthCreditMaxMinutes
+
+  if (creditLimitOverride?.enabled) {
+    // User has overridden the default credit limit
+    effectiveCreditLimitMinutes =
+      creditLimitOverride.customLimitHours === 0
+        ? null // No limit
+        : creditLimitOverride.customLimitHours * 60
+  } else if (
+    publisher === 'specialPioneer' ||
+    publisher === 'circuitOverseer'
+  ) {
+    // Special pioneers and circuit overseers have no credit limit by default
+    effectiveCreditLimitMinutes = null
+  }
+
+  const hasNoCreditLimit = effectiveCreditLimitMinutes === null
+
+  if (hasNoCreditLimit) {
+    // No credit limit - sum all time
+    minutes = standard + credit
+    creditOverage = 0
   } else {
-    const standardWithCredit = standard + credit
-    if (standardWithCredit > monthCreditMaxMinutes) {
-      minutes = monthCreditMaxMinutes
-      creditOverage = standardWithCredit - monthCreditMaxMinutes
+    // effectiveCreditLimitMinutes is guaranteed to be a number here since hasNoCreditLimit is false
+    const limitMinutes = effectiveCreditLimitMinutes!
+
+    if (standard > limitMinutes) {
+      minutes = standard
+      if (credit) {
+        creditOverage = credit
+      }
     } else {
-      minutes = standardWithCredit
+      const standardWithCredit = standard + credit
+      if (standardWithCredit > limitMinutes) {
+        minutes = limitMinutes
+        creditOverage = standardWithCredit - limitMinutes
+      } else {
+        minutes = standardWithCredit
+      }
     }
   }
 
   return {
     value: minutes,
     standard,
-    credit:
-      standard < monthCreditMaxMinutes
-        ? credit < monthCreditMaxMinutes - standard
-          ? credit
-          : monthCreditMaxMinutes - standard
-        : 0,
+    credit: hasNoCreditLimit
+      ? credit
+      : (() => {
+          const limitMinutes = effectiveCreditLimitMinutes!
+          return standard < limitMinutes
+            ? credit < limitMinutes - standard
+              ? credit
+              : limitMinutes - standard
+            : 0
+        })(),
     creditOverage: creditOverage,
   }
 }

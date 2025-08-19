@@ -10,6 +10,7 @@ import {
 } from '../lib/serviceReport'
 import _ from 'lodash'
 import useServiceReport from '../stores/serviceReport'
+import { usePreferences } from '../stores/preferences'
 import i18n from '../lib/locales'
 import { ThemeSizes } from '../types/theme'
 
@@ -24,6 +25,8 @@ export default function AheadOrBehindOfMonthSchedule(
 ) {
   const { month, year } = props
   const theme = useTheme()
+  const { publisher, overrideCreditLimit, customCreditLimitHours } =
+    usePreferences()
   const { dayPlans, recurringPlans, serviceReports } = useServiceReport()
 
   const plannedMinutesToCurrentDay = useMemo(() => {
@@ -56,8 +59,21 @@ export default function AheadOrBehindOfMonthSchedule(
   }, [month, monthReports, year])
 
   const adjustedMinutesForMonth = useMemo(() => {
-    return adjustedMinutesForSpecificMonth(monthReports, month, year)
-  }, [month, monthReports, year])
+    return adjustedMinutesForSpecificMonth(
+      monthReports,
+      month,
+      year,
+      publisher,
+      { enabled: overrideCreditLimit, customLimitHours: customCreditLimitHours }
+    )
+  }, [
+    month,
+    monthReports,
+    year,
+    publisher,
+    overrideCreditLimit,
+    customCreditLimitHours,
+  ])
 
   const hoursDiffToSchedule = useMemo(() => {
     const minutesForMonth =

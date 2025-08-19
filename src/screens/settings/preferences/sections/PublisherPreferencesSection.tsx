@@ -9,9 +9,17 @@ import Text from '../../../../components/MyText'
 import useTheme from '../../../../contexts/theme'
 import Card from '../../../../components/Card'
 import Divider from '../../../../components/Divider'
+import CheckboxWithLabel from '../../../../components/inputs/CheckboxWithLabel'
+import TextInputRow from '../../../../components/inputs/TextInputRow'
 
 const PublisherPreferencesSection = () => {
-  const { publisher } = usePreferences()
+  const {
+    publisher,
+    overrideCreditLimit,
+    customCreditLimitHours,
+    setOverrideCreditLimit,
+    setCustomCreditLimitHours,
+  } = usePreferences()
   const theme = useTheme()
 
   return (
@@ -71,6 +79,58 @@ const PublisherPreferencesSection = () => {
           </InputRowContainer>
         )}
       </Section>
+
+      {/* Credit Limit Override Section - Only show for publishers that normally have a credit limit */}
+      {publisher !== 'specialPioneer' && publisher !== 'circuitOverseer' && (
+        <>
+          <Divider marginVertical={10} />
+          <View style={{ paddingHorizontal: 20 }}>
+            <Card>
+              <Text
+                style={{
+                  fontSize: theme.fontSize('lg'),
+                  fontFamily: theme.fonts.semiBold,
+                }}
+              >
+                {i18n.t('overrideCreditLimit')}
+              </Text>
+              <Text>{i18n.t('overrideCreditLimit_description')}</Text>
+            </Card>
+          </View>
+          <Section>
+            <InputRowContainer
+              label={i18n.t('overrideCreditLimit')}
+              lastInSection={!overrideCreditLimit}
+            >
+              <View style={{ flex: 1 }}>
+                <CheckboxWithLabel
+                  value={overrideCreditLimit}
+                  setValue={setOverrideCreditLimit}
+                  label=''
+                  labelPosition='right'
+                />
+              </View>
+            </InputRowContainer>
+            {overrideCreditLimit && (
+              <TextInputRow
+                label={i18n.t('customCreditLimitHours')}
+                lastInSection
+                textInputProps={{
+                  value: customCreditLimitHours.toString(),
+                  onChangeText: (value) => {
+                    const numValue = parseInt(value) || 0
+                    if (numValue >= 0 && numValue <= 200) {
+                      setCustomCreditLimitHours(numValue)
+                    }
+                  },
+                  keyboardType: 'numeric',
+                  placeholder: '55',
+                }}
+              />
+            )}
+          </Section>
+        </>
+      )}
     </View>
   )
 }

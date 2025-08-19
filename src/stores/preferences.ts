@@ -169,6 +169,10 @@ const initialState = {
    * etc.
    */
   startOfWeek: 0,
+  /** Whether the user wants to override the default credit limit of 55 hours */
+  overrideCreditLimit: false,
+  /** Custom credit limit in hours (only used if overrideCreditLimit is true) */
+  customCreditLimitHours: 55,
 }
 
 export const usePreferences = create(
@@ -209,6 +213,10 @@ export const usePreferences = create(
           }
         })
       },
+      setOverrideCreditLimit: (overrideCreditLimit: boolean) =>
+        set({ overrideCreditLimit }),
+      setCustomCreditLimitHours: (customCreditLimitHours: number) =>
+        set({ customCreditLimitHours }),
     })),
     {
       name: 'preferences',

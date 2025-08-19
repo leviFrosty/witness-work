@@ -260,6 +260,250 @@ describe('lib/serviceReport', () => {
       expect(adjustedMinutes.value).toBe(100 * 60)
       expect(adjustedMinutes.creditOverage).toBe(20 * 60)
     })
+
+    it('should have no credit limit for special pioneers', () => {
+      const serviceReports: ServiceReport[] = [
+        {
+          id: '1',
+          date: moment().toDate(),
+          hours: 80,
+          minutes: 0,
+        },
+        {
+          id: '2',
+          date: moment().toDate(),
+          hours: 30,
+          minutes: 0,
+          ldc: true,
+        },
+      ]
+
+      const adjustedMinutes = adjustedMinutesForSpecificMonth(
+        serviceReports,
+        moment().month(),
+        moment().year(),
+        'specialPioneer'
+      )
+
+      expect(adjustedMinutes.value).toBe(110 * 60) // 80 + 30 = 110 hours total
+      expect(adjustedMinutes.creditOverage).toBe(0) // No overage for special pioneers
+      expect(adjustedMinutes.standard).toBe(80 * 60)
+      expect(adjustedMinutes.credit).toBe(30 * 60)
+    })
+
+    it('should have no credit limit for circuit overseers', () => {
+      const serviceReports: ServiceReport[] = [
+        {
+          id: '1',
+          date: moment().toDate(),
+          hours: 100,
+          minutes: 0,
+        },
+        {
+          id: '2',
+          date: moment().toDate(),
+          hours: 50,
+          minutes: 0,
+          ldc: true,
+        },
+      ]
+
+      const adjustedMinutes = adjustedMinutesForSpecificMonth(
+        serviceReports,
+        moment().month(),
+        moment().year(),
+        'circuitOverseer'
+      )
+
+      expect(adjustedMinutes.value).toBe(150 * 60) // 100 + 50 = 150 hours total
+      expect(adjustedMinutes.creditOverage).toBe(0) // No overage for circuit overseers
+      expect(adjustedMinutes.standard).toBe(100 * 60)
+      expect(adjustedMinutes.credit).toBe(50 * 60)
+    })
+
+    it('should still apply credit limit for regular pioneers', () => {
+      const serviceReports: ServiceReport[] = [
+        {
+          id: '1',
+          date: moment().toDate(),
+          hours: 30,
+          minutes: 0,
+        },
+        {
+          id: '2',
+          date: moment().toDate(),
+          hours: 40,
+          minutes: 0,
+          ldc: true,
+        },
+      ]
+
+      const adjustedMinutes = adjustedMinutesForSpecificMonth(
+        serviceReports,
+        moment().month(),
+        moment().year(),
+        'regularPioneer'
+      )
+
+      expect(adjustedMinutes.value).toBe(55 * 60) // Limited to 55 hours
+      expect(adjustedMinutes.creditOverage).toBe(15 * 60) // 30 + 40 - 55 = 15 hours overage
+      expect(adjustedMinutes.standard).toBe(30 * 60)
+      expect(adjustedMinutes.credit).toBe(25 * 60) // 55 - 30 = 25 credit applied
+    })
+
+    it('should still apply credit limit for publishers', () => {
+      const serviceReports: ServiceReport[] = [
+        {
+          id: '1',
+          date: moment().toDate(),
+          hours: 20,
+          minutes: 0,
+        },
+        {
+          id: '2',
+          date: moment().toDate(),
+          hours: 50,
+          minutes: 0,
+          ldc: true,
+        },
+      ]
+
+      const adjustedMinutes = adjustedMinutesForSpecificMonth(
+        serviceReports,
+        moment().month(),
+        moment().year(),
+        'publisher'
+      )
+
+      expect(adjustedMinutes.value).toBe(55 * 60) // Limited to 55 hours
+      expect(adjustedMinutes.creditOverage).toBe(15 * 60) // 20 + 50 - 55 = 15 hours overage
+      expect(adjustedMinutes.standard).toBe(20 * 60)
+      expect(adjustedMinutes.credit).toBe(35 * 60) // 55 - 20 = 35 credit applied
+    })
+
+    it('should respect user credit limit override - no limit (0 hours)', () => {
+      const serviceReports: ServiceReport[] = [
+        {
+          id: '1',
+          date: moment().toDate(),
+          hours: 60,
+          minutes: 0,
+        },
+        {
+          id: '2',
+          date: moment().toDate(),
+          hours: 40,
+          minutes: 0,
+          ldc: true,
+        },
+      ]
+
+      const adjustedMinutes = adjustedMinutesForSpecificMonth(
+        serviceReports,
+        moment().month(),
+        moment().year(),
+        'publisher',
+        { enabled: true, customLimitHours: 0 } // No limit
+      )
+
+      expect(adjustedMinutes.value).toBe(100 * 60) // 60 + 40 = 100 hours total
+      expect(adjustedMinutes.creditOverage).toBe(0) // No overage when no limit
+      expect(adjustedMinutes.standard).toBe(60 * 60)
+      expect(adjustedMinutes.credit).toBe(40 * 60)
+    })
+
+    it('should respect user credit limit override - custom limit (70 hours)', () => {
+      const serviceReports: ServiceReport[] = [
+        {
+          id: '1',
+          date: moment().toDate(),
+          hours: 45,
+          minutes: 0,
+        },
+        {
+          id: '2',
+          date: moment().toDate(),
+          hours: 40,
+          minutes: 0,
+          ldc: true,
+        },
+      ]
+
+      const adjustedMinutes = adjustedMinutesForSpecificMonth(
+        serviceReports,
+        moment().month(),
+        moment().year(),
+        'regularPioneer',
+        { enabled: true, customLimitHours: 70 } // Custom 70-hour limit
+      )
+
+      expect(adjustedMinutes.value).toBe(70 * 60) // Limited to 70 hours
+      expect(adjustedMinutes.creditOverage).toBe(15 * 60) // 45 + 40 - 70 = 15 hours overage
+      expect(adjustedMinutes.standard).toBe(45 * 60)
+      expect(adjustedMinutes.credit).toBe(25 * 60) // 70 - 45 = 25 credit applied
+    })
+
+    it('should use default behavior when override is disabled', () => {
+      const serviceReports: ServiceReport[] = [
+        {
+          id: '1',
+          date: moment().toDate(),
+          hours: 30,
+          minutes: 0,
+        },
+        {
+          id: '2',
+          date: moment().toDate(),
+          hours: 40,
+          minutes: 0,
+          ldc: true,
+        },
+      ]
+
+      const adjustedMinutes = adjustedMinutesForSpecificMonth(
+        serviceReports,
+        moment().month(),
+        moment().year(),
+        'publisher',
+        { enabled: false, customLimitHours: 100 } // Override disabled
+      )
+
+      expect(adjustedMinutes.value).toBe(55 * 60) // Default 55-hour limit applies
+      expect(adjustedMinutes.creditOverage).toBe(15 * 60) // 30 + 40 - 55 = 15 hours overage
+      expect(adjustedMinutes.standard).toBe(30 * 60)
+      expect(adjustedMinutes.credit).toBe(25 * 60) // 55 - 30 = 25 credit applied
+    })
+
+    it('should still respect special pioneer exemption even with override disabled', () => {
+      const serviceReports: ServiceReport[] = [
+        {
+          id: '1',
+          date: moment().toDate(),
+          hours: 80,
+          minutes: 0,
+        },
+        {
+          id: '2',
+          date: moment().toDate(),
+          hours: 50,
+          minutes: 0,
+          ldc: true,
+        },
+      ]
+
+      const adjustedMinutes = adjustedMinutesForSpecificMonth(
+        serviceReports,
+        moment().month(),
+        moment().year(),
+        'specialPioneer',
+        { enabled: false, customLimitHours: 55 } // Override disabled, but special pioneer gets no limit
+      )
+
+      expect(adjustedMinutes.value).toBe(130 * 60) // 80 + 50 = 130 hours total (no limit)
+      expect(adjustedMinutes.creditOverage).toBe(0) // No overage for special pioneers
+      expect(adjustedMinutes.standard).toBe(80 * 60)
+      expect(adjustedMinutes.credit).toBe(50 * 60)
+    })
   })
 
   describe('getTimeAsMinutesForHourglass', () => {

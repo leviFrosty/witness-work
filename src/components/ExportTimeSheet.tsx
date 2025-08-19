@@ -49,7 +49,8 @@ const ExportTimeSheet = ({
   setSheet,
   showViewAllMonthsButton,
 }: ExportTimeSheetProps) => {
-  const { publisher } = usePreferences()
+  const { publisher, overrideCreditLimit, customCreditLimitHours } =
+    usePreferences()
   const theme = useTheme()
   const { serviceReports } = useServiceReport()
   const { conversations } = useConversations()
@@ -64,9 +65,25 @@ const ExportTimeSheet = ({
   const { creditOverage, value, credit, standard }: AdjustedMinutes = useMemo(
     () =>
       month !== undefined && year !== undefined
-        ? adjustedMinutesForSpecificMonth(monthReports, month, year)
+        ? adjustedMinutesForSpecificMonth(
+            monthReports,
+            month,
+            year,
+            publisher,
+            {
+              enabled: overrideCreditLimit,
+              customLimitHours: customCreditLimitHours,
+            }
+          )
         : { value: 0, creditOverage: 0, credit: 0, standard: 0 },
-    [month, monthReports, year]
+    [
+      month,
+      monthReports,
+      year,
+      publisher,
+      overrideCreditLimit,
+      customCreditLimitHours,
+    ]
   )
 
   const studiesForMonth = useMemo(
@@ -163,7 +180,16 @@ const ExportTimeSheet = ({
           let nwPublisherLink = `${links.nwpublisherSubmitReport}sharedInMinistry=${!!monthReports.length}`
 
           const { creditOverage, credit, standard } =
-            adjustedMinutesForSpecificMonth(monthReports, month, year)
+            adjustedMinutesForSpecificMonth(
+              monthReports,
+              month,
+              year,
+              publisher,
+              {
+                enabled: overrideCreditLimit,
+                customLimitHours: customCreditLimitHours,
+              }
+            )
 
           if (standard > 0) {
             nwPublisherLink += `:hours=${Math.floor(standard / 60)}`
@@ -211,6 +237,8 @@ const ExportTimeSheet = ({
       monthReports,
       value,
       isLastMonth,
+      customCreditLimitHours,
+      overrideCreditLimit,
     ]
   )
 

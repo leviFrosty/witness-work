@@ -68,6 +68,8 @@
   "hoursLeft": "годин залишилося",
   "goalBasedOnPublisherType": "Ціль залежить від типу видавця",
   "addTime": "Додати час",
+  "updatedPlan": "Updated Plan",
+  "editPlan": "Edit Plan",
   "phrasesStudiesNone": {
     "keepGoing": "Продовжувати йти!",
     "stayStrong": "Будь мужнім!",
@@ -831,5 +833,8 @@
   "map": "Карта",
   "editColor": "Редагувати колір",
   "close": "Закрити",
-  "startOfWeek": "Початок тижня"
+  "startOfWeek": "Початок тижня",
+  "noPlansScheduledForThisMonth": "No plans scheduled for this month.",
+  "scheduledPlans": "Scheduled Plans",
+  "scheduledPlans_description": "Tap any plan to edit or view details. Swipe to delete."
 }

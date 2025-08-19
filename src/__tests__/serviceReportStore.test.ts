@@ -2,9 +2,17 @@ import moment from 'moment'
 import { describe, expect, it, beforeEach, vi } from 'vitest'
 import useServiceReport from '../stores/serviceReport'
 import {
+  RecurringPlan,
   RecurringPlanFrequencies,
   RecurringPlanOverride,
 } from '../lib/serviceReport'
+
+// Type for the result of getRecurringPlanForDate
+type RecurringPlanWithOverrideInfo = RecurringPlan &
+  (
+    | { isOverride: false }
+    | { isOverride: true; originalMinutes: number; originalNote?: string }
+  )
 
 // Mock the MMKV storage to avoid dependencies in tests
 vi.mock('../stores/mmkv', () => ({
@@ -33,7 +41,7 @@ describe('ServiceReport Store - Override Functionality', () => {
 
   describe('addRecurringPlanOverride', () => {
     it('should add an override to a recurring plan', () => {
-      const { addRecurringPlan, addRecurringPlanOverride, recurringPlans } =
+      const { addRecurringPlan, addRecurringPlanOverride } =
         useServiceReport.getState()
 
       // First create a recurring plan
@@ -386,8 +394,14 @@ describe('ServiceReport Store - Override Functionality', () => {
       expect(result!.note).toBe('Override note') // Override note
       expect(result!.isOverride).toBe(true)
       if (result!.isOverride) {
-        expect((result as any).originalMinutes).toBe(120) // Original minutes
-        expect((result as any).originalNote).toBe('Original note') // Original note
+        expect(
+          (result as RecurringPlanWithOverrideInfo & { isOverride: true })
+            .originalMinutes
+        ).toBe(120) // Original minutes
+        expect(
+          (result as RecurringPlanWithOverrideInfo & { isOverride: true })
+            .originalNote
+        ).toBe('Original note') // Original note
       }
     })
 
@@ -416,8 +430,8 @@ describe('ServiceReport Store - Override Functionality', () => {
       expect(result!.minutes).toBe(120) // Original minutes
       expect(result!.note).toBe('Original note') // Original note
       expect(result!.isOverride).toBe(false)
-      expect((result as any).originalMinutes).toBeUndefined()
-      expect((result as any).originalNote).toBeUndefined()
+      expect('originalMinutes' in result!).toBe(false)
+      expect('originalNote' in result!).toBe(false)
     })
 
     it('should return null for non-existent plan', () => {
@@ -466,8 +480,14 @@ describe('ServiceReport Store - Override Functionality', () => {
       expect(result!.note).toBeUndefined()
       expect(result!.isOverride).toBe(true)
       if (result!.isOverride) {
-        expect((result as any).originalMinutes).toBe(120)
-        expect((result as any).originalNote).toBeUndefined()
+        expect(
+          (result as RecurringPlanWithOverrideInfo & { isOverride: true })
+            .originalMinutes
+        ).toBe(120)
+        expect(
+          (result as RecurringPlanWithOverrideInfo & { isOverride: true })
+            .originalNote
+        ).toBeUndefined()
       }
     })
   })

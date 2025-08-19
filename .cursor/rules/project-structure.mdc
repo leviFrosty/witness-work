@@ -2,6 +2,10 @@
 alwaysApply: true
 ---
 
+## After making large change
+
+Always run `pnpm run testFinal && pnpm run lint` to validate no errors.
+
 ## Project Overview
 
 **WitnessWork** is a mobile application designed for Jehovah's Witnesses to manage their field service activities. Built with TypeScript, React Native, and Expo, it's available on iOS and Android (with some US restrictions due to legacy trademark issues).

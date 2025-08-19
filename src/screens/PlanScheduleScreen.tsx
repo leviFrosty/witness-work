@@ -7,7 +7,7 @@ import Wrapper from '../components/layout/Wrapper'
 import XView from '../components/layout/XView'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import moment from 'moment'
-import { Calendar } from 'react-native-calendars'
+import { Calendar, DateData } from 'react-native-calendars'
 import { NativeStackScreenProps } from '@react-navigation/native-stack'
 import CalendarDay from '../components/CalendarDay'
 import SimpleProgressBar from '../components/SimpleProgressBar'
@@ -19,6 +19,7 @@ import {
   getPlansIntersectingDay,
   getServiceYearFromDate,
   serviceYearsDateRange,
+  getMonthsReports,
 } from '../lib/serviceReport'
 import Header from '../components/layout/Header'
 import Button from '../components/Button'
@@ -26,6 +27,7 @@ import IconButton from '../components/IconButton'
 import { faArrowLeft, faArrowRight } from '@fortawesome/free-solid-svg-icons'
 import Card from '../components/Card'
 import MonthPlansList from '../components/MonthPlansList'
+
 import { RootStackParamList } from '../types/rootStack'
 
 type PlanScheduleScreenProps = NativeStackScreenProps<
@@ -41,6 +43,13 @@ const PlanScheduleScreen = ({ route, navigation }: PlanScheduleScreenProps) => {
   const [year, setYear] = useState(route.params.year)
   const selectedMonth = moment().month(month).year(year)
   const monthToView = selectedMonth.format('YYYY-MM-DD')
+
+  // Get service reports for the calendar display
+  const { serviceReports } = useServiceReport()
+  const thisMonthsReports = useMemo(
+    () => getMonthsReports(serviceReports, month, year),
+    [serviceReports, month, year]
+  )
 
   const handleArrowNavigate = useCallback(
     (direction: 'forward' | 'back') => {
@@ -238,12 +247,6 @@ const PlanScheduleScreen = ({ route, navigation }: PlanScheduleScreenProps) => {
               current={monthToView}
               disableMonthChange
               hideArrows
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              onDayPress={(day: any) => {
-                navigation.navigate('PlanDay', {
-                  date: moment(day.dateString).toISOString(),
-                })
-              }}
               renderHeader={() => (
                 <View style={{ width: '100%', gap: 10 }}>
                   <View style={{ gap: 4 }}>
@@ -276,7 +279,16 @@ const PlanScheduleScreen = ({ route, navigation }: PlanScheduleScreenProps) => {
               }}
               // eslint-disable-next-line @typescript-eslint/no-explicit-any
               dayComponent={(props: any) => (
-                <CalendarDay {...props} planMode={true} />
+                <CalendarDay
+                  {...props}
+                  planMode={true}
+                  monthsReports={thisMonthsReports}
+                  onPress={(day: DateData) => {
+                    navigation.navigate('PlanDay', {
+                      date: moment(day.dateString).toISOString(),
+                    })
+                  }}
+                />
               )}
               theme={{
                 backgroundColor: theme.colors.card,

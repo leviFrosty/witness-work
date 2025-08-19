@@ -68,6 +68,8 @@
   "hoursLeft": "Stunden übrig",
   "goalBasedOnPublisherType": "Das Ziel basiert auf Ihrem Publisher-Typ",
   "addTime": "Zeit hinzufügen",
+  "updatedPlan": "Updated Plan",
+  "editPlan": "Edit Plan",
   "phrasesStudiesNone": {
     "keepGoing": "Weitermachen!",
     "stayStrong": "Stark bleiben!",
@@ -831,5 +833,8 @@
   "map": "Karte",
   "editColor": "Farbe bearbeiten",
   "close": "Schließen",
-  "startOfWeek": "Beginn der Woche"
+  "startOfWeek": "Beginn der Woche",
+  "noPlansScheduledForThisMonth": "No plans scheduled for this month.",
+  "scheduledPlans": "Scheduled Plans",
+  "scheduledPlans_description": "Tap any plan to edit or view details. Swipe to delete."
 }

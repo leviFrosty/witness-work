@@ -805,6 +805,8 @@
     "one": "{{count}}분",
     "other": "{{count}}분"
   },
+  "hoursCompact": "시",
+  "minutesCompact": "분",
   "decimalExample": "15.5",
   "longExample": "15시간 30분",
   "shortExample": "15시간 30분",

@@ -19,6 +19,7 @@ import IconButton from './IconButton'
 import { faArrowUp } from '@fortawesome/free-solid-svg-icons'
 import { usePreferences } from '../stores/preferences'
 import { Theme } from '../types/theme'
+import { useCompactFormattedMinutes } from '../lib/minutes'
 
 const boxSize = 40
 
@@ -119,9 +120,9 @@ const PlannedDay = (
     (a, b) => b.minutes - a.minutes
   )[0]?.minutes
 
-  const plannedDurationText = `${moment
-    .duration(props.dayPlan?.minutes || highestRecurringPlanMinutes, 'minutes')
-    .humanize()}`
+  const plannedMinutes =
+    props.dayPlan?.minutes || highestRecurringPlanMinutes || 0
+  const plannedDurationText = useCompactFormattedMinutes(plannedMinutes)
 
   const wentInService = !!props.serviceReports?.length
   const hasAPlan = !!(props.dayPlan || props.recurringPlans?.length)

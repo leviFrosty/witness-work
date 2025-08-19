@@ -805,6 +805,8 @@
     "one": "{{count}} 分",
     "other": "{{count}} 分"
   },
+  "hoursCompact": "時",
+  "minutesCompact": "分",
   "decimalExample": "15.5",
   "longExample": "15 時間 30 分",
   "shortExample": "15 時間 30 分",

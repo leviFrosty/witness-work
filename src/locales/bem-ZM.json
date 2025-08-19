@@ -68,6 +68,8 @@
   "hoursLeft": "hours left",
   "goalBasedOnPublisherType": "Goal is based on your publisher type",
   "addTime": "Add Time",
+  "updatedPlan": "Updated Plan",
+  "editPlan": "Edit Plan",
   "phrasesStudiesNone": {
     "keepGoing": "Keep going!",
     "stayStrong": "Stay strong!",
@@ -831,5 +833,8 @@
   "map": "Mapu",
   "editColor": "Yalula Ilangi",
   "close": "Ukwisala",
-  "startOfWeek": "Start of Week"
+  "startOfWeek": "Start of Week",
+  "noPlansScheduledForThisMonth": "No plans scheduled for this month.",
+  "scheduledPlans": "Scheduled Plans",
+  "scheduledPlans_description": "Tap any plan to edit or view details. Swipe to delete."
 }

@@ -2,6 +2,7 @@ import moment from 'moment'
 import {
   RecurringPlan,
   RecurringPlanFrequencies,
+  RecurringPlanOverride,
   calculateMinutesRemaining,
   calculateProgress,
   getPlansIntersectingDay,
@@ -1030,6 +1031,283 @@ describe('lib/serviceReport', () => {
 
       const minutes = getTotalMinutesForServiceYear(reports, year)
       expect(minutes).toBe(20 * 60)
+    })
+  })
+
+  describe('RecurringPlan Overrides', () => {
+    const baseRecurringPlan: RecurringPlan = {
+      id: 'test-plan',
+      startDate: moment('2024-01-01').toDate(),
+      minutes: 120, // 2 hours
+      recurrence: {
+        frequency: RecurringPlanFrequencies.WEEKLY,
+        interval: 1,
+        endDate: null,
+      },
+      note: 'Original plan note',
+    }
+
+    describe('getPlansIntersectingDay with overrides', () => {
+      it('should respect deleted dates', () => {
+        const testDate = moment('2024-01-08').toDate() // Next Monday
+        const planWithDeleted: RecurringPlan = {
+          ...baseRecurringPlan,
+          deletedDates: [testDate],
+        }
+
+        const intersectingPlans = getPlansIntersectingDay(testDate, [
+          planWithDeleted,
+        ])
+        expect(intersectingPlans).toHaveLength(0)
+      })
+
+      it('should return plans without overrides normally', () => {
+        const testDate = moment('2024-01-08').toDate() // Next Monday
+        const intersectingPlans = getPlansIntersectingDay(testDate, [
+          baseRecurringPlan,
+        ])
+
+        expect(intersectingPlans).toHaveLength(1)
+        expect(intersectingPlans[0]).toEqual(baseRecurringPlan)
+      })
+
+      it('should return plans with overrides', () => {
+        const testDate = moment('2024-01-08').toDate() // Next Monday
+        const override: RecurringPlanOverride = {
+          date: testDate,
+          minutes: 180, // 3 hours instead of 2
+          note: 'Override note',
+        }
+
+        const planWithOverride: RecurringPlan = {
+          ...baseRecurringPlan,
+          overrides: [override],
+        }
+
+        const intersectingPlans = getPlansIntersectingDay(testDate, [
+          planWithOverride,
+        ])
+        expect(intersectingPlans).toHaveLength(1)
+        expect(intersectingPlans[0]).toEqual(planWithOverride)
+      })
+    })
+
+    describe('RecurringPlanOverride type validation', () => {
+      it('should create a valid override with required fields', () => {
+        const override: RecurringPlanOverride = {
+          date: moment('2024-01-15').toDate(),
+          minutes: 90,
+        }
+
+        expect(override.date).toBeInstanceOf(Date)
+        expect(override.minutes).toBe(90)
+        expect(override.note).toBeUndefined()
+      })
+
+      it('should create a valid override with optional note', () => {
+        const override: RecurringPlanOverride = {
+          date: moment('2024-01-15').toDate(),
+          minutes: 90,
+          note: 'Special override',
+        }
+
+        expect(override.date).toBeInstanceOf(Date)
+        expect(override.minutes).toBe(90)
+        expect(override.note).toBe('Special override')
+      })
+    })
+
+    describe('RecurringPlan with overrides', () => {
+      it('should allow multiple overrides on different dates', () => {
+        const override1: RecurringPlanOverride = {
+          date: moment('2024-01-08').toDate(),
+          minutes: 180,
+          note: 'First override',
+        }
+
+        const override2: RecurringPlanOverride = {
+          date: moment('2024-01-15').toDate(),
+          minutes: 60,
+          note: 'Second override',
+        }
+
+        const planWithMultipleOverrides: RecurringPlan = {
+          ...baseRecurringPlan,
+          overrides: [override1, override2],
+        }
+
+        expect(planWithMultipleOverrides.overrides).toHaveLength(2)
+        expect(planWithMultipleOverrides.overrides![0]).toEqual(override1)
+        expect(planWithMultipleOverrides.overrides![1]).toEqual(override2)
+      })
+
+      it('should work with empty overrides array', () => {
+        const planWithEmptyOverrides: RecurringPlan = {
+          ...baseRecurringPlan,
+          overrides: [],
+        }
+
+        expect(planWithEmptyOverrides.overrides).toHaveLength(0)
+      })
+
+      it('should work with undefined overrides', () => {
+        const planWithoutOverrides: RecurringPlan = {
+          ...baseRecurringPlan,
+          overrides: undefined,
+        }
+
+        expect(planWithoutOverrides.overrides).toBeUndefined()
+      })
+    })
+
+    describe('Override date matching', () => {
+      it('should match overrides by date correctly', () => {
+        const targetDate = moment('2024-01-15').toDate()
+        const override: RecurringPlanOverride = {
+          date: targetDate,
+          minutes: 90,
+          note: 'Override for Jan 15',
+        }
+
+        const planWithOverride: RecurringPlan = {
+          ...baseRecurringPlan,
+          overrides: [override],
+        }
+
+        // Verify the override matches the target date
+        const matchingOverride = planWithOverride.overrides?.find((o) =>
+          moment(o.date).isSame(targetDate, 'day')
+        )
+
+        expect(matchingOverride).toEqual(override)
+      })
+
+      it('should not match overrides on different dates', () => {
+        const overrideDate = moment('2024-01-15').toDate()
+        const searchDate = moment('2024-01-16').toDate()
+
+        const override: RecurringPlanOverride = {
+          date: overrideDate,
+          minutes: 90,
+        }
+
+        const planWithOverride: RecurringPlan = {
+          ...baseRecurringPlan,
+          overrides: [override],
+        }
+
+        const matchingOverride = planWithOverride.overrides?.find((o) =>
+          moment(o.date).isSame(searchDate, 'day')
+        )
+
+        expect(matchingOverride).toBeUndefined()
+      })
+    })
+
+    describe('Override data integrity', () => {
+      it('should preserve original plan data when overrides exist', () => {
+        const override: RecurringPlanOverride = {
+          date: moment('2024-01-08').toDate(),
+          minutes: 180,
+          note: 'Override note',
+        }
+
+        const planWithOverride: RecurringPlan = {
+          ...baseRecurringPlan,
+          overrides: [override],
+        }
+
+        // Original plan data should remain unchanged
+        expect(planWithOverride.minutes).toBe(120)
+        expect(planWithOverride.note).toBe('Original plan note')
+        expect(planWithOverride.startDate).toEqual(baseRecurringPlan.startDate)
+        expect(planWithOverride.recurrence).toEqual(
+          baseRecurringPlan.recurrence
+        )
+
+        // Override should be separate
+        expect(planWithOverride.overrides![0].minutes).toBe(180)
+        expect(planWithOverride.overrides![0].note).toBe('Override note')
+      })
+
+      it('should handle overrides with zero minutes', () => {
+        const override: RecurringPlanOverride = {
+          date: moment('2024-01-08').toDate(),
+          minutes: 0, // Zero minutes override
+        }
+
+        const planWithOverride: RecurringPlan = {
+          ...baseRecurringPlan,
+          overrides: [override],
+        }
+
+        expect(planWithOverride.overrides![0].minutes).toBe(0)
+      })
+
+      it('should handle overrides with very large minutes', () => {
+        const override: RecurringPlanOverride = {
+          date: moment('2024-01-08').toDate(),
+          minutes: 24 * 60, // 24 hours
+        }
+
+        const planWithOverride: RecurringPlan = {
+          ...baseRecurringPlan,
+          overrides: [override],
+        }
+
+        expect(planWithOverride.overrides![0].minutes).toBe(1440)
+      })
+    })
+
+    describe('Override edge cases', () => {
+      it('should handle overrides on plan start date', () => {
+        const override: RecurringPlanOverride = {
+          date: baseRecurringPlan.startDate, // Same as start date
+          minutes: 240,
+          note: 'Override on start date',
+        }
+
+        const planWithOverride: RecurringPlan = {
+          ...baseRecurringPlan,
+          overrides: [override],
+        }
+
+        expect(planWithOverride.overrides![0].date).toEqual(
+          baseRecurringPlan.startDate
+        )
+        expect(planWithOverride.overrides![0].minutes).toBe(240)
+      })
+
+      it('should handle multiple overrides sorted by date', () => {
+        const override1: RecurringPlanOverride = {
+          date: moment('2024-01-22').toDate(),
+          minutes: 60,
+        }
+
+        const override2: RecurringPlanOverride = {
+          date: moment('2024-01-08').toDate(),
+          minutes: 180,
+        }
+
+        const override3: RecurringPlanOverride = {
+          date: moment('2024-01-15').toDate(),
+          minutes: 90,
+        }
+
+        const planWithOverrides: RecurringPlan = {
+          ...baseRecurringPlan,
+          overrides: [override1, override2, override3], // Unsorted
+        }
+
+        // Sort overrides by date for testing
+        const sortedOverrides = planWithOverrides.overrides!.sort(
+          (a, b) => moment(a.date).unix() - moment(b.date).unix()
+        )
+
+        expect(sortedOverrides[0]).toEqual(override2) // Jan 8
+        expect(sortedOverrides[1]).toEqual(override3) // Jan 15
+        expect(sortedOverrides[2]).toEqual(override1) // Jan 22
+      })
     })
   })
 })

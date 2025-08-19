@@ -7,7 +7,11 @@ import {
   ServiceReportsByYears,
 } from '../types/serviceReport'
 import moment from 'moment'
-import { getReport, RecurringPlan } from '../lib/serviceReport'
+import {
+  getReport,
+  RecurringPlan,
+  RecurringPlanOverride,
+} from '../lib/serviceReport'
 import { hasMigratedFromAsyncStorage, MmkvStorage } from './mmkv'
 
 const initialState = {
@@ -153,6 +157,101 @@ export const useServiceReport = create(
                 return c
               }
               return { ...c, ...recurringPlan }
+            }),
+          }
+        })
+      },
+      addRecurringPlanOverride: (
+        planId: string,
+        override: RecurringPlanOverride
+      ) => {
+        set(({ recurringPlans }) => {
+          return {
+            recurringPlans: recurringPlans.map((c) => {
+              if (c.id !== planId) {
+                return c
+              }
+              const existingOverrides = c.overrides || []
+              const updatedOverrides = existingOverrides.filter(
+                (o) => !moment(o.date).isSame(override.date, 'day')
+              )
+              return { ...c, overrides: [...updatedOverrides, override] }
+            }),
+          }
+        })
+      },
+      updateRecurringPlanOverride: (
+        planId: string,
+        override: RecurringPlanOverride
+      ) => {
+        set(({ recurringPlans }) => {
+          return {
+            recurringPlans: recurringPlans.map((c) => {
+              if (c.id !== planId) {
+                return c
+              }
+              const existingOverrides = c.overrides || []
+              const updatedOverrides = existingOverrides.map((o) => {
+                if (moment(o.date).isSame(override.date, 'day')) {
+                  return override
+                }
+                return o
+              })
+              return { ...c, overrides: updatedOverrides }
+            }),
+          }
+        })
+      },
+      removeRecurringPlanOverride: (planId: string, date: Date) => {
+        set(({ recurringPlans }) => {
+          return {
+            recurringPlans: recurringPlans.map((c) => {
+              if (c.id !== planId) {
+                return c
+              }
+              const existingOverrides = c.overrides || []
+              const updatedOverrides = existingOverrides.filter(
+                (o) => !moment(o.date).isSame(date, 'day')
+              )
+              return { ...c, overrides: updatedOverrides }
+            }),
+          }
+        })
+      },
+      getRecurringPlanForDate: (planId: string, date: Date) => {
+        const { recurringPlans } = useServiceReport.getState()
+        const plan = recurringPlans.find((p) => p.id === planId)
+        if (!plan) return null
+
+        const override = plan.overrides?.find((o) =>
+          moment(o.date).isSame(date, 'day')
+        )
+
+        if (override) {
+          return {
+            ...plan,
+            minutes: override.minutes,
+            note: override.note,
+            isOverride: true,
+            originalMinutes: plan.minutes,
+            originalNote: plan.note,
+          }
+        }
+
+        return { ...plan, isOverride: false }
+      },
+      restoreRecurringPlanInstance: (planId: string, date: Date) => {
+        set(({ recurringPlans }) => {
+          return {
+            recurringPlans: recurringPlans.map((c) => {
+              if (c.id !== planId) {
+                return c
+              }
+              const existingDeleted = c.deletedDates || []
+              const updatedDeleted = existingDeleted.filter(
+                (deletedDate) => !moment(deletedDate).isSame(date, 'day')
+              )
+              return { ...c, deletedDates: updatedDeleted }
             }),
           }
         })

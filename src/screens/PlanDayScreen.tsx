@@ -265,6 +265,11 @@ const PlanDayScreen = ({ route, navigation }: PlanDayScreenProps) => {
     addRecurringPlan,
     updateDayPlan,
     updateRecurringPlan,
+    addRecurringPlanOverride,
+    updateRecurringPlanOverride,
+    removeRecurringPlanOverride,
+    getRecurringPlanForDate,
+    restoreRecurringPlanInstance,
   } = useServiceReport()
 
   // Find existing plan if editing
@@ -275,7 +280,24 @@ const PlanDayScreen = ({ route, navigation }: PlanDayScreenProps) => {
     ? recurringPlans.find((p) => p.id === route.params.existingRecurringPlanId)
     : null
 
+  // Check if we're editing a recurring plan override vs the entire plan
+  const editingDate =
+    existingRecurringPlan && route.params.recurringPlanDate
+      ? moment(route.params.recurringPlanDate).toDate()
+      : defaultDate
+
+  const isRecurringPlanOverride =
+    existingRecurringPlan &&
+    !moment(editingDate).isSame(existingRecurringPlan.startDate, 'day')
+
+  // Get the actual plan data (with overrides applied if applicable)
+  const recurringPlanData =
+    existingRecurringPlan && isRecurringPlanOverride
+      ? getRecurringPlanForDate(existingRecurringPlan.id, editingDate)
+      : existingRecurringPlan
+
   const isEditMode = !!(existingDayPlan || existingRecurringPlan)
+  const isOverrideMode = isRecurringPlanOverride
 
   // Initialize state with existing plan data or defaults
   const [oneTime, setOneTime] = useState(existingRecurringPlan ? false : true)
@@ -283,7 +305,7 @@ const PlanDayScreen = ({ route, navigation }: PlanDayScreenProps) => {
     existingDayPlan
       ? moment(existingDayPlan.date).toDate()
       : existingRecurringPlan
-        ? moment(route.params.recurringPlanDate).toDate()
+        ? editingDate
         : defaultDate
   )
   const [endDate, setEndDate] = useState<Date | null>(
@@ -294,15 +316,15 @@ const PlanDayScreen = ({ route, navigation }: PlanDayScreenProps) => {
   const [hours, setHours] = useState(
     existingDayPlan
       ? Math.floor(existingDayPlan.minutes / 60)
-      : existingRecurringPlan
-        ? Math.floor(existingRecurringPlan.minutes / 60)
+      : recurringPlanData
+        ? Math.floor(recurringPlanData.minutes / 60)
         : 0
   )
   const [minutes, setMinutes] = useState(
     existingDayPlan
       ? existingDayPlan.minutes % 60
-      : existingRecurringPlan
-        ? existingRecurringPlan.minutes % 60
+      : recurringPlanData
+        ? recurringPlanData.minutes % 60
         : 0
   )
   const [interval, setInterval] = useState<number>(
@@ -313,7 +335,7 @@ const PlanDayScreen = ({ route, navigation }: PlanDayScreenProps) => {
       RecurringPlanFrequencies.WEEKLY
   )
   const [note, setNote] = useState(
-    existingDayPlan?.note ?? existingRecurringPlan?.note ?? ''
+    existingDayPlan?.note ?? recurringPlanData?.note ?? ''
   )
   const toast = useToastController()
   const theme = useTheme()
@@ -330,21 +352,43 @@ const PlanDayScreen = ({ route, navigation }: PlanDayScreenProps) => {
           note: note || undefined,
         })
       } else if (existingRecurringPlan) {
-        updateRecurringPlan({
-          id: existingRecurringPlan.id,
-          startDate: date,
-          minutes: hours * 60 + minutes,
-          recurrence: {
-            endDate,
-            frequency,
-            interval,
-          },
-          note: note || undefined,
-        })
+        if (isOverrideMode) {
+          // Create or update override for specific date
+          const override = {
+            date: editingDate,
+            minutes: hours * 60 + minutes,
+            note: note || undefined,
+          }
+
+          const existingOverride = existingRecurringPlan.overrides?.find((o) =>
+            moment(o.date).isSame(editingDate, 'day')
+          )
+
+          if (existingOverride) {
+            updateRecurringPlanOverride(existingRecurringPlan.id, override)
+          } else {
+            addRecurringPlanOverride(existingRecurringPlan.id, override)
+          }
+        } else {
+          // Update the entire recurring plan
+          updateRecurringPlan({
+            id: existingRecurringPlan.id,
+            startDate: date,
+            minutes: hours * 60 + minutes,
+            recurrence: {
+              endDate,
+              frequency,
+              interval,
+            },
+            note: note || undefined,
+          })
+        }
       }
 
       toast.show(i18n.t('success'), {
-        message: i18n.t('updatedPlan'),
+        message: isOverrideMode
+          ? i18n.t('overrideCreated')
+          : i18n.t('updatedPlan'),
         native: true,
         duration: 2500,
       })
@@ -547,14 +591,255 @@ const PlanDayScreen = ({ route, navigation }: PlanDayScreenProps) => {
                     fontSize: theme.fontSize('lg'),
                   }}
                 >
-                  {isEditMode ? i18n.t('update') : i18n.t('add')}{' '}
                   {isEditMode
-                    ? i18n.t('plan')
-                    : `${i18n.t(oneTime ? 'oneTime' : 'recurring')} ${i18n.t('plan')}`}
+                    ? isOverrideMode
+                      ? existingRecurringPlan?.overrides?.some((o) =>
+                          moment(o.date).isSame(editingDate, 'day')
+                        )
+                        ? i18n.t('updateOverride')
+                        : i18n.t('createOverride')
+                      : i18n.t('updatePlan')
+                    : `${i18n.t('add')} ${i18n.t(oneTime ? 'oneTime' : 'recurring')} ${i18n.t('plan')}`}
                 </Text>
               </ActionButton>
             </View>
           </Section>
+          {existingRecurringPlan && (
+            <View style={{ paddingHorizontal: 20, gap: 15 }}>
+              {isOverrideMode && (
+                <View
+                  style={{
+                    backgroundColor: theme.colors.accentTranslucent,
+                    padding: 15,
+                    borderRadius: theme.numbers.borderRadiusSm,
+                    borderWidth: 1,
+                    borderColor: theme.colors.accent,
+                  }}
+                >
+                  <Text
+                    style={{
+                      fontFamily: theme.fonts.semiBold,
+                      color: theme.colors.accent,
+                      marginBottom: 5,
+                    }}
+                  >
+                    {i18n.t('editingOverride')}
+                  </Text>
+                  <Text
+                    style={{
+                      fontSize: theme.fontSize('sm'),
+                      color: theme.colors.text,
+                      marginBottom: 8,
+                    }}
+                  >
+                    {i18n.t('editingOverride_description')}
+                  </Text>
+                  <Button
+                    onPress={() => {
+                      if (
+                        existingRecurringPlan.overrides?.some((o) =>
+                          moment(o.date).isSame(editingDate, 'day')
+                        )
+                      ) {
+                        removeRecurringPlanOverride(
+                          existingRecurringPlan.id,
+                          editingDate
+                        )
+                        toast.show(i18n.t('success'), {
+                          message: i18n.t('overrideRemoved'),
+                          native: true,
+                          duration: 2500,
+                        })
+                        navigation.goBack()
+                      }
+                    }}
+                    style={{
+                      backgroundColor: theme.colors.backgroundLighter,
+                      paddingHorizontal: 15,
+                      paddingVertical: 8,
+                      borderRadius: theme.numbers.borderRadiusSm,
+                      alignSelf: 'flex-start',
+                    }}
+                  >
+                    <Text
+                      style={{
+                        color: theme.colors.text,
+                        fontSize: theme.fontSize('sm'),
+                        fontFamily: theme.fonts.semiBold,
+                      }}
+                    >
+                      {i18n.t('removeOverride')}
+                    </Text>
+                  </Button>
+                </View>
+              )}
+              {existingRecurringPlan.overrides &&
+                existingRecurringPlan.overrides.length > 0 && (
+                  <View
+                    style={{
+                      backgroundColor: theme.colors.backgroundLighter,
+                      padding: 15,
+                      borderRadius: theme.numbers.borderRadiusSm,
+                    }}
+                  >
+                    <Text
+                      style={{
+                        fontFamily: theme.fonts.semiBold,
+                        marginBottom: 10,
+                        fontSize: theme.fontSize('md'),
+                      }}
+                    >
+                      {i18n.t('existingOverrides')} (
+                      {existingRecurringPlan.overrides.length})
+                    </Text>
+                    <View style={{ gap: 8 }}>
+                      {existingRecurringPlan.overrides.map(
+                        (override, index) => (
+                          <View
+                            key={index}
+                            style={{
+                              flexDirection: 'row',
+                              justifyContent: 'space-between',
+                              alignItems: 'center',
+                              paddingVertical: 5,
+                            }}
+                          >
+                            <View>
+                              <Text
+                                style={{ fontFamily: theme.fonts.semiBold }}
+                              >
+                                {moment(override.date).format('MMM D, YYYY')}
+                              </Text>
+                              <Text
+                                style={{
+                                  fontSize: theme.fontSize('sm'),
+                                  color: theme.colors.textAlt,
+                                }}
+                              >
+                                {Math.floor(override.minutes / 60)}h{' '}
+                                {override.minutes % 60}m
+                                {override.note && ` • ${override.note}`}
+                              </Text>
+                            </View>
+                            <Button
+                              onPress={() => {
+                                removeRecurringPlanOverride(
+                                  existingRecurringPlan.id,
+                                  override.date
+                                )
+                                toast.show(i18n.t('success'), {
+                                  message: i18n.t('overrideRemoved'),
+                                  native: true,
+                                  duration: 1500,
+                                })
+                              }}
+                              style={{
+                                backgroundColor: theme.colors.card,
+                                paddingHorizontal: 10,
+                                paddingVertical: 5,
+                                borderRadius: theme.numbers.borderRadiusSm,
+                              }}
+                            >
+                              <Text
+                                style={{
+                                  color: theme.colors.textAlt,
+                                  fontSize: theme.fontSize('sm'),
+                                }}
+                              >
+                                {i18n.t('remove')}
+                              </Text>
+                            </Button>
+                          </View>
+                        )
+                      )}
+                    </View>
+                  </View>
+                )}
+              {existingRecurringPlan.deletedDates &&
+                existingRecurringPlan.deletedDates.length > 0 && (
+                  <View
+                    style={{
+                      backgroundColor: theme.colors.backgroundLighter,
+                      padding: 15,
+                      borderRadius: theme.numbers.borderRadiusSm,
+                    }}
+                  >
+                    <Text
+                      style={{
+                        fontFamily: theme.fonts.semiBold,
+                        marginBottom: 10,
+                        fontSize: theme.fontSize('md'),
+                      }}
+                    >
+                      {i18n.t('deletedInstances')} (
+                      {existingRecurringPlan.deletedDates.length})
+                    </Text>
+                    <Text
+                      style={{
+                        fontSize: theme.fontSize('sm'),
+                        color: theme.colors.textAlt,
+                        marginBottom: 15,
+                      }}
+                    >
+                      {i18n.t('deletedInstances_description')}
+                    </Text>
+                    <View style={{ gap: 8 }}>
+                      {existingRecurringPlan.deletedDates.map(
+                        (deletedDate, index) => (
+                          <View
+                            key={index}
+                            style={{
+                              flexDirection: 'row',
+                              justifyContent: 'space-between',
+                              alignItems: 'center',
+                              paddingVertical: 5,
+                              paddingHorizontal: 10,
+                              backgroundColor: theme.colors.card,
+                              borderRadius: theme.numbers.borderRadiusSm,
+                            }}
+                          >
+                            <Text style={{ fontFamily: theme.fonts.semiBold }}>
+                              {moment(deletedDate).format('MMM D, YYYY')}
+                            </Text>
+                            <Button
+                              onPress={() => {
+                                restoreRecurringPlanInstance(
+                                  existingRecurringPlan.id,
+                                  deletedDate
+                                )
+                                toast.show(i18n.t('success'), {
+                                  message: i18n.t('instanceRestored'),
+                                  native: true,
+                                  duration: 1500,
+                                })
+                              }}
+                              style={{
+                                backgroundColor: theme.colors.accentTranslucent,
+                                paddingHorizontal: 12,
+                                paddingVertical: 6,
+                                borderRadius: theme.numbers.borderRadiusSm,
+                                borderWidth: 1,
+                                borderColor: theme.colors.accent,
+                              }}
+                            >
+                              <Text
+                                style={{
+                                  color: theme.colors.accent,
+                                  fontSize: theme.fontSize('sm'),
+                                  fontFamily: theme.fonts.semiBold,
+                                }}
+                              >
+                                {i18n.t('restore')}
+                              </Text>
+                            </Button>
+                          </View>
+                        )
+                      )}
+                    </View>
+                  </View>
+                )}
+            </View>
+          )}
         </KeyboardAwareScrollView>
       </View>
     </Wrapper>

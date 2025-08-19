@@ -403,6 +403,12 @@ export enum RecurringPlanFrequencies {
   MONTHLY,
 }
 
+export type RecurringPlanOverride = {
+  date: Date
+  minutes: number
+  note?: string
+}
+
 export type RecurringPlan = {
   id: string
   startDate: Date
@@ -414,6 +420,7 @@ export type RecurringPlan = {
   }
   note?: string
   deletedDates?: Date[]
+  overrides?: RecurringPlanOverride[]
 }
 
 export const getPlansIntersectingDay = (

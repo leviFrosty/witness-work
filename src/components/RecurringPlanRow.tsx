@@ -27,7 +27,18 @@ const RecurringPlanRow = (props: {
     deleteEventAndFutureEvents,
   } = useServiceReport()
 
-  const formattedTime = useFormattedMinutes(props.plan.minutes)
+  // Check if there's an override for this specific date
+  const dateOverride = props.plan.overrides?.find((override) =>
+    moment(override.date).isSame(props.date, 'day')
+  )
+
+  // Use override data if it exists, otherwise use plan data
+  const displayMinutes = dateOverride
+    ? dateOverride.minutes
+    : props.plan.minutes
+  const displayNote = dateOverride ? dateOverride.note : props.plan.note
+  const formattedTime = useFormattedMinutes(displayMinutes)
+  const hasOverride = !!dateOverride
 
   const getFrequencyText = (freq: RecurringPlanFrequencies) => {
     switch (freq) {
@@ -152,6 +163,20 @@ const RecurringPlanRow = (props: {
                 {getFrequencyText(props.plan.recurrence.frequency)}
               </Text>
             </Badge>
+            {hasOverride && (
+              <Badge color={theme.colors.warn}>
+                <Text
+                  style={{
+                    fontFamily: theme.fonts.semiBold,
+                    textTransform: 'uppercase',
+                    fontSize: theme.fontSize('xs'),
+                    color: theme.colors.textInverse,
+                  }}
+                >
+                  {i18n.t('override')}
+                </Text>
+              </Badge>
+            )}
             <Text
               style={{
                 color: theme.colors.textAlt,
@@ -165,7 +190,7 @@ const RecurringPlanRow = (props: {
             </Text>
           </View>
         </View>
-        {props.plan.note && (
+        {displayNote && (
           <View>
             <View
               style={{
@@ -192,7 +217,7 @@ const RecurringPlanRow = (props: {
                   },
                 }}
               >
-                {props.plan.note}
+                {displayNote}
               </Copyeable>
             </View>
           </View>

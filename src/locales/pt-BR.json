@@ -812,6 +812,8 @@
     "one": "{{count}} Minutos",
     "other": "{{count}} Minutos"
   },
+  "hoursCompact": "h",
+  "minutesCompact": "m",
   "decimalExample": "15.5",
   "longExample": "15 Horas e 30 Minutos",
   "shortExample": "15 Horas e 30 Minutos",

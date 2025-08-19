@@ -812,6 +812,8 @@
     "one": "Iminota {{count}}",
     "other": "Iminota {{count}}"
   },
+  "hoursCompact": "h",
+  "minutesCompact": "m",
   "decimalExample": "15.5",
   "longExample": "Amasaha 15 Iminota 30",
   "shortExample": "15 Isaha 30 Imin",

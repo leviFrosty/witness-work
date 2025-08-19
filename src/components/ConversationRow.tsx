@@ -98,34 +98,42 @@ const ConversationRow = ({
       >
         <View
           style={{
-            gap: 10,
-            paddingVertical: 22,
-            paddingHorizontal: 12,
+            gap: 16,
+            paddingVertical: 24,
+            paddingHorizontal: 16,
           }}
         >
+          {/* Header Section */}
           <View
             style={{
               flexDirection: 'row',
               justifyContent: 'space-between',
-              alignItems: 'center',
+              alignItems: 'flex-start',
+              gap: 12,
             }}
           >
             <View
-              style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}
+              style={{
+                flex: 1,
+                gap: 4,
+                minWidth: 0, // Allow text to shrink
+              }}
             >
               <Text
                 style={{
-                  fontSize: theme.fontSize('md'),
+                  fontSize: theme.fontSize('lg'),
                   fontFamily: theme.fonts.bold,
-                  color: theme.colors.textAlt,
+                  color: theme.colors.text,
                 }}
+                numberOfLines={1}
+                adjustsFontSizeToFit
               >
                 {moment(conversation.date).format('dddd, L')}
               </Text>
 
               <Text
                 style={{
-                  fontSize: theme.fontSize('sm'),
+                  fontSize: theme.fontSize('md'),
                   color: theme.colors.textAlt,
                 }}
               >
@@ -133,71 +141,80 @@ const ConversationRow = ({
               </Text>
             </View>
             {(conversation.isBibleStudy || conversation.notAtHome) && (
-              <Badge color={theme.colors.accent3}>
-                <View
-                  style={{ flexDirection: 'row', gap: 5, alignItems: 'center' }}
-                >
-                  <IconButton
-                    icon={conversation.notAtHome ? faCaravan : faBook}
-                    iconStyle={{ color: theme.colors.textInverse }}
-                    size='sm'
-                  />
-                  <Text
+              <View style={{ flexShrink: 0 }}>
+                <Badge color={theme.colors.accent3}>
+                  <View
                     style={{
-                      fontFamily: theme.fonts.semiBold,
-                      textTransform: 'uppercase',
-                      fontSize: theme.fontSize('sm'),
-                      color: theme.colors.textInverse,
+                      flexDirection: 'row',
+                      gap: 6,
+                      alignItems: 'center',
                     }}
                   >
-                    {conversation.notAtHome
-                      ? i18n.t('notAtHome')
-                      : i18n.t('study')}
-                  </Text>
-                </View>
-              </Badge>
+                    <IconButton
+                      icon={conversation.notAtHome ? faCaravan : faBook}
+                      iconStyle={{ color: theme.colors.textInverse }}
+                      size='sm'
+                    />
+                    <Text
+                      style={{
+                        fontFamily: theme.fonts.semiBold,
+                        textTransform: 'uppercase',
+                        fontSize: theme.fontSize('sm'),
+                        color: theme.colors.textInverse,
+                      }}
+                      numberOfLines={1}
+                    >
+                      {conversation.notAtHome
+                        ? i18n.t('notAtHome')
+                        : i18n.t('study')}
+                    </Text>
+                  </View>
+                </Badge>
+              </View>
             )}
           </View>
 
-          <View style={{ flexDirection: 'row', gap: 10 }}>
+          {/* Content Section */}
+          <View style={{ gap: 16 }}>
+            {/* Follow-up Section */}
             {(conversation.followUp?.notifyMe ||
               conversation.followUp?.topic) && (
               <View
                 style={{
-                  gap: 10,
                   borderColor: notificationHasPassed
                     ? theme.colors.border
                     : theme.colors.accent3,
                   borderWidth: 1,
                   borderRadius: theme.numbers.borderRadiusSm,
-                  padding: 10,
-                  flexShrink: 1,
+                  padding: 16,
+                  backgroundColor: notificationHasPassed
+                    ? theme.colors.backgroundLighter
+                    : theme.colors.accent3 + '10',
                 }}
               >
-                <View style={{ gap: 3 }}>
-                  <View
+                {/* Follow-up Header */}
+                <View style={{ marginBottom: 12 }}>
+                  <Text
                     style={{
-                      flexDirection: 'row',
-                      justifyContent: 'space-between',
+                      fontSize: theme.fontSize('sm'),
+                      fontFamily: theme.fonts.semiBold,
+                      color: theme.colors.textAlt,
+                      textTransform: 'uppercase',
+                      letterSpacing: 0.5,
                     }}
                   >
-                    <Text
-                      style={{
-                        fontSize: 12,
-                        fontFamily: theme.fonts.semiBold,
-                        color: theme.colors.textAlt,
-                      }}
-                    >
-                      {i18n.t('followUp')}
-                    </Text>
-                  </View>
+                    {i18n.t('followUp')}
+                  </Text>
+                </View>
+
+                {/* Follow-up Content */}
+                <View style={{ gap: 12 }}>
                   {conversation.followUp?.date && (
                     <View
                       style={{
                         flexDirection: 'row',
-                        padding: 5,
-                        gap: 5,
                         alignItems: 'center',
+                        gap: 8,
                       }}
                     >
                       <IconButton
@@ -212,7 +229,7 @@ const ConversationRow = ({
                       />
                       <Text
                         style={{
-                          fontSize: 12,
+                          fontSize: theme.fontSize('md'),
                           fontFamily: theme.fonts.semiBold,
                           color: notificationHasPassed
                             ? theme.colors.textAlt
@@ -223,58 +240,92 @@ const ConversationRow = ({
                       </Text>
                     </View>
                   )}
-                </View>
 
-                {conversation.followUp?.topic && (
-                  <View style={{ gap: 3 }}>
-                    <Text
-                      style={{
-                        fontSize: 12,
-                        fontFamily: theme.fonts.semiBold,
-                        color: theme.colors.textAlt,
-                      }}
-                    >
-                      {i18n.t('topic')}
-                    </Text>
-                    <Copyeable
-                      textProps={{
-                        style: {
-                          color: notificationHasPassed
-                            ? theme.colors.textAlt
-                            : theme.colors.accent3,
-                        },
-                      }}
-                    >
-                      {conversation.followUp?.topic}
-                    </Copyeable>
-                  </View>
-                )}
+                  {conversation.followUp?.topic && (
+                    <View>
+                      <Text
+                        style={{
+                          fontSize: theme.fontSize('sm'),
+                          fontFamily: theme.fonts.semiBold,
+                          color: theme.colors.textAlt,
+                          marginBottom: 6,
+                        }}
+                      >
+                        {i18n.t('topic')}
+                      </Text>
+                      <Copyeable
+                        textProps={{
+                          style: {
+                            fontSize: theme.fontSize('md'),
+                            color: notificationHasPassed
+                              ? theme.colors.textAlt
+                              : theme.colors.accent3,
+                          },
+                        }}
+                      >
+                        {conversation.followUp?.topic}
+                      </Copyeable>
+                    </View>
+                  )}
+                </View>
               </View>
             )}
+
+            {/* Notes Section */}
             {hasNoConversationDetails && (
-              <Text
+              <View
                 style={{
-                  flexShrink: 1,
-                  color: theme.colors.textAlt,
-                  fontSize: theme.fontSize('sm'),
+                  padding: 16,
+                  backgroundColor: theme.colors.backgroundLighter,
+                  borderRadius: theme.numbers.borderRadiusSm,
+                  borderStyle: 'dashed',
+                  borderWidth: 1,
+                  borderColor: theme.colors.border,
                 }}
               >
-                {i18n.t('noNotesSaved')}
-              </Text>
+                <Text
+                  style={{
+                    color: theme.colors.textAlt,
+                    fontSize: theme.fontSize('md'),
+                    fontStyle: 'italic',
+                    textAlign: 'center',
+                  }}
+                >
+                  {i18n.t('noNotesSaved')}
+                </Text>
+              </View>
             )}
 
             {!!conversation.note?.length && (
-              <View style={{ gap: 3, flexShrink: 1 }}>
+              <View
+                style={{
+                  padding: 16,
+                  backgroundColor: theme.colors.backgroundLighter,
+                  borderRadius: theme.numbers.borderRadiusSm,
+                }}
+              >
                 <Text
                   style={{
-                    fontSize: 12,
+                    fontSize: theme.fontSize('sm'),
                     fontFamily: theme.fonts.semiBold,
                     color: theme.colors.textAlt,
+                    marginBottom: 8,
+                    textTransform: 'uppercase',
+                    letterSpacing: 0.5,
                   }}
                 >
                   {i18n.t('note')}
                 </Text>
-                <Copyeable>{conversation.note}</Copyeable>
+                <Copyeable
+                  textProps={{
+                    style: {
+                      fontSize: theme.fontSize('md'),
+                      lineHeight: theme.fontSize('md') * 1.4,
+                    },
+                  }}
+                >
+                  {conversation.note}
+                </Copyeable>
               </View>
             )}
           </View>

@@ -4,6 +4,7 @@ import Section from '../../../components/inputs/Section'
 import InputRowButton from '../../../components/inputs/InputRowButton'
 import {
   faChevronRight,
+  faClock,
   faDownload,
   faFileExport,
   faUndo,
@@ -22,6 +23,13 @@ const AppSection = ({ handleNavigate }: SettingsSectionProps) => {
           leftIcon={faUndo}
           label={i18n.t('recoverContacts')}
           onPress={() => handleNavigate('Recover Contacts')}
+        >
+          <IconButton icon={faChevronRight} />
+        </InputRowButton>
+        <InputRowButton
+          leftIcon={faClock}
+          label={i18n.t('dismissedContacts')}
+          onPress={() => handleNavigate('Dismissed Contacts')}
         >
           <IconButton icon={faChevronRight} />
         </InputRowButton>

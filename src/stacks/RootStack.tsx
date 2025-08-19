@@ -5,6 +5,7 @@ import ConversationFormScreen from '../screens/ConversationFormScreen'
 import ContactDetailsScreen from '../screens/ContactDetailsScreen'
 import AddTimeScreen from '../screens/AddTimeScreen'
 import RecoverContactsScreen from '../screens/RecoverContactsScreen'
+import DismissedContactsScreen from '../screens/DismissedContactsScreen'
 import OnBoarding from '../components/onboarding/Onboarding'
 import { usePreferences } from '../stores/preferences'
 import UpdateScreen from '../screens/UpdateScreen'
@@ -79,6 +80,15 @@ const RootStackComponent = () => {
         }}
         name='Recover Contacts'
         component={RecoverContactsScreen}
+      />
+      <RootStack.Screen
+        options={{
+          header: () => (
+            <Header buttonType='back' title={i18n.t('dismissedContacts')} />
+          ),
+        }}
+        name='Dismissed Contacts'
+        component={DismissedContactsScreen}
       />
       <RootStack.Screen
         options={{ header: () => null }}

@@ -89,6 +89,32 @@ export const useContacts = create(
           }
         })
       },
+      dismissContact: (id: string, dismissedUntil: Date) => {
+        set(({ contacts }) => {
+          return {
+            contacts: contacts.map((c) => {
+              if (c.id !== id) {
+                return c
+              }
+              return { ...c, dismissedUntil }
+            }),
+          }
+        })
+      },
+      undismissContact: (id: string) => {
+        set(({ contacts }) => {
+          return {
+            contacts: contacts.map((c) => {
+              if (c.id !== id) {
+                return c
+              }
+              const updatedContact = { ...c }
+              delete updatedContact.dismissedUntil
+              return updatedContact
+            }),
+          }
+        })
+      },
       _WARNING_forceDeleteContacts: () => set({ contacts: [] }),
       _WARNING_clearDeleted: () => set({ deletedContacts: [] }),
     })),

@@ -5,6 +5,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigation } from '@react-navigation/native'
 import useTheme from '../contexts/theme'
 import useConversations from '../stores/conversationStore'
+import { filterActivesContacts } from '../lib/dismissedContacts'
 import moment from 'moment'
 import { Dimensions, Platform, View } from 'react-native'
 import Carousel, { ICarouselInstance } from 'react-native-reanimated-carousel'
@@ -106,10 +107,9 @@ const FullMapView = ({ contactMarkers }: FullMapViewProps) => {
   }, [])
 
   const contactsWithCoords = useMemo(() => {
-    return contacts.filter(
-      (c) => c.coordinate?.latitude && c.coordinate.longitude
-    )
-  }, [contacts])
+    // Use the filtered contactMarkers instead of re-filtering contacts
+    return contactMarkers
+  }, [contactMarkers])
 
   const parallaxScrollingScale =
     contactsWithCoords.length === 1 ? 0.9 : isTablet ? 0.92 : 0.8025
@@ -269,7 +269,9 @@ const MapScreen = () => {
   const colors = useMarkerColors()
 
   const contactMarkers: ContactMarker[] = useMemo(() => {
-    const contactsWithCoords = contacts.filter(
+    // First filter out dismissed contacts, then check for coordinates
+    const activeContacts = filterActivesContacts(contacts)
+    const contactsWithCoords = activeContacts.filter(
       (c) => c.coordinate?.latitude && c.coordinate.longitude
     )
     return contactsWithCoords.map((c) => {

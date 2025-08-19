@@ -4,7 +4,7 @@ import useTheme from '../contexts/theme'
 import Card from './Card'
 import { Contact } from '../types/contact'
 import useConversations from '../stores/conversationStore'
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import moment from 'moment'
 import i18n from '../lib/locales'
 import {
@@ -18,6 +18,8 @@ import { Swipeable } from 'react-native-gesture-handler'
 import Haptics from '../lib/haptics'
 import useContacts from '../stores/contactsStore'
 import SwipeableArchive from './swipeableActions/Archive'
+import SwipeableDismiss from './swipeableActions/Dismiss'
+import DismissContactSheet from './DismissContactSheet'
 import { useToastController } from '@tamagui/toast'
 
 const ContactRow = ({
@@ -31,6 +33,7 @@ const ContactRow = ({
   const { deleteContact } = useContacts()
   const { conversations } = useConversations()
   const toast = useToastController()
+  const [dismissSheetOpen, setDismissSheetOpen] = useState(false)
 
   const isActiveBibleStudy = useMemo(
     () =>
@@ -66,7 +69,12 @@ const ContactRow = ({
     direction: 'left' | 'right',
     swipeable: Swipeable
   ) => {
-    if (direction === 'right') {
+    if (direction === 'left') {
+      // Dismiss action
+      setDismissSheetOpen(true)
+      swipeable.reset()
+    } else if (direction === 'right') {
+      // Archive action
       Alert.alert(
         i18n.t('archiveContact_question'),
         i18n.t('archiveContact_description'),
@@ -106,6 +114,7 @@ const ContactRow = ({
         <Swipeable
           onSwipeableWillOpen={() => Haptics.light()}
           containerStyle={{ backgroundColor: theme.colors.backgroundLighter }}
+          renderLeftActions={() => <SwipeableDismiss size='sm' />}
           renderRightActions={() => <SwipeableArchive size='sm' />}
           onSwipeableOpen={handleSwipeOpen}
         >
@@ -141,6 +150,11 @@ const ContactRow = ({
           </View>
         </Swipeable>
       </Card>
+      <DismissContactSheet
+        open={dismissSheetOpen}
+        setOpen={setDismissSheetOpen}
+        contact={contact}
+      />
     </Button>
   )
 }

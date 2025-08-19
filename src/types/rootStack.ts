@@ -20,6 +20,7 @@ export type RootStackParamList = {
       }
     | undefined
   'Recover Contacts': undefined
+  'Dismissed Contacts': undefined
   Onboarding: undefined
   Update: undefined
   Preferences: undefined

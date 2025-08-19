@@ -42,4 +42,10 @@ export type Contact = {
   userDraggedCoordinate?: boolean
   createdAt: Date
   customFields?: Record<string, string>
+
+  /**
+   * When set, this contact is dismissed and should be hidden from the main
+   * contact list and map until the dismissedUntil date has passed.
+   */
+  dismissedUntil?: Date
 }

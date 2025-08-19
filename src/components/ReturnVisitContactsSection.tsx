@@ -15,6 +15,7 @@ import i18n from '../lib/locales'
 import { contactSortOptions, usePreferences } from '../stores/preferences'
 import { Contact } from '../types/contact'
 import { contactMostRecentStudy } from '../lib/conversations'
+import { filterActivesContacts } from '../lib/dismissedContacts'
 import Select from './Select'
 import IconButton from './IconButton'
 import { faPlus, faSort } from '@fortawesome/free-solid-svg-icons'
@@ -30,7 +31,9 @@ const ReturnVisitContactsSection = () => {
   const navigation = useNavigation<RootStackNavigation>()
 
   const searchResultsSorted = useMemo(() => {
-    const filteredContacts = contacts.filter((c) =>
+    // First filter out dismissed contacts, then apply search filter
+    const activeContacts = filterActivesContacts(contacts)
+    const filteredContacts = activeContacts.filter((c) =>
       c.name.toLocaleUpperCase().includes(search.toLocaleUpperCase())
     )
 

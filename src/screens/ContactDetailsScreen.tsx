@@ -29,6 +29,7 @@ import IconButton from '../components/IconButton'
 import {
   faBook,
   faCaravan,
+  faClock,
   faComment,
   faComments,
   faEnvelope,
@@ -58,6 +59,8 @@ import { useToastController } from '@tamagui/toast'
 import XView from '../components/layout/XView'
 import { RootStackNavigation, RootStackParamList } from '../types/rootStack'
 import { useMarkerColors } from '../hooks/useMarkerColors'
+import DismissContactSheet from '../components/DismissContactSheet'
+import { isContactDismissed } from '../lib/dismissedContacts'
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Contact Details'>
 
@@ -628,6 +631,7 @@ const ContactDetailsScreen = ({ route, navigation }: Props) => {
   )
 
   const [sheetOpen, setSheetOpen] = useState(false)
+  const [dismissSheetOpen, setDismissSheetOpen] = useState(false)
 
   useEffect(() => {
     navigation.setOptions({
@@ -678,6 +682,13 @@ const ContactDetailsScreen = ({ route, navigation }: Props) => {
                   )
                 }
               />
+              {contact && !isContactDismissed(contact) && (
+                <IconButton
+                  icon={faClock}
+                  color={theme.colors.textInverse}
+                  onPress={() => setDismissSheetOpen(true)}
+                />
+              )}
               <Button
                 onPress={async () => {
                   navigation.replace('Contact Form', {
@@ -924,6 +935,11 @@ const ContactDetailsScreen = ({ route, navigation }: Props) => {
         navigation={navigation}
         setSheetOpen={setSheetOpen}
         sheetOpen={sheetOpen}
+      />
+      <DismissContactSheet
+        open={dismissSheetOpen}
+        setOpen={setDismissSheetOpen}
+        contact={contact}
       />
     </View>
   )

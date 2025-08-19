@@ -11,12 +11,12 @@ import moment from 'moment'
 import IconButton from './IconButton'
 import { faPersonDigging } from '@fortawesome/free-solid-svg-icons'
 import { useCallback } from 'react'
-import XView from './layout/XView'
 import Button from './Button'
 import { useNavigation } from '@react-navigation/native'
 import { useToastController } from '@tamagui/toast'
 import CreditBadge from './CreditBadge'
 import { RootStackNavigation } from '../types/rootStack'
+import { useFormattedMinutes } from '../lib/minutes'
 
 interface TimeReportRowProps {
   report: ServiceReport
@@ -27,6 +27,9 @@ const TimeReportRow = ({ report }: TimeReportRowProps) => {
   const { deleteServiceReport } = useServiceReport()
   const navigation = useNavigation<RootStackNavigation>()
   const toast = useToastController()
+
+  const totalMinutes = report.hours * 60 + report.minutes
+  const formattedTime = useFormattedMinutes(totalMinutes)
 
   const handleSwipeOpen = useCallback(
     (
@@ -107,24 +110,9 @@ const TimeReportRow = ({ report }: TimeReportRowProps) => {
               {`${moment(report.date).format('LL')}`}
             </Text>
           </View>
-          <XView style={{ gap: 6 }}>
-            <XView style={{ gap: 4 }}>
-              <Text style={{ fontFamily: theme.fonts.semiBold }}>
-                {report.hours}
-              </Text>
-              <Text style={{ fontFamily: theme.fonts.semiBold }}>
-                {i18n.t('hours')}
-              </Text>
-            </XView>
-            <XView style={{ gap: 4 }}>
-              <Text style={{ fontFamily: theme.fonts.semiBold }}>
-                {report.minutes}
-              </Text>
-              <Text style={{ fontFamily: theme.fonts.semiBold }}>
-                {i18n.t('minutes')}
-              </Text>
-            </XView>
-          </XView>
+          <Text style={{ fontFamily: theme.fonts.semiBold }}>
+            {formattedTime.formatted}
+          </Text>
         </View>
         {(report.ldc || report.tag) && (
           <View>

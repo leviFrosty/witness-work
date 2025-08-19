@@ -7,15 +7,14 @@ import i18n from '../lib/locales'
 import useTheme from '../contexts/theme'
 import Haptics from '../lib/haptics'
 import SwipeableDelete from './swipeableActions/Delete'
-import XView from './layout/XView'
 import { DayPlan } from '../types/serviceReport'
+import { useFormattedMinutes } from '../lib/minutes'
 
 const DayPlanRow = (props: { plan: DayPlan }) => {
   const theme = useTheme()
   const { deleteDayPlan } = useServiceReport()
 
-  const hours = Math.floor(props.plan.minutes / 60)
-  const minutes = props.plan.minutes % 60
+  const formattedTime = useFormattedMinutes(props.plan.minutes)
 
   const handleSwipeOpen = useCallback(
     (direction: 'left' | 'right', swipeable: Swipeable, plan: DayPlan) => {
@@ -78,22 +77,9 @@ const DayPlanRow = (props: { plan: DayPlan }) => {
           <Text style={{ fontFamily: theme.fonts.semiBold }}>
             {i18n.t('oneTime')}
           </Text>
-          <XView style={{ gap: 15 }}>
-            <XView style={{ gap: 5 }}>
-              <Text style={{ fontFamily: theme.fonts.semiBold }}>{hours}</Text>
-              <Text style={{ fontFamily: theme.fonts.semiBold }}>
-                {i18n.t('hours')}
-              </Text>
-            </XView>
-            <XView style={{ gap: 5 }}>
-              <Text style={{ fontFamily: theme.fonts.semiBold }}>
-                {minutes}
-              </Text>
-              <Text style={{ fontFamily: theme.fonts.semiBold }}>
-                {i18n.t('minutes')}
-              </Text>
-            </XView>
-          </XView>
+          <Text style={{ fontFamily: theme.fonts.semiBold }}>
+            {formattedTime.formatted}
+          </Text>
         </View>
         {props.plan.note && (
           <View style={{ gap: 2 }}>

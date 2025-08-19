@@ -26,11 +26,14 @@ export const formatMinutes = (
   let formatted: string
   const hours = Math.floor(totalMinutes / 60)
   const minutes = totalMinutes % 60
+  const decimalHours = _.round(totalMinutes / 60, 1)
 
   switch (format) {
-    case 'decimal':
-      formatted = _.round(totalMinutes / 60, 1).toString()
+    case 'decimal': {
+      // @ts-expect-error TranslationKey doesn't handle keys that contain objects.
+      formatted = `${i18n.t('hoursShort', { count: decimalHours })}`
       break
+    }
     // case 'long':
     //   // @ts-expect-error TranslationKey doesn't handle keys that contain objects.
     //   formatted = `${i18n.t('hoursLong', { count: hours })} ${i18n.t('minutesLong', { count: minutes })}`
@@ -44,5 +47,6 @@ export const formatMinutes = (
     formatted,
     minutes,
     hours,
+    decimalHours,
   }
 }

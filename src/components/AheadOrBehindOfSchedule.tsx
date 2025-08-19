@@ -13,6 +13,7 @@ import useServiceReport from '../stores/serviceReport'
 import { usePreferences } from '../stores/preferences'
 import i18n from '../lib/locales'
 import { ThemeSizes } from '../types/theme'
+import { useFormattedMinutes } from '../lib/minutes'
 
 type AheadOrBehindOfMonthScheduleProps = {
   month: number
@@ -75,29 +76,33 @@ export default function AheadOrBehindOfMonthSchedule(
     customCreditLimitHours,
   ])
 
-  const hoursDiffToSchedule = useMemo(() => {
+  const minutesDiffToSchedule = useMemo(() => {
     const minutesForMonth =
       adjustedMinutesForMonth.value < actualMinutesToCurrentDay
         ? adjustedMinutesForMonth.value
         : actualMinutesToCurrentDay
-    return _.round((minutesForMonth - plannedMinutesToCurrentDay) / 60, 1)
+    return minutesForMonth - plannedMinutesToCurrentDay
   }, [
     actualMinutesToCurrentDay,
     adjustedMinutesForMonth.value,
     plannedMinutesToCurrentDay,
   ])
 
+  const formattedTimeDiff = useFormattedMinutes(Math.abs(minutesDiffToSchedule))
+
   /** Previous month has no plans or the */
   if (plannedMinutesToCurrentDay === 0) {
     return null
   }
 
-  if (hoursDiffToSchedule === 0) {
+  if (minutesDiffToSchedule === 0) {
     return (
       <Text
         style={{
           color:
-            hoursDiffToSchedule >= 0 ? theme.colors.accent : theme.colors.text,
+            minutesDiffToSchedule >= 0
+              ? theme.colors.accent
+              : theme.colors.text,
           fontFamily: theme.fonts.semiBold,
           fontSize: theme.fontSize(props.fontSize ?? 'md'),
         }}
@@ -111,13 +116,13 @@ export default function AheadOrBehindOfMonthSchedule(
     <Text
       style={{
         color:
-          hoursDiffToSchedule >= 0 ? theme.colors.accent : theme.colors.error,
+          minutesDiffToSchedule >= 0 ? theme.colors.accent : theme.colors.error,
         fontFamily: theme.fonts.semiBold,
         fontSize: theme.fontSize(props.fontSize ?? 'md'),
         textTransform: 'lowercase',
       }}
     >
-      {`${Math.abs(hoursDiffToSchedule)} ${Math.abs(hoursDiffToSchedule) === 1 ? i18n.t('hour') : i18n.t('hours')} ${hoursDiffToSchedule > 0 ? i18n.t('aheadOfSchedule') : i18n.t('behindSchedule')}`}
+      {`${formattedTimeDiff.formatted} ${minutesDiffToSchedule > 0 ? i18n.t('aheadOfSchedule') : i18n.t('behindSchedule')}`}
     </Text>
   )
 }

@@ -812,6 +812,8 @@
     "one": "Dak {{count}}",
     "other": "Dak {{count}}"
   },
+  "hoursCompact": "h",
+  "minutesCompact": "m",
   "decimalExample": "15.5",
   "longExample": "Saa 15 Dakika 30",
   "shortExample": "Saa 15 Dakika 30",

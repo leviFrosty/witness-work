@@ -68,6 +68,8 @@
   "hoursLeft": "剩余时间",
   "goalBasedOnPublisherType": "目标取决于你的发布者类型",
   "addTime": "添加时间",
+  "updatedPlan": "Updated Plan",
+  "editPlan": "Edit Plan",
   "phrasesStudiesNone": {
     "keepGoing": "继续前进！",
     "stayStrong": "保持坚强！",
@@ -831,5 +833,8 @@
   "map": "地图",
   "editColor": "编辑颜色",
   "close": "关闭",
-  "startOfWeek": "Start of Week"
+  "startOfWeek": "Start of Week",
+  "noPlansScheduledForThisMonth": "No plans scheduled for this month.",
+  "scheduledPlans": "Scheduled Plans",
+  "scheduledPlans_description": "Tap any plan to edit or view details. Swipe to delete."
 }

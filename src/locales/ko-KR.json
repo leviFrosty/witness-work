@@ -68,6 +68,8 @@
   "hoursLeft": "남은 시간",
   "goalBasedOnPublisherType": "목표는 전도인 유형에 따라 결정됩니다.",
   "addTime": "시간 추가",
+  "updatedPlan": "Updated Plan",
+  "editPlan": "Edit Plan",
   "phrasesStudiesNone": {
     "keepGoing": "계속하세요!",
     "stayStrong": "힘내세요!",
@@ -831,5 +833,8 @@
   "map": "지도",
   "editColor": "색상 편집",
   "close": "닫기",
-  "startOfWeek": "Start of Week"
+  "startOfWeek": "Start of Week",
+  "noPlansScheduledForThisMonth": "No plans scheduled for this month.",
+  "scheduledPlans": "Scheduled Plans",
+  "scheduledPlans_description": "Tap any plan to edit or view details. Swipe to delete."
 }

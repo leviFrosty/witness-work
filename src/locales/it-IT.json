@@ -68,6 +68,8 @@
   "hoursLeft": "ore rimaste",
   "goalBasedOnPublisherType": "L'obiettivo è basato sul tipo di servizio scelto",
   "addTime": "Aggiungi tempo",
+  "updatedPlan": "Updated Plan",
+  "editPlan": "Edit Plan",
   "phrasesStudiesNone": {
     "keepGoing": "Continua!",
     "stayStrong": "Sii forte!",
@@ -831,5 +833,8 @@
   "map": "Mappa",
   "editColor": "Modifica colore",
   "close": "Chiudi",
-  "startOfWeek": "Start of Week"
+  "startOfWeek": "Start of Week",
+  "noPlansScheduledForThisMonth": "No plans scheduled for this month.",
+  "scheduledPlans": "Scheduled Plans",
+  "scheduledPlans_description": "Tap any plan to edit or view details. Swipe to delete."
 }

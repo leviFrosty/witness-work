@@ -641,6 +641,7 @@ const ConversationFormScreen = ({ route, navigation }: Props) => {
             label={i18n.t('topic')}
             textInputProps={{
               placeholder: i18n.t('topic_placeholder'),
+              multiline: true,
               defaultValue: conversation.followUp?.topic,
               returnKeyType: 'default',
               onChangeText: (topic: string) =>

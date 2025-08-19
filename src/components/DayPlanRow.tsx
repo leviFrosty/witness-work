@@ -7,18 +7,31 @@ import i18n from '../lib/locales'
 import useTheme from '../contexts/theme'
 import Haptics from '../lib/haptics'
 import SwipeableDelete from './swipeableActions/Delete'
+import SwipeableEdit from './swipeableActions/Edit'
 import { DayPlan } from '../types/serviceReport'
 import { useFormattedMinutes } from '../lib/minutes'
+import Button from './Button'
+import moment from 'moment'
+import Copyeable from './Copyeable'
 
-const DayPlanRow = (props: { plan: DayPlan }) => {
+const DayPlanRow = (props: {
+  plan: DayPlan
+  date: Date
+  onPress?: () => void
+}) => {
   const theme = useTheme()
   const { deleteDayPlan } = useServiceReport()
 
   const formattedTime = useFormattedMinutes(props.plan.minutes)
 
   const handleSwipeOpen = useCallback(
-    (direction: 'left' | 'right', swipeable: Swipeable, plan: DayPlan) => {
-      if (direction === 'right') {
+    (direction: 'left' | 'right', swipeable: Swipeable) => {
+      if (direction === 'left') {
+        if (props.onPress) {
+          props.onPress()
+        }
+        swipeable.reset()
+      } else {
         Alert.alert(
           i18n.t('deletePlan_title'),
           i18n.t('deletePlan_description'),
@@ -33,32 +46,31 @@ const DayPlanRow = (props: { plan: DayPlan }) => {
               style: 'destructive',
               onPress: () => {
                 swipeable.reset()
-                deleteDayPlan(plan.id)
+                deleteDayPlan(props.plan.id)
               },
             },
           ]
         )
       }
     },
-    [deleteDayPlan]
+    [deleteDayPlan, props]
   )
 
   return (
     <Swipeable
-      key={props.plan.id}
       onSwipeableWillOpen={() => Haptics.light()}
       containerStyle={{
         backgroundColor: theme.colors.background,
         borderRadius: theme.numbers.borderRadiusSm,
       }}
-      renderRightActions={() => (
-        <SwipeableDelete size='xs' style={{ flexDirection: 'row' }} />
-      )}
+      renderLeftActions={() => <SwipeableEdit />}
+      renderRightActions={() => <SwipeableDelete />}
       onSwipeableOpen={(direction, swipeable) =>
-        handleSwipeOpen(direction, swipeable, props.plan)
+        handleSwipeOpen(direction, swipeable)
       }
     >
-      <View
+      <Button
+        onPress={props.onPress}
         style={{
           backgroundColor: theme.colors.card,
           padding: 15,
@@ -70,33 +82,73 @@ const DayPlanRow = (props: { plan: DayPlan }) => {
           style={{
             flexDirection: 'row',
             justifyContent: 'space-between',
-            gap: 10,
-            alignItems: 'center',
+            flexGrow: 1,
           }}
         >
-          <Text style={{ fontFamily: theme.fonts.semiBold }}>
-            {i18n.t('oneTime')}
-          </Text>
+          <View style={{ flexDirection: 'row', gap: 10 }}>
+            <Text
+              style={{
+                fontFamily: theme.fonts.semiBold,
+              }}
+            >
+              {moment(props.date).format('LL')}
+            </Text>
+          </View>
           <Text style={{ fontFamily: theme.fonts.semiBold }}>
             {formattedTime.formatted}
           </Text>
         </View>
-        {props.plan.note && (
-          <View style={{ gap: 2 }}>
+        <View>
+          <View
+            style={{
+              flexDirection: 'row',
+              gap: 5,
+              alignItems: 'center',
+            }}
+          >
             <Text
               style={{
-                fontSize: theme.fontSize('sm'),
                 color: theme.colors.textAlt,
+                fontSize: theme.fontSize('sm'),
               }}
             >
-              {i18n.t('note')}
-            </Text>
-            <Text style={{ fontFamily: theme.fonts.semiBold }}>
-              {props.plan.note}
+              {i18n.t('oneTime')}
             </Text>
           </View>
+        </View>
+        {props.plan.note && (
+          <View>
+            <View
+              style={{
+                flexDirection: 'row',
+                gap: 5,
+                alignItems: 'flex-start',
+              }}
+            >
+              <Text
+                style={{
+                  color: theme.colors.textAlt,
+                  fontSize: theme.fontSize('sm'),
+                  fontFamily: theme.fonts.semiBold,
+                }}
+              >
+                {i18n.t('note')}:
+              </Text>
+              <Copyeable
+                textProps={{
+                  style: {
+                    color: theme.colors.textAlt,
+                    fontSize: theme.fontSize('sm'),
+                    flex: 1,
+                  },
+                }}
+              >
+                {props.plan.note}
+              </Copyeable>
+            </View>
+          </View>
         )}
-      </View>
+      </Button>
     </Swipeable>
   )
 }

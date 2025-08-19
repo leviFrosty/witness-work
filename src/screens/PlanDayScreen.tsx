@@ -3,7 +3,7 @@ import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view
 import ActionButton from '../components/ActionButton'
 import useServiceReport from '../stores/serviceReport'
 import * as Crypto from 'expo-crypto'
-import { useMemo, useState } from 'react'
+import { useState } from 'react'
 import { useToastController } from '@tamagui/toast'
 import i18n from '../lib/locales'
 import Text from '../components/MyText'
@@ -23,14 +23,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import moment from 'moment'
 import Checkbox from 'expo-checkbox'
 import { NativeStackScreenProps } from '@react-navigation/native-stack'
-import {
-  RecurringPlanFrequencies,
-  getPlansIntersectingDay,
-} from '../lib/serviceReport'
-import { FlashList } from '@shopify/flash-list'
-import DayPlanRow from '../components/DayPlanRow'
-import Card from '../components/Card'
-import RecurringPlanRow from '../components/RecurringPlanRow'
+import { RecurringPlanFrequencies } from '../lib/serviceReport'
+
 import TextInput from '../components/TextInput'
 import { RootStackParamList } from '../types/rootStack'
 
@@ -264,61 +258,128 @@ type PlanDayScreenProps = NativeStackScreenProps<RootStackParamList, 'PlanDay'>
 
 const PlanDayScreen = ({ route, navigation }: PlanDayScreenProps) => {
   const defaultDate = moment(route.params.date).toDate()
-  const [oneTime, setOneTime] = useState(true)
-  const [date, setDate] = useState(defaultDate)
-  const [endDate, setEndDate] = useState<Date | null>(null)
-  const [hours, setHours] = useState(0)
-  const [minutes, setMinutes] = useState(0)
-  const [interval, setInterval] = useState<number>(1)
-  const [frequency, setFrequency] = useState<RecurringPlanFrequencies>(
-    RecurringPlanFrequencies.WEEKLY
+  const {
+    dayPlans,
+    recurringPlans,
+    addDayPlan,
+    addRecurringPlan,
+    updateDayPlan,
+    updateRecurringPlan,
+  } = useServiceReport()
+
+  // Find existing plan if editing
+  const existingDayPlan = route.params.existingDayPlanId
+    ? dayPlans.find((p) => p.id === route.params.existingDayPlanId)
+    : null
+  const existingRecurringPlan = route.params.existingRecurringPlanId
+    ? recurringPlans.find((p) => p.id === route.params.existingRecurringPlanId)
+    : null
+
+  const isEditMode = !!(existingDayPlan || existingRecurringPlan)
+
+  // Initialize state with existing plan data or defaults
+  const [oneTime, setOneTime] = useState(existingRecurringPlan ? false : true)
+  const [date, setDate] = useState(
+    existingDayPlan
+      ? moment(existingDayPlan.date).toDate()
+      : existingRecurringPlan
+        ? moment(route.params.recurringPlanDate).toDate()
+        : defaultDate
   )
-  const [note, setNote] = useState('')
-  const { dayPlans, recurringPlans, addDayPlan, addRecurringPlan } =
-    useServiceReport()
+  const [endDate, setEndDate] = useState<Date | null>(
+    existingRecurringPlan?.recurrence.endDate
+      ? moment(existingRecurringPlan.recurrence.endDate).toDate()
+      : null
+  )
+  const [hours, setHours] = useState(
+    existingDayPlan
+      ? Math.floor(existingDayPlan.minutes / 60)
+      : existingRecurringPlan
+        ? Math.floor(existingRecurringPlan.minutes / 60)
+        : 0
+  )
+  const [minutes, setMinutes] = useState(
+    existingDayPlan
+      ? existingDayPlan.minutes % 60
+      : existingRecurringPlan
+        ? existingRecurringPlan.minutes % 60
+        : 0
+  )
+  const [interval, setInterval] = useState<number>(
+    existingRecurringPlan?.recurrence.interval ?? 1
+  )
+  const [frequency, setFrequency] = useState<RecurringPlanFrequencies>(
+    existingRecurringPlan?.recurrence.frequency ??
+      RecurringPlanFrequencies.WEEKLY
+  )
+  const [note, setNote] = useState(
+    existingDayPlan?.note ?? existingRecurringPlan?.note ?? ''
+  )
   const toast = useToastController()
   const theme = useTheme()
   const insets = useSafeAreaInsets()
 
   const handleAddPlan = () => {
-    if (oneTime) {
-      addDayPlan({
-        id: Crypto.randomUUID(),
-        date,
-        minutes: hours * 60 + minutes,
-        note: note || undefined,
+    if (isEditMode) {
+      // Update existing plan
+      if (existingDayPlan) {
+        updateDayPlan({
+          id: existingDayPlan.id,
+          date,
+          minutes: hours * 60 + minutes,
+          note: note || undefined,
+        })
+      } else if (existingRecurringPlan) {
+        updateRecurringPlan({
+          id: existingRecurringPlan.id,
+          startDate: date,
+          minutes: hours * 60 + minutes,
+          recurrence: {
+            endDate,
+            frequency,
+            interval,
+          },
+          note: note || undefined,
+        })
+      }
+
+      toast.show(i18n.t('success'), {
+        message: i18n.t('updatedPlan'),
+        native: true,
+        duration: 2500,
       })
     } else {
-      addRecurringPlan({
-        id: Crypto.randomUUID(),
-        startDate: date,
-        minutes: hours * 60 + minutes,
-        recurrence: {
-          endDate,
-          frequency,
-          interval,
-        },
-        note: note || undefined,
+      // Create new plan
+      if (oneTime) {
+        addDayPlan({
+          id: Crypto.randomUUID(),
+          date,
+          minutes: hours * 60 + minutes,
+          note: note || undefined,
+        })
+      } else {
+        addRecurringPlan({
+          id: Crypto.randomUUID(),
+          startDate: date,
+          minutes: hours * 60 + minutes,
+          recurrence: {
+            endDate,
+            frequency,
+            interval,
+          },
+          note: note || undefined,
+        })
+      }
+
+      toast.show(i18n.t('success'), {
+        message: i18n.t('addedPlan'),
+        native: true,
+        duration: 2500,
       })
     }
 
-    toast.show(i18n.t('success'), {
-      message: i18n.t('addedPlan'),
-      native: true,
-      duration: 2500,
-    })
     navigation.goBack()
   }
-
-  const dayPlan = useMemo(
-    () => dayPlans.filter((plan) => moment(plan.date).isSame(date, 'day')),
-    [date, dayPlans]
-  )
-
-  const recurringPlansForDay = useMemo(
-    () => getPlansIntersectingDay(moment(date).toDate(), recurringPlans),
-    [date, recurringPlans]
-  )
 
   return (
     <Wrapper
@@ -349,86 +410,92 @@ const PlanDayScreen = ({ route, navigation }: PlanDayScreenProps) => {
                 paddingBottom: 5,
               }}
             >
-              {i18n.t('createNewPlan')}
+              {isEditMode ? i18n.t('editPlan') : i18n.t('createNewPlan')}
             </Text>
             <View style={{ flexDirection: 'column', gap: 10 }}>
-              <InputRowContainer>
-                <XView
-                  style={{
-                    backgroundColor: theme.colors.background,
-                    borderRadius: theme.numbers.borderRadiusXl,
-                    padding: 10,
-                  }}
-                >
-                  <Button
+              {!isEditMode && (
+                <InputRowContainer>
+                  <XView
                     style={{
-                      backgroundColor: oneTime
-                        ? theme.colors.accentTranslucent
-                        : undefined,
-                      borderColor: oneTime ? theme.colors.accent : undefined,
-                      borderWidth: oneTime ? 1 : 0,
-                      paddingHorizontal: 30,
-                      paddingVertical: 10,
+                      backgroundColor: theme.colors.background,
                       borderRadius: theme.numbers.borderRadiusXl,
-                      justifyContent: 'center',
-                      flex: 1,
-                      flexDirection: 'row',
-                      alignItems: 'center',
-                      gap: 5,
+                      padding: 10,
                     }}
-                    onPress={() => setOneTime(true)}
                   >
-                    <IconButton
-                      icon={faCalendarDay}
-                      color={oneTime ? theme.colors.accent : theme.colors.text}
-                    />
-                    <Text
+                    <Button
                       style={{
-                        textAlign: 'center',
-                        color: oneTime
-                          ? theme.colors.accent
-                          : theme.colors.text,
+                        backgroundColor: oneTime
+                          ? theme.colors.accentTranslucent
+                          : undefined,
+                        borderColor: oneTime ? theme.colors.accent : undefined,
+                        borderWidth: oneTime ? 1 : 0,
+                        paddingHorizontal: 30,
+                        paddingVertical: 10,
+                        borderRadius: theme.numbers.borderRadiusXl,
+                        justifyContent: 'center',
+                        flex: 1,
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        gap: 5,
                       }}
+                      onPress={() => setOneTime(true)}
                     >
-                      {i18n.t('oneTime')}
-                    </Text>
-                  </Button>
-                  <Button
-                    style={{
-                      backgroundColor: !oneTime
-                        ? theme.colors.accentTranslucent
-                        : undefined,
-                      borderColor: !oneTime ? theme.colors.accent : undefined,
-                      borderWidth: !oneTime ? 1 : 0,
-                      paddingHorizontal: 30,
-                      paddingVertical: 10,
-                      borderRadius: theme.numbers.borderRadiusXl,
-                      justifyContent: 'center',
-                      flex: 1,
-                      flexDirection: 'row',
-                      alignItems: 'center',
-                      gap: 5,
-                    }}
-                    onPress={() => setOneTime(false)}
-                  >
-                    <IconButton
-                      icon={faRepeat}
-                      color={!oneTime ? theme.colors.accent : theme.colors.text}
-                    />
-                    <Text
+                      <IconButton
+                        icon={faCalendarDay}
+                        color={
+                          oneTime ? theme.colors.accent : theme.colors.text
+                        }
+                      />
+                      <Text
+                        style={{
+                          textAlign: 'center',
+                          color: oneTime
+                            ? theme.colors.accent
+                            : theme.colors.text,
+                        }}
+                      >
+                        {i18n.t('oneTime')}
+                      </Text>
+                    </Button>
+                    <Button
                       style={{
-                        textAlign: 'center',
-                        color: !oneTime
-                          ? theme.colors.accent
-                          : theme.colors.text,
+                        backgroundColor: !oneTime
+                          ? theme.colors.accentTranslucent
+                          : undefined,
+                        borderColor: !oneTime ? theme.colors.accent : undefined,
+                        borderWidth: !oneTime ? 1 : 0,
+                        paddingHorizontal: 30,
+                        paddingVertical: 10,
+                        borderRadius: theme.numbers.borderRadiusXl,
+                        justifyContent: 'center',
+                        flex: 1,
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        gap: 5,
                       }}
+                      onPress={() => setOneTime(false)}
                     >
-                      {i18n.t('recurring')}
-                    </Text>
-                  </Button>
-                </XView>
-              </InputRowContainer>
-              {oneTime && (
+                      <IconButton
+                        icon={faRepeat}
+                        color={
+                          !oneTime ? theme.colors.accent : theme.colors.text
+                        }
+                      />
+                      <Text
+                        style={{
+                          textAlign: 'center',
+                          color: !oneTime
+                            ? theme.colors.accent
+                            : theme.colors.text,
+                        }}
+                      >
+                        {i18n.t('recurring')}
+                      </Text>
+                    </Button>
+                  </XView>
+                </InputRowContainer>
+              )}
+              {!isEditMode && oneTime && (
                 <Text
                   style={{
                     fontSize: theme.fontSize('sm'),
@@ -480,97 +547,14 @@ const PlanDayScreen = ({ route, navigation }: PlanDayScreenProps) => {
                     fontSize: theme.fontSize('lg'),
                   }}
                 >
-                  {i18n.t('add')} {i18n.t(oneTime ? 'oneTime' : 'recurring')}{' '}
-                  {i18n.t('plan')}
+                  {isEditMode ? i18n.t('update') : i18n.t('add')}{' '}
+                  {isEditMode
+                    ? i18n.t('plan')
+                    : `${i18n.t(oneTime ? 'oneTime' : 'recurring')} ${i18n.t('plan')}`}
                 </Text>
               </ActionButton>
             </View>
           </Section>
-          {(!!dayPlan.length || !!recurringPlansForDay.length) && (
-            <View style={{ flex: 1, gap: 20, paddingHorizontal: 20 }}>
-              <View style={{ gap: 5 }}>
-                <Text
-                  style={{
-                    fontSize: theme.fontSize('xl'),
-                    fontFamily: theme.fonts.bold,
-                  }}
-                >
-                  {i18n.t('existingPlansForDay')}
-                </Text>
-                <Text
-                  style={{
-                    fontSize: theme.fontSize('sm'),
-                    color: theme.colors.textAlt,
-                  }}
-                >
-                  {i18n.t('existingPlansForDay_description')}
-                </Text>
-              </View>
-              <View style={{ gap: 5 }}>
-                <Text
-                  style={{
-                    fontFamily: theme.fonts.semiBold,
-                    color: theme.colors.textAlt,
-                    textTransform: 'uppercase',
-                    fontSize: theme.fontSize('sm'),
-                  }}
-                >
-                  {i18n.t('dayPlan')}
-                </Text>
-                <View style={{ flex: 1, minHeight: 10 }}>
-                  <FlashList
-                    scrollEnabled={false}
-                    data={dayPlan}
-                    ItemSeparatorComponent={() => (
-                      <View style={{ height: 10 }} />
-                    )}
-                    renderItem={({ item }) => <DayPlanRow plan={item} />}
-                    estimatedItemSize={66}
-                    ListEmptyComponent={
-                      <Card
-                        style={{ borderRadius: theme.numbers.borderRadiusSm }}
-                      >
-                        <Text>{i18n.t('noDayPlans')}</Text>
-                      </Card>
-                    }
-                  />
-                </View>
-              </View>
-              <View style={{ gap: 5 }}>
-                <Text
-                  style={{
-                    fontFamily: theme.fonts.semiBold,
-                    color: theme.colors.textAlt,
-                    textTransform: 'uppercase',
-                    fontSize: theme.fontSize('sm'),
-                  }}
-                >
-                  {i18n.t('recurringPlans')}
-                </Text>
-
-                <View style={{ flex: 1, minHeight: 10 }}>
-                  <FlashList
-                    scrollEnabled={false}
-                    data={recurringPlansForDay}
-                    ItemSeparatorComponent={() => (
-                      <View style={{ height: 10 }} />
-                    )}
-                    renderItem={({ item }) => (
-                      <RecurringPlanRow plan={item} date={date} />
-                    )}
-                    estimatedItemSize={66}
-                    ListEmptyComponent={
-                      <Card
-                        style={{ borderRadius: theme.numbers.borderRadiusSm }}
-                      >
-                        <Text>{i18n.t('noRecurringPlans')}</Text>
-                      </Card>
-                    }
-                  />
-                </View>
-              </View>
-            </View>
-          )}
         </KeyboardAwareScrollView>
       </View>
     </Wrapper>

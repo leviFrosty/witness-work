@@ -222,7 +222,9 @@ const SelectedDateSheet: React.FC<Props> = ({
                     ItemSeparatorComponent={() => (
                       <View style={{ height: 10 }} />
                     )}
-                    renderItem={({ item }) => <DayPlanRow plan={item} />}
+                    renderItem={({ item }) => (
+                      <DayPlanRow plan={item} date={sheet.date} />
+                    )}
                     estimatedItemSize={66}
                     ListEmptyComponent={
                       <Card

@@ -7,11 +7,19 @@ import i18n from '../lib/locales'
 import useTheme from '../contexts/theme'
 import Haptics from '../lib/haptics'
 import SwipeableDelete from './swipeableActions/Delete'
+import SwipeableEdit from './swipeableActions/Edit'
 import { RecurringPlan, RecurringPlanFrequencies } from '../lib/serviceReport'
 import moment from 'moment'
 import { useFormattedMinutes } from '../lib/minutes'
+import Button from './Button'
+import Badge from './Badge'
+import Copyeable from './Copyeable'
 
-const RecurringPlanRow = (props: { plan: RecurringPlan; date: Date }) => {
+const RecurringPlanRow = (props: {
+  plan: RecurringPlan
+  date: Date
+  onPress?: () => void
+}) => {
   const theme = useTheme()
   const {
     deleteRecurringPlan,
@@ -33,12 +41,13 @@ const RecurringPlanRow = (props: { plan: RecurringPlan; date: Date }) => {
   }
 
   const handleSwipeOpen = useCallback(
-    (
-      direction: 'left' | 'right',
-      swipeable: Swipeable,
-      plan: RecurringPlan
-    ) => {
-      if (direction === 'right') {
+    (direction: 'left' | 'right', swipeable: Swipeable) => {
+      if (direction === 'left') {
+        if (props.onPress) {
+          props.onPress()
+        }
+        swipeable.reset()
+      } else {
         Alert.alert(
           i18n.t('deletePlan_title'),
           i18n.t('deletePlan_description'),
@@ -52,21 +61,21 @@ const RecurringPlanRow = (props: { plan: RecurringPlan; date: Date }) => {
               text: i18n.t('deleteThisPlan'),
               onPress: () => {
                 swipeable.reset()
-                deleteSingleEventFromRecurringPlan(plan.id, props.date)
+                deleteSingleEventFromRecurringPlan(props.plan.id, props.date)
               },
             },
             {
               text: i18n.t('deleteThisAndFollowingPlans'),
               onPress: () => {
                 swipeable.reset()
-                deleteEventAndFutureEvents(plan.id, props.date)
+                deleteEventAndFutureEvents(props.plan.id, props.date)
               },
             },
             {
               text: i18n.t('deleteAllPlans'),
               onPress: () => {
                 swipeable.reset()
-                deleteRecurringPlan(plan.id)
+                deleteRecurringPlan(props.plan.id)
               },
             },
           ]
@@ -77,112 +86,118 @@ const RecurringPlanRow = (props: { plan: RecurringPlan; date: Date }) => {
       deleteEventAndFutureEvents,
       deleteRecurringPlan,
       deleteSingleEventFromRecurringPlan,
-      props.date,
+      props,
     ]
   )
 
   return (
     <Swipeable
-      key={props.plan.id}
       onSwipeableWillOpen={() => Haptics.light()}
       containerStyle={{
         backgroundColor: theme.colors.background,
         borderRadius: theme.numbers.borderRadiusSm,
       }}
-      renderRightActions={() => (
-        <SwipeableDelete size='xs' style={{ flexDirection: 'row' }} />
-      )}
+      renderLeftActions={() => <SwipeableEdit />}
+      renderRightActions={() => <SwipeableDelete />}
       onSwipeableOpen={(direction, swipeable) =>
-        handleSwipeOpen(direction, swipeable, props.plan)
+        handleSwipeOpen(direction, swipeable)
       }
     >
-      <View
+      <Button
+        onPress={props.onPress}
         style={{
           backgroundColor: theme.colors.card,
           padding: 15,
           borderRadius: theme.numbers.borderRadiusSm,
-          gap: 5,
+          gap: 10,
         }}
       >
         <View
           style={{
             flexDirection: 'row',
             justifyContent: 'space-between',
-            gap: 10,
-            alignItems: 'center',
+            flexGrow: 1,
           }}
         >
-          <View style={{ flexDirection: 'column', gap: 5 }}>
-            <View style={{ gap: 2 }}>
-              <Text
-                style={{
-                  fontSize: theme.fontSize('sm'),
-                  color: theme.colors.textAlt,
-                }}
-              >
-                {i18n.t('startDate')}
-              </Text>
-              <Text style={{ fontFamily: theme.fonts.semiBold }}>
-                {moment(props.plan.startDate).format('L')}
-              </Text>
-            </View>
-            {props.plan.recurrence.endDate && (
-              <View>
-                <Text
-                  style={{
-                    fontSize: theme.fontSize('sm'),
-                    color: theme.colors.textAlt,
-                  }}
-                >
-                  {i18n.t('endDate')}
-                </Text>
-                <Text
-                  style={{
-                    fontFamily: theme.fonts.semiBold,
-                  }}
-                >
-                  {moment(props.plan.recurrence.endDate).format('L')}
-                </Text>
-              </View>
-            )}
-            <View>
-              <Text
-                style={{
-                  fontSize: theme.fontSize('sm'),
-                  color: theme.colors.textAlt,
-                }}
-              >
-                {i18n.t('frequency')}
-              </Text>
-              <Text
-                style={{
-                  fontFamily: theme.fonts.semiBold,
-                }}
-              >
-                {getFrequencyText(props.plan.recurrence.frequency)}
-              </Text>
-            </View>
+          <View style={{ flexDirection: 'row', gap: 10 }}>
+            <Text
+              style={{
+                fontFamily: theme.fonts.semiBold,
+              }}
+            >
+              {moment(props.date).format('LL')}
+            </Text>
           </View>
           <Text style={{ fontFamily: theme.fonts.semiBold }}>
             {formattedTime.formatted}
           </Text>
         </View>
-        {props.plan.note && (
-          <View style={{ gap: 2 }}>
+        <View>
+          <View
+            style={{
+              flexDirection: 'row',
+              gap: 5,
+              alignItems: 'center',
+            }}
+          >
+            <Badge color={theme.colors.accent}>
+              <Text
+                style={{
+                  fontFamily: theme.fonts.semiBold,
+                  textTransform: 'uppercase',
+                  fontSize: theme.fontSize('xs'),
+                  color: theme.colors.textInverse,
+                }}
+              >
+                {getFrequencyText(props.plan.recurrence.frequency)}
+              </Text>
+            </Badge>
             <Text
               style={{
-                fontSize: theme.fontSize('sm'),
                 color: theme.colors.textAlt,
+                fontSize: theme.fontSize('sm'),
               }}
             >
-              {i18n.t('note')}
-            </Text>
-            <Text style={{ fontFamily: theme.fonts.semiBold }}>
-              {props.plan.note}
+              {i18n.t('recurring')} ({moment(props.plan.startDate).format('L')}
+              {props.plan.recurrence.endDate &&
+                ` - ${moment(props.plan.recurrence.endDate).format('L')}`}
+              )
             </Text>
           </View>
+        </View>
+        {props.plan.note && (
+          <View>
+            <View
+              style={{
+                flexDirection: 'row',
+                gap: 5,
+                alignItems: 'flex-start',
+              }}
+            >
+              <Text
+                style={{
+                  color: theme.colors.textAlt,
+                  fontSize: theme.fontSize('sm'),
+                  fontFamily: theme.fonts.semiBold,
+                }}
+              >
+                {i18n.t('note')}:
+              </Text>
+              <Copyeable
+                textProps={{
+                  style: {
+                    color: theme.colors.textAlt,
+                    fontSize: theme.fontSize('sm'),
+                    flex: 1,
+                  },
+                }}
+              >
+                {props.plan.note}
+              </Copyeable>
+            </View>
+          </View>
         )}
-      </View>
+      </Button>
     </Swipeable>
   )
 }

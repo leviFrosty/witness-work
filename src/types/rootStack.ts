@@ -35,7 +35,14 @@ export type RootStackParamList = {
   PreferencesBackups: undefined
   PreferencesAppearance: undefined
   PlanSchedule: { month: number; year: number }
-  PlanDay: { date?: string }
+  PlanDay: {
+    date?: string
+    /** Existing plan ID for editing mode */
+    existingDayPlanId?: string
+    existingRecurringPlanId?: string
+    /** For recurring plans, the specific date instance being edited */
+    recurringPlanDate?: string
+  }
 }
 
 export type RootStackNavigation = NativeStackNavigationProp<RootStackParamList>

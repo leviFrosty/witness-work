@@ -107,5 +107,3 @@ Build dependencies: [Android Studio](https://developer.android.com/studio), [JDK
 1. Develop
 
 Learn about the [file and project structure](./src/docs/project-structure.md).
-
-

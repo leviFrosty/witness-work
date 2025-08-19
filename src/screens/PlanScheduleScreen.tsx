@@ -25,6 +25,7 @@ import Button from '../components/Button'
 import IconButton from '../components/IconButton'
 import { faArrowLeft, faArrowRight } from '@fortawesome/free-solid-svg-icons'
 import Card from '../components/Card'
+import MonthPlansList from '../components/MonthPlansList'
 import { RootStackParamList } from '../types/rootStack'
 
 type PlanScheduleScreenProps = NativeStackScreenProps<
@@ -288,6 +289,29 @@ const PlanScheduleScreen = ({ route, navigation }: PlanScheduleScreenProps) => {
                 todayBackgroundColor: theme.colors.accentTranslucent,
               }}
             />
+          </View>
+          <View style={{ paddingHorizontal: 10 }}>
+            <View style={{ gap: 10 }}>
+              <View style={{ gap: 4 }}>
+                <Text
+                  style={{
+                    fontFamily: theme.fonts.bold,
+                    fontSize: theme.fontSize('xl'),
+                  }}
+                >
+                  {i18n.t('scheduledPlans')}
+                </Text>
+                <Text
+                  style={{
+                    color: theme.colors.textAlt,
+                    fontSize: theme.fontSize('sm'),
+                  }}
+                >
+                  {i18n.t('scheduledPlans_description')}
+                </Text>
+              </View>
+              <MonthPlansList month={month} year={year} />
+            </View>
           </View>
         </ScrollView>
       </View>

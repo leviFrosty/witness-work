@@ -8,7 +8,6 @@ import {
   plannedMinutesToCurrentDayForMonth,
   totalMinutesForSpecificMonthUpToDayOfMonth,
 } from '../lib/serviceReport'
-import _ from 'lodash'
 import useServiceReport from '../stores/serviceReport'
 import { usePreferences } from '../stores/preferences'
 import i18n from '../lib/locales'

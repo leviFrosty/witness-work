@@ -812,6 +812,8 @@
     "one": "{{count}} Iminiti",
     "other": "{{count}} Amaminiti"
   },
+  "hoursCompact": "h",
+  "minutesCompact": "m",
   "decimalExample": "15.5",
   "longExample": "Ama-awala 15 na Amamineti 30",
   "shortExample": "Ama-awala 15 na Amamineti 30",

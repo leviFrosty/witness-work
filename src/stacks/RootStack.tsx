@@ -194,11 +194,26 @@ const RootStackComponent = () => {
         component={PlanScheduleScreen}
       />
       <RootStack.Screen
-        options={{
-          header: () => (
-            <Header buttonType='back' title={i18n.t('createPlan')} noInsets />
-          ),
-          presentation: 'modal',
+        options={({ route }) => {
+          const params = route.params as RootStackParamList['PlanDay']
+          let title = i18n.t('createPlan')
+
+          if (params?.existingDayPlanId) {
+            title = `${i18n.t('editPlan')} • ${i18n.t('oneTime')}`
+          } else if (params?.existingRecurringPlanId) {
+            if (params?.recurringPlanDate) {
+              // This is an override scenario - we'd need to check if override exists
+              // For simplicity, we'll show "Edit Plan" since the screen will determine create vs edit override
+              title = `${i18n.t('editPlan')} • ${i18n.t('override')}`
+            } else {
+              title = `${i18n.t('editPlan')} • ${i18n.t('recurring')}`
+            }
+          }
+
+          return {
+            header: () => <Header buttonType='back' title={title} noInsets />,
+            presentation: 'modal',
+          }
         }}
         name='PlanDay'
         component={PlanDayScreen}

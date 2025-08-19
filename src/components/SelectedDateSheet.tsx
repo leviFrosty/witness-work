@@ -223,7 +223,17 @@ const SelectedDateSheet: React.FC<Props> = ({
                       <View style={{ height: 10 }} />
                     )}
                     renderItem={({ item }) => (
-                      <DayPlanRow plan={item} date={sheet.date} />
+                      <DayPlanRow
+                        plan={item}
+                        date={sheet.date}
+                        onPress={() => {
+                          setSheet({ ...sheet, open: false })
+                          navigation.navigate('PlanDay', {
+                            date: sheet.date.toISOString(),
+                            existingDayPlanId: item.id,
+                          })
+                        }}
+                      />
                     )}
                     estimatedItemSize={66}
                     ListEmptyComponent={
@@ -257,7 +267,18 @@ const SelectedDateSheet: React.FC<Props> = ({
                       <View style={{ height: 10 }} />
                     )}
                     renderItem={({ item }) => (
-                      <RecurringPlanRow plan={item} date={sheet.date} />
+                      <RecurringPlanRow
+                        plan={item}
+                        date={sheet.date}
+                        onPress={() => {
+                          setSheet({ ...sheet, open: false })
+                          navigation.navigate('PlanDay', {
+                            date: sheet.date.toISOString(),
+                            existingRecurringPlanId: item.id,
+                            recurringPlanDate: sheet.date.toISOString(),
+                          })
+                        }}
+                      />
                     )}
                     estimatedItemSize={66}
                     ListEmptyComponent={

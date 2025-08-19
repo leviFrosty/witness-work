@@ -447,15 +447,6 @@ const PlanDayScreen = ({ route, navigation }: PlanDayScreenProps) => {
           }}
         >
           <Section>
-            <Text
-              style={{
-                fontSize: theme.fontSize('xl'),
-                fontFamily: theme.fonts.bold,
-                paddingBottom: 5,
-              }}
-            >
-              {isEditMode ? i18n.t('editPlan') : i18n.t('createNewPlan')}
-            </Text>
             <View style={{ flexDirection: 'column', gap: 10 }}>
               {!isEditMode && (
                 <InputRowContainer>

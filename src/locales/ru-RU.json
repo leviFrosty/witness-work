@@ -812,6 +812,8 @@
     "one": "{{count}} минут",
     "other": "{{count}} минут"
   },
+  "hoursCompact": "h",
+  "minutesCompact": "m",
   "decimalExample": "15.5",
   "longExample": "15 часов 30 минут",
   "shortExample": "15 часов 30 минут",

@@ -8,6 +8,8 @@ export type ServiceReport = {
   tag?: string
   /** Used to denote the current tag is credit time, similar to LDC. */
   credit?: boolean
+  /** Optional note for the service report. */
+  note?: string
 }
 
 /** 0-indexed month key, 0-11 */

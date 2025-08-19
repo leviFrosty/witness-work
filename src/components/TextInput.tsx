@@ -11,10 +11,11 @@ export interface TextInputProps extends RNTextInputProps {
   errors?: Errors
   setErrors?: React.Dispatch<React.SetStateAction<Errors>>
   placeholder?: string
+  textAlign?: 'right' | 'left' | 'center' | undefined
 }
 
 const TextInput = forwardRef<RNTextInput, TextInputProps>((props, ref) => {
-  const { error, setErrors, errors, placeholder, ...rest } = props
+  const { error, setErrors, errors, placeholder, textAlign, ...rest } = props
   const theme = useTheme()
 
   return (
@@ -31,7 +32,7 @@ const TextInput = forwardRef<RNTextInput, TextInputProps>((props, ref) => {
       onChangeText={() => setErrors?.({ ...errors, id: '' })}
       hitSlop={{ top: 20, bottom: 20 }}
       placeholder={placeholder}
-      textAlign='right'
+      textAlign={textAlign ?? 'right'}
       clearButtonMode='while-editing'
       returnKeyType='next'
       {...rest}

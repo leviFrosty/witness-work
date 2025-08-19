@@ -156,6 +156,7 @@
   "addConversation_description": "Enter the conversation information below for the conversation you will be assigning to your contact.",
   "note": "Note",
   "note_placeholder": "Write down information about your conversation. Be sure to be descriptive!",
+  "optionalNote": "Optional note (e.g., details about the service day)",
   "followUp": "Follow Up",
   "topic_placeholder": "Enter topic, e.g., Enjoy Life Forever Ch. 1",
   "notifyMe": "Notify Me",

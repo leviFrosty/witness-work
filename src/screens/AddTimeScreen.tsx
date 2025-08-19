@@ -82,6 +82,7 @@ const AddTimeScreen = ({ route }: AddTimeScreenProps) => {
     ).toDate(),
     ldc: existingServiceReport?.report.ldc ?? false,
     credit: existingServiceReport?.report.credit ?? false,
+    note: existingServiceReport?.report.note ?? '',
   })
   const toast = useToastController()
 
@@ -212,6 +213,13 @@ const AddTimeScreen = ({ route }: AddTimeScreenProps) => {
     setServiceReport({
       ...serviceReport,
       minutes,
+    })
+  }
+
+  const setNote = (note: string) => {
+    setServiceReport({
+      ...serviceReport,
+      note,
     })
   }
 
@@ -591,6 +599,36 @@ const AddTimeScreen = ({ route }: AddTimeScreenProps) => {
                 </InputRowContainer>
               </View>
             </View>
+          </Section>
+          <Section>
+            <InputRowContainer
+              label={i18n.t('note')}
+              lastInSection
+              justifyContent='flex-start'
+            >
+              <View style={{ flex: 1, paddingTop: 10 }}>
+                <TextInput
+                  multiline
+                  numberOfLines={3}
+                  maxLength={500}
+                  style={{
+                    borderColor: theme.colors.border,
+                    borderWidth: 1,
+                    borderRadius: theme.numbers.borderRadiusSm,
+                    paddingVertical: 12,
+                    paddingHorizontal: 10,
+                    color: theme.colors.text,
+                    textAlignVertical: 'top',
+                    minHeight: 80,
+                  }}
+                  textAlign='left'
+                  onChangeText={setNote}
+                  value={serviceReport.note}
+                  placeholder={i18n.t('optionalNote')}
+                  placeholderTextColor={theme.colors.textAlt}
+                />
+              </View>
+            </InputRowContainer>
           </Section>
         </View>
         <View style={{ paddingHorizontal: 20, gap: 8, paddingTop: 20 }}>

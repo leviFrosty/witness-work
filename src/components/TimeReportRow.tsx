@@ -114,26 +114,39 @@ const TimeReportRow = ({ report }: TimeReportRowProps) => {
             {formattedTime.formatted}
           </Text>
         </View>
-        {(report.ldc || report.tag) && (
-          <View>
-            <View
-              style={{
-                flexDirection: 'row',
-                gap: 5,
-                alignItems: 'center',
-              }}
-            >
-              {report.ldc && <IconButton icon={faPersonDigging} />}
+        {(report.ldc || report.tag || report.note) && (
+          <View style={{ gap: 5 }}>
+            {(report.ldc || report.tag) && (
+              <View
+                style={{
+                  flexDirection: 'row',
+                  gap: 5,
+                  alignItems: 'center',
+                }}
+              >
+                {report.ldc && <IconButton icon={faPersonDigging} />}
+                <Text
+                  style={{
+                    color: theme.colors.textAlt,
+                    fontSize: theme.fontSize('sm'),
+                  }}
+                >
+                  {report.ldc ? i18n.t('ldc') : report.tag}
+                </Text>
+                {(report.credit || report.ldc) && <CreditBadge />}
+              </View>
+            )}
+            {report.note && (
               <Text
                 style={{
                   color: theme.colors.textAlt,
                   fontSize: theme.fontSize('sm'),
+                  lineHeight: 18,
                 }}
               >
-                {report.ldc ? i18n.t('ldc') : report.tag}
+                {report.note}
               </Text>
-              {(report.credit || report.ldc) && <CreditBadge />}
-            </View>
+            )}
           </View>
         )}
       </Button>

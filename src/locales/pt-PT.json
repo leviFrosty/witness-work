@@ -517,7 +517,7 @@
       "c3": "Resolvido o problema de estouro na tela inicial para tablets."
     },
     "1360": {
-      "c1": "Adicionar um código de cor à vista de mapa. Poderá personalizar a cor nos pins do mapa.",
+      "c1": "Adicionada uma nova chave de cor à visualização do mapa! Agora você pode personalizar as cores dos pinos no mapa.",
       "c2": "Adicionado um novo botão 'mais informações' à visualização do mapa. Clique nele para ver mais informações sobre o aplicativo.",
       "c3": "Resolve o problema com a formatação de números de telefone coreanos.",
       "c4": "Resolver o problema com a formação dos números de telefone.",
@@ -812,6 +812,8 @@
     "one": "{{count}} Minutos",
     "other": "{{count}} Minutos"
   },
+  "hoursCompact": "h",
+  "minutesCompact": "m",
   "decimalExample": "15,5",
   "longExample": "15 Horas e 30 Minutos",
   "shortExample": "15 Hrs e 30 Mins",

@@ -68,6 +68,8 @@
   "hoursLeft": "giờ còn lại",
   "goalBasedOnPublisherType": "Số giờ dựa trên đặc ân mà bạn đảm nhận",
   "addTime": "Thêm thời gian",
+  "updatedPlan": "Updated Plan",
+  "editPlan": "Edit Plan",
   "phrasesStudiesNone": {
     "keepGoing": "Tiếp tục nào!",
     "stayStrong": "Mạnh mẽ lên!",
@@ -831,5 +833,8 @@
   "map": "Bản đồ",
   "editColor": "Chỉnh sửa màu sắc",
   "close": "Đóng",
-  "startOfWeek": "Start of Week"
+  "startOfWeek": "Start of Week",
+  "noPlansScheduledForThisMonth": "No plans scheduled for this month.",
+  "scheduledPlans": "Scheduled Plans",
+  "scheduledPlans_description": "Tap any plan to edit or view details. Swipe to delete."
 }

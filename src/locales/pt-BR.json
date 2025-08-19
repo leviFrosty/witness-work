@@ -68,6 +68,8 @@
   "hoursLeft": "horas restantes",
   "goalBasedOnPublisherType": "A meta é baseada no seu tipo de publicador",
   "addTime": "Adicionar Hora",
+  "updatedPlan": "Updated Plan",
+  "editPlan": "Edit Plan",
   "phrasesStudiesNone": {
     "keepGoing": "Continue assim!",
     "stayStrong": "Aguenta firme!",
@@ -831,5 +833,8 @@
   "map": "Mapa",
   "editColor": "Editar cor",
   "close": "Fechar",
-  "startOfWeek": "Início da Semana"
+  "startOfWeek": "Início da Semana",
+  "noPlansScheduledForThisMonth": "No plans scheduled for this month.",
+  "scheduledPlans": "Scheduled Plans",
+  "scheduledPlans_description": "Tap any plan to edit or view details. Swipe to delete."
 }

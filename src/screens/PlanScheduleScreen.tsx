@@ -112,43 +112,39 @@ const PlanScheduleScreen = ({ route, navigation }: PlanScheduleScreenProps) => {
             paddingVertical: 10,
           }}
         >
-          {selectedMonth.isAfter(moment(), 'month') ? (
-            <Button
-              onPress={() => handleArrowNavigate('back')}
+          <Button
+            onPress={() => handleArrowNavigate('back')}
+            style={{
+              borderColor: theme.colors.accent,
+              borderWidth: 1,
+              borderRadius: theme.numbers.borderRadiusLg,
+              paddingHorizontal: 15,
+              paddingVertical: 5,
+            }}
+          >
+            <View
               style={{
-                borderColor: theme.colors.accent,
-                borderWidth: 1,
-                borderRadius: theme.numbers.borderRadiusLg,
-                paddingHorizontal: 15,
-                paddingVertical: 5,
+                flexDirection: 'row',
+                gap: 5,
+                alignItems: 'center',
               }}
             >
-              <View
+              <IconButton
+                icon={faArrowLeft}
+                size={15}
+                color={theme.colors.accent}
+              />
+              <Text
                 style={{
-                  flexDirection: 'row',
-                  gap: 5,
-                  alignItems: 'center',
+                  color: theme.colors.accent,
+                  fontFamily: theme.fonts.semiBold,
+                  textDecorationLine: 'underline',
                 }}
               >
-                <IconButton
-                  icon={faArrowLeft}
-                  size={15}
-                  color={theme.colors.accent}
-                />
-                <Text
-                  style={{
-                    color: theme.colors.accent,
-                    fontFamily: theme.fonts.semiBold,
-                    textDecorationLine: 'underline',
-                  }}
-                >
-                  {moment(selectedMonth).subtract(1, 'month').format('MMM')}
-                </Text>
-              </View>
-            </Button>
-          ) : (
-            <View style={{ width: 50 }} />
-          )}
+                {moment(selectedMonth).subtract(1, 'month').format('MMM')}
+              </Text>
+            </View>
+          </Button>
           {(month !== moment().month() || year !== moment().year()) && (
             <Button
               style={{

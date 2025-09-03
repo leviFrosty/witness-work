@@ -162,7 +162,6 @@ const RecurringPlan = (props: {
         justifyContent='space-between'
       >
         <DateTimePicker
-          minimumDate={new Date()}
           value={props.date}
           onChange={(_, newDate) => newDate && props.setDate(newDate)}
         />

@@ -294,31 +294,29 @@ const SelectedDateSheet: React.FC<Props> = ({
             )}
           </KeyboardAwareScrollView>
           <XView style={{ maxHeight: 70 }}>
-            {moment().isSameOrAfter(sheet.date, 'day') && (
-              <View style={{ flexGrow: 1 }}>
-                <ActionButton
-                  onPress={() => {
-                    setSheet({
-                      ...sheet,
-                      open: false,
-                    })
-                    navigation.navigate('Add Time', {
-                      date: sheet.date.toISOString(),
-                    })
+            <View style={{ flexGrow: 1 }}>
+              <ActionButton
+                onPress={() => {
+                  setSheet({
+                    ...sheet,
+                    open: false,
+                  })
+                  navigation.navigate('Add Time', {
+                    date: sheet.date.toISOString(),
+                  })
+                }}
+              >
+                <Text
+                  style={{
+                    color: theme.colors.textInverse,
+                    fontSize: theme.fontSize('lg'),
+                    fontFamily: theme.fonts.semiBold,
                   }}
                 >
-                  <Text
-                    style={{
-                      color: theme.colors.textInverse,
-                      fontSize: theme.fontSize('lg'),
-                      fontFamily: theme.fonts.semiBold,
-                    }}
-                  >
-                    {i18n.t('addTime')}
-                  </Text>
-                </ActionButton>
-              </View>
-            )}
+                  {i18n.t('addTime')}
+                </Text>
+              </ActionButton>
+            </View>
             <Button
               onPress={() =>
                 navigation.navigate('PlanDay', {

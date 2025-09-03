@@ -43,7 +43,16 @@
     "preachTheWord": "Preach the word!",
     "stayFocused": "Stay focused!",
     "haveFaith": "Have faith!",
-    "stayStrong": "Stay Strong!"
+    "stayStrong": "Stay Strong!",
+    "everyStepCounts": "Every step counts!",
+    "youGotThis": "You got this!",
+    "timeToShine": "Time to shine!",
+    "makingProgress": "Making progress!",
+    "greatStart": "Great start!",
+    "keepItUp": "Keep it up!",
+    "momentumBuilding": "Momentum building!",
+    "onYourWay": "On your way!",
+    "smallStepsBigResults": "Small steps, big results!"
   },
   "phrasesClose": {
     "oneStepCloser": "One step closer!",
@@ -53,7 +62,17 @@
     "momentumIsYours": "Momentum is yours!",
     "nearingAchievement": "Nearing achievement!",
     "youreClosingIn": "You're closing in!",
-    "closerThanEver": "Closer than ever!"
+    "closerThanEver": "Closer than ever!",
+    "homeStretch": "Home stretch!",
+    "finishStrong": "Finish strong!",
+    "soClose": "So close!",
+    "finalPush": "Final push!",
+    "youreOnFire": "You're on fire!",
+    "pushThroughToday": "Push through today!",
+    "goalInSight": "Goal in sight!",
+    "crushingIt": "Crushing it!",
+    "unstoppable": "Unstoppable!",
+    "powerThrough": "Power through!"
   },
   "phrasesDone": {
     "youDidIt": "You did it!",
@@ -63,7 +82,19 @@
     "takeYourShoesOff": "Take your shoes off!",
     "hatsOffToYou": "Hats off to you!",
     "missionComplete": "Mission complete!",
-    "success": "Success!"
+    "success": "Success!",
+    "phenomenal": "Phenomenal!",
+    "excellent": "Excellent!",
+    "outstanding": "Outstanding!",
+    "incredible": "Incredible!",
+    "amazingWork": "Amazing work!",
+    "goalCrushed": "Goal crushed!",
+    "victorious": "Victorious!",
+    "fantastic": "Fantastic!",
+    "wellDone": "Well done!",
+    "superb": "Superb!",
+    "keepGoingStrong": "Keep going strong!",
+    "onARoll": "On a roll!"
   },
   "hoursLeft": "hours left",
   "goalBasedOnPublisherType": "Goal is based on your publisher type",

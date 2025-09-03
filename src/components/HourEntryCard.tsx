@@ -75,6 +75,15 @@ export default function HourEntryCard() {
         i18n.t('phrasesFar.stayFocused'),
         i18n.t('phrasesFar.haveFaith'),
         i18n.t('phrasesFar.stayStrong'),
+        i18n.t('phrasesFar.everyStepCounts'),
+        i18n.t('phrasesFar.youGotThis'),
+        i18n.t('phrasesFar.timeToShine'),
+        i18n.t('phrasesFar.makingProgress'),
+        i18n.t('phrasesFar.greatStart'),
+        i18n.t('phrasesFar.keepItUp'),
+        i18n.t('phrasesFar.momentumBuilding'),
+        i18n.t('phrasesFar.onYourWay'),
+        i18n.t('phrasesFar.smallStepsBigResults'),
       ]
     }
 
@@ -88,6 +97,16 @@ export default function HourEntryCard() {
         i18n.t('phrasesClose.nearingAchievement'),
         i18n.t('phrasesClose.youreClosingIn'),
         i18n.t('phrasesClose.closerThanEver'),
+        i18n.t('phrasesClose.homeStretch'),
+        i18n.t('phrasesClose.finishStrong'),
+        i18n.t('phrasesClose.soClose'),
+        i18n.t('phrasesClose.finalPush'),
+        i18n.t('phrasesClose.youreOnFire'),
+        i18n.t('phrasesClose.pushThroughToday'),
+        i18n.t('phrasesClose.goalInSight'),
+        i18n.t('phrasesClose.crushingIt'),
+        i18n.t('phrasesClose.unstoppable'),
+        i18n.t('phrasesClose.powerThrough'),
       ]
     }
 
@@ -101,6 +120,18 @@ export default function HourEntryCard() {
         i18n.t('phrasesDone.hatsOffToYou'),
         i18n.t('phrasesDone.missionComplete'),
         i18n.t('phrasesDone.success'),
+        i18n.t('phrasesDone.phenomenal'),
+        i18n.t('phrasesDone.excellent'),
+        i18n.t('phrasesDone.outstanding'),
+        i18n.t('phrasesDone.incredible'),
+        i18n.t('phrasesDone.amazingWork'),
+        i18n.t('phrasesDone.goalCrushed'),
+        i18n.t('phrasesDone.victorious'),
+        i18n.t('phrasesDone.fantastic'),
+        i18n.t('phrasesDone.wellDone'),
+        i18n.t('phrasesDone.superb'),
+        i18n.t('phrasesDone.keepGoingStrong'),
+        i18n.t('phrasesDone.onARoll'),
       ]
     }
 

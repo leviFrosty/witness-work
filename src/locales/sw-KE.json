@@ -43,7 +43,16 @@
     "preachTheWord": "Hubiri neno!",
     "stayFocused": "Endelea kuzingatia!",
     "haveFaith": "Uwe na imani!",
-    "stayStrong": "Kaa Imara!"
+    "stayStrong": "Kaa Imara!",
+    "everyStepCounts": "Every step counts!",
+    "youGotThis": "You got this!",
+    "timeToShine": "Time to shine!",
+    "makingProgress": "Making progress!",
+    "greatStart": "Great start!",
+    "keepItUp": "Keep it up!",
+    "momentumBuilding": "Momentum building!",
+    "onYourWay": "On your way!",
+    "smallStepsBigResults": "Small steps, big results!"
   },
   "phrasesClose": {
     "oneStepCloser": "Hatua moja zaidi ",
@@ -53,7 +62,17 @@
     "momentumIsYours": "Kasi kwako!",
     "nearingAchievement": "Karibuni utafanikiwa!",
     "youreClosingIn": "Unakaribia",
-    "closerThanEver": "Karibu kuliko hapo awali!"
+    "closerThanEver": "Karibu kuliko hapo awali!",
+    "homeStretch": "Home stretch!",
+    "finishStrong": "Finish strong!",
+    "soClose": "So close!",
+    "finalPush": "Final push!",
+    "youreOnFire": "You're on fire!",
+    "pushThroughToday": "Push through today!",
+    "goalInSight": "Goal in sight!",
+    "crushingIt": "Crushing it!",
+    "unstoppable": "Unstoppable!",
+    "powerThrough": "Power through!"
   },
   "phrasesDone": {
     "youDidIt": "Umetimiza lengo!",
@@ -63,7 +82,19 @@
     "takeYourShoesOff": "Vua viatu sasa!",
     "hatsOffToYou": "Hongera sana!",
     "missionComplete": "Dhamira imekamilika!",
-    "success": "Mafanikio!"
+    "success": "Mafanikio!",
+    "phenomenal": "Phenomenal!",
+    "excellent": "Excellent!",
+    "outstanding": "Outstanding!",
+    "incredible": "Incredible!",
+    "amazingWork": "Amazing work!",
+    "goalCrushed": "Goal crushed!",
+    "victorious": "Victorious!",
+    "fantastic": "Fantastic!",
+    "wellDone": "Well done!",
+    "superb": "Superb!",
+    "keepGoingStrong": "Keep going strong!",
+    "onARoll": "On a roll!"
   },
   "hoursLeft": "saa zimesalia",
   "goalBasedOnPublisherType": "Lengo linatokana na aina ya mchapishaji wako",

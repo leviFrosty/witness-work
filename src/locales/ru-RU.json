@@ -43,7 +43,16 @@
     "preachTheWord": "Проповедуйте слово!",
     "stayFocused": "Оставайся сфокусированным!",
     "haveFaith": "Иметь веру!",
-    "stayStrong": "Оставайся сильным!"
+    "stayStrong": "Оставайся сильным!",
+    "everyStepCounts": "Every step counts!",
+    "youGotThis": "You got this!",
+    "timeToShine": "Time to shine!",
+    "makingProgress": "Making progress!",
+    "greatStart": "Great start!",
+    "keepItUp": "Keep it up!",
+    "momentumBuilding": "Momentum building!",
+    "onYourWay": "On your way!",
+    "smallStepsBigResults": "Small steps, big results!"
   },
   "phrasesClose": {
     "oneStepCloser": "На один шаг ближе!",
@@ -53,7 +62,17 @@
     "momentumIsYours": "Импульс ваш!",
     "nearingAchievement": "Близкое достижение!",
     "youreClosingIn": "Вы приближаетесь!",
-    "closerThanEver": "Ближе, чем когда-либо!"
+    "closerThanEver": "Ближе, чем когда-либо!",
+    "homeStretch": "Home stretch!",
+    "finishStrong": "Finish strong!",
+    "soClose": "So close!",
+    "finalPush": "Final push!",
+    "youreOnFire": "You're on fire!",
+    "pushThroughToday": "Push through today!",
+    "goalInSight": "Goal in sight!",
+    "crushingIt": "Crushing it!",
+    "unstoppable": "Unstoppable!",
+    "powerThrough": "Power through!"
   },
   "phrasesDone": {
     "youDidIt": "Ты сделал это!",
@@ -63,7 +82,19 @@
     "takeYourShoesOff": "Сними свою обувь!",
     "hatsOffToYou": "Снимаю перед вами шляпу!",
     "missionComplete": "Задание выполнено!",
-    "success": "Успех!"
+    "success": "Успех!",
+    "phenomenal": "Phenomenal!",
+    "excellent": "Excellent!",
+    "outstanding": "Outstanding!",
+    "incredible": "Incredible!",
+    "amazingWork": "Amazing work!",
+    "goalCrushed": "Goal crushed!",
+    "victorious": "Victorious!",
+    "fantastic": "Fantastic!",
+    "wellDone": "Well done!",
+    "superb": "Superb!",
+    "keepGoingStrong": "Keep going strong!",
+    "onARoll": "On a roll!"
   },
   "hoursLeft": "часов осталось",
   "goalBasedOnPublisherType": "Цель зависит от типа вашего издателя.",

@@ -417,7 +417,6 @@ const AddTimeScreen = ({ route }: AddTimeScreenProps) => {
               justifyContent='space-between'
             >
               <DateTimePicker
-                maximumDate={moment().toDate()}
                 value={serviceReport.date}
                 onChange={handleDateChange}
               />

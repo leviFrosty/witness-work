@@ -51,6 +51,18 @@ export const getDateStatusColor = (
   }
 }
 
+const getNoteIndicatorColor = (
+  theme: Theme,
+  backgroundColor: string
+): string => {
+  // For light backgrounds (planned/background), use dark indicator
+  if (backgroundColor === theme.colors.background) {
+    return theme.colors.textAlt
+  }
+  // For dark/colored backgrounds (error, warn, accent), use light indicator
+  return theme.colors.textInverse
+}
+
 const NonPlannedDay = (
   props: DayProps & {
     date?: DateData | undefined
@@ -63,6 +75,13 @@ const NonPlannedDay = (
   const disabled = props.state === 'disabled'
   const isToday = moment().isSame(props.date.dateString, 'day')
   const wentInService = !!props.serviceReports?.length
+  const hasNote = !!props.serviceReports?.some((report) => report.note)
+
+  const backgroundColor = disabled
+    ? undefined
+    : wentInService
+      ? theme.colors.accent
+      : undefined
 
   return (
     <View
@@ -75,11 +94,8 @@ const NonPlannedDay = (
         borderRadius: theme.numbers.borderRadiusSm,
         borderWidth: isToday ? 3 : 0,
         borderColor: theme.colors.text,
-        backgroundColor: disabled
-          ? undefined
-          : wentInService
-            ? theme.colors.accent
-            : undefined,
+        backgroundColor: backgroundColor,
+        position: 'relative',
       }}
     >
       <Text
@@ -95,6 +111,22 @@ const NonPlannedDay = (
       >
         {props.date?.day}
       </Text>
+      {hasNote && (
+        <View
+          style={{
+            position: 'absolute',
+            top: 2,
+            right: 2,
+            width: 6,
+            height: 6,
+            borderRadius: 3,
+            backgroundColor: getNoteIndicatorColor(
+              theme,
+              backgroundColor || theme.colors.background
+            ),
+          }}
+        />
+      )}
     </View>
   )
 }
@@ -126,6 +158,9 @@ const PlannedDay = (
 
   const wentInService = !!props.serviceReports?.length
   const hasAPlan = !!(props.dayPlan || props.recurringPlans?.length)
+  const hasNote = !!(
+    props.dayPlan?.note || props.serviceReports?.some((report) => report.note)
+  )
   const hitDayPlanGoal =
     wentInService &&
     props.dayPlan?.minutes &&
@@ -150,6 +185,11 @@ const PlannedDay = (
       }
     : getDateStatusColor(theme, wentInService, isToday, dateInPast, hitGoal)
 
+  const noteIndicatorColor = getNoteIndicatorColor(
+    theme,
+    statusColor.bg || theme.colors.background
+  )
+
   return (
     <View
       style={{
@@ -163,6 +203,7 @@ const PlannedDay = (
         borderWidth: isToday ? 3 : 0,
         borderColor: theme.colors.text,
         backgroundColor: statusColor.bg,
+        position: 'relative',
       }}
     >
       <Text
@@ -182,6 +223,19 @@ const PlannedDay = (
         >
           {plannedDurationText}
         </Text>
+      )}
+      {hasNote && (
+        <View
+          style={{
+            position: 'absolute',
+            top: 2,
+            right: 2,
+            width: 6,
+            height: 6,
+            borderRadius: 3,
+            backgroundColor: noteIndicatorColor,
+          }}
+        />
       )}
     </View>
   )

@@ -43,7 +43,16 @@
     "preachTheWord": "Predige das Wort!",
     "stayFocused": "Konzentriert bleiben!",
     "haveFaith": "Hab Vertrauen!",
-    "stayStrong": "Stark bleiben!"
+    "stayStrong": "Stark bleiben!",
+    "everyStepCounts": "Every step counts!",
+    "youGotThis": "You got this!",
+    "timeToShine": "Time to shine!",
+    "makingProgress": "Making progress!",
+    "greatStart": "Great start!",
+    "keepItUp": "Keep it up!",
+    "momentumBuilding": "Momentum building!",
+    "onYourWay": "On your way!",
+    "smallStepsBigResults": "Small steps, big results!"
   },
   "phrasesClose": {
     "oneStepCloser": "Einen Schritt näher!",
@@ -53,7 +62,17 @@
     "momentumIsYours": "Der Schwung liegt bei Ihnen!",
     "nearingAchievement": "Kurz vor dem Erfolg!",
     "youreClosingIn": "Sie kommen näher!",
-    "closerThanEver": "Näher denn je!"
+    "closerThanEver": "Näher denn je!",
+    "homeStretch": "Home stretch!",
+    "finishStrong": "Finish strong!",
+    "soClose": "So close!",
+    "finalPush": "Final push!",
+    "youreOnFire": "You're on fire!",
+    "pushThroughToday": "Push through today!",
+    "goalInSight": "Goal in sight!",
+    "crushingIt": "Crushing it!",
+    "unstoppable": "Unstoppable!",
+    "powerThrough": "Power through!"
   },
   "phrasesDone": {
     "youDidIt": "Du hast es geschafft!",
@@ -63,7 +82,19 @@
     "takeYourShoesOff": "Zieh 'deine Schuhe aus!",
     "hatsOffToYou": "Hut ab für Dich!",
     "missionComplete": "Mission abgeschlossen!",
-    "success": "Erfolg!"
+    "success": "Erfolg!",
+    "phenomenal": "Phenomenal!",
+    "excellent": "Excellent!",
+    "outstanding": "Outstanding!",
+    "incredible": "Incredible!",
+    "amazingWork": "Amazing work!",
+    "goalCrushed": "Goal crushed!",
+    "victorious": "Victorious!",
+    "fantastic": "Fantastic!",
+    "wellDone": "Well done!",
+    "superb": "Superb!",
+    "keepGoingStrong": "Keep going strong!",
+    "onARoll": "On a roll!"
   },
   "hoursLeft": "Stunden übrig",
   "goalBasedOnPublisherType": "Das Ziel basiert auf Ihrem Publisher-Typ",

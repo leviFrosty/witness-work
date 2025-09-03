@@ -20,7 +20,8 @@ import {
   faMinus,
 } from '@fortawesome/free-solid-svg-icons'
 import _ from 'lodash'
-import { useFormattedMinutes } from '../lib/minutes'
+import { useFormattedMinutes, useCompactFormattedMinutes } from '../lib/minutes'
+import moment from 'moment'
 
 /** Renders all service reports for the given year as a summary. */
 interface AnnualServiceReportSummaryProps {
@@ -93,6 +94,53 @@ const AnnualServiceReportSummary = ({
         ? true
         : false
 
+  // Calculate additional stats similar to MonthSummary
+  const currentDate = moment()
+  const serviceYearStart = moment().month(8).year(serviceYear) // September 1st
+  const serviceYearEnd = moment()
+    .month(7)
+    .year(serviceYear + 1)
+    .endOf('month') // August 31st
+
+  const isCurrentServiceYear = currentDate.isBetween(
+    serviceYearStart,
+    serviceYearEnd,
+    'day',
+    '[]'
+  )
+  const isPastServiceYear = currentDate.isAfter(serviceYearEnd, 'day')
+  const isFutureServiceYear = currentDate.isBefore(serviceYearStart, 'day')
+
+  const daysInServiceYear = serviceYearEnd.diff(serviceYearStart, 'days') + 1
+  const daysPassed = isCurrentServiceYear
+    ? currentDate.diff(serviceYearStart, 'days') + 1
+    : isPastServiceYear
+      ? daysInServiceYear
+      : 0
+  const daysRemaining = isCurrentServiceYear
+    ? Math.max(0, serviceYearEnd.diff(currentDate, 'days'))
+    : 0
+
+  const hoursCompleted = totalMinutesForServiceYear / 60
+  const hoursRemaining = Math.max(0, annualGoalHours - hoursCompleted)
+  const hoursNeededPerDay =
+    daysRemaining > 0 ? hoursRemaining / daysRemaining : 0
+  const averagePerDay = daysPassed > 0 ? hoursCompleted / daysPassed : 0
+  const isOnTrack =
+    annualGoalHours > 0
+      ? hoursCompleted / daysPassed >= annualGoalHours / daysInServiceYear
+      : true
+  const hasMetGoal = hoursCompleted >= annualGoalHours && annualGoalHours > 0
+
+  // Format time values using utility functions
+  const hoursRemainingFormatted = useFormattedMinutes(hoursRemaining * 60)
+  const hoursNeededPerDayRounded = _.round(hoursNeededPerDay, 1)
+  const averagePerDayFormatted =
+    useCompactFormattedMinutes(averagePerDay * 60) || `0 ${i18n.t('hours')}`
+  const annualGoalHoursFormatted = useCompactFormattedMinutes(
+    annualGoalHours * 60
+  )
+
   return (
     <Card style={{ flexGrow: 1 }}>
       <View
@@ -130,6 +178,128 @@ const AnnualServiceReportSummary = ({
         height={10}
         color={percentage >= 1 ? theme.colors.accent : theme.colors.textAlt}
       />
+
+      {/* Goal Progress Stats */}
+      {annualGoalHours > 0 && (
+        <View
+          style={{
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginTop: 8,
+            backgroundColor: theme.colors.background,
+            borderRadius: theme.numbers.borderRadiusSm,
+            paddingHorizontal: 12,
+            paddingVertical: 8,
+          }}
+        >
+          {/* Left side - Primary stats */}
+          <View style={{ flex: 1 }}>
+            {hasMetGoal ? (
+              <Text
+                style={{
+                  fontSize: theme.fontSize('sm'),
+                  color: theme.colors.accent,
+                  fontFamily: theme.fonts.semiBold,
+                }}
+              >
+                🎯 {i18n.t('goalAchieved')}
+              </Text>
+            ) : isCurrentServiceYear && daysRemaining > 0 ? (
+              <View style={{ gap: 2 }}>
+                <Text
+                  style={{
+                    fontSize: theme.fontSize('sm'),
+                    color: theme.colors.text,
+                    fontFamily: theme.fonts.semiBold,
+                  }}
+                >
+                  {hoursRemainingFormatted.formatted} {i18n.t('remaining')}
+                </Text>
+                <Text
+                  style={{
+                    fontSize: theme.fontSize('xs'),
+                    color: isOnTrack ? theme.colors.textAlt : theme.colors.warn,
+                  }}
+                >
+                  {hoursNeededPerDayRounded}h/{i18n.t('days_lowercase')}{' '}
+                  {i18n.t('needed')}
+                </Text>
+              </View>
+            ) : isPastServiceYear ? (
+              <Text
+                style={{
+                  fontSize: theme.fontSize('sm'),
+                  color: hasMetGoal
+                    ? theme.colors.accent
+                    : theme.colors.textAlt,
+                  fontFamily: theme.fonts.medium,
+                }}
+              >
+                {hasMetGoal
+                  ? `✅ ${i18n.t('completed')}`
+                  : `${hoursRemainingFormatted.formatted} ${i18n.t('short')}`}
+              </Text>
+            ) : isFutureServiceYear ? (
+              <Text
+                style={{
+                  fontSize: theme.fontSize('sm'),
+                  color: theme.colors.textAlt,
+                  fontFamily: theme.fonts.medium,
+                }}
+              >
+                {annualGoalHoursFormatted} {i18n.t('goal')}
+              </Text>
+            ) : null}
+          </View>
+
+          {/* Right side - Secondary stats */}
+          <View style={{ alignItems: 'flex-end' }}>
+            {isCurrentServiceYear && (
+              <View style={{ gap: 2, alignItems: 'flex-end' }}>
+                <Text
+                  style={{
+                    fontSize: theme.fontSize('xs'),
+                    color: theme.colors.textAlt,
+                  }}
+                >
+                  {averagePerDayFormatted}/{i18n.t('days_lowercase')}{' '}
+                  {i18n.t('average')}
+                </Text>
+                <Text
+                  style={{
+                    fontSize: theme.fontSize('xs'),
+                    color: theme.colors.textAlt,
+                  }}
+                >
+                  {daysRemaining} {i18n.t('daysLeft')}
+                </Text>
+              </View>
+            )}
+            {isPastServiceYear && annualGoalHours > 0 && (
+              <Text
+                style={{
+                  fontSize: theme.fontSize('xs'),
+                  color: theme.colors.textAlt,
+                }}
+              >
+                {Math.round((hoursCompleted / annualGoalHours) * 100)}%{' '}
+                {i18n.t('of')} {i18n.t('goal')}
+              </Text>
+            )}
+            {isFutureServiceYear && (
+              <Text
+                style={{
+                  fontSize: theme.fontSize('xs'),
+                  color: theme.colors.textAlt,
+                }}
+              >
+                {daysInServiceYear} {i18n.t('days_lowercase')} {i18n.t('total')}
+              </Text>
+            )}
+          </View>
+        </View>
+      )}
       {!hidePerMonthToGoal && (
         <View style={{ flexDirection: 'row' }}>
           <Badge

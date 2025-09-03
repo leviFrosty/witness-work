@@ -43,7 +43,16 @@
     "preachTheWord": "要傳道！",
     "stayFocused": "保持專心。",
     "haveFaith": "要有信心！",
-    "stayStrong": "堅强起来！"
+    "stayStrong": "堅强起来！",
+    "everyStepCounts": "Every step counts!",
+    "youGotThis": "You got this!",
+    "timeToShine": "Time to shine!",
+    "makingProgress": "Making progress!",
+    "greatStart": "Great start!",
+    "keepItUp": "Keep it up!",
+    "momentumBuilding": "Momentum building!",
+    "onYourWay": "On your way!",
+    "smallStepsBigResults": "Small steps, big results!"
   },
   "phrasesClose": {
     "oneStepCloser": "更近了一步！",
@@ -53,7 +62,17 @@
     "momentumIsYours": "动力是你的！",
     "nearingAchievement": "接近成就！",
     "youreClosingIn": "你快要逼近了！",
-    "closerThanEver": "比以往任何时候都更近！"
+    "closerThanEver": "比以往任何时候都更近！",
+    "homeStretch": "Home stretch!",
+    "finishStrong": "Finish strong!",
+    "soClose": "So close!",
+    "finalPush": "Final push!",
+    "youreOnFire": "You're on fire!",
+    "pushThroughToday": "Push through today!",
+    "goalInSight": "Goal in sight!",
+    "crushingIt": "Crushing it!",
+    "unstoppable": "Unstoppable!",
+    "powerThrough": "Power through!"
   },
   "phrasesDone": {
     "youDidIt": "你做到了！",
@@ -63,7 +82,19 @@
     "takeYourShoesOff": "脱鞋！",
     "hatsOffToYou": "向你致敬！",
     "missionComplete": "任務完成！",
-    "success": "成功！"
+    "success": "成功！",
+    "phenomenal": "Phenomenal!",
+    "excellent": "Excellent!",
+    "outstanding": "Outstanding!",
+    "incredible": "Incredible!",
+    "amazingWork": "Amazing work!",
+    "goalCrushed": "Goal crushed!",
+    "victorious": "Victorious!",
+    "fantastic": "Fantastic!",
+    "wellDone": "Well done!",
+    "superb": "Superb!",
+    "keepGoingStrong": "Keep going strong!",
+    "onARoll": "On a roll!"
   },
   "hoursLeft": "還剩下幾個小時",
   "goalBasedOnPublisherType": "目標取決於您的傳道員類型",

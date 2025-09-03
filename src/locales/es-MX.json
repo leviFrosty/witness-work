@@ -43,7 +43,16 @@
     "preachTheWord": "¡Predique la palabra!",
     "stayFocused": "¡Manténgase concentrado!",
     "haveFaith": "¡Tenga fe!",
-    "stayStrong": "¡Manténgase fuerte!"
+    "stayStrong": "¡Manténgase fuerte!",
+    "everyStepCounts": "Every step counts!",
+    "youGotThis": "You got this!",
+    "timeToShine": "Time to shine!",
+    "makingProgress": "Making progress!",
+    "greatStart": "Great start!",
+    "keepItUp": "Keep it up!",
+    "momentumBuilding": "Momentum building!",
+    "onYourWay": "On your way!",
+    "smallStepsBigResults": "Small steps, big results!"
   },
   "phrasesClose": {
     "oneStepCloser": "¡Un paso más cerca!",
@@ -53,7 +62,17 @@
     "momentumIsYours": "¡El impulso es tuyo!",
     "nearingAchievement": "¡Cerca de la meta!",
     "youreClosingIn": "¡Te estás acercando!",
-    "closerThanEver": "¡Más cerca que nunca!"
+    "closerThanEver": "¡Más cerca que nunca!",
+    "homeStretch": "Home stretch!",
+    "finishStrong": "Finish strong!",
+    "soClose": "So close!",
+    "finalPush": "Final push!",
+    "youreOnFire": "You're on fire!",
+    "pushThroughToday": "Push through today!",
+    "goalInSight": "Goal in sight!",
+    "crushingIt": "Crushing it!",
+    "unstoppable": "Unstoppable!",
+    "powerThrough": "Power through!"
   },
   "phrasesDone": {
     "youDidIt": "¡Lo lograste!",
@@ -63,7 +82,19 @@
     "takeYourShoesOff": "¡Quítate los zapatos!",
     "hatsOffToYou": "¡Aplausos para ti!",
     "missionComplete": "¡Misión cumplida!",
-    "success": "¡Éxito!"
+    "success": "¡Éxito!",
+    "phenomenal": "Phenomenal!",
+    "excellent": "Excellent!",
+    "outstanding": "Outstanding!",
+    "incredible": "Incredible!",
+    "amazingWork": "Amazing work!",
+    "goalCrushed": "Goal crushed!",
+    "victorious": "Victorious!",
+    "fantastic": "Fantastic!",
+    "wellDone": "Well done!",
+    "superb": "Superb!",
+    "keepGoingStrong": "Keep going strong!",
+    "onARoll": "On a roll!"
   },
   "hoursLeft": "horas restantes",
   "goalBasedOnPublisherType": "El objetivo se basa en el tipo de publicador",

@@ -66,11 +66,16 @@ const SimpleProgressBar = ({
             duration: pulseDuration,
             useNativeDriver: true,
           }),
+          // Add a small pause at the end
+          Animated.delay(300),
+          // Instant reset to avoid jarring flash
           Animated.timing(pulseAnimation, {
             toValue: 0,
-            duration: 200, // Quick reset
+            duration: 0, // Instant reset - no visible movement
             useNativeDriver: true,
           }),
+          // Small pause before next pulse
+          Animated.delay(200),
         ]),
         { iterations: -1 }
       )

@@ -43,7 +43,16 @@
     "preachTheWord": "말씀을 전하라!",
     "stayFocused": "집중하세요!",
     "haveFaith": "믿음을 가지세요!",
-    "stayStrong": "힘내세요!"
+    "stayStrong": "힘내세요!",
+    "everyStepCounts": "Every step counts!",
+    "youGotThis": "You got this!",
+    "timeToShine": "Time to shine!",
+    "makingProgress": "Making progress!",
+    "greatStart": "Great start!",
+    "keepItUp": "Keep it up!",
+    "momentumBuilding": "Momentum building!",
+    "onYourWay": "On your way!",
+    "smallStepsBigResults": "Small steps, big results!"
   },
   "phrasesClose": {
     "oneStepCloser": "한걸음 더 가까이!",
@@ -53,7 +62,17 @@
     "momentumIsYours": "추진력은 당신의 것입니다!",
     "nearingAchievement": "목표가 가까워졌습니다!",
     "youreClosingIn": "점점 가까워지고 있습니다!",
-    "closerThanEver": "그 어느 때보다 가까이!"
+    "closerThanEver": "그 어느 때보다 가까이!",
+    "homeStretch": "Home stretch!",
+    "finishStrong": "Finish strong!",
+    "soClose": "So close!",
+    "finalPush": "Final push!",
+    "youreOnFire": "You're on fire!",
+    "pushThroughToday": "Push through today!",
+    "goalInSight": "Goal in sight!",
+    "crushingIt": "Crushing it!",
+    "unstoppable": "Unstoppable!",
+    "powerThrough": "Power through!"
   },
   "phrasesDone": {
     "youDidIt": "해냈군요!",
@@ -63,7 +82,19 @@
     "takeYourShoesOff": "이제 좀 쉬어도 되겠군요!",
     "hatsOffToYou": "당신에게 경의를 표합니다!",
     "missionComplete": "미션 완료!",
-    "success": "성공!"
+    "success": "성공!",
+    "phenomenal": "Phenomenal!",
+    "excellent": "Excellent!",
+    "outstanding": "Outstanding!",
+    "incredible": "Incredible!",
+    "amazingWork": "Amazing work!",
+    "goalCrushed": "Goal crushed!",
+    "victorious": "Victorious!",
+    "fantastic": "Fantastic!",
+    "wellDone": "Well done!",
+    "superb": "Superb!",
+    "keepGoingStrong": "Keep going strong!",
+    "onARoll": "On a roll!"
   },
   "hoursLeft": "남은 시간",
   "goalBasedOnPublisherType": "목표는 전도인 유형에 따라 결정됩니다.",

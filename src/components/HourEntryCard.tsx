@@ -191,7 +191,9 @@ export default function HourEntryCard() {
                   fontFamily: theme.fonts.bold,
                 }}
               >
-                {minutesWithFormat.decimalHours}
+                {timeDisplayFormat === 'decimal'
+                  ? minutesWithFormat.decimalHours
+                  : minutesWithFormat.formatted}
               </Text>
               <View
                 style={{

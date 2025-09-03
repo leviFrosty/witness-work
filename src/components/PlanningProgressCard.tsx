@@ -186,7 +186,7 @@ export default function PlanningProgressCard({
               fontStyle: 'italic',
             }}
           >
-            Consider planning more to reach your goal.
+            {i18n.t('tryToPlanAtLeast100Percent')}
           </Text>
         )}
       </View>

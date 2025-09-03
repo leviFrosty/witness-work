@@ -872,5 +872,13 @@
   "undismiss": "Undismiss",
   "undismissContact": "Undismiss {{name}}?",
   "undismissContactDescription": "This contact will immediately reappear in your contact list and map.",
-  "contactUndismissed": "{{name}} has been undismissed"
+  "contactUndismissed": "{{name}} has been undismissed",
+  "goalAchieved": "Goal achieved!",
+  "remaining": "remaining",
+  "needed": "needed",
+  "perDay": "per day",
+  "short": "short",
+  "average": "avg",
+  "daysLeft": "days left",
+  "toPlan": "to plan"
 }

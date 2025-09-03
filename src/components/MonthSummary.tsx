@@ -23,7 +23,7 @@ import ActionButton from './ActionButton'
 import { useNavigation } from '@react-navigation/native'
 import _ from 'lodash'
 import moment from 'moment'
-import { useFormattedMinutes } from '../lib/minutes'
+import { useFormattedMinutes, useCompactFormattedMinutes } from '../lib/minutes'
 import { RootStackNavigation } from '../types/rootStack'
 
 interface MonthSummaryProps {
@@ -63,6 +63,40 @@ const MonthSummary = ({
     : { value: 0, credit: 0, standard: 0, creditOverage: 0 }
 
   const minutesWithFormat = useFormattedMinutes(adjustedMinutes.value)
+
+  const currentDay = moment()
+  const selectedMonth = moment().month(month).year(year)
+  const isCurrentMonth = currentDay.isSame(selectedMonth, 'month')
+  const isPastMonth = currentDay.isAfter(selectedMonth, 'month')
+  const isFutureMonth = currentDay.isBefore(selectedMonth, 'month')
+
+  const daysInMonth = selectedMonth.daysInMonth()
+  const currentDayOfMonth = isCurrentMonth
+    ? currentDay.date()
+    : isPastMonth
+      ? daysInMonth
+      : 1
+  const daysRemaining = isCurrentMonth
+    ? Math.max(0, daysInMonth - currentDay.date())
+    : 0
+
+  const hoursCompleted = adjustedMinutes.value / 60
+  const hoursRemaining = Math.max(0, goalHours - hoursCompleted)
+  const hoursNeededPerDay =
+    daysRemaining > 0 ? hoursRemaining / daysRemaining : 0
+  const averagePerDay =
+    currentDayOfMonth > 0 ? hoursCompleted / currentDayOfMonth : 0
+  const isOnTrack =
+    goalHours > 0
+      ? hoursCompleted / currentDayOfMonth >= goalHours / daysInMonth
+      : true
+  const hasMetGoal = hoursCompleted >= goalHours && goalHours > 0
+
+  // Format time values using utility functions
+  const hoursRemainingFormatted = useFormattedMinutes(hoursRemaining * 60)
+  const hoursNeededPerDayRounded = _.round(hoursNeededPerDay, 1)
+  const averagePerDayFormatted = useCompactFormattedMinutes(averagePerDay * 60)
+  const goalHoursFormatted = useCompactFormattedMinutes(goalHours * 60)
 
   const ldcMinutes = useMemo(
     () =>
@@ -214,11 +248,136 @@ const MonthSummary = ({
               })}
             </Text>
           )}
+
           <MonthServiceReportProgressBar
             month={month}
             year={year}
             minimal={noDetails}
           />
+
+          {/* Goal Progress Stats */}
+          {goalHours > 0 && !noDetails && (
+            <View
+              style={{
+                flexDirection: 'row',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                marginTop: 8,
+                backgroundColor: theme.colors.background,
+                borderRadius: theme.numbers.borderRadiusSm,
+                paddingHorizontal: 12,
+                paddingVertical: 8,
+              }}
+            >
+              {/* Left side - Primary stats */}
+              <View style={{ flex: 1 }}>
+                {hasMetGoal ? (
+                  <Text
+                    style={{
+                      fontSize: theme.fontSize('sm'),
+                      color: theme.colors.accent,
+                      fontFamily: theme.fonts.semiBold,
+                    }}
+                  >
+                    🎯 {i18n.t('goalAchieved')}
+                  </Text>
+                ) : isCurrentMonth && daysRemaining > 0 ? (
+                  <View style={{ gap: 2 }}>
+                    <Text
+                      style={{
+                        fontSize: theme.fontSize('sm'),
+                        color: theme.colors.text,
+                        fontFamily: theme.fonts.semiBold,
+                      }}
+                    >
+                      {hoursRemainingFormatted.formatted} {i18n.t('remaining')}
+                    </Text>
+                    <Text
+                      style={{
+                        fontSize: theme.fontSize('xs'),
+                        color: isOnTrack
+                          ? theme.colors.textAlt
+                          : theme.colors.warn,
+                      }}
+                    >
+                      {hoursNeededPerDayRounded}h/{i18n.t('days_lowercase')}{' '}
+                      {i18n.t('needed')}
+                    </Text>
+                  </View>
+                ) : isPastMonth ? (
+                  <Text
+                    style={{
+                      fontSize: theme.fontSize('sm'),
+                      color: hasMetGoal
+                        ? theme.colors.accent
+                        : theme.colors.textAlt,
+                      fontFamily: theme.fonts.medium,
+                    }}
+                  >
+                    {hasMetGoal
+                      ? `✅ ${i18n.t('completed')}`
+                      : `${hoursRemainingFormatted.formatted} ${i18n.t('short')}`}
+                  </Text>
+                ) : isFutureMonth ? (
+                  <Text
+                    style={{
+                      fontSize: theme.fontSize('sm'),
+                      color: theme.colors.textAlt,
+                      fontFamily: theme.fonts.medium,
+                    }}
+                  >
+                    {goalHoursFormatted} {i18n.t('goal')}
+                  </Text>
+                ) : null}
+              </View>
+
+              {/* Right side - Secondary stats */}
+              <View style={{ alignItems: 'flex-end' }}>
+                {isCurrentMonth && (
+                  <View style={{ gap: 2, alignItems: 'flex-end' }}>
+                    <Text
+                      style={{
+                        fontSize: theme.fontSize('xs'),
+                        color: theme.colors.textAlt,
+                      }}
+                    >
+                      {averagePerDayFormatted}/{i18n.t('days_lowercase')}{' '}
+                      {i18n.t('average')}
+                    </Text>
+                    <Text
+                      style={{
+                        fontSize: theme.fontSize('xs'),
+                        color: theme.colors.textAlt,
+                      }}
+                    >
+                      {daysRemaining} {i18n.t('daysLeft')}
+                    </Text>
+                  </View>
+                )}
+                {isPastMonth && goalHours > 0 && (
+                  <Text
+                    style={{
+                      fontSize: theme.fontSize('xs'),
+                      color: theme.colors.textAlt,
+                    }}
+                  >
+                    {Math.round((hoursCompleted / goalHours) * 100)}%{' '}
+                    {i18n.t('of')} {i18n.t('goal')}
+                  </Text>
+                )}
+                {isFutureMonth && (
+                  <Text
+                    style={{
+                      fontSize: theme.fontSize('xs'),
+                      color: theme.colors.textAlt,
+                    }}
+                  >
+                    {daysInMonth} {i18n.t('days_lowercase')} {i18n.t('total')}
+                  </Text>
+                )}
+              </View>
+            </View>
+          )}
         </View>
       </View>
       {!noDetails && (

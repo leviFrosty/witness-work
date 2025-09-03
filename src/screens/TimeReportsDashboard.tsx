@@ -17,7 +17,6 @@ import { SelectedDateSheetState } from '../components/SelectedDateSheet'
 import MonthScheduleSection from '../components/MonthScheduleSection'
 import CalendarHeader from '../components/CalendarHeader'
 import CalendarKey from '../components/CalendarKey'
-import PlanningProgressCard from '../components/PlanningProgressCard'
 
 type TimeReportsDashboardProps = {
   month: number
@@ -68,7 +67,6 @@ const TimeReportsDashboard = (props: TimeReportsDashboardProps) => {
             monthsReports={thisMonthsReports}
             setSheet={setSheet}
           />
-          <PlanningProgressCard month={month} year={year} />
           <Card style={{ gap: 0 }}>
             <CalendarHeader />
             <CalendarKey />

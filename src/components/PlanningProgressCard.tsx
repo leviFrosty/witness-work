@@ -58,30 +58,6 @@ export default function PlanningProgressCard({
     return count
   }, [selectedMonth, dayPlans, recurringPlans, totalDaysInMonth])
 
-  // Calculate days that have been planned (have some plan)
-  const plannedDays = useMemo(() => {
-    let count = 0
-    Array(totalDaysInMonth)
-      .fill(1)
-      .forEach((_, i) => {
-        const day = selectedMonth.clone().date(i + 1)
-
-        const dayPlan = dayPlans.find((plan) =>
-          moment(plan.date).isSame(day, 'day')
-        )
-
-        const recurringPlansForDay = getPlansIntersectingDay(
-          day.toDate(),
-          recurringPlans
-        )
-
-        if (dayPlan || recurringPlansForDay.length > 0) {
-          count++
-        }
-      })
-    return count
-  }, [selectedMonth, dayPlans, recurringPlans, totalDaysInMonth])
-
   const totalPlannedMinutesWithFormat = useFormattedMinutes(totalPlannedMinutes)
   const percentOfGoalPlanned = totalPlannedMinutes / 60 / goalHours
 

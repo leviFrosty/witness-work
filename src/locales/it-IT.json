@@ -43,7 +43,16 @@
     "preachTheWord": "Predica la parola!",
     "stayFocused": "Rimani concentrato!",
     "haveFaith": "Abbi fede!",
-    "stayStrong": "Coraggio!"
+    "stayStrong": "Coraggio!",
+    "everyStepCounts": "Every step counts!",
+    "youGotThis": "You got this!",
+    "timeToShine": "Time to shine!",
+    "makingProgress": "Making progress!",
+    "greatStart": "Great start!",
+    "keepItUp": "Keep it up!",
+    "momentumBuilding": "Momentum building!",
+    "onYourWay": "On your way!",
+    "smallStepsBigResults": "Small steps, big results!"
   },
   "phrasesClose": {
     "oneStepCloser": "Sei un passo più vicino!",
@@ -53,7 +62,17 @@
     "momentumIsYours": "Lo slancio è tuo!",
     "nearingAchievement": "Raggiungimento prossimo!",
     "youreClosingIn": "Ti stai avvicinando!",
-    "closerThanEver": "Più vicino che mai!"
+    "closerThanEver": "Più vicino che mai!",
+    "homeStretch": "Home stretch!",
+    "finishStrong": "Finish strong!",
+    "soClose": "So close!",
+    "finalPush": "Final push!",
+    "youreOnFire": "You're on fire!",
+    "pushThroughToday": "Push through today!",
+    "goalInSight": "Goal in sight!",
+    "crushingIt": "Crushing it!",
+    "unstoppable": "Unstoppable!",
+    "powerThrough": "Power through!"
   },
   "phrasesDone": {
     "youDidIt": "Ce l'hai fatta!",
@@ -63,7 +82,19 @@
     "takeYourShoesOff": "Togliti le scarpe!",
     "hatsOffToYou": "Tanto di cappello a te!",
     "missionComplete": "Missione compiuta!",
-    "success": "Successo!"
+    "success": "Successo!",
+    "phenomenal": "Phenomenal!",
+    "excellent": "Excellent!",
+    "outstanding": "Outstanding!",
+    "incredible": "Incredible!",
+    "amazingWork": "Amazing work!",
+    "goalCrushed": "Goal crushed!",
+    "victorious": "Victorious!",
+    "fantastic": "Fantastic!",
+    "wellDone": "Well done!",
+    "superb": "Superb!",
+    "keepGoingStrong": "Keep going strong!",
+    "onARoll": "On a roll!"
   },
   "hoursLeft": "ore rimaste",
   "goalBasedOnPublisherType": "L'obiettivo è basato sul tipo di servizio scelto",

@@ -43,7 +43,16 @@
     "preachTheWord": "Pregue a palavra!",
     "stayFocused": "Mantenha o foco!",
     "haveFaith": "Tenha fé!",
-    "stayStrong": "Aguenta firme!"
+    "stayStrong": "Aguenta firme!",
+    "everyStepCounts": "Every step counts!",
+    "youGotThis": "You got this!",
+    "timeToShine": "Time to shine!",
+    "makingProgress": "Making progress!",
+    "greatStart": "Great start!",
+    "keepItUp": "Keep it up!",
+    "momentumBuilding": "Momentum building!",
+    "onYourWay": "On your way!",
+    "smallStepsBigResults": "Small steps, big results!"
   },
   "phrasesClose": {
     "oneStepCloser": "Um passo mais perto!",
@@ -53,7 +62,17 @@
     "momentumIsYours": "O impulso é seu!",
     "nearingAchievement": "Aproximando-se da conquista!",
     "youreClosingIn": "Você está fechando!",
-    "closerThanEver": "Mais perto do que nunca!"
+    "closerThanEver": "Mais perto do que nunca!",
+    "homeStretch": "Home stretch!",
+    "finishStrong": "Finish strong!",
+    "soClose": "So close!",
+    "finalPush": "Final push!",
+    "youreOnFire": "You're on fire!",
+    "pushThroughToday": "Push through today!",
+    "goalInSight": "Goal in sight!",
+    "crushingIt": "Crushing it!",
+    "unstoppable": "Unstoppable!",
+    "powerThrough": "Power through!"
   },
   "phrasesDone": {
     "youDidIt": "Você conseguiu!",
@@ -63,7 +82,19 @@
     "takeYourShoesOff": "Tire seus sapatos!",
     "hatsOffToYou": "Tiro o chapéu para você!",
     "missionComplete": "Missão Concluída!",
-    "success": "Sucesso!"
+    "success": "Sucesso!",
+    "phenomenal": "Phenomenal!",
+    "excellent": "Excellent!",
+    "outstanding": "Outstanding!",
+    "incredible": "Incredible!",
+    "amazingWork": "Amazing work!",
+    "goalCrushed": "Goal crushed!",
+    "victorious": "Victorious!",
+    "fantastic": "Fantastic!",
+    "wellDone": "Well done!",
+    "superb": "Superb!",
+    "keepGoingStrong": "Keep going strong!",
+    "onARoll": "On a roll!"
   },
   "hoursLeft": "horas restantes",
   "goalBasedOnPublisherType": "A meta é baseada no seu tipo de publicador",

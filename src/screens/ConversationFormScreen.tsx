@@ -643,6 +643,7 @@ const ConversationFormScreen = ({ route, navigation }: Props) => {
               placeholder: i18n.t('topic_placeholder'),
               multiline: true,
               defaultValue: conversation.followUp?.topic,
+              textAlign: 'left',
               returnKeyType: 'default',
               onChangeText: (topic: string) =>
                 setConversation({

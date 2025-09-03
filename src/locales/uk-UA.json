@@ -43,7 +43,16 @@
     "preachTheWord": "Проповідуйте слово!",
     "stayFocused": "Будь зосередженим!",
     "haveFaith": "Май віру!",
-    "stayStrong": "Будь мужнім!"
+    "stayStrong": "Будь мужнім!",
+    "everyStepCounts": "Every step counts!",
+    "youGotThis": "You got this!",
+    "timeToShine": "Time to shine!",
+    "makingProgress": "Making progress!",
+    "greatStart": "Great start!",
+    "keepItUp": "Keep it up!",
+    "momentumBuilding": "Momentum building!",
+    "onYourWay": "On your way!",
+    "smallStepsBigResults": "Small steps, big results!"
   },
   "phrasesClose": {
     "oneStepCloser": "На крок ближче!",
@@ -53,7 +62,17 @@
     "momentumIsYours": "Імпульс ваш!",
     "nearingAchievement": "Наближається до досягнення!",
     "youreClosingIn": "Ви наближаєтесь!",
-    "closerThanEver": "Ближче, ніж будь-коли!"
+    "closerThanEver": "Ближче, ніж будь-коли!",
+    "homeStretch": "Home stretch!",
+    "finishStrong": "Finish strong!",
+    "soClose": "So close!",
+    "finalPush": "Final push!",
+    "youreOnFire": "You're on fire!",
+    "pushThroughToday": "Push through today!",
+    "goalInSight": "Goal in sight!",
+    "crushingIt": "Crushing it!",
+    "unstoppable": "Unstoppable!",
+    "powerThrough": "Power through!"
   },
   "phrasesDone": {
     "youDidIt": "Ти зробив це!",
@@ -63,7 +82,19 @@
     "takeYourShoesOff": "Зніміть черевики!",
     "hatsOffToYou": "Знімаю капелюха!",
     "missionComplete": "Завдання виконано!",
-    "success": "Успіх!"
+    "success": "Успіх!",
+    "phenomenal": "Phenomenal!",
+    "excellent": "Excellent!",
+    "outstanding": "Outstanding!",
+    "incredible": "Incredible!",
+    "amazingWork": "Amazing work!",
+    "goalCrushed": "Goal crushed!",
+    "victorious": "Victorious!",
+    "fantastic": "Fantastic!",
+    "wellDone": "Well done!",
+    "superb": "Superb!",
+    "keepGoingStrong": "Keep going strong!",
+    "onARoll": "On a roll!"
   },
   "hoursLeft": "годин залишилося",
   "goalBasedOnPublisherType": "Ціль залежить від типу видавця",

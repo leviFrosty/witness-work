@@ -282,8 +282,8 @@ importers:
         specifier: ^9.0.11
         version: 9.1.7
       i18n-auto-translation:
-        specifier: ^2.2.1
-        version: 2.2.1
+        specifier: ^1.8.1
+        version: 1.10.1
       prettier:
         specifier: ^3.2.5
         version: 3.3.3
@@ -2666,10 +2666,10 @@ packages:
       }
     engines: { node: '>=14' }
 
-  '@google-cloud/translate@8.5.1':
+  '@google-cloud/translate@8.5.0':
     resolution:
       {
-        integrity: sha512-xqIRV+lTaszgPHw0ulUQ3CUhnbPnsnYlh90mBh3PomU5SUGRlJc5bjN0UEP6MICnrj3AugxYQSelNn+rxGj2Ig==,
+        integrity: sha512-avQa3WLkO3PSk2fiV6Af/PmeDnM6XWGDgO+Z+hZ/FZpBRMjCW1Px9MNLbM1sBKGjt/uM8aOGHqow/AAR7lLsUA==,
       }
     engines: { node: '>=14.0.0' }
 
@@ -5518,10 +5518,10 @@ packages:
         integrity: sha512-S4kL7XrjgBmvdGut0sN3yJxqYzrDOnivkBiN0OFs6hLiUam3UPvswUo0kqGyhqUZGEOytHyumEdXsAkgCOUf3Q==,
       }
 
-  axios@1.8.4:
+  axios@1.7.9:
     resolution:
       {
-        integrity: sha512-eBSYY4Y68NNlHbHBMdeDmKNtDgXWhQsJcGqzO3iLUM0GraQFSS9cVgPX5I9b3lbdFKyYoAEGAZF1DwhTaljNAw==,
+        integrity: sha512-LhLcE7Hbiryz8oMDdDptSrWowmB4Bl6RCt6sIJKpRB4XtVf0iEgewX3au/pJqm+Py1kCASkb/FFKjxQaLtxJvw==,
       }
 
   babel-core@7.0.0-bridge.0:
@@ -8336,6 +8336,12 @@ packages:
       }
     engines: { node: '>=12' }
 
+  html-entities@2.5.2:
+    resolution:
+      {
+        integrity: sha512-K//PSRMQk4FZ78Kyau+mZurHn3FH0Vwr+H36eE0rPbeYkRRi9YxceYPhuN60UwWorxyKHhqoAJl2OFKa4BVtaA==,
+      }
+
   html-entities@2.6.0:
     resolution:
       {
@@ -8410,10 +8416,10 @@ packages:
         integrity: sha512-WDC/ui2VVRrz3jOVi+XtjqkDjiVjTtFaAGiW37k6b+ohyQ5wYDOGkvCZa8+H0nx3gyvv0+BST9xuOgIyGQ00gw==,
       }
 
-  i18n-auto-translation@2.2.1:
+  i18n-auto-translation@1.10.1:
     resolution:
       {
-        integrity: sha512-eNUhqWwuT1ZA0NmGKQnPD0X1/flmfKRRL/i7FIrAiyke7tqKjMiFwUOedM9XUGnwc25PQP5qrEg88BZFTFMBPA==,
+        integrity: sha512-/cRWmlrp61S4RwtrP6K4p6UlA6Nxcd0NvbdD0R9MenWEKEEq0w9rBT8Q93gVGsKznPAF1j/KGFVPacOxUjkexA==,
       }
     engines: { node: '>= 14.17' }
     hasBin: true
@@ -13716,20 +13722,6 @@ packages:
       }
     engines: { node: '>=10' }
 
-  yocto-spinner@0.2.1:
-    resolution:
-      {
-        integrity: sha512-lHHxjh0bXaLgdJy3cNnVb/F9myx3CkhrvSOEVTkaUgNMXnYFa2xYPVhtGnqhh3jErY2gParBOHallCbc7NrlZQ==,
-      }
-    engines: { node: '>=18.19' }
-
-  yoctocolors@2.1.2:
-    resolution:
-      {
-        integrity: sha512-CzhO+pFNo8ajLM2d2IW/R93ipy99LWjtwblvC1RsoSUMZgyLbYFr221TnSNT7GjGdYui6P459mw9JH/g/zW2ug==,
-      }
-    engines: { node: '>=18' }
-
   zod-validation-error@2.1.0:
     resolution:
       {
@@ -15730,7 +15722,7 @@ snapshots:
 
   '@google-cloud/promisify@4.0.0': {}
 
-  '@google-cloud/translate@8.5.1':
+  '@google-cloud/translate@8.5.0':
     dependencies:
       '@google-cloud/common': 5.0.2
       '@google-cloud/promisify': 4.0.0
@@ -18405,7 +18397,7 @@ snapshots:
     transitivePeerDependencies:
       - debug
 
-  axios@1.8.4:
+  axios@1.7.9:
     dependencies:
       follow-redirects: 1.15.11
       form-data: 4.0.4
@@ -20456,6 +20448,8 @@ snapshots:
     dependencies:
       whatwg-encoding: 2.0.0
 
+  html-entities@2.5.2: {}
+
   html-entities@2.6.0: {}
 
   html-escaper@2.0.2: {}
@@ -20500,16 +20494,15 @@ snapshots:
 
   hyphenate-style-name@1.1.0: {}
 
-  i18n-auto-translation@2.2.1:
+  i18n-auto-translation@1.10.1:
     dependencies:
-      '@google-cloud/translate': 8.5.1
-      axios: 1.8.4
+      '@google-cloud/translate': 8.5.0
+      axios: 1.7.9
       deep-object-diff: 1.1.9
       glob: 11.0.1
-      html-entities: 2.6.0
+      html-entities: 2.5.2
       just-extend: 6.2.0
       yargs: 17.7.2
-      yocto-spinner: 0.2.1
     transitivePeerDependencies:
       - debug
       - encoding
@@ -24121,12 +24114,6 @@ snapshots:
       yargs-parser: 21.1.1
 
   yocto-queue@0.1.0: {}
-
-  yocto-spinner@0.2.1:
-    dependencies:
-      yoctocolors: 2.1.2
-
-  yoctocolors@2.1.2: {}
 
   zod-validation-error@2.1.0(zod@3.23.8):
     dependencies:

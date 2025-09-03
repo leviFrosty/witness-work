@@ -103,55 +103,47 @@ const DismissedContactsScreen: React.FC<Props> = ({ navigation }) => {
   }, [navigation])
 
   return (
-    <Wrapper>
+    <Wrapper insets='none'>
       <View style={{ flex: 1, gap: 20 }}>
-        <View style={{ gap: 10 }}>
-          <Text
-            style={{
-              fontSize: theme.fontSize('xl'),
-              fontFamily: theme.fonts.bold,
-              color: theme.colors.text,
-            }}
-          >
+        <View style={{ padding: 25, gap: 5 }}>
+          <Text style={{ fontSize: 32, fontFamily: theme.fonts.bold }}>
             {i18n.t('dismissedContacts')}
           </Text>
-          <Text
-            style={{
-              fontSize: theme.fontSize('sm'),
-              color: theme.colors.textAlt,
-              lineHeight: 20,
-            }}
-          >
+          <Text style={{ color: theme.colors.textAlt, fontSize: 12 }}>
             {i18n.t('dismissedContactsHelp')}
           </Text>
         </View>
 
-        {dismissedContacts.length === 0 ? (
-          <Card>
-            <Text
-              style={{
-                color: theme.colors.textAlt,
-                fontSize: theme.fontSize('sm'),
-                textAlign: 'center',
-                paddingVertical: 40,
-                lineHeight: 20,
-              }}
-            >
-              {i18n.t('noDismissedContacts')}
-            </Text>
-          </Card>
-        ) : (
-          <Card style={{ flex: 1 }}>
-            <FlashList
-              data={dismissedContacts}
-              renderItem={({ item }) => (
-                <DismissedContactRow key={item.id} contact={item} />
-              )}
-              estimatedItemSize={84}
-              ItemSeparatorComponent={() => <View style={{ marginTop: 12 }} />}
-            />
-          </Card>
-        )}
+        <View style={{ paddingHorizontal: 10, flex: 1 }}>
+          {dismissedContacts.length === 0 ? (
+            <Card>
+              <Text
+                style={{
+                  color: theme.colors.textAlt,
+                  fontSize: theme.fontSize('sm'),
+                  textAlign: 'center',
+                  paddingVertical: 40,
+                  lineHeight: 20,
+                }}
+              >
+                {i18n.t('noDismissedContacts')}
+              </Text>
+            </Card>
+          ) : (
+            <Card style={{ flex: 1 }}>
+              <FlashList
+                data={dismissedContacts}
+                renderItem={({ item }) => (
+                  <DismissedContactRow key={item.id} contact={item} />
+                )}
+                estimatedItemSize={84}
+                ItemSeparatorComponent={() => (
+                  <View style={{ marginTop: 12 }} />
+                )}
+              />
+            </Card>
+          )}
+        </View>
       </View>
     </Wrapper>
   )

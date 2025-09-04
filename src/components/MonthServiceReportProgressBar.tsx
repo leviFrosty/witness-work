@@ -1,5 +1,5 @@
 import { View, ViewProps, Animated } from 'react-native'
-import { useCallback, useMemo, useEffect, useRef } from 'react'
+import { useCallback, useMemo, useEffect, useRef, useState } from 'react'
 import { usePreferences } from '../stores/preferences'
 import { useServiceReport } from '../stores/serviceReport'
 import useTheme from '../contexts/theme'
@@ -142,6 +142,7 @@ const MonthServiceReportProgressBar = ({
   // Animation setup
   const pulseAnimation = useRef(new Animated.Value(0)).current
   const animationRef = useRef<Animated.CompositeAnimation | null>(null)
+  const [shimmerContainerWidth, setShimmerContainerWidth] = useState<number>(0)
   const monthReports = useMemo(
     () => getMonthsReports(serviceReports, month, year),
     [month, serviceReports, year]
@@ -171,8 +172,8 @@ const MonthServiceReportProgressBar = ({
 
   // Animation effect
   useEffect(() => {
-    if (!animated || progress === 0) {
-      // Stop animation if not animated or no progress
+    if (!animated || progress === 0 || shimmerContainerWidth === 0) {
+      // Stop animation if not animated, no progress, or no measurement yet
       if (animationRef.current) {
         animationRef.current.stop()
         animationRef.current = null
@@ -225,12 +226,16 @@ const MonthServiceReportProgressBar = ({
         animationRef.current = null
       }
     }
-  }, [animated, progress, pulseDuration, pulseAnimation])
+  }, [animated, progress, pulseDuration, pulseAnimation, shimmerContainerWidth])
 
-  // Calculate pulse position - match SimpleProgressBar speed exactly
+  // Calculate pulse position dynamically based on shimmer container width
+  // The shimmer should travel across the entire shimmer container (which is already the filled portion)
   const pulseTranslateX = pulseAnimation.interpolate({
     inputRange: [0, 1],
-    outputRange: [-60, 200], // Same as SimpleProgressBar for consistent speed
+    outputRange: [
+      -60, // Start hidden to the left
+      Math.max(200, shimmerContainerWidth + 60), // End past the shimmer container
+    ],
   })
 
   const minutesDetailed = useMemo(
@@ -391,6 +396,10 @@ const MonthServiceReportProgressBar = ({
                 height: '100%',
                 overflow: 'hidden',
                 borderRadius: theme.numbers.borderRadiusSm,
+              }}
+              onLayout={(event) => {
+                const { width: layoutWidth } = event.nativeEvent.layout
+                setShimmerContainerWidth(layoutWidth)
               }}
             >
               <Animated.View

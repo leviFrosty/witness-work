@@ -71,31 +71,16 @@ const MonthSummary = ({
   const isFutureMonth = currentDay.isBefore(selectedMonth, 'month')
 
   const daysInMonth = selectedMonth.daysInMonth()
-  const currentDayOfMonth = isCurrentMonth
-    ? currentDay.date()
-    : isPastMonth
-      ? daysInMonth
-      : 1
   const daysRemaining = isCurrentMonth
     ? Math.max(0, daysInMonth - currentDay.date())
     : 0
 
   const hoursCompleted = adjustedMinutes.value / 60
   const hoursRemaining = Math.max(0, goalHours - hoursCompleted)
-  const hoursNeededPerDay =
-    daysRemaining > 0 ? hoursRemaining / daysRemaining : 0
-  const averagePerDay =
-    currentDayOfMonth > 0 ? hoursCompleted / currentDayOfMonth : 0
-  const isOnTrack =
-    goalHours > 0
-      ? hoursCompleted / currentDayOfMonth >= goalHours / daysInMonth
-      : true
   const hasMetGoal = hoursCompleted >= goalHours && goalHours > 0
 
   // Format time values using utility functions
   const hoursRemainingFormatted = useFormattedMinutes(hoursRemaining * 60)
-  const hoursNeededPerDayRounded = _.round(hoursNeededPerDay, 1)
-  const averagePerDayFormatted = useCompactFormattedMinutes(averagePerDay * 60)
   const goalHoursFormatted = useCompactFormattedMinutes(goalHours * 60)
 
   const ldcMinutes = useMemo(
@@ -282,28 +267,15 @@ const MonthSummary = ({
                     🎯 {i18n.t('goalAchieved')}
                   </Text>
                 ) : isCurrentMonth && daysRemaining > 0 ? (
-                  <View style={{ gap: 2 }}>
-                    <Text
-                      style={{
-                        fontSize: theme.fontSize('sm'),
-                        color: theme.colors.text,
-                        fontFamily: theme.fonts.semiBold,
-                      }}
-                    >
-                      {hoursRemainingFormatted.formatted} {i18n.t('remaining')}
-                    </Text>
-                    <Text
-                      style={{
-                        fontSize: theme.fontSize('xs'),
-                        color: isOnTrack
-                          ? theme.colors.textAlt
-                          : theme.colors.warn,
-                      }}
-                    >
-                      {hoursNeededPerDayRounded}h/{i18n.t('days_lowercase')}{' '}
-                      {i18n.t('needed')}
-                    </Text>
-                  </View>
+                  <Text
+                    style={{
+                      fontSize: theme.fontSize('md'),
+                      color: theme.colors.text,
+                      fontFamily: theme.fonts.semiBold,
+                    }}
+                  >
+                    {hoursRemainingFormatted.formatted} {i18n.t('remaining')}
+                  </Text>
                 ) : isPastMonth ? (
                   <Text
                     style={{
@@ -334,25 +306,14 @@ const MonthSummary = ({
               {/* Right side - Secondary stats */}
               <View style={{ alignItems: 'flex-end' }}>
                 {isCurrentMonth && (
-                  <View style={{ gap: 2, alignItems: 'flex-end' }}>
-                    <Text
-                      style={{
-                        fontSize: theme.fontSize('xs'),
-                        color: theme.colors.textAlt,
-                      }}
-                    >
-                      {averagePerDayFormatted}/{i18n.t('days_lowercase')}{' '}
-                      {i18n.t('average')}
-                    </Text>
-                    <Text
-                      style={{
-                        fontSize: theme.fontSize('xs'),
-                        color: theme.colors.textAlt,
-                      }}
-                    >
-                      {daysRemaining} {i18n.t('daysLeft')}
-                    </Text>
-                  </View>
+                  <Text
+                    style={{
+                      fontSize: theme.fontSize('xs'),
+                      color: theme.colors.textAlt,
+                    }}
+                  >
+                    {daysRemaining} {i18n.t('daysLeft')}
+                  </Text>
                 )}
                 {isPastMonth && goalHours > 0 && (
                   <Text

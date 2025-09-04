@@ -1,5 +1,5 @@
 import { View, Animated } from 'react-native'
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import useTheme from '../contexts/theme'
 
 interface SimpleProgressBarProps {
@@ -39,14 +39,15 @@ const SimpleProgressBar = ({
   const theme = useTheme()
   const pulseAnimation = useRef(new Animated.Value(0)).current
   const animationRef = useRef<Animated.CompositeAnimation | null>(null)
+  const [shimmerContainerWidth, setShimmerContainerWidth] = useState<number>(0)
 
   const progressColor = color ?? theme.colors.accent
   const barHeight = height
   const progressWidth = percentage * 100
 
   useEffect(() => {
-    if (!animated || percentage === 0) {
-      // Stop animation if not animated or no progress
+    if (!animated || percentage === 0 || shimmerContainerWidth === 0) {
+      // Stop animation if not animated, no progress, or no measurement yet
       if (animationRef.current) {
         animationRef.current.stop()
         animationRef.current = null
@@ -99,12 +100,22 @@ const SimpleProgressBar = ({
         animationRef.current = null
       }
     }
-  }, [animated, percentage, pulseDuration, pulseAnimation])
+  }, [
+    animated,
+    percentage,
+    pulseDuration,
+    pulseAnimation,
+    shimmerContainerWidth,
+  ])
 
-  // Calculate pulse position - use reasonable values that work for most sizes
+  // Calculate pulse position dynamically based on shimmer container width
+  // The shimmer should travel across the entire shimmer container (which is already the filled portion)
   const pulseTranslateX = pulseAnimation.interpolate({
     inputRange: [0, 1],
-    outputRange: [-60, 200], // Start hidden left, end well past typical progress bar
+    outputRange: [
+      -60, // Start hidden to the left
+      Math.max(200, shimmerContainerWidth + 60), // End past the shimmer container
+    ],
   })
 
   return (
@@ -153,6 +164,10 @@ const SimpleProgressBar = ({
               height: '100%',
               overflow: 'hidden',
               borderRadius: theme.numbers.borderRadiusSm,
+            }}
+            onLayout={(event) => {
+              const { width: layoutWidth } = event.nativeEvent.layout
+              setShimmerContainerWidth(layoutWidth)
             }}
           >
             <Animated.View

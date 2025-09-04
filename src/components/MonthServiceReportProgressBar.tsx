@@ -165,10 +165,17 @@ const MonthServiceReportProgressBar = ({
     ]
   )
 
-  const progress = useMemo(
+  const rawProgress = useMemo(
     () => calculateProgress({ minutes: adjustedMinutes.value, goalHours }),
     [adjustedMinutes, goalHours]
   )
+
+  const progress = useMemo(() => Math.min(rawProgress, 1.0), [rawProgress])
+
+  // Calculate scaling factor for individual segments when total exceeds 100%
+  const segmentScalingFactor = useMemo(() => {
+    return rawProgress > 1.0 ? 1.0 / rawProgress : 1.0
+  }, [rawProgress])
 
   // Animation effect
   useEffect(() => {
@@ -290,11 +297,18 @@ const MonthServiceReportProgressBar = ({
         <OtherHours
           key={`${report.tag}-${index}`}
           color={color}
-          percentage={report.minutes / adjustedMinutes.value}
+          percentage={
+            (report.minutes / adjustedMinutes.value) * segmentScalingFactor
+          }
         />
       )
     })
-  }, [minutesDetailed.other, otherColors, adjustedMinutes.value])
+  }, [
+    minutesDetailed.other,
+    otherColors,
+    adjustedMinutes.value,
+    segmentScalingFactor,
+  ])
 
   const renderOtherHoursColorKeys = useCallback(() => {
     let currentIndex = 0
@@ -334,13 +348,13 @@ const MonthServiceReportProgressBar = ({
           height: 20,
           backgroundColor: theme.colors.background,
           borderRadius: theme.numbers.borderRadiusSm,
-          overflow: 'visible', // Changed to visible to allow glow overflow
+          overflow: 'hidden',
         }}
       >
         <View
           style={{
             position: 'relative',
-            overflow: 'visible', // Changed to visible to allow glow overflow
+            overflow: 'hidden',
             borderRadius: theme.numbers.borderRadiusSm,
             width: '100%',
             height: 20,
@@ -372,13 +386,19 @@ const MonthServiceReportProgressBar = ({
           >
             {hasStandardMinutes && (
               <StandardHours
-                percentage={minutesDetailed.standard / adjustedMinutes.value}
+                percentage={
+                  (minutesDetailed.standard / adjustedMinutes.value) *
+                  segmentScalingFactor
+                }
                 color={theme.colors.accent}
               />
             )}
             {hasLdcMinutes && (
               <LdcHours
-                percentage={minutesDetailed.ldc / adjustedMinutes.value}
+                percentage={
+                  (minutesDetailed.ldc / adjustedMinutes.value) *
+                  segmentScalingFactor
+                }
                 color={minimal ? theme.colors.accent : theme.colors.accentAlt}
               />
             )}

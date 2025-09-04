@@ -43,10 +43,14 @@ const SimpleProgressBar = ({
 
   const progressColor = color ?? theme.colors.accent
   const barHeight = height
-  const progressWidth = percentage * 100
+  const progressWidth = Math.min(percentage, 1.0) * 100
 
   useEffect(() => {
-    if (!animated || percentage === 0 || shimmerContainerWidth === 0) {
+    if (
+      !animated ||
+      Math.min(percentage, 1.0) === 0 ||
+      shimmerContainerWidth === 0
+    ) {
       // Stop animation if not animated, no progress, or no measurement yet
       if (animationRef.current) {
         animationRef.current.stop()
@@ -122,7 +126,7 @@ const SimpleProgressBar = ({
     <View
       style={{
         backgroundColor: theme.colors.background,
-        overflow: 'visible', // Changed to visible to allow glow overflow
+        overflow: 'hidden',
         borderRadius: theme.numbers.borderRadiusSm,
         width: width ?? '100%',
       }}
@@ -147,14 +151,14 @@ const SimpleProgressBar = ({
               width: 0,
               height: 0,
             },
-            shadowOpacity: animated && percentage > 0 ? 0.6 : 0,
+            shadowOpacity: animated && Math.min(percentage, 1.0) > 0 ? 0.6 : 0,
             shadowRadius: 8,
-            elevation: animated && percentage > 0 ? 8 : 0,
+            elevation: animated && Math.min(percentage, 1.0) > 0 ? 8 : 0,
           }}
         />
 
         {/* Pulse/Shimmer overlay - only visible when animated and has progress */}
-        {animated && percentage > 0 && (
+        {animated && Math.min(percentage, 1.0) > 0 && (
           <View
             style={{
               position: 'absolute',

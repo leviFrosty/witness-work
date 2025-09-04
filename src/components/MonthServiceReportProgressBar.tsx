@@ -348,9 +348,39 @@ const MonthServiceReportProgressBar = ({
           height: 20,
           backgroundColor: theme.colors.background,
           borderRadius: theme.numbers.borderRadiusSm,
-          overflow: 'hidden',
+          overflow: 'visible',
         }}
       >
+        {/* External glow overlay (behind, not clipped) */}
+        <View
+          pointerEvents='none'
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            height: 20,
+            width: `${progress * 100}%`,
+            borderRadius: theme.numbers.borderRadiusSm,
+            backgroundColor: hasStandardMinutes
+              ? theme.colors.accent
+              : hasLdcMinutes
+                ? minimal
+                  ? theme.colors.accent
+                  : theme.colors.accentAlt
+                : theme.colors.accent2,
+            shadowColor: hasStandardMinutes
+              ? theme.colors.accent
+              : hasLdcMinutes
+                ? minimal
+                  ? theme.colors.accent
+                  : theme.colors.accentAlt
+                : theme.colors.accent2,
+            shadowOffset: { width: 0, height: 0 },
+            shadowOpacity: animated && progress > 0 ? 0.85 : 0,
+            shadowRadius: 14,
+            elevation: animated && progress > 0 ? 12 : 0,
+          }}
+        />
         <View
           style={{
             position: 'relative',
@@ -367,21 +397,6 @@ const MonthServiceReportProgressBar = ({
               flexDirection: 'row',
               alignItems: 'center',
               height: '100%',
-              // Enhanced glow effect using shadow - dynamically colored
-              shadowColor: hasStandardMinutes
-                ? theme.colors.accent
-                : hasLdcMinutes
-                  ? minimal
-                    ? theme.colors.accent
-                    : theme.colors.accentAlt
-                  : theme.colors.accent2,
-              shadowOffset: {
-                width: 0,
-                height: 0,
-              },
-              shadowOpacity: animated && progress > 0 ? 0.7 : 0, // Slightly more intense glow
-              shadowRadius: 10, // Larger glow radius
-              elevation: animated && progress > 0 ? 10 : 0, // Higher elevation for Android
             }}
           >
             {hasStandardMinutes && (

@@ -126,11 +126,30 @@ const SimpleProgressBar = ({
     <View
       style={{
         backgroundColor: theme.colors.background,
-        overflow: 'hidden',
+        overflow: 'visible',
+        position: 'relative',
         borderRadius: theme.numbers.borderRadiusSm,
         width: width ?? '100%',
       }}
     >
+      {/* External glow overlay (behind, not clipped) */}
+      <View
+        pointerEvents='none'
+        style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          height: barHeight,
+          width: `${progressWidth}%`,
+          borderRadius: theme.numbers.borderRadiusSm,
+          backgroundColor: progressColor,
+          shadowColor: progressColor,
+          shadowOffset: { width: 0, height: 0 },
+          shadowOpacity: animated && Math.min(percentage, 1.0) > 0 ? 0.8 : 0,
+          shadowRadius: 12,
+          elevation: animated && Math.min(percentage, 1.0) > 0 ? 10 : 0,
+        }}
+      />
       <View
         style={{
           position: 'relative',
@@ -138,22 +157,13 @@ const SimpleProgressBar = ({
           borderRadius: theme.numbers.borderRadiusSm,
         }}
       >
-        {/* Progress bar with glow effect */}
+        {/* Progress bar (clipped) */}
         <View
           style={{
             backgroundColor: progressColor,
             height: barHeight,
             width: `${progressWidth}%`,
             borderRadius: theme.numbers.borderRadiusSm,
-            // Glow effect using shadow
-            shadowColor: progressColor,
-            shadowOffset: {
-              width: 0,
-              height: 0,
-            },
-            shadowOpacity: animated && Math.min(percentage, 1.0) > 0 ? 0.6 : 0,
-            shadowRadius: 8,
-            elevation: animated && Math.min(percentage, 1.0) > 0 ? 8 : 0,
           }}
         />
 

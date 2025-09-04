@@ -12,6 +12,9 @@ import useContacts from '../stores/contactsStore'
 import { usePreferences } from '../stores/preferences'
 import { useToastController } from '@tamagui/toast'
 import moment from 'moment'
+import * as Notifications from 'expo-notifications'
+import * as Sentry from '@sentry/react-native'
+import useNotifications from '../hooks/notifications'
 
 export type DismissOption = {
   key: string
@@ -99,11 +102,12 @@ const DismissContactSheet: React.FC<DismissContactSheetProps> = ({
   contact,
 }) => {
   const theme = useTheme()
-  const { updateContact } = useContacts()
+  const { dismissContact } = useContacts()
   const { developerTools } = usePreferences()
   const toast = useToastController()
+  const { allowed: notificationsAllowed } = useNotifications()
 
-  const handleDismiss = (option: DismissOption) => {
+  const handleDismiss = async (option: DismissOption) => {
     if (!contact) return
 
     const exampleFormat =
@@ -122,48 +126,100 @@ const DismissContactSheet: React.FC<DismissContactSheetProps> = ({
       ? option.example.replace('{date}', exampleDate)
       : i18n.t(option.example as 'dismissExample', { date: exampleDate })
 
-    Alert.alert(
-      i18n.t('dismissContact'),
-      i18n.t('dismissContactDescription', {
-        name: contact.name,
-        duration: labelText,
-        example: exampleText,
-      }),
-      [
-        {
-          text: i18n.t('cancel'),
-          style: 'cancel',
-        },
-        {
-          text: i18n.t('dismiss'),
-          onPress: () => {
-            const dismissedUntil = moment()
-              .add(option.duration, option.unit)
-              .toDate()
+    const dismissDescription = notificationsAllowed
+      ? i18n.t('dismissContactDescriptionWithNotification', {
+          name: contact.name,
+          duration: labelText,
+          example: exampleText,
+        })
+      : i18n.t('dismissContactDescription', {
+          name: contact.name,
+          duration: labelText,
+          example: exampleText,
+        })
 
-            updateContact({
-              ...contact,
-              dismissedUntil,
-            })
+    Alert.alert(i18n.t('dismissContact'), dismissDescription, [
+      {
+        text: i18n.t('cancel'),
+        style: 'cancel',
+      },
+      {
+        text: i18n.t('dismiss'),
+        onPress: async () => {
+          const dismissedUntil = moment()
+            .add(option.duration, option.unit)
+            .toDate()
 
-            setOpen(false)
+          let notificationId: string | undefined
 
-            const untilFormat =
-              option.unit === 'seconds' || option.unit === 'minutes'
-                ? 'LTS' // Time format like "3:45:20 PM"
-                : 'MMM D, YYYY' // Date format like "Dec 25, 2024"
+          // Schedule notification if allowed
+          if (
+            notificationsAllowed &&
+            moment(dismissedUntil).isAfter(moment())
+          ) {
+            try {
+              const getRandomEmoji = () => {
+                const emojis = [
+                  '🔄',
+                  '✨',
+                  '👋',
+                  '⭐',
+                  '🎉',
+                  '💫',
+                  '👀',
+                  '💪',
+                  '⏱️',
+                  '🌟',
+                ]
+                const randomIndex = Math.floor(Math.random() * emojis.length)
+                return emojis[randomIndex]
+              }
 
-            toast.show(i18n.t('contactDismissed'), {
-              message: i18n.t('contactDismissedMessage', {
+              notificationId = await Notifications.scheduleNotificationAsync({
+                content: {
+                  title: i18n.t('contactAvailableAgain'),
+                  body: i18n.t('contactAvailableAgainMessage', {
+                    name: contact.name,
+                    emoji: getRandomEmoji(),
+                  }),
+                  sound: true,
+                },
+                trigger: {
+                  date: dismissedUntil,
+                },
+              })
+            } catch (error) {
+              Sentry.captureException(error)
+            }
+          }
+
+          // Use dismissContact function with notification ID
+          dismissContact(contact.id, dismissedUntil, notificationId)
+
+          setOpen(false)
+
+          const untilFormat =
+            option.unit === 'seconds' || option.unit === 'minutes'
+              ? 'LTS' // Time format like "3:45:20 PM"
+              : 'MMM D, YYYY' // Date format like "Dec 25, 2024"
+
+          const successMessage = notificationId
+            ? i18n.t('contactDismissedWithNotificationMessage', {
                 name: contact.name,
                 until: moment(dismissedUntil).format(untilFormat),
-              }),
-              native: true,
-            })
-          },
+              })
+            : i18n.t('contactDismissedMessage', {
+                name: contact.name,
+                until: moment(dismissedUntil).format(untilFormat),
+              })
+
+          toast.show(i18n.t('contactDismissed'), {
+            message: successMessage,
+            native: true,
+          })
         },
-      ]
-    )
+      },
+    ])
   }
 
   return (

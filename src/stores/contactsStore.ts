@@ -89,14 +89,18 @@ export const useContacts = create(
           }
         })
       },
-      dismissContact: (id: string, dismissedUntil: Date) => {
+      dismissContact: (
+        id: string,
+        dismissedUntil: Date,
+        dismissedNotificationId?: string
+      ) => {
         set(({ contacts }) => {
           return {
             contacts: contacts.map((c) => {
               if (c.id !== id) {
                 return c
               }
-              return { ...c, dismissedUntil }
+              return { ...c, dismissedUntil, dismissedNotificationId }
             }),
           }
         })
@@ -110,6 +114,7 @@ export const useContacts = create(
               }
               const updatedContact = { ...c }
               delete updatedContact.dismissedUntil
+              delete updatedContact.dismissedNotificationId
               return updatedContact
             }),
           }

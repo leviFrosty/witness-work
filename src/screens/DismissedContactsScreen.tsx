@@ -15,6 +15,8 @@ import IconButton from '../components/IconButton'
 import { faUndo } from '@fortawesome/free-solid-svg-icons'
 import { Contact } from '../types/contact'
 import { useToastController } from '@tamagui/toast'
+import * as Notifications from 'expo-notifications'
+import * as Sentry from '@sentry/react-native'
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Dismissed Contacts'>
 
@@ -34,7 +36,18 @@ const DismissedContactRow = ({ contact }: { contact: Contact }) => {
         },
         {
           text: i18n.t('undismiss'),
-          onPress: () => {
+          onPress: async () => {
+            // Cancel scheduled notification if it exists
+            if (contact.dismissedNotificationId) {
+              try {
+                await Notifications.cancelScheduledNotificationAsync(
+                  contact.dismissedNotificationId
+                )
+              } catch (error) {
+                Sentry.captureException(error)
+              }
+            }
+
             undismissContact(contact.id)
             toast.show(i18n.t('contactUndismissed', { name: contact.name }), {
               native: true,

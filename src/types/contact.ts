@@ -48,4 +48,10 @@ export type Contact = {
    * contact list and map until the dismissedUntil date has passed.
    */
   dismissedUntil?: Date
+
+  /**
+   * Notification ID for the scheduled notification to remind the user when the
+   * contact becomes available again after being dismissed.
+   */
+  dismissedNotificationId?: string
 }

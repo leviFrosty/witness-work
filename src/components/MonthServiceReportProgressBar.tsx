@@ -1,4 +1,5 @@
-import { View, ViewProps } from 'react-native'
+import { View, ViewProps, Animated } from 'react-native'
+import { useCallback, useMemo, useEffect, useRef } from 'react'
 import { usePreferences } from '../stores/preferences'
 import { useServiceReport } from '../stores/serviceReport'
 import useTheme from '../contexts/theme'
@@ -8,7 +9,6 @@ import {
   getMonthsReports,
   getTotalMinutesDetailedForSpecificMonth,
 } from '../lib/serviceReport'
-import { useCallback, useMemo } from 'react'
 import Text from './MyText'
 import i18n from '../lib/locales'
 import Circle from './Circle'
@@ -109,12 +109,26 @@ interface ProgressBarProps {
   month: number
   year: number
   minimal?: boolean
+  /**
+   * Enable pulse/shimmer/glow animation effects
+   *
+   * @default true
+   */
+  animated?: boolean
+  /**
+   * Duration of pulse animation in milliseconds
+   *
+   * @default 2000
+   */
+  pulseDuration?: number
 }
 
 const MonthServiceReportProgressBar = ({
   month,
   year,
   minimal,
+  animated = true,
+  pulseDuration = 2000,
 }: ProgressBarProps) => {
   const theme = useTheme()
   const { serviceReports } = useServiceReport()
@@ -124,6 +138,10 @@ const MonthServiceReportProgressBar = ({
     overrideCreditLimit,
     customCreditLimitHours,
   } = usePreferences()
+
+  // Animation setup
+  const pulseAnimation = useRef(new Animated.Value(0)).current
+  const animationRef = useRef<Animated.CompositeAnimation | null>(null)
   const monthReports = useMemo(
     () => getMonthsReports(serviceReports, month, year),
     [month, serviceReports, year]
@@ -150,6 +168,70 @@ const MonthServiceReportProgressBar = ({
     () => calculateProgress({ minutes: adjustedMinutes.value, goalHours }),
     [adjustedMinutes, goalHours]
   )
+
+  // Animation effect
+  useEffect(() => {
+    if (!animated || progress === 0) {
+      // Stop animation if not animated or no progress
+      if (animationRef.current) {
+        animationRef.current.stop()
+        animationRef.current = null
+      }
+      pulseAnimation.setValue(0)
+      return
+    }
+
+    // Create pulse animation that moves from left to right
+    const createPulseAnimation = () => {
+      pulseAnimation.setValue(0)
+
+      const animation = Animated.loop(
+        Animated.sequence([
+          Animated.timing(pulseAnimation, {
+            toValue: 1,
+            duration: pulseDuration,
+            useNativeDriver: true,
+          }),
+          // Add a small pause at the end
+          Animated.delay(300),
+          // Instant reset to avoid jarring flash
+          Animated.timing(pulseAnimation, {
+            toValue: 0,
+            duration: 0, // Instant reset - no visible movement
+            useNativeDriver: true,
+          }),
+          // Small pause before next pulse
+          Animated.delay(200),
+        ]),
+        { iterations: -1 }
+      )
+
+      return animation
+    }
+
+    // Stop existing animation
+    if (animationRef.current) {
+      animationRef.current.stop()
+    }
+
+    // Start new animation
+    animationRef.current = createPulseAnimation()
+    animationRef.current.start()
+
+    // Cleanup on unmount or dependency change
+    return () => {
+      if (animationRef.current) {
+        animationRef.current.stop()
+        animationRef.current = null
+      }
+    }
+  }, [animated, progress, pulseDuration, pulseAnimation])
+
+  // Calculate pulse position - match SimpleProgressBar speed exactly
+  const pulseTranslateX = pulseAnimation.interpolate({
+    inputRange: [0, 1],
+    outputRange: [-60, 200], // Same as SimpleProgressBar for consistent speed
+  })
 
   const minutesDetailed = useMemo(
     () => getTotalMinutesDetailedForSpecificMonth(monthReports, month, year),
@@ -247,29 +329,116 @@ const MonthServiceReportProgressBar = ({
           height: 20,
           backgroundColor: theme.colors.background,
           borderRadius: theme.numbers.borderRadiusSm,
-          overflow: 'hidden',
+          overflow: 'visible', // Changed to visible to allow glow overflow
         }}
       >
         <View
           style={{
-            width: `${progress * 100}%`,
-            flexDirection: 'row',
-            alignItems: 'center',
+            position: 'relative',
+            overflow: 'visible', // Changed to visible to allow glow overflow
+            borderRadius: theme.numbers.borderRadiusSm,
+            width: '100%',
+            height: 20,
           }}
         >
-          {hasStandardMinutes && (
-            <StandardHours
-              percentage={minutesDetailed.standard / adjustedMinutes.value}
-              color={theme.colors.accent}
-            />
+          {/* Progress segments with enhanced glow effect */}
+          <View
+            style={{
+              width: `${progress * 100}%`,
+              flexDirection: 'row',
+              alignItems: 'center',
+              height: '100%',
+              // Enhanced glow effect using shadow - dynamically colored
+              shadowColor: hasStandardMinutes
+                ? theme.colors.accent
+                : hasLdcMinutes
+                  ? minimal
+                    ? theme.colors.accent
+                    : theme.colors.accentAlt
+                  : theme.colors.accent2,
+              shadowOffset: {
+                width: 0,
+                height: 0,
+              },
+              shadowOpacity: animated && progress > 0 ? 0.7 : 0, // Slightly more intense glow
+              shadowRadius: 10, // Larger glow radius
+              elevation: animated && progress > 0 ? 10 : 0, // Higher elevation for Android
+            }}
+          >
+            {hasStandardMinutes && (
+              <StandardHours
+                percentage={minutesDetailed.standard / adjustedMinutes.value}
+                color={theme.colors.accent}
+              />
+            )}
+            {hasLdcMinutes && (
+              <LdcHours
+                percentage={minutesDetailed.ldc / adjustedMinutes.value}
+                color={minimal ? theme.colors.accent : theme.colors.accentAlt}
+              />
+            )}
+            {renderOtherHours()}
+          </View>
+
+          {/* Pulse/Shimmer overlay - only visible when animated and has progress */}
+          {animated && progress > 0 && (
+            <View
+              style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                width: `${progress * 100}%`, // Only cover the filled portion
+                height: '100%',
+                overflow: 'hidden',
+                borderRadius: theme.numbers.borderRadiusSm,
+              }}
+            >
+              <Animated.View
+                style={{
+                  position: 'absolute',
+                  top: 0,
+                  height: '100%',
+                  width: 60, // Fixed width shimmer that works with pixel-based transform
+                  transform: [{ translateX: pulseTranslateX }],
+                }}
+              >
+                {/* Shimmer gradient effect using multiple overlays */}
+                <View
+                  style={{
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    width: 40,
+                    height: '100%',
+                    backgroundColor: 'rgba(255, 255, 255, 0.4)',
+                    transform: [{ skewX: '-20deg' }],
+                  }}
+                />
+                <View
+                  style={{
+                    position: 'absolute',
+                    top: 0,
+                    left: 10,
+                    width: 30,
+                    height: '100%',
+                    backgroundColor: 'rgba(255, 255, 255, 0.6)',
+                    transform: [{ skewX: '-20deg' }],
+                  }}
+                />
+                <View
+                  style={{
+                    position: 'absolute',
+                    top: 0,
+                    left: 20,
+                    width: 15,
+                    height: '100%',
+                    backgroundColor: 'rgba(255, 255, 255, 0.8)',
+                    transform: [{ skewX: '-20deg' }],
+                  }}
+                />
+              </Animated.View>
+            </View>
           )}
-          {hasLdcMinutes && (
-            <LdcHours
-              percentage={minutesDetailed.ldc / adjustedMinutes.value}
-              color={minimal ? theme.colors.accent : theme.colors.accentAlt}
-            />
-          )}
-          {renderOtherHours()}
         </View>
       </View>
       {!minimal && (

@@ -68,7 +68,7 @@ const MonthPlansList = ({ month, year }: MonthPlansListProps) => {
 
     // Sort by date
     return planItems.sort(
-      (a, b) => moment(a.date).unix() - moment(b.date).unix()
+      (a, b) => moment(b.date).unix() - moment(a.date).unix()
     )
   }, [month, year, dayPlans, recurringPlans])
 

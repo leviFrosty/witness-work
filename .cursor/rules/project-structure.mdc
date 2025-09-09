@@ -4,7 +4,7 @@ alwaysApply: true
 
 ## After making large change
 
-Always run `pnpm run testFinal && pnpm run lint` to validate no errors.
+After making only signficant UI/logical changes: validate there linting and typecheck errors don't exist with one command: `pnpm run testFinal && pnpm run lint && pnpm run typecheck`
 
 ## Project Overview
 

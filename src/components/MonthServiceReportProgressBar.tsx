@@ -351,36 +351,6 @@ const MonthServiceReportProgressBar = ({
           overflow: 'visible',
         }}
       >
-        {/* External glow overlay (behind, not clipped) */}
-        <View
-          pointerEvents='none'
-          style={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            height: 20,
-            width: `${progress * 100}%`,
-            borderRadius: theme.numbers.borderRadiusSm,
-            backgroundColor: hasStandardMinutes
-              ? theme.colors.accent
-              : hasLdcMinutes
-                ? minimal
-                  ? theme.colors.accent
-                  : theme.colors.accentAlt
-                : theme.colors.accent2,
-            shadowColor: hasStandardMinutes
-              ? theme.colors.accent
-              : hasLdcMinutes
-                ? minimal
-                  ? theme.colors.accent
-                  : theme.colors.accentAlt
-                : theme.colors.accent2,
-            shadowOffset: { width: 0, height: 0 },
-            shadowOpacity: animated && progress > 0 ? 0.85 : 0,
-            shadowRadius: 14,
-            elevation: animated && progress > 0 ? 12 : 0,
-          }}
-        />
         <View
           style={{
             position: 'relative',
@@ -430,7 +400,6 @@ const MonthServiceReportProgressBar = ({
                 width: `${progress * 100}%`, // Only cover the filled portion
                 height: '100%',
                 overflow: 'hidden',
-                borderRadius: theme.numbers.borderRadiusSm,
               }}
               onLayout={(event) => {
                 const { width: layoutWidth } = event.nativeEvent.layout

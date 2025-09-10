@@ -3,7 +3,7 @@ import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view
 import ActionButton from '../components/ActionButton'
 import useServiceReport from '../stores/serviceReport'
 import * as Crypto from 'expo-crypto'
-import { useState } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useToastController } from '@tamagui/toast'
 import i18n from '../lib/locales'
 import Text from '../components/MyText'
@@ -134,7 +134,7 @@ const RecurringPlan = (props: {
   setNote: React.Dispatch<React.SetStateAction<string>>
   getRecurringDescription: () => string
 }) => {
-  const [willEnd, setWillEnd] = useState(false)
+  const [willEnd, setWillEnd] = useState(!!props.endDate)
   const theme = useTheme()
 
   const handleSetWillEnd = () => {
@@ -338,7 +338,10 @@ const RecurringPlan = (props: {
 type PlanDayScreenProps = NativeStackScreenProps<RootStackParamList, 'PlanDay'>
 
 const PlanDayScreen = ({ route, navigation }: PlanDayScreenProps) => {
-  const defaultDate = moment(route.params.date).toDate()
+  const defaultDate = useMemo(
+    () => moment(route.params.date).toDate(),
+    [route.params.date]
+  )
   const {
     dayPlans,
     recurringPlans,
@@ -530,6 +533,61 @@ const PlanDayScreen = ({ route, navigation }: PlanDayScreenProps) => {
   const theme = useTheme()
   const insets = useSafeAreaInsets()
 
+  // Create a unique key representing what we're editing to detect changes
+  const editingContext = useMemo(() => {
+    return `${route.params.existingDayPlanId || 'new'}-${route.params.existingRecurringPlanId || 'new'}-${route.params.recurringPlanDate || route.params.date}`
+  }, [
+    route.params.existingDayPlanId,
+    route.params.existingRecurringPlanId,
+    route.params.recurringPlanDate,
+    route.params.date,
+  ])
+
+  // Reset state when editing context changes (navigating to edit different plans)
+  useEffect(() => {
+    // Reset all state using the existing variables that are already calculated
+    setOneTime(existingRecurringPlan ? false : true)
+    setDate(
+      existingDayPlan
+        ? moment(existingDayPlan.date).toDate()
+        : existingRecurringPlan
+          ? editingDate
+          : defaultDate
+    )
+    setEndDate(
+      existingRecurringPlan?.recurrence.endDate
+        ? moment(existingRecurringPlan.recurrence.endDate).toDate()
+        : null
+    )
+    setHours(
+      existingDayPlan
+        ? Math.floor(existingDayPlan.minutes / 60)
+        : recurringPlanData
+          ? Math.floor(recurringPlanData.minutes / 60)
+          : 0
+    )
+    setMinutes(
+      existingDayPlan
+        ? existingDayPlan.minutes % 60
+        : recurringPlanData
+          ? recurringPlanData.minutes % 60
+          : 0
+    )
+    setInterval(existingRecurringPlan?.recurrence.interval ?? 1)
+    setFrequency(
+      existingRecurringPlan?.recurrence.frequency ??
+        RecurringPlanFrequencies.WEEKLY
+    )
+    setWeekday(
+      existingRecurringPlan?.recurrence.monthlyByWeekdayConfig?.weekday ?? 0
+    )
+    setWeekOfMonth(
+      existingRecurringPlan?.recurrence.monthlyByWeekdayConfig?.weekOfMonth ?? 1
+    )
+    setNote(existingDayPlan?.note ?? recurringPlanData?.note ?? '')
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [editingContext]) // Only depend on the stable editing context key
+
   const handleAddPlan = () => {
     if (isEditMode) {
       // Update existing plan
@@ -643,99 +701,189 @@ const PlanDayScreen = ({ route, navigation }: PlanDayScreenProps) => {
             gap: 20,
           }}
         >
-          <Section>
-            <View style={{ flexDirection: 'column', gap: 10 }}>
-              {!isEditMode && (
-                <InputRowContainer>
-                  <XView
+          {isEditMode && (
+            <View style={{ paddingHorizontal: 20, paddingTop: 10 }}>
+              <View
+                style={{
+                  backgroundColor: theme.colors.accent3Alt,
+                  padding: 15,
+                  borderRadius: theme.numbers.borderRadiusMd,
+                  borderWidth: 1,
+                  borderColor: theme.colors.accent3,
+                }}
+              >
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    marginBottom: 8,
+                  }}
+                >
+                  <IconButton
+                    icon={existingDayPlan ? faCalendarDay : faRepeat}
+                    color={theme.colors.accent3}
+                    size={18}
+                  />
+                  <Text
                     style={{
-                      backgroundColor: theme.colors.background,
-                      borderRadius: theme.numbers.borderRadiusXl,
-                      padding: 10,
+                      fontFamily: theme.fonts.semiBold,
+                      color: theme.colors.accent3,
+                      marginLeft: 8,
+                      fontSize: theme.fontSize('md'),
                     }}
                   >
-                    <Button
-                      style={{
-                        backgroundColor: oneTime
-                          ? theme.colors.accentTranslucent
-                          : undefined,
-                        borderColor: oneTime ? theme.colors.accent : undefined,
-                        borderWidth: oneTime ? 1 : 0,
-                        paddingHorizontal: 30,
-                        paddingVertical: 10,
-                        borderRadius: theme.numbers.borderRadiusXl,
-                        justifyContent: 'center',
-                        flex: 1,
-                        flexDirection: 'row',
-                        alignItems: 'center',
-                        gap: 5,
-                      }}
-                      onPress={() => setOneTime(true)}
-                    >
-                      <IconButton
-                        icon={faCalendarDay}
-                        color={
-                          oneTime ? theme.colors.accent : theme.colors.text
-                        }
-                      />
-                      <Text
-                        style={{
-                          textAlign: 'center',
-                          color: oneTime
-                            ? theme.colors.accent
-                            : theme.colors.text,
-                        }}
-                      >
-                        {i18n.t('oneTime')}
-                      </Text>
-                    </Button>
-                    <Button
-                      style={{
-                        backgroundColor: !oneTime
-                          ? theme.colors.accentTranslucent
-                          : undefined,
-                        borderColor: !oneTime ? theme.colors.accent : undefined,
-                        borderWidth: !oneTime ? 1 : 0,
-                        paddingHorizontal: 30,
-                        paddingVertical: 10,
-                        borderRadius: theme.numbers.borderRadiusXl,
-                        justifyContent: 'center',
-                        flex: 1,
-                        flexDirection: 'row',
-                        alignItems: 'center',
-                        gap: 5,
-                      }}
-                      onPress={() => setOneTime(false)}
-                    >
-                      <IconButton
-                        icon={faRepeat}
-                        color={
-                          !oneTime ? theme.colors.accent : theme.colors.text
-                        }
-                      />
-                      <Text
-                        style={{
-                          textAlign: 'center',
-                          color: !oneTime
-                            ? theme.colors.accent
-                            : theme.colors.text,
-                        }}
-                      >
-                        {i18n.t('recurring')}
-                      </Text>
-                    </Button>
-                  </XView>
-                </InputRowContainer>
-              )}
-              {!isEditMode && oneTime && (
+                    {existingDayPlan
+                      ? i18n.t('editingDayPlan')
+                      : isOverrideMode
+                        ? `${i18n.t('editingOverride')} • ${i18n.t('recurring')}`
+                        : i18n.t('editingRecurringPlan')}
+                  </Text>
+                </View>
                 <Text
                   style={{
                     fontSize: theme.fontSize('sm'),
-                    color: theme.colors.textAlt,
+                    color: theme.colors.text,
+                    lineHeight: theme.fontSize('sm') * 1.4,
                   }}
                 >
-                  {i18n.t('oneTimeSchedule_description')}
+                  {isOverrideMode
+                    ? i18n.t('editingOverride_description')
+                    : i18n.t('editingPlan_description')}
                 </Text>
+              </View>
+            </View>
+          )}
+          <Section>
+            <View style={{ flexDirection: 'column', gap: 10 }}>
+              {isEditMode ? (
+                <InputRowContainer label={i18n.t('currentPlanType')}>
+                  <View
+                    style={{
+                      backgroundColor: theme.colors.backgroundLighter,
+                      borderRadius: theme.numbers.borderRadiusMd,
+                      padding: 12,
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      justifyContent: 'flex-end',
+                      gap: 8,
+                      flex: 1,
+                    }}
+                  >
+                    <IconButton
+                      icon={existingDayPlan ? faCalendarDay : faRepeat}
+                      color={theme.colors.accent}
+                      size={16}
+                    />
+                    <Text
+                      style={{
+                        color: theme.colors.accent,
+                        fontFamily: theme.fonts.semiBold,
+                        fontSize: theme.fontSize('md'),
+                      }}
+                    >
+                      {existingDayPlan
+                        ? i18n.t('oneTime')
+                        : i18n.t('recurring')}
+                    </Text>
+                  </View>
+                </InputRowContainer>
+              ) : (
+                <>
+                  <InputRowContainer>
+                    <XView
+                      style={{
+                        backgroundColor: theme.colors.background,
+                        borderRadius: theme.numbers.borderRadiusXl,
+                        padding: 10,
+                      }}
+                    >
+                      <Button
+                        style={{
+                          backgroundColor: oneTime
+                            ? theme.colors.accentTranslucent
+                            : undefined,
+                          borderColor: oneTime
+                            ? theme.colors.accent
+                            : undefined,
+                          borderWidth: oneTime ? 1 : 0,
+                          paddingHorizontal: 30,
+                          paddingVertical: 10,
+                          borderRadius: theme.numbers.borderRadiusXl,
+                          justifyContent: 'center',
+                          flex: 1,
+                          flexDirection: 'row',
+                          alignItems: 'center',
+                          gap: 5,
+                        }}
+                        onPress={() => setOneTime(true)}
+                      >
+                        <IconButton
+                          icon={faCalendarDay}
+                          color={
+                            oneTime ? theme.colors.accent : theme.colors.text
+                          }
+                        />
+                        <Text
+                          style={{
+                            textAlign: 'center',
+                            color: oneTime
+                              ? theme.colors.accent
+                              : theme.colors.text,
+                          }}
+                        >
+                          {i18n.t('oneTime')}
+                        </Text>
+                      </Button>
+                      <Button
+                        style={{
+                          backgroundColor: !oneTime
+                            ? theme.colors.accentTranslucent
+                            : undefined,
+                          borderColor: !oneTime
+                            ? theme.colors.accent
+                            : undefined,
+                          borderWidth: !oneTime ? 1 : 0,
+                          paddingHorizontal: 30,
+                          paddingVertical: 10,
+                          borderRadius: theme.numbers.borderRadiusXl,
+                          justifyContent: 'center',
+                          flex: 1,
+                          flexDirection: 'row',
+                          alignItems: 'center',
+                          gap: 5,
+                        }}
+                        onPress={() => setOneTime(false)}
+                      >
+                        <IconButton
+                          icon={faRepeat}
+                          color={
+                            !oneTime ? theme.colors.accent : theme.colors.text
+                          }
+                        />
+                        <Text
+                          style={{
+                            textAlign: 'center',
+                            color: !oneTime
+                              ? theme.colors.accent
+                              : theme.colors.text,
+                          }}
+                        >
+                          {i18n.t('recurring')}
+                        </Text>
+                      </Button>
+                    </XView>
+                  </InputRowContainer>
+                  {oneTime && (
+                    <Text
+                      style={{
+                        fontSize: theme.fontSize('sm'),
+                        color: theme.colors.textAlt,
+                      }}
+                    >
+                      {i18n.t('oneTimeSchedule_description')}
+                    </Text>
+                  )}
+                </>
               )}
             </View>
             {oneTime ? (
@@ -864,6 +1012,8 @@ const PlanDayScreen = ({ route, navigation }: PlanDayScreenProps) => {
                           native: true,
                           duration: 2500,
                         })
+                        navigation.goBack()
+                      } else {
                         navigation.goBack()
                       }
                     }}

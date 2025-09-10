@@ -209,14 +209,13 @@ const RootStackComponent = () => {
           let title = i18n.t('createPlan')
 
           if (params?.existingDayPlanId) {
-            title = `${i18n.t('editPlan')} • ${i18n.t('oneTime')}`
+            title = i18n.t('editingDayPlan')
           } else if (params?.existingRecurringPlanId) {
             if (params?.recurringPlanDate) {
-              // This is an override scenario - we'd need to check if override exists
-              // For simplicity, we'll show "Edit Plan" since the screen will determine create vs edit override
-              title = `${i18n.t('editPlan')} • ${i18n.t('override')}`
+              // This is an override scenario
+              title = `${i18n.t('editingOverride')}`
             } else {
-              title = `${i18n.t('editPlan')} • ${i18n.t('recurring')}`
+              title = i18n.t('editingRecurringPlan')
             }
           }
 

@@ -401,6 +401,13 @@ export enum RecurringPlanFrequencies {
   WEEKLY,
   BI_WEEKLY,
   MONTHLY,
+  MONTHLY_BY_WEEKDAY,
+}
+
+// For monthly by weekday patterns (e.g., "first Monday of the month")
+export type MonthlyByWeekdayConfig = {
+  weekday: number // 0-6 (Sunday-Saturday)
+  weekOfMonth: number // 1-4 for first, second, third, fourth week, or -1 for last week
 }
 
 export type RecurringPlanOverride = {
@@ -417,10 +424,49 @@ export type RecurringPlan = {
     frequency: RecurringPlanFrequencies
     interval: number
     endDate: Date | null
+    // For MONTHLY_BY_WEEKDAY frequency only
+    monthlyByWeekdayConfig?: MonthlyByWeekdayConfig
   }
   note?: string
   deletedDates?: Date[]
   overrides?: RecurringPlanOverride[]
+}
+
+// Helper function to check if a date matches a monthly by weekday pattern
+const doesDayMatchMonthlyByWeekday = (
+  day: Date,
+  config: MonthlyByWeekdayConfig
+): boolean => {
+  const momentDay = moment(day)
+  const dayWeekday = momentDay.day() // 0-6 (Sunday-Saturday)
+
+  // Check if the weekday matches
+  if (dayWeekday !== config.weekday) {
+    return false
+  }
+
+  // Get the first day of the month and find which week of the month this day is in
+  const firstDayOfMonth = momentDay.clone().startOf('month')
+
+  if (config.weekOfMonth === -1) {
+    // Handle "last [weekday] of month"
+    const lastDayOfMonth = momentDay.clone().endOf('month')
+    const daysFromEnd = lastDayOfMonth.date() - momentDay.date()
+    return daysFromEnd < 7 && dayWeekday === config.weekday
+  } else {
+    // Handle "first", "second", "third", "fourth" [weekday] of month
+    // We need to be more precise about which occurrence this is
+    const firstWeekdayOfMonth = firstDayOfMonth.clone()
+    while (firstWeekdayOfMonth.day() !== config.weekday) {
+      firstWeekdayOfMonth.add(1, 'day')
+    }
+
+    // Calculate which occurrence this is (1st, 2nd, 3rd, 4th)
+    const weeksBetween = momentDay.diff(firstWeekdayOfMonth, 'weeks')
+    const occurrence = weeksBetween + 1
+
+    return occurrence === config.weekOfMonth
+  }
 }
 
 export const getPlansIntersectingDay = (
@@ -464,6 +510,16 @@ export const getPlansIntersectingDay = (
       case RecurringPlanFrequencies.MONTHLY:
         return (
           momentDay.date() === momentStartDate.date() &&
+          momentDay.isSameOrAfter(momentStartDate) &&
+          (!endDate || momentDay.isSameOrBefore(endDate))
+        )
+      case RecurringPlanFrequencies.MONTHLY_BY_WEEKDAY:
+        return (
+          recurrence.monthlyByWeekdayConfig &&
+          doesDayMatchMonthlyByWeekday(
+            day,
+            recurrence.monthlyByWeekdayConfig
+          ) &&
           momentDay.isSameOrAfter(momentStartDate) &&
           (!endDate || momentDay.isSameOrBefore(endDate))
         )

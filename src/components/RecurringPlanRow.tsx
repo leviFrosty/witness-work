@@ -48,6 +48,10 @@ const RecurringPlanRow = (props: {
         return i18n.t('biWeekly')
       case RecurringPlanFrequencies.MONTHLY:
         return i18n.t('monthly')
+      case RecurringPlanFrequencies.MONTHLY_BY_WEEKDAY:
+        return i18n.t('monthlyByWeekday')
+      default:
+        return i18n.t('unknown')
     }
   }
 

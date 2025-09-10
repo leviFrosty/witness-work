@@ -125,8 +125,13 @@ const RecurringPlan = (props: {
   setInterval: React.Dispatch<React.SetStateAction<number>>
   frequency: RecurringPlanFrequencies
   setFrequency: React.Dispatch<React.SetStateAction<RecurringPlanFrequencies>>
+  weekday: number
+  setWeekday: React.Dispatch<React.SetStateAction<number>>
+  weekOfMonth: number
+  setWeekOfMonth: React.Dispatch<React.SetStateAction<number>>
   note?: string
   setNote: React.Dispatch<React.SetStateAction<string>>
+  getRecurringDescription: () => string
 }) => {
   const [willEnd, setWillEnd] = useState(false)
   const theme = useTheme()
@@ -153,6 +158,10 @@ const RecurringPlan = (props: {
       label: i18n.t('monthly'),
       value: RecurringPlanFrequencies.MONTHLY,
     },
+    {
+      label: i18n.t('monthlyByWeekday'),
+      value: RecurringPlanFrequencies.MONTHLY_BY_WEEKDAY,
+    },
   ]
 
   return (
@@ -178,6 +187,64 @@ const RecurringPlan = (props: {
           />
         </View>
       </InputRowContainer>
+
+      {props.frequency === RecurringPlanFrequencies.MONTHLY_BY_WEEKDAY && (
+        <>
+          <InputRowContainer label={i18n.t('selectWeekday')}>
+            <View style={{ flex: 1 }}>
+              <Select
+                data={[
+                  { label: i18n.t('sunday'), value: 0 },
+                  { label: i18n.t('monday'), value: 1 },
+                  { label: i18n.t('tuesday'), value: 2 },
+                  { label: i18n.t('wednesday'), value: 3 },
+                  { label: i18n.t('thursday'), value: 4 },
+                  { label: i18n.t('friday'), value: 5 },
+                  { label: i18n.t('saturday'), value: 6 },
+                ]}
+                placeholder={
+                  [
+                    i18n.t('sunday'),
+                    i18n.t('monday'),
+                    i18n.t('tuesday'),
+                    i18n.t('wednesday'),
+                    i18n.t('thursday'),
+                    i18n.t('friday'),
+                    i18n.t('saturday'),
+                  ][props.weekday]
+                }
+                onChange={({ value }) => props.setWeekday(value)}
+                value={props.weekday.toString()}
+              />
+            </View>
+          </InputRowContainer>
+          <InputRowContainer label={i18n.t('selectWeekOfMonth')}>
+            <View style={{ flex: 1 }}>
+              <Select
+                data={[
+                  { label: i18n.t('firstWeek'), value: 1 },
+                  { label: i18n.t('secondWeek'), value: 2 },
+                  { label: i18n.t('thirdWeek'), value: 3 },
+                  { label: i18n.t('fourthWeek'), value: 4 },
+                  { label: i18n.t('lastWeek'), value: -1 },
+                ]}
+                placeholder={
+                  props.weekOfMonth === -1
+                    ? i18n.t('lastWeek')
+                    : [
+                        i18n.t('firstWeek'),
+                        i18n.t('secondWeek'),
+                        i18n.t('thirdWeek'),
+                        i18n.t('fourthWeek'),
+                      ][props.weekOfMonth - 1]
+                }
+                onChange={({ value }) => props.setWeekOfMonth(value)}
+                value={props.weekOfMonth.toString()}
+              />
+            </View>
+          </InputRowContainer>
+        </>
+      )}
       <InputRowContainer
         label={i18n.t('endDate')}
         style={{ justifyContent: 'space-between' }}
@@ -223,6 +290,20 @@ const RecurringPlan = (props: {
           />
         </View>
       </InputRowContainer>
+      {(props.frequency === RecurringPlanFrequencies.MONTHLY ||
+        props.frequency === RecurringPlanFrequencies.MONTHLY_BY_WEEKDAY) && (
+        <View style={{ paddingHorizontal: 20, paddingVertical: 8 }}>
+          <Text
+            style={{
+              fontSize: theme.fontSize('sm'),
+              color: theme.colors.textAlt,
+              fontStyle: 'italic',
+            }}
+          >
+            {props.getRecurringDescription()}
+          </Text>
+        </View>
+      )}
       <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
         <View style={{ width: '50%' }}>
           <InputRowContainer label={i18n.t('hours')} lastInSection>
@@ -333,6 +414,114 @@ const PlanDayScreen = ({ route, navigation }: PlanDayScreenProps) => {
     existingRecurringPlan?.recurrence.frequency ??
       RecurringPlanFrequencies.WEEKLY
   )
+  const [weekday, setWeekday] = useState(
+    existingRecurringPlan?.recurrence.monthlyByWeekdayConfig?.weekday ?? 0
+  )
+  const [weekOfMonth, setWeekOfMonth] = useState(
+    existingRecurringPlan?.recurrence.monthlyByWeekdayConfig?.weekOfMonth ?? 1
+  )
+
+  // Helper function to calculate week of month for a given date
+  const calculateWeekOfMonth = (targetDate: Date): number => {
+    const momentDate = moment(targetDate)
+    const targetWeekday = momentDate.day()
+    const targetDateNum = momentDate.date()
+
+    // Find the first occurrence of this weekday in the month
+    const firstDayOfMonth = momentDate.clone().startOf('month')
+    const firstWeekdayOfMonth = firstDayOfMonth.clone()
+
+    while (firstWeekdayOfMonth.day() !== targetWeekday) {
+      firstWeekdayOfMonth.add(1, 'day')
+    }
+
+    // Calculate which occurrence this is (1st, 2nd, 3rd, 4th)
+    const weeksBetween = momentDate.diff(firstWeekdayOfMonth, 'weeks')
+    const occurrence = weeksBetween + 1
+
+    // Check if this is the last occurrence of this weekday in the month
+    const lastDayOfMonth = momentDate.clone().endOf('month')
+    const daysFromEnd = lastDayOfMonth.date() - targetDateNum
+    const isLastWeek = daysFromEnd < 7 && targetWeekday === momentDate.day()
+
+    return isLastWeek ? -1 : occurrence
+  }
+
+  // Auto-populate weekday and week of month when switching to MONTHLY_BY_WEEKDAY
+  const handleFrequencyChange = (
+    value: React.SetStateAction<RecurringPlanFrequencies>
+  ) => {
+    const newFrequency = typeof value === 'function' ? value(frequency) : value
+    setFrequency(newFrequency)
+
+    if (newFrequency === RecurringPlanFrequencies.MONTHLY_BY_WEEKDAY) {
+      const selectedWeekday = moment(date).day()
+      const selectedWeekOfMonth = calculateWeekOfMonth(date)
+
+      setWeekday(selectedWeekday)
+      setWeekOfMonth(selectedWeekOfMonth)
+    }
+  }
+
+  // Auto-populate weekday and week of month when date changes and frequency is MONTHLY_BY_WEEKDAY
+  const handleDateChange = (value: React.SetStateAction<Date>) => {
+    const newDate = typeof value === 'function' ? value(date) : value
+    setDate(newDate)
+
+    if (frequency === RecurringPlanFrequencies.MONTHLY_BY_WEEKDAY) {
+      const selectedWeekday = moment(newDate).day()
+      const selectedWeekOfMonth = calculateWeekOfMonth(newDate)
+
+      setWeekday(selectedWeekday)
+      setWeekOfMonth(selectedWeekOfMonth)
+    }
+  }
+
+  // Helper function to get ordinal suffix for numbers
+  const getOrdinalSuffix = (num: number): string => {
+    const j = num % 10
+    const k = num % 100
+    if (j === 1 && k !== 11) return `${num}st`
+    if (j === 2 && k !== 12) return `${num}nd`
+    if (j === 3 && k !== 13) return `${num}rd`
+    return `${num}th`
+  }
+
+  // Helper function to get descriptive text for recurring frequency
+  const getRecurringDescription = (): string => {
+    if (frequency === RecurringPlanFrequencies.MONTHLY) {
+      const dayOfMonth = moment(date).date()
+      return `${i18n.t('repeatsOnThe')} ${getOrdinalSuffix(dayOfMonth)} ${i18n.t('ofEachMonth')}`
+    } else if (frequency === RecurringPlanFrequencies.MONTHLY_BY_WEEKDAY) {
+      const weekdayNames = [
+        i18n.t('sunday'),
+        i18n.t('monday'),
+        i18n.t('tuesday'),
+        i18n.t('wednesday'),
+        i18n.t('thursday'),
+        i18n.t('friday'),
+        i18n.t('saturday'),
+      ]
+      const weekdayName = weekdayNames[weekday]
+
+      if (weekOfMonth === -1) {
+        return `${i18n.t('repeatsOnThe_weekday')} ${i18n.t('lastWeek').toLowerCase()} ${weekdayName} ${i18n.t('ofEveryMonth')}`
+      } else {
+        const weekNames = [
+          i18n.t('firstWeek'),
+          i18n.t('secondWeek'),
+          i18n.t('thirdWeek'),
+          i18n.t('fourthWeek'),
+        ]
+        const weekName =
+          weekNames[weekOfMonth - 1]?.toLowerCase() ||
+          `${getOrdinalSuffix(weekOfMonth)}`
+        return `${i18n.t('repeatsOnThe_weekday')} ${weekName} ${weekdayName} ${i18n.t('ofEveryMonth')}`
+      }
+    }
+    return ''
+  }
+
   const [note, setNote] = useState(
     existingDayPlan?.note ?? recurringPlanData?.note ?? ''
   )
@@ -378,6 +567,10 @@ const PlanDayScreen = ({ route, navigation }: PlanDayScreenProps) => {
               endDate,
               frequency,
               interval,
+              monthlyByWeekdayConfig:
+                frequency === RecurringPlanFrequencies.MONTHLY_BY_WEEKDAY
+                  ? { weekday, weekOfMonth }
+                  : undefined,
             },
             note: note || undefined,
           })
@@ -409,6 +602,10 @@ const PlanDayScreen = ({ route, navigation }: PlanDayScreenProps) => {
             endDate,
             frequency,
             interval,
+            monthlyByWeekdayConfig:
+              frequency === RecurringPlanFrequencies.MONTHLY_BY_WEEKDAY
+                ? { weekday, weekOfMonth }
+                : undefined,
           },
           note: note || undefined,
         })
@@ -557,18 +754,24 @@ const PlanDayScreen = ({ route, navigation }: PlanDayScreenProps) => {
                 hours={hours}
                 minutes={minutes}
                 setMinutes={setMinutes}
-                setDate={setDate}
+                setDate={handleDateChange}
                 setHours={setHours}
                 endDate={endDate}
                 setEndDate={setEndDate}
                 interval={interval}
                 setInterval={setInterval}
                 frequency={frequency}
-                setFrequency={setFrequency}
+                setFrequency={handleFrequencyChange}
+                weekday={weekday}
+                setWeekday={setWeekday}
+                weekOfMonth={weekOfMonth}
+                setWeekOfMonth={setWeekOfMonth}
                 note={note}
                 setNote={setNote}
+                getRecurringDescription={getRecurringDescription}
               />
             )}
+
             <View style={{ paddingRight: 20, paddingVertical: 15 }}>
               <ActionButton
                 onPress={handleAddPlan}

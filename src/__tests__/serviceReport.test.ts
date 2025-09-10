@@ -1310,4 +1310,119 @@ describe('lib/serviceReport', () => {
       })
     })
   })
+
+  describe('MONTHLY_BY_WEEKDAY recurring plans', () => {
+    it('should match monthly by weekday plans correctly', () => {
+      const plan: RecurringPlan = {
+        id: '1',
+        startDate: new Date(2024, 0, 1), // January 1, 2024 (Monday)
+        minutes: 60,
+        recurrence: {
+          frequency: RecurringPlanFrequencies.MONTHLY_BY_WEEKDAY,
+          interval: 1,
+          endDate: null,
+          monthlyByWeekdayConfig: {
+            weekday: 1, // Monday
+            weekOfMonth: 1, // First week
+          },
+        },
+      }
+
+      // First Monday of February 2024 is February 5th
+      const firstMondayFeb = new Date(2024, 1, 5)
+      const plans = getPlansIntersectingDay(firstMondayFeb, [plan])
+      expect(plans).toHaveLength(1)
+
+      // February 12th is second Monday, should NOT match
+      const secondMondayFeb = new Date(2024, 1, 12)
+      const noPlans = getPlansIntersectingDay(secondMondayFeb, [plan])
+      expect(noPlans).toHaveLength(0)
+
+      // First Monday of March 2024 is March 4th
+      const firstMondayMarch = new Date(2024, 2, 4)
+      const marchPlans = getPlansIntersectingDay(firstMondayMarch, [plan])
+      expect(marchPlans).toHaveLength(1)
+    })
+
+    it('should match last weekday of month correctly', () => {
+      const plan: RecurringPlan = {
+        id: '1',
+        startDate: new Date(2024, 0, 29), // January 29, 2024 (last Monday)
+        minutes: 60,
+        recurrence: {
+          frequency: RecurringPlanFrequencies.MONTHLY_BY_WEEKDAY,
+          interval: 1,
+          endDate: null,
+          monthlyByWeekdayConfig: {
+            weekday: 1, // Monday
+            weekOfMonth: -1, // Last week
+          },
+        },
+      }
+
+      // Last Monday of February 2024 is February 26th
+      const lastMondayFeb = new Date(2024, 1, 26)
+      const plans = getPlansIntersectingDay(lastMondayFeb, [plan])
+      expect(plans).toHaveLength(1)
+
+      // February 19th is third Monday, should NOT match
+      const thirdMondayFeb = new Date(2024, 1, 19)
+      const noPlans = getPlansIntersectingDay(thirdMondayFeb, [plan])
+      expect(noPlans).toHaveLength(0)
+    })
+
+    it('should handle edge case where fourth week is also last week', () => {
+      const plan: RecurringPlan = {
+        id: '1',
+        startDate: new Date(2024, 8, 2), // September 2, 2024 (first Monday)
+        minutes: 60,
+        recurrence: {
+          frequency: RecurringPlanFrequencies.MONTHLY_BY_WEEKDAY,
+          interval: 1,
+          endDate: null,
+          monthlyByWeekdayConfig: {
+            weekday: 1, // Monday
+            weekOfMonth: 4, // Fourth week
+          },
+        },
+      }
+
+      // Fourth Monday of September 2024 is September 23rd
+      const fourthMondaySep = new Date(2024, 8, 23)
+      const plans = getPlansIntersectingDay(fourthMondaySep, [plan])
+      expect(plans).toHaveLength(1)
+    })
+
+    it('should properly handle last Friday of months with different lengths', () => {
+      const plan: RecurringPlan = {
+        id: '1',
+        startDate: new Date(2024, 0, 26), // January 26, 2024 (last Friday)
+        minutes: 60,
+        recurrence: {
+          frequency: RecurringPlanFrequencies.MONTHLY_BY_WEEKDAY,
+          interval: 1,
+          endDate: null,
+          monthlyByWeekdayConfig: {
+            weekday: 5, // Friday
+            weekOfMonth: -1, // Last week
+          },
+        },
+      }
+
+      // Last Friday of February 2024 is February 23rd
+      const lastFridayFeb = new Date(2024, 1, 23)
+      const februaryPlans = getPlansIntersectingDay(lastFridayFeb, [plan])
+      expect(februaryPlans).toHaveLength(1)
+
+      // Last Friday of March 2024 is March 29th
+      const lastFridayMarch = new Date(2024, 2, 29)
+      const marchPlans = getPlansIntersectingDay(lastFridayMarch, [plan])
+      expect(marchPlans).toHaveLength(1)
+
+      // March 22nd is fourth Friday, should NOT match
+      const fourthFridayMarch = new Date(2024, 2, 22)
+      const noPlans = getPlansIntersectingDay(fourthFridayMarch, [plan])
+      expect(noPlans).toHaveLength(0)
+    })
+  })
 })

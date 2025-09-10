@@ -27,6 +27,7 @@ import { RecurringPlanFrequencies } from '../lib/serviceReport'
 
 import TextInput from '../components/TextInput'
 import { RootStackParamList } from '../types/rootStack'
+import DayHistoryView from '../components/DayHistoryView'
 
 const hourOptions = [...Array(24).keys()].map((value) => ({
   label: `${value}`,
@@ -797,6 +798,26 @@ const PlanDayScreen = ({ route, navigation }: PlanDayScreenProps) => {
               </ActionButton>
             </View>
           </Section>
+
+          <View style={{ paddingHorizontal: 20 }}>
+            <DayHistoryView
+              date={date}
+              onDayPlanPress={(plan) => {
+                navigation.navigate('PlanDay', {
+                  date: date.toISOString(),
+                  existingDayPlanId: plan.id,
+                })
+              }}
+              onRecurringPlanPress={(plan) => {
+                navigation.navigate('PlanDay', {
+                  date: date.toISOString(),
+                  existingRecurringPlanId: plan.id,
+                  recurringPlanDate: date.toISOString(),
+                })
+              }}
+            />
+          </View>
+
           {existingRecurringPlan && (
             <View style={{ paddingHorizontal: 20, gap: 15 }}>
               {isOverrideMode && (

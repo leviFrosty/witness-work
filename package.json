@@ -42,7 +42,7 @@
     "@tamagui/config": "^1.116.14",
     "@tamagui/toast": "^1.116.14",
     "awesome-phonenumber": "^7.2.0",
-    "axios": "^1.7.7",
+    "axios": "^1.12.0",
     "babel-plugin-transform-inline-environment-variables": "^0.4.4",
     "burnt": "^0.12.2",
     "dotenv": "^16.4.5",

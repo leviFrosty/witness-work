@@ -3,13 +3,11 @@ import { Sheet } from 'tamagui'
 import Text from './MyText'
 import i18n from '../lib/locales'
 import useTheme from '../contexts/theme'
-import { useNavigation } from '@react-navigation/native'
 import { ServiceReport } from '../types/serviceReport'
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
 import ActionButton from './ActionButton'
 import XView from './layout/XView'
 import Button from './Button'
-import { RootStackNavigation } from '../types/rootStack'
 import DayHistoryView from './DayHistoryView'
 
 export type SelectedDateSheetState = {
@@ -21,15 +19,27 @@ interface Props {
   sheet: SelectedDateSheetState
   setSheet: React.Dispatch<React.SetStateAction<SelectedDateSheetState>>
   thisMonthsReports: ServiceReport[] | null
+  onAddTime?: () => void
+  onPlanDay?: () => void
+  onNavigateToPlanDay?: (existingDayPlanId: string) => void
+  onNavigateToRecurringPlan?: (
+    existingRecurringPlanId: string,
+    recurringPlanDate: string
+  ) => void
+  onEditTimeReport?: (report: ServiceReport) => void
 }
 
 const SelectedDateSheet: React.FC<Props> = ({
   sheet,
   setSheet,
   thisMonthsReports,
+  onAddTime,
+  onPlanDay,
+  onNavigateToPlanDay,
+  onNavigateToRecurringPlan,
+  onEditTimeReport,
 }) => {
   const theme = useTheme()
-  const navigation = useNavigation<RootStackNavigation>()
 
   return (
     <Sheet
@@ -58,18 +68,15 @@ const SelectedDateSheet: React.FC<Props> = ({
               showHeader={true}
               onDayPlanPress={(plan) => {
                 setSheet({ ...sheet, open: false })
-                navigation.navigate('PlanDay', {
-                  date: sheet.date.toISOString(),
-                  existingDayPlanId: plan.id,
-                })
+                onNavigateToPlanDay?.(plan.id)
               }}
               onRecurringPlanPress={(plan) => {
                 setSheet({ ...sheet, open: false })
-                navigation.navigate('PlanDay', {
-                  date: sheet.date.toISOString(),
-                  existingRecurringPlanId: plan.id,
-                  recurringPlanDate: sheet.date.toISOString(),
-                })
+                onNavigateToRecurringPlan?.(plan.id, sheet.date.toISOString())
+              }}
+              onTimeReportPress={(report) => {
+                setSheet({ ...sheet, open: false })
+                onEditTimeReport?.(report)
               }}
             />
           </KeyboardAwareScrollView>
@@ -81,9 +88,7 @@ const SelectedDateSheet: React.FC<Props> = ({
                     ...sheet,
                     open: false,
                   })
-                  navigation.navigate('Add Time', {
-                    date: sheet.date.toISOString(),
-                  })
+                  onAddTime?.()
                 }}
               >
                 <Text
@@ -98,11 +103,13 @@ const SelectedDateSheet: React.FC<Props> = ({
               </ActionButton>
             </View>
             <Button
-              onPress={() =>
-                navigation.navigate('PlanDay', {
-                  date: sheet.date.toISOString(),
+              onPress={() => {
+                setSheet({
+                  ...sheet,
+                  open: false,
                 })
-              }
+                onPlanDay?.()
+              }}
               style={{
                 paddingHorizontal: 40,
                 borderColor: theme.colors.border,

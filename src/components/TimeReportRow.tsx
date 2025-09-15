@@ -20,9 +20,10 @@ import { useFormattedMinutes } from '../lib/minutes'
 
 interface TimeReportRowProps {
   report: ServiceReport
+  onPress?: () => void
 }
 
-const TimeReportRow = ({ report }: TimeReportRowProps) => {
+const TimeReportRow = ({ report, onPress }: TimeReportRowProps) => {
   const theme = useTheme()
   const { deleteServiceReport } = useServiceReport()
   const navigation = useNavigation<RootStackNavigation>()
@@ -82,11 +83,15 @@ const TimeReportRow = ({ report }: TimeReportRowProps) => {
       }
     >
       <Button
-        onPress={() =>
-          navigation.navigate('Add Time', {
-            existingReport: JSON.stringify(report),
-          })
-        }
+        onPress={() => {
+          if (onPress) {
+            onPress()
+          } else {
+            navigation.navigate('Add Time', {
+              existingReport: JSON.stringify(report),
+            })
+          }
+        }}
         style={{
           backgroundColor: theme.colors.card,
           padding: 15,

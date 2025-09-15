@@ -1,7 +1,7 @@
 import useServiceReport from '../../stores/serviceReport'
 import useTheme from '../../contexts/theme'
 import moment from 'moment'
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import ExportTimeSheet, {
   ExportTimeSheetState,
 } from '../../components/ExportTimeSheet'
@@ -20,12 +20,16 @@ import Text from '../../components/MyText'
 import i18n from '../../lib/locales'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { HomeTabStackParamList } from '../../types/homeStack'
+import { useNavigation as useRootNavigation } from '@react-navigation/native'
+import { RootStackNavigation } from '../../types/rootStack'
+import { ServiceReport } from '../../types/serviceReport'
 
 type Props = NativeStackScreenProps<HomeTabStackParamList, 'Month'>
 
 const MonthScreen = ({ route, navigation }: Props) => {
   const theme = useTheme()
   const { serviceReports } = useServiceReport()
+  const rootNavigation = useRootNavigation<RootStackNavigation>()
   const [year, setYear] = useState(route.params?.year || moment().year())
   const [month, setMonth] = useState(route.params?.month || moment().month())
   const [sheet, setSheet] = useState<ExportTimeSheetState>({
@@ -38,8 +42,62 @@ const MonthScreen = ({ route, navigation }: Props) => {
       open: false,
       date: new Date(),
     })
+  const pendingNavigation = useRef<(() => void) | null>(null)
   const selectedMonth = moment().month(month).year(year)
   const insets = useSafeAreaInsets()
+
+  // Navigation callback functions
+  const handleAddTime = useCallback(() => {
+    pendingNavigation.current = () => {
+      rootNavigation.navigate('Add Time', {
+        date: selectedDateSheet.date.toISOString(),
+      })
+    }
+  }, [rootNavigation, selectedDateSheet.date])
+
+  const handlePlanDay = useCallback(() => {
+    pendingNavigation.current = () => {
+      rootNavigation.navigate('PlanDay', {
+        date: selectedDateSheet.date.toISOString(),
+      })
+    }
+  }, [rootNavigation, selectedDateSheet.date])
+
+  const handleNavigateToPlanDay = useCallback(
+    (existingDayPlanId: string) => {
+      pendingNavigation.current = () => {
+        rootNavigation.navigate('PlanDay', {
+          date: selectedDateSheet.date.toISOString(),
+          existingDayPlanId,
+        })
+      }
+    },
+    [rootNavigation, selectedDateSheet.date]
+  )
+
+  const handleNavigateToRecurringPlan = useCallback(
+    (existingRecurringPlanId: string, recurringPlanDate: string) => {
+      pendingNavigation.current = () => {
+        rootNavigation.navigate('PlanDay', {
+          date: selectedDateSheet.date.toISOString(),
+          existingRecurringPlanId,
+          recurringPlanDate,
+        })
+      }
+    },
+    [rootNavigation, selectedDateSheet.date]
+  )
+
+  const handleEditTimeReport = useCallback(
+    (report: ServiceReport) => {
+      pendingNavigation.current = () => {
+        rootNavigation.navigate('Add Time', {
+          existingReport: JSON.stringify(report),
+        })
+      }
+    },
+    [rootNavigation]
+  )
 
   useEffect(() => {
     if (route.params?.month) {
@@ -49,6 +107,16 @@ const MonthScreen = ({ route, navigation }: Props) => {
       setYear(route.params.year)
     }
   }, [route.params?.month, route.params?.year])
+
+  // Handle navigation after sheet closes
+  useEffect(() => {
+    if (!selectedDateSheet.open && pendingNavigation.current) {
+      const callback = pendingNavigation.current
+      pendingNavigation.current = null
+      // Small delay to ensure smooth sheet closing animation
+      setTimeout(callback, 125)
+    }
+  }, [selectedDateSheet.open])
 
   const handleArrowNavigate = useCallback(
     (direction: 'forward' | 'back') => {
@@ -188,6 +256,11 @@ const MonthScreen = ({ route, navigation }: Props) => {
         sheet={selectedDateSheet}
         setSheet={setSelectedDateSheet}
         thisMonthsReports={thisMonthsReports}
+        onAddTime={handleAddTime}
+        onPlanDay={handlePlanDay}
+        onNavigateToPlanDay={handleNavigateToPlanDay}
+        onNavigateToRecurringPlan={handleNavigateToRecurringPlan}
+        onEditTimeReport={handleEditTimeReport}
       />
     </>
   )

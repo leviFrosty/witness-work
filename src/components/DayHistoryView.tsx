@@ -27,6 +27,7 @@ interface DayHistoryViewProps {
   showHeader?: boolean
   onDayPlanPress?: (plan: DayPlan, date: Date) => void
   onRecurringPlanPress?: (plan: RecurringPlan, date: Date) => void
+  onTimeReportPress?: (report: ServiceReport) => void
 }
 
 const DayHistoryView: React.FC<DayHistoryViewProps> = ({
@@ -35,6 +36,7 @@ const DayHistoryView: React.FC<DayHistoryViewProps> = ({
   showHeader = false,
   onDayPlanPress,
   onRecurringPlanPress,
+  onTimeReportPress,
 }) => {
   const theme = useTheme()
   const { dayPlans, recurringPlans } = useServiceReport()
@@ -167,7 +169,12 @@ const DayHistoryView: React.FC<DayHistoryViewProps> = ({
                 : undefined
             }
             ItemSeparatorComponent={() => <View style={{ height: 10 }} />}
-            renderItem={({ item }) => <TimeReportRow report={item} />}
+            renderItem={({ item }) => (
+              <TimeReportRow
+                report={item}
+                onPress={() => onTimeReportPress?.(item)}
+              />
+            )}
             estimatedItemSize={66}
             ListEmptyComponent={
               <Card style={{ borderRadius: theme.numbers.borderRadiusSm }}>

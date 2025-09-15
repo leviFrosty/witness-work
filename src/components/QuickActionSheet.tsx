@@ -5,7 +5,7 @@ import XView from './layout/XView'
 import { faIdCard } from '@fortawesome/free-regular-svg-icons'
 import Text from './MyText'
 import i18n, { TranslationKey } from '../lib/locales'
-import { faClock, faTimes } from '@fortawesome/free-solid-svg-icons'
+import { faCalendar, faClock, faTimes } from '@fortawesome/free-solid-svg-icons'
 import useTheme from '../contexts/theme'
 import IconButton from './IconButton'
 import { View } from 'react-native'
@@ -20,7 +20,7 @@ export type QuickActionSheetProps = {
   setSheetOpen: React.Dispatch<React.SetStateAction<boolean>>
 }
 
-type QuickActionOption = 'addTime' | 'addContact'
+type QuickActionOption = 'addTime' | 'addContact' | 'addPlan'
 
 export default function QuickActionSheet({
   sheetOpen,
@@ -38,6 +38,9 @@ export default function QuickActionSheet({
         break
       case 'addContact':
         navigation.navigate('Contact Form', { id: Crypto.randomUUID() })
+        break
+      case 'addPlan':
+        navigation.navigate('PlanDay', {})
         break
     }
   }
@@ -74,11 +77,18 @@ export default function QuickActionSheet({
         <Sheet.ScrollView contentContainerStyle={{ paddingTop: 10 }}>
           <View style={{ gap: 10, paddingHorizontal: 20 }}>
             {publisher !== 'publisher' && (
-              <ActionButton
-                text='addTime'
-                icon={faClock}
-                onPress={() => handleQuickAction('addTime')}
-              />
+              <>
+                <ActionButton
+                  text='createPlan'
+                  icon={faCalendar}
+                  onPress={() => handleQuickAction('addPlan')}
+                />
+                <ActionButton
+                  text='addTime'
+                  icon={faClock}
+                  onPress={() => handleQuickAction('addTime')}
+                />
+              </>
             )}
 
             <ActionButton

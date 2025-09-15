@@ -696,3 +696,7 @@ find . -type d -not -path '*/node_modules*' -not -path '*/.git*' -not -path '*/.
 - **`src/stacks`** - Navigation stack configurations (HomeTabStack, RootStack for React Navigation)
 - **`src/stores`** - Zustand state management stores (contacts, conversations, service reports, preferences, MMKV)
 - **`src/types`** - TypeScript type definitions (contact, conversation, serviceReport, navigation, theme, etc.)
+
+## Response Guidelines
+
+Do not reiterate "Changes Made" or "How it works" after making a change. Simply make the change.

@@ -10,6 +10,7 @@ import useServiceReport from '../stores/serviceReport'
 import {
   getPlansIntersectingDay,
   plannedMinutesToCurrentDayForMonth,
+  getEffectiveMinutesForRecurringPlan,
 } from '../lib/serviceReport'
 import usePublisher from '../hooks/usePublisher'
 import Circle from './Circle'
@@ -40,24 +41,32 @@ export default function MonthScheduleSection(props: MonthScheduleSectionProps) {
       .fill(1)
       .forEach((_, i) => {
         const day = selectedMonth.clone().date(i + 1)
+        const dayDate = day.toDate()
 
         const dayPlan = dayPlans.find((plan) =>
           moment(plan.date).isSame(day, 'day')
         )
 
         const recurringPlansForDay = getPlansIntersectingDay(
-          day.toDate(),
+          dayDate,
           recurringPlans
         )
 
-        const highestRecurringPlanForDay = recurringPlansForDay.sort(
-          (a, b) => b.minutes - a.minutes
-        )[0]
+        // Get the highest recurring plan for the day, but use effective minutes (with overrides)
+        const highestRecurringPlanForDay = recurringPlansForDay
+          .map((plan) => ({
+            plan,
+            effectiveMinutes: getEffectiveMinutesForRecurringPlan(
+              plan,
+              dayDate
+            ),
+          }))
+          .sort((a, b) => b.effectiveMinutes - a.effectiveMinutes)[0]
 
         if (dayPlan) {
           count += dayPlan.minutes
         } else if (highestRecurringPlanForDay) {
-          count += highestRecurringPlanForDay.minutes
+          count += highestRecurringPlanForDay.effectiveMinutes
         }
       })
     return count

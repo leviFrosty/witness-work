@@ -10,11 +10,14 @@ import {
   getTotalMinutesForServiceYear,
   serviceReportHoursPerMonthToGoal,
   adjustedMinutesForSpecificMonth,
+  plannedMinutesToCurrentDayForMonth,
+  getEffectiveMinutesForRecurringPlan,
+  getEffectiveNoteForRecurringPlan,
 } from '../lib/serviceReport'
 import { ServiceReport, ServiceReportsByYears } from '../types/serviceReport'
 import { Publisher } from '../types/publisher'
 import { monthCreditMaxMinutes } from '../constants/serviceReports'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, beforeEach, afterEach, vi } from 'vitest'
 
 describe('lib/serviceReport', () => {
   describe('calculateProgress', () => {
@@ -1423,6 +1426,222 @@ describe('lib/serviceReport', () => {
       const fourthFridayMarch = new Date(2024, 2, 22)
       const noPlans = getPlansIntersectingDay(fourthFridayMarch, [plan])
       expect(noPlans).toHaveLength(0)
+    })
+  })
+
+  describe('Override calculations', () => {
+    const baseRecurringPlan: RecurringPlan = {
+      id: 'override-test-plan',
+      startDate: moment('2024-01-01').toDate(), // Monday
+      minutes: 300, // 5 hours
+      recurrence: {
+        frequency: RecurringPlanFrequencies.WEEKLY,
+        interval: 1,
+        endDate: null,
+      },
+      note: 'Original plan note',
+    }
+
+    it('should return original minutes when no override exists', () => {
+      const testDate = moment('2024-01-01').toDate()
+      const effectiveMinutes = getEffectiveMinutesForRecurringPlan(
+        baseRecurringPlan,
+        testDate
+      )
+      expect(effectiveMinutes).toBe(300)
+    })
+
+    it('should return override minutes when override exists', () => {
+      const testDate = moment('2024-01-15').toDate()
+      const planWithOverride: RecurringPlan = {
+        ...baseRecurringPlan,
+        overrides: [
+          {
+            date: testDate,
+            minutes: 60, // 1 hour instead of 5
+            note: 'Override note',
+          },
+        ],
+      }
+
+      const effectiveMinutes = getEffectiveMinutesForRecurringPlan(
+        planWithOverride,
+        testDate
+      )
+      expect(effectiveMinutes).toBe(60)
+    })
+
+    it('should return override note when override exists', () => {
+      const testDate = moment('2024-01-15').toDate()
+      const planWithOverride: RecurringPlan = {
+        ...baseRecurringPlan,
+        overrides: [
+          {
+            date: testDate,
+            minutes: 60,
+            note: 'Override note',
+          },
+        ],
+      }
+
+      const effectiveNote = getEffectiveNoteForRecurringPlan(
+        planWithOverride,
+        testDate
+      )
+      expect(effectiveNote).toBe('Override note')
+    })
+
+    it('should return original note when no override exists', () => {
+      const testDate = moment('2024-01-01').toDate()
+      const effectiveNote = getEffectiveNoteForRecurringPlan(
+        baseRecurringPlan,
+        testDate
+      )
+      expect(effectiveNote).toBe('Original plan note')
+    })
+  })
+
+  describe('plannedMinutesToCurrentDayForMonth with overrides', () => {
+    const baseRecurringPlan: RecurringPlan = {
+      id: 'monthly-calc-test-plan',
+      startDate: moment('2024-01-01').toDate(), // Monday
+      minutes: 300, // 5 hours
+      recurrence: {
+        frequency: RecurringPlanFrequencies.WEEKLY,
+        interval: 1,
+        endDate: null,
+      },
+    }
+
+    beforeEach(() => {
+      vi.useFakeTimers()
+      vi.setSystemTime(moment('2024-01-31').toDate()) // End of January
+    })
+
+    afterEach(() => {
+      vi.useRealTimers()
+    })
+
+    it('should calculate correct total with overrides applied', () => {
+      // January 2024: Mondays are 1st, 8th, 15th, 22nd, 29th = 5 Mondays
+      // Base plan: 5 * 300 minutes = 1500 minutes (25 hours)
+      // With override on 15th: 4 * 300 + 1 * 60 = 1260 minutes (21 hours)
+
+      const planWithOverride: RecurringPlan = {
+        ...baseRecurringPlan,
+        overrides: [
+          {
+            date: moment('2024-01-15').toDate(),
+            minutes: 60, // 1 hour instead of 5
+          },
+        ],
+      }
+
+      const totalMinutes = plannedMinutesToCurrentDayForMonth(
+        0, // January
+        2024,
+        [], // No day plans
+        [planWithOverride]
+      )
+
+      // Should be 4 * 300 + 1 * 60 = 1260 minutes
+      expect(totalMinutes).toBe(1260)
+    })
+
+    it('should handle multiple overrides in same month', () => {
+      const planWithMultipleOverrides: RecurringPlan = {
+        ...baseRecurringPlan,
+        overrides: [
+          {
+            date: moment('2024-01-15').toDate(),
+            minutes: 60, // 1 hour instead of 5
+          },
+          {
+            date: moment('2024-01-22').toDate(),
+            minutes: 120, // 2 hours instead of 5
+          },
+        ],
+      }
+
+      const totalMinutes = plannedMinutesToCurrentDayForMonth(
+        0, // January
+        2024,
+        [], // No day plans
+        [planWithMultipleOverrides]
+      )
+
+      // Should be 3 * 300 + 1 * 60 + 1 * 120 = 900 + 60 + 120 = 1080 minutes
+      expect(totalMinutes).toBe(1080)
+    })
+
+    it('should handle overrides with zero minutes', () => {
+      const planWithZeroOverride: RecurringPlan = {
+        ...baseRecurringPlan,
+        overrides: [
+          {
+            date: moment('2024-01-15').toDate(),
+            minutes: 0, // Skip this day
+          },
+        ],
+      }
+
+      const totalMinutes = plannedMinutesToCurrentDayForMonth(
+        0, // January
+        2024,
+        [], // No day plans
+        [planWithZeroOverride]
+      )
+
+      // Should be 4 * 300 + 1 * 0 = 1200 minutes
+      expect(totalMinutes).toBe(1200)
+    })
+
+    it('should prioritize highest override when multiple plans intersect', () => {
+      const plan1: RecurringPlan = {
+        id: 'plan-1',
+        startDate: moment('2024-01-01').toDate(),
+        minutes: 300,
+        recurrence: {
+          frequency: RecurringPlanFrequencies.WEEKLY,
+          interval: 1,
+          endDate: null,
+        },
+        overrides: [
+          {
+            date: moment('2024-01-15').toDate(),
+            minutes: 60,
+          },
+        ],
+      }
+
+      const plan2: RecurringPlan = {
+        id: 'plan-2',
+        startDate: moment('2024-01-01').toDate(),
+        minutes: 200,
+        recurrence: {
+          frequency: RecurringPlanFrequencies.WEEKLY,
+          interval: 1,
+          endDate: null,
+        },
+        overrides: [
+          {
+            date: moment('2024-01-15').toDate(),
+            minutes: 400, // This should be the highest
+          },
+        ],
+      }
+
+      const totalMinutes = plannedMinutesToCurrentDayForMonth(
+        0, // January
+        2024,
+        [], // No day plans
+        [plan1, plan2]
+      )
+
+      // For most days, plan1 (300) > plan2 (200), so plan1 is used
+      // But on Jan 15th, plan2 override (400) > plan1 override (60)
+      // Should be 4 * 300 + 1 * 400 = 1200 + 400 = 1600 minutes
+      expect(totalMinutes).toBe(1600)
     })
   })
 })

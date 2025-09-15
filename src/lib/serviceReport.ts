@@ -529,6 +529,41 @@ export const getPlansIntersectingDay = (
   })
 }
 
+/**
+ * Gets the effective minutes for a recurring plan on a specific date,
+ * accounting for overrides. This is the function to use for all calculations
+ * that need to display or calculate with the correct planned minutes.
+ */
+export const getEffectiveMinutesForRecurringPlan = (
+  plan: RecurringPlan,
+  date: Date
+): number => {
+  const override = plan.overrides?.find((o) => {
+    // Normalize both dates to start of day in local timezone to avoid timezone/time issues
+    const normalizedOverrideDate = moment(o.date).startOf('day')
+    const normalizedInputDate = moment(date).startOf('day')
+    return normalizedOverrideDate.isSame(normalizedInputDate, 'day')
+  })
+  return override ? override.minutes : plan.minutes
+}
+
+/**
+ * Gets the effective note for a recurring plan on a specific date, accounting
+ * for overrides.
+ */
+export const getEffectiveNoteForRecurringPlan = (
+  plan: RecurringPlan,
+  date: Date
+): string | undefined => {
+  const override = plan.overrides?.find((o) => {
+    // Normalize both dates to start of day in local timezone to avoid timezone/time issues
+    const normalizedOverrideDate = moment(o.date).startOf('day')
+    const normalizedInputDate = moment(date).startOf('day')
+    return normalizedOverrideDate.isSame(normalizedInputDate, 'day')
+  })
+  return override?.note || plan.note
+}
+
 export const plannedMinutesToCurrentDayForMonth = (
   month: number,
   year: number,
@@ -551,24 +586,29 @@ export const plannedMinutesToCurrentDayForMonth = (
     .fill(1)
     .forEach((_, i) => {
       const day = selectedMonth.clone().date(i + 1)
+      const dayDate = day.toDate()
 
       const dayPlan = dayPlans.find((plan) =>
         moment(plan.date).isSame(day, 'day')
       )
 
       const recurringPlansForDay = getPlansIntersectingDay(
-        day.toDate(),
+        dayDate,
         recurringPlans
       )
 
-      const highestRecurringPlanForDay = recurringPlansForDay.sort(
-        (a, b) => b.minutes - a.minutes
-      )[0]
+      // Get the highest recurring plan for the day, but use effective minutes (with overrides)
+      const highestRecurringPlanForDay = recurringPlansForDay
+        .map((plan) => ({
+          plan,
+          effectiveMinutes: getEffectiveMinutesForRecurringPlan(plan, dayDate),
+        }))
+        .sort((a, b) => b.effectiveMinutes - a.effectiveMinutes)[0]
 
       if (dayPlan) {
         count += dayPlan.minutes
       } else if (highestRecurringPlanForDay) {
-        count += highestRecurringPlanForDay.minutes
+        count += highestRecurringPlanForDay.effectiveMinutes
       }
     })
 

@@ -8,7 +8,12 @@ import Button from './Button'
 import useServiceReport from '../stores/serviceReport'
 import moment from 'moment'
 import { DayPlan, ServiceReport } from '../types/serviceReport'
-import { RecurringPlan, getPlansIntersectingDay } from '../lib/serviceReport'
+import {
+  RecurringPlan,
+  getPlansIntersectingDay,
+  getEffectiveMinutesForRecurringPlan,
+  getEffectiveNoteForRecurringPlan,
+} from '../lib/serviceReport'
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
@@ -147,19 +152,42 @@ const PlannedDay = (
     ) || 0
 
   const disabled = props.state === 'disabled'
+  // Get effective minutes for recurring plans (accounting for overrides)
+  const recurringPlansWithEffectiveMinutes = props.recurringPlans?.map(
+    (plan) => ({
+      plan,
+      effectiveMinutes: getEffectiveMinutesForRecurringPlan(
+        plan,
+        moment(props.date!.dateString).toDate()
+      ),
+    })
+  )
 
-  const highestRecurringPlanMinutes = props.recurringPlans?.sort(
-    (a, b) => b.minutes - a.minutes
-  )[0]?.minutes
+  const highestRecurringPlanEffectiveMinutes =
+    recurringPlansWithEffectiveMinutes?.sort(
+      (a, b) => b.effectiveMinutes - a.effectiveMinutes
+    )[0]?.effectiveMinutes
 
   const plannedMinutes =
-    props.dayPlan?.minutes || highestRecurringPlanMinutes || 0
+    props.dayPlan?.minutes || highestRecurringPlanEffectiveMinutes || 0
   const plannedDurationText = useCompactFormattedMinutes(plannedMinutes)
 
   const wentInService = !!props.serviceReports?.length
   const hasAPlan = !!(props.dayPlan || props.recurringPlans?.length)
+
+  // Check for notes from day plans, service reports, and recurring plans (with overrides)
+  const recurringPlanHasNote = props.recurringPlans?.some((plan) => {
+    const effectiveNote = getEffectiveNoteForRecurringPlan(
+      plan,
+      new Date(props.date!.dateString)
+    )
+    return !!effectiveNote
+  })
+
   const hasNote = !!(
-    props.dayPlan?.note || props.serviceReports?.some((report) => report.note)
+    props.dayPlan?.note ||
+    props.serviceReports?.some((report) => report.note) ||
+    recurringPlanHasNote
   )
   const hitDayPlanGoal =
     wentInService &&
@@ -168,8 +196,8 @@ const PlannedDay = (
 
   const hitRecurringPlanGoal =
     wentInService &&
-    highestRecurringPlanMinutes &&
-    minutesForDay >= highestRecurringPlanMinutes
+    highestRecurringPlanEffectiveMinutes &&
+    minutesForDay >= highestRecurringPlanEffectiveMinutes
 
   const hitGoal = props.dayPlan ? !!hitDayPlanGoal : !!hitRecurringPlanGoal
   const dateInPast = moment(props.date?.dateString).isSameOrBefore(

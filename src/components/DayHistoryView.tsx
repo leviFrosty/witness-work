@@ -11,7 +11,11 @@ import { useMemo } from 'react'
 import useServiceReport from '../stores/serviceReport'
 import XView from './layout/XView'
 import _ from 'lodash'
-import { getPlansIntersectingDay, RecurringPlan } from '../lib/serviceReport'
+import {
+  getPlansIntersectingDay,
+  RecurringPlan,
+  getEffectiveMinutesForRecurringPlan,
+} from '../lib/serviceReport'
 import DayPlanRow from './DayPlanRow'
 import RecurringPlanRow from './RecurringPlanRow'
 import Circle from './Circle'
@@ -65,16 +69,20 @@ const DayHistoryView: React.FC<DayHistoryViewProps> = ({
   const goalHours = useMemo(() => {
     const dayPlan = dayPlans.find((dp) => moment(dp.date).isSame(date, 'day'))
 
-    const highestRecurringPlanForDay = recurringPlansForToday.sort(
-      (a, b) => b.minutes - a.minutes
-    )[0]
+    // Get the highest recurring plan for the day, but use effective minutes (with overrides)
+    const highestRecurringPlanForDay = recurringPlansForToday
+      .map((plan) => ({
+        plan,
+        effectiveMinutes: getEffectiveMinutesForRecurringPlan(plan, date),
+      }))
+      .sort((a, b) => b.effectiveMinutes - a.effectiveMinutes)[0]
 
-    if (!dayPlan?.minutes && !highestRecurringPlanForDay?.minutes) {
+    if (!dayPlan?.minutes && !highestRecurringPlanForDay?.effectiveMinutes) {
       return
     }
 
     return _.round(
-      (dayPlan?.minutes || highestRecurringPlanForDay.minutes) / 60,
+      (dayPlan?.minutes || highestRecurringPlanForDay.effectiveMinutes) / 60,
       1
     )
   }, [dayPlans, recurringPlansForToday, date])

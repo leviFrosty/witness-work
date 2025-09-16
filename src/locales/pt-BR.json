@@ -128,7 +128,7 @@
     "stayPositive": "Seja positivo!",
     "grindOn": "Vamos começar!",
     "keepSearching": "Continue procurando!",
-    "stayResilient": "Mantenha a resiliência!"
+    "stayResilient": "Seja perseverante!"
   },
   "phrasesStudiesDone": {
     "bravo": "Parabéns!",
@@ -146,7 +146,7 @@
   "hours_lowercase": "horas",
   "hours": "Horas",
   "studies": "Estudos",
-  "addTime_description": "Inserir o tempo gasto no ministério abaixo vai gerar um registo das suas atividades no dia selecionado",
+  "addTime_description": "Inserir o tempo gasto no ministério abaixo vai gerar um registro das suas atividades no dia selecionado",
   "minutes": "Minutos",
   "minutes_lowercase": "minutos",
   "submit": "Enviar",
@@ -158,7 +158,7 @@
   "address": "Endereço",
   "email": "E-mail",
   "deleteContact": "Excluir Contato",
-  "created": "Adicionado em:",
+  "created": "Adicionado:",
   "edit": "Editar",
   "contactNotFoundForId": "Contato não encontrado para o ID fornecido:",
   "noPersonalInformationSaved": "Nenhuma informação pessoal salva. 🧐",
@@ -189,7 +189,7 @@
   "reminder_topic": "\nAssunto: ",
   "reminderFifteenMinutes_part1": "⏰ Sua conversa com ",
   "reminderFifteenMinutes_part2": " é em 15 minutos. Prepare-se e esteja pronto para uma conversa frutífera!🚀📖",
-  "addConversation": "Add Conversa",
+  "addConversation": "Adicionar Conversa",
   "addConversation_description": "Insira as informações de contato abaixo da pessoa que você adicionará ao WitnessWork.",
   "note": "Observação",
   "note_placeholder": "Anote informações sobre sua conversa. Certifique-se de ser descritivo!",

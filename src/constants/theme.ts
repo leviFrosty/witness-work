@@ -26,6 +26,23 @@ export const lightModeColors = {
   warnTranslucent: '#d19b0033',
   warnAlt: '#FFEAB8',
   shadow: '#000000',
+  // Feature showcase colors
+  purple: '#8B5CF6',
+  purpleAlt: '#EDE9FE',
+  teal: '#14B8A6',
+  tealAlt: '#F0FDFA',
+  orange: '#F97316',
+  orangeAlt: '#FFF7ED',
+  pink: '#EC4899',
+  pinkAlt: '#FDF2F8',
+  indigo: '#6366F1',
+  indigoAlt: '#EEF2FF',
+  cyan: '#06B6D4',
+  cyanAlt: '#ECFEFF',
+  lime: '#84CC16',
+  limeAlt: '#F7FEE7',
+  rose: '#F43F5E',
+  roseAlt: '#FFF1F2',
 }
 
 const darkModeColors: Colors = {
@@ -53,6 +70,23 @@ const darkModeColors: Colors = {
   warnTranslucent: '#FCC01433',
   warnAlt: '#FFEAB8',
   shadow: '#000000',
+  // Feature showcase colors
+  purple: '#A78BFA',
+  purpleAlt: '#2D1B69',
+  teal: '#5EEAD4',
+  tealAlt: '#134E4A',
+  orange: '#FB923C',
+  orangeAlt: '#7C2D12',
+  pink: '#F472B6',
+  pinkAlt: '#831843',
+  indigo: '#818CF8',
+  indigoAlt: '#312E81',
+  cyan: '#22D3EE',
+  cyanAlt: '#164E63',
+  lime: '#A3E635',
+  limeAlt: '#365314',
+  rose: '#FB7185',
+  roseAlt: '#881337',
 }
 
 export const numbers = {

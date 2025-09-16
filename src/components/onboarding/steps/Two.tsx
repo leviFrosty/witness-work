@@ -1,4 +1,5 @@
-import { View, TouchableWithoutFeedback, Keyboard } from 'react-native'
+import { View } from 'react-native'
+import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
 import { styles } from '../Onboarding.styles'
 import OnboardingNav from '../OnboardingNav'
 import Text from '../../MyText'
@@ -6,6 +7,7 @@ import i18n from '../../../lib/locales'
 import PublisherTypeSelector from '../../PublisherTypeSelector'
 import Wrapper from '../../layout/Wrapper'
 import ActionButton from '../../ActionButton'
+import FeatureShowcase from '../FeatureShowcase'
 
 interface Props {
   goBack: () => void
@@ -13,34 +15,39 @@ interface Props {
 }
 
 const StepTwo = ({ goBack, goNext }: Props) => {
-  const handlePress = () => {
-    Keyboard.dismiss()
-  }
-
   return (
     <View style={{ flex: 1 }}>
-      <TouchableWithoutFeedback onPress={handlePress}>
-        <View style={{ flex: 1 }}>
-          <Wrapper
-            style={{
+      <View style={{ flex: 1 }}>
+        <Wrapper
+          style={{
+            flex: 1,
+            paddingHorizontal: 30,
+            paddingTop: 60,
+            paddingBottom: 20,
+          }}
+        >
+          <OnboardingNav goBack={goBack} />
+          <KeyboardAwareScrollView
+            style={{ flex: 1 }}
+            contentContainerStyle={{
               flexGrow: 1,
-              paddingHorizontal: 30,
-              paddingTop: 60,
-              paddingBottom: 100,
-              justifyContent: 'space-between',
+              paddingTop: 30,
+              paddingBottom: 20,
             }}
+            showsVerticalScrollIndicator={false}
+            enableOnAndroid={true}
           >
-            <OnboardingNav goBack={goBack} />
-            <View style={styles.stepContentContainer}>
+            <View style={[styles.stepContentContainer, { marginRight: 0 }]}>
               <Text style={styles.stepTitle}>
                 {i18n.t('whatTypePublisherAreYou')}
               </Text>
               <PublisherTypeSelector />
+              <FeatureShowcase />
             </View>
-            <ActionButton onPress={goNext}>{i18n.t('continue')}</ActionButton>
-          </Wrapper>
-        </View>
-      </TouchableWithoutFeedback>
+          </KeyboardAwareScrollView>
+          <ActionButton onPress={goNext}>{i18n.t('continue')}</ActionButton>
+        </Wrapper>
+      </View>
     </View>
   )
 }

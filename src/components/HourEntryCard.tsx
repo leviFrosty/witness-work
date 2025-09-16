@@ -202,6 +202,7 @@ export default function HourEntryCard() {
             month={moment().month()}
             year={moment().year()}
             minimal={!displayDetailsOnProgressBarHomeScreen}
+            style={{ paddingHorizontal: 10 }}
           />
           <View
             style={{

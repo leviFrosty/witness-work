@@ -1,4 +1,4 @@
-import { View, ViewProps, Animated } from 'react-native'
+import { View, ViewProps, Animated, StyleProp, ViewStyle } from 'react-native'
 import { useCallback, useMemo, useEffect, useRef, useState } from 'react'
 import { usePreferences } from '../stores/preferences'
 import { useServiceReport } from '../stores/serviceReport'
@@ -121,6 +121,7 @@ interface ProgressBarProps {
    * @default 2000
    */
   pulseDuration?: number
+  style?: StyleProp<ViewStyle>
 }
 
 const MonthServiceReportProgressBar = ({
@@ -129,6 +130,7 @@ const MonthServiceReportProgressBar = ({
   minimal,
   animated = true,
   pulseDuration = 2000,
+  style,
 }: ProgressBarProps) => {
   const theme = useTheme()
   const { serviceReports } = useServiceReport()
@@ -332,12 +334,16 @@ const MonthServiceReportProgressBar = ({
 
   return (
     <View
-      style={{
-        gap: 3,
-        backgroundColor: theme.colors.card,
-        borderRadius: theme.numbers.borderRadiusSm,
-        padding: 10,
-      }}
+      style={[
+        {
+          gap: 3,
+          backgroundColor: theme.colors.card,
+          borderRadius: theme.numbers.borderRadiusSm,
+          paddingHorizontal: 0,
+          paddingVertical: 10,
+        },
+        style,
+      ]}
     >
       <View
         style={{

@@ -572,12 +572,21 @@
       "c3": "タブレットのホーム画面のオーバーフローの問題を解決しました。"
     },
     "1360": {
-      "c1": "マップ ビューに新しいカラー キーを追加しました。マップ上のピンの色をカスタマイズできるようになりました。",
-      "c2": "マップ ビューに新しい [詳細情報] ボタンを追加しました。クリックすると、アプリの詳細情報が表示されます。",
-      "c3": "韓国語の電話番号の書式設定に関する問題を解決しました。",
-      "c4": "Resolves issue with Panama phone number formatting.",
-      "c5": "Improves visibility of Map on Contacts Details screen.",
-      "c6": "You can now change your calendar's first day of the week. Visit Preferences > Appearance."
+      "c0": "This is a huge update with many improvements and features added, please read the notes below for details.",
+      "c2": "Added a color key to the map view! You can now customize the colors of the pins on the map.",
+      "c3": "NEW: Dismiss Contact feature - You can now dismiss contacts you no longer wish to visit and receive notifications when it's time to return to them.",
+      "c4": "Added notes support to time reports - You can now add notes to your daily time entries to keep track of important details.",
+      "c5": "Enhanced recurring plan scheduling - You can now schedule plans monthly by day of week (e.g., 'first Monday of every month').",
+      "c7": "Added statistics sections to your Monthly and Yearly reports to better track your progress and patterns.",
+      "c8": "You can now change your calendar's first day of the week. Visit Preferences > Appearance.",
+      "c9": "Improved progress bar animations throughout the app and added additional encouragement messages.",
+      "c10": "Enhanced follow up topic input - Now supports multiple lines for easier writing of longer topics.",
+      "c11": "There are now no restrictions on when you can add or schedule time, in the future or past.",
+      "c12": "Added visual indicators on calendar days to show when notes are present.",
+      "c13": "Resolves issue with Korean and Panama phone number formatting.",
+      "c14": "Improves visibility of Map on Contacts Details screen with better zoom levels.",
+      "c15": "Fixed various navigation issues when adding time and scheduling plans.",
+      "c16": "Improved readability and consistency throughout the app with better spacing and button sizes."
     }
   },
   "installed": "インストール済み",

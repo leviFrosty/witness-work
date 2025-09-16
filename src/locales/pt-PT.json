@@ -572,12 +572,21 @@
       "c3": "Resolvido o problema de estouro na tela inicial para tablets."
     },
     "1360": {
-      "c1": "Adicionada uma nova chave de cor à visualização do mapa! Agora você pode personalizar as cores dos pinos no mapa.",
-      "c2": "Adicionado um novo botão 'mais informações' à visualização do mapa. Clique nele para ver mais informações sobre o aplicativo.",
-      "c3": "Resolve o problema com a formatação de números de telefone coreanos.",
-      "c4": "Resolver o problema com a formação dos números de telefone.",
-      "c5": "Melhorar a visibilidade do Mapa no ecrã de Detalhes de Contacto",
-      "c6": "Poderá ajustar o primeiro dia do calendário da semana. Aceda a Preferências > Aparência."
+      "c0": "This is a huge update with many improvements and features added, please read the notes below for details.",
+      "c2": "Added a color key to the map view! You can now customize the colors of the pins on the map.",
+      "c3": "NEW: Dismiss Contact feature - You can now dismiss contacts you no longer wish to visit and receive notifications when it's time to return to them.",
+      "c4": "Added notes support to time reports - You can now add notes to your daily time entries to keep track of important details.",
+      "c5": "Enhanced recurring plan scheduling - You can now schedule plans monthly by day of week (e.g., 'first Monday of every month').",
+      "c7": "Added statistics sections to your Monthly and Yearly reports to better track your progress and patterns.",
+      "c8": "You can now change your calendar's first day of the week. Visit Preferences > Appearance.",
+      "c9": "Improved progress bar animations throughout the app and added additional encouragement messages.",
+      "c10": "Enhanced follow up topic input - Now supports multiple lines for easier writing of longer topics.",
+      "c11": "There are now no restrictions on when you can add or schedule time, in the future or past.",
+      "c12": "Added visual indicators on calendar days to show when notes are present.",
+      "c13": "Resolves issue with Korean and Panama phone number formatting.",
+      "c14": "Improves visibility of Map on Contacts Details screen with better zoom levels.",
+      "c15": "Fixed various navigation issues when adding time and scheduling plans.",
+      "c16": "Improved readability and consistency throughout the app with better spacing and button sizes."
     }
   },
   "installed": "Instalado",

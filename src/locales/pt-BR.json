@@ -4,7 +4,7 @@
   "welcomeTo": "Bem-vindo ao",
   "witnessWork": "WitnessWork",
   "getStarted": "Começar",
-  "whatTypePublisherAreYou": "Que tipo de publicador você é?",
+  "whatTypePublisherAreYou": "Qual seu perfil de publicador?",
   "noHourRequirement": "Sem requisito de horas",
   "hourMonthlyRequirement": "Requisito mensal de {{count}} horas",
   "publisher": "Publicador",
@@ -77,7 +77,7 @@
   "phrasesDone": {
     "youDidIt": "Você conseguiu!",
     "goalAchieved": "Objetivo alcançado!",
-    "youNailedIt": "Você acertou em cheio!",
+    "youNailedIt": "Você arrasou!",
     "congratulations": "Parabéns!",
     "takeYourShoesOff": "Tire seus sapatos!",
     "hatsOffToYou": "Tiro o chapéu para você!",
@@ -128,7 +128,7 @@
     "stayPositive": "Seja positivo!",
     "grindOn": "Vamos começar!",
     "keepSearching": "Continue procurando!",
-    "stayResilient": "Seja perseverante!"
+    "stayResilient": "Persevere!"
   },
   "phrasesStudiesDone": {
     "bravo": "Parabéns!",
@@ -185,7 +185,7 @@
   "youMustAssignAConversationToContact": "Você deve atribuir uma conversa a um contato.",
   "reminder_title": "Próxima Conversa",
   "reminderTwoHours_part1": "Ei! Sua conversa com ",
-  "reminderTwoHours_part2": "é amanhã às",
+  "reminderTwoHours_part2": " é amanhã às ",
   "reminder_topic": "\nAssunto: ",
   "reminderFifteenMinutes_part1": "⏰ Sua conversa com ",
   "reminderFifteenMinutes_part2": " é em 15 minutos. Prepare-se e esteja pronto para uma conversa frutífera!🚀📖",

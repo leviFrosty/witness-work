@@ -250,7 +250,24 @@ export default function AddressSection({
         )}
         <Button
           style={{ marginTop: 10 }}
-          onPress={() => setManuallyEnteringAddress(!manuallyEnteringAddress)}
+          onPress={() => {
+            const newManualMode = !manuallyEnteringAddress
+
+            if (newManualMode) {
+              // Switching from search to manual entry - move query to line1
+              if (query && !isResult) {
+                setLine1(query)
+              }
+            } else {
+              // Switching from manual entry to search - move line1 to query
+              if (contact.address?.line1) {
+                setQuery(contact.address.line1)
+                setIsResult(false)
+              }
+            }
+
+            setManuallyEnteringAddress(newManualMode)
+          }}
         >
           <Text
             style={{

@@ -82,27 +82,18 @@ const PublisherPreferencesSection = () => {
 
       {/* Credit Limit Override Section - Only show for publishers that normally have a credit limit */}
       {publisher !== 'specialPioneer' && publisher !== 'circuitOverseer' && (
-        <>
-          <Divider marginVertical={10} />
-          <View style={{ paddingHorizontal: 20 }}>
-            <Card>
-              <Text
+        <Section>
+          <InputRowContainer
+            label={i18n.t('overrideCreditLimit')}
+            lastInSection
+          >
+            <View style={{ flex: 1 }}>
+              <View
                 style={{
-                  fontSize: theme.fontSize('lg'),
-                  fontFamily: theme.fonts.semiBold,
+                  flex: 1,
+                  alignItems: 'flex-end',
                 }}
               >
-                {i18n.t('overrideCreditLimit')}
-              </Text>
-              <Text>{i18n.t('overrideCreditLimit_description')}</Text>
-            </Card>
-          </View>
-          <Section>
-            <InputRowContainer
-              label={i18n.t('overrideCreditLimit')}
-              lastInSection={!overrideCreditLimit}
-            >
-              <View style={{ flex: 1 }}>
                 <CheckboxWithLabel
                   value={overrideCreditLimit}
                   setValue={setOverrideCreditLimit}
@@ -110,8 +101,18 @@ const PublisherPreferencesSection = () => {
                   labelPosition='right'
                 />
               </View>
-            </InputRowContainer>
-            {overrideCreditLimit && (
+            </View>
+          </InputRowContainer>
+          <Text
+            style={{
+              fontSize: theme.fontSize('sm'),
+              color: theme.colors.textAlt,
+            }}
+          >
+            {i18n.t('overrideCreditLimit_description')}
+          </Text>
+          {overrideCreditLimit && (
+            <>
               <TextInputRow
                 label={i18n.t('customCreditLimitHours')}
                 lastInSection
@@ -127,9 +128,9 @@ const PublisherPreferencesSection = () => {
                   placeholder: '55',
                 }}
               />
-            )}
-          </Section>
-        </>
+            </>
+          )}
+        </Section>
       )}
     </View>
   )

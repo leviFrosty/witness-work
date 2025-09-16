@@ -12,6 +12,7 @@ import DayPlanRow from './DayPlanRow'
 import RecurringPlanRow from './RecurringPlanRow'
 import { useNavigation } from '@react-navigation/native'
 import { RootStackNavigation } from '../types/rootStack'
+import Card from './Card'
 
 interface PlanItem {
   type: 'day' | 'recurring'
@@ -105,23 +106,17 @@ const MonthPlansList = ({ month, year }: MonthPlansListProps) => {
 
   if (monthPlans.length === 0) {
     return (
-      <View
-        style={{
-          backgroundColor: theme.colors.backgroundLighter,
-          paddingVertical: 30,
-          paddingHorizontal: 20,
-        }}
-      >
+      <Card>
         <Text
           style={{
             textAlign: 'center',
-            color: theme.colors.textAlt,
+            color: theme.colors.text,
             fontSize: theme.fontSize('sm'),
           }}
         >
           {i18n.t('noPlansScheduledForThisMonth')}
         </Text>
-      </View>
+      </Card>
     )
   }
 

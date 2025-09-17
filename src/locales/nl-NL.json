@@ -367,7 +367,7 @@
   "couldNotOpenMaps": "Could Not Open Maps",
   "couldNotOpenMaps_description": "Please verify you have a valid mapping application installed.",
   "preferredMaps": "Preferred Maps",
-  "youCanChangeThisLaterInTheSettings": "You can change this later in the settings.",
+  "youCanChangeThisLaterInTheSettings": "Je kunt dit later wijzigen in de instellingen.",
   "preferredMaps_description": "WitnessWork will use your preferred mapping application to navigate to your contact's address.",
   "waze": "Waze",
   "navigation": "Navigatie",

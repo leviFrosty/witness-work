@@ -126,25 +126,12 @@ export const processContactImport = (
   isDeleted: boolean
   deletedContact?: Contact
 } => {
-  console.log('importdata id:', importData.contact.id)
-  console.log(
-    'existing contacts',
-    existingContacts.map((c) => c.id)
-  )
-  console.log(
-    'deleted contacts',
-    deletedContacts.map((c) => c.id)
-  )
-
   const existingContact = existingContacts.find(
     (c) => c.id === importData.contact.id
   )
   const deletedContact = deletedContacts.find(
     (c) => c.id === importData.contact.id
   )
-
-  console.log('existing contact found: ', existingContact)
-  console.log('deleted contact found: ', deletedContact)
 
   return {
     conflictExists: !!existingContact,
@@ -187,8 +174,6 @@ export const handleContactImport = async (
   replaceExisting: boolean = false
 ): Promise<void> => {
   try {
-    console.log('importing... Replace existing: ', replaceExisting)
-    console.log('importing contact id', importData.contact.id)
     let finalData = importData
 
     // If a conflict exists and we're not replacing it, then gen new IDs
@@ -234,16 +219,9 @@ export const processCompleteImport = async (
 ): Promise<void> => {
   const { conflictExists, existingContact, isDeleted, deletedContact } =
     processContactImport(importData, existingContacts, deletedContacts)
-  console.log('processCompleteImport', {
-    conflictExists,
-    existingContact,
-    isDeleted,
-    deletedContact,
-  })
 
   // Handle deleted contact case - automatically recover and then ask for override
   if (isDeleted && deletedContact) {
-    console.log('Contact is in deleted state, recovering...')
     callbacks.recoverContact(deletedContact.id)
 
     // Show dialog asking if user wants to override the recovered contact

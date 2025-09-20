@@ -29,6 +29,7 @@ export const releaseNotes: ReleaseNote[] = [
     date: moment('2025-09-16').toDate(),
     content: [
       'c0',
+      'c1',
       'c2',
       'c3',
       'c4',

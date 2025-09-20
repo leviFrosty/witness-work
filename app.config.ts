@@ -28,6 +28,7 @@ export default ({ config }: ConfigContext): ExpoConfig => {
       infoPlist: {
         RCTAsyncStorageExcludeFromBackup: false,
         ITSAppUsesNonExemptEncryption: false,
+        LSSupportsOpeningDocumentsInPlace: false,
         CFBundleDocumentTypes: [
           {
             CFBundleTypeName: 'WitnessWork Contact',

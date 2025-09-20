@@ -11,6 +11,7 @@ import Button from './Button'
 import useContacts from '../stores/contactsStore'
 import { usePreferences } from '../stores/preferences'
 import { useToastController } from '@tamagui/toast'
+import { useNavigation } from '@react-navigation/native'
 import moment from 'moment'
 import * as Notifications from 'expo-notifications'
 import * as Sentry from '@sentry/react-native'
@@ -106,6 +107,7 @@ const DismissContactSheet: React.FC<DismissContactSheetProps> = ({
   const { developerTools } = usePreferences()
   const toast = useToastController()
   const { allowed: notificationsAllowed } = useNotifications()
+  const navigation = useNavigation()
 
   const handleDismiss = async (option: DismissOption) => {
     if (!contact) return
@@ -197,6 +199,9 @@ const DismissContactSheet: React.FC<DismissContactSheetProps> = ({
           dismissContact(contact.id, dismissedUntil, notificationId)
 
           setOpen(false)
+
+          // Navigate back to close the ContactDetailsScreen
+          navigation.goBack()
 
           const untilFormat =
             option.unit === 'seconds' || option.unit === 'minutes'

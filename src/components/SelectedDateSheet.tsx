@@ -59,6 +59,7 @@ const SelectedDateSheet: React.FC<Props> = ({
             flex: 1,
             paddingTop: 30,
             paddingBottom: 50,
+            backgroundColor: theme.colors.backgroundLighter,
           }}
         >
           <KeyboardAwareScrollView contentContainerStyle={{ minHeight: 10 }}>

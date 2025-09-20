@@ -74,7 +74,7 @@ export const validateContactImport = (data: unknown): ImportResult => {
 export const importContactFromFile = async (): Promise<ImportResult> => {
   try {
     const result = await DocumentPicker.getDocumentAsync({
-      type: 'application/json',
+      type: ['*/*'],
       copyToCacheDirectory: true,
     })
 

@@ -32,7 +32,7 @@ export default ({ config }: ConfigContext): ExpoConfig => {
           {
             CFBundleTypeName: 'WitnessWork Contact',
             LSHandlerRank: 'Owner',
-            LSItemContentTypes: ['public.json'],
+            LSItemContentTypes: ['com.leviwilkerson.witnesswork.contact'],
             CFBundleTypeRole: 'Editor',
           },
         ],
@@ -42,7 +42,7 @@ export default ({ config }: ConfigContext): ExpoConfig => {
             UTTypeDescription: 'WitnessWork Contact',
             UTTypeConformsTo: ['public.json'],
             UTTypeTagSpecification: {
-              'public.filename-extension': ['json'],
+              'public.filename-extension': ['witnesswork'],
               'public.mime-type': ['application/json'],
             },
           },
@@ -72,10 +72,12 @@ export default ({ config }: ConfigContext): ExpoConfig => {
             {
               scheme: 'file',
               mimeType: 'application/json',
+              pathPattern: '.*\\.witnesswork',
             },
             {
               scheme: 'content',
               mimeType: 'application/json',
+              pathPattern: '.*\\.witnesswork',
             },
           ],
           category: ['DEFAULT', 'BROWSABLE'],

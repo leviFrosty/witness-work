@@ -658,7 +658,7 @@ const ContactDetailsScreen = ({ route, navigation }: Props) => {
     const jsonString = JSON.stringify(exportData, null, 2)
     const sanitizedName = contact.name.replace(/[^a-zA-Z0-9]/g, '_')
     const timestamp = moment().format('YYYY-MM-DD')
-    const fileName = `${sanitizedName}_${timestamp}.json`
+    const fileName = `${sanitizedName}_${timestamp}.witnesswork`
     const fileUri = `${FileSystem.documentDirectory}${fileName}`
 
     try {

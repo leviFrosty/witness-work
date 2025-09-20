@@ -1,4 +1,4 @@
-import { View, Platform, ScrollView, useColorScheme } from 'react-native'
+import { View, Platform, ScrollView, useColorScheme, Share } from 'react-native'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import Text from '../components/MyText'
 import useTheme from '../contexts/theme'
@@ -54,7 +54,7 @@ import { handleCall, handleMessage } from '../lib/phone'
 import { openURL } from '../lib/links'
 import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps'
 import useLocation from '../hooks/useLocation'
-import ExportContact, { ExportContactState } from '../components/ExportContact'
+import * as FileSystem from 'expo-file-system'
 import { useToastController } from '@tamagui/toast'
 import XView from '../components/layout/XView'
 import { RootStackNavigation, RootStackParamList } from '../types/rootStack'
@@ -66,6 +66,14 @@ import ContactActionsSheet, {
 } from '../components/ContactActionsSheet'
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Contact Details'>
+
+type ContactExport = {
+  version: '1.0'
+  type: 'witnesswork-contact'
+  exportedAt: string
+  contact: Contact
+  conversations?: Conversation[]
+}
 
 const PhoneRow = ({ contact }: { contact: Contact }) => {
   const theme = useTheme()
@@ -625,15 +633,48 @@ const ContactDetailsScreen = ({ route, navigation }: Props) => {
 
   const [sheetOpen, setSheetOpen] = useState(false)
   const [dismissSheetOpen, setDismissSheetOpen] = useState(false)
-  const [exportSheet, setExportSheet] = useState<ExportContactState>({
-    open: false,
-    contact: undefined,
-  })
   const [contactActionsSheet, setContactActionsSheet] =
     useState<ContactActionsSheetState>({
       open: false,
       contact: undefined,
     })
+
+  const handleExportContact = useCallback(async () => {
+    if (!contact) return
+
+    const exportData: ContactExport = {
+      version: '1.0',
+      type: 'witnesswork-contact',
+      exportedAt: moment().toISOString(),
+      contact,
+    }
+
+    if (contactConversations.length > 0) {
+      exportData.conversations = contactConversations.sort((a, b) =>
+        moment(a.date).unix() < moment(b.date).unix() ? 1 : -1
+      )
+    }
+
+    const jsonString = JSON.stringify(exportData, null, 2)
+    const sanitizedName = contact.name.replace(/[^a-zA-Z0-9]/g, '_')
+    const timestamp = moment().format('YYYY-MM-DD')
+    const fileName = `${sanitizedName}_${timestamp}.json`
+    const fileUri = `${FileSystem.documentDirectory}${fileName}`
+
+    try {
+      await FileSystem.writeAsStringAsync(fileUri, jsonString)
+      await Share.share({
+        url: fileUri,
+        title: i18n.t('exportContact'),
+      })
+      // Clean up temporary file
+      await FileSystem.deleteAsync(fileUri, { idempotent: true })
+    } catch (error) {
+      console.error('Error sharing contact:', error)
+      // Fallback to sharing JSON as text
+      await Share.share({ message: jsonString })
+    }
+  }, [contact, contactConversations])
 
   useEffect(() => {
     navigation.setOptions({
@@ -666,11 +707,7 @@ const ContactDetailsScreen = ({ route, navigation }: Props) => {
               <IconButton
                 icon={faArrowUpFromBracket}
                 color={theme.colors.textInverse}
-                onPress={() => {
-                  if (contact) {
-                    setExportSheet({ open: true, contact })
-                  }
-                }}
+                onPress={handleExportContact}
               />
 
               <Button onPress={() => setSheetOpen(true)}>
@@ -702,6 +739,7 @@ const ContactDetailsScreen = ({ route, navigation }: Props) => {
     contact,
     contact?.id,
     deleteContact,
+    handleExportContact,
     navigation,
     params.id,
     theme.colors.accent,
@@ -916,7 +954,6 @@ const ContactDetailsScreen = ({ route, navigation }: Props) => {
         setOpen={setDismissSheetOpen}
         contact={contact}
       />
-      <ExportContact sheet={exportSheet} setSheet={setExportSheet} />
     </View>
   )
 }

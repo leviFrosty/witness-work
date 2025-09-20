@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useMemo } from 'react'
+import { useCallback, useEffect, useMemo } from 'react'
 import { Alert } from 'react-native'
 import * as Linking from 'expo-linking'
 import { useNavigation } from '@react-navigation/native'
@@ -31,8 +31,6 @@ const ImportContactHandler = ({
   const { addConversation, updateConversation } = useConversations()
   const toast = useToastController()
   const navigation = useNavigation<RootStackNavigation>()
-  const processedUrls = useRef<Set<string>>(new Set())
-
   const callbacks: ImportHandlerCallbacks = useMemo(
     () => ({
       addContact,
@@ -62,12 +60,6 @@ const ImportContactHandler = ({
 
   const processFileImport = useCallback(
     async (url: string, currentContacts: Contact[]) => {
-      // Prevent processing the same URL multiple times
-      if (processedUrls.current.has(url)) {
-        return
-      }
-      processedUrls.current.add(url)
-
       const result = await importContactFromUrl(url)
 
       if (!result.success || !result.data) {
@@ -90,8 +82,12 @@ const ImportContactHandler = ({
 
   useEffect(() => {
     const handleUrl = (url: string) => {
-      // Check if this is a JSON file being opened
-      if (url.includes('.json') || url.includes('application/json')) {
+      // Check if this is a JSON or witnesswork file being opened
+      if (
+        url.includes('.json') ||
+        url.includes('application/json') ||
+        url.includes('.witnesswork')
+      ) {
         processFileImport(url, contacts)
       }
     }

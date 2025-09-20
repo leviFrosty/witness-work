@@ -28,24 +28,25 @@ export default ({ config }: ConfigContext): ExpoConfig => {
       infoPlist: {
         RCTAsyncStorageExcludeFromBackup: false,
         ITSAppUsesNonExemptEncryption: false,
-        LSSupportsOpeningDocumentsInPlace: false,
-        CFBundleDocumentTypes: [
+        LSSupportsOpeningDocumentsInPlace: true,
+        UISupportsDocumentBrowser: true,
+        UTExportedTypeDeclarations: [
           {
-            CFBundleTypeName: 'WitnessWork Contact',
-            LSHandlerRank: 'Owner',
-            LSItemContentTypes: ['com.leviwilkerson.witnesswork.contact'],
-            CFBundleTypeRole: 'Editor',
-          },
-        ],
-        UTImportedTypeDeclarations: [
-          {
-            UTTypeIdentifier: 'com.leviwilkerson.witnesswork.contact',
-            UTTypeDescription: 'WitnessWork Contact',
+            UTTypeIdentifier: 'com.leviwilkerson.witnesswork',
+            UTTypeDescription: 'WitnessWork Data',
             UTTypeConformsTo: ['public.json'],
             UTTypeTagSpecification: {
               'public.filename-extension': ['witnesswork'],
               'public.mime-type': ['application/json'],
             },
+          },
+        ],
+        CFBundleDocumentTypes: [
+          {
+            CFBundleTypeName: 'WitnessWork Data',
+            CFBundleTypeRole: 'Editor',
+            LSHandlerRank: 'Owner',
+            LSItemContentTypes: ['com.leviwilkerson.witnesswork'],
           },
         ],
       },

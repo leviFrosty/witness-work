@@ -44,7 +44,7 @@ export default ({ config }: ConfigContext): ExpoConfig => {
         CFBundleDocumentTypes: [
           {
             CFBundleTypeName: 'WitnessWork Data',
-            CFBundleTypeRole: 'Editor',
+            CFBundleTypeRole: 'Viewer',
             LSHandlerRank: 'Owner',
             LSItemContentTypes: ['com.leviwilkerson.witnesswork'],
           },

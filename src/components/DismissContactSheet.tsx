@@ -231,7 +231,7 @@ const DismissContactSheet: React.FC<DismissContactSheetProps> = ({
     <Sheet
       open={open}
       modal
-      snapPoints={[60]}
+      snapPoints={[80]}
       onOpenChange={setOpen}
       dismissOnSnapToBottom
       animation='quick'
@@ -269,7 +269,9 @@ const DismissContactSheet: React.FC<DismissContactSheetProps> = ({
           </Text>
         </View>
 
-        <Sheet.ScrollView contentContainerStyle={{ paddingTop: 10 }}>
+        <Sheet.ScrollView
+          contentContainerStyle={{ paddingTop: 10, paddingBottom: 75 }}
+        >
           <View style={{ gap: 10, paddingHorizontal: 20, paddingBottom: 30 }}>
             {developerTools && (
               <>

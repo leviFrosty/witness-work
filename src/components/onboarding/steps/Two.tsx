@@ -23,7 +23,7 @@ const StepTwo = ({ goBack, goNext }: Props) => {
             flex: 1,
             paddingHorizontal: 30,
             paddingTop: 60,
-            paddingBottom: 20,
+            paddingBottom: 60,
           }}
         >
           <OnboardingNav goBack={goBack} />

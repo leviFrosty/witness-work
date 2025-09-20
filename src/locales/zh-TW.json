@@ -992,5 +992,6 @@
   "featureGamifiedRoutine": "Monthly Routine",
   "featureGamifiedRoutineDesc": "Gamified service reporting to keep you motivated",
   "featureWordsOfAffirmation": "Words of Affirmation",
-  "featureWordsOfAffirmationDesc": "Receive encouraging phrases and positive feedback as you use the app"
+  "featureWordsOfAffirmationDesc": "Receive encouraging phrases and positive feedback as you use the app",
+  "actions": "Actions"
 }

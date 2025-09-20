@@ -1,4 +1,4 @@
-import { View, Platform, Alert, ScrollView, useColorScheme } from 'react-native'
+import { View, Platform, ScrollView, useColorScheme } from 'react-native'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import Text from '../components/MyText'
 import useTheme from '../contexts/theme'
@@ -30,14 +30,12 @@ import {
   faArrowUpFromBracket,
   faBook,
   faCaravan,
-  faClock,
   faComment,
   faComments,
+  faEllipsisVertical,
   faEnvelope,
-  faPencil,
   faPhone,
   faPlus,
-  faTrash,
 } from '@fortawesome/free-solid-svg-icons'
 import Copyeable from '../components/Copyeable'
 import Button from '../components/Button'
@@ -62,8 +60,10 @@ import XView from '../components/layout/XView'
 import { RootStackNavigation, RootStackParamList } from '../types/rootStack'
 import { useMarkerColors } from '../hooks/useMarkerColors'
 import DismissContactSheet from '../components/DismissContactSheet'
-import { isContactDismissed } from '../lib/dismissedContacts'
 import Card from '../components/Card'
+import ContactActionsSheet, {
+  ContactActionsSheetState,
+} from '../components/ContactActionsSheet'
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Contact Details'>
 
@@ -629,10 +629,15 @@ const ContactDetailsScreen = ({ route, navigation }: Props) => {
     open: false,
     contact: undefined,
   })
+  const [contactActionsSheet, setContactActionsSheet] =
+    useState<ContactActionsSheetState>({
+      open: false,
+      contact: undefined,
+    })
 
   useEffect(() => {
     navigation.setOptions({
-      header: ({ navigation }) => (
+      header: () => (
         <Header
           inverseTextAndIconColor
           noBottomBorder
@@ -649,6 +654,16 @@ const ContactDetailsScreen = ({ route, navigation }: Props) => {
               }}
             >
               <IconButton
+                icon={faEllipsisVertical}
+                color={theme.colors.textInverse}
+                onPress={() => {
+                  if (contact) {
+                    setContactActionsSheet({ open: true, contact })
+                  }
+                }}
+              />
+
+              <IconButton
                 icon={faArrowUpFromBracket}
                 color={theme.colors.textInverse}
                 onPress={() => {
@@ -657,58 +672,6 @@ const ContactDetailsScreen = ({ route, navigation }: Props) => {
                   }
                 }}
               />
-              <IconButton
-                icon={faTrash}
-                color={theme.colors.textInverse}
-                onPress={() =>
-                  Alert.alert(
-                    i18n.t('archiveContact_question'),
-                    i18n.t('archiveContact_description'),
-                    [
-                      {
-                        text: i18n.t('cancel'),
-                        style: 'cancel',
-                      },
-                      {
-                        text: i18n.t('delete'),
-                        style: 'destructive',
-                        onPress: () => {
-                          if (!contact) {
-                            return
-                          }
-                          deleteContact(contact.id)
-                          toast.show(i18n.t('success'), {
-                            message: i18n.t('archived'),
-                            native: true,
-                          })
-                          navigation.popToTop()
-                        },
-                      },
-                    ]
-                  )
-                }
-              />
-              {contact && !isContactDismissed(contact) && (
-                <IconButton
-                  icon={faClock}
-                  color={theme.colors.textInverse}
-                  onPress={() => setDismissSheetOpen(true)}
-                />
-              )}
-              <Button
-                onPress={async () => {
-                  navigation.replace('Contact Form', {
-                    id: params.id,
-                    edit: true,
-                  })
-                }}
-                style={{ flexDirection: 'row', gap: 5, alignItems: 'center' }}
-              >
-                <IconButton
-                  icon={faPencil}
-                  iconStyle={{ color: theme.colors.textInverse }}
-                />
-              </Button>
 
               <Button onPress={() => setSheetOpen(true)}>
                 <XView
@@ -936,6 +899,12 @@ const ContactDetailsScreen = ({ route, navigation }: Props) => {
           )}
         </Wrapper>
       </ScrollView>
+      <ContactActionsSheet
+        sheet={contactActionsSheet}
+        setSheet={setContactActionsSheet}
+        navigation={navigation}
+        setDismissSheetOpen={setDismissSheetOpen}
+      />
       <AddSheet
         contact={contact}
         navigation={navigation}

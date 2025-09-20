@@ -27,6 +27,7 @@ import Wrapper from '../components/layout/Wrapper'
 import { StatusBar } from 'expo-status-bar'
 import IconButton from '../components/IconButton'
 import {
+  faArrowUpFromBracket,
   faBook,
   faCaravan,
   faClock,
@@ -55,12 +56,14 @@ import { handleCall, handleMessage } from '../lib/phone'
 import { openURL } from '../lib/links'
 import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps'
 import useLocation from '../hooks/useLocation'
+import ExportContact, { ExportContactState } from '../components/ExportContact'
 import { useToastController } from '@tamagui/toast'
 import XView from '../components/layout/XView'
 import { RootStackNavigation, RootStackParamList } from '../types/rootStack'
 import { useMarkerColors } from '../hooks/useMarkerColors'
 import DismissContactSheet from '../components/DismissContactSheet'
 import { isContactDismissed } from '../lib/dismissedContacts'
+import Card from '../components/Card'
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Contact Details'>
 
@@ -459,18 +462,7 @@ const EmailRow = ({ contact }: { contact: Contact }) => {
   )
 }
 
-const CreatedAt = ({
-  contact,
-}: {
-  deleteContact: (id: string) => void
-  navigation: NativeStackNavigationProp<
-    RootStackParamList,
-    'Contact Details',
-    undefined
-  >
-  contactId: string
-  contact: Contact
-}) => {
+const CreatedAt = ({ contact }: { contact: Contact }) => {
   const theme = useTheme()
 
   return (
@@ -602,6 +594,7 @@ const AddSheet = ({
 const ContactDetailsScreen = ({ route, navigation }: Props) => {
   const colorScheme = useColorScheme()
   const theme = useTheme()
+  const { developerTools } = usePreferences()
   const { params } = route
   const insets = useSafeAreaInsets()
   const { contacts, deleteContact } = useContacts()
@@ -632,6 +625,10 @@ const ContactDetailsScreen = ({ route, navigation }: Props) => {
 
   const [sheetOpen, setSheetOpen] = useState(false)
   const [dismissSheetOpen, setDismissSheetOpen] = useState(false)
+  const [exportSheet, setExportSheet] = useState<ExportContactState>({
+    open: false,
+    contact: undefined,
+  })
 
   useEffect(() => {
     navigation.setOptions({
@@ -651,6 +648,15 @@ const ContactDetailsScreen = ({ route, navigation }: Props) => {
                 right: 0,
               }}
             >
+              <IconButton
+                icon={faArrowUpFromBracket}
+                color={theme.colors.textInverse}
+                onPress={() => {
+                  if (contact) {
+                    setExportSheet({ open: true, contact })
+                  }
+                }}
+              />
               <IconButton
                 icon={faTrash}
                 color={theme.colors.textInverse}
@@ -814,6 +820,11 @@ const ContactDetailsScreen = ({ route, navigation }: Props) => {
             mostRecentStudy={mostRecentStudy}
             name={name}
           />
+          {developerTools && (
+            <Card style={{ marginHorizontal: 10 }}>
+              <Text>{JSON.stringify(contact, null, 2)}</Text>
+            </Card>
+          )}
           <View style={{ gap: 30 }}>
             <CardWithTitle
               titlePosition='inside'
@@ -900,12 +911,7 @@ const ContactDetailsScreen = ({ route, navigation }: Props) => {
                 />
               </View>
             </View>
-            <CreatedAt
-              contact={contact}
-              contactId={params.id}
-              deleteContact={deleteContact}
-              navigation={navigation}
-            />
+            <CreatedAt contact={contact} />
           </View>
           <View
             style={{
@@ -941,6 +947,7 @@ const ContactDetailsScreen = ({ route, navigation }: Props) => {
         setOpen={setDismissSheetOpen}
         contact={contact}
       />
+      <ExportContact sheet={exportSheet} setSheet={setExportSheet} />
     </View>
   )
 }

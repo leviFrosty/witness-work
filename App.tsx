@@ -37,6 +37,7 @@ import {
 import { usePreferences } from './src/stores/preferences'
 import AnimationViewProvider from './src/providers/AnimationViewProvider'
 import useUserLocalePrefs from './src/hooks/useLocale'
+import ImportContactHandler from './src/components/ImportContactHandler'
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
@@ -133,6 +134,7 @@ export default function App() {
                     <ToastViewport />
                     <AnimationViewProvider>
                       <RootStackComponent />
+                      <ImportContactHandler />
                     </AnimationViewProvider>
                   </ToastProvider>
                 </TamaguiProvider>

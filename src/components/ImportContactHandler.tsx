@@ -21,7 +21,13 @@ interface ImportContactHandlerProps {
 const ImportContactHandler = ({
   onImportComplete,
 }: ImportContactHandlerProps) => {
-  const { contacts, addContact, updateContact } = useContacts()
+  const {
+    contacts,
+    deletedContacts,
+    addContact,
+    updateContact,
+    recoverContact,
+  } = useContacts()
   const { addConversation, updateConversation } = useConversations()
   const toast = useToastController()
   const navigation = useNavigation<RootStackNavigation>()
@@ -33,6 +39,7 @@ const ImportContactHandler = ({
       updateContact,
       addConversation,
       updateConversation,
+      recoverContact,
       showToast: (title: string, message: string) => {
         toast.show(title, { message, native: true })
       },
@@ -46,6 +53,7 @@ const ImportContactHandler = ({
       updateContact,
       addConversation,
       updateConversation,
+      recoverContact,
       toast,
       navigation,
       onImportComplete,
@@ -70,9 +78,14 @@ const ImportContactHandler = ({
         return
       }
 
-      await processCompleteImport(result.data, currentContacts, callbacks)
+      await processCompleteImport(
+        result.data,
+        currentContacts,
+        deletedContacts,
+        callbacks
+      )
     },
-    [callbacks]
+    [callbacks, deletedContacts]
   )
 
   useEffect(() => {

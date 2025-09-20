@@ -24,6 +24,7 @@ export type ImportHandlerCallbacks = {
   updateContact: (contact: Partial<Contact>) => void
   addConversation: (conversation: Conversation) => void
   updateConversation: (conversation: Partial<Conversation>) => void
+  recoverContact: (contactId: string) => void
   showToast: (title: string, message: string) => void
   navigate: (contactId: string) => void
 }
@@ -117,24 +118,39 @@ export const importContactFromUrl = async (
 
 export const processContactImport = (
   importData: ContactImportData,
-  existingContacts: Contact[]
+  existingContacts: Contact[],
+  deletedContacts: Contact[]
 ): {
   conflictExists: boolean
   existingContact?: Contact
+  isDeleted: boolean
+  deletedContact?: Contact
 } => {
   console.log('importdata id:', importData.contact.id)
   console.log(
-    'existing contactts',
+    'existing contacts',
     existingContacts.map((c) => c.id)
   )
+  console.log(
+    'deleted contacts',
+    deletedContacts.map((c) => c.id)
+  )
+
   const existingContact = existingContacts.find(
     (c) => c.id === importData.contact.id
   )
+  const deletedContact = deletedContacts.find(
+    (c) => c.id === importData.contact.id
+  )
+
   console.log('existing contact found: ', existingContact)
+  console.log('deleted contact found: ', deletedContact)
 
   return {
     conflictExists: !!existingContact,
     existingContact,
+    isDeleted: !!deletedContact,
+    deletedContact,
   }
 }
 
@@ -213,18 +229,45 @@ export const handleContactImport = async (
 export const processCompleteImport = async (
   importData: ContactImportData,
   existingContacts: Contact[],
+  deletedContacts: Contact[],
   callbacks: ImportHandlerCallbacks
 ): Promise<void> => {
-  const { conflictExists, existingContact } = processContactImport(
-    importData,
-    existingContacts
-  )
-  console.log('procesCompleteImport', {
+  const { conflictExists, existingContact, isDeleted, deletedContact } =
+    processContactImport(importData, existingContacts, deletedContacts)
+  console.log('processCompleteImport', {
     conflictExists,
     existingContact,
+    isDeleted,
+    deletedContact,
   })
 
-  if (conflictExists && existingContact) {
+  // Handle deleted contact case - automatically recover and then ask for override
+  if (isDeleted && deletedContact) {
+    console.log('Contact is in deleted state, recovering...')
+    callbacks.recoverContact(deletedContact.id)
+
+    // Show dialog asking if user wants to override the recovered contact
+    Alert.alert(
+      i18n.t('contactRecovered'),
+      i18n.t('contactRecovered_description'),
+      [
+        {
+          text: i18n.t('keep'),
+          style: 'cancel',
+          onPress: () => {
+            // Just navigate to the recovered contact
+            callbacks.showToast(i18n.t('success'), i18n.t('contactRecovered'))
+            callbacks.navigate(deletedContact.id)
+          },
+        },
+        {
+          text: i18n.t('replace'),
+          onPress: () =>
+            handleContactImport(importData, deletedContact, callbacks, true),
+        },
+      ]
+    )
+  } else if (conflictExists && existingContact) {
     Alert.alert(i18n.t('contactExists'), i18n.t('contactExists_description'), [
       {
         text: i18n.t('keep'),

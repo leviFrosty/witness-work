@@ -29,7 +29,13 @@ import { RootStackNavigation } from '../../../types/rootStack'
 
 const AppSection = ({ handleNavigate }: SettingsSectionProps) => {
   const { set } = usePreferences()
-  const { contacts, addContact, updateContact } = useContacts()
+  const {
+    contacts,
+    deletedContacts,
+    addContact,
+    updateContact,
+    recoverContact,
+  } = useContacts()
   const { addConversation, updateConversation } = useConversations()
   const toast = useToastController()
   const navigation = useNavigation<RootStackNavigation>()
@@ -39,6 +45,7 @@ const AppSection = ({ handleNavigate }: SettingsSectionProps) => {
     updateContact,
     addConversation,
     updateConversation,
+    recoverContact,
     showToast: (title: string, message: string) => {
       toast.show(title, { message, native: true })
     },
@@ -61,7 +68,12 @@ const AppSection = ({ handleNavigate }: SettingsSectionProps) => {
         return
       }
 
-      await processCompleteImport(result.data, contacts, callbacks)
+      await processCompleteImport(
+        result.data,
+        contacts,
+        deletedContacts,
+        callbacks
+      )
     } catch (error) {
       console.error('Error importing contact:', error)
       Alert.alert(i18n.t('error'), i18n.t('importError_description'))

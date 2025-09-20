@@ -21,7 +21,7 @@ export const useContacts = create(
           )
 
           if (foundCurrentContact || foundDeleteContact) {
-            return {}
+            return { contacts, deletedContacts }
           }
 
           return {
@@ -32,7 +32,7 @@ export const useContacts = create(
         set(({ contacts, deletedContacts }) => {
           const foundContact = contacts.find((contact) => contact.id === id)
           if (!foundContact) {
-            return {}
+            return { contacts, deletedContacts }
           }
           return {
             deletedContacts: [...deletedContacts, foundContact],
@@ -73,7 +73,7 @@ export const useContacts = create(
         set(({ contacts, deletedContacts }) => {
           const recoverContact = deletedContacts.find((dC) => dC.id === id)
           if (!recoverContact) {
-            return {}
+            return { contacts, deletedContacts }
           }
 
           return {

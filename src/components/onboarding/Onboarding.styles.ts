@@ -13,8 +13,8 @@ export const styles = StyleSheet.create({
     fontSize: 25,
   },
   title: {
-    fontSize: 75,
-    lineHeight: 85,
+    fontSize: 40,
+    lineHeight: 60,
     fontFamily: 'Inter_700Bold',
   },
   actionButton: {

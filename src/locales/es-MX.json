@@ -316,6 +316,8 @@
   "contactImported": "Contact Imported",
   "contactExists": "Contact Already Exists",
   "contactExists_description": "A contact with this name already exists. Do you want to replace it with the imported data?",
+  "contactRecovered": "Contact Recovered",
+  "contactRecovered_description": "This contact was previously deleted and has been automatically recovered. Do you want to replace it with the imported data?",
   "replace": "Replace",
   "keep": "Keep Existing",
   "invalidFile": "Invalid File",

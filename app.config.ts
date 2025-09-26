@@ -28,27 +28,6 @@ export default ({ config }: ConfigContext): ExpoConfig => {
       infoPlist: {
         RCTAsyncStorageExcludeFromBackup: false,
         ITSAppUsesNonExemptEncryption: false,
-        LSSupportsOpeningDocumentsInPlace: true,
-        UISupportsDocumentBrowser: true,
-        UTExportedTypeDeclarations: [
-          {
-            UTTypeIdentifier: 'com.leviwilkerson.witnesswork',
-            UTTypeDescription: 'WitnessWork Data',
-            UTTypeConformsTo: ['public.json'],
-            UTTypeTagSpecification: {
-              'public.filename-extension': ['witnesswork'],
-              'public.mime-type': ['application/json'],
-            },
-          },
-        ],
-        CFBundleDocumentTypes: [
-          {
-            CFBundleTypeName: 'WitnessWork Data',
-            CFBundleTypeRole: 'Viewer',
-            LSHandlerRank: 'Owner',
-            LSItemContentTypes: ['com.leviwilkerson.witnesswork'],
-          },
-        ],
       },
       appStoreUrl: 'https://apps.apple.com/us/app/jw-time/id6469723047',
     },
@@ -67,24 +46,6 @@ export default ({ config }: ConfigContext): ExpoConfig => {
           apiKey: process.env.GOOGLE_MAPS_ANDROID_SDK_API_KEY,
         },
       },
-      intentFilters: [
-        {
-          action: 'VIEW',
-          data: [
-            {
-              scheme: 'file',
-              mimeType: 'application/json',
-              pathPattern: '.*\\.witnesswork',
-            },
-            {
-              scheme: 'content',
-              mimeType: 'application/json',
-              pathPattern: '.*\\.witnesswork',
-            },
-          ],
-          category: ['DEFAULT', 'BROWSABLE'],
-        },
-      ],
     },
     extra: {
       eas: {

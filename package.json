@@ -3,10 +3,9 @@
   "version": "1.36.0",
   "main": "node_modules/expo/AppEntry.js",
   "scripts": {
-    "dev": "APP_VARIANT=development expo start",
+    "dev": "APP_VARIANT=development expo start --ios",
     "android": "expo run:android",
     "ios": "expo run:ios",
-    "web": "expo start --web",
     "clean": "rm -rf node_modules .tamagui .expo .cache *.tar.gz ios android",
     "prebuild": "expo prebuild --clean",
     "build:ios": "eas build -p ios --profile development-simulator --local",

@@ -187,6 +187,7 @@ const DismissContactSheet: React.FC<DismissContactSheetProps> = ({
                   sound: true,
                 },
                 trigger: {
+                  type: Notifications.SchedulableTriggerInputTypes.DATE,
                   date: dismissedUntil,
                 },
               })

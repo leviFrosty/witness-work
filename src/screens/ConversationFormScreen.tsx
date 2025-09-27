@@ -344,6 +344,7 @@ const ConversationFormScreen = ({ route, navigation }: Props) => {
                 sound: true,
               },
               trigger: {
+                type: Notifications.SchedulableTriggerInputTypes.DATE,
                 date: selectedDate,
               },
             })

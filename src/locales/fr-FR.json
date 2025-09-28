@@ -232,7 +232,7 @@
   "notificationsDisabled": "Vous devrez activer la notification push pour WitnessWork",
   "notificationsDisabled_description": "Souhaitez-vous que nous vous redirigeions vers les paramètres de votre téléphone ?",
   "checkForUpdate": "Vérifier la mise à jour",
-  "update": "Update",
+  "update": "Mise à jour disponible",
   "update_description": "Souhaitez-vous mettre à jour maintenant ?",
   "ok": "D'ACCORD",
   "noUpdateAvailable": "Aucune mise à jour disponible actuellement.",
@@ -587,9 +587,9 @@
       "c3": "Problème de débordement résolu sur l'écran d'accueil des tablettes."
     },
     "1360": {
-      "c1": "Ajout d'une nouvelle clé de couleur à la vue de la carte ! Vous pouvez désormais personnaliser les couleurs des épingles sur la carte.",
-      "c2": "Ajout d'un nouveau bouton « Plus d'informations » à la vue de la carte. Cliquez dessus pour voir plus d'informations sur l'application.",
-      "c3": "Résout le problème de formatage des numéros de téléphone coréens.",
+      "c1": "New: Share Contacts and easily import them. Transfering calls is now easier than ever.",
+      "c2": "Added a color key to the map view! You can now customize the colors of the pins on the map.",
+      "c3": "NEW: Dismiss Contact feature - You can now dismiss contacts you no longer wish to visit and receive notifications when it's time to return to them.",
       "c4": "Ajout de la prise en charge des notes dans les rapports de temps.",
       "c5": "Amélioration de la programmation des plans récurrents - Vous pouvez désormais programmer des plans mensuels par jour de la semaine (par exemple, 'premier lundi de chaque mois&apos ;).",
       "c7": "Ajout de sections statistiques à vos rapports mensuels et annuels pour mieux suivre vos progrès et vos modèles.",

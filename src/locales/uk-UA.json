@@ -41,6 +41,9 @@
     "youCanDoThis": "Ти впораєшся!",
     "neverGiveUp": "Ніколи не здавайся!",
     "preachTheWord": "Проповідуйте слово!",
+    "stayFocused": "Будь зосередженим!",
+    "haveFaith": "Май віру!",
+    "stayStrong": "Будь мужнім!",
     "everyStepCounts": "Кожен крок має значення!",
     "youGotThis": "У тебе вийде!",
     "timeToShine": "Час сяяти!",
@@ -49,10 +52,7 @@
     "keepItUp": "Так тримати!",
     "momentumBuilding": "Набираємо обертів!",
     "onYourWay": "Вперед!",
-    "smallStepsBigResults": "Маленькі кроки, великі результати!",
-    "stayFocused": "Будь зосередженим!",
-    "haveFaith": "Май віру!",
-    "stayStrong": "Будь мужнім!"
+    "smallStepsBigResults": "Маленькі кроки, великі результати!"
   },
   "phrasesClose": {
     "oneStepCloser": "На крок ближче!",
@@ -232,7 +232,7 @@
   "notificationsDisabled": "Вам потрібно буде ввімкнути push-сповіщення для WitnessWork",
   "notificationsDisabled_description": "Бажаєте, щоб ми перейшли до налаштувань телефону?",
   "checkForUpdate": "Перевірити оновлення",
-  "update": "Update",
+  "update": "Оновлення доступне",
   "update_description": "Хочете оновити зараз?",
   "ok": "в порядку",
   "noUpdateAvailable": "Оновлення наразі недоступне.",
@@ -587,9 +587,9 @@
       "c3": "Вирішено проблему переповнення на головному екрані планшетів."
     },
     "1360": {
-      "c1": "Додано нову кольорову клавішу до перегляду карти! Тепер ви можете налаштувати кольори шпильок на карті.",
-      "c2": "Додано нову 'більше інформації' кнопку перегляду карти. Натисніть її, щоб переглянути більше інформації про програму.",
-      "c3": "Вирішує проблему з корейським форматуванням номера телефону.",
+      "c1": "New: Share Contacts and easily import them. Transfering calls is now easier than ever.",
+      "c2": "Added a color key to the map view! You can now customize the colors of the pins on the map.",
+      "c3": "NEW: Dismiss Contact feature - You can now dismiss contacts you no longer wish to visit and receive notifications when it's time to return to them.",
       "c4": "Додано підтримку нотаток до часових звітів.",
       "c5": "Покращено планування повторюваних планів - тепер ви можете планувати плани щомісяця за днями тижня (наприклад, 'перший понеділок кожного місяця').",
       "c7": "Додано розділи статистики до ваших щомісячних та річних звітів, щоб краще відстежувати ваш прогрес та закономірності.",

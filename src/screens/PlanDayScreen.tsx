@@ -23,7 +23,10 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import moment from 'moment'
 import Checkbox from 'expo-checkbox'
 import { NativeStackScreenProps } from '@react-navigation/native-stack'
-import { RecurringPlanFrequencies } from '../lib/serviceReport'
+import {
+  RecurringPlanFrequencies,
+  getMonthsReports,
+} from '../lib/serviceReport'
 
 import TextInput from '../components/TextInput'
 import { RootStackParamList } from '../types/rootStack'
@@ -343,6 +346,7 @@ const PlanDayScreen = ({ route, navigation }: PlanDayScreenProps) => {
     [route.params.date]
   )
   const {
+    serviceReports,
     dayPlans,
     recurringPlans,
     addDayPlan,
@@ -529,6 +533,14 @@ const PlanDayScreen = ({ route, navigation }: PlanDayScreenProps) => {
   const [note, setNote] = useState(
     existingDayPlan?.note ?? recurringPlanData?.note ?? ''
   )
+
+  // Get service reports for the selected date's month so DayHistoryView can show time entries
+  const monthsReports = useMemo(() => {
+    const currentMonth = moment(date).month()
+    const currentYear = moment(date).year()
+    return getMonthsReports(serviceReports, currentMonth, currentYear)
+  }, [serviceReports, date])
+
   const toast = useToastController()
   const theme = useTheme()
   const insets = useSafeAreaInsets()
@@ -950,6 +962,7 @@ const PlanDayScreen = ({ route, navigation }: PlanDayScreenProps) => {
           <View style={{ paddingHorizontal: 20 }}>
             <DayHistoryView
               date={date}
+              serviceReports={monthsReports}
               onDayPlanPress={(plan) => {
                 navigation.navigate('PlanDay', {
                   date: date.toISOString(),

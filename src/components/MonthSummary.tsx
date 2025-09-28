@@ -369,15 +369,27 @@ const MonthSummary = ({
           </View>
           <Divider />
           <View style={{ gap: 10 }}>
-            <TimeCategoryTableRow
-              title={i18n.t('standard')}
-              number={standardMinutes}
-            />
-            <TimeCategoryTableRow
-              title={i18n.t('ldc')}
-              number={ldcMinutes}
-              credit
-            />
+            {!(
+              (standardMinutes > 0 ||
+                (otherMinutes && otherMinutes.length > 0)) &&
+              standardMinutes === 0
+            ) && (
+              <TimeCategoryTableRow
+                title={i18n.t('standard')}
+                number={standardMinutes}
+              />
+            )}
+            {!(
+              (standardMinutes > 0 ||
+                (otherMinutes && otherMinutes.length > 0)) &&
+              ldcMinutes === 0
+            ) && (
+              <TimeCategoryTableRow
+                title={i18n.t('ldc')}
+                number={ldcMinutes}
+                credit
+              />
+            )}
             {otherMinutes &&
               otherMinutes.length > 0 &&
               otherMinutes.map((report, index) => (

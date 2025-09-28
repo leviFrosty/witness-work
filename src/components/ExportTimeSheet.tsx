@@ -310,6 +310,7 @@ const ExportTimeSheet = ({
               />
             </View>
           </View>
+          {/* TEMPORARILY REMOVED: NW Publisher submit button
           <View style={{ gap: 5 }}>
             <Button
               onPress={() => handleAction('nwpublisher')}
@@ -359,6 +360,7 @@ const ExportTimeSheet = ({
               </View>
             )}
           </View>
+          */}
           <Button
             onPress={() => handleAction('hourglass')}
             variant='solid'

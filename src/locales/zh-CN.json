@@ -232,7 +232,7 @@
   "notificationsDisabled": "您需要为 WitnessWork 启用推送通知",
   "notificationsDisabled_description": "是否希望我们将您带到您的手机设置？",
   "checkForUpdate": "检查更新",
-  "update": "Update",
+  "update": "更新可用",
   "update_description": "是否要立即更新？",
   "ok": "确定",
   "noUpdateAvailable": "当前没有可用更新。",
@@ -587,9 +587,9 @@
       "c3": "解决了平板电脑主屏幕上的溢出问题。"
     },
     "1360": {
-      "c1": "地图视图中添加了新的颜色键！您现在可以自定义地图上图钉的颜色。",
-      "c2": "地图视图中添加了新的“更多信息”按钮。单击它可查看有关该应用的更多信息。",
-      "c3": "解决韩语电话号码格式问题。",
+      "c1": "New: Share Contacts and easily import them. Transfering calls is now easier than ever.",
+      "c2": "Added a color key to the map view! You can now customize the colors of the pins on the map.",
+      "c3": "NEW: Dismiss Contact feature - You can now dismiss contacts you no longer wish to visit and receive notifications when it's time to return to them.",
       "c4": "为时间报告添加了备注支持。",
       "c5": "增强了定期计划安排功能 - 现在可以按星期安排每月计划（例如，'每月第一个星期一'）。",
       "c7": "在月度和年度报表中添加了统计部分，以便更好地跟踪进度和模式。",

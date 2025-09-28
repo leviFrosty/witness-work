@@ -43,7 +43,16 @@
     "preachTheWord": "Bwiriza!",
     "stayFocused": "Komeza kwibanda ku murimo!",
     "haveFaith": "Gira icyizere!",
-    "stayStrong": "Komera!"
+    "stayStrong": "Komera!",
+    "everyStepCounts": "Every step counts!",
+    "youGotThis": "You got this!",
+    "timeToShine": "Time to shine!",
+    "makingProgress": "Making progress!",
+    "greatStart": "Great start!",
+    "keepItUp": "Keep it up!",
+    "momentumBuilding": "Momentum building!",
+    "onYourWay": "On your way!",
+    "smallStepsBigResults": "Small steps, big results!"
   },
   "phrasesClose": {
     "oneStepCloser": "Ongera rwose, harabura gato!",
@@ -53,7 +62,17 @@
     "momentumIsYours": "Wafatiyeho rwose!",
     "nearingAchievement": "Uri kugera ku ntego!",
     "youreClosingIn": "Urimo kwegereza!",
-    "closerThanEver": "Hafi cyane rwose!"
+    "closerThanEver": "Hafi cyane rwose!",
+    "homeStretch": "Home stretch!",
+    "finishStrong": "Finish strong!",
+    "soClose": "So close!",
+    "finalPush": "Final push!",
+    "youreOnFire": "You're on fire!",
+    "pushThroughToday": "Push through today!",
+    "goalInSight": "Goal in sight!",
+    "crushingIt": "Crushing it!",
+    "unstoppable": "Unstoppable!",
+    "powerThrough": "Power through!"
   },
   "phrasesDone": {
     "youDidIt": "Wabikoze!",
@@ -63,11 +82,46 @@
     "takeYourShoesOff": "Vana akavumbi ku nkweto!",
     "hatsOffToYou": "Turakwishimiye cyane!",
     "missionComplete": "Intego yagezweho!",
-    "success": "Imbere cyane!"
+    "success": "Imbere cyane!",
+    "phenomenal": "Phenomenal!",
+    "excellent": "Excellent!",
+    "outstanding": "Outstanding!",
+    "incredible": "Incredible!",
+    "amazingWork": "Amazing work!",
+    "goalCrushed": "Goal crushed!",
+    "victorious": "Victorious!",
+    "fantastic": "Fantastic!",
+    "wellDone": "Well done!",
+    "superb": "Superb!",
+    "keepGoingStrong": "Keep going strong!",
+    "onARoll": "On a roll!"
   },
   "hoursLeft": "amasaha abura",
   "goalBasedOnPublisherType": "Intego zishingiye ku mubwiriza uri we",
   "addTime": "Shyiramo igihe",
+  "updatedPlan": "Updated Plan",
+  "editPlan": "Edit Plan",
+  "overrideCreated": "Override Created",
+  "editingOverride": "Editing Override",
+  "editingOverride_description": "You're editing a specific occurrence of this recurring plan. Changes will only apply to this date.",
+  "removeOverride": "Remove Override",
+  "overrideRemoved": "Override Removed",
+  "existingOverrides": "Existing Overrides",
+  "override": "Override",
+  "createOverride": "Create Override",
+  "updateOverride": "Update Override",
+  "updatePlan": "Update Plan",
+  "editingPlan": "Editing Plan",
+  "editingPlan_description": "You're currently editing an existing plan. All fields below have been pre-filled with the current plan details.",
+  "editingDayPlan": "Editing Day Plan",
+  "editingRecurringPlan": "Editing Recurring Plan",
+  "planType": "Plan Type",
+  "currentPlanType": "Current Plan Type",
+  "remove": "Vanaho",
+  "deletedInstances": "Deleted Instances",
+  "deletedInstances_description": "These recurring plan instances have been deleted. You can restore them if needed.",
+  "instanceRestored": "Instance Restored",
+  "restore": "Restore",
   "phrasesStudiesNone": {
     "keepGoing": "Komeza!",
     "stayStrong": "Komera!",
@@ -78,7 +132,7 @@
   },
   "phrasesStudiesDone": {
     "bravo": "Amashyi!",
-    "wellDone": "Ubikoze neza!",
+    "wellDone": "Bimeze neza!",
     "amazingJob": "Umurimo mwiza rwose!",
     "wayToGo": "Komereza aho!",
     "victoryLap": "Wabigezeho!",
@@ -139,6 +193,7 @@
   "addConversation_description": "Shyiramo amakuru y'ikiganiro hasi aha ku kiganiro muzagirana.",
   "note": "Icyitonderwa",
   "note_placeholder": "Andika hasi uko ikiganiro cyagenze. Usobanure neza!",
+  "optionalNote": "Optional note (e.g., details about the service day)",
   "followUp": "Gukurikirana",
   "topic_placeholder": "Shyiramo ingingo; Urugero: Ishimire Isomo rya 1",
   "notifyMe": "Menyesha njyewe",
@@ -177,7 +232,7 @@
   "notificationsDisabled": "Biragusaba gushyiramo notification kuri Umurimo w'Umuhamya",
   "notificationsDisabled_description": "Urashaka ko tukujyana mu igenamiterere ya telephone?",
   "checkForUpdate": "Reba ibishya",
-  "update": "Ibishya birahari",
+  "update": "Update",
   "update_description": "Urashaka kongeramo ibishya?",
   "ok": "OK",
   "noUpdateAvailable": "Nta bishya bihari ubu.",
@@ -252,6 +307,21 @@
   "helpTranslateTitle": "Fasha mu buhinduzi?",
   "helpTranslate_message": "Umurimo w'Umuhamya uboneka mu ndimi zirenga 10+ hakoreshejwe ubuhinduzi bwikora. Hari igihe usanga ubu buhinduzi budahuje n'ukuri. Ese wifuza gufasha mu gukora ubuhinduzi bw'ukuri?",
   "share": "Sangiza",
+  "exportContact": "Export Contact",
+  "shareContact": "Share Contact",
+  "includeConversationHistory": "Include Conversation History",
+  "excludeConversationHistory": "Exclude Conversation History",
+  "options": "Options",
+  "importContact": "Import Contact",
+  "contactImported": "Contact Imported",
+  "contactExists": "Contact Already Exists",
+  "contactExists_description": "A contact with this name already exists. Do you want to replace it with the imported data?",
+  "contactRecovered": "Contact Recovered",
+  "contactRecovered_description": "This contact was previously deleted and has been automatically recovered. Do you want to replace it with the imported data?",
+  "replace": "Replace",
+  "keep": "Keep Existing",
+  "invalidFile": "Invalid File",
+  "invalidFile_description": "The selected file is not a valid WitnessWork contact export.",
   "notes": "Icyitonderwa",
   "no": "Oya",
   "viewAllMonths": "Reba amezi yose",
@@ -327,35 +397,50 @@
   "new": "Ibishya",
   "bugFixes": "Gukosora amakosa",
   "updates": {
-    "160": {
-      "c1": "Conversations are now editable. Notifications are configurable",
-      "c2": "Swipe gestures to edit or delete conversations, contacts, etc.",
-      "c3": "Added haptic feedback to various important actions"
+    "1211": {
+      "c1": "Hongewe izindi ngingo z'ingenzi inshuro imwe aho bikenewe."
     },
-    "161": {
-      "c1": "Added more minute options for time entries"
+    "1210": {
+      "c1": "Byanonosowe neza kugaragazwa kw'igihe.",
+      "c2": "Hanonosowe neza ku dukoni tw'iterambere.",
+      "c3": "Hongewemo udufasha tw'ibikorwa tutagaragara cyane.",
+      "c4": "Hanonosowe ubuziranenge kuri ekara y'ikarita harimo n'amakuru akenewe ndetse na buto yo kongeramo byihuse."
     },
-    "162": {
-      "c1": "Adjusted special pioneer hour requirement from 70 to 100"
+    "1201": {
+      "c1": "Huza n'igihe igice cya buri kwezi ahabanza kugira ngo ubone amezi abanza n'akurikira.",
+      "c2": "Hanonosowe ubuhinduzi bwo mu rurimi rwa Korean - Muvandimwe Paul, wakoze. Niba ushaka gufasha guhindura mu rurimi rwawe, reba mu igenamiterere.",
+      "c3": "Gukosora udukosa duto."
     },
-    "163": {
-      "c1": "Resolve automated update issues"
+    "1200": {
+      "c1": "Hongewemo ubryo bwo kugarura no kubika amakuru bwite ya application. Ushobora kubika kuri Cloud, ukabigarura nyuma no mu bindi bikoresho bya elegitoroniki. Wabyohereza no ku zindi platform. Reba iyi miterere mishya mu igenamiterere."
     },
-    "170": {
-      "c1": "Add various time export methods",
-      "c2": "Shiraho 'Ntabwo ari mu rugo'"
+    "1120": {
+      "c1": "Hongewemo ubryo bwo kugarura no kubika amakuru bwite ya application. Ushobora kubika kuri Cloud, ukabigarura nyuma no mu bindi bikoresho bya elegitoroniki. Wabyohereza no ku zindi platform. Reba iyi miterere mishya mu igenamiterere."
     },
-    "180": {
-      "c1": "Added automatic geocoding for contacts",
-      "c2": "Added map view"
+    "1111": {
+      "c1": "Hongewemo i paji yo gutanga impano kubifuza gutanga impano. Reba mu igenamiterere.",
+      "c2": "Harimo gukosora udukosa duto n'ibindi"
     },
-    "181": {
-      "c1": "Expanded map view",
-      "c2": "Added store review request after certain criteria is met",
-      "c3": "Small bug fixes"
+    "1110": {
+      "c1": "Hongewemo gukoreshwa na iPad na Tablet neza!",
+      "c2": "Hahinduwe imiterere imwe n'imwe kugira ngo ikore neza muri ekara nini.",
+      "c3": "Adjusted the method of submitting Bug Reports and Feature Requests to Github."
     },
-    "182": {
-      "c1": "Updated all time to reflect the current locale"
+    "1100": {
+      "c1": "Adds annual report to Time Reports screen! Keep track of your service year progress at a glance.",
+      "c2": "Adding time from Time Reports screen now defaults the report to the selected month.",
+      "c3": "Fixes an issue exporting January service report."
+    },
+    "192": {
+      "c1": "Ubu wa kanda ku kiganiro kugira ngo ugire ibyo uhindura, cyangwa ushobora gusunika ibumoso nka mbere.",
+      "c2": "Fixes an issue where some devices have an overflowing progress bar.",
+      "c3": "Adds more verbose handling of link errors for certain devices lacking required applications.",
+      "c4": "Navigate directly to a month from the monthly routine section of the home screen.",
+      "c5": "Time Reports screen better handles empty and future months.",
+      "c6": "Minor bug fixes."
+    },
+    "191": {
+      "c1": "Resolves an issue navigating to time screens."
     },
     "190": {
       "c1": "Added preferences in the settings",
@@ -366,50 +451,35 @@
       "c6": "Now add custom tags to your time entries",
       "c7": "Updated Time Reports screen to be better organized and separated by month"
     },
-    "191": {
-      "c1": "Resolves an issue navigating to time screens."
+    "182": {
+      "c1": "Updated all time to reflect the current locale"
     },
-    "192": {
-      "c1": "Ubu wa kanda ku kiganiro kugira ngo ugire ibyo uhindura, cyangwa ushobora gusunika ibumoso nka mbere.",
-      "c2": "Fixes an issue where some devices have an overflowing progress bar.",
-      "c3": "Adds more verbose handling of link errors for certain devices lacking required applications.",
-      "c4": "Navigate directly to a month from the monthly routine section of the home screen.",
-      "c5": "Time Reports screen better handles empty and future months.",
-      "c6": "Minor bug fixes."
+    "181": {
+      "c1": "Expanded map view",
+      "c2": "Added store review request after certain criteria is met",
+      "c3": "Small bug fixes"
     },
-    "1100": {
-      "c1": "Adds annual report to Time Reports screen! Keep track of your service year progress at a glance.",
-      "c2": "Adding time from Time Reports screen now defaults the report to the selected month.",
-      "c3": "Fixes an issue exporting January service report."
+    "180": {
+      "c1": "Added automatic geocoding for contacts",
+      "c2": "Added map view"
     },
-    "1110": {
-      "c1": "Hongewemo gukoreshwa na iPad na Tablet neza!",
-      "c2": "Hahinduwe imiterere imwe n'imwe kugira ngo ikore neza muri ekara nini.",
-      "c3": "Adjusted the method of submitting Bug Reports and Feature Requests to Github."
+    "170": {
+      "c1": "Add various time export methods",
+      "c2": "Shiraho 'Ntabwo ari mu rugo'"
     },
-    "1111": {
-      "c1": "Hongewemo i paji yo gutanga impano kubifuza gutanga impano. Reba mu igenamiterere.",
-      "c2": "Harimo gukosora udukosa duto n'ibindi"
+    "163": {
+      "c1": "Resolve automated update issues"
     },
-    "1120": {
-      "c1": "Hongewemo ubryo bwo kugarura no kubika amakuru bwite ya application. Ushobora kubika kuri Cloud, ukabigarura nyuma no mu bindi bikoresho bya elegitoroniki. Wabyohereza no ku zindi platform. Reba iyi miterere mishya mu igenamiterere."
+    "162": {
+      "c1": "Adjusted special pioneer hour requirement from 70 to 100"
     },
-    "1200": {
-      "c1": "Hongewemo ubryo bwo kugarura no kubika amakuru bwite ya application. Ushobora kubika kuri Cloud, ukabigarura nyuma no mu bindi bikoresho bya elegitoroniki. Wabyohereza no ku zindi platform. Reba iyi miterere mishya mu igenamiterere."
+    "161": {
+      "c1": "Added more minute options for time entries"
     },
-    "1201": {
-      "c1": "Huza n'igihe igice cya buri kwezi ahabanza kugira ngo ubone amezi abanza n'akurikira.",
-      "c2": "Hanonosowe ubuhinduzi bwo mu rurimi rwa Korean - Muvandimwe Paul, wakoze. Niba ushaka gufasha guhindura mu rurimi rwawe, reba mu igenamiterere.",
-      "c3": "Gukosora udukosa duto."
-    },
-    "1210": {
-      "c1": "Byanonosowe neza kugaragazwa kw'igihe.",
-      "c2": "Hanonosowe neza ku dukoni tw'iterambere.",
-      "c3": "Hongewemo udufasha tw'ibikorwa tutagaragara cyane.",
-      "c4": "Hanonosowe ubuziranenge kuri ekara y'ikarita harimo n'amakuru akenewe ndetse na buto yo kongeramo byihuse."
-    },
-    "1211": {
-      "c1": "Hongewe izindi ngingo z'ingenzi inshuro imwe aho bikenewe."
+    "160": {
+      "c1": "Conversations are now editable. Notifications are configurable",
+      "c2": "Swipe gestures to edit or delete conversations, contacts, etc.",
+      "c3": "Added haptic feedback to various important actions"
     },
     "1220": {
       "c3": "Added Calendar to time reports screen.",
@@ -503,8 +573,8 @@
       "c6": "Urashobora noneho guhitamo uburyo igihe cyawe cyerekanwa. Hitamo hagati ya cumi nka: 13.5 cyangwa uhitemo 13 Hrs 30 Mins. Sura Ibyifuzo & gt; Kugaragara."
     },
     "1330": {
-      "c1": "Wongeyeho abatoranya ururimi. Reba Ibyatoranijwe kugirango uhindure intoki ururimi rwawe.",
-      "c2": "Ikibazo cyakemutse hamwe na gahunda yigihe kimwe ifite itariki ntarengwa.",
+      "c1": "Hongewemo gutoranya ururimi. Reba Ibyatoranijwe kugirango uhindure ururimi.",
+      "c2": "Ikibazo cyakemutse kuri gahunda y'umusi umwe ifite itariki ntarengwa.",
       "c3": "Gukemura ikibazo cyo gusiba ibyiciro."
     },
     "1340": {
@@ -519,7 +589,19 @@
     "1360": {
       "c1": "Wongeyeho urufunguzo rushya rw'urufunguzo rwo kureba ikarita! Urashobora noneho guhitamo amabara ya pin kurikarita.",
       "c2": "Wongeyeho & apos; amakuru menshi & apos; Akabuto Kuri Ikarita Reba. Kanda kugirango ubone ibisobanuro birambuye kuri porogaramu.",
-      "c3": "Gukemura ikibazo hamwe nimero ya terefone ya koreya."
+      "c3": "Gukemura ikibazo hamwe nimero ya terefone ya koreya.",
+      "c4": "Added notes support to time reports.",
+      "c5": "Enhanced recurring plan scheduling - You can now schedule plans monthly by day of week (e.g., 'first Monday of every month').",
+      "c7": "Added statistics sections to your Monthly and Yearly reports to better track your progress and patterns.",
+      "c8": "You can now change your calendar's first day of the week. Visit Preferences > Appearance.",
+      "c9": "Added various progress bar animations.",
+      "c10": "Follow up topic now supports multiple lines.",
+      "c11": "There are now no restrictions on when you can add time or schedule plans.",
+      "c12": "Added visual indicators on calendar days to show when notes are present.",
+      "c13": "Resolves issue with Korean and Panama phone number formatting.",
+      "c14": "Contact Details Screen map is now zoomed out to easily see surroundings at a glance.",
+      "c15": "Fixed various navigation issues when adding time and scheduling plans.",
+      "c16": "Improved readability and consistency throughout the app with better spacing and button sizes."
     }
   },
   "installed": "Yagiye mu gikoresho cyawe",
@@ -532,7 +614,7 @@
   "tag": "Tagi",
   "showOtherCategories": "Erekana ibindi byiciro",
   "of": "mu",
-  "hoursToGoal": "mu masaha y'intego",
+  "hoursToGoal": "ku masaha y'intego",
   "removeCategory": "Vanaho ikiciro",
   "noReportsThisMonthYet": "Nta raporo y'uku kwezi kugeza ubu.",
   "timeReports": "Raporo z'amasaha",
@@ -569,7 +651,26 @@
   "thereAreNoOfferings": "Nta buryo bwo gutanga impano buhari ubu. Wongere mukanya.",
   "oneTime": "Incuri imwe",
   "monthly": "Mu kwezi",
+  "monthlyByWeekday": "Monthly (by weekday)",
   "eachMonth": "buri kwezi",
+  "selectWeekday": "Select Weekday",
+  "selectWeekOfMonth": "Select Week of Month",
+  "sunday": "Sunday",
+  "monday": "Monday",
+  "tuesday": "Tuesday",
+  "wednesday": "Wednesday",
+  "thursday": "Thursday",
+  "friday": "Friday",
+  "saturday": "Saturday",
+  "firstWeek": "First week",
+  "secondWeek": "Second week",
+  "thirdWeek": "Third week",
+  "fourthWeek": "Fourth week",
+  "lastWeek": "Last week",
+  "repeatsOnThe": "Repeats on the",
+  "ofEachMonth": "of each month",
+  "repeatsOnThe_weekday": "Repeats on the",
+  "ofEveryMonth": "of every month",
   "chooseYourDonationAmount": "Hitamo umubare w'amafaranga",
   "thanksForUsingWitnessWork": "Urakoze gukoresha Umurimo w'Umuhamya!",
   "firstOfAll": "Mbere na mbere...",
@@ -643,7 +744,7 @@
   "newPlan": "Gahunda nshya",
   "oneTimeSchedule_description": "Gahunda itisubiramo iravanaho gahunda yisubiramo ishobora kuba irimo.",
   "plan": "Gahunda",
-  "success": "Itsinzi",
+  "success": "Byakunze",
   "addedPlan": "Gahunda yashyizweho",
   "timePlanned": "Igihe cyagenwe",
   "timePlanned_description": "Ijanisha ry'igihe cyagenwe mu kwezi rishingira ku ntego z'umubwiriza uri we. Gerageza ku gena nibura 100% y'intego zawe.",
@@ -721,6 +822,10 @@
   "credit": "Credit",
   "credit_description": "Credit zizabarwa mu kwezi niba amasaha yo mu murimo wo kubwiriza atarenga 55.",
   "creditOverageInTheAmountOf": "Credit irenze y'amasaha {{count}}.",
+  "overrideCreditLimit": "Override Credit Limit",
+  "overrideCreditLimit_description": "By default, credit hours are limited to 55 hours total when combined with standard time. Special pioneers and circuit overseers have no limit by default.",
+  "customCreditLimitHours": "Custom Credit Limit (Hours)",
+  "customCreditLimitHours_description": "Set your own credit limit in hours. Enter 0 for no limit.",
   "updateCategories": "Huza n'igihe ibyiciro",
   "witnessWorkNowSupportsCredits": "Ubu Umurimo w'umuhamya yemerera gukoresha credits ku bafite intego y'umurimo mu mwaka. Numara guhuza n'igihe tag, raporo z'umurimo zawe nazo zizahuzwa n'igihe.",
   "credits": "Credits",
@@ -769,7 +874,6 @@
   "backupAndRestore": "Kubika & Kugarura",
   "pinLocation": "Gumishaho ikerekezo",
   "chooseLocation": "Hitamo ikerekezo",
-  "remove": "Vanaho",
   "coordinateSaved": "Coordinates zabitswe",
   "saved": "Byabitswe",
   "locationDisabled_description": "Kubona aho uri byahagaritswe. Ikarita ntabwo yahita ijya neza aho uri.",
@@ -792,7 +896,7 @@
   },
   "hoursShort": {
     "zero": "{{count}} Amasaha",
-    "one": "{{count}} Hr",
+    "one": "Amasaha {{count}}",
     "other": "{{count}} Amasaha"
   },
   "minutesLong": {
@@ -801,10 +905,12 @@
     "other": "{{count}} iminota"
   },
   "minutesShort": {
-    "zero": "{{count}} Mins",
-    "one": "{{count}} Min",
-    "other": "{{count}} Mins"
+    "zero": "Iminota {{count}}",
+    "one": "Iminota {{count}}",
+    "other": "Iminota {{count}}"
   },
+  "hoursCompact": "h",
+  "minutesCompact": "m",
   "decimalExample": "15.5",
   "longExample": "Amasaha 15 Iminota 30",
   "shortExample": "15 Isaha 30 Imin",
@@ -821,5 +927,73 @@
   "moreInfo": "Andi Makuru",
   "map": "Ikarita",
   "editColor": "Hindura ibara",
-  "close": "Funga"
+  "close": "Funga",
+  "startOfWeek": "Start of Week",
+  "noPlansScheduledForThisMonth": "No plans scheduled for this month.",
+  "scheduledPlans": "Scheduled Plans",
+  "scheduledPlans_description": "Tap any plan to edit or view details. Swipe to delete.",
+  "dismissForLater": "Dismiss For Later",
+  "dismiss": "Dismiss",
+  "dismissContact": "Dismiss Contact?",
+  "dismissContactDescription": "This will hide {{name}} from your contact list and map for {{duration}}. {{example}}",
+  "dismissContactDescriptionWithNotification": "This will hide {{name}} from your contact list and map for {{duration}}. {{example}}\n\nYou'll receive a notification when {{name}} becomes available again.",
+  "dismissContactHelp": "{{name}} will be hidden from your contact list and map for the time period you choose. You can always find dismissed contacts in Settings > Contacts > Dismissed Contacts.",
+  "dismissFor1Week": "1 Week",
+  "dismissFor1Month": "1 Month",
+  "dismissFor3Months": "3 Months",
+  "dismissFor6Months": "6 Months",
+  "dismissFor1Year": "1 Year",
+  "dismissExample": "They'll reappear on {{date}}",
+  "contactDismissed": "Contact Dismissed",
+  "contactDismissedMessage": "{{name}} is dismissed until {{until}}",
+  "contactDismissedWithNotificationMessage": "{{name}} is dismissed until {{until}}. You'll receive a notification when they're available again.",
+  "contactAvailableAgain": "Contact Available Again",
+  "contactAvailableAgainMessage": "{{name}} is now available in your contacts again! {{emoji}}",
+  "dismissedContacts": "Dismissed Contacts",
+  "noDismissedContacts": "No dismissed contacts. Use \"Dismiss For Later\" on any contact to hide them temporarily.",
+  "dismissedContactsHelp": "These contacts are temporarily hidden from your main contact list and map. They will automatically reappear when their dismiss period expires.",
+  "dismissedUntil": "Dismissed until {{date}}",
+  "undismiss": "Undismiss",
+  "undismissContact": "Undismiss {{name}}?",
+  "undismissContactDescription": "This contact will immediately reappear in your contact list and map.",
+  "contactUndismissed": "{{name}} has been undismissed",
+  "goalAchieved": "Goal achieved!",
+  "remaining": "remaining",
+  "needed": "needed",
+  "perDay": "per day",
+  "short": "short",
+  "average": "avg",
+  "daysLeft": "days left",
+  "toPlan": "to plan",
+  "featuresForYou": "Features for You",
+  "featuresBasedOnType": "Available features based on your publisher type",
+  "featureTimerTracking": "Timer & Time Tracking",
+  "featureTimerTrackingDesc": "Built-in stopwatch to easily track your service time",
+  "featureSimpleTimeCheckbox": "Simple Time Tracking",
+  "featureSimpleTimeCheckboxDesc": "Check off your time with a checkbox each month",
+  "featureDetailedTimeTracking": "Detailed Time Tracking",
+  "featureDetailedTimeTrackingDesc": "Track your service time in depth with detailed reporting",
+  "featureTimeTagging": "Time Tagging & Credit",
+  "featureTimeTaggingDesc": "Mark time as credit and group time entries into buckets for easy tracking",
+  "featureContactPins": "Automatic Contact Pins",
+  "featureContactPinsDesc": "Your contacts automatically appear on the map for easy navigation",
+  "featureReturnVisitConversations": "Return Visit Conversations",
+  "featureReturnVisitConversationsDesc": "Track conversations and never forget a return visit",
+  "featureUpcomingVisits": "Upcoming Visits Reminders",
+  "featureUpcomingVisitsDesc": "Get notified about scheduled conversations for the day",
+  "featureContactActions": "Quick Contact Actions",
+  "featureContactActionsDesc": "Instantly call, message, email, or navigate to contacts",
+  "featureMonthlyReports": "Service Reports",
+  "featureMonthlyReportsDesc": "View easy-to-understand monthly and annual reports",
+  "featureBackupRestore": "Backup & Restore",
+  "featureBackupRestoreDesc": "Offline only, secure backups so you never lose your data",
+  "featureAutomaticGoals": "Automatic Goal Creation",
+  "featureAutomaticGoalsDesc": "Goals set automatically based on your publisher type",
+  "featureSchedulePlanning": "Schedule & Plans",
+  "featureSchedulePlanningDesc": "Create one-time and recurring service plans",
+  "featureGamifiedRoutine": "Monthly Routine",
+  "featureGamifiedRoutineDesc": "Gamified service reporting to keep you motivated",
+  "featureWordsOfAffirmation": "Words of Affirmation",
+  "featureWordsOfAffirmationDesc": "Receive encouraging phrases and positive feedback as you use the app",
+  "actions": "Actions"
 }

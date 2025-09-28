@@ -1,59 +1,78 @@
 {
   "hello": "Muli shani",
   "goodBye": "Shalapo",
-  "welcomeTo": "Welcome To",
-  "witnessWork": "WitnessWork",
-  "getStarted": "Get Started",
-  "whatTypePublisherAreYou": "What type of publisher are you?",
-  "noHourRequirement": "No Hour Requirement",
-  "hourMonthlyRequirement": "{{count}} Hour Monthly Requirement",
-  "publisher": "Publisher",
-  "regularAuxiliary": "Regular Auxiliary",
-  "regularPioneer": "Regular Pioneer",
-  "circuitOverseer": "Circuit Overseer",
-  "specialPioneer": "Special Pioneer",
-  "continue": "Continue",
-  "neverForgetAReturnVisit": "Never Forget a Return Visit",
-  "neverForgetAReturnVisit_description": "WitnessWork will notify you about upcoming return visits or studies. You can change this later in the settings.",
-  "skip": "Skip",
-  "allowNotifications": "Allow Notifications",
-  "youreAllSet": "You're all set!",
-  "youreAllSet_description": "WitnessWork will notify you of conversations you've scheduled.",
-  "optInNotificationsLater": "You can opt-in to notifications in the settings later.",
-  "completeSetup": "Complete Setup",
-  "noRecentConversation": "No Recent Conversation",
-  "noRecentConversation_plural": "No Recent Conversations",
-  "returnVisitContacts": "Return Visit Contacts",
-  "noContactsSaved": "No contacts saved. Tap the plus button to add a contact.",
-  "deleteConversation": "Delete Conversation?",
-  "deleteConversation_description": "Deleting this conversation will permanently remove it and any assigned notifications.",
-  "cancel": "Cancel",
-  "delete": "Delete",
-  "noNotesSaved": "No note saved.",
-  "followUpInformation": "Follow Up Information",
-  "upcoming": "upcoming",
-  "past": "past",
-  "topic": "Topic",
-  "monthlyRoutine": "Monthly Routine",
-  "searchForContact": "Search for contact...",
+  "welcomeTo": "Xoş Gəlmisiniz",
+  "witnessWork": "Şahidlik Xidməti",
+  "getStarted": "Başla",
+  "whatTypePublisherAreYou": "Sizin xidmət növü hansıdı?",
+  "noHourRequirement": "Saat Tələbi Yoxdur",
+  "hourMonthlyRequirement": "{{count}} Aylıq Saat Tələbi",
+  "publisher": "Təbliğçi",
+  "regularAuxiliary": "Daimi Köməkçi Öncül",
+  "regularPioneer": "Daimi Öncül",
+  "circuitOverseer": "Rayon Nəzarətçisi",
+  "specialPioneer": "Xüsusi Öncül",
+  "continue": "Davam et",
+  "neverForgetAReturnVisit": "Yenidən Geri Dönməyi Unutma",
+  "neverForgetAReturnVisit_description": "WitnessWork sizə gələcək qayıdış ziyarətləri və ya tədqiqatlar barədə xəbərdarlıq edəcək. Bunu sonradan tənzimləmələrdə dəyişə bilərsiniz.",
+  "skip": "Keç",
+  "allowNotifications": "Bildirişlərə İcazə Ver",
+  "youreAllSet": "Hərşey hazırdı!",
+  "youreAllSet_description": "WitnessWork sizə təyin etdiyiniz öyrətmə barədə xəbərdarlıq edəcək.",
+  "optInNotificationsLater": "Sonradan tənzimləmələrdə bildirişləri aktiv edə bilərsiniz.",
+  "completeSetup": "Quraşdırmanı Tamamla",
+  "noRecentConversation": "Sonuncu öyrətmə ziyarəti yoxdur",
+  "noRecentConversation_plural": "Sonuncu öyrətmə ziyarətləri yoxdur",
+  "returnVisitContacts": "Kontaktları ziyarət edin",
+  "noContactsSaved": "Heç bir kontakt saxlanılmadı. Kontakt əlavə etmək üçün plus düyməsinə toxunun.",
+  "deleteConversation": "Söhbət silinsin?",
+  "deleteConversation_description": "Bu söhbətin silinməsi onu və təyin olunmuş bildirişləri həmişəlik siləcək.",
+  "cancel": "Ləğv et",
+  "delete": "Sil",
+  "noNotesSaved": "Heç bir qeyd yadda saxlanmadı.",
+  "followUpInformation": "Məlumatı izləyin",
+  "upcoming": "qarşıdan gələn",
+  "past": "keçmiş",
+  "topic": "Mövzu",
+  "monthlyRoutine": "Aylıq Rejim",
+  "searchForContact": "Əlaqə axtarın...",
   "phrasesFar": {
-    "keepGoing": "Keep going!",
-    "youCanDoThis": "You can do this!",
-    "neverGiveUp": "Never give up!",
-    "preachTheWord": "Preach the word!",
-    "stayFocused": "Stay focused!",
-    "haveFaith": "Have faith!",
-    "stayStrong": "Stay Strong!"
+    "keepGoing": "Davam et!",
+    "youCanDoThis": "Bunu edə bilərsiniz!",
+    "neverGiveUp": "Heç vaxt təslim olma!",
+    "preachTheWord": "Müjdəni təbliğ edin!",
+    "stayFocused": "Diqqət kəsilin!",
+    "haveFaith": "İman edin!",
+    "stayStrong": "Güclü qalın!",
+    "everyStepCounts": "Every step counts!",
+    "youGotThis": "You got this!",
+    "timeToShine": "Time to shine!",
+    "makingProgress": "Making progress!",
+    "greatStart": "Great start!",
+    "keepItUp": "Keep it up!",
+    "momentumBuilding": "Momentum building!",
+    "onYourWay": "On your way!",
+    "smallStepsBigResults": "Small steps, big results!"
   },
   "phrasesClose": {
-    "oneStepCloser": "One step closer!",
-    "almostThere": "Almost there!",
-    "keepMovingForward": "Keep moving forward!",
-    "successOnTheHorizon": "Success on the horizon!",
-    "momentumIsYours": "Momentum is yours!",
-    "nearingAchievement": "Nearing achievement!",
-    "youreClosingIn": "You're closing in!",
-    "closerThanEver": "Closer than ever!"
+    "oneStepCloser": "Bir addım daha yaxın!",
+    "almostThere": "Demək olar ki, var!",
+    "keepMovingForward": "İrəli, davam edin!",
+    "successOnTheHorizon": "Üfüqdə uğurlar!",
+    "momentumIsYours": "Bu an sizindir!",
+    "nearingAchievement": "Nailiyyət yaxınlaşır!",
+    "youreClosingIn": "Siz yaxınlaşırsınız!",
+    "closerThanEver": "Həmişəkindən daha yaxın!",
+    "homeStretch": "Home stretch!",
+    "finishStrong": "Finish strong!",
+    "soClose": "So close!",
+    "finalPush": "Final push!",
+    "youreOnFire": "You're on fire!",
+    "pushThroughToday": "Push through today!",
+    "goalInSight": "Goal in sight!",
+    "crushingIt": "Crushing it!",
+    "unstoppable": "Unstoppable!",
+    "powerThrough": "Power through!"
   },
   "phrasesDone": {
     "youDidIt": "You did it!",
@@ -63,11 +82,46 @@
     "takeYourShoesOff": "Take your shoes off!",
     "hatsOffToYou": "Hats off to you!",
     "missionComplete": "Mission complete!",
-    "success": "Success!"
+    "success": "Success!",
+    "phenomenal": "Phenomenal!",
+    "excellent": "Excellent!",
+    "outstanding": "Outstanding!",
+    "incredible": "Incredible!",
+    "amazingWork": "Amazing work!",
+    "goalCrushed": "Goal crushed!",
+    "victorious": "Victorious!",
+    "fantastic": "Fantastic!",
+    "wellDone": "Well done!",
+    "superb": "Superb!",
+    "keepGoingStrong": "Keep going strong!",
+    "onARoll": "On a roll!"
   },
   "hoursLeft": "hours left",
   "goalBasedOnPublisherType": "Goal is based on your publisher type",
   "addTime": "Add Time",
+  "updatedPlan": "Updated Plan",
+  "editPlan": "Edit Plan",
+  "overrideCreated": "Override Created",
+  "editingOverride": "Editing Override",
+  "editingOverride_description": "You're editing a specific occurrence of this recurring plan. Changes will only apply to this date.",
+  "removeOverride": "Remove Override",
+  "overrideRemoved": "Override Removed",
+  "existingOverrides": "Existing Overrides",
+  "override": "Override",
+  "createOverride": "Create Override",
+  "updateOverride": "Update Override",
+  "updatePlan": "Update Plan",
+  "editingPlan": "Editing Plan",
+  "editingPlan_description": "You're currently editing an existing plan. All fields below have been pre-filled with the current plan details.",
+  "editingDayPlan": "Editing Day Plan",
+  "editingRecurringPlan": "Editing Recurring Plan",
+  "planType": "Plan Type",
+  "currentPlanType": "Current Plan Type",
+  "remove": "Fumya",
+  "deletedInstances": "Deleted Instances",
+  "deletedInstances_description": "These recurring plan instances have been deleted. You can restore them if needed.",
+  "instanceRestored": "Instance Restored",
+  "restore": "Restore",
   "phrasesStudiesNone": {
     "keepGoing": "Keep going!",
     "stayStrong": "Stay strong!",
@@ -139,6 +193,7 @@
   "addConversation_description": "Enter the conversation information below for the conversation you will be assigning to your contact.",
   "note": "Note",
   "note_placeholder": "Write down information about your conversation. Be sure to be descriptive!",
+  "optionalNote": "Optional note (e.g., details about the service day)",
   "followUp": "Follow Up",
   "topic_placeholder": "Enter topic, e.g., Enjoy Life Forever Ch. 1",
   "notifyMe": "Notify Me",
@@ -177,7 +232,7 @@
   "notificationsDisabled": "You'll need to enable push notification for WitnessWork",
   "notificationsDisabled_description": "Would you like us to take you to your phone settings?",
   "checkForUpdate": "Check for update",
-  "update": "Update Available",
+  "update": "Update",
   "update_description": "Would you like to update now?",
   "ok": "OK",
   "noUpdateAvailable": "No update currently available.",
@@ -252,6 +307,21 @@
   "helpTranslateTitle": "Help Translate?",
   "helpTranslate_message": "WitnessWork is available in over 10+ languages by means of automatic translation tools. At times, these translations may not always be accurate. Would you like to help make them more accurate?",
   "share": "Share",
+  "exportContact": "Export Contact",
+  "shareContact": "Share Contact",
+  "includeConversationHistory": "Include Conversation History",
+  "excludeConversationHistory": "Exclude Conversation History",
+  "options": "Options",
+  "importContact": "Import Contact",
+  "contactImported": "Contact Imported",
+  "contactExists": "Contact Already Exists",
+  "contactExists_description": "A contact with this name already exists. Do you want to replace it with the imported data?",
+  "contactRecovered": "Contact Recovered",
+  "contactRecovered_description": "This contact was previously deleted and has been automatically recovered. Do you want to replace it with the imported data?",
+  "replace": "Replace",
+  "keep": "Keep Existing",
+  "invalidFile": "Invalid File",
+  "invalidFile_description": "The selected file is not a valid WitnessWork contact export.",
   "notes": "Notes",
   "no": "No",
   "viewAllMonths": "View All Months",
@@ -327,35 +397,50 @@
   "new": "New",
   "bugFixes": "Bug Fixes",
   "updates": {
-    "160": {
-      "c1": "Conversations are now editable. Notifications are configurable",
-      "c2": "Swipe gestures to edit or delete conversations, contacts, etc.",
-      "c3": "Added haptic feedback to various important actions"
+    "1211": {
+      "c1": "Added more helpful one-time hints when appropriate."
     },
-    "161": {
-      "c1": "Added more minute options for time entries"
+    "1210": {
+      "c1": "Greatly improved accuracy of time displays.",
+      "c2": "Improved accuracy of time progress bars.",
+      "c3": "Added helpful hints for actions that may not be immediately noticeable.",
+      "c4": "Improved quality of life on the maps screen with more relevant information and a quick-add button."
     },
-    "162": {
-      "c1": "Adjusted special pioneer hour requirement from 70 to 100"
+    "1201": {
+      "c1": "Updates monthly routine section of home screen to show surrounding months.",
+      "c2": "Significantly improved Korean translations - thank you brother Paul. If you'd like to help translate your own language, please visit the settings.",
+      "c3": "Minor bug fixes."
     },
-    "163": {
-      "c1": "Resolve automated update issues"
+    "1200": {
+      "c1": "Adds backup and restore functionality. Now you can backup your data to the cloud and restore it later, this allows you to transfer your data to another device. You can also transfer it to another platform. Find this new feature in settings."
     },
-    "170": {
-      "c1": "Add various time export methods",
-      "c2": "Add 'Not At Homes'"
+    "1120": {
+      "c1": "Adds backup and restore functionality. Now you can backup your data to the cloud and restore it later. You can transfer your data to another device. You can also transfer it to another platform. Find this new feature in the settings."
     },
-    "180": {
-      "c1": "Added automatic geocoding for contacts",
-      "c2": "Added map view"
+    "1111": {
+      "c1": "Add donate page in the settings for those who wish to contribute.",
+      "c2": "Includes various minor improvements and bug fixes"
     },
-    "181": {
-      "c1": "Expanded map view",
-      "c2": "Added store review request after certain criteria is met",
-      "c3": "Small bug fixes"
+    "1110": {
+      "c1": "Adds native support for iPad & tablets!",
+      "c2": "Adjusted various styles to better fit larger screens.",
+      "c3": "Adjusted the method of submitting Bug Reports and Feature Requests to Github."
     },
-    "182": {
-      "c1": "Updated all time to reflect the current locale"
+    "1100": {
+      "c1": "Adds annual report to Time Reports screen! Keep track of your service year progress at a glance.",
+      "c2": "Adding time from Time Reports screen now defaults the report to the selected month.",
+      "c3": "Fixes an issue exporting January service report."
+    },
+    "192": {
+      "c1": "Now tap on a conversation row to edit, or swipe left as before.",
+      "c2": "Fixes an issue where some devices have an overflowing progress bar.",
+      "c3": "Adds more verbose handling of link errors for certain devices lacking required applications.",
+      "c4": "Navigate directly to a month from the monthly routine section of the home screen.",
+      "c5": "Time Reports screen better handles empty and future months.",
+      "c6": "Minor bug fixes."
+    },
+    "191": {
+      "c1": "Resolves an issue navigating to time screens."
     },
     "190": {
       "c1": "Added preferences in the settings",
@@ -366,50 +451,35 @@
       "c6": "Now add custom tags to your time entries",
       "c7": "Updated Time Reports screen to be better organized and separated by month"
     },
-    "191": {
-      "c1": "Resolves an issue navigating to time screens."
+    "182": {
+      "c1": "Updated all time to reflect the current locale"
     },
-    "192": {
-      "c1": "Now tap on a conversation row to edit, or swipe left as before.",
-      "c2": "Fixes an issue where some devices have an overflowing progress bar.",
-      "c3": "Adds more verbose handling of link errors for certain devices lacking required applications.",
-      "c4": "Navigate directly to a month from the monthly routine section of the home screen.",
-      "c5": "Time Reports screen better handles empty and future months.",
-      "c6": "Minor bug fixes."
+    "181": {
+      "c1": "Expanded map view",
+      "c2": "Added store review request after certain criteria is met",
+      "c3": "Small bug fixes"
     },
-    "1100": {
-      "c1": "Adds annual report to Time Reports screen! Keep track of your service year progress at a glance.",
-      "c2": "Adding time from Time Reports screen now defaults the report to the selected month.",
-      "c3": "Fixes an issue exporting January service report."
+    "180": {
+      "c1": "Added automatic geocoding for contacts",
+      "c2": "Added map view"
     },
-    "1110": {
-      "c1": "Adds native support for iPad & tablets!",
-      "c2": "Adjusted various styles to better fit larger screens.",
-      "c3": "Adjusted the method of submitting Bug Reports and Feature Requests to Github."
+    "170": {
+      "c1": "Add various time export methods",
+      "c2": "Add 'Not At Homes'"
     },
-    "1111": {
-      "c1": "Add donate page in the settings for those who wish to contribute.",
-      "c2": "Includes various minor improvements and bug fixes"
+    "163": {
+      "c1": "Resolve automated update issues"
     },
-    "1120": {
-      "c1": "Adds backup and restore functionality. Now you can backup your data to the cloud and restore it later. You can transfer your data to another device. You can also transfer it to another platform. Find this new feature in the settings."
+    "162": {
+      "c1": "Adjusted special pioneer hour requirement from 70 to 100"
     },
-    "1200": {
-      "c1": "Adds backup and restore functionality. Now you can backup your data to the cloud and restore it later, this allows you to transfer your data to another device. You can also transfer it to another platform. Find this new feature in settings."
+    "161": {
+      "c1": "Added more minute options for time entries"
     },
-    "1201": {
-      "c1": "Updates monthly routine section of home screen to show surrounding months.",
-      "c2": "Significantly improved Korean translations - thank you brother Paul. If you'd like to help translate your own language, please visit the settings.",
-      "c3": "Minor bug fixes."
-    },
-    "1210": {
-      "c1": "Greatly improved accuracy of time displays.",
-      "c2": "Improved accuracy of time progress bars.",
-      "c3": "Added helpful hints for actions that may not be immediately noticeable.",
-      "c4": "Improved quality of life on the maps screen with more relevant information and a quick-add button."
-    },
-    "1211": {
-      "c1": "Added more helpful one-time hints when appropriate."
+    "160": {
+      "c1": "Conversations are now editable. Notifications are configurable",
+      "c2": "Swipe gestures to edit or delete conversations, contacts, etc.",
+      "c3": "Added haptic feedback to various important actions"
     },
     "1220": {
       "c3": "Added Calendar to time reports screen.",
@@ -517,9 +587,21 @@
       "c3": "Ubwafya bwa kupongomoka bwapwishiwe pa cibuno ca pa ng'anda ica ma tablet."
     },
     "1360": {
-      "c1": "Ukulundapo ulufungulo ulupya ulwa langi ku kumona kwa mapu! Nomba kuti mwapanga amalangi ya mapini pali mapu.",
-      "c2": "Ukulundapo ifipya 'amashiwi nayambi' batani ku kumona kwa mapu. Tinikeni pakuti mumone ifyebo nafimbi pa app.",
-      "c3": "Ipwisha ubwafya bwa kupanga inambala ya foni iya ku Korea."
+      "c1": "New: Share Contacts and easily import them. Transferring calls is now easier than ever.",
+      "c2": "You can now customize the colors of the pins on the map.",
+      "c3": "New: Dismiss Contact feature. You can now dismiss contacts you no longer wish to visit and receive notifications when it's time to return to them.",
+      "c4": "Added notes support to time reports.",
+      "c5": "Enhanced recurring plan scheduling - You can now schedule plans monthly by day of week (e.g., 'first Monday of every month').",
+      "c7": "Added statistics sections to your Monthly and Yearly reports to better track your progress and patterns.",
+      "c8": "You can now change your calendar's first day of the week. Visit Preferences > Appearance.",
+      "c9": "Added various progress bar animations.",
+      "c10": "Follow up topic now supports multiple lines.",
+      "c11": "There are now no restrictions on when you can add time or schedule plans.",
+      "c12": "Added visual indicators on calendar days to show when notes are present.",
+      "c13": "Resolves issue with Korean and Panama phone number formatting.",
+      "c14": "Contact Details Screen map is now zoomed out to easily see surroundings at a glance.",
+      "c15": "Fixed various navigation issues when adding time and scheduling plans.",
+      "c16": "Improved readability and consistency throughout the app with better spacing and button sizes."
     }
   },
   "installed": "Installed",
@@ -569,7 +651,26 @@
   "thereAreNoOfferings": "There are no donation methods available at this time. Please check again later.",
   "oneTime": "One Time",
   "monthly": "Monthly",
+  "monthlyByWeekday": "Monthly (by weekday)",
   "eachMonth": "/ month",
+  "selectWeekday": "Select Weekday",
+  "selectWeekOfMonth": "Select Week of Month",
+  "sunday": "Sunday",
+  "monday": "Monday",
+  "tuesday": "Tuesday",
+  "wednesday": "Wednesday",
+  "thursday": "Thursday",
+  "friday": "Friday",
+  "saturday": "Saturday",
+  "firstWeek": "First week",
+  "secondWeek": "Second week",
+  "thirdWeek": "Third week",
+  "fourthWeek": "Fourth week",
+  "lastWeek": "Last week",
+  "repeatsOnThe": "Repeats on the",
+  "ofEachMonth": "of each month",
+  "repeatsOnThe_weekday": "Repeats on the",
+  "ofEveryMonth": "of every month",
   "chooseYourDonationAmount": "Choose your donation amount",
   "thanksForUsingWitnessWork": "Thanks for loving WitnessWork!",
   "firstOfAll": "First of all...",
@@ -721,6 +822,10 @@
   "credit": "Credit",
   "credit_description": "Credit will be counted towards the month if your standard time plus credit doesn't exceed 55 hours.",
   "creditOverageInTheAmountOf": "Credit overage in the amount of {{count}} hours.",
+  "overrideCreditLimit": "Override Credit Limit",
+  "overrideCreditLimit_description": "By default, credit hours are limited to 55 hours total when combined with standard time. Special pioneers and circuit overseers have no limit by default.",
+  "customCreditLimitHours": "Custom Credit Limit (Hours)",
+  "customCreditLimitHours_description": "Set your own credit limit in hours. Enter 0 for no limit.",
   "updateCategories": "Update Categories",
   "witnessWorkNowSupportsCredits": "WitnessWork now properly supports credits for those with an annual service goal. Once your update an existing tag, all of your service reports will update as well.",
   "credits": "Credits",
@@ -769,7 +874,6 @@
   "backupAndRestore": "Ukusunga & Ukubwekeshepo",
   "pinLocation": "Icifulo ca Pin",
   "chooseLocation": "Saleni Icifulo",
-  "remove": "Fumya",
   "coordinateSaved": "Ukukonkanyapo kwasungilwe",
   "saved": "Ifisungilwe",
   "locationDisabled_description": "Ukwakana kwa ncende yenu kwaleshiwa. Mapu tekuti ilenge incende yenu ukupalamika.",
@@ -805,6 +909,8 @@
     "one": "{{count}} Iminiti",
     "other": "{{count}} Amaminiti"
   },
+  "hoursCompact": "h",
+  "minutesCompact": "m",
   "decimalExample": "15.5",
   "longExample": "Ama-awala 15 na Amamineti 30",
   "shortExample": "Ama-awala 15 na Amamineti 30",
@@ -821,5 +927,73 @@
   "moreInfo": "Amashiwi nayambi",
   "map": "Mapu",
   "editColor": "Yalula Ilangi",
-  "close": "Ukwisala"
+  "close": "Ukwisala",
+  "startOfWeek": "Start of Week",
+  "noPlansScheduledForThisMonth": "No plans scheduled for this month.",
+  "scheduledPlans": "Scheduled Plans",
+  "scheduledPlans_description": "Tap any plan to edit or view details. Swipe to delete.",
+  "dismissForLater": "Dismiss For Later",
+  "dismiss": "Dismiss",
+  "dismissContact": "Dismiss Contact?",
+  "dismissContactDescription": "This will hide {{name}} from your contact list and map for {{duration}}. {{example}}",
+  "dismissContactDescriptionWithNotification": "This will hide {{name}} from your contact list and map for {{duration}}. {{example}}\n\nYou'll receive a notification when {{name}} becomes available again.",
+  "dismissContactHelp": "{{name}} will be hidden from your contact list and map for the time period you choose. You can always find dismissed contacts in Settings > Contacts > Dismissed Contacts.",
+  "dismissFor1Week": "1 Week",
+  "dismissFor1Month": "1 Month",
+  "dismissFor3Months": "3 Months",
+  "dismissFor6Months": "6 Months",
+  "dismissFor1Year": "1 Year",
+  "dismissExample": "They'll reappear on {{date}}",
+  "contactDismissed": "Contact Dismissed",
+  "contactDismissedMessage": "{{name}} is dismissed until {{until}}",
+  "contactDismissedWithNotificationMessage": "{{name}} is dismissed until {{until}}. You'll receive a notification when they're available again.",
+  "contactAvailableAgain": "Contact Available Again",
+  "contactAvailableAgainMessage": "{{name}} is now available in your contacts again! {{emoji}}",
+  "dismissedContacts": "Dismissed Contacts",
+  "noDismissedContacts": "No dismissed contacts. Use \"Dismiss For Later\" on any contact to hide them temporarily.",
+  "dismissedContactsHelp": "These contacts are temporarily hidden from your main contact list and map. They will automatically reappear when their dismiss period expires.",
+  "dismissedUntil": "Dismissed until {{date}}",
+  "undismiss": "Undismiss",
+  "undismissContact": "Undismiss {{name}}?",
+  "undismissContactDescription": "This contact will immediately reappear in your contact list and map.",
+  "contactUndismissed": "{{name}} has been undismissed",
+  "goalAchieved": "Goal achieved!",
+  "remaining": "remaining",
+  "needed": "needed",
+  "perDay": "per day",
+  "short": "short",
+  "average": "avg",
+  "daysLeft": "days left",
+  "toPlan": "to plan",
+  "featuresForYou": "Features for You",
+  "featuresBasedOnType": "Available features based on your publisher type",
+  "featureTimerTracking": "Timer & Time Tracking",
+  "featureTimerTrackingDesc": "Built-in stopwatch to easily track your service time",
+  "featureSimpleTimeCheckbox": "Simple Time Tracking",
+  "featureSimpleTimeCheckboxDesc": "Check off your time with a checkbox each month",
+  "featureDetailedTimeTracking": "Detailed Time Tracking",
+  "featureDetailedTimeTrackingDesc": "Track your service time in depth with detailed reporting",
+  "featureTimeTagging": "Time Tagging & Credit",
+  "featureTimeTaggingDesc": "Mark time as credit and group time entries into buckets for easy tracking",
+  "featureContactPins": "Automatic Contact Pins",
+  "featureContactPinsDesc": "Your contacts automatically appear on the map for easy navigation",
+  "featureReturnVisitConversations": "Return Visit Conversations",
+  "featureReturnVisitConversationsDesc": "Track conversations and never forget a return visit",
+  "featureUpcomingVisits": "Upcoming Visits Reminders",
+  "featureUpcomingVisitsDesc": "Get notified about scheduled conversations for the day",
+  "featureContactActions": "Quick Contact Actions",
+  "featureContactActionsDesc": "Instantly call, message, email, or navigate to contacts",
+  "featureMonthlyReports": "Service Reports",
+  "featureMonthlyReportsDesc": "View easy-to-understand monthly and annual reports",
+  "featureBackupRestore": "Backup & Restore",
+  "featureBackupRestoreDesc": "Offline only, secure backups so you never lose your data",
+  "featureAutomaticGoals": "Automatic Goal Creation",
+  "featureAutomaticGoalsDesc": "Goals set automatically based on your publisher type",
+  "featureSchedulePlanning": "Schedule & Plans",
+  "featureSchedulePlanningDesc": "Create one-time and recurring service plans",
+  "featureGamifiedRoutine": "Monthly Routine",
+  "featureGamifiedRoutineDesc": "Gamified service reporting to keep you motivated",
+  "featureWordsOfAffirmation": "Words of Affirmation",
+  "featureWordsOfAffirmationDesc": "Receive encouraging phrases and positive feedback as you use the app",
+  "actions": "Actions"
 }

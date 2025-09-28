@@ -1,14 +1,14 @@
 {
   "hello": "你好",
-  "goodBye": "再见",
-  "welcomeTo": "歡迎光臨",
+  "goodBye": "再見",
+  "welcomeTo": "歡迎來到",
   "witnessWork": "見證工作",
   "getStarted": "開始使用",
-  "whatTypePublisherAreYou": "您是哪种类型的传道员？",
-  "noHourRequirement": "無時間要求",
-  "hourMonthlyRequirement": "每月要求 {{count}} 小時",
+  "whatTypePublisherAreYou": "您的傳道員身份是？",
+  "noHourRequirement": "無小時定額",
+  "hourMonthlyRequirement": "每月 {{count}} 小時定額",
   "publisher": "傳道員",
-  "regularAuxiliary": "连续做辅助先驱",
+  "regularAuxiliary": "輔助先驅",
   "regularPioneer": "正規先驅",
   "circuitOverseer": "分區監督",
   "specialPioneer": "特別先驅",
@@ -26,22 +26,22 @@
   "returnVisitContacts": "續訪聯絡方式",
   "noContactsSaved": "沒有保存聯絡人。點擊加號按鈕新增聯絡人。",
   "deleteConversation": "删除對話？",
-  "deleteConversation_description": "删除此对话将永久删除它以及任何分配的通知。",
+  "deleteConversation_description": "刪除此對話將永久刪除它以及任何分配的通知。",
   "cancel": "取消",
   "delete": "删除",
   "noNotesSaved": "沒有保存任何註釋。",
   "followUpInformation": "跟進資料",
   "upcoming": "即將到來",
-  "past": "过去的",
-  "topic": "话题",
-  "monthlyRoutine": "每月常规",
-  "searchForContact": "搜索联系人...",
+  "past": "過去的",
+  "topic": "話題",
+  "monthlyRoutine": "每月常規",
+  "searchForContact": "搜索聯繫人...",
   "phrasesFar": {
-    "keepGoing": "继续前进！",
+    "keepGoing": "繼續加油！",
     "youCanDoThis": "你可以做得到！",
-    "neverGiveUp": "永不放弃！",
-    "preachTheWord": "要传道！",
-    "stayFocused": "保持专注！",
+    "neverGiveUp": "永不放棄！",
+    "preachTheWord": "要傳道！",
+    "stayFocused": "保持專心。",
     "haveFaith": "要有信心！",
     "stayStrong": "堅强起来！",
     "everyStepCounts": "每一步都很重要",
@@ -57,7 +57,7 @@
   "phrasesClose": {
     "oneStepCloser": "更近了一步！",
     "almostThere": "差不多了！",
-    "keepMovingForward": "继续前进！",
+    "keepMovingForward": "繼續前進！",
     "successOnTheHorizon": "成功就在眼前！",
     "momentumIsYours": "动力是你的！",
     "nearingAchievement": "接近成就！",
@@ -76,7 +76,7 @@
   },
   "phrasesDone": {
     "youDidIt": "你做到了！",
-    "goalAchieved": "达到目标了！",
+    "goalAchieved": "達到目標了！",
     "youNailedIt": "你成功了！",
     "congratulations": "恭喜！",
     "takeYourShoesOff": "脱鞋！",
@@ -123,42 +123,42 @@
   "instanceRestored": "還原的實例",
   "restore": "還原",
   "phrasesStudiesNone": {
-    "keepGoing": "继续前进！",
-    "stayStrong": "要坚强！",
-    "stayPositive": "保持乐观！",
-    "grindOn": "继续努力！",
-    "keepSearching": "不停寻找！",
-    "stayResilient": "保持弹性！"
+    "keepGoing": "繼續前進！",
+    "stayStrong": "要堅強！",
+    "stayPositive": "保持樂觀！",
+    "grindOn": "繼續努力！",
+    "keepSearching": "不斷尋找！",
+    "stayResilient": "保持彈性！"
   },
   "phrasesStudiesDone": {
     "bravo": "太棒了！",
     "wellDone": "做得好！",
     "amazingJob": "很了不起！",
     "wayToGo": "干得好！",
-    "victoryLap": "胜利一圈！",
-    "fantastic": "极好的！",
+    "victoryLap": "勝利一圈！",
+    "fantastic": "極好的！",
     "wow": "哇！"
   },
-  "basedOnConcacts": "基于联系人",
+  "basedOnConcacts": "基於聯繫人",
   "undo": "撤消",
   "sharedTheGoodNews": "分享了\n好消息",
-  "serviceReport": "传道报告",
-  "hours_lowercase": "小时",
-  "hours": "小时",
-  "studies": "圣经研究",
-  "addTime_description": "在下面输入小时将记录当天的传道时间",
-  "minutes": "分钟",
-  "minutes_lowercase": "分钟",
+  "serviceReport": "傳道報告",
+  "hours_lowercase": "小時",
+  "hours": "小時",
+  "studies": "聖經研究",
+  "addTime_description": "在下面輸入小時將記錄當天的傳道時間",
+  "minutes": "分鐘",
+  "minutes_lowercase": "分鐘",
   "submit": "提交",
   "date": "日期",
-  "phone": "电话",
-  "contact": "联系人",
-  "isStudying": "正在学习",
-  "lastStudied": "最后学习",
+  "phone": "電話",
+  "contact": "聯繫人",
+  "isStudying": "正在學習",
+  "lastStudied": "最後學習",
   "address": "地址",
-  "email": "电子邮件",
-  "deleteContact": "删除联系人",
-  "created": "创建：",
+  "email": "電子郵件",
+  "deleteContact": "刪除聯繫人",
+  "created": "創建：",
   "edit": "编辑",
   "contactNotFoundForId": "未找到所提供 ID 的联系人：",
   "noPersonalInformationSaved": "没有保存任何个人信息。 🧐",
@@ -211,10 +211,10 @@
   "noTimeEntriesYet": "还没有时间条目..🕒",
   "deleteTime_title": "删除时间报告？",
   "deleteTime_description": "删除此时间报告将永久删除它。",
-  "ldcTime": "路易达孚时间",
+  "ldcTime": "LDC 時間",
   "selectDate": "选择日期",
   "selectTime": "选择时间",
-  "ldc": "最不发达国家",
+  "ldc": "LDC",
   "total": "全部的",
   "standard": "标准",
   "viewTime": "观看时间",
@@ -232,7 +232,7 @@
   "notificationsDisabled": "您需要为 WitnessWork 启用推送通知",
   "notificationsDisabled_description": "您希望我们带您进入手机设置吗？",
   "checkForUpdate": "检查更新",
-  "update": "可用更新",
+  "update": "Update",
   "update_description": "您想现在更新吗？",
   "ok": "好的",
   "noUpdateAvailable": "目前没有可用的更新。",
@@ -397,35 +397,50 @@
   "new": "新的",
   "bugFixes": "Bug修复",
   "updates": {
-    "160": {
-      "c1": "对话现在可以编辑。通知是可配置的",
-      "c2": "滑动手势即可编辑或删除对话、联系人等。",
-      "c3": "为各种重要操作添加了触觉反馈"
+    "1211": {
+      "c1": "在适当的时候添加了更多有用的一次性提示。"
     },
-    "161": {
-      "c1": "为时间条目添加了更多分钟选项"
+    "1210": {
+      "c1": "大大提高了时间显示的准确性。",
+      "c2": "提高了时间进度条的准确性。",
+      "c3": "为可能不会立即引起注意的操作添加了有用的提示。",
+      "c4": "通过更多相关信息和快速添加按钮提高地图屏幕上的生活质量。"
     },
-    "162": {
-      "c1": "将特别先驱的时间要求从 70 小时调整为 100 小时"
+    "1201": {
+      "c1": "修正了一些小错误。",
+      "c2": "显着改进了韩语翻译 - 谢谢保罗兄弟。如果您想帮助翻译您自己的语言，请访问设置。",
+      "c3": "修正了一些小错误。"
     },
-    "163": {
-      "c1": "解决自动更新问题"
+    "1200": {
+      "c1": "添加备份和恢复功能。现在您可以将数据备份到云端并稍后恢复，这样您就可以将数据传输到另一台设备。您也可以将其转移到其他平台。在设置中找到这个新功能。"
     },
-    "170": {
-      "c1": "添加多种时间导出方式",
-      "c2": "添加“不在家”"
+    "1120": {
+      "c1": "添加备份和恢复功能。现在您可以将数据备份到云端并在以后恢复。您可以将数据传输到另一台设备。您也可以将其转移到其他平台。在设置中找到这个新功能。"
     },
-    "180": {
-      "c1": "添加了联系人的自动地理编码",
-      "c2": "添加了地图视图"
+    "1111": {
+      "c1": "在设置中为那些希望捐款的人添加捐赠页面。",
+      "c2": "包括各种小改进和错误修复"
     },
-    "181": {
-      "c1": "扩展地图视图",
-      "c2": "满足特定条件后添加商店审核请求",
-      "c3": "小错误修复"
+    "1110": {
+      "c1": "添加了对 iPad 和 iPad 的支持平板电脑！",
+      "c2": "调整了各种样式以更好地适应更大的屏幕。",
+      "c3": "调整了向Github提交Bug报告和功能请求的方式。"
     },
-    "182": {
-      "c1": "始终更新以反映当前区域设置"
+    "1100": {
+      "c1": "将年度报告添加到时间报告屏幕！一目了然地跟踪您的服务年度进度。",
+      "c2": "现在，从时间报告屏幕添加时间会将报告默认为所选月份。",
+      "c3": "修复了导出一月服务报告的问题。"
+    },
+    "192": {
+      "c1": "修复了某些设备进度条溢出的问题。",
+      "c2": "为缺乏所需应用程序的设备添加更详细的链接错误处理。",
+      "c3": "为缺少所需应用程序的某些设备添加更详细的链接错误处理。",
+      "c4": "从主屏幕的每月例行部分直接导航到一个月。",
+      "c5": "时间报告屏幕可以更好地处理空月和未来月份。",
+      "c6": "修正了一些小错误。"
+    },
+    "191": {
+      "c1": "解决了导航到时间屏幕的问题。"
     },
     "190": {
       "c1": "在设置中添加了首选项",
@@ -436,50 +451,35 @@
       "c6": "现在将自定义标签添加到您的时间条目中",
       "c7": "更新了时间报告屏幕，以便更好地组织并按月分隔"
     },
-    "191": {
-      "c1": "解决了导航到时间屏幕的问题。"
+    "182": {
+      "c1": "始终更新以反映当前区域设置"
     },
-    "192": {
-      "c1": "修复了某些设备进度条溢出的问题。",
-      "c2": "为缺乏所需应用程序的设备添加更详细的链接错误处理。",
-      "c3": "为缺少所需应用程序的某些设备添加更详细的链接错误处理。",
-      "c4": "从主屏幕的每月例行部分直接导航到一个月。",
-      "c5": "时间报告屏幕可以更好地处理空月和未来月份。",
-      "c6": "修正了一些小错误。"
+    "181": {
+      "c1": "扩展地图视图",
+      "c2": "满足特定条件后添加商店审核请求",
+      "c3": "小错误修复"
     },
-    "1100": {
-      "c1": "将年度报告添加到时间报告屏幕！一目了然地跟踪您的服务年度进度。",
-      "c2": "现在，从时间报告屏幕添加时间会将报告默认为所选月份。",
-      "c3": "修复了导出一月服务报告的问题。"
+    "180": {
+      "c1": "添加了联系人的自动地理编码",
+      "c2": "添加了地图视图"
     },
-    "1110": {
-      "c1": "添加了对 iPad 和 iPad 的支持平板电脑！",
-      "c2": "调整了各种样式以更好地适应更大的屏幕。",
-      "c3": "调整了向Github提交Bug报告和功能请求的方式。"
+    "170": {
+      "c1": "添加多种时间导出方式",
+      "c2": "添加“不在家”"
     },
-    "1111": {
-      "c1": "在设置中为那些希望捐款的人添加捐赠页面。",
-      "c2": "包括各种小改进和错误修复"
+    "163": {
+      "c1": "解决自动更新问题"
     },
-    "1120": {
-      "c1": "添加备份和恢复功能。现在您可以将数据备份到云端并在以后恢复。您可以将数据传输到另一台设备。您也可以将其转移到其他平台。在设置中找到这个新功能。"
+    "162": {
+      "c1": "将特别先驱的时间要求从 70 小时调整为 100 小时"
     },
-    "1200": {
-      "c1": "添加备份和恢复功能。现在您可以将数据备份到云端并稍后恢复，这样您就可以将数据传输到另一台设备。您也可以将其转移到其他平台。在设置中找到这个新功能。"
+    "161": {
+      "c1": "为时间条目添加了更多分钟选项"
     },
-    "1201": {
-      "c1": "修正了一些小错误。",
-      "c2": "显着改进了韩语翻译 - 谢谢保罗兄弟。如果您想帮助翻译您自己的语言，请访问设置。",
-      "c3": "修正了一些小错误。"
-    },
-    "1210": {
-      "c1": "大大提高了时间显示的准确性。",
-      "c2": "提高了时间进度条的准确性。",
-      "c3": "为可能不会立即引起注意的操作添加了有用的提示。",
-      "c4": "通过更多相关信息和快速添加按钮提高地图屏幕上的生活质量。"
-    },
-    "1211": {
-      "c1": "在适当的时候添加了更多有用的一次性提示。"
+    "160": {
+      "c1": "对话现在可以编辑。通知是可配置的",
+      "c2": "滑动手势即可编辑或删除对话、联系人等。",
+      "c3": "为各种重要操作添加了触觉反馈"
     },
     "1220": {
       "c3": "将日历添加到时间报告屏幕。",
@@ -514,7 +514,7 @@
     },
     "1260": {
       "c1": "修复了 TimeReportsScreen 上滚动位置丢失的问题。解决了与时间报告屏幕相关的其他问题。",
-      "c2": "LDC 小时数不会对任何给定月份超过 55 小时的年度目标做出更多贡献。",
+      "c2": "LDC 小時數不會對任何給定月份超過 55 小時的年度目標做出更多貢獻。",
       "c3": "可以通过单个事件或单个事件和所有未来事件删除重复计划。",
       "c4": "新的联系人自定义字段！您可以创建任意数量的自定义字段。",
       "c5": "您现在可以直接与 NW Publisher 分享您的时间！"
@@ -914,6 +914,7 @@
   "decimalExample": "15.5",
   "longExample": "15小時30分鐘",
   "shortExample": "15 小時 30 分鐘",
+  "startOfWeek": "一週的開始",
   "timeDisplayFormat": "時間顯示格式",
   "tapDayToSchedule": "點擊日期建立計劃",
   "tapDayToSchedule_description": "透過選擇下面的日期開始建立或修改一次性或定期計劃。",
@@ -928,7 +929,6 @@
   "map": "地圖",
   "editColor": "編輯顏色",
   "close": "關閉",
-  "startOfWeek": "週初",
   "noPlansScheduledForThisMonth": "本月沒有安排計劃。",
   "scheduledPlans": "已排定的計劃",
   "scheduledPlans_description": "點選任何計劃以編輯或檢視詳細資訊。輕掃刪除。",

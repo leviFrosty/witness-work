@@ -211,10 +211,10 @@
   "noTimeEntriesYet": "Aucune entrée de temps pour l'instant.. 🕒",
   "deleteTime_title": "Supprimer le rapport de temps ?",
   "deleteTime_description": "La suppression de ce rapport de temps le supprimera définitivement.",
-  "ldcTime": "Heure PMA",
+  "ldcTime": "Heure LDC",
   "selectDate": "Sélectionner une date",
   "selectTime": "Sélectionnez l'heure",
-  "ldc": "PMA",
+  "ldc": "LDC",
   "total": "Total",
   "standard": "Standard",
   "viewTime": "Afficher l'heure",
@@ -232,7 +232,7 @@
   "notificationsDisabled": "Vous devrez activer la notification push pour WitnessWork",
   "notificationsDisabled_description": "Souhaitez-vous que nous vous redirigeions vers les paramètres de votre téléphone ?",
   "checkForUpdate": "Vérifier la mise à jour",
-  "update": "Mise à jour disponible",
+  "update": "Update",
   "update_description": "Souhaitez-vous mettre à jour maintenant ?",
   "ok": "D'ACCORD",
   "noUpdateAvailable": "Aucune mise à jour disponible actuellement.",
@@ -279,7 +279,7 @@
   "upcomingConversations": "Conversations à venir",
   "noTopicProvided": "Aucun sujet fourni.",
   "customHourRequirement": "Exigence d'heure personnalisée",
-  "custom": "Coutume",
+  "custom": "Personnaliser",
   "pleaseDescribeYourIssue": "Veuillez décrire votre problème en détail",
   "invalidPhone": "Numéro de téléphone invalide",
   "invalidPhone_description": "n'est pas un numéro valide pour le code de région :",
@@ -397,35 +397,50 @@
   "new": "Nouveau",
   "bugFixes": "Corrections de bugs",
   "updates": {
-    "160": {
-      "c1": "Les conversations sont désormais modifiables. Les notifications sont configurables",
-      "c2": "Faites glisser les gestes pour modifier ou supprimer des conversations, des contacts, etc.",
-      "c3": "Ajout d'un retour haptique à diverses actions importantes"
+    "1211": {
+      "c1": "Ajout d'indices ponctuels plus utiles, le cas échéant."
     },
-    "161": {
-      "c1": "Ajout de plus d'options de minutes pour les entrées de temps"
+    "1210": {
+      "c1": "Précision grandement améliorée de l’affichage de l’heure.",
+      "c2": "Amélioration de la précision des barres de progression temporelle.",
+      "c3": "Ajout de conseils utiles pour les actions qui peuvent ne pas être immédiatement perceptibles.",
+      "c4": "Qualité de vie améliorée sur l'écran des cartes avec des informations plus pertinentes et un bouton d'ajout rapide."
     },
-    "162": {
-      "c1": "L’exigence d’heures de pionnier spécial a été ajustée de 70 à 100"
+    "1201": {
+      "c1": "Corrections de bugs mineurs.",
+      "c2": "Traductions coréennes considérablement améliorées - merci frère Paul. Si vous souhaitez aider à traduire votre propre langue, veuillez visiter les paramètres.",
+      "c3": "Corrections de bugs mineurs."
     },
-    "163": {
-      "c1": "Résoudre les problèmes de mise à jour automatique"
+    "1200": {
+      "c1": "Ajoute des fonctionnalités de sauvegarde et de restauration. Vous pouvez désormais sauvegarder vos données sur le cloud et les restaurer plus tard, cela vous permet de transférer vos données vers un autre appareil. Vous pouvez également le transférer vers une autre plateforme. Retrouvez cette nouvelle fonctionnalité dans les paramètres."
     },
-    "170": {
-      "c1": "Ajouter diverses méthodes d'exportation de temps",
-      "c2": "Ajoutez « Pas à la maison »"
+    "1120": {
+      "c1": "Ajoute des fonctionnalités de sauvegarde et de restauration. Vous pouvez désormais sauvegarder vos données sur le cloud et les restaurer plus tard. Vous pouvez transférer vos données vers un autre appareil. Vous pouvez également le transférer vers une autre plateforme. Retrouvez cette nouvelle fonctionnalité dans les paramètres."
     },
-    "180": {
-      "c1": "Ajout du géocodage automatique pour les contacts",
-      "c2": "Vue cartographique ajoutée"
+    "1111": {
+      "c1": "Ajoutez une page de don dans les paramètres pour ceux qui souhaitent contribuer.",
+      "c2": "Comprend diverses améliorations mineures et corrections de bugs"
     },
-    "181": {
-      "c1": "Vue de la carte étendue",
-      "c2": "Ajout d'une demande d'examen du magasin une fois que certains critères sont remplis",
-      "c3": "Petites corrections de bugs"
+    "1110": {
+      "c1": "Ajout de la prise en charge des iPad et des versions ultérieures. Comprimés!",
+      "c2": "Ajustement de différents styles pour mieux s'adapter aux écrans plus grands.",
+      "c3": "Ajustement de la méthode de soumission des rapports de bogues et des demandes de fonctionnalités à Github."
     },
-    "182": {
-      "c1": "Mis à jour à tout moment pour refléter les paramètres régionaux actuels"
+    "1100": {
+      "c1": "Ajoute le rapport annuel à l'écran Time Reports ! Gardez une trace de la progression de votre année de service en un coup d’œil.",
+      "c2": "L'ajout de temps à partir de l'écran Rapports de temps définit désormais par défaut le rapport sur le mois sélectionné.",
+      "c3": "Résout un problème lors de l’exportation du rapport de service de janvier."
+    },
+    "192": {
+      "c1": "Résout un problème où certains appareils ont une barre de progression débordante.",
+      "c2": "Ajoute une gestion plus détaillée des erreurs de lien pour les appareils dépourvus des applications requises.",
+      "c3": "Ajoute une gestion plus détaillée des erreurs de lien pour certains appareils dépourvus des applications requises.",
+      "c4": "Accédez directement à un mois à partir de la section de routine mensuelle de l'écran d'accueil.",
+      "c5": "L’écran des rapports de temps gère mieux les mois vides et futurs.",
+      "c6": "Corrections de bugs mineurs."
+    },
+    "191": {
+      "c1": "Résout un problème de navigation vers les écrans horaires."
     },
     "190": {
       "c1": "Préférences ajoutées dans les paramètres",
@@ -436,50 +451,35 @@
       "c6": "Ajoutez maintenant des balises personnalisées à vos entrées de temps",
       "c7": "Écran des rapports de temps mis à jour pour être mieux organisé et séparé par mois"
     },
-    "191": {
-      "c1": "Résout un problème de navigation vers les écrans horaires."
+    "182": {
+      "c1": "Mis à jour à tout moment pour refléter les paramètres régionaux actuels"
     },
-    "192": {
-      "c1": "Résout un problème où certains appareils ont une barre de progression débordante.",
-      "c2": "Ajoute une gestion plus détaillée des erreurs de lien pour les appareils dépourvus des applications requises.",
-      "c3": "Ajoute une gestion plus détaillée des erreurs de lien pour certains appareils dépourvus des applications requises.",
-      "c4": "Accédez directement à un mois à partir de la section de routine mensuelle de l'écran d'accueil.",
-      "c5": "L’écran des rapports de temps gère mieux les mois vides et futurs.",
-      "c6": "Corrections de bugs mineurs."
+    "181": {
+      "c1": "Vue de la carte étendue",
+      "c2": "Ajout d'une demande d'examen du magasin une fois que certains critères sont remplis",
+      "c3": "Petites corrections de bugs"
     },
-    "1100": {
-      "c1": "Ajoute le rapport annuel à l'écran Time Reports ! Gardez une trace de la progression de votre année de service en un coup d’œil.",
-      "c2": "L'ajout de temps à partir de l'écran Rapports de temps définit désormais par défaut le rapport sur le mois sélectionné.",
-      "c3": "Résout un problème lors de l’exportation du rapport de service de janvier."
+    "180": {
+      "c1": "Ajout du géocodage automatique pour les contacts",
+      "c2": "Vue cartographique ajoutée"
     },
-    "1110": {
-      "c1": "Ajout de la prise en charge des iPad et des versions ultérieures. Comprimés!",
-      "c2": "Ajustement de différents styles pour mieux s'adapter aux écrans plus grands.",
-      "c3": "Ajustement de la méthode de soumission des rapports de bogues et des demandes de fonctionnalités à Github."
+    "170": {
+      "c1": "Ajouter diverses méthodes d'exportation de temps",
+      "c2": "Ajoutez « Pas à la maison »"
     },
-    "1111": {
-      "c1": "Ajoutez une page de don dans les paramètres pour ceux qui souhaitent contribuer.",
-      "c2": "Comprend diverses améliorations mineures et corrections de bugs"
+    "163": {
+      "c1": "Résoudre les problèmes de mise à jour automatique"
     },
-    "1120": {
-      "c1": "Ajoute des fonctionnalités de sauvegarde et de restauration. Vous pouvez désormais sauvegarder vos données sur le cloud et les restaurer plus tard. Vous pouvez transférer vos données vers un autre appareil. Vous pouvez également le transférer vers une autre plateforme. Retrouvez cette nouvelle fonctionnalité dans les paramètres."
+    "162": {
+      "c1": "L’exigence d’heures de pionnier spécial a été ajustée de 70 à 100"
     },
-    "1200": {
-      "c1": "Ajoute des fonctionnalités de sauvegarde et de restauration. Vous pouvez désormais sauvegarder vos données sur le cloud et les restaurer plus tard, cela vous permet de transférer vos données vers un autre appareil. Vous pouvez également le transférer vers une autre plateforme. Retrouvez cette nouvelle fonctionnalité dans les paramètres."
+    "161": {
+      "c1": "Ajout de plus d'options de minutes pour les entrées de temps"
     },
-    "1201": {
-      "c1": "Corrections de bugs mineurs.",
-      "c2": "Traductions coréennes considérablement améliorées - merci frère Paul. Si vous souhaitez aider à traduire votre propre langue, veuillez visiter les paramètres.",
-      "c3": "Corrections de bugs mineurs."
-    },
-    "1210": {
-      "c1": "Précision grandement améliorée de l’affichage de l’heure.",
-      "c2": "Amélioration de la précision des barres de progression temporelle.",
-      "c3": "Ajout de conseils utiles pour les actions qui peuvent ne pas être immédiatement perceptibles.",
-      "c4": "Qualité de vie améliorée sur l'écran des cartes avec des informations plus pertinentes et un bouton d'ajout rapide."
-    },
-    "1211": {
-      "c1": "Ajout d'indices ponctuels plus utiles, le cas échéant."
+    "160": {
+      "c1": "Les conversations sont désormais modifiables. Les notifications sont configurables",
+      "c2": "Faites glisser les gestes pour modifier ou supprimer des conversations, des contacts, etc.",
+      "c3": "Ajout d'un retour haptique à diverses actions importantes"
     },
     "1220": {
       "c3": "Ajout du calendrier à l'écran des rapports de temps.",
@@ -514,7 +514,7 @@
     },
     "1260": {
       "c1": "Correction d'un problème où la position de défilement serait perdue sur TimeReportsScreen. Résolution d'autres problèmes liés à l'écran des rapports de temps.",
-      "c2": "Les heures de PMA ne contribuent pas davantage à l'objectif annuel au-delà de 55 heures pour un mois donné.",
+      "c2": "Les heures de LDC ne contribuent pas davantage à l'objectif annuel au-delà de 55 heures pour un mois donné.",
       "c3": "Les plans récurrents peuvent être supprimés par événement unique ou par événement unique et tous les événements futurs.",
       "c4": "Nouveaux champs personnalisés pour les contacts ! Vous pouvez créer autant de champs personnalisés que vous le souhaitez.",
       "c5": "Vous pouvez désormais partager votre temps directement avec NW Publisher !"

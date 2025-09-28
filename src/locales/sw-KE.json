@@ -43,7 +43,16 @@
     "preachTheWord": "Hubiri neno!",
     "stayFocused": "Endelea kuzingatia!",
     "haveFaith": "Uwe na imani!",
-    "stayStrong": "Kaa Imara!"
+    "stayStrong": "Kaa Imara!",
+    "everyStepCounts": "Every step counts!",
+    "youGotThis": "You got this!",
+    "timeToShine": "Time to shine!",
+    "makingProgress": "Making progress!",
+    "greatStart": "Great start!",
+    "keepItUp": "Keep it up!",
+    "momentumBuilding": "Momentum building!",
+    "onYourWay": "On your way!",
+    "smallStepsBigResults": "Small steps, big results!"
   },
   "phrasesClose": {
     "oneStepCloser": "Hatua moja zaidi ",
@@ -53,7 +62,17 @@
     "momentumIsYours": "Kasi kwako!",
     "nearingAchievement": "Karibuni utafanikiwa!",
     "youreClosingIn": "Unakaribia",
-    "closerThanEver": "Karibu kuliko hapo awali!"
+    "closerThanEver": "Karibu kuliko hapo awali!",
+    "homeStretch": "Home stretch!",
+    "finishStrong": "Finish strong!",
+    "soClose": "So close!",
+    "finalPush": "Final push!",
+    "youreOnFire": "You're on fire!",
+    "pushThroughToday": "Push through today!",
+    "goalInSight": "Goal in sight!",
+    "crushingIt": "Crushing it!",
+    "unstoppable": "Unstoppable!",
+    "powerThrough": "Power through!"
   },
   "phrasesDone": {
     "youDidIt": "Umetimiza lengo!",
@@ -63,11 +82,46 @@
     "takeYourShoesOff": "Vua viatu sasa!",
     "hatsOffToYou": "Hongera sana!",
     "missionComplete": "Dhamira imekamilika!",
-    "success": "Mafanikio!"
+    "success": "Mafanikio!",
+    "phenomenal": "Phenomenal!",
+    "excellent": "Excellent!",
+    "outstanding": "Outstanding!",
+    "incredible": "Incredible!",
+    "amazingWork": "Amazing work!",
+    "goalCrushed": "Goal crushed!",
+    "victorious": "Victorious!",
+    "fantastic": "Fantastic!",
+    "wellDone": "Well done!",
+    "superb": "Superb!",
+    "keepGoingStrong": "Keep going strong!",
+    "onARoll": "On a roll!"
   },
   "hoursLeft": "saa zimesalia",
   "goalBasedOnPublisherType": "Lengo linatokana na aina ya mchapishaji wako",
   "addTime": "Ongeza Muda",
+  "updatedPlan": "Updated Plan",
+  "editPlan": "Edit Plan",
+  "overrideCreated": "Override Created",
+  "editingOverride": "Editing Override",
+  "editingOverride_description": "You're editing a specific occurrence of this recurring plan. Changes will only apply to this date.",
+  "removeOverride": "Remove Override",
+  "overrideRemoved": "Override Removed",
+  "existingOverrides": "Existing Overrides",
+  "override": "Override",
+  "createOverride": "Create Override",
+  "updateOverride": "Update Override",
+  "updatePlan": "Update Plan",
+  "editingPlan": "Editing Plan",
+  "editingPlan_description": "You're currently editing an existing plan. All fields below have been pre-filled with the current plan details.",
+  "editingDayPlan": "Editing Day Plan",
+  "editingRecurringPlan": "Editing Recurring Plan",
+  "planType": "Plan Type",
+  "currentPlanType": "Current Plan Type",
+  "remove": "Ondoa",
+  "deletedInstances": "Deleted Instances",
+  "deletedInstances_description": "These recurring plan instances have been deleted. You can restore them if needed.",
+  "instanceRestored": "Instance Restored",
+  "restore": "Restore",
   "phrasesStudiesNone": {
     "keepGoing": "Endelea!",
     "stayStrong": "Kaa imara!",
@@ -139,6 +193,7 @@
   "addConversation_description": "Ingiza maelezo ya mazungumzo hapa chini kwa mazungumzo utakayokabidhi kwa mwasiliani wako.",
   "note": "Kumbuka",
   "note_placeholder": "Andika habari kuhusu mazungumzo yako. Hakikisha kuwa maelezo!",
+  "optionalNote": "Optional note (e.g., details about the service day)",
   "followUp": "Fuatilia",
   "topic_placeholder": "Ingiza mada, k.m., Furahia Maisha Milele Ch. 1",
   "notifyMe": "Nijulishe",
@@ -177,7 +232,7 @@
   "notificationsDisabled": "Utahitaji kuwezesha arifa zinazotumwa na programu hata wakati huitumii kwa WitnessWork",
   "notificationsDisabled_description": "Je, ungependa tukupeleke kwenye mipangilio ya simu yako?",
   "checkForUpdate": "Angalia sasisho",
-  "update": "Sasisho Linapatikana",
+  "update": "Update",
   "update_description": "Je, ungependa kusasisha sasa?",
   "ok": "sawa",
   "noUpdateAvailable": "Hakuna sasisho linalopatikana kwa sasa.",
@@ -252,6 +307,21 @@
   "helpTranslateTitle": "Je, usaidie Kutafsiri?",
   "helpTranslate_message": "WitnessWork inapatikana katika lugha zaidi ya 10 kwa kutumia zana za kutafsiri kiotomatiki. Wakati fulani, tafsiri hizi huenda zisiwe sahihi kila wakati. Je, ungependa kusaidia kuzifanya kuwa sahihi zaidi?",
   "share": "Shiriki",
+  "exportContact": "Export Contact",
+  "shareContact": "Share Contact",
+  "includeConversationHistory": "Include Conversation History",
+  "excludeConversationHistory": "Exclude Conversation History",
+  "options": "Options",
+  "importContact": "Import Contact",
+  "contactImported": "Contact Imported",
+  "contactExists": "Contact Already Exists",
+  "contactExists_description": "A contact with this name already exists. Do you want to replace it with the imported data?",
+  "contactRecovered": "Contact Recovered",
+  "contactRecovered_description": "This contact was previously deleted and has been automatically recovered. Do you want to replace it with the imported data?",
+  "replace": "Replace",
+  "keep": "Keep Existing",
+  "invalidFile": "Invalid File",
+  "invalidFile_description": "The selected file is not a valid WitnessWork contact export.",
   "notes": "Vidokezo",
   "no": "Hapana",
   "viewAllMonths": "Tazama Miezi Yote",
@@ -327,35 +397,50 @@
   "new": "Mpya",
   "bugFixes": "Marekebisho ya Hitilafu",
   "updates": {
-    "160": {
-      "c1": "Mazungumzo sasa yanaweza kuhaririwa. Arifa zinaweza kusanidiwa",
-      "c2": "Telezesha kidole kwa ishara ili kuhariri au kufuta mazungumzo, anwani, n.k.",
-      "c3": "Aliongeza maoni haptic kwa vitendo mbalimbali muhimu"
+    "1211": {
+      "c1": "Aliongeza vidokezo muhimu zaidi vya wakati mmoja inapofaa."
     },
-    "161": {
-      "c1": "Imeongeza chaguo zaidi za dakika kwa maingizo ya muda"
+    "1210": {
+      "c1": "Usahihi ulioboreshwa sana wa maonyesho ya wakati.",
+      "c2": "Usahihi ulioboreshwa wa pau za maendeleo ya wakati.",
+      "c3": "Aliongeza vidokezo muhimu kwa vitendo ambavyo vinaweza kutoonekana mara moja.",
+      "c4": "Ubora wa maisha ulioboreshwa kwenye skrini ya ramani na maelezo muhimu zaidi na kitufe cha kuongeza haraka."
     },
-    "162": {
-      "c1": "Ilirekebisha takwa la saa za painia wa pekee kutoka 70 hadi 100"
+    "1201": {
+      "c1": "Husasisha sehemu ya utaratibu wa kila mwezi ya skrini ya kwanza ili kuonyesha miezi inayozunguka.",
+      "c2": "Tafsiri za Kikorea zilizoboreshwa sana - asante kaka Paul. Ikiwa ungependa kusaidia kutafsiri lugha yako mwenyewe, tafadhali tembelea mipangilio.",
+      "c3": "Marekebisho madogo ya hitilafu."
     },
-    "163": {
-      "c1": "Suluhisha masuala ya sasisho otomatiki"
+    "1200": {
+      "c1": "Inaongeza utendakazi chelezo na kurejesha. Sasa unaweza kuhifadhi data yako kwenye wingu na kuirejesha baadaye, hii hukuruhusu kuhamisha data yako kwa kifaa kingine. Unaweza pia kuihamisha hadi kwenye jukwaa lingine. Pata kipengele hiki kipya katika mipangilio."
     },
-    "170": {
-      "c1": "Ongeza njia mbalimbali za kuhamisha za wakati",
-      "c2": "Ongeza 'Sio Nyumbani'"
+    "1120": {
+      "c1": "Inaongeza utendakazi chelezo na kurejesha. Sasa unaweza kuhifadhi data yako kwenye wingu na kuirejesha baadaye. Unaweza kuhamisha data yako kwa kifaa kingine. Unaweza pia kuihamisha hadi kwenye jukwaa lingine. Pata kipengele hiki kipya katika mipangilio."
     },
-    "180": {
-      "c1": "Imeongeza uwekaji misimbo otomatiki kwa anwani",
-      "c2": "Aliongeza mwonekano wa ramani"
+    "1111": {
+      "c1": "Ongeza ukurasa wa mchango katika mipangilio kwa wale wanaotaka kuchangia.",
+      "c2": "Inajumuisha uboreshaji mbalimbali mdogo na marekebisho ya hitilafu"
     },
-    "181": {
-      "c1": "Mwonekano wa ramani uliopanuliwa",
-      "c2": "Ombi la ukaguzi wa duka limeongezwa baada ya vigezo fulani kutimizwa",
-      "c3": "Marekebisho ya hitilafu ndogo"
+    "1110": {
+      "c1": "Huongeza usaidizi asilia kwa iPad & vidonge!",
+      "c2": "Ilirekebisha mitindo mbalimbali ili kutoshea vyema skrini kubwa.",
+      "c3": "Ilirekebisha mbinu ya kuwasilisha Ripoti za Mdudu na Maombi ya Kipengele kwa Github."
     },
-    "182": {
-      "c1": "Imesasishwa kila wakati ili kuonyesha eneo la sasa"
+    "1100": {
+      "c1": "Inaongeza ripoti ya kila mwaka kwenye skrini ya Ripoti za Wakati! Fuatilia kwa haraka maendeleo yako ya mwaka wa utumishi.",
+      "c2": "Kuongeza muda kutoka kwa skrini ya Ripoti za Wakati sasa kunabadilisha ripoti kuwa mwezi uliochaguliwa.",
+      "c3": "Hurekebisha suala la kuhamisha ripoti ya huduma ya Januari."
+    },
+    "192": {
+      "c1": "Sasa gusa safu mlalo ya mazungumzo ili kuhariri, au telezesha kidole kushoto kama hapo awali.",
+      "c2": "Hurekebisha tatizo ambapo baadhi ya vifaa vina upau wa maendeleo unaofurika.",
+      "c3": "Huongeza ushughulikiaji zaidi wa kitenzi wa hitilafu za kiungo kwa vifaa fulani visivyo na programu zinazohitajika.",
+      "c4": "Nenda moja kwa moja hadi mwezi kutoka kwa sehemu ya utaratibu wa kila mwezi ya skrini ya kwanza.",
+      "c5": "Skrini ya Ripoti za Wakati hushughulikia vyema miezi tupu na ijayo.",
+      "c6": "Marekebisho madogo ya hitilafu."
+    },
+    "191": {
+      "c1": "Husuluhisha suala la kusogeza kwenye skrini za saa."
     },
     "190": {
       "c1": "Aliongeza mapendeleo katika mipangilio",
@@ -366,50 +451,35 @@
       "c6": "Sasa ongeza lebo maalum kwenye maingizo yako ya wakati",
       "c7": "Skrini ya Ripoti za Muda Iliyosasishwa ili kupangwa vyema na kutengwa kwa mwezi"
     },
-    "191": {
-      "c1": "Husuluhisha suala la kusogeza kwenye skrini za saa."
+    "182": {
+      "c1": "Imesasishwa kila wakati ili kuonyesha eneo la sasa"
     },
-    "192": {
-      "c1": "Sasa gusa safu mlalo ya mazungumzo ili kuhariri, au telezesha kidole kushoto kama hapo awali.",
-      "c2": "Hurekebisha tatizo ambapo baadhi ya vifaa vina upau wa maendeleo unaofurika.",
-      "c3": "Huongeza ushughulikiaji zaidi wa kitenzi wa hitilafu za kiungo kwa vifaa fulani visivyo na programu zinazohitajika.",
-      "c4": "Nenda moja kwa moja hadi mwezi kutoka kwa sehemu ya utaratibu wa kila mwezi ya skrini ya kwanza.",
-      "c5": "Skrini ya Ripoti za Wakati hushughulikia vyema miezi tupu na ijayo.",
-      "c6": "Marekebisho madogo ya hitilafu."
+    "181": {
+      "c1": "Mwonekano wa ramani uliopanuliwa",
+      "c2": "Ombi la ukaguzi wa duka limeongezwa baada ya vigezo fulani kutimizwa",
+      "c3": "Marekebisho ya hitilafu ndogo"
     },
-    "1100": {
-      "c1": "Inaongeza ripoti ya kila mwaka kwenye skrini ya Ripoti za Wakati! Fuatilia kwa haraka maendeleo yako ya mwaka wa utumishi.",
-      "c2": "Kuongeza muda kutoka kwa skrini ya Ripoti za Wakati sasa kunabadilisha ripoti kuwa mwezi uliochaguliwa.",
-      "c3": "Hurekebisha suala la kuhamisha ripoti ya huduma ya Januari."
+    "180": {
+      "c1": "Imeongeza uwekaji misimbo otomatiki kwa anwani",
+      "c2": "Aliongeza mwonekano wa ramani"
     },
-    "1110": {
-      "c1": "Huongeza usaidizi asilia kwa iPad & vidonge!",
-      "c2": "Ilirekebisha mitindo mbalimbali ili kutoshea vyema skrini kubwa.",
-      "c3": "Ilirekebisha mbinu ya kuwasilisha Ripoti za Mdudu na Maombi ya Kipengele kwa Github."
+    "170": {
+      "c1": "Ongeza njia mbalimbali za kuhamisha za wakati",
+      "c2": "Ongeza 'Sio Nyumbani'"
     },
-    "1111": {
-      "c1": "Ongeza ukurasa wa mchango katika mipangilio kwa wale wanaotaka kuchangia.",
-      "c2": "Inajumuisha uboreshaji mbalimbali mdogo na marekebisho ya hitilafu"
+    "163": {
+      "c1": "Suluhisha masuala ya sasisho otomatiki"
     },
-    "1120": {
-      "c1": "Inaongeza utendakazi chelezo na kurejesha. Sasa unaweza kuhifadhi data yako kwenye wingu na kuirejesha baadaye. Unaweza kuhamisha data yako kwa kifaa kingine. Unaweza pia kuihamisha hadi kwenye jukwaa lingine. Pata kipengele hiki kipya katika mipangilio."
+    "162": {
+      "c1": "Ilirekebisha takwa la saa za painia wa pekee kutoka 70 hadi 100"
     },
-    "1200": {
-      "c1": "Inaongeza utendakazi chelezo na kurejesha. Sasa unaweza kuhifadhi data yako kwenye wingu na kuirejesha baadaye, hii hukuruhusu kuhamisha data yako kwa kifaa kingine. Unaweza pia kuihamisha hadi kwenye jukwaa lingine. Pata kipengele hiki kipya katika mipangilio."
+    "161": {
+      "c1": "Imeongeza chaguo zaidi za dakika kwa maingizo ya muda"
     },
-    "1201": {
-      "c1": "Husasisha sehemu ya utaratibu wa kila mwezi ya skrini ya kwanza ili kuonyesha miezi inayozunguka.",
-      "c2": "Tafsiri za Kikorea zilizoboreshwa sana - asante kaka Paul. Ikiwa ungependa kusaidia kutafsiri lugha yako mwenyewe, tafadhali tembelea mipangilio.",
-      "c3": "Marekebisho madogo ya hitilafu."
-    },
-    "1210": {
-      "c1": "Usahihi ulioboreshwa sana wa maonyesho ya wakati.",
-      "c2": "Usahihi ulioboreshwa wa pau za maendeleo ya wakati.",
-      "c3": "Aliongeza vidokezo muhimu kwa vitendo ambavyo vinaweza kutoonekana mara moja.",
-      "c4": "Ubora wa maisha ulioboreshwa kwenye skrini ya ramani na maelezo muhimu zaidi na kitufe cha kuongeza haraka."
-    },
-    "1211": {
-      "c1": "Aliongeza vidokezo muhimu zaidi vya wakati mmoja inapofaa."
+    "160": {
+      "c1": "Mazungumzo sasa yanaweza kuhaririwa. Arifa zinaweza kusanidiwa",
+      "c2": "Telezesha kidole kwa ishara ili kuhariri au kufuta mazungumzo, anwani, n.k.",
+      "c3": "Aliongeza maoni haptic kwa vitendo mbalimbali muhimu"
     },
     "1220": {
       "c3": "Kalenda imeongezwa kwenye skrini ya ripoti za saa.",
@@ -519,7 +589,19 @@
     "1360": {
       "c1": "Imeongeza ufunguo mpya wa rangi kwenye mwonekano wa ramani! Sasa unaweza kubinafsisha rangi za pini kwenye ramani.",
       "c2": "Aliongeza 'maelezo zaidi' kitufe cha mwonekano wa ramani. Bofya ili kuona maelezo zaidi kuhusu programu.",
-      "c3": "Husuluhisha suala na uumbizaji wa nambari ya simu ya Kikorea."
+      "c3": "Husuluhisha suala na uumbizaji wa nambari ya simu ya Kikorea.",
+      "c4": "Added notes support to time reports.",
+      "c5": "Enhanced recurring plan scheduling - You can now schedule plans monthly by day of week (e.g., 'first Monday of every month').",
+      "c7": "Added statistics sections to your Monthly and Yearly reports to better track your progress and patterns.",
+      "c8": "You can now change your calendar's first day of the week. Visit Preferences > Appearance.",
+      "c9": "Added various progress bar animations.",
+      "c10": "Follow up topic now supports multiple lines.",
+      "c11": "There are now no restrictions on when you can add time or schedule plans.",
+      "c12": "Added visual indicators on calendar days to show when notes are present.",
+      "c13": "Resolves issue with Korean and Panama phone number formatting.",
+      "c14": "Contact Details Screen map is now zoomed out to easily see surroundings at a glance.",
+      "c15": "Fixed various navigation issues when adding time and scheduling plans.",
+      "c16": "Improved readability and consistency throughout the app with better spacing and button sizes."
     }
   },
   "installed": "Imesakinishwa",
@@ -569,7 +651,26 @@
   "thereAreNoOfferings": "Hakuna mbinu za uchangiaji zinazopatikana kwa wakati huu. Tafadhali angalia tena baadaye.",
   "oneTime": "Mara moja",
   "monthly": "Kila mwezi",
+  "monthlyByWeekday": "Monthly (by weekday)",
   "eachMonth": "/ mwezi",
+  "selectWeekday": "Select Weekday",
+  "selectWeekOfMonth": "Select Week of Month",
+  "sunday": "Sunday",
+  "monday": "Monday",
+  "tuesday": "Tuesday",
+  "wednesday": "Wednesday",
+  "thursday": "Thursday",
+  "friday": "Friday",
+  "saturday": "Saturday",
+  "firstWeek": "First week",
+  "secondWeek": "Second week",
+  "thirdWeek": "Third week",
+  "fourthWeek": "Fourth week",
+  "lastWeek": "Last week",
+  "repeatsOnThe": "Repeats on the",
+  "ofEachMonth": "of each month",
+  "repeatsOnThe_weekday": "Repeats on the",
+  "ofEveryMonth": "of every month",
   "chooseYourDonationAmount": "Chagua kiasi cha mchango wako",
   "thanksForUsingWitnessWork": "Asante kwa kupenda WitnessWork!",
   "firstOfAll": "Kwanza kabisa...",
@@ -721,6 +822,10 @@
   "credit": "Mikopo",
   "credit_description": "Salio litahesabiwa kuelekea mwezi ikiwa muda wako wa kawaida pamoja na mkopo hauzidi saa 55.",
   "creditOverageInTheAmountOf": "Kiwango cha juu cha salio katika muda wa saa {{count}}.",
+  "overrideCreditLimit": "Override Credit Limit",
+  "overrideCreditLimit_description": "By default, credit hours are limited to 55 hours total when combined with standard time. Special pioneers and circuit overseers have no limit by default.",
+  "customCreditLimitHours": "Custom Credit Limit (Hours)",
+  "customCreditLimitHours_description": "Set your own credit limit in hours. Enter 0 for no limit.",
   "updateCategories": "Sasisha Jamii",
   "witnessWorkNowSupportsCredits": "WitnessWork sasa inasaidia vyema mikopo kwa wale walio na lengo la huduma la kila mwaka. Mara tu unaposasisha lebo iliyopo, ripoti zako zote za huduma zitasasishwa pia.",
   "credits": "Mikopo",
@@ -769,7 +874,6 @@
   "backupAndRestore": "Hifadhi nakala & Rejesha",
   "pinLocation": "Bandika Mahali",
   "chooseLocation": "Chagua Mahali",
-  "remove": "Ondoa",
   "coordinateSaved": "Uratibu Umehifadhiwa",
   "saved": "Imehifadhiwa",
   "locationDisabled_description": "Kushiriki eneo lako kumezimwa. Ramani haitaweza kuvuta kiotomatiki eneo lako.",
@@ -805,6 +909,8 @@
     "one": "Dak {{count}}",
     "other": "Dak {{count}}"
   },
+  "hoursCompact": "h",
+  "minutesCompact": "m",
   "decimalExample": "15.5",
   "longExample": "Saa 15 Dakika 30",
   "shortExample": "Saa 15 Dakika 30",
@@ -821,5 +927,73 @@
   "moreInfo": "Maelezo Zaidi",
   "map": "Ramani",
   "editColor": "Badilisha Rangi",
-  "close": "Funga"
+  "close": "Funga",
+  "startOfWeek": "Start of Week",
+  "noPlansScheduledForThisMonth": "No plans scheduled for this month.",
+  "scheduledPlans": "Scheduled Plans",
+  "scheduledPlans_description": "Tap any plan to edit or view details. Swipe to delete.",
+  "dismissForLater": "Dismiss For Later",
+  "dismiss": "Dismiss",
+  "dismissContact": "Dismiss Contact?",
+  "dismissContactDescription": "This will hide {{name}} from your contact list and map for {{duration}}. {{example}}",
+  "dismissContactDescriptionWithNotification": "This will hide {{name}} from your contact list and map for {{duration}}. {{example}}\n\nYou'll receive a notification when {{name}} becomes available again.",
+  "dismissContactHelp": "{{name}} will be hidden from your contact list and map for the time period you choose. You can always find dismissed contacts in Settings > Contacts > Dismissed Contacts.",
+  "dismissFor1Week": "1 Week",
+  "dismissFor1Month": "1 Month",
+  "dismissFor3Months": "3 Months",
+  "dismissFor6Months": "6 Months",
+  "dismissFor1Year": "1 Year",
+  "dismissExample": "They'll reappear on {{date}}",
+  "contactDismissed": "Contact Dismissed",
+  "contactDismissedMessage": "{{name}} is dismissed until {{until}}",
+  "contactDismissedWithNotificationMessage": "{{name}} is dismissed until {{until}}. You'll receive a notification when they're available again.",
+  "contactAvailableAgain": "Contact Available Again",
+  "contactAvailableAgainMessage": "{{name}} is now available in your contacts again! {{emoji}}",
+  "dismissedContacts": "Dismissed Contacts",
+  "noDismissedContacts": "No dismissed contacts. Use \"Dismiss For Later\" on any contact to hide them temporarily.",
+  "dismissedContactsHelp": "These contacts are temporarily hidden from your main contact list and map. They will automatically reappear when their dismiss period expires.",
+  "dismissedUntil": "Dismissed until {{date}}",
+  "undismiss": "Undismiss",
+  "undismissContact": "Undismiss {{name}}?",
+  "undismissContactDescription": "This contact will immediately reappear in your contact list and map.",
+  "contactUndismissed": "{{name}} has been undismissed",
+  "goalAchieved": "Goal achieved!",
+  "remaining": "remaining",
+  "needed": "needed",
+  "perDay": "per day",
+  "short": "short",
+  "average": "avg",
+  "daysLeft": "days left",
+  "toPlan": "to plan",
+  "featuresForYou": "Features for You",
+  "featuresBasedOnType": "Available features based on your publisher type",
+  "featureTimerTracking": "Timer & Time Tracking",
+  "featureTimerTrackingDesc": "Built-in stopwatch to easily track your service time",
+  "featureSimpleTimeCheckbox": "Simple Time Tracking",
+  "featureSimpleTimeCheckboxDesc": "Check off your time with a checkbox each month",
+  "featureDetailedTimeTracking": "Detailed Time Tracking",
+  "featureDetailedTimeTrackingDesc": "Track your service time in depth with detailed reporting",
+  "featureTimeTagging": "Time Tagging & Credit",
+  "featureTimeTaggingDesc": "Mark time as credit and group time entries into buckets for easy tracking",
+  "featureContactPins": "Automatic Contact Pins",
+  "featureContactPinsDesc": "Your contacts automatically appear on the map for easy navigation",
+  "featureReturnVisitConversations": "Return Visit Conversations",
+  "featureReturnVisitConversationsDesc": "Track conversations and never forget a return visit",
+  "featureUpcomingVisits": "Upcoming Visits Reminders",
+  "featureUpcomingVisitsDesc": "Get notified about scheduled conversations for the day",
+  "featureContactActions": "Quick Contact Actions",
+  "featureContactActionsDesc": "Instantly call, message, email, or navigate to contacts",
+  "featureMonthlyReports": "Service Reports",
+  "featureMonthlyReportsDesc": "View easy-to-understand monthly and annual reports",
+  "featureBackupRestore": "Backup & Restore",
+  "featureBackupRestoreDesc": "Offline only, secure backups so you never lose your data",
+  "featureAutomaticGoals": "Automatic Goal Creation",
+  "featureAutomaticGoalsDesc": "Goals set automatically based on your publisher type",
+  "featureSchedulePlanning": "Schedule & Plans",
+  "featureSchedulePlanningDesc": "Create one-time and recurring service plans",
+  "featureGamifiedRoutine": "Monthly Routine",
+  "featureGamifiedRoutineDesc": "Gamified service reporting to keep you motivated",
+  "featureWordsOfAffirmation": "Words of Affirmation",
+  "featureWordsOfAffirmationDesc": "Receive encouraging phrases and positive feedback as you use the app",
+  "actions": "Actions"
 }

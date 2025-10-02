@@ -232,7 +232,7 @@
   "notificationsDisabled": "Dovrai abilitare la notifica push per WitnessWork",
   "notificationsDisabled_description": "Vuoi che ti portiamo alle impostazioni del tuo telefono?",
   "checkForUpdate": "Ricerca aggiornamenti",
-  "update": "Update",
+  "update": "Aggiornamento disponibile",
   "update_description": "Vuoi aggiornare adesso?",
   "ok": "OK",
   "noUpdateAvailable": "Nessun aggiornamento attualmente disponibile.",
@@ -587,9 +587,9 @@
       "c3": "Risolto il problema di overflow nella schermata iniziale per tablet."
     },
     "1360": {
-      "c1": "Aggiunta una nuova chiave colore alla vista mappa! Ora puoi personalizzare i colori dei pin sulla mappa.",
-      "c2": "Aggiunto un nuovo pulsante \"ulteriori informazioni\" alla vista mappa. Cliccaci sopra per vedere maggiori informazioni sull'app.",
-      "c3": "Risolve il problema con la formattazione dei numeri di telefono coreani.",
+      "c1": "New: Share Contacts and easily import them. Transfering calls is now easier than ever.",
+      "c2": "Added a color key to the map view! You can now customize the colors of the pins on the map.",
+      "c3": "NEW: Dismiss Contact feature - You can now dismiss contacts you no longer wish to visit and receive notifications when it's time to return to them.",
       "c4": "Aggiunto il supporto per le note ai rapporti temporali.",
       "c5": "Pianificazione ricorrente migliorata - È ora possibile pianificare i piani mensilmente per giorno della settimana (ad esempio, 'primo lunedì di ogni mese').",
       "c7": "Aggiunte sezioni statistiche ai rapporti mensili e annuali per monitorare meglio i progressi e gli schemi.",

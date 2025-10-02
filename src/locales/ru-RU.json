@@ -232,7 +232,7 @@
   "notificationsDisabled": "Вам нужно будет включить push-уведомление для WitnessWork.",
   "notificationsDisabled_description": "Хотите, чтобы мы перешли к настройкам вашего телефона?",
   "checkForUpdate": "Проверить обновления",
-  "update": "Update",
+  "update": "Доступно обновление",
   "update_description": "Хотите обновить сейчас?",
   "ok": "ХОРОШО",
   "noUpdateAvailable": "В настоящее время нет доступных обновлений.",
@@ -587,9 +587,9 @@
       "c3": "Решена проблема переполнения на главном экране для планшетов."
     },
     "1360": {
-      "c1": "Добавлен новый цветовой ключ для вида карты! Теперь вы можете настраивать цвета меток на карте.",
-      "c2": "Добавлена новая кнопка «Подробнее» для вида карты. Нажмите ее, чтобы увидеть больше информации о приложении.",
-      "c3": "Решает проблему с форматированием корейских телефонных номеров.",
+      "c1": "New: Share Contacts and easily import them. Transfering calls is now easier than ever.",
+      "c2": "Added a color key to the map view! You can now customize the colors of the pins on the map.",
+      "c3": "NEW: Dismiss Contact feature - You can now dismiss contacts you no longer wish to visit and receive notifications when it's time to return to them.",
       "c4": "Добавлена поддержка заметок в отчетах о времени.",
       "c5": "Улучшено планирование повторяющихся планов - теперь можно планировать планы на месяц по дням недели (например, 'первый понедельник каждого месяца').",
       "c7": "Добавлены разделы статистики в месячные и годовые отчеты, чтобы лучше отслеживать прогресс и закономерности.",

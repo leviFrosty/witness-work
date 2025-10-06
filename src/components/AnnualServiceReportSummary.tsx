@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useMemo, useEffect } from 'react'
 import useServiceReport from '../stores/serviceReport'
 import Card from './Card'
 import Text from './MyText'
@@ -22,6 +22,12 @@ import {
 import _ from 'lodash'
 import { useFormattedMinutes, useCompactFormattedMinutes } from '../lib/minutes'
 import moment from 'moment'
+import {
+  useTimeCache,
+  getAnnualServiceReportCacheKey,
+  generateServiceReportsHash,
+} from '../stores/timeCache'
+import { logger } from '../lib/logger'
 
 /** Renders all service reports for the given year as a summary. */
 interface AnnualServiceReportSummaryProps {
@@ -50,16 +56,85 @@ const AnnualServiceReportSummary = ({
   const theme = useTheme()
   const { annualGoalHours, goalHours } = usePublisher()
   const { serviceReports } = useServiceReport()
+  const { getCachedPlannedMinutes, setCachedPlannedMinutes } = useTimeCache()
 
-  const totalMinutesForServiceYear = useMemo(() => {
-    const serviceYearsReports = getServiceYearReports(serviceReports, year - 1)
-    const total = getTotalMinutesForServiceYear(
-      serviceYearsReports,
-      serviceYear
-    )
+  const { totalMinutesForServiceYear, cacheKey, reportsHash, needsCache } =
+    useMemo(() => {
+      const perfNow = performance.now()
+      const cacheKey = getAnnualServiceReportCacheKey(serviceYear)
+      const reportsHash = generateServiceReportsHash(serviceReports, year - 1)
 
-    return total
-  }, [serviceReports, serviceYear, year])
+      logger.log(
+        `[AnnualSummary] Service year ${serviceYear} - Checking cache (key: ${cacheKey})`
+      )
+      logger.log(
+        `[AnnualSummary] Current reports hash: ${reportsHash.substring(0, 50)}...`
+      )
+
+      // Check cache first
+      const cached = getCachedPlannedMinutes(cacheKey)
+      if (cached && cached.planHash === reportsHash) {
+        logger.log(
+          `[AnnualSummary] ✅ CACHE HIT - Retrieved ${cached.plannedMinutes} minutes in ~0ms`
+        )
+        logger.log(
+          `[AnnualSummary] Cache last updated: ${new Date(cached.lastUpdated).toISOString()}`
+        )
+        return {
+          totalMinutesForServiceYear: cached.plannedMinutes,
+          cacheKey,
+          reportsHash,
+          needsCache: false,
+        }
+      }
+
+      if (cached) {
+        logger.log(
+          `[AnnualSummary] ⚠️ CACHE INVALIDATED - Reports hash mismatch`
+        )
+      } else {
+        logger.log('[AnnualSummary] ❌ CACHE MISS - No cached data found')
+      }
+
+      logger.log('[AnnualSummary] Starting fresh calculation...')
+
+      // Calculate total minutes
+      const serviceYearsReports = getServiceYearReports(
+        serviceReports,
+        year - 1
+      )
+      const total = getTotalMinutesForServiceYear(
+        serviceYearsReports,
+        serviceYear
+      )
+
+      logger.log(
+        `[AnnualSummary] Total time: ${(performance.now() - perfNow).toFixed(2)}ms`
+      )
+
+      return {
+        totalMinutesForServiceYear: total,
+        cacheKey,
+        reportsHash,
+        needsCache: true,
+      }
+      // eslint-disable-next-line react-compiler/react-compiler
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [serviceReports, serviceYear, year])
+
+  // Cache the result after render
+  useEffect(() => {
+    if (needsCache) {
+      setCachedPlannedMinutes(cacheKey, totalMinutesForServiceYear, reportsHash)
+      logger.log(`[AnnualSummary] Cached result for future use`)
+    }
+  }, [
+    needsCache,
+    cacheKey,
+    totalMinutesForServiceYear,
+    reportsHash,
+    setCachedPlannedMinutes,
+  ])
 
   const totalMinutesForServiceYearWithFormat = useFormattedMinutes(
     totalMinutesForServiceYear

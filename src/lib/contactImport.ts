@@ -4,6 +4,7 @@ import { Alert } from 'react-native'
 import { Contact } from '../types/contact'
 import { Conversation } from '../types/conversation'
 import i18n from './locales'
+import { logger } from './logger'
 
 export type ContactImportData = {
   version: '1.0'
@@ -92,7 +93,7 @@ export const importContactFromFile = async (): Promise<ImportResult> => {
 
     return validateContactImport(jsonData)
   } catch (error) {
-    console.error('Error importing contact:', error)
+    logger.error('Error importing contact:', error)
     return {
       success: false,
       error: i18n.t('invalidFile_description'),
@@ -108,7 +109,7 @@ export const importContactFromUrl = async (
     const jsonData = JSON.parse(fileContent)
     return validateContactImport(jsonData)
   } catch (error) {
-    console.error('Error importing contact from URL:', error)
+    logger.error('Error importing contact from URL:', error)
     return {
       success: false,
       error: i18n.t('invalidFile_description'),
@@ -205,7 +206,7 @@ export const handleContactImport = async (
 
     callbacks.navigate(contactId)
   } catch (error) {
-    console.error('Error processing import:', error)
+    logger.error('Error processing import:', error)
     Alert.alert(i18n.t('error'), i18n.t('importError_description'))
   }
 }

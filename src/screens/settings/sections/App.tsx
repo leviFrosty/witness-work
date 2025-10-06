@@ -16,6 +16,7 @@ import { fetchUpdate } from '../../../lib/updates'
 import SectionTitle from '../shared/SectionTitle'
 import { SettingsSectionProps } from '../settingScreen'
 import { usePreferences } from '../../../stores/preferences'
+import { logger } from '../../../lib/logger'
 import {
   importContactFromFile,
   processCompleteImport,
@@ -75,7 +76,7 @@ const AppSection = ({ handleNavigate }: SettingsSectionProps) => {
         callbacks
       )
     } catch (error) {
-      console.error('Error importing contact:', error)
+      logger.error('Error importing contact:', error)
       Alert.alert(i18n.t('error'), i18n.t('importError_description'))
     }
   }

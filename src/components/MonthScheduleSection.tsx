@@ -4,13 +4,13 @@ import AheadOrBehindOfMonthSchedule from './AheadOrBehindOfSchedule'
 import Text from './MyText'
 import Button from './Button'
 import { useNavigation } from '@react-navigation/native'
-import { useMemo } from 'react'
+import { useMemo, useEffect } from 'react'
 import moment from 'moment'
 import useServiceReport from '../stores/serviceReport'
 import {
-  getPlansIntersectingDay,
   plannedMinutesToCurrentDayForMonth,
-  getEffectiveMinutesForRecurringPlan,
+  calculateMonthlyPlannedMinutesOptimized,
+  generatePlanHash,
 } from '../lib/serviceReport'
 import usePublisher from '../hooks/usePublisher'
 import Circle from './Circle'
@@ -19,6 +19,8 @@ import { View } from 'react-native'
 import _ from 'lodash'
 import { useFormattedMinutes } from '../lib/minutes'
 import { RootStackNavigation } from '../types/rootStack'
+import { useTimeCache, getMonthCacheKey } from '../stores/timeCache'
+import { logger } from '../lib/logger'
 
 type MonthScheduleSectionProps = {
   month: number
@@ -30,47 +32,76 @@ export default function MonthScheduleSection(props: MonthScheduleSectionProps) {
   const theme = useTheme()
   const navigation = useNavigation<RootStackNavigation>()
   const { dayPlans, recurringPlans } = useServiceReport()
-  const selectedMonth = moment().month(month).year(year)
   const { goalHours } = usePublisher()
+  const { getCachedPlannedMinutes, setCachedPlannedMinutes } = useTimeCache()
 
-  const plannedMinutes = useMemo(() => {
-    const dayOfMonth = selectedMonth.daysInMonth()
+  const { plannedMinutes, cacheKey, planHash, needsCache } = useMemo(() => {
+    const perfNow = performance.now()
+    const cacheKey = getMonthCacheKey(month, year)
+    const planHash = generatePlanHash(dayPlans, recurringPlans)
 
-    let count = 0
-    Array(dayOfMonth)
-      .fill(1)
-      .forEach((_, i) => {
-        const day = selectedMonth.clone().date(i + 1)
-        const dayDate = day.toDate()
+    const monthName = moment().month(month).format('MMMM')
+    logger.log(
+      `[MonthScheduleSection] ${monthName} ${year} - Checking cache (key: ${cacheKey})`
+    )
+    logger.log(`[MonthScheduleSection] Current plan hash: ${planHash}`)
 
-        const dayPlan = dayPlans.find((plan) =>
-          moment(plan.date).isSame(day, 'day')
-        )
+    // Check cache first
+    const cached = getCachedPlannedMinutes(cacheKey)
+    if (cached && cached.planHash === planHash) {
+      logger.log(
+        `[MonthScheduleSection] ✅ CACHE HIT - Retrieved ${cached.plannedMinutes} minutes in ~0ms`
+      )
+      logger.log(
+        `[MonthScheduleSection] Cache last updated: ${new Date(cached.lastUpdated).toISOString()}`
+      )
+      return {
+        plannedMinutes: cached.plannedMinutes,
+        cacheKey,
+        planHash,
+        needsCache: false,
+      }
+    }
 
-        const recurringPlansForDay = getPlansIntersectingDay(
-          dayDate,
-          recurringPlans
-        )
+    if (cached) {
+      logger.log(
+        `[MonthScheduleSection] ⚠️ CACHE INVALIDATED - Plan hash mismatch (cached: ${cached.planHash})`
+      )
+    } else {
+      logger.log('[MonthScheduleSection] ❌ CACHE MISS - No cached data found')
+    }
 
-        // Get the highest recurring plan for the day, but use effective minutes (with overrides)
-        const highestRecurringPlanForDay = recurringPlansForDay
-          .map((plan) => ({
-            plan,
-            effectiveMinutes: getEffectiveMinutesForRecurringPlan(
-              plan,
-              dayDate
-            ),
-          }))
-          .sort((a, b) => b.effectiveMinutes - a.effectiveMinutes)[0]
+    logger.log('[MonthScheduleSection] Starting fresh calculation...')
 
-        if (dayPlan) {
-          count += dayPlan.minutes
-        } else if (highestRecurringPlanForDay) {
-          count += highestRecurringPlanForDay.effectiveMinutes
-        }
-      })
-    return count
-  }, [selectedMonth, dayPlans, recurringPlans])
+    // Calculate using optimized function
+    const minutes = calculateMonthlyPlannedMinutesOptimized(
+      month,
+      year,
+      dayPlans,
+      recurringPlans
+    )
+
+    logger.log(
+      `[MonthScheduleSection] Total time: ${(performance.now() - perfNow).toFixed(2)}ms`
+    )
+
+    return {
+      plannedMinutes: minutes,
+      cacheKey,
+      planHash,
+      needsCache: true,
+    }
+    // eslint-disable-next-line react-compiler/react-compiler
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [month, year, dayPlans, recurringPlans])
+
+  // Cache the result after render
+  useEffect(() => {
+    if (needsCache) {
+      setCachedPlannedMinutes(cacheKey, plannedMinutes, planHash)
+      logger.log(`[MonthScheduleSection] Cached result for future use`)
+    }
+  }, [needsCache, cacheKey, plannedMinutes, planHash, setCachedPlannedMinutes])
 
   const plannedMinutesWithFormat = useFormattedMinutes(plannedMinutes)
 

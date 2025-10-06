@@ -13,11 +13,24 @@ import {
   plannedMinutesToCurrentDayForMonth,
   getEffectiveMinutesForRecurringPlan,
   getEffectiveNoteForRecurringPlan,
+  generatePlanHash,
+  calculateMonthlyPlannedMinutesOptimized,
+  calculateAnnualPlannedMinutesOptimized,
 } from '../lib/serviceReport'
 import { ServiceReport, ServiceReportsByYears } from '../types/serviceReport'
 import { Publisher } from '../types/publisher'
 import { monthCreditMaxMinutes } from '../constants/serviceReports'
 import { describe, expect, it, beforeEach, afterEach, vi } from 'vitest'
+
+// Mock the logger to avoid MMKV dependencies in tests
+vi.mock('../lib/logger', () => ({
+  logger: {
+    log: vi.fn(),
+    error: vi.fn(),
+    warn: vi.fn(),
+    info: vi.fn(),
+  },
+}))
 
 describe('lib/serviceReport', () => {
   describe('calculateProgress', () => {
@@ -1426,6 +1439,127 @@ describe('lib/serviceReport', () => {
       const fourthFridayMarch = new Date(2024, 2, 22)
       const noPlans = getPlansIntersectingDay(fourthFridayMarch, [plan])
       expect(noPlans).toHaveLength(0)
+    })
+  })
+
+  describe('generatePlanHash', () => {
+    it('should generate consistent hash for same plans', () => {
+      const dayPlans = [
+        { id: '1', date: new Date(), minutes: 60 },
+        { id: '2', date: new Date(), minutes: 120 },
+      ]
+      const recurringPlans: RecurringPlan[] = [
+        {
+          id: 'r1',
+          startDate: new Date(),
+          minutes: 60,
+          recurrence: {
+            frequency: RecurringPlanFrequencies.WEEKLY,
+            interval: 1,
+            endDate: null,
+          },
+        },
+      ]
+
+      const hash1 = generatePlanHash(dayPlans, recurringPlans)
+      const hash2 = generatePlanHash(dayPlans, recurringPlans)
+
+      expect(hash1).toBe(hash2)
+    })
+
+    it('should generate different hash when plans change', () => {
+      const dayPlans1 = [{ id: '1', date: new Date(), minutes: 60 }]
+      const dayPlans2 = [
+        { id: '1', date: new Date(), minutes: 60 },
+        { id: '2', date: new Date(), minutes: 120 },
+      ]
+      const recurringPlans: RecurringPlan[] = []
+
+      const hash1 = generatePlanHash(dayPlans1, recurringPlans)
+      const hash2 = generatePlanHash(dayPlans2, recurringPlans)
+
+      expect(hash1).not.toBe(hash2)
+    })
+  })
+
+  describe('calculateMonthlyPlannedMinutesOptimized', () => {
+    it('should calculate same result as original function', () => {
+      const dayPlans = [
+        {
+          id: '1',
+          date: moment('2024-01-15').toDate(),
+          minutes: 120,
+        },
+      ]
+      const recurringPlans: RecurringPlan[] = [
+        {
+          id: 'r1',
+          startDate: moment('2024-01-01').toDate(),
+          minutes: 60,
+          recurrence: {
+            frequency: RecurringPlanFrequencies.WEEKLY,
+            interval: 1,
+            endDate: null,
+          },
+        },
+      ]
+
+      const optimizedResult = calculateMonthlyPlannedMinutesOptimized(
+        0,
+        2024,
+        dayPlans,
+        recurringPlans
+      )
+      const originalResult = plannedMinutesToCurrentDayForMonth(
+        0,
+        2024,
+        dayPlans,
+        recurringPlans
+      )
+
+      expect(optimizedResult).toBe(originalResult)
+    })
+
+    it('should handle empty plans', () => {
+      const result = calculateMonthlyPlannedMinutesOptimized(0, 2024, [], [])
+      expect(result).toBe(0)
+    })
+  })
+
+  describe('calculateAnnualPlannedMinutesOptimized', () => {
+    it('should calculate annual minutes correctly', () => {
+      const dayPlans = [
+        {
+          id: '1',
+          date: moment('2024-09-15').toDate(),
+          minutes: 120,
+        },
+      ]
+      const recurringPlans: RecurringPlan[] = [
+        {
+          id: 'r1',
+          startDate: moment('2024-09-01').toDate(),
+          minutes: 60,
+          recurrence: {
+            frequency: RecurringPlanFrequencies.WEEKLY,
+            interval: 1,
+            endDate: null,
+          },
+        },
+      ]
+
+      const result = calculateAnnualPlannedMinutesOptimized(
+        2024,
+        dayPlans,
+        recurringPlans
+      )
+
+      expect(result).toBeGreaterThan(0)
+    })
+
+    it('should handle empty plans', () => {
+      const result = calculateAnnualPlannedMinutesOptimized(2024, [], [])
+      expect(result).toBe(0)
     })
   })
 

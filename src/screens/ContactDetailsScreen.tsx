@@ -26,6 +26,7 @@ import { Conversation } from '../types/conversation'
 import Wrapper from '../components/layout/Wrapper'
 import { StatusBar } from 'expo-status-bar'
 import IconButton from '../components/IconButton'
+import { logger } from '../lib/logger'
 import {
   faArrowUpFromBracket,
   faBook,
@@ -670,7 +671,7 @@ const ContactDetailsScreen = ({ route, navigation }: Props) => {
       // Clean up temporary file
       await FileSystem.deleteAsync(fileUri, { idempotent: true })
     } catch (error) {
-      console.error('Error sharing contact:', error)
+      logger.error('Error sharing contact:', error)
       // Fallback to sharing JSON as text
       await Share.share({ message: jsonString })
     }

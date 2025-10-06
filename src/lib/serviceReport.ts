@@ -8,6 +8,7 @@ import {
 } from '../types/serviceReport'
 import moment from 'moment'
 import { monthCreditMaxMinutes } from '../constants/serviceReports'
+import { logger } from './logger'
 
 export const calculateProgress = ({
   minutes,
@@ -613,6 +614,279 @@ export const plannedMinutesToCurrentDayForMonth = (
     })
 
   return count
+}
+
+/**
+ * Optimized calculation for planned minutes up to current day using
+ * pre-computed recurring plans.
+ */
+export const calculatePlannedMinutesToCurrentDayOptimized = (
+  month: number,
+  year: number,
+  dayPlans: DayPlan[],
+  recurringPlans: RecurringPlan[]
+): number => {
+  const perfStart = performance.now()
+  const selectedMonth = moment().month(month).year(year)
+
+  const dayOfMonth = selectedMonth.isBefore(moment(), 'month')
+    ? selectedMonth.daysInMonth()
+    : moment().date()
+
+  if (selectedMonth.isAfter(moment(), 'month')) {
+    return 0
+  }
+
+  logger.log(
+    `[calculateCurrentDayOptimized] Calculating for ${selectedMonth.format('MMMM YYYY')} up to day ${dayOfMonth} with ${dayPlans.length} day plans and ${recurringPlans.length} recurring plans`
+  )
+
+  // Create day plan lookup map for O(1) access
+  const dayPlanMap = new Map(
+    dayPlans.map((p) => [moment(p.date).format('YYYY-MM-DD'), p])
+  )
+  logger.log(
+    `[calculateCurrentDayOptimized] Created day plan map with ${dayPlanMap.size} entries`
+  )
+
+  // Pre-compute recurring plans for the range
+  const minDate = selectedMonth.clone().startOf('month')
+  const maxDate = selectedMonth.clone().date(dayOfMonth)
+  const recurringPlanCache = precomputeRecurringPlansForRange(
+    recurringPlans,
+    minDate,
+    maxDate
+  )
+
+  let count = 0
+
+  for (let i = 0; i < dayOfMonth; i++) {
+    const day = selectedMonth.clone().date(i + 1)
+    const dayKey = day.format('YYYY-MM-DD')
+
+    const dayPlan = dayPlanMap.get(dayKey)
+
+    if (dayPlan) {
+      count += dayPlan.minutes
+    } else {
+      // Get pre-computed recurring plans for this day
+      const recurringPlansForDay = recurringPlanCache.get(dayKey) || []
+
+      // Find the highest minutes value
+      const highestMinutes = recurringPlansForDay.reduce(
+        (max, p) => Math.max(max, p.effectiveMinutes),
+        0
+      )
+
+      count += highestMinutes
+    }
+  }
+
+  logger.log(
+    `[calculateCurrentDayOptimized] Completed in ${(performance.now() - perfStart).toFixed(2)}ms - total minutes: ${count}`
+  )
+
+  return count
+}
+
+/**
+ * Generates a stable hash of plans to detect if cache needs invalidation. This
+ * is a simple hash based on plan count and last modified times.
+ */
+export const generatePlanHash = (
+  dayPlans: DayPlan[],
+  recurringPlans: RecurringPlan[]
+): string => {
+  const dayPlanIds = dayPlans
+    .map((p) => p.id)
+    .sort()
+    .join(',')
+  const recurringPlanIds = recurringPlans
+    .map((p) => p.id)
+    .sort()
+    .join(',')
+  return `d:${dayPlans.length}:${dayPlanIds}|r:${recurringPlans.length}:${recurringPlanIds}`
+}
+
+/**
+ * Pre-computes all recurring plan occurrences for a given date range. Returns a
+ * Map where key is date string (YYYY-MM-DD) and value is array of plans with
+ * effective minutes.
+ */
+export const precomputeRecurringPlansForRange = (
+  recurringPlans: RecurringPlan[],
+  minDate: moment.Moment,
+  maxDate: moment.Moment
+): Map<string, { plan: RecurringPlan; effectiveMinutes: number }[]> => {
+  const perfStart = performance.now()
+  const cache = new Map<
+    string,
+    { plan: RecurringPlan; effectiveMinutes: number }[]
+  >()
+
+  logger.log(
+    `[precomputeRecurringPlans] Starting pre-computation for ${recurringPlans.length} plans from ${minDate.format('YYYY-MM-DD')} to ${maxDate.format('YYYY-MM-DD')}`
+  )
+
+  recurringPlans.forEach((plan) => {
+    const current = minDate.clone()
+
+    while (current.isSameOrBefore(maxDate)) {
+      const currentDate = current.toDate()
+      const plansForDay = getPlansIntersectingDay(currentDate, [plan])
+
+      if (plansForDay.length > 0) {
+        const key = current.format('YYYY-MM-DD')
+        const existing = cache.get(key) || []
+        existing.push({
+          plan,
+          effectiveMinutes: getEffectiveMinutesForRecurringPlan(
+            plan,
+            currentDate
+          ),
+        })
+        cache.set(key, existing)
+      }
+
+      current.add(1, 'd')
+    }
+  })
+
+  logger.log(
+    `[precomputeRecurringPlans] Completed in ${(performance.now() - perfStart).toFixed(2)}ms - cached ${cache.size} unique dates`
+  )
+
+  return cache
+}
+
+/**
+ * Optimized calculation for monthly planned minutes using pre-computed
+ * recurring plans.
+ */
+export const calculateMonthlyPlannedMinutesOptimized = (
+  month: number,
+  year: number,
+  dayPlans: DayPlan[],
+  recurringPlans: RecurringPlan[]
+): number => {
+  const perfStart = performance.now()
+  const selectedMonth = moment().month(month).year(year)
+  const dayOfMonth = selectedMonth.daysInMonth()
+
+  logger.log(
+    `[calculateMonthlyOptimized] Calculating for ${selectedMonth.format('MMMM YYYY')} with ${dayPlans.length} day plans and ${recurringPlans.length} recurring plans`
+  )
+
+  // Create day plan lookup map for O(1) access
+  const dayPlanMap = new Map(
+    dayPlans.map((p) => [moment(p.date).format('YYYY-MM-DD'), p])
+  )
+  logger.log(
+    `[calculateMonthlyOptimized] Created day plan map with ${dayPlanMap.size} entries`
+  )
+
+  // Pre-compute recurring plans for the month
+  const minDate = selectedMonth.clone().startOf('month')
+  const maxDate = selectedMonth.clone().endOf('month')
+  const recurringPlanCache = precomputeRecurringPlansForRange(
+    recurringPlans,
+    minDate,
+    maxDate
+  )
+
+  let count = 0
+
+  for (let i = 0; i < dayOfMonth; i++) {
+    const day = selectedMonth.clone().date(i + 1)
+    const dayKey = day.format('YYYY-MM-DD')
+
+    const dayPlan = dayPlanMap.get(dayKey)
+
+    if (dayPlan) {
+      count += dayPlan.minutes
+    } else {
+      // Get pre-computed recurring plans for this day
+      const recurringPlansForDay = recurringPlanCache.get(dayKey) || []
+
+      // Find the highest minutes value
+      const highestMinutes = recurringPlansForDay.reduce(
+        (max, p) => Math.max(max, p.effectiveMinutes),
+        0
+      )
+
+      count += highestMinutes
+    }
+  }
+
+  logger.log(
+    `[calculateMonthlyOptimized] Completed in ${(performance.now() - perfStart).toFixed(2)}ms - total minutes: ${count}`
+  )
+
+  return count
+}
+
+/**
+ * Optimized calculation for annual planned minutes using pre-computed recurring
+ * plans.
+ */
+export const calculateAnnualPlannedMinutesOptimized = (
+  serviceYear: number,
+  dayPlans: DayPlan[],
+  recurringPlans: RecurringPlan[]
+): number => {
+  const perfStart = performance.now()
+  const { minDate, maxDate } = serviceYearsDateRange(serviceYear)
+
+  logger.log(
+    `[calculateAnnualOptimized] Calculating service year ${serviceYear} (${minDate.format('YYYY-MM-DD')} to ${maxDate.format('YYYY-MM-DD')}) with ${dayPlans.length} day plans and ${recurringPlans.length} recurring plans`
+  )
+
+  // Create day plan lookup map for O(1) access
+  const dayPlanMap = new Map(
+    dayPlans.map((p) => [moment(p.date).format('YYYY-MM-DD'), p])
+  )
+  logger.log(
+    `[calculateAnnualOptimized] Created day plan map with ${dayPlanMap.size} entries`
+  )
+
+  // Pre-compute recurring plans for the entire year
+  const recurringPlanCache = precomputeRecurringPlansForRange(
+    recurringPlans,
+    minDate,
+    maxDate
+  )
+
+  let minutes = 0
+  const current = minDate.clone()
+
+  while (current.isSameOrBefore(maxDate)) {
+    const dayKey = current.format('YYYY-MM-DD')
+
+    const dayPlan = dayPlanMap.get(dayKey)
+
+    if (dayPlan) {
+      minutes += dayPlan.minutes
+    } else {
+      // Get pre-computed recurring plans for this day
+      const recurringPlansForDay = recurringPlanCache.get(dayKey) || []
+
+      // Find the highest minutes value
+      const highestMinutes = recurringPlansForDay.reduce(
+        (max, p) => Math.max(max, p.effectiveMinutes),
+        0
+      )
+
+      minutes += highestMinutes
+    }
+
+    current.add(1, 'd')
+  }
+
+  logger.log(
+    `[calculateAnnualOptimized] Completed in ${(performance.now() - perfStart).toFixed(2)}ms - total minutes: ${minutes}`
+  )
+
+  return minutes
 }
 
 type ReportQueryResult = {

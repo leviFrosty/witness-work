@@ -67,9 +67,6 @@ importers:
       babel-plugin-react-compiler:
         specifier: 19.0.0-beta-af1b7da-20250417
         version: 19.0.0-beta-af1b7da-20250417
-      babel-plugin-transform-inline-environment-variables:
-        specifier: ^0.4.4
-        version: 0.4.4
       burnt:
         specifier: ^0.12.2
         version: 0.12.2(expo@52.0.47(@babel/core@7.28.4)(@babel/preset-env@7.26.0(@babel/core@7.28.4))(babel-plugin-react-compiler@19.0.0-beta-af1b7da-20250417)(graphql@15.8.0)(react-compiler-runtime@19.0.0-beta-af1b7da-20250417(react@18.3.1))(react-native@0.76.9(@babel/core@7.28.4)(@babel/preset-env@7.26.0(@babel/core@7.28.4))(@react-native-community/cli@13.6.9)(@types/react@18.3.24)(react@18.3.1))(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react-native@0.76.9(@babel/core@7.28.4)(@babel/preset-env@7.26.0(@babel/core@7.28.4))(@react-native-community/cli@13.6.9)(@types/react@18.3.24)(react@18.3.1))(react@18.3.1)
@@ -5061,12 +5058,6 @@ packages:
     resolution:
       {
         integrity: sha512-g4aaCrDDOsWjbm0PUUeVnkcVd6AKJsVc/MbnPhEotEpkeJQP6b8nzewohQi7+QS8UyPehOhGWn0nOwjvWpmMvQ==,
-      }
-
-  babel-plugin-transform-inline-environment-variables@0.4.4:
-    resolution:
-      {
-        integrity: sha512-bJILBtn5a11SmtR2j/3mBOjX4K3weC6cq+NNZ7hG22wCAqpc3qtj/iN7dSe9HDiS46lgp1nHsQgeYrea/RUe+g==,
       }
 
   babel-preset-current-node-syntax@1.2.0:
@@ -17179,8 +17170,6 @@ snapshots:
       '@babel/plugin-syntax-flow': 7.27.1(@babel/core@7.28.4)
     transitivePeerDependencies:
       - '@babel/core'
-
-  babel-plugin-transform-inline-environment-variables@0.4.4: {}
 
   babel-preset-current-node-syntax@1.2.0(@babel/core@7.28.4):
     dependencies:

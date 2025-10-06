@@ -45,7 +45,6 @@
     "awesome-phonenumber": "^7.5.0",
     "axios": "^1.12.2",
     "babel-plugin-react-compiler": "19.0.0-beta-af1b7da-20250417",
-    "babel-plugin-transform-inline-environment-variables": "^0.4.4",
     "burnt": "^0.12.2",
     "dotenv": "^16.6.1",
     "expo": "~52.0.47",

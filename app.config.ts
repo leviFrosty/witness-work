@@ -76,6 +76,9 @@ export default ({ config }: ConfigContext): ExpoConfig => {
         },
       ],
     ],
+    experiments: {
+      reactCompiler: true,
+    },
   }
 
   return withSentry(expoConfig, {

@@ -10,10 +10,11 @@
     "ecmaVersion": "latest",
     "sourceType": "module"
   },
-  "plugins": ["@typescript-eslint", "react", "react-hooks"],
+  "plugins": ["@typescript-eslint", "react", "react-hooks", "react-compiler"],
   "rules": {
     "react/react-in-jsx-scope": "off",
     "react-hooks/rules-of-hooks": "error",
-    "react-hooks/exhaustive-deps": "error"
+    "react-hooks/exhaustive-deps": "error",
+    "react-compiler/react-compiler": "error"
   }
 }

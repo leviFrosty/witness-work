@@ -133,14 +133,16 @@ const WhatsNewSheet: React.FC<Props> = ({ show, setShow }) => {
   const insets = useSafeAreaInsets()
   const { lastAppVersion, set } = usePreferences()
   const lastVersion = useRef(lastAppVersion)
+  const hasSetVersion = useRef(false)
 
   useEffect(() => {
-    set({
-      lastAppVersion: Constants.expoConfig?.version,
-    })
-
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+    if (!hasSetVersion.current) {
+      set({
+        lastAppVersion: Constants.expoConfig?.version,
+      })
+      hasSetVersion.current = true
+    }
+  }, [set])
 
   return (
     <Sheet

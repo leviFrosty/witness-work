@@ -2,10 +2,27 @@ module.exports = function (api) {
   api.cache(true)
 
   return {
-    presets: ['babel-preset-expo'],
+    presets: [
+      [
+        'babel-preset-expo',
+        {
+          'react-compiler': {
+            sources: (filename) => {
+              const matches = ['src', 'App.tsx']
+              const include = matches.some((match) => filename.includes(match))
+              if (include) {
+                console.log('Compiling: ', filename)
+              } else {
+                console.log('Skipping compilation: ', filename)
+              }
+              return include
+            },
+          },
+        },
+      ],
+    ],
     plugins: [
       'react-native-reanimated/plugin',
-      'transform-inline-environment-variables',
       [
         '@tamagui/babel-plugin',
         {

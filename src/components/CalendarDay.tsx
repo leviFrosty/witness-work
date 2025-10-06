@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo } from 'react'
+import { useCallback, useEffect, useMemo } from 'react'
 import { View } from 'react-native'
 import { DateData } from 'react-native-calendars'
 import { DayProps } from 'react-native-calendars/src/calendar/day'
@@ -283,10 +283,14 @@ const CalendarDay = (
 
   const isToday = moment().isSame(props.date?.dateString, 'day')
 
-  useEffect(() => {
+  const startAnimation = useCallback(() => {
     translateY.value = withRepeat(withTiming(-10, { duration: 600 }), 0, true)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, [translateY])
+
+  useEffect(() => {
+    startAnimation()
+  }, [startAnimation])
+
   const animatedStyle = useAnimatedStyle(() => {
     return {
       transform: [{ translateY: translateY.value }],

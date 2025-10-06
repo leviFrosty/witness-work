@@ -597,6 +597,7 @@ const PlanDayScreen = ({ route, navigation }: PlanDayScreenProps) => {
       existingRecurringPlan?.recurrence.monthlyByWeekdayConfig?.weekOfMonth ?? 1
     )
     setNote(existingDayPlan?.note ?? recurringPlanData?.note ?? '')
+    // eslint-disable-next-line react-compiler/react-compiler
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [editingContext]) // Only depend on the stable editing context key
 

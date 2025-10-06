@@ -6,7 +6,6 @@
 - [`.vscode`](/.vscode) VSCode configuration files for extensions.
 - [`App.tsx`](/App.tsx) Application entry point.
 - [**`src`**](/src) This is where all of the project source code lives.
-
   - [`__tests__`](/src/__tests__) Where all of the tests for the project lives.
   - [`assets`](/src/assets) Where local assets such a images, icons, and [lottie](https://lottiefiles.com/) animations are stored.
   - [`components`](/src/components) All of the components of the project.

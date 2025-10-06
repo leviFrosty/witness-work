@@ -4,6 +4,7 @@
   "main": "node_modules/expo/AppEntry.js",
   "scripts": {
     "dev": "APP_VARIANT=development expo start --ios",
+    "dev:prod": "expo start --no-dev --minify",
     "android": "expo run:android",
     "ios": "expo run:ios",
     "clean": "rm -rf node_modules .tamagui .expo .cache *.tar.gz ios android",

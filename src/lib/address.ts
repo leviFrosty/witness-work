@@ -55,7 +55,7 @@ export const fetchCoordinateFromAddress = async (
 
   try {
     const addressString = addressToString(address)
-    const hereApiKey = process.env.HERE_API_KEY
+    const hereApiKey = process.env.EXPO_PUBLIC_HERE_API_KEY
 
     incrementGeocodeApiCallCount()
     const { data } = await axios.get<HereGeocodeResponse>(

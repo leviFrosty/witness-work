@@ -88,12 +88,14 @@ const FullMapView = ({ contactMarkers }: FullMapViewProps) => {
     return unsubscribe
   }, [fitToMarkers, navigation])
 
-  useEffect(() => {
-    fitToMarkers()
+  const hasFitOnMount = useRef(false)
 
-    // Only run at mount.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  useEffect(() => {
+    if (!hasFitOnMount.current) {
+      fitToMarkers()
+      hasFitOnMount.current = true
+    }
+  }, [fitToMarkers])
 
   useEffect(() => {
     const getLocation = async () => {

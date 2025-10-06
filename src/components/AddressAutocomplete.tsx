@@ -100,7 +100,7 @@ const AddressAutocomplete: React.FC<AddressAutocompleteProps> = ({
       }
 
       try {
-        const hereApiKey = process.env.HERE_API_KEY
+        const hereApiKey = process.env.EXPO_PUBLIC_HERE_API_KEY
         const autocompleteUrl = `${apis.hereAutocomplete}?apiKey=${hereApiKey}&q=${encodeURIComponent(query)}&limit=${MAX_SUGGESTIONS}${location ? `&in=circle:${location.coords.latitude},${location.coords.longitude};r=${SEARCH_RADIUS}` : ''}`
         const response = await axios.get(autocompleteUrl)
 

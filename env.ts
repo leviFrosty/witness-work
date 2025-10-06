@@ -1,27 +1,16 @@
 import { z } from 'zod'
 
 const envVariables = z.object({
-  GOOGLE_CLOUD_API_KEY: z
-    .string()
-    .describe('Used for cloud translation API calls in CLI'),
-  HERE_API_KEY: z
+  EXPO_PUBLIC_HERE_API_KEY: z
     .string()
     .describe(
-      'Used for geocoding api calls when users create address to fetch coordinates'
+      'Used for geocoding api calls when users create address to fetch coordinates. Used at runtime.'
     ),
-  GOOGLE_MAPS_ANDROID_SDK_API_KEY: z
+  EXPO_PUBLIC_REVENUECAT_APPLE_API_KEY: z
     .string()
     .describe(
-      '[Android] Maps SDK Api allows use of Google Maps within application'
+      '[iOS] Allows use of revenuecat service for in-app purchases for donations. Used at runtime.'
     ),
-  REVENUECAT_APPLE_API_KEY: z
-    .string()
-    .describe(
-      '[iOS] Allows use of revenuecat service for in-app purchases for donations'
-    ),
-  SENTRY_AUTH_TOKEN: z
-    .string()
-    .describe('Token that enables Sentry application error logging'),
   EXPO_PUBLIC_SENTRY_PROJECT: z
     .string()
     .describe("Configuration for sentry's project"),
@@ -37,9 +26,8 @@ const envVariables = z.object({
 })
 
 if (__DEV__) {
-  // Only runtime checks environment variables for dev mode.
-  // Ensures production still launches always.
-  // envVariables.parse(process.env)
+  // Check for runtime environment variables.
+  envVariables.parse(process.env)
 }
 
 declare global {

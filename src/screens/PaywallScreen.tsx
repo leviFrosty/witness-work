@@ -14,7 +14,7 @@ import Purchases, {
 } from 'react-native-purchases'
 import IconButton from '../components/IconButton'
 import { faCheck } from '@fortawesome/free-solid-svg-icons'
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import ActionButton from '../components/ActionButton'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import useCustomer from '../hooks/useCustomer'
@@ -98,6 +98,8 @@ const PaywallScreen = () => {
   }, [currentOfferings])
 
   // Fetches latest offerings & gets existing customer info from RevenueCat
+  const hasFetchedOfferings = useRef(false)
+
   useEffect(() => {
     const getOfferings = async () => {
       const offerings = await Purchases.getOfferings()
@@ -110,12 +112,13 @@ const PaywallScreen = () => {
       }
     }
 
-    getOfferings().catch((error) => {
-      Alert.alert(i18n.t('errorFetchingOfferings'), i18n.t('tryAgainLater'))
-      Sentry.captureException(error)
-    })
-
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    if (!hasFetchedOfferings.current) {
+      hasFetchedOfferings.current = true
+      getOfferings().catch((error) => {
+        Alert.alert(i18n.t('errorFetchingOfferings'), i18n.t('tryAgainLater'))
+        Sentry.captureException(error)
+      })
+    }
   }, [])
 
   const handlePurchase = useCallback(async () => {

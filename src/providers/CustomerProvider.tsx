@@ -3,6 +3,7 @@ import {
   useCallback,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from 'react'
 import { CustomerContext, CustomerCtx } from '../contexts/customer'
@@ -20,22 +21,7 @@ interface Props {}
 const CustomerProvider: React.FC<PropsWithChildren<Props>> = ({ children }) => {
   const [customer, setCustomer] = useState<CustomerInfo | null>(null)
   const { isAndroid } = useDevice()
-
-  useEffect(() => {
-    const setup = async () => {
-      await initialize()
-      await getCustomerInfo()
-    }
-
-    if (isAndroid) {
-      return
-      // For now, android does not support donations.
-    }
-
-    setup()
-
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  const hasInitialized = useRef(false)
 
   const getCustomerInfo = useCallback(async () => {
     try {
@@ -53,7 +39,7 @@ const CustomerProvider: React.FC<PropsWithChildren<Props>> = ({ children }) => {
       } else {
         __DEV__ && Purchases.setLogLevel(LOG_LEVEL.DEBUG)
         await Purchases.configure({
-          apiKey: process.env.REVENUECAT_APPLE_API_KEY || '',
+          apiKey: process.env.EXPO_PUBLIC_REVENUECAT_APPLE_API_KEY || '',
         })
       }
 
@@ -64,6 +50,21 @@ const CustomerProvider: React.FC<PropsWithChildren<Props>> = ({ children }) => {
       // Regardless, we are not able to resolve these issues.
     }
   }, [isAndroid])
+
+  useEffect(() => {
+    const setup = async () => {
+      await initialize()
+      await getCustomerInfo()
+    }
+
+    if (isAndroid || hasInitialized.current) {
+      return
+      // For now, android does not support donations.
+    }
+
+    hasInitialized.current = true
+    setup()
+  }, [isAndroid, initialize, getCustomerInfo])
 
   const hasPurchasedBefore = useMemo(
     () =>

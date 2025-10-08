@@ -9,7 +9,7 @@ export default ({ config }: ConfigContext): ExpoConfig => {
     name: IS_DEV ? 'WitnessWork Dev' : 'WitnessWork',
     developmentClient: {},
     slug: 'jw-time',
-    version: '1.37.2',
+    version: '1.37.3',
     owner: 'levi_frosty',
     orientation: 'portrait',
     icon: './src/assets/icon.png',

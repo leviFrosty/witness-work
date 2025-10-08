@@ -1,7 +1,7 @@
 {
   "name": "witness-work",
   "version": "1.37.9",
-  "main": "node_modules/expo/AppEntry.js",
+  "main": "src/index.js",
   "scripts": {
     "dev": "APP_VARIANT=development expo start --ios",
     "dev:prod": "expo start --no-dev --minify",
@@ -12,8 +12,8 @@
     "build:ios": "eas build -p ios --profile development-simulator --local",
     "build:ios-production": "eas build -p ios --profile production-simulator --local --clear-cache",
     "build:android": "eas build -p android --profile development-simulator --local",
-    "translate": "bun run ./src/scripts/translate.ts",
-    "version:bump": "bun run ./src/scripts/bump-version.js",
+    "translate": "bun run ./scripts/translate.ts",
+    "version:bump": "bun run ./scripts/bump-version.js",
     "prepare": "husky",
     "test": "vitest",
     "testFinal": "vitest run",
@@ -23,7 +23,7 @@
     "typecheck": "tsc -p ./tsconfig.json",
     "lint": "eslint . --cache --cache-location .cache/.eslintcache",
     "doctor": "expo-doctor",
-    "deps": "madge --ts-config ./tsconfig.json App.tsx -c"
+    "deps": "madge --ts-config ./tsconfig.json src/App.tsx -c"
   },
   "dependencies": {
     "@expo-google-fonts/inter": "^0.2.3",

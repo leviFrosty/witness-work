@@ -8,7 +8,7 @@ module.exports = function (api) {
         {
           'react-compiler': {
             sources: (filename) => {
-              const matches = ['src', 'App.tsx']
+              const matches = ['src']
               const include = matches.some((match) => filename.includes(match))
               if (include) {
                 console.log('Compiling: ', filename)

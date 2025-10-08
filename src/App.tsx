@@ -1,9 +1,9 @@
-import './env'
-import './src/lib/locales'
+import '../env'
+import './lib/locales'
 import 'react-native-gesture-handler'
 import React, { useEffect, useState } from 'react'
 import { NavigationContainer } from '@react-navigation/native'
-import RootStackComponent from './src/stacks/RootStack'
+import RootStackComponent from './stacks/RootStack'
 import { SafeAreaProvider } from 'react-native-safe-area-context'
 import * as Notifications from 'expo-notifications'
 import * as Sentry from '@sentry/react-native'
@@ -26,17 +26,17 @@ import {
 import { StatusBar } from 'expo-status-bar'
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
 import { TamaguiProvider } from 'tamagui'
-import tamaguiConfig from './tamagui.config'
-import ThemeProvider from './src/providers/ThemeProvider'
-import CustomerProvider from './src/providers/CustomerProvider'
+import tamaguiConfig from '../tamagui.config'
+import ThemeProvider from './providers/ThemeProvider'
+import CustomerProvider from './providers/CustomerProvider'
 import { ToastProvider, ToastViewport } from '@tamagui/toast'
 import {
   hasMigratedFromAsyncStorage,
   migrateFromAsyncStorage,
-} from './src/stores/mmkv'
-import { usePreferences } from './src/stores/preferences'
-import AnimationViewProvider from './src/providers/AnimationViewProvider'
-import useUserLocalePrefs from './src/hooks/useLocale'
+} from './stores/mmkv'
+import { usePreferences } from './stores/preferences'
+import AnimationViewProvider from './providers/AnimationViewProvider'
+import useUserLocalePrefs from './hooks/useLocale'
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({

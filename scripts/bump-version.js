@@ -53,7 +53,7 @@ if (!['major', 'minor', 'patch'].includes(bumpType)) {
 }
 
 // Paths
-const rootDir = path.resolve(__dirname, '../..')
+const rootDir = path.resolve(__dirname, '..')
 const packageJsonPath = path.join(rootDir, 'package.json')
 const appConfigPath = path.join(rootDir, 'app.config.ts')
 const releaseNotesPath = path.join(rootDir, 'src/constants/releaseNotes.ts')

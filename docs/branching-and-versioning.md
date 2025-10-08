@@ -130,20 +130,18 @@ git push origin main --follow-tags
 
 ## GitHub Actions Workflows
 
-### On PRs to `development`
-
-- `lint.yml` - ESLint and TypeScript checks
-- `test.yml` - Unit tests
-
 ### On PRs to `main`
 
-- `lint.yml` - ESLint and TypeScript checks
-- `test.yml` - Unit tests
-- `pr-preview-build.yml` - EAS preview builds for iOS and Android
+- `pr-preview-build.yml` - Runs lint, typecheck, tests, then EAS preview builds for iOS and Android
+  - **Validation job**: Lint, typecheck, test, circular dependency check
+  - **Build job**: Only runs if validation passes (saves compute resources)
 
 ### On Tag Push to `main` (e.g., `v1.37.0`)
 
 - `production-release.yml` - Full validation, production builds, auto-submit to stores
+  - Runs lint, typecheck, tests before expensive EAS builds
+  - Builds and auto-submits to App Store and Play Store
+  - Creates GitHub Release
 
 ## Quick Reference
 

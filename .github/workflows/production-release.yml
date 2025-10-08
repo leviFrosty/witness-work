@@ -116,7 +116,7 @@ jobs:
               .join('\n');
 
             const body = `### Changes${previousTag ? ` since ${previousTag}` : ''}
-            ${changelog || 'No changes recorded'}
+            ${changelog || 'No changes recorded'}`;
 
             github.rest.repos.createRelease({
               owner: context.repo.owner,

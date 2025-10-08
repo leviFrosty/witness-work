@@ -10,7 +10,7 @@ jobs:
     name: EAS Production Build & Submit
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      contents: write
     environment: Production
     steps:
       - name: Check for EXPO_TOKEN

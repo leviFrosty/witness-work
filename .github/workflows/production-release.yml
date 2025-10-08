@@ -70,12 +70,65 @@ jobs:
             const tag = context.ref.replace('refs/tags/', '');
             const version = tag.replace('v', '');
 
+            // Get the previous release to compare commits
+            let previousTag = null;
+            try {
+              const releases = await github.rest.repos.listReleases({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                per_page: 1
+              });
+              if (releases.data.length > 0) {
+                previousTag = releases.data[0].tag_name;
+              }
+            } catch (error) {
+              console.log('No previous releases found');
+            }
+
+            // Get commits since last release
+            let commits = [];
+            if (previousTag) {
+              const comparison = await github.rest.repos.compareCommits({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                base: previousTag,
+                head: tag
+              });
+              commits = comparison.data.commits;
+            } else {
+              // If no previous release, get recent commits
+              const commitsResponse = await github.rest.repos.listCommits({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                sha: tag,
+                per_page: 20
+              });
+              commits = commitsResponse.data;
+            }
+
+            // Format commits into changelog
+            const changelog = commits
+              .map(commit => {
+                const message = commit.commit.message.split('\n')[0];
+                const sha = commit.sha.substring(0, 7);
+                return `- ${message} (${sha})`;
+              })
+              .join('\n');
+
+            const body = `## WitnessWork ${version}
+
+            ### Changes${previousTag ? ` since ${previousTag}` : ''}
+            ${changelog || 'No changes recorded'}
+
+            ### Release Notes
+            ${changelog || 'No changes recorded'}`;
+
             github.rest.repos.createRelease({
               owner: context.repo.owner,
               repo: context.repo.repo,
               tag_name: tag,
               name: `Release ${version}`,
-              body: `## WitnessWork ${version}\n\nProduction build submitted to App Store and Play Store.\n\nCheck the [EAS dashboard](https://expo.dev/accounts/levi_frosty/projects/jw-time/builds) for build status.`,
+              body: body,
               draft: false,
               prerelease: false
             });

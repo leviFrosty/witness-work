@@ -11,6 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
+    environment: Production
     steps:
       - name: Check for EXPO_TOKEN
         env:

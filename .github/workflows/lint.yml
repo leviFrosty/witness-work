@@ -3,13 +3,11 @@ name: Lint and Typecheck
 on:
   push:
     branches:
-      - production
-      - preview
+      - main
       - development
   pull_request:
     branches:
-      - production
-      - preview
+      - main
       - development
 
 jobs:

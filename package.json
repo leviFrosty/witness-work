@@ -13,6 +13,7 @@
     "build:ios-production": "eas build -p ios --profile production-simulator --local --clear-cache",
     "build:android": "eas build -p android --profile development-simulator --local",
     "translate": "bun run ./src/scripts/translate.ts",
+    "version:bump": "bun run ./src/scripts/bump-version.js",
     "prepare": "husky",
     "test": "vitest",
     "testFinal": "vitest run",

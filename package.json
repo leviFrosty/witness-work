@@ -22,7 +22,10 @@
     "typecheck": "tsc -p ./tsconfig.json",
     "lint": "eslint . --cache --cache-location .cache/.eslintcache",
     "doctor": "expo-doctor",
-    "deps": "madge --ts-config ./tsconfig.json App.tsx -c"
+    "deps": "madge --ts-config ./tsconfig.json App.tsx -c",
+    "e2e:test": "maestro test .maestro/",
+    "e2e:workflow": "npx eas-cli@latest workflow:run .eas/workflows/e2e-test-ios.yml",
+    "build:e2e": "eas build --profile e2e-test --platform ios"
   },
   "dependencies": {
     "@expo-google-fonts/inter": "^0.2.3",

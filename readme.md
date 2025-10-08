@@ -107,3 +107,32 @@ Build dependencies: [Android Studio](https://developer.android.com/studio), [JDK
 1. Develop
 
 Learn about the [file and project structure](./docs/project-structure.md).
+
+## E2E Testing
+
+WitnessWork uses [Maestro](https://maestro.mobile.dev/) for end-to-end testing on iOS.
+
+### Prerequisites
+
+Install Maestro CLI: [Installing Maestro](https://maestro.mobile.dev/getting-started/installing-maestro)
+
+### Running E2E Tests
+
+**Local Testing:**
+
+```bash
+# Run E2E tests
+pnpm run e2e:test
+```
+
+**EAS Workflows:**
+
+```bash
+# Run E2E tests on EAS
+pnpm run e2e:workflow
+
+# Build iOS app for E2E testing
+pnpm run build:e2e
+```
+
+E2E tests automatically run on pull requests via EAS Workflows.

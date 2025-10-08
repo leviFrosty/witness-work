@@ -1,0 +1,8 @@
+appId: com.leviwilkerson.jwtime # Production app ID
+---
+- launchApp
+- tapOn: 'Month'
+- assertVisible: 'Schedule'
+- tapOn: 'Year'
+- tapOn: 'Map'
+- tapOn: 'Home'

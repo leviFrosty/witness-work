@@ -57,6 +57,14 @@
         "image": "macos-sequoia-15.3-xcode-16.2"
       },
       "node": "20.14.0"
+    },
+    "e2e-test": {
+      "withoutCredentials": true,
+      "ios": {
+        "simulator": true,
+        "image": "latest"
+      },
+      "node": "20.14.0"
     }
   },
   "submit": {

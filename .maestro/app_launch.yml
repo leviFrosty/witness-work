@@ -1,0 +1,4 @@
+appId: com.leviwilkerson.jwtime # Production app ID
+---
+- launchApp
+- assertVisible: 'Service Report'

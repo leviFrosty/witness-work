@@ -995,5 +995,7 @@
   "featureGamifiedRoutineDesc": "遊戲化服務報告讓您保持動力",
   "featureWordsOfAffirmation": "肯定的話語",
   "featureWordsOfAffirmationDesc": "當您使用應用程式時，會收到鼓勵的短語和正面的回饋",
-  "actions": "行動"
+  "actions": "行動",
+  "cache": "快取",
+  "timeCache": "時間快取"
 }

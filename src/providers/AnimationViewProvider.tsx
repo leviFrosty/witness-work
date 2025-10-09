@@ -28,9 +28,16 @@ const AnimationViewProvider: React.FC<PropsWithChildren<Props>> = ({
   const [sound, setSound] = useState<Audio.Sound>()
 
   async function playSound() {
-    const { sound } = await Audio.Sound.createAsync(chime)
-    setSound(sound)
-    await sound.playAsync()
+    try {
+      await Audio.setAudioModeAsync({
+        playsInSilentModeIOS: true,
+      })
+      const { sound } = await Audio.Sound.createAsync(chime)
+      setSound(sound)
+      await sound.playAsync()
+    } catch (error) {
+      // Silently fail if audio session cannot be activated
+    }
   }
 
   useEffect(() => {

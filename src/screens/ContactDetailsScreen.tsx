@@ -791,7 +791,8 @@ const ContactDetailsScreen = ({ route, navigation }: Props) => {
 
   const { name, address, phone, email, customFields, coordinate } = contact
 
-  const hasAddress = address && Object.values(address).some((v) => v.length > 0)
+  const hasAddress =
+    address && Object.values(address).some((v) => v?.length > 0)
   const hasCustomFields =
     customFields !== undefined &&
     Object.values(customFields).some((f) => !!f.length)

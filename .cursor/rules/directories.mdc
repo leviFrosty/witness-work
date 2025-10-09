@@ -1,0 +1,40 @@
+---
+alwaysApply: true
+---
+
+# Directory Structure with Descriptions
+
+- **`.`** - Project root containing configuration files (package.json, tsconfig.json, app.config.ts, etc.)
+- **`src`** - Main source code directory containing all application logic
+- **`src/__tests__`** - Test files using Vitest and React Native Testing Library
+- **`src/__tests__/__data__`** - Mock data and test fixtures for unit tests
+- **`src/assets`** - Static assets including images, audio files, and animations
+- **`src/assets/audio`** - Audio files (success-chime.mp3 for UI feedback)
+- **`src/assets/lottie`** - Lottie animation JSON files (checkMark, confetti, doggie, error, floatingHearts, loading)
+- **`src/components`** - Reusable React components (60+ components for UI, forms, business logic)
+- **`src/components/inputs`** - Form input components (CheckboxWithLabel, TextInputRow, InputRowSelect, etc.)
+- **`src/components/layout`** - Layout components (Header, Wrapper, XView for consistent app structure)
+- **`src/components/onboarding`** - Components for user onboarding flow with styles and navigation
+- **`src/components/onboarding/steps`** - Individual onboarding step components (One, Two, Three, Four, DefaultNav)
+- **`src/components/swipeableActions`** - Swipeable action components (Archive, Delete, Edit for lists)
+- **`src/constants`** - Application constants (APIs, themes, publisher settings, release notes, etc.)
+- **`src/contexts`** - React context definitions (AnimationView, customer, theme management)
+- **`src/docs`** - Project documentation and architecture notes
+- **`src/docs/screenshots`** - Application preview screenshots (6 preview images for documentation)
+- **`src/hooks`** - Custom React hooks (device detection, location services, animations, stopwatch)
+- **`src/lib`** - Utility functions and business logic (contacts, conversations, serviceReport, address handling)
+- **`src/locales`** - Internationalization files supporting 16+ languages via Crowdin
+- **`src/locales/test`** - Test locale files directory (currently empty)
+- **`src/providers`** - React context providers (ThemeProvider, CustomerProvider, AnimationViewProvider)
+- **`src/screens`** - Screen components for navigation (20+ screens including forms, dashboards, utilities)
+- **`src/screens/MonthScreen`** - Monthly time report screen with calendar and progress tracking
+- **`src/screens/settings`** - Settings screen hierarchy with preferences and configuration options
+- **`src/screens/settings/preferences`** - User preferences screens (main PreferencesScreen entry point)
+- **`src/screens/settings/preferences/screens`** - Individual preference screens (Appearance, Backups, Conversation, Home, Navigation, Publisher)
+- **`src/screens/settings/preferences/sections`** - Reusable preference section components matching the preference screens
+- **`src/screens/settings/sections`** - Main settings section components (App, Contact, Language, Misc, Preferences, Support)
+- **`src/screens/settings/shared`** - Shared settings components (SectionTitle for consistent styling)
+- **`src/scripts`** - Build and development scripts (translate.js for auto-translation via Google Cloud API)
+- **`src/stacks`** - Navigation stack configurations (HomeTabStack, RootStack for React Navigation)
+- **`src/stores`** - Zustand state management stores (contacts, conversations, service reports, preferences, MMKV)
+- **`src/types`** - TypeScript type definitions (contact, conversation, serviceReport, navigation, theme, etc.)

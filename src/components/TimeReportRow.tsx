@@ -53,7 +53,7 @@ const TimeReportRow = ({ report, onPress }: TimeReportRowProps) => {
               style: 'destructive',
               onPress: () => {
                 swipeable.reset()
-                toast.show(i18n.t('success'), {
+                toast?.show(i18n.t('success'), {
                   message: i18n.t('deleted'),
                   native: true,
                 })

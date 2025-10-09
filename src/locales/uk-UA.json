@@ -995,5 +995,7 @@
   "featureGamifiedRoutineDesc": "Гейміфіковані звіти про обслуговування, щоб мотивувати вас",
   "featureWordsOfAffirmation": "Слова підтримки",
   "featureWordsOfAffirmationDesc": "Отримуйте підбадьорливі фрази та позитивні відгуки під час використання додатку",
-  "actions": "Дії"
+  "actions": "Дії",
+  "cache": "Кеш",
+  "timeCache": "Кеш часу"
 }

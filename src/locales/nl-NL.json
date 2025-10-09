@@ -995,5 +995,7 @@
   "featureGamifiedRoutineDesc": "Gamified servicerapportage om u gemotiveerd te houden",
   "featureWordsOfAffirmation": "Woorden van bevestiging",
   "featureWordsOfAffirmationDesc": "Ontvang bemoedigende zinnen en positieve feedback terwijl je de app gebruikt",
-  "actions": "Acties"
+  "actions": "Acties",
+  "cache": "Cache",
+  "timeCache": "Tijd Cache"
 }

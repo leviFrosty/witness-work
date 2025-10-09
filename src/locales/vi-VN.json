@@ -995,5 +995,7 @@
   "featureGamifiedRoutineDesc": "Gamified service reporting to keep you motivated",
   "featureWordsOfAffirmation": "Words of Affirmation",
   "featureWordsOfAffirmationDesc": "Receive encouraging phrases and positive feedback as you use the app",
-  "actions": "Actions"
+  "actions": "Actions",
+  "cache": "Bộ nhớ đệm #__# Thời gian bộ nhớ đệm",
+  "timeCache": "Time Cache"
 }

@@ -24,6 +24,7 @@ import XView from '../components/layout/XView'
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
 import IconButton from '../components/IconButton'
 import { faFileImport, faUpload } from '@fortawesome/free-solid-svg-icons'
+import { useTimeCache } from '../stores/timeCache'
 
 /**
  * Any new stores should be added to this type to be included in the
@@ -41,6 +42,7 @@ const ImportAndExportScreen = () => {
   const contactStore = useContacts()
   const conversationStore = useConversations()
   const preferencesStore = usePreferences()
+  const timeCache = useTimeCache()
 
   const [loading, setLoading] = useState(false)
   const [successfulImport, setSuccessfulImport] = useState(false)
@@ -101,6 +103,7 @@ const ImportAndExportScreen = () => {
           data.conversationStore &&
             conversationStore.set(data.conversationStore)
           data.preferencesStore && preferencesStore.set(data.preferencesStore)
+          timeCache.invalidateAllCache()
           setSuccessfulImport(true)
         })
         .finally(() => {

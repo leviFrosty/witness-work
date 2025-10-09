@@ -18,6 +18,7 @@ import { useToastController } from '@tamagui/toast'
 import { RecurringPlanFrequencies } from '../lib/serviceReport'
 import { useState } from 'react'
 import Button from '../components/Button'
+import { useTimeCache } from '../stores/timeCache'
 
 export default function ToolsScreen() {
   const theme = useTheme()
@@ -38,11 +39,13 @@ export default function ToolsScreen() {
     _WARNING_clearDeleted,
     addContact,
   } = useContacts()
+  const { cache } = useTimeCache()
   const { _WARNING_forceDeleteConversations } = useConversations()
   const toast = useToastController()
   const [showContacts, setShowContacts] = useState(false)
   const [showReports, setShowReports] = useState(false)
   const [showPlans, setShowPlans] = useState(false)
+  const [showTimeCache, setShowTimeCache] = useState(false)
 
   const generateContacts = async () => {
     const { data } = await axios.get(
@@ -292,6 +295,26 @@ export default function ToolsScreen() {
                 <Text>{i18n.t('recurringPlans')}</Text>
                 <Text style={{ fontSize: theme.fontSize('xs') }}>
                   {JSON.stringify(recurringPlans, null, 2)}
+                </Text>
+              </View>
+            </View>
+          )}
+        </Card>
+        <Card>
+          <XView>
+            <Text>{i18n.t('cache')}</Text>
+            <Button onPress={() => setShowTimeCache(!showTimeCache)}>
+              <Text style={{ fontFamily: theme.fonts.bold }}>
+                {i18n.t(showTimeCache ? 'hide' : 'show')}
+              </Text>
+            </Button>
+          </XView>
+          {showTimeCache && (
+            <View style={{ gap: 20 }}>
+              <View>
+                <Text>{i18n.t('timeCache')}</Text>
+                <Text style={{ fontSize: theme.fontSize('xs') }}>
+                  {JSON.stringify(cache, null, 2)}
                 </Text>
               </View>
             </View>

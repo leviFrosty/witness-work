@@ -10,6 +10,7 @@ import { CustomerContext, CustomerCtx } from '../contexts/customer'
 import Purchases, { CustomerInfo, LOG_LEVEL } from 'react-native-purchases'
 import useDevice from '../hooks/useDevice'
 import * as Sentry from '@sentry/react-native'
+import { logger } from '../lib/logger'
 
 interface Props {}
 
@@ -38,6 +39,10 @@ const CustomerProvider: React.FC<PropsWithChildren<Props>> = ({ children }) => {
         return
       } else {
         __DEV__ && Purchases.setLogLevel(LOG_LEVEL.DEBUG)
+        logger.log(
+          'Purchases.configure',
+          process.env.EXPO_PUBLIC_REVENUECAT_APPLE_API_KEY
+        )
         await Purchases.configure({
           apiKey: process.env.EXPO_PUBLIC_REVENUECAT_APPLE_API_KEY || '',
         })

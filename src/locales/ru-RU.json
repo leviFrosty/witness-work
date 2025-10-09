@@ -995,5 +995,7 @@
   "featureGamifiedRoutineDesc": "Игровая отчетность по услугам для поддержания мотивации",
   "featureWordsOfAffirmation": "Слова-утверждения",
   "featureWordsOfAffirmationDesc": "Получайте ободряющие фразы и положительные отзывы по мере использования приложения",
-  "actions": "Действия"
+  "actions": "Действия",
+  "cache": "Кэш",
+  "timeCache": "Кэш времени"
 }

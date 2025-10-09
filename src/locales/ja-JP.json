@@ -995,5 +995,7 @@
   "featureGamifiedRoutineDesc": "ゲーム化されたサービス報告でモチベーションを維持",
   "featureWordsOfAffirmation": "肯定する言葉",
   "featureWordsOfAffirmationDesc": "アプリを使用すると、励ましのフレーズや肯定的なフィードバックを受け取ることができます。",
-  "actions": "行動"
+  "actions": "行動",
+  "cache": "キャッシュ",
+  "timeCache": "タイムキャッシュ"
 }

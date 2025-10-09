@@ -19,5 +19,11 @@
     "Swipeable",
     "tamagui",
     "zustand"
+  ],
+  "todo-tree.filtering.excludeGlobs": [
+    "**/node_modules/**",
+    "**/android/**",
+    "**/ios/**",
+    "**/.expo/**"
   ]
 }

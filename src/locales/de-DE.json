@@ -995,5 +995,7 @@
   "featureGamifiedRoutineDesc": "Gamified Service Reporting für mehr Motivation",
   "featureWordsOfAffirmation": "Worte der Bestärkung",
   "featureWordsOfAffirmationDesc": "Erhalten Sie ermutigende Sätze und positives Feedback, während Sie die App nutzen",
-  "actions": "Aktionen"
+  "actions": "Aktionen",
+  "cache": "Cache",
+  "timeCache": "Zeit-Cache"
 }

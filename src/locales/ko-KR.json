@@ -995,5 +995,7 @@
   "featureGamifiedRoutineDesc": "동기 부여를 위한 게임형 서비스 보고",
   "featureWordsOfAffirmation": "긍정의 말",
   "featureWordsOfAffirmationDesc": "앱 사용 시 격려 문구와 긍정적인 피드백을 받아보세요",
-  "actions": "행동"
+  "actions": "행동",
+  "cache": "캐시",
+  "timeCache": "시간 캐시"
 }

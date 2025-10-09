@@ -12,6 +12,9 @@ import MonthScreen from '../screens/MonthScreen/MonthScreen'
 import YearScreen from '../screens/YearScreen'
 import usePublisher from '../hooks/usePublisher'
 import { HomeTabStackParamList } from '../types/homeStack'
+import { releaseNotes } from '../constants/releaseNotes'
+import semver from 'semver'
+import { logger } from '../lib/logger'
 
 const HomeTabStack = () => {
   const Tab = createBottomTabNavigator<HomeTabStackParamList>()
@@ -22,7 +25,18 @@ const HomeTabStack = () => {
 
   useEffect(() => {
     const currentVersion = Constants.expoConfig?.version
-    if (currentVersion !== lastAppVersion) {
+    if (!currentVersion || !lastAppVersion) return
+    logger.log('[HomeTabStack] currentVersion', currentVersion)
+    logger.log('[HomeTabStack] lastVersion', lastAppVersion)
+    const notesBetweenVersions = releaseNotes.filter(
+      (note) =>
+        semver.gt(note.version, lastAppVersion) &&
+        semver.lte(note.version, currentVersion)
+    )
+    logger.log('[HomeTabStack] notesBetweenVersions', notesBetweenVersions)
+    const isNewVersionMessages = notesBetweenVersions.length > 0
+
+    if (currentVersion !== lastAppVersion && isNewVersionMessages) {
       setShowWhatsNew(true)
       set({ lastAppVersion: currentVersion })
     }

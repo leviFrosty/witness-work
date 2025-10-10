@@ -1,11 +1,6 @@
 import { z } from 'zod'
 
 const envVariables = z.object({
-  EXPO_PUBLIC_HERE_API_KEY: z
-    .string()
-    .describe(
-      'Used for geocoding api calls when users create address to fetch coordinates. Used at runtime.'
-    ),
   EXPO_PUBLIC_REVENUECAT_APPLE_API_KEY: z
     .string()
     .describe(

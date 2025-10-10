@@ -1,4 +1,5 @@
+const BASE_URL = 'https://ww-proxy.levi-wilkerson.workers.dev'
 export default {
-  hereGeocode: 'https://geocode.search.hereapi.com/v1/geocode',
-  hereAutocomplete: 'https://autocomplete.search.hereapi.com/v1/autocomplete',
+  geocode: `${BASE_URL}/geocode`,
+  autocomplete: `${BASE_URL}/autocomplete`,
 }

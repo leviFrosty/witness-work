@@ -38,7 +38,7 @@ export const formatMinutes = (
 ) => {
   let formatted: string
   const hours = Math.floor(totalMinutes / 60)
-  const minutes = totalMinutes % 60
+  const minutes = _.round(totalMinutes % 60, 0)
   const decimalHours = _.round(totalMinutes / 60, 1)
 
   switch (format) {

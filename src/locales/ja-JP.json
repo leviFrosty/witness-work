@@ -997,5 +997,6 @@
   "featureWordsOfAffirmationDesc": "アプリを使用すると、励ましのフレーズや肯定的なフィードバックを受け取ることができます。",
   "actions": "行動",
   "cache": "キャッシュ",
-  "timeCache": "タイムキャッシュ"
+  "timeCache": "タイムキャッシュ",
+  "logs": "過去ログ"
 }

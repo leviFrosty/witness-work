@@ -996,5 +996,7 @@
   "featureWordsOfAffirmation": "Words of Affirmation",
   "featureWordsOfAffirmationDesc": "Receive encouraging phrases and positive feedback as you use the app",
   "actions": "Actions",
-  "cache": "Caché #__# Tiempo Caché"
+  "cache": "Caché",
+  "timeCache": "Caché de tiempo",
+  "logs": "Registros"
 }

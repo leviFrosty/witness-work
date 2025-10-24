@@ -119,6 +119,8 @@ const fontSize = (size?: ThemeSizes) => {
   }
 
   switch (size) {
+    case '2xs':
+      return sizeFromDefault(-6)
     case 'xs':
       return sizeFromDefault(-4)
     case 'sm':
@@ -162,6 +164,7 @@ const getThemeFromColorScheme = (colorScheme: ColorSchemeName): Theme => {
 export default getThemeFromColorScheme
 
 export type ThemeSizes =
+  | '2xs'
   | 'xs'
   | 'sm'
   | 'md'

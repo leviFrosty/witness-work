@@ -19,6 +19,7 @@ import { RecurringPlanFrequencies } from '../lib/serviceReport'
 import { useState } from 'react'
 import Button from '../components/Button'
 import { useTimeCache } from '../stores/timeCache'
+import { history } from '../lib/logger'
 
 export default function ToolsScreen() {
   const theme = useTheme()
@@ -46,6 +47,7 @@ export default function ToolsScreen() {
   const [showReports, setShowReports] = useState(false)
   const [showPlans, setShowPlans] = useState(false)
   const [showTimeCache, setShowTimeCache] = useState(false)
+  const [showLogHistory, setShowLogHistory] = useState(false)
 
   const generateContacts = async () => {
     const { data } = await axios.get(
@@ -315,6 +317,54 @@ export default function ToolsScreen() {
                 <Text>{i18n.t('timeCache')}</Text>
                 <Text style={{ fontSize: theme.fontSize('xs') }}>
                   {JSON.stringify(cache, null, 2)}
+                </Text>
+              </View>
+            </View>
+          )}
+        </Card>
+        <Card>
+          <XView>
+            <Text>{i18n.t('logs')}</Text>
+            <Button onPress={() => setShowLogHistory(!showLogHistory)}>
+              <Text style={{ fontFamily: theme.fonts.bold }}>
+                {i18n.t(showLogHistory ? 'hide' : 'show')}
+              </Text>
+            </Button>
+          </XView>
+          {showLogHistory && (
+            <View style={{ gap: 20 }}>
+              <View>
+                <Text>{i18n.t('logs')}</Text>
+                <Text style={{ fontSize: theme.fontSize('2xs') }}>
+                  <View style={{ minHeight: 100 }}>
+                    {/* <FlashList
+                      data={history}
+                      renderItem={({ item }) => (
+                        <View
+                          key={item.id}
+                          style={{ display: 'flex', gap: 4, paddingBottom: 5 }}
+                        >
+                          <Text style={{ fontFamily: theme.fonts.semiBold }}>
+                            {moment(item.timestamp).format(
+                              'YYYY-MM-DD HH:mm:ss'
+                            )}
+                          </Text>
+                          <Text>{item.message}</Text>
+                        </View>
+                      )}
+                    /> */}
+                    {history.map((log) => (
+                      <View
+                        key={log.id}
+                        style={{ display: 'flex', gap: 4, paddingBottom: 5 }}
+                      >
+                        <Text style={{ fontFamily: theme.fonts.semiBold }}>
+                          {moment(log.timestamp).format('YYYY-MM-DD HH:mm:ss')}
+                        </Text>
+                        <Text>{log.message}</Text>
+                      </View>
+                    ))}
+                  </View>
                 </Text>
               </View>
             </View>

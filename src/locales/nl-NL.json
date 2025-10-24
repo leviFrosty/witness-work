@@ -997,5 +997,6 @@
   "featureWordsOfAffirmationDesc": "Ontvang bemoedigende zinnen en positieve feedback terwijl je de app gebruikt",
   "actions": "Acties",
   "cache": "Cache",
-  "timeCache": "Tijd Cache"
+  "timeCache": "Tijd Cache",
+  "logs": "Logboeken"
 }

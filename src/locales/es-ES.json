@@ -997,5 +997,6 @@
   "featureWordsOfAffirmationDesc": "Recibe frases de ánimo y comentarios positivos mientras utilizas la aplicación",
   "actions": "Acciones",
   "cache": "Caché",
-  "timeCache": "Tiempo Caché"
+  "timeCache": "Tiempo Caché",
+  "logs": "Registros"
 }

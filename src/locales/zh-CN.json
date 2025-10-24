@@ -997,5 +997,6 @@
   "featureWordsOfAffirmationDesc": "在使用应用程序时接收鼓励性短语和积极反馈",
   "actions": "行动",
   "cache": "缓存",
-  "timeCache": "时间缓存"
+  "timeCache": "时间缓存",
+  "logs": "日志"
 }

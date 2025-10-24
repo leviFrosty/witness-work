@@ -997,5 +997,6 @@
   "featureWordsOfAffirmationDesc": "Receive encouraging phrases and positive feedback as you use the app",
   "actions": "Actions",
   "cache": "Cache",
-  "timeCache": "Time Cache"
+  "timeCache": "Time Cache",
+  "logs": "Logs"
 }

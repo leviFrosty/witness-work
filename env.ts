@@ -18,6 +18,10 @@ const envVariables = z.object({
     .describe(
       'Set to `development` when working locally, targets the eas build to create the `WitnessWork Dev` bundle instead of production `WitnessWork`'
     ),
+  EXPO_PUBLIC_SILENT: z
+    .string()
+    .optional()
+    .describe('BOOLEAN, Set to true to silence all logs. Defaults to false.'),
 })
 
 if (__DEV__) {

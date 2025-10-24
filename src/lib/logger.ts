@@ -8,6 +8,12 @@ import { usePreferences } from '../stores/preferences'
  */
 const shouldLog = (): boolean => {
   const developerTools = usePreferences.getState().developerTools
+  if (
+    process.env.EXPO_PUBLIC_SILENT === 'true' ||
+    process.env.EXPO_PUBLIC_SILENT === '1'
+  ) {
+    return false
+  }
   return developerTools || __DEV__
 }
 

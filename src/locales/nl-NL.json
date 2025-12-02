@@ -51,7 +51,7 @@
     "greatStart": "Geweldige start!",
     "keepItUp": "Ga zo door !",
     "momentumBuilding": "Momentum!",
-    "onYourWay": "Op weg",
+    "onYourWay": "Op weg!",
     "smallStepsBigResults": "Kleine stappen, grote resultaten!"
   },
   "phrasesClose": {
@@ -103,7 +103,7 @@
   "editPlan": "Plan bewerken",
   "overrideCreated": "Overschrijven Gemaakt",
   "editingOverride": "Overschrijven bewerken",
-  "editingOverride_description": "U'bewerkt een specifieke gebeurtenis van dit terugkerende plan. Wijzigingen gelden alleen voor deze datum.",
+  "editingOverride_description": "Je bewerkt een specifieke gebeurtenis van dit terugkerende abonnement. Wijzigingen zijn alleen van toepassing op deze datum.",
   "removeOverride": "Overschrijven verwijderen",
   "overrideRemoved": "Overschrijven verwijderd",
   "existingOverrides": "Bestaande overschrijving",

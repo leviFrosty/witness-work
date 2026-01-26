@@ -390,6 +390,11 @@ packages:
     peerDependencies:
       '@babel/core': ^7.4.0 || ^8.0.0-0 <8.0.0
 
+  '@babel/helper-define-polyfill-provider@0.6.6':
+    resolution: {integrity: sha512-mOAsxeeKkUKayvZR3HeTYD/fICpCPLJrU5ZjelT/PA6WHtNDBOE436YiaEUvHN454bRM3CebhDsIpieCc4texA==}
+    peerDependencies:
+      '@babel/core': ^7.4.0 || ^8.0.0-0 <8.0.0
+
   '@babel/helper-globals@7.28.0':
     resolution: {integrity: sha512-+W6cISkXFa1jXsDEdYA8HeevQT/FULhxzR99pxphltZcVaugps53THCeiWA8SguxxpSp3gKPiuYfSWopkLQ4hw==}
     engines: {node: '>=6.9.0'}
@@ -3358,6 +3363,11 @@ packages:
     peerDependencies:
       '@babel/core': ^7.4.0 || ^8.0.0-0 <8.0.0
 
+  babel-plugin-polyfill-corejs2@0.4.15:
+    resolution: {integrity: sha512-hR3GwrRwHUfYwGfrisXPIDP3JcYfBrW7wKE7+Au6wDYl7fm/ka1NEII6kORzxNU556JjfidZeBsO10kYvtV1aw==}
+    peerDependencies:
+      '@babel/core': ^7.4.0 || ^8.0.0-0 <8.0.0
+
   babel-plugin-polyfill-corejs3@0.10.6:
     resolution: {integrity: sha512-b37+KR2i/khY5sKmWNVQAnitvquQbNdWy6lJdsr0kmquCKEEUgMKK4SboVM3HtfnZilfjr4MMQ7vY58FVWDtIA==}
     peerDependencies:
@@ -3370,6 +3380,11 @@ packages:
 
   babel-plugin-polyfill-regenerator@0.6.5:
     resolution: {integrity: sha512-ISqQ2frbiNU9vIJkzg7dlPpznPZ4jOiUQ1uSmB0fEHeowtN3COYRsXr/xexn64NpU13P06jc/L5TgiJXOgrbEg==}
+    peerDependencies:
+      '@babel/core': ^7.4.0 || ^8.0.0-0 <8.0.0
+
+  babel-plugin-polyfill-regenerator@0.6.6:
+    resolution: {integrity: sha512-hYm+XLYRMvupxiQzrvXUj7YyvFFVfv5gI0R71AJzudg1g2AI2vyCPPIFEBjk162/wFzti3inBHo7isWFuEVS/A==}
     peerDependencies:
       '@babel/core': ^7.4.0 || ^8.0.0-0 <8.0.0
 
@@ -3423,8 +3438,8 @@ packages:
     resolution: {integrity: sha512-wrH5NNqren/QMtKUEEJf7z86YjfqW/2uw3IL3/xpqZUC95SSVIFXYQeeGjL6FT/X68IROu6RMehZQS5foy2BXw==}
     hasBin: true
 
-  baseline-browser-mapping@2.9.17:
-    resolution: {integrity: sha512-agD0MgJFUP/4nvjqzIB29zRPUuCF7Ge6mEv9s8dHrtYD7QWXRcx75rOADE/d5ah1NI+0vkDl0yorDd5U852IQQ==}
+  baseline-browser-mapping@2.9.18:
+    resolution: {integrity: sha512-e23vBV1ZLfjb9apvfPk4rHVu2ry6RIr2Wfs+O324okSidrX7pTAnEJPCh/O5BtRlr7QtZI7ktOP3vsqr7Z5XoA==}
     hasBin: true
 
   better-opn@3.0.2:
@@ -3560,8 +3575,8 @@ packages:
   caniuse-lite@1.0.30001743:
     resolution: {integrity: sha512-e6Ojr7RV14Un7dz6ASD0aZDmQPT/A+eZU+nuTNfjqmRrmkmQlnTNWH0SKmqagx9PeW87UVqapSurtAXifmtdmw==}
 
-  caniuse-lite@1.0.30001765:
-    resolution: {integrity: sha512-LWcNtSyZrakjECqmpP4qdg0MMGdN368D7X8XvvAqOcqMv0RxnlqVKZl2V6/mBR68oYMxOZPLw/gO7DuisMHUvQ==}
+  caniuse-lite@1.0.30001766:
+    resolution: {integrity: sha512-4C0lfJ0/YPjJQHagaE9x2Elb69CIqEPZeG0anQt9SIvIoOH4a4uaRl73IavyO+0qZh6MDLH//DrXThEYKHkmYA==}
 
   chai@5.3.3:
     resolution: {integrity: sha512-4zNhdJD/iOjSH0A05ea+Ke6MU5mmpQcbQsSOkgdaUMJ9zTlDTD/GYlwohmIE2u0gaxHYiVHEn1Fw9mZ/ktJWgw==}
@@ -4068,8 +4083,8 @@ packages:
   electron-to-chromium@1.5.222:
     resolution: {integrity: sha512-gA7psSwSwQRE60CEoLz6JBCQPIxNeuzB2nL8vE03GK/OHxlvykbLyeiumQy1iH5C2f3YbRAZpGCMT12a/9ih9w==}
 
-  electron-to-chromium@1.5.277:
-    resolution: {integrity: sha512-wKXFZw4erWmmOz5N/grBoJ2XrNJGDFMu2+W5ACHza5rHtvsqrK4gb6rnLC7XxKB9WlJ+RmyQatuEXmtm86xbnw==}
+  electron-to-chromium@1.5.279:
+    resolution: {integrity: sha512-0bblUU5UNdOt5G7XqGiJtpZMONma6WAfq9vsFmtn9x1+joAObr6x1chfqyxFSDCAFwFhCQDrqeAr6MYdpwJ9Hg==}
 
   emittery@0.13.1:
     resolution: {integrity: sha512-DeWwawk6r5yR9jFgnDKYt4sLS0LmHJJi3ZOnb5/JdbYwj3nW+FxQnHIjhBKz8YLC7oRNPVM9NQ47I3CVx34eqQ==}
@@ -8166,6 +8181,17 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
+  '@babel/helper-define-polyfill-provider@0.6.6(@babel/core@7.28.4)':
+    dependencies:
+      '@babel/core': 7.28.4
+      '@babel/helper-compilation-targets': 7.28.6
+      '@babel/helper-plugin-utils': 7.28.6
+      debug: 4.4.3
+      lodash.debounce: 4.0.8
+      resolve: 1.22.11
+    transitivePeerDependencies:
+      - supports-color
+
   '@babel/helper-globals@7.28.0': {}
 
   '@babel/helper-member-expression-to-functions@7.27.1':
@@ -8275,7 +8301,7 @@ snapshots:
 
   '@babel/helper-wrap-function@7.28.3':
     dependencies:
-      '@babel/template': 7.28.6
+      '@babel/template': 7.27.2
       '@babel/traverse': 7.28.4
       '@babel/types': 7.28.6
     transitivePeerDependencies:
@@ -9180,9 +9206,9 @@ snapshots:
       '@babel/plugin-transform-unicode-regex': 7.27.1(@babel/core@7.28.4)
       '@babel/plugin-transform-unicode-sets-regex': 7.28.6(@babel/core@7.28.4)
       '@babel/preset-modules': 0.1.6-no-external-plugins(@babel/core@7.28.4)
-      babel-plugin-polyfill-corejs2: 0.4.14(@babel/core@7.28.4)
+      babel-plugin-polyfill-corejs2: 0.4.15(@babel/core@7.28.4)
       babel-plugin-polyfill-corejs3: 0.10.6(@babel/core@7.28.4)
-      babel-plugin-polyfill-regenerator: 0.6.5(@babel/core@7.28.4)
+      babel-plugin-polyfill-regenerator: 0.6.6(@babel/core@7.28.4)
       core-js-compat: 3.48.0
       semver: 6.3.1
     transitivePeerDependencies:
@@ -12620,10 +12646,19 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
+  babel-plugin-polyfill-corejs2@0.4.15(@babel/core@7.28.4):
+    dependencies:
+      '@babel/compat-data': 7.28.6
+      '@babel/core': 7.28.4
+      '@babel/helper-define-polyfill-provider': 0.6.6(@babel/core@7.28.4)
+      semver: 6.3.1
+    transitivePeerDependencies:
+      - supports-color
+
   babel-plugin-polyfill-corejs3@0.10.6(@babel/core@7.28.4):
     dependencies:
       '@babel/core': 7.28.4
-      '@babel/helper-define-polyfill-provider': 0.6.5(@babel/core@7.28.4)
+      '@babel/helper-define-polyfill-provider': 0.6.6(@babel/core@7.28.4)
       core-js-compat: 3.48.0
     transitivePeerDependencies:
       - supports-color
@@ -12640,6 +12675,13 @@ snapshots:
     dependencies:
       '@babel/core': 7.28.4
       '@babel/helper-define-polyfill-provider': 0.6.5(@babel/core@7.28.4)
+    transitivePeerDependencies:
+      - supports-color
+
+  babel-plugin-polyfill-regenerator@0.6.6(@babel/core@7.28.4):
+    dependencies:
+      '@babel/core': 7.28.4
+      '@babel/helper-define-polyfill-provider': 0.6.6(@babel/core@7.28.4)
     transitivePeerDependencies:
       - supports-color
 
@@ -12740,7 +12782,7 @@ snapshots:
 
   baseline-browser-mapping@2.8.6: {}
 
-  baseline-browser-mapping@2.9.17: {}
+  baseline-browser-mapping@2.9.18: {}
 
   better-opn@3.0.2:
     dependencies:
@@ -12799,9 +12841,9 @@ snapshots:
 
   browserslist@4.28.1:
     dependencies:
-      baseline-browser-mapping: 2.9.17
-      caniuse-lite: 1.0.30001765
-      electron-to-chromium: 1.5.277
+      baseline-browser-mapping: 2.9.18
+      caniuse-lite: 1.0.30001766
+      electron-to-chromium: 1.5.279
       node-releases: 2.0.27
       update-browserslist-db: 1.2.3(browserslist@4.28.1)
 
@@ -12891,7 +12933,7 @@ snapshots:
 
   caniuse-lite@1.0.30001743: {}
 
-  caniuse-lite@1.0.30001765: {}
+  caniuse-lite@1.0.30001766: {}
 
   chai@5.3.3:
     dependencies:
@@ -13427,7 +13469,7 @@ snapshots:
 
   electron-to-chromium@1.5.222: {}
 
-  electron-to-chromium@1.5.277: {}
+  electron-to-chromium@1.5.279: {}
 
   emittery@0.13.1: {}
 
@@ -15785,8 +15827,8 @@ snapshots:
   metro-transform-plugins@0.81.5:
     dependencies:
       '@babel/core': 7.28.4
-      '@babel/generator': 7.28.6
-      '@babel/template': 7.28.6
+      '@babel/generator': 7.28.3
+      '@babel/template': 7.27.2
       '@babel/traverse': 7.28.4
       flow-enums-runtime: 0.0.6
       nullthrows: 1.1.1
@@ -15796,9 +15838,9 @@ snapshots:
   metro-transform-worker@0.81.5:
     dependencies:
       '@babel/core': 7.28.4
-      '@babel/generator': 7.28.6
-      '@babel/parser': 7.28.6
-      '@babel/types': 7.28.6
+      '@babel/generator': 7.28.3
+      '@babel/parser': 7.28.4
+      '@babel/types': 7.28.4
       flow-enums-runtime: 0.0.6
       metro: 0.81.5
       metro-babel-transformer: 0.81.5

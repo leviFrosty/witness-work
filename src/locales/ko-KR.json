@@ -6,7 +6,7 @@
   "getStarted": "시작",
   "whatTypePublisherAreYou": "당신은 어떤 유형의 전도인인가요?",
   "noHourRequirement": "시간 요구 사항 없음",
-  "hourMonthlyRequirement": "{{count}} 월별 시간 요구 사항",
+  "hourMonthlyRequirement": "월 요구 시간 {{count}}",
   "publisher": "전도인",
   "regularAuxiliary": "보조 파이오니아",
   "regularPioneer": "정규 파이오니아",
@@ -18,7 +18,7 @@
   "skip": "건너뛰기",
   "allowNotifications": "알림 허용",
   "youreAllSet": "설정이 완료되었습니다!",
-  "youreAllSet_description": "WitnessWork은 귀하가 약속한 방문을 알려드릴 것입니다.",
+  "youreAllSet_description": "WitnessWork는 귀하가 약속한 방문을 알려드릴 것입니다.",
   "optInNotificationsLater": "나중에 설정에서 알림을 수신하도록 선택할 수 있습니다.",
   "completeSetup": "설정 완료",
   "noRecentConversation": "최근 대화 없음",
@@ -30,7 +30,7 @@
   "cancel": "취소",
   "delete": "삭제",
   "noNotesSaved": "저장된 메모가 없습니다.",
-  "followUpInformation": "후속 조치 정보",
+  "followUpInformation": "후속 정보",
   "upcoming": "다가오는",
   "past": "지난",
   "topic": "주제:",
@@ -71,8 +71,8 @@
     "pushThroughToday": "오늘도 힘내세요!",
     "goalInSight": "목표가 보입니다!",
     "crushingIt": "크러싱!",
-    "unstoppable": "멈출 수 없다!",
-    "powerThrough": "파워 스루!"
+    "unstoppable": "막힘없이!",
+    "powerThrough": "잘해내고있어요!"
   },
   "phrasesDone": {
     "youDidIt": "해냈군요!",

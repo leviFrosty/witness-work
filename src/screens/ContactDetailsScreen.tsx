@@ -619,6 +619,31 @@ const ContactDetailsScreen = ({ route, navigation }: Props) => {
     [conversations, params.highlightedConversationId]
   )
 
+  const scrollViewRef = useRef<ScrollView>(null)
+  const highlightedRowRef = useRef<View>(null)
+
+  // When opened via the widget deep link
+  // (`witnesswork://contact/:id/:convId`), scroll the highlighted row into
+  // view so the user can immediately see which conversation the widget was
+  // pointing at. Delayed slightly so the FlashList has time to lay out.
+  useEffect(() => {
+    if (!params.highlightedConversationId || !highlightedConversation) return
+    const timer = setTimeout(() => {
+      const sv = scrollViewRef.current
+      const row = highlightedRowRef.current
+      if (!sv || !row) return
+      row.measureLayout(
+        // @ts-expect-error — RN accepts a host component ref here.
+        sv,
+        (_x, y) => {
+          sv.scrollTo({ y: Math.max(0, y - 100), animated: true })
+        },
+        () => {}
+      )
+    }, 450)
+    return () => clearTimeout(timer)
+  }, [params.highlightedConversationId, highlightedConversation])
+
   const contactConversations = useMemo(
     () => conversations.filter(({ contact: { id } }) => id === contact?.id),
     [contact?.id, conversations]
@@ -800,6 +825,7 @@ const ContactDetailsScreen = ({ route, navigation }: Props) => {
   return (
     <View style={{ flexGrow: 1 }}>
       <ScrollView
+        ref={scrollViewRef}
         style={{
           position: 'relative',
           paddingTop: 100,
@@ -889,12 +915,18 @@ const ContactDetailsScreen = ({ route, navigation }: Props) => {
               <View style={{ minHeight: 2 }}>
                 <FlashList
                   scrollEnabled={false}
-                  renderItem={({ item }) => (
-                    <ConversationRow
-                      conversation={item}
-                      highlighted={item.id === highlightedConversation?.id}
-                    />
-                  )}
+                  renderItem={({ item }) => {
+                    const isHighlighted =
+                      item.id === highlightedConversation?.id
+                    return (
+                      <View ref={isHighlighted ? highlightedRowRef : undefined}>
+                        <ConversationRow
+                          conversation={item}
+                          highlighted={isHighlighted}
+                        />
+                      </View>
+                    )
+                  }}
                   ItemSeparatorComponent={() => <Divider borderWidth={2} />}
                   data={contactConversationsSorted}
                   ListEmptyComponent={

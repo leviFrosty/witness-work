@@ -11,6 +11,7 @@ export default ({ config }: ConfigContext): ExpoConfig => {
     slug: 'jw-time',
     version: '1.37.9',
     owner: 'levi_frosty',
+    scheme: 'witnesswork',
     orientation: 'portrait',
     icon: './src/assets/icon.png',
     userInterfaceStyle: 'automatic',

@@ -38,6 +38,8 @@ import { usePreferences } from './stores/preferences'
 import AnimationViewProvider from './providers/AnimationViewProvider'
 import useUserLocalePrefs from './hooks/useLocale'
 import { installWidgetSync } from './lib/widgets/widgetSync'
+import { linking, navigationRef } from './lib/linking'
+import SharedGoodNewsListener from './components/SharedGoodNewsListener'
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
@@ -130,7 +132,7 @@ export default function App() {
         <SafeAreaProvider>
           <CustomerProvider>
             <GestureHandlerRootView style={{ flex: 1 }}>
-              <NavigationContainer>
+              <NavigationContainer ref={navigationRef} linking={linking}>
                 <TamaguiProvider
                   defaultTheme={
                     colorScheme ? colorScheme : systemColorScheme || undefined
@@ -141,6 +143,7 @@ export default function App() {
                     <StatusBar />
                     <ToastViewport />
                     <AnimationViewProvider>
+                      <SharedGoodNewsListener />
                       <RootStackComponent />
                     </AnimationViewProvider>
                   </ToastProvider>

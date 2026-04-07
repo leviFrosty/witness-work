@@ -1,6 +1,10 @@
 # iOS Widgets
 
-iOS-only. Plumbing only — `targets/hours/HoursStubWidget` is a verification stub, not a real widget UI.
+iOS-only. One widget extension (`targets/widgets/`) hosts a `WidgetBundle` with three widgets:
+
+- **ReportWidget** — current month's hours toward goal (or check-in for non-pioneer publishers). Small + medium.
+- **ContactsWidget** — top contacts with call / text / directions quick actions. Small + medium + large. Sort is user-configurable via App Intent.
+- **AppointmentsWidget** — upcoming follow-ups within a configurable window. Medium + large. Window is user-configurable via App Intent.
 
 ## Architecture
 
@@ -17,13 +21,25 @@ MMKV's binary format isn't readable from Swift, so JS computes a small derived *
 
 ## Key files
 
-| File                                  | Purpose                                                                                                                            |
-| ------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
-| `src/lib/widgets/snapshot.ts`         | Snapshot schema + `buildWidgetSnapshot()`. Single source of truth for the JSON shape. Bump `SNAPSHOT_VERSION` on breaking changes. |
-| `src/lib/widgets/widgetSync.ts`       | `installWidgetSync()` — subscribes to relevant stores, foreground events, and registers the background fetch task.                 |
-| `modules/widget-bridge/`              | Local Expo module exposing `writeSnapshot`, `reloadAllTimelines`, `getAppGroupIdentifier` to JS. iOS-only.                         |
-| `targets/hours/HoursStubWidget.swift` | Stub widget reading `snapshot.json`. Mirrors the TS schema in `WidgetSnapshot`.                                                    |
-| `targets/hours/expo-target.config.js` | `@bacons/apple-targets` target config. App Group mirrored from `APP_VARIANT`.                                                      |
+| File                                        | Purpose                                                                                                                            |
+| ------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| `src/lib/widgets/snapshot.ts`               | Snapshot schema + `buildWidgetSnapshot()`. Single source of truth for the JSON shape. Bump `SNAPSHOT_VERSION` on breaking changes. |
+| `src/lib/widgets/buildReport.ts`            | Builds the `report` slice (hours/checkbox modes, encouragement phrase, ahead/behind).                                              |
+| `src/lib/widgets/buildContacts.ts`          | Builds `contacts[]`. Pre-formats `tel:`/`sms:`/maps URLs and parses phone numbers via `awesome-phonenumber`.                       |
+| `src/lib/widgets/buildAppointments.ts`      | Builds `appointments[]` from conversations with a `followUp` set, within ~31 days.                                                 |
+| `src/lib/widgets/widgetSync.ts`             | `installWidgetSync()` — subscribes to relevant stores, foreground events, and registers the background fetch task.                 |
+| `src/lib/linking.ts`                        | React Navigation linking config + the `witnesswork://shared-good-news` URL detector.                                               |
+| `src/components/SharedGoodNewsListener.tsx` | Mounts inside `AnimationViewProvider`. Reacts to the `shared-good-news` deep link by adding a 0h0m report and playing confetti.    |
+| `modules/widget-bridge/`                    | Local Expo module exposing `writeSnapshot`, `reloadAllTimelines`, `getAppGroupIdentifier` to JS. iOS-only.                         |
+| `targets/widgets/Snapshot.swift`            | Swift mirror of the TS `WidgetSnapshot` schema. Bump `SUPPORTED_VERSION` in lockstep with the TS `SNAPSHOT_VERSION`.               |
+| `targets/widgets/SnapshotLoader.swift`      | Reads `snapshot.json` from the App Group container. App Group resolved from the widget's bundle id.                                |
+| `targets/widgets/WidgetURLs.swift`          | Centralized factory for widget → app deep link URLs. Mirrors the route table in `src/lib/linking.ts`.                              |
+| `targets/widgets/AppIntents.swift`          | `ContactsConfigurationIntent` (sort) + `AppointmentsConfigurationIntent` (window).                                                 |
+| `targets/widgets/WidgetsBundle.swift`       | `@main WidgetBundle` referencing all 3 widgets.                                                                                    |
+| `targets/widgets/ReportWidget.swift`        | Service-report card. Branches on `report.mode` (`hours`/`checkbox`).                                                               |
+| `targets/widgets/ContactsWidget.swift`      | Top-N contact list with quick action buttons. Configurable sort.                                                                   |
+| `targets/widgets/AppointmentsWidget.swift`  | Upcoming follow-ups list. Configurable day window.                                                                                 |
+| `targets/widgets/expo-target.config.js`     | `@bacons/apple-targets` target config. App Group mirrored from `APP_VARIANT`.                                                      |
 
 ## App Groups
 
@@ -38,17 +54,31 @@ App Group entitlements require an Apple Team ID. Set `APPLE_TEAM_ID` in your env
 
 ## Adding a field to the snapshot
 
-1. Add the field to `WidgetSnapshot` in `src/lib/widgets/snapshot.ts` and populate it in `buildWidgetSnapshot()`. Reuse existing utilities from `src/lib/serviceReport.ts`, `src/lib/minutes.ts`, etc. — never reimplement.
+1. Add the field to `WidgetSnapshot` in `src/lib/widgets/snapshot.ts` and populate it in `buildWidgetSnapshot()` (or one of the `build*.ts` helpers it composes). Reuse existing utilities from `src/lib/serviceReport.ts`, `src/lib/minutes.ts`, `src/lib/contacts.ts`, etc. — never reimplement.
 2. If the new field is for **display strings**, resolve them via `i18n.t()` in JS so the widget never needs Swift-side localization.
-3. If the schema change is breaking (renamed/removed field), bump `SNAPSHOT_VERSION` in both `snapshot.ts` and `SUPPORTED_VERSION` in the Swift widget. The widget will render the empty placeholder until the app rewrites the snapshot.
-4. Add the corresponding field to the Swift `WidgetSnapshot` struct in any widget that consumes it.
+3. If the schema change is breaking (renamed/removed field), bump `SNAPSHOT_VERSION` in both `snapshot.ts` and `SUPPORTED_VERSION` in `targets/widgets/Snapshot.swift`. The widgets will render the empty placeholder until the app rewrites the snapshot.
+4. Add the corresponding field to the Swift `WidgetSnapshot` struct in `targets/widgets/Snapshot.swift` (single file shared across all widgets in the bundle).
 
-## Adding a new widget target
+## Adding a new widget
 
-1. `mkdir targets/<name>` and create `expo-target.config.js` (copy from `targets/hours`).
-2. Add the widget Swift file alongside it. Use `@main` only on the single widget entry point or wrap multiple widgets in a `WidgetBundle`.
-3. Re-run `npm run prebuild`.
-4. If the new widget needs new snapshot fields, follow the section above.
+1. Add a new Swift file in `targets/widgets/` (e.g. `MyWidget.swift`). Reuse `SnapshotLoader.load()` and the existing `WidgetSnapshot` model.
+2. Register it in `WidgetsBundle.swift` alongside the existing widgets. Do **not** add `@main` — the bundle owns that.
+3. If the widget needs user-configurable settings, add an `AppIntent` in `AppIntents.swift` and use `AppIntentConfiguration` instead of `StaticConfiguration`.
+4. If the widget needs new snapshot fields, follow the "Adding a field" section above.
+5. Re-run `npm run prebuild`.
+
+## Deep linking
+
+Widgets deep-link into the app via the `witnesswork://` scheme declared in `app.config.ts`. The route table lives in `src/lib/linking.ts` and the Swift-side URL factory lives in `targets/widgets/WidgetURLs.swift` — keep them in sync.
+
+| URL                                 | Effect                                              |
+| ----------------------------------- | --------------------------------------------------- |
+| `witnesswork://add-time`            | Push the Add Time screen.                           |
+| `witnesswork://contact/:id`         | Push Contact Details.                               |
+| `witnesswork://contact/:id/:convId` | Push Contact Details with the conversation focused. |
+| `witnesswork://shared-good-news`    | **Action**: log a 0h0m report + play confetti.      |
+
+`shared-good-news` is handled by `SharedGoodNewsListener.tsx`, not React Navigation, because it mutates state instead of pushing a screen.
 
 ## Refresh model
 

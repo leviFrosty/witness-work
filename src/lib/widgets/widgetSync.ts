@@ -2,9 +2,12 @@ import { AppState, AppStateStatus, Platform } from 'react-native'
 import * as BackgroundFetch from 'expo-background-fetch'
 import * as TaskManager from 'expo-task-manager'
 import _ from 'lodash'
+import { getLocales } from 'expo-localization'
 import * as WidgetBridge from '../../../modules/widget-bridge'
 import { useServiceReport } from '../../stores/serviceReport'
 import { usePreferences } from '../../stores/preferences'
+import { useContacts } from '../../stores/contactsStore'
+import { useConversations } from '../../stores/conversationStore'
 import { DEFAULT_LOCALE } from '../locales'
 import { buildWidgetSnapshot } from './snapshot'
 import { logger } from '../logger'
@@ -25,6 +28,12 @@ function pushSnapshot(reason: string): void {
   try {
     const sr = useServiceReport.getState()
     const prefs = usePreferences.getState()
+    const contactsState = useContacts.getState()
+    const conversationsState = useConversations.getState()
+
+    // Region code lives outside any of our stores; pull from device locale.
+    // Used as a fallback when a contact's phone has no `phoneRegionCode`.
+    const defaultPhoneRegionCode = getLocales()[0]?.regionCode ?? ''
 
     const snapshot = buildWidgetSnapshot({
       serviceReports: sr.serviceReports,
@@ -33,6 +42,12 @@ function pushSnapshot(reason: string): void {
       overrideCreditLimit: prefs.overrideCreditLimit,
       customCreditLimitHours: prefs.customCreditLimitHours,
       timeDisplayFormat: prefs.timeDisplayFormat,
+      dayPlans: sr.dayPlans,
+      recurringPlans: sr.recurringPlans,
+      contacts: contactsState.contacts,
+      conversations: conversationsState.conversations,
+      defaultNavigationMapProvider: prefs.defaultNavigationMapProvider,
+      defaultPhoneRegionCode,
       locale: prefs.locale ?? DEFAULT_LOCALE,
     })
 
@@ -71,6 +86,8 @@ export function installWidgetSync(): () => void {
   // 1. Subscribe to relevant zustand stores. Each write debounces a push.
   const unsubServiceReport = useServiceReport.subscribe(() => debouncedPush())
   const unsubPreferences = usePreferences.subscribe(() => debouncedPush())
+  const unsubContacts = useContacts.subscribe(() => debouncedPush())
+  const unsubConversations = useConversations.subscribe(() => debouncedPush())
 
   // 2. Foreground rewrite — covers locale switches, midnight rollover, and
   //    any other state that changes while the app was backgrounded.
@@ -96,6 +113,8 @@ export function installWidgetSync(): () => void {
   return () => {
     unsubServiceReport()
     unsubPreferences()
+    unsubContacts()
+    unsubConversations()
     appStateSub.remove()
     BackgroundFetch.unregisterTaskAsync(WIDGET_REFRESH_TASK).catch(() => {})
     installed = false

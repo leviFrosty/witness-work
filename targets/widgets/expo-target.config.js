@@ -1,9 +1,10 @@
 /**
- * @bacons/apple-targets configuration for the Hours stub widget.
+ * @bacons/apple-targets configuration for the WitnessWork widget extension.
  *
- * This widget is intentionally minimal — it exists to verify the snapshot
- * pipeline (JS → App Group → Swift → WidgetCenter) end-to-end. Real widget UIs
- * are added in follow-up PRs.
+ * One iOS extension hosts a `WidgetBundle` of multiple widgets:
+ *   - ReportWidget       (hours / checkbox)
+ *   - ContactsWidget     (top contacts with quick actions)
+ *   - AppointmentsWidget (upcoming follow-ups)
  *
  * The App Group identifier is mirrored from the host app's bundle id so the
  * dev variant points at `group.com.leviwilkerson.jwtimedev` and the prod

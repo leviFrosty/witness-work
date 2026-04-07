@@ -997,5 +997,13 @@
   "featureWordsOfAffirmationDesc": "Receive encouraging phrases and positive feedback as you use the app",
   "actions": "Actions",
   "cache": "Cache",
-  "timeCache": "Time Cache"
+  "timeCache": "Time Cache",
+  "tomorrow": "Tomorrow",
+  "appointments": "Appointments",
+  "noUpcomingAppointments": "No upcoming appointments",
+  "noContactsYet": "No contacts yet",
+  "call": "Call",
+  "text": "Text",
+  "directions": "Directions",
+  "thisMonth": "This Month"
 }

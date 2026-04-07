@@ -39,8 +39,11 @@ googleServiceAccount.json
 # Windows
 %ProgramData%/
 
-/ios
-/android
+android/
+ios/
+
+# @bacons/apple-targets generated entitlements
+targets/*/generated.entitlements
 
 # Compiled tamagui config
 .tamagui/

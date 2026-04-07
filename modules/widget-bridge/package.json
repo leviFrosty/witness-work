@@ -1,0 +1,7 @@
+{
+  "name": "widget-bridge",
+  "version": "0.1.0",
+  "description": "Local Expo module bridging MMKV-derived widget snapshots to iOS App Group + WidgetCenter.",
+  "main": "index.ts",
+  "private": true
+}

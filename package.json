@@ -27,6 +27,7 @@
     "deps": "madge --ts-config ./tsconfig.json src/App.tsx -c"
   },
   "dependencies": {
+    "@bacons/apple-targets": "0.2.1",
     "@expo-google-fonts/inter": "^0.2.3",
     "@fortawesome/fontawesome-svg-core": "^6.7.2",
     "@fortawesome/free-brands-svg-icons": "^6.7.2",
@@ -53,6 +54,7 @@
     "expo": "~52.0.49",
     "expo-application": "~6.0.2",
     "expo-av": "~15.0.2",
+    "expo-background-fetch": "~13.0.6",
     "expo-blur": "~14.0.3",
     "expo-checkbox": "~4.0.1",
     "expo-clipboard": "~7.0.1",
@@ -75,7 +77,8 @@
     "expo-status-bar": "~2.0.1",
     "expo-store-review": "~8.0.1",
     "expo-system-ui": "~4.0.9",
-    "expo-updates": "~0.27.5",
+    "expo-task-manager": "~12.0.6",
+    "expo-updates": "~0.27.4",
     "i18n-js": "^4.5.1",
     "jest-expo": "~52.0.6",
     "lodash": "^4.18.1",

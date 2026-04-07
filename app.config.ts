@@ -25,9 +25,24 @@ export default ({ config }: ConfigContext): ExpoConfig => {
       bundleIdentifier: IS_DEV
         ? 'com.leviwilkerson.jwtimedev'
         : 'com.leviwilkerson.jwtime',
+      // Required for App Group entitlements (widget <-> app shared container).
+      // Set via env in CI/EAS or hardcode here once known.
+      appleTeamId: process.env.APPLE_TEAM_ID,
       infoPlist: {
         RCTAsyncStorageExcludeFromBackup: false,
         ITSAppUsesNonExemptEncryption: false,
+        // expo-background-fetch requires this permitted task identifier
+        // to register the snapshot refresh task.
+        BGTaskSchedulerPermittedIdentifiers: [
+          'com.leviwilkerson.jwtime.widget.refresh',
+        ],
+      },
+      entitlements: {
+        'com.apple.security.application-groups': [
+          IS_DEV
+            ? 'group.com.leviwilkerson.jwtimedev'
+            : 'group.com.leviwilkerson.jwtime',
+        ],
       },
       appStoreUrl: 'https://apps.apple.com/us/app/jw-time/id6469723047',
     },
@@ -52,16 +67,23 @@ export default ({ config }: ConfigContext): ExpoConfig => {
         projectId: 'a67257dc-2fb8-4942-97f2-e9364b80d318',
       },
     },
-    runtimeVersion: {
-      policy: 'appVersion',
-    },
     updates: {
       url: 'https://u.expo.dev/a67257dc-2fb8-4942-97f2-e9364b80d318',
     },
     plugins: [
+      '@bacons/apple-targets',
       'expo-font',
       'expo-localization',
-      ['expo-updates', { username: 'levi_frosty' }],
+      [
+        'expo-updates',
+        {
+          username: 'levi_frosty',
+          // Resolved into Info.plist at prebuild time so the bare workflow
+          // (post-prebuild) doesn't reject the policy. Was previously a
+          // top-level `runtimeVersion: { policy: 'appVersion' }`.
+          runtimeVersion: { policy: 'appVersion' },
+        },
+      ],
       [
         'expo-location',
         {

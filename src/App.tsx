@@ -37,6 +37,7 @@ import {
 import { usePreferences } from './stores/preferences'
 import AnimationViewProvider from './providers/AnimationViewProvider'
 import useUserLocalePrefs from './hooks/useLocale'
+import { installWidgetSync } from './lib/widgets/widgetSync'
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
@@ -101,6 +102,14 @@ export default function App() {
       })
     }
   }, [])
+
+  // Install iOS widget snapshot sync after MMKV is the source of truth.
+  // No-op on Android and before the native module is linked (pre-prebuild).
+  useEffect(() => {
+    if (!hasMigrated) return
+    const teardown = installWidgetSync()
+    return teardown
+  }, [hasMigrated])
 
   if (!hasMigrated) {
     return (

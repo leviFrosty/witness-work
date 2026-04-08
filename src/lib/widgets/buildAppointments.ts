@@ -1,6 +1,7 @@
 import moment from 'moment'
 import { Contact } from '../../types/contact'
 import { Conversation } from '../../types/conversation'
+import { isAppointment } from '../conversations'
 
 export type WidgetAppointment = {
   /** Conversation ID — used to deep-link with `highlightedConversationId`. */
@@ -11,8 +12,18 @@ export type WidgetAppointment = {
   date: number
   /** Topic the user typed for the follow-up, or `null`. */
   topic: string | null
-  /** Whether the contact is flagged as a Bible study. Used for icon hinting. */
-  isBibleStudy: boolean
+  /**
+   * Pre-formatted, locale-aware time-of-day string. Today renders the time
+   * (e.g. `"3:00 PM"`), tomorrow gets `"Tomorrow 3:00 PM"`, this week shows the
+   * day name (`"Thu 3:00 PM"`), and anything beyond falls back to a short date
+   * (`"Apr 14"`).
+   */
+  timeFormatted: string
+  /**
+   * True when the follow-up date is in the past. Surfaces in red on the widget
+   * and unlocks the reschedule action.
+   */
+  isOverdue: boolean
 }
 
 export type BuildAppointmentsArgs = {
@@ -30,20 +41,43 @@ const MAX_APPOINTMENTS = 20
  * the largest configurable window the user can pick.
  */
 const FORWARD_DAYS = 31
+/**
+ * Backward window for surfacing overdue follow-ups the user never marked
+ * complete. Anything older than this is presumed forgotten.
+ */
+const OVERDUE_LOOKBACK_DAYS = 30
+
+/** Format a follow-up date as a locale-aware "time of day"-style label. */
+function formatAppointmentTime(
+  date: moment.Moment,
+  now: moment.Moment
+): string {
+  const isSameDay = date.isSame(now, 'day')
+  const isTomorrow = date.isSame(now.clone().add(1, 'day'), 'day')
+  const isYesterday = date.isSame(now.clone().subtract(1, 'day'), 'day')
+  const isThisWeek = date.isSame(now, 'isoWeek')
+
+  // moment honors locale for these tokens — `LT` is short time, `ddd` is short
+  // day name, `MMM D` is short date.
+  if (isSameDay) return date.format('LT')
+  if (isTomorrow) return `${date.calendar(now, { sameElse: 'LT' })}` // localized "Tomorrow at HH:mm"
+  if (isYesterday) return date.calendar(now, { sameElse: 'LT' })
+  if (isThisWeek) return date.format('ddd LT')
+  return date.format('MMM D')
+}
 
 export function buildAppointments(
   args: BuildAppointmentsArgs
 ): WidgetAppointment[] {
   const now = moment()
-  // Mirror `upcomingFollowUpConversations` minDate: 4 hours back, so an
-  // appointment that "just started" still shows as upcoming.
-  const min = moment(now).subtract(4, 'hours')
-  const max = moment(now).add(FORWARD_DAYS, 'days').endOf('day')
+  const min = now.clone().subtract(OVERDUE_LOOKBACK_DAYS, 'days').startOf('day')
+  const max = now.clone().add(FORWARD_DAYS, 'days').endOf('day')
 
   const contactsById = new Map(args.contacts.map((c) => [c.id, c]))
 
-  const upcoming = args.conversations
+  const inWindow = args.conversations
     .filter((conv) => {
+      if (!isAppointment(conv)) return false
       const date = conv.followUp?.date
       if (!date) return false
       return moment(date).isBetween(min, max, undefined, '[]')
@@ -51,17 +85,23 @@ export function buildAppointments(
     .map((conv): WidgetAppointment | null => {
       const contact = contactsById.get(conv.contact.id)
       if (!contact) return null
+      const followUpMoment = moment(conv.followUp!.date)
       return {
         id: conv.id,
         contactId: contact.id,
         contactName: contact.name,
-        date: moment(conv.followUp!.date).valueOf(),
+        date: followUpMoment.valueOf(),
         topic: conv.followUp?.topic || null,
-        isBibleStudy: conv.isBibleStudy,
+        timeFormatted: formatAppointmentTime(followUpMoment, now),
+        isOverdue: followUpMoment.isBefore(now),
       }
     })
     .filter((a): a is WidgetAppointment => a !== null)
 
-  upcoming.sort((a, b) => a.date - b.date)
-  return upcoming.slice(0, MAX_APPOINTMENTS)
+  // Overdue first (most urgent), then chronological for upcoming.
+  inWindow.sort((a, b) => {
+    if (a.isOverdue !== b.isOverdue) return a.isOverdue ? -1 : 1
+    return a.date - b.date
+  })
+  return inWindow.slice(0, MAX_APPOINTMENTS)
 }

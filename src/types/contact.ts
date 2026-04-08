@@ -54,4 +54,11 @@ export type Contact = {
    * contact becomes available again after being dismissed.
    */
   dismissedNotificationId?: string
+
+  /**
+   * When true, this contact is favorited and pinned to the top of contact lists
+   * (home screen, contacts widget) above bible studies and any selected sort
+   * order.
+   */
+  isFavorite?: boolean
 }

@@ -10,8 +10,10 @@ import {
   faHome,
   faPalette,
   faRoute,
+  faTableCellsLarge,
   faUser,
 } from '@fortawesome/free-solid-svg-icons'
+import { Platform } from 'react-native'
 import i18n from '../../../lib/locales'
 import { useNavigation } from '@react-navigation/native'
 import IconButton from '../../../components/IconButton'
@@ -67,6 +69,15 @@ const PreferencesScreen = () => {
             >
               <IconButton icon={faChevronRight} />
             </InputRowButton>
+            {Platform.OS === 'ios' && (
+              <InputRowButton
+                leftIcon={faTableCellsLarge}
+                label={i18n.t('widgets')}
+                onPress={() => navigation.navigate('PreferencesWidgets')}
+              >
+                <IconButton icon={faChevronRight} />
+              </InputRowButton>
+            )}
             <InputRowButton
               leftIcon={faFileExport}
               label={i18n.t('backups')}

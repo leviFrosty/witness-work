@@ -1,116 +1,133 @@
 import SwiftUI
 import WidgetKit
-import AppIntents
 
 // MARK: - Timeline
+//
+// Sort + per-row quick action live in `WidgetSnapshot.config`, sourced from
+// in-app Settings > Widgets. Swift never re-sorts contacts; JS sends them in
+// the user's chosen order with favorites and bible studies tiered to the top.
 
 private struct ContactsEntry: TimelineEntry {
   let date: Date
   let snapshot: WidgetSnapshot?
-  let configuration: ContactsConfigurationIntent
 }
 
-private struct ContactsProvider: AppIntentTimelineProvider {
+private struct ContactsProvider: TimelineProvider {
   func placeholder(in context: Context) -> ContactsEntry {
-    ContactsEntry(date: Date(), snapshot: nil, configuration: ContactsConfigurationIntent())
+    ContactsEntry(date: Date(), snapshot: nil)
   }
 
-  func snapshot(for configuration: ContactsConfigurationIntent, in context: Context) async -> ContactsEntry {
-    ContactsEntry(date: Date(), snapshot: SnapshotLoader.load(), configuration: configuration)
+  func getSnapshot(in context: Context, completion: @escaping (ContactsEntry) -> Void) {
+    completion(ContactsEntry(date: Date(), snapshot: SnapshotLoader.load()))
   }
 
-  func timeline(for configuration: ContactsConfigurationIntent, in context: Context) async -> Timeline<ContactsEntry> {
-    let entry = ContactsEntry(
-      date: Date(),
-      snapshot: SnapshotLoader.load(),
-      configuration: configuration
-    )
+  func getTimeline(in context: Context, completion: @escaping (Timeline<ContactsEntry>) -> Void) {
+    let entry = ContactsEntry(date: Date(), snapshot: SnapshotLoader.load())
     let next = Calendar.current.date(byAdding: .hour, value: 1, to: Date()) ?? Date()
-    return Timeline(entries: [entry], policy: .after(next))
+    completion(Timeline(entries: [entry], policy: .after(next)))
   }
 }
 
-// MARK: - Sorting (App Intent → snapshot)
-
-private func sortContacts(
-  _ contacts: [WidgetSnapshot.Contact],
-  by option: ContactSortOption
-) -> [WidgetSnapshot.Contact] {
-  switch option {
-  case .recent:
-    // JS already sorted by `lastConversationAt` desc, so just return as-is.
-    return contacts
-  case .alphabetical:
-    return contacts.sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
-  case .bibleStudy:
-    // Studies first, then everything else preserving recent order.
-    return contacts.sorted { lhs, rhs in
-      if lhs.isBibleStudy != rhs.isBibleStudy {
-        return lhs.isBibleStudy && !rhs.isBibleStudy
-      }
-      return false
-    }
-  }
-}
+// MARK: - Family sizing
+//
+// Small drops the action icon entirely (one tappable region: the contact),
+// medium and large reserve the right edge for the configured action.
 
 private func contactsCount(for family: WidgetFamily) -> Int {
   switch family {
   case .systemSmall:  return 1
-  case .systemMedium: return 3
-  case .systemLarge:  return 6
-  default:            return 3
+  case .systemMedium: return 4
+  case .systemLarge:  return 8
+  default:            return 4
   }
+}
+
+// MARK: - Quick action
+
+/// Returns the SF Symbol + URL for the user's chosen quick action, or `nil`
+/// when the action either isn't configured (`.none`) or the contact lacks the
+/// required data (e.g. no phone number for `.call`/`.text`).
+private func quickAction(
+  for contact: WidgetSnapshot.Contact,
+  action: WidgetSnapshot.ContactAction
+) -> (icon: String, url: URL)? {
+  switch action {
+  case .none:
+    return nil
+  case .directions:
+    if let str = contact.mapsUrl, let url = URL(string: str) {
+      return ("location.fill", url)
+    }
+  case .call:
+    if let str = contact.telUrl, let url = URL(string: str) {
+      return ("phone.fill", url)
+    }
+  case .text:
+    if let str = contact.smsUrl, let url = URL(string: str) {
+      return ("message.fill", url)
+    }
+  }
+  return nil
 }
 
 // MARK: - Row
 
 private struct ContactRow: View {
   let contact: WidgetSnapshot.Contact
-  let strings: WidgetSnapshot.Strings
-  let showQuickActions: Bool
+  let action: WidgetSnapshot.ContactAction
+  let showAction: Bool
+  let isCompact: Bool
 
   var body: some View {
-    HStack(spacing: 8) {
-      // Tap-name region opens Contact Details.
+    let qa = showAction ? quickAction(for: contact, action: action) : nil
+
+    HStack(spacing: WidgetSpacing.lg) {
+      // Tappable name region — opens Contact Details.
       Link(destination: WidgetURLs.contact(id: contact.id)) {
-        HStack(spacing: 6) {
-          if contact.isBibleStudy {
-            Image(systemName: "book.closed.fill")
-              .font(.caption2)
-              .foregroundColor(.green)
+        HStack(spacing: WidgetSpacing.md) {
+          // Staleness dot
+          Circle()
+            .fill(contact.staleness.color)
+            .frame(width: 7, height: 7)
+
+          VStack(alignment: .leading, spacing: WidgetSpacing.xs) {
+            HStack(spacing: WidgetSpacing.xs) {
+              Text(contact.name)
+                .font(.system(size: isCompact ? 12 : 13, weight: .semibold))
+                .foregroundColor(.primary)
+                .lineLimit(1)
+                .privacySensitive()
+              if contact.isFavorite {
+                Image(systemName: "star.fill")
+                  .font(.system(size: 8))
+                  .foregroundColor(WidgetColor.warn)
+              }
+              if contact.isBibleStudy {
+                Image(systemName: "book.closed.fill")
+                  .font(.system(size: 8))
+                  .foregroundColor(WidgetColor.accent)
+              }
+            }
+            // Last-contacted relative date — only on medium/large where there
+            // is room for two lines per row without crowding.
+            if !isCompact, let when = contact.lastContactedRelative {
+              Text(when)
+                .font(.system(size: 10))
+                .foregroundColor(.secondary)
+                .lineLimit(1)
+            }
           }
-          Text(contact.name)
-            .font(.caption)
-            .fontWeight(.semibold)
-            .lineLimit(1)
-            .privacySensitive()
+
           Spacer(minLength: 0)
         }
       }
 
-      if showQuickActions {
-        HStack(spacing: 6) {
-          if let telUrl = contact.telUrl, let url = URL(string: telUrl) {
-            Link(destination: url) {
-              Image(systemName: "phone.fill")
-                .font(.caption2)
-                .foregroundColor(.green)
-            }
-          }
-          if let smsUrl = contact.smsUrl, let url = URL(string: smsUrl) {
-            Link(destination: url) {
-              Image(systemName: "message.fill")
-                .font(.caption2)
-                .foregroundColor(.green)
-            }
-          }
-          if let mapsUrl = contact.mapsUrl, let url = URL(string: mapsUrl) {
-            Link(destination: url) {
-              Image(systemName: "location.fill")
-                .font(.caption2)
-                .foregroundColor(.green)
-            }
-          }
+      if let qa = qa {
+        Link(destination: qa.url) {
+          Image(systemName: qa.icon)
+            .font(.system(size: 13, weight: .semibold))
+            .foregroundColor(WidgetColor.accent)
+            .frame(width: 24, height: 24)
         }
       }
     }
@@ -126,39 +143,56 @@ private struct ContactsWidgetView: View {
   var body: some View {
     Group {
       if let snapshot = entry.snapshot {
-        let visible = Array(
-          sortContacts(snapshot.contacts, by: entry.configuration.sort)
-            .prefix(contactsCount(for: family))
-        )
+        let visible = Array(snapshot.contacts.prefix(contactsCount(for: family)))
         if visible.isEmpty {
           emptyState(strings: snapshot.strings)
         } else {
-          VStack(alignment: .leading, spacing: 6) {
-            HStack {
-              Text(snapshot.strings.contactsLabel)
-                .font(.caption2)
-                .fontWeight(.bold)
-                .foregroundColor(.secondary)
-              Spacer()
-            }
-            ForEach(visible) { contact in
-              ContactRow(
-                contact: contact,
-                strings: snapshot.strings,
-                showQuickActions: family != .systemSmall
-              )
-            }
-            Spacer(minLength: 0)
-          }
+          content(snapshot: snapshot, visible: visible)
         }
       } else {
-        Text("—")
-          .font(.system(size: 20, weight: .bold))
-          .foregroundColor(.secondary)
+        VStack {
+          Spacer()
+          Text("—")
+            .font(.system(size: 20, weight: .bold))
+            .foregroundColor(.secondary)
+          Spacer()
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
       }
     }
-    .padding()
     .containerBackground(.background, for: .widget)
+  }
+
+  private func content(
+    snapshot: WidgetSnapshot,
+    visible: [WidgetSnapshot.Contact]
+  ) -> some View {
+    let isSmall = family == .systemSmall
+    return VStack(alignment: .leading, spacing: WidgetSpacing.md) {
+      // Header
+      Text(snapshot.strings.contactsLabel.uppercased())
+        .font(.system(size: 9, weight: .bold))
+        .foregroundColor(.secondary)
+        .lineLimit(1)
+
+      // Rows distributed evenly across the available height.
+      VStack(spacing: WidgetSpacing.md) {
+        ForEach(Array(visible.enumerated()), id: \.element.id) { index, contact in
+          ContactRow(
+            contact: contact,
+            action: snapshot.config.contactAction,
+            showAction: !isSmall,
+            isCompact: isSmall
+          )
+          if index < visible.count - 1 && !isSmall {
+            Divider()
+              .opacity(0.4)
+          }
+        }
+        Spacer(minLength: 0)
+      }
+    }
+    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
   }
 
   private func emptyState(strings: WidgetSnapshot.Strings) -> some View {
@@ -170,7 +204,7 @@ private struct ContactsWidgetView: View {
         .multilineTextAlignment(.center)
       Spacer()
     }
-    .frame(maxWidth: .infinity)
+    .frame(maxWidth: .infinity, maxHeight: .infinity)
   }
 }
 
@@ -180,15 +214,11 @@ struct ContactsWidget: Widget {
   let kind: String = "ContactsWidget"
 
   var body: some WidgetConfiguration {
-    AppIntentConfiguration(
-      kind: kind,
-      intent: ContactsConfigurationIntent.self,
-      provider: ContactsProvider()
-    ) { entry in
+    StaticConfiguration(kind: kind, provider: ContactsProvider()) { entry in
       ContactsWidgetView(entry: entry)
     }
     .configurationDisplayName("Contacts")
-    .description("Quick access to your contacts with call / text / directions.")
+    .description("Quick access to your contacts. Sort, action, and favorites set in Settings.")
     .supportedFamilies([.systemSmall, .systemMedium, .systemLarge])
   }
 }

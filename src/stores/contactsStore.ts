@@ -105,6 +105,18 @@ export const useContacts = create(
           }
         })
       },
+      toggleFavoriteContact: (id: string) => {
+        set(({ contacts }) => {
+          return {
+            contacts: contacts.map((c) => {
+              if (c.id !== id) {
+                return c
+              }
+              return { ...c, isFavorite: !c.isFavorite }
+            }),
+          }
+        })
+      },
       undismissContact: (id: string) => {
         set(({ contacts }) => {
           return {

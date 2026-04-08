@@ -82,6 +82,31 @@ export type ServiceReportTag = {
   credit: boolean
 }
 
+export const widgetContactSortOptions = [
+  'longestContacted',
+  'recentConversation',
+  'az',
+  'bibleStudy',
+] as const
+export type WidgetContactSort = (typeof widgetContactSortOptions)[number]
+
+export const widgetContactActionOptions = [
+  'directions',
+  'call',
+  'text',
+  'none',
+] as const
+export type WidgetContactAction = (typeof widgetContactActionOptions)[number]
+
+export const widgetAppointmentWindowOptions = [
+  'today',
+  '7days',
+  '14days',
+  '30days',
+] as const
+export type WidgetAppointmentWindow =
+  (typeof widgetAppointmentWindowOptions)[number]
+
 export type MarkerColors = {
   noConversations: string
   longerThanAMonthAgo: string
@@ -173,6 +198,12 @@ const initialState = {
   overrideCreditLimit: false,
   /** Custom credit limit in hours (only used if overrideCreditLimit is true) */
   customCreditLimitHours: 55,
+  /** Sort order for the iOS Contacts widget. */
+  widgetContactSort: 'longestContacted' as WidgetContactSort,
+  /** Quick action shown on each row of the iOS Contacts widget. */
+  widgetContactAction: 'directions' as WidgetContactAction,
+  /** Time window for the iOS Appointments widget. */
+  widgetAppointmentWindow: '7days' as WidgetAppointmentWindow,
 }
 
 export const usePreferences = create(

@@ -1,7 +1,10 @@
 import useTheme from '../contexts/theme'
 import { useMemo, useState } from 'react'
 import useConversations from '../stores/conversationStore'
-import { upcomingFollowUpConversations } from '../lib/conversations'
+import {
+  overdueFollowUpConversations,
+  upcomingFollowUpConversations,
+} from '../lib/conversations'
 import ApproachingConversations from '../components/ApproachingConversations'
 import ExportTimeSheet, {
   ExportTimeSheetState,
@@ -67,24 +70,27 @@ export const HomeScreen = () => {
     [conversations]
   )
 
-  const conversationsWithNotificationOrTopic = useMemo(
-    () =>
-      approachingConversations.filter(
-        (c) => c.followUp?.notifyMe || c.followUp?.topic
-      ),
-    [approachingConversations]
-  )
+  // `upcomingFollowUpConversations` already enforces the
+  // notify-or-topic-required filter via `isAppointment`, so we only need to
+  // narrow to active (non-deleted/non-dismissed) contacts here.
+  const approachingConvosWithActiveContacts = useMemo(() => {
+    const activeIds = new Set(contacts.map((c) => c.id))
+    return approachingConversations.filter((c) => activeIds.has(c.contact.id))
+  }, [contacts, approachingConversations])
 
-  const approachingConvosWithActiveContacts = useMemo(
-    () =>
-      conversationsWithNotificationOrTopic.filter((convo) => {
-        const contactIsActive = contacts.find((c) => c.id === convo.contact.id)
-        if (contactIsActive) {
-          return convo
-        }
-      }),
-    [contacts, conversationsWithNotificationOrTopic]
-  )
+  // Overdue follow-ups — mirrors the widget's 30-day lookback so a user
+  // tapping a missed appointment from the widget can also find it listed in
+  // the app. Unlike upcoming, overdue items are not filtered by notify/topic
+  // since the user always wants to know they missed something.
+  const overdueConvosWithActiveContacts = useMemo(() => {
+    const overdue = overdueFollowUpConversations({
+      currentTime: new Date(),
+      conversations,
+      lookbackDays: 30,
+    })
+    const activeIds = new Set(contacts.map((c) => c.id))
+    return overdue.filter((c) => activeIds.has(c.contact.id))
+  }, [contacts, conversations])
 
   const shouldRemindToBackup = useMemo(() => {
     if (!remindMeAboutBackups) return false
@@ -125,10 +131,12 @@ export const HomeScreen = () => {
         }}
       >
         <View style={{ gap: 20, paddingBottom: insets.bottom, flex: 1 }}>
-          {!!approachingConvosWithActiveContacts.length &&
-            homeScreenElements.approachingConversations && (
+          {homeScreenElements.approachingConversations &&
+            (approachingConvosWithActiveContacts.length > 0 ||
+              overdueConvosWithActiveContacts.length > 0) && (
               <ApproachingConversations
                 conversations={approachingConvosWithActiveContacts}
+                overdueConversations={overdueConvosWithActiveContacts}
               />
             )}
           {shouldRemindToBackup && <BackupReminder />}

@@ -20,4 +20,12 @@ enum WidgetURLs {
   static func conversation(contactId: String, conversationId: String) -> URL {
     URL(string: "\(scheme)://contact/\(contactId)/\(conversationId)")!
   }
+
+  /// Opens the Reschedule Conversation modal sheet for an overdue follow-up.
+  /// Used by the Appointments widget when the user taps a row whose
+  /// `isOverdue` flag is true — they're more likely to want to reschedule than
+  /// to view conversation details.
+  static func reschedule(contactId: String, conversationId: String) -> URL {
+    URL(string: "\(scheme)://reschedule/\(contactId)/\(conversationId)")!
+  }
 }

@@ -6,7 +6,6 @@ import { useNavigation } from '@react-navigation/native'
 import useTheme from '../contexts/theme'
 import useConversations from '../stores/conversationStore'
 import { filterActivesContacts } from '../lib/dismissedContacts'
-import moment from 'moment'
 import { Dimensions, Platform, View } from 'react-native'
 import Carousel, { ICarouselInstance } from 'react-native-reanimated-carousel'
 import MapCarouselCard from '../components/MapCarouselCard'
@@ -33,6 +32,7 @@ import { faInfo, faTimes } from '@fortawesome/free-solid-svg-icons'
 import { Sheet } from 'tamagui'
 import MapKey from '../components/MapColorKey'
 import { useMarkerColors } from '../hooks/useMarkerColors'
+import { getContactStaleness, stalenessToColor } from '../lib/contactStaleness'
 
 interface FullMapViewProps {
   contactMarkers: ContactMarker[]
@@ -276,47 +276,11 @@ const MapScreen = () => {
     const contactsWithCoords = activeContacts.filter(
       (c) => c.coordinate?.latitude && c.coordinate.longitude
     )
-    return contactsWithCoords.map((c) => {
-      const today = moment()
-      const contactConvos = conversations.filter(
-        (convo) => convo.contact.id === c.id
-      )
-
-      if (contactConvos.length === 0) {
-        return {
-          ...c,
-          pinColor: colors.noConversations,
-        }
-      }
-
-      const conversationsSorted = [...contactConvos].sort(
-        (a, b) => moment(b.date).unix() - moment(a.date).unix()
-      )
-      const mostRecentDate = moment(conversationsSorted[0].date)
-
-      let pinColor: string = colors.withinThePastWeek
-
-      if (mostRecentDate.isBefore(today.subtract(1, 'week'))) {
-        pinColor = colors.longerThanAWeekAgo
-      }
-
-      if (mostRecentDate.isBefore(today.subtract(1, 'month'))) {
-        pinColor = colors.longerThanAMonthAgo
-      }
-
-      return {
-        ...c,
-        pinColor: pinColor,
-      }
-    })
-  }, [
-    colors.longerThanAMonthAgo,
-    colors.longerThanAWeekAgo,
-    colors.noConversations,
-    colors.withinThePastWeek,
-    contacts,
-    conversations,
-  ])
+    return contactsWithCoords.map((c) => ({
+      ...c,
+      pinColor: stalenessToColor(getContactStaleness(c, conversations), colors),
+    }))
+  }, [colors, contacts, conversations])
 
   if (!hasCompletedMapOnboarding) {
     return (

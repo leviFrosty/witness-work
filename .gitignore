@@ -45,6 +45,10 @@ ios/
 # @bacons/apple-targets generated entitlements
 targets/*/generated.entitlements
 
+# @bacons/apple-targets generated asset catalog metadata
+# (sourced from `colors:` / `icon:` in expo-target.config.js)
+targets/*/Assets.xcassets/**/Contents.json
+
 # Compiled tamagui config
 .tamagui/
 

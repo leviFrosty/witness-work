@@ -17,12 +17,13 @@ export const navigationRef = createNavigationContainerRef<RootStackParamList>()
  *
  * Widget URL contract (mirrors `WidgetURLs` in Swift):
  *
- * | URL                                 | Screen                                     |
- * | ----------------------------------- | ------------------------------------------ |
- * | `witnesswork://add-time`            | Add Time                                   |
- * | `witnesswork://contact/:id`         | Contact Details                            |
- * | `witnesswork://contact/:id/:convId` | Contact Details with highlighted conv.     |
- * | `witnesswork://shared-good-news`    | Home + triggers checkbox confetti (action) |
+ * | URL                                           | Screen                                     |
+ * | --------------------------------------------- | ------------------------------------------ |
+ * | `witnesswork://add-time`                      | Add Time                                   |
+ * | `witnesswork://contact/:id`                   | Contact Details                            |
+ * | `witnesswork://contact/:id/:convId`           | Contact Details with highlighted conv.     |
+ * | `witnesswork://reschedule/:contactId/:convId` | Reschedule Conversation modal              |
+ * | `witnesswork://shared-good-news`              | Home + triggers checkbox confetti (action) |
  *
  * `shared-good-news` is an **action**, not a screen. It is handled by a
  * `Linking.addEventListener('url', …)` subscriber in the root component — not
@@ -45,6 +46,7 @@ export const linking: LinkingOptions<RootStackParamList> = {
       },
       'Add Time': 'add-time',
       'Contact Details': 'contact/:id/:highlightedConversationId?',
+      RescheduleConversation: 'reschedule/:contactId/:conversationId',
     },
   },
 }

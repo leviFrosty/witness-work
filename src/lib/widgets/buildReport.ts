@@ -17,14 +17,26 @@ import {
   MinuteDisplayFormat,
   ServiceReportsByYears,
 } from '../../types/serviceReport'
+import { Conversation } from '../../types/conversation'
 
 export type ReportMode = 'hours' | 'checkbox'
+
+/**
+ * State machine for the publisher (`publisher === 'publisher'`) variant of the
+ * report widget. Drives whether the widget shows the "Shared the Good News"
+ * checkbox, a celebratory just-reported card, or a summary of this month's
+ * conversations + studies.
+ */
+export type PublisherState =
+  | 'unreported'
+  | 'reportedToday'
+  | 'reportedThisMonth'
 
 export type ReportFields = {
   /** `'checkbox'` for `publisher === 'publisher'`, `'hours'` otherwise. */
   mode: ReportMode
 
-  // Hours mode
+  // Hours mode — month
   monthMinutes: number
   /** Pre-formatted display value matching the user's timeDisplayFormat. */
   monthHoursFormatted: string
@@ -42,9 +54,15 @@ export type ReportFields = {
    */
   aheadBehindMinutes: number | null
 
-  // Checkbox mode
+  // Checkbox/publisher mode
   /** True when at least one service report exists for the current month. */
   hasReportedThisMonth: boolean
+  /** Publisher state machine value. Only meaningful when `mode === 'checkbox'`. */
+  publisherState: PublisherState
+  /** Number of conversations recorded this calendar month. */
+  monthConversationCount: number
+  /** Number of distinct bible studies held this calendar month. */
+  monthBibleStudyCount: number
 
   /**
    * Pre-picked encouragement phrase for the current `progress` bucket. Picked
@@ -63,6 +81,7 @@ export type BuildReportArgs = {
   timeDisplayFormat: MinuteDisplayFormat
   dayPlans: DayPlan[]
   recurringPlans: RecurringPlan[]
+  conversations: Conversation[]
 }
 
 /**
@@ -144,11 +163,15 @@ function pickEncouragementPhrase(progress: number): string {
 }
 
 export function buildReport(args: BuildReportArgs): ReportFields {
-  const month = moment().month()
-  const year = moment().year()
+  const now = moment()
+  const month = now.month()
+  const year = now.year()
 
   const monthReports = getMonthsReports(args.serviceReports, month, year)
   const hasReportedThisMonth = monthReports.length > 0
+  const hasReportedToday = monthReports.some((r) =>
+    moment(r.date).isSame(now, 'day')
+  )
 
   const adjusted = adjustedMinutesForSpecificMonth(
     monthReports,
@@ -201,6 +224,25 @@ export function buildReport(args: BuildReportArgs): ReportFields {
       ? adjusted.value - plannedMinutesToCurrentDay
       : null
 
+  // --- Publisher (checkbox) state machine + month conversation/study counts
+  const publisherState: PublisherState = !hasReportedThisMonth
+    ? 'unreported'
+    : hasReportedToday
+      ? 'reportedToday'
+      : 'reportedThisMonth'
+
+  const monthStart = now.clone().startOf('month')
+  const monthEnd = now.clone().endOf('month')
+  const conversationsThisMonth = args.conversations.filter((c) =>
+    moment(c.date).isBetween(monthStart, monthEnd, undefined, '[]')
+  )
+  const monthConversationCount = conversationsThisMonth.length
+  const monthBibleStudyCount = new Set(
+    conversationsThisMonth
+      .filter((c) => c.isBibleStudy)
+      .map((c) => c.contact.id)
+  ).size
+
   return {
     mode: args.publisher === 'publisher' ? 'checkbox' : 'hours',
     monthMinutes: adjusted.value,
@@ -210,6 +252,9 @@ export function buildReport(args: BuildReportArgs): ReportFields {
     hoursPerDayNeeded,
     aheadBehindMinutes,
     hasReportedThisMonth,
+    publisherState,
+    monthConversationCount,
+    monthBibleStudyCount,
     encouragementPhrase: pickEncouragementPhrase(progress),
   }
 }

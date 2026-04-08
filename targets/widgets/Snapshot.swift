@@ -7,7 +7,7 @@ import Foundation
 // way Swift cares about. The widget refuses to render snapshots whose version
 // doesn't match — the placeholder UI is shown instead.
 
-let SUPPORTED_VERSION = 2
+let SUPPORTED_VERSION = 4
 
 struct WidgetSnapshot: Decodable {
   // MARK: Strings (pre-translated by JS)
@@ -21,6 +21,10 @@ struct WidgetSnapshot: Decodable {
     let aheadOfScheduleLabel: String
     let behindScheduleLabel: String
     let encouragementPhrase: String
+    let monthLabel: String
+    let reportedTodayLabel: String
+    let conversationsThisMonthLabel: String
+    let studiesThisMonthLabel: String
 
     // Contacts
     let contactsLabel: String
@@ -34,8 +38,38 @@ struct WidgetSnapshot: Decodable {
     let todaysConversationsLabel: String
     let upcomingConversationsLabel: String
     let noAppointmentsLabel: String
-    let todayLabel: String
     let tomorrowLabel: String
+    let overdueLabel: String
+    let rescheduleLabel: String
+    let markCompleteLabel: String
+  }
+
+  // MARK: Config (Settings > Widgets — source of truth)
+  enum ContactSort: String, Decodable {
+    case longestContacted
+    case recentConversation
+    case az
+    case bibleStudy
+  }
+
+  enum ContactAction: String, Decodable {
+    case directions
+    case call
+    case text
+    case none
+  }
+
+  enum AppointmentWindow: String, Decodable {
+    case today
+    case sevenDays = "7days"
+    case fourteenDays = "14days"
+    case thirtyDays = "30days"
+  }
+
+  struct Config: Decodable {
+    let contactSort: ContactSort
+    let contactAction: ContactAction
+    let appointmentWindow: AppointmentWindow
   }
 
   // MARK: Report card
@@ -44,8 +78,16 @@ struct WidgetSnapshot: Decodable {
     case checkbox
   }
 
+  enum PublisherState: String, Decodable {
+    case unreported
+    case reportedToday
+    case reportedThisMonth
+  }
+
   struct Report: Decodable {
     let mode: ReportMode
+
+    // Month
     let monthMinutes: Int
     let monthHoursFormatted: String
     let goalHours: Int
@@ -54,10 +96,22 @@ struct WidgetSnapshot: Decodable {
     let hoursPerDayNeeded: Double?
     /// Minutes ahead (+) or behind (−) of plan. `nil` when no plan exists.
     let aheadBehindMinutes: Int?
+
+    // Publisher (checkbox) mode
     let hasReportedThisMonth: Bool
+    let publisherState: PublisherState
+    let monthConversationCount: Int
+    let monthBibleStudyCount: Int
   }
 
   // MARK: Contacts
+  enum ContactStaleness: String, Decodable {
+    case never
+    case recent
+    case week
+    case month
+  }
+
   struct Contact: Decodable, Identifiable {
     let id: String
     let name: String
@@ -67,7 +121,11 @@ struct WidgetSnapshot: Decodable {
     let mapsUrl: String?
     /// Epoch ms; `nil` if the contact has no conversation history.
     let lastConversationAt: Double?
+    /// Pre-translated relative time string (e.g. "3 days ago").
+    let lastContactedRelative: String?
     let isBibleStudy: Bool
+    let isFavorite: Bool
+    let staleness: ContactStaleness
   }
 
   // MARK: Appointments
@@ -78,7 +136,9 @@ struct WidgetSnapshot: Decodable {
     /// Epoch ms of the follow-up date.
     let date: Double
     let topic: String?
-    let isBibleStudy: Bool
+    /// Pre-formatted, locale-aware time-of-day string from JS.
+    let timeFormatted: String
+    let isOverdue: Bool
 
     var dateAsDate: Date {
       Date(timeIntervalSince1970: date / 1000)
@@ -89,6 +149,7 @@ struct WidgetSnapshot: Decodable {
   let updatedAt: Double
   let locale: String
   let strings: Strings
+  let config: Config
   let report: Report
   let contacts: [Contact]
   let appointments: [Appointment]

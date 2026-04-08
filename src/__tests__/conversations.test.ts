@@ -193,7 +193,7 @@ describe('lib/conversations', () => {
         },
         followUp: {
           date: moment(startOfDay).subtract(3, 'days').toDate(),
-          notifyMe: false,
+          notifyMe: true,
         },
         date: new Date(),
         id: '-1',
@@ -207,7 +207,7 @@ describe('lib/conversations', () => {
         },
         followUp: {
           date: moment(startOfDay).hour(10).toDate(),
-          notifyMe: false,
+          notifyMe: true,
         },
         date: new Date(),
         id: '2',
@@ -219,7 +219,7 @@ describe('lib/conversations', () => {
         },
         followUp: {
           date: moment(startOfDay).hour(3).toDate(),
-          notifyMe: false,
+          notifyMe: true,
         },
         date: new Date(),
         id: '1',
@@ -231,7 +231,7 @@ describe('lib/conversations', () => {
         },
         followUp: {
           date: moment(startOfDay).hour(16).toDate(),
-          notifyMe: false,
+          notifyMe: true,
         },
         date: new Date(),
         id: '3',
@@ -245,7 +245,7 @@ describe('lib/conversations', () => {
         },
         followUp: {
           date: moment(startOfDay).hour(17).toDate(),
-          notifyMe: false,
+          notifyMe: true,
         },
         date: new Date(),
         id: '4',
@@ -257,7 +257,7 @@ describe('lib/conversations', () => {
         },
         followUp: {
           date: moment(startOfDay).hour(18).toDate(),
-          notifyMe: false,
+          notifyMe: true,
         },
         date: new Date(),
 
@@ -272,7 +272,7 @@ describe('lib/conversations', () => {
         },
         followUp: {
           date: moment(startOfDay).add('1', 'day').toDate(),
-          notifyMe: false,
+          notifyMe: true,
         },
         date: new Date(),
         id: '6',
@@ -288,7 +288,7 @@ describe('lib/conversations', () => {
             .endOf('day')
             .subtract(1, 'second')
             .toDate(),
-          notifyMe: false,
+          notifyMe: true,
         },
         date: new Date(),
         id: '7',

@@ -1,53 +1,60 @@
 import SwiftUI
 import WidgetKit
-import AppIntents
 
 // MARK: - Timeline
+//
+// Time window lives in `WidgetSnapshot.config.appointmentWindow`, sourced from
+// in-app Settings > Widgets. JS pre-trims to the widest possible window (30d
+// back through 31d forward) and pre-formats the time-of-day string for the
+// current locale; Swift just narrows by the configured forward edge and
+// renders.
 
 private struct AppointmentsEntry: TimelineEntry {
   let date: Date
   let snapshot: WidgetSnapshot?
-  let configuration: AppointmentsConfigurationIntent
 }
 
-private struct AppointmentsProvider: AppIntentTimelineProvider {
+private struct AppointmentsProvider: TimelineProvider {
   func placeholder(in context: Context) -> AppointmentsEntry {
-    AppointmentsEntry(
-      date: Date(),
-      snapshot: nil,
-      configuration: AppointmentsConfigurationIntent()
-    )
+    AppointmentsEntry(date: Date(), snapshot: nil)
   }
 
-  func snapshot(for configuration: AppointmentsConfigurationIntent, in context: Context) async -> AppointmentsEntry {
-    AppointmentsEntry(
-      date: Date(),
-      snapshot: SnapshotLoader.load(),
-      configuration: configuration
-    )
+  func getSnapshot(in context: Context, completion: @escaping (AppointmentsEntry) -> Void) {
+    completion(AppointmentsEntry(date: Date(), snapshot: SnapshotLoader.load()))
   }
 
-  func timeline(for configuration: AppointmentsConfigurationIntent, in context: Context) async -> Timeline<AppointmentsEntry> {
-    let entry = AppointmentsEntry(
-      date: Date(),
-      snapshot: SnapshotLoader.load(),
-      configuration: configuration
-    )
+  func getTimeline(in context: Context, completion: @escaping (Timeline<AppointmentsEntry>) -> Void) {
+    let entry = AppointmentsEntry(date: Date(), snapshot: SnapshotLoader.load())
     let next = Calendar.current.date(byAdding: .hour, value: 1, to: Date()) ?? Date()
-    return Timeline(entries: [entry], policy: .after(next))
+    completion(Timeline(entries: [entry], policy: .after(next)))
   }
 }
 
 // MARK: - Filtering
 
+private extension WidgetSnapshot.AppointmentWindow {
+  /// Forward-looking days for this window. Overdue items always pass through
+  /// regardless because they remain actionable until the user reschedules.
+  var forwardDays: Int {
+    switch self {
+    case .today:        return 1
+    case .sevenDays:    return 7
+    case .fourteenDays: return 14
+    case .thirtyDays:   return 30
+    }
+  }
+}
+
 private func filterAppointments(
   _ appointments: [WidgetSnapshot.Appointment],
-  window: AppointmentWindow,
+  window: WidgetSnapshot.AppointmentWindow,
   now: Date
 ) -> [WidgetSnapshot.Appointment] {
-  let max = Calendar.current.date(byAdding: .day, value: window.days, to: now) ?? now
-  // The JS side already trims to "now − 4h" .. "now + 31d" and sorts ascending.
-  return appointments.filter { $0.dateAsDate <= max }
+  let cal = Calendar.current
+  let max = cal.date(byAdding: .day, value: window.forwardDays, to: now) ?? now
+  return appointments.filter { appt in
+    appt.isOverdue || appt.dateAsDate <= max
+  }
 }
 
 private func appointmentsCount(for family: WidgetFamily) -> Int {
@@ -58,13 +65,17 @@ private func appointmentsCount(for family: WidgetFamily) -> Int {
   }
 }
 
-/// Mirrors `ApproachingConversations.tsx`: before 4:59 PM, the heading reads
-/// "Today's Conversations"; after, "Upcoming Conversations". Pre-translated
+/// Header reads "Today's Conversations" when at least one visible appointment
+/// falls on the current day, "Upcoming Conversations" otherwise. Pre-translated
 /// strings come from the snapshot.
-private func headerLabel(strings: WidgetSnapshot.Strings, now: Date) -> String {
-  var components = Calendar.current.dateComponents([.hour], from: now)
-  let hour = components.hour ?? 0
-  return hour < 17 ? strings.todaysConversationsLabel : strings.upcomingConversationsLabel
+private func headerLabel(
+  visible: [WidgetSnapshot.Appointment],
+  strings: WidgetSnapshot.Strings,
+  now: Date
+) -> String {
+  let cal = Calendar.current
+  let hasToday = visible.contains { cal.isDate($0.dateAsDate, inSameDayAs: now) }
+  return hasToday ? strings.todaysConversationsLabel : strings.upcomingConversationsLabel
 }
 
 // MARK: - Row
@@ -74,64 +85,54 @@ private struct AppointmentRow: View {
   let strings: WidgetSnapshot.Strings
 
   var body: some View {
-    Link(
-      destination: WidgetURLs.conversation(
-        contactId: appointment.contactId,
-        conversationId: appointment.id
-      )
-    ) {
-      HStack(spacing: 8) {
-        VStack(alignment: .leading, spacing: 1) {
-          HStack(spacing: 4) {
-            if appointment.isBibleStudy {
-              Image(systemName: "book.closed.fill")
-                .font(.caption2)
-                .foregroundColor(.green)
-            }
+    // Overdue follow-ups deep-link to the Reschedule sheet — the user almost
+    // certainly wants to reschedule or mark complete, not browse history.
+    let destination = appointment.isOverdue
+      ? WidgetURLs.reschedule(
+          contactId: appointment.contactId,
+          conversationId: appointment.id
+        )
+      : WidgetURLs.conversation(
+          contactId: appointment.contactId,
+          conversationId: appointment.id
+        )
+
+    Link(destination: destination) {
+      HStack(spacing: WidgetSpacing.lg) {
+        VStack(alignment: .leading, spacing: WidgetSpacing.xs) {
+          HStack(spacing: WidgetSpacing.xs) {
             Text(appointment.contactName)
-              .font(.caption)
-              .fontWeight(.semibold)
+              .font(.system(size: 13, weight: .semibold))
+              .foregroundColor(.primary)
               .lineLimit(1)
               .privacySensitive()
+            if appointment.isOverdue {
+              Text(strings.overdueLabel.uppercased())
+                .font(.system(size: 8, weight: .bold))
+                .foregroundColor(.white)
+                .padding(.horizontal, 5)
+                .padding(.vertical, 1)
+                .background(
+                  Capsule().fill(WidgetColor.error)
+                )
+            }
           }
+          // Topic only when present — no reserved blank row otherwise.
           if let topic = appointment.topic, !topic.isEmpty {
             Text(topic)
-              .font(.caption2)
+              .font(.system(size: 10))
               .foregroundColor(.secondary)
               .lineLimit(1)
               .privacySensitive()
           }
         }
         Spacer(minLength: 0)
-        Text(formatRelative(date: appointment.dateAsDate, strings: strings))
-          .font(.caption2)
-          .fontWeight(.semibold)
-          .foregroundColor(.green)
+        Text(appointment.timeFormatted)
+          .font(.system(size: 11, weight: .semibold))
+          .foregroundColor(appointment.isOverdue ? WidgetColor.error : WidgetColor.accent)
+          .lineLimit(1)
       }
     }
-  }
-
-  private func formatRelative(date: Date, strings: WidgetSnapshot.Strings) -> String {
-    let cal = Calendar.current
-    let now = Date()
-    if cal.isDateInToday(date) {
-      let f = DateFormatter()
-      f.timeStyle = .short
-      f.dateStyle = .none
-      return "\(strings.todayLabel) \(f.string(from: date))"
-    }
-    if cal.isDateInTomorrow(date) {
-      return strings.tomorrowLabel
-    }
-    let days = cal.dateComponents([.day], from: cal.startOfDay(for: now), to: cal.startOfDay(for: date)).day ?? 0
-    if days < 7 {
-      let f = DateFormatter()
-      f.dateFormat = "EEE"
-      return f.string(from: date)
-    }
-    let f = DateFormatter()
-    f.dateFormat = "MMM d"
-    return f.string(from: date)
   }
 }
 
@@ -147,7 +148,7 @@ private struct AppointmentsWidgetView: View {
         let visible = Array(
           filterAppointments(
             snapshot.appointments,
-            window: entry.configuration.window,
+            window: snapshot.config.appointmentWindow,
             now: entry.date
           )
           .prefix(appointmentsCount(for: family))
@@ -155,29 +156,44 @@ private struct AppointmentsWidgetView: View {
         if visible.isEmpty {
           emptyState(strings: snapshot.strings)
         } else {
-          VStack(alignment: .leading, spacing: 6) {
-            HStack {
-              Text(headerLabel(strings: snapshot.strings, now: entry.date))
-                .font(.caption2)
-                .fontWeight(.bold)
-                .foregroundColor(.secondary)
-                .lineLimit(1)
-              Spacer()
-            }
-            ForEach(visible) { appointment in
-              AppointmentRow(appointment: appointment, strings: snapshot.strings)
-            }
-            Spacer(minLength: 0)
-          }
+          content(snapshot: snapshot, visible: visible)
         }
       } else {
-        Text("—")
-          .font(.system(size: 20, weight: .bold))
-          .foregroundColor(.secondary)
+        VStack {
+          Spacer()
+          Text("—")
+            .font(.system(size: 20, weight: .bold))
+            .foregroundColor(.secondary)
+          Spacer()
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
       }
     }
-    .padding()
     .containerBackground(.background, for: .widget)
+  }
+
+  private func content(
+    snapshot: WidgetSnapshot,
+    visible: [WidgetSnapshot.Appointment]
+  ) -> some View {
+    VStack(alignment: .leading, spacing: WidgetSpacing.md) {
+      Text(headerLabel(visible: visible, strings: snapshot.strings, now: entry.date)
+            .uppercased())
+        .font(.system(size: 9, weight: .bold))
+        .foregroundColor(.secondary)
+        .lineLimit(1)
+
+      VStack(spacing: WidgetSpacing.md) {
+        ForEach(Array(visible.enumerated()), id: \.element.id) { index, appt in
+          AppointmentRow(appointment: appt, strings: snapshot.strings)
+          if index < visible.count - 1 {
+            Divider().opacity(0.4)
+          }
+        }
+        Spacer(minLength: 0)
+      }
+    }
+    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
   }
 
   private func emptyState(strings: WidgetSnapshot.Strings) -> some View {
@@ -189,7 +205,7 @@ private struct AppointmentsWidgetView: View {
         .multilineTextAlignment(.center)
       Spacer()
     }
-    .frame(maxWidth: .infinity)
+    .frame(maxWidth: .infinity, maxHeight: .infinity)
   }
 }
 
@@ -199,15 +215,11 @@ struct AppointmentsWidget: Widget {
   let kind: String = "AppointmentsWidget"
 
   var body: some WidgetConfiguration {
-    AppIntentConfiguration(
-      kind: kind,
-      intent: AppointmentsConfigurationIntent.self,
-      provider: AppointmentsProvider()
-    ) { entry in
+    StaticConfiguration(kind: kind, provider: AppointmentsProvider()) { entry in
       AppointmentsWidgetView(entry: entry)
     }
     .configurationDisplayName("Appointments")
-    .description("Upcoming follow-ups from your conversations.")
+    .description("Upcoming follow-ups. Overdue items surface a reschedule sheet on tap.")
     .supportedFamilies([.systemMedium, .systemLarge])
   }
 }

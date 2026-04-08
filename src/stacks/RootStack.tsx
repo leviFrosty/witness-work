@@ -23,6 +23,8 @@ import PreferencesNavigationScreen from '../screens/settings/preferences/screens
 import PreferencesHomeScreen from '../screens/settings/preferences/screens/PreferencesHomeScreen'
 import PreferencesBackupsScreen from '../screens/settings/preferences/screens/PreferencesBackupsScreen'
 import PreferencesAppearanceScreen from '../screens/settings/preferences/screens/PreferencesAppearanceScreen'
+import PreferencesWidgetsScreen from '../screens/settings/preferences/screens/PreferencesWidgetsScreen'
+import RescheduleConversationScreen from '../screens/RescheduleConversationScreen'
 import PlanScheduleScreen from '../screens/PlanScheduleScreen'
 import PlanDayScreen from '../screens/PlanDayScreen'
 import { RootStackParamList } from '../types/rootStack'
@@ -192,6 +194,23 @@ const RootStackComponent = () => {
         }}
         name='PreferencesAppearance'
         component={PreferencesAppearanceScreen}
+      />
+      <RootStack.Screen
+        options={{
+          header: () => <Header buttonType='back' title={i18n.t('widgets')} />,
+        }}
+        name='PreferencesWidgets'
+        component={PreferencesWidgetsScreen}
+      />
+      <RootStack.Screen
+        options={{
+          presentation: 'modal',
+          header: () => (
+            <Header noInsets buttonType='back' title={i18n.t('reschedule')} />
+          ),
+        }}
+        name='RescheduleConversation'
+        component={RescheduleConversationScreen}
       />
       <RootStack.Screen
         options={{

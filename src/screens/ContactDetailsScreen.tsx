@@ -37,7 +37,9 @@ import {
   faEnvelope,
   faPhone,
   faPlus,
+  faStar,
 } from '@fortawesome/free-solid-svg-icons'
+import { faStar as faStarOutline } from '@fortawesome/free-regular-svg-icons'
 import Copyeable from '../components/Copyeable'
 import Button from '../components/Button'
 import { Sheet } from 'tamagui'
@@ -60,6 +62,7 @@ import { useToastController } from '@tamagui/toast'
 import XView from '../components/layout/XView'
 import { RootStackNavigation, RootStackParamList } from '../types/rootStack'
 import { useMarkerColors } from '../hooks/useMarkerColors'
+import { getContactStaleness, stalenessToColor } from '../lib/contactStaleness'
 import DismissContactSheet from '../components/DismissContactSheet'
 import Card from '../components/Card'
 import ContactActionsSheet, {
@@ -234,39 +237,11 @@ const AddressRow = ({ contact }: { contact: Contact }) => {
     }, 0)
   }, [contact.coordinate, contact.id])
 
-  const pinColor = useMemo(() => {
-    const contactConvos = conversations.filter(
-      (convo) => convo.contact.id === contact.id
-    )
-
-    if (contactConvos.length === 0) {
-      return colors.noConversations
-    }
-    const today = moment()
-
-    const conversationsSorted = [...contactConvos].sort(
-      (a, b) => moment(b.date).unix() - moment(a.date).unix()
-    )
-    const mostRecentDate = moment(conversationsSorted[0].date)
-
-    let color: string = colors.withinThePastWeek
-
-    if (mostRecentDate.isBefore(today.subtract(1, 'week'))) {
-      color = colors.longerThanAWeekAgo
-    }
-
-    if (mostRecentDate.isBefore(today.subtract(1, 'month'))) {
-      color = colors.longerThanAMonthAgo
-    }
-    return color
-  }, [
-    colors.longerThanAMonthAgo,
-    colors.longerThanAWeekAgo,
-    colors.noConversations,
-    colors.withinThePastWeek,
-    contact.id,
-    conversations,
-  ])
+  const pinColor = useMemo(
+    () =>
+      stalenessToColor(getContactStaleness(contact!, conversations), colors),
+    [colors, contact, conversations]
+  )
 
   const attemptToGetCoordinates = async () => {
     setHasTriedToGetCoordinates(true)
@@ -606,7 +581,7 @@ const ContactDetailsScreen = ({ route, navigation }: Props) => {
   const { developerTools } = usePreferences()
   const { params } = route
   const insets = useSafeAreaInsets()
-  const { contacts, deleteContact } = useContacts()
+  const { contacts, deleteContact, toggleFavoriteContact } = useContacts()
   const contact = useMemo(
     () => contacts.find((c) => c.id === params.id),
     [contacts, params.id]
@@ -731,6 +706,16 @@ const ContactDetailsScreen = ({ route, navigation }: Props) => {
               />
 
               <IconButton
+                icon={contact?.isFavorite ? faStar : faStarOutline}
+                color={theme.colors.textInverse}
+                onPress={() => {
+                  if (contact) {
+                    toggleFavoriteContact(contact.id)
+                  }
+                }}
+              />
+
+              <IconButton
                 icon={faArrowUpFromBracket}
                 color={theme.colors.textInverse}
                 onPress={handleExportContact}
@@ -764,6 +749,7 @@ const ContactDetailsScreen = ({ route, navigation }: Props) => {
   }, [
     contact,
     contact?.id,
+    contact?.isFavorite,
     deleteContact,
     handleExportContact,
     navigation,
@@ -774,6 +760,7 @@ const ContactDetailsScreen = ({ route, navigation }: Props) => {
     theme.colors.textInverse,
     theme.numbers.borderRadiusSm,
     toast,
+    toggleFavoriteContact,
   ])
 
   const isActiveBibleStudy = useMemo(

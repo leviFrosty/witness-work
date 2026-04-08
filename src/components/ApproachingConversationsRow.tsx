@@ -19,8 +19,16 @@ import { RootStackNavigation } from '../types/rootStack'
 
 const ApproachingConversationRow = ({
   conversation,
+  isOverdue = false,
 }: {
   conversation: Conversation
+  /**
+   * When true, the row renders with the warn-color border + an "Overdue" pill
+   * and tap navigates to the Reschedule sheet instead of Contact Details. Same
+   * UX as tapping an overdue follow-up from the Appointments widget so users
+   * get one consistent flow regardless of entry point.
+   */
+  isOverdue?: boolean
 }) => {
   const theme = useContext(ThemeContext)
   const { contacts } = useContacts()
@@ -36,12 +44,19 @@ const ApproachingConversationRow = ({
 
   return (
     <Button
-      onPress={() =>
-        navigation.navigate('Contact Details', {
-          id: contact.id,
-          highlightedConversationId: conversation.id,
-        })
-      }
+      onPress={() => {
+        if (isOverdue) {
+          navigation.navigate('RescheduleConversation', {
+            contactId: contact.id,
+            conversationId: conversation.id,
+          })
+        } else {
+          navigation.navigate('Contact Details', {
+            id: contact.id,
+            highlightedConversationId: conversation.id,
+          })
+        }
+      }}
     >
       <Card
         style={{
@@ -50,12 +65,40 @@ const ApproachingConversationRow = ({
           gap: 30,
           flexDirection: 'row',
           alignItems: 'center',
+          ...(isOverdue
+            ? {
+                borderLeftWidth: 3,
+                borderLeftColor: theme.colors.warn,
+              }
+            : {}),
         }}
       >
         <View style={{ gap: 5 }}>
-          <Text style={{ fontFamily: theme.fonts.semiBold }}>
-            {contact.name}
-          </Text>
+          <View style={{ flexDirection: 'row', gap: 6, alignItems: 'center' }}>
+            <Text style={{ fontFamily: theme.fonts.semiBold }}>
+              {contact.name}
+            </Text>
+            {isOverdue ? (
+              <View
+                style={{
+                  backgroundColor: theme.colors.warn,
+                  paddingHorizontal: 6,
+                  paddingVertical: 2,
+                  borderRadius: theme.numbers.borderRadiusSm,
+                }}
+              >
+                <Text
+                  style={{
+                    fontSize: 9,
+                    color: theme.colors.textInverse,
+                    fontFamily: theme.fonts.bold,
+                  }}
+                >
+                  {i18n.t('overdue').toUpperCase()}
+                </Text>
+              </View>
+            ) : null}
+          </View>
           <Text>{moment(conversation.followUp?.date).fromNow()}</Text>
           <View style={{ flexDirection: 'row', gap: 5, alignItems: 'center' }}>
             <Text

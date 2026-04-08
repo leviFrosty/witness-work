@@ -37,7 +37,26 @@ const ReturnVisitContactsSection = () => {
       c.name.toLocaleUpperCase().includes(search.toLocaleUpperCase())
     )
 
+    // Bible studies tier above non-studies *only* when the user isn't already
+    // sorting by bible study (which has its own ordering).
+    const studiesAboveOthers = contactSort !== 'bibleStudy'
+    const studyContactIds = new Set(
+      conversations.filter((c) => c.isBibleStudy).map((c) => c.contact.id)
+    )
+    const isStudy = (contact: Contact) => studyContactIds.has(contact.id)
+
     return filteredContacts.sort((a, b) => {
+      // Favorites always pinned to the top, regardless of selected sort.
+      if (!!a.isFavorite !== !!b.isFavorite) {
+        return a.isFavorite ? -1 : 1
+      }
+      // Then bible studies (when not already the sort key).
+      if (studiesAboveOthers) {
+        const aStudy = isStudy(a)
+        const bStudy = isStudy(b)
+        if (aStudy !== bStudy) return aStudy ? -1 : 1
+      }
+
       const getMostRecentConversation = (contact: Contact) => {
         const filteredConversations = conversations.filter(
           (c) => c.contact.id === contact.id

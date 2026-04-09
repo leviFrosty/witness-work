@@ -762,6 +762,8 @@
   "frequency": "Frequency",
   "startDate": "Start Date",
   "createPlan": "Create Plan",
+  "calendar": "Calendar",
+  "calendarPublisherLocked": "Calendar is available for pioneers and other goal-tracking publishers.",
   "endDate": "End Date",
   "missed": "Missed",
   "plans": "Plans",

@@ -17,6 +17,7 @@ import i18n from '../locales'
 import { buildReport, ReportFields } from './buildReport'
 import { buildContacts, WidgetContact } from './buildContacts'
 import { buildAppointments, WidgetAppointment } from './buildAppointments'
+import { buildCalendar, WidgetCalendar } from './buildCalendar'
 
 /**
  * Bumped whenever the snapshot shape changes in a way the Swift decoder cares
@@ -30,9 +31,12 @@ import { buildAppointments, WidgetAppointment } from './buildAppointments'
  * today/week/publisher-state fields to report; adds top-level config block
  * driven by Settings > Widgets. 4 — Report widget is always-month. Drops
  * today/week minute fields and the todayLabel/weekLabel strings. Drops
- * `startOfWeek` from BuildSnapshotArgs.
+ * `startOfWeek` from BuildSnapshotArgs. 5 — Adds the `calendar` slice powering
+ * the month-calendar widget (locked for publishers) and its pre-translated
+ * label strings. Re-introduces `startOfWeek` on BuildSnapshotArgs so JS can
+ * pre-build the grid with the user's preferred first column.
  */
-export const SNAPSHOT_VERSION = 4
+export const SNAPSHOT_VERSION = 5
 
 export type WidgetStrings = {
   // Report widget
@@ -68,6 +72,13 @@ export type WidgetStrings = {
   overdueLabel: string
   rescheduleLabel: string
   markCompleteLabel: string
+
+  // Calendar widget
+  calendarLabel: string
+  /** Shown on the publisher-locked calendar placeholder. */
+  calendarPublisherLockedLabel: string
+  /** "Create plan" quick-action tooltip / accessibility label. */
+  createPlanLabel: string
 }
 
 export type WidgetConfig = {
@@ -110,6 +121,12 @@ export type WidgetSnapshot = {
    * `appointmentWindow`.
    */
   appointments: WidgetAppointment[]
+  /**
+   * Pre-built calendar grid for the current month. `locked: true` when the user
+   * is a publisher — the widget renders a locked placeholder in that case and
+   * `days` is empty.
+   */
+  calendar: WidgetCalendar
 }
 
 export type BuildSnapshotArgs = {
@@ -133,6 +150,9 @@ export type BuildSnapshotArgs = {
   widgetContactSort: WidgetContactSort
   widgetContactAction: WidgetContactAction
   widgetAppointmentWindow: WidgetAppointmentWindow
+
+  /** Mirrors `preferences.startOfWeek` — drives the calendar grid layout. */
+  startOfWeek: number
 
   // Locale
   locale: string
@@ -162,6 +182,14 @@ export function buildWidgetSnapshot(args: BuildSnapshotArgs): WidgetSnapshot {
   const appointments = buildAppointments({
     contacts: args.contacts,
     conversations: args.conversations,
+  })
+
+  const calendar = buildCalendar({
+    serviceReports: args.serviceReports,
+    dayPlans: args.dayPlans,
+    recurringPlans: args.recurringPlans,
+    publisher: args.publisher,
+    startOfWeek: args.startOfWeek,
   })
 
   return {
@@ -196,6 +224,10 @@ export function buildWidgetSnapshot(args: BuildSnapshotArgs): WidgetSnapshot {
       overdueLabel: i18n.t('overdue'),
       rescheduleLabel: i18n.t('reschedule'),
       markCompleteLabel: i18n.t('markComplete'),
+
+      calendarLabel: i18n.t('calendar'),
+      calendarPublisherLockedLabel: i18n.t('calendarPublisherLocked'),
+      createPlanLabel: i18n.t('createPlan'),
     },
     config: {
       contactSort: args.widgetContactSort,
@@ -205,5 +237,6 @@ export function buildWidgetSnapshot(args: BuildSnapshotArgs): WidgetSnapshot {
     report,
     contacts,
     appointments,
+    calendar,
   }
 }

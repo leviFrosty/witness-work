@@ -51,6 +51,7 @@ function pushSnapshot(reason: string): void {
       widgetContactSort: prefs.widgetContactSort,
       widgetContactAction: prefs.widgetContactAction,
       widgetAppointmentWindow: prefs.widgetAppointmentWindow,
+      startOfWeek: prefs.startOfWeek,
       locale: prefs.locale ?? DEFAULT_LOCALE,
     })
 

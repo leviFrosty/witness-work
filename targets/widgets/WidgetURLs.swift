@@ -28,4 +28,15 @@ enum WidgetURLs {
   static func reschedule(contactId: String, conversationId: String) -> URL {
     URL(string: "\(scheme)://reschedule/\(contactId)/\(conversationId)")!
   }
+
+  /// Opens Plan Day for a specific `YYYY-MM-DD` date. Used by the Calendar
+  /// widget when a user taps a day cell — the in-app screen surfaces the day
+  /// plan, recurring plan overrides, reports, and notes for that date.
+  static func day(date: String) -> URL {
+    URL(string: "\(scheme)://day/\(date)")!
+  }
+
+  /// Opens Plan Day with no pre-filled date, used by the Calendar widget's
+  /// top-right "+" CTA to create a new plan.
+  static let createPlan = URL(string: "\(scheme)://day")!
 }

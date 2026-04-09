@@ -7,5 +7,6 @@ struct WitnessWorkWidgets: WidgetBundle {
     ReportWidget()
     ContactsWidget()
     AppointmentsWidget()
+    CalendarWidget()
   }
 }

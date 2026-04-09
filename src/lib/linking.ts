@@ -24,6 +24,8 @@ export const navigationRef = createNavigationContainerRef<RootStackParamList>()
  * | `witnesswork://contact/:id/:convId`           | Contact Details with highlighted conv.     |
  * | `witnesswork://reschedule/:contactId/:convId` | Reschedule Conversation modal              |
  * | `witnesswork://shared-good-news`              | Home + triggers checkbox confetti (action) |
+ * | `witnesswork://day/:date`                     | Plan Day (view/edit plan + notes for date) |
+ * | `witnesswork://day`                           | Plan Day (empty form — widget "+" button)  |
  *
  * `shared-good-news` is an **action**, not a screen. It is handled by a
  * `Linking.addEventListener('url', …)` subscriber in the root component — not
@@ -47,6 +49,11 @@ export const linking: LinkingOptions<RootStackParamList> = {
       'Add Time': 'add-time',
       'Contact Details': 'contact/:id/:highlightedConversationId?',
       RescheduleConversation: 'reschedule/:contactId/:conversationId',
+      // Widget deep links. PlanDay is reused for both the per-date view and
+      // the empty-form "create plan" CTA — the screen renders details/notes
+      // for an existing plan when `date` resolves to one and an empty form
+      // otherwise, so both URLs converge on the same screen.
+      PlanDay: 'day/:date?',
     },
   },
 }

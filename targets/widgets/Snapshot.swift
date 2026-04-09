@@ -7,7 +7,7 @@ import Foundation
 // way Swift cares about. The widget refuses to render snapshots whose version
 // doesn't match — the placeholder UI is shown instead.
 
-let SUPPORTED_VERSION = 4
+let SUPPORTED_VERSION = 5
 
 struct WidgetSnapshot: Decodable {
   // MARK: Strings (pre-translated by JS)
@@ -42,6 +42,11 @@ struct WidgetSnapshot: Decodable {
     let overdueLabel: String
     let rescheduleLabel: String
     let markCompleteLabel: String
+
+    // Calendar
+    let calendarLabel: String
+    let calendarPublisherLockedLabel: String
+    let createPlanLabel: String
   }
 
   // MARK: Config (Settings > Widgets — source of truth)
@@ -145,6 +150,40 @@ struct WidgetSnapshot: Decodable {
     }
   }
 
+  // MARK: Calendar
+  struct CalendarDay: Decodable, Identifiable {
+    /// ISO `YYYY-MM-DD` used as both the deep-link parameter and the list id.
+    let date: String
+    let day: Int
+    let isCurrentMonth: Bool
+    let isToday: Bool
+    let isPast: Bool
+    let wentInService: Bool
+    let hasPlan: Bool
+    /// Pre-formatted compact planned hours (e.g. `"1.5h"`). Empty when no plan.
+    let plannedText: String
+    let workedMinutes: Int
+    let hitGoal: Bool
+    let hasNote: Bool
+
+    var id: String { date }
+  }
+
+  struct Calendar: Decodable {
+    /// True for publishers — the widget renders a locked placeholder.
+    let locked: Bool
+    let month: Int
+    let year: Int
+    let startOfWeek: Int
+    let weekdayLabels: [String]
+    let monthTitle: String
+    /// Always 42 cells (6 weeks) when `locked == false`, empty otherwise.
+    let days: [CalendarDay]
+    /// Index into `days` where the current week starts. Used by the medium
+    /// widget to slice out a single row without re-deriving dates.
+    let currentWeekStart: Int
+  }
+
   let version: Int
   let updatedAt: Double
   let locale: String
@@ -153,4 +192,5 @@ struct WidgetSnapshot: Decodable {
   let report: Report
   let contacts: [Contact]
   let appointments: [Appointment]
+  let calendar: Calendar
 }

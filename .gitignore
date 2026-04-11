@@ -39,8 +39,8 @@ googleServiceAccount.json
 # Windows
 %ProgramData%/
 
-ios/
-android/
+/ios
+/android
 
 # Compiled tamagui config
 .tamagui/

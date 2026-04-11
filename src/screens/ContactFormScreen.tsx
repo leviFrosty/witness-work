@@ -24,6 +24,10 @@ import PersonalContactSection from '../components/PersonalContactSection'
 import AddressSection from '../components/AddressSection'
 import { RootStackParamList } from '../types/rootStack'
 import { Errors } from '../types/textInput'
+import {
+  emitTutorialEvent,
+  useOptionalTutorialContext,
+} from '../providers/TutorialProvider'
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Contact Form'>
 
@@ -88,6 +92,24 @@ const ContactFormScreen = ({ route, navigation }: Props) => {
       customFields: {},
     }
   )
+
+  // Subscribe to the tutorial event bus so "Fill sample" on a tutorial step
+  // can hydrate this form with a demo contact. No-op outside a tutorial.
+  const tutorialCtx = useOptionalTutorialContext()
+  useEffect(() => {
+    if (!tutorialCtx) return
+    return tutorialCtx.subscribe((event) => {
+      if (event !== 'sample.contact') return
+      setContact((prev) => ({
+        ...prev,
+        name: prev.name || 'Sample Contact',
+        address: {
+          ...prev.address,
+          line1: prev.address?.line1 || '123 Sample St',
+        },
+      }))
+    })
+  }, [tutorialCtx])
 
   const setName = (name: string) => {
     setContact({
@@ -368,6 +390,9 @@ const ContactFormScreen = ({ route, navigation }: Props) => {
                     return false
                   }
                   await submit()
+                  emitTutorialEvent(
+                    editMode ? 'contacts.editSaved' : 'contacts.saved'
+                  )
                   if (editMode) {
                     navigation.replace('Contact Details', {
                       id: (params as { id: string }).id,

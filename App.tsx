@@ -33,10 +33,16 @@ import { ToastProvider, ToastViewport } from '@tamagui/toast'
 import {
   hasMigratedFromAsyncStorage,
   migrateFromAsyncStorage,
-} from './src/stores/mmkv'
+} from './stores/mmkv'
 import { usePreferences } from './src/stores/preferences'
 import AnimationViewProvider from './src/providers/AnimationViewProvider'
 import useUserLocalePrefs from './src/hooks/useLocale'
+import { installWidgetSync } from './lib/widgets/widgetSync'
+import { linking, navigationRef } from './lib/linking'
+import SharedGoodNewsListener from './components/SharedGoodNewsListener'
+import { TutorialProvider } from './providers/TutorialProvider'
+import { TutorialOverlay } from './components/tutorial/TutorialOverlay'
+import { TutorialPromptSheet } from './components/tutorial/TutorialPromptSheet'
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
@@ -131,9 +137,14 @@ export default function App() {
                   <ToastProvider>
                     <StatusBar />
                     <ToastViewport />
-                    <AnimationViewProvider>
-                      <RootStackComponent />
-                    </AnimationViewProvider>
+                    <TutorialProvider>
+                      <AnimationViewProvider>
+                        <SharedGoodNewsListener />
+                        <RootStackComponent />
+                      </AnimationViewProvider>
+                      <TutorialPromptSheet />
+                      <TutorialOverlay />
+                    </TutorialProvider>
                   </ToastProvider>
                 </TamaguiProvider>
               </NavigationContainer>

@@ -1,5 +1,5 @@
 import useTheme from '../contexts/theme'
-import { useMemo, useState } from 'react'
+import { useCallback, useMemo, useRef, useState } from 'react'
 import useConversations from '../stores/conversationStore'
 import { upcomingFollowUpConversations } from '../lib/conversations'
 import ApproachingConversations from '../components/ApproachingConversations'
@@ -7,7 +7,7 @@ import ExportTimeSheet, {
   ExportTimeSheetState,
 } from '../components/ExportTimeSheet'
 import useContacts from '../stores/contactsStore'
-import { View } from 'react-native'
+import { NativeScrollEvent, NativeSyntheticEvent, View } from 'react-native'
 import MonthlyRoutine from '../components/MonthlyRoutine'
 import ServiceReportSection from '../components/ServiceReportSection'
 import ReturnVisitContactsSection from '../components/ReturnVisitContactsSection'
@@ -21,13 +21,14 @@ import { getServiceYearFromDate } from '../lib/serviceReport'
 import i18n from '../lib/locales'
 import Text from '../components/MyText'
 import Button from '../components/Button'
-import { useNavigation } from '@react-navigation/native'
+import { useFocusEffect, useNavigation } from '@react-navigation/native'
 import usePublisher from '../hooks/usePublisher'
 import { usePreferences } from '../stores/preferences'
 import BackupReminder from '../components/BackupReminder'
 import { TimerSection } from '../components/TimerSection'
 import UpgradeLegacyTimeReportsSheet from '../components/UpgradeLegacyTimeReportsSheet'
 import { HomeTabStackNavigation } from '../types/homeStack'
+import { useOptionalTutorialContext } from '../providers/TutorialProvider'
 
 export const HomeScreen = () => {
   const theme = useTheme()
@@ -45,6 +46,42 @@ export const HomeScreen = () => {
   const { serviceReportTags, publisher, homeScreenElements } = usePreferences()
   const navigation = useNavigation<HomeTabStackNavigation>()
   const serviceYear = getServiceYearFromDate(moment())
+
+  // Register this screen's scroll container with the tutorial engine so
+  // spotlight steps can scroll targets (e.g. the Contacts FAB, typically
+  // below the fold) into view automatically.
+  //
+  // Only register while this screen is focused. Otherwise, after navigating
+  // away (e.g. to Contact Details), a subsequent spotlight step would try
+  // to `measureLayout` a target in the new screen relative to Home's
+  // ScrollView — which throws "not a descendant of" because the two views
+  // live in different native hierarchies.
+  const scrollRef = useRef<KeyboardAwareScrollView>(null)
+  const scrollYRef = useRef(0)
+  const tutorialCtx = useOptionalTutorialContext()
+  useFocusEffect(
+    useCallback(() => {
+      if (!tutorialCtx) return
+      const handle = {
+        scrollTo: (opts: { x?: number; y?: number; animated?: boolean }) => {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const ref = scrollRef.current as any
+          if (!ref) return
+          if (typeof ref.scrollToPosition === 'function') {
+            ref.scrollToPosition(
+              opts.x ?? 0,
+              opts.y ?? 0,
+              opts.animated ?? true
+            )
+          } else if (typeof ref.scrollTo === 'function') {
+            ref.scrollTo(opts)
+          }
+        },
+        getScrollY: () => scrollYRef.current,
+      }
+      return tutorialCtx.registerScrollContainer(handle)
+    }, [tutorialCtx])
+  )
   const hasLegacyReports = useMemo(() => {
     return serviceReportTags.some((t) => typeof t === 'string')
   }, [serviceReportTags])
@@ -116,6 +153,11 @@ export const HomeScreen = () => {
   return (
     <View style={{ flexGrow: 1, backgroundColor: theme.colors.background }}>
       <KeyboardAwareScrollView
+        ref={scrollRef}
+        onScroll={(e: NativeSyntheticEvent<NativeScrollEvent>) => {
+          scrollYRef.current = e.nativeEvent.contentOffset.y
+        }}
+        scrollEventThrottle={16}
         contentContainerStyle={{ paddingBottom: insets.bottom + 85 }}
         automaticallyAdjustKeyboardInsets
         style={{

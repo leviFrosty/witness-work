@@ -18,6 +18,7 @@ import { RootStackParamList } from '../types/rootStack'
 import { useToastController } from '@tamagui/toast'
 import useContacts from '../stores/contactsStore'
 import { isContactDismissed } from '../lib/dismissedContacts'
+import { emitTutorialEvent } from '../providers/TutorialProvider'
 
 export type ContactActionsSheetState = {
   open: boolean
@@ -53,6 +54,7 @@ const ContactActionsSheet = ({
 
       switch (action) {
         case 'edit': {
+          emitTutorialEvent('contacts.editPressed')
           navigation.replace('Contact Form', {
             id: contact.id,
             edit: true,

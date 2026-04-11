@@ -13,6 +13,7 @@ import Button from './Button'
 import { IconProp } from '@fortawesome/fontawesome-svg-core'
 import { RootStackNavigation } from '../types/rootStack'
 import { HomeTabStackNavigation } from '../types/homeStack'
+import { emitTutorialEvent } from '../providers/TutorialProvider'
 
 export type QuickActionSheetProps = {
   navigation: RootStackNavigation & HomeTabStackNavigation
@@ -34,12 +35,15 @@ export default function QuickActionSheet({
     setSheetOpen(false)
     switch (action) {
       case 'addTime':
+        emitTutorialEvent('time.addPressed')
         navigation.navigate('Add Time')
         break
       case 'addContact':
+        emitTutorialEvent('contacts.addPressed')
         navigation.navigate('Contact Form', { id: Crypto.randomUUID() })
         break
       case 'addPlan':
+        emitTutorialEvent('plan.created')
         navigation.navigate('PlanDay', {})
         break
     }

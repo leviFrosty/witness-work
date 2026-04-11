@@ -21,6 +21,8 @@ import IconButton from './IconButton'
 import { faPlus, faSort } from '@fortawesome/free-solid-svg-icons'
 import XView from './layout/XView'
 import { RootStackNavigation } from '../types/rootStack'
+import { TutorialTarget } from './tutorial/TutorialTarget'
+import { emitTutorialEvent } from '../providers/TutorialProvider'
 
 const ReturnVisitContactsSection = () => {
   const theme = useTheme()
@@ -150,23 +152,28 @@ const ReturnVisitContactsSection = () => {
             value={search}
             setValue={setSearch}
           />
-          <IconButton
-            icon={faPlus}
-            size='lg'
-            style={{
-              backgroundColor: theme.colors.accentTranslucent,
-              justifyContent: 'center',
-              alignItems: 'center',
-              padding: 17,
-              borderRadius: theme.numbers.borderRadiusSm,
-              borderWidth: 1,
-              borderColor: theme.colors.accent,
-            }}
-            color={theme.colors.accent}
-            onPress={() =>
-              navigation.navigate('Contact Form', { id: Crypto.randomUUID() })
-            }
-          />
+          <TutorialTarget id='contacts.addButton'>
+            <IconButton
+              icon={faPlus}
+              size='lg'
+              style={{
+                backgroundColor: theme.colors.accentTranslucent,
+                justifyContent: 'center',
+                alignItems: 'center',
+                padding: 17,
+                borderRadius: theme.numbers.borderRadiusSm,
+                borderWidth: 1,
+                borderColor: theme.colors.accent,
+              }}
+              color={theme.colors.accent}
+              onPress={() => {
+                emitTutorialEvent('contacts.addPressed')
+                navigation.navigate('Contact Form', {
+                  id: Crypto.randomUUID(),
+                })
+              }}
+            />
+          </TutorialTarget>
         </XView>
         <View style={{ flex: 1, minHeight: 10 }}>
           <FlashList

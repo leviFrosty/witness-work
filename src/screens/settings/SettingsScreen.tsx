@@ -14,6 +14,7 @@ import AppSection from './sections/App'
 import ContactSection from './sections/Contact'
 import MiscSection from './sections/Misc'
 import SupportSection from './sections/Support'
+import HelpSection from './sections/Help'
 import { usePreferences } from '../../stores/preferences'
 import { useState } from 'react'
 import Badge from '../../components/Badge'
@@ -61,6 +62,7 @@ const SettingsScreen = (props: DrawerContentComponentProps) => {
         <View style={{ gap: 25 }}>
           <PreferencesSection handleNavigate={navigateAndCloseDrawer} />
           <AppSection handleNavigate={navigateAndCloseDrawer} />
+          <HelpSection handleNavigate={navigateAndCloseDrawer} />
           <SupportSection />
           <ContactSection />
           <MiscSection handleNavigate={navigateAndCloseDrawer} />

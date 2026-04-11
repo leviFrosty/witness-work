@@ -25,6 +25,7 @@ import PreferencesBackupsScreen from '../screens/settings/preferences/screens/Pr
 import PreferencesAppearanceScreen from '../screens/settings/preferences/screens/PreferencesAppearanceScreen'
 import PlanScheduleScreen from '../screens/PlanScheduleScreen'
 import PlanDayScreen from '../screens/PlanDayScreen'
+import HelpScreen from '../screens/HelpScreen'
 import { RootStackParamList } from '../types/rootStack'
 
 const RootStack = createNativeStackNavigator<RootStackParamList>()
@@ -202,6 +203,15 @@ const RootStackComponent = () => {
         }}
         name='PlanSchedule'
         component={PlanScheduleScreen}
+      />
+      <RootStack.Screen
+        options={{
+          header: () => (
+            <Header buttonType='back' title={i18n.t('tutorial.help')} />
+          ),
+        }}
+        name='Help'
+        component={HelpScreen}
       />
       <RootStack.Screen
         options={({ route }) => {

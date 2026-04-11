@@ -49,7 +49,7 @@ import {
 } from '../lib/address'
 import { parsePhoneNumber } from 'awesome-phonenumber'
 import { getLocales } from 'expo-localization'
-import { useNavigation } from '@react-navigation/native'
+import { useFocusEffect, useNavigation } from '@react-navigation/native'
 import { usePreferences } from '../stores/preferences'
 import { handleCall, handleMessage } from '../lib/phone'
 import { openURL } from '../lib/links'
@@ -65,6 +65,11 @@ import Card from '../components/Card'
 import ContactActionsSheet, {
   ContactActionsSheetState,
 } from '../components/ContactActionsSheet'
+import { TutorialTarget } from '../components/tutorial/TutorialTarget'
+import {
+  emitTutorialEvent,
+  useOptionalTutorialContext,
+} from '../providers/TutorialProvider'
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Contact Details'>
 
@@ -619,6 +624,50 @@ const ContactDetailsScreen = ({ route, navigation }: Props) => {
     [conversations, params.highlightedConversationId]
   )
 
+  const scrollViewRef = useRef<ScrollView>(null)
+  const highlightedRowRef = useRef<View>(null)
+  const scrollYRef = useRef(0)
+
+  // Register this screen's scroll container with the tutorial engine so
+  // spotlight steps on Contact Details (e.g. highlighting a conversation
+  // row below the fold) can bring their target into view. Scoped to focus
+  // so only the active screen's container is registered at any time.
+  const tutorialCtx = useOptionalTutorialContext()
+  useFocusEffect(
+    useCallback(() => {
+      if (!tutorialCtx) return
+      const handle = {
+        scrollTo: (opts: { x?: number; y?: number; animated?: boolean }) => {
+          scrollViewRef.current?.scrollTo(opts)
+        },
+        getScrollY: () => scrollYRef.current,
+      }
+      return tutorialCtx.registerScrollContainer(handle)
+    }, [tutorialCtx])
+  )
+
+  // When opened via the widget deep link
+  // (`witnesswork://contact/:id/:convId`), scroll the highlighted row into
+  // view so the user can immediately see which conversation the widget was
+  // pointing at. Delayed slightly so the FlashList has time to lay out.
+  useEffect(() => {
+    if (!params.highlightedConversationId || !highlightedConversation) return
+    const timer = setTimeout(() => {
+      const sv = scrollViewRef.current
+      const row = highlightedRowRef.current
+      if (!sv || !row) return
+      row.measureLayout(
+        // @ts-expect-error — RN accepts a host component ref here.
+        sv,
+        (_x, y) => {
+          sv.scrollTo({ y: Math.max(0, y - 100), animated: true })
+        },
+        () => {}
+      )
+    }, 450)
+    return () => clearTimeout(timer)
+  }, [params.highlightedConversationId, highlightedConversation])
+
   const contactConversations = useMemo(
     () => conversations.filter(({ contact: { id } }) => id === contact?.id),
     [contact?.id, conversations]
@@ -695,15 +744,17 @@ const ContactDetailsScreen = ({ route, navigation }: Props) => {
                 right: 0,
               }}
             >
-              <IconButton
-                icon={faEllipsisVertical}
-                color={theme.colors.textInverse}
-                onPress={() => {
-                  if (contact) {
-                    setContactActionsSheet({ open: true, contact })
-                  }
-                }}
-              />
+              <TutorialTarget id='contacts.editButton'>
+                <IconButton
+                  icon={faEllipsisVertical}
+                  color={theme.colors.textInverse}
+                  onPress={() => {
+                    if (contact) {
+                      setContactActionsSheet({ open: true, contact })
+                    }
+                  }}
+                />
+              </TutorialTarget>
 
               <IconButton
                 icon={faArrowUpFromBracket}
@@ -711,25 +762,32 @@ const ContactDetailsScreen = ({ route, navigation }: Props) => {
                 onPress={handleExportContact}
               />
 
-              <Button onPress={() => setSheetOpen(true)}>
-                <XView
-                  style={{
-                    borderColor: theme.colors.textInverse,
-                    borderWidth: 1,
-                    paddingVertical: 5,
-                    paddingHorizontal: 10,
-                    borderRadius: theme.numbers.borderRadiusSm,
+              <TutorialTarget id='conversations.addButton'>
+                <Button
+                  onPress={() => {
+                    emitTutorialEvent('conversations.addPressed')
+                    setSheetOpen(true)
                   }}
                 >
-                  <IconButton
-                    iconStyle={{ color: theme.colors.textInverse }}
-                    icon={faPlus}
-                  />
-                  <Text style={{ color: theme.colors.textInverse }}>
-                    {i18n.t('add')}
-                  </Text>
-                </XView>
-              </Button>
+                  <XView
+                    style={{
+                      borderColor: theme.colors.textInverse,
+                      borderWidth: 1,
+                      paddingVertical: 5,
+                      paddingHorizontal: 10,
+                      borderRadius: theme.numbers.borderRadiusSm,
+                    }}
+                  >
+                    <IconButton
+                      iconStyle={{ color: theme.colors.textInverse }}
+                      icon={faPlus}
+                    />
+                    <Text style={{ color: theme.colors.textInverse }}>
+                      {i18n.t('add')}
+                    </Text>
+                  </XView>
+                </Button>
+              </TutorialTarget>
             </View>
           }
           backgroundColor={theme.colors.accent3}
@@ -799,6 +857,11 @@ const ContactDetailsScreen = ({ route, navigation }: Props) => {
   return (
     <View style={{ flexGrow: 1 }}>
       <ScrollView
+        ref={scrollViewRef}
+        onScroll={(e) => {
+          scrollYRef.current = e.nativeEvent.contentOffset.y
+        }}
+        scrollEventThrottle={16}
         style={{
           position: 'relative',
           paddingTop: 100,

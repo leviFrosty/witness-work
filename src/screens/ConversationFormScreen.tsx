@@ -5,6 +5,10 @@ import * as Notifications from 'expo-notifications'
 import * as Crypto from 'expo-crypto'
 import { NativeStackScreenProps } from '@react-navigation/native-stack'
 import * as Sentry from '@sentry/react-native'
+import {
+  emitTutorialEvent,
+  useOptionalTutorialContext,
+} from '../providers/TutorialProvider'
 import useContacts from '../stores/contactsStore'
 import { useEffect, useState } from 'react'
 import Header from '../components/layout/Header'
@@ -246,6 +250,19 @@ const ConversationFormScreen = ({ route, navigation }: Props) => {
     getConversationDefaultValue()
   )
 
+  // Tutorial "Fill sample" hydration — only active when a tutorial is running.
+  const tutorialCtx = useOptionalTutorialContext()
+  useEffect(() => {
+    if (!tutorialCtx) return
+    return tutorialCtx.subscribe((event) => {
+      if (event !== 'sample.conversation') return
+      setConversation((prev) => ({
+        ...prev,
+        note: prev.note || 'Discussed a scripture about hope.',
+      }))
+    })
+  }, [tutorialCtx])
+
   const selectedContact = contacts.find((c) => c.id === contactId)
   const isEditing = conversationToUpdate?.contact.id
 
@@ -386,6 +403,11 @@ const ConversationFormScreen = ({ route, navigation }: Props) => {
           : addConversation(conversation)
         resolve(conversation)
       }
+      emitTutorialEvent(
+        params.conversationToEditId
+          ? 'conversations.editSaved'
+          : 'conversations.saved'
+      )
       toast.show(i18n.t('success'), {
         message: i18n.t(
           conversation.notAtHome ? 'addedNotAtHome' : 'addedConversation'

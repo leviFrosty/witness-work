@@ -36,6 +36,7 @@ export type RootStackParamList = {
   PreferencesBackups: undefined
   PreferencesAppearance: undefined
   PlanSchedule: { month: number; year: number }
+  Help: undefined
   PlanDay: {
     date?: string
     /** Existing plan ID for editing mode */

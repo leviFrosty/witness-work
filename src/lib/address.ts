@@ -58,7 +58,7 @@ export const fetchCoordinateFromAddress = async (
 
     incrementGeocodeApiCallCount()
     const { data } = await axios.get<HereGeocodeResponse>(
-      `${apis.geocode}?q=${addressString}&limit=1`,
+      `${apis.geocode}?q=${encodeURIComponent(addressString)}&limit=1`,
       {
         signal: abortController?.signal,
       }

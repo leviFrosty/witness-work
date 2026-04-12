@@ -11,8 +11,9 @@ import useUserLocalePrefs from '../../../hooks/useLocale'
 import Text from '../../../components/MyText'
 import { getLocales } from 'expo-localization'
 import useTheme from '../../../contexts/theme'
-import * as Updates from 'expo-updates'
 import { faLanguage } from '@fortawesome/free-solid-svg-icons'
+import * as Updates from 'expo-updates'
+import { DevSettings } from 'react-native'
 
 export default function LanguageSelector() {
   const { set, locale } = usePreferences()
@@ -32,7 +33,11 @@ export default function LanguageSelector() {
 
   function handleChange(value: TranslatedLocale | null) {
     set({ locale: value || undefined })
-    Updates.reloadAsync()
+    if (__DEV__) {
+      DevSettings.reload()
+    } else {
+      Updates.reloadAsync()
+    }
   }
 
   return (

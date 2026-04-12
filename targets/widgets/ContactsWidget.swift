@@ -35,7 +35,7 @@ private struct ContactsProvider: TimelineProvider {
 
 private func contactsCount(for family: WidgetFamily) -> Int {
   switch family {
-  case .systemSmall:  return 1
+  case .systemSmall:  return 5
   case .systemMedium: return 4
   case .systemLarge:  return 8
   default:            return 4

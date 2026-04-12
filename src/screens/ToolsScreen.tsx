@@ -40,7 +40,8 @@ export default function ToolsScreen() {
     addContact,
   } = useContacts()
   const { cache } = useTimeCache()
-  const { _WARNING_forceDeleteConversations } = useConversations()
+  const { addConversation, _WARNING_forceDeleteConversations } =
+    useConversations()
   const toast = useToastController()
   const [showContacts, setShowContacts] = useState(false)
   const [showReports, setShowReports] = useState(false)
@@ -71,7 +72,36 @@ export default function ToolsScreen() {
           email: contact.email,
           customFields: contact.company,
           phone: contact.phone,
+          isFavorite: index < 2, // First 2 contacts are favorites
         })
+      })
+
+      // Generate conversations for each contact
+      data.forEach((_: unknown, index: number) => {
+        const contactId = `generated-${index}`
+        const conversationCount = index < 4 ? 5 : 2
+
+        for (let j = 0; j < conversationCount; j++) {
+          addConversation({
+            id: `generated-conv-${index}-${j}`,
+            contact: { id: contactId },
+            date: moment()
+              .subtract(j * 5 + index, 'days')
+              .toDate(),
+            note: j === 0 ? 'Discussed chapter 3' : '',
+            isBibleStudy: index < 3 && j < 3, // First 3 contacts have bible studies
+            followUp:
+              j === 0 && index < 4
+                ? {
+                    date: moment()
+                      .add(3 + index, 'days')
+                      .toDate(),
+                    notifyMe: true,
+                    topic: 'Continue discussion',
+                  }
+                : undefined,
+          })
+        }
       })
     }
   }

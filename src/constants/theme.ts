@@ -1,4 +1,3 @@
-import { ColorSchemeName } from 'react-native'
 import * as Device from 'expo-device'
 
 export const lightModeColors = {
@@ -146,7 +145,9 @@ const baseTheme = {
   fontSize,
 }
 
-const getThemeFromColorScheme = (colorScheme: ColorSchemeName): Theme => {
+const getThemeFromColorScheme = (
+  colorScheme: 'light' | 'dark' | undefined
+): Theme => {
   if (colorScheme === 'light') {
     return {
       ...baseTheme,

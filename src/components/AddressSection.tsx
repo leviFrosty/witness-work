@@ -34,16 +34,16 @@ export default function AddressSection({
 }: {
   contact: Contact
   setContact: (value: React.SetStateAction<Contact>) => void
-  line1Input: React.RefObject<TextInput>
-  line2Input: React.RefObject<TextInput>
+  line1Input: React.RefObject<TextInput | null>
+  line2Input: React.RefObject<TextInput | null>
   setLine1: (line1: string) => void
-  cityInput: React.RefObject<TextInput>
+  cityInput: React.RefObject<TextInput | null>
   setLine2: (line2: string) => void
   setCity: (city: string) => void
-  stateInput: React.RefObject<TextInput>
+  stateInput: React.RefObject<TextInput | null>
   setState: (state: string) => void
-  zipInput: React.RefObject<TextInput>
-  countryInput: React.RefObject<TextInput>
+  zipInput: React.RefObject<TextInput | null>
+  countryInput: React.RefObject<TextInput | null>
   setZip: (zip: string) => void
   setCountry: (country: string) => void
   prefill:

@@ -149,7 +149,6 @@ const DismissedContactsScreen: React.FC<Props> = ({ navigation }) => {
                 renderItem={({ item }) => (
                   <DismissedContactRow key={item.id} contact={item} />
                 )}
-                estimatedItemSize={84}
                 ItemSeparatorComponent={() => (
                   <View style={{ marginTop: 12 }} />
                 )}

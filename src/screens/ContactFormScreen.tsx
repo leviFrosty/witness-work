@@ -40,7 +40,7 @@ const ContactFormScreen = ({ route, navigation }: Props) => {
     ? contacts.find((c) => c.id === route.params.id)
     : undefined
   const locales = Localization.getLocales()
-  const geocodeAbortController = useRef<AbortController>()
+  const geocodeAbortController = useRef<AbortController>(null)
   const [fetching, setFetching] = useState(false)
   const prefillKeys = prefillAddress.address
     ? Object.keys(prefillAddress.address)
@@ -221,7 +221,7 @@ const ContactFormScreen = ({ route, navigation }: Props) => {
       const position = await fetchCoordinateFromAddress(
         incrementGeocodeApiCallCount,
         c.address,
-        geocodeAbortController.current
+        geocodeAbortController.current ?? undefined
       )
       if (position) {
         c.coordinate = position

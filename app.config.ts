@@ -73,8 +73,11 @@ export default ({ config }: ConfigContext): ExpoConfig => {
     },
     plugins: [
       '@bacons/apple-targets',
+      '@react-native-community/datetimepicker',
+      'expo-asset',
       'expo-font',
       'expo-localization',
+      'expo-sharing',
       [
         'expo-updates',
         {

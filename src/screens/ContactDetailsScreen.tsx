@@ -57,7 +57,7 @@ import { handleCall, handleMessage } from '../lib/phone'
 import { openURL } from '../lib/links'
 import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps'
 import useLocation from '../hooks/useLocation'
-import * as FileSystem from 'expo-file-system'
+import * as FileSystem from 'expo-file-system/legacy'
 import { useToastController } from '@tamagui/toast'
 import XView from '../components/layout/XView'
 import { RootStackNavigation, RootStackParamList } from '../types/rootStack'
@@ -929,7 +929,6 @@ const ContactDetailsScreen = ({ route, navigation }: Props) => {
                       </Button>
                     </View>
                   }
-                  estimatedItemSize={175}
                 />
               </View>
             </View>

@@ -128,7 +128,6 @@ const MonthlyRoutine = () => {
           horizontal
           initialScrollIndex={5}
           keyExtractor={(item) => item.format()}
-          estimatedItemSize={44}
           data={surroundingMonths()}
           renderItem={({ item }) => {
             const month = item.month()

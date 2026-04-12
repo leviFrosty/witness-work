@@ -104,7 +104,6 @@ const TimeReportsDashboard = (props: TimeReportsDashboardProps) => {
               }
               ItemSeparatorComponent={() => <View style={{ height: 10 }} />}
               renderItem={({ item }) => <TimeReportRow report={item} />}
-              estimatedItemSize={66}
               ListEmptyComponent={
                 <Card>
                   <Text>{i18n.t('noReportsThisMonthYet')}</Text>

@@ -39,12 +39,12 @@ export default function PersonalContactSection({
   clearCustomField,
 }: {
   contact: Contact
-  nameInput: React.RefObject<TextInput>
+  nameInput: React.RefObject<TextInput | null>
   setName: (name: string) => void
-  emailInput: React.RefObject<TextInput>
+  emailInput: React.RefObject<TextInput | null>
   setPhone: (phone: string) => void
   setRegionCode: (regionCode: string) => void
-  line1Input: React.RefObject<TextInput>
+  line1Input: React.RefObject<TextInput | null>
   setEmail: (email: string) => void
   errors: Errors
   setErrors: React.Dispatch<React.SetStateAction<Errors>>

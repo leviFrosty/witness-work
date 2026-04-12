@@ -1,4 +1,4 @@
-import { ColorSchemeName, View } from 'react-native'
+import { View } from 'react-native'
 import Section from '../../../../components/inputs/Section'
 import InputRowContainer from '../../../../components/inputs/InputRowContainer'
 import i18n from '../../../../lib/locales'
@@ -24,7 +24,10 @@ const AppearancePreferencesSection = () => {
     { label: '+4', value: 4 },
   ]
 
-  const darkModeOptions: { label: string; value: ColorSchemeName }[] = [
+  const darkModeOptions: {
+    label: string
+    value: 'light' | 'dark' | undefined
+  }[] = [
     { label: i18n.t('device'), value: undefined },
     { label: i18n.t('dark'), value: 'dark' },
     { label: i18n.t('light'), value: 'light' },

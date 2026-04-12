@@ -28,7 +28,7 @@ export default function MapOnboarding() {
   const { contacts, updateContact } = useContacts()
   const theme = useTheme()
   const navigation = useNavigation<HomeTabStackNavigation>()
-  const abortController = useRef<AbortController>()
+  const abortController = useRef<AbortController>(null)
   const insets = useSafeAreaInsets()
   const [fetching, setFetching] = useState<boolean>()
   const [progress, setProgress] = useState(0)
@@ -59,7 +59,7 @@ export default function MapOnboarding() {
           const position = await fetchCoordinateFromAddress(
             incrementGeocodeApiCallCount,
             contact.address,
-            abortController.current
+            abortController.current ?? undefined
           )
           if (position) {
             const contactWithPosition: Contact = {

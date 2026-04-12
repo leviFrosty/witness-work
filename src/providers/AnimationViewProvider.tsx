@@ -1,18 +1,12 @@
 import LottieView from 'lottie-react-native'
-import {
-  PropsWithChildren,
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
-} from 'react'
+import { PropsWithChildren, useCallback, useRef } from 'react'
 import { View } from 'react-native'
 import {
   AnimationViewContext,
   AnimationViewCtx,
 } from '../contexts/AnimationView'
 import confetti from '../assets/lottie/confetti.json'
-import { Audio } from 'expo-av'
+import { setAudioModeAsync, useAudioPlayer } from 'expo-audio'
 // @ts-expect-error MP3 doesn't export module
 import chime from '../assets/audio/success-chime.mp3'
 
@@ -25,28 +19,17 @@ const AnimationViewProvider: React.FC<PropsWithChildren<Props>> = ({
   children,
 }) => {
   const lottieViewRef = useRef<LottieView>(null)
-  const [sound, setSound] = useState<Audio.Sound>()
+  const player = useAudioPlayer(chime)
 
-  async function playSound() {
+  const playSound = useCallback(() => {
     try {
-      await Audio.setAudioModeAsync({
-        playsInSilentModeIOS: true,
-      })
-      const { sound } = await Audio.Sound.createAsync(chime)
-      setSound(sound)
-      await sound.playAsync()
-    } catch (error) {
+      setAudioModeAsync({ playsInSilentMode: true })
+      player.seekTo(0)
+      player.play()
+    } catch {
       // Silently fail if audio session cannot be activated
     }
-  }
-
-  useEffect(() => {
-    return sound
-      ? () => {
-          sound.unloadAsync()
-        }
-      : undefined
-  }, [sound])
+  }, [player])
 
   const playConfetti = useCallback(() => {
     lottieViewRef.current?.reset()
@@ -54,7 +37,7 @@ const AnimationViewProvider: React.FC<PropsWithChildren<Props>> = ({
       playSound()
       lottieViewRef.current?.play(100, 180)
     }, CONFETTI_DELAY_MS)
-  }, [])
+  }, [playSound])
 
   const ctx: AnimationViewCtx = {
     playConfetti,

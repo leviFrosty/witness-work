@@ -1,5 +1,5 @@
 import { AppState, AppStateStatus, Platform } from 'react-native'
-import * as BackgroundFetch from 'expo-background-fetch'
+import * as BackgroundTask from 'expo-background-task'
 import * as TaskManager from 'expo-task-manager'
 import _ from 'lodash'
 import { getLocales } from 'expo-localization'
@@ -72,7 +72,7 @@ const debouncedPush = _.debounce(() => pushSnapshot('store-change'), 500, {
 if (Platform.OS === 'ios' && !TaskManager.isTaskDefined(WIDGET_REFRESH_TASK)) {
   TaskManager.defineTask(WIDGET_REFRESH_TASK, async () => {
     pushSnapshot('background-fetch')
-    return BackgroundFetch.BackgroundFetchResult.NewData
+    return BackgroundTask.BackgroundTaskResult.Success
   })
 }
 
@@ -106,10 +106,8 @@ export function installWidgetSync(): () => void {
 
   // 4. Register the background fetch task. iOS treats minimumInterval as a
   //    hint, not a guarantee. 1h is a reasonable lower bound.
-  BackgroundFetch.registerTaskAsync(WIDGET_REFRESH_TASK, {
+  BackgroundTask.registerTaskAsync(WIDGET_REFRESH_TASK, {
     minimumInterval: 60 * 60,
-    stopOnTerminate: false,
-    startOnBoot: false,
   }).catch((e) => {
     logger.error('[widgetSync] failed to register background task', e)
   })
@@ -120,7 +118,7 @@ export function installWidgetSync(): () => void {
     unsubContacts()
     unsubConversations()
     appStateSub.remove()
-    BackgroundFetch.unregisterTaskAsync(WIDGET_REFRESH_TASK).catch(() => {})
+    BackgroundTask.unregisterTaskAsync(WIDGET_REFRESH_TASK).catch(() => {})
     installed = false
   }
 }

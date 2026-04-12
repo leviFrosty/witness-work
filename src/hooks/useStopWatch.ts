@@ -30,7 +30,7 @@ export const useStopWatch = () => {
     persistedStopwatch.timeWhenLastStopped
   )
 
-  const interval = useRef<NodeJS.Timeout>()
+  const interval = useRef<NodeJS.Timeout>(null)
 
   useEffect(() => {
     // Persist the latest data to async storage to be used later, if needed
@@ -52,7 +52,7 @@ export const useStopWatch = () => {
     } else {
       if (interval.current) {
         clearInterval(interval.current)
-        interval.current = undefined
+        interval.current = null
       }
     }
   }, [startTime, timeWhenLastStopped])

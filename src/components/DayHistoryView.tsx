@@ -175,7 +175,6 @@ const DayHistoryView: React.FC<DayHistoryViewProps> = ({
                 onPress={() => onTimeReportPress?.(item)}
               />
             )}
-            estimatedItemSize={66}
             ListEmptyComponent={
               <Card style={{ borderRadius: theme.numbers.borderRadiusSm }}>
                 <Text>{i18n.t('noReportsThisDay')}</Text>
@@ -213,7 +212,6 @@ const DayHistoryView: React.FC<DayHistoryViewProps> = ({
                   }
                 />
               )}
-              estimatedItemSize={66}
               ListEmptyComponent={
                 <Card style={{ borderRadius: theme.numbers.borderRadiusSm }}>
                   <Text>{i18n.t('noDayPlans')}</Text>
@@ -252,7 +250,6 @@ const DayHistoryView: React.FC<DayHistoryViewProps> = ({
                   }
                 />
               )}
-              estimatedItemSize={66}
               ListEmptyComponent={
                 <Card style={{ borderRadius: theme.numbers.borderRadiusSm }}>
                   <Text>{i18n.t('noRecurringPlans')}</Text>

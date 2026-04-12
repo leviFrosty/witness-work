@@ -9,7 +9,8 @@ interface Props {}
 const ThemeProvider: React.FC<PropsWithChildren<Props>> = ({ children }) => {
   const colorScheme = useColorScheme()
   const { colorScheme: theme } = usePreferences()
-  const userSelectedTheme = getThemeFromColorScheme(theme ?? colorScheme)
+  const scheme = colorScheme === 'unspecified' ? undefined : colorScheme
+  const userSelectedTheme = getThemeFromColorScheme(theme ?? scheme)
 
   return (
     <ThemeContext.Provider value={userSelectedTheme}>

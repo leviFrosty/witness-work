@@ -10,7 +10,7 @@
     "clean": "rm -rf node_modules .tamagui .expo .cache *.tar.gz ios android",
     "prebuild": "expo prebuild --clean",
     "build:ios": "eas build -p ios --profile development-simulator --local",
-    "build:ios-production": "eas build -p ios --profile production-simulator --local --clear-cache",
+    "build:ios-production": "eas build -p ios --profile production-simulator --local",
     "build:android": "eas build -p android --profile development-simulator --local",
     "translate": "bun run ./scripts/translate.ts",
     "version:bump": "bun run ./scripts/bump-version.js",

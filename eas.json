@@ -56,7 +56,12 @@
         "simulator": true,
         "image": "macos-sequoia-15.3-xcode-16.2"
       },
-      "node": "20.14.0"
+      "node": "20.14.0",
+      "env": {
+        "SENTRY_DISABLE_AUTO_UPLOAD": "true",
+        "APPLE_TEAM_ID": "Y3KE7B7AHJ",
+        "ENTRY_FILE": "src/index.js"
+      }
     }
   },
   "submit": {

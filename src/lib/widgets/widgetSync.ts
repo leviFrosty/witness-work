@@ -107,7 +107,7 @@ export function installWidgetSync(): () => void {
   // 4. Register the background fetch task. iOS treats minimumInterval as a
   //    hint, not a guarantee. 1h is a reasonable lower bound.
   BackgroundTask.registerTaskAsync(WIDGET_REFRESH_TASK, {
-    minimumInterval: 60 * 60,
+    minimumInterval: 60,
   }).catch((e) => {
     logger.error('[widgetSync] failed to register background task', e)
   })

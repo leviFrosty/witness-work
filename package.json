@@ -127,7 +127,7 @@
     "eslint-plugin-react-hooks": "^4.6.2",
     "expo-doctor": "^1.17.8",
     "husky": "^9.1.7",
-    "i18n-auto-translation": "2.2.1",
+    "i18n-auto-translation": "2.2.3",
     "prettier": "^3.6.2",
     "prettier-plugin-jsdoc": "^1.3.3",
     "react-test-renderer": "^19.2.0",
@@ -157,5 +157,13 @@
     "testMatch": [
       "**/__tests__/**/*.test.ts?(x)"
     ]
+  },
+  "pnpm": {
+    "overrides": {
+      "axios": ">=1.15.0",
+      "glob": ">=11.1.0",
+      "@xmldom/xmldom": ">=0.8.12",
+      "@tootallnate/once": ">=3.0.1"
+    }
   }
 }

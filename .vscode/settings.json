@@ -25,5 +25,8 @@
     "**/android/**",
     "**/ios/**",
     "**/.expo/**"
-  ]
+  ],
+  "[typescript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  }
 }

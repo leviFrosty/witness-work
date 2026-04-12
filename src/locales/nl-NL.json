@@ -397,50 +397,35 @@
   "new": "Nieuw",
   "bugFixes": "Bugfixes",
   "updates": {
-    "1211": {
-      "c1": "Waar nodig meer nuttige eenmalige tips toegevoegd."
+    "160": {
+      "c1": "Gesprekken kunnen nu worden bewerkt. Meldingen zijn configureerbaar",
+      "c2": "Veeggebaren om gesprekken, contacten, enz. te bewerken of te verwijderen.",
+      "c3": "Haptische feedback toegevoegd aan verschillende belangrijke acties"
     },
-    "1210": {
-      "c1": "Sterk verbeterde nauwkeurigheid van tijdweergaven.",
-      "c2": "Verbeterde nauwkeurigheid van tijdvoortgangsbalken.",
-      "c3": "Nuttige tips toegevoegd voor acties die misschien niet meteen opvallen.",
-      "c4": "Verbeterde levenskwaliteit op het kaartenscherm met meer relevante informatie en een knop voor snel toevoegen."
+    "161": {
+      "c1": "Meer minuutopties toegevoegd voor tijdinvoer"
     },
-    "1201": {
-      "c1": "Kleine bugfixes.",
-      "c2": "Aanzienlijk verbeterde Koreaanse vertalingen - bedankt broeder Paul. Als je wilt helpen met het vertalen van je eigen taal, ga dan naar de instellingen.",
-      "c3": "Kleine bugfixes."
+    "162": {
+      "c1": "Eis voor speciaal pioniersuur aangepast van 70 naar 100"
     },
-    "1200": {
-      "c1": "Voegt back-up- en herstelfunctionaliteit toe. Nu kunt u een back-up van uw gegevens maken in de cloud en deze later herstellen, zodat u uw gegevens naar een ander apparaat kunt overbrengen. Je kunt het ook overzetten naar een ander platform. Zoek deze nieuwe functie in de instellingen."
+    "163": {
+      "c1": "Los problemen met automatische updates op"
     },
-    "1120": {
-      "c1": "Voegt back-up- en herstelfunctionaliteit toe. Nu kunt u een back-up van uw gegevens maken in de cloud en deze later herstellen. U kunt uw gegevens overbrengen naar een ander apparaat. Je kunt het ook overzetten naar een ander platform. Zoek deze nieuwe functie in de instellingen."
+    "170": {
+      "c1": "Voeg verschillende tijdexportmethoden toe",
+      "c2": "Voeg 'Niet thuis' toe"
     },
-    "1111": {
-      "c1": "Voeg een donatiepagina toe in de instellingen voor degenen die willen bijdragen.",
-      "c2": "Bevat verschillende kleine verbeteringen en bugfixes"
+    "180": {
+      "c1": "Automatische geocodering voor contacten toegevoegd",
+      "c2": "Kaartweergave toegevoegd"
     },
-    "1110": {
-      "c1": "Ondersteuning toegevoegd voor iPads & Tabletten!",
-      "c2": "Verschillende stijlen aangepast om beter op grotere schermen te passen.",
-      "c3": "De methode voor het indienen van bugrapporten en functieverzoeken bij Github aangepast."
+    "181": {
+      "c1": "Uitgebreide kaartweergave",
+      "c2": "Winkelbeoordelingsverzoek toegevoegd nadat aan bepaalde criteria is voldaan",
+      "c3": "Kleine bugfixes"
     },
-    "1100": {
-      "c1": "Voegt een jaarverslag toe aan het tijdrapportenscherm! Houd in één oogopslag de voortgang van uw servicejaar bij.",
-      "c2": "Als u tijd toevoegt vanuit het scherm Tijdrapporten, wordt het rapport nu standaard ingesteld op de geselecteerde maand.",
-      "c3": "Er is een probleem opgelost bij het exporteren van het servicerapport van januari."
-    },
-    "192": {
-      "c1": "Er is een probleem opgelost waarbij sommige apparaten een overvolle voortgangsbalk hebben.",
-      "c2": "Voegt een uitgebreidere afhandeling van verbindingsfouten toe voor apparaten waarop de vereiste applicaties ontbreken.",
-      "c3": "Voegt een uitgebreidere afhandeling van verbindingsfouten toe voor bepaalde apparaten waarop de vereiste applicaties ontbreken.",
-      "c4": "Navigeer rechtstreeks naar een maand vanuit het maandelijkse routinegedeelte van het startscherm.",
-      "c5": "Het scherm Tijdrapporten kan beter omgaan met lege en toekomstige maanden.",
-      "c6": "Kleine bugfixes."
-    },
-    "191": {
-      "c1": "Lost een probleem op bij het navigeren naar tijdschermen."
+    "182": {
+      "c1": "Altijd bijgewerkt om de huidige landinstelling weer te geven"
     },
     "190": {
       "c1": "Voorkeuren toegevoegd in de instellingen",
@@ -451,35 +436,50 @@
       "c6": "Voeg nu aangepaste tags toe aan uw tijdinvoer",
       "c7": "Bijgewerkt tijdrapportenscherm om beter georganiseerd en gescheiden te zijn per maand"
     },
-    "182": {
-      "c1": "Altijd bijgewerkt om de huidige landinstelling weer te geven"
+    "191": {
+      "c1": "Lost een probleem op bij het navigeren naar tijdschermen."
     },
-    "181": {
-      "c1": "Uitgebreide kaartweergave",
-      "c2": "Winkelbeoordelingsverzoek toegevoegd nadat aan bepaalde criteria is voldaan",
-      "c3": "Kleine bugfixes"
+    "192": {
+      "c1": "Er is een probleem opgelost waarbij sommige apparaten een overvolle voortgangsbalk hebben.",
+      "c2": "Voegt een uitgebreidere afhandeling van verbindingsfouten toe voor apparaten waarop de vereiste applicaties ontbreken.",
+      "c3": "Voegt een uitgebreidere afhandeling van verbindingsfouten toe voor bepaalde apparaten waarop de vereiste applicaties ontbreken.",
+      "c4": "Navigeer rechtstreeks naar een maand vanuit het maandelijkse routinegedeelte van het startscherm.",
+      "c5": "Het scherm Tijdrapporten kan beter omgaan met lege en toekomstige maanden.",
+      "c6": "Kleine bugfixes."
     },
-    "180": {
-      "c1": "Automatische geocodering voor contacten toegevoegd",
-      "c2": "Kaartweergave toegevoegd"
+    "1100": {
+      "c1": "Voegt een jaarverslag toe aan het tijdrapportenscherm! Houd in één oogopslag de voortgang van uw servicejaar bij.",
+      "c2": "Als u tijd toevoegt vanuit het scherm Tijdrapporten, wordt het rapport nu standaard ingesteld op de geselecteerde maand.",
+      "c3": "Er is een probleem opgelost bij het exporteren van het servicerapport van januari."
     },
-    "170": {
-      "c1": "Voeg verschillende tijdexportmethoden toe",
-      "c2": "Voeg 'Niet thuis' toe"
+    "1110": {
+      "c1": "Ondersteuning toegevoegd voor iPads & Tabletten!",
+      "c2": "Verschillende stijlen aangepast om beter op grotere schermen te passen.",
+      "c3": "De methode voor het indienen van bugrapporten en functieverzoeken bij Github aangepast."
     },
-    "163": {
-      "c1": "Los problemen met automatische updates op"
+    "1111": {
+      "c1": "Voeg een donatiepagina toe in de instellingen voor degenen die willen bijdragen.",
+      "c2": "Bevat verschillende kleine verbeteringen en bugfixes"
     },
-    "162": {
-      "c1": "Eis voor speciaal pioniersuur aangepast van 70 naar 100"
+    "1120": {
+      "c1": "Voegt back-up- en herstelfunctionaliteit toe. Nu kunt u een back-up van uw gegevens maken in de cloud en deze later herstellen. U kunt uw gegevens overbrengen naar een ander apparaat. Je kunt het ook overzetten naar een ander platform. Zoek deze nieuwe functie in de instellingen."
     },
-    "161": {
-      "c1": "Meer minuutopties toegevoegd voor tijdinvoer"
+    "1200": {
+      "c1": "Voegt back-up- en herstelfunctionaliteit toe. Nu kunt u een back-up van uw gegevens maken in de cloud en deze later herstellen, zodat u uw gegevens naar een ander apparaat kunt overbrengen. Je kunt het ook overzetten naar een ander platform. Zoek deze nieuwe functie in de instellingen."
     },
-    "160": {
-      "c1": "Gesprekken kunnen nu worden bewerkt. Meldingen zijn configureerbaar",
-      "c2": "Veeggebaren om gesprekken, contacten, enz. te bewerken of te verwijderen.",
-      "c3": "Haptische feedback toegevoegd aan verschillende belangrijke acties"
+    "1201": {
+      "c1": "Kleine bugfixes.",
+      "c2": "Aanzienlijk verbeterde Koreaanse vertalingen - bedankt broeder Paul. Als je wilt helpen met het vertalen van je eigen taal, ga dan naar de instellingen.",
+      "c3": "Kleine bugfixes."
+    },
+    "1210": {
+      "c1": "Sterk verbeterde nauwkeurigheid van tijdweergaven.",
+      "c2": "Verbeterde nauwkeurigheid van tijdvoortgangsbalken.",
+      "c3": "Nuttige tips toegevoegd voor acties die misschien niet meteen opvallen.",
+      "c4": "Verbeterde levenskwaliteit op het kaartenscherm met meer relevante informatie en een knop voor snel toevoegen."
+    },
+    "1211": {
+      "c1": "Waar nodig meer nuttige eenmalige tips toegevoegd."
     },
     "1220": {
       "c3": "Kalender toegevoegd aan het tijdrapportscherm.",
@@ -602,6 +602,11 @@
       "c14": "De kaart van het scherm Contactgegevens is nu uitgezoomd om de omgeving in één oogopslag te kunnen zien.",
       "c15": "Diverse navigatieproblemen opgelost bij het toevoegen van tijd- en planningsschema's.",
       "c16": "Verbeterde leesbaarheid en consistentie in de app met betere spatiëring en knopgroottes."
+    },
+    "1380": {
+      "c1": "Nieuw: widgets voor het beginscherm zijn er! Bekijk je maandelijkse agenda, komende afspraken en belangrijkste contacten - allemaal vanaf je startscherm. Widgets passen bij het thema van de app'en ondersteunen deeplinks om met één tik het juiste scherm te openen.",
+      "c2": "Probleem opgelost waarbij de achtergrond van de agendadag niet groen werd bij het toevoegen van tijd aan een datum in de toekomst.",
+      "c3": "Probleem opgelost waarbij minuten als een decimaal getal konden worden weergegeven in plaats van een heel getal."
     }
   },
   "installed": "Geïnstalleerd",
@@ -762,8 +767,8 @@
   "frequency": "Frequentie",
   "startDate": "Begin datum",
   "createPlan": "Plan maken",
-  "calendar": "Calendar",
-  "calendarPublisherLocked": "Calendar is available for pioneers and other goal-tracking publishers.",
+  "calendar": "Kalender",
+  "calendarPublisherLocked": "Kalender is beschikbaar voor pioniers en andere uitgevers die hun doelen volgen.",
   "endDate": "Einddatum",
   "missed": "Gemist",
   "plans": "Plannen",
@@ -1000,33 +1005,33 @@
   "actions": "Acties",
   "cache": "Cache",
   "timeCache": "Tijd Cache",
-  "tomorrow": "Tomorrow",
-  "appointments": "Appointments",
-  "noUpcomingAppointments": "No upcoming appointments",
-  "noContactsYet": "No contacts yet",
-  "text": "Text",
-  "directions": "Directions",
-  "thisMonth": "This Month",
+  "tomorrow": "Morgen",
+  "appointments": "Afspraken",
+  "noUpcomingAppointments": "Geen komende afspraken",
+  "noContactsYet": "Nog geen contacten",
+  "text": "Tekst",
+  "directions": "Routebeschrijving",
+  "thisMonth": "Deze maand",
   "widgets": "Widgets",
-  "widgetsDescription": "Configure how home screen widgets look and behave.",
-  "contactsWidget": "Contacts Widget",
-  "appointmentsWidget": "Appointments Widget",
-  "sortOrder": "Sort order",
-  "timeWindow": "Time window",
-  "longestContacted": "Longest contacted",
-  "none": "None",
-  "next7Days": "Next 7 days",
-  "next14Days": "Next 14 days",
-  "next30Days": "Next 30 days",
-  "reportedToday": "Reported today",
-  "conversationsThisMonth": "Conversations this month",
-  "studiesThisMonth": "Studies this month",
-  "overdue": "Overdue",
-  "missedConversations": "Missed Conversations",
-  "reschedule": "Reschedule",
-  "markComplete": "Mark complete",
-  "or": "or",
-  "rescheduleDescription": "Move this follow-up to a new date.",
-  "newConversation": "New Conversation",
-  "addConversationShortDescription": "Log a new visit with this contact."
+  "widgetsDescription": "Configureer hoe widgets op het beginscherm eruitzien en zich gedragen.",
+  "contactsWidget": "Widget Contacten",
+  "appointmentsWidget": "Widget Afspraken",
+  "sortOrder": "Sorteer volgorde",
+  "timeWindow": "Tijd venster",
+  "longestContacted": "Langste contact",
+  "none": "Geen",
+  "next7Days": "Komende 7 dagen",
+  "next14Days": "Volgende 14 dagen",
+  "next30Days": "Volgende 30 dagen",
+  "reportedToday": "Vandaag gemeld",
+  "conversationsThisMonth": "Gesprekken deze maand",
+  "studiesThisMonth": "Studies deze maand",
+  "overdue": "Achterstallig",
+  "missedConversations": "Gemiste gesprekken",
+  "reschedule": "Opnieuw inplannen",
+  "markComplete": "Markeer volledig",
+  "or": "of",
+  "rescheduleDescription": "Verplaats deze follow-up naar een nieuwe datum.",
+  "newConversation": "Nieuw gesprek",
+  "addConversationShortDescription": "Een nieuw bezoek met dit contact registreren."
 }

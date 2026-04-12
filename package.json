@@ -20,7 +20,7 @@
     "check:all": "concurrently 'pnpm run testFinal' 'pnpm run typecheck' 'pnpm run lint' 'pnpm run doctor'",
     "testVitest": "",
     "updateSnapshots": "jest -u --coverage=false",
-    "format": "prettier --write . --log-level warn --cache",
+    "fmt": "prettier --write . --log-level warn --cache",
     "typecheck": "tsc -p ./tsconfig.json",
     "lint": "eslint . --cache --cache-location .cache/.eslintcache",
     "doctor": "expo-doctor",

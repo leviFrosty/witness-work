@@ -762,6 +762,7 @@
   "frequency": "Frecuencia",
   "startDate": "Fecha de inicio",
   "createPlan": "Crear plan",
+  "calendar": "Calendario #__# El calendario está disponible para los pioneros y otros editores que realizan un seguimiento de objetivos. #__# Caché de tiempo #__# Mañana #__# Citas #__# No hay citas próximas #__# Aún no hay contactos #__# Mensaje de texto #__# Indicaciones #__# Este mes\n#__# Widgets #__# Configura el aspecto y el comportamiento de los widgets de la pantalla de inicio. #__# Widget de contactos #__# Widget de citas #__# Orden de clasificación #__# Intervalo de tiempo #__# Contacto más antiguo #__# Ninguno #__# Próximos 7 días #__# Próximos 14 días #__# Próximos 30 días\n#__# Reportado hoy #__# Conversaciones de este mes #__# Estudios de este mes #__# Vencidos #__# Conversaciones perdidas #__# Reprogramar #__# Marcar como completado #__# o #__# Mover este seguimiento a una nueva fecha. #__# Nueva conversación #__# Registrar una nueva visita con este contacto.",
   "endDate": "Fecha de finalización",
   "missed": "Incumplido",
   "plans": "Arreglos",

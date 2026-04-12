@@ -602,6 +602,11 @@
       "c14": "O mapa do ecrã de detalhes de contacto está agora ampliado para ver facilmente os arredores num relance.",
       "c15": "Foram resolvidos vários problemas de navegação ao adicionar planos de horário e de agendamento.",
       "c16": "Melhoria da legibilidade e consistência em toda a aplicação, com melhor espaçamento e tamanho dos botões."
+    },
+    "1380": {
+      "c1": "Novo: Os widgets do ecrã inicial estão aqui! Veja o seu calendário mensal, os próximos compromissos e os principais contactos - tudo a partir do seu ecrã inicial. Os widgets combinam com o tema da aplicação e suportam ligações profundas para abrir o ecrã certo com um toque.",
+      "c2": "Resolvido o problema em que o fundo do dia do calendário não ficava verde ao adicionar tempo a uma data futura.",
+      "c3": "Foi resolvido um problema em que os minutos podiam ser apresentados como um número decimal em vez de um número inteiro."
     }
   },
   "installed": "Instalado",

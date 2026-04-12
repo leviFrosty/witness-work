@@ -602,6 +602,9 @@
       "c14": "Improves visibility of Map on Contacts Details screen with better zoom levels.",
       "c15": "Fixed various navigation issues when adding time and scheduling plans.",
       "c16": "Improved readability and consistency throughout the app with better spacing and button sizes."
+    },
+    "1380": {
+      "c1": "Novedad: ¡Ya están aquí los widgets para la pantalla de inicio! Consulta tu calendario mensual, las próximas citas y tus contactos principales, todo desde la pantalla de inicio. Los widgets se adaptan al tema de la aplicación y admiten enlaces directos para abrir la pantalla correcta con un solo toque. #__# Se ha solucionado el problema por el que el fondo del día del calendario no se volvía verde al añadir una hora a una fecha futura. #__# Se ha solucionado el problema por el que los minutos podían aparecer como un número decimal en lugar de un número entero.\n#__# El calendario está disponible para los pioneros y otros editores de seguimiento de objetivos. #__# Caché de tiempo #__# Mañana #__# Citas #__# No hay citas próximas #__# Aún no hay contactos #__# Texto #__# Direcciones #__# Este mes #__# Widgets #__# Configura el aspecto y el comportamiento de los widgets de la pantalla de inicio.\n#__# Widget de contactos #__# Widget de citas #__# Orden de clasificación #__# Intervalo de tiempo #__# Contacto más antiguo #__# Ninguno #__# Próximos 7 días #__# Próximos 14 días #__# Próximos 30 días\n#__# Reportado hoy #__# Conversaciones este mes #__# Estudios este mes #__# Vencidos #__# Conversaciones perdidas #__# Reprogramar #__# Marcar como completado #__# o #__# Mover este seguimiento a una nueva fecha. #__# Nueva conversación #__# Registrar una nueva visita con este contacto."
     }
   },
   "installed": "Instalado",

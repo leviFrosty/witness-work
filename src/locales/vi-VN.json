@@ -602,6 +602,9 @@
       "c14": "Improves visibility of Map on Contacts Details screen with better zoom levels.",
       "c15": "Fixed various navigation issues when adding time and scheduling plans.",
       "c16": "Improved readability and consistency throughout the app with better spacing and button sizes."
+    },
+    "1380": {
+      "c1": "Mới: Các tiện ích màn hình chính đã có mặt! Xem lịch hàng tháng, các cuộc hẹn sắp tới và danh bạ liên hệ hàng đầu — tất cả ngay từ màn hình chính. Các tiện ích này phù hợp với chủ đề của ứng dụng và hỗ trợ liên kết sâu để mở màn hình phù hợp chỉ với một lần chạm. #__# Đã khắc phục sự cố khiến nền ngày trên lịch không chuyển sang màu xanh lá khi thêm thời gian vào một ngày trong tương lai. #__# Đã khắc phục sự cố khiến phút có thể hiển thị dưới dạng số thập phân thay vì số nguyên.\n#__# Lịch hiện có sẵn cho các nhà tiên phong và các nhà xuất bản theo dõi mục tiêu khác. #__# Bộ nhớ đệm thời gian #__# Ngày mai #__# Cuộc hẹn #__# Không có cuộc hẹn sắp tới #__# Chưa có liên hệ nào #__# Tin nhắn #__# Hướng dẫn #__# Tháng này #__# Widget #__# Cấu hình giao diện và cách hoạt động của widget màn hình chính.\n#__# Widget Danh bạ #__# Widget Cuộc hẹn #__# Thứ tự sắp xếp #__# Khoảng thời gian #__# Liên lạc lâu nhất #__# Không có #__# 7 ngày tới #__# 14 ngày tới #__# 30 ngày tới\n#__# Được báo cáo hôm nay #__# Cuộc trò chuyện trong tháng này #__# Nghiên cứu trong tháng này #__# Quá hạn #__# Cuộc trò chuyện bị bỏ lỡ #__# Lên lịch lại #__# Đánh dấu hoàn thành #__# hoặc #__# Chuyển cuộc theo dõi này sang một ngày mới. #__# Cuộc trò chuyện mới #__# Ghi lại một cuộc thăm viếng mới với liên hệ này."
     }
   },
   "installed": "Cài đặt",

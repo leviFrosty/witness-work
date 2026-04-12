@@ -602,6 +602,11 @@
       "c14": "O mapa da tela de detalhes de contato agora está com o zoom reduzido para facilitar a visualização dos arredores.",
       "c15": "Correção de vários problemas de navegação ao adicionar planos de horário e agendamento.",
       "c16": "Melhoria da legibilidade e da consistência em todo o aplicativo com melhor espaçamento e tamanho dos botões."
+    },
+    "1380": {
+      "c1": "Novo: Os widgets da tela inicial estão aqui! Veja o calendário mensal, os próximos compromissos e os principais contatos, tudo na tela inicial. Os widgets combinam com o tema do aplicativo e suportam links diretos para abrir a tela certa com um toque.",
+      "c2": "Resolvido o problema em que o plano de fundo do dia do calendário não ficava verde ao adicionar tempo a uma data futura.",
+      "c3": "Foi solucionado o problema em que os minutos podiam ser exibidos como um decimal em vez de um número inteiro."
     }
   },
   "installed": "Instalado",

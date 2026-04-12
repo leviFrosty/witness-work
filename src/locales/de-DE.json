@@ -602,6 +602,11 @@
       "c14": "Die Karte des Kontaktdetails-Bildschirms ist jetzt verkleinert, um die Umgebung auf einen Blick zu sehen.",
       "c15": "Verschiedene Navigationsprobleme beim Hinzufügen von Zeit- und Terminplänen wurden behoben.",
       "c16": "Verbesserte Lesbarkeit und Konsistenz in der gesamten App durch bessere Abstände und Schaltflächengrößen."
+    },
+    "1380": {
+      "c1": "Neu: Widgets für den Startbildschirm sind da! Zeigen Sie Ihren Monatskalender, anstehende Termine und die wichtigsten Kontakte an - alles auf Ihrem Startbildschirm. Die Widgets passen sich dem Thema der App an und unterstützen Deep Links, um mit einem Fingertipp den richtigen Bildschirm zu öffnen.",
+      "c2": "Es wurde ein Problem behoben, bei dem der Hintergrund des Kalenders nicht grün wurde, wenn Zeit zu einem zukünftigen Datum hinzugefügt wurde.",
+      "c3": "Es wurde ein Problem behoben, bei dem die Minuten als Dezimalzahl statt als ganze Zahl angezeigt wurden."
     }
   },
   "installed": "Eingerichtet",

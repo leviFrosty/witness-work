@@ -105,7 +105,7 @@ const translateLocale = (locale: string): Promise<TranslationResult> => {
   return new Promise((resolve, reject) => {
     const nodeCommand = `pnpm i18n-auto-translation --key ${process.env.DEEPL_FREE_API_KEY} --apiProvider "deepl-free" --dirPath "${LOCALE_DIR}/" --from "EN" --to "${locale}"`
 
-    exec(nodeCommand, (error, _stdout, _stderr) => {
+    exec(nodeCommand, (error) => {
       if (error) {
         logFailure(locale, error)
         reject({ locale, error })

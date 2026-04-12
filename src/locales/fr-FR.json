@@ -602,6 +602,11 @@
       "c14": "La carte de l'écran des détails des contacts est maintenant agrandie pour permettre de voir les environs d'un coup d'œil.",
       "c15": "Correction de divers problèmes de navigation lors de l'ajout d'horaires et de plans de travail.",
       "c16": "Amélioration de la lisibilité et de la cohérence dans l'ensemble de l'application grâce à un meilleur espacement et à une meilleure taille des boutons."
+    },
+    "1380": {
+      "c1": "Nouveau : Les widgets de l'écran d'accueil sont là ! Affichez votre calendrier mensuel, vos rendez-vous à venir et vos principaux contacts, le tout depuis votre écran d'accueil. Les widgets sont assortis au thème de l'application et prennent en charge les liens profonds pour ouvrir l'écran approprié d'un simple toucher.",
+      "c2": "Résolution d'un problème où l'arrière-plan du jour du calendrier ne devenait pas vert lors de l'ajout d'une heure à une date future.",
+      "c3": "Résolution d'un problème où les minutes pouvaient s'afficher sous forme de décimales au lieu d'un nombre entier."
     }
   },
   "installed": "installée",

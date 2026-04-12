@@ -602,6 +602,11 @@
       "c14": "El mapa de la pantalla de detalles de contacto ahora se aleja para ver fácilmente los alrededores de un vistazo.",
       "c15": "Arreglados varios problemas de navegación al añadir planes de horarios.",
       "c16": "Mejora de la legibilidad y la coherencia en toda la aplicación con un mejor espaciado y tamaño de los botones."
+    },
+    "1380": {
+      "c1": "Nuevo: ¡Ya están aquí los widgets de la pantalla de inicio! Consulta tu calendario mensual, tus próximas citas y tus contactos más importantes, todo desde tu pantalla de inicio. Los widgets combinan con el tema de la aplicación y admiten enlaces profundos para abrir la pantalla correcta con un toque.",
+      "c2": "Se ha resuelto un problema por el que el fondo del día del calendario no se volvía verde al añadir tiempo a una fecha futura.",
+      "c3": "Se ha resuelto un problema por el que los minutos podían aparecer como decimales en lugar de como números enteros."
     }
   },
   "installed": "Instalado",

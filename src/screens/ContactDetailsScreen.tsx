@@ -156,6 +156,7 @@ const Hero = ({
         gap: 8,
         justifyContent: 'center',
         alignItems: 'center',
+        backgroundColor: theme.colors.accent3,
       }}
     >
       <Text

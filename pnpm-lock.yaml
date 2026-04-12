@@ -236,8 +236,8 @@ importers:
         specifier: ~4.3.0
         version: 4.3.0(react-native-worklets@0.8.1(@babel/core@7.28.4)(@react-native/metro-config@0.85.0(@babel/core@7.28.4))(react-native@0.83.4(@babel/core@7.28.4)(@react-native-community/cli@13.6.9)(@react-native/metro-config@0.85.0(@babel/core@7.28.4))(@types/react@19.2.14)(react@19.2.0))(react@19.2.0))(react-native@0.83.4(@babel/core@7.28.4)(@react-native-community/cli@13.6.9)(@react-native/metro-config@0.85.0(@babel/core@7.28.4))(@types/react@19.2.14)(react@19.2.0))(react@19.2.0)
       react-native-reanimated-carousel:
-        specifier: ^3.5.1
-        version: 3.5.1(react-native-gesture-handler@2.30.1(react-native@0.83.4(@babel/core@7.28.4)(@react-native-community/cli@13.6.9)(@react-native/metro-config@0.85.0(@babel/core@7.28.4))(@types/react@19.2.14)(react@19.2.0))(react@19.2.0))(react-native-reanimated@4.3.0(react-native-worklets@0.8.1(@babel/core@7.28.4)(@react-native/metro-config@0.85.0(@babel/core@7.28.4))(react-native@0.83.4(@babel/core@7.28.4)(@react-native-community/cli@13.6.9)(@react-native/metro-config@0.85.0(@babel/core@7.28.4))(@types/react@19.2.14)(react@19.2.0))(react@19.2.0))(react-native@0.83.4(@babel/core@7.28.4)(@react-native-community/cli@13.6.9)(@react-native/metro-config@0.85.0(@babel/core@7.28.4))(@types/react@19.2.14)(react@19.2.0))(react@19.2.0))(react-native@0.83.4(@babel/core@7.28.4)(@react-native-community/cli@13.6.9)(@react-native/metro-config@0.85.0(@babel/core@7.28.4))(@types/react@19.2.14)(react@19.2.0))(react@19.2.0)
+        specifier: ^4.0.3
+        version: 4.0.3(react-native-gesture-handler@2.30.1(react-native@0.83.4(@babel/core@7.28.4)(@react-native-community/cli@13.6.9)(@react-native/metro-config@0.85.0(@babel/core@7.28.4))(@types/react@19.2.14)(react@19.2.0))(react@19.2.0))(react-native-reanimated@4.3.0(react-native-worklets@0.8.1(@babel/core@7.28.4)(@react-native/metro-config@0.85.0(@babel/core@7.28.4))(react-native@0.83.4(@babel/core@7.28.4)(@react-native-community/cli@13.6.9)(@react-native/metro-config@0.85.0(@babel/core@7.28.4))(@types/react@19.2.14)(react@19.2.0))(react@19.2.0))(react-native@0.83.4(@babel/core@7.28.4)(@react-native-community/cli@13.6.9)(@react-native/metro-config@0.85.0(@babel/core@7.28.4))(@types/react@19.2.14)(react@19.2.0))(react@19.2.0))(react-native@0.83.4(@babel/core@7.28.4)(@react-native-community/cli@13.6.9)(@react-native/metro-config@0.85.0(@babel/core@7.28.4))(@types/react@19.2.14)(react@19.2.0))(react@19.2.0)
       react-native-safe-area-context:
         specifier: 5.6.2
         version: 5.6.2(react-native@0.83.4(@babel/core@7.28.4)(@react-native-community/cli@13.6.9)(@react-native/metro-config@0.85.0(@babel/core@7.28.4))(@types/react@19.2.14)(react@19.2.0))(react@19.2.0)
@@ -10298,15 +10298,15 @@ packages:
       react: '>= 16.6.3'
       react-native: '*'
 
-  react-native-reanimated-carousel@3.5.1:
+  react-native-reanimated-carousel@4.0.3:
     resolution:
       {
-        integrity: sha512-9BBQV6JAYSQm2lV7MFtT4mzapXmW4IZO6s38gfiJL84Jg23ivGB1UykcNQauKgtHyhtW2NuZJzItb1s42lM+hA==,
+        integrity: sha512-YZXlvZNghR5shFcI9hTA7h7bEhh97pfUSLZvLBAshpbkuYwJDKmQXejO/199T6hqGq0wCRwR0CWf2P4Vs6A4Fw==,
       }
     peerDependencies:
-      react: '>=16.8.0'
-      react-native: '>=0.6.0'
-      react-native-gesture-handler: '>=2.0.0'
+      react: '>=18.0.0'
+      react-native: '>=0.70.3'
+      react-native-gesture-handler: '>=2.9.0'
       react-native-reanimated: '>=3.0.0'
 
   react-native-reanimated@4.3.0:
@@ -20562,7 +20562,7 @@ snapshots:
       react: 19.2.0
       react-native: 0.83.4(@babel/core@7.28.4)(@react-native-community/cli@13.6.9)(@react-native/metro-config@0.85.0(@babel/core@7.28.4))(@types/react@19.2.14)(react@19.2.0)
 
-  react-native-reanimated-carousel@3.5.1(react-native-gesture-handler@2.30.1(react-native@0.83.4(@babel/core@7.28.4)(@react-native-community/cli@13.6.9)(@react-native/metro-config@0.85.0(@babel/core@7.28.4))(@types/react@19.2.14)(react@19.2.0))(react@19.2.0))(react-native-reanimated@4.3.0(react-native-worklets@0.8.1(@babel/core@7.28.4)(@react-native/metro-config@0.85.0(@babel/core@7.28.4))(react-native@0.83.4(@babel/core@7.28.4)(@react-native-community/cli@13.6.9)(@react-native/metro-config@0.85.0(@babel/core@7.28.4))(@types/react@19.2.14)(react@19.2.0))(react@19.2.0))(react-native@0.83.4(@babel/core@7.28.4)(@react-native-community/cli@13.6.9)(@react-native/metro-config@0.85.0(@babel/core@7.28.4))(@types/react@19.2.14)(react@19.2.0))(react@19.2.0))(react-native@0.83.4(@babel/core@7.28.4)(@react-native-community/cli@13.6.9)(@react-native/metro-config@0.85.0(@babel/core@7.28.4))(@types/react@19.2.14)(react@19.2.0))(react@19.2.0):
+  react-native-reanimated-carousel@4.0.3(react-native-gesture-handler@2.30.1(react-native@0.83.4(@babel/core@7.28.4)(@react-native-community/cli@13.6.9)(@react-native/metro-config@0.85.0(@babel/core@7.28.4))(@types/react@19.2.14)(react@19.2.0))(react@19.2.0))(react-native-reanimated@4.3.0(react-native-worklets@0.8.1(@babel/core@7.28.4)(@react-native/metro-config@0.85.0(@babel/core@7.28.4))(react-native@0.83.4(@babel/core@7.28.4)(@react-native-community/cli@13.6.9)(@react-native/metro-config@0.85.0(@babel/core@7.28.4))(@types/react@19.2.14)(react@19.2.0))(react@19.2.0))(react-native@0.83.4(@babel/core@7.28.4)(@react-native-community/cli@13.6.9)(@react-native/metro-config@0.85.0(@babel/core@7.28.4))(@types/react@19.2.14)(react@19.2.0))(react@19.2.0))(react-native@0.83.4(@babel/core@7.28.4)(@react-native-community/cli@13.6.9)(@react-native/metro-config@0.85.0(@babel/core@7.28.4))(@types/react@19.2.14)(react@19.2.0))(react@19.2.0):
     dependencies:
       react: 19.2.0
       react-native: 0.83.4(@babel/core@7.28.4)(@react-native-community/cli@13.6.9)(@react-native/metro-config@0.85.0(@babel/core@7.28.4))(@types/react@19.2.14)(react@19.2.0)

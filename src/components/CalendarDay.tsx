@@ -35,7 +35,7 @@ export const getDateStatusColor = (
   dateInPast: boolean,
   hitGoal: boolean
 ): { bg: string; text: string } => {
-  if (!dateInPast || (isToday && !wentInService))
+  if (!wentInService && (!dateInPast || isToday))
     return {
       bg: theme.colors.background,
       text: theme.colors.text,

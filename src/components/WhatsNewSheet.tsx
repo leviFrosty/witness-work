@@ -116,7 +116,6 @@ export const WhatsNewContent = ({ lastVersion }: { lastVersion: string }) => {
           </View>
         )}
         ItemSeparatorComponent={() => <Divider marginVertical={25} />}
-        estimatedItemSize={125}
       />
     </View>
   )

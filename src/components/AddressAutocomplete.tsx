@@ -170,7 +170,6 @@ const AddressAutocomplete: React.FC<AddressAutocompleteProps> = ({
           <FlashList
             data={suggestions}
             keyExtractor={(_, index) => index.toString()}
-            estimatedItemSize={100}
             renderItem={({ item }) => (
               <TouchableOpacity
                 onPress={() => {

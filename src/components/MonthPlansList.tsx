@@ -125,7 +125,6 @@ const MonthPlansList = ({ month, year }: MonthPlansListProps) => {
       <FlashList
         renderItem={renderPlanItem}
         data={monthPlans}
-        estimatedItemSize={150}
         scrollEnabled={false}
         ItemSeparatorComponent={() => <View style={{ height: 10 }} />}
       />

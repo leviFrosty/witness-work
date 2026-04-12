@@ -5,7 +5,7 @@ vi.mock('expo-document-picker', () => ({
   getDocumentAsync: vi.fn(),
 }))
 
-vi.mock('expo-file-system', () => ({
+vi.mock('expo-file-system/legacy', () => ({
   readAsStringAsync: vi.fn(),
 }))
 

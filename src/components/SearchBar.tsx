@@ -1,8 +1,4 @@
-import {
-  TextInput,
-  NativeSyntheticEvent,
-  TextInputFocusEventData,
-} from 'react-native'
+import { TextInput, TextInputProps } from 'react-native'
 import useTheme from '../contexts/theme'
 import i18n from '../lib/locales'
 import XView from './layout/XView'
@@ -15,12 +11,8 @@ interface Props {
   setValue:
     | React.Dispatch<React.SetStateAction<string | undefined>>
     | ((value: string) => unknown)
-  onFocus?:
-    | ((e: NativeSyntheticEvent<TextInputFocusEventData>) => void)
-    | undefined
-  onBlur?:
-    | ((e: NativeSyntheticEvent<TextInputFocusEventData>) => void)
-    | undefined
+  onFocus?: TextInputProps['onFocus']
+  onBlur?: TextInputProps['onBlur']
 }
 
 const SearchBar = ({

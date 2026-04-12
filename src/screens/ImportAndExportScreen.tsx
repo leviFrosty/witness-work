@@ -10,7 +10,7 @@ import { usePreferences } from '../stores/preferences'
 import useServiceReport, {
   migrateServiceReports,
 } from '../stores/serviceReport'
-import * as FileSystem from 'expo-file-system'
+import * as FileSystem from 'expo-file-system/legacy'
 import * as Sentry from '@sentry/react-native'
 import * as Sharing from 'expo-sharing'
 import * as DocumentPicker from 'expo-document-picker'

@@ -65,11 +65,9 @@ const Accordion: React.FC<PropsWithChildren<Props>> = ({
       <Button style={{ gap: expanded ? 20 : 0 }} onPress={handleToggleExpand}>
         <XView style={{ justifyContent: 'space-between' }}>
           {header}
-          <IconButton
-            icon={faCaretUp}
-            style={animatedStyle}
-            color={theme.colors.text}
-          />
+          <Animated.View style={animatedStyle}>
+            <IconButton icon={faCaretUp} color={theme.colors.text} />
+          </Animated.View>
         </XView>
         <Animated.View style={[{ height: expanded ? 'auto' : 0 }, [viewStyle]]}>
           {children}

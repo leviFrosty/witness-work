@@ -204,7 +204,6 @@ const ReturnVisitContactsSection = () => {
                 {i18n.t('noContactsSaved')}
               </Text>
             )}
-            estimatedItemSize={84}
             ItemSeparatorComponent={() => <View style={{ marginTop: 12 }} />}
           />
         </View>

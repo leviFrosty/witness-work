@@ -94,7 +94,6 @@ const RecoverContactsScreen = () => {
             <View style={{ minHeight: 2 }}>
               <FlashList
                 data={sortedContacts}
-                estimatedItemSize={87}
                 renderItem={({ item }) => (
                   <View style={{ padding: 6 }}>
                     <Card

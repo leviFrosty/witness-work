@@ -226,7 +226,6 @@ const YearScreen = ({ route }: ServiceYearScreenProps) => {
                     )
                   }}
                   ItemSeparatorComponent={() => <View style={{ height: 8 }} />}
-                  estimatedItemSize={183}
                   ListEmptyComponent={
                     <View style={{ gap: 5 }}>
                       <Text>

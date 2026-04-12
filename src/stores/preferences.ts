@@ -6,7 +6,7 @@ import i18n, { TranslatedLocale } from '../lib/locales'
 import Constants from 'expo-constants'
 import moment from 'moment'
 import * as Device from 'expo-device'
-import { ColorSchemeName, Platform } from 'react-native'
+import { Platform } from 'react-native'
 import { hasMigratedFromAsyncStorage, MmkvStorage } from './mmkv'
 import { Address } from '../types/contact'
 import { MinuteDisplayFormat } from '../types/serviceReport'
@@ -185,7 +185,7 @@ const initialState = {
     timer: true,
     contacts: true,
   },
-  colorScheme: undefined as ColorSchemeName,
+  colorScheme: undefined as 'light' | 'dark' | undefined,
   timeDisplayFormat: 'decimal' as MinuteDisplayFormat,
   locale: undefined as TranslatedLocale | undefined,
   mapKeyColors: undefined as MarkerColors | undefined,

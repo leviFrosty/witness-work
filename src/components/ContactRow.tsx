@@ -12,7 +12,11 @@ import {
   contactStudiedForGivenMonth,
 } from '../lib/conversations'
 import IconButton from './IconButton'
-import { faBook, faChevronRight } from '@fortawesome/free-solid-svg-icons'
+import {
+  faBook,
+  faChevronRight,
+  faStar,
+} from '@fortawesome/free-solid-svg-icons'
 import Button from './Button'
 import { Swipeable } from 'react-native-gesture-handler'
 import Haptics from '../lib/haptics'
@@ -136,6 +140,13 @@ const ContactRow = ({
                       : theme.colors.textAlt,
                   }}
                   icon={faBook}
+                />
+              )}
+              {contact.isFavorite && (
+                <IconButton
+                  icon={faStar}
+                  iconStyle={{ color: theme.colors.warn }}
+                  size='sm'
                 />
               )}
               <IconButton

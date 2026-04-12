@@ -105,20 +105,12 @@ const translateLocale = (locale: string): Promise<TranslationResult> => {
   return new Promise((resolve, reject) => {
     const nodeCommand = `pnpm i18n-auto-translation --key ${process.env.DEEPL_FREE_API_KEY} --apiProvider "deepl-free" --dirPath "${LOCALE_DIR}/" --from "EN" --to "${locale}"`
 
-    console.log('FOUND FILES:', listFilesWithoutExtensions(LOCALE_DIR + '/'))
-
-    exec(nodeCommand, (error, stdout, stderr) => {
-      if (stderr) {
-        logError(stderr)
-      }
+    exec(nodeCommand, (error, _stdout, _stderr) => {
       if (error) {
         logFailure(locale, error)
         reject({ locale, error })
       } else {
         logSuccess(locale)
-        if (stdout.trim()) {
-          log(`Output for ${locale}:`, stdout.trim())
-        }
         resolve({ locale, success: true })
       }
     })
@@ -133,19 +125,13 @@ const processTranslationsSequentially = async (): Promise<
   let successCount = 0
   let failureCount = 0
 
-  log(
-    `Processing ${locales.length} locales with ${REQUEST_DELAY_MS}ms delay between requests...`
-  )
+  log(`Translating ${locales.length} locales...`)
 
   for (let i = 0; i < locales.length; i++) {
     const locale = locales[i]
 
-    if (!Object.values(LOCALE_MAP).includes(locale)) {
-      log(`Skipping ${locale}, locale_map does not contain a valid target.`)
-      continue
-    }
+    if (!Object.values(LOCALE_MAP).includes(locale)) continue
 
-    log(`Starting translation for: ${locale}`)
     try {
       const result = await translateLocale(locale)
       successCount++
@@ -160,9 +146,7 @@ const processTranslationsSequentially = async (): Promise<
       })
     }
 
-    // Add delay between requests (except for the last one)
     if (i < locales.length - 1) {
-      log(`Waiting ${REQUEST_DELAY_MS}ms before next request...`)
       await sleep(REQUEST_DELAY_MS)
     }
   }
@@ -188,8 +172,8 @@ interface RenameOptions {
 }
 
 function renameFilesForDeeplSupport({ revert }: RenameOptions = {}): void {
-  log('Preparing file names for i18n-auto-translation...')
   Object.keys(LOCALE_MAP).forEach((key) => {
+    if (!LOCALE_MAP[key]) return
     let oldName = `${LOCALE_DIR}/${key}${FILE_TYPE}`
     let newName = `${LOCALE_DIR}/${LOCALE_MAP[key]}${FILE_TYPE}`
     if (revert) {
@@ -197,26 +181,15 @@ function renameFilesForDeeplSupport({ revert }: RenameOptions = {}): void {
       oldName = newName
       newName = temp
     }
-    if (!LOCALE_MAP[key]) {
-      log('Skipping rename for: ', key)
-      return // we don't want to rename files that have no support by translation provider
-    }
-    log('Temporarily renaming: ', oldName, ' to: ', newName)
     fs.renameSync(oldName, newName)
   })
 }
 
-log('Detecting if translations changed...')
-
 renameFilesForDeeplSupport()
 processTranslationsSequentially()
-  .then(() => {
-    log('Finished auto translations!')
-  })
   .catch((error) => {
     logError('Unexpected error during translations:', error)
   })
   .finally(() => {
-    log('Finally reverting file names back...')
     renameFilesForDeeplSupport({ revert: true })
   })

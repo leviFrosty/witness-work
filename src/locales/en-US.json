@@ -114,7 +114,7 @@
   "editingPlan": "Editing Plan",
   "editingPlan_description": "You're currently editing an existing plan. All fields below have been pre-filled with the current plan details.",
   "editingDayPlan": "Editing Day Plan",
-  "editingRecurringPlan": "Editing Recurring Plan", 
+  "editingRecurringPlan": "Editing Recurring Plan",
   "planType": "Plan Type",
   "currentPlanType": "Current Plan Type",
   "remove": "Remove",
@@ -397,50 +397,35 @@
   "new": "New",
   "bugFixes": "Bug Fixes",
   "updates": {
-    "1211": {
-      "c1": "Added more helpful one-time hints when appropriate."
+    "160": {
+      "c1": "Conversations are now editable. Notifications are configurable",
+      "c2": "Swipe gestures to edit or delete conversations, contacts, etc.",
+      "c3": "Added haptic feedback to various important actions"
     },
-    "1210": {
-      "c1": "Greatly improved accuracy of time displays.",
-      "c2": "Improved accuracy of time progress bars.",
-      "c3": "Added helpful hints for actions that may not be immediately noticeable.",
-      "c4": "Improved quality of life on the maps screen with more relevant information and a quick-add button."
+    "161": {
+      "c1": "Added more minute options for time entries"
     },
-    "1201": {
-      "c1": "Updates monthly routine section of home screen to show surrounding months.",
-      "c2": "Significantly improved Korean translations - thank you brother Paul. If you'd like to help translate your own language, please visit the settings.",
-      "c3": "Minor bug fixes."
+    "162": {
+      "c1": "Adjusted special pioneer hour requirement from 70 to 100"
     },
-    "1200": {
-      "c1": "Adds backup and restore functionality. Now you can backup your data to the cloud and restore it later, this allows you to transfer your data to another device. You can also transfer it to another platform. Find this new feature in settings."
+    "163": {
+      "c1": "Resolve automated update issues"
     },
-    "1120": {
-      "c1": "Adds backup and restore functionality. Now you can backup your data to the cloud and restore it later. You can transfer your data to another device. You can also transfer it to another platform. Find this new feature in the settings."
+    "170": {
+      "c1": "Add various time export methods",
+      "c2": "Add 'Not At Homes'"
     },
-    "1111": {
-      "c1": "Add donate page in the settings for those who wish to contribute.",
-      "c2": "Includes various minor improvements and bug fixes"
+    "180": {
+      "c1": "Added automatic geocoding for contacts",
+      "c2": "Added map view"
     },
-    "1110": {
-      "c1": "Adds native support for iPad & tablets!",
-      "c2": "Adjusted various styles to better fit larger screens.",
-      "c3": "Adjusted the method of submitting Bug Reports and Feature Requests to Github."
+    "181": {
+      "c1": "Expanded map view",
+      "c2": "Added store review request after certain criteria is met",
+      "c3": "Small bug fixes"
     },
-    "1100": {
-      "c1": "Adds annual report to Time Reports screen! Keep track of your service year progress at a glance.",
-      "c2": "Adding time from Time Reports screen now defaults the report to the selected month.",
-      "c3": "Fixes an issue exporting January service report."
-    },
-    "192": {
-      "c1": "Now tap on a conversation row to edit, or swipe left as before.",
-      "c2": "Fixes an issue where some devices have an overflowing progress bar.",
-      "c3": "Adds more verbose handling of link errors for certain devices lacking required applications.",
-      "c4": "Navigate directly to a month from the monthly routine section of the home screen.",
-      "c5": "Time Reports screen better handles empty and future months.",
-      "c6": "Minor bug fixes."
-    },
-    "191": {
-      "c1": "Resolves an issue navigating to time screens."
+    "182": {
+      "c1": "Updated all time to reflect the current locale"
     },
     "190": {
       "c1": "Added preferences in the settings",
@@ -451,42 +436,57 @@
       "c6": "Now add custom tags to your time entries",
       "c7": "Updated Time Reports screen to be better organized and separated by month"
     },
-    "182": {
-      "c1": "Updated all time to reflect the current locale"
+    "191": {
+      "c1": "Resolves an issue navigating to time screens."
     },
-    "181": {
-      "c1": "Expanded map view",
-      "c2": "Added store review request after certain criteria is met",
-      "c3": "Small bug fixes"
+    "192": {
+      "c1": "Now tap on a conversation row to edit, or swipe left as before.",
+      "c2": "Fixes an issue where some devices have an overflowing progress bar.",
+      "c3": "Adds more verbose handling of link errors for certain devices lacking required applications.",
+      "c4": "Navigate directly to a month from the monthly routine section of the home screen.",
+      "c5": "Time Reports screen better handles empty and future months.",
+      "c6": "Minor bug fixes."
     },
-    "180": {
-      "c1": "Added automatic geocoding for contacts",
-      "c2": "Added map view"
+    "1100": {
+      "c1": "Adds annual report to Time Reports screen! Keep track of your service year progress at a glance.",
+      "c2": "Adding time from Time Reports screen now defaults the report to the selected month.",
+      "c3": "Fixes an issue exporting January service report."
     },
-    "170": {
-      "c1": "Add various time export methods",
-      "c2": "Add 'Not At Homes'"
+    "1110": {
+      "c1": "Adds native support for iPad & tablets!",
+      "c2": "Adjusted various styles to better fit larger screens.",
+      "c3": "Adjusted the method of submitting Bug Reports and Feature Requests to Github."
     },
-    "163": {
-      "c1": "Resolve automated update issues"
+    "1111": {
+      "c1": "Add donate page in the settings for those who wish to contribute.",
+      "c2": "Includes various minor improvements and bug fixes"
     },
-    "162": {
-      "c1": "Adjusted special pioneer hour requirement from 70 to 100"
+    "1120": {
+      "c1": "Adds backup and restore functionality. Now you can backup your data to the cloud and restore it later. You can transfer your data to another device. You can also transfer it to another platform. Find this new feature in the settings."
     },
-    "161": {
-      "c1": "Added more minute options for time entries"
+    "1200": {
+      "c1": "Adds backup and restore functionality. Now you can backup your data to the cloud and restore it later, this allows you to transfer your data to another device. You can also transfer it to another platform. Find this new feature in settings."
     },
-    "160": {
-      "c1": "Conversations are now editable. Notifications are configurable",
-      "c2": "Swipe gestures to edit or delete conversations, contacts, etc.",
-      "c3": "Added haptic feedback to various important actions"
+    "1201": {
+      "c1": "Updates monthly routine section of home screen to show surrounding months.",
+      "c2": "Significantly improved Korean translations - thank you brother Paul. If you'd like to help translate your own language, please visit the settings.",
+      "c3": "Minor bug fixes."
+    },
+    "1210": {
+      "c1": "Greatly improved accuracy of time displays.",
+      "c2": "Improved accuracy of time progress bars.",
+      "c3": "Added helpful hints for actions that may not be immediately noticeable.",
+      "c4": "Improved quality of life on the maps screen with more relevant information and a quick-add button."
+    },
+    "1211": {
+      "c1": "Added more helpful one-time hints when appropriate."
     },
     "1220": {
       "c3": "Added Calendar to time reports screen.",
       "c1": "Preferences are now better organized by category.",
       "c2": "Improved import & export screen to be visually clearer.",
       "c4": "Occasionally notifies you to create a new backup. This is configurable in the settings."
-    }, 
+    },
     "1221": {
       "c1": "[iOS] Date and Time pickers now use the correct locale",
       "c2": "Fixed an issue where editing a conversation would incorrectly navigate.",
@@ -602,6 +602,11 @@
       "c14": "Contact Details Screen map is now zoomed out to easily see surroundings at a glance.",
       "c15": "Fixed various navigation issues when adding time and scheduling plans.",
       "c16": "Improved readability and consistency throughout the app with better spacing and button sizes."
+    },
+    "1380": {
+      "c1": "New: Home screen widgets are here! View your monthly calendar, upcoming appointments, and top contacts — all from your home screen. Widgets match the app's theme and support deep links to open the right screen with a tap.",
+      "c2": "Resolved issue where the calendar day background would not turn green when adding time to a future date.",
+      "c3": "Resolved issue where minutes could display as a decimal instead of a whole number."
     }
   },
   "installed": "Installed",
@@ -677,7 +682,7 @@
   "restorePurchase": "Restore Purchases",
   "showAll": "Show More Options",
   "donate_letter": "Dear Brother or Sister,\n\nI am very honored that you have chosen my app to use in the sea of other amazing choices. I started working on this app when I was pioneering - I just couldn't find a clear and concise place to keep my notes. For me, it felt like I would always lose my paper notes and somehow forget my return visits. I knew a lot of other people felt the same way. My goal when creating this app was to focus on high utility but also simplicity. Anyone should be able to use this app, no matter their age or publisher experience. I hope my app has been a useful tool for you and your service to Jehovah. I have spent countless hours developing this app, and I am very happy to see it being used by so many brothers and sisters around the world. If you haven't already, please let others know about WitnessWork - it's a labor of love. Regardless if you choose to donate, I hope you continue to enjoy the app and the future updates.\n\nThank you,\n\nLevi Wilkerson",
-  "donate_letter_ps": "P.S. I'm always available to talk about anything - personal questions, app questions, or other concerns. Feel free to reach out to me at my personal email below." ,
+  "donate_letter_ps": "P.S. I'm always available to talk about anything - personal questions, app questions, or other concerns. Feel free to reach out to me at my personal email below.",
   "emailMe": "Email me!",
   "aLetterForYou": "A letter to you.",
   "frequentlyAskedQuestions": "Frequently Asked Questions",
@@ -941,7 +946,7 @@
   "dismissContactDescriptionWithNotification": "This will hide {{name}} from your contact list and map for {{duration}}. {{example}}\n\nYou'll receive a notification when {{name}} becomes available again.",
   "dismissContactHelp": "{{name}} will be hidden from your contact list and map for the time period you choose. You can always find dismissed contacts in Settings > Contacts > Dismissed Contacts.",
   "dismissFor1Week": "1 Week",
-  "dismissFor1Month": "1 Month", 
+  "dismissFor1Month": "1 Month",
   "dismissFor3Months": "3 Months",
   "dismissFor6Months": "6 Months",
   "dismissFor1Year": "1 Year",

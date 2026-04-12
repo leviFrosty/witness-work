@@ -602,6 +602,11 @@
       "c14": "La mappa della schermata dei dettagli dei contatti è ora ingrandita per vedere facilmente i dintorni a colpo d'occhio.",
       "c15": "Risolti vari problemi di navigazione durante l'aggiunta di piani orari e di pianificazione.",
       "c16": "Migliorata la leggibilità e la coerenza in tutta l'app con una migliore spaziatura e dimensione dei pulsanti."
+    },
+    "1380": {
+      "c1": "Novità: sono arrivati i widget per la schermata iniziale! Visualizzate il calendario mensile, i prossimi appuntamenti e i contatti più importanti, tutto dalla schermata iniziale. I widget si abbinano al tema dell'app e supportano i collegamenti profondi per aprire la schermata giusta con un tocco.",
+      "c2": "Risolto il problema per cui lo sfondo del giorno del calendario non diventava verde quando si aggiungeva tempo a una data futura.",
+      "c3": "Risolto il problema per cui i minuti potevano essere visualizzati come decimali invece che come numeri interi."
     }
   },
   "installed": "Installato",

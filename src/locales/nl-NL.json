@@ -602,6 +602,11 @@
       "c14": "De kaart van het scherm Contactgegevens is nu uitgezoomd om de omgeving in één oogopslag te kunnen zien.",
       "c15": "Diverse navigatieproblemen opgelost bij het toevoegen van tijd- en planningsschema's.",
       "c16": "Verbeterde leesbaarheid en consistentie in de app met betere spatiëring en knopgroottes."
+    },
+    "1380": {
+      "c1": "Nieuw: widgets voor het beginscherm zijn er! Bekijk je maandelijkse agenda, komende afspraken en belangrijkste contacten - allemaal vanaf je startscherm. Widgets passen bij het thema van de app'en ondersteunen deeplinks om met één tik het juiste scherm te openen.",
+      "c2": "Probleem opgelost waarbij de achtergrond van de agendadag niet groen werd bij het toevoegen van tijd aan een datum in de toekomst.",
+      "c3": "Probleem opgelost waarbij minuten als een decimaal getal konden worden weergegeven in plaats van een heel getal."
     }
   },
   "installed": "Geïnstalleerd",

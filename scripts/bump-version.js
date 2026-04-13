@@ -6,8 +6,10 @@
  * Bumps the version in package.json and app.config.ts, creates a git commit and
  * tag.
  *
- * Usage: pnpm run version:bump major # 1.36.0 → 2.0.0 pnpm run version:bump
- * minor # 1.36.0 → 1.37.0 pnpm run version:bump patch # 1.36.0 → 1.36.1
+ * Usage: pnpm run bump-version major # 1.36.0 → 2.0.0 pnpm run bump-version
+ * minor # 1.36.0 → 1.37.0 pnpm run bump-version patch # 1.36.0 → 1.36.1
+ *
+ * Options: --skip-notes Skip release notes generation
  */
 
 import fs from 'fs'
@@ -47,7 +49,47 @@ function warning(message) {
   log(`⚠️  ${message}`, 'yellow')
 }
 
-const bumpType = process.argv[2]
+const args = process.argv.slice(2)
+
+if (args.includes('--help') || args.includes('-h')) {
+  console.log(`
+${colors.cyan}bump-version${colors.reset} — Bump the app version, optionally generate release notes, commit, and tag.
+
+${colors.yellow}USAGE${colors.reset}
+  pnpm run bump-version <major|minor|patch> [options]
+
+${colors.yellow}ARGUMENTS${colors.reset}
+  major          Bump the major version    (e.g. 1.36.0 → 2.0.0)
+  minor          Bump the minor version    (e.g. 1.36.0 → 1.37.0)
+  patch          Bump the patch version    (e.g. 1.36.0 → 1.36.1)
+
+${colors.yellow}OPTIONS${colors.reset}
+  --skip-notes   Skip release notes generation. Only bumps the version in
+                 package.json and app.config.ts, commits, and tags. Useful for
+                 shipping a quick update without notifying users via in-app
+                 release notes.
+  -h, --help     Show this help message and exit.
+
+${colors.yellow}WHAT IT DOES${colors.reset}
+  1. Updates the version in package.json and app.config.ts.
+  2. (Unless --skip-notes) Uses Claude to generate user-facing release notes
+     from the git log, lets you review/revise interactively, then updates
+     releaseNotes.ts, en-US.json, and runs auto-translate.
+  3. Stages all changed files, creates a commit, and an annotated git tag.
+
+${colors.yellow}EXAMPLES${colors.reset}
+  pnpm run bump-version minor              # bump + release notes
+  pnpm run bump-version patch --skip-notes  # bump only, no release notes
+
+${colors.yellow}PREREQUISITES${colors.reset}
+  - Clean git working tree (no uncommitted changes).
+  - Claude CLI available on PATH (for release notes generation).
+`)
+  process.exit(0)
+}
+
+const skipNotes = args.includes('--skip-notes')
+const bumpType = args.find((a) => !a.startsWith('--'))
 if (!['major', 'minor', 'patch'].includes(bumpType)) {
   error('Invalid bump type. Use: major, minor, or patch')
 }
@@ -311,7 +353,12 @@ ${feedback}`
 
 // Run the interactive flow
 try {
-  const notes = await generateAndReviewNotes()
+  let notes = null
+  if (skipNotes) {
+    info('Skipping release notes generation (--skip-notes)')
+  } else {
+    notes = await generateAndReviewNotes()
+  }
   rl.close()
 
   let releaseNotesGenerated = false

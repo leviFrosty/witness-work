@@ -169,10 +169,7 @@ try {
   error(`Failed to update app.config.ts: ${e.message}`)
 }
 
-// Generate release notes via Claude CLI
-console.log('')
-info('Generating release notes with Claude...')
-
+// Release notes preparation
 const versionKey = newVersion.replace(/\./g, '')
 const today = new Date().toISOString().split('T')[0]
 
@@ -437,7 +434,7 @@ try {
 
   console.log('')
   info('Next steps:')
-  info(`   git push origin main --follow-tags`)
+  info(`   git push origin development --follow-tags`)
   info(`   → This will trigger the production build workflow`)
 
   console.log('')

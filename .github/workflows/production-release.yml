@@ -60,9 +60,6 @@ jobs:
       - name: Build and submit iOS to App Store
         run: eas build --platform ios --profile production --auto-submit --non-interactive --no-wait
 
-      - name: Build and submit Android to Play Store
-        run: eas build --platform android --profile production --auto-submit --non-interactive --no-wait
-
       - name: Create GitHub Release
         uses: actions/github-script@v7
         with:

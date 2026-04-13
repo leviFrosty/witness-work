@@ -1,3 +1,4 @@
+import { execSync } from 'child_process'
 import { ExpoConfig, ConfigContext } from 'expo/config'
 import { withSentry } from '@sentry/react-native/expo'
 /** Passed in from `env` property in profile `./eas.json` to eas build */
@@ -64,6 +65,7 @@ export default ({ config }: ConfigContext): ExpoConfig => {
       },
     },
     extra: {
+      commitHash: execSync('git rev-parse --short HEAD').toString().trim(),
       eas: {
         projectId: 'a67257dc-2fb8-4942-97f2-e9364b80d318',
       },

@@ -76,7 +76,7 @@ const SettingsScreen = (props: DrawerContentComponentProps) => {
             onPress={incrementHiddenCounter}
           >
             {Constants.expoConfig?.version
-              ? `v${Constants.expoConfig?.version}`
+              ? `v${Constants.expoConfig?.version} (${Constants.expoConfig?.extra?.commitHash ?? '?'})`
               : i18n.t('versionUnknown')}
           </Text>
           {developerTools && (

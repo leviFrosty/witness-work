@@ -9,37 +9,19 @@ WitnessWork is the easy way for Jehovah's Witnesses to manage their field servic
 
 It is written in Typescript using React Native and Expo and is available on iOS and Android. Android is currently unavailable in the USA due legacy trademark restrictions. ~I am working to resolve this issue with Google.~ I have given up on working with Google on resolving this. Unfortunately this app will not be available on Android in the US.
 
+## Sponsor
+
+Please consider donating if you have found WitnessWork helpful to you in your service & you have the means.
+
+[![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/leviwilkerson)
+
 ## Looking for maintainers
 
-Are you available to assist in resolving bugs / adding features? Please contact me at levi@leviwilkerson.com to discuss!
-
-## State of Development
-
-I am considering WitnessWork "feature complete" for now. It is currently being maintained to ensure that it functions and does not have major bugs.
-
-If you have a feature request, please still send it -- I may still consider adding the feature if I consider it to be something extremely valuable to the userbase.
-If you have a bug, please report it. Eventually I will resolve the issues in order of severity and scope. There are no promises that each bug will be resolved, or even that it'll be handled in a timely manner.
-
-### Goals
-
-- Maintain valid App Store status
-- Provide bug fixes
-
-### Non Goals
-
-- Add features to WitnessWork
-- Expand WitnessWork's integrations
-
-### What the future looks like
-
-I do not guarantee that this software will be maintained forever -- as Apple and Google's App Stores are very annoying to deal with.
-At some point, if my free time becomes more readily available, I might consider rewriting this into an [PWA](https://developer.mozilla.org/en-US/docs/Web/Progressive_web_apps) in the future so I can bypass App Stores and remove the complexity of cross platform native development.
+Due to my increased time constraints volunteering @ Bethel, my day job, family, etc., I'm looking for someone to take the lead in bug fixes + future development on this project for the foreseeable future. Please contact me at <levi@leviwilkerson.com>.
 
 ## View it live
 
 [![App Store](https://img.shields.io/badge/App_Store-0D96F6?style=for-the-badge&logo=app-store&logoColor=white)](https://apps.apple.com/us/app/jw-time/id6469723047)
-
-<!-- [![Play Store](https://img.shields.io/badge/Google_Play-414141?style=for-the-badge&logo=google-play&logoColor=white)](https://play.google.com/store/apps/details?id=com.leviwilkerson.witnesswork) -->
 
 <div float="left">
 <img src="./docs/screenshots/preview1.jpg" width="130">
@@ -58,52 +40,4 @@ WitnessWork is available in 16 languages. Some of these translations are done by
 
 ## License
 
-WitnessWork © 2023-2025 by Levi Wilkerson is licensed under [Attribution-NonCommercial 4.0 International](./LICENSE)
-
-## Sponsor
-
-Sponsors & Donations are never expected but greatly appreciated.
-
-[![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/leviwilkerson)
-
-## Build
-
-The build process for iOS and Android is similar. Ensure you have all dependencies installed.
-
-### iOS
-
-Build dependencies: [XCode](https://docs.expo.dev/workflow/ios-simulator/#install-xcode), XCode latest iOS version, [XCode cli](https://docs.expo.dev/workflow/ios-simulator/#install-xcode-command-line-tools), [Watchman](https://facebook.github.io/watchman/docs/install#macos), [Fastlane](https://docs.fastlane.tools/), [Cocoapods](https://cocoapods.org/), [Node](https://nodejs.org/en/download/package-manager), [pnpm](https://pnpm.io/), and [EAS cli](https://docs.expo.dev/eas-update/getting-started/)
-
-1. Clone repository
-
-1. Switch to workspace node version, `nvm use`
-
-1. Install dependencies, `pnpm install`
-
-1. Build iOS, run `pnpm run build:ios`
-
-1. Install new build to simulator, (replace path) `eas build:run -p ios --path [path].tar.gz`
-
-1. Run development server, `pnpm run dev`
-
-1. Develop 🚀
-
-### Android
-
-Build dependencies: [Android Studio](https://developer.android.com/studio), [JDK](https://openjdk.org/), [pnpm](https://pnpm.io/), [EAS cli](https://docs.expo.dev/eas-update/getting-started/), [Watchman](https://facebook.github.io/watchman/docs/install#macos), and [Fastlane](https://docs.fastlane.tools/)
-
-1. Clone repository
-
-1. Switch to workspace node version, `nvm use`
-
-1. Install dependencies, `pnpm install`
-
-1. Build iOS, run `pnpm build:android`
-
-1. Install new build to simulator, (replace path) `eas build:run -p android --path [path].apk`
-
-1. Run development server, `pnpm run dev`
-
-1. Develop
-
-Learn about the [file and project structure](./docs/project-structure.md).
+WitnessWork © 2023-2026 by Levi Wilkerson is licensed under [Attribution-NonCommercial 4.0 International](./LICENSE)

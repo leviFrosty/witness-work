@@ -33,7 +33,15 @@ export const navigationRef = createNavigationContainerRef<RootStackParamList>()
  * 0h0m service report) rather than push a new screen.
  */
 export const linking: LinkingOptions<RootStackParamList> = {
-  prefixes: [Linking.createURL('/'), 'witnesswork://'],
+  prefixes: [
+    Linking.createURL('/'),
+    'witnesswork://',
+    // Universal Links for shared contact URLs. The /c/:payload path is
+    // handled imperatively by ContactImportListener (it needs to decode,
+    // confirm with the user, then navigate) — not via React Navigation's
+    // declarative `screens` config.
+    'https://ww-proxy.leviwilkerson.com',
+  ],
   config: {
     // Always seed the stack with `Root` so deep-linked screens (Contact
     // Details, Add Time, …) have something to pop back to. Without this,

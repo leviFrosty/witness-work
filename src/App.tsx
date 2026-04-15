@@ -39,7 +39,7 @@ import AnimationViewProvider from './providers/AnimationViewProvider'
 import useUserLocalePrefs from './hooks/useLocale'
 import { installWidgetSync } from './lib/widgets/widgetSync'
 import { linking, navigationRef } from './lib/linking'
-import SharedGoodNewsListener from './components/SharedGoodNewsListener'
+import DeepLinkListeners from './components/DeepLinkListeners'
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
@@ -145,7 +145,7 @@ export default function App() {
                     <StatusBar />
                     <ToastViewport />
                     <AnimationViewProvider>
-                      <SharedGoodNewsListener />
+                      <DeepLinkListeners />
                       <RootStackComponent />
                     </AnimationViewProvider>
                   </ToastProvider>

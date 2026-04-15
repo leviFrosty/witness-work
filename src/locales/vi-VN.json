@@ -309,6 +309,7 @@
   "share": "Chia sẻ",
   "exportContact": "Export Contact",
   "shareContact": "Share Contact",
+  "shareContactMessage": "Xem thông tin liên hệ này trong WitnessWork: #__# Chỉ {{included}} cuộc trò chuyện gần đây nhất (trong tổng số {{total}}) được đưa vào để giữ cho liên kết đủ ngắn để chia sẻ. #__# Nhập thông tin liên hệ? #__# Nhập \"{{name}}\" vào WitnessWork? #__# Đã khắc phục sự cố khiến nền ngày trên lịch không chuyển sang màu xanh lá khi thêm thời gian vào một ngày trong tương lai.\n#__# Đã khắc phục sự cố khiến phút hiển thị dưới dạng số thập phân thay vì số nguyên. #__# Lịch hiện có sẵn cho các nhà tiên phong và các nhà xuất bản theo dõi mục tiêu khác. #__# Bộ nhớ đệm thời gian #__# Ngày mai #__# Cuộc hẹn #__# Không có cuộc hẹn sắp tới #__# Chưa có liên hệ nào #__# Tin nhắn #__# Hướng dẫn #__# Tháng này\n#__# Widget #__# Cấu hình giao diện và cách hoạt động của widget trên màn hình chính. #__# Widget Danh bạ #__# Widget Cuộc hẹn #__# Thứ tự sắp xếp #__# Khoảng thời gian #__# Liên lạc lâu nhất #__# Không có #__# 7 ngày tới #__# 14 ngày tới #__# 30 ngày tới\n#__# Được báo cáo hôm nay #__# Cuộc trò chuyện trong tháng này #__# Nghiên cứu trong tháng này #__# Quá hạn #__# Cuộc trò chuyện bị bỏ lỡ #__# Lên lịch lại #__# Đánh dấu hoàn thành #__# hoặc #__# Chuyển cuộc theo dõi này sang một ngày mới. #__# Cuộc trò chuyện mới #__# Ghi lại một cuộc thăm viếng mới với liên hệ này.",
   "includeConversationHistory": "Include Conversation History",
   "excludeConversationHistory": "Exclude Conversation History",
   "options": "Options",

@@ -18,4 +18,3 @@
 - Remove all android references in the codebase. the app is now ios only.
 - update calendar widget to default add time, + button adds plan. Add plan helper text.
 - Add a toggle to swap between time added and time planned
--

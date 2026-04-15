@@ -68,6 +68,7 @@ import Card from '../components/Card'
 import ContactActionsSheet, {
   ContactActionsSheetState,
 } from '../components/ContactActionsSheet'
+import { buildContactShareLink } from '../lib/contactShareLink'
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Contact Details'>
 
@@ -653,6 +654,41 @@ const ContactDetailsScreen = ({ route, navigation }: Props) => {
   const handleExportContact = useCallback(async () => {
     if (!contact) return
 
+    // Primary path: share a universal link. Tapping it on a device with the
+    // app installed opens straight into the Contact Details screen; iOS
+    // without the app falls through to the ww-proxy fallback HTML (App Store
+    // CTA). Google-Maps-style "tap the bubble, open the app".
+    try {
+      const { url, includedConversations, trimmed } = buildContactShareLink(
+        contact,
+        contactConversations
+      )
+      logger.log('[ContactShareLink] generated url =', url)
+      logger.log('[ContactShareLink] length =', url.length, 'bytes')
+      // Pass the URL as `url` (not embedded in `message`) so iOS fetches
+      // Open Graph metadata from the ww-proxy fallback page and renders a
+      // rich link preview in the share sheet + iMessage bubble. Passing
+      // both fields causes some targets to duplicate the URL.
+      await Share.share({
+        url,
+        title: i18n.t('exportContact'),
+      })
+      if (trimmed) {
+        toast.show(i18n.t('shareContact'), {
+          message: i18n.t('shareContactTrimmed', {
+            included: includedConversations,
+            total: contactConversations.length,
+          }),
+          native: true,
+        })
+      }
+      return
+    } catch (error) {
+      // Fall through to file-export path for contacts too large to fit in a
+      // URL even with zero conversations (pathological custom fields, etc.).
+      logger.error('Falling back to file export:', error)
+    }
+
     const exportData: ContactExport = {
       version: '1.0',
       type: 'witnesswork-contact',
@@ -670,7 +706,11 @@ const ContactDetailsScreen = ({ route, navigation }: Props) => {
     const sanitizedName = contact.name.replace(/[^a-zA-Z0-9]/g, '_')
     const timestamp = moment().format('YYYY-MM-DD')
     const fileName = `${sanitizedName}_${timestamp}.witnesswork`
-    const fileUri = `${FileSystem.documentDirectory}${fileName}`
+    // Cache dir (not document dir): iOS share-sheet attachments are passed by
+    // reference, so we can't delete the file immediately after `Share.share`
+    // resolves without blanking the iMessage attachment. Cache is purged by
+    // the OS when needed.
+    const fileUri = `${FileSystem.cacheDirectory}${fileName}`
 
     try {
       await FileSystem.writeAsStringAsync(fileUri, jsonString)
@@ -678,14 +718,12 @@ const ContactDetailsScreen = ({ route, navigation }: Props) => {
         url: fileUri,
         title: i18n.t('exportContact'),
       })
-      // Clean up temporary file
-      await FileSystem.deleteAsync(fileUri, { idempotent: true })
     } catch (error) {
       logger.error('Error sharing contact:', error)
-      // Fallback to sharing JSON as text
+      // Last resort: share the JSON as message text.
       await Share.share({ message: jsonString })
     }
-  }, [contact, contactConversations])
+  }, [contact, contactConversations, toast])
 
   useEffect(() => {
     navigation.setOptions({

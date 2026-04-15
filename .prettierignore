@@ -4,3 +4,7 @@ src/assets/lottie/**
 
 # TODO: make this only exluded when using husky and prettier cli
 src/locales/**
+
+# Symlinks to shared Stopwatch Swift sources (canonical files live in
+# modules/stopwatch-bridge/ios/). Prettier errors on explicitly-staged symlinks.
+targets/widgets/Stopwatch/*.swift

@@ -1,2 +1,3 @@
-prettier $(git diff --cached --name-only --diff-filter=ACMR | sed 's| |\\ |g') --write --ignore-unknown --ignore-path=".prettierignore"
+files=$(git diff --cached --name-only --diff-filter=ACMR | while IFS= read -r f; do [ -L "$f" ] || printf '%s\n' "$f"; done)
+[ -n "$files" ] && prettier $(printf '%s\n' "$files" | sed 's| |\\ |g') --write --ignore-unknown --ignore-path=".prettierignore"
 git update-index --again

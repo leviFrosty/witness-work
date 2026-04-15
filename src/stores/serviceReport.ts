@@ -18,11 +18,6 @@ const initialState = {
   serviceReports: {} as ServiceReportsByYears,
   dayPlans: [] as DayPlan[],
   recurringPlans: [] as RecurringPlan[],
-  persistedStopwatch: {
-    startTime: 0,
-    isRunning: false,
-    timeWhenLastStopped: 0,
-  },
 }
 
 /**

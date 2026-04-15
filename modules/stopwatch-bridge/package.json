@@ -1,0 +1,7 @@
+{
+  "name": "stopwatch-bridge",
+  "version": "0.1.0",
+  "description": "Local Expo module exposing the iOS stopwatch Live Activity controls to JS.",
+  "main": "index.ts",
+  "private": true
+}

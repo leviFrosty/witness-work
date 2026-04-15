@@ -1,6 +1,5 @@
 # TODO
 
-- Add intent to witnesswork file type for contact export and json backup file.
 - Add live activity
 - Add WW icon to widgets (small top right)
 - Add e2e tests

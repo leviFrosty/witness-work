@@ -1,0 +1,1 @@
+../../../modules/stopwatch-bridge/ios/StopwatchIntents.swift

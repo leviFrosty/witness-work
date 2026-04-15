@@ -8,5 +8,8 @@ struct WitnessWorkWidgets: WidgetBundle {
     CalendarWidget()
     AppointmentsWidget()
     ContactsWidget()
+    if #available(iOS 16.2, *) {
+      StopwatchLiveActivity()
+    }
   }
 }

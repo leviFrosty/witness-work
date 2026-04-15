@@ -53,10 +53,6 @@ MMKV's binary format isn't readable from Swift, so JS computes a small derived *
 
 The dev variant has its own group so dev builds can iterate without polluting prod data. Both are declared in `app.config.ts` (`ios.entitlements`) and mirrored in `targets/hours/expo-target.config.js`.
 
-## Apple Team ID
-
-App Group entitlements require an Apple Team ID. Set `APPLE_TEAM_ID` in your env (or the EAS project secrets). `app.config.ts` reads `process.env.APPLE_TEAM_ID` into `ios.appleTeamId`.
-
 ## Adding a field to the snapshot
 
 1. Add the field to `WidgetSnapshot` in `src/lib/widgets/snapshot.ts` and populate it in `buildWidgetSnapshot()` (or one of the `build*.ts` helpers it composes). Reuse existing utilities from `src/lib/serviceReport.ts`, `src/lib/minutes.ts`, `src/lib/contacts.ts`, etc. — never reimplement.

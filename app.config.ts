@@ -27,9 +27,7 @@ export default ({ config }: ConfigContext): ExpoConfig => {
       bundleIdentifier: IS_DEV
         ? 'com.leviwilkerson.jwtimedev'
         : 'com.leviwilkerson.jwtime',
-      // Required for App Group entitlements (widget <-> app shared container).
-      // Set via env in CI/EAS or hardcode here once known.
-      appleTeamId: process.env.APPLE_TEAM_ID,
+      appleTeamId: 'Y3KE7B7AHJ',
       infoPlist: {
         RCTAsyncStorageExcludeFromBackup: false,
         ITSAppUsesNonExemptEncryption: false,
@@ -39,7 +37,33 @@ export default ({ config }: ConfigContext): ExpoConfig => {
         BGTaskSchedulerPermittedIdentifiers: [
           'com.leviwilkerson.jwtime.widget.refresh',
         ],
+        // Register the .witnesswork contact-export file type so iMessage,
+        // Files, etc. open WitnessWork when the user taps the attachment.
+        UTExportedTypeDeclarations: [
+          {
+            UTTypeIdentifier: 'com.leviwilkerson.witnesswork.contact',
+            UTTypeDescription: 'WitnessWork Contact',
+            UTTypeConformsTo: ['public.json'],
+            UTTypeTagSpecification: {
+              'public.filename-extension': ['witnesswork'],
+              'public.mime-type': ['application/witnesswork+json'],
+            },
+          },
+        ],
+        CFBundleDocumentTypes: [
+          {
+            CFBundleTypeName: 'WitnessWork Contact',
+            CFBundleTypeRole: 'Editor',
+            LSHandlerRank: 'Owner',
+            LSItemContentTypes: ['com.leviwilkerson.witnesswork.contact'],
+          },
+        ],
       },
+      // Universal Links for shared contact URLs
+      // (https://ww-proxy.leviwilkerson.com/c/*). The ww-proxy worker serves
+      // the AASA file that lists both dev and prod bundle IDs, so a single
+      // associated domain works across both build variants.
+      associatedDomains: ['applinks:ww-proxy.leviwilkerson.com'],
       entitlements: {
         'com.apple.security.application-groups': [
           IS_DEV

@@ -172,6 +172,9 @@ importers:
       expo-updates:
         specifier: ~55.0.20
         version: 55.0.20(expo@55.0.14)(react-native@0.83.4(@babel/core@7.28.4)(@react-native-community/cli@13.6.9)(@react-native/metro-config@0.85.0(@babel/core@7.28.4))(@types/react@19.2.14)(react@19.2.0))(react@19.2.0)(typescript@5.9.2)
+      fflate:
+        specifier: ^0.8.2
+        version: 0.8.2
       i18n-js:
         specifier: ^4.5.1
         version: 4.5.1
@@ -7006,6 +7009,12 @@ packages:
     resolution:
       {
         integrity: sha512-m6I8ALe4L4XpdETy7MJZWs6L1IVMbjs99bwbpIKphxX+0CTns4IKDWJY0LWfr4YsFjfg+z1TjzTMU8lKl8rG0w==,
+      }
+
+  fflate@0.8.2:
+    resolution:
+      {
+        integrity: sha512-cPJU47OaAoCbg0pBvzsgpTPhmhqI5eJjh/JIu8tPj5q+T7iLvW/JAYUqmE7KOB4R1ZyEhzBaIQpQpardBF5z8A==,
       }
 
   file-entry-cache@6.0.1:
@@ -18084,6 +18093,8 @@ snapshots:
       web-streams-polyfill: 3.3.3
 
   fetch-nodeshim@0.4.10: {}
+
+  fflate@0.8.2: {}
 
   file-entry-cache@6.0.1:
     dependencies:

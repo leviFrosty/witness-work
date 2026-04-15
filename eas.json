@@ -35,7 +35,7 @@
       "autoIncrement": true,
       "node": "20.14.0",
       "ios": {
-        "image": "macos-sequoia-15.3-xcode-16.2"
+        "image": "latest"
       }
     },
     "production-local": {
@@ -54,12 +54,11 @@
       "channel": "production",
       "ios": {
         "simulator": true,
-        "image": "macos-sequoia-15.3-xcode-16.2"
+        "image": "latest"
       },
       "node": "20.14.0",
       "env": {
         "SENTRY_DISABLE_AUTO_UPLOAD": "true",
-        "APPLE_TEAM_ID": "Y3KE7B7AHJ",
         "ENTRY_FILE": "src/index.js"
       }
     }

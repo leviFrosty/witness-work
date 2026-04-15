@@ -500,6 +500,13 @@ const AddSheet = ({
     setSheetOpen(false)
   }
 
+  // Unmount the entire Sheet when closed so the tamagui modal portal +
+  // overlay (zIndex 99999) don't linger on top of subsequent screens.
+  // Same pattern as QuickActionSheet.
+  if (!sheetOpen) {
+    return null
+  }
+
   return (
     <Sheet
       open={sheetOpen}
@@ -533,6 +540,7 @@ const AddSheet = ({
             </Text>
           </View>
           <Button
+            testID='add-sheet-not-at-home'
             style={{ gap: 10 }}
             variant='outline'
             onPress={async () => handleAction('notAtHome')}
@@ -551,6 +559,7 @@ const AddSheet = ({
             </Text>
           </Button>
           <Button
+            testID='add-sheet-conversation'
             style={{ gap: 10, backgroundColor: theme.colors.accent }}
             variant='solid'
             onPress={async () => handleAction('conversation')}
@@ -697,6 +706,7 @@ const ContactDetailsScreen = ({ route, navigation }: Props) => {
               }}
             >
               <IconButton
+                testID='contact-details-menu'
                 icon={faEllipsisVertical}
                 color={theme.colors.textInverse}
                 onPress={() => {
@@ -707,6 +717,7 @@ const ContactDetailsScreen = ({ route, navigation }: Props) => {
               />
 
               <IconButton
+                testID='contact-details-favorite'
                 icon={contact?.isFavorite ? faStar : faStarOutline}
                 color={theme.colors.textInverse}
                 onPress={() => {
@@ -722,7 +733,10 @@ const ContactDetailsScreen = ({ route, navigation }: Props) => {
                 onPress={handleExportContact}
               />
 
-              <Button onPress={() => setSheetOpen(true)}>
+              <Button
+                testID='contact-details-add'
+                onPress={() => setSheetOpen(true)}
+              >
                 <XView
                   style={{
                     borderColor: theme.colors.textInverse,

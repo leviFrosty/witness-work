@@ -1,0 +1,25 @@
+appId: ${APP_ID}
+---
+- runFlow: ../../subflows/launch-fresh.yml
+- runFlow: ../../subflows/seed-contact.yml
+- tapOn:
+    id: 'contact-details-add'
+    label: 'Tap header + button'
+- extendedWaitUntil:
+    visible:
+      id: 'add-sheet-not-at-home'
+    timeout: 10000
+- tapOn:
+    id: 'add-sheet-not-at-home'
+    label: 'Tap Not at Home'
+- extendedWaitUntil:
+    visible:
+      id: 'conversation-form-save'
+    timeout: 10000
+    label: 'Conversation form opens prefilled with notAtHome'
+- tapOn:
+    id: 'conversation-form-save'
+    label: 'Save not-at-home entry'
+- assertVisible:
+    text: 'Test Contact'
+    label: 'Returned to Contact Details'

@@ -361,6 +361,7 @@ const ContactFormScreen = ({ route, navigation }: Props) => {
               </View>
             ) : (
               <Button
+                testID='contact-form-save'
                 disabled={fetching}
                 style={{ position: 'absolute', right: 0 }}
                 onPress={async () => {

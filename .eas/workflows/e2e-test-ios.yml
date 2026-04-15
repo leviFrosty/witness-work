@@ -1,0 +1,26 @@
+name: e2e-test-ios
+
+on:
+  pull_request:
+    branches: ['*']
+
+jobs:
+  check_syntax:
+    steps:
+      - uses: eas/checkout
+      - name: Check Maestro syntax
+        run: find src/__tests__/e2e -name '*.yml' -print0 | xargs -0 -n1 maestro check-syntax
+
+  build_e2e:
+    needs: [check_syntax]
+    type: build
+    params:
+      platform: ios
+      profile: production-simulator
+
+  e2e_test:
+    needs: [build_e2e]
+    type: maestro
+    params:
+      build_id: ${{ needs.build_e2e.outputs.build_id }}
+      flow_path: ['src/__tests__/e2e/']

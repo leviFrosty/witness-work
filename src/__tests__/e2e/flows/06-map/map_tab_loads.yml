@@ -1,0 +1,11 @@
+appId: ${APP_ID}
+---
+- runFlow: ../../subflows/launch-fresh.yml
+- tapOn:
+    id: 'tab-map'
+    label: 'Navigate to Map tab'
+# Empty state when no contacts have geocoded addresses.
+- extendedWaitUntil:
+    visible: 'Map'
+    timeout: 10000
+    label: 'Map screen renders'

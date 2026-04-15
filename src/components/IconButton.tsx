@@ -16,6 +16,7 @@ type Props = {
   style?: StyleProp<ViewStyle>
   iconStyle?: FontAwesomeIconStyle
   color?: string
+  testID?: string
 }
 
 const IconButton = ({
@@ -25,6 +26,7 @@ const IconButton = ({
   size: _size,
   iconStyle,
   color,
+  testID,
 }: Props) => {
   const theme = useContext(ThemeContext)
   const size = typeof _size === 'number' ? _size : theme.fontSize(_size)
@@ -35,6 +37,7 @@ const IconButton = ({
       noTransform={!onPress}
       disabled={!onPress}
       onPress={onPress}
+      testID={testID}
     >
       <FontAwesomeIcon
         icon={icon}

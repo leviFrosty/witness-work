@@ -1,0 +1,10 @@
+appId: ${APP_ID}
+---
+- runFlow: ../../subflows/launch-fresh.yml
+- openLink: 'witnesswork://shared-good-news'
+# Action only — should remain on Home tab and trigger a 0h service report
+# (visible via confetti / report count). At minimum, the app stays alive
+# and the Home tab is still visible.
+- assertVisible:
+    id: 'tab-home'
+    label: 'Home tab still visible after shared-good-news action'

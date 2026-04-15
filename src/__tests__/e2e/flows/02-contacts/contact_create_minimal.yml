@@ -1,0 +1,23 @@
+appId: ${APP_ID}
+---
+- runFlow: ../../subflows/launch-fresh.yml
+- tapOn:
+    id: 'tab-quick-action'
+    label: 'Open quick actions'
+- tapOn:
+    id: 'quick-action-addContact'
+    label: 'Choose Add Contact'
+- extendedWaitUntil:
+    visible: "What's their name?"
+    timeout: 15000
+    label: 'Wait for contact form (match placeholder)'
+- tapOn:
+    id: 'contact-form-name'
+    label: 'Focus name input'
+- inputText: 'Jane Doe'
+- tapOn:
+    id: 'contact-form-save'
+    label: 'Save with name only'
+- assertVisible:
+    id: 'conversation-form-save'
+    label: 'Conversation form opens after contact save'

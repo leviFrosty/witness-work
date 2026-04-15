@@ -104,6 +104,7 @@ const TabBar = ({ state, descriptors, ...props }: BottomTabBarProps) => {
                   }}
                 >
                   <Button
+                    testID='tab-quick-action'
                     style={{
                       backgroundColor: theme.colors.accent,
                       borderRadius: theme.numbers.borderRadiusSm,
@@ -123,6 +124,7 @@ const TabBar = ({ state, descriptors, ...props }: BottomTabBarProps) => {
                 </View>
               )}
               <TouchableOpacity
+                testID={`tab-${route.name.toLowerCase()}`}
                 accessibilityRole='button'
                 accessibilityState={isFocused ? { selected: true } : {}}
                 accessibilityLabel={options.tabBarAccessibilityLabel}

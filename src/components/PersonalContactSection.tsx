@@ -134,6 +134,8 @@ export default function PersonalContactSection({
         label={i18n.t('name')}
         ref={nameInput}
         textInputProps={{
+          testID: 'contact-form-name',
+          accessible: true,
           placeholder: i18n.t('name_placeholder'),
           onChangeText: (val: string) => setName(val),
           value: contact.name,

@@ -1,0 +1,4 @@
+# Maestro test suite config. Controls which flows `maestro test src/__tests__/e2e/`
+# picks up. Subflows are referenced via `runFlow:` and should NOT be matched here.
+flows:
+  - 'flows/**'

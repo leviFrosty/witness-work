@@ -1,0 +1,8 @@
+appId: ${APP_ID}
+---
+# Launch with cleared state AND complete onboarding. Use this at the top of
+# most flows so they start from a known "onboarded, empty" state.
+- launchApp:
+    clearState: true
+    label: 'Launch with fresh state'
+- runFlow: complete-onboarding.yml

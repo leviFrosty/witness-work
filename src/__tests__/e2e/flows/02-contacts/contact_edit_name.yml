@@ -1,0 +1,28 @@
+appId: ${APP_ID}
+---
+- runFlow: ../../subflows/launch-fresh.yml
+- runFlow: ../../subflows/seed-contact.yml
+- tapOn:
+    id: 'contact-details-menu'
+    label: 'Open contact actions (native iOS sheet)'
+- tapOn:
+    text: 'Edit'
+    label: 'Tap Edit in native action sheet'
+- extendedWaitUntil:
+    visible: 'Test Contact'
+    timeout: 15000
+    label: 'Wait for edit form with prefilled value'
+- tapOn:
+    id: 'contact-form-name'
+    label: 'Focus prefilled name field'
+- eraseText: 20
+- inputText: 'Renamed Contact'
+- tapOn:
+    id: 'contact-form-save'
+    label: 'Save edited contact'
+- assertVisible:
+    text: 'Renamed Contact'
+    label: 'Updated name visible on Contact Details'
+- assertNotVisible:
+    text: 'Test Contact'
+    label: 'Old name gone'

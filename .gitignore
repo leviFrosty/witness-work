@@ -62,3 +62,6 @@ build-*
 # Agentic tools
 .cursor
 .claude
+
+# Local e2e build cache
+.e2e/

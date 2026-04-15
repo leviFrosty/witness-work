@@ -1,0 +1,17 @@
+appId: ${APP_ID}
+---
+- runFlow: ../../subflows/launch-fresh.yml
+- runFlow: ../../subflows/seed-contact.yml
+- tapOn:
+    id: 'contact-details-menu'
+    label: 'Open contact actions (native iOS sheet)'
+- tapOn:
+    text: 'Delete'
+    label: 'Tap Delete in native action sheet'
+# Native Alert confirmation — tap the destructive "Delete" button.
+- tapOn:
+    text: 'Delete'
+    label: 'Confirm delete in alert'
+- assertNotVisible:
+    text: 'Test Contact'
+    label: 'Contact no longer visible after delete'

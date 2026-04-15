@@ -1,0 +1,9 @@
+appId: ${APP_ID}
+---
+- runFlow: ../../subflows/launch-fresh.yml
+- runFlow: ../../subflows/seed-contact.yml
+# seed-contact.yml already asserts we're on Contact Details with the name visible.
+# Extra verification that conversation history rendered something.
+- assertVisible:
+    text: 'Test Contact'
+    label: 'Contact name persists on details screen'

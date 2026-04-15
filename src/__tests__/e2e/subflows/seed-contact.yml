@@ -1,0 +1,32 @@
+appId: ${APP_ID}
+---
+# Create a contact named "Test Contact" and log an initial (empty) conversation
+# so it appears in contact stores. Lands on Contact Details.
+#
+# Prereq: caller has an onboarded app state (use launch-fresh.yml first).
+- tapOn:
+    id: 'tab-quick-action'
+    label: 'Open quick actions'
+- tapOn:
+    id: 'quick-action-addContact'
+    label: 'Choose Add Contact'
+- extendedWaitUntil:
+    visible: "What's their name?"
+    timeout: 15000
+    label: 'Wait for contact form (match placeholder)'
+- tapOn:
+    id: 'contact-form-name'
+    label: 'Focus name input'
+- inputText: 'Test Contact'
+- tapOn:
+    id: 'contact-form-save'
+    label: 'Save contact'
+- assertVisible:
+    id: 'conversation-form-save'
+    label: 'Conversation form opened after contact save'
+- tapOn:
+    id: 'conversation-form-save'
+    label: 'Save empty conversation'
+- assertVisible:
+    text: 'Test Contact'
+    label: 'Landed on Contact Details for seeded contact'

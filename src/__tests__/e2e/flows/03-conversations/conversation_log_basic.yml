@@ -1,0 +1,28 @@
+appId: ${APP_ID}
+---
+- runFlow: ../../subflows/launch-fresh.yml
+- runFlow: ../../subflows/seed-contact.yml
+# seed-contact lands on Contact Details. Add a second conversation via the
+# header "+" → AddSheet → Conversation flow.
+- tapOn:
+    id: 'contact-details-add'
+    label: 'Tap header + button'
+- extendedWaitUntil:
+    visible:
+      id: 'add-sheet-conversation'
+    timeout: 10000
+    label: 'AddSheet opened with conversation option'
+- tapOn:
+    id: 'add-sheet-conversation'
+    label: 'Tap Conversation'
+- extendedWaitUntil:
+    visible:
+      id: 'conversation-form-save'
+    timeout: 10000
+    label: 'Conversation Form opens'
+- tapOn:
+    id: 'conversation-form-save'
+    label: 'Save second conversation'
+- assertVisible:
+    text: 'Test Contact'
+    label: 'Returned to Contact Details after second save'

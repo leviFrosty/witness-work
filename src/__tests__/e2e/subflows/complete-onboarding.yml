@@ -1,0 +1,33 @@
+appId: ${APP_ID}
+---
+# Reusable onboarding completion. Caller should `launchApp: clearState: true`
+# before running this so onboarding is guaranteed to show.
+- assertVisible:
+    text: 'Welcome To'
+    label: 'Onboarding step 1 visible'
+- tapOn:
+    text: 'Get Started'
+    label: 'Start onboarding'
+- assertVisible:
+    text: 'What type of publisher are you?'
+    label: 'Publisher step visible'
+- tapOn:
+    text: 'Continue'
+    label: 'Accept default publisher'
+- runFlow:
+    when:
+      visible: 'Skip'
+    commands:
+      - tapOn:
+          text: 'Skip'
+          label: 'Skip notifications'
+- runFlow:
+    when:
+      visible: 'Continue'
+    commands:
+      - tapOn:
+          text: 'Continue'
+          label: 'Accept default navigation'
+- tapOn:
+    text: 'Complete Setup'
+    label: 'Finish onboarding'

@@ -1,0 +1,9 @@
+appId: ${APP_ID}
+---
+- launchApp:
+    clearState: true
+    label: 'Launch app cold'
+- runFlow: ../../subflows/complete-onboarding.yml
+- assertVisible:
+    id: 'tab-home'
+    label: 'Home tab visible after onboarding'

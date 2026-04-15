@@ -1,18 +1,7 @@
-import { Sheet } from 'tamagui'
-import { Alert, View } from 'react-native'
-import Button from './Button'
-import IconButton from './IconButton'
-import Text from './MyText'
+import { ActionSheetIOS, Alert, Platform } from 'react-native'
 import i18n from '../lib/locales'
-import useTheme from '../contexts/theme'
-import {
-  faClock,
-  faPencil,
-  faTimes,
-  faTrash,
-} from '@fortawesome/free-solid-svg-icons'
 import { Contact } from '../types/contact'
-import { useCallback } from 'react'
+import { useCallback, useEffect, useRef } from 'react'
 import { NativeStackNavigationProp } from '@react-navigation/native-stack'
 import { RootStackParamList } from '../types/rootStack'
 import { useToastController } from '@tamagui/toast'
@@ -35,45 +24,39 @@ interface ContactActionsSheetProps {
   setDismissSheetOpen: React.Dispatch<React.SetStateAction<boolean>>
 }
 
+type ActionKey = 'edit' | 'dismiss' | 'delete'
+
 const ContactActionsSheet = ({
   sheet,
   setSheet,
   navigation,
   setDismissSheetOpen,
 }: ContactActionsSheetProps) => {
-  const theme = useTheme()
   const toast = useToastController()
   const { deleteContact } = useContacts()
   const { contact } = sheet
 
   const handleAction = useCallback(
-    async (action: 'edit' | 'dismiss' | 'delete') => {
+    (action: ActionKey) => {
       if (!contact) return
       setSheet({ open: false, contact: undefined })
 
       switch (action) {
-        case 'edit': {
+        case 'edit':
           navigation.replace('Contact Form', {
             id: contact.id,
             edit: true,
           })
           break
-        }
-
-        case 'dismiss': {
+        case 'dismiss':
           setDismissSheetOpen(true)
           break
-        }
-
-        case 'delete': {
+        case 'delete':
           Alert.alert(
             i18n.t('archiveContact_question'),
             i18n.t('archiveContact_description'),
             [
-              {
-                text: i18n.t('cancel'),
-                style: 'cancel',
-              },
+              { text: i18n.t('cancel'), style: 'cancel' },
               {
                 text: i18n.t('delete'),
                 style: 'destructive',
@@ -89,111 +72,52 @@ const ContactActionsSheet = ({
             ]
           )
           break
-        }
       }
     },
     [contact, deleteContact, navigation, setDismissSheetOpen, setSheet, toast]
   )
 
-  if (!contact) {
-    return null
-  }
+  // Stable refs so the effect only depends on sheet.open / contact and
+  // doesn't re-fire the ActionSheet on every render.
+  const handleActionRef = useRef(handleAction)
+  handleActionRef.current = handleAction
+  const setSheetRef = useRef(setSheet)
+  setSheetRef.current = setSheet
 
-  const isDismissed = isContactDismissed(contact)
+  // iOS: present a true UIKit action sheet via ActionSheetIOS. Fires once
+  // per `sheet.open` transition. No portal, no overlay artifacts.
+  useEffect(() => {
+    if (Platform.OS !== 'ios' || !sheet.open || !contact) return
 
-  return (
-    <Sheet
-      open={sheet.open}
-      onOpenChange={(o: boolean) => setSheet({ ...sheet, open: o })}
-      dismissOnSnapToBottom
-      modal
-    >
-      <Sheet.Handle />
-      <Sheet.Overlay zIndex={100_000 - 1} />
-      <Sheet.Frame>
-        <View style={{ padding: 30, gap: 15 }}>
-          <View style={{ marginBottom: 20 }}>
-            <View
-              style={{
-                flexDirection: 'row',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-              }}
-            >
-              <Text
-                style={{
-                  fontSize: theme.fontSize('xl'),
-                  fontFamily: theme.fonts.semiBold,
-                  color: theme.colors.text,
-                }}
-              >
-                {i18n.t('actions')}
-              </Text>
+    const isDismissed = isContactDismissed(contact)
+    const actions: { key: ActionKey | 'cancel'; label: string }[] = [
+      { key: 'edit', label: i18n.t('edit') },
+      ...(isDismissed
+        ? []
+        : [{ key: 'dismiss' as const, label: i18n.t('dismiss') }]),
+      { key: 'delete', label: i18n.t('delete') },
+      { key: 'cancel', label: i18n.t('cancel') },
+    ]
 
-              <IconButton
-                icon={faTimes}
-                size='xl'
-                onPress={() => setSheet({ open: false, contact: undefined })}
-              />
-            </View>
-          </View>
+    ActionSheetIOS.showActionSheetWithOptions(
+      {
+        title: i18n.t('actions'),
+        options: actions.map((a) => a.label),
+        destructiveButtonIndex: actions.findIndex((a) => a.key === 'delete'),
+        cancelButtonIndex: actions.findIndex((a) => a.key === 'cancel'),
+      },
+      (index) => {
+        const picked = actions[index]
+        if (!picked || picked.key === 'cancel') {
+          setSheetRef.current({ open: false, contact: undefined })
+          return
+        }
+        handleActionRef.current(picked.key)
+      }
+    )
+  }, [sheet.open, contact])
 
-          <View style={{ gap: 10 }}>
-            <Button
-              onPress={() => handleAction('edit')}
-              variant='solid'
-              style={{ backgroundColor: theme.colors.card }}
-            >
-              <View
-                style={{ flexDirection: 'row', gap: 10, alignItems: 'center' }}
-              >
-                <IconButton icon={faPencil} />
-                <Text style={{ color: theme.colors.text }}>
-                  {i18n.t('edit')}
-                </Text>
-              </View>
-            </Button>
-
-            {!isDismissed && (
-              <Button
-                onPress={() => handleAction('dismiss')}
-                variant='solid'
-                style={{ backgroundColor: theme.colors.card }}
-              >
-                <View
-                  style={{
-                    flexDirection: 'row',
-                    gap: 10,
-                    alignItems: 'center',
-                  }}
-                >
-                  <IconButton icon={faClock} />
-                  <Text style={{ color: theme.colors.text }}>
-                    {i18n.t('dismiss')}
-                  </Text>
-                </View>
-              </Button>
-            )}
-
-            <Button
-              onPress={() => handleAction('delete')}
-              variant='solid'
-              style={{ backgroundColor: theme.colors.errorTranslucent }}
-            >
-              <View
-                style={{ flexDirection: 'row', gap: 10, alignItems: 'center' }}
-              >
-                <IconButton icon={faTrash} color={theme.colors.error} />
-                <Text style={{ color: theme.colors.error }}>
-                  {i18n.t('delete')}
-                </Text>
-              </View>
-            </Button>
-          </View>
-        </View>
-      </Sheet.Frame>
-    </Sheet>
-  )
+  return null
 }
 
 export default ContactActionsSheet

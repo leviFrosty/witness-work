@@ -86,6 +86,13 @@ const Header = ({
       >
         {buttonType !== 'none' && (
           <IconButton
+            testID={
+              buttonType === 'back'
+                ? 'header-back-button'
+                : buttonType === 'exit'
+                  ? 'header-exit-button'
+                  : 'header-drawer-button'
+            }
             style={{ position: 'absolute', left: 0 }}
             onPress={handleButtonAction}
             icon={iconName()}

@@ -1,0 +1,22 @@
+appId: ${APP_ID}
+---
+- runFlow: ../../subflows/launch-fresh.yml
+- swipe:
+    start: 0%, 50%
+    end: 60%, 50%
+    label: 'Open drawer'
+- extendedWaitUntil:
+    visible: 'Preferences'
+    timeout: 10000
+- tapOn:
+    text: 'Preferences'
+- extendedWaitUntil:
+    visible: 'Import'
+    timeout: 10000
+    label: 'Preferences shows Import & Export option'
+- tapOn:
+    text: 'Import'
+- extendedWaitUntil:
+    visible: 'Export'
+    timeout: 10000
+    label: 'Import & Export screen rendered'

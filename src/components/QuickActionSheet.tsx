@@ -45,6 +45,14 @@ export default function QuickActionSheet({
     }
   }
 
+  // When closed, return nothing so the tamagui Sheet's modal portal
+  // (and its overlay at zIndex 99999) fully unmounts. Keeping the Sheet
+  // mounted across navigation leaves the overlay visible on top of the
+  // destination screen — blocks accessibility queries and touch events.
+  if (!sheetOpen) {
+    return null
+  }
+
   return (
     <Sheet
       open={sheetOpen}
@@ -111,6 +119,7 @@ function ActionButton(props: {
   const theme = useTheme()
   return (
     <Button
+      testID={`quick-action-${props.text}`}
       onPress={props.onPress}
       style={{
         justifyContent: 'flex-start',

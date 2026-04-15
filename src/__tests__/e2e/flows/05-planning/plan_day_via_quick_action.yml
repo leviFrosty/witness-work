@@ -1,0 +1,13 @@
+appId: ${APP_ID}
+---
+- runFlow: ../../subflows/launch-fresh.yml
+- tapOn:
+    id: 'tab-quick-action'
+    label: 'Open quick actions'
+- tapOn:
+    id: 'quick-action-createPlan'
+    label: 'Tap Create Plan'
+- extendedWaitUntil:
+    visible: 'Plan'
+    timeout: 10000
+    label: 'Plan Day screen opens via quick action'

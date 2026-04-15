@@ -1,0 +1,14 @@
+appId: ${APP_ID}
+---
+- runFlow: ../../subflows/launch-fresh.yml
+- runFlow: ../../subflows/seed-contact.yml
+- tapOn:
+    id: 'contact-details-favorite'
+    label: 'Mark as favorite'
+# Re-tap should unfavorite; both taps should succeed without navigation.
+- tapOn:
+    id: 'contact-details-favorite'
+    label: 'Unmark favorite'
+- assertVisible:
+    text: 'Test Contact'
+    label: 'Still on Contact Details after favorite toggle'

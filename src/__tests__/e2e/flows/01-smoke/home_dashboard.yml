@@ -1,0 +1,9 @@
+appId: ${APP_ID}
+---
+- runFlow: ../../subflows/launch-fresh.yml
+- assertVisible:
+    text: 'Home'
+    label: 'Home tab label visible'
+- assertVisible:
+    text: 'Map'
+    label: 'Map tab label visible'

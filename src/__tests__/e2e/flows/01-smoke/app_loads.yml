@@ -1,0 +1,8 @@
+appId: ${APP_ID}
+---
+- launchApp:
+    clearState: true
+    label: 'Launch app cold'
+- assertVisible:
+    text: 'Welcome To'
+    label: 'Onboarding renders on first launch'

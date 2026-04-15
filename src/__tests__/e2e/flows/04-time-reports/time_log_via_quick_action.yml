@@ -1,0 +1,13 @@
+appId: ${APP_ID}
+---
+- runFlow: ../../subflows/launch-fresh.yml
+- tapOn:
+    id: 'tab-quick-action'
+    label: 'Open quick actions'
+- tapOn:
+    id: 'quick-action-addTime'
+    label: 'Tap Add Time'
+- extendedWaitUntil:
+    visible: 'Add Time'
+    timeout: 10000
+    label: 'Add Time form opens via quick action'

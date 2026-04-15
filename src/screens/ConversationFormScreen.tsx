@@ -469,6 +469,7 @@ const ConversationFormScreen = ({ route, navigation }: Props) => {
                 />
               )}
               <Button
+                testID='conversation-form-save'
                 onPress={async () => {
                   const succeeded = await submit()
                   if (!succeeded) {

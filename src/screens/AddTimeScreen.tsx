@@ -642,6 +642,7 @@ const AddTimeScreen = ({ route }: AddTimeScreenProps) => {
             </Text>
           )}
           <ActionButton
+            testID='add-time-submit'
             disabled={!submittable}
             onPress={existingServiceReport ? save : submit}
           >

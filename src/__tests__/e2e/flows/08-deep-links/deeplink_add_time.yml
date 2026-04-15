@@ -1,0 +1,8 @@
+appId: ${APP_ID}
+---
+- runFlow: ../../subflows/launch-fresh.yml
+- openLink: 'witnesswork://add-time'
+- extendedWaitUntil:
+    visible: 'Add Time'
+    timeout: 10000
+    label: 'Add Time screen rendered via deep link'

@@ -1,0 +1,15 @@
+appId: ${APP_ID}
+---
+- runFlow: ../../subflows/launch-fresh.yml
+- tapOn:
+    text: 'Map'
+    label: 'Navigate to Map tab'
+- assertVisible:
+    text: 'Map'
+    label: 'Map screen loaded'
+- tapOn:
+    text: 'Home'
+    label: 'Navigate back to Home tab'
+- assertVisible:
+    text: 'Home'
+    label: 'Home screen loaded'

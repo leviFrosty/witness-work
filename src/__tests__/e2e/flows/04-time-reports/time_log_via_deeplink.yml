@@ -1,0 +1,16 @@
+appId: ${APP_ID}
+---
+- runFlow: ../../subflows/launch-fresh.yml
+- openLink: 'witnesswork://add-time'
+- extendedWaitUntil:
+    visible: 'Add Time'
+    timeout: 10000
+    label: 'Add Time form opens'
+# Form requires entering at least 1 minute and selecting a category.
+# Until time-input testIDs are added, this flow only verifies the
+# Add Time screen is reachable via deep link. Filling/submitting the
+# form will be added once we instrument the time picker / category
+# selector.
+- assertVisible:
+    text: 'Add Time'
+    label: 'Add Time form rendered'

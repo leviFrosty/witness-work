@@ -130,9 +130,9 @@ export default function App() {
 
   try {
     return (
-      <ThemeProvider>
-        <SafeAreaProvider>
-          <CustomerProvider>
+      <CustomerProvider>
+        <ThemeProvider>
+          <SafeAreaProvider>
             <GestureHandlerRootView style={{ flex: 1 }}>
               <NavigationContainer ref={navigationRef} linking={linking}>
                 <TamaguiProvider
@@ -152,9 +152,9 @@ export default function App() {
                 </TamaguiProvider>
               </NavigationContainer>
             </GestureHandlerRootView>
-          </CustomerProvider>
-        </SafeAreaProvider>
-      </ThemeProvider>
+          </SafeAreaProvider>
+        </ThemeProvider>
+      </CustomerProvider>
     )
   } catch (error) {
     Sentry.captureException(error)

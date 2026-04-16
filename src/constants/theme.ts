@@ -35,6 +35,7 @@ export const lightModeColors = {
   pink: '#EC4899',
   pinkAlt: '#FDF2F8',
   indigo: '#6366F1',
+  indigoTranslucent: '#6366F133',
   indigoAlt: '#EEF2FF',
   cyan: '#06B6D4',
   cyanAlt: '#ECFEFF',
@@ -42,6 +43,10 @@ export const lightModeColors = {
   limeAlt: '#F7FEE7',
   rose: '#F43F5E',
   roseAlt: '#FFF1F2',
+  // Supporter identity — amber/gold, used for supporter badges, gated rows, and the onboarding intro.
+  supporter: '#ffc228',
+  supporterTranslucent: '#ffc12533',
+  supporterAlt: '#FBE9A5',
 }
 
 const darkModeColors: Colors = {
@@ -79,6 +84,7 @@ const darkModeColors: Colors = {
   pink: '#F472B6',
   pinkAlt: '#831843',
   indigo: '#818CF8',
+  indigoTranslucent: '#818CF833',
   indigoAlt: '#312E81',
   cyan: '#22D3EE',
   cyanAlt: '#164E63',
@@ -86,6 +92,10 @@ const darkModeColors: Colors = {
   limeAlt: '#365314',
   rose: '#FB7185',
   roseAlt: '#881337',
+  // Supporter identity — brighter amber for dark mode legibility.
+  supporter: '#F4C23A',
+  supporterTranslucent: '#F4C23A33',
+  supporterAlt: '#5A4310',
 }
 
 export const numbers = {

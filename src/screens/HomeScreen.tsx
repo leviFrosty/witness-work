@@ -30,8 +30,8 @@ import BackupReminder from '../components/BackupReminder'
 import { TimerSection } from '../components/TimerSection'
 import UpgradeLegacyTimeReportsSheet from '../components/UpgradeLegacyTimeReportsSheet'
 import ProfileCard from '../components/ProfileCard'
-import ProfileSetupSheet from '../components/ProfileSetupSheet'
 import { HomeTabStackNavigation } from '../types/homeStack'
+import { RootStackNavigation } from '../types/rootStack'
 
 export const HomeScreen = () => {
   const theme = useTheme()
@@ -48,6 +48,7 @@ export const HomeScreen = () => {
   const { hasAnnualGoal } = usePublisher()
   const { serviceReportTags, publisher, homeScreenElements } = usePreferences()
   const navigation = useNavigation<HomeTabStackNavigation>()
+  const rootNavigation = useNavigation<RootStackNavigation>()
   const serviceYear = getServiceYearFromDate(moment())
   const hasLegacyReports = useMemo(() => {
     return serviceReportTags.some((t) => typeof t === 'string')
@@ -60,8 +61,6 @@ export const HomeScreen = () => {
     month: 0,
     year: 0,
   })
-  const [profileSheetOpen, setProfileSheetOpen] = useState(false)
-
   const approachingConversations = useMemo(
     () =>
       upcomingFollowUpConversations({
@@ -133,7 +132,9 @@ export const HomeScreen = () => {
         }}
       >
         <View style={{ gap: 20, paddingBottom: insets.bottom, flex: 1 }}>
-          <ProfileCard onPressIncomplete={() => setProfileSheetOpen(true)} />
+          <ProfileCard
+            onPressIncomplete={() => rootNavigation.navigate('ProfileSetup')}
+          />
           {homeScreenElements.approachingConversations &&
             (approachingConvosWithActiveContacts.length > 0 ||
               overdueConvosWithActiveContacts.length > 0) && (
@@ -192,10 +193,6 @@ export const HomeScreen = () => {
         sheet={exportTimeSheet}
         setSheet={setExportTimeSheet}
         showViewAllMonthsButton={publisher !== 'publisher'}
-      />
-      <ProfileSetupSheet
-        open={profileSheetOpen}
-        setOpen={setProfileSheetOpen}
       />
     </View>
   )

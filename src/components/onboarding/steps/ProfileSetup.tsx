@@ -7,9 +7,10 @@ import i18n from '../../../lib/locales'
 import Wrapper from '../../layout/Wrapper'
 import ActionButton from '../../ActionButton'
 import useTheme from '../../../contexts/theme'
-import ProfileSetupForm from '../../ProfileSetupForm'
 import ProfileCard from '../../ProfileCard'
+import DateTimePicker from '../../DateTimePicker'
 import { usePreferences } from '../../../stores/preferences'
+import { isPioneer } from '../../../constants/publisher'
 
 interface Props {
   goBack: () => void
@@ -18,7 +19,7 @@ interface Props {
 
 const ProfileSetup = ({ goBack, goNext }: Props) => {
   const theme = useTheme()
-  const { set } = usePreferences()
+  const { publisher, pioneerStartDate, set } = usePreferences()
 
   const handleContinue = () => {
     set({ hasCompletedProfileSetup: true })
@@ -57,20 +58,39 @@ const ProfileSetup = ({ goBack, goNext }: Props) => {
           >
             {i18n.t('profileSetupDesc')}
           </Text>
-          <ProfileSetupForm />
-          <View style={{ marginTop: 24, gap: 8 }}>
-            <Text
-              style={{
-                fontSize: 12,
-                color: theme.colors.textAlt,
-                textTransform: 'uppercase',
-                letterSpacing: 0.5,
-              }}
-            >
-              {i18n.t('profileSetupPreviewLabel')}
-            </Text>
-            <ProfileCard preview />
-          </View>
+          <ProfileCard editable />
+          {isPioneer(publisher) && (
+            <View style={{ marginTop: 20, gap: 6 }}>
+              <Text
+                style={{
+                  fontFamily: theme.fonts.semiBold,
+                  color: theme.colors.text,
+                }}
+              >
+                {i18n.t('pioneerStartDate')}
+              </Text>
+              <Text
+                style={{
+                  fontSize: 12,
+                  color: theme.colors.textAlt,
+                  marginBottom: 4,
+                }}
+              >
+                {i18n.t('pioneerStartDate_description')}
+              </Text>
+              <DateTimePicker
+                value={
+                  pioneerStartDate ? new Date(pioneerStartDate) : new Date()
+                }
+                onChange={(_e, date) => {
+                  if (date) set({ pioneerStartDate: date })
+                }}
+                maximumDate={new Date()}
+                iOSMode='date'
+                androidFirstPickerMode='date'
+              />
+            </View>
+          )}
         </View>
       </KeyboardAwareScrollView>
       <ActionButton onPress={handleContinue}>{i18n.t('continue')}</ActionButton>

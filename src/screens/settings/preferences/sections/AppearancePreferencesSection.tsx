@@ -9,6 +9,7 @@ import { useContext } from 'react'
 import { ThemeContext } from '../../../../contexts/theme'
 import { MinuteDisplayFormat } from '../../../../types/serviceReport'
 import MapKey from '../../../../components/MapColorKey'
+import AccentColorPicker from '../../../../components/AccentColorPicker'
 import Divider from '../../../../components/Divider'
 
 const AppearancePreferencesSection = () => {
@@ -109,6 +110,10 @@ const AppearancePreferencesSection = () => {
         >
           {i18n.t('thisGloballyOffsetsTextSize')}
         </Text>
+      </Section>
+      <Divider marginVertical={20} />
+      <Section style={{ paddingLeft: 20, paddingRight: 20 }} noPadding>
+        <AccentColorPicker />
       </Section>
       <Divider marginVertical={20} />
       <Section style={{ paddingLeft: 20, paddingRight: 20 }} noPadding>

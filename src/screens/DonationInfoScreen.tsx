@@ -25,6 +25,8 @@ import Divider from '../components/Divider'
 import PreviousDonations from '../components/PreviousDonations'
 import useCustomer from '../hooks/useCustomer'
 import { RootStackNavigation } from '../types/rootStack'
+import SupporterBenefits from '../components/SupporterBenefits'
+import SupporterBadge from '../components/SupporterBadge'
 
 const DonationInfoScreen = () => {
   const theme = useTheme()
@@ -181,6 +183,47 @@ const DonationInfoScreen = () => {
             <ShareAppButton />
           </View>
           <Divider />
+          <View style={{ gap: 10, paddingHorizontal: 5 }}>
+            <View
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: 10,
+                flexWrap: 'wrap',
+              }}
+            >
+              <Text
+                style={{
+                  fontSize: theme.fontSize('lg'),
+                  fontFamily: theme.fonts.semiBold,
+                }}
+              >
+                {i18n.t('supporterBenefitsTitle')}
+              </Text>
+              <Text
+                style={{
+                  fontSize: theme.fontSize('sm'),
+                  color: theme.colors.textAlt,
+                }}
+              >
+                =
+              </Text>
+              <SupporterBadge size='md' />
+            </View>
+            <Text
+              style={{
+                fontSize: theme.fontSize('sm'),
+                color: theme.colors.textAlt,
+                lineHeight: 19,
+              }}
+            >
+              {i18n.t('monthlySupporterExplainer')}
+            </Text>
+            <View style={{ marginTop: 8 }}>
+              <SupporterBenefits />
+            </View>
+          </View>
+          <Divider />
           <View style={{ gap: 10 }}>
             <Text
               style={{
@@ -194,11 +237,37 @@ const DonationInfoScreen = () => {
             <Accordion
               style={{ flexShrink: 1 }}
               header={
-                <Text
-                  style={{
-                    fontFamily: theme.fonts.semiBold,
-                  }}
-                >
+                <Text style={{ fontFamily: theme.fonts.semiBold }}>
+                  {i18n.t('donate_faq3')}
+                </Text>
+              }
+            >
+              <Text>{i18n.t('donate_faqAnswer3')}</Text>
+            </Accordion>
+            <Accordion
+              style={{ flexShrink: 1 }}
+              header={
+                <Text style={{ fontFamily: theme.fonts.semiBold }}>
+                  {i18n.t('donate_faq5')}
+                </Text>
+              }
+            >
+              <Text>{i18n.t('donate_faqAnswer5')}</Text>
+            </Accordion>
+            <Accordion
+              style={{ flexShrink: 1 }}
+              header={
+                <Text style={{ fontFamily: theme.fonts.semiBold }}>
+                  {i18n.t('donate_faq4')}
+                </Text>
+              }
+            >
+              <Text>{i18n.t('donate_faqAnswer4')}</Text>
+            </Accordion>
+            <Accordion
+              style={{ flexShrink: 1 }}
+              header={
+                <Text style={{ fontFamily: theme.fonts.semiBold }}>
                   {i18n.t('donate_faq1')}
                 </Text>
               }
@@ -208,11 +277,7 @@ const DonationInfoScreen = () => {
             <Accordion
               style={{ flexShrink: 1 }}
               header={
-                <Text
-                  style={{
-                    fontFamily: theme.fonts.semiBold,
-                  }}
-                >
+                <Text style={{ fontFamily: theme.fonts.semiBold }}>
                   {i18n.t('donate_faq2')}
                 </Text>
               }

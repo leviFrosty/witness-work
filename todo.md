@@ -11,7 +11,6 @@
 - Check if we can just link direction to kofi instead of using in-app purchases since Apple has updated their TOS recently.
 - Finish tutorials
 - Add 'thank you' screen on donation page that includes short bio about me, where I'm currently at, what I'm doing, and I hope it serves you well - add little signature at the bottom and image of myself.
-- Add data disclosure information screen "your privacy is important" to onboarding
 - Add "premium" screen to onboarding -- that is a psuedo premium screen: donations are optional, all services are always free but please keep in mind of time and cost associated with app development.
 - Since we're no longer cross-platform, redesign app to be in "Apple's Design language", but with our own colors.
 - Update all components to use tamagui buttons, sheets, lists, etc.
@@ -29,6 +28,8 @@
   - Shows info like "since xxxx year started using", pfp image upload (local only)
   - Immediately after privacy important
 - Add "WitnessWork" fade in and grand reveal at startup. It should have a very terse and useful description for what witnesswork does right below it, the intro screen to excite the user.
+- Add 'Badges' feature. Highest badge based on weight, or user selected badge should appear on ProfileCard. ProfilDetailOverlay should contain more details about top 3 badges. There should be a separate Badge screen that overviews "See all" badges, with non-unlocked badges in 'grey' state. Each badge should be unique and have its' own art. We'll need to figure out a good solution on how to source art or art-like references through emojis or something else? Given that badges are special, we probably don't want to do emojis.
+- See about implementing a social 'friends' feature similar to apple workouts/activity where users will get notified about friends week/month achievements, badge unlocks, etc. Look to see if existing iOS sdk exists to implement this or if we have to roll this ourselves with API and db.
 - Make the lock screen larger widget remove the encouragement text and overall increase the font size of the "month" and hours and progress bar size.
 - Resolve gap where "Search address" isn't enabled unless the user enables location services. Currently if user hasn't enabled location services, the queries are wildly inaccurate as it doesn't have a coordinate to center its searches off of.
 - Resolve build issue: We noticed one or more issues with a recent delivery for the following app:

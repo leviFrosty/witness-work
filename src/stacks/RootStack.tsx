@@ -27,6 +27,7 @@ import PreferencesWidgetsScreen from '../screens/settings/preferences/screens/Pr
 import RescheduleConversationScreen from '../screens/RescheduleConversationScreen'
 import PlanScheduleScreen from '../screens/PlanScheduleScreen'
 import PlanDayScreen from '../screens/PlanDayScreen'
+import ProfileSetupScreen from '../screens/ProfileSetupScreen'
 import { RootStackParamList } from '../types/rootStack'
 
 const RootStack = createNativeStackNavigator<RootStackParamList>()
@@ -245,6 +246,14 @@ const RootStackComponent = () => {
         }}
         name='PlanDay'
         component={PlanDayScreen}
+      />
+      <RootStack.Screen
+        options={{
+          presentation: 'modal',
+          header: () => null,
+        }}
+        name='ProfileSetup'
+        component={ProfileSetupScreen}
       />
     </RootStack.Navigator>
   )

@@ -13,6 +13,7 @@ import Purchases, {
   PurchasesOfferings,
 } from 'react-native-purchases'
 import IconButton from '../components/IconButton'
+import SupporterBadge from '../components/SupporterBadge'
 import { faCheck } from '@fortawesome/free-solid-svg-icons'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import ActionButton from '../components/ActionButton'
@@ -272,6 +273,10 @@ const PaywallScreen = () => {
                   paddingVertical: 10,
                   borderRadius: theme.numbers.borderRadiusXl,
                   flex: 1,
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: 6,
                 }}
                 onPress={() => handleSetPurchaseMethod(false)}
               >
@@ -285,8 +290,32 @@ const PaywallScreen = () => {
                 >
                   {i18n.t('monthly')}
                 </Text>
+                <SupporterBadge iconOnly />
               </Button>
             </XView>
+            <View
+              style={{
+                flexDirection: 'row',
+                alignItems: 'flex-start',
+                gap: 8,
+                paddingHorizontal: 4,
+              }}
+            >
+              <Text
+                style={{
+                  flex: 1,
+                  fontSize: theme.fontSize('sm'),
+                  color: oneTimePurchaseMethod
+                    ? theme.colors.textAlt
+                    : theme.colors.supporter,
+                  lineHeight: 18,
+                }}
+              >
+                {oneTimePurchaseMethod
+                  ? i18n.t('oneTimeNoSupporterNote')
+                  : i18n.t('monthlySupporterNote')}
+              </Text>
+            </View>
 
             <View style={{ height: 185 }}>
               <ScrollView contentContainerStyle={{ gap: 5 }}>

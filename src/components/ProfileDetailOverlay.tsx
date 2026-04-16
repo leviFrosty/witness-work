@@ -8,7 +8,12 @@ import {
   View,
 } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { faStar, faTimes } from '@fortawesome/free-solid-svg-icons'
+import { useNavigation } from '@react-navigation/native'
+import {
+  faPenToSquare,
+  faStar,
+  faTimes,
+} from '@fortawesome/free-solid-svg-icons'
 import { faHeart } from '@fortawesome/free-solid-svg-icons'
 import moment from 'moment'
 import Animated, {
@@ -21,16 +26,17 @@ import Animated, {
 import useTheme from '../contexts/theme'
 import { usePreferences } from '../stores/preferences'
 import usePublisher from '../hooks/usePublisher'
-import useCustomer from '../hooks/useCustomer'
+import useIsSupporter from '../hooks/useIsSupporter'
 import useServiceReport from '../stores/serviceReport'
 import Text from './MyText'
 import IconButton from './IconButton'
 import Avatar from './Avatar'
+import { RootStackNavigation } from '../types/rootStack'
 import ContributionGraph from './ContributionGraph'
 import MonthlyRoutine from './MonthlyRoutine'
 import SinceBadge from './SinceBadge'
 import i18n from '../lib/locales'
-import { isPioneer } from './ProfileSetupForm'
+import { isPioneer } from '../constants/publisher'
 import {
   consecutiveWeeksStreak,
   daysLogged,
@@ -38,7 +44,6 @@ import {
   minutesInTrailingDays,
   totalMinutes,
 } from '../lib/profileStats'
-import { supporterSinceDate } from '../lib/supporterSince'
 
 export type OriginRect = { x: number; y: number; width: number; height: number }
 
@@ -103,13 +108,17 @@ const Stat = ({
 const ProfileDetailOverlay = ({ origin, open, onClose, onClosed }: Props) => {
   const theme = useTheme()
   const insets = useSafeAreaInsets()
+  const navigation = useNavigation<RootStackNavigation>()
   const { width: winW, height: winH } = useWindowDimensions()
   const { name, avatar, pioneerStartDate } = usePreferences()
-  const { status: publisher } = usePublisher()
-  const { customer } = useCustomer()
-  const { serviceReports } = useServiceReport()
 
-  const supporterSince = useMemo(() => supporterSinceDate(customer), [customer])
+  const handleEdit = () => {
+    onClose()
+    navigation.navigate('ProfileSetup')
+  }
+  const { status: publisher } = usePublisher()
+  const { since: supporterSince } = useIsSupporter()
+  const { serviceReports } = useServiceReport()
 
   const daily = useMemo(
     () => flattenDailyMinutes(serviceReports),
@@ -248,9 +257,15 @@ const ProfileDetailOverlay = ({ origin, open, onClose, onClosed }: Props) => {
               <View
                 style={{
                   flexDirection: 'row',
-                  justifyContent: 'flex-end',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
                 }}
               >
+                <IconButton
+                  icon={faPenToSquare}
+                  size='lg'
+                  onPress={handleEdit}
+                />
                 <IconButton icon={faTimes} size='xl' onPress={onClose} />
               </View>
               <View
@@ -316,8 +331,8 @@ const ProfileDetailOverlay = ({ origin, open, onClose, onClosed }: Props) => {
                       icon={faStar}
                       label={i18n.t('profileStatPioneer')}
                       value={moment(pioneerStartDate).format('MMMM YYYY')}
-                      tint={theme.colors.warn}
-                      tintBg={theme.colors.warnTranslucent}
+                      tint={theme.colors.indigo}
+                      tintBg={theme.colors.indigoTranslucent}
                     />
                   )}
                   {supporterSince && (
@@ -325,8 +340,8 @@ const ProfileDetailOverlay = ({ origin, open, onClose, onClosed }: Props) => {
                       icon={faHeart}
                       label={i18n.t('profileStatSupporter')}
                       value={moment(supporterSince).format('MMMM YYYY')}
-                      tint={theme.colors.rose}
-                      tintBg={theme.colors.roseAlt}
+                      tint={theme.colors.supporter}
+                      tintBg={theme.colors.supporterTranslucent}
                     />
                   )}
                 </View>

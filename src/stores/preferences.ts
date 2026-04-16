@@ -232,6 +232,26 @@ const initialState = {
   widgetContactAction: 'directions' as WidgetContactAction,
   /** Time window for the iOS Appointments widget. */
   widgetAppointmentWindow: '7days' as WidgetAppointmentWindow,
+  /**
+   * Supporter-only override for the primary accent color. Preserved even when
+   * supporter status lapses so the user's choice isn't lost — the theme applies
+   * it only while supporter status is active.
+   */
+  customAccentColor: null as string | null,
+  /**
+   * Supporter-only override for the avatar/profile-picture background color.
+   * When null, the avatar background follows the accent color. Kept separate so
+   * users who want a different-colored avatar than their accent can opt in
+   * without affecting the rest of the app's tint.
+   */
+  customAvatarBackground: null as string | null,
+  /**
+   * Developer override for supporter status. When non-null, forces
+   * `useIsSupporter()` to report the user as a supporter with the given `since`
+   * date, bypassing RevenueCat. Null disables the override. Exposed from the
+   * hidden developer tools screen only.
+   */
+  devSupporterOverride: null as Date | null,
 }
 
 export const usePreferences = create(

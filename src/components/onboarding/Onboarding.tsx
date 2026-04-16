@@ -8,6 +8,7 @@ import { usePreferences } from '../../stores/preferences'
 import StepDefaultNav from './steps/DefaultNav'
 import PrivacyFirst from './steps/PrivacyFirst'
 import ProfileSetup from './steps/ProfileSetup'
+import Supporter from './steps/Supporter'
 
 const steps = [
   StepOne,
@@ -16,6 +17,7 @@ const steps = [
   ProfileSetup,
   StepThree,
   StepDefaultNav,
+  Supporter,
   StepFour,
 ]
 const DEFAULT_NAV_STEP_INDEX = steps.indexOf(StepDefaultNav)

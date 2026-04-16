@@ -46,6 +46,7 @@ export type RootStackParamList = {
     /** For recurring plans, the specific date instance being edited */
     recurringPlanDate?: string
   }
+  ProfileSetup: undefined
 }
 
 export type RootStackNavigation = NativeStackNavigationProp<RootStackParamList>

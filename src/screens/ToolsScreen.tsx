@@ -19,6 +19,10 @@ import { RecurringPlanFrequencies } from '../lib/serviceReport'
 import { useState } from 'react'
 import Button from '../components/Button'
 import { useTimeCache } from '../stores/timeCache'
+import { usePreferences } from '../stores/preferences'
+import DateTimePicker from '../components/DateTimePicker'
+import SupporterBadge from '../components/SupporterBadge'
+import useIsSupporter from '../hooks/useIsSupporter'
 
 export default function ToolsScreen() {
   const theme = useTheme()
@@ -47,6 +51,13 @@ export default function ToolsScreen() {
   const [showReports, setShowReports] = useState(false)
   const [showPlans, setShowPlans] = useState(false)
   const [showTimeCache, setShowTimeCache] = useState(false)
+  const {
+    devSupporterOverride,
+    hasCompletedProfileSetup,
+    name,
+    set: setPreferences,
+  } = usePreferences()
+  const { isSupporter, since: supporterSince } = useIsSupporter()
 
   const generateContacts = async () => {
     const { data } = await axios.get(
@@ -205,6 +216,122 @@ export default function ToolsScreen() {
               <Text>{`${hasMigratedFromAsyncStorage()}`}</Text>
             </XView>
           </View>
+        </Card>
+
+        <Card style={{ gap: 10 }}>
+          <XView style={{ justifyContent: 'space-between' }}>
+            <Text style={{ fontFamily: theme.fonts.bold }}>
+              Supporter override
+            </Text>
+            {isSupporter && <SupporterBadge />}
+          </XView>
+          <Text
+            style={{
+              fontSize: theme.fontSize('sm'),
+              color: theme.colors.textAlt,
+            }}
+          >
+            {devSupporterOverride
+              ? 'Forcing supporter status on. Bypasses RevenueCat.'
+              : 'Off. useIsSupporter reads real RevenueCat state.'}
+          </Text>
+          <XView style={{ justifyContent: 'space-between' }}>
+            <Text>Current isSupporter:</Text>
+            <Text style={{ fontFamily: theme.fonts.bold }}>
+              {String(isSupporter)}
+            </Text>
+          </XView>
+          <XView style={{ justifyContent: 'space-between' }}>
+            <Text>Current since:</Text>
+            <Text style={{ fontFamily: theme.fonts.bold }}>
+              {supporterSince ? moment(supporterSince).format('ll') : '—'}
+            </Text>
+          </XView>
+          {devSupporterOverride ? (
+            <>
+              <XView style={{ justifyContent: 'space-between' }}>
+                <Text>Override since:</Text>
+                <DateTimePicker
+                  value={new Date(devSupporterOverride)}
+                  maximumDate={new Date()}
+                  onChange={(_, date) => {
+                    if (date) setPreferences({ devSupporterOverride: date })
+                  }}
+                />
+              </XView>
+              <ActionButton
+                onPress={() => setPreferences({ devSupporterOverride: null })}
+              >
+                Disable supporter override
+              </ActionButton>
+            </>
+          ) : (
+            <>
+              <ActionButton
+                onPress={() =>
+                  setPreferences({ devSupporterOverride: new Date() })
+                }
+              >
+                Enable as supporter (today)
+              </ActionButton>
+              <ActionButton
+                onPress={() =>
+                  setPreferences({
+                    devSupporterOverride: moment()
+                      .subtract(2, 'years')
+                      .toDate(),
+                  })
+                }
+              >
+                Enable as supporter (2 years ago)
+              </ActionButton>
+            </>
+          )}
+        </Card>
+
+        <Card style={{ gap: 10 }}>
+          <Text style={{ fontFamily: theme.fonts.bold }}>
+            Simulate pre-profile-feature user
+          </Text>
+          <Text
+            style={{
+              fontSize: theme.fontSize('sm'),
+              color: theme.colors.textAlt,
+            }}
+          >
+            Keeps onboardingComplete=true but clears profile fields so the
+            post-update prompt re-appears. Use this to validate the upgrade flow
+            for existing users.
+          </Text>
+          <XView style={{ justifyContent: 'space-between' }}>
+            <Text>hasCompletedProfileSetup:</Text>
+            <Text style={{ fontFamily: theme.fonts.bold }}>
+              {String(hasCompletedProfileSetup)}
+            </Text>
+          </XView>
+          <XView style={{ justifyContent: 'space-between' }}>
+            <Text>name:</Text>
+            <Text style={{ fontFamily: theme.fonts.bold }}>
+              {name ? name : '—'}
+            </Text>
+          </XView>
+          <ActionButton
+            onPress={() => {
+              setPreferences({
+                onboardingComplete: true,
+                hasCompletedProfileSetup: false,
+                name: '',
+                pioneerStartDate: null,
+                avatar: { type: 'none', value: '' },
+              })
+              toast.show('Reset to pre-profile state', {
+                message: '',
+                native: true,
+              })
+            }}
+          >
+            Reset profile data (keep onboarded)
+          </ActionButton>
         </Card>
 
         <Card style={{ gap: 5 }}>

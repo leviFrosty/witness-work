@@ -1,5 +1,5 @@
-import { useMemo, useRef, useState } from 'react'
-import { Pressable, View } from 'react-native'
+import { useRef, useState } from 'react'
+import { Pressable, TextInput as RNTextInput, View } from 'react-native'
 import moment from 'moment'
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
 import { IconDefinition } from '@fortawesome/fontawesome-svg-core'
@@ -12,19 +12,25 @@ import {
 import useTheme from '../contexts/theme'
 import { usePreferences } from '../stores/preferences'
 import usePublisher from '../hooks/usePublisher'
-import useCustomer from '../hooks/useCustomer'
+import useIsSupporter from '../hooks/useIsSupporter'
 import Card from './Card'
 import Text from './MyText'
 import Avatar from './Avatar'
 import TiltableCard from './TiltableCard'
 import ProfileDetailOverlay, { OriginRect } from './ProfileDetailOverlay'
+import AvatarPickerPopover from './AvatarPickerPopover'
 import i18n from '../lib/locales'
-import { isPioneer } from './ProfileSetupForm'
-import { supporterSinceDate } from '../lib/supporterSince'
+import { isPioneer } from '../constants/publisher'
 
 interface Props {
   /** Disables interaction; used for the live preview inside onboarding. */
   preview?: boolean
+  /**
+   * Turns the card into an inline editor: avatar becomes a picker trigger and
+   * name becomes a text input. Used by the profile setup sheet + onboarding
+   * step so the preview _is_ the form.
+   */
+  editable?: boolean
   /**
    * Called when the card is tapped in its incomplete state. The home screen
    * wires this to open the existing-user profile setup sheet.
@@ -64,7 +70,7 @@ const buildTenureText = (tone: TenureTone, days: number): string => {
 const CARD_PADDING_V = 14
 const CARD_PADDING_H = 16
 
-const ProfileCard = ({ preview, onPressIncomplete }: Props) => {
+const ProfileCard = ({ preview, editable, onPressIncomplete }: Props) => {
   const theme = useTheme()
   const {
     name,
@@ -72,15 +78,15 @@ const ProfileCard = ({ preview, onPressIncomplete }: Props) => {
     installedOn,
     pioneerStartDate,
     hasCompletedProfileSetup,
+    set,
   } = usePreferences()
   const { status: publisher } = usePublisher()
-  const { customer } = useCustomer()
-  const supporterSince = useMemo(() => supporterSinceDate(customer), [customer])
+  const { since: supporterSince } = useIsSupporter()
   const [detailOpen, setDetailOpen] = useState(false)
   const [origin, setOrigin] = useState<OriginRect | null>(null)
   const anchorRef = useRef<View>(null)
 
-  const isIncomplete = !preview && !hasCompletedProfileSetup
+  const isIncomplete = !preview && !editable && !hasCompletedProfileSetup
 
   const handlePress = () => {
     if (preview) return
@@ -156,7 +162,7 @@ const ProfileCard = ({ preview, onPressIncomplete }: Props) => {
       return {
         tone: 'supporter',
         icon: faHeart,
-        tint: theme.colors.rose,
+        tint: theme.colors.supporter,
         text: buildTenureText('supporter', daysSince(supporterSince)),
       }
     }
@@ -164,7 +170,7 @@ const ProfileCard = ({ preview, onPressIncomplete }: Props) => {
       return {
         tone: 'pioneer',
         icon: faStar,
-        tint: theme.colors.warn,
+        tint: theme.colors.indigo,
         text: buildTenureText('pioneer', daysSince(new Date(pioneerStartDate))),
       }
     }
@@ -176,6 +182,44 @@ const ProfileCard = ({ preview, onPressIncomplete }: Props) => {
     }
   })()
 
+  const avatarEl = editable ? (
+    <AvatarPickerPopover size={44} />
+  ) : (
+    <Avatar avatar={avatar} name={trimmedName} size={44} />
+  )
+
+  const nameEl = editable ? (
+    <RNTextInput
+      value={name}
+      onChangeText={(val) => set({ name: val })}
+      placeholder={i18n.t('firstNamePlaceholder')}
+      placeholderTextColor={theme.colors.textAlt}
+      autoCapitalize='words'
+      autoCorrect={false}
+      autoFocus={!name}
+      maxLength={40}
+      returnKeyType='done'
+      style={{
+        fontFamily: theme.fonts.semiBold,
+        fontSize: 16,
+        color: theme.colors.text,
+        padding: 0,
+        margin: 0,
+      }}
+    />
+  ) : (
+    <Text
+      style={{
+        fontFamily: theme.fonts.semiBold,
+        fontSize: 16,
+        color: theme.colors.text,
+      }}
+      numberOfLines={1}
+    >
+      {greeting}
+    </Text>
+  )
+
   const cardBody = (
     <Card
       style={{
@@ -185,18 +229,9 @@ const ProfileCard = ({ preview, onPressIncomplete }: Props) => {
       }}
     >
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-        <Avatar avatar={avatar} name={trimmedName} size={44} />
+        {avatarEl}
         <View style={{ flex: 1 }}>
-          <Text
-            style={{
-              fontFamily: theme.fonts.semiBold,
-              fontSize: 16,
-              color: theme.colors.text,
-            }}
-            numberOfLines={1}
-          >
-            {greeting}
-          </Text>
+          {nameEl}
           <Text
             style={{
               fontSize: 12,
@@ -217,8 +252,8 @@ const ProfileCard = ({ preview, onPressIncomplete }: Props) => {
     </Card>
   )
 
-  if (preview) {
-    return <Pressable disabled>{cardBody}</Pressable>
+  if (preview || editable) {
+    return <View>{cardBody}</View>
   }
 
   return (

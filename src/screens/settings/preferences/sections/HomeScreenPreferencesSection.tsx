@@ -135,20 +135,6 @@ const HomeElements = () => {
             {i18n.t('approachingConversations_description')}
           </Text>
         </View>
-        <XView style={{ justifyContent: 'space-between' }}>
-          <Text>{i18n.t('monthlyRoutine')}</Text>
-          <Switch
-            value={homeScreenElements.monthlyRoutine}
-            onValueChange={(value) =>
-              set({
-                homeScreenElements: {
-                  ...homeScreenElements,
-                  monthlyRoutine: value,
-                },
-              })
-            }
-          />
-        </XView>
         {isTablet && hasAnnualGoal && (
           <XView style={{ justifyContent: 'space-between' }}>
             <Text>{i18n.t('serviceYearSummary')}</Text>

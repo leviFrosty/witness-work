@@ -1,8 +1,10 @@
 # TODO
 
 - Add WW icon to widgets (small top right)
+- Resolve Revenuecat not working in dev.
 - Add e2e tests
 - Upgrade remaining dependencies.
+- remove all references to android in codebase, update expo scripts + ci to only care about iOS.
 - Update documentation for project structure
 - Add deep links to sharing file so it'll automatically import and navigate the user to the imported contact.
 - Add a donation nudge reminder for users who have 'high' app usage. Define 'high' usage.
@@ -17,7 +19,6 @@
 - update calendar widget to default add time, + button adds plan. Add plan helper text.
 - Add a toggle to swap between time added and time planned
 - Add dismiss/cancel to "Missed conversations reminders"
-- Resolve all widgets just being '-' or '<CalendarIcon>' on production testflight
 - Add contextual donation card after monthly report submission. Only show after 6-month app anniversary. Max 1 per 60 days, never if dismissed.
 - Add cancellation flow intercept: offer "Pause for 1/3/6 months" before cancelling recurring donation.
 - "Gift a supporter year" — let donors sponsor supporter status for another user.
@@ -28,6 +29,8 @@
   - Shows info like "since xxxx year started using", pfp image upload (local only)
   - Immediately after privacy important
 - Add "WitnessWork" fade in and grand reveal at startup. It should have a very terse and useful description for what witnesswork does right below it, the intro screen to excite the user.
+- Make the lock screen larger widget remove the encouragement text and overall increase the font size of the "month" and hours and progress bar size.
+- Resolve gap where "Search address" isn't enabled unless the user enables location services. Currently if user hasn't enabled location services, the queries are wildly inaccurate as it doesn't have a coordinate to center its searches off of.
 - Resolve build issue: We noticed one or more issues with a recent delivery for the following app:
 
 - WitnessWork

@@ -1,21 +1,27 @@
 import { View } from 'react-native'
-import { useCallback, useContext, useMemo } from 'react'
+import { useCallback, useMemo } from 'react'
 import moment from 'moment'
-import useTheme, { ThemeContext } from '../contexts/theme'
-import Card from './Card'
+import useTheme from '../contexts/theme'
 import Text from './MyText'
 import { FlashList } from '@shopify/flash-list'
 import useServiceReport from '../stores/serviceReport'
 import { usePreferences } from '../stores/preferences'
 import { useNavigation } from '@react-navigation/native'
-import i18n from '../lib/locales'
 import IconButton from './IconButton'
 import { faCheck, faMinus, faTimes } from '@fortawesome/free-solid-svg-icons'
 import Button from './Button'
 import { getMonthsReports } from '../lib/serviceReport'
 import { HomeTabStackNavigation } from '../types/homeStack'
 
-const Month = ({ month, year }: { month: number; year: number }) => {
+const Month = ({
+  month,
+  year,
+  onBeforeNavigate,
+}: {
+  month: number
+  year: number
+  onBeforeNavigate?: () => void
+}) => {
   const theme = useTheme()
   const navigation = useNavigation<HomeTabStackNavigation>()
   const { installedOn, publisher } = usePreferences()
@@ -39,24 +45,26 @@ const Month = ({ month, year }: { month: number; year: number }) => {
     <Button
       onPress={
         publisher !== 'publisher'
-          ? () =>
+          ? () => {
+              onBeforeNavigate?.()
               navigation.navigate('Month', {
                 month,
                 year,
               })
+            }
           : undefined
       }
       style={{
-        gap: 5,
+        gap: 4,
         backgroundColor: isCurrentMonth ? theme.colors.text : undefined,
         borderRadius: theme.numbers.borderRadiusSm,
-        padding: 7,
+        padding: 5,
       }}
     >
       <View
         style={{
           backgroundColor: theme.colors.backgroundLighter,
-          padding: 8,
+          padding: 6,
           borderRadius: theme.numbers.borderRadiusSm,
           justifyContent: 'center',
           alignItems: 'center',
@@ -95,9 +103,16 @@ const Month = ({ month, year }: { month: number; year: number }) => {
   )
 }
 
-const MonthlyRoutine = () => {
-  const theme = useContext(ThemeContext)
+interface MonthlyRoutineProps {
+  /**
+   * Called after the user taps a month but before navigation occurs. Lets a
+   * parent overlay/modal dismiss itself so the destination screen isn't
+   * covered.
+   */
+  onBeforeNavigate?: () => void
+}
 
+const MonthlyRoutine = ({ onBeforeNavigate }: MonthlyRoutineProps = {}) => {
   const surroundingMonths = useCallback(() => {
     const now = moment()
     const currentMonth = now.month()
@@ -113,30 +128,25 @@ const MonthlyRoutine = () => {
   }, [])
 
   return (
-    <View style={{ gap: 10, flexShrink: 1 }}>
-      <Text
-        style={{
-          fontSize: 14,
-          fontFamily: theme.fonts.semiBold,
-          marginLeft: 5,
+    <View style={{ height: 60 }}>
+      <FlashList
+        horizontal
+        initialScrollIndex={5}
+        keyExtractor={(item) => item.format()}
+        data={surroundingMonths()}
+        renderItem={({ item }) => {
+          const month = item.month()
+          const year = item.year()
+          return (
+            <Month
+              month={month}
+              year={year}
+              onBeforeNavigate={onBeforeNavigate}
+            />
+          )
         }}
-      >
-        {i18n.t('monthlyRoutine')}
-      </Text>
-      <Card style={{ flexGrow: 1, justifyContent: 'center' }}>
-        <FlashList
-          horizontal
-          initialScrollIndex={5}
-          keyExtractor={(item) => item.format()}
-          data={surroundingMonths()}
-          renderItem={({ item }) => {
-            const month = item.month()
-            const year = item.year()
-            return <Month month={month} year={year} />
-          }}
-          showsHorizontalScrollIndicator={false}
-        />
-      </Card>
+        showsHorizontalScrollIndicator={false}
+      />
     </View>
   )
 }

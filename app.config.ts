@@ -129,6 +129,13 @@ export default ({ config }: ConfigContext): ExpoConfig => {
           iCloudContainerEnvironment: IS_DEV ? 'Development' : 'Production',
         },
       ],
+      [
+        'expo-image-picker',
+        {
+          photosPermission:
+            '$(PRODUCT_NAME) uses your photos only to set a profile picture. Images stay on your device.',
+        },
+      ],
     ],
     experiments: {
       reactCompiler: true,

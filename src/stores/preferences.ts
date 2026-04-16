@@ -123,6 +123,19 @@ export type PrefillAddress = {
   lastUpdated?: Date
 }
 
+/**
+ * User-selected profile avatar.
+ *
+ * - `none`: no avatar set (display falls back to initial letter or icon)
+ * - `emoji`: `value` holds the emoji character
+ * - `image`: `value` holds a local file URI inside `FileSystem.documentDirectory`
+ *   — image never leaves the device.
+ */
+export type ProfileAvatar = {
+  type: 'none' | 'emoji' | 'image'
+  value: string
+}
+
 const initialState = {
   publisher: 'publisher' as Publisher,
   publisherHours: publisherHours,
@@ -130,6 +143,21 @@ const initialState = {
   /** Overrides publisherHours hour requirement for given month. */
   oneOffGoalHours: [] as GoalHours[],
   onboardingComplete: false,
+  /**
+   * Distinct from onboardingComplete so existing users — who installed before
+   * the profile step existed — can be prompted to fill it in post-onboarding.
+   */
+  hasCompletedProfileSetup: false,
+  /** User's first name. Collected during onboarding profile step. */
+  name: '',
+  /**
+   * Date the user began pioneering. Used by ProfileCard to display duration
+   * (e.g. "Pioneering for 2 years"). Only surfaced for pioneer-type
+   * publishers.
+   */
+  pioneerStartDate: null as Date | null,
+  /** Profile avatar — stored locally, never uploaded. */
+  avatar: { type: 'none', value: '' } as ProfileAvatar,
   installedOn: new Date(),
   contactSort: 'recentConversation' as (typeof SortOptionValues)[number],
   hasCompletedMapOnboarding: false,

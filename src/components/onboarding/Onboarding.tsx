@@ -6,8 +6,19 @@ import StepThree from './steps/Three'
 import StepFour from './steps/Four'
 import { usePreferences } from '../../stores/preferences'
 import StepDefaultNav from './steps/DefaultNav'
+import PrivacyFirst from './steps/PrivacyFirst'
+import ProfileSetup from './steps/ProfileSetup'
 
-const steps = [StepOne, StepTwo, StepThree, StepDefaultNav, StepFour]
+const steps = [
+  StepOne,
+  PrivacyFirst,
+  StepTwo,
+  ProfileSetup,
+  StepThree,
+  StepDefaultNav,
+  StepFour,
+]
+const DEFAULT_NAV_STEP_INDEX = steps.indexOf(StepDefaultNav)
 
 const OnBoarding = () => {
   const { set, onboardingComplete } = usePreferences()
@@ -21,7 +32,10 @@ const OnBoarding = () => {
 
   const goNext = () => {
     // Skips default navigation step on Android. Android does not have configuration default navigation.
-    if (Platform.OS === 'android' && onboardingStep === 2) {
+    if (
+      Platform.OS === 'android' &&
+      onboardingStep === DEFAULT_NAV_STEP_INDEX - 1
+    ) {
       setOnboardingStep(onboardingStep + 2)
       return
     }
@@ -36,6 +50,14 @@ const OnBoarding = () => {
 
   const goBack = () => {
     if (onboardingStep === 0) {
+      return
+    }
+    // Skips default navigation step on Android going backward as well.
+    if (
+      Platform.OS === 'android' &&
+      onboardingStep === DEFAULT_NAV_STEP_INDEX + 1
+    ) {
+      setOnboardingStep(onboardingStep - 2)
       return
     }
     setOnboardingStep(onboardingStep - 1)

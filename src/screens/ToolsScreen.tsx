@@ -107,16 +107,29 @@ export default function ToolsScreen() {
   }
 
   const generateServiceReports = () => {
-    for (let i = 0; i < 1000; i++) {
-      addServiceReport({
-        date: moment().subtract(i, 'day').toDate(),
-        hours: 1,
-        id: `generated-${i}`,
-        minutes: 0,
-        credit: i % 2 === 0,
-        ldc: i % 3 === 0,
-        tag: i % 2 === 0 ? 'Special' : undefined,
-      })
+    const tags = ['Special', 'Campaign', 'Memorial', 'Convention', undefined]
+    let i = 0
+    while (i < 1000) {
+      const reportsForDay = (i * 2654435761) % 4
+      for (let j = 0; j <= reportsForDay; j++) {
+        const seed = i * 31 + j * 17
+        const r = ((seed * 2654435761) % 1000) / 1000
+        const hours = Math.floor(Math.pow(r, 2.5) * 17)
+        const minutes = (seed * 7) % 12 === 0 ? 0 : ((seed * 7) % 12) * 5
+        if (hours === 0 && minutes === 0) continue
+        addServiceReport({
+          date: moment().subtract(i, 'day').toDate(),
+          hours,
+          id: `generated-${i}-${j}`,
+          minutes,
+          credit: seed % 3 === 0,
+          ldc: seed % 5 === 0,
+          tag: tags[seed % tags.length],
+        })
+      }
+      const gapR = ((i * 2654435761 + 12345) % 1000) / 1000
+      const gap = Math.floor(Math.pow(gapR, 2.5) * 7) + 1
+      i += gap
     }
   }
 

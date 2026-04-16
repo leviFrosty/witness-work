@@ -8,7 +8,7 @@
     "android": "expo run:android",
     "ios": "expo run:ios",
     "clean": "rm -rf node_modules .tamagui .expo .cache *.tar.gz ios android",
-    "prebuild": "pnpm sync:widget-shared && expo prebuild --clean",
+    "prebuild": "pnpm sync:widget-shared && expo prebuild",
     "sync:widget-shared": "node ./scripts/sync-widget-shared.mjs",
     "build:ios": "pnpm sync:widget-shared && eas build -p ios --profile development-simulator --local",
     "build:ios-production": "pnpm sync:widget-shared && eas build -p ios --profile production-simulator --local",

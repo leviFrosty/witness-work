@@ -99,7 +99,7 @@ export default function App() {
         try {
           await migrateFromAsyncStorage()
           await Updates.reloadAsync() // Reloads JS and causes stores to point to new MMKV store
-        } catch (e) {
+        } catch {
           // Falls back to async storage
         }
         setHasMigrated(true) // Allows app to continue regardless

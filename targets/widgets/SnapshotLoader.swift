@@ -23,14 +23,13 @@ enum SnapshotLoader {
     guard let group = appGroupIdentifier,
           let container = FileManager.default.containerURL(
             forSecurityApplicationGroupIdentifier: group
-          )
-    else { return nil }
-
-    let url = container.appendingPathComponent("snapshot.json")
-    guard let data = try? Data(contentsOf: url),
+          ),
+          let data = try? Data(contentsOf: container.appendingPathComponent("snapshot.json")),
           let snapshot = try? JSONDecoder().decode(WidgetSnapshot.self, from: data),
           snapshot.version == SUPPORTED_VERSION
-    else { return nil }
+    else {
+      return nil
+    }
     return snapshot
   }
 }

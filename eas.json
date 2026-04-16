@@ -36,17 +36,20 @@
       "node": "20.14.0",
       "ios": {
         "image": "latest"
+      },
+      "env": {
+        "APP_VARIANT": "production"
       }
     },
     "production-local": {
       "channel": "production",
       "autoIncrement": true,
       "node": "20.14.0",
-      "env": {
-        "ANDROID_SDK_ROOT": "/Users/levi/Library/Android/sdk"
+      "ios": {
+        "image": "latest"
       },
-      "android": {
-        "buildType": "apk"
+      "env": {
+        "APP_VARIANT": "production"
       }
     },
     "production-simulator": {
@@ -58,6 +61,7 @@
       },
       "node": "20.14.0",
       "env": {
+        "APP_VARIANT": "production",
         "SENTRY_DISABLE_AUTO_UPLOAD": "true",
         "ENTRY_FILE": "src/index.js"
       }

@@ -8,6 +8,7 @@ import Haptics from '../lib/haptics'
 import { CONFETTI_DELAY_MS } from '../providers/AnimationViewProvider'
 import { getMonthsReports } from '../lib/serviceReport'
 import { isSharedGoodNewsUrl, navigationRef } from '../lib/linking'
+import { isContactShareLink } from '../lib/contactShareLink'
 import { ServiceReport } from '../types/serviceReport'
 
 /**
@@ -43,8 +44,13 @@ export default function SharedGoodNewsListener() {
 
       // Forward external URL schemes (tel:, sms:, http(s):, mailto:) to the
       // system. They land here because iOS routes widget Link taps through
-      // the host app once the app declares its own scheme.
-      if (FORWARDED_SCHEMES.some((s) => url.startsWith(s))) {
+      // the host app once the app declares its own scheme. Skip contact-share
+      // universal links — those are in-app URLs handled by
+      // ContactImportListener; forwarding them bounces the user to Safari.
+      if (
+        FORWARDED_SCHEMES.some((s) => url.startsWith(s)) &&
+        !isContactShareLink(url)
+      ) {
         Linking.openURL(url).catch(() => {})
         return
       }

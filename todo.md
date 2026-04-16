@@ -18,7 +18,6 @@
 - Add a toggle to swap between time added and time planned
 - Add dismiss/cancel to "Missed conversations reminders"
 - Resolve all widgets just being '-' or '<CalendarIcon>' on production testflight
-- App instantly opens with the Universallink (and prompts to import contact), but then immediately navigates to browser. Confusing UX. Then, if I click "open in app", it double prompts to import the contact, and you have to click cancel twice.
 - Add contextual donation card after monthly report submission. Only show after 6-month app anniversary. Max 1 per 60 days, never if dismissed.
 - Add cancellation flow intercept: offer "Pause for 1/3/6 months" before cancelling recurring donation.
 - "Gift a supporter year" — let donors sponsor supporter status for another user.

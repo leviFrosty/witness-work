@@ -39,8 +39,8 @@ googleServiceAccount.json
 # Windows
 %ProgramData%/
 
-android/
-ios/
+/android/
+/ios/
 
 # @bacons/apple-targets generated entitlements
 targets/*/generated.entitlements

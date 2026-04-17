@@ -1,10 +1,11 @@
-import { View, Alert } from 'react-native'
+import { View, Alert, Platform } from 'react-native'
 import i18n from '../../../lib/locales'
 import Section from '../../../components/inputs/Section'
 import InputRowButton from '../../../components/inputs/InputRowButton'
 import {
   faChevronRight,
   faClock,
+  faCloud,
   faDownload,
   faFileExport,
   faFileImport,
@@ -113,6 +114,15 @@ const AppSection = ({ handleNavigate }: SettingsSectionProps) => {
         >
           <IconButton icon={faChevronRight} />
         </InputRowButton>
+        {Platform.OS === 'ios' && (
+          <InputRowButton
+            leftIcon={faCloud}
+            label={i18n.t('iCloudSync')}
+            onPress={() => handleNavigate('PreferencesiCloud')}
+          >
+            <IconButton icon={faChevronRight} />
+          </InputRowButton>
+        )}
         <InputRowButton
           leftIcon={faDownload}
           label={i18n.t('checkForUpdate')}

@@ -5,6 +5,7 @@ import {
   DayPlan,
   ServiceReport,
   ServiceReportsByYears,
+  ServiceReportTombstone,
 } from '../types/serviceReport'
 import moment from 'moment'
 import {
@@ -18,6 +19,11 @@ const initialState = {
   serviceReports: {} as ServiceReportsByYears,
   dayPlans: [] as DayPlan[],
   recurringPlans: [] as RecurringPlan[],
+  /**
+   * Tombstones for deleted service reports. Populated by `deleteServiceReport`
+   * so iCloud sync can propagate deletions across devices.
+   */
+  deletedServiceReports: [] as ServiceReportTombstone[],
 }
 
 /**
@@ -65,7 +71,7 @@ export const useServiceReport = create(
             reports[year][month] = []
           }
 
-          reports[year][month].push(report)
+          reports[year][month].push({ ...report, updatedAt: Date.now() })
 
           return {
             serviceReports: reports,
@@ -85,7 +91,7 @@ export const useServiceReport = create(
                 if (!moment(c.date).isSame(dayPlan.date, 'day')) {
                   return c
                 }
-                return { ...c, ...dayPlan }
+                return { ...c, ...dayPlan, updatedAt: Date.now() }
               }),
             }
           }
@@ -95,7 +101,7 @@ export const useServiceReport = create(
           }
 
           return {
-            dayPlans: [...dayPlans, dayPlan],
+            dayPlans: [...dayPlans, { ...dayPlan, updatedAt: Date.now() }],
           }
         }),
       updateDayPlan: (dayPlan: Partial<DayPlan>) => {
@@ -105,7 +111,7 @@ export const useServiceReport = create(
               if (c.id !== dayPlan.id) {
                 return c
               }
-              return { ...c, ...dayPlan }
+              return { ...c, ...dayPlan, updatedAt: Date.now() }
             }),
           }
         })
@@ -298,7 +304,7 @@ export const useServiceReport = create(
           }
         }),
       deleteServiceReport: (_report: ServiceReport) =>
-        set(({ serviceReports }) => {
+        set(({ serviceReports, deletedServiceReports }) => {
           const reports = { ...serviceReports }
           const foundReport = getReport(reports, _report)
 
@@ -319,6 +325,10 @@ export const useServiceReport = create(
 
           return {
             serviceReports: reports,
+            deletedServiceReports: [
+              ...deletedServiceReports.filter((t) => t.id !== report.id),
+              { id: report.id, deletedAt: Date.now() },
+            ],
           }
         }),
       updateServiceReport: (serviceReport: ServiceReport) => {
@@ -333,7 +343,7 @@ export const useServiceReport = create(
             if (c.id !== serviceReport.id) {
               return c
             }
-            return { ...c, ...serviceReport }
+            return { ...c, ...serviceReport, updatedAt: Date.now() }
           })
 
           reports[year][month] = updatedMonth
@@ -343,7 +353,8 @@ export const useServiceReport = create(
           }
         })
       },
-      _WARNING_forceDeleteServiceReports: () => set({ serviceReports: {} }),
+      _WARNING_forceDeleteServiceReports: () =>
+        set({ serviceReports: {}, deletedServiceReports: [] }),
       _WARNING_forceDeleteDayPlans: () => set({ dayPlans: [] }),
       _WARNING_forceDeleteRecurringPlans: () => set({ recurringPlans: [] }),
     })),

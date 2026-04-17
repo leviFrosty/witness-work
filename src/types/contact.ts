@@ -41,6 +41,13 @@ export type Contact = {
    */
   userDraggedCoordinate?: boolean
   createdAt: Date
+  /**
+   * Epoch ms of the most recent field change on this record. Populated by store
+   * actions so the iCloud merge algorithm can pick the newest version when the
+   * same id exists on multiple devices. Optional for historical records that
+   * predate sync — backfilled lazily.
+   */
+  updatedAt?: number
   customFields?: Record<string, string>
 
   /**

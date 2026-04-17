@@ -38,6 +38,7 @@ import { usePreferences } from './stores/preferences'
 import AnimationViewProvider from './providers/AnimationViewProvider'
 import useUserLocalePrefs from './hooks/useLocale'
 import { installWidgetSync } from './lib/widgets/widgetSync'
+import { installiCloudSync } from './lib/sync/iCloudSync'
 import { linking, navigationRef } from './lib/linking'
 import DeepLinkListeners from './components/DeepLinkListeners'
 
@@ -112,6 +113,16 @@ export default function App() {
   useEffect(() => {
     if (!hasMigrated) return
     const teardown = installWidgetSync()
+    return teardown
+  }, [hasMigrated])
+
+  // Install the iCloud sync layer after storage is settled. Gated internally
+  // on iOS + supporter opt-in (preferences.iCloudSyncEnabled), so this is a
+  // no-op for users who haven't turned it on or don't have the native module
+  // linked.
+  useEffect(() => {
+    if (!hasMigrated) return
+    const teardown = installiCloudSync()
     return teardown
   }, [hasMigrated])
 

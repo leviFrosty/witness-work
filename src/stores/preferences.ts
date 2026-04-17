@@ -252,51 +252,163 @@ const initialState = {
    * hidden developer tools screen only.
    */
   devSupporterOverride: null as Date | null,
+  /**
+   * ICloud sync (supporter-only). When true, the sync layer writes the backup
+   * payload to the ubiquity container on store changes and pulls remote updates
+   * on foreground / remote-change events. Off by default so opting in is
+   * explicit.
+   */
+  iCloudSyncEnabled: false,
+  /**
+   * Epoch ms of the most recent successful push or pull. Null until first sync.
+   * Retained for back-compat; the granular `lastiCloudPushedAt` /
+   * `lastiCloudPulledAt` / `lastiCloudRemoteWrittenAt` fields are what the sync
+   * settings UI surfaces for debugging.
+   */
+  lastiCloudSyncAt: null as number | null,
+  /** Epoch ms of the most recent successful push to iCloud. */
+  lastiCloudPushedAt: null as number | null,
+  /** Epoch ms of the most recent successful pull/read from iCloud. */
+  lastiCloudPulledAt: null as number | null,
+  /** Epoch ms from `writtenAt` of the last remote payload this device read. */
+  lastiCloudRemoteWrittenAt: null as number | null,
+  /** DeviceId of the device that wrote the last remote payload this device read. */
+  lastiCloudRemoteDeviceId: null as string | null,
+  /**
+   * DeviceName of the device that wrote the last remote payload this device
+   * read.
+   */
+  lastiCloudRemoteDeviceName: null as string | null,
+  /**
+   * Stable per-install UUID stamped into the payload metadata. Used to
+   * distinguish our own writes from remote-device writes and to attribute
+   * entries in the "recent devices" display in Settings.
+   */
+  iCloudDeviceId: null as string | null,
+  /**
+   * Per-key epoch ms of the most recent change for syncable preference keys.
+   * Merged last-writer-wins per key so a theme toggle on device A doesn't
+   * revert a publisher-type change on device B.
+   */
+  preferenceUpdatedAt: {} as Record<string, number>,
+  /**
+   * Backfill flag for the one-time `updatedAt` stamp migration on records that
+   * predate sync. Set to true after the first boot that ran the backfill so it
+   * never runs twice.
+   */
+  hasMigratedToSyncSchema: false,
 }
+
+/**
+ * Keys that should never be merged across devices (local bookkeeping, dev
+ * flags, device-specific state). Everything outside this set participates in
+ * per-key last-writer-wins merge when iCloud sync is enabled.
+ *
+ * Completion flags (`onboardingComplete`, `hasCompletedProfileSetup`,
+ * `hasCompletedMapOnboarding`) intentionally DO sync — once the user sets up on
+ * one device, the other device shouldn't re-prompt and wipe out their restored
+ * profile. Device-specific _install_ bookkeeping (MMKV migration flag, dev
+ * tools, geocode counter, etc.) stays local.
+ */
+export const NON_SYNCABLE_PREFERENCE_KEYS = new Set<string>([
+  'iCloudSyncEnabled',
+  'lastiCloudSyncAt',
+  'lastiCloudPushedAt',
+  'lastiCloudPulledAt',
+  'lastiCloudRemoteWrittenAt',
+  'lastiCloudRemoteDeviceId',
+  'lastiCloudRemoteDeviceName',
+  'iCloudDeviceId',
+  'preferenceUpdatedAt',
+  'hasMigratedToSyncSchema',
+  'devSupporterOverride',
+  'developerTools',
+  'hasAttemptedToMigrateToMmkv',
+  'monthlyRoutineHasShownInvalidMonthAlert',
+  'lastAppVersion',
+  'calledGoecodeApiTimes',
+  'lastTimeRequestedAReview',
+  'lastBackupDate',
+])
 
 export const usePreferences = create(
   persist(
-    combine(initialState, (set) => ({
-      set,
-      setPublisher: (publisher: Publisher) => set({ publisher }),
-      incrementGeocodeApiCallCount: () =>
-        set(({ calledGoecodeApiTimes }) => ({
-          calledGoecodeApiTimes: calledGoecodeApiTimes + 1,
-        })),
-      updateLastTimeRequestedStoreReview: () =>
-        set({ lastTimeRequestedAReview: new Date() }),
-      setContactSort: (contactSort: (typeof SortOptionValues)[number]) =>
-        set({ contactSort }),
-      removeHint: (hint: keyof typeof hints) =>
-        set((preferences) => {
-          const updatedPreferences = { ...preferences }
-          updatedPreferences[hint] = false
-          return updatedPreferences
-        }),
-      /**
-       * Will not update lastUpdated property or address if address param is
-       * undefined.
-       */
-      updatePrefillAddress: (address?: Address) => {
-        if (!address || !Object.keys(address)) {
-          return
-        }
+    combine(initialState, (rawSet, getState) => {
+      // Wraps the raw zustand setter so every partial update also stamps
+      // per-key timestamps used by the iCloud merge algorithm. Keys in
+      // `NON_SYNCABLE_PREFERENCE_KEYS` are excluded from stamping so local
+      // bookkeeping (e.g. the sync timestamps themselves) doesn't generate
+      // churn on the map.
+      const set: typeof rawSet = (partial, replace) => {
+        const resolved =
+          typeof partial === 'function' ? partial(getState()) : partial
 
-        set(({ prefillAddress }) => {
-          return {
-            prefillAddress: {
-              ...prefillAddress,
-              address,
-              lastUpdated: new Date(),
-            },
+        if (
+          resolved &&
+          typeof resolved === 'object' &&
+          !Array.isArray(resolved) &&
+          !replace
+        ) {
+          const now = Date.now()
+          const current = getState().preferenceUpdatedAt ?? {}
+          const next: Record<string, number> = { ...current }
+          let changed = false
+          for (const key of Object.keys(resolved)) {
+            if (NON_SYNCABLE_PREFERENCE_KEYS.has(key)) continue
+            next[key] = now
+            changed = true
           }
-        })
-      },
-      setOverrideCreditLimit: (overrideCreditLimit: boolean) =>
-        set({ overrideCreditLimit }),
-      setCustomCreditLimitHours: (customCreditLimitHours: number) =>
-        set({ customCreditLimitHours }),
-    })),
+          if (changed) {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            rawSet({ ...(resolved as any), preferenceUpdatedAt: next })
+            return
+          }
+        }
+        rawSet(resolved, replace as never)
+      }
+
+      return {
+        set,
+        setPublisher: (publisher: Publisher) => set({ publisher }),
+        incrementGeocodeApiCallCount: () =>
+          set(({ calledGoecodeApiTimes }) => ({
+            calledGoecodeApiTimes: calledGoecodeApiTimes + 1,
+          })),
+        updateLastTimeRequestedStoreReview: () =>
+          set({ lastTimeRequestedAReview: new Date() }),
+        setContactSort: (contactSort: (typeof SortOptionValues)[number]) =>
+          set({ contactSort }),
+        removeHint: (hint: keyof typeof hints) =>
+          set((preferences) => {
+            const updatedPreferences = { ...preferences }
+            updatedPreferences[hint] = false
+            return updatedPreferences
+          }),
+        /**
+         * Will not update lastUpdated property or address if address param is
+         * undefined.
+         */
+        updatePrefillAddress: (address?: Address) => {
+          if (!address || !Object.keys(address)) {
+            return
+          }
+
+          set(({ prefillAddress }) => {
+            return {
+              prefillAddress: {
+                ...prefillAddress,
+                address,
+                lastUpdated: new Date(),
+              },
+            }
+          })
+        },
+        setOverrideCreditLimit: (overrideCreditLimit: boolean) =>
+          set({ overrideCreditLimit }),
+        setCustomCreditLimitHours: (customCreditLimitHours: number) =>
+          set({ customCreditLimitHours }),
+      }
+    }),
     {
       name: 'preferences',
       storage: createJSONStorage(() =>

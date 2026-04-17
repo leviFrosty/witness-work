@@ -1,12 +1,18 @@
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { create } from 'zustand'
 import { persist, combine, createJSONStorage } from 'zustand/middleware'
-import { Conversation } from '../types/conversation'
+import { Conversation, ConversationTombstone } from '../types/conversation'
 import * as Notifications from 'expo-notifications'
 import { hasMigratedFromAsyncStorage, MmkvStorage } from './mmkv'
 
 const initialState = {
   conversations: [] as Conversation[],
+  /**
+   * Tombstones for deleted conversations. Populated by `deleteConversation` so
+   * iCloud sync can propagate deletions across devices. Pruned when a tombstone
+   * exceeds the retention window (see `src/lib/sync/merge.ts`).
+   */
+  deletedConversations: [] as ConversationTombstone[],
 }
 
 export const useConversations = create(
@@ -24,11 +30,14 @@ export const useConversations = create(
           }
 
           return {
-            conversations: [...conversations, conversation],
+            conversations: [
+              ...conversations,
+              { ...conversation, updatedAt: Date.now() },
+            ],
           }
         }),
       deleteConversation: (id: string) =>
-        set(({ conversations }) => {
+        set(({ conversations, deletedConversations }) => {
           const foundConversation = conversations.find(
             (conversation) => conversation.id === id
           )
@@ -41,10 +50,15 @@ export const useConversations = create(
               await Notifications.cancelScheduledNotificationAsync(id)
           )
 
+          const now = Date.now()
           return {
             conversations: conversations.filter(
               (conversation) => conversation.id !== id
             ),
+            deletedConversations: [
+              ...deletedConversations.filter((t) => t.id !== id),
+              { id, deletedAt: now },
+            ],
           }
         }),
       updateConversation: (conversation: Partial<Conversation>) => {
@@ -54,12 +68,13 @@ export const useConversations = create(
               if (c.id !== conversation.id) {
                 return c
               }
-              return { ...c, ...conversation }
+              return { ...c, ...conversation, updatedAt: Date.now() }
             }),
           }
         })
       },
-      _WARNING_forceDeleteConversations: () => set({ conversations: [] }),
+      _WARNING_forceDeleteConversations: () =>
+        set({ conversations: [], deletedConversations: [] }),
     })),
     {
       name: 'conversations',

@@ -19,7 +19,7 @@ interface Props {
    * Optional key of the specific feature the user tapped. Surfaces slightly
    * different copy acknowledging what they were trying to customize.
    */
-  featureKey?: 'customAccentColor'
+  featureKey?: 'customAccentColor' | 'iCloudSync'
 }
 
 const SupporterInfoSheet = ({ open, setOpen, featureKey }: Props) => {

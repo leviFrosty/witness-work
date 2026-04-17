@@ -431,6 +431,8 @@ export type RecurringPlan = {
   note?: string
   deletedDates?: Date[]
   overrides?: RecurringPlanOverride[]
+  /** Epoch ms of the most recent change. Used for iCloud merge. */
+  updatedAt?: number
 }
 
 // Helper function to check if a date matches a monthly by weekday pattern

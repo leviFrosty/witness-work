@@ -11,6 +11,7 @@ import { useConversations } from '../../stores/conversationStore'
 import { DEFAULT_LOCALE } from '../locales'
 import { buildWidgetSnapshot } from './snapshot'
 import { logger } from '../logger'
+import { iCloudSync } from '../sync/iCloudSync'
 
 export const WIDGET_REFRESH_TASK = 'com.leviwilkerson.jwtime.widget.refresh'
 
@@ -72,6 +73,16 @@ const debouncedPush = _.debounce(() => pushSnapshot('store-change'), 500, {
 if (Platform.OS === 'ios' && !TaskManager.isTaskDefined(WIDGET_REFRESH_TASK)) {
   TaskManager.defineTask(WIDGET_REFRESH_TASK, async () => {
     pushSnapshot('background-fetch')
+    // Piggyback on the widget-refresh task to pull any remote iCloud updates
+    // and push pending local writes. Gated on the sync opt-in so it's a
+    // no-op when the feature is off. Errors are handled inside the sync
+    // layer — don't let them fail the widget task.
+    try {
+      await iCloudSync.pullAndMerge('background-fetch')
+      await iCloudSync.push('background-fetch')
+    } catch (e) {
+      logger.error('[widgetSync] iCloud sync in background task failed', e)
+    }
     return BackgroundTask.BackgroundTaskResult.Success
   })
 }

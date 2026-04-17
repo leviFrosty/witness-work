@@ -9,10 +9,13 @@ import StepDefaultNav from './steps/DefaultNav'
 import PrivacyFirst from './steps/PrivacyFirst'
 import ProfileSetup from './steps/ProfileSetup'
 import Supporter from './steps/Supporter'
+import ICloudRestore from './steps/iCloudRestore'
 
 const steps = [
   StepOne,
   PrivacyFirst,
+  // iCloud restore lives on iOS only; step is skipped on Android (see goNext).
+  ICloudRestore,
   StepTwo,
   ProfileSetup,
   StepThree,
@@ -21,6 +24,7 @@ const steps = [
   StepFour,
 ]
 const DEFAULT_NAV_STEP_INDEX = steps.indexOf(StepDefaultNav)
+const ICLOUD_RESTORE_STEP_INDEX = steps.indexOf(ICloudRestore)
 
 const OnBoarding = () => {
   const { set, onboardingComplete } = usePreferences()
@@ -33,13 +37,17 @@ const OnBoarding = () => {
   }, [onboardingComplete])
 
   const goNext = () => {
-    // Skips default navigation step on Android. Android does not have configuration default navigation.
-    if (
-      Platform.OS === 'android' &&
-      onboardingStep === DEFAULT_NAV_STEP_INDEX - 1
-    ) {
-      setOnboardingStep(onboardingStep + 2)
-      return
+    // Skip iOS-only steps on Android (iCloud restore + default nav). If the
+    // next step is an iOS-only step and we're on Android, hop over it.
+    if (Platform.OS === 'android') {
+      if (onboardingStep === ICLOUD_RESTORE_STEP_INDEX - 1) {
+        setOnboardingStep(onboardingStep + 2)
+        return
+      }
+      if (onboardingStep === DEFAULT_NAV_STEP_INDEX - 1) {
+        setOnboardingStep(onboardingStep + 2)
+        return
+      }
     }
 
     if (onboardingStep === steps.length - 1) {
@@ -54,13 +62,16 @@ const OnBoarding = () => {
     if (onboardingStep === 0) {
       return
     }
-    // Skips default navigation step on Android going backward as well.
-    if (
-      Platform.OS === 'android' &&
-      onboardingStep === DEFAULT_NAV_STEP_INDEX + 1
-    ) {
-      setOnboardingStep(onboardingStep - 2)
-      return
+    // Mirror the skip logic going backward on Android.
+    if (Platform.OS === 'android') {
+      if (onboardingStep === ICLOUD_RESTORE_STEP_INDEX + 1) {
+        setOnboardingStep(onboardingStep - 2)
+        return
+      }
+      if (onboardingStep === DEFAULT_NAV_STEP_INDEX + 1) {
+        setOnboardingStep(onboardingStep - 2)
+        return
+      }
     }
     setOnboardingStep(onboardingStep - 1)
   }

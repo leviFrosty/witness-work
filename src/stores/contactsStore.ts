@@ -25,7 +25,7 @@ export const useContacts = create(
           }
 
           return {
-            contacts: [...contacts, contact],
+            contacts: [...contacts, { ...contact, updatedAt: Date.now() }],
           }
         }),
       deleteContact: (id: string) =>
@@ -35,7 +35,10 @@ export const useContacts = create(
             return { contacts, deletedContacts }
           }
           return {
-            deletedContacts: [...deletedContacts, foundContact],
+            deletedContacts: [
+              ...deletedContacts,
+              { ...foundContact, updatedAt: Date.now() },
+            ],
             contacts: contacts.filter((contact) => contact.id !== id),
           }
         }),
@@ -46,7 +49,7 @@ export const useContacts = create(
               if (c.id !== contact.id) {
                 return c
               }
-              return { ...c, ...contact }
+              return { ...c, ...contact, updatedAt: Date.now() }
             }),
           }
         })
@@ -78,7 +81,10 @@ export const useContacts = create(
 
           return {
             deletedContacts: deletedContacts.filter((dC) => dC.id !== id),
-            contacts: [...contacts, recoverContact],
+            contacts: [
+              ...contacts,
+              { ...recoverContact, updatedAt: Date.now() },
+            ],
           }
         })
       },
@@ -100,7 +106,12 @@ export const useContacts = create(
               if (c.id !== id) {
                 return c
               }
-              return { ...c, dismissedUntil, dismissedNotificationId }
+              return {
+                ...c,
+                dismissedUntil,
+                dismissedNotificationId,
+                updatedAt: Date.now(),
+              }
             }),
           }
         })
@@ -112,7 +123,11 @@ export const useContacts = create(
               if (c.id !== id) {
                 return c
               }
-              return { ...c, isFavorite: !c.isFavorite }
+              return {
+                ...c,
+                isFavorite: !c.isFavorite,
+                updatedAt: Date.now(),
+              }
             }),
           }
         })
@@ -124,7 +139,7 @@ export const useContacts = create(
               if (c.id !== id) {
                 return c
               }
-              const updatedContact = { ...c }
+              const updatedContact = { ...c, updatedAt: Date.now() }
               delete updatedContact.dismissedUntil
               delete updatedContact.dismissedNotificationId
               return updatedContact

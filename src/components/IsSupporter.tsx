@@ -12,7 +12,7 @@ interface Props {
    * Which supporter-only feature this gate protects. Drives the copy shown in
    * the info sheet when a non-supporter taps through.
    */
-  feature: 'customAccentColor'
+  feature: 'customAccentColor' | 'iCloudSync'
   /** Size of the supporter badge. */
   size?: 'sm' | 'md' | 'lg'
   /**
@@ -22,6 +22,11 @@ interface Props {
    * `children` (top-right aligned) as a fallback.
    */
   title?: string
+  /**
+   * Fill available vertical space. Use when the gate wraps an entire screen so
+   * its children can flex to full height.
+   */
+  fill?: boolean
 }
 
 /**
@@ -34,7 +39,13 @@ interface Props {
  * Non-supporters see a tappable block whose header row holds the title and
  * supporter badge side-by-side, with dimmed pointer-disabled children below.
  */
-const IsSupporter = ({ children, feature, size = 'sm', title }: Props) => {
+const IsSupporter = ({
+  children,
+  feature,
+  size = 'sm',
+  title,
+  fill,
+}: Props) => {
   const theme = useTheme()
   const { isSupporter } = useIsSupporter()
   const [sheetOpen, setSheetOpen] = useState(false)
@@ -52,7 +63,7 @@ const IsSupporter = ({ children, feature, size = 'sm', title }: Props) => {
 
   if (isSupporter) {
     return (
-      <View style={{ gap: 10 }}>
+      <View style={{ gap: 10, ...(fill ? { flex: 1 } : null) }}>
         {titleEl}
         {children}
       </View>
@@ -61,7 +72,10 @@ const IsSupporter = ({ children, feature, size = 'sm', title }: Props) => {
 
   return (
     <>
-      <Pressable onPress={() => setSheetOpen(true)} style={{ gap: 10 }}>
+      <Pressable
+        onPress={() => setSheetOpen(true)}
+        style={{ gap: 10, ...(fill ? { flex: 1 } : null) }}
+      >
         <View
           style={{
             flexDirection: 'row',

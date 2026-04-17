@@ -10,6 +10,21 @@ export type ServiceReport = {
   credit?: boolean
   /** Optional note for the service report. */
   note?: string
+  /**
+   * Epoch ms of the most recent change on this record. Populated by store
+   * actions for iCloud merge. Optional for historical records that predate sync
+   * — backfilled lazily.
+   */
+  updatedAt?: number
+}
+
+/**
+ * Tombstone written when a service report is deleted so it propagates across
+ * devices.
+ */
+export type ServiceReportTombstone = {
+  id: string
+  deletedAt: number
 }
 
 /** 0-indexed month key, 0-11 */
@@ -35,4 +50,6 @@ export type DayPlan = {
   date: Date
   minutes: number
   note?: string
+  /** Epoch ms of the most recent change. Used for iCloud merge. */
+  updatedAt?: number
 }

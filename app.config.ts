@@ -70,6 +70,9 @@ export default ({ config }: ConfigContext): ExpoConfig => {
             ? 'group.com.leviwilkerson.jwtimedev'
             : 'group.com.leviwilkerson.jwtime',
         ],
+        // iCloud entitlements are populated at prebuild time by
+        // `plugins/with-icloud-container.js` so the container identifier
+        // stays in lockstep with the plugin's Info.plist edits.
       },
       appStoreUrl: 'https://apps.apple.com/us/app/jw-time/id6469723047',
     },
@@ -100,6 +103,15 @@ export default ({ config }: ConfigContext): ExpoConfig => {
     },
     plugins: [
       './plugins/with-force-load-local-modules',
+      [
+        './plugins/with-icloud-container',
+        {
+          containerIdentifier: IS_DEV
+            ? 'iCloud.com.leviwilkerson.jwtimedev'
+            : 'iCloud.com.leviwilkerson.jwtime',
+          containerDisplayName: 'WitnessWork',
+        },
+      ],
       '@bacons/apple-targets',
       '@react-native-community/datetimepicker',
       'expo-asset',

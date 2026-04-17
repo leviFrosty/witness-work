@@ -1,5 +1,5 @@
 import useTheme from '../contexts/theme'
-import { useMemo, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import useConversations from '../stores/conversationStore'
 import {
   overdueFollowUpConversations,
@@ -10,7 +10,8 @@ import ExportTimeSheet, {
   ExportTimeSheetState,
 } from '../components/ExportTimeSheet'
 import useContacts from '../stores/contactsStore'
-import { View } from 'react-native'
+import { RefreshControl, View } from 'react-native'
+import { iCloudSync } from '../lib/sync/iCloudSync'
 import ServiceReportSection from '../components/ServiceReportSection'
 import ReturnVisitContactsSection from '../components/ReturnVisitContactsSection'
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
@@ -41,7 +42,21 @@ export const HomeScreen = () => {
     remindMeAboutBackups,
     lastBackupDate,
     installedOn,
+    iCloudSyncEnabled,
   } = usePreferences()
+  const [refreshing, setRefreshing] = useState(false)
+
+  const handleRefresh = useCallback(async () => {
+    setRefreshing(true)
+    try {
+      // Pull first so any remote-side changes land before we push ours —
+      // avoids a fight between two devices that both just pulled to refresh.
+      await iCloudSync.pullAndMerge('pull-to-refresh')
+      await iCloudSync.push('pull-to-refresh')
+    } finally {
+      setRefreshing(false)
+    }
+  }, [])
   const { conversations } = useConversations()
   const { contacts } = useContacts()
   const { isTablet } = useDevice()
@@ -130,6 +145,17 @@ export const HomeScreen = () => {
           padding: 15,
           paddingBottom: insets.bottom + 50,
         }}
+        refreshControl={
+          iCloudSyncEnabled ? (
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={handleRefresh}
+              tintColor={theme.colors.accent}
+              progressViewOffset={16}
+              style={{ transform: [{ scale: 0.85 }] }}
+            />
+          ) : undefined
+        }
       >
         <View style={{ gap: 20, paddingBottom: insets.bottom, flex: 1 }}>
           <ProfileCard

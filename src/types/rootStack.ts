@@ -36,6 +36,7 @@ export type RootStackParamList = {
   PreferencesBackups: undefined
   PreferencesAppearance: undefined
   PreferencesWidgets: undefined
+  PreferencesiCloud: undefined
   RescheduleConversation: { contactId: string; conversationId: string }
   PlanSchedule: { month: number; year: number }
   PlanDay: {

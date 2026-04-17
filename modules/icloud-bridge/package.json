@@ -1,0 +1,7 @@
+{
+  "name": "icloud-bridge",
+  "version": "0.1.0",
+  "description": "Local Expo module wrapping NSFileCoordinator / NSMetadataQuery / ubiquityIdentityToken for iCloud Drive document sync.",
+  "main": "index.ts",
+  "private": true
+}

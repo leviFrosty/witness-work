@@ -80,6 +80,9 @@ const CONTACT_POLICY: Record<keyof Contact, FieldPolicy> = {
   dismissedUntil: 'omit',
   dismissedNotificationId: 'omit',
   isFavorite: 'omit',
+  // Sync bookkeeping — only meaningful inside the iCloud sync payload, not in
+  // a universal-link share intended for another person.
+  updatedAt: 'omit',
 }
 
 const ADDRESS_POLICY: Record<keyof Address, FieldPolicy> = {
@@ -108,6 +111,7 @@ const CONVERSATION_POLICY: Record<keyof Conversation, FieldPolicy> = {
   note: 'optional',
   followUp: 'optional',
   notAtHome: 'optional',
+  updatedAt: 'omit',
 }
 
 // --- Stripping --------------------------------------------------------------

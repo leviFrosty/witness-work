@@ -1,0 +1,269 @@
+import { useEffect, useState } from 'react'
+import { Platform, View } from 'react-native'
+import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
+import {
+  faCheckCircle,
+  faCircleExclamation,
+  faCloud,
+} from '@fortawesome/free-solid-svg-icons'
+import moment from 'moment'
+import { Spinner } from 'tamagui'
+import { styles } from '../Onboarding.styles'
+import OnboardingNav from '../OnboardingNav'
+import Text from '../../MyText'
+import Wrapper from '../../layout/Wrapper'
+import ActionButton from '../../ActionButton'
+import Button from '../../Button'
+import Card from '../../Card'
+import useTheme from '../../../contexts/theme'
+import i18n from '../../../lib/locales'
+import * as ICloudBridge from '../../../../modules/icloud-bridge'
+import { iCloudSync } from '../../../lib/sync/iCloudSync'
+import { SyncPayload } from '../../../lib/sync/payload'
+import { usePreferences } from '../../../stores/preferences'
+
+interface Props {
+  goBack: () => void
+  goNext: () => void
+}
+
+type Probe =
+  | { state: 'probing' }
+  | { state: 'unavailable' } // iCloud account unavailable on this device
+  | { state: 'noBackup' } // Available but nothing there yet
+  | { state: 'found'; remote: SyncPayload }
+
+/**
+ * Offers a one-shot restore from iCloud during onboarding. Pulling is not gated
+ * by supporter status — the user can import their data now and decide whether
+ * to enable ongoing sync (which IS supporter-only) later. Skipping just
+ * advances to the next onboarding step with no side effects.
+ *
+ * Not rendered on Android: iCloud is iOS-only. The parent step list hides this
+ * step on non-iOS platforms.
+ */
+const ICloudRestore = ({ goBack, goNext }: Props) => {
+  const theme = useTheme()
+  const { set } = usePreferences()
+  const [probe, setProbe] = useState<Probe>({ state: 'probing' })
+  const [restoring, setRestoring] = useState(false)
+
+  useEffect(() => {
+    let cancelled = false
+    const run = async () => {
+      if (Platform.OS !== 'ios' || !ICloudBridge.isAvailable()) {
+        if (!cancelled) setProbe({ state: 'unavailable' })
+        return
+      }
+      const remote = await iCloudSync.peekRemotePayload()
+      if (cancelled) return
+      if (!remote) {
+        setProbe({ state: 'noBackup' })
+      } else {
+        setProbe({ state: 'found', remote })
+      }
+    }
+    void run()
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+  const handleRestore = async () => {
+    if (probe.state !== 'found') return
+    setRestoring(true)
+    try {
+      iCloudSync.replaceLocalWithRemote(probe.remote)
+      // Mark onboarding complete — the user's restored publisher/profile/etc.
+      // replaces the defaults they would've otherwise set in the remaining
+      // steps. Leaves `iCloudSyncEnabled` off so ongoing sync is still an
+      // opt-in decision they can make later in Settings (supporter-gated).
+      //
+      // Also force-set `hasCompletedProfileSetup` + `hasCompletedMapOnboarding`
+      // so the main app doesn't re-prompt the user and overwrite their
+      // restored name/avatar. (These sync as of the NON_SYNCABLE_PREFERENCE_KEYS
+      // revision, but an older remote payload may not contain them.)
+      set({
+        onboardingComplete: true,
+        hasCompletedProfileSetup: true,
+        hasCompletedMapOnboarding: true,
+      })
+    } finally {
+      setRestoring(false)
+    }
+  }
+
+  return (
+    <Wrapper
+      style={{
+        flex: 1,
+        paddingHorizontal: 30,
+        paddingTop: 60,
+        paddingBottom: 60,
+      }}
+    >
+      <OnboardingNav goBack={goBack} />
+      <View style={{ flex: 1, paddingTop: 30 }}>
+        <View
+          style={{
+            alignItems: 'center',
+            justifyContent: 'center',
+            width: 64,
+            height: 64,
+            borderRadius: 32,
+            backgroundColor: theme.colors.accentTranslucent,
+            marginBottom: 20,
+          }}
+        >
+          <FontAwesomeIcon
+            icon={faCloud}
+            size={28}
+            color={theme.colors.accent}
+          />
+        </View>
+        <Text style={styles.stepTitle}>{i18n.t('iCloudRestoreTitle')}</Text>
+        <Text
+          style={{
+            fontSize: 14,
+            color: theme.colors.textAlt,
+            marginTop: 8,
+            marginBottom: 24,
+            lineHeight: 20,
+          }}
+        >
+          {i18n.t('iCloudRestoreDescription')}
+        </Text>
+
+        {probe.state === 'probing' && (
+          <Card
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              gap: 12,
+              paddingVertical: 16,
+              paddingHorizontal: 16,
+            }}
+          >
+            <Spinner color={theme.colors.textAlt} />
+            <Text style={{ color: theme.colors.textAlt }}>
+              {i18n.t('iCloudRestoreChecking')}
+            </Text>
+          </Card>
+        )}
+
+        {probe.state === 'unavailable' && (
+          <Card
+            style={{
+              flexDirection: 'row',
+              alignItems: 'flex-start',
+              gap: 12,
+              paddingVertical: 16,
+              paddingHorizontal: 16,
+            }}
+          >
+            <FontAwesomeIcon
+              icon={faCircleExclamation}
+              size={18}
+              color={theme.colors.textAlt}
+            />
+            <Text
+              style={{
+                flex: 1,
+                fontSize: 13,
+                color: theme.colors.textAlt,
+                lineHeight: 18,
+              }}
+            >
+              {i18n.t('iCloudRestoreUnavailable')}
+            </Text>
+          </Card>
+        )}
+
+        {probe.state === 'noBackup' && (
+          <Card
+            style={{
+              flexDirection: 'row',
+              alignItems: 'flex-start',
+              gap: 12,
+              paddingVertical: 16,
+              paddingHorizontal: 16,
+            }}
+          >
+            <FontAwesomeIcon
+              icon={faCheckCircle}
+              size={18}
+              color={theme.colors.textAlt}
+            />
+            <Text
+              style={{
+                flex: 1,
+                fontSize: 13,
+                color: theme.colors.textAlt,
+                lineHeight: 18,
+              }}
+            >
+              {i18n.t('iCloudRestoreNoBackup')}
+            </Text>
+          </Card>
+        )}
+
+        {probe.state === 'found' && (
+          <Card
+            style={{
+              paddingVertical: 16,
+              paddingHorizontal: 16,
+              gap: 8,
+              borderWidth: 1,
+              borderColor: theme.colors.accentTranslucent,
+            }}
+          >
+            <Text
+              style={{
+                fontSize: theme.fontSize('md'),
+                fontFamily: theme.fonts.semiBold,
+                color: theme.colors.text,
+              }}
+            >
+              {i18n.t('iCloudRestoreFoundTitle')}
+            </Text>
+            <Text style={{ fontSize: 13, color: theme.colors.textAlt }}>
+              {i18n.t('iCloudRestoreFoundSummary', {
+                device:
+                  probe.remote.deviceName || i18n.t('iCloudAnotherDevice'),
+                relative: moment(probe.remote.writtenAt).fromNow(),
+              })}
+            </Text>
+          </Card>
+        )}
+      </View>
+
+      <View style={{ gap: 10 }}>
+        {probe.state === 'found' && (
+          <ActionButton onPress={handleRestore} disabled={restoring}>
+            {restoring
+              ? i18n.t('iCloudRestoreRestoring')
+              : i18n.t('iCloudRestoreAction')}
+          </ActionButton>
+        )}
+        <Button
+          onPress={goNext}
+          style={{ alignSelf: 'center', paddingVertical: 10 }}
+          disabled={restoring}
+        >
+          <Text
+            style={{
+              color: theme.colors.textAlt,
+              textDecorationLine: 'underline',
+            }}
+          >
+            {probe.state === 'found'
+              ? i18n.t('iCloudRestoreSkip')
+              : i18n.t('continue')}
+          </Text>
+        </Button>
+      </View>
+    </Wrapper>
+  )
+}
+
+export default ICloudRestore

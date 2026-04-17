@@ -31,6 +31,7 @@ const { withAppDelegate } = require('@expo/config-plugins')
 const LOCAL_MODULES = [
   { importName: 'WidgetBridge', className: 'WidgetBridgeModule' },
   { importName: 'StopwatchBridge', className: 'StopwatchBridgeModule' },
+  { importName: 'ICloudBridge', className: 'ICloudBridgeModule' },
 ]
 
 const IMPORT_MARKER = '// with-force-load-local-modules:imports'

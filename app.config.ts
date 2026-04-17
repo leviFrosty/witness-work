@@ -32,6 +32,7 @@ export default ({ config }: ConfigContext): ExpoConfig => {
         RCTAsyncStorageExcludeFromBackup: false,
         ITSAppUsesNonExemptEncryption: false,
         NSSupportsLiveActivities: true,
+        LSSupportsOpeningDocumentsInPlace: true,
         // expo-background-fetch requires this permitted task identifier
         // to register the snapshot refresh task.
         BGTaskSchedulerPermittedIdentifiers: [

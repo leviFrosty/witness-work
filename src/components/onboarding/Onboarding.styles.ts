@@ -31,6 +31,31 @@ export const styles = StyleSheet.create({
     fontFamily: 'Inter_700Bold',
   },
   navContainer: {
+    flexDirection: 'column',
+    alignItems: 'stretch',
+  },
+  // Reserves vertical space for the progress indicator (track height + the
+  // gap below) whether or not currentStep/totalSteps are passed. Keeping this
+  // slot always present means the "WitnessWork" label sits at the same Y
+  // position on hero screens and step screens, so the nav never jumps.
+  navProgressSlot: {
+    height: 3,
+    marginBottom: 10,
+    alignSelf: 'center',
+    width: '60%',
+    justifyContent: 'center',
+  },
+  navProgressTrack: {
+    width: '100%',
+    height: 3,
+    borderRadius: 1.5,
+    overflow: 'hidden',
+  },
+  navProgressFill: {
+    height: '100%',
+    borderRadius: 1.5,
+  },
+  navTitleRow: {
     position: 'relative',
     flexDirection: 'row',
     justifyContent: 'center',

@@ -7,7 +7,7 @@ import i18n from '../../../lib/locales'
 import Wrapper from '../../layout/Wrapper'
 import ActionButton from '../../ActionButton'
 import useTheme from '../../../contexts/theme'
-import ProfileCard from '../../ProfileCard'
+import DateTimePicker from '../../DateTimePicker'
 import { usePreferences } from '../../../stores/preferences'
 
 interface Props {
@@ -15,12 +15,11 @@ interface Props {
   goNext: () => void
 }
 
-const ProfileSetup = ({ goBack, goNext }: Props) => {
+const ProfileSetupPioneerDate = ({ goBack, goNext }: Props) => {
   const theme = useTheme()
-  const { set } = usePreferences()
+  const { pioneerStartDate, set } = usePreferences()
 
   const handleContinue = () => {
-    set({ hasCompletedProfileSetup: true })
     goNext()
   }
 
@@ -42,9 +41,12 @@ const ProfileSetup = ({ goBack, goNext }: Props) => {
           paddingBottom: 20,
         }}
         showsVerticalScrollIndicator={false}
+        enableOnAndroid={true}
       >
         <View style={[styles.stepContentContainer, { marginRight: 0 }]}>
-          <Text style={styles.stepTitle}>{i18n.t('profileSetupTitle')}</Text>
+          <Text style={styles.stepTitle}>
+            {i18n.t('pioneerStartDateTitle')}
+          </Text>
           <Text
             style={{
               fontSize: 14,
@@ -53,9 +55,27 @@ const ProfileSetup = ({ goBack, goNext }: Props) => {
               lineHeight: 20,
             }}
           >
-            {i18n.t('profileSetupDesc')}
+            {i18n.t('pioneerStartDate_description')}
           </Text>
-          <ProfileCard editable />
+          <View style={{ gap: 6 }}>
+            <Text
+              style={{
+                fontFamily: theme.fonts.semiBold,
+                color: theme.colors.text,
+              }}
+            >
+              {i18n.t('pioneerStartDate')}
+            </Text>
+            <DateTimePicker
+              value={pioneerStartDate ? new Date(pioneerStartDate) : new Date()}
+              onChange={(_e, date) => {
+                if (date) set({ pioneerStartDate: date })
+              }}
+              maximumDate={new Date()}
+              iOSMode='date'
+              androidFirstPickerMode='date'
+            />
+          </View>
         </View>
       </KeyboardAwareScrollView>
       <ActionButton onPress={handleContinue}>{i18n.t('continue')}</ActionButton>
@@ -63,4 +83,4 @@ const ProfileSetup = ({ goBack, goNext }: Props) => {
   )
 }
 
-export default ProfileSetup
+export default ProfileSetupPioneerDate

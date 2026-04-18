@@ -311,6 +311,18 @@ const initialState = {
    * never runs twice.
    */
   hasMigratedToSyncSchema: false,
+  /**
+   * Whether the Home-screen onboarding "Get started" checklist has been
+   * dismissed. Once dismissed it should not auto-reappear. Additive flag owned
+   * by the onboarding-overhaul Phase 3 (HomeChecklist).
+   */
+  homeChecklistDismissed: false,
+  /**
+   * IDs of checklist items the user has manually ticked as complete on the
+   * Home-screen onboarding checklist. Items that auto-complete from other
+   * stores (e.g. `logFirstMinute`, `addFirstContact`) are not tracked here.
+   */
+  homeChecklistManualCompletions: [] as string[],
 }
 
 /**

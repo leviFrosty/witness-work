@@ -131,6 +131,19 @@ export type ProfileAvatar = {
   value: string
 }
 
+/**
+ * Intents selected by the user during onboarding (`IntentPicker` step). Drives
+ * the post-onboarding HomeChecklist and personalization of the plan-preview /
+ * supporter reframe screens. Additive-only; consumers should treat an empty
+ * array as "no preference expressed" and fall back to sensible defaults.
+ */
+export type OnboardingIntent =
+  | 'trackTime'
+  | 'returnVisits'
+  | 'planWeek'
+  | 'monthlyGoal'
+  | 'mapContacts'
+
 const initialState = {
   publisher: 'publisher' as Publisher,
   publisherHours: publisherHours,
@@ -145,6 +158,13 @@ const initialState = {
   hasCompletedProfileSetup: false,
   /** User's first name. Collected during onboarding profile step. */
   name: '',
+  /**
+   * Multi-select intents captured during onboarding (`IntentPicker` step).
+   * Drives the post-onboarding `HomeChecklist` and personalizes later
+   * onboarding screens. Empty array means the user skipped or the step hasn't
+   * run yet — consumers must treat that case defensively.
+   */
+  onboardingIntents: [] as OnboardingIntent[],
   /**
    * Date the user began pioneering. Used by ProfileCard to display duration
    * (e.g. "Pioneering for 2 years"). Only surfaced for pioneer-type

@@ -1195,5 +1195,13 @@
   "yourPlanMapStrip": "Territory pins ready",
   "yourPlanMonthlyGoalLine": "Your monthly routine is set up",
   "yourPlanPlanWeekLine": "Weekly planner ready to fill in",
-  "yourPlanReady": "Your WitnessWork is ready."
+  "yourPlanReady": "Your WitnessWork is ready.",
+  "intentPickerTitle": "What do you want WitnessWork to help with?",
+  "intentPickerSubtitle": "We'll tailor your WitnessWork based on this. Pick as many as you like — you can change these later.",
+  "intentTrackTime": "Track my service time",
+  "intentReturnVisits": "Remember return visits & conversations",
+  "intentPlanWeek": "Plan my week",
+  "intentMonthlyGoal": "Build a monthly routine / hit my goal",
+  "intentMapContacts": "Keep a map of my territory contacts",
+  "continueWithCount": "Continue · {{count}} selected"
 }

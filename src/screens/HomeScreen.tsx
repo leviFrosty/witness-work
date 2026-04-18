@@ -43,6 +43,8 @@ export const HomeScreen = () => {
     lastBackupDate,
     installedOn,
     iCloudSyncEnabled,
+    lastiCloudPushedAt,
+    lastiCloudPulledAt,
   } = usePreferences()
   const [refreshing, setRefreshing] = useState(false)
 
@@ -111,6 +113,24 @@ export const HomeScreen = () => {
   const shouldRemindToBackup = useMemo(() => {
     if (!remindMeAboutBackups) return false
 
+    // If iCloud sync is on and has successfully pushed or pulled within the
+    // backup-freshness window, the user's data is already off-device. Skip
+    // the local-export nag. If sync has been silent longer than the window
+    // (broken, signed out), fall through and nag as usual.
+    const mostRecentiCloudSyncAt = Math.max(
+      lastiCloudPushedAt ?? 0,
+      lastiCloudPulledAt ?? 0
+    )
+    if (
+      iCloudSyncEnabled &&
+      mostRecentiCloudSyncAt > 0 &&
+      moment(mostRecentiCloudSyncAt)
+        .add(backupNotificationFrequencyAsDays, 'days')
+        .isAfter(moment())
+    ) {
+      return false
+    }
+
     const installedMoreThanNotificationFrequencyAgo = moment(installedOn)
       .add(backupNotificationFrequencyAsDays, 'days')
       .isBefore(moment())
@@ -133,6 +153,9 @@ export const HomeScreen = () => {
     installedOn,
     lastBackupDate,
     remindMeAboutBackups,
+    iCloudSyncEnabled,
+    lastiCloudPushedAt,
+    lastiCloudPulledAt,
   ])
 
   return (

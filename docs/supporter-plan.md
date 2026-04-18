@@ -87,7 +87,7 @@ When iCloud sync lands, it becomes the first real caller of `SupporterGate`.
 
 ## Decisions log
 
-- **iOS only**: RevenueCat integration is iOS-only; Android support deferred.
+- **iOS only**: RevenueCat integration is iOS-only.
 - **Pure-education onboarding**: onboarding screen does not link to paywall. Reduces friction, keeps the "all features free" promise loud. Paywall is already reachable from Settings > Support.
 - **One gated cosmetic this PR**: custom accent color picker. Everything else stacks on top in follow-ups.
 - **Amber color**: chosen over purple/rose for the universal premium signal and clear contrast with green primary.

@@ -6,7 +6,6 @@ import i18n, { TranslatedLocale } from '../lib/locales'
 import Constants from 'expo-constants'
 import moment from 'moment'
 import * as Device from 'expo-device'
-import { Platform } from 'react-native'
 import { hasMigratedFromAsyncStorage, MmkvStorage } from './mmkv'
 import { Address } from '../types/contact'
 import { MinuteDisplayFormat } from '../types/serviceReport'
@@ -51,10 +50,6 @@ const publisherHours: PublisherHours = {
   custom: 50,
 }
 
-/**
- * @platform iOS: All Supported
- * @platform Android: Only 'google' is supported
- */
 export type DefaultNavigationMapProvider = 'apple' | 'waze' | 'google' | null
 
 interface TimeOffset {
@@ -164,14 +159,7 @@ const initialState = {
   calledGoecodeApiTimes: 0,
   lastTimeRequestedAReview: null as Date | null,
 
-  /**
-   * @platform iOS: Supported
-   * @platform Android: Not Supported
-   */
-  defaultNavigationMapProvider:
-    Platform.OS === 'ios'
-      ? 'apple'
-      : ('google' as DefaultNavigationMapProvider),
+  defaultNavigationMapProvider: 'apple' as DefaultNavigationMapProvider,
   lastAppVersion: Constants.expoConfig?.version || null,
   returnVisitTimeOffset: null as TimeOffset | null,
   returnVisitNotificationOffset: null as TimeOffset | null,

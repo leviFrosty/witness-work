@@ -11,7 +11,6 @@ Plan for adding iCloud sync to WitnessWork. Status: **proposal, not yet implemen
 
 ## Non-goals (for v1)
 
-- Android sync. iCloud is iOS-only; Android users keep the manual export flow.
 - Cross-platform web access to data.
 - Real-time per-keystroke collaboration.
 - Selective sync (pick which stores to sync). All-or-nothing in v1.
@@ -182,7 +181,6 @@ Extend `src/lib/widgets/widgetSync.ts`' existing `BGTaskScheduler` registration 
 
 - Do we want a "History" view showing recent writes per device? Probably v2.
 - Should preference keys be selectively excluded from sync (e.g., `hasSeenOnboarding`, device-specific theme)? Start with allow-list of syncable keys in `preferences.ts`; everything else stays local.
-- How do we handle a user who has both Android and iOS devices? They keep using manual export. Don't conflate the two paths.
 
 ## Alternatives considered
 
@@ -200,7 +198,7 @@ Apple's one-call solution, but requires rewriting from Zustand to Core Data. Not
 
 ### Supabase / custom backend
 
-Gives cross-platform sync (Android + web) but requires auth, hosting, a privacy-policy overhaul, and ongoing server costs for a local-first OSS app. **Rejected** — against the product's ethos.
+Gives cross-platform sync but requires auth, hosting, a privacy-policy overhaul, and ongoing server costs for a local-first OSS app. **Rejected** — against the product's ethos.
 
 ## Milestones
 

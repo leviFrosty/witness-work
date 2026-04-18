@@ -1,12 +1,12 @@
 import Wrapper from '../components/layout/Wrapper'
-import MapView, { LatLng, Marker, PROVIDER_GOOGLE } from 'react-native-maps'
+import MapView, { LatLng, Marker } from 'react-native-maps'
 import useContacts from '../stores/contactsStore'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigation } from '@react-navigation/native'
 import useTheme from '../contexts/theme'
 import useConversations from '../stores/conversationStore'
 import { filterActivesContacts } from '../lib/dismissedContacts'
-import { Dimensions, Platform, View } from 'react-native'
+import { Dimensions, View } from 'react-native'
 import Carousel, { ICarouselInstance } from 'react-native-reanimated-carousel'
 import MapCarouselCard from '../components/MapCarouselCard'
 import * as Location from 'expo-location'
@@ -124,7 +124,6 @@ const FullMapView = ({ contactMarkers }: FullMapViewProps) => {
         ref={mapRef}
         onLayout={handleMapLayout}
         style={{ height: '100%', width: '100%' }}
-        provider={Platform.OS === 'android' ? PROVIDER_GOOGLE : undefined}
       >
         {contactMarkers.map((c, index) => (
           <Marker

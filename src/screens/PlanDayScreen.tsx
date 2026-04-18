@@ -1,4 +1,4 @@
-import { Platform, View } from 'react-native'
+import { View } from 'react-native'
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
 import ActionButton from '../components/ActionButton'
 import useServiceReport from '../stores/serviceReport'
@@ -255,20 +255,13 @@ const RecurringPlan = (props: {
       >
         <XView>
           <Checkbox value={willEnd} onValueChange={handleSetWillEnd} />
-          {willEnd &&
-            props.endDate &&
-            (Platform.OS !== 'android' ? (
-              <RNDateTimePicker
-                locale={getLocales()[0].languageCode || undefined}
-                value={props.endDate}
-                onChange={(_, newDate) => newDate && props.setEndDate(newDate)}
-              />
-            ) : (
-              <DateTimePicker
-                value={props.endDate}
-                onChange={(_, newDate) => newDate && props.setEndDate(newDate)}
-              />
-            ))}
+          {willEnd && props.endDate && (
+            <RNDateTimePicker
+              locale={getLocales()[0].languageCode || undefined}
+              value={props.endDate}
+              onChange={(_, newDate) => newDate && props.setEndDate(newDate)}
+            />
+          )}
         </XView>
       </InputRowContainer>
       <InputRowContainer label={i18n.t('note')}>

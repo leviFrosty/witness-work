@@ -107,6 +107,6 @@ After every write, `WidgetCenter.shared.reloadAllTimelines()` is called.
 
 ## Limitations
 
-- iOS only. The `widget-bridge` module declares `platforms: ["ios"]`; calls from Android are no-ops.
+- iOS only. The `widget-bridge` module declares `platforms: ["ios"]`.
 - Snapshot is intentionally tiny (<1 KB). If it grows past ~32 KB, switch the Swift loader from a JSON file to a `Data` blob in `UserDefaults(suiteName:)` — the JS API doesn't need to change.
 - Background fetch is best-effort; iOS may throttle or skip it.

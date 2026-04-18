@@ -35,7 +35,6 @@ const StepTwo = ({ goBack, goNext }: Props) => {
               paddingBottom: 20,
             }}
             showsVerticalScrollIndicator={false}
-            enableOnAndroid={true}
           >
             <View style={[styles.stepContentContainer, { marginRight: 0 }]}>
               <Text style={styles.stepTitle}>

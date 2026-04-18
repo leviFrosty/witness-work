@@ -1,4 +1,4 @@
-import { Alert, Platform } from 'react-native'
+import { Alert } from 'react-native'
 import * as Updates from 'expo-updates'
 import i18n from './locales'
 import * as Sentry from '@sentry/react-native'
@@ -19,9 +19,7 @@ export const fetchUpdate = async (
     Alert.alert(i18n.t('noUpdateAvailable'))
   } catch (error) {
     Alert.alert(
-      `${i18n.t('updateViaThe')} ${
-        Platform.OS === 'android' ? 'Play Store' : 'App Store'
-      }`,
+      `${i18n.t('updateViaThe')} App Store`,
       `${i18n.t('update_error')} ${error}`
     )
     Sentry.captureException(error)

@@ -40,8 +40,7 @@ type Probe =
  * to enable ongoing sync (which IS supporter-only) later. Skipping just
  * advances to the next onboarding step with no side effects.
  *
- * Not rendered on Android: iCloud is iOS-only. The parent step list hides this
- * step on non-iOS platforms.
+ * Offers a one-shot restore from iCloud during onboarding.
  */
 const ICloudRestore = ({ goBack, goNext }: Props) => {
   const theme = useTheme()

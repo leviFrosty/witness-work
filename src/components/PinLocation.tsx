@@ -1,6 +1,6 @@
 import Card from '../components/Card'
 import { Sheet, Spinner } from 'tamagui'
-import MapView, { Marker, PROVIDER_GOOGLE, Region } from 'react-native-maps'
+import MapView, { Marker, Region } from 'react-native-maps'
 import { useToastController } from '@tamagui/toast'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import MapWarningLocationSharingDisabled from '../components/MapWarningLocationSharingDisabled'
@@ -12,7 +12,7 @@ import i18n from '../lib/locales'
 import XView from './layout/XView'
 import Button from './Button'
 import Text from './MyText'
-import { Platform, View } from 'react-native'
+import { View } from 'react-native'
 import IconButton from './IconButton'
 import { faTimes } from '@fortawesome/free-solid-svg-icons'
 import useContacts from '../stores/contactsStore'
@@ -280,9 +280,6 @@ export default function PinLocation(props: {
                     longitude: e.nativeEvent.coordinate.longitude,
                   })
                 }}
-                provider={
-                  Platform.OS === 'android' ? PROVIDER_GOOGLE : undefined
-                }
                 initialRegion={
                   initialRegion
                     ? initialRegion

@@ -7,7 +7,7 @@
 
 WitnessWork is the easy way for Jehovah's Witnesses to manage their field service priorities.
 
-It is written in Typescript using React Native and Expo and is available on iOS and Android. Android is currently unavailable in the USA due legacy trademark restrictions. ~I am working to resolve this issue with Google.~ I have given up on working with Google on resolving this. Unfortunately this app will not be available on Android in the US.
+It is written in Typescript using React Native and Expo and is available on iOS.
 
 ## Sponsor
 

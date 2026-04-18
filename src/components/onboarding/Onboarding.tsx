@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Platform, View } from 'react-native'
+import { View } from 'react-native'
 import StepOne from './steps/One'
 import StepTwo from './steps/Two'
 import StepThree from './steps/Three'
@@ -14,7 +14,6 @@ import ICloudRestore from './steps/iCloudRestore'
 const steps = [
   StepOne,
   PrivacyFirst,
-  // iCloud restore lives on iOS only; step is skipped on Android (see goNext).
   ICloudRestore,
   StepTwo,
   ProfileSetup,
@@ -23,8 +22,6 @@ const steps = [
   Supporter,
   StepFour,
 ]
-const DEFAULT_NAV_STEP_INDEX = steps.indexOf(StepDefaultNav)
-const ICLOUD_RESTORE_STEP_INDEX = steps.indexOf(ICloudRestore)
 
 const OnBoarding = () => {
   const { set, onboardingComplete } = usePreferences()
@@ -37,19 +34,6 @@ const OnBoarding = () => {
   }, [onboardingComplete])
 
   const goNext = () => {
-    // Skip iOS-only steps on Android (iCloud restore + default nav). If the
-    // next step is an iOS-only step and we're on Android, hop over it.
-    if (Platform.OS === 'android') {
-      if (onboardingStep === ICLOUD_RESTORE_STEP_INDEX - 1) {
-        setOnboardingStep(onboardingStep + 2)
-        return
-      }
-      if (onboardingStep === DEFAULT_NAV_STEP_INDEX - 1) {
-        setOnboardingStep(onboardingStep + 2)
-        return
-      }
-    }
-
     if (onboardingStep === steps.length - 1) {
       set({ onboardingComplete: true })
       return
@@ -61,17 +45,6 @@ const OnBoarding = () => {
   const goBack = () => {
     if (onboardingStep === 0) {
       return
-    }
-    // Mirror the skip logic going backward on Android.
-    if (Platform.OS === 'android') {
-      if (onboardingStep === ICLOUD_RESTORE_STEP_INDEX + 1) {
-        setOnboardingStep(onboardingStep - 2)
-        return
-      }
-      if (onboardingStep === DEFAULT_NAV_STEP_INDEX + 1) {
-        setOnboardingStep(onboardingStep - 2)
-        return
-      }
     }
     setOnboardingStep(onboardingStep - 1)
   }

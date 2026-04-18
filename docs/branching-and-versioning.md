@@ -77,7 +77,6 @@ git switch development
 
 - ✅ Production workflow runs (lint, test, typecheck)
 - ✅ iOS build submitted to App Store
-- ✅ Android build submitted to Play Store
 - ✅ GitHub Release created
 
 ## Version Bumping
@@ -132,7 +131,7 @@ git push origin main --follow-tags
 
 ### On PRs to `main`
 
-- `pr-preview-build.yml` - Runs lint, typecheck, tests, then EAS preview builds for iOS and Android
+- `pr-preview-build.yml` - Runs lint, typecheck, tests, then EAS preview build for iOS
   - **Validation job**: Lint, typecheck, test, circular dependency check
   - **Build job**: Only runs if validation passes (saves compute resources)
 

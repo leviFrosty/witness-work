@@ -160,7 +160,7 @@ export default function App() {
   }, [])
 
   // Install iOS widget snapshot sync after MMKV is the source of truth.
-  // No-op on Android and before the native module is linked (pre-prebuild).
+  // No-op before the native module is linked (pre-prebuild).
   useEffect(() => {
     if (!hasMigrated) return
     const teardown = installWidgetSync()

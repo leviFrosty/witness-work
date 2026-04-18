@@ -1,6 +1,6 @@
 # AGENTS.md
 
-Guide for AI coding agents working in WitnessWork. An iOS only application. Some Android remnants may remain -- ignore.
+Guide for AI coding agents working in WitnessWork. iOS only application.
 
 ## Project Overview
 
@@ -29,13 +29,11 @@ Guide for AI coding agents working in WitnessWork. An iOS only application. Some
 pnpm install
 pnpm run dev               # expo start --ios (APP_VARIANT=development)
 pnpm run ios               # expo run:ios (diff build + run, most common)
-pnpm run android           # expo run:android
 nvm use                    # match node version
 
 # Build (local EAS)
-pnpm run build:ios
-pnpm run build:ios-production
-pnpm run build:android
+pnpm run build
+pnpm run build-production
 pnpm run prebuild          # expo prebuild --clean
 
 # Quality (MUST run after large changes)
@@ -49,7 +47,6 @@ pnpm run translate         # bun run src/scripts/translate.ts
 
 # Install built artifact
 eas build:run -p ios --path [path].tar.gz
-eas build:run -p android --path [path].apk
 ```
 
 ## Conventions
@@ -91,7 +88,7 @@ TypeScript path aliases per `tsconfig.json`. Check existing files for convention
 ## Quirks / Gotchas
 
 - iOS — use `pnpm run ios` for diff build + run (fastest)
-- `clean` script nukes `ios/`, `android/`, `.expo/`, `.tamagui/`, `.cache/`, `node_modules/` — destructive
+- `clean` script nukes `ios/`, `.expo/`, `.tamagui/`, `.cache/`, `node_modules/` — destructive
 - App version bumps land in their own commits (see recent: `chore: bump version to X`)
 - Some features US-restricted due to trademark — check constants before assuming availability
 - React Compiler beta — watch for compiler-related lint warnings

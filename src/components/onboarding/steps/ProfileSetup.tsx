@@ -44,7 +44,6 @@ const ProfileSetup = ({ goBack, goNext }: Props) => {
           paddingBottom: 20,
         }}
         showsVerticalScrollIndicator={false}
-        enableOnAndroid={true}
       >
         <View style={[styles.stepContentContainer, { marginRight: 0 }]}>
           <Text style={styles.stepTitle}>{i18n.t('profileSetupTitle')}</Text>
@@ -87,7 +86,6 @@ const ProfileSetup = ({ goBack, goNext }: Props) => {
                 }}
                 maximumDate={new Date()}
                 iOSMode='date'
-                androidFirstPickerMode='date'
               />
             </View>
           )}

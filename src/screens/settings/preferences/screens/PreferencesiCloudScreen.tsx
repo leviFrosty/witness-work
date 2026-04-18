@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Alert, Linking, Switch, View } from 'react-native'
+import { ActivityIndicator, Alert, Linking, Switch, View } from 'react-native'
 import moment from 'moment'
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
 import Wrapper from '../../../../components/layout/Wrapper'
@@ -61,6 +61,10 @@ const PreferencesiCloudScreenInner = () => {
   const [available, setAvailable] = useState(() => ICloudBridge.isAvailable())
   const [firstEnableSheetOpen, setFirstEnableSheetOpen] = useState(false)
   const [pendingRemote, setPendingRemote] = useState<SyncPayload | null>(null)
+  // Optimistic override for the enable switch. Lets the thumb flip immediately
+  // on tap while the async enable flow (availability check, conflict sheet,
+  // seed/pull) resolves in the background. Null when no flip is in flight.
+  const [pendingEnable, setPendingEnable] = useState<boolean | null>(null)
   const toast = useToastController()
 
   // Re-check iCloud availability on mount and whenever the identity changes.
@@ -105,6 +109,7 @@ const PreferencesiCloudScreenInner = () => {
     } finally {
       setPendingRemote(null)
       setSyncing(false)
+      setPendingEnable(null)
     }
   }
 
@@ -114,7 +119,9 @@ const PreferencesiCloudScreenInner = () => {
       return
     }
     set({ iCloudSyncSetByUser: true })
+    setPendingEnable(true)
     if (!ICloudBridge.isAvailable()) {
+      setPendingEnable(null)
       Alert.alert(
         i18n.t('iCloudUnavailable_title'),
         i18n.t('iCloudUnavailable_description')
@@ -129,6 +136,9 @@ const PreferencesiCloudScreenInner = () => {
     // the sheet opens — the sheet itself owns the rest of the flow and will
     // clear `syncing` in its own `onChoose` / dismiss paths. Handle it first
     // and return so the try/finally below only scopes the headless branches.
+    // `pendingEnable` also stays set so the switch reads "on" while the sheet
+    // is up; it clears in `applyFirstEnableChoice` (on choose) or the sheet's
+    // dismiss handler (on cancel).
     if (decision.outcome === 'conflict') {
       setPendingRemote(decision.remote)
       setSyncing(false)
@@ -155,11 +165,17 @@ const PreferencesiCloudScreenInner = () => {
       }
     } finally {
       setSyncing(false)
+      setPendingEnable(null)
     }
   }
 
   const handleFirstEnableChoice = (choice: FirstEnableChoice) => {
     setFirstEnableSheetOpen(false)
+    // `FirstEnableSheet` calls `setOpen(false)` *before* `onChoose`, and our
+    // setOpen handler rolls the optimistic switch back to null. Restore it
+    // here so the switch stays visually on while `applyFirstEnableChoice`
+    // does the async work; its finally clears the override.
+    setPendingEnable(true)
     void applyFirstEnableChoice(choice)
   }
 
@@ -240,11 +256,18 @@ const PreferencesiCloudScreenInner = () => {
             label={i18n.t('iCloudEnableLabel')}
             style={{ justifyContent: 'space-between' }}
           >
-            <Switch
-              value={iCloudSyncEnabled}
-              onValueChange={handleToggle}
-              disabled={syncing}
-            />
+            <View
+              style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}
+            >
+              {syncing && (
+                <ActivityIndicator size='small' color={theme.colors.textAlt} />
+              )}
+              <Switch
+                value={pendingEnable ?? iCloudSyncEnabled}
+                onValueChange={handleToggle}
+                disabled={syncing || pendingEnable !== null}
+              />
+            </View>
           </InputRowContainer>
           <InputRowContainer
             label={i18n.t('iCloudStatusLabel')}
@@ -254,7 +277,7 @@ const PreferencesiCloudScreenInner = () => {
             <View style={{ alignItems: 'flex-end', flexShrink: 1 }}>
               <Text
                 style={{
-                  color: theme.colors.textAlt,
+                  color: theme.colors.text,
                   textAlign: 'right',
                 }}
               >
@@ -409,6 +432,12 @@ const PreferencesiCloudScreenInner = () => {
           if (!open) {
             setPendingRemote(null)
             setSyncing(false)
+            // Dismiss without a choice = user cancelled. Roll the optimistic
+            // switch back off. When a choice *is* made, `handleFirstEnableChoice`
+            // closes the sheet directly (not via `setOpen`), so this branch
+            // doesn't fire and `applyFirstEnableChoice` clears the override on
+            // completion instead.
+            setPendingEnable(null)
           }
         }}
         remote={pendingRemote}

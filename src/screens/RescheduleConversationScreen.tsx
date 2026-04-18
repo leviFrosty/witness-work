@@ -526,8 +526,6 @@ const RescheduleConversationScreen = ({ route, navigation }: Props) => {
                     <DateTimePicker
                       value={newDate}
                       onChange={(_e, picked) => picked && setNewDate(picked)}
-                      timeAndDate
-                      androidFirstPickerMode='date'
                       iOSMode='datetime'
                     />
                   </View>

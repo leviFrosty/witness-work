@@ -1,4 +1,4 @@
-import { View, Platform, ScrollView, useColorScheme, Share } from 'react-native'
+import { View, ScrollView, useColorScheme, Share } from 'react-native'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import Text from '../components/MyText'
 import useTheme from '../contexts/theme'
@@ -55,7 +55,7 @@ import { useNavigation } from '@react-navigation/native'
 import { usePreferences } from '../stores/preferences'
 import { handleCall, handleMessage } from '../lib/phone'
 import { openURL } from '../lib/links'
-import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps'
+import MapView, { Marker } from 'react-native-maps'
 import useLocation from '../hooks/useLocation'
 import * as FileSystem from 'expo-file-system/legacy'
 import { useToastController } from '@tamagui/toast'
@@ -347,7 +347,6 @@ const AddressRow = ({ contact }: { contact: Contact }) => {
               width: '100%',
               borderRadius: theme.numbers.borderRadiusSm,
             }}
-            provider={Platform.OS === 'android' ? PROVIDER_GOOGLE : undefined}
             onPress={() => navigateTo(contact, defaultNavigationMapProvider)}
           >
             <Marker
@@ -982,18 +981,16 @@ const ContactDetailsScreen = ({ route, navigation }: Props) => {
               backgroundColor: theme.colors.accent3,
             }}
           />
-          {Platform.OS === 'ios' && (
-            <View
-              style={{
-                backgroundColor: theme.colors.accent3,
-                height: 1000,
-                position: 'absolute',
-                top: -1000,
-                left: 0,
-                right: 0,
-              }}
-            />
-          )}
+          <View
+            style={{
+              backgroundColor: theme.colors.accent3,
+              height: 1000,
+              position: 'absolute',
+              top: -1000,
+              left: 0,
+              right: 0,
+            }}
+          />
         </Wrapper>
       </ScrollView>
       <ContactActionsSheet

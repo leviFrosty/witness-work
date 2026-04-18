@@ -77,22 +77,6 @@ export default ({ config }: ConfigContext): ExpoConfig => {
       },
       appStoreUrl: 'https://apps.apple.com/us/app/jw-time/id6469723047',
     },
-    android: {
-      allowBackup: true,
-      adaptiveIcon: {
-        foregroundImage: './src/assets/adaptive-icon.png',
-        monochromeImage: './src/assets/adaptive-icon-monochrome.png',
-        backgroundColor: '#ffffff',
-      },
-      package: 'com.leviwilkerson.jwtime',
-      playStoreUrl:
-        'https://play.google.com/store/apps/details?id=com.leviwilkerson.jwtime',
-      config: {
-        googleMaps: {
-          apiKey: process.env.GOOGLE_MAPS_ANDROID_SDK_API_KEY,
-        },
-      },
-    },
     extra: {
       commitHash: execSync('git rev-parse --short HEAD').toString().trim(),
       eas: {

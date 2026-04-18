@@ -4,7 +4,7 @@ import { HereGeocodeResponse } from '../types/here'
 import apis from '../constants/apis'
 import * as Network from 'expo-network'
 import * as Sentry from '@sentry/react-native'
-import { Alert, Platform } from 'react-native'
+import { Alert } from 'react-native'
 import i18n from './locales'
 import { countTruthyValueStrings } from './objects'
 import * as Location from 'expo-location'
@@ -96,9 +96,6 @@ export const navigateTo = (
       case 'waze':
         return links.wazeMapsBase
       default:
-        if (Platform.OS === 'android') {
-          return links.googleMapsBase
-        }
         return links.appleMapsBase
     }
   }

@@ -12,8 +12,7 @@
         "simulator": true
       },
       "env": {
-        "APP_VARIANT": "development",
-        "ANDROID_SDK_ROOT": "/Users/levi/Library/Android/sdk"
+        "APP_VARIANT": "development"
       },
       "node": "20.14.0"
     },

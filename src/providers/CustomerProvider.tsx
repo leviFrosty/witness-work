@@ -8,7 +8,6 @@ import {
 } from 'react'
 import { CustomerContext, CustomerCtx } from '../contexts/customer'
 import Purchases, { CustomerInfo, LOG_LEVEL } from 'react-native-purchases'
-import useDevice from '../hooks/useDevice'
 import * as Sentry from '@sentry/react-native'
 import { logger } from '../lib/logger'
 
@@ -21,7 +20,6 @@ interface Props {}
  */
 const CustomerProvider: React.FC<PropsWithChildren<Props>> = ({ children }) => {
   const [customer, setCustomer] = useState<CustomerInfo | null>(null)
-  const { isAndroid } = useDevice()
   const hasInitialized = useRef(false)
 
   const getCustomerInfo = useCallback(async () => {
@@ -35,18 +33,14 @@ const CustomerProvider: React.FC<PropsWithChildren<Props>> = ({ children }) => {
 
   const initialize = useCallback(async () => {
     try {
-      if (isAndroid) {
-        return
-      } else {
-        __DEV__ && Purchases.setLogLevel(LOG_LEVEL.DEBUG)
-        logger.log(
-          'Purchases.configure',
-          process.env.EXPO_PUBLIC_REVENUECAT_APPLE_API_KEY
-        )
-        await Purchases.configure({
-          apiKey: process.env.EXPO_PUBLIC_REVENUECAT_APPLE_API_KEY || '',
-        })
-      }
+      __DEV__ && Purchases.setLogLevel(LOG_LEVEL.DEBUG)
+      logger.log(
+        'Purchases.configure',
+        process.env.EXPO_PUBLIC_REVENUECAT_APPLE_API_KEY
+      )
+      await Purchases.configure({
+        apiKey: process.env.EXPO_PUBLIC_REVENUECAT_APPLE_API_KEY || '',
+      })
 
       const customerInfo = await Purchases.getCustomerInfo()
       setCustomer(customerInfo)
@@ -54,22 +48,20 @@ const CustomerProvider: React.FC<PropsWithChildren<Props>> = ({ children }) => {
       // Do nothing, the user does not have a internet connection or is not able to connect to RevenueCat servers at launch.
       // Regardless, we are not able to resolve these issues.
     }
-  }, [isAndroid])
+  }, [])
 
   useEffect(() => {
+    if (hasInitialized.current) {
+      return
+    }
+
+    hasInitialized.current = true
     const setup = async () => {
       await initialize()
       await getCustomerInfo()
     }
-
-    if (isAndroid || hasInitialized.current) {
-      return
-      // For now, android does not support donations.
-    }
-
-    hasInitialized.current = true
     setup()
-  }, [isAndroid, initialize, getCustomerInfo])
+  }, [initialize, getCustomerInfo])
 
   const hasPurchasedBefore = useMemo(
     () =>

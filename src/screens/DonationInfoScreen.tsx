@@ -7,7 +7,6 @@ import { Alert, View } from 'react-native'
 import ActionButton from '../components/ActionButton'
 import links from '../constants/links'
 import useTheme from '../contexts/theme'
-import useDevice from '../hooks/useDevice'
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import XView from '../components/layout/XView'
@@ -30,7 +29,6 @@ import SupporterBadge from '../components/SupporterBadge'
 
 const DonationInfoScreen = () => {
   const theme = useTheme()
-  const { isAndroid } = useDevice()
   const insets = useSafeAreaInsets()
   const navigation = useNavigation<RootStackNavigation>()
   const { customer, setCustomer, hasPurchasedBefore, revalidate } =
@@ -60,10 +58,6 @@ const DonationInfoScreen = () => {
   }, [])
 
   const renderPreviousDonations = useCallback(() => {
-    if (isAndroid) {
-      return null
-    }
-
     return (
       <React.Fragment>
         <Divider />
@@ -84,14 +78,7 @@ const DonationInfoScreen = () => {
         )}
       </React.Fragment>
     )
-  }, [
-    customer,
-    handleRestore,
-    hasPurchasedBefore,
-    isAndroid,
-    revalidate,
-    theme,
-  ])
+  }, [customer, handleRestore, hasPurchasedBefore, revalidate, theme])
 
   return (
     <Wrapper
@@ -291,11 +278,7 @@ const DonationInfoScreen = () => {
       </KeyboardAwareScrollView>
 
       <View style={{ paddingHorizontal: 15, gap: 5 }}>
-        <ActionButton
-          onPress={() =>
-            isAndroid ? openURL(links.donate) : navigation.navigate('Paywall')
-          }
-        >
+        <ActionButton onPress={() => navigation.navigate('Paywall')}>
           {i18n.t('donate')}
         </ActionButton>
       </View>

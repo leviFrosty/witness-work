@@ -1,4 +1,3 @@
-import { Platform } from 'react-native'
 import i18n from '../lib/locales'
 import InputRowSelect from './inputs/InputRowSelect'
 import { SelectData } from './Select'
@@ -25,10 +24,6 @@ export const navigationSelectionOptions: SelectData<DefaultNavigationMapProvider
 
 const DefaultNavigationSelector = () => {
   const { defaultNavigationMapProvider, set } = usePreferences()
-
-  if (Platform.OS === 'android') {
-    return null
-  }
 
   return (
     <InputRowSelect

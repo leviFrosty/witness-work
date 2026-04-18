@@ -1,6 +1,6 @@
 # Build
 
-The build process for iOS and Android is similar. Ensure you have all dependencies installed.
+Ensure you have all dependencies installed.
 
 ## iOS
 
@@ -12,14 +12,10 @@ Build dependencies: [XCode](https://docs.expo.dev/workflow/ios-simulator/#instal
 
 1. Install dependencies, `pnpm install`
 
-1. Build iOS, run `pnpm run build:ios`
+1. Build iOS, run `pnpm run build`
 
 1. Install new build to simulator, (replace path) `eas build:run -p ios --path [path].tar.gz`
 
 1. Run development server, `pnpm run ios`
 
 1. Develop 🚀
-
-## Android
-
-Android development has been stopped due to time constraints and lack of community reception.

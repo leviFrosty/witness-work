@@ -39,7 +39,6 @@ googleServiceAccount.json
 # Windows
 %ProgramData%/
 
-/android/
 /ios/
 
 # @bacons/apple-targets generated entitlements
@@ -54,7 +53,6 @@ targets/*/Assets.xcassets/**/Contents.json
 
 # Local Builds
 build-*
-*.apk
 
 # Cache
 .cache

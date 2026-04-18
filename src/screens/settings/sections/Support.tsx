@@ -1,4 +1,4 @@
-import { Alert, Platform, View } from 'react-native'
+import { Alert, View } from 'react-native'
 import moment from 'moment'
 import Section from '../../../components/inputs/Section'
 import i18n from '../../../lib/locales'
@@ -101,24 +101,14 @@ const SupportSection = () => {
         </InputRowButton>
         <InputRowButton
           leftIcon={faRankingStar}
-          label={
-            Platform.OS === 'android'
-              ? i18n.t('rateWitnessWorkOnPlayStore')
-              : i18n.t('rateWitnessWorkOnAppStore')
-          }
+          label={i18n.t('rateWitnessWorkOnAppStore')}
           onPress={() => {
             try {
-              Platform.OS === 'android'
-                ? openURL(links.playStoreReview)
-                : openURL(links.appStoreReview)
+              openURL(links.appStoreReview)
             } catch (error) {
               Alert.alert(
-                Platform.OS === 'android'
-                  ? i18n.t('androidAppStoreReviewErrorTitle')
-                  : i18n.t('appleAppStoreReviewErrorTitle'),
-                Platform.OS === 'android'
-                  ? i18n.t('androidAppStoreReviewErrorMessage')
-                  : i18n.t('appleAppStoreReviewErrorMessage')
+                i18n.t('appleAppStoreReviewErrorTitle'),
+                i18n.t('appleAppStoreReviewErrorMessage')
               )
             }
           }}

@@ -2,7 +2,7 @@ import { Sheet } from 'tamagui'
 import Text from './MyText'
 import i18n from '../lib/locales'
 import Button from './Button'
-import { Platform, Share, View } from 'react-native'
+import { Share, View } from 'react-native'
 import IconButton from './IconButton'
 import { faApple, faGoogle } from '@fortawesome/free-brands-svg-icons'
 import useTheme from '../contexts/theme'
@@ -25,14 +25,12 @@ const ShareAddressSheet = ({ sheet, setSheet }: Props) => {
     if (service === 'apple') {
       Share.share({
         url: sheet.appleMapsUri,
-        message: Platform.OS === 'android' ? sheet.appleMapsUri : undefined,
       })
     }
 
     if (service === 'google') {
       Share.share({
         url: sheet.googleMapsUri,
-        message: Platform.OS === 'android' ? sheet.googleMapsUri : undefined,
       })
     }
 

@@ -83,9 +83,6 @@ jobs:
       - name: Build iOS preview
         run: eas build --platform ios --profile preview --non-interactive --no-wait
 
-      - name: Build Android preview
-        run: eas build --platform android --profile preview --non-interactive --no-wait
-
       - name: Comment on PR
         uses: actions/github-script@v7
         with:

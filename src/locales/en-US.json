@@ -21,6 +21,7 @@
   "firstNamePlaceholder": "Your first name",
   "pioneerStartDate": "Pioneering since",
   "pioneerStartDate_description": "When did you begin pioneering? We'll show how long you've been serving.",
+  "pioneerStartDateTitle": "When did you start pioneering?",
   "profileGreeting": "Hi, {{name}}",
   "profileGreetingNoName": "Welcome back",
   "profileUsingForDay": "Using WitnessWork for 1 day",

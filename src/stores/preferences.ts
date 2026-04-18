@@ -255,10 +255,16 @@ const initialState = {
   /**
    * ICloud sync (supporter-only). When true, the sync layer writes the backup
    * payload to the ubiquity container on store changes and pulls remote updates
-   * on foreground / remote-change events. Off by default so opting in is
-   * explicit.
+   * on foreground / remote-change events. Defaulted to true for supporters on
+   * first launch; off by default for non-supporters.
    */
   iCloudSyncEnabled: false,
+  /**
+   * True once the user has explicitly toggled iCloud sync on or off in
+   * Settings. Before this is set, supporters get sync enabled automatically.
+   * After this is set, the user's explicit choice is respected permanently.
+   */
+  iCloudSyncSetByUser: false,
   /**
    * Epoch ms of the most recent successful push or pull. Null until first sync.
    * Retained for back-compat; the granular `lastiCloudPushedAt` /
@@ -312,6 +318,7 @@ const initialState = {
  */
 export const NON_SYNCABLE_PREFERENCE_KEYS = new Set<string>([
   'iCloudSyncEnabled',
+  'iCloudSyncSetByUser',
   'lastiCloudSyncAt',
   'lastiCloudPushedAt',
   'lastiCloudPulledAt',

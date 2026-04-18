@@ -32,6 +32,20 @@ public class ICloudBridgeModule: Module {
     label: "com.witnesswork.icloud-bridge.state"
   )
 
+  /// Flipped to `true` the first time `NSMetadataQuery` emits
+  /// `DidFinishGathering` for this module's lifetime. Used by
+  /// `waitForInitialScan` so the JS layer can avoid racing a fresh-install
+  /// probe against iCloud's asynchronous directory materialization — without
+  /// this, the first-launch onboarding probe can return "no backup" before
+  /// iCloud has surfaced an existing per-device file. Once set, it stays set
+  /// even if the query is later stopped and restarted; a completed initial
+  /// scan doesn't become incomplete again.
+  private var initialGatheringDidFinish: Bool = false
+  /// Pending promises from `waitForInitialScan` calls that arrived before the
+  /// first `DidFinishGathering`. Resolved all at once when gathering finishes,
+  /// or individually by their own timeout timer. Also guarded by `stateQueue`.
+  private var pendingScanWaiters: [(Bool) -> Void] = []
+
   private func getLastObserved(_ filename: String) -> Date? {
     return stateQueue.sync { self.lastObservedModifiedAt[filename] }
   }
@@ -78,6 +92,61 @@ public class ICloudBridgeModule: Module {
       return FileManager.default
         .url(forUbiquityContainerIdentifier: nil)?
         .path
+    }
+
+    /// Resolves `true` once `NSMetadataQuery` has completed at least one full
+    /// directory scan of the ubiquity container, or `false` if `timeoutMs`
+    /// elapses first. Lets callers (most importantly the onboarding restore
+    /// probe on a fresh install) avoid racing iCloud's asynchronous directory
+    /// materialization — `contentsOfDirectory` can return empty for several
+    /// seconds after launch even when a remote file exists, and a premature
+    /// "no backup" verdict is what sends users through onboarding with fresh
+    /// timestamps that then beat their real data in the LWW merge.
+    ///
+    /// Starts the metadata query if it isn't already running — the normal
+    /// trigger (`OnStartObserving` when JS adds the first listener) may
+    /// happen fractionally later than onboarding's probe on cold launch.
+    AsyncFunction("waitForInitialScan") { (timeoutMs: Double, promise: Promise) in
+      self.startMetadataQuery()
+
+      // Single-shot resolver shared between the gather notification path and
+      // the timeout timer. Whichever fires first wins; subsequent calls are
+      // no-ops. The lock protects the `didResolve` check-and-set from the
+      // classic TOCTOU where both paths fire within a few microseconds and
+      // try to resolve the promise twice.
+      let resolveLock = NSLock()
+      var didResolve = false
+      let tryResolve: (Bool) -> Void = { result in
+        resolveLock.lock()
+        if didResolve {
+          resolveLock.unlock()
+          return
+        }
+        didResolve = true
+        resolveLock.unlock()
+        promise.resolve(result)
+      }
+
+      var alreadyDone = false
+      self.stateQueue.sync {
+        if self.initialGatheringDidFinish {
+          alreadyDone = true
+        } else {
+          self.pendingScanWaiters.append(tryResolve)
+        }
+      }
+
+      if alreadyDone {
+        tryResolve(true)
+        return
+      }
+
+      // Arm a timeout. If gathering never completes (e.g. iCloud is
+      // unreachable on-device), we still resolve so the caller isn't stuck.
+      let deadline = DispatchTime.now() + (timeoutMs / 1000.0)
+      DispatchQueue.global().asyncAfter(deadline: deadline) {
+        tryResolve(false)
+      }
     }
 
     // Reads every `witness-work*.json` file in the ubiquity Documents dir,
@@ -379,7 +448,7 @@ public class ICloudBridgeModule: Module {
 
     NotificationCenter.default.addObserver(
       self,
-      selector: #selector(metadataQueryDidUpdate(_:)),
+      selector: #selector(metadataQueryDidFinishGathering(_:)),
       name: NSNotification.Name.NSMetadataQueryDidFinishGathering,
       object: query
     )
@@ -404,6 +473,25 @@ public class ICloudBridgeModule: Module {
       query.stop()
     }
     self.metadataQuery = nil
+  }
+
+  /// Fires once per query lifetime when the initial directory scan completes.
+  /// Flips the `initialGatheringDidFinish` flag, resolves any pending
+  /// `waitForInitialScan` promises, and then falls through to the standard
+  /// update handler so remote-change detection still runs for any files
+  /// discovered in the initial gather.
+  @objc private func metadataQueryDidFinishGathering(_ notification: Notification) {
+    var waitersToResolve: [(Bool) -> Void] = []
+    stateQueue.sync {
+      if !self.initialGatheringDidFinish {
+        self.initialGatheringDidFinish = true
+        waitersToResolve = self.pendingScanWaiters
+        self.pendingScanWaiters.removeAll()
+      }
+    }
+    // Resolve outside the lock so promise callbacks can't deadlock us.
+    for waiter in waitersToResolve { waiter(true) }
+    metadataQueryDidUpdate(notification)
   }
 
   @objc private func metadataQueryDidUpdate(_ notification: Notification) {

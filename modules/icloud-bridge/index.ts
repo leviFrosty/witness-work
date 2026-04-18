@@ -19,6 +19,7 @@ type ICloudBridgeEvents = {
 declare class ICloudBridgeNative extends NativeModule<ICloudBridgeEvents> {
   isAvailable(): boolean
   getContainerPath(): string | null
+  waitForInitialScan(timeoutMs: number): Promise<boolean>
   readAll(): Promise<SyncFile[]>
   write(filename: string, json: string): Promise<number>
   deleteFile(filename: string): Promise<null>
@@ -36,6 +37,25 @@ export function isAvailable(): boolean {
 export function getContainerPath(): string | null {
   if (Platform.OS !== 'ios' || !native) return null
   return native.getContainerPath()
+}
+
+/**
+ * Resolves `true` once `NSMetadataQuery` has completed at least one full scan
+ * of the ubiquity container, or `false` if `timeoutMs` elapses first.
+ *
+ * Callers that enumerate files for a "do we have a backup?" decision should
+ * await this first on cold launch: `FileManager.contentsOfDirectory` can return
+ * an empty list for several seconds after app start even when a remote
+ * per-device file already exists, and an unconditional "no backup" verdict
+ * during onboarding is what produces the bug where a fresh install's defaults
+ * later beat the real remote data in the LWW merge.
+ *
+ * On non-iOS / no native module, resolves `true` immediately — there's no scan
+ * to wait on, and callers should fall through to their own noop path.
+ */
+export async function waitForInitialScan(timeoutMs = 5000): Promise<boolean> {
+  if (Platform.OS !== 'ios' || !native) return true
+  return native.waitForInitialScan(timeoutMs)
 }
 
 /**

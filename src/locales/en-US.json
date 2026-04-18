@@ -1149,6 +1149,9 @@
   "iCloudResetConfirm_description": "This clears the synced file in iCloud. Your device's data is not affected — it will be pushed again on the next sync.",
   "iCloudUnavailable_title": "iCloud is unavailable",
   "iCloudUnavailable_description": "Sign in to iCloud in iOS Settings and make sure iCloud Drive is on, then try again.",
+  "iCloudOpenSettings": "Open iOS Settings",
+  "iCloudOpenSettingsHelp": "Sign in to iCloud and enable iCloud Drive for this app.",
+  "open": "Open",
   "iCloudPrivacyNote": "Data is stored in your app's private iCloud container. Apple manages the transport and encryption; Advanced Data Protection enables end-to-end encryption when turned on in iOS Settings.",
   "iCloudAnotherDevice": "another device",
   "iCloudFoundBackupSummary": "Last updated from {{device}} {{relative}}.",
@@ -1176,5 +1179,6 @@
   "iCloudRestoreFoundSummary": "From {{device}}, last updated {{relative}}.",
   "iCloudRestoreAction": "Restore from iCloud",
   "iCloudRestoreRestoring": "Restoring…",
-  "iCloudRestoreSkip": "Skip and set up fresh"
+  "iCloudRestoreSkip": "Skip and set up fresh",
+  "iCloudRestoreRetry": "Search again"
 }

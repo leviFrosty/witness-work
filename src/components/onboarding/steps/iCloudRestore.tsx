@@ -1,10 +1,11 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { Platform, View } from 'react-native'
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
 import {
   faCheckCircle,
   faCircleExclamation,
   faCloud,
+  faRotateRight,
 } from '@fortawesome/free-solid-svg-icons'
 import moment from 'moment'
 import { Spinner } from 'tamagui'
@@ -47,27 +48,51 @@ const ICloudRestore = ({ goBack, goNext }: Props) => {
   const { set } = usePreferences()
   const [probe, setProbe] = useState<Probe>({ state: 'probing' })
   const [restoring, setRestoring] = useState(false)
+  // Tracks whether a probe is in flight so concurrent retries (user tapping
+  // "Search again" while the auto-subscription fires, or the initial mount
+  // effect still racing) don't trample each other or flicker the UI.
+  const probeInFlight = useRef(false)
+  const cancelledRef = useRef(false)
 
-  useEffect(() => {
-    let cancelled = false
-    const run = async () => {
-      if (Platform.OS !== 'ios' || !ICloudBridge.isAvailable()) {
-        if (!cancelled) setProbe({ state: 'unavailable' })
-        return
-      }
+  const runProbe = useCallback(async () => {
+    if (probeInFlight.current) return
+    if (Platform.OS !== 'ios' || !ICloudBridge.isAvailable()) {
+      if (!cancelledRef.current) setProbe({ state: 'unavailable' })
+      return
+    }
+    probeInFlight.current = true
+    setProbe({ state: 'probing' })
+    try {
       const remote = await iCloudSync.peekRemotePayload()
-      if (cancelled) return
+      if (cancelledRef.current) return
       if (!remote) {
         setProbe({ state: 'noBackup' })
       } else {
         setProbe({ state: 'found', remote })
       }
-    }
-    void run()
-    return () => {
-      cancelled = true
+    } finally {
+      probeInFlight.current = false
     }
   }, [])
+
+  useEffect(() => {
+    cancelledRef.current = false
+    void runProbe()
+
+    // If iCloud surfaces a new sync file after our initial probe (e.g. a
+    // fresh-install cold launch where the container hadn't finished
+    // materializing by the time we first peeked), re-probe so we can upgrade
+    // the screen from "no backup" to "found" without requiring a restart.
+    const sub = ICloudBridge.addRemoteChangeListener(() => {
+      if (cancelledRef.current) return
+      void runProbe()
+    })
+
+    return () => {
+      cancelledRef.current = true
+      sub.remove()
+    }
+  }, [runProbe])
 
   const handleRestore = async () => {
     if (probe.state !== 'found') return
@@ -244,6 +269,33 @@ const ICloudRestore = ({ goBack, goNext }: Props) => {
               ? i18n.t('iCloudRestoreRestoring')
               : i18n.t('iCloudRestoreAction')}
           </ActionButton>
+        )}
+        {(probe.state === 'noBackup' || probe.state === 'unavailable') && (
+          <Button
+            onPress={() => void runProbe()}
+            style={{
+              alignSelf: 'center',
+              flexDirection: 'row',
+              alignItems: 'center',
+              gap: 8,
+              paddingVertical: 10,
+            }}
+            disabled={restoring}
+          >
+            <FontAwesomeIcon
+              icon={faRotateRight}
+              size={14}
+              color={theme.colors.textAlt}
+            />
+            <Text
+              style={{
+                color: theme.colors.textAlt,
+                textDecorationLine: 'underline',
+              }}
+            >
+              {i18n.t('iCloudRestoreRetry')}
+            </Text>
+          </Button>
         )}
         <Button
           onPress={goNext}

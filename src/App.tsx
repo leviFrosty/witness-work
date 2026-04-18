@@ -20,6 +20,7 @@ import {
   ActivityIndicator,
   InteractionManager,
   LogBox,
+  Platform,
   useColorScheme,
   View,
 } from 'react-native'
@@ -38,9 +39,10 @@ import { usePreferences } from './stores/preferences'
 import AnimationViewProvider from './providers/AnimationViewProvider'
 import useUserLocalePrefs from './hooks/useLocale'
 import { installWidgetSync } from './lib/widgets/widgetSync'
-import { installiCloudSync } from './lib/sync/iCloudSync'
+import { installiCloudSync, iCloudSync } from './lib/sync/iCloudSync'
 import { linking, navigationRef } from './lib/linking'
 import DeepLinkListeners from './components/DeepLinkListeners'
+import useIsSupporter from './hooks/useIsSupporter'
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
@@ -78,6 +80,55 @@ if (Constants.appOwnership === 'expo' && Constants.expoVersion) {
 }
 Sentry.setTag('expoChannel', Updates.channel)
 Sentry.setTag('expoUpdateVersion', Updates.updateId)
+
+/**
+ * Auto-enables iCloud sync for supporters who haven't explicitly chosen a
+ * setting yet. Runs inside CustomerProvider so useIsSupporter is available.
+ * Once the user touches the toggle in Settings, `iCloudSyncSetByUser` is set
+ * and this effect becomes a permanent no-op.
+ *
+ * Delegates to `resolveInitialEnable()` + `apply*Enable()` so auto-enable
+ * shares the same look-before-leaping decision as the manual Settings toggle.
+ * Critically, the `conflict` outcome (remote data exists AND local has
+ * meaningful user records) leaves sync **disabled** — a headless auto-enable
+ * can't safely pick between keep-local / use-remote / merge, and silently
+ * defaulting to any of them can clobber data. Users land in Settings and
+ * resolve explicitly via `FirstEnableSheet`.
+ */
+function SupporterSyncDefault() {
+  const { isSupporter } = useIsSupporter()
+  const { iCloudSyncEnabled, iCloudSyncSetByUser } = usePreferences()
+
+  useEffect(() => {
+    if (Platform.OS !== 'ios') return
+    if (!isSupporter) return
+    if (iCloudSyncSetByUser) return
+    if (iCloudSyncEnabled) return
+
+    let cancelled = false
+    void (async () => {
+      const decision = await iCloudSync.resolveInitialEnable()
+      if (cancelled) return
+      switch (decision.outcome) {
+        case 'seed':
+          await iCloudSync.applySeedEnable()
+          return
+        case 'pull':
+          iCloudSync.applyPullEnable(decision.remote)
+          return
+        case 'conflict':
+        case 'unavailable':
+          return
+      }
+    })()
+
+    return () => {
+      cancelled = true
+    }
+  }, [isSupporter, iCloudSyncSetByUser, iCloudSyncEnabled])
+
+  return null
+}
 
 export default function App() {
   const systemColorScheme = useColorScheme()
@@ -142,6 +193,7 @@ export default function App() {
   try {
     return (
       <CustomerProvider>
+        <SupporterSyncDefault />
         <ThemeProvider>
           <SafeAreaProvider>
             <GestureHandlerRootView style={{ flex: 1 }}>

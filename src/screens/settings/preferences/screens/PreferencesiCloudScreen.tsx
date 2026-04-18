@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Alert, Switch, View } from 'react-native'
+import { Alert, Linking, Switch, View } from 'react-native'
 import moment from 'moment'
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
 import Wrapper from '../../../../components/layout/Wrapper'
@@ -21,17 +21,24 @@ import { useToastController } from '@tamagui/toast'
 
 const TIMESTAMP_FMT = 'MMM D, YYYY h:mm:ss A'
 
-const headlineStatus = (
+type StatusDisplay = { text: string; subtitle?: string }
+
+const buildStatus = (
   enabled: boolean,
   available: boolean,
   lastiCloudPulledAt: number | null,
   lastiCloudPushedAt: number | null
-): string => {
-  if (!enabled) return i18n.t('iCloudStatusDisabled')
-  if (!available) return i18n.t('iCloudStatusUnavailable')
+): StatusDisplay => {
+  if (!enabled) return { text: i18n.t('iCloudStatusDisabled') }
+  if (!available) return { text: i18n.t('iCloudStatusUnavailable') }
   const mostRecent = Math.max(lastiCloudPulledAt ?? 0, lastiCloudPushedAt ?? 0)
-  if (!mostRecent) return i18n.t('iCloudStatusWaitingForFirstSync')
-  return moment(mostRecent).format(TIMESTAMP_FMT)
+  if (!mostRecent) return { text: i18n.t('iCloudStatusWaitingForFirstSync') }
+  return {
+    text: i18n.t('iCloudStatusLastSynced', {
+      relative: moment(mostRecent).fromNow(),
+    }),
+    subtitle: moment(mostRecent).format(TIMESTAMP_FMT),
+  }
 }
 
 const formatOrDash = (ts: number | null): string =>
@@ -47,6 +54,7 @@ const PreferencesiCloudScreenInner = () => {
     lastiCloudRemoteDeviceId,
     lastiCloudRemoteDeviceName,
     iCloudDeviceId,
+    developerTools,
     set,
   } = usePreferences()
   const [syncing, setSyncing] = useState(false)
@@ -66,12 +74,13 @@ const PreferencesiCloudScreenInner = () => {
 
   /**
    * Completes the "enable sync" flow given the user's chosen collision
-   * resolution. Called both from the auto-resolved path (fresh device) and the
-   * first-enable sheet.
+   * resolution from `FirstEnableSheet`. The auto-resolved branches (no remote /
+   * fresh device) don't route through here — they use the shared
+   * `applySeedEnable` / `applyPullEnable` helpers in `iCloudSync` so this
+   * screen and the supporter auto-enable effect in `App.tsx` make the same
+   * decisions.
    */
-  const finalizeEnable = async (
-    choice: FirstEnableChoice | 'autoPull' | 'autoPush'
-  ) => {
+  const applyFirstEnableChoice = async (choice: FirstEnableChoice) => {
     iCloudSync.backfillUpdatedAtIfNeeded()
     set({ iCloudSyncEnabled: true })
     setSyncing(true)
@@ -92,16 +101,6 @@ const PreferencesiCloudScreenInner = () => {
           await iCloudSync.push('initial-enable-merge')
           toast.show(i18n.t('iCloudEnabledToastMerged'), { native: true })
           break
-        case 'autoPull':
-          if (pendingRemote) {
-            iCloudSync.replaceLocalWithRemote(pendingRemote)
-            toast.show(i18n.t('iCloudEnabledToastRestored'), { native: true })
-          }
-          break
-        case 'autoPush':
-          await iCloudSync.push('initial-enable-seed')
-          toast.show(i18n.t('iCloudEnabledToastSeeded'), { native: true })
-          break
       }
     } finally {
       setPendingRemote(null)
@@ -111,9 +110,10 @@ const PreferencesiCloudScreenInner = () => {
 
   const handleToggle = async (next: boolean) => {
     if (!next) {
-      set({ iCloudSyncEnabled: false })
+      set({ iCloudSyncEnabled: false, iCloudSyncSetByUser: true })
       return
     }
+    set({ iCloudSyncSetByUser: true })
     if (!ICloudBridge.isAvailable()) {
       Alert.alert(
         i18n.t('iCloudUnavailable_title'),
@@ -123,41 +123,44 @@ const PreferencesiCloudScreenInner = () => {
     }
 
     setSyncing(true)
-    // Look before leaping: peek at the remote file so we can decide whether
-    // to ask the user anything or just proceed. A null result means either
-    // no remote file yet (fresh iCloud) or a corrupt/unreadable payload —
-    // in both cases the safe action is to seed from local.
-    let remote: SyncPayload | null = null
+    const decision = await iCloudSync.resolveInitialEnable()
+
+    // The `conflict` branch must not flip `syncing` off in a `finally` before
+    // the sheet opens — the sheet itself owns the rest of the flow and will
+    // clear `syncing` in its own `onChoose` / dismiss paths. Handle it first
+    // and return so the try/finally below only scopes the headless branches.
+    if (decision.outcome === 'conflict') {
+      setPendingRemote(decision.remote)
+      setSyncing(false)
+      setFirstEnableSheetOpen(true)
+      return
+    }
+
     try {
-      remote = await iCloudSync.peekRemotePayload()
+      switch (decision.outcome) {
+        case 'seed':
+          await iCloudSync.applySeedEnable()
+          toast.show(i18n.t('iCloudEnabledToastSeeded'), { native: true })
+          break
+        case 'pull':
+          iCloudSync.applyPullEnable(decision.remote)
+          toast.show(i18n.t('iCloudEnabledToastRestored'), { native: true })
+          break
+        case 'unavailable':
+          // We already early-returned on `!isAvailable()` above, so reaching
+          // `unavailable` here means the iCloud identity token flipped out
+          // between the availability check and the peek. Bail quietly — the
+          // availability listener will update UI.
+          break
+      }
     } finally {
-      // Don't clear `syncing` yet — we're about to kick off the real work.
+      setSyncing(false)
     }
-
-    const localIsMeaningful = iCloudSync.hasMeaningfulLocalData()
-
-    if (!remote) {
-      // Nothing on iCloud — seed from this device.
-      await finalizeEnable('autoPush')
-      return
-    }
-
-    if (!localIsMeaningful) {
-      // Fresh device discovering a prior backup — silent restore.
-      setPendingRemote(remote)
-      await finalizeEnable('autoPull')
-      return
-    }
-
-    // Both sides populated — ask the user how to resolve.
-    setPendingRemote(remote)
-    setSyncing(false)
-    setFirstEnableSheetOpen(true)
   }
 
   const handleFirstEnableChoice = (choice: FirstEnableChoice) => {
     setFirstEnableSheetOpen(false)
-    void finalizeEnable(choice)
+    void applyFirstEnableChoice(choice)
   }
 
   const handleSyncNow = async () => {
@@ -176,6 +179,17 @@ const PreferencesiCloudScreenInner = () => {
       setSyncing(false)
     }
   }
+
+  const handleOpenSettings = () => {
+    void Linking.openSettings()
+  }
+
+  const status = buildStatus(
+    iCloudSyncEnabled,
+    available,
+    lastiCloudPulledAt,
+    lastiCloudPushedAt
+  )
 
   const handleReset = () => {
     Alert.alert(
@@ -237,18 +251,61 @@ const PreferencesiCloudScreenInner = () => {
             lastInSection
             style={{ justifyContent: 'space-between' }}
           >
-            <Text style={{ color: theme.colors.textAlt, flexShrink: 1 }}>
-              {headlineStatus(
-                iCloudSyncEnabled,
-                available,
-                lastiCloudPulledAt,
-                lastiCloudPushedAt
+            <View style={{ alignItems: 'flex-end', flexShrink: 1 }}>
+              <Text
+                style={{
+                  color: theme.colors.textAlt,
+                  textAlign: 'right',
+                }}
+              >
+                {status.text}
+              </Text>
+              {status.subtitle && (
+                <Text
+                  style={{
+                    color: theme.colors.textAlt,
+                    fontSize: 12,
+                    textAlign: 'right',
+                  }}
+                >
+                  {status.subtitle}
+                </Text>
               )}
-            </Text>
+            </View>
           </InputRowContainer>
         </Section>
 
-        {iCloudSyncEnabled && (
+        {!available && (
+          <Section>
+            <InputRowButton
+              label={i18n.t('iCloudOpenSettings')}
+              onPress={handleOpenSettings}
+              lastInSection
+            >
+              <Text style={{ color: theme.colors.accent }}>
+                {i18n.t('open')}
+              </Text>
+            </InputRowButton>
+            <Text
+              style={{
+                fontSize: 12,
+                color: theme.colors.textAlt,
+                paddingTop: 4,
+                paddingRight: 15,
+              }}
+            >
+              {i18n.t('iCloudOpenSettingsHelp')}
+            </Text>
+          </Section>
+        )}
+
+        <View style={{ paddingHorizontal: 15 }}>
+          <Text style={{ fontSize: 12, color: theme.colors.textAlt }}>
+            {i18n.t('iCloudPrivacyNote')}
+          </Text>
+        </View>
+
+        {iCloudSyncEnabled && developerTools && (
           <Section>
             <InputRowContainer
               label={i18n.t('iCloudLastPushedLabel')}
@@ -322,11 +379,17 @@ const PreferencesiCloudScreenInner = () => {
             <InputRowButton
               label={i18n.t('iCloudSyncNow')}
               onPress={handleSyncNow}
+              lastInSection
             >
               <Text style={{ color: theme.colors.accent }}>
                 {syncing ? i18n.t('iCloudSyncing') : i18n.t('sync')}
               </Text>
             </InputRowButton>
+          </Section>
+        )}
+
+        {iCloudSyncEnabled && (
+          <Section>
             <InputRowButton
               label={i18n.t('iCloudReset')}
               onPress={handleReset}
@@ -338,12 +401,6 @@ const PreferencesiCloudScreenInner = () => {
             </InputRowButton>
           </Section>
         )}
-
-        <View style={{ paddingHorizontal: 15 }}>
-          <Text style={{ fontSize: 12, color: theme.colors.textAlt }}>
-            {i18n.t('iCloudPrivacyNote')}
-          </Text>
-        </View>
       </KeyboardAwareScrollView>
       <FirstEnableSheet
         open={firstEnableSheetOpen}

@@ -139,24 +139,27 @@ export function canSync(): boolean {
  * on first-enable to decide whether to silently pull (fresh device) or surface
  * the merge/replace sheet (both sides populated).
  *
- * `onboardingComplete` alone is enough, since the user has deliberately set
- * their publisher type and related prefs at that point. Absent that, we check
- * for any user-created records.
+ * Intentionally does NOT treat `onboardingComplete` as meaningful. A new device
+ * completing onboarding writes fresh preferences stamped with `Date.now()`,
+ * which would otherwise beat the old device's older (real) preferences in the
+ * LWW merge. Treating an onboarded-but-otherwise-empty device as non-meaningful
+ * lets first-enable silently auto-pull and restore the real data. Users who
+ * have actually created records (contacts, conversations, reports, plans) get
+ * the choice sheet as before.
  */
 export function hasMeaningfulLocalData(): boolean {
-  const prefs = usePreferences.getState()
-  if (prefs.onboardingComplete) return true
-
   const contacts = useContacts.getState()
   if (contacts.contacts.length > 0) return true
   if (contacts.deletedContacts.length > 0) return true
 
   const conversations = useConversations.getState()
   if (conversations.conversations.length > 0) return true
+  if (conversations.deletedConversations.length > 0) return true
 
   const reports = useServiceReport.getState()
   if (reports.dayPlans.length > 0) return true
   if (reports.recurringPlans.length > 0) return true
+  if (reports.deletedServiceReports.length > 0) return true
   for (const year of Object.values(reports.serviceReports)) {
     for (const month of Object.values(year)) {
       if (month.length > 0) return true
@@ -321,12 +324,21 @@ export async function overwriteRemoteWithLocal(): Promise<void> {
  * the user to be opted in. Used by the onboarding restore step to peek at
  * what's available before the user decides.
  *
+ * Waits for `NSMetadataQuery`'s initial gather to complete before enumerating
+ * files — on a cold-launched fresh install, the ubiquity container's directory
+ * listing can be empty for several seconds even when a remote per-device file
+ * already exists. Skipping this wait is what used to cause onboarding to report
+ * "no backup" on new devices, letting the user complete onboarding with fresh
+ * timestamps that then beat their real remote data in the LWW merge once sync
+ * was enabled.
+ *
  * Folds all per-device files together so the caller sees one unified view.
  */
 export async function peekRemotePayload(): Promise<SyncPayload | null> {
   if (Platform.OS !== 'ios') return null
   if (!ICloudBridge.isAvailable()) return null
   try {
+    await ICloudBridge.waitForInitialScan(5000)
     const files = await ICloudBridge.readAll()
     const payloads: SyncPayload[] = []
     for (const file of files) {
@@ -338,6 +350,70 @@ export async function peekRemotePayload(): Promise<SyncPayload | null> {
     logger.error(`${tag()} peekRemotePayload failed`, e)
     return null
   }
+}
+
+/**
+ * Classification of what an initial enable-sync flow should do, given the
+ * current remote state and the current local state. Returned by
+ * `resolveInitialEnable()` so every call site that flips sync on for the first
+ * time shares the same "look before leaping" decision.
+ *
+ * - `unavailable` — iCloud isn't usable (wrong platform or no identity token).
+ *   Caller should abort.
+ * - `seed` — no remote file exists. Safe to enable + push this device's state.
+ * - `pull` — remote exists, local has no meaningful user records. Safe to
+ *   destructively replace local with remote + enable.
+ * - `conflict` — both sides populated. Caller must ask the user to resolve
+ *   (Settings renders `FirstEnableSheet`; headless callers like
+ *   `SupporterSyncDefault` should leave sync disabled and defer to Settings).
+ */
+export type InitialEnableDecision =
+  | { outcome: 'unavailable' }
+  | { outcome: 'seed' }
+  | { outcome: 'pull'; remote: SyncPayload }
+  | { outcome: 'conflict'; remote: SyncPayload }
+
+/**
+ * Peeks at the remote state and classifies what an initial enable should do.
+ * Pure observation — never mutates stores or iCloud. Callers pass the result to
+ * `applySeedEnable` / `applyPullEnable`, or surface their own conflict UI.
+ *
+ * This is the single chokepoint that guards against the new-device hazard
+ * described in docs/icloud-sync.md: a fresh device that completes onboarding
+ * has `preferenceUpdatedAt` stamps newer than the old device's real values, so
+ * any path that enables sync without first checking for remote data risks
+ * clobbering the old device on the next pull-and-merge.
+ */
+export async function resolveInitialEnable(): Promise<InitialEnableDecision> {
+  if (Platform.OS !== 'ios') return { outcome: 'unavailable' }
+  if (!ICloudBridge.isAvailable()) return { outcome: 'unavailable' }
+  const remote = await peekRemotePayload()
+  if (!remote) return { outcome: 'seed' }
+  if (!hasMeaningfulLocalData()) return { outcome: 'pull', remote }
+  return { outcome: 'conflict', remote }
+}
+
+/**
+ * Enables sync and pushes this device's state to iCloud. Safe only when the
+ * caller has first seen `resolveInitialEnable()` return `seed` — otherwise a
+ * concurrent writer's file can get shadowed by a fresh-install payload.
+ */
+export async function applySeedEnable(): Promise<void> {
+  backfillUpdatedAtIfNeeded()
+  usePreferences.getState().set({ iCloudSyncEnabled: true })
+  await push('initial-enable-seed')
+}
+
+/**
+ * Destructively replaces local state with `remote` and enables sync. Safe only
+ * when the caller has first seen `resolveInitialEnable()` return `pull` — i.e.
+ * local had no meaningful user records. Sets `iCloudSyncEnabled` _after_ the
+ * replace so ongoing-sync subscribers don't briefly see the half-replaced
+ * intermediate state.
+ */
+export function applyPullEnable(remote: SyncPayload): void {
+  replaceLocalWithRemote(remote)
+  usePreferences.getState().set({ iCloudSyncEnabled: true })
 }
 
 /**
@@ -831,5 +907,8 @@ export const iCloudSync = {
   replaceLocalWithRemote,
   overwriteRemoteWithLocal,
   peekRemotePayload,
+  resolveInitialEnable,
+  applySeedEnable,
+  applyPullEnable,
   isPushScheduled: () => pushScheduled,
 }

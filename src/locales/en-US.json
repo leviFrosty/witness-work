@@ -1176,5 +1176,19 @@
   "iCloudRestoreFoundSummary": "From {{device}}, last updated {{relative}}.",
   "iCloudRestoreAction": "Restore from iCloud",
   "iCloudRestoreRestoring": "Restoring…",
-  "iCloudRestoreSkip": "Skip and set up fresh"
+  "iCloudRestoreSkip": "Skip and set up fresh",
+  "yourPlanTitle": "Your plan",
+  "yourPlanMonthlyGoal": "{{hours}} hrs/month goal",
+  "yourPlanNoGoal": "No monthly requirement",
+  "yourPlanPioneeringSince": "Pioneering since {{date}} · {{days}} days",
+  "yourPlanReturnVisitsHeader": "Upcoming return visit",
+  "yourPlanSampleReturnVisitName": "Alex · Sunday 10am",
+  "yourPlanSampleReturnVisitNote": "We'll nudge you 30 min before",
+  "yourPlanTrackTimeHeader": "This month's progress",
+  "yourPlanTrackTimeValue": "0 / {{hours}} hrs",
+  "yourPlanTrackTimeValueNoGoal": "Ready to log your first hour",
+  "yourPlanMapStrip": "Territory pins ready",
+  "yourPlanMonthlyGoalLine": "Your monthly routine is set up",
+  "yourPlanPlanWeekLine": "Weekly planner ready to fill in",
+  "yourPlanReady": "Your WitnessWork is ready."
 }

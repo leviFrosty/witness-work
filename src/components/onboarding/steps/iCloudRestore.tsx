@@ -1,11 +1,10 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
-import { Platform, View } from 'react-native'
+import { useEffect, useRef, useState } from 'react'
+import { Animated, Easing, Platform, View } from 'react-native'
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
 import {
   faCheckCircle,
   faCircleExclamation,
   faCloud,
-  faRotateRight,
 } from '@fortawesome/free-solid-svg-icons'
 import moment from 'moment'
 import { Spinner } from 'tamagui'
@@ -40,58 +39,67 @@ type Probe =
  * to enable ongoing sync (which IS supporter-only) later. Skipping just
  * advances to the next onboarding step with no side effects.
  *
- * Offers a one-shot restore from iCloud during onboarding.
+ * Not rendered on Android: iCloud is iOS-only. The parent step list hides this
+ * step on non-iOS platforms.
  */
 const ICloudRestore = ({ goBack, goNext }: Props) => {
   const theme = useTheme()
   const { set } = usePreferences()
   const [probe, setProbe] = useState<Probe>({ state: 'probing' })
   const [restoring, setRestoring] = useState(false)
-  // Tracks whether a probe is in flight so concurrent retries (user tapping
-  // "Search again" while the auto-subscription fires, or the initial mount
-  // effect still racing) don't trample each other or flicker the UI.
-  const probeInFlight = useRef(false)
-  const cancelledRef = useRef(false)
 
-  const runProbe = useCallback(async () => {
-    if (probeInFlight.current) return
-    if (Platform.OS !== 'ios' || !ICloudBridge.isAvailable()) {
-      if (!cancelledRef.current) setProbe({ state: 'unavailable' })
-      return
-    }
-    probeInFlight.current = true
-    setProbe({ state: 'probing' })
-    try {
+  // Breathing animation for the cloud icon while probing. Runs only while
+  // `probe.state === 'probing'` and stops cleanly when the state resolves.
+  const pulse = useRef(new Animated.Value(0)).current
+
+  useEffect(() => {
+    let cancelled = false
+    const run = async () => {
+      if (Platform.OS !== 'ios' || !ICloudBridge.isAvailable()) {
+        if (!cancelled) setProbe({ state: 'unavailable' })
+        return
+      }
       const remote = await iCloudSync.peekRemotePayload()
-      if (cancelledRef.current) return
+      if (cancelled) return
       if (!remote) {
         setProbe({ state: 'noBackup' })
       } else {
         setProbe({ state: 'found', remote })
       }
-    } finally {
-      probeInFlight.current = false
+    }
+    void run()
+    return () => {
+      cancelled = true
     }
   }, [])
 
   useEffect(() => {
-    cancelledRef.current = false
-    void runProbe()
-
-    // If iCloud surfaces a new sync file after our initial probe (e.g. a
-    // fresh-install cold launch where the container hadn't finished
-    // materializing by the time we first peeked), re-probe so we can upgrade
-    // the screen from "no backup" to "found" without requiring a restart.
-    const sub = ICloudBridge.addRemoteChangeListener(() => {
-      if (cancelledRef.current) return
-      void runProbe()
-    })
-
-    return () => {
-      cancelledRef.current = true
-      sub.remove()
+    if (probe.state !== 'probing') {
+      pulse.stopAnimation()
+      pulse.setValue(0)
+      return
     }
-  }, [runProbe])
+    const loop = Animated.loop(
+      Animated.sequence([
+        Animated.timing(pulse, {
+          toValue: 1,
+          duration: 1100,
+          easing: Easing.inOut(Easing.ease),
+          useNativeDriver: true,
+        }),
+        Animated.timing(pulse, {
+          toValue: 0,
+          duration: 1100,
+          easing: Easing.inOut(Easing.ease),
+          useNativeDriver: true,
+        }),
+      ])
+    )
+    loop.start()
+    return () => {
+      loop.stop()
+    }
+  }, [probe.state, pulse])
 
   const handleRestore = async () => {
     if (probe.state !== 'found') return
@@ -130,20 +138,72 @@ const ICloudRestore = ({ goBack, goNext }: Props) => {
       <View style={{ flex: 1, paddingTop: 30 }}>
         <View
           style={{
-            alignItems: 'center',
-            justifyContent: 'center',
             width: 64,
             height: 64,
-            borderRadius: 32,
-            backgroundColor: theme.colors.accentTranslucent,
             marginBottom: 20,
+            alignItems: 'center',
+            justifyContent: 'center',
           }}
         >
-          <FontAwesomeIcon
-            icon={faCloud}
-            size={28}
-            color={theme.colors.accent}
-          />
+          {/* Breathing ring — only visible while probing. */}
+          {probe.state === 'probing' && (
+            <Animated.View
+              pointerEvents='none'
+              style={{
+                position: 'absolute',
+                width: 64,
+                height: 64,
+                borderRadius: 32,
+                backgroundColor: theme.colors.accentTranslucent,
+                opacity: pulse.interpolate({
+                  inputRange: [0, 1],
+                  outputRange: [0.45, 0],
+                }),
+                transform: [
+                  {
+                    scale: pulse.interpolate({
+                      inputRange: [0, 1],
+                      outputRange: [1, 1.35],
+                    }),
+                  },
+                ],
+              }}
+            />
+          )}
+          <Animated.View
+            style={{
+              alignItems: 'center',
+              justifyContent: 'center',
+              width: 64,
+              height: 64,
+              borderRadius: 32,
+              backgroundColor: theme.colors.accentTranslucent,
+              opacity:
+                probe.state === 'probing'
+                  ? pulse.interpolate({
+                      inputRange: [0, 1],
+                      outputRange: [0.8, 1],
+                    })
+                  : 1,
+              transform: [
+                {
+                  scale:
+                    probe.state === 'probing'
+                      ? pulse.interpolate({
+                          inputRange: [0, 1],
+                          outputRange: [0.94, 1],
+                        })
+                      : 1,
+                },
+              ],
+            }}
+          >
+            <FontAwesomeIcon
+              icon={faCloud}
+              size={28}
+              color={theme.colors.accent}
+            />
+          </Animated.View>
         </View>
         <Text style={styles.stepTitle}>{i18n.t('iCloudRestoreTitle')}</Text>
         <Text
@@ -268,33 +328,6 @@ const ICloudRestore = ({ goBack, goNext }: Props) => {
               ? i18n.t('iCloudRestoreRestoring')
               : i18n.t('iCloudRestoreAction')}
           </ActionButton>
-        )}
-        {(probe.state === 'noBackup' || probe.state === 'unavailable') && (
-          <Button
-            onPress={() => void runProbe()}
-            style={{
-              alignSelf: 'center',
-              flexDirection: 'row',
-              alignItems: 'center',
-              gap: 8,
-              paddingVertical: 10,
-            }}
-            disabled={restoring}
-          >
-            <FontAwesomeIcon
-              icon={faRotateRight}
-              size={14}
-              color={theme.colors.textAlt}
-            />
-            <Text
-              style={{
-                color: theme.colors.textAlt,
-                textDecorationLine: 'underline',
-              }}
-            >
-              {i18n.t('iCloudRestoreRetry')}
-            </Text>
-          </Button>
         )}
         <Button
           onPress={goNext}

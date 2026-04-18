@@ -8,6 +8,7 @@ import PublisherTypeSelector from '../../PublisherTypeSelector'
 import Wrapper from '../../layout/Wrapper'
 import ActionButton from '../../ActionButton'
 import FeatureShowcase from '../FeatureShowcase'
+import { usePreferences } from '../../../stores/preferences'
 
 interface Props {
   goBack: () => void
@@ -15,6 +16,15 @@ interface Props {
 }
 
 const StepTwo = ({ goBack, goNext }: Props) => {
+  const { publisher } = usePreferences()
+  // Reflect the user's just-made selection in the CTA. For 'custom' the role
+  // label would be "Custom" which isn't meaningful as a subject — fall back
+  // to plain "Continue" there.
+  const ctaLabel =
+    publisher && publisher !== 'custom'
+      ? i18n.t('continueAs', { role: i18n.t(publisher) })
+      : i18n.t('continue')
+
   return (
     <View style={{ flex: 1 }}>
       <View style={{ flex: 1 }}>
@@ -45,7 +55,7 @@ const StepTwo = ({ goBack, goNext }: Props) => {
               <FeatureShowcase />
             </View>
           </KeyboardAwareScrollView>
-          <ActionButton onPress={goNext}>{i18n.t('continue')}</ActionButton>
+          <ActionButton onPress={goNext}>{ctaLabel}</ActionButton>
         </Wrapper>
       </View>
     </View>

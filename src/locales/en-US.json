@@ -1176,5 +1176,9 @@
   "iCloudRestoreFoundSummary": "From {{device}}, last updated {{relative}}.",
   "iCloudRestoreAction": "Restore from iCloud",
   "iCloudRestoreRestoring": "Restoring…",
-  "iCloudRestoreSkip": "Skip and set up fresh"
+  "iCloudRestoreSkip": "Skip and set up fresh",
+  "onboardingHeroTagline": "Field service, remembered.",
+  "onboardingHeroReturningLink": "I already use WitnessWork",
+  "continueAs": "Continue as {{role}}",
+  "continueWith": "Continue with {{option}}"
 }

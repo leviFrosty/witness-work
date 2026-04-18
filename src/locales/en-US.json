@@ -1181,6 +1181,7 @@
   "iCloudRestoreAction": "Restore from iCloud",
   "iCloudRestoreRestoring": "Restoring…",
   "iCloudRestoreSkip": "Skip and set up fresh",
+<<<<<<< HEAD
   "iCloudRestoreRetry": "Search again",
   "yourPlanTitle": "Your plan",
   "yourPlanMonthlyGoal": "{{hours}} hrs/month goal",
@@ -1214,5 +1215,9 @@
   "homeChecklistTrackTime": "Track your time",
   "homeChecklistReturnVisits": "Manage return visits",
   "homeChecklistPlanWeek": "Plan your week",
-  "homeChecklistMapContacts": "Map your contacts"
+  "homeChecklistMapContacts": "Map your contacts",
+  "onboardingHeroTagline": "Field service, remembered.",
+  "onboardingHeroReturningLink": "I already use WitnessWork",
+  "continueAs": "Continue as {{role}}",
+  "continueWith": "Continue with {{option}}"
 }

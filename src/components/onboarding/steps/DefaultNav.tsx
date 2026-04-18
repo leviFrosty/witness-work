@@ -18,6 +18,14 @@ const StepDefaultNav = ({ goNext, goBack }: Props) => {
   const { defaultNavigationMapProvider, set } = usePreferences()
   const theme = useTheme()
 
+  const selectedOption = navigationSelectionOptions.find(
+    (o) => o.value === defaultNavigationMapProvider
+  )
+  // Reflect the just-picked map provider in the CTA when available.
+  const ctaLabel = selectedOption
+    ? i18n.t('continueWith', { option: selectedOption.label })
+    : i18n.t('continue')
+
   return (
     <Wrapper
       style={{
@@ -54,7 +62,7 @@ const StepDefaultNav = ({ goNext, goBack }: Props) => {
         />
       </View>
       <View>
-        <ActionButton onPress={goNext}>{i18n.t('continue')}</ActionButton>
+        <ActionButton onPress={goNext}>{ctaLabel}</ActionButton>
         <View style={{ alignItems: 'center', marginTop: 15 }}></View>
       </View>
     </Wrapper>

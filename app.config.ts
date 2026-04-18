@@ -116,6 +116,7 @@ export default ({ config }: ConfigContext): ExpoConfig => {
       '@bacons/apple-targets',
       '@react-native-community/datetimepicker',
       'expo-asset',
+      'expo-background-task',
       'expo-font',
       'expo-localization',
       'expo-sharing',

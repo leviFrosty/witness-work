@@ -189,7 +189,7 @@ const PreferencesiCloudScreenInner = () => {
           onPress: async () => {
             setSyncing(true)
             try {
-              await ICloudBridge.deleteFile()
+              await ICloudBridge.deleteAll()
               set({ lastiCloudSyncAt: null })
               await iCloudSync.push('post-reset')
             } finally {

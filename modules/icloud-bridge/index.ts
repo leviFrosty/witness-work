@@ -5,7 +5,8 @@ import {
   requireOptionalNativeModule,
 } from 'expo-modules-core'
 
-export type ReadResult = {
+export type SyncFile = {
+  filename: string
   json: string
   modifiedAt: number
 }
@@ -18,9 +19,10 @@ type ICloudBridgeEvents = {
 declare class ICloudBridgeNative extends NativeModule<ICloudBridgeEvents> {
   isAvailable(): boolean
   getContainerPath(): string | null
-  read(): Promise<ReadResult | null>
-  write(json: string): Promise<number>
-  deleteFile(): Promise<null>
+  readAll(): Promise<SyncFile[]>
+  write(filename: string, json: string): Promise<number>
+  deleteFile(filename: string): Promise<null>
+  deleteAll(): Promise<null>
 }
 
 const native = requireOptionalNativeModule<ICloudBridgeNative>('ICloudBridge')
@@ -37,36 +39,52 @@ export function getContainerPath(): string | null {
 }
 
 /**
- * Reads the JSON blob from the ubiquity container. Resolves to null if the file
- * does not yet exist. Rejects on coordination / I/O errors or when iCloud is
- * unavailable.
+ * Reads every `witness-work*.json` file in the ubiquity container, triggering
+ * downloads in parallel for any that are still iCloud placeholders. Resolves to
+ * the list of successfully-materialized files — anything still downloading at
+ * the 10s deadline is skipped and picked up by the next pull.
+ *
+ * Returns an empty array when there are no sync files yet.
  */
-export async function read(): Promise<ReadResult | null> {
-  if (Platform.OS !== 'ios' || !native) return null
-  return native.read()
+export async function readAll(): Promise<SyncFile[]> {
+  if (Platform.OS !== 'ios' || !native) return []
+  return native.readAll()
 }
 
 /**
- * Writes `json` to the ubiquity container using an atomic, coordinated write.
+ * Writes `json` to `filename` inside the ubiquity container using an atomic,
+ * coordinated write. Filename must live in the `witness-work*.json` namespace —
+ * anything else is rejected by the native module.
+ *
  * Resolves to the file's modification time in epoch ms.
  */
-export async function write(json: string): Promise<number> {
+export async function write(filename: string, json: string): Promise<number> {
   if (Platform.OS !== 'ios' || !native) {
     throw new Error('iCloud bridge is not available on this platform')
   }
-  return native.write(json)
-}
-
-/** Coordinated delete of the sync file. Idempotent — no error if missing. */
-export async function deleteFile(): Promise<void> {
-  if (Platform.OS !== 'ios' || !native) return
-  await native.deleteFile()
+  return native.write(filename, json)
 }
 
 /**
- * Fires when NSMetadataQuery observes a modification to the sync file that is
- * strictly newer than the last write/read this device performed — typically
- * meaning another device pushed an update.
+ * Coordinated delete of a single sync file. Idempotent — no error if missing.
+ * Filename is validated against the sync namespace by the native module.
+ */
+export async function deleteFile(filename: string): Promise<void> {
+  if (Platform.OS !== 'ios' || !native) return
+  await native.deleteFile(filename)
+}
+
+/** Coordinated delete of every `witness-work*.json` in the container. */
+export async function deleteAll(): Promise<void> {
+  if (Platform.OS !== 'ios' || !native) return
+  await native.deleteAll()
+}
+
+/**
+ * Fires when NSMetadataQuery observes a modification to any sync file whose
+ * content-change date is strictly newer than the most recent write/read this
+ * device performed for that filename — typically meaning another device pushed
+ * an update.
  */
 export function addRemoteChangeListener(
   listener: ICloudBridgeEvents['onRemoteChange']

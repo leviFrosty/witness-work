@@ -379,11 +379,11 @@ export const usePreferences = create(
         setContactSort: (contactSort: (typeof SortOptionValues)[number]) =>
           set({ contactSort }),
         removeHint: (hint: keyof typeof hints) =>
-          set((preferences) => {
-            const updatedPreferences = { ...preferences }
-            updatedPreferences[hint] = false
-            return updatedPreferences
-          }),
+          // Pass a partial rather than spreading the full preferences object —
+          // the stamping wrapper iterates `Object.keys(resolved)` and would
+          // otherwise bump `preferenceUpdatedAt` for every syncable key, which
+          // flips last-writer-wins for unrelated prefs during iCloud merges.
+          set({ [hint]: false } as Partial<typeof initialState>),
         /**
          * Will not update lastUpdated property or address if address param is
          * undefined.

@@ -11,11 +11,86 @@ import { logger } from '../logger'
 import * as Sentry from '@sentry/react-native'
 import * as Device from 'expo-device'
 import { EventSubscription } from 'expo-modules-core'
+import { Contact } from '../../types/contact'
+import { Conversation, ConversationTombstone } from '../../types/conversation'
+import {
+  DayPlan,
+  ServiceReportsByYears,
+  ServiceReportTombstone,
+} from '../../types/serviceReport'
+import { RecurringPlan } from '../serviceReport'
 
 const PUSH_DEBOUNCE_MS = 5000
+/**
+ * ICloud re-stamps a file's FSContentChangeDate as it replicates through the
+ * server, so every push produces 1–2 `remote-change` notifications a few
+ * hundred ms later that aren't real foreign edits. Coalescing in `pullAndMerge`
+ * doesn't catch them because they arrive _sequentially_ after the prior pull
+ * finishes. A short leading+trailing debounce on the listener folds each echo
+ * burst into one follow-up pull while still letting genuine remote changes
+ * trigger an immediate pull on the leading edge.
+ */
+const REMOTE_CHANGE_DEBOUNCE_MS = 500
+
+/**
+ * Per-device file naming. The JS layer owns this scheme so the Swift bridge
+ * stays agnostic about payload semantics — it just enforces that writes stay
+ * within the `witness-work*.json` namespace.
+ *
+ * Per-device files prevent cross-device iCloud Drive conflicts, which
+ * previously surfaced as `witness-work 2.json`, `witness-work 3.json` etc. and
+ * stranded each device's data in its own silo.
+ */
+const SYNC_FILE_PREFIX = 'witness-work'
+const SYNC_FILE_EXT = '.json'
 
 let installed = false
 let pushScheduled = false
+
+/**
+ * Coalesce concurrent `pullAndMerge` calls. NSMetadataQuery fires in bursts
+ * (both `DidFinishGathering` and `DidUpdate`, plus multiple notifications per
+ * iCloud file op), and each `readAll` takes ~1s; running them concurrently
+ * wastes I/O and produced the storm visible in the logs. At-most-one-queued is
+ * enough because every caller just wants "the freshest state after my wake-up,"
+ * and the in-flight pull's readAll sees strictly newer data than anything the
+ * coalesced caller saw.
+ */
+let pullInFlight: Promise<boolean> | null = null
+let pullQueuedReason: string | null = null
+
+function filenameForDevice(deviceId: string): string {
+  return `${SYNC_FILE_PREFIX}-${deviceId}${SYNC_FILE_EXT}`
+}
+
+/**
+ * A filename is "legacy" if it's not in the per-device scheme — i.e. the
+ * pre-upgrade single-file name `witness-work.json` or its iCloud conflict
+ * duplicates `witness-work 2.json`, `witness-work 3.json`, etc. These can still
+ * contain valuable data (one of ours had 23KB stranded in `witness-work
+ * 4.json`), so the reader absorbs them and then deletes them.
+ */
+function isLegacyFilename(filename: string): boolean {
+  return !filename.startsWith(`${SYNC_FILE_PREFIX}-`)
+}
+
+/**
+ * Counts the flattened service reports across the year/month nesting. Used by
+ * the diagnostic logs so we can spot size drift between local / remote / merged
+ * without dumping every record.
+ */
+function countReports(
+  byYear: { [year: string]: { [month: string]: unknown[] } } | undefined
+): number {
+  if (!byYear) return 0
+  let total = 0
+  for (const year of Object.values(byYear)) {
+    for (const month of Object.values(year)) {
+      total += month.length
+    }
+  }
+  return total
+}
 
 /**
  * Lightweight UUID-ish id. Good enough for attributing writes to a device in
@@ -36,6 +111,19 @@ function ensureDeviceId(): string {
   const id = generateDeviceId()
   prefs.set({ iCloudDeviceId: id })
   return id
+}
+
+/**
+ * Short log tag so interleaved Metro/Console output from multiple devices is
+ * readable at a glance — pins which device emitted each line. Prefers the
+ * human-readable model name (e.g. "iPhone 17 Pro") and falls back to the first
+ * 6 chars of the device id, or "?" before the id has been generated.
+ */
+function tag(): string {
+  const model = Device.modelName
+  if (model) return `[iCloudSync/${model}]`
+  const id = usePreferences.getState().iCloudDeviceId
+  return `[iCloudSync/${id ? id.slice(0, 6) : '?'}]`
 }
 
 /** Whether the user has opted into iCloud sync AND iCloud is actually usable. */
@@ -77,6 +165,97 @@ export function hasMeaningfulLocalData(): boolean {
   return false
 }
 
+type LocalMergeState = {
+  contacts: Contact[]
+  deletedContacts: Contact[]
+  conversations: Conversation[]
+  deletedConversations: ConversationTombstone[]
+  serviceReports: ServiceReportsByYears
+  dayPlans: DayPlan[]
+  recurringPlans: RecurringPlan[]
+  deletedServiceReports: ServiceReportTombstone[]
+  preferencesValues: Record<string, unknown>
+  preferenceUpdatedAt: Record<string, number>
+}
+
+/**
+ * Folds a list of remote payloads into a single synthesized SyncPayload by
+ * merging them pairwise via the LWW merge algorithm. Used for
+ * `peekRemotePayload` and the manual "restore from iCloud" flow, where the
+ * caller expects one payload-shaped object representing the full remote state
+ * across all devices.
+ *
+ * Returns null when the input is empty.
+ */
+function foldRemotePayloads(payloads: SyncPayload[]): SyncPayload | null {
+  if (payloads.length === 0) return null
+  if (payloads.length === 1) return payloads[0]
+
+  const first = payloads[0]
+  let acc: LocalMergeState = {
+    contacts: (first.contactStore.contacts ?? []) as Contact[],
+    deletedContacts: (first.contactStore.deletedContacts ?? []) as Contact[],
+    conversations: (first.conversationStore.conversations ??
+      []) as Conversation[],
+    deletedConversations: first.conversationStore.deletedConversations ?? [],
+    serviceReports:
+      (first.serviceReportStore.serviceReports as ServiceReportsByYears) ?? {},
+    dayPlans: (first.serviceReportStore.dayPlans ?? []) as DayPlan[],
+    recurringPlans: (first.serviceReportStore.recurringPlans ??
+      []) as RecurringPlan[],
+    deletedServiceReports: first.serviceReportStore.deletedServiceReports ?? [],
+    preferencesValues: first.preferencesStore?.values ?? {},
+    preferenceUpdatedAt: first.preferencesStore?.updatedAt ?? {},
+  }
+
+  for (let i = 1; i < payloads.length; i++) {
+    const result = mergePayload(acc, payloads[i])
+    acc = {
+      contacts: result.contacts,
+      deletedContacts: result.deletedContacts,
+      conversations: result.conversations,
+      deletedConversations: result.deletedConversations,
+      serviceReports: result.serviceReports,
+      dayPlans: result.dayPlans,
+      recurringPlans: result.recurringPlans,
+      deletedServiceReports: result.deletedServiceReports,
+      preferencesValues: result.preferencesValues,
+      preferenceUpdatedAt: result.preferenceUpdatedAt,
+    }
+  }
+
+  // Representative metadata: pick the payload with the newest writtenAt.
+  let rep = payloads[0]
+  for (const p of payloads) {
+    if (p.writtenAt > rep.writtenAt) rep = p
+  }
+
+  return {
+    version: rep.version,
+    writtenAt: rep.writtenAt,
+    deviceId: rep.deviceId,
+    deviceName: rep.deviceName,
+    contactStore: {
+      contacts: acc.contacts,
+      deletedContacts: acc.deletedContacts,
+    },
+    conversationStore: {
+      conversations: acc.conversations,
+      deletedConversations: acc.deletedConversations,
+    },
+    serviceReportStore: {
+      serviceReports: acc.serviceReports,
+      dayPlans: acc.dayPlans,
+      recurringPlans: acc.recurringPlans,
+      deletedServiceReports: acc.deletedServiceReports,
+    },
+    preferencesStore: {
+      values: acc.preferencesValues,
+      updatedAt: acc.preferenceUpdatedAt,
+    },
+  }
+}
+
 /**
  * Destructive: wipes local user data + syncable prefs and replaces them with
  * the contents of `remote`. Device-local bookkeeping (`iCloudSyncEnabled`,
@@ -110,8 +289,8 @@ export function replaceLocalWithRemote(remote: SyncPayload): void {
   })
 
   const now = Date.now()
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   usePreferences.setState({
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     ...(remote.preferencesStore.values as any),
     preferenceUpdatedAt: remote.preferencesStore.updatedAt ?? {},
     lastiCloudSyncAt: now,
@@ -123,34 +302,40 @@ export function replaceLocalWithRemote(remote: SyncPayload): void {
 }
 
 /**
- * The inverse of `replaceLocalWithRemote`: wipes the remote file so nothing on
- * iCloud shadows what's about to be pushed, then pushes fresh from this device.
- * Used by the first-enable sheet's "Keep this device's data" branch.
+ * The inverse of `replaceLocalWithRemote`: wipes every remote file so nothing
+ * on iCloud shadows what's about to be pushed, then pushes fresh from this
+ * device. Used by the first-enable sheet's "Keep this device's data" branch.
  */
 export async function overwriteRemoteWithLocal(): Promise<void> {
   try {
-    await ICloudBridge.deleteFile()
+    await ICloudBridge.deleteAll()
   } catch (e) {
-    logger.error('[iCloudSync] failed to clear remote before overwrite', e)
+    logger.error(`${tag()} failed to clear remote before overwrite`, e)
     Sentry.captureException(e, { tags: { iCloudSync: 'overwrite' } })
   }
   await push('overwrite-remote')
 }
 
 /**
- * One-shot read of the remote payload without installing sync, without
- * requiring the user to be opted in. Used by the onboarding restore step to
- * peek at what's available before the user decides.
+ * One-shot read of the remote state without installing sync, without requiring
+ * the user to be opted in. Used by the onboarding restore step to peek at
+ * what's available before the user decides.
+ *
+ * Folds all per-device files together so the caller sees one unified view.
  */
 export async function peekRemotePayload(): Promise<SyncPayload | null> {
   if (Platform.OS !== 'ios') return null
   if (!ICloudBridge.isAvailable()) return null
   try {
-    const read = await ICloudBridge.read()
-    if (!read) return null
-    return parsePayload(read.json)
+    const files = await ICloudBridge.readAll()
+    const payloads: SyncPayload[] = []
+    for (const file of files) {
+      const parsed = parsePayload(file.json)
+      if (parsed) payloads.push(parsed)
+    }
+    return foldRemotePayloads(payloads)
   } catch (e) {
-    logger.error('[iCloudSync] peekRemotePayload failed', e)
+    logger.error(`${tag()} peekRemotePayload failed`, e)
     return null
   }
 }
@@ -161,26 +346,47 @@ export async function peekRemotePayload(): Promise<SyncPayload | null> {
  * callers (store subscribers, AppState handlers) don't need try/catch.
  */
 export async function push(reason: string): Promise<void> {
-  if (!canSync()) return
+  if (!canSync()) {
+    logger.log(`${tag()} push skipped (canSync=false)`, { reason })
+    return
+  }
   try {
     const deviceId = ensureDeviceId()
+    const filename = filenameForDevice(deviceId)
     const payload = buildPayload({
       deviceId,
       deviceName: Device.modelName ?? undefined,
     })
-    await ICloudBridge.write(JSON.stringify(payload))
+    const json = JSON.stringify(payload)
+    logger.log(`${tag()} push start`, {
+      reason,
+      filename,
+      writtenAt: payload.writtenAt,
+      bytes: json.length,
+      contacts: payload.contactStore.contacts.length,
+      deletedContacts: payload.contactStore.deletedContacts.length,
+      conversations: payload.conversationStore.conversations.length,
+      deletedConversations:
+        payload.conversationStore.deletedConversations?.length ?? 0,
+      serviceReports: countReports(payload.serviceReportStore.serviceReports),
+      dayPlans: payload.serviceReportStore.dayPlans.length,
+      recurringPlans: payload.serviceReportStore.recurringPlans.length,
+      preferenceKeys: Object.keys(payload.preferencesStore.values).length,
+    })
+    await ICloudBridge.write(filename, json)
     const now = Date.now()
     usePreferences.getState().set({
       lastiCloudSyncAt: now,
       lastiCloudPushedAt: now,
     })
+    logger.log(`${tag()} push success`, { reason, filename })
     Sentry.addBreadcrumb({
       category: 'iCloudSync',
       message: `push (${reason})`,
       level: 'info',
     })
   } catch (e) {
-    logger.error(`[iCloudSync] push failed (${reason})`, e)
+    logger.error(`${tag()} push failed (${reason})`, e)
     Sentry.captureException(e, { tags: { iCloudSync: 'push' } })
   }
 }
@@ -201,68 +407,152 @@ function schedulePush() {
 }
 
 /**
- * Reads the remote blob (if any), merges against local state, and writes the
- * merged result back into the relevant zustand stores. No-op when sync is
- * disabled. Returns whether any local state actually changed.
+ * Reads all remote files, filters out this device's own file (its contents are
+ * already in local state), merges each foreign payload into local state via the
+ * LWW algorithm, and writes the merged result back to the stores. No-op when
+ * sync is disabled. Returns whether any local state actually changed.
+ *
+ * Coalesces concurrent callers: if a pull is already running, this returns the
+ * in-flight promise and schedules at most one follow-up pull to catch anything
+ * the running `readAll` raced past. See the `pullInFlight` comment for why
+ * at-most-one is sufficient.
+ *
+ * Also absorbs + cleans up **legacy files** (pre-upgrade single-file scheme
+ *
+ * - ICloud conflict duplicates) so we converge on the per-device layout over
+ *   time, without losing any stranded data.
  */
 export async function pullAndMerge(reason: string): Promise<boolean> {
-  if (!canSync()) return false
+  if (pullInFlight) {
+    if (!pullQueuedReason) pullQueuedReason = reason
+    return pullInFlight
+  }
+  pullInFlight = (async () => {
+    try {
+      return await pullAndMergeInner(reason)
+    } finally {
+      const queued = pullQueuedReason
+      pullQueuedReason = null
+      pullInFlight = null
+      if (queued) void pullAndMerge(queued)
+    }
+  })()
+  return pullInFlight
+}
 
-  let remote: SyncPayload | null = null
+async function pullAndMergeInner(reason: string): Promise<boolean> {
+  if (!canSync()) {
+    logger.log(`${tag()} pullAndMerge skipped (canSync=false)`, { reason })
+    return false
+  }
+
+  logger.log(`${tag()} pullAndMerge start`, { reason })
+
+  const deviceId = ensureDeviceId()
+  const ownFilename = filenameForDevice(deviceId)
+
+  let files: ICloudBridge.SyncFile[]
   try {
-    const readResult = await ICloudBridge.read()
-    if (!readResult) {
-      // Nothing remote yet — seed on next push.
-      usePreferences.getState().set({ lastiCloudPulledAt: Date.now() })
-      Sentry.addBreadcrumb({
-        category: 'iCloudSync',
-        message: `pull (${reason}) — no remote`,
-        level: 'info',
-      })
-      return false
-    }
-    remote = parsePayload(readResult.json)
-    if (!remote) {
-      logger.error('[iCloudSync] remote payload rejected by validator')
-      Sentry.captureMessage('iCloudSync: invalid remote payload', {
-        level: 'warning',
-      })
-      return false
-    }
+    files = await ICloudBridge.readAll()
   } catch (e) {
-    logger.error(`[iCloudSync] pull failed (${reason})`, e)
+    logger.error(`${tag()} readAll failed (${reason})`, e)
     Sentry.captureException(e, { tags: { iCloudSync: 'pull' } })
     return false
   }
 
-  // Record what we saw in the remote file so the settings screen can show
-  // "last remote write was at T from device X" — independent of whether we
-  // actually merged anything.
-  const now = Date.now()
-  usePreferences.getState().set({
-    lastiCloudPulledAt: now,
-    lastiCloudRemoteWrittenAt: remote.writtenAt,
-    lastiCloudRemoteDeviceId: remote.deviceId,
-    lastiCloudRemoteDeviceName: remote.deviceName ?? null,
+  logger.log(`${tag()} pullAndMerge: readAll`, {
+    reason,
+    totalFiles: files.length,
+    filenames: files.map((f) => f.filename),
   })
 
-  // Skip merge if the remote blob was last written by this device and
-  // nothing has changed since — avoids a useless merge pass on our own
-  // writes bouncing back through the metadata query.
-  const prefs = usePreferences.getState()
-  if (remote.deviceId === prefs.iCloudDeviceId && prefs.lastiCloudSyncAt) {
-    if (remote.writtenAt <= prefs.lastiCloudSyncAt) {
-      return false
+  if (files.length === 0) {
+    usePreferences.getState().set({ lastiCloudPulledAt: Date.now() })
+    logger.log(`${tag()} pullAndMerge: no remote files`, { reason })
+    Sentry.addBreadcrumb({
+      category: 'iCloudSync',
+      message: `pull (${reason}) — no remote`,
+      level: 'info',
+    })
+    return false
+  }
+
+  // Parse each file. Legacy filenames are tracked for post-merge cleanup so
+  // that once we've absorbed their contents, subsequent pulls stop seeing
+  // them. A foreign device still on the old code will re-create a legacy
+  // file on its next push; that's fine — we'll absorb + delete again.
+  const remotePayloads: Array<{
+    payload: SyncPayload
+    filename: string
+    modifiedAt: number
+  }> = []
+  const legacyFilenames: string[] = []
+  for (const file of files) {
+    if (file.filename === ownFilename) continue
+    const parsed = parsePayload(file.json)
+    if (!parsed) {
+      logger.warn(`${tag()} pullAndMerge: skipping invalid file`, {
+        reason,
+        filename: file.filename,
+        bytes: file.json.length,
+        jsonPreview: file.json.slice(0, 200),
+      })
+      Sentry.captureMessage('iCloudSync: invalid remote payload', {
+        level: 'warning',
+      })
+      continue
+    }
+    remotePayloads.push({
+      payload: parsed,
+      filename: file.filename,
+      modifiedAt: file.modifiedAt,
+    })
+    if (isLegacyFilename(file.filename)) {
+      legacyFilenames.push(file.filename)
     }
   }
 
+  // Surface the freshest remote file in the settings display, regardless of
+  // whether the merge actually changes anything. Chosen by `modifiedAt`
+  // rather than `writtenAt` so the clock skew between devices doesn't
+  // cause a very stale file to win.
+  let freshest: (typeof remotePayloads)[number] | null = null
+  for (const r of remotePayloads) {
+    if (!freshest || r.modifiedAt > freshest.modifiedAt) {
+      freshest = r
+    }
+  }
+
+  const now = Date.now()
+  usePreferences.getState().set({
+    lastiCloudPulledAt: now,
+    ...(freshest
+      ? {
+          lastiCloudRemoteWrittenAt: freshest.payload.writtenAt,
+          lastiCloudRemoteDeviceId: freshest.payload.deviceId,
+          lastiCloudRemoteDeviceName: freshest.payload.deviceName ?? null,
+        }
+      : {}),
+  })
+
+  if (remotePayloads.length === 0) {
+    logger.log(`${tag()} pullAndMerge: no foreign payloads`, {
+      reason,
+      totalFiles: files.length,
+      skippedOwn: files.some((f) => f.filename === ownFilename),
+    })
+    // Even with no foreign payloads, stale legacy files may exist from this
+    // device's own pre-upgrade writes. Clean them up.
+    void cleanupLegacyFiles(legacyFilenames)
+    return false
+  }
+
+  // Snapshot local state once; fold each remote payload into the accumulator.
   const contactsState = useContacts.getState()
   const conversationsState = useConversations.getState()
   const serviceReportState = useServiceReport.getState()
   const preferencesState = usePreferences.getState()
 
-  // Snapshot the preference values participating in sync — same allow-list
-  // used by `buildPayload`.
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const localPrefValues: Record<string, any> = {}
   for (const [key, value] of Object.entries(preferencesState)) {
@@ -270,52 +560,101 @@ export async function pullAndMerge(reason: string): Promise<boolean> {
     localPrefValues[key] = value
   }
 
-  const result = mergePayload(
-    {
-      contacts: contactsState.contacts,
-      deletedContacts: contactsState.deletedContacts,
-      conversations: conversationsState.conversations,
-      deletedConversations: conversationsState.deletedConversations,
-      serviceReports: serviceReportState.serviceReports,
-      dayPlans: serviceReportState.dayPlans,
-      recurringPlans: serviceReportState.recurringPlans,
-      deletedServiceReports: serviceReportState.deletedServiceReports,
-      preferencesValues: localPrefValues,
-      preferenceUpdatedAt: preferencesState.preferenceUpdatedAt ?? {},
-    },
-    remote
-  )
+  logger.log(`${tag()} pullAndMerge: local snapshot`, {
+    reason,
+    contacts: contactsState.contacts.length,
+    deletedContacts: contactsState.deletedContacts.length,
+    conversations: conversationsState.conversations.length,
+    deletedConversations: conversationsState.deletedConversations.length,
+    serviceReports: countReports(serviceReportState.serviceReports),
+    dayPlans: serviceReportState.dayPlans.length,
+    recurringPlans: serviceReportState.recurringPlans.length,
+    preferenceUpdatedAtKeys: Object.keys(
+      preferencesState.preferenceUpdatedAt ?? {}
+    ).length,
+  })
 
-  if (!result.changed) {
+  let acc: LocalMergeState = {
+    contacts: contactsState.contacts,
+    deletedContacts: contactsState.deletedContacts,
+    conversations: conversationsState.conversations,
+    deletedConversations: conversationsState.deletedConversations,
+    serviceReports: serviceReportState.serviceReports,
+    dayPlans: serviceReportState.dayPlans,
+    recurringPlans: serviceReportState.recurringPlans,
+    deletedServiceReports: serviceReportState.deletedServiceReports,
+    preferencesValues: localPrefValues,
+    preferenceUpdatedAt: preferencesState.preferenceUpdatedAt ?? {},
+  }
+
+  let anyChanged = false
+  for (const r of remotePayloads) {
+    const result = mergePayload(acc, r.payload)
+    if (result.changed) anyChanged = true
+    acc = {
+      contacts: result.contacts,
+      deletedContacts: result.deletedContacts,
+      conversations: result.conversations,
+      deletedConversations: result.deletedConversations,
+      serviceReports: result.serviceReports,
+      dayPlans: result.dayPlans,
+      recurringPlans: result.recurringPlans,
+      deletedServiceReports: result.deletedServiceReports,
+      preferencesValues: result.preferencesValues,
+      preferenceUpdatedAt: result.preferenceUpdatedAt,
+    }
+  }
+
+  logger.log(`${tag()} pullAndMerge: merge result`, {
+    reason,
+    changed: anyChanged,
+    remoteFiles: remotePayloads.length,
+    legacyFiles: legacyFilenames.length,
+    contacts: acc.contacts.length,
+    deletedContacts: acc.deletedContacts.length,
+    conversations: acc.conversations.length,
+    deletedConversations: acc.deletedConversations.length,
+    serviceReports: countReports(acc.serviceReports),
+    dayPlans: acc.dayPlans.length,
+    recurringPlans: acc.recurringPlans.length,
+  })
+
+  if (!anyChanged) {
+    // Still clean up legacy files — their contents are already reflected in
+    // local state from a prior pull, so deleting them is safe and stops
+    // future pulls from re-reading them.
+    void cleanupLegacyFiles(legacyFilenames)
     return false
   }
 
-  // Apply to stores. Each store's raw `set` replaces the named fields while
-  // leaving the rest of the state (actions, other fields) intact.
   contactsState.set({
-    contacts: result.contacts,
-    deletedContacts: result.deletedContacts,
+    contacts: acc.contacts,
+    deletedContacts: acc.deletedContacts,
   })
   conversationsState.set({
-    conversations: result.conversations,
-    deletedConversations: result.deletedConversations,
+    conversations: acc.conversations,
+    deletedConversations: acc.deletedConversations,
   })
   serviceReportState.set({
-    serviceReports: result.serviceReports,
-    dayPlans: result.dayPlans,
-    recurringPlans: result.recurringPlans,
-    deletedServiceReports: result.deletedServiceReports,
+    serviceReports: acc.serviceReports,
+    dayPlans: acc.dayPlans,
+    recurringPlans: acc.recurringPlans,
+    deletedServiceReports: acc.deletedServiceReports,
   })
 
-  // Preferences have a stamping wrapper that would restamp every merged key
-  // with Date.now() — bypass it via setState so the merge algorithm's own
-  // per-key timestamps survive the write.
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   usePreferences.setState({
-    ...(result.preferencesValues as any),
-    preferenceUpdatedAt: result.preferenceUpdatedAt,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    ...(acc.preferencesValues as any),
+    preferenceUpdatedAt: acc.preferenceUpdatedAt,
     lastiCloudSyncAt: Date.now(),
     lastiCloudPulledAt: Date.now(),
+  })
+
+  logger.log(`${tag()} pullAndMerge: applied merge to stores`, {
+    reason,
+    contactsNow: useContacts.getState().contacts.length,
+    conversationsNow: useConversations.getState().conversations.length,
+    serviceReportsNow: countReports(useServiceReport.getState().serviceReports),
   })
 
   Sentry.addBreadcrumb({
@@ -324,7 +663,31 @@ export async function pullAndMerge(reason: string): Promise<boolean> {
     level: 'info',
   })
 
+  // Legacy contents are now reflected in local state AND will be written to
+  // this device's per-device file on the next push. Safe to delete.
+  void cleanupLegacyFiles(legacyFilenames)
+
   return true
+}
+
+/**
+ * Deletes legacy sync files after their contents have been absorbed. Failures
+ * are non-fatal — next pull will retry. Keeping this async-fire-and-forget so
+ * it doesn't add latency to the hot path.
+ */
+async function cleanupLegacyFiles(filenames: string[]): Promise<void> {
+  if (filenames.length === 0) return
+  for (const filename of filenames) {
+    try {
+      await ICloudBridge.deleteFile(filename)
+      logger.log(`${tag()} deleted legacy file`, { filename })
+    } catch (e) {
+      logger.warn(`${tag()} failed to delete legacy file`, {
+        filename,
+        error: (e as Error).message,
+      })
+    }
+  }
 }
 
 /**
@@ -396,7 +759,17 @@ export function installiCloudSync(): () => void {
   const unsubContacts = useContacts.subscribe(() => schedulePush())
   const unsubConversations = useConversations.subscribe(() => schedulePush())
   const unsubServiceReports = useServiceReport.subscribe(() => schedulePush())
-  const unsubPreferences = usePreferences.subscribe(() => schedulePush())
+  // Only schedule a push when a *syncable* preference key changed. The
+  // stamping wrapper in `usePreferences` re-allocates `preferenceUpdatedAt`
+  // iff a non-bookkeeping key was written, so a reference check on that map
+  // is a cheap and accurate filter. Without this, every `pullAndMerge` wrote
+  // `lastiCloudPulledAt` and armed a 5s debounced push, looping pulls back
+  // into no-op pushes.
+  const unsubPreferences = usePreferences.subscribe((state, prev) => {
+    if (state.preferenceUpdatedAt !== prev.preferenceUpdatedAt) {
+      schedulePush()
+    }
+  })
 
   const onAppState = (state: AppStateStatus) => {
     if (state === 'active') {
@@ -417,13 +790,21 @@ export function installiCloudSync(): () => void {
 
   let remoteChangeSub: EventSubscription | null = null
   let availabilitySub: EventSubscription | null = null
+  const debouncedRemotePull = _.debounce(
+    () => {
+      if (!canSync()) return
+      void pullAndMerge('remote-change')
+    },
+    REMOTE_CHANGE_DEBOUNCE_MS,
+    { leading: true, trailing: true }
+  )
   remoteChangeSub = ICloudBridge.addRemoteChangeListener(() => {
     if (!canSync()) return
-    void pullAndMerge('remote-change')
+    debouncedRemotePull()
   })
   availabilitySub = ICloudBridge.addAvailabilityChangeListener((e) => {
     if (!e.available) {
-      logger.warn('[iCloudSync] iCloud became unavailable')
+      logger.warn(`${tag()} iCloud became unavailable`)
     }
   })
 
@@ -435,6 +816,7 @@ export function installiCloudSync(): () => void {
     appStateSub.remove()
     remoteChangeSub?.remove()
     availabilitySub?.remove()
+    debouncedRemotePull.cancel()
     installed = false
   }
 }

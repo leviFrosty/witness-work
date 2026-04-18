@@ -1,20 +1,54 @@
 import ExpoModulesCore
 import Foundation
 
-/// Bridges iCloud Drive document sync into JS. Writes and reads a single
-/// JSON blob inside the app's ubiquity container using NSFileCoordinator
-/// for crash/contention safety, and exposes remote-change events via
-/// NSMetadataQuery so JS can pull when another device writes.
+/// Bridges iCloud Drive document sync into JS. Uses a **per-device file scheme**
+/// to sidestep iCloud Drive's cross-device write-conflict behavior: each device
+/// owns a file named `witness-work-<deviceId>.json` and only ever writes to
+/// that file. Readers enumerate all files matching `witness-work*.json` and
+/// merge them in JS. Two devices can never write to the same filename, so
+/// iCloud never has a conflict to resolve.
 ///
 /// The ubiquity container identifier is resolved via
 /// `containerURL(forUbiquityContainerIdentifier: nil)` — iOS returns the
 /// first container listed in the app's entitlements, which matches the
 /// bundle variant (dev vs. prod) so no runtime selection is needed here.
 public class ICloudBridgeModule: Module {
-  private static let syncFileName = "witness-work.json"
+  private static let syncFilePrefix = "witness-work"
+  private static let syncFileExtension = "json"
 
   private var metadataQuery: NSMetadataQuery?
-  private var lastObservedModifiedAt: Date?
+  /// Per-filename modification dates this device has observed (from its own
+  /// writes OR reads). Used to distinguish "this file changed remotely" from
+  /// "we just wrote it ourselves" in the metadata query handler.
+  ///
+  /// Accessed from three contexts: the `.utility` queue (write/readAll/
+  /// delete callbacks), the main thread (metadataQueryDidUpdate), and the
+  /// module lifecycle hooks. Swift's `Dictionary` is not thread-safe, so all
+  /// reads and writes must go through `stateQueue.sync` — concurrent bucket
+  /// mutation was crashing the app with an unhandled `CORPSE` in
+  /// ReportCrash. Keep these accessors the only way in.
+  private var lastObservedModifiedAt: [String: Date] = [:]
+  private let stateQueue = DispatchQueue(
+    label: "com.witnesswork.icloud-bridge.state"
+  )
+
+  private func getLastObserved(_ filename: String) -> Date? {
+    return stateQueue.sync { self.lastObservedModifiedAt[filename] }
+  }
+
+  private func setLastObserved(_ filename: String, _ date: Date?) {
+    stateQueue.sync {
+      if let date = date {
+        self.lastObservedModifiedAt[filename] = date
+      } else {
+        self.lastObservedModifiedAt[filename] = nil
+      }
+    }
+  }
+
+  private func clearAllLastObserved() {
+    stateQueue.sync { self.lastObservedModifiedAt.removeAll() }
+  }
 
   public func definition() -> ModuleDefinition {
     Name("ICloudBridge")
@@ -46,111 +80,111 @@ public class ICloudBridgeModule: Module {
         .path
     }
 
-    AsyncFunction("read") { (promise: Promise) in
-      guard let containerURL = FileManager.default.url(forUbiquityContainerIdentifier: nil) else {
+    // Reads every `witness-work*.json` file in the ubiquity Documents dir,
+    // triggering parallel downloads for any that are still placeholders.
+    // Returns one entry per successfully-materialized file. Files still
+    // downloading at the 10s deadline are skipped — they'll be picked up on
+    // the next pull.
+    AsyncFunction("readAll") { (promise: Promise) in
+      guard let documentsURL = self.documentsURL() else {
         promise.reject(ICloudBridgeError.unavailable)
         return
       }
-      let documentsURL = containerURL.appendingPathComponent("Documents", isDirectory: true)
-      let fileURL = documentsURL.appendingPathComponent(ICloudBridgeModule.syncFileName)
 
       DispatchQueue.global(qos: .utility).async {
-        // Step 1: ensure the file is materialized on this device. On the
-        // second device in a sync pair, the ubiquity container surfaces the
-        // file as a `.icloud` placeholder until iOS has downloaded it.
-        // Reading from a placeholder's URL either returns empty or the
-        // placeholder metadata — never the real payload. So trigger a
-        // download and wait for it to reach `.current` before reading.
-        let placeholderURL = documentsURL.appendingPathComponent(".\(ICloudBridgeModule.syncFileName).icloud")
-
-        let fileExists = FileManager.default.fileExists(atPath: fileURL.path)
-        let placeholderExists = FileManager.default.fileExists(atPath: placeholderURL.path)
-
-        if !fileExists && !placeholderExists {
-          // Nothing to read — no remote file yet.
-          promise.resolve(nil)
-          return
-        }
-
-        // Kick off a download if needed. No-op when already current.
         do {
-          try FileManager.default.startDownloadingUbiquitousItem(at: fileURL)
-        } catch {
-          promise.reject(
-            "ICLOUD_DOWNLOAD",
-            "Failed to begin iCloud download: \(error.localizedDescription)"
+          try FileManager.default.createDirectory(
+            at: documentsURL,
+            withIntermediateDirectories: true
           )
-          return
-        }
 
-        // Poll the downloading status until it flips to `.current` or the
-        // timeout elapses. 10s is generous — first-sync of a small JSON is
-        // typically under a second, but backgrounded network or power saving
-        // can stretch it. Bail out with a clear error rather than silently
-        // reading stale bytes.
-        let pollDeadline = Date().addingTimeInterval(10.0)
-        var downloadComplete = false
-        while Date() < pollDeadline {
-          let values = try? fileURL.resourceValues(forKeys: [.ubiquitousItemDownloadingStatusKey])
-          if values?.ubiquitousItemDownloadingStatus == .current {
-            downloadComplete = true
-            break
-          }
-          Thread.sleep(forTimeInterval: 0.2)
-        }
-
-        if !downloadComplete {
-          promise.reject(
-            "ICLOUD_DOWNLOAD_TIMEOUT",
-            "iCloud file is still downloading after 10s. The sync file exists remotely but hasn't fully landed on this device yet — try again in a moment."
-          )
-          return
-        }
-
-        // Step 2: coordinated read of the (now-materialized) file.
-        let coordinator = NSFileCoordinator(filePresenter: nil)
-        var coordinatorError: NSError?
-        var result: ReadResult = .notFound
-
-        coordinator.coordinate(readingItemAt: fileURL, options: [], error: &coordinatorError) { readURL in
-          guard FileManager.default.fileExists(atPath: readURL.path) else {
-            result = .notFound
+          let urls = try self.listSyncFiles(in: documentsURL)
+          if urls.isEmpty {
+            promise.resolve([])
             return
           }
-          do {
-            let data = try Data(contentsOf: readURL)
-            let values = try readURL.resourceValues(forKeys: [.contentModificationDateKey])
-            let modifiedAt = values.contentModificationDate ?? Date()
-            let json = String(data: data, encoding: .utf8) ?? ""
-            result = .ok(json: json, modifiedAt: modifiedAt)
-          } catch {
-            result = .error(message: "Failed to read iCloud file: \(error.localizedDescription)")
+
+          // Kick off downloads for all files concurrently. On the second
+          // device in a sync pair, files surface as `.icloud` placeholders
+          // until iOS has downloaded them; reading without this first would
+          // return empty.
+          for url in urls {
+            try? FileManager.default.startDownloadingUbiquitousItem(at: url)
           }
-        }
 
-        if let err = coordinatorError {
-          promise.reject("ICLOUD_COORDINATE", "Coordinator error: \(err.localizedDescription)")
-          return
-        }
+          // Poll all files in parallel until each becomes `.current` or the
+          // deadline elapses.
+          let deadline = Date().addingTimeInterval(10.0)
+          var remaining = Set(urls.map { $0.path })
+          while Date() < deadline && !remaining.isEmpty {
+            for url in urls where remaining.contains(url.path) {
+              let values = try? url.resourceValues(forKeys: [
+                .ubiquitousItemDownloadingStatusKey,
+              ])
+              if values?.ubiquitousItemDownloadingStatus == .current {
+                remaining.remove(url.path)
+              }
+            }
+            if !remaining.isEmpty {
+              Thread.sleep(forTimeInterval: 0.2)
+            }
+          }
 
-        switch result {
-        case .notFound:
-          promise.resolve(nil)
-        case .ok(let json, let modifiedAt):
-          self.lastObservedModifiedAt = modifiedAt
-          promise.resolve([
-            "json": json,
-            "modifiedAt": modifiedAt.timeIntervalSince1970 * 1000,
-          ])
-        case .error(let message):
-          promise.reject("ICLOUD_READ", message)
+          // Coordinated read of every file that finished downloading.
+          var results: [[String: Any]] = []
+          let coordinator = NSFileCoordinator(filePresenter: nil)
+          for url in urls {
+            if remaining.contains(url.path) {
+              // Still downloading — skip. The metadata query will fire when
+              // it lands and the next pull will read it.
+              continue
+            }
+            var payload: (json: String, modifiedAt: Date)?
+            var coordinatorError: NSError?
+            coordinator.coordinate(
+              readingItemAt: url,
+              options: [],
+              error: &coordinatorError
+            ) { readURL in
+              guard FileManager.default.fileExists(atPath: readURL.path) else {
+                return
+              }
+              guard let data = try? Data(contentsOf: readURL) else { return }
+              let values = try? readURL.resourceValues(forKeys: [
+                .contentModificationDateKey,
+              ])
+              let modifiedAt = values?.contentModificationDate ?? Date()
+              let json = String(data: data, encoding: .utf8) ?? ""
+              payload = (json, modifiedAt)
+            }
+            if let (json, modifiedAt) = payload {
+              let filename = url.lastPathComponent
+              self.setLastObserved(filename, modifiedAt)
+              results.append([
+                "filename": filename,
+                "json": json,
+                "modifiedAt": modifiedAt.timeIntervalSince1970 * 1000,
+              ])
+            }
+          }
+
+          promise.resolve(results)
+        } catch {
+          promise.reject(
+            "ICLOUD_READ_ALL",
+            "Failed to enumerate iCloud files: \(error.localizedDescription)"
+          )
         }
       }
     }
 
-    AsyncFunction("write") { (json: String, promise: Promise) in
-      guard let url = self.syncFileURL() else {
+    AsyncFunction("write") { (filename: String, json: String, promise: Promise) in
+      guard let documentsURL = self.documentsURL() else {
         promise.reject(ICloudBridgeError.unavailable)
+        return
+      }
+      guard self.isValidSyncFilename(filename) else {
+        promise.reject("ICLOUD_FILENAME", "Refusing to write outside sync namespace: \(filename)")
         return
       }
       guard let data = json.data(using: .utf8) else {
@@ -158,12 +192,11 @@ public class ICloudBridgeModule: Module {
         return
       }
 
+      let fileURL = documentsURL.appendingPathComponent(filename)
+
       DispatchQueue.global(qos: .utility).async {
-        // Ensure the Documents directory inside the ubiquity container
-        // exists — iOS does not pre-create it.
-        let parent = url.deletingLastPathComponent()
         try? FileManager.default.createDirectory(
-          at: parent,
+          at: documentsURL,
           withIntermediateDirectories: true
         )
 
@@ -172,13 +205,15 @@ public class ICloudBridgeModule: Module {
         var writeResult: Result<Date, Error> = .failure(ICloudBridgeError.unavailable)
 
         coordinator.coordinate(
-          writingItemAt: url,
+          writingItemAt: fileURL,
           options: .forReplacing,
           error: &coordinatorError
         ) { writeURL in
           do {
             try data.write(to: writeURL, options: .atomic)
-            let values = try writeURL.resourceValues(forKeys: [.contentModificationDateKey])
+            let values = try writeURL.resourceValues(forKeys: [
+              .contentModificationDateKey,
+            ])
             writeResult = .success(values.contentModificationDate ?? Date())
           } catch {
             writeResult = .failure(error)
@@ -192,7 +227,7 @@ public class ICloudBridgeModule: Module {
 
         switch writeResult {
         case .success(let modifiedAt):
-          self.lastObservedModifiedAt = modifiedAt
+          self.setLastObserved(filename, modifiedAt)
           promise.resolve(modifiedAt.timeIntervalSince1970 * 1000)
         case .failure(let error):
           promise.reject("ICLOUD_WRITE", "Failed to write iCloud file: \(error.localizedDescription)")
@@ -200,11 +235,16 @@ public class ICloudBridgeModule: Module {
       }
     }
 
-    AsyncFunction("deleteFile") { (promise: Promise) in
-      guard let url = self.syncFileURL() else {
+    AsyncFunction("deleteFile") { (filename: String, promise: Promise) in
+      guard let documentsURL = self.documentsURL() else {
         promise.reject(ICloudBridgeError.unavailable)
         return
       }
+      guard self.isValidSyncFilename(filename) else {
+        promise.reject("ICLOUD_FILENAME", "Refusing to delete outside sync namespace: \(filename)")
+        return
+      }
+      let fileURL = documentsURL.appendingPathComponent(filename)
 
       DispatchQueue.global(qos: .utility).async {
         let coordinator = NSFileCoordinator(filePresenter: nil)
@@ -212,7 +252,7 @@ public class ICloudBridgeModule: Module {
         var deleteError: Error?
 
         coordinator.coordinate(
-          writingItemAt: url,
+          writingItemAt: fileURL,
           options: .forDeleting,
           error: &coordinatorError
         ) { writeURL in
@@ -233,21 +273,96 @@ public class ICloudBridgeModule: Module {
           promise.reject("ICLOUD_DELETE", "Failed to delete iCloud file: \(err.localizedDescription)")
           return
         }
-        self.lastObservedModifiedAt = nil
+        self.setLastObserved(filename, nil)
         promise.resolve(nil)
+      }
+    }
+
+    // Wipes every `witness-work*.json` in the container. Used by the Settings
+    // "overwrite remote with this device's data" flow to guarantee the next
+    // push isn't shadowed by leftover files from other devices.
+    AsyncFunction("deleteAll") { (promise: Promise) in
+      guard let documentsURL = self.documentsURL() else {
+        promise.reject(ICloudBridgeError.unavailable)
+        return
+      }
+
+      DispatchQueue.global(qos: .utility).async {
+        do {
+          let urls = try self.listSyncFiles(in: documentsURL)
+          let coordinator = NSFileCoordinator(filePresenter: nil)
+          var firstError: Error?
+          for url in urls {
+            var coordinatorError: NSError?
+            coordinator.coordinate(
+              writingItemAt: url,
+              options: .forDeleting,
+              error: &coordinatorError
+            ) { writeURL in
+              do {
+                if FileManager.default.fileExists(atPath: writeURL.path) {
+                  try FileManager.default.removeItem(at: writeURL)
+                }
+              } catch {
+                if firstError == nil { firstError = error }
+              }
+            }
+            if let err = coordinatorError, firstError == nil {
+              firstError = err
+            }
+          }
+          self.clearAllLastObserved()
+          if let err = firstError {
+            promise.reject(
+              "ICLOUD_DELETE_ALL",
+              "Failed to delete one or more files: \(err.localizedDescription)"
+            )
+            return
+          }
+          promise.resolve(nil)
+        } catch {
+          promise.reject(
+            "ICLOUD_DELETE_ALL",
+            "Failed to enumerate sync files: \(error.localizedDescription)"
+          )
+        }
       }
     }
   }
 
   // MARK: - File location
 
-  private func syncFileURL() -> URL? {
+  private func documentsURL() -> URL? {
     guard let container = FileManager.default.url(forUbiquityContainerIdentifier: nil) else {
       return nil
     }
-    return container
-      .appendingPathComponent("Documents", isDirectory: true)
-      .appendingPathComponent(ICloudBridgeModule.syncFileName)
+    return container.appendingPathComponent("Documents", isDirectory: true)
+  }
+
+  private func listSyncFiles(in documentsURL: URL) throws -> [URL] {
+    if !FileManager.default.fileExists(atPath: documentsURL.path) {
+      return []
+    }
+    let contents = try FileManager.default.contentsOfDirectory(
+      at: documentsURL,
+      includingPropertiesForKeys: [
+        .contentModificationDateKey,
+        .ubiquitousItemDownloadingStatusKey,
+      ],
+      options: []
+    )
+    return contents.filter { self.isValidSyncFilename($0.lastPathComponent) }
+  }
+
+  /// Matches both the new per-device scheme (`witness-work-<id>.json`) and any
+  /// legacy single-file / conflict-duplicate names (`witness-work.json`,
+  /// `witness-work 2.json`, …) so the reader can absorb pre-upgrade data.
+  /// Rejects path separators and relative components defensively.
+  private func isValidSyncFilename(_ name: String) -> Bool {
+    guard name.hasPrefix(ICloudBridgeModule.syncFilePrefix) else { return false }
+    guard name.hasSuffix(".\(ICloudBridgeModule.syncFileExtension)") else { return false }
+    if name.contains("/") || name.contains("..") { return false }
+    return true
   }
 
   // MARK: - Remote change observation
@@ -257,9 +372,9 @@ public class ICloudBridgeModule: Module {
     let query = NSMetadataQuery()
     query.searchScopes = [NSMetadataQueryUbiquitousDocumentsScope]
     query.predicate = NSPredicate(
-      format: "%K == %@",
+      format: "%K LIKE %@",
       NSMetadataItemFSNameKey,
-      ICloudBridgeModule.syncFileName
+      "\(ICloudBridgeModule.syncFilePrefix)*.\(ICloudBridgeModule.syncFileExtension)"
     )
 
     NotificationCenter.default.addObserver(
@@ -296,22 +411,27 @@ public class ICloudBridgeModule: Module {
     query.disableUpdates()
     defer { query.enableUpdates() }
 
+    var sawNewerRemote = false
     var newestModifiedAt: Date?
     for i in 0..<query.resultCount {
       guard let item = query.result(at: i) as? NSMetadataItem else { continue }
-      if let date = item.value(forAttribute: NSMetadataItemFSContentChangeDateKey) as? Date {
-        if newestModifiedAt == nil || date > newestModifiedAt! {
-          newestModifiedAt = date
-        }
+      guard let filename = item.value(forAttribute: NSMetadataItemFSNameKey) as? String else {
+        continue
+      }
+      guard let date = item.value(forAttribute: NSMetadataItemFSContentChangeDateKey) as? Date else {
+        continue
+      }
+
+      let lastKnown = self.getLastObserved(filename)
+      if lastKnown == nil || date > lastKnown! {
+        sawNewerRemote = true
+      }
+      if newestModifiedAt == nil || date > newestModifiedAt! {
+        newestModifiedAt = date
       }
     }
 
-    // Only emit when the remote-side modification is strictly newer than the
-    // most recent write/read we observed locally, so our own writes don't
-    // bounce back as remote-change events.
-    if let remote = newestModifiedAt,
-       self.lastObservedModifiedAt == nil || remote > self.lastObservedModifiedAt! {
-      self.lastObservedModifiedAt = remote
+    if sawNewerRemote, let remote = newestModifiedAt {
       self.sendEvent("onRemoteChange", [
         "modifiedAt": remote.timeIntervalSince1970 * 1000,
       ])
@@ -323,12 +443,6 @@ public class ICloudBridgeModule: Module {
       "available": FileManager.default.ubiquityIdentityToken != nil,
     ])
   }
-}
-
-private enum ReadResult {
-  case notFound
-  case ok(json: String, modifiedAt: Date)
-  case error(message: String)
 }
 
 enum ICloudBridgeError: Error, CustomStringConvertible {

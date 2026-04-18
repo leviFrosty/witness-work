@@ -31,6 +31,7 @@ import BackupReminder from '../components/BackupReminder'
 import { TimerSection } from '../components/TimerSection'
 import UpgradeLegacyTimeReportsSheet from '../components/UpgradeLegacyTimeReportsSheet'
 import ProfileCard from '../components/ProfileCard'
+import HomeChecklist from '../components/onboarding/HomeChecklist'
 import { HomeTabStackNavigation } from '../types/homeStack'
 import { RootStackNavigation } from '../types/rootStack'
 
@@ -170,6 +171,7 @@ export const HomeScreen = () => {
               />
             )}
           {shouldRemindToBackup && <BackupReminder />}
+          <HomeChecklist />
           {isTablet &&
             hasAnnualGoal &&
             homeScreenElements.tabletServiceYearSummary && (

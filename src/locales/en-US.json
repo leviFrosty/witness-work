@@ -1176,5 +1176,16 @@
   "iCloudRestoreFoundSummary": "From {{device}}, last updated {{relative}}.",
   "iCloudRestoreAction": "Restore from iCloud",
   "iCloudRestoreRestoring": "Restoring…",
-  "iCloudRestoreSkip": "Skip and set up fresh"
+  "iCloudRestoreSkip": "Skip and set up fresh",
+  "homeChecklistHeader": "Get started",
+  "homeChecklistFooter": "Nice work!",
+  "homeChecklistDismiss": "Hide",
+  "homeChecklistLogFirstMinute": "Log your first minute of service",
+  "homeChecklistAddFirstContact": "Add your first return visit",
+  "homeChecklistSetMonthlyGoal": "Set your monthly goal",
+  "homeChecklistTryTheMap": "Try the map",
+  "homeChecklistTrackTime": "Track your time",
+  "homeChecklistReturnVisits": "Manage return visits",
+  "homeChecklistPlanWeek": "Plan your week",
+  "homeChecklistMapContacts": "Map your contacts"
 }

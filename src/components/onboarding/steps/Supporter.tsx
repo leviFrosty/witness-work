@@ -9,14 +9,54 @@ import ActionButton from '../../ActionButton'
 import SupporterBadge from '../../SupporterBadge'
 import SupporterBenefits from '../../SupporterBenefits'
 import useTheme from '../../../contexts/theme'
+import { usePreferences } from '../../../stores/preferences'
+import { Publisher } from '../../../types/publisher'
 
 interface Props {
   goBack: () => void
   goNext: () => void
 }
 
+const personalizationKeyByPublisher: Record<
+  Publisher,
+  | 'supporterOnboardingPersonalPublisher'
+  | 'supporterOnboardingPersonalRegularAuxiliary'
+  | 'supporterOnboardingPersonalRegularPioneer'
+  | 'supporterOnboardingPersonalCircuitOverseer'
+  | 'supporterOnboardingPersonalSpecialPioneer'
+  | 'supporterOnboardingPersonalCustom'
+> = {
+  publisher: 'supporterOnboardingPersonalPublisher',
+  regularAuxiliary: 'supporterOnboardingPersonalRegularAuxiliary',
+  regularPioneer: 'supporterOnboardingPersonalRegularPioneer',
+  circuitOverseer: 'supporterOnboardingPersonalCircuitOverseer',
+  specialPioneer: 'supporterOnboardingPersonalSpecialPioneer',
+  custom: 'supporterOnboardingPersonalCustom',
+}
+
 const Supporter = ({ goBack, goNext }: Props) => {
   const theme = useTheme()
+  const prefs = usePreferences()
+  const { publisher } = prefs
+
+  // Read `onboardingIntents` defensively — the field is being added by a
+  // sibling worktree and may not exist in the preferences store yet. Typing
+  // through `unknown` avoids coupling this component to the prefs shape.
+  const intents =
+    (prefs as unknown as { onboardingIntents?: string[] }).onboardingIntents ??
+    []
+
+  const personalizationKey = publisher
+    ? personalizationKeyByPublisher[publisher]
+    : undefined
+
+  const intentCount = intents.length
+  const intentsLine =
+    intentCount === 0
+      ? null
+      : intentCount === 1
+        ? i18n.t('supporterOnboardingIntentsLineOne')
+        : i18n.t('supporterOnboardingIntentsLine', { count: intentCount })
 
   return (
     <Wrapper
@@ -40,21 +80,83 @@ const Supporter = ({ goBack, goNext }: Props) => {
         <View style={[styles.stepContentContainer, { marginRight: 0 }]}>
           <SupporterBadge
             size='md'
-            style={{ alignSelf: 'flex-start', marginBottom: 24 }}
+            style={{ alignSelf: 'flex-start', marginBottom: 16 }}
           />
-          <Text style={[styles.stepTitle, { marginTop: 14 }]}>
+
+          {/* From-the-maker lead-in: volunteer framing + free-forever reassurance. */}
+          <Text
+            style={{
+              fontSize: 14,
+              color: theme.colors.textAlt,
+              lineHeight: 20,
+              marginBottom: 12,
+            }}
+          >
+            {i18n.t('supporterOnboardingLeadIn')}
+          </Text>
+          <View
+            style={{
+              alignSelf: 'flex-start',
+              backgroundColor: theme.colors.supporterTranslucent,
+              borderWidth: 1,
+              borderColor: theme.colors.supporter,
+              borderRadius: theme.numbers.borderRadiusSm,
+              paddingHorizontal: 10,
+              paddingVertical: 4,
+              marginBottom: 20,
+            }}
+          >
+            <Text
+              style={{
+                fontSize: 12,
+                color: theme.colors.supporter,
+                fontFamily: theme.fonts.semiBold,
+              }}
+            >
+              {i18n.t('supporterOnboardingFreeForever')}
+            </Text>
+          </View>
+
+          <Text style={[styles.stepTitle, { marginTop: 6 }]}>
             {i18n.t('supporterOnboardingTitle')}
           </Text>
           <Text
             style={{
               fontSize: 14,
               color: theme.colors.textAlt,
-              marginBottom: 24,
+              marginBottom: 16,
               lineHeight: 20,
             }}
           >
             {i18n.t('supporterOnboardingDesc')}
           </Text>
+
+          {/* Personalized lines — only render when we actually have data. */}
+          {personalizationKey ? (
+            <Text
+              style={{
+                fontSize: 14,
+                color: theme.colors.text,
+                lineHeight: 20,
+                marginBottom: intentsLine ? 6 : 20,
+              }}
+            >
+              {i18n.t(personalizationKey)}
+            </Text>
+          ) : null}
+          {intentsLine ? (
+            <Text
+              style={{
+                fontSize: 13,
+                color: theme.colors.textAlt,
+                lineHeight: 18,
+                marginBottom: 20,
+              }}
+            >
+              {intentsLine}
+            </Text>
+          ) : null}
+
           <SupporterBenefits />
         </View>
       </KeyboardAwareScrollView>

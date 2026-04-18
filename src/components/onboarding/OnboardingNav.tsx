@@ -6,19 +6,20 @@ import IconButton from '../IconButton'
 import { faChevronLeft } from '@fortawesome/free-solid-svg-icons'
 import Button from '../Button'
 import useTheme from '../../contexts/theme'
+import { useOnboardingProgress } from './OnboardingProgressContext'
 
 interface Props {
   noActions?: boolean
   goBack: () => void
   /**
-   * 1-based index of the current step within the visible onboarding flow.
-   * Must be paired with `totalSteps` to render the progress indicator.
+   * 1-based index of the current step within the visible onboarding flow. Must
+   * be paired with `totalSteps` to render the progress indicator.
    */
   currentStep?: number
   /**
-   * Total number of steps the caller wants to represent in the indicator.
-   * The nav makes no assumptions about the hero / founder screens — whatever
-   * the caller passes is what gets drawn.
+   * Total number of steps the caller wants to represent in the indicator. The
+   * nav makes no assumptions about the hero / founder screens — whatever the
+   * caller passes is what gets drawn.
    */
   totalSteps?: number
 }
@@ -30,18 +31,22 @@ const OnboardingNav = ({
   totalSteps,
 }: Props) => {
   const theme = useTheme()
+  const progressCtx = useOnboardingProgress()
+
+  const resolvedCurrent = currentStep ?? progressCtx.currentStep
+  const resolvedTotal = totalSteps ?? progressCtx.totalSteps
 
   const showProgress =
-    typeof currentStep === 'number' &&
-    typeof totalSteps === 'number' &&
-    totalSteps > 0
+    typeof resolvedCurrent === 'number' &&
+    typeof resolvedTotal === 'number' &&
+    resolvedTotal > 0
 
   // Clamp to [1, totalSteps] so a caller passing a stale index can't break the
   // fill math.
   const clampedStep = showProgress
-    ? Math.max(1, Math.min(currentStep as number, totalSteps as number))
+    ? Math.max(1, Math.min(resolvedCurrent as number, resolvedTotal as number))
     : 0
-  const progress = showProgress ? clampedStep / (totalSteps as number) : 0
+  const progress = showProgress ? clampedStep / (resolvedTotal as number) : 0
 
   return (
     <View style={styles.navContainer}>
@@ -65,7 +70,7 @@ const OnboardingNav = ({
             accessibilityRole='progressbar'
             accessibilityValue={{
               min: 0,
-              max: totalSteps,
+              max: resolvedTotal,
               now: clampedStep,
             }}
           >

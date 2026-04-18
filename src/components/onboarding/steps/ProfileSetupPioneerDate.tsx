@@ -73,7 +73,6 @@ const ProfileSetupPioneerDate = ({ goBack, goNext }: Props) => {
               }}
               maximumDate={new Date()}
               iOSMode='date'
-              androidFirstPickerMode='date'
             />
           </View>
         </View>

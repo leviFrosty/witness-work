@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react'
-import { Platform, View } from 'react-native'
+import { useEffect, useRef, useState } from 'react'
+import { Animated, Easing, Platform, View } from 'react-native'
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
 import {
   faCheckCircle,
@@ -48,6 +48,10 @@ const ICloudRestore = ({ goBack, goNext }: Props) => {
   const [probe, setProbe] = useState<Probe>({ state: 'probing' })
   const [restoring, setRestoring] = useState(false)
 
+  // Breathing animation for the cloud icon while probing. Runs only while
+  // `probe.state === 'probing'` and stops cleanly when the state resolves.
+  const pulse = useRef(new Animated.Value(0)).current
+
   useEffect(() => {
     let cancelled = false
     const run = async () => {
@@ -68,6 +72,34 @@ const ICloudRestore = ({ goBack, goNext }: Props) => {
       cancelled = true
     }
   }, [])
+
+  useEffect(() => {
+    if (probe.state !== 'probing') {
+      pulse.stopAnimation()
+      pulse.setValue(0)
+      return
+    }
+    const loop = Animated.loop(
+      Animated.sequence([
+        Animated.timing(pulse, {
+          toValue: 1,
+          duration: 1100,
+          easing: Easing.inOut(Easing.ease),
+          useNativeDriver: true,
+        }),
+        Animated.timing(pulse, {
+          toValue: 0,
+          duration: 1100,
+          easing: Easing.inOut(Easing.ease),
+          useNativeDriver: true,
+        }),
+      ])
+    )
+    loop.start()
+    return () => {
+      loop.stop()
+    }
+  }, [probe.state, pulse])
 
   const handleRestore = async () => {
     if (probe.state !== 'found') return
@@ -106,20 +138,72 @@ const ICloudRestore = ({ goBack, goNext }: Props) => {
       <View style={{ flex: 1, paddingTop: 30 }}>
         <View
           style={{
-            alignItems: 'center',
-            justifyContent: 'center',
             width: 64,
             height: 64,
-            borderRadius: 32,
-            backgroundColor: theme.colors.accentTranslucent,
             marginBottom: 20,
+            alignItems: 'center',
+            justifyContent: 'center',
           }}
         >
-          <FontAwesomeIcon
-            icon={faCloud}
-            size={28}
-            color={theme.colors.accent}
-          />
+          {/* Breathing ring — only visible while probing. */}
+          {probe.state === 'probing' && (
+            <Animated.View
+              pointerEvents='none'
+              style={{
+                position: 'absolute',
+                width: 64,
+                height: 64,
+                borderRadius: 32,
+                backgroundColor: theme.colors.accentTranslucent,
+                opacity: pulse.interpolate({
+                  inputRange: [0, 1],
+                  outputRange: [0.45, 0],
+                }),
+                transform: [
+                  {
+                    scale: pulse.interpolate({
+                      inputRange: [0, 1],
+                      outputRange: [1, 1.35],
+                    }),
+                  },
+                ],
+              }}
+            />
+          )}
+          <Animated.View
+            style={{
+              alignItems: 'center',
+              justifyContent: 'center',
+              width: 64,
+              height: 64,
+              borderRadius: 32,
+              backgroundColor: theme.colors.accentTranslucent,
+              opacity:
+                probe.state === 'probing'
+                  ? pulse.interpolate({
+                      inputRange: [0, 1],
+                      outputRange: [0.8, 1],
+                    })
+                  : 1,
+              transform: [
+                {
+                  scale:
+                    probe.state === 'probing'
+                      ? pulse.interpolate({
+                          inputRange: [0, 1],
+                          outputRange: [0.94, 1],
+                        })
+                      : 1,
+                },
+              ],
+            }}
+          >
+            <FontAwesomeIcon
+              icon={faCloud}
+              size={28}
+              color={theme.colors.accent}
+            />
+          </Animated.View>
         </View>
         <Text style={styles.stepTitle}>{i18n.t('iCloudRestoreTitle')}</Text>
         <Text

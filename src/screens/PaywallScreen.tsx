@@ -8,6 +8,7 @@ import Button from '../components/Button'
 import Wrapper from '../components/layout/Wrapper'
 import { Spinner } from 'tamagui'
 import Purchases, {
+  PURCHASES_ERROR_CODE,
   PurchasesError,
   PurchasesOffering,
   PurchasesOfferings,
@@ -21,6 +22,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import useCustomer from '../hooks/useCustomer'
 import { useNavigation } from '@react-navigation/native'
 import { RootStackNavigation } from '../types/rootStack'
+import { logger } from '../lib/logger'
 
 interface OfferButtonProps {
   offering: PurchasesOffering
@@ -66,7 +68,7 @@ const PaywallScreen = () => {
     useState<PurchasesOffering | null>(null)
   const [currentOfferings, setCurrentOfferings] =
     useState<PurchasesOfferings | null>(null)
-  const { revalidate } = useCustomer()
+  const { revalidate, ready } = useCustomer()
   const [oneTimePurchaseMethod, setOneTimePurchaseMethod] = useState(false)
   const navigation = useNavigation<RootStackNavigation>()
 
@@ -98,29 +100,47 @@ const PaywallScreen = () => {
       )
   }, [currentOfferings])
 
-  // Fetches latest offerings & gets existing customer info from RevenueCat
+  // Fetches latest offerings from RevenueCat. Must wait until
+  // `Purchases.configure` has run in CustomerProvider, otherwise the native
+  // SDK throws "Purchases has not been configured" and the user sees
+  // "Error Fetching Offerings" on first launch.
   const hasFetchedOfferings = useRef(false)
 
   useEffect(() => {
-    const getOfferings = async () => {
-      const offerings = await Purchases.getOfferings()
-      setCurrentOfferings(offerings)
+    logger.log('[Paywall] effect fired', {
+      ready,
+      alreadyFetched: hasFetchedOfferings.current,
+    })
+    if (!ready || hasFetchedOfferings.current) return
+    hasFetchedOfferings.current = true
 
-      setSelectedOffering(offerings.current)
-
-      if (offerings.current?.monthly) {
-        setOneTimePurchaseMethod(false)
-      }
-    }
-
-    if (!hasFetchedOfferings.current) {
-      hasFetchedOfferings.current = true
-      getOfferings().catch((error) => {
+    logger.log('[Paywall] calling Purchases.getOfferings')
+    Purchases.getOfferings()
+      .then((offerings) => {
+        logger.log('[Paywall] getOfferings success', {
+          currentIdentifier: offerings.current?.identifier ?? null,
+          allCount: Object.keys(offerings.all).length,
+          allIdentifiers: Object.keys(offerings.all),
+        })
+        setCurrentOfferings(offerings)
+        setSelectedOffering(offerings.current)
+        if (offerings.current?.monthly) {
+          setOneTimePurchaseMethod(false)
+        }
+      })
+      .catch((error: PurchasesError) => {
+        logger.error('[Paywall] getOfferings failed', {
+          code: error?.code,
+          message: error?.message,
+          underlying: error?.underlyingErrorMessage,
+          userInfo: error?.userInfo,
+          raw: error,
+        })
+        hasFetchedOfferings.current = false
         Alert.alert(i18n.t('errorFetchingOfferings'), i18n.t('tryAgainLater'))
         Sentry.captureException(error)
       })
-    }
-  }, [])
+  }, [ready])
 
   const handlePurchase = useCallback(async () => {
     if (!selectedOffering) {
@@ -136,9 +156,10 @@ const PaywallScreen = () => {
         navigation.replace('Thank You')
       }
     } catch (error: unknown) {
-      if (!(error as PurchasesError).userCancelled) {
+      const code = (error as PurchasesError).code
+      const cancelled = code === PURCHASES_ERROR_CODE.PURCHASE_CANCELLED_ERROR
+      if (!cancelled) {
         Alert.alert(i18n.t('error'), i18n.t('errorCheckingOut'))
-      } else {
         Sentry.captureException(error)
       }
     }

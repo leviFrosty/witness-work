@@ -3,6 +3,8 @@ import useConversations from '../../stores/conversationStore'
 import useServiceReport from '../../stores/serviceReport'
 import { usePreferences } from '../../stores/preferences'
 import { NON_SYNCABLE_PREFERENCE_KEYS } from '../../stores/preferences'
+import { Contact } from '../../types/contact'
+import { ProfileAvatar } from '../../stores/preferences'
 
 /**
  * Bumped whenever the payload shape changes in a breaking way. Consumers reject
@@ -45,6 +47,31 @@ export type SyncPayload = {
 }
 
 /**
+ * Strips `avatar` from a contact when it holds a user-uploaded image. The
+ * `value` field is a per-device `file://` URI inside
+ * `FileSystem.documentDirectory`, which would be a dead path on any other
+ * device. Emoji + `none` avatars are safe to sync as-is.
+ *
+ * Phase 1 is unconditional; Phase 2 (see docs/icloud-image-sync-plan.md) will
+ * gate this on the `iCloudSyncIncludeImages` preference once the binary sync
+ * bridge lands.
+ */
+function stripImageAvatar(contact: Contact): Contact {
+  if (contact.avatar?.type !== 'image') return contact
+  const rest: Contact = { ...contact }
+  delete rest.avatar
+  return rest
+}
+
+/** Same rule as `stripImageAvatar`, applied to the profile-avatar preference. */
+function stripImageProfileAvatar(
+  avatar: ProfileAvatar | undefined
+): ProfileAvatar | undefined {
+  if (avatar?.type === 'image') return { type: 'none', value: '' }
+  return avatar
+}
+
+/**
  * Builds the iCloud payload by snapshotting each zustand store. Intentionally
  * reads state synchronously so the caller (sync layer) can diff and push
  * without waiting on React.
@@ -66,6 +93,10 @@ export function buildPayload(args: {
   for (const [key, value] of Object.entries(prefs)) {
     if (typeof value === 'function') continue
     if (NON_SYNCABLE_PREFERENCE_KEYS.has(key)) continue
+    if (key === 'avatar') {
+      syncablePrefs[key] = stripImageProfileAvatar(value as ProfileAvatar)
+      continue
+    }
     syncablePrefs[key] = value
   }
 
@@ -75,8 +106,8 @@ export function buildPayload(args: {
     deviceId,
     deviceName,
     contactStore: {
-      contacts: contacts.contacts,
-      deletedContacts: contacts.deletedContacts,
+      contacts: contacts.contacts.map(stripImageAvatar),
+      deletedContacts: contacts.deletedContacts.map(stripImageAvatar),
     },
     conversationStore: {
       conversations: conversations.conversations,

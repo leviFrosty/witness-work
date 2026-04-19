@@ -1,3 +1,5 @@
+import { ProfileAvatar } from '../stores/preferences'
+
 export type Address = {
   line1?: string
   line2?: string
@@ -68,4 +70,12 @@ export type Contact = {
    * order.
    */
   isFavorite?: boolean
+
+  /**
+   * Per-contact avatar — emoji or local image URI. Same shape as the user's
+   * profile avatar so it renders through the shared `Avatar` component. Image
+   * files live in `FileSystem.documentDirectory` under a per-contact filename
+   * and never leave the device.
+   */
+  avatar?: ProfileAvatar
 }

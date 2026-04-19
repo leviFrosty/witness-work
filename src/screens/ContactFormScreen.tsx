@@ -11,19 +11,19 @@ import Header from '../components/layout/Header'
 import i18n from '../lib/locales'
 import Wrapper from '../components/layout/Wrapper'
 import * as Localization from 'expo-localization'
-import IconButton from '../components/IconButton'
 import { fetchCoordinateFromAddress } from '../lib/address'
 import Loader from '../components/Loader'
 import _ from 'lodash'
 import Button from '../components/Button'
 import { usePreferences } from '../stores/preferences'
-import { faIdCard } from '@fortawesome/free-regular-svg-icons'
 import moment from 'moment'
 
 import PersonalContactSection from '../components/PersonalContactSection'
 import AddressSection from '../components/AddressSection'
 import { RootStackParamList } from '../types/rootStack'
 import { Errors } from '../types/textInput'
+import AvatarPickerPopover from '../components/AvatarPickerPopover'
+import { ProfileAvatar } from '../stores/preferences'
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Contact Form'>
 
@@ -412,33 +412,89 @@ const ContactFormScreen = ({ route, navigation }: Props) => {
       style={{ backgroundColor: theme.colors.background, position: 'relative' }}
       contentContainerStyle={{ paddingBottom: 100 }}
     >
-      <Wrapper insets='none' style={{ gap: 30, marginTop: 20 }}>
-        <View style={{ padding: 25, gap: 5 }}>
-          <View style={{ flexDirection: 'row', gap: 10, alignItems: 'center' }}>
-            <IconButton
-              icon={faIdCard}
-              iconStyle={{ color: theme.colors.text }}
-              size={20}
-            />
-            <Text style={{ fontSize: 32, fontFamily: theme.fonts.bold }}>
-              {editMode ? i18n.t('edit') : i18n.t('add')} {i18n.t('contact')}
-            </Text>
-          </View>
-          <Text style={{ color: theme.colors.textAlt, fontSize: 12 }}>
-            {i18n.t('enterContactInformation')}
+      <Wrapper insets='none' style={{ gap: 24, marginTop: 8 }}>
+        <View
+          style={{
+            alignItems: 'center',
+            paddingTop: 20,
+            paddingBottom: 24,
+            paddingHorizontal: 28,
+            gap: 18,
+          }}
+        >
+          <Text
+            style={{
+              fontSize: 11,
+              color: theme.colors.textAlt,
+              letterSpacing: 1.4,
+              fontFamily: theme.fonts.semiBold,
+              textTransform: 'uppercase',
+            }}
+          >
+            {editMode ? i18n.t('edit') : i18n.t('add')} {i18n.t('contact')}
           </Text>
+          <AvatarPickerPopover
+            value={contact.avatar ?? { type: 'none', value: '' }}
+            onChange={(next: ProfileAvatar) =>
+              setContact({ ...contact, avatar: next })
+            }
+            name={contact.name}
+            size={104}
+            imageFileName={`contact-${contact.id}-avatar.jpg`}
+          />
+          <View style={{ alignItems: 'center', gap: 6, width: '100%' }}>
+            <TextInput
+              ref={nameInput}
+              value={contact.name}
+              onChangeText={(val) => {
+                setName(val)
+                if (errors.name) setErrors({ ...errors, name: '' })
+              }}
+              placeholder={i18n.t('name_placeholder')}
+              placeholderTextColor={theme.colors.textAlt}
+              autoCapitalize='words'
+              autoCorrect={false}
+              returnKeyType='next'
+              style={{
+                fontSize: 26,
+                fontFamily: theme.fonts.bold,
+                color: theme.colors.text,
+                textAlign: 'center',
+                width: '100%',
+                paddingVertical: 4,
+              }}
+            />
+            {errors.name ? (
+              <Text
+                style={{
+                  fontSize: 12,
+                  color: theme.colors.error,
+                  fontFamily: theme.fonts.semiBold,
+                  textAlign: 'center',
+                }}
+              >
+                {errors.name}
+              </Text>
+            ) : (
+              <Text
+                style={{
+                  fontSize: 12,
+                  color: theme.colors.textAlt,
+                  textAlign: 'center',
+                }}
+              >
+                {i18n.t('enterContactInformation')}
+              </Text>
+            )}
+          </View>
         </View>
         <PersonalContactSection
           contact={contact}
           emailInput={emailInput}
           line1Input={line1Input}
-          nameInput={nameInput}
           setEmail={setEmail}
-          setName={setName}
           setPhone={setPhone}
           setRegionCode={setRegionCode}
-          errors={errors}
-          setErrors={setErrors}
           customFields={contact.customFields || {}}
           setCustomField={setCustomField}
           clearCustomField={clearCustomField}

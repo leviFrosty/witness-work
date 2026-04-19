@@ -21,33 +21,24 @@ import IconButton from './IconButton'
 import { faCaretDown, faMinus } from '@fortawesome/free-solid-svg-icons'
 import Text from './MyText'
 import XView from './layout/XView'
-import { Errors } from '../types/textInput'
 
 export default function PersonalContactSection({
   contact,
-  nameInput,
-  setName,
   emailInput,
   setPhone,
   setRegionCode,
   line1Input,
   setEmail,
-  setErrors,
-  errors,
   customFields,
   setCustomField,
   clearCustomField,
 }: {
   contact: Contact
-  nameInput: React.RefObject<TextInput | null>
-  setName: (name: string) => void
   emailInput: React.RefObject<TextInput | null>
   setPhone: (phone: string) => void
   setRegionCode: (regionCode: string) => void
   line1Input: React.RefObject<TextInput | null>
   setEmail: (email: string) => void
-  errors: Errors
-  setErrors: React.Dispatch<React.SetStateAction<Errors>>
   customFields?: Record<string, string>
   setCustomField: (key: string, value: string) => void
   clearCustomField: (key: string) => void
@@ -127,21 +118,6 @@ export default function PersonalContactSection({
 
   return (
     <Section>
-      <TextInputRow
-        errors={errors}
-        setErrors={setErrors}
-        id='name'
-        label={i18n.t('name')}
-        ref={nameInput}
-        textInputProps={{
-          placeholder: i18n.t('name_placeholder'),
-          onChangeText: (val: string) => setName(val),
-          value: contact.name,
-          autoCapitalize: 'words',
-          autoCorrect: false,
-        }}
-        required
-      />
       <InputRowContainer>
         <View style={{ flex: 1 }}>
           <PhoneInput

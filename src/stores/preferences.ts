@@ -144,7 +144,7 @@ export type OnboardingIntent =
   | 'monthlyGoal'
   | 'mapContacts'
 
-const initialState = {
+export const PREFERENCE_DEFAULTS = {
   publisher: 'publisher' as Publisher,
   publisherHours: publisherHours,
 
@@ -274,6 +274,18 @@ const initialState = {
    */
   iCloudSyncSetByUser: false,
   /**
+   * When true, user-uploaded images (profile + contact avatars) are uploaded to
+   * the iCloud ubiquity container alongside the JSON sync payload and
+   * downloaded on other devices. Default false — images stay on-device unless
+   * the user opts in. Per-device (non-syncable) so consent isn't implicitly
+   * extended to other devices on the same Apple ID.
+   *
+   * Phase 1 ships the preference plumbing only; image bytes are still stripped
+   * from every sync payload. Phase 2 (see docs/icloud-image-sync-plan.md) wires
+   * this flag to the binary sync path.
+   */
+  iCloudSyncIncludeImages: false,
+  /**
    * Epoch ms of the most recent successful push or pull. Null until first sync.
    * Retained for back-compat; the granular `lastiCloudPushedAt` /
    * `lastiCloudPulledAt` / `lastiCloudRemoteWrittenAt` fields are what the sync
@@ -323,6 +335,14 @@ const initialState = {
    * stores (e.g. `logFirstMinute`, `addFirstContact`) are not tracked here.
    */
   homeChecklistManualCompletions: [] as string[],
+  /**
+   * Stable id of the onboarding step the user was last on, so a mid-flow app
+   * reload resumes where they left off instead of throwing them back to the
+   * hero. Stored as an id (not an index) because publisher-conditional steps
+   * (e.g. pioneerDate) shift indices when publisher type changes. Null once
+   * onboarding completes or is reset.
+   */
+  onboardingStepId: null as string | null,
 }
 
 /**
@@ -339,6 +359,7 @@ const initialState = {
 export const NON_SYNCABLE_PREFERENCE_KEYS = new Set<string>([
   'iCloudSyncEnabled',
   'iCloudSyncSetByUser',
+  'iCloudSyncIncludeImages',
   'lastiCloudSyncAt',
   'lastiCloudPushedAt',
   'lastiCloudPulledAt',
@@ -356,11 +377,12 @@ export const NON_SYNCABLE_PREFERENCE_KEYS = new Set<string>([
   'calledGoecodeApiTimes',
   'lastTimeRequestedAReview',
   'lastBackupDate',
+  'onboardingStepId',
 ])
 
 export const usePreferences = create(
   persist(
-    combine(initialState, (rawSet, getState) => {
+    combine(PREFERENCE_DEFAULTS, (rawSet, getState) => {
       // Wraps the raw zustand setter so every partial update also stamps
       // per-key timestamps used by the iCloud merge algorithm. Keys in
       // `NON_SYNCABLE_PREFERENCE_KEYS` are excluded from stamping so local
@@ -410,7 +432,7 @@ export const usePreferences = create(
           // the stamping wrapper iterates `Object.keys(resolved)` and would
           // otherwise bump `preferenceUpdatedAt` for every syncable key, which
           // flips last-writer-wins for unrelated prefs during iCloud merges.
-          set({ [hint]: false } as Partial<typeof initialState>),
+          set({ [hint]: false } as Partial<typeof PREFERENCE_DEFAULTS>),
         /**
          * Will not update lastUpdated property or address if address param is
          * undefined.

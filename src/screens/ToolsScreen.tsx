@@ -19,7 +19,9 @@ import { RecurringPlanFrequencies } from '../lib/serviceReport'
 import { useState } from 'react'
 import Button from '../components/Button'
 import { useTimeCache } from '../stores/timeCache'
-import { usePreferences } from '../stores/preferences'
+import { PREFERENCE_DEFAULTS, usePreferences } from '../stores/preferences'
+import AsyncStorage from '@react-native-async-storage/async-storage'
+import { mmkvStorage } from '../stores/mmkv'
 import DateTimePicker from '../components/DateTimePicker'
 import SupporterBadge from '../components/SupporterBadge'
 import useIsSupporter from '../hooks/useIsSupporter'
@@ -43,7 +45,7 @@ export default function ToolsScreen() {
     _WARNING_clearDeleted,
     addContact,
   } = useContacts()
-  const { cache } = useTimeCache()
+  const { cache, invalidateAllCache } = useTimeCache()
   const { addConversation, _WARNING_forceDeleteConversations } =
     useConversations()
   const toast = useToastController()
@@ -412,6 +414,25 @@ export default function ToolsScreen() {
             }}
           >
             {i18n.t('deleteAllConversations')}
+          </ActionButton>
+          <ActionButton
+            onPress={() => {
+              _WARNING_forceDeleteContacts()
+              _WARNING_clearDeleted()
+              _WARNING_forceDeleteServiceReports()
+              setServiceReports({ dayPlans: [], recurringPlans: [] })
+              _WARNING_forceDeleteConversations()
+              invalidateAllCache()
+              setPreferences(PREFERENCE_DEFAULTS)
+              mmkvStorage.clearAll()
+              void AsyncStorage.clear()
+              toast.show('All data cleared — restart the app', {
+                message: '',
+                native: true,
+              })
+            }}
+          >
+            Reset all (fresh install)
           </ActionButton>
         </Card>
         <Card>

@@ -133,7 +133,9 @@ const AppSection = ({ handleNavigate }: SettingsSectionProps) => {
         <InputRowButton
           leftIcon={faSeedling}
           label={i18n.t('restartOnboarding')}
-          onPress={() => set({ onboardingComplete: false })}
+          onPress={() =>
+            set({ onboardingComplete: false, onboardingStepId: null })
+          }
           lastInSection
         >
           <IconButton icon={faChevronRight} />

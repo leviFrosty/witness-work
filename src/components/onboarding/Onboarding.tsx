@@ -77,19 +77,25 @@ const allSteps: StepDef[] = [
 ]
 
 const OnBoarding = () => {
-  const { set, onboardingComplete, publisher } = usePreferences()
-  const [stepIndex, setStepIndex] = useState(0)
+  const { set, publisher, onboardingStepId } = usePreferences()
 
   const visibleSteps = useMemo(
     () => allSteps.filter((s) => !s.showIf || s.showIf(publisher)),
     [publisher]
   )
 
-  useEffect(() => {
-    if (onboardingComplete === false) {
-      setStepIndex(0)
-    }
-  }, [onboardingComplete])
+  // Lazy-init from persisted step id so a mid-flow reload resumes where the
+  // user left off. OnBoarding is only mounted while `onboardingComplete` is
+  // false (see RootStack), and unmounts on completion/reset, so this runs
+  // exactly once per onboarding session.
+  const [stepIndex, setStepIndex] = useState(() => {
+    if (!onboardingStepId) return 0
+    const initialVisible = allSteps.filter(
+      (s) => !s.showIf || s.showIf(publisher)
+    )
+    const idx = initialVisible.findIndex((s) => s.id === onboardingStepId)
+    return idx >= 0 ? idx : 0
+  })
 
   // Clamp the index if the visible-step list shrinks (e.g. user switches
   // publisher type from pioneer to non-pioneer mid-flow and the pioneer-date
@@ -98,10 +104,20 @@ const OnBoarding = () => {
     setStepIndex((idx) => Math.min(idx, Math.max(0, visibleSteps.length - 1)))
   }, [visibleSteps.length])
 
+  // Persist the active step id so reloads resume here. Writing the id (not
+  // the index) keeps the saved state meaningful even when conditional steps
+  // re-order the visible list.
+  useEffect(() => {
+    const id = visibleSteps[stepIndex]?.id
+    if (id && id !== onboardingStepId) {
+      set({ onboardingStepId: id })
+    }
+  }, [stepIndex, visibleSteps, onboardingStepId, set])
+
   const goNext = useCallback(() => {
     setStepIndex((idx) => {
       if (idx >= visibleSteps.length - 1) {
-        set({ onboardingComplete: true })
+        set({ onboardingComplete: true, onboardingStepId: null })
         return idx
       }
       return idx + 1

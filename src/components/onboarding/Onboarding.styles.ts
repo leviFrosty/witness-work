@@ -39,21 +39,21 @@ export const styles = StyleSheet.create({
   // slot always present means the "WitnessWork" label sits at the same Y
   // position on hero screens and step screens, so the nav never jumps.
   navProgressSlot: {
-    height: 3,
-    marginBottom: 10,
+    height: 6,
+    marginBottom: 12,
     alignSelf: 'center',
-    width: '60%',
+    width: '70%',
     justifyContent: 'center',
   },
   navProgressTrack: {
     width: '100%',
-    height: 3,
-    borderRadius: 1.5,
+    height: 6,
+    borderRadius: 3,
     overflow: 'hidden',
   },
   navProgressFill: {
     height: '100%',
-    borderRadius: 1.5,
+    borderRadius: 3,
   },
   navTitleRow: {
     position: 'relative',

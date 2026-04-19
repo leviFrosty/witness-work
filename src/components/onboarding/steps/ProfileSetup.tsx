@@ -28,7 +28,7 @@ const ProfileSetup = ({ goBack, goNext }: Props) => {
     <Wrapper
       style={{
         flex: 1,
-        paddingHorizontal: 30,
+        paddingHorizontal: 20,
         paddingTop: 60,
         paddingBottom: 60,
       }}

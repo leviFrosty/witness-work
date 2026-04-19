@@ -101,10 +101,12 @@ const ICloudRestore = ({ goBack, goNext }: Props) => {
     }
   }, [probe.state, pulse])
 
-  const handleRestore = async () => {
-    if (probe.state !== 'found') return
+  const handleRestore = () => {
+    if (probe.state !== 'found' || restoring) return
     setRestoring(true)
-    try {
+    // Defer the synchronous store replacement one frame so the spinner
+    // actually paints before the setState cascade blocks the JS thread.
+    requestAnimationFrame(() => {
       iCloudSync.replaceLocalWithRemote(probe.remote)
       // Mark onboarding complete — the user's restored publisher/profile/etc.
       // replaces the defaults they would've otherwise set in the remaining
@@ -120,16 +122,14 @@ const ICloudRestore = ({ goBack, goNext }: Props) => {
         hasCompletedProfileSetup: true,
         hasCompletedMapOnboarding: true,
       })
-    } finally {
-      setRestoring(false)
-    }
+    })
   }
 
   return (
     <Wrapper
       style={{
         flex: 1,
-        paddingHorizontal: 30,
+        paddingHorizontal: 20,
         paddingTop: 60,
         paddingBottom: 60,
       }}
@@ -324,9 +324,28 @@ const ICloudRestore = ({ goBack, goNext }: Props) => {
       <View style={{ gap: 10 }}>
         {probe.state === 'found' && (
           <ActionButton onPress={handleRestore} disabled={restoring}>
-            {restoring
-              ? i18n.t('iCloudRestoreRestoring')
-              : i18n.t('iCloudRestoreAction')}
+            {restoring ? (
+              <View
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  gap: 10,
+                }}
+              >
+                <Spinner color={theme.colors.textInverse} />
+                <Text
+                  style={{
+                    fontSize: theme.fontSize('lg'),
+                    color: theme.colors.textInverse,
+                    fontFamily: theme.fonts.bold,
+                  }}
+                >
+                  {i18n.t('iCloudRestoreRestoring')}
+                </Text>
+              </View>
+            ) : (
+              i18n.t('iCloudRestoreAction')
+            )}
           </ActionButton>
         )}
         <Button

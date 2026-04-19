@@ -18,6 +18,7 @@ import useServiceReport from '../../stores/serviceReport'
 import useContacts from '../../stores/contactsStore'
 import { HomeTabStackNavigation } from '../../types/homeStack'
 import { RootStackNavigation } from '../../types/rootStack'
+import Card from '../Card'
 
 /**
  * Canonical checklist item ids. These strings are intentionally stable so Phase
@@ -190,16 +191,7 @@ const HomeChecklist = () => {
   if (items.length === 0) return null
 
   return (
-    <View
-      style={{
-        backgroundColor: theme.colors.card,
-        borderColor: theme.colors.border,
-        borderWidth: 1,
-        padding: 20,
-        borderRadius: theme.numbers.borderRadiusLg,
-        gap: 12,
-      }}
-    >
+    <Card>
       <XView style={{ justifyContent: 'space-between' }}>
         <Text
           style={{
@@ -270,7 +262,7 @@ const HomeChecklist = () => {
           {i18n.t('homeChecklistFooter')}
         </Text>
       )}
-    </View>
+    </Card>
   )
 }
 

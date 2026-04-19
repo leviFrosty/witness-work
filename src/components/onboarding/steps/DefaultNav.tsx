@@ -29,7 +29,7 @@ const StepDefaultNav = ({ goNext, goBack }: Props) => {
   return (
     <Wrapper
       style={{
-        paddingHorizontal: 30,
+        paddingHorizontal: 20,
         paddingTop: 60,
         paddingBottom: 100,
         justifyContent: 'space-between',

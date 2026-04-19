@@ -1,4 +1,18 @@
+import { useEffect } from 'react'
 import { View } from 'react-native'
+import Animated, {
+  Easing,
+  useAnimatedStyle,
+  useSharedValue,
+  withTiming,
+} from 'react-native-reanimated'
+
+// Persisted across step unmount/remount. Each step renders its own
+// `OnboardingNav`, so without this the shared value would be re-initialized to
+// the *new* progress on every mount and never animate from the prior position.
+// Module scope is fine here: onboarding only runs in one place, and resetting
+// to 0 on a full app reload is the correct fresh-start behavior.
+let lastSeenProgress = 0
 import { styles } from './Onboarding.styles'
 import Text from '../MyText'
 import i18n from '../../lib/locales'
@@ -48,6 +62,22 @@ const OnboardingNav = ({
     : 0
   const progress = showProgress ? clampedStep / (resolvedTotal as number) : 0
 
+  // Seed from the module-level cache so a fresh mount (step change) animates
+  // from the previous step's progress rather than snapping to the new value.
+  const progressValue = useSharedValue(lastSeenProgress)
+
+  useEffect(() => {
+    progressValue.value = withTiming(progress, {
+      duration: 500,
+      easing: Easing.out(Easing.cubic),
+    })
+    lastSeenProgress = progress
+  }, [progress, progressValue])
+
+  const fillAnimatedStyle = useAnimatedStyle(() => ({
+    width: `${progressValue.value * 100}%`,
+  }))
+
   return (
     <View style={styles.navContainer}>
       {/*
@@ -74,13 +104,11 @@ const OnboardingNav = ({
               now: clampedStep,
             }}
           >
-            <View
+            <Animated.View
               style={[
                 styles.navProgressFill,
-                {
-                  backgroundColor: theme.colors.accent,
-                  width: `${progress * 100}%`,
-                },
+                { backgroundColor: theme.colors.accent },
+                fillAnimatedStyle,
               ]}
             />
           </View>

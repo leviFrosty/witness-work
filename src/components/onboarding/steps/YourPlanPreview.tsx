@@ -1,5 +1,15 @@
 import { View } from 'react-native'
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
+import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
+import { IconProp } from '@fortawesome/fontawesome-svg-core'
+import {
+  faStopwatch,
+  faComments,
+  faCalendar,
+  faBullseye,
+  faMap,
+  faUser,
+} from '@fortawesome/free-solid-svg-icons'
 import moment from 'moment'
 import { styles } from '../Onboarding.styles'
 import OnboardingNav from '../OnboardingNav'
@@ -7,11 +17,15 @@ import Text from '../../MyText'
 import Card from '../../Card'
 import Wrapper from '../../layout/Wrapper'
 import ActionButton from '../../ActionButton'
+import NotificationPreview from '../NotificationPreview'
 import SimpleProgressBar from '../../SimpleProgressBar'
 import useTheme from '../../../contexts/theme'
-import i18n from '../../../lib/locales'
-import { usePreferences } from '../../../stores/preferences'
+import i18n, { TranslationKey } from '../../../lib/locales'
+import { OnboardingIntent, usePreferences } from '../../../stores/preferences'
 import { isPioneer } from '../../../constants/publisher'
+import { useMarkerColors } from '../../../hooks/useMarkerColors'
+import { Theme } from '../../../types/theme'
+import { ReactNode } from 'react'
 
 interface Props {
   goBack: () => void
@@ -32,20 +46,145 @@ const useOnboardingIntents = (): string[] => {
   return Array.isArray(raw) ? (raw as string[]) : []
 }
 
+type IntentMeta = {
+  id: OnboardingIntent
+  icon: IconProp
+  color: (t: Theme) => string
+  tint: (t: Theme) => string
+  headerKey: TranslationKey
+  blurbKey: TranslationKey
+}
+
+const INTENT_META: Record<OnboardingIntent, IntentMeta> = {
+  trackTime: {
+    id: 'trackTime',
+    icon: faStopwatch,
+    color: (t) => t.colors.purple,
+    tint: (t) => t.colors.purpleAlt,
+    headerKey: 'yourPlanTrackTimeHeader',
+    blurbKey: 'yourPlanTrackTimeBlurb',
+  },
+  returnVisits: {
+    id: 'returnVisits',
+    icon: faComments,
+    color: (t) => t.colors.cyan,
+    tint: (t) => t.colors.cyanAlt,
+    headerKey: 'yourPlanReturnVisitsHeader',
+    blurbKey: 'yourPlanReturnVisitsBlurb',
+  },
+  planWeek: {
+    id: 'planWeek',
+    icon: faCalendar,
+    color: (t) => t.colors.indigo,
+    tint: (t) => t.colors.indigoAlt,
+    headerKey: 'yourPlanPlanWeekHeader',
+    blurbKey: 'yourPlanPlanWeekBlurb',
+  },
+  monthlyGoal: {
+    id: 'monthlyGoal',
+    icon: faBullseye,
+    color: (t) => t.colors.rose,
+    tint: (t) => t.colors.roseAlt,
+    headerKey: 'yourPlanMonthlyGoalHeader',
+    blurbKey: 'yourPlanMonthlyGoalBlurb',
+  },
+  mapContacts: {
+    id: 'mapContacts',
+    icon: faMap,
+    color: (t) => t.colors.orange,
+    tint: (t) => t.colors.orangeAlt,
+    headerKey: 'yourPlanMapHeader',
+    blurbKey: 'yourPlanMapBlurb',
+  },
+}
+
+const INTENT_ORDER: OnboardingIntent[] = [
+  'trackTime',
+  'returnVisits',
+  'planWeek',
+  'monthlyGoal',
+  'mapContacts',
+]
+
+interface ResultCardProps {
+  theme: Theme
+  icon: IconProp
+  accent: string
+  tint: string
+  header: string
+  blurb: string
+  children?: ReactNode
+}
+
+const ResultCard = ({
+  theme,
+  icon,
+  accent,
+  tint,
+  header,
+  blurb,
+  children,
+}: ResultCardProps) => (
+  <Card style={{ padding: 0, gap: 0, overflow: 'hidden', marginBottom: 14 }}>
+    <View
+      style={{
+        flexDirection: 'row',
+        alignItems: 'flex-start',
+        gap: 14,
+        padding: 16,
+        backgroundColor: tint,
+      }}
+    >
+      <View
+        style={{
+          width: 40,
+          height: 40,
+          borderRadius: 20,
+          backgroundColor: accent,
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
+        <FontAwesomeIcon
+          icon={icon}
+          size={18}
+          color={theme.colors.textInverse}
+        />
+      </View>
+      <View style={{ flex: 1, gap: 4 }}>
+        <Text
+          style={{
+            fontSize: 17,
+            fontFamily: theme.fonts.bold,
+            color: theme.colors.text,
+            lineHeight: 22,
+          }}
+        >
+          {header}
+        </Text>
+        <Text
+          style={{
+            fontSize: 13,
+            color: theme.colors.textAlt,
+            lineHeight: 18,
+          }}
+        >
+          {blurb}
+        </Text>
+      </View>
+    </View>
+    {children ? <View style={{ padding: 16, gap: 10 }}>{children}</View> : null}
+  </Card>
+)
+
 const YourPlanPreview = ({ goBack, goNext }: Props) => {
   const theme = useTheme()
   const { publisher, publisherHours, pioneerStartDate } = usePreferences()
   const intents = useOnboardingIntents()
+  const markerColors = useMarkerColors()
 
   const monthlyGoalHours = publisherHours[publisher] ?? 0
   const publisherLabel = i18n.t(publisher)
-
-  const hasIntent = (key: string) => intents.includes(key)
-  const showReturnVisits = hasIntent('returnVisits')
-  const showTrackTime = hasIntent('trackTime')
-  const showMapContacts = hasIntent('mapContacts')
-  const showMonthlyGoal = hasIntent('monthlyGoal')
-  const showPlanWeek = hasIntent('planWeek')
 
   const pioneering = isPioneer(publisher) && pioneerStartDate
   const pioneeringLine = pioneering
@@ -55,11 +194,13 @@ const YourPlanPreview = ({ goBack, goNext }: Props) => {
       })
     : null
 
+  const selectedIntents = INTENT_ORDER.filter((id) => intents.includes(id))
+
   return (
     <Wrapper
       style={{
         flex: 1,
-        paddingHorizontal: 30,
+        paddingHorizontal: 20,
         paddingTop: 60,
         paddingBottom: 60,
       }}
@@ -77,23 +218,93 @@ const YourPlanPreview = ({ goBack, goNext }: Props) => {
       >
         <View style={[styles.stepContentContainer, { marginRight: 0 }]}>
           <Text style={styles.stepTitle}>{i18n.t('yourPlanTitle')}</Text>
+          <Text
+            style={{
+              fontSize: 14,
+              color: theme.colors.textAlt,
+              marginTop: -10,
+              marginBottom: 24,
+              lineHeight: 20,
+            }}
+          >
+            {i18n.t('yourPlanIntro')}
+          </Text>
 
-          {/* Personalized plan card — headline + subtitle driven by the quiz */}
-          <Card style={{ gap: 14, marginBottom: 16 }}>
-            <View style={{ gap: 4 }}>
-              <Text
+          {/* Foundation — publisher role */}
+          <Card
+            style={{
+              padding: 0,
+              gap: 0,
+              overflow: 'hidden',
+              marginBottom: 14,
+              borderWidth: 1,
+              borderColor: theme.colors.accentAlt,
+            }}
+          >
+            <View
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: 14,
+                padding: 16,
+                backgroundColor: theme.colors.accentTranslucent,
+              }}
+            >
+              <View
                 style={{
-                  fontSize: 22,
-                  fontFamily: theme.fonts.bold,
-                  color: theme.colors.text,
+                  width: 44,
+                  height: 44,
+                  borderRadius: 22,
+                  backgroundColor: theme.colors.accent,
+                  alignItems: 'center',
+                  justifyContent: 'center',
                 }}
               >
-                {publisherLabel}
-              </Text>
+                <FontAwesomeIcon
+                  icon={faUser}
+                  size={18}
+                  color={theme.colors.textInverse}
+                />
+              </View>
+              <View style={{ flex: 1, gap: 2 }}>
+                <Text
+                  style={{
+                    fontSize: 11,
+                    fontFamily: theme.fonts.semiBold,
+                    color: theme.colors.textAlt,
+                    letterSpacing: 0.8,
+                    textTransform: 'uppercase',
+                  }}
+                >
+                  {i18n.t('yourPlanRoleEyebrow')}
+                </Text>
+                <Text
+                  style={{
+                    fontSize: 22,
+                    fontFamily: theme.fonts.bold,
+                    color: theme.colors.text,
+                    lineHeight: 28,
+                  }}
+                >
+                  {publisherLabel}
+                </Text>
+                <Text
+                  style={{
+                    fontSize: 13,
+                    color: theme.colors.textAlt,
+                    lineHeight: 18,
+                  }}
+                >
+                  {i18n.t('yourPlanRoleBlurb', { role: publisherLabel })}
+                </Text>
+              </View>
+            </View>
+            <View style={{ padding: 16, gap: 8 }}>
               <Text
                 style={{
                   fontSize: 14,
-                  color: theme.colors.textAlt,
+                  fontFamily: theme.fonts.semiBold,
+                  color: theme.colors.text,
                 }}
               >
                 {monthlyGoalHours > 0
@@ -106,202 +317,218 @@ const YourPlanPreview = ({ goBack, goNext }: Props) => {
                     fontSize: 12,
                     color: theme.colors.accent,
                     fontFamily: theme.fonts.semiBold,
-                    marginTop: 2,
                   }}
                 >
                   {pioneeringLine}
                 </Text>
               )}
             </View>
+          </Card>
 
-            {/* trackTime: mini progress preview */}
-            {showTrackTime && (
-              <View
-                style={{
-                  gap: 8,
-                  paddingTop: 10,
-                  borderTopWidth: 1,
-                  borderTopColor: theme.colors.border,
-                }}
-              >
-                <View
-                  style={{
-                    flexDirection: 'row',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                  }}
+          {/* Per-intent result cards */}
+          {selectedIntents.map((id) => {
+            const meta = INTENT_META[id]
+            const accent = meta.color(theme)
+            const tint = meta.tint(theme)
+            const header = i18n.t(meta.headerKey)
+            const blurb = i18n.t(meta.blurbKey)
+
+            if (id === 'trackTime') {
+              return (
+                <ResultCard
+                  key={id}
+                  theme={theme}
+                  icon={meta.icon}
+                  accent={accent}
+                  tint={tint}
+                  header={header}
+                  blurb={blurb}
+                >
+                  <View
+                    style={{
+                      flexDirection: 'row',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                    }}
+                  >
+                    <Text
+                      style={{
+                        fontSize: 12,
+                        color: theme.colors.textAlt,
+                        fontFamily: theme.fonts.semiBold,
+                        textTransform: 'uppercase',
+                        letterSpacing: 0.5,
+                      }}
+                    >
+                      {i18n.t('yourPlanTrackTimeProgressLabel')}
+                    </Text>
+                    <Text
+                      style={{
+                        fontSize: 13,
+                        color: theme.colors.text,
+                        fontFamily: theme.fonts.semiBold,
+                      }}
+                    >
+                      {monthlyGoalHours > 0
+                        ? i18n.t('yourPlanTrackTimeValue', {
+                            hours: monthlyGoalHours,
+                          })
+                        : i18n.t('yourPlanTrackTimeValueNoGoal')}
+                    </Text>
+                  </View>
+                  <SimpleProgressBar
+                    percentage={0}
+                    height={8}
+                    animated={false}
+                  />
+                </ResultCard>
+              )
+            }
+
+            if (id === 'returnVisits') {
+              return (
+                <ResultCard
+                  key={id}
+                  theme={theme}
+                  icon={meta.icon}
+                  accent={accent}
+                  tint={tint}
+                  header={header}
+                  blurb={blurb}
+                >
+                  <View
+                    style={{
+                      borderRadius: theme.numbers.borderRadiusMd,
+                      borderLeftWidth: 3,
+                      borderLeftColor: accent,
+                      backgroundColor: theme.colors.backgroundLighter,
+                      paddingVertical: 10,
+                      paddingHorizontal: 12,
+                      gap: 2,
+                    }}
+                  >
+                    <Text
+                      style={{
+                        fontSize: 15,
+                        color: theme.colors.text,
+                        fontFamily: theme.fonts.semiBold,
+                      }}
+                    >
+                      {i18n.t('yourPlanSampleReturnVisitName')}
+                    </Text>
+                    <Text
+                      style={{
+                        fontSize: 12,
+                        color: theme.colors.textAlt,
+                      }}
+                    >
+                      {i18n.t('yourPlanSampleReturnVisitNote')}
+                    </Text>
+                  </View>
+                  <NotificationPreview />
+                </ResultCard>
+              )
+            }
+
+            if (id === 'planWeek') {
+              return (
+                <ResultCard
+                  key={id}
+                  theme={theme}
+                  icon={meta.icon}
+                  accent={accent}
+                  tint={tint}
+                  header={header}
+                  blurb={blurb}
                 >
                   <Text
                     style={{
                       fontSize: 13,
-                      fontFamily: theme.fonts.semiBold,
                       color: theme.colors.text,
                     }}
                   >
-                    {i18n.t('yourPlanTrackTimeHeader')}
+                    {i18n.t('yourPlanPlanWeekLine')}
                   </Text>
+                </ResultCard>
+              )
+            }
+
+            if (id === 'monthlyGoal') {
+              return (
+                <ResultCard
+                  key={id}
+                  theme={theme}
+                  icon={meta.icon}
+                  accent={accent}
+                  tint={tint}
+                  header={header}
+                  blurb={blurb}
+                >
                   <Text
                     style={{
-                      fontSize: 12,
-                      color: theme.colors.textAlt,
+                      fontSize: 13,
+                      color: theme.colors.text,
                     }}
                   >
-                    {monthlyGoalHours > 0
-                      ? i18n.t('yourPlanTrackTimeValue', {
-                          hours: monthlyGoalHours,
-                        })
-                      : i18n.t('yourPlanTrackTimeValueNoGoal')}
+                    {i18n.t('yourPlanMonthlyGoalLine')}
                   </Text>
-                </View>
-                <SimpleProgressBar percentage={0} height={8} animated={false} />
-              </View>
-            )}
+                </ResultCard>
+              )
+            }
 
-            {/* monthlyGoal intent — reinforces the routine line */}
-            {showMonthlyGoal && (
-              <View
-                style={{
-                  paddingTop: 10,
-                  borderTopWidth: 1,
-                  borderTopColor: theme.colors.border,
-                }}
-              >
-                <Text
-                  style={{
-                    fontSize: 13,
-                    color: theme.colors.text,
-                    fontFamily: theme.fonts.semiBold,
-                  }}
+            if (id === 'mapContacts') {
+              const pinColors = [
+                markerColors.withinThePastWeek,
+                markerColors.longerThanAWeekAgo,
+                markerColors.longerThanAMonthAgo,
+                markerColors.noConversations,
+              ]
+              return (
+                <ResultCard
+                  key={id}
+                  theme={theme}
+                  icon={meta.icon}
+                  accent={accent}
+                  tint={tint}
+                  header={header}
+                  blurb={blurb}
                 >
-                  {i18n.t('yourPlanMonthlyGoalLine')}
-                </Text>
-              </View>
-            )}
+                  <View
+                    style={{
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      gap: 10,
+                    }}
+                  >
+                    <View style={{ flexDirection: 'row', gap: 6 }}>
+                      {pinColors.map((color, idx) => (
+                        <View
+                          key={idx}
+                          style={{
+                            width: 10,
+                            height: 10,
+                            borderRadius: 5,
+                            backgroundColor: color,
+                          }}
+                        />
+                      ))}
+                    </View>
+                    <Text
+                      style={{
+                        fontSize: 12,
+                        color: theme.colors.textAlt,
+                        flex: 1,
+                      }}
+                    >
+                      {i18n.t('yourPlanMapStrip')}
+                    </Text>
+                  </View>
+                </ResultCard>
+              )
+            }
 
-            {/* planWeek intent — week planner teaser */}
-            {showPlanWeek && (
-              <View
-                style={{
-                  paddingTop: 10,
-                  borderTopWidth: 1,
-                  borderTopColor: theme.colors.border,
-                }}
-              >
-                <Text
-                  style={{
-                    fontSize: 13,
-                    color: theme.colors.text,
-                    fontFamily: theme.fonts.semiBold,
-                  }}
-                >
-                  {i18n.t('yourPlanPlanWeekLine')}
-                </Text>
-              </View>
-            )}
-          </Card>
-
-          {/* returnVisits: sample appointment card */}
-          {showReturnVisits && (
-            <Card style={{ gap: 6, marginBottom: 16 }}>
-              <Text
-                style={{
-                  fontSize: 12,
-                  color: theme.colors.textAlt,
-                  fontFamily: theme.fonts.semiBold,
-                  textTransform: 'uppercase',
-                  letterSpacing: 0.5,
-                }}
-              >
-                {i18n.t('yourPlanReturnVisitsHeader')}
-              </Text>
-              <Text
-                style={{
-                  fontSize: 16,
-                  color: theme.colors.text,
-                  fontFamily: theme.fonts.semiBold,
-                }}
-              >
-                {i18n.t('yourPlanSampleReturnVisitName')}
-              </Text>
-              <Text
-                style={{
-                  fontSize: 13,
-                  color: theme.colors.accent,
-                }}
-              >
-                {i18n.t('yourPlanSampleReturnVisitNote')}
-              </Text>
-            </Card>
-          )}
-
-          {/* mapContacts: thin map-evoking strip */}
-          {showMapContacts && (
-            <View
-              style={{
-                height: 44,
-                borderRadius: theme.numbers.borderRadiusMd,
-                backgroundColor: theme.colors.tealAlt,
-                borderWidth: 1,
-                borderColor: theme.colors.teal,
-                marginBottom: 16,
-                flexDirection: 'row',
-                alignItems: 'center',
-                paddingHorizontal: 14,
-                gap: 10,
-                overflow: 'hidden',
-              }}
-            >
-              {/* Pin dots to evoke a map preview without rendering one. */}
-              <View style={{ flexDirection: 'row', gap: 6 }}>
-                <View
-                  style={{
-                    width: 8,
-                    height: 8,
-                    borderRadius: 4,
-                    backgroundColor: theme.colors.teal,
-                  }}
-                />
-                <View
-                  style={{
-                    width: 8,
-                    height: 8,
-                    borderRadius: 4,
-                    backgroundColor: theme.colors.accent,
-                  }}
-                />
-                <View
-                  style={{
-                    width: 8,
-                    height: 8,
-                    borderRadius: 4,
-                    backgroundColor: theme.colors.indigo,
-                  }}
-                />
-              </View>
-              <Text
-                style={{
-                  fontSize: 13,
-                  color: theme.colors.text,
-                  fontFamily: theme.fonts.semiBold,
-                  flex: 1,
-                }}
-              >
-                {i18n.t('yourPlanMapStrip')}
-              </Text>
-            </View>
-          )}
-
-          <Text
-            style={{
-              fontSize: 15,
-              color: theme.colors.textAlt,
-              textAlign: 'center',
-              marginTop: 8,
-              fontFamily: theme.fonts.semiBold,
-            }}
-          >
-            {i18n.t('yourPlanReady')}
-          </Text>
+            return null
+          })}
         </View>
       </KeyboardAwareScrollView>
       <ActionButton onPress={goNext}>{i18n.t('continue')}</ActionButton>

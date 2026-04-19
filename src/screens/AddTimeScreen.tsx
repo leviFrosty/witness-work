@@ -15,6 +15,7 @@ import i18n, { TranslationKey } from '../lib/locales'
 import DateTimePicker from '../components/DateTimePicker'
 import Wrapper from '../components/layout/Wrapper'
 import Select from '../components/Select'
+import SelectWheel from '../components/SelectWheel'
 import {
   getTagName,
   ServiceReportTag,
@@ -576,7 +577,7 @@ const AddTimeScreen = ({ route }: AddTimeScreenProps) => {
               <View style={{ width: '50%' }}>
                 <InputRowContainer label={i18n.t('hours')} lastInSection>
                   <View style={{ flex: 1 }}>
-                    <Select
+                    <SelectWheel
                       data={hourOptions}
                       placeholder={serviceReport.hours.toString()}
                       onChange={({ value }) => setHours(value)}
@@ -588,7 +589,7 @@ const AddTimeScreen = ({ route }: AddTimeScreenProps) => {
               <View style={{ width: '50%' }}>
                 <InputRowContainer label={i18n.t('minutes')} lastInSection>
                   <View style={{ flex: 1 }}>
-                    <Select
+                    <SelectWheel
                       data={minuteOptions}
                       placeholder={serviceReport.minutes.toString()}
                       onChange={({ value }) => setMinutes(value)}

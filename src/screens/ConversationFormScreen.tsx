@@ -110,7 +110,6 @@ const NotificationSection = (props: {
             <View style={{ flex: 1 }}>
               <Select
                 data={amountOptions}
-                dropdownPosition='top'
                 onChange={({ value: amount }) =>
                   setNotifyMeOffset({ ...notifyMeOffset, amount })
                 }
@@ -121,7 +120,6 @@ const NotificationSection = (props: {
             <View style={{ flex: 1 }}>
               <Select
                 data={unitOptions}
-                dropdownPosition='top'
                 onChange={({ value: unit }) =>
                   setNotifyMeOffset({ ...notifyMeOffset, unit })
                 }
@@ -598,7 +596,6 @@ const ConversationFormScreen = ({ route, navigation }: Props) => {
               maximumDate={moment().toDate()}
               value={conversation.date}
               onChange={handleDateChange}
-              timeAndDate
               iOSMode='datetime'
             />
           </InputRowContainer>
@@ -634,7 +631,6 @@ const ConversationFormScreen = ({ route, navigation }: Props) => {
               minimumDate={moment().toDate()}
               value={conversation.followUp!.date}
               onChange={handleFollowUpDateChange}
-              timeAndDate
               iOSMode='datetime'
             />
           </InputRowContainer>

@@ -17,6 +17,7 @@ import { faCalendarDay, faRepeat } from '@fortawesome/free-solid-svg-icons'
 import RNDateTimePicker from '@react-native-community/datetimepicker'
 import DateTimePicker from '../components/DateTimePicker'
 import Select from '../components/Select'
+import SelectWheel from '../components/SelectWheel'
 import { getLocales } from 'expo-localization'
 import Wrapper from '../components/layout/Wrapper'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
@@ -90,7 +91,7 @@ const OneTimePlan = (props: {
         <View style={{ width: '50%' }}>
           <InputRowContainer label={i18n.t('hours')} lastInSection>
             <View style={{ flex: 1 }}>
-              <Select
+              <SelectWheel
                 data={hourOptions}
                 placeholder={props.hours.toString()}
                 onChange={({ value }) => props.setHours(value)}
@@ -102,7 +103,7 @@ const OneTimePlan = (props: {
         <View style={{ width: '50%' }}>
           <InputRowContainer label={i18n.t('minutes')} lastInSection>
             <View style={{ flex: 1 }}>
-              <Select
+              <SelectWheel
                 data={minuteOptions}
                 placeholder={props.minutes.toString()}
                 onChange={({ value }) => props.setMinutes(value)}
@@ -305,7 +306,7 @@ const RecurringPlan = (props: {
         <View style={{ width: '50%' }}>
           <InputRowContainer label={i18n.t('hours')} lastInSection>
             <View style={{ flex: 1 }}>
-              <Select
+              <SelectWheel
                 data={hourOptions}
                 placeholder={props.hours.toString()}
                 onChange={({ value }) => props.setHours(value)}
@@ -317,7 +318,7 @@ const RecurringPlan = (props: {
         <View style={{ width: '50%' }}>
           <InputRowContainer label={i18n.t('minutes')} lastInSection>
             <View style={{ flex: 1 }}>
-              <Select
+              <SelectWheel
                 data={minuteOptions}
                 placeholder={props.minutes.toString()}
                 onChange={({ value }) => props.setMinutes(value)}

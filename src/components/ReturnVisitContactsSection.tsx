@@ -16,7 +16,7 @@ import { contactSortOptions, usePreferences } from '../stores/preferences'
 import { Contact } from '../types/contact'
 import { contactMostRecentStudy } from '../lib/conversations'
 import { filterActivesContacts } from '../lib/dismissedContacts'
-import Select from './Select'
+import { MenuView } from '@react-native-menu/menu'
 import IconButton from './IconButton'
 import { faPlus, faSort } from '@fortawesome/free-solid-svg-icons'
 import XView from './layout/XView'
@@ -141,26 +141,21 @@ const ReturnVisitContactsSection = () => {
           {i18n.t('returnVisitContacts')}
         </Text>
 
-        <View style={{ flex: 1 }}>
-          <Select
-            data={contactSortOptions}
-            placeholder='Sort'
-            style={{
-              borderWidth: 0,
-              marginRight: 0,
-            }}
-            placeholderStyle={{ fontSize: 12 }}
-            selectedTextStyle={{ opacity: 0 }}
-            renderRightIcon={() => (
-              <IconButton
-                icon={faSort}
-                iconStyle={{ color: theme.colors.text }}
-              />
-            )}
-            onChange={({ value }) => setContactSort(value)}
-            value={contactSort}
-          />
-        </View>
+        <MenuView
+          actions={contactSortOptions.map((opt) => ({
+            id: String(opt.value),
+            title: opt.label,
+            state: opt.value === contactSort ? 'on' : 'off',
+          }))}
+          onPressAction={({ nativeEvent }) => {
+            const item = contactSortOptions.find(
+              (o) => String(o.value) === nativeEvent.event
+            )
+            if (item) setContactSort(item.value)
+          }}
+        >
+          <IconButton icon={faSort} iconStyle={{ color: theme.colors.text }} />
+        </MenuView>
       </View>
       <Card>
         <XView>

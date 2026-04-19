@@ -14,6 +14,8 @@ interface Props {
 const GAP = 3
 const MIN_CELL = 8
 const MAX_CELL = 14
+const LABEL_WIDTH = 22
+const LABEL_GAP = 4
 
 const hexToHsl = (hex: string): [number, number, number] => {
   const h = hex.replace('#', '')
@@ -58,9 +60,22 @@ const ContributionGraph = ({ daily, weeks = 26 }: Props) => {
 
   const cell = useMemo(() => {
     if (width <= 0) return MIN_CELL
-    const size = Math.floor((width - (weeks - 1) * GAP) / weeks)
+    const gridWidth = width - LABEL_WIDTH - LABEL_GAP
+    const size = Math.floor((gridWidth - (weeks - 1) * GAP) / weeks)
     return Math.max(MIN_CELL, Math.min(MAX_CELL, size))
   }, [width, weeks])
+
+  const dayLabels = useMemo(
+    () =>
+      [0, 1, 2, 3, 4, 5, 6].map((i) =>
+        i === 1 || i === 3 || i === 5
+          ? moment()
+              .isoWeekday(i + 1)
+              .format('ddd')
+          : ''
+      ),
+    []
+  )
 
   const onLayout = (e: LayoutChangeEvent) => {
     const w = Math.floor(e.nativeEvent.layout.width)
@@ -97,39 +112,68 @@ const ContributionGraph = ({ daily, weeks = 26 }: Props) => {
 
   return (
     <View style={{ gap: 8 }} onLayout={onLayout}>
-      <View style={{ height: 14, position: 'relative' }}>
-        {monthStarts.map((label, i) =>
-          label ? (
-            <Text
-              key={`m-${i}`}
-              style={{
-                position: 'absolute',
-                left: i * (cell + GAP),
-                fontSize: 10,
-                color: theme.colors.textAlt,
-              }}
-            >
-              {label}
-            </Text>
-          ) : null
-        )}
-      </View>
-      <View style={{ flexDirection: 'row', gap: GAP }}>
-        {grid.map((col, i) => (
-          <View key={`c-${i}`} style={{ gap: GAP }}>
-            {col.map((cellData, j) => (
-              <View
-                key={`d-${i}-${j}`}
+      <View style={{ flexDirection: 'row', gap: LABEL_GAP }}>
+        <View style={{ width: LABEL_WIDTH }} />
+        <View style={{ height: 14, position: 'relative', flex: 1 }}>
+          {monthStarts.map((label, i) =>
+            label ? (
+              <Text
+                key={`m-${i}`}
                 style={{
-                  width: cell,
-                  height: cell,
-                  borderRadius: 2,
-                  backgroundColor: levelColor(cellData),
+                  position: 'absolute',
+                  left: i * (cell + GAP),
+                  fontSize: 10,
+                  color: theme.colors.textAlt,
                 }}
-              />
-            ))}
-          </View>
-        ))}
+              >
+                {label}
+              </Text>
+            ) : null
+          )}
+        </View>
+      </View>
+      <View style={{ flexDirection: 'row', gap: LABEL_GAP }}>
+        <View
+          style={{
+            width: LABEL_WIDTH,
+            height: cell * 7 + GAP * 6,
+          }}
+        >
+          {dayLabels.map((label, i) =>
+            label ? (
+              <Text
+                key={`lbl-${i}`}
+                style={{
+                  position: 'absolute',
+                  left: 0,
+                  top: i * (cell + GAP) + cell / 2 - 6,
+                  fontSize: 10,
+                  lineHeight: 12,
+                  color: theme.colors.textAlt,
+                }}
+              >
+                {label}
+              </Text>
+            ) : null
+          )}
+        </View>
+        <View style={{ flexDirection: 'row', gap: GAP }}>
+          {grid.map((col, i) => (
+            <View key={`c-${i}`} style={{ gap: GAP }}>
+              {col.map((cellData, j) => (
+                <View
+                  key={`d-${i}-${j}`}
+                  style={{
+                    width: cell,
+                    height: cell,
+                    borderRadius: 2,
+                    backgroundColor: levelColor(cellData),
+                  }}
+                />
+              ))}
+            </View>
+          ))}
+        </View>
       </View>
       <View
         style={{
@@ -137,6 +181,7 @@ const ContributionGraph = ({ daily, weeks = 26 }: Props) => {
           alignItems: 'center',
           gap: 6,
           marginTop: 2,
+          marginLeft: LABEL_WIDTH + LABEL_GAP,
         }}
       >
         <Text style={{ fontSize: 10, color: theme.colors.textAlt }}>

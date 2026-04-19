@@ -14,7 +14,7 @@ import Animated, {
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
 import { faPencil } from '@fortawesome/free-solid-svg-icons'
 import useTheme from '../contexts/theme'
-import { usePreferences } from '../stores/preferences'
+import { ProfileAvatar } from '../stores/preferences'
 import Avatar from './Avatar'
 import AvatarPickerContent from './AvatarPickerContent'
 import i18n from '../lib/locales'
@@ -22,8 +22,25 @@ import i18n from '../lib/locales'
 type AnchorRect = { x: number; y: number; width: number; height: number }
 
 interface Props {
+  /** Currently-selected avatar to render in the anchor + drive picker state. */
+  value: ProfileAvatar
+  /** Persisted by the caller (preferences for the user, contact store per-row). */
+  onChange: (next: ProfileAvatar) => void
+  /** Display name used for the initial-letter fallback in the avatar preview. */
+  name?: string
   /** Pixel size of the rendered avatar. */
   size?: number
+  /**
+   * Filename used by the picker when persisting an image to
+   * `FileSystem.documentDirectory`. Each consumer should pass a unique name.
+   */
+  imageFileName?: string
+  /** Background color for the avatar circle when emoji/letter fallback. */
+  background?: string
+  /** Show the accent-tone background swatches. Profile-only by default. */
+  showBackgroundSwatches?: boolean
+  /** Accessibility label for the tappable anchor. Defaults to "profilePicture". */
+  accessibilityLabel?: string
 }
 
 /**
@@ -34,9 +51,17 @@ interface Props {
  * parent screen is presented as a native modal / form sheet. Tamagui's Portal
  * mounts behind those presentations and so its content is never visible.
  */
-const AvatarPickerPopover = ({ size = 44 }: Props) => {
+const AvatarPickerPopover = ({
+  value,
+  onChange,
+  name,
+  size = 44,
+  imageFileName,
+  background,
+  showBackgroundSwatches = false,
+  accessibilityLabel,
+}: Props) => {
   const theme = useTheme()
-  const { avatar, name } = usePreferences()
   const anchorRef = useRef<View>(null)
   const [anchor, setAnchor] = useState<AnchorRect | null>(null)
   const [open, setOpen] = useState(false)
@@ -55,6 +80,11 @@ const AvatarPickerPopover = ({ size = 44 }: Props) => {
   }
 
   const close = () => setOpen(false)
+
+  const handleChange = (next: ProfileAvatar) => {
+    onChange(next)
+    close()
+  }
 
   // Width of the picker content (8 cols × 36 cell + 7 × 2 gap) plus padding.
   const contentWidth = 8 * 36 + 7 * 2 + 24
@@ -84,13 +114,18 @@ const AvatarPickerPopover = ({ size = 44 }: Props) => {
     <>
       <View ref={anchorRef} collapsable={false}>
         <Pressable
-          accessibilityLabel={i18n.t('profilePicture')}
+          accessibilityLabel={accessibilityLabel ?? i18n.t('profilePicture')}
           accessibilityRole='button'
           onPress={handlePress}
           hitSlop={8}
         >
           <View>
-            <Avatar avatar={avatar} name={name.trim()} size={size} />
+            <Avatar
+              avatar={value}
+              name={(name ?? '').trim()}
+              size={size}
+              background={background}
+            />
             <View
               style={{
                 position: 'absolute',
@@ -157,7 +192,12 @@ const AvatarPickerPopover = ({ size = 44 }: Props) => {
             contentStyle,
           ]}
         >
-          <AvatarPickerContent onPicked={close} />
+          <AvatarPickerContent
+            value={value}
+            onChange={handleChange}
+            imageFileName={imageFileName}
+            showBackgroundSwatches={showBackgroundSwatches}
+          />
         </Animated.View>
         <StatusBar translucent />
       </Modal>

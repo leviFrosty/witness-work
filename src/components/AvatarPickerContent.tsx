@@ -9,7 +9,7 @@ import {
   faTrash,
 } from '@fortawesome/free-solid-svg-icons'
 import useTheme from '../contexts/theme'
-import { usePreferences } from '../stores/preferences'
+import { ProfileAvatar, usePreferences } from '../stores/preferences'
 import Text from './MyText'
 import Button from './Button'
 import IsSupporter from './IsSupporter'
@@ -73,12 +73,8 @@ const EMOJI_OPTIONS = [
   '🌍',
 ]
 
-/**
- * Filename inside FileSystem.documentDirectory. A single fixed path keeps the
- * user's on-device footprint to exactly one avatar image — replacing the avatar
- * overwrites the old file.
- */
-const AVATAR_FILENAME = 'profile-avatar.jpg'
+/** Default filename inside FileSystem.documentDirectory for the user's profile. */
+const DEFAULT_AVATAR_FILENAME = 'profile-avatar.jpg'
 
 const EMOJI_COLS = 8
 const EMOJI_CELL = 36
@@ -86,8 +82,24 @@ const EMOJI_GAP = 2
 const SWATCH_SIZE = 24
 
 interface Props {
-  /** Fired after a pick or clear succeeds — lets callers close the popover. */
-  onPicked?: () => void
+  /** Currently-selected avatar (drives the highlighted state in the grid). */
+  value: ProfileAvatar
+  /**
+   * Called with the next avatar after the user picks an emoji, image, or
+   * clears.
+   */
+  onChange: (next: ProfileAvatar) => void
+  /**
+   * Filename used for the persisted image inside
+   * `FileSystem.documentDirectory`. Each consumer (profile, per-contact) should
+   * pass a unique name so picks don't trample each other's files.
+   */
+  imageFileName?: string
+  /**
+   * Show the accent-tone swatches above the emoji grid. Only meaningful for the
+   * user's profile avatar — contacts have no associated background preference.
+   */
+  showBackgroundSwatches?: boolean
 }
 
 /**
@@ -162,18 +174,21 @@ const BackgroundSwatches = () => {
   )
 }
 
-const AvatarPickerContent = ({ onPicked }: Props) => {
+const AvatarPickerContent = ({
+  value,
+  onChange,
+  imageFileName = DEFAULT_AVATAR_FILENAME,
+  showBackgroundSwatches = true,
+}: Props) => {
   const theme = useTheme()
-  const { avatar, set } = usePreferences()
-  // Image avatars ignore the background color, so hide the swatches entirely
-  // in that case rather than showing an inert control. Non-image avatars get
-  // the full picker, gated behind `IsSupporter` for non-supporters.
-  const showBackgroundSwatches = avatar.type !== 'image'
+  // Image avatars ignore the background color, so hide the swatches when the
+  // current pick is an image even if the caller opted in.
+  const renderSwatches = showBackgroundSwatches && value.type !== 'image'
 
   const deleteStoredImage = async () => {
-    if (avatar.type !== 'image' || !avatar.value) return
+    if (value.type !== 'image' || !value.value) return
     try {
-      const path = avatar.value.split('?')[0]
+      const path = value.value.split('?')[0]
       await FileSystem.deleteAsync(path, { idempotent: true })
     } catch (e) {
       logger.warn('Failed to delete previous avatar image', e)
@@ -182,14 +197,12 @@ const AvatarPickerContent = ({ onPicked }: Props) => {
 
   const pickEmoji = async (emoji: string) => {
     await deleteStoredImage()
-    set({ avatar: { type: 'emoji', value: emoji } })
-    onPicked?.()
+    onChange({ type: 'emoji', value: emoji })
   }
 
   const clearAvatar = async () => {
     await deleteStoredImage()
-    set({ avatar: { type: 'none', value: '' } })
-    onPicked?.()
+    onChange({ type: 'none', value: '' })
   }
 
   const pickImage = async () => {
@@ -207,7 +220,7 @@ const AvatarPickerContent = ({ onPicked }: Props) => {
     if (result.canceled || !result.assets[0]) return
 
     const src = result.assets[0].uri
-    const destPath = `${FileSystem.documentDirectory}${AVATAR_FILENAME}`
+    const destPath = `${FileSystem.documentDirectory}${imageFileName}`
     try {
       await FileSystem.deleteAsync(destPath, { idempotent: true })
       await FileSystem.copyAsync({ from: src, to: destPath })
@@ -217,16 +230,15 @@ const AvatarPickerContent = ({ onPicked }: Props) => {
       return
     }
     // Cache-buster so <Image> reloads when the same path is reused.
-    set({ avatar: { type: 'image', value: `${destPath}?t=${Date.now()}` } })
-    onPicked?.()
+    onChange({ type: 'image', value: `${destPath}?t=${Date.now()}` })
   }
 
-  const hasAvatar = avatar.type !== 'none' && !!avatar.value
+  const hasAvatar = value.type !== 'none' && !!value.value
   const gridWidth = EMOJI_COLS * EMOJI_CELL + (EMOJI_COLS - 1) * EMOJI_GAP
 
   return (
     <View style={{ width: gridWidth, gap: 12 }}>
-      {showBackgroundSwatches && (
+      {renderSwatches && (
         <IsSupporter
           feature='customAccentColor'
           size='sm'
@@ -243,7 +255,7 @@ const AvatarPickerContent = ({ onPicked }: Props) => {
         }}
       >
         {EMOJI_OPTIONS.map((emoji) => {
-          const selected = avatar.type === 'emoji' && avatar.value === emoji
+          const selected = value.type === 'emoji' && value.value === emoji
           return (
             <Pressable
               key={emoji}

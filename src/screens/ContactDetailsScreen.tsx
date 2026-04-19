@@ -1,4 +1,4 @@
-import { View, ScrollView, useColorScheme, Share } from 'react-native'
+import { View, ScrollView, useColorScheme, Share, Alert } from 'react-native'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import Text from '../components/MyText'
 import useTheme from '../contexts/theme'
@@ -65,10 +65,11 @@ import { useMarkerColors } from '../hooks/useMarkerColors'
 import { getContactStaleness, stalenessToColor } from '../lib/contactStaleness'
 import DismissContactSheet from '../components/DismissContactSheet'
 import Card from '../components/Card'
-import ContactActionsSheet, {
-  ContactActionsSheetState,
-} from '../components/ContactActionsSheet'
 import { buildContactShareLink } from '../lib/contactShareLink'
+import { MenuView, MenuAction } from '@react-native-menu/menu'
+import { isContactDismissed } from '../lib/dismissedContacts'
+import Avatar from '../components/Avatar'
+import { ProfileAvatar } from '../stores/preferences'
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Contact Details'>
 
@@ -139,11 +140,13 @@ const PhoneRow = ({ contact }: { contact: Contact }) => {
 
 const Hero = ({
   name,
+  avatar,
   isBibleStudy: isActiveBibleStudy,
   hasStudiedPreviously,
   mostRecentStudy,
 }: {
   name: string
+  avatar: ProfileAvatar
   isBibleStudy?: boolean
   hasStudiedPreviously?: boolean
   mostRecentStudy: Conversation | null
@@ -153,13 +156,15 @@ const Hero = ({
   return (
     <View
       style={{
-        paddingVertical: 100,
-        gap: 8,
+        paddingTop: 80,
+        paddingBottom: 24,
+        gap: 12,
         justifyContent: 'center',
         alignItems: 'center',
         backgroundColor: theme.colors.accent3,
       }}
     >
+      <Avatar avatar={avatar} name={name} size={134} focusable />
       <Text
         style={{
           fontSize: 14,
@@ -175,6 +180,7 @@ const Hero = ({
             fontSize: 40,
             fontFamily: theme.fonts.bold,
             color: theme.colors.textInverse,
+            textAlign: 'center',
           },
         }}
       >
@@ -635,11 +641,58 @@ const ContactDetailsScreen = ({ route, navigation }: Props) => {
 
   const [sheetOpen, setSheetOpen] = useState(false)
   const [dismissSheetOpen, setDismissSheetOpen] = useState(false)
-  const [contactActionsSheet, setContactActionsSheet] =
-    useState<ContactActionsSheetState>({
-      open: false,
-      contact: undefined,
+
+  const contactMenuActions = useMemo<MenuAction[]>(() => {
+    const actions: MenuAction[] = [
+      { id: 'edit', title: i18n.t('edit'), image: 'pencil' },
+    ]
+    if (contact && !isContactDismissed(contact)) {
+      actions.push({ id: 'dismiss', title: i18n.t('dismiss'), image: 'clock' })
+    }
+    actions.push({
+      id: 'delete',
+      title: i18n.t('delete'),
+      image: 'trash',
+      attributes: { destructive: true },
     })
+    return actions
+  }, [contact])
+
+  const handleContactMenuAction = useCallback(
+    (action: string) => {
+      if (!contact) return
+      switch (action) {
+        case 'edit':
+          navigation.replace('Contact Form', { id: contact.id, edit: true })
+          break
+        case 'dismiss':
+          setDismissSheetOpen(true)
+          break
+        case 'delete':
+          Alert.alert(
+            i18n.t('archiveContact_question'),
+            i18n.t('archiveContact_description'),
+            [
+              { text: i18n.t('cancel'), style: 'cancel' },
+              {
+                text: i18n.t('delete'),
+                style: 'destructive',
+                onPress: () => {
+                  deleteContact(contact.id)
+                  toast.show(i18n.t('success'), {
+                    message: i18n.t('archived'),
+                    native: true,
+                  })
+                  navigation.popToTop()
+                },
+              },
+            ]
+          )
+          break
+      }
+    },
+    [contact, deleteContact, navigation, toast]
+  )
 
   const handleExportContact = useCallback(async () => {
     if (!contact) return
@@ -679,11 +732,21 @@ const ContactDetailsScreen = ({ route, navigation }: Props) => {
       logger.error('Falling back to file export:', error)
     }
 
+    // Drop per-device image avatar URIs — same policy as the universal-link
+    // share (see contactShareLink.ts CONTACT_POLICY.avatar). The file path
+    // points inside this device's FileSystem.documentDirectory and would be
+    // dead on the recipient's device.
+    let exportContact: Contact = contact
+    if (contact.avatar?.type === 'image') {
+      exportContact = { ...contact }
+      delete exportContact.avatar
+    }
+
     const exportData: ContactExport = {
       version: '1.0',
       type: 'witnesswork-contact',
       exportedAt: moment().toISOString(),
-      contact,
+      contact: exportContact,
     }
 
     if (contactConversations.length > 0) {
@@ -733,15 +796,17 @@ const ContactDetailsScreen = ({ route, navigation }: Props) => {
                 right: 0,
               }}
             >
-              <IconButton
-                icon={faEllipsisVertical}
-                color={theme.colors.textInverse}
-                onPress={() => {
-                  if (contact) {
-                    setContactActionsSheet({ open: true, contact })
-                  }
-                }}
-              />
+              <MenuView
+                actions={contactMenuActions}
+                onPressAction={({ nativeEvent }) =>
+                  handleContactMenuAction(nativeEvent.event)
+                }
+              >
+                <IconButton
+                  icon={faEllipsisVertical}
+                  color={theme.colors.textInverse}
+                />
+              </MenuView>
 
               <IconButton
                 icon={contact?.isFavorite ? faStar : faStarOutline}
@@ -788,16 +853,14 @@ const ContactDetailsScreen = ({ route, navigation }: Props) => {
     contact,
     contact?.id,
     contact?.isFavorite,
-    deleteContact,
+    contactMenuActions,
+    handleContactMenuAction,
     handleExportContact,
     navigation,
     params.id,
-    theme.colors.accent,
     theme.colors.accent3,
-    theme.colors.accentTranslucent,
     theme.colors.textInverse,
     theme.numbers.borderRadiusSm,
-    toast,
     toggleFavoriteContact,
   ])
 
@@ -873,6 +936,7 @@ const ContactDetailsScreen = ({ route, navigation }: Props) => {
             hasStudiedPreviously={hasStudiedPreviously}
             mostRecentStudy={mostRecentStudy}
             name={name}
+            avatar={contact.avatar ?? { type: 'none', value: '' }}
           />
           {developerTools && (
             <Card style={{ marginHorizontal: 10 }}>
@@ -993,12 +1057,6 @@ const ContactDetailsScreen = ({ route, navigation }: Props) => {
           />
         </Wrapper>
       </ScrollView>
-      <ContactActionsSheet
-        sheet={contactActionsSheet}
-        setSheet={setContactActionsSheet}
-        navigation={navigation}
-        setDismissSheetOpen={setDismissSheetOpen}
-      />
       <AddSheet
         contact={contact}
         navigation={navigation}

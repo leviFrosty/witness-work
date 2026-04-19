@@ -183,7 +183,13 @@ const ProfileCard = ({ preview, editable, onPressIncomplete }: Props) => {
   })()
 
   const avatarEl = editable ? (
-    <AvatarPickerPopover size={44} />
+    <AvatarPickerPopover
+      value={avatar}
+      onChange={(next) => set({ avatar: next })}
+      name={trimmedName}
+      size={44}
+      showBackgroundSwatches
+    />
   ) : (
     <Avatar avatar={avatar} name={trimmedName} size={44} />
   )

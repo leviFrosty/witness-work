@@ -25,6 +25,7 @@ import SwipeableArchive from './swipeableActions/Archive'
 import SwipeableDismiss from './swipeableActions/Dismiss'
 import DismissContactSheet from './DismissContactSheet'
 import { useToastController } from '@tamagui/toast'
+import Avatar from './Avatar'
 
 const ContactRow = ({
   contact,
@@ -122,8 +123,13 @@ const ContactRow = ({
           renderRightActions={() => <SwipeableArchive size='sm' />}
           onSwipeableOpen={handleSwipeOpen}
         >
-          <View style={{ alignItems: 'center', flexDirection: 'row' }}>
-            <View style={{ flexGrow: 1, gap: 2 }}>
+          <View style={{ alignItems: 'center', flexDirection: 'row', gap: 12 }}>
+            <Avatar
+              avatar={contact.avatar ?? { type: 'none', value: '' }}
+              name={contact.name}
+              size={36}
+            />
+            <View style={{ flexGrow: 1, flexShrink: 1, gap: 2 }}>
               <Text style={{ fontSize: 18 }}>{contact.name}</Text>
               <Text style={{ color: theme.colors.textAlt, fontSize: 10 }}>
                 {mostRecentConversation

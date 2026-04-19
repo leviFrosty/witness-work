@@ -41,6 +41,12 @@ importers:
       '@react-native-community/datetimepicker':
         specifier: 8.6.0
         version: 8.6.0(expo@55.0.15)(react-native@0.83.4(@babel/core@7.28.4)(@react-native-community/cli@13.6.9)(@react-native/metro-config@0.85.0(@babel/core@7.28.4))(@types/react@19.2.14)(react@19.2.0))(react@19.2.0)
+      '@react-native-menu/menu':
+        specifier: ^2.0.0
+        version: 2.0.0(react-native@0.83.4(@babel/core@7.28.4)(@react-native-community/cli@13.6.9)(@react-native/metro-config@0.85.0(@babel/core@7.28.4))(@types/react@19.2.14)(react@19.2.0))(react@19.2.0)
+      '@react-native-picker/picker':
+        specifier: ^2.11.4
+        version: 2.11.4(react-native@0.83.4(@babel/core@7.28.4)(@react-native-community/cli@13.6.9)(@react-native/metro-config@0.85.0(@babel/core@7.28.4))(@types/react@19.2.14)(react@19.2.0))(react@19.2.0)
       '@react-navigation/bottom-tabs':
         specifier: ^7.15.9
         version: 7.15.9(@react-navigation/native@7.2.2(react-native@0.83.4(@babel/core@7.28.4)(@react-native-community/cli@13.6.9)(@react-native/metro-config@0.85.0(@babel/core@7.28.4))(@types/react@19.2.14)(react@19.2.0))(react@19.2.0))(react-native-safe-area-context@5.6.2(react-native@0.83.4(@babel/core@7.28.4)(@react-native-community/cli@13.6.9)(@react-native/metro-config@0.85.0(@babel/core@7.28.4))(@types/react@19.2.14)(react@19.2.0))(react@19.2.0))(react-native-screens@4.23.0(react-native@0.83.4(@babel/core@7.28.4)(@react-native-community/cli@13.6.9)(@react-native/metro-config@0.85.0(@babel/core@7.28.4))(@types/react@19.2.14)(react@19.2.0))(react@19.2.0))(react-native@0.83.4(@babel/core@7.28.4)(@react-native-community/cli@13.6.9)(@react-native/metro-config@0.85.0(@babel/core@7.28.4))(@types/react@19.2.14)(react@19.2.0))(react@19.2.0)
@@ -218,9 +224,6 @@ importers:
       react-native-calendars:
         specifier: ^1.1313.0
         version: 1.1313.0(react-native@0.83.4(@babel/core@7.28.4)(@react-native-community/cli@13.6.9)(@react-native/metro-config@0.85.0(@babel/core@7.28.4))(@types/react@19.2.14)(react@19.2.0))(react@19.2.0)
-      react-native-element-dropdown:
-        specifier: ^2.12.4
-        version: 2.12.4(react-native@0.83.4(@babel/core@7.28.4)(@react-native-community/cli@13.6.9)(@react-native/metro-config@0.85.0(@babel/core@7.28.4))(@types/react@19.2.14)(react@19.2.0))(react@19.2.0)
       react-native-gesture-handler:
         specifier: ~2.30.1
         version: 2.30.1(react-native@0.83.4(@babel/core@7.28.4)(@react-native-community/cli@13.6.9)(@react-native/metro-config@0.85.0(@babel/core@7.28.4))(@types/react@19.2.14)(react@19.2.0))(react@19.2.0)
@@ -240,8 +243,8 @@ importers:
         specifier: 8.0.0
         version: 8.0.0(react-native@0.83.4(@babel/core@7.28.4)(@react-native-community/cli@13.6.9)(@react-native/metro-config@0.85.0(@babel/core@7.28.4))(@types/react@19.2.14)(react@19.2.0))(react@19.2.0)
       react-native-purchases:
-        specifier: 8.6.2
-        version: 8.6.2(react-native@0.83.4(@babel/core@7.28.4)(@react-native-community/cli@13.6.9)(@react-native/metro-config@0.85.0(@babel/core@7.28.4))(@types/react@19.2.14)(react@19.2.0))(react@19.2.0)
+        specifier: 10.0.1
+        version: 10.0.1(react-native-web@0.21.2(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(react-native@0.83.4(@babel/core@7.28.4)(@react-native-community/cli@13.6.9)(@react-native/metro-config@0.85.0(@babel/core@7.28.4))(@types/react@19.2.14)(react@19.2.0))(react@19.2.0)
       react-native-reanimated:
         specifier: ~4.3.0
         version: 4.3.0(react-native-worklets@0.8.1(@babel/core@7.28.4)(@react-native/metro-config@0.85.0(@babel/core@7.28.4))(react-native@0.83.4(@babel/core@7.28.4)(@react-native-community/cli@13.6.9)(@react-native/metro-config@0.85.0(@babel/core@7.28.4))(@types/react@19.2.14)(react@19.2.0))(react@19.2.0))(react-native@0.83.4(@babel/core@7.28.4)(@react-native-community/cli@13.6.9)(@react-native/metro-config@0.85.0(@babel/core@7.28.4))(@types/react@19.2.14)(react@19.2.0))(react@19.2.0)
@@ -2629,6 +2632,24 @@ packages:
       react-native-windows:
         optional: true
 
+  '@react-native-menu/menu@2.0.0':
+    resolution:
+      {
+        integrity: sha512-hb8Mirw6aKPGONhgo52IiNpwHtISVrgCT3rMdFX1qS7eOFNzOcQh8d2UDnaH5zVpxN+QuvWtaaiRMGFpIjzdtA==,
+      }
+    peerDependencies:
+      react: '*'
+      react-native: '*'
+
+  '@react-native-picker/picker@2.11.4':
+    resolution:
+      {
+        integrity: sha512-Kf8h1AMnBo54b1fdiVylP2P/iFcZqzpMYcglC28EEFB1DEnOjsNr6Ucqc+3R9e91vHxEDnhZFbYDmAe79P2gjA==,
+      }
+    peerDependencies:
+      react: '*'
+      react-native: '*'
+
   '@react-native/assets-registry@0.83.4':
     resolution:
       {
@@ -2873,10 +2894,22 @@ packages:
         integrity: sha512-1tJHg4KKRJuQ1/EvJxatrMef3NZXEPzwUIUZ3n1yJ2t7Q97siwRtbynRpQG9/69ebbtiZ8W3ScOZF/OmhvM4Rg==,
       }
 
-  '@revenuecat/purchases-typescript-internal@13.19.0':
+  '@revenuecat/purchases-js-hybrid-mappings@18.1.0':
     resolution:
       {
-        integrity: sha512-Slxrn+mH4PPY+kGrvhvvIGdHZeF6hNRZPp7squ7aGfSpl8twnssjsr0Fqs0DQmmedZjk4tF+N4rLg2OS84GoLg==,
+        integrity: sha512-P2KtqjPUcdEhTx51nzXAWNFoNTRzQm9lR/g2S90jQ/uzwrB4H7OJNRJ9B1NFNa511Uc84LfwmmIh51oeQO9+qQ==,
+      }
+
+  '@revenuecat/purchases-js@1.34.0':
+    resolution:
+      {
+        integrity: sha512-p3hpHHvyllAckqnjpjaCoj+lVK0gNJwqR1F8EwZPw7eMKFummE0UItbGzBCfncJIPxGA1NJHrgZb1dLflEmjhg==,
+      }
+
+  '@revenuecat/purchases-typescript-internal@18.1.0':
+    resolution:
+      {
+        integrity: sha512-aoXmrvDSCVStXAbv+yfUkb1BEIga2hXYiUSLHOoGMX6luXXlSLNMeG7nhvMa7gXTgjnEZXDYOG59en4NNBtJ6A==,
       }
 
   '@rollup/rollup-android-arm-eabi@4.60.1':
@@ -10264,16 +10297,6 @@ packages:
       react-native-gesture-handler: '>= 2.0.0'
       react-native-reanimated: '>= 2.0.0'
 
-  react-native-element-dropdown@2.12.4:
-    resolution:
-      {
-        integrity: sha512-abZc5SVji9FIt7fjojRYrbuvp03CoeZJrgvezQoDoSOrpiTqkX69ix5m+j06W2AVncA0VWvbT+vCMam8SoVadw==,
-      }
-    engines: { node: '>= 16.0.0' }
-    peerDependencies:
-      react: '*'
-      react-native: '*'
-
   react-native-gesture-handler@2.30.1:
     resolution:
       {
@@ -10349,14 +10372,18 @@ packages:
       react: '*'
       react-native: '*'
 
-  react-native-purchases@8.6.2:
+  react-native-purchases@10.0.1:
     resolution:
       {
-        integrity: sha512-WtU0UXJZ2EHHSy2UUi7b21RwU06Fl7nY45civ0VfoNU/plgzOWFGm4utXgJBwYjJpFCDQaE8yh5/gwBSmtpmNA==,
+        integrity: sha512-FyJgOLuGo2TqR/sswzgkUebiYu30FPAsB9N2goyv4q2pr5ixPL0v6QrETrYDpnPI8kz/wg+aMv8/HsAU9b6ajw==,
       }
     peerDependencies:
       react: '>= 16.6.3'
-      react-native: '*'
+      react-native: '>= 0.73.0'
+      react-native-web: '*'
+    peerDependenciesMeta:
+      react-native-web:
+        optional: true
 
   react-native-reanimated-carousel@4.0.3:
     resolution:
@@ -14413,6 +14440,16 @@ snapshots:
     optionalDependencies:
       expo: 55.0.15(@babel/core@7.28.4)(@expo/dom-webview@55.0.5)(react-dom@19.2.0(react@19.2.0))(react-native-worklets@0.8.1(@babel/core@7.28.4)(@react-native/metro-config@0.85.0(@babel/core@7.28.4))(react-native@0.83.4(@babel/core@7.28.4)(@react-native-community/cli@13.6.9)(@react-native/metro-config@0.85.0(@babel/core@7.28.4))(@types/react@19.2.14)(react@19.2.0))(react@19.2.0))(react-native@0.83.4(@babel/core@7.28.4)(@react-native-community/cli@13.6.9)(@react-native/metro-config@0.85.0(@babel/core@7.28.4))(@types/react@19.2.14)(react@19.2.0))(react@19.2.0)(typescript@5.9.2)
 
+  '@react-native-menu/menu@2.0.0(react-native@0.83.4(@babel/core@7.28.4)(@react-native-community/cli@13.6.9)(@react-native/metro-config@0.85.0(@babel/core@7.28.4))(@types/react@19.2.14)(react@19.2.0))(react@19.2.0)':
+    dependencies:
+      react: 19.2.0
+      react-native: 0.83.4(@babel/core@7.28.4)(@react-native-community/cli@13.6.9)(@react-native/metro-config@0.85.0(@babel/core@7.28.4))(@types/react@19.2.14)(react@19.2.0)
+
+  '@react-native-picker/picker@2.11.4(react-native@0.83.4(@babel/core@7.28.4)(@react-native-community/cli@13.6.9)(@react-native/metro-config@0.85.0(@babel/core@7.28.4))(@types/react@19.2.14)(react@19.2.0))(react@19.2.0)':
+    dependencies:
+      react: 19.2.0
+      react-native: 0.83.4(@babel/core@7.28.4)(@react-native-community/cli@13.6.9)(@react-native/metro-config@0.85.0(@babel/core@7.28.4))(@types/react@19.2.14)(react@19.2.0)
+
   '@react-native/assets-registry@0.83.4': {}
 
   '@react-native/babel-plugin-codegen@0.83.4(@babel/core@7.28.4)':
@@ -14705,7 +14742,13 @@ snapshots:
     dependencies:
       nanoid: 3.3.11
 
-  '@revenuecat/purchases-typescript-internal@13.19.0': {}
+  '@revenuecat/purchases-js-hybrid-mappings@18.1.0':
+    dependencies:
+      '@revenuecat/purchases-js': 1.34.0
+
+  '@revenuecat/purchases-js@1.34.0': {}
+
+  '@revenuecat/purchases-typescript-internal@18.1.0': {}
 
   '@rollup/rollup-android-arm-eabi@4.60.1':
     optional: true
@@ -20620,12 +20663,6 @@ snapshots:
       react-native-reanimated: 4.3.0(react-native-worklets@0.8.1(@babel/core@7.28.4)(@react-native/metro-config@0.85.0(@babel/core@7.28.4))(react-native@0.83.4(@babel/core@7.28.4)(@react-native-community/cli@13.6.9)(@react-native/metro-config@0.85.0(@babel/core@7.28.4))(@types/react@19.2.14)(react@19.2.0))(react@19.2.0))(react-native@0.83.4(@babel/core@7.28.4)(@react-native-community/cli@13.6.9)(@react-native/metro-config@0.85.0(@babel/core@7.28.4))(@types/react@19.2.14)(react@19.2.0))(react@19.2.0)
       use-latest-callback: 0.2.4(react@19.2.0)
 
-  react-native-element-dropdown@2.12.4(react-native@0.83.4(@babel/core@7.28.4)(@react-native-community/cli@13.6.9)(@react-native/metro-config@0.85.0(@babel/core@7.28.4))(@types/react@19.2.14)(react@19.2.0))(react@19.2.0):
-    dependencies:
-      lodash: 4.18.1
-      react: 19.2.0
-      react-native: 0.83.4(@babel/core@7.28.4)(@react-native-community/cli@13.6.9)(@react-native/metro-config@0.85.0(@babel/core@7.28.4))(@types/react@19.2.14)(react@19.2.0)
-
   react-native-gesture-handler@2.30.1(react-native@0.83.4(@babel/core@7.28.4)(@react-native-community/cli@13.6.9)(@react-native/metro-config@0.85.0(@babel/core@7.28.4))(@types/react@19.2.14)(react@19.2.0))(react@19.2.0):
     dependencies:
       '@egjs/hammerjs': 2.0.17
@@ -20673,11 +20710,14 @@ snapshots:
       react: 19.2.0
       react-native: 0.83.4(@babel/core@7.28.4)(@react-native-community/cli@13.6.9)(@react-native/metro-config@0.85.0(@babel/core@7.28.4))(@types/react@19.2.14)(react@19.2.0)
 
-  react-native-purchases@8.6.2(react-native@0.83.4(@babel/core@7.28.4)(@react-native-community/cli@13.6.9)(@react-native/metro-config@0.85.0(@babel/core@7.28.4))(@types/react@19.2.14)(react@19.2.0))(react@19.2.0):
+  react-native-purchases@10.0.1(react-native-web@0.21.2(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(react-native@0.83.4(@babel/core@7.28.4)(@react-native-community/cli@13.6.9)(@react-native/metro-config@0.85.0(@babel/core@7.28.4))(@types/react@19.2.14)(react@19.2.0))(react@19.2.0):
     dependencies:
-      '@revenuecat/purchases-typescript-internal': 13.19.0
+      '@revenuecat/purchases-js-hybrid-mappings': 18.1.0
+      '@revenuecat/purchases-typescript-internal': 18.1.0
       react: 19.2.0
       react-native: 0.83.4(@babel/core@7.28.4)(@react-native-community/cli@13.6.9)(@react-native/metro-config@0.85.0(@babel/core@7.28.4))(@types/react@19.2.14)(react@19.2.0)
+    optionalDependencies:
+      react-native-web: 0.21.2(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
 
   react-native-reanimated-carousel@4.0.3(react-native-gesture-handler@2.30.1(react-native@0.83.4(@babel/core@7.28.4)(@react-native-community/cli@13.6.9)(@react-native/metro-config@0.85.0(@babel/core@7.28.4))(@types/react@19.2.14)(react@19.2.0))(react@19.2.0))(react-native-reanimated@4.3.0(react-native-worklets@0.8.1(@babel/core@7.28.4)(@react-native/metro-config@0.85.0(@babel/core@7.28.4))(react-native@0.83.4(@babel/core@7.28.4)(@react-native-community/cli@13.6.9)(@react-native/metro-config@0.85.0(@babel/core@7.28.4))(@types/react@19.2.14)(react@19.2.0))(react@19.2.0))(react-native@0.83.4(@babel/core@7.28.4)(@react-native-community/cli@13.6.9)(@react-native/metro-config@0.85.0(@babel/core@7.28.4))(@types/react@19.2.14)(react@19.2.0))(react@19.2.0))(react-native@0.83.4(@babel/core@7.28.4)(@react-native-community/cli@13.6.9)(@react-native/metro-config@0.85.0(@babel/core@7.28.4))(@types/react@19.2.14)(react@19.2.0))(react@19.2.0):
     dependencies:

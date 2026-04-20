@@ -1084,6 +1084,9 @@
   "rescheduleDescription": "Move this follow-up to a new date.",
   "newConversation": "New Conversation",
   "addConversationShortDescription": "Log a new visit with this contact.",
+  "dismissFollowUp": "Dismiss follow-up",
+  "dismissFollowUpConfirmTitle": "Dismiss this follow-up?",
+  "dismissFollowUpConfirmDesc": "This removes the follow-up reminder without logging a new conversation. The original conversation stays unchanged.",
   "supporter": "Supporter",
   "comingSoon": "Coming soon",
   "supporterOnboardingTitle": "A little thank-you for supporters",
@@ -1246,5 +1249,8 @@
   "onboardingHeroTagline": "Your field service assistant.",
   "onboardingHeroReturningLink": "I already use WitnessWork",
   "continueAs": "Continue as {{role}}",
-  "continueWith": "Continue with {{option}}"
+  "continueWith": "Continue with {{option}}",
+  "notNow": "Not Now",
+  "shareLocationForBetterAddressSearch": "Improve Address Search?",
+  "shareLocationForBetterAddressSearch_description": "WitnessWork can use your approximate location to return more relevant address suggestions. Your location is never shared with external services."
 }

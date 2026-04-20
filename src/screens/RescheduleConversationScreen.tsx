@@ -1,5 +1,5 @@
 import React, { useCallback, useMemo, useState } from 'react'
-import { View } from 'react-native'
+import { Alert, View } from 'react-native'
 import moment from 'moment'
 import * as Notifications from 'expo-notifications'
 import { NativeStackScreenProps } from '@react-navigation/native-stack'
@@ -380,6 +380,39 @@ const RescheduleConversationScreen = ({ route, navigation }: Props) => {
     dismiss,
   ])
 
+  const handleDismissFollowUp = useCallback(() => {
+    if (!conversation) return
+    Alert.alert(
+      i18n.t('dismissFollowUpConfirmTitle'),
+      i18n.t('dismissFollowUpConfirmDesc'),
+      [
+        { text: i18n.t('cancel'), style: 'cancel' },
+        {
+          text: i18n.t('dismiss'),
+          style: 'destructive',
+          onPress: async () => {
+            await Promise.all(
+              (conversation.followUp?.notifications ?? []).map(
+                async ({ id }) => {
+                  try {
+                    await Notifications.cancelScheduledNotificationAsync(id)
+                  } catch (e) {
+                    logger.error(
+                      '[reschedule] failed to cancel notification',
+                      e
+                    )
+                  }
+                }
+              )
+            )
+            updateConversation({ ...conversation, followUp: undefined })
+            dismiss()
+          },
+        },
+      ]
+    )
+  }, [conversation, updateConversation, dismiss])
+
   const handleAddConversation = useCallback(() => {
     if (!contact) return
     // Not marking the original follow-up complete — this opens Add
@@ -546,6 +579,21 @@ const RescheduleConversationScreen = ({ route, navigation }: Props) => {
             },
           ]}
         />
+
+        <Button
+          onPress={handleDismissFollowUp}
+          style={{ alignSelf: 'center', paddingVertical: 8 }}
+        >
+          <Text
+            style={{
+              color: theme.colors.textAlt,
+              fontSize: 13,
+              textDecorationLine: 'underline',
+            }}
+          >
+            {i18n.t('dismissFollowUp')}
+          </Text>
+        </Button>
       </View>
     </Wrapper>
   )

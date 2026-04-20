@@ -43,6 +43,7 @@ import { installiCloudSync, iCloudSync } from './lib/sync/iCloudSync'
 import { linking, navigationRef } from './lib/linking'
 import DeepLinkListeners from './components/DeepLinkListeners'
 import useIsSupporter from './hooks/useIsSupporter'
+import { useSupporter } from './stores/supporter'
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
@@ -80,6 +81,20 @@ if (Constants.appOwnership === 'expo' && Constants.expoVersion) {
 }
 Sentry.setTag('expoChannel', Updates.channel)
 Sentry.setTag('expoUpdateVersion', Updates.updateId)
+
+/**
+ * Mirrors supporter status into the `useSupporter` zustand store so non-React
+ * code (widget snapshot writer) can branch on it without pulling from
+ * `CustomerContext`. Kept tiny and side-effect-only so it composes cleanly
+ * alongside `SupporterSyncDefault`.
+ */
+function SupporterStoreSync() {
+  const { isSupporter } = useIsSupporter()
+  useEffect(() => {
+    useSupporter.getState().setSupporter(isSupporter)
+  }, [isSupporter])
+  return null
+}
 
 /**
  * Auto-enables iCloud sync for supporters who haven't explicitly chosen a
@@ -193,6 +208,7 @@ export default function App() {
   try {
     return (
       <CustomerProvider>
+        <SupporterStoreSync />
         <SupporterSyncDefault />
         <ThemeProvider>
           <SafeAreaProvider>

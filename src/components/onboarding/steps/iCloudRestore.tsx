@@ -21,6 +21,7 @@ import * as ICloudBridge from '../../../../modules/icloud-bridge'
 import { iCloudSync } from '../../../lib/sync/iCloudSync'
 import { SyncPayload } from '../../../lib/sync/payload'
 import { usePreferences } from '../../../stores/preferences'
+import useIsSupporter from '../../../hooks/useIsSupporter'
 
 interface Props {
   goBack: () => void
@@ -75,6 +76,7 @@ function remoteReferencesImages(remote: SyncPayload): boolean {
 const ICloudRestore = ({ goBack, goNext }: Props) => {
   const theme = useTheme()
   const { set } = usePreferences()
+  const { isSupporter } = useIsSupporter()
   const [probe, setProbe] = useState<Probe>({ state: 'probing' })
   const [restoring, setRestoring] = useState(false)
 
@@ -140,8 +142,17 @@ const ICloudRestore = ({ goBack, goNext }: Props) => {
       iCloudSync.replaceLocalWithRemote(probe.remote)
       // Mark onboarding complete — the user's restored publisher/profile/etc.
       // replaces the defaults they would've otherwise set in the remaining
-      // steps. Leaves `iCloudSyncEnabled` off so ongoing sync is still an
-      // opt-in decision they can make later in Settings (supporter-gated).
+      // steps.
+      //
+      // For supporters, also flip ongoing sync on and mark the choice as
+      // user-set so `SupporterSyncDefault` doesn't second-guess it. The user
+      // just explicitly picked "bring my data from iCloud" — keeping the two
+      // sides in sync is the obvious follow-up, and requiring them to dig
+      // into Settings to turn it on is friction with no upside.
+      //
+      // Non-supporters leave `iCloudSyncEnabled` off: ongoing sync is
+      // supporter-gated, so enabling it here would be a dead write that the
+      // Settings screen would refuse to expose anyway.
       //
       // Also force-set `hasCompletedProfileSetup` + `hasCompletedMapOnboarding`
       // so the main app doesn't re-prompt the user and overwrite their
@@ -151,6 +162,9 @@ const ICloudRestore = ({ goBack, goNext }: Props) => {
         onboardingComplete: true,
         hasCompletedProfileSetup: true,
         hasCompletedMapOnboarding: true,
+        ...(isSupporter
+          ? { iCloudSyncEnabled: true, iCloudSyncSetByUser: true }
+          : {}),
       })
 
       // If the restored payload references images via iCloud markers, prompt
@@ -368,6 +382,18 @@ const ICloudRestore = ({ goBack, goNext }: Props) => {
                 relative: moment(probe.remote.writtenAt).fromNow(),
               })}
             </Text>
+            {isSupporter && (
+              <Text
+                style={{
+                  fontSize: 12,
+                  color: theme.colors.textAlt,
+                  marginTop: 4,
+                  lineHeight: 16,
+                }}
+              >
+                {i18n.t('iCloudRestoreFoundSyncNote')}
+              </Text>
+            )}
           </Card>
         )}
       </View>
@@ -395,7 +421,11 @@ const ICloudRestore = ({ goBack, goNext }: Props) => {
                 </Text>
               </View>
             ) : (
-              i18n.t('iCloudRestoreAction')
+              i18n.t(
+                isSupporter
+                  ? 'iCloudRestoreActionWithSync'
+                  : 'iCloudRestoreAction'
+              )
             )}
           </ActionButton>
         )}

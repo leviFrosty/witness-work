@@ -1193,6 +1193,8 @@
   "iCloudRestoreFoundTitle": "Your data's still here",
   "iCloudRestoreFoundSummary": "From {{device}}, last updated {{relative}}.",
   "iCloudRestoreAction": "Restore from iCloud",
+  "iCloudRestoreActionWithSync": "Restore & keep in sync",
+  "iCloudRestoreFoundSyncNote": "We'll keep this iPhone in sync with iCloud going forward — change this anytime in Settings.",
   "iCloudRestoreRestoring": "Restoring…",
   "iCloudRestoreSkip": "Skip and set up fresh",
   "iCloudRestoreRetry": "Search again",

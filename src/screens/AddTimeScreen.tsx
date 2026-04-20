@@ -593,7 +593,7 @@ const AddTimeScreen = ({ route }: AddTimeScreenProps) => {
                       data={minuteOptions}
                       placeholder={serviceReport.minutes.toString()}
                       onChange={({ value }) => setMinutes(value)}
-                      value={serviceReport.hours.toString()}
+                      value={serviceReport.minutes.toString()}
                     />
                   </View>
                 </InputRowContainer>

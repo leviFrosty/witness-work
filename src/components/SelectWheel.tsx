@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Pressable, View } from 'react-native'
 import { Picker } from '@react-native-picker/picker'
 import { Sheet } from 'tamagui'
@@ -7,6 +7,8 @@ import { faChevronDown } from '@fortawesome/free-solid-svg-icons'
 import useTheme from '../contexts/theme'
 import Text from './MyText'
 import { SelectDataItem, SelectProps } from './Select'
+import i18n from '../lib/locales'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 const SelectWheel = <T,>({
   data,
@@ -16,6 +18,7 @@ const SelectWheel = <T,>({
   placeholder,
 }: SelectProps<T>) => {
   const theme = useTheme()
+  const insets = useSafeAreaInsets()
   const [open, setOpen] = useState(false)
 
   // Mirror Select.tsx: stringify both sides for matching, then map back to
@@ -26,6 +29,45 @@ const SelectWheel = <T,>({
   const selectedLabel = items.find(
     (i) => String(i.value) === stringValue
   )?.label
+
+  // Keep the authoritative state LOCAL to SelectWheel while the sheet is
+  // open. This matters because the native event handler in PickerIOS.ios.js
+  // calls two setStates back-to-back: ours (for the controlled value) and
+  // its own internal `setNativeSelectedIndex`. If those two live in
+  // different component subtrees (e.g. parent state + library state), React
+  // commits them in separate passes — and between those passes the library
+  // re-runs its reconciliation effect with a stale `selectedValue`, sees
+  // disagreement, and shoves the native wheel back to the old value before
+  // the fresh prop arrives. Keeping both setStates in the same subtree lets
+  // React batch them into one commit, so they update together and the
+  // reconciler never sees a stale state.
+  const [draftValue, setDraftValue] = useState<string | undefined>(stringValue)
+  const draftRef = useRef(draftValue)
+  draftRef.current = draftValue
+  const stringValueRef = useRef(stringValue)
+  stringValueRef.current = stringValue
+
+  useEffect(() => {
+    if (open) setDraftValue(stringValueRef.current)
+  }, [open])
+
+  const commitToParent = (next: string | undefined) => {
+    if (next === undefined) return
+    const item = items.find((i) => String(i.value) === next)
+    if (item) onChange(item as unknown as T)
+  }
+
+  const done = () => {
+    if (draftRef.current !== stringValueRef.current) {
+      commitToParent(draftRef.current)
+    }
+    setOpen(false)
+  }
+
+  const cancel = () => {
+    setDraftValue(stringValueRef.current)
+    setOpen(false)
+  }
 
   return (
     <>
@@ -64,19 +106,51 @@ const SelectWheel = <T,>({
         open={open}
         modal
         snapPointsMode='fit'
-        onOpenChange={setOpen}
-        dismissOnSnapToBottom
+        onOpenChange={(next: boolean) => {
+          if (!next) done()
+          else setOpen(true)
+        }}
         animation='quick'
+        disableDrag
       >
         <Sheet.Overlay zIndex={100_000 - 1} />
-        <Sheet.Handle />
-        <Sheet.Frame backgroundColor={theme.colors.background}>
-          <Picker
-            selectedValue={stringValue}
-            onValueChange={(next) => {
-              const item = items.find((i) => String(i.value) === String(next))
-              if (item) onChange(item as unknown as T)
+        <Sheet.Frame
+          backgroundColor={theme.colors.background}
+          padding={0}
+          paddingBottom={insets.bottom}
+        >
+          <View
+            style={{
+              flexDirection: 'row',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              paddingHorizontal: 16,
+              paddingVertical: 12,
+              borderBottomWidth: 1,
+              borderBottomColor: theme.colors.border,
             }}
+          >
+            <Pressable onPress={cancel} hitSlop={8}>
+              <Text style={{ color: theme.colors.accent, fontSize: 16 }}>
+                {i18n.t('cancel')}
+              </Text>
+            </Pressable>
+            <Pressable onPress={done} hitSlop={8}>
+              <Text
+                style={{
+                  color: theme.colors.accent,
+                  fontSize: 16,
+                  fontFamily: theme.fonts.semiBold,
+                }}
+              >
+                {i18n.t('done')}
+              </Text>
+            </Pressable>
+          </View>
+          <Picker
+            style={{ height: 216 }}
+            selectedValue={draftValue}
+            onValueChange={(next) => setDraftValue(String(next))}
             itemStyle={{ color: theme.colors.text }}
           >
             {items.map((item) => (

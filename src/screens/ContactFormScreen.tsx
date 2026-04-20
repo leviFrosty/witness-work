@@ -23,7 +23,7 @@ import AddressSection from '../components/AddressSection'
 import { RootStackParamList } from '../types/rootStack'
 import { Errors } from '../types/textInput'
 import AvatarPickerPopover from '../components/AvatarPickerPopover'
-import { ProfileAvatar } from '../stores/preferences'
+import { ProfileAvatar } from '../types/avatar'
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Contact Form'>
 

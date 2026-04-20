@@ -9,7 +9,8 @@ import {
   faTrash,
 } from '@fortawesome/free-solid-svg-icons'
 import useTheme from '../contexts/theme'
-import { ProfileAvatar, usePreferences } from '../stores/preferences'
+import { usePreferences } from '../stores/preferences'
+import { ProfileAvatar } from '../types/avatar'
 import Text from './MyText'
 import Button from './Button'
 import IsSupporter from './IsSupporter'

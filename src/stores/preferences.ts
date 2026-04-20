@@ -8,6 +8,7 @@ import moment from 'moment'
 import * as Device from 'expo-device'
 import { hasMigratedFromAsyncStorage, MmkvStorage } from './mmkv'
 import { Address } from '../types/contact'
+import { ProfileAvatar } from '../types/avatar'
 import { MinuteDisplayFormat } from '../types/serviceReport'
 
 const SortOptionValues = [
@@ -116,19 +117,6 @@ export type PrefillAddress = {
   address?: Address
   /** When an address was last entered */
   lastUpdated?: Date
-}
-
-/**
- * User-selected profile avatar.
- *
- * - `none`: no avatar set (display falls back to initial letter or icon)
- * - `emoji`: `value` holds the emoji character
- * - `image`: `value` holds a local file URI inside `FileSystem.documentDirectory`
- *   — image never leaves the device.
- */
-export type ProfileAvatar = {
-  type: 'none' | 'emoji' | 'image'
-  value: string
 }
 
 /**

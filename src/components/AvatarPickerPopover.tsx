@@ -14,7 +14,7 @@ import Animated, {
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
 import { faPencil } from '@fortawesome/free-solid-svg-icons'
 import useTheme from '../contexts/theme'
-import { ProfileAvatar } from '../stores/preferences'
+import { ProfileAvatar } from '../types/avatar'
 import Avatar from './Avatar'
 import AvatarPickerContent from './AvatarPickerContent'
 import i18n from '../lib/locales'

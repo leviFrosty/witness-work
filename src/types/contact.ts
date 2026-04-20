@@ -1,4 +1,4 @@
-import { ProfileAvatar } from '../stores/preferences'
+import { ProfileAvatar } from './avatar'
 
 export type Address = {
   line1?: string

@@ -69,7 +69,7 @@ import { buildContactShareLink } from '../lib/contactShareLink'
 import { MenuView, MenuAction } from '@react-native-menu/menu'
 import { isContactDismissed } from '../lib/dismissedContacts'
 import Avatar from '../components/Avatar'
-import { ProfileAvatar } from '../stores/preferences'
+import { ProfileAvatar } from '../types/avatar'
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Contact Details'>
 

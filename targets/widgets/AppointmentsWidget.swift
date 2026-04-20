@@ -83,6 +83,7 @@ private func headerLabel(
 private struct AppointmentRow: View {
   let appointment: WidgetSnapshot.Appointment
   let strings: WidgetSnapshot.Strings
+  @Environment(\.widgetAccent) private var accent
 
   var body: some View {
     // Overdue follow-ups deep-link to the Reschedule sheet — the user almost
@@ -98,38 +99,41 @@ private struct AppointmentRow: View {
         )
 
     Link(destination: destination) {
-      HStack(spacing: WidgetSpacing.lg) {
-        VStack(alignment: .leading, spacing: WidgetSpacing.xs) {
-          HStack(spacing: WidgetSpacing.xs) {
+      HStack(spacing: WidgetSpacing.md) {
+        VStack(alignment: .leading, spacing: 1) {
+          HStack(spacing: 4) {
             Text(appointment.contactName)
-              .font(.system(size: 13, weight: .semibold))
+              .font(.system(size: 14, weight: .semibold))
               .foregroundColor(.primary)
               .lineLimit(1)
               .privacySensitive()
             if appointment.isOverdue {
+              // Tinted capsule (error text on 15% error fill) — consistent
+              // with the tinted pace/quick-action styling used across the
+              // other widgets, less shouty than a solid-red pill.
               Text(strings.overdueLabel.uppercased())
-                .font(.system(size: 8, weight: .bold))
-                .foregroundColor(.white)
-                .padding(.horizontal, 5)
+                .font(.system(size: 9, weight: .bold))
+                .tracking(0.3)
+                .foregroundStyle(WidgetColor.error)
+                .padding(.horizontal, 6)
                 .padding(.vertical, 1)
-                .background(
-                  Capsule().fill(WidgetColor.error)
-                )
+                .background(Capsule().fill(WidgetColor.error.opacity(0.15)))
             }
           }
           // Topic only when present — no reserved blank row otherwise.
           if let topic = appointment.topic, !topic.isEmpty {
             Text(topic)
-              .font(.system(size: 10))
-              .foregroundColor(.secondary)
+              .font(.caption2)
+              .foregroundStyle(.secondary)
               .lineLimit(1)
               .privacySensitive()
           }
         }
         Spacer(minLength: 0)
         Text(appointment.timeFormatted)
-          .font(.system(size: 11, weight: .semibold))
-          .foregroundColor(appointment.isOverdue ? WidgetColor.error : WidgetColor.accent)
+          .font(.system(size: 12, weight: .semibold))
+          .monospacedDigit()
+          .foregroundStyle(appointment.isOverdue ? WidgetColor.error : accent)
           .lineLimit(1)
       }
     }
@@ -169,6 +173,7 @@ private struct AppointmentsWidgetView: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity)
       }
     }
+    .environment(\.widgetAccent, entry.snapshot?.resolvedAccent ?? WidgetColor.brandAccent)
     .containerBackground(.background, for: .widget)
   }
 
@@ -176,19 +181,22 @@ private struct AppointmentsWidgetView: View {
     snapshot: WidgetSnapshot,
     visible: [WidgetSnapshot.Appointment]
   ) -> some View {
-    VStack(alignment: .leading, spacing: WidgetSpacing.md) {
+    VStack(alignment: .leading, spacing: WidgetSpacing.lg) {
+      // Header — caption2 + tracking to match the Report and Contacts
+      // widgets, so the system-caps labels read as one family.
       Text(headerLabel(visible: visible, strings: snapshot.strings, now: entry.date)
             .uppercased())
-        .font(.system(size: 9, weight: .bold))
-        .foregroundColor(.secondary)
+        .font(.caption2)
+        .fontWeight(.semibold)
+        .tracking(0.5)
+        .foregroundStyle(.secondary)
         .lineLimit(1)
 
-      VStack(spacing: WidgetSpacing.md) {
-        ForEach(Array(visible.enumerated()), id: \.element.id) { index, appt in
+      // Dividers removed — whitespace carries the row rhythm (matches
+      // Apple's Reminders/Mail widget patterns).
+      VStack(spacing: WidgetSpacing.xl) {
+        ForEach(visible) { appt in
           AppointmentRow(appointment: appt, strings: snapshot.strings)
-          if index < visible.count - 1 {
-            Divider().opacity(0.4)
-          }
         }
         Spacer(minLength: 0)
       }

@@ -1,5 +1,5 @@
 import React, { useCallback, useMemo, useState } from 'react'
-import { Alert, View } from 'react-native'
+import { Alert, Pressable, View } from 'react-native'
 import moment from 'moment'
 import * as Notifications from 'expo-notifications'
 import { NativeStackScreenProps } from '@react-navigation/native-stack'
@@ -11,6 +11,7 @@ import {
   faComment,
   faPenToSquare,
   faCalendarDay,
+  faTrash,
 } from '@fortawesome/free-solid-svg-icons'
 
 import Wrapper from '../components/layout/Wrapper'
@@ -67,10 +68,10 @@ const QuickActionIconButton = ({
 
 /**
  * Parallel card used for the two mutually-exclusive actions on this screen
- * (reschedule the follow-up vs log a new conversation). Both cards share the
- * same structure — icon+title header, short description, optional body content,
- * primary CTA — so the user reads them as alternatives rather than as a list of
- * steps.
+ * (reschedule the follow-up vs log a new conversation). The primary variant
+ * uses a filled accent CTA; the secondary variant uses an outlined CTA so the
+ * visual weight matches the semantic hierarchy — "Reschedule" is the default
+ * path for this screen, "Log visit" is the alternate.
  */
 const ChoiceCard = ({
   icon,
@@ -78,6 +79,7 @@ const ChoiceCard = ({
   description,
   ctaLabel,
   onCta,
+  variant = 'primary',
   children,
 }: {
   icon: typeof faPhone
@@ -85,9 +87,11 @@ const ChoiceCard = ({
   description: string
   ctaLabel: string
   onCta: () => void
+  variant?: 'primary' | 'secondary'
   children?: React.ReactNode
 }) => {
   const theme = useTheme()
+  const isPrimary = variant === 'primary'
   return (
     <View
       style={{
@@ -112,7 +116,7 @@ const ChoiceCard = ({
         </View>
         <Text
           style={{
-            fontSize: 12,
+            fontSize: 13,
             color: theme.colors.textAlt,
           }}
         >
@@ -123,15 +127,17 @@ const ChoiceCard = ({
       <Button
         onPress={onCta}
         style={{
-          backgroundColor: theme.colors.accent,
+          backgroundColor: isPrimary ? theme.colors.accent : 'transparent',
           borderRadius: theme.numbers.borderRadiusSm,
+          borderWidth: isPrimary ? 0 : 1,
+          borderColor: theme.colors.border,
           paddingVertical: 14,
           alignItems: 'center',
         }}
       >
         <Text
           style={{
-            color: theme.colors.textInverse,
+            color: isPrimary ? theme.colors.textInverse : theme.colors.text,
             fontFamily: theme.fonts.bold,
           }}
         >
@@ -143,9 +149,9 @@ const ChoiceCard = ({
 }
 
 /**
- * "— or —" divider between the ChoiceCards inside the tree. Lives entirely
- * inside the right-hand (cards) column so its hairlines don't collide with the
- * vertical trunk on the left.
+ * "— or —" divider between the two ChoiceCards. Sits between primary and
+ * secondary actions to reinforce the either/or relationship without the heavier
+ * connector tree that previously wrapped this section.
  */
 const OrDivider = () => {
   const theme = useTheme()
@@ -179,87 +185,79 @@ const OrDivider = () => {
 }
 
 /**
- * Tree wrapper for the ChoiceCards. Draws a vertical trunk on the left that
- * visually roots both options in the contact card above, plus a short
- * horizontal stub from the trunk to each card's header. An OR divider is
- * interleaved between items to reinforce the either/or relationship.
- *
- * The trunk is absolutely positioned so its top edge can extend up past the
- * wrapper into the gap above (bridging into the contact card) and its bottom
- * edge can stop at the last card's stub, regardless of dynamic card heights.
- * The last card's height is measured via `onLayout`.
+ * One-tap shortcut for the most common reschedule destinations. The inline
+ * datetime picker below is always available as the "custom" escape hatch, so
+ * the chips deliberately don't include a Custom option.
  */
-const ChoicesTree = ({
-  items,
+const QuickDateChips = ({
+  originalDate,
+  value,
+  onPick,
 }: {
-  items: { key: string; card: React.ReactNode }[]
+  originalDate: Date
+  value: Date
+  onPick: (d: Date) => void
 }) => {
   const theme = useTheme()
-  // Where the horizontal stub sits from the top of each card — roughly the
-  // vertical center of the card's icon+title header. Fixed offset is fine
-  // because the ChoiceCard header is a single row with consistent height.
-  const STUB_Y = 34
-  const TRUNK_X = 10
-  const STUB_LENGTH = 14
-  // How far the trunk reaches up past the tree wrapper so it visually
-  // touches the contact card directly above. Must match the parent
-  // container's `gap` between the contact card and this tree.
-  const REACH_UP = 20
-
-  const [lastCardHeight, setLastCardHeight] = useState(0)
+  // Chips only shift the day — they carry the currently-picked time forward
+  // so the user doesn't have to re-enter it after adjusting with the picker.
+  const options = useMemo(() => {
+    const h = value.getHours()
+    const m = value.getMinutes()
+    const s = value.getSeconds()
+    const ms = value.getMilliseconds()
+    const withCurrentTime = (base: moment.Moment) =>
+      base.hours(h).minutes(m).seconds(s).milliseconds(ms).toDate()
+    return [
+      {
+        key: 'tomorrow',
+        label: i18n.t('tomorrow'),
+        date: withCurrentTime(moment(originalDate).add(1, 'day')),
+      },
+      {
+        key: 'plus3',
+        label: i18n.t('plusDays', { count: 3 }),
+        date: withCurrentTime(moment(originalDate).add(3, 'days')),
+      },
+      {
+        key: 'nextWeek',
+        label: i18n.t('nextWeek'),
+        date: withCurrentTime(moment(originalDate).add(1, 'week')),
+      },
+    ]
+  }, [originalDate, value])
 
   return (
-    <View style={{ flexDirection: 'row', position: 'relative' }}>
-      {/* Vertical trunk — absolutely positioned so top can extend up into
-          the contact card's area and bottom can land exactly at the last
-          card's stub. */}
-      <View
-        style={{
-          position: 'absolute',
-          left: TRUNK_X,
-          top: -REACH_UP,
-          bottom: Math.max(lastCardHeight - STUB_Y, 0),
-          width: 2,
-          backgroundColor: theme.colors.border,
-        }}
-      />
-
-      {/* Left spacer column — reserves room so the card column starts to the
-          right of the trunk + its horizontal stubs. */}
-      <View style={{ width: TRUNK_X + 2 + STUB_LENGTH }} />
-
-      {/* Right column: cards separated by an OR divider. Each card has a
-          short horizontal stub reaching back to the trunk. */}
-      <View style={{ flex: 1 }}>
-        {items.map((item, index) => {
-          const isLast = index === items.length - 1
-          return (
-            <React.Fragment key={item.key}>
-              <View
-                style={{ position: 'relative' }}
-                onLayout={
-                  isLast
-                    ? (e) => setLastCardHeight(e.nativeEvent.layout.height)
-                    : undefined
-                }
-              >
-                <View
-                  style={{
-                    position: 'absolute',
-                    left: -STUB_LENGTH,
-                    top: STUB_Y,
-                    width: STUB_LENGTH,
-                    height: 2,
-                    backgroundColor: theme.colors.border,
-                  }}
-                />
-                {item.card}
-              </View>
-              {!isLast ? <OrDivider /> : null}
-            </React.Fragment>
-          )
-        })}
-      </View>
+    <View style={{ flexDirection: 'row', gap: 8, flexWrap: 'wrap' }}>
+      {options.map((opt) => {
+        const active = moment(value).isSame(opt.date, 'minute')
+        return (
+          <Button
+            key={opt.key}
+            onPress={() => onPick(opt.date)}
+            style={{
+              paddingVertical: 8,
+              paddingHorizontal: 12,
+              borderRadius: 999,
+              borderWidth: 1,
+              borderColor: active ? theme.colors.accent : theme.colors.border,
+              backgroundColor: active
+                ? theme.colors.accentTranslucent
+                : 'transparent',
+            }}
+          >
+            <Text
+              style={{
+                fontSize: 13,
+                fontFamily: theme.fonts.semiBold,
+                color: active ? theme.colors.accent : theme.colors.text,
+              }}
+            >
+              {opt.label}
+            </Text>
+          </Button>
+        )
+      })}
     </View>
   )
 }
@@ -267,17 +265,12 @@ const ChoicesTree = ({
 /**
  * Reschedule sheet — surfaces from the Appointments widget and home-screen
  * "Missed Conversations" card for overdue follow-ups. The intent is "I missed
- * this — what now?", so the layout groups all contact-related info and quick
- * actions into one card at the top, and all reschedule-related controls into
- * one card below:
- *
- * Contact card: OVERDUE pill, name, original date, topic, Call/Text quick
- * actions — everything you need to contact the person to apologize, reach out,
- * or check in. Reschedule: date/time picker + primary "Reschedule" CTA in the
- * same card so the picker visibly owns the action. Add: secondary "Add
- * conversation" button (not "mark complete" — it's not marking anything, it
- * opens the conversation form prefilled for this contact so the user can log
- * the actual conversation). Cancel: dismiss without changes.
+ * this — what now?", so the layout groups all contact-related info into one
+ * card at the top (with the user's previous note for quick context), and offers
+ * two mutually exclusive paths: reschedule (primary) or log the visit that
+ * already happened (secondary). "Dismiss follow-up" is a low-priority iconified
+ * text button at the bottom since it's destructive and rarely the intended
+ * action.
  */
 const RescheduleConversationScreen = ({ route, navigation }: Props) => {
   const theme = useTheme()
@@ -426,6 +419,14 @@ const RescheduleConversationScreen = ({ route, navigation }: Props) => {
     )
   }, [contact, dismiss, navigation])
 
+  const openContactDetails = useCallback(() => {
+    if (!contact) return
+    ;(navigation as unknown as RootStackNavigation).navigate(
+      'Contact Details',
+      { id: contact.id }
+    )
+  }, [contact, navigation])
+
   if (!conversation || !contact) {
     return (
       <Wrapper insets='bottom'>
@@ -441,6 +442,13 @@ const RescheduleConversationScreen = ({ route, navigation }: Props) => {
     )
   }
 
+  // moment's fromNow(true) returns "5 hours" / "2 days" without the trailing
+  // "ago", letting us compose a localized "{time} overdue" label that's more
+  // scannable than the absolute timestamp alone.
+  const overdueLabel = i18n.t('overdueBy', {
+    time: moment(originalDate).fromNow(true),
+  })
+
   return (
     <Wrapper insets='bottom'>
       <View
@@ -451,10 +459,12 @@ const RescheduleConversationScreen = ({ route, navigation }: Props) => {
           gap: 20,
         }}
       >
-        {/* Contact card — who this is, with low-priority icon-only call/text
-            quick actions in the top-right corner so they don't compete with
-            the main Reschedule CTA below. */}
-        <View
+        {/* Contact card — tappable to open full contact details. Shows a
+            tinted OVERDUE pill with relative time, the name, the user's
+            previous note (so they can pick up the thread before reaching
+            out), the follow-up topic, and quick call/text actions. */}
+        <Pressable
+          onPress={openContactDetails}
           style={{
             backgroundColor: theme.colors.backgroundLighter,
             borderRadius: theme.numbers.borderRadiusLg,
@@ -464,17 +474,27 @@ const RescheduleConversationScreen = ({ route, navigation }: Props) => {
             gap: 12,
           }}
         >
-          <View style={{ flex: 1, gap: 4 }}>
-            <Text
+          <View style={{ flex: 1, gap: 6 }}>
+            <View
               style={{
-                fontSize: 11,
-                fontFamily: theme.fonts.bold,
-                color: theme.colors.warn,
-                letterSpacing: 1,
+                alignSelf: 'flex-start',
+                backgroundColor: theme.colors.warnTranslucent,
+                borderRadius: 999,
+                paddingHorizontal: 8,
+                paddingVertical: 3,
               }}
             >
-              {i18n.t('overdue').toUpperCase()}
-            </Text>
+              <Text
+                style={{
+                  fontSize: 11,
+                  fontFamily: theme.fonts.bold,
+                  color: theme.colors.warn,
+                  letterSpacing: 1,
+                }}
+              >
+                {overdueLabel.toUpperCase()}
+              </Text>
+            </View>
             <Text
               style={{ fontSize: 22, fontFamily: theme.fonts.bold }}
               numberOfLines={1}
@@ -490,12 +510,36 @@ const RescheduleConversationScreen = ({ route, navigation }: Props) => {
             >
               {moment(originalDate).format('LLL')}
             </Text>
+            {conversation.note ? (
+              <View style={{ marginTop: 8, gap: 2 }}>
+                <Text
+                  style={{
+                    fontSize: 11,
+                    fontFamily: theme.fonts.bold,
+                    color: theme.colors.textAlt,
+                    letterSpacing: 1,
+                  }}
+                >
+                  {i18n.t('youLastWrote').toUpperCase()}
+                </Text>
+                <Text
+                  style={{
+                    fontSize: 13,
+                    color: theme.colors.text,
+                    fontStyle: 'italic',
+                  }}
+                  numberOfLines={3}
+                >
+                  {`"${conversation.note}"`}
+                </Text>
+              </View>
+            ) : null}
             {conversation.followUp?.topic ? (
               <Text
                 style={{
                   fontSize: 13,
                   color: theme.colors.text,
-                  marginTop: 4,
+                  marginTop: 6,
                 }}
                 numberOfLines={3}
               >
@@ -528,67 +572,70 @@ const RescheduleConversationScreen = ({ route, navigation }: Props) => {
               />
             </View>
           ) : null}
-        </View>
+        </Pressable>
 
-        {/* Two mutually-exclusive paths — either reschedule the existing
-            follow-up, or log a new visit. Wrapped in a tree connector that
-            visually roots both options in the contact card above, so they
-            read as alternatives stemming from the same parent. */}
-        <ChoicesTree
-          items={[
-            {
-              key: 'reschedule',
-              card: (
-                <ChoiceCard
-                  icon={faCalendarDay}
-                  title={i18n.t('reschedule')}
-                  description={i18n.t('rescheduleDescription')}
-                  ctaLabel={i18n.t('reschedule')}
-                  onCta={handleReschedule}
-                >
-                  <View
-                    style={{
-                      backgroundColor: theme.colors.background,
-                      borderRadius: theme.numbers.borderRadiusSm,
-                      paddingVertical: 10,
-                      paddingHorizontal: 12,
-                      flexDirection: 'row',
-                      alignItems: 'center',
-                    }}
-                  >
-                    <DateTimePicker
-                      value={newDate}
-                      onChange={(_e, picked) => picked && setNewDate(picked)}
-                      iOSMode='datetime'
-                    />
-                  </View>
-                </ChoiceCard>
-              ),
-            },
-            {
-              key: 'add',
-              card: (
-                <ChoiceCard
-                  icon={faPenToSquare}
-                  title={i18n.t('newConversation')}
-                  description={i18n.t('addConversationShortDescription')}
-                  ctaLabel={i18n.t('addConversation')}
-                  onCta={handleAddConversation}
-                />
-              ),
-            },
-          ]}
-        />
+        {/* Two mutually-exclusive paths. Primary (reschedule) is filled,
+            secondary (log the visit that already happened) is outlined. */}
+        <View>
+          <ChoiceCard
+            icon={faCalendarDay}
+            title={i18n.t('pickNewDate')}
+            description={i18n.t('rescheduleDescription')}
+            ctaLabel={i18n.t('reschedule')}
+            onCta={handleReschedule}
+          >
+            <QuickDateChips
+              originalDate={originalDate}
+              value={newDate}
+              onPick={setNewDate}
+            />
+            <View
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'flex-start',
+              }}
+            >
+              <DateTimePicker
+                value={newDate}
+                onChange={(_e, picked) => picked && setNewDate(picked)}
+                iOSMode='datetime'
+              />
+            </View>
+          </ChoiceCard>
+
+          <OrDivider />
+
+          <ChoiceCard
+            icon={faPenToSquare}
+            title={i18n.t('alreadyHadVisit')}
+            description={i18n.t('alreadyHadVisitDescription')}
+            ctaLabel={i18n.t('logVisit')}
+            onCta={handleAddConversation}
+            variant='secondary'
+          />
+        </View>
 
         <Button
           onPress={handleDismissFollowUp}
-          style={{ alignSelf: 'center', paddingVertical: 8 }}
+          style={{
+            alignSelf: 'center',
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: 6,
+            paddingVertical: 8,
+            paddingHorizontal: 12,
+          }}
         >
+          <IconButton
+            icon={faTrash}
+            size={12}
+            iconStyle={{ color: theme.colors.textAlt }}
+          />
           <Text
             style={{
               color: theme.colors.textAlt,
               fontSize: 13,
-              textDecorationLine: 'underline',
             }}
           >
             {i18n.t('dismissFollowUp')}

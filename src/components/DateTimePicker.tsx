@@ -2,8 +2,6 @@ import { View } from 'react-native'
 import RNDateTimePicker, {
   DateTimePickerEvent,
 } from '@react-native-community/datetimepicker'
-import { useContext } from 'react'
-import { ThemeContext } from '../contexts/theme'
 import { getLocales } from 'expo-localization'
 import { usePreferences } from '../stores/preferences'
 
@@ -24,7 +22,6 @@ const DateTimePicker = ({
   minimumDate,
   iOSMode,
 }: Props) => {
-  const theme = useContext(ThemeContext)
   const { colorScheme } = usePreferences()
 
   return (

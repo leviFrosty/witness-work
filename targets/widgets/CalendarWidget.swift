@@ -66,13 +66,13 @@ private let plannedNeutralPalette = CellPalette(
   noteDot: .secondary
 )
 
-private func palette(for day: WidgetSnapshot.CalendarDay) -> CellPalette {
+private func palette(for day: WidgetSnapshot.CalendarDay, accent: Color) -> CellPalette {
   if !day.hasPlan {
     // Matches `NonPlannedDay`: green only when time was logged, otherwise
     // the cell stays blank regardless of whether the date is in the past.
     if day.wentInService {
       return CellPalette(
-        background: WidgetColor.accent,
+        background: accent,
         foreground: .white,
         noteDot: .white
       )
@@ -93,7 +93,7 @@ private func palette(for day: WidgetSnapshot.CalendarDay) -> CellPalette {
   }
   if day.hitGoal {
     return CellPalette(
-      background: WidgetColor.accent,
+      background: accent,
       foreground: .white,
       noteDot: .white
     )
@@ -110,13 +110,14 @@ private func palette(for day: WidgetSnapshot.CalendarDay) -> CellPalette {
 private struct CalendarCell: View {
   let day: WidgetSnapshot.CalendarDay
   let isCompact: Bool
+  @Environment(\.widgetAccent) private var accent
 
   var body: some View {
     // Out-of-month tail/head cells skip the status palette entirely and use
     // the blank palette instead — otherwise a planned-but-missed cross-month
     // day would keep its white foreground while losing its red fill, making
     // the day number invisible on the widget background.
-    let colors = day.isCurrentMonth ? palette(for: day) : blankPalette
+    let colors = day.isCurrentMonth ? palette(for: day, accent: accent) : blankPalette
 
     ZStack(alignment: .topTrailing) {
       RoundedRectangle(cornerRadius: WidgetRadius.sm)
@@ -157,16 +158,21 @@ private struct CalendarCell: View {
 }
 
 // MARK: - Shared header
+//
+// Title on the left, "+ create plan" on the right. The tap targets split the
+// widget's intent cleanly: cells log hours (the frequent action), header "+"
+// creates a plan (the occasional one).
 
 private struct CalendarHeader: View {
   let title: String
   let createPlanLabel: String
+  @Environment(\.widgetAccent) private var accent
 
   var body: some View {
     HStack(alignment: .center, spacing: WidgetSpacing.md) {
       Text(title)
-        .font(.system(size: 13, weight: .bold))
-        .foregroundColor(.primary)
+        .font(.headline)
+        .foregroundStyle(.primary)
         .lineLimit(1)
         .minimumScaleFactor(0.8)
 
@@ -174,17 +180,10 @@ private struct CalendarHeader: View {
 
       Link(destination: WidgetURLs.createPlan) {
         Image(systemName: "plus")
-          .font(.system(size: 11, weight: .bold))
-          .foregroundColor(WidgetColor.accent)
-          .frame(width: 18, height: 18)
-          .background(
-            RoundedRectangle(cornerRadius: WidgetRadius.sm)
-              .fill(WidgetColor.accentTranslucent)
-          )
-          .overlay(
-            RoundedRectangle(cornerRadius: WidgetRadius.sm)
-              .stroke(WidgetColor.accent, lineWidth: 1)
-          )
+          .font(.system(size: 12, weight: .bold))
+          .foregroundStyle(accent)
+          .frame(width: 24, height: 24)
+          .background(Circle().fill(accent.opacity(0.15)))
       }
       .accessibilityLabel(createPlanLabel)
     }
@@ -216,12 +215,16 @@ private struct WeekdayRow: View {
 
 /// Wraps the cell in a per-day deep link. Pulled into its own view so the
 /// medium and large layouts share the same tap behavior.
+///
+/// Taps open Add Time with the date pre-filled — logging hours is the far
+/// more common intent from a calendar cell than editing the plan. Plan
+/// creation lives on the header "+" button.
 private struct CellLink: View {
   let day: WidgetSnapshot.CalendarDay
   let isCompact: Bool
 
   var body: some View {
-    Link(destination: WidgetURLs.day(date: day.date)) {
+    Link(destination: WidgetURLs.addTime(date: day.date)) {
       CalendarCell(day: day, isCompact: isCompact)
     }
   }
@@ -350,6 +353,7 @@ private struct CalendarWidgetView: View {
         placeholder
       }
     }
+    .environment(\.widgetAccent, entry.snapshot?.resolvedAccent ?? WidgetColor.brandAccent)
     .containerBackground(.background, for: .widget)
   }
 

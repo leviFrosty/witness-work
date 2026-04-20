@@ -43,9 +43,13 @@ struct StopwatchLiveActivity: Widget {
         Image(systemName: "stopwatch")
           .foregroundStyle(Color(red: 0.29, green: 0.82, blue: 0.49))
       } compactTrailing: {
+        // No explicit width — let the Dynamic Island shrink/grow the pill to
+        // fit the timer. The previous `frame(maxWidth: 56, alignment: .trailing)`
+        // pinned the trailing slot at 56pt and right-aligned the text inside,
+        // which is what produced the wide gap between the icon and short
+        // timer values (e.g. "0:13") before the hours digit appeared.
         StopwatchTimerText(state: context.state)
           .monospacedDigit()
-          .frame(maxWidth: 56)
       } minimal: {
         Image(systemName: "stopwatch")
           .foregroundStyle(Color(red: 0.29, green: 0.82, blue: 0.49))

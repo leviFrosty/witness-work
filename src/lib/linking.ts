@@ -20,11 +20,11 @@ export const navigationRef = createNavigationContainerRef<RootStackParamList>()
  * | URL                                           | Screen                                     |
  * | --------------------------------------------- | ------------------------------------------ |
  * | `witnesswork://add-time`                      | Add Time                                   |
+ * | `witnesswork://add-time/:date`                | Add Time, date pre-filled (calendar tap)   |
  * | `witnesswork://contact/:id`                   | Contact Details                            |
  * | `witnesswork://contact/:id/:convId`           | Contact Details with highlighted conv.     |
  * | `witnesswork://reschedule/:contactId/:convId` | Reschedule Conversation modal              |
  * | `witnesswork://shared-good-news`              | Home + triggers checkbox confetti (action) |
- * | `witnesswork://day/:date`                     | Plan Day (view/edit plan + notes for date) |
  * | `witnesswork://day`                           | Plan Day (empty form — widget "+" button)  |
  *
  * `shared-good-news` is an **action**, not a screen. It is handled by a
@@ -54,14 +54,16 @@ export const linking: LinkingOptions<RootStackParamList> = {
           Home: 'home',
         },
       },
-      'Add Time': 'add-time',
+      // Date suffix is optional: `add-time` opens the empty form, and
+      // `add-time/:date` pre-fills the date — used by the Calendar widget
+      // when a user taps a day cell, so the primary gesture logs hours for
+      // that day rather than opening the plan editor.
+      'Add Time': 'add-time/:date?',
       'Contact Details': 'contact/:id/:highlightedConversationId?',
       RescheduleConversation: 'reschedule/:contactId/:conversationId',
-      // Widget deep links. PlanDay is reused for both the per-date view and
-      // the empty-form "create plan" CTA — the screen renders details/notes
-      // for an existing plan when `date` resolves to one and an empty form
-      // otherwise, so both URLs converge on the same screen.
-      PlanDay: 'day/:date?',
+      // "+" button on the Calendar widget lands here with no date to start
+      // a fresh plan; the in-app schedule UI owns per-date plan editing.
+      PlanDay: 'day',
     },
   },
 }

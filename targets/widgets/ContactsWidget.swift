@@ -32,13 +32,17 @@ private struct ContactsProvider: TimelineProvider {
 //
 // Small drops the action icon entirely (one tappable region: the contact),
 // medium and large reserve the right edge for the configured action.
+//
+// Counts chosen so two-line rows (name + relative date) never overflow the
+// widget height on medium/large. Previous 4/8 packed rows tight enough that
+// the header was being clipped against the top safe-area.
 
 private func contactsCount(for family: WidgetFamily) -> Int {
   switch family {
   case .systemSmall:  return 5
-  case .systemMedium: return 4
-  case .systemLarge:  return 8
-  default:            return 4
+  case .systemMedium: return 3
+  case .systemLarge:  return 6
+  default:            return 3
   }
 }
 
@@ -77,43 +81,44 @@ private struct ContactRow: View {
   let action: WidgetSnapshot.ContactAction
   let showAction: Bool
   let isCompact: Bool
+  @Environment(\.widgetAccent) private var accent
 
   var body: some View {
     let qa = showAction ? quickAction(for: contact, action: action) : nil
 
-    HStack(spacing: WidgetSpacing.lg) {
+    HStack(spacing: WidgetSpacing.md) {
       // Tappable name region — opens Contact Details.
       Link(destination: WidgetURLs.contact(id: contact.id)) {
         HStack(spacing: WidgetSpacing.md) {
-          // Staleness dot
+          // Staleness dot — functional color indicator of "how long ago".
           Circle()
-            .fill(contact.staleness.color)
-            .frame(width: 7, height: 7)
+            .fill(contact.staleness.color(accent: accent))
+            .frame(width: 8, height: 8)
 
-          VStack(alignment: .leading, spacing: WidgetSpacing.xs) {
-            HStack(spacing: WidgetSpacing.xs) {
+          VStack(alignment: .leading, spacing: 1) {
+            HStack(spacing: 4) {
               Text(contact.name)
-                .font(.system(size: isCompact ? 12 : 13, weight: .semibold))
+                .font(.system(size: isCompact ? 13 : 14, weight: .semibold))
                 .foregroundColor(.primary)
                 .lineLimit(1)
                 .privacySensitive()
               if contact.isFavorite {
                 Image(systemName: "star.fill")
-                  .font(.system(size: 8))
-                  .foregroundColor(WidgetColor.warn)
+                  .font(.system(size: 9))
+                  .foregroundStyle(WidgetColor.warn)
               }
               if contact.isBibleStudy {
                 Image(systemName: "book.closed.fill")
-                  .font(.system(size: 8))
-                  .foregroundColor(WidgetColor.accent)
+                  .font(.system(size: 9))
+                  .foregroundStyle(accent)
               }
             }
             // Last-contacted relative date — only on medium/large where there
             // is room for two lines per row without crowding.
             if !isCompact, let when = contact.lastContactedRelative {
               Text(when)
-                .font(.system(size: 10))
-                .foregroundColor(.secondary)
+                .font(.caption2)
+                .foregroundStyle(.secondary)
                 .lineLimit(1)
             }
           }
@@ -125,9 +130,10 @@ private struct ContactRow: View {
       if let qa = qa {
         Link(destination: qa.url) {
           Image(systemName: qa.icon)
-            .font(.system(size: 13, weight: .semibold))
-            .foregroundColor(WidgetColor.accent)
-            .frame(width: 24, height: 24)
+            .font(.system(size: 12, weight: .semibold))
+            .foregroundStyle(accent)
+            .frame(width: 28, height: 28)
+            .background(Circle().fill(accent.opacity(0.15)))
         }
       }
     }
@@ -160,6 +166,7 @@ private struct ContactsWidgetView: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity)
       }
     }
+    .environment(\.widgetAccent, entry.snapshot?.resolvedAccent ?? WidgetColor.brandAccent)
     .containerBackground(.background, for: .widget)
   }
 
@@ -168,26 +175,31 @@ private struct ContactsWidgetView: View {
     visible: [WidgetSnapshot.Contact]
   ) -> some View {
     let isSmall = family == .systemSmall
-    return VStack(alignment: .leading, spacing: WidgetSpacing.md) {
-      // Header
+    // Rows breathe more on medium/large where each row is two-line; small
+    // stays tight since rows are single-line and a roomier gap would waste
+    // the limited 158pt canvas.
+    let rowSpacing: CGFloat = isSmall ? WidgetSpacing.md : WidgetSpacing.xl
+    return VStack(alignment: .leading, spacing: WidgetSpacing.lg) {
+      // Header — tracking + caption2 matches the styling used in the Report
+      // widget so the system-caps labels across widgets feel intentional.
       Text(snapshot.strings.contactsLabel.uppercased())
-        .font(.system(size: 9, weight: .bold))
-        .foregroundColor(.secondary)
+        .font(.caption2)
+        .fontWeight(.semibold)
+        .tracking(0.5)
+        .foregroundStyle(.secondary)
         .lineLimit(1)
 
-      // Rows distributed evenly across the available height.
-      VStack(spacing: WidgetSpacing.md) {
-        ForEach(Array(visible.enumerated()), id: \.element.id) { index, contact in
+      // Dividers removed — whitespace carries the row rhythm (Apple pattern
+      // used in Reminders/Mail widgets) and reclaims ~3pt × (N-1) vertical
+      // budget, which was exactly what was pushing the header into the clip.
+      VStack(spacing: rowSpacing) {
+        ForEach(visible) { contact in
           ContactRow(
             contact: contact,
             action: snapshot.config.contactAction,
             showAction: !isSmall,
             isCompact: isSmall
           )
-          if index < visible.count - 1 && !isSmall {
-            Divider()
-              .opacity(0.4)
-          }
         }
         Spacer(minLength: 0)
       }

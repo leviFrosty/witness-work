@@ -64,9 +64,10 @@ private struct MonthEyebrow: View {
   let label: String
   var body: some View {
     Text(label.uppercased())
-      .font(.system(size: 10, weight: .bold))
-      .foregroundColor(.secondary)
-      .frame(maxWidth: .infinity, alignment: .leading)
+      .font(.caption2)
+      .fontWeight(.semibold)
+      .tracking(0.5)
+      .foregroundStyle(.secondary)
   }
 }
 
@@ -76,115 +77,143 @@ private struct BigHoursNumber: View {
   let size: CGFloat
 
   var body: some View {
-    HStack(alignment: .lastTextBaseline, spacing: WidgetSpacing.xs) {
+    HStack(alignment: .firstTextBaseline, spacing: 1) {
       Text(formatted)
-        .font(.system(size: size, weight: .bold))
+        .font(.system(size: size, weight: .bold, design: .rounded))
         .minimumScaleFactor(0.6)
         .lineLimit(1)
       Text("/\(goalHours)")
-        .font(.caption)
-        .fontWeight(.semibold)
-        .foregroundColor(.secondary)
+        .font(.system(size: size * 0.38, weight: .semibold, design: .rounded))
+        .foregroundStyle(.tertiary)
     }
   }
 }
 
-/// Bordered green CTA matching `HourEntryCard.tsx:294-313`.
+/// Tinted CTA — accent text on translucent accent fill, matching iOS's
+/// native `.borderedProminent` tint style in widgets.
 private struct AddTimeButton: View {
   let label: String
+  @Environment(\.widgetAccent) private var accent
 
   var body: some View {
     Link(destination: WidgetURLs.addTime) {
-      Text(label)
-        .font(.system(size: 13, weight: .bold))
-        .foregroundColor(WidgetColor.accent)
-        .frame(maxWidth: .infinity)
-        .padding(.vertical, WidgetSpacing.lg)
-        .background(
-          RoundedRectangle(cornerRadius: WidgetRadius.sm)
-            .fill(WidgetColor.accentTranslucent)
-        )
-        .overlay(
-          RoundedRectangle(cornerRadius: WidgetRadius.sm)
-            .stroke(WidgetColor.accent, lineWidth: 1)
-        )
+      HStack(spacing: 4) {
+        Image(systemName: "plus")
+          .font(.system(size: 11, weight: .bold))
+        Text(label)
+          .font(.system(size: 13, weight: .semibold))
+          .lineLimit(1)
+          .minimumScaleFactor(0.8)
+      }
+      .foregroundStyle(accent)
+      .frame(maxWidth: .infinity)
+      .padding(.vertical, 10)
+      .background(
+        RoundedRectangle(cornerRadius: WidgetRadius.md, style: .continuous)
+          .fill(accent.opacity(0.15))
+      )
     }
   }
 }
 
-/// Pill that mirrors HourEntryCard's "X.X hrs/day to goal" / ahead-behind
-/// badge. Returns `nil` when the report has no badge to display so the
-/// caller can omit the slot entirely.
+/// Subtle tinted capsule — tinted text on tinted fill for a quieter
+/// accent than the solid-color pill it replaced. Mirrors the visual
+/// weight of iOS status pills (e.g. Reminders "Today").
 private struct PaceBadge: View {
   let snapshot: WidgetSnapshot
-  let compact: Bool
+  @Environment(\.widgetAccent) private var accent
 
   var body: some View {
     let report = snapshot.report
     let strings = snapshot.strings
     if let aheadBehind = report.aheadBehindMinutes {
       let isAhead = aheadBehind >= 0
-      Text(isAhead ? strings.aheadOfScheduleLabel : strings.behindScheduleLabel)
-        .font(.system(size: compact ? 10 : 11, weight: .semibold))
-        .foregroundColor(.white)
-        .padding(.horizontal, WidgetSpacing.lg)
-        .padding(.vertical, WidgetSpacing.xs)
-        .background(
-          Capsule().fill(isAhead ? WidgetColor.accent : Color.orange)
-        )
+      let tint = isAhead ? accent : Color.orange
+      pill(
+        icon: isAhead ? "arrow.up.right" : "arrow.down.right",
+        text: isAhead ? strings.aheadOfScheduleLabel : strings.behindScheduleLabel,
+        tint: tint
+      )
     } else if let perDay = report.hoursPerDayNeeded {
-      Text("\(formatHours(perDay)) \(strings.hoursPerDayToGoalSuffix)")
-        .font(.system(size: compact ? 10 : 11, weight: .semibold))
-        .foregroundColor(.white)
-        .padding(.horizontal, WidgetSpacing.lg)
-        .padding(.vertical, WidgetSpacing.xs)
-        .background(Capsule().fill(WidgetColor.accent))
+      pill(
+        icon: "target",
+        text: "\(formatHours(perDay)) \(strings.hoursPerDayToGoalSuffix)",
+        tint: accent
+      )
     }
+  }
+
+  private func pill(icon: String, text: String, tint: Color) -> some View {
+    HStack(spacing: 3) {
+      Image(systemName: icon)
+        .font(.system(size: 9, weight: .bold))
+      Text(text)
+        .font(.system(size: 11, weight: .semibold))
+        .lineLimit(1)
+    }
+    .foregroundStyle(tint)
+    .padding(.horizontal, 8)
+    .padding(.vertical, 4)
+    .background(Capsule().fill(tint.opacity(0.15)))
   }
 }
 
 // MARK: Small (always month)
+//
+// Left-aligned vertical hierarchy: eyebrow → hero number → caption → progress.
+// Progress moves to the bottom so it acts as an at-a-glance indicator without
+// competing with the hero number for attention (Apple Fitness widget pattern).
 
 private struct SmallMonthCard: View {
   let snapshot: WidgetSnapshot
+  @Environment(\.widgetAccent) private var accent
 
   var body: some View {
     let report = snapshot.report
     let strings = snapshot.strings
     let progress = min(max(report.progress, 0), 1)
 
-    VStack(alignment: .center, spacing: WidgetSpacing.md) {
+    VStack(alignment: .leading, spacing: 0) {
       MonthEyebrow(label: strings.monthLabel)
-
-      ProgressView(value: progress)
-        .progressViewStyle(.linear)
-        .tint(WidgetColor.accent)
 
       Spacer(minLength: 0)
 
       BigHoursNumber(
         formatted: report.monthHoursFormatted,
         goalHours: report.goalHours,
-        size: 40
+        size: 46
       )
 
       Text(strings.encouragementPhrase)
-        .font(.system(size: 11, weight: .semibold))
-        .multilineTextAlignment(.center)
-        .lineLimit(2)
+        .font(.footnote)
+        .fontWeight(.medium)
+        .foregroundStyle(.secondary)
+        .lineLimit(1)
         .minimumScaleFactor(0.8)
+        .padding(.top, 2)
 
       Spacer(minLength: 0)
+
+      ProgressView(value: progress)
+        .progressViewStyle(.linear)
+        .tint(accent)
     }
-    .frame(maxWidth: .infinity, maxHeight: .infinity)
+    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
     .widgetURL(WidgetURLs.addTime)
   }
 }
 
 // MARK: Medium (always month, horizontal)
+//
+// Header row anchors context (label + pace badge), progress bar spans the full
+// width as the visual connector, and the body splits into a hero-number
+// column and a single tappable CTA. The pace badge sits in the header rather
+// than next to the button so the right column has one clear action instead of
+// two stacked elements competing for the eye.
 
 private struct MediumMonthCard: View {
   let snapshot: WidgetSnapshot
+  @Environment(\.widgetAccent) private var accent
 
   var body: some View {
     let report = snapshot.report
@@ -192,35 +221,37 @@ private struct MediumMonthCard: View {
     let progress = min(max(report.progress, 0), 1)
 
     VStack(alignment: .leading, spacing: WidgetSpacing.lg) {
-      MonthEyebrow(label: strings.monthLabel)
+      HStack(alignment: .center, spacing: WidgetSpacing.md) {
+        MonthEyebrow(label: strings.monthLabel)
+        Spacer(minLength: WidgetSpacing.md)
+        PaceBadge(snapshot: snapshot)
+      }
 
       ProgressView(value: progress)
         .progressViewStyle(.linear)
-        .tint(WidgetColor.accent)
+        .tint(accent)
 
       Spacer(minLength: 0)
 
-      // Two-column body: stats on the left, actions on the right.
-      HStack(alignment: .center, spacing: WidgetSpacing.xl) {
-        VStack(alignment: .leading, spacing: WidgetSpacing.sm) {
+      HStack(alignment: .bottom, spacing: WidgetSpacing.xl) {
+        VStack(alignment: .leading, spacing: 2) {
           BigHoursNumber(
             formatted: report.monthHoursFormatted,
             goalHours: report.goalHours,
             size: 44
           )
           Text(strings.encouragementPhrase)
-            .font(.system(size: 12, weight: .semibold))
-            .lineLimit(2)
+            .font(.footnote)
+            .fontWeight(.medium)
+            .foregroundStyle(.secondary)
+            .lineLimit(1)
             .minimumScaleFactor(0.85)
         }
 
         Spacer(minLength: 0)
 
-        VStack(alignment: .trailing, spacing: WidgetSpacing.lg) {
-          PaceBadge(snapshot: snapshot, compact: true)
-          AddTimeButton(label: strings.addTimeLabel)
-            .frame(maxWidth: 130)
-        }
+        AddTimeButton(label: strings.addTimeLabel)
+          .frame(maxWidth: 130)
       }
     }
     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
@@ -258,6 +289,7 @@ private struct CheckboxReportView: View {
 private struct UnreportedCard: View {
   let snapshot: WidgetSnapshot
   let family: WidgetFamily
+  @Environment(\.widgetAccent) private var accent
 
   var body: some View {
     let strings = snapshot.strings
@@ -280,7 +312,7 @@ private struct UnreportedCard: View {
     .padding(WidgetSpacing.md)
     .background(
       RoundedRectangle(cornerRadius: WidgetRadius.md)
-        .fill(WidgetColor.accent)
+        .fill(accent)
     )
     .widgetURL(WidgetURLs.sharedGoodNews)
   }
@@ -289,6 +321,7 @@ private struct UnreportedCard: View {
 private struct ReportedTodayCard: View {
   let snapshot: WidgetSnapshot
   let family: WidgetFamily
+  @Environment(\.widgetAccent) private var accent
 
   var body: some View {
     let strings = snapshot.strings
@@ -296,7 +329,7 @@ private struct ReportedTodayCard: View {
       Spacer()
       Image(systemName: "checkmark.seal.fill")
         .font(.system(size: family == .systemSmall ? 44 : 60))
-        .foregroundColor(WidgetColor.accent)
+        .foregroundColor(accent)
       Text(strings.reportedTodayLabel)
         .font(.system(size: family == .systemSmall ? 13 : 15, weight: .bold))
         .foregroundColor(.primary)
@@ -319,6 +352,7 @@ private struct ReportedTodayCard: View {
 private struct ConversationsThisMonthCard: View {
   let snapshot: WidgetSnapshot
   let family: WidgetFamily
+  @Environment(\.widgetAccent) private var accent
 
   var body: some View {
     let report = snapshot.report
@@ -349,7 +383,7 @@ private struct ConversationsThisMonthCard: View {
         HStack(spacing: WidgetSpacing.md) {
           Image(systemName: "book.closed.fill")
             .font(.caption)
-            .foregroundColor(WidgetColor.accent)
+            .foregroundColor(accent)
           Text("\(report.monthBibleStudyCount) \(strings.studiesThisMonthLabel)")
             .font(.system(size: 11, weight: .semibold))
             .foregroundColor(.primary)
@@ -550,6 +584,7 @@ private struct ReportWidgetView: View {
         placeholder
       }
     }
+    .environment(\.widgetAccent, entry.snapshot?.resolvedAccent ?? WidgetColor.brandAccent)
     .containerBackground(.background, for: .widget)
   }
 

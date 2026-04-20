@@ -32,6 +32,9 @@ const MonthScreen = ({ route, navigation }: Props) => {
   const rootNavigation = useRootNavigation<RootStackNavigation>()
   const [year, setYear] = useState(route.params?.year || moment().year())
   const [month, setMonth] = useState(route.params?.month || moment().month())
+  const [calendarViewMode, setCalendarViewMode] = useState<
+    'planned' | 'actual'
+  >('planned')
   const [sheet, setSheet] = useState<ExportTimeSheetState>({
     open: false,
     month,
@@ -250,6 +253,8 @@ const MonthScreen = ({ route, navigation }: Props) => {
         month={month}
         thisMonthsReports={thisMonthsReports}
         setSelectedDateSheet={setSelectedDateSheet}
+        calendarViewMode={calendarViewMode}
+        setCalendarViewMode={setCalendarViewMode}
       />
       <ExportTimeSheet setSheet={setSheet} sheet={sheet} />
       <SelectedDateSheet

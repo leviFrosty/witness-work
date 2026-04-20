@@ -7,12 +7,14 @@ import { SelectedDateSheetState } from './SelectedDateSheet'
 import CalendarDay from './CalendarDay'
 import { useMemo } from 'react'
 import { usePreferences } from '../stores/preferences'
+import type { CalendarViewMode } from '../screens/TimeReportsDashboard'
 
 type MonthTimeReportsCalendarProps = {
   month: number
   year: number
   monthsReports: ServiceReport[] | null
   setSheet: React.Dispatch<React.SetStateAction<SelectedDateSheetState>>
+  viewMode?: CalendarViewMode
 }
 
 const MonthTimeReportsCalendar: React.FC<MonthTimeReportsCalendarProps> = ({
@@ -20,6 +22,7 @@ const MonthTimeReportsCalendar: React.FC<MonthTimeReportsCalendarProps> = ({
   year,
   monthsReports,
   setSheet,
+  viewMode = 'planned',
 }) => {
   const { startOfWeek } = usePreferences()
   const theme = useTheme()
@@ -63,7 +66,11 @@ const MonthTimeReportsCalendar: React.FC<MonthTimeReportsCalendarProps> = ({
       markingType='custom'
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       dayComponent={(props: any) => (
-        <CalendarDay monthsReports={monthsReports} {...props} />
+        <CalendarDay
+          monthsReports={monthsReports}
+          viewMode={viewMode}
+          {...props}
+        />
       )}
       theme={{
         calendarBackground: theme.colors.card,

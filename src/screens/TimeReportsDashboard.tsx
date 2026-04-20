@@ -18,6 +18,8 @@ import MonthScheduleSection from '../components/MonthScheduleSection'
 import CalendarHeader from '../components/CalendarHeader'
 import CalendarKey from '../components/CalendarKey'
 
+export type CalendarViewMode = 'planned' | 'actual'
+
 type TimeReportsDashboardProps = {
   month: number
   year: number
@@ -26,11 +28,20 @@ type TimeReportsDashboardProps = {
   setSelectedDateSheet: React.Dispatch<
     React.SetStateAction<SelectedDateSheetState>
   >
+  calendarViewMode: CalendarViewMode
+  setCalendarViewMode: React.Dispatch<React.SetStateAction<CalendarViewMode>>
 }
 
 const TimeReportsDashboard = (props: TimeReportsDashboardProps) => {
-  const { month, year, setSheet, thisMonthsReports, setSelectedDateSheet } =
-    props
+  const {
+    month,
+    year,
+    setSheet,
+    thisMonthsReports,
+    setSelectedDateSheet,
+    calendarViewMode,
+    setCalendarViewMode,
+  } = props
   const insets = useSafeAreaInsets()
   const theme = useTheme()
 
@@ -68,7 +79,10 @@ const TimeReportsDashboard = (props: TimeReportsDashboardProps) => {
             setSheet={setSheet}
           />
           <Card style={{ gap: 0 }}>
-            <CalendarHeader />
+            <CalendarHeader
+              viewMode={calendarViewMode}
+              onChangeViewMode={setCalendarViewMode}
+            />
             <CalendarKey />
             <View>
               <MonthTimeReportsCalendar
@@ -76,6 +90,7 @@ const TimeReportsDashboard = (props: TimeReportsDashboardProps) => {
                 year={year}
                 monthsReports={thisMonthsReports}
                 setSheet={setSelectedDateSheet}
+                viewMode={calendarViewMode}
               />
               <MonthScheduleSection month={month} year={year} />
             </View>

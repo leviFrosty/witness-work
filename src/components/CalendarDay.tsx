@@ -25,6 +25,7 @@ import { faArrowUp } from '@fortawesome/free-solid-svg-icons'
 import { usePreferences } from '../stores/preferences'
 import { Theme } from '../types/theme'
 import { useCompactFormattedMinutes } from '../lib/minutes'
+import type { CalendarViewMode } from '../screens/TimeReportsDashboard'
 
 const boxSize = 40
 
@@ -72,15 +73,24 @@ const NonPlannedDay = (
   props: DayProps & {
     date?: DateData | undefined
     serviceReports: ServiceReport[] | undefined
+    viewMode?: CalendarViewMode
   }
 ) => {
   const theme = useTheme()
+  const minutesForDay =
+    props.serviceReports?.reduce(
+      (acc, report) => acc + report.minutes + report.hours * 60,
+      0
+    ) || 0
+  const actualDurationText = useCompactFormattedMinutes(minutesForDay)
 
   if (!props.date) return null
   const disabled = props.state === 'disabled'
   const isToday = moment().isSame(props.date.dateString, 'day')
   const wentInService = !!props.serviceReports?.length
   const hasNote = !!props.serviceReports?.some((report) => report.note)
+  const showActualTime =
+    props.viewMode === 'actual' && wentInService && !disabled
 
   const backgroundColor = disabled
     ? undefined
@@ -96,6 +106,7 @@ const NonPlannedDay = (
         flexDirection: 'column',
         justifyContent: 'center',
         alignItems: 'center',
+        paddingHorizontal: 2,
         borderRadius: theme.numbers.borderRadiusSm,
         borderWidth: isToday ? 3 : 0,
         borderColor: theme.colors.text,
@@ -116,6 +127,18 @@ const NonPlannedDay = (
       >
         {props.date?.day}
       </Text>
+      {showActualTime && (
+        <Text
+          style={{
+            fontSize: theme.fontSize('xs'),
+            color: theme.colors.textInverse,
+          }}
+          numberOfLines={1}
+          ellipsizeMode='tail'
+        >
+          {actualDurationText}
+        </Text>
+      )}
       {hasNote && (
         <View
           style={{
@@ -142,6 +165,7 @@ const PlannedDay = (
     serviceReports: ServiceReport[] | undefined
     dayPlan?: DayPlan
     recurringPlans?: RecurringPlan[]
+    viewMode?: CalendarViewMode
   }
 ) => {
   const theme = useTheme()
@@ -171,6 +195,8 @@ const PlannedDay = (
   const plannedMinutes =
     props.dayPlan?.minutes || highestRecurringPlanEffectiveMinutes || 0
   const plannedDurationText = useCompactFormattedMinutes(plannedMinutes)
+  const actualDurationText = useCompactFormattedMinutes(minutesForDay)
+  const showActual = props.viewMode === 'actual'
 
   const wentInService = !!props.serviceReports?.length
   const hasAPlan = !!(props.dayPlan || props.recurringPlans?.length)
@@ -243,15 +269,31 @@ const PlannedDay = (
       >
         {props.date?.day}
       </Text>
-      {hasAPlan && (
-        <Text
-          style={{ fontSize: theme.fontSize('xs'), color: statusColor.text }}
-          numberOfLines={1}
-          ellipsizeMode='tail'
-        >
-          {plannedDurationText}
-        </Text>
-      )}
+      {showActual
+        ? wentInService && (
+            <Text
+              style={{
+                fontSize: theme.fontSize('xs'),
+                color: statusColor.text,
+              }}
+              numberOfLines={1}
+              ellipsizeMode='tail'
+            >
+              {actualDurationText}
+            </Text>
+          )
+        : hasAPlan && (
+            <Text
+              style={{
+                fontSize: theme.fontSize('xs'),
+                color: statusColor.text,
+              }}
+              numberOfLines={1}
+              ellipsizeMode='tail'
+            >
+              {plannedDurationText}
+            </Text>
+          )}
       {hasNote && (
         <View
           style={{
@@ -274,6 +316,7 @@ const CalendarDay = (
     date?: DateData | undefined
     planMode?: boolean
     monthsReports: ServiceReport[] | null
+    viewMode?: CalendarViewMode
   }
 ) => {
   const { dayPlans, recurringPlans } = useServiceReport()

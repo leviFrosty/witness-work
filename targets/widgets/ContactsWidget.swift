@@ -175,10 +175,16 @@ private struct ContactsWidgetView: View {
     visible: [WidgetSnapshot.Contact]
   ) -> some View {
     let isSmall = family == .systemSmall
-    // Rows breathe more on medium/large where each row is two-line; small
-    // stays tight since rows are single-line and a roomier gap would waste
-    // the limited 158pt canvas.
-    let rowSpacing: CGFloat = isSmall ? WidgetSpacing.md : WidgetSpacing.xl
+    // Small stays tight (single-line rows); large gets the roomier xl gap
+    // since 6 two-line rows have the vertical headroom. Medium sits in
+    // between — xl on medium pushed three two-line rows past the top safe
+    // area, so lg gives just enough breathing room without overflowing.
+    let rowSpacing: CGFloat
+    switch family {
+    case .systemSmall:  rowSpacing = WidgetSpacing.md
+    case .systemMedium: rowSpacing = WidgetSpacing.lg
+    default:            rowSpacing = WidgetSpacing.xl
+    }
     return VStack(alignment: .leading, spacing: WidgetSpacing.lg) {
       // Header — tracking + caption2 matches the styling used in the Report
       // widget so the system-caps labels across widgets feel intentional.

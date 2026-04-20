@@ -31,32 +31,73 @@ enum WidgetRadius {
 /// (light variant). SwiftUI handles dark mode by leaning on system semantics
 /// where possible — only the accent and staleness palette are pinned.
 enum WidgetColor {
-  /// Brand green. Same as `theme.colors.accent` in the app.
-  static let accent = Color(red: 0x08 / 255, green: 0xCC / 255, blue: 0x50 / 255)
-  /// Translucent fill for accent backgrounds (e.g. Add Time button).
-  static let accentTranslucent = accent.opacity(0.15)
+  /// Default brand green. Same as `theme.colors.accent` in the app. Supporters
+  /// can override this at runtime via `snapshot.accentColor`; the resolved
+  /// value rides through the view tree as `EnvironmentValues.widgetAccent`.
+  static let brandAccent = Color(red: 0x08 / 255, green: 0xCC / 255, blue: 0x50 / 255)
   /// Warm warning, used by the in-app warn token (`#fac220`).
   static let warn = Color(red: 0xFA / 255, green: 0xC2 / 255, blue: 0x20 / 255)
   /// Hard error red used for overdue follow-ups and longerThanAMonthAgo.
   static let error = Color(red: 0xE3 / 255, green: 0x09 / 255, blue: 0x09 / 255)
-
-  // Staleness dot palette — mirrors `useMarkerColors` defaults so the widget
-  // renders the same colors a user sees on the contact map.
-  enum Staleness {
-    static let never = Color.secondary
-    static let recent = WidgetColor.accent
-    static let week = WidgetColor.warn
-    static let month = WidgetColor.error
-  }
 }
 
 extension WidgetSnapshot.ContactStaleness {
-  var color: Color {
+  /// Mirrors `useMarkerColors` — the `.recent` bucket tracks the effective
+  /// accent (brand green by default, supporter override when set) so the
+  /// widget's dot colors stay in sync with the rest of the widget's tint.
+  func color(accent: Color) -> Color {
     switch self {
-    case .never:  return WidgetColor.Staleness.never
-    case .recent: return WidgetColor.Staleness.recent
-    case .week:   return WidgetColor.Staleness.week
-    case .month:  return WidgetColor.Staleness.month
+    case .never:  return .secondary
+    case .recent: return accent
+    case .week:   return WidgetColor.warn
+    case .month:  return WidgetColor.error
     }
+  }
+}
+
+// MARK: - Accent override
+//
+// Supporter-selected accent rides through the widget's view hierarchy via an
+// environment key so individual views don't need to know whether an override
+// is in play. The widget's root reads `snapshot.accentColor`, resolves it to
+// a `Color` (falling back to `brandAccent` on missing / malformed hex), and
+// sets `.environment(\.widgetAccent, …)` once. Leaves propagate via
+// `@Environment(\.widgetAccent)`.
+
+private struct WidgetAccentKey: EnvironmentKey {
+  static let defaultValue: Color = WidgetColor.brandAccent
+}
+
+extension EnvironmentValues {
+  var widgetAccent: Color {
+    get { self[WidgetAccentKey.self] }
+    set { self[WidgetAccentKey.self] = newValue }
+  }
+}
+
+extension Color {
+  /// Parses a `#RRGGBB` string. Returns `nil` on any malformed input so
+  /// callers can fall back to the brand accent instead of rendering an
+  /// arbitrary default. Alpha is fixed at 1 — translucent variants are
+  /// derived at the call site via `.opacity(…)`.
+  init?(widgetHex: String) {
+    var s = widgetHex.trimmingCharacters(in: .whitespacesAndNewlines)
+    if s.hasPrefix("#") { s.removeFirst() }
+    guard s.count == 6, let value = UInt32(s, radix: 16) else { return nil }
+    let r = Double((value >> 16) & 0xFF) / 255
+    let g = Double((value >> 8) & 0xFF) / 255
+    let b = Double(value & 0xFF) / 255
+    self = Color(red: r, green: g, blue: b)
+  }
+}
+
+extension WidgetSnapshot {
+  /// Resolves the effective accent color for this snapshot. Returns the brand
+  /// green when no override is set or the hex is malformed.
+  var resolvedAccent: Color {
+    if let hex = accentColor, let color = Color(widgetHex: hex) {
+      return color
+    }
+    return WidgetColor.brandAccent
   }
 }

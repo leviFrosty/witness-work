@@ -97,6 +97,14 @@ export type WidgetSnapshot = {
   /** App locale at write time, e.g. 'en-us'. */
   locale: string
   /**
+   * Supporter-only custom accent (`#RRGGBB`). `null` means use the default
+   * brand green. The snapshot writer is responsible for gating on supporter
+   * status — non-supporters always receive `null` even if `customAccentColor`
+   * is set, so a lapsed supporter's preference stops taking effect in widgets
+   * without the Swift side needing to know what a supporter is.
+   */
+  accentColor: string | null
+  /**
    * Pre-translated display strings. The widget never calls i18n; the JS side
    * resolves every label and writes the result so SwiftUI can render the user's
    * chosen locale without duplicating translation infrastructure.
@@ -156,6 +164,13 @@ export type BuildSnapshotArgs = {
 
   // Locale
   locale: string
+
+  /**
+   * Resolved accent hex (`#RRGGBB`) or `null` to fall back to the brand green.
+   * Caller is responsible for only forwarding a value when the user is an
+   * active supporter — this builder treats whatever it receives as final.
+   */
+  accentColor: string | null
 }
 
 export function buildWidgetSnapshot(args: BuildSnapshotArgs): WidgetSnapshot {
@@ -196,6 +211,7 @@ export function buildWidgetSnapshot(args: BuildSnapshotArgs): WidgetSnapshot {
     version: SNAPSHOT_VERSION,
     updatedAt: Date.now(),
     locale: args.locale,
+    accentColor: args.accentColor,
     strings: {
       monthHoursLabel: i18n.t('hours'),
       goalLabel: i18n.t('goal'),

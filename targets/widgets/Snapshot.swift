@@ -187,6 +187,9 @@ struct WidgetSnapshot: Decodable {
   let version: Int
   let updatedAt: Double
   let locale: String
+  /// Supporter-only hex (`#RRGGBB`). `nil` means fall back to the brand green.
+  /// JS already gates this on supporter status, so Swift just trusts the field.
+  let accentColor: String?
   let strings: Strings
   let config: Config
   let report: Report

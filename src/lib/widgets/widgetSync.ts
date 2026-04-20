@@ -8,6 +8,7 @@ import { useServiceReport } from '../../stores/serviceReport'
 import { usePreferences } from '../../stores/preferences'
 import { useContacts } from '../../stores/contactsStore'
 import { useConversations } from '../../stores/conversationStore'
+import { useSupporter } from '../../stores/supporter'
 import { DEFAULT_LOCALE } from '../locales'
 import { buildWidgetSnapshot } from './snapshot'
 import { logger } from '../logger'
@@ -31,10 +32,15 @@ function pushSnapshot(reason: string): void {
     const prefs = usePreferences.getState()
     const contactsState = useContacts.getState()
     const conversationsState = useConversations.getState()
+    const { isSupporter } = useSupporter.getState()
 
     // Region code lives outside any of our stores; pull from device locale.
     // Used as a fallback when a contact's phone has no `phoneRegionCode`.
     const defaultPhoneRegionCode = getLocales()[0]?.regionCode ?? ''
+
+    // Gate custom accent on supporter status — mirrors `ThemeProvider`, so a
+    // lapsed supporter's preference stops taking effect in widgets too.
+    const accentColor = isSupporter ? (prefs.customAccentColor ?? null) : null
 
     const snapshot = buildWidgetSnapshot({
       serviceReports: sr.serviceReports,
@@ -54,6 +60,7 @@ function pushSnapshot(reason: string): void {
       widgetAppointmentWindow: prefs.widgetAppointmentWindow,
       startOfWeek: prefs.startOfWeek,
       locale: prefs.locale ?? DEFAULT_LOCALE,
+      accentColor,
     })
 
     WidgetBridge.writeSnapshot(JSON.stringify(snapshot))
@@ -103,6 +110,10 @@ export function installWidgetSync(): () => void {
   const unsubPreferences = usePreferences.subscribe(() => debouncedPush())
   const unsubContacts = useContacts.subscribe(() => debouncedPush())
   const unsubConversations = useConversations.subscribe(() => debouncedPush())
+  // Supporter status flips the accent gate on/off — re-push when it changes so
+  // a newly-active supporter's custom accent appears in widgets without
+  // waiting for the next unrelated store write.
+  const unsubSupporter = useSupporter.subscribe(() => debouncedPush())
 
   // 2. Foreground rewrite — covers locale switches, midnight rollover, and
   //    any other state that changes while the app was backgrounded.
@@ -128,6 +139,7 @@ export function installWidgetSync(): () => void {
     unsubPreferences()
     unsubContacts()
     unsubConversations()
+    unsubSupporter()
     appStateSub.remove()
     BackgroundTask.unregisterTaskAsync(WIDGET_REFRESH_TASK).catch(() => {})
     installed = false

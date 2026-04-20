@@ -20,6 +20,23 @@ import useTheme from '../contexts/theme'
 import Text from './MyText'
 import { ProfileAvatar } from '../types/avatar'
 
+/**
+ * Whether an `avatar.value` string actually resolves to something `<Image>` can
+ * render. Returns false for:
+ *
+ * - Empty strings (`type === 'image'` with no value yet)
+ * - ICloud markers (`icloud://contact-<id>` / `icloud://profile`) — these are
+ *   placeholders that travel on the synced payload while the binary downloads
+ *   in the background. Before the download lands (or if the sender turned image
+ *   sync off, so the binary will never land), the avatar should render as the
+ *   initials fallback — see Q3 / Q4 in `docs/icloud-image-sync-plan.md`.
+ */
+function isRenderableImageValue(value: string): boolean {
+  if (!value) return false
+  if (value.startsWith('icloud://')) return false
+  return true
+}
+
 type AnchorRect = { x: number; y: number; size: number }
 
 interface Props {
@@ -95,7 +112,7 @@ const Avatar = ({ avatar, name, size = 44, background, focusable }: Props) => {
   })
 
   const inner = (() => {
-    if (avatar.type === 'image' && avatar.value) {
+    if (avatar.type === 'image' && isRenderableImageValue(avatar.value)) {
       return (
         <Image
           source={{ uri: avatar.value }}

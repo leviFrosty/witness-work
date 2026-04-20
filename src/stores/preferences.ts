@@ -267,12 +267,40 @@ export const PREFERENCE_DEFAULTS = {
    * downloaded on other devices. Default false — images stay on-device unless
    * the user opts in. Per-device (non-syncable) so consent isn't implicitly
    * extended to other devices on the same Apple ID.
-   *
-   * Phase 1 ships the preference plumbing only; image bytes are still stripped
-   * from every sync payload. Phase 2 (see docs/icloud-image-sync-plan.md) wires
-   * this flag to the binary sync path.
    */
   iCloudSyncIncludeImages: false,
+  /**
+   * Persistent bookkeeping for the image-sync uploader. Keyed by container
+   * filename (e.g. `witness-work-img-contact-<id>.jpg`). Drives the
+   * upload/retry loop across app restarts so an interrupted migration or a
+   * transient network failure automatically resumes on the next push
+   * opportunity — see docs/icloud-image-sync-plan.md and
+   * `src/lib/sync/imageSync.ts`.
+   *
+   * Field semantics:
+   *
+   * - `localMtime`: last-seen modification time of the on-device source file
+   *   (`file://...`). If the user re-picks their avatar, this bumps past
+   *   `uploadedMtime` and the entry becomes dirty.
+   * - `uploadedMtime`: local-file mtime at the point of the last successful
+   *   upload. `null` means "never uploaded" (brand new or bookkeeping lost).
+   * - `lastError` / `failedAt`: last failure classification and timestamp.
+   *   `'quota'` errors suppress store-edit retries and only retry on
+   *   foreground; other errors retry freely on the next push cycle.
+   *
+   * Per-device (non-syncable) — this is purely local queue state and must not
+   * ride the JSON payload, otherwise a stale entry from Device A could cause
+   * Device B to think a file is already uploaded when it isn't.
+   */
+  iCloudImageSync: {} as Record<
+    string,
+    {
+      localMtime: number
+      uploadedMtime: number | null
+      lastError?: string
+      failedAt?: number
+    }
+  >,
   /**
    * Epoch ms of the most recent successful push or pull. Null until first sync.
    * Retained for back-compat; the granular `lastiCloudPushedAt` /
@@ -348,6 +376,7 @@ export const NON_SYNCABLE_PREFERENCE_KEYS = new Set<string>([
   'iCloudSyncEnabled',
   'iCloudSyncSetByUser',
   'iCloudSyncIncludeImages',
+  'iCloudImageSync',
   'lastiCloudSyncAt',
   'lastiCloudPushedAt',
   'lastiCloudPulledAt',

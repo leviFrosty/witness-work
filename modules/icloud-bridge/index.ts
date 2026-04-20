@@ -11,6 +11,12 @@ export type SyncFile = {
   modifiedAt: number
 }
 
+/** One entry returned by `listBinaryFiles` — filename + container mtime. */
+export type BinaryFileInfo = {
+  filename: string
+  modifiedAt: number
+}
+
 type ICloudBridgeEvents = {
   onRemoteChange: (event: { modifiedAt: number }) => void
   onAvailabilityChange: (event: { available: boolean }) => void
@@ -24,6 +30,11 @@ declare class ICloudBridgeNative extends NativeModule<ICloudBridgeEvents> {
   write(filename: string, json: string): Promise<number>
   deleteFile(filename: string): Promise<null>
   deleteAll(): Promise<null>
+  writeBinary(filename: string, sourcePath: string): Promise<number>
+  readBinary(filename: string, destinationPath: string): Promise<number>
+  listBinaryFiles(): Promise<BinaryFileInfo[]>
+  deleteBinaryFile(filename: string): Promise<null>
+  deleteAllBinaries(): Promise<null>
 }
 
 const native = requireOptionalNativeModule<ICloudBridgeNative>('ICloudBridge')
@@ -98,6 +109,71 @@ export async function deleteFile(filename: string): Promise<void> {
 export async function deleteAll(): Promise<void> {
   if (Platform.OS !== 'ios' || !native) return
   await native.deleteAll()
+}
+
+/**
+ * Copies a local file at `sourcePath` into the ubiquity container under the
+ * validated image filename (`witness-work-img-*.jpg` namespace) and resolves to
+ * the resulting file's modification time in epoch ms.
+ *
+ * File-path transport — the bytes never flow through the JS bridge, so a 5 MB
+ * original-quality photo uploads for the price of a stat() + coordinated copy.
+ */
+export async function writeBinary(
+  filename: string,
+  sourcePath: string
+): Promise<number> {
+  if (Platform.OS !== 'ios' || !native) {
+    throw new Error('iCloud bridge is not available on this platform')
+  }
+  return native.writeBinary(filename, sourcePath)
+}
+
+/**
+ * Coordinated-read of a container binary into `destinationPath`. Kicks off
+ * `startDownloadingUbiquitousItem` if the file is still an iCloud placeholder
+ * and polls up to 10s for it to materialize. Resolves to the container file's
+ * modification time in epoch ms (used by the sync bookkeeper to skip redundant
+ * re-downloads next cycle).
+ *
+ * Rejects with `ICLOUD_READ_BINARY_MISSING` when the file is absent from the
+ * container — callers should treat that as "fall back to initials" rather than
+ * a hard error.
+ */
+export async function readBinary(
+  filename: string,
+  destinationPath: string
+): Promise<number> {
+  if (Platform.OS !== 'ios' || !native) {
+    throw new Error('iCloud bridge is not available on this platform')
+  }
+  return native.readBinary(filename, destinationPath)
+}
+
+/**
+ * Enumerates `witness-work-img-*.jpg` in the container with their container
+ * mtimes. Does not trigger downloads. Returns an empty array when the iCloud
+ * bridge is unavailable, so callers can treat "no iCloud" and "no binaries"
+ * identically for list-style operations.
+ */
+export async function listBinaryFiles(): Promise<BinaryFileInfo[]> {
+  if (Platform.OS !== 'ios' || !native) return []
+  return native.listBinaryFiles()
+}
+
+/**
+ * Coordinated delete of a single binary file. Idempotent on the native side —
+ * resolves cleanly when the target doesn't exist.
+ */
+export async function deleteBinaryFile(filename: string): Promise<void> {
+  if (Platform.OS !== 'ios' || !native) return
+  await native.deleteBinaryFile(filename)
+}
+
+/** Coordinated delete of every `witness-work-img-*.jpg` in the container. */
+export async function deleteAllBinaries(): Promise<void> {
+  if (Platform.OS !== 'ios' || !native) return
+  await native.deleteAllBinaries()
 }
 
 /**

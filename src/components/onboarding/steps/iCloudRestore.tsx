@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { Animated, Easing, Platform, View } from 'react-native'
+import { Alert, Animated, Easing, Platform, View } from 'react-native'
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
 import {
   faCheckCircle,
@@ -32,6 +32,36 @@ type Probe =
   | { state: 'unavailable' } // iCloud account unavailable on this device
   | { state: 'noBackup' } // Available but nothing there yet
   | { state: 'found'; remote: SyncPayload }
+
+/**
+ * Whether the folded remote payload contains any image markers — i.e. the
+ * source device had image sync on and would expect its companion devices to
+ * download binaries. Used to gate the "also download photos?" prompt so we
+ * don't show it for users whose remote payload is image-free.
+ */
+function remoteReferencesImages(remote: SyncPayload): boolean {
+  for (const c of remote.contactStore.contacts ?? []) {
+    const avatar = (c as { avatar?: { type?: string; value?: string } }).avatar
+    if (
+      avatar?.type === 'image' &&
+      typeof avatar.value === 'string' &&
+      avatar.value.startsWith('icloud://')
+    ) {
+      return true
+    }
+  }
+  const profile = remote.preferencesStore?.values?.avatar as
+    | { type?: string; value?: string }
+    | undefined
+  if (
+    profile?.type === 'image' &&
+    typeof profile.value === 'string' &&
+    profile.value.startsWith('icloud://')
+  ) {
+    return true
+  }
+  return false
+}
 
 /**
  * Offers a one-shot restore from iCloud during onboarding. Pulling is not gated
@@ -122,6 +152,27 @@ const ICloudRestore = ({ goBack, goNext }: Props) => {
         hasCompletedProfileSetup: true,
         hasCompletedMapOnboarding: true,
       })
+
+      // If the restored payload references images via iCloud markers, prompt
+      // the user to also pull those photos down. Per-device consent means we
+      // can't silently flip `iCloudSyncIncludeImages` on — the user must opt
+      // in explicitly. See Q9 in docs/icloud-image-sync-plan.md.
+      if (remoteReferencesImages(probe.remote)) {
+        Alert.alert(
+          i18n.t('iCloudImagesRestorePrompt_title'),
+          i18n.t('iCloudImagesRestorePrompt_description'),
+          [
+            { text: i18n.t('iCloudImagesRestorePrompt_skip'), style: 'cancel' },
+            {
+              text: i18n.t('iCloudImagesRestorePrompt_action'),
+              onPress: async () => {
+                usePreferences.setState({ iCloudSyncIncludeImages: true })
+                await iCloudSync.pullImagesIfEnabled()
+              },
+            },
+          ]
+        )
+      }
     })
   }
 

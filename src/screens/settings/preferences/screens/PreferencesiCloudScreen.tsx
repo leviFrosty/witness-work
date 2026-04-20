@@ -48,6 +48,7 @@ const PreferencesiCloudScreenInner = () => {
   const theme = useTheme()
   const {
     iCloudSyncEnabled,
+    iCloudSyncIncludeImages,
     lastiCloudPushedAt,
     lastiCloudPulledAt,
     lastiCloudRemoteWrittenAt,
@@ -65,6 +66,12 @@ const PreferencesiCloudScreenInner = () => {
   // on tap while the async enable flow (availability check, conflict sheet,
   // seed/pull) resolves in the background. Null when no flip is in flight.
   const [pendingEnable, setPendingEnable] = useState<boolean | null>(null)
+  // Optimistic override for the image-sync switch — same pattern as
+  // `pendingEnable` but scoped to the image toggle.
+  const [pendingImagesEnable, setPendingImagesEnable] = useState<
+    boolean | null
+  >(null)
+  const [migratingImages, setMigratingImages] = useState(false)
   const toast = useToastController()
 
   // Re-check iCloud availability on mount and whenever the identity changes.
@@ -88,6 +95,7 @@ const PreferencesiCloudScreenInner = () => {
     iCloudSync.backfillUpdatedAtIfNeeded()
     set({ iCloudSyncEnabled: true })
     setSyncing(true)
+    let shouldPromptForImages = false
     try {
       switch (choice) {
         case 'keepLocal':
@@ -97,6 +105,7 @@ const PreferencesiCloudScreenInner = () => {
         case 'useRemote':
           if (pendingRemote) {
             iCloudSync.replaceLocalWithRemote(pendingRemote)
+            shouldPromptForImages = remotePayloadReferencesImages(pendingRemote)
             toast.show(i18n.t('iCloudEnabledToastRestored'), { native: true })
           }
           break
@@ -111,6 +120,50 @@ const PreferencesiCloudScreenInner = () => {
       setSyncing(false)
       setPendingEnable(null)
     }
+    if (shouldPromptForImages) {
+      Alert.alert(
+        i18n.t('iCloudImagesRestorePrompt_title'),
+        i18n.t('iCloudImagesRestorePrompt_description'),
+        [
+          { text: i18n.t('iCloudImagesRestorePrompt_skip'), style: 'cancel' },
+          {
+            text: i18n.t('iCloudImagesRestorePrompt_action'),
+            onPress: async () => {
+              usePreferences.setState({ iCloudSyncIncludeImages: true })
+              await iCloudSync.pullImagesIfEnabled()
+            },
+          },
+        ]
+      )
+    }
+  }
+
+  /**
+   * Returns true when the folded remote payload carries any image markers,
+   * meaning the sender had image sync on. Drives the "also download photos?"
+   * prompt — we don't bother showing it when the remote payload is image-free
+   * (Q9 in the design doc).
+   */
+  const remotePayloadReferencesImages = (remote: SyncPayload): boolean => {
+    for (const c of remote.contactStore.contacts ?? []) {
+      const avatar = (c as { avatar?: { type?: string; value?: string } })
+        .avatar
+      if (
+        avatar?.type === 'image' &&
+        typeof avatar.value === 'string' &&
+        avatar.value.startsWith('icloud://')
+      ) {
+        return true
+      }
+    }
+    const profile = remote.preferencesStore?.values?.avatar as
+      | { type?: string; value?: string }
+      | undefined
+    return (
+      profile?.type === 'image' &&
+      typeof profile.value === 'string' &&
+      profile.value.startsWith('icloud://')
+    )
   }
 
   const handleToggle = async (next: boolean) => {
@@ -206,6 +259,98 @@ const PreferencesiCloudScreenInner = () => {
     lastiCloudPulledAt,
     lastiCloudPushedAt
   )
+
+  /**
+   * Handles the image-sync toggle. Both directions are destructive (enabling
+   * copies photos to iCloud; disabling deletes them from iCloud) so both
+   * surface a confirmation alert before the async flow runs. The optimistic
+   * `pendingImagesEnable` state keeps the switch visually responsive while
+   * `enableImageSync` / `disableImageSync` do their work.
+   */
+  const handleImagesToggle = (next: boolean) => {
+    if (next) {
+      Alert.alert(
+        i18n.t('iCloudImagesEnableConfirm_title'),
+        i18n.t('iCloudImagesEnableConfirm_description'),
+        [
+          { text: i18n.t('cancel'), style: 'cancel' },
+          {
+            text: i18n.t('iCloudImagesEnableConfirm_action'),
+            style: 'destructive',
+            onPress: async () => {
+              setPendingImagesEnable(true)
+              setMigratingImages(true)
+              toast.show(i18n.t('iCloudImagesToastMigrating'), {
+                native: true,
+              })
+              try {
+                await iCloudSync.enableImageSync()
+                // Surface migration result — imageSync returns counts but
+                // `enableImageSync` awaits the first push internally. The
+                // next foreground will retry any failures; for the toast we
+                // can inspect bookkeeping to spot partial outcomes.
+                const book = usePreferences.getState().iCloudImageSync ?? {}
+                const entries = Object.values(book)
+                const failed = entries.filter(
+                  (e) => e.uploadedMtime == null && e.lastError
+                ).length
+                const uploaded = entries.filter(
+                  (e) => e.uploadedMtime != null
+                ).length
+                if (failed > 0) {
+                  toast.show(
+                    i18n.t('iCloudImagesToastMigratedPartial', {
+                      uploaded,
+                      total: uploaded + failed,
+                    }),
+                    { native: true }
+                  )
+                } else {
+                  toast.show(
+                    i18n.t('iCloudImagesToastMigrated', { count: uploaded }),
+                    { native: true }
+                  )
+                }
+              } finally {
+                setMigratingImages(false)
+                setPendingImagesEnable(null)
+              }
+            },
+          },
+        ]
+      )
+      return
+    }
+
+    Alert.alert(
+      i18n.t('iCloudImagesDisableConfirm_title'),
+      i18n.t('iCloudImagesDisableConfirm_description'),
+      [
+        { text: i18n.t('cancel'), style: 'cancel' },
+        {
+          text: i18n.t('iCloudImagesDisableConfirm_action'),
+          style: 'destructive',
+          onPress: async () => {
+            setPendingImagesEnable(false)
+            setMigratingImages(true)
+            try {
+              await iCloudSync.disableImageSync()
+              toast.show(i18n.t('iCloudImagesToastRemoved'), { native: true })
+            } finally {
+              setMigratingImages(false)
+              setPendingImagesEnable(null)
+            }
+          },
+        },
+      ]
+    )
+  }
+
+  const handleOpenADP = () => {
+    void Linking.openURL(
+      'https://support.apple.com/guide/security/advanced-data-protection-for-icloud-sec973254c5f/web'
+    )
+  }
 
   const handleReset = () => {
     Alert.alert(
@@ -409,6 +554,67 @@ const PreferencesiCloudScreenInner = () => {
               </Text>
             </InputRowButton>
           </Section>
+        )}
+
+        {iCloudSyncEnabled && (
+          <View style={{ gap: 8 }}>
+            <View style={{ paddingHorizontal: 15 }}>
+              <Text
+                style={{
+                  fontSize: theme.fontSize('md'),
+                  fontFamily: theme.fonts.semiBold,
+                  color: theme.colors.text,
+                }}
+              >
+                {i18n.t('iCloudImagesSectionTitle')}
+              </Text>
+            </View>
+            <Section>
+              <InputRowContainer
+                label={i18n.t('iCloudImagesToggleLabel')}
+                style={{ justifyContent: 'space-between' }}
+              >
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    gap: 10,
+                  }}
+                >
+                  {migratingImages && (
+                    <ActivityIndicator
+                      size='small'
+                      color={theme.colors.textAlt}
+                    />
+                  )}
+                  <Switch
+                    value={pendingImagesEnable ?? iCloudSyncIncludeImages}
+                    onValueChange={handleImagesToggle}
+                    disabled={migratingImages || pendingImagesEnable !== null}
+                  />
+                </View>
+              </InputRowContainer>
+              <InputRowButton
+                label={i18n.t('iCloudImagesLearnADP')}
+                onPress={handleOpenADP}
+                lastInSection
+              >
+                <Text style={{ color: theme.colors.accent }}>
+                  {i18n.t('open')}
+                </Text>
+              </InputRowButton>
+            </Section>
+            <View style={{ paddingHorizontal: 15 }}>
+              <Text style={{ fontSize: 12, color: theme.colors.textAlt }}>
+                {i18n.t('iCloudImagesToggleSubtitle')}
+              </Text>
+            </View>
+            <View style={{ paddingHorizontal: 15 }}>
+              <Text style={{ fontSize: 12, color: theme.colors.textAlt }}>
+                {i18n.t('iCloudImagesInfoFooter')}
+              </Text>
+            </View>
+          </View>
         )}
 
         {iCloudSyncEnabled && (

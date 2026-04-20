@@ -3,8 +3,8 @@ import useConversations from '../../stores/conversationStore'
 import useServiceReport from '../../stores/serviceReport'
 import { usePreferences } from '../../stores/preferences'
 import { NON_SYNCABLE_PREFERENCE_KEYS } from '../../stores/preferences'
-import { Contact } from '../../types/contact'
 import { ProfileAvatar } from '../../types/avatar'
+import { sanitizeContactAvatar, sanitizeProfileAvatar } from './avatarPayload'
 
 /**
  * Bumped whenever the payload shape changes in a breaking way. Consumers reject
@@ -47,34 +47,13 @@ export type SyncPayload = {
 }
 
 /**
- * Strips `avatar` from a contact when it holds a user-uploaded image. The
- * `value` field is a per-device `file://` URI inside
- * `FileSystem.documentDirectory`, which would be a dead path on any other
- * device. Emoji + `none` avatars are safe to sync as-is.
- *
- * Phase 1 is unconditional; Phase 2 (see docs/icloud-image-sync-plan.md) will
- * gate this on the `iCloudSyncIncludeImages` preference once the binary sync
- * bridge lands.
- */
-function stripImageAvatar(contact: Contact): Contact {
-  if (contact.avatar?.type !== 'image') return contact
-  const rest: Contact = { ...contact }
-  delete rest.avatar
-  return rest
-}
-
-/** Same rule as `stripImageAvatar`, applied to the profile-avatar preference. */
-function stripImageProfileAvatar(
-  avatar: ProfileAvatar | undefined
-): ProfileAvatar | undefined {
-  if (avatar?.type === 'image') return { type: 'none', value: '' }
-  return avatar
-}
-
-/**
  * Builds the iCloud payload by snapshotting each zustand store. Intentionally
  * reads state synchronously so the caller (sync layer) can diff and push
  * without waiting on React.
+ *
+ * Avatar sanitization (drop-or-rewrite) is delegated to `./avatarPayload` and
+ * gated on the per-device `iCloudSyncIncludeImages` preference — see that
+ * module for the full behavior matrix.
  */
 export function buildPayload(args: {
   deviceId: string
@@ -86,6 +65,9 @@ export function buildPayload(args: {
   const serviceReports = useServiceReport.getState()
   const prefs = usePreferences.getState()
 
+  const includeImages = prefs.iCloudSyncIncludeImages === true
+  const avatarOpts = { includeImages }
+
   // Allow-list of preference keys that participate in sync. Anything in
   // NON_SYNCABLE_PREFERENCE_KEYS is explicitly device-local.
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -94,7 +76,10 @@ export function buildPayload(args: {
     if (typeof value === 'function') continue
     if (NON_SYNCABLE_PREFERENCE_KEYS.has(key)) continue
     if (key === 'avatar') {
-      syncablePrefs[key] = stripImageProfileAvatar(value as ProfileAvatar)
+      syncablePrefs[key] = sanitizeProfileAvatar(
+        value as ProfileAvatar,
+        avatarOpts
+      )
       continue
     }
     syncablePrefs[key] = value
@@ -106,8 +91,12 @@ export function buildPayload(args: {
     deviceId,
     deviceName,
     contactStore: {
-      contacts: contacts.contacts.map(stripImageAvatar),
-      deletedContacts: contacts.deletedContacts.map(stripImageAvatar),
+      contacts: contacts.contacts.map((c) =>
+        sanitizeContactAvatar(c, avatarOpts)
+      ),
+      deletedContacts: contacts.deletedContacts.map((c) =>
+        sanitizeContactAvatar(c, avatarOpts)
+      ),
     },
     conversationStore: {
       conversations: conversations.conversations,

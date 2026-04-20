@@ -72,10 +72,15 @@ export type Contact = {
   isFavorite?: boolean
 
   /**
-   * Per-contact avatar — emoji or local image URI. Same shape as the user's
-   * profile avatar so it renders through the shared `Avatar` component. Image
-   * files live in `FileSystem.documentDirectory` under a per-contact filename
-   * and never leave the device.
+   * Per-contact avatar — emoji, local image URI, or (when iCloud image sync is
+   * enabled) an `icloud://contact-<id>` marker. Same shape as the user's
+   * profile avatar so it renders through the shared `Avatar` component. See
+   * `types/avatar.ts` for the full marker-vs-URI behavior matrix.
+   *
+   * Local image files live in `FileSystem.documentDirectory` under
+   * `contact-<id>-avatar.jpg`. With image sync on, a deterministic twin exists
+   * in the iCloud ubiquity container as `witness-work-img-contact-<id>.jpg` —
+   * see `docs/icloud-image-sync-plan.md` for the full lifecycle.
    */
   avatar?: ProfileAvatar
 }

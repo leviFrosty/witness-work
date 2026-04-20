@@ -15,6 +15,14 @@ import Foundation
 public class ICloudBridgeModule: Module {
   private static let syncFilePrefix = "witness-work"
   private static let syncFileExtension = "json"
+  /// Separate namespace from the JSON sync files. Binaries live alongside the
+  /// per-device JSON payloads in the ubiquity container's `Documents/` dir but
+  /// use a distinct `witness-work-img-*.jpg` filename so the two namespaces
+  /// never cross — critical because the JSON metadata query predicate matches
+  /// only `*.json` and must not fire remote-change events for binary writes.
+  /// Phase 2 of iCloud image sync, see docs/icloud-image-sync-plan.md.
+  private static let imageFilePrefix = "witness-work-img-"
+  private static let imageFileExtension = "jpg"
 
   private var metadataQuery: NSMetadataQuery?
   /// Per-filename modification dates this device has observed (from its own
@@ -347,6 +355,303 @@ public class ICloudBridgeModule: Module {
       }
     }
 
+    /// Copies a local file at `sourcePath` into the ubiquity container under
+    /// the validated `filename` (the `witness-work-img-*.jpg` namespace). Uses
+    /// `NSFileCoordinator` for the write so concurrent access from
+    /// `NSMetadataQuery` and other file presenters is safe. Returns the
+    /// resulting file's modification time in epoch ms.
+    ///
+    /// File-path transport avoids shipping multi-MB images through the RN
+    /// bridge as base64 — the JS layer only ever holds filenames, never
+    /// bytes. Source file must be readable; Swift `copyItem` (not `moveItem`)
+    /// so the caller's `FileSystem.documentDirectory` copy stays intact.
+    AsyncFunction("writeBinary") { (filename: String, sourcePath: String, promise: Promise) in
+      guard let documentsURL = self.documentsURL() else {
+        promise.reject(ICloudBridgeError.unavailable)
+        return
+      }
+      guard self.isValidImageFilename(filename) else {
+        promise.reject("ICLOUD_FILENAME", "Refusing to write outside image namespace: \(filename)")
+        return
+      }
+      let sourceURL = self.fileURL(from: sourcePath)
+      let destURL = documentsURL.appendingPathComponent(filename)
+
+      DispatchQueue.global(qos: .utility).async {
+        guard FileManager.default.fileExists(atPath: sourceURL.path) else {
+          promise.reject("ICLOUD_WRITE_BINARY", "Source file does not exist: \(sourcePath)")
+          return
+        }
+
+        try? FileManager.default.createDirectory(
+          at: documentsURL,
+          withIntermediateDirectories: true
+        )
+
+        let coordinator = NSFileCoordinator(filePresenter: nil)
+        var coordinatorError: NSError?
+        var writeResult: Result<Date, Error> = .failure(ICloudBridgeError.unavailable)
+
+        coordinator.coordinate(
+          writingItemAt: destURL,
+          options: .forReplacing,
+          error: &coordinatorError
+        ) { writeURL in
+          do {
+            if FileManager.default.fileExists(atPath: writeURL.path) {
+              try FileManager.default.removeItem(at: writeURL)
+            }
+            try FileManager.default.copyItem(at: sourceURL, to: writeURL)
+            let values = try writeURL.resourceValues(forKeys: [
+              .contentModificationDateKey,
+            ])
+            writeResult = .success(values.contentModificationDate ?? Date())
+          } catch {
+            writeResult = .failure(error)
+          }
+        }
+
+        if let err = coordinatorError {
+          promise.reject("ICLOUD_COORDINATE", "Coordinator error: \(err.localizedDescription)")
+          return
+        }
+
+        switch writeResult {
+        case .success(let modifiedAt):
+          promise.resolve(modifiedAt.timeIntervalSince1970 * 1000)
+        case .failure(let error):
+          promise.reject("ICLOUD_WRITE_BINARY", "Failed to write image: \(error.localizedDescription)")
+        }
+      }
+    }
+
+    /// Coordinated-read of a binary from the ubiquity container into
+    /// `destinationPath` on the local filesystem. Triggers
+    /// `startDownloadingUbiquitousItem` for placeholder files and polls up to
+    /// 10s for `.current` — mirrors the pattern in `readAll` for JSON files.
+    ///
+    /// Returns the container file's modification time in epoch ms so the JS
+    /// bookkeeping layer can decide whether a later re-download is warranted.
+    AsyncFunction("readBinary") { (filename: String, destinationPath: String, promise: Promise) in
+      guard let documentsURL = self.documentsURL() else {
+        promise.reject(ICloudBridgeError.unavailable)
+        return
+      }
+      guard self.isValidImageFilename(filename) else {
+        promise.reject("ICLOUD_FILENAME", "Refusing to read outside image namespace: \(filename)")
+        return
+      }
+      let sourceURL = documentsURL.appendingPathComponent(filename)
+      let destURL = self.fileURL(from: destinationPath)
+
+      DispatchQueue.global(qos: .utility).async {
+        try? FileManager.default.startDownloadingUbiquitousItem(at: sourceURL)
+
+        // Poll for `.current` status — identical strategy to readAll.
+        let deadline = Date().addingTimeInterval(10.0)
+        while Date() < deadline {
+          let values = try? sourceURL.resourceValues(forKeys: [
+            .ubiquitousItemDownloadingStatusKey,
+          ])
+          if values?.ubiquitousItemDownloadingStatus == .current {
+            break
+          }
+          Thread.sleep(forTimeInterval: 0.2)
+        }
+
+        guard FileManager.default.fileExists(atPath: sourceURL.path) else {
+          promise.reject("ICLOUD_READ_BINARY_MISSING", "Binary not in container: \(filename)")
+          return
+        }
+
+        let coordinator = NSFileCoordinator(filePresenter: nil)
+        var coordinatorError: NSError?
+        var readResult: Result<Date, Error> = .failure(ICloudBridgeError.unavailable)
+
+        coordinator.coordinate(
+          readingItemAt: sourceURL,
+          options: [],
+          error: &coordinatorError
+        ) { readURL in
+          do {
+            // Ensure parent dir of destination exists.
+            let parent = destURL.deletingLastPathComponent()
+            try FileManager.default.createDirectory(
+              at: parent,
+              withIntermediateDirectories: true
+            )
+            if FileManager.default.fileExists(atPath: destURL.path) {
+              try FileManager.default.removeItem(at: destURL)
+            }
+            try FileManager.default.copyItem(at: readURL, to: destURL)
+            let values = try readURL.resourceValues(forKeys: [
+              .contentModificationDateKey,
+            ])
+            readResult = .success(values.contentModificationDate ?? Date())
+          } catch {
+            readResult = .failure(error)
+          }
+        }
+
+        if let err = coordinatorError {
+          promise.reject("ICLOUD_COORDINATE", "Coordinator error: \(err.localizedDescription)")
+          return
+        }
+
+        switch readResult {
+        case .success(let modifiedAt):
+          promise.resolve(modifiedAt.timeIntervalSince1970 * 1000)
+        case .failure(let error):
+          promise.reject("ICLOUD_READ_BINARY", "Failed to read image: \(error.localizedDescription)")
+        }
+      }
+    }
+
+    /// Enumerates every `witness-work-img-*.jpg` in the ubiquity container.
+    /// Returns `[{ filename, modifiedAt }]` so the JS layer can diff by mtime
+    /// without a per-file round-trip. Does NOT trigger downloads for
+    /// placeholders — the caller drives downloads explicitly via `readBinary`.
+    AsyncFunction("listBinaryFiles") { (promise: Promise) in
+      guard let documentsURL = self.documentsURL() else {
+        promise.reject(ICloudBridgeError.unavailable)
+        return
+      }
+
+      DispatchQueue.global(qos: .utility).async {
+        do {
+          if !FileManager.default.fileExists(atPath: documentsURL.path) {
+            promise.resolve([])
+            return
+          }
+          let contents = try FileManager.default.contentsOfDirectory(
+            at: documentsURL,
+            includingPropertiesForKeys: [.contentModificationDateKey],
+            options: []
+          )
+          var results: [[String: Any]] = []
+          for url in contents {
+            let name = url.lastPathComponent
+            if !self.isValidImageFilename(name) { continue }
+            let values = try? url.resourceValues(forKeys: [
+              .contentModificationDateKey,
+            ])
+            let modifiedAt = values?.contentModificationDate ?? Date()
+            results.append([
+              "filename": name,
+              "modifiedAt": modifiedAt.timeIntervalSince1970 * 1000,
+            ])
+          }
+          promise.resolve(results)
+        } catch {
+          promise.reject(
+            "ICLOUD_LIST_BINARY",
+            "Failed to enumerate binaries: \(error.localizedDescription)"
+          )
+        }
+      }
+    }
+
+    /// Coordinated delete of a single binary file. Idempotent — missing file
+    /// resolves successfully so callers don't need to pre-check existence.
+    AsyncFunction("deleteBinaryFile") { (filename: String, promise: Promise) in
+      guard let documentsURL = self.documentsURL() else {
+        promise.reject(ICloudBridgeError.unavailable)
+        return
+      }
+      guard self.isValidImageFilename(filename) else {
+        promise.reject("ICLOUD_FILENAME", "Refusing to delete outside image namespace: \(filename)")
+        return
+      }
+      let fileURL = documentsURL.appendingPathComponent(filename)
+
+      DispatchQueue.global(qos: .utility).async {
+        let coordinator = NSFileCoordinator(filePresenter: nil)
+        var coordinatorError: NSError?
+        var deleteError: Error?
+
+        coordinator.coordinate(
+          writingItemAt: fileURL,
+          options: .forDeleting,
+          error: &coordinatorError
+        ) { writeURL in
+          do {
+            if FileManager.default.fileExists(atPath: writeURL.path) {
+              try FileManager.default.removeItem(at: writeURL)
+            }
+          } catch {
+            deleteError = error
+          }
+        }
+
+        if let err = coordinatorError {
+          promise.reject("ICLOUD_COORDINATE", "Coordinator error: \(err.localizedDescription)")
+          return
+        }
+        if let err = deleteError {
+          promise.reject("ICLOUD_DELETE_BINARY", "Failed to delete binary: \(err.localizedDescription)")
+          return
+        }
+        promise.resolve(nil)
+      }
+    }
+
+    /// Wipes every `witness-work-img-*.jpg` in the container. Used by the
+    /// image-sync disable path to scrub all uploaded avatars in one pass.
+    AsyncFunction("deleteAllBinaries") { (promise: Promise) in
+      guard let documentsURL = self.documentsURL() else {
+        promise.reject(ICloudBridgeError.unavailable)
+        return
+      }
+
+      DispatchQueue.global(qos: .utility).async {
+        do {
+          if !FileManager.default.fileExists(atPath: documentsURL.path) {
+            promise.resolve(nil)
+            return
+          }
+          let contents = try FileManager.default.contentsOfDirectory(
+            at: documentsURL,
+            includingPropertiesForKeys: [],
+            options: []
+          )
+          let coordinator = NSFileCoordinator(filePresenter: nil)
+          var firstError: Error?
+          for url in contents where self.isValidImageFilename(url.lastPathComponent) {
+            var coordinatorError: NSError?
+            coordinator.coordinate(
+              writingItemAt: url,
+              options: .forDeleting,
+              error: &coordinatorError
+            ) { writeURL in
+              do {
+                if FileManager.default.fileExists(atPath: writeURL.path) {
+                  try FileManager.default.removeItem(at: writeURL)
+                }
+              } catch {
+                if firstError == nil { firstError = error }
+              }
+            }
+            if let err = coordinatorError, firstError == nil {
+              firstError = err
+            }
+          }
+          if let err = firstError {
+            promise.reject(
+              "ICLOUD_DELETE_ALL_BINARIES",
+              "Failed to delete one or more binaries: \(err.localizedDescription)"
+            )
+            return
+          }
+          promise.resolve(nil)
+        } catch {
+          promise.reject(
+            "ICLOUD_DELETE_ALL_BINARIES",
+            "Failed to enumerate binaries: \(error.localizedDescription)"
+          )
+        }
+      }
+    }
+
     // Wipes every `witness-work*.json` in the container. Used by the Settings
     // "overwrite remote with this device's data" flow to guarantee the next
     // push isn't shadowed by leftover files from other devices.
@@ -401,6 +706,21 @@ public class ICloudBridgeModule: Module {
 
   // MARK: - File location
 
+  /// Accepts either a `file://` URI (which `expo-file-system` surfaces in JS
+  /// as `FileSystem.documentDirectory + filename`) or a plain filesystem
+  /// path and returns a `URL` that `FileManager` can use. Using
+  /// `URL(fileURLWithPath:)` on a string that already starts with `file://`
+  /// produces a bogus URL whose `.path` contains the literal scheme prefix,
+  /// so `FileManager.fileExists` returns false and writes silently fail.
+  private func fileURL(from pathOrUri: String) -> URL {
+    if pathOrUri.hasPrefix("file://") {
+      if let parsed = URL(string: pathOrUri) {
+        return parsed
+      }
+    }
+    return URL(fileURLWithPath: pathOrUri)
+  }
+
   private func documentsURL() -> URL? {
     guard let container = FileManager.default.url(forUbiquityContainerIdentifier: nil) else {
       return nil
@@ -431,6 +751,26 @@ public class ICloudBridgeModule: Module {
     guard name.hasPrefix(ICloudBridgeModule.syncFilePrefix) else { return false }
     guard name.hasSuffix(".\(ICloudBridgeModule.syncFileExtension)") else { return false }
     if name.contains("/") || name.contains("..") { return false }
+    // Exclude the image namespace even though it shares the `witness-work-`
+    // prefix — images end in `.jpg`, JSON files end in `.json`, so the suffix
+    // check already separates them, but be explicit as belt-and-suspenders.
+    if name.hasPrefix(ICloudBridgeModule.imageFilePrefix) { return false }
+    return true
+  }
+
+  /// Mirror of `src/lib/sync/imageNames.ts :: isValidImageFilename` — keep in
+  /// sync. Rejects anything outside the `witness-work-img-*.jpg` namespace,
+  /// any path separators / relative components, and empty-middle filenames
+  /// like `witness-work-img-.jpg`.
+  private func isValidImageFilename(_ name: String) -> Bool {
+    guard name.hasPrefix(ICloudBridgeModule.imageFilePrefix) else { return false }
+    guard name.hasSuffix(".\(ICloudBridgeModule.imageFileExtension)") else { return false }
+    if name.contains("/") || name.contains("..") { return false }
+    let middle = String(
+      name.dropFirst(ICloudBridgeModule.imageFilePrefix.count)
+        .dropLast(ICloudBridgeModule.imageFileExtension.count + 1) // include the '.'
+    )
+    if middle.isEmpty { return false }
     return true
   }
 

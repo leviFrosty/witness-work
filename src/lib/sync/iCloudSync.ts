@@ -1,4 +1,5 @@
 import { AppState, AppStateStatus, Platform } from 'react-native'
+import * as FileSystem from 'expo-file-system/legacy'
 import _ from 'lodash'
 import * as ICloudBridge from '../../../modules/icloud-bridge'
 import useContacts from '../../stores/contactsStore'
@@ -19,6 +20,19 @@ import {
   ServiceReportTombstone,
 } from '../../types/serviceReport'
 import { RecurringPlan } from '../serviceReport'
+import {
+  pushAllImages,
+  pullMissingImages,
+  gcOrphanImages,
+  ActiveIdentity,
+  ImageSyncBookkeeping,
+  ImageSyncDeps,
+} from './imageSync'
+import {
+  collectLocalAvatarSources,
+  collectExpectedMarkerSources,
+  applyDownloadedAvatars,
+} from './imageSources'
 
 const PUSH_DEBOUNCE_MS = 5000
 /**
@@ -417,6 +431,175 @@ export function applyPullEnable(remote: SyncPayload): void {
 }
 
 /**
+ * Wires the real `ICloudBridge` + `expo-file-system` into the injectable deps
+ * the pure `imageSync` module consumes. The pure module exists to keep
+ * upload/download bookkeeping testable without react-native mocks; this is the
+ * production adapter.
+ */
+function buildImageSyncDeps(): ImageSyncDeps {
+  return {
+    bridge: {
+      writeBinary: (filename, sourcePath) =>
+        ICloudBridge.writeBinary(filename, sourcePath),
+      readBinary: (filename, destinationPath) =>
+        ICloudBridge.readBinary(filename, destinationPath),
+      listBinaryFiles: () => ICloudBridge.listBinaryFiles(),
+      deleteBinaryFile: (filename) => ICloudBridge.deleteBinaryFile(filename),
+    },
+    fs: {
+      getModifiedAt: async (path) => {
+        // `path` is a `file://` URI with the cache-buster already stripped by
+        // `collectLocalAvatarSources`. `getInfoAsync` handles both URI and
+        // plain path forms.
+        const info = await FileSystem.getInfoAsync(path)
+        if (!info.exists) return null
+        return typeof info.modificationTime === 'number'
+          ? info.modificationTime * 1000
+          : Date.now()
+      },
+    },
+    now: () => Date.now(),
+  }
+}
+
+const DOCUMENT_DIR = FileSystem.documentDirectory ?? ''
+
+/**
+ * Pushes the local image bookkeeping forward: uploads any dirty or
+ * never-uploaded avatars and persists the resulting bookkeeping back to
+ * preferences. No-op when image sync is disabled. Failures are logged and
+ * surfaced to Sentry; the returned promise resolves regardless.
+ */
+async function pushImagesIfEnabled(
+  trigger: 'store-edit' | 'foreground'
+): Promise<void> {
+  const prefs = usePreferences.getState()
+  if (!prefs.iCloudSyncIncludeImages) return
+  if (Platform.OS !== 'ios') return
+  try {
+    const sources = collectLocalAvatarSources({
+      contacts: useContacts.getState().contacts,
+      profileAvatar: prefs.avatar,
+      documentDirectory: DOCUMENT_DIR,
+    })
+    if (sources.length === 0) return
+    const deps = buildImageSyncDeps()
+    const result = await pushAllImages({
+      sources,
+      bookkeeping: prefs.iCloudImageSync ?? {},
+      deps,
+      trigger,
+    })
+    usePreferences.setState({ iCloudImageSync: result.bookkeeping })
+    // Surface the first failure's error message — lossy when there are many,
+    // but keeps the log from exploding and tells the operator exactly why
+    // writes are failing (path mismatch, quota, coordinator error, etc.).
+    const firstError = Object.values(result.bookkeeping).find(
+      (e) => e.lastError
+    )?.lastError
+    logger.log(`${tag()} image push`, {
+      trigger,
+      uploaded: result.uploaded,
+      failed: result.failed,
+      skipped: result.skipped,
+      ...(firstError ? { firstError } : {}),
+    })
+  } catch (e) {
+    logger.error(`${tag()} image push failed`, e)
+    Sentry.captureException(e, { tags: { iCloudSync: 'image-push' } })
+  }
+}
+
+/**
+ * Downloads any images the merged state references as markers but doesn't yet
+ * have locally, then rewrites the in-memory records to point at the fresh local
+ * URIs. No-op when image sync is disabled; skipping downloads on disabled
+ * devices is how receivers naturally fall back to initials (see Q4 in
+ * docs/icloud-image-sync-plan.md).
+ */
+async function pullImagesIfEnabled(): Promise<void> {
+  const prefs = usePreferences.getState()
+  if (!prefs.iCloudSyncIncludeImages) return
+  if (Platform.OS !== 'ios') return
+  try {
+    const sources = collectExpectedMarkerSources({
+      contacts: useContacts.getState().contacts,
+      profileAvatar: prefs.avatar,
+      documentDirectory: DOCUMENT_DIR,
+    })
+    if (sources.length === 0) return
+    const deps = buildImageSyncDeps()
+    const result = await pullMissingImages({
+      expectedSources: sources,
+      bookkeeping: prefs.iCloudImageSync ?? {},
+      deps,
+    })
+    if (result.downloaded.length === 0) {
+      // Still persist bookkeeping even without downloads in case we tracked
+      // new containerMtime observations via skip-branch.
+      usePreferences.setState({ iCloudImageSync: result.bookkeeping })
+      return
+    }
+    const contactsState = useContacts.getState()
+    const applied = applyDownloadedAvatars({
+      contacts: contactsState.contacts,
+      profileAvatar: prefs.avatar,
+      downloaded: result.downloaded,
+    })
+    // Write through the stores' own `set` to avoid bumping `updatedAt` — the
+    // helper preserved the records' timestamps, and `set` is a raw state
+    // replacement (no stamping). Using `usePreferences.setState` directly
+    // bypasses the iCloud-sync stamping wrapper on the preferences store
+    // for the same reason.
+    contactsState.set({ contacts: applied.contacts })
+    if (applied.profileAvatar && applied.profileAvatar !== prefs.avatar) {
+      usePreferences.setState({ avatar: applied.profileAvatar })
+    }
+    usePreferences.setState({ iCloudImageSync: result.bookkeeping })
+    logger.log(`${tag()} image pull`, {
+      downloaded: result.downloaded.length,
+      missing: result.missing.length,
+    })
+  } catch (e) {
+    logger.error(`${tag()} image pull failed`, e)
+    Sentry.captureException(e, { tags: { iCloudSync: 'image-pull' } })
+  }
+}
+
+/**
+ * Deletes container binaries with no corresponding local identity. Meant to be
+ * fired on foreground after a merge that changed the contact list and once at
+ * app launch — cleans up after contact deletes that happened while this device
+ * was offline.
+ */
+async function gcImagesIfEnabled(): Promise<void> {
+  const prefs = usePreferences.getState()
+  if (!prefs.iCloudSyncIncludeImages) return
+  if (Platform.OS !== 'ios') return
+  try {
+    const active: ActiveIdentity[] = useContacts
+      .getState()
+      .contacts.map((c) => ({ kind: 'contact', id: c.id }))
+    if (prefs.avatar?.type === 'image') active.push({ kind: 'profile' })
+    const deps = buildImageSyncDeps()
+    const result = await gcOrphanImages({ activeIdentities: active, deps })
+    if (result.deleted.length > 0) {
+      // Strip the deleted filenames from bookkeeping so we don't keep stale
+      // entries forever.
+      const next: ImageSyncBookkeeping = {
+        ...(prefs.iCloudImageSync ?? {}),
+      }
+      for (const filename of result.deleted) delete next[filename]
+      usePreferences.setState({ iCloudImageSync: next })
+      logger.log(`${tag()} image gc`, { deleted: result.deleted.length })
+    }
+  } catch (e) {
+    logger.error(`${tag()} image gc failed`, e)
+    Sentry.captureException(e, { tags: { iCloudSync: 'image-gc' } })
+  }
+}
+
+/**
  * Pushes current local state to iCloud. Safe to call when sync is disabled —
  * it's a no-op. Errors are logged + reported to Sentry but never thrown, so
  * callers (store subscribers, AppState handlers) don't need try/catch.
@@ -461,6 +644,9 @@ export async function push(reason: string): Promise<void> {
       message: `push (${reason})`,
       level: 'info',
     })
+    // Piggyback the binary upload on every successful JSON push. No-op when
+    // image sync is disabled.
+    await pushImagesIfEnabled('store-edit')
   } catch (e) {
     logger.error(`${tag()} push failed (${reason})`, e)
     Sentry.captureException(e, { tags: { iCloudSync: 'push' } })
@@ -700,6 +886,17 @@ async function pullAndMergeInner(reason: string): Promise<boolean> {
     // local state from a prior pull, so deleting them is safe and stops
     // future pulls from re-reading them.
     void cleanupLegacyFiles(legacyFilenames)
+    // Even when the JSON merge is a no-op, image state can drift:
+    //
+    // - User enabled image sync on this device after a previous pull
+    //   brought markers into local state; binaries now need to be pulled.
+    // - Another device re-uploaded a binary whose mtime advanced without
+    //   changing the JSON record (e.g. user re-picked the same image).
+    //
+    // `pullImagesIfEnabled` is cheap and idempotent, so run it
+    // unconditionally on every pull cycle and let its own bookkeeping
+    // skip no-op downloads.
+    await pullImagesIfEnabled()
     return false
   }
 
@@ -742,6 +939,13 @@ async function pullAndMergeInner(reason: string): Promise<boolean> {
   // Legacy contents are now reflected in local state AND will be written to
   // this device's per-device file on the next push. Safe to delete.
   void cleanupLegacyFiles(legacyFilenames)
+
+  // A merge that changed anything may have introduced new avatar markers for
+  // contacts whose images we haven't downloaded yet. Fire-and-forget — the
+  // helper handles its own error reporting and is a no-op when image sync
+  // is disabled. Wait on it so `pullAndMerge` callers can sequence their
+  // own UI refresh after images land.
+  await pullImagesIfEnabled()
 
   return true
 }
@@ -852,6 +1056,11 @@ export function installiCloudSync(): () => void {
       if (!canSync()) return
       // Fire and forget — errors are already handled inside pullAndMerge.
       void pullAndMerge('foreground')
+      // Also drive a foreground image-push so quota-backoffed uploads get
+      // another shot (see imageSync.ts quota handling) and a GC sweep to
+      // clean up after foreign-device deletes we might have missed.
+      void pushImagesIfEnabled('foreground')
+      void gcImagesIfEnabled()
       return
     }
     // Leaving foreground (inactive/background): if a debounced push is
@@ -897,6 +1106,43 @@ export function installiCloudSync(): () => void {
   }
 }
 
+/**
+ * Destructive cleanup for the image-sync-off path. Wipes every binary from the
+ * ubiquity container and clears local bookkeeping. Does NOT touch local
+ * `documentDirectory` copies — the user turned sync off, not their photos.
+ */
+export async function disableImageSync(): Promise<void> {
+  try {
+    await ICloudBridge.deleteAllBinaries()
+  } catch (e) {
+    logger.error(`${tag()} failed to clear remote binaries on disable`, e)
+    Sentry.captureException(e, { tags: { iCloudSync: 'image-disable' } })
+  }
+  usePreferences.setState({
+    iCloudSyncIncludeImages: false,
+    iCloudImageSync: {},
+  })
+}
+
+/**
+ * Opt-in flip: turns image sync on, then kicks off BOTH directions of the
+ * first-pass migration so the device converges on the cross-device image set
+ * regardless of which side has bytes:
+ *
+ * - Push uploads every local `file://` avatar we haven't sent yet (the typical "I
+ *   already have photos, now I want them on my other devices" story).
+ * - Pull downloads any `icloud://` markers already sitting in local state — for
+ *   example, after an onboarding restore where the user said "no" to the
+ *   download-photos prompt and later opts in via Settings. Without this pass,
+ *   markers would linger with no local files until the next
+ *   merge-that-changes-something, which may never come.
+ */
+export async function enableImageSync(): Promise<void> {
+  usePreferences.setState({ iCloudSyncIncludeImages: true })
+  await pushImagesIfEnabled('store-edit')
+  await pullImagesIfEnabled()
+}
+
 /** For tests + the Settings "Sync now" button. */
 export const iCloudSync = {
   push,
@@ -910,5 +1156,10 @@ export const iCloudSync = {
   resolveInitialEnable,
   applySeedEnable,
   applyPullEnable,
+  enableImageSync,
+  disableImageSync,
+  pushImagesIfEnabled: () => pushImagesIfEnabled('foreground'),
+  pullImagesIfEnabled,
+  gcImagesIfEnabled,
   isPushScheduled: () => pushScheduled,
 }

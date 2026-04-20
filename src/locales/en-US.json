@@ -1252,5 +1252,5 @@
   "continueWith": "Continue with {{option}}",
   "notNow": "Not Now",
   "shareLocationForBetterAddressSearch": "Improve Address Search?",
-  "shareLocationForBetterAddressSearch_description": "WitnessWork can use your approximate location to return more relevant address suggestions. Your location is never shared with external services."
+  "shareLocationForBetterAddressSearch_description": "WitnessWork can use your approximate location to return more relevant address suggestions. Searches are anonymous — your location isn't linked to you personally."
 }

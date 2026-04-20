@@ -1,6 +1,7 @@
 import React, { useEffect, useCallback, useRef } from 'react'
-import { View, TouchableOpacity, TextInput } from 'react-native'
+import { Alert, View, TouchableOpacity, TextInput } from 'react-native'
 import axios from 'axios'
+import * as Location from 'expo-location'
 import apis from '../constants/apis'
 import Text from './MyText'
 import useTheme from '../contexts/theme'
@@ -44,8 +45,29 @@ const AddressAutocomplete: React.FC<AddressAutocompleteProps> = ({
   onSelect,
 }) => {
   const textInputRef = useRef<TextInput>(null)
-  const { location } = useLocation()
+  const { location, status, requestLocation } = useLocation()
+  const hasPromptedLocationRef = useRef(false)
   const theme = useTheme()
+
+  useEffect(() => {
+    if (hasPromptedLocationRef.current) return
+    if (query.length < 3 || isResult) return
+    if (status !== Location.PermissionStatus.UNDETERMINED) return
+    hasPromptedLocationRef.current = true
+    Alert.alert(
+      i18n.t('shareLocationForBetterAddressSearch'),
+      i18n.t('shareLocationForBetterAddressSearch_description'),
+      [
+        { text: i18n.t('notNow'), style: 'cancel' },
+        {
+          text: i18n.t('enableLocationServices'),
+          onPress: () => {
+            requestLocation()
+          },
+        },
+      ]
+    )
+  }, [query, isResult, status, requestLocation])
 
   const getHighlightedText = useCallback(
     (

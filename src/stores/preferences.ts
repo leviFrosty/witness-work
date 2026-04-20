@@ -10,6 +10,8 @@ import { hasMigratedFromAsyncStorage, MmkvStorage } from './mmkv'
 import { Address } from '../types/contact'
 import { ProfileAvatar } from '../types/avatar'
 import { MinuteDisplayFormat } from '../types/serviceReport'
+import type { ShaderId } from '../shaders/types'
+import { DEFAULT_SHADER_ID } from '../shaders/registry'
 
 const SortOptionValues = [
   'recentConversation',
@@ -210,6 +212,19 @@ export const PREFERENCE_DEFAULTS = {
     contacts: true,
   },
   colorScheme: undefined as 'light' | 'dark' | undefined,
+  /**
+   * Toggles the Skia-backed shader overlay on `ProfileCard`. Off by default
+   * while the effect is still being tuned — the preference is only surfaced
+   * under `__DEV__` today and will be revisited before wider release.
+   */
+  profileCardShaderEnabled: false,
+  /**
+   * Which shader from `src/shaders/registry.ts` is active on the profile card.
+   * Reserved for a future picker + unlock flow. Today only `holographic` is
+   * surfaced in the UI, but the preference is already typed as `ShaderId` so
+   * adding new entries is a pure registry change.
+   */
+  profileCardShaderId: DEFAULT_SHADER_ID as ShaderId,
   timeDisplayFormat: 'decimal' as MinuteDisplayFormat,
   locale: undefined as TranslatedLocale | undefined,
   mapKeyColors: undefined as MarkerColors | undefined,

@@ -1,28 +1,36 @@
-import { PropsWithChildren, useEffect, useRef } from 'react'
-import { LayoutChangeEvent, View, ViewStyle } from 'react-native'
+import { PropsWithChildren, ReactNode, useEffect, useRef } from 'react'
+import { LayoutChangeEvent, ViewStyle } from 'react-native'
 import Animated, {
-  interpolate,
   runOnJS,
   useAnimatedStyle,
+  useDerivedValue,
   useSharedValue,
   withSpring,
   withTiming,
 } from 'react-native-reanimated'
 import { Gesture, GestureDetector } from 'react-native-gesture-handler'
 import { Accelerometer } from 'expo-sensors'
+import type { TiltShaderContext } from '../shaders/types'
 
 interface Props {
   /** Disables the tilt gesture (e.g. in previews). */
   disabled?: boolean
   /** Max tilt in degrees at the corners. */
   maxTilt?: number
-  /** Shows a subtle gloss overlay that tracks the tilt. */
-  shimmer?: boolean
-  /** Subscribes to accelerometer for idle gyro tilt. */
+  /** Subscribes to the accelerometer for an idle gyro tilt. */
   gyro?: boolean
   /** Fires on a short press-and-release without drag. */
   onTap?: () => void
   style?: ViewStyle | ViewStyle[]
+  /**
+   * Renders a visual overlay on top of the children, transformed with the same
+   * 3D tilt. Given the live tilt + size so effects (e.g. Skia shaders) can
+   * drive their own uniforms. Returned nodes should position themselves with
+   * `StyleSheet.absoluteFillObject` and be `pointerEvents='none'`.
+   */
+  renderOverlay?: (ctx: TiltShaderContext) => ReactNode
+  /** Border radius forwarded to `renderOverlay` for masking. */
+  overlayBorderRadius?: number
 }
 
 const SPRING = { damping: 18, stiffness: 160, mass: 0.6 }
@@ -32,10 +40,11 @@ const TiltableCard = ({
   children,
   disabled,
   maxTilt = 8,
-  shimmer = true,
   gyro = true,
   onTap,
   style,
+  renderOverlay,
+  overlayBorderRadius = 15,
 }: PropsWithChildren<Props>) => {
   const touchTiltX = useSharedValue(0)
   const touchTiltY = useSharedValue(0)
@@ -110,57 +119,30 @@ const TiltableCard = ({
     }
   })
 
-  const shimmerStyle = useAnimatedStyle(() => {
-    const w = width.value || 1
-    const h = height.value || 1
-    const tx = touchTiltY.value + gyroTiltY.value * (1 - active.value)
-    const ty = touchTiltX.value + gyroTiltX.value * (1 - active.value)
-    const px = interpolate(tx, [-maxTilt, maxTilt], [0, 1])
-    const py = interpolate(ty, [maxTilt, -maxTilt], [0, 1])
-    const bandW = w * 1.6
-    // Gloss is faint at rest, brighter under touch.
-    const baseOpacity = gyro ? 0.08 : 0
-    return {
-      opacity: baseOpacity + active.value * 0.14,
-      transform: [
-        { translateX: px * w - bandW / 2 },
-        { translateY: (py - 0.5) * h * 0.4 },
-        { rotateZ: '20deg' },
-      ],
-      width: bandW,
-    }
+  // Normalized tilt in roughly [-1, 1] derived from the same rotation values
+  // the transform uses, so overlays stay in perfect sync with the 3D tilt.
+  const normTiltX = useDerivedValue(() => {
+    const deg = touchTiltY.value + gyroTiltY.value * (1 - active.value)
+    return Math.max(-1, Math.min(1, deg / maxTilt))
+  })
+  const normTiltY = useDerivedValue(() => {
+    const deg = -(touchTiltX.value + gyroTiltX.value * (1 - active.value))
+    return Math.max(-1, Math.min(1, deg / maxTilt))
+  })
+
+  const overlay = renderOverlay?.({
+    width,
+    height,
+    tiltX: normTiltX,
+    tiltY: normTiltY,
+    borderRadius: overlayBorderRadius,
   })
 
   return (
     <GestureDetector gesture={composed}>
       <Animated.View onLayout={onLayout} style={[style, animatedStyle]}>
         {children}
-        {shimmer && (
-          <View
-            pointerEvents='none'
-            style={{
-              position: 'absolute',
-              top: 0,
-              right: 0,
-              bottom: 0,
-              left: 0,
-              borderRadius: 15,
-              overflow: 'hidden',
-            }}
-          >
-            <Animated.View
-              style={[
-                {
-                  position: 'absolute',
-                  top: -20,
-                  bottom: -20,
-                  backgroundColor: 'white',
-                },
-                shimmerStyle,
-              ]}
-            />
-          </View>
-        )}
+        {overlay}
       </Animated.View>
     </GestureDetector>
   )

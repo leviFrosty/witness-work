@@ -21,6 +21,7 @@ import ProfileDetailOverlay, { OriginRect } from './ProfileDetailOverlay'
 import AvatarPickerPopover from './AvatarPickerPopover'
 import i18n from '../lib/locales'
 import { isPioneer } from '../constants/publisher'
+import { ShaderOverlay } from '../shaders'
 
 interface Props {
   /** Disables interaction; used for the live preview inside onboarding. */
@@ -78,6 +79,8 @@ const ProfileCard = ({ preview, editable, onPressIncomplete }: Props) => {
     installedOn,
     pioneerStartDate,
     hasCompletedProfileSetup,
+    profileCardShaderEnabled,
+    profileCardShaderId,
     set,
   } = usePreferences()
   const { status: publisher } = usePublisher()
@@ -182,6 +185,21 @@ const ProfileCard = ({ preview, editable, onPressIncomplete }: Props) => {
     }
   })()
 
+  // When the holographic shader is on we swap the whole card to a warm
+  // cream cardstock + dark text. A Balatro holo is defined by its *light*
+  // cardstock underneath the foil — a dark card with pastels over it reads
+  // as neon, not holographic. Text colors flip too so they stay legible.
+  const holoActive = !preview && !editable && profileCardShaderEnabled
+  const cardBg = holoActive ? '#F2E9D2' : theme.colors.background
+  const cardBorder = holoActive ? '#D9CDAD' : theme.colors.border
+  const titleColor = holoActive ? '#1A1A1A' : theme.colors.text
+  const subtitleColor = holoActive ? '#5A5244' : theme.colors.textAlt
+  const tenureIconTint = holoActive
+    ? tenure.tone === 'installed'
+      ? '#5A5244'
+      : tenure.tint
+    : tenure.tint
+
   const avatarEl = editable ? (
     <AvatarPickerPopover
       value={avatar}
@@ -208,7 +226,7 @@ const ProfileCard = ({ preview, editable, onPressIncomplete }: Props) => {
       style={{
         fontFamily: theme.fonts.semiBold,
         fontSize: 16,
-        color: theme.colors.text,
+        color: titleColor,
         padding: 0,
         margin: 0,
       }}
@@ -218,7 +236,7 @@ const ProfileCard = ({ preview, editable, onPressIncomplete }: Props) => {
       style={{
         fontFamily: theme.fonts.semiBold,
         fontSize: 16,
-        color: theme.colors.text,
+        color: titleColor,
       }}
       numberOfLines={1}
     >
@@ -232,6 +250,9 @@ const ProfileCard = ({ preview, editable, onPressIncomplete }: Props) => {
         paddingVertical: CARD_PADDING_V,
         paddingHorizontal: CARD_PADDING_H,
         gap: 10,
+        backgroundColor: cardBg,
+        borderWidth: 1,
+        borderColor: cardBorder,
       }}
     >
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
@@ -241,7 +262,7 @@ const ProfileCard = ({ preview, editable, onPressIncomplete }: Props) => {
           <Text
             style={{
               fontSize: 12,
-              color: theme.colors.textAlt,
+              color: subtitleColor,
               marginTop: 1,
             }}
           >
@@ -250,8 +271,8 @@ const ProfileCard = ({ preview, editable, onPressIncomplete }: Props) => {
         </View>
       </View>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-        <FontAwesomeIcon icon={tenure.icon} size={11} color={tenure.tint} />
-        <Text style={{ fontSize: 12, color: theme.colors.textAlt }}>
+        <FontAwesomeIcon icon={tenure.icon} size={11} color={tenureIconTint} />
+        <Text style={{ fontSize: 12, color: subtitleColor }}>
           {tenure.text}
         </Text>
       </View>
@@ -265,7 +286,19 @@ const ProfileCard = ({ preview, editable, onPressIncomplete }: Props) => {
   return (
     <>
       <View ref={anchorRef} collapsable={false}>
-        <TiltableCard onTap={handleTap}>{cardBody}</TiltableCard>
+        <TiltableCard
+          onTap={handleTap}
+          overlayBorderRadius={theme.numbers.borderRadiusLg}
+          renderOverlay={(ctx) => (
+            <ShaderOverlay
+              {...ctx}
+              enabled={profileCardShaderEnabled}
+              shaderId={profileCardShaderId}
+            />
+          )}
+        >
+          {cardBody}
+        </TiltableCard>
       </View>
       <ProfileDetailOverlay
         origin={origin}

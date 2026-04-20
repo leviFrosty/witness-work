@@ -29,7 +29,8 @@
   - Immediately after privacy important
 - Add "WitnessWork" fade in and grand reveal at startup. It should have a very terse and useful description for what witnesswork does right below it, the intro screen to excite the user.
 - Add 'Badges' feature. Highest badge based on weight, or user selected badge should appear on ProfileCard. ProfilDetailOverlay should contain more details about top 3 badges. There should be a separate Badge screen that overviews "See all" badges, with non-unlocked badges in 'grey' state. Each badge should be unique and have its' own art. We'll need to figure out a good solution on how to source art or art-like references through emojis or something else? Given that badges are special, we probably don't want to do emojis.
-- Resolve medium contact widget overflow
+- Update / handle all "Get started" actions and validate functionaltiy.
+- Update lists to use ListItem: <https://tamagui.dev/ui/list-item> across the ENTIRE application and be styled in iOS 26, liquid glass aesthetic and design scheme. We want 100% iOS UI styling. It should feel like a native iOS app made by Apple. /grill-me
 - Review month and year screen for improvements to analytics, revisit and reconsider what is the best data display format for the given data.
 - Year screen: show months remaining in service year -- somewhere.
 - See about implementing a social 'friends' feature similar to apple workouts/activity where users will get notified about friends week/month achievements, badge unlocks, etc. Look to see if existing iOS sdk exists to implement this or if we have to roll this ourselves with API and db.

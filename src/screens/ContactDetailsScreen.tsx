@@ -64,12 +64,12 @@ import { RootStackNavigation, RootStackParamList } from '../types/rootStack'
 import { useMarkerColors } from '../hooks/useMarkerColors'
 import { getContactStaleness, stalenessToColor } from '../lib/contactStaleness'
 import DismissContactSheet from '../components/DismissContactSheet'
-import Card from '../components/Card'
 import { buildContactShareLink } from '../lib/contactShareLink'
 import { MenuView, MenuAction } from '@react-native-menu/menu'
 import { isContactDismissed } from '../lib/dismissedContacts'
 import Avatar from '../components/Avatar'
 import { ProfileAvatar } from '../types/avatar'
+import JsonViewer from '../components/JsonViewer'
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Contact Details'>
 
@@ -939,9 +939,7 @@ const ContactDetailsScreen = ({ route, navigation }: Props) => {
             avatar={contact.avatar ?? { type: 'none', value: '' }}
           />
           {developerTools && (
-            <Card style={{ marginHorizontal: 10 }}>
-              <Text>{JSON.stringify(contact, null, 2)}</Text>
-            </Card>
+            <JsonViewer label={i18n.t('data')} value={contact} />
           )}
           <View style={{ gap: 30 }}>
             <CardWithTitle

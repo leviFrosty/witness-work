@@ -11,6 +11,7 @@ interface Props extends ViewProps {
   titleColor?: ColorValue
   noPadding?: boolean
   style?: StyleProp<ViewStyle>
+  cardStyle?: StyleProp<ViewStyle>
 }
 
 const CardWithTitle: React.FC<PropsWithChildren<Props>> = ({
@@ -20,6 +21,7 @@ const CardWithTitle: React.FC<PropsWithChildren<Props>> = ({
   titleColor,
   noPadding,
   style,
+  cardStyle,
   ...rest
 }) => {
   const theme = useTheme()
@@ -38,9 +40,10 @@ const CardWithTitle: React.FC<PropsWithChildren<Props>> = ({
         </Text>
       )}
       <Card
-        style={
-          noPadding ? { paddingVertical: 0, paddingHorizontal: 0 } : undefined
-        }
+        style={[
+          noPadding ? { paddingVertical: 0, paddingHorizontal: 0 } : undefined,
+          cardStyle,
+        ]}
       >
         {titlePosition === 'inside' && typeof title === 'string' ? (
           <View style={{ gap: 10 }}>

@@ -17,10 +17,11 @@ import ReturnVisitContactsSection from '../components/ReturnVisitContactsSection
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import XView from '../components/layout/XView'
-import AnnualServiceReportSummary from '../components/AnnualServiceReportSummary'
+import YearMilestoneCard from '../components/YearMilestoneCard'
 import moment from 'moment'
 import useDevice from '../hooks/useDevice'
-import { getServiceYearFromDate } from '../lib/serviceReport'
+import { getMonthsReports, getServiceYearFromDate } from '../lib/serviceReport'
+import WeekStripTeaser from '../components/WeekStripTeaser'
 import i18n from '../lib/locales'
 import Text from '../components/MyText'
 import Button from '../components/Button'
@@ -32,6 +33,10 @@ import { TimerSection } from '../components/TimerSection'
 import UpgradeLegacyTimeReportsSheet from '../components/UpgradeLegacyTimeReportsSheet'
 import ProfileCard from '../components/ProfileCard'
 import HomeChecklist from '../components/onboarding/HomeChecklist'
+import SupporterNudgeCard from '../components/SupporterNudgeCard'
+import useIsSupporter from '../hooks/useIsSupporter'
+import { useServiceReport } from '../stores/serviceReport'
+import { isSupporterNudgeEligible } from '../lib/supporterNudge'
 import { HomeTabStackNavigation } from '../types/homeStack'
 import { RootStackNavigation } from '../types/rootStack'
 
@@ -46,7 +51,13 @@ export const HomeScreen = () => {
     iCloudSyncEnabled,
     lastiCloudPushedAt,
     lastiCloudPulledAt,
+    hideDonateHeart,
+    hideSupporterNudge,
+    supporterNudgeDismissedAt,
+    devSupporterNudgeForceShow,
   } = usePreferences()
+  const { isSupporter } = useIsSupporter()
+  const { serviceReports } = useServiceReport()
   const [refreshing, setRefreshing] = useState(false)
 
   const handleRefresh = useCallback(async () => {
@@ -68,6 +79,12 @@ export const HomeScreen = () => {
   const navigation = useNavigation<HomeTabStackNavigation>()
   const rootNavigation = useNavigation<RootStackNavigation>()
   const serviceYear = getServiceYearFromDate(moment())
+  const currentMonth = moment().month()
+  const currentYear = moment().year()
+  const currentMonthsReports = useMemo(
+    () => getMonthsReports(serviceReports, currentMonth, currentYear),
+    [serviceReports, currentMonth, currentYear]
+  )
   const hasLegacyReports = useMemo(() => {
     return serviceReportTags.some((t) => typeof t === 'string')
   }, [serviceReportTags])
@@ -110,6 +127,33 @@ export const HomeScreen = () => {
     const activeIds = new Set(contacts.map((c) => c.id))
     return overdue.filter((c) => activeIds.has(c.contact.id))
   }, [contacts, conversations])
+
+  const showSupporterNudge = useMemo(
+    () =>
+      isSupporterNudgeEligible({
+        isSupporter,
+        hideDonateHeart,
+        hideSupporterNudge,
+        installedOn,
+        supporterNudgeDismissedAt,
+        serviceReports,
+        contactsCount: contacts.length,
+        conversationsCount: conversations.length,
+        devForceShow: devSupporterNudgeForceShow,
+        isDev: __DEV__,
+      }),
+    [
+      isSupporter,
+      hideDonateHeart,
+      hideSupporterNudge,
+      installedOn,
+      supporterNudgeDismissedAt,
+      serviceReports,
+      contacts.length,
+      conversations.length,
+      devSupporterNudgeForceShow,
+    ]
+  )
 
   const shouldRemindToBackup = useMemo(() => {
     if (!remindMeAboutBackups) return false
@@ -195,6 +239,7 @@ export const HomeScreen = () => {
             )}
           {shouldRemindToBackup && <BackupReminder />}
           <HomeChecklist />
+          {showSupporterNudge && <SupporterNudgeCard />}
           {isTablet &&
             hasAnnualGoal &&
             homeScreenElements.tabletServiceYearSummary && (
@@ -212,23 +257,26 @@ export const HomeScreen = () => {
                   <Button
                     style={{ flex: 1 }}
                     onPress={() =>
-                      navigation.navigate('Month', {
+                      navigation.navigate('Progress', {
                         month: moment().month(),
                         year: moment().year(),
                       })
                     }
                   >
-                    <AnnualServiceReportSummary
-                      serviceYear={serviceYear}
-                      month={moment().month()}
-                      year={moment().year()}
-                    />
+                    <YearMilestoneCard year={serviceYear + 1} />
                   </Button>
                 </XView>
               </View>
             )}
           {homeScreenElements.serviceReport && (
             <ServiceReportSection setSheet={setExportTimeSheet} />
+          )}
+          {homeScreenElements.thisWeek && (
+            <WeekStripTeaser
+              month={currentMonth}
+              year={currentYear}
+              monthsReports={currentMonthsReports}
+            />
           )}
           {publisher !== 'publisher' && homeScreenElements.timer && (
             <TimerSection />

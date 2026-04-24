@@ -4,7 +4,8 @@ import Text from './MyText'
 import i18n from '../lib/locales'
 import Button from './Button'
 import XView from './layout/XView'
-import type { CalendarViewMode } from '../screens/TimeReportsDashboard'
+
+export type CalendarViewMode = 'planned' | 'actual'
 
 type CalendarHeaderProps = {
   viewMode?: CalendarViewMode

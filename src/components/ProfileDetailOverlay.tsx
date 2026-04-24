@@ -44,6 +44,10 @@ import {
   minutesInTrailingDays,
   totalMinutes,
 } from '../lib/profileStats'
+import {
+  generateDailyMinutesFingerprint,
+  useTimeCache,
+} from '../stores/timeCache'
 
 export type OriginRect = { x: number; y: number; width: number; height: number }
 
@@ -119,11 +123,34 @@ const ProfileDetailOverlay = ({ origin, open, onClose, onClosed }: Props) => {
   const { status: publisher } = usePublisher()
   const { since: supporterSince } = useIsSupporter()
   const { serviceReports } = useServiceReport()
+  const setDailyMinutesCache = useTimeCache((s) => s.setDailyMinutesCache)
 
-  const daily = useMemo(
-    () => flattenDailyMinutes(serviceReports),
-    [serviceReports]
-  )
+  const { daily, fingerprint, cacheHit } = useMemo(() => {
+    const fp = generateDailyMinutesFingerprint(serviceReports)
+    const cached = useTimeCache.getState().dailyMinutes
+    if (cached && cached.fingerprint === fp) {
+      return {
+        daily: new Map(Object.entries(cached.daily)),
+        fingerprint: fp,
+        cacheHit: true,
+      }
+    }
+    return {
+      daily: flattenDailyMinutes(serviceReports),
+      fingerprint: fp,
+      cacheHit: false,
+    }
+  }, [serviceReports])
+
+  useEffect(() => {
+    if (cacheHit) return
+    const obj: Record<string, number> = {}
+    daily.forEach((v, k) => {
+      obj[k] = v
+    })
+    setDailyMinutesCache(obj, fingerprint)
+  }, [cacheHit, daily, fingerprint, setDailyMinutesCache])
+
   const stats = useMemo(() => {
     const total = totalMinutes(daily)
     return {

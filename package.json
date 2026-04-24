@@ -43,6 +43,7 @@
     "@react-navigation/native-stack": "^7.14.10",
     "@sentry/react-native": "~7.11.0",
     "@shopify/flash-list": "2.0.2",
+    "@shopify/react-native-skia": "^2.6.2",
     "@tamagui/babel-plugin": "^1.144.4",
     "@tamagui/config": "^1.144.4",
     "@tamagui/toast": "^1.144.4",
@@ -68,6 +69,7 @@
     "expo-file-system": "~55.0.16",
     "expo-font": "~55.0.6",
     "expo-haptics": "~55.0.14",
+    "expo-image": "~55.0.8",
     "expo-image-picker": "~55.0.18",
     "expo-insights": "~55.0.16",
     "expo-linking": "~55.0.13",
@@ -168,6 +170,9 @@
       "@xmldom/xmldom": ">=0.8.12",
       "@tootallnate/once": ">=3.0.1",
       "react-native-safe-area-context": "5.6.2"
-    }
+    },
+    "onlyBuiltDependencies": [
+      "@shopify/react-native-skia"
+    ]
   }
 }

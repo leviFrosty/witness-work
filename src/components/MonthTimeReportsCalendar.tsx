@@ -7,7 +7,7 @@ import { SelectedDateSheetState } from './SelectedDateSheet'
 import CalendarDay from './CalendarDay'
 import { useMemo } from 'react'
 import { usePreferences } from '../stores/preferences'
-import type { CalendarViewMode } from '../screens/TimeReportsDashboard'
+import type { CalendarViewMode } from './CalendarHeader'
 
 type MonthTimeReportsCalendarProps = {
   month: number

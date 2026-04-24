@@ -102,6 +102,7 @@ export default ({ config }: ConfigContext): ExpoConfig => {
       'expo-asset',
       'expo-background-task',
       'expo-font',
+      'expo-image',
       'expo-localization',
       'expo-sharing',
       [

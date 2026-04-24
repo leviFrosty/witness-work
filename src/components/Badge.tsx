@@ -16,10 +16,10 @@ const Badge: React.FC<PropsWithChildren<Props>> = ({
   fullWidth,
   children,
   textStyle,
-  size = 'md',
+  size = 'sm',
 }) => {
   const theme = useContext(ThemeContext)
-  const color = _color || theme.colors.accent3
+  const color = _color || theme.colors.accentTranslucent
 
   return (
     <View

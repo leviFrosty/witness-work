@@ -1,3 +1,4 @@
+import { getEffectiveMilestones } from '../lib/milestones'
 import { usePreferences } from '../stores/preferences'
 import { Publisher } from '../types/publisher'
 
@@ -6,6 +7,7 @@ type PublisherDetails = {
   goalHours: number
   annualGoalHours: number
   hasAnnualGoal: boolean
+  milestones: number[]
 }
 
 export const hasAnnualGoal = (
@@ -35,16 +37,26 @@ export const hasAnnualGoal = (
 }
 
 const usePublisher = (): PublisherDetails => {
-  const { publisher, publisherHours, userSpecifiedHasAnnualGoal } =
-    usePreferences()
+  const {
+    publisher,
+    publisherHours,
+    userSpecifiedHasAnnualGoal,
+    milestoneOverrides,
+  } = usePreferences()
 
   const goalHours = publisherHours[publisher]
+  const annualGoalHours = goalHours * 12
 
   return {
     status: publisher,
     goalHours,
-    annualGoalHours: goalHours * 12,
+    annualGoalHours,
     hasAnnualGoal: hasAnnualGoal(publisher, userSpecifiedHasAnnualGoal),
+    milestones: getEffectiveMilestones(
+      publisher,
+      milestoneOverrides,
+      annualGoalHours
+    ),
   }
 }
 

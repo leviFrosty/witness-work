@@ -191,7 +191,7 @@ export default function HourEntryCard() {
           position: 'relative',
         }}
         onPress={() =>
-          navigation.navigate('Month', {
+          navigation.navigate('Progress', {
             month: moment().month(),
             year: moment().year(),
           })
@@ -202,7 +202,7 @@ export default function HourEntryCard() {
             month={moment().month()}
             year={moment().year()}
             minimal={!displayDetailsOnProgressBarHomeScreen}
-            style={{ paddingHorizontal: 10 }}
+            style={{ paddingHorizontal: 10, paddingVertical: 10 }}
           />
           <View
             style={{

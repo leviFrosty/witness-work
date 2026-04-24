@@ -1,63 +1,49 @@
 # TODO
 
-- Add WW icon to widgets (small top right)
-- Resolve Revenuecat not working in dev.
+- update revenuecat to have dev bundle specific instance.
 - Add e2e tests
 - Upgrade remaining dependencies.
-- remove all references to android in codebase, update expo scripts + ci to only care about iOS.
+- Fix hatch pattern,
 - Update documentation for project structure
+- Refactor components to not directly access publisher data, but instead call usePublisher.
+- Refactor/break down preferences into smaller stores, it's getting a bit convoluted. Publisher data should live in its' own store.
+- Add a "pet" feature. To define later.
+- "What's the sloppiest part of this codebase, and how can we fix it?"
+- Add milestone celebration page with animated present.
+- Add year wrapped golden present.
+- Make the 'outer edge'/'rim' of the tab bar smaller
+- Change backup messaging on @backupreminder to also mention "or turn on icloud sync"
+- Resolve random i18n issues, especially when generating strings -- for example MilestoneAdjustSheet not using i18n on renderSubtitle()
+- Add a "this year, wrapped" spotify style animations and service "year end" card that shows their interesting stats, information, etc. Final card should be sharable as image for social media, etc. Also make sure we have app branding included in this polish UI.
 - Add deep links to sharing file so it'll automatically import and navigate the user to the imported contact.
-- Add a donation nudge reminder for users who have 'high' app usage. Define 'high' usage.
-- Check if we can just link direction to kofi instead of using in-app purchases since Apple has updated their TOS recently.
-- Finish tutorials
 - Add 'thank you' screen on donation page that includes short bio about me, where I'm currently at, what I'm doing, and I hope it serves you well - add little signature at the bottom and image of myself.
-- Add "premium" screen to onboarding -- that is a psuedo premium screen: donations are optional, all services are always free but please keep in mind of time and cost associated with app development.
 - Since we're no longer cross-platform, redesign app to be in "Apple's Design language", but with our own colors.
 - Update all components to use tamagui buttons, sheets, lists, etc.
-- Remove all android references in the codebase. the app is now ios only.
-- update calendar widget to default add time, + button adds plan. Add plan helper text.
 - Add a toggle to swap between time added and time planned
-- Add dismiss/cancel to "Missed conversations reminders"
-- Add contextual donation card after monthly report submission. Only show after 6-month app anniversary. Max 1 per 60 days, never if dismissed.
 - Add cancellation flow intercept: offer "Pause for 1/3/6 months" before cancelling recurring donation.
 - "Gift a supporter year" — let donors sponsor supporter status for another user.
 - Service-year donation prompt — gentle one-time ask in early September for annual support.
 - Yearly service summary — polished "year in review" card (contacts made, studies conducted, hours served) sharable as an image.
-- "Streaks" tracking — consecutive weeks with service time logged.
-- Add "profile" section to onboarding with profile card.
-  - Shows info like "since xxxx year started using", pfp image upload (local only)
-  - Immediately after privacy important
-- Add "WitnessWork" fade in and grand reveal at startup. It should have a very terse and useful description for what witnesswork does right below it, the intro screen to excite the user.
 - Add 'Badges' feature. Highest badge based on weight, or user selected badge should appear on ProfileCard. ProfilDetailOverlay should contain more details about top 3 badges. There should be a separate Badge screen that overviews "See all" badges, with non-unlocked badges in 'grey' state. Each badge should be unique and have its' own art. We'll need to figure out a good solution on how to source art or art-like references through emojis or something else? Given that badges are special, we probably don't want to do emojis.
 - Update / handle all "Get started" actions and validate functionaltiy.
 - Update lists to use ListItem: <https://tamagui.dev/ui/list-item> across the ENTIRE application and be styled in iOS 26, liquid glass aesthetic and design scheme. We want 100% iOS UI styling. It should feel like a native iOS app made by Apple. /grill-me
 - Review month and year screen for improvements to analytics, revisit and reconsider what is the best data display format for the given data.
 - Year screen: show months remaining in service year -- somewhere.
 - See about implementing a social 'friends' feature similar to apple workouts/activity where users will get notified about friends week/month achievements, badge unlocks, etc. Look to see if existing iOS sdk exists to implement this or if we have to roll this ourselves with API and db.
+- Remove categories breakout -- merge it into existing detailed progress bar.
+- Fix bug: open day sheet directly when tapping on this week's day.
+- Move "This Week" section directly to home screen above the Timer. Add preference to toggle
 - Add deep links from reminder notification -> contact details page.
 - Make the lock screen larger widget remove the encouragement text and overall increase the font size of the "month" and hours and progress bar size.
 - Resolve gap where "Search address" isn't enabled unless the user enables location services. Currently if user hasn't enabled location services, the queries are wildly inaccurate as it doesn't have a coordinate to center its searches off of.
-- Resolve build issue: We noticed one or more issues with a recent delivery for the following app:
-
-- WitnessWork
-- App Apple ID 6469723047
-- Version 1.38.2
-- Build 125
-
-Although delivery was successful, you may want to correct the following issues in your next delivery. Once you've corrected the issues, upload a new binary to App Store Connect.
-
-## ITMS-90737: Missing Document Configuration - By declaring the CFBundleDocumentTypes key in your app, you've indicated that your app is able to open documents. Please set the UISupportsDocumentBrowser key to 'YES' if your app uses a UIDocumentBrowserViewController. Otherwise, set the LSSupportsOpeningDocumentsInPlace key in the Info.plist to 'YES' (recommended) or 'NO' to specify whether the app can open files in place. All document-based apps must include one of these configurations. For more information, visit <https://developer.apple.com/document-based-apps/>
 
 ## Supporter features
 
-- Supporter badge + "Supporter since [year]" line in Settings for donors.
 - Alternate app icons (gold, dark, seasonal, minimalist).
-- Custom accent color picker (beyond default palette).
 - Custom progress bar themes for monthly goals.
 - Custom notification sounds for return visit reminders.
 - Custom report export themes (PDF with personalized header/branding).
 - Advanced annual analytics (trends over time, month-over-month comparisons, personal bests).
-- iCloud sync (real cloud backup vs local-only).
 - Multiple backup slots (free = 1, supporter = 5).
 - Quick-add Siri Shortcuts for logging time.
 - Early access to beta features via TestFlight.

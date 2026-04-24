@@ -4,6 +4,7 @@ import { BottomTabBarProps } from '@react-navigation/bottom-tabs'
 import { BlurView } from 'expo-blur'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import {
+  faCalendarDays,
   faChartLine,
   faHome,
   faMapLocation,
@@ -74,6 +75,8 @@ const TabBar = ({ state, descriptors, ...props }: BottomTabBarProps) => {
           return faWrench
         case 'Progress':
           return faChartLine
+        case 'Schedule':
+          return faCalendarDays
         default:
           return faQuestion
       }

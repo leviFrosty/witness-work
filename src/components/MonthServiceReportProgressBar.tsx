@@ -337,10 +337,6 @@ const MonthServiceReportProgressBar = ({
       style={[
         {
           gap: 3,
-          backgroundColor: theme.colors.card,
-          borderRadius: theme.numbers.borderRadiusSm,
-          paddingHorizontal: 0,
-          paddingVertical: 10,
         },
         style,
       ]}
@@ -378,7 +374,8 @@ const MonthServiceReportProgressBar = ({
             {hasStandardMinutes && (
               <StandardHours
                 percentage={
-                  (minutesDetailed.standard / adjustedMinutes.value) *
+                  (minutesDetailed.standardWithoutOtherMinutes /
+                    adjustedMinutes.value) *
                   segmentScalingFactor
                 }
                 color={theme.colors.accent}

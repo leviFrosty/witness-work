@@ -190,7 +190,7 @@ const ProfileCard = ({ preview, editable, onPressIncomplete }: Props) => {
   // cardstock underneath the foil — a dark card with pastels over it reads
   // as neon, not holographic. Text colors flip too so they stay legible.
   const holoActive = !preview && !editable && profileCardShaderEnabled
-  const cardBg = holoActive ? '#F2E9D2' : theme.colors.background
+  const cardBg = holoActive ? '#F2E9D2' : theme.colors.card
   const cardBorder = holoActive ? '#D9CDAD' : theme.colors.border
   const titleColor = holoActive ? '#1A1A1A' : theme.colors.text
   const subtitleColor = holoActive ? '#5A5244' : theme.colors.textAlt

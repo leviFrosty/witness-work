@@ -1,0 +1,266 @@
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import { View, StyleSheet } from 'react-native'
+import { BlurView } from 'expo-blur'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import { NativeStackScreenProps } from '@react-navigation/native-stack'
+import moment from 'moment'
+import { faArrowLeft, faArrowRight } from '@fortawesome/free-solid-svg-icons'
+
+import useTheme from '../../contexts/theme'
+import { usePreferences } from '../../stores/preferences'
+import i18n from '../../lib/locales'
+
+import ExportTimeSheet, {
+  ExportTimeSheetState,
+} from '../../components/ExportTimeSheet'
+import MilestoneAdjustSheet from '../../components/MilestoneAdjustSheet'
+import Button from '../../components/Button'
+import IconButton from '../../components/IconButton'
+import Text from '../../components/MyText'
+import XView from '../../components/layout/XView'
+import { HomeTabStackParamList } from '../../types/homeStack'
+
+import ProgressTabSelector, { ProgressTab } from './ProgressTabSelector'
+import ProgressMonthTab from './ProgressMonthTab'
+import ProgressYearTab from './ProgressYearTab'
+import ProgressAllTimeTab from './ProgressAllTimeTab'
+
+type Props = NativeStackScreenProps<HomeTabStackParamList, 'Progress'>
+
+const ProgressScreen = ({ route, navigation }: Props) => {
+  const theme = useTheme()
+  const insets = useSafeAreaInsets()
+  const { publisher, publisherHours } = usePreferences()
+
+  const now = moment()
+  const currentYear = now.year()
+  const currentMonth = now.month()
+
+  const [month, setMonth] = useState(route.params?.month ?? currentMonth)
+  const [year, setYear] = useState(route.params?.year ?? currentYear)
+
+  // Publisher types with no year goal (e.g. `publisher` or custom-at-0) cannot
+  // meaningfully render the Year tab. Hide it from the selector and coerce
+  // route-param landings away from `year`.
+  const hideYearTab = (publisherHours[publisher] ?? 0) === 0
+
+  const initialTab: ProgressTab = (() => {
+    const requested = route.params?.tab
+    if (requested === 'year' && hideYearTab) return 'month'
+    return requested ?? 'month'
+  })()
+
+  const [activeTab, setActiveTab] = useState<ProgressTab>(initialTab)
+
+  const [exportSheet, setExportSheet] = useState<ExportTimeSheetState>({
+    open: false,
+    month,
+    year,
+  })
+
+  const [milestoneSheetOpen, setMilestoneSheetOpen] = useState(false)
+
+  // Keep activeTab sane if publisher type changes mid-session.
+  useEffect(() => {
+    if (hideYearTab && activeTab === 'year') {
+      setActiveTab('month')
+    }
+  }, [hideYearTab, activeTab])
+
+  // Sync route params → local state when navigation updates them.
+  useEffect(() => {
+    if (route.params?.month !== undefined) setMonth(route.params.month)
+    if (route.params?.year !== undefined) setYear(route.params.year)
+    if (route.params?.tab !== undefined) {
+      const next =
+        route.params.tab === 'year' && hideYearTab ? 'month' : route.params.tab
+      setActiveTab(next)
+    }
+  }, [route.params?.month, route.params?.year, route.params?.tab, hideYearTab])
+
+  const selectedMonth = useMemo(
+    () => moment().month(month).year(year),
+    [month, year]
+  )
+  const isCurrentMonth = month === currentMonth && year === currentYear
+
+  // Service-year convention: Jan–Aug rolls up into the prior year's service
+  // year, Sep–Dec into the following service year. `serviceYear` here is the
+  // END year (matches how YearMilestoneCard / ProgressYearTab expect it).
+  const serviceYear = useMemo(
+    () => (month < 8 ? year : year + 1),
+    [month, year]
+  )
+
+  const handleMonthNav = useCallback(
+    (direction: 'forward' | 'back') => {
+      if (direction === 'forward') {
+        if (month === 11) {
+          setMonth(0)
+          setYear(year + 1)
+        } else {
+          setMonth(month + 1)
+        }
+      } else {
+        if (month === 0) {
+          setMonth(11)
+          setYear(year - 1)
+        } else {
+          setMonth(month - 1)
+        }
+      }
+    },
+    [month, year]
+  )
+
+  const jumpToToday = useCallback(() => {
+    setMonth(currentMonth)
+    setYear(currentYear)
+  }, [currentMonth, currentYear])
+
+  useEffect(() => {
+    navigation.setOptions({ header: () => null })
+  }, [navigation])
+
+  return (
+    <View
+      style={{
+        flex: 1,
+        backgroundColor: theme.colors.background,
+      }}
+    >
+      <View
+        style={{
+          paddingTop: insets.top,
+          overflow: 'hidden',
+        }}
+      >
+        <BlurView
+          tint={theme.colors.background === '#121212' ? 'dark' : 'light'}
+          intensity={40}
+          style={StyleSheet.absoluteFill}
+        />
+        <View
+          pointerEvents='none'
+          style={[
+            StyleSheet.absoluteFill,
+            {
+              backgroundColor: theme.colors.background,
+              opacity: 0.6,
+            },
+          ]}
+        />
+        <View
+          style={{
+            paddingTop: 10,
+            paddingBottom: 10,
+            gap: 10,
+          }}
+        >
+          <ProgressTabSelector
+            activeTab={activeTab}
+            onChange={setActiveTab}
+            hideYearTab={hideYearTab}
+          />
+          {activeTab === 'month' ? (
+            <View style={{ paddingHorizontal: 15 }}>
+              <XView style={{ justifyContent: 'space-between' }}>
+                <Button
+                  onPress={() => handleMonthNav('back')}
+                  style={navButtonStyle(theme)}
+                >
+                  <View
+                    style={{
+                      flexDirection: 'row',
+                      gap: 5,
+                      alignItems: 'center',
+                    }}
+                  >
+                    <IconButton icon={faArrowLeft} size={15} />
+                    <Text style={{ color: theme.colors.textAlt }}>
+                      {moment(selectedMonth).subtract(1, 'month').format('MMM')}
+                    </Text>
+                  </View>
+                </Button>
+                {!isCurrentMonth ? (
+                  <Button
+                    style={{
+                      backgroundColor: theme.colors.accentTranslucent,
+                      paddingVertical: 5,
+                      paddingHorizontal: 15,
+                      borderRadius: theme.numbers.borderRadiusSm,
+                    }}
+                    onPress={jumpToToday}
+                  >
+                    <Text style={{ textDecorationLine: 'underline' }}>
+                      {i18n.t('today')}
+                    </Text>
+                  </Button>
+                ) : (
+                  <Text
+                    style={{
+                      fontSize: theme.fontSize('lg'),
+                      fontFamily: theme.fonts.semiBold,
+                    }}
+                  >
+                    {selectedMonth.format('MMMM YYYY')}
+                  </Text>
+                )}
+                <Button
+                  onPress={() => handleMonthNav('forward')}
+                  style={navButtonStyle(theme)}
+                >
+                  <View
+                    style={{
+                      flexDirection: 'row',
+                      gap: 5,
+                      alignItems: 'center',
+                    }}
+                  >
+                    <Text style={{ color: theme.colors.textAlt }}>
+                      {moment(selectedMonth).add(1, 'month').format('MMM')}
+                    </Text>
+                    <IconButton icon={faArrowRight} size={15} />
+                  </View>
+                </Button>
+              </XView>
+            </View>
+          ) : null}
+        </View>
+      </View>
+
+      <View style={{ flex: 1 }}>
+        {activeTab === 'month' ? (
+          <ProgressMonthTab
+            month={month}
+            year={year}
+            setSheet={setExportSheet}
+          />
+        ) : null}
+        {activeTab === 'year' && !hideYearTab ? (
+          <ProgressYearTab
+            year={serviceYear}
+            onAdjustMilestones={() => setMilestoneSheetOpen(true)}
+          />
+        ) : null}
+        {activeTab === 'allTime' ? <ProgressAllTimeTab /> : null}
+      </View>
+
+      <ExportTimeSheet sheet={exportSheet} setSheet={setExportSheet} />
+      <MilestoneAdjustSheet
+        visible={milestoneSheetOpen}
+        onClose={() => setMilestoneSheetOpen(false)}
+      />
+    </View>
+  )
+}
+
+const navButtonStyle = (theme: ReturnType<typeof useTheme>) => ({
+  borderColor: theme.colors.border,
+  borderWidth: 1,
+  borderRadius: theme.numbers.borderRadiusLg,
+  paddingHorizontal: 15,
+  paddingVertical: 5,
+})
+
+export default ProgressScreen

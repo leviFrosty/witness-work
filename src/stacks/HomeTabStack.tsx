@@ -8,9 +8,8 @@ import { View } from 'react-native'
 import WhatsNewSheet from '../components/WhatsNewSheet'
 import { useEffect, useState } from 'react'
 import ToolsScreen from '../screens/ToolsScreen'
-import MonthScreen from '../screens/MonthScreen/MonthScreen'
-import YearScreen from '../screens/YearScreen'
-import usePublisher from '../hooks/usePublisher'
+import ProgressScreen from '../screens/ProgressScreen'
+import ScheduleScreen from '../screens/ScheduleScreen'
 import { HomeTabStackParamList } from '../types/homeStack'
 import { releaseNotes } from '../constants/releaseNotes'
 import semver from 'semver'
@@ -19,7 +18,6 @@ import { logger } from '../lib/logger'
 const HomeTabStack = () => {
   const Tab = createBottomTabNavigator<HomeTabStackParamList>()
   const { lastAppVersion, developerTools, set, publisher } = usePreferences()
-  const { hasAnnualGoal } = usePublisher()
   const [lastVersion] = useState(lastAppVersion)
   const [showWhatsNew, setShowWhatsNew] = useState(false)
 
@@ -59,9 +57,9 @@ const HomeTabStack = () => {
         <Tab.Screen name='Home' component={DrawerNavigator} />
         {developerTools && <Tab.Screen name='Tools' component={ToolsScreen} />}
         {publisher !== 'publisher' && (
-          <Tab.Screen name='Month' component={MonthScreen} />
+          <Tab.Screen name='Progress' component={ProgressScreen} />
         )}
-        {hasAnnualGoal && <Tab.Screen name='Year' component={YearScreen} />}
+        <Tab.Screen name='Schedule' component={ScheduleScreen} />
         <Tab.Screen name='Map' component={Map} />
       </Tab.Navigator>
     </View>

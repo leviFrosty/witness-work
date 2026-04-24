@@ -64,6 +64,22 @@ const DetailedProgressBar = () => {
 
 const HideDonateHeart = () => {
   const { hideDonateHeart, set } = usePreferences()
+
+  return (
+    <InputRowContainer
+      label={i18n.t('hideDonateHeart')}
+      style={{ justifyContent: 'space-between' }}
+    >
+      <Switch
+        value={hideDonateHeart}
+        onValueChange={(value) => set({ hideDonateHeart: value })}
+      />
+    </InputRowContainer>
+  )
+}
+
+const HideSupporterNudge = () => {
+  const { hideSupporterNudge, set } = usePreferences()
   const { status } = usePublisher()
 
   const lastInSection = status === 'publisher'
@@ -71,12 +87,12 @@ const HideDonateHeart = () => {
   return (
     <InputRowContainer
       lastInSection={lastInSection}
-      label={i18n.t('hideDonateHeart')}
+      label={i18n.t('hideSupporterNudge')}
       style={{ justifyContent: 'space-between' }}
     >
       <Switch
-        value={hideDonateHeart}
-        onValueChange={(value) => set({ hideDonateHeart: value })}
+        value={hideSupporterNudge}
+        onValueChange={(value) => set({ hideSupporterNudge: value })}
       />
     </InputRowContainer>
   )
@@ -165,6 +181,20 @@ const HomeElements = () => {
             }
           />
         </XView>
+        <XView style={{ justifyContent: 'space-between' }}>
+          <Text>{i18n.t('thisWeek')}</Text>
+          <Switch
+            value={homeScreenElements.thisWeek}
+            onValueChange={(value) =>
+              set({
+                homeScreenElements: {
+                  ...homeScreenElements,
+                  thisWeek: value,
+                },
+              })
+            }
+          />
+        </XView>
         {status !== 'publisher' && (
           <XView style={{ justifyContent: 'space-between' }}>
             <Text>{i18n.t('timer')}</Text>
@@ -207,6 +237,7 @@ const HomeScreenPreferencesSection = () => {
       <Section>
         <HomeElements />
         <HideDonateHeart />
+        <HideSupporterNudge />
         <DetailedProgressBar />
       </Section>
     </View>

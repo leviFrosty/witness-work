@@ -95,7 +95,7 @@ const SupportSection = () => {
         <InputRowButton
           leftIcon={faHeart}
           label={i18n.t('becomeSupporter')}
-          onPress={() => navigation.navigate('Donate')}
+          onPress={() => navigation.navigate('Paywall')}
         >
           <IconButton icon={faChevronRight} />
         </InputRowButton>

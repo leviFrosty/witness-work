@@ -86,7 +86,7 @@ const IsSupporter = ({
           {titleEl}
           <SupporterBadge size={size} />
         </View>
-        <View pointerEvents='none' style={{ opacity: 0.55 }}>
+        <View pointerEvents='none' style={{ opacity: 0.3 }}>
           {children}
         </View>
       </Pressable>

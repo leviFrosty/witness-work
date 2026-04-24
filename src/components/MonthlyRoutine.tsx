@@ -47,7 +47,7 @@ const Month = ({
         publisher !== 'publisher'
           ? () => {
               onBeforeNavigate?.()
-              navigation.navigate('Month', {
+              navigation.navigate('Progress', {
                 month,
                 year,
               })

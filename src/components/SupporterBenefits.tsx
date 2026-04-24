@@ -51,25 +51,6 @@ const HeroCard = () => {
             >
               {i18n.t('supporterHeroTitle')}
             </Text>
-            <View
-              style={{
-                paddingVertical: 2,
-                paddingHorizontal: 6,
-                borderRadius: 4,
-                backgroundColor: theme.colors.supporter,
-              }}
-            >
-              <Text
-                style={{
-                  fontSize: 10,
-                  fontFamily: theme.fonts.bold,
-                  color: theme.colors.textInverse,
-                  letterSpacing: 0.5,
-                }}
-              >
-                {i18n.t('comingSoon').toUpperCase()}
-              </Text>
-            </View>
           </View>
           <Text
             style={{
@@ -141,9 +122,20 @@ const SupporterBenefits = ({ compact }: Props) => {
 
   return (
     <View style={{ gap: 16 }}>
+      <Text
+        style={{
+          fontSize: 12,
+          fontFamily: theme.fonts.semiBold,
+          color: theme.colors.textAlt,
+          textTransform: 'uppercase',
+          letterSpacing: 0.5,
+        }}
+      >
+        {i18n.t('supportersUnlock')}
+      </Text>
       {!compact && <HeroCard />}
       <View style={{ gap: 14 }}>
-        <Text
+        {/* <Text
           style={{
             fontSize: 12,
             fontFamily: theme.fonts.semiBold,
@@ -153,7 +145,7 @@ const SupporterBenefits = ({ compact }: Props) => {
           }}
         >
           {i18n.t('supporterPerksLabel')}
-        </Text>
+        </Text> */}
         <PerkRow
           icon={faPalette}
           title={i18n.t('supporterPerkAccentTitle')}

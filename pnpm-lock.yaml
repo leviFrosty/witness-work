@@ -65,6 +65,9 @@ importers:
       '@shopify/flash-list':
         specifier: 2.0.2
         version: 2.0.2(@babel/runtime@7.28.4)(react-native@0.83.4(@babel/core@7.28.4)(@react-native-community/cli@13.6.9)(@react-native/metro-config@0.85.0(@babel/core@7.28.4))(@types/react@19.2.14)(react@19.2.0))(react@19.2.0)
+      '@shopify/react-native-skia':
+        specifier: ^2.6.2
+        version: 2.6.2(react-native-reanimated@4.3.0(react-native-worklets@0.8.1(@babel/core@7.28.4)(@react-native/metro-config@0.85.0(@babel/core@7.28.4))(react-native@0.83.4(@babel/core@7.28.4)(@react-native-community/cli@13.6.9)(@react-native/metro-config@0.85.0(@babel/core@7.28.4))(@types/react@19.2.14)(react@19.2.0))(react@19.2.0))(react-native@0.83.4(@babel/core@7.28.4)(@react-native-community/cli@13.6.9)(@react-native/metro-config@0.85.0(@babel/core@7.28.4))(@types/react@19.2.14)(react@19.2.0))(react@19.2.0))(react-native@0.83.4(@babel/core@7.28.4)(@react-native-community/cli@13.6.9)(@react-native/metro-config@0.85.0(@babel/core@7.28.4))(@types/react@19.2.14)(react@19.2.0))(react@19.2.0)
       '@tamagui/babel-plugin':
         specifier: ^1.144.4
         version: 1.144.4(react-dom@19.2.0(react@19.2.0))(react-native@0.83.4(@babel/core@7.28.4)(@react-native-community/cli@13.6.9)(@react-native/metro-config@0.85.0(@babel/core@7.28.4))(@types/react@19.2.14)(react@19.2.0))(react@19.2.0)
@@ -140,6 +143,9 @@ importers:
       expo-haptics:
         specifier: ~55.0.14
         version: 55.0.14(expo@55.0.15)
+      expo-image:
+        specifier: ~55.0.8
+        version: 55.0.8(expo@55.0.15)(react-native-web@0.21.2(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(react-native@0.83.4(@babel/core@7.28.4)(@react-native-community/cli@13.6.9)(@react-native/metro-config@0.85.0(@babel/core@7.28.4))(@types/react@19.2.14)(react@19.2.0))(react@19.2.0)
       expo-image-picker:
         specifier: ~55.0.18
         version: 55.0.18(expo@55.0.15)
@@ -3293,6 +3299,22 @@ packages:
       react: '*'
       react-native: '*'
 
+  '@shopify/react-native-skia@2.6.2':
+    resolution:
+      {
+        integrity: sha512-NzZ3+MRedZAUhguWw9DTCpWFd09Bq+tdGWhimGfJLGckuyoWGyimTiNTmaO2DeeivHTnGdv+eXbw7j/AV3LkRQ==,
+      }
+    hasBin: true
+    peerDependencies:
+      react: '>=19.0'
+      react-native: '>=0.78'
+      react-native-reanimated: '>=3.19.1'
+    peerDependenciesMeta:
+      react-native:
+        optional: true
+      react-native-reanimated:
+        optional: true
+
   '@sideway/address@4.1.5':
     resolution:
       {
@@ -4639,6 +4661,12 @@ packages:
         integrity: sha512-+2k1EQpnYuVuu3N7atWyG3/xoFWIVJZq4Mz8XNOdScFI0etES75fbny/oU4lKWk/577P1zmg0ioYvpGEDZ3DLw==,
       }
 
+  '@webgpu/types@0.1.21':
+    resolution:
+      {
+        integrity: sha512-pUrWq3V5PiSGFLeLxoGqReTZmiiXwY3jRkIG5sLLKjyqNxrwm/04b4nw7LSmGWJcKk59XOM/YRTUwOzo4MMlow==,
+      }
+
   '@xmldom/xmldom@0.8.12':
     resolution:
       {
@@ -5390,6 +5418,12 @@ packages:
     resolution:
       {
         integrity: sha512-4oxTZEvqmLLrERwxO76yfKM7acZo310U+v4kqexI2TL1DkkUEMT8UijrxxcnVdxR3qkVf5awGRX+4Z6aPHVKrA==,
+      }
+
+  canvaskit-wasm@0.41.0:
+    resolution:
+      {
+        integrity: sha512-cnbL02NFB3yOYMF/MtxViZHgD1vh55Pvy+zR8q4JuFvyCPejZP3eClkt2GuZ0S7jOmGMCJXaHBasbMChbR9JZg==,
       }
 
   chai@5.3.3:
@@ -6772,6 +6806,20 @@ packages:
       }
     peerDependencies:
       expo: '*'
+
+  expo-image@55.0.8:
+    resolution:
+      {
+        integrity: sha512-fNdvdYVcGn3g1x6o5AXHKzk4xX8U6rg2W9vFdE1pQO80kWCNReh003ypqSrGy4dD+zA8FtZjrNF3oMDGnPpIGQ==,
+      }
+    peerDependencies:
+      expo: '*'
+      react: '*'
+      react-native: '*'
+      react-native-web: '*'
+    peerDependenciesMeta:
+      react-native-web:
+        optional: true
 
   expo-insights@55.0.16:
     resolution:
@@ -10424,6 +10472,30 @@ packages:
       react: '*'
       react-native: '*'
 
+  react-native-skia-android@147.1.0:
+    resolution:
+      {
+        integrity: sha512-pWA0M0G74AhjEop0HLCkjWJMup2HJxOmuUjfPt6kSDhYeWKVx8AEzWh0Fh19ah78zE/s4hD0Of0Tyem5shhiTg==,
+      }
+
+  react-native-skia-apple-ios@147.1.0:
+    resolution:
+      {
+        integrity: sha512-cr4rWe4Bf0H0TTutUp5cgHt5/Felttl1bh4BAAAsgAeL2F10FAK9urX8spjUshzMwjqXD7rNOWuFzU6ZcNlGKw==,
+      }
+
+  react-native-skia-apple-macos@147.1.0:
+    resolution:
+      {
+        integrity: sha512-Qbv0Y7LgawtRKuGk8gnGeh8nDWwNiu03LcX0mVaQzBBbxFDYvqejanA+AkO3p8gsQb+fsXRc9DAk+U8cBnzZvA==,
+      }
+
+  react-native-skia-apple-tvos@147.1.0:
+    resolution:
+      {
+        integrity: sha512-b+4vILXHPu++t8H41PHLBVsTab2LPqwXNdzgdScyl4+Cu8Ta34aUQW3T469cB0ogAMPdu//KV00w4YVpDZoRUQ==,
+      }
+
   react-native-svg@15.15.3:
     resolution:
       {
@@ -10472,6 +10544,15 @@ packages:
     peerDependenciesMeta:
       '@types/react':
         optional: true
+
+  react-reconciler@0.31.0:
+    resolution:
+      {
+        integrity: sha512-7Ob7Z+URmesIsIVRjnLoDGwBEG/tVitidU0nMsqX/eeJaLY89RISO/10ERe0MqmzuKUUB1rmY+h1itMbUHg9BQ==,
+      }
+    engines: { node: '>=0.10.0' }
+    peerDependencies:
+      react: ^19.0.0
 
   react-refresh@0.14.2:
     resolution:
@@ -10820,6 +10901,12 @@ packages:
         integrity: sha512-xAg7SOnEhrm5zI3puOOKyy1OMcMlIJZYNJY7xLBwSze0UjhPLnWfj2GF2EpT0jmzaJKIWKHLsaSSajf35bcYnA==,
       }
     engines: { node: '>=v12.22.7' }
+
+  scheduler@0.25.0:
+    resolution:
+      {
+        integrity: sha512-xFVuu11jh+xcO7JOAGJNOXld8/TcEHK/4CituBUeUb5hqxJLj9YuemAEuvm9gQ/+pgXYfbQuqAkiYu+u7YEsNA==,
+      }
 
   scheduler@0.27.0:
     resolution:
@@ -14932,6 +15019,19 @@ snapshots:
       react-native: 0.83.4(@babel/core@7.28.4)(@react-native-community/cli@13.6.9)(@react-native/metro-config@0.85.0(@babel/core@7.28.4))(@types/react@19.2.14)(react@19.2.0)
       tslib: 2.8.1
 
+  '@shopify/react-native-skia@2.6.2(react-native-reanimated@4.3.0(react-native-worklets@0.8.1(@babel/core@7.28.4)(@react-native/metro-config@0.85.0(@babel/core@7.28.4))(react-native@0.83.4(@babel/core@7.28.4)(@react-native-community/cli@13.6.9)(@react-native/metro-config@0.85.0(@babel/core@7.28.4))(@types/react@19.2.14)(react@19.2.0))(react@19.2.0))(react-native@0.83.4(@babel/core@7.28.4)(@react-native-community/cli@13.6.9)(@react-native/metro-config@0.85.0(@babel/core@7.28.4))(@types/react@19.2.14)(react@19.2.0))(react@19.2.0))(react-native@0.83.4(@babel/core@7.28.4)(@react-native-community/cli@13.6.9)(@react-native/metro-config@0.85.0(@babel/core@7.28.4))(@types/react@19.2.14)(react@19.2.0))(react@19.2.0)':
+    dependencies:
+      canvaskit-wasm: 0.41.0
+      react: 19.2.0
+      react-native-skia-android: 147.1.0
+      react-native-skia-apple-ios: 147.1.0
+      react-native-skia-apple-macos: 147.1.0
+      react-native-skia-apple-tvos: 147.1.0
+      react-reconciler: 0.31.0(react@19.2.0)
+    optionalDependencies:
+      react-native: 0.83.4(@babel/core@7.28.4)(@react-native-community/cli@13.6.9)(@react-native/metro-config@0.85.0(@babel/core@7.28.4))(@types/react@19.2.14)(react@19.2.0)
+      react-native-reanimated: 4.3.0(react-native-worklets@0.8.1(@babel/core@7.28.4)(@react-native/metro-config@0.85.0(@babel/core@7.28.4))(react-native@0.83.4(@babel/core@7.28.4)(@react-native-community/cli@13.6.9)(@react-native/metro-config@0.85.0(@babel/core@7.28.4))(@types/react@19.2.14)(react@19.2.0))(react@19.2.0))(react-native@0.83.4(@babel/core@7.28.4)(@react-native-community/cli@13.6.9)(@react-native/metro-config@0.85.0(@babel/core@7.28.4))(@types/react@19.2.14)(react@19.2.0))(react@19.2.0)
+
   '@sideway/address@4.1.5':
     dependencies:
       '@hapi/hoek': 9.3.0
@@ -16443,6 +16543,8 @@ snapshots:
 
   '@vue/shared@3.5.21': {}
 
+  '@webgpu/types@0.1.21': {}
+
   '@xmldom/xmldom@0.8.12': {}
 
   abab@2.0.6: {}
@@ -16976,6 +17078,10 @@ snapshots:
   caniuse-lite@1.0.30001743: {}
 
   caniuse-lite@1.0.30001786: {}
+
+  canvaskit-wasm@0.41.0:
+    dependencies:
+      '@webgpu/types': 0.1.21
 
   chai@5.3.3:
     dependencies:
@@ -17974,6 +18080,15 @@ snapshots:
     dependencies:
       expo: 55.0.15(@babel/core@7.28.4)(@expo/dom-webview@55.0.5)(react-dom@19.2.0(react@19.2.0))(react-native-worklets@0.8.1(@babel/core@7.28.4)(@react-native/metro-config@0.85.0(@babel/core@7.28.4))(react-native@0.83.4(@babel/core@7.28.4)(@react-native-community/cli@13.6.9)(@react-native/metro-config@0.85.0(@babel/core@7.28.4))(@types/react@19.2.14)(react@19.2.0))(react@19.2.0))(react-native@0.83.4(@babel/core@7.28.4)(@react-native-community/cli@13.6.9)(@react-native/metro-config@0.85.0(@babel/core@7.28.4))(@types/react@19.2.14)(react@19.2.0))(react@19.2.0)(typescript@5.9.2)
       expo-image-loader: 55.0.0(expo@55.0.15)
+
+  expo-image@55.0.8(expo@55.0.15)(react-native-web@0.21.2(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(react-native@0.83.4(@babel/core@7.28.4)(@react-native-community/cli@13.6.9)(@react-native/metro-config@0.85.0(@babel/core@7.28.4))(@types/react@19.2.14)(react@19.2.0))(react@19.2.0):
+    dependencies:
+      expo: 55.0.15(@babel/core@7.28.4)(@expo/dom-webview@55.0.5)(react-dom@19.2.0(react@19.2.0))(react-native-worklets@0.8.1(@babel/core@7.28.4)(@react-native/metro-config@0.85.0(@babel/core@7.28.4))(react-native@0.83.4(@babel/core@7.28.4)(@react-native-community/cli@13.6.9)(@react-native/metro-config@0.85.0(@babel/core@7.28.4))(@types/react@19.2.14)(react@19.2.0))(react@19.2.0))(react-native@0.83.4(@babel/core@7.28.4)(@react-native-community/cli@13.6.9)(@react-native/metro-config@0.85.0(@babel/core@7.28.4))(@types/react@19.2.14)(react@19.2.0))(react@19.2.0)(typescript@5.9.2)
+      react: 19.2.0
+      react-native: 0.83.4(@babel/core@7.28.4)(@react-native-community/cli@13.6.9)(@react-native/metro-config@0.85.0(@babel/core@7.28.4))(@types/react@19.2.14)(react@19.2.0)
+      sf-symbols-typescript: 2.2.0
+    optionalDependencies:
+      react-native-web: 0.21.2(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
 
   expo-insights@55.0.16(expo@55.0.15):
     dependencies:
@@ -20746,6 +20861,14 @@ snapshots:
       react-native: 0.83.4(@babel/core@7.28.4)(@react-native-community/cli@13.6.9)(@react-native/metro-config@0.85.0(@babel/core@7.28.4))(@types/react@19.2.14)(react@19.2.0)
       warn-once: 0.1.1
 
+  react-native-skia-android@147.1.0: {}
+
+  react-native-skia-apple-ios@147.1.0: {}
+
+  react-native-skia-apple-macos@147.1.0: {}
+
+  react-native-skia-apple-tvos@147.1.0: {}
+
   react-native-svg@15.15.3(react-native@0.83.4(@babel/core@7.28.4)(@react-native-community/cli@13.6.9)(@react-native/metro-config@0.85.0(@babel/core@7.28.4))(@types/react@19.2.14)(react@19.2.0))(react@19.2.0):
     dependencies:
       css-select: 5.2.2
@@ -20838,6 +20961,11 @@ snapshots:
       - bufferutil
       - supports-color
       - utf-8-validate
+
+  react-reconciler@0.31.0(react@19.2.0):
+    dependencies:
+      react: 19.2.0
+      scheduler: 0.25.0
 
   react-refresh@0.14.2: {}
 
@@ -21072,6 +21200,8 @@ snapshots:
   saxes@6.0.0:
     dependencies:
       xmlchars: 2.2.0
+
+  scheduler@0.25.0: {}
 
   scheduler@0.27.0: {}
 

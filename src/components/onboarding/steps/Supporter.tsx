@@ -6,7 +6,6 @@ import Text from '../../MyText'
 import i18n from '../../../lib/locales'
 import Wrapper from '../../layout/Wrapper'
 import ActionButton from '../../ActionButton'
-import SupporterBadge from '../../SupporterBadge'
 import SupporterBenefits from '../../SupporterBenefits'
 import useTheme from '../../../contexts/theme'
 import { usePreferences } from '../../../stores/preferences'
@@ -78,22 +77,7 @@ const Supporter = ({ goBack, goNext }: Props) => {
         showsVerticalScrollIndicator={false}
       >
         <View style={[styles.stepContentContainer, { marginRight: 0 }]}>
-          <SupporterBadge
-            size='md'
-            style={{ alignSelf: 'flex-start', marginBottom: 16 }}
-          />
-
           {/* From-the-maker lead-in: volunteer framing + free-forever reassurance. */}
-          <Text
-            style={{
-              fontSize: 14,
-              color: theme.colors.textAlt,
-              lineHeight: 20,
-              marginBottom: 12,
-            }}
-          >
-            {i18n.t('supporterOnboardingLeadIn')}
-          </Text>
           <View
             style={{
               alignSelf: 'flex-start',
@@ -116,19 +100,26 @@ const Supporter = ({ goBack, goNext }: Props) => {
               {i18n.t('supporterOnboardingFreeForever')}
             </Text>
           </View>
-
-          <Text style={[styles.stepTitle, { marginTop: 6 }]}>
-            {i18n.t('supporterOnboardingTitle')}
+          <Text
+            style={{
+              fontSize: 24,
+              color: theme.colors.text,
+              fontFamily: theme.fonts.bold,
+              lineHeight: 30,
+              marginBottom: 10,
+            }}
+          >
+            {i18n.t('supporterSheetTitle')}
           </Text>
           <Text
             style={{
               fontSize: 14,
               color: theme.colors.textAlt,
-              marginBottom: 16,
               lineHeight: 20,
+              marginBottom: 12,
             }}
           >
-            {i18n.t('supporterOnboardingDesc')}
+            {i18n.t('supporterOnboardingLeadIn')}
           </Text>
 
           {/* Personalized lines — only render when we actually have data. */}

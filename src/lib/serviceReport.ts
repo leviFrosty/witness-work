@@ -398,6 +398,96 @@ export const getServiceYearFromDate = (moment: moment.Moment) => {
   return year
 }
 
+// ---------------------------------------------------------------------------
+// Lifetime / all-time aggregation helpers
+//
+// Used by the Progress screen's "All-time" tab (LifetimeHoursCard +
+// YearByYearList). These helpers operate over a FLAT `ServiceReport[]`
+// (callers flatten the store's `ServiceReportsByYears` before passing it in)
+// so they stay pure and easy to test. Lifetime hours are intentionally the
+// RAW sum of `hours + minutes/60` across every report — i.e. NOT adjusted for
+// the monthly credit cap. The surrounding UI shows an "unadjusted" info
+// affordance so the number's meaning stays clear.
+// ---------------------------------------------------------------------------
+
+/**
+ * Raw lifetime hours across every `ServiceReport` — unadjusted for credit caps.
+ * Rounded to 1 decimal place.
+ */
+export const getLifetimeHours = (serviceReports: ServiceReport[]): number => {
+  const totalMinutes = serviceReports.reduce(
+    (sum, report) => sum + report.hours * 60 + report.minutes,
+    0
+  )
+  return _.round(totalMinutes / 60, 1)
+}
+
+/** Earliest `date` found across all reports, or `null` if none. */
+export const getEarliestReportDate = (
+  serviceReports: ServiceReport[]
+): Date | null => {
+  if (serviceReports.length === 0) return null
+  let earliestMs = Infinity
+  for (const report of serviceReports) {
+    const ms = new Date(report.date).getTime()
+    if (ms < earliestMs) earliestMs = ms
+  }
+  return earliestMs === Infinity ? null : new Date(earliestMs)
+}
+
+/**
+ * Continuous span of service-year END years from the earliest report's service
+ * year up to the current service year (inclusive).
+ *
+ * Service-year convention (matches `getServiceYearFromDate`):
+ *
+ * - Months Jan–Aug (0–7) roll into the PRIOR service year; its end-year is the
+ *   calendar year itself.
+ * - Months Sep–Dec (8–11) roll into the NEXT service year; its end-year is `year
+ *   + 1`.
+ *
+ * Returns an empty array when there are no reports.
+ */
+export const getServiceYearEndYearsSpan = (
+  serviceReports: ServiceReport[],
+  nowMoment?: moment.Moment
+): number[] => {
+  const earliest = getEarliestReportDate(serviceReports)
+  if (!earliest) return []
+
+  const earliestMoment = moment(earliest)
+  const earliestStart = getServiceYearFromDate(earliestMoment)
+  const now = nowMoment ?? moment()
+  const currentStart = getServiceYearFromDate(now)
+
+  // End-year = start-year + 1 (service year Sep `start` → Aug `start+1`).
+  const firstEnd = earliestStart + 1
+  const lastEnd = currentStart + 1
+  if (lastEnd < firstEnd) return []
+
+  const endYears: number[] = []
+  for (let y = firstEnd; y <= lastEnd; y++) endYears.push(y)
+  return endYears
+}
+
+/**
+ * Raw hours summed across reports whose service year matches `endYear` (i.e.
+ * the service year ending Aug 31 of `endYear`). Rounded to 1 dp.
+ */
+export const getHoursForServiceYearEndYear = (
+  serviceReports: ServiceReport[],
+  endYear: number
+): number => {
+  const startYear = endYear - 1
+  const totalMinutes = serviceReports.reduce((sum, report) => {
+    const m = moment(report.date)
+    const reportStartYear = getServiceYearFromDate(m)
+    if (reportStartYear !== startYear) return sum
+    return sum + report.hours * 60 + report.minutes
+  }, 0)
+  return _.round(totalMinutes / 60, 1)
+}
+
 export enum RecurringPlanFrequencies {
   WEEKLY,
   BI_WEEKLY,

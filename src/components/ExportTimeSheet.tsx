@@ -12,7 +12,6 @@ import Text from './MyText'
 import {
   faArrowUpFromBracket,
   faCopy,
-  faHourglass,
   faTimes,
 } from '@fortawesome/free-solid-svg-icons'
 import moment from 'moment'
@@ -260,7 +259,7 @@ const ExportTimeSheet = ({
             {showViewAllMonthsButton && (
               <Button
                 onPress={() => {
-                  navigation.navigate('Month', {
+                  navigation.navigate('Progress', {
                     month: moment().month(),
                     year: moment().year(),
                   })
@@ -360,7 +359,8 @@ const ExportTimeSheet = ({
             )}
           </View>
           */}
-          <Button
+          {/* TODO: update and resolve hourglass breaking api changing */}
+          {/* <Button
             onPress={() => handleAction('hourglass')}
             variant='solid'
             style={{ backgroundColor: theme.colors.card }}
@@ -373,7 +373,7 @@ const ExportTimeSheet = ({
                 {i18n.t('hourglass')}
               </Text>
             </View>
-          </Button>
+          </Button> */}
 
           <Button
             onPress={() => handleAction('copy')}

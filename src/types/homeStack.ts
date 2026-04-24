@@ -3,8 +3,14 @@ import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs'
 export type HomeTabStackParamList = {
   Home: undefined
   Tools: undefined
-  Month: { month?: number; year?: number }
-  Year: { year?: number }
+  Progress:
+    | {
+        month?: number
+        year?: number
+        tab?: 'month' | 'year' | 'allTime'
+      }
+    | undefined
+  Schedule: { month: number; year: number } | undefined
   Map: undefined
 }
 

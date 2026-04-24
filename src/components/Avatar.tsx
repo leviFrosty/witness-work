@@ -1,12 +1,12 @@
 import { useEffect, useRef, useState } from 'react'
 import {
-  Image,
   Modal,
   Pressable,
   StatusBar,
   useWindowDimensions,
   View,
 } from 'react-native'
+import { Image } from 'expo-image'
 import Animated, {
   interpolate,
   runOnJS,
@@ -122,6 +122,9 @@ const Avatar = ({ avatar, name, size = 44, background, focusable }: Props) => {
             borderRadius: size / 2,
             backgroundColor: theme.colors.border,
           }}
+          contentFit='cover'
+          cachePolicy='memory-disk'
+          transition={120}
         />
       )
     }

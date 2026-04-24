@@ -25,7 +25,7 @@ import { faArrowUp } from '@fortawesome/free-solid-svg-icons'
 import { usePreferences } from '../stores/preferences'
 import { Theme } from '../types/theme'
 import { useCompactFormattedMinutes } from '../lib/minutes'
-import type { CalendarViewMode } from '../screens/TimeReportsDashboard'
+import type { CalendarViewMode } from './CalendarHeader'
 
 const boxSize = 40
 
@@ -70,10 +70,11 @@ const getNoteIndicatorColor = (
 }
 
 const NonPlannedDay = (
-  props: DayProps & {
+  props: Omit<DayProps, 'date'> & {
     date?: DateData | undefined
     serviceReports: ServiceReport[] | undefined
     viewMode?: CalendarViewMode
+    height?: number
   }
 ) => {
   const theme = useTheme()
@@ -102,7 +103,7 @@ const NonPlannedDay = (
     <View
       style={{
         width: boxSize,
-        height: boxSize,
+        height: props.height ?? boxSize,
         flexDirection: 'column',
         justifyContent: 'center',
         alignItems: 'center',
@@ -160,12 +161,13 @@ const NonPlannedDay = (
 }
 
 const PlannedDay = (
-  props: DayProps & {
+  props: Omit<DayProps, 'date'> & {
     date?: DateData | undefined
     serviceReports: ServiceReport[] | undefined
     dayPlan?: DayPlan
     recurringPlans?: RecurringPlan[]
     viewMode?: CalendarViewMode
+    height?: number
   }
 ) => {
   const theme = useTheme()
@@ -248,7 +250,7 @@ const PlannedDay = (
     <View
       style={{
         width: boxSize,
-        height: boxSize,
+        height: props.height ?? boxSize,
         flexDirection: 'column',
         justifyContent: 'center',
         alignItems: 'center',
@@ -312,11 +314,12 @@ const PlannedDay = (
 }
 
 const CalendarDay = (
-  props: DayProps & {
+  props: Omit<DayProps, 'date'> & {
     date?: DateData | undefined
     planMode?: boolean
     monthsReports: ServiceReport[] | null
     viewMode?: CalendarViewMode
+    height?: number
   }
 ) => {
   const { dayPlans, recurringPlans } = useServiceReport()

@@ -1,11 +1,11 @@
 import { useState } from 'react'
 import {
-  Image,
   LayoutChangeEvent,
   NativeSyntheticEvent,
   TextLayoutEventData,
   View,
 } from 'react-native'
+import { Image as ExpoImage } from 'expo-image'
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
 import { faHeart } from '@fortawesome/free-solid-svg-icons'
@@ -160,13 +160,16 @@ const FounderNote = ({ goBack, goNext }: Props) => {
                   backgroundColor: theme.colors.supporterTranslucent,
                 }}
               >
-                <Image
+                <ExpoImage
                   source={require('../../../assets/levi-portrait.png')}
                   style={{
                     width: IMAGE_SIZE,
                     height: IMAGE_SIZE,
                     borderRadius: IMAGE_SIZE / 2,
                   }}
+                  contentFit='cover'
+                  cachePolicy='memory-disk'
+                  transition={150}
                 />
               </View>
               <Text
@@ -194,15 +197,15 @@ const FounderNote = ({ goBack, goNext }: Props) => {
           </View>
 
           <View style={{ marginTop: 8, alignItems: 'flex-start', gap: 4 }}>
-            {/* TODO: replace src/assets/signature.png with actual signature art.
-                  The current file is a 1×1 transparent placeholder. */}
-            <Image
+            <ExpoImage
               source={require('./../../../assets/signature.png')}
               style={{
                 width: 180,
                 height: 64,
-                resizeMode: 'contain',
               }}
+              contentFit='contain'
+              cachePolicy='memory-disk'
+              tintColor={theme.colors.text}
             />
             <View
               style={{

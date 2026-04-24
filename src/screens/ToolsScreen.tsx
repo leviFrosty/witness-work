@@ -2,7 +2,7 @@ import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view
 import Text from '../components/MyText'
 import i18n from '../lib/locales'
 import useTheme from '../contexts/theme'
-import { Alert, Platform, View } from 'react-native'
+import { Alert, Platform, Switch, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import ActionButton from '../components/ActionButton'
 import useServiceReport from '../stores/serviceReport'
@@ -82,6 +82,9 @@ export default function ToolsScreen() {
   const preferences = usePreferences()
   const {
     devSupporterOverride,
+    devSupporterNudgeForceShow,
+    supporterNudgeDismissedAt,
+    hideSupporterNudge,
     hasCompletedProfileSetup,
     name,
     set: setPreferences,
@@ -173,6 +176,69 @@ export default function ToolsScreen() {
       const gap = Math.floor(Math.pow(gapR, 2.5) * 7) + 1
       i += gap
     }
+  }
+
+  const generateOverdueFollowUps = () => {
+    const variants: {
+      suffix: string
+      name: string
+      hoursOverdue: number
+      notifyMe: boolean
+      topic?: string
+    }[] = [
+      {
+        suffix: 'fresh',
+        name: 'Overdue — 5h ago (notify + topic)',
+        hoursOverdue: 5,
+        notifyMe: true,
+        topic: 'Continue Revelation chapter 21',
+      },
+      {
+        suffix: 'yesterday',
+        name: 'Overdue — 1d ago (notify, no topic)',
+        hoursOverdue: 26,
+        notifyMe: true,
+      },
+      {
+        suffix: 'lastweek',
+        name: 'Overdue — 7d ago (topic, no notify)',
+        hoursOverdue: 24 * 7,
+        notifyMe: false,
+        topic: 'Follow up on bible study offer',
+      },
+      {
+        suffix: 'oldish',
+        name: 'Overdue — 20d ago (notify + topic)',
+        hoursOverdue: 24 * 20,
+        notifyMe: true,
+        topic: 'Return visit — left tract last time',
+      },
+    ]
+
+    variants.forEach((v, i) => {
+      const contactId = `overdue-contact-${v.suffix}`
+      addContact({
+        createdAt: moment()
+          .subtract(v.hoursOverdue + 24, 'hours')
+          .toDate(),
+        id: contactId,
+        name: v.name,
+      })
+      addConversation({
+        id: `overdue-conv-${v.suffix}`,
+        contact: { id: contactId },
+        date: moment()
+          .subtract(v.hoursOverdue + 2, 'hours')
+          .toDate(),
+        note: `Overdue test variant ${i + 1}`,
+        isBibleStudy: false,
+        followUp: {
+          date: moment().subtract(v.hoursOverdue, 'hours').toDate(),
+          notifyMe: v.notifyMe,
+          topic: v.topic,
+        },
+      })
+    })
   }
 
   const generateServicePlans = () => {
@@ -331,6 +397,51 @@ export default function ToolsScreen() {
                 </>
               )}
             </Card>
+
+            <SectionHeader title='Supporter nudge' />
+            <Card style={{ gap: 10 }}>
+              <Text
+                style={{
+                  fontSize: theme.fontSize('sm'),
+                  color: theme.colors.textAlt,
+                }}
+              >
+                Force-show bypasses tenure, engagement, and cooldown gates so
+                you can see the Home card immediately. Still respects
+                !isSupporter.
+              </Text>
+              <XView style={{ justifyContent: 'space-between' }}>
+                <Text>Force-show nudge:</Text>
+                <Switch
+                  value={devSupporterNudgeForceShow}
+                  onValueChange={(value) =>
+                    setPreferences({ devSupporterNudgeForceShow: value })
+                  }
+                />
+              </XView>
+              <XView style={{ justifyContent: 'space-between' }}>
+                <Text>hideSupporterNudge:</Text>
+                <Text style={{ fontFamily: theme.fonts.bold }}>
+                  {String(hideSupporterNudge)}
+                </Text>
+              </XView>
+              <XView style={{ justifyContent: 'space-between' }}>
+                <Text>Last dismissed:</Text>
+                <Text style={{ fontFamily: theme.fonts.bold }}>
+                  {supporterNudgeDismissedAt
+                    ? moment(supporterNudgeDismissedAt).format('lll')
+                    : '—'}
+                </Text>
+              </XView>
+              <ActionButton
+                onPress={() => {
+                  setPreferences({ supporterNudgeDismissedAt: null })
+                  showDone('Nudge dismissal cleared')
+                }}
+              >
+                Reset nudge dismissal
+              </ActionButton>
+            </Card>
           </>
         )}
 
@@ -399,6 +510,14 @@ export default function ToolsScreen() {
             }}
           >
             {i18n.t('servicePlans')}
+          </ActionButton>
+          <ActionButton
+            onPress={() => {
+              generateOverdueFollowUps()
+              showDone(i18n.t('generated'))
+            }}
+          >
+            Overdue follow-ups
           </ActionButton>
         </Card>
 

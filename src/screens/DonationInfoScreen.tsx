@@ -1,17 +1,15 @@
 import AnimatedLottieView from 'lottie-react-native'
-import * as Sentry from '@sentry/react-native'
 import Text from '../components/MyText'
 import Wrapper from '../components/layout/Wrapper'
 import i18n from '../lib/locales'
-import { Alert, View } from 'react-native'
+import { View } from 'react-native'
 import ActionButton from '../components/ActionButton'
 import useTheme from '../contexts/theme'
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import XView from '../components/layout/XView'
 import Button from '../components/Button'
-import Purchases from 'react-native-purchases'
-import React, { useCallback } from 'react'
+import { useCallback } from 'react'
 import Accordion from '../components/Accordion'
 import { useNavigation } from '@react-navigation/native'
 import Copyeable from '../components/Copyeable'
@@ -20,31 +18,12 @@ import { openURL } from '../lib/links'
 import Card from '../components/Card'
 import ShareAppButton from '../components/ShareAppButton'
 import Divider from '../components/Divider'
-import PreviousDonations from '../components/PreviousDonations'
-import useCustomer from '../hooks/useCustomer'
 import { RootStackNavigation } from '../types/rootStack'
-import SupporterBenefits from '../components/SupporterBenefits'
-import SupporterBadge from '../components/SupporterBadge'
 
 const DonationInfoScreen = () => {
   const theme = useTheme()
   const insets = useSafeAreaInsets()
   const navigation = useNavigation<RootStackNavigation>()
-  const { customer, setCustomer, hasPurchasedBefore, revalidate } =
-    useCustomer()
-
-  const handleRestore = useCallback(async () => {
-    try {
-      const restored = await Purchases.restorePurchases()
-      if (Object.keys(restored.allPurchaseDates).length === 0) {
-        Alert.alert(i18n.t('noPurchasesFound'))
-      }
-      setCustomer(restored)
-    } catch (error: unknown) {
-      Sentry.captureException(error)
-      Alert.alert(i18n.t('error_restoring_account'))
-    }
-  }, [setCustomer])
 
   const handleEmail = useCallback(() => {
     const subject = encodeURIComponent('[WitnessWork]')
@@ -55,29 +34,6 @@ const DonationInfoScreen = () => {
       },
     })
   }, [])
-
-  const renderPreviousDonations = useCallback(() => {
-    return (
-      <React.Fragment>
-        <Divider />
-        {hasPurchasedBefore && customer ? (
-          <PreviousDonations customer={customer} revalidate={revalidate} />
-        ) : (
-          <Button onPress={handleRestore}>
-            <Text
-              style={{
-                fontSize: theme.fontSize('sm'),
-                textDecorationLine: 'underline',
-                textAlign: 'center',
-              }}
-            >
-              {i18n.t('restorePurchase')}
-            </Text>
-          </Button>
-        )}
-      </React.Fragment>
-    )
-  }, [customer, handleRestore, hasPurchasedBefore, revalidate, theme])
 
   return (
     <Wrapper
@@ -169,47 +125,6 @@ const DonationInfoScreen = () => {
             <ShareAppButton />
           </View>
           <Divider />
-          <View style={{ gap: 10, paddingHorizontal: 5 }}>
-            <View
-              style={{
-                flexDirection: 'row',
-                alignItems: 'center',
-                gap: 10,
-                flexWrap: 'wrap',
-              }}
-            >
-              <Text
-                style={{
-                  fontSize: theme.fontSize('lg'),
-                  fontFamily: theme.fonts.semiBold,
-                }}
-              >
-                {i18n.t('supporterBenefitsTitle')}
-              </Text>
-              <Text
-                style={{
-                  fontSize: theme.fontSize('sm'),
-                  color: theme.colors.textAlt,
-                }}
-              >
-                =
-              </Text>
-              <SupporterBadge size='md' />
-            </View>
-            <Text
-              style={{
-                fontSize: theme.fontSize('sm'),
-                color: theme.colors.textAlt,
-                lineHeight: 19,
-              }}
-            >
-              {i18n.t('monthlySupporterExplainer')}
-            </Text>
-            <View style={{ marginTop: 8 }}>
-              <SupporterBenefits />
-            </View>
-          </View>
-          <Divider />
           <View style={{ gap: 10 }}>
             <Text
               style={{
@@ -271,15 +186,37 @@ const DonationInfoScreen = () => {
               <Text>{i18n.t('donate_faqAnswer2')}</Text>
             </Accordion>
           </View>
-
-          {renderPreviousDonations()}
         </View>
       </KeyboardAwareScrollView>
 
-      <View style={{ paddingHorizontal: 15, gap: 5 }}>
-        <ActionButton onPress={() => navigation.navigate('Paywall')}>
-          {i18n.t('donate')}
+      <View style={{ paddingHorizontal: 15, gap: 8 }}>
+        <ActionButton
+          onPress={() =>
+            navigation.navigate('Paywall', { initialTier: 'supporter' })
+          }
+        >
+          {i18n.t('becomeSupporter')}
         </ActionButton>
+        <Button
+          onPress={() => navigation.navigate('Paywall', { initialTier: 'tip' })}
+          style={{
+            backgroundColor: theme.colors.backgroundLighter,
+            borderRadius: theme.numbers.borderRadiusSm,
+            paddingVertical: 12,
+            paddingHorizontal: 24,
+            alignItems: 'center',
+          }}
+        >
+          <Text
+            style={{
+              fontSize: theme.fontSize('md'),
+              color: theme.colors.text,
+              fontFamily: theme.fonts.semiBold,
+            }}
+          >
+            {i18n.t('paywallCtaSendTip')}
+          </Text>
+        </Button>
       </View>
     </Wrapper>
   )

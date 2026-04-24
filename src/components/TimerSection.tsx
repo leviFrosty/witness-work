@@ -15,11 +15,13 @@ import useTheme from '../contexts/theme'
 import Button from './Button'
 import { useNavigation } from '@react-navigation/native'
 import { RootStackNavigation } from '../types/rootStack'
+import { usePreferences } from '../stores/preferences'
 
 export const TimerSection = () => {
   const { start, stop, reset, isRunning, time, ms } = useStopWatch()
   const navigation = useNavigation<RootStackNavigation>()
   const theme = useTheme()
+  const { homeScreenElements, set } = usePreferences()
   const minutes = Math.floor(ms / 60000) % 60
   const hours = Math.floor(ms / 3600000)
   const notEnoughTimeToSave = minutes < 5
@@ -32,17 +34,38 @@ export const TimerSection = () => {
     })
   }
 
+  const handleHide = () => {
+    set({
+      homeScreenElements: {
+        ...homeScreenElements,
+        timer: false,
+      },
+    })
+  }
+
   return (
     <View style={{ gap: 10 }}>
-      <Text
-        style={{
-          fontSize: 14,
-          fontFamily: theme.fonts.semiBold,
-          marginLeft: 5,
-        }}
-      >
-        {i18n.t('timer')}
-      </Text>
+      <XView style={{ justifyContent: 'space-between', marginHorizontal: 5 }}>
+        <Text
+          style={{
+            fontSize: 14,
+            fontFamily: theme.fonts.semiBold,
+          }}
+        >
+          {i18n.t('timer')}
+        </Text>
+        <Button onPress={handleHide}>
+          <Text
+            style={{
+              fontSize: 12,
+              color: theme.colors.textAlt,
+              textDecorationLine: 'underline',
+            }}
+          >
+            {i18n.t('hide')}
+          </Text>
+        </Button>
+      </XView>
       <Card>
         <Text
           style={{

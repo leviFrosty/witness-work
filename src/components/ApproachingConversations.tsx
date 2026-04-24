@@ -5,6 +5,7 @@ import { Conversation } from '../types/conversation'
 import { ThemeContext } from '../contexts/theme'
 import { useContext, useMemo } from 'react'
 import { View } from 'react-native'
+import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
 import IconButton from './IconButton'
 import ApproachingConversationRow from './ApproachingConversationsRow'
 import moment from 'moment'
@@ -66,20 +67,66 @@ const ApproachingConversations = ({
       ? i18n.t('todaysConversations')
       : i18n.t('upcomingConversations')
 
+  const overdueCount = overdueSortedByFollowUpDate.length
+
   return (
     <CardWithTitle
       title={
-        <View style={{ flexDirection: 'row', gap: 5, alignItems: 'center' }}>
-          <IconButton icon={titleIcon} iconStyle={{ color: accentColor }} />
+        <View
+          style={{
+            flexDirection: 'row',
+            gap: 10,
+            alignItems: 'center',
+          }}
+        >
+          {hasOverdue ? (
+            <View
+              style={{
+                width: 28,
+                height: 28,
+                borderRadius: 14,
+                backgroundColor: theme.colors.warnTranslucent,
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <FontAwesomeIcon icon={titleIcon} size={14} color={accentColor} />
+            </View>
+          ) : (
+            <IconButton icon={titleIcon} iconStyle={{ color: accentColor }} />
+          )}
           <Text
             style={{
               fontSize: theme.fontSize('xl'),
               color: accentColor,
               fontFamily: theme.fonts.bold,
+              flex: 1,
             }}
           >
             {titleLabel}
           </Text>
+          {hasOverdue && overdueCount > 1 ? (
+            <View
+              style={{
+                paddingHorizontal: 8,
+                paddingVertical: 2,
+                borderRadius: 10,
+                backgroundColor: theme.colors.warnTranslucent,
+                minWidth: 24,
+                alignItems: 'center',
+              }}
+            >
+              <Text
+                style={{
+                  fontSize: theme.fontSize('xs'),
+                  color: accentColor,
+                  fontFamily: theme.fonts.bold,
+                }}
+              >
+                {overdueCount}
+              </Text>
+            </View>
+          ) : null}
         </View>
       }
       titlePosition='inside'
@@ -89,6 +136,11 @@ const ApproachingConversations = ({
         borderWidth: 1,
         borderRadius: theme.numbers.borderRadiusLg,
       }}
+      cardStyle={
+        hasOverdue
+          ? { backgroundColor: theme.colors.warnTranslucent }
+          : undefined
+      }
     >
       {overdueSortedByFollowUpDate.map((c) => (
         <ApproachingConversationRow key={c.id} conversation={c} isOverdue />

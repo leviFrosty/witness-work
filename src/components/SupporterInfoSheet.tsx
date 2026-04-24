@@ -47,7 +47,7 @@ const SupporterInfoSheet = ({ open, setOpen, featureKey }: Props) => {
 
   const handleDonatePress = () => {
     setOpen(false)
-    navigation.navigate('Donate')
+    navigation.navigate('Paywall')
   }
 
   // Wrap the tamagui Sheet in a RN Modal so the sheet is hosted in a new

@@ -6,15 +6,10 @@ import { Conversation } from '../types/conversation'
 import Text from './MyText'
 import useContacts from '../stores/contactsStore'
 import moment from 'moment'
-import i18n from '../lib/locales'
 import Button from './Button'
 import { useNavigation } from '@react-navigation/native'
 import IconButton from './IconButton'
-import {
-  faBell,
-  faBellSlash,
-  faChevronRight,
-} from '@fortawesome/free-solid-svg-icons'
+import { faChevronRight } from '@fortawesome/free-solid-svg-icons'
 import { RootStackNavigation } from '../types/rootStack'
 
 const ApproachingConversationRow = ({
@@ -23,10 +18,9 @@ const ApproachingConversationRow = ({
 }: {
   conversation: Conversation
   /**
-   * When true, the row renders with the warn-color border + an "Overdue" pill
-   * and tap navigates to the Reschedule sheet instead of Contact Details. Same
-   * UX as tapping an overdue follow-up from the Appointments widget so users
-   * get one consistent flow regardless of entry point.
+   * When true, tap navigates to the Reschedule sheet instead of Contact
+   * Details. Same UX as tapping an overdue follow-up from the Appointments
+   * widget so users get one consistent flow regardless of entry point.
    */
   isOverdue?: boolean
 }) => {
@@ -60,77 +54,38 @@ const ApproachingConversationRow = ({
     >
       <Card
         style={{
-          backgroundColor: theme.colors.backgroundLighter,
-          paddingVertical: 10,
-          gap: 30,
+          backgroundColor: isOverdue
+            ? theme.colors.card
+            : theme.colors.backgroundLighter,
+          paddingVertical: 12,
+          gap: 12,
           flexDirection: 'row',
           alignItems: 'center',
           ...(isOverdue
             ? {
-                borderLeftWidth: 3,
-                borderLeftColor: theme.colors.warn,
+                borderRadius: theme.numbers.borderRadiusMd,
               }
             : {}),
         }}
       >
-        <View style={{ gap: 5 }}>
-          <View style={{ flexDirection: 'row', gap: 6, alignItems: 'center' }}>
-            <Text style={{ fontFamily: theme.fonts.semiBold }}>
-              {contact.name}
-            </Text>
-            {isOverdue ? (
-              <View
-                style={{
-                  backgroundColor: theme.colors.warn,
-                  paddingHorizontal: 6,
-                  paddingVertical: 2,
-                  borderRadius: theme.numbers.borderRadiusSm,
-                }}
-              >
-                <Text
-                  style={{
-                    fontSize: 9,
-                    color: theme.colors.textInverse,
-                    fontFamily: theme.fonts.bold,
-                  }}
-                >
-                  {i18n.t('overdue').toUpperCase()}
-                </Text>
-              </View>
-            ) : null}
-          </View>
-          <Text>{moment(conversation.followUp?.date).fromNow()}</Text>
-          <View style={{ flexDirection: 'row', gap: 5, alignItems: 'center' }}>
-            <Text
-              style={{
-                fontSize: theme.fontSize('xs'),
-                color: theme.colors.textAlt,
-              }}
-            >
-              {moment(conversation.followUp?.date).format('LT')}
-            </Text>
-            <IconButton
-              icon={conversation.followUp?.notifyMe ? faBell : faBellSlash}
-              size='xs'
-            />
-          </View>
-        </View>
-        <View style={{ flex: 1, gap: 3 }}>
+        <View style={{ flex: 1, minWidth: 0, gap: 4 }}>
+          <Text style={{ fontFamily: theme.fonts.semiBold }} numberOfLines={1}>
+            {contact.name}
+          </Text>
           <Text
             style={{
-              fontSize: theme.fontSize('xs'),
+              fontSize: theme.fontSize('sm'),
               color: theme.colors.textAlt,
             }}
+            numberOfLines={2}
           >
-            {i18n.t('topic')}
-          </Text>
-          <Text>
-            {conversation.followUp?.topic || i18n.t('noTopicProvided')}
+            {moment(conversation.followUp?.date).fromNow()}
+            {conversation.followUp?.topic
+              ? ` · ${conversation.followUp.topic}`
+              : ''}
           </Text>
         </View>
-        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-          <IconButton icon={faChevronRight} />
-        </View>
+        <IconButton icon={faChevronRight} />
       </Card>
     </Button>
   )

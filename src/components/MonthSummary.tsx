@@ -1,30 +1,49 @@
-import { View } from 'react-native'
+import { View, Dimensions } from 'react-native'
 import Text from './MyText'
 import i18n from '../lib/locales'
-import Divider from './Divider'
 import MonthServiceReportProgressBar from './MonthServiceReportProgressBar'
-import { faArrowUpFromBracket } from '@fortawesome/free-solid-svg-icons'
+import { faArrowUpFromBracket, faPlus } from '@fortawesome/free-solid-svg-icons'
 import IconButton from './IconButton'
+import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
 import {
   AdjustedMinutes,
   adjustedMinutesForSpecificMonth,
+  getMonthsReports,
   ldcMinutesForSpecificMonth,
   otherMinutesForSpecificMonth,
   standardMinutesForSpecificMonth,
 } from '../lib/serviceReport'
-import { useMemo } from 'react'
+import useServiceReport from '../stores/serviceReport'
+import { useEffect, useMemo } from 'react'
 import useTheme from '../contexts/theme'
 import { ExportTimeSheetState } from './ExportTimeSheet'
 import { ServiceReport } from '../types/serviceReport'
-import TimeCategoryTableRow from './TimeCategoryTableRow'
+import { CategorySegment } from './CategorySegmentBar'
+import CategoriesSection from './CategoriesSection'
 import { usePreferences } from '../stores/preferences'
-import Card from './Card'
+import GlassCard from './GlassCard'
 import ActionButton from './ActionButton'
+import Button from './Button'
+import Chip from './Chip'
+import CreditInfoSheet from './CreditInfoSheet'
 import { useNavigation } from '@react-navigation/native'
 import _ from 'lodash'
 import moment from 'moment'
-import { useFormattedMinutes, useCompactFormattedMinutes } from '../lib/minutes'
+import GoalProgressStats from './GoalProgressStats'
 import { RootStackNavigation } from '../types/rootStack'
+import {
+  isPersonalBest12mo,
+  monthCelebrationKey,
+  resolveTier,
+} from '../lib/achievementTier'
+import {
+  useAnimatedStyle,
+  useSharedValue,
+  withSequence,
+  withTiming,
+} from 'react-native-reanimated'
+import Haptics from '../lib/haptics'
+import ConfettiCannon from '../vendor/ConfettiCannon'
 
 interface MonthSummaryProps {
   monthsReports: ServiceReport[] | null
@@ -32,6 +51,7 @@ interface MonthSummaryProps {
   year: number
   setSheet?: React.Dispatch<React.SetStateAction<ExportTimeSheetState>>
   title?: string
+  hideTitle?: boolean
   noDetails?: boolean
   highlightAsCurrentMonth?: boolean
 }
@@ -42,6 +62,7 @@ const MonthSummary = ({
   year,
   setSheet,
   title,
+  hideTitle,
   noDetails,
   highlightAsCurrentMonth,
 }: MonthSummaryProps) => {
@@ -51,6 +72,8 @@ const MonthSummary = ({
     publisherHours,
     overrideCreditLimit,
     customCreditLimitHours,
+    celebratedTiers,
+    markTierCelebrated,
   } = usePreferences()
   const goalHours = publisherHours[publisher]
   const navigation = useNavigation<RootStackNavigation>()
@@ -62,13 +85,11 @@ const MonthSummary = ({
       })
     : { value: 0, credit: 0, standard: 0, creditOverage: 0 }
 
-  const minutesWithFormat = useFormattedMinutes(adjustedMinutes.value)
-
   const currentDay = moment()
   const selectedMonth = moment().month(month).year(year)
   const isCurrentMonth = currentDay.isSame(selectedMonth, 'month')
   const isPastMonth = currentDay.isAfter(selectedMonth, 'month')
-  const isFutureMonth = currentDay.isBefore(selectedMonth, 'month')
+  const monthInFuture = currentDay.isBefore(selectedMonth, 'month')
 
   const daysInMonth = selectedMonth.daysInMonth()
   const daysRemaining = isCurrentMonth
@@ -79,9 +100,57 @@ const MonthSummary = ({
   const hoursRemaining = Math.max(0, goalHours - hoursCompleted)
   const hasMetGoal = hoursCompleted >= goalHours && goalHours > 0
 
-  // Format time values using utility functions
-  const hoursRemainingFormatted = useFormattedMinutes(hoursRemaining * 60)
-  const goalHoursFormatted = useCompactFormattedMinutes(goalHours * 60)
+  const hoursPerDayNeeded =
+    isCurrentMonth && daysRemaining > 0 && hoursRemaining > 0
+      ? _.round(hoursRemaining / daysRemaining, 1)
+      : 0
+  const evenPace = goalHours > 0 ? goalHours / daysInMonth : 0
+  const isOnPace =
+    isCurrentMonth &&
+    !hasMetGoal &&
+    hoursPerDayNeeded > 0 &&
+    hoursPerDayNeeded <= evenPace
+
+  const { serviceReports } = useServiceReport()
+  const prevMonth = month === 0 ? 11 : month - 1
+  const prevMonthYear = month === 0 ? year - 1 : year
+  const lastMonthHours = useMemo(() => {
+    const reports = getMonthsReports(serviceReports, prevMonth, prevMonthYear)
+    if (!reports.length) return null
+    return (
+      adjustedMinutesForSpecificMonth(
+        reports,
+        prevMonth,
+        prevMonthYear,
+        publisher,
+        {
+          enabled: overrideCreditLimit,
+          customLimitHours: customCreditLimitHours,
+        }
+      ).value / 60
+    )
+  }, [
+    serviceReports,
+    prevMonth,
+    prevMonthYear,
+    publisher,
+    overrideCreditLimit,
+    customCreditLimitHours,
+  ])
+  const momDelta =
+    lastMonthHours !== null && (isCurrentMonth || isPastMonth)
+      ? _.round(hoursCompleted - lastMonthHours, 1)
+      : null
+  const bothMonthsMetGoal =
+    hasMetGoal && lastMonthHours !== null && lastMonthHours >= goalHours
+
+  const lastLoggedDate = useMemo(() => {
+    if (!monthsReports || monthsReports.length === 0) return null
+    const latest = monthsReports.reduce((prev, curr) =>
+      moment(curr.date).isAfter(prev.date) ? curr : prev
+    )
+    return moment(latest.date)
+  }, [monthsReports])
 
   const ldcMinutes = useMemo(
     () =>
@@ -107,14 +176,112 @@ const MonthSummary = ({
     [month, monthsReports, year]
   )
 
-  const monthInFuture = moment().isBefore(
-    moment().month(month).year(year),
-    'month'
-  )
+  // Must stay in sync with MonthServiceReportProgressBar's palette — the
+  // categories sheet and the progress bar render side-by-side and need to
+  // tell the same color story.
+  const otherSegmentPalette = [
+    theme.colors.accent2,
+    theme.colors.accent2Alt,
+    theme.colors.warn,
+    theme.colors.warnAlt,
+    theme.colors.accent3,
+    theme.colors.accent3Alt,
+  ]
+  const categorySegments: CategorySegment[] = [
+    {
+      title: i18n.t('standard'),
+      minutes: standardMinutes,
+      color: theme.colors.accent,
+    },
+    {
+      title: i18n.t('ldc'),
+      minutes: ldcMinutes,
+      color: theme.colors.accentAlt,
+      credit: true,
+    },
+    ...(otherMinutes ?? []).map((report, i) => ({
+      title: report.tag,
+      minutes: report.minutes,
+      color: otherSegmentPalette[i % otherSegmentPalette.length],
+      credit: report.credit,
+    })),
+  ]
+  const hasCategorySegments = categorySegments.some((s) => s.minutes > 0)
+
+  const percentOfGoal = goalHours > 0 ? (hoursCompleted / goalHours) * 100 : 0
+  const isPersonalBest = useMemo(() => {
+    if (!hasMetGoal || !isCurrentMonth) return false
+    return isPersonalBest12mo(
+      serviceReports,
+      month,
+      year,
+      hoursCompleted,
+      publisher,
+      {
+        enabled: overrideCreditLimit,
+        customLimitHours: customCreditLimitHours,
+      }
+    )
+  }, [
+    hasMetGoal,
+    isCurrentMonth,
+    serviceReports,
+    month,
+    year,
+    hoursCompleted,
+    publisher,
+    overrideCreditLimit,
+    customCreditLimitHours,
+  ])
+  const tier = hasMetGoal ? resolveTier(percentOfGoal, isPersonalBest) : null
+  // Past/future months: suppress the celebration palette. See
+  // GoalProgressStats + the UX rationale in the plan doc.
+  const celebratingTier = isCurrentMonth ? tier : null
+  const cardTone =
+    celebratingTier === 'crushed' || celebratingTier === 'record'
+      ? 'amber'
+      : 'default'
+
+  // One-time crossing animation: scale/glow pulse on the seal, a haptic, and
+  // (record-only) confetti. Persisted per-month-per-tier so re-opening the
+  // screen doesn't re-fire.
+  const sealScale = useSharedValue(1)
+  const sealAnimatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: sealScale.value }],
+  }))
+  const monthKey = monthCelebrationKey(month, year)
+  const alreadyCelebrated =
+    celebratingTier !== null &&
+    (celebratedTiers[monthKey] ?? []).includes(celebratingTier)
+  const shouldCelebrate = celebratingTier !== null && !alreadyCelebrated
+
+  useEffect(() => {
+    if (!shouldCelebrate || !celebratingTier) return
+    sealScale.value = withSequence(
+      withTiming(1.3, { duration: 180 }),
+      withTiming(1, { duration: 220 })
+    )
+    // Confetti auto-starts on its own mount; this effect only owns the
+    // haptic + "mark as celebrated" side effects.
+    if (celebratingTier === 'record') {
+      Haptics.heavy()
+    } else if (celebratingTier === 'crushed') {
+      Haptics.medium()
+    } else {
+      Haptics.light()
+    }
+    markTierCelebrated(monthKey, celebratingTier)
+  }, [
+    shouldCelebrate,
+    celebratingTier,
+    monthKey,
+    markTierCelebrated,
+    sealScale,
+  ])
 
   if (!monthsReports) {
     return (
-      <Card>
+      <GlassCard>
         <Text
           style={{
             fontSize: theme.fontSize('xl'),
@@ -127,6 +294,8 @@ const MonthSummary = ({
           style={{
             fontSize: theme.fontSize('sm'),
             color: theme.colors.textAlt,
+            marginTop: 6,
+            marginBottom: 12,
           }}
         >
           {i18n.t('noTimeReports_description')}
@@ -135,14 +304,7 @@ const MonthSummary = ({
           <ActionButton
             onPress={() => navigation.navigate('PlanSchedule', { month, year })}
           >
-            <Text
-              style={{
-                color: theme.colors.textInverse,
-                fontFamily: theme.fonts.bold,
-              }}
-            >
-              {i18n.t('createPlan')}
-            </Text>
+            {i18n.t('createPlan')}
           </ActionButton>
         ) : (
           <ActionButton
@@ -152,291 +314,228 @@ const MonthSummary = ({
               })
             }
           >
-            <Text
-              style={{
-                textAlign: 'center',
-                flex: 1,
-                color: theme.colors.textInverse,
-                fontFamily: theme.fonts.bold,
-              }}
-            >
-              {i18n.t('addTime')}
-            </Text>
+            {i18n.t('addTime')}
           </ActionButton>
         )}
-      </Card>
+      </GlassCard>
     )
   }
 
   return (
-    <Card
-      style={{
-        borderColor: theme.colors.accent,
-        borderWidth: highlightAsCurrentMonth ? 2 : 0,
-        gap: noDetails ? 3 : 15,
-        paddingVertical: noDetails ? 10 : 20,
-      }}
-    >
-      <View style={{ gap: noDetails ? 2 : 10 }}>
-        <View
-          style={{
-            flexDirection: 'row',
-            gap: 10,
-            justifyContent: 'space-between',
-            marginBottom: 3,
-          }}
-        >
-          <Text
-            style={{
-              fontFamily: theme.fonts.semiBold,
-              fontSize: theme.fontSize('xl'),
-            }}
-          >
-            {title ?? moment().month(month).year(year).format('MMMM YYYY')}
-          </Text>
-          {setSheet !== undefined && (
-            <IconButton
-              iconStyle={{ color: theme.colors.accent }}
-              onPress={() =>
-                setSheet({
-                  open: true,
-                  month: month,
-                  year,
-                })
-              }
-              icon={faArrowUpFromBracket}
-            />
-          )}
-        </View>
-        <View style={{ gap: 5 }}>
-          <Text
-            style={{
-              textAlign: 'right',
-              color: theme.colors.text,
-              fontFamily: theme.fonts.semiBold,
-            }}
-          >
-            {`${minutesWithFormat.formatted} ${i18n.t(
-              'of'
-            )} ${goalHours} ${i18n.t('hoursToGoal')}`}
-          </Text>
-          {!!adjustedMinutes.creditOverage && (
-            <Text
-              style={{
-                fontSize: theme.fontSize('xs'),
-                color: theme.colors.warn,
-                textAlign: 'right',
-              }}
-            >
-              {i18n.t('youHaveCreditOverage', {
-                count: _.round(adjustedMinutes.creditOverage / 60, 1),
-              })}
-            </Text>
-          )}
-
-          <MonthServiceReportProgressBar
-            month={month}
-            year={year}
-            minimal={noDetails}
-          />
-
-          {/* Goal Progress Stats */}
-          {goalHours > 0 && !noDetails && (
+    <View>
+      <GlassCard
+        highlighted={highlightAsCurrentMonth}
+        padding={noDetails ? 14 : 20}
+        tone={noDetails ? 'default' : cardTone}
+        style={{ gap: 0 }}
+      >
+        <View style={{ gap: noDetails ? 10 : 14 }}>
+          {/* Title row — when the parent provides section context
+            (e.g. Progress screen header + eyebrow already name the month),
+            the title is suppressed and the export icon rides in the hero
+            row instead. */}
+          {!hideTitle && (
             <View
               style={{
                 flexDirection: 'row',
-                justifyContent: 'space-between',
                 alignItems: 'center',
-                marginTop: 8,
-                backgroundColor: theme.colors.background,
-                borderRadius: theme.numbers.borderRadiusSm,
-                paddingHorizontal: 12,
-                paddingVertical: 8,
+                justifyContent: 'space-between',
               }}
             >
-              {/* Left side - Primary stats */}
-              <View style={{ flex: 1 }}>
-                {hasMetGoal ? (
-                  <Text
-                    style={{
-                      fontSize: theme.fontSize('sm'),
-                      color: theme.colors.accent,
-                      fontFamily: theme.fonts.semiBold,
-                    }}
-                  >
-                    🎯 {i18n.t('goalAchieved')}
-                  </Text>
-                ) : isCurrentMonth && daysRemaining > 0 ? (
-                  <Text
-                    style={{
-                      fontSize: theme.fontSize('md'),
-                      color: theme.colors.text,
-                      fontFamily: theme.fonts.semiBold,
-                    }}
-                  >
-                    {hoursRemainingFormatted.formatted} {i18n.t('remaining')}
-                  </Text>
-                ) : isPastMonth ? (
-                  <Text
-                    style={{
-                      fontSize: theme.fontSize('sm'),
-                      color: hasMetGoal
-                        ? theme.colors.accent
-                        : theme.colors.textAlt,
-                      fontFamily: theme.fonts.medium,
-                    }}
-                  >
-                    {hasMetGoal
-                      ? `✅ ${i18n.t('completed')}`
-                      : `${hoursRemainingFormatted.formatted} ${i18n.t('short')}`}
-                  </Text>
-                ) : isFutureMonth ? (
-                  <Text
-                    style={{
-                      fontSize: theme.fontSize('sm'),
-                      color: theme.colors.textAlt,
-                      fontFamily: theme.fonts.medium,
-                    }}
-                  >
-                    {goalHoursFormatted} {i18n.t('goal')}
-                  </Text>
-                ) : null}
-              </View>
+              <Text
+                style={{
+                  fontFamily: theme.fonts.semiBold,
+                  fontSize: theme.fontSize('xl'),
+                }}
+              >
+                {title ?? moment().month(month).year(year).format('MMMM YYYY')}
+              </Text>
+              {setSheet !== undefined && (
+                <IconButton
+                  iconStyle={{ color: theme.colors.textAlt }}
+                  onPress={() =>
+                    setSheet({
+                      open: true,
+                      month: month,
+                      year,
+                    })
+                  }
+                  icon={faArrowUpFromBracket}
+                />
+              )}
+            </View>
+          )}
 
-              {/* Right side - Secondary stats */}
-              <View style={{ alignItems: 'flex-end' }}>
-                {isCurrentMonth && (
-                  <Text
-                    style={{
-                      fontSize: theme.fontSize('xs'),
-                      color: theme.colors.textAlt,
-                    }}
-                  >
-                    {daysRemaining} {i18n.t('daysLeft')}
-                  </Text>
-                )}
-                {isPastMonth && goalHours > 0 && (
-                  <Text
-                    style={{
-                      fontSize: theme.fontSize('xs'),
-                      color: theme.colors.textAlt,
-                    }}
-                  >
-                    {Math.round((hoursCompleted / goalHours) * 100)}%{' '}
-                    {i18n.t('of')} {i18n.t('goal')}
-                  </Text>
-                )}
-                {isFutureMonth && (
-                  <Text
-                    style={{
-                      fontSize: theme.fontSize('xs'),
-                      color: theme.colors.textAlt,
-                    }}
-                  >
-                    {daysInMonth} {i18n.t('days_lowercase')} {i18n.t('total')}
-                  </Text>
-                )}
+          {/* Hero + secondary line */}
+          {!noDetails && (
+            <View
+              style={{
+                flexDirection: 'row',
+                alignItems: 'flex-start',
+                gap: 12,
+              }}
+            >
+              <View style={{ flex: 1 }}>
+                <GoalProgressStats
+                  hoursCompleted={hoursCompleted}
+                  goalHours={goalHours}
+                  hasMetGoal={hasMetGoal}
+                  periodState={
+                    isCurrentMonth ? 'current' : isPastMonth ? 'past' : 'future'
+                  }
+                  paceHoursPerUnit={hoursPerDayNeeded}
+                  paceUnit='day'
+                  isOnPace={isOnPace}
+                  remainingLabel={`${daysRemaining} ${i18n.t('daysLeft')}`}
+                  totalLabel={`${daysInMonth} ${i18n.t('days_lowercase')}`}
+                  achievementTier={celebratingTier}
+                  sealAnimatedStyle={sealAnimatedStyle}
+                />
               </View>
+              {hideTitle && setSheet !== undefined && (
+                <IconButton
+                  iconStyle={{ color: theme.colors.textAlt }}
+                  onPress={() =>
+                    setSheet({
+                      open: true,
+                      month: month,
+                      year,
+                    })
+                  }
+                  icon={faArrowUpFromBracket}
+                />
+              )}
+            </View>
+          )}
+
+          {/* Category breakdown header — tap to open detailed sheet.
+            Sits directly above the progress bar since the bar itself
+            now carries the category colors + legend. */}
+          {!noDetails && hasCategorySegments && (
+            <CategoriesSection segments={categorySegments} />
+          )}
+
+          {/* Progress bar — detailed view: each category is its own
+            colored segment, with a legend rendered below the bar. */}
+          <MonthServiceReportProgressBar month={month} year={year} />
+
+          {/* Context chips */}
+          {!noDetails && (
+            <View
+              style={{
+                flexDirection: 'row',
+                flexWrap: 'wrap',
+                gap: 6,
+              }}
+            >
+              {momDelta !== null && momDelta !== 0 && (
+                <Chip
+                  label={`${momDelta > 0 ? '↑' : '↓'} ${Math.abs(momDelta)} ${i18n.t('vsLastMonth')}`}
+                  tone={
+                    // When both months cleared goal, a downward delta isn't a
+                    // warning — it just means a very strong prior month. Keep
+                    // tone neutral so the celebration card stays coherent.
+                    bothMonthsMetGoal
+                      ? 'neutral'
+                      : momDelta > 0
+                        ? 'positive'
+                        : 'warn'
+                  }
+                />
+              )}
+              <CreditInfoSheet
+                creditOverageMinutes={adjustedMinutes.creditOverage}
+              />
+              {lastLoggedDate && (
+                <Chip
+                  label={i18n.t('lastLoggedOn', {
+                    date: lastLoggedDate.format('MMM D'),
+                  })}
+                  tone='neutral'
+                />
+              )}
+              {isCurrentMonth && !lastLoggedDate && hoursCompleted === 0 && (
+                <Chip label={i18n.t('nothingLoggedYet')} tone='warn' />
+              )}
             </View>
           )}
         </View>
-      </View>
-      {!noDetails && (
-        <View style={{ gap: 5 }}>
+
+        {/* Tertiary action — progress/breakdown is the primary focus; the
+          global "+" tab-bar pill is the primary path to logging, so this
+          button is kept subdued. */}
+        {!noDetails && (
           <View
             style={{
-              flexDirection: 'row',
-              justifyContent: 'space-between',
-              alignItems: 'center',
+              marginTop: 10,
+              paddingTop: 10,
+              borderTopWidth: 1,
+              borderTopColor: theme.colors.border,
+              alignItems: 'flex-start',
             }}
           >
-            <Text
+            <Button
+              onPress={() =>
+                monthInFuture
+                  ? navigation.navigate('PlanSchedule', { month, year })
+                  : navigation.navigate('Add Time', {
+                      date: moment().month(month).year(year).toISOString(),
+                    })
+              }
               style={{
-                fontFamily: theme.fonts.semiBold,
-                color: theme.colors.textAlt,
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: 6,
+                paddingVertical: 6,
               }}
+              noTransform
             >
-              {i18n.t('categories')}
-            </Text>
-            <Text
-              style={{
-                fontFamily: theme.fonts.semiBold,
-                color: theme.colors.textAlt,
-              }}
-            >
-              {i18n.t('hours')}
-            </Text>
-          </View>
-          <Divider />
-          <View style={{ gap: 10 }}>
-            {!(
-              (standardMinutes > 0 ||
-                (otherMinutes && otherMinutes.length > 0)) &&
-              standardMinutes === 0
-            ) && (
-              <TimeCategoryTableRow
-                title={i18n.t('standard')}
-                number={standardMinutes}
+              <FontAwesomeIcon
+                icon={faPlus}
+                size={11}
+                style={{ color: theme.colors.accent }}
               />
-            )}
-            {!(
-              (standardMinutes > 0 ||
-                (otherMinutes && otherMinutes.length > 0)) &&
-              ldcMinutes === 0
-            ) && (
-              <TimeCategoryTableRow
-                title={i18n.t('ldc')}
-                number={ldcMinutes}
-                credit
-              />
-            )}
-            {otherMinutes &&
-              otherMinutes.length > 0 &&
-              otherMinutes.map((report, index) => (
-                <TimeCategoryTableRow
-                  key={index}
-                  title={report.tag}
-                  number={report.minutes}
-                  credit={report.credit}
-                />
-              ))}
+              <Text
+                style={{
+                  color: theme.colors.accent,
+                  fontFamily: theme.fonts.semiBold,
+                  fontSize: theme.fontSize('sm'),
+                }}
+              >
+                {i18n.t(monthInFuture ? 'createPlan' : 'addTime')}
+              </Text>
+            </Button>
           </View>
+        )}
+      </GlassCard>
+      {shouldCelebrate && celebratingTier === 'record' && (
+        <View
+          pointerEvents='none'
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+          }}
+        >
+          <ConfettiCannon
+            count={80}
+            origin={{ x: Dimensions.get('window').width / 2, y: 0 }}
+            fadeOut
+            autoStart
+            colors={[
+              theme.colors.supporter,
+              theme.colors.accent,
+              theme.colors.accent3,
+              theme.colors.pink,
+              theme.colors.teal,
+            ]}
+          />
         </View>
       )}
-      {monthInFuture ? (
-        <ActionButton
-          onPress={() => navigation.navigate('PlanSchedule', { month, year })}
-        >
-          <Text
-            style={{
-              color: theme.colors.textInverse,
-              fontFamily: theme.fonts.bold,
-            }}
-          >
-            {i18n.t('createPlan')}
-          </Text>
-        </ActionButton>
-      ) : !noDetails ? (
-        <ActionButton
-          onPress={() =>
-            navigation.navigate('Add Time', {
-              date: moment().month(month).year(year).toISOString(),
-            })
-          }
-        >
-          <Text
-            style={{
-              textAlign: 'center',
-              flex: 1,
-              color: theme.colors.textInverse,
-              fontFamily: theme.fonts.bold,
-            }}
-          >
-            {i18n.t('addTime')}
-          </Text>
-        </ActionButton>
-      ) : null}
-    </Card>
+    </View>
   )
 }
+
 export default MonthSummary

@@ -185,6 +185,25 @@ export const PREFERENCE_DEFAULTS = {
     Device.deviceType === Device.DeviceType.TABLET,
   monthlyRoutineHasShownInvalidMonthAlert: false,
   hideDonateHeart: false,
+  /**
+   * Epoch ms of the last time the Home supporter-nudge card was dismissed (via
+   * "Not right now" or the CTA). `null` means never dismissed. Drives the
+   * 365-day cooldown in `isSupporterNudgeEligible`. Syncable — dismissal is
+   * user intent and should follow the user.
+   */
+  supporterNudgeDismissedAt: null as number | null,
+  /**
+   * Explicit opt-out for the Home supporter-nudge card. Separate from
+   * `hideDonateHeart` so a user can keep the heart icon but silence the larger
+   * periodic card, or vice versa. Syncable.
+   */
+  hideSupporterNudge: false,
+  /**
+   * Dev override that bypasses tenure, engagement, and cooldown gates for the
+   * supporter-nudge card. Only honored under `__DEV__` (production reads it but
+   * ignores it, same pattern as `devSupporterOverride`). Non-syncable.
+   */
+  devSupporterNudgeForceShow: false,
   ...hints,
   lastBackupDate: null as Date | null,
   remindMeAboutBackups: true,
@@ -207,6 +226,7 @@ export const PREFERENCE_DEFAULTS = {
     approachingConversations: true,
     monthlyRoutine: true,
     tabletServiceYearSummary: true,
+    thisWeek: true,
     serviceReport: true,
     timer: true,
     contacts: true,
@@ -374,6 +394,25 @@ export const PREFERENCE_DEFAULTS = {
    * onboarding completes or is reset.
    */
   onboardingStepId: null as string | null,
+  /**
+   * Tracks which achievement tiers have already been celebrated per month, so
+   * the one-time confetti / haptic / scale-pulse doesn't re-fire every time the
+   * user reopens the MonthScreen. Keyed `YYYY-MM`; values are the tier names
+   * the user has already been shown the crossing animation for. Non-syncable —
+   * per-device so a user upgrading on a second device doesn't retroactively see
+   * a celebration they've already seen elsewhere.
+   */
+  celebratedTiers: {} as Record<string, string[]>,
+  /**
+   * User-customized milestone ladder for the Year tab's `YearMilestoneCard` /
+   * `MilestoneAdjustSheet`. `null` means "use the publisher-type default
+   * ladder" from `src/lib/milestones.ts`. When non-null, these hours override
+   * the defaults and persist across publisher-type changes (shared list, not
+   * per-publisher). The final row — the annual goal — is derived from
+   * `publisherHours[publisher] * 12` at render time and is NOT stored here.
+   * "Reset to defaults" sets this back to `null`.
+   */
+  milestoneOverrides: null as number[] | null,
 }
 
 /**
@@ -402,6 +441,7 @@ export const NON_SYNCABLE_PREFERENCE_KEYS = new Set<string>([
   'preferenceUpdatedAt',
   'hasMigratedToSyncSchema',
   'devSupporterOverride',
+  'devSupporterNudgeForceShow',
   'developerTools',
   'hasAttemptedToMigrateToMmkv',
   'monthlyRoutineHasShownInvalidMonthAlert',
@@ -410,6 +450,7 @@ export const NON_SYNCABLE_PREFERENCE_KEYS = new Set<string>([
   'lastTimeRequestedAReview',
   'lastBackupDate',
   'onboardingStepId',
+  'celebratedTiers',
 ])
 
 export const usePreferences = create(
@@ -488,6 +529,20 @@ export const usePreferences = create(
           set({ overrideCreditLimit }),
         setCustomCreditLimitHours: (customCreditLimitHours: number) =>
           set({ customCreditLimitHours }),
+        setMilestoneOverrides: (values: number[]) =>
+          set({ milestoneOverrides: values }),
+        resetMilestoneOverrides: () => set({ milestoneOverrides: null }),
+        markTierCelebrated: (monthKey: string, tier: string) =>
+          set(({ celebratedTiers }) => {
+            const existing = celebratedTiers[monthKey] ?? []
+            if (existing.includes(tier)) return {}
+            return {
+              celebratedTiers: {
+                ...celebratedTiers,
+                [monthKey]: [...existing, tier],
+              },
+            }
+          }),
       }
     }),
     {

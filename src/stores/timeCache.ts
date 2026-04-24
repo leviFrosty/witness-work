@@ -18,8 +18,20 @@ type CacheEntry = {
   planHash: string
 }
 
+/**
+ * Pre-flattened day→minutes map for the entire reports history. Serialized as a
+ * plain object because `Map` doesn't round-trip through JSON.
+ */
+export type DailyMinutesCacheEntry = {
+  daily: Record<string, number>
+  lastUpdated: number
+  /** Fingerprint of `serviceReports` — see `generateDailyMinutesFingerprint`. */
+  fingerprint: string
+}
+
 type TimeCacheState = {
   cache: Record<CacheKey, CacheEntry>
+  dailyMinutes: DailyMinutesCacheEntry | null
 }
 
 type TimeCacheActions = {
@@ -31,10 +43,16 @@ type TimeCacheActions = {
   ) => void
   invalidateCache: (key?: CacheKey) => void
   invalidateAllCache: () => void
+  setDailyMinutesCache: (
+    daily: Record<string, number>,
+    fingerprint: string
+  ) => void
+  invalidateDailyMinutesCache: () => void
 }
 
 const initialState: TimeCacheState = {
   cache: {},
+  dailyMinutes: null,
 }
 
 export const useTimeCache = create<TimeCacheState & TimeCacheActions>()(
@@ -85,6 +103,21 @@ export const useTimeCache = create<TimeCacheState & TimeCacheActions>()(
       invalidateAllCache: () => {
         logger.log('[PlanCache] Invalidating ALL cache entries')
         set({ cache: {} })
+      },
+      setDailyMinutesCache: (
+        daily: Record<string, number>,
+        fingerprint: string
+      ) => {
+        set({
+          dailyMinutes: {
+            daily,
+            lastUpdated: Date.now(),
+            fingerprint,
+          },
+        })
+      },
+      invalidateDailyMinutesCache: () => {
+        set({ dailyMinutes: null })
       },
     }),
     {
@@ -144,4 +177,26 @@ export const generateServiceReportsHash = (
   }
 
   return `sr:${reportIds.length}:${reportIds.sort().join(',')}`
+}
+
+/**
+ * Light-touch fingerprint for the full reports collection. Iterates once but
+ * avoids `moment()` parsing and date formatting, so it's much cheaper than
+ * running `flattenDailyMinutes`. Any add/edit/delete changes either the total
+ * count or the max `updatedAt`, so this reliably detects mutations.
+ */
+export const generateDailyMinutesFingerprint = (
+  reports: ServiceReportsByYears
+): string => {
+  let count = 0
+  let maxUpdated = 0
+  for (const year of Object.values(reports)) {
+    for (const month of Object.values(year)) {
+      count += month.length
+      for (const r of month) {
+        if (r.updatedAt && r.updatedAt > maxUpdated) maxUpdated = r.updatedAt
+      }
+    }
+  }
+  return `dm:${count}:${maxUpdated}`
 }

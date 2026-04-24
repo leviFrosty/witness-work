@@ -36,7 +36,7 @@ const DrawerNavigator = () => {
                 !hideDonateHeart && (
                   <View style={{ position: 'absolute', right: 0 }}>
                     <IconButton
-                      onPress={() => navigation.navigate('Donate')}
+                      onPress={() => navigation.navigate('Paywall')}
                       icon={hasPurchasedBefore ? faHeart : faHeartRegular}
                       color={
                         hasPurchasedBefore

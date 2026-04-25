@@ -1,4 +1,4 @@
-import { View, StyleProp, TextStyle } from 'react-native'
+import { View, StyleProp, TextStyle, StyleSheet } from 'react-native'
 import { PropsWithChildren, useContext } from 'react'
 import { ThemeContext } from '../contexts/theme'
 import Text from './MyText'
@@ -35,16 +35,14 @@ const Badge: React.FC<PropsWithChildren<Props>> = ({
     >
       {typeof children === 'string' ? (
         <Text
-          style={[
-            [
-              {
-                fontFamily: theme.fonts.semiBold,
-                textTransform: 'uppercase',
-                fontSize: theme.fontSize(size),
-              },
-            ],
-            [textStyle],
-          ]}
+          style={StyleSheet.flatten([
+            {
+              fontFamily: theme.fonts.semiBold,
+              textTransform: 'uppercase',
+              fontSize: theme.fontSize(size),
+            },
+            textStyle,
+          ])}
         >
           {children}
         </Text>

@@ -1,6 +1,5 @@
 import { useMemo } from 'react'
 import { Pressable, View } from 'react-native'
-import { useNavigation } from '@react-navigation/native'
 
 import useTheme from '../contexts/theme'
 import useServiceReport from '../stores/serviceReport'
@@ -11,7 +10,6 @@ import {
 } from '../lib/serviceReport'
 import { ServiceReport } from '../types/serviceReport'
 import i18n from '../lib/locales'
-import { HomeTabStackNavigation } from '../types/homeStack'
 
 import Text from './MyText'
 
@@ -43,9 +41,13 @@ const useFlatServiceReports = (): ServiceReport[] => {
  *
  * Tapping a row navigates to the Progress > Year tab for that service year.
  */
-const YearByYearList = () => {
+interface YearByYearListProps {
+  /** Invoked when the user taps a year row — parent switches to Year tab. */
+  onYearPress: (endYear: number) => void
+}
+
+const YearByYearList = ({ onYearPress }: YearByYearListProps) => {
   const theme = useTheme()
-  const navigation = useNavigation<HomeTabStackNavigation>()
   const reports = useFlatServiceReports()
   const { annualGoalHours } = usePublisher()
 
@@ -101,12 +103,7 @@ const YearByYearList = () => {
             <Pressable
               key={endYear}
               accessibilityRole='button'
-              onPress={() =>
-                navigation.navigate('Progress', {
-                  tab: 'year',
-                  year: endYear,
-                })
-              }
+              onPress={() => onYearPress(endYear)}
               style={({ pressed }) => ({
                 opacity: pressed ? 0.7 : 1,
                 backgroundColor: theme.colors.card,

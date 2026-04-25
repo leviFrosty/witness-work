@@ -22,7 +22,12 @@ import YearByYearList from '../../components/YearByYearList'
  *
  * Renders a centered `Empty` state instead when no reports exist.
  */
-const ProgressAllTimeTab = () => {
+interface ProgressAllTimeTabProps {
+  /** Invoked when the user taps a year row — parent switches to Year tab. */
+  onYearPress: (endYear: number) => void
+}
+
+const ProgressAllTimeTab = ({ onYearPress }: ProgressAllTimeTabProps) => {
   const insets = useSafeAreaInsets()
   const { serviceReports } = useServiceReport()
 
@@ -74,7 +79,7 @@ const ProgressAllTimeTab = () => {
       <View style={{ paddingHorizontal: 15 }}>
         <LifetimeHoursCard />
       </View>
-      <YearByYearList />
+      <YearByYearList onYearPress={onYearPress} />
     </KeyboardAwareScrollView>
   )
 }

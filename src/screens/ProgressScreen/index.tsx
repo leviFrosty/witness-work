@@ -241,9 +241,21 @@ const ProgressScreen = ({ route, navigation }: Props) => {
           <ProgressYearTab
             year={serviceYear}
             onAdjustMilestones={() => setMilestoneSheetOpen(true)}
+            onMonthPress={(m, y) => {
+              setMonth(m)
+              setYear(y)
+              setActiveTab('month')
+            }}
           />
         ) : null}
-        {activeTab === 'allTime' ? <ProgressAllTimeTab /> : null}
+        {activeTab === 'allTime' ? (
+          <ProgressAllTimeTab
+            onYearPress={(endYear) => {
+              setYear(endYear)
+              setActiveTab(hideYearTab ? 'month' : 'year')
+            }}
+          />
+        ) : null}
       </View>
 
       <ExportTimeSheet sheet={exportSheet} setSheet={setExportSheet} />

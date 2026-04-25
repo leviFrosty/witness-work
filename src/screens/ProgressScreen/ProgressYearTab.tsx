@@ -2,7 +2,6 @@ import { useMemo } from 'react'
 import { Pressable, View } from 'react-native'
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { useNavigation } from '@react-navigation/native'
 import moment from 'moment'
 import _ from 'lodash'
 
@@ -19,7 +18,6 @@ import i18n from '../../lib/locales'
 import YearMilestoneCard from '../../components/YearMilestoneCard'
 import Text from '../../components/MyText'
 import XView from '../../components/layout/XView'
-import { HomeTabStackNavigation } from '../../types/homeStack'
 import Badge from '../../components/Badge'
 
 interface ProgressYearTabProps {
@@ -27,6 +25,8 @@ interface ProgressYearTabProps {
   year: number
   /** Invoked when the user taps "adjust milestones" on the hero card. */
   onAdjustMilestones: () => void
+  /** Invoked when the user taps a month row — parent switches to Month tab. */
+  onMonthPress: (month: number, year: number) => void
 }
 
 /**
@@ -163,10 +163,10 @@ const MonthRow = ({
 const ProgressYearTab = ({
   year,
   onAdjustMilestones,
+  onMonthPress,
 }: ProgressYearTabProps) => {
   const theme = useTheme()
   const insets = useSafeAreaInsets()
-  const navigation = useNavigation<HomeTabStackNavigation>()
 
   const now = moment()
   const currentMonth = now.month()
@@ -226,13 +226,7 @@ const ProgressYearTab = ({
                 month={month}
                 year={calendarYear}
                 isCurrent={isCurrent}
-                onPress={() =>
-                  navigation.navigate('Progress', {
-                    month,
-                    year: calendarYear,
-                    tab: 'month',
-                  })
-                }
+                onPress={() => onMonthPress(month, calendarYear)}
               />
             )
           })}

@@ -199,45 +199,53 @@ const YearMilestoneCard = ({
         ) : null}
       </View>
 
-      <View
-        style={{
-          flexDirection: 'row',
-          alignItems: 'baseline',
-          gap: 2,
-          flexWrap: 'wrap',
-        }}
-      >
-        <Text
+      {/* Hero number + milestones chip share a tight inner rhythm — matches
+        the month card's GoalProgressStats inner gap so the chip reads as
+        sub-info to the hero rather than a sibling section. */}
+      <View style={{ gap: 10 }}>
+        <View
           style={{
-            fontSize: theme.fontSize('3xl'),
-            fontFamily: theme.fonts.bold,
-            color: theme.colors.text,
+            flexDirection: 'row',
+            alignItems: 'baseline',
+            gap: 2,
+            flexWrap: 'wrap',
           }}
         >
-          {hoursCompleted}
-        </Text>
-        <Text
-          style={{
-            fontSize: theme.fontSize('lg'),
-            color: theme.colors.textAlt,
-          }}
-        >
-          / {annualGoalHours} {i18n.t('hours_lowercase')}
-        </Text>
-      </View>
-
-      {hitState.total > 0 ? (
-        <View style={{ flexDirection: 'row', marginLeft: -10 }}>
-          <Chip
-            icon='✓'
-            tone={hitState.totalHit === hitState.total ? 'positive' : 'neutral'}
-            label={i18n.t('milestonesHitChip', {
-              hit: hitState.totalHit,
-              total: hitState.total,
-            })}
-          />
+          <Text
+            style={{
+              fontSize: 64,
+              lineHeight: 68,
+              fontFamily: theme.fonts.bold,
+              color: theme.colors.text,
+            }}
+          >
+            {hoursCompleted}
+          </Text>
+          <Text
+            style={{
+              fontSize: theme.fontSize('lg'),
+              color: theme.colors.textAlt,
+            }}
+          >
+            / {annualGoalHours} {i18n.t('hours_lowercase')}
+          </Text>
         </View>
-      ) : null}
+
+        {hitState.total > 0 ? (
+          <View style={{ flexDirection: 'row', marginLeft: -10 }}>
+            <Chip
+              icon='✓'
+              tone={
+                hitState.totalHit === hitState.total ? 'positive' : 'neutral'
+              }
+              label={i18n.t('milestonesHitChip', {
+                hit: hitState.totalHit,
+                total: hitState.total,
+              })}
+            />
+          </View>
+        ) : null}
+      </View>
 
       <MilestoneProgressBar year={year} />
 
@@ -250,17 +258,28 @@ const YearMilestoneCard = ({
             gap: 8,
           }}
         >
-          <Text
+          <View
             style={{
-              fontSize: theme.fontSize('sm'),
-              color: theme.colors.textAlt,
+              borderWidth: 1,
+              borderColor: theme.colors.border,
+              borderRadius: theme.numbers.borderRadiusSm,
+              paddingHorizontal: 8,
+              paddingVertical: 3,
             }}
           >
-            {i18n.t('nextMilestoneLabel', {
-              hours: hitState.next,
-              remaining: nextMilestoneRemaining,
-            })}
-          </Text>
+            <Text
+              style={{
+                fontSize: theme.fontSize('sm'),
+                fontFamily: theme.fonts.semiBold,
+                color: theme.colors.text,
+              }}
+            >
+              {i18n.t('nextMilestoneLabel', {
+                hours: hitState.next,
+                remaining: nextMilestoneRemaining,
+              })}
+            </Text>
+          </View>
           {onAdjustMilestones ? (
             <Pressable
               onPress={onAdjustMilestones}

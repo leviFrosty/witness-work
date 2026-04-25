@@ -12,29 +12,23 @@ import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
 import Text from './MyText'
 import i18n from '../lib/locales'
 import useTheme from '../contexts/theme'
-import { useFormattedMinutes } from '../lib/minutes'
 import { AchievementTier } from '../lib/achievementTier'
 import { Theme } from '../types/theme'
 
 export type PeriodState = 'current' | 'past' | 'future'
-export type PaceUnit = 'day' | 'month'
 
 type GoalProgressStatsProps = {
   hoursCompleted: number
   goalHours: number
   hasMetGoal: boolean
   periodState: PeriodState
-  paceHoursPerUnit?: number
-  paceUnit?: PaceUnit
-  isOnPace?: boolean
   remainingLabel?: string
   totalLabel?: string
   /**
-   * When provided and periodState is 'current', the hero line renders the
-   * celebration tier (icon + amber palette for crushed/record) instead of the
-   * plain "Goal achieved" label. Past/future months ignore this prop and keep
-   * the subdued historical rendering — see docs/month-year-analytics-plan.md
-   * for rationale.
+   * When provided and periodState is 'current', a small tier seal renders above
+   * the hero (icon + amber palette for crushed/record). Past/future months
+   * ignore this prop and keep the subdued historical rendering — see
+   * docs/month-year-analytics-plan.md for rationale.
    */
   achievementTier?: AchievementTier | null
   /**
@@ -42,74 +36,6 @@ type GoalProgressStatsProps = {
    * parent can orchestrate a one-time scale/glow pulse when a new tier is
    * crossed without pushing animation state down into this component.
    */
-  sealAnimatedStyle?: Parameters<typeof Animated.View>[0]['style']
-}
-
-const GoalProgressStats = ({
-  hoursCompleted,
-  goalHours,
-  hasMetGoal,
-  periodState,
-  paceHoursPerUnit,
-  paceUnit,
-  isOnPace,
-  remainingLabel,
-  totalLabel,
-  achievementTier,
-  sealAnimatedStyle,
-}: GoalProgressStatsProps) => {
-  const theme = useTheme()
-  const hoursRemaining = Math.max(0, goalHours - hoursCompleted)
-  const percentOfGoal =
-    goalHours > 0 ? Math.round((hoursCompleted / goalHours) * 100) : 0
-  const hoursCompletedFormatted = useFormattedMinutes(hoursCompleted * 60)
-  const hoursBeyondGoal = _.round(Math.max(0, hoursCompleted - goalHours), 1)
-
-  if (goalHours <= 0) return null
-
-  const showTier =
-    hasMetGoal && periodState === 'current' && achievementTier !== undefined
-  return (
-    <View style={{ gap: 2 }}>
-      <HeroLine
-        hasMetGoal={hasMetGoal}
-        periodState={periodState}
-        hoursRemaining={hoursRemaining}
-        goalHours={goalHours}
-        paceHoursPerUnit={paceHoursPerUnit}
-        paceUnit={paceUnit}
-        isOnPace={!!isOnPace}
-        tier={showTier ? (achievementTier ?? null) : null}
-        sealAnimatedStyle={sealAnimatedStyle}
-      />
-      <Text
-        style={{
-          fontSize: theme.fontSize('xs'),
-          color: theme.colors.textAlt,
-        }}
-      >
-        {`${hoursCompletedFormatted.formatted} / ${goalHours} ${i18n.t('hours')}`}
-        {hasMetGoal && hoursBeyondGoal > 0
-          ? ` · ${i18n.t('beyondGoalShort', { count: hoursBeyondGoal })}`
-          : ` · ${percentOfGoal}%`}
-        {periodState === 'current' && remainingLabel
-          ? ` · ${remainingLabel}`
-          : ''}
-        {periodState === 'future' && totalLabel ? ` · ${totalLabel}` : ''}
-      </Text>
-    </View>
-  )
-}
-
-type HeroLineProps = {
-  hasMetGoal: boolean
-  periodState: PeriodState
-  hoursRemaining: number
-  goalHours: number
-  paceHoursPerUnit?: number
-  paceUnit?: PaceUnit
-  isOnPace: boolean
-  tier: AchievementTier | null
   sealAnimatedStyle?: Parameters<typeof Animated.View>[0]['style']
 }
 
@@ -145,102 +71,165 @@ const tierColor = (tier: AchievementTier, theme: Theme) => {
     : theme.colors.accent
 }
 
-const HeroLine = ({
+const GoalProgressStats = ({
+  hoursCompleted,
+  goalHours,
   hasMetGoal,
   periodState,
-  hoursRemaining,
-  goalHours,
-  paceHoursPerUnit,
-  paceUnit,
-  isOnPace,
-  tier,
+  remainingLabel,
+  totalLabel,
+  achievementTier,
   sealAnimatedStyle,
-}: HeroLineProps) => {
+}: GoalProgressStatsProps) => {
   const theme = useTheme()
-  const base = {
-    fontSize: theme.fontSize('lg'),
-    fontFamily: theme.fonts.semiBold,
-  }
+  const hoursRemaining = Math.max(0, goalHours - hoursCompleted)
+  const hoursBeyondGoal = _.round(Math.max(0, hoursCompleted - goalHours), 1)
 
-  if (hasMetGoal) {
-    // Past months intentionally skip the tier palette — historical data
-    // shouldn't retroactively light up amber for a user who's only just
-    // installed the new version of the app.
-    if (tier) {
-      const color = tierColor(tier, theme)
-      return (
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+  if (goalHours <= 0) return null
+
+  const tier =
+    hasMetGoal && periodState === 'current' && achievementTier
+      ? achievementTier
+      : null
+
+  const heroColor = tier
+    ? tierColor(tier, theme)
+    : hasMetGoal
+      ? theme.colors.accent
+      : periodState === 'future'
+        ? theme.colors.textAlt
+        : theme.colors.text
+
+  // iOS Health-style hero split: gigantic numeric headline + small unit
+  // baseline-aligned (e.g. "40" + "hours"). Unit is the lowercase full word
+  // for parity with the Year and All-time hero cards. The goal target lives
+  // in the context line below alongside "hours left" / "days left" so all
+  // reference info shares one visual tier.
+  const heroBig =
+    periodState === 'future'
+      ? String(goalHours)
+      : String(_.round(hoursCompleted, 1))
+  const heroUnit = i18n.t('hours_lowercase')
+
+  // Context line under the hero. The actionable "hours left" is split off
+  // as an outlined pill so it reads as the most-actionable item without
+  // breaking the single-tier rhythm — the rest (days left / goal) trails as
+  // plain meta. For met-goal and future states there's no "left" value to
+  // pull out, so the whole line collapses to plain text.
+  const goalSuffix = i18n.t('goalLabel', { count: goalHours })
+  let pillText: string | null = null
+  const trailingParts: string[] = []
+  if (hasMetGoal && hoursBeyondGoal > 0) {
+    trailingParts.push(i18n.t('beyondGoalShort', { count: hoursBeyondGoal }))
+  } else if (hasMetGoal) {
+    trailingParts.push(i18n.t('goalAchieved'))
+  } else if (periodState === 'current') {
+    pillText = `${_.round(hoursRemaining, 1)} ${i18n.t('hoursLeft')}`
+    if (remainingLabel) trailingParts.push(remainingLabel)
+    trailingParts.push(goalSuffix)
+  } else if (periodState === 'past') {
+    pillText = i18n.t('hrsShort', { count: _.round(hoursRemaining, 1) })
+    trailingParts.push(goalSuffix)
+  } else if (periodState === 'future' && totalLabel) {
+    trailingParts.push(totalLabel)
+  }
+  const trailingText = trailingParts.join(' · ')
+
+  return (
+    <View style={{ gap: 10 }}>
+      {tier && (
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
           <Animated.View style={sealAnimatedStyle}>
-            <FontAwesomeIcon icon={tierIcon(tier)} color={color} size={18} />
+            <FontAwesomeIcon
+              icon={tierIcon(tier)}
+              color={heroColor}
+              size={18}
+            />
           </Animated.View>
-          <Text style={{ ...base, color }}>{i18n.t(tierCopyKey(tier))}</Text>
-        </View>
-      )
-    }
-    return (
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-        <FontAwesomeIcon icon={faCheck} color={theme.colors.accent} size={16} />
-        <Text style={{ ...base, color: theme.colors.accent }}>
-          {i18n.t('goalAchieved')}
-        </Text>
-      </View>
-    )
-  }
-  if (periodState === 'past') {
-    return (
-      <Text style={{ ...base, color: theme.colors.textAlt }}>
-        {i18n.t('hrsShort', { count: _.round(hoursRemaining, 1) })}
-      </Text>
-    )
-  }
-  if (periodState === 'future') {
-    return (
-      <Text style={{ ...base, color: theme.colors.textAlt }}>
-        {i18n.t('goalLabel', { count: goalHours })}
-      </Text>
-    )
-  }
-  if (
-    periodState === 'current' &&
-    paceHoursPerUnit &&
-    paceHoursPerUnit > 0 &&
-    paceUnit
-  ) {
-    const key = paceUnit === 'day' ? 'hrsPerDayToGoal' : 'hrsPerMonthToGoal'
-    return (
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-        <Text style={{ ...base, color: theme.colors.text }}>
-          {i18n.t(key, { count: paceHoursPerUnit })}
-        </Text>
-        {isOnPace && (
-          <View
+          <Text
             style={{
-              backgroundColor: theme.colors.accentTranslucent,
-              paddingHorizontal: 8,
-              paddingVertical: 2,
-              borderRadius: theme.numbers.borderRadiusSm,
+              fontFamily: theme.fonts.semiBold,
+              fontSize: theme.fontSize('md'),
+              color: heroColor,
             }}
           >
-            <Text
-              style={{
-                fontSize: theme.fontSize('xs'),
-                color: theme.colors.accent,
-                fontFamily: theme.fonts.semiBold,
-              }}
-            >
-              {i18n.t('onPace')}
-            </Text>
-          </View>
+            {i18n.t(tierCopyKey(tier))}
+          </Text>
+        </View>
+      )}
+      <View
+        style={{
+          flexDirection: 'row',
+          alignItems: 'baseline',
+          flexWrap: 'wrap',
+          gap: 8,
+        }}
+      >
+        <Text
+          style={{
+            fontSize: 64,
+            lineHeight: 68,
+            fontFamily: theme.fonts.bold,
+            color: heroColor,
+          }}
+        >
+          {heroBig}
+        </Text>
+        {!!heroUnit && (
+          <Text
+            style={{
+              fontSize: theme.fontSize('xl'),
+              fontFamily: theme.fonts.semiBold,
+              color: theme.colors.textAlt,
+            }}
+          >
+            {heroUnit}
+          </Text>
         )}
       </View>
-    )
-  }
-  return (
-    <Text style={{ ...base, color: theme.colors.text }}>
-      {/* @ts-expect-error TranslationKey typing */}
-      {i18n.t('hoursShort', { count: _.round(hoursRemaining, 1) })}{' '}
-      {i18n.t('remaining')}
-    </Text>
+      {(pillText || trailingText) && (
+        <View
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            flexWrap: 'wrap',
+            gap: 8,
+          }}
+        >
+          {pillText && (
+            <View
+              style={{
+                borderWidth: 1,
+                borderColor: theme.colors.border,
+                borderRadius: theme.numbers.borderRadiusSm,
+                paddingHorizontal: 8,
+                paddingVertical: 3,
+              }}
+            >
+              <Text
+                style={{
+                  fontSize: theme.fontSize('sm'),
+                  fontFamily: theme.fonts.semiBold,
+                  color: theme.colors.text,
+                }}
+              >
+                {pillText}
+              </Text>
+            </View>
+          )}
+          {!!trailingText && (
+            <Text
+              style={{
+                fontSize: theme.fontSize('sm'),
+                color: theme.colors.textAlt,
+              }}
+            >
+              {trailingText}
+            </Text>
+          )}
+        </View>
+      )}
+    </View>
   )
 }
 

@@ -97,19 +97,7 @@ const MonthSummary = ({
     : 0
 
   const hoursCompleted = adjustedMinutes.value / 60
-  const hoursRemaining = Math.max(0, goalHours - hoursCompleted)
   const hasMetGoal = hoursCompleted >= goalHours && goalHours > 0
-
-  const hoursPerDayNeeded =
-    isCurrentMonth && daysRemaining > 0 && hoursRemaining > 0
-      ? _.round(hoursRemaining / daysRemaining, 1)
-      : 0
-  const evenPace = goalHours > 0 ? goalHours / daysInMonth : 0
-  const isOnPace =
-    isCurrentMonth &&
-    !hasMetGoal &&
-    hoursPerDayNeeded > 0 &&
-    hoursPerDayNeeded <= evenPace
 
   const { serviceReports } = useServiceReport()
   const prevMonth = month === 0 ? 11 : month - 1
@@ -329,7 +317,7 @@ const MonthSummary = ({
         tone={noDetails ? 'default' : cardTone}
         style={{ gap: 0 }}
       >
-        <View style={{ gap: noDetails ? 10 : 14 }}>
+        <View style={{ gap: noDetails ? 10 : 15 }}>
           {/* Title row — when the parent provides section context
             (e.g. Progress screen header + eyebrow already name the month),
             the title is suppressed and the export icon rides in the hero
@@ -383,9 +371,6 @@ const MonthSummary = ({
                   periodState={
                     isCurrentMonth ? 'current' : isPastMonth ? 'past' : 'future'
                   }
-                  paceHoursPerUnit={hoursPerDayNeeded}
-                  paceUnit='day'
-                  isOnPace={isOnPace}
                   remainingLabel={`${daysRemaining} ${i18n.t('daysLeft')}`}
                   totalLabel={`${daysInMonth} ${i18n.t('days_lowercase')}`}
                   achievementTier={celebratingTier}

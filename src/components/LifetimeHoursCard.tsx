@@ -99,7 +99,8 @@ const LifetimeHoursCard = () => {
         >
           <Text
             style={{
-              fontSize: theme.fontSize('4xl'),
+              fontSize: 64,
+              lineHeight: 68,
               fontFamily: theme.fonts.bold,
               color: theme.colors.text,
               letterSpacing: -1,

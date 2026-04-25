@@ -1033,11 +1033,11 @@ describe('lib/serviceReport', () => {
           7: [
             {
               minutes: 0,
-              date: moment()
-                .year(year + 1)
-                .month(7)
-                .endOf('month')
-                .toDate(),
+              // Anchored noon UTC of Aug 31 — production stores this shape.
+              // The local-mode `endOf('month')` would yield 23:59:59 local,
+              // which on a west-of-UTC device crosses into Sep 1 UTC and gets
+              // re-bucketed to September under UTC-mode reads.
+              date: new Date(Date.UTC(year + 1, 7, 31, 12)),
               hours: 10,
               id: '0',
             },

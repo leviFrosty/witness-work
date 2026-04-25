@@ -9,6 +9,7 @@ import {
 import moment from 'moment'
 import { monthCreditMaxMinutes } from '../constants/serviceReports'
 import { logger } from './logger'
+import { momentStoredDate, normalizeDateForStorage } from './normalizeDate'
 
 export const calculateProgress = ({
   minutes,
@@ -47,10 +48,8 @@ export const getTotalMinutesDetailedForSpecificMonth = (
   const other = otherMinutesForSpecificMonth(monthsReports, month, year)
 
   const reportsForMonth = monthsReports.filter((report) => {
-    return (
-      moment(report.date).month() === month &&
-      moment(report.date).year() === year
-    )
+    const m = momentStoredDate(report.date)
+    return m.month() === month && m.year() === year
   })
   const otherWithNonCreditMinutes = reportsForMonth.reduce((prev, report) => {
     if (report.tag && !report.credit) {
@@ -192,12 +191,14 @@ export const totalMinutesForSpecificMonthUpToDayOfMonth = (
   targetYear: number
 ): number => {
   const totalMinutesForMonth = serviceReports
-    .filter(
-      (report) =>
-        moment(report.date).month() === targetMonth &&
-        moment(report.date).year() === targetYear &&
-        moment(report.date).date() <= targetDay
-    )
+    .filter((report) => {
+      const m = momentStoredDate(report.date)
+      return (
+        m.month() === targetMonth &&
+        m.year() === targetYear &&
+        m.date() <= targetDay
+      )
+    })
     .reduce((accumulator, report) => {
       return accumulator + report.hours * 60 + report.minutes
     }, 0)
@@ -210,12 +211,10 @@ export const ldcMinutesForSpecificMonth = (
   targetYear: number
 ): number => {
   const totalMinutesForMonth = monthsReports
-    .filter(
-      (report) =>
-        moment(report.date).month() === targetMonth &&
-        moment(report.date).year() === targetYear &&
-        report.ldc
-    )
+    .filter((report) => {
+      const m = momentStoredDate(report.date)
+      return m.month() === targetMonth && m.year() === targetYear && report.ldc
+    })
     .reduce((accumulator, report) => {
       return accumulator + report.hours * 60 + report.minutes
     }, 0)
@@ -231,10 +230,8 @@ export const otherMinutesForSpecificMonth = (
   targetYear: number
 ): OtherReports => {
   const reportsForMonth = monthsReports.filter((report) => {
-    return (
-      moment(report.date).month() === targetMonth &&
-      moment(report.date).year() === targetYear
-    )
+    const m = momentStoredDate(report.date)
+    return m.month() === targetMonth && m.year() === targetYear
   })
   const taggedReports = reportsForMonth.filter((report) => report.tag)
 
@@ -267,13 +264,15 @@ export const standardMinutesForSpecificMonth = (
   targetYear: number
 ): number => {
   const totalMinutesForMonth = monthsReports
-    .filter(
-      (report) =>
-        moment(report.date).month() === targetMonth &&
-        moment(report.date).year() === targetYear &&
+    .filter((report) => {
+      const m = momentStoredDate(report.date)
+      return (
+        m.month() === targetMonth &&
+        m.year() === targetYear &&
         !report.ldc &&
         !report.tag
-    )
+      )
+    })
     .reduce((accumulator, report) => {
       return accumulator + report.hours * 60 + report.minutes
     }, 0)
@@ -435,6 +434,10 @@ export const getEarliestReportDate = (
   return earliestMs === Infinity ? null : new Date(earliestMs)
 }
 
+// `getServiceYearEndYearsSpan` and friends below feed `report.date` into
+// `getServiceYearFromDate` (which calls `.month()/.year()`). Wrap stored Dates
+// in UTC mode so the calendar day is read consistently across device TZs.
+
 /**
  * Continuous span of service-year END years from the earliest report's service
  * year up to the current service year (inclusive).
@@ -444,7 +447,8 @@ export const getEarliestReportDate = (
  * - Months Jan–Aug (0–7) roll into the PRIOR service year; its end-year is the
  *   calendar year itself.
  * - Months Sep–Dec (8–11) roll into the NEXT service year; its end-year is `year
- *   + 1`.
+ *
+ *   - 1`.
  *
  * Returns an empty array when there are no reports.
  */
@@ -455,7 +459,7 @@ export const getServiceYearEndYearsSpan = (
   const earliest = getEarliestReportDate(serviceReports)
   if (!earliest) return []
 
-  const earliestMoment = moment(earliest)
+  const earliestMoment = momentStoredDate(earliest)
   const earliestStart = getServiceYearFromDate(earliestMoment)
   const now = nowMoment ?? moment()
   const currentStart = getServiceYearFromDate(now)
@@ -480,7 +484,7 @@ export const getHoursForServiceYearEndYear = (
 ): number => {
   const startYear = endYear - 1
   const totalMinutes = serviceReports.reduce((sum, report) => {
-    const m = moment(report.date)
+    const m = momentStoredDate(report.date)
     const reportStartYear = getServiceYearFromDate(m)
     if (reportStartYear !== startYear) return sum
     return sum + report.hours * 60 + report.minutes
@@ -525,12 +529,14 @@ export type RecurringPlan = {
   updatedAt?: number
 }
 
-// Helper function to check if a date matches a monthly by weekday pattern
+// Helper function to check if a date matches a monthly by weekday pattern.
+// Caller is responsible for passing a calendar-day Date that's already been
+// normalized via `normalizeDateForStorage`; this fn reads it via UTC mode.
 const doesDayMatchMonthlyByWeekday = (
   day: Date,
   config: MonthlyByWeekdayConfig
 ): boolean => {
-  const momentDay = moment(day)
+  const momentDay = momentStoredDate(day)
   const dayWeekday = momentDay.day() // 0-6 (Sunday-Saturday)
 
   // Check if the weekday matches
@@ -566,22 +572,29 @@ export const getPlansIntersectingDay = (
   day: Date,
   plans: RecurringPlan[]
 ): RecurringPlan[] => {
+  // `day` is whatever the caller had — often a local-mode Date built from
+  // `selectedMonth.clone().date(i+1).toDate()`. Normalize it so it sits on the
+  // same noon-UTC anchor as the stored plan dates, then read everything in
+  // UTC mode. This is what makes recurrence math TZ-stable: in NZDT (+13) a
+  // local-mode `diff` against a noon-UTC startDate would silently round to a
+  // negative day count and miss every weekly occurrence.
+  const normalizedDay = normalizeDateForStorage(day)
+  const momentDay = momentStoredDate(normalizedDay)
+
   return plans.filter((plan) => {
     const { startDate, recurrence } = plan
     const { frequency, interval, endDate } = recurrence
 
-    // Convert dates to Moment.js objects for easier manipulation
-    const momentDay = moment(day)
-
     if (
       plan.deletedDates?.some((deletedDate) =>
-        moment(deletedDate).isSame(momentDay, 'day')
+        momentStoredDate(deletedDate).isSame(momentDay, 'day')
       )
     ) {
       return false
     }
 
-    const momentStartDate = moment(startDate)
+    const momentStartDate = momentStoredDate(startDate)
+    const momentEndDate = endDate ? momentStoredDate(endDate) : null
 
     // Calculate the difference in days between the start date and the given day
     const daysDiff = momentDay.diff(momentStartDate, 'days')
@@ -592,29 +605,29 @@ export const getPlansIntersectingDay = (
         return (
           daysDiff % (interval * 7) === 0 &&
           momentDay.isSameOrAfter(momentStartDate) &&
-          (!endDate || momentDay.isSameOrBefore(endDate))
+          (!momentEndDate || momentDay.isSameOrBefore(momentEndDate))
         )
       case RecurringPlanFrequencies.BI_WEEKLY:
         return (
           daysDiff % (interval * 14) === 0 &&
           momentDay.isSameOrAfter(momentStartDate) &&
-          (!endDate || momentDay.isSameOrBefore(endDate))
+          (!momentEndDate || momentDay.isSameOrBefore(momentEndDate))
         )
       case RecurringPlanFrequencies.MONTHLY:
         return (
           momentDay.date() === momentStartDate.date() &&
           momentDay.isSameOrAfter(momentStartDate) &&
-          (!endDate || momentDay.isSameOrBefore(endDate))
+          (!momentEndDate || momentDay.isSameOrBefore(momentEndDate))
         )
       case RecurringPlanFrequencies.MONTHLY_BY_WEEKDAY:
         return (
           recurrence.monthlyByWeekdayConfig &&
           doesDayMatchMonthlyByWeekday(
-            day,
+            normalizedDay,
             recurrence.monthlyByWeekdayConfig
           ) &&
           momentDay.isSameOrAfter(momentStartDate) &&
-          (!endDate || momentDay.isSameOrBefore(endDate))
+          (!momentEndDate || momentDay.isSameOrBefore(momentEndDate))
         )
       default:
         return false
@@ -631,12 +644,10 @@ export const getEffectiveMinutesForRecurringPlan = (
   plan: RecurringPlan,
   date: Date
 ): number => {
-  const override = plan.overrides?.find((o) => {
-    // Normalize both dates to start of day in local timezone to avoid timezone/time issues
-    const normalizedOverrideDate = moment(o.date).startOf('day')
-    const normalizedInputDate = moment(date).startOf('day')
-    return normalizedOverrideDate.isSame(normalizedInputDate, 'day')
-  })
+  const targetDay = momentStoredDate(normalizeDateForStorage(date))
+  const override = plan.overrides?.find((o) =>
+    momentStoredDate(o.date).isSame(targetDay, 'day')
+  )
   return override ? override.minutes : plan.minutes
 }
 
@@ -648,12 +659,10 @@ export const getEffectiveNoteForRecurringPlan = (
   plan: RecurringPlan,
   date: Date
 ): string | undefined => {
-  const override = plan.overrides?.find((o) => {
-    // Normalize both dates to start of day in local timezone to avoid timezone/time issues
-    const normalizedOverrideDate = moment(o.date).startOf('day')
-    const normalizedInputDate = moment(date).startOf('day')
-    return normalizedOverrideDate.isSame(normalizedInputDate, 'day')
-  })
+  const targetDay = momentStoredDate(normalizeDateForStorage(date))
+  const override = plan.overrides?.find((o) =>
+    momentStoredDate(o.date).isSame(targetDay, 'day')
+  )
   return override?.note || plan.note
 }
 
@@ -682,7 +691,10 @@ export const plannedMinutesToCurrentDayForMonth = (
       const dayDate = day.toDate()
 
       const dayPlan = dayPlans.find((plan) =>
-        moment(plan.date).isSame(day, 'day')
+        momentStoredDate(plan.date).isSame(
+          momentStoredDate(normalizeDateForStorage(dayDate)),
+          'day'
+        )
       )
 
       const recurringPlansForDay = getPlansIntersectingDay(
@@ -735,7 +747,7 @@ export const calculatePlannedMinutesToCurrentDayOptimized = (
 
   // Create day plan lookup map for O(1) access
   const dayPlanMap = new Map(
-    dayPlans.map((p) => [moment(p.date).format('YYYY-MM-DD'), p])
+    dayPlans.map((p) => [momentStoredDate(p.date).format('YYYY-MM-DD'), p])
   )
   logger.log(
     `[calculateCurrentDayOptimized] Created day plan map with ${dayPlanMap.size} entries`
@@ -871,7 +883,7 @@ export const calculateMonthlyPlannedMinutesOptimized = (
 
   // Create day plan lookup map for O(1) access
   const dayPlanMap = new Map(
-    dayPlans.map((p) => [moment(p.date).format('YYYY-MM-DD'), p])
+    dayPlans.map((p) => [momentStoredDate(p.date).format('YYYY-MM-DD'), p])
   )
   logger.log(
     `[calculateMonthlyOptimized] Created day plan map with ${dayPlanMap.size} entries`
@@ -935,7 +947,7 @@ export const calculateAnnualPlannedMinutesOptimized = (
 
   // Create day plan lookup map for O(1) access
   const dayPlanMap = new Map(
-    dayPlans.map((p) => [moment(p.date).format('YYYY-MM-DD'), p])
+    dayPlans.map((p) => [momentStoredDate(p.date).format('YYYY-MM-DD'), p])
   )
   logger.log(
     `[calculateAnnualOptimized] Created day plan map with ${dayPlanMap.size} entries`
@@ -994,8 +1006,9 @@ export const getReport = (
   if (!report) {
     return
   }
-  const month = moment(report.date).month()
-  const year = moment(report.date).year()
+  const m = momentStoredDate(report.date)
+  const month = m.month()
+  const year = m.year()
   if (!years[year] || !years[year][month]) {
     return
   }

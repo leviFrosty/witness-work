@@ -20,6 +20,7 @@ import {
   ServiceReportTombstone,
 } from '../../types/serviceReport'
 import { RecurringPlan } from '../serviceReport'
+import { migrateNormalizeDates } from '../normalizeDate'
 import {
   pushAllImages,
   pullMissingImages,
@@ -297,10 +298,18 @@ export function replaceLocalWithRemote(remote: SyncPayload): void {
     conversations: remote.conversationStore.conversations ?? [],
     deletedConversations: remote.conversationStore.deletedConversations ?? [],
   })
-  useServiceReport.setState({
+  // Remote may have been written by a device that pre-dates calendar-day
+  // normalization, so re-anchor every Date to noon UTC before persisting it
+  // locally. Idempotent on already-normalized data.
+  const normalizedRemote = migrateNormalizeDates({
     serviceReports: remote.serviceReportStore.serviceReports ?? {},
     dayPlans: remote.serviceReportStore.dayPlans ?? [],
     recurringPlans: remote.serviceReportStore.recurringPlans ?? [],
+  })
+  useServiceReport.setState({
+    serviceReports: normalizedRemote.serviceReports,
+    dayPlans: normalizedRemote.dayPlans,
+    recurringPlans: normalizedRemote.recurringPlans,
     deletedServiceReports:
       remote.serviceReportStore.deletedServiceReports ?? [],
   })
@@ -908,10 +917,17 @@ async function pullAndMergeInner(reason: string): Promise<boolean> {
     conversations: acc.conversations,
     deletedConversations: acc.deletedConversations,
   })
-  serviceReportState.set({
+  // Same rationale as `replaceLocalWithRemote`: a peer device could have
+  // written un-normalized dates. Re-anchor before applying.
+  const normalizedAcc = migrateNormalizeDates({
     serviceReports: acc.serviceReports,
     dayPlans: acc.dayPlans,
     recurringPlans: acc.recurringPlans,
+  })
+  serviceReportState.set({
+    serviceReports: normalizedAcc.serviceReports,
+    dayPlans: normalizedAcc.dayPlans,
+    recurringPlans: normalizedAcc.recurringPlans,
     deletedServiceReports: acc.deletedServiceReports,
   })
 

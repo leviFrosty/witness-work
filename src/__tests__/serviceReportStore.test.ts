@@ -6,6 +6,16 @@ import {
   RecurringPlanFrequencies,
   RecurringPlanOverride,
 } from '../lib/serviceReport'
+import { normalizeDateForStorage } from '../lib/normalizeDate'
+
+// Stored overrides have their `date` normalized to noon UTC. Compare against
+// this normalized shape rather than the raw input the test passed in.
+const normalizedOverride = (
+  o: RecurringPlanOverride
+): RecurringPlanOverride => ({
+  ...o,
+  date: normalizeDateForStorage(o.date),
+})
 
 // Type for the result of getRecurringPlanForDate
 type RecurringPlanWithOverrideInfo = RecurringPlan &
@@ -82,7 +92,7 @@ describe('ServiceReport Store - Override Functionality', () => {
 
       expect(updatedPlan).toBeDefined()
       expect(updatedPlan!.overrides).toHaveLength(1)
-      expect(updatedPlan!.overrides![0]).toEqual(override)
+      expect(updatedPlan!.overrides![0]).toEqual(normalizedOverride(override))
     })
 
     it('should replace existing override on same date', () => {
@@ -124,7 +134,9 @@ describe('ServiceReport Store - Override Functionality', () => {
       const updatedPlan = updatedPlans.find((p) => p.id === 'test-plan-2')
 
       expect(updatedPlan!.overrides).toHaveLength(1)
-      expect(updatedPlan!.overrides![0]).toEqual(secondOverride)
+      expect(updatedPlan!.overrides![0]).toEqual(
+        normalizedOverride(secondOverride)
+      )
     })
 
     it('should not affect non-matching plans', () => {
@@ -214,7 +226,9 @@ describe('ServiceReport Store - Override Functionality', () => {
       const updatedPlan = updatedPlans.find((p) => p.id === 'test-plan-3')
 
       expect(updatedPlan!.overrides).toHaveLength(1)
-      expect(updatedPlan!.overrides![0]).toEqual(updatedOverride)
+      expect(updatedPlan!.overrides![0]).toEqual(
+        normalizedOverride(updatedOverride)
+      )
     })
 
     it('should not update non-matching overrides', () => {
@@ -272,8 +286,8 @@ describe('ServiceReport Store - Override Functionality', () => {
         moment(o.date).isSame(moment('2024-01-15'), 'day')
       )
 
-      expect(firstOverride).toEqual(updatedOverride)
-      expect(secondOverride).toEqual(override2) // Unchanged
+      expect(firstOverride).toEqual(normalizedOverride(updatedOverride))
+      expect(secondOverride).toEqual(normalizedOverride(override2)) // Unchanged
     })
   })
 
@@ -362,7 +376,7 @@ describe('ServiceReport Store - Override Functionality', () => {
       const updatedPlan = updatedPlans.find((p) => p.id === 'test-plan-6')
 
       expect(updatedPlan!.overrides).toHaveLength(1)
-      expect(updatedPlan!.overrides![0]).toEqual(override2)
+      expect(updatedPlan!.overrides![0]).toEqual(normalizedOverride(override2))
     })
   })
 
@@ -532,7 +546,9 @@ describe('ServiceReport Store - Override Functionality', () => {
       let updatedPlans = useServiceReport.getState().recurringPlans
       let updatedPlan = updatedPlans.find((p) => p.id === 'restore-test-plan')
       expect(updatedPlan!.deletedDates).toHaveLength(1)
-      expect(updatedPlan!.deletedDates![0]).toEqual(testDate)
+      expect(updatedPlan!.deletedDates![0]).toEqual(
+        normalizeDateForStorage(testDate)
+      )
 
       // Restore the instance
       restoreRecurringPlanInstance('restore-test-plan', testDate)

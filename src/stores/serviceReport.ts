@@ -13,6 +13,14 @@ import {
   RecurringPlan,
   RecurringPlanOverride,
 } from '../lib/serviceReport'
+import {
+  migrateNormalizeDates,
+  momentStoredDate,
+  normalizeDateForStorage,
+  normalizePartialRecurringPlan,
+  normalizeRecurringPlan,
+  PersistedServiceReportState,
+} from '../lib/normalizeDate'
 import { hasMigratedFromAsyncStorage, MmkvStorage } from './mmkv'
 
 const initialState = {
@@ -54,6 +62,44 @@ export const migrateServiceReports = (
   return years
 }
 
+/**
+ * Persist-middleware migration entry point. Chains:
+ *
+ * - V0 → v1: reshape `ServiceReport[]` into `ServiceReportsByYears` (legacy).
+ * - V1 → v2: anchor every persisted Date to noon UTC so calendar days survive
+ *   device timezone changes. See `migrateNormalizeDates`.
+ *
+ * Exported for unit testing.
+ */
+export const migrateServiceReportPersistedState = (
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  persistedState: any,
+  version: number
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+): any => {
+  let next = persistedState
+  if (version === 0) {
+    const previousReports = (next as { serviceReports: ServiceReport[] })
+      .serviceReports
+    const years = migrateServiceReports(previousReports)
+    next = { ...next, serviceReports: years }
+  }
+  if (version < 2) {
+    const normalized = migrateNormalizeDates({
+      serviceReports: next.serviceReports ?? {},
+      dayPlans: next.dayPlans ?? [],
+      recurringPlans: next.recurringPlans ?? [],
+    } as PersistedServiceReportState)
+    next = {
+      ...next,
+      serviceReports: normalized.serviceReports,
+      dayPlans: normalized.dayPlans,
+      recurringPlans: normalized.recurringPlans,
+    }
+  }
+  return next
+}
+
 export const useServiceReport = create(
   persist(
     combine(initialState, (set) => ({
@@ -61,8 +107,10 @@ export const useServiceReport = create(
       addServiceReport: (report: ServiceReport) =>
         set(({ serviceReports }) => {
           const reports = { ...serviceReports }
-          const month = moment(report.date).month()
-          const year = moment(report.date).year()
+          const normalizedDate = normalizeDateForStorage(report.date)
+          const m = momentStoredDate(normalizedDate)
+          const month = m.month()
+          const year = m.year()
           if (!reports[year]) {
             reports[year] = {}
           }
@@ -71,7 +119,11 @@ export const useServiceReport = create(
             reports[year][month] = []
           }
 
-          reports[year][month].push({ ...report, updatedAt: Date.now() })
+          reports[year][month].push({
+            ...report,
+            date: normalizedDate,
+            updatedAt: Date.now(),
+          })
 
           return {
             serviceReports: reports,
@@ -79,19 +131,31 @@ export const useServiceReport = create(
         }),
       addDayPlan: (dayPlan: DayPlan) =>
         set(({ dayPlans }) => {
-          const foundDayPlan = dayPlans.find((c) => c.id === dayPlan.id)
+          const normalized: DayPlan = {
+            ...dayPlan,
+            date: normalizeDateForStorage(dayPlan.date),
+          }
+          const foundDayPlan = dayPlans.find((c) => c.id === normalized.id)
           const foundDayPlanDate = dayPlans.find((c) =>
-            moment(c.date).isSame(dayPlan.date, 'day')
+            momentStoredDate(c.date).isSame(
+              momentStoredDate(normalized.date),
+              'day'
+            )
           )
 
           // Overrides existing day if already added.
           if (foundDayPlanDate) {
             return {
               dayPlans: dayPlans.map((c) => {
-                if (!moment(c.date).isSame(dayPlan.date, 'day')) {
+                if (
+                  !momentStoredDate(c.date).isSame(
+                    momentStoredDate(normalized.date),
+                    'day'
+                  )
+                ) {
                   return c
                 }
-                return { ...c, ...dayPlan, updatedAt: Date.now() }
+                return { ...c, ...normalized, updatedAt: Date.now() }
               }),
             }
           }
@@ -101,17 +165,20 @@ export const useServiceReport = create(
           }
 
           return {
-            dayPlans: [...dayPlans, { ...dayPlan, updatedAt: Date.now() }],
+            dayPlans: [...dayPlans, { ...normalized, updatedAt: Date.now() }],
           }
         }),
       updateDayPlan: (dayPlan: Partial<DayPlan>) => {
         set(({ dayPlans }) => {
+          const normalized: Partial<DayPlan> = dayPlan.date
+            ? { ...dayPlan, date: normalizeDateForStorage(dayPlan.date) }
+            : dayPlan
           return {
             dayPlans: dayPlans.map((c) => {
-              if (c.id !== dayPlan.id) {
+              if (c.id !== normalized.id) {
                 return c
               }
-              return { ...c, ...dayPlan, updatedAt: Date.now() }
+              return { ...c, ...normalized, updatedAt: Date.now() }
             }),
           }
         })
@@ -129,35 +196,43 @@ export const useServiceReport = create(
         }),
       addRecurringPlan: (recurringPlan: RecurringPlan) =>
         set(({ recurringPlans }) => {
+          const normalized = normalizeRecurringPlan(recurringPlan)
           const foundRecurringPlanStartDate = recurringPlans.find((c) =>
-            moment(c.startDate).isSame(recurringPlan.startDate, 'day')
+            momentStoredDate(c.startDate).isSame(
+              momentStoredDate(normalized.startDate),
+              'day'
+            )
           )
 
           if (foundRecurringPlanStartDate) {
             return {
               recurringPlans: recurringPlans.map((c) => {
                 if (
-                  !moment(c.startDate).isSame(recurringPlan.startDate, 'day')
+                  !momentStoredDate(c.startDate).isSame(
+                    momentStoredDate(normalized.startDate),
+                    'day'
+                  )
                 ) {
                   return c
                 }
-                return { ...c, ...recurringPlan }
+                return { ...c, ...normalized }
               }),
             }
           }
 
           return {
-            recurringPlans: [...recurringPlans, recurringPlan],
+            recurringPlans: [...recurringPlans, normalized],
           }
         }),
       updateRecurringPlan: (recurringPlan: Partial<RecurringPlan>) => {
         set(({ recurringPlans }) => {
+          const normalized = normalizePartialRecurringPlan(recurringPlan)
           return {
             recurringPlans: recurringPlans.map((c) => {
-              if (c.id !== recurringPlan.id) {
+              if (c.id !== normalized.id) {
                 return c
               }
-              return { ...c, ...recurringPlan }
+              return { ...c, ...normalized }
             }),
           }
         })
@@ -167,6 +242,10 @@ export const useServiceReport = create(
         override: RecurringPlanOverride
       ) => {
         set(({ recurringPlans }) => {
+          const normalized: RecurringPlanOverride = {
+            ...override,
+            date: normalizeDateForStorage(override.date),
+          }
           return {
             recurringPlans: recurringPlans.map((c) => {
               if (c.id !== planId) {
@@ -174,9 +253,13 @@ export const useServiceReport = create(
               }
               const existingOverrides = c.overrides || []
               const updatedOverrides = existingOverrides.filter(
-                (o) => !moment(o.date).isSame(override.date, 'day')
+                (o) =>
+                  !momentStoredDate(o.date).isSame(
+                    momentStoredDate(normalized.date),
+                    'day'
+                  )
               )
-              return { ...c, overrides: [...updatedOverrides, override] }
+              return { ...c, overrides: [...updatedOverrides, normalized] }
             }),
           }
         })
@@ -186,6 +269,10 @@ export const useServiceReport = create(
         override: RecurringPlanOverride
       ) => {
         set(({ recurringPlans }) => {
+          const normalized: RecurringPlanOverride = {
+            ...override,
+            date: normalizeDateForStorage(override.date),
+          }
           return {
             recurringPlans: recurringPlans.map((c) => {
               if (c.id !== planId) {
@@ -193,8 +280,13 @@ export const useServiceReport = create(
               }
               const existingOverrides = c.overrides || []
               const updatedOverrides = existingOverrides.map((o) => {
-                if (moment(o.date).isSame(override.date, 'day')) {
-                  return override
+                if (
+                  momentStoredDate(o.date).isSame(
+                    momentStoredDate(normalized.date),
+                    'day'
+                  )
+                ) {
+                  return normalized
                 }
                 return o
               })
@@ -205,6 +297,7 @@ export const useServiceReport = create(
       },
       removeRecurringPlanOverride: (planId: string, date: Date) => {
         set(({ recurringPlans }) => {
+          const normalizedDate = normalizeDateForStorage(date)
           return {
             recurringPlans: recurringPlans.map((c) => {
               if (c.id !== planId) {
@@ -212,7 +305,11 @@ export const useServiceReport = create(
               }
               const existingOverrides = c.overrides || []
               const updatedOverrides = existingOverrides.filter(
-                (o) => !moment(o.date).isSame(date, 'day')
+                (o) =>
+                  !momentStoredDate(o.date).isSame(
+                    momentStoredDate(normalizedDate),
+                    'day'
+                  )
               )
               return { ...c, overrides: updatedOverrides }
             }),
@@ -224,8 +321,12 @@ export const useServiceReport = create(
         const plan = recurringPlans.find((p) => p.id === planId)
         if (!plan) return null
 
+        const normalizedDate = normalizeDateForStorage(date)
         const override = plan.overrides?.find((o) =>
-          moment(o.date).isSame(date, 'day')
+          momentStoredDate(o.date).isSame(
+            momentStoredDate(normalizedDate),
+            'day'
+          )
         )
 
         if (override) {
@@ -243,6 +344,7 @@ export const useServiceReport = create(
       },
       restoreRecurringPlanInstance: (planId: string, date: Date) => {
         set(({ recurringPlans }) => {
+          const normalizedDate = normalizeDateForStorage(date)
           return {
             recurringPlans: recurringPlans.map((c) => {
               if (c.id !== planId) {
@@ -250,7 +352,11 @@ export const useServiceReport = create(
               }
               const existingDeleted = c.deletedDates || []
               const updatedDeleted = existingDeleted.filter(
-                (deletedDate) => !moment(deletedDate).isSame(date, 'day')
+                (deletedDate) =>
+                  !momentStoredDate(deletedDate).isSame(
+                    momentStoredDate(normalizedDate),
+                    'day'
+                  )
               )
               return { ...c, deletedDates: updatedDeleted }
             }),
@@ -259,19 +365,21 @@ export const useServiceReport = create(
       },
       deleteSingleEventFromRecurringPlan: (id: string, date: Date) => {
         set(({ recurringPlans }) => {
+          const normalizedDate = normalizeDateForStorage(date)
           return {
             recurringPlans: recurringPlans.map((c) => {
               if (c.id !== id) {
                 return c
               }
               const deleted = c.deletedDates || []
-              return { ...c, deletedDates: [...deleted, date] }
+              return { ...c, deletedDates: [...deleted, normalizedDate] }
             }),
           }
         })
       },
       deleteEventAndFutureEvents: (id: string, date: Date) => {
         set(({ recurringPlans }) => {
+          const normalizedDate = normalizeDateForStorage(date)
           return {
             recurringPlans: recurringPlans.map((c) => {
               if (c.id !== id) {
@@ -280,10 +388,10 @@ export const useServiceReport = create(
               const deleted = c.deletedDates || []
               return {
                 ...c,
-                deletedDates: [...deleted, date],
+                deletedDates: [...deleted, normalizedDate],
                 recurrence: {
                   ...c.recurrence,
-                  endDate: date,
+                  endDate: normalizedDate,
                 },
               }
             }),
@@ -334,16 +442,20 @@ export const useServiceReport = create(
       updateServiceReport: (serviceReport: ServiceReport) => {
         set(({ serviceReports }) => {
           const reports = { ...serviceReports }
-          const foundReport = getReport(reports, serviceReport)
+          const normalized: ServiceReport = {
+            ...serviceReport,
+            date: normalizeDateForStorage(serviceReport.date),
+          }
+          const foundReport = getReport(reports, normalized)
           if (!foundReport) {
             return {}
           }
           const { month, year } = foundReport
           const updatedMonth = serviceReports[year][month].map((c) => {
-            if (c.id !== serviceReport.id) {
+            if (c.id !== normalized.id) {
               return c
             }
-            return { ...c, ...serviceReport, updatedAt: Date.now() }
+            return { ...c, ...normalized, updatedAt: Date.now() }
           })
 
           reports[year][month] = updatedMonth
@@ -363,21 +475,9 @@ export const useServiceReport = create(
       storage: createJSONStorage(() =>
         hasMigratedFromAsyncStorage() ? MmkvStorage : AsyncStorage
       ),
-      version: 1,
-      migrate: (persistedState, version) => {
-        if (version === 0) {
-          const previousReports = (
-            persistedState as { serviceReports: ServiceReport[] }
-          ).serviceReports
-
-          const years = migrateServiceReports(previousReports)
-
-          // @ts-expect-error This cannot be type checked because legacy data
-          persistedState.serviceReports = years
-        }
-
-        return persistedState
-      },
+      version: 2,
+      migrate: (persistedState, version) =>
+        migrateServiceReportPersistedState(persistedState, version),
     }
   )
 )

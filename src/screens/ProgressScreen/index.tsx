@@ -14,6 +14,7 @@ import ExportTimeSheet, {
   ExportTimeSheetState,
 } from '../../components/ExportTimeSheet'
 import MilestoneAdjustSheet from '../../components/MilestoneAdjustSheet'
+import Badge from '../../components/Badge'
 import Button from '../../components/Button'
 import IconButton from '../../components/IconButton'
 import Text from '../../components/MyText'
@@ -152,9 +153,9 @@ const ProgressScreen = ({ route, navigation }: Props) => {
         />
         <View
           style={{
-            paddingTop: 10,
-            paddingBottom: 10,
-            gap: 10,
+            paddingTop: 6,
+            paddingBottom: 6,
+            gap: 6,
           }}
         >
           <ProgressTabSelector
@@ -182,30 +183,11 @@ const ProgressScreen = ({ route, navigation }: Props) => {
                     </Text>
                   </View>
                 </Button>
-                {!isCurrentMonth ? (
-                  <Button
-                    style={{
-                      backgroundColor: theme.colors.accentTranslucent,
-                      paddingVertical: 5,
-                      paddingHorizontal: 15,
-                      borderRadius: theme.numbers.borderRadiusSm,
-                    }}
-                    onPress={jumpToToday}
-                  >
-                    <Text style={{ textDecorationLine: 'underline' }}>
-                      {i18n.t('today')}
-                    </Text>
-                  </Button>
-                ) : (
-                  <Text
-                    style={{
-                      fontSize: theme.fontSize('lg'),
-                      fontFamily: theme.fonts.semiBold,
-                    }}
-                  >
-                    {selectedMonth.format('MMMM YYYY')}
-                  </Text>
-                )}
+                <TodayTitleStack
+                  title={selectedMonth.format('MMMM YYYY')}
+                  showTodayBadge={!isCurrentMonth}
+                  onPressToday={jumpToToday}
+                />
                 <Button
                   onPress={() => handleMonthNav('forward')}
                   style={navButtonStyle(theme)}
@@ -274,5 +256,41 @@ const navButtonStyle = (theme: ReturnType<typeof useTheme>) => ({
   paddingHorizontal: 15,
   paddingVertical: 5,
 })
+
+/**
+ * Stack of the current section's title (e.g. "April 2026" or "2025–2026") with
+ * an optional "Today" badge directly beneath. When the badge is absent the
+ * title alone sits centered in the row alongside the nav buttons; when present,
+ * the title + badge group is centered as a unit by the parent's alignItems.
+ */
+const TodayTitleStack = ({
+  title,
+  showTodayBadge,
+  onPressToday,
+}: {
+  title: string
+  showTodayBadge: boolean
+  onPressToday: () => void
+}) => {
+  const theme = useTheme()
+
+  return (
+    <View style={{ alignItems: 'center', gap: 4 }}>
+      <Text
+        style={{
+          fontSize: theme.fontSize('md'),
+          fontFamily: theme.fonts.semiBold,
+        }}
+      >
+        {title}
+      </Text>
+      {showTodayBadge ? (
+        <Button onPress={onPressToday} accessibilityLabel={i18n.t('today')}>
+          <Badge size='xs'>{i18n.t('today')}</Badge>
+        </Button>
+      ) : null}
+    </View>
+  )
+}
 
 export default ProgressScreen

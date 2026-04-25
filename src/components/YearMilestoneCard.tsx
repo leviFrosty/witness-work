@@ -203,7 +203,7 @@ const YearMilestoneCard = ({
         style={{
           flexDirection: 'row',
           alignItems: 'baseline',
-          gap: 8,
+          gap: 2,
           flexWrap: 'wrap',
         }}
       >
@@ -227,7 +227,7 @@ const YearMilestoneCard = ({
       </View>
 
       {hitState.total > 0 ? (
-        <View style={{ flexDirection: 'row' }}>
+        <View style={{ flexDirection: 'row', marginLeft: -10 }}>
           <Chip
             icon='✓'
             tone={hitState.totalHit === hitState.total ? 'positive' : 'neutral'}

@@ -9,6 +9,7 @@ import ActionButton from '../../ActionButton'
 import useTheme from '../../../contexts/theme'
 import DateTimePicker from '../../DateTimePicker'
 import { usePreferences } from '../../../stores/preferences'
+import { getStartDateLabels } from '../../../constants/publisher'
 
 interface Props {
   goBack: () => void
@@ -17,7 +18,8 @@ interface Props {
 
 const ProfileSetupPioneerDate = ({ goBack, goNext }: Props) => {
   const theme = useTheme()
-  const { pioneerStartDate, set } = usePreferences()
+  const { publisher, pioneerStartDate, set } = usePreferences()
+  const labels = getStartDateLabels(publisher)
 
   const handleContinue = () => {
     goNext()
@@ -44,9 +46,7 @@ const ProfileSetupPioneerDate = ({ goBack, goNext }: Props) => {
         enableOnAndroid={true}
       >
         <View style={[styles.stepContentContainer, { marginRight: 0 }]}>
-          <Text style={styles.stepTitle}>
-            {i18n.t('pioneerStartDateTitle')}
-          </Text>
+          <Text style={styles.stepTitle}>{i18n.t(labels.title)}</Text>
           <Text
             style={{
               fontSize: 14,
@@ -55,7 +55,7 @@ const ProfileSetupPioneerDate = ({ goBack, goNext }: Props) => {
               lineHeight: 20,
             }}
           >
-            {i18n.t('pioneerStartDate_description')}
+            {i18n.t(labels.description)}
           </Text>
           <View style={{ gap: 6 }}>
             <Text
@@ -64,7 +64,7 @@ const ProfileSetupPioneerDate = ({ goBack, goNext }: Props) => {
                 color: theme.colors.text,
               }}
             >
-              {i18n.t('pioneerStartDate')}
+              {i18n.t(labels.label)}
             </Text>
             <DateTimePicker
               value={pioneerStartDate ? new Date(pioneerStartDate) : new Date()}

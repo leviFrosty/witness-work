@@ -42,7 +42,13 @@ interface Props {
 const daysSince = (from: Date): number =>
   Math.max(1, moment().diff(moment(from), 'days'))
 
-type TenureTone = 'supporter' | 'pioneer' | 'installed'
+type TenureTone =
+  | 'supporter'
+  | 'pioneer'
+  | 'specialPioneer'
+  | 'circuitOverseer'
+  | 'regularAuxiliary'
+  | 'installed'
 
 type Tenure = {
   tone: TenureTone
@@ -53,19 +59,32 @@ type Tenure = {
 
 const buildTenureText = (tone: TenureTone, days: number): string => {
   const formatted = days.toLocaleString()
-  if (tone === 'supporter') {
-    return days === 1
-      ? i18n.t('profileSupporterForDay')
-      : i18n.t('profileSupporterForDays', { days: formatted })
+  switch (tone) {
+    case 'supporter':
+      return days === 1
+        ? i18n.t('profileSupporterForDay')
+        : i18n.t('profileSupporterForDays', { days: formatted })
+    case 'pioneer':
+      return days === 1
+        ? i18n.t('profilePioneeringForDay')
+        : i18n.t('profilePioneeringForDays', { days: formatted })
+    case 'specialPioneer':
+      return days === 1
+        ? i18n.t('profileSpecialPioneeringForDay')
+        : i18n.t('profileSpecialPioneeringForDays', { days: formatted })
+    case 'circuitOverseer':
+      return days === 1
+        ? i18n.t('profileCircuitOverseeingForDay')
+        : i18n.t('profileCircuitOverseeingForDays', { days: formatted })
+    case 'regularAuxiliary':
+      return days === 1
+        ? i18n.t('profileRegularAuxiliaryForDay')
+        : i18n.t('profileRegularAuxiliaryForDays', { days: formatted })
+    case 'installed':
+      return days === 1
+        ? i18n.t('profileUsingForDay')
+        : i18n.t('profileUsingForDays', { days: formatted })
   }
-  if (tone === 'pioneer') {
-    return days === 1
-      ? i18n.t('profilePioneeringForDay')
-      : i18n.t('profilePioneeringForDays', { days: formatted })
-  }
-  return days === 1
-    ? i18n.t('profileUsingForDay')
-    : i18n.t('profileUsingForDays', { days: formatted })
 }
 
 const CARD_PADDING_V = 14
@@ -161,20 +180,37 @@ const ProfileCard = ({ preview, editable, onPressIncomplete }: Props) => {
       : i18n.t('profileGreetingNoName')
 
   const tenure: Tenure = (() => {
-    if (supporterSince) {
+    if (isPioneer(publisher) && pioneerStartDate) {
+      const tone: TenureTone =
+        publisher === 'specialPioneer'
+          ? 'specialPioneer'
+          : publisher === 'circuitOverseer'
+            ? 'circuitOverseer'
+            : 'pioneer'
+      return {
+        tone,
+        icon: faStar,
+        tint: theme.colors.indigo,
+        text: buildTenureText(tone, daysSince(new Date(pioneerStartDate))),
+      }
+    }
+    if (publisher === 'regularAuxiliary' && pioneerStartDate) {
+      return {
+        tone: 'regularAuxiliary',
+        icon: faStar,
+        tint: theme.colors.indigo,
+        text: buildTenureText(
+          'regularAuxiliary',
+          daysSince(new Date(pioneerStartDate))
+        ),
+      }
+    }
+    if (supporterSince && publisher === 'publisher') {
       return {
         tone: 'supporter',
         icon: faHeart,
         tint: theme.colors.supporter,
         text: buildTenureText('supporter', daysSince(supporterSince)),
-      }
-    }
-    if (isPioneer(publisher) && pioneerStartDate) {
-      return {
-        tone: 'pioneer',
-        icon: faStar,
-        tint: theme.colors.indigo,
-        text: buildTenureText('pioneer', daysSince(new Date(pioneerStartDate))),
       }
     }
     return {

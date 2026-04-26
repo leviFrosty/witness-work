@@ -36,7 +36,7 @@ import ContributionGraph from './ContributionGraph'
 import MonthlyRoutine from './MonthlyRoutine'
 import SinceBadge from './SinceBadge'
 import i18n from '../lib/locales'
-import { isPioneer } from '../constants/publisher'
+import { getStartDateLabels, tracksStartDate } from '../constants/publisher'
 import {
   consecutiveWeeksStreak,
   daysLogged,
@@ -351,12 +351,13 @@ const ProfileDetailOverlay = ({ origin, open, onClose, onClosed }: Props) => {
                 />
               </View>
 
-              {(isPioneer(publisher) && pioneerStartDate) || supporterSince ? (
+              {(tracksStartDate(publisher) && pioneerStartDate) ||
+              supporterSince ? (
                 <View style={{ gap: 10 }}>
-                  {isPioneer(publisher) && pioneerStartDate && (
+                  {tracksStartDate(publisher) && pioneerStartDate && (
                     <SinceBadge
                       icon={faStar}
-                      label={i18n.t('profileStatPioneer')}
+                      label={i18n.t(getStartDateLabels(publisher).badge)}
                       value={moment(pioneerStartDate).format('MMMM YYYY')}
                       tint={theme.colors.indigo}
                       tintBg={theme.colors.indigoTranslucent}

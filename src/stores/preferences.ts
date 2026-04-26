@@ -156,9 +156,11 @@ export const PREFERENCE_DEFAULTS = {
    */
   onboardingIntents: [] as OnboardingIntent[],
   /**
-   * Date the user began pioneering. Used by ProfileCard to display duration
-   * (e.g. "Pioneering for 2 years"). Only surfaced for pioneer-type
-   * publishers.
+   * Date the user began their current publisher role. Despite the name, this
+   * stores the start date for any role that tracks one — see `tracksStartDate`
+   * in `constants/publisher.ts` (regular pioneer, special pioneer, circuit
+   * overseer, regular auxiliary). Used by ProfileCard / ProfileDetailOverlay to
+   * display duration (e.g. "Pioneering for 2 years").
    */
   pioneerStartDate: null as Date | null,
   /** Profile avatar — stored locally, never uploaded. */

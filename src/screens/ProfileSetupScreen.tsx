@@ -10,7 +10,7 @@ import ProfileCard from '../components/ProfileCard'
 import DateTimePicker from '../components/DateTimePicker'
 import i18n from '../lib/locales'
 import { usePreferences } from '../stores/preferences'
-import { isPioneer } from '../constants/publisher'
+import { getStartDateLabels, tracksStartDate } from '../constants/publisher'
 import { RootStackNavigation } from '../types/rootStack'
 
 const ProfileSetupScreen = () => {
@@ -80,7 +80,7 @@ const ProfileSetupScreen = () => {
 
         <ProfileCard editable />
 
-        {isPioneer(publisher) && (
+        {tracksStartDate(publisher) && (
           <View style={{ gap: 6 }}>
             <Text
               style={{
@@ -88,7 +88,7 @@ const ProfileSetupScreen = () => {
                 color: theme.colors.text,
               }}
             >
-              {i18n.t('pioneerStartDate')}
+              {i18n.t(getStartDateLabels(publisher).label)}
             </Text>
             <Text
               style={{
@@ -97,7 +97,7 @@ const ProfileSetupScreen = () => {
                 marginBottom: 4,
               }}
             >
-              {i18n.t('pioneerStartDate_description')}
+              {i18n.t(getStartDateLabels(publisher).description)}
             </Text>
             <DateTimePicker
               value={pioneerStartDate ? new Date(pioneerStartDate) : new Date()}

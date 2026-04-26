@@ -92,3 +92,9 @@ TypeScript path aliases per `tsconfig.json`. Check existing files for convention
 - App version bumps land in their own commits (see recent: `chore: bump version to X`)
 - Some features US-restricted due to trademark — check constants before assuming availability
 - React Compiler beta — watch for compiler-related lint warnings
+
+## Components
+
+Reuse existing components where available instead of creating new ones @src/components/\*\*
+
+- Never create one-off badges

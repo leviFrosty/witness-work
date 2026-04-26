@@ -6,7 +6,8 @@ const PreferencesPublisherScreen = () => {
   return (
     <Wrapper insets='bottom'>
       <KeyboardAwareScrollView
-        contentContainerStyle={{ gap: 30, paddingTop: 30, paddingBottom: 30 }}
+        style={{ flex: 1 }}
+        contentContainerStyle={{ gap: 30, paddingTop: 30, paddingBottom: 60 }}
       >
         <AppearancePreferencesSection />
       </KeyboardAwareScrollView>

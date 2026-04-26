@@ -24,7 +24,7 @@ import { RootStackNavigation } from '../types/rootStack'
 import { HomeTabStackNavigation } from '../types/homeStack'
 
 const CAPSULE_HEIGHT = 56
-const FLOATING_GAP = 14
+const FLOATING_GAP = 6
 const HORIZONTAL_MARGIN = 16
 const PILL_GAP = 10
 const ACCESSORY_DIAMETER = CAPSULE_HEIGHT // square pill the width of its height = circle

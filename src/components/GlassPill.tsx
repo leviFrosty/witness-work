@@ -163,7 +163,7 @@ const GlassPill = ({
   const rimEffect = getRimEffect()
   // Rim band thickness scales with pill size so the effect holds on both a
   // thin pill (the main tab bar) and a near-circular one (the `+` accessory).
-  const rimThickness = Math.min(Math.max(r * 0.6, 8), 22)
+  const rimThickness = Math.min(Math.max(r * 0.32, 5), 12)
 
   return (
     <Canvas

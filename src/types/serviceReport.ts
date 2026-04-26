@@ -53,3 +53,40 @@ export type DayPlan = {
   /** Epoch ms of the most recent change. Used for iCloud merge. */
   updatedAt?: number
 }
+
+export enum RecurringPlanFrequencies {
+  WEEKLY,
+  BI_WEEKLY,
+  MONTHLY,
+  MONTHLY_BY_WEEKDAY,
+}
+
+// For monthly by weekday patterns (e.g., "first Monday of the month")
+export type MonthlyByWeekdayConfig = {
+  weekday: number // 0-6 (Sunday-Saturday)
+  weekOfMonth: number // 1-4 for first, second, third, fourth week, or -1 for last week
+}
+
+export type RecurringPlanOverride = {
+  date: Date
+  minutes: number
+  note?: string
+}
+
+export type RecurringPlan = {
+  id: string
+  startDate: Date
+  minutes: number
+  recurrence: {
+    frequency: RecurringPlanFrequencies
+    interval: number
+    endDate: Date | null
+    // For MONTHLY_BY_WEEKDAY frequency only
+    monthlyByWeekdayConfig?: MonthlyByWeekdayConfig
+  }
+  note?: string
+  deletedDates?: Date[]
+  overrides?: RecurringPlanOverride[]
+  /** Epoch ms of the most recent change. Used for iCloud merge. */
+  updatedAt?: number
+}

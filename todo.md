@@ -3,10 +3,9 @@
 - Add a 'rollover' feature that'll prompt the user to automatically create a time entry if they have a non-whole hour if their publisher type has an annual goal. For example: a user had 34.4 hours. It'll prompt them the next time they open the app in the next month to roll over the "0.4" hours. If they press yes, it'll do two entries: One special service report for the previous months' last day of "-0.4" hours. And a service report for the first day of the current month (which is also specially tagged) as "0.4" hours. This will make it clear to users where the hour. It could be called "Time rollover". This feature should be prompted as a full screen takeover. The user may also optionally choose to select "automatically handle for future months", where this will no longer cause a full screen takeover and will instead just move the time over at the month crossover time in the background. If the user doesn't open the app for multiple months in a row, then they finally do (let's say Jan 30 -> March 3), it should still prompt them to ask if they want to move their time over, and/or automatically handle moving it to the currne tmonth (march) -- not feb.
 - Implement a notifications feature, start with backend and logic first. /grill-me on design decisions. We want it to support holding
 - Tags/categories for contacts, add filter/sort functionality to contacts. Issue #260
-- update revenuecat to have dev bundle specific instance.
 - Add e2e tests
 - Upgrade remaining dependencies.
-- Fix hatch pattern,
+- Fix hatch pattern
 - Update documentation for project structure
 - Refactor components to not directly access publisher data, but instead call usePublisher.
 - Refactor/break down preferences into smaller stores, it's getting a bit convoluted. Publisher data should live in its' own store.

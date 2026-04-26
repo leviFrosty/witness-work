@@ -121,7 +121,7 @@ const MonthRow = ({
           >
             {monthYearLabel}
           </Text>
-          {isCurrent ? <Badge>{i18n.t('now')}</Badge> : null}
+          {isCurrent ? <Badge size='xs'>{i18n.t('today')}</Badge> : null}
         </XView>
         <XView style={{ gap: 12 }}>
           <Text

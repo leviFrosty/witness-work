@@ -23,6 +23,13 @@ interface MilestoneProgressBarPreviewProps {
 const BAR_HEIGHT = 28
 const BAR_RADIUS = 6
 const LABEL_MARGIN_TOP = 6
+const LABEL_WIDTH = 50
+const LABEL_ROW_HEIGHT = 8
+const LABEL_ROW_GAP = 2
+// Min gap (as fraction of bar width) between labels on the same row before we
+// drop the next one to a second row. ~7% comfortably clears a 4-digit label at
+// xs font on a typical card-width bar.
+const LABEL_MIN_GAP_RATIO = 0.07
 
 type SegmentState = 'hit' | 'progress' | 'future'
 
@@ -32,6 +39,13 @@ type Segment = {
   widthFlex: number
   state: SegmentState
   fillRatio: number
+}
+
+type LabelLayout = {
+  value: number
+  position: number
+  row: number
+  isNext: boolean
 }
 
 /**
@@ -48,8 +62,9 @@ type Segment = {
  * - The in-progress segment renders the completed portion as solid accent with
  *   the remainder in a lighter pastel accent.
  * - Future segments render as a subdued diagonal cross-hatch pattern.
- * - Milestone values sit under the right edge of each segment; the "next" value
- *   is emphasized in accent.
+ * - Milestone values are centered beneath their divider line; labels that would
+ *   crowd a neighbor drop to a second row. The "next" value is emphasized in
+ *   accent.
  */
 export const MilestoneProgressBarPreview = ({
   milestones,
@@ -60,7 +75,7 @@ export const MilestoneProgressBarPreview = ({
 
   const safeGoal = yearGoalHours > 0 ? yearGoalHours : 1
 
-  const { segments, nextMilestone } = useMemo(() => {
+  const { segments, labels, labelsHeight } = useMemo(() => {
     const segs: Segment[] = []
     let prev = 0
     for (const m of milestones) {
@@ -81,7 +96,31 @@ export const MilestoneProgressBarPreview = ({
       prev = m
     }
     const next = getMilestoneHitState(milestones, hoursCompleted).next
-    return { segments: segs, nextMilestone: next }
+
+    // Lay out labels centered on each milestone divider. When two milestones
+    // sit closer than LABEL_MIN_GAP_RATIO, drop the second label to a second
+    // row so values never collide or wrap inside a too-narrow segment.
+    const labelLayout: LabelLayout[] = []
+    let cumulative = 0
+    let lastTopRowPos = -Infinity
+    for (const seg of segs) {
+      cumulative += seg.widthFlex
+      const tooClose = cumulative - lastTopRowPos < LABEL_MIN_GAP_RATIO
+      const row = tooClose ? 1 : 0
+      if (!tooClose) lastTopRowPos = cumulative
+      labelLayout.push({
+        value: seg.end,
+        position: cumulative,
+        row,
+        isNext: seg.end === next,
+      })
+    }
+    const hasSecondRow = labelLayout.some((l) => l.row === 1)
+    const height = hasSecondRow
+      ? LABEL_ROW_HEIGHT * 2 + LABEL_ROW_GAP
+      : LABEL_ROW_HEIGHT
+
+    return { segments: segs, labels: labelLayout, labelsHeight: height }
   }, [milestones, hoursCompleted, safeGoal])
 
   const separatorColor = theme.colors.background
@@ -147,30 +186,41 @@ export const MilestoneProgressBarPreview = ({
         ))}
       </View>
 
-      <View style={{ flexDirection: 'row', marginTop: LABEL_MARGIN_TOP }}>
-        {segments.map((seg) => {
-          const value = seg.end
-          const isNext = value === nextMilestone
-          return (
-            <View
-              key={value}
+      <View
+        style={{
+          marginTop: LABEL_MARGIN_TOP,
+          height: labelsHeight,
+          position: 'relative',
+        }}
+      >
+        {labels.map((label) => (
+          <View
+            key={label.value}
+            style={{
+              position: 'absolute',
+              left: `${label.position * 100}%`,
+              top: label.row * (LABEL_ROW_HEIGHT + LABEL_ROW_GAP),
+              width: LABEL_WIDTH,
+              marginLeft: -LABEL_WIDTH / 2,
+              alignItems: 'center',
+            }}
+          >
+            <Text
+              numberOfLines={1}
               style={{
-                flex: seg.widthFlex,
-                alignItems: 'flex-end',
+                fontSize: theme.fontSize('xs'),
+                color: label.isNext
+                  ? theme.colors.accent
+                  : theme.colors.textAlt,
+                fontFamily: label.isNext
+                  ? theme.fonts.bold
+                  : theme.fonts.regular,
               }}
             >
-              <Text
-                style={{
-                  fontSize: theme.fontSize('xs'),
-                  color: isNext ? theme.colors.accent : theme.colors.textAlt,
-                  fontFamily: isNext ? theme.fonts.bold : theme.fonts.regular,
-                }}
-              >
-                {value}
-              </Text>
-            </View>
-          )
-        })}
+              {label.value}
+            </Text>
+          </View>
+        ))}
       </View>
     </View>
   )

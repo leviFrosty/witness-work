@@ -213,7 +213,7 @@ const AllDaysList = ({ month, year }: AllDaysListProps) => {
               >
                 {row.dayLabel}
               </Text>
-              {row.isToday ? <Badge>{i18n.t('now')}</Badge> : null}
+              {row.isToday ? <Badge size='xs'>{i18n.t('today')}</Badge> : null}
             </View>
             <Text
               style={{

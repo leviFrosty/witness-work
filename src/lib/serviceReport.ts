@@ -2,6 +2,10 @@ import _ from 'lodash'
 import { Publisher } from '../types/publisher'
 import {
   DayPlan,
+  MonthlyByWeekdayConfig,
+  RecurringPlan,
+  RecurringPlanFrequencies,
+  RecurringPlanOverride,
   ServiceReport,
   ServiceReportsByYears,
   ServiceYear,
@@ -10,6 +14,10 @@ import moment from 'moment'
 import { monthCreditMaxMinutes } from '../constants/serviceReports'
 import { logger } from './logger'
 import { momentStoredDate, normalizeDateForStorage } from './normalizeDate'
+
+// Re-exported for backwards compatibility — canonical home is `types/serviceReport`.
+export { RecurringPlanFrequencies }
+export type { MonthlyByWeekdayConfig, RecurringPlan, RecurringPlanOverride }
 
 export const calculateProgress = ({
   minutes,
@@ -490,43 +498,6 @@ export const getHoursForServiceYearEndYear = (
     return sum + report.hours * 60 + report.minutes
   }, 0)
   return _.round(totalMinutes / 60, 1)
-}
-
-export enum RecurringPlanFrequencies {
-  WEEKLY,
-  BI_WEEKLY,
-  MONTHLY,
-  MONTHLY_BY_WEEKDAY,
-}
-
-// For monthly by weekday patterns (e.g., "first Monday of the month")
-export type MonthlyByWeekdayConfig = {
-  weekday: number // 0-6 (Sunday-Saturday)
-  weekOfMonth: number // 1-4 for first, second, third, fourth week, or -1 for last week
-}
-
-export type RecurringPlanOverride = {
-  date: Date
-  minutes: number
-  note?: string
-}
-
-export type RecurringPlan = {
-  id: string
-  startDate: Date
-  minutes: number
-  recurrence: {
-    frequency: RecurringPlanFrequencies
-    interval: number
-    endDate: Date | null
-    // For MONTHLY_BY_WEEKDAY frequency only
-    monthlyByWeekdayConfig?: MonthlyByWeekdayConfig
-  }
-  note?: string
-  deletedDates?: Date[]
-  overrides?: RecurringPlanOverride[]
-  /** Epoch ms of the most recent change. Used for iCloud merge. */
-  updatedAt?: number
 }
 
 // Helper function to check if a date matches a monthly by weekday pattern.

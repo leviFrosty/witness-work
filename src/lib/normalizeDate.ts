@@ -1,6 +1,9 @@
 import moment from 'moment'
-import { DayPlan, ServiceReportsByYears } from '../types/serviceReport'
-import { RecurringPlan } from './serviceReport'
+import {
+  DayPlan,
+  RecurringPlan,
+  ServiceReportsByYears,
+} from '../types/serviceReport'
 
 /**
  * Plans and time entries store a _calendar day_, not a moment in time. We carry

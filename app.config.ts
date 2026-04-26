@@ -103,6 +103,7 @@ export default ({ config }: ConfigContext): ExpoConfig => {
       'expo-background-task',
       'expo-font',
       'expo-image',
+      'expo-audio',
       'expo-localization',
       'expo-sharing',
       [

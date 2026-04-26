@@ -214,21 +214,33 @@ export default function App() {
           <SafeAreaProvider>
             <GestureHandlerRootView style={{ flex: 1 }}>
               <NavigationContainer ref={navigationRef} linking={linking}>
-                <TamaguiProvider
-                  defaultTheme={
-                    colorScheme ? colorScheme : systemColorScheme || undefined
-                  }
-                  config={tamaguiConfig}
-                >
-                  <ToastProvider>
+                {/*
+                 * ToastProvider must wrap TamaguiProvider — TamaguiProvider
+                 * mounts its own PortalProvider internally, and tamagui Sheets
+                 * (with `modal`) render their content via that portal host.
+                 * If ToastProvider sat inside TamaguiProvider, portaled sheet
+                 * content would render outside the toast context and
+                 * useToastController() would return an empty default, so
+                 * toast.show inside a Sheet (e.g. SelectedDateSheet on the
+                 * Progress screen) would throw "show is not a function".
+                 * ToastViewport stays inside TamaguiProvider since it's a
+                 * styled component that needs the Tamagui theme.
+                 */}
+                <ToastProvider>
+                  <TamaguiProvider
+                    defaultTheme={
+                      colorScheme ? colorScheme : systemColorScheme || undefined
+                    }
+                    config={tamaguiConfig}
+                  >
                     <StatusBar />
                     <ToastViewport />
                     <AnimationViewProvider>
                       <DeepLinkListeners />
                       <RootStackComponent />
                     </AnimationViewProvider>
-                  </ToastProvider>
-                </TamaguiProvider>
+                  </TamaguiProvider>
+                </ToastProvider>
               </NavigationContainer>
             </GestureHandlerRootView>
           </SafeAreaProvider>

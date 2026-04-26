@@ -45,7 +45,7 @@ const MonthTimeReportsCalendar: React.FC<MonthTimeReportsCalendarProps> = ({
 
   return (
     <Calendar
-      key={monthToView}
+      key={`${monthToView}-${theme.colors.background}`}
       current={monthToView}
       firstDay={startOfWeek}
       disableMonthChange

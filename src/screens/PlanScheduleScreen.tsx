@@ -246,7 +246,7 @@ const PlanScheduleScreen = ({ route, navigation }: PlanScheduleScreenProps) => {
             style={{ paddingHorizontal: 10, position: 'relative', gap: 10 }}
           >
             <Calendar
-              key={monthToView}
+              key={`${monthToView}-${theme.colors.background}`}
               current={monthToView}
               disableMonthChange
               hideArrows

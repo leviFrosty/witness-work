@@ -1377,6 +1377,8 @@
   "timeRollover_autoLabel": "Automatically handle for future months",
   "timeRollover_autoHint": "We'll handle this silently each month going forward. You can change this in Preferences.",
   "timeRollover_rowLabel": "Time rollover",
+  "timeRollover_inlineCard": "Roll {{minutes}} min from {{from}}?",
+  "timeRollover_inlineCard_action": "Rollover",
   "timeRollover_cantEdit_title": "Rollover entries can't be edited",
   "timeRollover_cantEdit_description": "Delete it to remove both halves of the pair, then redo the rollover if you want different numbers.",
   "timeRollover_deletePair_title": "Delete rollover pair?",

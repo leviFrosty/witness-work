@@ -415,6 +415,26 @@ export const PREFERENCE_DEFAULTS = {
    * "Reset to defaults" sets this back to `null`.
    */
   milestoneOverrides: null as number[] | null,
+  /**
+   * Most recent `YYYY-MM` for which the Time Rollover prompt has been resolved
+   * (either applied or dismissed). When this matches the current month, no
+   * rollover prompt or auto-rollover runs again until the next month. Syncable
+   * so a second device doesn't re-prompt for the same month.
+   */
+  lastRolloverYearMonth: null as string | null,
+  /**
+   * When true, fractional minutes are rolled over silently on first app launch
+   * in a new month — no full-screen prompt. Set via the "Automatically handle
+   * for future months" checkbox on the rollover screen. Syncable.
+   */
+  autoRolloverEnabled: false,
+  /**
+   * Dev-only clock override for the Time Rollover system. When set, the
+   * rollover hook uses this date as "today" instead of `moment()`. Lets a
+   * developer simulate opening the app on, say, April 1st with March's
+   * fractional minutes already on disk. Non-syncable — local testing only.
+   */
+  devRolloverDateOverride: null as Date | null,
 }
 
 /**
@@ -453,6 +473,7 @@ export const NON_SYNCABLE_PREFERENCE_KEYS = new Set<string>([
   'lastBackupDate',
   'onboardingStepId',
   'celebratedTiers',
+  'devRolloverDateOverride',
 ])
 
 export const usePreferences = create(
@@ -531,6 +552,8 @@ export const usePreferences = create(
           set({ overrideCreditLimit }),
         setCustomCreditLimitHours: (customCreditLimitHours: number) =>
           set({ customCreditLimitHours }),
+        setAutoRolloverEnabled: (autoRolloverEnabled: boolean) =>
+          set({ autoRolloverEnabled }),
         setMilestoneOverrides: (values: number[]) =>
           set({ milestoneOverrides: values }),
         resetMilestoneOverrides: () => set({ milestoneOverrides: null }),

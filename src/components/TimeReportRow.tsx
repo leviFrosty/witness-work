@@ -9,7 +9,7 @@ import useServiceReport from '../stores/serviceReport'
 import Text from './MyText'
 import moment from 'moment'
 import IconButton from './IconButton'
-import { faPersonDigging } from '@fortawesome/free-solid-svg-icons'
+import { faPersonDigging, faRightLeft } from '@fortawesome/free-solid-svg-icons'
 import { useCallback } from 'react'
 import Button from './Button'
 import { useNavigation } from '@react-navigation/native'
@@ -25,12 +25,14 @@ interface TimeReportRowProps {
 
 const TimeReportRow = ({ report, onPress }: TimeReportRowProps) => {
   const theme = useTheme()
-  const { deleteServiceReport } = useServiceReport()
+  const { deleteServiceReport, deleteRolloverPair } = useServiceReport()
   const navigation = useNavigation<RootStackNavigation>()
   const toast = useToastController()
 
   const totalMinutes = report.hours * 60 + report.minutes
-  const formattedTime = useFormattedMinutes(totalMinutes)
+  const formattedTime = useFormattedMinutes(Math.abs(totalMinutes))
+  const isRollover = report.rollover === true
+  const sign = totalMinutes < 0 ? '−' : '+'
 
   const handleSwipeOpen = useCallback(
     (
@@ -39,9 +41,15 @@ const TimeReportRow = ({ report, onPress }: TimeReportRowProps) => {
       report: ServiceReport
     ) => {
       if (direction === 'right') {
+        const isRolloverPair =
+          report.rollover === true && report.rolloverGroupId !== undefined
         Alert.alert(
-          i18n.t('deleteTime_title'),
-          i18n.t('deleteTime_description'),
+          isRolloverPair
+            ? i18n.t('timeRollover_deletePair_title')
+            : i18n.t('deleteTime_title'),
+          isRolloverPair
+            ? i18n.t('timeRollover_deletePair_description')
+            : i18n.t('deleteTime_description'),
           [
             {
               text: i18n.t('cancel'),
@@ -57,14 +65,18 @@ const TimeReportRow = ({ report, onPress }: TimeReportRowProps) => {
                   message: i18n.t('deleted'),
                   native: true,
                 })
-                deleteServiceReport(report)
+                if (isRolloverPair) {
+                  deleteRolloverPair(report)
+                } else {
+                  deleteServiceReport(report)
+                }
               },
             },
           ]
         )
       }
     },
-    [deleteServiceReport, toast]
+    [deleteRolloverPair, deleteServiceReport, toast]
   )
 
   return (
@@ -84,18 +96,35 @@ const TimeReportRow = ({ report, onPress }: TimeReportRowProps) => {
     >
       <Button
         onPress={() => {
+          // Rollover entries are paired and must never be edited — would
+          // imbalance the source/destination math. Block here regardless of
+          // whether a caller passed a custom onPress (their intent is also
+          // edit-routing). Centralizing the rule here means new call sites
+          // can't accidentally bypass it.
+          if (isRollover) {
+            Alert.alert(
+              i18n.t('timeRollover_cantEdit_title'),
+              i18n.t('timeRollover_cantEdit_description')
+            )
+            return
+          }
           if (onPress) {
             onPress()
-          } else {
-            navigation.navigate('Add Time', {
-              existingReport: JSON.stringify(report),
-            })
+            return
           }
+          navigation.navigate('Add Time', {
+            existingReport: JSON.stringify(report),
+          })
         }}
         style={{
-          backgroundColor: theme.colors.card,
+          backgroundColor: isRollover
+            ? theme.colors.backgroundLighter
+            : theme.colors.card,
           padding: 15,
           borderRadius: theme.numbers.borderRadiusSm,
+          borderWidth: isRollover ? 1 : 0,
+          borderStyle: 'dashed',
+          borderColor: isRollover ? theme.colors.border : 'transparent',
           gap: 10,
         }}
       >
@@ -110,16 +139,43 @@ const TimeReportRow = ({ report, onPress }: TimeReportRowProps) => {
             <Text
               style={{
                 fontFamily: theme.fonts.semiBold,
+                color: isRollover ? theme.colors.textAlt : theme.colors.text,
               }}
             >
               {`${moment(report.date).format('LL')}`}
             </Text>
           </View>
-          <Text style={{ fontFamily: theme.fonts.semiBold }}>
-            {formattedTime.formatted}
+          <Text
+            style={{
+              fontFamily: theme.fonts.semiBold,
+              color: isRollover ? theme.colors.textAlt : theme.colors.text,
+            }}
+          >
+            {isRollover
+              ? `${sign} ${formattedTime.formatted}`
+              : formattedTime.formatted}
           </Text>
         </View>
-        {(report.ldc || report.tag || report.note) && (
+        {isRollover && (
+          <View
+            style={{
+              flexDirection: 'row',
+              gap: 6,
+              alignItems: 'center',
+            }}
+          >
+            <IconButton icon={faRightLeft} />
+            <Text
+              style={{
+                color: theme.colors.textAlt,
+                fontSize: theme.fontSize('sm'),
+              }}
+            >
+              {i18n.t('timeRollover_rowLabel')}
+            </Text>
+          </View>
+        )}
+        {!isRollover && (report.ldc || report.tag || report.note) && (
           <View style={{ gap: 5 }}>
             {(report.ldc || report.tag) && (
               <View

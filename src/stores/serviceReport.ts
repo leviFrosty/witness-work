@@ -6,6 +6,7 @@ import {
   ServiceReport,
   ServiceReportsByYears,
   ServiceReportTombstone,
+  ServiceYear,
 } from '../types/serviceReport'
 import moment from 'moment'
 import {
@@ -436,6 +437,55 @@ export const useServiceReport = create(
             deletedServiceReports: [
               ...deletedServiceReports.filter((t) => t.id !== report.id),
               { id: report.id, deletedAt: Date.now() },
+            ],
+          }
+        }),
+      deleteRolloverPair: (_report: ServiceReport) =>
+        set(({ serviceReports, deletedServiceReports }) => {
+          const groupId = _report.rolloverGroupId
+          const now = Date.now()
+          const reports: ServiceReportsByYears = {}
+          const removedIds: string[] = []
+
+          // Walk the whole tree once. With or without a groupId we always
+          // remove the passed report itself; with a groupId we also drop any
+          // sibling sharing it. Pre-grouping legacy entries hit the no-id
+          // path and just delete the one row.
+          for (const yearKey of Object.keys(serviceReports)) {
+            const yearMap: ServiceYear = {}
+            const months = serviceReports[yearKey]
+            for (const monthKey of Object.keys(months)) {
+              const filtered = months[monthKey].filter((r) => {
+                const matchesGroup =
+                  groupId !== undefined && r.rolloverGroupId === groupId
+                const matchesId = r.id === _report.id
+                if (matchesGroup || matchesId) {
+                  removedIds.push(r.id)
+                  return false
+                }
+                return true
+              })
+              if (filtered.length > 0) {
+                yearMap[monthKey] = filtered
+              }
+            }
+            if (Object.keys(yearMap).length > 0) {
+              reports[yearKey] = yearMap
+            }
+          }
+
+          if (removedIds.length === 0) return {}
+
+          const newTombstones = removedIds.map((id) => ({
+            id,
+            deletedAt: now,
+          }))
+          const removedSet = new Set(removedIds)
+          return {
+            serviceReports: reports,
+            deletedServiceReports: [
+              ...deletedServiceReports.filter((t) => !removedSet.has(t.id)),
+              ...newTombstones,
             ],
           }
         }),

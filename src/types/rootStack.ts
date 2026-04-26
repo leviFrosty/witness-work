@@ -48,6 +48,7 @@ export type RootStackParamList = {
     recurringPlanDate?: string
   }
   ProfileSetup: undefined
+  Rollover: undefined
 }
 
 export type RootStackNavigation = NativeStackNavigationProp<RootStackParamList>

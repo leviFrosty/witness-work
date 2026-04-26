@@ -6,7 +6,7 @@ import { usePreferences } from '../stores/preferences'
 import Constants from 'expo-constants'
 import { View } from 'react-native'
 import WhatsNewSheet from '../components/WhatsNewSheet'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import ToolsScreen from '../screens/ToolsScreen'
 import ProgressScreen from '../screens/ProgressScreen'
 import ScheduleScreen from '../screens/ScheduleScreen'
@@ -14,6 +14,9 @@ import { HomeTabStackParamList } from '../types/homeStack'
 import { releaseNotes } from '../constants/releaseNotes'
 import semver from 'semver'
 import { logger } from '../lib/logger'
+import { useNavigation } from '@react-navigation/native'
+import { useRollover } from '../hooks/useRollover'
+import { RootStackNavigation } from '../types/rootStack'
 
 const HomeTabStack = () => {
   const Tab = createBottomTabNavigator<HomeTabStackParamList>()
@@ -39,6 +42,24 @@ const HomeTabStack = () => {
       set({ lastAppVersion: currentVersion })
     }
   }, [lastAppVersion, set])
+
+  const navigation = useNavigation<RootStackNavigation>()
+  const rollover = useRollover()
+  const { autoRolloverEnabled } = usePreferences()
+  // Once-per-mount guard. Without this, swapping the auto-toggle inside the
+  // rollover screen would re-trigger this effect (autoRolloverEnabled changes)
+  // and potentially navigate or apply twice.
+  const rolloverHandledRef = useRef(false)
+  useEffect(() => {
+    if (rolloverHandledRef.current) return
+    if (rollover.pending.length === 0) return
+    rolloverHandledRef.current = true
+    if (autoRolloverEnabled) {
+      rollover.apply()
+    } else {
+      navigation.navigate('Rollover')
+    }
+  }, [autoRolloverEnabled, navigation, rollover])
 
   return (
     <View style={{ flexGrow: 1 }}>

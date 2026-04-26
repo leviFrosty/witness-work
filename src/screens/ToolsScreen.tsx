@@ -24,6 +24,9 @@ import DateTimePicker from '../components/DateTimePicker'
 import SupporterBadge from '../components/SupporterBadge'
 import useIsSupporter from '../hooks/useIsSupporter'
 import JsonViewer from '../components/JsonViewer'
+import { useNavigation } from '@react-navigation/native'
+import { RootStackNavigation } from '../types/rootStack'
+import { useRollover } from '../hooks/useRollover'
 
 const MONO = Platform.select({
   ios: 'Menlo',
@@ -87,9 +90,14 @@ export default function ToolsScreen() {
     hideSupporterNudge,
     hasCompletedProfileSetup,
     name,
+    devRolloverDateOverride,
+    lastRolloverYearMonth,
+    autoRolloverEnabled,
     set: setPreferences,
   } = preferences
   const { isSupporter, since: supporterSince } = useIsSupporter()
+  const navigation = useNavigation<RootStackNavigation>()
+  const rollover = useRollover()
 
   const showDone = (label: string) =>
     toast.show(label, { message: '', native: true })
@@ -482,6 +490,104 @@ export default function ToolsScreen() {
             }}
           >
             Reset profile data (keep onboarded)
+          </ActionButton>
+        </Card>
+
+        <SectionHeader title='Time rollover' />
+        <Card style={{ gap: 10 }}>
+          <Text
+            style={{
+              fontSize: theme.fontSize('sm'),
+              color: theme.colors.textAlt,
+            }}
+          >
+            Override the &quot;today&quot; the rollover system uses, then
+            re-trigger the check. Lets you simulate opening the app on the 1st
+            of next month without waiting for the calendar to flip. Only affects
+            rollover — every other date in the app still uses the real clock.
+          </Text>
+          <XView style={{ justifyContent: 'space-between' }}>
+            <Text>Pending rollovers:</Text>
+            <Text style={{ fontFamily: theme.fonts.bold }}>
+              {rollover.pending.length === 0
+                ? 'none'
+                : `${rollover.pending.length} (${rollover.totalMinutes}m)`}
+            </Text>
+          </XView>
+          <XView style={{ justifyContent: 'space-between' }}>
+            <Text>lastRolloverYearMonth:</Text>
+            <Text style={{ fontFamily: theme.fonts.bold }}>
+              {lastRolloverYearMonth ?? '—'}
+            </Text>
+          </XView>
+          <XView style={{ justifyContent: 'space-between' }}>
+            <Text>autoRolloverEnabled:</Text>
+            <Switch
+              value={autoRolloverEnabled}
+              onValueChange={(value) =>
+                setPreferences({ autoRolloverEnabled: value })
+              }
+            />
+          </XView>
+          <XView style={{ justifyContent: 'space-between' }}>
+            <Text>Override &quot;today&quot;:</Text>
+            <DateTimePicker
+              value={
+                devRolloverDateOverride
+                  ? new Date(devRolloverDateOverride)
+                  : new Date()
+              }
+              onChange={(_, date) => {
+                if (date) setPreferences({ devRolloverDateOverride: date })
+              }}
+            />
+          </XView>
+          <Text
+            style={{
+              fontSize: theme.fontSize('sm'),
+              color: theme.colors.textAlt,
+            }}
+          >
+            {devRolloverDateOverride
+              ? `Active. Using ${moment(devRolloverDateOverride).format('LL')} as today.`
+              : 'Off. Using real clock.'}
+          </Text>
+          {devRolloverDateOverride && (
+            <ActionButton
+              onPress={() => {
+                setPreferences({ devRolloverDateOverride: null })
+                showDone('Date override cleared')
+              }}
+            >
+              Clear date override
+            </ActionButton>
+          )}
+          <ActionButton
+            onPress={() => {
+              setPreferences({ lastRolloverYearMonth: null })
+              showDone('Marker cleared')
+            }}
+          >
+            Clear rollover marker
+          </ActionButton>
+          <ActionButton
+            onPress={() => {
+              if (rollover.pending.length === 0) {
+                toast.show('Nothing pending', {
+                  message: 'No fractional minutes to roll over right now.',
+                  native: true,
+                })
+                return
+              }
+              if (autoRolloverEnabled) {
+                rollover.apply()
+                showDone('Applied silently')
+              } else {
+                navigation.navigate('Rollover')
+              }
+            }}
+          >
+            Run rollover check now
           </ActionButton>
         </Card>
 

@@ -17,8 +17,10 @@ const PublisherPreferencesSection = () => {
     publisher,
     overrideCreditLimit,
     customCreditLimitHours,
+    autoRolloverEnabled,
     setOverrideCreditLimit,
     setCustomCreditLimitHours,
+    setAutoRolloverEnabled,
   } = usePreferences()
   const theme = useTheme()
 
@@ -130,6 +132,30 @@ const PublisherPreferencesSection = () => {
               />
             </>
           )}
+        </Section>
+      )}
+      {publisher !== 'publisher' && (
+        <Section>
+          <InputRowContainer label={i18n.t('autoRollover')} lastInSection>
+            <View style={{ flex: 1 }}>
+              <View style={{ flex: 1, alignItems: 'flex-end' }}>
+                <CheckboxWithLabel
+                  value={autoRolloverEnabled}
+                  setValue={setAutoRolloverEnabled}
+                  label=''
+                  labelPosition='right'
+                />
+              </View>
+            </View>
+          </InputRowContainer>
+          <Text
+            style={{
+              fontSize: theme.fontSize('sm'),
+              color: theme.colors.textAlt,
+            }}
+          >
+            {i18n.t('autoRollover_description')}
+          </Text>
         </Section>
       )}
     </View>

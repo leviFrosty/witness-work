@@ -36,6 +36,8 @@ import {
   monthCelebrationKey,
   resolveTier,
 } from '../lib/achievementTier'
+import { useRollover } from '../hooks/useRollover'
+import { faRightLeft } from '@fortawesome/free-solid-svg-icons'
 import {
   useAnimatedStyle,
   useSharedValue,
@@ -77,6 +79,7 @@ const MonthSummary = ({
   } = usePreferences()
   const goalHours = publisherHours[publisher]
   const navigation = useNavigation<RootStackNavigation>()
+  const rollover = useRollover()
 
   const adjustedMinutes: AdjustedMinutes = monthsReports
     ? adjustedMinutesForSpecificMonth(monthsReports, month, year, publisher, {
@@ -493,6 +496,63 @@ const MonthSummary = ({
           </View>
         )}
       </GlassCard>
+
+      {/* Inline rollover affordance: shown only when (a) viewing the current
+        month, (b) there's a fractional source month available, and (c) the
+        parent isn't asking for the compact `noDetails` layout. Stays subdued
+        on purpose — the takeover screen is the primary path; this is a
+        recovery surface for users who pressed "Not now" or deleted the
+        rollover pair. */}
+      {isCurrentMonth && !noDetails && rollover.availablePending.length > 0 && (
+        <Button
+          onPress={() => navigation.navigate('Rollover')}
+          style={{
+            marginTop: 8,
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: 10,
+            paddingVertical: 10,
+            paddingHorizontal: 14,
+            borderRadius: theme.numbers.borderRadiusSm,
+            backgroundColor: theme.colors.backgroundLighter,
+            borderWidth: 1,
+            borderStyle: 'dashed',
+            borderColor: theme.colors.border,
+          }}
+        >
+          <FontAwesomeIcon
+            icon={faRightLeft}
+            size={12}
+            style={{ color: theme.colors.textAlt }}
+          />
+          <Text
+            style={{
+              flex: 1,
+              color: theme.colors.textAlt,
+              fontSize: theme.fontSize('sm'),
+            }}
+            numberOfLines={1}
+          >
+            {i18n.t('timeRollover_inlineCard', {
+              minutes: rollover.availablePending[0].minutes,
+              from: moment({
+                year: rollover.availablePending[0].sourceYear,
+                month: rollover.availablePending[0].sourceMonth,
+              }).format('MMMM'),
+            })}
+          </Text>
+          <Text
+            style={{
+              color: theme.colors.accent,
+              fontFamily: theme.fonts.semiBold,
+              fontSize: theme.fontSize('sm'),
+            }}
+          >
+            {i18n.t('timeRollover_inlineCard_action')}
+          </Text>
+        </Button>
+      )}
+
       {shouldCelebrate && celebratingTier === 'record' && (
         <View
           pointerEvents='none'

@@ -29,6 +29,7 @@ import RescheduleConversationScreen from '../screens/RescheduleConversationScree
 import PlanScheduleScreen from '../screens/PlanScheduleScreen'
 import PlanDayScreen from '../screens/PlanDayScreen'
 import ProfileSetupScreen from '../screens/ProfileSetupScreen'
+import RolloverScreen from '../screens/RolloverScreen'
 import { RootStackParamList } from '../types/rootStack'
 
 const RootStack = createNativeStackNavigator<RootStackParamList>()
@@ -264,6 +265,15 @@ const RootStackComponent = () => {
         }}
         name='ProfileSetup'
         component={ProfileSetupScreen}
+      />
+      <RootStack.Screen
+        options={{
+          presentation: 'fullScreenModal',
+          gestureEnabled: false,
+          header: () => null,
+        }}
+        name='Rollover'
+        component={RolloverScreen}
       />
     </RootStack.Navigator>
   )

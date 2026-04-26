@@ -143,6 +143,7 @@ const AllDaysList = ({ month, year }: AllDaysListProps) => {
       let categoryLabel = '—'
       if (reportsForDay.length > 0) {
         const keyFor = (r: ServiceReport): string => {
+          if (r.rollover) return '__rollover__'
           if (r.ldc) return '__ldc__'
           if (r.tag) return `tag:${r.tag}`
           return '__standard__'
@@ -152,7 +153,9 @@ const AllDaysList = ({ month, year }: AllDaysListProps) => {
           categoryLabel = i18n.t('multiple')
         } else {
           const [only] = Array.from(keys)
-          if (only === '__ldc__') {
+          if (only === '__rollover__') {
+            categoryLabel = i18n.t('timeRollover_rowLabel')
+          } else if (only === '__ldc__') {
             categoryLabel = i18n.t('ldc')
           } else if (only === '__standard__') {
             categoryLabel = i18n.t('standard')

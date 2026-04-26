@@ -1368,5 +1368,21 @@
   "multiple": "Multiple",
   "allDays": "All Days",
   "allMonths": "All Months",
-  "now": "now"
+  "now": "now",
+  "timeRollover": "Time Rollover",
+  "timeRollover_intro": "Your previous month had partial hours. We can roll those minutes into this month so your reports stay on whole hours.",
+  "timeRollover_movePreview": "Move {{minutes}} min from {{from}} into {{to}}",
+  "timeRollover_apply": "Roll over time",
+  "timeRollover_skip": "Not now",
+  "timeRollover_autoLabel": "Automatically handle for future months",
+  "timeRollover_autoHint": "We'll handle this silently each month going forward. You can change this in Preferences.",
+  "timeRollover_rowLabel": "Time rollover",
+  "timeRollover_inlineCard": "Roll {{minutes}} min from {{from}}?",
+  "timeRollover_inlineCard_action": "Rollover",
+  "timeRollover_cantEdit_title": "Rollover entries can't be edited",
+  "timeRollover_cantEdit_description": "Delete it to remove both halves of the pair, then redo the rollover if you want different numbers.",
+  "timeRollover_deletePair_title": "Delete rollover pair?",
+  "timeRollover_deletePair_description": "This will also delete the matching entry in the other month so the math stays balanced.",
+  "autoRollover": "Automatic time rollover",
+  "autoRollover_description": "Each month often ends with a few extra minutes that don't make a clean hour — say 34 hours and 24 minutes. With this on, those extra minutes are moved into the first day of the next month so each report stays on whole hours.\n\nYou'll see two matching entries labeled as rollover: one on the last day of the previous month subtracting the minutes, and one on the first day of the new month adding them back. The two always cancel out — no time is gained or lost.\n\nWhen this is off, you'll get a one-time prompt at the start of each new month asking if you want to roll over.\n\nFor pioneers tracking an annual goal, rollover never crosses the September service-year boundary — each yearly cycle starts on whole hours."
 }

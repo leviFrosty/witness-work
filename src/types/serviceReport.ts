@@ -8,6 +8,18 @@ export type ServiceReport = {
   tag?: string
   /** Used to denote the current tag is credit time, similar to LDC. */
   credit?: boolean
+  /**
+   * True when the entry was created by the Time Rollover system to move
+   * fractional minutes between months toward an annual goal. Pairs of these
+   * entries cancel out across month boundaries.
+   */
+  rollover?: boolean
+  /**
+   * Shared id linking the two halves of a rollover (the negative entry on the
+   * source month's last day and the positive entry on the destination month's
+   * first day). Used to delete the pair atomically and keep the math balanced.
+   */
+  rolloverGroupId?: string
   /** Optional note for the service report. */
   note?: string
   /**

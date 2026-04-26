@@ -783,3 +783,98 @@ describe('ServiceReport Store - Override Functionality', () => {
     })
   })
 })
+
+describe('ServiceReport Store - Rollover pair deletion', () => {
+  beforeEach(() => {
+    useServiceReport.getState()._WARNING_forceDeleteServiceReports()
+  })
+
+  it('deletes both halves of a rollover pair regardless of which one is passed', () => {
+    const { addServiceReport, deleteRolloverPair, serviceReports } =
+      useServiceReport.getState()
+
+    const groupId = 'group-1'
+    const negative = {
+      id: 'rollover-neg',
+      hours: 0,
+      minutes: -24,
+      date: moment('2026-03-31').toDate(),
+      rollover: true,
+      rolloverGroupId: groupId,
+    }
+    const positive = {
+      id: 'rollover-pos',
+      hours: 0,
+      minutes: 24,
+      date: moment('2026-04-01').toDate(),
+      rollover: true,
+      rolloverGroupId: groupId,
+    }
+    // Unrelated rollover pair that must NOT be touched.
+    const otherNeg = {
+      id: 'other-neg',
+      hours: 0,
+      minutes: -12,
+      date: moment('2026-02-28').toDate(),
+      rollover: true,
+      rolloverGroupId: 'group-2',
+    }
+    const otherPos = {
+      id: 'other-pos',
+      hours: 0,
+      minutes: 12,
+      date: moment('2026-03-01').toDate(),
+      rollover: true,
+      rolloverGroupId: 'group-2',
+    }
+
+    addServiceReport(negative)
+    addServiceReport(positive)
+    addServiceReport(otherNeg)
+    addServiceReport(otherPos)
+
+    deleteRolloverPair(positive)
+
+    // Negative + positive of group-1 are both gone; group-2 is intact.
+    const all = useServiceReport.getState().serviceReports
+    const allFlat = Object.values(all).flatMap((y) =>
+      Object.values(y).flat()
+    ) as ReturnType<
+      typeof addServiceReport extends (r: infer R) => unknown
+        ? () => R[]
+        : never
+    >
+    const ids = (allFlat as { id: string }[]).map((r) => r.id).sort()
+    expect(ids).toEqual(['other-neg', 'other-pos'])
+
+    // Both deleted ids land in the tombstone list.
+    const tombstones = useServiceReport
+      .getState()
+      .deletedServiceReports.map((t) => t.id)
+      .sort()
+    expect(tombstones).toEqual(['rollover-neg', 'rollover-pos'])
+    void serviceReports // silence unused destructure
+  })
+
+  it('falls back to deleting just the passed report when no group id is set', () => {
+    const { addServiceReport, deleteRolloverPair } = useServiceReport.getState()
+
+    const orphan = {
+      id: 'orphan',
+      hours: 0,
+      minutes: -10,
+      date: moment('2026-03-31').toDate(),
+      rollover: true,
+      // No rolloverGroupId — legacy entry from before grouping existed.
+    }
+    addServiceReport(orphan)
+
+    deleteRolloverPair(orphan)
+
+    const all = useServiceReport.getState().serviceReports
+    const allFlat = Object.values(all).flatMap((y) =>
+      Object.values(y).flat()
+    ) as { id: string }[]
+    expect(allFlat).toEqual([])
+  })
+})

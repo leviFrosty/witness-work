@@ -33,6 +33,10 @@ import { Sheet } from 'tamagui'
 import MapKey from '../components/MapColorKey'
 import { useMarkerColors } from '../hooks/useMarkerColors'
 import { getContactStaleness, stalenessToColor } from '../lib/contactStaleness'
+import {
+  findContactIndexById,
+  reconcileActiveContact,
+} from '../lib/mapCarousel'
 
 interface FullMapViewProps {
   contactMarkers: ContactMarker[]
@@ -57,6 +61,16 @@ const FullMapView = ({ contactMarkers }: FullMapViewProps) => {
   const { contacts, updateContact } = useContacts()
   const CARD_HEIGHT = 200
 
+  // Track the active contact by id rather than carousel index. Indices shift
+  // whenever the source list reorders (dismiss/undismiss, sync inserts, etc.),
+  // which is the primary cause of carousel↔pin desync — using a stable id
+  // means lookups always resolve to the contact the user is actually looking
+  // at, regardless of how the array has been re-keyed since render.
+  const [activeContactId, setActiveContactId] = useState<string | undefined>(
+    () => contactMarkers[0]?.id
+  )
+  const lastReconciledIndexRef = useRef<number>(0)
+
   const handleDragContactPin = (id: string, coordinate: LatLng) => {
     updateContact({
       ...contacts.find((c) => c.id === id),
@@ -73,11 +87,64 @@ const FullMapView = ({ contactMarkers }: FullMapViewProps) => {
     fitToMarkers()
   }
 
-  const handleFitToMarker = (index: number) => {
-    if (contactMarkers[index]) {
-      mapRef.current?.fitToSuppliedMarkers([contactMarkers[index].id])
+  const fitToContactId = useCallback((id: string) => {
+    mapRef.current?.fitToSuppliedMarkers([id])
+  }, [])
+
+  const handleCarouselSnap = useCallback(
+    (index: number) => {
+      const contact = contactMarkers[index]
+      if (!contact) return
+      lastReconciledIndexRef.current = index
+      setActiveContactId(contact.id)
+      fitToContactId(contact.id)
+    },
+    [contactMarkers, fitToContactId]
+  )
+
+  const handlePinPress = useCallback(
+    (id: string) => {
+      // Resolve the index from the *current* contactMarkers rather than a
+      // captured render-time index — otherwise an upstream reorder between
+      // render and tap scrolls the carousel to the wrong card.
+      const idx = findContactIndexById(contactMarkers, id)
+      if (idx < 0) return
+      lastReconciledIndexRef.current = idx
+      setActiveContactId(id)
+      carouselRef.current?.scrollTo({ index: idx, animated: true })
+    },
+    [contactMarkers]
+  )
+
+  // Reconcile carousel + active id when the underlying list changes.
+  // - If the active contact still exists, ensure the carousel is on its
+  //   current index — covers the case where contacts were inserted/removed
+  //   before it and shifted its position.
+  // - If it disappeared (dismissed, deleted), pick a deterministic neighbour
+  //   based on its previous index rather than snapping back to 0.
+  useEffect(() => {
+    const { activeId, index } = reconcileActiveContact({
+      previousActiveId: activeContactId,
+      previousIndex: lastReconciledIndexRef.current,
+      nextContactMarkers: contactMarkers,
+    })
+
+    if (activeId !== activeContactId) {
+      setActiveContactId(activeId)
     }
-  }
+
+    if (index < 0) {
+      lastReconciledIndexRef.current = 0
+      return
+    }
+
+    lastReconciledIndexRef.current = index
+
+    const currentCarouselIndex = carouselRef.current?.getCurrentIndex()
+    if (currentCarouselIndex !== undefined && currentCarouselIndex !== index) {
+      carouselRef.current?.scrollTo({ index, animated: false })
+    }
+  }, [activeContactId, contactMarkers])
 
   useEffect(() => {
     const unsubscribe = navigation.addListener('tabPress', (e) => {
@@ -108,13 +175,8 @@ const FullMapView = ({ contactMarkers }: FullMapViewProps) => {
     getLocation()
   }, [])
 
-  const contactsWithCoords = useMemo(() => {
-    // Use the filtered contactMarkers instead of re-filtering contacts
-    return contactMarkers
-  }, [contactMarkers])
-
   const parallaxScrollingScale =
-    contactsWithCoords.length === 1 ? 0.9 : isTablet ? 0.92 : 0.8025
+    contactMarkers.length === 1 ? 0.9 : isTablet ? 0.92 : 0.8025
 
   return (
     <>
@@ -125,11 +187,9 @@ const FullMapView = ({ contactMarkers }: FullMapViewProps) => {
         onLayout={handleMapLayout}
         style={{ height: '100%', width: '100%' }}
       >
-        {contactMarkers.map((c, index) => (
+        {contactMarkers.map((c) => (
           <Marker
-            onPress={() =>
-              carouselRef.current?.scrollTo({ index, animated: true })
-            }
+            onPress={() => handlePinPress(c.id)}
             identifier={c.id}
             key={c.id}
             coordinate={c.coordinate!}
@@ -178,7 +238,7 @@ const FullMapView = ({ contactMarkers }: FullMapViewProps) => {
         </View>
       ) : (
         <Carousel
-          onSnapToItem={(index) => handleFitToMarker(index)}
+          onSnapToItem={handleCarouselSnap}
           defaultIndex={0}
           ref={carouselRef}
           data={contactMarkers}
@@ -190,7 +250,7 @@ const FullMapView = ({ contactMarkers }: FullMapViewProps) => {
           modeConfig={{
             parallaxScrollingScale,
           }}
-          loop={contactsWithCoords.length !== 1}
+          loop={contactMarkers.length !== 1}
           width={width}
           height={CARD_HEIGHT}
           style={{

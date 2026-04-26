@@ -628,7 +628,6 @@ const ConversationFormScreen = ({ route, navigation }: Props) => {
             justifyContent='space-between'
           >
             <DateTimePicker
-              minimumDate={moment().toDate()}
               value={conversation.followUp!.date}
               onChange={handleFollowUpDateChange}
               iOSMode='datetime'

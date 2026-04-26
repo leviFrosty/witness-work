@@ -17,7 +17,10 @@ import useTheme from '../contexts/theme'
 import i18n from '../lib/locales'
 import { usePreferences } from '../stores/preferences'
 import useServiceReport from '../stores/serviceReport'
-import { getTotalMinutesForServiceYear } from '../lib/serviceReport'
+import {
+  getServiceYearReports,
+  getTotalMinutesForServiceYear,
+} from '../lib/serviceReport'
 import {
   DEFAULT_MILESTONES_BY_PUBLISHER,
   getMilestoneHitState,
@@ -108,14 +111,18 @@ const MilestoneAdjustSheet = ({ visible, onClose }: Props) => {
   }, [visible, milestoneOverrides, publisher, yearGoalHours])
 
   // Live hours completed for the current service year — same math the rest of
-  // the app uses. `getTotalMinutesForServiceYear` takes the nested-by-year map
-  // directly and the service-year end year.
+  // the app uses. Must filter to just this service year first; passing the raw
+  // store sums every year ever logged.
   const hoursCompleted = useMemo(() => {
     if (yearGoalHours <= 0) return 0
-    const serviceYearEnd = currentServiceYearEnd()
-    const totalMinutes = getTotalMinutesForServiceYear(
+    const serviceYearStart = currentServiceYearEnd() - 1
+    const serviceYearReports = getServiceYearReports(
       serviceReports,
-      serviceYearEnd - 1
+      serviceYearStart
+    )
+    const totalMinutes = getTotalMinutesForServiceYear(
+      serviceYearReports,
+      serviceYearStart
     )
     return _.round(totalMinutes / 60, 1)
   }, [serviceReports, yearGoalHours])

@@ -1,5 +1,5 @@
 import { useMemo } from 'react'
-import { View } from 'react-native'
+import { View, ViewStyle } from 'react-native'
 import Svg, { Defs, Line, Pattern, Rect } from 'react-native-svg'
 import _ from 'lodash'
 
@@ -23,13 +23,13 @@ interface MilestoneProgressBarPreviewProps {
 const BAR_HEIGHT = 28
 const BAR_RADIUS = 6
 const LABEL_MARGIN_TOP = 6
-const LABEL_WIDTH = 50
+const LABEL_WIDTH = 40
 const LABEL_ROW_HEIGHT = 8
 const LABEL_ROW_GAP = 2
 // Min gap (as fraction of bar width) between labels on the same row before we
 // drop the next one to a second row. ~7% comfortably clears a 4-digit label at
 // xs font on a typical card-width bar.
-const LABEL_MIN_GAP_RATIO = 0.07
+const LABEL_MIN_GAP_RATIO = 0.06
 
 type SegmentState = 'hit' | 'progress' | 'future'
 
@@ -193,34 +193,48 @@ export const MilestoneProgressBarPreview = ({
           position: 'relative',
         }}
       >
-        {labels.map((label) => (
-          <View
-            key={label.value}
-            style={{
-              position: 'absolute',
-              left: `${label.position * 100}%`,
-              top: label.row * (LABEL_ROW_HEIGHT + LABEL_ROW_GAP),
-              width: LABEL_WIDTH,
-              marginLeft: -LABEL_WIDTH / 2,
-              alignItems: 'center',
-            }}
-          >
-            <Text
-              numberOfLines={1}
+        {labels.map((label) => {
+          // Anchor edge labels to the bar edge instead of centering them on it,
+          // so the rightmost label (year goal) isn't half-clipped by ancestor
+          // scroll views that don't honor `overflow: visible`.
+          const isRightEdge = label.position >= 0.999
+          const isLeftEdge = label.position <= 0.001
+          const positionStyle: ViewStyle = isRightEdge
+            ? { right: 0, alignItems: 'flex-end' }
+            : isLeftEdge
+              ? { left: 0, alignItems: 'flex-start' }
+              : {
+                  left: `${label.position * 100}%`,
+                  width: LABEL_WIDTH,
+                  marginLeft: -LABEL_WIDTH / 2,
+                  alignItems: 'center',
+                }
+          return (
+            <View
+              key={label.value}
               style={{
-                fontSize: theme.fontSize('xs'),
-                color: label.isNext
-                  ? theme.colors.accent
-                  : theme.colors.textAlt,
-                fontFamily: label.isNext
-                  ? theme.fonts.bold
-                  : theme.fonts.regular,
+                position: 'absolute',
+                top: label.row * (LABEL_ROW_HEIGHT + LABEL_ROW_GAP),
+                ...positionStyle,
               }}
             >
-              {label.value}
-            </Text>
-          </View>
-        ))}
+              <Text
+                numberOfLines={1}
+                style={{
+                  fontSize: theme.fontSize('xs'),
+                  color: label.isNext
+                    ? theme.colors.accent
+                    : theme.colors.textAlt,
+                  fontFamily: label.isNext
+                    ? theme.fonts.bold
+                    : theme.fonts.regular,
+                }}
+              >
+                {label.value}
+              </Text>
+            </View>
+          )
+        })}
       </View>
     </View>
   )

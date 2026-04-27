@@ -33,20 +33,18 @@ const Select = <T,>({
   // UIMenu keys actions by string id. Stringify both sides and map back to
   // the original item on selection so callers receive the untouched object.
   const items = data as unknown as SelectDataItem<unknown>[]
-  const stringValue =
-    value === undefined || value === null ? undefined : String(value)
-  const selectedLabel = items.find(
-    (i) => String(i.value) === stringValue
-  )?.label
+  const isSelected = (itemValue: unknown) => {
+    if (itemValue === value) return true
+    if (itemValue == null || value == null) return false
+    return String(itemValue) === String(value)
+  }
+  const selectedLabel = items.find((i) => isSelected(i.value))?.label
 
-  const actions: MenuAction[] = items.map((item) => {
-    const id = String(item.value)
-    return {
-      id,
-      title: item.label,
-      state: id === stringValue ? 'on' : 'off',
-    }
-  })
+  const actions: MenuAction[] = items.map((item) => ({
+    id: String(item.value),
+    title: item.label,
+    state: isSelected(item.value) ? 'on' : 'off',
+  }))
 
   return (
     <MenuView

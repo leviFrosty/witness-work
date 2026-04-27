@@ -13,6 +13,7 @@ import Animated, {
 } from 'react-native-reanimated'
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
 import { faPencil } from '@fortawesome/free-solid-svg-icons'
+import { useNavigation } from '@react-navigation/native'
 import useTheme from '../contexts/theme'
 import { ProfileAvatar } from '../types/avatar'
 import Avatar from './Avatar'
@@ -37,8 +38,14 @@ interface Props {
   imageFileName?: string
   /** Background color for the avatar circle when emoji/letter fallback. */
   background?: string
-  /** Show the accent-tone background swatches. Profile-only by default. */
+  /** Show the accent-tone background swatches above the emoji grid. */
   showBackgroundSwatches?: boolean
+  /** Currently-selected background override; required when swatches are shown. */
+  backgroundValue?: string | null
+  /** Called when a swatch is picked; required when swatches are shown. */
+  onBackgroundChange?: (next: string | null) => void
+  /** Wrap swatches in the supporter gate (used by the user's profile only). */
+  gateBackgroundBySupporter?: boolean
   /** Accessibility label for the tappable anchor. Defaults to "profilePicture". */
   accessibilityLabel?: string
 }
@@ -59,9 +66,13 @@ const AvatarPickerPopover = ({
   imageFileName,
   background,
   showBackgroundSwatches = false,
+  backgroundValue = null,
+  onBackgroundChange,
+  gateBackgroundBySupporter = false,
   accessibilityLabel,
 }: Props) => {
   const theme = useTheme()
+  const navigation = useNavigation()
   const anchorRef = useRef<View>(null)
   const [anchor, setAnchor] = useState<AnchorRect | null>(null)
   const [open, setOpen] = useState(false)
@@ -71,6 +82,17 @@ const AvatarPickerPopover = ({
   useEffect(() => {
     progress.value = withTiming(open ? 1 : 0, { duration: 140 })
   }, [open, progress])
+
+  // Close when the host screen loses focus (e.g. the supporter gate inside the
+  // picker navigates to the paywall). Otherwise the Modal's backdrop stays
+  // mounted on top of the screen after the user returns and blocks every tap,
+  // including the avatar that would normally re-open the picker.
+  useEffect(() => {
+    const unsubscribe = navigation.addListener('blur', () => {
+      setOpen(false)
+    })
+    return unsubscribe
+  }, [navigation])
 
   const handlePress = () => {
     anchorRef.current?.measureInWindow((x, y, width, height) => {
@@ -197,6 +219,9 @@ const AvatarPickerPopover = ({
             onChange={handleChange}
             imageFileName={imageFileName}
             showBackgroundSwatches={showBackgroundSwatches}
+            backgroundValue={backgroundValue}
+            onBackgroundChange={onBackgroundChange}
+            gateBackgroundBySupporter={gateBackgroundBySupporter}
           />
         </Animated.View>
         <StatusBar translucent />

@@ -17,6 +17,7 @@ import {
 import { useNavigation } from '@react-navigation/native'
 import { addressToString, coordinateAsString, navigateTo } from '../lib/address'
 import Copyeable from './Copyeable'
+import Avatar from './Avatar'
 import links from '../constants/links'
 import { MapShareSheet } from './ShareAddressSheet'
 import { parsePhoneNumber } from 'awesome-phonenumber'
@@ -80,16 +81,33 @@ const MapCarouselCard = ({ contact, setSheet }: Props) => {
           flexDirection: 'row',
           justifyContent: 'space-between',
           alignItems: 'flex-start',
+          gap: 10,
         }}
       >
-        <Text
+        <View
           style={{
-            fontSize: theme.fontSize('xl'),
-            fontFamily: theme.fonts.bold,
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: 10,
+            flexShrink: 1,
           }}
         >
-          {contact.name}
-        </Text>
+          <Avatar
+            avatar={contact.avatar ?? { type: 'none', value: '' }}
+            name={contact.name}
+            size={40}
+            background={contact.avatarBackground ?? undefined}
+          />
+          <Text
+            style={{
+              fontSize: theme.fontSize('xl'),
+              fontFamily: theme.fonts.bold,
+              flexShrink: 1,
+            }}
+          >
+            {contact.name}
+          </Text>
+        </View>
         <Button
           onPress={() =>
             setSheet({

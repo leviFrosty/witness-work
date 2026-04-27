@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import {
   ActivityIndicator,
+  Alert,
   Modal,
   Pressable,
   StatusBar,
@@ -84,8 +85,27 @@ const SyncPopover = () => {
 
   const close = () => setOpen(false)
 
+  const handleOpenSettings = () => {
+    close()
+    navigation.navigate('PreferencesiCloud')
+  }
+
   const handleSyncNow = async () => {
-    if (!iCloudSyncEnabled || syncing) return
+    if (syncing) return
+    if (!iCloudSyncEnabled) {
+      Alert.alert(
+        i18n.t('iCloudSyncDisabled_title'),
+        i18n.t('iCloudSyncDisabled_description'),
+        [
+          { style: 'cancel', text: i18n.t('cancel') },
+          {
+            text: i18n.t('iCloudSyncDisabled_action'),
+            onPress: handleOpenSettings,
+          },
+        ]
+      )
+      return
+    }
     setSyncing(true)
     try {
       await iCloudSync.pullAndMerge('popover-manual')
@@ -93,11 +113,6 @@ const SyncPopover = () => {
     } finally {
       setSyncing(false)
     }
-  }
-
-  const handleOpenSettings = () => {
-    close()
-    navigation.navigate('PreferencesiCloud')
   }
 
   const contentWidth = 260
@@ -216,7 +231,7 @@ const SyncPopover = () => {
           </Text>
           <View style={{ gap: 8 }}>
             <Button
-              disabled={!iCloudSyncEnabled || !available || syncing}
+              disabled={!available || syncing}
               onPress={handleSyncNow}
               style={{
                 flexDirection: 'row',
@@ -226,7 +241,7 @@ const SyncPopover = () => {
                 paddingVertical: 10,
                 borderRadius: theme.numbers.borderRadiusSm,
                 backgroundColor: theme.colors.backgroundLighter,
-                opacity: !iCloudSyncEnabled || !available || syncing ? 0.5 : 1,
+                opacity: !available || syncing ? 0.5 : 1,
               }}
             >
               {syncing ? (

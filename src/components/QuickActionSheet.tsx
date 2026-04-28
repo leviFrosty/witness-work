@@ -79,18 +79,17 @@ export default function QuickActionSheet({
             {publisher !== 'publisher' && (
               <>
                 <ActionButton
-                  text='createPlan'
-                  icon={faCalendar}
-                  onPress={() => handleQuickAction('addPlan')}
-                />
-                <ActionButton
                   text='addTime'
                   icon={faClock}
                   onPress={() => handleQuickAction('addTime')}
                 />
               </>
             )}
-
+            <ActionButton
+              text='createPlan'
+              icon={faCalendar}
+              onPress={() => handleQuickAction('addPlan')}
+            />
             <ActionButton
               text='addContact'
               icon={faIdCard}

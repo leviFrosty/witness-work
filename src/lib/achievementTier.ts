@@ -9,17 +9,20 @@ import { Publisher } from '../types/publisher'
 export type AchievementTier = 'reached' | 'exceeded' | 'crushed' | 'record'
 
 /**
- * Resolves the celebration tier for a given percent-of-goal. Returns null when
- * the user hasn't met their goal — callers render the normal progress state in
- * that case.
+ * Resolves the threshold-based celebration tier for a given percent-of-goal.
+ * Returns null when the user hasn't met their goal — callers render the normal
+ * progress state in that case.
+ *
+ * The `record` tier is intentionally NOT reachable from this function — it's
+ * reserved for actual 12-month personal bests. A monster month at 500% of goal
+ * still tops out at `crushed` here; only `resolveTier` can promote to
+ * `record`.
  *
  * Thresholds:
  *
  * - Reached: 100-109%
  * - Exceeded: 110-149%
- * - Crushed: 150-199%
- * - Record: 200%+ (also promoted from any tier when the month is a personal best
- *   over the trailing 12 months — see `resolveTier` below)
+ * - Crushed: 150%+
  */
 export const tierFromPercent = (
   percentOfGoal: number
@@ -27,8 +30,7 @@ export const tierFromPercent = (
   if (percentOfGoal < 100) return null
   if (percentOfGoal < 110) return 'reached'
   if (percentOfGoal < 150) return 'exceeded'
-  if (percentOfGoal < 200) return 'crushed'
-  return 'record'
+  return 'crushed'
 }
 
 /**
@@ -73,8 +75,12 @@ export const isPersonalBest12mo = (
 }
 
 /**
- * Resolves the final tier a month should display, combining raw percent-of-goal
- * with the personal-best promotion.
+ * Resolves the final tier a month should display.
+ *
+ * `record` requires _both_ that the month met its goal _and_ that it's a
+ * 12-month personal best — a high percent of goal alone isn't enough. A 286%
+ * month with a higher prior month within the last year is `crushed`, not
+ * `record`.
  */
 export const resolveTier = (
   percentOfGoal: number,
@@ -82,7 +88,7 @@ export const resolveTier = (
 ): AchievementTier | null => {
   const base = tierFromPercent(percentOfGoal)
   if (!base) return null
-  if (isPersonalBest && base !== 'record') return 'record'
+  if (isPersonalBest) return 'record'
   return base
 }
 

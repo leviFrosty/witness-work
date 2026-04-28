@@ -26,9 +26,10 @@ type GoalProgressStatsProps = {
   totalLabel?: string
   /**
    * When provided and periodState is 'current', a small tier seal renders above
-   * the hero (icon + amber palette for crushed/record). Past/future months
-   * ignore this prop and keep the subdued historical rendering — see
-   * docs/month-year-analytics-plan.md for rationale.
+   * the hero (icon + accent palette by default; gold/amber reserved for the
+   * `record` personal-best tier). Past/future months ignore this prop and keep
+   * the subdued historical rendering — see docs/month-year-analytics-plan.md
+   * for rationale.
    */
   achievementTier?: AchievementTier | null
   /**
@@ -66,9 +67,10 @@ const tierCopyKey = (tier: AchievementTier) => {
 }
 
 const tierColor = (tier: AchievementTier, theme: Theme) => {
-  return tier === 'crushed' || tier === 'record'
-    ? theme.colors.supporter
-    : theme.colors.accent
+  // Gold (`supporter`) is reserved for an actual 12-month personal best.
+  // `crushed` is just 150%+ of goal — celebratory, but not record-tier — so it
+  // shares the regular accent palette with `reached` / `exceeded`.
+  return tier === 'record' ? theme.colors.supporter : theme.colors.accent
 }
 
 const GoalProgressStats = ({

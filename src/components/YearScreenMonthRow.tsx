@@ -43,9 +43,11 @@ const tierIcon = (tier: AchievementTier): IconDefinition => {
 }
 
 const tierColor = (tier: AchievementTier, theme: Theme) =>
-  tier === 'crushed' || tier === 'record'
-    ? theme.colors.supporter
-    : theme.colors.accent
+  // Gold (`supporter`) is reserved for the `record` personal-best tier; every
+  // other goal-met tier (including `crushed` at 150%+) shares the regular
+  // accent palette. Mirrors GoalProgressStats so the two surfaces tell the
+  // same color story.
+  tier === 'record' ? theme.colors.supporter : theme.colors.accent
 
 export default function YearScreenMonthRow(props: {
   month: number

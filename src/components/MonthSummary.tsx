@@ -228,10 +228,10 @@ const MonthSummary = ({
   // Past/future months: suppress the celebration palette. See
   // GoalProgressStats + the UX rationale in the plan doc.
   const celebratingTier = isCurrentMonth ? tier : null
-  const cardTone =
-    celebratingTier === 'crushed' || celebratingTier === 'record'
-      ? 'amber'
-      : 'default'
+  // Amber is the personal-best palette — reserve it for `record` so a
+  // high-percent month that *isn't* a 12-month best (e.g. 286% behind a
+  // bigger prior month) doesn't masquerade as one.
+  const cardTone = celebratingTier === 'record' ? 'amber' : 'default'
 
   // One-time crossing animation: scale/glow pulse on the seal, a haptic, and
   // (record-only) confetti. Persisted per-month-per-tier so re-opening the

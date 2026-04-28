@@ -31,6 +31,8 @@ import { useRollover } from '../hooks/useRollover'
 import * as ICloudBridge from '../../modules/icloud-bridge'
 import * as Notifications from 'expo-notifications'
 import { splitDateAndStartTime } from '../lib/normalizeDate'
+import IconButton from '../components/IconButton'
+import { faRotate } from '@fortawesome/free-solid-svg-icons'
 
 const MONO = Platform.select({
   ios: 'Menlo',
@@ -306,6 +308,15 @@ export default function ToolsScreen() {
     return true
   }
 
+  // Snapshot of what's actually in the OS queue right now — useful for
+  // confirming that creating/editing/deleting plans keeps storage and the OS
+  // queue in sync. Returns the count so callers can include it in toasts.
+  const refreshScheduledNotifications = async (): Promise<number> => {
+    const all = await Notifications.getAllScheduledNotificationsAsync()
+    setScheduledNotifications(all)
+    return all.length
+  }
+
   // Smallest possible end-to-end check: schedules a generic notification 10s
   // out. Verifies the OS scheduling pipeline independent of any plan logic.
   const scheduleTestNotificationIn10s = async () => {
@@ -322,8 +333,9 @@ export default function ToolsScreen() {
         date: fireAt,
       },
     })
+    const count = await refreshScheduledNotifications()
     toast.show('Scheduled', {
-      message: `Fires in 10s · id ${id.slice(0, 8)}…`,
+      message: `Fires in 10s · queue=${count} · id ${id.slice(0, 8)}…`,
       native: true,
     })
   }
@@ -367,22 +379,11 @@ export default function ToolsScreen() {
         : [],
     })
 
+    const count = await refreshScheduledNotifications()
     toast.show('Generated', {
       message: notificationId
-        ? `Plan in 3min · notif in ~2min`
+        ? `Plan in 3min · notif in ~2min · queue=${count}`
         : 'Plan created without notification (permission denied)',
-      native: true,
-    })
-  }
-
-  // Snapshot of what's actually in the OS queue right now — useful for
-  // confirming that creating/editing/deleting plans keeps storage and the OS
-  // queue in sync. Refresh on demand; the list isn't reactive.
-  const refreshScheduledNotifications = async () => {
-    const all = await Notifications.getAllScheduledNotificationsAsync()
-    setScheduledNotifications(all)
-    toast.show(`${all.length} scheduled`, {
-      message: 'See JSON below for details',
       native: true,
     })
   }
@@ -390,8 +391,8 @@ export default function ToolsScreen() {
   const cancelAllScheduledNotifications = () =>
     confirmDestructive('Cancel all scheduled notifications', async () => {
       await Notifications.cancelAllScheduledNotificationsAsync()
-      setScheduledNotifications([])
-      showDone('All scheduled notifications cancelled')
+      const count = await refreshScheduledNotifications()
+      showDone(`Cancelled · queue=${count}`)
     })
 
   const resetLocal = () => {
@@ -777,12 +778,27 @@ export default function ToolsScreen() {
           <ActionButton onPress={generateImminentDayPlanWithNotification}>
             Generate plan with imminent notification (~2min)
           </ActionButton>
-          <ActionButton onPress={refreshScheduledNotifications}>
-            Refresh scheduled list
-          </ActionButton>
           <ActionButton onPress={cancelAllScheduledNotifications}>
             Cancel all scheduled
           </ActionButton>
+          <XView style={{ justifyContent: 'space-between', marginTop: 5 }}>
+            <Text
+              style={{
+                fontFamily: theme.fonts.semiBold,
+                color: theme.colors.textAlt,
+              }}
+            >
+              Scheduled (OS queue)
+            </Text>
+            <IconButton
+              icon={faRotate}
+              color={theme.colors.text}
+              onPress={async () => {
+                const count = await refreshScheduledNotifications()
+                toast.show(`${count} scheduled`, { message: '', native: true })
+              }}
+            />
+          </XView>
           <JsonViewer
             label='Scheduled (OS queue)'
             value={scheduledNotifications}

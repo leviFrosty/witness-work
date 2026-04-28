@@ -30,8 +30,13 @@ type Props = NativeStackScreenProps<RootStackParamList, 'Contact Form'>
 const ContactFormScreen = ({ route, navigation }: Props) => {
   const theme = useTheme()
   const { addContact, contacts, updateContact } = useContacts()
-  const { incrementGeocodeApiCallCount, prefillAddress, updatePrefillAddress } =
-    usePreferences()
+  const {
+    incrementGeocodeApiCallCount,
+    prefillAddress,
+    updatePrefillAddress,
+    defaultPhoneRegionCode,
+    setDefaultPhoneRegionCode,
+  } = usePreferences()
   const editMode = route.params.edit
   const [errors, setErrors] = useState<Errors>({
     name: '',
@@ -84,7 +89,7 @@ const ContactFormScreen = ({ route, navigation }: Props) => {
       address: newContactAddress,
       email: '',
       phone: '',
-      phoneRegionCode: locales[0].regionCode || '',
+      phoneRegionCode: defaultPhoneRegionCode || locales[0].regionCode || '',
       customFields: {},
     }
   )
@@ -108,6 +113,9 @@ const ContactFormScreen = ({ route, navigation }: Props) => {
       ...contact,
       phoneRegionCode: regionCode,
     })
+    if (regionCode) {
+      setDefaultPhoneRegionCode(regionCode)
+    }
   }
 
   const setEmail = (email: string) => {
@@ -438,9 +446,18 @@ const ContactFormScreen = ({ route, navigation }: Props) => {
             onChange={(next: ProfileAvatar) =>
               setContact({ ...contact, avatar: next })
             }
+            onImageMeta={(meta) =>
+              setContact((c) => ({ ...c, avatarMeta: meta }))
+            }
             name={contact.name}
             size={104}
             imageFileName={`contact-${contact.id}-avatar.jpg`}
+            background={contact.avatarBackground ?? undefined}
+            showBackgroundSwatches
+            backgroundValue={contact.avatarBackground ?? null}
+            onBackgroundChange={(next) =>
+              setContact({ ...contact, avatarBackground: next })
+            }
           />
           <View style={{ alignItems: 'center', gap: 6, width: '100%' }}>
             <TextInput

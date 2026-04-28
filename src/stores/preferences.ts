@@ -224,6 +224,15 @@ export const PREFERENCE_DEFAULTS = {
     enabled: true,
     lastUpdated: undefined,
   } as PrefillAddress,
+  /**
+   * Most recently selected phone region on the contact form, as an ISO 3166-1
+   * alpha-2 code (e.g. `"US"`, `"GB"`, `"DE"`). Format matches what
+   * `react-native-phone-number-input` / `expo-localization` exchange. Used as
+   * the default region for new contacts so the user doesn't re-pick their
+   * country every time. Null until first contact is saved — falls back to the
+   * device locale.
+   */
+  defaultPhoneRegionCode: null as string | null,
   homeScreenElements: {
     approachingConversations: true,
     monthlyRoutine: true,
@@ -523,6 +532,8 @@ export const usePreferences = create(
           set({ lastTimeRequestedAReview: new Date() }),
         setContactSort: (contactSort: (typeof SortOptionValues)[number]) =>
           set({ contactSort }),
+        setDefaultPhoneRegionCode: (defaultPhoneRegionCode: string) =>
+          set({ defaultPhoneRegionCode }),
         removeHint: (hint: keyof typeof hints) =>
           // Pass a partial rather than spreading the full preferences object —
           // the stamping wrapper iterates `Object.keys(resolved)` and would

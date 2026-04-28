@@ -6,6 +6,7 @@ import ContactDetailsScreen from '../screens/ContactDetailsScreen'
 import AddTimeScreen from '../screens/AddTimeScreen'
 import RecoverContactsScreen from '../screens/RecoverContactsScreen'
 import DismissedContactsScreen from '../screens/DismissedContactsScreen'
+import ContactsSortAndFilterScreen from '../screens/ContactsSortAndFilterScreen'
 import OnBoarding from '../components/onboarding/Onboarding'
 import { usePreferences } from '../stores/preferences'
 import UpdateScreen from '../screens/UpdateScreen'
@@ -96,6 +97,19 @@ const RootStackComponent = () => {
         }}
         name='Dismissed Contacts'
         component={DismissedContactsScreen}
+      />
+      <RootStack.Screen
+        // Native iOS form sheet — handles drag-to-dismiss + inner ScrollView
+        // gestures correctly, which the previous Tamagui sheet did not.
+        options={{
+          presentation: 'modal',
+          sheetAllowedDetents: [1],
+          sheetGrabberVisible: true,
+          sheetCornerRadius: 18,
+          headerShown: false,
+        }}
+        name='Contacts Sort And Filter'
+        component={ContactsSortAndFilterScreen}
       />
       <RootStack.Screen
         options={{ header: () => null }}

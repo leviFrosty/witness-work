@@ -1437,6 +1437,7 @@
   "contacts_pinStaleness_week": "This month",
   "contacts_pinStaleness_month": "Stale",
   "contacts_sortBy": "Sort by",
+  "contacts_sortBySuggested": "Suggested",
   "contacts_sortByPin": "Color pin (staleness)",
   "contacts_sortByDateAdded": "Date added",
   "contacts_sortByCity": "City",
@@ -1474,5 +1475,14 @@
   "contacts_emptySearch_title": "No matches",
   "contacts_emptySearch_body": "No contacts match your search and filters. Try clearing a filter or adjusting your search.",
   "contacts_pickCustomField": "Pick a custom field",
-  "contacts_noCustomFields": "No custom fields yet."
+  "contacts_noCustomFields": "No custom fields yet.",
+  "contacts_sortAndFilter_title": "Sort & Filter",
+  "contacts_sortAndFilter_filtersSection": "Filters",
+  "contacts_sortAndFilter_sortSection": "Sort",
+  "contacts_sortAndFilter_resultCount": {
+    "zero": "No matches",
+    "one": "1 match",
+    "other": "{{count}} matches"
+  },
+  "contacts_sortAndFilter_sortLabel": "Sort: {{label}}"
 }

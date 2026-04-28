@@ -24,6 +24,7 @@ export const builtInContactSortOptions: {
   label: () => string
   value: ContactSortKey
 }[] = [
+  { label: () => i18n.t('contacts_sortBySuggested'), value: 'suggested' },
   { label: () => i18n.t('recentConversation'), value: 'recentConversation' },
   { label: () => i18n.t('alphabeticalAsc'), value: 'az' },
   { label: () => i18n.t('alphabeticalDesc'), value: 'za' },
@@ -162,7 +163,7 @@ export const PREFERENCE_DEFAULTS = {
   /** Profile avatar — stored locally, never uploaded. */
   avatar: { type: 'none', value: '' } as ProfileAvatar,
   installedOn: new Date(),
-  contactSort: 'recentConversation' as ContactSortKey,
+  contactSort: 'suggested' as ContactSortKey,
   /**
    * Direction the active sort runs in. `desc` is the default because the
    * Contacts screen's primary sorts (recent conversation, color-pin staleness)

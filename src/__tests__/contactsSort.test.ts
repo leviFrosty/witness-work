@@ -32,71 +32,117 @@ const sortContacts = (
 }
 
 describe('lib/contactsSort', () => {
-  describe('favorites pinning', () => {
-    it('puts favorites first regardless of sort key/direction', () => {
+  describe('suggested sort: favorite + study pinning', () => {
+    it('pins favorites above non-favorites under suggested', () => {
       const a = c({ id: 'a', name: 'Alpha' })
       const b = c({ id: 'b', name: 'Bravo', isFavorite: true })
       const cc = c({ id: 'c', name: 'Charlie' })
-      const result = sortContacts([a, b, cc], 'az', 'asc')
+      const result = sortContacts([a, b, cc], 'suggested', 'desc')
       expect(result[0]).toBe(b)
     })
 
-    it('keeps favorites first under desc as well', () => {
+    it('keeps favorites first under asc as well (pinning is direction-independent)', () => {
       const a = c({ id: 'a', name: 'Alpha' })
       const b = c({ id: 'b', name: 'Bravo', isFavorite: true })
       const cc = c({ id: 'c', name: 'Charlie' })
-      const result = sortContacts([a, b, cc], 'az', 'desc')
+      const result = sortContacts([a, b, cc], 'suggested', 'asc')
       expect(result[0]).toBe(b)
     })
-  })
 
-  describe('bible-study tiering above non-studies', () => {
-    it('puts study contact above non-study under az asc when sort is not bibleStudy', () => {
-      // Note: study contact name is alphabetically AFTER non-study, but study should still come first
-      const studyContact = c({ id: 's', name: 'Zelda Study' })
-      const regular = c({ id: 'r', name: 'Aaron Regular' })
-      const conversations: Conversation[] = [
-        {
-          id: 'conv1',
-          contact: { id: studyContact.id },
-          date: moment().subtract(2, 'months').toDate(),
-          isBibleStudy: true,
-        },
-      ]
-      const result = sortContacts(
-        [studyContact, regular],
-        'az',
-        'asc',
-        ctx({ conversations })
-      )
-      expect(result).toEqual([studyContact, regular])
-    })
-
-    it('ranks an active study above a lapsed study (both above non-study)', () => {
+    it('ranks favorite > active study > lapsed study > regular', () => {
+      const favorite = c({ id: 'fav', name: 'Z Favorite', isFavorite: true })
       const active = c({ id: 'active', name: 'Active' })
       const lapsed = c({ id: 'lapsed', name: 'Lapsed' })
-      const nonStudy = c({ id: 'non', name: 'Non' })
+      const regular = c({ id: 'reg', name: 'Aaron Regular' })
       const conversations: Conversation[] = [
         {
-          id: 'conv1',
+          id: 'conv-active',
           contact: { id: active.id },
           date: moment().toDate(),
           isBibleStudy: true,
         },
         {
-          id: 'conv2',
+          id: 'conv-lapsed',
           contact: { id: lapsed.id },
           date: moment().subtract(6, 'months').toDate(),
           isBibleStudy: true,
         },
       ]
       const result = sortContacts(
-        [nonStudy, lapsed, active],
-        'az',
+        [regular, lapsed, active, favorite],
+        'suggested',
+        'desc',
+        ctx({ conversations })
+      )
+      expect(result.map((x) => x.id)).toEqual([
+        'fav',
+        'active',
+        'lapsed',
+        'reg',
+      ])
+    })
+
+    it('inside the regular tier, sorts by recent conversation', () => {
+      const recent = c({ id: 'recent', name: 'R' })
+      const old = c({ id: 'old', name: 'O' })
+      const conversations: Conversation[] = [
+        {
+          id: 'conv-recent',
+          contact: { id: recent.id },
+          date: moment().subtract(1, 'day').toDate(),
+          isBibleStudy: false,
+        },
+        {
+          id: 'conv-old',
+          contact: { id: old.id },
+          date: moment().subtract(1, 'year').toDate(),
+          isBibleStudy: false,
+        },
+      ]
+      const result = sortContacts(
+        [old, recent],
+        'suggested',
+        'desc',
+        ctx({ conversations })
+      )
+      expect(result.map((x) => x.id)).toEqual(['recent', 'old'])
+    })
+  })
+
+  describe('explicit sort keys: no favorite/study pinning', () => {
+    it('az asc places a non-favorite above a favorite when alphabetically earlier', () => {
+      const aaron = c({ id: 'aaron', name: 'Aaron' })
+      const zelda = c({ id: 'zelda', name: 'Zelda', isFavorite: true })
+      const result = sortContacts([zelda, aaron], 'az', 'asc')
+      expect(result.map((x) => x.id)).toEqual(['aaron', 'zelda'])
+    })
+
+    it('recentConversation asc keeps oldest first even if a newer contact is a study', () => {
+      // Reproduces the bug: with explicit "Recent Conversation" asc, a 2-day-old
+      // bible study should NOT jump above a 9-day-old non-study.
+      const studyRecent = c({ id: 'study', name: 'Study' })
+      const oldRegular = c({ id: 'old', name: 'Old' })
+      const conversations: Conversation[] = [
+        {
+          id: 'conv-study',
+          contact: { id: studyRecent.id },
+          date: moment().subtract(2, 'days').toDate(),
+          isBibleStudy: true,
+        },
+        {
+          id: 'conv-old',
+          contact: { id: oldRegular.id },
+          date: moment().subtract(9, 'days').toDate(),
+          isBibleStudy: false,
+        },
+      ]
+      const result = sortContacts(
+        [studyRecent, oldRegular],
+        'recentConversation',
         'asc',
         ctx({ conversations })
       )
-      expect(result.map((x) => x.id)).toEqual(['active', 'lapsed', 'non'])
+      expect(result.map((x) => x.id)).toEqual(['old', 'study'])
     })
   })
 

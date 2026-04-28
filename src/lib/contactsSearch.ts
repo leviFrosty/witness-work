@@ -28,15 +28,20 @@ const buildEntries = (
   }))
 }
 
+// Weights are relative — Fuse normalizes them internally. Name still leads
+// (it's the primary identifier), but we keep its lead modest so a strong
+// match in a conversation note or a user-curated custom field can outrank a
+// weak fuzzy hit on someone else's name. Custom fields rank just under name
+// because the user typed them by hand — they're high-signal.
 const FUSE_KEYS: IFuseOptions<ContactSearchEntry>['keys'] = [
-  { name: 'contact.name', weight: 0.5 },
+  { name: 'contact.name', weight: 0.35 },
+  { name: 'customFieldValues', weight: 0.25 },
+  { name: 'notes', weight: 0.2 },
   { name: 'contact.phone', weight: 0.15 },
   { name: 'contact.email', weight: 0.15 },
   { name: 'contact.address.city', weight: 0.05 },
   { name: 'contact.address.state', weight: 0.05 },
   { name: 'contact.address.zip', weight: 0.05 },
-  { name: 'customFieldValues', weight: 0.1 },
-  { name: 'notes', weight: 0.15 },
 ]
 
 export const buildContactsFuse = (

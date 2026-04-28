@@ -1,6 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react'
-import { TextInput, View } from 'react-native'
-import { Sheet, XStack } from 'tamagui'
+import { ScrollView, StyleSheet, TextInput, View } from 'react-native'
 import { faTimes } from '@fortawesome/free-solid-svg-icons'
 
 import useTheme from '../../contexts/theme'
@@ -458,19 +457,39 @@ const ContactsFilterSheet: React.FC<ContactsFilterSheetProps> = ({
     valueInputProps.placeholder = 'YYYY-MM-DD'
   }
 
+  if (!open) return null
+
   return (
-    <Sheet
-      open={open}
-      modal
-      snapPoints={[80]}
-      onOpenChange={onOpenChange}
-      dismissOnSnapToBottom
-      animation='quick'
+    // Absolutely-positioned overlay rendered inside the parent screen rather
+    // than a Tamagui Sheet. The parent (ContactsSortAndFilterScreen) is itself
+    // an iOS native form-sheet modal, and a Tamagui Sheet's portal/RN-Modal
+    // attaches to the React root which sits *behind* the form-sheet — opening
+    // it from within would render the sheet but never make it visible. Staying
+    // inline within the parent's view tree keeps everything visible.
+    <View
+      style={{
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        zIndex: 50,
+        backgroundColor: theme.colors.background,
+      }}
     >
-      <Sheet.Handle />
-      <Sheet.Overlay zIndex={100_000 - 1} />
-      <Sheet.Frame>
-        <XStack ai='center' jc='space-between' px={20} pt={20} pb={10}>
+      <View style={{ flex: 1 }}>
+        <View
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            paddingHorizontal: 20,
+            paddingTop: 20,
+            paddingBottom: 10,
+            borderBottomWidth: StyleSheet.hairlineWidth,
+            borderBottomColor: theme.colors.border,
+          }}
+        >
           <Text
             style={{
               fontSize: theme.fontSize('xl'),
@@ -486,14 +505,16 @@ const ContactsFilterSheet: React.FC<ContactsFilterSheetProps> = ({
             icon={faTimes}
             color={theme.colors.text}
           />
-        </XStack>
+        </View>
 
-        <Sheet.ScrollView
+        <ScrollView
+          style={{ flex: 1 }}
           contentContainerStyle={{
             paddingHorizontal: 16,
-            paddingTop: 6,
+            paddingTop: 12,
             paddingBottom: 120,
           }}
+          keyboardShouldPersistTaps='handled'
         >
           <View style={{ gap: 22 }}>
             {/* Top sections (field/operator/value) share a 14px rhythm. */}
@@ -573,9 +594,9 @@ const ContactsFilterSheet: React.FC<ContactsFilterSheetProps> = ({
               )}
             </View>
           </View>
-        </Sheet.ScrollView>
+        </ScrollView>
 
-        {/* Sticky bottom action row — sits over Sheet.ScrollView's bottom
+        {/* Sticky bottom action row — sits over the ScrollView's bottom
             padding so neither button is ever hidden behind the home indicator. */}
         <View
           style={{
@@ -644,8 +665,8 @@ const ContactsFilterSheet: React.FC<ContactsFilterSheetProps> = ({
             </Text>
           </Button>
         </View>
-      </Sheet.Frame>
-    </Sheet>
+      </View>
+    </View>
   )
 }
 

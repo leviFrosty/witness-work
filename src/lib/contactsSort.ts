@@ -18,6 +18,7 @@ export type ContactSortDirection = 'asc' | 'desc'
  * defs as "no values everywhere", which sorts to the end).
  */
 export type ContactSortKey =
+  | 'suggested'
   | 'recentConversation'
   | 'az'
   | 'za'
@@ -109,6 +110,7 @@ const compareKey = (
     return localeCmp(av, bv)
   }
   switch (sort) {
+    case 'suggested':
     case 'recentConversation': {
       const ar = getMostRecentConversationForContact({
         conversations: ctx.conversations,
@@ -162,17 +164,23 @@ const compareKey = (
 }
 
 /**
- * Builds a comparator that preserves "favorites pinned to top, then bible
- * studies above non-studies (when not the sort key), then the selected sort
- * key." Direction flips only the sort-key axis — pins remain on top regardless.
- * Sentinels (undefined values) always sort last.
+ * Builds a comparator. The `'suggested'` sort is the default and applies a
+ * "favorites first, then active bible studies, then lapsed studies, then by
+ * recent conversation" tiering — it's what existing users expect from a smart
+ * default. Every other sort key is a pure sort: no favorite or study pinning,
+ * just the chosen axis. That keeps "Recent Conversation" honest (you asked for
+ * a sort, you get a sort), and the user picks `'suggested'` when they want the
+ * smart layering.
+ *
+ * Direction flips only the sort-key axis. Sentinels (undefined values) always
+ * sort last regardless of direction.
  */
 export const buildContactComparator = (
   sort: ContactSortKey,
   direction: ContactSortDirection,
   ctx: SortContext
 ) => {
-  const studiesAboveOthers = sort !== 'bibleStudy'
+  const applyPinning = sort === 'suggested'
   const studyContactIds = new Set(
     ctx.conversations.filter((c) => c.isBibleStudy).map((c) => c.contact.id)
   )
@@ -190,8 +198,8 @@ export const buildContactComparator = (
   const dirMul = direction === 'desc' ? -1 : 1
 
   return (a: Contact, b: Contact): number => {
-    if (!!a.isFavorite !== !!b.isFavorite) return a.isFavorite ? -1 : 1
-    if (studiesAboveOthers) {
+    if (applyPinning) {
+      if (!!a.isFavorite !== !!b.isFavorite) return a.isFavorite ? -1 : 1
       const at = studyTier(a)
       const bt = studyTier(b)
       if (at !== bt) return bt - at

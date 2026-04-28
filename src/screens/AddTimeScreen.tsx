@@ -31,11 +31,16 @@ import Header from '../components/layout/Header'
 import { faTrash } from '@fortawesome/free-solid-svg-icons'
 import IconButton from '../components/IconButton'
 import usePublisher from '../hooks/usePublisher'
-import { getMonthsReports, getReport } from '../lib/serviceReport'
+import {
+  adjustedMinutesForSpecificMonth,
+  getMonthsReports,
+  getReport,
+} from '../lib/serviceReport'
 import useAnimation from '../hooks/useAnimation'
 import { RootStackNavigation, RootStackParamList } from '../types/rootStack'
 import Haptics from '../lib/haptics'
 import { CONFETTI_DELAY_MS } from '../providers/AnimationViewProvider'
+import useCelebrationQueue from '../stores/celebrationQueue'
 
 type AddTimeScreenProps = NativeStackScreenProps<RootStackParamList, 'Add Time'>
 
@@ -43,7 +48,14 @@ const AddTimeScreen = ({ route }: AddTimeScreenProps) => {
   const theme = useTheme()
   const insets = useSafeAreaInsets()
   const navigation = useNavigation<RootStackNavigation>()
-  const { serviceReportTags, set } = usePreferences()
+  const {
+    serviceReportTags,
+    set,
+    publisher,
+    publisherHours,
+    overrideCreditLimit,
+    customCreditLimitHours,
+  } = usePreferences()
   const { hasAnnualGoal } = usePublisher()
   const { playConfetti } = useAnimation()
   const presetCategories: ServiceReportTag[] = [
@@ -304,6 +316,50 @@ const AddTimeScreen = ({ route }: AddTimeScreenProps) => {
     setTimeout(() => {
       Haptics.success()
     }, CONFETTI_DELAY_MS + 100)
+
+    // Multi-burst Skia fireworks on the Progress month tab are reserved for
+    // *crossing* the monthly goal — the moment the report's target month
+    // goes from below goal to at-or-above goal. Adding more time after the
+    // goal is already met (or adding time that doesn't reach goal) doesn't
+    // queue anything, so the fireworks don't fire on every submission. The
+    // queue is keyed by `(month, year)` so it only pops when the user is
+    // actually viewing the month they crossed.
+    const goalHours = publisherHours[publisher]
+    if (goalHours > 0) {
+      const reportMoment = moment(serviceReport.date)
+      const reportMonth = reportMoment.month()
+      const reportYear = reportMoment.year()
+      const creditOverride = {
+        enabled: overrideCreditLimit,
+        customLimitHours: customCreditLimitHours,
+      }
+      const beforeReports = getMonthsReports(
+        serviceReports,
+        reportMonth,
+        reportYear
+      )
+      const beforeMinutes = adjustedMinutesForSpecificMonth(
+        beforeReports,
+        reportMonth,
+        reportYear,
+        publisher,
+        creditOverride
+      ).value
+      const afterMinutes = adjustedMinutesForSpecificMonth(
+        [...beforeReports, serviceReport],
+        reportMonth,
+        reportYear,
+        publisher,
+        creditOverride
+      ).value
+      const goalMinutes = goalHours * 60
+      const crossedGoal =
+        beforeMinutes < goalMinutes && afterMinutes >= goalMinutes
+      if (crossedGoal) {
+        useCelebrationQueue.getState().queue(reportMonth, reportYear)
+      }
+    }
+
     addServiceReport(serviceReport)
     toast.show(i18n.t('success'), {
       message: i18n.t('timeAdded'),

@@ -1,0 +1,5 @@
+export { default as Confetti } from './react/Confetti'
+export type { ConfettiHandle, ConfettiProps } from './react/Confetti'
+export { default as useConfetti } from './react/useConfetti'
+export type { UseConfettiResult } from './react/useConfetti'
+export type { ConfettiConfig } from './core/Config'

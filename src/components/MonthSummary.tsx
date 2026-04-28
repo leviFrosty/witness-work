@@ -1,4 +1,4 @@
-import { View, Dimensions } from 'react-native'
+import { useWindowDimensions, View } from 'react-native'
 import Text from './MyText'
 import i18n from '../lib/locales'
 import MonthServiceReportProgressBar from './MonthServiceReportProgressBar'
@@ -14,7 +14,7 @@ import {
   standardMinutesForSpecificMonth,
 } from '../lib/serviceReport'
 import useServiceReport from '../stores/serviceReport'
-import { useEffect, useMemo } from 'react'
+import { useCallback, useEffect, useMemo, useRef } from 'react'
 import useTheme from '../contexts/theme'
 import { ExportTimeSheetState } from './ExportTimeSheet'
 import { ServiceReport } from '../types/serviceReport'
@@ -26,7 +26,11 @@ import ActionButton from './ActionButton'
 import Button from './Button'
 import Chip from './Chip'
 import CreditInfoSheet from './CreditInfoSheet'
-import { useNavigation } from '@react-navigation/native'
+import {
+  useFocusEffect,
+  useIsFocused,
+  useNavigation,
+} from '@react-navigation/native'
 import _ from 'lodash'
 import moment from 'moment'
 import GoalProgressStats from './GoalProgressStats'
@@ -45,7 +49,51 @@ import {
   withTiming,
 } from 'react-native-reanimated'
 import Haptics from '../lib/haptics'
-import ConfettiCannon from '../vendor/ConfettiCannon'
+import { Confetti, useConfetti } from '../vendor/ConfettiSkia'
+import type { ConfettiConfig } from '../vendor/ConfettiSkia'
+import useCelebrationQueue from '../stores/celebrationQueue'
+import {
+  CONFETTI_DELAY_MS,
+  CONFETTI_DURATION,
+} from '../providers/AnimationViewProvider'
+
+/**
+ * Visual buffer between the global Lottie + chime ending and the Skia fireworks
+ * starting, so the two don't visibly butt up against each other.
+ */
+const FIREWORKS_AFTER_LOTTIE_BUFFER_MS = 200
+
+/**
+ * Fan a confetti burst out across multiple screen positions instead of one
+ * point in the middle. Stagger keeps it reading as a sequence of fireworks
+ * rather than a single explosion. Particle count per burst is kept modest so
+ * the cumulative total roughly matches the prior single-burst intensity.
+ */
+const triggerFireworks = (
+  trigger: (config?: Partial<ConfettiConfig>) => void,
+  width: number,
+  height: number
+) => {
+  // Spread bursts across the upper-mid band of the screen so confetti rains
+  // down through the visible content, not from the edges or below the fold.
+  const burstSpots: { x: number; y: number }[] = [
+    { x: width * 0.2, y: height * 0.28 },
+    { x: width * 0.78, y: height * 0.32 },
+    { x: width * 0.5, y: height * 0.2 },
+    { x: width * 0.35, y: height * 0.5 },
+    { x: width * 0.7, y: height * 0.55 },
+  ]
+  burstSpots.forEach((position, i) => {
+    setTimeout(() => {
+      trigger({
+        position,
+        count: 28,
+        velocity: 240,
+        fade: true,
+      })
+    }, i * 180)
+  })
+}
 
 interface MonthSummaryProps {
   monthsReports: ServiceReport[] | null
@@ -245,17 +293,41 @@ const MonthSummary = ({
     celebratingTier !== null &&
     (celebratedTiers[monthKey] ?? []).includes(celebratingTier)
   const shouldCelebrate = celebratingTier !== null && !alreadyCelebrated
+  const confetti = useConfetti()
+  const { width: windowWidth, height: windowHeight } = useWindowDimensions()
+  // Tab preloading mounts this screen before the user navigates to it. Gate
+  // the celebration burst on actual focus so haptics/fireworks don't fire
+  // (and get marked as celebrated) while the tab is sitting offscreen.
+  const isFocused = useIsFocused()
+
+  // Track scheduled fireworks timers so a quick unmount (tab swap, screen
+  // pop) doesn't leave them firing into a torn-down Skia canvas.
+  const pendingFireworksTimerRef = useRef<ReturnType<typeof setTimeout> | null>(
+    null
+  )
+  useEffect(() => {
+    return () => {
+      if (pendingFireworksTimerRef.current !== null) {
+        clearTimeout(pendingFireworksTimerRef.current)
+        pendingFireworksTimerRef.current = null
+      }
+    }
+  }, [])
+
+  const fireFireworks = useCallback(() => {
+    triggerFireworks(confetti.trigger, windowWidth, windowHeight)
+  }, [confetti, windowWidth, windowHeight])
 
   useEffect(() => {
+    if (!isFocused) return
     if (!shouldCelebrate || !celebratingTier) return
     sealScale.value = withSequence(
       withTiming(1.3, { duration: 180 }),
       withTiming(1, { duration: 220 })
     )
-    // Confetti auto-starts on its own mount; this effect only owns the
-    // haptic + "mark as celebrated" side effects.
     if (celebratingTier === 'record') {
       Haptics.heavy()
+      fireFireworks()
     } else if (celebratingTier === 'crushed') {
       Haptics.medium()
     } else {
@@ -263,52 +335,92 @@ const MonthSummary = ({
     }
     markTierCelebrated(monthKey, celebratingTier)
   }, [
+    isFocused,
     shouldCelebrate,
     celebratingTier,
     monthKey,
     markTierCelebrated,
     sealScale,
+    fireFireworks,
   ])
+
+  // Pop any pending fireworks queued by AddTimeScreen.submit() for THIS
+  // specific month/year. The queue is keyed per-month so adding time that
+  // crosses March's goal doesn't fire on April — the fireworks wait until
+  // the user actually navigates to March. If the user submitted from this
+  // very screen, the global Lottie + chime is mid-play — delay the Skia
+  // bursts until after it finishes so the two celebrations don't visually
+  // overlap.
+  useFocusEffect(
+    useCallback(() => {
+      const queuedAt = useCelebrationQueue.getState().consume(month, year)
+      if (queuedAt === null) return
+      const elapsed = Date.now() - queuedAt
+      const lottieTotalMs =
+        CONFETTI_DELAY_MS + CONFETTI_DURATION + FIREWORKS_AFTER_LOTTIE_BUFFER_MS
+      const delay = Math.max(0, lottieTotalMs - elapsed)
+      pendingFireworksTimerRef.current = setTimeout(() => {
+        pendingFireworksTimerRef.current = null
+        fireFireworks()
+      }, delay)
+      return () => {
+        if (pendingFireworksTimerRef.current !== null) {
+          clearTimeout(pendingFireworksTimerRef.current)
+          pendingFireworksTimerRef.current = null
+        }
+      }
+    }, [fireFireworks, month, year])
+  )
 
   if (!monthsReports) {
     return (
-      <GlassCard>
-        <Text
-          style={{
-            fontSize: theme.fontSize('xl'),
-            fontFamily: theme.fonts.bold,
-          }}
-        >
-          {i18n.t('noTimeReports')}
-        </Text>
-        <Text
-          style={{
-            fontSize: theme.fontSize('sm'),
-            color: theme.colors.textAlt,
-            marginTop: 6,
-            marginBottom: 12,
-          }}
-        >
-          {i18n.t('noTimeReports_description')}
-        </Text>
-        {monthInFuture ? (
-          <ActionButton
-            onPress={() => navigation.navigate('PlanSchedule', { month, year })}
+      <View>
+        <GlassCard>
+          <Text
+            style={{
+              fontSize: theme.fontSize('xl'),
+              fontFamily: theme.fonts.bold,
+            }}
           >
-            {i18n.t('createPlan')}
-          </ActionButton>
-        ) : (
-          <ActionButton
-            onPress={() =>
-              navigation.navigate('Add Time', {
-                date: moment().month(month).year(year).toISOString(),
-              })
-            }
+            {i18n.t('noTimeReports')}
+          </Text>
+          <Text
+            style={{
+              fontSize: theme.fontSize('sm'),
+              color: theme.colors.textAlt,
+              marginTop: 6,
+              marginBottom: 12,
+            }}
           >
-            {i18n.t('addTime')}
-          </ActionButton>
-        )}
-      </GlassCard>
+            {i18n.t('noTimeReports_description')}
+          </Text>
+          {monthInFuture ? (
+            <ActionButton
+              onPress={() =>
+                navigation.navigate('PlanSchedule', { month, year })
+              }
+            >
+              {i18n.t('createPlan')}
+            </ActionButton>
+          ) : (
+            <ActionButton
+              onPress={() =>
+                navigation.navigate('Add Time', {
+                  date: moment().month(month).year(year).toISOString(),
+                })
+              }
+            >
+              {i18n.t('addTime')}
+            </ActionButton>
+          )}
+        </GlassCard>
+        {/* Mount the canvas in the empty-state branch too — fireworks queued
+          by AddTimeScreen.submit() should still fire when the user lands on
+          a month with no reports yet (e.g. submitting for March, viewing
+          April). Without this, `confetti.ref.current` would be null and the
+          burst would be silently dropped. */}
+        <Confetti ref={confetti.ref} />
+      </View>
     )
   }
 
@@ -553,32 +665,7 @@ const MonthSummary = ({
         </Button>
       )}
 
-      {shouldCelebrate && celebratingTier === 'record' && (
-        <View
-          pointerEvents='none'
-          style={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-          }}
-        >
-          <ConfettiCannon
-            count={80}
-            origin={{ x: Dimensions.get('window').width / 2, y: 0 }}
-            fadeOut
-            autoStart
-            colors={[
-              theme.colors.supporter,
-              theme.colors.accent,
-              theme.colors.accent3,
-              theme.colors.pink,
-              theme.colors.teal,
-            ]}
-          />
-        </View>
-      )}
+      <Confetti ref={confetti.ref} />
     </View>
   )
 }

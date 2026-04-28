@@ -33,6 +33,8 @@ import * as Notifications from 'expo-notifications'
 import { splitDateAndStartTime } from '../lib/normalizeDate'
 import IconButton from '../components/IconButton'
 import { faRotate } from '@fortawesome/free-solid-svg-icons'
+import useCelebrationQueue from '../stores/celebrationQueue'
+import { monthCelebrationKey } from '../lib/achievementTier'
 
 const MONO = Platform.select({
   ios: 'Menlo',
@@ -99,8 +101,10 @@ export default function ToolsScreen() {
     devRolloverDateOverride,
     lastRolloverYearMonth,
     autoRolloverEnabled,
+    celebratedTiers,
     set: setPreferences,
   } = preferences
+  const celebrationQueue = useCelebrationQueue()
   const { isSupporter, since: supporterSince } = useIsSupporter()
   const navigation = useNavigation<RootStackNavigation>()
   const rollover = useRollover()
@@ -812,6 +816,114 @@ export default function ToolsScreen() {
             label='Scheduled (OS queue)'
             value={scheduledNotifications}
             count={scheduledNotifications.length}
+          />
+        </Card>
+
+        <SectionHeader title='Celebrations' />
+        <Card style={{ gap: 10 }}>
+          <Text
+            style={{
+              fontSize: theme.fontSize('sm'),
+              color: theme.colors.textAlt,
+            }}
+          >
+            Two halves of the month-goal celebration. The queue is the in-memory
+            handoff AddTimeScreen.submit() uses to ask MonthSummary for
+            fireworks on focus. celebratedTiers is the persisted record of which
+            tiers fired for which month — once a tier is in here, MonthSummary
+            stops firing the on-mount celebration for it. To verify
+            focus-gating: queue a month, stay on a different tab, and confirm
+            nothing fires until you navigate to that month.
+          </Text>
+          {(() => {
+            const now = moment()
+            const thisMonth = now.month()
+            const thisYear = now.year()
+            const prev = moment().subtract(1, 'month')
+            const prevMonth = prev.month()
+            const prevYear = prev.year()
+            const thisKey = monthCelebrationKey(thisMonth, thisYear)
+            const prevKey = monthCelebrationKey(prevMonth, prevYear)
+            const pendingCount = Object.keys(celebrationQueue.pending).length
+            const celebratedCount = Object.keys(celebratedTiers).length
+            return (
+              <>
+                <XView style={{ justifyContent: 'space-between' }}>
+                  <Text>Pending in queue:</Text>
+                  <Text style={{ fontFamily: theme.fonts.bold }}>
+                    {pendingCount}
+                  </Text>
+                </XView>
+                <XView style={{ justifyContent: 'space-between' }}>
+                  <Text>celebratedTiers months:</Text>
+                  <Text style={{ fontFamily: theme.fonts.bold }}>
+                    {celebratedCount}
+                  </Text>
+                </XView>
+                <XView style={{ justifyContent: 'space-between' }}>
+                  <Text>This month key:</Text>
+                  <Text
+                    style={{ color: theme.colors.textAlt, fontFamily: MONO }}
+                  >
+                    {thisKey}
+                  </Text>
+                </XView>
+                <ActionButton
+                  onPress={() => {
+                    celebrationQueue.queue(thisMonth, thisYear)
+                    showDone(`Queued ${thisKey}`)
+                  }}
+                >
+                  {`Queue fireworks for this month (${now.format('MMM YYYY')})`}
+                </ActionButton>
+                <ActionButton
+                  onPress={() => {
+                    celebrationQueue.queue(prevMonth, prevYear)
+                    showDone(`Queued ${prevKey}`)
+                  }}
+                >
+                  {`Queue fireworks for previous month (${prev.format('MMM YYYY')})`}
+                </ActionButton>
+                <ActionButton
+                  onPress={() => {
+                    useCelebrationQueue.setState({ pending: {} })
+                    showDone('Queue cleared')
+                  }}
+                >
+                  Clear celebration queue
+                </ActionButton>
+                <ActionButton
+                  onPress={() => {
+                    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+                    const { [thisKey]: _removed, ...rest } = celebratedTiers
+                    setPreferences({ celebratedTiers: rest })
+                    showDone(`Cleared ${thisKey} from celebratedTiers`)
+                  }}
+                >
+                  Reset celebratedTiers for this month
+                </ActionButton>
+                <ActionButton
+                  onPress={() =>
+                    confirmDestructive('Reset all celebratedTiers', () => {
+                      setPreferences({ celebratedTiers: {} })
+                      showDone('All celebratedTiers cleared')
+                    })
+                  }
+                >
+                  Reset ALL celebratedTiers
+                </ActionButton>
+              </>
+            )
+          })()}
+          <JsonViewer
+            label='Celebration queue (pending)'
+            value={celebrationQueue.pending}
+            count={Object.keys(celebrationQueue.pending).length}
+          />
+          <JsonViewer
+            label='celebratedTiers'
+            value={celebratedTiers}
+            count={Object.keys(celebratedTiers).length}
           />
         </Card>
 

@@ -6,14 +6,19 @@ import { BottomTabScreenProps } from '@react-navigation/bottom-tabs'
 import { useNavigation as useRootNavigation } from '@react-navigation/native'
 import moment from 'moment'
 import { faArrowLeft, faArrowRight } from '@fortawesome/free-solid-svg-icons'
-import { FlashList } from '@shopify/flash-list'
 
 import useServiceReport from '../stores/serviceReport'
 import useTheme from '../contexts/theme'
-import { getMonthsReports } from '../lib/serviceReport'
+import {
+  getMonthsReports,
+  getPlansIntersectingDay,
+  getEffectiveStartTimeInMinutesForRecurringPlan,
+  RecurringPlan,
+} from '../lib/serviceReport'
+import { getStartTimeInMinutes } from '../lib/normalizeDate'
 import { RootStackNavigation } from '../types/rootStack'
 import { HomeTabStackParamList } from '../types/homeStack'
-import { ServiceReport } from '../types/serviceReport'
+import { DayPlan, ServiceReport } from '../types/serviceReport'
 
 import GlassCard from '../components/GlassCard'
 import CalendarHeader, { CalendarViewMode } from '../components/CalendarHeader'
@@ -28,7 +33,8 @@ import Button from '../components/Button'
 import IconButton from '../components/IconButton'
 import Text from '../components/MyText'
 import XView from '../components/layout/XView'
-import TimeReportRow from '../components/TimeReportRow'
+import DayPlanRow from '../components/DayPlanRow'
+import RecurringPlanRow from '../components/RecurringPlanRow'
 import i18n from '../lib/locales'
 
 type Props = BottomTabScreenProps<HomeTabStackParamList, 'Schedule'>
@@ -37,7 +43,7 @@ const ScheduleScreen = ({ route }: Props) => {
   const theme = useTheme()
   const insets = useSafeAreaInsets()
   const rootNavigation = useRootNavigation<RootStackNavigation>()
-  const { serviceReports } = useServiceReport()
+  const { serviceReports, dayPlans, recurringPlans } = useServiceReport()
 
   const [year, setYear] = useState(route.params?.year ?? moment().year())
   const [month, setMonth] = useState(route.params?.month ?? moment().month())
@@ -59,6 +65,68 @@ const ScheduleScreen = ({ route }: Props) => {
   const thisMonthsReports = useMemo(
     () => getMonthsReports(serviceReports, month, year),
     [month, serviceReports, year]
+  )
+
+  type PlanInstance =
+    | { kind: 'day'; date: Date; plan: DayPlan; sortKey: number }
+    | { kind: 'recurring'; date: Date; plan: RecurringPlan; sortKey: number }
+
+  const monthPlanInstances = useMemo<PlanInstance[]>(() => {
+    const base = moment().month(month).year(year).startOf('month')
+    const daysInMonth = base.daysInMonth()
+    const items: PlanInstance[] = []
+
+    for (let d = 1; d <= daysInMonth; d++) {
+      const dayDate = moment(base).date(d).toDate()
+      const dayStartMs = moment(base).date(d).startOf('day').valueOf()
+
+      const dayPlansForDay = dayPlans.filter((dp) =>
+        moment(dp.date).isSame(dayDate, 'day')
+      )
+      for (const plan of dayPlansForDay) {
+        items.push({
+          kind: 'day',
+          date: dayDate,
+          plan,
+          sortKey: dayStartMs + getStartTimeInMinutes(plan),
+        })
+      }
+
+      const recurringForDay = getPlansIntersectingDay(dayDate, recurringPlans)
+      for (const plan of recurringForDay) {
+        items.push({
+          kind: 'recurring',
+          date: dayDate,
+          plan,
+          sortKey:
+            dayStartMs +
+            getEffectiveStartTimeInMinutesForRecurringPlan(plan, dayDate),
+        })
+      }
+    }
+
+    return items.sort((a, b) => b.sortKey - a.sortKey)
+  }, [dayPlans, recurringPlans, month, year])
+
+  const handleEditDayPlan = useCallback(
+    (plan: DayPlan, date: Date) => {
+      rootNavigation.navigate('PlanDay', {
+        date: date.toISOString(),
+        existingDayPlanId: plan.id,
+      })
+    },
+    [rootNavigation]
+  )
+
+  const handleEditRecurringPlanInstance = useCallback(
+    (plan: RecurringPlan, date: Date) => {
+      rootNavigation.navigate('PlanDay', {
+        date: date.toISOString(),
+        existingRecurringPlanId: plan.id,
+        recurringPlanDate: date.toISOString(),
+      })
+    },
+    [rootNavigation]
   )
 
   const handleAddTime = useCallback(() => {
@@ -246,26 +314,34 @@ const ScheduleScreen = ({ route }: Props) => {
               letterSpacing: 0.5,
             }}
           >
-            {i18n.t('entries')}
+            {i18n.t('plans')}
           </Text>
           <View style={{ gap: 10, minHeight: 10 }}>
-            <FlashList
-              scrollEnabled={false}
-              data={
-                thisMonthsReports
-                  ? [...thisMonthsReports].sort((a, b) =>
-                      moment(a.date).unix() < moment(b.date).unix() ? 1 : -1
-                    )
-                  : undefined
-              }
-              ItemSeparatorComponent={() => <View style={{ height: 10 }} />}
-              renderItem={({ item }) => <TimeReportRow report={item} />}
-              ListEmptyComponent={
-                <Card>
-                  <Text>{i18n.t('noReportsThisMonthYet')}</Text>
-                </Card>
-              }
-            />
+            {monthPlanInstances.length === 0 ? (
+              <Card>
+                <Text>{i18n.t('noPlansScheduledForThisMonth')}</Text>
+              </Card>
+            ) : (
+              monthPlanInstances.map((item) =>
+                item.kind === 'day' ? (
+                  <DayPlanRow
+                    key={`day-${item.plan.id}-${item.date.toISOString()}`}
+                    plan={item.plan}
+                    date={item.date}
+                    onPress={() => handleEditDayPlan(item.plan, item.date)}
+                  />
+                ) : (
+                  <RecurringPlanRow
+                    key={`recurring-${item.plan.id}-${item.date.toISOString()}`}
+                    plan={item.plan}
+                    date={item.date}
+                    onPress={() =>
+                      handleEditRecurringPlanInstance(item.plan, item.date)
+                    }
+                  />
+                )
+              )
+            )}
           </View>
         </View>
       </KeyboardAwareScrollView>

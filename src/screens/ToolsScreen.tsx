@@ -256,6 +256,13 @@ export default function ToolsScreen() {
   }
 
   const generateServicePlans = () => {
+    // Realistic field-service start times (minutes since midnight): 8:00, 9:30,
+    // 10:00, 13:00, 14:00, 15:30, 18:00, 19:00. Cycled deterministically so
+    // repeated runs produce the same spread.
+    const startTimePool = [480, 570, 600, 780, 840, 930, 1080, 1140]
+    const pickStartTime = (i: number) =>
+      startTimePool[(i * 2654435761) % startTimePool.length]
+
     for (let i = 0; i < 30; i++) {
       if (i < 3) {
         addRecurringPlan({
@@ -269,6 +276,7 @@ export default function ToolsScreen() {
           startDate: moment()
             .subtract(i + 7, 'days')
             .toDate(),
+          startTimeInMinutes: pickStartTime(i),
           note: i === 3 ? 'Note' : '',
         })
       } else {
@@ -282,6 +290,7 @@ export default function ToolsScreen() {
           date: date.toDate(),
           id: `generated-${i}`,
           minutes: 120 + i * 10,
+          startTimeInMinutes: pickStartTime(i),
         })
       }
     }

@@ -42,6 +42,7 @@ const RecurringPlanRow = (props: {
     dateOverride?.startTimeInMinutes ?? props.plan.startTimeInMinutes
   const formattedTime = useFormattedMinutes(displayMinutes)
   const hasOverride = !!dateOverride
+  const isToday = moment(props.date).isSame(moment(), 'day')
 
   const getFrequencyText = (freq: RecurringPlanFrequencies) => {
     switch (freq) {
@@ -136,23 +137,34 @@ const RecurringPlanRow = (props: {
             justifyContent: 'space-between',
             alignItems: 'center',
             marginBottom: 10,
+            gap: 8,
           }}
         >
-          <Text
+          <View
             style={{
-              fontFamily: theme.fonts.semiBold,
-              fontSize: theme.fontSize('md'),
-              color: theme.colors.text,
               flex: 1,
+              flexDirection: 'row',
+              alignItems: 'center',
+              gap: 6,
               marginRight: 10,
             }}
-            numberOfLines={1}
-            ellipsizeMode='tail'
           >
-            {moment(props.date).format('LL')}
-            {' · '}
-            {formatStartTime(displayStartTimeInMinutes)}
-          </Text>
+            <Text
+              style={{
+                fontFamily: theme.fonts.semiBold,
+                fontSize: theme.fontSize('md'),
+                color: theme.colors.text,
+                flexShrink: 1,
+              }}
+              numberOfLines={1}
+              ellipsizeMode='tail'
+            >
+              {moment(props.date).format('LL')}
+              {' · '}
+              {formatStartTime(displayStartTimeInMinutes)}
+            </Text>
+            {isToday && <Badge size='xs'>{i18n.t('today')}</Badge>}
+          </View>
           <Text
             style={{
               fontFamily: theme.fonts.semiBold,

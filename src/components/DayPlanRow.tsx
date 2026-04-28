@@ -13,6 +13,7 @@ import { useFormattedMinutes } from '../lib/minutes'
 import Button from './Button'
 import moment from 'moment'
 import Copyeable from './Copyeable'
+import Badge from './Badge'
 import { formatStartTime } from '../lib/normalizeDate'
 
 const DayPlanRow = (props: {
@@ -24,6 +25,7 @@ const DayPlanRow = (props: {
   const { deleteDayPlan } = useServiceReport()
 
   const formattedTime = useFormattedMinutes(props.plan.minutes)
+  const isToday = moment(props.date).isSame(moment(), 'day')
 
   const handleSwipeOpen = useCallback(
     (direction: 'left' | 'right', swipeable: Swipeable) => {
@@ -85,23 +87,34 @@ const DayPlanRow = (props: {
             justifyContent: 'space-between',
             alignItems: 'center',
             marginBottom: 8,
+            gap: 8,
           }}
         >
-          <Text
+          <View
             style={{
-              fontFamily: theme.fonts.semiBold,
-              fontSize: theme.fontSize('md'),
-              color: theme.colors.text,
               flex: 1,
+              flexDirection: 'row',
+              alignItems: 'center',
+              gap: 6,
               marginRight: 10,
             }}
-            numberOfLines={1}
-            ellipsizeMode='tail'
           >
-            {moment(props.date).format('LL')}
-            {' · '}
-            {formatStartTime(props.plan.startTimeInMinutes)}
-          </Text>
+            <Text
+              style={{
+                fontFamily: theme.fonts.semiBold,
+                fontSize: theme.fontSize('md'),
+                color: theme.colors.text,
+                flexShrink: 1,
+              }}
+              numberOfLines={1}
+              ellipsizeMode='tail'
+            >
+              {moment(props.date).format('LL')}
+              {' · '}
+              {formatStartTime(props.plan.startTimeInMinutes)}
+            </Text>
+            {isToday && <Badge size='xs'>{i18n.t('today')}</Badge>}
+          </View>
           <Text
             style={{
               fontFamily: theme.fonts.semiBold,

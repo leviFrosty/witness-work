@@ -1,6 +1,6 @@
 # AGENTS.md
 
-Guide for AI coding agents working in WitnessWork. iOS only application.
+Guide for AI coding agents working in WitnessWork. THIS PROJECT IS iOS ONLY. DO NOT MAKE ANY REFERENCES TO ANDROID!!!!!!
 
 ## Project Overview
 
@@ -70,6 +70,23 @@ Source of truth = `src/locales/en-US.json`. Add new keys there first. Run `pnpm 
 ### Styling
 
 Tamagui + RN StyleSheet. Theme via `ThemeProvider`. Prefer theme tokens over hardcoded colors.
+
+### iOS 26 Liquid Glass — use `expo-glass-effect`, never fake it
+
+The app targets iOS 26's Liquid Glass material. `expo-glass-effect` is **already installed** — use `GlassView` from it for any nav/control/modal-layer surface that needs the material.
+
+```tsx
+import { GlassView } from 'expo-glass-effect'
+;<GlassView glassEffectStyle='regular' style={shape}>
+  {children}
+</GlassView>
+```
+
+- **Auto-fallback**: `GlassView` renders as a plain `View` on iOS < 26 — no manual `isLiquidGlassAvailable()` gating needed for render. For free-floating elements that would visually disappear without the material (tab bar, chips, full-screen loaders), keep a `BlurView` underneath unconditionally as the visible-surface fallback.
+- **`GlassContainer`** merges adjacent glass surfaces — use when grouping pills/toolbar items.
+- **Do not hand-build glass** with `BlurView` + opacity overlays + custom borders. That replicas the system effect badly and conflicts with the real material when it activates. The legacy `GlassCard.tsx` is a known example slated for deletion.
+- **Where glass belongs** (Apple HIG): nav bars, tab bars, sheets/popovers/modals, primary CTAs, search bars, floating overlays. **Where it doesn't**: content cards, list rows, badges, form inputs, static visualizations.
+- Full inventory & rollout plan: `docs/liquid-glass-adoption-plan.md`. Reference impl: `src/components/TabBar.tsx`.
 
 ### React Compiler
 

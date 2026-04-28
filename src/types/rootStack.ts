@@ -31,6 +31,7 @@ export type RootStackParamList = {
   'Import and Export': undefined
   PreferencesPublisher: undefined
   PreferencesConversation: undefined
+  PreferencesPlans: undefined
   PreferencesNavigation: undefined
   PreferencesHomeScreen: undefined
   PreferencesBackups: undefined

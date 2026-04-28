@@ -40,6 +40,7 @@ import { maybeRequestStoreReview } from '../lib/storeReview'
 import useNotifications from '../hooks/notifications'
 import { useToastController } from '@tamagui/toast'
 import { RootStackParamList } from '../types/rootStack'
+import { deriveOffsetFromDates } from '../lib/notificationOffset'
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Conversation Form'>
 type MomentOffset = {
@@ -197,10 +198,29 @@ const ConversationFormScreen = ({ route, navigation }: Props) => {
 
   const notAtHome = params.notAtHome
 
-  const [notifyMeOffset, setNotifyMeOffset] = useState<MomentOffset>({
-    amount: returnVisitNotificationOffset?.amount || 2,
-    unit: returnVisitNotificationOffset?.unit || 'hours',
-  })
+  // When editing, prefer the offset implied by the saved notification so the
+  // form doesn't silently rewrite the user's prior choice with the preference
+  // default. Falls back to the preference (then a hardcoded default) for new
+  // conversations or when no notification was scheduled.
+  const initialNotifyMeOffset = (): MomentOffset => {
+    const saved = conversationToUpdate?.followUp?.notifications?.[0]
+    const followUpDate = conversationToUpdate?.followUp?.date
+    if (saved && followUpDate) {
+      const derived = deriveOffsetFromDates(
+        new Date(followUpDate),
+        new Date(saved.date)
+      )
+      if (derived) return derived
+    }
+    return {
+      amount: returnVisitNotificationOffset?.amount || 2,
+      unit: returnVisitNotificationOffset?.unit || 'hours',
+    }
+  }
+
+  const [notifyMeOffset, setNotifyMeOffset] = useState<MomentOffset>(
+    initialNotifyMeOffset()
+  )
 
   const getConversationDefaultValue = (): Conversation => {
     if (conversationToUpdate) {

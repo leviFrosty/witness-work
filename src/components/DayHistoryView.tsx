@@ -15,7 +15,9 @@ import {
   getPlansIntersectingDay,
   RecurringPlan,
   getEffectiveMinutesForRecurringPlan,
+  getEffectiveStartTimeInMinutesForRecurringPlan,
 } from '../lib/serviceReport'
+import { getStartTimeInMinutes } from '../lib/normalizeDate'
 import DayPlanRow from './DayPlanRow'
 import RecurringPlanRow from './RecurringPlanRow'
 import Circle from './Circle'
@@ -61,11 +63,17 @@ const DayHistoryView: React.FC<DayHistoryViewProps> = ({
   }, [thisDaysReports])
 
   const dayPlansForToday = useMemo(() => {
-    return dayPlans.filter((dp) => moment(dp.date).isSame(date, 'day'))
+    return dayPlans
+      .filter((dp) => moment(dp.date).isSame(date, 'day'))
+      .sort((a, b) => getStartTimeInMinutes(a) - getStartTimeInMinutes(b))
   }, [dayPlans, date])
 
   const recurringPlansForToday = useMemo(() => {
-    return getPlansIntersectingDay(date, recurringPlans)
+    return getPlansIntersectingDay(date, recurringPlans).sort(
+      (a, b) =>
+        getEffectiveStartTimeInMinutesForRecurringPlan(a, date) -
+        getEffectiveStartTimeInMinutesForRecurringPlan(b, date)
+    )
   }, [recurringPlans, date])
 
   const goalHours = useMemo(() => {

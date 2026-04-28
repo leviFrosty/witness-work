@@ -19,6 +19,7 @@ import PaywallThankYouScreen from '../screens/PaywallThankYouScreen'
 import ImportAndExportScreen from '../screens/ImportAndExportScreen'
 import PreferencesPublisherScreen from '../screens/settings/preferences/screens/PreferencesPublisherScreen'
 import PreferencesConversationScreen from '../screens/settings/preferences/screens/PreferencesConversationScreen'
+import PreferencesPlansScreen from '../screens/settings/preferences/screens/PreferencesPlansScreen'
 import PreferencesNavigationScreen from '../screens/settings/preferences/screens/PreferencesNavigationScreen'
 import PreferencesHomeScreen from '../screens/settings/preferences/screens/PreferencesHomeScreen'
 import PreferencesBackupsScreen from '../screens/settings/preferences/screens/PreferencesBackupsScreen'
@@ -163,6 +164,13 @@ const RootStackComponent = () => {
         }}
         name='PreferencesConversation'
         component={PreferencesConversationScreen}
+      />
+      <RootStack.Screen
+        options={{
+          header: () => <Header buttonType='back' title={i18n.t('plans')} />,
+        }}
+        name='PreferencesPlans'
+        component={PreferencesPlansScreen}
       />
       <RootStack.Screen
         options={{

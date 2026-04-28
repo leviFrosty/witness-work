@@ -13,6 +13,7 @@ import { useFormattedMinutes } from '../lib/minutes'
 import Button from './Button'
 import moment from 'moment'
 import Copyeable from './Copyeable'
+import { formatStartTime } from '../lib/normalizeDate'
 
 const DayPlanRow = (props: {
   plan: DayPlan
@@ -98,6 +99,8 @@ const DayPlanRow = (props: {
             ellipsizeMode='tail'
           >
             {moment(props.date).format('LL')}
+            {' · '}
+            {formatStartTime(props.plan.startTimeInMinutes)}
           </Text>
           <Text
             style={{

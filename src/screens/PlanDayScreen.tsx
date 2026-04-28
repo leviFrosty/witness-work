@@ -3,13 +3,16 @@ import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view
 import ActionButton from '../components/ActionButton'
 import useServiceReport from '../stores/serviceReport'
 import * as Crypto from 'expo-crypto'
+import * as Notifications from 'expo-notifications'
+import * as Sentry from '@sentry/react-native'
 import { useState, useEffect, useMemo } from 'react'
 import { useToastController } from '@tamagui/toast'
-import i18n from '../lib/locales'
+import i18n, { TranslationKey } from '../lib/locales'
 import Text from '../components/MyText'
 import useTheme from '../contexts/theme'
 import Section from '../components/inputs/Section'
 import InputRowContainer from '../components/inputs/InputRowContainer'
+import CheckboxWithLabel from '../components/inputs/CheckboxWithLabel'
 import XView from '../components/layout/XView'
 import Button from '../components/Button'
 import IconButton from '../components/IconButton'
@@ -28,10 +31,24 @@ import {
   RecurringPlanFrequencies,
   getMonthsReports,
 } from '../lib/serviceReport'
+import {
+  combineDateAndStartTime,
+  formatStartTime,
+  splitDateAndStartTime,
+} from '../lib/normalizeDate'
+import { deriveOffsetFromDates } from '../lib/notificationOffset'
+import { usePreferences } from '../stores/preferences'
+import useNotifications from '../hooks/notifications'
+import { Notification } from '../types/conversation'
 
 import TextInput from '../components/TextInput'
 import { RootStackParamList } from '../types/rootStack'
 import DayHistoryView from '../components/DayHistoryView'
+
+type NotifyMeOffset = {
+  amount: number
+  unit: moment.unitOfTime.DurationConstructor
+}
 
 const hourOptions = [...Array(24).keys()].map((value) => ({
   label: `${value}`,
@@ -44,6 +61,18 @@ const minuteOptions = [0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55].map(
   })
 )
 
+const offsetAmountOptions = [...Array(1000).keys()].map((value) => ({
+  label: `${value}`,
+  value,
+}))
+const offsetUnitOptions: {
+  label: string
+  value: moment.unitOfTime.DurationConstructor
+}[] = ['minutes', 'hours', 'days', 'weeks'].map((value) => ({
+  label: i18n.t(`${value}_lowercase` as TranslationKey),
+  value: value as moment.unitOfTime.DurationConstructor,
+}))
+
 const OneTimePlan = (props: {
   date: Date
   setDate: React.Dispatch<React.SetStateAction<Date>>
@@ -53,6 +82,11 @@ const OneTimePlan = (props: {
   setMinutes: React.Dispatch<React.SetStateAction<number>>
   note?: string
   setNote: React.Dispatch<React.SetStateAction<string>>
+  notifyMe: boolean
+  setNotifyMe: React.Dispatch<React.SetStateAction<boolean>>
+  notifyMeOffset: NotifyMeOffset
+  setNotifyMeOffset: React.Dispatch<React.SetStateAction<NotifyMeOffset>>
+  notificationsAllowed: boolean
 }) => {
   const theme = useTheme()
 
@@ -62,6 +96,7 @@ const OneTimePlan = (props: {
         <DateTimePicker
           value={props.date}
           onChange={(_, newDate) => newDate && props.setDate(newDate)}
+          iOSMode='datetime'
         />
       </InputRowContainer>
       <InputRowContainer label={i18n.t('note')}>
@@ -89,7 +124,7 @@ const OneTimePlan = (props: {
       </InputRowContainer>
       <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
         <View style={{ width: '50%' }}>
-          <InputRowContainer label={i18n.t('hours')} lastInSection>
+          <InputRowContainer label={i18n.t('hours')}>
             <View style={{ flex: 1 }}>
               <SelectWheel
                 data={hourOptions}
@@ -101,7 +136,7 @@ const OneTimePlan = (props: {
           </InputRowContainer>
         </View>
         <View style={{ width: '50%' }}>
-          <InputRowContainer label={i18n.t('minutes')} lastInSection>
+          <InputRowContainer label={i18n.t('minutes')}>
             <View style={{ flex: 1 }}>
               <SelectWheel
                 data={minuteOptions}
@@ -113,6 +148,60 @@ const OneTimePlan = (props: {
           </InputRowContainer>
         </View>
       </View>
+      <InputRowContainer label={i18n.t('notification')} lastInSection>
+        <View style={{ gap: 15, flex: 1 }}>
+          <View
+            style={{
+              justifyContent: 'flex-end',
+              flex: 1,
+              flexDirection: 'row',
+            }}
+          >
+            <CheckboxWithLabel
+              label={i18n.t('notifyMe')}
+              value={props.notifyMe}
+              setValue={props.setNotifyMe}
+              disabled={!props.notificationsAllowed}
+              description={i18n.t('notifyMe_description')}
+              descriptionOnlyOnDisabled
+            />
+          </View>
+          {props.notificationsAllowed && props.notifyMe && (
+            <View
+              style={{ flexDirection: 'row', gap: 10, alignItems: 'center' }}
+            >
+              <View style={{ flex: 1 }}>
+                <Select
+                  data={offsetAmountOptions}
+                  onChange={({ value: amount }) =>
+                    props.setNotifyMeOffset({
+                      ...props.notifyMeOffset,
+                      amount,
+                    })
+                  }
+                  placeholder={props.notifyMeOffset.amount.toString()}
+                  value={props.notifyMeOffset.amount.toString()}
+                />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Select
+                  data={offsetUnitOptions}
+                  onChange={({ value: unit }) =>
+                    props.setNotifyMeOffset({
+                      ...props.notifyMeOffset,
+                      unit,
+                    })
+                  }
+                  value={props.notifyMeOffset.unit}
+                />
+              </View>
+              <Text style={{ color: theme.colors.textAlt }}>
+                {i18n.t('before')}
+              </Text>
+            </View>
+          )}
+        </View>
+      </InputRowContainer>
     </>
   )
 }
@@ -178,6 +267,7 @@ const RecurringPlan = (props: {
         <DateTimePicker
           value={props.date}
           onChange={(_, newDate) => newDate && props.setDate(newDate)}
+          iOSMode='datetime'
         />
       </InputRowContainer>
       <InputRowContainer label={i18n.t('frequency')}>
@@ -385,10 +475,16 @@ const PlanDayScreen = ({ route, navigation }: PlanDayScreenProps) => {
   const [oneTime, setOneTime] = useState(existingRecurringPlan ? false : true)
   const [date, setDate] = useState(
     existingDayPlan
-      ? moment(existingDayPlan.date).toDate()
+      ? combineDateAndStartTime(
+          existingDayPlan.date,
+          existingDayPlan.startTimeInMinutes
+        )
       : existingRecurringPlan
-        ? editingDate
-        : defaultDate
+        ? combineDateAndStartTime(
+            editingDate,
+            recurringPlanData?.startTimeInMinutes
+          )
+        : combineDateAndStartTime(defaultDate, undefined)
   )
   const [endDate, setEndDate] = useState<Date | null>(
     existingRecurringPlan?.recurrence.endDate
@@ -528,6 +624,36 @@ const PlanDayScreen = ({ route, navigation }: PlanDayScreenProps) => {
     existingDayPlan?.note ?? recurringPlanData?.note ?? ''
   )
 
+  const { planNotificationOffset, planAlwaysNotify } = usePreferences()
+  const { allowed: notificationsAllowed } = useNotifications()
+
+  const defaultNotifyOffset: NotifyMeOffset = {
+    amount: planNotificationOffset?.amount ?? 30,
+    unit: planNotificationOffset?.unit ?? 'minutes',
+  }
+
+  // Reflect the saved notification's actual offset on edit so the form doesn't
+  // silently rewrite the user's prior choice with the preference default.
+  const initialNotifyOffset = (): NotifyMeOffset => {
+    const saved = existingDayPlan?.notifications?.[0]
+    if (existingDayPlan && saved) {
+      const anchor = combineDateAndStartTime(
+        existingDayPlan.date,
+        existingDayPlan.startTimeInMinutes
+      )
+      const derived = deriveOffsetFromDates(anchor, new Date(saved.date))
+      if (derived) return derived
+    }
+    return defaultNotifyOffset
+  }
+
+  const [notifyMe, setNotifyMe] = useState<boolean>(
+    existingDayPlan ? !!existingDayPlan.notifyMe : planAlwaysNotify
+  )
+  const [notifyMeOffset, setNotifyMeOffset] = useState<NotifyMeOffset>(
+    initialNotifyOffset()
+  )
+
   // Get service reports for the selected date's month so DayHistoryView can show time entries
   const monthsReports = useMemo(() => {
     const currentMonth = moment(date).month()
@@ -555,10 +681,16 @@ const PlanDayScreen = ({ route, navigation }: PlanDayScreenProps) => {
     setOneTime(existingRecurringPlan ? false : true)
     setDate(
       existingDayPlan
-        ? moment(existingDayPlan.date).toDate()
+        ? combineDateAndStartTime(
+            existingDayPlan.date,
+            existingDayPlan.startTimeInMinutes
+          )
         : existingRecurringPlan
-          ? editingDate
-          : defaultDate
+          ? combineDateAndStartTime(
+              editingDate,
+              recurringPlanData?.startTimeInMinutes
+            )
+          : combineDateAndStartTime(defaultDate, undefined)
     )
     setEndDate(
       existingRecurringPlan?.recurrence.endDate
@@ -591,26 +723,104 @@ const PlanDayScreen = ({ route, navigation }: PlanDayScreenProps) => {
       existingRecurringPlan?.recurrence.monthlyByWeekdayConfig?.weekOfMonth ?? 1
     )
     setNote(existingDayPlan?.note ?? recurringPlanData?.note ?? '')
+    setNotifyMe(existingDayPlan ? !!existingDayPlan.notifyMe : planAlwaysNotify)
+    setNotifyMeOffset(initialNotifyOffset())
     // eslint-disable-next-line react-compiler/react-compiler
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [editingContext]) // Only depend on the stable editing context key
 
-  const handleAddPlan = () => {
+  const scheduleDayPlanNotification = async (
+    storedDate: Date,
+    startTimeInMinutes: number,
+    plannedMinutes: number,
+    plannedNote: string | undefined,
+    existingNotifications: Notification[] | undefined
+  ): Promise<Notification[]> => {
+    // Always cancel any prior notifications on this plan first; we re-create
+    // below if (and only if) `notifyMe` is on and the trigger is still in the
+    // future. Same shape as ConversationFormScreen.
+    if (existingNotifications) {
+      for (const n of existingNotifications) {
+        try {
+          await Notifications.cancelScheduledNotificationAsync(n.id)
+        } catch (error) {
+          Sentry.captureException(error)
+        }
+      }
+    }
+    if (!notifyMe || !notificationsAllowed) return []
+
+    const planStart = combineDateAndStartTime(storedDate, startTimeInMinutes)
+    const fireAt = moment(planStart)
+      .subtract(notifyMeOffset.amount, notifyMeOffset.unit)
+      .toDate()
+    if (!moment(fireAt).isAfter(moment())) {
+      // Past-time guard: keep notifyMe persisted so a future edit can
+      // reschedule, but skip the OS call rather than throwing.
+      return []
+    }
+
+    const formatDuration = () => {
+      const h = Math.floor(plannedMinutes / 60)
+      const m = plannedMinutes % 60
+      if (h && m) return `${h}h ${m}m`
+      if (h) return `${h}h`
+      return `${m}m`
+    }
+
+    try {
+      const id = await Notifications.scheduleNotificationAsync({
+        content: {
+          title: i18n.t('plan_reminder_title'),
+          body: `${i18n.t('plan_notification_part1')} ${
+            notifyMeOffset.amount
+          } ${i18n.t(
+            `${notifyMeOffset.unit}_lowercase` as TranslationKey
+          )}. (${formatDuration()})${plannedNote ? `\n${plannedNote}` : ''}`,
+          sound: true,
+        },
+        trigger: {
+          type: Notifications.SchedulableTriggerInputTypes.DATE,
+          date: fireAt,
+        },
+      })
+      return [{ date: fireAt, id }]
+    } catch (error) {
+      Sentry.captureException(error)
+      return []
+    }
+  }
+
+  const handleAddPlan = async () => {
+    const { date: storedDate, startTimeInMinutes } = splitDateAndStartTime(date)
     if (isEditMode) {
       // Update existing plan
       if (existingDayPlan) {
+        const notifications = await scheduleDayPlanNotification(
+          storedDate,
+          startTimeInMinutes,
+          hours * 60 + minutes,
+          note || undefined,
+          existingDayPlan.notifications
+        )
         updateDayPlan({
           id: existingDayPlan.id,
-          date,
+          date: storedDate,
+          startTimeInMinutes,
           minutes: hours * 60 + minutes,
           note: note || undefined,
+          notifyMe,
+          notifications,
         })
       } else if (existingRecurringPlan) {
         if (isOverrideMode) {
-          // Create or update override for specific date
+          // Create or update override for specific date. The override is keyed
+          // to the original instance date (editingDate); only the time part of
+          // the picker contributes to startTimeInMinutes.
           const override = {
             date: editingDate,
             minutes: hours * 60 + minutes,
+            startTimeInMinutes,
             note: note || undefined,
           }
 
@@ -627,7 +837,8 @@ const PlanDayScreen = ({ route, navigation }: PlanDayScreenProps) => {
           // Update the entire recurring plan
           updateRecurringPlan({
             id: existingRecurringPlan.id,
-            startDate: date,
+            startDate: storedDate,
+            startTimeInMinutes,
             minutes: hours * 60 + minutes,
             recurrence: {
               endDate,
@@ -653,16 +864,27 @@ const PlanDayScreen = ({ route, navigation }: PlanDayScreenProps) => {
     } else {
       // Create new plan
       if (oneTime) {
+        const notifications = await scheduleDayPlanNotification(
+          storedDate,
+          startTimeInMinutes,
+          hours * 60 + minutes,
+          note || undefined,
+          undefined
+        )
         addDayPlan({
           id: Crypto.randomUUID(),
-          date,
+          date: storedDate,
+          startTimeInMinutes,
           minutes: hours * 60 + minutes,
           note: note || undefined,
+          notifyMe,
+          notifications,
         })
       } else {
         addRecurringPlan({
           id: Crypto.randomUUID(),
-          startDate: date,
+          startDate: storedDate,
+          startTimeInMinutes,
           minutes: hours * 60 + minutes,
           recurrence: {
             endDate,
@@ -903,6 +1125,11 @@ const PlanDayScreen = ({ route, navigation }: PlanDayScreenProps) => {
                 setHours={setHours}
                 note={note}
                 setNote={setNote}
+                notifyMe={notifyMe}
+                setNotifyMe={setNotifyMe}
+                notifyMeOffset={notifyMeOffset}
+                setNotifyMeOffset={setNotifyMeOffset}
+                notificationsAllowed={notificationsAllowed}
               />
             ) : (
               <RecurringPlan
@@ -1081,6 +1308,11 @@ const PlanDayScreen = ({ route, navigation }: PlanDayScreenProps) => {
                                 style={{ fontFamily: theme.fonts.semiBold }}
                               >
                                 {moment(override.date).format('MMM D, YYYY')}
+                                {' · '}
+                                {formatStartTime(
+                                  override.startTimeInMinutes ??
+                                    existingRecurringPlan.startTimeInMinutes
+                                )}
                               </Text>
                               <Text
                                 style={{

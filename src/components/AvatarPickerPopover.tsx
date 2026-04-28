@@ -17,7 +17,7 @@ import { useNavigation } from '@react-navigation/native'
 import useTheme from '../contexts/theme'
 import { ProfileAvatar } from '../types/avatar'
 import Avatar from './Avatar'
-import AvatarPickerContent from './AvatarPickerContent'
+import AvatarPickerContent, { AvatarMetaCapture } from './AvatarPickerContent'
 import i18n from '../lib/locales'
 
 type AnchorRect = { x: number; y: number; width: number; height: number }
@@ -48,6 +48,12 @@ interface Props {
   gateBackgroundBySupporter?: boolean
   /** Accessibility label for the tappable anchor. Defaults to "profilePicture". */
   accessibilityLabel?: string
+  /**
+   * Forwarded to the picker so callers (specifically `ContactFormScreen`) can
+   * persist resolution / file size / capturedAt metadata on the contact.
+   * Optional — the user's profile avatar doesn't track meta.
+   */
+  onImageMeta?: (meta: AvatarMetaCapture) => void
 }
 
 /**
@@ -70,6 +76,7 @@ const AvatarPickerPopover = ({
   onBackgroundChange,
   gateBackgroundBySupporter = false,
   accessibilityLabel,
+  onImageMeta,
 }: Props) => {
   const theme = useTheme()
   const navigation = useNavigation()
@@ -222,6 +229,7 @@ const AvatarPickerPopover = ({
             backgroundValue={backgroundValue}
             onBackgroundChange={onBackgroundChange}
             gateBackgroundBySupporter={gateBackgroundBySupporter}
+            onImageMeta={onImageMeta}
           />
         </Animated.View>
         <StatusBar translucent />

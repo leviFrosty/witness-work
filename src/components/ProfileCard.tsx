@@ -95,6 +95,7 @@ const ProfileCard = ({ preview, editable, onPressIncomplete }: Props) => {
   const {
     name,
     avatar,
+    customAvatarBackground,
     installedOn,
     pioneerStartDate,
     hasCompletedProfileSetup,
@@ -243,6 +244,9 @@ const ProfileCard = ({ preview, editable, onPressIncomplete }: Props) => {
       name={trimmedName}
       size={44}
       showBackgroundSwatches
+      backgroundValue={customAvatarBackground}
+      onBackgroundChange={(next) => set({ customAvatarBackground: next })}
+      gateBackgroundBySupporter
     />
   ) : (
     <Avatar avatar={avatar} name={trimmedName} size={44} />

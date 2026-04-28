@@ -1,4 +1,11 @@
-import { ComponentType, useCallback, useEffect, useMemo, useState } from 'react'
+import {
+  ComponentType,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react'
 import { View } from 'react-native'
 import StepOne from './steps/One'
 import StepTwo from './steps/Two'
@@ -106,8 +113,17 @@ const OnBoarding = () => {
 
   // Persist the active step id so reloads resume here. Writing the id (not
   // the index) keeps the saved state meaningful even when conditional steps
-  // re-order the visible list.
+  // re-order the visible list. Skipped on first mount: when there's no
+  // persisted id, the useState initializer above already lands on step 0, and
+  // writing 'hero' back during the same commit cycle that flipped
+  // onboardingComplete=false races App's preferences subscription and trips
+  // React's "update during render" warning.
+  const skipFirstPersist = useRef(true)
   useEffect(() => {
+    if (skipFirstPersist.current) {
+      skipFirstPersist.current = false
+      return
+    }
     const id = visibleSteps[stepIndex]?.id
     if (id && id !== onboardingStepId) {
       set({ onboardingStepId: id })

@@ -2,6 +2,7 @@ import moment from 'moment'
 import {
   DayPlan,
   RecurringPlan,
+  RecurringPlanOverride,
   ServiceReportsByYears,
 } from '../types/serviceReport'
 
@@ -169,4 +170,57 @@ export const migrateNormalizeDates = (
     dayPlans,
     recurringPlans,
   }
+}
+
+/** Default start time for plans that have no explicit time set: noon. */
+export const DEFAULT_START_TIME_IN_MINUTES = 720
+
+/**
+ * Returns the effective start time for a plan or override. Falls back to noon
+ * (720) when the field is unset, so legacy plans without a stored time render
+ * as noon without requiring a data migration.
+ */
+export const getStartTimeInMinutes = (
+  plan: Pick<
+    DayPlan | RecurringPlan | RecurringPlanOverride,
+    'startTimeInMinutes'
+  >
+): number => plan.startTimeInMinutes ?? DEFAULT_START_TIME_IN_MINUTES
+
+/**
+ * Combines a noon-UTC anchored calendar date with a wall-clock
+ * minutes-since-midnight value into a local-time Date suitable for a datetime
+ * picker's `value` prop. The returned Date is in the device's local time.
+ */
+export const combineDateAndStartTime = (
+  date: Date | string,
+  startTimeInMinutes?: number
+): Date => {
+  const minutes = startTimeInMinutes ?? DEFAULT_START_TIME_IN_MINUTES
+  const m = momentStoredDate(date)
+  const d = new Date(m.year(), m.month(), m.date(), 0, 0, 0, 0)
+  d.setMinutes(minutes)
+  return d
+}
+
+/**
+ * Splits a local-time Date (typically from a datetime picker's `onChange`) into
+ * the noon-UTC anchored calendar date and the local wall-clock minutes since
+ * midnight.
+ */
+export const splitDateAndStartTime = (
+  localDate: Date
+): { date: Date; startTimeInMinutes: number } => ({
+  date: normalizeDateForStorage(localDate),
+  startTimeInMinutes: localDate.getHours() * 60 + localDate.getMinutes(),
+})
+
+/**
+ * Formats a plan's start time using the active moment locale's `LT` token
+ * (e.g., "9:00 AM" en-US, "09:00" de-DE). Pass either an explicit
+ * minutes-since-midnight value or `undefined` to fall through to the default.
+ */
+export const formatStartTime = (startTimeInMinutes?: number): string => {
+  const minutes = startTimeInMinutes ?? DEFAULT_START_TIME_IN_MINUTES
+  return moment().startOf('day').add(minutes, 'minutes').format('LT')
 }

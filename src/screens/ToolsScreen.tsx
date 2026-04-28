@@ -14,6 +14,7 @@ import { hasMigratedFromAsyncStorage } from '../stores/mmkv'
 import useConversations from '../stores/conversationStore'
 import axios from 'axios'
 import moment from 'moment'
+import { useState } from 'react'
 import { useToastController } from '@tamagui/toast'
 import { RecurringPlanFrequencies } from '../lib/serviceReport'
 import { useTimeCache } from '../stores/timeCache'
@@ -27,6 +28,9 @@ import JsonViewer from '../components/JsonViewer'
 import { useNavigation } from '@react-navigation/native'
 import { RootStackNavigation } from '../types/rootStack'
 import { useRollover } from '../hooks/useRollover'
+import * as ICloudBridge from '../../modules/icloud-bridge'
+import * as Notifications from 'expo-notifications'
+import { splitDateAndStartTime } from '../lib/normalizeDate'
 
 const MONO = Platform.select({
   ios: 'Menlo',
@@ -279,6 +283,133 @@ export default function ToolsScreen() {
         })
       }
     }
+  }
+
+  const [scheduledNotifications, setScheduledNotifications] = useState<
+    Notifications.NotificationRequest[]
+  >([])
+
+  // Asks for notification permission if not yet granted. Returns true if the
+  // app may schedule, false otherwise. The dev tool helpers below all funnel
+  // through this so the user gets one consistent prompt path.
+  const ensureNotificationPermission = async (): Promise<boolean> => {
+    const { granted } = await Notifications.getPermissionsAsync()
+    if (granted) return true
+    const r = await Notifications.requestPermissionsAsync()
+    if (!r.granted) {
+      toast.show('Notifications denied', {
+        message: 'Enable notifications in iOS Settings, then retry.',
+        native: true,
+      })
+      return false
+    }
+    return true
+  }
+
+  // Smallest possible end-to-end check: schedules a generic notification 10s
+  // out. Verifies the OS scheduling pipeline independent of any plan logic.
+  const scheduleTestNotificationIn10s = async () => {
+    if (!(await ensureNotificationPermission())) return
+    const fireAt = new Date(Date.now() + 10_000)
+    const id = await Notifications.scheduleNotificationAsync({
+      content: {
+        title: 'Test notification',
+        body: 'Fired from dev tools (10s)',
+        sound: true,
+      },
+      trigger: {
+        type: Notifications.SchedulableTriggerInputTypes.DATE,
+        date: fireAt,
+      },
+    })
+    toast.show('Scheduled', {
+      message: `Fires in 10s · id ${id.slice(0, 8)}…`,
+      native: true,
+    })
+  }
+
+  // Exercises the real plan path: creates a day plan starting 3 minutes from
+  // now with a 1-minute notify offset, so the notification fires in ~2 min.
+  // Stores the OS notification id on the plan exactly like PlanDayScreen does
+  // so deletion via the normal UI cancels it.
+  const generateImminentDayPlanWithNotification = async () => {
+    const planStart = new Date(Date.now() + 3 * 60_000)
+    const fireAt = new Date(planStart.getTime() - 60_000)
+    const { date: storedDate, startTimeInMinutes } =
+      splitDateAndStartTime(planStart)
+
+    let notificationId: string | null = null
+    if (await ensureNotificationPermission()) {
+      notificationId = await Notifications.scheduleNotificationAsync({
+        content: {
+          title: i18n.t('plan_reminder_title'),
+          body: `${i18n.t('plan_notification_part1')} 1 ${i18n.t(
+            'minutes_lowercase'
+          )}. (1h)\nDev imminent test plan`,
+          sound: true,
+        },
+        trigger: {
+          type: Notifications.SchedulableTriggerInputTypes.DATE,
+          date: fireAt,
+        },
+      })
+    }
+
+    addDayPlan({
+      id: `dev-imminent-${Date.now()}`,
+      date: storedDate,
+      startTimeInMinutes,
+      minutes: 60,
+      note: 'Dev imminent test plan',
+      notifyMe: true,
+      notifications: notificationId
+        ? [{ id: notificationId, date: fireAt }]
+        : [],
+    })
+
+    toast.show('Generated', {
+      message: notificationId
+        ? `Plan in 3min · notif in ~2min`
+        : 'Plan created without notification (permission denied)',
+      native: true,
+    })
+  }
+
+  // Snapshot of what's actually in the OS queue right now — useful for
+  // confirming that creating/editing/deleting plans keeps storage and the OS
+  // queue in sync. Refresh on demand; the list isn't reactive.
+  const refreshScheduledNotifications = async () => {
+    const all = await Notifications.getAllScheduledNotificationsAsync()
+    setScheduledNotifications(all)
+    toast.show(`${all.length} scheduled`, {
+      message: 'See JSON below for details',
+      native: true,
+    })
+  }
+
+  const cancelAllScheduledNotifications = () =>
+    confirmDestructive('Cancel all scheduled notifications', async () => {
+      await Notifications.cancelAllScheduledNotificationsAsync()
+      setScheduledNotifications([])
+      showDone('All scheduled notifications cancelled')
+    })
+
+  const resetLocal = () => {
+    // Lock iCloud sync off + mark setByUser BEFORE wiping local data, otherwise
+    // SupporterSyncDefault (App.tsx) sees a supporter with no local records and
+    // setByUser=false, calls resolveInitialEnable(), gets `pull`, and restores
+    // everything from iCloud — kicking the user back to home instead of
+    // onboarding. Re-applied after the defaults reset so the flag survives.
+    setPreferences({ iCloudSyncEnabled: false, iCloudSyncSetByUser: true })
+    _WARNING_forceDeleteContacts()
+    _WARNING_clearDeleted()
+    _WARNING_forceDeleteServiceReports()
+    setServiceReports({ dayPlans: [], recurringPlans: [] })
+    _WARNING_forceDeleteConversations()
+    invalidateAllCache()
+    setPreferences({ ...PREFERENCE_DEFAULTS, iCloudSyncSetByUser: true })
+    mmkvStorage.clearAll()
+    void AsyncStorage.clear()
   }
 
   const cacheSize = Object.keys(cache ?? {}).length
@@ -627,6 +758,38 @@ export default function ToolsScreen() {
           </ActionButton>
         </Card>
 
+        <SectionHeader title='Plan notifications' />
+        <Card style={{ gap: 10 }}>
+          <Text
+            style={{
+              fontSize: theme.fontSize('sm'),
+              color: theme.colors.textAlt,
+            }}
+          >
+            End-to-end checks for the day-plan notification feature. Requires
+            iOS notification permission. Generated plans appear in the normal
+            day-plan list and respect the same delete-cancels-notification
+            wiring.
+          </Text>
+          <ActionButton onPress={scheduleTestNotificationIn10s}>
+            Schedule test notification (10s)
+          </ActionButton>
+          <ActionButton onPress={generateImminentDayPlanWithNotification}>
+            Generate plan with imminent notification (~2min)
+          </ActionButton>
+          <ActionButton onPress={refreshScheduledNotifications}>
+            Refresh scheduled list
+          </ActionButton>
+          <ActionButton onPress={cancelAllScheduledNotifications}>
+            Cancel all scheduled
+          </ActionButton>
+          <JsonViewer
+            label='Scheduled (OS queue)'
+            value={scheduledNotifications}
+            count={scheduledNotifications.length}
+          />
+        </Card>
+
         <SectionHeader title={i18n.t('dangerZone')} color={theme.colors.warn} />
         <Card style={{ gap: 5 }}>
           <ActionButton
@@ -700,20 +863,44 @@ export default function ToolsScreen() {
           <ActionButton
             onPress={() =>
               confirmDestructive('Reset all (fresh install)', () => {
-                _WARNING_forceDeleteContacts()
-                _WARNING_clearDeleted()
-                _WARNING_forceDeleteServiceReports()
-                setServiceReports({ dayPlans: [], recurringPlans: [] })
-                _WARNING_forceDeleteConversations()
-                invalidateAllCache()
-                setPreferences(PREFERENCE_DEFAULTS)
-                mmkvStorage.clearAll()
-                void AsyncStorage.clear()
+                resetLocal()
                 showDone('All data cleared — restart the app')
               })
             }
           >
             Reset all (fresh install)
+          </ActionButton>
+          <ActionButton
+            onPress={() => {
+              Alert.alert(
+                'Reset all + wipe iCloud',
+                'This wipes local data AND every witness-work file in iCloud — affecting all devices on this Apple ID. Cannot be undone.',
+                [
+                  { text: i18n.t('cancel'), style: 'cancel' },
+                  {
+                    text: i18n.t('delete'),
+                    style: 'destructive',
+                    onPress: async () => {
+                      try {
+                        await ICloudBridge.deleteAll()
+                        await ICloudBridge.deleteAllBinaries()
+                      } catch (e) {
+                        toast.show('iCloud wipe failed', {
+                          message: (e as Error).message,
+                          native: true,
+                        })
+                      }
+                      resetLocal()
+                      showDone(
+                        'All data cleared (local + iCloud) — restart the app'
+                      )
+                    },
+                  },
+                ]
+              )
+            }}
+          >
+            Reset all + wipe iCloud
           </ActionButton>
         </Card>
 

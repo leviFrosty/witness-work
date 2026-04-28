@@ -7,7 +7,15 @@ import useTheme from '../contexts/theme'
 import useServiceReport from '../stores/serviceReport'
 import i18n from '../lib/locales'
 import { DayPlan } from '../types/serviceReport'
-import { RecurringPlan, getPlansIntersectingDay } from '../lib/serviceReport'
+import {
+  RecurringPlan,
+  getPlansIntersectingDay,
+  getEffectiveStartTimeInMinutesForRecurringPlan,
+} from '../lib/serviceReport'
+import {
+  DEFAULT_START_TIME_IN_MINUTES,
+  getStartTimeInMinutes,
+} from '../lib/normalizeDate'
 import DayPlanRow from './DayPlanRow'
 import RecurringPlanRow from './RecurringPlanRow'
 import { useNavigation } from '@react-navigation/native'
@@ -67,10 +75,25 @@ const MonthPlansList = ({ month, year }: MonthPlansListProps) => {
       })
     }
 
-    // Sort by date
-    return planItems.sort(
-      (a, b) => moment(b.date).unix() - moment(a.date).unix()
-    )
+    // Sort newest day first; within a day, ascending by start time so 9 AM
+    // appears above 2 PM.
+    const planTime = (item: PlanItem): number => {
+      if (item.type === 'day') {
+        return getStartTimeInMinutes(item.plan as DayPlan)
+      }
+      return getEffectiveStartTimeInMinutesForRecurringPlan(
+        item.plan as RecurringPlan,
+        item.date
+      )
+    }
+    return planItems.sort((a, b) => {
+      const dayDiff = moment(b.date).unix() - moment(a.date).unix()
+      if (dayDiff !== 0) return dayDiff
+      return (
+        (planTime(a) ?? DEFAULT_START_TIME_IN_MINUTES) -
+        (planTime(b) ?? DEFAULT_START_TIME_IN_MINUTES)
+      )
+    })
   }, [month, year, dayPlans, recurringPlans])
 
   const handlePlanPress = (planItem: PlanItem) => {

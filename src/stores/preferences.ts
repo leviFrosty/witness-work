@@ -177,6 +177,17 @@ export const PREFERENCE_DEFAULTS = {
   returnVisitNotificationOffset: null as TimeOffset | null,
   returnVisitAlwaysNotify: false,
   /**
+   * Default amount + unit for "notify me before plan starts" on day plans. Null
+   * means "use the in-app default" (30 minutes).
+   */
+  planNotificationOffset: null as TimeOffset | null,
+  /**
+   * When true, newly created day plans default `notifyMe` to true. The user can
+   * still flip the per-plan toggle off in the form. Existing plans are not
+   * touched when this preference changes.
+   */
+  planAlwaysNotify: false,
+  /**
    * Tags were originally only strings, like "Bethel Service". Later, tags
    * needed more metadata - like whether or not a tag is a credit hour or not.
    * Example: {value: 'Bethel Service', credit: true}. This is why later the

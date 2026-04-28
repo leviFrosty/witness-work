@@ -87,6 +87,12 @@ const CONTACT_POLICY: Record<keyof Contact, FieldPolicy> = {
   // dead path on the recipient's device, so the whole field is dropped from
   // shares. The recipient picks their own avatar.
   avatar: 'omit',
+  // Cosmetic, paired with the omitted avatar — the recipient's theme decides.
+  avatarBackground: 'omit',
+  // Capture-time / file-size / resolution metadata of the avatar image is
+  // device-local. The recipient gets a fresh avatar (or none) and would
+  // recompute their own meta if they pick one.
+  avatarMeta: 'omit',
 }
 
 const ADDRESS_POLICY: Record<keyof Address, FieldPolicy> = {

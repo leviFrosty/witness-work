@@ -13,7 +13,11 @@ import {
 import moment from 'moment'
 import { monthCreditMaxMinutes } from '../constants/serviceReports'
 import { logger } from './logger'
-import { momentStoredDate, normalizeDateForStorage } from './normalizeDate'
+import {
+  DEFAULT_START_TIME_IN_MINUTES,
+  momentStoredDate,
+  normalizeDateForStorage,
+} from './normalizeDate'
 
 // Re-exported for backwards compatibility — canonical home is `types/serviceReport`.
 export { RecurringPlanFrequencies }
@@ -635,6 +639,26 @@ export const getEffectiveNoteForRecurringPlan = (
     momentStoredDate(o.date).isSame(targetDay, 'day')
   )
   return override?.note || plan.note
+}
+
+/**
+ * Gets the effective start time (minutes since midnight) for a recurring plan
+ * on a specific date, accounting for overrides. Falls back to noon (720) when
+ * neither the override nor the plan has a stored time.
+ */
+export const getEffectiveStartTimeInMinutesForRecurringPlan = (
+  plan: RecurringPlan,
+  date: Date
+): number => {
+  const targetDay = momentStoredDate(normalizeDateForStorage(date))
+  const override = plan.overrides?.find((o) =>
+    momentStoredDate(o.date).isSame(targetDay, 'day')
+  )
+  return (
+    override?.startTimeInMinutes ??
+    plan.startTimeInMinutes ??
+    DEFAULT_START_TIME_IN_MINUTES
+  )
 }
 
 export const plannedMinutesToCurrentDayForMonth = (

@@ -4,6 +4,7 @@ import AppPreferencesSection from './sections/AppPreferencesSection'
 import Section from '../../../components/inputs/Section'
 import InputRowButton from '../../../components/inputs/InputRowButton'
 import {
+  faCalendarDay,
   faChevronRight,
   faComments,
   faFileExport,
@@ -52,6 +53,13 @@ const PreferencesScreen = () => {
               leftIcon={faComments}
               label={i18n.t('conversations')}
               onPress={() => navigation.navigate('PreferencesConversation')}
+            >
+              <IconButton icon={faChevronRight} />
+            </InputRowButton>
+            <InputRowButton
+              leftIcon={faCalendarDay}
+              label={i18n.t('plans')}
+              onPress={() => navigation.navigate('PreferencesPlans')}
             >
               <IconButton icon={faChevronRight} />
             </InputRowButton>

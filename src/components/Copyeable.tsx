@@ -11,6 +11,7 @@ import { PropsWithChildren, useContext, useState } from 'react'
 import Text from './MyText'
 import Animated, {
   Easing,
+  useAnimatedStyle,
   useSharedValue,
   withTiming,
 } from 'react-native-reanimated'
@@ -37,6 +38,9 @@ const Copyeable: React.FC<PropsWithChildren<Props>> = ({
   const theme = useContext(ThemeContext)
   const [showOverlay, setShowOverlay] = useState(false)
   const opacity = useSharedValue(0)
+  const overlayStyle = useAnimatedStyle(() => ({
+    opacity: opacity.value,
+  }))
 
   const handleLongPress = async (event: GestureResponderEvent) => {
     Haptics.success()
@@ -83,21 +87,23 @@ const Copyeable: React.FC<PropsWithChildren<Props>> = ({
       )}
       {showOverlay && (
         <AnimatedView
-          style={{
-            position: 'absolute',
-            top: -40,
-            left: 0,
-            backgroundColor: theme.colors.backgroundLighter,
-            shadowColor: theme.colors.shadow,
-            shadowOffset: { width: 0, height: 1 },
-            shadowOpacity: theme.numbers.shadowOpacity,
-            paddingHorizontal: 10,
-            paddingVertical: 10,
-            borderWidth: 1,
-            borderColor: theme.colors.border,
-            borderRadius: theme.numbers.borderRadiusLg,
-            opacity: opacity,
-          }}
+          style={[
+            {
+              position: 'absolute',
+              top: -40,
+              left: 0,
+              backgroundColor: theme.colors.backgroundLighter,
+              shadowColor: theme.colors.shadow,
+              shadowOffset: { width: 0, height: 1 },
+              shadowOpacity: theme.numbers.shadowOpacity,
+              paddingHorizontal: 10,
+              paddingVertical: 10,
+              borderWidth: 1,
+              borderColor: theme.colors.border,
+              borderRadius: theme.numbers.borderRadiusLg,
+            },
+            overlayStyle,
+          ]}
         >
           <View style={{ position: 'relative' }}>
             <Text style={{ fontSize: theme.fontSize('sm') }}>

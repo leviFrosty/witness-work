@@ -30,8 +30,11 @@ import { ProfileAvatar } from '../types/avatar'
  *   in the background. Before the download lands (or if the sender turned image
  *   sync off, so the binary will never land), the avatar should render as the
  *   initials fallback — see Q3 / Q4 in `docs/icloud-image-sync-plan.md`.
+ *
+ * Exported so callers (e.g. ContactDetailsScreen) can decide whether to open
+ * the rich image viewer or fall back to the initials-morph experience.
  */
-function isRenderableImageValue(value: string): boolean {
+export function isRenderableImageValue(value: string): boolean {
   if (!value) return false
   if (value.startsWith('icloud://')) return false
   return true

@@ -23,6 +23,7 @@ import {
   PersistedServiceReportState,
 } from '../lib/normalizeDate'
 import { hasMigratedFromAsyncStorage, MmkvStorage } from './mmkv'
+import * as Notifications from 'expo-notifications'
 
 const initialState = {
   serviceReports: {} as ServiceReportsByYears,
@@ -191,6 +192,13 @@ export const useServiceReport = create(
             return {}
           }
 
+          foundDayPlan.notifications?.forEach(
+            async ({ id: notificationId }) =>
+              await Notifications.cancelScheduledNotificationAsync(
+                notificationId
+              )
+          )
+
           return {
             dayPlans: dayPlans.filter((plan) => plan.id !== id),
           }
@@ -335,9 +343,12 @@ export const useServiceReport = create(
             ...plan,
             minutes: override.minutes,
             note: override.note,
+            startTimeInMinutes:
+              override.startTimeInMinutes ?? plan.startTimeInMinutes,
             isOverride: true,
             originalMinutes: plan.minutes,
             originalNote: plan.note,
+            originalStartTimeInMinutes: plan.startTimeInMinutes,
           }
         }
 

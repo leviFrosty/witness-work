@@ -61,7 +61,25 @@ export type DayPlan = {
   id: string
   date: Date
   minutes: number
+  /**
+   * Local-wall-clock start time as minutes since midnight (0–1439). Independent
+   * of timezone — `date` carries the calendar day, this carries the time. When
+   * undefined, treat as noon (720) via `getStartTimeInMinutes`.
+   */
+  startTimeInMinutes?: number
   note?: string
+  /**
+   * Whether the user opted this plan into a local notification. Defaults false;
+   * the global preference `planAlwaysNotify` flips the default for newly
+   * created plans.
+   */
+  notifyMe?: boolean
+  /**
+   * Scheduled local notifications for this plan. IDs are device-local — they
+   * are still synced via iCloud last-writer-wins, but consumers must treat
+   * remote IDs as opaque (they cannot be cancelled from another device).
+   */
+  notifications?: import('./conversation').Notification[]
   /** Epoch ms of the most recent change. Used for iCloud merge. */
   updatedAt?: number
 }
@@ -82,6 +100,11 @@ export type MonthlyByWeekdayConfig = {
 export type RecurringPlanOverride = {
   date: Date
   minutes: number
+  /**
+   * When set, overrides the parent recurring plan's start time for this
+   * instance. Undefined means inherit from the parent plan.
+   */
+  startTimeInMinutes?: number
   note?: string
 }
 
@@ -89,6 +112,12 @@ export type RecurringPlan = {
   id: string
   startDate: Date
   minutes: number
+  /**
+   * Local-wall-clock start time as minutes since midnight (0–1439). Applies to
+   * every instance unless an override sets its own. When undefined, treat as
+   * noon (720) via `getStartTimeInMinutes`.
+   */
+  startTimeInMinutes?: number
   recurrence: {
     frequency: RecurringPlanFrequencies
     interval: number

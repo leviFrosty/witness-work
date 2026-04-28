@@ -83,6 +83,7 @@
   "photoLibraryWritePermissionNeeded": "WitnessWork needs permission to save photos to your library. You can grant this in Settings.",
   "doneLabel": "Done",
   "applyCrop": "Apply",
+  "cropPhotoHint": "Pinch to zoom, drag to reposition",
   "profileStatStreak": "Streak",
   "profileStatStreakUnit": "week",
   "profileStatStreakUnit_plural": "weeks",

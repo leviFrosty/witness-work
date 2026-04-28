@@ -17,6 +17,7 @@ const PaywallThankYouScreen = () => {
   const insets = useSafeAreaInsets()
   const navigation = useNavigation<RootStackNavigation>()
   const { isSupporter } = useIsSupporter()
+  const canGoBack = navigation.canGoBack()
 
   return (
     <Wrapper
@@ -107,8 +108,16 @@ const PaywallThankYouScreen = () => {
           paddingBottom: insets.bottom + 10,
         }}
       >
-        <ActionButton onPress={() => navigation.navigate('Root')}>
-          {i18n.t('goHome')}
+        <ActionButton
+          onPress={() => {
+            if (navigation.canGoBack()) {
+              navigation.goBack()
+            } else {
+              navigation.navigate('Root')
+            }
+          }}
+        >
+          {canGoBack ? i18n.t('goBack') : i18n.t('goHome')}
         </ActionButton>
       </View>
     </Wrapper>

@@ -83,4 +83,35 @@ export type Contact = {
    * see `docs/icloud-image-sync-plan.md` for the full lifecycle.
    */
   avatar?: ProfileAvatar
+
+  /**
+   * Per-contact override for the avatar circle background (emoji + initial
+   * fallback). Hex string when set, `null` when the user explicitly picked
+   * "match accent", `undefined` when never touched. Both null and undefined
+   * fall back to the theme's accentBackground at render time.
+   */
+  avatarBackground?: string | null
+
+  /**
+   * Metadata about the contact's image avatar. Populated when the user picks an
+   * image; absent for emoji / none / legacy image avatars. Used by the
+   * full-screen image viewer's "i" popover.
+   *
+   * - `width` / `height` — pixel size of the original (uncropped) image.
+   * - `fileSize` — bytes of the original image as picked.
+   * - `capturedAt` — ISO-8601 string. Set from EXIF where available, otherwise
+   *   the moment the photo was added to the contact.
+   * - `croppedAt` — ISO-8601 timestamp of the most recent crop pass.
+   *
+   * Local-only — never travels through iCloud sync. Receivers compute their own
+   * metadata after the binary lands (or, more pragmatically, just see no
+   * metadata in the popover until they re-pick).
+   */
+  avatarMeta?: {
+    width: number
+    height: number
+    fileSize?: number
+    capturedAt?: string
+    croppedAt?: string
+  }
 }

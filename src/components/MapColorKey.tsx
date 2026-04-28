@@ -15,6 +15,7 @@ import ColorPicker, {
 import ActionButton from './ActionButton'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useMarkerColors } from '../hooks/useMarkerColors'
+import { runOnJS } from 'react-native-reanimated'
 
 type MapKeyRow = {
   name: keyof MarkerColors
@@ -146,7 +147,8 @@ export default function MapKey() {
                 ref={pickerRef}
                 value={currentColorToEdit.color}
                 onComplete={({ hex }) => {
-                  set({
+                  'worklet'
+                  runOnJS(set)({
                     mapKeyColors: {
                       ...colors,
                       [currentColorToEdit.name as keyof typeof colors]: hex,

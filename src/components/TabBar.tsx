@@ -1,7 +1,8 @@
 import { useState } from 'react'
-import { LayoutChangeEvent, Pressable, StyleSheet, View } from 'react-native'
+import { Pressable, StyleSheet, View } from 'react-native'
 import { BottomTabBarProps } from '@react-navigation/bottom-tabs'
 import { BlurView } from 'expo-blur'
+import { GlassView, isLiquidGlassAvailable } from 'expo-glass-effect'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import {
   faCalendarDays,
@@ -18,7 +19,6 @@ import i18n, { TranslationKey } from '../lib/locales'
 import IconButton from './IconButton'
 import Text from './MyText'
 import Button from './Button'
-import GlassPill from './GlassPill'
 import QuickActionSheet from './QuickActionSheet'
 import { RootStackNavigation } from '../types/rootStack'
 import { HomeTabStackNavigation } from '../types/homeStack'
@@ -27,7 +27,7 @@ const CAPSULE_HEIGHT = 56
 const FLOATING_GAP = 6
 const HORIZONTAL_MARGIN = 16
 const PILL_GAP = 10
-const ACCESSORY_DIAMETER = CAPSULE_HEIGHT // square pill the width of its height = circle
+const ACCESSORY_DIAMETER = CAPSULE_HEIGHT
 
 /**
  * Vertical space reserved above the safe-area bottom inset for the floating tab
@@ -35,9 +35,10 @@ const ACCESSORY_DIAMETER = CAPSULE_HEIGHT // square pill the width of its height
  */
 export const TAB_BAR_HEIGHT = CAPSULE_HEIGHT + FLOATING_GAP
 
+const liquidGlass = isLiquidGlassAvailable()
+
 const TabBar = ({ state, descriptors, ...props }: BottomTabBarProps) => {
   const [sheetOpen, setSheetOpen] = useState(false)
-  const [mainPillSize, setMainPillSize] = useState({ width: 0, height: 0 })
   const theme = useTheme()
   const insets = useSafeAreaInsets()
   const isDark = theme.colors.background === '#121212'
@@ -114,88 +115,83 @@ const TabBar = ({ state, descriptors, ...props }: BottomTabBarProps) => {
     )
   }
 
-  const onMainLayout = (e: LayoutChangeEvent) => {
-    const { width, height } = e.nativeEvent.layout
-    if (width !== mainPillSize.width || height !== mainPillSize.height) {
-      setMainPillSize({ width, height })
-    }
+  const pillShape = {
+    height: CAPSULE_HEIGHT,
+    borderRadius: CAPSULE_HEIGHT / 2,
+    borderCurve: 'continuous' as const,
+    overflow: 'hidden' as const,
   }
 
-  const mainPill = (
+  const tabsRow = (
     <View
-      key='main'
-      onLayout={onMainLayout}
       style={{
-        height: CAPSULE_HEIGHT,
-        borderRadius: CAPSULE_HEIGHT / 2,
-        borderCurve: 'continuous',
-        overflow: 'hidden',
+        flex: 1,
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingHorizontal: 6,
       }}
     >
-      {/* BlurView does the actual backdrop blur of content scrolling behind
-          the tab bar — Skia can't reach outside its own surface to do this.
-          Skia sits on top to add the glass *surface* treatment (tint,
-          specular, rim) at reduced opacity so the blur shows through. */}
+      {state.routes.map((route, index) => renderTab(route, index))}
+    </View>
+  )
+
+  const mainPill = liquidGlass ? (
+    <GlassView key='main' glassEffectStyle='regular' style={pillShape}>
+      {tabsRow}
+    </GlassView>
+  ) : (
+    <View
+      key='main'
+      style={[pillShape, { backgroundColor: theme.colors.card + 'cc' }]}
+    >
       <BlurView
         tint={isDark ? 'dark' : 'light'}
         intensity={60}
         style={StyleSheet.absoluteFill}
       />
-      {mainPillSize.width > 0 && (
-        <GlassPill
-          width={mainPillSize.width}
-          height={mainPillSize.height}
-          tint={theme.colors.card}
-          rim={theme.colors.border}
-          tintOpacity={0.4}
-          isDark={isDark}
-        />
-      )}
-      <View
-        style={{
-          flex: 1,
-          flexDirection: 'row',
-          alignItems: 'center',
-          paddingHorizontal: 6,
-        }}
-      >
-        {state.routes.map((route, index) => renderTab(route, index))}
-      </View>
+      {tabsRow}
     </View>
   )
 
-  const accessoryPill = (
-    <View
-      key='accessory'
+  const accessoryShape = {
+    width: ACCESSORY_DIAMETER,
+    height: CAPSULE_HEIGHT,
+    borderRadius: CAPSULE_HEIGHT / 2,
+    borderCurve: 'continuous' as const,
+    overflow: 'hidden' as const,
+  }
+
+  const plusButton = (
+    <Button
+      noTransform
+      onPress={() => setSheetOpen(true)}
       style={{
-        width: ACCESSORY_DIAMETER,
-        height: CAPSULE_HEIGHT,
-        borderRadius: CAPSULE_HEIGHT / 2,
-        borderCurve: 'continuous',
-        backgroundColor: theme.colors.accent,
-        overflow: 'hidden',
+        flex: 1,
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: 'transparent',
       }}
     >
-      <GlassPill
-        width={ACCESSORY_DIAMETER}
-        height={CAPSULE_HEIGHT}
-        tint={theme.colors.accent}
-        rim={'rgba(255,255,255,0.35)'}
-        tintOpacity={0.95}
-        isDark={isDark}
-      />
-      <Button
-        noTransform
-        onPress={() => setSheetOpen(true)}
-        style={{
-          flex: 1,
-          alignItems: 'center',
-          justifyContent: 'center',
-          backgroundColor: 'transparent',
-        }}
-      >
-        <IconButton icon={faPlus} color={theme.colors.textInverse} size={22} />
-      </Button>
+      <IconButton icon={faPlus} color={theme.colors.textInverse} size={22} />
+    </Button>
+  )
+
+  const accessoryPill = liquidGlass ? (
+    <GlassView
+      key='accessory'
+      glassEffectStyle='regular'
+      tintColor={theme.colors.accent}
+      isInteractive
+      style={accessoryShape}
+    >
+      {plusButton}
+    </GlassView>
+  ) : (
+    <View
+      key='accessory'
+      style={[accessoryShape, { backgroundColor: theme.colors.accent }]}
+    >
+      {plusButton}
     </View>
   )
 

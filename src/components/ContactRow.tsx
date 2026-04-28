@@ -128,6 +128,7 @@ const ContactRow = ({
               avatar={contact.avatar ?? { type: 'none', value: '' }}
               name={contact.name}
               size={36}
+              background={contact.avatarBackground ?? undefined}
             />
             <View style={{ flexGrow: 1, flexShrink: 1, gap: 2 }}>
               <Text style={{ fontSize: 18 }}>{contact.name}</Text>

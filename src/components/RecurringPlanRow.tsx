@@ -14,6 +14,7 @@ import { useFormattedMinutes } from '../lib/minutes'
 import Button from './Button'
 import Badge from './Badge'
 import Copyeable from './Copyeable'
+import { formatStartTime } from '../lib/normalizeDate'
 
 const RecurringPlanRow = (props: {
   plan: RecurringPlan
@@ -37,6 +38,8 @@ const RecurringPlanRow = (props: {
     ? dateOverride.minutes
     : props.plan.minutes
   const displayNote = dateOverride ? dateOverride.note : props.plan.note
+  const displayStartTimeInMinutes =
+    dateOverride?.startTimeInMinutes ?? props.plan.startTimeInMinutes
   const formattedTime = useFormattedMinutes(displayMinutes)
   const hasOverride = !!dateOverride
 
@@ -147,6 +150,8 @@ const RecurringPlanRow = (props: {
             ellipsizeMode='tail'
           >
             {moment(props.date).format('LL')}
+            {' · '}
+            {formatStartTime(displayStartTimeInMinutes)}
           </Text>
           <Text
             style={{

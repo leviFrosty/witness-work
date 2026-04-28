@@ -1,4 +1,11 @@
-import { View, ScrollView, useColorScheme, Share, Alert } from 'react-native'
+import {
+  View,
+  ScrollView,
+  useColorScheme,
+  Share,
+  Alert,
+  Pressable,
+} from 'react-native'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import Text from '../components/MyText'
 import useTheme from '../contexts/theme'
@@ -67,9 +74,10 @@ import DismissContactSheet from '../components/DismissContactSheet'
 import { buildContactShareLink } from '../lib/contactShareLink'
 import { MenuView, MenuAction } from '@react-native-menu/menu'
 import { isContactDismissed } from '../lib/dismissedContacts'
-import Avatar from '../components/Avatar'
+import Avatar, { isRenderableImageValue } from '../components/Avatar'
 import { ProfileAvatar } from '../types/avatar'
 import JsonViewer from '../components/JsonViewer'
+import ContactAvatarViewer from '../components/ContactAvatarViewer'
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Contact Details'>
 
@@ -139,19 +147,32 @@ const PhoneRow = ({ contact }: { contact: Contact }) => {
 }
 
 const Hero = ({
+  contact,
   name,
   avatar,
+  avatarBackground,
   isBibleStudy: isActiveBibleStudy,
   hasStudiedPreviously,
   mostRecentStudy,
 }: {
+  contact: Contact
   name: string
   avatar: ProfileAvatar
+  avatarBackground?: string | null
   isBibleStudy?: boolean
   hasStudiedPreviously?: boolean
   mostRecentStudy: Conversation | null
 }) => {
   const theme = useTheme()
+  const [viewerOpen, setViewerOpen] = useState(false)
+  // Image avatars open the new full-screen viewer (pinch / pan / share / save
+  // / edit / reset / info). Emoji and initials fallbacks keep the existing
+  // morph-to-center animation from `Avatar`'s built-in `focusable` mode.
+  // iCloud markers (`icloud://...`) report `type === 'image'` but aren't
+  // renderable — they fall through to the morph experience until the binary
+  // lands and the marker is rewritten to a `file://` URI.
+  const isImageAvatar =
+    avatar.type === 'image' && isRenderableImageValue(avatar.value)
 
   return (
     <View
@@ -164,7 +185,36 @@ const Hero = ({
         backgroundColor: theme.colors.accent3,
       }}
     >
-      <Avatar avatar={avatar} name={name} size={134} focusable />
+      {isImageAvatar ? (
+        <Pressable
+          onPress={() => setViewerOpen(true)}
+          accessibilityRole='imagebutton'
+          accessibilityLabel={i18n.t('profilePicture')}
+          hitSlop={4}
+        >
+          <Avatar
+            avatar={avatar}
+            name={name}
+            size={134}
+            background={avatarBackground ?? undefined}
+          />
+        </Pressable>
+      ) : (
+        <Avatar
+          avatar={avatar}
+          name={name}
+          size={134}
+          focusable
+          background={avatarBackground ?? undefined}
+        />
+      )}
+      {isImageAvatar && (
+        <ContactAvatarViewer
+          visible={viewerOpen}
+          contact={contact}
+          onClose={() => setViewerOpen(false)}
+        />
+      )}
       <Text
         style={{
           fontSize: 14,
@@ -932,11 +982,13 @@ const ContactDetailsScreen = ({ route, navigation }: Props) => {
           }}
         >
           <Hero
+            contact={contact}
             isBibleStudy={isActiveBibleStudy}
             hasStudiedPreviously={hasStudiedPreviously}
             mostRecentStudy={mostRecentStudy}
             name={name}
             avatar={contact.avatar ?? { type: 'none', value: '' }}
+            avatarBackground={contact.avatarBackground}
           />
           {developerTools && (
             <JsonViewer label={i18n.t('data')} value={contact} />

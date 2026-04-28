@@ -5,6 +5,7 @@ import { BlurView } from 'expo-blur'
 import { GlassView, isLiquidGlassAvailable } from 'expo-glass-effect'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import {
+  faAddressBook,
   faCalendarDays,
   faChartLine,
   faHome,
@@ -70,6 +71,8 @@ const TabBar = ({ state, descriptors, ...props }: BottomTabBarProps) => {
       switch (label) {
         case 'Home':
           return faHome
+        case 'Contacts':
+          return faAddressBook
         case 'Map':
           return faMapLocation
         case 'Tools':

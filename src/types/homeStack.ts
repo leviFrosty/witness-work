@@ -2,6 +2,7 @@ import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs'
 
 export type HomeTabStackParamList = {
   Home: undefined
+  Contacts: undefined
   Tools: undefined
   Progress:
     | {

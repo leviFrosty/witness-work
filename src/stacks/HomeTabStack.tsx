@@ -10,6 +10,7 @@ import { useEffect, useRef, useState } from 'react'
 import ToolsScreen from '../screens/ToolsScreen'
 import ProgressScreen from '../screens/ProgressScreen'
 import ScheduleScreen from '../screens/ScheduleScreen'
+import ContactsScreen from '../screens/ContactsScreen'
 import { HomeTabStackParamList } from '../types/homeStack'
 import { releaseNotes } from '../constants/releaseNotes'
 import semver from 'semver'
@@ -76,6 +77,7 @@ const HomeTabStack = () => {
         screenOptions={{ header: () => null }}
       >
         <Tab.Screen name='Home' component={DrawerNavigator} />
+        <Tab.Screen name='Contacts' component={ContactsScreen} />
         {developerTools && <Tab.Screen name='Tools' component={ToolsScreen} />}
         {publisher !== 'publisher' && (
           <Tab.Screen name='Progress' component={ProgressScreen} />

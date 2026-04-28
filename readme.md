@@ -17,7 +17,7 @@ Please consider donating if you have found WitnessWork helpful to you in your se
 
 ## Looking for maintainers
 
-Due to my increased time constraints volunteering @ Bethel, my day job, family, etc., I'm looking for someone to take the lead in bug fixes + future development on this project for the foreseeable future. Please contact me at <levi@leviwilkerson.com>.
+Due to my increased time constraints volunteering, my day job, family, etc., I'm looking for someone to take the lead in bug fixes + future development on this project for the foreseeable future. Please contact me at <levi@leviwilkerson.com>.
 
 ## View it live
 

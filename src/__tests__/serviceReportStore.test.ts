@@ -24,34 +24,12 @@ type RecurringPlanWithOverrideInfo = RecurringPlan &
     | { isOverride: true; originalMinutes: number; originalNote?: string }
   )
 
-// Mock the logger to avoid MMKV dependencies in tests
-vi.mock('../lib/logger', () => ({
-  logger: {
-    log: vi.fn(),
-    error: vi.fn(),
-    warn: vi.fn(),
-    info: vi.fn(),
-  },
-}))
-
-// Mock the MMKV storage to avoid dependencies in tests
-vi.mock('../stores/mmkv', () => ({
-  hasMigratedFromAsyncStorage: () => true,
-  MmkvStorage: {
-    getItem: () => null,
-    setItem: () => {},
-    removeItem: () => {},
-  },
-}))
-
-// Mock AsyncStorage
-vi.mock('@react-native-async-storage/async-storage', () => ({
-  default: {
-    getItem: () => Promise.resolve(null),
-    setItem: () => Promise.resolve(),
-    removeItem: () => Promise.resolve(),
-  },
-}))
+vi.mock('../lib/logger', () => import('./mocks/logger'))
+vi.mock('../stores/mmkv', () => import('./mocks/mmkv'))
+vi.mock(
+  '@react-native-async-storage/async-storage',
+  () => import('./mocks/asyncStorage')
+)
 
 describe('ServiceReport Store - Override Functionality', () => {
   beforeEach(() => {

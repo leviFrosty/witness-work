@@ -25,14 +25,7 @@ vi.mock('../lib/locales', () => ({
 }))
 
 // Mock the logger to avoid MMKV dependencies in tests
-vi.mock('../lib/logger', () => ({
-  logger: {
-    log: vi.fn(),
-    error: vi.fn(),
-    warn: vi.fn(),
-    info: vi.fn(),
-  },
-}))
+vi.mock('../lib/logger', () => import('./mocks/logger'))
 
 // Now import after all mocks are set up
 import { validateContactImport, ContactImportData } from '../lib/contactImport'

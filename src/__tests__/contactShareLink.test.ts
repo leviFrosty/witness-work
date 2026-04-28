@@ -13,14 +13,7 @@ vi.mock('expo-file-system/legacy', () => ({
   readAsStringAsync: vi.fn(),
 }))
 
-vi.mock('../lib/logger', () => ({
-  logger: {
-    log: vi.fn(),
-    error: vi.fn(),
-    warn: vi.fn(),
-    info: vi.fn(),
-  },
-}))
+vi.mock('../lib/logger', () => import('./mocks/logger'))
 
 vi.mock('../lib/locales', () => ({
   default: { t: (key: string) => key },

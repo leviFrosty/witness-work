@@ -23,14 +23,7 @@ import { monthCreditMaxMinutes } from '../constants/serviceReports'
 import { describe, expect, it, beforeEach, afterEach, vi } from 'vitest'
 
 // Mock the logger to avoid MMKV dependencies in tests
-vi.mock('../lib/logger', () => ({
-  logger: {
-    log: vi.fn(),
-    error: vi.fn(),
-    warn: vi.fn(),
-    info: vi.fn(),
-  },
-}))
+vi.mock('../lib/logger', () => import('./mocks/logger'))
 
 describe('lib/serviceReport', () => {
   describe('calculateProgress', () => {

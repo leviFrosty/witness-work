@@ -41,33 +41,52 @@ const stalenessRank: Record<ContactStaleness, number> = {
   month: 3,
 }
 
-const localeCmp = (a: string | undefined, b: string | undefined): number => {
+/**
+ * Sentinel returned by the per-key comparators when one side is "missing" — the
+ * caller in {@link buildContactComparator} treats this specially so direction
+ * (asc/desc) doesn't accidentally pull undefined values to the top under desc.
+ * Real value-vs-value comparisons return regular numbers and the direction
+ * multiplier flips them as expected.
+ */
+type KeyCompare = number | { aMissing: boolean; bMissing: boolean }
+
+const isMissingResult = (
+  v: KeyCompare
+): v is { aMissing: boolean; bMissing: boolean } =>
+  typeof v === 'object' && v !== null
+
+const missing = (aSet: boolean, bSet: boolean): KeyCompare => ({
+  aMissing: !aSet,
+  bMissing: !bSet,
+})
+
+const localeCmp = (
+  a: string | undefined,
+  b: string | undefined
+): KeyCompare => {
   const aSet = !!a && a.length > 0
   const bSet = !!b && b.length > 0
-  if (!aSet && !bSet) return 0
-  if (!aSet) return 1
-  if (!bSet) return -1
+  if (!aSet || !bSet) return missing(aSet, bSet)
   return a!.localeCompare(b!)
 }
 
-const dateCmp = (a: string | undefined, b: string | undefined): number => {
+const dateCmp = (a: string | undefined, b: string | undefined): KeyCompare => {
   const aSet = !!a && a.length > 0
   const bSet = !!b && b.length > 0
-  if (!aSet && !bSet) return 0
-  if (!aSet) return 1
-  if (!bSet) return -1
+  if (!aSet || !bSet) return missing(aSet, bSet)
   const am = moment(a)
   const bm = moment(b)
   if (am.isValid() && bm.isValid()) return am.unix() - bm.unix()
   return localeCmp(a, b)
 }
 
-const numberCmp = (a: string | undefined, b: string | undefined): number => {
+const numberCmp = (
+  a: string | undefined,
+  b: string | undefined
+): KeyCompare => {
   const aSet = !!a && a.length > 0
   const bSet = !!b && b.length > 0
-  if (!aSet && !bSet) return 0
-  if (!aSet) return 1
-  if (!bSet) return -1
+  if (!aSet || !bSet) return missing(aSet, bSet)
   const an = Number(a)
   const bn = Number(b)
   if (Number.isFinite(an) && Number.isFinite(bn)) return an - bn
@@ -79,7 +98,7 @@ const compareKey = (
   b: Contact,
   sort: ContactSortKey,
   ctx: SortContext
-): number => {
+): KeyCompare => {
   if (sort.startsWith('customField:')) {
     const defId = sort.slice('customField:'.length)
     const def = ctx.customFieldDefs.find((d) => d.id === defId)
@@ -99,9 +118,7 @@ const compareKey = (
         conversations: ctx.conversations,
         contact: b,
       })
-      if (!ar && !br) return 0
-      if (!ar) return 1
-      if (!br) return -1
+      if (!ar || !br) return missing(!!ar, !!br)
       return moment(ar.date).unix() - moment(br.date).unix()
     }
     case 'az':
@@ -117,9 +134,7 @@ const compareKey = (
         conversations: ctx.conversations,
         contact: b,
       })
-      if (!ar && !br) return 0
-      if (!ar) return 1
-      if (!br) return -1
+      if (!ar || !br) return missing(!!ar, !!br)
       return moment(ar.date).unix() - moment(br.date).unix()
     }
     case 'pinStaleness':
@@ -135,6 +150,8 @@ const compareKey = (
       return localeCmp(a.address?.state, b.address?.state)
     case 'zip':
       return localeCmp(a.address?.zip, b.address?.zip)
+    default:
+      return 0
   }
 }
 
@@ -173,6 +190,14 @@ export const buildContactComparator = (
       const bt = studyTier(b)
       if (at !== bt) return bt - at
     }
-    return compareKey(a, b, sort, ctx) * dirMul
+    const result = compareKey(a, b, sort, ctx)
+    if (isMissingResult(result)) {
+      // Both missing → tie; one missing → that side goes last regardless of
+      // direction. The user's intent for "undefineds last" doesn't flip with
+      // asc/desc.
+      if (result.aMissing && result.bMissing) return 0
+      return result.aMissing ? 1 : -1
+    }
+    return result * dirMul
   }
 }

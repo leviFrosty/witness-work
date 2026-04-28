@@ -46,7 +46,11 @@ export const buildContactsFuse = (
   const entries = buildEntries(contacts, conversations)
   return new Fuse(entries, {
     keys: FUSE_KEYS,
-    threshold: 0.35,
+    // Loose enough to absorb single-letter transpositions ("jhon" → "John")
+    // while still rejecting unrelated terms. With `ignoreLocation: true` and
+    // weighted multi-key search, scores trend higher than fuse's default 0.6,
+    // so we open up to 0.6 to catch typos in short fields like a first name.
+    threshold: 0.6,
     ignoreLocation: true,
     minMatchCharLength: 2,
     includeScore: false,

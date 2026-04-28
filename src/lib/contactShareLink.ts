@@ -1,6 +1,7 @@
 import { gzipSync, gunzipSync, strToU8, strFromU8 } from 'fflate'
 import { Address, Contact } from '../types/contact'
 import { Conversation } from '../types/conversation'
+import { CustomFieldDefinition } from '../types/customField'
 import { ContactImportData } from './contactImport'
 import { logger } from './logger'
 
@@ -186,6 +187,37 @@ function stripConversation(conversation: Conversation): Partial<Conversation> {
   return stripped
 }
 
+/**
+ * Picks the subset of `defs` whose ids appear as keys in
+ * `contact.customFields`, so the share payload only carries the labels the
+ * recipient actually needs to render. `order` / `createdAt` / `archived` are
+ * dropped — the recipient orders the def at the end of their local list when it
+ * lands, and sender-side archive state would only confuse the merge.
+ * `updatedAt` is preserved so future LWW merges (if both ends have the def)
+ * work correctly.
+ */
+function pickReferencedDefs(
+  contact: Partial<Contact>,
+  defs: CustomFieldDefinition[]
+): CustomFieldDefinition[] {
+  const fields = contact.customFields
+  if (!fields) return []
+  const referenced = new Set(Object.keys(fields))
+  if (referenced.size === 0) return []
+  return defs
+    .filter((d) => referenced.has(d.id))
+    .map((d) => ({
+      id: d.id,
+      label: d.label,
+      // Order will be reassigned on import (slotted at end of recipient's
+      // active list). Keep the field in the type but normalize the value.
+      order: 0,
+      createdAt: d.createdAt,
+      updatedAt: d.updatedAt,
+      ...(d.type ? { type: d.type } : {}),
+    }))
+}
+
 // --- Compression / encoding -------------------------------------------------
 
 function u8ToBase64Url(bytes: Uint8Array): string {
@@ -249,10 +281,17 @@ export type ContactShareLinkResult = {
  * conversations) exceeds the cap — that means the contact itself is
  * pathologically large (custom fields abuse, etc.) and should go through the
  * file-export flow instead.
+ *
+ * `customFieldDefs` is the sender's full def list; only the defs whose ids are
+ * actually referenced by `contact.customFields` are embedded in the payload,
+ * stripped of fields the recipient doesn't need (`order`, `archived`,
+ * `createdAt`). Without these defs the recipient would render UUID keys because
+ * the labels live in the sender's local store.
  */
 export function buildContactShareLink(
   contact: Contact,
   conversations: Conversation[],
+  customFieldDefs: CustomFieldDefinition[] = [],
   now: Date = new Date()
 ): ContactShareLinkResult {
   const baseUrl = `${CONTACT_SHARE_LINK.ORIGIN_PROD}${CONTACT_SHARE_LINK.PATH_PREFIX}`
@@ -270,6 +309,11 @@ export function buildContactShareLink(
 
   const strippedContact = stripContact(contact) as Contact
 
+  // Pick only the defs the contact actually references. Empty when the
+  // contact has no custom fields — keeps existing share links byte-for-byte
+  // unchanged for users who never used the feature.
+  const referencedDefs = pickReferencedDefs(strippedContact, customFieldDefs)
+
   const tryBuild = (convs: Conversation[]): string => {
     const importData: ContactImportData = {
       version: '1.0',
@@ -283,6 +327,7 @@ export function buildContactShareLink(
             ),
           }
         : {}),
+      ...(referencedDefs.length > 0 ? { customFieldDefs: referencedDefs } : {}),
     }
     return baseUrl + encodePayload(importData)
   }

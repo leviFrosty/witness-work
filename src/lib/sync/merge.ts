@@ -1,5 +1,6 @@
 import { Contact } from '../../types/contact'
 import { Conversation, ConversationTombstone } from '../../types/conversation'
+import { CustomFieldDefinition } from '../../types/customField'
 import {
   DayPlan,
   ServiceReport,
@@ -22,6 +23,7 @@ const TOMBSTONE_RETENTION_MS = 1000 * 60 * 60 * 24 * 90 // 90 days
 export type MergeResult = {
   contacts: Contact[]
   deletedContacts: Contact[]
+  customFieldDefs: CustomFieldDefinition[]
   conversations: Conversation[]
   deletedConversations: ConversationTombstone[]
   serviceReports: ServiceReportsByYears
@@ -37,6 +39,7 @@ export type MergeResult = {
 type LocalState = {
   contacts: Contact[]
   deletedContacts: Contact[]
+  customFieldDefs: CustomFieldDefinition[]
   conversations: Conversation[]
   deletedConversations: ConversationTombstone[]
   serviceReports: ServiceReportsByYears
@@ -85,6 +88,18 @@ export function mergePayload(
   // loser from the other side.
   const { activeFinal: contactsFinal, deletedFinal: deletedContactsFinal } =
     reconcileActiveAndDeletedContacts(mergedContacts, mergedDeletedContacts)
+
+  // --- Custom field definitions ---
+  // Merged by id with per-def updatedAt LWW. Hard-deletion produces a
+  // tombstone via the def disappearing from one side; we don't track that
+  // separately because archive is the user-facing delete, and an archived
+  // def with a newer updatedAt naturally wins over an active one.
+  const remoteDefs = (remote.contactStore.customFieldDefs ??
+    []) as CustomFieldDefinition[]
+  const { merged: mergedDefs, changed: defsChanged } = mergeById(
+    local.customFieldDefs,
+    remoteDefs
+  )
 
   // --- Conversations ---
   const { merged: mergedConversations, changed: conversationsChanged } =
@@ -144,6 +159,7 @@ export function mergePayload(
   const changed =
     contactsChanged ||
     deletedContactsChanged ||
+    defsChanged ||
     conversationsChanged ||
     reportsChanged ||
     dayPlansChanged ||
@@ -155,6 +171,7 @@ export function mergePayload(
   return {
     contacts: contactsFinal,
     deletedContacts: deletedContactsFinal,
+    customFieldDefs: mergedDefs,
     conversations: conversationsAfterTombstones,
     deletedConversations: mergedConversationTombstones,
     serviceReports: reportsAfterTombstones,

@@ -3,6 +3,7 @@ import * as FileSystem from 'expo-file-system/legacy'
 import { Alert } from 'react-native'
 import { Contact } from '../types/contact'
 import { Conversation } from '../types/conversation'
+import { CustomFieldDefinition } from '../types/customField'
 import i18n from './locales'
 import { logger } from './logger'
 
@@ -12,6 +13,15 @@ export type ContactImportData = {
   exportedAt: string
   contact: Contact
   conversations?: Conversation[]
+  /**
+   * Custom field definitions referenced by `contact.customFields`. Embedded so
+   * the recipient can render the values with their original labels — without
+   * this, the recipient would see UUID keys for fields they don't already have.
+   * Recipients merge by id: existing local defs win on label conflicts; unknown
+   * ids are added as fresh defs. See `mergeIncomingCustomFieldDefs` in
+   * `contactsStore`.
+   */
+  customFieldDefs?: CustomFieldDefinition[]
 }
 
 export type ImportResult = {
@@ -26,6 +36,13 @@ export type ImportHandlerCallbacks = {
   addConversation: (conversation: Conversation) => void
   updateConversation: (conversation: Partial<Conversation>) => void
   recoverContact: (contactId: string) => void
+  /**
+   * Adds any defs from `incoming` whose id isn't already known locally. Local
+   * defs always win on label conflicts — this only fills in missing referenced
+   * fields so the imported contact's customFields render with their original
+   * labels.
+   */
+  mergeIncomingCustomFieldDefs: (incoming: CustomFieldDefinition[]) => void
   showToast: (title: string, message: string) => void
   navigate: (contactId: string) => void
 }
@@ -180,6 +197,14 @@ export const handleContactImport = async (
     // If a conflict exists and we're not replacing it, then gen new IDs
     if (existingContact && !replaceExisting) {
       finalData = generateNewIds(importData)
+    }
+
+    // Merge custom field defs first so the contact's customFields keys have
+    // their definitions in place by the time the contact lands in the store.
+    // Order matters here only for visual consistency on the details screen —
+    // both stores are local Zustand and writes are synchronous.
+    if (finalData.customFieldDefs && finalData.customFieldDefs.length > 0) {
+      callbacks.mergeIncomingCustomFieldDefs(finalData.customFieldDefs)
     }
 
     if (replaceExisting) {

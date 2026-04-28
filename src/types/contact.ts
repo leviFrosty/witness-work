@@ -50,6 +50,12 @@ export type Contact = {
    * predate sync — backfilled lazily.
    */
   updatedAt?: number
+  /**
+   * Per-contact custom field values. Keyed by `CustomFieldDefinition.id`
+   * (UUID), not by the user-facing label — so renaming a field on the def
+   * doesn't orphan the value here. Definitions live in `contactsStore`'s
+   * `customFieldDefs` and the renderer joins the two by id.
+   */
   customFields?: Record<string, string>
 
   /**

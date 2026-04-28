@@ -288,3 +288,59 @@ describe('buildContactShareLink strip policy', () => {
     expect(followUp).not.toHaveProperty('topic')
   })
 })
+
+describe('buildContactShareLink customFieldDefs embedding', () => {
+  const makeDef = (id: string, label: string) => ({
+    id,
+    label,
+    order: 0,
+    createdAt: 1000,
+    updatedAt: 2000,
+  })
+
+  it('embeds only defs that the contact references', () => {
+    const contact = makeContact({
+      customFields: { 'def-1': 'Acme' },
+    })
+    const defs = [
+      makeDef('def-1', 'Company'),
+      makeDef('def-2', 'Department'), // unreferenced — should NOT be embedded
+    ]
+    const { url } = buildContactShareLink(contact, [], defs)
+    const parsed = parseContactShareLink(url) as {
+      customFieldDefs?: Array<{ id: string; label: string }>
+    }
+    expect(parsed.customFieldDefs).toHaveLength(1)
+    expect(parsed.customFieldDefs?.[0]).toMatchObject({
+      id: 'def-1',
+      label: 'Company',
+    })
+  })
+
+  it('omits the customFieldDefs field entirely when there are no custom fields', () => {
+    const contact = makeContact()
+    const { url } = buildContactShareLink(contact, [], [makeDef('def-1', 'X')])
+    const parsed = parseContactShareLink(url) as Record<string, unknown>
+    expect(parsed).not.toHaveProperty('customFieldDefs')
+  })
+
+  it('preserves updatedAt on embedded defs (for LWW merging)', () => {
+    const contact = makeContact({
+      customFields: { 'def-1': 'Acme' },
+    })
+    const defs = [makeDef('def-1', 'Company')]
+    const { url } = buildContactShareLink(contact, [], defs)
+    const parsed = parseContactShareLink(url) as {
+      customFieldDefs?: Array<{ updatedAt: number }>
+    }
+    expect(parsed.customFieldDefs?.[0].updatedAt).toBe(2000)
+  })
+
+  it('back-compat: omitting the defs argument still produces a valid link', () => {
+    const contact = makeContact({ phone: '+1 555 000 0001' })
+    const { url } = buildContactShareLink(contact, [])
+    const parsed = parseContactShareLink(url) as Record<string, unknown>
+    expect(parsed).toHaveProperty('contact')
+    expect(parsed).not.toHaveProperty('customFieldDefs')
+  })
+})

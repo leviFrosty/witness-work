@@ -223,7 +223,17 @@ export const PREFERENCE_DEFAULTS = {
   backupNotificationFrequencyAsDays: 60,
   userSpecifiedHasAnnualGoal: 'default' as boolean | 'default',
   fontSizeOffset: 0,
-  customContactFields: [] as string[],
+  /**
+   * One-shot flag for the legacy-`customContactFields` → `customFieldDefs`
+   * migration. Per-device because the migration runs once per install against
+   * whatever shape happens to be on disk; once flipped to true, the boot runner
+   * skips the migration. Non-syncable.
+   *
+   * The legacy `customContactFields: string[]` field that this migration
+   * replaces was removed from the schema — see `lib/customFieldsMigration.ts`
+   * for the rewrite, and `contactsStore.customFieldDefs` for the new home.
+   */
+  hasMigratedCustomFieldsToIds: false,
   hasAttemptedToMigrateToMmkv: false,
   /**
    * Hidden dev tools for diagnosing issues. To enable/disable, navigate to
@@ -482,6 +492,11 @@ export const NON_SYNCABLE_PREFERENCE_KEYS = new Set<string>([
   'iCloudDeviceId',
   'preferenceUpdatedAt',
   'hasMigratedToSyncSchema',
+  'hasMigratedCustomFieldsToIds',
+  // Legacy field — removed from the schema but may still exist on disk for
+  // installs that pre-date the id-keyed migration. Listed here so the boot
+  // cleanup that wipes it doesn't propagate the deletion through sync.
+  'customContactFields',
   'devSupporterOverride',
   'devSupporterNudgeForceShow',
   'developerTools',

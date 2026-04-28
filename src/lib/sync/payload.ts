@@ -23,6 +23,14 @@ export type SyncPayload = {
     contacts: any[]
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     deletedContacts: any[]
+    /**
+     * Custom field definitions. Optional in the wire shape because pre-id
+     * payloads (written by clients before this feature shipped) won't include
+     * them; consumers default to `[]` when absent. Merged by id with per-def
+     * `updatedAt` last-writer-wins.
+     */
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    customFieldDefs?: any[]
   }
   conversationStore: {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -97,6 +105,7 @@ export function buildPayload(args: {
       deletedContacts: contacts.deletedContacts.map((c) =>
         sanitizeContactAvatar(c, avatarOpts)
       ),
+      customFieldDefs: contacts.customFieldDefs,
     },
     conversationStore: {
       conversations: conversations.conversations,

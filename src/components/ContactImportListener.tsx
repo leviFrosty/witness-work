@@ -36,6 +36,7 @@ export default function ContactImportListener() {
     addContact,
     updateContact,
     recoverContact,
+    mergeIncomingCustomFieldDefs,
   } = useContacts()
   const { addConversation, updateConversation } = useConversations()
   const toast = useToastController()
@@ -119,6 +120,7 @@ export default function ContactImportListener() {
                   addConversation,
                   updateConversation,
                   recoverContact,
+                  mergeIncomingCustomFieldDefs,
                   showToast: (title, message) =>
                     toast.show(title, { message, native: true }),
                   navigate: (contactId) => {
@@ -164,6 +166,7 @@ export default function ContactImportListener() {
     addContact,
     updateContact,
     recoverContact,
+    mergeIncomingCustomFieldDefs,
     addConversation,
     updateConversation,
     toast,

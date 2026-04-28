@@ -10,10 +10,10 @@ import ActionButton from '../components/ActionButton'
 import { Contact } from '../types/contact'
 import { Alert, TextInput, useColorScheme, View } from 'react-native'
 import TextInputRow from './inputs/TextInputRow'
-import { usePreferences } from '../stores/preferences'
 import useContacts from '../stores/contactsStore'
 import { useMemo, useRef, useState } from 'react'
 import * as Localization from 'expo-localization'
+import { useNavigation } from '@react-navigation/native'
 import useTheme from '../contexts/theme'
 import i18n from '../lib/locales'
 import Section from './inputs/Section'
@@ -21,6 +21,7 @@ import IconButton from './IconButton'
 import { faCaretDown, faMinus } from '@fortawesome/free-solid-svg-icons'
 import Text from './MyText'
 import XView from './layout/XView'
+import { RootStackNavigation } from '../types/rootStack'
 
 export default function PersonalContactSection({
   contact,
@@ -43,13 +44,25 @@ export default function PersonalContactSection({
   setCustomField: (key: string, value: string) => void
   clearCustomField: (key: string) => void
 }) {
-  const { customContactFields, set } = usePreferences()
-  const { deleteFieldFromAllContacts } = useContacts()
+  const { customFieldDefs, addCustomFieldDef, archiveCustomFieldDef } =
+    useContacts()
+  const navigation = useNavigation<RootStackNavigation>()
   const placeholder = useRef(contact.phone || '')
   const locales = Localization.getLocales()
   const [customFieldName, setCustomFieldName] = useState('')
   const colorScheme = useColorScheme()
   const theme = useTheme()
+
+  // Sorted, non-archived defs are the only ones the user sees on the form.
+  // Archived defs are hidden everywhere by design — restore from the manage
+  // screen if the user wants their data back.
+  const visibleDefs = useMemo(
+    () =>
+      [...customFieldDefs]
+        .filter((d) => !d.archived)
+        .sort((a, b) => a.order - b.order),
+    [customFieldDefs]
+  )
 
   const handleCountryChange = (country: ICountry) => {
     if (!country) {
@@ -80,13 +93,11 @@ export default function PersonalContactSection({
   )
 
   const handleAddNewCustomField = () => {
-    set({
-      customContactFields: [...customContactFields, customFieldName],
-    })
+    addCustomFieldDef(customFieldName)
     setCustomFieldName('')
   }
 
-  const handleDeletePrompt = (field: string) => {
+  const handleDeletePrompt = (defId: string) => {
     Alert.alert(i18n.t('delete'), i18n.t('deleteField_description'), [
       {
         text: i18n.t('cancel'),
@@ -95,25 +106,17 @@ export default function PersonalContactSection({
       },
       {
         text: i18n.t('clearForThisContact'),
-        onPress: () => handleClearCustomFieldForContact(field),
+        onPress: () => clearCustomField(defId),
       },
       {
-        text: i18n.t('deleteFieldOnAllContacts'),
+        // Archive (soft-delete): hides the field everywhere but preserves
+        // every contact's value in storage. The user can restore from the
+        // management screen.
+        text: i18n.t('archiveField'),
         style: 'destructive',
-        onPress: () => handleDeleteCustomFieldAcrossAllContacts(field),
+        onPress: () => archiveCustomFieldDef(defId),
       },
     ])
-  }
-
-  const handleDeleteCustomFieldAcrossAllContacts = (field: string) => {
-    set({
-      customContactFields: customContactFields.filter((f) => f !== field),
-    })
-    deleteFieldFromAllContacts(field)
-  }
-
-  const handleClearCustomFieldForContact = (field: string) => {
-    clearCustomField(field)
   }
 
   return (
@@ -201,25 +204,24 @@ export default function PersonalContactSection({
           autoCapitalize: 'none',
         }}
       />
-      {!!customContactFields.length &&
-        customFields &&
-        customContactFields.map((field) => (
-          <XView key={field}>
+      {visibleDefs.length > 0 &&
+        visibleDefs.map((def) => (
+          <XView key={def.id}>
             <IconButton
               icon={faMinus}
               color={theme.colors.error}
-              onPress={() => handleDeletePrompt(field)}
+              onPress={() => handleDeletePrompt(def.id)}
               style={{ paddingBottom: 15 }}
             />
             <TextInputRow
-              label={field}
+              label={def.label}
               style={{ flex: 1 }}
               textInputProps={{
                 placeholder: `${i18n.t('goesHere')}`,
                 onChangeText: (val: string) => {
-                  setCustomField(field, val)
+                  setCustomField(def.id, val)
                 },
-                value: customFields[field],
+                value: customFields?.[def.id] ?? '',
                 autoCapitalize: 'words',
               }}
             />
@@ -249,6 +251,17 @@ export default function PersonalContactSection({
           </Text>
         </ActionButton>
       </XView>
+      {(visibleDefs.length > 0 || customFieldDefs.some((d) => d.archived)) && (
+        <View style={{ paddingTop: 8 }}>
+          <ActionButton
+            onPress={() => navigation.navigate('PreferencesCustomFields')}
+          >
+            <Text style={{ color: theme.colors.textInverse }}>
+              {i18n.t('manageCustomFields')}
+            </Text>
+          </ActionButton>
+        </View>
+      )}
     </Section>
   )
 }

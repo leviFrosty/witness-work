@@ -37,6 +37,7 @@ const AppSection = ({ handleNavigate }: SettingsSectionProps) => {
     addContact,
     updateContact,
     recoverContact,
+    mergeIncomingCustomFieldDefs,
   } = useContacts()
   const { addConversation, updateConversation } = useConversations()
   const toast = useToastController()
@@ -48,6 +49,7 @@ const AppSection = ({ handleNavigate }: SettingsSectionProps) => {
     addConversation,
     updateConversation,
     recoverContact,
+    mergeIncomingCustomFieldDefs,
     showToast: (title: string, message: string) => {
       toast.show(title, { message, native: true })
     },

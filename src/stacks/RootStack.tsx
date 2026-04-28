@@ -26,6 +26,7 @@ import PreferencesBackupsScreen from '../screens/settings/preferences/screens/Pr
 import PreferencesAppearanceScreen from '../screens/settings/preferences/screens/PreferencesAppearanceScreen'
 import PreferencesWidgetsScreen from '../screens/settings/preferences/screens/PreferencesWidgetsScreen'
 import PreferencesiCloudScreen from '../screens/settings/preferences/screens/PreferencesiCloudScreen'
+import PreferencesCustomFieldsScreen from '../screens/settings/preferences/screens/PreferencesCustomFieldsScreen'
 import RescheduleConversationScreen from '../screens/RescheduleConversationScreen'
 import PlanScheduleScreen from '../screens/PlanScheduleScreen'
 import PlanDayScreen from '../screens/PlanDayScreen'
@@ -171,6 +172,15 @@ const RootStackComponent = () => {
         }}
         name='PreferencesPlans'
         component={PreferencesPlansScreen}
+      />
+      <RootStack.Screen
+        options={{
+          header: () => (
+            <Header buttonType='back' title={i18n.t('customFields')} />
+          ),
+        }}
+        name='PreferencesCustomFields'
+        component={PreferencesCustomFieldsScreen}
       />
       <RootStack.Screen
         options={{

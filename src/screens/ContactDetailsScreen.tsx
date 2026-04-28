@@ -429,13 +429,25 @@ const AddressRow = ({ contact }: { contact: Contact }) => {
 const CustomFieldsRow = (props: { contact: Contact }) => {
   const theme = useTheme()
   const { customFields } = props.contact
+  const customFieldDefs = useContacts((s) => s.customFieldDefs)
 
   if (!customFields) {
     return null
   }
 
-  return Object.keys(customFields).map((key) => (
-    <View style={{ gap: 10 }} key={key}>
+  // Render in def.order, skip archived defs entirely (their values stay in
+  // storage; restoring the def re-exposes them). Iterating defs (rather than
+  // contact keys) also drops orphan ids from view — those exist only when a
+  // def was hard-purged but the contact still references the id, which is
+  // not reachable through the standard archive flow.
+  const visible = [...customFieldDefs]
+    .filter((d) => !d.archived && customFields[d.id])
+    .sort((a, b) => a.order - b.order)
+
+  if (visible.length === 0) return null
+
+  return visible.map((def) => (
+    <View style={{ gap: 10 }} key={def.id}>
       <Text
         style={{
           fontSize: 14,
@@ -443,9 +455,9 @@ const CustomFieldsRow = (props: { contact: Contact }) => {
           color: theme.colors.textAlt,
         }}
       >
-        {key}
+        {def.label}
       </Text>
-      <Copyeable>{customFields[key]}</Copyeable>
+      <Copyeable>{customFields[def.id]}</Copyeable>
     </View>
   ))
 }
@@ -638,7 +650,8 @@ const ContactDetailsScreen = ({ route, navigation }: Props) => {
   const { developerTools } = usePreferences()
   const { params } = route
   const insets = useSafeAreaInsets()
-  const { contacts, deleteContact, toggleFavoriteContact } = useContacts()
+  const { contacts, deleteContact, toggleFavoriteContact, customFieldDefs } =
+    useContacts()
   const contact = useMemo(
     () => contacts.find((c) => c.id === params.id),
     [contacts, params.id]
@@ -754,7 +767,8 @@ const ContactDetailsScreen = ({ route, navigation }: Props) => {
     try {
       const { url, includedConversations, trimmed } = buildContactShareLink(
         contact,
-        contactConversations
+        contactConversations,
+        customFieldDefs
       )
       logger.log('[ContactShareLink] generated url =', url)
       logger.log('[ContactShareLink] length =', url.length, 'bytes')
@@ -826,7 +840,7 @@ const ContactDetailsScreen = ({ route, navigation }: Props) => {
       // Last resort: share the JSON as message text.
       await Share.share({ message: jsonString })
     }
-  }, [contact, contactConversations, toast])
+  }, [contact, contactConversations, customFieldDefs, toast])
 
   useEffect(() => {
     navigation.setOptions({
@@ -956,9 +970,12 @@ const ContactDetailsScreen = ({ route, navigation }: Props) => {
 
   const hasAddress =
     address && Object.values(address).some((v) => v?.length > 0)
+  // True only when at least one non-archived def has a value on this contact.
+  // Archived defs (and orphan ids referencing purged defs) hold data but are
+  // hidden by design — see CustomFieldsRow.
   const hasCustomFields =
     customFields !== undefined &&
-    Object.values(customFields).some((f) => !!f.length)
+    customFieldDefs.some((d) => !d.archived && !!customFields[d.id]?.length)
 
   return (
     <View style={{ flexGrow: 1 }}>

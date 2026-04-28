@@ -11,6 +11,7 @@ import {
   faHome,
   faPalette,
   faRoute,
+  faSliders,
   faTableCellsLarge,
   faUser,
 } from '@fortawesome/free-solid-svg-icons'
@@ -67,6 +68,13 @@ const PreferencesScreen = () => {
               leftIcon={faRoute}
               label={i18n.t('navigation')}
               onPress={() => navigation.navigate('PreferencesNavigation')}
+            >
+              <IconButton icon={faChevronRight} />
+            </InputRowButton>
+            <InputRowButton
+              leftIcon={faSliders}
+              label={i18n.t('customFields')}
+              onPress={() => navigation.navigate('PreferencesCustomFields')}
             >
               <IconButton icon={faChevronRight} />
             </InputRowButton>

@@ -13,6 +13,7 @@ import * as Sentry from '@sentry/react-native'
 import * as Device from 'expo-device'
 import { EventSubscription } from 'expo-modules-core'
 import { Contact } from '../../types/contact'
+import { CustomFieldDefinition } from '../../types/customField'
 import { Conversation, ConversationTombstone } from '../../types/conversation'
 import {
   DayPlan,
@@ -186,6 +187,7 @@ export function hasMeaningfulLocalData(): boolean {
 type LocalMergeState = {
   contacts: Contact[]
   deletedContacts: Contact[]
+  customFieldDefs: CustomFieldDefinition[]
   conversations: Conversation[]
   deletedConversations: ConversationTombstone[]
   serviceReports: ServiceReportsByYears
@@ -213,6 +215,8 @@ function foldRemotePayloads(payloads: SyncPayload[]): SyncPayload | null {
   let acc: LocalMergeState = {
     contacts: (first.contactStore.contacts ?? []) as Contact[],
     deletedContacts: (first.contactStore.deletedContacts ?? []) as Contact[],
+    customFieldDefs: (first.contactStore.customFieldDefs ??
+      []) as CustomFieldDefinition[],
     conversations: (first.conversationStore.conversations ??
       []) as Conversation[],
     deletedConversations: first.conversationStore.deletedConversations ?? [],
@@ -231,6 +235,7 @@ function foldRemotePayloads(payloads: SyncPayload[]): SyncPayload | null {
     acc = {
       contacts: result.contacts,
       deletedContacts: result.deletedContacts,
+      customFieldDefs: result.customFieldDefs,
       conversations: result.conversations,
       deletedConversations: result.deletedConversations,
       serviceReports: result.serviceReports,
@@ -256,6 +261,7 @@ function foldRemotePayloads(payloads: SyncPayload[]): SyncPayload | null {
     contactStore: {
       contacts: acc.contacts,
       deletedContacts: acc.deletedContacts,
+      customFieldDefs: acc.customFieldDefs,
     },
     conversationStore: {
       conversations: acc.conversations,
@@ -293,6 +299,8 @@ export function replaceLocalWithRemote(remote: SyncPayload): void {
   useContacts.setState({
     contacts: remote.contactStore.contacts ?? [],
     deletedContacts: remote.contactStore.deletedContacts ?? [],
+    customFieldDefs: (remote.contactStore.customFieldDefs ??
+      []) as CustomFieldDefinition[],
   })
   useConversations.setState({
     conversations: remote.conversationStore.conversations ?? [],
@@ -848,6 +856,7 @@ async function pullAndMergeInner(reason: string): Promise<boolean> {
   let acc: LocalMergeState = {
     contacts: contactsState.contacts,
     deletedContacts: contactsState.deletedContacts,
+    customFieldDefs: contactsState.customFieldDefs,
     conversations: conversationsState.conversations,
     deletedConversations: conversationsState.deletedConversations,
     serviceReports: serviceReportState.serviceReports,
@@ -865,6 +874,7 @@ async function pullAndMergeInner(reason: string): Promise<boolean> {
     acc = {
       contacts: result.contacts,
       deletedContacts: result.deletedContacts,
+      customFieldDefs: result.customFieldDefs,
       conversations: result.conversations,
       deletedConversations: result.deletedConversations,
       serviceReports: result.serviceReports,
@@ -912,6 +922,7 @@ async function pullAndMergeInner(reason: string): Promise<boolean> {
   contactsState.set({
     contacts: acc.contacts,
     deletedContacts: acc.deletedContacts,
+    customFieldDefs: acc.customFieldDefs,
   })
   conversationsState.set({
     conversations: acc.conversations,

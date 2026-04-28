@@ -12,31 +12,27 @@ import { ProfileAvatar } from '../types/avatar'
 import { MinuteDisplayFormat } from '../types/serviceReport'
 import type { ShaderId } from '../shaders/types'
 import { DEFAULT_SHADER_ID } from '../shaders/registry'
+import type { ContactSortDirection, ContactSortKey } from '../lib/contactsSort'
+import type { ActiveFilter } from '../lib/contactsFilters'
 
-const SortOptionValues = [
-  'recentConversation',
-  'az',
-  'za',
-  'bibleStudy',
-] as const
-
-export const contactSortOptions = [
-  {
-    label: i18n.t('recentConversation'),
-    value: SortOptionValues[0],
-  },
-  {
-    label: i18n.t('alphabeticalAsc'),
-    value: SortOptionValues[1],
-  },
-  {
-    label: i18n.t('alphabeticalDesc'),
-    value: SortOptionValues[2],
-  },
-  {
-    label: i18n.t('bibleStudy'),
-    value: SortOptionValues[3],
-  },
+/**
+ * Built-in (non-custom-field) sort dimensions. Custom-field sorts use the
+ * `customField:<defId>` template literal form on `ContactSortKey` and are
+ * appended at render time when picking a custom field.
+ */
+export const builtInContactSortOptions: {
+  label: () => string
+  value: ContactSortKey
+}[] = [
+  { label: () => i18n.t('recentConversation'), value: 'recentConversation' },
+  { label: () => i18n.t('alphabeticalAsc'), value: 'az' },
+  { label: () => i18n.t('alphabeticalDesc'), value: 'za' },
+  { label: () => i18n.t('bibleStudy'), value: 'bibleStudy' },
+  { label: () => i18n.t('contacts_sortByPin'), value: 'pinStaleness' },
+  { label: () => i18n.t('contacts_sortByDateAdded'), value: 'createdAt' },
+  { label: () => i18n.t('contacts_sortByCity'), value: 'city' },
+  { label: () => i18n.t('contacts_sortByState'), value: 'state' },
+  { label: () => i18n.t('contacts_sortByZip'), value: 'zip' },
 ]
 
 export type GoalHours = {
@@ -166,7 +162,18 @@ export const PREFERENCE_DEFAULTS = {
   /** Profile avatar — stored locally, never uploaded. */
   avatar: { type: 'none', value: '' } as ProfileAvatar,
   installedOn: new Date(),
-  contactSort: 'recentConversation' as (typeof SortOptionValues)[number],
+  contactSort: 'recentConversation' as ContactSortKey,
+  /**
+   * Direction the active sort runs in. `desc` is the default because the
+   * Contacts screen's primary sorts (recent conversation, color-pin staleness)
+   * read most naturally with the most-actionable rows on top.
+   */
+  contactSortDirection: 'desc' as ContactSortDirection,
+  /**
+   * Persisted advanced filters (AND'd) on the Contacts screen. Survives a tab
+   * switch so the user doesn't lose their filter set when leaving the screen.
+   */
+  contactsFilters: [] as ActiveFilter[],
   hasCompletedMapOnboarding: false,
   calledGoecodeApiTimes: 0,
   lastTimeRequestedAReview: null as Date | null,
@@ -556,8 +563,11 @@ export const usePreferences = create(
           })),
         updateLastTimeRequestedStoreReview: () =>
           set({ lastTimeRequestedAReview: new Date() }),
-        setContactSort: (contactSort: (typeof SortOptionValues)[number]) =>
-          set({ contactSort }),
+        setContactSort: (contactSort: ContactSortKey) => set({ contactSort }),
+        setContactSortDirection: (contactSortDirection: ContactSortDirection) =>
+          set({ contactSortDirection }),
+        setContactsFilters: (contactsFilters: ActiveFilter[]) =>
+          set({ contactsFilters }),
         setDefaultPhoneRegionCode: (defaultPhoneRegionCode: string) =>
           set({ defaultPhoneRegionCode }),
         removeHint: (hint: keyof typeof hints) =>

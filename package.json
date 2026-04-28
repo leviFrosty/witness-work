@@ -89,6 +89,7 @@
     "expo-task-manager": "~55.0.15",
     "expo-updates": "~55.0.21",
     "fflate": "^0.8.2",
+    "fuse.js": "^7.3.0",
     "i18n-js": "^4.5.1",
     "jest-expo": "~55.0.16",
     "lodash": "^4.18.1",

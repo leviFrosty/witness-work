@@ -26,6 +26,8 @@ import SwipeableDismiss from './swipeableActions/Dismiss'
 import DismissContactSheet from './DismissContactSheet'
 import { useToastController } from '@tamagui/toast'
 import Avatar from './Avatar'
+import { getContactStaleness, stalenessToColor } from '../lib/contactStaleness'
+import { useMarkerColors } from '../hooks/useMarkerColors'
 
 const ContactRow = ({
   contact,
@@ -37,8 +39,18 @@ const ContactRow = ({
   const theme = useTheme()
   const { deleteContact } = useContacts()
   const { conversations } = useConversations()
+  const markerColors = useMarkerColors()
   const toast = useToastController()
   const [dismissSheetOpen, setDismissSheetOpen] = useState(false)
+
+  const stripeColor = useMemo(
+    () =>
+      stalenessToColor(
+        getContactStaleness(contact, conversations),
+        markerColors
+      ),
+    [contact, conversations, markerColors]
+  )
 
   const isActiveBibleStudy = useMemo(
     () =>
@@ -114,8 +126,20 @@ const ContactRow = ({
           paddingVertical: 16,
           borderRadius: theme.numbers.borderRadiusSm,
           backgroundColor: theme.colors.backgroundLighter,
+          overflow: 'hidden',
         }}
       >
+        <View
+          pointerEvents='none'
+          style={{
+            position: 'absolute',
+            left: 0,
+            top: 0,
+            bottom: 0,
+            width: 4,
+            backgroundColor: stripeColor,
+          }}
+        />
         <Swipeable
           onSwipeableWillOpen={() => Haptics.light()}
           containerStyle={{ backgroundColor: theme.colors.backgroundLighter }}
@@ -131,11 +155,17 @@ const ContactRow = ({
               background={contact.avatarBackground ?? undefined}
             />
             <View style={{ flexGrow: 1, flexShrink: 1, gap: 2 }}>
-              <Text style={{ fontSize: 18 }}>{contact.name}</Text>
-              <Text style={{ color: theme.colors.textAlt, fontSize: 10 }}>
+              <Text style={{ fontSize: 18 }} numberOfLines={1}>
+                {contact.name}
+              </Text>
+              <Text
+                style={{ color: theme.colors.textAlt, fontSize: 10 }}
+                numberOfLines={1}
+              >
                 {mostRecentConversation
                   ? moment(mostRecentConversation.date).fromNow()
                   : i18n.t('noRecentConversation_plural')}
+                {contact.address?.city ? ` · ${contact.address.city}` : ''}
               </Text>
             </View>
             <View style={{ flexDirection: 'row', gap: 10 }}>

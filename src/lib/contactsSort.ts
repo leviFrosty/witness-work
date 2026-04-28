@@ -142,8 +142,14 @@ const compareKey = (
         stalenessRank[getContactStaleness(a, ctx.conversations)] -
         stalenessRank[getContactStaleness(b, ctx.conversations)]
       )
-    case 'createdAt':
-      return a.createdAt.getTime() - b.createdAt.getTime()
+    case 'createdAt': {
+      const am = a.createdAt ? moment(a.createdAt) : null
+      const bm = b.createdAt ? moment(b.createdAt) : null
+      const aSet = !!am && am.isValid()
+      const bSet = !!bm && bm.isValid()
+      if (!aSet || !bSet) return missing(aSet, bSet)
+      return am!.unix() - bm!.unix()
+    }
     case 'city':
       return localeCmp(a.address?.city, b.address?.city)
     case 'state':

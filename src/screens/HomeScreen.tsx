@@ -13,7 +13,6 @@ import useContacts from '../stores/contactsStore'
 import { RefreshControl, View } from 'react-native'
 import { iCloudSync } from '../lib/sync/iCloudSync'
 import ServiceReportSection from '../components/ServiceReportSection'
-import ReturnVisitContactsSection from '../components/ReturnVisitContactsSection'
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import XView from '../components/layout/XView'
@@ -281,7 +280,6 @@ export const HomeScreen = () => {
           {publisher !== 'publisher' && homeScreenElements.timer && (
             <TimerSection />
           )}
-          {homeScreenElements.contacts && <ReturnVisitContactsSection />}
         </View>
       </KeyboardAwareScrollView>
       <UpgradeLegacyTimeReportsSheet

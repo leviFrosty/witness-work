@@ -1,6 +1,6 @@
 import { useMemo } from 'react'
 import { View, ViewStyle } from 'react-native'
-import Svg, { Defs, Line, Pattern, Rect } from 'react-native-svg'
+import Svg, { Defs, Path, Pattern, Rect } from 'react-native-svg'
 import _ from 'lodash'
 
 import useTheme from '../contexts/theme'
@@ -46,6 +46,7 @@ type LabelLayout = {
   position: number
   row: number
   isNext: boolean
+  state: SegmentState
 }
 
 /**
@@ -86,9 +87,9 @@ export const MilestoneProgressBarPreview = ({
       if (hoursCompleted >= m) {
         state = 'hit'
         fillRatio = 1
-      } else if (hoursCompleted > prev && range > 0) {
+      } else if (hoursCompleted >= prev && range > 0) {
         state = 'progress'
-        fillRatio = Math.min(1, (hoursCompleted - prev) / range)
+        fillRatio = Math.min(1, Math.max(0, (hoursCompleted - prev) / range))
       } else {
         state = 'future'
       }
@@ -113,6 +114,7 @@ export const MilestoneProgressBarPreview = ({
         position: cumulative,
         row,
         isNext: seg.end === next,
+        state: seg.state,
       })
     }
     const hasSecondRow = labelLayout.some((l) => l.row === 1)
@@ -123,7 +125,7 @@ export const MilestoneProgressBarPreview = ({
     return { segments: segs, labels: labelLayout, labelsHeight: height }
   }, [milestones, hoursCompleted, safeGoal])
 
-  const separatorColor = theme.colors.background
+  const separatorColor = theme.colors.textAlt
   const pastelFill = theme.colors.accentTranslucent
   const hatchLineColor = theme.colors.textAlt
 
@@ -133,57 +135,78 @@ export const MilestoneProgressBarPreview = ({
         style={{
           height: BAR_HEIGHT,
           borderRadius: BAR_RADIUS,
-          flexDirection: 'row',
           overflow: 'hidden',
-          backgroundColor: theme.colors.backgroundLighter,
+          backgroundColor: theme.colors.background,
         }}
       >
-        {segments.map((seg, i) => (
-          <View
-            key={`${seg.end}-${i}`}
-            style={{
-              flex: seg.widthFlex,
-              height: '100%',
-              borderRightWidth: i < segments.length - 1 ? 1 : 0,
-              borderRightColor: separatorColor,
-              overflow: 'hidden',
-              position: 'relative',
-            }}
-          >
-            {seg.state === 'hit' && (
-              <View
-                style={{
-                  flex: 1,
-                  backgroundColor: theme.colors.accent,
-                }}
-              />
-            )}
-            {seg.state === 'progress' && (
-              <>
+        <View
+          pointerEvents='none'
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            opacity: 0.25,
+          }}
+        >
+          <HatchBackground color={hatchLineColor} />
+        </View>
+        <View style={{ flexDirection: 'row', height: '100%' }}>
+          {segments.map((seg, i) => (
+            <View
+              key={`${seg.end}-${i}`}
+              style={{
+                flex: seg.widthFlex,
+                height: '100%',
+                borderRightWidth: i < segments.length - 1 ? 1 : 0,
+                borderRightColor: separatorColor,
+                overflow: 'hidden',
+                position: 'relative',
+              }}
+            >
+              {seg.state === 'hit' && (
                 <View
                   style={{
-                    position: 'absolute',
-                    top: 0,
-                    left: 0,
-                    right: 0,
-                    bottom: 0,
-                    backgroundColor: pastelFill,
-                  }}
-                />
-                <View
-                  style={{
-                    width: `${seg.fillRatio * 100}%`,
-                    height: '100%',
+                    flex: 1,
                     backgroundColor: theme.colors.accent,
                   }}
                 />
-              </>
-            )}
-            {seg.state === 'future' && (
-              <HatchBackground color={hatchLineColor} />
-            )}
-          </View>
-        ))}
+              )}
+              {seg.state === 'progress' && (
+                <>
+                  <View
+                    style={{
+                      position: 'absolute',
+                      top: 0,
+                      left: 0,
+                      right: 0,
+                      bottom: 0,
+                      backgroundColor: theme.colors.background,
+                    }}
+                  />
+                  <View
+                    style={{
+                      position: 'absolute',
+                      top: 0,
+                      left: 0,
+                      right: 0,
+                      bottom: 0,
+                      backgroundColor: pastelFill,
+                    }}
+                  />
+                  <View
+                    style={{
+                      width: `${seg.fillRatio * 100}%`,
+                      height: '100%',
+                      backgroundColor: theme.colors.accent,
+                    }}
+                  />
+                </>
+              )}
+            </View>
+          ))}
+        </View>
       </View>
 
       <View
@@ -222,9 +245,12 @@ export const MilestoneProgressBarPreview = ({
                 numberOfLines={1}
                 style={{
                   fontSize: theme.fontSize('xs'),
-                  color: label.isNext
-                    ? theme.colors.accent
-                    : theme.colors.textAlt,
+                  color:
+                    label.state === 'hit'
+                      ? theme.colors.accent
+                      : label.isNext
+                        ? theme.colors.text
+                        : theme.colors.textAlt,
                   fontFamily: label.isNext
                     ? theme.fonts.bold
                     : theme.fonts.regular,
@@ -247,14 +273,10 @@ const HatchBackground = ({ color }: { color: string }) => (
     style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}
   >
     <Defs>
-      <Pattern
-        id='hatch'
-        width='6'
-        height='6'
-        patternUnits='userSpaceOnUse'
-        patternTransform='rotate(45)'
-      >
-        <Line x1='0' y1='0' x2='0' y2='6' stroke={color} strokeWidth='2' />
+      <Pattern id='hatch' width='14' height='14' patternUnits='userSpaceOnUse'>
+        <Path d='M0,14 L14,0' stroke={color} strokeWidth='1.5' />
+        <Path d='M-1,1 L1,-1' stroke={color} strokeWidth='1.5' />
+        <Path d='M13,15 L15,13' stroke={color} strokeWidth='1.5' />
       </Pattern>
     </Defs>
     <Rect width='100%' height='100%' fill='url(#hatch)' />

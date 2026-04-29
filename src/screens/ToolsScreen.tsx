@@ -86,6 +86,7 @@ export default function ToolsScreen() {
     _WARNING_forceDeleteContacts,
     _WARNING_clearDeleted,
     addContact,
+    addCustomFieldDef,
   } = useContacts()
   const { cache, invalidateAllCache } = useTimeCache()
   const { conversations, addConversation, _WARNING_forceDeleteConversations } =
@@ -117,7 +118,26 @@ export default function ToolsScreen() {
       'https://jsonplaceholder.typicode.com/users'
     )
     if (Array.isArray(data)) {
+      // customFields is id-keyed against contactsStore.customFieldDefs (see
+      // customFieldsMigration.ts) — writing the raw company object would
+      // produce label-keyed values that no renderer can resolve. Create defs
+      // up-front and key by their ids. addCustomFieldDef returns the existing
+      // def on label collision, so re-running stays a no-op for the def list.
+      const companyDef = addCustomFieldDef('Company')
+      const catchphraseDef = addCustomFieldDef('Catchphrase')
+      const bsDef = addCustomFieldDef('BS')
+
       data.forEach((contact, index) => {
+        const customFields: Record<string, string> = {}
+        if (companyDef && contact.company?.name) {
+          customFields[companyDef.id] = contact.company.name
+        }
+        if (catchphraseDef && contact.company?.catchPhrase) {
+          customFields[catchphraseDef.id] = contact.company.catchPhrase
+        }
+        if (bsDef && contact.company?.bs) {
+          customFields[bsDef.id] = contact.company.bs
+        }
         addContact({
           createdAt: moment()
             .subtract(index + 1 * 3, 'weeks')
@@ -134,7 +154,7 @@ export default function ToolsScreen() {
             longitude: contact.address.geo.lng,
           },
           email: contact.email,
-          customFields: contact.company,
+          customFields,
           phone: contact.phone,
           isFavorite: index < 2,
         })

@@ -379,19 +379,39 @@ export const getTotalMinutesForServiceYear = (
 
   for (const year in serviceYearReports) {
     for (const month in serviceYearReports[year]) {
-      const current = moment().month(parseInt(month)).year(parseInt(year))
       const monthReports = getMonthsReports(
         serviceYearReports,
         parseInt(month),
         parseInt(year)
       )
-      const currentMinutes = adjustedMinutesForSpecificMonth(
-        monthReports,
-        current.month(),
-        current.year()
-      ).value
 
-      minutes += currentMinutes
+      // Trust the bucket key: `monthReports` are already keyed under
+      // (year, month). Re-filtering by `report.date` would also drop entries
+      // whose stored UTC calendar day drifts off its bucket (legacy pre-
+      // normalization data still in the user's store).
+      let standardOnly = 0
+      let ldc = 0
+      let otherWithCredit = 0
+      let otherWithoutCredit = 0
+      for (const report of monthReports) {
+        const m = report.hours * 60 + report.minutes
+        if (report.tag) {
+          if (report.credit) otherWithCredit += m
+          else otherWithoutCredit += m
+        } else if (report.ldc) {
+          ldc += m
+        } else {
+          standardOnly += m
+        }
+      }
+
+      const standard = standardOnly + otherWithoutCredit
+      const credit = ldc + otherWithCredit
+      const limit = monthCreditMaxMinutes
+      const monthMinutes =
+        standard > limit ? standard : Math.min(standard + credit, limit)
+
+      minutes += monthMinutes
     }
   }
 

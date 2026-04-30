@@ -1,4 +1,5 @@
 import { useMemo } from 'react'
+import { FuseResultMatch } from 'fuse.js'
 import useContacts from '../stores/contactsStore'
 import useConversations from '../stores/conversationStore'
 import { usePreferences } from '../stores/preferences'
@@ -36,13 +37,31 @@ export function useContactsSorted() {
     [search, fuse, actives]
   )
 
+  const matchedContacts = useMemo(
+    () => searched.map((r) => r.contact),
+    [searched]
+  )
+
+  // Keyed lookup so the row renderer doesn't have to scan the search results
+  // array for every item it draws. The map is empty when the query is empty —
+  // every entry's `matches` is undefined in that case, so we skip them.
+  const searchMatchesById = useMemo(() => {
+    const map = new Map<string, readonly FuseResultMatch[]>()
+    for (const r of searched) {
+      if (r.matches && r.matches.length > 0) {
+        map.set(r.contact.id, r.matches)
+      }
+    }
+    return map
+  }, [searched])
+
   const filtered = useMemo(
     () =>
-      applyFilters(searched, contactsFilters, {
+      applyFilters(matchedContacts, contactsFilters, {
         conversations,
         customFieldDefs,
       }),
-    [searched, contactsFilters, conversations, customFieldDefs]
+    [matchedContacts, contactsFilters, conversations, customFieldDefs]
   )
 
   const comparator = useMemo(
@@ -61,6 +80,7 @@ export function useContactsSorted() {
 
   return {
     searchSortedAndFilteredContacts,
+    searchMatchesById,
     search,
     contactsFilters,
     customFieldDefs,

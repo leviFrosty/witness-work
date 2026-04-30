@@ -58,6 +58,7 @@ const ContactsScreen = () => {
     hasActiveFilters,
     isSortNonDefault,
     searchSortedAndFilteredContacts,
+    searchMatchesById,
   } = useContactsSorted()
 
   // Keep the list pinned to the top as the query, filters, or sort change —
@@ -212,7 +213,7 @@ const ContactsScreen = () => {
                   borderRadius: theme.numbers.borderRadiusSm,
                   borderWidth: 1,
                   borderColor: theme.colors.border,
-                  backgroundColor: theme.colors.backgroundLighter,
+                  backgroundColor: theme.colors.background,
                 }}
               >
                 <FontAwesomeIcon
@@ -335,6 +336,7 @@ const ContactsScreen = () => {
         renderItem={({ item }) => (
           <ContactRow
             contact={item}
+            searchMatches={searchMatchesById.get(item.id)}
             onPress={() =>
               navigation.navigate('Contact Details', { id: item.id })
             }

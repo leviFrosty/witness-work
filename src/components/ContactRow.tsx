@@ -15,8 +15,16 @@ import IconButton from './IconButton'
 import {
   faBook,
   faChevronRight,
+  faComment,
+  faEnvelope,
+  faLocationDot,
+  faPhone,
   faStar,
+  faTag,
 } from '@fortawesome/free-solid-svg-icons'
+import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
+import { IconDefinition } from '@fortawesome/fontawesome-svg-core'
+import { FuseResultMatch } from 'fuse.js'
 import Button from './Button'
 import { Swipeable } from 'react-native-gesture-handler'
 import Haptics from '../lib/haptics'
@@ -28,13 +36,37 @@ import { useToastController } from '@tamagui/toast'
 import Avatar from './Avatar'
 import { getContactStaleness, stalenessToColor } from '../lib/contactStaleness'
 import { useMarkerColors } from '../hooks/useMarkerColors'
+import {
+  findNameMatch,
+  MatchSource,
+  pickPreviewMatch,
+} from '../lib/contactsSearch'
+import HighlightedText from './contacts/HighlightedText'
+
+const SNIPPET_CONTEXT_CHARS = 24
+
+const ICON_BY_SOURCE: Record<Exclude<MatchSource, 'name'>, IconDefinition> = {
+  customField: faTag,
+  note: faComment,
+  phone: faPhone,
+  email: faEnvelope,
+  address: faLocationDot,
+}
 
 const ContactRow = ({
   contact,
   onPress,
+  searchMatches,
 }: {
   contact: Contact
   onPress?: () => void
+  /**
+   * Per-key Fuse match metadata for the active search query, when there is one.
+   * When provided, the row renders an inline highlight on the contact name and
+   * a one-line preview snippet for the best non-name match (custom field,
+   * conversation note, phone, email, or address).
+   */
+  searchMatches?: readonly FuseResultMatch[]
 }) => {
   const theme = useTheme()
   const { deleteContact } = useContacts()
@@ -42,6 +74,12 @@ const ContactRow = ({
   const markerColors = useMarkerColors()
   const toast = useToastController()
   const [dismissSheetOpen, setDismissSheetOpen] = useState(false)
+
+  const nameMatch = useMemo(() => findNameMatch(searchMatches), [searchMatches])
+  const previewMatch = useMemo(
+    () => pickPreviewMatch(searchMatches),
+    [searchMatches]
+  )
 
   const stripeColor = useMemo(
     () =>
@@ -155,18 +193,49 @@ const ContactRow = ({
               background={contact.avatarBackground ?? undefined}
             />
             <View style={{ flexGrow: 1, flexShrink: 1, gap: 2 }}>
-              <Text style={{ fontSize: 18 }} numberOfLines={1}>
-                {contact.name}
-              </Text>
-              <Text
-                style={{ color: theme.colors.textAlt, fontSize: 10 }}
+              <HighlightedText
+                text={contact.name}
+                match={nameMatch}
+                baseStyle={{ fontSize: 18 }}
                 numberOfLines={1}
-              >
-                {mostRecentConversation
-                  ? moment(mostRecentConversation.date).fromNow()
-                  : i18n.t('noRecentConversation_plural')}
-                {contact.address?.city ? ` · ${contact.address.city}` : ''}
-              </Text>
+              />
+              {previewMatch ? (
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    gap: 6,
+                  }}
+                >
+                  <FontAwesomeIcon
+                    icon={ICON_BY_SOURCE[previewMatch.source]}
+                    size={9}
+                    style={{ color: theme.colors.textAlt }}
+                  />
+                  <View style={{ flex: 1 }}>
+                    <HighlightedText
+                      text={previewMatch.match.value ?? ''}
+                      match={previewMatch.match}
+                      contextChars={SNIPPET_CONTEXT_CHARS}
+                      baseStyle={{
+                        color: theme.colors.textAlt,
+                        fontSize: 11,
+                      }}
+                      numberOfLines={1}
+                    />
+                  </View>
+                </View>
+              ) : (
+                <Text
+                  style={{ color: theme.colors.textAlt, fontSize: 10 }}
+                  numberOfLines={1}
+                >
+                  {mostRecentConversation
+                    ? moment(mostRecentConversation.date).fromNow()
+                    : i18n.t('noRecentConversation_plural')}
+                  {contact.address?.city ? ` · ${contact.address.city}` : ''}
+                </Text>
+              )}
             </View>
             <View style={{ flexDirection: 'row', gap: 10 }}>
               {hasStudiedPreviously && (

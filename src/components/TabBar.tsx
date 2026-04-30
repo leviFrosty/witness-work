@@ -26,8 +26,8 @@ import { HomeTabStackNavigation } from '../types/homeStack'
 
 const CAPSULE_HEIGHT = 56
 const FLOATING_GAP = 6
-const HORIZONTAL_MARGIN = 16
-const PILL_GAP = 10
+const HORIZONTAL_MARGIN = 12
+const PILL_GAP = 8
 const ACCESSORY_DIAMETER = CAPSULE_HEIGHT
 
 /**
@@ -93,32 +93,41 @@ const TabBar = ({ state, descriptors, ...props }: BottomTabBarProps) => {
         key={route.key}
         accessibilityRole='button'
         accessibilityState={isFocused ? { selected: true } : {}}
-        accessibilityLabel={options.tabBarAccessibilityLabel}
+        accessibilityLabel={
+          options.tabBarAccessibilityLabel ?? i18n.t(label as TranslationKey)
+        }
         onPress={onPress}
         onLongPress={onLongPress}
         style={({ pressed }) => ({
+          flex: 1,
           alignItems: 'center',
           justifyContent: 'center',
           gap: 2,
-          paddingHorizontal: 14,
+          paddingHorizontal: 2,
           opacity: pressed ? 0.6 : 1,
         })}
       >
         <IconButton iconStyle={{ color }} icon={icon} size={18} />
-        <Text
-          style={{
-            color,
-            fontSize: theme.fontSize('xs'),
-            fontFamily: isFocused ? theme.fonts.semiBold : theme.fonts.medium,
-          }}
-        >
-          {i18n.t(label as TranslationKey)}
-        </Text>
+        {isFocused && (
+          <Text
+            numberOfLines={1}
+            adjustsFontSizeToFit
+            minimumFontScale={0.7}
+            style={{
+              color,
+              fontSize: theme.fontSize('xs'),
+              fontFamily: theme.fonts.semiBold,
+            }}
+          >
+            {i18n.t(label as TranslationKey)}
+          </Text>
+        )}
       </Pressable>
     )
   }
 
   const pillShape = {
+    flex: 1,
     height: CAPSULE_HEIGHT,
     borderRadius: CAPSULE_HEIGHT / 2,
     borderCurve: 'continuous' as const,
@@ -131,7 +140,7 @@ const TabBar = ({ state, descriptors, ...props }: BottomTabBarProps) => {
         flex: 1,
         flexDirection: 'row',
         alignItems: 'center',
-        paddingHorizontal: 6,
+        paddingHorizontal: 4,
       }}
     >
       {state.routes.map((route, index) => renderTab(route, index))}
@@ -209,7 +218,7 @@ const TabBar = ({ state, descriptors, ...props }: BottomTabBarProps) => {
           bottom: insets.bottom + FLOATING_GAP,
           height: CAPSULE_HEIGHT,
           flexDirection: 'row',
-          justifyContent: 'space-between',
+          alignItems: 'center',
           gap: PILL_GAP,
         }}
       >

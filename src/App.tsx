@@ -39,6 +39,7 @@ import { usePreferences } from './stores/preferences'
 import useContacts from './stores/contactsStore'
 import { migrateCustomFieldsToIds } from './lib/customFieldsMigration'
 import AnimationViewProvider from './providers/AnimationViewProvider'
+import ConfettiProvider from './providers/ConfettiProvider'
 import useUserLocalePrefs from './hooks/useLocale'
 import { installWidgetSync } from './lib/widgets/widgetSync'
 import { installiCloudSync, iCloudSync } from './lib/sync/iCloudSync'
@@ -278,10 +279,12 @@ export default function App() {
                   >
                     <StatusBar />
                     <ToastViewport />
-                    <AnimationViewProvider>
-                      <DeepLinkListeners />
-                      <RootStackComponent />
-                    </AnimationViewProvider>
+                    <ConfettiProvider>
+                      <AnimationViewProvider>
+                        <DeepLinkListeners />
+                        <RootStackComponent />
+                      </AnimationViewProvider>
+                    </ConfettiProvider>
                   </TamaguiProvider>
                 </ToastProvider>
               </NavigationContainer>

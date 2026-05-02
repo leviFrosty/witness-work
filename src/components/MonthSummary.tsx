@@ -1,4 +1,4 @@
-import { useWindowDimensions, View } from 'react-native'
+import { View } from 'react-native'
 import Text from './MyText'
 import i18n from '../lib/locales'
 import MonthServiceReportProgressBar from './MonthServiceReportProgressBar'
@@ -49,51 +49,13 @@ import {
   withTiming,
 } from 'react-native-reanimated'
 import Haptics from '../lib/haptics'
-import { Confetti, useConfetti } from '../vendor/ConfettiSkia'
-import type { ConfettiConfig } from '../vendor/ConfettiSkia'
 import useCelebrationQueue from '../stores/celebrationQueue'
 import {
   CONFETTI_DELAY_MS,
   CONFETTI_DURATION,
 } from '../providers/AnimationViewProvider'
-
-/**
- * Visual buffer between the global Lottie + chime ending and the Skia fireworks
- * starting, so the two don't visibly butt up against each other.
- */
-const FIREWORKS_AFTER_LOTTIE_BUFFER_MS = 200
-
-/**
- * Fan a confetti burst out across multiple screen positions instead of one
- * point in the middle. Stagger keeps it reading as a sequence of fireworks
- * rather than a single explosion. Particle count per burst is kept modest so
- * the cumulative total roughly matches the prior single-burst intensity.
- */
-const triggerFireworks = (
-  trigger: (config?: Partial<ConfettiConfig>) => void,
-  width: number,
-  height: number
-) => {
-  // Spread bursts across the upper-mid band of the screen so confetti rains
-  // down through the visible content, not from the edges or below the fold.
-  const burstSpots: { x: number; y: number }[] = [
-    { x: width * 0.2, y: height * 0.28 },
-    { x: width * 0.78, y: height * 0.32 },
-    { x: width * 0.5, y: height * 0.2 },
-    { x: width * 0.35, y: height * 0.5 },
-    { x: width * 0.7, y: height * 0.55 },
-  ]
-  burstSpots.forEach((position, i) => {
-    setTimeout(() => {
-      trigger({
-        position,
-        count: 28,
-        velocity: 240,
-        fade: true,
-      })
-    }, i * 180)
-  })
-}
+import useFireworks from '../hooks/useFireworks'
+import { FIREWORKS_AFTER_LOTTIE_BUFFER_MS } from '../providers/ConfettiProvider'
 
 interface MonthSummaryProps {
   monthsReports: ServiceReport[] | null
@@ -293,8 +255,7 @@ const MonthSummary = ({
     celebratingTier !== null &&
     (celebratedTiers[monthKey] ?? []).includes(celebratingTier)
   const shouldCelebrate = celebratingTier !== null && !alreadyCelebrated
-  const confetti = useConfetti()
-  const { width: windowWidth, height: windowHeight } = useWindowDimensions()
+  const fireworks = useFireworks()
   // Tab preloading mounts this screen before the user navigates to it. Gate
   // the celebration burst on actual focus so haptics/fireworks don't fire
   // (and get marked as celebrated) while the tab is sitting offscreen.
@@ -315,8 +276,8 @@ const MonthSummary = ({
   }, [])
 
   const fireFireworks = useCallback(() => {
-    triggerFireworks(confetti.trigger, windowWidth, windowHeight)
-  }, [confetti, windowWidth, windowHeight])
+    fireworks.fire()
+  }, [fireworks])
 
   useEffect(() => {
     if (!isFocused) return
@@ -414,12 +375,6 @@ const MonthSummary = ({
             </ActionButton>
           )}
         </GlassCard>
-        {/* Mount the canvas in the empty-state branch too — fireworks queued
-          by AddTimeScreen.submit() should still fire when the user lands on
-          a month with no reports yet (e.g. submitting for March, viewing
-          April). Without this, `confetti.ref.current` would be null and the
-          burst would be silently dropped. */}
-        <Confetti ref={confetti.ref} />
       </View>
     )
   }
@@ -664,8 +619,6 @@ const MonthSummary = ({
           </Text>
         </Button>
       )}
-
-      <Confetti ref={confetti.ref} />
     </View>
   )
 }

@@ -1,8 +1,8 @@
-import { Dimensions, ScrollView, View } from 'react-native'
+import { useEffect, useRef } from 'react'
+import { ScrollView, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import useTheme from '../contexts/theme'
 import i18n from '../lib/locales'
-import AnimatedLottieView from 'lottie-react-native'
 import { useNavigation } from '@react-navigation/native'
 import Wrapper from '../components/layout/Wrapper'
 import Text from '../components/MyText'
@@ -11,6 +11,28 @@ import SupporterBenefits from '../components/SupporterBenefits'
 import SupporterBadge from '../components/SupporterBadge'
 import useIsSupporter from '../hooks/useIsSupporter'
 import { RootStackNavigation } from '../types/rootStack'
+import useAnimation from '../hooks/useAnimation'
+import useFireworks from '../hooks/useFireworks'
+import { FIREWORKS_AFTER_LOTTIE_BUFFER_MS } from '../providers/ConfettiProvider'
+import {
+  CONFETTI_DELAY_MS,
+  CONFETTI_DURATION,
+} from '../providers/AnimationViewProvider'
+import Haptics from '../lib/haptics'
+
+const PAYWALL_FIREWORKS_OPTS = {
+  count: 36,
+  velocity: 280,
+  spots: [
+    { x: 0.15, y: 0.25 },
+    { x: 0.85, y: 0.25 },
+    { x: 0.5, y: 0.18 },
+    { x: 0.3, y: 0.45 },
+    { x: 0.7, y: 0.45 },
+    { x: 0.5, y: 0.55 },
+    { x: 0.5, y: 0.35 },
+  ],
+}
 
 const PaywallThankYouScreen = () => {
   const theme = useTheme()
@@ -18,29 +40,34 @@ const PaywallThankYouScreen = () => {
   const navigation = useNavigation<RootStackNavigation>()
   const { isSupporter } = useIsSupporter()
   const canGoBack = navigation.canGoBack()
+  const { playConfetti } = useAnimation()
+  const fireworks = useFireworks()
+
+  const hasCelebratedRef = useRef(false)
+  useEffect(() => {
+    if (hasCelebratedRef.current) return
+    hasCelebratedRef.current = true
+
+    playConfetti()
+    Haptics.heavy()
+
+    const buffer =
+      CONFETTI_DELAY_MS + CONFETTI_DURATION + FIREWORKS_AFTER_LOTTIE_BUFFER_MS
+    const timer = setTimeout(() => {
+      fireworks.fire(PAYWALL_FIREWORKS_OPTS)
+    }, buffer)
+
+    return () => clearTimeout(timer)
+  }, [playConfetti, fireworks])
 
   return (
     <Wrapper
       style={{
-        paddingTop: 0,
         gap: 10,
         justifyContent: 'space-between',
         position: 'relative',
       }}
     >
-      <AnimatedLottieView
-        source={require('../assets/lottie/floatingHearts.json')}
-        style={{
-          position: 'absolute',
-          right: 5,
-          opacity: 0.4,
-          zIndex: -100,
-          height: Dimensions.get('screen').height,
-          width: Dimensions.get('screen').width,
-        }}
-        autoPlay
-        loop
-      />
       <ScrollView
         contentContainerStyle={{
           paddingTop: 30,
@@ -57,27 +84,14 @@ const PaywallThankYouScreen = () => {
             paddingBottom: 30,
           }}
         >
-          <View style={{ position: 'relative' }}>
-            <Text
-              style={{
-                fontSize: theme.fontSize('4xl'),
-                fontFamily: theme.fonts.bold,
-              }}
-            >
-              {i18n.t('thankYou')}
-            </Text>
-            <AnimatedLottieView
-              autoPlay
-              loop={true}
-              style={{
-                position: 'absolute',
-                width: 100,
-                top: -10,
-                right: -5,
-              }}
-              source={require('./../assets/lottie/confetti.json')}
-            />
-          </View>
+          <Text
+            style={{
+              fontSize: theme.fontSize('4xl'),
+              fontFamily: theme.fonts.bold,
+            }}
+          >
+            {i18n.t('thankYou')}
+          </Text>
 
           {isSupporter && <SupporterBadge size='md' />}
 

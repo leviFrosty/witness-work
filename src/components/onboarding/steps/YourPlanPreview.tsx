@@ -1,5 +1,18 @@
-import { View } from 'react-native'
-import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
+import { View, Pressable } from 'react-native'
+import { useEffect, useMemo, useState } from 'react'
+import Animated, {
+  Easing,
+  useSharedValue,
+  useAnimatedStyle,
+  useAnimatedReaction,
+  withTiming,
+  withRepeat,
+  withSequence,
+  cancelAnimation,
+  type SharedValue,
+} from 'react-native-reanimated'
+import { scheduleOnRN, scheduleOnUI } from 'react-native-worklets'
+import MapView, { Marker } from 'react-native-maps'
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
 import { IconProp } from '@fortawesome/fontawesome-svg-core'
 import {
@@ -8,93 +21,79 @@ import {
   faCalendar,
   faBullseye,
   faMap,
-  faUser,
+  faPlay,
+  faPause,
+  faBell,
 } from '@fortawesome/free-solid-svg-icons'
 import moment from 'moment'
 import { styles } from '../Onboarding.styles'
 import OnboardingNav from '../OnboardingNav'
 import Text from '../../MyText'
-import Card from '../../Card'
 import Wrapper from '../../layout/Wrapper'
 import ActionButton from '../../ActionButton'
-import NotificationPreview from '../NotificationPreview'
-import SimpleProgressBar from '../../SimpleProgressBar'
+import WeekStripTeaser from '../../WeekStripTeaser'
 import useTheme from '../../../contexts/theme'
 import i18n, { TranslationKey } from '../../../lib/locales'
 import { OnboardingIntent, usePreferences } from '../../../stores/preferences'
 import { isPioneer } from '../../../constants/publisher'
 import { useMarkerColors } from '../../../hooks/useMarkerColors'
 import { Theme } from '../../../types/theme'
-import { ReactNode } from 'react'
+import type { DayPlan, ServiceReport } from '../../../types/serviceReport'
 
 interface Props {
   goBack: () => void
   goNext: () => void
 }
 
-/**
- * Safely reads `onboardingIntents` from the preferences store. The preference
- * is added in Phase 2a (sibling worktree), so it may not exist in this
- * worktree's store shape yet. Fall back to an empty array when missing so the
- * screen still renders a meaningful publisher-only preview.
- */
-const useOnboardingIntents = (): string[] => {
-  const state = usePreferences() as unknown as {
-    onboardingIntents?: unknown
-  }
-  const raw = state.onboardingIntents
-  return Array.isArray(raw) ? (raw as string[]) : []
-}
-
 type IntentMeta = {
   id: OnboardingIntent
   icon: IconProp
-  color: (t: Theme) => string
+  accent: (t: Theme) => string
   tint: (t: Theme) => string
   headerKey: TranslationKey
-  blurbKey: TranslationKey
+  actionKey: TranslationKey
 }
 
 const INTENT_META: Record<OnboardingIntent, IntentMeta> = {
   trackTime: {
     id: 'trackTime',
     icon: faStopwatch,
-    color: (t) => t.colors.purple,
+    accent: (t) => t.colors.purple,
     tint: (t) => t.colors.purpleAlt,
     headerKey: 'yourPlanTrackTimeHeader',
-    blurbKey: 'yourPlanTrackTimeBlurb',
+    actionKey: 'yourPlanActionTrackTime',
   },
   returnVisits: {
     id: 'returnVisits',
     icon: faComments,
-    color: (t) => t.colors.cyan,
+    accent: (t) => t.colors.cyan,
     tint: (t) => t.colors.cyanAlt,
     headerKey: 'yourPlanReturnVisitsHeader',
-    blurbKey: 'yourPlanReturnVisitsBlurb',
+    actionKey: 'yourPlanActionReturnVisits',
   },
   planWeek: {
     id: 'planWeek',
     icon: faCalendar,
-    color: (t) => t.colors.indigo,
+    accent: (t) => t.colors.indigo,
     tint: (t) => t.colors.indigoAlt,
     headerKey: 'yourPlanPlanWeekHeader',
-    blurbKey: 'yourPlanPlanWeekBlurb',
+    actionKey: 'yourPlanActionPlanWeek',
   },
   monthlyGoal: {
     id: 'monthlyGoal',
     icon: faBullseye,
-    color: (t) => t.colors.rose,
+    accent: (t) => t.colors.rose,
     tint: (t) => t.colors.roseAlt,
     headerKey: 'yourPlanMonthlyGoalHeader',
-    blurbKey: 'yourPlanMonthlyGoalBlurb',
+    actionKey: 'yourPlanActionMonthlyGoal',
   },
   mapContacts: {
     id: 'mapContacts',
     icon: faMap,
-    color: (t) => t.colors.orange,
+    accent: (t) => t.colors.orange,
     tint: (t) => t.colors.orangeAlt,
     headerKey: 'yourPlanMapHeader',
-    blurbKey: 'yourPlanMapBlurb',
+    actionKey: 'yourPlanActionMapContacts',
   },
 }
 
@@ -106,82 +105,903 @@ const INTENT_ORDER: OnboardingIntent[] = [
   'mapContacts',
 ]
 
-interface ResultCardProps {
-  theme: Theme
-  icon: IconProp
-  accent: string
-  tint: string
-  header: string
-  blurb: string
-  children?: ReactNode
-}
+const SLIDE_MS = 4000
 
-const ResultCard = ({
-  theme,
-  icon,
+/* ────────────────────────────────────────────────────────────
+   PER-INTENT VISUALIZATIONS
+   Each takes the active accent so the visual feels continuous
+   with the stage tint.
+   ──────────────────────────────────────────────────────────── */
+
+const TRACK_BAR_HEIGHT = 20
+const TRACK_NO_GOAL_REFERENCE_HRS = 40
+
+const TrackTimeVisual = ({
   accent,
-  tint,
-  header,
-  blurb,
-  children,
-}: ResultCardProps) => (
-  <Card style={{ padding: 0, gap: 0, overflow: 'hidden', marginBottom: 14 }}>
-    <View
-      style={{
-        flexDirection: 'row',
-        alignItems: 'flex-start',
-        gap: 14,
-        padding: 16,
-        backgroundColor: tint,
-      }}
-    >
+  goalHours,
+  active,
+}: {
+  accent: string
+  goalHours: number
+  active: boolean
+}) => {
+  const theme = useTheme()
+  // Pick a target hour count that's modest but visible (~12% of goal). The
+  // displayed integer and the bar fill are both derived from the same shared
+  // value so they stay in lockstep — the count never reads "0" while the bar
+  // shows progress. Mirrors the in-app monthly progress bar so the preview
+  // matches what they'll see post-onboarding.
+  const targetHours =
+    goalHours > 0 ? Math.max(1, Math.round(goalHours * 0.12)) : 5
+  const referenceHours = goalHours > 0 ? goalHours : TRACK_NO_GOAL_REFERENCE_HRS
+  const progress = useSharedValue(0)
+  const [displayedHours, setDisplayedHours] = useState(0)
+
+  useEffect(() => {
+    if (!active) {
+      cancelAnimation(progress)
+      progress.value = 0
+      setDisplayedHours(0)
+      return
+    }
+    progress.value = 0
+    progress.value = withTiming(targetHours, {
+      duration: SLIDE_MS - 400,
+      easing: Easing.out(Easing.cubic),
+    })
+    return () => cancelAnimation(progress)
+  }, [active, progress, targetHours])
+
+  // Throttle JS updates to the rounded integer — no setState until the
+  // displayed number actually changes.
+  useAnimatedReaction(
+    () => Math.round(progress.value),
+    (curr, prev) => {
+      if (curr !== prev) {
+        scheduleOnRN(setDisplayedHours, curr)
+      }
+    }
+  )
+
+  const fillStyle = useAnimatedStyle(() => ({
+    width: `${Math.min(progress.value / referenceHours, 1) * 100}%`,
+  }))
+
+  return (
+    <View style={{ width: '100%', gap: 10 }}>
       <View
         style={{
-          width: 40,
-          height: 40,
-          borderRadius: 20,
-          backgroundColor: accent,
-          alignItems: 'center',
-          justifyContent: 'center',
+          flexDirection: 'row',
+          alignItems: 'baseline',
+          justifyContent: 'space-between',
         }}
       >
-        <FontAwesomeIcon
-          icon={icon}
-          size={18}
-          color={theme.colors.textInverse}
-        />
-      </View>
-      <View style={{ flex: 1, gap: 4 }}>
         <Text
           style={{
-            fontSize: 17,
+            fontSize: 28,
             fontFamily: theme.fonts.bold,
             color: theme.colors.text,
-            lineHeight: 22,
+            lineHeight: 32,
           }}
         >
-          {header}
+          {displayedHours}
+          {goalHours > 0 && (
+            <Text
+              style={{
+                fontSize: 16,
+                fontFamily: theme.fonts.semiBold,
+                color: theme.colors.textAlt,
+              }}
+            >
+              {' '}
+              / {goalHours}
+            </Text>
+          )}
         </Text>
         <Text
           style={{
-            fontSize: 13,
+            fontSize: 11,
             color: theme.colors.textAlt,
-            lineHeight: 18,
+            fontFamily: theme.fonts.semiBold,
+            letterSpacing: 0.4,
+            textTransform: 'uppercase',
           }}
         >
-          {blurb}
+          {goalHours > 0
+            ? `hrs in ${moment().format('MMM')}`
+            : moment().format('MMMM')}
         </Text>
       </View>
+      <View
+        style={{
+          height: TRACK_BAR_HEIGHT,
+          width: '100%',
+          backgroundColor: theme.colors.background,
+          borderRadius: theme.numbers.borderRadiusSm,
+          overflow: 'hidden',
+        }}
+      >
+        <Animated.View
+          style={[
+            {
+              height: '100%',
+              backgroundColor: accent,
+              borderRadius: theme.numbers.borderRadiusSm,
+            },
+            fillStyle,
+          ]}
+        />
+      </View>
     </View>
-    {children ? <View style={{ padding: 16, gap: 10 }}>{children}</View> : null}
-  </Card>
-)
+  )
+}
+
+const ShakingBell = ({
+  active,
+  accent,
+  tint,
+  delayMs,
+}: {
+  active: boolean
+  accent: string
+  tint: string
+  delayMs: number
+}) => {
+  const rotation = useSharedValue(0)
+
+  useEffect(() => {
+    if (!active) {
+      cancelAnimation(rotation)
+      rotation.value = 0
+      return
+    }
+    // Burst-then-pause shake — feels like a notification ping rather than a
+    // continuous wobble. delayMs staggers the two bells so they don't fire in
+    // unison.
+    const startShake = () => {
+      rotation.value = withRepeat(
+        withSequence(
+          withTiming(-1, { duration: 60 }),
+          withTiming(1, { duration: 60 }),
+          withTiming(-0.7, { duration: 60 }),
+          withTiming(0.7, { duration: 60 }),
+          withTiming(0, { duration: 60 }),
+          withTiming(0, { duration: 1600 })
+        ),
+        -1,
+        false
+      )
+    }
+    if (delayMs > 0) {
+      const t = setTimeout(startShake, delayMs)
+      return () => {
+        clearTimeout(t)
+        cancelAnimation(rotation)
+      }
+    }
+    startShake()
+    return () => cancelAnimation(rotation)
+  }, [active, delayMs, rotation])
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ rotate: `${rotation.value * 18}deg` }],
+  }))
+
+  return (
+    <Animated.View
+      style={[
+        {
+          width: 30,
+          height: 30,
+          borderRadius: 15,
+          backgroundColor: tint,
+          alignItems: 'center',
+          justifyContent: 'center',
+        },
+        animatedStyle,
+      ]}
+    >
+      <FontAwesomeIcon icon={faBell} size={12} color={accent} />
+    </Animated.View>
+  )
+}
+
+const ReturnVisitsVisual = ({
+  accent,
+  tint,
+  active,
+}: {
+  accent: string
+  tint: string
+  active: boolean
+}) => {
+  const theme = useTheme()
+  const samples: { nameKey: TranslationKey; noteKey: TranslationKey }[] = [
+    {
+      nameKey: 'yourPlanSampleReturnVisitName',
+      noteKey: 'yourPlanSampleReturnVisitNote',
+    },
+    {
+      nameKey: 'yourPlanSampleReturnVisitName2',
+      noteKey: 'yourPlanSampleReturnVisitNote2',
+    },
+  ]
+  return (
+    <View style={{ width: '100%', gap: 8 }}>
+      {samples.map((s, i) => (
+        <View
+          key={s.nameKey}
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: 10,
+            paddingVertical: 10,
+            paddingHorizontal: 12,
+            borderRadius: theme.numbers.borderRadiusMd,
+            backgroundColor: theme.colors.background,
+            borderLeftWidth: 3,
+            borderLeftColor: accent,
+          }}
+        >
+          <ShakingBell
+            active={active}
+            accent={accent}
+            tint={tint}
+            delayMs={i * 320}
+          />
+          <View style={{ flex: 1, gap: 1 }}>
+            <Text
+              style={{
+                fontSize: 13,
+                fontFamily: theme.fonts.semiBold,
+                color: theme.colors.text,
+              }}
+            >
+              {i18n.t(s.nameKey)}
+            </Text>
+            <Text
+              style={{
+                fontSize: 11,
+                color: theme.colors.textAlt,
+              }}
+            >
+              {i18n.t(s.noteKey)}
+            </Text>
+          </View>
+        </View>
+      ))}
+    </View>
+  )
+}
+
+const PlanWeekVisual = () => {
+  // Anchor mock plans to the current week so the strip always looks lived-in
+  // regardless of when onboarding runs. The real WeekStripTeaser is dropped in
+  // here with overrides instead of a bespoke mock visual — keeps the preview
+  // honest about what the user will actually see in the app.
+  const today = useMemo(() => moment(), [])
+  const startOfDisplayWeek = useMemo(
+    () => today.clone().startOf('week'),
+    [today]
+  )
+
+  const mockDayPlans: DayPlan[] = useMemo(
+    () => [
+      {
+        id: 'wp-mock-mon',
+        date: startOfDisplayWeek.clone().add(1, 'days').toDate(),
+        minutes: 90,
+      },
+      {
+        id: 'wp-mock-wed',
+        date: startOfDisplayWeek.clone().add(3, 'days').toDate(),
+        minutes: 120,
+      },
+      {
+        id: 'wp-mock-sat',
+        date: startOfDisplayWeek.clone().add(6, 'days').toDate(),
+        minutes: 180,
+      },
+    ],
+    [startOfDisplayWeek]
+  )
+
+  const mockReports: ServiceReport[] = useMemo(
+    () => [
+      {
+        id: 'wp-mock-r-1',
+        date: today.clone().subtract(1, 'day').toDate(),
+        hours: 1,
+        minutes: 30,
+      },
+    ],
+    [today]
+  )
+
+  return (
+    <View style={{ width: '100%' }} pointerEvents='none'>
+      <WeekStripTeaser
+        month={today.month()}
+        year={today.year()}
+        monthsReports={mockReports}
+        today={today}
+        dayPlansOverride={mockDayPlans}
+        recurringPlansOverride={[]}
+        onOpenSchedule={() => {}}
+      />
+    </View>
+  )
+}
+
+const BAR_COUNT = 30
+const FILLED_BAR = 8
+
+const MonthlyGoalVisual = ({
+  accent,
+  tint,
+  active,
+}: {
+  accent: string
+  tint: string
+  active: boolean
+}) => {
+  const theme = useTheme()
+  const progress = useSharedValue(0)
+
+  useEffect(() => {
+    if (!active) {
+      cancelAnimation(progress)
+      progress.value = 0
+      return
+    }
+    progress.value = 0
+    progress.value = withTiming(1, {
+      duration: SLIDE_MS - 400,
+      easing: Easing.out(Easing.cubic),
+    })
+    return () => cancelAnimation(progress)
+  }, [active, progress])
+
+  // Pre-compute deterministic heights so they don't shimmer between renders
+  const heights = useMemo(
+    () =>
+      Array.from({ length: BAR_COUNT }, (_, i) =>
+        Math.round(40 + Math.abs(Math.sin(i / 3)) * 60)
+      ),
+    []
+  )
+
+  return (
+    <View style={{ width: '100%', gap: 10 }}>
+      <View
+        style={{
+          flexDirection: 'row',
+          alignItems: 'flex-end',
+          gap: 2,
+          height: 56,
+        }}
+      >
+        {heights.map((h, i) => (
+          <Bar
+            key={i}
+            index={i}
+            heightPct={h}
+            accent={accent}
+            tint={tint}
+            progress={progress}
+          />
+        ))}
+      </View>
+      <Text
+        style={{
+          fontSize: 12,
+          textAlign: 'center',
+          color: theme.colors.textAlt,
+          fontFamily: theme.fonts.semiBold,
+        }}
+      >
+        {i18n.t('yourPlanMonthlyGoalPace', {
+          day: FILLED_BAR,
+          total: BAR_COUNT,
+        })}
+      </Text>
+    </View>
+  )
+}
+
+const Bar = ({
+  index,
+  heightPct,
+  accent,
+  tint,
+  progress,
+}: {
+  index: number
+  heightPct: number
+  accent: string
+  tint: string
+  progress: SharedValue<number>
+}) => {
+  const animatedStyle = useAnimatedStyle(() => {
+    // Bars fill in sequence as progress sweeps 0 → 1 over the slide
+    const localProgress = progress.value * BAR_COUNT
+    const filled = localProgress > index && index < FILLED_BAR
+    return {
+      backgroundColor: filled ? accent : tint,
+    }
+  })
+  return (
+    <Animated.View
+      style={[
+        {
+          flex: 1,
+          height: `${heightPct}%`,
+          borderRadius: 1.5,
+        },
+        animatedStyle,
+      ]}
+    />
+  )
+}
+
+const FAKE_USER_LOCATION = {
+  latitude: 41.160376,
+  longitude: -74.257556,
+}
+
+const MapVisual = () => {
+  const theme = useTheme()
+  const markerColors = useMarkerColors()
+  const { colorScheme } = usePreferences()
+
+  // Fake contacts arranged around the fake user location. Offsets are kept
+  // small (a few blocks) so they stay inside the initial region.
+  const fakeContacts = useMemo(
+    () => [
+      { dLat: 0.0028, dLng: -0.0034, color: markerColors.withinThePastWeek },
+      { dLat: -0.0022, dLng: 0.0018, color: markerColors.longerThanAWeekAgo },
+      { dLat: 0.0014, dLng: 0.0042, color: markerColors.longerThanAMonthAgo },
+      { dLat: -0.0036, dLng: -0.0026, color: markerColors.noConversations },
+      { dLat: 0.0044, dLng: 0.0012, color: markerColors.withinThePastWeek },
+      { dLat: -0.0012, dLng: 0.0038, color: markerColors.longerThanAWeekAgo },
+    ],
+    [markerColors]
+  )
+
+  return (
+    <View
+      pointerEvents='none'
+      style={{
+        width: '100%',
+        height: 150,
+        borderRadius: theme.numbers.borderRadiusMd,
+        overflow: 'hidden',
+        backgroundColor: theme.colors.background,
+      }}
+    >
+      <MapView
+        userInterfaceStyle={colorScheme ? colorScheme : undefined}
+        scrollEnabled={false}
+        zoomEnabled={false}
+        pitchEnabled={false}
+        rotateEnabled={false}
+        toolbarEnabled={false}
+        style={{ height: '100%', width: '100%' }}
+        initialRegion={{
+          latitude: FAKE_USER_LOCATION.latitude,
+          longitude: FAKE_USER_LOCATION.longitude,
+          latitudeDelta: 0.015,
+          longitudeDelta: 0.015,
+        }}
+      >
+        {/* Fake user-location dot — can't use showsUserLocation since this is a
+            preview and we don't want to request permissions or reveal the real
+            location. */}
+        <Marker coordinate={FAKE_USER_LOCATION} anchor={{ x: 0.5, y: 0.5 }}>
+          <View
+            style={{
+              width: 18,
+              height: 18,
+              borderRadius: 9,
+              backgroundColor: '#4285F4',
+              borderWidth: 3,
+              borderColor: '#FFFFFF',
+            }}
+          />
+        </Marker>
+        {fakeContacts.map((p, i) => (
+          <Marker
+            key={i}
+            coordinate={{
+              latitude: FAKE_USER_LOCATION.latitude + p.dLat,
+              longitude: FAKE_USER_LOCATION.longitude + p.dLng,
+            }}
+            anchor={{ x: 0.5, y: 0.5 }}
+          >
+            <View
+              style={{
+                width: 14,
+                height: 14,
+                borderRadius: 7,
+                backgroundColor: p.color,
+                borderWidth: 2,
+                borderColor: theme.colors.card,
+              }}
+            />
+          </Marker>
+        ))}
+      </MapView>
+    </View>
+  )
+}
+
+/* ────────────────────────────────────────────────────────────
+   STAGE — auto-cycling reel
+   ──────────────────────────────────────────────────────────── */
+
+const Stage = ({
+  intents,
+  goalHours,
+  publisherLabel,
+  pioneeringLine,
+}: {
+  intents: OnboardingIntent[]
+  goalHours: number
+  publisherLabel: string
+  pioneeringLine: string | null
+}) => {
+  const theme = useTheme()
+  const [idx, setIdx] = useState(0)
+  const [paused, setPaused] = useState(false)
+
+  const reel = intents
+  const reelLength = reel.length
+  const active = reel[idx] ?? reel[0]
+  const meta = INTENT_META[active]
+  const accent = meta.accent(theme)
+  const tint = meta.tint(theme)
+
+  // Drives the active progress segment + visual animations.
+  const slideProgress = useSharedValue(0)
+
+  useEffect(() => {
+    if (paused || reelLength === 0) {
+      cancelAnimation(slideProgress)
+      return
+    }
+    const nextIdx = (idx + 1) % reelLength
+    scheduleOnUI(() => {
+      'worklet'
+      cancelAnimation(slideProgress)
+      slideProgress.value = 0
+      slideProgress.value = withTiming(
+        1,
+        { duration: SLIDE_MS, easing: Easing.linear },
+        (finished) => {
+          if (finished) {
+            scheduleOnRN(setIdx, nextIdx)
+          }
+        }
+      )
+    })
+    return () => cancelAnimation(slideProgress)
+  }, [idx, paused, reelLength, slideProgress])
+
+  // Cross-fade the visual when the slide changes
+  const visualOpacity = useSharedValue(1)
+  useEffect(() => {
+    visualOpacity.value = 0
+    visualOpacity.value = withTiming(1, { duration: 320 })
+  }, [idx, visualOpacity])
+  const visualStyle = useAnimatedStyle(() => ({
+    opacity: visualOpacity.value,
+  }))
+
+  if (reel.length === 0) return null
+
+  const visual = (() => {
+    switch (active) {
+      case 'trackTime':
+        return (
+          <TrackTimeVisual
+            key='trackTime'
+            accent={accent}
+            goalHours={goalHours}
+            active={!paused}
+          />
+        )
+      case 'returnVisits':
+        return (
+          <ReturnVisitsVisual
+            key='returnVisits'
+            accent={accent}
+            tint={tint}
+            active={!paused}
+          />
+        )
+      case 'planWeek':
+        return <PlanWeekVisual key='planWeek' />
+      case 'monthlyGoal':
+        return (
+          <MonthlyGoalVisual
+            key='monthlyGoal'
+            accent={accent}
+            tint={tint}
+            active={!paused}
+          />
+        )
+      case 'mapContacts':
+        return <MapVisual key='mapContacts' />
+    }
+  })()
+
+  return (
+    <View style={{ gap: 12 }}>
+      <Pressable
+        onPress={() => setPaused((p) => !p)}
+        accessibilityLabel={i18n.t(meta.headerKey)}
+        accessibilityHint={i18n.t(
+          paused ? 'yourPlanAutoTourPaused' : 'yourPlanAutoTourAuto'
+        )}
+        style={{
+          backgroundColor: theme.colors.card,
+          borderRadius: theme.numbers.borderRadiusLg,
+          borderWidth: 1,
+          borderColor: theme.colors.border,
+          overflow: 'hidden',
+        }}
+      >
+        {/* Tinted backdrop — sits behind the whole card */}
+        <View
+          pointerEvents='none'
+          style={{
+            position: 'absolute',
+            inset: 0,
+            backgroundColor: tint,
+            opacity: 0.55,
+          }}
+        />
+        <View style={{ padding: 16, gap: 14 }}>
+          {/* Slide header */}
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+            <View
+              style={{
+                width: 40,
+                height: 40,
+                borderRadius: theme.numbers.borderRadiusMd,
+                backgroundColor: accent,
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <FontAwesomeIcon
+                icon={meta.icon}
+                size={18}
+                color={theme.colors.textInverse}
+              />
+            </View>
+            <View style={{ flex: 1, gap: 2 }}>
+              <Text
+                style={{
+                  fontSize: 16,
+                  fontFamily: theme.fonts.bold,
+                  color: theme.colors.text,
+                }}
+              >
+                {i18n.t(meta.headerKey)}
+              </Text>
+              <Text style={{ fontSize: 11, color: theme.colors.textAlt }}>
+                {i18n.t('yourPlanBecausePrefix')}{' '}
+                <Text
+                  style={{
+                    fontSize: 11,
+                    color: accent,
+                    fontFamily: theme.fonts.semiBold,
+                  }}
+                >
+                  {i18n.t(meta.actionKey)}
+                </Text>
+              </Text>
+            </View>
+            <View
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: 4,
+                opacity: 0.7,
+              }}
+            >
+              <FontAwesomeIcon
+                icon={paused ? faPlay : faPause}
+                size={9}
+                color={theme.colors.textAlt}
+              />
+              <Text
+                style={{
+                  fontSize: 10,
+                  color: theme.colors.textAlt,
+                  fontFamily: theme.fonts.semiBold,
+                  letterSpacing: 0.4,
+                  textTransform: 'uppercase',
+                }}
+              >
+                {i18n.t(
+                  paused ? 'yourPlanAutoTourPaused' : 'yourPlanAutoTourAuto'
+                )}
+              </Text>
+            </View>
+          </View>
+
+          {/* Visual area */}
+          <Animated.View
+            style={[
+              {
+                minHeight: 150,
+                alignItems: 'center',
+                justifyContent: 'center',
+                paddingVertical: 6,
+              },
+              visualStyle,
+            ]}
+          >
+            {visual}
+          </Animated.View>
+
+          {/* Per-slide progress segments */}
+          <View style={{ flexDirection: 'row', gap: 4 }}>
+            {reel.map((id, i) => (
+              <SegmentBar
+                key={id}
+                isActive={i === idx}
+                isComplete={i < idx}
+                accent={accent}
+                track={theme.colors.border}
+                progress={slideProgress}
+                onPress={() => {
+                  setIdx(i)
+                  setPaused(true)
+                }}
+              />
+            ))}
+          </View>
+        </View>
+      </Pressable>
+
+      {/* Foundation row: role + goal, with pioneering stacked beneath when
+          present. Stacking avoids an orphaned "·" wrapping to its own line. */}
+      <View style={{ gap: 2 }}>
+        <Text
+          style={{
+            fontSize: 12,
+            color: theme.colors.textAlt,
+            fontFamily: theme.fonts.semiBold,
+          }}
+        >
+          {goalHours > 0
+            ? i18n.t('yourPlanRoleLine', {
+                role: publisherLabel,
+                hours: goalHours,
+              })
+            : i18n.t('yourPlanRoleLineNoGoal', { role: publisherLabel })}
+        </Text>
+        {pioneeringLine && (
+          <Text
+            style={{
+              fontSize: 12,
+              color: theme.colors.accent,
+              fontFamily: theme.fonts.semiBold,
+            }}
+          >
+            {pioneeringLine}
+          </Text>
+        )}
+      </View>
+
+      {/* Chip strip */}
+      <View
+        style={{
+          flexDirection: 'row',
+          flexWrap: 'wrap',
+          gap: 6,
+        }}
+      >
+        {reel.map((id, i) => {
+          const m = INTENT_META[id]
+          const a = m.accent(theme)
+          const t = m.tint(theme)
+          const on = i === idx
+          return (
+            <Pressable
+              key={id}
+              onPress={() => {
+                setIdx(i)
+                setPaused(true)
+              }}
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: 5,
+                paddingVertical: 5,
+                paddingHorizontal: 10,
+                borderRadius: 999,
+                borderWidth: 1,
+                borderColor: on ? a : theme.colors.border,
+                backgroundColor: on ? t : 'transparent',
+              }}
+            >
+              <FontAwesomeIcon
+                icon={m.icon}
+                size={9}
+                color={on ? a : theme.colors.textAlt}
+              />
+              <Text
+                style={{
+                  fontSize: 11,
+                  fontFamily: theme.fonts.semiBold,
+                  color: on ? a : theme.colors.textAlt,
+                }}
+              >
+                {i18n.t(m.headerKey)}
+              </Text>
+            </Pressable>
+          )
+        })}
+      </View>
+    </View>
+  )
+}
+
+const SegmentBar = ({
+  isActive,
+  isComplete,
+  accent,
+  track,
+  progress,
+  onPress,
+}: {
+  isActive: boolean
+  isComplete: boolean
+  accent: string
+  track: string
+  progress: SharedValue<number>
+  onPress: () => void
+}) => {
+  const animatedStyle = useAnimatedStyle(() => {
+    const w = isActive ? progress.value : isComplete ? 1 : 0
+    return {
+      width: `${w * 100}%`,
+      backgroundColor: accent,
+    }
+  })
+  return (
+    <Pressable
+      onPress={onPress}
+      style={{
+        flex: 1,
+        height: 3,
+        borderRadius: 2,
+        backgroundColor: track,
+        overflow: 'hidden',
+      }}
+    >
+      <Animated.View style={[{ height: '100%' }, animatedStyle]} />
+    </Pressable>
+  )
+}
+
+/* ────────────────────────────────────────────────────────────
+   SCREEN
+   ──────────────────────────────────────────────────────────── */
 
 const YourPlanPreview = ({ goBack, goNext }: Props) => {
   const theme = useTheme()
-  const { publisher, publisherHours, pioneerStartDate } = usePreferences()
-  const intents = useOnboardingIntents()
-  const markerColors = useMarkerColors()
+  const {
+    publisher,
+    publisherHours,
+    pioneerStartDate,
+    name,
+    onboardingIntents,
+  } = usePreferences()
 
   const monthlyGoalHours = publisherHours[publisher] ?? 0
   const publisherLabel = i18n.t(publisher)
@@ -194,7 +1014,14 @@ const YourPlanPreview = ({ goBack, goNext }: Props) => {
       })
     : null
 
-  const selectedIntents = INTENT_ORDER.filter((id) => intents.includes(id))
+  // Tour the user's picks. If they skipped the picker, show all five so the
+  // screen still demonstrates the app rather than rendering an empty stage.
+  const reel: OnboardingIntent[] = useMemo(() => {
+    const picked = INTENT_ORDER.filter((id) => onboardingIntents.includes(id))
+    return picked.length > 0 ? picked : INTENT_ORDER
+  }, [onboardingIntents])
+
+  const youOrName = name?.trim() ? name.trim() : i18n.t('yourPlanHeroYou')
 
   return (
     <Wrapper
@@ -206,331 +1033,39 @@ const YourPlanPreview = ({ goBack, goNext }: Props) => {
       }}
     >
       <OnboardingNav goBack={goBack} />
-      <KeyboardAwareScrollView
-        style={{ flex: 1 }}
-        contentContainerStyle={{
-          flexGrow: 1,
+      <View
+        style={{
+          flex: 1,
           paddingTop: 30,
           paddingBottom: 20,
         }}
-        showsVerticalScrollIndicator={false}
-        enableOnAndroid={true}
       >
-        <View style={[styles.stepContentContainer, { marginRight: 0 }]}>
-          <Text style={styles.stepTitle}>{i18n.t('yourPlanTitle')}</Text>
-          <Text
-            style={{
-              fontSize: 14,
-              color: theme.colors.textAlt,
-              marginTop: -10,
-              marginBottom: 24,
-              lineHeight: 20,
-            }}
-          >
-            {i18n.t('yourPlanIntro')}
-          </Text>
-
-          {/* Foundation — publisher role */}
-          <Card
-            style={{
-              padding: 0,
-              gap: 0,
-              overflow: 'hidden',
-              marginBottom: 14,
-              borderWidth: 1,
-              borderColor: theme.colors.accentAlt,
-            }}
-          >
-            <View
+        <View
+          style={[styles.stepContentContainer, { marginRight: 0, gap: 16 }]}
+        >
+          <View style={{ gap: 8 }}>
+            <Text style={[styles.stepTitle, { marginBottom: 0 }]}>
+              {i18n.t('yourPlanHero', { youOrName })}
+            </Text>
+            <Text
               style={{
-                flexDirection: 'row',
-                alignItems: 'center',
-                gap: 14,
-                padding: 16,
-                backgroundColor: theme.colors.accentTranslucent,
+                fontSize: 14,
+                color: theme.colors.textAlt,
+                lineHeight: 20,
               }}
             >
-              <View
-                style={{
-                  width: 44,
-                  height: 44,
-                  borderRadius: 22,
-                  backgroundColor: theme.colors.accent,
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}
-              >
-                <FontAwesomeIcon
-                  icon={faUser}
-                  size={18}
-                  color={theme.colors.textInverse}
-                />
-              </View>
-              <View style={{ flex: 1, gap: 2 }}>
-                <Text
-                  style={{
-                    fontSize: 11,
-                    fontFamily: theme.fonts.semiBold,
-                    color: theme.colors.textAlt,
-                    letterSpacing: 0.8,
-                    textTransform: 'uppercase',
-                  }}
-                >
-                  {i18n.t('yourPlanRoleEyebrow')}
-                </Text>
-                <Text
-                  style={{
-                    fontSize: 22,
-                    fontFamily: theme.fonts.bold,
-                    color: theme.colors.text,
-                    lineHeight: 28,
-                  }}
-                >
-                  {publisherLabel}
-                </Text>
-                <Text
-                  style={{
-                    fontSize: 13,
-                    color: theme.colors.textAlt,
-                    lineHeight: 18,
-                  }}
-                >
-                  {i18n.t('yourPlanRoleBlurb', { role: publisherLabel })}
-                </Text>
-              </View>
-            </View>
-            <View style={{ padding: 16, gap: 8 }}>
-              <Text
-                style={{
-                  fontSize: 14,
-                  fontFamily: theme.fonts.semiBold,
-                  color: theme.colors.text,
-                }}
-              >
-                {monthlyGoalHours > 0
-                  ? i18n.t('yourPlanMonthlyGoal', { hours: monthlyGoalHours })
-                  : i18n.t('yourPlanNoGoal')}
-              </Text>
-              {pioneeringLine && (
-                <Text
-                  style={{
-                    fontSize: 12,
-                    color: theme.colors.accent,
-                    fontFamily: theme.fonts.semiBold,
-                  }}
-                >
-                  {pioneeringLine}
-                </Text>
-              )}
-            </View>
-          </Card>
+              {i18n.t('yourPlanIntro')}
+            </Text>
+          </View>
 
-          {/* Per-intent result cards */}
-          {selectedIntents.map((id) => {
-            const meta = INTENT_META[id]
-            const accent = meta.color(theme)
-            const tint = meta.tint(theme)
-            const header = i18n.t(meta.headerKey)
-            const blurb = i18n.t(meta.blurbKey)
-
-            if (id === 'trackTime') {
-              return (
-                <ResultCard
-                  key={id}
-                  theme={theme}
-                  icon={meta.icon}
-                  accent={accent}
-                  tint={tint}
-                  header={header}
-                  blurb={blurb}
-                >
-                  <View
-                    style={{
-                      flexDirection: 'row',
-                      justifyContent: 'space-between',
-                      alignItems: 'center',
-                    }}
-                  >
-                    <Text
-                      style={{
-                        fontSize: 12,
-                        color: theme.colors.textAlt,
-                        fontFamily: theme.fonts.semiBold,
-                        textTransform: 'uppercase',
-                        letterSpacing: 0.5,
-                      }}
-                    >
-                      {i18n.t('yourPlanTrackTimeProgressLabel')}
-                    </Text>
-                    <Text
-                      style={{
-                        fontSize: 13,
-                        color: theme.colors.text,
-                        fontFamily: theme.fonts.semiBold,
-                      }}
-                    >
-                      {monthlyGoalHours > 0
-                        ? i18n.t('yourPlanTrackTimeValue', {
-                            hours: monthlyGoalHours,
-                          })
-                        : i18n.t('yourPlanTrackTimeValueNoGoal')}
-                    </Text>
-                  </View>
-                  <SimpleProgressBar
-                    percentage={0}
-                    height={8}
-                    animated={false}
-                  />
-                </ResultCard>
-              )
-            }
-
-            if (id === 'returnVisits') {
-              return (
-                <ResultCard
-                  key={id}
-                  theme={theme}
-                  icon={meta.icon}
-                  accent={accent}
-                  tint={tint}
-                  header={header}
-                  blurb={blurb}
-                >
-                  <View
-                    style={{
-                      borderRadius: theme.numbers.borderRadiusMd,
-                      borderLeftWidth: 3,
-                      borderLeftColor: accent,
-                      backgroundColor: theme.colors.backgroundLighter,
-                      paddingVertical: 10,
-                      paddingHorizontal: 12,
-                      gap: 2,
-                    }}
-                  >
-                    <Text
-                      style={{
-                        fontSize: 15,
-                        color: theme.colors.text,
-                        fontFamily: theme.fonts.semiBold,
-                      }}
-                    >
-                      {i18n.t('yourPlanSampleReturnVisitName')}
-                    </Text>
-                    <Text
-                      style={{
-                        fontSize: 12,
-                        color: theme.colors.textAlt,
-                      }}
-                    >
-                      {i18n.t('yourPlanSampleReturnVisitNote')}
-                    </Text>
-                  </View>
-                  <NotificationPreview />
-                </ResultCard>
-              )
-            }
-
-            if (id === 'planWeek') {
-              return (
-                <ResultCard
-                  key={id}
-                  theme={theme}
-                  icon={meta.icon}
-                  accent={accent}
-                  tint={tint}
-                  header={header}
-                  blurb={blurb}
-                >
-                  <Text
-                    style={{
-                      fontSize: 13,
-                      color: theme.colors.text,
-                    }}
-                  >
-                    {i18n.t('yourPlanPlanWeekLine')}
-                  </Text>
-                </ResultCard>
-              )
-            }
-
-            if (id === 'monthlyGoal') {
-              return (
-                <ResultCard
-                  key={id}
-                  theme={theme}
-                  icon={meta.icon}
-                  accent={accent}
-                  tint={tint}
-                  header={header}
-                  blurb={blurb}
-                >
-                  <Text
-                    style={{
-                      fontSize: 13,
-                      color: theme.colors.text,
-                    }}
-                  >
-                    {i18n.t('yourPlanMonthlyGoalLine')}
-                  </Text>
-                </ResultCard>
-              )
-            }
-
-            if (id === 'mapContacts') {
-              const pinColors = [
-                markerColors.withinThePastWeek,
-                markerColors.longerThanAWeekAgo,
-                markerColors.longerThanAMonthAgo,
-                markerColors.noConversations,
-              ]
-              return (
-                <ResultCard
-                  key={id}
-                  theme={theme}
-                  icon={meta.icon}
-                  accent={accent}
-                  tint={tint}
-                  header={header}
-                  blurb={blurb}
-                >
-                  <View
-                    style={{
-                      flexDirection: 'row',
-                      alignItems: 'center',
-                      gap: 10,
-                    }}
-                  >
-                    <View style={{ flexDirection: 'row', gap: 6 }}>
-                      {pinColors.map((color, idx) => (
-                        <View
-                          key={idx}
-                          style={{
-                            width: 10,
-                            height: 10,
-                            borderRadius: 5,
-                            backgroundColor: color,
-                          }}
-                        />
-                      ))}
-                    </View>
-                    <Text
-                      style={{
-                        fontSize: 12,
-                        color: theme.colors.textAlt,
-                        flex: 1,
-                      }}
-                    >
-                      {i18n.t('yourPlanMapStrip')}
-                    </Text>
-                  </View>
-                </ResultCard>
-              )
-            }
-
-            return null
-          })}
+          <Stage
+            intents={reel}
+            goalHours={monthlyGoalHours}
+            publisherLabel={publisherLabel}
+            pioneeringLine={pioneeringLine}
+          />
         </View>
-      </KeyboardAwareScrollView>
+      </View>
       <ActionButton onPress={goNext}>{i18n.t('continue')}</ActionButton>
     </Wrapper>
   )

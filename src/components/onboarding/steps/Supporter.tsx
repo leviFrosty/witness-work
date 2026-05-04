@@ -1,8 +1,12 @@
 import { View } from 'react-native'
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
+import { useNavigation } from '@react-navigation/native'
+import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
+import { faHeart } from '@fortawesome/free-solid-svg-icons'
 import { styles } from '../Onboarding.styles'
 import OnboardingNav from '../OnboardingNav'
 import Text from '../../MyText'
+import Button from '../../Button'
 import i18n from '../../../lib/locales'
 import Wrapper from '../../layout/Wrapper'
 import ActionButton from '../../ActionButton'
@@ -10,6 +14,7 @@ import SupporterBenefits from '../../SupporterBenefits'
 import useTheme from '../../../contexts/theme'
 import { usePreferences } from '../../../stores/preferences'
 import { Publisher } from '../../../types/publisher'
+import { RootStackNavigation } from '../../../types/rootStack'
 
 interface Props {
   goBack: () => void
@@ -35,6 +40,7 @@ const personalizationKeyByPublisher: Record<
 
 const Supporter = ({ goBack, goNext }: Props) => {
   const theme = useTheme()
+  const navigation = useNavigation<RootStackNavigation>()
   const prefs = usePreferences()
   const { publisher } = prefs
 
@@ -149,6 +155,47 @@ const Supporter = ({ goBack, goNext }: Props) => {
           ) : null}
 
           <SupporterBenefits />
+
+          <Button
+            style={{
+              marginTop: 18,
+              alignSelf: 'center',
+              flexDirection: 'row',
+              alignItems: 'center',
+              gap: 8,
+              paddingVertical: 10,
+              paddingHorizontal: 14,
+            }}
+            onPress={() => navigation.navigate('Paywall')}
+          >
+            <FontAwesomeIcon
+              icon={faHeart}
+              size={12}
+              color={theme.colors.supporter}
+            />
+            <Text
+              style={{
+                fontSize: 14,
+                color: theme.colors.supporter,
+                fontFamily: theme.fonts.semiBold,
+              }}
+            >
+              {i18n.t('supporterOnboardingLearnMore')}
+            </Text>
+          </Button>
+
+          <Text
+            style={{
+              fontSize: 12,
+              color: theme.colors.textAlt,
+              lineHeight: 17,
+              textAlign: 'center',
+              marginTop: 10,
+              paddingHorizontal: 8,
+            }}
+          >
+            {i18n.t('supporterOnboardingFindLater')}
+          </Text>
         </View>
       </KeyboardAwareScrollView>
       <ActionButton onPress={goNext}>{i18n.t('continue')}</ActionButton>

@@ -320,9 +320,18 @@ const CalendarDay = (
     monthsReports: ServiceReport[] | null
     viewMode?: CalendarViewMode
     height?: number
+    /**
+     * When provided, used in place of the live store. Lets non-app surfaces
+     * (onboarding previews, screenshots) show a planned day without writing to
+     * the user's actual schedule.
+     */
+    dayPlansOverride?: DayPlan[]
+    recurringPlansOverride?: RecurringPlan[]
   }
 ) => {
-  const { dayPlans, recurringPlans } = useServiceReport()
+  const store = useServiceReport()
+  const dayPlans = props.dayPlansOverride ?? store.dayPlans
+  const recurringPlans = props.recurringPlansOverride ?? store.recurringPlans
   const translateY = useSharedValue(0)
   const theme = useTheme()
   const { howToAddPlan, removeHint } = usePreferences()

@@ -11,7 +11,12 @@ import i18n from '../lib/locales'
 import { usePreferences } from '../stores/preferences'
 import useServiceReport from '../stores/serviceReport'
 import { getMonthsReports } from '../lib/serviceReport'
-import { ServiceReport } from '../types/serviceReport'
+import {
+  DayPlan,
+  RecurringPlan,
+  ServiceReport,
+  ServiceReportsByYears,
+} from '../types/serviceReport'
 import { HomeTabStackNavigation } from '../types/homeStack'
 import { faChevronRight } from '@fortawesome/free-solid-svg-icons'
 import CalendarDay from './CalendarDay'
@@ -21,30 +26,57 @@ type Props = {
   month: number
   year: number
   monthsReports: ServiceReport[] | null
+  /**
+   * Override "now" — used by onboarding previews so the highlighted day is
+   * deterministic regardless of when the user runs through the flow.
+   */
+  today?: moment.Moment
+  /**
+   * When set, replaces the live preferences/store data driving the strip. Lets
+   * non-app surfaces render a populated week without touching the real
+   * schedule.
+   */
+  dayPlansOverride?: DayPlan[]
+  recurringPlansOverride?: RecurringPlan[]
+  serviceReportsOverride?: ServiceReportsByYears
+  /** Defaults to navigating to Schedule. Override for previews / mock UI. */
+  onOpenSchedule?: () => void
 }
 
-const WeekStripTeaser = ({ month, year, monthsReports }: Props) => {
+const WeekStripTeaser = ({
+  month,
+  year,
+  monthsReports,
+  today: todayProp,
+  dayPlansOverride,
+  recurringPlansOverride,
+  serviceReportsOverride,
+  onOpenSchedule,
+}: Props) => {
   const theme = useTheme()
   const { startOfWeek } = usePreferences()
-  const { serviceReports } = useServiceReport()
+  const { serviceReports: storeServiceReports } = useServiceReport()
+  const serviceReports = serviceReportsOverride ?? storeServiceReports
   const navigation = useNavigation<HomeTabStackNavigation>()
+
+  const today = useMemo(() => todayProp ?? moment(), [todayProp])
 
   const selectedMonth = useMemo(
     () => moment().month(month).year(year),
     [month, year]
   )
   const isCurrentMonth = useMemo(
-    () => moment().isSame(selectedMonth, 'month'),
-    [selectedMonth]
+    () => today.isSame(selectedMonth, 'month'),
+    [today, selectedMonth]
   )
 
   // Anchor the strip on the current week when viewing the current month;
   // otherwise anchor to the first week of the selected month. This keeps the
   // strip relevant to the user's "now" while still previewing other months.
   const weekAnchor = useMemo(() => {
-    if (isCurrentMonth) return moment()
+    if (isCurrentMonth) return today.clone()
     return selectedMonth.clone().startOf('month')
-  }, [isCurrentMonth, selectedMonth])
+  }, [isCurrentMonth, selectedMonth, today])
 
   const days = useMemo(() => {
     const startOfStripWeek = weekAnchor.clone().day(startOfWeek)
@@ -76,9 +108,8 @@ const WeekStripTeaser = ({ month, year, monthsReports }: Props) => {
     return [...firstMonthReports, ...lastMonthReports]
   }, [days, month, year, monthsReports, serviceReports])
 
-  const openSchedule = () => {
-    navigation.navigate('Schedule', { month, year })
-  }
+  const openSchedule =
+    onOpenSchedule ?? (() => navigation.navigate('Schedule', { month, year }))
 
   return (
     <GlassCard padding={20}>
@@ -163,6 +194,8 @@ const WeekStripTeaser = ({ month, year, monthsReports }: Props) => {
                   monthsReports={weekReports}
                   onPress={openSchedule}
                   height={50}
+                  dayPlansOverride={dayPlansOverride}
+                  recurringPlansOverride={recurringPlansOverride}
                 />
               </View>
             )

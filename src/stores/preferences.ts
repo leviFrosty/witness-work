@@ -14,6 +14,9 @@ import type { ShaderId } from '../shaders/types'
 import { DEFAULT_SHADER_ID } from '../shaders/registry'
 import type { ContactSortDirection, ContactSortKey } from '../lib/contactsSort'
 import type { ActiveFilter } from '../lib/contactsFilters'
+import type { MarkerColors } from '../types/markerColors'
+
+export type { MarkerColors }
 
 /**
  * Built-in (non-custom-field) sort dimensions. Custom-field sorts use the
@@ -101,13 +104,6 @@ export const widgetAppointmentWindowOptions = [
 ] as const
 export type WidgetAppointmentWindow =
   (typeof widgetAppointmentWindowOptions)[number]
-
-export type MarkerColors = {
-  noConversations: string
-  longerThanAMonthAgo: string
-  longerThanAWeekAgo: string
-  withinThePastWeek: string
-}
 
 export type PrefillAddress = {
   /** Whether or not prefill address is enabled. */

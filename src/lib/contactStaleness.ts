@@ -1,7 +1,7 @@
 import moment from 'moment'
 import { Contact } from '../types/contact'
 import { Conversation } from '../types/conversation'
-import { MarkerColors } from '../stores/preferences'
+import { MarkerColors } from '../types/markerColors'
 import { getMostRecentConversationForContact } from './contacts'
 
 export type ContactStaleness = 'never' | 'recent' | 'week' | 'month'

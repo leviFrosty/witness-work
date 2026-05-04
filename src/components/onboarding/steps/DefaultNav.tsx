@@ -1,4 +1,7 @@
 import { View, Pressable } from 'react-native'
+import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
+import { faApple, faGoogle, faWaze } from '@fortawesome/free-brands-svg-icons'
+import type { IconDefinition } from '@fortawesome/fontawesome-svg-core'
 import i18n from '../../../lib/locales'
 import {
   usePreferences,
@@ -17,15 +20,13 @@ interface Props {
   goNext: () => void
 }
 
-// Brand-y swatch on each chip — same accent the route uses on the preview, so
-// chip and preview read as the same "this is your map" identity.
-const PROVIDER_SWATCH: Record<
+const PROVIDER_ICON: Record<
   Exclude<DefaultNavigationMapProvider, null>,
-  string
+  IconDefinition
 > = {
-  apple: '#0A84FF',
-  google: '#4285F4',
-  waze: '#33CCFF',
+  apple: faApple,
+  google: faGoogle,
+  waze: faWaze,
 }
 
 const StepDefaultNav = ({ goNext, goBack }: Props) => {
@@ -50,14 +51,25 @@ const StepDefaultNav = ({ goNext, goBack }: Props) => {
     >
       <OnboardingNav goBack={goBack} />
       <View style={{ gap: 20 }}>
-        <Text
-          style={{
-            fontSize: 32,
-            fontFamily: theme.fonts.bold,
-          }}
-        >
-          {i18n.t('preferredMaps')}
-        </Text>
+        <View style={{ gap: 6 }}>
+          <Text
+            style={{
+              fontSize: 32,
+              fontFamily: theme.fonts.bold,
+            }}
+          >
+            {i18n.t('preferredMaps')}
+          </Text>
+          <Text
+            style={{
+              fontSize: 14,
+              color: theme.colors.textAlt,
+              lineHeight: 20,
+            }}
+          >
+            {i18n.t('preferredMaps_description')}
+          </Text>
+        </View>
 
         <NavMapPreview provider={defaultNavigationMapProvider} />
 
@@ -65,20 +77,20 @@ const StepDefaultNav = ({ goNext, goBack }: Props) => {
           {navigationSelectionOptions.map((opt) => {
             if (!opt.value) return null
             const isSelected = opt.value === defaultNavigationMapProvider
-            const swatch = PROVIDER_SWATCH[opt.value]
+            const icon = PROVIDER_ICON[opt.value]
             return (
               <Pressable
                 key={opt.value}
                 onPress={() => set({ defaultNavigationMapProvider: opt.value })}
                 accessibilityRole='button'
+                accessibilityLabel={opt.label}
                 accessibilityState={{ selected: isSelected }}
                 style={{
                   flex: 1,
                   flexDirection: 'row',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  gap: 6,
-                  paddingVertical: 10,
+                  paddingVertical: 12,
                   paddingHorizontal: 8,
                   borderRadius: 999,
                   borderWidth: 2,
@@ -90,26 +102,11 @@ const StepDefaultNav = ({ goNext, goBack }: Props) => {
                     : theme.colors.card,
                 }}
               >
-                <View
-                  style={{
-                    width: 10,
-                    height: 10,
-                    borderRadius: 5,
-                    backgroundColor: swatch,
-                  }}
+                <FontAwesomeIcon
+                  icon={icon}
+                  size={18}
+                  color={theme.colors.text}
                 />
-                <Text
-                  style={{
-                    fontSize: 13,
-                    fontFamily: isSelected
-                      ? theme.fonts.bold
-                      : theme.fonts.semiBold,
-                    color: theme.colors.text,
-                  }}
-                  numberOfLines={1}
-                >
-                  {opt.label}
-                </Text>
               </Pressable>
             )
           })}

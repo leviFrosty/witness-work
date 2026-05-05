@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react'
+import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { ScrollView, StyleSheet, TextInput, View } from 'react-native'
 import { faTimes } from '@fortawesome/free-solid-svg-icons'
 
@@ -185,9 +185,13 @@ const ContactsFilterSheet: React.FC<ContactsFilterSheetProps> = ({
 
   // Seed local state every time the sheet flips open. We deliberately do NOT
   // sync on every prop tick — only on the open transition — so user input
-  // isn't stomped if the parent re-renders mid-edit.
+  // isn't stomped if the parent re-renders mid-edit. The ref gates re-runs
+  // triggered by `initial` reference churn while the sheet is already open.
+  const prevOpenRef = useRef(false)
   useEffect(() => {
-    if (!open) return
+    const wasClosed = !prevOpenRef.current
+    prevOpenRef.current = open
+    if (!open || !wasClosed) return
     if (initial) {
       setField(fieldKeyFromFilter(initial))
       switch (initial.kind) {
@@ -220,13 +224,13 @@ const ContactsFilterSheet: React.FC<ContactsFilterSheetProps> = ({
       setOp(null)
       setValue('')
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open])
+  }, [open, initial])
 
   // Whenever `field` changes, clamp `op` to a value that's valid for that
   // field (or null when the field doesn't take an operator). Without this the
   // user could leave a `gt` op selected after switching from a custom number
-  // field to a plain text field and then submit something invalid.
+  // field to a plain text field and then submit something invalid. The body
+  // is idempotent — re-runs from `op` ticking are no-ops once `op` is valid.
   useEffect(() => {
     if (field === null) {
       if (op !== null) setOp(null)
@@ -240,11 +244,12 @@ const ContactsFilterSheet: React.FC<ContactsFilterSheetProps> = ({
     if (op === null || !valid.includes(op)) {
       setOp(valid[0])
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [field, customFieldDefs])
+  }, [field, customFieldDefs, op])
 
   // Reset value when switching between field shapes that don't share value
   // semantics (e.g. text -> pinStaleness leaving "Phoenix" in the buffer).
+  // Body is idempotent — user typing into a non-boolean field re-triggers
+  // this effect but the guards bail without touching state.
   useEffect(() => {
     if (field === null) {
       if (value !== '') setValue('')
@@ -253,8 +258,7 @@ const ContactsFilterSheet: React.FC<ContactsFilterSheetProps> = ({
     if (isBooleanField(field)) {
       if (value !== '') setValue('')
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [field])
+  }, [field, value])
 
   const availableFields = useMemo<Exclude<FieldKey, null>[]>(() => {
     const base: Exclude<FieldKey, null>[] = [

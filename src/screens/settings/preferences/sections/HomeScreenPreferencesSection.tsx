@@ -11,11 +11,11 @@ import { rowPaddingVertical } from '../../../../constants/Inputs'
 import useDevice from '../../../../hooks/useDevice'
 
 const DetailedProgressBar = () => {
-  const { displayDetailsOnProgressBarHomeScreen, publisher, set } =
-    usePreferences()
+  const { displayDetailsOnProgressBarHomeScreen, set } = usePreferences()
+  const { entryMode } = usePublisher()
   const theme = useTheme()
 
-  if (publisher === 'publisher') return null
+  if (entryMode === 'checkbox') return null
 
   return (
     <InputRowContainer
@@ -80,9 +80,9 @@ const HideDonateHeart = () => {
 
 const HideSupporterNudge = () => {
   const { hideSupporterNudge, set } = usePreferences()
-  const { status } = usePublisher()
+  const { entryMode } = usePublisher()
 
-  const lastInSection = status === 'publisher'
+  const lastInSection = entryMode === 'checkbox'
 
   return (
     <InputRowContainer
@@ -100,7 +100,7 @@ const HideSupporterNudge = () => {
 
 const HomeElements = () => {
   const { homeScreenElements, set } = usePreferences()
-  const { status, hasAnnualGoal } = usePublisher()
+  const { showsTimer, hasAnnualGoal } = usePublisher()
   const { isTablet } = useDevice()
   const theme = useTheme()
 
@@ -195,7 +195,7 @@ const HomeElements = () => {
             }
           />
         </XView>
-        {status !== 'publisher' && (
+        {showsTimer && (
           <XView style={{ justifyContent: 'space-between' }}>
             <Text>{i18n.t('timer')}</Text>
             <Switch

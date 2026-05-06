@@ -25,6 +25,7 @@ import {
 } from '../lib/serviceReport'
 import useTheme from '../contexts/theme'
 import useServiceReport from '../stores/serviceReport'
+import usePublisher from '../hooks/usePublisher'
 import { useNavigation } from '@react-navigation/native'
 import links from '../constants/links'
 import { openURL } from '../lib/links'
@@ -47,8 +48,8 @@ const ExportTimeSheet = ({
   setSheet,
   showViewAllMonthsButton,
 }: ExportTimeSheetProps) => {
-  const { publisher, overrideCreditLimit, customCreditLimitHours } =
-    usePreferences()
+  const { overrideCreditLimit, customCreditLimitHours } = usePreferences()
+  const { type: publisher, entryMode } = usePublisher()
   const theme = useTheme()
   const { serviceReports } = useServiceReport()
   const { conversations } = useConversations()
@@ -114,7 +115,7 @@ const ExportTimeSheet = ({
           return ''
         }
         const hoursForPublisherOrPioneer = () => {
-          if (publisher === 'publisher') {
+          if (entryMode === 'checkbox') {
             if (monthReports.length) {
               return i18n.t('yes')
             } else {
@@ -231,6 +232,7 @@ const ExportTimeSheet = ({
       studiesForMonth,
       creditOverage,
       publisher,
+      entryMode,
       standard,
       monthReports,
       value,

@@ -21,7 +21,7 @@ import * as ICloudBridge from '../../../../modules/icloud-bridge'
 import { iCloudSync } from '../../../lib/sync/iCloudSync'
 import { SyncPayload } from '../../../lib/sync/payload'
 import { usePreferences } from '../../../stores/preferences'
-import useIsSupporter from '../../../hooks/useIsSupporter'
+import useFeatureAccess from '../../../hooks/useFeatureAccess'
 
 interface Props {
   goBack: () => void
@@ -76,7 +76,7 @@ function remoteReferencesImages(remote: SyncPayload): boolean {
 const ICloudRestore = ({ goBack, goNext }: Props) => {
   const theme = useTheme()
   const { set } = usePreferences()
-  const { isSupporter } = useIsSupporter()
+  const { hasAccess: canEnableICloudSync } = useFeatureAccess('iCloudSync')
   const [probe, setProbe] = useState<Probe>({ state: 'probing' })
   const [restoring, setRestoring] = useState(false)
 
@@ -162,7 +162,7 @@ const ICloudRestore = ({ goBack, goNext }: Props) => {
         onboardingComplete: true,
         hasCompletedProfileSetup: true,
         hasCompletedMapOnboarding: true,
-        ...(isSupporter
+        ...(canEnableICloudSync
           ? { iCloudSyncEnabled: true, iCloudSyncSetByUser: true }
           : {}),
       })
@@ -382,7 +382,7 @@ const ICloudRestore = ({ goBack, goNext }: Props) => {
                 relative: moment(probe.remote.writtenAt).fromNow(),
               })}
             </Text>
-            {isSupporter && (
+            {canEnableICloudSync && (
               <Text
                 style={{
                   fontSize: 12,
@@ -422,7 +422,7 @@ const ICloudRestore = ({ goBack, goNext }: Props) => {
               </View>
             ) : (
               i18n.t(
-                isSupporter
+                canEnableICloudSync
                   ? 'iCloudRestoreActionWithSync'
                   : 'iCloudRestoreAction'
               )

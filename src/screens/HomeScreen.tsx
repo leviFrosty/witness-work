@@ -75,8 +75,8 @@ export const HomeScreen = () => {
   const { conversations } = useConversations()
   const { contacts } = useContacts()
   const { isTablet } = useDevice()
-  const { hasAnnualGoal } = usePublisher()
-  const { serviceReportTags, publisher, homeScreenElements } = usePreferences()
+  const { hasAnnualGoal, showsTimer } = usePublisher()
+  const { serviceReportTags, homeScreenElements } = usePreferences()
   const navigation = useNavigation<HomeTabStackNavigation>()
   const rootNavigation = useNavigation<RootStackNavigation>()
   const serviceYear = getServiceYearFromDate(moment())
@@ -285,9 +285,7 @@ export const HomeScreen = () => {
               monthsReports={currentMonthsReports}
             />
           )}
-          {publisher !== 'publisher' && homeScreenElements.timer && (
-            <TimerSection />
-          )}
+          {showsTimer && homeScreenElements.timer && <TimerSection />}
         </View>
       </KeyboardAwareScrollView>
       <UpgradeLegacyTimeReportsSheet
@@ -297,7 +295,7 @@ export const HomeScreen = () => {
       <ExportTimeSheet
         sheet={exportTimeSheet}
         setSheet={setExportTimeSheet}
-        showViewAllMonthsButton={publisher !== 'publisher'}
+        showViewAllMonthsButton={showsTimer}
       />
     </View>
   )

@@ -1,6 +1,7 @@
 import moment from 'moment'
 import { DayPlan, ServiceReportsByYears } from '../../types/serviceReport'
 import { Publisher } from '../../types/publisher'
+import { getEntryMode } from '../publisherCapabilities'
 import {
   RecurringPlan,
   getEffectiveMinutesForRecurringPlan,
@@ -95,7 +96,7 @@ export function buildCalendar(args: BuildCalendarArgs): WidgetCalendar {
   }
 
   // Publishers don't have an hours goal, so the feature is hidden for them.
-  if (args.publisher === 'publisher') {
+  if (getEntryMode(args.publisher) === 'checkbox') {
     return {
       locked: true,
       month,

@@ -20,7 +20,7 @@ import FounderNote from './steps/FounderNote'
 import IntentPicker from './steps/IntentPicker'
 import YourPlanPreview from './steps/YourPlanPreview'
 import { usePreferences } from '../../stores/preferences'
-import { tracksStartDate } from '../../constants/publisher'
+import { tracksPioneerStartDate } from '../../lib/publisherCapabilities'
 import { Publisher } from '../../types/publisher'
 import {
   OnboardingProgress,
@@ -71,7 +71,7 @@ const allSteps: StepDef[] = [
     id: 'pioneerDate',
     Component: ProfileSetupPioneerDate,
     countsTowardProgress: true,
-    showIf: (publisher) => tracksStartDate(publisher),
+    showIf: (publisher) => tracksPioneerStartDate(publisher),
   },
   {
     id: 'yourPlanPreview',

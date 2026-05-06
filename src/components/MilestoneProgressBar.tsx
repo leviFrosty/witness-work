@@ -297,7 +297,7 @@ interface MilestoneProgressBarProps {
  * progress bar for the given service year.
  */
 const MilestoneProgressBar = ({ year }: MilestoneProgressBarProps) => {
-  const { status: publisher, annualGoalHours } = usePublisher()
+  const { type: publisher, annualGoalHours } = usePublisher()
   const { milestoneOverrides } = usePreferences()
   const { serviceReports } = useServiceReport()
 

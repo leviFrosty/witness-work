@@ -12,6 +12,7 @@ import {
 } from '../types/serviceReport'
 import moment from 'moment'
 import { monthCreditMaxMinutes } from '../constants/serviceReports'
+import { creditCapMinutesFor, getEntryMode } from './publisherCapabilities'
 import { logger } from './logger'
 import {
   DEFAULT_START_TIME_IN_MINUTES,
@@ -136,22 +137,12 @@ export const adjustedMinutesForSpecificMonth = (
   let minutes = 0
   let creditOverage = 0
 
-  // Determine effective credit limit based on preferences and publisher type
-  let effectiveCreditLimitMinutes: number | null = monthCreditMaxMinutes
-
-  if (creditLimitOverride?.enabled) {
-    // User has overridden the default credit limit
-    effectiveCreditLimitMinutes =
-      creditLimitOverride.customLimitHours === 0
-        ? null // No limit
-        : creditLimitOverride.customLimitHours * 60
-  } else if (
-    publisher === 'specialPioneer' ||
-    publisher === 'circuitOverseer'
-  ) {
-    // Special pioneers and circuit overseers have no credit limit by default
-    effectiveCreditLimitMinutes = null
-  }
+  // Effective credit cap is derived once, in publisherCapabilities — both
+  // role defaults (specialPioneer/circuitOverseer = unlimited) and the
+  // user's override live behind that single seam.
+  const effectiveCreditLimitMinutes = publisher
+    ? creditCapMinutesFor(publisher, creditLimitOverride)
+    : monthCreditMaxMinutes
 
   const hasNoCreditLimit = effectiveCreditLimitMinutes === null
 
@@ -304,7 +295,7 @@ export const getTimeAsMinutesForHourglass = (
   wentOutForMonth: boolean | null,
   minutes: number | null
 ) => {
-  if (publisher === 'publisher') {
+  if (getEntryMode(publisher) === 'checkbox') {
     if (wentOutForMonth) {
       return 1
     }

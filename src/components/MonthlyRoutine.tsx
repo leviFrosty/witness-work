@@ -6,6 +6,7 @@ import Text from './MyText'
 import { FlashList } from '@shopify/flash-list'
 import useServiceReport from '../stores/serviceReport'
 import { usePreferences } from '../stores/preferences'
+import usePublisher from '../hooks/usePublisher'
 import { useNavigation } from '@react-navigation/native'
 import IconButton from './IconButton'
 import { faCheck, faMinus, faTimes } from '@fortawesome/free-solid-svg-icons'
@@ -24,7 +25,8 @@ const Month = ({
 }) => {
   const theme = useTheme()
   const navigation = useNavigation<HomeTabStackNavigation>()
-  const { installedOn, publisher } = usePreferences()
+  const { installedOn } = usePreferences()
+  const { showsYearTabs } = usePublisher()
   const current = moment()
   const toDisplay = moment().month(month).year(year)
   const isCurrentMonth = current.isSame(toDisplay, 'month')
@@ -44,7 +46,7 @@ const Month = ({
   return (
     <Button
       onPress={
-        publisher !== 'publisher'
+        showsYearTabs
           ? () => {
               onBeforeNavigate?.()
               navigation.navigate('Progress', {

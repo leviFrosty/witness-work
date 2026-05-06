@@ -3,7 +3,7 @@ import { ThemeContext } from '../contexts/theme'
 import getThemeFromColorScheme from '../constants/theme'
 import { useColorScheme } from 'react-native'
 import { usePreferences } from '../stores/preferences'
-import useIsSupporter from '../hooks/useIsSupporter'
+import useFeatureAccess from '../hooks/useFeatureAccess'
 import { mix, withAlpha } from '../lib/color'
 
 interface Props {}
@@ -15,13 +15,14 @@ const ThemeProvider: React.FC<PropsWithChildren<Props>> = ({ children }) => {
     customAccentColor,
     customAvatarBackground,
   } = usePreferences()
-  const { isSupporter } = useIsSupporter()
+  const { hasAccess: canCustomizeAccent } =
+    useFeatureAccess('customAccentColor')
   const scheme = colorScheme === 'unspecified' ? undefined : colorScheme
   const resolvedScheme = theme ?? scheme
   const userSelectedTheme = getThemeFromColorScheme(resolvedScheme)
 
   const themeWithOverrides = useMemo(() => {
-    if (!isSupporter) return userSelectedTheme
+    if (!canCustomizeAccent) return userSelectedTheme
     if (!customAccentColor && !customAvatarBackground) return userSelectedTheme
 
     const isDark = resolvedScheme === 'dark'
@@ -46,7 +47,7 @@ const ThemeProvider: React.FC<PropsWithChildren<Props>> = ({ children }) => {
     return { ...userSelectedTheme, colors }
   }, [
     userSelectedTheme,
-    isSupporter,
+    canCustomizeAccent,
     customAccentColor,
     customAvatarBackground,
     resolvedScheme,

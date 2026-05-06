@@ -4,15 +4,16 @@ import useTheme from '../contexts/theme'
 import Text from './MyText'
 import SupporterBadge from './SupporterBadge'
 import SupporterInfoSheet from './SupporterInfoSheet'
-import useIsSupporter from '../hooks/useIsSupporter'
+import useFeatureAccess from '../hooks/useFeatureAccess'
+import type { FeatureKey } from '../lib/featureAccess'
 
 interface Props {
   children: ReactNode
   /**
-   * Which supporter-only feature this gate protects. Drives the copy shown in
-   * the info sheet when a non-supporter taps through.
+   * Which feature this gate protects. Drives the copy shown in the info sheet
+   * when access is denied.
    */
-  feature: 'customAccentColor' | 'iCloudSync'
+  feature: FeatureKey
   /** Size of the supporter badge. */
   size?: 'sm' | 'md' | 'lg'
   /**
@@ -47,7 +48,7 @@ const IsSupporter = ({
   fill,
 }: Props) => {
   const theme = useTheme()
-  const { isSupporter } = useIsSupporter()
+  const { hasAccess } = useFeatureAccess(feature)
   const [sheetOpen, setSheetOpen] = useState(false)
 
   const titleEl = title ? (
@@ -61,7 +62,7 @@ const IsSupporter = ({
     </Text>
   ) : null
 
-  if (isSupporter) {
+  if (hasAccess) {
     return (
       <View style={{ gap: 10, ...(fill ? { flex: 1 } : null) }}>
         {titleEl}

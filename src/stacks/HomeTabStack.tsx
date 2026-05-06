@@ -3,6 +3,7 @@ import TabBar from '../components/TabBar'
 import Map from '../screens/MapScreen'
 import DrawerNavigator from '../screens/DrawerNavigator'
 import { usePreferences } from '../stores/preferences'
+import usePublisher from '../hooks/usePublisher'
 import Constants from 'expo-constants'
 import { View } from 'react-native'
 import WhatsNewSheet from '../components/WhatsNewSheet'
@@ -21,7 +22,8 @@ import { RootStackNavigation } from '../types/rootStack'
 
 const HomeTabStack = () => {
   const Tab = createBottomTabNavigator<HomeTabStackParamList>()
-  const { lastAppVersion, developerTools, set, publisher } = usePreferences()
+  const { lastAppVersion, developerTools, set } = usePreferences()
+  const { showsYearTabs } = usePublisher()
   const [lastVersion] = useState(lastAppVersion)
   const [showWhatsNew, setShowWhatsNew] = useState(false)
 
@@ -79,7 +81,7 @@ const HomeTabStack = () => {
         <Tab.Screen name='Home' component={DrawerNavigator} />
         <Tab.Screen name='Contacts' component={ContactsScreen} />
         {developerTools && <Tab.Screen name='Tools' component={ToolsScreen} />}
-        {publisher !== 'publisher' && (
+        {showsYearTabs && (
           <Tab.Screen name='Progress' component={ProgressScreen} />
         )}
         <Tab.Screen name='Schedule' component={ScheduleScreen} />

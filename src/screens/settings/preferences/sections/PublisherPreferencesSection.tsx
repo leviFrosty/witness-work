@@ -11,10 +11,10 @@ import Card from '../../../../components/Card'
 import Divider from '../../../../components/Divider'
 import CheckboxWithLabel from '../../../../components/inputs/CheckboxWithLabel'
 import TextInputRow from '../../../../components/inputs/TextInputRow'
+import usePublisher from '../../../../hooks/usePublisher'
 
 const PublisherPreferencesSection = () => {
   const {
-    publisher,
     overrideCreditLimit,
     customCreditLimitHours,
     autoRolloverEnabled,
@@ -22,11 +22,17 @@ const PublisherPreferencesSection = () => {
     setCustomCreditLimitHours,
     setAutoRolloverEnabled,
   } = usePreferences()
+  const {
+    type: publisher,
+    entryMode,
+    hasUnlimitedCreditDefault,
+  } = usePublisher()
   const theme = useTheme()
+  const isCheckboxMode = entryMode === 'checkbox'
 
   return (
     <View style={{ gap: 5 }}>
-      {publisher === 'publisher' && (
+      {isCheckboxMode && (
         <>
           <View style={{ paddingHorizontal: 20 }}>
             <Card>
@@ -67,13 +73,13 @@ const PublisherPreferencesSection = () => {
       <Section>
         <InputRowContainer
           label={i18n.t('status')}
-          lastInSection={publisher === 'publisher'}
+          lastInSection={isCheckboxMode}
         >
           <View style={{ flex: 1 }}>
             <PublisherTypeSelector />
           </View>
         </InputRowContainer>
-        {publisher !== 'publisher' && (
+        {!isCheckboxMode && (
           <InputRowContainer label={i18n.t('annualGoal')} lastInSection>
             <View style={{ flex: 1 }}>
               <AnnualGoalSelector />
@@ -82,8 +88,7 @@ const PublisherPreferencesSection = () => {
         )}
       </Section>
 
-      {/* Credit Limit Override Section - Only show for publishers that normally have a credit limit */}
-      {publisher !== 'specialPioneer' && publisher !== 'circuitOverseer' && (
+      {!hasUnlimitedCreditDefault && (
         <Section>
           <InputRowContainer
             label={i18n.t('overrideCreditLimit')}
@@ -134,7 +139,7 @@ const PublisherPreferencesSection = () => {
           )}
         </Section>
       )}
-      {publisher !== 'publisher' && (
+      {!isCheckboxMode && (
         <Section>
           <InputRowContainer label={i18n.t('autoRollover')} lastInSection>
             <View style={{ flex: 1 }}>

@@ -2,15 +2,11 @@ import { View } from 'react-native'
 import i18n from '../lib/locales'
 import { usePreferences } from '../stores/preferences'
 import Select, { SelectData } from './Select'
-import usePublisher, { hasAnnualGoal } from '../hooks/usePublisher'
+import usePublisher from '../hooks/usePublisher'
 
 const AnnualGoalSelector = () => {
-  const { status } = usePublisher()
+  const { hasAnnualGoal: hasAnnualGoalByDefault } = usePublisher()
   const { set, userSpecifiedHasAnnualGoal } = usePreferences()
-  const hasAnnualGoalByDefault = hasAnnualGoal(
-    status,
-    userSpecifiedHasAnnualGoal
-  )
 
   const items: SelectData<boolean | 'default'> = [
     {

@@ -30,7 +30,7 @@ type RolloverContext = {
 }
 
 export const useRollover = (): RolloverContext => {
-  const { hasAnnualGoal, status: publisher } = usePublisher()
+  const { hasAnnualGoal, type: publisher } = usePublisher()
   const {
     lastRolloverYearMonth,
     autoRolloverEnabled,

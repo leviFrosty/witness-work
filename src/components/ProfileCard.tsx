@@ -20,7 +20,6 @@ import TiltableCard from './TiltableCard'
 import ProfileDetailOverlay, { OriginRect } from './ProfileDetailOverlay'
 import AvatarPickerPopover from './AvatarPickerPopover'
 import i18n from '../lib/locales'
-import { isPioneer } from '../constants/publisher'
 import { ShaderOverlay } from '../shaders'
 
 interface Props {
@@ -103,7 +102,7 @@ const ProfileCard = ({ preview, editable, onPressIncomplete }: Props) => {
     profileCardShaderId,
     set,
   } = usePreferences()
-  const { status: publisher } = usePublisher()
+  const { type: publisher, isPioneer, entryMode } = usePublisher()
   const { since: supporterSince } = useIsSupporter()
   const [detailOpen, setDetailOpen] = useState(false)
   const [origin, setOrigin] = useState<OriginRect | null>(null)
@@ -181,7 +180,7 @@ const ProfileCard = ({ preview, editable, onPressIncomplete }: Props) => {
       : i18n.t('profileGreetingNoName')
 
   const tenure: Tenure = (() => {
-    if (isPioneer(publisher) && pioneerStartDate) {
+    if (isPioneer && pioneerStartDate) {
       const tone: TenureTone =
         publisher === 'specialPioneer'
           ? 'specialPioneer'
@@ -206,7 +205,7 @@ const ProfileCard = ({ preview, editable, onPressIncomplete }: Props) => {
         ),
       }
     }
-    if (supporterSince && publisher === 'publisher') {
+    if (supporterSince && entryMode === 'checkbox') {
       return {
         tone: 'supporter',
         icon: faHeart,

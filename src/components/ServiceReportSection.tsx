@@ -1,6 +1,6 @@
 import { View } from 'react-native'
 import useTheme from '../contexts/theme'
-import { usePreferences } from '../stores/preferences'
+import usePublisher from '../hooks/usePublisher'
 import Card from './Card'
 import Text from './MyText'
 import moment from 'moment'
@@ -41,7 +41,7 @@ interface ServiceReportProps {
 
 const ServiceReportSection = ({ setSheet }: ServiceReportProps) => {
   const theme = useTheme()
-  const { publisher } = usePreferences()
+  const { entryMode } = usePublisher()
   const { isTablet } = useDevice()
 
   return (
@@ -87,7 +87,7 @@ const ServiceReportSection = ({ setSheet }: ServiceReportProps) => {
             <View style={{ flexDirection: 'row' }}>
               <RowSectionTitle title={i18n.t('hours')} />
             </View>
-            {publisher === 'publisher' ? (
+            {entryMode === 'checkbox' ? (
               <PublisherCheckBoxCard />
             ) : (
               <HourEntryCard />

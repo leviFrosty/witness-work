@@ -36,7 +36,7 @@ import ContributionGraph from './ContributionGraph'
 import MonthlyRoutine from './MonthlyRoutine'
 import SinceBadge from './SinceBadge'
 import i18n from '../lib/locales'
-import { getStartDateLabels, tracksStartDate } from '../constants/publisher'
+import { getStartDateLabels } from '../constants/publisher'
 import {
   consecutiveWeeksStreak,
   daysLogged,
@@ -120,7 +120,7 @@ const ProfileDetailOverlay = ({ origin, open, onClose, onClosed }: Props) => {
     onClose()
     navigation.navigate('ProfileSetup')
   }
-  const { status: publisher } = usePublisher()
+  const { type: publisher, tracksPioneerStartDate } = usePublisher()
   const { since: supporterSince } = useIsSupporter()
   const { serviceReports } = useServiceReport()
   const setDailyMinutesCache = useTimeCache((s) => s.setDailyMinutesCache)
@@ -351,10 +351,10 @@ const ProfileDetailOverlay = ({ origin, open, onClose, onClosed }: Props) => {
                 />
               </View>
 
-              {(tracksStartDate(publisher) && pioneerStartDate) ||
+              {(tracksPioneerStartDate && pioneerStartDate) ||
               supporterSince ? (
                 <View style={{ gap: 10 }}>
-                  {tracksStartDate(publisher) && pioneerStartDate && (
+                  {tracksPioneerStartDate && pioneerStartDate && (
                     <SinceBadge
                       icon={faStar}
                       label={i18n.t(getStartDateLabels(publisher).badge)}

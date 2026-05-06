@@ -10,7 +10,8 @@ import ProfileCard from '../components/ProfileCard'
 import DateTimePicker from '../components/DateTimePicker'
 import i18n from '../lib/locales'
 import { usePreferences } from '../stores/preferences'
-import { getStartDateLabels, tracksStartDate } from '../constants/publisher'
+import { getStartDateLabels } from '../constants/publisher'
+import usePublisher from '../hooks/usePublisher'
 import { RootStackNavigation } from '../types/rootStack'
 
 const ProfileSetupScreen = () => {
@@ -19,6 +20,7 @@ const ProfileSetupScreen = () => {
   const navigation = useNavigation<RootStackNavigation>()
   const { publisher, pioneerStartDate, hasCompletedProfileSetup, set } =
     usePreferences()
+  const { tracksPioneerStartDate } = usePublisher()
   const isEditing = hasCompletedProfileSetup
 
   const handleSave = () => {
@@ -80,7 +82,7 @@ const ProfileSetupScreen = () => {
 
         <ProfileCard editable />
 
-        {tracksStartDate(publisher) && (
+        {tracksPioneerStartDate && (
           <View style={{ gap: 6 }}>
             <Text
               style={{

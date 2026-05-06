@@ -32,7 +32,7 @@ export default function MonthScheduleSection(props: MonthScheduleSectionProps) {
   const theme = useTheme()
   const navigation = useNavigation<RootStackNavigation>()
   const { dayPlans, recurringPlans } = useServiceReport()
-  const { goalHours } = usePublisher()
+  const { monthlyGoalHours: goalHours } = usePublisher()
   const { getCachedPlannedMinutes, setCachedPlannedMinutes } = useTimeCache()
 
   const { plannedMinutes, cacheKey, planHash, needsCache } = useMemo(() => {

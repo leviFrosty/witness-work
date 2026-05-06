@@ -17,6 +17,7 @@ import Card from '../Card'
 import i18n, { TranslationKey } from '../../lib/locales'
 import { usePreferences } from '../../stores/preferences'
 import { Publisher } from '../../types/publisher'
+import { getEntryMode } from '../../lib/publisherCapabilities'
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
 import { faCheck, faStopwatch, faBell } from '@fortawesome/free-solid-svg-icons'
 
@@ -394,7 +395,7 @@ const HIGHLIGHTS: Record<HighlightId, Highlight> = {
 }
 
 const highlightsForPublisher = (publisher: Publisher): HighlightId[] => {
-  if (publisher === 'publisher') {
+  if (getEntryMode(publisher) === 'checkbox') {
     return ['check', 'conversations', 'reminders']
   }
   return ['goal', 'conversations', 'report']

@@ -1,5 +1,5 @@
 import { Sheet, XStack } from 'tamagui'
-import { usePreferences } from '../stores/preferences'
+import usePublisher from '../hooks/usePublisher'
 import * as Crypto from 'expo-crypto'
 import XView from './layout/XView'
 import { faIdCard } from '@fortawesome/free-regular-svg-icons'
@@ -27,7 +27,7 @@ export default function QuickActionSheet({
   setSheetOpen,
   navigation,
 }: QuickActionSheetProps) {
-  const { publisher } = usePreferences()
+  const { showsTimer } = usePublisher()
   const theme = useTheme()
 
   const handleQuickAction = (action: QuickActionOption): void => {
@@ -76,7 +76,7 @@ export default function QuickActionSheet({
         </XStack>
         <Sheet.ScrollView contentContainerStyle={{ paddingTop: 10 }}>
           <View style={{ gap: 10, paddingHorizontal: 20 }}>
-            {publisher !== 'publisher' && (
+            {showsTimer && (
               <>
                 <ActionButton
                   text='addTime'

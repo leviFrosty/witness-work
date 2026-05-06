@@ -12,6 +12,7 @@ import {
 import { formatMinutes } from '../minutes'
 import i18n, { TranslationKey } from '../locales'
 import { Publisher, PublisherHours } from '../../types/publisher'
+import { getEntryMode } from '../publisherCapabilities'
 import {
   DayPlan,
   MinuteDisplayFormat,
@@ -244,7 +245,7 @@ export function buildReport(args: BuildReportArgs): ReportFields {
   ).size
 
   return {
-    mode: args.publisher === 'publisher' ? 'checkbox' : 'hours',
+    mode: getEntryMode(args.publisher),
     monthMinutes: adjusted.value,
     monthHoursFormatted,
     goalHours,

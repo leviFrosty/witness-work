@@ -7,19 +7,6 @@ export const publishers = [
   'custom',
 ] as const
 
-const PIONEER_PUBLISHERS = [
-  'regularPioneer',
-  'specialPioneer',
-  'circuitOverseer',
-] as const
-
-export const isPioneer = (publisher: (typeof publishers)[number]): boolean =>
-  PIONEER_PUBLISHERS.includes(publisher as never)
-
-export const tracksStartDate = (
-  publisher: (typeof publishers)[number]
-): boolean => isPioneer(publisher) || publisher === 'regularAuxiliary'
-
 type StartDateRole =
   | 'pioneer'
   | 'specialPioneer'

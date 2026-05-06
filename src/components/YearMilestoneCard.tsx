@@ -52,7 +52,7 @@ const YearMilestoneCard = ({
   onAdjustMilestones,
 }: YearMilestoneCardProps) => {
   const theme = useTheme()
-  const { status: publisher, annualGoalHours } = usePublisher()
+  const { type: publisher, annualGoalHours } = usePublisher()
   const { milestoneOverrides } = usePreferences()
   const { serviceReports } = useServiceReport()
   const { getCachedPlannedMinutes, setCachedPlannedMinutes } = useTimeCache()

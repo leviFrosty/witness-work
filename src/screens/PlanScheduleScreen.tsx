@@ -454,7 +454,7 @@ const AnnualScheduleSection = (props: { month: number; year: number }) => {
 const MonthScheduleSection = (props: { month: number; year: number }) => {
   const theme = useTheme()
   const { dayPlans, recurringPlans } = useServiceReport()
-  const { goalHours } = usePublisher()
+  const { monthlyGoalHours: goalHours } = usePublisher()
   const { getCachedPlannedMinutes, setCachedPlannedMinutes } = useTimeCache()
 
   const { plannedMinutes, cacheKey, planHash, needsCache } = useMemo(() => {

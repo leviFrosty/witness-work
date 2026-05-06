@@ -252,7 +252,7 @@ export default function PersonalContactSection({
         </ActionButton>
       </XView>
       {(visibleDefs.length > 0 || customFieldDefs.some((d) => d.archived)) && (
-        <View style={{ paddingTop: 8 }}>
+        <View style={{ paddingTop: 8, paddingRight: 20 }}>
           <ActionButton
             onPress={() => navigation.navigate('PreferencesCustomFields')}
           >

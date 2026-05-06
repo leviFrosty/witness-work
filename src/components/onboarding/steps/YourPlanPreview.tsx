@@ -208,7 +208,9 @@ const TrackTimeVisual = ({
           }}
         >
           {goalHours > 0
-            ? `hrs in ${moment().format('MMM')}`
+            ? i18n.t('yourPlanTrackTimeMonthLabel', {
+                month: moment().format('MMM'),
+              })
             : moment().format('MMMM')}
         </Text>
       </View>

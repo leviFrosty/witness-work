@@ -1,5 +1,7 @@
 import * as Notifications from 'expo-notifications'
 import * as Device from 'expo-device'
+import { Alert } from 'react-native'
+import i18n from './locales'
 
 export async function registerForPushNotificationsAsync() {
   let token
@@ -15,7 +17,7 @@ export async function registerForPushNotificationsAsync() {
       return
     }
   } else {
-    alert('Must use physical device for Push Notifications')
+    Alert.alert(i18n.t('pushNotificationsRequirePhysicalDevice'))
   }
 
   return token

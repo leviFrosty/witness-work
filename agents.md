@@ -115,3 +115,17 @@ TypeScript path aliases per `tsconfig.json`. Check existing files for convention
 Reuse existing components where available instead of creating new ones @src/components/\*\*
 
 - Never create one-off badges
+
+## Agent skills
+
+### Issue tracker
+
+GitHub issues at [`leviFrosty/witness-work`](https://github.com/leviFrosty/witness-work) via the `gh` CLI. See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+Default canonical labels (`needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `wontfix`). See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Single-context layout: `CONTEXT.md` and `docs/adr/` at the repo root. See `docs/agents/domain.md`.

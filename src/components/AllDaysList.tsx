@@ -138,7 +138,7 @@ const AllDaysList = ({ month, year }: AllDaysListProps) => {
       const hoursLabel =
         reportsForDay.length === 0
           ? '—'
-          : `${(Math.round(totalHours * 10) / 10).toString()}h`
+          : `${(Math.round(totalHours * 10) / 10).toString()}${i18n.t('hoursCompact')}`
 
       let categoryLabel = '—'
       if (reportsForDay.length > 0) {

@@ -346,7 +346,7 @@ const ProfileDetailOverlay = ({ origin, open, onClose, onClosed }: Props) => {
                 />
                 <Stat
                   label={i18n.t('profileStatLast30')}
-                  value={`${stats.last30Hours}h`}
+                  value={`${stats.last30Hours}${i18n.t('hoursCompact')}`}
                   sub={i18n.t('profileStatLast30Sub')}
                 />
               </View>

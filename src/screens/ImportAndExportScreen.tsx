@@ -129,7 +129,7 @@ const ImportAndExportScreen = () => {
     setLoading(true)
 
     if (!Sharing.isAvailableAsync()) {
-      Alert.alert('sharingIsNotAvailable')
+      Alert.alert(i18n.t('sharingIsNotAvailable'))
       return
     }
 

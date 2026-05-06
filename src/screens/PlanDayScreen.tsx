@@ -763,9 +763,11 @@ const PlanDayScreen = ({ route, navigation }: PlanDayScreenProps) => {
     const formatDuration = () => {
       const h = Math.floor(plannedMinutes / 60)
       const m = plannedMinutes % 60
-      if (h && m) return `${h}h ${m}m`
-      if (h) return `${h}h`
-      return `${m}m`
+      const hLabel = i18n.t('hoursCompact')
+      const mLabel = i18n.t('minutesCompact')
+      if (h && m) return `${h}${hLabel} ${m}${mLabel}`
+      if (h) return `${h}${hLabel}`
+      return `${m}${mLabel}`
     }
 
     try {
@@ -1320,8 +1322,9 @@ const PlanDayScreen = ({ route, navigation }: PlanDayScreenProps) => {
                                   color: theme.colors.textAlt,
                                 }}
                               >
-                                {Math.floor(override.minutes / 60)}h{' '}
-                                {override.minutes % 60}m
+                                {Math.floor(override.minutes / 60)}
+                                {i18n.t('hoursCompact')} {override.minutes % 60}
+                                {i18n.t('minutesCompact')}
                                 {override.note && ` • ${override.note}`}
                               </Text>
                             </View>

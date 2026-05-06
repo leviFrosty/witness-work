@@ -37,7 +37,7 @@ const useFlatServiceReports = (): ServiceReport[] => {
  * - A proportional fill bar in the middle (year's hours ÷ current annual goal,
  *   capped at 100%). If the user has no annual goal, the bar's divisor falls
  *   back to the max-hours year so rows still render comparatively.
- * - `{hours}h` on the right.
+ * - `{hours}{hoursCompact}` on the right (localized hour abbreviation).
  *
  * Tapping a row navigates to the Progress > Year tab for that service year.
  */
@@ -155,7 +155,8 @@ const YearByYearList = ({ onYearPress }: YearByYearListProps) => {
                   textAlign: 'right',
                 }}
               >
-                {hours}h
+                {hours}
+                {i18n.t('hoursCompact')}
               </Text>
             </Pressable>
           )

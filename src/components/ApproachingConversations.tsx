@@ -12,17 +12,20 @@ import moment from 'moment'
 import {
   faPersonRunning,
   faThumbtack,
+  faTimes,
   faTriangleExclamation,
 } from '@fortawesome/free-solid-svg-icons'
 
 interface Props {
   conversations: Conversation[]
   overdueConversations?: Conversation[]
+  onDismissMissedConversations?: () => void
 }
 
 const ApproachingConversations = ({
   conversations,
   overdueConversations = [],
+  onDismissMissedConversations,
 }: Props) => {
   const theme = useContext(ThemeContext)
 
@@ -126,6 +129,13 @@ const ApproachingConversations = ({
                 {overdueCount}
               </Text>
             </View>
+          ) : null}
+          {hasOverdue && onDismissMissedConversations ? (
+            <IconButton
+              icon={faTimes}
+              color={theme.colors.textAlt}
+              onPress={onDismissMissedConversations}
+            />
           ) : null}
         </View>
       }

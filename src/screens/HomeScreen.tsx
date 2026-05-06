@@ -58,6 +58,8 @@ export const HomeScreen = () => {
   const { isSupporter } = useIsSupporter()
   const { serviceReports } = useServiceReport()
   const [refreshing, setRefreshing] = useState(false)
+  const [missedConversationsDismissed, setMissedConversationsDismissed] =
+    useState(false)
 
   const handleRefresh = useCallback(async () => {
     setRefreshing(true)
@@ -126,6 +128,9 @@ export const HomeScreen = () => {
     const activeIds = new Set(contacts.map((c) => c.id))
     return overdue.filter((c) => activeIds.has(c.contact.id))
   }, [contacts, conversations])
+  const visibleOverdueConvos = missedConversationsDismissed
+    ? []
+    : overdueConvosWithActiveContacts
 
   const showSupporterNudge = useMemo(
     () =>
@@ -230,10 +235,13 @@ export const HomeScreen = () => {
           />
           {homeScreenElements.approachingConversations &&
             (approachingConvosWithActiveContacts.length > 0 ||
-              overdueConvosWithActiveContacts.length > 0) && (
+              visibleOverdueConvos.length > 0) && (
               <ApproachingConversations
                 conversations={approachingConvosWithActiveContacts}
-                overdueConversations={overdueConvosWithActiveContacts}
+                overdueConversations={visibleOverdueConvos}
+                onDismissMissedConversations={() =>
+                  setMissedConversationsDismissed(true)
+                }
               />
             )}
           {shouldRemindToBackup && <BackupReminder />}

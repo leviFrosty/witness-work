@@ -1,7 +1,6 @@
 import { useCallback } from 'react'
 import { View, Alert } from 'react-native'
 import Text from '../components/MyText'
-import * as Notifications from 'expo-notifications'
 import * as Crypto from 'expo-crypto'
 import { NativeStackScreenProps } from '@react-navigation/native-stack'
 import * as Sentry from '@sentry/react-native'
@@ -12,7 +11,7 @@ import useTheme from '../contexts/theme'
 import Divider from '../components/Divider'
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
 import Section from '../components/inputs/Section'
-import { Conversation, Notification } from '../types/conversation'
+import { Conversation } from '../types/conversation'
 import InputRowContainer from '../components/inputs/InputRowContainer'
 import { DateTimePickerEvent } from '@react-native-community/datetimepicker'
 import TextInputRow from '../components/inputs/TextInputRow'
@@ -32,7 +31,6 @@ import {
   faIdCard,
   faTrash,
 } from '@fortawesome/free-solid-svg-icons'
-import _ from 'lodash'
 import Button from '../components/Button'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { usePreferences } from '../stores/preferences'
@@ -41,6 +39,7 @@ import useNotifications from '../hooks/notifications'
 import { useToastController } from '@tamagui/toast'
 import { RootStackParamList } from '../types/rootStack'
 import { deriveOffsetFromDates } from '../lib/notificationOffset'
+import { sync as syncConversationReminders } from '../lib/conversationReminders'
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Conversation Form'>
 type MomentOffset = {
@@ -297,90 +296,32 @@ const ConversationFormScreen = ({ route, navigation }: Props) => {
 
   const submit = useCallback(() => {
     return new Promise((resolve) => {
-      const cancelExistingNotification = () => {
-        conversationToUpdate?.followUp?.notifications?.forEach(
-          async ({ id }) => {
-            await Notifications.cancelScheduledNotificationAsync(id)
-          }
-        )
-      }
-
-      const scheduleNotifications = async () => {
-        if (!conversation.followUp) {
-          return []
-        }
-
-        const notificationChanged = !_.isEqual(
-          conversationToUpdate?.followUp,
-          conversation.followUp
-        )
-
-        if (notificationChanged) {
-          cancelExistingNotification()
-        }
-
-        if (!conversation.followUp.notifyMe) {
-          return []
-        }
-
-        const notifications: Notification[] = []
-
-        const selectedDate = moment(conversation.followUp?.date)
-          .subtract(notifyMeOffset.amount, notifyMeOffset.unit)
-          .toDate()
-
-        const getRandomEmoji = () => {
-          const emojis = [
-            '😀',
-            '✨',
-            '🚀',
-            '⭐',
-            '🎉',
-            '💨',
-            '👀',
-            '💪',
-            '⏱️',
-            '🌟',
-          ]
-          const randomIndex = Math.floor(Math.random() * emojis.length)
-          return emojis[randomIndex]
-        }
-
-        if (moment(selectedDate).isAfter(moment())) {
-          try {
-            const id = await Notifications.scheduleNotificationAsync({
-              content: {
-                title: i18n.t('reminder_title'),
-                body: `${i18n.t('notification_part1')} ${
-                  selectedContact!.name
-                } ${i18n.t('notification_part2')} ${notifyMeOffset.amount} ${
-                  notifyMeOffset.unit
-                }. ${getRandomEmoji()}${
-                  conversation.followUp.topic &&
-                  `${i18n.t('reminder_topic')}${conversation.followUp.topic}`
-                }`,
-                sound: true,
-              },
-              trigger: {
-                type: Notifications.SchedulableTriggerInputTypes.DATE,
-                date: selectedDate,
-              },
-            })
-
-            notifications.push({
-              date: selectedDate,
-              id,
-            })
-          } catch (error) {
-            Sentry.captureException(error)
-          }
-        }
-
-        return notifications
+      const pickEmoji = () => {
+        const emojis = [
+          '😀',
+          '✨',
+          '🚀',
+          '⭐',
+          '🎉',
+          '💨',
+          '👀',
+          '💪',
+          '⏱️',
+          '🌟',
+        ]
+        const randomIndex = Math.floor(Math.random() * emojis.length)
+        return emojis[randomIndex]
       }
 
       if (notificationsAllowed) {
-        scheduleNotifications()
+        syncConversationReminders({
+          conversation,
+          previous: conversationToUpdate,
+          contactName: selectedContact?.name ?? '',
+          notifyMeOffset,
+          pickEmoji,
+          onError: (error) => Sentry.captureException(error),
+        })
           .then((notifications) => {
             const conversationWithNotificationIds: Conversation = {
               ...conversation,
@@ -414,10 +355,9 @@ const ConversationFormScreen = ({ route, navigation }: Props) => {
   }, [
     addConversation,
     conversation,
-    conversationToUpdate?.followUp,
+    conversationToUpdate,
     notificationsAllowed,
-    notifyMeOffset.amount,
-    notifyMeOffset.unit,
+    notifyMeOffset,
     params.conversationToEditId,
     selectedContact,
     toast,

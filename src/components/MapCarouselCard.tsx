@@ -79,7 +79,6 @@ const MapCarouselCard = ({ contact, setSheet }: Props) => {
       <View
         style={{
           flexDirection: 'row',
-          justifyContent: 'space-between',
           alignItems: 'flex-start',
           gap: 10,
         }}
@@ -108,25 +107,6 @@ const MapCarouselCard = ({ contact, setSheet }: Props) => {
             {contact.name}
           </Text>
         </View>
-        <Button
-          onPress={() =>
-            setSheet({
-              open: true,
-              appleMapsUri: appleMapsLink,
-              googleMapsUri: googleMapsLink,
-            })
-          }
-          style={{
-            backgroundColor: theme.colors.background,
-            padding: 10,
-            borderRadius: theme.numbers.borderRadiusMd,
-          }}
-        >
-          <IconButton
-            icon={faArrowUpFromBracket}
-            iconStyle={{ color: theme.colors.textAlt }}
-          />
-        </Button>
       </View>
       <View
         style={{
@@ -216,6 +196,20 @@ const MapCarouselCard = ({ contact, setSheet }: Props) => {
             <IconButton icon={faMessage} />
           </Button>
         )}
+        <Button
+          accessibilityLabel={i18n.t('share')}
+          onPress={() =>
+            setSheet({
+              open: true,
+              appleMapsUri: appleMapsLink,
+              googleMapsUri: googleMapsLink,
+            })
+          }
+          variant='outline'
+          style={{ gap: 10, paddingHorizontal: 20 }}
+        >
+          <IconButton icon={faArrowUpFromBracket} />
+        </Button>
       </View>
     </Button>
   )

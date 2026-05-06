@@ -7,7 +7,7 @@ settings:
 overrides:
   axios: '>=1.15.2'
   glob: '>=11.1.0'
-  '@xmldom/xmldom': '>=0.8.13'
+  '@xmldom/xmldom': 0.8.13
   '@tootallnate/once': '>=3.0.1'
   react-native-safe-area-context: 5.6.2
   postcss: '>=8.5.10'
@@ -4638,12 +4638,12 @@ packages:
         integrity: sha512-pUrWq3V5PiSGFLeLxoGqReTZmiiXwY3jRkIG5sLLKjyqNxrwm/04b4nw7LSmGWJcKk59XOM/YRTUwOzo4MMlow==,
       }
 
-  '@xmldom/xmldom@0.9.10':
+  '@xmldom/xmldom@0.8.13':
     resolution:
       {
-        integrity: sha512-A9gOqLdi6cV4ibazAjcQufGj0B1y/vDqYrcuP6d/6x8P27gRS8643Dj9o1dEKtB6O7fwxb2FgBmJS2mX7gpvdw==,
+        integrity: sha512-KRYzxepc14G/CEpEGc3Yn+JKaAeT63smlDr+vjB8jRfgTBBI9wRj/nkQEO+ucV8p8I9bfKLWp37uHgFrbntPvw==,
       }
-    engines: { node: '>=14.6' }
+    engines: { node: '>=10.0.0' }
 
   abab@2.0.6:
     resolution:
@@ -13957,19 +13957,19 @@ snapshots:
 
   '@expo/plist@0.0.18':
     dependencies:
-      '@xmldom/xmldom': 0.9.10
+      '@xmldom/xmldom': 0.8.13
       base64-js: 1.5.1
       xmlbuilder: 14.0.0
 
   '@expo/plist@0.5.2':
     dependencies:
-      '@xmldom/xmldom': 0.9.10
+      '@xmldom/xmldom': 0.8.13
       base64-js: 1.5.1
       xmlbuilder: 15.1.1
 
   '@expo/plist@0.5.3':
     dependencies:
-      '@xmldom/xmldom': 0.9.10
+      '@xmldom/xmldom': 0.8.13
       base64-js: 1.5.1
       xmlbuilder: 15.1.1
 
@@ -16608,7 +16608,7 @@ snapshots:
 
   '@webgpu/types@0.1.21': {}
 
-  '@xmldom/xmldom@0.9.10': {}
+  '@xmldom/xmldom@0.8.13': {}
 
   abab@2.0.6: {}
 
@@ -20800,7 +20800,7 @@ snapshots:
 
   plist@3.1.0:
     dependencies:
-      '@xmldom/xmldom': 0.9.10
+      '@xmldom/xmldom': 0.8.13
       base64-js: 1.5.1
       xmlbuilder: 15.1.1
 

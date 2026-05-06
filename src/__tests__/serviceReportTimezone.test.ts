@@ -19,11 +19,11 @@ vi.mock(
 import useServiceReport from '../stores/serviceReport'
 import {
   RecurringPlanFrequencies,
-  adjustedMinutesForSpecificMonth,
   getMonthsReports,
   getPlansIntersectingDay,
   standardMinutesForSpecificMonth,
 } from '../lib/serviceReport'
+import { ServiceReportPeriod } from '../lib/serviceReportPeriod'
 
 const originalTZ = process.env.TZ
 const setTZ = (tz: string) => {
@@ -60,8 +60,12 @@ describe('end-to-end TZ stability', () => {
     const standard = standardMinutesForSpecificMonth(monthsReports, 4, 2026)
     expect(standard).toBe(2 * 60 + 30)
 
-    const adjusted = adjustedMinutesForSpecificMonth(monthsReports, 4, 2026)
-    expect(adjusted.value).toBe(2 * 60 + 30)
+    const period = ServiceReportPeriod.forMonth({
+      year: 2026,
+      month: 4,
+      serviceReports: state.serviceReports,
+    })
+    expect(period.adjustedMinutes.value).toBe(2 * 60 + 30)
   })
 
   it('a JST-authored May 1 report is also correctly counted in NZDT (UTC+13)', () => {

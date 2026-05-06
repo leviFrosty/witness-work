@@ -7,7 +7,7 @@ import useTheme from '../contexts/theme'
 import useConversations from '../stores/conversationStore'
 import { filterActivesContacts } from '../lib/dismissedContacts'
 import { Dimensions, View } from 'react-native'
-import Carousel, { ICarouselInstance } from 'react-native-reanimated-carousel'
+import Carousel from 'react-native-reanimated-carousel'
 import MapCarouselCard from '../components/MapCarouselCard'
 import * as Location from 'expo-location'
 import * as Crypto from 'expo-crypto'
@@ -33,10 +33,7 @@ import { Sheet } from 'tamagui'
 import MapKey from '../components/MapColorKey'
 import { useMarkerColors } from '../hooks/useMarkerColors'
 import { getContactStaleness, stalenessToColor } from '../lib/contactStaleness'
-import {
-  findContactIndexById,
-  reconcileActiveContact,
-} from '../lib/mapCarousel'
+import { useMapCarouselController } from '../hooks/useMapCarouselController'
 
 interface FullMapViewProps {
   contactMarkers: ContactMarker[]
@@ -48,7 +45,6 @@ const FullMapView = ({ contactMarkers }: FullMapViewProps) => {
   const { colorScheme } = usePreferences()
   const mapRef = useRef<MapView>(null)
   const insets = useSafeAreaInsets()
-  const carouselRef = useRef<ICarouselInstance>(null)
   const { isTablet } = useDevice()
   const [locationPermission, setLocationPermission] = useState(false)
   const [sheet, setSheet] = useState<MapShareSheet>({
@@ -61,15 +57,7 @@ const FullMapView = ({ contactMarkers }: FullMapViewProps) => {
   const { contacts, updateContact } = useContacts()
   const CARD_HEIGHT = 200
 
-  // Track the active contact by id rather than carousel index. Indices shift
-  // whenever the source list reorders (dismiss/undismiss, sync inserts, etc.),
-  // which is the primary cause of carousel↔pin desync — using a stable id
-  // means lookups always resolve to the contact the user is actually looking
-  // at, regardless of how the array has been re-keyed since render.
-  const [activeContactId, setActiveContactId] = useState<string | undefined>(
-    () => contactMarkers[0]?.id
-  )
-  const lastReconciledIndexRef = useRef<number>(0)
+  const { carouselRef, select } = useMapCarouselController(contactMarkers)
 
   const handleDragContactPin = (id: string, coordinate: LatLng) => {
     updateContact({
@@ -95,56 +83,18 @@ const FullMapView = ({ contactMarkers }: FullMapViewProps) => {
     (index: number) => {
       const contact = contactMarkers[index]
       if (!contact) return
-      lastReconciledIndexRef.current = index
-      setActiveContactId(contact.id)
+      select(contact.id)
       fitToContactId(contact.id)
     },
-    [contactMarkers, fitToContactId]
+    [contactMarkers, fitToContactId, select]
   )
 
   const handlePinPress = useCallback(
     (id: string) => {
-      // Resolve the index from the *current* contactMarkers rather than a
-      // captured render-time index — otherwise an upstream reorder between
-      // render and tap scrolls the carousel to the wrong card.
-      const idx = findContactIndexById(contactMarkers, id)
-      if (idx < 0) return
-      lastReconciledIndexRef.current = idx
-      setActiveContactId(id)
-      carouselRef.current?.scrollTo({ index: idx, animated: true })
+      select(id)
     },
-    [contactMarkers]
+    [select]
   )
-
-  // Reconcile carousel + active id when the underlying list changes.
-  // - If the active contact still exists, ensure the carousel is on its
-  //   current index — covers the case where contacts were inserted/removed
-  //   before it and shifted its position.
-  // - If it disappeared (dismissed, deleted), pick a deterministic neighbour
-  //   based on its previous index rather than snapping back to 0.
-  useEffect(() => {
-    const { activeId, index } = reconcileActiveContact({
-      previousActiveId: activeContactId,
-      previousIndex: lastReconciledIndexRef.current,
-      nextContactMarkers: contactMarkers,
-    })
-
-    if (activeId !== activeContactId) {
-      setActiveContactId(activeId)
-    }
-
-    if (index < 0) {
-      lastReconciledIndexRef.current = 0
-      return
-    }
-
-    lastReconciledIndexRef.current = index
-
-    const currentCarouselIndex = carouselRef.current?.getCurrentIndex()
-    if (currentCarouselIndex !== undefined && currentCarouselIndex !== index) {
-      carouselRef.current?.scrollTo({ index, animated: false })
-    }
-  }, [activeContactId, contactMarkers])
 
   useEffect(() => {
     const unsubscribe = navigation.addListener('tabPress', (e) => {

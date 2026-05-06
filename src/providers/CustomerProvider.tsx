@@ -39,11 +39,7 @@ const CustomerProvider: React.FC<PropsWithChildren<Props>> = ({ children }) => {
     // `configure` returns void synchronously; `setLogLevel` is fire-and-forget.
     // Flip `ready` immediately after so downstream screens can fetch offerings.
     const apiKey = process.env.EXPO_PUBLIC_REVENUECAT_APPLE_API_KEY || ''
-    logger.log('[CustomerProvider] init', {
-      hasApiKey: apiKey.length > 0,
-      apiKeyLength: apiKey.length,
-      apiKeyPrefix: apiKey.slice(0, 5),
-    })
+    logger.log('[CustomerProvider] init')
 
     try {
       if (__DEV__) Purchases.setLogLevel(LOG_LEVEL.DEBUG)

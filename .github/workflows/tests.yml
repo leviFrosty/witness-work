@@ -5,6 +5,9 @@ on:
     branches:
       - development
 
+permissions:
+  contents: read
+
 jobs:
   lint-and-test:
     name: Lint, Typecheck & Test

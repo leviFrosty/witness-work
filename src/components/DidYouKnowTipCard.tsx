@@ -1,19 +1,21 @@
 import { useState } from 'react'
-import { StyleProp, View, ViewStyle } from 'react-native'
+import { Pressable, StyleProp, StyleSheet, View, ViewStyle } from 'react-native'
+import { faXmark } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
 import useTheme from '../contexts/theme'
 import i18n, { TranslationKey } from '../lib/locales'
 import { usePreferences } from '../stores/preferences'
 import { DID_YOU_KNOW_TIPS } from '../lib/didYouKnowTips'
-import Button from './Button'
 import Text from './MyText'
-import XView from './layout/XView'
 
 /**
  * Home-screen tip card that drip-feeds lesser-known features one at a time. On
  * mount it captures the first unseen tip and renders until dismissed; the next
  * session shows the next tip. Once the user has dismissed every entry in
  * `DID_YOU_KNOW_TIPS`, the card stops rendering for good.
+ *
+ * Visually quiet by design — a hairline-divider footer rather than a card — so
+ * it doesn't compete with the primary home-screen content.
  */
 const DidYouKnowTipCard = ({ style }: { style?: StyleProp<ViewStyle> }) => {
   const theme = useTheme()
@@ -43,84 +45,65 @@ const DidYouKnowTipCard = ({ style }: { style?: StyleProp<ViewStyle> }) => {
     <View
       style={[
         {
-          backgroundColor: theme.colors.accentTranslucent,
-          borderColor: theme.colors.accent,
-          borderWidth: 1,
-          padding: 16,
-          borderRadius: theme.numbers.borderRadiusLg,
+          flexDirection: 'row',
           gap: 10,
+          paddingTop: 14,
+          paddingBottom: 4,
+          borderTopWidth: StyleSheet.hairlineWidth,
+          borderTopColor: theme.colors.border,
         },
         style,
       ]}
     >
-      <XView style={{ gap: 8, alignItems: 'center' }}>
-        <View
-          style={{
-            width: 24,
-            height: 24,
-            borderRadius: 12,
-            backgroundColor: theme.colors.accent,
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}
-        >
-          <FontAwesomeIcon
-            icon={tip.icon}
-            size={11}
-            color={theme.colors.textInverse}
-          />
-        </View>
+      <View style={{ paddingTop: 2 }}>
+        <FontAwesomeIcon
+          icon={tip.icon}
+          size={12}
+          color={theme.colors.textAlt}
+        />
+      </View>
+
+      <View style={{ flex: 1, gap: 2 }}>
         <Text
           style={{
-            color: theme.colors.accent,
-            fontFamily: theme.fonts.semiBold,
-            fontSize: 11,
-            letterSpacing: 1.2,
+            fontSize: theme.fontSize('xs'),
+            color: theme.colors.textAlt,
           }}
         >
           {i18n.t('didYouKnow_kicker')}
         </Text>
-      </XView>
-
-      <Text
-        style={{
-          fontSize: theme.fontSize('md'),
-          fontFamily: theme.fonts.semiBold,
-          color: theme.colors.text,
-        }}
-      >
-        {i18n.t(`didYouKnow_${tip.id}_title` as TranslationKey)}
-      </Text>
-      <Text
-        style={{
-          fontSize: theme.fontSize('sm'),
-          color: theme.colors.textAlt,
-          lineHeight: 19,
-        }}
-      >
-        {i18n.t(`didYouKnow_${tip.id}_body` as TranslationKey)}
-      </Text>
-
-      <XView style={{ justifyContent: 'flex-end', marginTop: 2 }}>
-        <Button
-          onPress={handleDismiss}
+        <Text
           style={{
-            paddingVertical: 6,
-            paddingHorizontal: 12,
-            borderRadius: theme.numbers.borderRadiusMd,
+            fontSize: theme.fontSize('sm'),
+            fontFamily: theme.fonts.semiBold,
+            color: theme.colors.text,
           }}
         >
-          <Text
-            style={{
-              fontSize: theme.fontSize('sm'),
-              color: theme.colors.textAlt,
-              fontFamily: theme.fonts.semiBold,
-            }}
-          >
-            {i18n.t('gotIt')}
-          </Text>
-        </Button>
-      </XView>
+          {i18n.t(`didYouKnow_${tip.id}_title` as TranslationKey)}
+        </Text>
+        <Text
+          style={{
+            fontSize: theme.fontSize('xs'),
+            color: theme.colors.textAlt,
+            lineHeight: 16,
+          }}
+        >
+          {i18n.t(`didYouKnow_${tip.id}_body` as TranslationKey)}
+        </Text>
+      </View>
+
+      <Pressable
+        onPress={handleDismiss}
+        hitSlop={10}
+        accessibilityLabel={i18n.t('gotIt')}
+        style={{ padding: 2 }}
+      >
+        <FontAwesomeIcon
+          icon={faXmark}
+          size={12}
+          color={theme.colors.textAlt}
+        />
+      </Pressable>
     </View>
   )
 }

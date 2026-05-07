@@ -1,5 +1,6 @@
 import { PropsWithChildren, useCallback, useMemo } from 'react'
 import { useWindowDimensions, View } from 'react-native'
+import { FullWindowOverlay } from 'react-native-screens'
 import { Confetti, useConfetti } from '../vendor/ConfettiSkia'
 import { ConfettiContext, FireworksCtx, FireOpts } from '../contexts/Confetti'
 
@@ -64,7 +65,15 @@ const ConfettiProvider: React.FC<PropsWithChildren<Props>> = ({ children }) => {
     <ConfettiContext.Provider value={ctx}>
       <View style={{ position: 'relative', flex: 1 }}>
         {children}
-        <Confetti ref={confetti.ref} />
+        {/*
+         * Mounted at the UIWindow level so fireworks render above any
+         * pushed/modal screens (e.g. the Paywall Thank You screen). Sitting
+         * as a sibling of the navigator was occluded by pushed screens at
+         * the native view layer, so the burst landed behind the screen.
+         */}
+        <FullWindowOverlay>
+          <Confetti ref={confetti.ref} />
+        </FullWindowOverlay>
       </View>
     </ConfettiContext.Provider>
   )

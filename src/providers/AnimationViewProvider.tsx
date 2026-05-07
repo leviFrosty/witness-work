@@ -1,6 +1,7 @@
 import LottieView from 'lottie-react-native'
 import { PropsWithChildren, useCallback, useRef } from 'react'
 import { View } from 'react-native'
+import { FullWindowOverlay } from 'react-native-screens'
 import {
   AnimationViewContext,
   AnimationViewCtx,
@@ -47,20 +48,27 @@ const AnimationViewProvider: React.FC<PropsWithChildren<Props>> = ({
     <AnimationViewContext.Provider value={ctx}>
       <View style={{ position: 'relative', flex: 1 }}>
         {children}
-        <LottieView
-          autoPlay={false}
-          loop={false}
-          onAnimationFinish={lottieViewRef.current?.reset}
-          resizeMode='cover'
-          ref={lottieViewRef}
-          source={confetti}
-          style={{
-            position: 'absolute',
-            width: '100%',
-            height: '100%',
-            pointerEvents: 'none',
-          }}
-        />
+        {/*
+         * Mounted at the UIWindow level so the celebration renders above
+         * any pushed/modal screens (e.g. the Paywall Thank You screen),
+         * not as a sibling of the navigator that pushed screens can occlude.
+         */}
+        <FullWindowOverlay>
+          <LottieView
+            autoPlay={false}
+            loop={false}
+            onAnimationFinish={lottieViewRef.current?.reset}
+            resizeMode='cover'
+            ref={lottieViewRef}
+            source={confetti}
+            style={{
+              position: 'absolute',
+              width: '100%',
+              height: '100%',
+              pointerEvents: 'none',
+            }}
+          />
+        </FullWindowOverlay>
       </View>
     </AnimationViewContext.Provider>
   )

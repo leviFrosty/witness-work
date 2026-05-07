@@ -122,7 +122,8 @@ const TimeReportRow = ({ report, onPress }: TimeReportRowProps) => {
           isRollover
             ? {
                 backgroundColor: theme.colors.backgroundLighter,
-                padding: 15,
+                paddingVertical: 12,
+                paddingHorizontal: 15,
                 borderRadius: cardStyle.borderRadius,
                 borderWidth: 1,
                 borderStyle: 'dashed',
@@ -131,7 +132,8 @@ const TimeReportRow = ({ report, onPress }: TimeReportRowProps) => {
               }
             : {
                 ...cardStyle,
-                padding: 15,
+                paddingVertical: 12,
+                paddingHorizontal: 15,
                 gap: 10,
               }
         }
@@ -140,24 +142,37 @@ const TimeReportRow = ({ report, onPress }: TimeReportRowProps) => {
           style={{
             flexDirection: 'row',
             justifyContent: 'space-between',
+            alignItems: 'center',
             flexGrow: 1,
+            gap: 10,
           }}
         >
-          <View style={{ flexDirection: 'row', gap: 10 }}>
+          <View
+            style={{
+              flex: 1,
+              flexDirection: 'row',
+              alignItems: 'center',
+              gap: 8,
+            }}
+          >
             <Text
               style={{
                 fontFamily: theme.fonts.semiBold,
                 color: isRollover ? theme.colors.textAlt : theme.colors.text,
+                flexShrink: 1,
               }}
+              numberOfLines={1}
+              ellipsizeMode='tail'
             >
               {`${moment(report.date).format('LL')}`}
             </Text>
           </View>
           <Text
             style={{
-              fontFamily: theme.fonts.semiBold,
-              color: isRollover ? theme.colors.textAlt : theme.colors.text,
+              color: theme.colors.textAlt,
+              fontSize: theme.fontSize('sm'),
             }}
+            numberOfLines={1}
           >
             {isRollover
               ? `${sign} ${formattedTime.formatted}`

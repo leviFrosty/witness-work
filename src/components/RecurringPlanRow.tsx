@@ -128,7 +128,8 @@ const RecurringPlanRow = (props: {
         onPress={props.onPress}
         style={{
           ...cardStyle,
-          padding: 16,
+          paddingVertical: 12,
+          paddingHorizontal: 15,
         }}
       >
         {/* Header Row - Date and Time */}
@@ -138,7 +139,7 @@ const RecurringPlanRow = (props: {
             justifyContent: 'space-between',
             alignItems: 'center',
             marginBottom: 10,
-            gap: 8,
+            gap: 10,
           }}
         >
           <View
@@ -146,14 +147,12 @@ const RecurringPlanRow = (props: {
               flex: 1,
               flexDirection: 'row',
               alignItems: 'center',
-              gap: 6,
-              marginRight: 10,
+              gap: 8,
             }}
           >
             <Text
               style={{
                 fontFamily: theme.fonts.semiBold,
-                fontSize: theme.fontSize('md'),
                 color: theme.colors.text,
                 flexShrink: 1,
               }}
@@ -168,10 +167,10 @@ const RecurringPlanRow = (props: {
           </View>
           <Text
             style={{
-              fontFamily: theme.fonts.semiBold,
-              fontSize: theme.fontSize('md'),
-              color: theme.colors.text,
+              color: theme.colors.textAlt,
+              fontSize: theme.fontSize('sm'),
             }}
+            numberOfLines={1}
           >
             {formattedTime.formatted}
           </Text>

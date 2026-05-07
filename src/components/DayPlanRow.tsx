@@ -78,7 +78,8 @@ const DayPlanRow = (props: {
         onPress={props.onPress}
         style={{
           ...cardStyle,
-          padding: 16,
+          paddingVertical: 12,
+          paddingHorizontal: 15,
         }}
       >
         {/* Header Row - Date and Time */}
@@ -87,8 +88,8 @@ const DayPlanRow = (props: {
             flexDirection: 'row',
             justifyContent: 'space-between',
             alignItems: 'center',
-            marginBottom: 8,
-            gap: 8,
+            marginBottom: props.plan.note ? 8 : 0,
+            gap: 10,
           }}
         >
           <View
@@ -96,14 +97,12 @@ const DayPlanRow = (props: {
               flex: 1,
               flexDirection: 'row',
               alignItems: 'center',
-              gap: 6,
-              marginRight: 10,
+              gap: 8,
             }}
           >
             <Text
               style={{
                 fontFamily: theme.fonts.semiBold,
-                fontSize: theme.fontSize('md'),
                 color: theme.colors.text,
                 flexShrink: 1,
               }}
@@ -118,10 +117,10 @@ const DayPlanRow = (props: {
           </View>
           <Text
             style={{
-              fontFamily: theme.fonts.semiBold,
-              fontSize: theme.fontSize('md'),
-              color: theme.colors.text,
+              color: theme.colors.textAlt,
+              fontSize: theme.fontSize('sm'),
             }}
+            numberOfLines={1}
           >
             {formattedTime.formatted}
           </Text>

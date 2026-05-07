@@ -242,68 +242,68 @@ const PlanScheduleScreen = ({ route, navigation }: PlanScheduleScreenProps) => {
               </XView>
             </Card>
           </View>
-          <View
-            style={{ paddingHorizontal: 10, position: 'relative', gap: 10 }}
-          >
-            <Calendar
-              key={`${monthToView}-${theme.colors.background}`}
-              current={monthToView}
-              disableMonthChange
-              hideArrows
-              renderHeader={() => (
-                <View style={{ width: '100%', gap: 10 }}>
-                  <View style={{ gap: 4 }}>
-                    <Text
-                      style={{
-                        fontSize: theme.fontSize('lg'),
-                        fontFamily: theme.fonts.semiBold,
-                      }}
-                    >
-                      {i18n.t('tapDayToSchedule')}
-                    </Text>
-                    <Text
-                      style={{
-                        color: theme.colors.textAlt,
-                        fontSize: theme.fontSize('sm'),
-                      }}
-                    >
-                      {i18n.t('tapDayToSchedule_description')}
-                    </Text>
+          <View style={{ paddingHorizontal: 10 }}>
+            <Card style={{ gap: 0, paddingVertical: 0, paddingHorizontal: 0 }}>
+              <Calendar
+                key={`${monthToView}-${theme.colors.background}`}
+                current={monthToView}
+                disableMonthChange
+                hideArrows
+                renderHeader={() => (
+                  <View style={{ width: '100%', gap: 10 }}>
+                    <View style={{ gap: 4 }}>
+                      <Text
+                        style={{
+                          fontSize: theme.fontSize('lg'),
+                          fontFamily: theme.fonts.semiBold,
+                        }}
+                      >
+                        {i18n.t('tapDayToSchedule')}
+                      </Text>
+                      <Text
+                        style={{
+                          color: theme.colors.textAlt,
+                          fontSize: theme.fontSize('sm'),
+                        }}
+                      >
+                        {i18n.t('tapDayToSchedule_description')}
+                      </Text>
+                    </View>
+                    <CalendarKey />
                   </View>
-                  <CalendarKey />
-                </View>
-              )}
-              style={{
-                borderRadius: theme.numbers.borderRadiusLg,
-                paddingBottom: 10,
-                paddingTop: 10,
-                paddingLeft: 10,
-                paddingRight: 10,
-              }}
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              dayComponent={(props: any) => (
-                <CalendarDay
-                  {...props}
-                  planMode={true}
-                  monthsReports={thisMonthsReports}
-                  onPress={(day: DateData) => {
-                    navigation.navigate('PlanDay', {
-                      date: moment(day.dateString).toISOString(),
-                    })
-                  }}
-                />
-              )}
-              theme={{
-                backgroundColor: theme.colors.card,
-                calendarBackground: theme.colors.card,
-                dayTextColor: theme.colors.text,
-                textDisabledColor: theme.colors.textAlt,
-                textDayHeaderFontSize: theme.fontSize('md'),
-                selectedDayBackgroundColor: theme.colors.accent,
-                todayTextColor: theme.colors.text,
-                todayBackgroundColor: theme.colors.accentTranslucent,
-              }}
-            />
+                )}
+                style={{
+                  borderRadius: theme.numbers.borderRadiusLg,
+                  paddingBottom: 10,
+                  paddingTop: 10,
+                  paddingLeft: 10,
+                  paddingRight: 10,
+                }}
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                dayComponent={(props: any) => (
+                  <CalendarDay
+                    {...props}
+                    planMode={true}
+                    monthsReports={thisMonthsReports}
+                    onPress={(day: DateData) => {
+                      navigation.navigate('PlanDay', {
+                        date: moment(day.dateString).toISOString(),
+                      })
+                    }}
+                  />
+                )}
+                theme={{
+                  backgroundColor: theme.colors.card,
+                  calendarBackground: theme.colors.card,
+                  dayTextColor: theme.colors.text,
+                  textDisabledColor: theme.colors.textAlt,
+                  textDayHeaderFontSize: theme.fontSize('md'),
+                  selectedDayBackgroundColor: theme.colors.accent,
+                  todayTextColor: theme.colors.text,
+                  todayBackgroundColor: theme.colors.accentTranslucent,
+                }}
+              />
+            </Card>
           </View>
           <View style={{ paddingHorizontal: 10 }}>
             <View style={{ gap: 10 }}>

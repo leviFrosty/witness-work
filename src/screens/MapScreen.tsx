@@ -30,7 +30,7 @@ import { ContactMarker } from '../types/map'
 import IconButton from '../components/IconButton'
 import {
   faAddressBook,
-  faLayerGroup,
+  faCircleInfo,
   faMapLocationDot,
   faMagnifyingGlass,
   faPlus,
@@ -633,7 +633,7 @@ const FullMapView = ({
           style={mapControlStyle}
         >
           <FontAwesomeIcon
-            icon={faLayerGroup}
+            icon={faCircleInfo}
             size={theme.fontSize('sm')}
             style={{ color: theme.colors.text }}
           />

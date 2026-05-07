@@ -17,6 +17,7 @@ import { Conversation } from '../../types/conversation'
 import Text from '../MyText'
 import Card from '../Card'
 import Button from '../Button'
+import StalenessColorKey from '../StalenessColorKey'
 
 export type ContactsStatsHeaderProps = {
   /** All contacts, active AND dismissed. The component computes the splits. */
@@ -169,78 +170,14 @@ const ContactsStatsHeader: React.FC<ContactsStatsHeaderProps> = ({
             ]}
             enterStyle={{ y: -8, opacity: 0 }}
             exitStyle={{ y: -8, opacity: 0 }}
-            maxWidth={280}
+            maxWidth={300}
           >
             <Popover.Arrow
               borderWidth={1}
               borderColor={theme.colors.border}
               backgroundColor={theme.colors.card}
             />
-            <View style={{ gap: 10 }}>
-              <View style={{ gap: 2 }}>
-                <Text
-                  style={{
-                    fontFamily: theme.fonts.semiBold,
-                    fontSize: theme.fontSize('md'),
-                    color: theme.colors.text,
-                  }}
-                >
-                  {i18n.t('contacts_stalenessInfo_title')}
-                </Text>
-                <Text
-                  style={{
-                    fontSize: theme.fontSize('xs'),
-                    color: theme.colors.textAlt,
-                  }}
-                >
-                  {i18n.t('contacts_stalenessInfo_subtitle')}
-                </Text>
-              </View>
-              <View style={{ gap: 8 }}>
-                {STALENESS_ORDER.map((bucket) => (
-                  <View
-                    key={bucket}
-                    style={{
-                      flexDirection: 'row',
-                      alignItems: 'center',
-                      gap: 10,
-                    }}
-                  >
-                    <View
-                      style={{
-                        width: 10,
-                        height: 10,
-                        borderRadius: 5,
-                        backgroundColor: stalenessToColor(bucket, markerColors),
-                      }}
-                    />
-                    <View style={{ flex: 1 }}>
-                      <Text
-                        style={{
-                          fontFamily: theme.fonts.semiBold,
-                          fontSize: theme.fontSize('sm'),
-                          color: theme.colors.text,
-                        }}
-                      >
-                        {i18n.t(
-                          `contacts_pinStaleness_${bucket}` as TranslationKey
-                        )}
-                      </Text>
-                      <Text
-                        style={{
-                          fontSize: theme.fontSize('xs'),
-                          color: theme.colors.textAlt,
-                        }}
-                      >
-                        {i18n.t(
-                          `contacts_stalenessCriteria_${bucket}` as TranslationKey
-                        )}
-                      </Text>
-                    </View>
-                  </View>
-                ))}
-              </View>
-            </View>
+            <StalenessColorKey />
           </Popover.Content>
         </Popover>
 

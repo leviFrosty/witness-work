@@ -155,6 +155,18 @@ export type OnboardingIntent =
   | 'monthlyGoal'
   | 'mapContacts'
 
+/**
+ * User-visible alternate app icon options. `'Seasonal'` is resolved to one of
+ * the four bundled `SeasonalXxx` PascalCase plugin names at apply time
+ * depending on hemisphere + date — see `lib/appIcon.ts`.
+ */
+export type AppIconVariant =
+  | 'Default'
+  | 'Gold'
+  | 'Dark'
+  | 'Minimalist'
+  | 'Seasonal'
+
 export const PREFERENCE_DEFAULTS = {
   publisher: 'publisher' as Publisher,
   publisherHours: publisherHours,
@@ -252,7 +264,7 @@ export const PREFERENCE_DEFAULTS = {
   ...hints,
   lastBackupDate: null as Date | null,
   remindMeAboutBackups: true,
-  backupNotificationFrequencyAsDays: 60,
+  backupNotificationFrequencyAsDays: 120,
   userSpecifiedHasAnnualGoal: 'default' as boolean | 'default',
   fontSizeOffset: 0,
   /**
@@ -340,6 +352,19 @@ export const PREFERENCE_DEFAULTS = {
    * without affecting the rest of the app's tint.
    */
   customAvatarBackground: null as string | null,
+  /**
+   * Supporter-only override for the iOS Home Screen app icon. `null` /
+   * `'Default'` use the bundle's primary icon. `'Seasonal'` is resolved at
+   * runtime to one of the four SeasonalXxx variants based on the user's
+   * hemisphere and current date — the value persisted here stays `'Seasonal'`
+   * regardless of which season is currently rendered.
+   *
+   * Preserved even when supporter status lapses so the user's choice isn't lost
+   * — the runtime applies it only while supporter status is active and resets
+   * the Home Screen tile to the default the moment supporter status lapses.
+   * Mirrors `customAccentColor`.
+   */
+  customAppIcon: null as AppIconVariant | null,
   /**
    * Developer override for supporter status. When non-null, forces
    * `useIsSupporter()` to report the user as a supporter with the given `since`

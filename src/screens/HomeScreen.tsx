@@ -246,7 +246,9 @@ export const HomeScreen = () => {
               />
             </>
           )}
-          {shouldRemindToBackup && <BackupReminder />}
+          {shouldRemindToBackup && (
+            <BackupReminder compact={iCloudSyncEnabled} />
+          )}
           <HomeChecklist />
           {showSupporterNudge && <SupporterNudgeCard />}
           {isTablet &&

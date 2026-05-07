@@ -477,6 +477,21 @@ export const PREFERENCE_DEFAULTS = {
    * fractional minutes already on disk. Non-syncable — local testing only.
    */
   devRolloverDateOverride: null as Date | null,
+  /**
+   * Set to true once the user has fully viewed the Milestone Update showcase
+   * (scrolled to bottom or tapped the closing CTA). Suppresses both the
+   * grand-reveal overlay and the "shaking present" recovery icon on the home
+   * screen. Per-device — a user upgrading on a second device can re-experience
+   * the reveal there independently.
+   */
+  seenMilestoneUpdateReveal: false,
+  /**
+   * Set to true if the user dismissed the grand-reveal overlay without entering
+   * the showcase (tapped "Not now" or skip-anywhere). Used to surface the
+   * "shaking present" icon on the home screen as a recovery affordance so the
+   * reveal can be replayed on demand. Per-device.
+   */
+  dismissedMilestoneRevealOnce: false,
 }
 
 /**
@@ -522,6 +537,8 @@ export const NON_SYNCABLE_PREFERENCE_KEYS = new Set<string>([
   'celebratedTiers',
   'homeChecklistAllDoneCelebrated',
   'devRolloverDateOverride',
+  'seenMilestoneUpdateReveal',
+  'dismissedMilestoneRevealOnce',
 ])
 
 export const usePreferences = create(

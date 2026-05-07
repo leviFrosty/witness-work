@@ -17,6 +17,7 @@ import { useToastController } from '@tamagui/toast'
 import CreditBadge from './CreditBadge'
 import { RootStackNavigation } from '../types/rootStack'
 import { useFormattedMinutes } from '../lib/minutes'
+import { useCardStyle } from './Card'
 
 interface TimeReportRowProps {
   report: ServiceReport
@@ -25,6 +26,7 @@ interface TimeReportRowProps {
 
 const TimeReportRow = ({ report, onPress }: TimeReportRowProps) => {
   const theme = useTheme()
+  const cardStyle = useCardStyle()
   const { deleteServiceReport, deleteRolloverPair } = useServiceReport()
   const navigation = useNavigation<RootStackNavigation>()
   const toast = useToastController()
@@ -85,7 +87,7 @@ const TimeReportRow = ({ report, onPress }: TimeReportRowProps) => {
       onSwipeableWillOpen={() => Haptics.light()}
       containerStyle={{
         backgroundColor: theme.colors.background,
-        borderRadius: theme.numbers.borderRadiusSm,
+        borderRadius: cardStyle.borderRadius,
       }}
       renderRightActions={() => (
         <SwipeableDelete size='xs' style={{ flexDirection: 'row' }} />
@@ -116,17 +118,23 @@ const TimeReportRow = ({ report, onPress }: TimeReportRowProps) => {
             existingReport: JSON.stringify(report),
           })
         }}
-        style={{
-          backgroundColor: isRollover
-            ? theme.colors.backgroundLighter
-            : theme.colors.card,
-          padding: 15,
-          borderRadius: theme.numbers.borderRadiusSm,
-          borderWidth: isRollover ? 1 : 0,
-          borderStyle: 'dashed',
-          borderColor: isRollover ? theme.colors.border : 'transparent',
-          gap: 10,
-        }}
+        style={
+          isRollover
+            ? {
+                backgroundColor: theme.colors.backgroundLighter,
+                padding: 15,
+                borderRadius: cardStyle.borderRadius,
+                borderWidth: 1,
+                borderStyle: 'dashed',
+                borderColor: theme.colors.border,
+                gap: 10,
+              }
+            : {
+                ...cardStyle,
+                padding: 15,
+                gap: 10,
+              }
+        }
       >
         <View
           style={{

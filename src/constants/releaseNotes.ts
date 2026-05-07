@@ -21,13 +21,40 @@ export type ReleaseNote = {
    *   Then the `content` array should be `['c1', 'c2']`
    */
   content: string[]
+  /**
+   * Marks this release as a "milestone" — a major rollup release that gets a
+   * dedicated grand-reveal flow on first launch and is visually flagged in the
+   * What's New list. Only one milestone release exists at a time; future major
+   * rollups should set this on the new entry and clear it on prior ones.
+   */
+  milestone?: boolean
 }
 
 export const releaseNotes: ReleaseNote[] = [
   {
-    version: '1.38.0',
-    date: moment('2026-04-12').toDate(),
-    content: ['c1', 'c2', 'c3'],
+    version: '1.38.2',
+    date: moment('2026-05-06').toDate(),
+    milestone: true,
+    content: [
+      'c1',
+      'c2',
+      'c3',
+      'c4',
+      'c5',
+      'c6',
+      'c7',
+      'c8',
+      'c9',
+      'c10',
+      'c11',
+      'c12',
+      'c13',
+      'c14',
+      'c15',
+      'c16',
+      'c17',
+      'c18',
+    ],
   },
   {
     version: '1.36.0',

@@ -15,6 +15,7 @@ import Button from './Button'
 import Badge from './Badge'
 import Copyeable from './Copyeable'
 import { formatStartTime } from '../lib/normalizeDate'
+import { useCardStyle } from './Card'
 
 const RecurringPlanRow = (props: {
   plan: RecurringPlan
@@ -22,6 +23,7 @@ const RecurringPlanRow = (props: {
   onPress?: () => void
 }) => {
   const theme = useTheme()
+  const cardStyle = useCardStyle()
   const {
     deleteRecurringPlan,
     deleteSingleEventFromRecurringPlan,
@@ -114,7 +116,7 @@ const RecurringPlanRow = (props: {
       onSwipeableWillOpen={() => Haptics.light()}
       containerStyle={{
         backgroundColor: theme.colors.background,
-        borderRadius: theme.numbers.borderRadiusSm,
+        borderRadius: cardStyle.borderRadius,
       }}
       renderLeftActions={() => <SwipeableEdit />}
       renderRightActions={() => <SwipeableDelete />}
@@ -125,9 +127,8 @@ const RecurringPlanRow = (props: {
       <Button
         onPress={props.onPress}
         style={{
-          backgroundColor: theme.colors.card,
+          ...cardStyle,
           padding: 16,
-          borderRadius: theme.numbers.borderRadiusSm,
         }}
       >
         {/* Header Row - Date and Time */}

@@ -212,7 +212,7 @@ const HomeChecklist = () => {
                       homeNavigation.navigate('Map')
                       break
                     case 'planWeek':
-                      homeNavigation.navigate('Tools')
+                      homeNavigation.navigate('Schedule')
                       break
                   }
                 },
@@ -351,15 +351,6 @@ const HomeChecklist = () => {
             }}
           >
             {i18n.t('homeChecklistFooter')}
-          </Text>
-          <Text
-            style={{
-              fontSize: theme.fontSize('sm'),
-              color: theme.colors.textAlt,
-              textAlign: 'center',
-            }}
-          >
-            {i18n.t('homeChecklistAllDoneSubtitle')}
           </Text>
           <Button
             onPress={handleDismiss}

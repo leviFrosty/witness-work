@@ -15,6 +15,8 @@ import { usePreferences } from '../stores/preferences'
 import Constants from 'expo-constants'
 import Badge from './Badge'
 import semver from 'semver'
+import { faGift } from '@fortawesome/free-solid-svg-icons'
+import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
 
 interface Props {
   setShow: React.Dispatch<React.SetStateAction<boolean>>
@@ -80,6 +82,35 @@ export const WhatsNewContent = ({ lastVersion }: { lastVersion: string }) => {
                       {i18n.t('new')}
                     </Text>
                   </Badge>
+                )}
+                {item.milestone && (
+                  <View
+                    style={{
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      gap: 5,
+                      paddingHorizontal: 8,
+                      paddingVertical: 3,
+                      borderRadius: 999,
+                      backgroundColor: theme.colors.accent,
+                    }}
+                  >
+                    <FontAwesomeIcon
+                      icon={faGift}
+                      size={10}
+                      color={theme.colors.textInverse}
+                    />
+                    <Text
+                      style={{
+                        color: theme.colors.textInverse,
+                        fontSize: theme.fontSize('xs'),
+                        fontFamily: theme.fonts.semiBold,
+                        letterSpacing: 0.4,
+                      }}
+                    >
+                      {i18n.t('milestoneReveal_title')}
+                    </Text>
+                  </View>
                 )}
                 {semver.eq(
                   item.version,

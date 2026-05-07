@@ -11,15 +11,31 @@ import useCustomer from '../hooks/useCustomer'
 import useIsSupporter from '../hooks/useIsSupporter'
 import { usePreferences } from '../stores/preferences'
 import SyncPopover from '../components/sync/SyncPopover'
+import MilestoneRevealRecoveryIcon from '../components/MilestoneRevealRecoveryIcon'
 
 const DrawerNavigator = () => {
   const Drawer = createDrawerNavigator()
   const { hasPurchasedBefore } = useCustomer()
   const { isSupporter } = useIsSupporter()
-  const { hideDonateHeart } = usePreferences()
+  const { hideDonateHeart, set } = usePreferences()
   const theme = useTheme()
 
   const showSyncPopover = isSupporter && Platform.OS === 'ios'
+
+  // Dev-only reset for the milestone-reveal flow. Long-press the date in the
+  // header to clear both flags so the grand reveal fires fresh on next mount.
+  // Wired in __DEV__ only; the prop is undefined in production so production
+  // callers see no behaviour change on long-press.
+  const onLongPressTitle = __DEV__
+    ? () => {
+        set({
+          seenMilestoneUpdateReveal: false,
+          dismissedMilestoneRevealOnce: false,
+          lastAppVersion: '1.36.0',
+          homeChecklistAllDoneCelebrated: false,
+        })
+      }
+    : undefined
 
   return (
     <Drawer.Navigator
@@ -27,14 +43,22 @@ const DrawerNavigator = () => {
         header: ({ navigation }) => (
           <Header
             onPressLeftIcon={() => navigation.toggleDrawer()}
+            onLongPressTitle={onLongPressTitle}
             rightElement={
-              showSyncPopover ? (
-                <View style={{ position: 'absolute', right: 0 }}>
+              <View
+                style={{
+                  position: 'absolute',
+                  right: 0,
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  gap: 12,
+                }}
+              >
+                <MilestoneRevealRecoveryIcon />
+                {showSyncPopover ? (
                   <SyncPopover />
-                </View>
-              ) : (
-                !hideDonateHeart && (
-                  <View style={{ position: 'absolute', right: 0 }}>
+                ) : (
+                  !hideDonateHeart && (
                     <IconButton
                       onPress={() => navigation.navigate('Paywall')}
                       icon={hasPurchasedBefore ? faHeart : faHeartRegular}
@@ -44,9 +68,9 @@ const DrawerNavigator = () => {
                           : theme.colors.text
                       }
                     />
-                  </View>
-                )
-              )
+                  )
+                )}
+              </View>
             }
           />
         ),

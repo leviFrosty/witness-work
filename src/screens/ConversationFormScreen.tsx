@@ -429,7 +429,22 @@ const ConversationFormScreen = ({ route, navigation }: Props) => {
       header: ({ navigation }) => (
         <Header
           title=''
-          buttonType='exit'
+          buttonType={params.fromContactForm ? 'none' : 'exit'}
+          leftElement={
+            params.fromContactForm ? (
+              <Button
+                onPress={() =>
+                  navigation.replace('Contact Details', {
+                    id: params.contactId!,
+                  })
+                }
+              >
+                <Text style={{ color: theme.colors.text, fontSize: 16 }}>
+                  {i18n.t('skip')}
+                </Text>
+              </Button>
+            ) : undefined
+          }
           rightElement={
             <View
               style={{
@@ -440,22 +455,6 @@ const ConversationFormScreen = ({ route, navigation }: Props) => {
                 right: 0,
               }}
             >
-              {!params.contactId && (
-                <Button
-                  onPress={async () => {
-                    navigation.popToTop()
-                  }}
-                >
-                  <Text
-                    style={{
-                      color: theme.colors.text,
-                      fontSize: 12,
-                    }}
-                  >
-                    {i18n.t('skip')}
-                  </Text>
-                </Button>
-              )}
               {isEditing && (
                 <IconButton
                   icon={faTrash}

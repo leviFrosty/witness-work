@@ -21,7 +21,7 @@ import { ServiceReport } from '../types/serviceReport'
 import { CategorySegment } from './CategorySegmentBar'
 import CategoriesSection from './CategoriesSection'
 import { usePreferences } from '../stores/preferences'
-import GlassCard from './GlassCard'
+import Card from './Card'
 import ActionButton from './ActionButton'
 import Button from './Button'
 import Chip from './Chip'
@@ -336,7 +336,7 @@ const MonthSummary = ({
   if (!monthsReports) {
     return (
       <View>
-        <GlassCard>
+        <Card>
           <Text
             style={{
               fontSize: theme.fontSize('xl'),
@@ -374,18 +374,28 @@ const MonthSummary = ({
               {i18n.t('addTime')}
             </ActionButton>
           )}
-        </GlassCard>
+        </Card>
       </View>
     )
   }
 
   return (
     <View>
-      <GlassCard
-        highlighted={highlightAsCurrentMonth}
-        padding={noDetails ? 14 : 20}
-        tone={noDetails ? 'default' : cardTone}
-        style={{ gap: 0 }}
+      <Card
+        style={{
+          gap: 0,
+          paddingVertical: noDetails ? 14 : 20,
+          paddingHorizontal: noDetails ? 14 : 20,
+          ...(cardTone === 'amber' && !noDetails
+            ? {
+                borderWidth: 2,
+                borderColor: theme.colors.supporter,
+                backgroundColor: theme.colors.supporterTranslucent,
+              }
+            : highlightAsCurrentMonth
+              ? { borderWidth: 2, borderColor: theme.colors.accent }
+              : {}),
+        }}
       >
         <View style={{ gap: noDetails ? 10 : 15 }}>
           {/* Title row — when the parent provides section context
@@ -562,7 +572,7 @@ const MonthSummary = ({
             </Button>
           </View>
         )}
-      </GlassCard>
+      </Card>
 
       {/* Inline rollover affordance: shown only when (a) viewing the current
         month, (b) there's a fractional source month available, and (c) the

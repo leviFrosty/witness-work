@@ -33,6 +33,7 @@ import PlanScheduleScreen from '../screens/PlanScheduleScreen'
 import PlanDayScreen from '../screens/PlanDayScreen'
 import ProfileSetupScreen from '../screens/ProfileSetupScreen'
 import RolloverScreen from '../screens/RolloverScreen'
+import MilestoneShowcaseScreen from '../screens/MilestoneShowcaseScreen'
 import { RootStackParamList } from '../types/rootStack'
 
 const RootStack = createNativeStackNavigator<RootStackParamList>()
@@ -306,6 +307,14 @@ const RootStackComponent = () => {
         }}
         name='Rollover'
         component={RolloverScreen}
+      />
+      <RootStack.Screen
+        options={{
+          presentation: 'modal',
+          header: () => null,
+        }}
+        name='MilestoneShowcase'
+        component={MilestoneShowcaseScreen}
       />
     </RootStack.Navigator>
   )

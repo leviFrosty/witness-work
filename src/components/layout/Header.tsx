@@ -1,4 +1,4 @@
-import { Platform, View } from 'react-native'
+import { Platform, Pressable, View } from 'react-native'
 import useTheme from '../../contexts/theme'
 import moment from 'moment'
 import Text from '../MyText'
@@ -19,20 +19,30 @@ type Props = {
   title?: string
   buttonType?: 'exit' | 'settings' | 'back' | 'none'
   onPressLeftIcon?: () => void
+  leftElement?: React.ReactNode
   rightElement?: React.ReactNode
   noBottomBorder?: boolean
   noInsets?: boolean
+  /**
+   * Optional long-press handler on the title. Used for hidden dev affordances
+   * (e.g. resetting the milestone-reveal flags from the home header). Pure
+   * pass-through — Header doesn't add visual chrome to indicate it's
+   * long-pressable.
+   */
+  onLongPressTitle?: () => void
 }
 
 const Header = ({
   title,
   buttonType,
   rightElement,
+  leftElement,
   backgroundColor,
   inverseTextAndIconColor,
   noBottomBorder,
   noInsets,
   onPressLeftIcon,
+  onLongPressTitle,
 }: Props) => {
   const theme = useTheme()
   const insets = useSafeAreaInsets()
@@ -84,30 +94,40 @@ const Header = ({
           paddingVertical: 12,
         }}
       >
-        {buttonType !== 'none' && (
-          <IconButton
-            style={{ position: 'absolute', left: 0 }}
-            onPress={handleButtonAction}
-            icon={iconName()}
-            iconStyle={{
+        {leftElement ? (
+          <View style={{ position: 'absolute', left: 0 }}>{leftElement}</View>
+        ) : (
+          buttonType !== 'none' && (
+            <IconButton
+              style={{ position: 'absolute', left: 0 }}
+              onPress={handleButtonAction}
+              icon={iconName()}
+              iconStyle={{
+                color: inverseTextAndIconColor
+                  ? theme.colors.textInverse
+                  : theme.colors.text,
+              }}
+              size={'xl'}
+            />
+          )
+        )}
+        <Pressable
+          onLongPress={onLongPressTitle}
+          disabled={!onLongPressTitle}
+          delayLongPress={800}
+        >
+          <Text
+            style={{
+              fontSize: 18,
+              fontFamily: theme.fonts.semiBold,
               color: inverseTextAndIconColor
                 ? theme.colors.textInverse
                 : theme.colors.text,
             }}
-            size={'xl'}
-          />
-        )}
-        <Text
-          style={{
-            fontSize: 18,
-            fontFamily: theme.fonts.semiBold,
-            color: inverseTextAndIconColor
-              ? theme.colors.textInverse
-              : theme.colors.text,
-          }}
-        >
-          {title ?? moment().format('LL')}
-        </Text>
+          >
+            {title ?? moment().format('LL')}
+          </Text>
+        </Pressable>
         {rightElement}
       </View>
     </View>

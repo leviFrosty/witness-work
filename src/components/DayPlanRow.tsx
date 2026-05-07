@@ -15,6 +15,7 @@ import moment from 'moment'
 import Copyeable from './Copyeable'
 import Badge from './Badge'
 import { formatStartTime } from '../lib/normalizeDate'
+import { useCardStyle } from './Card'
 
 const DayPlanRow = (props: {
   plan: DayPlan
@@ -22,6 +23,7 @@ const DayPlanRow = (props: {
   onPress?: () => void
 }) => {
   const theme = useTheme()
+  const cardStyle = useCardStyle()
   const { deleteDayPlan } = useServiceReport()
 
   const formattedTime = useFormattedMinutes(props.plan.minutes)
@@ -64,7 +66,7 @@ const DayPlanRow = (props: {
       onSwipeableWillOpen={() => Haptics.light()}
       containerStyle={{
         backgroundColor: theme.colors.background,
-        borderRadius: theme.numbers.borderRadiusSm,
+        borderRadius: cardStyle.borderRadius,
       }}
       renderLeftActions={() => <SwipeableEdit />}
       renderRightActions={() => <SwipeableDelete />}
@@ -75,9 +77,8 @@ const DayPlanRow = (props: {
       <Button
         onPress={props.onPress}
         style={{
-          backgroundColor: theme.colors.card,
+          ...cardStyle,
           padding: 16,
-          borderRadius: theme.numbers.borderRadiusSm,
         }}
       >
         {/* Header Row - Date and Time */}

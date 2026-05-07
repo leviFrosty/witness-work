@@ -16,6 +16,7 @@ import Text from './MyText'
 import IconButton from './IconButton'
 import SelectedDateSheet, { SelectedDateSheetState } from './SelectedDateSheet'
 import Badge from './Badge'
+import { useCardStyle } from './Card'
 
 interface AllDaysListProps {
   month: number
@@ -44,6 +45,7 @@ type DayRow = {
  */
 const AllDaysList = ({ month, year }: AllDaysListProps) => {
   const theme = useTheme()
+  const cardStyle = useCardStyle()
   const { serviceReports } = useServiceReport()
   const rootNavigation = useRootNavigation<RootStackNavigation>()
 
@@ -189,8 +191,7 @@ const AllDaysList = ({ month, year }: AllDaysListProps) => {
             key={row.date.toISOString()}
             onPress={() => setSheet({ open: true, date: row.date })}
             style={{
-              backgroundColor: theme.colors.card,
-              borderRadius: theme.numbers.borderRadiusSm,
+              ...cardStyle,
               paddingVertical: 12,
               paddingHorizontal: 15,
               marginHorizontal: 15,

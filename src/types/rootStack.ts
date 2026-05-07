@@ -6,6 +6,7 @@ export type RootStackParamList = {
     contactId?: string
     conversationToEditId?: string
     notAtHome?: boolean
+    fromContactForm?: boolean
   }
   'Contact Details': { id: string; highlightedConversationId?: string } // Contact ID
   'Contact Form': { id: string; edit?: boolean } // Contact ID
@@ -52,6 +53,7 @@ export type RootStackParamList = {
   }
   ProfileSetup: undefined
   Rollover: undefined
+  MilestoneShowcase: undefined
 }
 
 export type RootStackNavigation = NativeStackNavigationProp<RootStackParamList>

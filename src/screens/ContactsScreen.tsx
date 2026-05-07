@@ -18,7 +18,7 @@ import useConversations from '../stores/conversationStore'
 import useContactsSearchStore from '../stores/contactsSearchStore'
 import { builtInContactSortOptions } from '../stores/preferences'
 import i18n from '../lib/locales'
-import GlassCard from '../components/GlassCard'
+import Card from '../components/Card'
 import Button from '../components/Button'
 import IconButton from '../components/IconButton'
 import Text from '../components/MyText'
@@ -143,7 +143,7 @@ const ContactsScreen = () => {
       }}
     >
       <View style={{ paddingHorizontal: 12, gap: 12, paddingBottom: 12 }}>
-        <GlassCard variant='elevated' padding={16}>
+        <Card style={{ paddingVertical: 16, paddingHorizontal: 16 }}>
           <View style={{ gap: 14 }}>
             {/* Title row: large title on the left, primary "+" CTA on the
                 right. iOS-native: the page-level add action lives at the top
@@ -326,7 +326,7 @@ const ContactsScreen = () => {
               </View>
             )}
           </View>
-        </GlassCard>
+        </Card>
       </View>
 
       <FlashList

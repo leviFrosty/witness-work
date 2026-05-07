@@ -1,5 +1,6 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { View } from 'react-native'
+import { Popover } from 'tamagui'
 import { faChevronRight } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
 import useTheme from '../../contexts/theme'
@@ -14,7 +15,7 @@ import { useMarkerColors } from '../../hooks/useMarkerColors'
 import { Contact } from '../../types/contact'
 import { Conversation } from '../../types/conversation'
 import Text from '../MyText'
-import GlassCard from '../GlassCard'
+import Card from '../Card'
 import Button from '../Button'
 
 export type ContactsStatsHeaderProps = {
@@ -37,6 +38,7 @@ const ContactsStatsHeader: React.FC<ContactsStatsHeaderProps> = ({
 }) => {
   const theme = useTheme()
   const markerColors = useMarkerColors()
+  const [infoOpen, setInfoOpen] = useState(false)
 
   const { activeCount, dismissedCount, stalenessCounts } = useMemo(() => {
     const active = filterActivesContacts(contacts)
@@ -58,7 +60,13 @@ const ContactsStatsHeader: React.FC<ContactsStatsHeaderProps> = ({
   }, [contacts, conversations])
 
   return (
-    <GlassCard variant='surface' padding={16}>
+    <Card
+      style={{
+        paddingVertical: 16,
+        paddingHorizontal: 16,
+        backgroundColor: 'rgba(0,0,0,0.25)',
+      }}
+    >
       <View
         style={{
           flexDirection: 'row',
@@ -88,48 +96,153 @@ const ContactsStatsHeader: React.FC<ContactsStatsHeaderProps> = ({
           </Text>
         </View>
 
-        {/* Staleness breakdown pill */}
-        <View
-          style={{
-            flexDirection: 'row',
-            alignItems: 'center',
-            gap: 6,
-            paddingHorizontal: 10,
-            paddingVertical: 6,
-            backgroundColor: theme.colors.backgroundLighter,
-            borderRadius: theme.numbers.borderRadiusMd,
-            flexShrink: 1,
-          }}
+        {/* Staleness breakdown pill — tap to reveal what each color means. */}
+        <Popover
+          open={infoOpen}
+          onOpenChange={setInfoOpen}
+          placement='bottom'
+          allowFlip
+          offset={8}
         >
-          {STALENESS_ORDER.map((bucket) => (
-            <View
-              key={bucket}
+          <Popover.Trigger asChild>
+            <Button
+              onPress={() => setInfoOpen((v) => !v)}
+              accessibilityLabel={i18n.t('contacts_stalenessInfo_title')}
+              accessibilityRole='button'
+              hitSlop={6}
+              noTransform
               style={{
                 flexDirection: 'row',
                 alignItems: 'center',
-                gap: 4,
+                gap: 6,
+                paddingHorizontal: 10,
+                paddingVertical: 6,
+                backgroundColor: theme.colors.backgroundLighter,
+                borderRadius: theme.numbers.borderRadiusMd,
+                flexShrink: 1,
               }}
             >
-              <View
-                style={{
-                  width: 8,
-                  height: 8,
-                  borderRadius: 4,
-                  backgroundColor: stalenessToColor(bucket, markerColors),
-                }}
-              />
-              <Text
-                style={{
-                  fontFamily: theme.fonts.semiBold,
-                  fontSize: theme.fontSize('xs'),
-                  color: theme.colors.text,
-                }}
-              >
-                {stalenessCounts[bucket]}
-              </Text>
+              {STALENESS_ORDER.map((bucket) => (
+                <View
+                  key={bucket}
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    gap: 4,
+                  }}
+                >
+                  <View
+                    style={{
+                      width: 8,
+                      height: 8,
+                      borderRadius: 4,
+                      backgroundColor: stalenessToColor(bucket, markerColors),
+                    }}
+                  />
+                  <Text
+                    style={{
+                      fontFamily: theme.fonts.semiBold,
+                      fontSize: theme.fontSize('xs'),
+                      color: theme.colors.text,
+                    }}
+                  >
+                    {stalenessCounts[bucket]}
+                  </Text>
+                </View>
+              ))}
+            </Button>
+          </Popover.Trigger>
+
+          <Popover.Content
+            borderWidth={1}
+            borderColor={theme.colors.border}
+            backgroundColor={theme.colors.card}
+            padding={14}
+            elevate
+            animation={[
+              'quick',
+              {
+                opacity: {
+                  overshootClamping: true,
+                },
+              },
+            ]}
+            enterStyle={{ y: -8, opacity: 0 }}
+            exitStyle={{ y: -8, opacity: 0 }}
+            maxWidth={280}
+          >
+            <Popover.Arrow
+              borderWidth={1}
+              borderColor={theme.colors.border}
+              backgroundColor={theme.colors.card}
+            />
+            <View style={{ gap: 10 }}>
+              <View style={{ gap: 2 }}>
+                <Text
+                  style={{
+                    fontFamily: theme.fonts.semiBold,
+                    fontSize: theme.fontSize('md'),
+                    color: theme.colors.text,
+                  }}
+                >
+                  {i18n.t('contacts_stalenessInfo_title')}
+                </Text>
+                <Text
+                  style={{
+                    fontSize: theme.fontSize('xs'),
+                    color: theme.colors.textAlt,
+                  }}
+                >
+                  {i18n.t('contacts_stalenessInfo_subtitle')}
+                </Text>
+              </View>
+              <View style={{ gap: 8 }}>
+                {STALENESS_ORDER.map((bucket) => (
+                  <View
+                    key={bucket}
+                    style={{
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      gap: 10,
+                    }}
+                  >
+                    <View
+                      style={{
+                        width: 10,
+                        height: 10,
+                        borderRadius: 5,
+                        backgroundColor: stalenessToColor(bucket, markerColors),
+                      }}
+                    />
+                    <View style={{ flex: 1 }}>
+                      <Text
+                        style={{
+                          fontFamily: theme.fonts.semiBold,
+                          fontSize: theme.fontSize('sm'),
+                          color: theme.colors.text,
+                        }}
+                      >
+                        {i18n.t(
+                          `contacts_pinStaleness_${bucket}` as TranslationKey
+                        )}
+                      </Text>
+                      <Text
+                        style={{
+                          fontSize: theme.fontSize('xs'),
+                          color: theme.colors.textAlt,
+                        }}
+                      >
+                        {i18n.t(
+                          `contacts_stalenessCriteria_${bucket}` as TranslationKey
+                        )}
+                      </Text>
+                    </View>
+                  </View>
+                ))}
+              </View>
             </View>
-          ))}
-        </View>
+          </Popover.Content>
+        </Popover>
 
         {/* Dismissed/archived count */}
         {dismissedCount > 0 && (
@@ -162,7 +275,7 @@ const ContactsStatsHeader: React.FC<ContactsStatsHeaderProps> = ({
           </Button>
         )}
       </View>
-    </GlassCard>
+    </Card>
   )
 }
 

@@ -19,6 +19,7 @@ import YearMilestoneCard from '../../components/YearMilestoneCard'
 import Text from '../../components/MyText'
 import XView from '../../components/layout/XView'
 import Badge from '../../components/Badge'
+import { useCardStyle } from '../../components/Card'
 
 interface ProgressYearTabProps {
   /** End year of the service year (Sep 1 of `year - 1` → Aug 31 of `year`). */
@@ -45,6 +46,7 @@ const MonthRow = ({
   onPress: () => void
 }) => {
   const theme = useTheme()
+  const cardStyle = useCardStyle()
   const {
     publisher,
     publisherHours,
@@ -102,9 +104,8 @@ const MonthRow = ({
       onPress={onPress}
       accessibilityRole='button'
       style={({ pressed }) => ({
+        ...cardStyle,
         opacity: pressed ? 0.6 : 1,
-        backgroundColor: theme.colors.card,
-        borderRadius: theme.numbers.borderRadiusSm,
         paddingHorizontal: 15,
         paddingVertical: 12,
       })}

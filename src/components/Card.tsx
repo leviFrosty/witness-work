@@ -11,6 +11,23 @@ interface Props extends ViewProps {
     | undefined
 }
 
+/**
+ * Shared card shape/border styles — use this to keep non-Card pressables
+ * consistent.
+ */
+export const useCardStyle = () => {
+  const theme = useTheme()
+  return {
+    borderRadius: theme.numbers.borderRadiusLg,
+    backgroundColor: theme.colors.card,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    shadowOffset: { width: 0, height: 1 } as const,
+    shadowColor: theme.colors.shadow,
+    shadowOpacity: theme.numbers.shadowOpacity,
+  }
+}
+
 const Card: React.FC<PropsWithChildren<Props>> = ({
   children,
   flexDirection,

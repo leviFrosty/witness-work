@@ -5,7 +5,11 @@ import i18n, { TranslationKey } from '../../../../lib/locales'
 import Section from '../../../../components/inputs/Section'
 import InputRowContainer from '../../../../components/inputs/InputRowContainer'
 import Select from '../../../../components/Select'
-import { usePreferences } from '../../../../stores/preferences'
+import {
+  DEFAULT_RETURN_VISIT_NOTIFICATION_OFFSET,
+  DEFAULT_RETURN_VISIT_TIME_OFFSET,
+  usePreferences,
+} from '../../../../stores/preferences'
 
 const ConversationsPreferencesSection = () => {
   const theme = useTheme()
@@ -15,6 +19,17 @@ const ConversationsPreferencesSection = () => {
     returnVisitAlwaysNotify,
     set,
   } = usePreferences()
+
+  const currentTimeAmount =
+    returnVisitTimeOffset?.amount ?? DEFAULT_RETURN_VISIT_TIME_OFFSET.amount
+  const currentTimeUnit =
+    returnVisitTimeOffset?.unit ?? DEFAULT_RETURN_VISIT_TIME_OFFSET.unit
+  const currentNotifAmount =
+    returnVisitNotificationOffset?.amount ??
+    DEFAULT_RETURN_VISIT_NOTIFICATION_OFFSET.amount
+  const currentNotifUnit =
+    returnVisitNotificationOffset?.unit ??
+    DEFAULT_RETURN_VISIT_NOTIFICATION_OFFSET.unit
 
   const amountOptions = [...Array(1000).keys()].map((value) => ({
     label: `${value}`,
@@ -61,12 +76,12 @@ const ConversationsPreferencesSection = () => {
                 onChange={({ value }) =>
                   set({
                     returnVisitTimeOffset: {
-                      ...returnVisitTimeOffset,
                       amount: value,
+                      unit: currentTimeUnit,
                     },
                   })
                 }
-                value={returnVisitTimeOffset?.amount}
+                value={currentTimeAmount}
               />
             </View>
 
@@ -76,12 +91,12 @@ const ConversationsPreferencesSection = () => {
                 onChange={({ value }) =>
                   set({
                     returnVisitTimeOffset: {
-                      ...returnVisitTimeOffset,
+                      amount: currentTimeAmount,
                       unit: value,
                     },
                   })
                 }
-                value={returnVisitTimeOffset?.unit}
+                value={currentTimeUnit}
               />
             </View>
           </View>
@@ -125,12 +140,12 @@ const ConversationsPreferencesSection = () => {
                 onChange={({ value }) =>
                   set({
                     returnVisitNotificationOffset: {
-                      ...returnVisitNotificationOffset,
                       amount: value,
+                      unit: currentNotifUnit,
                     },
                   })
                 }
-                value={returnVisitNotificationOffset?.amount}
+                value={currentNotifAmount}
               />
             </View>
 
@@ -140,12 +155,12 @@ const ConversationsPreferencesSection = () => {
                 onChange={({ value }) =>
                   set({
                     returnVisitNotificationOffset: {
-                      ...returnVisitNotificationOffset,
+                      amount: currentNotifAmount,
                       unit: value,
                     },
                   })
                 }
-                value={returnVisitNotificationOffset?.unit}
+                value={currentNotifUnit}
               />
             </View>
             <Text style={{ color: theme.colors.textAlt }}>

@@ -61,6 +61,34 @@ interface TimeOffset {
 }
 
 /**
+ * In-app fallback for `planNotificationOffset` when the user has not chosen
+ * one. Consumed by the day-plan form and by the prefs UI so the dropdowns
+ * pre-fill with the value the app would actually use.
+ */
+export const DEFAULT_PLAN_NOTIFICATION_OFFSET: Required<TimeOffset> = {
+  amount: 30,
+  unit: 'minutes',
+}
+
+/**
+ * In-app fallback for `returnVisitTimeOffset` (how far out a new conversation's
+ * follow-up date is set from "now" when the user hasn't picked one).
+ */
+export const DEFAULT_RETURN_VISIT_TIME_OFFSET: Required<TimeOffset> = {
+  amount: 1,
+  unit: 'weeks',
+}
+
+/**
+ * In-app fallback for `returnVisitNotificationOffset` (how long before a
+ * follow-up's date the notification fires when the user hasn't picked one).
+ */
+export const DEFAULT_RETURN_VISIT_NOTIFICATION_OFFSET: Required<TimeOffset> = {
+  amount: 2,
+  unit: 'hours',
+}
+
+/**
  * These hints are enabled if true, and dismissed if false. See
  * `usePreferences.removeHint()` to set a hint to false.
  */

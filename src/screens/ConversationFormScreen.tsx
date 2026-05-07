@@ -35,7 +35,11 @@ import {
 import _ from 'lodash'
 import Button from '../components/Button'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { usePreferences } from '../stores/preferences'
+import {
+  DEFAULT_RETURN_VISIT_NOTIFICATION_OFFSET,
+  DEFAULT_RETURN_VISIT_TIME_OFFSET,
+  usePreferences,
+} from '../stores/preferences'
 import { maybeRequestStoreReview } from '../lib/storeReview'
 import useNotifications from '../hooks/notifications'
 import { useToastController } from '@tamagui/toast'
@@ -213,8 +217,12 @@ const ConversationFormScreen = ({ route, navigation }: Props) => {
       if (derived) return derived
     }
     return {
-      amount: returnVisitNotificationOffset?.amount || 2,
-      unit: returnVisitNotificationOffset?.unit || 'hours',
+      amount:
+        returnVisitNotificationOffset?.amount ??
+        DEFAULT_RETURN_VISIT_NOTIFICATION_OFFSET.amount,
+      unit:
+        returnVisitNotificationOffset?.unit ??
+        DEFAULT_RETURN_VISIT_NOTIFICATION_OFFSET.unit,
     }
   }
 
@@ -250,7 +258,11 @@ const ConversationFormScreen = ({ route, navigation }: Props) => {
       note: '',
       followUp: {
         date: moment()
-          .add(returnVisitTimeOffset?.amount, returnVisitTimeOffset?.unit)
+          .add(
+            returnVisitTimeOffset?.amount ??
+              DEFAULT_RETURN_VISIT_TIME_OFFSET.amount,
+            returnVisitTimeOffset?.unit ?? DEFAULT_RETURN_VISIT_TIME_OFFSET.unit
+          )
           .toDate(),
         topic: '',
         notifyMe: returnVisitAlwaysNotify,

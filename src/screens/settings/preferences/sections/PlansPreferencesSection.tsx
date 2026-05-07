@@ -5,11 +5,19 @@ import i18n, { TranslationKey } from '../../../../lib/locales'
 import Section from '../../../../components/inputs/Section'
 import InputRowContainer from '../../../../components/inputs/InputRowContainer'
 import Select from '../../../../components/Select'
-import { usePreferences } from '../../../../stores/preferences'
+import {
+  DEFAULT_PLAN_NOTIFICATION_OFFSET,
+  usePreferences,
+} from '../../../../stores/preferences'
 
 const PlansPreferencesSection = () => {
   const theme = useTheme()
   const { planNotificationOffset, planAlwaysNotify, set } = usePreferences()
+
+  const currentAmount =
+    planNotificationOffset?.amount ?? DEFAULT_PLAN_NOTIFICATION_OFFSET.amount
+  const currentUnit =
+    planNotificationOffset?.unit ?? DEFAULT_PLAN_NOTIFICATION_OFFSET.unit
 
   const amountOptions = [...Array(1000).keys()].map((value) => ({
     label: `${value}`,
@@ -57,12 +65,12 @@ const PlansPreferencesSection = () => {
                 onChange={({ value }) =>
                   set({
                     planNotificationOffset: {
-                      ...planNotificationOffset,
                       amount: value,
+                      unit: currentUnit,
                     },
                   })
                 }
-                value={planNotificationOffset?.amount}
+                value={currentAmount}
               />
             </View>
 
@@ -72,12 +80,12 @@ const PlansPreferencesSection = () => {
                 onChange={({ value }) =>
                   set({
                     planNotificationOffset: {
-                      ...planNotificationOffset,
+                      amount: currentAmount,
                       unit: value,
                     },
                   })
                 }
-                value={planNotificationOffset?.unit}
+                value={currentUnit}
               />
             </View>
             <Text style={{ color: theme.colors.textAlt }}>

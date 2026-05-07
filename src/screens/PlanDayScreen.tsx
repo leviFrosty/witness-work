@@ -37,7 +37,10 @@ import {
   splitDateAndStartTime,
 } from '../lib/normalizeDate'
 import { deriveOffsetFromDates } from '../lib/notificationOffset'
-import { usePreferences } from '../stores/preferences'
+import {
+  DEFAULT_PLAN_NOTIFICATION_OFFSET,
+  usePreferences,
+} from '../stores/preferences'
 import useNotifications from '../hooks/notifications'
 import { Notification } from '../types/conversation'
 
@@ -628,8 +631,9 @@ const PlanDayScreen = ({ route, navigation }: PlanDayScreenProps) => {
   const { allowed: notificationsAllowed } = useNotifications()
 
   const defaultNotifyOffset: NotifyMeOffset = {
-    amount: planNotificationOffset?.amount ?? 30,
-    unit: planNotificationOffset?.unit ?? 'minutes',
+    amount:
+      planNotificationOffset?.amount ?? DEFAULT_PLAN_NOTIFICATION_OFFSET.amount,
+    unit: planNotificationOffset?.unit ?? DEFAULT_PLAN_NOTIFICATION_OFFSET.unit,
   }
 
   // Reflect the saved notification's actual offset on edit so the form doesn't

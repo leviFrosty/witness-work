@@ -23,7 +23,10 @@ import DateTimePicker from '../components/DateTimePicker'
 import useTheme from '../contexts/theme'
 import useContacts from '../stores/contactsStore'
 import useConversations from '../stores/conversationStore'
-import { usePreferences } from '../stores/preferences'
+import {
+  DEFAULT_RETURN_VISIT_NOTIFICATION_OFFSET,
+  usePreferences,
+} from '../stores/preferences'
 import { handleCall, handleMessage } from '../lib/phone'
 import i18n from '../lib/locales'
 import { logger } from '../lib/logger'
@@ -328,8 +331,12 @@ const RescheduleConversationScreen = ({ route, navigation }: Props) => {
     // the future, schedule a fresh notification using the same offset.
     const notifications: ConvNotification[] = []
     if (conversation.followUp?.notifyMe) {
-      const offsetAmount = returnVisitNotificationOffset?.amount ?? 2
-      const offsetUnit = returnVisitNotificationOffset?.unit ?? 'hours'
+      const offsetAmount =
+        returnVisitNotificationOffset?.amount ??
+        DEFAULT_RETURN_VISIT_NOTIFICATION_OFFSET.amount
+      const offsetUnit =
+        returnVisitNotificationOffset?.unit ??
+        DEFAULT_RETURN_VISIT_NOTIFICATION_OFFSET.unit
       const fireAt = moment(newDate).subtract(offsetAmount, offsetUnit).toDate()
 
       if (moment(fireAt).isAfter(moment())) {

@@ -1,12 +1,23 @@
 import { useEffect, useState } from 'react'
-import { ActivityIndicator, Alert, Linking, Switch, View } from 'react-native'
+import {
+  ActivityIndicator,
+  Alert,
+  Linking,
+  Pressable,
+  Switch,
+  View,
+} from 'react-native'
 import moment from 'moment'
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
+import { Popover } from 'tamagui'
+import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
+import { faCircleInfo } from '@fortawesome/free-solid-svg-icons'
 import Wrapper from '../../../../components/layout/Wrapper'
 import Section from '../../../../components/inputs/Section'
 import InputRowContainer from '../../../../components/inputs/InputRowContainer'
 import InputRowButton from '../../../../components/inputs/InputRowButton'
 import Text from '../../../../components/MyText'
+import Badge from '../../../../components/Badge'
 import IsSupporter from '../../../../components/IsSupporter'
 import useTheme from '../../../../contexts/theme'
 import i18n from '../../../../lib/locales'
@@ -72,6 +83,7 @@ const PreferencesiCloudScreenInner = () => {
     boolean | null
   >(null)
   const [migratingImages, setMigratingImages] = useState(false)
+  const [betaInfoOpen, setBetaInfoOpen] = useState(false)
   const toast = useToastController()
 
   // Re-check iCloud availability on mount and whenever the identity changes.
@@ -382,15 +394,84 @@ const PreferencesiCloudScreenInner = () => {
         contentContainerStyle={{ gap: 30, paddingTop: 30, paddingBottom: 30 }}
       >
         <View style={{ paddingHorizontal: 15, gap: 6 }}>
-          <Text
-            style={{
-              fontSize: theme.fontSize('lg'),
-              fontFamily: theme.fonts.semiBold,
-              color: theme.colors.text,
-            }}
-          >
-            {i18n.t('iCloudSync')}
-          </Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+            <Text
+              style={{
+                fontSize: theme.fontSize('lg'),
+                fontFamily: theme.fonts.semiBold,
+                color: theme.colors.text,
+              }}
+            >
+              {i18n.t('iCloudSync')}
+            </Text>
+            <Popover
+              open={betaInfoOpen}
+              onOpenChange={setBetaInfoOpen}
+              placement='bottom'
+              allowFlip
+              offset={8}
+            >
+              <Popover.Trigger asChild>
+                <Pressable
+                  onPress={() => setBetaInfoOpen((v) => !v)}
+                  accessibilityRole='button'
+                  accessibilityLabel={i18n.t('iCloudBetaNotice')}
+                  hitSlop={8}
+                >
+                  <Badge color={theme.colors.accentTranslucent}>
+                    <View
+                      style={{
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        gap: 4,
+                      }}
+                    >
+                      <Text
+                        style={{
+                          fontFamily: theme.fonts.semiBold,
+                          fontSize: theme.fontSize('xs'),
+                          textTransform: 'uppercase',
+                          color: theme.colors.accent,
+                        }}
+                      >
+                        {i18n.t('beta')}
+                      </Text>
+                      <FontAwesomeIcon
+                        icon={faCircleInfo}
+                        size={theme.fontSize('xs')}
+                        style={{ color: theme.colors.accent }}
+                      />
+                    </View>
+                  </Badge>
+                </Pressable>
+              </Popover.Trigger>
+              <Popover.Content
+                borderWidth={1}
+                borderColor={theme.colors.border}
+                backgroundColor={theme.colors.card}
+                padding={12}
+                elevate
+                animation={['quick', { opacity: { overshootClamping: true } }]}
+                enterStyle={{ y: -8, opacity: 0 }}
+                exitStyle={{ y: -8, opacity: 0 }}
+                maxWidth={300}
+              >
+                <Popover.Arrow
+                  borderWidth={1}
+                  borderColor={theme.colors.border}
+                  backgroundColor={theme.colors.card}
+                />
+                <Text
+                  style={{
+                    fontSize: 13,
+                    color: theme.colors.text,
+                  }}
+                >
+                  {i18n.t('iCloudBetaNotice')}
+                </Text>
+              </Popover.Content>
+            </Popover>
+          </View>
           <Text style={{ fontSize: 13, color: theme.colors.textAlt }}>
             {i18n.t('iCloudSync_description')}
           </Text>

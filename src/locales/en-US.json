@@ -1378,6 +1378,8 @@
   "sync": "Sync",
   "iCloudSync": "iCloud Sync",
   "iCloudSync_description": "Keep your contacts, conversations, reports, and preferences in sync across your iPhone and iPad using your iCloud account. Data stays in your private container — we never see it.",
+  "beta": "Beta",
+  "iCloudBetaNotice": "iCloud Sync is in beta. It should be reliable for everyday use, but you may occasionally run into rough edges — please report anything unexpected.",
   "iCloudEnableLabel": "Sync with iCloud",
   "iCloudStatusLabel": "Status",
   "iCloudStatusDisabled": "Off",

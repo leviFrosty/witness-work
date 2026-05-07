@@ -203,7 +203,7 @@ const ProgressYearTab = ({
         />
       ) : null}
 
-      <View style={{ gap: 8 }}>
+      <View style={{ gap: 8, paddingTop: 10 }}>
         <Text
           style={{
             fontFamily: theme.fonts.semiBold,

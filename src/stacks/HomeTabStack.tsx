@@ -85,6 +85,7 @@ const HomeTabStack = () => {
           <Tab.Screen name='Progress' component={ProgressScreen} />
         )}
         <Tab.Screen name='Schedule' component={ScheduleScreen} />
+
         <Tab.Screen name='Map' component={Map} />
       </Tab.Navigator>
     </View>

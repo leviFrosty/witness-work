@@ -21,12 +21,14 @@ import Text from '../../components/MyText'
 import XView from '../../components/layout/XView'
 import { HomeTabStackParamList } from '../../types/homeStack'
 
-import ProgressTabSelector, { ProgressTab } from './ProgressTabSelector'
+import SegmentedControl from '../../components/SegmentedControl'
 import ProgressMonthTab from './ProgressMonthTab'
 import ProgressYearTab from './ProgressYearTab'
 import ProgressAllTimeTab from './ProgressAllTimeTab'
 
 type Props = NativeStackScreenProps<HomeTabStackParamList, 'Progress'>
+
+export type ProgressTab = 'month' | 'year' | 'allTime'
 
 const ProgressScreen = ({ route, navigation }: Props) => {
   const theme = useTheme()
@@ -158,10 +160,17 @@ const ProgressScreen = ({ route, navigation }: Props) => {
             gap: 6,
           }}
         >
-          <ProgressTabSelector
-            activeTab={activeTab}
+          <SegmentedControl<ProgressTab>
+            value={activeTab}
             onChange={setActiveTab}
-            hideYearTab={hideYearTab}
+            options={[
+              { key: 'month', label: i18n.t('month') },
+              ...(hideYearTab
+                ? []
+                : ([{ key: 'year', label: i18n.t('year') }] as const)),
+              { key: 'allTime', label: i18n.t('allTime') },
+            ]}
+            style={{ marginHorizontal: 15 }}
           />
           {activeTab === 'month' ? (
             <View style={{ paddingHorizontal: 15 }}>

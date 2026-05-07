@@ -45,8 +45,8 @@ const EMOJI_OPTIONS = [
   '😎',
   '🤓',
   '🫶',
-  '🙏',
-  '🕊️',
+  '🤗',
+  '🌹',
   '📖',
   '📚',
   '✨',
@@ -59,7 +59,7 @@ const EMOJI_OPTIONS = [
   '🌸',
   '🌻',
   '🌳',
-  '🍀',
+  '🌺',
   '🌈',
   '🐑',
   '🦋',
@@ -109,20 +109,10 @@ interface Props {
    * pass a unique name so picks don't trample each other's files.
    */
   imageFileName?: string
-  /**
-   * Show the accent-tone swatches above the emoji grid. When provided,
-   * `backgroundValue` and `onBackgroundChange` must also be supplied.
-   */
-  showBackgroundSwatches?: boolean
   /** Currently-selected background override (null = match accent). */
   backgroundValue?: string | null
   /** Called when the user picks a different swatch. */
-  onBackgroundChange?: (next: string | null) => void
-  /**
-   * When true, the swatches are wrapped in the `IsSupporter` gate. The user's
-   * profile avatar uses this; per-contact backgrounds do not.
-   */
-  gateBackgroundBySupporter?: boolean
+  onBackgroundChange: (next: string | null) => void
   /**
    * Optional callback invoked alongside `onChange` when the user picks an image
    * — surfaces the metadata (resolution / file size / capture time) needed by
@@ -210,20 +200,11 @@ const AvatarPickerContent = ({
   value,
   onChange,
   imageFileName = DEFAULT_AVATAR_FILENAME,
-  showBackgroundSwatches = false,
   backgroundValue = null,
   onBackgroundChange,
-  gateBackgroundBySupporter = false,
   onImageMeta,
 }: Props) => {
   const theme = useTheme()
-  // Image avatars ignore the background color, so hide the swatches when the
-  // current pick is an image even if the caller opted in.
-  const renderSwatches =
-    showBackgroundSwatches &&
-    value.type !== 'image' &&
-    onBackgroundChange !== undefined
-
   const destPath = `${FileSystem.documentDirectory}${imageFileName}`
   const originalPath = `${FileSystem.documentDirectory}${originalSiblingFileName(imageFileName)}`
 
@@ -327,25 +308,16 @@ const AvatarPickerContent = ({
 
   return (
     <View style={{ width: gridWidth, gap: 12 }}>
-      {renderSwatches &&
-        onBackgroundChange &&
-        (gateBackgroundBySupporter ? (
-          <IsSupporter
-            feature='customAccentColor'
-            size='sm'
-            title={i18n.t('avatarBackgroundColor')}
-          >
-            <BackgroundSwatches
-              value={backgroundValue}
-              onChange={onBackgroundChange}
-            />
-          </IsSupporter>
-        ) : (
-          <BackgroundSwatches
-            value={backgroundValue}
-            onChange={onBackgroundChange}
-          />
-        ))}
+      <IsSupporter
+        feature='customAccentColor'
+        size='sm'
+        title={i18n.t('avatarBackgroundColor')}
+      >
+        <BackgroundSwatches
+          value={backgroundValue}
+          onChange={onBackgroundChange}
+        />
+      </IsSupporter>
       <View
         style={{
           flexDirection: 'row',

@@ -55,6 +55,41 @@ export const consecutiveWeeksStreak = (
   return streak
 }
 
+/**
+ * Counts trailing months with at least one day of logged service, ending with
+ * the current month. Stops counting at the first empty month.
+ */
+export const consecutiveMonthsStreak = (
+  daily: Map<string, number>,
+  now: Date = new Date()
+): number => {
+  let streak = 0
+  const cursor = moment(now).startOf('month')
+  for (let i = 0; i < 600; i++) {
+    let hasDay = false
+    const daysInMonth = cursor.daysInMonth()
+    for (let d = 0; d < daysInMonth; d++) {
+      const key = dayKey(cursor.clone().add(d, 'days'))
+      if ((daily.get(key) || 0) > 0) {
+        hasDay = true
+        break
+      }
+    }
+    if (!hasDay) {
+      // Allow the current month to be empty without breaking the streak —
+      // a user mid-month hasn't "lost" their streak yet.
+      if (i === 0) {
+        cursor.subtract(1, 'month')
+        continue
+      }
+      break
+    }
+    streak++
+    cursor.subtract(1, 'month')
+  }
+  return streak
+}
+
 /** Total minutes logged in the trailing N days (inclusive of today). */
 export const minutesInTrailingDays = (
   daily: Map<string, number>,

@@ -19,11 +19,13 @@ import {
   faStopwatch,
   faComments,
   faCalendar,
+  faCalendarCheck,
   faBullseye,
   faMap,
   faPlay,
   faPause,
   faBell,
+  faCheck,
 } from '@fortawesome/free-solid-svg-icons'
 import moment from 'moment'
 import { styles } from '../Onboarding.styles'
@@ -35,7 +37,7 @@ import WeekStripTeaser from '../../WeekStripTeaser'
 import useTheme from '../../../contexts/theme'
 import i18n, { TranslationKey } from '../../../lib/locales'
 import { OnboardingIntent, usePreferences } from '../../../stores/preferences'
-import { isPioneer } from '../../../lib/publisherCapabilities'
+import { getEntryMode, isPioneer } from '../../../lib/publisherCapabilities'
 import { useMarkerColors } from '../../../hooks/useMarkerColors'
 import { Theme } from '../../../types/theme'
 import type { DayPlan, ServiceReport } from '../../../types/serviceReport'
@@ -95,6 +97,24 @@ const INTENT_META: Record<OnboardingIntent, IntentMeta> = {
     headerKey: 'yourPlanMapHeader',
     actionKey: 'yourPlanActionMapContacts',
   },
+}
+
+// Checkbox-mode publishers don't track hours — the "track your service time"
+// framing reads as both inaccurate and judgey. Swap to neutral "monthly
+// activity, recorded" copy + a calendar-check icon for that audience only.
+const effectiveMeta = (
+  id: OnboardingIntent,
+  entryMode: 'checkbox' | 'hours'
+): IntentMeta => {
+  if (id === 'trackTime' && entryMode === 'checkbox') {
+    return {
+      ...INTENT_META.trackTime,
+      icon: faCalendarCheck,
+      headerKey: 'yourPlanTrackTimeCheckboxHeader',
+      actionKey: 'yourPlanActionTrackTimeCheckbox',
+    }
+  }
+  return INTENT_META[id]
 }
 
 const INTENT_ORDER: OnboardingIntent[] = [
@@ -233,6 +253,108 @@ const TrackTimeVisual = ({
             fillStyle,
           ]}
         />
+      </View>
+    </View>
+  )
+}
+
+const CheckOffMonthVisual = ({
+  accent,
+  tint,
+  active,
+}: {
+  accent: string
+  tint: string
+  active: boolean
+}) => {
+  const theme = useTheme()
+  const fill = useSharedValue(0)
+  const tick = useSharedValue(0)
+
+  useEffect(() => {
+    if (!active) {
+      cancelAnimation(fill)
+      cancelAnimation(tick)
+      fill.value = 0
+      tick.value = 0
+      return
+    }
+    fill.value = 0
+    tick.value = 0
+    fill.value = withTiming(1, {
+      duration: 380,
+      easing: Easing.out(Easing.cubic),
+    })
+    tick.value = withTiming(1, {
+      duration: 320,
+      easing: Easing.out(Easing.cubic),
+    })
+    return () => {
+      cancelAnimation(fill)
+      cancelAnimation(tick)
+    }
+  }, [active, fill, tick])
+
+  const fillStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: fill.value }],
+  }))
+  const tickStyle = useAnimatedStyle(() => ({
+    opacity: tick.value,
+    transform: [{ scale: 0.6 + tick.value * 0.4 }],
+  }))
+
+  return (
+    <View style={{ width: '100%', gap: 10, alignItems: 'center' }}>
+      <View
+        style={{
+          width: 56,
+          height: 56,
+          borderRadius: 12,
+          borderWidth: 2,
+          borderColor: accent,
+          backgroundColor: tint,
+          justifyContent: 'center',
+          alignItems: 'center',
+          overflow: 'hidden',
+        }}
+      >
+        <Animated.View
+          style={[
+            {
+              position: 'absolute',
+              width: '100%',
+              height: '100%',
+              backgroundColor: accent,
+            },
+            fillStyle,
+          ]}
+        />
+        <Animated.View style={tickStyle}>
+          <FontAwesomeIcon
+            icon={faCheck}
+            size={28}
+            color={theme.colors.textInverse}
+          />
+        </Animated.View>
+      </View>
+      <View style={{ alignItems: 'center', gap: 2 }}>
+        <Text
+          style={{
+            fontSize: 13,
+            fontFamily: theme.fonts.semiBold,
+            color: theme.colors.text,
+          }}
+        >
+          {i18n.t('yourPlanCheckOffMonthLabel')}
+        </Text>
+        <Text
+          style={{
+            fontSize: 11,
+            color: theme.colors.textAlt,
+          }}
+        >
+          {moment().format('MMMM YYYY')}
+        </Text>
       </View>
     </View>
   )
@@ -646,11 +768,15 @@ const Stage = ({
   goalHours,
   publisherLabel,
   pioneeringLine,
+  entryMode,
+  isPreview,
 }: {
   intents: OnboardingIntent[]
   goalHours: number
   publisherLabel: string
   pioneeringLine: string | null
+  entryMode: 'checkbox' | 'hours'
+  isPreview: boolean
 }) => {
   const theme = useTheme()
   const [idx, setIdx] = useState(0)
@@ -659,7 +785,7 @@ const Stage = ({
   const reel = intents
   const reelLength = reel.length
   const active = reel[idx] ?? reel[0]
-  const meta = INTENT_META[active]
+  const meta = effectiveMeta(active, entryMode)
   const accent = meta.accent(theme)
   const tint = meta.tint(theme)
 
@@ -704,6 +830,16 @@ const Stage = ({
   const visual = (() => {
     switch (active) {
       case 'trackTime':
+        if (entryMode === 'checkbox') {
+          return (
+            <CheckOffMonthVisual
+              key='trackTime-checkbox'
+              accent={accent}
+              tint={tint}
+              active={!paused}
+            />
+          )
+        }
         return (
           <TrackTimeVisual
             key='trackTime'
@@ -792,18 +928,20 @@ const Stage = ({
               >
                 {i18n.t(meta.headerKey)}
               </Text>
-              <Text style={{ fontSize: 11, color: theme.colors.textAlt }}>
-                {i18n.t('yourPlanBecausePrefix')}{' '}
-                <Text
-                  style={{
-                    fontSize: 11,
-                    color: accent,
-                    fontFamily: theme.fonts.semiBold,
-                  }}
-                >
-                  {i18n.t(meta.actionKey)}
+              {!isPreview && (
+                <Text style={{ fontSize: 11, color: theme.colors.textAlt }}>
+                  {i18n.t('yourPlanBecausePrefix')}{' '}
+                  <Text
+                    style={{
+                      fontSize: 11,
+                      color: accent,
+                      fontFamily: theme.fonts.semiBold,
+                    }}
+                  >
+                    {i18n.t(meta.actionKey)}
+                  </Text>
                 </Text>
-              </Text>
+              )}
             </View>
             <View
               style={{
@@ -908,7 +1046,7 @@ const Stage = ({
         }}
       >
         {reel.map((id, i) => {
-          const m = INTENT_META[id]
+          const m = effectiveMeta(id, entryMode)
           const a = m.accent(theme)
           const t = m.tint(theme)
           const on = i === idx
@@ -1007,6 +1145,7 @@ const YourPlanPreview = ({ goBack, goNext }: Props) => {
 
   const monthlyGoalHours = publisherHours[publisher] ?? 0
   const publisherLabel = i18n.t(publisher)
+  const entryMode = getEntryMode(publisher)
 
   const pioneering = isPioneer(publisher) && pioneerStartDate
   const pioneeringLine = pioneering
@@ -1016,14 +1155,26 @@ const YourPlanPreview = ({ goBack, goNext }: Props) => {
       })
     : null
 
-  // Tour the user's picks. If they skipped the picker, show all five so the
-  // screen still demonstrates the app rather than rendering an empty stage.
+  // Tour the user's picks. If they skipped the picker, fall back to all five
+  // and flip into preview mode so the screen reads as an app tour rather than a
+  // (false) personalization claim.
   const reel: OnboardingIntent[] = useMemo(() => {
     const picked = INTENT_ORDER.filter((id) => onboardingIntents.includes(id))
     return picked.length > 0 ? picked : INTENT_ORDER
   }, [onboardingIntents])
+  const isPreview = onboardingIntents.length === 0
 
-  const youOrName = name?.trim() ? name.trim() : i18n.t('yourPlanHeroYou')
+  const trimmedName = name?.trim()
+  const heroKey: TranslationKey = isPreview
+    ? trimmedName
+      ? 'yourPlanHeroPreview'
+      : 'yourPlanHeroPreviewNoName'
+    : trimmedName
+      ? 'yourPlanHero'
+      : 'yourPlanHeroNoName'
+  const introKey: TranslationKey = isPreview
+    ? 'yourPlanIntroPreview'
+    : 'yourPlanIntro'
 
   return (
     <Wrapper
@@ -1047,7 +1198,9 @@ const YourPlanPreview = ({ goBack, goNext }: Props) => {
         >
           <View style={{ gap: 8 }}>
             <Text style={[styles.stepTitle, { marginBottom: 0 }]}>
-              {i18n.t('yourPlanHero', { youOrName })}
+              {trimmedName
+                ? i18n.t(heroKey, { name: trimmedName })
+                : i18n.t(heroKey)}
             </Text>
             <Text
               style={{
@@ -1056,7 +1209,7 @@ const YourPlanPreview = ({ goBack, goNext }: Props) => {
                 lineHeight: 20,
               }}
             >
-              {i18n.t('yourPlanIntro')}
+              {i18n.t(introKey)}
             </Text>
           </View>
 
@@ -1065,6 +1218,8 @@ const YourPlanPreview = ({ goBack, goNext }: Props) => {
             goalHours={monthlyGoalHours}
             publisherLabel={publisherLabel}
             pioneeringLine={pioneeringLine}
+            entryMode={entryMode}
+            isPreview={isPreview}
           />
         </View>
       </View>

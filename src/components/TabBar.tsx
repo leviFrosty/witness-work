@@ -24,8 +24,8 @@ import QuickActionSheet from './QuickActionSheet'
 import { RootStackNavigation } from '../types/rootStack'
 import { HomeTabStackNavigation } from '../types/homeStack'
 
-const CAPSULE_HEIGHT = 56
-const FLOATING_GAP = 6
+const CAPSULE_HEIGHT = 52
+const FLOATING_GAP = 2
 const HORIZONTAL_MARGIN = 12
 const PILL_GAP = 8
 const ACCESSORY_DIAMETER = CAPSULE_HEIGHT

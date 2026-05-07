@@ -6,6 +6,7 @@ import {
   faStopwatch,
   faComments,
   faCalendar,
+  faCalendarCheck,
   faBullseye,
   faMap,
   faCheck,
@@ -20,6 +21,7 @@ import Button from '../../Button'
 import useTheme from '../../../contexts/theme'
 import i18n, { TranslationKey } from '../../../lib/locales'
 import { usePreferences, OnboardingIntent } from '../../../stores/preferences'
+import { getEntryMode } from '../../../lib/publisherCapabilities'
 
 interface Props {
   goBack: () => void
@@ -35,13 +37,14 @@ interface IntentOption {
 
 const IntentPicker = ({ goBack, goNext }: Props) => {
   const theme = useTheme()
-  const { onboardingIntents, set } = usePreferences()
+  const { onboardingIntents, set, publisher } = usePreferences()
+  const isCheckbox = getEntryMode(publisher) === 'checkbox'
 
   const options: IntentOption[] = [
     {
       id: 'trackTime',
-      icon: faStopwatch,
-      labelKey: 'intentTrackTime',
+      icon: isCheckbox ? faCalendarCheck : faStopwatch,
+      labelKey: isCheckbox ? 'intentTrackTimeCheckbox' : 'intentTrackTime',
       color: theme.colors.purple,
     },
     {

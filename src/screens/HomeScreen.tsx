@@ -6,6 +6,7 @@ import {
   upcomingFollowUpConversations,
 } from '../lib/conversations'
 import ApproachingConversations from '../components/ApproachingConversations'
+import MissedConversations from '../components/MissedConversations'
 import ExportTimeSheet, {
   ExportTimeSheetState,
 } from '../components/ExportTimeSheet'
@@ -58,8 +59,6 @@ export const HomeScreen = () => {
   const { isSupporter } = useIsSupporter()
   const { serviceReports } = useServiceReport()
   const [refreshing, setRefreshing] = useState(false)
-  const [missedConversationsDismissed, setMissedConversationsDismissed] =
-    useState(false)
 
   const handleRefresh = useCallback(async () => {
     setRefreshing(true)
@@ -75,7 +74,7 @@ export const HomeScreen = () => {
   const { conversations } = useConversations()
   const { contacts } = useContacts()
   const { isTablet } = useDevice()
-  const { hasAnnualGoal, showsTimer } = usePublisher()
+  const { hasAnnualGoal, showsTimer, showSchedule } = usePublisher()
   const { serviceReportTags, homeScreenElements } = usePreferences()
   const navigation = useNavigation<HomeTabStackNavigation>()
   const rootNavigation = useNavigation<RootStackNavigation>()
@@ -128,9 +127,6 @@ export const HomeScreen = () => {
     const activeIds = new Set(contacts.map((c) => c.id))
     return overdue.filter((c) => activeIds.has(c.contact.id))
   }, [contacts, conversations])
-  const visibleOverdueConvos = missedConversationsDismissed
-    ? []
-    : overdueConvosWithActiveContacts
 
   const showSupporterNudge = useMemo(
     () =>
@@ -233,17 +229,16 @@ export const HomeScreen = () => {
           <ProfileCard
             onPressIncomplete={() => rootNavigation.navigate('ProfileSetup')}
           />
-          {homeScreenElements.approachingConversations &&
-            (approachingConvosWithActiveContacts.length > 0 ||
-              visibleOverdueConvos.length > 0) && (
+          {homeScreenElements.approachingConversations && (
+            <>
+              <MissedConversations
+                conversations={overdueConvosWithActiveContacts}
+              />
               <ApproachingConversations
                 conversations={approachingConvosWithActiveContacts}
-                overdueConversations={visibleOverdueConvos}
-                onDismissMissedConversations={() =>
-                  setMissedConversationsDismissed(true)
-                }
               />
-            )}
+            </>
+          )}
           {shouldRemindToBackup && <BackupReminder />}
           <HomeChecklist />
           {showSupporterNudge && <SupporterNudgeCard />}
@@ -278,7 +273,7 @@ export const HomeScreen = () => {
           {homeScreenElements.serviceReport && (
             <ServiceReportSection setSheet={setExportTimeSheet} />
           )}
-          {homeScreenElements.thisWeek && (
+          {homeScreenElements.thisWeek && showSchedule && (
             <WeekStripTeaser
               month={currentMonth}
               year={currentYear}

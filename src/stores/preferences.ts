@@ -423,6 +423,14 @@ export const PREFERENCE_DEFAULTS = {
    */
   homeChecklistManualCompletions: [] as string[],
   /**
+   * One-shot flag that flips the first time the Home checklist transitions to
+   * fully complete, so the celebration burst (fireworks + success haptic +
+   * scale-pop) plays once and not on every Home screen mount. Per-device so a
+   * user upgrading on a second device doesn't retroactively see a celebration
+   * they already saw elsewhere.
+   */
+  homeChecklistAllDoneCelebrated: false,
+  /**
    * Stable id of the onboarding step the user was last on, so a mid-flow app
    * reload resumes where they left off instead of throwing them back to the
    * hero. Stored as an id (not an index) because publisher-conditional steps
@@ -512,6 +520,7 @@ export const NON_SYNCABLE_PREFERENCE_KEYS = new Set<string>([
   'lastBackupDate',
   'onboardingStepId',
   'celebratedTiers',
+  'homeChecklistAllDoneCelebrated',
   'devRolloverDateOverride',
 ])
 

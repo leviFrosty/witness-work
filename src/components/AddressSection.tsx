@@ -1,10 +1,10 @@
-import { TextInput, View } from 'react-native'
+import { TextInput, TouchableOpacity, View } from 'react-native'
 import { Address, Contact } from '../types/contact'
 import useTheme from '../contexts/theme'
 import { useState } from 'react'
 import XView from './layout/XView'
 import Text from './MyText'
-import i18n from '../lib/locales'
+import i18n, { TranslationKey } from '../lib/locales'
 import Button from './Button'
 import Section from './inputs/Section'
 import TextInputRow from './inputs/TextInputRow'
@@ -12,8 +12,66 @@ import PinLocation from './PinLocation'
 import AddressAutocomplete, { Suggestion } from './AddressAutocomplete'
 import Divider from './Divider'
 import IconButton from './IconButton'
-import { faBolt } from '@fortawesome/free-solid-svg-icons'
+import {
+  faBolt,
+  faMagnifyingGlass,
+  faPenToSquare,
+} from '@fortawesome/free-solid-svg-icons'
+import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
+import { IconProp } from '@fortawesome/fontawesome-svg-core'
 import { addressToString } from '../lib/address'
+
+type Mode = 'search' | 'manual'
+
+const ModeSegment: React.FC<{
+  active: boolean
+  icon: IconProp
+  labelKey: TranslationKey
+  onPress: () => void
+}> = ({ active, icon, labelKey, onPress }) => {
+  const theme = useTheme()
+  return (
+    <TouchableOpacity
+      onPress={onPress}
+      activeOpacity={0.7}
+      accessibilityRole='button'
+      accessibilityState={{ selected: active }}
+      style={{
+        flex: 1,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 8,
+        paddingVertical: 8,
+        borderRadius: theme.numbers.borderRadiusSm,
+        backgroundColor: active
+          ? theme.colors.backgroundLighter
+          : 'transparent',
+        shadowColor: active ? theme.colors.shadow : undefined,
+        shadowOpacity: active ? 0.08 : 0,
+        shadowRadius: 2,
+        shadowOffset: { width: 0, height: 1 },
+      }}
+    >
+      <FontAwesomeIcon
+        icon={icon}
+        size={13}
+        style={{
+          color: active ? theme.colors.text : theme.colors.textAlt,
+        }}
+      />
+      <Text
+        style={{
+          color: active ? theme.colors.text : theme.colors.textAlt,
+          fontFamily: active ? theme.fonts.semiBold : theme.fonts.regular,
+          fontSize: theme.fontSize('sm'),
+        }}
+      >
+        {i18n.t(labelKey)}
+      </Text>
+    </TouchableOpacity>
+  )
+}
 
 export default function AddressSection({
   contact,
@@ -61,7 +119,7 @@ export default function AddressSection({
   const [isResult, setIsResult] = useState(!!contact.address)
   const [suggestions, setSuggestions] = useState<Suggestion[]>([])
   const [error, setError] = useState(false)
-  const [manuallyEnteringAddress, setManuallyEnteringAddress] = useState(false)
+  const [mode, setMode] = useState<Mode>('search')
   const [hasCleared, setHasCleared] = useState(false)
   const keysSameAsPrefill = (): (keyof Address)[] => {
     if (!contact.address || !prefill.address) {
@@ -100,6 +158,24 @@ export default function AddressSection({
       ...prevContact,
       address: selectedAddress,
     }))
+  }
+
+  const switchMode = (next: Mode) => {
+    if (next === mode) return
+    if (next === 'manual') {
+      // Switching from search to manual entry — move query to line1 if it
+      // hasn't been resolved to a real result yet.
+      if (query && !isResult) {
+        setLine1(query)
+      }
+    } else {
+      // Switching from manual entry back to search — preload query with line1.
+      if (contact.address?.line1) {
+        setQuery(contact.address.line1)
+        setIsResult(false)
+      }
+    }
+    setMode(next)
   }
 
   return (
@@ -148,8 +224,34 @@ export default function AddressSection({
           </View>
         </XView>
       )}
+      <View
+        style={{
+          flexDirection: 'row',
+          marginHorizontal: 20,
+          marginBottom: 10,
+          padding: 3,
+          borderRadius: theme.numbers.borderRadiusSm + 3,
+          backgroundColor: theme.colors.background,
+          borderWidth: 1,
+          borderColor: theme.colors.border,
+          gap: 3,
+        }}
+      >
+        <ModeSegment
+          active={mode === 'search'}
+          icon={faMagnifyingGlass}
+          labelKey='searchAddress'
+          onPress={() => switchMode('search')}
+        />
+        <ModeSegment
+          active={mode === 'manual'}
+          icon={faPenToSquare}
+          labelKey='enterManually'
+          onPress={() => switchMode('manual')}
+        />
+      </View>
       <Section>
-        {!manuallyEnteringAddress ? (
+        {mode === 'search' ? (
           <AddressAutocomplete
             onSelect={handleAddressSelect}
             error={error}
@@ -248,37 +350,6 @@ export default function AddressSection({
             </View>
           </>
         )}
-        <Button
-          style={{ marginTop: 10 }}
-          onPress={() => {
-            const newManualMode = !manuallyEnteringAddress
-
-            if (newManualMode) {
-              // Switching from search to manual entry - move query to line1
-              if (query && !isResult) {
-                setLine1(query)
-              }
-            } else {
-              // Switching from manual entry to search - move line1 to query
-              if (contact.address?.line1) {
-                setQuery(contact.address.line1)
-                setIsResult(false)
-              }
-            }
-
-            setManuallyEnteringAddress(newManualMode)
-          }}
-        >
-          <Text
-            style={{
-              textDecorationLine: 'underline',
-              color: theme.colors.textAlt,
-              fontSize: theme.fontSize('sm'),
-            }}
-          >
-            {i18n.t(manuallyEnteringAddress ? 'search' : 'manuallyEnter')}
-          </Text>
-        </Button>
       </Section>
 
       <Divider marginVertical={20} />

@@ -41,6 +41,12 @@
 - Add deep links from reminder notification -> contact details page.
 - Make the lock screen larger widget remove the encouragement text and overall increase the font size of the "month" and hours and progress bar size.
 - Resolve gap where "Search address" isn't enabled unless the user enables location services. Currently if user hasn't enabled location services, the queries are wildly inaccurate as it doesn't have a coordinate to center its searches off of.
+- Add spiritual goals list section on ProfileDetailOverlay:
+  - Reminders (optional)
+  - Goal
+  - Date
+  -
+- Add a "Did you know?" tip card (drip-feed feature discovery), likely at the bottom of the home screen. Rotates through lesser-known features one at a time so users discover them gradually instead of all at once. Should be dismissible per-tip and remember which ones have been shown.
 
 ## Supporter features
 

@@ -16,6 +16,7 @@ import Purchases, {
 } from 'react-native-purchases'
 import SupporterBadge from '../components/SupporterBadge'
 import GlassCard from '../components/GlassCard'
+import SegmentedControl from '../components/SegmentedControl'
 import PreviousDonations from '../components/PreviousDonations'
 import Divider from '../components/Divider'
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
@@ -393,125 +394,6 @@ const PriceOption = ({
   )
 }
 
-interface BillingToggleProps {
-  value: SupporterBilling
-  onChange: (value: SupporterBilling) => void
-}
-
-const BillingToggle = ({ value, onChange }: BillingToggleProps) => {
-  const theme = useTheme()
-  const options: ReadonlyArray<{
-    key: SupporterBilling
-    label: string
-    save?: string
-  }> = [
-    { key: 'monthly', label: i18n.t('paywallBillingMonthly') },
-    {
-      key: 'annual',
-      label: i18n.t('paywallBillingAnnual'),
-      save: i18n.t('paywallBillingAnnualSave'),
-    },
-  ]
-  return (
-    <XView
-      style={{
-        alignSelf: 'center',
-        backgroundColor: theme.colors.backgroundLighter,
-        borderRadius: 999,
-        padding: 2,
-        gap: 2,
-      }}
-    >
-      {options.map((opt) => {
-        const active = value === opt.key
-        return (
-          <Button
-            key={opt.key}
-            onPress={() => onChange(opt.key)}
-            style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              gap: 5,
-              paddingHorizontal: 10,
-              paddingVertical: 4,
-              borderRadius: 999,
-              backgroundColor: active ? theme.colors.card : 'transparent',
-              shadowColor: active ? theme.colors.shadow : 'transparent',
-              shadowOffset: { width: 0, height: 1 },
-              shadowOpacity: active ? 0.15 : 0,
-              shadowRadius: 2,
-            }}
-          >
-            <Text
-              style={{
-                fontSize: 12,
-                fontFamily: active ? theme.fonts.semiBold : theme.fonts.regular,
-                color: active ? theme.colors.text : theme.colors.textAlt,
-              }}
-            >
-              {opt.label}
-            </Text>
-            {opt.save && (
-              <Text
-                style={{
-                  fontSize: 10,
-                  fontFamily: theme.fonts.semiBold,
-                  color: theme.colors.supporter,
-                  letterSpacing: 0.3,
-                }}
-              >
-                {opt.save}
-              </Text>
-            )}
-          </Button>
-        )
-      })}
-    </XView>
-  )
-}
-
-interface TabPillProps {
-  active: boolean
-  label: string
-  onPress: () => void
-  showBadge?: boolean
-}
-
-const TabPill = ({ active, label, onPress, showBadge }: TabPillProps) => {
-  const theme = useTheme()
-  return (
-    <Button
-      onPress={onPress}
-      style={{
-        flex: 1,
-        paddingVertical: 10,
-        paddingHorizontal: 16,
-        borderRadius: theme.numbers.borderRadiusXl,
-        backgroundColor: active ? theme.colors.card : 'transparent',
-        shadowColor: active ? theme.colors.shadow : 'transparent',
-        shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: active ? 0.15 : 0,
-        shadowRadius: 3,
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'center',
-        gap: 6,
-      }}
-    >
-      <Text
-        style={{
-          fontSize: 14,
-          fontFamily: active ? theme.fonts.semiBold : theme.fonts.regular,
-          color: active ? theme.colors.text : theme.colors.textAlt,
-        }}
-      >
-        {label}
-      </Text>
-      {showBadge && <SupporterBadge iconOnly size='sm' />}
-    </Button>
-  )
-}
-
 interface DevPillButtonProps {
   icon: IconDefinition
   label: string
@@ -832,27 +714,19 @@ const PaywallScreen = () => {
         <FounderLetter />
         <ComparisonChart />
 
-        <View
-          style={{
-            flexDirection: 'row',
-            padding: 4,
-            borderRadius: theme.numbers.borderRadiusXl,
-            backgroundColor: theme.colors.backgroundLighter,
-            gap: 4,
-          }}
-        >
-          <TabPill
-            active={tier === 'supporter'}
-            label={i18n.t('paywallTierSupporter')}
-            onPress={() => setTier('supporter')}
-            showBadge
-          />
-          <TabPill
-            active={tier === 'tip'}
-            label={i18n.t('paywallTierTip')}
-            onPress={() => setTier('tip')}
-          />
-        </View>
+        <SegmentedControl<Tier>
+          variant='pill'
+          value={tier}
+          onChange={setTier}
+          options={[
+            {
+              key: 'supporter',
+              label: i18n.t('paywallTierSupporter'),
+              trailing: <SupporterBadge iconOnly size='sm' />,
+            },
+            { key: 'tip', label: i18n.t('paywallTierTip') },
+          ]}
+        />
 
         <Text
           style={{
@@ -883,9 +757,20 @@ const PaywallScreen = () => {
         )}
 
         {showBillingToggle && (
-          <BillingToggle
+          <SegmentedControl<SupporterBilling>
+            variant='pill'
+            size='sm'
             value={supporterBilling}
             onChange={setSupporterBilling}
+            style={{ alignSelf: 'center' }}
+            options={[
+              { key: 'monthly', label: i18n.t('paywallBillingMonthly') },
+              {
+                key: 'annual',
+                label: i18n.t('paywallBillingAnnual'),
+                subLabel: { text: i18n.t('paywallBillingAnnualSave') },
+              },
+            ]}
           />
         )}
 

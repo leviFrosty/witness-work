@@ -38,14 +38,10 @@ interface Props {
   imageFileName?: string
   /** Background color for the avatar circle when emoji/letter fallback. */
   background?: string
-  /** Show the accent-tone background swatches above the emoji grid. */
-  showBackgroundSwatches?: boolean
-  /** Currently-selected background override; required when swatches are shown. */
+  /** Currently-selected background override (null = match accent). */
   backgroundValue?: string | null
-  /** Called when a swatch is picked; required when swatches are shown. */
-  onBackgroundChange?: (next: string | null) => void
-  /** Wrap swatches in the supporter gate (used by the user's profile only). */
-  gateBackgroundBySupporter?: boolean
+  /** Called when the user picks a different swatch. */
+  onBackgroundChange: (next: string | null) => void
   /** Accessibility label for the tappable anchor. Defaults to "profilePicture". */
   accessibilityLabel?: string
   /**
@@ -71,10 +67,8 @@ const AvatarPickerPopover = ({
   size = 44,
   imageFileName,
   background,
-  showBackgroundSwatches = false,
   backgroundValue = null,
   onBackgroundChange,
-  gateBackgroundBySupporter = false,
   accessibilityLabel,
   onImageMeta,
 }: Props) => {
@@ -225,10 +219,8 @@ const AvatarPickerPopover = ({
             value={value}
             onChange={handleChange}
             imageFileName={imageFileName}
-            showBackgroundSwatches={showBackgroundSwatches}
             backgroundValue={backgroundValue}
             onBackgroundChange={onBackgroundChange}
-            gateBackgroundBySupporter={gateBackgroundBySupporter}
             onImageMeta={onImageMeta}
           />
         </Animated.View>

@@ -7,6 +7,8 @@ import { ICountryCca2 } from 'react-native-international-phone-number/lib/interf
 import InputRowContainer from '../components/inputs/InputRowContainer'
 import { parsePhoneNumber } from 'awesome-phonenumber'
 import ActionButton from '../components/ActionButton'
+import Button from '../components/Button'
+import Divider from './Divider'
 import { Contact } from '../types/contact'
 import { Alert, TextInput, useColorScheme, View } from 'react-native'
 import TextInputRow from './inputs/TextInputRow'
@@ -119,149 +121,191 @@ export default function PersonalContactSection({
     ])
   }
 
+  const hasManage =
+    visibleDefs.length > 0 || customFieldDefs.some((d) => d.archived)
+
   return (
-    <Section>
-      <InputRowContainer>
-        <View style={{ flex: 1 }}>
-          <PhoneInput
-            hitSlop={{ top: 15, bottom: 15 }}
-            value={contact.phone || ''}
-            defaultValue={defaultValue}
-            onChangePhoneNumber={(phone: string) => setPhone(phone)}
-            defaultCountry={locales[0].regionCode as ICountryCca2}
-            selectedCountry={country}
-            placeholder={i18n.t('phone_placeholder')}
-            placeholderTextColor={theme.colors.textAlt}
-            popularCountries={['US', 'KR', 'BR', 'JP', 'MX', 'CA']}
-            onChangeSelectedCountry={handleCountryChange}
-            theme={colorScheme as ITheme}
-            inputMode='numeric'
-            clearButtonMode='while-editing'
-            customCaret={<IconButton icon={faCaretDown} />}
-            phoneInputStyles={{
-              container: {
-                borderWidth: 0,
-                backgroundColor: theme.colors.backgroundLighter,
-              },
-              flagContainer: {
-                backgroundColor: theme.colors.card,
-                borderRadius: theme.numbers.borderRadiusSm,
-              },
-              input: {
-                fontSize: theme.fontSize('md'),
-                textAlign: 'right',
-                paddingHorizontal: 2,
-              },
-              callingCode: {
-                fontSize: theme.fontSize('md'),
-              },
-              divider: {
-                backgroundColor: theme.colors.border,
-              },
-              caret: {
-                fontSize: theme.fontSize('sm'),
-                color: theme.colors.textAlt,
-              },
-            }}
-            modalStyles={{
-              modal: {
-                backgroundColor: theme.colors.background,
-              },
-              searchInput: {
-                borderColor: theme.colors.border,
-              },
-              countryButton: {
-                borderColor: theme.colors.border,
-                backgroundColor: theme.colors.card,
-                shadowColor: theme.colors.shadow,
-                shadowOffset: { height: 1, width: 0 },
-                shadowOpacity: theme.numbers.shadowOpacity,
-              },
-            }}
-          />
-          {placeholder.current.length > 0 && !formatted.possible && (
-            <Text
-              style={{
-                textAlign: 'right',
-                fontSize: theme.fontSize('sm'),
-                color: theme.colors.textAlt,
-              }}
-            >{`"${formatted.number?.input}" ${i18n.t('error')}: ${
-              formatted.possibility
-            }`}</Text>
-          )}
-        </View>
-      </InputRowContainer>
-      <TextInputRow
-        label={i18n.t('email')}
-        ref={emailInput}
-        textInputProps={{
-          placeholder: i18n.t('email_placeholder'),
-          onSubmitEditing: () => line1Input.current?.focus(),
-          keyboardType: 'email-address',
-          onChangeText: (val: string) => setEmail(val),
-          value: contact.email,
-          autoCapitalize: 'none',
-        }}
-      />
-      {visibleDefs.length > 0 &&
-        visibleDefs.map((def) => (
-          <XView key={def.id}>
-            <IconButton
-              icon={faMinus}
-              color={theme.colors.error}
-              onPress={() => handleDeletePrompt(def.id)}
-              style={{ paddingBottom: 15 }}
-            />
-            <TextInputRow
-              label={def.label}
-              style={{ flex: 1 }}
-              textInputProps={{
-                placeholder: `${i18n.t('goesHere')}`,
-                onChangeText: (val: string) => {
-                  setCustomField(def.id, val)
+    <View style={{ gap: 24 }}>
+      <Section>
+        <InputRowContainer>
+          <View style={{ flex: 1 }}>
+            <PhoneInput
+              hitSlop={{ top: 15, bottom: 15 }}
+              value={contact.phone || ''}
+              defaultValue={defaultValue}
+              onChangePhoneNumber={(phone: string) => setPhone(phone)}
+              defaultCountry={locales[0].regionCode as ICountryCca2}
+              selectedCountry={country}
+              placeholder={i18n.t('phone_placeholder')}
+              placeholderTextColor={theme.colors.textAlt}
+              popularCountries={['US', 'KR', 'BR', 'JP', 'MX', 'CA']}
+              onChangeSelectedCountry={handleCountryChange}
+              theme={colorScheme as ITheme}
+              inputMode='numeric'
+              clearButtonMode='while-editing'
+              customCaret={<IconButton icon={faCaretDown} />}
+              phoneInputStyles={{
+                container: {
+                  borderWidth: 0,
+                  backgroundColor: theme.colors.backgroundLighter,
                 },
-                value: customFields?.[def.id] ?? '',
-                autoCapitalize: 'words',
+                flagContainer: {
+                  backgroundColor: theme.colors.card,
+                  borderRadius: theme.numbers.borderRadiusSm,
+                },
+                input: {
+                  fontSize: theme.fontSize('md'),
+                  textAlign: 'right',
+                  paddingHorizontal: 2,
+                },
+                callingCode: {
+                  fontSize: theme.fontSize('md'),
+                },
+                divider: {
+                  backgroundColor: theme.colors.border,
+                },
+                caret: {
+                  fontSize: theme.fontSize('sm'),
+                  color: theme.colors.textAlt,
+                },
+              }}
+              modalStyles={{
+                modal: {
+                  backgroundColor: theme.colors.background,
+                },
+                searchInput: {
+                  borderColor: theme.colors.border,
+                },
+                countryButton: {
+                  borderColor: theme.colors.border,
+                  backgroundColor: theme.colors.card,
+                  shadowColor: theme.colors.shadow,
+                  shadowOffset: { height: 1, width: 0 },
+                  shadowOpacity: theme.numbers.shadowOpacity,
+                },
               }}
             />
-          </XView>
-        ))}
-      <XView style={{ paddingRight: 20 }}>
+            {placeholder.current.length > 0 && !formatted.possible && (
+              <Text
+                style={{
+                  textAlign: 'right',
+                  fontSize: theme.fontSize('sm'),
+                  color: theme.colors.textAlt,
+                }}
+              >{`"${formatted.number?.input}" ${i18n.t('error')}: ${
+                formatted.possibility
+              }`}</Text>
+            )}
+          </View>
+        </InputRowContainer>
         <TextInputRow
-          label={i18n.t('customField')}
+          label={i18n.t('email')}
+          ref={emailInput}
           textInputProps={{
-            onChangeText: (val: string) => {
-              setCustomFieldName(val)
-            },
-            placeholder: i18n.t('customField_placeholder'),
-            value: customFieldName,
-            autoCapitalize: 'words',
-            maxLength: 14,
+            placeholder: i18n.t('email_placeholder'),
+            onSubmitEditing: () => line1Input.current?.focus(),
+            keyboardType: 'email-address',
+            onChangeText: (val: string) => setEmail(val),
+            value: contact.email,
+            autoCapitalize: 'none',
           }}
-          style={{ flex: 1 }}
           lastInSection
         />
-        <ActionButton
-          disabled={!customFieldName.length}
-          onPress={handleAddNewCustomField}
+      </Section>
+
+      <View style={{ gap: 8 }}>
+        <XView
+          style={{
+            paddingLeft: 25,
+            paddingRight: 20,
+            alignItems: 'center',
+            justifyContent: 'space-between',
+          }}
         >
-          <Text style={{ color: theme.colors.textInverse }}>
-            {i18n.t('add')}
-          </Text>
-        </ActionButton>
-      </XView>
-      {(visibleDefs.length > 0 || customFieldDefs.some((d) => d.archived)) && (
-        <View style={{ paddingTop: 8, paddingRight: 20 }}>
-          <ActionButton
-            onPress={() => navigation.navigate('PreferencesCustomFields')}
+          <Text
+            style={{
+              fontSize: 11,
+              color: theme.colors.textAlt,
+              letterSpacing: 1.4,
+              fontFamily: theme.fonts.semiBold,
+              textTransform: 'uppercase',
+            }}
           >
-            <Text style={{ color: theme.colors.textInverse }}>
-              {i18n.t('manageCustomFields')}
-            </Text>
-          </ActionButton>
-        </View>
-      )}
-    </Section>
+            {i18n.t('customFields')}
+          </Text>
+          {hasManage && (
+            <Button
+              onPress={() => navigation.navigate('PreferencesCustomFields')}
+            >
+              <Text
+                style={{
+                  fontSize: 12,
+                  color: theme.colors.textAlt,
+                  textDecorationLine: 'underline',
+                }}
+              >
+                {i18n.t('manageCustomFields')}
+              </Text>
+            </Button>
+          )}
+        </XView>
+
+        <Section>
+          {visibleDefs.map((def, index) => {
+            const isLast = index === visibleDefs.length - 1
+            return (
+              <XView key={def.id}>
+                <IconButton
+                  icon={faMinus}
+                  color={theme.colors.error}
+                  onPress={() => handleDeletePrompt(def.id)}
+                  style={{ paddingBottom: isLast ? 0 : 15 }}
+                />
+                <TextInputRow
+                  label={def.label}
+                  style={{ flex: 1 }}
+                  textInputProps={{
+                    placeholder: `${i18n.t('goesHere')}`,
+                    onChangeText: (val: string) => {
+                      setCustomField(def.id, val)
+                    },
+                    value: customFields?.[def.id] ?? '',
+                    autoCapitalize: 'words',
+                  }}
+                  lastInSection={isLast}
+                />
+              </XView>
+            )
+          })}
+          {visibleDefs.length > 0 && (
+            <Divider marginVertical={4} marginHorizontal={-3} />
+          )}
+          <XView style={{ paddingRight: 20 }}>
+            <TextInputRow
+              label={i18n.t('customField')}
+              textInputProps={{
+                onChangeText: (val: string) => {
+                  setCustomFieldName(val)
+                },
+                placeholder: i18n.t('customField_placeholder'),
+                value: customFieldName,
+                autoCapitalize: 'words',
+                maxLength: 14,
+              }}
+              style={{ flex: 1 }}
+              lastInSection
+            />
+            <ActionButton
+              disabled={!customFieldName.length}
+              onPress={handleAddNewCustomField}
+            >
+              <Text style={{ color: theme.colors.textInverse }}>
+                {i18n.t('add')}
+              </Text>
+            </ActionButton>
+          </XView>
+        </Section>
+      </View>
+    </View>
   )
 }

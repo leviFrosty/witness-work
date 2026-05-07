@@ -1,24 +1,32 @@
-import { useMemo } from 'react'
+import { useEffect, useMemo } from 'react'
 import { Pressable, View } from 'react-native'
 import {
   faCheck,
   faCircle,
   faCircleCheck,
-  faTimes,
 } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
-import { useNavigation } from '@react-navigation/native'
+import { useIsFocused, useNavigation } from '@react-navigation/native'
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withSequence,
+  withTiming,
+} from 'react-native-reanimated'
 import useTheme from '../../contexts/theme'
 import Text from '../MyText'
 import XView from '../layout/XView'
-import IconButton from '../IconButton'
 import i18n from '../../lib/locales'
 import { usePreferences } from '../../stores/preferences'
 import useServiceReport from '../../stores/serviceReport'
 import useContacts from '../../stores/contactsStore'
+import usePublisher from '../../hooks/usePublisher'
+import useFireworks from '../../hooks/useFireworks'
+import Haptics from '../../lib/haptics'
+import Button from '../Button'
 import { HomeTabStackNavigation } from '../../types/homeStack'
 import { RootStackNavigation } from '../../types/rootStack'
-import Card from '../Card'
+import DismissableCard from '../DismissableCard'
 
 /**
  * Canonical checklist item ids. These strings are intentionally stable so Phase
@@ -85,12 +93,27 @@ const HomeChecklist = () => {
   const {
     homeChecklistDismissed,
     homeChecklistManualCompletions,
+    homeChecklistAllDoneCelebrated,
+    hasCompletedMapOnboarding,
     set: setPref,
   } = prefs
-  const { serviceReports } = useServiceReport()
+  const fireworks = useFireworks()
+  const sealScale = useSharedValue(1)
+  const sealAnimatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: sealScale.value }],
+  }))
+  const { serviceReports, dayPlans, recurringPlans } = useServiceReport()
   const { contacts } = useContacts()
+  const { entryMode } = usePublisher()
+  const isCheckboxMode = entryMode === 'checkbox'
   const homeNavigation = useNavigation<HomeTabStackNavigation>()
   const rootNavigation = useNavigation<RootStackNavigation>()
+  // Tab preloading mounts HomeScreen before the user navigates to it, and a
+  // checklist item can auto-complete from another screen (e.g. logging time).
+  // Gate the celebration on actual Home focus so the burst is queued — backed
+  // by the persisted `homeChecklistAllDoneCelebrated` flag — until the user
+  // is actually looking at the Home tab.
+  const isFocused = useIsFocused()
 
   // Phase 2a owns the `onboardingIntents` field — read defensively so this
   // component compiles before Phase 2a lands. See docs/onboarding-overhaul-plan.md.
@@ -110,63 +133,92 @@ const HomeChecklist = () => {
   }, [serviceReports])
 
   const hasAnyContact = contacts.length > 0
+  const hasAnyPlan = dayPlans.length > 0 || recurringPlans.length > 0
 
   const autoCompletedIds = useMemo(() => {
     const set = new Set<HomeChecklistItemId>()
     if (hasAnyServiceReport) set.add('logFirstMinute')
     if (hasAnyContact) set.add('addFirstContact')
+    if (hasCompletedMapOnboarding) {
+      set.add('tryTheMap')
+      set.add('mapContacts')
+    }
+    if (hasAnyPlan) {
+      set.add('setMonthlyGoal')
+      set.add('monthlyGoal')
+      set.add('planWeek')
+    }
     return set
-  }, [hasAnyServiceReport, hasAnyContact])
+  }, [
+    hasAnyServiceReport,
+    hasAnyContact,
+    hasCompletedMapOnboarding,
+    hasAnyPlan,
+  ])
 
   const selectedItemIds = useMemo<HomeChecklistItemId[]>(() => {
     const intents: string[] = Array.isArray(onboardingIntentsRaw)
       ? onboardingIntentsRaw
       : []
-    if (intents.length === 0) {
-      return DEFAULT_ITEM_IDS
-    }
-    const mapped = intents
-      .map((intent) => INTENT_TO_ITEM_ID[intent])
-      .filter((id): id is HomeChecklistItemId => Boolean(id))
+    const base =
+      intents.length === 0
+        ? DEFAULT_ITEM_IDS
+        : (() => {
+            const mapped = intents
+              .map((intent) => INTENT_TO_ITEM_ID[intent])
+              .filter((id): id is HomeChecklistItemId => Boolean(id))
+            // Fall back to defaults if every intent is unrecognised (e.g. a
+            // future intent value added upstream) so the user still sees
+            // something useful.
+            return mapped.length > 0 ? mapped : DEFAULT_ITEM_IDS
+          })()
 
-    // Fall back to defaults if every intent is unrecognised (e.g. a future
-    // intent value added upstream) so the user still sees something useful.
-    return mapped.length > 0 ? mapped : DEFAULT_ITEM_IDS
+    return base
   }, [onboardingIntentsRaw])
 
   const items = useMemo<ChecklistItem[]>(
     () =>
-      selectedItemIds.map((id) => ({
-        id,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        label: i18n.t(LABEL_I18N_KEY[id] as any),
-        onPress: () => {
-          switch (id) {
-            case 'logFirstMinute':
-            case 'trackTime':
-              rootNavigation.navigate('Add Time')
-              break
-            case 'addFirstContact':
-            case 'returnVisits':
-              rootNavigation.navigate('Contact Form', {
-                id: '',
-              })
-              break
-            case 'setMonthlyGoal':
-            case 'monthlyGoal':
-              rootNavigation.navigate('PreferencesPublisher')
-              break
-            case 'tryTheMap':
-            case 'mapContacts':
-              homeNavigation.navigate('Map')
-              break
-            case 'planWeek':
-              homeNavigation.navigate('Tools')
-              break
-          }
-        },
-      })),
-    [selectedItemIds, homeNavigation, rootNavigation]
+      selectedItemIds.map((id) => {
+        const isTrackTime = id === 'logFirstMinute' || id === 'trackTime'
+        const labelKey =
+          isTrackTime && isCheckboxMode
+            ? 'homeChecklistCheckOffFirstMonth'
+            : LABEL_I18N_KEY[id]
+        return {
+          id,
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          label: i18n.t(labelKey as any),
+          onPress:
+            isTrackTime && isCheckboxMode
+              ? undefined
+              : () => {
+                  switch (id) {
+                    case 'logFirstMinute':
+                    case 'trackTime':
+                      rootNavigation.navigate('Add Time')
+                      break
+                    case 'addFirstContact':
+                    case 'returnVisits':
+                      rootNavigation.navigate('Contact Form', {
+                        id: '',
+                      })
+                      break
+                    case 'setMonthlyGoal':
+                    case 'monthlyGoal':
+                      homeNavigation.navigate('Schedule')
+                      break
+                    case 'tryTheMap':
+                    case 'mapContacts':
+                      homeNavigation.navigate('Map')
+                      break
+                    case 'planWeek':
+                      homeNavigation.navigate('Tools')
+                      break
+                  }
+                },
+        }
+      }),
+    [selectedItemIds, homeNavigation, rootNavigation, isCheckboxMode]
   )
 
   const isComplete = (id: HomeChecklistItemId) =>
@@ -180,6 +232,7 @@ const HomeChecklist = () => {
     const next = alreadyDone
       ? homeChecklistManualCompletions.filter((i) => i !== id)
       : [...homeChecklistManualCompletions, id]
+    if (!alreadyDone) Haptics.light()
     setPref({ homeChecklistManualCompletions: next })
   }
 
@@ -187,12 +240,35 @@ const HomeChecklist = () => {
 
   const allDone = items.length > 0 && items.every((it) => isComplete(it.id))
 
+  // One-shot celebration. Only fires when the user is actually focused on the
+  // Home tab — if `allDone` flips while they're elsewhere (or the app is
+  // closed), the burst stays queued via the persisted `celebrated` flag and
+  // plays the next time they land on Home.
+  useEffect(() => {
+    if (!isFocused || !allDone || homeChecklistAllDoneCelebrated) return
+    Haptics.success()
+    sealScale.value = withSequence(
+      withTiming(1.25, { duration: 180 }),
+      withTiming(1, { duration: 220 })
+    )
+    fireworks.fire({ count: 22, velocity: 220 })
+    setPref({ homeChecklistAllDoneCelebrated: true })
+  }, [
+    isFocused,
+    allDone,
+    homeChecklistAllDoneCelebrated,
+    fireworks,
+    sealScale,
+    setPref,
+  ])
+
   if (homeChecklistDismissed) return null
   if (items.length === 0) return null
 
   return (
-    <Card>
-      <XView style={{ justifyContent: 'space-between' }}>
+    <DismissableCard
+      onDismiss={handleDismiss}
+      title={
         <Text
           style={{
             fontSize: theme.fontSize('lg'),
@@ -201,12 +277,8 @@ const HomeChecklist = () => {
         >
           {i18n.t('homeChecklistHeader')}
         </Text>
-        <IconButton
-          icon={faTimes}
-          color={theme.colors.textAlt}
-          onPress={handleDismiss}
-        />
-      </XView>
+      }
+    >
       <View style={{ gap: 10 }}>
         {items.map((item) => {
           const done = isComplete(item.id)
@@ -250,19 +322,68 @@ const HomeChecklist = () => {
         })}
       </View>
       {allDone && (
-        <Text
-          style={{
-            fontSize: theme.fontSize('sm'),
-            color: theme.colors.accent,
-            fontFamily: theme.fonts.semiBold,
-            textAlign: 'center',
-            marginTop: 4,
-          }}
-        >
-          {i18n.t('homeChecklistFooter')}
-        </Text>
+        <View style={{ alignItems: 'center', gap: 10, marginTop: 8 }}>
+          <Animated.View
+            style={[
+              {
+                width: 56,
+                height: 56,
+                borderRadius: 28,
+                alignItems: 'center',
+                justifyContent: 'center',
+                backgroundColor: theme.colors.accentTranslucent,
+              },
+              sealAnimatedStyle,
+            ]}
+          >
+            <FontAwesomeIcon
+              icon={faCircleCheck}
+              size={theme.fontSize('3xl')}
+              style={{ color: theme.colors.accent }}
+            />
+          </Animated.View>
+          <Text
+            style={{
+              fontSize: theme.fontSize('lg'),
+              color: theme.colors.text,
+              fontFamily: theme.fonts.semiBold,
+              textAlign: 'center',
+            }}
+          >
+            {i18n.t('homeChecklistFooter')}
+          </Text>
+          <Text
+            style={{
+              fontSize: theme.fontSize('sm'),
+              color: theme.colors.textAlt,
+              textAlign: 'center',
+            }}
+          >
+            {i18n.t('homeChecklistAllDoneSubtitle')}
+          </Text>
+          <Button
+            onPress={handleDismiss}
+            style={{
+              marginTop: 4,
+              paddingVertical: 10,
+              paddingHorizontal: 18,
+              borderRadius: theme.numbers.borderRadiusSm,
+              backgroundColor: theme.colors.accent,
+            }}
+          >
+            <Text
+              style={{
+                color: theme.colors.textInverse,
+                fontFamily: theme.fonts.semiBold,
+                fontSize: theme.fontSize('sm'),
+              }}
+            >
+              {i18n.t('homeChecklistDismissCta')}
+            </Text>
+          </Button>
+        </View>
       )}
-    </Card>
+    </DismissableCard>
   )
 }
 

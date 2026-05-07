@@ -26,6 +26,8 @@ const Card: React.FC<PropsWithChildren<Props>> = ({
           {
             borderRadius: theme.numbers.borderRadiusLg,
             backgroundColor: theme.colors.card,
+            borderWidth: 1,
+            borderColor: theme.colors.border,
             paddingVertical: 20,
             paddingHorizontal: 20,
             gap: 15,

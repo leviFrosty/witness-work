@@ -453,7 +453,6 @@ const ContactFormScreen = ({ route, navigation }: Props) => {
             size={104}
             imageFileName={`contact-${contact.id}-avatar.jpg`}
             background={contact.avatarBackground ?? undefined}
-            showBackgroundSwatches
             backgroundValue={contact.avatarBackground ?? null}
             onBackgroundChange={(next) =>
               setContact({ ...contact, avatarBackground: next })

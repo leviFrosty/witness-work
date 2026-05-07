@@ -1,7 +1,18 @@
 import React, { useEffect, useCallback, useRef } from 'react'
-import { Alert, View, TouchableOpacity, TextInput } from 'react-native'
+import {
+  View,
+  TouchableOpacity,
+  TextInput,
+  AppState,
+  Linking,
+} from 'react-native'
 import axios from 'axios'
 import * as Location from 'expo-location'
+import {
+  faLocationArrow,
+  faLocationCrosshairs,
+} from '@fortawesome/free-solid-svg-icons'
+import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
 import apis from '../constants/apis'
 import Text from './MyText'
 import useTheme from '../contexts/theme'
@@ -33,6 +44,74 @@ const SEARCH_RADIUS = 1000000
 const DEBOUNCE_TIMEOUT_MS = 300
 const MAX_SUGGESTIONS = 5
 
+const LocationStatusPill: React.FC<{
+  status: Location.PermissionStatus | null
+  onRequest: () => void
+}> = ({ status, onRequest }) => {
+  const theme = useTheme()
+  if (status === null) return null
+
+  const granted = status === Location.PermissionStatus.GRANTED
+  const denied = status === Location.PermissionStatus.DENIED
+
+  const label = granted
+    ? i18n.t('usingYourLocation')
+    : denied
+      ? i18n.t('locationOff_openSettings')
+      : i18n.t('enableLocationForNearbyResults')
+
+  const handlePress = () => {
+    if (granted) return
+    if (denied) {
+      Linking.openSettings()
+      return
+    }
+    onRequest()
+  }
+
+  const tint = granted ? theme.colors.accent : theme.colors.textAlt
+  const background = granted
+    ? theme.colors.accentTranslucent
+    : theme.colors.background
+
+  return (
+    <TouchableOpacity
+      onPress={handlePress}
+      disabled={granted}
+      activeOpacity={0.7}
+      accessibilityRole={granted ? 'text' : 'button'}
+      accessibilityLabel={label}
+      style={{
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 8,
+        alignSelf: 'flex-start',
+        paddingVertical: 6,
+        paddingHorizontal: 12,
+        borderRadius: theme.numbers.borderRadiusLg,
+        borderWidth: 1,
+        borderColor: tint,
+        backgroundColor: background,
+      }}
+    >
+      <FontAwesomeIcon
+        icon={granted ? faLocationArrow : faLocationCrosshairs}
+        size={12}
+        style={{ color: tint }}
+      />
+      <Text
+        style={{
+          color: tint,
+          fontSize: theme.fontSize('sm'),
+          fontFamily: theme.fonts.semiBold,
+        }}
+      >
+        {label}
+      </Text>
+    </TouchableOpacity>
+  )
+}
+
 const AddressAutocomplete: React.FC<AddressAutocompleteProps> = ({
   query,
   setQuery,
@@ -45,29 +124,17 @@ const AddressAutocomplete: React.FC<AddressAutocompleteProps> = ({
   onSelect,
 }) => {
   const textInputRef = useRef<TextInput>(null)
-  const { location, status, requestLocation } = useLocation()
-  const hasPromptedLocationRef = useRef(false)
+  const { location, status, requestLocation, refreshStatus } = useLocation()
   const theme = useTheme()
 
   useEffect(() => {
-    if (hasPromptedLocationRef.current) return
-    if (query.length < 3 || isResult) return
-    if (status !== Location.PermissionStatus.UNDETERMINED) return
-    hasPromptedLocationRef.current = true
-    Alert.alert(
-      i18n.t('shareLocationForBetterAddressSearch'),
-      i18n.t('shareLocationForBetterAddressSearch_description'),
-      [
-        { text: i18n.t('notNow'), style: 'cancel' },
-        {
-          text: i18n.t('enableLocationServices'),
-          onPress: () => {
-            requestLocation()
-          },
-        },
-      ]
-    )
-  }, [query, isResult, status, requestLocation])
+    const subscription = AppState.addEventListener('change', (next) => {
+      if (next === 'active') {
+        refreshStatus()
+      }
+    })
+    return () => subscription.remove()
+  }, [refreshStatus])
 
   const getHighlightedText = useCallback(
     (
@@ -163,10 +230,11 @@ const AddressAutocomplete: React.FC<AddressAutocompleteProps> = ({
   }, [getHighlightedText, isResult, location, query, setError, setSuggestions])
 
   return (
-    <View>
+    <View style={{ gap: 12 }}>
+      <LocationStatusPill status={status} onRequest={requestLocation} />
       <TextInputRow
         ref={textInputRef}
-        label={i18n.t('search')}
+        label={i18n.t('searchAddress')}
         textInputProps={{
           onChangeText: (text: string) => {
             setQuery(text)
@@ -175,7 +243,6 @@ const AddressAutocomplete: React.FC<AddressAutocompleteProps> = ({
           placeholder: i18n.t('enterAddress'),
           value: query,
         }}
-        style={{ marginTop: 8 }}
         lastInSection
       />
       {error ? (

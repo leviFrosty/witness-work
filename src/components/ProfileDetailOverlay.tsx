@@ -28,6 +28,7 @@ import { usePreferences } from '../stores/preferences'
 import usePublisher from '../hooks/usePublisher'
 import useIsSupporter from '../hooks/useIsSupporter'
 import useServiceReport from '../stores/serviceReport'
+import useConversations from '../stores/conversationStore'
 import Text from './MyText'
 import IconButton from './IconButton'
 import Avatar from './Avatar'
@@ -38,6 +39,7 @@ import SinceBadge from './SinceBadge'
 import i18n from '../lib/locales'
 import { getStartDateLabels } from '../constants/publisher'
 import {
+  consecutiveMonthsStreak,
   consecutiveWeeksStreak,
   daysLogged,
   flattenDailyMinutes,
@@ -120,9 +122,10 @@ const ProfileDetailOverlay = ({ origin, open, onClose, onClosed }: Props) => {
     onClose()
     navigation.navigate('ProfileSetup')
   }
-  const { type: publisher, tracksPioneerStartDate } = usePublisher()
+  const { type: publisher, tracksPioneerStartDate, entryMode } = usePublisher()
   const { since: supporterSince } = useIsSupporter()
   const { serviceReports } = useServiceReport()
+  const { conversations } = useConversations()
   const setDailyMinutesCache = useTimeCache((s) => s.setDailyMinutesCache)
 
   const { daily, fingerprint, cacheHit } = useMemo(() => {
@@ -156,10 +159,13 @@ const ProfileDetailOverlay = ({ origin, open, onClose, onClosed }: Props) => {
     return {
       totalHours: Math.round(total / 60),
       days: daysLogged(daily),
-      streak: consecutiveWeeksStreak(daily),
+      streak:
+        entryMode === 'hours'
+          ? consecutiveMonthsStreak(daily)
+          : consecutiveWeeksStreak(daily),
       last30Hours: Math.round(minutesInTrailingDays(daily, 30) / 60),
     }
-  }, [daily])
+  }, [daily, entryMode])
 
   // `mounted` holds the Modal up for the full duration of both open and close
   // animations. Decoupling it from `open` lets the close-spring play out
@@ -327,29 +333,43 @@ const ProfileDetailOverlay = ({ origin, open, onClose, onClosed }: Props) => {
                   label={i18n.t('profileStatStreak')}
                   value={String(stats.streak)}
                   sub={i18n.t(
-                    stats.streak === 1
-                      ? 'profileStatStreakUnit'
-                      : 'profileStatStreakUnit_plural'
+                    entryMode === 'hours'
+                      ? stats.streak === 1
+                        ? 'profileStatStreakUnitMonth'
+                        : 'profileStatStreakUnitMonth_plural'
+                      : stats.streak === 1
+                        ? 'profileStatStreakUnit'
+                        : 'profileStatStreakUnit_plural'
                   )}
                 />
-                <Stat
-                  label={i18n.t('profileStatHours')}
-                  value={String(stats.totalHours)}
-                  sub={i18n.t('profileStatHoursSub')}
-                />
+                {entryMode === 'hours' ? (
+                  <Stat
+                    label={i18n.t('profileStatDays')}
+                    value={String(stats.days)}
+                    sub={i18n.t('profileStatDaysSub')}
+                  />
+                ) : (
+                  <Stat
+                    label={i18n.t('profileStatConversations')}
+                    value={String(conversations.length)}
+                    sub={i18n.t('profileStatConversationsSub')}
+                  />
+                )}
               </View>
-              <View style={{ flexDirection: 'row', gap: 10 }}>
-                <Stat
-                  label={i18n.t('profileStatDays')}
-                  value={String(stats.days)}
-                  sub={i18n.t('profileStatDaysSub')}
-                />
-                <Stat
-                  label={i18n.t('profileStatLast30')}
-                  value={`${stats.last30Hours}${i18n.t('hoursCompact')}`}
-                  sub={i18n.t('profileStatLast30Sub')}
-                />
-              </View>
+              {entryMode === 'hours' && (
+                <View style={{ flexDirection: 'row', gap: 10 }}>
+                  <Stat
+                    label={i18n.t('profileStatHours')}
+                    value={String(stats.totalHours)}
+                    sub={i18n.t('profileStatHoursSub')}
+                  />
+                  <Stat
+                    label={i18n.t('profileStatLast30')}
+                    value={`${stats.last30Hours}${i18n.t('hoursCompact')}`}
+                    sub={i18n.t('profileStatLast30Sub')}
+                  />
+                </View>
+              )}
 
               {(tracksPioneerStartDate && pioneerStartDate) ||
               supporterSince ? (
@@ -388,18 +408,20 @@ const ProfileDetailOverlay = ({ origin, open, onClose, onClosed }: Props) => {
                 <MonthlyRoutine onBeforeNavigate={onClose} />
               </View>
 
-              <View style={{ gap: 10 }}>
-                <Text
-                  style={{
-                    fontSize: 13,
-                    fontFamily: theme.fonts.semiBold,
-                    color: theme.colors.text,
-                  }}
-                >
-                  {i18n.t('profileActivityTitle')}
-                </Text>
-                <ContributionGraph daily={daily} />
-              </View>
+              {entryMode === 'hours' && (
+                <View style={{ gap: 10 }}>
+                  <Text
+                    style={{
+                      fontSize: 13,
+                      fontFamily: theme.fonts.semiBold,
+                      color: theme.colors.text,
+                    }}
+                  >
+                    {i18n.t('profileActivityTitle')}
+                  </Text>
+                  <ContributionGraph daily={daily} />
+                </View>
+              )}
             </ScrollView>
           </Animated.View>
         </Animated.View>

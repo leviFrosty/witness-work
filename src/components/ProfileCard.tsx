@@ -242,10 +242,8 @@ const ProfileCard = ({ preview, editable, onPressIncomplete }: Props) => {
       onChange={(next) => set({ avatar: next })}
       name={trimmedName}
       size={44}
-      showBackgroundSwatches
       backgroundValue={customAvatarBackground}
       onBackgroundChange={(next) => set({ customAvatarBackground: next })}
-      gateBackgroundBySupporter
     />
   ) : (
     <Avatar avatar={avatar} name={trimmedName} size={44} />

@@ -16,6 +16,7 @@ import { CustomFieldDefinition } from '../../types/customField'
 import Button from '../Button'
 import IconButton from '../IconButton'
 import Text from '../MyText'
+import SegmentedControl, { SegmentedOption } from '../SegmentedControl'
 
 export type ContactsFilterSheetProps = {
   open: boolean
@@ -353,100 +354,23 @@ const ContactsFilterSheet: React.FC<ContactsFilterSheetProps> = ({
     letterSpacing: 0.5,
   }
 
-  const renderFieldButton = (key: Exclude<FieldKey, null>) => {
-    const selected = field === key
-    return (
-      <Button
-        key={`field-${key}`}
-        onPress={() => setField(key)}
-        noTransform
-        style={{
-          paddingHorizontal: 12,
-          paddingVertical: 8,
-          borderRadius: theme.numbers.borderRadiusSm,
-          borderWidth: 1,
-          borderColor: selected ? theme.colors.accent : theme.colors.border,
-          backgroundColor: selected
-            ? theme.colors.accentTranslucent
-            : theme.colors.backgroundLighter,
-        }}
-      >
-        <Text
-          style={{
-            fontSize: theme.fontSize('sm'),
-            color: selected ? theme.colors.accent : theme.colors.text,
-            fontFamily: selected ? theme.fonts.semiBold : theme.fonts.regular,
-          }}
-        >
-          {fieldLabel(key, customFieldDefs)}
-        </Text>
-      </Button>
-    )
-  }
+  const fieldOptions: SegmentedOption<Exclude<FieldKey, null>>[] =
+    availableFields.map((key) => ({
+      key,
+      label: fieldLabel(key, customFieldDefs),
+    }))
 
-  const renderOperatorButton = (
-    candidate: TextOperator | ComparableOperator
-  ) => {
-    const selected = op === candidate
-    return (
-      <Button
-        key={`op-${candidate}`}
-        onPress={() => setOp(candidate)}
-        noTransform
-        style={{
-          paddingHorizontal: 12,
-          paddingVertical: 8,
-          borderRadius: theme.numbers.borderRadiusSm,
-          borderWidth: 1,
-          borderColor: selected ? theme.colors.accent : theme.colors.border,
-          backgroundColor: selected
-            ? theme.colors.accentTranslucent
-            : theme.colors.backgroundLighter,
-        }}
-      >
-        <Text
-          style={{
-            fontSize: theme.fontSize('sm'),
-            color: selected ? theme.colors.accent : theme.colors.text,
-            fontFamily: selected ? theme.fonts.semiBold : theme.fonts.regular,
-          }}
-        >
-          {operatorLabel(candidate)}
-        </Text>
-      </Button>
-    )
-  }
+  const operatorOptions: SegmentedOption<TextOperator | ComparableOperator>[] =
+    validOperators.map((candidate) => ({
+      key: candidate,
+      label: operatorLabel(candidate),
+    }))
 
-  const renderPinStalenessButton = (candidate: ContactStaleness) => {
-    const selected = value === candidate
-    return (
-      <Button
-        key={`pin-${candidate}`}
-        onPress={() => setValue(candidate)}
-        noTransform
-        style={{
-          paddingHorizontal: 12,
-          paddingVertical: 10,
-          borderRadius: theme.numbers.borderRadiusSm,
-          borderWidth: 1,
-          borderColor: selected ? theme.colors.accent : theme.colors.border,
-          backgroundColor: selected
-            ? theme.colors.accentTranslucent
-            : theme.colors.backgroundLighter,
-        }}
-      >
-        <Text
-          style={{
-            fontSize: theme.fontSize('sm'),
-            color: selected ? theme.colors.accent : theme.colors.text,
-            fontFamily: selected ? theme.fonts.semiBold : theme.fonts.regular,
-          }}
-        >
-          {i18n.t(`contacts_pinStaleness_${candidate}` as const)}
-        </Text>
-      </Button>
-    )
-  }
+  const pinStalenessOptions: SegmentedOption<ContactStaleness>[] =
+    PIN_STALENESS_VALUES.map((candidate) => ({
+      key: candidate,
+      label: i18n.t(`contacts_pinStaleness_${candidate}` as const),
+    }))
 
   // Pick the proper TextInput config for the active field. Custom number/date
   // fields surface specialised keyboards / placeholders so the user knows what
@@ -527,15 +451,13 @@ const ContactsFilterSheet: React.FC<ContactsFilterSheetProps> = ({
                 <Text style={sectionTitleStyle}>
                   {i18n.t('contacts_filterField')}
                 </Text>
-                <View
-                  style={{
-                    flexDirection: 'row',
-                    flexWrap: 'wrap',
-                    gap: 8,
-                  }}
-                >
-                  {availableFields.map(renderFieldButton)}
-                </View>
+                <SegmentedControl<Exclude<FieldKey, null>>
+                  variant='bordered'
+                  wrap
+                  value={field}
+                  onChange={setField}
+                  options={fieldOptions}
+                />
               </View>
 
               {showOperatorRow && (
@@ -543,15 +465,13 @@ const ContactsFilterSheet: React.FC<ContactsFilterSheetProps> = ({
                   <Text style={sectionTitleStyle}>
                     {i18n.t('contacts_filterOperator')}
                   </Text>
-                  <View
-                    style={{
-                      flexDirection: 'row',
-                      flexWrap: 'wrap',
-                      gap: 8,
-                    }}
-                  >
-                    {validOperators.map(renderOperatorButton)}
-                  </View>
+                  <SegmentedControl<TextOperator | ComparableOperator>
+                    variant='bordered'
+                    wrap
+                    value={op}
+                    onChange={setOp}
+                    options={operatorOptions}
+                  />
                 </View>
               )}
 
@@ -560,15 +480,13 @@ const ContactsFilterSheet: React.FC<ContactsFilterSheetProps> = ({
                   <Text style={sectionTitleStyle}>
                     {i18n.t('contacts_filterValue')}
                   </Text>
-                  <View
-                    style={{
-                      flexDirection: 'row',
-                      flexWrap: 'wrap',
-                      gap: 8,
-                    }}
-                  >
-                    {PIN_STALENESS_VALUES.map(renderPinStalenessButton)}
-                  </View>
+                  <SegmentedControl<ContactStaleness>
+                    variant='bordered'
+                    wrap
+                    value={value as ContactStaleness}
+                    onChange={(v) => setValue(v)}
+                    options={pinStalenessOptions}
+                  />
                 </View>
               )}
 

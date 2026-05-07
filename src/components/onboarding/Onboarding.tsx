@@ -131,14 +131,12 @@ const OnBoarding = () => {
   }, [stepIndex, visibleSteps, onboardingStepId, set])
 
   const goNext = useCallback(() => {
-    setStepIndex((idx) => {
-      if (idx >= visibleSteps.length - 1) {
-        set({ onboardingComplete: true, onboardingStepId: null })
-        return idx
-      }
-      return idx + 1
-    })
-  }, [visibleSteps.length, set])
+    if (stepIndex >= visibleSteps.length - 1) {
+      set({ onboardingComplete: true, onboardingStepId: null })
+      return
+    }
+    setStepIndex(stepIndex + 1)
+  }, [stepIndex, visibleSteps.length, set])
 
   const goBack = useCallback(() => {
     setStepIndex((idx) => (idx === 0 ? 0 : idx - 1))

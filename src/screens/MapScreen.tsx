@@ -148,10 +148,19 @@ const FullMapView = ({
       const idx = findContactIndexById(visibleContactMarkers, id)
       if (idx < 0) return
       lastReconciledIndexRef.current = idx
+
+      // Re-tap on the already-active pin: the carousel is already on this
+      // index so onSnapToItem won't fire — refocus the map directly so the
+      // user gets the same zoom-in behaviour as the first tap.
+      if (id === activeContactId) {
+        fitToContactId(id)
+        return
+      }
+
       setActiveContactId(id)
       carouselRef.current?.scrollTo({ index: idx, animated: true })
     },
-    [visibleContactMarkers]
+    [visibleContactMarkers, activeContactId, fitToContactId]
   )
 
   // Reconcile carousel + active id when the underlying list changes.
@@ -451,7 +460,7 @@ const FullMapView = ({
             position: 'absolute',
             top: insets.top + 8,
             left: 16,
-            right: 16,
+            right: 64,
             height: 44,
             borderRadius: 22,
             borderWidth: 1,
@@ -544,6 +553,11 @@ const FullMapView = ({
         </View>
       ) : (
         <Carousel
+          // Remount when crossing the 1↔many boundary. `loop` cannot be
+          // toggled mid-life on react-native-reanimated-carousel — when a
+          // search narrows results to a single match the carousel keeps its
+          // looping internals and renders blank otherwise.
+          key={visibleContactMarkers.length === 1 ? 'single' : 'multi'}
           onSnapToItem={handleCarouselSnap}
           defaultIndex={0}
           ref={carouselRef}
@@ -592,7 +606,7 @@ const FullMapView = ({
         style={{
           position: 'absolute',
           top: insets.top + 64,
-          right: 16,
+          left: 16,
           gap: 8,
         }}
       >

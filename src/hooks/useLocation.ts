@@ -5,18 +5,18 @@ export default function useLocation() {
   const [status, setStatus] = useState<Location.PermissionStatus | null>(null)
   const [location, setLocation] = useState<Location.LocationObject | null>(null)
 
-  useEffect(() => {
-    const getLocation = async () => {
-      const result = await Location.getForegroundPermissionsAsync()
-      setStatus(result.status)
-      if (result.granted) {
-        const location = await Location.getCurrentPositionAsync()
-        setLocation(location)
-      }
+  const refreshStatus = useCallback(async () => {
+    const result = await Location.getForegroundPermissionsAsync()
+    setStatus(result.status)
+    if (result.granted) {
+      const location = await Location.getCurrentPositionAsync()
+      setLocation(location)
     }
-
-    getLocation()
   }, [])
+
+  useEffect(() => {
+    refreshStatus()
+  }, [refreshStatus])
 
   const requestLocation = useCallback(async () => {
     const result = await Location.requestForegroundPermissionsAsync()
@@ -33,5 +33,6 @@ export default function useLocation() {
     location,
     status,
     requestLocation,
+    refreshStatus,
   }
 }

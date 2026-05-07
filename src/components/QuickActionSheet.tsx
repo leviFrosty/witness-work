@@ -68,6 +68,7 @@ export default function QuickActionSheet({
             {i18n.t('quickAction')}
           </Text>
           <IconButton
+            noTransform
             onPress={() => setSheetOpen(false)}
             size={20}
             icon={faTimes}
@@ -110,6 +111,7 @@ function ActionButton(props: {
   const theme = useTheme()
   return (
     <Button
+      noTransform
       onPress={props.onPress}
       style={{
         justifyContent: 'flex-start',

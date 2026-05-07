@@ -308,9 +308,14 @@ const MilestoneAdjustSheet = ({ visible, onClose }: Props) => {
               {i18n.t('milestones')}
             </Text>
             {noGoalSet ? (
-              <IconButton icon={faTimes} size='xl' onPress={handleClose} />
+              <IconButton
+                noTransform
+                icon={faTimes}
+                size='xl'
+                onPress={handleClose}
+              />
             ) : (
-              <Button onPress={handleDone} hitSlop={10}>
+              <Button noTransform onPress={handleDone} hitSlop={10}>
                 <Text
                   style={{
                     color: theme.colors.accent,
@@ -335,7 +340,7 @@ const MilestoneAdjustSheet = ({ visible, onClose }: Props) => {
               >
                 {i18n.t('yearGoalSetInSettings')}
               </Text>
-              <ActionButton onPress={handleNavigateToSettings}>
+              <ActionButton noTransform onPress={handleNavigateToSettings}>
                 <Text
                   style={{
                     color: theme.colors.textInverse,
@@ -491,6 +496,7 @@ const MilestoneAdjustSheet = ({ visible, onClose }: Props) => {
                       {/* Remove */}
                       <View style={{ flex: 1, alignItems: 'flex-end' }}>
                         <IconButton
+                          noTransform
                           icon={faTimes}
                           size='sm'
                           onPress={() => handleRemove(value)}
@@ -565,6 +571,7 @@ const MilestoneAdjustSheet = ({ visible, onClose }: Props) => {
               {/* Footer actions */}
               <View style={{ gap: 10 }}>
                 <Button
+                  noTransform
                   onPress={handleAdd}
                   variant='outline'
                   style={{
@@ -586,7 +593,7 @@ const MilestoneAdjustSheet = ({ visible, onClose }: Props) => {
                     {i18n.t('addMilestone')}
                   </Text>
                 </Button>
-                <Button onPress={handleReset} hitSlop={10}>
+                <Button noTransform onPress={handleReset} hitSlop={10}>
                   <Text
                     style={{
                       color: theme.colors.textAlt,

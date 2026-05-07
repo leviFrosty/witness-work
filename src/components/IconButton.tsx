@@ -16,6 +16,7 @@ type Props = {
   style?: StyleProp<ViewStyle>
   iconStyle?: FontAwesomeIconStyle
   color?: string
+  noTransform?: boolean
 }
 
 const IconButton = ({
@@ -25,6 +26,7 @@ const IconButton = ({
   size: _size,
   iconStyle,
   color,
+  noTransform,
 }: Props) => {
   const theme = useContext(ThemeContext)
   const size = typeof _size === 'number' ? _size : theme.fontSize(_size)
@@ -32,7 +34,7 @@ const IconButton = ({
   return (
     <Button
       style={style}
-      noTransform={!onPress}
+      noTransform={noTransform ?? !onPress}
       disabled={!onPress}
       onPress={onPress}
     >

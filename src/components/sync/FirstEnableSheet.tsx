@@ -87,6 +87,7 @@ const FirstEnableSheet: React.FC<Props> = ({
             {i18n.t('iCloudFirstEnableTitle')}
           </Text>
           <IconButton
+            noTransform
             onPress={() => setOpen(false)}
             size={20}
             icon={faTimes}
@@ -167,6 +168,7 @@ const ChoiceCard: React.FC<ChoiceCardProps> = ({
   const theme = useTheme()
   return (
     <Button
+      noTransform
       onPress={onPress}
       style={{
         paddingVertical: 14,

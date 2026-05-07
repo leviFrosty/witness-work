@@ -601,6 +601,7 @@ const AddSheet = ({
             </Text>
           </View>
           <Button
+            noTransform
             style={{ gap: 10 }}
             variant='outline'
             onPress={async () => handleAction('notAtHome')}
@@ -619,6 +620,7 @@ const AddSheet = ({
             </Text>
           </Button>
           <Button
+            noTransform
             style={{ gap: 10, backgroundColor: theme.colors.accent }}
             variant='solid'
             onPress={async () => handleAction('conversation')}

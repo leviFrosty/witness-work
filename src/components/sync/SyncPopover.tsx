@@ -231,6 +231,7 @@ const SyncPopover = () => {
           </Text>
           <View style={{ gap: 8 }}>
             <Button
+              noTransform
               disabled={!available || syncing}
               onPress={handleSyncNow}
               style={{
@@ -263,6 +264,7 @@ const SyncPopover = () => {
               </Text>
             </Button>
             <Button
+              noTransform
               onPress={handleOpenSettings}
               style={{
                 flexDirection: 'row',

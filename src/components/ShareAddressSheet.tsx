@@ -73,6 +73,7 @@ const ShareAddressSheet = ({ sheet, setSheet }: Props) => {
             </Text>
           </View>
           <Button
+            noTransform
             variant='solid'
             style={{ gap: 10, backgroundColor: theme.colors.card }}
             onPress={() => handleShare('apple')}
@@ -86,6 +87,7 @@ const ShareAddressSheet = ({ sheet, setSheet }: Props) => {
             </Text>
           </Button>
           <Button
+            noTransform
             style={{ gap: 10, backgroundColor: theme.colors.card }}
             variant='solid'
             onPress={() => handleShare('google')}

@@ -106,6 +106,7 @@ const SupporterInfoSheet = ({ open, setOpen, featureKey }: Props) => {
                 </Text>
               </View>
               <IconButton
+                noTransform
                 icon={faTimes}
                 size='xl'
                 onPress={() => setOpen(false)}
@@ -116,6 +117,7 @@ const SupporterInfoSheet = ({ open, setOpen, featureKey }: Props) => {
 
             <View style={{ gap: 10, marginTop: 6 }}>
               <Button
+                noTransform
                 style={{
                   backgroundColor: theme.colors.supporter,
                   borderRadius: theme.numbers.borderRadiusSm,
@@ -138,6 +140,7 @@ const SupporterInfoSheet = ({ open, setOpen, featureKey }: Props) => {
                 </Text>
               </Button>
               <Button
+                noTransform
                 style={{ alignSelf: 'center', paddingVertical: 8 }}
                 onPress={() => setOpen(false)}
               >

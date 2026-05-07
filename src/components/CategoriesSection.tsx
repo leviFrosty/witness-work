@@ -80,7 +80,11 @@ const CategoriesSection = ({ segments }: Props) => {
               >
                 {i18n.t('categoryBreakdown')}
               </Text>
-              <IconButton icon={faTimes} onPress={() => setOpen(false)} />
+              <IconButton
+                noTransform
+                icon={faTimes}
+                onPress={() => setOpen(false)}
+              />
             </View>
             <Text
               style={{

@@ -251,6 +251,7 @@ const DismissContactSheet: React.FC<DismissContactSheetProps> = ({
             {i18n.t('dismissForLater')}
           </Text>
           <IconButton
+            noTransform
             onPress={() => setOpen(false)}
             size={20}
             icon={faTimes}
@@ -295,6 +296,7 @@ const DismissContactSheet: React.FC<DismissContactSheetProps> = ({
 
                   return (
                     <Button
+                      noTransform
                       key={option.key}
                       onPress={() => handleDismiss(option)}
                       style={{
@@ -338,6 +340,7 @@ const DismissContactSheet: React.FC<DismissContactSheetProps> = ({
 
               return (
                 <Button
+                  noTransform
                   key={option.key}
                   onPress={() => handleDismiss(option)}
                   style={{

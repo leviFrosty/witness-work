@@ -232,6 +232,7 @@ export default function UpgradeLegacyTimeReportsSheet({
           }}
         >
           <ActionButton
+            noTransform
             onPress={() => {
               updateRemainingLegacyTags()
               setSheet(false)

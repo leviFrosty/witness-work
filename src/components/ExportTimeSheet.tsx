@@ -260,6 +260,7 @@ const ExportTimeSheet = ({
           <View style={{ marginBottom: 20 }}>
             {showViewAllMonthsButton && (
               <Button
+                noTransform
                 onPress={() => {
                   navigation.navigate('Progress', {
                     month: moment().month(),
@@ -304,6 +305,7 @@ const ExportTimeSheet = ({
               </Text>
 
               <IconButton
+                noTransform
                 icon={faTimes}
                 size='xl'
                 onPress={() => setSheet({ open: false, month: 0, year: 0 })}
@@ -378,6 +380,7 @@ const ExportTimeSheet = ({
           </Button> */}
 
           <Button
+            noTransform
             onPress={() => handleAction('copy')}
             variant='solid'
             style={{ backgroundColor: theme.colors.card }}
@@ -396,6 +399,7 @@ const ExportTimeSheet = ({
             </View>
           </Button>
           <Button
+            noTransform
             onPress={() => handleAction('share')}
             variant='solid'
             style={{ backgroundColor: theme.colors.card }}

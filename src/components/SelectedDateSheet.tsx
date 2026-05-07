@@ -84,6 +84,7 @@ const SelectedDateSheet: React.FC<Props> = ({
           <XView style={{ maxHeight: 70 }}>
             <View style={{ flexGrow: 1 }}>
               <ActionButton
+                noTransform
                 onPress={() => {
                   setSheet({
                     ...sheet,
@@ -104,6 +105,7 @@ const SelectedDateSheet: React.FC<Props> = ({
               </ActionButton>
             </View>
             <Button
+              noTransform
               onPress={() => {
                 setSheet({
                   ...sheet,

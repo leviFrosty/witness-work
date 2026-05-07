@@ -46,8 +46,16 @@ const SupporterInfoSheet = ({ open, setOpen, featureKey }: Props) => {
     : i18n.t('supporterSheetSubtitle')
 
   const handleDonatePress = () => {
+    // Close synchronously and skip the 300ms linger. When this sheet is
+    // hosted inside another RN Modal (e.g. the AvatarPickerPopover that
+    // surfaces the contact-form avatar gate), iOS refuses to unwind the
+    // parent UIWindow while a child Modal is still presented — leaving
+    // the Paywall covered by a touch-blocking overlay. Defer the push
+    // by one frame so RN commits `visible={false}` and dispatches the
+    // native dismiss before the new screen lands on top.
     setOpen(false)
-    navigation.navigate('Paywall')
+    setMounted(false)
+    requestAnimationFrame(() => navigation.navigate('Paywall'))
   }
 
   // Wrap the tamagui Sheet in a RN Modal so the sheet is hosted in a new

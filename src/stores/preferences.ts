@@ -492,6 +492,14 @@ export const PREFERENCE_DEFAULTS = {
    * reveal can be replayed on demand. Per-device.
    */
   dismissedMilestoneRevealOnce: false,
+  /**
+   * Stable IDs of "Did you know?" tips the user has dismissed from the
+   * home-screen tip card. The card surfaces the first tip in
+   * `DID_YOU_KNOW_TIPS` whose id isn't here; once all are present the card
+   * stops rendering. Syncable so a dismissal on one device doesn't re-surface
+   * the same tip on another.
+   */
+  seenTipIds: [] as string[],
 }
 
 /**
@@ -638,6 +646,12 @@ export const usePreferences = create(
               },
             }
           }),
+        markTipSeen: (tipId: string) =>
+          set(({ seenTipIds }) =>
+            seenTipIds.includes(tipId)
+              ? {}
+              : { seenTipIds: [...seenTipIds, tipId] }
+          ),
       }
     }),
     {

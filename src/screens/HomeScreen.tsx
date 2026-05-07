@@ -34,6 +34,7 @@ import UpgradeLegacyTimeReportsSheet from '../components/UpgradeLegacyTimeReport
 import ProfileCard from '../components/ProfileCard'
 import HomeChecklist from '../components/onboarding/HomeChecklist'
 import SupporterNudgeCard from '../components/SupporterNudgeCard'
+import DidYouKnowTipCard from '../components/DidYouKnowTipCard'
 import useIsSupporter from '../hooks/useIsSupporter'
 import { useServiceReport } from '../stores/serviceReport'
 import { isSupporterNudgeEligible } from '../lib/supporterNudge'
@@ -206,7 +207,13 @@ export const HomeScreen = () => {
   return (
     <View style={{ flexGrow: 1, backgroundColor: theme.colors.background }}>
       <KeyboardAwareScrollView
-        contentContainerStyle={{ paddingBottom: insets.bottom + 85 }}
+        contentContainerStyle={{
+          paddingBottom: insets.bottom + 85,
+          // flexGrow lets the inner View's `flex: 1` actually fill the
+          // viewport when the user's home sections are short, which the tip
+          // card's `marginTop: 'auto'` relies on to anchor to the bottom.
+          flexGrow: 1,
+        }}
         automaticallyAdjustKeyboardInsets
         style={{
           flex: 1,
@@ -281,6 +288,7 @@ export const HomeScreen = () => {
             />
           )}
           {showsTimer && homeScreenElements.timer && <TimerSection />}
+          <DidYouKnowTipCard style={{ marginTop: 'auto' }} />
         </View>
       </KeyboardAwareScrollView>
       <UpgradeLegacyTimeReportsSheet

@@ -61,6 +61,47 @@ const sleep = (ms: number): Promise<void> => {
   return new Promise((resolve) => setTimeout(resolve, ms))
 }
 
+const SPINNER_FRAMES = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏']
+
+const startSpinner = (
+  message: string
+): { stop: (finalLine?: string) => void } => {
+  let frame = 0
+  const isTTY = process.stdout.isTTY
+  const start = Date.now()
+
+  const render = () => {
+    const elapsed = ((Date.now() - start) / 1000).toFixed(1)
+    const text = `[translate] - ${SPINNER_FRAMES[frame]} ${message} (${elapsed}s)`
+    if (isTTY) {
+      process.stdout.write(`\r\x1b[2K${text}`)
+    }
+  }
+
+  if (isTTY) {
+    render()
+  } else {
+    console.log(`[translate] - ⏳ ${message}...`)
+  }
+
+  const interval = setInterval(() => {
+    frame = (frame + 1) % SPINNER_FRAMES.length
+    render()
+  }, 80)
+
+  return {
+    stop: (finalLine?: string) => {
+      clearInterval(interval)
+      if (isTTY) {
+        process.stdout.write('\r\x1b[2K')
+      }
+      if (finalLine) {
+        console.log(finalLine)
+      }
+    },
+  }
+}
+
 // Check for --force flag
 const hasForceFlag: boolean = process.argv.includes('--force')
 if (!hasForceFlag) {
@@ -105,12 +146,15 @@ const translateLocale = (locale: string): Promise<TranslationResult> => {
   return new Promise((resolve, reject) => {
     const nodeCommand = `pnpm i18n-auto-translation --key ${process.env.DEEPL_FREE_API_KEY} --apiProvider "deepl-free" --dirPath "${LOCALE_DIR}/" --from "EN" --to "${locale}"`
 
+    const spinner = startSpinner(`Translating ${locale}`)
+
     exec(nodeCommand, (error) => {
       if (error) {
+        spinner.stop()
         logFailure(locale, error)
         reject({ locale, error })
       } else {
-        logSuccess(locale)
+        spinner.stop(`[translate] - ✅ Successfully translated: ${locale}`)
         resolve({ locale, success: true })
       }
     })
@@ -125,12 +169,19 @@ const processTranslationsSequentially = async (): Promise<
   let successCount = 0
   let failureCount = 0
 
-  log(`Translating ${locales.length} locales...`)
+  const translatable = locales.filter((l) =>
+    Object.values(LOCALE_MAP).includes(l)
+  )
+  log(`Translating ${translatable.length} locales...`)
 
+  let processed = 0
   for (let i = 0; i < locales.length; i++) {
     const locale = locales[i]
 
     if (!Object.values(LOCALE_MAP).includes(locale)) continue
+
+    processed++
+    log(`(${processed}/${translatable.length}) Starting ${locale}`)
 
     try {
       const result = await translateLocale(locale)

@@ -1,6 +1,18 @@
 # AGENTS.md
 
-Guide for AI coding agents working in WitnessWork. THIS PROJECT IS iOS ONLY. DO NOT MAKE ANY REFERENCES TO ANDROID!!!!!!
+Guide for AI coding agents working in WitnessWork. This is an iOS project only, this app is not made to support Android.
+
+## NEVER REVERT OR DESTROY UNSTAGED WORK DESTRUCTIVELY, UNDER ANY CIRCUMSTANCES
+
+`git checkout <path>`, `git restore <path>`, `git reset --hard`, and `git clean` discard working-tree changes with **no recoverable trace** — not in reflog, not in fsck, not in stash. If files show `M` in `git status` and you need to undo your own modifications, the only safe sequence is:
+
+1. `git stash push -- <paths>` first (captures both your changes and the user's into a recoverable stash)
+2. Then make your fix
+3. Then `git stash pop` if you need any of it back, or `git stash drop` if not
+
+Before running any destructive git path-level command, **always** check `git status` and `git diff <path>` first. If the working tree is dirty with changes you didn't make this session, treat that file as off-limits to destructive operations — re-edit instead. Reverting paths with foreign unstaged changes is the same as `rm` on that work.
+
+This rule has no exceptions, including "I just made this mess and need to undo it." Your own bad edit is recoverable via Edit; the user's hours of unstaged work are not.
 
 ## Project Overview
 

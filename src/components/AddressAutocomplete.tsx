@@ -269,6 +269,19 @@ const AddressAutocomplete: React.FC<AddressAutocompleteProps> = ({
             onChangeText: (text: string) => {
               setQuery(text)
               setIsResult(false)
+              if (text === '') {
+                // Clearing the search box should also clear the structured
+                // address — otherwise stale fields (from prefill or a prior
+                // selection) silently survive and get geocoded on save.
+                onSelect({
+                  line1: '',
+                  line2: '',
+                  city: '',
+                  state: '',
+                  zip: '',
+                  country: '',
+                })
+              }
             },
             onBlur: () => setSuggestions([]),
             placeholder: i18n.t('enterAddress'),

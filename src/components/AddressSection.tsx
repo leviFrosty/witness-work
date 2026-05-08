@@ -159,18 +159,11 @@ export default function AddressSection({
 
   const switchMode = (next: Mode) => {
     if (next === mode) return
-    if (next === 'manual') {
-      // Switching from search to manual entry — move query to line1 if it
-      // hasn't been resolved to a real result yet.
-      if (query && !isResult) {
-        setLine1(query)
-      }
-    } else {
-      // Switching from manual entry back to search — preload query with line1.
-      if (contact.address?.line1) {
-        setQuery(contact.address.line1)
-        setIsResult(false)
-      }
+    if (next === 'search') {
+      // Re-derive the search query from the structured address so the two
+      // views stay in sync without copying stale data between them.
+      setQuery(addressToString(contact.address))
+      setIsResult(true)
     }
     setMode(next)
   }

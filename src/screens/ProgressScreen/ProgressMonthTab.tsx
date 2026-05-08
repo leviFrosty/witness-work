@@ -11,12 +11,10 @@ import i18n from '../../lib/locales'
 import Text from '../../components/MyText'
 import MonthSummary from '../../components/MonthSummary'
 import AllDaysList from '../../components/AllDaysList'
-import { ExportTimeSheetState } from '../../components/ExportTimeSheet'
 
 interface ProgressMonthTabProps {
   month: number
   year: number
-  setSheet: React.Dispatch<React.SetStateAction<ExportTimeSheetState>>
 }
 
 /**
@@ -25,7 +23,7 @@ interface ProgressMonthTabProps {
  * every day in the month (most-recent first; current-month caps at today).
  * Wraps its own `KeyboardAwareScrollView` — the parent shell does not scroll.
  */
-const ProgressMonthTab = ({ month, year, setSheet }: ProgressMonthTabProps) => {
+const ProgressMonthTab = ({ month, year }: ProgressMonthTabProps) => {
   const theme = useTheme()
   const insets = useSafeAreaInsets()
   const { serviceReports } = useServiceReport()
@@ -48,7 +46,7 @@ const ProgressMonthTab = ({ month, year, setSheet }: ProgressMonthTabProps) => {
           month={month}
           year={year}
           monthsReports={thisMonthsReports}
-          setSheet={setSheet}
+          showReportButton
           hideTitle
         />
       </View>

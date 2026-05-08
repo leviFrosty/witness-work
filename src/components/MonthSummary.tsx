@@ -2,7 +2,7 @@ import { View } from 'react-native'
 import Text from './MyText'
 import i18n from '../lib/locales'
 import MonthServiceReportProgressBar from './MonthServiceReportProgressBar'
-import { faArrowUpFromBracket, faPlus } from '@fortawesome/free-solid-svg-icons'
+import { faEye, faPlus } from '@fortawesome/free-solid-svg-icons'
 import IconButton from './IconButton'
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
 import {
@@ -16,7 +16,6 @@ import {
 import useServiceReport from '../stores/serviceReport'
 import { useCallback, useEffect, useMemo, useRef } from 'react'
 import useTheme from '../contexts/theme'
-import { ExportTimeSheetState } from './ExportTimeSheet'
 import { ServiceReport } from '../types/serviceReport'
 import { CategorySegment } from './CategorySegmentBar'
 import CategoriesSection from './CategoriesSection'
@@ -61,7 +60,8 @@ interface MonthSummaryProps {
   monthsReports: ServiceReport[] | null
   month: number
   year: number
-  setSheet?: React.Dispatch<React.SetStateAction<ExportTimeSheetState>>
+  /** Show the report-view trigger icon. */
+  showReportButton?: boolean
   title?: string
   hideTitle?: boolean
   noDetails?: boolean
@@ -72,7 +72,7 @@ const MonthSummary = ({
   monthsReports,
   month,
   year,
-  setSheet,
+  showReportButton,
   title,
   hideTitle,
   noDetails,
@@ -418,17 +418,13 @@ const MonthSummary = ({
               >
                 {title ?? moment().month(month).year(year).format('MMMM YYYY')}
               </Text>
-              {setSheet !== undefined && (
+              {showReportButton && (
                 <IconButton
                   iconStyle={{ color: theme.colors.textAlt }}
                   onPress={() =>
-                    setSheet({
-                      open: true,
-                      month: month,
-                      year,
-                    })
+                    navigation.navigate('ServiceReportView', { month, year })
                   }
-                  icon={faArrowUpFromBracket}
+                  icon={faEye}
                 />
               )}
             </View>
@@ -457,17 +453,13 @@ const MonthSummary = ({
                   sealAnimatedStyle={sealAnimatedStyle}
                 />
               </View>
-              {hideTitle && setSheet !== undefined && (
+              {hideTitle && showReportButton && (
                 <IconButton
                   iconStyle={{ color: theme.colors.textAlt }}
                   onPress={() =>
-                    setSheet({
-                      open: true,
-                      month: month,
-                      year,
-                    })
+                    navigation.navigate('ServiceReportView', { month, year })
                   }
-                  icon={faArrowUpFromBracket}
+                  icon={faEye}
                 />
               )}
             </View>

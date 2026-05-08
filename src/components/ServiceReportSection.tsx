@@ -6,12 +6,13 @@ import Text from './MyText'
 import moment from 'moment'
 import i18n from '../lib/locales'
 import IconButton from './IconButton'
-import { faArrowUpFromBracket } from '@fortawesome/free-solid-svg-icons'
-import { ExportTimeSheetState } from './ExportTimeSheet'
+import { faEye } from '@fortawesome/free-solid-svg-icons'
+import { useNavigation } from '@react-navigation/native'
 import useDevice from '../hooks/useDevice'
 import HourEntryCard from './HourEntryCard'
 import PublisherCheckBoxCard from './PublisherCheckBoxCard'
 import StudiesCard from './StudiesCard'
+import { RootStackNavigation } from '../types/rootStack'
 
 const RowSectionTitle = ({
   title,
@@ -35,14 +36,11 @@ const RowSectionTitle = ({
   )
 }
 
-interface ServiceReportProps {
-  setSheet: React.Dispatch<React.SetStateAction<ExportTimeSheetState>>
-}
-
-const ServiceReportSection = ({ setSheet }: ServiceReportProps) => {
+const ServiceReportSection = () => {
   const theme = useTheme()
   const { entryMode } = usePublisher()
   const { isTablet } = useDevice()
+  const navigation = useNavigation<RootStackNavigation>()
 
   return (
     <View style={{ gap: 10 }}>
@@ -57,11 +55,10 @@ const ServiceReportSection = ({ setSheet }: ServiceReportProps) => {
           {i18n.t('serviceReport')}
         </Text>
         <IconButton
-          icon={faArrowUpFromBracket}
+          icon={faEye}
           size='sm'
           onPress={() =>
-            setSheet({
-              open: true,
+            navigation.navigate('ServiceReportView', {
               month: moment().month(),
               year: moment().year(),
             })

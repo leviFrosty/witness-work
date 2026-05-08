@@ -10,9 +10,6 @@ import useTheme from '../../contexts/theme'
 import { usePreferences } from '../../stores/preferences'
 import i18n from '../../lib/locales'
 
-import ExportTimeSheet, {
-  ExportTimeSheetState,
-} from '../../components/ExportTimeSheet'
 import MilestoneAdjustSheet from '../../components/MilestoneAdjustSheet'
 import Badge from '../../components/Badge'
 import Button from '../../components/Button'
@@ -25,6 +22,7 @@ import SegmentedControl from '../../components/SegmentedControl'
 import ProgressMonthTab from './ProgressMonthTab'
 import ProgressYearTab from './ProgressYearTab'
 import ProgressAllTimeTab from './ProgressAllTimeTab'
+import ServiceYearCatchUpBanner from '../../components/ServiceYearCatchUpBanner'
 
 type Props = NativeStackScreenProps<HomeTabStackParamList, 'Progress'>
 
@@ -54,12 +52,6 @@ const ProgressScreen = ({ route, navigation }: Props) => {
   })()
 
   const [activeTab, setActiveTab] = useState<ProgressTab>(initialTab)
-
-  const [exportSheet, setExportSheet] = useState<ExportTimeSheetState>({
-    open: false,
-    month,
-    year,
-  })
 
   const [milestoneSheetOpen, setMilestoneSheetOpen] = useState(false)
 
@@ -221,12 +213,9 @@ const ProgressScreen = ({ route, navigation }: Props) => {
       </View>
 
       <View style={{ flex: 1 }}>
+        <ServiceYearCatchUpBanner />
         {activeTab === 'month' ? (
-          <ProgressMonthTab
-            month={month}
-            year={year}
-            setSheet={setExportSheet}
-          />
+          <ProgressMonthTab month={month} year={year} />
         ) : null}
         {activeTab === 'year' && !hideYearTab ? (
           <ProgressYearTab
@@ -249,7 +238,6 @@ const ProgressScreen = ({ route, navigation }: Props) => {
         ) : null}
       </View>
 
-      <ExportTimeSheet sheet={exportSheet} setSheet={setExportSheet} />
       <MilestoneAdjustSheet
         visible={milestoneSheetOpen}
         onClose={() => setMilestoneSheetOpen(false)}

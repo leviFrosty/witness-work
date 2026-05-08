@@ -94,15 +94,6 @@ const AddEarlierYearSheet = ({
                 {i18n.t('cancel')}
               </Text>
             </Pressable>
-            <Text
-              style={{
-                color: theme.colors.text,
-                fontSize: 16,
-                fontFamily: theme.fonts.semiBold,
-              }}
-            >
-              {i18n.t('addEarlierYear_pickerTitle')}
-            </Text>
             <Pressable onPress={handleConfirm} hitSlop={8}>
               <Text
                 style={{
@@ -111,7 +102,7 @@ const AddEarlierYearSheet = ({
                   fontFamily: theme.fonts.semiBold,
                 }}
               >
-                {i18n.t('addEarlierYear')}
+                {i18n.t('add')}
               </Text>
             </Pressable>
           </View>

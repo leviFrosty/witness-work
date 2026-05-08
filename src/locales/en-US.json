@@ -1602,7 +1602,6 @@
   "lifetimeHours": "Lifetime Hours",
   "yearByYear": "Year by Year",
   "addEarlierYear": "Add earlier year",
-  "addEarlierYear_pickerTitle": "Add Earlier Service Year",
   "sinceDateServiceYears": "since {{date}} · {{count}} service years",
   "lifetimeHoursInfo": "Raw total — not adjusted for credit caps",
   "emptyAllTime_title": "No time logged yet",

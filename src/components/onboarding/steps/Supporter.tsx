@@ -2,7 +2,7 @@ import { View } from 'react-native'
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
 import { useNavigation } from '@react-navigation/native'
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
-import { faHeart } from '@fortawesome/free-solid-svg-icons'
+import { faChevronRight, faHeart } from '@fortawesome/free-solid-svg-icons'
 import { styles } from '../Onboarding.styles'
 import OnboardingNav from '../OnboardingNav'
 import Text from '../../MyText'
@@ -83,7 +83,7 @@ const Supporter = ({ goBack, goNext }: Props) => {
         showsVerticalScrollIndicator={false}
       >
         <View style={[styles.stepContentContainer, { marginRight: 0 }]}>
-          {/* From-the-maker lead-in: volunteer framing + free-forever reassurance. */}
+          {/* From-the-maker lead-in: volunteer framing + supporter-perks nudge. */}
           <View
             style={{
               alignSelf: 'flex-start',
@@ -157,31 +157,40 @@ const Supporter = ({ goBack, goNext }: Props) => {
           <SupporterBenefits />
 
           <Button
+            variant='outline'
             style={{
               marginTop: 18,
-              alignSelf: 'center',
+              alignSelf: 'stretch',
               flexDirection: 'row',
               alignItems: 'center',
-              gap: 8,
-              paddingVertical: 10,
-              paddingHorizontal: 14,
+              justifyContent: 'center',
+              gap: 10,
+              paddingVertical: 14,
+              paddingHorizontal: 16,
+              borderColor: theme.colors.supporter,
+              backgroundColor: theme.colors.supporterTranslucent,
             }}
             onPress={() => navigation.navigate('Paywall')}
           >
             <FontAwesomeIcon
               icon={faHeart}
-              size={12}
+              size={14}
               color={theme.colors.supporter}
             />
             <Text
               style={{
-                fontSize: 14,
+                fontSize: 15,
                 color: theme.colors.supporter,
                 fontFamily: theme.fonts.semiBold,
               }}
             >
               {i18n.t('supporterOnboardingLearnMore')}
             </Text>
+            <FontAwesomeIcon
+              icon={faChevronRight}
+              size={12}
+              color={theme.colors.supporter}
+            />
           </Button>
 
           <Text

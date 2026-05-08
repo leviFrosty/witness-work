@@ -197,6 +197,7 @@ const WhatsNewSheet: React.FC<Props> = ({ show, setShow }) => {
           </Text>
 
           <IconButton
+            noTransform
             onPress={() => setShow(false)}
             size={20}
             icon={faTimes}

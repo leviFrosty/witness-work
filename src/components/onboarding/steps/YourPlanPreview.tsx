@@ -37,6 +37,7 @@ import WeekStripTeaser from '../../WeekStripTeaser'
 import useTheme from '../../../contexts/theme'
 import i18n, { TranslationKey } from '../../../lib/locales'
 import { OnboardingIntent, usePreferences } from '../../../stores/preferences'
+import usePublisher from '../../../hooks/usePublisher'
 import { getEntryMode, isPioneer } from '../../../lib/publisherCapabilities'
 import { useMarkerColors } from '../../../hooks/useMarkerColors'
 import { Theme } from '../../../types/theme'
@@ -1135,13 +1136,9 @@ const SegmentBar = ({
 
 const YourPlanPreview = ({ goBack, goNext }: Props) => {
   const theme = useTheme()
-  const {
-    publisher,
-    publisherHours,
-    pioneerStartDate,
-    name,
-    onboardingIntents,
-  } = usePreferences()
+  const { publisher, publisherHours, pioneerStartDate, onboardingIntents } =
+    usePreferences()
+  const { name: trimmedName, hasName } = usePublisher()
 
   const monthlyGoalHours = publisherHours[publisher] ?? 0
   const publisherLabel = i18n.t(publisher)
@@ -1164,12 +1161,11 @@ const YourPlanPreview = ({ goBack, goNext }: Props) => {
   }, [onboardingIntents])
   const isPreview = onboardingIntents.length === 0
 
-  const trimmedName = name?.trim()
   const heroKey: TranslationKey = isPreview
-    ? trimmedName
+    ? hasName
       ? 'yourPlanHeroPreview'
       : 'yourPlanHeroPreviewNoName'
-    : trimmedName
+    : hasName
       ? 'yourPlanHero'
       : 'yourPlanHeroNoName'
   const introKey: TranslationKey = isPreview

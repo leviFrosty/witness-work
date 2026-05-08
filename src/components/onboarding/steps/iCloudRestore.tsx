@@ -5,6 +5,7 @@ import {
   faCheckCircle,
   faCircleExclamation,
   faCloud,
+  faFloppyDisk,
 } from '@fortawesome/free-solid-svg-icons'
 import moment from 'moment'
 import { Spinner } from 'tamagui'
@@ -359,41 +360,62 @@ const ICloudRestore = ({ goBack, goNext }: Props) => {
         {probe.state === 'found' && (
           <Card
             style={{
+              flexDirection: 'row',
+              alignItems: 'flex-start',
               paddingVertical: 16,
               paddingHorizontal: 16,
-              gap: 8,
+              gap: 12,
               borderWidth: 1,
               borderColor: theme.colors.accentTranslucent,
             }}
           >
-            <Text
+            <View
               style={{
-                fontSize: theme.fontSize('md'),
-                fontFamily: theme.fonts.semiBold,
-                color: theme.colors.text,
+                width: 36,
+                height: 36,
+                borderRadius: 18,
+                alignItems: 'center',
+                justifyContent: 'center',
+                backgroundColor: theme.colors.accentTranslucent,
+                marginTop: 2,
               }}
             >
-              {i18n.t('iCloudRestoreFoundTitle')}
-            </Text>
-            <Text style={{ fontSize: 13, color: theme.colors.textAlt }}>
-              {i18n.t('iCloudRestoreFoundSummary', {
-                device:
-                  probe.remote.deviceName || i18n.t('iCloudAnotherDevice'),
-                relative: moment(probe.remote.writtenAt).fromNow(),
-              })}
-            </Text>
-            {canEnableICloudSync && (
+              <FontAwesomeIcon
+                icon={faFloppyDisk}
+                size={16}
+                color={theme.colors.accent}
+              />
+            </View>
+            <View style={{ flex: 1, gap: 8 }}>
               <Text
                 style={{
-                  fontSize: 12,
-                  color: theme.colors.textAlt,
-                  marginTop: 4,
-                  lineHeight: 16,
+                  fontSize: theme.fontSize('md'),
+                  fontFamily: theme.fonts.semiBold,
+                  color: theme.colors.text,
                 }}
               >
-                {i18n.t('iCloudRestoreFoundSyncNote')}
+                {i18n.t('iCloudRestoreFoundTitle')}
               </Text>
-            )}
+              <Text style={{ fontSize: 13, color: theme.colors.textAlt }}>
+                {i18n.t('iCloudRestoreFoundSummary', {
+                  device:
+                    probe.remote.deviceName || i18n.t('iCloudAnotherDevice'),
+                  relative: moment(probe.remote.writtenAt).fromNow(),
+                })}
+              </Text>
+              {canEnableICloudSync && (
+                <Text
+                  style={{
+                    fontSize: 12,
+                    color: theme.colors.textAlt,
+                    marginTop: 4,
+                    lineHeight: 16,
+                  }}
+                >
+                  {i18n.t('iCloudRestoreFoundSyncNote')}
+                </Text>
+              )}
+            </View>
           </Card>
         )}
       </View>

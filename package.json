@@ -27,7 +27,11 @@
   },
   "dependencies": {
     "@bacons/apple-targets": "0.2.1",
+    "@expo-google-fonts/gaegu": "^0.4.1",
     "@expo-google-fonts/inter": "^0.2.3",
+    "@expo-google-fonts/kalam": "^0.4.1",
+    "@expo-google-fonts/klee-one": "^0.4.1",
+    "@expo-google-fonts/ma-shan-zheng": "^0.4.2",
     "@fortawesome/fontawesome-svg-core": "^6.7.2",
     "@fortawesome/free-brands-svg-icons": "^6.7.2",
     "@fortawesome/free-regular-svg-icons": "^6.7.2",
@@ -54,6 +58,7 @@
     "concurrently": "^9.2.1",
     "dotenv": "^16.6.1",
     "expo": "^55.0.23",
+    "expo-alternate-app-icons": "^8.0.0",
     "expo-application": "~55.0.14",
     "expo-asset": "~55.0.17",
     "expo-audio": "^55.0.14",
@@ -182,6 +187,9 @@
     },
     "onlyBuiltDependencies": [
       "@shopify/react-native-skia"
-    ]
+    ],
+    "patchedDependencies": {
+      "expo-alternate-app-icons": "patches/expo-alternate-app-icons.patch"
+    }
   }
 }

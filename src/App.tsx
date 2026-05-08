@@ -16,8 +16,16 @@ import {
   Inter_600SemiBold,
   Inter_700Bold,
 } from '@expo-google-fonts/inter'
+import { Kalam_400Regular, Kalam_700Bold } from '@expo-google-fonts/kalam'
+import { Gaegu_400Regular, Gaegu_700Bold } from '@expo-google-fonts/gaegu'
+import {
+  KleeOne_400Regular,
+  KleeOne_600SemiBold,
+} from '@expo-google-fonts/klee-one'
+import { MaShanZheng_400Regular } from '@expo-google-fonts/ma-shan-zheng'
 import {
   ActivityIndicator,
+  AppState,
   InteractionManager,
   LogBox,
   Platform,
@@ -36,6 +44,11 @@ import {
   migrateFromAsyncStorage,
 } from './stores/mmkv'
 import { usePreferences } from './stores/preferences'
+import {
+  applyAppIcon,
+  determineHemisphere,
+  resolvePluginIcon,
+} from './lib/appIcon'
 import useContacts from './stores/contactsStore'
 import { migrateCustomFieldsToIds } from './lib/customFieldsMigration'
 import AnimationViewProvider from './providers/AnimationViewProvider'
@@ -46,6 +59,7 @@ import { installiCloudSync, iCloudSync } from './lib/sync/iCloudSync'
 import { linking, navigationRef } from './lib/linking'
 import DeepLinkListeners from './components/DeepLinkListeners'
 import useIsSupporter from './hooks/useIsSupporter'
+import useCustomer from './hooks/useCustomer'
 import { useSupporter } from './stores/supporter'
 
 Notifications.setNotificationHandler({
@@ -113,6 +127,105 @@ function SupporterStoreSync() {
  * defaulting to any of them can clobber data. Users land in Settings and
  * resolve explicitly via `FirstEnableSheet`.
  */
+/**
+ * Applies the user's selected supporter-only app icon when supporter status
+ * resolves and on AppState→active transitions. Two reasons to re-run on
+ * foreground:
+ *
+ * 1. Seasonal: the persisted `customAppIcon` is `'Seasonal'` regardless of which
+ *    season's art is active; we have to recompute which `SeasonalXxx` plugin
+ *    name to apply on every wake-up so the tile rotates at season boundaries
+ *    (worst case: lag of one app open).
+ * 2. Lapse: if RevenueCat has flipped the user out of supporter status while the
+ *    app was backgrounded, we revert the Home Screen tile to default
+ *    immediately on the next foreground rather than waiting for an explicit
+ *    user action. Mirrors `customAccentColor`'s "applies only while supporter
+ *    status is active" semantics.
+ *
+ * Critically, this gates on `customer !== null` — until RevenueCat's initial
+ * `getCustomerInfo()` resolves, `isSupporter` defaults to `false` for one
+ * render. Acting on that false pulse would revert a legitimately-active
+ * alternate icon to the default and fire a "App Icon Updated" system
+ * notification, only to fire a second one a moment later when supporter status
+ * loads and we re-apply the user's choice. By waiting for the customer to load,
+ * we either confirm the icon should stay (idempotent skip) or we confirm a true
+ * lapse and revert exactly once.
+ *
+ * The applier is also idempotent — `applyAppIcon` no-ops when the requested
+ * icon is already active — so the stable-supporter path on launch is silent.
+ */
+function AppIconSync() {
+  const { customer } = useCustomer()
+  const { isSupporter } = useIsSupporter()
+  const { customAppIcon } = usePreferences()
+  const supporterStatusKnown = customer !== null
+
+  useEffect(() => {
+    if (Platform.OS !== 'ios') return
+    if (!supporterStatusKnown) return
+
+    let cancelled = false
+    const apply = async () => {
+      const target =
+        isSupporter && customAppIcon
+          ? resolvePluginIcon(customAppIcon, await determineHemisphere())
+          : null
+      if (cancelled) return
+      try {
+        await applyAppIcon(target)
+      } catch {
+        // The system "App Icon Updated" alert is the user-visible failure
+        // mode anyway; swallow so a transient glitch doesn't crash boot.
+      }
+    }
+
+    void apply()
+    const sub = AppState.addEventListener('change', (state) => {
+      if (state === 'active') void apply()
+    })
+    return () => {
+      cancelled = true
+      sub.remove()
+    }
+  }, [supporterStatusKnown, isSupporter, customAppIcon])
+
+  return null
+}
+
+/**
+ * Reactively disables iCloud sync the moment supporter status lapses, mirroring
+ * how `AppIconSync` reverts the Home Screen tile and how `customAccentColor` is
+ * gated in widget snapshots. Without this, a lapsed supporter's data would keep
+ * round-tripping through iCloud even though every other supporter feature has
+ * gone dark.
+ *
+ * Gates on `customer !== null` for the same reason as `AppIconSync`: until
+ * RevenueCat's initial `getCustomerInfo()` resolves, `isSupporter` is a
+ * transient `false`, and acting on it would clobber a legitimately-enabled sync
+ * setting on every app launch.
+ *
+ * Resets `iCloudSyncSetByUser` so a future re-subscription re-enters the
+ * auto-enable flow in `SupporterSyncDefault` (same first-enable look-before-
+ * leaping decision as a brand new supporter), rather than leaving sync
+ * permanently off.
+ */
+function SupporterSyncLapseGate() {
+  const { customer } = useCustomer()
+  const { isSupporter } = useIsSupporter()
+  const { iCloudSyncEnabled, set } = usePreferences()
+  const supporterStatusKnown = customer !== null
+
+  useEffect(() => {
+    if (Platform.OS !== 'ios') return
+    if (!supporterStatusKnown) return
+    if (isSupporter) return
+    if (!iCloudSyncEnabled) return
+    set({ iCloudSyncEnabled: false, iCloudSyncSetByUser: false })
+  }, [supporterStatusKnown, isSupporter, iCloudSyncEnabled, set])
+
+  return null
+}
+
 function SupporterSyncDefault() {
   const { isSupporter } = useIsSupporter()
   const { iCloudSyncEnabled, iCloudSyncSetByUser } = usePreferences()
@@ -160,6 +273,13 @@ export default function App() {
     Inter_700Bold,
     Inter: require('@tamagui/font-inter/otf/Inter-Medium.otf'),
     InterBold: require('@tamagui/font-inter/otf/Inter-Bold.otf'),
+    Kalam_400Regular,
+    Kalam_700Bold,
+    Gaegu_400Regular,
+    Gaegu_700Bold,
+    KleeOne_400Regular,
+    KleeOne_600SemiBold,
+    MaShanZheng_400Regular,
   })
   const [hasMigrated, setHasMigrated] = useState(hasMigratedFromAsyncStorage())
 
@@ -254,6 +374,8 @@ export default function App() {
       <CustomerProvider>
         <SupporterStoreSync />
         <SupporterSyncDefault />
+        <SupporterSyncLapseGate />
+        <AppIconSync />
         <ThemeProvider>
           <SafeAreaProvider>
             <GestureHandlerRootView style={{ flex: 1 }}>

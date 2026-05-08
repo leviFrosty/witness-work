@@ -9,13 +9,14 @@
  * per-feature gating decision.
  */
 
-export type FeatureKey = 'customAccentColor' | 'iCloudSync'
+export type FeatureKey = 'customAccentColor' | 'iCloudSync' | 'customAppIcon'
 
 type GateRule = { gate: 'supporter-only' }
 
 export const FEATURES: Record<FeatureKey, GateRule> = {
   customAccentColor: { gate: 'supporter-only' },
   iCloudSync: { gate: 'supporter-only' },
+  customAppIcon: { gate: 'supporter-only' },
 }
 
 export type FeatureAccess = {

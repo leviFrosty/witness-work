@@ -11,6 +11,7 @@ import SupporterBadge from './SupporterBadge'
 import SupporterBenefits from './SupporterBenefits'
 import i18n from '../lib/locales'
 import { RootStackNavigation } from '../types/rootStack'
+import useCheapestSupporterPrice from '../hooks/useCheapestSupporterPrice'
 
 interface Props {
   open: boolean
@@ -19,12 +20,13 @@ interface Props {
    * Optional key of the specific feature the user tapped. Surfaces slightly
    * different copy acknowledging what they were trying to customize.
    */
-  featureKey?: 'customAccentColor' | 'iCloudSync'
+  featureKey?: 'customAccentColor' | 'iCloudSync' | 'customAppIcon'
 }
 
 const SupporterInfoSheet = ({ open, setOpen, featureKey }: Props) => {
   const theme = useTheme()
   const navigation = useNavigation<RootStackNavigation>()
+  const { priceString } = useCheapestSupporterPrice()
   // Keep the native Modal mounted through the Sheet's dismiss animation so it
   // can slide down instead of disappearing instantly when `open` flips false.
   const [mounted, setMounted] = useState(open)
@@ -144,7 +146,11 @@ const SupporterInfoSheet = ({ open, setOpen, featureKey }: Props) => {
                     fontFamily: theme.fonts.bold,
                   }}
                 >
-                  {i18n.t('supporterSheetLearnMore')}
+                  {priceString
+                    ? i18n.t('supporterSheetSupportFrom', {
+                        price: priceString,
+                      })
+                    : i18n.t('supporterSheetLearnMore')}
                 </Text>
               </Button>
               <Button

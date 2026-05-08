@@ -165,7 +165,60 @@ export type AppIconVariant =
   | 'Gold'
   | 'Dark'
   | 'Minimalist'
+  | 'Mono'
   | 'Seasonal'
+
+/**
+ * The toggleable home-screen sections that the user can also reorder. Order is
+ * persisted in `homeScreenElementsOrder`; visibility is persisted in
+ * `homeScreenElements`. Capability gates (tablet, annual goal, timer enabled)
+ * are applied at render time, not stored — turning off a capability hides the
+ * section without losing the user's saved order.
+ */
+export type HomeScreenElementKey =
+  | 'approachingConversations'
+  | 'tabletServiceYearSummary'
+  | 'serviceReport'
+  | 'thisWeek'
+  | 'timer'
+  | 'didYouKnow'
+
+export const DEFAULT_HOME_SCREEN_ELEMENTS_ORDER: HomeScreenElementKey[] = [
+  'approachingConversations',
+  'tabletServiceYearSummary',
+  'serviceReport',
+  'thisWeek',
+  'timer',
+  'didYouKnow',
+]
+
+/**
+ * Returns the user's stored order with any missing keys appended in their
+ * default position. Tolerates legacy entries (e.g. `monthlyRoutine`) by
+ * dropping anything not in the current key set.
+ */
+export function getEffectiveHomeScreenOrder(
+  stored: string[] | undefined
+): HomeScreenElementKey[] {
+  const valid = new Set<HomeScreenElementKey>(
+    DEFAULT_HOME_SCREEN_ELEMENTS_ORDER
+  )
+  const seen = new Set<HomeScreenElementKey>()
+  const out: HomeScreenElementKey[] = []
+  for (const k of stored ?? []) {
+    if (
+      valid.has(k as HomeScreenElementKey) &&
+      !seen.has(k as HomeScreenElementKey)
+    ) {
+      out.push(k as HomeScreenElementKey)
+      seen.add(k as HomeScreenElementKey)
+    }
+  }
+  for (const k of DEFAULT_HOME_SCREEN_ELEMENTS_ORDER) {
+    if (!seen.has(k)) out.push(k)
+  }
+  return out
+}
 
 export const PREFERENCE_DEFAULTS = {
   publisher: 'publisher' as Publisher,
@@ -306,7 +359,15 @@ export const PREFERENCE_DEFAULTS = {
     serviceReport: true,
     timer: true,
     contacts: true,
+    didYouKnow: true,
   },
+  /**
+   * User-defined order of the toggleable home-screen sections. Resolved through
+   * `getEffectiveHomeScreenOrder` at read time so newly-added keys (or legacy
+   * keys) don't break the layout.
+   */
+  homeScreenElementsOrder:
+    DEFAULT_HOME_SCREEN_ELEMENTS_ORDER as HomeScreenElementKey[],
   colorScheme: undefined as 'light' | 'dark' | undefined,
   /**
    * Toggles the Skia-backed shader overlay on `ProfileCard`. Off by default
@@ -372,6 +433,15 @@ export const PREFERENCE_DEFAULTS = {
    * hidden developer tools screen only.
    */
   devSupporterOverride: null as Date | null,
+  /**
+   * When true, app-icon changes go through the public `setAlternateIconName`
+   * path which fires the iOS "App Icon Updated" system alert. When false
+   * (default), they go through the patched silent selector — same outcome, no
+   * alert. Exposed from the developer tools screen so the alerts can be
+   * re-enabled for debugging without re-patching the native module.
+   * Non-syncable.
+   */
+  devShowAppIconAlerts: false,
   /**
    * ICloud sync (supporter-only). When true, the sync layer writes the backup
    * payload to the ubiquity container on store changes and pulls remote updates
@@ -492,6 +562,26 @@ export const PREFERENCE_DEFAULTS = {
    */
   onboardingStepId: null as string | null,
   /**
+   * Resolution state for the one-time service-year catch-up prompt shown to
+   * annual-goal publishers who installed mid-service-year. Lifecycle:
+   *
+   * - `null` — never engaged / ineligible on older persisted installs.
+   * - `'pending'` — eligible user has not resolved the onboarding step yet.
+   * - `'skipped'` — user hit Skip in the onboarding step. Surfaces the recovery
+   *   banner on the Progress screen.
+   * - `'completed'` — user filled in the form; banner is permanently hidden.
+   * - `'dismissed'` — user tapped the X on the banner; banner is permanently
+   *   hidden without filling in data.
+   *
+   * Syncable so dismissal/completion carries across devices.
+   */
+  serviceYearCatchUpStatus: null as
+    | 'pending'
+    | 'skipped'
+    | 'completed'
+    | 'dismissed'
+    | null,
+  /**
    * Tracks which achievement tiers have already been celebrated per month, so
    * the one-time confetti / haptic / scale-pulse doesn't re-fire every time the
    * user reopens the MonthScreen. Keyed `YYYY-MM`; values are the tier names
@@ -587,6 +677,7 @@ export const NON_SYNCABLE_PREFERENCE_KEYS = new Set<string>([
   'customContactFields',
   'devSupporterOverride',
   'devSupporterNudgeForceShow',
+  'devShowAppIconAlerts',
   'developerTools',
   'hasAttemptedToMigrateToMmkv',
   'monthlyRoutineHasShownInvalidMonthAlert',

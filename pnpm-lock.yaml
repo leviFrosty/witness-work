@@ -15,15 +15,32 @@ overrides:
   protobufjs: '>=7.5.5'
   follow-redirects: '>=1.16.0'
 
+patchedDependencies:
+  expo-alternate-app-icons:
+    hash: e03bd1668a2ea072fbd4845ebec286ec5021f27907fdd8ac64801e8350b5438c
+    path: patches/expo-alternate-app-icons.patch
+
 importers:
   .:
     dependencies:
       '@bacons/apple-targets':
         specifier: 0.2.1
         version: 0.2.1
+      '@expo-google-fonts/gaegu':
+        specifier: ^0.4.1
+        version: 0.4.1
       '@expo-google-fonts/inter':
         specifier: ^0.2.3
         version: 0.2.3
+      '@expo-google-fonts/kalam':
+        specifier: ^0.4.1
+        version: 0.4.1
+      '@expo-google-fonts/klee-one':
+        specifier: ^0.4.1
+        version: 0.4.1
+      '@expo-google-fonts/ma-shan-zheng':
+        specifier: ^0.4.2
+        version: 0.4.2
       '@fortawesome/fontawesome-svg-core':
         specifier: ^6.7.2
         version: 6.7.2
@@ -102,6 +119,9 @@ importers:
       expo:
         specifier: ^55.0.23
         version: 55.0.23(@babel/core@7.28.4)(@expo/dom-webview@55.0.5)(react-dom@19.2.0(react@19.2.0))(react-native-worklets@0.8.1(@babel/core@7.28.4)(@react-native/metro-config@0.85.0(@babel/core@7.28.4))(react-native@0.83.6(@babel/core@7.28.4)(@react-native-community/cli@13.6.9)(@react-native/metro-config@0.85.0(@babel/core@7.28.4))(@types/react@19.2.14)(react@19.2.0))(react@19.2.0))(react-native@0.83.6(@babel/core@7.28.4)(@react-native-community/cli@13.6.9)(@react-native/metro-config@0.85.0(@babel/core@7.28.4))(@types/react@19.2.14)(react@19.2.0))(react@19.2.0)(typescript@5.9.2)
+      expo-alternate-app-icons:
+        specifier: ^8.0.0
+        version: 8.0.0(patch_hash=e03bd1668a2ea072fbd4845ebec286ec5021f27907fdd8ac64801e8350b5438c)(expo@55.0.23)(react-native@0.83.6(@babel/core@7.28.4)(@react-native-community/cli@13.6.9)(@react-native/metro-config@0.85.0(@babel/core@7.28.4))(@types/react@19.2.14)(react@19.2.0))(react@19.2.0)
       expo-application:
         specifier: ~55.0.14
         version: 55.0.14(expo@55.0.23)
@@ -1816,10 +1836,34 @@ packages:
       }
     engines: { node: ^12.22.0 || ^14.17.0 || >=16.0.0 }
 
+  '@expo-google-fonts/gaegu@0.4.1':
+    resolution:
+      {
+        integrity: sha512-qaT0EdguT/3GkC4iZyC8RXuoJaqhVDqjntVxAtyGH2TaBcotHpFd2RcaAY8cGm/mtKeGGOJbRR9A68ZQ8zYOXQ==,
+      }
+
   '@expo-google-fonts/inter@0.2.3':
     resolution:
       {
         integrity: sha512-iHK9FI+dnE45X5c2Z5hSFwNH4zUWethizpbv3XUn0FIGw5jwvzriENz0a6wCdkI4/d+1QkurnHo5XHti7TbNJA==,
+      }
+
+  '@expo-google-fonts/kalam@0.4.1':
+    resolution:
+      {
+        integrity: sha512-A5LZoojqb9OCzOI/2WDRofaIQGGzC5zzmKxqxCFIx1jSYOO8g7q+5fZdd+QfJ6pY6VLzO4j5xoJq0ptcHFpQSg==,
+      }
+
+  '@expo-google-fonts/klee-one@0.4.1':
+    resolution:
+      {
+        integrity: sha512-3hMj7H5o3mD6lNPPPew1dezDVe1T+CzxSnNfH0UxdOHhxYSbbnFWPNv5CjCgf7w3zJLLuvE4a9NLEUOE/5FpOQ==,
+      }
+
+  '@expo-google-fonts/ma-shan-zheng@0.4.2':
+    resolution:
+      {
+        integrity: sha512-pCcOmxTamTpXHjUqx4R8wO3JQ612yuIx+i45Cd2Rzq3pLJY+lhTG/MwhotO3pjS4ba3dc06LL90RxXh2QfB/KA==,
       }
 
   '@expo/cli@55.0.29':
@@ -6579,6 +6623,16 @@ packages:
         integrity: sha512-2Zks0hf1VLFYI1kbh0I5jP3KHHyCHpkfyHBzsSXRFgl/Bg9mWYfMW8oD+PdMPlEwy5HNsR9JutYy6pMeOh61nw==,
       }
     engines: { node: ^14.15.0 || ^16.10.0 || >=18.0.0 }
+
+  expo-alternate-app-icons@8.0.0:
+    resolution:
+      {
+        integrity: sha512-iqvcxu3fNPtOtZ/y0/VPlxol9WUhkvbj7VI6SMwSAEAgOZ1D5k7KvF54U0oLC/i0k+HL0YOaIuZcLJuLaphIIw==,
+      }
+    peerDependencies:
+      expo: '>=53'
+      react: '*'
+      react-native: '*'
 
   expo-application@55.0.14:
     resolution:
@@ -13691,7 +13745,15 @@ snapshots:
 
   '@eslint/js@8.51.0': {}
 
+  '@expo-google-fonts/gaegu@0.4.1': {}
+
   '@expo-google-fonts/inter@0.2.3': {}
+
+  '@expo-google-fonts/kalam@0.4.1': {}
+
+  '@expo-google-fonts/klee-one@0.4.1': {}
+
+  '@expo-google-fonts/ma-shan-zheng@0.4.2': {}
 
   '@expo/cli@55.0.29(@expo/dom-webview@55.0.5)(expo-constants@55.0.16(expo@55.0.23)(react-native@0.83.6(@babel/core@7.28.4)(@react-native-community/cli@13.6.9)(@react-native/metro-config@0.85.0(@babel/core@7.28.4))(@types/react@19.2.14)(react@19.2.0)))(expo-font@55.0.7(expo@55.0.23)(react-native@0.83.6(@babel/core@7.28.4)(@react-native-community/cli@13.6.9)(@react-native/metro-config@0.85.0(@babel/core@7.28.4))(@types/react@19.2.14)(react@19.2.0))(react@19.2.0))(expo@55.0.23)(react-dom@19.2.0(react@19.2.0))(react-native@0.83.6(@babel/core@7.28.4)(@react-native-community/cli@13.6.9)(@react-native/metro-config@0.85.0(@babel/core@7.28.4))(@types/react@19.2.14)(react@19.2.0))(react@19.2.0)(typescript@5.9.2)':
     dependencies:
@@ -18010,6 +18072,12 @@ snapshots:
       jest-matcher-utils: 29.7.0
       jest-message-util: 29.7.0
       jest-util: 29.7.0
+
+  expo-alternate-app-icons@8.0.0(patch_hash=e03bd1668a2ea072fbd4845ebec286ec5021f27907fdd8ac64801e8350b5438c)(expo@55.0.23)(react-native@0.83.6(@babel/core@7.28.4)(@react-native-community/cli@13.6.9)(@react-native/metro-config@0.85.0(@babel/core@7.28.4))(@types/react@19.2.14)(react@19.2.0))(react@19.2.0):
+    dependencies:
+      expo: 55.0.23(@babel/core@7.28.4)(@expo/dom-webview@55.0.5)(react-dom@19.2.0(react@19.2.0))(react-native-worklets@0.8.1(@babel/core@7.28.4)(@react-native/metro-config@0.85.0(@babel/core@7.28.4))(react-native@0.83.6(@babel/core@7.28.4)(@react-native-community/cli@13.6.9)(@react-native/metro-config@0.85.0(@babel/core@7.28.4))(@types/react@19.2.14)(react@19.2.0))(react@19.2.0))(react-native@0.83.6(@babel/core@7.28.4)(@react-native-community/cli@13.6.9)(@react-native/metro-config@0.85.0(@babel/core@7.28.4))(@types/react@19.2.14)(react@19.2.0))(react@19.2.0)(typescript@5.9.2)
+      react: 19.2.0
+      react-native: 0.83.6(@babel/core@7.28.4)(@react-native-community/cli@13.6.9)(@react-native/metro-config@0.85.0(@babel/core@7.28.4))(@types/react@19.2.14)(react@19.2.0)
 
   expo-application@55.0.14(expo@55.0.23):
     dependencies:

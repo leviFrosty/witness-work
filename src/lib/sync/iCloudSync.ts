@@ -6,6 +6,7 @@ import useContacts from '../../stores/contactsStore'
 import useConversations from '../../stores/conversationStore'
 import useServiceReport from '../../stores/serviceReport'
 import { usePreferences } from '../../stores/preferences'
+import { useSupporter } from '../../stores/supporter'
 import { buildPayload, parsePayload, SyncPayload } from './payload'
 import { mergePayload } from './merge'
 import { logger } from '../logger'
@@ -142,11 +143,17 @@ function tag(): string {
   return `[iCloudSync/${id ? id.slice(0, 6) : '?'}]`
 }
 
-/** Whether the user has opted into iCloud sync AND iCloud is actually usable. */
+/**
+ * Whether the user has opted into iCloud sync AND is currently entitled to it
+ * AND iCloud is actually usable. The supporter check is a runtime gate: if the
+ * subscription lapses between syncs, push/pull immediately stop even before the
+ * lapse-flip effect in `App.tsx` clears `iCloudSyncEnabled`.
+ */
 export function canSync(): boolean {
   if (Platform.OS !== 'ios') return false
   const { iCloudSyncEnabled } = usePreferences.getState()
   if (!iCloudSyncEnabled) return false
+  if (!useSupporter.getState().isSupporter) return false
   return ICloudBridge.isAvailable()
 }
 

@@ -75,7 +75,16 @@ const IsSupporter = ({
     <>
       <Pressable
         onPress={() => setSheetOpen(true)}
-        style={{ gap: 10, ...(fill ? { flex: 1 } : null) }}
+        style={{
+          gap: 10,
+          ...(fill
+            ? {
+                flex: 1,
+                backgroundColor: theme.colors.background,
+                paddingTop: 10,
+              }
+            : null),
+        }}
       >
         <View
           style={{

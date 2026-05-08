@@ -2,6 +2,7 @@ import { View } from 'react-native'
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
 import {
   faCloudArrowUp,
+  faIcons,
   faPalette,
   faWandMagicSparkles,
 } from '@fortawesome/free-solid-svg-icons'
@@ -150,6 +151,11 @@ const SupporterBenefits = ({ compact }: Props) => {
           icon={faPalette}
           title={i18n.t('supporterPerkAccentTitle')}
           desc={i18n.t('supporterPerkAccentDesc')}
+        />
+        <PerkRow
+          icon={faIcons}
+          title={i18n.t('supporterPerkAppIconTitle')}
+          desc={i18n.t('supporterPerkAppIconDesc')}
         />
         <PerkRow
           icon={faWandMagicSparkles}

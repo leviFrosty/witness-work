@@ -99,6 +99,28 @@ export default ({ config }: ConfigContext): ExpoConfig => {
       ],
       '@bacons/apple-targets',
       '@react-native-community/datetimepicker',
+      [
+        'expo-alternate-app-icons',
+        [
+          { name: 'Gold', ios: './src/assets/icons/Gold.png' },
+          { name: 'Dark', ios: './src/assets/icons/Dark.png' },
+          { name: 'Minimalist', ios: './src/assets/icons/Minimalist.png' },
+          { name: 'Mono', ios: './src/assets/icons/Mono.png' },
+          {
+            name: 'SeasonalSpring',
+            ios: './src/assets/icons/SeasonalSpring.png',
+          },
+          {
+            name: 'SeasonalSummer',
+            ios: './src/assets/icons/SeasonalSummer.png',
+          },
+          { name: 'SeasonalFall', ios: './src/assets/icons/SeasonalFall.png' },
+          {
+            name: 'SeasonalWinter',
+            ios: './src/assets/icons/SeasonalWinter.png',
+          },
+        ],
+      ],
       'expo-asset',
       'expo-background-task',
       'expo-font',

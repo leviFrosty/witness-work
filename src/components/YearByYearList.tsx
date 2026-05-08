@@ -1,5 +1,10 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { Pressable, View } from 'react-native'
+
+import * as Crypto from 'expo-crypto'
+import moment from 'moment'
+import { faPlus } from '@fortawesome/free-solid-svg-icons'
+import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
 
 import useTheme from '../contexts/theme'
 import useServiceReport from '../stores/serviceReport'
@@ -7,11 +12,16 @@ import usePublisher from '../hooks/usePublisher'
 import {
   getHoursForServiceYearEndYear,
   getServiceYearEndYearsSpan,
+  getAvailableEarlierEndYears,
+  getServiceYearFromDate,
 } from '../lib/serviceReport'
 import { ServiceReport } from '../types/serviceReport'
 import i18n from '../lib/locales'
 
 import Text from './MyText'
+import AddEarlierYearSheet from './AddEarlierYearSheet'
+
+const EARLIER_YEAR_FLOOR_YEARS_BACK = 100
 
 const useFlatServiceReports = (): ServiceReport[] => {
   const { serviceReports } = useServiceReport()
@@ -63,6 +73,34 @@ const YearByYearList = ({ onYearPress }: YearByYearListProps) => {
     return data
   }, [endYears, reports])
 
+  const { addServiceReport } = useServiceReport()
+
+  const [sheetOpen, setSheetOpen] = useState(false)
+
+  const availableEndYears = useMemo(() => {
+    if (endYears.length === 0) return []
+    const currentEndYear = getServiceYearFromDate(moment()) + 1
+    return getAvailableEarlierEndYears(
+      endYears,
+      currentEndYear,
+      EARLIER_YEAR_FLOOR_YEARS_BACK
+    )
+  }, [endYears])
+
+  const handleAddEarlierYear = (endYear: number) => {
+    const startYear = endYear - 1
+    // Sept 1 = canonical start of a JW service year. Noon avoids any DST edge
+    // case that could shift the stored calendar day.
+    const date = new Date(startYear, 8, 1, 12, 0, 0, 0)
+    addServiceReport({
+      id: Crypto.randomUUID(),
+      hours: 0,
+      minutes: 0,
+      date,
+    })
+    setSheetOpen(false)
+  }
+
   const divisor = useMemo(() => {
     if (annualGoalHours > 0) return annualGoalHours
     // Fallback so bars remain meaningful when the user has no annual goal.
@@ -73,37 +111,100 @@ const YearByYearList = ({ onYearPress }: YearByYearListProps) => {
   if (rows.length === 0) return null
 
   return (
-    <View style={{ gap: 8 }}>
-      <Text
-        style={{
-          fontFamily: theme.fonts.semiBold,
-          color: theme.colors.textAlt,
-          fontSize: theme.fontSize('sm'),
-          letterSpacing: 0.5,
-          paddingHorizontal: 15,
-          textTransform: 'uppercase',
-        }}
-      >
-        {i18n.t('yearByYear')}
-      </Text>
+    <>
+      <View style={{ gap: 8 }}>
+        <Text
+          style={{
+            fontFamily: theme.fonts.semiBold,
+            color: theme.colors.textAlt,
+            fontSize: theme.fontSize('sm'),
+            letterSpacing: 0.5,
+            paddingHorizontal: 15,
+            textTransform: 'uppercase',
+          }}
+        >
+          {i18n.t('yearByYear')}
+        </Text>
 
-      <View
-        style={{
-          paddingHorizontal: 15,
-          gap: 6,
-        }}
-      >
-        {rows.map(({ endYear, hours }) => {
-          const ratio = Math.max(0, Math.min(1, hours / divisor))
-          const startYear = endYear - 1
-          const endShort = String(endYear % 100).padStart(2, '0')
-          const label = `${startYear}—${endShort}`
+        <View
+          style={{
+            paddingHorizontal: 15,
+            gap: 6,
+          }}
+        >
+          {rows.map(({ endYear, hours }) => {
+            const ratio = Math.max(0, Math.min(1, hours / divisor))
+            const startYear = endYear - 1
+            const endShort = String(endYear % 100).padStart(2, '0')
+            const label = `${startYear}—${endShort}`
 
-          return (
+            return (
+              <Pressable
+                key={endYear}
+                accessibilityRole='button'
+                onPress={() => onYearPress(endYear)}
+                style={({ pressed }) => ({
+                  opacity: pressed ? 0.7 : 1,
+                  backgroundColor: theme.colors.card,
+                  borderRadius: theme.numbers.borderRadiusSm,
+                  borderCurve: 'continuous',
+                  paddingVertical: 12,
+                  paddingHorizontal: 14,
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  gap: 12,
+                })}
+              >
+                <Text
+                  style={{
+                    fontFamily: theme.fonts.semiBold,
+                    color: theme.colors.text,
+                    fontSize: theme.fontSize('sm'),
+                    minWidth: 72,
+                  }}
+                >
+                  {label}
+                </Text>
+
+                <View
+                  style={{
+                    flex: 1,
+                    height: 8,
+                    borderRadius: 999,
+                    backgroundColor: theme.colors.border,
+                    overflow: 'hidden',
+                  }}
+                >
+                  <View
+                    style={{
+                      width: `${ratio * 100}%`,
+                      height: '100%',
+                      backgroundColor: theme.colors.accent,
+                      borderRadius: 999,
+                    }}
+                  />
+                </View>
+
+                <Text
+                  style={{
+                    fontFamily: theme.fonts.semiBold,
+                    color: theme.colors.text,
+                    fontSize: theme.fontSize('sm'),
+                    minWidth: 56,
+                    textAlign: 'right',
+                  }}
+                >
+                  {hours}
+                  {i18n.t('hoursCompact')}
+                </Text>
+              </Pressable>
+            )
+          })}
+
+          {availableEndYears.length > 0 && (
             <Pressable
-              key={endYear}
               accessibilityRole='button'
-              onPress={() => onYearPress(endYear)}
+              onPress={() => setSheetOpen(true)}
               style={({ pressed }) => ({
                 opacity: pressed ? 0.7 : 1,
                 backgroundColor: theme.colors.card,
@@ -116,53 +217,31 @@ const YearByYearList = ({ onYearPress }: YearByYearListProps) => {
                 gap: 12,
               })}
             >
+              <FontAwesomeIcon
+                icon={faPlus}
+                color={theme.colors.text}
+                size={14}
+              />
               <Text
                 style={{
                   fontFamily: theme.fonts.semiBold,
                   color: theme.colors.text,
                   fontSize: theme.fontSize('sm'),
-                  minWidth: 72,
                 }}
               >
-                {label}
-              </Text>
-
-              <View
-                style={{
-                  flex: 1,
-                  height: 8,
-                  borderRadius: 999,
-                  backgroundColor: theme.colors.border,
-                  overflow: 'hidden',
-                }}
-              >
-                <View
-                  style={{
-                    width: `${ratio * 100}%`,
-                    height: '100%',
-                    backgroundColor: theme.colors.accent,
-                    borderRadius: 999,
-                  }}
-                />
-              </View>
-
-              <Text
-                style={{
-                  fontFamily: theme.fonts.semiBold,
-                  color: theme.colors.text,
-                  fontSize: theme.fontSize('sm'),
-                  minWidth: 56,
-                  textAlign: 'right',
-                }}
-              >
-                {hours}
-                {i18n.t('hoursCompact')}
+                {i18n.t('addEarlierYear')}
               </Text>
             </Pressable>
-          )
-        })}
+          )}
+        </View>
       </View>
-    </View>
+      <AddEarlierYearSheet
+        open={sheetOpen}
+        availableEndYears={availableEndYears}
+        onConfirm={handleAddEarlierYear}
+        onClose={() => setSheetOpen(false)}
+      />
+    </>
   )
 }
 

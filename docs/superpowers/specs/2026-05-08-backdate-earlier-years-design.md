@@ -41,10 +41,10 @@ above it). The row's content:
 - No bar, no hours value.
 - Tappable, with the same press feedback as other rows.
 
-It always renders, even when the list is empty (so a brand-new user can also
-seed history before logging current time — though this is an edge case, the
-trailing row should still appear when there is at least one report; if zero
-reports exist the All-time tab still shows the empty state per existing logic).
+When zero reports exist the All-time tab shows its existing empty state and
+this list (and therefore the trailing row) does not render. Whenever the list
+renders, the trailing row appears as the last item — unless every available
+year is already in the rendered span (see "At the 100-year floor" below).
 
 ### Year picker sheet
 
@@ -63,8 +63,9 @@ Tapping the row opens a bottom sheet containing:
 - A primary "Add Year" button. A "Cancel" / dismiss action closes the sheet
   without changes.
 
-If `earliestEndYear - 1 < currentEndYear - 100` (user already at the floor),
-the trailing row is hidden.
+If the computed `availableEndYears` list (see Edge Cases) is empty — i.e. the
+user has already filled every year back to the 100-year floor — the trailing
+row is hidden.
 
 ### Seed behavior
 

@@ -49,6 +49,7 @@ const ScheduleScreen = ({ route }: Props) => {
   const [month, setMonth] = useState(route.params?.month ?? moment().month())
   const [calendarViewMode, setCalendarViewMode] =
     useState<CalendarViewMode>('planned')
+  const [showPastPlans, setShowPastPlans] = useState(false)
   const [selectedDateSheet, setSelectedDateSheet] =
     useState<SelectedDateSheetState>({
       open: false,
@@ -71,9 +72,10 @@ const ScheduleScreen = ({ route }: Props) => {
     | { kind: 'day'; date: Date; plan: DayPlan; sortKey: number }
     | { kind: 'recurring'; date: Date; plan: RecurringPlan; sortKey: number }
 
-  const monthPlanInstances = useMemo<PlanInstance[]>(() => {
+  const { pastPlans, currentAndFuturePlans } = useMemo(() => {
     const base = moment().month(month).year(year).startOf('month')
     const daysInMonth = base.daysInMonth()
+    const todayStartMs = moment().startOf('day').valueOf()
     const items: PlanInstance[] = []
 
     for (let d = 1; d <= daysInMonth; d++) {
@@ -105,8 +107,28 @@ const ScheduleScreen = ({ route }: Props) => {
       }
     }
 
-    return items.sort((a, b) => b.sortKey - a.sortKey)
-  }, [dayPlans, recurringPlans, month, year])
+    items.sort((a, b) => a.sortKey - b.sortKey)
+
+    if (!isCurrentMonth) {
+      return { pastPlans: [] as PlanInstance[], currentAndFuturePlans: items }
+    }
+
+    const past: PlanInstance[] = []
+    const currentAndFuture: PlanInstance[] = []
+    for (const item of items) {
+      if (moment(item.date).startOf('day').valueOf() < todayStartMs) {
+        past.push(item)
+      } else {
+        currentAndFuture.push(item)
+      }
+    }
+    return { pastPlans: past, currentAndFuturePlans: currentAndFuture }
+  }, [dayPlans, recurringPlans, month, year, isCurrentMonth])
+
+  const hasAnyPlans = pastPlans.length > 0 || currentAndFuturePlans.length > 0
+  const visiblePlans = showPastPlans
+    ? [...pastPlans, ...currentAndFuturePlans]
+    : currentAndFuturePlans
 
   const handleEditDayPlan = useCallback(
     (plan: DayPlan, date: Date) => {
@@ -305,24 +327,42 @@ const ScheduleScreen = ({ route }: Props) => {
           <MonthScheduleSection month={month} year={year} />
         </GlassCard>
         <View style={{ gap: 8 }}>
-          <Text
-            style={{
-              color: theme.colors.textAlt,
-              textTransform: 'uppercase',
-              fontSize: theme.fontSize('sm'),
-              fontFamily: theme.fonts.semiBold,
-              letterSpacing: 0.5,
-            }}
-          >
-            {i18n.t('plans')}
-          </Text>
+          <XView style={{ justifyContent: 'space-between' }}>
+            <Text
+              style={{
+                color: theme.colors.textAlt,
+                textTransform: 'uppercase',
+                fontSize: theme.fontSize('sm'),
+                fontFamily: theme.fonts.semiBold,
+                letterSpacing: 0.5,
+              }}
+            >
+              {i18n.t('plans')}
+            </Text>
+            {isCurrentMonth && pastPlans.length > 0 && (
+              <Button onPress={() => setShowPastPlans((v) => !v)}>
+                <Text
+                  style={{
+                    color: theme.colors.textAlt,
+                    fontSize: theme.fontSize('sm'),
+                    fontFamily: theme.fonts.semiBold,
+                    textDecorationLine: 'underline',
+                  }}
+                >
+                  {showPastPlans
+                    ? i18n.t('hidePreviousPlans')
+                    : i18n.t('showPreviousPlans')}
+                </Text>
+              </Button>
+            )}
+          </XView>
           <View style={{ gap: 10, minHeight: 10 }}>
-            {monthPlanInstances.length === 0 ? (
+            {!hasAnyPlans ? (
               <Card>
                 <Text>{i18n.t('noPlansScheduledForThisMonth')}</Text>
               </Card>
             ) : (
-              monthPlanInstances.map((item) =>
+              visiblePlans.map((item) =>
                 item.kind === 'day' ? (
                   <DayPlanRow
                     key={`day-${item.plan.id}-${item.date.toISOString()}`}

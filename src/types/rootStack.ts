@@ -38,8 +38,10 @@ export type RootStackParamList = {
   PreferencesHomeScreen: undefined
   PreferencesBackups: undefined
   PreferencesAppearance: undefined
+  PreferencesPersonalization: undefined
   PreferencesWidgets: undefined
   PreferencesiCloud: undefined
+  PreferencesAppIcon: undefined
   PreferencesCustomFields: undefined
   RescheduleConversation: { contactId: string; conversationId: string }
   PlanSchedule: { month: number; year: number }
@@ -51,9 +53,12 @@ export type RootStackParamList = {
     /** For recurring plans, the specific date instance being edited */
     recurringPlanDate?: string
   }
-  ProfileSetup: undefined
   Rollover: undefined
   MilestoneShowcase: undefined
+  FAQ: undefined
+  More: undefined
+  ServiceReportView: { month: number; year: number }
+  ServiceYearCatchUp: undefined
 }
 
 export type RootStackNavigation = NativeStackNavigationProp<RootStackParamList>

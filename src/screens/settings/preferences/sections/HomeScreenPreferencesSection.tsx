@@ -2,13 +2,20 @@ import { Switch, View } from 'react-native'
 import i18n from '../../../../lib/locales'
 import Section from '../../../../components/inputs/Section'
 import InputRowContainer from '../../../../components/inputs/InputRowContainer'
-import { usePreferences } from '../../../../stores/preferences'
+import {
+  getEffectiveHomeScreenOrder,
+  HomeScreenElementKey,
+  usePreferences,
+} from '../../../../stores/preferences'
 import usePublisher from '../../../../hooks/usePublisher'
 import Text from '../../../../components/MyText'
 import useTheme from '../../../../contexts/theme'
 import XView from '../../../../components/layout/XView'
 import { rowPaddingVertical } from '../../../../constants/Inputs'
 import useDevice from '../../../../hooks/useDevice'
+import IconButton from '../../../../components/IconButton'
+import { faArrowDown, faArrowUp } from '@fortawesome/free-solid-svg-icons'
+import { useMemo } from 'react'
 
 const DetailedProgressBar = () => {
   const { displayDetailsOnProgressBarHomeScreen, set } = usePreferences()
@@ -99,10 +106,73 @@ const HideSupporterNudge = () => {
 }
 
 const HomeElements = () => {
-  const { homeScreenElements, set } = usePreferences()
+  const { homeScreenElements, homeScreenElementsOrder, set } = usePreferences()
   const { showsTimer, hasAnnualGoal } = usePublisher()
   const { isTablet } = useDevice()
   const theme = useTheme()
+
+  const effectiveOrder = useMemo(
+    () => getEffectiveHomeScreenOrder(homeScreenElementsOrder),
+    [homeScreenElementsOrder]
+  )
+
+  // Hide rows whose capability isn't available — but leave them in the stored
+  // order so toggling capability later (e.g. enabling timer) restores the
+  // user's saved position for that row.
+  const visibleKeys = useMemo(
+    () =>
+      effectiveOrder.filter((k) => {
+        if (k === 'tabletServiceYearSummary') return isTablet && hasAnnualGoal
+        if (k === 'timer') return showsTimer
+        return true
+      }),
+    [effectiveOrder, isTablet, hasAnnualGoal, showsTimer]
+  )
+
+  const labelFor = (key: HomeScreenElementKey): string => {
+    switch (key) {
+      case 'approachingConversations':
+        return i18n.t('approachingConversations')
+      case 'tabletServiceYearSummary':
+        return i18n.t('serviceYearSummary')
+      case 'serviceReport':
+        return i18n.t('serviceReport')
+      case 'thisWeek':
+        return i18n.t('thisWeek')
+      case 'timer':
+        return i18n.t('timer')
+      case 'didYouKnow':
+        return i18n.t('didYouKnow_kicker')
+    }
+  }
+
+  const descriptionFor = (key: HomeScreenElementKey): string | null => {
+    if (key === 'approachingConversations')
+      return i18n.t('approachingConversations_description')
+    return null
+  }
+
+  const setVisibility = (key: HomeScreenElementKey, value: boolean) => {
+    set({
+      homeScreenElements: {
+        ...homeScreenElements,
+        [key]: value,
+      },
+    })
+  }
+
+  const move = (visibleIdx: number, direction: -1 | 1) => {
+    const target = visibleIdx + direction
+    if (target < 0 || target >= visibleKeys.length) return
+    const a = visibleKeys[visibleIdx]
+    const b = visibleKeys[target]
+    const next = [...effectiveOrder]
+    const ai = next.indexOf(a)
+    const bi = next.indexOf(b)
+    if (ai < 0 || bi < 0) return
+    ;[next[ai], next[bi]] = [next[bi], next[ai]]
+    set({ homeScreenElementsOrder: next })
+  }
 
   return (
     <View
@@ -127,105 +197,52 @@ const HomeElements = () => {
         </Text>
       </View>
       <View style={{ paddingLeft: 20, gap: 12 }}>
-        <View>
-          <XView style={{ justifyContent: 'space-between' }}>
-            <Text>{i18n.t('approachingConversations')}</Text>
-            <Switch
-              value={homeScreenElements.approachingConversations}
-              onValueChange={(value) =>
-                set({
-                  homeScreenElements: {
-                    ...homeScreenElements,
-                    approachingConversations: value,
-                  },
-                })
-              }
-            />
-          </XView>
-          <Text
-            style={{
-              fontSize: theme.fontSize('xs'),
-              color: theme.colors.textAlt,
-            }}
-          >
-            {i18n.t('approachingConversations_description')}
-          </Text>
-        </View>
-        {isTablet && hasAnnualGoal && (
-          <XView style={{ justifyContent: 'space-between' }}>
-            <Text>{i18n.t('serviceYearSummary')}</Text>
-            <Switch
-              value={homeScreenElements.tabletServiceYearSummary}
-              onValueChange={(value) =>
-                set({
-                  homeScreenElements: {
-                    ...homeScreenElements,
-                    tabletServiceYearSummary: value,
-                  },
-                })
-              }
-            />
-          </XView>
-        )}
-        <XView style={{ justifyContent: 'space-between' }}>
-          <Text>{i18n.t('serviceReport')}</Text>
-          <Switch
-            value={homeScreenElements.serviceReport}
-            onValueChange={(value) =>
-              set({
-                homeScreenElements: {
-                  ...homeScreenElements,
-                  serviceReport: value,
-                },
-              })
-            }
-          />
-        </XView>
-        <XView style={{ justifyContent: 'space-between' }}>
-          <Text>{i18n.t('thisWeek')}</Text>
-          <Switch
-            value={homeScreenElements.thisWeek}
-            onValueChange={(value) =>
-              set({
-                homeScreenElements: {
-                  ...homeScreenElements,
-                  thisWeek: value,
-                },
-              })
-            }
-          />
-        </XView>
-        {showsTimer && (
-          <XView style={{ justifyContent: 'space-between' }}>
-            <Text>{i18n.t('timer')}</Text>
-            <Switch
-              value={homeScreenElements.timer}
-              onValueChange={(value) =>
-                set({
-                  homeScreenElements: {
-                    ...homeScreenElements,
-                    timer: value,
-                  },
-                })
-              }
-            />
-          </XView>
-        )}
-        <XView style={{ justifyContent: 'space-between' }}>
-          <Text>{i18n.t('contacts')}</Text>
-          <Switch
-            disabled
-            value={homeScreenElements.contacts}
-            onValueChange={(value) =>
-              set({
-                homeScreenElements: {
-                  ...homeScreenElements,
-                  contacts: value,
-                },
-              })
-            }
-          />
-        </XView>
+        {visibleKeys.map((key, idx) => {
+          const isFirst = idx === 0
+          const isLast = idx === visibleKeys.length - 1
+          const isOn =
+            (homeScreenElements as Record<string, boolean>)[key] ?? true
+          const description = descriptionFor(key)
+          return (
+            <View key={key}>
+              <XView style={{ justifyContent: 'space-between', gap: 6 }}>
+                <XView style={{ gap: 8 }}>
+                  <IconButton
+                    icon={faArrowUp}
+                    onPress={isFirst ? undefined : () => move(idx, -1)}
+                    color={isFirst ? theme.colors.border : theme.colors.textAlt}
+                    // Asymmetric slop so the up arrow's right-slop and the
+                    // down arrow's left-slop don't overlap (RN resolves
+                    // overlapping siblings to the later one, which made
+                    // taps on the inner half of the up arrow fire down).
+                    hitSlop={{ top: 10, bottom: 10, left: 10, right: 0 }}
+                  />
+                  <IconButton
+                    icon={faArrowDown}
+                    onPress={isLast ? undefined : () => move(idx, 1)}
+                    color={isLast ? theme.colors.border : theme.colors.textAlt}
+                    hitSlop={{ top: 10, bottom: 10, left: 0, right: 10 }}
+                  />
+                </XView>
+                <Text style={{ flex: 1, marginLeft: 8 }}>{labelFor(key)}</Text>
+                <Switch
+                  value={isOn}
+                  onValueChange={(value) => setVisibility(key, value)}
+                />
+              </XView>
+              {description !== null && (
+                <Text
+                  style={{
+                    fontSize: theme.fontSize('xs'),
+                    color: theme.colors.textAlt,
+                  }}
+                >
+                  {description}
+                </Text>
+              )}
+            </View>
+          )
+        })}
       </View>
     </View>
   )

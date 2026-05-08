@@ -25,7 +25,6 @@ import { RootStackNavigation } from '../types/rootStack'
 import { HomeTabStackNavigation } from '../types/homeStack'
 
 const CAPSULE_HEIGHT = 52
-const FLOATING_GAP = 2
 const HORIZONTAL_MARGIN = 12
 const PILL_GAP = 8
 const ACCESSORY_DIAMETER = CAPSULE_HEIGHT
@@ -34,7 +33,7 @@ const ACCESSORY_DIAMETER = CAPSULE_HEIGHT
  * Vertical space reserved above the safe-area bottom inset for the floating tab
  * bar — use in screens that need to pad content away from the bar.
  */
-export const TAB_BAR_HEIGHT = CAPSULE_HEIGHT + FLOATING_GAP
+export const TAB_BAR_HEIGHT = CAPSULE_HEIGHT
 
 const liquidGlass = isLiquidGlassAvailable()
 
@@ -215,7 +214,7 @@ const TabBar = ({ state, descriptors, ...props }: BottomTabBarProps) => {
           position: 'absolute',
           left: HORIZONTAL_MARGIN,
           right: HORIZONTAL_MARGIN,
-          bottom: insets.bottom + FLOATING_GAP,
+          bottom: insets.bottom,
           height: CAPSULE_HEIGHT,
           flexDirection: 'row',
           alignItems: 'center',

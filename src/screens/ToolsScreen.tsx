@@ -95,6 +95,7 @@ export default function ToolsScreen() {
   const {
     devSupporterOverride,
     devSupporterNudgeForceShow,
+    devShowAppIconAlerts,
     supporterNudgeDismissedAt,
     hideSupporterNudge,
     hasCompletedProfileSetup,
@@ -187,6 +188,32 @@ export default function ToolsScreen() {
         }
       })
     }
+  }
+
+  // Creates a single contact whose stripped JSON, even with zero conversations,
+  // exceeds CONTACT_SHARE_LINK.MAX_URL_BYTES (4 KB) after gzip + base64. Lets us
+  // exercise the "use file export" fallback path end-to-end. High-entropy
+  // random values defeat gzip — a handful of KB of Math.random().toString(36)
+  // reliably blows past the cap.
+  const generateOversizedShareContact = () => {
+    const randomString = (len: number) => {
+      let s = ''
+      while (s.length < len) s += Math.random().toString(36).slice(2)
+      return s.slice(0, len)
+    }
+
+    const customFields: Record<string, string> = {}
+    for (let i = 0; i < 30; i++) {
+      const def = addCustomFieldDef(`Oversize Field ${i + 1}`)
+      if (def) customFields[def.id] = randomString(1024)
+    }
+
+    addContact({
+      createdAt: new Date(),
+      id: `oversized-share-${Date.now()}`,
+      name: 'Oversized share-link test contact',
+      customFields,
+    })
   }
 
   const generateServiceReports = () => {
@@ -618,6 +645,36 @@ export default function ToolsScreen() {
           </>
         )}
 
+        {Platform.OS === 'ios' && (
+          <>
+            <SectionHeader title='App icon alerts' />
+            <Card style={{ gap: 10 }}>
+              <Text
+                style={{
+                  fontSize: theme.fontSize('sm'),
+                  color: theme.colors.textAlt,
+                }}
+              >
+                By default, app-icon changes (manual picks, seasonal rotation,
+                supporter-lapse reverts) bypass the iOS &quot;App Icon
+                Updated&quot; system alert via a patched private selector. Flip
+                this on to use the public API instead — the alert will fire on
+                every change, useful for confirming a change actually landed
+                when the icon doesn&apos;t appear to update.
+              </Text>
+              <XView style={{ justifyContent: 'space-between' }}>
+                <Text>Show system alert on icon change:</Text>
+                <Switch
+                  value={devShowAppIconAlerts}
+                  onValueChange={(value) =>
+                    setPreferences({ devShowAppIconAlerts: value })
+                  }
+                />
+              </XView>
+            </Card>
+          </>
+        )}
+
         <SectionHeader title='Profile simulation' />
         <Card style={{ gap: 10 }}>
           <Text
@@ -789,6 +846,14 @@ export default function ToolsScreen() {
             }}
           >
             Overdue follow-ups
+          </ActionButton>
+          <ActionButton
+            onPress={() => {
+              generateOversizedShareContact()
+              showDone('Generated oversized share contact')
+            }}
+          >
+            Oversized contact (share-link cap)
           </ActionButton>
         </Card>
 

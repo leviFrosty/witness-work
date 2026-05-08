@@ -17,6 +17,7 @@ const ConversationsPreferencesSection = () => {
     returnVisitTimeOffset,
     returnVisitNotificationOffset,
     returnVisitAlwaysNotify,
+    prefillAddress,
     set,
   } = usePreferences()
 
@@ -177,7 +178,6 @@ const ConversationsPreferencesSection = () => {
           </Text>
         </InputRowContainer>
         <InputRowContainer
-          lastInSection
           label={i18n.t('alwaysNotify')}
           style={{ justifyContent: 'space-between' }}
         >
@@ -185,6 +185,46 @@ const ConversationsPreferencesSection = () => {
             value={returnVisitAlwaysNotify}
             onValueChange={(value) => set({ returnVisitAlwaysNotify: value })}
           />
+        </InputRowContainer>
+        <InputRowContainer
+          lastInSection
+          style={{
+            flexDirection: 'column',
+            gap: 10,
+            alignItems: 'flex-start',
+          }}
+        >
+          <View
+            style={{
+              width: '100%',
+              flexDirection: 'row',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+            }}
+          >
+            <Text style={{ fontFamily: theme.fonts.semiBold }}>
+              {i18n.t('autoFillAddressFromLastContact')}
+            </Text>
+            <Switch
+              value={prefillAddress.enabled}
+              onValueChange={(value) =>
+                set({
+                  prefillAddress: {
+                    ...prefillAddress,
+                    enabled: value,
+                  },
+                })
+              }
+            />
+          </View>
+          <Text
+            style={{
+              fontSize: theme.fontSize('xs'),
+              color: theme.colors.textAlt,
+            }}
+          >
+            {i18n.t('autoFillAddressFromLastContact_description')}
+          </Text>
         </InputRowContainer>
       </Section>
     </View>

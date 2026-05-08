@@ -6,9 +6,20 @@ import { useNavigation } from '@react-navigation/native'
 import useTheme from '../contexts/theme'
 import useConversations from '../stores/conversationStore'
 import { filterActivesContacts } from '../lib/dismissedContacts'
-import { Dimensions, StyleSheet, TextInput, View } from 'react-native'
+import {
+  Dimensions,
+  Pressable,
+  StyleSheet,
+  TextInput,
+  View,
+} from 'react-native'
 import { BlurView } from 'expo-blur'
-import { GlassView } from 'expo-glass-effect'
+import { GlassView, isLiquidGlassAvailable } from 'expo-glass-effect'
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withSpring,
+} from 'react-native-reanimated'
 import Carousel, { ICarouselInstance } from 'react-native-reanimated-carousel'
 import MapCarouselCard from '../components/MapCarouselCard'
 import * as Location from 'expo-location'
@@ -27,17 +38,15 @@ import useDevice from '../hooks/useDevice'
 import { RootStackNavigation } from '../types/rootStack'
 import { HomeTabStackNavigation } from '../types/homeStack'
 import { ContactMarker } from '../types/map'
-import IconButton from '../components/IconButton'
 import {
   faAddressBook,
   faCircleInfo,
   faMapLocationDot,
   faMagnifyingGlass,
   faPlus,
-  faTimes,
   faUpRightAndDownLeftFromCenter,
 } from '@fortawesome/free-solid-svg-icons'
-import { Sheet } from 'tamagui'
+import { Popover } from 'tamagui'
 import MapKey from '../components/MapColorKey'
 import { useMarkerColors } from '../hooks/useMarkerColors'
 import { getContactStaleness, stalenessToColor } from '../lib/contactStaleness'
@@ -47,6 +56,12 @@ import {
 } from '../lib/mapCarousel'
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
 import { addressToString, coordinateAsString } from '../lib/address'
+
+const liquidGlass = isLiquidGlassAvailable()
+
+// Reserved vertical space above the tab bar for Apple Maps' legal/logo
+// attribution, which `mapPadding` lifts up out from behind the carousel.
+const LEGAL_LABEL_HEIGHT = 20
 
 interface FullMapViewProps {
   contactMarkers: ContactMarker[]
@@ -72,6 +87,9 @@ const FullMapView = ({
   })
   const [showInfo, setShowInfo] = useState(false)
   const [search, setSearch] = useState('')
+  const [searchExpanded, setSearchExpanded] = useState(false)
+  const searchInputRef = useRef<TextInput>(null)
+  const searchExpand = useSharedValue(0)
   const theme = useTheme()
   const { contacts, updateContact } = useContacts()
   const CARD_HEIGHT = 200
@@ -229,10 +247,58 @@ const FullMapView = ({
     width: 44,
     height: 44,
     borderRadius: 22,
+    borderCurve: 'continuous' as const,
     alignItems: 'center' as const,
     justifyContent: 'center' as const,
-    backgroundColor: theme.colors.card + 'dd',
+    paddingHorizontal: 0,
+    paddingVertical: 0,
+    backgroundColor: liquidGlass ? undefined : theme.colors.card + 'dd',
   }
+
+  const SEARCH_COLLAPSED_WIDTH = 44
+  const SEARCH_EXPANDED_WIDTH = width - 16 - 64
+  const SEARCH_SPRING_OPEN = { damping: 18, stiffness: 180, mass: 0.9 }
+  const SEARCH_SPRING_CLOSE = { damping: 22, stiffness: 200, mass: 0.9 }
+
+  const expandSearch = () => {
+    if (searchExpanded) {
+      searchInputRef.current?.focus()
+      return
+    }
+    setSearchExpanded(true)
+    searchExpand.value = withSpring(1, SEARCH_SPRING_OPEN)
+    requestAnimationFrame(() => searchInputRef.current?.focus())
+  }
+
+  const handleSearchBlur = () => {
+    if (search.trim().length === 0) {
+      searchExpand.value = withSpring(0, SEARCH_SPRING_CLOSE)
+      setSearchExpanded(false)
+    }
+  }
+
+  const collapseSearch = () => {
+    if (!searchExpanded) return
+    searchInputRef.current?.blur()
+    searchExpand.value = withSpring(0, SEARCH_SPRING_CLOSE)
+    setSearchExpanded(false)
+  }
+
+  const dismissSearchKeyboard = () => {
+    if (searchInputRef.current?.isFocused()) {
+      searchInputRef.current.blur()
+    }
+  }
+
+  const animatedSearchContainerStyle = useAnimatedStyle(() => ({
+    width:
+      SEARCH_COLLAPSED_WIDTH +
+      (SEARCH_EXPANDED_WIDTH - SEARCH_COLLAPSED_WIDTH) * searchExpand.value,
+  }))
+
+  const animatedSearchInputStyle = useAnimatedStyle(() => ({
+    opacity: searchExpand.value,
+  }))
 
   const addContact = () =>
     (navigation as unknown as RootStackNavigation).navigate('Contact Form', {
@@ -273,26 +339,27 @@ const FullMapView = ({
           borderRadius: 24,
           borderCurve: 'continuous',
           overflow: 'hidden',
-          backgroundColor: theme.colors.card + 'dd',
-          borderWidth: StyleSheet.hairlineWidth,
-          borderColor: theme.colors.border,
+          backgroundColor: liquidGlass ? undefined : theme.colors.card + 'dd',
           shadowColor: theme.colors.shadow,
           shadowOffset: { width: 0, height: 8 },
           shadowOpacity: theme.numbers.shadowOpacity * 1.5,
           shadowRadius: 18,
         }}
       >
-        <BlurView
-          pointerEvents='none'
-          tint={isDark ? 'dark' : 'light'}
-          intensity={70}
-          style={StyleSheet.absoluteFill}
-        />
-        <GlassView
-          pointerEvents='none'
-          glassEffectStyle='regular'
-          style={StyleSheet.absoluteFill}
-        />
+        {liquidGlass ? (
+          <GlassView
+            pointerEvents='none'
+            glassEffectStyle='regular'
+            style={[StyleSheet.absoluteFill, { borderRadius: 24 }]}
+          />
+        ) : (
+          <BlurView
+            pointerEvents='none'
+            tint={isDark ? 'dark' : 'light'}
+            intensity={70}
+            style={StyleSheet.absoluteFill}
+          />
+        )}
         <View style={{ padding: 20, gap: 16 }}>
           <View
             style={{
@@ -437,6 +504,14 @@ const FullMapView = ({
         showsUserLocation={locationPermission}
         ref={mapRef}
         onLayout={handleMapLayout}
+        onPress={collapseSearch}
+        onPanDrag={dismissSearchKeyboard}
+        mapPadding={{
+          top: 0,
+          right: 0,
+          left: 0,
+          bottom: insets.bottom + TAB_BAR_HEIGHT / 4,
+        }}
         style={{ height: '100%', width: '100%' }}
       >
         {visibleContactMarkers.map((c) => (
@@ -455,56 +530,79 @@ const FullMapView = ({
       </MapView>
 
       {contactMarkers.length > 0 && (
-        <View
-          style={{
-            position: 'absolute',
-            top: insets.top + 8,
-            left: 16,
-            right: 64,
-            height: 44,
-            borderRadius: 22,
-            borderWidth: 1,
-            borderColor: theme.colors.border,
-            backgroundColor: theme.colors.card + 'dd',
-            overflow: 'hidden',
-            flexDirection: 'row',
-            alignItems: 'center',
-            gap: 10,
-            paddingHorizontal: 14,
-          }}
+        <Animated.View
+          style={[
+            {
+              position: 'absolute',
+              top: insets.top + 8,
+              left: 16,
+              height: 44,
+              borderRadius: 22,
+              borderCurve: 'continuous',
+              backgroundColor: liquidGlass
+                ? undefined
+                : theme.colors.card + 'dd',
+              overflow: 'hidden',
+              flexDirection: 'row',
+              alignItems: 'center',
+            },
+            animatedSearchContainerStyle,
+          ]}
         >
-          <BlurView
-            pointerEvents='none'
-            tint={isDark ? 'dark' : 'light'}
-            intensity={60}
-            style={StyleSheet.absoluteFill}
-          />
-          <GlassView
-            pointerEvents='none'
-            glassEffectStyle='regular'
-            style={StyleSheet.absoluteFill}
-          />
-          <FontAwesomeIcon
-            icon={faMagnifyingGlass}
-            size={theme.fontSize('sm')}
-            style={{ color: theme.colors.textAlt }}
-          />
-          <TextInput
-            value={search}
-            onChangeText={setSearch}
-            placeholder={i18n.t('map_searchContacts')}
-            placeholderTextColor={theme.colors.textAlt}
-            clearButtonMode='while-editing'
-            returnKeyType='search'
+          {liquidGlass ? (
+            <GlassView
+              pointerEvents='none'
+              glassEffectStyle='regular'
+              style={[StyleSheet.absoluteFill, { borderRadius: 22 }]}
+            />
+          ) : (
+            <BlurView
+              pointerEvents='none'
+              tint={isDark ? 'dark' : 'light'}
+              intensity={60}
+              style={StyleSheet.absoluteFill}
+            />
+          )}
+          <Pressable
+            onPress={expandSearch}
+            accessibilityLabel={i18n.t('map_searchContacts')}
+            accessibilityRole='button'
             style={{
-              flex: 1,
-              color: theme.colors.text,
-              fontFamily: theme.fonts.regular,
-              fontSize: theme.fontSize('md'),
-              padding: 0,
+              width: 44,
+              height: 44,
+              alignItems: 'center',
+              justifyContent: 'center',
             }}
-          />
-        </View>
+          >
+            <FontAwesomeIcon
+              icon={faMagnifyingGlass}
+              size={theme.fontSize('sm')}
+              style={{ color: theme.colors.text }}
+            />
+          </Pressable>
+          <Animated.View
+            style={[{ flex: 1, paddingRight: 14 }, animatedSearchInputStyle]}
+            pointerEvents={searchExpanded ? 'auto' : 'none'}
+          >
+            <TextInput
+              ref={searchInputRef}
+              value={search}
+              onChangeText={setSearch}
+              onBlur={handleSearchBlur}
+              editable={searchExpanded}
+              placeholder={i18n.t('map_searchContacts')}
+              placeholderTextColor={theme.colors.textAlt}
+              clearButtonMode='while-editing'
+              returnKeyType='search'
+              style={{
+                color: theme.colors.text,
+                fontFamily: theme.fonts.regular,
+                fontSize: theme.fontSize('md'),
+                padding: 0,
+              }}
+            />
+          </Animated.View>
+        </Animated.View>
       )}
 
       {contactMarkers.length === 0 ? (
@@ -521,23 +619,30 @@ const FullMapView = ({
           <View
             style={{
               borderRadius: theme.numbers.borderRadiusLg,
+              borderCurve: 'continuous',
               overflow: 'hidden',
-              backgroundColor: theme.colors.card + 'dd',
-              borderWidth: StyleSheet.hairlineWidth,
-              borderColor: theme.colors.border,
+              backgroundColor: liquidGlass
+                ? undefined
+                : theme.colors.card + 'dd',
             }}
           >
-            <BlurView
-              pointerEvents='none'
-              tint={isDark ? 'dark' : 'light'}
-              intensity={60}
-              style={StyleSheet.absoluteFill}
-            />
-            <GlassView
-              pointerEvents='none'
-              glassEffectStyle='regular'
-              style={StyleSheet.absoluteFill}
-            />
+            {liquidGlass ? (
+              <GlassView
+                pointerEvents='none'
+                glassEffectStyle='regular'
+                style={[
+                  StyleSheet.absoluteFill,
+                  { borderRadius: theme.numbers.borderRadiusLg },
+                ]}
+              />
+            ) : (
+              <BlurView
+                pointerEvents='none'
+                tint={isDark ? 'dark' : 'light'}
+                intensity={60}
+                style={StyleSheet.absoluteFill}
+              />
+            )}
             <View style={{ padding: 20, gap: 8 }}>
               <Text
                 style={{
@@ -559,6 +664,7 @@ const FullMapView = ({
           // looping internals and renders blank otherwise.
           key={visibleContactMarkers.length === 1 ? 'single' : 'multi'}
           onSnapToItem={handleCarouselSnap}
+          onScrollStart={dismissSearchKeyboard}
           defaultIndex={0}
           ref={carouselRef}
           data={visibleContactMarkers}
@@ -575,33 +681,11 @@ const FullMapView = ({
           height={CARD_HEIGHT}
           style={{
             position: 'absolute',
-            bottom: insets.bottom + TAB_BAR_HEIGHT - 5,
+            bottom: insets.bottom + TAB_BAR_HEIGHT + LEGAL_LABEL_HEIGHT - 5,
           }}
         />
       )}
       <ShareAddressSheet sheet={sheet} setSheet={setSheet} />
-      <Sheet
-        open={showInfo}
-        onOpenChange={(o: boolean) => setShowInfo(o)}
-        dismissOnSnapToBottom
-        modal
-        snapPoints={[65]}
-      >
-        <Sheet.Handle />
-        <Sheet.Overlay zIndex={100_000 - 1} />
-        <Sheet.Frame>
-          <View style={{ padding: 30, gap: 10 }}>
-            <IconButton
-              icon={faTimes}
-              color={theme.colors.text}
-              onPress={() => setShowInfo(false)}
-              size='xl'
-              style={{ marginLeft: 'auto', marginBottom: 10 }}
-            />
-            <MapKey />
-          </View>
-        </Sheet.Frame>
-      </Sheet>
       <View
         style={{
           position: 'absolute',
@@ -614,7 +698,6 @@ const FullMapView = ({
           <Button
             accessibilityLabel={i18n.t('map_fitContacts')}
             variant='glass'
-            glassTint={theme.colors.card + 'dd'}
             onPress={fitToMarkers}
             style={mapControlStyle}
           >
@@ -625,19 +708,46 @@ const FullMapView = ({
             />
           </Button>
         )}
-        <Button
-          accessibilityLabel={i18n.t('map_showLegend')}
-          variant='glass'
-          glassTint={theme.colors.card + 'dd'}
-          onPress={() => setShowInfo(!showInfo)}
-          style={mapControlStyle}
+        <Popover
+          open={showInfo}
+          onOpenChange={setShowInfo}
+          placement='right-start'
+          allowFlip
+          offset={8}
         >
-          <FontAwesomeIcon
-            icon={faCircleInfo}
-            size={theme.fontSize('sm')}
-            style={{ color: theme.colors.text }}
-          />
-        </Button>
+          <Popover.Trigger asChild>
+            <Button
+              accessibilityLabel={i18n.t('map_showLegend')}
+              variant='glass'
+              onPress={() => setShowInfo((v) => !v)}
+              style={mapControlStyle}
+            >
+              <FontAwesomeIcon
+                icon={faCircleInfo}
+                size={theme.fontSize('sm')}
+                style={{ color: theme.colors.text }}
+              />
+            </Button>
+          </Popover.Trigger>
+          <Popover.Content
+            borderWidth={1}
+            borderColor={theme.colors.border}
+            backgroundColor={theme.colors.card}
+            padding={12}
+            elevate
+            animation={['quick', { opacity: { overshootClamping: true } }]}
+            enterStyle={{ x: -8, opacity: 0 }}
+            exitStyle={{ x: -8, opacity: 0 }}
+            maxWidth={300}
+          >
+            <Popover.Arrow
+              borderWidth={1}
+              borderColor={theme.colors.border}
+              backgroundColor={theme.colors.card}
+            />
+            <MapKey />
+          </Popover.Content>
+        </Popover>
       </View>
     </>
   )

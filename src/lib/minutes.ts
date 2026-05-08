@@ -100,3 +100,7 @@ export const formatMinutesCompact = (totalMinutes: number): string => {
 
   return `${Math.round(decimalHours * 10) / 10}${i18n.t('hoursCompact')}`
 }
+
+export const formatHoursCompact = (hours: number): string => {
+  return `${hours}${i18n.t('hoursCompact')}`
+}

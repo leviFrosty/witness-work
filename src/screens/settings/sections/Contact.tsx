@@ -3,38 +3,28 @@ import i18n from '../../../lib/locales'
 import Section from '../../../components/inputs/Section'
 import InputRowButton from '../../../components/inputs/InputRowButton'
 import {
-  faArrowUpRightFromSquare,
-  faBug,
-  faHand,
+  faChevronRight,
+  faCircleQuestion,
 } from '@fortawesome/free-solid-svg-icons'
 import IconButton from '../../../components/IconButton'
 import SectionTitle from '../shared/SectionTitle'
-import { openURL } from '../../../lib/links'
-import links from '../../../constants/links'
+import { useNavigation } from '@react-navigation/native'
+import { RootStackNavigation } from '../../../types/rootStack'
 
 const ContactSection = () => {
+  const navigation = useNavigation<RootStackNavigation>()
+
   return (
     <View style={{ gap: 3 }}>
-      <SectionTitle text={i18n.t('contact')} />
+      <SectionTitle text={i18n.t('helpCenter')} />
       <Section>
         <InputRowButton
-          leftIcon={faBug}
-          label={i18n.t('bugReport')}
-          onPress={async () => {
-            openURL(links.bugReport)
-          }}
-        >
-          <IconButton icon={faArrowUpRightFromSquare} />
-        </InputRowButton>
-        <InputRowButton
           lastInSection
-          leftIcon={faHand}
-          label={i18n.t('featureRequest')}
-          onPress={async () => {
-            openURL(links.featureRequest)
-          }}
+          leftIcon={faCircleQuestion}
+          label={i18n.t('helpCenter')}
+          onPress={() => navigation.navigate('FAQ')}
         >
-          <IconButton icon={faArrowUpRightFromSquare} />
+          <IconButton icon={faChevronRight} />
         </InputRowButton>
       </Section>
     </View>

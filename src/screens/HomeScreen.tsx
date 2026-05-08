@@ -7,9 +7,6 @@ import {
 } from '../lib/conversations'
 import ApproachingConversations from '../components/ApproachingConversations'
 import MissedConversations from '../components/MissedConversations'
-import ExportTimeSheet, {
-  ExportTimeSheetState,
-} from '../components/ExportTimeSheet'
 import useContacts from '../stores/contactsStore'
 import { RefreshControl, View } from 'react-native'
 import { iCloudSync } from '../lib/sync/iCloudSync'
@@ -27,7 +24,11 @@ import Text from '../components/MyText'
 import Button from '../components/Button'
 import { useNavigation } from '@react-navigation/native'
 import usePublisher from '../hooks/usePublisher'
-import { usePreferences } from '../stores/preferences'
+import {
+  getEffectiveHomeScreenOrder,
+  HomeScreenElementKey,
+  usePreferences,
+} from '../stores/preferences'
 import BackupReminder from '../components/BackupReminder'
 import { TimerSection } from '../components/TimerSection'
 import UpgradeLegacyTimeReportsSheet from '../components/UpgradeLegacyTimeReportsSheet'
@@ -40,6 +41,7 @@ import { useServiceReport } from '../stores/serviceReport'
 import { isSupporterNudgeEligible } from '../lib/supporterNudge'
 import { HomeTabStackNavigation } from '../types/homeStack'
 import { RootStackNavigation } from '../types/rootStack'
+import { Fragment } from 'react'
 
 export const HomeScreen = () => {
   const theme = useTheme()
@@ -75,8 +77,18 @@ export const HomeScreen = () => {
   const { conversations } = useConversations()
   const { contacts } = useContacts()
   const { isTablet } = useDevice()
-  const { hasAnnualGoal, showsTimer, showSchedule } = usePublisher()
-  const { serviceReportTags, homeScreenElements } = usePreferences()
+  const { hasAnnualGoal, showsTimer } = usePublisher()
+  const { serviceReportTags, homeScreenElements, homeScreenElementsOrder } =
+    usePreferences()
+  const effectiveOrder = useMemo(
+    () => getEffectiveHomeScreenOrder(homeScreenElementsOrder),
+    [homeScreenElementsOrder]
+  )
+  // Anchor the "Did you know" tip card to the bottom of the scroll view only
+  // when the user has it in its default trailing position. Once they reorder
+  // it inline, drop the auto-margin so it flows with surrounding sections.
+  const isDidYouKnowLast =
+    effectiveOrder[effectiveOrder.length - 1] === 'didYouKnow'
   const navigation = useNavigation<HomeTabStackNavigation>()
   const rootNavigation = useNavigation<RootStackNavigation>()
   const serviceYear = getServiceYearFromDate(moment())
@@ -92,11 +104,6 @@ export const HomeScreen = () => {
   const [upgradeReportsSheet, setUpgradeReportSheet] = useState(
     hasLegacyReports && hasAnnualGoal
   )
-  const [exportTimeSheet, setExportTimeSheet] = useState<ExportTimeSheetState>({
-    open: false,
-    month: 0,
-    year: 0,
-  })
   const approachingConversations = useMemo(
     () =>
       upcomingFollowUpConversations({
@@ -234,73 +241,97 @@ export const HomeScreen = () => {
       >
         <View style={{ gap: 20, paddingBottom: insets.bottom, flex: 1 }}>
           <ProfileCard
-            onPressIncomplete={() => rootNavigation.navigate('ProfileSetup')}
+            onPressIncomplete={() =>
+              rootNavigation.navigate('PreferencesPublisher')
+            }
           />
-          {homeScreenElements.approachingConversations && (
-            <>
-              <MissedConversations
-                conversations={overdueConvosWithActiveContacts}
-              />
-              <ApproachingConversations
-                conversations={approachingConvosWithActiveContacts}
-              />
-            </>
-          )}
           {shouldRemindToBackup && (
             <BackupReminder compact={iCloudSyncEnabled} />
           )}
           <HomeChecklist />
           {showSupporterNudge && <SupporterNudgeCard />}
-          {isTablet &&
-            hasAnnualGoal &&
-            homeScreenElements.tabletServiceYearSummary && (
-              <View style={{ gap: 10 }}>
-                <Text
-                  style={{
-                    fontSize: 14,
-                    fontFamily: theme.fonts.semiBold,
-                    marginLeft: 5,
-                  }}
-                >
-                  {i18n.t('serviceYearSummary')}
-                </Text>
-                <XView>
-                  <Button
-                    style={{ flex: 1 }}
-                    onPress={() =>
-                      navigation.navigate('Progress', {
-                        month: moment().month(),
-                        year: moment().year(),
-                      })
-                    }
-                  >
-                    <YearMilestoneCard year={serviceYear + 1} />
-                  </Button>
-                </XView>
-              </View>
-            )}
-          {homeScreenElements.serviceReport && (
-            <ServiceReportSection setSheet={setExportTimeSheet} />
-          )}
-          {homeScreenElements.thisWeek && showSchedule && (
-            <WeekStripTeaser
-              month={currentMonth}
-              year={currentYear}
-              monthsReports={currentMonthsReports}
-            />
-          )}
-          {showsTimer && homeScreenElements.timer && <TimerSection />}
-          <DidYouKnowTipCard style={{ marginTop: 'auto' }} />
+          {effectiveOrder.map((key: HomeScreenElementKey) => {
+            switch (key) {
+              case 'approachingConversations':
+                if (!homeScreenElements.approachingConversations) return null
+                return (
+                  <Fragment key={key}>
+                    <MissedConversations
+                      conversations={overdueConvosWithActiveContacts}
+                    />
+                    <ApproachingConversations
+                      conversations={approachingConvosWithActiveContacts}
+                    />
+                  </Fragment>
+                )
+              case 'tabletServiceYearSummary':
+                if (
+                  !isTablet ||
+                  !hasAnnualGoal ||
+                  !homeScreenElements.tabletServiceYearSummary
+                ) {
+                  return null
+                }
+                return (
+                  <View key={key} style={{ gap: 10 }}>
+                    <Text
+                      style={{
+                        fontSize: 14,
+                        fontFamily: theme.fonts.semiBold,
+                        marginLeft: 5,
+                      }}
+                    >
+                      {i18n.t('serviceYearSummary')}
+                    </Text>
+                    <XView>
+                      <Button
+                        style={{ flex: 1 }}
+                        onPress={() =>
+                          navigation.navigate('Progress', {
+                            month: moment().month(),
+                            year: moment().year(),
+                          })
+                        }
+                      >
+                        <YearMilestoneCard year={serviceYear + 1} />
+                      </Button>
+                    </XView>
+                  </View>
+                )
+              case 'serviceReport':
+                if (!homeScreenElements.serviceReport) return null
+                return <ServiceReportSection key={key} />
+
+              case 'thisWeek':
+                if (!homeScreenElements.thisWeek) return null
+                return (
+                  <WeekStripTeaser
+                    key={key}
+                    month={currentMonth}
+                    year={currentYear}
+                    monthsReports={currentMonthsReports}
+                  />
+                )
+              case 'timer':
+                if (!showsTimer || !homeScreenElements.timer) return null
+                return <TimerSection key={key} />
+              case 'didYouKnow':
+                if (homeScreenElements.didYouKnow === false) return null
+                return (
+                  <DidYouKnowTipCard
+                    key={key}
+                    style={isDidYouKnowLast ? { marginTop: 'auto' } : undefined}
+                  />
+                )
+              default:
+                return null
+            }
+          })}
         </View>
       </KeyboardAwareScrollView>
       <UpgradeLegacyTimeReportsSheet
         sheet={upgradeReportsSheet}
         setSheet={setUpgradeReportSheet}
-      />
-      <ExportTimeSheet
-        sheet={exportTimeSheet}
-        setSheet={setExportTimeSheet}
-        showViewAllMonthsButton={showsTimer}
       />
     </View>
   )

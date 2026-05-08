@@ -1,12 +1,5 @@
-import { useRef, useState } from 'react'
-import { Modal, View } from 'react-native'
-import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { runOnJS } from 'react-native-reanimated'
-import ColorPicker, {
-  ColorPickerRef,
-  HueSlider,
-  Panel1,
-} from 'reanimated-color-picker'
+import { useState } from 'react'
+import { Pressable, View } from 'react-native'
 import useTheme from '../contexts/theme'
 import i18n, { TranslationKey } from '../lib/locales'
 import { ContactStaleness, stalenessToColor } from '../lib/contactStaleness'
@@ -14,8 +7,7 @@ import { useMarkerColors } from '../hooks/useMarkerColors'
 import { MarkerColors, usePreferences } from '../stores/preferences'
 import Text from './MyText'
 import Button from './Button'
-import Card from './Card'
-import ActionButton from './ActionButton'
+import ColorPickerSheet from './ColorPickerSheet'
 
 /**
  * Order shown left-to-right / top-to-bottom: most stale first so the eye lands
@@ -37,28 +29,28 @@ type Props = {
 
 export default function StalenessColorKey({ showHeader = true }: Props) {
   const theme = useTheme()
-  const insets = useSafeAreaInsets()
   const colors = useMarkerColors()
-  const { set } = usePreferences()
-  const pickerRef = useRef<ColorPickerRef>(null)
-  const [editing, setEditing] = useState<{
-    bucket: ContactStaleness
-    color: string
-  }>()
+  const { set, mapKeyColors } = usePreferences()
+  const [activeBucket, setActiveBucket] = useState<ContactStaleness | null>(
+    null
+  )
 
-  const reset = (bucket: ContactStaleness) => {
+  const updateBucket = (bucket: ContactStaleness, hex: string | null) => {
     const key = stalenessToMarkerKey[bucket]
     set({
       mapKeyColors: {
         ...colors,
-        [key]: undefined,
+        [key]: hex ?? undefined,
       },
     })
-    pickerRef.current?.setColor(colors[key])
-    setTimeout(() => {
-      pickerRef.current?.setColor(colors[key])
-    }, 100)
   }
+
+  const isOverridden = (bucket: ContactStaleness) =>
+    mapKeyColors?.[stalenessToMarkerKey[bucket]] !== undefined
+
+  const activeColor = activeBucket
+    ? stalenessToColor(activeBucket, colors)
+    : '#000000'
 
   return (
     <View style={{ gap: 10 }}>
@@ -88,24 +80,14 @@ export default function StalenessColorKey({ showHeader = true }: Props) {
         {STALENESS_ORDER.map((bucket) => {
           const color = stalenessToColor(bucket, colors)
           return (
-            <Button
+            <View
               key={bucket}
-              noTransform
-              onPress={() => setEditing({ bucket, color })}
               style={{
                 flexDirection: 'row',
                 alignItems: 'center',
                 gap: 10,
               }}
             >
-              <View
-                style={{
-                  width: 10,
-                  height: 10,
-                  borderRadius: 5,
-                  backgroundColor: color,
-                }}
-              />
               <View style={{ flex: 1 }}>
                 <Text
                   style={{
@@ -127,91 +109,51 @@ export default function StalenessColorKey({ showHeader = true }: Props) {
                   )}
                 </Text>
               </View>
-              <Text
-                style={{
-                  textDecorationLine: 'underline',
-                  color: theme.colors.textAlt,
-                  fontSize: theme.fontSize('xs'),
-                }}
-              >
-                {i18n.t('edit')}
-              </Text>
-            </Button>
-          )
-        })}
-      </View>
-
-      <Modal visible={!!editing} animationType='fade'>
-        {editing && (
-          <View
-            style={{
-              backgroundColor: stalenessToColor(editing.bucket, colors),
-              padding: 10,
-              gap: 10,
-              alignItems: 'center',
-              justifyContent: 'center',
-              flex: 1,
-              paddingTop: insets.top + 10,
-              paddingBottom: insets.bottom,
-            }}
-          >
-            <Card style={{ maxWidth: 600 }}>
-              <View
-                style={{
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  flexDirection: 'row',
-                  gap: 10,
-                  width: '80%',
-                }}
-              >
-                <Text
-                  style={{
-                    fontSize: theme.fontSize('2xl'),
-                    fontFamily: theme.fonts.bold,
-                  }}
-                >
-                  {i18n.t('editColor')}
-                </Text>
-                <Button onPress={() => reset(editing.bucket)}>
-                  <Text style={{ textDecorationLine: 'underline' }}>
+              {isOverridden(bucket) && (
+                <Button onPress={() => updateBucket(bucket, null)}>
+                  <Text
+                    style={{
+                      textDecorationLine: 'underline',
+                      color: theme.colors.textAlt,
+                      fontSize: theme.fontSize('xs'),
+                    }}
+                  >
                     {i18n.t('reset')}
                   </Text>
                 </Button>
-              </View>
-              <ColorPicker
-                ref={pickerRef}
-                value={editing.color}
-                onComplete={({ hex }) => {
-                  'worklet'
-                  runOnJS(set)({
-                    mapKeyColors: {
-                      ...colors,
-                      [stalenessToMarkerKey[editing.bucket]]: hex,
-                    },
-                  })
-                }}
-              >
-                <Panel1 />
-                <HueSlider style={{ marginTop: 15 }} />
-              </ColorPicker>
-              <View
+              )}
+              <Pressable
+                onPress={() => setActiveBucket(bucket)}
+                accessibilityLabel={i18n.t(
+                  `contacts_pinStaleness_${bucket}` as TranslationKey
+                )}
+                accessibilityRole='button'
                 style={{
-                  gap: 10,
-                  alignItems: 'center',
-                  marginTop: 30,
+                  width: 28,
+                  height: 28,
+                  borderRadius: 14,
+                  backgroundColor: color,
+                  borderWidth: 1,
+                  borderColor: theme.colors.border,
                 }}
-              >
-                <View style={{ width: '100%' }}>
-                  <ActionButton onPress={() => setEditing(undefined)}>
-                    {i18n.t('ok')}
-                  </ActionButton>
-                </View>
-              </View>
-            </Card>
-          </View>
-        )}
-      </Modal>
+              />
+            </View>
+          )
+        })}
+      </View>
+      <ColorPickerSheet
+        visible={activeBucket !== null}
+        value={activeColor}
+        onClose={() => setActiveBucket(null)}
+        onChange={(hex) => {
+          if (activeBucket) updateBucket(activeBucket, hex)
+        }}
+        title={
+          activeBucket
+            ? i18n.t(`contacts_pinStaleness_${activeBucket}` as TranslationKey)
+            : undefined
+        }
+      />
     </View>
   )
 }

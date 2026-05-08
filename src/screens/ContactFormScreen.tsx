@@ -1,10 +1,20 @@
 import React, { useRef, useState, useCallback, useEffect } from 'react'
-import { Alert, TextInput, View } from 'react-native'
+import {
+  Alert,
+  Pressable,
+  StyleSheet,
+  TextInput,
+  useWindowDimensions,
+  View,
+} from 'react-native'
+import { Popover } from 'tamagui'
+import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
+import { faMars, faQuestion, faVenus } from '@fortawesome/free-solid-svg-icons'
+import { GENDER_COLORS } from '../components/GenderIcon'
 import Text from '../components/MyText'
 import { NativeStackScreenProps } from '@react-navigation/native-stack'
 import useContacts from '../stores/contactsStore'
 import useTheme from '../contexts/theme'
-import Divider from '../components/Divider'
 import { Address, Contact } from '../types/contact'
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
 import Header from '../components/layout/Header'
@@ -24,8 +34,113 @@ import { RootStackParamList } from '../types/rootStack'
 import { Errors } from '../types/textInput'
 import AvatarPickerPopover from '../components/AvatarPickerPopover'
 import { ProfileAvatar } from '../types/avatar'
+import {
+  BackgroundSwatches,
+  BACKGROUND_SWATCHES_WIDTH,
+} from '../components/AvatarPickerContent'
+import IsSupporter from '../components/IsSupporter'
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Contact Form'>
+
+/**
+ * Compact entry-point for editing the per-contact background color. Always
+ * opens a popover — non-supporters see the swatch row dimmed via `IsSupporter`
+ * so they discover the perk without a separate gate sheet.
+ */
+const BackgroundEditButton = ({
+  value,
+  onChange,
+}: {
+  value: string | null
+  onChange: (next: string | null) => void
+}) => {
+  const theme = useTheme()
+  const { width } = useWindowDimensions()
+  const [pickerOpen, setPickerOpen] = useState(false)
+  const swatchColor = value ?? theme.colors.accent
+  const popoverPadding = 10
+  const popoverExtraWidth = 28
+  const popoverWidth = Math.min(
+    BACKGROUND_SWATCHES_WIDTH + popoverPadding * 2 + popoverExtraWidth,
+    width - 32
+  )
+
+  const triggerStyle = {
+    flexDirection: 'row' as const,
+    alignItems: 'center' as const,
+    gap: 8,
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 999,
+    backgroundColor: theme.colors.backgroundLighter,
+    alignSelf: 'center' as const,
+  }
+
+  return (
+    <Popover
+      open={pickerOpen}
+      onOpenChange={setPickerOpen}
+      placement='bottom'
+      allowFlip
+      offset={8}
+    >
+      <Popover.Trigger asChild>
+        <Pressable
+          onPress={() => setPickerOpen((v) => !v)}
+          accessibilityRole='button'
+          accessibilityLabel={i18n.t('contactHeroBackgroundColor')}
+          style={triggerStyle}
+        >
+          <View
+            style={{
+              width: 14,
+              height: 14,
+              borderRadius: 7,
+              backgroundColor: swatchColor,
+              borderWidth: StyleSheet.hairlineWidth,
+              borderColor: theme.colors.border,
+            }}
+          />
+          <Text
+            style={{
+              fontSize: theme.fontSize('xs'),
+              color: theme.colors.textAlt,
+              fontFamily: theme.fonts.medium,
+            }}
+          >
+            {i18n.t('contactHeroBackgroundColor')}
+          </Text>
+        </Pressable>
+      </Popover.Trigger>
+      <Popover.Content
+        borderWidth={1}
+        borderColor={theme.colors.border}
+        backgroundColor={theme.colors.card}
+        padding={popoverPadding}
+        elevate
+        animation={[
+          'quick',
+          {
+            opacity: { overshootClamping: true },
+          },
+        ]}
+        enterStyle={{ y: -8, opacity: 0 }}
+        exitStyle={{ y: -8, opacity: 0 }}
+        width={popoverWidth}
+        maxWidth={popoverWidth}
+      >
+        <Popover.Arrow
+          borderWidth={1}
+          borderColor={theme.colors.border}
+          backgroundColor={theme.colors.card}
+        />
+        <IsSupporter feature='customAccentColor' size='sm'>
+          <BackgroundSwatches value={value} onChange={onChange} />
+        </IsSupporter>
+      </Popover.Content>
+    </Popover>
+  )
+}
 
 const ContactFormScreen = ({ route, navigation }: Props) => {
   const theme = useTheme()
@@ -418,6 +533,7 @@ const ContactFormScreen = ({ route, navigation }: Props) => {
       extraHeight={100}
       automaticallyAdjustContentInsets
       automaticallyAdjustKeyboardInsets
+      enableResetScrollToCoords={false}
       style={{ backgroundColor: theme.colors.background, position: 'relative' }}
       contentContainerStyle={{ paddingBottom: 100 }}
     >
@@ -459,6 +575,12 @@ const ContactFormScreen = ({ route, navigation }: Props) => {
               setContact({ ...contact, avatarBackground: next })
             }
           />
+          <BackgroundEditButton
+            value={contact.heroBackground ?? null}
+            onChange={(next) =>
+              setContact({ ...contact, heroBackground: next })
+            }
+          />
           <View style={{ alignItems: 'center', gap: 6, width: '100%' }}>
             <TextInput
               ref={nameInput}
@@ -471,6 +593,7 @@ const ContactFormScreen = ({ route, navigation }: Props) => {
               placeholderTextColor={theme.colors.textAlt}
               autoCapitalize='words'
               autoCorrect={false}
+              autoFocus={!editMode}
               returnKeyType='next'
               style={{
                 fontSize: 26,
@@ -503,20 +626,64 @@ const ContactFormScreen = ({ route, navigation }: Props) => {
                 {i18n.t('enterContactInformation')}
               </Text>
             )}
+            <View
+              style={{
+                flexDirection: 'row',
+                justifyContent: 'center',
+                alignItems: 'center',
+                gap: 10,
+                marginTop: 6,
+              }}
+            >
+              {(
+                [
+                  { key: 'male', icon: faMars, color: GENDER_COLORS.male },
+                  { key: 'female', icon: faVenus, color: GENDER_COLORS.female },
+                  {
+                    key: 'unknown',
+                    icon: faQuestion,
+                    color: theme.colors.textAlt,
+                  },
+                ] as const
+              ).map(({ key, icon, color }) => {
+                const selected = contact.gender === key
+                return (
+                  <Pressable
+                    key={key}
+                    accessibilityLabel={i18n.t(`gender_${key}`)}
+                    accessibilityState={{ selected }}
+                    hitSlop={8}
+                    onPress={() =>
+                      setContact({
+                        ...contact,
+                        gender: selected ? undefined : key,
+                      })
+                    }
+                    style={{
+                      width: 32,
+                      height: 32,
+                      borderRadius: 16,
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      backgroundColor: selected ? `${color}26` : 'transparent',
+                      borderWidth: 1,
+                      borderColor: selected ? color : theme.colors.border,
+                    }}
+                  >
+                    <FontAwesomeIcon
+                      icon={icon}
+                      size={14}
+                      style={{
+                        color: selected ? color : theme.colors.textAlt,
+                        opacity: selected ? 1 : 0.7,
+                      }}
+                    />
+                  </Pressable>
+                )
+              })}
+            </View>
           </View>
         </View>
-        <PersonalContactSection
-          contact={contact}
-          emailInput={emailInput}
-          line1Input={line1Input}
-          setEmail={setEmail}
-          setPhone={setPhone}
-          setRegionCode={setRegionCode}
-          customFields={contact.customFields || {}}
-          setCustomField={setCustomField}
-          clearCustomField={clearCustomField}
-        />
-        <Divider borderStyle='dashed' />
         <AddressSection
           contact={contact}
           setContact={setContact}
@@ -533,6 +700,16 @@ const ContactFormScreen = ({ route, navigation }: Props) => {
           stateInput={stateInput}
           zipInput={zipInput}
           prefill={prefill}
+        />
+        <PersonalContactSection
+          contact={contact}
+          emailInput={emailInput}
+          setEmail={setEmail}
+          setPhone={setPhone}
+          setRegionCode={setRegionCode}
+          customFields={contact.customFields || {}}
+          setCustomField={setCustomField}
+          clearCustomField={clearCustomField}
         />
       </Wrapper>
     </KeyboardAwareScrollView>

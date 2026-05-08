@@ -2,7 +2,6 @@ import { TextInput, TouchableOpacity, View } from 'react-native'
 import { Address, Contact } from '../types/contact'
 import useTheme from '../contexts/theme'
 import { useState } from 'react'
-import XView from './layout/XView'
 import Text from './MyText'
 import i18n, { TranslationKey } from '../lib/locales'
 import Button from './Button'
@@ -10,10 +9,8 @@ import Section from './inputs/Section'
 import TextInputRow from './inputs/TextInputRow'
 import PinLocation from './PinLocation'
 import AddressAutocomplete, { Suggestion } from './AddressAutocomplete'
-import Divider from './Divider'
-import IconButton from './IconButton'
 import {
-  faBolt,
+  faCircleInfo,
   faMagnifyingGlass,
   faPenToSquare,
 } from '@fortawesome/free-solid-svg-icons'
@@ -179,51 +176,26 @@ export default function AddressSection({
   }
 
   return (
-    <View style={{ paddingBottom: 80 }}>
-      {prefill.enabled && !!keysSameAsPrefill().length && !hasCleared && (
-        <XView
+    <View>
+      <View
+        style={{
+          paddingLeft: 25,
+          paddingRight: 20,
+          marginBottom: 8,
+        }}
+      >
+        <Text
           style={{
-            marginRight: 10,
-            marginBottom: 10,
-            justifyContent: 'flex-end',
+            fontSize: 11,
+            color: theme.colors.textAlt,
+            letterSpacing: 1.4,
+            fontFamily: theme.fonts.semiBold,
+            textTransform: 'uppercase',
           }}
         >
-          <View
-            style={{
-              borderRadius: theme.numbers.borderRadiusLg,
-              paddingHorizontal: 20,
-              paddingVertical: 5,
-              borderColor: theme.colors.accent,
-              backgroundColor: theme.colors.accentTranslucent,
-              borderWidth: 1,
-              flexDirection: 'row',
-              gap: 10,
-            }}
-          >
-            <View
-              style={{
-                flexDirection: 'row',
-                gap: 3,
-                alignItems: 'center',
-              }}
-            >
-              <Text
-                style={{
-                  fontFamily: theme.fonts.semiBold,
-                }}
-              >
-                {i18n.t('prefilledAddress')}
-              </Text>
-              <IconButton icon={faBolt} color={theme.colors.accent} />
-            </View>
-            <Button onPress={clearPrefill}>
-              <Text style={{ textDecorationLine: 'underline' }}>
-                {i18n.t('clear')}
-              </Text>
-            </Button>
-          </View>
-        </XView>
-      )}
+          {i18n.t('address')}
+        </Text>
+      </View>
       <View
         style={{
           flexDirection: 'row',
@@ -350,12 +322,54 @@ export default function AddressSection({
             </View>
           </>
         )}
-      </Section>
-
-      <Divider marginVertical={20} />
-      <Section>
+        <View
+          style={{
+            marginTop: 8,
+            marginRight: 20,
+            borderTopWidth: 1,
+            borderStyle: 'dashed',
+            borderColor: theme.colors.border,
+          }}
+        />
         <PinLocation setContact={setContact} contact={contact} />
       </Section>
+      {prefill.enabled && !!keysSameAsPrefill().length && !hasCleared && (
+        <View
+          style={{
+            marginHorizontal: 20,
+            marginTop: 8,
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: 6,
+          }}
+        >
+          <FontAwesomeIcon
+            icon={faCircleInfo}
+            size={11}
+            style={{ color: theme.colors.textAlt }}
+          />
+          <Text
+            style={{
+              fontSize: theme.fontSize('xs'),
+              color: theme.colors.textAlt,
+              flex: 1,
+            }}
+          >
+            {i18n.t('prefilledFromLastContact_short')}
+          </Text>
+          <Button onPress={clearPrefill}>
+            <Text
+              style={{
+                fontSize: theme.fontSize('xs'),
+                color: theme.colors.textAlt,
+                textDecorationLine: 'underline',
+              }}
+            >
+              {i18n.t('clear')}
+            </Text>
+          </Button>
+        </View>
+      )}
     </View>
   )
 }

@@ -25,6 +25,7 @@ export type Contact = {
    */
   phoneRegionCode?: string
   email?: string
+  gender?: 'male' | 'female' | 'unknown'
   address?: Address
 
   /**
@@ -97,6 +98,15 @@ export type Contact = {
    * fall back to the theme's accentBackground at render time.
    */
   avatarBackground?: string | null
+
+  /**
+   * Per-contact override for the Contact Details hero / header background.
+   * Independent of `avatarBackground` — the user can tint the screen chrome
+   * without touching the avatar disc, and vice-versa. Same null/undefined
+   * semantics: both fall back to the theme's accentBackground (which already
+   * tracks a supporter's `customAccentColor`).
+   */
+  heroBackground?: string | null
 
   /**
    * Metadata about the contact's image avatar. Populated when the user picks an

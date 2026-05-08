@@ -42,6 +42,7 @@ import {
   pickPreviewMatch,
 } from '../lib/contactsSearch'
 import HighlightedText from './contacts/HighlightedText'
+import GenderIcon from './GenderIcon'
 
 const SNIPPET_CONTEXT_CHARS = 24
 
@@ -193,12 +194,25 @@ const ContactRow = ({
               background={contact.avatarBackground ?? undefined}
             />
             <View style={{ flexGrow: 1, flexShrink: 1, gap: 2 }}>
-              <HighlightedText
-                text={contact.name}
-                match={nameMatch}
-                baseStyle={{ fontSize: 18 }}
-                numberOfLines={1}
-              />
+              <View
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  gap: 6,
+                }}
+              >
+                <View style={{ flexShrink: 1 }}>
+                  <HighlightedText
+                    text={contact.name}
+                    match={nameMatch}
+                    baseStyle={{ fontSize: 18 }}
+                    numberOfLines={1}
+                  />
+                </View>
+                {contact.gender && (
+                  <GenderIcon gender={contact.gender} size={10} opacity={0.6} />
+                )}
+              </View>
               {previewMatch ? (
                 <View
                   style={{

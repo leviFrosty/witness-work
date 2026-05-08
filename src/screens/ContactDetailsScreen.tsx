@@ -71,13 +71,18 @@ import { RootStackNavigation, RootStackParamList } from '../types/rootStack'
 import { useMarkerColors } from '../hooks/useMarkerColors'
 import { getContactStaleness, stalenessToColor } from '../lib/contactStaleness'
 import DismissContactSheet from '../components/DismissContactSheet'
-import { buildContactShareLink } from '../lib/contactShareLink'
+import {
+  buildContactShareLink,
+  ContactShareLinkTooLargeError,
+} from '../lib/contactShareLink'
 import { MenuView, MenuAction } from '@react-native-menu/menu'
 import { isContactDismissed } from '../lib/dismissedContacts'
 import Avatar, { isRenderableImageValue } from '../components/Avatar'
+import GenderIcon from '../components/GenderIcon'
 import { ProfileAvatar } from '../types/avatar'
 import JsonViewer from '../components/JsonViewer'
 import ContactAvatarViewer from '../components/ContactAvatarViewer'
+import useContactHeroBackground from '../hooks/useContactHeroBackground'
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Contact Details'>
 
@@ -151,6 +156,7 @@ const Hero = ({
   name,
   avatar,
   avatarBackground,
+  heroBackground,
   isBibleStudy: isActiveBibleStudy,
   hasStudiedPreviously,
   mostRecentStudy,
@@ -159,6 +165,7 @@ const Hero = ({
   name: string
   avatar: ProfileAvatar
   avatarBackground?: string | null
+  heroBackground: string
   isBibleStudy?: boolean
   hasStudiedPreviously?: boolean
   mostRecentStudy: Conversation | null
@@ -182,32 +189,42 @@ const Hero = ({
         gap: 12,
         justifyContent: 'center',
         alignItems: 'center',
-        backgroundColor: theme.colors.accent3,
+        backgroundColor: heroBackground,
       }}
     >
-      {isImageAvatar ? (
-        <Pressable
-          onPress={() => setViewerOpen(true)}
-          accessibilityRole='imagebutton'
-          accessibilityLabel={i18n.t('profilePicture')}
-          hitSlop={4}
-        >
+      <View
+        style={{
+          borderRadius: 67,
+          shadowColor: '#000',
+          shadowOpacity: 0.2,
+          shadowRadius: 16,
+          shadowOffset: { width: 0, height: 6 },
+        }}
+      >
+        {isImageAvatar ? (
+          <Pressable
+            onPress={() => setViewerOpen(true)}
+            accessibilityRole='imagebutton'
+            accessibilityLabel={i18n.t('profilePicture')}
+            hitSlop={4}
+          >
+            <Avatar
+              avatar={avatar}
+              name={name}
+              size={134}
+              background={avatarBackground ?? undefined}
+            />
+          </Pressable>
+        ) : (
           <Avatar
             avatar={avatar}
             name={name}
             size={134}
+            focusable
             background={avatarBackground ?? undefined}
           />
-        </Pressable>
-      ) : (
-        <Avatar
-          avatar={avatar}
-          name={name}
-          size={134}
-          focusable
-          background={avatarBackground ?? undefined}
-        />
-      )}
+        )}
+      </View>
       {isImageAvatar && (
         <ContactAvatarViewer
           visible={viewerOpen}
@@ -224,18 +241,36 @@ const Hero = ({
       >
         {i18n.t('contact')}
       </Text>
-      <Copyeable
-        textProps={{
-          style: {
-            fontSize: 40,
-            fontFamily: theme.fonts.bold,
-            color: theme.colors.textInverse,
-            textAlign: 'center',
-          },
+      <View
+        style={{
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: 10,
+          paddingHorizontal: 20,
         }}
       >
-        {name}
-      </Copyeable>
+        <Copyeable
+          textProps={{
+            style: {
+              fontSize: 40,
+              fontFamily: theme.fonts.bold,
+              color: theme.colors.textInverse,
+              textAlign: 'center',
+            },
+          }}
+        >
+          {name}
+        </Copyeable>
+        {contact.gender && (
+          <GenderIcon
+            gender={contact.gender}
+            size={22}
+            color={theme.colors.textInverse}
+            opacity={0.7}
+          />
+        )}
+      </View>
       {hasStudiedPreviously && mostRecentStudy && (
         <View style={{ flexDirection: 'row', gap: 5, alignItems: 'center' }}>
           <Text
@@ -660,6 +695,7 @@ const ContactDetailsScreen = ({ route, navigation }: Props) => {
   )
   const toast = useToastController()
   const { conversations } = useConversations()
+  const heroBackground = useContactHeroBackground(contact)
 
   const highlightedConversation = useMemo(
     () => conversations.find((c) => c.id === params.highlightedConversationId),
@@ -709,19 +745,30 @@ const ContactDetailsScreen = ({ route, navigation }: Props) => {
 
   const contactMenuActions = useMemo<MenuAction[]>(() => {
     const actions: MenuAction[] = [
-      { id: 'edit', title: i18n.t('edit'), image: 'pencil' },
+      {
+        id: 'edit',
+        title: i18n.t('edit'),
+        image: 'pencil',
+        imageColor: theme.colors.text,
+      },
     ]
     if (contact && !isContactDismissed(contact)) {
-      actions.push({ id: 'dismiss', title: i18n.t('dismiss'), image: 'clock' })
+      actions.push({
+        id: 'dismiss',
+        title: i18n.t('dismiss'),
+        image: 'clock',
+        imageColor: theme.colors.text,
+      })
     }
     actions.push({
       id: 'delete',
       title: i18n.t('delete'),
       image: 'trash',
+      imageColor: theme.colors.error,
       attributes: { destructive: true },
     })
     return actions
-  }, [contact])
+  }, [contact, theme.colors.text, theme.colors.error])
 
   const handleContactMenuAction = useCallback(
     (action: string) => {
@@ -759,45 +806,8 @@ const ContactDetailsScreen = ({ route, navigation }: Props) => {
     [contact, deleteContact, navigation, toast]
   )
 
-  const handleExportContact = useCallback(async () => {
+  const shareContactAsFile = useCallback(async () => {
     if (!contact) return
-
-    // Primary path: share a universal link. Tapping it on a device with the
-    // app installed opens straight into the Contact Details screen; iOS
-    // without the app falls through to the ww-proxy fallback HTML (App Store
-    // CTA). Google-Maps-style "tap the bubble, open the app".
-    try {
-      const { url, includedConversations, trimmed } = buildContactShareLink(
-        contact,
-        contactConversations,
-        customFieldDefs
-      )
-      logger.log('[ContactShareLink] generated url =', url)
-      logger.log('[ContactShareLink] length =', url.length, 'bytes')
-      // Pass the URL as `url` (not embedded in `message`) so iOS fetches
-      // Open Graph metadata from the ww-proxy fallback page and renders a
-      // rich link preview in the share sheet + iMessage bubble. Passing
-      // both fields causes some targets to duplicate the URL.
-      await Share.share({
-        url,
-        title: i18n.t('exportContact'),
-      })
-      if (trimmed) {
-        toast.show(i18n.t('shareContact'), {
-          message: i18n.t('shareContactTrimmed', {
-            included: includedConversations,
-            total: contactConversations.length,
-          }),
-          native: true,
-        })
-      }
-      return
-    } catch (error) {
-      // Fall through to file-export path for contacts too large to fit in a
-      // URL even with zero conversations (pathological custom fields, etc.).
-      logger.error('Falling back to file export:', error)
-    }
-
     // Drop per-device image avatar URIs — same policy as the universal-link
     // share (see contactShareLink.ts CONTACT_POLICY.avatar). The file path
     // points inside this device's FileSystem.documentDirectory and would be
@@ -838,11 +848,89 @@ const ContactDetailsScreen = ({ route, navigation }: Props) => {
         title: i18n.t('exportContact'),
       })
     } catch (error) {
-      logger.error('Error sharing contact:', error)
-      // Last resort: share the JSON as message text.
-      await Share.share({ message: jsonString })
+      logger.error('Error sharing contact file:', error)
+      Alert.alert(
+        i18n.t('shareContactFileFailed_title'),
+        i18n.t('shareContactFileFailed_description')
+      )
     }
-  }, [contact, contactConversations, customFieldDefs, toast])
+  }, [contact, contactConversations])
+
+  const handleExportContact = useCallback(async () => {
+    if (!contact) return
+
+    // Primary path: share a universal link. Tapping it on a device with the
+    // app installed opens straight into the Contact Details screen; iOS
+    // without the app falls through to the ww-proxy fallback HTML (App Store
+    // CTA). Google-Maps-style "tap the bubble, open the app".
+    try {
+      const { url, includedConversations, trimmed } = buildContactShareLink(
+        contact,
+        contactConversations,
+        customFieldDefs
+      )
+      logger.log('[ContactShareLink] generated url =', url)
+      logger.log('[ContactShareLink] length =', url.length, 'bytes')
+      // Pass the URL as `url` (not embedded in `message`) so iOS fetches
+      // Open Graph metadata from the ww-proxy fallback page and renders a
+      // rich link preview in the share sheet + iMessage bubble. Passing
+      // both fields causes some targets to duplicate the URL.
+      await Share.share({
+        url,
+        title: i18n.t('exportContact'),
+      })
+      if (trimmed) {
+        toast.show(i18n.t('shareContact'), {
+          message: i18n.t('shareContactTrimmed', {
+            included: includedConversations,
+            total: contactConversations.length,
+          }),
+          native: true,
+        })
+      }
+      return
+    } catch (error) {
+      if (error instanceof ContactShareLinkTooLargeError) {
+        // Surface the situation explicitly: file export only works for
+        // recipients who already have the app, unlike the universal link
+        // which falls back to an App Store CTA. The user needs to make that
+        // tradeoff themselves rather than us silently degrading.
+        logger.log(
+          '[ContactShareLink] payload too large, prompting user',
+          error.bareUrlBytes,
+          '/',
+          error.maxUrlBytes
+        )
+        Alert.alert(
+          i18n.t('shareContactTooLarge_title'),
+          i18n.t('shareContactTooLarge_description'),
+          [
+            { text: i18n.t('cancel'), style: 'cancel' },
+            {
+              text: i18n.t('shareContactTooLarge_shareAsFile'),
+              onPress: () => {
+                void shareContactAsFile()
+              },
+            },
+          ]
+        )
+        return
+      }
+      // Unexpected error from link build — surface it the same way so the
+      // user isn't left wondering why nothing happened.
+      logger.error('Unexpected error building contact share link:', error)
+      Alert.alert(
+        i18n.t('shareContactFileFailed_title'),
+        i18n.t('shareContactFileFailed_description')
+      )
+    }
+  }, [
+    contact,
+    contactConversations,
+    customFieldDefs,
+    toast,
+    shareContactAsFile,
+  ])
 
   useEffect(() => {
     navigation.setOptions({
@@ -911,7 +999,7 @@ const ContactDetailsScreen = ({ route, navigation }: Props) => {
               </Button>
             </View>
           }
-          backgroundColor={theme.colors.accent3}
+          backgroundColor={heroBackground}
         />
       ),
     })
@@ -922,9 +1010,9 @@ const ContactDetailsScreen = ({ route, navigation }: Props) => {
     contactMenuActions,
     handleContactMenuAction,
     handleExportContact,
+    heroBackground,
     navigation,
     params.id,
-    theme.colors.accent3,
     theme.colors.textInverse,
     theme.numbers.borderRadiusSm,
     toggleFavoriteContact,
@@ -1008,6 +1096,7 @@ const ContactDetailsScreen = ({ route, navigation }: Props) => {
             name={name}
             avatar={contact.avatar ?? { type: 'none', value: '' }}
             avatarBackground={contact.avatarBackground}
+            heroBackground={heroBackground}
           />
           {developerTools && (
             <JsonViewer label={i18n.t('data')} value={contact} />
@@ -1111,12 +1200,12 @@ const ContactDetailsScreen = ({ route, navigation }: Props) => {
               height: 360,
               width: '100%',
               zIndex: -100,
-              backgroundColor: theme.colors.accent3,
+              backgroundColor: heroBackground,
             }}
           />
           <View
             style={{
-              backgroundColor: theme.colors.accent3,
+              backgroundColor: heroBackground,
               height: 1000,
               position: 'absolute',
               top: -1000,

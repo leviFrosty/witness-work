@@ -68,10 +68,15 @@ const MapCarouselCard = ({ contact, setSheet }: Props) => {
   return (
     <Button
       onPress={() => navigation.navigate('Contact Details', { id: contact.id })}
+      variant='glass'
       style={{
-        backgroundColor: theme.colors.card,
         borderRadius: theme.numbers.borderRadiusLg,
-        padding: 15,
+        borderCurve: 'continuous',
+        borderWidth: 0,
+        flexDirection: 'column',
+        alignItems: 'stretch',
+        paddingHorizontal: 15,
+        paddingVertical: 15,
         gap: 5,
         flex: 1,
       }}

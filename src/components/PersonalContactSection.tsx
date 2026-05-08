@@ -30,7 +30,6 @@ export default function PersonalContactSection({
   emailInput,
   setPhone,
   setRegionCode,
-  line1Input,
   setEmail,
   customFields,
   setCustomField,
@@ -40,7 +39,6 @@ export default function PersonalContactSection({
   emailInput: React.RefObject<TextInput | null>
   setPhone: (phone: string) => void
   setRegionCode: (regionCode: string) => void
-  line1Input: React.RefObject<TextInput | null>
   setEmail: (email: string) => void
   customFields?: Record<string, string>
   setCustomField: (key: string, value: string) => void
@@ -126,93 +124,6 @@ export default function PersonalContactSection({
 
   return (
     <View style={{ gap: 24 }}>
-      <Section>
-        <InputRowContainer>
-          <View style={{ flex: 1 }}>
-            <PhoneInput
-              hitSlop={{ top: 15, bottom: 15 }}
-              value={contact.phone || ''}
-              defaultValue={defaultValue}
-              onChangePhoneNumber={(phone: string) => setPhone(phone)}
-              defaultCountry={locales[0].regionCode as ICountryCca2}
-              selectedCountry={country}
-              placeholder={i18n.t('phone_placeholder')}
-              placeholderTextColor={theme.colors.textAlt}
-              popularCountries={['US', 'KR', 'BR', 'JP', 'MX', 'CA']}
-              onChangeSelectedCountry={handleCountryChange}
-              theme={colorScheme as ITheme}
-              inputMode='numeric'
-              clearButtonMode='while-editing'
-              customCaret={<IconButton icon={faCaretDown} />}
-              phoneInputStyles={{
-                container: {
-                  borderWidth: 0,
-                  backgroundColor: theme.colors.backgroundLighter,
-                },
-                flagContainer: {
-                  backgroundColor: theme.colors.card,
-                  borderRadius: theme.numbers.borderRadiusSm,
-                },
-                input: {
-                  fontSize: theme.fontSize('md'),
-                  textAlign: 'right',
-                  paddingHorizontal: 2,
-                },
-                callingCode: {
-                  fontSize: theme.fontSize('md'),
-                },
-                divider: {
-                  backgroundColor: theme.colors.border,
-                },
-                caret: {
-                  fontSize: theme.fontSize('sm'),
-                  color: theme.colors.textAlt,
-                },
-              }}
-              modalStyles={{
-                modal: {
-                  backgroundColor: theme.colors.background,
-                },
-                searchInput: {
-                  borderColor: theme.colors.border,
-                },
-                countryButton: {
-                  borderColor: theme.colors.border,
-                  backgroundColor: theme.colors.card,
-                  shadowColor: theme.colors.shadow,
-                  shadowOffset: { height: 1, width: 0 },
-                  shadowOpacity: theme.numbers.shadowOpacity,
-                },
-              }}
-            />
-            {placeholder.current.length > 0 && !formatted.possible && (
-              <Text
-                style={{
-                  textAlign: 'right',
-                  fontSize: theme.fontSize('sm'),
-                  color: theme.colors.textAlt,
-                }}
-              >{`"${formatted.number?.input}" ${i18n.t('error')}: ${
-                formatted.possibility
-              }`}</Text>
-            )}
-          </View>
-        </InputRowContainer>
-        <TextInputRow
-          label={i18n.t('email')}
-          ref={emailInput}
-          textInputProps={{
-            placeholder: i18n.t('email_placeholder'),
-            onSubmitEditing: () => line1Input.current?.focus(),
-            keyboardType: 'email-address',
-            onChangeText: (val: string) => setEmail(val),
-            value: contact.email,
-            autoCapitalize: 'none',
-          }}
-          lastInSection
-        />
-      </Section>
-
       <View style={{ gap: 8 }}>
         <XView
           style={{
@@ -306,6 +217,92 @@ export default function PersonalContactSection({
           </XView>
         </Section>
       </View>
+
+      <Section>
+        <InputRowContainer>
+          <View style={{ flex: 1 }}>
+            <PhoneInput
+              hitSlop={{ top: 15, bottom: 15 }}
+              value={contact.phone || ''}
+              defaultValue={defaultValue}
+              onChangePhoneNumber={(phone: string) => setPhone(phone)}
+              defaultCountry={locales[0].regionCode as ICountryCca2}
+              selectedCountry={country}
+              placeholder={i18n.t('phone_placeholder')}
+              placeholderTextColor={theme.colors.textAlt}
+              popularCountries={['US', 'KR', 'BR', 'JP', 'MX', 'CA']}
+              onChangeSelectedCountry={handleCountryChange}
+              theme={colorScheme as ITheme}
+              inputMode='numeric'
+              clearButtonMode='while-editing'
+              customCaret={<IconButton icon={faCaretDown} />}
+              phoneInputStyles={{
+                container: {
+                  borderWidth: 0,
+                  backgroundColor: theme.colors.backgroundLighter,
+                },
+                flagContainer: {
+                  backgroundColor: theme.colors.card,
+                  borderRadius: theme.numbers.borderRadiusSm,
+                },
+                input: {
+                  fontSize: theme.fontSize('md'),
+                  textAlign: 'right',
+                  paddingHorizontal: 2,
+                },
+                callingCode: {
+                  fontSize: theme.fontSize('md'),
+                },
+                divider: {
+                  backgroundColor: theme.colors.border,
+                },
+                caret: {
+                  fontSize: theme.fontSize('sm'),
+                  color: theme.colors.textAlt,
+                },
+              }}
+              modalStyles={{
+                modal: {
+                  backgroundColor: theme.colors.background,
+                },
+                searchInput: {
+                  borderColor: theme.colors.border,
+                },
+                countryButton: {
+                  borderColor: theme.colors.border,
+                  backgroundColor: theme.colors.card,
+                  shadowColor: theme.colors.shadow,
+                  shadowOffset: { height: 1, width: 0 },
+                  shadowOpacity: theme.numbers.shadowOpacity,
+                },
+              }}
+            />
+            {placeholder.current.length > 0 && !formatted.possible && (
+              <Text
+                style={{
+                  textAlign: 'right',
+                  fontSize: theme.fontSize('sm'),
+                  color: theme.colors.textAlt,
+                }}
+              >{`"${formatted.number?.input}" ${i18n.t('error')}: ${
+                formatted.possibility
+              }`}</Text>
+            )}
+          </View>
+        </InputRowContainer>
+        <TextInputRow
+          label={i18n.t('email')}
+          ref={emailInput}
+          textInputProps={{
+            placeholder: i18n.t('email_placeholder'),
+            keyboardType: 'email-address',
+            onChangeText: (val: string) => setEmail(val),
+            value: contact.email,
+            autoCapitalize: 'none',
+          }}
+          lastInSection
+        />
+      </Section>
     </View>
   )
 }

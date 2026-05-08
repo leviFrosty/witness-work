@@ -102,7 +102,12 @@ const ProfileCard = ({ preview, editable, onPressIncomplete }: Props) => {
     profileCardShaderId,
     set,
   } = usePreferences()
-  const { type: publisher, isPioneer, entryMode } = usePublisher()
+  const {
+    type: publisher,
+    isPioneer,
+    name: trimmedName,
+    hasName,
+  } = usePublisher()
   const { since: supporterSince } = useIsSupporter()
   const [detailOpen, setDetailOpen] = useState(false)
   const [origin, setOrigin] = useState<OriginRect | null>(null)
@@ -173,11 +178,9 @@ const ProfileCard = ({ preview, editable, onPressIncomplete }: Props) => {
     )
   }
 
-  const trimmedName = name.trim()
-  const greeting =
-    trimmedName.length > 0
-      ? i18n.t('profileGreeting', { name: trimmedName })
-      : i18n.t('profileGreetingNoName')
+  const greeting = hasName
+    ? i18n.t('profileGreeting', { name: trimmedName })
+    : i18n.t('profileGreetingNoName')
 
   const tenure: Tenure = (() => {
     if (isPioneer && pioneerStartDate) {
@@ -205,7 +208,7 @@ const ProfileCard = ({ preview, editable, onPressIncomplete }: Props) => {
         ),
       }
     }
-    if (supporterSince && entryMode === 'checkbox') {
+    if (supporterSince) {
       return {
         tone: 'supporter',
         icon: faHeart,

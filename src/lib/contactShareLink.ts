@@ -73,6 +73,7 @@ const CONTACT_POLICY: Record<keyof Contact, FieldPolicy> = {
   phone: 'optional',
   phoneRegionCode: 'optional',
   email: 'optional',
+  gender: 'optional',
   address: 'optional',
   coordinate: 'optional',
   customFields: 'optional',
@@ -90,6 +91,9 @@ const CONTACT_POLICY: Record<keyof Contact, FieldPolicy> = {
   avatar: 'omit',
   // Cosmetic, paired with the omitted avatar — the recipient's theme decides.
   avatarBackground: 'omit',
+  // Cosmetic chrome for the recipient's Contact Details screen — let their
+  // own theme/accent decide rather than imposing the sender's choice.
+  heroBackground: 'omit',
   // Capture-time / file-size / resolution metadata of the avatar image is
   // device-local. The recipient gets a fresh avatar (or none) and would
   // recompute their own meta if they pick one.
@@ -259,6 +263,26 @@ function decodePayload(payload: string): unknown {
 
 // --- Public API -------------------------------------------------------------
 
+/**
+ * Thrown by `buildContactShareLink` when the encoded payload exceeds
+ * `MAX_URL_BYTES` even after dropping every conversation. Callers should catch
+ * this specifically to surface a "contact too large to link" UX, rather than
+ * silently falling back to file export — file export only works for recipients
+ * who already have the app, so the user needs to know what's happening.
+ */
+export class ContactShareLinkTooLargeError extends Error {
+  readonly bareUrlBytes: number
+  readonly maxUrlBytes: number
+  constructor(bareUrlBytes: number, maxUrlBytes: number) {
+    super(
+      `Contact exceeds URL size cap (${bareUrlBytes} > ${maxUrlBytes}) even with zero conversations.`
+    )
+    this.name = 'ContactShareLinkTooLargeError'
+    this.bareUrlBytes = bareUrlBytes
+    this.maxUrlBytes = maxUrlBytes
+  }
+}
+
 export type ContactShareLinkResult = {
   url: string
   /**
@@ -362,8 +386,10 @@ export function buildContactShareLink(
   }
 
   if (bestUrl === '') {
-    throw new Error(
-      'Contact exceeds URL size cap even with zero conversations — use file export.'
+    const bareUrl = tryBuild([])
+    throw new ContactShareLinkTooLargeError(
+      bareUrl.length,
+      CONTACT_SHARE_LINK.MAX_URL_BYTES
     )
   }
 

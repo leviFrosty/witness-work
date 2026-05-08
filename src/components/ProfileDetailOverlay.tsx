@@ -116,13 +116,18 @@ const ProfileDetailOverlay = ({ origin, open, onClose, onClosed }: Props) => {
   const insets = useSafeAreaInsets()
   const navigation = useNavigation<RootStackNavigation>()
   const { width: winW, height: winH } = useWindowDimensions()
-  const { name, avatar, pioneerStartDate } = usePreferences()
+  const { avatar, pioneerStartDate } = usePreferences()
 
   const handleEdit = () => {
     onClose()
-    navigation.navigate('ProfileSetup')
+    navigation.navigate('PreferencesPublisher')
   }
-  const { type: publisher, tracksPioneerStartDate, entryMode } = usePublisher()
+  const {
+    type: publisher,
+    tracksPioneerStartDate,
+    entryMode,
+    name: trimmedName,
+  } = usePublisher()
   const { since: supporterSince } = useIsSupporter()
   const { serviceReports } = useServiceReport()
   const { conversations } = useConversations()
@@ -217,8 +222,6 @@ const ProfileDetailOverlay = ({ origin, open, onClose, onClosed }: Props) => {
   const surfaceStyle = useAnimatedStyle(() => ({
     opacity: interpolate(progress.value, [0, 0.15], [0, 1], 'clamp'),
   }))
-
-  const trimmedName = name.trim()
 
   if (!mounted || !origin) return null
 

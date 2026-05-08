@@ -15,6 +15,7 @@ import Text from './MyText'
 import Button from './Button'
 import IsSupporter from './IsSupporter'
 import { ACCENT_PRESETS } from './AccentColorPicker'
+import CustomColorSwatch from './CustomColorSwatch'
 import i18n from '../lib/locales'
 import { logger } from '../lib/logger'
 import {
@@ -94,6 +95,16 @@ const EMOJI_COLS = 8
 const EMOJI_CELL = 36
 const EMOJI_GAP = 2
 const SWATCH_SIZE = 24
+const SWATCH_GAP = 8
+/**
+ * Rendered count = 1 ("match accent" pseudo-swatch) + (ACCENT_PRESETS.length -
+ * 1) non-default presets + 1 eyedropper. Kept as a derived constant so the
+ * containing popover sizes itself to fit the row exactly.
+ */
+const BACKGROUND_SWATCH_COUNT = ACCENT_PRESETS.length + 1
+export const BACKGROUND_SWATCHES_WIDTH =
+  BACKGROUND_SWATCH_COUNT * SWATCH_SIZE +
+  (BACKGROUND_SWATCH_COUNT - 1) * SWATCH_GAP
 
 interface Props {
   /** Currently-selected avatar (drives the highlighted state in the grid). */
@@ -134,15 +145,25 @@ interface BackgroundSwatchesProps {
  * avatar is a non-image type, since image avatars ignore the background color
  * entirely.
  */
-const BackgroundSwatches = ({ value, onChange }: BackgroundSwatchesProps) => {
+export const BackgroundSwatches = ({
+  value,
+  onChange,
+}: BackgroundSwatchesProps) => {
   const theme = useTheme()
+  const selectedColor = value ?? theme.colors.accent
+  const presetValues = ACCENT_PRESETS.slice(1).map((p) => p.value)
 
   return (
     <View style={{ gap: 6 }}>
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
-        contentContainerStyle={{ gap: 8, paddingVertical: 2 }}
+        style={{ flexGrow: 0, height: SWATCH_SIZE }}
+        contentContainerStyle={{
+          alignItems: 'center',
+          gap: SWATCH_GAP,
+          paddingVertical: 0,
+        }}
       >
         <Pressable
           onPress={() => onChange(null)}
@@ -191,6 +212,14 @@ const BackgroundSwatches = ({ value, onChange }: BackgroundSwatchesProps) => {
             </Pressable>
           )
         })}
+        <CustomColorSwatch
+          value={value}
+          presetValues={presetValues}
+          onChange={(hex) => onChange(hex)}
+          title={i18n.t('avatarBackgroundColor')}
+          sheetInitialColor={selectedColor}
+          size={SWATCH_SIZE}
+        />
       </ScrollView>
     </View>
   )

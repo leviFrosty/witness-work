@@ -5,6 +5,7 @@ import {
   TextInput,
   AppState,
   Linking,
+  ScrollView,
 } from 'react-native'
 import axios from 'axios'
 import * as Location from 'expo-location'
@@ -18,9 +19,11 @@ import Text from './MyText'
 import useTheme from '../contexts/theme'
 import { Address } from '../types/contact'
 import i18n from '../lib/locales'
-import { FlashList } from '@shopify/flash-list'
 import TextInputRow from './inputs/TextInputRow'
 import useLocation from '../hooks/useLocation'
+
+const SUGGESTION_ROW_HEIGHT = 44
+const MAX_VISIBLE_SUGGESTIONS = 3
 
 interface AddressAutocompleteProps {
   onSelect: (address: Address) => void
@@ -69,17 +72,41 @@ const LocationStatusPill: React.FC<{
     onRequest()
   }
 
-  const tint = granted ? theme.colors.accent : theme.colors.textAlt
-  const background = granted
-    ? theme.colors.accentTranslucent
-    : theme.colors.background
+  if (granted) {
+    return (
+      <View
+        accessibilityRole='text'
+        accessibilityLabel={label}
+        style={{
+          flexDirection: 'row',
+          alignItems: 'center',
+          gap: 6,
+          alignSelf: 'flex-start',
+          paddingVertical: 2,
+        }}
+      >
+        <FontAwesomeIcon
+          icon={faLocationArrow}
+          size={10}
+          style={{ color: theme.colors.accent }}
+        />
+        <Text
+          style={{
+            color: theme.colors.textAlt,
+            fontSize: theme.fontSize('xs'),
+          }}
+        >
+          {label}
+        </Text>
+      </View>
+    )
+  }
 
   return (
     <TouchableOpacity
       onPress={handlePress}
-      disabled={granted}
       activeOpacity={0.7}
-      accessibilityRole={granted ? 'text' : 'button'}
+      accessibilityRole='button'
       accessibilityLabel={label}
       style={{
         flexDirection: 'row',
@@ -90,18 +117,18 @@ const LocationStatusPill: React.FC<{
         paddingHorizontal: 12,
         borderRadius: theme.numbers.borderRadiusLg,
         borderWidth: 1,
-        borderColor: tint,
-        backgroundColor: background,
+        borderColor: theme.colors.textAlt,
+        backgroundColor: theme.colors.background,
       }}
     >
       <FontAwesomeIcon
-        icon={granted ? faLocationArrow : faLocationCrosshairs}
+        icon={faLocationCrosshairs}
         size={12}
-        style={{ color: tint }}
+        style={{ color: theme.colors.textAlt }}
       />
       <Text
         style={{
-          color: tint,
+          color: theme.colors.textAlt,
           fontSize: theme.fontSize('sm'),
           fontFamily: theme.fonts.semiBold,
         }}
@@ -229,23 +256,81 @@ const AddressAutocomplete: React.FC<AddressAutocompleteProps> = ({
     return () => clearTimeout(debounce)
   }, [getHighlightedText, isResult, location, query, setError, setSuggestions])
 
+  const showFloatingResults = !error && !isResult && suggestions.length > 0
+
   return (
-    <View style={{ gap: 12 }}>
+    <View style={{ gap: 12, zIndex: 10 }}>
       <LocationStatusPill status={status} onRequest={requestLocation} />
-      <TextInputRow
-        ref={textInputRef}
-        label={i18n.t('searchAddress')}
-        textInputProps={{
-          onChangeText: (text: string) => {
-            setQuery(text)
-            setIsResult(false)
-          },
-          placeholder: i18n.t('enterAddress'),
-          value: query,
-        }}
-        lastInSection
-      />
-      {error ? (
+      <View style={{ position: 'relative', zIndex: 20 }}>
+        <TextInputRow
+          ref={textInputRef}
+          label={i18n.t('searchAddress')}
+          textInputProps={{
+            onChangeText: (text: string) => {
+              setQuery(text)
+              setIsResult(false)
+            },
+            onBlur: () => setSuggestions([]),
+            placeholder: i18n.t('enterAddress'),
+            value: query,
+          }}
+          lastInSection
+        />
+        {showFloatingResults && (
+          <View
+            style={{
+              position: 'absolute',
+              top: '100%',
+              left: 0,
+              right: 0,
+              marginTop: 6,
+              backgroundColor: theme.colors.card,
+              borderRadius: theme.numbers.borderRadiusMd,
+              borderWidth: 1,
+              borderColor: theme.colors.border,
+              shadowColor: '#000',
+              shadowOffset: { width: 0, height: 4 },
+              shadowOpacity: 0.15,
+              shadowRadius: 12,
+              elevation: 8,
+              maxHeight: SUGGESTION_ROW_HEIGHT * MAX_VISIBLE_SUGGESTIONS,
+              overflow: 'hidden',
+              zIndex: 20,
+            }}
+          >
+            <ScrollView
+              keyboardShouldPersistTaps='handled'
+              nestedScrollEnabled
+              showsVerticalScrollIndicator={
+                suggestions.length > MAX_VISIBLE_SUGGESTIONS
+              }
+            >
+              {suggestions.map((item, index) => (
+                <TouchableOpacity
+                  key={index}
+                  onPress={() => {
+                    onSelect(item.address)
+                    setQuery(item.title)
+                    setIsResult(true)
+                    setSuggestions([])
+                  }}
+                  style={{
+                    minHeight: SUGGESTION_ROW_HEIGHT,
+                    paddingHorizontal: 12,
+                    paddingVertical: 10,
+                    justifyContent: 'center',
+                    borderBottomWidth: index === suggestions.length - 1 ? 0 : 1,
+                    borderBottomColor: theme.colors.border,
+                  }}
+                >
+                  <Text numberOfLines={2}>{item.highlightedTitle}</Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </View>
+        )}
+      </View>
+      {error && (
         <Text
           style={{
             color: theme.colors.error,
@@ -254,31 +339,6 @@ const AddressAutocomplete: React.FC<AddressAutocompleteProps> = ({
         >
           {i18n.t('errorFetchingAddress')}
         </Text>
-      ) : (
-        <View style={{ minHeight: 2 }}>
-          <FlashList
-            data={suggestions}
-            keyExtractor={(_, index) => index.toString()}
-            renderItem={({ item }) => (
-              <TouchableOpacity
-                onPress={() => {
-                  onSelect(item.address)
-                  setQuery(item.title)
-                  setIsResult(true)
-                  textInputRef.current?.blur()
-                  setSuggestions([])
-                }}
-                style={{
-                  padding: 10,
-                  borderBottomWidth: 1,
-                  borderBottomColor: theme.colors.border,
-                }}
-              >
-                <Text>{item.highlightedTitle}</Text>
-              </TouchableOpacity>
-            )}
-          />
-        </View>
       )}
     </View>
   )

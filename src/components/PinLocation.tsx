@@ -99,86 +99,39 @@ export default function PinLocation(props: {
     <>
       <View
         style={{
-          paddingVertical: 15,
+          paddingVertical: 10,
           marginRight: 20,
-          marginTop: 5,
-          gap: 10,
         }}
       >
-        <XView style={{ gap: 10 }}>
-          <View style={{ gap: 5, flex: 1 }}>
+        <XView style={{ gap: 10, alignItems: 'center' }}>
+          <View style={{ gap: 2, flex: 1 }}>
             <Text
               style={{
                 fontFamily: theme.fonts.semiBold,
-              }}
-            >
-              {i18n.t('pinLocation')}
-            </Text>
-            <Text
-              style={{
                 fontSize: theme.fontSize('sm'),
                 color: theme.colors.textAlt,
               }}
             >
-              {i18n.t('pinLocation_description')}
+              {i18n.t('pinOnMap')}
+            </Text>
+            <Text
+              style={{
+                fontSize: theme.fontSize('xs'),
+                color: theme.colors.textAlt,
+              }}
+            >
+              {contact.coordinate
+                ? i18n.t('pinOnMap_customSet')
+                : i18n.t('pinOnMap_descriptionAuto')}
             </Text>
           </View>
-          <View style={{ gap: 3, justifyContent: 'center' }}>
+          <View style={{ flexDirection: 'row', gap: 6 }}>
             {contact.coordinate && (
-              <View
-                style={{
-                  borderRadius: theme.numbers.borderRadiusLg,
-                  borderWidth: 1,
-                  borderColor: theme.colors.accent,
-                  backgroundColor: theme.colors.accentTranslucent,
-                  paddingHorizontal: 15,
-                  paddingVertical: 2,
-                  alignItems: 'center',
-                }}
-              >
-                <Text
-                  style={{
-                    color: theme.colors.accent,
-                    fontSize: theme.fontSize('sm'),
-                  }}
-                >
-                  {i18n.t('saved')}
-                </Text>
-              </View>
-            )}
-            {contact.userDraggedCoordinate && (
-              <View
-                style={{
-                  borderRadius: theme.numbers.borderRadiusLg,
-                  borderWidth: 1,
-                  borderColor: theme.colors.text,
-                  backgroundColor: theme.colors.background,
-                  paddingHorizontal: 15,
-                  paddingVertical: 2,
-                  alignItems: 'center',
-                }}
-              >
-                <Text
-                  style={{
-                    color: theme.colors.text,
-                    fontSize: theme.fontSize('sm'),
-                  }}
-                >
-                  {i18n.t('custom')}
-                </Text>
-              </View>
-            )}
-          </View>
-        </XView>
-
-        <XView>
-          {contact.coordinate && (
-            <>
               <Button
                 variant='outline'
                 style={{
-                  paddingVertical: 12,
-                  paddingHorizontal: 30,
+                  paddingVertical: 6,
+                  paddingHorizontal: 12,
                   justifyContent: 'center',
                   borderRadius: theme.numbers.borderRadiusSm,
                 }}
@@ -196,24 +149,26 @@ export default function PinLocation(props: {
                   }
                 }}
               >
-                <Text>{i18n.t('clear')}</Text>
+                <Text style={{ fontSize: theme.fontSize('sm') }}>
+                  {i18n.t('clear')}
+                </Text>
               </Button>
-            </>
-          )}
-          <Button
-            onPress={() => setOpen(true)}
-            variant='solid'
-            style={{
-              paddingVertical: 12,
-              flex: 1,
-              justifyContent: 'center',
-              borderRadius: theme.numbers.borderRadiusSm,
-              borderColor: theme.colors.border,
-              borderWidth: 1,
-            }}
-          >
-            <Text>{i18n.t(contact.coordinate ? 'edit' : 'add')}</Text>
-          </Button>
+            )}
+            <Button
+              onPress={() => setOpen(true)}
+              variant='outline'
+              style={{
+                paddingVertical: 6,
+                paddingHorizontal: 14,
+                justifyContent: 'center',
+                borderRadius: theme.numbers.borderRadiusSm,
+              }}
+            >
+              <Text style={{ fontSize: theme.fontSize('sm') }}>
+                {i18n.t(contact.coordinate ? 'edit' : 'add')}
+              </Text>
+            </Button>
+          </View>
         </XView>
       </View>
       <Sheet
@@ -240,6 +195,7 @@ export default function PinLocation(props: {
               {i18n.t('pinLocationHelp')}
             </Text>
             <IconButton
+              noTransform
               icon={faTimes}
               color={theme.colors.text}
               onPress={() => setOpen(false)}
@@ -339,6 +295,7 @@ export default function PinLocation(props: {
                 }}
               >
                 <Button
+                  noTransform
                   variant='outline'
                   style={{
                     justifyContent: 'center',
@@ -350,6 +307,7 @@ export default function PinLocation(props: {
                   <Text>{i18n.t(coordinate ? 'remove' : 'add')}</Text>
                 </Button>
                 <Button
+                  noTransform
                   variant='solid'
                   style={{
                     justifyContent: 'center',

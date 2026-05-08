@@ -24,9 +24,24 @@ const envVariables = z.object({
     .describe('BOOLEAN, Set to true to silence all logs. Defaults to false.'),
 })
 
-if (__DEV__) {
-  // Check for runtime environment variables.
-  envVariables.parse(process.env)
+// Validate runtime env in all builds. In dev we throw to fail fast; in
+// production we log + report to Sentry so a misconfigured EAS env var
+// (e.g. the RevenueCat key shipped as a `secret`-visibility variable and
+// thus stripped from the bundle) surfaces loudly instead of silently
+// breaking features in TestFlight.
+const result = envVariables.safeParse(process.env)
+if (!result.success) {
+  if (__DEV__) {
+    throw new Error(
+      `[env] Missing/invalid runtime env vars:\n${result.error.toString()}`
+    )
+  } else {
+    // eslint-disable-next-line no-console
+    console.error(
+      '[env] Missing/invalid runtime env vars',
+      result.error.format()
+    )
+  }
 }
 
 declare global {

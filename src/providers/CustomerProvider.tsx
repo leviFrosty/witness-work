@@ -41,6 +41,19 @@ const CustomerProvider: React.FC<PropsWithChildren<Props>> = ({ children }) => {
     const apiKey = process.env.EXPO_PUBLIC_REVENUECAT_APPLE_API_KEY || ''
     logger.log('[CustomerProvider] init')
 
+    if (!apiKey) {
+      // Empty key means the EAS env var was never inlined into the bundle —
+      // typically caused by missing `EXPO_PUBLIC_` prefix or `secret`
+      // visibility. Report loudly so TestFlight regressions don't ship
+      // silently like they did before this guard was added.
+      const error = new Error(
+        '[CustomerProvider] EXPO_PUBLIC_REVENUECAT_APPLE_API_KEY is empty at runtime — RevenueCat will not function. Check EAS env var name and visibility (must be sensitive/plaintext, not secret).'
+      )
+      logger.error(error.message)
+      Sentry.captureException(error)
+      return
+    }
+
     try {
       if (__DEV__) Purchases.setLogLevel(LOG_LEVEL.DEBUG)
       Purchases.configure({ apiKey })

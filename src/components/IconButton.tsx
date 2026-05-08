@@ -1,6 +1,6 @@
 import { IconProp } from '@fortawesome/fontawesome-svg-core'
 import Button from './Button'
-import { StyleProp, ViewStyle } from 'react-native'
+import { Insets, StyleProp, ViewStyle } from 'react-native'
 import {
   FontAwesomeIcon,
   FontAwesomeIconStyle,
@@ -17,6 +17,14 @@ type Props = {
   iconStyle?: FontAwesomeIconStyle
   color?: string
   noTransform?: boolean
+  accessibilityLabel?: string
+  /**
+   * Override the underlying Button's default 10px hitSlop. Set this when two
+   * IconButtons sit side-by-side with a small gap — the default slop overlaps
+   * and RN resolves overlapping siblings to the last one rendered, so a tap on
+   * the inner edge of the first button fires the second.
+   */
+  hitSlop?: number | Insets
 }
 
 const IconButton = ({
@@ -27,6 +35,8 @@ const IconButton = ({
   iconStyle,
   color,
   noTransform,
+  accessibilityLabel,
+  hitSlop,
 }: Props) => {
   const theme = useContext(ThemeContext)
   const size = typeof _size === 'number' ? _size : theme.fontSize(_size)
@@ -37,6 +47,8 @@ const IconButton = ({
       noTransform={noTransform ?? !onPress}
       disabled={!onPress}
       onPress={onPress}
+      hitSlop={hitSlop}
+      accessibilityLabel={accessibilityLabel}
     >
       <FontAwesomeIcon
         icon={icon}

@@ -1,7 +1,14 @@
-import { PropsWithChildren, useCallback, useMemo } from 'react'
+import {
+  PropsWithChildren,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react'
 import { useWindowDimensions, View } from 'react-native'
 import { FullWindowOverlay } from 'react-native-screens'
-import { Confetti, useConfetti } from '../vendor/ConfettiSkia'
+import { Confetti, ConfettiConfig, useConfetti } from '../vendor/ConfettiSkia'
 import { ConfettiContext, FireworksCtx, FireOpts } from '../contexts/Confetti'
 
 /**
@@ -30,6 +37,36 @@ interface Props {}
 const ConfettiProvider: React.FC<PropsWithChildren<Props>> = ({ children }) => {
   const confetti = useConfetti()
   const { width, height } = useWindowDimensions()
+  const [overlayMounted, setOverlayMounted] = useState(false)
+  const pendingTriggersRef = useRef<Partial<ConfettiConfig>[]>([])
+
+  /**
+   * Drains any triggers that arrived while the FullWindowOverlay was still
+   * mounting (and therefore before `confetti.ref.current` had attached).
+   * Without this, the first burst after an idle period would silently no-op.
+   */
+  const drainPendingTriggers = useCallback(() => {
+    const handle = confetti.ref.current
+    if (!handle) return
+    const queued = pendingTriggersRef.current
+    if (queued.length === 0) return
+    pendingTriggersRef.current = []
+    for (const cfg of queued) handle.trigger(cfg)
+  }, [confetti.ref])
+
+  const triggerBurst = useCallback(
+    (cfg?: Partial<ConfettiConfig>) => {
+      const handle = confetti.ref.current
+      if (handle) {
+        handle.trigger(cfg)
+        return
+      }
+      // Overlay not mounted yet — queue, mount, drain on next frame.
+      pendingTriggersRef.current.push(cfg ?? {})
+      setOverlayMounted(true)
+    },
+    [confetti.ref]
+  )
 
   const fire = useCallback(
     (opts?: FireOpts) => {
@@ -41,7 +78,7 @@ const ConfettiProvider: React.FC<PropsWithChildren<Props>> = ({ children }) => {
 
       spots.forEach((spot, i) => {
         setTimeout(() => {
-          confetti.trigger({
+          triggerBurst({
             position: { x: width * spot.x, y: height * spot.y },
             count,
             velocity,
@@ -50,15 +87,31 @@ const ConfettiProvider: React.FC<PropsWithChildren<Props>> = ({ children }) => {
         }, i * staggerMs)
       })
     },
-    [confetti, width, height]
+    [triggerBurst, width, height]
   )
+
+  /**
+   * Confetti reports `true` the moment its engine accepts a trigger and `false`
+   * after the last particle is culled. We keep the FullWindowOverlay mounted
+   * while active and unmount it the instant the engine goes idle so native
+   * sheets/pickers underneath aren't competing with a UIWindow-level container
+   * that React Native's touch handler is attached to.
+   */
+  const handleActiveChange = useCallback((active: boolean) => {
+    if (!active) setOverlayMounted(false)
+  }, [])
+
+  useEffect(() => {
+    if (!overlayMounted) return
+    drainPendingTriggers()
+  }, [overlayMounted, drainPendingTriggers])
 
   const ctx = useMemo<FireworksCtx>(
     () => ({
       fire,
-      triggerBurst: confetti.trigger,
+      triggerBurst,
     }),
-    [fire, confetti.trigger]
+    [fire, triggerBurst]
   )
 
   return (
@@ -70,10 +123,21 @@ const ConfettiProvider: React.FC<PropsWithChildren<Props>> = ({ children }) => {
          * pushed/modal screens (e.g. the Paywall Thank You screen). Sitting
          * as a sibling of the navigator was occluded by pushed screens at
          * the native view layer, so the burst landed behind the screen.
+         *
+         * Conditional mount: the iOS FullWindowOverlay attaches an
+         * `RCTSurfaceTouchHandler` to a container that lives directly in the
+         * UIWindow, sibling to any natively presented sheet (Share,
+         * UIColorPicker, etc.). Even with `pointerEvents="none"` on the
+         * inner View, leaving the overlay mounted at all times has been
+         * observed to swallow taps on those sheets. Mounting it only while
+         * particles are alive keeps the celebration working without leaving
+         * a permanent UIWindow-level touch surface.
          */}
-        <FullWindowOverlay>
-          <Confetti ref={confetti.ref} />
-        </FullWindowOverlay>
+        {overlayMounted ? (
+          <FullWindowOverlay>
+            <Confetti ref={confetti.ref} onActiveChange={handleActiveChange} />
+          </FullWindowOverlay>
+        ) : null}
       </View>
     </ConfettiContext.Provider>
   )

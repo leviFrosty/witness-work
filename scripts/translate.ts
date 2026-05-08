@@ -44,10 +44,6 @@ const logError = (...stringArrays: unknown[]): void => {
   console.error('[translate] - ❌ ' + stringArrays.join(' '))
 }
 
-const logSuccess = (locale: string): void => {
-  console.log('[translate] - ✅ Successfully translated:', locale)
-}
-
 const logFailure = (locale: string, error: Error | string): void => {
   console.error(
     '[translate] - ❌ Failed to translate:',

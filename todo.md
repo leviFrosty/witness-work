@@ -48,6 +48,11 @@
   -
 - Add a "Did you know?" tip card (drip-feed feature discovery), likely at the bottom of the home screen. Rotates through lesser-known features one at a time so users discover them gradually instead of all at once. Should be dismissible per-tip and remember which ones have been shown.
 
+If the user creates the app after the month or installs the app and they're starting in the month of September or later then and they are have an annual goal their publisher type has an annual goal. They should be presented a final onboarding screen just before the supporter information screen that asks their current year-to-date service year-to-date totals
+Fix colors not appearing on map onboarding info ![alt text](image.png)
+Move address to top of contact form
+Edit profile, scrollability issue, no bottom padding.
+
 ## Supporter features
 
 - Alternate app icons (gold, dark, seasonal, minimalist).

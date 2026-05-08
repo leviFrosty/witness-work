@@ -25,10 +25,16 @@ export interface ConfettiHandle {
 
 export interface ConfettiProps {
   pointerEvents?: 'none' | 'auto'
+  /**
+   * Fires when the engine transitions between idle and animating. Lets the
+   * parent unmount any expensive wrapper (e.g. an iOS `FullWindowOverlay`)
+   * while no particles exist so it can't interfere with native hit-testing.
+   */
+  onActiveChange?: (active: boolean) => void
 }
 
 const Confetti = forwardRef<ConfettiHandle, ConfettiProps>(function Confetti(
-  { pointerEvents = 'none' },
+  { pointerEvents = 'none', onActiveChange },
   ref
 ) {
   const { width, height } = useWindowDimensions()
@@ -43,6 +49,19 @@ const Confetti = forwardRef<ConfettiHandle, ConfettiProps>(function Confetti(
   const rafRef = useRef<number | null>(null)
   const [, setTick] = useState(0)
   const [active, setActive] = useState(false)
+  const onActiveChangeRef = useRef(onActiveChange)
+  onActiveChangeRef.current = onActiveChange
+  const skipFirstActiveCallback = useRef(true)
+
+  useEffect(() => {
+    // Initial active=false on mount is not a real transition — skipping
+    // avoids parents unmounting the wrapper before the first trigger lands.
+    if (skipFirstActiveCallback.current) {
+      skipFirstActiveCallback.current = false
+      return
+    }
+    onActiveChangeRef.current?.(active)
+  }, [active])
 
   const loop = useCallback(
     (time: number) => {

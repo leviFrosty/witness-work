@@ -1,14 +1,17 @@
-import { useMemo, useState } from 'react'
-import { Image, View, TextInput as RNTextInput } from 'react-native'
+import { useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { Image, View, TextInput as RNTextInput, ScrollView } from 'react-native'
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
 import {
   faBug,
+  faCircleQuestion,
   faHand,
   faMagnifyingGlass,
   faThumbtack,
 } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
+import { useNavigation } from '@react-navigation/native'
 
+import Header from '../components/layout/Header'
 import Wrapper from '../components/layout/Wrapper'
 import Text from '../components/MyText'
 import Accordion from '../components/Accordion'
@@ -101,7 +104,29 @@ const FAQItem = ({ entry }: { entry: FAQEntry }) => {
 
 const FAQScreen = () => {
   const theme = useTheme()
+  const navigation = useNavigation()
+  const scrollRef = useRef<ScrollView>(null)
   const [search, setSearch] = useState('')
+
+  useLayoutEffect(() => {
+    navigation.setOptions({
+      header: () => (
+        <Header
+          buttonType='back'
+          title={i18n.t('helpCenter')}
+          rightElement={
+            <IconButton
+              style={{ position: 'absolute', right: 0 }}
+              icon={faCircleQuestion}
+              size='xl'
+              accessibilityLabel={i18n.t('faq_jumpToStillNeedHelp')}
+              onPress={() => scrollRef.current?.scrollToEnd({ animated: true })}
+            />
+          }
+        />
+      ),
+    })
+  }, [navigation])
 
   const trimmed = normalize(search)
   const isSearching = trimmed.length > 0
@@ -134,6 +159,9 @@ const FAQScreen = () => {
   return (
     <Wrapper insets='bottom'>
       <KeyboardAwareScrollView
+        innerRef={(ref) => {
+          scrollRef.current = ref as unknown as ScrollView
+        }}
         keyboardShouldPersistTaps='handled'
         contentContainerStyle={{
           paddingTop: 20,

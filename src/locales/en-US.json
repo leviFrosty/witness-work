@@ -1701,6 +1701,7 @@
   "faq_allHeader": "All Questions",
   "faq_noResults": "No questions match your search.",
   "faq_stillNeedHelp": "Still need help?",
+  "faq_jumpToStillNeedHelp": "Jump to Still Need Help",
   "faq_stillNeedHelp_description": "If your question isn't covered here, send a quick message. Levi reads everything personally.",
   "faq_emailLevi": "Reach out privately by email at",
   "faq_category_time": "Time & Reports",

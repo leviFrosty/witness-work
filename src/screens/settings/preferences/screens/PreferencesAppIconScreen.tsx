@@ -152,7 +152,7 @@ const PreferencesAppIconPicker = () => {
 
   return (
     <View style={{ gap: 24 }}>
-      <View style={{ paddingHorizontal: 20 }}>
+      <View>
         <Text style={{ fontSize: 13, color: theme.colors.textAlt }}>
           {i18n.t('appIconScreenDescription')}
         </Text>
@@ -160,7 +160,6 @@ const PreferencesAppIconPicker = () => {
 
       <View
         style={{
-          paddingHorizontal: 20,
           flexDirection: 'row',
           flexWrap: 'wrap',
           gap: 16,
@@ -251,9 +250,11 @@ const PreferencesAppIconScreen = () => (
       contentContainerStyle={{ gap: 24, paddingTop: 24, paddingBottom: 120 }}
     >
       <ArtistCallout />
-      <IsSupporter feature='customAppIcon'>
-        <PreferencesAppIconPicker />
-      </IsSupporter>
+      <View style={{ paddingHorizontal: 20 }}>
+        <IsSupporter feature='customAppIcon'>
+          <PreferencesAppIconPicker />
+        </IsSupporter>
+      </View>
     </KeyboardAwareScrollView>
   </Wrapper>
 )

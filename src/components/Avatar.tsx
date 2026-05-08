@@ -61,6 +61,15 @@ const Avatar = ({ avatar, name, size = 44, background, focusable }: Props) => {
   const anchorRef = useRef<View>(null)
   const [anchor, setAnchor] = useState<AnchorRect | null>(null)
   const [open, setOpen] = useState(false)
+  // If the image URI fails to load (common after a TestFlight migration where
+  // the old `file://` path no longer points at a real file), treat it as
+  // not-renderable so the fallback chain — emoji → letter → person icon —
+  // gets a chance to render. Reset whenever the URI changes so a fresh value
+  // gets a fresh attempt.
+  const [imageFailed, setImageFailed] = useState(false)
+  useEffect(() => {
+    setImageFailed(false)
+  }, [avatar.type, avatar.value])
   const progress = useSharedValue(0)
   const dims = useWindowDimensions()
 
@@ -115,7 +124,11 @@ const Avatar = ({ avatar, name, size = 44, background, focusable }: Props) => {
   })
 
   const inner = (() => {
-    if (avatar.type === 'image' && isRenderableImageValue(avatar.value)) {
+    if (
+      avatar.type === 'image' &&
+      isRenderableImageValue(avatar.value) &&
+      !imageFailed
+    ) {
       return (
         <Image
           source={{ uri: avatar.value }}
@@ -128,6 +141,7 @@ const Avatar = ({ avatar, name, size = 44, background, focusable }: Props) => {
           contentFit='cover'
           cachePolicy='memory-disk'
           transition={120}
+          onError={() => setImageFailed(true)}
         />
       )
     }
@@ -140,20 +154,21 @@ const Avatar = ({ avatar, name, size = 44, background, focusable }: Props) => {
       justifyContent: 'center' as const,
     }
 
+    // Non-image fallbacks (emoji / letter / person icon) all share the same
+    // background default so toggling between them doesn't snap colors. We use
+    // `accentBackground` — which honors `customAvatarBackground` — so the
+    // avatar circle never flips to the user's accent (which can read as a
+    // link-blue when customized).
+    const bg = background ?? theme.colors.accentBackground
+
     if (avatar.type === 'emoji' && avatar.value) {
       return (
-        <View
-          style={{
-            ...base,
-            backgroundColor: background ?? theme.colors.accentBackground,
-          }}
-        >
+        <View style={{ ...base, backgroundColor: bg }}>
           <Text style={{ fontSize: size * 0.5 }}>{avatar.value}</Text>
         </View>
       )
     }
 
-    const bg = background ?? theme.colors.accent
     const initial = (name ?? '').trim().charAt(0).toUpperCase()
 
     if (initial) {

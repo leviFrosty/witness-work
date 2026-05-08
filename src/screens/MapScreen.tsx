@@ -694,7 +694,7 @@ const FullMapView = ({
           gap: 8,
         }}
       >
-        {visibleContactMarkers.length > 1 && (
+        {visibleContactMarkers.length >= 1 && (
           <Button
             accessibilityLabel={i18n.t('map_fitContacts')}
             variant='glass'

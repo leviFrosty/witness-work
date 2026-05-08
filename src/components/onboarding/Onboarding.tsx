@@ -19,9 +19,17 @@ import ICloudRestore from './steps/iCloudRestore'
 import FounderNote from './steps/FounderNote'
 import IntentPicker from './steps/IntentPicker'
 import YourPlanPreview from './steps/YourPlanPreview'
+import ServiceYearCatchUp from './steps/ServiceYearCatchUp'
+import { hasReportsInCatchUpWindow } from '../ServiceYearCatchUpForm'
 import { usePreferences } from '../../stores/preferences'
-import { tracksPioneerStartDate } from '../../lib/publisherCapabilities'
+import useServiceReport from '../../stores/serviceReport'
+import { ServiceReportsByYears } from '../../types/serviceReport'
+import {
+  effectiveHasAnnualGoal,
+  tracksPioneerStartDate,
+} from '../../lib/publisherCapabilities'
 import { Publisher } from '../../types/publisher'
+import moment from 'moment'
 import {
   OnboardingProgress,
   OnboardingProgressContext,
@@ -39,11 +47,24 @@ type StepId =
   | 'yourPlanPreview'
   | 'notifications'
   | 'defaultNav'
+  | 'serviceYearCatchUp'
   | 'supporter'
 
 interface StepProps {
   goBack: () => void
   goNext: () => void
+}
+
+/**
+ * Context passed to `showIf`. Widened beyond `publisher` so steps can gate on
+ * other onboarding state (e.g. the catch-up step needs `installedOn` and the
+ * user's annual-goal override).
+ */
+interface StepShowIfContext {
+  publisher: Publisher
+  installedOn: Date
+  userSpecifiedHasAnnualGoal: boolean | 'default'
+  serviceReports: ServiceReportsByYears
 }
 
 interface StepDef {
@@ -56,7 +77,7 @@ interface StepDef {
    */
   countsTowardProgress: boolean
   /** If present and returns false, the step is skipped entirely. */
-  showIf?: (publisher: Publisher) => boolean
+  showIf?: (ctx: StepShowIfContext) => boolean
 }
 
 const allSteps: StepDef[] = [
@@ -71,7 +92,7 @@ const allSteps: StepDef[] = [
     id: 'pioneerDate',
     Component: ProfileSetupPioneerDate,
     countsTowardProgress: true,
-    showIf: (publisher) => tracksPioneerStartDate(publisher),
+    showIf: ({ publisher }) => tracksPioneerStartDate(publisher),
   },
   {
     id: 'yourPlanPreview',
@@ -80,15 +101,51 @@ const allSteps: StepDef[] = [
   },
   { id: 'notifications', Component: StepThree, countsTowardProgress: true },
   { id: 'defaultNav', Component: StepDefaultNav, countsTowardProgress: true },
+  {
+    id: 'serviceYearCatchUp',
+    Component: ServiceYearCatchUp,
+    countsTowardProgress: true,
+    // Only annual-goal publishers who installed mid-service-year (any month
+    // other than September) need to backdate. September installs have no
+    // missed months, and monthly-goal publishers don't track an annual total.
+    // Also skip when a restore already populated the catch-up window — the
+    // user has nothing left to backdate.
+    showIf: ({
+      publisher,
+      installedOn,
+      userSpecifiedHasAnnualGoal,
+      serviceReports,
+    }) =>
+      effectiveHasAnnualGoal(publisher, userSpecifiedHasAnnualGoal) &&
+      moment(installedOn).month() !== 8 &&
+      !hasReportsInCatchUpWindow(serviceReports, installedOn),
+  },
   { id: 'supporter', Component: Supporter, countsTowardProgress: true },
 ]
 
 const OnBoarding = () => {
-  const { set, publisher, onboardingStepId } = usePreferences()
+  const {
+    set,
+    publisher,
+    onboardingStepId,
+    installedOn,
+    userSpecifiedHasAnnualGoal,
+  } = usePreferences()
+  const { serviceReports } = useServiceReport()
+
+  const showIfCtx: StepShowIfContext = useMemo(
+    () => ({
+      publisher,
+      installedOn,
+      userSpecifiedHasAnnualGoal,
+      serviceReports,
+    }),
+    [publisher, installedOn, userSpecifiedHasAnnualGoal, serviceReports]
+  )
 
   const visibleSteps = useMemo(
-    () => allSteps.filter((s) => !s.showIf || s.showIf(publisher)),
-    [publisher]
+    () => allSteps.filter((s) => !s.showIf || s.showIf(showIfCtx)),
+    [showIfCtx]
   )
 
   // Lazy-init from persisted step id so a mid-flow reload resumes where the
@@ -98,7 +155,7 @@ const OnBoarding = () => {
   const [stepIndex, setStepIndex] = useState(() => {
     if (!onboardingStepId) return 0
     const initialVisible = allSteps.filter(
-      (s) => !s.showIf || s.showIf(publisher)
+      (s) => !s.showIf || s.showIf(showIfCtx)
     )
     const idx = initialVisible.findIndex((s) => s.id === onboardingStepId)
     return idx >= 0 ? idx : 0

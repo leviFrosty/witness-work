@@ -57,8 +57,12 @@ const LifetimeHoursCard = () => {
   const endYears = useMemo(() => getServiceYearEndYearsSpan(reports), [reports])
 
   const formattedLifetime = useMemo(() => {
-    // Thousands-separator via toLocaleString; keep a single decimal place only
-    // when the fractional part is non-zero to avoid "4,218.0" noise.
+    // Once we hit 3+ whole-number digits the hero text starts crowding the card,
+    // so floor sub-decimal noise; below that we keep a single decimal place only
+    // when the fractional part is non-zero to avoid "42.0" noise.
+    if (lifetimeHours >= 100) {
+      return Math.floor(lifetimeHours).toLocaleString()
+    }
     const rounded = Math.round(lifetimeHours * 10) / 10
     const hasFraction = Math.abs(rounded - Math.round(rounded)) > 0
     return rounded.toLocaleString(undefined, {
@@ -66,6 +70,11 @@ const LifetimeHoursCard = () => {
       maximumFractionDigits: 1,
     })
   }, [lifetimeHours])
+
+  // At 100k+ even the "hours" label competes with the digits for space, so swap
+  // to the compact form ("h").
+  const hoursLabel =
+    lifetimeHours >= 100000 ? i18n.t('hoursCompact') : i18n.t('hours_lowercase')
 
   const subtitle = useMemo(() => {
     if (!earliestDate) return null
@@ -114,7 +123,7 @@ const LifetimeHoursCard = () => {
               color: theme.colors.textAlt,
             }}
           >
-            {i18n.t('hours_lowercase')}
+            {hoursLabel}
           </Text>
         </View>
 

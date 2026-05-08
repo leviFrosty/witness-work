@@ -4,6 +4,11 @@ import type { Publisher, PublisherHours } from '../types/publisher'
 
 export type PublisherCapabilities = {
   type: Publisher
+  /** Trimmed publisher/user name from onboarding profile. Empty string if unset. */
+  name: string
+  /** Name to render to the user — falls back to a localized greeting when unset. */
+  displayName: string
+  hasName: boolean
   entryMode: 'checkbox' | 'hours'
   /** `null` means no monthly credit cap (unlimited). */
   creditCapMinutes: number | null
@@ -54,6 +59,7 @@ export type PublisherCapabilitiesInput = {
   milestoneOverrides: number[] | null
   overrideCreditLimit: boolean
   customCreditLimitHours: number
+  name: string
 }
 
 const baseCreditCapMinutes = (publisher: Publisher): number | null => {
@@ -102,7 +108,7 @@ const roleDefaultHasAnnualGoal = (publisher: Publisher): boolean => {
   }
 }
 
-const effectiveHasAnnualGoal = (
+export const effectiveHasAnnualGoal = (
   publisher: Publisher,
   userSpecified: boolean | 'default'
 ): boolean => {
@@ -120,13 +126,20 @@ export const derivePublisherCapabilities = (
     milestoneOverrides,
     overrideCreditLimit,
     customCreditLimitHours,
+    name,
   } = input
   const monthlyGoalHours = publisherHours[publisher]
   const annualGoalHours = monthlyGoalHours * 12
   const entryMode = getEntryMode(publisher)
   const hoursMode = entryMode === 'hours'
+  const trimmedName = (name ?? '').trim()
   return {
     type: publisher,
+    name: trimmedName,
+    // displayName is filled in by the React-side hook (it needs i18n).
+    // Pure callers can ignore it.
+    displayName: trimmedName,
+    hasName: trimmedName.length > 0,
     entryMode,
     creditCapMinutes: effectiveCreditCapMinutes(
       publisher,

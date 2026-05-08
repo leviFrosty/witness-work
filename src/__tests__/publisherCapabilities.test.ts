@@ -15,6 +15,7 @@ const baseInput = {
   milestoneOverrides: null as number[] | null,
   overrideCreditLimit: false,
   customCreditLimitHours: 55,
+  name: '',
 }
 
 const derive = (

@@ -515,6 +515,36 @@ export const getHoursForServiceYearEndYear = (
   return _.round(totalMinutes / 60, 1)
 }
 
+/**
+ * Compute the list of service-year `endYear`s the user is allowed to backdate
+ * into from the All-time tab's "Add earlier year" picker.
+ *
+ * Range: from `currentEndYear - floorYearsBack` up to (earliest present
+ * endYear) - 1, descending. Excludes any year already in `endYears` (defensive;
+ * `getServiceYearEndYearsSpan` already returns a continuous span, but we don't
+ * want to rely on that contract here).
+ *
+ * Returns `[]` if `endYears` is empty or if every candidate year is already
+ * present / below the floor.
+ */
+export const getAvailableEarlierEndYears = (
+  endYears: number[],
+  currentEndYear: number,
+  floorYearsBack: number
+): number[] => {
+  if (endYears.length === 0) return []
+  const earliest = Math.min(...endYears)
+  const floor = currentEndYear - floorYearsBack
+  const upper = earliest - 1
+  if (upper < floor) return []
+  const present = new Set(endYears)
+  const out: number[] = []
+  for (let y = upper; y >= floor; y--) {
+    if (!present.has(y)) out.push(y)
+  }
+  return out
+}
+
 // Helper function to check if a date matches a monthly by weekday pattern.
 // Caller is responsible for passing a calendar-day Date that's already been
 // normalized via `normalizeDateForStorage`; this fn reads it via UTC mode.

@@ -193,17 +193,17 @@ const OrDivider = () => {
  * the chips deliberately don't include a Custom option.
  */
 const QuickDateChips = ({
-  originalDate,
   value,
   onPick,
 }: {
-  originalDate: Date
   value: Date
   onPick: (d: Date) => void
 }) => {
   const theme = useTheme()
-  // Chips only shift the day — they carry the currently-picked time forward
-  // so the user doesn't have to re-enter it after adjusting with the picker.
+  // Chips shift the day relative to *now* (not the original missed date) so
+  // the labels always match reality — "Tomorrow" actually means tomorrow.
+  // They carry the currently-picked time forward so the user doesn't have to
+  // re-enter it after adjusting with the picker.
   const options = useMemo(() => {
     const h = value.getHours()
     const m = value.getMinutes()
@@ -215,20 +215,20 @@ const QuickDateChips = ({
       {
         key: 'tomorrow',
         label: i18n.t('tomorrow'),
-        date: withCurrentTime(moment(originalDate).add(1, 'day')),
+        date: withCurrentTime(moment().add(1, 'day')),
       },
       {
         key: 'plus3',
         label: i18n.t('plusDays', { count: 3 }),
-        date: withCurrentTime(moment(originalDate).add(3, 'days')),
+        date: withCurrentTime(moment().add(3, 'days')),
       },
       {
         key: 'nextWeek',
         label: i18n.t('nextWeek'),
-        date: withCurrentTime(moment(originalDate).add(1, 'week')),
+        date: withCurrentTime(moment().add(1, 'week')),
       },
     ]
-  }, [originalDate, value])
+  }, [value])
 
   return (
     <View style={{ flexDirection: 'row', gap: 8, flexWrap: 'wrap' }}>
@@ -293,12 +293,20 @@ const RescheduleConversationScreen = ({ route, navigation }: Props) => {
   )
 
   // Default the picker to "tomorrow at the original time" so the user can
-  // accept the easiest possible reschedule with one tap.
+  // accept the easiest possible reschedule with one tap. Anchored to now (not
+  // the original missed date) so the new date is always in the future — for
+  // an overdue follow-up, "original + 1 day" can still be in the past.
   const originalDate = conversation?.followUp?.date
     ? new Date(conversation.followUp.date)
     : new Date()
   const [newDate, setNewDate] = useState(() =>
-    moment(originalDate).add(1, 'day').toDate()
+    moment()
+      .add(1, 'day')
+      .hours(originalDate.getHours())
+      .minutes(originalDate.getMinutes())
+      .seconds(0)
+      .milliseconds(0)
+      .toDate()
   )
 
   const phoneFormatted = useMemo(() => {
@@ -367,6 +375,10 @@ const RescheduleConversationScreen = ({ route, navigation }: Props) => {
         ...conversation.followUp!,
         date: newDate,
         notifications,
+        // Rescheduling re-activates a previously dismissed follow-up — the
+        // user has explicitly committed to a new date, so the dismissal no
+        // longer applies.
+        dismissed: false,
       },
     })
 
@@ -405,7 +417,18 @@ const RescheduleConversationScreen = ({ route, navigation }: Props) => {
                 }
               )
             )
-            updateConversation({ ...conversation, followUp: undefined })
+            // Mark dismissed instead of nuking the followUp object — we want
+            // to preserve the user's topic/date/note context for history.
+            // Notifications are still cancelled above so a stale reminder
+            // can't fire after dismissal.
+            updateConversation({
+              ...conversation,
+              followUp: {
+                ...conversation.followUp!,
+                notifications: [],
+                dismissed: true,
+              },
+            })
             dismiss()
           },
         },
@@ -591,11 +614,7 @@ const RescheduleConversationScreen = ({ route, navigation }: Props) => {
             ctaLabel={i18n.t('reschedule')}
             onCta={handleReschedule}
           >
-            <QuickDateChips
-              originalDate={originalDate}
-              value={newDate}
-              onPick={setNewDate}
-            />
+            <QuickDateChips value={newDate} onPick={setNewDate} />
             <View
               style={{
                 flexDirection: 'row',

@@ -34,6 +34,13 @@ export type Conversation = {
      * simplifies ConversationForm.tsx submit function.
      */
     notifications?: Notification[] // Changing to only one
+    /**
+     * When true, the user has dismissed this follow-up — it should be hidden
+     * from "Missed Conversations" and the widget's overdue list, but the
+     * follow-up's `topic` and any other data are preserved (non-destructive).
+     * Re-enabled by rescheduling, which clears this flag implicitly.
+     */
+    dismissed?: boolean
   }
   isBibleStudy: boolean
   notAtHome?: boolean

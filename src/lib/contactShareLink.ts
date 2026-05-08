@@ -116,6 +116,7 @@ const FOLLOW_UP_POLICY: Record<keyof FollowUp, FieldPolicy> = {
   notifyMe: 'always',
   topic: 'optional',
   notifications: 'optional',
+  dismissed: 'optional',
 }
 
 const CONVERSATION_POLICY: Record<keyof Conversation, FieldPolicy> = {

@@ -1,6 +1,5 @@
 import Wrapper from '../../../components/layout/Wrapper'
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
-import AppPreferencesSection from './sections/AppPreferencesSection'
 import Section from '../../../components/inputs/Section'
 import InputRowButton from '../../../components/inputs/InputRowButton'
 import {
@@ -9,18 +8,15 @@ import {
   faComments,
   faFileExport,
   faHome,
-  faPalette,
   faRoute,
   faSliders,
   faTableCellsLarge,
-  faUser,
 } from '@fortawesome/free-solid-svg-icons'
 import { Platform } from 'react-native'
 import i18n from '../../../lib/locales'
 import { useNavigation } from '@react-navigation/native'
 import IconButton from '../../../components/IconButton'
 import { View } from 'react-native'
-import LanguageSelector from '../sections/LanguageSelector'
 import { RootStackNavigation } from '../../../types/rootStack'
 
 const PreferencesScreen = () => {
@@ -31,25 +27,8 @@ const PreferencesScreen = () => {
       <KeyboardAwareScrollView
         contentContainerStyle={{ gap: 30, paddingTop: 30, paddingBottom: 30 }}
       >
-        <Section>
-          <LanguageSelector />
-        </Section>
         <View style={{ gap: 5 }}>
           <Section>
-            <InputRowButton
-              leftIcon={faPalette}
-              label={i18n.t('appearance')}
-              onPress={() => navigation.navigate('PreferencesAppearance')}
-            >
-              <IconButton icon={faChevronRight} />
-            </InputRowButton>
-            <InputRowButton
-              leftIcon={faUser}
-              label={i18n.t('publisher')}
-              onPress={() => navigation.navigate('PreferencesPublisher')}
-            >
-              <IconButton icon={faChevronRight} />
-            </InputRowButton>
             <InputRowButton
               leftIcon={faComments}
               label={i18n.t('conversations')}
@@ -104,8 +83,6 @@ const PreferencesScreen = () => {
             </InputRowButton>
           </Section>
         </View>
-
-        <AppPreferencesSection />
       </KeyboardAwareScrollView>
     </Wrapper>
   )

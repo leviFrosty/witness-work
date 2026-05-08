@@ -1,4 +1,4 @@
-import { Switch, View } from 'react-native'
+import { View } from 'react-native'
 import Section from '../../../../components/inputs/Section'
 import InputRowContainer from '../../../../components/inputs/InputRowContainer'
 import i18n from '../../../../lib/locales'
@@ -8,54 +8,6 @@ import Text from '../../../../components/MyText'
 import { useContext } from 'react'
 import { ThemeContext } from '../../../../contexts/theme'
 import { MinuteDisplayFormat } from '../../../../types/serviceReport'
-import MapKey from '../../../../components/MapColorKey'
-import AccentColorPicker from '../../../../components/AccentColorPicker'
-import Divider from '../../../../components/Divider'
-
-const ProfileCardShaderToggle = () => {
-  const { profileCardShaderEnabled, set } = usePreferences()
-  const theme = useContext(ThemeContext)
-
-  return (
-    <InputRowContainer
-      lastInSection
-      style={{
-        flexDirection: 'column',
-        gap: 10,
-        alignItems: 'flex-start',
-      }}
-    >
-      <View
-        style={{
-          width: '100%',
-          flexDirection: 'row',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-        }}
-      >
-        <Text
-          style={{
-            fontFamily: theme.fonts.semiBold,
-          }}
-        >
-          {i18n.t('profileCardShader')}
-        </Text>
-        <Switch
-          value={profileCardShaderEnabled}
-          onValueChange={(value) => set({ profileCardShaderEnabled: value })}
-        />
-      </View>
-      <Text
-        style={{
-          fontSize: theme.fontSize('xs'),
-          color: theme.colors.textAlt,
-        }}
-      >
-        {i18n.t('profileCardShader_description')}
-      </Text>
-    </InputRowContainer>
-  )
-}
 
 const AppearancePreferencesSection = () => {
   const { set, fontSizeOffset, colorScheme, timeDisplayFormat, startOfWeek } =
@@ -155,30 +107,6 @@ const AppearancePreferencesSection = () => {
         >
           {i18n.t('thisGloballyOffsetsTextSize')}
         </Text>
-      </Section>
-      {__DEV__ && (
-        <>
-          <Divider marginVertical={20} />
-          <Section>
-            <ProfileCardShaderToggle />
-          </Section>
-        </>
-      )}
-      <Divider marginVertical={20} />
-      <Section style={{ paddingLeft: 20, paddingRight: 20 }} noPadding>
-        <AccentColorPicker />
-      </Section>
-      <Divider marginVertical={20} />
-      <Section style={{ paddingLeft: 20, paddingRight: 20 }} noPadding>
-        <Text
-          style={{
-            fontFamily: theme.fonts.semiBold,
-            fontSize: theme.fontSize('lg'),
-          }}
-        >
-          {i18n.t('map')}
-        </Text>
-        <MapKey />
       </Section>
     </View>
   )

@@ -1,9 +1,10 @@
-import { Pressable, ScrollView, View } from 'react-native'
+import { Pressable, View } from 'react-native'
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
 import { faCheck } from '@fortawesome/free-solid-svg-icons'
 import useTheme from '../contexts/theme'
 import Text from './MyText'
 import IsSupporter from './IsSupporter'
+import CustomColorSwatch from './CustomColorSwatch'
 import { usePreferences } from '../stores/preferences'
 import { lightModeColors } from '../constants/theme'
 import i18n from '../lib/locales'
@@ -15,14 +16,12 @@ import i18n from '../lib/locales'
  */
 export const ACCENT_PRESETS: { value: string; label: string }[] = [
   { value: lightModeColors.accent, label: 'default' },
-  { value: '#D4A017', label: 'amber' },
-  { value: '#8B5CF6', label: 'purple' },
+  { value: '#F59E0B', label: 'amber' },
+  { value: '#EF4444', label: 'crimson' },
+  { value: '#EC4899', label: 'magenta' },
+  { value: '#A855F7', label: 'violet' },
+  { value: '#3B82F6', label: 'blue' },
   { value: '#14B8A6', label: 'teal' },
-  { value: '#F97316', label: 'orange' },
-  { value: '#EC4899', label: 'pink' },
-  { value: '#6366F1', label: 'indigo' },
-  { value: '#06B6D4', label: 'cyan' },
-  { value: '#F43F5E', label: 'rose' },
 ]
 
 const Swatch = ({
@@ -70,10 +69,13 @@ const PickerContents = () => {
 
   return (
     <View style={{ gap: 10 }}>
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={{ gap: 10, paddingVertical: 4 }}
+      <View
+        style={{
+          flexDirection: 'row',
+          flexWrap: 'wrap',
+          gap: 10,
+          paddingVertical: 4,
+        }}
       >
         {ACCENT_PRESETS.map((preset) => {
           const isDefault = preset.value === ACCENT_PRESETS[0].value
@@ -94,7 +96,15 @@ const PickerContents = () => {
             />
           )
         })}
-      </ScrollView>
+        <CustomColorSwatch
+          value={customAccentColor}
+          presetValues={ACCENT_PRESETS.map((p) => p.value)}
+          onChange={(hex) => set({ customAccentColor: hex })}
+          title={i18n.t('accentColor')}
+          sheetInitialColor={selectedValue}
+          size={36}
+        />
+      </View>
       <Text
         style={{
           fontSize: theme.fontSize('sm'),

@@ -2,8 +2,8 @@ import { View } from 'react-native'
 import Text from './MyText'
 import i18n from '../lib/locales'
 import MonthServiceReportProgressBar from './MonthServiceReportProgressBar'
-import { faEye, faPlus } from '@fortawesome/free-solid-svg-icons'
-import IconButton from './IconButton'
+import { faPlus } from '@fortawesome/free-solid-svg-icons'
+import ViewReportButton from './ViewReportButton'
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
 import {
   AdjustedMinutes,
@@ -419,13 +419,7 @@ const MonthSummary = ({
                 {title ?? moment().month(month).year(year).format('MMMM YYYY')}
               </Text>
               {showReportButton && (
-                <IconButton
-                  iconStyle={{ color: theme.colors.textAlt }}
-                  onPress={() =>
-                    navigation.navigate('ServiceReportView', { month, year })
-                  }
-                  icon={faEye}
-                />
+                <ViewReportButton month={month} year={year} />
               )}
             </View>
           )}
@@ -454,13 +448,7 @@ const MonthSummary = ({
                 />
               </View>
               {hideTitle && showReportButton && (
-                <IconButton
-                  iconStyle={{ color: theme.colors.textAlt }}
-                  onPress={() =>
-                    navigation.navigate('ServiceReportView', { month, year })
-                  }
-                  icon={faEye}
-                />
+                <ViewReportButton month={month} year={year} />
               )}
             </View>
           )}

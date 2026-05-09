@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react'
+import { useCallback, useEffect, useMemo } from 'react'
 import { Pressable, View } from 'react-native'
 import {
   faCheck,
@@ -13,6 +13,8 @@ import Animated, {
   withSequence,
   withTiming,
 } from 'react-native-reanimated'
+import * as Crypto from 'expo-crypto'
+import moment from 'moment'
 import useTheme from '../../contexts/theme'
 import Text from '../MyText'
 import XView from '../layout/XView'
@@ -22,11 +24,15 @@ import useServiceReport from '../../stores/serviceReport'
 import useContacts from '../../stores/contactsStore'
 import usePublisher from '../../hooks/usePublisher'
 import useFireworks from '../../hooks/useFireworks'
+import useAnimation from '../../hooks/useAnimation'
+import { CONFETTI_DELAY_MS } from '../../providers/AnimationViewProvider'
 import Haptics from '../../lib/haptics'
 import Button from '../Button'
 import { HomeTabStackNavigation } from '../../types/homeStack'
 import { RootStackNavigation } from '../../types/rootStack'
 import DismissableCard from '../DismissableCard'
+import { getMonthsReports } from '../../lib/serviceReport'
+import { ServiceReport as ServiceReportType } from '../../types/serviceReport'
 
 /**
  * Canonical checklist item ids. These strings are intentionally stable so Phase
@@ -47,12 +53,7 @@ export type HomeChecklistItemId =
 type ChecklistItem = {
   id: HomeChecklistItemId
   label: string
-  /**
-   * Navigation handler invoked when the user taps the label. The checkbox
-   * itself toggles manual completion separately so users can still mark an item
-   * done without leaving the Home screen.
-   */
-  onPress?: () => void
+  onPress: () => void
 }
 
 /**
@@ -102,10 +103,12 @@ const HomeChecklist = () => {
   const sealAnimatedStyle = useAnimatedStyle(() => ({
     transform: [{ scale: sealScale.value }],
   }))
-  const { serviceReports, dayPlans, recurringPlans } = useServiceReport()
+  const { serviceReports, dayPlans, recurringPlans, addServiceReport } =
+    useServiceReport()
   const { contacts } = useContacts()
   const { entryMode } = usePublisher()
   const isCheckboxMode = entryMode === 'checkbox'
+  const { playConfetti } = useAnimation()
   const homeNavigation = useNavigation<HomeTabStackNavigation>()
   const rootNavigation = useNavigation<RootStackNavigation>()
   // Tab preloading mounts HomeScreen before the user navigates to it, and a
@@ -134,6 +137,27 @@ const HomeChecklist = () => {
 
   const hasAnyContact = contacts.length > 0
   const hasAnyPlan = dayPlans.length > 0 || recurringPlans.length > 0
+
+  const hasReportThisMonth = useMemo(
+    () =>
+      getMonthsReports(serviceReports, moment().month(), moment().year())
+        .length > 0,
+    [serviceReports]
+  )
+
+  const handleCheckOffMonth = useCallback(() => {
+    if (hasReportThisMonth) return
+    const report: ServiceReportType = {
+      date: new Date(),
+      hours: 0,
+      minutes: 0,
+      id: Crypto.randomUUID(),
+    }
+    addServiceReport(report)
+    Haptics.heavy()
+    setTimeout(() => Haptics.success(), CONFETTI_DELAY_MS + 100)
+    playConfetti()
+  }, [hasReportThisMonth, addServiceReport, playConfetti])
 
   const autoCompletedIds = useMemo(() => {
     const set = new Set<HomeChecklistItemId>()
@@ -188,53 +212,48 @@ const HomeChecklist = () => {
           id,
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           label: i18n.t(labelKey as any),
-          onPress:
-            isTrackTime && isCheckboxMode
-              ? undefined
-              : () => {
-                  switch (id) {
-                    case 'logFirstMinute':
-                    case 'trackTime':
-                      rootNavigation.navigate('Add Time')
-                      break
-                    case 'addFirstContact':
-                    case 'returnVisits':
-                      rootNavigation.navigate('Contact Form', {
-                        id: '',
-                      })
-                      break
-                    case 'setMonthlyGoal':
-                    case 'monthlyGoal':
-                      homeNavigation.navigate('Schedule')
-                      break
-                    case 'tryTheMap':
-                    case 'mapContacts':
-                      homeNavigation.navigate('Map')
-                      break
-                    case 'planWeek':
-                      homeNavigation.navigate('Schedule')
-                      break
-                  }
-                },
+          onPress: () => {
+            switch (id) {
+              case 'logFirstMinute':
+              case 'trackTime':
+                if (isCheckboxMode) {
+                  handleCheckOffMonth()
+                } else {
+                  rootNavigation.navigate('Add Time')
+                }
+                break
+              case 'addFirstContact':
+              case 'returnVisits':
+                rootNavigation.navigate('Contact Form', {
+                  id: '',
+                })
+                break
+              case 'setMonthlyGoal':
+              case 'monthlyGoal':
+                homeNavigation.navigate('Schedule')
+                break
+              case 'tryTheMap':
+              case 'mapContacts':
+                homeNavigation.navigate('Map')
+                break
+              case 'planWeek':
+                homeNavigation.navigate('Schedule')
+                break
+            }
+          },
         }
       }),
-    [selectedItemIds, homeNavigation, rootNavigation, isCheckboxMode]
+    [
+      selectedItemIds,
+      homeNavigation,
+      rootNavigation,
+      isCheckboxMode,
+      handleCheckOffMonth,
+    ]
   )
 
   const isComplete = (id: HomeChecklistItemId) =>
     autoCompletedIds.has(id) || homeChecklistManualCompletions.includes(id)
-
-  const toggleManualCompletion = (id: HomeChecklistItemId) => {
-    // Auto-completed items can't be untoggled — their state is derived from
-    // real data, not a flag.
-    if (autoCompletedIds.has(id)) return
-    const alreadyDone = homeChecklistManualCompletions.includes(id)
-    const next = alreadyDone
-      ? homeChecklistManualCompletions.filter((i) => i !== id)
-      : [...homeChecklistManualCompletions, id]
-    if (!alreadyDone) Haptics.light()
-    setPref({ homeChecklistManualCompletions: next })
-  }
 
   const handleDismiss = () => setPref({ homeChecklistDismissed: true })
 
@@ -283,14 +302,15 @@ const HomeChecklist = () => {
         {items.map((item) => {
           const done = isComplete(item.id)
           return (
-            <XView key={item.id} style={{ gap: 12 }}>
-              <Pressable
-                onPress={() => toggleManualCompletion(item.id)}
-                hitSlop={8}
-                accessibilityRole='checkbox'
-                accessibilityState={{ checked: done }}
-                accessibilityLabel={item.label}
-              >
+            <Pressable
+              key={item.id}
+              onPress={item.onPress}
+              hitSlop={4}
+              accessibilityRole='button'
+              accessibilityState={{ checked: done }}
+              accessibilityLabel={item.label}
+            >
+              <XView style={{ gap: 12 }}>
                 <FontAwesomeIcon
                   icon={done ? faCircleCheck : faCircle}
                   size={theme.fontSize('xl')}
@@ -298,10 +318,9 @@ const HomeChecklist = () => {
                     color: done ? theme.colors.accent : theme.colors.border,
                   }}
                 />
-              </Pressable>
-              <Pressable onPress={item.onPress} style={{ flex: 1 }} hitSlop={4}>
                 <Text
                   style={{
+                    flex: 1,
                     fontSize: theme.fontSize('md'),
                     color: done ? theme.colors.textAlt : theme.colors.text,
                     textDecorationLine: done ? 'line-through' : 'none',
@@ -309,15 +328,15 @@ const HomeChecklist = () => {
                 >
                   {item.label}
                 </Text>
-              </Pressable>
-              {done && (
-                <FontAwesomeIcon
-                  icon={faCheck}
-                  size={theme.fontSize('sm')}
-                  style={{ color: theme.colors.accent }}
-                />
-              )}
-            </XView>
+                {done && (
+                  <FontAwesomeIcon
+                    icon={faCheck}
+                    size={theme.fontSize('sm')}
+                    style={{ color: theme.colors.accent }}
+                  />
+                )}
+              </XView>
+            </Pressable>
           )
         })}
       </View>

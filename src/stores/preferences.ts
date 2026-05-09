@@ -384,7 +384,7 @@ export const PREFERENCE_DEFAULTS = {
   profileCardShaderId: DEFAULT_SHADER_ID as ShaderId,
   timeDisplayFormat: 'decimal' as MinuteDisplayFormat,
   locale: undefined as TranslatedLocale | undefined,
-  mapKeyColors: undefined as MarkerColors | undefined,
+  mapKeyColors: undefined as Partial<MarkerColors> | undefined,
   /**
    * Start of week for localization. 0 starts on Sunday, 1 starts on Monday,
    * etc.

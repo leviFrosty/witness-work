@@ -39,7 +39,7 @@ export default function StalenessColorKey({ showHeader = true }: Props) {
     const key = stalenessToMarkerKey[bucket]
     set({
       mapKeyColors: {
-        ...colors,
+        ...mapKeyColors,
         [key]: hex ?? undefined,
       },
     })

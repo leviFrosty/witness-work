@@ -1,5 +1,5 @@
 import React, { PropsWithChildren, ReactNode } from 'react'
-import { StyleProp, View, ViewStyle } from 'react-native'
+import { Pressable, StyleProp, View, ViewStyle } from 'react-native'
 import useTheme from '../../contexts/theme'
 import { rowPaddingVertical } from '../../constants/Inputs'
 import Text from '../MyText'
@@ -23,6 +23,7 @@ export interface InputRowContainerProps {
   gap?: number
   required?: boolean
   style?: StyleProp<ViewStyle>
+  onLabelPress?: () => void
 }
 
 const InputRowContainer: React.FC<
@@ -37,8 +38,42 @@ const InputRowContainer: React.FC<
   gap,
   required,
   style,
+  onLabelPress,
 }: InputRowContainerProps) => {
   const theme = useTheme()
+
+  const labelCluster = (leftIcon || label) && (
+    <View
+      style={{
+        alignItems: 'center',
+        gap: 5,
+        flexDirection: 'row',
+      }}
+    >
+      {leftIcon && <IconButton icon={leftIcon} />}
+      {label && (
+        <Text
+          style={{
+            fontFamily: theme.fonts.semiBold,
+            flexDirection: 'column',
+            gap: 10,
+          }}
+        >
+          {label}
+        </Text>
+      )}
+      {required && (
+        <Text
+          style={{
+            color: theme.colors.error,
+            fontSize: theme.fontSize('sm'),
+          }}
+        >
+          *
+        </Text>
+      )}
+    </View>
+  )
 
   return (
     <View
@@ -59,38 +94,19 @@ const InputRowContainer: React.FC<
         [style],
       ]}
     >
-      {(leftIcon || label) && (
-        <View
-          style={{
-            alignItems: 'center',
-            gap: 5,
-            flexDirection: 'row',
-          }}
-        >
-          {leftIcon && <IconButton icon={leftIcon} />}
-          {label && (
-            <Text
-              style={{
-                fontFamily: theme.fonts.semiBold,
-                flexDirection: 'column',
-                gap: 10,
-              }}
-            >
-              {label}
-            </Text>
-          )}
-          {required && (
-            <Text
-              style={{
-                color: theme.colors.error,
-                fontSize: theme.fontSize('sm'),
-              }}
-            >
-              *
-            </Text>
-          )}
-        </View>
-      )}
+      {labelCluster &&
+        (onLabelPress ? (
+          <Pressable
+            onPress={onLabelPress}
+            hitSlop={{ top: 12, bottom: 12, left: 8, right: 4 }}
+            accessibilityRole='button'
+            accessibilityLabel={label}
+          >
+            {labelCluster}
+          </Pressable>
+        ) : (
+          labelCluster
+        ))}
       {children}
     </View>
   )

@@ -1,11 +1,11 @@
-import { View } from 'react-native'
+import { TextInput as RNTextInput, View } from 'react-native'
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
 import ActionButton from '../components/ActionButton'
 import useServiceReport from '../stores/serviceReport'
 import * as Crypto from 'expo-crypto'
 import * as Notifications from 'expo-notifications'
 import * as Sentry from '@sentry/react-native'
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useRef } from 'react'
 import { useToastController } from '@tamagui/toast'
 import i18n, { TranslationKey } from '../lib/locales'
 import Text from '../components/MyText'
@@ -92,6 +92,7 @@ const OneTimePlan = (props: {
   notificationsAllowed: boolean
 }) => {
   const theme = useTheme()
+  const noteInput = useRef<RNTextInput>(null)
 
   return (
     <>
@@ -102,9 +103,13 @@ const OneTimePlan = (props: {
           iOSMode='datetime'
         />
       </InputRowContainer>
-      <InputRowContainer label={i18n.t('note')}>
+      <InputRowContainer
+        label={i18n.t('note')}
+        onLabelPress={() => noteInput.current?.focus()}
+      >
         <View style={{ flex: 1 }}>
           <TextInput
+            ref={noteInput}
             value={props.note}
             onChangeText={props.setNote}
             placeholder={i18n.t('optional')}
@@ -232,6 +237,7 @@ const RecurringPlan = (props: {
 }) => {
   const [willEnd, setWillEnd] = useState(!!props.endDate)
   const theme = useTheme()
+  const noteInput = useRef<RNTextInput>(null)
 
   const handleSetWillEnd = () => {
     if (!willEnd === true) {
@@ -358,9 +364,13 @@ const RecurringPlan = (props: {
           )}
         </XView>
       </InputRowContainer>
-      <InputRowContainer label={i18n.t('note')}>
+      <InputRowContainer
+        label={i18n.t('note')}
+        onLabelPress={() => noteInput.current?.focus()}
+      >
         <View style={{ flex: 1 }}>
           <TextInput
+            ref={noteInput}
             value={props.note}
             onChangeText={props.setNote}
             placeholder={i18n.t('optional')}

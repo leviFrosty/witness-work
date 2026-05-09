@@ -1,5 +1,11 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react'
-import { ScrollView, StyleSheet, TextInput, View } from 'react-native'
+import {
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  TextInput,
+  View,
+} from 'react-native'
 import { faTimes } from '@fortawesome/free-solid-svg-icons'
 
 import useTheme from '../../contexts/theme'
@@ -183,6 +189,7 @@ const ContactsFilterSheet: React.FC<ContactsFilterSheetProps> = ({
   const [field, setField] = useState<FieldKey>(null)
   const [op, setOp] = useState<TextOperator | ComparableOperator | null>(null)
   const [value, setValue] = useState<string>('')
+  const valueInput = useRef<TextInput>(null)
 
   // Seed local state every time the sheet flips open. We deliberately do NOT
   // sync on every prop tick — only on the open transition — so user input
@@ -492,10 +499,18 @@ const ContactsFilterSheet: React.FC<ContactsFilterSheetProps> = ({
 
               {showValueRow && field !== 'pinStaleness' && (
                 <View style={{ gap: 8 }}>
-                  <Text style={sectionTitleStyle}>
-                    {i18n.t('contacts_filterValue')}
-                  </Text>
+                  <Pressable
+                    onPress={() => valueInput.current?.focus()}
+                    hitSlop={{ top: 8, bottom: 8 }}
+                    accessibilityRole='button'
+                    accessibilityLabel={i18n.t('contacts_filterValue')}
+                  >
+                    <Text style={sectionTitleStyle}>
+                      {i18n.t('contacts_filterValue')}
+                    </Text>
+                  </Pressable>
                   <TextInput
+                    ref={valueInput}
                     value={value}
                     onChangeText={setValue}
                     placeholder={valueInputProps.placeholder}

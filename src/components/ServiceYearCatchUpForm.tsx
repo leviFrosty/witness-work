@@ -1,5 +1,10 @@
-import { useMemo, useState } from 'react'
-import { Keyboard, View } from 'react-native'
+import { useMemo, useRef, useState } from 'react'
+import {
+  Keyboard,
+  Pressable,
+  TextInput as RNTextInput,
+  View,
+} from 'react-native'
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
 import * as Crypto from 'expo-crypto'
 import moment from 'moment'
@@ -76,6 +81,111 @@ export const hasReportsInCatchUpWindow = (
     cursor.add(1, 'month')
   }
   return false
+}
+
+const CatchUpMonthRow = ({
+  row,
+  index,
+  onChange,
+}: {
+  row: MonthRow
+  index: number
+  onChange: (i: number, key: 'hours' | 'creditHours', value: string) => void
+}) => {
+  const theme = useTheme()
+  const hoursInput = useRef<RNTextInput>(null)
+  const creditInput = useRef<RNTextInput>(null)
+
+  const inputStyle = {
+    backgroundColor: theme.colors.backgroundLighter,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: theme.numbers.borderRadiusSm,
+    minWidth: 90,
+    color: theme.colors.text,
+  }
+  const labelStyle = { color: theme.colors.textAlt, flex: 1 }
+  const labelHitSlop = { top: 8, bottom: 8 }
+
+  return (
+    <View
+      style={{
+        backgroundColor: theme.colors.card,
+        paddingHorizontal: 14,
+        paddingVertical: 12,
+        borderRadius: theme.numbers.borderRadiusMd,
+        gap: 8,
+      }}
+    >
+      <Text
+        style={{
+          fontFamily: theme.fonts.semiBold,
+          color: theme.colors.text,
+          fontSize: 16,
+        }}
+      >
+        {moment().month(row.monthIndex).year(row.year).format('MMMM YYYY')}
+      </Text>
+      <View
+        style={{
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: 12,
+        }}
+      >
+        <Pressable
+          onPress={() => hoursInput.current?.focus()}
+          hitSlop={labelHitSlop}
+          accessibilityRole='button'
+          accessibilityLabel={i18n.t('serviceYearCatchUpHoursLabel')}
+          style={{ flex: 1 }}
+        >
+          <Text style={labelStyle}>
+            {i18n.t('serviceYearCatchUpHoursLabel')}
+          </Text>
+        </Pressable>
+        <TextInput
+          ref={hoursInput}
+          style={inputStyle}
+          keyboardType='decimal-pad'
+          value={row.hours}
+          onChangeText={(v) => onChange(index, 'hours', v)}
+          placeholder='0'
+          textAlign='right'
+        />
+      </View>
+      <View
+        style={{
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: 12,
+        }}
+      >
+        <Pressable
+          onPress={() => creditInput.current?.focus()}
+          hitSlop={labelHitSlop}
+          accessibilityRole='button'
+          accessibilityLabel={i18n.t('serviceYearCatchUpCreditLabel')}
+          style={{ flex: 1 }}
+        >
+          <Text style={labelStyle}>
+            {i18n.t('serviceYearCatchUpCreditLabel')}
+          </Text>
+        </Pressable>
+        <TextInput
+          ref={creditInput}
+          style={inputStyle}
+          keyboardType='decimal-pad'
+          value={row.creditHours}
+          onChangeText={(v) => onChange(index, 'creditHours', v)}
+          placeholder='0'
+          textAlign='right'
+        />
+      </View>
+    </View>
+  )
 }
 
 const ServiceYearCatchUpForm = ({
@@ -224,83 +334,12 @@ const ServiceYearCatchUpForm = ({
 
         <View style={{ gap: 12 }}>
           {rows.map((row, i) => (
-            <View
+            <CatchUpMonthRow
               key={`${row.year}-${row.monthIndex}`}
-              style={{
-                backgroundColor: theme.colors.card,
-                paddingHorizontal: 14,
-                paddingVertical: 12,
-                borderRadius: theme.numbers.borderRadiusMd,
-                gap: 8,
-              }}
-            >
-              <Text
-                style={{
-                  fontFamily: theme.fonts.semiBold,
-                  color: theme.colors.text,
-                  fontSize: 16,
-                }}
-              >
-                {moment()
-                  .month(row.monthIndex)
-                  .year(row.year)
-                  .format('MMMM YYYY')}
-              </Text>
-              <View
-                style={{
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  gap: 12,
-                }}
-              >
-                <Text style={{ color: theme.colors.textAlt, flex: 1 }}>
-                  {i18n.t('serviceYearCatchUpHoursLabel')}
-                </Text>
-                <TextInput
-                  style={{
-                    backgroundColor: theme.colors.backgroundLighter,
-                    paddingHorizontal: 10,
-                    paddingVertical: 6,
-                    borderRadius: theme.numbers.borderRadiusSm,
-                    minWidth: 90,
-                    color: theme.colors.text,
-                  }}
-                  keyboardType='decimal-pad'
-                  value={row.hours}
-                  onChangeText={(v) => updateRow(i, 'hours', v)}
-                  placeholder='0'
-                  textAlign='right'
-                />
-              </View>
-              <View
-                style={{
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  gap: 12,
-                }}
-              >
-                <Text style={{ color: theme.colors.textAlt, flex: 1 }}>
-                  {i18n.t('serviceYearCatchUpCreditLabel')}
-                </Text>
-                <TextInput
-                  style={{
-                    backgroundColor: theme.colors.backgroundLighter,
-                    paddingHorizontal: 10,
-                    paddingVertical: 6,
-                    borderRadius: theme.numbers.borderRadiusSm,
-                    minWidth: 90,
-                    color: theme.colors.text,
-                  }}
-                  keyboardType='decimal-pad'
-                  value={row.creditHours}
-                  onChangeText={(v) => updateRow(i, 'creditHours', v)}
-                  placeholder='0'
-                  textAlign='right'
-                />
-              </View>
-            </View>
+              row={row}
+              index={i}
+              onChange={updateRow}
+            />
           ))}
         </View>
       </KeyboardAwareScrollView>

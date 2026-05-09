@@ -1,5 +1,5 @@
-import { View, Alert, Switch } from 'react-native'
-import { useCallback, useEffect, useState } from 'react'
+import { View, Alert, Switch, TextInput as RNTextInput } from 'react-native'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import Section from '../components/inputs/Section'
 import InputRowContainer from '../components/inputs/InputRowContainer'
 import useTheme from '../contexts/theme'
@@ -48,6 +48,7 @@ const AddTimeScreen = ({ route }: AddTimeScreenProps) => {
   const theme = useTheme()
   const insets = useSafeAreaInsets()
   const navigation = useNavigation<RootStackNavigation>()
+  const noteInput = useRef<RNTextInput>(null)
   const {
     serviceReportTags,
     set,
@@ -661,9 +662,11 @@ const AddTimeScreen = ({ route }: AddTimeScreenProps) => {
               label={i18n.t('note')}
               lastInSection
               justifyContent='flex-start'
+              onLabelPress={() => noteInput.current?.focus()}
             >
               <View style={{ flex: 1, paddingTop: 10 }}>
                 <TextInput
+                  ref={noteInput}
                   multiline
                   numberOfLines={3}
                   maxLength={500}

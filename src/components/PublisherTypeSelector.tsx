@@ -1,4 +1,4 @@
-import { View } from 'react-native'
+import { Pressable, TextInput as RNTextInput, View } from 'react-native'
 import useTheme from '../contexts/theme'
 import Text from './MyText'
 import i18n from '../lib/locales'
@@ -7,7 +7,7 @@ import { publishers } from '../constants/publisher'
 import Select, { SelectData } from './Select'
 import TextInput from './TextInput'
 import { Publisher } from '../types/publisher'
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 
 const PublisherTypeSelector = () => {
   const theme = useTheme()
@@ -40,6 +40,7 @@ const PublisherTypeSelector = () => {
 
   const { publisherHours, publisher, setPublisher, set } = usePreferences()
   const [goalHours, setGoalHours] = useState(publisherHours.custom.toString())
+  const customHoursInput = useRef<RNTextInput>(null)
 
   return (
     <View>
@@ -52,15 +53,23 @@ const PublisherTypeSelector = () => {
 
       {publisher === 'custom' ? (
         <View>
-          <Text
-            style={{
-              fontSize: 12,
-              color: theme.colors.textAlt,
-            }}
+          <Pressable
+            onPress={() => customHoursInput.current?.focus()}
+            hitSlop={{ top: 8, bottom: 8 }}
+            accessibilityRole='button'
+            accessibilityLabel={i18n.t('customHourRequirement')}
           >
-            {i18n.t('customHourRequirement')}
-          </Text>
+            <Text
+              style={{
+                fontSize: 12,
+                color: theme.colors.textAlt,
+              }}
+            >
+              {i18n.t('customHourRequirement')}
+            </Text>
+          </Pressable>
           <TextInput
+            ref={customHoursInput}
             textAlign='left'
             style={{
               marginVertical: 5,

@@ -1,4 +1,4 @@
-import React, { forwardRef, Ref } from 'react'
+import React, { forwardRef, Ref, useImperativeHandle, useRef } from 'react'
 import {
   View,
   TextInput as RNTextInput,
@@ -43,6 +43,9 @@ const TextInputRow: React.ForwardRefExoticComponent<
     const theme = useTheme()
     const error = id && errors ? errors[id] : undefined
 
+    const innerRef = useRef<RNTextInput>(null)
+    useImperativeHandle(ref, () => innerRef.current as RNTextInput)
+
     return (
       <InputRowContainer
         lastInSection={lastInSection}
@@ -50,10 +53,11 @@ const TextInputRow: React.ForwardRefExoticComponent<
         label={label}
         required={required}
         style={style}
+        onLabelPress={() => innerRef.current?.focus()}
       >
         <View style={{ flexGrow: 1, flex: 1, gap: 5 }}>
           <MyTextInput
-            ref={ref}
+            ref={innerRef}
             style={{
               borderWidth: error ? 1 : 0,
               padding: 3,

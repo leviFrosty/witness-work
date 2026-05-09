@@ -97,6 +97,7 @@ const TabBar = ({ state, descriptors, ...props }: BottomTabBarProps) => {
         }
         onPress={onPress}
         onLongPress={onLongPress}
+        hitSlop={{ top: 20, bottom: 20, left: 4, right: 4 }}
         style={({ pressed }) => ({
           flex: 1,
           alignItems: 'center',
@@ -176,6 +177,7 @@ const TabBar = ({ state, descriptors, ...props }: BottomTabBarProps) => {
     <Button
       noTransform
       onPress={() => setSheetOpen(true)}
+      hitSlop={{ top: 20, bottom: 20, left: 12, right: 12 }}
       style={{
         flex: 1,
         alignItems: 'center',

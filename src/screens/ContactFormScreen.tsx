@@ -534,6 +534,7 @@ const ContactFormScreen = ({ route, navigation }: Props) => {
       automaticallyAdjustContentInsets
       automaticallyAdjustKeyboardInsets
       enableResetScrollToCoords={false}
+      keyboardShouldPersistTaps='handled'
       style={{ backgroundColor: theme.colors.background, position: 'relative' }}
       contentContainerStyle={{ paddingBottom: 100 }}
     >

@@ -286,6 +286,11 @@ const AddressAutocomplete: React.FC<AddressAutocompleteProps> = ({
             onBlur: () => setSuggestions([]),
             placeholder: i18n.t('enterAddress'),
             value: query,
+            // iOS RN bug (facebook/react-native#32726, #10218): a TextInput
+            // with textAlign='right' queues space characters and only flushes
+            // them once a non-space is typed. TextInputRow defaults to right
+            // alignment; force left for this search field to dodge the bug.
+            textAlign: 'left',
           }}
           lastInSection
         />

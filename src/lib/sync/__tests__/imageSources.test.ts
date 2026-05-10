@@ -54,6 +54,48 @@ describe('collectLocalAvatarSources', () => {
     ])
   })
 
+  it('skips contact avatars whose file:// path escapes the document directory', () => {
+    // Defense-in-depth: a malicious import that slipped past the validator
+    // could put any sandbox path into avatar.value. The push pipeline must
+    // never accept a source path that lives outside its own document
+    // directory, regardless of what the contact record claims.
+    const sources = collectLocalAvatarSources({
+      contacts: [
+        makeContact({
+          id: 'mmkv',
+          avatar: {
+            type: 'image',
+            value: 'file:///Library/Caches/com.app/mmkv-secret',
+          },
+        }),
+        makeContact({
+          id: 'traversal',
+          avatar: {
+            type: 'image',
+            value: 'file:///Docs/../Library/Application Support/secrets.json',
+          },
+        }),
+        makeContact({
+          id: 'sibling-prefix',
+          // Tricky: `/Docs2/...` shares a string prefix with `/Docs/` but is
+          // actually a different directory. The `/`-terminated comparison
+          // must reject this.
+          avatar: {
+            type: 'image',
+            value: 'file:///Docs2/contact-sibling-prefix-avatar.jpg',
+          },
+        }),
+      ],
+      profileAvatar: {
+        type: 'image',
+        value: 'file:///etc/passwd',
+      },
+      documentDirectory: 'file:///Docs/',
+    })
+
+    expect(sources).toEqual([])
+  })
+
   it('skips avatars that are markers, emoji, or none', () => {
     const sources = collectLocalAvatarSources({
       contacts: [

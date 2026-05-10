@@ -78,9 +78,33 @@ export const validateContactImport = (data: unknown): ImportResult => {
       }
     }
 
+    // Mirror the sender-side `CONTACT_POLICY` from `contactShareLink.ts`: image
+    // avatars and the device-local image metadata never travel with a share.
+    // A payload that carries `avatar.type === 'image'` could not have come from
+    // the legitimate exporter, so it's a hand-crafted import. Trusting its
+    // `avatar.value` would let an attacker pick an arbitrary `file://` path
+    // inside this device's sandbox; the iCloud image-sync push path would then
+    // copy that internal file into the user-browsable iCloud Drive container
+    // masquerading as a JPEG. Drop the whole avatar field — the recipient
+    // picks their own avatar locally.
+    const sanitizedContact: Record<string, unknown> = { ...contact }
+    const avatar = sanitizedContact.avatar as
+      | { type?: unknown }
+      | null
+      | undefined
+    if (avatar && typeof avatar === 'object' && avatar.type === 'image') {
+      delete sanitizedContact.avatar
+      delete sanitizedContact.avatarMeta
+    }
+
+    const sanitized: Record<string, unknown> = {
+      ...possibleImport,
+      contact: sanitizedContact,
+    }
+
     return {
       success: true,
-      data: possibleImport as ContactImportData,
+      data: sanitized as ContactImportData,
     }
   } catch (error) {
     return {

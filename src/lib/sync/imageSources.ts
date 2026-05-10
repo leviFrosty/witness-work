@@ -36,6 +36,38 @@ function stripCacheBuster(value: string): string {
 }
 
 /**
+ * Defense-in-depth: ensure an avatar source path lives inside the app's own
+ * document directory before it reaches the iCloud-write pipeline. The
+ * contactImport validator already strips image avatars off any imported payload
+ * — this is the second layer that would catch a future regression which
+ * re-opens that door. A foreign `file://` path could otherwise point at MMKV /
+ * AsyncStorage / Sentry breadcrumbs / the ubiquity container itself, and the
+ * bridge would happily copy that file into iCloud Drive as a JPEG.
+ *
+ * Both inputs are normalized to plain `/path` strings (scheme stripped,
+ * traversal segments rejected) and compared by prefix. The cache-buster has
+ * already been removed upstream.
+ */
+function isInsideDocumentDirectory(
+  candidate: string,
+  documentDirectory: string
+): boolean {
+  const normalize = (input: string): string | null => {
+    if (!input) return null
+    const stripped = input.startsWith('file://')
+      ? input.slice('file://'.length)
+      : input
+    if (stripped.split('/').some((seg) => seg === '..')) return null
+    return stripped
+  }
+  const c = normalize(candidate)
+  const d = normalize(documentDirectory)
+  if (c == null || d == null) return false
+  const dirPrefix = d.endsWith('/') ? d : `${d}/`
+  return c.startsWith(dirPrefix)
+}
+
+/**
  * Walks the local state and returns every avatar whose value is a local
  * `file://` URI — these are the ones the device has in
  * `FileSystem.documentDirectory` and needs to UPLOAD on the next push.
@@ -54,19 +86,17 @@ export function collectLocalAvatarSources(args: {
   for (const c of args.contacts) {
     if (c.avatar?.type !== 'image') continue
     if (!c.avatar.value.startsWith('file://')) continue
-    sources.push({
-      kind: 'contact',
-      id: c.id,
-      localPath: stripCacheBuster(c.avatar.value),
-    })
+    const localPath = stripCacheBuster(c.avatar.value)
+    if (!isInsideDocumentDirectory(localPath, args.documentDirectory)) continue
+    sources.push({ kind: 'contact', id: c.id, localPath })
   }
 
   const profile = args.profileAvatar
   if (profile?.type === 'image' && profile.value.startsWith('file://')) {
-    sources.push({
-      kind: 'profile',
-      localPath: stripCacheBuster(profile.value),
-    })
+    const localPath = stripCacheBuster(profile.value)
+    if (isInsideDocumentDirectory(localPath, args.documentDirectory)) {
+      sources.push({ kind: 'profile', localPath })
+    }
   }
 
   return sources

@@ -421,6 +421,100 @@ describe('validateContactImport', () => {
     })
   })
 
+  describe('avatar sanitization (security)', () => {
+    // The export side never produces an image avatar (CONTACT_POLICY.avatar =
+    // 'omit'). A payload that carries `avatar.type === 'image'` is therefore a
+    // hand-crafted import — its `avatar.value` could point at an arbitrary
+    // sandbox file path, which the iCloud image-sync push would then copy
+    // verbatim into iCloud Drive masquerading as a JPEG. The validator must
+    // strip these on the receive path.
+
+    it('strips image avatars from imported contacts', () => {
+      const malicious = {
+        type: 'witnesswork-contact',
+        version: '1.0',
+        contact: {
+          id: 'evil-1',
+          name: 'Bob Smith',
+          createdAt: new Date(),
+          avatar: {
+            type: 'image',
+            value:
+              'file:///var/mobile/Containers/Data/Application/UUID/Documents/mmkv-secret',
+          },
+          avatarMeta: {
+            width: 1,
+            height: 1,
+          },
+        },
+      }
+      const result = validateContactImport(malicious)
+
+      expect(result.success).toBe(true)
+      // `avatar` and `avatarMeta` must be gone — both are device-local-only
+      // and a foreign value for either has no legitimate origin.
+      expect(result.data?.contact.avatar).toBeUndefined()
+      expect(result.data?.contact.avatarMeta).toBeUndefined()
+    })
+
+    it('strips image avatars even with an icloud:// marker value', () => {
+      // Markers never leave a receiving device — but `avatar` is `omit` on the
+      // share-link encoder anyway, so any image-typed avatar arriving via
+      // import is illegitimate regardless of its value.
+      const payload = {
+        type: 'witnesswork-contact',
+        version: '1.0',
+        contact: {
+          id: 'evil-2',
+          name: 'Bob Smith',
+          createdAt: new Date(),
+          avatar: { type: 'image', value: 'icloud://contact-evil-2' },
+        },
+      }
+      const result = validateContactImport(payload)
+
+      expect(result.success).toBe(true)
+      expect(result.data?.contact.avatar).toBeUndefined()
+    })
+
+    it('preserves emoji avatars on imported contacts', () => {
+      const payload = {
+        type: 'witnesswork-contact',
+        version: '1.0',
+        contact: {
+          id: 'friendly-1',
+          name: 'Bob Smith',
+          createdAt: new Date(),
+          avatar: { type: 'emoji', value: '🌱' },
+        },
+      }
+      const result = validateContactImport(payload)
+
+      expect(result.success).toBe(true)
+      expect(result.data?.contact.avatar).toEqual({
+        type: 'emoji',
+        value: '🌱',
+      })
+    })
+
+    it('preserves "none" avatars on imported contacts', () => {
+      const payload = {
+        type: 'witnesswork-contact',
+        version: '1.0',
+        contact: {
+          id: 'friendly-2',
+          name: 'Bob Smith',
+          createdAt: new Date(),
+          avatar: { type: 'none', value: '' },
+        },
+      }
+      const result = validateContactImport(payload)
+
+      expect(result.success).toBe(true)
+      expect(result.data?.contact.avatar).toEqual({ type: 'none', value: '' })
+    })
+  })
+
   describe('edge cases', () => {
     it('should accept contact with extra fields', () => {
       // Create valid data first, then add extra fields to the contact object directly

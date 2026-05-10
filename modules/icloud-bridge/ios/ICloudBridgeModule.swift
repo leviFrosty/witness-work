@@ -375,6 +375,18 @@ public class ICloudBridgeModule: Module {
         return
       }
       let sourceURL = self.fileURL(from: sourcePath)
+      // Defense-in-depth: the JS guard in `collectLocalAvatarSources` and the
+      // contactImport validator already block foreign source paths from
+      // reaching this bridge, but the bridge cannot trust JS. Source must
+      // resolve inside the app's own Documents directory — that's where
+      // `FileSystem.documentDirectory` (and the only legitimate caller,
+      // `pushAllImages`) operates. Anything else would let a malicious
+      // contact-import payload turn this bridge into a sandbox-escape
+      // primitive: arbitrary file in → user-browsable iCloud Drive out.
+      guard self.isInsideAppDocuments(sourceURL) else {
+        promise.reject("ICLOUD_WRITE_BINARY_SOURCE", "Source path outside app documents directory: \(sourcePath)")
+        return
+      }
       let destURL = documentsURL.appendingPathComponent(filename)
 
       DispatchQueue.global(qos: .utility).async {
@@ -726,6 +738,31 @@ public class ICloudBridgeModule: Module {
       return nil
     }
     return container.appendingPathComponent("Documents", isDirectory: true)
+  }
+
+  /// True when `candidate` resolves inside this app's sandbox Documents
+  /// directory — the same path `FileSystem.documentDirectory` returns in JS.
+  /// Symlinks are resolved on both sides so the iOS `/private/var` ↔ `/var`
+  /// alias can't be used to slip past the prefix check, and `..` segments
+  /// are rejected outright before the comparison. The bridge's only
+  /// legitimate `writeBinary` caller (`pushAllImages`) always supplies paths
+  /// in this directory; anything else is treated as a sandbox-escape attempt.
+  private func isInsideAppDocuments(_ candidate: URL) -> Bool {
+    let resolvedCandidate = candidate.resolvingSymlinksInPath().standardizedFileURL
+    if resolvedCandidate.pathComponents.contains("..") { return false }
+    guard let docsURL = try? FileManager.default.url(
+      for: .documentDirectory,
+      in: .userDomainMask,
+      appropriateFor: nil,
+      create: false
+    ) else {
+      return false
+    }
+    let resolvedDocs = docsURL.resolvingSymlinksInPath().standardizedFileURL
+    let docsPath = resolvedDocs.path.hasSuffix("/")
+      ? resolvedDocs.path
+      : resolvedDocs.path + "/"
+    return resolvedCandidate.path.hasPrefix(docsPath)
   }
 
   private func listSyncFiles(in documentsURL: URL) throws -> [URL] {

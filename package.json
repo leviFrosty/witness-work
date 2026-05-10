@@ -85,7 +85,6 @@
     "expo-media-library": "~55.0.16",
     "expo-network": "~55.0.13",
     "expo-notifications": "~55.0.22",
-    "expo-sensors": "~55.0.14",
     "expo-sharing": "~55.0.18",
     "expo-splash-screen": "~55.0.20",
     "expo-status-bar": "~55.0.6",

@@ -1,7 +1,6 @@
 import { I18n, TranslateOptions } from 'i18n-js'
 import deDE from '../locales/de-DE.json'
 import esES from '../locales/es-ES.json'
-import esMX from '../locales/es-MX.json'
 import enUS from '../locales/en-US.json'
 import frFR from '../locales/fr-FR.json'
 import itIT from '../locales/it-IT.json'
@@ -46,7 +45,6 @@ import 'moment/locale/es'
 import 'moment/locale/zh-cn'
 import 'moment/locale/zh-tw'
 import 'moment/locale/es-do'
-import 'moment/locale/es-mx'
 import 'moment/locale/es-us'
 import 'moment/locale/es'
 import 'moment/locale/sw'
@@ -58,7 +56,6 @@ import { getLocales } from 'expo-localization'
 export const translations = {
   'en-us': enUS,
   'de-de': deDE,
-  'es-mx': esMX,
   'es-es': esES,
   'fr-fr': frFR,
   'it-it': itIT,
@@ -81,8 +78,7 @@ export type TranslatedLocale = keyof typeof translations
 export const translationsLabels: { [K in TranslatedLocale]: string } = {
   'en-us': 'English',
   'de-de': 'Deutsch',
-  'es-mx': 'Español (Mexico)',
-  'es-es': 'Español (España)',
+  'es-es': 'Español',
   'fr-fr': 'Français',
   'it-it': 'Italiano',
   'ja-jp': '日本語',

@@ -338,6 +338,20 @@ export default function App() {
     } as never)
   }, [hasMigrated])
 
+  // Normalize the legacy `'es-mx'` locale to `'es-es'` after the es-MX bundle
+  // was retired. Idempotent — checked on every launch so an iCloud pull that
+  // re-introduces the stale value also gets cleaned up. Uses raw `setState`
+  // to avoid bumping `preferenceUpdatedAt.locale`, so a genuine user locale
+  // choice on another device still wins the LWW merge.
+  useEffect(() => {
+    if (!hasMigrated) return
+    const legacyLocale = (
+      usePreferences.getState() as unknown as { locale?: string }
+    ).locale
+    if (legacyLocale !== 'es-mx') return
+    usePreferences.setState({ locale: 'es-es' })
+  }, [hasMigrated])
+
   // Install iOS widget snapshot sync after MMKV is the source of truth.
   // No-op before the native module is linked (pre-prebuild).
   useEffect(() => {

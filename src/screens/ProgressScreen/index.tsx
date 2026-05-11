@@ -215,7 +215,12 @@ const ProgressScreen = ({ route, navigation }: Props) => {
       <View style={{ flex: 1 }}>
         <ServiceYearCatchUpBanner />
         {activeTab === 'month' ? (
-          <ProgressMonthTab month={month} year={year} />
+          <ProgressMonthTab
+            month={month}
+            year={year}
+            onSwipeForward={() => handleMonthNav('forward')}
+            onSwipeBack={() => handleMonthNav('back')}
+          />
         ) : null}
         {activeTab === 'year' && !hideYearTab ? (
           <ProgressYearTab

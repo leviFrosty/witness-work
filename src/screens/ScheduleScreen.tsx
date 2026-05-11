@@ -21,6 +21,7 @@ import { HomeTabStackParamList } from '../types/homeStack'
 import { DayPlan, ServiceReport } from '../types/serviceReport'
 
 import GlassCard from '../components/GlassCard'
+import SwipeMonthNavigator from '../components/SwipeMonthNavigator'
 import CalendarHeader, { CalendarViewMode } from '../components/CalendarHeader'
 import CalendarKey from '../components/CalendarKey'
 import MonthTimeReportsCalendar from '../components/MonthTimeReportsCalendar'
@@ -309,23 +310,28 @@ const ScheduleScreen = ({ route }: Props) => {
             </Text>
           </Button>
         )}
-        <GlassCard>
-          <CalendarHeader
-            viewMode={calendarViewMode}
-            onChangeViewMode={setCalendarViewMode}
-          />
-          <CalendarKey />
-          <View style={{ marginTop: 4 }}>
-            <MonthTimeReportsCalendar
-              month={month}
-              year={year}
-              monthsReports={thisMonthsReports}
-              setSheet={setSelectedDateSheet}
+        <SwipeMonthNavigator
+          onSwipeForward={() => handleArrowNavigate('forward')}
+          onSwipeBack={() => handleArrowNavigate('back')}
+        >
+          <GlassCard>
+            <CalendarHeader
               viewMode={calendarViewMode}
+              onChangeViewMode={setCalendarViewMode}
             />
-          </View>
-          <MonthScheduleSection month={month} year={year} />
-        </GlassCard>
+            <CalendarKey />
+            <View style={{ marginTop: 4 }}>
+              <MonthTimeReportsCalendar
+                month={month}
+                year={year}
+                monthsReports={thisMonthsReports}
+                setSheet={setSelectedDateSheet}
+                viewMode={calendarViewMode}
+              />
+            </View>
+            <MonthScheduleSection month={month} year={year} />
+          </GlassCard>
+        </SwipeMonthNavigator>
         <View style={{ gap: 8 }}>
           <XView style={{ justifyContent: 'space-between' }}>
             <Text

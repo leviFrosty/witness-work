@@ -11,10 +11,13 @@ import i18n from '../../lib/locales'
 import Text from '../../components/MyText'
 import MonthSummary from '../../components/MonthSummary'
 import AllDaysList from '../../components/AllDaysList'
+import SwipeMonthNavigator from '../../components/SwipeMonthNavigator'
 
 interface ProgressMonthTabProps {
   month: number
   year: number
+  onSwipeForward: () => void
+  onSwipeBack: () => void
 }
 
 /**
@@ -23,7 +26,12 @@ interface ProgressMonthTabProps {
  * every day in the month (most-recent first; current-month caps at today).
  * Wraps its own `KeyboardAwareScrollView` — the parent shell does not scroll.
  */
-const ProgressMonthTab = ({ month, year }: ProgressMonthTabProps) => {
+const ProgressMonthTab = ({
+  month,
+  year,
+  onSwipeForward,
+  onSwipeBack,
+}: ProgressMonthTabProps) => {
   const theme = useTheme()
   const insets = useSafeAreaInsets()
   const { serviceReports } = useServiceReport()
@@ -41,7 +49,11 @@ const ProgressMonthTab = ({ month, year }: ProgressMonthTabProps) => {
         gap: 24,
       }}
     >
-      <View style={{ paddingHorizontal: 15, paddingBottom: 20 }}>
+      <SwipeMonthNavigator
+        onSwipeForward={onSwipeForward}
+        onSwipeBack={onSwipeBack}
+        style={{ paddingHorizontal: 15, paddingBottom: 20 }}
+      >
         <MonthSummary
           month={month}
           year={year}
@@ -49,7 +61,7 @@ const ProgressMonthTab = ({ month, year }: ProgressMonthTabProps) => {
           showReportButton
           hideTitle
         />
-      </View>
+      </SwipeMonthNavigator>
 
       <View style={{ gap: 8 }}>
         <Text

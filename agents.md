@@ -121,6 +121,66 @@ TypeScript path aliases per `tsconfig.json`. Check existing files for convention
 - App version bumps land in their own commits (see recent: `chore: bump version to X`)
 - React Compiler beta — watch for compiler-related lint warnings
 
+## Publisher types (core domain)
+
+The `Publisher` role is the single biggest driver of app behavior — it decides the entry mode (checkbox vs hours), monthly/annual goals, credit cap, milestone ladder, tenure display, and which Home/Progress sections render at all. Treat it as a first-class domain concept.
+
+### The six roles
+
+Defined in [src/constants/publisher.ts](src/constants/publisher.ts) as a `const` tuple; `Publisher` is `(typeof publishers)[number]` in [src/types/publisher.ts](src/types/publisher.ts).
+
+| Role               | Default monthly goal (h)      | Entry mode | Annual goal default | Base credit cap | Tracks start date | Default milestone ladder |
+| ------------------ | ----------------------------- | ---------- | ------------------- | --------------- | ----------------- | ------------------------ |
+| `publisher`        | 0                             | checkbox   | no                  | 55h             | no                | —                        |
+| `regularAuxiliary` | 30                            | hours      | no                  | 55h             | yes               | —                        |
+| `regularPioneer`   | 50                            | hours      | yes                 | 55h             | yes               | 30, 50, 100, 200, 350    |
+| `circuitOverseer`  | 50                            | hours      | yes                 | unlimited       | yes               | 100, 200, 300, 400, 500  |
+| `specialPioneer`   | 100                           | hours      | no                  | unlimited       | yes               | —                        |
+| `custom`           | user-defined (defaults to 50) | hours      | yes                 | 55h             | no                | —                        |
+
+Defaults come from [src/stores/preferences.ts:47-54](src/stores/preferences.ts:47) (`publisherHours`), [src/lib/publisherCapabilities.ts:65-70](src/lib/publisherCapabilities.ts:65) (base credit cap), [src/lib/publisherCapabilities.ts:98-117](src/lib/publisherCapabilities.ts:98) (annual goal default), [src/lib/publisherCapabilities.ts:42-46](src/lib/publisherCapabilities.ts:42) (pioneer + start-date predicates), and [src/lib/milestones.ts:13-20](src/lib/milestones.ts:13) (`DEFAULT_MILESTONES_BY_PUBLISHER`).
+
+### What each role means in practice
+
+- **`publisher`** — Regular publisher with no hour goal. UI flips to a "did I share the Good News this month?" checkbox flow (`entryMode === 'checkbox'`). The Home timer, Year tab, milestone card, annual-goal selector, and rollover prompt all hide. The widget switches to its `PublisherState` state machine (`unreported` / `reportedToday` / `reportedThisMonth`) — see [src/lib/widgets/buildReport.ts:26-34](src/lib/widgets/buildReport.ts:26).
+- **`regularAuxiliary`** — Time-tracking role (30h/month) with a tenure start date but no annual-goal default. Falls under the standard 55h credit cap.
+- **`regularPioneer`** — The most common "full" role: monthly hours, annual goal on by default, standard 55h credit cap, default milestone ladder topping out at 350.
+- **`circuitOverseer`** — Like a regular pioneer but with **no credit cap** (unlimited credit time) and a higher milestone ladder (up to 500).
+- **`specialPioneer`** — Higher monthly goal (100h), no credit cap, but annual goal is **off** by default. Has a tenure start date.
+- **`custom`** — Escape hatch. The user types their own monthly hour requirement inline via [src/components/PublisherTypeSelector.tsx:54-99](src/components/PublisherTypeSelector.tsx:54). Annual goal is on by default but milestones default to empty (user enters arbitrary hours, so the app can't pre-pick a meaningful ladder). Standard credit cap applies.
+
+### The single seam: `derivePublisherCapabilities`
+
+[src/lib/publisherCapabilities.ts](src/lib/publisherCapabilities.ts) is the **only** place role behavior is encoded. It produces a `PublisherCapabilities` object with everything callers need:
+
+```ts
+{
+  type, name, displayName, hasName,
+  entryMode: 'checkbox' | 'hours',
+  creditCapMinutes: number | null,    // null = unlimited
+  hasUnlimitedCreditDefault: boolean, // base role behavior, ignoring overrides
+  monthlyGoalHours, annualGoalHours,
+  hasAnnualGoal, isPioneer, tracksPioneerStartDate,
+  showsTimer, showsYearTabs,
+  milestones: number[],
+}
+```
+
+- **React code uses [`usePublisher()`](src/hooks/usePublisher.ts) hook** — it wires up the preferences store and adds a localized `displayName` fallback.
+- **Pure/non-React callers** (widget snapshot builders, `adjustedMinutesForSpecificMonth`, onboarding step gates) call `derivePublisherCapabilities` or the small helpers directly: `getEntryMode`, `isPioneer`, `tracksPioneerStartDate`, `effectiveHasAnnualGoal`, `creditCapMinutesFor`.
+
+### Rules for future features
+
+1. **Never branch on the publisher string in feature code.** If you find yourself writing `if (publisher === 'specialPioneer')`, stop — add the capability flag to `PublisherCapabilities` and read from `usePublisher()` instead. Existing flags (`entryMode`, `hasAnnualGoal`, `isPioneer`, `tracksPioneerStartDate`, `showsTimer`, `showsYearTabs`, `creditCapMinutes`, `hasUnlimitedCreditDefault`) cover most cases — extend the type if a new one is needed.
+2. **Capability flags compose with user overrides.** `hasAnnualGoal` already folds in `userSpecifiedHasAnnualGoal` (`'default' | true | false`); `creditCapMinutes` already folds in `overrideCreditLimit` + `customCreditLimitHours` (0 means unlimited); `milestones` already folds in `milestoneOverrides`. Read the resolved value, don't re-derive it.
+3. **Gate UI on capability flags, not on the role.** Examples in the wild: [HomeScreen.tsx:80](src/screens/HomeScreen.tsx:80) gates the timer on `showsTimer` and the legacy-reports upgrade on `hasAnnualGoal`; [HomeTabStack.tsx:153](src/stacks/HomeTabStack.tsx:153) hides the Year tab on `showsYearTabs`; [QuickActionSheet.tsx:80](src/components/QuickActionSheet.tsx:80) hides the timer action; [PublisherPreferencesSection.tsx:104](src/screens/settings/preferences/sections/PublisherPreferencesSection.tsx:104) gates the start-date row on `tracksPioneerStartDate`; [ServiceReportSection.tsx:81](src/components/ServiceReportSection.tsx:81) switches checkbox vs hours rendering on `entryMode`.
+4. **`publisher` (the role) is the no-goal path — handle it explicitly.** Anything that assumes hours will break in checkbox mode. Always check `entryMode` (or `hasAnnualGoal` / `showsTimer` / `showsYearTabs`) before reaching into hours-mode code paths.
+5. **Custom is the "open hours, no ladder" role.** Don't hardcode milestone defaults for it; respect `milestoneOverrides`. Its goal is whatever the user typed into `publisherHours.custom` and can be 0.
+6. **Credit cap is per-role with a user override.** The 55h cap (`monthCreditMaxMinutes` in [src/constants/serviceReports.ts](src/constants/serviceReports.ts)) is the default for everyone _except_ `specialPioneer` and `circuitOverseer` (unlimited). Use `creditCapMinutesFor()` from `publisherCapabilities` — never re-implement the override math, never inline the 55h constant in feature code.
+7. **Milestone ladder rules.** Defaults are in [src/lib/milestones.ts:13](src/lib/milestones.ts:13). The final rung (`annualGoalHours`) is **appended at read time** by `getEffectiveMilestones`, never stored. Roles with `hasAnnualGoal === false` get an empty ladder.
+8. **Start-date semantics.** The preference field is named `pioneerStartDate` for historical reasons, but it stores the start date for **any** role where `tracksPioneerStartDate === true` (regular/special pioneer, circuit overseer, regular auxiliary). Label/title/badge i18n keys come from `getStartDateLabels(publisher)` in [src/constants/publisher.ts:23](src/constants/publisher.ts:23).
+9. **Adding a new role** requires touching all of: the tuple in `src/constants/publisher.ts`, `publisherHours` defaults in `src/stores/preferences.ts`, the `roleDefaultHasAnnualGoal` switch and `baseCreditCapMinutes` in `src/lib/publisherCapabilities.ts`, `DEFAULT_MILESTONES_BY_PUBLISHER` in `src/lib/milestones.ts`, the selector list in `src/components/PublisherTypeSelector.tsx`, `getStartDateLabels` if it has a tenure date, and i18n strings (start with `src/locales/en-US.json`). TypeScript's exhaustiveness checks on the switch statements will flag most of these.
+
 ## Components
 
 Reuse existing components where available instead of creating new ones @src/components/\*\*

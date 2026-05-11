@@ -77,7 +77,7 @@ pnpm run testFinal && pnpm run lint && pnpm run typecheck
 
 ### Translations
 
-Source of truth = `src/locales/en-US.json`. Add new keys there first. Run `pnpm run translate` to propagate.
+Source of truth = `src/locales/en-US.json`. Add new keys there first. Do not try to edit other locales without asking for human approval.
 
 ### Styling
 
@@ -119,7 +119,6 @@ TypeScript path aliases per `tsconfig.json`. Check existing files for convention
 - iOS — use `pnpm run ios` for diff build + run (fastest)
 - `clean` script nukes `ios/`, `.expo/`, `.tamagui/`, `.cache/`, `node_modules/` — destructive
 - App version bumps land in their own commits (see recent: `chore: bump version to X`)
-- Some features US-restricted due to trademark — check constants before assuming availability
 - React Compiler beta — watch for compiler-related lint warnings
 
 ## Components

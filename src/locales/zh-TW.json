@@ -1551,7 +1551,6 @@
   "serviceYearCatchUpHoursLabel": "營業時間",
   "serviceYearCatchUpCreditLabel": "學分時數",
   "serviceYearCatchUpSkip": "先跳過",
-  "serviceYearCatchUpPlanNote": "服務年小時數至{{month}}",
   "serviceYearCatchUpScreenHeader": "補上你的服役年數",
   "serviceYearCatchUpBannerTitle": "請回溯你的服務年份",
   "serviceYearCatchUpBannerSubtitle": "將自九月以來的工時加入，以獲得準確的年度目標。",

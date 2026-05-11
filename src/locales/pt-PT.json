@@ -1551,7 +1551,6 @@
   "serviceYearCatchUpHoursLabel": "Hours",
   "serviceYearCatchUpCreditLabel": "Credit hours",
   "serviceYearCatchUpSkip": "Skip for now",
-  "serviceYearCatchUpPlanNote": "Service year hours through {{month}}",
   "serviceYearCatchUpScreenHeader": "Catch up your service year",
   "serviceYearCatchUpBannerTitle": "Backdate your service year",
   "serviceYearCatchUpBannerSubtitle": "Add your hours since September to get an accurate annual goal.",

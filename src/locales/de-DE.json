@@ -1551,7 +1551,6 @@
   "serviceYearCatchUpHoursLabel": "Öffnungszeiten",
   "serviceYearCatchUpCreditLabel": "Leistungspunkte",
   "serviceYearCatchUpSkip": "Vorerst überspringen",
-  "serviceYearCatchUpPlanNote": "Dienstjahresstunden bis {{month}}",
   "serviceYearCatchUpScreenHeader": "Holen Sie Ihr Dienstjahr nach.",
   "serviceYearCatchUpBannerTitle": "Zurückdatieren Sie Ihr Dienstjahr",
   "serviceYearCatchUpBannerSubtitle": "Addiere deine Stunden seit September, um ein genaues Jahresziel zu erreichen.",

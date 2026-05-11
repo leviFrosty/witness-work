@@ -1551,7 +1551,6 @@
   "serviceYearCatchUpHoursLabel": "운영 시간",
   "serviceYearCatchUpCreditLabel": "학점 시간",
   "serviceYearCatchUpSkip": "일단 건너뛰자.",
-  "serviceYearCatchUpPlanNote": "{{month}}까지의 근무 연도 시간",
   "serviceYearCatchUpScreenHeader": "복무 기간을 따라잡으세요",
   "serviceYearCatchUpBannerTitle": "복무 연도를 소급 확인하세요",
   "serviceYearCatchUpBannerSubtitle": "정확한 연간 목표를 위해서는 9월 이후 근무 시간을 합산하세요.",

@@ -1551,7 +1551,6 @@
   "serviceYearCatchUpHoursLabel": "Години роботи",
   "serviceYearCatchUpCreditLabel": "Кредитні години",
   "serviceYearCatchUpSkip": "Поки що пропустити",
-  "serviceYearCatchUpPlanNote": "Години служби до {{month}}",
   "serviceYearCatchUpScreenHeader": "Наздоганяйте свій рік служби",
   "serviceYearCatchUpBannerTitle": "Встановіть назад рік служби",
   "serviceYearCatchUpBannerSubtitle": "Додайте години з вересня, щоб отримати точну річну ціль.",

@@ -17,11 +17,7 @@ import useTheme from '../contexts/theme'
 import i18n from '../lib/locales'
 import { usePreferences } from '../stores/preferences'
 import useServiceReport from '../stores/serviceReport'
-import {
-  getServiceYearFromDate,
-  getServiceYearReports,
-  getTotalMinutesForServiceYear,
-} from '../lib/serviceReport'
+import { getServiceYearFromDate } from '../lib/serviceReport'
 import { ServiceReportsByYears } from '../types/serviceReport'
 
 interface MonthRow {
@@ -195,7 +191,7 @@ const ServiceYearCatchUpForm = ({
 }: Props) => {
   const theme = useTheme()
   const { installedOn, set } = usePreferences()
-  const { addServiceReport, addDayPlan } = useServiceReport()
+  const { addServiceReport } = useServiceReport()
 
   const initialRows = useMemo(
     () => buildCatchUpRows(installedOn),
@@ -255,29 +251,6 @@ const ServiceYearCatchUpForm = ({
           credit: true,
         })
       }
-    }
-
-    const updatedReports = useServiceReport.getState().serviceReports
-    const sy = getServiceYearFromDate(moment(installedOn))
-    const syReports = getServiceYearReports(updatedReports, sy)
-    const totalMinutes = getTotalMinutesForServiceYear(syReports, sy)
-
-    if (totalMinutes > 0) {
-      const planDate = moment(installedOn)
-        .subtract(1, 'month')
-        .endOf('month')
-        .hour(12)
-        .minute(0)
-        .second(0)
-        .millisecond(0)
-        .toDate()
-      const monthLabel = moment(planDate).format('MMMM YYYY')
-      addDayPlan({
-        id: Crypto.randomUUID(),
-        date: planDate,
-        minutes: totalMinutes,
-        note: i18n.t('serviceYearCatchUpPlanNote', { month: monthLabel }),
-      })
     }
 
     set({ serviceYearCatchUpStatus: 'completed' })

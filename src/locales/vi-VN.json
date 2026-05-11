@@ -1551,7 +1551,6 @@
   "serviceYearCatchUpHoursLabel": "Giờ",
   "serviceYearCatchUpCreditLabel": "Giờ tín dụng",
   "serviceYearCatchUpSkip": "Bỏ qua ngay bây giờ",
-  "serviceYearCatchUpPlanNote": "Số giờ hoạt động trong năm hoạt động đến {{month}}",
   "serviceYearCatchUpScreenHeader": "Bắt kịp năm phục vụ của bạn",
   "serviceYearCatchUpBannerTitle": "Lùi ngày năm dịch vụ của bạn",
   "serviceYearCatchUpBannerSubtitle": "Thêm số giờ của bạn kể từ tháng Chín để có được mục tiêu hàng năm chính xác.",

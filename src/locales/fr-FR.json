@@ -1551,7 +1551,6 @@
   "serviceYearCatchUpHoursLabel": "Horaires",
   "serviceYearCatchUpCreditLabel": "Crédits",
   "serviceYearCatchUpSkip": "Passez pour l’instant",
-  "serviceYearCatchUpPlanNote": "Heures de service de l’année de service jusqu’à {{month}}",
   "serviceYearCatchUpScreenHeader": "Rattrapez votre année de service",
   "serviceYearCatchUpBannerTitle": "Rétrodater votre année de service",
   "serviceYearCatchUpBannerSubtitle": "Ajoutez vos heures depuis septembre pour obtenir un objectif annuel précis.",

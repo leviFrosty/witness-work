@@ -1,6 +1,10 @@
 # AGENTS.md
 
-Guide for AI coding agents working in WitnessWork. This is an iOS project only, this app is not made to support Android.
+WitnessWork is a field service assistant app for Jehovah's Witnesses. This is an iOS project only, this app is not made to support Android. The goal of the app is to encourage and assist users in scheduling their service-time to hit their publisher goals, keep track of contacts & appointments, and minimize the amount of mental overhead in calculating their progress and what's up-next.
+
+## Jehovah's Witness sensitivities
+
+Do not use the word "magic" or magic-wands in i18n or iconography
 
 ## NEVER REVERT OR DESTROY UNSTAGED WORK DESTRUCTIVELY, UNDER ANY CIRCUMSTANCES
 

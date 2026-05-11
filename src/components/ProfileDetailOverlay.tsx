@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import useDailyMinutes from '../hooks/useDailyMinutes'
 import {
   Modal,
   Pressable,
@@ -27,13 +28,11 @@ import useTheme from '../contexts/theme'
 import { usePreferences } from '../stores/preferences'
 import usePublisher from '../hooks/usePublisher'
 import useIsSupporter from '../hooks/useIsSupporter'
-import useServiceReport from '../stores/serviceReport'
 import useConversations from '../stores/conversationStore'
 import Text from './MyText'
 import IconButton from './IconButton'
 import Avatar from './Avatar'
 import { RootStackNavigation } from '../types/rootStack'
-import ContributionGraph from './ContributionGraph'
 import MonthlyRoutine from './MonthlyRoutine'
 import SinceBadge from './SinceBadge'
 import i18n from '../lib/locales'
@@ -42,14 +41,9 @@ import {
   consecutiveMonthsStreak,
   consecutiveWeeksStreak,
   daysLogged,
-  flattenDailyMinutes,
   minutesInTrailingDays,
   totalMinutes,
 } from '../lib/profileStats'
-import {
-  generateDailyMinutesFingerprint,
-  useTimeCache,
-} from '../stores/timeCache'
 
 export type OriginRect = { x: number; y: number; width: number; height: number }
 
@@ -129,35 +123,8 @@ const ProfileDetailOverlay = ({ origin, open, onClose, onClosed }: Props) => {
     name: trimmedName,
   } = usePublisher()
   const { since: supporterSince } = useIsSupporter()
-  const { serviceReports } = useServiceReport()
   const { conversations } = useConversations()
-  const setDailyMinutesCache = useTimeCache((s) => s.setDailyMinutesCache)
-
-  const { daily, fingerprint, cacheHit } = useMemo(() => {
-    const fp = generateDailyMinutesFingerprint(serviceReports)
-    const cached = useTimeCache.getState().dailyMinutes
-    if (cached && cached.fingerprint === fp) {
-      return {
-        daily: new Map(Object.entries(cached.daily)),
-        fingerprint: fp,
-        cacheHit: true,
-      }
-    }
-    return {
-      daily: flattenDailyMinutes(serviceReports),
-      fingerprint: fp,
-      cacheHit: false,
-    }
-  }, [serviceReports])
-
-  useEffect(() => {
-    if (cacheHit) return
-    const obj: Record<string, number> = {}
-    daily.forEach((v, k) => {
-      obj[k] = v
-    })
-    setDailyMinutesCache(obj, fingerprint)
-  }, [cacheHit, daily, fingerprint, setDailyMinutesCache])
+  const daily = useDailyMinutes()
 
   const stats = useMemo(() => {
     const total = totalMinutes(daily)
@@ -410,21 +377,6 @@ const ProfileDetailOverlay = ({ origin, open, onClose, onClosed }: Props) => {
                 </Text>
                 <MonthlyRoutine onBeforeNavigate={onClose} />
               </View>
-
-              {entryMode === 'hours' && (
-                <View style={{ gap: 10 }}>
-                  <Text
-                    style={{
-                      fontSize: 13,
-                      fontFamily: theme.fonts.semiBold,
-                      color: theme.colors.text,
-                    }}
-                  >
-                    {i18n.t('profileActivityTitle')}
-                  </Text>
-                  <ContributionGraph daily={daily} />
-                </View>
-              )}
             </ScrollView>
           </Animated.View>
         </Animated.View>

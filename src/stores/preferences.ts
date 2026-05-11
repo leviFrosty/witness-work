@@ -181,6 +181,7 @@ export type HomeScreenElementKey =
   | 'serviceReport'
   | 'thisWeek'
   | 'timer'
+  | 'contributionGraph'
   | 'didYouKnow'
 
 export const DEFAULT_HOME_SCREEN_ELEMENTS_ORDER: HomeScreenElementKey[] = [
@@ -189,6 +190,7 @@ export const DEFAULT_HOME_SCREEN_ELEMENTS_ORDER: HomeScreenElementKey[] = [
   'serviceReport',
   'thisWeek',
   'timer',
+  'contributionGraph',
   'didYouKnow',
 ]
 
@@ -358,6 +360,7 @@ export const PREFERENCE_DEFAULTS = {
     thisWeek: true,
     serviceReport: true,
     timer: true,
+    contributionGraph: true,
     contacts: true,
     didYouKnow: true,
   },

@@ -1551,7 +1551,6 @@
   "serviceYearCatchUpHoursLabel": "Часы работы",
   "serviceYearCatchUpCreditLabel": "Кредитные часы",
   "serviceYearCatchUpSkip": "Пока пропусти",
-  "serviceYearCatchUpPlanNote": "Часы службы до {{month}}",
   "serviceYearCatchUpScreenHeader": "Наверстывайте свой год службы",
   "serviceYearCatchUpBannerTitle": "Уведите назад дату службы",
   "serviceYearCatchUpBannerSubtitle": "Добавьте часы с сентября, чтобы получить точную годовую цель.",

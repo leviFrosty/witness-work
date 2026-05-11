@@ -1551,7 +1551,6 @@
   "serviceYearCatchUpHoursLabel": "営業時間",
   "serviceYearCatchUpCreditLabel": "単位時間",
   "serviceYearCatchUpSkip": "今はスキップしておきます",
-  "serviceYearCatchUpPlanNote": "{{month}}までの勤務時間",
   "serviceYearCatchUpScreenHeader": "勤務期間を取り戻しましょう",
   "serviceYearCatchUpBannerTitle": "勤務期間を遡って確認してください",
   "serviceYearCatchUpBannerSubtitle": "正確な年間目標を得るために、9月以降の勤務時間を加算してください。",

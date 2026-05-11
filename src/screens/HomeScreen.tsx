@@ -36,12 +36,36 @@ import ProfileCard from '../components/ProfileCard'
 import HomeChecklist from '../components/onboarding/HomeChecklist'
 import SupporterNudgeCard from '../components/SupporterNudgeCard'
 import DidYouKnowTipCard from '../components/DidYouKnowTipCard'
+import ContributionGraph from '../components/ContributionGraph'
+import useDailyMinutes from '../hooks/useDailyMinutes'
 import useIsSupporter from '../hooks/useIsSupporter'
 import { useServiceReport } from '../stores/serviceReport'
 import { isSupporterNudgeEligible } from '../lib/supporterNudge'
 import { HomeTabStackNavigation } from '../types/homeStack'
 import { RootStackNavigation } from '../types/rootStack'
 import { Fragment } from 'react'
+
+// Defined inline so `useDailyMinutes` only fires when the section is actually
+// mounted — for publisher (checkbox) users the case below returns null and we
+// never flatten the reports collection.
+const ContributionGraphSection = () => {
+  const theme = useTheme()
+  const daily = useDailyMinutes()
+  return (
+    <View style={{ gap: 10 }}>
+      <Text
+        style={{
+          fontSize: 14,
+          fontFamily: theme.fonts.semiBold,
+          marginLeft: 5,
+        }}
+      >
+        {i18n.t('profileActivityTitle')}
+      </Text>
+      <ContributionGraph daily={daily} />
+    </View>
+  )
+}
 
 export const HomeScreen = () => {
   const theme = useTheme()
@@ -77,7 +101,7 @@ export const HomeScreen = () => {
   const { conversations } = useConversations()
   const { contacts } = useContacts()
   const { isTablet } = useDevice()
-  const { hasAnnualGoal, showsTimer } = usePublisher()
+  const { hasAnnualGoal, showsTimer, entryMode } = usePublisher()
   const { serviceReportTags, homeScreenElements, homeScreenElementsOrder } =
     usePreferences()
   const effectiveOrder = useMemo(
@@ -315,6 +339,14 @@ export const HomeScreen = () => {
               case 'timer':
                 if (!showsTimer || !homeScreenElements.timer) return null
                 return <TimerSection key={key} />
+              case 'contributionGraph':
+                if (
+                  entryMode !== 'hours' ||
+                  !homeScreenElements.contributionGraph
+                ) {
+                  return null
+                }
+                return <ContributionGraphSection key={key} />
               case 'didYouKnow':
                 if (homeScreenElements.didYouKnow === false) return null
                 return (

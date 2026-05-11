@@ -107,7 +107,7 @@ const HideSupporterNudge = () => {
 
 const HomeElements = () => {
   const { homeScreenElements, homeScreenElementsOrder, set } = usePreferences()
-  const { showsTimer, hasAnnualGoal } = usePublisher()
+  const { showsTimer, hasAnnualGoal, entryMode } = usePublisher()
   const { isTablet } = useDevice()
   const theme = useTheme()
 
@@ -124,9 +124,10 @@ const HomeElements = () => {
       effectiveOrder.filter((k) => {
         if (k === 'tabletServiceYearSummary') return isTablet && hasAnnualGoal
         if (k === 'timer') return showsTimer
+        if (k === 'contributionGraph') return entryMode === 'hours'
         return true
       }),
-    [effectiveOrder, isTablet, hasAnnualGoal, showsTimer]
+    [effectiveOrder, isTablet, hasAnnualGoal, showsTimer, entryMode]
   )
 
   const labelFor = (key: HomeScreenElementKey): string => {
@@ -141,6 +142,8 @@ const HomeElements = () => {
         return i18n.t('thisWeek')
       case 'timer':
         return i18n.t('timer')
+      case 'contributionGraph':
+        return i18n.t('profileActivityTitle')
       case 'didYouKnow':
         return i18n.t('didYouKnow_kicker')
     }

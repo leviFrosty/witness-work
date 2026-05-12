@@ -118,6 +118,37 @@ TypeScript path aliases per `tsconfig.json`. Check existing files for convention
 - Husky pre-commit hooks active — don't skip with `--no-verify` unless explicitly told
 - Version bumps via `pnpm run version:bump`
 
+## Pull request descriptions
+
+Size the description to the change. The goal is fast review — not to demonstrate effort. A one-line PR with a one-line description is a feature, not a gap.
+
+### Title
+
+The PR title is the TL;DR of the change. Treat it as the single sentence a reviewer should be able to read in the PR list and understand what shipped. Conventional Commits prefix (`feat:`, `fix:`, `chore:`, `refactor:`, `docs:`, etc.), imperative mood, no trailing period, under ~70 chars. If the title fully captures the change, the body can be empty or a single line.
+
+### Size the description to the diff
+
+- **Trivial / obvious** (rename, typo, one-line fix, dep bump, copy tweak): one line is enough. If the title already says it, the body can repeat or extend the title and stop. Don't pad with empty sections.
+- **Small but non-obvious** (subtle bug fix, behavior change, tricky edge case, perf nudge): lean into **Why** and the tradeoffs you considered. The diff already shows _what_ changed — the description's job is _why this way and not the obvious alternative_.
+- **Large / multi-file**: optimize for human scanability. Point the reviewer at the 1–3 highest-impact files first (link them with `path/to/file.ts:42`), then summarize the rest in bullets. Prefer bullets and file references over paragraphs. A wall of prose loses the reviewer faster than the diff itself would.
+
+When in doubt, write less. The reviewer can always ask.
+
+### Sections (and when each is required)
+
+- **Why** — **required** unless the title is self-evident (`chore: bump version to X`, `fix: typo in onboarding copy`). State the problem, user/business reason, or bug being fixed. One or two sentences is usually enough.
+- **How** — **optional**. Only include when the approach is non-obvious or you rejected a tempting alternative. Name the tradeoff. Don't restate the diff.
+- **Risks** — **required for** migrations, data changes, schema/storage changes (MMKV keys, persisted Zustand shapes), shared infra, anything that touches publisher capability resolution, anything affecting widget snapshots, or any behavior change visible to users. Otherwise optional. Cover: what could break, blast radius, rollback story.
+- **Tests required** — **required only when HITL action exists**. List _only_ human-in-the-loop items: manual QA on device, migrations to run, RevenueCat sandbox checks, App Store Connect steps, feature flag flips, staged rollouts, translation review. **Do not list** anything already verified by CI or pre-commit hooks — no `✅ typecheck passed`, no `✅ tests pass`, no `✅ lint clean`. That's redundant noise; CI is the source of truth for those. If there's no HITL step, omit the section entirely.
+
+### Anti-patterns
+
+- Don't paraphrase the diff line-by-line in a "Summary" section.
+- Don't include green-checkmark lists for things CI verifies (`✅ typecheck`, `✅ lint`, `✅ tests`).
+- Don't add empty/placeholder sections (`## Risks\nNone.`) — omit the section instead.
+- Don't bury the lead. The most important sentence comes first.
+- Don't write "this PR..." in every bullet. Just say what changed.
+
 ## Quirks / Gotchas
 
 - iOS — use `pnpm run ios` for diff build + run (fastest)

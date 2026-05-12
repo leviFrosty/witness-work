@@ -156,6 +156,10 @@ When in doubt, write less. The reviewer can always ask.
 - App version bumps land in their own commits (see recent: `chore: bump version to X`)
 - React Compiler beta — watch for compiler-related lint warnings
 
+## Branching
+
+Branch names should be [feature-name]. No prefix of [agent]/[feature].
+
 ## Publisher types (core domain)
 
 The `Publisher` role is the single biggest driver of app behavior — it decides the entry mode (checkbox vs hours), monthly/annual goals, credit cap, milestone ladder, tenure display, and which Home/Progress sections render at all. Treat it as a first-class domain concept.

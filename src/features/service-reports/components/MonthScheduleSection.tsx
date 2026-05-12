@@ -1,6 +1,5 @@
 import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
-import AheadOrBehindOfMonthSchedule from '@/features/service-reports/components/AheadOrBehindOfSchedule'
 import Text from '@/components/ui/MyText'
 import Button from '@/components/ui/Button'
 import { useNavigation } from '@react-navigation/native'
@@ -8,7 +7,6 @@ import { useMemo, useEffect } from 'react'
 import moment from 'moment'
 import useServiceReport from '@/stores/serviceReport'
 import {
-  plannedMinutesToCurrentDayForMonth,
   calculateMonthlyPlannedMinutesOptimized,
   generatePlanHash,
 } from '@/lib/serviceReport'
@@ -107,15 +105,6 @@ export default function MonthScheduleSection(props: MonthScheduleSectionProps) {
 
   const percentPlanned = plannedMinutes / 60 / goalHours
 
-  const plannedMinutesToCurrentDay = useMemo(() => {
-    return plannedMinutesToCurrentDayForMonth(
-      month,
-      year,
-      dayPlans,
-      recurringPlans
-    )
-  }, [dayPlans, month, recurringPlans, year])
-
   return (
     <View
       style={{
@@ -126,20 +115,6 @@ export default function MonthScheduleSection(props: MonthScheduleSectionProps) {
       }}
     >
       <View style={{ gap: 10 }}>
-        {plannedMinutesToCurrentDay !== 0 && (
-          <View style={{ gap: 3 }}>
-            <Text
-              style={{
-                fontFamily: theme.fonts.semiBold,
-                color: theme.colors.textAlt,
-                fontSize: theme.fontSize('sm'),
-              }}
-            >
-              {i18n.t('today')}
-            </Text>
-            <AheadOrBehindOfMonthSchedule month={month} year={year} />
-          </View>
-        )}
         <View style={{ gap: 3 }}>
           <Text
             style={{

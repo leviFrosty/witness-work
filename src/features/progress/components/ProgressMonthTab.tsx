@@ -9,7 +9,8 @@ import { getMonthsReports } from '@/lib/serviceReport'
 import i18n from '@/lib/locales'
 
 import Text from '@/components/ui/MyText'
-import MonthSummary from '@/features/service-reports/components/MonthSummary'
+import MonthReport from '@/features/service-reports/components/MonthReport'
+import ProjectedTotalCard from '@/components/ProjectedTotalCard'
 import AllDaysList from '@/features/service-reports/components/AllDaysList'
 import SwipeMonthNavigator from '@/components/SwipeMonthNavigator'
 
@@ -52,15 +53,16 @@ const ProgressMonthTab = ({
       <SwipeMonthNavigator
         onSwipeForward={onSwipeForward}
         onSwipeBack={onSwipeBack}
-        style={{ paddingHorizontal: 15, paddingBottom: 20 }}
+        style={{ paddingHorizontal: 15, paddingBottom: 20, gap: 12 }}
       >
-        <MonthSummary
+        <MonthReport
           month={month}
           year={year}
           monthsReports={thisMonthsReports}
           showReportButton
           hideTitle
         />
+        <ProjectedTotalCard scope={{ kind: 'month', month, year }} />
       </SwipeMonthNavigator>
 
       <View style={{ gap: 8 }}>

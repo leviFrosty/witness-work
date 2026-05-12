@@ -1,18 +1,31 @@
 import { Switch, View } from 'react-native'
+import { useState } from 'react'
+import { faChevronRight } from '@fortawesome/free-solid-svg-icons'
 import Text from '@/components/ui/MyText'
 import useTheme from '@/contexts/theme'
 import i18n, { TranslationKey } from '@/lib/locales'
 import Section from '@/components/ui/inputs/Section'
 import InputRowContainer from '@/components/ui/inputs/InputRowContainer'
+import InputRowButton from '@/features/settings/components/inputs/InputRowButton'
+import IconButton from '@/components/ui/IconButton'
 import Select from '@/components/ui/Select'
 import {
   DEFAULT_PLAN_NOTIFICATION_OFFSET,
   usePreferences,
 } from '@/stores/preferences'
+import AvailabilityOnboardingSheet from '@/components/AvailabilityOnboardingSheet'
 
 const PlansPreferencesSection = () => {
   const theme = useTheme()
-  const { planNotificationOffset, planAlwaysNotify, set } = usePreferences()
+  const { planNotificationOffset, planAlwaysNotify, excludedWeekdays, set } =
+    usePreferences()
+  const [availabilityOpen, setAvailabilityOpen] = useState(false)
+  const availabilitySummary =
+    excludedWeekdays.length === 0
+      ? i18n.t('availability.settingsValueAllAvailable')
+      : i18n.t('availability.settingsValueNExcluded', {
+          count: excludedWeekdays.length,
+        })
 
   const currentAmount =
     planNotificationOffset?.amount ?? DEFAULT_PLAN_NOTIFICATION_OFFSET.amount
@@ -102,7 +115,6 @@ const PlansPreferencesSection = () => {
           </Text>
         </InputRowContainer>
         <InputRowContainer
-          lastInSection
           label={i18n.t('planAlwaysNotify')}
           style={{ justifyContent: 'space-between' }}
         >
@@ -111,7 +123,22 @@ const PlansPreferencesSection = () => {
             onValueChange={(value) => set({ planAlwaysNotify: value })}
           />
         </InputRowContainer>
+        <InputRowButton
+          lastInSection
+          label={i18n.t('availability.settingsRow')}
+          onPress={() => setAvailabilityOpen(true)}
+        >
+          <Text style={{ color: theme.colors.textAlt }}>
+            {availabilitySummary}
+          </Text>
+          <IconButton icon={faChevronRight} />
+        </InputRowButton>
       </Section>
+      <AvailabilityOnboardingSheet
+        open={availabilityOpen}
+        onOpenChange={setAvailabilityOpen}
+        markSeenOnDismiss={false}
+      />
     </View>
   )
 }

@@ -80,6 +80,12 @@ export type DayPlan = {
    * remote IDs as opaque (they cannot be cancelled from another device).
    */
   notifications?: import('./conversation').Notification[]
+  /**
+   * Origin of this plan. `'recommendation'` is stamped by the Assistant when
+   * the engine inserts plans on the user's behalf; treated as `'manual'` when
+   * unset, including for all plans that predate this field.
+   */
+  source?: 'manual' | 'recommendation'
   /** Epoch ms of the most recent change. Used for iCloud merge. */
   updatedAt?: number
 }

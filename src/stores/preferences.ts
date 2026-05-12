@@ -108,6 +108,19 @@ export type ServiceReportTag = {
   credit: boolean
 }
 
+/**
+ * A single record in `assistantHistory` — written when the user accepts or
+ * dismisses a recommendation from the Projected Total card's Assistant. The
+ * engine reads this list to back off from shapes the user has rejected
+ * repeatedly (see `docs/projected-total-plan.md` → "Assistant history
+ * weighting").
+ */
+export type AssistantEvent = {
+  shape: 'concentrated' | 'distributed' | 'recurring'
+  action: 'accepted' | 'dismissed'
+  at: number
+}
+
 export const widgetContactSortOptions = [
   'longestContacted',
   'recentConversation',
@@ -646,6 +659,34 @@ export const PREFERENCE_DEFAULTS = {
    * the same tip on another.
    */
   seenTipIds: [] as string[],
+  /**
+   * Weekdays (0 = Sunday … 6 = Saturday) that the Projected Total Assistant
+   * should treat as unavailable when generating recommended day plans. Empty by
+   * default — no exclusion. The user can override per-day even when a weekday
+   * is excluded; the calendar dims excluded weekdays as a hint.
+   */
+  excludedWeekdays: [] as number[],
+  /**
+   * One-shot flag for the Availability Onboarding sheet, which surfaces just in
+   * time the first time a recommendation would render. Flipped true when the
+   * user saves OR skips the sheet, so we never re-prompt automatically — but
+   * Settings retains an entry point to revisit.
+   */
+  hasSeenAvailabilityOnboarding: false,
+  /**
+   * FIFO ring buffer (cap 10) of the user's accept/dismiss actions on Assistant
+   * recommendations. The engine reads this to back off from
+   * repeatedly-dismissed shapes. Insert/eviction happens in the action that
+   * records the event — this store only owns the default empty list.
+   */
+  assistantHistory: [] as AssistantEvent[],
+  /**
+   * Hash of the engine inputs (logged, plans, conversations, excluded weekdays)
+   * at the time the user last dismissed the Assistant card. While this hash
+   * matches the current inputs, the Assistant section stays hidden —
+   * re-emerging once any input changes.
+   */
+  hasDismissedRecommendationHash: undefined as string | undefined,
 }
 
 /**

@@ -1,5 +1,4 @@
 import useTheme from '@/contexts/theme'
-import AheadOrBehindOfMonthSchedule from '@/features/service-reports/components/AheadOrBehindOfSchedule'
 import _ from 'lodash'
 import { useNavigation } from '@react-navigation/native'
 import MonthServiceReportProgressBar from '@/features/service-reports/components/MonthServiceReportProgressBar'
@@ -12,7 +11,6 @@ import {
   calculateProgress,
   getDaysLeftInCurrentMonth,
   getMonthsReports,
-  plannedMinutesToCurrentDayForMonth,
 } from '@/lib/serviceReport'
 import moment from 'moment'
 import i18n from '@/lib/locales'
@@ -33,7 +31,7 @@ export default function HourEntryCard() {
     overrideCreditLimit,
     customCreditLimitHours,
   } = usePreferences()
-  const { serviceReports, dayPlans, recurringPlans } = useServiceReport()
+  const { serviceReports } = useServiceReport()
   const navigation = useNavigation<
     HomeTabStackNavigation & RootStackNavigation
   >()
@@ -155,15 +153,6 @@ export default function HourEntryCard() {
 
   const daysLeftInMonth = useMemo(() => getDaysLeftInCurrentMonth(), [])
 
-  const plannedMinutesToCurrentDay = useMemo(() => {
-    return plannedMinutesToCurrentDayForMonth(
-      moment().month(),
-      moment().year(),
-      dayPlans,
-      recurringPlans
-    )
-  }, [dayPlans, recurringPlans])
-
   // Returns hours remaining if the last day of the month because x/0 = infinity.
   // Which we don't want to display to the user
   const hoursPerDayNeeded = useMemo(
@@ -249,13 +238,7 @@ export default function HourEntryCard() {
             <Text style={{ fontFamily: theme.fonts.bold, maxWidth: 200 }}>
               {encouragementPhrase}
             </Text>
-            {plannedMinutesToCurrentDay !== 0 ? (
-              <AheadOrBehindOfMonthSchedule
-                month={moment().month()}
-                year={moment().year()}
-                fontSize='xs'
-              />
-            ) : hoursPerDayNeeded > 0 ? (
+            {hoursPerDayNeeded > 0 ? (
               <View style={{ gap: 5 }}>
                 <View
                   style={{

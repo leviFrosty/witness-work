@@ -56,7 +56,7 @@ import {
 import useFireworks from '@/hooks/useFireworks'
 import { FIREWORKS_AFTER_LOTTIE_BUFFER_MS } from '@/providers/ConfettiProvider'
 
-interface MonthSummaryProps {
+interface MonthReportProps {
   monthsReports: ServiceReport[] | null
   month: number
   year: number
@@ -68,7 +68,7 @@ interface MonthSummaryProps {
   highlightAsCurrentMonth?: boolean
 }
 
-const MonthSummary = ({
+const MonthReport = ({
   monthsReports,
   month,
   year,
@@ -77,7 +77,7 @@ const MonthSummary = ({
   hideTitle,
   noDetails,
   highlightAsCurrentMonth,
-}: MonthSummaryProps) => {
+}: MonthReportProps) => {
   const theme = useTheme()
   const {
     publisher,
@@ -613,4 +613,4 @@ const MonthSummary = ({
   )
 }
 
-export default MonthSummary
+export default MonthReport

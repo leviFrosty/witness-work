@@ -334,9 +334,12 @@ const CalendarDay = (
   const recurringPlans = props.recurringPlansOverride ?? store.recurringPlans
   const translateY = useSharedValue(0)
   const theme = useTheme()
-  const { howToAddPlan, removeHint } = usePreferences()
+  const { howToAddPlan, removeHint, excludedWeekdays } = usePreferences()
 
   const isToday = moment().isSame(props.date?.dateString, 'day')
+  const isExcludedWeekday = props.date?.dateString
+    ? excludedWeekdays.includes(moment(props.date.dateString).day())
+    : false
 
   const startAnimation = useCallback(() => {
     translateY.value = withRepeat(withTiming(-10, { duration: 600 }), 0, true)
@@ -395,7 +398,10 @@ const CalendarDay = (
             removeHint('howToAddPlan')
           }
         }}
-        style={{ opacity: props.state === 'disabled' ? 0.4 : 1 }}
+        style={{
+          opacity:
+            props.state === 'disabled' ? 0.4 : isExcludedWeekday ? 0.55 : 1,
+        }}
       >
         {(dayPlan ?? !!recurringPlansForDay?.length) ? (
           <PlannedDay

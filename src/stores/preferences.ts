@@ -10,6 +10,8 @@ import { hasMigratedFromAsyncStorage, MmkvStorage } from '@/stores/mmkv'
 import { Address } from '@/types/contact'
 import { ProfileAvatar } from '@/types/avatar'
 import { MinuteDisplayFormat } from '@/types/serviceReport'
+import type { AssistantEvent } from '@/types/assistant'
+import { appendAssistantEventCapped } from '@/lib/assistantState'
 import type { ShaderId } from '@/shaders/types'
 import { DEFAULT_SHADER_ID } from '@/shaders/registry'
 import type { ContactSortDirection, ContactSortKey } from '@/lib/contactsSort'
@@ -106,19 +108,6 @@ export type ServiceReportTag = {
   /** Also acts as ID */
   value: string
   credit: boolean
-}
-
-/**
- * A single record in `assistantHistory` — written when the user accepts or
- * dismisses a recommendation from the Projected Total card's Assistant. The
- * engine reads this list to back off from shapes the user has rejected
- * repeatedly (see `docs/projected-total-plan.md` → "Assistant history
- * weighting").
- */
-export type AssistantEvent = {
-  shape: 'concentrated' | 'distributed' | 'recurring'
-  action: 'accepted' | 'dismissed'
-  at: number
 }
 
 export const widgetContactSortOptions = [
@@ -840,6 +829,27 @@ export const usePreferences = create(
               ? {}
               : { seenTipIds: [...seenTipIds, tipId] }
           ),
+        recordAssistantEvent: (event: AssistantEvent) =>
+          set(({ assistantHistory }) => ({
+            assistantHistory: appendAssistantEventCapped(
+              assistantHistory,
+              event,
+              10
+            ),
+          })),
+        replaceLastAssistantEvent: (event: AssistantEvent) =>
+          set(({ assistantHistory }) => {
+            if (assistantHistory.length === 0) return {}
+            const next = [...assistantHistory]
+            next[next.length - 1] = event
+            return { assistantHistory: next }
+          }),
+        setExcludedWeekdays: (excludedWeekdays: number[]) =>
+          set({ excludedWeekdays }),
+        setHasSeenAvailabilityOnboarding: (value: boolean) =>
+          set({ hasSeenAvailabilityOnboarding: value }),
+        setHasDismissedRecommendationHash: (value: string | undefined) =>
+          set({ hasDismissedRecommendationHash: value }),
       }
     }),
     {

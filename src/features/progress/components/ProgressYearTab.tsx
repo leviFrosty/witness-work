@@ -11,11 +11,13 @@ import useServiceReport from '@/stores/serviceReport'
 import { usePreferences } from '@/stores/preferences'
 import {
   adjustedMinutesForSpecificMonth,
+  calculateMonthlyPlannedMinutesOptimized,
   getMonthsReports,
 } from '@/lib/serviceReport'
 import i18n from '@/lib/locales'
 
 import YearMilestoneCard from '@/components/YearMilestoneCard'
+import ProjectedTotalCard from '@/components/ProjectedTotalCard'
 import Text from '@/components/ui/MyText'
 import XView from '@/components/ui/layout/XView'
 import Badge from '@/components/ui/Badge'
@@ -38,11 +40,13 @@ const MonthRow = ({
   month,
   year,
   isCurrent,
+  isFuture,
   onPress,
 }: {
   month: number
   year: number
   isCurrent: boolean
+  isFuture: boolean
   onPress: () => void
 }) => {
   const theme = useTheme()
@@ -53,7 +57,7 @@ const MonthRow = ({
     overrideCreditLimit,
     customCreditLimitHours,
   } = usePreferences()
-  const { serviceReports } = useServiceReport()
+  const { serviceReports, dayPlans, recurringPlans } = useServiceReport()
 
   const goalHours = publisherHours[publisher]
 
@@ -80,7 +84,19 @@ const MonthRow = ({
     customCreditLimitHours,
   ])
 
+  const plannedHours = useMemo(() => {
+    if (!isFuture) return 0
+    const planned = calculateMonthlyPlannedMinutesOptimized(
+      month,
+      year,
+      dayPlans,
+      recurringPlans
+    )
+    return planned / 60
+  }, [isFuture, month, year, dayPlans, recurringPlans])
+
   const hoursRounded = _.round(hoursCompleted, 1)
+  const plannedRounded = _.round(plannedHours, 1)
   const delta = _.round(hoursCompleted - goalHours, 1)
 
   // Only show delta when there's a meaningful goal and at least some activity,
@@ -88,6 +104,9 @@ const MonthRow = ({
   // miss). Future months with no activity should stay visually quiet.
   const hasActivity = hoursCompleted > 0
   const showDelta = goalHours > 0 && hasActivity
+  // Future months haven't happened yet — surface planned hours instead of a
+  // bare "0h", styled with textAlt so the eye still reads it as upcoming.
+  const showFuturePlanned = isFuture && !hasActivity && plannedHours > 0
 
   const deltaLabel = delta > 0 ? `+${delta}` : `${delta}`
   const deltaColor =
@@ -132,7 +151,7 @@ const MonthRow = ({
               letterSpacing: -0.3,
             }}
           >
-            {hoursRounded}h
+            {showFuturePlanned ? `${plannedRounded}h` : `${hoursRounded}h`}
           </Text>
           {showDelta ? (
             <Text
@@ -204,6 +223,10 @@ const ProgressYearTab = ({
         />
       ) : null}
 
+      <ProjectedTotalCard
+        scope={{ kind: 'serviceYear', serviceYear: year - 1 }}
+      />
+
       <View style={{ gap: 8, paddingTop: 10 }}>
         <Text
           style={{
@@ -221,12 +244,16 @@ const ProgressYearTab = ({
           {months.map(({ month, year: calendarYear }) => {
             const isCurrent =
               month === currentMonth && calendarYear === currentYear
+            const isFuture =
+              calendarYear > currentYear ||
+              (calendarYear === currentYear && month > currentMonth)
             return (
               <MonthRow
                 key={`${calendarYear}-${month}`}
                 month={month}
                 year={calendarYear}
                 isCurrent={isCurrent}
+                isFuture={isFuture}
                 onPress={() => onMonthPress(month, calendarYear)}
               />
             )

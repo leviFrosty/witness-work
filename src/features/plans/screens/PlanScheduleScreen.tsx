@@ -33,7 +33,7 @@ import Button from '../../../components/Button'
 import IconButton from '../../../components/IconButton'
 import { faArrowLeft, faArrowRight } from '@fortawesome/free-solid-svg-icons'
 import Card from '../../../components/Card'
-import MonthPlansList from '../../../components/MonthPlansList'
+import MonthPlansList from '../components/MonthPlansList'
 
 import { RootStackParamList } from '../../../types/rootStack'
 

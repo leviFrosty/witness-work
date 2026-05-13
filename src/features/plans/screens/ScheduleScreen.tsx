@@ -26,11 +26,11 @@ import CalendarHeader, {
   CalendarViewMode,
 } from '../../../components/CalendarHeader'
 import CalendarKey from '../../../components/CalendarKey'
-import MonthTimeReportsCalendar from '../../../components/MonthTimeReportsCalendar'
-import MonthScheduleSection from '../../../components/MonthScheduleSection'
+import MonthTimeReportsCalendar from '../../service-reports/components/MonthTimeReportsCalendar'
+import MonthScheduleSection from '../../service-reports/components/MonthScheduleSection'
 import SelectedDateSheet, {
   SelectedDateSheetState,
-} from '../../../components/SelectedDateSheet'
+} from '../../service-reports/components/SelectedDateSheet'
 import Card from '../../../components/Card'
 import Button from '../../../components/Button'
 import IconButton from '../../../components/IconButton'

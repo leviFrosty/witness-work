@@ -1,27 +1,27 @@
 import { View } from 'react-native'
-import Text from './MyText'
-import i18n from '../lib/locales'
-import useTheme from '../contexts/theme'
+import Text from '../../../components/MyText'
+import i18n from '../../../lib/locales'
+import useTheme from '../../../contexts/theme'
 import moment from 'moment'
 import { FlashList } from '@shopify/flash-list'
-import { ServiceReport, DayPlan } from '../types/serviceReport'
+import { ServiceReport, DayPlan } from '../../../types/serviceReport'
 import TimeReportRow from './TimeReportRow'
-import Card from './Card'
+import Card from '../../../components/Card'
 import { useMemo } from 'react'
-import useServiceReport from '../stores/serviceReport'
-import XView from './layout/XView'
+import useServiceReport from '../../../stores/serviceReport'
+import XView from '../../../components/layout/XView'
 import _ from 'lodash'
 import {
   getPlansIntersectingDay,
   RecurringPlan,
   getEffectiveMinutesForRecurringPlan,
   getEffectiveStartTimeInMinutesForRecurringPlan,
-} from '../lib/serviceReport'
-import { getStartTimeInMinutes } from '../lib/normalizeDate'
-import DayPlanRow from './DayPlanRow'
-import RecurringPlanRow from './RecurringPlanRow'
-import Circle from './Circle'
-import { getDateStatusColor } from './CalendarDay'
+} from '../../../lib/serviceReport'
+import { getStartTimeInMinutes } from '../../../lib/normalizeDate'
+import DayPlanRow from '../../../components/DayPlanRow'
+import RecurringPlanRow from '../../../components/RecurringPlanRow'
+import Circle from '../../../components/Circle'
+import { getDateStatusColor } from '../../../components/CalendarDay'
 
 interface DayHistoryViewProps {
   date: Date

@@ -2,25 +2,25 @@ import { View } from 'react-native'
 import { useMemo } from 'react'
 import { FlashList } from '@shopify/flash-list'
 import moment from 'moment'
-import Text from './MyText'
-import useTheme from '../contexts/theme'
-import useServiceReport from '../stores/serviceReport'
-import i18n from '../lib/locales'
-import { DayPlan } from '../types/serviceReport'
+import Text from '../../../components/MyText'
+import useTheme from '../../../contexts/theme'
+import useServiceReport from '../../../stores/serviceReport'
+import i18n from '../../../lib/locales'
+import { DayPlan } from '../../../types/serviceReport'
 import {
   RecurringPlan,
   getPlansIntersectingDay,
   getEffectiveStartTimeInMinutesForRecurringPlan,
-} from '../lib/serviceReport'
+} from '../../../lib/serviceReport'
 import {
   DEFAULT_START_TIME_IN_MINUTES,
   getStartTimeInMinutes,
-} from '../lib/normalizeDate'
-import DayPlanRow from './DayPlanRow'
-import RecurringPlanRow from './RecurringPlanRow'
+} from '../../../lib/normalizeDate'
+import DayPlanRow from '../../../components/DayPlanRow'
+import RecurringPlanRow from '../../../components/RecurringPlanRow'
 import { useNavigation } from '@react-navigation/native'
-import { RootStackNavigation } from '../types/rootStack'
-import Card from './Card'
+import { RootStackNavigation } from '../../../types/rootStack'
+import Card from '../../../components/Card'
 
 interface PlanItem {
   type: 'day' | 'recurring'

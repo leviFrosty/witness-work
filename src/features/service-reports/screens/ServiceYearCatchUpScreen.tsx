@@ -2,7 +2,7 @@ import { useNavigation } from '@react-navigation/native'
 import { View } from 'react-native'
 
 import Wrapper from '../../../components/layout/Wrapper'
-import ServiceYearCatchUpForm from '../../../components/ServiceYearCatchUpForm'
+import ServiceYearCatchUpForm from '../components/ServiceYearCatchUpForm'
 import { RootStackNavigation } from '../../../types/rootStack'
 
 const ServiceYearCatchUpScreen = () => {

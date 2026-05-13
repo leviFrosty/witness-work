@@ -38,7 +38,9 @@
           "src/features/home/**/*",
           "src/features/settings/**/*",
           "src/features/updates/**/*",
-          "src/features/onboarding/**/*"
+          "src/features/onboarding/**/*",
+          "src/features/plans/**/*",
+          "src/features/progress/**/*"
         ]
       },
       {

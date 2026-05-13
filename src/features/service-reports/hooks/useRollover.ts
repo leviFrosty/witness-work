@@ -7,7 +7,7 @@ import {
   applyRollover,
   computePendingRollovers,
   PendingRollover,
-} from '../../../lib/rollover'
+} from '../lib/rollover'
 import usePublisher from '../../../hooks/usePublisher'
 
 type RolloverContext = {

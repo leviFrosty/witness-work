@@ -14,27 +14,27 @@ src/
     deep-links/        DeepLinkListeners
 
   features/            ← feature tier (one folder per domain)
-    contacts/
-    conversations/
-    home/                 (treated as app — page-level orchestrator)
-    map/
-    milestones/
-    onboarding/           (treated as app — uses app/sync infra)
-    plans/                (treated as app — composes plans + service-reports)
-    progress/             (treated as app — composes reports + milestones)
-    service-reports/
-    settings/             (treated as app — composes every other feature)
-    supporter/
-    updates/              (treated as app — links into settings, etc.)
+    contacts/        screens/ components/ hooks/ lib/ stores/
+    conversations/   screens/ components/ lib/
+    home/            screens/ components/ lib/         (treated as app — page-level orchestrator)
+    map/             screens/ components/ lib/ types/
+    milestones/      screens/ components/ stores/
+    onboarding/      components/                        (treated as app — uses app/sync infra)
+    plans/           screens/ components/               (treated as app — composes plans + service-reports)
+    progress/        screens/ components/               (treated as app — composes reports + milestones)
+    service-reports/ screens/ components/ hooks/ lib/ stores/
+    settings/        screens/ components/ hooks/ lib/   (treated as app — composes every other feature)
+    supporter/       screens/ components/ stores/
+    updates/         screens/ components/ lib/ constants/  (treated as app — links into settings, etc.)
 
     Each feature contains:
       screens/        navigation entry points
       components/     feature-specific UI
-      (lib/, hooks/, stores/, types/ — added when needed)
+      (lib/, hooks/, stores/, types/, constants/ — added when needed)
 
   components/  lib/  hooks/  stores/  types/  constants/   ← shared tier
   providers/   contexts/   assets/   locales/   shaders/   vendor/
-  __tests__/
+  __tests__/                                                ← treated as `app` so tests can pull from features
 ```
 
 ## Boundaries rules (`.eslintrc.json`)
@@ -49,9 +49,9 @@ Cool-ice's strict rule is `app ← shared + feature only`. The transitional `app
 
 ### Pattern matching order (first-match-wins)
 
-1. `app` — includes `src/app/**`, plus `features/{home,settings,updates,onboarding,plans,progress}/**` (page-level orchestrators)
+1. `app` — includes `src/app/**`, plus `features/{home,settings,updates,onboarding,plans,progress}/**` (page-level orchestrators), plus `src/__tests__/**` (tests need to reach features)
 2. `feature` — `src/features/*/**` (captures `featureName`)
-3. `shared` — `src/{components,lib,hooks,stores,types,constants,providers,contexts,assets,locales,shaders,vendor,__tests__}/**`
+3. `shared` — `src/{components,lib,hooks,stores,types,constants,providers,contexts,assets,locales,shaders,vendor}/**`
 4. `neverImport` — `src/*` (top-level root files)
 
 ## Why some features are classified as `app`
@@ -71,10 +71,11 @@ In cool-ice, these would be top-level pages in `src/app/`. We keep them under `s
 
 The boundaries plugin surfaced real coupling that wasn't visible before:
 
-- **Data layer** (`stores/contactsStore`, `stores/conversationStore`, `stores/serviceReport`, `stores/milestoneReveal`, `stores/preferences`) — read by `app/widgets` and `app/sync` plus every feature. Moving them into a feature would require those widgets/sync writers to do cross-feature imports.
-- **Pure domain helpers** (`lib/contacts`, `lib/conversations`, `lib/serviceReport`, `lib/milestones`, `lib/profileStats`, …) — consumed by both feature screens and shared hooks (`useMonthReportData`) and the widgets/sync layer.
-- **Shared UI primitives that look feature-named** (`SupporterBadge`, `IsSupporter`, `PinLocation`, `DayPlanRow`, `RecurringPlanRow`, `ConversationRow`, `YearMilestoneCard`, `MilestoneAdjustSheet`, `MilestoneProgressBar`, `ContactAvatarCropEditor`, `CategoriesSection`, `ShareAddressSheet`) — used by multiple features. They earn a place in `shared/components/` because they have many callers.
-- **Domain types** (`types/contact`, `types/customField`, `types/conversation`, `types/serviceReport`) — referenced by preferences, sync payloads, widget snapshots, and many features.
+- **Cross-feature data stores** (`stores/contactsStore`, `stores/conversationStore`, `stores/serviceReport`, `stores/preferences`, `stores/timeCache`, `stores/mmkv`) — read by `app/widgets` and `app/sync` plus every feature. Moving them into a feature would require those widgets/sync writers to do cross-feature imports. The per-feature stores that did move (`celebrationQueue`, `milestoneReveal`, `contactsSearchStore`, `supporter`) only had a single feature or app-tier consumer.
+- **Pure domain helpers** (`lib/contacts`, `lib/conversations`, `lib/serviceReport`, `lib/milestones`, `lib/profileStats`, `lib/contactsFilters`, `lib/contactsSort`, `lib/notifications`, …) — consumed by the data layer (preferences/widgets/sync) or by multiple features. The persisted-state types in `contactsFilters` / `contactsSort` keep the impl pinned to shared.
+- **Cross-feature UI primitives** (`SupporterBadge`, `IsSupporter`, `DayPlanRow`, `RecurringPlanRow`, `YearMilestoneCard`, `MilestoneProgressBar`, `ContactAvatarCropEditor`, `ProfileCard`, `ProfileDetailOverlay`, `TabBar`, `GlassCard`, `PublisherTypeSelector`, `PublisherCheckBoxCard`, `StalenessColorKey`, `SwipeMonthNavigator`, `WeekStripTeaser`, `DefaultNavigationSelector`, `SupporterBenefits`, `DismissableCard`, `CardWithTitle`) — used by 2+ features. They earn a place in `shared/components/` because they have many callers.
+- **Domain types** (`types/contact`, `types/customField`, `types/conversation`, `types/serviceReport`, `types/publisher`, `types/avatar`, `types/here`, `types/markerColors`, `types/textInput`, `types/theme`, `types/rootStack`, `types/homeStack`) — referenced by preferences, sync payloads, widget snapshots, and many features.
+- **Shader stack** (`shaders/*`) — used by `ProfileCard` + `TiltableCard` (shared components) + `preferences`, so it sits in shared.
 
 This is the principled "shared model, feature UI" split for this codebase. A purer per-feature data isolation would require splitting each feature's read of the global store into per-feature snapshot contributors with an app-level composer — a follow-up worth doing if cross-feature coupling continues to grow.
 
@@ -85,10 +86,12 @@ This is the principled "shared model, feature UI" split for this codebase. A pur
 | ESLint boundaries config                 | ✅ in place                                                                                                     |
 | App tier (`src/app/`)                    | ✅ navigation, widgets, sync, deep-links moved                                                                  |
 | `features/*/screens/`                    | ✅ every screen migrated                                                                                        |
-| `features/*/components/`                 | 🟡 obvious per-feature components migrated; cross-cutting UI primitives remain shared                           |
-| `features/*/lib/`                        | ❌ not yet — most lib files turned out to be shared (consumed by multiple features and infra)                   |
-| `features/*/hooks/`                      | ❌ not yet — same                                                                                               |
-| `features/*/stores/`                     | ❌ not yet — store data is consumed cross-feature                                                               |
+| `features/*/components/`                 | ✅ single-feature components migrated; only multi-feature primitives remain shared                              |
+| `features/*/lib/`                        | ✅ single-feature lib migrated (contacts, conversations, home, map, service-reports, settings, updates)         |
+| `features/*/hooks/`                      | ✅ single-feature hooks migrated (contacts, service-reports, settings)                                          |
+| `features/*/stores/`                     | ✅ single-feature stores migrated (contacts, milestones, service-reports, supporter)                            |
+| `features/*/types/`                      | ✅ single-feature types migrated (map)                                                                          |
+| `features/*/constants/`                  | ✅ single-feature constants migrated (updates)                                                                  |
 | Strict `app←shared+feature` (no app→app) | ❌ transitional rule still allows app→app and neverImport→neverImport while a few legacy import patterns settle |
 
 ## Following the pattern
@@ -122,3 +125,8 @@ All compatible with the existing ESLint 8.51 setup — no engine upgrade require
 6. `chore(eslint): drop legacy src/screens & src/stacks patterns`
 7. `refactor(features): extract conversations + milestones components`
 8. `refactor(features): migrate per-feature components into feature folders`
+9. `refactor(features): pull obvious single-feature lib/hooks/stores into feature folders` (settings/lib/appIcon + hooks/useLocale; updates/lib + constants; map/lib/mapCarousel; conversations/lib/storeReview; home/lib/supporterNudge; contacts/hooks; service-reports/hooks + stores/celebrationQueue; milestones/stores/milestoneReveal)
+10. `refactor(features): migrate contact/map/supporter lib + stores into feature folders` (contacts/lib/{customFieldsMigration,contactsSearch,contactShareLink,contactImport}, contacts/stores/contactsSearchStore, contacts/components/SharedGoodNewsListener, settings/lib/hemisphere, map/types/map, supporter/stores/supporter)
+11. `refactor(features): pull rollover, updates lib, and drop dead timeScreen constant`
+12. `refactor(features): pull single-feature components into feature folders` (PinLocation, MapWarningLocationSharingDisabled, ConversationRow → contacts; CategorySegmentBar, CategoriesSection, CreditBadge, CreditInfoSheet, StudiesCard → service-reports; AddEarlierYearSheet, LifetimeHoursCard, MilestoneAdjustSheet → progress; BackupReminder → home; AnnualGoalSelector → settings; ShareAppButton → supporter; ShareAddressSheet → map)
+13. `refactor(features): migrate 4 more single-feature shared components` (CalendarKey → plans; ContributionGraph → home; AheadOrBehindOfSchedule → service-reports; JsonViewer → contacts)

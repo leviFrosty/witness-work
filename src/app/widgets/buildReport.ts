@@ -8,11 +8,11 @@ import {
   getMonthsReports,
   plannedMinutesToCurrentDayForMonth,
   RecurringPlan,
-} from '../serviceReport'
-import { formatMinutes } from '../minutes'
-import i18n, { TranslationKey } from '../locales'
+} from '../../lib/serviceReport'
+import { formatMinutes } from '../../lib/minutes'
+import i18n, { TranslationKey } from '../../lib/locales'
 import { Publisher, PublisherHours } from '../../types/publisher'
-import { getEntryMode } from '../publisherCapabilities'
+import { getEntryMode } from '../../lib/publisherCapabilities'
 import {
   DayPlan,
   MinuteDisplayFormat,

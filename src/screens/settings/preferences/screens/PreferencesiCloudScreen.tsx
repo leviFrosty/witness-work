@@ -23,11 +23,11 @@ import useTheme from '../../../../contexts/theme'
 import i18n from '../../../../lib/locales'
 import { usePreferences } from '../../../../stores/preferences'
 import * as ICloudBridge from '../../../../../modules/icloud-bridge'
-import { iCloudSync } from '../../../../lib/sync/iCloudSync'
+import { iCloudSync } from '../../../../app/sync/iCloudSync'
 import FirstEnableSheet, {
   FirstEnableChoice,
-} from '../../../../components/sync/FirstEnableSheet'
-import { SyncPayload } from '../../../../lib/sync/payload'
+} from '../../../../app/sync/components/FirstEnableSheet'
+import { SyncPayload } from '../../../../app/sync/payload'
 import { useToastController } from '@tamagui/toast'
 
 const TIMESTAMP_FMT = 'MMM D, YYYY h:mm:ss A'

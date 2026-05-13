@@ -7,7 +7,7 @@ import {
   ServiceReportsByYears,
   ServiceReportTombstone,
 } from '../../types/serviceReport'
-import { RecurringPlan } from '../serviceReport'
+import { RecurringPlan } from '../../lib/serviceReport'
 import { SyncPayload } from './payload'
 
 /**

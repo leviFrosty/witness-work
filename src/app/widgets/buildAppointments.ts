@@ -1,7 +1,7 @@
 import moment from 'moment'
 import { Contact } from '../../types/contact'
 import { Conversation } from '../../types/conversation'
-import { isAppointment } from '../conversations'
+import { isAppointment } from '../../lib/conversations'
 
 export type WidgetAppointment = {
   /** Conversation ID — used to deep-link with `highlightedConversationId`. */

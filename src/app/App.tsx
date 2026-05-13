@@ -1,9 +1,9 @@
-import '../env'
-import './lib/locales'
+import '../../env'
+import '../lib/locales'
 import 'react-native-gesture-handler'
 import React, { useEffect, useState } from 'react'
 import { NavigationContainer } from '@react-navigation/native'
-import RootStackComponent from './stacks/RootStack'
+import RootStackComponent from './navigation/RootStack'
 import { SafeAreaProvider } from 'react-native-safe-area-context'
 import * as Notifications from 'expo-notifications'
 import * as Sentry from '@sentry/react-native'
@@ -35,32 +35,32 @@ import {
 import { StatusBar } from 'expo-status-bar'
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
 import { TamaguiProvider } from 'tamagui'
-import tamaguiConfig from '../tamagui.config'
-import ThemeProvider from './providers/ThemeProvider'
-import CustomerProvider from './providers/CustomerProvider'
+import tamaguiConfig from '../../tamagui.config'
+import ThemeProvider from '../providers/ThemeProvider'
+import CustomerProvider from '../providers/CustomerProvider'
 import { ToastProvider, ToastViewport } from '@tamagui/toast'
 import {
   hasMigratedFromAsyncStorage,
   migrateFromAsyncStorage,
-} from './stores/mmkv'
-import { usePreferences } from './stores/preferences'
+} from '../stores/mmkv'
+import { usePreferences } from '../stores/preferences'
 import {
   applyAppIcon,
   determineHemisphere,
   resolvePluginIcon,
-} from './lib/appIcon'
-import useContacts from './stores/contactsStore'
-import { migrateCustomFieldsToIds } from './lib/customFieldsMigration'
-import AnimationViewProvider from './providers/AnimationViewProvider'
-import ConfettiProvider from './providers/ConfettiProvider'
-import useUserLocalePrefs from './hooks/useLocale'
-import { installWidgetSync } from './lib/widgets/widgetSync'
-import { installiCloudSync, iCloudSync } from './lib/sync/iCloudSync'
-import { linking, navigationRef } from './lib/linking'
-import DeepLinkListeners from './components/DeepLinkListeners'
-import useIsSupporter from './hooks/useIsSupporter'
-import useCustomer from './hooks/useCustomer'
-import { useSupporter } from './stores/supporter'
+} from '../lib/appIcon'
+import useContacts from '../stores/contactsStore'
+import { migrateCustomFieldsToIds } from '../lib/customFieldsMigration'
+import AnimationViewProvider from '../providers/AnimationViewProvider'
+import ConfettiProvider from '../providers/ConfettiProvider'
+import useUserLocalePrefs from '../hooks/useLocale'
+import { installWidgetSync } from './widgets/widgetSync'
+import { installiCloudSync, iCloudSync } from './sync/iCloudSync'
+import { linking, navigationRef } from '../lib/linking'
+import DeepLinkListeners from './deep-links/DeepLinkListeners'
+import useIsSupporter from '../hooks/useIsSupporter'
+import useCustomer from '../hooks/useCustomer'
+import { useSupporter } from '../stores/supporter'
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({

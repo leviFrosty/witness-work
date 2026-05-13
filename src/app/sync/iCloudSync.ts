@@ -9,7 +9,7 @@ import { usePreferences } from '../../stores/preferences'
 import { useSupporter } from '../../stores/supporter'
 import { buildPayload, parsePayload, SyncPayload } from './payload'
 import { mergePayload } from './merge'
-import { logger } from '../logger'
+import { logger } from '../../lib/logger'
 import * as Sentry from '@sentry/react-native'
 import * as Device from 'expo-device'
 import { EventSubscription } from 'expo-modules-core'
@@ -21,8 +21,8 @@ import {
   ServiceReportsByYears,
   ServiceReportTombstone,
 } from '../../types/serviceReport'
-import { RecurringPlan } from '../serviceReport'
-import { migrateNormalizeDates } from '../normalizeDate'
+import { RecurringPlan } from '../../lib/serviceReport'
+import { migrateNormalizeDates } from '../../lib/normalizeDate'
 import {
   pushAllImages,
   pullMissingImages,

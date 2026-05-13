@@ -6,14 +6,14 @@ import {
   MinuteDisplayFormat,
   ServiceReportsByYears,
 } from '../../types/serviceReport'
-import { RecurringPlan } from '../serviceReport'
+import { RecurringPlan } from '../../lib/serviceReport'
 import {
   DefaultNavigationMapProvider,
   WidgetAppointmentWindow,
   WidgetContactAction,
   WidgetContactSort,
 } from '../../stores/preferences'
-import i18n from '../locales'
+import i18n from '../../lib/locales'
 import { buildReport, ReportFields } from './buildReport'
 import { buildContacts, WidgetContact } from './buildContacts'
 import { buildAppointments, WidgetAppointment } from './buildAppointments'

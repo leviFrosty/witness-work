@@ -25,8 +25,11 @@ import {
   seasonFor,
   type Hemisphere,
   type Season,
-} from './hemisphere'
-import { usePreferences, type AppIconVariant } from '../stores/preferences'
+} from '../../../lib/hemisphere'
+import {
+  usePreferences,
+  type AppIconVariant,
+} from '../../../stores/preferences'
 
 /**
  * The PascalCase plugin names declared in `app.config.ts` under

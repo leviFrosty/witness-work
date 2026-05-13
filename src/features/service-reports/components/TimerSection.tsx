@@ -10,7 +10,7 @@ import {
   faPause,
   faPlay,
 } from '@fortawesome/free-solid-svg-icons'
-import { useStopWatch } from '../../../hooks/useStopWatch'
+import { useStopWatch } from '../hooks/useStopWatch'
 import useTheme from '../../../contexts/theme'
 import Button from '../../../components/Button'
 import { useNavigation } from '@react-navigation/native'

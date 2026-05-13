@@ -40,7 +40,8 @@
           "src/features/updates/**/*",
           "src/features/onboarding/**/*",
           "src/features/plans/**/*",
-          "src/features/progress/**/*"
+          "src/features/progress/**/*",
+          "src/__tests__/**/*"
         ]
       },
       {
@@ -64,8 +65,7 @@
           "src/assets/**/*",
           "src/locales/**/*",
           "src/shaders/**/*",
-          "src/vendor/**/*",
-          "src/__tests__/**/*"
+          "src/vendor/**/*"
         ]
       },
       {

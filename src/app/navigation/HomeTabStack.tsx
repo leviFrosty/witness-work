@@ -14,13 +14,13 @@ import ProgressScreen from '../../features/progress/screens/ProgressScreen'
 import ScheduleScreen from '../../features/plans/screens/ScheduleScreen'
 import ContactsScreen from '../../features/contacts/screens/ContactsScreen'
 import { HomeTabStackParamList } from '../../types/homeStack'
-import { releaseNotes } from '../../constants/releaseNotes'
+import { releaseNotes } from '../../features/updates/constants/releaseNotes'
 import semver from 'semver'
 import { logger } from '../../lib/logger'
 import { useNavigation } from '@react-navigation/native'
-import { useRollover } from '../../hooks/useRollover'
+import { useRollover } from '../../features/service-reports/hooks/useRollover'
 import { RootStackNavigation } from '../../types/rootStack'
-import { useMilestoneRevealStore } from '../../stores/milestoneReveal'
+import { useMilestoneRevealStore } from '../../features/milestones/stores/milestoneReveal'
 
 /**
  * Version that, on a returning install with `lastAppVersion` strictly less,

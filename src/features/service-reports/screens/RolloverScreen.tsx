@@ -8,7 +8,7 @@ import Text from '../../../components/MyText'
 import ActionButton from '../../../components/ActionButton'
 import Button from '../../../components/Button'
 import useTheme from '../../../contexts/theme'
-import { useRollover } from '../../../hooks/useRollover'
+import { useRollover } from '../hooks/useRollover'
 import i18n from '../../../lib/locales'
 import { RootStackNavigation } from '../../../types/rootStack'
 

@@ -5,7 +5,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
 import useTheme from '../../../contexts/theme'
 import i18n, { TranslationKey } from '../../../lib/locales'
 import { usePreferences } from '../../../stores/preferences'
-import { DID_YOU_KNOW_TIPS } from '../../../lib/didYouKnowTips'
+import { DID_YOU_KNOW_TIPS } from '../lib/didYouKnowTips'
 import Text from '../../../components/MyText'
 
 /**

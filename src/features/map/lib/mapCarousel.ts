@@ -1,4 +1,4 @@
-import { ContactMarker } from '../types/map'
+import { ContactMarker } from '../../../types/map'
 
 /**
  * Returns the index of the contact with the given id in `contactMarkers`, or

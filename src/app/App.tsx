@@ -48,12 +48,12 @@ import {
   applyAppIcon,
   determineHemisphere,
   resolvePluginIcon,
-} from '../lib/appIcon'
+} from '../features/settings/lib/appIcon'
 import useContacts from '../stores/contactsStore'
 import { migrateCustomFieldsToIds } from '../lib/customFieldsMigration'
 import AnimationViewProvider from '../providers/AnimationViewProvider'
 import ConfettiProvider from '../providers/ConfettiProvider'
-import useUserLocalePrefs from '../hooks/useLocale'
+import useUserLocalePrefs from '../features/settings/hooks/useLocale'
 import { installWidgetSync } from './widgets/widgetSync'
 import { installiCloudSync, iCloudSync } from './sync/iCloudSync'
 import { linking, navigationRef } from '../lib/linking'

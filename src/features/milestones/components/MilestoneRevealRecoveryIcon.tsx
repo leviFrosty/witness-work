@@ -14,7 +14,7 @@ import { faGift } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
 import useTheme from '../../../contexts/theme'
 import { usePreferences } from '../../../stores/preferences'
-import { useMilestoneRevealStore } from '../../../stores/milestoneReveal'
+import { useMilestoneRevealStore } from '../stores/milestoneReveal'
 import Haptics from '../../../lib/haptics'
 
 /**

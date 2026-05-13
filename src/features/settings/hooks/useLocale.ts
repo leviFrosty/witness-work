@@ -5,8 +5,8 @@ import {
   DEFAULT_LOCALE,
   handleLangFallback,
   TranslatedLocale,
-} from '../lib/locales'
-import { usePreferences } from '../stores/preferences'
+} from '../../../lib/locales'
+import { usePreferences } from '../../../stores/preferences'
 import { LocaleConfig } from 'react-native-calendars'
 import moment from 'moment'
 

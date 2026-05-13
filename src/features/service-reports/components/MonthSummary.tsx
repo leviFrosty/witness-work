@@ -39,7 +39,7 @@ import {
   monthCelebrationKey,
   resolveTier,
 } from '../../../lib/achievementTier'
-import { useRollover } from '../../../hooks/useRollover'
+import { useRollover } from '../hooks/useRollover'
 import { faRightLeft } from '@fortawesome/free-solid-svg-icons'
 import {
   useAnimatedStyle,
@@ -48,7 +48,7 @@ import {
   withTiming,
 } from 'react-native-reanimated'
 import Haptics from '../../../lib/haptics'
-import useCelebrationQueue from '../../../stores/celebrationQueue'
+import useCelebrationQueue from '../stores/celebrationQueue'
 import {
   CONFETTI_DELAY_MS,
   CONFETTI_DURATION,

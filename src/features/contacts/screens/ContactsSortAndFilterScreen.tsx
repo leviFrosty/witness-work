@@ -25,7 +25,7 @@ import {
 } from '../../../lib/contactsFilters'
 import { ContactSortKey } from '../../../lib/contactsSort'
 import { CustomFieldDefinition } from '../../../types/customField'
-import { useContactsSorted } from '../../../hooks/useContactsSorted'
+import { useContactsSorted } from '../hooks/useContactsSorted'
 import Button from '../../../components/Button'
 import IconButton from '../../../components/IconButton'
 import Text from '../../../components/MyText'

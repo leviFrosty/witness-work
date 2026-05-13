@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, useCallback } from 'react'
-import * as Stopwatch from '../../modules/stopwatch-bridge'
+import * as Stopwatch from '../../../../modules/stopwatch-bridge'
 
 const padStart = (num: number) => num.toString().padStart(2, '0')
 

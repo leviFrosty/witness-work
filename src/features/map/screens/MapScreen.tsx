@@ -56,7 +56,7 @@ import {
 import {
   findContactIndexById,
   reconcileActiveContact,
-} from '../../../lib/mapCarousel'
+} from '../lib/mapCarousel'
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
 import { addressToString, coordinateAsString } from '../../../lib/address'
 

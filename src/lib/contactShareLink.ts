@@ -3,7 +3,7 @@ import { Address, Contact } from '../types/contact'
 import { Conversation } from '../types/conversation'
 import { CustomFieldDefinition } from '../types/customField'
 import { ContactImportData } from './contactImport'
-import { logger } from './logger'
+import { logger } from '../lib/logger'
 
 /**
  * Contact-share universal link encoding.

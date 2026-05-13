@@ -1,7 +1,7 @@
 import moment from 'moment'
 import { Contact } from '../types/contact'
 import { Conversation } from '../types/conversation'
-import { contactStudiedForGivenMonth } from './conversations'
+import { contactStudiedForGivenMonth } from '../lib/conversations'
 
 export const getStudiesForGivenMonth = ({
   contacts,

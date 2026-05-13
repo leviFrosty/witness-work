@@ -1,13 +1,13 @@
 import { TextInput, TouchableOpacity, View } from 'react-native'
-import { Address, Contact } from '../types/contact'
-import useTheme from '../contexts/theme'
+import { Address, Contact } from '../../../types/contact'
+import useTheme from '../../../contexts/theme'
 import { useState } from 'react'
-import Text from './MyText'
-import i18n, { TranslationKey } from '../lib/locales'
-import Button from './Button'
-import Section from './inputs/Section'
-import TextInputRow from './inputs/TextInputRow'
-import PinLocation from './PinLocation'
+import Text from '../../../components/MyText'
+import i18n, { TranslationKey } from '../../../lib/locales'
+import Button from '../../../components/Button'
+import Section from '../../../components/inputs/Section'
+import TextInputRow from '../../../components/inputs/TextInputRow'
+import PinLocation from '../../../components/PinLocation'
 import AddressAutocomplete, { Suggestion } from './AddressAutocomplete'
 import {
   faCircleInfo,
@@ -16,7 +16,7 @@ import {
 } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
 import { IconProp } from '@fortawesome/fontawesome-svg-core'
-import { addressToString } from '../lib/address'
+import { addressToString } from '../../../lib/address'
 
 type Mode = 'search' | 'manual'
 

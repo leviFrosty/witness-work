@@ -11,26 +11,26 @@ import {
 } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
 
-import useTheme from '../contexts/theme'
-import i18n from '../lib/locales'
-import useContacts from '../stores/contactsStore'
+import useTheme from '../../../contexts/theme'
+import i18n from '../../../lib/locales'
+import useContacts from '../../../stores/contactsStore'
 import {
   builtInContactSortOptions,
   usePreferences,
-} from '../stores/preferences'
+} from '../../../stores/preferences'
 import {
   ActiveFilter,
   ComparableOperator,
   TextOperator,
-} from '../lib/contactsFilters'
-import { ContactSortKey } from '../lib/contactsSort'
-import { CustomFieldDefinition } from '../types/customField'
-import { useContactsSorted } from '../hooks/useContactsSorted'
-import Button from '../components/Button'
-import IconButton from '../components/IconButton'
-import Text from '../components/MyText'
-import ContactsFilterSheet from '../components/contacts/ContactsFilterSheet'
-import { RootStackNavigation } from '../types/rootStack'
+} from '../../../lib/contactsFilters'
+import { ContactSortKey } from '../../../lib/contactsSort'
+import { CustomFieldDefinition } from '../../../types/customField'
+import { useContactsSorted } from '../../../hooks/useContactsSorted'
+import Button from '../../../components/Button'
+import IconButton from '../../../components/IconButton'
+import Text from '../../../components/MyText'
+import ContactsFilterSheet from '../components/ContactsFilterSheet'
+import { RootStackNavigation } from '../../../types/rootStack'
 
 const operatorLabel = (op: TextOperator | ComparableOperator): string => {
   switch (op) {

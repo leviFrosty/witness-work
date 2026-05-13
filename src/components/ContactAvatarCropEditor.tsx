@@ -25,8 +25,8 @@ import * as Haptics from 'expo-haptics'
 import { GlassView } from 'expo-glass-effect'
 import { BlurView } from 'expo-blur'
 import useTheme from '../contexts/theme'
-import Text from './MyText'
-import ActionButton from './ActionButton'
+import Text from '../components/MyText'
+import ActionButton from '../components/ActionButton'
 import i18n from '../lib/locales'
 import {
   CropRect,

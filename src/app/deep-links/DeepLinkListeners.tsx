@@ -1,4 +1,4 @@
-import ContactImportListener from '../../components/ContactImportListener'
+import ContactImportListener from '../../features/contacts/components/ContactImportListener'
 import SharedGoodNewsListener from '../../components/SharedGoodNewsListener'
 
 /**

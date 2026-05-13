@@ -1,17 +1,17 @@
 import { View, Alert } from 'react-native'
-import Text from './MyText'
-import useTheme from '../contexts/theme'
-import Card from './Card'
-import { Contact } from '../types/contact'
-import useConversations from '../stores/conversationStore'
+import Text from '../../../components/MyText'
+import useTheme from '../../../contexts/theme'
+import Card from '../../../components/Card'
+import { Contact } from '../../../types/contact'
+import useConversations from '../../../stores/conversationStore'
 import { useMemo, useState } from 'react'
 import moment from 'moment'
-import i18n from '../lib/locales'
+import i18n from '../../../lib/locales'
 import {
   contactHasAtLeastOneStudy,
   contactStudiedForGivenMonth,
-} from '../lib/conversations'
-import IconButton from './IconButton'
+} from '../../../lib/conversations'
+import IconButton from '../../../components/IconButton'
 import {
   faBook,
   faChevronRight,
@@ -25,24 +25,27 @@ import {
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
 import { IconDefinition } from '@fortawesome/fontawesome-svg-core'
 import { FuseResultMatch } from 'fuse.js'
-import Button from './Button'
+import Button from '../../../components/Button'
 import { Swipeable } from 'react-native-gesture-handler'
-import Haptics from '../lib/haptics'
-import useContacts from '../stores/contactsStore'
-import SwipeableArchive from './swipeableActions/Archive'
-import SwipeableDismiss from './swipeableActions/Dismiss'
+import Haptics from '../../../lib/haptics'
+import useContacts from '../../../stores/contactsStore'
+import SwipeableArchive from '../../../components/swipeableActions/Archive'
+import SwipeableDismiss from '../../../components/swipeableActions/Dismiss'
 import DismissContactSheet from './DismissContactSheet'
 import { useToastController } from '@tamagui/toast'
-import Avatar from './Avatar'
-import { getContactStaleness, stalenessToColor } from '../lib/contactStaleness'
-import { useMarkerColors } from '../hooks/useMarkerColors'
+import Avatar from '../../../components/Avatar'
+import {
+  getContactStaleness,
+  stalenessToColor,
+} from '../../../lib/contactStaleness'
+import { useMarkerColors } from '../../../hooks/useMarkerColors'
 import {
   findNameMatch,
   MatchSource,
   pickPreviewMatch,
-} from '../lib/contactsSearch'
-import HighlightedText from './contacts/HighlightedText'
-import GenderIcon from './GenderIcon'
+} from '../../../lib/contactsSearch'
+import HighlightedText from './HighlightedText'
+import GenderIcon from '../../../components/GenderIcon'
 
 const SNIPPET_CONTEXT_CHARS = 24
 

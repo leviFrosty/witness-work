@@ -4,8 +4,8 @@ import { Alert } from 'react-native'
 import { Contact } from '../types/contact'
 import { Conversation } from '../types/conversation'
 import { CustomFieldDefinition } from '../types/customField'
-import i18n from './locales'
-import { logger } from './logger'
+import i18n from '../lib/locales'
+import { logger } from '../lib/logger'
 
 export type ContactImportData = {
   version: '1.0'

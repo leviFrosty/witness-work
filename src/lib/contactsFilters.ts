@@ -5,7 +5,7 @@ import { CustomFieldDefinition } from '../types/customField'
 import {
   contactHasAtLeastOneStudy,
   contactStudiedForGivenMonth,
-} from './conversations'
+} from '../lib/conversations'
 import { ContactStaleness, getContactStaleness } from './contactStaleness'
 
 export type TextOperator =

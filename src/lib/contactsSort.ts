@@ -6,7 +6,7 @@ import { ContactStaleness, getContactStaleness } from './contactStaleness'
 import {
   contactMostRecentStudy,
   contactStudiedForGivenMonth,
-} from './conversations'
+} from '../lib/conversations'
 import { getMostRecentConversationForContact } from './contacts'
 
 export type ContactSortDirection = 'asc' | 'desc'

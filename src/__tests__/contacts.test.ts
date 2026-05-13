@@ -1,6 +1,6 @@
 import moment from 'moment'
 import { getStudiesForGivenMonth } from '../lib/contacts'
-import { createFakeContacts } from './__data__/contacts'
+import { createFakeContacts } from '../__tests__/__data__/contacts'
 import { Conversation } from '../types/conversation'
 import { describe, expect, it } from 'vitest'
 

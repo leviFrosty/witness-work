@@ -1,12 +1,12 @@
 import moment from 'moment'
-import { createFakeContact } from './__data__/contacts'
+import { createFakeContact } from '@/__tests__/__data__/contacts'
 import {
   contactHasAtLeastOneStudy,
   contactMostRecentStudy,
   contactStudiedForGivenMonth,
   upcomingFollowUpConversations,
-} from '../lib/conversations'
-import { Conversation } from '../types/conversation'
+} from '@/lib/conversations'
+import { Conversation } from '@/types/conversation'
 import { describe, expect, it } from 'vitest'
 
 const testDate = moment({ year: 2023, month: 10 }).toDate()

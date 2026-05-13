@@ -1,6 +1,6 @@
 import { View, ViewProps } from 'react-native'
-import { ThemeSizes } from '../types/theme'
-import useTheme from '../contexts/theme'
+import { ThemeSizes } from '@/types/theme'
+import useTheme from '@/contexts/theme'
 
 interface CircleProps extends ViewProps {
   color: string

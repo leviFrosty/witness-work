@@ -1,52 +1,49 @@
 import { TextInput as RNTextInput, View } from 'react-native'
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
-import ActionButton from '../../../components/ActionButton'
-import useServiceReport from '../../../stores/serviceReport'
+import ActionButton from '@/components/ActionButton'
+import useServiceReport from '@/stores/serviceReport'
 import * as Crypto from 'expo-crypto'
 import * as Notifications from 'expo-notifications'
 import * as Sentry from '@sentry/react-native'
 import { useState, useEffect, useMemo, useRef } from 'react'
 import { useToastController } from '@tamagui/toast'
-import i18n, { TranslationKey } from '../../../lib/locales'
-import Text from '../../../components/MyText'
-import useTheme from '../../../contexts/theme'
-import Section from '../../../components/inputs/Section'
-import InputRowContainer from '../../../components/inputs/InputRowContainer'
-import CheckboxWithLabel from '../../../components/inputs/CheckboxWithLabel'
-import XView from '../../../components/layout/XView'
-import Button from '../../../components/Button'
-import IconButton from '../../../components/IconButton'
+import i18n, { TranslationKey } from '@/lib/locales'
+import Text from '@/components/MyText'
+import useTheme from '@/contexts/theme'
+import Section from '@/components/inputs/Section'
+import InputRowContainer from '@/components/inputs/InputRowContainer'
+import CheckboxWithLabel from '@/components/inputs/CheckboxWithLabel'
+import XView from '@/components/layout/XView'
+import Button from '@/components/Button'
+import IconButton from '@/components/IconButton'
 import { faCalendarDay, faRepeat } from '@fortawesome/free-solid-svg-icons'
 import RNDateTimePicker from '@react-native-community/datetimepicker'
-import DateTimePicker from '../../../components/DateTimePicker'
-import Select from '../../../components/Select'
-import SelectWheel from '../../../components/SelectWheel'
+import DateTimePicker from '@/components/DateTimePicker'
+import Select from '@/components/Select'
+import SelectWheel from '@/components/SelectWheel'
 import { getLocales } from 'expo-localization'
-import Wrapper from '../../../components/layout/Wrapper'
+import Wrapper from '@/components/layout/Wrapper'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import moment from 'moment'
 import Checkbox from 'expo-checkbox'
 import { NativeStackScreenProps } from '@react-navigation/native-stack'
-import {
-  RecurringPlanFrequencies,
-  getMonthsReports,
-} from '../../../lib/serviceReport'
+import { RecurringPlanFrequencies, getMonthsReports } from '@/lib/serviceReport'
 import {
   combineDateAndStartTime,
   formatStartTime,
   splitDateAndStartTime,
-} from '../../../lib/normalizeDate'
-import { deriveOffsetFromDates } from '../../../lib/notificationOffset'
+} from '@/lib/normalizeDate'
+import { deriveOffsetFromDates } from '@/lib/notificationOffset'
 import {
   DEFAULT_PLAN_NOTIFICATION_OFFSET,
   usePreferences,
-} from '../../../stores/preferences'
-import useNotifications from '../../../hooks/notifications'
-import { Notification } from '../../../types/conversation'
+} from '@/stores/preferences'
+import useNotifications from '@/hooks/notifications'
+import { Notification } from '@/types/conversation'
 
-import TextInput from '../../../components/TextInput'
-import { RootStackParamList } from '../../../types/rootStack'
-import DayHistoryView from '../../service-reports/components/DayHistoryView'
+import TextInput from '@/components/TextInput'
+import { RootStackParamList } from '@/types/rootStack'
+import DayHistoryView from '@/features/service-reports/components/DayHistoryView'
 
 type NotifyMeOffset = {
   amount: number

@@ -1,11 +1,11 @@
 import * as DocumentPicker from 'expo-document-picker'
 import * as FileSystem from 'expo-file-system/legacy'
 import { Alert } from 'react-native'
-import { Contact } from '../../../types/contact'
-import { Conversation } from '../../../types/conversation'
-import { CustomFieldDefinition } from '../../../types/customField'
-import i18n from '../../../lib/locales'
-import { logger } from '../../../lib/logger'
+import { Contact } from '@/types/contact'
+import { Conversation } from '@/types/conversation'
+import { CustomFieldDefinition } from '@/types/customField'
+import i18n from '@/lib/locales'
+import { logger } from '@/lib/logger'
 
 export type ContactImportData = {
   version: '1.0'

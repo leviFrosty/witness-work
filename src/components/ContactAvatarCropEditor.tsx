@@ -24,17 +24,17 @@ import { faRotateLeft, faXmark } from '@fortawesome/free-solid-svg-icons'
 import * as Haptics from 'expo-haptics'
 import { GlassView } from 'expo-glass-effect'
 import { BlurView } from 'expo-blur'
-import useTheme from '../contexts/theme'
-import Text from '../components/MyText'
-import ActionButton from '../components/ActionButton'
-import i18n from '../lib/locales'
+import useTheme from '@/contexts/theme'
+import Text from '@/components/MyText'
+import ActionButton from '@/components/ActionButton'
+import i18n from '@/lib/locales'
 import {
   CropRect,
   cropAndSaveImage,
   stripCacheBuster,
   withCacheBuster,
-} from '../lib/contactAvatarFiles'
-import { logger } from '../lib/logger'
+} from '@/lib/contactAvatarFiles'
+import { logger } from '@/lib/logger'
 
 interface Props {
   visible: boolean

@@ -1,13 +1,13 @@
 import { View } from 'react-native'
-import Section from '../../../../components/inputs/Section'
-import InputRowContainer from '../../../../components/inputs/InputRowContainer'
-import i18n from '../../../../lib/locales'
-import Select from '../../../../components/Select'
-import { usePreferences } from '../../../../stores/preferences'
-import Text from '../../../../components/MyText'
+import Section from '@/components/inputs/Section'
+import InputRowContainer from '@/components/inputs/InputRowContainer'
+import i18n from '@/lib/locales'
+import Select from '@/components/Select'
+import { usePreferences } from '@/stores/preferences'
+import Text from '@/components/MyText'
 import { useContext } from 'react'
-import { ThemeContext } from '../../../../contexts/theme'
-import { MinuteDisplayFormat } from '../../../../types/serviceReport'
+import { ThemeContext } from '@/contexts/theme'
+import { MinuteDisplayFormat } from '@/types/serviceReport'
 
 const AppearancePreferencesSection = () => {
   const { set, fontSizeOffset, colorScheme, timeDisplayFormat, startOfWeek } =

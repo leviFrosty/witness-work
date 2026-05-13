@@ -1,11 +1,11 @@
 import moment from 'moment'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-vi.mock('../lib/logger', () => import('./mocks/logger'))
-vi.mock('../stores/mmkv', () => import('./mocks/mmkv'))
+vi.mock('@/lib/logger', () => import('@/__tests__/mocks/logger'))
+vi.mock('@/stores/mmkv', () => import('@/__tests__/mocks/mmkv'))
 vi.mock(
   '@react-native-async-storage/async-storage',
-  () => import('./mocks/asyncStorage')
+  () => import('@/__tests__/mocks/asyncStorage')
 )
 vi.mock('expo-constants', () => ({
   default: { expoConfig: { version: '1.0.0' } },
@@ -14,18 +14,18 @@ vi.mock('expo-device', () => ({ DeviceType: { TABLET: 2 }, deviceType: 1 }))
 vi.mock('expo-localization', () => ({
   getLocales: () => [{ languageTag: 'en-US' }],
 }))
-vi.mock('../lib/locales', () => ({
+vi.mock('@/lib/locales', () => ({
   default: { t: (k: string) => k },
 }))
-vi.mock('../shaders/registry', () => ({
+vi.mock('@/shaders/registry', () => ({
   DEFAULT_SHADER_ID: 'holographic',
 }))
 
-import useServiceReport from '../stores/serviceReport'
+import useServiceReport from '@/stores/serviceReport'
 import {
   NON_SYNCABLE_PREFERENCE_KEYS,
   usePreferences,
-} from '../stores/preferences'
+} from '@/stores/preferences'
 
 describe('DayPlan.source field', () => {
   beforeEach(() => {

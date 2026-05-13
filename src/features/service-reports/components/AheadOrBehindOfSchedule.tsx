@@ -1,6 +1,6 @@
 import { useMemo, useEffect } from 'react'
-import useTheme from '../../../contexts/theme'
-import Text from '../../../components/MyText'
+import useTheme from '@/contexts/theme'
+import Text from '@/components/MyText'
 import moment from 'moment'
 import {
   adjustedMinutesForSpecificMonth,
@@ -8,14 +8,14 @@ import {
   totalMinutesForSpecificMonthUpToDayOfMonth,
   calculatePlannedMinutesToCurrentDayOptimized,
   generatePlanHash,
-} from '../../../lib/serviceReport'
-import useServiceReport from '../../../stores/serviceReport'
-import { usePreferences } from '../../../stores/preferences'
-import i18n from '../../../lib/locales'
-import { ThemeSizes } from '../../../types/theme'
-import { useFormattedMinutes } from '../../../lib/minutes'
-import { useTimeCache, getCurrentDayCacheKey } from '../../../stores/timeCache'
-import { logger } from '../../../lib/logger'
+} from '@/lib/serviceReport'
+import useServiceReport from '@/stores/serviceReport'
+import { usePreferences } from '@/stores/preferences'
+import i18n from '@/lib/locales'
+import { ThemeSizes } from '@/types/theme'
+import { useFormattedMinutes } from '@/lib/minutes'
+import { useTimeCache, getCurrentDayCacheKey } from '@/stores/timeCache'
+import { logger } from '@/lib/logger'
 
 type AheadOrBehindOfMonthScheduleProps = {
   month: number

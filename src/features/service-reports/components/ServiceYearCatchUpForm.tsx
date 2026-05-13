@@ -9,16 +9,16 @@ import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view
 import * as Crypto from 'expo-crypto'
 import moment from 'moment'
 
-import Text from '../../../components/MyText'
-import TextInput from '../../../components/TextInput'
-import ActionButton from '../../../components/ActionButton'
-import Button from '../../../components/Button'
-import useTheme from '../../../contexts/theme'
-import i18n from '../../../lib/locales'
-import { usePreferences } from '../../../stores/preferences'
-import useServiceReport from '../../../stores/serviceReport'
-import { getServiceYearFromDate } from '../../../lib/serviceReport'
-import { ServiceReportsByYears } from '../../../types/serviceReport'
+import Text from '@/components/MyText'
+import TextInput from '@/components/TextInput'
+import ActionButton from '@/components/ActionButton'
+import Button from '@/components/Button'
+import useTheme from '@/contexts/theme'
+import i18n from '@/lib/locales'
+import { usePreferences } from '@/stores/preferences'
+import useServiceReport from '@/stores/serviceReport'
+import { getServiceYearFromDate } from '@/lib/serviceReport'
+import { ServiceReportsByYears } from '@/types/serviceReport'
 
 interface MonthRow {
   monthIndex: number

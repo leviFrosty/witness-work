@@ -1,10 +1,13 @@
-import useContacts from '../../stores/contactsStore'
-import useConversations from '../../stores/conversationStore'
-import useServiceReport from '../../stores/serviceReport'
-import { usePreferences } from '../../stores/preferences'
-import { NON_SYNCABLE_PREFERENCE_KEYS } from '../../stores/preferences'
-import { ProfileAvatar } from '../../types/avatar'
-import { sanitizeContactAvatar, sanitizeProfileAvatar } from './avatarPayload'
+import useContacts from '@/stores/contactsStore'
+import useConversations from '@/stores/conversationStore'
+import useServiceReport from '@/stores/serviceReport'
+import { usePreferences } from '@/stores/preferences'
+import { NON_SYNCABLE_PREFERENCE_KEYS } from '@/stores/preferences'
+import { ProfileAvatar } from '@/types/avatar'
+import {
+  sanitizeContactAvatar,
+  sanitizeProfileAvatar,
+} from '@/app/sync/avatarPayload'
 
 /**
  * Bumped whenever the payload shape changes in a breaking way. Consumers reject

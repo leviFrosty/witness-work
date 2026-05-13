@@ -1,9 +1,9 @@
 import { ReactNode } from 'react'
 import { StyleSheet, View, ViewProps, ViewStyle } from 'react-native'
 import { BlurView } from 'expo-blur'
-import useTheme from '../contexts/theme'
-import Button from './Button'
-import Text from './MyText'
+import useTheme from '@/contexts/theme'
+import Button from '@/components/Button'
+import Text from '@/components/MyText'
 
 export type SegmentedVariant = 'glass' | 'pill' | 'bordered'
 

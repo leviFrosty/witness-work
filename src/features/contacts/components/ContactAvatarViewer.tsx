@@ -38,11 +38,11 @@ import {
   faXmark,
 } from '@fortawesome/free-solid-svg-icons'
 import moment from 'moment'
-import useTheme from '../../../contexts/theme'
-import Text from '../../../components/MyText'
-import i18n from '../../../lib/locales'
-import { Contact } from '../../../types/contact'
-import useContacts from '../../../stores/contactsStore'
+import useTheme from '@/contexts/theme'
+import Text from '@/components/MyText'
+import i18n from '@/lib/locales'
+import { Contact } from '@/types/contact'
+import useContacts from '@/stores/contactsStore'
 import {
   cropAndSaveAvatar,
   croppedAvatarPath,
@@ -51,9 +51,9 @@ import {
   originalExists,
   stripCacheBuster,
   withCacheBuster,
-} from '../../../lib/contactAvatarFiles'
-import { logger } from '../../../lib/logger'
-import ContactAvatarCropEditor from '../../../components/ContactAvatarCropEditor'
+} from '@/lib/contactAvatarFiles'
+import { logger } from '@/lib/logger'
+import ContactAvatarCropEditor from '@/components/ContactAvatarCropEditor'
 
 interface Props {
   visible: boolean

@@ -1,15 +1,12 @@
 import moment from 'moment'
-import { Publisher } from '../../../types/publisher'
-import {
-  ServiceReport,
-  ServiceReportsByYears,
-} from '../../../types/serviceReport'
-import { normalizeDateForStorage } from '../../../lib/normalizeDate'
+import { Publisher } from '@/types/publisher'
+import { ServiceReport, ServiceReportsByYears } from '@/types/serviceReport'
+import { normalizeDateForStorage } from '@/lib/normalizeDate'
 import {
   adjustedMinutesForSpecificMonth,
   getMonthsReports,
   getServiceYearFromDate,
-} from '../../../lib/serviceReport'
+} from '@/lib/serviceReport'
 
 export type PendingRollover = {
   sourceYear: number

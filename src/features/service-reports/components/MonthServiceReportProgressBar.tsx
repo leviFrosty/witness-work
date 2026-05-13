@@ -1,17 +1,17 @@
 import { View, ViewProps, Animated, StyleProp, ViewStyle } from 'react-native'
 import { useCallback, useMemo, useEffect, useRef, useState } from 'react'
-import { usePreferences } from '../../../stores/preferences'
-import { useServiceReport } from '../../../stores/serviceReport'
-import useTheme from '../../../contexts/theme'
+import { usePreferences } from '@/stores/preferences'
+import { useServiceReport } from '@/stores/serviceReport'
+import useTheme from '@/contexts/theme'
 import {
   adjustedMinutesForSpecificMonth,
   calculateProgress,
   getMonthsReports,
   getTotalMinutesDetailedForSpecificMonth,
-} from '../../../lib/serviceReport'
-import Text from '../../../components/MyText'
-import i18n from '../../../lib/locales'
-import Circle from '../../../components/Circle'
+} from '@/lib/serviceReport'
+import Text from '@/components/MyText'
+import i18n from '@/lib/locales'
+import Circle from '@/components/Circle'
 
 interface ProgressBarSegmentBaseProps extends ViewProps {
   borderRadiusLeft?: boolean

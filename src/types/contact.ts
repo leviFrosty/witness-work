@@ -1,4 +1,4 @@
-import { ProfileAvatar } from './avatar'
+import { ProfileAvatar } from '@/types/avatar'
 
 export type Address = {
   line1?: string

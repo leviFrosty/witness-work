@@ -20,14 +20,14 @@ import Svg, {
   Circle,
 } from 'react-native-svg'
 
-import IconButton from '../../../components/IconButton'
-import Text from '../../../components/MyText'
-import useTheme from '../../../contexts/theme'
-import i18n, { _i18n } from '../../../lib/locales'
-import Haptics from '../../../lib/haptics'
-import useMonthReportData from '../hooks/useMonthReportData'
-import usePublisher from '../../../hooks/usePublisher'
-import { RootStackParamList } from '../../../types/rootStack'
+import IconButton from '@/components/IconButton'
+import Text from '@/components/MyText'
+import useTheme from '@/contexts/theme'
+import i18n, { _i18n } from '@/lib/locales'
+import Haptics from '@/lib/haptics'
+import useMonthReportData from '@/features/service-reports/hooks/useMonthReportData'
+import usePublisher from '@/hooks/usePublisher'
+import { RootStackParamList } from '@/types/rootStack'
 
 type Props = NativeStackScreenProps<RootStackParamList, 'ServiceReportView'>
 

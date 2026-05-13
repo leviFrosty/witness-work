@@ -6,7 +6,7 @@ import {
   GestureDetector,
 } from 'react-native-gesture-handler'
 
-import Haptics from '../lib/haptics'
+import Haptics from '@/lib/haptics'
 
 interface SwipeMonthNavigatorProps {
   onSwipeForward: () => void

@@ -1,5 +1,5 @@
 import { useContext } from 'react'
-import { AnimationViewContext } from '../contexts/AnimationView'
+import { AnimationViewContext } from '@/contexts/AnimationView'
 
 const useAnimation = () => {
   const context = useContext(AnimationViewContext)

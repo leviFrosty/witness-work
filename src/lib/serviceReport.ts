@@ -1,5 +1,5 @@
 import _ from 'lodash'
-import { Publisher } from '../types/publisher'
+import { Publisher } from '@/types/publisher'
 import {
   DayPlan,
   MonthlyByWeekdayConfig,
@@ -9,16 +9,16 @@ import {
   ServiceReport,
   ServiceReportsByYears,
   ServiceYear,
-} from '../types/serviceReport'
+} from '@/types/serviceReport'
 import moment from 'moment'
-import { monthCreditMaxMinutes } from '../constants/serviceReports'
-import { creditCapMinutesFor, getEntryMode } from './publisherCapabilities'
-import { logger } from './logger'
+import { monthCreditMaxMinutes } from '@/constants/serviceReports'
+import { creditCapMinutesFor, getEntryMode } from '@/lib/publisherCapabilities'
+import { logger } from '@/lib/logger'
 import {
   DEFAULT_START_TIME_IN_MINUTES,
   momentStoredDate,
   normalizeDateForStorage,
-} from './normalizeDate'
+} from '@/lib/normalizeDate'
 
 // Re-exported for backwards compatibility — canonical home is `types/serviceReport`.
 export { RecurringPlanFrequencies }

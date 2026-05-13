@@ -7,7 +7,7 @@ import {
   parseContactMarker,
   isProfileMarker,
   isValidImageFilename,
-} from '../imageNames'
+} from '@/app/sync/imageNames'
 
 describe('imageNames', () => {
   describe('filenameForContact', () => {

@@ -35,13 +35,13 @@ import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
 import { BlurView } from 'expo-blur'
 import Constants from 'expo-constants'
 import { Image as ExpoImage } from 'expo-image'
-import Text from '../../../components/MyText'
-import IconButton from '../../../components/IconButton'
-import ActionButton from '../../../components/ActionButton'
-import useTheme from '../../../contexts/theme'
-import i18n, { TranslationKey } from '../../../lib/locales'
-import { usePreferences } from '../../../stores/preferences'
-import { RootStackNavigation } from '../../../types/rootStack'
+import Text from '@/components/MyText'
+import IconButton from '@/components/IconButton'
+import ActionButton from '@/components/ActionButton'
+import useTheme from '@/contexts/theme'
+import i18n, { TranslationKey } from '@/lib/locales'
+import { usePreferences } from '@/stores/preferences'
+import { RootStackNavigation } from '@/types/rootStack'
 
 const HERO_FEATURES = [
   'liquidGlass',
@@ -971,7 +971,7 @@ const ClosingThanks = ({ onClose }: { onClose: () => void }) => {
       </Text>
       <View style={styles.closingSignature}>
         <ExpoImage
-          source={require('../../../assets/signature.png')}
+          source={require('@/assets/signature.png')}
           style={styles.closingSignatureImage}
           contentFit='contain'
           cachePolicy='memory-disk'

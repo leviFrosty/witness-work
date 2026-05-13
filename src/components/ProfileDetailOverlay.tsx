@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import useDailyMinutes from '../hooks/useDailyMinutes'
+import useDailyMinutes from '@/hooks/useDailyMinutes'
 import {
   Modal,
   Pressable,
@@ -24,26 +24,26 @@ import Animated, {
   useSharedValue,
   withSpring,
 } from 'react-native-reanimated'
-import useTheme from '../contexts/theme'
-import { usePreferences } from '../stores/preferences'
-import usePublisher from '../hooks/usePublisher'
-import useIsSupporter from '../hooks/useIsSupporter'
-import useConversations from '../stores/conversationStore'
-import Text from './MyText'
-import IconButton from './IconButton'
-import Avatar from './Avatar'
-import { RootStackNavigation } from '../types/rootStack'
-import MonthlyRoutine from './MonthlyRoutine'
-import SinceBadge from './SinceBadge'
-import i18n from '../lib/locales'
-import { getStartDateLabels } from '../constants/publisher'
+import useTheme from '@/contexts/theme'
+import { usePreferences } from '@/stores/preferences'
+import usePublisher from '@/hooks/usePublisher'
+import useIsSupporter from '@/hooks/useIsSupporter'
+import useConversations from '@/stores/conversationStore'
+import Text from '@/components/MyText'
+import IconButton from '@/components/IconButton'
+import Avatar from '@/components/Avatar'
+import { RootStackNavigation } from '@/types/rootStack'
+import MonthlyRoutine from '@/components/MonthlyRoutine'
+import SinceBadge from '@/components/SinceBadge'
+import i18n from '@/lib/locales'
+import { getStartDateLabels } from '@/constants/publisher'
 import {
   consecutiveMonthsStreak,
   consecutiveWeeksStreak,
   daysLogged,
   minutesInTrailingDays,
   totalMinutes,
-} from '../lib/profileStats'
+} from '@/lib/profileStats'
 
 export type OriginRect = { x: number; y: number; width: number; height: number }
 

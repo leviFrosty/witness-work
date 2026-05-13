@@ -1,11 +1,11 @@
 import { Sheet } from 'tamagui'
-import Text from '../../../components/MyText'
-import i18n from '../../../lib/locales'
-import Button from '../../../components/Button'
+import Text from '@/components/MyText'
+import i18n from '@/lib/locales'
+import Button from '@/components/Button'
 import { Share, View } from 'react-native'
-import IconButton from '../../../components/IconButton'
+import IconButton from '@/components/IconButton'
 import { faApple, faGoogle } from '@fortawesome/free-brands-svg-icons'
-import useTheme from '../../../contexts/theme'
+import useTheme from '@/contexts/theme'
 
 export type MapShareSheet = {
   open: boolean

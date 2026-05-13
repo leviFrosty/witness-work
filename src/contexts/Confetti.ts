@@ -1,5 +1,5 @@
 import { createContext } from 'react'
-import type { ConfettiConfig } from '../vendor/ConfettiSkia'
+import type { ConfettiConfig } from '@/vendor/ConfettiSkia'
 
 export type FireOpts = {
   /** Particles per burst. Default 28. */

@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import { monthCelebrationKey } from '../../../lib/achievementTier'
+import { monthCelebrationKey } from '@/lib/achievementTier'
 
 /**
  * Cross-screen handoff for the post-submit fireworks celebration on the

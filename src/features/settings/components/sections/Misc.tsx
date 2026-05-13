@@ -1,7 +1,7 @@
 import { View } from 'react-native'
-import i18n from '../../../../lib/locales'
-import Section from '../../../../components/inputs/Section'
-import InputRowButton from '../../../../components/inputs/InputRowButton'
+import i18n from '@/lib/locales'
+import Section from '@/components/inputs/Section'
+import InputRowButton from '@/components/inputs/InputRowButton'
 import {
   faArrowUpRightFromSquare,
   faChevronRight,
@@ -9,11 +9,11 @@ import {
   faFileContract,
   faTag,
 } from '@fortawesome/free-solid-svg-icons'
-import IconButton from '../../../../components/IconButton'
-import links from '../../../../constants/links'
-import SectionTitle from '../shared/SectionTitle'
-import { openURL } from '../../../../lib/links'
-import { SettingsSectionProps } from '../../screens/settingScreen'
+import IconButton from '@/components/IconButton'
+import links from '@/constants/links'
+import SectionTitle from '@/features/settings/components/shared/SectionTitle'
+import { openURL } from '@/lib/links'
+import { SettingsSectionProps } from '@/features/settings/screens/settingScreen'
 
 const MiscSection = ({ handleNavigate }: SettingsSectionProps) => {
   return (

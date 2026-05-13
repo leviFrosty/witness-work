@@ -1,10 +1,10 @@
-import useTheme from '../../../contexts/theme'
-import AheadOrBehindOfMonthSchedule from './AheadOrBehindOfSchedule'
+import useTheme from '@/contexts/theme'
+import AheadOrBehindOfMonthSchedule from '@/features/service-reports/components/AheadOrBehindOfSchedule'
 import _ from 'lodash'
 import { useNavigation } from '@react-navigation/native'
-import MonthServiceReportProgressBar from './MonthServiceReportProgressBar'
-import { usePreferences } from '../../../stores/preferences'
-import useServiceReport from '../../../stores/serviceReport'
+import MonthServiceReportProgressBar from '@/features/service-reports/components/MonthServiceReportProgressBar'
+import { usePreferences } from '@/stores/preferences'
+import useServiceReport from '@/stores/serviceReport'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import {
   adjustedMinutesForSpecificMonth,
@@ -13,15 +13,15 @@ import {
   getDaysLeftInCurrentMonth,
   getMonthsReports,
   plannedMinutesToCurrentDayForMonth,
-} from '../../../lib/serviceReport'
+} from '@/lib/serviceReport'
 import moment from 'moment'
-import i18n from '../../../lib/locales'
-import Button from '../../../components/Button'
+import i18n from '@/lib/locales'
+import Button from '@/components/Button'
 import { View } from 'react-native'
-import Text from '../../../components/MyText'
-import { formatMinutes } from '../../../lib/minutes'
-import { RootStackNavigation } from '../../../types/rootStack'
-import { HomeTabStackNavigation } from '../../../types/homeStack'
+import Text from '@/components/MyText'
+import { formatMinutes } from '@/lib/minutes'
+import { RootStackNavigation } from '@/types/rootStack'
+import { HomeTabStackNavigation } from '@/types/homeStack'
 
 export default function HourEntryCard() {
   const theme = useTheme()

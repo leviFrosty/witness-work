@@ -8,17 +8,17 @@ import {
   getMonthsReports,
   plannedMinutesToCurrentDayForMonth,
   RecurringPlan,
-} from '../../lib/serviceReport'
-import { formatMinutes } from '../../lib/minutes'
-import i18n, { TranslationKey } from '../../lib/locales'
-import { Publisher, PublisherHours } from '../../types/publisher'
-import { getEntryMode } from '../../lib/publisherCapabilities'
+} from '@/lib/serviceReport'
+import { formatMinutes } from '@/lib/minutes'
+import i18n, { TranslationKey } from '@/lib/locales'
+import { Publisher, PublisherHours } from '@/types/publisher'
+import { getEntryMode } from '@/lib/publisherCapabilities'
 import {
   DayPlan,
   MinuteDisplayFormat,
   ServiceReportsByYears,
-} from '../../types/serviceReport'
-import { Conversation } from '../../types/conversation'
+} from '@/types/serviceReport'
+import { Conversation } from '@/types/conversation'
 
 export type ReportMode = 'hours' | 'checkbox'
 

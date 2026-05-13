@@ -1,10 +1,10 @@
 import { useEffect, useMemo } from 'react'
-import { flattenDailyMinutes } from '../lib/profileStats'
-import useServiceReport from '../stores/serviceReport'
+import { flattenDailyMinutes } from '@/lib/profileStats'
+import useServiceReport from '@/stores/serviceReport'
 import {
   generateDailyMinutesFingerprint,
   useTimeCache,
-} from '../stores/timeCache'
+} from '@/stores/timeCache'
 
 /**
  * Returns a `dateStr → minutes` map covering all reports. Reads from the

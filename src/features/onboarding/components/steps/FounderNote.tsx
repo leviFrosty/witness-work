@@ -9,12 +9,12 @@ import { Image as ExpoImage } from 'expo-image'
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
 import { faHeart } from '@fortawesome/free-solid-svg-icons'
-import OnboardingNav from '../OnboardingNav'
-import Text from '../../../../components/MyText'
-import Wrapper from '../../../../components/layout/Wrapper'
-import ActionButton from '../../../../components/ActionButton'
-import useTheme from '../../../../contexts/theme'
-import i18n from '../../../../lib/locales'
+import OnboardingNav from '@/features/onboarding/components/OnboardingNav'
+import Text from '@/components/MyText'
+import Wrapper from '@/components/layout/Wrapper'
+import ActionButton from '@/components/ActionButton'
+import useTheme from '@/contexts/theme'
+import i18n from '@/lib/locales'
 
 interface Props {
   goBack: () => void
@@ -161,7 +161,7 @@ const FounderNote = ({ goBack, goNext }: Props) => {
                 }}
               >
                 <ExpoImage
-                  source={require('../../../../assets/levi-portrait.png')}
+                  source={require('@/assets/levi-portrait.png')}
                   style={{
                     width: IMAGE_SIZE,
                     height: IMAGE_SIZE,
@@ -198,7 +198,7 @@ const FounderNote = ({ goBack, goNext }: Props) => {
 
           <View style={{ marginTop: 8, alignItems: 'flex-start', gap: 4 }}>
             <ExpoImage
-              source={require('../../../../assets/signature.png')}
+              source={require('@/assets/signature.png')}
               style={{
                 width: 180,
                 height: 64,

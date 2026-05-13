@@ -7,13 +7,13 @@ import {
   ServiceReportsByYears,
   ServiceReportTombstone,
   ServiceYear,
-} from '../types/serviceReport'
+} from '@/types/serviceReport'
 import moment from 'moment'
 import {
   getReport,
   RecurringPlan,
   RecurringPlanOverride,
-} from '../lib/serviceReport'
+} from '@/lib/serviceReport'
 import {
   migrateNormalizeDates,
   momentStoredDate,
@@ -21,8 +21,8 @@ import {
   normalizePartialRecurringPlan,
   normalizeRecurringPlan,
   PersistedServiceReportState,
-} from '../lib/normalizeDate'
-import { hasMigratedFromAsyncStorage, MmkvStorage } from './mmkv'
+} from '@/lib/normalizeDate'
+import { hasMigratedFromAsyncStorage, MmkvStorage } from '@/stores/mmkv'
 import * as Notifications from 'expo-notifications'
 
 const initialState = {

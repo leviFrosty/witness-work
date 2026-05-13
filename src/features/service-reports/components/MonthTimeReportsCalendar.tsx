@@ -1,13 +1,13 @@
 import { Calendar } from 'react-native-calendars'
-import { ServiceReport } from '../../../types/serviceReport'
+import { ServiceReport } from '@/types/serviceReport'
 import moment from 'moment'
-import useTheme from '../../../contexts/theme'
+import useTheme from '@/contexts/theme'
 import { MarkedDates } from 'react-native-calendars/src/types'
-import { SelectedDateSheetState } from './SelectedDateSheet'
-import CalendarDay from '../../../components/CalendarDay'
+import { SelectedDateSheetState } from '@/features/service-reports/components/SelectedDateSheet'
+import CalendarDay from '@/components/CalendarDay'
 import { useMemo } from 'react'
-import { usePreferences } from '../../../stores/preferences'
-import type { CalendarViewMode } from '../../../components/CalendarHeader'
+import { usePreferences } from '@/stores/preferences'
+import type { CalendarViewMode } from '@/components/CalendarHeader'
 
 type MonthTimeReportsCalendarProps = {
   month: number

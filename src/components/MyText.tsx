@@ -1,12 +1,12 @@
 import { PropsWithChildren } from 'react'
-import useTheme from '../contexts/theme'
+import useTheme from '@/contexts/theme'
 import {
   Text as ReactNativeText,
   TextProps,
   TextStyle,
   StyleSheet,
 } from 'react-native'
-import { usePreferences } from '../stores/preferences'
+import { usePreferences } from '@/stores/preferences'
 
 interface Props extends TextProps {}
 

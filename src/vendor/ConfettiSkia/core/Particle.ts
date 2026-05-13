@@ -1,6 +1,6 @@
-import { ConfettiConfig } from './Config'
-import Random from './Random'
-import Vector2D from './Vector2D'
+import { ConfettiConfig } from '@/vendor/ConfettiSkia/core/Config'
+import Random from '@/vendor/ConfettiSkia/core/Random'
+import Vector2D from '@/vendor/ConfettiSkia/core/Vector2D'
 
 export interface DrawContext {
   drawRect(

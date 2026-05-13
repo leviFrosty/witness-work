@@ -1,16 +1,16 @@
 import { View, ScrollView } from 'react-native'
 import LottieView from 'lottie-react-native'
-import Text from '../../../components/MyText'
+import Text from '@/components/MyText'
 import { useEffect, useRef, useState } from 'react'
-import useTheme from '../../../contexts/theme'
-import i18n from '../../../lib/locales'
+import useTheme from '@/contexts/theme'
+import i18n from '@/lib/locales'
 import * as Updates from 'expo-updates'
 import * as Sentry from '@sentry/react-native'
-import ActionButton from '../../../components/ActionButton'
+import ActionButton from '@/components/ActionButton'
 import { useNavigation } from '@react-navigation/native'
-import Wrapper from '../../../components/layout/Wrapper'
-import Button from '../../../components/Button'
-import { RootStackNavigation } from '../../../types/rootStack'
+import Wrapper from '@/components/layout/Wrapper'
+import Button from '@/components/Button'
+import { RootStackNavigation } from '@/types/rootStack'
 
 const UpdateScreen = () => {
   const theme = useTheme()
@@ -63,7 +63,7 @@ const UpdateScreen = () => {
             style={{
               width: '100%',
             }}
-            source={require('../../../assets/lottie/loading.json')}
+            source={require('@/assets/lottie/loading.json')}
           />
           {isLoadingSlowly && (
             <View style={{ gap: 10 }}>
@@ -99,7 +99,7 @@ const UpdateScreen = () => {
                 style={{
                   width: '50%',
                 }}
-                source={require('../../../assets/lottie/error.json')}
+                source={require('@/assets/lottie/error.json')}
               />
             </View>
             <Text style={{ fontSize: 40, fontFamily: theme.fonts.bold }}>

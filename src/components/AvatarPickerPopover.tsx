@@ -1,12 +1,14 @@
 import { Pressable, View } from 'react-native'
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
 import { faPencil } from '@fortawesome/free-solid-svg-icons'
-import useTheme from '../contexts/theme'
-import { ProfileAvatar } from '../types/avatar'
-import Avatar from './Avatar'
-import AvatarPickerContent, { AvatarMetaCapture } from './AvatarPickerContent'
-import AnchoredPopover from './AnchoredPopover'
-import i18n from '../lib/locales'
+import useTheme from '@/contexts/theme'
+import { ProfileAvatar } from '@/types/avatar'
+import Avatar from '@/components/Avatar'
+import AvatarPickerContent, {
+  AvatarMetaCapture,
+} from '@/components/AvatarPickerContent'
+import AnchoredPopover from '@/components/AnchoredPopover'
+import i18n from '@/lib/locales'
 
 interface Props {
   /** Currently-selected avatar to render in the anchor + drive picker state. */

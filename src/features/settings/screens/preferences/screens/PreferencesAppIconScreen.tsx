@@ -4,57 +4,54 @@ import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
 import { faCheck } from '@fortawesome/free-solid-svg-icons'
 import { useToastController } from '@tamagui/toast'
-import Wrapper from '../../../../../components/layout/Wrapper'
-import Text from '../../../../../components/MyText'
-import IsSupporter from '../../../../../components/IsSupporter'
-import useTheme from '../../../../../contexts/theme'
-import i18n from '../../../../../lib/locales'
-import { email } from '../../../../../constants/contactInformation'
-import { openURL } from '../../../../../lib/links'
-import {
-  AppIconVariant,
-  usePreferences,
-} from '../../../../../stores/preferences'
+import Wrapper from '@/components/layout/Wrapper'
+import Text from '@/components/MyText'
+import IsSupporter from '@/components/IsSupporter'
+import useTheme from '@/contexts/theme'
+import i18n from '@/lib/locales'
+import { email } from '@/constants/contactInformation'
+import { openURL } from '@/lib/links'
+import { AppIconVariant, usePreferences } from '@/stores/preferences'
 import {
   applyAppIcon,
   determineHemisphere,
   isAppIconSupported,
   resolvePluginIcon,
-} from '../../../lib/appIcon'
-import type { Hemisphere } from '../../../lib/hemisphere'
+} from '@/features/settings/lib/appIcon'
+import type { Hemisphere } from '@/features/settings/lib/hemisphere'
 
 const TILES = [
   {
     variant: 'Default',
     label: 'appIconDefault',
-    preview: require('../../../../../assets/icon.png'),
+    preview: require('@/assets/icon.png'),
   },
   {
     variant: 'Gold',
     label: 'appIconGold',
-    preview: require('../../../../../assets/icons/Gold.png'),
+    preview: require('@/assets/icons/Gold.png'),
   },
   {
     variant: 'Dark',
     label: 'appIconDark',
-    preview: require('../../../../../assets/icons/Dark.png'),
+    preview: require('@/assets/icons/Dark.png'),
   },
   {
     variant: 'Seasonal',
     label: 'appIconSeasonal',
     // Spring stands in as the seasonal preview; the actual rendered icon
     // rotates with the date once selected.
-    preview: require('../../../../../assets/icons/SeasonalSpring.png'),
+    preview: require('@/assets/icons/SeasonalSpring.png'),
   },
   {
     variant: 'Minimalist',
     label: 'appIconMinimalist',
-    preview: require('../../../../../assets/icons/Minimalist.png'),
+    preview: require('@/assets/icons/Minimalist.png'),
   },
   {
     variant: 'Mono',
     label: 'appIconMono',
-    preview: require('../../../../../assets/icons/Mono.png'),
+    preview: require('@/assets/icons/Mono.png'),
   },
 ] as const satisfies ReadonlyArray<{
   variant: AppIconVariant

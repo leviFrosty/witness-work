@@ -9,11 +9,11 @@ import {
   IconDefinition,
 } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
-import Text from './MyText'
-import i18n from '../lib/locales'
-import useTheme from '../contexts/theme'
-import { AchievementTier } from '../lib/achievementTier'
-import { Theme } from '../types/theme'
+import Text from '@/components/MyText'
+import i18n from '@/lib/locales'
+import useTheme from '@/contexts/theme'
+import { AchievementTier } from '@/lib/achievementTier'
+import { Theme } from '@/types/theme'
 
 export type PeriodState = 'current' | 'past' | 'future'
 

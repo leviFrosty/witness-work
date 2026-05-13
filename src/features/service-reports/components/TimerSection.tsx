@@ -1,21 +1,21 @@
 import React from 'react'
 import { View } from 'react-native'
-import Text from '../../../components/MyText'
-import Card from '../../../components/Card'
-import IconButton from '../../../components/IconButton'
-import i18n from '../../../lib/locales'
-import XView from '../../../components/layout/XView'
+import Text from '@/components/MyText'
+import Card from '@/components/Card'
+import IconButton from '@/components/IconButton'
+import i18n from '@/lib/locales'
+import XView from '@/components/layout/XView'
 import {
   faArrowRotateLeft,
   faPause,
   faPlay,
 } from '@fortawesome/free-solid-svg-icons'
-import { useStopWatch } from '../hooks/useStopWatch'
-import useTheme from '../../../contexts/theme'
-import Button from '../../../components/Button'
+import { useStopWatch } from '@/features/service-reports/hooks/useStopWatch'
+import useTheme from '@/contexts/theme'
+import Button from '@/components/Button'
 import { useNavigation } from '@react-navigation/native'
-import { RootStackNavigation } from '../../../types/rootStack'
-import { usePreferences } from '../../../stores/preferences'
+import { RootStackNavigation } from '@/types/rootStack'
+import { usePreferences } from '@/stores/preferences'
 
 export const TimerSection = () => {
   const { start, stop, reset, isRunning, time, ms } = useStopWatch()

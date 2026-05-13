@@ -11,20 +11,17 @@ import {
   faMap,
   faCheck,
 } from '@fortawesome/free-solid-svg-icons'
-import { styles } from '../Onboarding.styles'
-import OnboardingNav from '../OnboardingNav'
-import Text from '../../../../components/MyText'
-import Card from '../../../../components/Card'
-import Wrapper from '../../../../components/layout/Wrapper'
-import ActionButton from '../../../../components/ActionButton'
-import Button from '../../../../components/Button'
-import useTheme from '../../../../contexts/theme'
-import i18n, { TranslationKey } from '../../../../lib/locales'
-import {
-  usePreferences,
-  OnboardingIntent,
-} from '../../../../stores/preferences'
-import { getEntryMode } from '../../../../lib/publisherCapabilities'
+import { styles } from '@/features/onboarding/components/Onboarding.styles'
+import OnboardingNav from '@/features/onboarding/components/OnboardingNav'
+import Text from '@/components/MyText'
+import Card from '@/components/Card'
+import Wrapper from '@/components/layout/Wrapper'
+import ActionButton from '@/components/ActionButton'
+import Button from '@/components/Button'
+import useTheme from '@/contexts/theme'
+import i18n, { TranslationKey } from '@/lib/locales'
+import { usePreferences, OnboardingIntent } from '@/stores/preferences'
+import { getEntryMode } from '@/lib/publisherCapabilities'
 
 interface Props {
   goBack: () => void

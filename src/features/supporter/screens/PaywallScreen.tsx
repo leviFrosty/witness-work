@@ -1,12 +1,12 @@
 import { Alert, ScrollView, View } from 'react-native'
 import { Image } from 'expo-image'
 import * as Sentry from '@sentry/react-native'
-import Text from '../../../components/MyText'
-import useTheme from '../../../contexts/theme'
-import i18n from '../../../lib/locales'
-import XView from '../../../components/layout/XView'
-import Button from '../../../components/Button'
-import Wrapper from '../../../components/layout/Wrapper'
+import Text from '@/components/MyText'
+import useTheme from '@/contexts/theme'
+import i18n from '@/lib/locales'
+import XView from '@/components/layout/XView'
+import Button from '@/components/Button'
+import Wrapper from '@/components/layout/Wrapper'
 import { Spinner } from 'tamagui'
 import Purchases, {
   PURCHASES_ERROR_CODE,
@@ -14,11 +14,11 @@ import Purchases, {
   PurchasesOfferings,
   PurchasesPackage,
 } from 'react-native-purchases'
-import SupporterBadge from '../../../components/SupporterBadge'
-import GlassCard from '../../../components/GlassCard'
-import SegmentedControl from '../../../components/SegmentedControl'
-import PreviousDonations from '../components/PreviousDonations'
-import Divider from '../../../components/Divider'
+import SupporterBadge from '@/components/SupporterBadge'
+import GlassCard from '@/components/GlassCard'
+import SegmentedControl from '@/components/SegmentedControl'
+import PreviousDonations from '@/features/supporter/components/PreviousDonations'
+import Divider from '@/components/Divider'
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
 import {
   faCheck,
@@ -29,16 +29,13 @@ import {
 } from '@fortawesome/free-solid-svg-icons'
 import type { IconDefinition } from '@fortawesome/fontawesome-svg-core'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import ActionButton from '../../../components/ActionButton'
+import ActionButton from '@/components/ActionButton'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import useCustomer from '../../../hooks/useCustomer'
+import useCustomer from '@/hooks/useCustomer'
 import { RouteProp, useNavigation, useRoute } from '@react-navigation/native'
-import {
-  RootStackNavigation,
-  RootStackParamList,
-} from '../../../types/rootStack'
-import { logger } from '../../../lib/logger'
-import { TranslationKey } from '../../../lib/locales'
+import { RootStackNavigation, RootStackParamList } from '@/types/rootStack'
+import { logger } from '@/lib/logger'
+import { TranslationKey } from '@/lib/locales'
 
 type Tier = 'supporter' | 'tip'
 type SupporterBilling = 'monthly' | 'annual'
@@ -98,7 +95,7 @@ const FounderLetter = () => {
           }}
         >
           <Image
-            source={require('../../../assets/levi-portrait.png')}
+            source={require('@/assets/levi-portrait.png')}
             style={{ width: 80, height: 80, borderRadius: 40 }}
             contentFit='cover'
             cachePolicy='memory-disk'
@@ -119,7 +116,7 @@ const FounderLetter = () => {
       <View style={{ marginTop: 12, alignItems: 'flex-start', gap: 2 }}>
         {/* TODO: replace src/assets/signature.png with actual signature art. */}
         <Image
-          source={require('../../../assets/signature.png')}
+          source={require('@/assets/signature.png')}
           style={{ width: 140, height: 48 }}
           contentFit='contain'
           cachePolicy='memory-disk'

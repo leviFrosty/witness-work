@@ -18,23 +18,23 @@ vi.mock('react-native', () => ({
   },
 }))
 
-vi.mock('../lib/locales', () => ({
+vi.mock('@/lib/locales', () => ({
   default: {
     t: vi.fn((key: string) => key),
   },
 }))
 
 // Mock the logger to avoid MMKV dependencies in tests
-vi.mock('../lib/logger', () => import('./mocks/logger'))
+vi.mock('@/lib/logger', () => import('@/__tests__/mocks/logger'))
 
 // Now import after all mocks are set up
 import {
   validateContactImport,
   ContactImportData,
-} from '../features/contacts/lib/contactImport'
-import { Contact } from '../types/contact'
-import { Conversation } from '../types/conversation'
-import i18n from '../lib/locales'
+} from '@/features/contacts/lib/contactImport'
+import { Contact } from '@/types/contact'
+import { Conversation } from '@/types/conversation'
+import i18n from '@/lib/locales'
 
 const mockI18n = vi.mocked(i18n)
 

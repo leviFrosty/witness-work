@@ -1,19 +1,19 @@
 import { Switch, View } from 'react-native'
-import i18n from '../../../../lib/locales'
-import Section from '../../../../components/inputs/Section'
-import InputRowContainer from '../../../../components/inputs/InputRowContainer'
+import i18n from '@/lib/locales'
+import Section from '@/components/inputs/Section'
+import InputRowContainer from '@/components/inputs/InputRowContainer'
 import {
   getEffectiveHomeScreenOrder,
   HomeScreenElementKey,
   usePreferences,
-} from '../../../../stores/preferences'
-import usePublisher from '../../../../hooks/usePublisher'
-import Text from '../../../../components/MyText'
-import useTheme from '../../../../contexts/theme'
-import XView from '../../../../components/layout/XView'
-import { rowPaddingVertical } from '../../../../constants/Inputs'
-import useDevice from '../../../../hooks/useDevice'
-import IconButton from '../../../../components/IconButton'
+} from '@/stores/preferences'
+import usePublisher from '@/hooks/usePublisher'
+import Text from '@/components/MyText'
+import useTheme from '@/contexts/theme'
+import XView from '@/components/layout/XView'
+import { rowPaddingVertical } from '@/constants/Inputs'
+import useDevice from '@/hooks/useDevice'
+import IconButton from '@/components/IconButton'
 import { faArrowDown, faArrowUp } from '@fortawesome/free-solid-svg-icons'
 import { useMemo } from 'react'
 

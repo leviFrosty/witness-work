@@ -1,6 +1,6 @@
 import { useRef, type RefObject } from 'react'
-import type { ConfettiHandle } from './Confetti'
-import type { ConfettiConfig } from '../core/Config'
+import type { ConfettiHandle } from '@/vendor/ConfettiSkia/react/Confetti'
+import type { ConfettiConfig } from '@/vendor/ConfettiSkia/core/Config'
 
 export interface UseConfettiResult {
   ref: RefObject<ConfettiHandle | null>

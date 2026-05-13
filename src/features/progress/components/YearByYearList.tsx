@@ -6,20 +6,20 @@ import moment from 'moment'
 import { faPlus } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
 
-import useTheme from '../../../contexts/theme'
-import useServiceReport from '../../../stores/serviceReport'
-import usePublisher from '../../../hooks/usePublisher'
+import useTheme from '@/contexts/theme'
+import useServiceReport from '@/stores/serviceReport'
+import usePublisher from '@/hooks/usePublisher'
 import {
   getHoursForServiceYearEndYear,
   getServiceYearEndYearsSpan,
   getAvailableEarlierEndYears,
   getServiceYearFromDate,
-} from '../../../lib/serviceReport'
-import { ServiceReport } from '../../../types/serviceReport'
-import i18n from '../../../lib/locales'
+} from '@/lib/serviceReport'
+import { ServiceReport } from '@/types/serviceReport'
+import i18n from '@/lib/locales'
 
-import Text from '../../../components/MyText'
-import AddEarlierYearSheet from './AddEarlierYearSheet'
+import Text from '@/components/MyText'
+import AddEarlierYearSheet from '@/features/progress/components/AddEarlierYearSheet'
 
 const EARLIER_YEAR_FLOOR_YEARS_BACK = 100
 

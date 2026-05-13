@@ -9,18 +9,20 @@ import {
   faHeart,
   faStar,
 } from '@fortawesome/free-solid-svg-icons'
-import useTheme from '../contexts/theme'
-import { usePreferences } from '../stores/preferences'
-import usePublisher from '../hooks/usePublisher'
-import useIsSupporter from '../hooks/useIsSupporter'
-import Card from './Card'
-import Text from './MyText'
-import Avatar from './Avatar'
-import TiltableCard from './TiltableCard'
-import ProfileDetailOverlay, { OriginRect } from './ProfileDetailOverlay'
-import AvatarPickerPopover from './AvatarPickerPopover'
-import i18n from '../lib/locales'
-import { ShaderOverlay } from '../shaders'
+import useTheme from '@/contexts/theme'
+import { usePreferences } from '@/stores/preferences'
+import usePublisher from '@/hooks/usePublisher'
+import useIsSupporter from '@/hooks/useIsSupporter'
+import Card from '@/components/Card'
+import Text from '@/components/MyText'
+import Avatar from '@/components/Avatar'
+import TiltableCard from '@/components/TiltableCard'
+import ProfileDetailOverlay, {
+  OriginRect,
+} from '@/components/ProfileDetailOverlay'
+import AvatarPickerPopover from '@/components/AvatarPickerPopover'
+import i18n from '@/lib/locales'
+import { ShaderOverlay } from '@/shaders'
 
 interface Props {
   /** Disables interaction; used for the live preview inside onboarding. */

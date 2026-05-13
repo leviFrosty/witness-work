@@ -1,12 +1,12 @@
 import { PropsWithChildren } from 'react'
-import useTheme from '../contexts/theme'
-import i18n from '../lib/locales'
-import { hints, usePreferences } from '../stores/preferences'
-import Button from './Button'
-import Card from './Card'
-import Text from './MyText'
+import useTheme from '@/contexts/theme'
+import i18n from '@/lib/locales'
+import { hints, usePreferences } from '@/stores/preferences'
+import Button from '@/components/Button'
+import Card from '@/components/Card'
+import Text from '@/components/MyText'
 import { View, ViewProps } from 'react-native'
-import XView from './layout/XView'
+import XView from '@/components/layout/XView'
 
 interface HintCardProps extends ViewProps {
   /** The key identifier */

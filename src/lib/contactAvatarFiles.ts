@@ -1,6 +1,6 @@
 import * as FileSystem from 'expo-file-system/legacy'
 import * as ImageManipulator from 'expo-image-manipulator'
-import { logger } from '../lib/logger'
+import { logger } from '@/lib/logger'
 
 /**
  * On-disk layout for a contact's image avatar.

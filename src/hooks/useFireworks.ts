@@ -1,5 +1,5 @@
 import { useContext } from 'react'
-import { ConfettiContext } from '../contexts/Confetti'
+import { ConfettiContext } from '@/contexts/Confetti'
 
 const useFireworks = () => {
   const context = useContext(ConfettiContext)

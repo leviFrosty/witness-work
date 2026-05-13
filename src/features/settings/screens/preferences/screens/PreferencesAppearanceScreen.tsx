@@ -1,6 +1,6 @@
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
-import Wrapper from '../../../../../components/layout/Wrapper'
-import AppearancePreferencesSection from '../../../components/preferences-sections/AppearancePreferencesSection'
+import Wrapper from '@/components/layout/Wrapper'
+import AppearancePreferencesSection from '@/features/settings/components/preferences-sections/AppearancePreferencesSection'
 
 const PreferencesPublisherScreen = () => {
   return (

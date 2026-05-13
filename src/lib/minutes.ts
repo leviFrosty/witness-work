@@ -1,7 +1,7 @@
 import _ from 'lodash'
-import { usePreferences } from '../stores/preferences'
-import { MinuteDisplayFormat } from '../types/serviceReport'
-import i18n from './locales'
+import { usePreferences } from '@/stores/preferences'
+import { MinuteDisplayFormat } from '@/types/serviceReport'
+import i18n from '@/lib/locales'
 
 /**
  * Formats minutes for display based on user preference.

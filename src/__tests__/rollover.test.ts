@@ -1,14 +1,14 @@
 import moment from 'moment'
 import { describe, expect, it, vi } from 'vitest'
-import { ServiceReport, ServiceReportsByYears } from '../types/serviceReport'
+import { ServiceReport, ServiceReportsByYears } from '@/types/serviceReport'
 import {
   applyRollover,
   buildRolloverEntries,
   computePendingRollovers,
-} from '../features/service-reports/lib/rollover'
-import { normalizeDateForStorage } from '../lib/normalizeDate'
+} from '@/features/service-reports/lib/rollover'
+import { normalizeDateForStorage } from '@/lib/normalizeDate'
 
-vi.mock('../lib/logger', () => import('./mocks/logger'))
+vi.mock('@/lib/logger', () => import('@/__tests__/mocks/logger'))
 
 const reports = (
   year: number,

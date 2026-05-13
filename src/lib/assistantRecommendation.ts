@@ -1,11 +1,11 @@
 import moment from 'moment'
-import type { Conversation } from '../types/conversation'
-import type { DayPlan, RecurringPlan } from '../types/serviceReport'
-import { momentStoredDate, normalizeDateForStorage } from './normalizeDate'
+import type { Conversation } from '@/types/conversation'
+import type { DayPlan, RecurringPlan } from '@/types/serviceReport'
+import { momentStoredDate, normalizeDateForStorage } from '@/lib/normalizeDate'
 import {
   getEffectiveMinutesForRecurringPlan,
   getPlansIntersectingDay,
-} from './serviceReport'
+} from '@/lib/serviceReport'
 
 export type RecommendationShape = 'concentrated' | 'distributed' | 'recurring'
 

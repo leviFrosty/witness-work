@@ -3,27 +3,27 @@ import { Pressable, View } from 'react-native'
 import moment from 'moment'
 import _ from 'lodash'
 
-import useTheme from '../contexts/theme'
-import usePublisher from '../hooks/usePublisher'
-import useServiceReport from '../stores/serviceReport'
-import { usePreferences } from '../stores/preferences'
+import useTheme from '@/contexts/theme'
+import usePublisher from '@/hooks/usePublisher'
+import useServiceReport from '@/stores/serviceReport'
+import { usePreferences } from '@/stores/preferences'
 import {
   getServiceYearReports,
   getTotalMinutesForServiceYear,
-} from '../lib/serviceReport'
-import { getEffectiveMilestones, getMilestoneHitState } from '../lib/milestones'
+} from '@/lib/serviceReport'
+import { getEffectiveMilestones, getMilestoneHitState } from '@/lib/milestones'
 import {
   generateServiceReportsHash,
   getAnnualServiceReportCacheKey,
   useTimeCache,
-} from '../stores/timeCache'
-import i18n from '../lib/locales'
-import { logger } from '../lib/logger'
+} from '@/stores/timeCache'
+import i18n from '@/lib/locales'
+import { logger } from '@/lib/logger'
 
-import Card from '../components/Card'
-import Chip from '../components/Chip'
-import MilestoneProgressBar from './MilestoneProgressBar'
-import Text from '../components/MyText'
+import Card from '@/components/Card'
+import Chip from '@/components/Chip'
+import MilestoneProgressBar from '@/components/MilestoneProgressBar'
+import Text from '@/components/MyText'
 
 interface YearMilestoneCardProps {
   /**

@@ -1,15 +1,15 @@
 import { View } from 'react-native'
-import i18n from '../../../../lib/locales'
-import Section from '../../../../components/inputs/Section'
-import InputRowButton from '../../../../components/inputs/InputRowButton'
+import i18n from '@/lib/locales'
+import Section from '@/components/inputs/Section'
+import InputRowButton from '@/components/inputs/InputRowButton'
 import {
   faChevronRight,
   faCircleQuestion,
 } from '@fortawesome/free-solid-svg-icons'
-import IconButton from '../../../../components/IconButton'
-import SectionTitle from '../shared/SectionTitle'
+import IconButton from '@/components/IconButton'
+import SectionTitle from '@/features/settings/components/shared/SectionTitle'
 import { useNavigation } from '@react-navigation/native'
-import { RootStackNavigation } from '../../../../types/rootStack'
+import { RootStackNavigation } from '@/types/rootStack'
 
 const ContactSection = () => {
   const navigation = useNavigation<RootStackNavigation>()

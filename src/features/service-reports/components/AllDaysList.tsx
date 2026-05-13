@@ -4,21 +4,21 @@ import { useNavigation as useRootNavigation } from '@react-navigation/native'
 import { faChevronRight } from '@fortawesome/free-solid-svg-icons'
 import moment from 'moment'
 
-import useServiceReport from '../../../stores/serviceReport'
-import useTheme from '../../../contexts/theme'
-import i18n from '../../../lib/locales'
-import { getMonthsReports } from '../../../lib/serviceReport'
-import { ServiceReport } from '../../../types/serviceReport'
-import { RootStackNavigation } from '../../../types/rootStack'
+import useServiceReport from '@/stores/serviceReport'
+import useTheme from '@/contexts/theme'
+import i18n from '@/lib/locales'
+import { getMonthsReports } from '@/lib/serviceReport'
+import { ServiceReport } from '@/types/serviceReport'
+import { RootStackNavigation } from '@/types/rootStack'
 
-import Button from '../../../components/Button'
-import Text from '../../../components/MyText'
-import IconButton from '../../../components/IconButton'
+import Button from '@/components/Button'
+import Text from '@/components/MyText'
+import IconButton from '@/components/IconButton'
 import SelectedDateSheet, {
   SelectedDateSheetState,
-} from '../../../features/service-reports/components/SelectedDateSheet'
-import Badge from '../../../components/Badge'
-import { useCardStyle } from '../../../components/Card'
+} from '@/features/service-reports/components/SelectedDateSheet'
+import Badge from '@/components/Badge'
+import { useCardStyle } from '@/components/Card'
 
 interface AllDaysListProps {
   month: number

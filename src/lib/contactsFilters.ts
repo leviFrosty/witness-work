@@ -1,12 +1,12 @@
 import moment from 'moment'
-import { Contact } from '../types/contact'
-import { Conversation } from '../types/conversation'
-import { CustomFieldDefinition } from '../types/customField'
+import { Contact } from '@/types/contact'
+import { Conversation } from '@/types/conversation'
+import { CustomFieldDefinition } from '@/types/customField'
 import {
   contactHasAtLeastOneStudy,
   contactStudiedForGivenMonth,
-} from '../lib/conversations'
-import { ContactStaleness, getContactStaleness } from './contactStaleness'
+} from '@/lib/conversations'
+import { ContactStaleness, getContactStaleness } from '@/lib/contactStaleness'
 
 export type TextOperator =
   | 'equals'

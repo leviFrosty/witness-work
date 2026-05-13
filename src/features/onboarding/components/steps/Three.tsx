@@ -1,13 +1,13 @@
 import { View } from 'react-native'
-import { styles } from '../Onboarding.styles'
-import OnboardingNav from '../OnboardingNav'
-import NotificationPreview from '../NotificationPreview'
-import Text from '../../../../components/MyText'
-import i18n from '../../../../lib/locales'
-import Wrapper from '../../../../components/layout/Wrapper'
-import ActionButton from '../../../../components/ActionButton'
-import Button from '../../../../components/Button'
-import useNotifications from '../../../../hooks/notifications'
+import { styles } from '@/features/onboarding/components/Onboarding.styles'
+import OnboardingNav from '@/features/onboarding/components/OnboardingNav'
+import NotificationPreview from '@/features/onboarding/components/NotificationPreview'
+import Text from '@/components/MyText'
+import i18n from '@/lib/locales'
+import Wrapper from '@/components/layout/Wrapper'
+import ActionButton from '@/components/ActionButton'
+import Button from '@/components/Button'
+import useNotifications from '@/hooks/notifications'
 
 interface Props {
   goBack: () => void

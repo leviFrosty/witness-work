@@ -28,23 +28,20 @@ import {
   faCheck,
 } from '@fortawesome/free-solid-svg-icons'
 import moment from 'moment'
-import { styles } from '../Onboarding.styles'
-import OnboardingNav from '../OnboardingNav'
-import Text from '../../../../components/MyText'
-import Wrapper from '../../../../components/layout/Wrapper'
-import ActionButton from '../../../../components/ActionButton'
-import WeekStripTeaser from '../../../../components/WeekStripTeaser'
-import useTheme from '../../../../contexts/theme'
-import i18n, { TranslationKey } from '../../../../lib/locales'
-import {
-  OnboardingIntent,
-  usePreferences,
-} from '../../../../stores/preferences'
-import usePublisher from '../../../../hooks/usePublisher'
-import { getEntryMode, isPioneer } from '../../../../lib/publisherCapabilities'
-import { useMarkerColors } from '../../../../hooks/useMarkerColors'
-import { Theme } from '../../../../types/theme'
-import type { DayPlan, ServiceReport } from '../../../../types/serviceReport'
+import { styles } from '@/features/onboarding/components/Onboarding.styles'
+import OnboardingNav from '@/features/onboarding/components/OnboardingNav'
+import Text from '@/components/MyText'
+import Wrapper from '@/components/layout/Wrapper'
+import ActionButton from '@/components/ActionButton'
+import WeekStripTeaser from '@/components/WeekStripTeaser'
+import useTheme from '@/contexts/theme'
+import i18n, { TranslationKey } from '@/lib/locales'
+import { OnboardingIntent, usePreferences } from '@/stores/preferences'
+import usePublisher from '@/hooks/usePublisher'
+import { getEntryMode, isPioneer } from '@/lib/publisherCapabilities'
+import { useMarkerColors } from '@/hooks/useMarkerColors'
+import { Theme } from '@/types/theme'
+import type { DayPlan, ServiceReport } from '@/types/serviceReport'
 
 interface Props {
   goBack: () => void

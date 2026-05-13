@@ -1,6 +1,6 @@
 import { View } from 'react-native'
-import Section from '../../../../components/inputs/Section'
-import InputRowButton from '../../../../components/inputs/InputRowButton'
+import Section from '@/components/inputs/Section'
+import InputRowButton from '@/components/inputs/InputRowButton'
 import {
   faChevronRight,
   faCircleHalfStroke,
@@ -8,10 +8,10 @@ import {
   faPalette,
   faUser,
 } from '@fortawesome/free-solid-svg-icons'
-import i18n from '../../../../lib/locales'
-import IconButton from '../../../../components/IconButton'
-import { SettingsSectionProps } from '../../screens/settingScreen'
-import LanguageSelector from './LanguageSelector'
+import i18n from '@/lib/locales'
+import IconButton from '@/components/IconButton'
+import { SettingsSectionProps } from '@/features/settings/screens/settingScreen'
+import LanguageSelector from '@/features/settings/components/sections/LanguageSelector'
 
 const PreferencesSection = ({ handleNavigate }: SettingsSectionProps) => {
   return (

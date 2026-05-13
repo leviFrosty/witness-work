@@ -15,14 +15,14 @@ import {
   faWrench,
 } from '@fortawesome/free-solid-svg-icons'
 
-import useTheme from '../contexts/theme'
-import i18n, { TranslationKey } from '../lib/locales'
-import IconButton from './IconButton'
-import Text from './MyText'
-import Button from './Button'
-import QuickActionSheet from './QuickActionSheet'
-import { RootStackNavigation } from '../types/rootStack'
-import { HomeTabStackNavigation } from '../types/homeStack'
+import useTheme from '@/contexts/theme'
+import i18n, { TranslationKey } from '@/lib/locales'
+import IconButton from '@/components/IconButton'
+import Text from '@/components/MyText'
+import Button from '@/components/Button'
+import QuickActionSheet from '@/components/QuickActionSheet'
+import { RootStackNavigation } from '@/types/rootStack'
+import { HomeTabStackNavigation } from '@/types/homeStack'
 
 const CAPSULE_HEIGHT = 52
 const HORIZONTAL_MARGIN = 12

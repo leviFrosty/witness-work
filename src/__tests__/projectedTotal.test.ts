@@ -1,14 +1,14 @@
 import { describe, it, expect, vi } from 'vitest'
 
-vi.mock('../lib/logger', () => import('./mocks/logger'))
+vi.mock('@/lib/logger', () => import('@/__tests__/mocks/logger'))
 
-import { computeProjectedTotal } from '../lib/projectedTotal'
-import { normalizeDateForStorage } from '../lib/normalizeDate'
+import { computeProjectedTotal } from '@/lib/projectedTotal'
+import { normalizeDateForStorage } from '@/lib/normalizeDate'
 import {
   RecurringPlanFrequencies,
   type DayPlan,
   type RecurringPlan,
-} from '../types/serviceReport'
+} from '@/types/serviceReport'
 
 const dayPlan = (isoDay: string, minutes: number): DayPlan => ({
   id: isoDay,

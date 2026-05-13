@@ -2,30 +2,30 @@ import { useCallback, useEffect, useMemo } from 'react'
 import { View } from 'react-native'
 import { DateData } from 'react-native-calendars'
 import { DayProps } from 'react-native-calendars/src/calendar/day'
-import Text from './MyText'
-import useTheme from '../contexts/theme'
-import Button from './Button'
-import useServiceReport from '../stores/serviceReport'
+import Text from '@/components/MyText'
+import useTheme from '@/contexts/theme'
+import Button from '@/components/Button'
+import useServiceReport from '@/stores/serviceReport'
 import moment from 'moment'
-import { DayPlan, ServiceReport } from '../types/serviceReport'
+import { DayPlan, ServiceReport } from '@/types/serviceReport'
 import {
   RecurringPlan,
   getPlansIntersectingDay,
   getEffectiveMinutesForRecurringPlan,
   getEffectiveNoteForRecurringPlan,
-} from '../lib/serviceReport'
+} from '@/lib/serviceReport'
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
   withRepeat,
   withTiming,
 } from 'react-native-reanimated'
-import IconButton from './IconButton'
+import IconButton from '@/components/IconButton'
 import { faArrowUp } from '@fortawesome/free-solid-svg-icons'
-import { usePreferences } from '../stores/preferences'
-import { Theme } from '../types/theme'
-import { useCompactFormattedMinutes } from '../lib/minutes'
-import type { CalendarViewMode } from './CalendarHeader'
+import { usePreferences } from '@/stores/preferences'
+import { Theme } from '@/types/theme'
+import { useCompactFormattedMinutes } from '@/lib/minutes'
+import type { CalendarViewMode } from '@/components/CalendarHeader'
 
 const boxSize = 40
 

@@ -13,9 +13,9 @@ vi.mock('expo-file-system/legacy', () => ({
   readAsStringAsync: vi.fn(),
 }))
 
-vi.mock('../lib/logger', () => import('./mocks/logger'))
+vi.mock('@/lib/logger', () => import('@/__tests__/mocks/logger'))
 
-vi.mock('../lib/locales', () => ({
+vi.mock('@/lib/locales', () => ({
   default: { t: (key: string) => key },
 }))
 
@@ -24,10 +24,10 @@ import {
   isContactShareLink,
   parseContactShareLink,
   CONTACT_SHARE_LINK,
-} from '../features/contacts/lib/contactShareLink'
-import { validateContactImport } from '../features/contacts/lib/contactImport'
-import { Contact } from '../types/contact'
-import { Conversation } from '../types/conversation'
+} from '@/features/contacts/lib/contactShareLink'
+import { validateContactImport } from '@/features/contacts/lib/contactImport'
+import { Contact } from '@/types/contact'
+import { Conversation } from '@/types/conversation'
 
 const makeContact = (overrides: Partial<Contact> = {}): Contact => ({
   id: 'contact-1',

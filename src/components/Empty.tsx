@@ -1,8 +1,8 @@
 import { ReactNode } from 'react'
 import { View } from 'react-native'
 
-import useTheme from '../contexts/theme'
-import Text from './MyText'
+import useTheme from '@/contexts/theme'
+import Text from '@/components/MyText'
 
 interface EmptyProps {
   /** Optional illustrative icon / graphic rendered above the title. */

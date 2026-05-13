@@ -1,6 +1,6 @@
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
-import Wrapper from '../../../../../components/layout/Wrapper'
-import HomeScreenPreferencesSection from '../../../components/preferences-sections/HomeScreenPreferencesSection'
+import Wrapper from '@/components/layout/Wrapper'
+import HomeScreenPreferencesSection from '@/features/settings/components/preferences-sections/HomeScreenPreferencesSection'
 
 const PreferencesHomeScreen = () => {
   return (

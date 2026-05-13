@@ -5,21 +5,21 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import moment from 'moment'
 import _ from 'lodash'
 
-import useTheme from '../../../contexts/theme'
-import usePublisher from '../../../hooks/usePublisher'
-import useServiceReport from '../../../stores/serviceReport'
-import { usePreferences } from '../../../stores/preferences'
+import useTheme from '@/contexts/theme'
+import usePublisher from '@/hooks/usePublisher'
+import useServiceReport from '@/stores/serviceReport'
+import { usePreferences } from '@/stores/preferences'
 import {
   adjustedMinutesForSpecificMonth,
   getMonthsReports,
-} from '../../../lib/serviceReport'
-import i18n from '../../../lib/locales'
+} from '@/lib/serviceReport'
+import i18n from '@/lib/locales'
 
-import YearMilestoneCard from '../../../components/YearMilestoneCard'
-import Text from '../../../components/MyText'
-import XView from '../../../components/layout/XView'
-import Badge from '../../../components/Badge'
-import { useCardStyle } from '../../../components/Card'
+import YearMilestoneCard from '@/components/YearMilestoneCard'
+import Text from '@/components/MyText'
+import XView from '@/components/layout/XView'
+import Badge from '@/components/Badge'
+import { useCardStyle } from '@/components/Card'
 
 interface ProgressYearTabProps {
   /** End year of the service year (Sep 1 of `year - 1` → Aug 31 of `year`). */

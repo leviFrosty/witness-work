@@ -4,10 +4,10 @@ import {
   ActiveFilter,
   applyFilters,
   FilterContext,
-} from '../lib/contactsFilters'
-import { Contact } from '../types/contact'
-import { Conversation } from '../types/conversation'
-import { CustomFieldDefinition } from '../types/customField'
+} from '@/lib/contactsFilters'
+import { Contact } from '@/types/contact'
+import { Conversation } from '@/types/conversation'
+import { CustomFieldDefinition } from '@/types/customField'
 
 const baseContact = (overrides: Partial<Contact> = {}): Contact => ({
   id: 'c1',

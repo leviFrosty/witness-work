@@ -1,18 +1,15 @@
 import moment from 'moment'
 import { parsePhoneNumber } from 'awesome-phonenumber'
-import { Contact } from '../../types/contact'
-import { Conversation } from '../../types/conversation'
+import { Contact } from '@/types/contact'
+import { Conversation } from '@/types/conversation'
 import {
   DefaultNavigationMapProvider,
   WidgetContactSort,
-} from '../../stores/preferences'
-import { addressToString, coordinateAsString } from '../../lib/address'
-import { getMostRecentConversationForContact } from '../../lib/contacts'
-import {
-  ContactStaleness,
-  getContactStaleness,
-} from '../../lib/contactStaleness'
-import links from '../../constants/links'
+} from '@/stores/preferences'
+import { addressToString, coordinateAsString } from '@/lib/address'
+import { getMostRecentConversationForContact } from '@/lib/contacts'
+import { ContactStaleness, getContactStaleness } from '@/lib/contactStaleness'
+import links from '@/constants/links'
 
 export type WidgetContact = {
   id: string

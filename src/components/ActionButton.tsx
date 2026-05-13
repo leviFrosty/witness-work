@@ -1,7 +1,7 @@
-import Text from './MyText'
-import useTheme from '../contexts/theme'
-import Button, { ButtonProps } from './Button'
-import { ThemeSizes } from '../types/theme'
+import Text from '@/components/MyText'
+import useTheme from '@/contexts/theme'
+import Button, { ButtonProps } from '@/components/Button'
+import { ThemeSizes } from '@/types/theme'
 import React, { PropsWithChildren } from 'react'
 interface Props extends ButtonProps {
   onPress: () => unknown

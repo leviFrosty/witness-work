@@ -4,7 +4,7 @@ import {
   pullMissingImages,
   gcOrphanImages,
   ImageSyncDeps,
-} from '../imageSync'
+} from '@/app/sync/imageSync'
 
 const makeDeps = (overrides: Partial<ImageSyncDeps> = {}): ImageSyncDeps => ({
   bridge: {

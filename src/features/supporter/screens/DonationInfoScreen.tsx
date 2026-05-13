@@ -1,24 +1,24 @@
 import AnimatedLottieView from 'lottie-react-native'
-import Text from '../../../components/MyText'
-import Wrapper from '../../../components/layout/Wrapper'
-import i18n from '../../../lib/locales'
+import Text from '@/components/MyText'
+import Wrapper from '@/components/layout/Wrapper'
+import i18n from '@/lib/locales'
 import { View } from 'react-native'
-import ActionButton from '../../../components/ActionButton'
-import useTheme from '../../../contexts/theme'
+import ActionButton from '@/components/ActionButton'
+import useTheme from '@/contexts/theme'
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import XView from '../../../components/layout/XView'
-import Button from '../../../components/Button'
+import XView from '@/components/layout/XView'
+import Button from '@/components/Button'
 import { useCallback } from 'react'
-import Accordion from '../../../components/Accordion'
+import Accordion from '@/components/Accordion'
 import { useNavigation } from '@react-navigation/native'
-import Copyeable from '../../../components/Copyeable'
-import { email } from '../../../constants/contactInformation'
-import { openURL } from '../../../lib/links'
-import Card from '../../../components/Card'
-import ShareAppButton from '../components/ShareAppButton'
-import Divider from '../../../components/Divider'
-import { RootStackNavigation } from '../../../types/rootStack'
+import Copyeable from '@/components/Copyeable'
+import { email } from '@/constants/contactInformation'
+import { openURL } from '@/lib/links'
+import Card from '@/components/Card'
+import ShareAppButton from '@/features/supporter/components/ShareAppButton'
+import Divider from '@/components/Divider'
+import { RootStackNavigation } from '@/types/rootStack'
 
 const DonationInfoScreen = () => {
   const theme = useTheme()
@@ -70,7 +70,7 @@ const DonationInfoScreen = () => {
                 {i18n.t('aLetterForYou')}
               </Text>
               <AnimatedLottieView
-                source={require('../../../assets/lottie/floatingHearts.json')}
+                source={require('@/assets/lottie/floatingHearts.json')}
                 style={{
                   position: 'absolute',
                   right: 5,

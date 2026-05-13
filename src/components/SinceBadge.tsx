@@ -1,8 +1,8 @@
 import { View } from 'react-native'
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
 import { IconDefinition } from '@fortawesome/fontawesome-svg-core'
-import useTheme from '../contexts/theme'
-import Text from './MyText'
+import useTheme from '@/contexts/theme'
+import Text from '@/components/MyText'
 
 interface Props {
   icon: IconDefinition

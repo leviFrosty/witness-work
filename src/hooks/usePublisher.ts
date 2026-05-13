@@ -1,9 +1,9 @@
-import { usePreferences } from '../stores/preferences'
+import { usePreferences } from '@/stores/preferences'
 import {
   derivePublisherCapabilities,
   type PublisherCapabilities,
-} from '../lib/publisherCapabilities'
-import i18n from '../lib/locales'
+} from '@/lib/publisherCapabilities'
+import i18n from '@/lib/locales'
 
 const usePublisher = (): PublisherCapabilities => {
   const {

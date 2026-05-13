@@ -16,18 +16,18 @@ import {
   momentStoredDate,
   normalizeDateForStorage,
   splitDateAndStartTime,
-} from '../lib/normalizeDate'
+} from '@/lib/normalizeDate'
 import {
   RecurringPlanFrequencies,
   getEffectiveStartTimeInMinutesForRecurringPlan,
-} from '../lib/serviceReport'
-import useServiceReport from '../stores/serviceReport'
+} from '@/lib/serviceReport'
+import useServiceReport from '@/stores/serviceReport'
 
-vi.mock('../lib/logger', () => import('./mocks/logger'))
-vi.mock('../stores/mmkv', () => import('./mocks/mmkv'))
+vi.mock('@/lib/logger', () => import('@/__tests__/mocks/logger'))
+vi.mock('@/stores/mmkv', () => import('@/__tests__/mocks/mmkv'))
 vi.mock(
   '@react-native-async-storage/async-storage',
-  () => import('./mocks/asyncStorage')
+  () => import('@/__tests__/mocks/asyncStorage')
 )
 
 const originalTZ = process.env.TZ

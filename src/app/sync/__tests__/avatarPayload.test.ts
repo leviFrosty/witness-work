@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest'
-import { sanitizeContactAvatar, sanitizeProfileAvatar } from '../avatarPayload'
-import { Contact } from '../../../types/contact'
+import {
+  sanitizeContactAvatar,
+  sanitizeProfileAvatar,
+} from '@/app/sync/avatarPayload'
+import { Contact } from '@/types/contact'
 
 const makeContact = (overrides: Partial<Contact> = {}): Contact => ({
   id: 'contact-1',

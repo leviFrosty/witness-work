@@ -1,16 +1,16 @@
 import { View } from 'react-native'
-import InputRowContainer from '../../../../components/inputs/InputRowContainer'
+import InputRowContainer from '@/components/inputs/InputRowContainer'
 import i18n, {
   TranslatedLocale,
   translations,
   translationsLabels,
-} from '../../../../lib/locales'
-import Select from '../../../../components/Select'
-import { usePreferences } from '../../../../stores/preferences'
-import useUserLocalePrefs from '../../hooks/useLocale'
-import Text from '../../../../components/MyText'
+} from '@/lib/locales'
+import Select from '@/components/Select'
+import { usePreferences } from '@/stores/preferences'
+import useUserLocalePrefs from '@/features/settings/hooks/useLocale'
+import Text from '@/components/MyText'
 import { getLocales } from 'expo-localization'
-import useTheme from '../../../../contexts/theme'
+import useTheme from '@/contexts/theme'
 import { faLanguage } from '@fortawesome/free-solid-svg-icons'
 import * as Updates from 'expo-updates'
 import { DevSettings } from 'react-native'

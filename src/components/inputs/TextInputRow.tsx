@@ -5,11 +5,11 @@ import {
   ViewStyle,
   StyleProp,
 } from 'react-native'
-import useTheme from '../../contexts/theme'
-import Text from '../MyText'
-import InputRowContainer from './InputRowContainer'
-import MyTextInput, { TextInputProps } from '../TextInput'
-import { Errors } from '../../types/textInput'
+import useTheme from '@/contexts/theme'
+import Text from '@/components/MyText'
+import InputRowContainer from '@/components/inputs/InputRowContainer'
+import MyTextInput, { TextInputProps } from '@/components/TextInput'
+import { Errors } from '@/types/textInput'
 
 interface TextInputRowProps {
   errors?: Errors

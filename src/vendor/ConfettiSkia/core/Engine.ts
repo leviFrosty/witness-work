@@ -1,5 +1,8 @@
-import type { ConfettiConfig } from './Config'
-import Particle, { CullContext, DrawContext } from './Particle'
+import type { ConfettiConfig } from '@/vendor/ConfettiSkia/core/Config'
+import Particle, {
+  CullContext,
+  DrawContext,
+} from '@/vendor/ConfettiSkia/core/Particle'
 
 export default class Engine {
   private particles: Particle[] = []

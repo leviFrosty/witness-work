@@ -1,6 +1,6 @@
 import moment from 'moment'
-import { Contact } from '../types/contact'
-import { Conversation } from './../types/conversation'
+import { Contact } from '@/types/contact'
+import { Conversation } from '@/types/conversation'
 
 export const contactStudiedForGivenMonth = ({
   conversations,

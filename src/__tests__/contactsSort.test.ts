@@ -4,10 +4,10 @@ import {
   buildContactComparator,
   ContactSortKey,
   SortContext,
-} from '../lib/contactsSort'
-import { Contact } from '../types/contact'
-import { Conversation } from '../types/conversation'
-import { CustomFieldDefinition } from '../types/customField'
+} from '@/lib/contactsSort'
+import { Contact } from '@/types/contact'
+import { Conversation } from '@/types/conversation'
+import { CustomFieldDefinition } from '@/types/customField'
 
 const c = (
   overrides: Partial<Contact> & { id: string; name: string }

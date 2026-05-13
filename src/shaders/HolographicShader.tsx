@@ -11,7 +11,7 @@ import {
   useFrameCallback,
   useSharedValue,
 } from 'react-native-reanimated'
-import type { TiltShaderContext } from './types'
+import type { TiltShaderContext } from '@/shaders/types'
 
 /**
  * Balatro-style holographic foil.

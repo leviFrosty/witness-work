@@ -3,15 +3,15 @@ import { View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
 
-import useServiceReport from '../../../stores/serviceReport'
-import useTheme from '../../../contexts/theme'
-import { getMonthsReports } from '../../../lib/serviceReport'
-import i18n from '../../../lib/locales'
+import useServiceReport from '@/stores/serviceReport'
+import useTheme from '@/contexts/theme'
+import { getMonthsReports } from '@/lib/serviceReport'
+import i18n from '@/lib/locales'
 
-import Text from '../../../components/MyText'
-import MonthSummary from '../../service-reports/components/MonthSummary'
-import AllDaysList from '../../service-reports/components/AllDaysList'
-import SwipeMonthNavigator from '../../../components/SwipeMonthNavigator'
+import Text from '@/components/MyText'
+import MonthSummary from '@/features/service-reports/components/MonthSummary'
+import AllDaysList from '@/features/service-reports/components/AllDaysList'
+import SwipeMonthNavigator from '@/components/SwipeMonthNavigator'
 
 interface ProgressMonthTabProps {
   month: number

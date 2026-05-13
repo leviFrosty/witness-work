@@ -7,16 +7,16 @@ import {
   importContactFromUrl,
   processCompleteImport,
   validateContactImport,
-} from '../lib/contactImport'
+} from '@/features/contacts/lib/contactImport'
 import {
   isContactShareLink,
   parseContactShareLink,
-} from '../lib/contactShareLink'
-import useContacts from '../../../stores/contactsStore'
-import useConversations from '../../../stores/conversationStore'
-import { navigationRef } from '../../../lib/linking'
-import i18n from '../../../lib/locales'
-import { logger } from '../../../lib/logger'
+} from '@/features/contacts/lib/contactShareLink'
+import useContacts from '@/stores/contactsStore'
+import useConversations from '@/stores/conversationStore'
+import { navigationRef } from '@/lib/linking'
+import i18n from '@/lib/locales'
+import { logger } from '@/lib/logger'
 
 /**
  * Handles two kinds of incoming contact URLs:

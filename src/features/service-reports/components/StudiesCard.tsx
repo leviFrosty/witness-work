@@ -1,11 +1,11 @@
 import { useEffect, useMemo, useState } from 'react'
-import useTheme from '../../../contexts/theme'
-import useContacts from '../../../stores/contactsStore'
-import useConversations from '../../../stores/conversationStore'
-import { getStudiesForGivenMonth } from '../../../lib/contacts'
-import i18n from '../../../lib/locales'
+import useTheme from '@/contexts/theme'
+import useContacts from '@/stores/contactsStore'
+import useConversations from '@/stores/conversationStore'
+import { getStudiesForGivenMonth } from '@/lib/contacts'
+import i18n from '@/lib/locales'
 import { View } from 'react-native'
-import Text from '../../../components/MyText'
+import Text from '@/components/MyText'
 
 export default function StudiesCard() {
   const theme = useTheme()

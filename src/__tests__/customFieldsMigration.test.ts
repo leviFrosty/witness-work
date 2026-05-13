@@ -7,8 +7,8 @@ vi.mock('expo-crypto', () => ({
   randomUUID: vi.fn(() => 'mock-uuid-from-default'),
 }))
 
-import { migrateCustomFieldsToIds } from '../features/contacts/lib/customFieldsMigration'
-import { Contact } from '../types/contact'
+import { migrateCustomFieldsToIds } from '@/features/contacts/lib/customFieldsMigration'
+import { Contact } from '@/types/contact'
 
 const NOW = 1714000000000
 

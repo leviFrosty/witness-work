@@ -1,9 +1,9 @@
 import { View, ViewStyle } from 'react-native'
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
 import { faHeart } from '@fortawesome/free-solid-svg-icons'
-import useTheme from '../contexts/theme'
-import Text from '../components/MyText'
-import i18n from '../lib/locales'
+import useTheme from '@/contexts/theme'
+import Text from '@/components/MyText'
+import i18n from '@/lib/locales'
 
 interface Props {
   /** Hides the "Supporter" label — shows only the heart icon chip. */

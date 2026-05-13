@@ -9,20 +9,20 @@ import {
   faLink,
   faTrash,
 } from '@fortawesome/free-solid-svg-icons'
-import useTheme from '../contexts/theme'
-import { ProfileAvatar } from '../types/avatar'
-import Text from './MyText'
-import Button from './Button'
-import IsSupporter from './IsSupporter'
-import { ACCENT_PRESETS } from './AccentColorPicker'
-import CustomColorSwatch from './CustomColorSwatch'
-import i18n from '../lib/locales'
-import { logger } from '../lib/logger'
+import useTheme from '@/contexts/theme'
+import { ProfileAvatar } from '@/types/avatar'
+import Text from '@/components/MyText'
+import Button from '@/components/Button'
+import IsSupporter from '@/components/IsSupporter'
+import { ACCENT_PRESETS } from '@/components/AccentColorPicker'
+import CustomColorSwatch from '@/components/CustomColorSwatch'
+import i18n from '@/lib/locales'
+import { logger } from '@/lib/logger'
 import {
   originalSiblingFileName,
   withCacheBuster,
-} from '../lib/contactAvatarFiles'
-import ContactAvatarCropEditor from './ContactAvatarCropEditor'
+} from '@/lib/contactAvatarFiles'
+import ContactAvatarCropEditor from '@/components/ContactAvatarCropEditor'
 
 export type AvatarMetaCapture = {
   width: number
@@ -98,8 +98,9 @@ const SWATCH_SIZE = 24
 const SWATCH_GAP = 8
 /**
  * Rendered count = 1 ("match accent" pseudo-swatch) + (ACCENT_PRESETS.length -
- * 1) non-default presets + 1 eyedropper. Kept as a derived constant so the
- * containing popover sizes itself to fit the row exactly.
+ *
+ * 1. Non-default presets + 1 eyedropper. Kept as a derived constant so the
+ *    containing popover sizes itself to fit the row exactly.
  */
 const BACKGROUND_SWATCH_COUNT = ACCENT_PRESETS.length + 1
 export const BACKGROUND_SWATCHES_WIDTH =

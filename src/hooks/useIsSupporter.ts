@@ -1,7 +1,7 @@
 import { useMemo } from 'react'
-import useCustomer from './useCustomer'
-import { supporterSinceDate } from '../lib/supporterSince'
-import { usePreferences } from '../stores/preferences'
+import useCustomer from '@/hooks/useCustomer'
+import { supporterSinceDate } from '@/lib/supporterSince'
+import { usePreferences } from '@/stores/preferences'
 
 export type SupporterStatus = {
   isSupporter: boolean

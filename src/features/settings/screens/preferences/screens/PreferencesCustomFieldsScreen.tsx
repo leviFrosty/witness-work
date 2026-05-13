@@ -7,16 +7,16 @@ import {
   faMinus,
   faRotateLeft,
 } from '@fortawesome/free-solid-svg-icons'
-import Wrapper from '../../../../../components/layout/Wrapper'
-import Section from '../../../../../components/inputs/Section'
-import InputRowContainer from '../../../../../components/inputs/InputRowContainer'
-import ActionButton from '../../../../../components/ActionButton'
-import IconButton from '../../../../../components/IconButton'
-import MyTextInput from '../../../../../components/TextInput'
-import Text from '../../../../../components/MyText'
-import useTheme from '../../../../../contexts/theme'
-import i18n from '../../../../../lib/locales'
-import useContacts from '../../../../../stores/contactsStore'
+import Wrapper from '@/components/layout/Wrapper'
+import Section from '@/components/inputs/Section'
+import InputRowContainer from '@/components/inputs/InputRowContainer'
+import ActionButton from '@/components/ActionButton'
+import IconButton from '@/components/IconButton'
+import MyTextInput from '@/components/TextInput'
+import Text from '@/components/MyText'
+import useTheme from '@/contexts/theme'
+import i18n from '@/lib/locales'
+import useContacts from '@/stores/contactsStore'
 
 const PreferencesCustomFieldsScreen = () => {
   const theme = useTheme()

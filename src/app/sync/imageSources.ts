@@ -1,7 +1,7 @@
-import { Contact } from '../../types/contact'
-import { ProfileAvatar } from '../../types/avatar'
-import { AvatarSource, DownloadedAvatar } from './imageSync'
-import { parseContactMarker, isProfileMarker } from './imageNames'
+import { Contact } from '@/types/contact'
+import { ProfileAvatar } from '@/types/avatar'
+import { AvatarSource, DownloadedAvatar } from '@/app/sync/imageSync'
+import { parseContactMarker, isProfileMarker } from '@/app/sync/imageNames'
 
 /**
  * Conventional local filename for a contact's avatar image inside

@@ -1,22 +1,22 @@
 import { Sheet } from 'tamagui'
-import Text from '../../../components/MyText'
-import i18n, { TranslationKey } from '../../../lib/locales'
-import useTheme from '../../../contexts/theme'
+import Text from '@/components/MyText'
+import i18n, { TranslationKey } from '@/lib/locales'
+import useTheme from '@/contexts/theme'
 import {
   getTagName,
   ServiceReportTag,
   usePreferences,
-} from '../../../stores/preferences'
-import useServiceReport from '../../../stores/serviceReport'
+} from '@/stores/preferences'
+import useServiceReport from '@/stores/serviceReport'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Switch, View } from 'react-native'
-import XView from '../../../components/layout/XView'
-import CreditBadge from './CreditBadge'
-import Badge from '../../../components/Badge'
-import ActionButton from '../../../components/ActionButton'
-import Divider from '../../../components/Divider'
-import Card from '../../../components/Card'
-import { getMonthsReports } from '../../../lib/serviceReport'
+import XView from '@/components/layout/XView'
+import CreditBadge from '@/features/service-reports/components/CreditBadge'
+import Badge from '@/components/Badge'
+import ActionButton from '@/components/ActionButton'
+import Divider from '@/components/Divider'
+import Card from '@/components/Card'
+import { getMonthsReports } from '@/lib/serviceReport'
 
 type UpgradeLegacyTimeReportsTagsSheetProps = {
   sheet: boolean

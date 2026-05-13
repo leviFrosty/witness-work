@@ -1,23 +1,26 @@
-import { Contact } from '../../types/contact'
-import { Conversation } from '../../types/conversation'
-import { Publisher, PublisherHours } from '../../types/publisher'
+import { Contact } from '@/types/contact'
+import { Conversation } from '@/types/conversation'
+import { Publisher, PublisherHours } from '@/types/publisher'
 import {
   DayPlan,
   MinuteDisplayFormat,
   ServiceReportsByYears,
-} from '../../types/serviceReport'
-import { RecurringPlan } from '../../lib/serviceReport'
+} from '@/types/serviceReport'
+import { RecurringPlan } from '@/lib/serviceReport'
 import {
   DefaultNavigationMapProvider,
   WidgetAppointmentWindow,
   WidgetContactAction,
   WidgetContactSort,
-} from '../../stores/preferences'
-import i18n from '../../lib/locales'
-import { buildReport, ReportFields } from './buildReport'
-import { buildContacts, WidgetContact } from './buildContacts'
-import { buildAppointments, WidgetAppointment } from './buildAppointments'
-import { buildCalendar, WidgetCalendar } from './buildCalendar'
+} from '@/stores/preferences'
+import i18n from '@/lib/locales'
+import { buildReport, ReportFields } from '@/app/widgets/buildReport'
+import { buildContacts, WidgetContact } from '@/app/widgets/buildContacts'
+import {
+  buildAppointments,
+  WidgetAppointment,
+} from '@/app/widgets/buildAppointments'
+import { buildCalendar, WidgetCalendar } from '@/app/widgets/buildCalendar'
 
 /**
  * Bumped whenever the snapshot shape changes in a way the Swift decoder cares

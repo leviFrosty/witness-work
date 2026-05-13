@@ -7,11 +7,11 @@ import ColorPicker, {
   Preview,
 } from 'reanimated-color-picker'
 import { faTimes } from '@fortawesome/free-solid-svg-icons'
-import useTheme from '../contexts/theme'
-import Text from './MyText'
-import Button from './Button'
-import IconButton from './IconButton'
-import i18n from '../lib/locales'
+import useTheme from '@/contexts/theme'
+import Text from '@/components/MyText'
+import Button from '@/components/Button'
+import IconButton from '@/components/IconButton'
+import i18n from '@/lib/locales'
 
 interface Props {
   visible: boolean

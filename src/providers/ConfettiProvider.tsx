@@ -8,8 +8,8 @@ import {
 } from 'react'
 import { useWindowDimensions, View } from 'react-native'
 import { FullWindowOverlay } from 'react-native-screens'
-import { Confetti, ConfettiConfig, useConfetti } from '../vendor/ConfettiSkia'
-import { ConfettiContext, FireworksCtx, FireOpts } from '../contexts/Confetti'
+import { Confetti, ConfettiConfig, useConfetti } from '@/vendor/ConfettiSkia'
+import { ConfettiContext, FireworksCtx, FireOpts } from '@/contexts/Confetti'
 
 /**
  * Visual buffer between the global Lottie + chime ending and the Skia fireworks

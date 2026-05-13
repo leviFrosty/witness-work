@@ -1,14 +1,14 @@
-import { Contact } from '../../types/contact'
-import { Conversation, ConversationTombstone } from '../../types/conversation'
-import { CustomFieldDefinition } from '../../types/customField'
+import { Contact } from '@/types/contact'
+import { Conversation, ConversationTombstone } from '@/types/conversation'
+import { CustomFieldDefinition } from '@/types/customField'
 import {
   DayPlan,
   ServiceReport,
   ServiceReportsByYears,
   ServiceReportTombstone,
-} from '../../types/serviceReport'
-import { RecurringPlan } from '../../lib/serviceReport'
-import { SyncPayload } from './payload'
+} from '@/types/serviceReport'
+import { RecurringPlan } from '@/lib/serviceReport'
+import { SyncPayload } from '@/app/sync/payload'
 
 /**
  * Records older than this are dropped from tombstone arrays to keep them

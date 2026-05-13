@@ -1,20 +1,20 @@
-import { getMonthsReports } from '../lib/serviceReport'
-import { useServiceReport } from '../stores/serviceReport'
+import { getMonthsReports } from '@/lib/serviceReport'
+import { useServiceReport } from '@/stores/serviceReport'
 import * as Crypto from 'expo-crypto'
 import LottieView from 'lottie-react-native'
 import { faSquare } from '@fortawesome/free-regular-svg-icons'
-import Button from './Button'
-import { ServiceReport as ServiceReportType } from '../types/serviceReport'
-import useTheme from '../contexts/theme'
-import Text from './MyText'
-import i18n from '../lib/locales'
+import Button from '@/components/Button'
+import { ServiceReport as ServiceReportType } from '@/types/serviceReport'
+import useTheme from '@/contexts/theme'
+import Text from '@/components/MyText'
+import i18n from '@/lib/locales'
 import { View } from 'react-native'
 import { useMemo, useState } from 'react'
 import moment from 'moment'
-import IconButton from './IconButton'
-import Haptics from '../lib/haptics'
-import useAnimation from '../hooks/useAnimation'
-import { CONFETTI_DELAY_MS } from '../providers/AnimationViewProvider'
+import IconButton from '@/components/IconButton'
+import Haptics from '@/lib/haptics'
+import useAnimation from '@/hooks/useAnimation'
+import { CONFETTI_DELAY_MS } from '@/providers/AnimationViewProvider'
 
 const CheckMarkAnimationComponent = ({
   undoReport,
@@ -42,7 +42,7 @@ const CheckMarkAnimationComponent = ({
         }}
         speed={0.875}
         // Find more Lottie files at https://lottiefiles.com/featured
-        source={require('./../assets/lottie/checkMark.json')}
+        source={require('@/assets/lottie/checkMark.json')}
       />
       {undoReport && (
         <Button onPress={() => deleteServiceReport(undoReport)}>

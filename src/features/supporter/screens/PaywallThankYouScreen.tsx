@@ -1,24 +1,24 @@
 import { useEffect, useRef } from 'react'
 import { ScrollView, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import useTheme from '../../../contexts/theme'
-import i18n from '../../../lib/locales'
+import useTheme from '@/contexts/theme'
+import i18n from '@/lib/locales'
 import { useNavigation } from '@react-navigation/native'
-import Wrapper from '../../../components/layout/Wrapper'
-import Text from '../../../components/MyText'
-import ActionButton from '../../../components/ActionButton'
-import SupporterBenefits from '../../../components/SupporterBenefits'
-import SupporterBadge from '../../../components/SupporterBadge'
-import useIsSupporter from '../../../hooks/useIsSupporter'
-import { RootStackNavigation } from '../../../types/rootStack'
-import useAnimation from '../../../hooks/useAnimation'
-import useFireworks from '../../../hooks/useFireworks'
-import { FIREWORKS_AFTER_LOTTIE_BUFFER_MS } from '../../../providers/ConfettiProvider'
+import Wrapper from '@/components/layout/Wrapper'
+import Text from '@/components/MyText'
+import ActionButton from '@/components/ActionButton'
+import SupporterBenefits from '@/components/SupporterBenefits'
+import SupporterBadge from '@/components/SupporterBadge'
+import useIsSupporter from '@/hooks/useIsSupporter'
+import { RootStackNavigation } from '@/types/rootStack'
+import useAnimation from '@/hooks/useAnimation'
+import useFireworks from '@/hooks/useFireworks'
+import { FIREWORKS_AFTER_LOTTIE_BUFFER_MS } from '@/providers/ConfettiProvider'
 import {
   CONFETTI_DELAY_MS,
   CONFETTI_DURATION,
-} from '../../../providers/AnimationViewProvider'
-import Haptics from '../../../lib/haptics'
+} from '@/providers/AnimationViewProvider'
+import Haptics from '@/lib/haptics'
 
 const PAYWALL_FIREWORKS_OPTS = {
   count: 36,

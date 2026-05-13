@@ -1,13 +1,13 @@
 import moment from 'moment'
-import { Contact } from '../types/contact'
-import { Conversation } from '../types/conversation'
-import { CustomFieldDefinition } from '../types/customField'
-import { ContactStaleness, getContactStaleness } from './contactStaleness'
+import { Contact } from '@/types/contact'
+import { Conversation } from '@/types/conversation'
+import { CustomFieldDefinition } from '@/types/customField'
+import { ContactStaleness, getContactStaleness } from '@/lib/contactStaleness'
 import {
   contactMostRecentStudy,
   contactStudiedForGivenMonth,
-} from '../lib/conversations'
-import { getMostRecentConversationForContact } from './contacts'
+} from '@/lib/conversations'
+import { getMostRecentConversationForContact } from '@/lib/contacts'
 
 export type ContactSortDirection = 'asc' | 'desc'
 

@@ -3,7 +3,7 @@ import {
   createNavigationContainerRef,
 } from '@react-navigation/native'
 import * as Linking from 'expo-linking'
-import { RootStackParamList } from '../types/rootStack'
+import { RootStackParamList } from '@/types/rootStack'
 
 /**
  * Shared navigation ref so non-React-Navigation code (e.g. the widget URL

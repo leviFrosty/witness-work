@@ -1,14 +1,14 @@
 import { View } from 'react-native'
 import { Sheet } from 'tamagui'
-import Text from '../../../components/MyText'
-import i18n from '../../../lib/locales'
-import useTheme from '../../../contexts/theme'
-import { ServiceReport } from '../../../types/serviceReport'
+import Text from '@/components/MyText'
+import i18n from '@/lib/locales'
+import useTheme from '@/contexts/theme'
+import { ServiceReport } from '@/types/serviceReport'
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
-import ActionButton from '../../../components/ActionButton'
-import XView from '../../../components/layout/XView'
-import Button from '../../../components/Button'
-import DayHistoryView from './DayHistoryView'
+import ActionButton from '@/components/ActionButton'
+import XView from '@/components/layout/XView'
+import Button from '@/components/Button'
+import DayHistoryView from '@/features/service-reports/components/DayHistoryView'
 
 export type SelectedDateSheetState = {
   open: boolean

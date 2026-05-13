@@ -1,14 +1,14 @@
 import { View } from 'react-native'
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
-import { styles } from '../Onboarding.styles'
-import OnboardingNav from '../OnboardingNav'
-import Text from '../../../../components/MyText'
-import i18n from '../../../../lib/locales'
-import Wrapper from '../../../../components/layout/Wrapper'
-import ActionButton from '../../../../components/ActionButton'
-import useTheme from '../../../../contexts/theme'
-import ProfileCard from '../../../../components/ProfileCard'
-import { usePreferences } from '../../../../stores/preferences'
+import { styles } from '@/features/onboarding/components/Onboarding.styles'
+import OnboardingNav from '@/features/onboarding/components/OnboardingNav'
+import Text from '@/components/MyText'
+import i18n from '@/lib/locales'
+import Wrapper from '@/components/layout/Wrapper'
+import ActionButton from '@/components/ActionButton'
+import useTheme from '@/contexts/theme'
+import ProfileCard from '@/components/ProfileCard'
+import { usePreferences } from '@/stores/preferences'
 
 interface Props {
   goBack: () => void

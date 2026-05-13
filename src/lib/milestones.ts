@@ -1,4 +1,4 @@
-import { Publisher } from '../types/publisher'
+import { Publisher } from '@/types/publisher'
 
 /**
  * Hardcoded sensible milestone ladders per publisher type. Each array lists

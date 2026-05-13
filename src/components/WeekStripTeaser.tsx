@@ -2,24 +2,24 @@ import { useMemo } from 'react'
 import { View } from 'react-native'
 import moment from 'moment'
 import { useNavigation } from '@react-navigation/native'
-import Text from './MyText'
-import Button from './Button'
-import IconButton from './IconButton'
-import GlassCard from './GlassCard'
-import useTheme from '../contexts/theme'
-import i18n from '../lib/locales'
-import { usePreferences } from '../stores/preferences'
-import useServiceReport from '../stores/serviceReport'
-import { getMonthsReports } from '../lib/serviceReport'
+import Text from '@/components/MyText'
+import Button from '@/components/Button'
+import IconButton from '@/components/IconButton'
+import GlassCard from '@/components/GlassCard'
+import useTheme from '@/contexts/theme'
+import i18n from '@/lib/locales'
+import { usePreferences } from '@/stores/preferences'
+import useServiceReport from '@/stores/serviceReport'
+import { getMonthsReports } from '@/lib/serviceReport'
 import {
   DayPlan,
   RecurringPlan,
   ServiceReport,
   ServiceReportsByYears,
-} from '../types/serviceReport'
-import { HomeTabStackNavigation } from '../types/homeStack'
+} from '@/types/serviceReport'
+import { HomeTabStackNavigation } from '@/types/homeStack'
 import { faChevronRight } from '@fortawesome/free-solid-svg-icons'
-import CalendarDay from './CalendarDay'
+import CalendarDay from '@/components/CalendarDay'
 import type { DateData } from 'react-native-calendars'
 
 type Props = {

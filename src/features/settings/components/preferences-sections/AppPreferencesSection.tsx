@@ -1,10 +1,10 @@
 import { Alert, View } from 'react-native'
 import * as Linking from 'expo-linking'
-import i18n from '../../../../lib/locales'
-import Section from '../../../../components/inputs/Section'
-import InputRowButton from '../../../../components/inputs/InputRowButton'
-import { requestLocationPermission } from '../../../../lib/address'
-import IconButton from '../../../../components/IconButton'
+import i18n from '@/lib/locales'
+import Section from '@/components/inputs/Section'
+import InputRowButton from '@/components/inputs/InputRowButton'
+import { requestLocationPermission } from '@/lib/address'
+import IconButton from '@/components/IconButton'
 import {
   faBell,
   faBellSlash,
@@ -14,7 +14,7 @@ import {
 } from '@fortawesome/free-solid-svg-icons'
 import { useEffect, useState } from 'react'
 import * as Location from 'expo-location'
-import useNotifications from '../../../../hooks/notifications'
+import useNotifications from '@/hooks/notifications'
 
 const AppPreferencesSection = () => {
   const notifications = useNotifications()

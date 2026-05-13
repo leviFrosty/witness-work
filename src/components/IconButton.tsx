@@ -1,13 +1,13 @@
 import { IconProp } from '@fortawesome/fontawesome-svg-core'
-import Button from './Button'
+import Button from '@/components/Button'
 import { Insets, StyleProp, ViewStyle } from 'react-native'
 import {
   FontAwesomeIcon,
   FontAwesomeIconStyle,
 } from '@fortawesome/react-native-fontawesome'
-import { ThemeContext } from '../contexts/theme'
+import { ThemeContext } from '@/contexts/theme'
 import { useContext } from 'react'
-import { ThemeSizes } from '../types/theme'
+import { ThemeSizes } from '@/types/theme'
 
 type Props = {
   icon: IconProp

@@ -1,9 +1,9 @@
 import React, { PropsWithChildren, ReactNode } from 'react'
 import { Pressable, StyleProp, View, ViewStyle } from 'react-native'
-import useTheme from '../../contexts/theme'
-import { rowPaddingVertical } from '../../constants/Inputs'
-import Text from '../MyText'
-import IconButton from '../IconButton'
+import useTheme from '@/contexts/theme'
+import { rowPaddingVertical } from '@/constants/Inputs'
+import Text from '@/components/MyText'
+import IconButton from '@/components/IconButton'
 import { IconProp } from '@fortawesome/fontawesome-svg-core'
 
 export interface InputRowContainerProps {

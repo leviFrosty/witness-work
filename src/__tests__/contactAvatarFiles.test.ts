@@ -19,7 +19,7 @@ vi.mock('expo-image-manipulator', () => ({
 // `../lib/logger` chains through to the preferences store which imports the
 // react-native MMKV module — not parseable in node. Stub it out for these
 // pure-function tests.
-vi.mock('../lib/logger', () => import('./mocks/logger'))
+vi.mock('@/lib/logger', () => import('@/__tests__/mocks/logger'))
 
 import {
   croppedAvatarFileName,
@@ -30,7 +30,7 @@ import {
   originalSiblingFileName,
   stripCacheBuster,
   withCacheBuster,
-} from '../lib/contactAvatarFiles'
+} from '@/lib/contactAvatarFiles'
 
 describe('contactAvatarFiles paths', () => {
   it('builds cropped + original filenames per contact id', () => {

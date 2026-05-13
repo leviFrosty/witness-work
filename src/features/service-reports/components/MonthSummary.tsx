@@ -32,7 +32,7 @@ import {
 } from '@react-navigation/native'
 import _ from 'lodash'
 import moment from 'moment'
-import GoalProgressStats from '@/components/GoalProgressStats'
+import GoalProgressStats from '@/features/service-reports/components/GoalProgressStats'
 import { RootStackNavigation } from '@/types/rootStack'
 import {
   isPersonalBest12mo,

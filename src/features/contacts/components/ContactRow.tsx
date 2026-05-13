@@ -29,8 +29,8 @@ import Button from '@/components/ui/Button'
 import { Swipeable } from 'react-native-gesture-handler'
 import Haptics from '@/lib/haptics'
 import useContacts from '@/stores/contactsStore'
-import SwipeableArchive from '@/components/ui/swipeableActions/Archive'
-import SwipeableDismiss from '@/components/ui/swipeableActions/Dismiss'
+import SwipeableArchive from '@/features/contacts/components/swipeableActions/Archive'
+import SwipeableDismiss from '@/features/contacts/components/swipeableActions/Dismiss'
 import DismissContactSheet from '@/features/contacts/components/DismissContactSheet'
 import { useToastController } from '@tamagui/toast'
 import Avatar from '@/components/ui/Avatar'
@@ -42,7 +42,7 @@ import {
   pickPreviewMatch,
 } from '@/features/contacts/lib/contactsSearch'
 import HighlightedText from '@/features/contacts/components/HighlightedText'
-import GenderIcon from '@/components/GenderIcon'
+import GenderIcon from '@/features/contacts/components/GenderIcon'
 
 const SNIPPET_CONTEXT_CHARS = 24
 

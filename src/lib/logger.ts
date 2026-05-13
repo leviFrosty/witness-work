@@ -1,4 +1,4 @@
-import { usePreferences } from '../stores/preferences'
+import { usePreferences } from '@/stores/preferences'
 
 /**
  * Simple logger utility that logs only when:

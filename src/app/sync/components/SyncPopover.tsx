@@ -10,15 +10,15 @@ import {
 } from '@fortawesome/free-solid-svg-icons'
 import moment from 'moment'
 import { useNavigation } from '@react-navigation/native'
-import useTheme from '../../../contexts/theme'
-import { usePreferences } from '../../../stores/preferences'
-import { iCloudSync } from '../iCloudSync'
+import useTheme from '@/contexts/theme'
+import { usePreferences } from '@/stores/preferences'
+import { iCloudSync } from '@/app/sync/iCloudSync'
 import * as ICloudBridge from '../../../../modules/icloud-bridge'
-import i18n from '../../../lib/locales'
-import Text from '../../../components/MyText'
-import Button from '../../../components/Button'
-import AnchoredPopover from '../../../components/AnchoredPopover'
-import { RootStackNavigation } from '../../../types/rootStack'
+import i18n from '@/lib/locales'
+import Text from '@/components/MyText'
+import Button from '@/components/Button'
+import AnchoredPopover from '@/components/AnchoredPopover'
+import { RootStackNavigation } from '@/types/rootStack'
 
 const CONTENT_WIDTH = 260
 

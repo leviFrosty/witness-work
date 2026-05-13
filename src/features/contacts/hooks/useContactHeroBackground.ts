@@ -1,7 +1,7 @@
 import { useColorScheme } from 'react-native'
-import useTheme from '../../../contexts/theme'
-import { mix } from '../../../lib/color'
-import { Contact } from '../../../types/contact'
+import useTheme from '@/contexts/theme'
+import { mix } from '@/lib/color'
+import { Contact } from '@/types/contact'
 
 /**
  * Resolves the background color for a contact's hero / header chrome.

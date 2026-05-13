@@ -1,12 +1,12 @@
 import moment from 'moment'
 import { describe, expect, it, beforeEach, vi } from 'vitest'
-import useServiceReport from '../stores/serviceReport'
+import useServiceReport from '@/stores/serviceReport'
 import {
   RecurringPlan,
   RecurringPlanFrequencies,
   RecurringPlanOverride,
-} from '../lib/serviceReport'
-import { normalizeDateForStorage } from '../lib/normalizeDate'
+} from '@/lib/serviceReport'
+import { normalizeDateForStorage } from '@/lib/normalizeDate'
 
 // Stored overrides have their `date` normalized to noon UTC. Compare against
 // this normalized shape rather than the raw input the test passed in.
@@ -24,11 +24,11 @@ type RecurringPlanWithOverrideInfo = RecurringPlan &
     | { isOverride: true; originalMinutes: number; originalNote?: string }
   )
 
-vi.mock('../lib/logger', () => import('./mocks/logger'))
-vi.mock('../stores/mmkv', () => import('./mocks/mmkv'))
+vi.mock('@/lib/logger', () => import('@/__tests__/mocks/logger'))
+vi.mock('@/stores/mmkv', () => import('@/__tests__/mocks/mmkv'))
 vi.mock(
   '@react-native-async-storage/async-storage',
-  () => import('./mocks/asyncStorage')
+  () => import('@/__tests__/mocks/asyncStorage')
 )
 
 describe('ServiceReport Store - Override Functionality', () => {

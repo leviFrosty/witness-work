@@ -1,9 +1,9 @@
 import { gzipSync, gunzipSync, strToU8, strFromU8 } from 'fflate'
-import { Address, Contact } from '../../../types/contact'
-import { Conversation } from '../../../types/conversation'
-import { CustomFieldDefinition } from '../../../types/customField'
-import { ContactImportData } from './contactImport'
-import { logger } from '../../../lib/logger'
+import { Address, Contact } from '@/types/contact'
+import { Conversation } from '@/types/conversation'
+import { CustomFieldDefinition } from '@/types/customField'
+import { ContactImportData } from '@/features/contacts/lib/contactImport'
+import { logger } from '@/lib/logger'
 
 /**
  * Contact-share universal link encoding.

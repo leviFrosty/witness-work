@@ -1,4 +1,4 @@
-import { filenameForContact, filenameForProfile } from './imageNames'
+import { filenameForContact, filenameForProfile } from '@/app/sync/imageNames'
 
 /**
  * Dependencies injected by the caller (`iCloudSync.ts`). Keeping the module

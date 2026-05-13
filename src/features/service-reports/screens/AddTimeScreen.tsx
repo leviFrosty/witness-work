@@ -1,49 +1,46 @@
 import { View, Alert, Switch, TextInput as RNTextInput } from 'react-native'
 import { useCallback, useEffect, useRef, useState } from 'react'
-import Section from '../../../components/inputs/Section'
-import InputRowContainer from '../../../components/inputs/InputRowContainer'
-import useTheme from '../../../contexts/theme'
-import Text from '../../../components/MyText'
-import ActionButton from '../../../components/ActionButton'
-import useServiceReport from '../../../stores/serviceReport'
+import Section from '@/components/inputs/Section'
+import InputRowContainer from '@/components/inputs/InputRowContainer'
+import useTheme from '@/contexts/theme'
+import Text from '@/components/MyText'
+import ActionButton from '@/components/ActionButton'
+import useServiceReport from '@/stores/serviceReport'
 import * as Crypto from 'expo-crypto'
 import { DateTimePickerEvent } from '@react-native-community/datetimepicker'
 import moment from 'moment'
-import { ServiceReport } from '../../../types/serviceReport'
+import { ServiceReport } from '@/types/serviceReport'
 import { useNavigation } from '@react-navigation/native'
-import i18n, { TranslationKey } from '../../../lib/locales'
-import DateTimePicker from '../../../components/DateTimePicker'
-import Wrapper from '../../../components/layout/Wrapper'
-import Select from '../../../components/Select'
-import SelectWheel from '../../../components/SelectWheel'
+import i18n, { TranslationKey } from '@/lib/locales'
+import DateTimePicker from '@/components/DateTimePicker'
+import Wrapper from '@/components/layout/Wrapper'
+import Select from '@/components/Select'
+import SelectWheel from '@/components/SelectWheel'
 import {
   getTagName,
   ServiceReportTag,
   usePreferences,
-} from '../../../stores/preferences'
-import TextInput from '../../../components/TextInput'
-import Button from '../../../components/Button'
+} from '@/stores/preferences'
+import TextInput from '@/components/TextInput'
+import Button from '@/components/Button'
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { NativeStackScreenProps } from '@react-navigation/native-stack'
 import { useToastController } from '@tamagui/toast'
-import Header from '../../../components/layout/Header'
+import Header from '@/components/layout/Header'
 import { faTrash } from '@fortawesome/free-solid-svg-icons'
-import IconButton from '../../../components/IconButton'
-import usePublisher from '../../../hooks/usePublisher'
+import IconButton from '@/components/IconButton'
+import usePublisher from '@/hooks/usePublisher'
 import {
   adjustedMinutesForSpecificMonth,
   getMonthsReports,
   getReport,
-} from '../../../lib/serviceReport'
-import useAnimation from '../../../hooks/useAnimation'
-import {
-  RootStackNavigation,
-  RootStackParamList,
-} from '../../../types/rootStack'
-import Haptics from '../../../lib/haptics'
-import { CONFETTI_DELAY_MS } from '../../../providers/AnimationViewProvider'
-import useCelebrationQueue from '../stores/celebrationQueue'
+} from '@/lib/serviceReport'
+import useAnimation from '@/hooks/useAnimation'
+import { RootStackNavigation, RootStackParamList } from '@/types/rootStack'
+import Haptics from '@/lib/haptics'
+import { CONFETTI_DELAY_MS } from '@/providers/AnimationViewProvider'
+import useCelebrationQueue from '@/features/service-reports/stores/celebrationQueue'
 
 type AddTimeScreenProps = NativeStackScreenProps<RootStackParamList, 'Add Time'>
 

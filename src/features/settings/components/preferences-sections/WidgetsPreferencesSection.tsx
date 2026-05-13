@@ -1,15 +1,15 @@
 import { Platform, View } from 'react-native'
-import Section from '../../../../components/inputs/Section'
-import InputRowSelect from '../../../../components/inputs/InputRowSelect'
-import i18n from '../../../../lib/locales'
+import Section from '@/components/inputs/Section'
+import InputRowSelect from '@/components/inputs/InputRowSelect'
+import i18n from '@/lib/locales'
 import {
   usePreferences,
   WidgetAppointmentWindow,
   WidgetContactAction,
   WidgetContactSort,
-} from '../../../../stores/preferences'
-import Text from '../../../../components/MyText'
-import useTheme from '../../../../contexts/theme'
+} from '@/stores/preferences'
+import Text from '@/components/MyText'
+import useTheme from '@/contexts/theme'
 
 const contactSortData: { label: string; value: WidgetContactSort }[] = [
   { label: i18n.t('longestContacted'), value: 'longestContacted' },

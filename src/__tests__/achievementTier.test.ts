@@ -5,14 +5,14 @@ import {
   monthCelebrationKey,
   resolveTier,
   tierFromPercent,
-} from '../lib/achievementTier'
-import { ServiceReport, ServiceReportsByYears } from '../types/serviceReport'
-import { Publisher } from '../types/publisher'
-import { normalizeDateForStorage } from '../lib/normalizeDate'
+} from '@/lib/achievementTier'
+import { ServiceReport, ServiceReportsByYears } from '@/types/serviceReport'
+import { Publisher } from '@/types/publisher'
+import { normalizeDateForStorage } from '@/lib/normalizeDate'
 
 // Tests pull in modules that transitively touch MMKV, which doesn't exist
 // in the vitest env.
-vi.mock('../lib/logger', () => import('./mocks/logger'))
+vi.mock('@/lib/logger', () => import('@/__tests__/mocks/logger'))
 
 type ReportInput = {
   /** 0-indexed (Jan=0). */

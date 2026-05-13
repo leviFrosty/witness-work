@@ -1,17 +1,17 @@
 import { Platform, Pressable, View } from 'react-native'
-import useTheme from '../../contexts/theme'
+import useTheme from '@/contexts/theme'
 import moment from 'moment'
-import Text from '../MyText'
+import Text from '@/components/MyText'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useNavigation } from '@react-navigation/native'
-import IconButton from '../IconButton'
+import IconButton from '@/components/IconButton'
 import {
   faBars,
   faChevronLeft,
   faTimes,
 } from '@fortawesome/free-solid-svg-icons'
 import { IconProp } from '@fortawesome/fontawesome-svg-core'
-import { RootStackNavigation } from '../../types/rootStack'
+import { RootStackNavigation } from '@/types/rootStack'
 
 type Props = {
   backgroundColor?: string

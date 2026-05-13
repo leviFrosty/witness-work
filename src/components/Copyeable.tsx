@@ -5,19 +5,19 @@ import {
   Pressable,
   ViewProps,
 } from 'react-native'
-import Haptics from '../lib/haptics'
+import Haptics from '@/lib/haptics'
 import * as Clipboard from 'expo-clipboard'
 import { PropsWithChildren, useContext, useState } from 'react'
-import Text from './MyText'
+import Text from '@/components/MyText'
 import Animated, {
   Easing,
   useAnimatedStyle,
   useSharedValue,
   withTiming,
 } from 'react-native-reanimated'
-import i18n from '../lib/locales'
-import { ThemeContext } from '../contexts/theme'
-import IconButton from './IconButton'
+import i18n from '@/lib/locales'
+import { ThemeContext } from '@/contexts/theme'
+import IconButton from '@/components/IconButton'
 import { faCaretDown } from '@fortawesome/free-solid-svg-icons'
 
 const AnimatedView = Animated.createAnimatedComponent(View)

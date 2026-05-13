@@ -7,38 +7,36 @@ import { useNavigation as useRootNavigation } from '@react-navigation/native'
 import moment from 'moment'
 import { faArrowLeft, faArrowRight } from '@fortawesome/free-solid-svg-icons'
 
-import useServiceReport from '../../../stores/serviceReport'
-import useTheme from '../../../contexts/theme'
+import useServiceReport from '@/stores/serviceReport'
+import useTheme from '@/contexts/theme'
 import {
   getMonthsReports,
   getPlansIntersectingDay,
   getEffectiveStartTimeInMinutesForRecurringPlan,
   RecurringPlan,
-} from '../../../lib/serviceReport'
-import { getStartTimeInMinutes } from '../../../lib/normalizeDate'
-import { RootStackNavigation } from '../../../types/rootStack'
-import { HomeTabStackParamList } from '../../../types/homeStack'
-import { DayPlan, ServiceReport } from '../../../types/serviceReport'
+} from '@/lib/serviceReport'
+import { getStartTimeInMinutes } from '@/lib/normalizeDate'
+import { RootStackNavigation } from '@/types/rootStack'
+import { HomeTabStackParamList } from '@/types/homeStack'
+import { DayPlan, ServiceReport } from '@/types/serviceReport'
 
-import GlassCard from '../../../components/GlassCard'
-import SwipeMonthNavigator from '../../../components/SwipeMonthNavigator'
-import CalendarHeader, {
-  CalendarViewMode,
-} from '../../../components/CalendarHeader'
-import CalendarKey from '../components/CalendarKey'
-import MonthTimeReportsCalendar from '../../service-reports/components/MonthTimeReportsCalendar'
-import MonthScheduleSection from '../../service-reports/components/MonthScheduleSection'
+import GlassCard from '@/components/GlassCard'
+import SwipeMonthNavigator from '@/components/SwipeMonthNavigator'
+import CalendarHeader, { CalendarViewMode } from '@/components/CalendarHeader'
+import CalendarKey from '@/features/plans/components/CalendarKey'
+import MonthTimeReportsCalendar from '@/features/service-reports/components/MonthTimeReportsCalendar'
+import MonthScheduleSection from '@/features/service-reports/components/MonthScheduleSection'
 import SelectedDateSheet, {
   SelectedDateSheetState,
-} from '../../service-reports/components/SelectedDateSheet'
-import Card from '../../../components/Card'
-import Button from '../../../components/Button'
-import IconButton from '../../../components/IconButton'
-import Text from '../../../components/MyText'
-import XView from '../../../components/layout/XView'
-import DayPlanRow from '../../../components/DayPlanRow'
-import RecurringPlanRow from '../../../components/RecurringPlanRow'
-import i18n from '../../../lib/locales'
+} from '@/features/service-reports/components/SelectedDateSheet'
+import Card from '@/components/Card'
+import Button from '@/components/Button'
+import IconButton from '@/components/IconButton'
+import Text from '@/components/MyText'
+import XView from '@/components/layout/XView'
+import DayPlanRow from '@/components/DayPlanRow'
+import RecurringPlanRow from '@/components/RecurringPlanRow'
+import i18n from '@/lib/locales'
 
 type Props = BottomTabScreenProps<HomeTabStackParamList, 'Schedule'>
 

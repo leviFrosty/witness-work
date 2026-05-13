@@ -1,13 +1,13 @@
 import moment from 'moment'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import * as Notifications from 'expo-notifications'
-import { deriveOffsetFromDates } from '../lib/notificationOffset'
+import { deriveOffsetFromDates } from '@/lib/notificationOffset'
 
-vi.mock('../lib/logger', () => import('./mocks/logger'))
-vi.mock('../stores/mmkv', () => import('./mocks/mmkv'))
+vi.mock('@/lib/logger', () => import('@/__tests__/mocks/logger'))
+vi.mock('@/stores/mmkv', () => import('@/__tests__/mocks/mmkv'))
 vi.mock(
   '@react-native-async-storage/async-storage',
-  () => import('./mocks/asyncStorage')
+  () => import('@/__tests__/mocks/asyncStorage')
 )
 
 const cancelScheduledNotificationAsync = vi.mocked(
@@ -69,9 +69,7 @@ describe('deriveOffsetFromDates', () => {
 describe('deleteDayPlan cancels scheduled notifications', () => {
   beforeEach(async () => {
     cancelScheduledNotificationAsync.mockClear()
-    const { default: useServiceReport } = await import(
-      '../stores/serviceReport'
-    )
+    const { default: useServiceReport } = await import('@/stores/serviceReport')
     useServiceReport.setState({ dayPlans: [] })
   })
   afterEach(() => {
@@ -79,9 +77,7 @@ describe('deleteDayPlan cancels scheduled notifications', () => {
   })
 
   it('calls cancelScheduledNotificationAsync for each notification on the deleted plan', async () => {
-    const { default: useServiceReport } = await import(
-      '../stores/serviceReport'
-    )
+    const { default: useServiceReport } = await import('@/stores/serviceReport')
     const { addDayPlan, deleteDayPlan } = useServiceReport.getState()
     addDayPlan({
       id: 'np1',
@@ -108,9 +104,7 @@ describe('deleteDayPlan cancels scheduled notifications', () => {
   })
 
   it('is a no-op when the plan has no notifications', async () => {
-    const { default: useServiceReport } = await import(
-      '../stores/serviceReport'
-    )
+    const { default: useServiceReport } = await import('@/stores/serviceReport')
     const { addDayPlan, deleteDayPlan } = useServiceReport.getState()
     addDayPlan({
       id: 'np2',

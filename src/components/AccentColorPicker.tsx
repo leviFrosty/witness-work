@@ -1,13 +1,13 @@
 import { Pressable, View } from 'react-native'
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
 import { faCheck } from '@fortawesome/free-solid-svg-icons'
-import useTheme from '../contexts/theme'
-import Text from './MyText'
-import IsSupporter from './IsSupporter'
-import CustomColorSwatch from './CustomColorSwatch'
-import { usePreferences } from '../stores/preferences'
-import { lightModeColors } from '../constants/theme'
-import i18n from '../lib/locales'
+import useTheme from '@/contexts/theme'
+import Text from '@/components/MyText'
+import IsSupporter from '@/components/IsSupporter'
+import CustomColorSwatch from '@/components/CustomColorSwatch'
+import { usePreferences } from '@/stores/preferences'
+import { lightModeColors } from '@/constants/theme'
+import i18n from '@/lib/locales'
 
 /**
  * Curated palette for supporter-selected accent overrides. Hex values are

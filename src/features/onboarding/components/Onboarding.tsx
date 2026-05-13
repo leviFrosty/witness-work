@@ -7,33 +7,33 @@ import {
   useState,
 } from 'react'
 import { View } from 'react-native'
-import StepOne from './steps/One'
-import StepTwo from './steps/Two'
-import StepThree from './steps/Three'
-import StepDefaultNav from './steps/DefaultNav'
-import PrivacyFirst from './steps/PrivacyFirst'
-import ProfileSetup from './steps/ProfileSetup'
-import ProfileSetupPioneerDate from './steps/ProfileSetupPioneerDate'
-import Supporter from './steps/Supporter'
-import ICloudRestore from './steps/iCloudRestore'
-import FounderNote from './steps/FounderNote'
-import IntentPicker from './steps/IntentPicker'
-import YourPlanPreview from './steps/YourPlanPreview'
-import ServiceYearCatchUp from './steps/ServiceYearCatchUp'
-import { hasReportsInCatchUpWindow } from '../../service-reports/components/ServiceYearCatchUpForm'
-import { usePreferences } from '../../../stores/preferences'
-import useServiceReport from '../../../stores/serviceReport'
-import { ServiceReportsByYears } from '../../../types/serviceReport'
+import StepOne from '@/features/onboarding/components/steps/One'
+import StepTwo from '@/features/onboarding/components/steps/Two'
+import StepThree from '@/features/onboarding/components/steps/Three'
+import StepDefaultNav from '@/features/onboarding/components/steps/DefaultNav'
+import PrivacyFirst from '@/features/onboarding/components/steps/PrivacyFirst'
+import ProfileSetup from '@/features/onboarding/components/steps/ProfileSetup'
+import ProfileSetupPioneerDate from '@/features/onboarding/components/steps/ProfileSetupPioneerDate'
+import Supporter from '@/features/onboarding/components/steps/Supporter'
+import ICloudRestore from '@/features/onboarding/components/steps/iCloudRestore'
+import FounderNote from '@/features/onboarding/components/steps/FounderNote'
+import IntentPicker from '@/features/onboarding/components/steps/IntentPicker'
+import YourPlanPreview from '@/features/onboarding/components/steps/YourPlanPreview'
+import ServiceYearCatchUp from '@/features/onboarding/components/steps/ServiceYearCatchUp'
+import { hasReportsInCatchUpWindow } from '@/features/service-reports/components/ServiceYearCatchUpForm'
+import { usePreferences } from '@/stores/preferences'
+import useServiceReport from '@/stores/serviceReport'
+import { ServiceReportsByYears } from '@/types/serviceReport'
 import {
   effectiveHasAnnualGoal,
   tracksPioneerStartDate,
-} from '../../../lib/publisherCapabilities'
-import { Publisher } from '../../../types/publisher'
+} from '@/lib/publisherCapabilities'
+import { Publisher } from '@/types/publisher'
 import moment from 'moment'
 import {
   OnboardingProgress,
   OnboardingProgressContext,
-} from './OnboardingProgressContext'
+} from '@/features/onboarding/components/OnboardingProgressContext'
 
 type StepId =
   | 'hero'

@@ -2,8 +2,8 @@ import { StyleProp, View, ViewStyle } from 'react-native'
 import { MenuView, MenuAction } from '@react-native-menu/menu'
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
 import { faChevronDown } from '@fortawesome/free-solid-svg-icons'
-import useTheme from '../contexts/theme'
-import Text from './MyText'
+import useTheme from '@/contexts/theme'
+import Text from '@/components/MyText'
 
 export type SelectDataItem<T> = { label: string; value: T }
 export type SelectData<T> = SelectDataItem<T>[]

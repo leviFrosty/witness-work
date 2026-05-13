@@ -1,4 +1,4 @@
-import { fonts, lightModeColors, numbers } from '../constants/theme'
+import { fonts, lightModeColors, numbers } from '@/constants/theme'
 export type ThemeSizes =
   | 'xs'
   | 'sm'

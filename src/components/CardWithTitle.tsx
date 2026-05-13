@@ -1,9 +1,9 @@
 import { ColorValue, StyleProp, View, ViewStyle, ViewProps } from 'react-native'
-import Text from './MyText'
-import Card from './Card'
+import Text from '@/components/MyText'
+import Card from '@/components/Card'
 import { PropsWithChildren, ReactNode } from 'react'
-import useTheme from '../contexts/theme'
-import Divider from './Divider'
+import useTheme from '@/contexts/theme'
+import Divider from '@/components/Divider'
 
 interface Props extends ViewProps {
   title: string | ReactNode

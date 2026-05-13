@@ -1,9 +1,9 @@
 import { View } from 'react-native'
 import { useContext } from 'react'
-import { ThemeContext } from '../../contexts/theme'
-import Text from '../MyText'
-import i18n from '../../lib/locales'
-import IconButton from '../IconButton'
+import { ThemeContext } from '@/contexts/theme'
+import Text from '@/components/MyText'
+import i18n from '@/lib/locales'
+import IconButton from '@/components/IconButton'
 import { faEdit } from '@fortawesome/free-solid-svg-icons'
 
 const SwipeableEdit = () => {

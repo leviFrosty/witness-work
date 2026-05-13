@@ -3,9 +3,9 @@ import type {
   SkPaint,
   Skia as SkiaApi,
 } from '@shopify/react-native-skia'
-import { confettiColor } from './color'
-import type { DrawContext } from './Particle'
-import Vector2D from './Vector2D'
+import { confettiColor } from '@/vendor/ConfettiSkia/core/color'
+import type { DrawContext } from '@/vendor/ConfettiSkia/core/Particle'
+import Vector2D from '@/vendor/ConfettiSkia/core/Vector2D'
 
 export default class SkiaRenderer implements DrawContext {
   private canvas: SkCanvas

@@ -3,7 +3,7 @@ import RNDateTimePicker, {
   DateTimePickerEvent,
 } from '@react-native-community/datetimepicker'
 import { getLocales } from 'expo-localization'
-import { usePreferences } from '../stores/preferences'
+import { usePreferences } from '@/stores/preferences'
 
 type IOSMode = 'date' | 'time' | 'datetime' | 'countdown'
 

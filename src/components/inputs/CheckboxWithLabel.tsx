@@ -1,7 +1,7 @@
 import Checkbox from 'expo-checkbox'
 import { View } from 'react-native'
-import Text from '../MyText'
-import useTheme from '../../contexts/theme'
+import Text from '@/components/MyText'
+import useTheme from '@/contexts/theme'
 
 const CheckboxWithLabel = ({
   value,

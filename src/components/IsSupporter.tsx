@@ -1,11 +1,11 @@
 import { ReactNode, useState } from 'react'
 import { Pressable, View } from 'react-native'
-import useTheme from '../contexts/theme'
-import Text from '../components/MyText'
-import SupporterBadge from './SupporterBadge'
-import SupporterInfoSheet from './SupporterInfoSheet'
-import useFeatureAccess from '../hooks/useFeatureAccess'
-import type { FeatureKey } from '../lib/featureAccess'
+import useTheme from '@/contexts/theme'
+import Text from '@/components/MyText'
+import SupporterBadge from '@/components/SupporterBadge'
+import SupporterInfoSheet from '@/components/SupporterInfoSheet'
+import useFeatureAccess from '@/hooks/useFeatureAccess'
+import type { FeatureKey } from '@/lib/featureAccess'
 
 interface Props {
   children: ReactNode

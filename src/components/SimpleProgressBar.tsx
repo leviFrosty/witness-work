@@ -1,6 +1,6 @@
 import { View, Animated } from 'react-native'
 import { useEffect, useRef, useState } from 'react'
-import useTheme from '../contexts/theme'
+import useTheme from '@/contexts/theme'
 
 interface SimpleProgressBarProps {
   /**

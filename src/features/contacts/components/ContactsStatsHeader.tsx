@@ -3,21 +3,21 @@ import { View } from 'react-native'
 import { Popover } from 'tamagui'
 import { faChevronRight } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
-import useTheme from '../../../contexts/theme'
-import i18n, { TranslationKey } from '../../../lib/locales'
+import useTheme from '@/contexts/theme'
+import i18n, { TranslationKey } from '@/lib/locales'
 import {
   ContactStaleness,
   getContactStaleness,
   stalenessToColor,
-} from '../../../lib/contactStaleness'
-import { filterActivesContacts } from '../../../lib/dismissedContacts'
-import { useMarkerColors } from '../../../hooks/useMarkerColors'
-import { Contact } from '../../../types/contact'
-import { Conversation } from '../../../types/conversation'
-import Text from '../../../components/MyText'
-import Card from '../../../components/Card'
-import Button from '../../../components/Button'
-import StalenessColorKey from '../../../components/StalenessColorKey'
+} from '@/lib/contactStaleness'
+import { filterActivesContacts } from '@/lib/dismissedContacts'
+import { useMarkerColors } from '@/hooks/useMarkerColors'
+import { Contact } from '@/types/contact'
+import { Conversation } from '@/types/conversation'
+import Text from '@/components/MyText'
+import Card from '@/components/Card'
+import Button from '@/components/Button'
+import StalenessColorKey from '@/components/StalenessColorKey'
 
 export type ContactsStatsHeaderProps = {
   /** All contacts, active AND dismissed. The component computes the splits. */

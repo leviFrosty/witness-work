@@ -1,7 +1,7 @@
 import * as Linking from 'expo-linking'
 import { Alert, AlertButton } from 'react-native'
 import * as Sentry from '@sentry/react-native'
-import i18n from './locales'
+import i18n from '@/lib/locales'
 
 /** Opens a URI or URL and handles when it cannot be opened. */
 export const openURL = async (

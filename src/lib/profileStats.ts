@@ -1,5 +1,5 @@
 import moment from 'moment'
-import { ServiceReportsByYears } from '../types/serviceReport'
+import { ServiceReportsByYears } from '@/types/serviceReport'
 
 const dayKey = (d: moment.Moment) => d.format('YYYY-MM-DD')
 

@@ -11,11 +11,11 @@ import { FullWindowOverlay } from 'react-native-screens'
 import {
   AnimationViewContext,
   AnimationViewCtx,
-} from '../contexts/AnimationView'
-import confetti from '../assets/lottie/confetti.json'
+} from '@/contexts/AnimationView'
+import confetti from '@/assets/lottie/confetti.json'
 import { setAudioModeAsync, useAudioPlayer } from 'expo-audio'
 // @ts-expect-error MP3 doesn't export module
-import chime from '../assets/audio/success-chime.mp3'
+import chime from '@/assets/audio/success-chime.mp3'
 
 interface Props {}
 

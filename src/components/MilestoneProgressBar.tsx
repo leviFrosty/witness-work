@@ -3,16 +3,16 @@ import { View, ViewStyle } from 'react-native'
 import Svg, { Defs, Path, Pattern, Rect } from 'react-native-svg'
 import _ from 'lodash'
 
-import useTheme from '../contexts/theme'
-import usePublisher from '../hooks/usePublisher'
-import useServiceReport from '../stores/serviceReport'
-import { usePreferences } from '../stores/preferences'
+import useTheme from '@/contexts/theme'
+import usePublisher from '@/hooks/usePublisher'
+import useServiceReport from '@/stores/serviceReport'
+import { usePreferences } from '@/stores/preferences'
 import {
   getServiceYearReports,
   getTotalMinutesForServiceYear,
-} from '../lib/serviceReport'
-import { getEffectiveMilestones, getMilestoneHitState } from '../lib/milestones'
-import Text from '../components/MyText'
+} from '@/lib/serviceReport'
+import { getEffectiveMilestones, getMilestoneHitState } from '@/lib/milestones'
+import Text from '@/components/MyText'
 
 interface MilestoneProgressBarPreviewProps {
   milestones: number[]

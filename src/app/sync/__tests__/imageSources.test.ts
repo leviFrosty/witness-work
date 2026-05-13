@@ -3,9 +3,9 @@ import {
   collectLocalAvatarSources,
   collectExpectedMarkerSources,
   applyDownloadedAvatars,
-} from '../imageSources'
-import { Contact } from '../../../types/contact'
-import { ProfileAvatar } from '../../../types/avatar'
+} from '@/app/sync/imageSources'
+import { Contact } from '@/types/contact'
+import { ProfileAvatar } from '@/types/avatar'
 
 const makeContact = (overrides: Partial<Contact> = {}): Contact => ({
   id: 'contact-1',

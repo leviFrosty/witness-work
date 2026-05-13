@@ -3,6 +3,9 @@
   "compilerOptions": {
     "jsx": "react-jsx",
     "strict": true,
-    "module": "ESNext"
+    "module": "ESNext",
+    "paths": {
+      "@/*": ["./src/*"]
+    }
   }
 }

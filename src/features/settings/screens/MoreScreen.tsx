@@ -1,8 +1,8 @@
 import { Alert } from 'react-native'
-import Wrapper from '../../../components/layout/Wrapper'
+import Wrapper from '@/components/layout/Wrapper'
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
-import Section from '../../../components/inputs/Section'
-import InputRowButton from '../../../components/inputs/InputRowButton'
+import Section from '@/components/inputs/Section'
+import InputRowButton from '@/components/inputs/InputRowButton'
 import {
   faChevronRight,
   faClock,
@@ -11,25 +11,22 @@ import {
   faSeedling,
   faUndo,
 } from '@fortawesome/free-solid-svg-icons'
-import IconButton from '../../../components/IconButton'
-import i18n from '../../../lib/locales'
+import IconButton from '@/components/IconButton'
+import i18n from '@/lib/locales'
 import { StackActions, useNavigation } from '@react-navigation/native'
-import {
-  RootStackNavigation,
-  RootStackParamList,
-} from '../../../types/rootStack'
-import { fetchUpdate } from '../../updates/lib/updates'
-import { usePreferences } from '../../../stores/preferences'
+import { RootStackNavigation, RootStackParamList } from '@/types/rootStack'
+import { fetchUpdate } from '@/features/updates/lib/updates'
+import { usePreferences } from '@/stores/preferences'
 import {
   importContactFromFile,
   processCompleteImport,
   ImportHandlerCallbacks,
-} from '../../contacts/lib/contactImport'
-import useContacts from '../../../stores/contactsStore'
-import useConversations from '../../../stores/conversationStore'
+} from '@/features/contacts/lib/contactImport'
+import useContacts from '@/stores/contactsStore'
+import useConversations from '@/stores/conversationStore'
 import { useToastController } from '@tamagui/toast'
-import { logger } from '../../../lib/logger'
-import AppPreferencesSection from '../components/preferences-sections/AppPreferencesSection'
+import { logger } from '@/lib/logger'
+import AppPreferencesSection from '@/features/settings/components/preferences-sections/AppPreferencesSection'
 
 const MoreScreen = () => {
   const navigation = useNavigation<RootStackNavigation>()

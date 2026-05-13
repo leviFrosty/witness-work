@@ -13,27 +13,27 @@ import {
 } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
 
-import useTheme from '../../../contexts/theme'
-import i18n from '../../../lib/locales'
-import { usePreferences } from '../../../stores/preferences'
-import useServiceReport from '../../../stores/serviceReport'
+import useTheme from '@/contexts/theme'
+import i18n from '@/lib/locales'
+import { usePreferences } from '@/stores/preferences'
+import useServiceReport from '@/stores/serviceReport'
 import {
   getServiceYearReports,
   getTotalMinutesForServiceYear,
-} from '../../../lib/serviceReport'
+} from '@/lib/serviceReport'
 import {
   DEFAULT_MILESTONES_BY_PUBLISHER,
   getMilestoneHitState,
   validateMilestoneValue,
-} from '../../../lib/milestones'
-import { RootStackNavigation } from '../../../types/rootStack'
+} from '@/lib/milestones'
+import { RootStackNavigation } from '@/types/rootStack'
 
-import Text from '../../../components/MyText'
-import TextInput from '../../../components/TextInput'
-import Button from '../../../components/Button'
-import IconButton from '../../../components/IconButton'
-import ActionButton from '../../../components/ActionButton'
-import { MilestoneProgressBarPreview } from '../../../components/MilestoneProgressBar'
+import Text from '@/components/MyText'
+import TextInput from '@/components/TextInput'
+import Button from '@/components/Button'
+import IconButton from '@/components/IconButton'
+import ActionButton from '@/components/ActionButton'
+import { MilestoneProgressBarPreview } from '@/components/MilestoneProgressBar'
 
 const MILESTONE_STEP = 10
 

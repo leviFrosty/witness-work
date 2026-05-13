@@ -1,7 +1,7 @@
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
-import { WhatsNewContent } from '../components/WhatsNewSheet'
-import Wrapper from '../../../components/layout/Wrapper'
-import { usePreferences } from '../../../stores/preferences'
+import { WhatsNewContent } from '@/features/updates/components/WhatsNewSheet'
+import Wrapper from '@/components/layout/Wrapper'
+import { usePreferences } from '@/stores/preferences'
 
 const WhatsNewScreen = () => {
   const { lastAppVersion } = usePreferences()

@@ -1,6 +1,6 @@
-import { Contact } from '../../types/contact'
-import { ProfileAvatar } from '../../types/avatar'
-import { markerForContact, MARKER_PROFILE } from './imageNames'
+import { Contact } from '@/types/contact'
+import { ProfileAvatar } from '@/types/avatar'
+import { markerForContact, MARKER_PROFILE } from '@/app/sync/imageNames'
 
 /**
  * Sanitizes a contact's avatar for inclusion in the synced iCloud JSON payload.

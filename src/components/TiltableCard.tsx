@@ -8,7 +8,7 @@ import Animated, {
   withSpring,
 } from 'react-native-reanimated'
 import { Gesture, GestureDetector } from 'react-native-gesture-handler'
-import type { TiltShaderContext } from '../shaders/types'
+import type { TiltShaderContext } from '@/shaders/types'
 
 interface Props {
   /** Disables the tilt gesture (e.g. in previews). */

@@ -1,8 +1,8 @@
 import { Alert, View } from 'react-native'
 import moment from 'moment'
-import Section from '../../../../components/inputs/Section'
-import i18n from '../../../../lib/locales'
-import InputRowButton from '../../../../components/inputs/InputRowButton'
+import Section from '@/components/inputs/Section'
+import i18n from '@/lib/locales'
+import InputRowButton from '@/components/inputs/InputRowButton'
 import {
   faArrowUpRightFromSquare,
   faChevronRight,
@@ -11,15 +11,15 @@ import {
   faRankingStar,
 } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
-import links from '../../../../constants/links'
-import IconButton from '../../../../components/IconButton'
-import SectionTitle from '../shared/SectionTitle'
-import Text from '../../../../components/MyText'
-import useIsSupporter from '../../../../hooks/useIsSupporter'
-import useTheme from '../../../../contexts/theme'
-import { openURL } from '../../../../lib/links'
+import links from '@/constants/links'
+import IconButton from '@/components/IconButton'
+import SectionTitle from '@/features/settings/components/shared/SectionTitle'
+import Text from '@/components/MyText'
+import useIsSupporter from '@/hooks/useIsSupporter'
+import useTheme from '@/contexts/theme'
+import { openURL } from '@/lib/links'
 import { useNavigation } from '@react-navigation/native'
-import { RootStackNavigation } from '../../../../types/rootStack'
+import { RootStackNavigation } from '@/types/rootStack'
 
 const SupporterCard = () => {
   const theme = useTheme()

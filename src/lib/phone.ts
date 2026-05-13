@@ -1,9 +1,9 @@
 import { Alert } from 'react-native'
-import i18n from './locales'
+import i18n from '@/lib/locales'
 import { ParsedPhoneNumber } from 'awesome-phonenumber'
-import { Contact } from '../types/contact'
-import { openURL } from './links'
-import { RootStackNavigation } from '../types/rootStack'
+import { Contact } from '@/types/contact'
+import { openURL } from '@/lib/links'
+import { RootStackNavigation } from '@/types/rootStack'
 
 const alertInvalidPhone = (
   contact: Contact,

@@ -1,5 +1,5 @@
 import moment from 'moment'
-import { Contact } from '../types/contact'
+import { Contact } from '@/types/contact'
 
 /**
  * Checks if a contact is currently dismissed (dismissedUntil date is in the

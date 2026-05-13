@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import Purchases from 'react-native-purchases'
 import * as Sentry from '@sentry/react-native'
-import useCustomer from './useCustomer'
-import { logger } from '../lib/logger'
+import useCustomer from '@/hooks/useCustomer'
+import { logger } from '@/lib/logger'
 
 /**
  * Returns the cheapest per-month-equivalent supporter price across all

@@ -1,17 +1,17 @@
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest'
 import moment from 'moment'
 
-vi.mock('../lib/logger', () => import('./mocks/logger'))
-vi.mock('../stores/mmkv', () => import('./mocks/mmkv'))
+vi.mock('@/lib/logger', () => import('@/__tests__/mocks/logger'))
+vi.mock('@/stores/mmkv', () => import('@/__tests__/mocks/mmkv'))
 vi.mock(
   '@react-native-async-storage/async-storage',
-  () => import('./mocks/asyncStorage')
+  () => import('@/__tests__/mocks/asyncStorage')
 )
 
-import { migrateServiceReportPersistedState } from '../stores/serviceReport'
-import { momentStoredDate } from '../lib/normalizeDate'
-import { RecurringPlan, RecurringPlanFrequencies } from '../lib/serviceReport'
-import { DayPlan, ServiceReport } from '../types/serviceReport'
+import { migrateServiceReportPersistedState } from '@/stores/serviceReport'
+import { momentStoredDate } from '@/lib/normalizeDate'
+import { RecurringPlan, RecurringPlanFrequencies } from '@/lib/serviceReport'
+import { DayPlan, ServiceReport } from '@/types/serviceReport'
 
 const originalTZ = process.env.TZ
 const setTZ = (tz: string) => {

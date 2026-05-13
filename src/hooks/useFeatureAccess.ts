@@ -1,10 +1,10 @@
 import { useMemo } from 'react'
-import useIsSupporter from './useIsSupporter'
+import useIsSupporter from '@/hooks/useIsSupporter'
 import {
   evaluateFeatureAccess,
   type FeatureAccess,
   type FeatureKey,
-} from '../lib/featureAccess'
+} from '@/lib/featureAccess'
 
 /**
  * Per-feature access gate. Use this when you're deciding whether to render or

@@ -21,7 +21,7 @@ const FullScreenLoader = () => {
           style={{
             width: '100%',
           }}
-          source={require('./../assets/lottie/loading.json')}
+          source={require('@/assets/lottie/loading.json')}
         />
       </BlurView>
     </Modal>

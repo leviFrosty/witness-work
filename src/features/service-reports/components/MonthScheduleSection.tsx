@@ -1,26 +1,26 @@
-import useTheme from '../../../contexts/theme'
-import i18n from '../../../lib/locales'
-import AheadOrBehindOfMonthSchedule from './AheadOrBehindOfSchedule'
-import Text from '../../../components/MyText'
-import Button from '../../../components/Button'
+import useTheme from '@/contexts/theme'
+import i18n from '@/lib/locales'
+import AheadOrBehindOfMonthSchedule from '@/features/service-reports/components/AheadOrBehindOfSchedule'
+import Text from '@/components/MyText'
+import Button from '@/components/Button'
 import { useNavigation } from '@react-navigation/native'
 import { useMemo, useEffect } from 'react'
 import moment from 'moment'
-import useServiceReport from '../../../stores/serviceReport'
+import useServiceReport from '@/stores/serviceReport'
 import {
   plannedMinutesToCurrentDayForMonth,
   calculateMonthlyPlannedMinutesOptimized,
   generatePlanHash,
-} from '../../../lib/serviceReport'
-import usePublisher from '../../../hooks/usePublisher'
-import Circle from '../../../components/Circle'
-import XView from '../../../components/layout/XView'
+} from '@/lib/serviceReport'
+import usePublisher from '@/hooks/usePublisher'
+import Circle from '@/components/Circle'
+import XView from '@/components/layout/XView'
 import { View } from 'react-native'
 import _ from 'lodash'
-import { useFormattedMinutes } from '../../../lib/minutes'
-import { RootStackNavigation } from '../../../types/rootStack'
-import { useTimeCache, getMonthCacheKey } from '../../../stores/timeCache'
-import { logger } from '../../../lib/logger'
+import { useFormattedMinutes } from '@/lib/minutes'
+import { RootStackNavigation } from '@/types/rootStack'
+import { useTimeCache, getMonthCacheKey } from '@/stores/timeCache'
+import { logger } from '@/lib/logger'
 
 type MonthScheduleSectionProps = {
   month: number

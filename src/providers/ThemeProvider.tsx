@@ -1,10 +1,10 @@
 import { PropsWithChildren, useMemo } from 'react'
-import { ThemeContext } from '../contexts/theme'
-import getThemeFromColorScheme from '../constants/theme'
+import { ThemeContext } from '@/contexts/theme'
+import getThemeFromColorScheme from '@/constants/theme'
 import { useColorScheme } from 'react-native'
-import { usePreferences } from '../stores/preferences'
-import useFeatureAccess from '../hooks/useFeatureAccess'
-import { mix, withAlpha } from '../lib/color'
+import { usePreferences } from '@/stores/preferences'
+import useFeatureAccess from '@/hooks/useFeatureAccess'
+import { mix, withAlpha } from '@/lib/color'
 
 interface Props {}
 

@@ -2,18 +2,18 @@ import { View, Pressable } from 'react-native'
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
 import { faApple, faGoogle, faWaze } from '@fortawesome/free-brands-svg-icons'
 import type { IconDefinition } from '@fortawesome/fontawesome-svg-core'
-import i18n from '../../../../lib/locales'
+import i18n from '@/lib/locales'
 import {
   usePreferences,
   type DefaultNavigationMapProvider,
-} from '../../../../stores/preferences'
-import ActionButton from '../../../../components/ActionButton'
-import Text from '../../../../components/MyText'
-import Wrapper from '../../../../components/layout/Wrapper'
-import OnboardingNav from '../OnboardingNav'
-import useTheme from '../../../../contexts/theme'
-import { navigationSelectionOptions } from '../../../../components/DefaultNavigationSelector'
-import NavMapPreview from '../NavMapPreview'
+} from '@/stores/preferences'
+import ActionButton from '@/components/ActionButton'
+import Text from '@/components/MyText'
+import Wrapper from '@/components/layout/Wrapper'
+import OnboardingNav from '@/features/onboarding/components/OnboardingNav'
+import useTheme from '@/contexts/theme'
+import { navigationSelectionOptions } from '@/components/DefaultNavigationSelector'
+import NavMapPreview from '@/features/onboarding/components/NavMapPreview'
 
 interface Props {
   goBack: () => void

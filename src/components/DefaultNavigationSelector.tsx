@@ -1,10 +1,10 @@
-import i18n from '../lib/locales'
-import InputRowSelect from './inputs/InputRowSelect'
-import { SelectData } from './Select'
+import i18n from '@/lib/locales'
+import InputRowSelect from '@/components/inputs/InputRowSelect'
+import { SelectData } from '@/components/Select'
 import {
   DefaultNavigationMapProvider,
   usePreferences,
-} from '../stores/preferences'
+} from '@/stores/preferences'
 
 export const navigationSelectionOptions: SelectData<DefaultNavigationMapProvider> =
   [

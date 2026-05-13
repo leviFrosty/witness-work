@@ -1,5 +1,5 @@
 import moment from 'moment'
-import { Contact } from '../../types/contact'
+import { Contact } from '@/types/contact'
 
 const testContact: Contact = {
   id: '123',

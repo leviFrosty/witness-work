@@ -2,11 +2,11 @@ import { useState } from 'react'
 import { Pressable, StyleProp, StyleSheet, View, ViewStyle } from 'react-native'
 import { faXmark } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
-import useTheme from '../../../contexts/theme'
-import i18n, { TranslationKey } from '../../../lib/locales'
-import { usePreferences } from '../../../stores/preferences'
-import { DID_YOU_KNOW_TIPS } from '../lib/didYouKnowTips'
-import Text from '../../../components/MyText'
+import useTheme from '@/contexts/theme'
+import i18n, { TranslationKey } from '@/lib/locales'
+import { usePreferences } from '@/stores/preferences'
+import { DID_YOU_KNOW_TIPS } from '@/features/updates/lib/didYouKnowTips'
+import Text from '@/components/MyText'
 
 /**
  * Home-screen tip card that drip-feeds lesser-known features one at a time. On

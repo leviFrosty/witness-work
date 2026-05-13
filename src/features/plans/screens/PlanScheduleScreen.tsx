@@ -1,41 +1,41 @@
 import { ScrollView, View } from 'react-native'
-import Text from '../../../components/MyText'
-import useTheme from '../../../contexts/theme'
+import Text from '@/components/MyText'
+import useTheme from '@/contexts/theme'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import i18n from '../../../lib/locales'
-import Wrapper from '../../../components/layout/Wrapper'
-import XView from '../../../components/layout/XView'
+import i18n from '@/lib/locales'
+import Wrapper from '@/components/layout/Wrapper'
+import XView from '@/components/layout/XView'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import moment from 'moment'
 import { Calendar, DateData } from 'react-native-calendars'
 import { NativeStackScreenProps } from '@react-navigation/native-stack'
-import CalendarDay from '../../../components/CalendarDay'
-import SimpleProgressBar from '../../../components/SimpleProgressBar'
+import CalendarDay from '@/components/CalendarDay'
+import SimpleProgressBar from '@/components/SimpleProgressBar'
 import _ from 'lodash'
-import CalendarKey from '../components/CalendarKey'
-import useServiceReport from '../../../stores/serviceReport'
-import usePublisher from '../../../hooks/usePublisher'
+import CalendarKey from '@/features/plans/components/CalendarKey'
+import useServiceReport from '@/stores/serviceReport'
+import usePublisher from '@/hooks/usePublisher'
 import {
   getServiceYearFromDate,
   getMonthsReports,
   calculateAnnualPlannedMinutesOptimized,
   calculateMonthlyPlannedMinutesOptimized,
   generatePlanHash,
-} from '../../../lib/serviceReport'
+} from '@/lib/serviceReport'
 import {
   useTimeCache,
   getMonthCacheKey,
   getAnnualCacheKey,
-} from '../../../stores/timeCache'
-import { logger } from '../../../lib/logger'
-import Header from '../../../components/layout/Header'
-import Button from '../../../components/Button'
-import IconButton from '../../../components/IconButton'
+} from '@/stores/timeCache'
+import { logger } from '@/lib/logger'
+import Header from '@/components/layout/Header'
+import Button from '@/components/Button'
+import IconButton from '@/components/IconButton'
 import { faArrowLeft, faArrowRight } from '@fortawesome/free-solid-svg-icons'
-import Card from '../../../components/Card'
-import MonthPlansList from '../components/MonthPlansList'
+import Card from '@/components/Card'
+import MonthPlansList from '@/features/plans/components/MonthPlansList'
 
-import { RootStackParamList } from '../../../types/rootStack'
+import { RootStackParamList } from '@/types/rootStack'
 
 type PlanScheduleScreenProps = NativeStackScreenProps<
   RootStackParamList,

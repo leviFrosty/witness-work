@@ -3,14 +3,14 @@ import { View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
 
-import useServiceReport from '../../../stores/serviceReport'
-import { getLifetimeHours } from '../../../lib/serviceReport'
-import { ServiceReport } from '../../../types/serviceReport'
-import i18n from '../../../lib/locales'
+import useServiceReport from '@/stores/serviceReport'
+import { getLifetimeHours } from '@/lib/serviceReport'
+import { ServiceReport } from '@/types/serviceReport'
+import i18n from '@/lib/locales'
 
-import Empty from '../../../components/Empty'
-import LifetimeHoursCard from './LifetimeHoursCard'
-import YearByYearList from './YearByYearList'
+import Empty from '@/components/Empty'
+import LifetimeHoursCard from '@/features/progress/components/LifetimeHoursCard'
+import YearByYearList from '@/features/progress/components/YearByYearList'
 
 /**
  * Progress screen's "All-time" tab. Aggregates every service report the user

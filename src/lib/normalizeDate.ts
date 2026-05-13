@@ -4,7 +4,7 @@ import {
   RecurringPlan,
   RecurringPlanOverride,
   ServiceReportsByYears,
-} from '../types/serviceReport'
+} from '@/types/serviceReport'
 
 /**
  * Plans and time entries store a _calendar day_, not a moment in time. We carry

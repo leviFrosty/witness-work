@@ -1,6 +1,6 @@
 import { useMemo } from 'react'
-import useTheme from '../contexts/theme'
-import { MarkerColors, usePreferences } from '../stores/preferences'
+import useTheme from '@/contexts/theme'
+import { MarkerColors, usePreferences } from '@/stores/preferences'
 
 export function useMarkerColors(): MarkerColors {
   const { mapKeyColors } = usePreferences()

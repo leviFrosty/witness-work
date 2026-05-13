@@ -14,7 +14,7 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated'
 import { useNavigation } from '@react-navigation/native'
-import useTheme from '../contexts/theme'
+import useTheme from '@/contexts/theme'
 
 type AnchorRect = { x: number; y: number; width: number; height: number }
 

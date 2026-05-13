@@ -11,20 +11,25 @@ import {
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
 import { useNavigation } from '@react-navigation/native'
 
-import Header from '../../../components/layout/Header'
-import Wrapper from '../../../components/layout/Wrapper'
-import Text from '../../../components/MyText'
-import Accordion from '../../../components/Accordion'
-import Card from '../../../components/Card'
-import IconButton from '../../../components/IconButton'
-import Button from '../../../components/Button'
-import SectionTitle from '../../settings/components/shared/SectionTitle'
-import useTheme from '../../../contexts/theme'
-import i18n, { TranslationKey } from '../../../lib/locales'
-import links from '../../../constants/links'
-import { email } from '../../../constants/contactInformation'
-import { openURL } from '../../../lib/links'
-import { FAQS, FAQ_CATEGORIES, FAQEntry, FAQCategory } from '../constants/faqs'
+import Header from '@/components/layout/Header'
+import Wrapper from '@/components/layout/Wrapper'
+import Text from '@/components/MyText'
+import Accordion from '@/components/Accordion'
+import Card from '@/components/Card'
+import IconButton from '@/components/IconButton'
+import Button from '@/components/Button'
+import SectionTitle from '@/features/settings/components/shared/SectionTitle'
+import useTheme from '@/contexts/theme'
+import i18n, { TranslationKey } from '@/lib/locales'
+import links from '@/constants/links'
+import { email } from '@/constants/contactInformation'
+import { openURL } from '@/lib/links'
+import {
+  FAQS,
+  FAQ_CATEGORIES,
+  FAQEntry,
+  FAQCategory,
+} from '@/features/updates/constants/faqs'
 
 const normalize = (s: string) => s.toLowerCase().trim()
 
@@ -179,7 +184,7 @@ const FAQScreen = () => {
           }}
         >
           <Image
-            source={require('../../../assets/icon.png')}
+            source={require('@/assets/icon.png')}
             style={{
               width: 64,
               height: 64,

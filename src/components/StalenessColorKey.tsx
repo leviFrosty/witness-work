@@ -1,13 +1,13 @@
 import { useState } from 'react'
 import { Pressable, View } from 'react-native'
-import useTheme from '../contexts/theme'
-import i18n, { TranslationKey } from '../lib/locales'
-import { ContactStaleness, stalenessToColor } from '../lib/contactStaleness'
-import { useMarkerColors } from '../hooks/useMarkerColors'
-import { MarkerColors, usePreferences } from '../stores/preferences'
-import Text from './MyText'
-import Button from './Button'
-import ColorPickerSheet from './ColorPickerSheet'
+import useTheme from '@/contexts/theme'
+import i18n, { TranslationKey } from '@/lib/locales'
+import { ContactStaleness, stalenessToColor } from '@/lib/contactStaleness'
+import { useMarkerColors } from '@/hooks/useMarkerColors'
+import { MarkerColors, usePreferences } from '@/stores/preferences'
+import Text from '@/components/MyText'
+import Button from '@/components/Button'
+import ColorPickerSheet from '@/components/ColorPickerSheet'
 
 /**
  * Order shown left-to-right / top-to-bottom: most stale first so the eye lands

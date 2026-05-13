@@ -1,5 +1,5 @@
-import { getShader } from './registry'
-import type { ShaderId, TiltShaderContext } from './types'
+import { getShader } from '@/shaders/registry'
+import type { ShaderId, TiltShaderContext } from '@/shaders/types'
 
 interface Props extends TiltShaderContext {
   shaderId: ShaderId

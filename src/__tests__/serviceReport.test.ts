@@ -16,14 +16,14 @@ import {
   generatePlanHash,
   calculateMonthlyPlannedMinutesOptimized,
   calculateAnnualPlannedMinutesOptimized,
-} from '../lib/serviceReport'
-import { ServiceReport, ServiceReportsByYears } from '../types/serviceReport'
-import { Publisher } from '../types/publisher'
-import { monthCreditMaxMinutes } from '../constants/serviceReports'
+} from '@/lib/serviceReport'
+import { ServiceReport, ServiceReportsByYears } from '@/types/serviceReport'
+import { Publisher } from '@/types/publisher'
+import { monthCreditMaxMinutes } from '@/constants/serviceReports'
 import { describe, expect, it, beforeEach, afterEach, vi } from 'vitest'
 
 // Mock the logger to avoid MMKV dependencies in tests
-vi.mock('../lib/logger', () => import('./mocks/logger'))
+vi.mock('@/lib/logger', () => import('@/__tests__/mocks/logger'))
 
 describe('lib/serviceReport', () => {
   describe('calculateProgress', () => {

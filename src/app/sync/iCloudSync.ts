@@ -2,27 +2,27 @@ import { AppState, AppStateStatus, Platform } from 'react-native'
 import * as FileSystem from 'expo-file-system/legacy'
 import _ from 'lodash'
 import * as ICloudBridge from '../../../modules/icloud-bridge'
-import useContacts from '../../stores/contactsStore'
-import useConversations from '../../stores/conversationStore'
-import useServiceReport from '../../stores/serviceReport'
-import { usePreferences } from '../../stores/preferences'
-import { useSupporter } from '../../features/supporter/stores/supporter'
-import { buildPayload, parsePayload, SyncPayload } from './payload'
-import { mergePayload } from './merge'
-import { logger } from '../../lib/logger'
+import useContacts from '@/stores/contactsStore'
+import useConversations from '@/stores/conversationStore'
+import useServiceReport from '@/stores/serviceReport'
+import { usePreferences } from '@/stores/preferences'
+import { useSupporter } from '@/features/supporter/stores/supporter'
+import { buildPayload, parsePayload, SyncPayload } from '@/app/sync/payload'
+import { mergePayload } from '@/app/sync/merge'
+import { logger } from '@/lib/logger'
 import * as Sentry from '@sentry/react-native'
 import * as Device from 'expo-device'
 import { EventSubscription } from 'expo-modules-core'
-import { Contact } from '../../types/contact'
-import { CustomFieldDefinition } from '../../types/customField'
-import { Conversation, ConversationTombstone } from '../../types/conversation'
+import { Contact } from '@/types/contact'
+import { CustomFieldDefinition } from '@/types/customField'
+import { Conversation, ConversationTombstone } from '@/types/conversation'
 import {
   DayPlan,
   ServiceReportsByYears,
   ServiceReportTombstone,
-} from '../../types/serviceReport'
-import { RecurringPlan } from '../../lib/serviceReport'
-import { migrateNormalizeDates } from '../../lib/normalizeDate'
+} from '@/types/serviceReport'
+import { RecurringPlan } from '@/lib/serviceReport'
+import { migrateNormalizeDates } from '@/lib/normalizeDate'
 import {
   pushAllImages,
   pullMissingImages,
@@ -30,12 +30,12 @@ import {
   ActiveIdentity,
   ImageSyncBookkeeping,
   ImageSyncDeps,
-} from './imageSync'
+} from '@/app/sync/imageSync'
 import {
   collectLocalAvatarSources,
   collectExpectedMarkerSources,
   applyDownloadedAvatars,
-} from './imageSources'
+} from '@/app/sync/imageSources'
 
 const PUSH_DEBOUNCE_MS = 5000
 /**

@@ -7,7 +7,7 @@
 // `mmkvStorage` and `migrateFromAsyncStorage` are intentionally omitted.
 //
 // Usage:
-//   vi.mock('../stores/mmkv', () => import('./mocks/mmkv'))
+//   vi.mock('@/__tests__/stores/mmkv', () => import('@/__tests__/mocks/mocks/mmkv'))
 export const hasMigratedFromAsyncStorage = () => true
 
 export const MmkvStorage = {

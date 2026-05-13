@@ -1,12 +1,12 @@
 import { Switch, View } from 'react-native'
-import Section from '../../../../components/inputs/Section'
-import { usePreferences } from '../../../../stores/preferences'
-import InputRowContainer from '../../../../components/inputs/InputRowContainer'
-import i18n from '../../../../lib/locales'
-import Select from '../../../../components/Select'
-import Text from '../../../../components/MyText'
-import XView from '../../../../components/layout/XView'
-import useTheme from '../../../../contexts/theme'
+import Section from '@/components/inputs/Section'
+import { usePreferences } from '@/stores/preferences'
+import InputRowContainer from '@/components/inputs/InputRowContainer'
+import i18n from '@/lib/locales'
+import Select from '@/components/Select'
+import Text from '@/components/MyText'
+import XView from '@/components/layout/XView'
+import useTheme from '@/contexts/theme'
 
 const RemindMeAboutBackups = () => {
   const { remindMeAboutBackups, set } = usePreferences()

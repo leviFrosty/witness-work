@@ -1,13 +1,13 @@
 import { describe, expect, it, vi } from 'vitest'
 
-vi.mock('../lib/logger', () => import('./mocks/logger'))
-vi.mock('../stores/mmkv', () => import('./mocks/mmkv'))
+vi.mock('@/lib/logger', () => import('@/__tests__/mocks/logger'))
+vi.mock('@/stores/mmkv', () => import('@/__tests__/mocks/mmkv'))
 vi.mock(
   '@react-native-async-storage/async-storage',
-  () => import('./mocks/asyncStorage')
+  () => import('@/__tests__/mocks/asyncStorage')
 )
 
-import { getAvailableEarlierEndYears } from '../lib/serviceReport'
+import { getAvailableEarlierEndYears } from '@/lib/serviceReport'
 
 describe('getAvailableEarlierEndYears', () => {
   it('returns years from (current - floor) up to (earliest - 1), descending, excluding any already-present year', () => {

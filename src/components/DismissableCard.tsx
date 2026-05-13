@@ -1,9 +1,9 @@
 import { ColorValue, StyleProp, View, ViewStyle } from 'react-native'
 import { ReactNode, useState } from 'react'
 import { faTimes } from '@fortawesome/free-solid-svg-icons'
-import useTheme from '../contexts/theme'
-import CardWithTitle from './CardWithTitle'
-import IconButton from './IconButton'
+import useTheme from '@/contexts/theme'
+import CardWithTitle from '@/components/CardWithTitle'
+import IconButton from '@/components/IconButton'
 
 interface Props {
   title: ReactNode

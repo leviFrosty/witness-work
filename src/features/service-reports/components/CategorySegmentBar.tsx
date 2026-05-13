@@ -1,8 +1,8 @@
 import { View } from 'react-native'
-import Text from '../../../components/MyText'
-import useTheme from '../../../contexts/theme'
-import { useFormattedMinutes } from '../../../lib/minutes'
-import CreditBadge from './CreditBadge'
+import Text from '@/components/MyText'
+import useTheme from '@/contexts/theme'
+import { useFormattedMinutes } from '@/lib/minutes'
+import CreditBadge from '@/features/service-reports/components/CreditBadge'
 
 export type CategorySegment = {
   title: string

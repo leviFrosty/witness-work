@@ -1,19 +1,19 @@
 import { useCallback, useMemo } from 'react'
 import moment from 'moment'
-import i18n from '../../../lib/locales'
-import { usePreferences } from '../../../stores/preferences'
-import useServiceReport from '../../../stores/serviceReport'
-import useConversations from '../../../stores/conversationStore'
-import useContacts from '../../../stores/contactsStore'
-import usePublisher from '../../../hooks/usePublisher'
+import i18n from '@/lib/locales'
+import { usePreferences } from '@/stores/preferences'
+import useServiceReport from '@/stores/serviceReport'
+import useConversations from '@/stores/conversationStore'
+import useContacts from '@/stores/contactsStore'
+import usePublisher from '@/hooks/usePublisher'
 import {
   AdjustedMinutes,
   adjustedMinutesForSpecificMonth,
   getTotalMinutesDetailedForSpecificMonth,
   getMonthsReports,
-} from '../../../lib/serviceReport'
-import { getStudiesForGivenMonth } from '../../../lib/contacts'
-import { formatHoursCompact, formatMinutesCompact } from '../../../lib/minutes'
+} from '@/lib/serviceReport'
+import { getStudiesForGivenMonth } from '@/lib/contacts'
+import { formatHoursCompact, formatMinutesCompact } from '@/lib/minutes'
 
 export type MonthReportData = {
   /** Whether the publisher has any reports logged for this month. */

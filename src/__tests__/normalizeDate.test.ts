@@ -6,14 +6,14 @@ import {
   normalizePartialRecurringPlan,
   normalizeRecurringPlan,
   preserveOrNormalizeStoredDate,
-} from '../lib/normalizeDate'
-import { RecurringPlan, RecurringPlanFrequencies } from '../lib/serviceReport'
+} from '@/lib/normalizeDate'
+import { RecurringPlan, RecurringPlanFrequencies } from '@/lib/serviceReport'
 
-vi.mock('../lib/logger', () => import('./mocks/logger'))
-vi.mock('../stores/mmkv', () => import('./mocks/mmkv'))
+vi.mock('@/lib/logger', () => import('@/__tests__/mocks/logger'))
+vi.mock('@/stores/mmkv', () => import('@/__tests__/mocks/mmkv'))
 vi.mock(
   '@react-native-async-storage/async-storage',
-  () => import('./mocks/asyncStorage')
+  () => import('@/__tests__/mocks/asyncStorage')
 )
 
 const originalTZ = process.env.TZ

@@ -1,27 +1,27 @@
 import { Alert, ScrollView, View } from 'react-native'
 
-import { countTruthyValueStrings } from '../../../lib/objects'
+import { countTruthyValueStrings } from '@/lib/objects'
 import {
   fetchCoordinateFromAddress,
   requestLocationPermission,
-} from '../../../lib/address'
-import Loader from '../../../components/Loader'
+} from '@/lib/address'
+import Loader from '@/components/Loader'
 import { Progress } from 'tamagui'
 import AnimatedLottieView from 'lottie-react-native'
-import { usePreferences } from '../../../stores/preferences'
-import useContacts from '../../../stores/contactsStore'
-import useTheme from '../../../contexts/theme'
+import { usePreferences } from '@/stores/preferences'
+import useContacts from '@/stores/contactsStore'
+import useTheme from '@/contexts/theme'
 import { useNavigation } from '@react-navigation/native'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { Contact } from '../../../types/contact'
-import i18n from '../../../lib/locales'
-import Wrapper from '../../../components/layout/Wrapper'
-import Text from '../../../components/MyText'
-import ActionButton from '../../../components/ActionButton'
-import Button from '../../../components/Button'
-import { HomeTabStackNavigation } from '../../../types/homeStack'
-import MapKey from './MapColorKey'
+import { Contact } from '@/types/contact'
+import i18n from '@/lib/locales'
+import Wrapper from '@/components/layout/Wrapper'
+import Text from '@/components/MyText'
+import ActionButton from '@/components/ActionButton'
+import Button from '@/components/Button'
+import { HomeTabStackNavigation } from '@/types/homeStack'
+import MapKey from '@/features/map/components/MapColorKey'
 
 export default function MapOnboarding() {
   const { incrementGeocodeApiCallCount, set } = usePreferences()
@@ -167,7 +167,7 @@ export default function MapOnboarding() {
                   width: 160,
                   height: 160,
                 }}
-                source={require('../../../assets/lottie/checkMark.json')}
+                source={require('@/assets/lottie/checkMark.json')}
               />
               <Text
                 style={{

@@ -1,11 +1,11 @@
-import Wrapper from '../../../components/layout/Wrapper'
+import Wrapper from '@/components/layout/Wrapper'
 import MapView, { LatLng, Marker } from 'react-native-maps'
-import useContacts from '../../../stores/contactsStore'
+import useContacts from '@/stores/contactsStore'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigation } from '@react-navigation/native'
-import useTheme from '../../../contexts/theme'
-import useConversations from '../../../stores/conversationStore'
-import { filterActivesContacts } from '../../../lib/dismissedContacts'
+import useTheme from '@/contexts/theme'
+import useConversations from '@/stores/conversationStore'
+import { filterActivesContacts } from '@/lib/dismissedContacts'
 import {
   Dimensions,
   Pressable,
@@ -21,23 +21,23 @@ import Animated, {
   withSpring,
 } from 'react-native-reanimated'
 import Carousel, { ICarouselInstance } from 'react-native-reanimated-carousel'
-import MapCarouselCard from '../components/MapCarouselCard'
+import MapCarouselCard from '@/features/map/components/MapCarouselCard'
 import * as Location from 'expo-location'
 import * as Crypto from 'expo-crypto'
 import ShareAddressSheet, {
   MapShareSheet,
-} from '../components/ShareAddressSheet'
-import { usePreferences } from '../../../stores/preferences'
-import Text from '../../../components/MyText'
-import Button from '../../../components/Button'
-import i18n from '../../../lib/locales'
+} from '@/features/map/components/ShareAddressSheet'
+import { usePreferences } from '@/stores/preferences'
+import Text from '@/components/MyText'
+import Button from '@/components/Button'
+import i18n from '@/lib/locales'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import MapOnboarding from '../components/MapOnboarding'
-import { TAB_BAR_HEIGHT } from '../../../components/TabBar'
-import useDevice from '../../../hooks/useDevice'
-import { RootStackNavigation } from '../../../types/rootStack'
-import { HomeTabStackNavigation } from '../../../types/homeStack'
-import { ContactMarker } from '../types/map'
+import MapOnboarding from '@/features/map/components/MapOnboarding'
+import { TAB_BAR_HEIGHT } from '@/components/TabBar'
+import useDevice from '@/hooks/useDevice'
+import { RootStackNavigation } from '@/types/rootStack'
+import { HomeTabStackNavigation } from '@/types/homeStack'
+import { ContactMarker } from '@/features/map/types/map'
 import {
   faAddressBook,
   faCircleInfo,
@@ -47,18 +47,15 @@ import {
   faUpRightAndDownLeftFromCenter,
 } from '@fortawesome/free-solid-svg-icons'
 import { Popover } from 'tamagui'
-import MapKey from '../components/MapColorKey'
-import { useMarkerColors } from '../../../hooks/useMarkerColors'
-import {
-  getContactStaleness,
-  stalenessToColor,
-} from '../../../lib/contactStaleness'
+import MapKey from '@/features/map/components/MapColorKey'
+import { useMarkerColors } from '@/hooks/useMarkerColors'
+import { getContactStaleness, stalenessToColor } from '@/lib/contactStaleness'
 import {
   findContactIndexById,
   reconcileActiveContact,
-} from '../lib/mapCarousel'
+} from '@/features/map/lib/mapCarousel'
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
-import { addressToString, coordinateAsString } from '../../../lib/address'
+import { addressToString, coordinateAsString } from '@/lib/address'
 
 const liquidGlass = isLiquidGlassAvailable()
 

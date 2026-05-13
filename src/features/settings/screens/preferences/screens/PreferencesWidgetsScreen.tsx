@@ -1,6 +1,6 @@
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
-import Wrapper from '../../../../../components/layout/Wrapper'
-import WidgetsPreferencesSection from '../../../components/preferences-sections/WidgetsPreferencesSection'
+import Wrapper from '@/components/layout/Wrapper'
+import WidgetsPreferencesSection from '@/features/settings/components/preferences-sections/WidgetsPreferencesSection'
 
 const PreferencesWidgetsScreen = () => {
   return (

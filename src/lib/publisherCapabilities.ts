@@ -1,6 +1,6 @@
-import { monthCreditMaxMinutes } from '../constants/serviceReports'
-import { getEffectiveMilestones } from './milestones'
-import type { Publisher, PublisherHours } from '../types/publisher'
+import { monthCreditMaxMinutes } from '@/constants/serviceReports'
+import { getEffectiveMilestones } from '@/lib/milestones'
+import type { Publisher, PublisherHours } from '@/types/publisher'
 
 export type PublisherCapabilities = {
   type: Publisher

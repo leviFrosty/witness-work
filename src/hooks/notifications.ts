@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import * as Notifications from 'expo-notifications'
-import { registerForPushNotificationsAsync } from '../lib/notifications'
+import { registerForPushNotificationsAsync } from '@/lib/notifications'
 
 const useNotifications = () => {
   const [allowed, setAllowed] = useState(false)

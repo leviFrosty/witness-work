@@ -7,9 +7,9 @@ import {
   faWandMagicSparkles,
 } from '@fortawesome/free-solid-svg-icons'
 import { IconProp } from '@fortawesome/fontawesome-svg-core'
-import useTheme from '../contexts/theme'
-import Text from '../components/MyText'
-import i18n from '../lib/locales'
+import useTheme from '@/contexts/theme'
+import Text from '@/components/MyText'
+import i18n from '@/lib/locales'
 
 const HeroCard = () => {
   const theme = useTheme()

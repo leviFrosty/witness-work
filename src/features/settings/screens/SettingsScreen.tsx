@@ -1,26 +1,23 @@
 import { View } from 'react-native'
-import Text from '../../../components/MyText'
+import Text from '@/components/MyText'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import useTheme from '../../../contexts/theme'
+import useTheme from '@/contexts/theme'
 import { useNavigation } from '@react-navigation/native'
-import i18n from '../../../lib/locales'
+import i18n from '@/lib/locales'
 import Constants from 'expo-constants'
 import {
   DrawerContentComponentProps,
   DrawerContentScrollView,
 } from '@react-navigation/drawer'
-import PreferencesSection from '../components/sections/Preferences'
-import AppSection from '../components/sections/App'
-import ContactSection from '../components/sections/Contact'
-import MiscSection from '../components/sections/Misc'
-import SupportSection from '../components/sections/Support'
-import { usePreferences } from '../../../stores/preferences'
+import PreferencesSection from '@/features/settings/components/sections/Preferences'
+import AppSection from '@/features/settings/components/sections/App'
+import ContactSection from '@/features/settings/components/sections/Contact'
+import MiscSection from '@/features/settings/components/sections/Misc'
+import SupportSection from '@/features/settings/components/sections/Support'
+import { usePreferences } from '@/stores/preferences'
 import { useState } from 'react'
-import Badge from '../../../components/Badge'
-import {
-  RootStackNavigation,
-  RootStackParamList,
-} from '../../../types/rootStack'
+import Badge from '@/components/Badge'
+import { RootStackNavigation, RootStackParamList } from '@/types/rootStack'
 
 const SettingsScreen = (props: DrawerContentComponentProps) => {
   const theme = useTheme()

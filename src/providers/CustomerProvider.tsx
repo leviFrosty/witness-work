@@ -6,10 +6,10 @@ import {
   useRef,
   useState,
 } from 'react'
-import { CustomerContext, CustomerCtx } from '../contexts/customer'
+import { CustomerContext, CustomerCtx } from '@/contexts/customer'
 import Purchases, { CustomerInfo, LOG_LEVEL } from 'react-native-purchases'
 import * as Sentry from '@sentry/react-native'
-import { logger } from '../lib/logger'
+import { logger } from '@/lib/logger'
 
 interface Props {}
 

@@ -1,5 +1,5 @@
 import { useContext, createContext } from 'react'
-import getThemeFromColorScheme from '../constants/theme'
+import getThemeFromColorScheme from '@/constants/theme'
 
 export const ThemeContext = createContext(getThemeFromColorScheme('light'))
 

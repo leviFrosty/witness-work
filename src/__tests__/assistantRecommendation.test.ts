@@ -1,11 +1,11 @@
 import { describe, it, expect, vi } from 'vitest'
 
-vi.mock('../lib/logger', () => import('./mocks/logger'))
+vi.mock('@/lib/logger', () => import('@/__tests__/mocks/logger'))
 
-import { generateRecommendation } from '../lib/assistantRecommendation'
-import { momentStoredDate, normalizeDateForStorage } from '../lib/normalizeDate'
-import type { Conversation } from '../types/conversation'
-import type { DayPlan, RecurringPlan } from '../types/serviceReport'
+import { generateRecommendation } from '@/lib/assistantRecommendation'
+import { momentStoredDate, normalizeDateForStorage } from '@/lib/normalizeDate'
+import type { Conversation } from '@/types/conversation'
+import type { DayPlan, RecurringPlan } from '@/types/serviceReport'
 
 const baseInput = {
   year: 2026,

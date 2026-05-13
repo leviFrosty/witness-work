@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
-import { derivePublisherCapabilities } from '../lib/publisherCapabilities'
-import type { Publisher } from '../types/publisher'
+import { derivePublisherCapabilities } from '@/lib/publisherCapabilities'
+import type { Publisher } from '@/types/publisher'
 
 const baseInput = {
   publisherHours: {

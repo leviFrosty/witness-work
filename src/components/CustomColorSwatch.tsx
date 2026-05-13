@@ -2,8 +2,8 @@ import { useState } from 'react'
 import { Pressable } from 'react-native'
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
 import { faEyeDropper } from '@fortawesome/free-solid-svg-icons'
-import useTheme from '../contexts/theme'
-import ColorPickerSheet from './ColorPickerSheet'
+import useTheme from '@/contexts/theme'
+import ColorPickerSheet from '@/components/ColorPickerSheet'
 
 interface Props {
   /** Currently-stored color, or null when nothing custom is set. */

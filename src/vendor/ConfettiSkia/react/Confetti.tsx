@@ -14,9 +14,9 @@ import {
   createPicture,
 } from '@shopify/react-native-skia'
 import type { SkPaint } from '@shopify/react-native-skia'
-import Config, { ConfettiConfig } from '../core/Config'
-import Engine from '../core/Engine'
-import SkiaRenderer from '../core/SkiaRenderer'
+import Config, { ConfettiConfig } from '@/vendor/ConfettiSkia/core/Config'
+import Engine from '@/vendor/ConfettiSkia/core/Engine'
+import SkiaRenderer from '@/vendor/ConfettiSkia/core/SkiaRenderer'
 
 export interface ConfettiHandle {
   trigger: (config?: Partial<ConfettiConfig>) => void

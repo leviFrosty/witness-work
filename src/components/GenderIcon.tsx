@@ -1,7 +1,7 @@
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
 import { faMars, faQuestion, faVenus } from '@fortawesome/free-solid-svg-icons'
-import { Contact } from '../types/contact'
-import useTheme from '../contexts/theme'
+import { Contact } from '@/types/contact'
+import useTheme from '@/contexts/theme'
 
 export const GENDER_COLORS = {
   male: '#5B9BD5',

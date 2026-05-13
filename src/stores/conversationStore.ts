@@ -1,9 +1,9 @@
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { create } from 'zustand'
 import { persist, combine, createJSONStorage } from 'zustand/middleware'
-import { Conversation, ConversationTombstone } from '../types/conversation'
+import { Conversation, ConversationTombstone } from '@/types/conversation'
 import * as Notifications from 'expo-notifications'
-import { hasMigratedFromAsyncStorage, MmkvStorage } from './mmkv'
+import { hasMigratedFromAsyncStorage, MmkvStorage } from '@/stores/mmkv'
 
 const initialState = {
   conversations: [] as Conversation[],

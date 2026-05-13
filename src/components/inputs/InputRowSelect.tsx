@@ -1,6 +1,8 @@
 import React from 'react'
-import Select, { SelectProps } from '../Select'
-import InputRowContainer, { InputRowContainerProps } from './InputRowContainer'
+import Select, { SelectProps } from '@/components/Select'
+import InputRowContainer, {
+  InputRowContainerProps,
+} from '@/components/inputs/InputRowContainer'
 import { View } from 'react-native'
 
 interface InputRowSelectProps<T> extends InputRowContainerProps {

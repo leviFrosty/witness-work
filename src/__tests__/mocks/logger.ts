@@ -6,7 +6,7 @@ import { vi } from 'vitest'
 // this stub.
 //
 // Usage:
-//   vi.mock('../lib/logger', () => import('./mocks/logger'))
+//   vi.mock('@/__tests__/lib/logger', () => import('@/__tests__/mocks/mocks/logger'))
 export const logger = {
   log: vi.fn(),
   error: vi.fn(),

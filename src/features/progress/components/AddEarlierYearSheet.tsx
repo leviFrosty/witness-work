@@ -4,9 +4,9 @@ import { Picker } from '@react-native-picker/picker'
 import { Sheet } from 'tamagui'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
-import useTheme from '../../../contexts/theme'
-import i18n from '../../../lib/locales'
-import Text from '../../../components/MyText'
+import useTheme from '@/contexts/theme'
+import i18n from '@/lib/locales'
+import Text from '@/components/MyText'
 
 interface AddEarlierYearSheetProps {
   /** Controls visibility. Parent owns this. */

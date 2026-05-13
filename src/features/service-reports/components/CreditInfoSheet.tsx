@@ -2,12 +2,12 @@ import { useState } from 'react'
 import { View } from 'react-native'
 import { Sheet } from 'tamagui'
 import _ from 'lodash'
-import Chip from '../../../components/Chip'
-import Text from '../../../components/MyText'
-import IconButton from '../../../components/IconButton'
+import Chip from '@/components/Chip'
+import Text from '@/components/MyText'
+import IconButton from '@/components/IconButton'
 import { faTimes } from '@fortawesome/free-solid-svg-icons'
-import useTheme from '../../../contexts/theme'
-import i18n from '../../../lib/locales'
+import useTheme from '@/contexts/theme'
+import i18n from '@/lib/locales'
 
 type Props = {
   creditOverageMinutes: number

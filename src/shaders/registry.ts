@@ -1,5 +1,5 @@
-import HolographicShader from './HolographicShader'
-import type { ShaderDefinition, ShaderId } from './types'
+import HolographicShader from '@/shaders/HolographicShader'
+import type { ShaderDefinition, ShaderId } from '@/shaders/types'
 
 const NoneShader = () => null
 

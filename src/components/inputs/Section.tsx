@@ -1,7 +1,7 @@
 import { PropsWithChildren } from 'react'
 import { View, ViewProps } from 'react-native'
-import useTheme from '../../contexts/theme'
-import { rowPaddingVertical } from '../../constants/Inputs'
+import useTheme from '@/contexts/theme'
+import { rowPaddingVertical } from '@/constants/Inputs'
 
 interface Props extends ViewProps {
   noPadding?: boolean

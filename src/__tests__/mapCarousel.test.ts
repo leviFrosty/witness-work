@@ -2,8 +2,8 @@ import { describe, expect, it } from 'vitest'
 import {
   findContactIndexById,
   reconcileActiveContact,
-} from '../features/map/lib/mapCarousel'
-import { ContactMarker } from '../features/map/types/map'
+} from '@/features/map/lib/mapCarousel'
+import { ContactMarker } from '@/features/map/types/map'
 
 const marker = (id: string): ContactMarker =>
   ({ id, name: id, createdAt: new Date(), pinColor: '#fff' }) as ContactMarker

@@ -13,14 +13,14 @@ import Animated, {
 // Module scope is fine here: onboarding only runs in one place, and resetting
 // to 0 on a full app reload is the correct fresh-start behavior.
 let lastSeenProgress = 0
-import { styles } from './Onboarding.styles'
-import Text from '../../../components/MyText'
-import i18n from '../../../lib/locales'
-import IconButton from '../../../components/IconButton'
+import { styles } from '@/features/onboarding/components/Onboarding.styles'
+import Text from '@/components/MyText'
+import i18n from '@/lib/locales'
+import IconButton from '@/components/IconButton'
 import { faChevronLeft } from '@fortawesome/free-solid-svg-icons'
-import Button from '../../../components/Button'
-import useTheme from '../../../contexts/theme'
-import { useOnboardingProgress } from './OnboardingProgressContext'
+import Button from '@/components/Button'
+import useTheme from '@/contexts/theme'
+import { useOnboardingProgress } from '@/features/onboarding/components/OnboardingProgressContext'
 
 interface Props {
   noActions?: boolean

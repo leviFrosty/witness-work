@@ -17,7 +17,7 @@ const Loader = ({ style, ...props }: Props) => {
         [style],
       ]}
       {...props}
-      source={require('./../assets/lottie/loading.json')}
+      source={require('@/assets/lottie/loading.json')}
     />
   )
 }

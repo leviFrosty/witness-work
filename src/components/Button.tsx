@@ -6,7 +6,7 @@ import {
   StyleSheet,
   ViewStyle,
 } from 'react-native'
-import Haptics from '../lib/haptics'
+import Haptics from '@/lib/haptics'
 import { GlassColorScheme, GlassView } from 'expo-glass-effect'
 import Animated, {
   Easing,
@@ -14,7 +14,7 @@ import Animated, {
   useSharedValue,
   withTiming,
 } from 'react-native-reanimated'
-import useTheme from '../contexts/theme'
+import useTheme from '@/contexts/theme'
 
 export interface ButtonProps extends PressableProps {
   onPress?: (event: GestureResponderEvent) => void

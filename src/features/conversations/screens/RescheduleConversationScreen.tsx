@@ -14,27 +14,24 @@ import {
   faTrash,
 } from '@fortawesome/free-solid-svg-icons'
 
-import Wrapper from '../../../components/layout/Wrapper'
-import Text from '../../../components/MyText'
-import Button from '../../../components/Button'
-import IconButton from '../../../components/IconButton'
-import DateTimePicker from '../../../components/DateTimePicker'
+import Wrapper from '@/components/layout/Wrapper'
+import Text from '@/components/MyText'
+import Button from '@/components/Button'
+import IconButton from '@/components/IconButton'
+import DateTimePicker from '@/components/DateTimePicker'
 
-import useTheme from '../../../contexts/theme'
-import useContacts from '../../../stores/contactsStore'
-import useConversations from '../../../stores/conversationStore'
+import useTheme from '@/contexts/theme'
+import useContacts from '@/stores/contactsStore'
+import useConversations from '@/stores/conversationStore'
 import {
   DEFAULT_RETURN_VISIT_NOTIFICATION_OFFSET,
   usePreferences,
-} from '../../../stores/preferences'
-import { handleCall, handleMessage } from '../../../lib/phone'
-import i18n from '../../../lib/locales'
-import { logger } from '../../../lib/logger'
-import {
-  RootStackParamList,
-  RootStackNavigation,
-} from '../../../types/rootStack'
-import { Notification as ConvNotification } from '../../../types/conversation'
+} from '@/stores/preferences'
+import { handleCall, handleMessage } from '@/lib/phone'
+import i18n from '@/lib/locales'
+import { logger } from '@/lib/logger'
+import { RootStackParamList, RootStackNavigation } from '@/types/rootStack'
+import { Notification as ConvNotification } from '@/types/conversation'
 
 type Props = NativeStackScreenProps<
   RootStackParamList,

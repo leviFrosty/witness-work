@@ -1,5 +1,5 @@
 import { DimensionValue, View, ViewProps } from 'react-native'
-import useTheme from '../contexts/theme'
+import useTheme from '@/contexts/theme'
 
 interface Props extends ViewProps {
   marginHorizontal?: DimensionValue

@@ -6,9 +6,9 @@ import {
   matchSourceForKey,
   pickPreviewMatch,
   searchContactsFuzzy,
-} from '../features/contacts/lib/contactsSearch'
-import { Contact } from '../types/contact'
-import { Conversation } from '../types/conversation'
+} from '@/features/contacts/lib/contactsSearch'
+import { Contact } from '@/types/contact'
+import { Conversation } from '@/types/conversation'
 
 const c = (
   overrides: Partial<Contact> & { id: string; name: string }

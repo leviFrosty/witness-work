@@ -2,9 +2,9 @@ import moment from 'moment'
 import {
   adjustedMinutesForSpecificMonth,
   getMonthsReports,
-} from './serviceReport'
-import { ServiceReportsByYears } from '../types/serviceReport'
-import { Publisher } from '../types/publisher'
+} from '@/lib/serviceReport'
+import { ServiceReportsByYears } from '@/types/serviceReport'
+import { Publisher } from '@/types/publisher'
 
 export type AchievementTier = 'reached' | 'exceeded' | 'crushed' | 'record'
 

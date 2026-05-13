@@ -37,7 +37,7 @@ import { TAB_BAR_HEIGHT } from '../../../components/TabBar'
 import useDevice from '../../../hooks/useDevice'
 import { RootStackNavigation } from '../../../types/rootStack'
 import { HomeTabStackNavigation } from '../../../types/homeStack'
-import { ContactMarker } from '../../../types/map'
+import { ContactMarker } from '../types/map'
 import {
   faAddressBook,
   faCircleInfo,

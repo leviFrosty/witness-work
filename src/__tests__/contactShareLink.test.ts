@@ -24,8 +24,8 @@ import {
   isContactShareLink,
   parseContactShareLink,
   CONTACT_SHARE_LINK,
-} from '../lib/contactShareLink'
-import { validateContactImport } from '../lib/contactImport'
+} from '../features/contacts/lib/contactShareLink'
+import { validateContactImport } from '../features/contacts/lib/contactImport'
 import { Contact } from '../types/contact'
 import { Conversation } from '../types/conversation'
 

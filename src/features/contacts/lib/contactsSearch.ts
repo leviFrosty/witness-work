@@ -1,6 +1,6 @@
 import Fuse, { FuseResultMatch, IFuseOptions, RangeTuple } from 'fuse.js'
-import { Contact } from '../types/contact'
-import { Conversation } from '../types/conversation'
+import { Contact } from '../../../types/contact'
+import { Conversation } from '../../../types/conversation'
 
 export type ContactSearchEntry = {
   contact: Contact

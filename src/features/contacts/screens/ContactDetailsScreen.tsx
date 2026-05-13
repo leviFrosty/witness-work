@@ -80,7 +80,7 @@ import DismissContactSheet from '../components/DismissContactSheet'
 import {
   buildContactShareLink,
   ContactShareLinkTooLargeError,
-} from '../../../lib/contactShareLink'
+} from '../lib/contactShareLink'
 import { MenuView, MenuAction } from '@react-native-menu/menu'
 import { isContactDismissed } from '../../../lib/dismissedContacts'
 import Avatar, { isRenderableImageValue } from '../../../components/Avatar'

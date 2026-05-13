@@ -28,7 +28,10 @@ vi.mock('../lib/locales', () => ({
 vi.mock('../lib/logger', () => import('./mocks/logger'))
 
 // Now import after all mocks are set up
-import { validateContactImport, ContactImportData } from '../lib/contactImport'
+import {
+  validateContactImport,
+  ContactImportData,
+} from '../features/contacts/lib/contactImport'
 import { Contact } from '../types/contact'
 import { Conversation } from '../types/conversation'
 import i18n from '../lib/locales'

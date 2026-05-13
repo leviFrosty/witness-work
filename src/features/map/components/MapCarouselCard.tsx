@@ -29,7 +29,7 @@ import { getLocales } from 'expo-localization'
 import { handleCall, handleMessage } from '../../../lib/phone'
 import { usePreferences } from '../../../stores/preferences'
 import { RootStackNavigation } from '../../../types/rootStack'
-import { ContactMarker } from '../../../types/map'
+import { ContactMarker } from '../types/map'
 
 interface Props {
   contact: ContactMarker

@@ -24,7 +24,7 @@ import {
   importContactFromFile,
   processCompleteImport,
   ImportHandlerCallbacks,
-} from '../../../lib/contactImport'
+} from '../../contacts/lib/contactImport'
 import useContacts from '../../../stores/contactsStore'
 import useConversations from '../../../stores/conversationStore'
 import { useToastController } from '@tamagui/toast'

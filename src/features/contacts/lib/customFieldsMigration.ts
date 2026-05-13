@@ -1,6 +1,6 @@
 import * as Crypto from 'expo-crypto'
-import { Contact } from '../types/contact'
-import { CustomFieldDefinition } from '../types/customField'
+import { Contact } from '../../../types/contact'
+import { CustomFieldDefinition } from '../../../types/customField'
 
 /**
  * One-time migration from the legacy custom-fields shape (label-keyed) to the

@@ -33,7 +33,12 @@ src/
       components/     feature-specific UI
       (lib/, hooks/, stores/, types/, constants/ — added when needed)
 
-  components/  lib/  hooks/  stores/  types/  constants/   ← shared tier
+  components/                                              ← shared tier
+    ui/              atomic UI primitives (Button, MyText, Card, Badge, …)
+                       + inputs/ layout/ swipeableActions/ subfolders
+    <root>           composed cross-feature blocks that combine primitives
+                       (CalendarDay, AvatarPickerPopover, IsSupporter, …)
+  lib/  hooks/  stores/  types/  constants/
   providers/   contexts/   assets/   locales/   shaders/   vendor/
   __tests__/                                                ← treated as `app` so tests can pull from features
 ```
@@ -87,7 +92,9 @@ The boundaries plugin surfaced real coupling that wasn't visible before:
 
 - **Cross-feature data stores** (`stores/contactsStore`, `stores/conversationStore`, `stores/serviceReport`, `stores/preferences`, `stores/timeCache`, `stores/mmkv`) — read by `app/widgets` and `app/sync` plus every feature. Moving them into a feature would require those widgets/sync writers to do cross-feature imports. The per-feature stores that did move (`celebrationQueue`, `milestoneReveal`, `contactsSearchStore`, `supporter`) only had a single feature or app-tier consumer.
 - **Pure domain helpers** (`lib/contacts`, `lib/conversations`, `lib/serviceReport`, `lib/milestones`, `lib/contactsFilters`, `lib/contactsSort`, `lib/notifications`, …) — consumed by the data layer (preferences/widgets/sync) or by multiple features. The persisted-state types in `contactsFilters` / `contactsSort` keep the impl pinned to shared.
-- **Cross-feature UI primitives** (`SupporterBadge`, `IsSupporter`, `SupporterInfoSheet`, `SupporterBenefits`, `DayPlanRow`, `RecurringPlanRow`, `YearMilestoneCard`, `MilestoneProgressBar`, `ContactAvatarCropEditor`, `TabBar`, `GlassCard`, `PublisherTypeSelector`, `PublisherCheckBoxCard`, `StalenessColorKey`, `SwipeMonthNavigator`, `DefaultNavigationSelector`, `DismissableCard`, `CardWithTitle`) — used by 2+ features. They earn a place in `shared/components/` because they have many callers.
+- **Cross-feature UI primitives** — split into two tiers inside `shared/components/`:
+  - `components/ui/` — atomic primitives with no domain awareness (`MyText`, `Button`, `IconButton`, `ActionButton`, `Card`, `Badge`, `Chip`, `Circle`, `Divider`, `Empty`, `Loader`, `Avatar`, `Copyeable`, `Accordion`, `SegmentedControl`, `SimpleProgressBar`, `AnchoredPopover`, `GlassCard`, `TabBar`, `Select`, `SelectWheel`, `TextInput`, `DateTimePicker`, plus the `inputs/`, `layout/`, and `swipeableActions/` subfolders). These earn shared status by having no single domain owner.
+  - `components/<root>` — composed blocks that combine primitives AND are consumed by 2+ features, or are locked into shared by a shared-tier consumer chain (`SupporterBadge`, `IsSupporter`, `SupporterInfoSheet`, `SupporterBenefits`, `DayPlanRow`, `RecurringPlanRow`, `YearMilestoneCard`, `MilestoneProgressBar`, `ContactAvatarCropEditor`, `PublisherTypeSelector`, `StalenessColorKey`, `SwipeMonthNavigator`, `DefaultNavigationSelector`, `DismissableCard`, `CardWithTitle`, `AvatarPickerPopover`, `AvatarPickerContent`, `AccentColorPicker`, `CustomColorSwatch`, `ColorPickerSheet`, `CalendarDay`, `CalendarHeader`, `QuickActionSheet`).
 - **Domain types** (`types/contact`, `types/customField`, `types/conversation`, `types/serviceReport`, `types/publisher`, `types/avatar`, `types/here`, `types/markerColors`, `types/textInput`, `types/theme`, `types/rootStack`, `types/homeStack`) — referenced by preferences, sync payloads, widget snapshots, and many features.
 - **Shader stack** (`shaders/*`) — used by `ProfileCard` + `TiltableCard` (now both inside `features/profile/`) and by `stores/preferences` (shared). Stays in shared so the preferences store doesn't have to reach into a feature.
 
@@ -145,6 +152,18 @@ Use `shared/` only when:
 - The component has no single domain owner (`Card`, `Button`, `IconButton`, layout primitives), **or**
 - It's consumed by another **shared** module — since `shared → feature` is forbidden, the dependency forces it into `shared/`. (Example: `stores/preferences` reads `shaders/` types, which keeps the shader stack pinned to shared.)
 
+### `components/ui/` vs `components/<root>` — which to pick
+
+Inside `shared/components/`, decide between the two tiers by asking: **is this a primitive or a composition?**
+
+- **`components/ui/`** — atomic. Single concept. No domain knowledge. Doesn't read feature stores. Takes props and renders. Examples: `Button`, `MyText`, `Card`, `Badge`, `Chip`, `Avatar`, `TextInput`, plus the `inputs/`, `layout/`, and `swipeableActions/` subfolders. If you can imagine the same component shipping in a generic React Native UI library, it belongs in `ui/`.
+- **`components/<root>`** — composed. Combines multiple primitives and/or shared lib/state into a domain-aware block (still domain-agnostic enough to serve multiple features). Examples: `CalendarDay` (composes `Card` + `MyText` + plan/report data for two features), `IsSupporter` / `SupporterBadge` (supporter-status UI consumed across features), `AvatarPickerPopover` (composes `AnchoredPopover` + `Avatar` for the avatar-picker flow). These are the cross-feature **blocks**, not low-level pieces.
+
+The two-tier rule helps prevent two common drifts:
+
+1. **`ui/` getting domain-leaky** — if you find yourself reaching for `usePublisher()` or `stores/serviceReport` inside `ui/<X>`, the component isn't a primitive. It belongs at `components/<X>` or, more often, inside a feature.
+2. **`components/<root>` getting cluttered with single-feature blocks** — if a composed block has exactly one feature consumer, move it to `features/<owner>/components/`. The shared-tier audit pulled `PublisherCheckBoxCard` (→ service-reports), `GoalProgressStats` (→ service-reports), `MonthlyRoutine` + `SinceBadge` (→ profile), `GenderIcon` (→ contacts), `InputRowButton` (→ settings), and `Archive` / `Dismiss` swipe actions (→ contacts) for exactly this reason.
+
 ## ESLint deps added
 
 - `eslint-plugin-boundaries@^4.2.2`
@@ -169,3 +188,8 @@ All compatible with the existing ESLint 8.51 setup — no engine upgrade require
 12. `refactor(features): pull single-feature components into feature folders` (PinLocation, MapWarningLocationSharingDisabled, ConversationRow → contacts; CategorySegmentBar, CategoriesSection, CreditBadge, CreditInfoSheet, StudiesCard → service-reports; AddEarlierYearSheet, LifetimeHoursCard, MilestoneAdjustSheet → progress; BackupReminder → home; AnnualGoalSelector → settings; ShareAppButton → supporter; ShareAddressSheet → map)
 13. `refactor(features): migrate 4 more single-feature shared components` (CalendarKey → plans; ContributionGraph → home; AheadOrBehindOfSchedule → service-reports; JsonViewer → contacts)
 14. `refactor(features): drain features/home and extract a profile feature` (ContributionGraph + ProfileCard + ProfileDetailOverlay + TiltableCard + lib/profileStats + hooks/useDailyMinutes → new `features/profile/`; `home/lib/supporterNudge` → `supporter/lib/`; `home/components/BackupReminder` → `settings/components/`; `components/WeekStripTeaser` → `service-reports/components/`. After this commit `features/home/` only contains `screens/HomeScreen.tsx`.)
+15. `refactor(features): split components/ into ui/ primitives + composed blocks` (carve `src/components/` into `components/ui/` for atomic primitives — Button, MyText, IconButton, ActionButton, Card, Badge, Chip, Circle, Divider, Empty, Loader, Avatar, Copyeable, Accordion, SegmentedControl, SimpleProgressBar, AnchoredPopover, GlassCard, TabBar, Select, SelectWheel, TextInput, DateTimePicker, plus the `inputs/`, `layout/`, `swipeableActions/` subfolders — and `components/<root>` for composed cross-feature blocks.)
+16. `refactor(features): pull single-feature components out of shared` (PublisherCheckBoxCard + GoalProgressStats → service-reports; MonthlyRoutine + SinceBadge → profile; GenderIcon → contacts; `inputs/InputRowButton` → settings/components/inputs/; `swipeableActions/Archive` + `Dismiss` → contacts/components/swipeableActions/.)
+17. `refactor: delete dead code surfaced by the shared-tier audit` (components/HintCard, components/FullScreenLoader, lib/assistantRecommendation + test, lib/projectedTotal + test — all had zero or test-only callers.)
+18. `refactor(features): move lib/linking → features/contacts/lib/` (deep-link / Universal Link handler for contact share URLs; only consumed by app/App.tsx + contacts share-import components.)
+19. `docs(architecture-features): document the components/ui split and shared-tier audit`

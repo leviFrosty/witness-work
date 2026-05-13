@@ -35,8 +35,6 @@
         "capture": ["_", "fileName"],
         "pattern": [
           "src/app/**/*",
-          "src/screens/**/*",
-          "src/stacks/**/*",
           "src/features/home/**/*",
           "src/features/settings/**/*",
           "src/features/updates/**/*",

@@ -1,9 +1,9 @@
 import { useState } from 'react'
 import { View } from 'react-native'
 import { Sheet } from 'tamagui'
-import Text from '@/components/MyText'
-import Button from '@/components/Button'
-import IconButton from '@/components/IconButton'
+import Text from '@/components/ui/MyText'
+import Button from '@/components/ui/Button'
+import IconButton from '@/components/ui/IconButton'
 import CategorySegmentBar, {
   CategorySegment,
 } from '@/features/service-reports/components/CategorySegmentBar'

@@ -1,10 +1,10 @@
 import React from 'react'
 import { View } from 'react-native'
-import Text from '@/components/MyText'
-import Card from '@/components/Card'
-import IconButton from '@/components/IconButton'
+import Text from '@/components/ui/MyText'
+import Card from '@/components/ui/Card'
+import IconButton from '@/components/ui/IconButton'
 import i18n from '@/lib/locales'
-import XView from '@/components/layout/XView'
+import XView from '@/components/ui/layout/XView'
 import {
   faArrowRotateLeft,
   faPause,
@@ -12,7 +12,7 @@ import {
 } from '@fortawesome/free-solid-svg-icons'
 import { useStopWatch } from '@/features/service-reports/hooks/useStopWatch'
 import useTheme from '@/contexts/theme'
-import Button from '@/components/Button'
+import Button from '@/components/ui/Button'
 import { useNavigation } from '@react-navigation/native'
 import { RootStackNavigation } from '@/types/rootStack'
 import { usePreferences } from '@/stores/preferences'

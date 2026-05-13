@@ -1,7 +1,7 @@
 import { View, StyleProp, TextStyle, StyleSheet } from 'react-native'
 import { PropsWithChildren, useContext } from 'react'
 import { ThemeContext } from '@/contexts/theme'
-import Text from '@/components/MyText'
+import Text from '@/components/ui/MyText'
 import { ThemeSizes } from '@/types/theme'
 
 type Props = {

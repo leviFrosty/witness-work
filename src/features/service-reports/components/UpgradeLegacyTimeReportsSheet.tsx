@@ -1,5 +1,5 @@
 import { Sheet } from 'tamagui'
-import Text from '@/components/MyText'
+import Text from '@/components/ui/MyText'
 import i18n, { TranslationKey } from '@/lib/locales'
 import useTheme from '@/contexts/theme'
 import {
@@ -10,12 +10,12 @@ import {
 import useServiceReport from '@/stores/serviceReport'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Switch, View } from 'react-native'
-import XView from '@/components/layout/XView'
+import XView from '@/components/ui/layout/XView'
 import CreditBadge from '@/features/service-reports/components/CreditBadge'
-import Badge from '@/components/Badge'
-import ActionButton from '@/components/ActionButton'
-import Divider from '@/components/Divider'
-import Card from '@/components/Card'
+import Badge from '@/components/ui/Badge'
+import ActionButton from '@/components/ui/ActionButton'
+import Divider from '@/components/ui/Divider'
+import Card from '@/components/ui/Card'
 import { getMonthsReports } from '@/lib/serviceReport'
 
 type UpgradeLegacyTimeReportsTagsSheetProps = {

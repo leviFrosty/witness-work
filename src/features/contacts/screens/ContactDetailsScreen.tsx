@@ -7,21 +7,21 @@ import {
   Pressable,
 } from 'react-native'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import Text from '@/components/MyText'
+import Text from '@/components/ui/MyText'
 import useTheme from '@/contexts/theme'
 import {
   NativeStackNavigationProp,
   NativeStackScreenProps,
 } from '@react-navigation/native-stack'
 import useContacts from '@/stores/contactsStore'
-import Header from '@/components/layout/Header'
+import Header from '@/components/ui/layout/Header'
 import CardWithTitle from '@/components/CardWithTitle'
 import { Address, Contact } from '@/types/contact'
 import { FlashList } from '@shopify/flash-list'
 import ConversationRow from '@/features/contacts/components/ConversationRow'
 import useConversations from '@/stores/conversationStore'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import Divider from '@/components/Divider'
+import Divider from '@/components/ui/Divider'
 import moment from 'moment'
 import i18n from '@/lib/locales'
 import {
@@ -30,9 +30,9 @@ import {
   contactStudiedForGivenMonth,
 } from '@/lib/conversations'
 import { Conversation } from '@/types/conversation'
-import Wrapper from '@/components/layout/Wrapper'
+import Wrapper from '@/components/ui/layout/Wrapper'
 import { StatusBar } from 'expo-status-bar'
-import IconButton from '@/components/IconButton'
+import IconButton from '@/components/ui/IconButton'
 import { logger } from '@/lib/logger'
 import {
   faArrowUpFromBracket,
@@ -47,8 +47,8 @@ import {
   faStar,
 } from '@fortawesome/free-solid-svg-icons'
 import { faStar as faStarOutline } from '@fortawesome/free-regular-svg-icons'
-import Copyeable from '@/components/Copyeable'
-import Button from '@/components/Button'
+import Copyeable from '@/components/ui/Copyeable'
+import Button from '@/components/ui/Button'
 import { Sheet } from 'tamagui'
 import {
   addressToString,
@@ -66,7 +66,7 @@ import MapView, { Marker } from 'react-native-maps'
 import useLocation from '@/features/contacts/hooks/useLocation'
 import * as FileSystem from 'expo-file-system/legacy'
 import { useToastController } from '@tamagui/toast'
-import XView from '@/components/layout/XView'
+import XView from '@/components/ui/layout/XView'
 import { RootStackNavigation, RootStackParamList } from '@/types/rootStack'
 import { useMarkerColors } from '@/hooks/useMarkerColors'
 import { getContactStaleness, stalenessToColor } from '@/lib/contactStaleness'
@@ -77,7 +77,7 @@ import {
 } from '@/features/contacts/lib/contactShareLink'
 import { MenuView, MenuAction } from '@react-native-menu/menu'
 import { isContactDismissed } from '@/lib/dismissedContacts'
-import Avatar, { isRenderableImageValue } from '@/components/Avatar'
+import Avatar, { isRenderableImageValue } from '@/components/ui/Avatar'
 import GenderIcon from '@/components/GenderIcon'
 import { ProfileAvatar } from '@/types/avatar'
 import JsonViewer from '@/features/contacts/components/JsonViewer'

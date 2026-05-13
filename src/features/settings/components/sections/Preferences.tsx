@@ -1,6 +1,6 @@
 import { View } from 'react-native'
-import Section from '@/components/inputs/Section'
-import InputRowButton from '@/components/inputs/InputRowButton'
+import Section from '@/components/ui/inputs/Section'
+import InputRowButton from '@/components/ui/inputs/InputRowButton'
 import {
   faChevronRight,
   faCircleHalfStroke,
@@ -9,7 +9,7 @@ import {
   faUser,
 } from '@fortawesome/free-solid-svg-icons'
 import i18n from '@/lib/locales'
-import IconButton from '@/components/IconButton'
+import IconButton from '@/components/ui/IconButton'
 import { SettingsSectionProps } from '@/features/settings/screens/settingScreen'
 import LanguageSelector from '@/features/settings/components/sections/LanguageSelector'
 

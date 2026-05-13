@@ -17,7 +17,7 @@ import Animated, {
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
 import { faUser } from '@fortawesome/free-solid-svg-icons'
 import useTheme from '@/contexts/theme'
-import Text from '@/components/MyText'
+import Text from '@/components/ui/MyText'
 import { ProfileAvatar } from '@/types/avatar'
 
 /**

@@ -1,4 +1,4 @@
-import Text from '@/components/MyText'
+import Text from '@/components/ui/MyText'
 import i18n from '@/lib/locales'
 import DismissableCard from '@/components/DismissableCard'
 import { Conversation } from '@/types/conversation'

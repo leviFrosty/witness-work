@@ -1,5 +1,5 @@
 import { View } from 'react-native'
-import Text from '@/components/MyText'
+import Text from '@/components/ui/MyText'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import useTheme from '@/contexts/theme'
 import { useNavigation } from '@react-navigation/native'
@@ -16,7 +16,7 @@ import MiscSection from '@/features/settings/components/sections/Misc'
 import SupportSection from '@/features/settings/components/sections/Support'
 import { usePreferences } from '@/stores/preferences'
 import { useState } from 'react'
-import Badge from '@/components/Badge'
+import Badge from '@/components/ui/Badge'
 import { RootStackNavigation, RootStackParamList } from '@/types/rootStack'
 
 const SettingsScreen = (props: DrawerContentComponentProps) => {

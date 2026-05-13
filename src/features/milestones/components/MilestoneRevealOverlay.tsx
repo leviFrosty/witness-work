@@ -11,13 +11,13 @@ import Animated, {
 } from 'react-native-reanimated'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import Constants from 'expo-constants'
-import Text from '@/components/MyText'
+import Text from '@/components/ui/MyText'
 import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
 import Haptics from '@/lib/haptics'
 import useFireworks from '@/hooks/useFireworks'
-import ActionButton from '@/components/ActionButton'
-import Button from '@/components/Button'
+import ActionButton from '@/components/ui/ActionButton'
+import Button from '@/components/ui/Button'
 
 interface Props {
   /** Whether the reveal is currently presented. */

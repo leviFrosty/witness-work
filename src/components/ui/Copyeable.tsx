@@ -8,7 +8,7 @@ import {
 import Haptics from '@/lib/haptics'
 import * as Clipboard from 'expo-clipboard'
 import { PropsWithChildren, useContext, useState } from 'react'
-import Text from '@/components/MyText'
+import Text from '@/components/ui/MyText'
 import Animated, {
   Easing,
   useAnimatedStyle,
@@ -17,7 +17,7 @@ import Animated, {
 } from 'react-native-reanimated'
 import i18n from '@/lib/locales'
 import { ThemeContext } from '@/contexts/theme'
-import IconButton from '@/components/IconButton'
+import IconButton from '@/components/ui/IconButton'
 import { faCaretDown } from '@fortawesome/free-solid-svg-icons'
 
 const AnimatedView = Animated.createAnimatedComponent(View)

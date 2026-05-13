@@ -1,6 +1,6 @@
 import { createNativeStackNavigator } from '@react-navigation/native-stack'
 import ContactFormScreen from '@/features/contacts/screens/ContactFormScreen'
-import Header from '@/components/layout/Header'
+import Header from '@/components/ui/layout/Header'
 import ConversationFormScreen from '@/features/conversations/screens/ConversationFormScreen'
 import ContactDetailsScreen from '@/features/contacts/screens/ContactDetailsScreen'
 import AddTimeScreen from '@/features/service-reports/screens/AddTimeScreen'

@@ -1,8 +1,8 @@
 import moment from 'moment'
 import { useMemo } from 'react'
 import useTheme from '@/contexts/theme'
-import XView from '@/components/layout/XView'
-import Text from '@/components/MyText'
+import XView from '@/components/ui/layout/XView'
+import Text from '@/components/ui/MyText'
 import {
   AdjustedMinutes,
   adjustedMinutesForSpecificMonth,

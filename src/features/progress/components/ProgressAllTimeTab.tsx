@@ -8,7 +8,7 @@ import { getLifetimeHours } from '@/lib/serviceReport'
 import { ServiceReport } from '@/types/serviceReport'
 import i18n from '@/lib/locales'
 
-import Empty from '@/components/Empty'
+import Empty from '@/components/ui/Empty'
 import LifetimeHoursCard from '@/features/progress/components/LifetimeHoursCard'
 import YearByYearList from '@/features/progress/components/YearByYearList'
 

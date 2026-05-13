@@ -1,8 +1,8 @@
 import { Alert, View } from 'react-native'
 import moment from 'moment'
-import Section from '@/components/inputs/Section'
+import Section from '@/components/ui/inputs/Section'
 import i18n from '@/lib/locales'
-import InputRowButton from '@/components/inputs/InputRowButton'
+import InputRowButton from '@/components/ui/inputs/InputRowButton'
 import {
   faArrowUpRightFromSquare,
   faChevronRight,
@@ -12,9 +12,9 @@ import {
 } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
 import links from '@/constants/links'
-import IconButton from '@/components/IconButton'
+import IconButton from '@/components/ui/IconButton'
 import SectionTitle from '@/features/settings/components/shared/SectionTitle'
-import Text from '@/components/MyText'
+import Text from '@/components/ui/MyText'
 import useIsSupporter from '@/hooks/useIsSupporter'
 import useTheme from '@/contexts/theme'
 import { openURL } from '@/lib/links'

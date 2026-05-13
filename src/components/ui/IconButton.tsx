@@ -1,5 +1,5 @@
 import { IconProp } from '@fortawesome/fontawesome-svg-core'
-import Button from '@/components/Button'
+import Button from '@/components/ui/Button'
 import { Insets, StyleProp, ViewStyle } from 'react-native'
 import {
   FontAwesomeIcon,

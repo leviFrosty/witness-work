@@ -9,9 +9,9 @@ import {
   getMonthsReports,
   getTotalMinutesDetailedForSpecificMonth,
 } from '@/lib/serviceReport'
-import Text from '@/components/MyText'
+import Text from '@/components/ui/MyText'
 import i18n from '@/lib/locales'
-import Circle from '@/components/Circle'
+import Circle from '@/components/ui/Circle'
 
 interface ProgressBarSegmentBaseProps extends ViewProps {
   borderRadiusLeft?: boolean

@@ -15,11 +15,11 @@ import {
 } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
 import apis from '@/constants/apis'
-import Text from '@/components/MyText'
+import Text from '@/components/ui/MyText'
 import useTheme from '@/contexts/theme'
 import { Address } from '@/types/contact'
 import i18n from '@/lib/locales'
-import TextInputRow from '@/components/inputs/TextInputRow'
+import TextInputRow from '@/components/ui/inputs/TextInputRow'
 import useLocation from '@/features/contacts/hooks/useLocation'
 
 const SUGGESTION_ROW_HEIGHT = 44

@@ -1,8 +1,8 @@
 import { Alert } from 'react-native'
-import Wrapper from '@/components/layout/Wrapper'
+import Wrapper from '@/components/ui/layout/Wrapper'
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
-import Section from '@/components/inputs/Section'
-import InputRowButton from '@/components/inputs/InputRowButton'
+import Section from '@/components/ui/inputs/Section'
+import InputRowButton from '@/components/ui/inputs/InputRowButton'
 import {
   faChevronRight,
   faClock,
@@ -11,7 +11,7 @@ import {
   faSeedling,
   faUndo,
 } from '@fortawesome/free-solid-svg-icons'
-import IconButton from '@/components/IconButton'
+import IconButton from '@/components/ui/IconButton'
 import i18n from '@/lib/locales'
 import { StackActions, useNavigation } from '@react-navigation/native'
 import { RootStackNavigation, RootStackParamList } from '@/types/rootStack'

@@ -1,6 +1,6 @@
 import { PropsWithChildren, useState } from 'react'
 import { ViewProps } from 'react-native'
-import Card from '@/components/Card'
+import Card from '@/components/ui/Card'
 import Animated, {
   Easing,
   interpolate,
@@ -8,10 +8,10 @@ import Animated, {
   useSharedValue,
   withTiming,
 } from 'react-native-reanimated'
-import XView from '@/components/layout/XView'
-import IconButton from '@/components/IconButton'
+import XView from '@/components/ui/layout/XView'
+import IconButton from '@/components/ui/IconButton'
 import { faCaretUp } from '@fortawesome/free-solid-svg-icons'
-import Button from '@/components/Button'
+import Button from '@/components/ui/Button'
 import useTheme from '@/contexts/theme'
 
 interface Props extends ViewProps {

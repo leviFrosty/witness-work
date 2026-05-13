@@ -1,6 +1,6 @@
 import { Platform, View } from 'react-native'
-import Section from '@/components/inputs/Section'
-import InputRowSelect from '@/components/inputs/InputRowSelect'
+import Section from '@/components/ui/inputs/Section'
+import InputRowSelect from '@/components/ui/inputs/InputRowSelect'
 import i18n from '@/lib/locales'
 import {
   usePreferences,
@@ -8,7 +8,7 @@ import {
   WidgetContactAction,
   WidgetContactSort,
 } from '@/stores/preferences'
-import Text from '@/components/MyText'
+import Text from '@/components/ui/MyText'
 import useTheme from '@/contexts/theme'
 
 const contactSortData: { label: string; value: WidgetContactSort }[] = [

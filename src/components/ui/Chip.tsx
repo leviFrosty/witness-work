@@ -2,8 +2,8 @@ import { PropsWithChildren } from 'react'
 import { View, StyleSheet } from 'react-native'
 import { BlurView } from 'expo-blur'
 import useTheme from '@/contexts/theme'
-import Button from '@/components/Button'
-import Text from '@/components/MyText'
+import Button from '@/components/ui/Button'
+import Text from '@/components/ui/MyText'
 
 type ChipTone = 'neutral' | 'positive' | 'negative' | 'warn' | 'info'
 

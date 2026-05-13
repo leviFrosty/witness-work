@@ -7,9 +7,9 @@ import {
   usePreferences,
   type DefaultNavigationMapProvider,
 } from '@/stores/preferences'
-import ActionButton from '@/components/ActionButton'
-import Text from '@/components/MyText'
-import Wrapper from '@/components/layout/Wrapper'
+import ActionButton from '@/components/ui/ActionButton'
+import Text from '@/components/ui/MyText'
+import Wrapper from '@/components/ui/layout/Wrapper'
 import OnboardingNav from '@/features/onboarding/components/OnboardingNav'
 import useTheme from '@/contexts/theme'
 import { navigationSelectionOptions } from '@/components/DefaultNavigationSelector'

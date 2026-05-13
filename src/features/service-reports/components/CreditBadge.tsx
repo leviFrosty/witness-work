@@ -1,6 +1,6 @@
 import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
-import Text from '@/components/MyText'
+import Text from '@/components/ui/MyText'
 
 export default function CreditBadge() {
   const theme = useTheme()

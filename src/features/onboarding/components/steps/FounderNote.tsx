@@ -10,9 +10,9 @@ import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
 import { faHeart } from '@fortawesome/free-solid-svg-icons'
 import OnboardingNav from '@/features/onboarding/components/OnboardingNav'
-import Text from '@/components/MyText'
-import Wrapper from '@/components/layout/Wrapper'
-import ActionButton from '@/components/ActionButton'
+import Text from '@/components/ui/MyText'
+import Wrapper from '@/components/ui/layout/Wrapper'
+import ActionButton from '@/components/ui/ActionButton'
 import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
 

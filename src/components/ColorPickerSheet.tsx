@@ -8,9 +8,9 @@ import ColorPicker, {
 } from 'reanimated-color-picker'
 import { faTimes } from '@fortawesome/free-solid-svg-icons'
 import useTheme from '@/contexts/theme'
-import Text from '@/components/MyText'
-import Button from '@/components/Button'
-import IconButton from '@/components/IconButton'
+import Text from '@/components/ui/MyText'
+import Button from '@/components/ui/Button'
+import IconButton from '@/components/ui/IconButton'
 import i18n from '@/lib/locales'
 
 interface Props {

@@ -1,12 +1,12 @@
 import { Alert, ScrollView, View } from 'react-native'
 import { Image } from 'expo-image'
 import * as Sentry from '@sentry/react-native'
-import Text from '@/components/MyText'
+import Text from '@/components/ui/MyText'
 import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
-import XView from '@/components/layout/XView'
-import Button from '@/components/Button'
-import Wrapper from '@/components/layout/Wrapper'
+import XView from '@/components/ui/layout/XView'
+import Button from '@/components/ui/Button'
+import Wrapper from '@/components/ui/layout/Wrapper'
 import { Spinner } from 'tamagui'
 import Purchases, {
   PURCHASES_ERROR_CODE,
@@ -15,10 +15,10 @@ import Purchases, {
   PurchasesPackage,
 } from 'react-native-purchases'
 import SupporterBadge from '@/components/SupporterBadge'
-import GlassCard from '@/components/GlassCard'
-import SegmentedControl from '@/components/SegmentedControl'
+import GlassCard from '@/components/ui/GlassCard'
+import SegmentedControl from '@/components/ui/SegmentedControl'
 import PreviousDonations from '@/features/supporter/components/PreviousDonations'
-import Divider from '@/components/Divider'
+import Divider from '@/components/ui/Divider'
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
 import {
   faCheck,
@@ -29,7 +29,7 @@ import {
 } from '@fortawesome/free-solid-svg-icons'
 import type { IconDefinition } from '@fortawesome/fontawesome-svg-core'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import ActionButton from '@/components/ActionButton'
+import ActionButton from '@/components/ui/ActionButton'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import useCustomer from '@/hooks/useCustomer'
 import { RouteProp, useNavigation, useRoute } from '@react-navigation/native'

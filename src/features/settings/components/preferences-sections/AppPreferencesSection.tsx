@@ -1,10 +1,10 @@
 import { Alert, View } from 'react-native'
 import * as Linking from 'expo-linking'
 import i18n from '@/lib/locales'
-import Section from '@/components/inputs/Section'
-import InputRowButton from '@/components/inputs/InputRowButton'
+import Section from '@/components/ui/inputs/Section'
+import InputRowButton from '@/components/ui/inputs/InputRowButton'
 import { requestLocationPermission } from '@/lib/address'
-import IconButton from '@/components/IconButton'
+import IconButton from '@/components/ui/IconButton'
 import {
   faBell,
   faBellSlash,

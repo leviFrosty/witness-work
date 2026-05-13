@@ -1,7 +1,7 @@
 import { View } from 'react-native'
 import i18n from '@/lib/locales'
-import Section from '@/components/inputs/Section'
-import InputRowButton from '@/components/inputs/InputRowButton'
+import Section from '@/components/ui/inputs/Section'
+import InputRowButton from '@/components/ui/inputs/InputRowButton'
 import {
   faArrowUpRightFromSquare,
   faChevronRight,
@@ -9,7 +9,7 @@ import {
   faFileContract,
   faTag,
 } from '@fortawesome/free-solid-svg-icons'
-import IconButton from '@/components/IconButton'
+import IconButton from '@/components/ui/IconButton'
 import links from '@/constants/links'
 import SectionTitle from '@/features/settings/components/shared/SectionTitle'
 import { openURL } from '@/lib/links'

@@ -1,7 +1,7 @@
 import { View, Alert } from 'react-native'
-import Text from '@/components/MyText'
+import Text from '@/components/ui/MyText'
 import useTheme from '@/contexts/theme'
-import Card from '@/components/Card'
+import Card from '@/components/ui/Card'
 import { Contact } from '@/types/contact'
 import useConversations from '@/stores/conversationStore'
 import { useMemo, useState } from 'react'
@@ -11,7 +11,7 @@ import {
   contactHasAtLeastOneStudy,
   contactStudiedForGivenMonth,
 } from '@/lib/conversations'
-import IconButton from '@/components/IconButton'
+import IconButton from '@/components/ui/IconButton'
 import {
   faBook,
   faChevronRight,
@@ -25,15 +25,15 @@ import {
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
 import { IconDefinition } from '@fortawesome/fontawesome-svg-core'
 import { FuseResultMatch } from 'fuse.js'
-import Button from '@/components/Button'
+import Button from '@/components/ui/Button'
 import { Swipeable } from 'react-native-gesture-handler'
 import Haptics from '@/lib/haptics'
 import useContacts from '@/stores/contactsStore'
-import SwipeableArchive from '@/components/swipeableActions/Archive'
-import SwipeableDismiss from '@/components/swipeableActions/Dismiss'
+import SwipeableArchive from '@/components/ui/swipeableActions/Archive'
+import SwipeableDismiss from '@/components/ui/swipeableActions/Dismiss'
 import DismissContactSheet from '@/features/contacts/components/DismissContactSheet'
 import { useToastController } from '@tamagui/toast'
-import Avatar from '@/components/Avatar'
+import Avatar from '@/components/ui/Avatar'
 import { getContactStaleness, stalenessToColor } from '@/lib/contactStaleness'
 import { useMarkerColors } from '@/hooks/useMarkerColors'
 import {

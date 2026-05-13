@@ -19,12 +19,12 @@ import {
 } from '@/lib/contactsFilters'
 import { ContactStaleness } from '@/lib/contactStaleness'
 import { CustomFieldDefinition } from '@/types/customField'
-import Button from '@/components/Button'
-import IconButton from '@/components/IconButton'
-import Text from '@/components/MyText'
+import Button from '@/components/ui/Button'
+import IconButton from '@/components/ui/IconButton'
+import Text from '@/components/ui/MyText'
 import SegmentedControl, {
   SegmentedOption,
-} from '@/components/SegmentedControl'
+} from '@/components/ui/SegmentedControl'
 
 export type ContactsFilterSheetProps = {
   open: boolean

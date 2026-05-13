@@ -1,15 +1,15 @@
 import { View } from 'react-native'
-import Text from '@/components/MyText'
+import Text from '@/components/ui/MyText'
 import i18n from '@/lib/locales'
 import useTheme from '@/contexts/theme'
 import moment from 'moment'
 import { FlashList } from '@shopify/flash-list'
 import { ServiceReport, DayPlan } from '@/types/serviceReport'
 import TimeReportRow from '@/features/service-reports/components/TimeReportRow'
-import Card from '@/components/Card'
+import Card from '@/components/ui/Card'
 import { useMemo } from 'react'
 import useServiceReport from '@/stores/serviceReport'
-import XView from '@/components/layout/XView'
+import XView from '@/components/ui/layout/XView'
 import _ from 'lodash'
 import {
   getPlansIntersectingDay,
@@ -20,7 +20,7 @@ import {
 import { getStartTimeInMinutes } from '@/lib/normalizeDate'
 import DayPlanRow from '@/components/DayPlanRow'
 import RecurringPlanRow from '@/components/RecurringPlanRow'
-import Circle from '@/components/Circle'
+import Circle from '@/components/ui/Circle'
 import { getDateStatusColor } from '@/components/CalendarDay'
 
 interface DayHistoryViewProps {

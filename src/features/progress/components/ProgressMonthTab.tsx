@@ -8,7 +8,7 @@ import useTheme from '@/contexts/theme'
 import { getMonthsReports } from '@/lib/serviceReport'
 import i18n from '@/lib/locales'
 
-import Text from '@/components/MyText'
+import Text from '@/components/ui/MyText'
 import MonthSummary from '@/features/service-reports/components/MonthSummary'
 import AllDaysList from '@/features/service-reports/components/AllDaysList'
 import SwipeMonthNavigator from '@/components/SwipeMonthNavigator'

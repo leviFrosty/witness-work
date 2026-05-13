@@ -39,7 +39,7 @@ import {
 } from '@fortawesome/free-solid-svg-icons'
 import moment from 'moment'
 import useTheme from '@/contexts/theme'
-import Text from '@/components/MyText'
+import Text from '@/components/ui/MyText'
 import i18n from '@/lib/locales'
 import { Contact } from '@/types/contact'
 import useContacts from '@/stores/contactsStore'

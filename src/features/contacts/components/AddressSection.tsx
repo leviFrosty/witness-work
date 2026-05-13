@@ -7,7 +7,7 @@ import i18n, { TranslationKey } from '../../../lib/locales'
 import Button from '../../../components/Button'
 import Section from '../../../components/inputs/Section'
 import TextInputRow from '../../../components/inputs/TextInputRow'
-import PinLocation from '../../../components/PinLocation'
+import PinLocation from './PinLocation'
 import AddressAutocomplete, { Suggestion } from './AddressAutocomplete'
 import {
   faCircleInfo,

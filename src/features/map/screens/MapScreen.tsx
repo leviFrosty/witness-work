@@ -26,7 +26,7 @@ import * as Location from 'expo-location'
 import * as Crypto from 'expo-crypto'
 import ShareAddressSheet, {
   MapShareSheet,
-} from '../../../components/ShareAddressSheet'
+} from '../components/ShareAddressSheet'
 import { usePreferences } from '../../../stores/preferences'
 import Text from '../../../components/MyText'
 import Button from '../../../components/Button'

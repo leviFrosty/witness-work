@@ -17,14 +17,14 @@ import useServiceReport from '../../../stores/serviceReport'
 import { useCallback, useEffect, useMemo, useRef } from 'react'
 import useTheme from '../../../contexts/theme'
 import { ServiceReport } from '../../../types/serviceReport'
-import { CategorySegment } from '../../../components/CategorySegmentBar'
-import CategoriesSection from '../../../components/CategoriesSection'
+import { CategorySegment } from './CategorySegmentBar'
+import CategoriesSection from './CategoriesSection'
 import { usePreferences } from '../../../stores/preferences'
 import Card from '../../../components/Card'
 import ActionButton from '../../../components/ActionButton'
 import Button from '../../../components/Button'
 import Chip from '../../../components/Chip'
-import CreditInfoSheet from '../../../components/CreditInfoSheet'
+import CreditInfoSheet from './CreditInfoSheet'
 import {
   useFocusEffect,
   useIsFocused,

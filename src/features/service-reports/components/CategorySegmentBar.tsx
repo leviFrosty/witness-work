@@ -1,7 +1,7 @@
 import { View } from 'react-native'
-import Text from './MyText'
-import useTheme from '../contexts/theme'
-import { useFormattedMinutes } from '../lib/minutes'
+import Text from '../../../components/MyText'
+import useTheme from '../../../contexts/theme'
+import { useFormattedMinutes } from '../../../lib/minutes'
 import CreditBadge from './CreditBadge'
 
 export type CategorySegment = {

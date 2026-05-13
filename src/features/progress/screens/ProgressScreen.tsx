@@ -10,7 +10,7 @@ import useTheme from '../../../contexts/theme'
 import { usePreferences } from '../../../stores/preferences'
 import i18n from '../../../lib/locales'
 
-import MilestoneAdjustSheet from '../../../components/MilestoneAdjustSheet'
+import MilestoneAdjustSheet from '../components/MilestoneAdjustSheet'
 import Badge from '../../../components/Badge'
 import Button from '../../../components/Button'
 import IconButton from '../../../components/IconButton'

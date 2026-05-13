@@ -16,7 +16,7 @@ import Copyeable from '../../../components/Copyeable'
 import { email } from '../../../constants/contactInformation'
 import { openURL } from '../../../lib/links'
 import Card from '../../../components/Card'
-import ShareAppButton from '../../../components/ShareAppButton'
+import ShareAppButton from '../components/ShareAppButton'
 import Divider from '../../../components/Divider'
 import { RootStackNavigation } from '../../../types/rootStack'
 

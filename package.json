@@ -23,7 +23,7 @@
     "typecheck": "tsc -p ./tsconfig.json",
     "lint": "eslint . --cache --cache-location .cache/.eslintcache",
     "doctor": "expo-doctor",
-    "deps": "madge --ts-config ./tsconfig.json src/App.tsx -c"
+    "deps": "madge --ts-config ./tsconfig.json src/app/App.tsx -c"
   },
   "dependencies": {
     "@bacons/apple-targets": "0.2.1",

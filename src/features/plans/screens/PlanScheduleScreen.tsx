@@ -12,7 +12,7 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack'
 import CalendarDay from '../../../components/CalendarDay'
 import SimpleProgressBar from '../../../components/SimpleProgressBar'
 import _ from 'lodash'
-import CalendarKey from '../../../components/CalendarKey'
+import CalendarKey from '../components/CalendarKey'
 import useServiceReport from '../../../stores/serviceReport'
 import usePublisher from '../../../hooks/usePublisher'
 import {

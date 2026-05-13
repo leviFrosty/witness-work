@@ -1,8 +1,8 @@
 import { View } from 'react-native'
-import i18n from '../lib/locales'
-import Text from './MyText'
-import XView from './layout/XView'
-import useTheme from '../contexts/theme'
+import i18n from '../../../lib/locales'
+import Text from '../../../components/MyText'
+import XView from '../../../components/layout/XView'
+import useTheme from '../../../contexts/theme'
 
 const size = 10
 

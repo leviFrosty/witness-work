@@ -20,10 +20,10 @@ import {
 import i18n from '../lib/locales'
 import { logger } from '../lib/logger'
 
-import Card from './Card'
-import Chip from './Chip'
+import Card from '../components/Card'
+import Chip from '../components/Chip'
 import MilestoneProgressBar from './MilestoneProgressBar'
-import Text from './MyText'
+import Text from '../components/MyText'
 
 interface YearMilestoneCardProps {
   /**

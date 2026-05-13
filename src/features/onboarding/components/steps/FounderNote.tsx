@@ -161,7 +161,7 @@ const FounderNote = ({ goBack, goNext }: Props) => {
                 }}
               >
                 <ExpoImage
-                  source={require('../../../assets/levi-portrait.png')}
+                  source={require('../../../../assets/levi-portrait.png')}
                   style={{
                     width: IMAGE_SIZE,
                     height: IMAGE_SIZE,
@@ -198,7 +198,7 @@ const FounderNote = ({ goBack, goNext }: Props) => {
 
           <View style={{ marginTop: 8, alignItems: 'flex-start', gap: 4 }}>
             <ExpoImage
-              source={require('./../../../assets/signature.png')}
+              source={require('../../../../assets/signature.png')}
               style={{
                 width: 180,
                 height: 64,

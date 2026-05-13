@@ -11,7 +11,7 @@ import useCustomer from '../../hooks/useCustomer'
 import useIsSupporter from '../../hooks/useIsSupporter'
 import { usePreferences } from '../../stores/preferences'
 import SyncPopover from '../sync/components/SyncPopover'
-import MilestoneRevealRecoveryIcon from '../../components/MilestoneRevealRecoveryIcon'
+import MilestoneRevealRecoveryIcon from '../../features/milestones/components/MilestoneRevealRecoveryIcon'
 
 const DrawerNavigator = () => {
   const Drawer = createDrawerNavigator()

@@ -25,7 +25,7 @@ import SwipeMonthNavigator from '../../../components/SwipeMonthNavigator'
 import CalendarHeader, {
   CalendarViewMode,
 } from '../../../components/CalendarHeader'
-import CalendarKey from '../../../components/CalendarKey'
+import CalendarKey from '../components/CalendarKey'
 import MonthTimeReportsCalendar from '../../service-reports/components/MonthTimeReportsCalendar'
 import MonthScheduleSection from '../../service-reports/components/MonthScheduleSection'
 import SelectedDateSheet, {

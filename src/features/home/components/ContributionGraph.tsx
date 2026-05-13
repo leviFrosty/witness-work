@@ -1,10 +1,10 @@
 import { useMemo, useState } from 'react'
 import { LayoutChangeEvent, View } from 'react-native'
 import moment from 'moment'
-import useTheme from '../contexts/theme'
-import Text from './MyText'
-import { ContributionCell, contributionGrid } from '../lib/profileStats'
-import i18n from '../lib/locales'
+import useTheme from '../../../contexts/theme'
+import Text from '../../../components/MyText'
+import { ContributionCell, contributionGrid } from '../../../lib/profileStats'
+import i18n from '../../../lib/locales'
 
 interface Props {
   daily: Map<string, number>

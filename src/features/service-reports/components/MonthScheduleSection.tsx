@@ -1,6 +1,6 @@
 import useTheme from '../../../contexts/theme'
 import i18n from '../../../lib/locales'
-import AheadOrBehindOfMonthSchedule from '../../../components/AheadOrBehindOfSchedule'
+import AheadOrBehindOfMonthSchedule from './AheadOrBehindOfSchedule'
 import Text from '../../../components/MyText'
 import Button from '../../../components/Button'
 import { useNavigation } from '@react-navigation/native'

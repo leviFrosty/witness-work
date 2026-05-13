@@ -1,5 +1,5 @@
 import useTheme from '../../../contexts/theme'
-import AheadOrBehindOfMonthSchedule from '../../../components/AheadOrBehindOfSchedule'
+import AheadOrBehindOfMonthSchedule from './AheadOrBehindOfSchedule'
 import _ from 'lodash'
 import { useNavigation } from '@react-navigation/native'
 import MonthServiceReportProgressBar from './MonthServiceReportProgressBar'

@@ -86,7 +86,7 @@ import { isContactDismissed } from '../../../lib/dismissedContacts'
 import Avatar, { isRenderableImageValue } from '../../../components/Avatar'
 import GenderIcon from '../../../components/GenderIcon'
 import { ProfileAvatar } from '../../../types/avatar'
-import JsonViewer from '../../../components/JsonViewer'
+import JsonViewer from '../components/JsonViewer'
 import ContactAvatarViewer from '../components/ContactAvatarViewer'
 import useContactHeroBackground from '../hooks/useContactHeroBackground'
 

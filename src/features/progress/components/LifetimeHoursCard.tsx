@@ -2,19 +2,19 @@ import { useMemo } from 'react'
 import { View } from 'react-native'
 import moment from 'moment'
 
-import useTheme from '../contexts/theme'
-import useServiceReport from '../stores/serviceReport'
+import useTheme from '../../../contexts/theme'
+import useServiceReport from '../../../stores/serviceReport'
 import {
   getEarliestReportDate,
   getLifetimeHours,
   getServiceYearEndYearsSpan,
-} from '../lib/serviceReport'
-import { ServiceReport } from '../types/serviceReport'
-import i18n from '../lib/locales'
+} from '../../../lib/serviceReport'
+import { ServiceReport } from '../../../types/serviceReport'
+import i18n from '../../../lib/locales'
 
-import GlassCard from './GlassCard'
-import Chip from './Chip'
-import Text from './MyText'
+import GlassCard from '../../../components/GlassCard'
+import Chip from '../../../components/Chip'
+import Text from '../../../components/MyText'
 
 /**
  * Flattens the store's `ServiceReportsByYears` shape into a single

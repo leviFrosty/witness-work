@@ -19,7 +19,7 @@ import { ServiceReport } from '../../../types/serviceReport'
 import i18n from '../../../lib/locales'
 
 import Text from '../../../components/MyText'
-import AddEarlierYearSheet from '../../../components/AddEarlierYearSheet'
+import AddEarlierYearSheet from './AddEarlierYearSheet'
 
 const EARLIER_YEAR_FLOOR_YEARS_BACK = 100
 

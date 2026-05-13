@@ -1,9 +1,9 @@
 import { Share } from 'react-native'
-import useTheme from '../contexts/theme'
-import Button from './Button'
-import links from '../constants/links'
-import Text from './MyText'
-import i18n from '../lib/locales'
+import useTheme from '../../../contexts/theme'
+import Button from '../../../components/Button'
+import links from '../../../constants/links'
+import Text from '../../../components/MyText'
+import i18n from '../../../lib/locales'
 
 const ShareAppButton = () => {
   const theme = useTheme()

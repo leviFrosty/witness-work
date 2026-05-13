@@ -1,18 +1,18 @@
 import { View } from 'react-native'
-import useTheme from '../contexts/theme'
-import Text from './MyText'
-import i18n from '../lib/locales'
-import Button from './Button'
-import { usePreferences } from '../stores/preferences'
-import XView from './layout/XView'
-import IconButton from './IconButton'
+import useTheme from '../../../contexts/theme'
+import Text from '../../../components/MyText'
+import i18n from '../../../lib/locales'
+import Button from '../../../components/Button'
+import { usePreferences } from '../../../stores/preferences'
+import XView from '../../../components/layout/XView'
+import IconButton from '../../../components/IconButton'
 import {
   faChevronRight,
   faTimes,
   faWarning,
 } from '@fortawesome/free-solid-svg-icons'
 import { useNavigation } from '@react-navigation/native'
-import { RootStackNavigation } from '../types/rootStack'
+import { RootStackNavigation } from '../../../types/rootStack'
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
 
 type Props = {

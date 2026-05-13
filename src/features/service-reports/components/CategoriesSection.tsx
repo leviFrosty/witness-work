@@ -1,14 +1,12 @@
 import { useState } from 'react'
 import { View } from 'react-native'
 import { Sheet } from 'tamagui'
-import Text from '../components/MyText'
-import Button from '../components/Button'
-import IconButton from '../components/IconButton'
-import CategorySegmentBar, {
-  CategorySegment,
-} from '../components/CategorySegmentBar'
-import useTheme from '../contexts/theme'
-import i18n from '../lib/locales'
+import Text from '../../../components/MyText'
+import Button from '../../../components/Button'
+import IconButton from '../../../components/IconButton'
+import CategorySegmentBar, { CategorySegment } from './CategorySegmentBar'
+import useTheme from '../../../contexts/theme'
+import i18n from '../../../lib/locales'
 import { faChevronRight, faTimes } from '@fortawesome/free-solid-svg-icons'
 
 type Props = {

@@ -8,7 +8,7 @@ import i18n from '../../../lib/locales'
 import useDevice from '../../../hooks/useDevice'
 import HourEntryCard from './HourEntryCard'
 import PublisherCheckBoxCard from '../../../components/PublisherCheckBoxCard'
-import StudiesCard from '../../../components/StudiesCard'
+import StudiesCard from './StudiesCard'
 import ViewReportButton from './ViewReportButton'
 
 const RowSectionTitle = ({

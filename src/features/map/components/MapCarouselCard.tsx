@@ -23,7 +23,7 @@ import {
 import Copyeable from '../../../components/Copyeable'
 import Avatar from '../../../components/Avatar'
 import links from '../../../constants/links'
-import { MapShareSheet } from '../../../components/ShareAddressSheet'
+import { MapShareSheet } from './ShareAddressSheet'
 import { parsePhoneNumber } from 'awesome-phonenumber'
 import { getLocales } from 'expo-localization'
 import { handleCall, handleMessage } from '../../../lib/phone'

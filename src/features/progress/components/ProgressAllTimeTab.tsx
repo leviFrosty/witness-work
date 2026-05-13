@@ -9,7 +9,7 @@ import { ServiceReport } from '../../../types/serviceReport'
 import i18n from '../../../lib/locales'
 
 import Empty from '../../../components/Empty'
-import LifetimeHoursCard from '../../../components/LifetimeHoursCard'
+import LifetimeHoursCard from './LifetimeHoursCard'
 import YearByYearList from './YearByYearList'
 
 /**

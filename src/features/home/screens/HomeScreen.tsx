@@ -32,7 +32,7 @@ import {
   HomeScreenElementKey,
   usePreferences,
 } from '../../../stores/preferences'
-import BackupReminder from '../../../components/BackupReminder'
+import BackupReminder from '../components/BackupReminder'
 import { TimerSection } from '../../service-reports/components/TimerSection'
 import UpgradeLegacyTimeReportsSheet from '../../service-reports/components/UpgradeLegacyTimeReportsSheet'
 import ProfileCard from '../../../components/ProfileCard'

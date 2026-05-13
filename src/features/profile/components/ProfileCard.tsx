@@ -13,9 +13,9 @@ import useTheme from '@/contexts/theme'
 import { usePreferences } from '@/stores/preferences'
 import usePublisher from '@/hooks/usePublisher'
 import useIsSupporter from '@/hooks/useIsSupporter'
-import Card from '@/components/Card'
-import Text from '@/components/MyText'
-import Avatar from '@/components/Avatar'
+import Card from '@/components/ui/Card'
+import Text from '@/components/ui/MyText'
+import Avatar from '@/components/ui/Avatar'
 import TiltableCard from '@/features/profile/components/TiltableCard'
 import ProfileDetailOverlay, {
   OriginRect,

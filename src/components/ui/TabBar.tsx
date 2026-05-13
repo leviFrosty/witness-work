@@ -17,9 +17,9 @@ import {
 
 import useTheme from '@/contexts/theme'
 import i18n, { TranslationKey } from '@/lib/locales'
-import IconButton from '@/components/IconButton'
-import Text from '@/components/MyText'
-import Button from '@/components/Button'
+import IconButton from '@/components/ui/IconButton'
+import Text from '@/components/ui/MyText'
+import Button from '@/components/ui/Button'
 import QuickActionSheet from '@/components/QuickActionSheet'
 import { RootStackNavigation } from '@/types/rootStack'
 import { HomeTabStackNavigation } from '@/types/homeStack'

@@ -14,11 +14,11 @@ import {
   faTrash,
 } from '@fortawesome/free-solid-svg-icons'
 
-import Wrapper from '@/components/layout/Wrapper'
-import Text from '@/components/MyText'
-import Button from '@/components/Button'
-import IconButton from '@/components/IconButton'
-import DateTimePicker from '@/components/DateTimePicker'
+import Wrapper from '@/components/ui/layout/Wrapper'
+import Text from '@/components/ui/MyText'
+import Button from '@/components/ui/Button'
+import IconButton from '@/components/ui/IconButton'
+import DateTimePicker from '@/components/ui/DateTimePicker'
 
 import useTheme from '@/contexts/theme'
 import useContacts from '@/stores/contactsStore'

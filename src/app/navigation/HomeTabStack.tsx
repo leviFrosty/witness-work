@@ -1,5 +1,5 @@
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs'
-import TabBar from '@/components/TabBar'
+import TabBar from '@/components/ui/TabBar'
 import Map from '@/features/map/screens/MapScreen'
 import DrawerNavigator from '@/app/navigation/DrawerNavigator'
 import { usePreferences } from '@/stores/preferences'

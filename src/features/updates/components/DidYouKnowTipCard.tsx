@@ -6,7 +6,7 @@ import useTheme from '@/contexts/theme'
 import i18n, { TranslationKey } from '@/lib/locales'
 import { usePreferences } from '@/stores/preferences'
 import { DID_YOU_KNOW_TIPS } from '@/features/updates/lib/didYouKnowTips'
-import Text from '@/components/MyText'
+import Text from '@/components/ui/MyText'
 
 /**
  * Home-screen tip card that drip-feeds lesser-known features one at a time. On

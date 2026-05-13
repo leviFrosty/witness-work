@@ -12,9 +12,9 @@ import {
 import { ServiceReport } from '@/types/serviceReport'
 import i18n from '@/lib/locales'
 
-import GlassCard from '@/components/GlassCard'
-import Chip from '@/components/Chip'
-import Text from '@/components/MyText'
+import GlassCard from '@/components/ui/GlassCard'
+import Chip from '@/components/ui/Chip'
+import Text from '@/components/ui/MyText'
 
 /**
  * Flattens the store's `ServiceReportsByYears` shape into a single

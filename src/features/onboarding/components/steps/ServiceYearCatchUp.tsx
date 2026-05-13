@@ -1,7 +1,7 @@
 import { View } from 'react-native'
 
 import OnboardingNav from '@/features/onboarding/components/OnboardingNav'
-import Wrapper from '@/components/layout/Wrapper'
+import Wrapper from '@/components/ui/layout/Wrapper'
 import ServiceYearCatchUpForm from '@/features/service-reports/components/ServiceYearCatchUpForm'
 
 interface Props {

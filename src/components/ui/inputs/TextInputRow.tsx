@@ -6,9 +6,9 @@ import {
   StyleProp,
 } from 'react-native'
 import useTheme from '@/contexts/theme'
-import Text from '@/components/MyText'
-import InputRowContainer from '@/components/inputs/InputRowContainer'
-import MyTextInput, { TextInputProps } from '@/components/TextInput'
+import Text from '@/components/ui/MyText'
+import InputRowContainer from '@/components/ui/inputs/InputRowContainer'
+import MyTextInput, { TextInputProps } from '@/components/ui/TextInput'
 import { Errors } from '@/types/textInput'
 
 interface TextInputRowProps {

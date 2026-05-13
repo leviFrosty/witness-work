@@ -28,11 +28,11 @@ import {
 } from '@/lib/milestones'
 import { RootStackNavigation } from '@/types/rootStack'
 
-import Text from '@/components/MyText'
-import TextInput from '@/components/TextInput'
-import Button from '@/components/Button'
-import IconButton from '@/components/IconButton'
-import ActionButton from '@/components/ActionButton'
+import Text from '@/components/ui/MyText'
+import TextInput from '@/components/ui/TextInput'
+import Button from '@/components/ui/Button'
+import IconButton from '@/components/ui/IconButton'
+import ActionButton from '@/components/ui/ActionButton'
 import { MilestoneProgressBarPreview } from '@/components/MilestoneProgressBar'
 
 const MILESTONE_STEP = 10

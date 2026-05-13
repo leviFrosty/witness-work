@@ -12,7 +12,7 @@ import {
   getTotalMinutesForServiceYear,
 } from '@/lib/serviceReport'
 import { getEffectiveMilestones, getMilestoneHitState } from '@/lib/milestones'
-import Text from '@/components/MyText'
+import Text from '@/components/ui/MyText'
 
 interface MilestoneProgressBarPreviewProps {
   milestones: number[]

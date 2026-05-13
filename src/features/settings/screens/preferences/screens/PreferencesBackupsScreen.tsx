@@ -1,5 +1,5 @@
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
-import Wrapper from '@/components/layout/Wrapper'
+import Wrapper from '@/components/ui/layout/Wrapper'
 import BackupsPreferencesSection from '@/features/settings/components/preferences-sections/BackupsPreferencesSection'
 
 const PreferencesBackupsScreen = () => {

@@ -20,8 +20,8 @@ import Svg, {
   Circle,
 } from 'react-native-svg'
 
-import IconButton from '@/components/IconButton'
-import Text from '@/components/MyText'
+import IconButton from '@/components/ui/IconButton'
+import Text from '@/components/ui/MyText'
 import useTheme from '@/contexts/theme'
 import i18n, { _i18n } from '@/lib/locales'
 import Haptics from '@/lib/haptics'

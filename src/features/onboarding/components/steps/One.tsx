@@ -8,11 +8,11 @@ import Animated, {
   withSpring,
   Easing,
 } from 'react-native-reanimated'
-import Text from '@/components/MyText'
+import Text from '@/components/ui/MyText'
 import i18n from '@/lib/locales'
-import Wrapper from '@/components/layout/Wrapper'
-import ActionButton from '@/components/ActionButton'
-import Button from '@/components/Button'
+import Wrapper from '@/components/ui/layout/Wrapper'
+import ActionButton from '@/components/ui/ActionButton'
+import Button from '@/components/ui/Button'
 import useTheme from '@/contexts/theme'
 
 interface Props {

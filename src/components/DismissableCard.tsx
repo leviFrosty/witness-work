@@ -3,7 +3,7 @@ import { ReactNode, useState } from 'react'
 import { faTimes } from '@fortawesome/free-solid-svg-icons'
 import useTheme from '@/contexts/theme'
 import CardWithTitle from '@/components/CardWithTitle'
-import IconButton from '@/components/IconButton'
+import IconButton from '@/components/ui/IconButton'
 
 interface Props {
   title: ReactNode

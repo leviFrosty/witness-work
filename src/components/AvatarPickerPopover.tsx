@@ -3,11 +3,11 @@ import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
 import { faPencil } from '@fortawesome/free-solid-svg-icons'
 import useTheme from '@/contexts/theme'
 import { ProfileAvatar } from '@/types/avatar'
-import Avatar from '@/components/Avatar'
+import Avatar from '@/components/ui/Avatar'
 import AvatarPickerContent, {
   AvatarMetaCapture,
 } from '@/components/AvatarPickerContent'
-import AnchoredPopover from '@/components/AnchoredPopover'
+import AnchoredPopover from '@/components/ui/AnchoredPopover'
 import i18n from '@/lib/locales'
 
 interface Props {

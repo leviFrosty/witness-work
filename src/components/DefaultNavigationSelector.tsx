@@ -1,6 +1,6 @@
 import i18n from '@/lib/locales'
-import InputRowSelect from '@/components/inputs/InputRowSelect'
-import { SelectData } from '@/components/Select'
+import InputRowSelect from '@/components/ui/inputs/InputRowSelect'
+import { SelectData } from '@/components/ui/Select'
 import {
   DefaultNavigationMapProvider,
   usePreferences,

@@ -15,9 +15,9 @@ import { usePreferences } from '@/stores/preferences'
 import { iCloudSync } from '@/app/sync/iCloudSync'
 import * as ICloudBridge from '../../../../modules/icloud-bridge'
 import i18n from '@/lib/locales'
-import Text from '@/components/MyText'
-import Button from '@/components/Button'
-import AnchoredPopover from '@/components/AnchoredPopover'
+import Text from '@/components/ui/MyText'
+import Button from '@/components/ui/Button'
+import AnchoredPopover from '@/components/ui/AnchoredPopover'
 import { RootStackNavigation } from '@/types/rootStack'
 
 const CONTENT_WIDTH = 260

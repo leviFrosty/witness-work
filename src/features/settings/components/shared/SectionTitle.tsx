@@ -1,4 +1,4 @@
-import Text from '@/components/MyText'
+import Text from '@/components/ui/MyText'
 import useTheme from '@/contexts/theme'
 
 export const SectionTitle = ({ text }: { text: string }) => {

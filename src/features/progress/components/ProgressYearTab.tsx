@@ -16,10 +16,10 @@ import {
 import i18n from '@/lib/locales'
 
 import YearMilestoneCard from '@/components/YearMilestoneCard'
-import Text from '@/components/MyText'
-import XView from '@/components/layout/XView'
-import Badge from '@/components/Badge'
-import { useCardStyle } from '@/components/Card'
+import Text from '@/components/ui/MyText'
+import XView from '@/components/ui/layout/XView'
+import Badge from '@/components/ui/Badge'
+import { useCardStyle } from '@/components/ui/Card'
 
 interface ProgressYearTabProps {
   /** End year of the service year (Sep 1 of `year - 1` → Aug 31 of `year`). */

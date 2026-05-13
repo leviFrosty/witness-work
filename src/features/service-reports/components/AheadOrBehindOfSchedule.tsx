@@ -1,6 +1,6 @@
 import { useMemo, useEffect } from 'react'
 import useTheme from '@/contexts/theme'
-import Text from '@/components/MyText'
+import Text from '@/components/ui/MyText'
 import moment from 'moment'
 import {
   adjustedMinutesForSpecificMonth,

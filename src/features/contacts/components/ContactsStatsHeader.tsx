@@ -14,9 +14,9 @@ import { filterActivesContacts } from '@/lib/dismissedContacts'
 import { useMarkerColors } from '@/hooks/useMarkerColors'
 import { Contact } from '@/types/contact'
 import { Conversation } from '@/types/conversation'
-import Text from '@/components/MyText'
-import Card from '@/components/Card'
-import Button from '@/components/Button'
+import Text from '@/components/ui/MyText'
+import Card from '@/components/ui/Card'
+import Button from '@/components/ui/Button'
 import StalenessColorKey from '@/components/StalenessColorKey'
 
 export type ContactsStatsHeaderProps = {

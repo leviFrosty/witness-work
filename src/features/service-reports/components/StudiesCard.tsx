@@ -5,7 +5,7 @@ import useConversations from '@/stores/conversationStore'
 import { getStudiesForGivenMonth } from '@/lib/contacts'
 import i18n from '@/lib/locales'
 import { View } from 'react-native'
-import Text from '@/components/MyText'
+import Text from '@/components/ui/MyText'
 
 export default function StudiesCard() {
   const theme = useTheme()

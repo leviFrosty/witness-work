@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react'
 import { LayoutChangeEvent, View } from 'react-native'
 import moment from 'moment'
 import useTheme from '@/contexts/theme'
-import Text from '@/components/MyText'
+import Text from '@/components/ui/MyText'
 import {
   ContributionCell,
   contributionGrid,

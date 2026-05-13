@@ -1,7 +1,7 @@
-import Wrapper from '@/components/layout/Wrapper'
+import Wrapper from '@/components/ui/layout/Wrapper'
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
-import Section from '@/components/inputs/Section'
-import InputRowButton from '@/components/inputs/InputRowButton'
+import Section from '@/components/ui/inputs/Section'
+import InputRowButton from '@/components/ui/inputs/InputRowButton'
 import {
   faCalendarDay,
   faChevronRight,
@@ -15,7 +15,7 @@ import {
 import { Platform } from 'react-native'
 import i18n from '@/lib/locales'
 import { useNavigation } from '@react-navigation/native'
-import IconButton from '@/components/IconButton'
+import IconButton from '@/components/ui/IconButton'
 import { View } from 'react-native'
 import { RootStackNavigation } from '@/types/rootStack'
 

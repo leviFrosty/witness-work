@@ -11,14 +11,14 @@ import { getMonthsReports } from '@/lib/serviceReport'
 import { ServiceReport } from '@/types/serviceReport'
 import { RootStackNavigation } from '@/types/rootStack'
 
-import Button from '@/components/Button'
-import Text from '@/components/MyText'
-import IconButton from '@/components/IconButton'
+import Button from '@/components/ui/Button'
+import Text from '@/components/ui/MyText'
+import IconButton from '@/components/ui/IconButton'
 import SelectedDateSheet, {
   SelectedDateSheetState,
 } from '@/features/service-reports/components/SelectedDateSheet'
-import Badge from '@/components/Badge'
-import { useCardStyle } from '@/components/Card'
+import Badge from '@/components/ui/Badge'
+import { useCardStyle } from '@/components/ui/Card'
 
 interface AllDaysListProps {
   month: number

@@ -1,10 +1,10 @@
 import { Switch, View } from 'react-native'
-import Text from '@/components/MyText'
+import Text from '@/components/ui/MyText'
 import useTheme from '@/contexts/theme'
 import i18n, { TranslationKey } from '@/lib/locales'
-import Section from '@/components/inputs/Section'
-import InputRowContainer from '@/components/inputs/InputRowContainer'
-import Select from '@/components/Select'
+import Section from '@/components/ui/inputs/Section'
+import InputRowContainer from '@/components/ui/inputs/InputRowContainer'
+import Select from '@/components/ui/Select'
 import {
   DEFAULT_RETURN_VISIT_NOTIFICATION_OFFSET,
   DEFAULT_RETURN_VISIT_TIME_OFFSET,

@@ -1,9 +1,9 @@
 import { View } from 'react-native'
 import useTheme from '@/contexts/theme'
-import Text from '@/components/MyText'
+import Text from '@/components/ui/MyText'
 import i18n from '@/lib/locales'
-import Button from '@/components/Button'
-import XView from '@/components/layout/XView'
+import Button from '@/components/ui/Button'
+import XView from '@/components/ui/layout/XView'
 
 export type CalendarViewMode = 'planned' | 'actual'
 

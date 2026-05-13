@@ -5,7 +5,7 @@ import {
   fetchCoordinateFromAddress,
   requestLocationPermission,
 } from '@/lib/address'
-import Loader from '@/components/Loader'
+import Loader from '@/components/ui/Loader'
 import { Progress } from 'tamagui'
 import AnimatedLottieView from 'lottie-react-native'
 import { usePreferences } from '@/stores/preferences'
@@ -16,10 +16,10 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Contact } from '@/types/contact'
 import i18n from '@/lib/locales'
-import Wrapper from '@/components/layout/Wrapper'
-import Text from '@/components/MyText'
-import ActionButton from '@/components/ActionButton'
-import Button from '@/components/Button'
+import Wrapper from '@/components/ui/layout/Wrapper'
+import Text from '@/components/ui/MyText'
+import ActionButton from '@/components/ui/ActionButton'
+import Button from '@/components/ui/Button'
 import { HomeTabStackNavigation } from '@/types/homeStack'
 import MapKey from '@/features/map/components/MapColorKey'
 

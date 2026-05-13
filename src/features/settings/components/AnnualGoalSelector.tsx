@@ -1,7 +1,7 @@
 import { View } from 'react-native'
 import i18n from '@/lib/locales'
 import { usePreferences } from '@/stores/preferences'
-import Select, { SelectData } from '@/components/Select'
+import Select, { SelectData } from '@/components/ui/Select'
 import usePublisher from '@/hooks/usePublisher'
 
 const AnnualGoalSelector = () => {

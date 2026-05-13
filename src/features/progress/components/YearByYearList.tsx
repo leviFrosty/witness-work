@@ -18,7 +18,7 @@ import {
 import { ServiceReport } from '@/types/serviceReport'
 import i18n from '@/lib/locales'
 
-import Text from '@/components/MyText'
+import Text from '@/components/ui/MyText'
 import AddEarlierYearSheet from '@/features/progress/components/AddEarlierYearSheet'
 
 const EARLIER_YEAR_FLOOR_YEARS_BACK = 100

@@ -1,10 +1,10 @@
 import { faTimes } from '@fortawesome/free-solid-svg-icons'
 import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
-import Card from '@/components/Card'
-import IconButton from '@/components/IconButton'
-import XView from '@/components/layout/XView'
-import Text from '@/components/MyText'
+import Card from '@/components/ui/Card'
+import IconButton from '@/components/ui/IconButton'
+import XView from '@/components/ui/layout/XView'
+import Text from '@/components/ui/MyText'
 import { useState } from 'react'
 
 export default function MapWarningLocationSharingDisabled(props: {

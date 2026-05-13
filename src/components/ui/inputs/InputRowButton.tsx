@@ -2,9 +2,9 @@ import React, { PropsWithChildren, ReactNode } from 'react'
 import { GestureResponderEvent, ViewStyle, View } from 'react-native'
 import useTheme from '@/contexts/theme'
 import { rowPaddingVertical } from '@/constants/Inputs'
-import Text from '@/components/MyText'
-import Button from '@/components/Button'
-import IconButton from '@/components/IconButton'
+import Text from '@/components/ui/MyText'
+import Button from '@/components/ui/Button'
+import IconButton from '@/components/ui/IconButton'
 import { IconProp } from '@fortawesome/fontawesome-svg-core'
 
 interface Props {

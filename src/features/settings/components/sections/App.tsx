@@ -1,14 +1,14 @@
 import { View, Platform } from 'react-native'
 import i18n from '@/lib/locales'
-import Section from '@/components/inputs/Section'
-import InputRowButton from '@/components/inputs/InputRowButton'
+import Section from '@/components/ui/inputs/Section'
+import InputRowButton from '@/components/ui/inputs/InputRowButton'
 import {
   faChevronRight,
   faCloud,
   faEllipsisH,
   faFileExport,
 } from '@fortawesome/free-solid-svg-icons'
-import IconButton from '@/components/IconButton'
+import IconButton from '@/components/ui/IconButton'
 import SectionTitle from '@/features/settings/components/shared/SectionTitle'
 import { SettingsSectionProps } from '@/features/settings/screens/settingScreen'
 import { useNavigation } from '@react-navigation/native'

@@ -1,11 +1,11 @@
 import { View } from 'react-native'
 import useTheme from '@/contexts/theme'
-import Text from '@/components/MyText'
+import Text from '@/components/ui/MyText'
 import i18n from '@/lib/locales'
-import Button from '@/components/Button'
+import Button from '@/components/ui/Button'
 import { usePreferences } from '@/stores/preferences'
-import XView from '@/components/layout/XView'
-import IconButton from '@/components/IconButton'
+import XView from '@/components/ui/layout/XView'
+import IconButton from '@/components/ui/IconButton'
 import {
   faChevronRight,
   faTimes,

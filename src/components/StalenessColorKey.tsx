@@ -5,8 +5,8 @@ import i18n, { TranslationKey } from '@/lib/locales'
 import { ContactStaleness, stalenessToColor } from '@/lib/contactStaleness'
 import { useMarkerColors } from '@/hooks/useMarkerColors'
 import { MarkerColors, usePreferences } from '@/stores/preferences'
-import Text from '@/components/MyText'
-import Button from '@/components/Button'
+import Text from '@/components/ui/MyText'
+import Button from '@/components/ui/Button'
 import ColorPickerSheet from '@/components/ColorPickerSheet'
 
 /**

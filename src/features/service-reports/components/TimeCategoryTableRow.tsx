@@ -1,6 +1,6 @@
 import { View } from 'react-native'
-import Text from '@/components/MyText'
-import XView from '@/components/layout/XView'
+import Text from '@/components/ui/MyText'
+import XView from '@/components/ui/layout/XView'
 import CreditBadge from '@/features/service-reports/components/CreditBadge'
 import { useFormattedMinutes } from '@/lib/minutes'
 

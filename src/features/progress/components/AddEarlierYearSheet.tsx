@@ -6,7 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
-import Text from '@/components/MyText'
+import Text from '@/components/ui/MyText'
 
 interface AddEarlierYearSheetProps {
   /** Controls visibility. Parent owns this. */

@@ -78,7 +78,7 @@ import {
 import { MenuView, MenuAction } from '@react-native-menu/menu'
 import { isContactDismissed } from '@/lib/dismissedContacts'
 import Avatar, { isRenderableImageValue } from '@/components/ui/Avatar'
-import GenderIcon from '@/components/GenderIcon'
+import GenderIcon from '@/features/contacts/components/GenderIcon'
 import { ProfileAvatar } from '@/types/avatar'
 import JsonViewer from '@/features/contacts/components/JsonViewer'
 import ContactAvatarViewer from '@/features/contacts/components/ContactAvatarViewer'

@@ -1,6 +1,6 @@
 import { View } from 'react-native'
 import Section from '@/components/ui/inputs/Section'
-import InputRowButton from '@/components/ui/inputs/InputRowButton'
+import InputRowButton from '@/features/settings/components/inputs/InputRowButton'
 import {
   faChevronRight,
   faCircleHalfStroke,

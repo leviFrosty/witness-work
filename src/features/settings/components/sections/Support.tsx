@@ -2,7 +2,7 @@ import { Alert, View } from 'react-native'
 import moment from 'moment'
 import Section from '@/components/ui/inputs/Section'
 import i18n from '@/lib/locales'
-import InputRowButton from '@/components/ui/inputs/InputRowButton'
+import InputRowButton from '@/features/settings/components/inputs/InputRowButton'
 import {
   faArrowUpRightFromSquare,
   faChevronRight,

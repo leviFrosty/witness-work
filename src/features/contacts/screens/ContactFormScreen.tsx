@@ -10,7 +10,7 @@ import {
 import { Popover } from 'tamagui'
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
 import { faMars, faQuestion, faVenus } from '@fortawesome/free-solid-svg-icons'
-import { GENDER_COLORS } from '@/components/GenderIcon'
+import { GENDER_COLORS } from '@/features/contacts/components/GenderIcon'
 import Text from '@/components/ui/MyText'
 import { NativeStackScreenProps } from '@react-navigation/native-stack'
 import useContacts from '@/stores/contactsStore'

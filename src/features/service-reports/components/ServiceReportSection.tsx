@@ -7,7 +7,7 @@ import moment from 'moment'
 import i18n from '@/lib/locales'
 import useDevice from '@/hooks/useDevice'
 import HourEntryCard from '@/features/service-reports/components/HourEntryCard'
-import PublisherCheckBoxCard from '@/components/PublisherCheckBoxCard'
+import PublisherCheckBoxCard from '@/features/service-reports/components/PublisherCheckBoxCard'
 import StudiesCard from '@/features/service-reports/components/StudiesCard'
 import ViewReportButton from '@/features/service-reports/components/ViewReportButton'
 

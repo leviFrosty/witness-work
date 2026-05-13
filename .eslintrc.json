@@ -11,11 +11,91 @@
     "ecmaVersion": "latest",
     "sourceType": "module"
   },
-  "plugins": ["@typescript-eslint", "react", "react-hooks", "react-compiler"],
+  "plugins": [
+    "@typescript-eslint",
+    "react",
+    "react-hooks",
+    "react-compiler",
+    "boundaries"
+  ],
+  "settings": {
+    "import/resolver": {
+      "typescript": {
+        "alwaysTryTypes": true
+      },
+      "node": {
+        "extensions": [".js", ".jsx", ".ts", ".tsx"]
+      }
+    },
+    "boundaries/include": ["src/**/*"],
+    "boundaries/elements": [
+      {
+        "mode": "full",
+        "type": "shared",
+        "pattern": [
+          "src/components/**/*",
+          "src/lib/**/*",
+          "src/hooks/**/*",
+          "src/stores/**/*",
+          "src/types/**/*",
+          "src/constants/**/*",
+          "src/providers/**/*",
+          "src/contexts/**/*",
+          "src/assets/**/*",
+          "src/locales/**/*",
+          "src/shaders/**/*",
+          "src/vendor/**/*",
+          "src/__tests__/**/*"
+        ]
+      },
+      {
+        "mode": "full",
+        "type": "feature",
+        "capture": ["featureName"],
+        "pattern": ["src/features/*/**/*"]
+      },
+      {
+        "mode": "full",
+        "type": "app",
+        "capture": ["_", "fileName"],
+        "pattern": ["src/app/**/*", "src/screens/**/*", "src/stacks/**/*"]
+      },
+      {
+        "mode": "full",
+        "type": "neverImport",
+        "pattern": ["src/*"]
+      }
+    ]
+  },
   "rules": {
     "react/react-in-jsx-scope": "off",
     "react-hooks/rules-of-hooks": "error",
     "react-hooks/exhaustive-deps": "error",
-    "react-compiler/react-compiler": "error"
+    "react-compiler/react-compiler": "error",
+    "boundaries/no-unknown": "error",
+    "boundaries/no-unknown-files": "error",
+    "boundaries/element-types": [
+      "error",
+      {
+        "default": "disallow",
+        "rules": [
+          {
+            "from": ["shared"],
+            "allow": ["shared"]
+          },
+          {
+            "from": ["feature"],
+            "allow": [
+              "shared",
+              ["feature", { "featureName": "${from.featureName}" }]
+            ]
+          },
+          {
+            "from": ["app", "neverImport"],
+            "allow": ["shared", "feature", "app", "neverImport"]
+          }
+        ]
+      }
+    ]
   }
 }

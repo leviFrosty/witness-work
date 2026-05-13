@@ -1,5 +1,5 @@
 import { Alert, View } from 'react-native'
-import Text from './MyText'
+import Text from '../components/MyText'
 import { Conversation } from '../types/conversation'
 import moment from 'moment'
 import useTheme from '../contexts/theme'
@@ -7,19 +7,19 @@ import useConversations from '../stores/conversationStore'
 import i18n from '../lib/locales'
 import { useNavigation } from '@react-navigation/native'
 import { Swipeable } from 'react-native-gesture-handler'
-import Badge from './Badge'
+import Badge from '../components/Badge'
 import Haptics from '../lib/haptics'
-import SwipeableDelete from './swipeableActions/Delete'
-import SwipeableEdit from './swipeableActions/Edit'
-import IconButton from './IconButton'
+import SwipeableDelete from '../components/swipeableActions/Delete'
+import SwipeableEdit from '../components/swipeableActions/Edit'
+import IconButton from '../components/IconButton'
 import {
   faBell,
   faBellSlash,
   faBook,
   faCaravan,
 } from '@fortawesome/free-solid-svg-icons'
-import Copyeable from './Copyeable'
-import Button from './Button'
+import Copyeable from '../components/Copyeable'
+import Button from '../components/Button'
 import { RootStackNavigation } from '../types/rootStack'
 
 const ConversationRow = ({

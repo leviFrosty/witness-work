@@ -12,10 +12,10 @@ import Animated, {
 } from 'react-native-reanimated'
 import { faGift } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
-import useTheme from '../contexts/theme'
-import { usePreferences } from '../stores/preferences'
-import { useMilestoneRevealStore } from '../stores/milestoneReveal'
-import Haptics from '../lib/haptics'
+import useTheme from '../../../contexts/theme'
+import { usePreferences } from '../../../stores/preferences'
+import { useMilestoneRevealStore } from '../../../stores/milestoneReveal'
+import Haptics from '../../../lib/haptics'
 
 /**
  * Top-right "shaking present" affordance — surfaces only after the user has

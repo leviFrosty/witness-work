@@ -5,8 +5,8 @@ import {
   overdueFollowUpConversations,
   upcomingFollowUpConversations,
 } from '../../../lib/conversations'
-import ApproachingConversations from '../../../components/ApproachingConversations'
-import MissedConversations from '../../../components/MissedConversations'
+import ApproachingConversations from '../../conversations/components/ApproachingConversations'
+import MissedConversations from '../../conversations/components/MissedConversations'
 import useContacts from '../../../stores/contactsStore'
 import { RefreshControl, View } from 'react-native'
 import { iCloudSync } from '../../../app/sync/iCloudSync'

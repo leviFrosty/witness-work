@@ -7,11 +7,11 @@ import {
   importContactFromUrl,
   processCompleteImport,
   validateContactImport,
-} from '../../../lib/contactImport'
+} from '../lib/contactImport'
 import {
   isContactShareLink,
   parseContactShareLink,
-} from '../../../lib/contactShareLink'
+} from '../lib/contactShareLink'
 import useContacts from '../../../stores/contactsStore'
 import useConversations from '../../../stores/conversationStore'
 import { navigationRef } from '../../../lib/linking'

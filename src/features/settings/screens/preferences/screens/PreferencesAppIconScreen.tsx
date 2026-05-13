@@ -21,7 +21,7 @@ import {
   isAppIconSupported,
   resolvePluginIcon,
 } from '../../../lib/appIcon'
-import type { Hemisphere } from '../../../../../lib/hemisphere'
+import type { Hemisphere } from '../../../lib/hemisphere'
 
 const TILES = [
   {

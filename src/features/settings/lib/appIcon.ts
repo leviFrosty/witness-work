@@ -25,7 +25,7 @@ import {
   seasonFor,
   type Hemisphere,
   type Season,
-} from '../../../lib/hemisphere'
+} from './hemisphere'
 import {
   usePreferences,
   type AppIconVariant,

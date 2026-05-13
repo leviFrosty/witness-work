@@ -50,7 +50,7 @@ import {
   resolvePluginIcon,
 } from '../features/settings/lib/appIcon'
 import useContacts from '../stores/contactsStore'
-import { migrateCustomFieldsToIds } from '../lib/customFieldsMigration'
+import { migrateCustomFieldsToIds } from '../features/contacts/lib/customFieldsMigration'
 import AnimationViewProvider from '../providers/AnimationViewProvider'
 import ConfettiProvider from '../providers/ConfettiProvider'
 import useUserLocalePrefs from '../features/settings/hooks/useLocale'
@@ -60,7 +60,7 @@ import { linking, navigationRef } from '../lib/linking'
 import DeepLinkListeners from './deep-links/DeepLinkListeners'
 import useIsSupporter from '../hooks/useIsSupporter'
 import useCustomer from '../hooks/useCustomer'
-import { useSupporter } from '../stores/supporter'
+import { useSupporter } from '../features/supporter/stores/supporter'
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({

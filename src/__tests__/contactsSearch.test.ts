@@ -6,7 +6,7 @@ import {
   matchSourceForKey,
   pickPreviewMatch,
   searchContactsFuzzy,
-} from '../lib/contactsSearch'
+} from '../features/contacts/lib/contactsSearch'
 import { Contact } from '../types/contact'
 import { Conversation } from '../types/conversation'
 

@@ -43,7 +43,7 @@ import {
   findNameMatch,
   MatchSource,
   pickPreviewMatch,
-} from '../../../lib/contactsSearch'
+} from '../lib/contactsSearch'
 import HighlightedText from './HighlightedText'
 import GenderIcon from '../../../components/GenderIcon'
 

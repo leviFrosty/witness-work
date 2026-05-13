@@ -3,13 +3,10 @@ import { FuseResultMatch } from 'fuse.js'
 import useContacts from '../../../stores/contactsStore'
 import useConversations from '../../../stores/conversationStore'
 import { usePreferences } from '../../../stores/preferences'
-import useContactsSearchStore from '../../../stores/contactsSearchStore'
+import useContactsSearchStore from '../stores/contactsSearchStore'
 import { applyFilters } from '../../../lib/contactsFilters'
 import { buildContactComparator } from '../../../lib/contactsSort'
-import {
-  buildContactsFuse,
-  searchContactsFuzzy,
-} from '../../../lib/contactsSearch'
+import { buildContactsFuse, searchContactsFuzzy } from '../lib/contactsSearch'
 import { filterActivesContacts } from '../../../lib/dismissedContacts'
 
 /**

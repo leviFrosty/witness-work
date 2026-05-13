@@ -1,13 +1,13 @@
 import { View } from 'react-native'
-import useTheme from '../contexts/theme'
-import useConversations from '../stores/conversationStore'
+import useTheme from '../../../contexts/theme'
+import useConversations from '../../../stores/conversationStore'
 import moment from 'moment'
 import { useMemo } from 'react'
-import Text from './MyText'
-import { getMostRecentConversationForContact } from '../lib/contacts'
-import i18n from '../lib/locales'
-import Button from './Button'
-import IconButton from './IconButton'
+import Text from '../../../components/MyText'
+import { getMostRecentConversationForContact } from '../../../lib/contacts'
+import i18n from '../../../lib/locales'
+import Button from '../../../components/Button'
+import IconButton from '../../../components/IconButton'
 import {
   faArrowUpFromBracket,
   faDiamondTurnRight,
@@ -15,17 +15,21 @@ import {
   faPhone,
 } from '@fortawesome/free-solid-svg-icons'
 import { useNavigation } from '@react-navigation/native'
-import { addressToString, coordinateAsString, navigateTo } from '../lib/address'
-import Copyeable from './Copyeable'
-import Avatar from './Avatar'
-import links from '../constants/links'
-import { MapShareSheet } from './ShareAddressSheet'
+import {
+  addressToString,
+  coordinateAsString,
+  navigateTo,
+} from '../../../lib/address'
+import Copyeable from '../../../components/Copyeable'
+import Avatar from '../../../components/Avatar'
+import links from '../../../constants/links'
+import { MapShareSheet } from '../../../components/ShareAddressSheet'
 import { parsePhoneNumber } from 'awesome-phonenumber'
 import { getLocales } from 'expo-localization'
-import { handleCall, handleMessage } from '../lib/phone'
-import { usePreferences } from '../stores/preferences'
-import { RootStackNavigation } from '../types/rootStack'
-import { ContactMarker } from '../types/map'
+import { handleCall, handleMessage } from '../../../lib/phone'
+import { usePreferences } from '../../../stores/preferences'
+import { RootStackNavigation } from '../../../types/rootStack'
+import { ContactMarker } from '../../../types/map'
 
 interface Props {
   contact: ContactMarker

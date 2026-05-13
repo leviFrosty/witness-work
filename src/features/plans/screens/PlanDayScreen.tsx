@@ -46,7 +46,7 @@ import { Notification } from '../../../types/conversation'
 
 import TextInput from '../../../components/TextInput'
 import { RootStackParamList } from '../../../types/rootStack'
-import DayHistoryView from '../../../components/DayHistoryView'
+import DayHistoryView from '../../service-reports/components/DayHistoryView'
 
 type NotifyMeOffset = {
   amount: number

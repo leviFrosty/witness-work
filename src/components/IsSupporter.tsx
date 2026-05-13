@@ -1,7 +1,7 @@
 import { ReactNode, useState } from 'react'
 import { Pressable, View } from 'react-native'
 import useTheme from '../contexts/theme'
-import Text from './MyText'
+import Text from '../components/MyText'
 import SupporterBadge from './SupporterBadge'
 import SupporterInfoSheet from './SupporterInfoSheet'
 import useFeatureAccess from '../hooks/useFeatureAccess'

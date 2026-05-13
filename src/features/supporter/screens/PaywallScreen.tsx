@@ -17,7 +17,7 @@ import Purchases, {
 import SupporterBadge from '../../../components/SupporterBadge'
 import GlassCard from '../../../components/GlassCard'
 import SegmentedControl from '../../../components/SegmentedControl'
-import PreviousDonations from '../../../components/PreviousDonations'
+import PreviousDonations from '../components/PreviousDonations'
 import Divider from '../../../components/Divider'
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
 import {

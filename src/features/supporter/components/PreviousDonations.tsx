@@ -4,15 +4,15 @@ import Purchases, {
   CustomerInfo,
   PurchasesStoreProduct,
 } from 'react-native-purchases'
-import Text from './MyText'
-import i18n from '../lib/locales'
-import XView from './layout/XView'
+import Text from '../../../components/MyText'
+import i18n from '../../../lib/locales'
+import XView from '../../../components/layout/XView'
 import moment from 'moment'
 import React, { useEffect, useMemo, useState } from 'react'
-import Card from './Card'
-import useTheme from '../contexts/theme'
-import Badge from './Badge'
-import IconButton from './IconButton'
+import Card from '../../../components/Card'
+import useTheme from '../../../contexts/theme'
+import Badge from '../../../components/Badge'
+import IconButton from '../../../components/IconButton'
 import { faRefresh } from '@fortawesome/free-solid-svg-icons'
 
 const MONTHLY_DONATOR_ENTITLEMENT = 'Monthly Donator'

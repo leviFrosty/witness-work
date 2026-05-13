@@ -21,7 +21,7 @@ import Animated, {
   withSpring,
 } from 'react-native-reanimated'
 import Carousel, { ICarouselInstance } from 'react-native-reanimated-carousel'
-import MapCarouselCard from '../../../components/MapCarouselCard'
+import MapCarouselCard from '../components/MapCarouselCard'
 import * as Location from 'expo-location'
 import * as Crypto from 'expo-crypto'
 import ShareAddressSheet, {
@@ -32,7 +32,7 @@ import Text from '../../../components/MyText'
 import Button from '../../../components/Button'
 import i18n from '../../../lib/locales'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import MapOnboarding from '../../../components/MapOnboarding'
+import MapOnboarding from '../components/MapOnboarding'
 import { TAB_BAR_HEIGHT } from '../../../components/TabBar'
 import useDevice from '../../../hooks/useDevice'
 import { RootStackNavigation } from '../../../types/rootStack'
@@ -47,7 +47,7 @@ import {
   faUpRightAndDownLeftFromCenter,
 } from '@fortawesome/free-solid-svg-icons'
 import { Popover } from 'tamagui'
-import MapKey from '../../../components/MapColorKey'
+import MapKey from '../components/MapColorKey'
 import { useMarkerColors } from '../../../hooks/useMarkerColors'
 import {
   getContactStaleness,

@@ -1,11 +1,11 @@
 import { useNavigation } from '@react-navigation/native'
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
 import { faFileLines } from '@fortawesome/free-solid-svg-icons'
-import Button from './Button'
-import Text from './MyText'
-import useTheme from '../contexts/theme'
-import i18n from '../lib/locales'
-import { RootStackNavigation } from '../types/rootStack'
+import Button from '../../../components/Button'
+import Text from '../../../components/MyText'
+import useTheme from '../../../contexts/theme'
+import i18n from '../../../lib/locales'
+import { RootStackNavigation } from '../../../types/rootStack'
 
 interface ViewReportButtonProps {
   month: number

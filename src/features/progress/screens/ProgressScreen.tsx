@@ -22,7 +22,7 @@ import SegmentedControl from '../../../components/SegmentedControl'
 import ProgressMonthTab from '../components/ProgressMonthTab'
 import ProgressYearTab from '../components/ProgressYearTab'
 import ProgressAllTimeTab from '../components/ProgressAllTimeTab'
-import ServiceYearCatchUpBanner from '../../../components/ServiceYearCatchUpBanner'
+import ServiceYearCatchUpBanner from '../../service-reports/components/ServiceYearCatchUpBanner'
 
 type Props = NativeStackScreenProps<HomeTabStackParamList, 'Progress'>
 

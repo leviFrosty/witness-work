@@ -9,8 +9,8 @@ import { getMonthsReports } from '../../../lib/serviceReport'
 import i18n from '../../../lib/locales'
 
 import Text from '../../../components/MyText'
-import MonthSummary from '../../../components/MonthSummary'
-import AllDaysList from '../../../components/AllDaysList'
+import MonthSummary from '../../service-reports/components/MonthSummary'
+import AllDaysList from '../../service-reports/components/AllDaysList'
 import SwipeMonthNavigator from '../../../components/SwipeMonthNavigator'
 
 interface ProgressMonthTabProps {

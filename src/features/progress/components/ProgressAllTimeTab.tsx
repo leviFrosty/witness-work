@@ -10,7 +10,7 @@ import i18n from '../../../lib/locales'
 
 import Empty from '../../../components/Empty'
 import LifetimeHoursCard from '../../../components/LifetimeHoursCard'
-import YearByYearList from '../../../components/YearByYearList'
+import YearByYearList from './YearByYearList'
 
 /**
  * Progress screen's "All-time" tab. Aggregates every service report the user

@@ -1,6 +1,6 @@
 import { View } from 'react-native'
-import Text from './MyText'
-import i18n from '../lib/locales'
+import Text from '../../../components/MyText'
+import i18n from '../../../lib/locales'
 import MonthServiceReportProgressBar from './MonthServiceReportProgressBar'
 import { faPlus } from '@fortawesome/free-solid-svg-icons'
 import ViewReportButton from './ViewReportButton'
@@ -12,19 +12,19 @@ import {
   ldcMinutesForSpecificMonth,
   otherMinutesForSpecificMonth,
   standardMinutesForSpecificMonth,
-} from '../lib/serviceReport'
-import useServiceReport from '../stores/serviceReport'
+} from '../../../lib/serviceReport'
+import useServiceReport from '../../../stores/serviceReport'
 import { useCallback, useEffect, useMemo, useRef } from 'react'
-import useTheme from '../contexts/theme'
-import { ServiceReport } from '../types/serviceReport'
-import { CategorySegment } from './CategorySegmentBar'
-import CategoriesSection from './CategoriesSection'
-import { usePreferences } from '../stores/preferences'
-import Card from './Card'
-import ActionButton from './ActionButton'
-import Button from './Button'
-import Chip from './Chip'
-import CreditInfoSheet from './CreditInfoSheet'
+import useTheme from '../../../contexts/theme'
+import { ServiceReport } from '../../../types/serviceReport'
+import { CategorySegment } from '../../../components/CategorySegmentBar'
+import CategoriesSection from '../../../components/CategoriesSection'
+import { usePreferences } from '../../../stores/preferences'
+import Card from '../../../components/Card'
+import ActionButton from '../../../components/ActionButton'
+import Button from '../../../components/Button'
+import Chip from '../../../components/Chip'
+import CreditInfoSheet from '../../../components/CreditInfoSheet'
 import {
   useFocusEffect,
   useIsFocused,
@@ -32,14 +32,14 @@ import {
 } from '@react-navigation/native'
 import _ from 'lodash'
 import moment from 'moment'
-import GoalProgressStats from './GoalProgressStats'
-import { RootStackNavigation } from '../types/rootStack'
+import GoalProgressStats from '../../../components/GoalProgressStats'
+import { RootStackNavigation } from '../../../types/rootStack'
 import {
   isPersonalBest12mo,
   monthCelebrationKey,
   resolveTier,
-} from '../lib/achievementTier'
-import { useRollover } from '../hooks/useRollover'
+} from '../../../lib/achievementTier'
+import { useRollover } from '../../../hooks/useRollover'
 import { faRightLeft } from '@fortawesome/free-solid-svg-icons'
 import {
   useAnimatedStyle,
@@ -47,14 +47,14 @@ import {
   withSequence,
   withTiming,
 } from 'react-native-reanimated'
-import Haptics from '../lib/haptics'
-import useCelebrationQueue from '../stores/celebrationQueue'
+import Haptics from '../../../lib/haptics'
+import useCelebrationQueue from '../../../stores/celebrationQueue'
 import {
   CONFETTI_DELAY_MS,
   CONFETTI_DURATION,
-} from '../providers/AnimationViewProvider'
-import useFireworks from '../hooks/useFireworks'
-import { FIREWORKS_AFTER_LOTTIE_BUFFER_MS } from '../providers/ConfettiProvider'
+} from '../../../providers/AnimationViewProvider'
+import useFireworks from '../../../hooks/useFireworks'
+import { FIREWORKS_AFTER_LOTTIE_BUFFER_MS } from '../../../providers/ConfettiProvider'
 
 interface MonthSummaryProps {
   monthsReports: ServiceReport[] | null

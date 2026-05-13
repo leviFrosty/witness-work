@@ -1,24 +1,24 @@
 import moment from 'moment'
 import { useMemo } from 'react'
-import useTheme from '../contexts/theme'
-import XView from './layout/XView'
-import Text from './MyText'
+import useTheme from '../../../contexts/theme'
+import XView from '../../../components/layout/XView'
+import Text from '../../../components/MyText'
 import {
   AdjustedMinutes,
   adjustedMinutesForSpecificMonth,
-} from '../lib/serviceReport'
-import { ServiceReport } from '../types/serviceReport'
-import { usePreferences } from '../stores/preferences'
-import useServiceReport from '../stores/serviceReport'
+} from '../../../lib/serviceReport'
+import { ServiceReport } from '../../../types/serviceReport'
+import { usePreferences } from '../../../stores/preferences'
+import useServiceReport from '../../../stores/serviceReport'
 import _ from 'lodash'
-import i18n from '../lib/locales'
+import i18n from '../../../lib/locales'
 import { View } from 'react-native'
-import { useFormattedMinutes } from '../lib/minutes'
+import { useFormattedMinutes } from '../../../lib/minutes'
 import {
   AchievementTier,
   isPersonalBest12mo,
   resolveTier,
-} from '../lib/achievementTier'
+} from '../../../lib/achievementTier'
 import {
   faCheck,
   faCrown,
@@ -27,7 +27,7 @@ import {
   IconDefinition,
 } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
-import { Theme } from '../types/theme'
+import { Theme } from '../../../types/theme'
 
 const tierIcon = (tier: AchievementTier): IconDefinition => {
   switch (tier) {

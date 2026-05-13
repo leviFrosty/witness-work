@@ -9,12 +9,12 @@ import {
 } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
 import moment from 'moment'
-import useTheme from '../../contexts/theme'
-import i18n from '../../lib/locales'
-import Text from '../MyText'
-import IconButton from '../IconButton'
-import Button from '../Button'
-import { SyncPayload } from '../../lib/sync/payload'
+import useTheme from '../../../contexts/theme'
+import i18n from '../../../lib/locales'
+import Text from '../../../components/MyText'
+import IconButton from '../../../components/IconButton'
+import Button from '../../../components/Button'
+import { SyncPayload } from '../payload'
 
 export type FirstEnableChoice = 'keepLocal' | 'useRemote' | 'merge'
 

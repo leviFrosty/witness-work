@@ -31,6 +31,23 @@
     "boundaries/elements": [
       {
         "mode": "full",
+        "type": "app",
+        "capture": ["_", "fileName"],
+        "pattern": [
+          "src/app/**/*",
+          "src/screens/**/*",
+          "src/stacks/**/*",
+          "src/components/onboarding/**/*"
+        ]
+      },
+      {
+        "mode": "full",
+        "type": "feature",
+        "capture": ["featureName"],
+        "pattern": ["src/features/*/**/*"]
+      },
+      {
+        "mode": "full",
         "type": "shared",
         "pattern": [
           "src/components/**/*",
@@ -47,18 +64,6 @@
           "src/vendor/**/*",
           "src/__tests__/**/*"
         ]
-      },
-      {
-        "mode": "full",
-        "type": "feature",
-        "capture": ["featureName"],
-        "pattern": ["src/features/*/**/*"]
-      },
-      {
-        "mode": "full",
-        "type": "app",
-        "capture": ["_", "fileName"],
-        "pattern": ["src/app/**/*", "src/screens/**/*", "src/stacks/**/*"]
       },
       {
         "mode": "full",

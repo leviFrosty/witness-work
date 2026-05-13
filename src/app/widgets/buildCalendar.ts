@@ -1,15 +1,15 @@
 import moment from 'moment'
 import { DayPlan, ServiceReportsByYears } from '../../types/serviceReport'
 import { Publisher } from '../../types/publisher'
-import { getEntryMode } from '../publisherCapabilities'
+import { getEntryMode } from '../../lib/publisherCapabilities'
 import {
   RecurringPlan,
   getEffectiveMinutesForRecurringPlan,
   getEffectiveNoteForRecurringPlan,
   getPlansIntersectingDay,
   getMonthsReports,
-} from '../serviceReport'
-import { formatMinutesCompact } from '../minutes'
+} from '../../lib/serviceReport'
+import { formatMinutesCompact } from '../../lib/minutes'
 
 /** Pre-computed calendar cell mirroring `CalendarDay.tsx`'s render inputs. */
 export type WidgetCalendarDay = {

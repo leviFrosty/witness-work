@@ -1,5 +1,5 @@
-import ContactImportListener from './ContactImportListener'
-import SharedGoodNewsListener from './SharedGoodNewsListener'
+import ContactImportListener from '../../components/ContactImportListener'
+import SharedGoodNewsListener from '../../components/SharedGoodNewsListener'
 
 /**
  * Aggregates all components that subscribe to incoming URLs / file intents

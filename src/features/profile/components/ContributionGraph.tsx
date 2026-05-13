@@ -3,7 +3,10 @@ import { LayoutChangeEvent, View } from 'react-native'
 import moment from 'moment'
 import useTheme from '@/contexts/theme'
 import Text from '@/components/MyText'
-import { ContributionCell, contributionGrid } from '@/lib/profileStats'
+import {
+  ContributionCell,
+  contributionGrid,
+} from '@/features/profile/lib/profileStats'
 import i18n from '@/lib/locales'
 
 interface Props {

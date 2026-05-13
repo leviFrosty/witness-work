@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import useDailyMinutes from '@/hooks/useDailyMinutes'
+import useDailyMinutes from '@/features/profile/hooks/useDailyMinutes'
 import {
   Modal,
   Pressable,
@@ -43,7 +43,7 @@ import {
   daysLogged,
   minutesInTrailingDays,
   totalMinutes,
-} from '@/lib/profileStats'
+} from '@/features/profile/lib/profileStats'
 
 export type OriginRect = { x: number; y: number; width: number; height: number }
 

@@ -63,7 +63,7 @@ import { usePreferences } from '../../../stores/preferences'
 import { handleCall, handleMessage } from '../../../lib/phone'
 import { openURL } from '../../../lib/links'
 import MapView, { Marker } from 'react-native-maps'
-import useLocation from '../../../hooks/useLocation'
+import useLocation from '../hooks/useLocation'
 import * as FileSystem from 'expo-file-system/legacy'
 import { useToastController } from '@tamagui/toast'
 import XView from '../../../components/layout/XView'
@@ -88,7 +88,7 @@ import GenderIcon from '../../../components/GenderIcon'
 import { ProfileAvatar } from '../../../types/avatar'
 import JsonViewer from '../../../components/JsonViewer'
 import ContactAvatarViewer from '../components/ContactAvatarViewer'
-import useContactHeroBackground from '../../../hooks/useContactHeroBackground'
+import useContactHeroBackground from '../hooks/useContactHeroBackground'
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Contact Details'>
 

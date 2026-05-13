@@ -40,7 +40,7 @@ import {
   DEFAULT_RETURN_VISIT_TIME_OFFSET,
   usePreferences,
 } from '../../../stores/preferences'
-import { maybeRequestStoreReview } from '../../../lib/storeReview'
+import { maybeRequestStoreReview } from '../lib/storeReview'
 import useNotifications from '../../../hooks/notifications'
 import { useToastController } from '@tamagui/toast'
 import { RootStackParamList } from '../../../types/rootStack'

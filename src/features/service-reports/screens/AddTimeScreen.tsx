@@ -43,7 +43,7 @@ import {
 } from '../../../types/rootStack'
 import Haptics from '../../../lib/haptics'
 import { CONFETTI_DELAY_MS } from '../../../providers/AnimationViewProvider'
-import useCelebrationQueue from '../../../stores/celebrationQueue'
+import useCelebrationQueue from '../stores/celebrationQueue'
 
 type AddTimeScreenProps = NativeStackScreenProps<RootStackParamList, 'Add Time'>
 

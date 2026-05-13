@@ -26,7 +26,7 @@ import ContactRow from '../components/ContactRow'
 import ContactsStatsHeader from '../components/ContactsStatsHeader'
 import { TAB_BAR_HEIGHT } from '../../../components/TabBar'
 import { RootStackNavigation } from '../../../types/rootStack'
-import { useContactsSorted } from '../../../hooks/useContactsSorted'
+import { useContactsSorted } from '../hooks/useContactsSorted'
 import { Contact } from '../../../types/contact'
 
 /**

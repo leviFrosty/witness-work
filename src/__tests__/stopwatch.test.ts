@@ -18,7 +18,10 @@ vi.mock('../../modules/stopwatch-bridge', () => ({
   onStateChange: () => ({ remove: () => {} }),
 }))
 
-import { computeElapsedMs, formatMs } from '../hooks/useStopWatch'
+import {
+  computeElapsedMs,
+  formatMs,
+} from '../features/service-reports/hooks/useStopWatch'
 
 describe('formatMs', () => {
   it('pads hours/minutes/seconds', () => {

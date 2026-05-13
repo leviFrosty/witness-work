@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import {
   findContactIndexById,
   reconcileActiveContact,
-} from '../lib/mapCarousel'
+} from '../features/map/lib/mapCarousel'
 import { ContactMarker } from '../types/map'
 
 const marker = (id: string): ContactMarker =>

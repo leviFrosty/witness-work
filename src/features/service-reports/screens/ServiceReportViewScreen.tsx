@@ -25,7 +25,7 @@ import Text from '../../../components/MyText'
 import useTheme from '../../../contexts/theme'
 import i18n, { _i18n } from '../../../lib/locales'
 import Haptics from '../../../lib/haptics'
-import useMonthReportData from '../../../hooks/useMonthReportData'
+import useMonthReportData from '../hooks/useMonthReportData'
 import usePublisher from '../../../hooks/usePublisher'
 import { RootStackParamList } from '../../../types/rootStack'
 

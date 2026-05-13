@@ -20,7 +20,7 @@ import {
   determineHemisphere,
   isAppIconSupported,
   resolvePluginIcon,
-} from '../../../../../lib/appIcon'
+} from '../../../lib/appIcon'
 import type { Hemisphere } from '../../../../../lib/hemisphere'
 
 const TILES = [

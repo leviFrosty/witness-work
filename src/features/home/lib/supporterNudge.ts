@@ -1,5 +1,5 @@
 import moment from 'moment'
-import { ServiceReportsByYears } from '../types/serviceReport'
+import { ServiceReportsByYears } from '../../../types/serviceReport'
 
 /**
  * Tenure, engagement, and cooldown thresholds for the Home supporter-nudge

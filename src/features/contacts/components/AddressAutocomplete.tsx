@@ -20,7 +20,7 @@ import useTheme from '../../../contexts/theme'
 import { Address } from '../../../types/contact'
 import i18n from '../../../lib/locales'
 import TextInputRow from '../../../components/inputs/TextInputRow'
-import useLocation from '../../../hooks/useLocation'
+import useLocation from '../hooks/useLocation'
 
 const SUGGESTION_ROW_HEIGHT = 44
 const MAX_VISIBLE_SUGGESTIONS = 3

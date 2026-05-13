@@ -24,12 +24,7 @@ import i18n, { TranslationKey } from '../../../lib/locales'
 import links from '../../../constants/links'
 import { email } from '../../../constants/contactInformation'
 import { openURL } from '../../../lib/links'
-import {
-  FAQS,
-  FAQ_CATEGORIES,
-  FAQEntry,
-  FAQCategory,
-} from '../../../constants/faqs'
+import { FAQS, FAQ_CATEGORIES, FAQEntry, FAQCategory } from '../constants/faqs'
 
 const normalize = (s: string) => s.toLowerCase().trim()
 

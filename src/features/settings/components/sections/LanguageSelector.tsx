@@ -7,7 +7,7 @@ import i18n, {
 } from '../../../../lib/locales'
 import Select from '../../../../components/Select'
 import { usePreferences } from '../../../../stores/preferences'
-import useUserLocalePrefs from '../../../../hooks/useLocale'
+import useUserLocalePrefs from '../../hooks/useLocale'
 import Text from '../../../../components/MyText'
 import { getLocales } from 'expo-localization'
 import useTheme from '../../../../contexts/theme'

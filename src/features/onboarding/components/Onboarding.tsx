@@ -20,15 +20,15 @@ import FounderNote from './steps/FounderNote'
 import IntentPicker from './steps/IntentPicker'
 import YourPlanPreview from './steps/YourPlanPreview'
 import ServiceYearCatchUp from './steps/ServiceYearCatchUp'
-import { hasReportsInCatchUpWindow } from '../ServiceYearCatchUpForm'
-import { usePreferences } from '../../stores/preferences'
-import useServiceReport from '../../stores/serviceReport'
-import { ServiceReportsByYears } from '../../types/serviceReport'
+import { hasReportsInCatchUpWindow } from '../../../components/ServiceYearCatchUpForm'
+import { usePreferences } from '../../../stores/preferences'
+import useServiceReport from '../../../stores/serviceReport'
+import { ServiceReportsByYears } from '../../../types/serviceReport'
 import {
   effectiveHasAnnualGoal,
   tracksPioneerStartDate,
-} from '../../lib/publisherCapabilities'
-import { Publisher } from '../../types/publisher'
+} from '../../../lib/publisherCapabilities'
+import { Publisher } from '../../../types/publisher'
 import moment from 'moment'
 import {
   OnboardingProgress,

@@ -14,12 +14,12 @@ import Animated, {
 // to 0 on a full app reload is the correct fresh-start behavior.
 let lastSeenProgress = 0
 import { styles } from './Onboarding.styles'
-import Text from '../MyText'
-import i18n from '../../lib/locales'
-import IconButton from '../IconButton'
+import Text from '../../../components/MyText'
+import i18n from '../../../lib/locales'
+import IconButton from '../../../components/IconButton'
 import { faChevronLeft } from '@fortawesome/free-solid-svg-icons'
-import Button from '../Button'
-import useTheme from '../../contexts/theme'
+import Button from '../../../components/Button'
+import useTheme from '../../../contexts/theme'
 import { useOnboardingProgress } from './OnboardingProgressContext'
 
 interface Props {

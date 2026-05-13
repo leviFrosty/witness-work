@@ -1,8 +1,8 @@
 import { View } from 'react-native'
 
 import OnboardingNav from '../OnboardingNav'
-import Wrapper from '../../layout/Wrapper'
-import ServiceYearCatchUpForm from '../../ServiceYearCatchUpForm'
+import Wrapper from '../../../../components/layout/Wrapper'
+import ServiceYearCatchUpForm from '../../../../components/ServiceYearCatchUpForm'
 
 interface Props {
   goBack: () => void

@@ -152,7 +152,6 @@ const getEffect = (): SkRuntimeEffect | null => {
   if (cachedEffect === undefined) {
     cachedEffect = Skia.RuntimeEffect.Make(sksl)
     if (!cachedEffect) {
-      // eslint-disable-next-line no-console
       console.warn('HolographicShader: SkSL failed to compile')
     }
   }

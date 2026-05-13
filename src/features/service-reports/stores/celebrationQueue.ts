@@ -49,7 +49,6 @@ const useCelebrationQueue = create<CelebrationQueueState>((set, get) => ({
     const t = get().pending[key]
     if (t === undefined) return null
     set(({ pending }) => {
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { [key]: _removed, ...rest } = pending
       return { pending: rest }
     })

@@ -36,7 +36,6 @@ if (!result.success) {
       `[env] Missing/invalid runtime env vars:\n${result.error.toString()}`
     )
   } else {
-    // eslint-disable-next-line no-console
     console.error(
       '[env] Missing/invalid runtime env vars',
       result.error.format()

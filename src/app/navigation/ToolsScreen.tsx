@@ -979,7 +979,6 @@ export default function ToolsScreen() {
                 </ActionButton>
                 <ActionButton
                   onPress={() => {
-                    // eslint-disable-next-line @typescript-eslint/no-unused-vars
                     const { [thisKey]: _removed, ...rest } = celebratedTiers
                     setPreferences({ celebratedTiers: rest })
                     showDone(`Cleared ${thisKey} from celebratedTiers`)

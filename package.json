@@ -172,23 +172,5 @@
       "**/__tests__/**/*.test.ts?(x)"
     ]
   },
-  "pnpm": {
-    "overrides": {
-      "axios": ">=1.15.2",
-      "glob": ">=11.1.0",
-      "@xmldom/xmldom": "0.8.13",
-      "@tootallnate/once": ">=3.0.1",
-      "react-native-safe-area-context": "5.6.2",
-      "postcss": ">=8.5.10",
-      "fast-xml-parser": ">=5.7.0",
-      "protobufjs": ">=7.5.5",
-      "follow-redirects": ">=1.16.0"
-    },
-    "onlyBuiltDependencies": [
-      "@shopify/react-native-skia"
-    ],
-    "patchedDependencies": {
-      "expo-alternate-app-icons": "patches/expo-alternate-app-icons.patch"
-    }
-  }
+  "packageManager": "pnpm@11.1.1+sha512.d1fdf5f73c617b64fa1a56a81c3c8dfe0e966e33a6010aa256b517ae77be21d93e05affc0de1a83b0e4f29d569f68b446ae8f068cd7247c0bb3df0fb4d7bdf9a"
 }

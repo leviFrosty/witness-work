@@ -1,8 +1,26 @@
 packages:
   - '.'
+nodeLinker: hoisted
+minimumReleaseAge: 10080
+allowBuilds:
+  '@sentry/cli': true
+  '@shopify/react-native-skia': true
+  esbuild: true
+  protobufjs: false
 onlyBuiltDependencies:
   - '@sentry/cli'
   - esbuild
   - protobufjs
+  - '@shopify/react-native-skia'
 overrides:
   react-native-safe-area-context: $react-native-safe-area-context
+  axios: '>=1.15.2'
+  glob: '>=11.1.0'
+  '@xmldom/xmldom': 0.8.13
+  '@tootallnate/once': '>=3.0.1'
+  postcss: '>=8.5.10'
+  fast-xml-parser: '>=5.7.0'
+  protobufjs: '>=7.5.5'
+  follow-redirects: '>=1.16.0'
+patchedDependencies:
+  expo-alternate-app-icons: patches/expo-alternate-app-icons.patch

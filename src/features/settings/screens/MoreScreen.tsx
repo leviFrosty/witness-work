@@ -18,7 +18,7 @@ import {
   RootStackNavigation,
   RootStackParamList,
 } from '../../../types/rootStack'
-import { fetchUpdate } from '../../../lib/updates'
+import { fetchUpdate } from '../../updates/lib/updates'
 import { usePreferences } from '../../../stores/preferences'
 import {
   importContactFromFile,

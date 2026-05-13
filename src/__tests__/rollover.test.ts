@@ -5,7 +5,7 @@ import {
   applyRollover,
   buildRolloverEntries,
   computePendingRollovers,
-} from '../lib/rollover'
+} from '../features/service-reports/lib/rollover'
 import { normalizeDateForStorage } from '../lib/normalizeDate'
 
 vi.mock('../lib/logger', () => import('./mocks/logger'))

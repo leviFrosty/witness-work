@@ -37,10 +37,10 @@
           "src/app/**/*",
           "src/screens/**/*",
           "src/stacks/**/*",
-          "src/components/onboarding/**/*",
           "src/features/home/**/*",
           "src/features/settings/**/*",
-          "src/features/updates/**/*"
+          "src/features/updates/**/*",
+          "src/features/onboarding/**/*"
         ]
       },
       {

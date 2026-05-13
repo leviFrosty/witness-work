@@ -14,7 +14,7 @@ import {
 } from '@/features/contacts/lib/contactShareLink'
 import useContacts from '@/stores/contactsStore'
 import useConversations from '@/stores/conversationStore'
-import { navigationRef } from '@/lib/linking'
+import { navigationRef } from '@/features/contacts/lib/linking'
 import i18n from '@/lib/locales'
 import { logger } from '@/lib/logger'
 

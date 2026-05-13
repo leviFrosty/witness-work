@@ -7,7 +7,10 @@ import useAnimation from '@/hooks/useAnimation'
 import Haptics from '@/lib/haptics'
 import { CONFETTI_DELAY_MS } from '@/providers/AnimationViewProvider'
 import { getMonthsReports } from '@/lib/serviceReport'
-import { isSharedGoodNewsUrl, navigationRef } from '@/lib/linking'
+import {
+  isSharedGoodNewsUrl,
+  navigationRef,
+} from '@/features/contacts/lib/linking'
 import { isContactShareLink } from '@/features/contacts/lib/contactShareLink'
 import { ServiceReport } from '@/types/serviceReport'
 

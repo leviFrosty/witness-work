@@ -1,9 +1,9 @@
 import { Sheet } from 'tamagui'
-import Text from './MyText'
+import Text from '../components/MyText'
 import i18n from '../lib/locales'
-import Button from './Button'
+import Button from '../components/Button'
 import { Share, View } from 'react-native'
-import IconButton from './IconButton'
+import IconButton from '../components/IconButton'
 import { faApple, faGoogle } from '@fortawesome/free-brands-svg-icons'
 import useTheme from '../contexts/theme'
 

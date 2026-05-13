@@ -8,21 +8,23 @@ import {
 } from 'react-native'
 import { faTimes } from '@fortawesome/free-solid-svg-icons'
 
-import useTheme from '../../contexts/theme'
-import i18n from '../../lib/locales'
+import useTheme from '../../../contexts/theme'
+import i18n from '../../../lib/locales'
 import {
   ActiveFilter,
   AddressKind,
   ComparableOperator,
   IdentityKind,
   TextOperator,
-} from '../../lib/contactsFilters'
-import { ContactStaleness } from '../../lib/contactStaleness'
-import { CustomFieldDefinition } from '../../types/customField'
-import Button from '../Button'
-import IconButton from '../IconButton'
-import Text from '../MyText'
-import SegmentedControl, { SegmentedOption } from '../SegmentedControl'
+} from '../../../lib/contactsFilters'
+import { ContactStaleness } from '../../../lib/contactStaleness'
+import { CustomFieldDefinition } from '../../../types/customField'
+import Button from '../../../components/Button'
+import IconButton from '../../../components/IconButton'
+import Text from '../../../components/MyText'
+import SegmentedControl, {
+  SegmentedOption,
+} from '../../../components/SegmentedControl'
 
 export type ContactsFilterSheetProps = {
   open: boolean

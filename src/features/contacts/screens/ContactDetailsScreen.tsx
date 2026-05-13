@@ -7,33 +7,33 @@ import {
   Pressable,
 } from 'react-native'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import Text from '../components/MyText'
-import useTheme from '../contexts/theme'
+import Text from '../../../components/MyText'
+import useTheme from '../../../contexts/theme'
 import {
   NativeStackNavigationProp,
   NativeStackScreenProps,
 } from '@react-navigation/native-stack'
-import useContacts from '../stores/contactsStore'
-import Header from '../components/layout/Header'
-import CardWithTitle from '../components/CardWithTitle'
-import { Address, Contact } from '../types/contact'
+import useContacts from '../../../stores/contactsStore'
+import Header from '../../../components/layout/Header'
+import CardWithTitle from '../../../components/CardWithTitle'
+import { Address, Contact } from '../../../types/contact'
 import { FlashList } from '@shopify/flash-list'
-import ConversationRow from '../components/ConversationRow'
-import useConversations from '../stores/conversationStore'
+import ConversationRow from '../../../components/ConversationRow'
+import useConversations from '../../../stores/conversationStore'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import Divider from '../components/Divider'
+import Divider from '../../../components/Divider'
 import moment from 'moment'
-import i18n from '../lib/locales'
+import i18n from '../../../lib/locales'
 import {
   contactHasAtLeastOneStudy,
   contactMostRecentStudy,
   contactStudiedForGivenMonth,
-} from '../lib/conversations'
-import { Conversation } from '../types/conversation'
-import Wrapper from '../components/layout/Wrapper'
+} from '../../../lib/conversations'
+import { Conversation } from '../../../types/conversation'
+import Wrapper from '../../../components/layout/Wrapper'
 import { StatusBar } from 'expo-status-bar'
-import IconButton from '../components/IconButton'
-import { logger } from '../lib/logger'
+import IconButton from '../../../components/IconButton'
+import { logger } from '../../../lib/logger'
 import {
   faArrowUpFromBracket,
   faBook,
@@ -47,42 +47,48 @@ import {
   faStar,
 } from '@fortawesome/free-solid-svg-icons'
 import { faStar as faStarOutline } from '@fortawesome/free-regular-svg-icons'
-import Copyeable from '../components/Copyeable'
-import Button from '../components/Button'
+import Copyeable from '../../../components/Copyeable'
+import Button from '../../../components/Button'
 import { Sheet } from 'tamagui'
 import {
   addressToString,
   coordinateAsString,
   fetchCoordinateFromAddress,
   navigateTo,
-} from '../lib/address'
+} from '../../../lib/address'
 import { parsePhoneNumber } from 'awesome-phonenumber'
 import { getLocales } from 'expo-localization'
 import { useNavigation } from '@react-navigation/native'
-import { usePreferences } from '../stores/preferences'
-import { handleCall, handleMessage } from '../lib/phone'
-import { openURL } from '../lib/links'
+import { usePreferences } from '../../../stores/preferences'
+import { handleCall, handleMessage } from '../../../lib/phone'
+import { openURL } from '../../../lib/links'
 import MapView, { Marker } from 'react-native-maps'
-import useLocation from '../hooks/useLocation'
+import useLocation from '../../../hooks/useLocation'
 import * as FileSystem from 'expo-file-system/legacy'
 import { useToastController } from '@tamagui/toast'
-import XView from '../components/layout/XView'
-import { RootStackNavigation, RootStackParamList } from '../types/rootStack'
-import { useMarkerColors } from '../hooks/useMarkerColors'
-import { getContactStaleness, stalenessToColor } from '../lib/contactStaleness'
+import XView from '../../../components/layout/XView'
+import {
+  RootStackNavigation,
+  RootStackParamList,
+} from '../../../types/rootStack'
+import { useMarkerColors } from '../../../hooks/useMarkerColors'
+import {
+  getContactStaleness,
+  stalenessToColor,
+} from '../../../lib/contactStaleness'
 import DismissContactSheet from '../components/DismissContactSheet'
 import {
   buildContactShareLink,
   ContactShareLinkTooLargeError,
-} from '../lib/contactShareLink'
+} from '../../../lib/contactShareLink'
 import { MenuView, MenuAction } from '@react-native-menu/menu'
-import { isContactDismissed } from '../lib/dismissedContacts'
-import Avatar, { isRenderableImageValue } from '../components/Avatar'
-import GenderIcon from '../components/GenderIcon'
-import { ProfileAvatar } from '../types/avatar'
-import JsonViewer from '../components/JsonViewer'
+import { isContactDismissed } from '../../../lib/dismissedContacts'
+import Avatar, { isRenderableImageValue } from '../../../components/Avatar'
+import GenderIcon from '../../../components/GenderIcon'
+import { ProfileAvatar } from '../../../types/avatar'
+import JsonViewer from '../../../components/JsonViewer'
 import ContactAvatarViewer from '../components/ContactAvatarViewer'
-import useContactHeroBackground from '../hooks/useContactHeroBackground'
+import useContactHeroBackground from '../../../hooks/useContactHeroBackground'
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Contact Details'>
 

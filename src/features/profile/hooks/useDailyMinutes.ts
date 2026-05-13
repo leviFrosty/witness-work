@@ -1,5 +1,5 @@
 import { useEffect, useMemo } from 'react'
-import { flattenDailyMinutes } from '@/lib/profileStats'
+import { flattenDailyMinutes } from '@/features/profile/lib/profileStats'
 import useServiceReport from '@/stores/serviceReport'
 import {
   generateDailyMinutesFingerprint,

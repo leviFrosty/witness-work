@@ -16,10 +16,10 @@ import useIsSupporter from '@/hooks/useIsSupporter'
 import Card from '@/components/Card'
 import Text from '@/components/MyText'
 import Avatar from '@/components/Avatar'
-import TiltableCard from '@/components/TiltableCard'
+import TiltableCard from '@/features/profile/components/TiltableCard'
 import ProfileDetailOverlay, {
   OriginRect,
-} from '@/components/ProfileDetailOverlay'
+} from '@/features/profile/components/ProfileDetailOverlay'
 import AvatarPickerPopover from '@/components/AvatarPickerPopover'
 import i18n from '@/lib/locales'
 import { ShaderOverlay } from '@/shaders'

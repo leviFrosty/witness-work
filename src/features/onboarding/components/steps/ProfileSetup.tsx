@@ -7,7 +7,7 @@ import i18n from '@/lib/locales'
 import Wrapper from '@/components/layout/Wrapper'
 import ActionButton from '@/components/ActionButton'
 import useTheme from '@/contexts/theme'
-import ProfileCard from '@/components/ProfileCard'
+import ProfileCard from '@/features/profile/components/ProfileCard'
 import { usePreferences } from '@/stores/preferences'
 
 interface Props {

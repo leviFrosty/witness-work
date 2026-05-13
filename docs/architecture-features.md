@@ -16,15 +16,16 @@ src/
   features/            ← feature tier (one folder per domain)
     contacts/        screens/ components/ hooks/ lib/ stores/
     conversations/   screens/ components/ lib/
-    home/            screens/ components/ lib/         (treated as app — page-level orchestrator)
+    home/            screens/                           (treated as app — pure orchestrator, no own UI/lib)
     map/             screens/ components/ lib/ types/
     milestones/      screens/ components/ stores/
     onboarding/      components/                        (treated as app — uses app/sync infra)
     plans/           screens/ components/               (treated as app — composes plans + service-reports)
+    profile/         components/ hooks/ lib/            (profile card, contribution graph, profile stats)
     progress/        screens/ components/               (treated as app — composes reports + milestones)
     service-reports/ screens/ components/ hooks/ lib/ stores/
     settings/        screens/ components/ hooks/ lib/   (treated as app — composes every other feature)
-    supporter/       screens/ components/ stores/
+    supporter/       screens/ components/ lib/ stores/
     updates/         screens/ components/ lib/ constants/  (treated as app — links into settings, etc.)
 
     Each feature contains:
@@ -67,32 +68,46 @@ Cool-ice's strict rule is `app ← shared + feature only`. The transitional `app
 
 In cool-ice, these would be top-level pages in `src/app/`. We keep them under `src/features/` for navigation hygiene but mark them as `app` in boundaries so they can pull from any feature plus app-tier infrastructure.
 
+### Home is a pure orchestrator — do not put UI/lib in `features/home/`
+
+The home tab is the strongest expression of "page-level orchestrator." Its job is to import and arrange UI authored by other features: timer (`service-reports`), approaching/missed conversations (`conversations`), the profile card and activity heatmap (`profile`), the monthly progress summary (`service-reports`), the supporter nudge (`supporter`), the backup reminder (`settings`), the year milestone (`milestones`), the "what's new" tip (`updates`), the onboarding checklist (`onboarding`).
+
+**Do not add new components, hooks, or lib under `features/home/`.** If you find yourself reaching for `features/home/components/Foo.tsx`, ask: _which domain does `Foo` belong to?_ — and put it there instead. Common domains:
+
+- A new home-screen card visualizing time data → `features/service-reports/components/` (or `features/profile/components/` if it's about identity/activity stats)
+- A piece of supporter-nudge UI → `features/supporter/components/` (and any eligibility predicate → `features/supporter/lib/`)
+- A piece of backup/export UI → `features/settings/components/`
+- An onboarding-checklist piece → `features/onboarding/components/`
+
+The test: **someone wanting to reuse `Foo` on a non-home screen should not have to import from `features/home/`.** That's a coupling smell that defeats the point of feature folders. Only `screens/HomeScreen.tsx` (and any future home-tab-specific screen) should live in `features/home/`.
+
 ## Why some "obvious feature" code stays in shared
 
 The boundaries plugin surfaced real coupling that wasn't visible before:
 
 - **Cross-feature data stores** (`stores/contactsStore`, `stores/conversationStore`, `stores/serviceReport`, `stores/preferences`, `stores/timeCache`, `stores/mmkv`) — read by `app/widgets` and `app/sync` plus every feature. Moving them into a feature would require those widgets/sync writers to do cross-feature imports. The per-feature stores that did move (`celebrationQueue`, `milestoneReveal`, `contactsSearchStore`, `supporter`) only had a single feature or app-tier consumer.
-- **Pure domain helpers** (`lib/contacts`, `lib/conversations`, `lib/serviceReport`, `lib/milestones`, `lib/profileStats`, `lib/contactsFilters`, `lib/contactsSort`, `lib/notifications`, …) — consumed by the data layer (preferences/widgets/sync) or by multiple features. The persisted-state types in `contactsFilters` / `contactsSort` keep the impl pinned to shared.
-- **Cross-feature UI primitives** (`SupporterBadge`, `IsSupporter`, `DayPlanRow`, `RecurringPlanRow`, `YearMilestoneCard`, `MilestoneProgressBar`, `ContactAvatarCropEditor`, `ProfileCard`, `ProfileDetailOverlay`, `TabBar`, `GlassCard`, `PublisherTypeSelector`, `PublisherCheckBoxCard`, `StalenessColorKey`, `SwipeMonthNavigator`, `WeekStripTeaser`, `DefaultNavigationSelector`, `SupporterBenefits`, `DismissableCard`, `CardWithTitle`) — used by 2+ features. They earn a place in `shared/components/` because they have many callers.
+- **Pure domain helpers** (`lib/contacts`, `lib/conversations`, `lib/serviceReport`, `lib/milestones`, `lib/contactsFilters`, `lib/contactsSort`, `lib/notifications`, …) — consumed by the data layer (preferences/widgets/sync) or by multiple features. The persisted-state types in `contactsFilters` / `contactsSort` keep the impl pinned to shared.
+- **Cross-feature UI primitives** (`SupporterBadge`, `IsSupporter`, `SupporterInfoSheet`, `SupporterBenefits`, `DayPlanRow`, `RecurringPlanRow`, `YearMilestoneCard`, `MilestoneProgressBar`, `ContactAvatarCropEditor`, `TabBar`, `GlassCard`, `PublisherTypeSelector`, `PublisherCheckBoxCard`, `StalenessColorKey`, `SwipeMonthNavigator`, `DefaultNavigationSelector`, `DismissableCard`, `CardWithTitle`) — used by 2+ features. They earn a place in `shared/components/` because they have many callers.
 - **Domain types** (`types/contact`, `types/customField`, `types/conversation`, `types/serviceReport`, `types/publisher`, `types/avatar`, `types/here`, `types/markerColors`, `types/textInput`, `types/theme`, `types/rootStack`, `types/homeStack`) — referenced by preferences, sync payloads, widget snapshots, and many features.
-- **Shader stack** (`shaders/*`) — used by `ProfileCard` + `TiltableCard` (shared components) + `preferences`, so it sits in shared.
+- **Shader stack** (`shaders/*`) — used by `ProfileCard` + `TiltableCard` (now both inside `features/profile/`) and by `stores/preferences` (shared). Stays in shared so the preferences store doesn't have to reach into a feature.
 
 This is the principled "shared model, feature UI" split for this codebase. A purer per-feature data isolation would require splitting each feature's read of the global store into per-feature snapshot contributors with an app-level composer — a follow-up worth doing if cross-feature coupling continues to grow.
 
 ## What's still in flight
 
-| Tier                                     | Status                                                                                                          |
-| ---------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
-| ESLint boundaries config                 | ✅ in place                                                                                                     |
-| App tier (`src/app/`)                    | ✅ navigation, widgets, sync, deep-links moved                                                                  |
-| `features/*/screens/`                    | ✅ every screen migrated                                                                                        |
-| `features/*/components/`                 | ✅ single-feature components migrated; only multi-feature primitives remain shared                              |
-| `features/*/lib/`                        | ✅ single-feature lib migrated (contacts, conversations, home, map, service-reports, settings, updates)         |
-| `features/*/hooks/`                      | ✅ single-feature hooks migrated (contacts, service-reports, settings)                                          |
-| `features/*/stores/`                     | ✅ single-feature stores migrated (contacts, milestones, service-reports, supporter)                            |
-| `features/*/types/`                      | ✅ single-feature types migrated (map)                                                                          |
-| `features/*/constants/`                  | ✅ single-feature constants migrated (updates)                                                                  |
-| Strict `app←shared+feature` (no app→app) | ❌ transitional rule still allows app→app and neverImport→neverImport while a few legacy import patterns settle |
+| Tier                                     | Status                                                                                                                |
+| ---------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| ESLint boundaries config                 | ✅ in place                                                                                                           |
+| App tier (`src/app/`)                    | ✅ navigation, widgets, sync, deep-links moved                                                                        |
+| `features/*/screens/`                    | ✅ every screen migrated                                                                                              |
+| `features/*/components/`                 | ✅ single-feature components migrated; only multi-feature primitives remain shared                                    |
+| `features/*/lib/`                        | ✅ single-feature lib migrated (contacts, conversations, map, profile, service-reports, settings, supporter, updates) |
+| `features/*/hooks/`                      | ✅ single-feature hooks migrated (contacts, profile, service-reports, settings)                                       |
+| `features/*/stores/`                     | ✅ single-feature stores migrated (contacts, milestones, service-reports, supporter)                                  |
+| `features/*/types/`                      | ✅ single-feature types migrated (map)                                                                                |
+| `features/*/constants/`                  | ✅ single-feature constants migrated (updates)                                                                        |
+| `features/home/` is screens-only         | ✅ no UI components or libs live in home; it is purely an orchestrator                                                |
+| Strict `app←shared+feature` (no app→app) | ❌ transitional rule still allows app→app and neverImport→neverImport while a few legacy import patterns settle       |
 
 ## Following the pattern
 
@@ -105,7 +120,30 @@ When adding new code:
 If your feature needs to import from another feature, that's a signal — either:
 
 - The dependency belongs in `shared/` (lift it up), or
+- The dependency belongs in a **different feature** (the wrong feature folder claimed it), or
 - The consumer is actually a page-level orchestrator and should be reclassified to `app` (and added to the app-pattern in `.eslintrc.json`)
+
+### Naming the right feature for new code
+
+Pick the feature by **domain**, not by **which screen will mount it first**. A component that happens to debut on the home tab is not a "home feature" component — it's whatever-it-actually-is. If you can't decide, answer:
+
+> If I wanted to reuse this on a different screen, where would I expect to find it?
+
+That answer is the feature folder. Examples from this refactor:
+
+- The supporter-nudge eligibility predicate lived in `home/lib/` because the home screen consumed it. Wrong — its domain is supporter, not home. → moved to `supporter/lib/supporterNudge.ts`.
+- The contribution-graph heatmap component lived in `home/components/`. Wrong — its domain is profile/activity stats, not home. → moved to `profile/components/ContributionGraph.tsx`.
+- The backup reminder banner lived in `home/components/`. Wrong — its domain is backups, which is owned by settings (Import & Export). → moved to `settings/components/BackupReminder.tsx`.
+- `WeekStripTeaser` lived in `shared/components/`. Wrong — it's a service-reports week summary, only consumed by app-tier orchestrators. → moved to `service-reports/components/WeekStripTeaser.tsx`.
+
+### When a "shared" primitive is actually a feature primitive
+
+Just because two app-tier orchestrators (home, settings, onboarding, …) both consume a component does **not** automatically make it a "cross-feature primitive" deserving a slot in `shared/components/`. App-tier code is allowed to reach into any feature. If a component has a clear domain owner, prefer the feature folder and let the app-tier consumers import it from there.
+
+Use `shared/` only when:
+
+- The component has no single domain owner (`Card`, `Button`, `IconButton`, layout primitives), **or**
+- It's consumed by another **shared** module — since `shared → feature` is forbidden, the dependency forces it into `shared/`. (Example: `stores/preferences` reads `shaders/` types, which keeps the shader stack pinned to shared.)
 
 ## ESLint deps added
 
@@ -130,3 +168,4 @@ All compatible with the existing ESLint 8.51 setup — no engine upgrade require
 11. `refactor(features): pull rollover, updates lib, and drop dead timeScreen constant`
 12. `refactor(features): pull single-feature components into feature folders` (PinLocation, MapWarningLocationSharingDisabled, ConversationRow → contacts; CategorySegmentBar, CategoriesSection, CreditBadge, CreditInfoSheet, StudiesCard → service-reports; AddEarlierYearSheet, LifetimeHoursCard, MilestoneAdjustSheet → progress; BackupReminder → home; AnnualGoalSelector → settings; ShareAppButton → supporter; ShareAddressSheet → map)
 13. `refactor(features): migrate 4 more single-feature shared components` (CalendarKey → plans; ContributionGraph → home; AheadOrBehindOfSchedule → service-reports; JsonViewer → contacts)
+14. `refactor(features): drain features/home and extract a profile feature` (ContributionGraph + ProfileCard + ProfileDetailOverlay + TiltableCard + lib/profileStats + hooks/useDailyMinutes → new `features/profile/`; `home/lib/supporterNudge` → `supporter/lib/`; `home/components/BackupReminder` → `settings/components/`; `components/WeekStripTeaser` → `service-reports/components/`. After this commit `features/home/` only contains `screens/HomeScreen.tsx`.)

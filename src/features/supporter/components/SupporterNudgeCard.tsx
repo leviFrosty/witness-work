@@ -13,9 +13,9 @@ import { RootStackNavigation } from '@/types/rootStack'
 /**
  * Home-screen "thank you" card for long-tenure, high-engagement non-supporters.
  * Visibility is gated by `isSupporterNudgeEligible` in
- * `src/lib/supporterNudge.ts` and wired in `HomeScreen`. Both interactions
- * stamp `supporterNudgeDismissedAt` so the card goes quiet for ~365 days
- * regardless of outcome.
+ * `src/features/supporter/lib/supporterNudge.ts` and wired in `HomeScreen`.
+ * Both interactions stamp `supporterNudgeDismissedAt` so the card goes quiet
+ * for ~365 days regardless of outcome.
  */
 const SupporterNudgeCard = () => {
   const theme = useTheme()

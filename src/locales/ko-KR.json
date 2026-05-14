@@ -1769,5 +1769,94 @@
   "faq_becomeSupporter_q": "서포터가 되면 무엇이 열릴까요?",
   "faq_becomeSupporter_a": "WitnessWork는 그리고 앞으로도 항상 무료입니다. 앱이 도움이 되었다면, 후원자가 되는 것은 감사의 뜻이자 개발을 이어가는 방법입니다. 지지자들은 작은 감사의 표시로 몇 가지 추가적인 편의 기능도 받습니다. 현재 세부 정보를 보려면 설정 서랍에서 '지지자가 되기'를 탭하세요.",
   "faq_whatsNew_q": "최신 업데이트에서 어떤 변화가 있었는지 어디서 확인할 수 있나요?",
-  "faq_whatsNew_a": "설정→ 'What's New'는 최근 변경 사항 요약을 보여줍니다. 주요 업데이트는 업데이트 후 앱을 처음 열 때 일회성 '새로운 소식' 시트가 뜨기도 합니다."
+  "faq_whatsNew_a": "설정→ 'What's New'는 최근 변경 사항 요약을 보여줍니다. 주요 업데이트는 업데이트 후 앱을 처음 열 때 일회성 '새로운 소식' 시트가 뜨기도 합니다.",
+  "availability": {
+    "settingsRow": "Availability",
+    "settingsRowDescription": "Pick weekdays you'd rather not plan service on. The Assistant will steer recommendations away from them.",
+    "settingsValueAllAvailable": "All days available",
+    "settingsValueNExcluded": "{{count}} days excluded",
+    "onboarding": {
+      "title": "Which days are you never available?",
+      "body": "Tap the weekdays you'd rather skip. The Assistant will steer its recommendations away from them. You can always change this in Settings.",
+      "save": "Save",
+      "skip": "Skip"
+    },
+    "weekday": {
+      "sun": "Sun",
+      "mon": "Mon",
+      "tue": "Tue",
+      "wed": "Wed",
+      "thu": "Thu",
+      "fri": "Fri",
+      "sat": "Sat"
+    }
+  },
+  "assistant": {
+    "label": "Assistant",
+    "headline": {
+      "concentrated": "Plan **{{hours}}h** on **{{day}}** to reach your goal",
+      "distributed": "Plan **{{hours}}h** on **{{days}} days** to reach your goal",
+      "recurring": "Plan **{{hours}}h** every **{{weekdayList}}** for the next **{{weeks}} weeks**"
+    },
+    "rationale": {
+      "small_gap_one_focused_plan": "A single focused plan is the fastest path.",
+      "spread_to_sustainable_pace": "Spread out so no day pushes too hard.",
+      "pattern_fits_over_horizon": "A weekly rhythm makes the goal feel routine.",
+      "stretched_for_short_horizon": "A bit more per day — there's not much time left.",
+      "rest_recommended_then_resume": "Starts after a rest day — you've been pushing lately.",
+      "layered_on_conversation_days": "Layered on days you'll already be out.",
+      "best_effort_unreachable_goal": "Closing your full goal is a stretch this {{period}} — here's the strongest finish."
+    },
+    "button": {
+      "preview": "Preview",
+      "dismiss": "Dismiss",
+      "addToSchedule": "Add to Schedule",
+      "cancel": "Cancel",
+      "undo": "Undo"
+    },
+    "preview": {
+      "notifyMe": "Notify me before each plan",
+      "addAnotherDay": "Add another day",
+      "proposedTotal": "This will put you at **{{projected}} hrs**",
+      "goalReached": "Goal reached"
+    },
+    "snackbar": {
+      "addedPlans": "Assistant added {{count}} plans"
+    },
+    "collapsedAfterAccept": "✓ You've planned enough"
+  },
+  "projectedTotal": {
+    "header": "Projected Total",
+    "heroSuffix": "hrs if all planned hours come through",
+    "legend": {
+      "logged": "Logged · {{value}}",
+      "planned": "Planned · {{value}}",
+      "goal": "Goal · {{value}}"
+    },
+    "noPlansYet": "No plans scheduled yet.",
+    "period": {
+      "thisMonth": "this month",
+      "thisServiceYear": "this service year"
+    },
+    "status": {
+      "present": {
+        "empty": "No hours logged or planned yet for {{period}}.",
+        "logged_over_goal": "You're already **{{over}} hrs** over goal. Planned hours would put you at **{{projected}}**.",
+        "projected_over_goal": "On track — planned hours would put you at **{{projected}}**.",
+        "reachable_gap": "Planned hours put you at **{{projected}}** — **{{gap}} hrs** short of your goal.",
+        "unreachable_gap": "Planned hours put you at **{{projected}}**. **{{gap}} hrs** to goal — a stretch from here."
+      },
+      "past": {
+        "empty": "No hours were logged or planned for {{period}}.",
+        "logged_over_goal": "You ended **{{over}} hrs** over goal.",
+        "unreachable_gap": "You ended **{{gap}} hrs** short of goal."
+      },
+      "future": {
+        "empty": "No hours planned yet for {{period}}.",
+        "projected_over_goal": "On track — planned hours would put you at **{{projected}}**.",
+        "reachable_gap": "Planned hours put you at **{{projected}}** — **{{gap}} hrs** short of goal.",
+        "unreachable_gap": "Planned hours put you at **{{projected}}**. **{{gap}} hrs** to goal — a stretch from here."
+      }
+    }
+  }
 }

@@ -14,7 +14,7 @@
       "env": {
         "APP_VARIANT": "development"
       },
-      "node": "20.14.0"
+      "node": "24.15.0"
     },
 
     "development": {
@@ -23,7 +23,7 @@
       "env": {
         "APP_VARIANT": "development"
       },
-      "node": "20.14.0"
+      "node": "24.15.0"
     },
     "preview": {
       "distribution": "internal",
@@ -32,7 +32,7 @@
     "production": {
       "channel": "production",
       "autoIncrement": true,
-      "node": "20.14.0",
+      "node": "24.15.0",
       "environment": "production",
       "ios": {
         "image": "latest"
@@ -44,7 +44,7 @@
     "production-local": {
       "channel": "production",
       "autoIncrement": true,
-      "node": "20.14.0",
+      "node": "24.15.0",
       "environment": "production",
       "ios": {
         "image": "latest"
@@ -60,7 +60,7 @@
         "simulator": true,
         "image": "latest"
       },
-      "node": "20.14.0",
+      "node": "24.15.0",
       "environment": "production",
       "env": {
         "APP_VARIANT": "production",

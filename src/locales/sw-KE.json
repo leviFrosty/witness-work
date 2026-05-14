@@ -1769,5 +1769,94 @@
   "faq_becomeSupporter_q": "Kuwa Msaidizi kunafungua nini?",
   "faq_becomeSupporter_a": "WitnessWork ni, na daima itakuwa, bure. Ikiwa programu imekuwa na manufaa kwako, kuwa mfuasi ni njia ya kusema asante na husaidia kuendeleza maendeleo. Wafuasi pia hupata vipengele vichache vya ziada vya ubora wa maisha kama shukrani ndogo. Gusa Kuwa Msaidizi kutoka kwa droo ya Mipangilio kwa maelezo ya sasa.",
   "faq_whatsNew_q": "Ninaweza kuona wapi kile kilichobadilika katika sasisho la hivi punde?",
-  "faq_whatsNew_a": "Mipangilio → Nini Kipya kinaonyesha muhtasari wa mabadiliko ya hivi majuzi. Masasisho makubwa pia hujitokeza laha ya mara moja ya \"Nini kipya\" mara ya kwanza unapofungua programu baada ya kusasisha."
+  "faq_whatsNew_a": "Mipangilio → Nini Kipya kinaonyesha muhtasari wa mabadiliko ya hivi majuzi. Masasisho makubwa pia hujitokeza laha ya mara moja ya \"Nini kipya\" mara ya kwanza unapofungua programu baada ya kusasisha.",
+  "availability": {
+    "settingsRow": "Availability",
+    "settingsRowDescription": "Pick weekdays you'd rather not plan service on. The Assistant will steer recommendations away from them.",
+    "settingsValueAllAvailable": "All days available",
+    "settingsValueNExcluded": "{{count}} days excluded",
+    "onboarding": {
+      "title": "Which days are you never available?",
+      "body": "Tap the weekdays you'd rather skip. The Assistant will steer its recommendations away from them. You can always change this in Settings.",
+      "save": "Save",
+      "skip": "Skip"
+    },
+    "weekday": {
+      "sun": "Sun",
+      "mon": "Mon",
+      "tue": "Tue",
+      "wed": "Wed",
+      "thu": "Thu",
+      "fri": "Fri",
+      "sat": "Sat"
+    }
+  },
+  "assistant": {
+    "label": "Assistant",
+    "headline": {
+      "concentrated": "Plan **{{hours}}h** on **{{day}}** to reach your goal",
+      "distributed": "Plan **{{hours}}h** on **{{days}} days** to reach your goal",
+      "recurring": "Plan **{{hours}}h** every **{{weekdayList}}** for the next **{{weeks}} weeks**"
+    },
+    "rationale": {
+      "small_gap_one_focused_plan": "A single focused plan is the fastest path.",
+      "spread_to_sustainable_pace": "Spread out so no day pushes too hard.",
+      "pattern_fits_over_horizon": "A weekly rhythm makes the goal feel routine.",
+      "stretched_for_short_horizon": "A bit more per day — there's not much time left.",
+      "rest_recommended_then_resume": "Starts after a rest day — you've been pushing lately.",
+      "layered_on_conversation_days": "Layered on days you'll already be out.",
+      "best_effort_unreachable_goal": "Closing your full goal is a stretch this {{period}} — here's the strongest finish."
+    },
+    "button": {
+      "preview": "Preview",
+      "dismiss": "Dismiss",
+      "addToSchedule": "Add to Schedule",
+      "cancel": "Cancel",
+      "undo": "Undo"
+    },
+    "preview": {
+      "notifyMe": "Notify me before each plan",
+      "addAnotherDay": "Add another day",
+      "proposedTotal": "This will put you at **{{projected}} hrs**",
+      "goalReached": "Goal reached"
+    },
+    "snackbar": {
+      "addedPlans": "Assistant added {{count}} plans"
+    },
+    "collapsedAfterAccept": "✓ You've planned enough"
+  },
+  "projectedTotal": {
+    "header": "Projected Total",
+    "heroSuffix": "hrs if all planned hours come through",
+    "legend": {
+      "logged": "Logged · {{value}}",
+      "planned": "Planned · {{value}}",
+      "goal": "Goal · {{value}}"
+    },
+    "noPlansYet": "No plans scheduled yet.",
+    "period": {
+      "thisMonth": "this month",
+      "thisServiceYear": "this service year"
+    },
+    "status": {
+      "present": {
+        "empty": "No hours logged or planned yet for {{period}}.",
+        "logged_over_goal": "You're already **{{over}} hrs** over goal. Planned hours would put you at **{{projected}}**.",
+        "projected_over_goal": "On track — planned hours would put you at **{{projected}}**.",
+        "reachable_gap": "Planned hours put you at **{{projected}}** — **{{gap}} hrs** short of your goal.",
+        "unreachable_gap": "Planned hours put you at **{{projected}}**. **{{gap}} hrs** to goal — a stretch from here."
+      },
+      "past": {
+        "empty": "No hours were logged or planned for {{period}}.",
+        "logged_over_goal": "You ended **{{over}} hrs** over goal.",
+        "unreachable_gap": "You ended **{{gap}} hrs** short of goal."
+      },
+      "future": {
+        "empty": "No hours planned yet for {{period}}.",
+        "projected_over_goal": "On track — planned hours would put you at **{{projected}}**.",
+        "reachable_gap": "Planned hours put you at **{{projected}}** — **{{gap}} hrs** short of goal.",
+        "unreachable_gap": "Planned hours put you at **{{projected}}**. **{{gap}} hrs** to goal — a stretch from here."
+      }
+    }
+  }
 }

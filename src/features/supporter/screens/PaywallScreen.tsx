@@ -611,18 +611,24 @@ const PaywallScreen = () => {
     )
   }, [fetchOfferings, isResetting, revalidate, setCustomer])
 
-  // Preselect a sensible default whenever the active list changes. Finds the
-  // currently-selected price in the new list, otherwise picks the lowest.
+  // Preselect a sensible default whenever the active list changes. Compares on
+  // per-month-equivalent price so switching monthly↔annual maps $0.99/mo to
+  // the ~$0.83/mo annual tier (and back) rather than treating the annual's
+  // $9.99 total as a monthly price.
+  const currentMonthlyPrice = selectedPackage
+    ? (selectedPackage.product.pricePerMonth ?? selectedPackage.product.price)
+    : undefined
   useEffect(() => {
     if (activePackages.length === 0) {
       setSelectedPackage(null)
       return
     }
-    const currentPrice = selectedPackage?.product.price
-    if (currentPrice !== undefined) {
+    if (currentMonthlyPrice !== undefined) {
       const closest = activePackages.reduce((best, pkg) => {
-        const diff = Math.abs(pkg.product.price - currentPrice)
-        const bestDiff = Math.abs(best.product.price - currentPrice)
+        const pkgPerMonth = pkg.product.pricePerMonth ?? pkg.product.price
+        const bestPerMonth = best.product.pricePerMonth ?? best.product.price
+        const diff = Math.abs(pkgPerMonth - currentMonthlyPrice)
+        const bestDiff = Math.abs(bestPerMonth - currentMonthlyPrice)
         return diff < bestDiff ? pkg : best
       }, activePackages[0])
       setSelectedPackage(closest)
@@ -631,7 +637,7 @@ const PaywallScreen = () => {
     }
     // We intentionally exclude selectedPackage from deps — this effect only
     // reacts to the active list changing (tier/billing switch).
-  }, [activePackages, selectedPackage?.product.price])
+  }, [activePackages, currentMonthlyPrice])
 
   const handlePurchase = useCallback(async () => {
     if (!selectedPackage) {

@@ -79,6 +79,14 @@ eas build:run -p ios --path [path].tar.gz
 pnpm run testFinal && pnpm run lint && pnpm run typecheck
 ```
 
+### After import / file-tree changes — run lint
+
+`eslint-plugin-boundaries` enforces the shared / feature / app tier rules (see [Project structure](#project-structure)). TypeScript won't catch a boundary violation — only ESLint will. **Always** run `pnpm run lint` after:
+
+- Adding or moving a file (the path determines its tier)
+- Changing an `import` line (may cross a tier boundary)
+- Renaming a feature folder, or anything under `src/features/`, `src/app/`, or `src/components/`
+
 ### Translations
 
 Source of truth = `src/locales/en-US.json`. Add new keys there first. Do not try to edit other locales without asking for human approval.
@@ -225,6 +233,25 @@ Defaults come from [src/stores/preferences.ts:47-54](src/stores/preferences.ts:4
 Reuse existing components where available instead of creating new ones @src/components/\*\*
 
 - Never create one-off badges
+
+## Project structure
+
+Source lives in `src/` and is organised into three tiers, enforced at lint time by `eslint-plugin-boundaries`:
+
+- **`src/app/`** — app-tier infra (entry point, navigation, widgets, iCloud sync, deep links). May import from any tier.
+- **`src/features/<domain>/`** — one folder per domain (`contacts/`, `conversations/`, `service-reports/`, `map/`, `milestones/`, `supporter/`, `profile/`, `plans/`, `progress/`, `home/`, `settings/`, `updates/`, `onboarding/`). Each holds the subset of `screens/ components/ hooks/ lib/ stores/ types/ constants/` it actually needs. A feature may import from shared and itself only.
+- **Shared tier** — `src/components/` (split into `ui/` primitives and root composed blocks), `src/lib/`, `src/hooks/`, `src/stores/`, `src/types/`, `src/constants/`, `src/providers/`, `src/contexts/`, `src/assets/`, `src/locales/`, `src/shaders/`, `src/vendor/`. Importable from anywhere; may only import from shared.
+
+Page-level orchestrator features (`home`, `settings`, `progress`, `plans`, `updates`, `onboarding`) are classified as `app` in the boundaries config so they can compose across domains. `home` in particular is a **pure orchestrator** — do not add components/hooks/lib under `features/home/`; put domain UI in the owning feature and import it.
+
+Imports use the `@/*` path alias (mapped to `src/*`). Prefer `@/features/...` / `@/app/...` / `@/components/...` over relative paths.
+
+**Deeper docs:**
+
+- [`docs/project-structure.md`](docs/project-structure.md) — full directory map with one-line summaries of every feature folder and what each owns.
+- [`docs/architecture-features.md`](docs/architecture-features.md) — tier rules, boundaries lint config, why some features are classified as `app`, and the `components/ui/` vs `components/` (root) decision.
+
+When adding files or changing imports, run `pnpm run lint` — see [After import / file-tree changes — run lint](#after-import--file-tree-changes--run-lint).
 
 ## Agent skills
 

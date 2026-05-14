@@ -33,6 +33,7 @@
       "channel": "production",
       "autoIncrement": true,
       "node": "20.14.0",
+      "environment": "production",
       "ios": {
         "image": "latest"
       },
@@ -44,6 +45,7 @@
       "channel": "production",
       "autoIncrement": true,
       "node": "20.14.0",
+      "environment": "production",
       "ios": {
         "image": "latest"
       },
@@ -59,6 +61,7 @@
         "image": "latest"
       },
       "node": "20.14.0",
+      "environment": "production",
       "env": {
         "APP_VARIANT": "production",
         "SENTRY_DISABLE_AUTO_UPLOAD": "true",

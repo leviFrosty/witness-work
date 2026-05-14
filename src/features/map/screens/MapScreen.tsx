@@ -1,3 +1,4 @@
+import useGlassColorScheme from '@/hooks/useGlassColorScheme'
 import Wrapper from '@/components/ui/layout/Wrapper'
 import MapView, { LatLng, Marker } from 'react-native-maps'
 import useContacts from '@/stores/contactsStore'
@@ -91,6 +92,7 @@ const FullMapView = ({
   const searchInputRef = useRef<TextInput>(null)
   const searchExpand = useSharedValue(0)
   const theme = useTheme()
+  const glassColorScheme = useGlassColorScheme()
   const { contacts, updateContact } = useContacts()
   const CARD_HEIGHT = 200
   const isDark = theme.colors.background === '#121212'
@@ -350,6 +352,7 @@ const FullMapView = ({
           <GlassView
             pointerEvents='none'
             glassEffectStyle='regular'
+            colorScheme={glassColorScheme}
             style={[StyleSheet.absoluteFill, { borderRadius: 24 }]}
           />
         ) : (
@@ -553,6 +556,7 @@ const FullMapView = ({
             <GlassView
               pointerEvents='none'
               glassEffectStyle='regular'
+              colorScheme={glassColorScheme}
               style={[StyleSheet.absoluteFill, { borderRadius: 22 }]}
             />
           ) : (
@@ -630,6 +634,7 @@ const FullMapView = ({
               <GlassView
                 pointerEvents='none'
                 glassEffectStyle='regular'
+                colorScheme={glassColorScheme}
                 style={[
                   StyleSheet.absoluteFill,
                   { borderRadius: theme.numbers.borderRadiusLg },
@@ -689,7 +694,7 @@ const FullMapView = ({
       <View
         style={{
           position: 'absolute',
-          top: insets.top + 64,
+          top: insets.top + (contactMarkers.length > 0 ? 64 : 8),
           left: 16,
           gap: 8,
         }}

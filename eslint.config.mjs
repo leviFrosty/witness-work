@@ -11,6 +11,7 @@ export default tseslint.config(
     ignores: [
       'node_modules/**',
       '.cache/**',
+      '.claude/**',
       '.expo/**',
       '.tamagui/**',
       'ios/**',
@@ -27,6 +28,14 @@ export default tseslint.config(
   },
   js.configs.recommended,
   ...tseslint.configs.recommended,
+  {
+    files: ['**/*.{js,jsx,ts,tsx,mjs,mts,cjs,cts}'],
+    languageOptions: {
+      parserOptions: {
+        tsconfigRootDir: import.meta.dirname,
+      },
+    },
+  },
   {
     files: ['**/*.{js,jsx,ts,tsx}'],
     languageOptions: {

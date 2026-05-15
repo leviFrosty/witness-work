@@ -21,7 +21,13 @@ export type PublisherCapabilities = {
   monthlyGoalHours: number
   annualGoalHours: number
   hasAnnualGoal: boolean
-  isPioneer: boolean
+  /**
+   * Whether this role is part of **Full-Time Service** — the umbrella covering
+   * regular pioneer, special pioneer, and circuit overseer. These three roles
+   * share a single tenure clock. A circuit overseer is not called a "pioneer"
+   * in JW vernacular, so prefer this flag over any "isPioneer"-style naming.
+   */
+  isInFullTimeService: boolean
   /**
    * Whether this role has a pioneering/auxiliary tenure start date the app
    * displays (e.g. "regular pioneer since 2018"). False for plain publishers
@@ -33,17 +39,17 @@ export type PublisherCapabilities = {
   milestones: number[]
 }
 
-const PIONEER_PUBLISHERS: ReadonlyArray<Publisher> = [
+const FULL_TIME_SERVICE_PUBLISHERS: ReadonlyArray<Publisher> = [
   'regularPioneer',
   'specialPioneer',
   'circuitOverseer',
 ]
 
-export const isPioneer = (publisher: Publisher): boolean =>
-  PIONEER_PUBLISHERS.includes(publisher)
+export const isInFullTimeService = (publisher: Publisher): boolean =>
+  FULL_TIME_SERVICE_PUBLISHERS.includes(publisher)
 
 export const tracksPioneerStartDate = (publisher: Publisher): boolean =>
-  isPioneer(publisher) || publisher === 'regularAuxiliary'
+  isInFullTimeService(publisher) || publisher === 'regularAuxiliary'
 
 /**
  * Whether this role enters service time as a "did I go out?" checkbox (the
@@ -153,7 +159,7 @@ export const derivePublisherCapabilities = (
       publisher,
       userSpecifiedHasAnnualGoal
     ),
-    isPioneer: isPioneer(publisher),
+    isInFullTimeService: isInFullTimeService(publisher),
     tracksPioneerStartDate: tracksPioneerStartDate(publisher),
     showsTimer: hoursMode,
     showsYearTabs: hoursMode,

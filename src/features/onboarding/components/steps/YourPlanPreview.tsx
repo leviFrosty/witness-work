@@ -38,7 +38,7 @@ import useTheme from '@/contexts/theme'
 import i18n, { TranslationKey } from '@/lib/locales'
 import { OnboardingIntent, usePreferences } from '@/stores/preferences'
 import usePublisher from '@/hooks/usePublisher'
-import { getEntryMode, isPioneer } from '@/lib/publisherCapabilities'
+import { getEntryMode, isInFullTimeService } from '@/lib/publisherCapabilities'
 import { useMarkerColors } from '@/hooks/useMarkerColors'
 import { Theme } from '@/types/theme'
 import type { DayPlan, ServiceReport } from '@/types/serviceReport'
@@ -1144,7 +1144,7 @@ const YourPlanPreview = ({ goBack, goNext }: Props) => {
   const publisherLabel = i18n.t(publisher)
   const entryMode = getEntryMode(publisher)
 
-  const pioneering = isPioneer(publisher) && pioneerStartDate
+  const pioneering = isInFullTimeService(publisher) && pioneerStartDate
   const pioneeringLine = pioneering
     ? i18n.t('yourPlanPioneeringSince', {
         date: moment(pioneerStartDate).format('MMM YYYY'),

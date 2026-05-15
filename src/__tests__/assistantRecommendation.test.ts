@@ -16,8 +16,8 @@ const baseInput = {
   dayPlans: [] as DayPlan[],
   recurringPlans: [] as RecurringPlan[],
   conversations: [] as Conversation[],
-  excludedWeekdays: [] as number[],
-  meetingWeekdays: [] as number[],
+  offDays: [] as number[],
+  meetingDays: [] as number[],
   assistantHistory: [],
 }
 
@@ -152,14 +152,14 @@ describe('generateRecommendation', () => {
       expect(rec!.plans.every((p) => p.minutes % 60 === 0)).toBe(true)
     })
 
-    it('excludes weekdays in excludedWeekdays from the eligible pool', () => {
-      // May 22, 2026 is a Friday. Excluding Fridays means the first eligible
-      // day must not be a Friday.
+    it('excludes weekdays in offDays from the eligible pool', () => {
+      // May 22, 2026 is a Friday. Marking Friday as an Off Day means the first
+      // eligible day must not be a Friday.
       const rec = generateRecommendation({
         ...baseInput,
         today: normalizeDateForStorage('2026-05-22'),
         loggedAdjustedMinutes: 44 * 60,
-        excludedWeekdays: [5],
+        offDays: [5],
       })
 
       expect(rec).not.toBeNull()
@@ -303,7 +303,7 @@ describe('generateRecommendation', () => {
         ...baseInput,
         today: normalizeDateForStorage('2026-05-22'),
         loggedAdjustedMinutes: 44 * 60,
-        meetingWeekdays: [5],
+        meetingDays: [5],
       })
 
       expect(rec).not.toBeNull()
@@ -312,14 +312,14 @@ describe('generateRecommendation', () => {
       expect(momentStoredDate(rec!.plans[0].date).day()).not.toBe(5)
     })
 
-    it('keeps distributed picks off meeting weekdays when non-meeting capacity is sufficient', () => {
+    it('keeps distributed picks off meeting days when non-meeting capacity is sufficient', () => {
       // 20h gap, lots of eligible days, mark Wed (3) + Sun (0) as meeting
       // days. Engine should pick only non-meeting days.
       const rec = generateRecommendation({
         ...baseInput,
         today: normalizeDateForStorage('2026-05-10'),
         loggedAdjustedMinutes: 30 * 60,
-        meetingWeekdays: [0, 3],
+        meetingDays: [0, 3],
       })
 
       expect(rec).not.toBeNull()
@@ -330,15 +330,15 @@ describe('generateRecommendation', () => {
       }
     })
 
-    it('treats excluded as winning over meeting when both flags overlap', () => {
-      // Friday (5) is both excluded and a meeting day. The engine should
+    it('treats Off Day as winning over Meeting Day when both flags overlap', () => {
+      // Friday (5) is both an Off Day and a Meeting Day. The engine should
       // exclude Friday entirely (no proposal on a Friday at any cap).
       const rec = generateRecommendation({
         ...baseInput,
         today: normalizeDateForStorage('2026-05-22'),
         loggedAdjustedMinutes: 44 * 60,
-        excludedWeekdays: [5],
-        meetingWeekdays: [5],
+        offDays: [5],
+        meetingDays: [5],
       })
 
       expect(rec).not.toBeNull()
@@ -356,7 +356,7 @@ describe('generateRecommendation', () => {
         ...baseInput,
         today: normalizeDateForStorage('2026-05-28'),
         loggedAdjustedMinutes: 47 * 60,
-        meetingWeekdays: [0, 4, 5, 6],
+        meetingDays: [0, 4, 5, 6],
       })
 
       expect(rec).not.toBeNull()
@@ -375,7 +375,7 @@ describe('generateRecommendation', () => {
         ...baseInput,
         today: normalizeDateForStorage('2026-05-28'),
         loggedAdjustedMinutes: 44 * 60,
-        meetingWeekdays: [0, 4, 5, 6],
+        meetingDays: [0, 4, 5, 6],
       })
 
       expect(rec).not.toBeNull()
@@ -386,7 +386,7 @@ describe('generateRecommendation', () => {
       }
     })
 
-    it('does not pick a recurring pattern that lands on meeting weekdays', () => {
+    it('does not pick a recurring pattern that lands on meeting days', () => {
       // Recurring scenario from the existing test (May 18, gap 60h ≥ 14d
       // horizon). Mark Mon (1) as a meeting day. The pattern should skip Mon.
       const rec = generateRecommendation({
@@ -394,7 +394,7 @@ describe('generateRecommendation', () => {
         today: normalizeDateForStorage('2026-05-18'),
         monthlyGoalHours: 60,
         loggedAdjustedMinutes: 0,
-        meetingWeekdays: [1],
+        meetingDays: [1],
       })
 
       expect(rec).not.toBeNull()

@@ -662,21 +662,23 @@ export const PREFERENCE_DEFAULTS = {
    */
   seenTipIds: [] as string[],
   /**
-   * Weekdays (0 = Sunday … 6 = Saturday) that the Projected Total Assistant
-   * should treat as unavailable when generating recommended day plans. Empty by
-   * default — no exclusion. The user can override per-day even when a weekday
-   * is excluded; the calendar dims excluded weekdays as a hint.
+   * Off Days the user wants the Assistant to treat as a hard exclusion when
+   * generating recommended day plans. Empty by default — no exclusion. Today
+   * stored as weekday numbers (0 = Sunday … 6 = Saturday); the concept covers
+   * any day. The user can override per-day even when a weekday is in this set;
+   * the calendar dims Off Days as a hint.
    */
-  excludedWeekdays: [] as number[],
+  offDays: [] as number[],
   /**
-   * Weekdays (0 = Sunday … 6 = Saturday) the user has Kingdom Hall meetings on.
-   * The Assistant treats these as "busier" days: it prefers other days first
-   * and, when a meeting day is used, caps the proposed session at a lower
-   * number of hours so the user still has time to study and attend. A weekday
-   * listed in both `excludedWeekdays` and `meetingWeekdays` is treated as
-   * excluded — the stricter rule wins.
+   * Meeting Days — days the user attends a Kingdom Hall meeting. The Assistant
+   * treats these as "busier" days: it prefers other days first and, when a
+   * meeting day is used, caps the proposed session at a lower number of hours
+   * so the user still has time to study and attend. A day listed in both
+   * `offDays` and `meetingDays` is treated as an Off Day — the stricter rule
+   * wins. Today stored as weekday numbers (0 = Sunday … 6 = Saturday); the
+   * concept covers any day.
    */
-  meetingWeekdays: [] as number[],
+  meetingDays: [] as number[],
   /**
    * One-shot flag for the Availability Onboarding sheet, which surfaces just in
    * time the first time a recommendation would render. Flipped true when the
@@ -692,9 +694,9 @@ export const PREFERENCE_DEFAULTS = {
    */
   assistantHistory: [] as AssistantEvent[],
   /**
-   * Hash of the engine inputs (logged, plans, conversations, excluded weekdays)
-   * at the time the user last dismissed the Assistant card. While this hash
-   * matches the current inputs, the Assistant section stays hidden —
+   * Hash of the engine inputs (logged, plans, conversations, off days, meeting
+   * days) at the time the user last dismissed the Assistant card. While this
+   * hash matches the current inputs, the Assistant section stays hidden —
    * re-emerging once any input changes.
    */
   hasDismissedRecommendationHash: undefined as string | undefined,
@@ -748,6 +750,67 @@ export const NON_SYNCABLE_PREFERENCE_KEYS = new Set<string>([
   'dismissedMilestoneRevealOnce',
   'seenFoundingSupporterReveal',
 ])
+
+/**
+ * Persisted-shape migrations for the preferences store.
+ *
+ * Versioning history:
+ *
+ * - V0 → v1: rename `excludedWeekdays` → `offDays`, `meetingWeekdays` →
+ *   `meetingDays`. The underlying data (a set of weekday numbers 0–6) is
+ *   identical; only the field names change. We also migrate the
+ *   `preferenceUpdatedAt` timestamp map so iCloud last-writer-wins continues to
+ *   work across the rename. The legacy fields are dropped from disk.
+ *
+ * Exported for unit testing. Idempotent — re-running on an already-migrated
+ * blob is a no-op.
+ */
+export const migratePreferencesPersistedState = (
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  persistedState: any,
+  version: number
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+): any => {
+  let next = persistedState
+  if (version < 1) {
+    next = migrateExcludedMeetingWeekdaysToOffMeetingDays(next)
+  }
+  return next
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const migrateExcludedMeetingWeekdaysToOffMeetingDays = (state: any): any => {
+  if (!state || typeof state !== 'object') return state
+  const { excludedWeekdays, meetingWeekdays, ...rest } = state
+  const next = { ...rest }
+  // If the new key already carries a value, it wins (defensive — a
+  // downgrade-then-upgrade could leave both keys present).
+  if (excludedWeekdays !== undefined && next.offDays === undefined) {
+    next.offDays = excludedWeekdays
+  }
+  if (meetingWeekdays !== undefined && next.meetingDays === undefined) {
+    next.meetingDays = meetingWeekdays
+  }
+  if (
+    next.preferenceUpdatedAt &&
+    typeof next.preferenceUpdatedAt === 'object'
+  ) {
+    const {
+      excludedWeekdays: excludedTs,
+      meetingWeekdays: meetingTs,
+      ...restTs
+    } = next.preferenceUpdatedAt
+    const nextTs: Record<string, number> = { ...restTs }
+    if (excludedTs !== undefined && nextTs.offDays === undefined) {
+      nextTs.offDays = excludedTs
+    }
+    if (meetingTs !== undefined && nextTs.meetingDays === undefined) {
+      nextTs.meetingDays = meetingTs
+    }
+    next.preferenceUpdatedAt = nextTs
+  }
+  return next
+}
 
 export const usePreferences = create(
   persist(
@@ -867,10 +930,8 @@ export const usePreferences = create(
             next[next.length - 1] = event
             return { assistantHistory: next }
           }),
-        setExcludedWeekdays: (excludedWeekdays: number[]) =>
-          set({ excludedWeekdays }),
-        setMeetingWeekdays: (meetingWeekdays: number[]) =>
-          set({ meetingWeekdays }),
+        setOffDays: (offDays: number[]) => set({ offDays }),
+        setMeetingDays: (meetingDays: number[]) => set({ meetingDays }),
         setHasSeenAvailabilityOnboarding: (value: boolean) =>
           set({ hasSeenAvailabilityOnboarding: value }),
         setHasDismissedRecommendationHash: (value: string | undefined) =>
@@ -882,6 +943,9 @@ export const usePreferences = create(
       storage: createJSONStorage(() =>
         hasMigratedFromAsyncStorage() ? MmkvStorage : AsyncStorage
       ),
+      version: 1,
+      migrate: (persistedState, version) =>
+        migratePreferencesPersistedState(persistedState, version),
     }
   )
 )

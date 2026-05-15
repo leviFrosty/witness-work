@@ -93,15 +93,20 @@ export type EngineInput = {
   dayPlans: DayPlan[]
   recurringPlans: RecurringPlan[]
   conversations: Conversation[]
-  excludedWeekdays: number[]
   /**
-   * Weekdays the user has Kingdom Hall meetings on. The engine prefers
-   * non-meeting days, and when it has to use a meeting day it caps the proposed
-   * session at the meeting-day cap. A weekday present in both
-   * `excludedWeekdays` and `meetingWeekdays` is treated as excluded (stricter
-   * wins).
+   * Off Days the user wants the engine to treat as a hard exclusion when
+   * generating a recommendation. Today stored as weekday numbers (0–6); the
+   * concept covers any day.
    */
-  meetingWeekdays?: number[]
+  offDays: number[]
+  /**
+   * Meeting Days — days the user attends a Kingdom Hall meeting. The engine
+   * prefers non-meeting days, and when it has to use a meeting day it caps the
+   * proposed session at the meeting-day cap. A day present in both `offDays`
+   * and `meetingDays` is treated as an Off Day (stricter wins). Today stored as
+   * weekday numbers (0–6).
+   */
+  meetingDays?: number[]
   assistantHistory: AssistantEvent[]
   /**
    * Total minutes logged within `tirednessLookbackDays` of `today` (not
@@ -169,8 +174,8 @@ const eligibleDays = (
   year: number,
   month: number,
   today: Date,
-  excludedWeekdays: number[],
-  meetingWeekdays: number[],
+  offDays: number[],
+  meetingDays: number[],
   dayPlans: DayPlan[],
   recurringPlans: RecurringPlan[]
 ): EligibleDay[] => {
@@ -186,18 +191,18 @@ const eligibleDays = (
   const days: EligibleDay[] = []
   while (cursor.isSameOrBefore(end, 'day')) {
     const weekday = cursor.day()
-    const isExcluded = excludedWeekdays.includes(weekday)
+    const isOffDay = offDays.includes(weekday)
     const key = cursor.format('YYYY-MM-DD')
     const hasDayPlan = dayPlanKeys.has(key)
     const hasRecurring =
       getPlansIntersectingDay(cursor.toDate(), recurringPlans).length > 0
-    if (!isExcluded && !hasDayPlan && !hasRecurring) {
+    if (!isOffDay && !hasDayPlan && !hasRecurring) {
       days.push({
         m: cursor.clone(),
-        // Excluded already filtered out — meeting flag only matters for the
-        // days that survived. This is also why `meetingWeekdays ∩ excludedWeekdays`
-        // never reaches the engine: excluded wins by virtue of filtering first.
-        isMeetingDay: meetingWeekdays.includes(weekday),
+        // Off Days already filtered out — meeting flag only matters for the
+        // days that survived. This is also why `meetingDays ∩ offDays` never
+        // reaches the engine: Off Day wins by virtue of filtering first.
+        isMeetingDay: meetingDays.includes(weekday),
       })
     }
     cursor.add(1, 'day')
@@ -587,8 +592,8 @@ export const generateRecommendation = (
     input.year,
     input.month,
     input.today,
-    input.excludedWeekdays,
-    input.meetingWeekdays ?? [],
+    input.offDays,
+    input.meetingDays ?? [],
     input.dayPlans,
     input.recurringPlans
   )

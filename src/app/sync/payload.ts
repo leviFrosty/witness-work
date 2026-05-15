@@ -127,10 +127,17 @@ export function buildPayload(args: {
   }
 }
 
+import { normalizeLegacyPayloadFieldNames } from '@/app/sync/payloadFieldRenames'
+
 /**
  * Parses and validates a JSON-encoded payload. Returns null if the JSON is
  * malformed or the shape is unrecognizable — the caller should treat that as
  * "leave local state alone, surface a sync error in settings."
+ *
+ * Also translates legacy preference field names from older app versions so the
+ * merge step sees the canonical schema. The wire payload version
+ * (`PAYLOAD_VERSION`) is intentionally NOT bumped for pure renames — receivers
+ * normalize on read. See `payloadFieldRenames.ts` for the rename table.
  */
 export function parsePayload(json: string): SyncPayload | null {
   let data: unknown
@@ -147,5 +154,6 @@ export function parsePayload(json: string): SyncPayload | null {
   if (!d.contactStore || !d.conversationStore || !d.serviceReportStore) {
     return null
   }
+  normalizeLegacyPayloadFieldNames(d)
   return d as SyncPayload
 }

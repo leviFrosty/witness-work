@@ -20,25 +20,25 @@ const PlansPreferencesSection = () => {
   const {
     planNotificationOffset,
     planAlwaysNotify,
-    excludedWeekdays,
-    meetingWeekdays,
+    offDays,
+    meetingDays,
     set,
   } = usePreferences()
   const [availabilityOpen, setAvailabilityOpen] = useState(false)
   const availabilitySummary =
-    excludedWeekdays.length === 0 && meetingWeekdays.length === 0
+    offDays.length === 0 && meetingDays.length === 0
       ? i18n.t('availability.settingsValueAllAvailable')
-      : meetingWeekdays.length === 0
-        ? i18n.t('availability.settingsValueNExcluded', {
-            count: excludedWeekdays.length,
+      : meetingDays.length === 0
+        ? i18n.t('availability.settingsValueNOff', {
+            count: offDays.length,
           })
-        : excludedWeekdays.length === 0
+        : offDays.length === 0
           ? i18n.t('availability.settingsValueNMeeting', {
-              count: meetingWeekdays.length,
+              count: meetingDays.length,
             })
-          : i18n.t('availability.settingsValueNExcludedNMeeting', {
-              excluded: excludedWeekdays.length,
-              meeting: meetingWeekdays.length,
+          : i18n.t('availability.settingsValueNOffNMeeting', {
+              off: offDays.length,
+              meeting: meetingDays.length,
             })
 
   const currentAmount =

@@ -17,15 +17,29 @@ import AvailabilityOnboardingSheet from '@/components/AvailabilityOnboardingShee
 
 const PlansPreferencesSection = () => {
   const theme = useTheme()
-  const { planNotificationOffset, planAlwaysNotify, excludedWeekdays, set } =
-    usePreferences()
+  const {
+    planNotificationOffset,
+    planAlwaysNotify,
+    excludedWeekdays,
+    meetingWeekdays,
+    set,
+  } = usePreferences()
   const [availabilityOpen, setAvailabilityOpen] = useState(false)
   const availabilitySummary =
-    excludedWeekdays.length === 0
+    excludedWeekdays.length === 0 && meetingWeekdays.length === 0
       ? i18n.t('availability.settingsValueAllAvailable')
-      : i18n.t('availability.settingsValueNExcluded', {
-          count: excludedWeekdays.length,
-        })
+      : meetingWeekdays.length === 0
+        ? i18n.t('availability.settingsValueNExcluded', {
+            count: excludedWeekdays.length,
+          })
+        : excludedWeekdays.length === 0
+          ? i18n.t('availability.settingsValueNMeeting', {
+              count: meetingWeekdays.length,
+            })
+          : i18n.t('availability.settingsValueNExcludedNMeeting', {
+              excluded: excludedWeekdays.length,
+              meeting: meetingWeekdays.length,
+            })
 
   const currentAmount =
     planNotificationOffset?.amount ?? DEFAULT_PLAN_NOTIFICATION_OFFSET.amount

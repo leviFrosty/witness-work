@@ -34,6 +34,7 @@ import _ from 'lodash'
 import moment from 'moment'
 import GoalProgressStats from '@/features/service-reports/components/GoalProgressStats'
 import { RootStackNavigation } from '@/types/rootStack'
+import { HomeTabStackNavigation } from '@/types/homeStack'
 import {
   isPersonalBest12mo,
   monthCelebrationKey,
@@ -89,6 +90,7 @@ const MonthReport = ({
   } = usePreferences()
   const goalHours = publisherHours[publisher]
   const navigation = useNavigation<RootStackNavigation>()
+  const tabNavigation = useNavigation<HomeTabStackNavigation>()
   const rollover = useRollover()
 
   const adjustedMinutes: AdjustedMinutes = monthsReports
@@ -358,7 +360,7 @@ const MonthReport = ({
           {monthInFuture ? (
             <ActionButton
               onPress={() =>
-                navigation.navigate('PlanSchedule', { month, year })
+                tabNavigation.navigate('Schedule', { month, year })
               }
             >
               {i18n.t('createPlan')}
@@ -522,7 +524,7 @@ const MonthReport = ({
             <Button
               onPress={() =>
                 monthInFuture
-                  ? navigation.navigate('PlanSchedule', { month, year })
+                  ? tabNavigation.navigate('Schedule', { month, year })
                   : navigation.navigate('Add Time', {
                       date: moment().month(month).year(year).toISOString(),
                     })

@@ -17,6 +17,7 @@ describe('computeRecommendationInputsHash', () => {
     recurringPlanFingerprints: ['rp-1:weekly'],
     conversationDayKeys: ['2026-05-18'],
     excludedWeekdays: [0, 6] as number[],
+    meetingWeekdays: [3] as number[],
   }
 
   it('is stable for the same inputs', () => {
@@ -43,6 +44,22 @@ describe('computeRecommendationInputsHash', () => {
   it('changes when excluded weekdays change', () => {
     expect(computeRecommendationInputsHash(base)).not.toBe(
       computeRecommendationInputsHash({ ...base, excludedWeekdays: [0] })
+    )
+  })
+
+  it('changes when meeting weekdays change', () => {
+    expect(computeRecommendationInputsHash(base)).not.toBe(
+      computeRecommendationInputsHash({ ...base, meetingWeekdays: [2] })
+    )
+  })
+
+  it('hashes the same when meetingWeekdays is omitted vs set to []', () => {
+    const { meetingWeekdays: _omit, ...withoutMeeting } = base
+    expect(computeRecommendationInputsHash(withoutMeeting)).toBe(
+      computeRecommendationInputsHash({
+        ...withoutMeeting,
+        meetingWeekdays: [],
+      })
     )
   })
 

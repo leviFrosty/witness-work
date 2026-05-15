@@ -1,12 +1,15 @@
-import { Fragment, useCallback, useEffect, useMemo, useState } from 'react'
+import { Fragment, useCallback, useMemo, useState } from 'react'
 import { View } from 'react-native'
 import moment from 'moment'
+import { useNavigation } from '@react-navigation/native'
 
 import Text from '@/components/ui/MyText'
 import Button from '@/components/ui/Button'
+import IconButton from '@/components/ui/IconButton'
 import useTheme from '@/contexts/theme'
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
-import { faLightbulb } from '@fortawesome/free-solid-svg-icons'
+import { faGear, faLightbulb } from '@fortawesome/free-solid-svg-icons'
+import { RootStackNavigation } from '@/types/rootStack'
 
 import i18n, { TranslationKey } from '@/lib/locales'
 import {
@@ -39,6 +42,12 @@ type Props = {
   loggedAdjustedMinutes: number
   /** Projection result the parent already computed. */
   projection: ProjectedTotalResult
+  /**
+   * When true, omit the top divider/padding the section uses to separate itself
+   * from sibling content above. Use when the section is the sole occupant of
+   * its container (e.g. its own Card).
+   */
+  standalone?: boolean
 }
 
 const ASSISTANT_VISIBLE_STATES: ReadonlySet<ProjectedTotalState> = new Set([
@@ -54,10 +63,13 @@ const AssistantSection = ({
   monthlyGoalHours,
   loggedAdjustedMinutes,
   projection,
+  standalone = false,
 }: Props) => {
   const theme = useTheme()
+  const navigation = useNavigation<RootStackNavigation>()
   const {
     excludedWeekdays,
+    meetingWeekdays,
     assistantHistory,
     hasDismissedRecommendationHash,
     hasSeenAvailabilityOnboarding,
@@ -99,6 +111,7 @@ const AssistantSection = ({
       recurringPlans,
       conversations,
       excludedWeekdays,
+      meetingWeekdays,
       assistantHistory,
       minutesLoggedInPriorDays,
     })
@@ -113,6 +126,7 @@ const AssistantSection = ({
     recurringPlans,
     conversations,
     excludedWeekdays,
+    meetingWeekdays,
     assistantHistory,
     minutesLoggedInPriorDays,
   ])
@@ -140,6 +154,7 @@ const AssistantSection = ({
           ])
           .filter((s): s is string => s !== null),
         excludedWeekdays,
+        meetingWeekdays,
       }),
     [
       loggedAdjustedMinutes,
@@ -147,6 +162,7 @@ const AssistantSection = ({
       recurringPlans,
       conversations,
       excludedWeekdays,
+      meetingWeekdays,
     ]
   )
 
@@ -157,15 +173,9 @@ const AssistantSection = ({
   const [previewOpen, setPreviewOpen] = useState(false)
   const [availabilityOpen, setAvailabilityOpen] = useState(false)
 
-  // Just-in-time onboarding: the first time we'd surface a recommendation,
-  // ask the user about excluded weekdays so the proposal is actually
-  // actionable. The sheet flips `hasSeenAvailabilityOnboarding` on Save or
-  // Skip so this fires at most once.
-  useEffect(() => {
-    if (!hasSeenAvailabilityOnboarding && recommendation !== null) {
-      setAvailabilityOpen(true)
-    }
-  }, [hasSeenAvailabilityOnboarding, recommendation])
+  const openPlanPreferences = useCallback(() => {
+    navigation.navigate('PreferencesPlans')
+  }, [navigation])
 
   const handleDismiss = useCallback(() => {
     if (!recommendation) return
@@ -216,11 +226,15 @@ const AssistantSection = ({
     if (!justAccepted) return null
     return (
       <View
-        style={{
-          paddingTop: 12,
-          borderTopWidth: 1,
-          borderTopColor: theme.colors.border,
-        }}
+        style={
+          standalone
+            ? {}
+            : {
+                paddingTop: 12,
+                borderTopWidth: 1,
+                borderTopColor: theme.colors.border,
+              }
+        }
       >
         <Text
           style={{
@@ -236,6 +250,70 @@ const AssistantSection = ({
   }
 
   if (isDismissedForCurrentInputs) return null
+
+  // Pre-onboarding: show an explicit CTA instead of instantly prompting for
+  // unavailable days. The user opts in by tapping "Set up Assistant".
+  if (!hasSeenAvailabilityOnboarding) {
+    return (
+      <View
+        style={{
+          gap: 10,
+          ...(standalone
+            ? {}
+            : {
+                paddingTop: 12,
+                borderTopWidth: 1,
+                borderTopColor: theme.colors.border,
+              }),
+        }}
+      >
+        <AssistantHeader onPressSettings={openPlanPreferences} />
+        <Text
+          style={{
+            fontFamily: theme.fonts.semiBold,
+            fontSize: theme.fontSize('sm'),
+            color: theme.colors.text,
+          }}
+        >
+          {i18n.t('assistant.intro.title')}
+        </Text>
+        <Text
+          style={{
+            fontSize: theme.fontSize('xs'),
+            color: theme.colors.textAlt,
+            lineHeight: theme.fontSize('xs') * 1.45,
+          }}
+        >
+          {i18n.t('assistant.intro.body')}
+        </Text>
+        <Button
+          onPress={() => setAvailabilityOpen(true)}
+          style={{
+            alignItems: 'center',
+            backgroundColor: theme.colors.accent,
+            paddingVertical: 10,
+            borderRadius: theme.numbers.borderRadiusSm,
+            marginTop: 4,
+          }}
+        >
+          <Text
+            style={{
+              color: theme.colors.textInverse,
+              fontFamily: theme.fonts.semiBold,
+              fontSize: theme.fontSize('sm'),
+            }}
+          >
+            {i18n.t('assistant.intro.cta')}
+          </Text>
+        </Button>
+
+        <AvailabilityOnboardingSheet
+          open={availabilityOpen}
+          onOpenChange={setAvailabilityOpen}
+        />
+      </View>
+    )
+  }
 
   const headlineText = i18n.t(
     `assistant.headline.${recommendation.shape}` as TranslationKey,
@@ -260,30 +338,17 @@ const AssistantSection = ({
   return (
     <View
       style={{
-        paddingTop: 12,
-        borderTopWidth: 1,
-        borderTopColor: theme.colors.border,
         gap: 10,
+        ...(standalone
+          ? {}
+          : {
+              paddingTop: 12,
+              borderTopWidth: 1,
+              borderTopColor: theme.colors.border,
+            }),
       }}
     >
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-        <FontAwesomeIcon
-          icon={faLightbulb}
-          size={12}
-          style={{ color: theme.colors.warn }}
-        />
-        <Text
-          style={{
-            fontFamily: theme.fonts.semiBold,
-            fontSize: theme.fontSize('xs'),
-            color: theme.colors.textAlt,
-            textTransform: 'uppercase',
-            letterSpacing: 0.5,
-          }}
-        >
-          {i18n.t('assistant.label')}
-        </Text>
-      </View>
+      <AssistantHeader onPressSettings={openPlanPreferences} />
 
       <Text
         style={{
@@ -375,6 +440,48 @@ const AssistantSection = ({
       <AvailabilityOnboardingSheet
         open={availabilityOpen}
         onOpenChange={setAvailabilityOpen}
+      />
+    </View>
+  )
+}
+
+const AssistantHeader = ({
+  onPressSettings,
+}: {
+  onPressSettings: () => void
+}) => {
+  const theme = useTheme()
+  return (
+    <View
+      style={{
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 8,
+      }}
+    >
+      <FontAwesomeIcon
+        icon={faLightbulb}
+        size={12}
+        style={{ color: theme.colors.warn }}
+      />
+      <Text
+        style={{
+          fontFamily: theme.fonts.semiBold,
+          fontSize: theme.fontSize('xs'),
+          color: theme.colors.textAlt,
+          textTransform: 'uppercase',
+          letterSpacing: 0.5,
+          flex: 1,
+        }}
+      >
+        {i18n.t('assistant.label')}
+      </Text>
+      <IconButton
+        icon={faGear}
+        size='xs'
+        color={theme.colors.textAlt}
+        onPress={onPressSettings}
+        accessibilityLabel={i18n.t('assistant.settingsA11y')}
       />
     </View>
   )

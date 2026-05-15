@@ -81,8 +81,31 @@ const SelectedDateSheet: React.FC<Props> = ({
               }}
             />
           </KeyboardAwareScrollView>
-          <XView style={{ maxHeight: 70 }}>
-            <View style={{ flexGrow: 1 }}>
+          <XView style={{ maxHeight: 70, gap: 8 }}>
+            <Button
+              noTransform
+              onPress={() => {
+                setSheet({
+                  ...sheet,
+                  open: false,
+                })
+                onAddTime?.()
+              }}
+              style={{
+                paddingHorizontal: 20,
+                borderColor: theme.colors.border,
+                backgroundColor: theme.colors.background,
+                borderWidth: 1,
+                borderRadius: theme.numbers.borderRadiusSm,
+                height: '100%',
+                flexShrink: 0,
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <Text style={{ textAlign: 'center' }}>{i18n.t('addTime')}</Text>
+            </Button>
+            <View style={{ flex: 1 }}>
               <ActionButton
                 noTransform
                 onPress={() => {
@@ -90,7 +113,7 @@ const SelectedDateSheet: React.FC<Props> = ({
                     ...sheet,
                     open: false,
                   })
-                  onAddTime?.()
+                  onPlanDay?.()
                 }}
               >
                 <Text
@@ -100,33 +123,10 @@ const SelectedDateSheet: React.FC<Props> = ({
                     fontFamily: theme.fonts.semiBold,
                   }}
                 >
-                  {i18n.t('addTime')}
+                  {i18n.t('planDay')}
                 </Text>
               </ActionButton>
             </View>
-            <Button
-              noTransform
-              onPress={() => {
-                setSheet({
-                  ...sheet,
-                  open: false,
-                })
-                onPlanDay?.()
-              }}
-              style={{
-                paddingHorizontal: 40,
-                borderColor: theme.colors.border,
-                backgroundColor: theme.colors.background,
-                borderWidth: 1,
-                borderRadius: theme.numbers.borderRadiusSm,
-                height: '100%',
-                flexGrow: 1,
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-            >
-              <Text style={{ textAlign: 'center' }}>{i18n.t('planDay')}</Text>
-            </Button>
           </XView>
         </View>
       </Sheet.Frame>

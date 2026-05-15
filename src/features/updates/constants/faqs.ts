@@ -179,6 +179,22 @@ export const FAQS: FAQEntry[] = [
     category: 'supporter',
   },
   {
+    id: 'stillFree',
+    category: 'supporter',
+  },
+  {
+    id: 'stopSupporting',
+    category: 'supporter',
+  },
+  {
+    id: 'acceptDonations',
+    category: 'supporter',
+  },
+  {
+    id: 'donationsUsedFor',
+    category: 'supporter',
+  },
+  {
     id: 'whatsNew',
     category: 'general',
     related: [33],

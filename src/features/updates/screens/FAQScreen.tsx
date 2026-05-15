@@ -1,4 +1,4 @@
-import { useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { Image, View, TextInput as RNTextInput, ScrollView } from 'react-native'
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
 import {
@@ -9,7 +9,7 @@ import {
   faThumbtack,
 } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
-import { useNavigation } from '@react-navigation/native'
+import { RouteProp, useNavigation, useRoute } from '@react-navigation/native'
 
 import Header from '@/components/ui/layout/Header'
 import Wrapper from '@/components/ui/layout/Wrapper'
@@ -30,6 +30,7 @@ import {
   FAQEntry,
   FAQCategory,
 } from '@/features/updates/constants/faqs'
+import { RootStackParamList } from '@/types/rootStack'
 
 const normalize = (s: string) => s.toLowerCase().trim()
 
@@ -110,8 +111,36 @@ const FAQItem = ({ entry }: { entry: FAQEntry }) => {
 const FAQScreen = () => {
   const theme = useTheme()
   const navigation = useNavigation()
+  const route = useRoute<RouteProp<RootStackParamList, 'FAQ'>>()
+  const requestedCategory = route.params?.scrollToCategory
+  const targetCategory = (FAQ_CATEGORIES as readonly string[]).includes(
+    requestedCategory ?? ''
+  )
+    ? (requestedCategory as FAQCategory)
+    : undefined
   const scrollRef = useRef<ScrollView>(null)
+  const categoryRefs = useRef<Partial<Record<FAQCategory, View | null>>>({})
+  const didScrollRef = useRef(false)
   const [search, setSearch] = useState('')
+
+  const scrollToTargetCategory = useCallback(() => {
+    if (didScrollRef.current) return
+    if (!targetCategory) return
+    const node = categoryRefs.current[targetCategory]
+    const scroll = scrollRef.current
+    if (!node || !scroll) return
+    didScrollRef.current = true
+    // measureLayout reports y relative to the inner ScrollView, which is what
+    // scrollTo expects. The 12px offset gives the category title a little
+    // breathing room above the screen edge.
+    node.measureLayout(
+      scroll as unknown as number,
+      (_x, y) => scroll.scrollTo({ y: Math.max(0, y - 12), animated: true }),
+      () => {
+        didScrollRef.current = false
+      }
+    )
+  }, [targetCategory])
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -291,7 +320,16 @@ const FAQScreen = () => {
           <View style={{ gap: 20 }}>
             <SectionTitle text={i18n.t('faq_allHeader')} />
             {grouped.map(({ category, entries }) => (
-              <View key={category} style={{ gap: 8 }}>
+              <View
+                key={category}
+                style={{ gap: 8 }}
+                ref={(node) => {
+                  categoryRefs.current[category] = node
+                }}
+                onLayout={() => {
+                  if (category === targetCategory) scrollToTargetCategory()
+                }}
+              >
                 <Text
                   style={{
                     paddingHorizontal: 20,

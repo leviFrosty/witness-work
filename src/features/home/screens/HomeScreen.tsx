@@ -1,5 +1,5 @@
 import useTheme from '@/contexts/theme'
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import useConversations from '@/stores/conversationStore'
 import {
   overdueFollowUpConversations,
@@ -38,6 +38,10 @@ import SupporterNudgeCard from '@/features/supporter/components/SupporterNudgeCa
 import DidYouKnowTipCard from '@/features/updates/components/DidYouKnowTipCard'
 import ContributionGraph from '@/features/profile/components/ContributionGraph'
 import useDailyMinutes from '@/features/profile/hooks/useDailyMinutes'
+import SelectedDateSheet, {
+  SelectedDateSheetState,
+} from '@/features/service-reports/components/SelectedDateSheet'
+import { ServiceReport } from '@/types/serviceReport'
 import useIsSupporter from '@/hooks/useIsSupporter'
 import { useServiceReport } from '@/stores/serviceReport'
 import { isSupporterNudgeEligible } from '@/features/supporter/lib/supporterNudge'
@@ -51,6 +55,91 @@ import { Fragment } from 'react'
 const ContributionGraphSection = () => {
   const theme = useTheme()
   const daily = useDailyMinutes()
+  const { serviceReports } = useServiceReport()
+  const rootNavigation = useNavigation<RootStackNavigation>()
+
+  const [sheet, setSheet] = useState<SelectedDateSheetState>({
+    open: false,
+    date: new Date(),
+  })
+
+  // Reports for the selected day's month — `SelectedDateSheet` (→
+  // `DayHistoryView`) filters down to the day itself.
+  const sheetMonthsReports = useMemo(
+    () =>
+      getMonthsReports(
+        serviceReports,
+        sheet.date.getMonth(),
+        sheet.date.getFullYear()
+      ),
+    [serviceReports, sheet.date]
+  )
+
+  // Same pattern as `AllDaysList`: queue navigation until the sheet animates
+  // closed, then fire on the next tick so the dismissal isn't fighting a
+  // route push.
+  const pendingNavigation = useRef<(() => void) | null>(null)
+
+  useEffect(() => {
+    if (!sheet.open && pendingNavigation.current) {
+      const cb = pendingNavigation.current
+      pendingNavigation.current = null
+      setTimeout(cb, 125)
+    }
+  }, [sheet.open])
+
+  const handleDayPress = useCallback((date: Date) => {
+    setSheet({ open: true, date })
+  }, [])
+
+  const handleAddTime = useCallback(() => {
+    pendingNavigation.current = () => {
+      rootNavigation.navigate('Add Time', { date: sheet.date.toISOString() })
+    }
+  }, [rootNavigation, sheet.date])
+
+  const handlePlanDay = useCallback(() => {
+    pendingNavigation.current = () => {
+      rootNavigation.navigate('PlanDay', { date: sheet.date.toISOString() })
+    }
+  }, [rootNavigation, sheet.date])
+
+  const handleNavigateToPlanDay = useCallback(
+    (existingDayPlanId: string) => {
+      pendingNavigation.current = () => {
+        rootNavigation.navigate('PlanDay', {
+          date: sheet.date.toISOString(),
+          existingDayPlanId,
+        })
+      }
+    },
+    [rootNavigation, sheet.date]
+  )
+
+  const handleNavigateToRecurringPlan = useCallback(
+    (existingRecurringPlanId: string, recurringPlanDate: string) => {
+      pendingNavigation.current = () => {
+        rootNavigation.navigate('PlanDay', {
+          date: sheet.date.toISOString(),
+          existingRecurringPlanId,
+          recurringPlanDate,
+        })
+      }
+    },
+    [rootNavigation, sheet.date]
+  )
+
+  const handleEditTimeReport = useCallback(
+    (report: ServiceReport) => {
+      pendingNavigation.current = () => {
+        rootNavigation.navigate('Add Time', {
+          existingReport: JSON.stringify(report),
+        })
+      }
+    },
+    [rootNavigation]
+  )
+
   return (
     <View style={{ gap: 10 }}>
       <Text
@@ -62,7 +151,17 @@ const ContributionGraphSection = () => {
       >
         {i18n.t('profileActivityTitle')}
       </Text>
-      <ContributionGraph daily={daily} />
+      <ContributionGraph daily={daily} onDayPress={handleDayPress} />
+      <SelectedDateSheet
+        sheet={sheet}
+        setSheet={setSheet}
+        thisMonthsReports={sheetMonthsReports}
+        onAddTime={handleAddTime}
+        onPlanDay={handlePlanDay}
+        onNavigateToPlanDay={handleNavigateToPlanDay}
+        onNavigateToRecurringPlan={handleNavigateToRecurringPlan}
+        onEditTimeReport={handleEditTimeReport}
+      />
     </View>
   )
 }

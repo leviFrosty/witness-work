@@ -29,7 +29,7 @@ import {
 } from '@fortawesome/free-solid-svg-icons'
 import type { IconDefinition } from '@fortawesome/fontawesome-svg-core'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import ActionButton from '@/components/ui/ActionButton'
+import SupporterCtaButton from '@/features/supporter/components/SupporterCtaButton'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import useCustomer from '@/hooks/useCustomer'
 import { RouteProp, useNavigation, useRoute } from '@react-navigation/native'
@@ -821,7 +821,9 @@ const PaywallScreen = () => {
         </View>
 
         <Button
-          onPress={() => navigation.navigate('Donate')}
+          onPress={() =>
+            navigation.navigate('FAQ', { scrollToCategory: 'supporter' })
+          }
           style={{ alignSelf: 'center', paddingVertical: 10 }}
         >
           <Text
@@ -862,17 +864,26 @@ const PaywallScreen = () => {
           paddingBottom: insets.bottom + 10,
         }}
       >
-        <ActionButton disabled={!selectedPackage} onPress={handlePurchase}>
+        <SupporterCtaButton
+          disabled={!selectedPackage}
+          onPress={handlePurchase}
+          shimmer={tier === 'supporter'}
+        >
           <Text
             style={{
               fontSize: theme.fontSize('lg'),
-              color: theme.colors.textInverse,
+              // Gold supporter fill needs a dark foreground in both themes —
+              // textInverse flips to white in light mode and fails contrast.
+              // The tip tier keeps the green accent fill, where textInverse is
+              // already the right call.
+              color:
+                tier === 'supporter' ? '#1A1A1A' : theme.colors.textInverse,
               fontFamily: theme.fonts.bold,
             }}
           >
             {ctaLabel}
           </Text>
-        </ActionButton>
+        </SupporterCtaButton>
       </View>
     </Wrapper>
   )

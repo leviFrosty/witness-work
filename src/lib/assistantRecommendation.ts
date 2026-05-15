@@ -57,6 +57,17 @@ export type EngineParams = {
   tirednessLookbackDays: number
   tirednessThresholdHours: number
   recurringMinHorizonDays: number
+  /**
+   * Soft per-day cap for days the user marked as meeting days (Kingdom Hall
+   * meetings). Used when a meeting day is unavoidable but still preferable to
+   * keep light.
+   */
+  meetingDaySoftMaxHoursPerDay: number
+  /**
+   * Absolute per-day cap for meeting days. Even in best-effort/unreachable
+   * paths the engine will not propose more than this on a meeting day.
+   */
+  meetingDayAbsoluteMaxHoursPerDay: number
 }
 
 export const DEFAULT_ENGINE_PARAMS: EngineParams = {
@@ -69,6 +80,8 @@ export const DEFAULT_ENGINE_PARAMS: EngineParams = {
   tirednessLookbackDays: 3,
   tirednessThresholdHours: 12,
   recurringMinHorizonDays: 14,
+  meetingDaySoftMaxHoursPerDay: 2,
+  meetingDayAbsoluteMaxHoursPerDay: 3,
 }
 
 export type EngineInput = {
@@ -81,6 +94,14 @@ export type EngineInput = {
   recurringPlans: RecurringPlan[]
   conversations: Conversation[]
   excludedWeekdays: number[]
+  /**
+   * Weekdays the user has Kingdom Hall meetings on. The engine prefers
+   * non-meeting days, and when it has to use a meeting day it caps the proposed
+   * session at the meeting-day cap. A weekday present in both
+   * `excludedWeekdays` and `meetingWeekdays` is treated as excluded (stricter
+   * wins).
+   */
+  meetingWeekdays?: number[]
   assistantHistory: AssistantEvent[]
   /**
    * Total minutes logged within `tirednessLookbackDays` of `today` (not
@@ -134,14 +155,25 @@ const futurePlannedMinutes = (
   return sum
 }
 
+type EligibleDay = {
+  m: moment.Moment
+  /**
+   * True when the user marked this weekday as a Kingdom Hall meeting day. Such
+   * days are still eligible but are de-prioritised by the builders and capped
+   * lower when used.
+   */
+  isMeetingDay: boolean
+}
+
 const eligibleDays = (
   year: number,
   month: number,
   today: Date,
   excludedWeekdays: number[],
+  meetingWeekdays: number[],
   dayPlans: DayPlan[],
   recurringPlans: RecurringPlan[]
-): moment.Moment[] => {
+): EligibleDay[] => {
   const start = moment.utc({ year, month, day: 1 })
   const end = start.clone().endOf('month')
   const todayDay = momentStoredDate(normalizeDateForStorage(today))
@@ -151,15 +183,22 @@ const eligibleDays = (
     dayPlans.map((p) => momentStoredDate(p.date).format('YYYY-MM-DD'))
   )
 
-  const days: moment.Moment[] = []
+  const days: EligibleDay[] = []
   while (cursor.isSameOrBefore(end, 'day')) {
-    const isExcluded = excludedWeekdays.includes(cursor.day())
+    const weekday = cursor.day()
+    const isExcluded = excludedWeekdays.includes(weekday)
     const key = cursor.format('YYYY-MM-DD')
     const hasDayPlan = dayPlanKeys.has(key)
     const hasRecurring =
       getPlansIntersectingDay(cursor.toDate(), recurringPlans).length > 0
     if (!isExcluded && !hasDayPlan && !hasRecurring) {
-      days.push(cursor.clone())
+      days.push({
+        m: cursor.clone(),
+        // Excluded already filtered out — meeting flag only matters for the
+        // days that survived. This is also why `meetingWeekdays ∩ excludedWeekdays`
+        // never reaches the engine: excluded wins by virtue of filtering first.
+        isMeetingDay: meetingWeekdays.includes(weekday),
+      })
     }
     cursor.add(1, 'day')
   }
@@ -168,7 +207,14 @@ const eligibleDays = (
 
 type BuildContext = {
   gapMinutes: number
-  eligible: moment.Moment[]
+  /**
+   * All eligible days from today through end-of-month (no DayPlan, no
+   * recurring, not excluded). The horizon always extends to month-end —
+   * proposed days can sit before or after the user's other commitments. Meeting
+   * days remain in the pool but carry `isMeetingDay = true` so builders can
+   * prefer non-meeting days and cap meeting-day sessions lower.
+   */
+  eligible: EligibleDay[]
   params: EngineParams
   conversationDayKeys: Set<string>
   tirednessTriggered: boolean
@@ -177,17 +223,27 @@ type BuildContext = {
 const buildConcentrated = (ctx: BuildContext): Recommendation | null => {
   const { gapMinutes, eligible, params, tirednessTriggered } = ctx
   const absoluteCapMinutes = params.absoluteMaxHoursPerDay * 60
+  const meetingAbsoluteCapMinutes = params.meetingDayAbsoluteMaxHoursPerDay * 60
   if (gapMinutes > absoluteCapMinutes) return null
-  const pool = tirednessTriggered ? eligible.slice(1) : eligible
-  if (pool.length === 0) return null
-  const day = pool[0]
+  if (eligible.length === 0) return null
+  // Prefer the last non-meeting day so the user gets breathing room without
+  // doubling-up on a Kingdom Hall day. Fall back to the last meeting day only
+  // when the gap fits under the meeting-day cap.
+  const lastNonMeeting = [...eligible].reverse().find((d) => !d.isMeetingDay)
+  let day: EligibleDay
+  if (lastNonMeeting) {
+    day = lastNonMeeting
+  } else {
+    if (gapMinutes > meetingAbsoluteCapMinutes) return null
+    day = eligible[eligible.length - 1]
+  }
   const hours = Math.ceil(gapMinutes / 60)
   return {
     shape: 'concentrated',
-    plans: [{ date: day.toDate(), minutes: gapMinutes }],
+    plans: [{ date: day.m.toDate(), minutes: gapMinutes }],
     headline: {
       code: 'shape.concentrated',
-      values: { hours, day: day.format('YYYY-MM-DD') },
+      values: { hours, day: day.m.format('YYYY-MM-DD') },
     },
     rationale: {
       code: tirednessTriggered
@@ -200,54 +256,190 @@ const buildConcentrated = (ctx: BuildContext): Recommendation | null => {
 
 const buildDistributed = (ctx: BuildContext): Recommendation | null => {
   const { gapMinutes, eligible, params, conversationDayKeys } = ctx
-  const softCapMinutes = params.softMaxHoursPerDay * 60
   const stretchCapMinutes = params.stretchMaxHoursPerDay * 60
-  const fitsAtSoftCap = gapMinutes <= eligible.length * softCapMinutes
+  const meetingSoftCapMinutes = params.meetingDaySoftMaxHoursPerDay * 60
+  const meetingAbsoluteCapMinutes = params.meetingDayAbsoluteMaxHoursPerDay * 60
+  if (eligible.length === 0) return null
 
-  const slotMinutes = fitsAtSoftCap ? softCapMinutes : stretchCapMinutes
-  const hoursPerSlot = fitsAtSoftCap
-    ? params.softMaxHoursPerDay
-    : params.stretchMaxHoursPerDay
-  const nSlots = fitsAtSoftCap
-    ? Math.ceil(gapMinutes / slotMinutes)
-    : eligible.length
+  const nonMeetingPool = eligible.filter((d) => !d.isMeetingDay)
+  const meetingPool = eligible.filter((d) => d.isMeetingDay)
 
-  const conversationDays = eligible.filter((d) =>
-    conversationDayKeys.has(d.format('YYYY-MM-DD'))
+  // Step 1: prefer non-meeting days. If the gap fits at stretchCap using only
+  // non-meeting days, run the standard distributed algorithm against that
+  // pool — meeting days are simply not proposed.
+  const minDaysAtStretch = Math.max(
+    2,
+    Math.ceil(gapMinutes / stretchCapMinutes)
   )
-  const nonConversationDays = eligible.filter(
-    (d) => !conversationDayKeys.has(d.format('YYYY-MM-DD'))
+  if (nonMeetingPool.length >= minDaysAtStretch) {
+    return distributeAcrossNonMeetingPool(
+      nonMeetingPool,
+      gapMinutes,
+      stretchCapMinutes,
+      conversationDayKeys
+    )
+  }
+
+  // Step 2: non-meeting capacity alone is insufficient. Mix in meeting days at
+  // the meeting soft-cap. Each non-meeting day still carries stretchCap; each
+  // meeting day carries meetingSoftCap (best-effort fallback uses
+  // meetingAbsoluteCap).
+  const nonMeetingCapacity = nonMeetingPool.length * stretchCapMinutes
+  const remainderForMeeting = Math.max(0, gapMinutes - nonMeetingCapacity)
+  const meetingDaysNeeded = Math.ceil(
+    remainderForMeeting / meetingSoftCapMinutes
+  )
+  const meetingDaysAvailable = meetingPool.length
+
+  if (meetingDaysNeeded <= meetingDaysAvailable) {
+    // Hybrid path that *does* close the gap: non-meeting at stretchCap,
+    // meeting days at meetingSoftCap (last meeting day absorbs the remainder).
+    const chosenNonMeeting = pickEvenlySpacedDays(
+      nonMeetingPool,
+      nonMeetingPool.length,
+      true
+    )
+    const chosenMeeting = pickEvenlySpacedDays(
+      meetingPool,
+      meetingDaysNeeded,
+      true
+    )
+    const chosen = [...chosenNonMeeting, ...chosenMeeting].sort((a, b) =>
+      a.m.isBefore(b.m) ? -1 : 1
+    )
+    const nSlots = chosen.length
+    const totalNonMeeting = chosenNonMeeting.length * stretchCapMinutes
+    const remainderOnMeeting = Math.max(0, gapMinutes - totalNonMeeting)
+    const baseMeetingMinutes =
+      meetingDaysNeeded > 0
+        ? Math.min(
+            meetingAbsoluteCapMinutes,
+            Math.ceil(remainderOnMeeting / meetingDaysNeeded / 60) * 60
+          )
+        : 0
+    const lastMeetingIdx = chosen.reduce(
+      (acc, d, i) => (d.isMeetingDay ? i : acc),
+      -1
+    )
+    const plans: ProposedDayPlan[] = chosen.map((d, i) => {
+      if (!d.isMeetingDay) {
+        return { date: d.m.toDate(), minutes: stretchCapMinutes }
+      }
+      if (i === lastMeetingIdx) {
+        // Last meeting day absorbs any remainder so the total closes exactly,
+        // bounded by the meeting absolute cap.
+        const meetingTotalAllocatedSoFar =
+          (meetingDaysNeeded - 1) * baseMeetingMinutes
+        const remaining = Math.max(
+          0,
+          gapMinutes - totalNonMeeting - meetingTotalAllocatedSoFar
+        )
+        return {
+          date: d.m.toDate(),
+          minutes: Math.min(meetingAbsoluteCapMinutes, Math.max(60, remaining)),
+        }
+      }
+      return { date: d.m.toDate(), minutes: baseMeetingMinutes }
+    })
+    const hoursAvg = Math.round(gapMinutes / nSlots / 60)
+    return {
+      shape: 'distributed',
+      plans,
+      headline: {
+        code: 'shape.distributed',
+        values: { hours: Math.max(1, hoursAvg), days: nSlots },
+      },
+      rationale: {
+        code: 'spread_to_sustainable_pace',
+        values: { hours: Math.max(1, hoursAvg), days: nSlots },
+      },
+    }
+  }
+
+  // Step 3: even with meeting days at softCap we can't close the gap. Fall
+  // through to the original best-effort algorithm using every eligible day at
+  // its per-day max (stretchCap for non-meeting, meetingAbsoluteCap for
+  // meeting). Mirrors the previous unreachable-goal behaviour.
+  const nSlots = eligible.length
+  const chosen = eligible.slice().sort((a, b) => (a.m.isBefore(b.m) ? -1 : 1))
+  const plans: ProposedDayPlan[] = chosen.map((d) => ({
+    date: d.m.toDate(),
+    minutes: d.isMeetingDay ? meetingAbsoluteCapMinutes : stretchCapMinutes,
+  }))
+  const hoursPerSlot = Math.round(
+    plans.reduce((s, p) => s + p.minutes, 0) / nSlots / 60
+  )
+  return {
+    shape: 'distributed',
+    plans,
+    headline: {
+      code: 'shape.distributed',
+      values: { hours: Math.max(1, hoursPerSlot), days: nSlots },
+    },
+    rationale: {
+      code: 'best_effort_unreachable_goal',
+      values: { hours: Math.max(1, hoursPerSlot), days: nSlots },
+    },
+  }
+}
+
+const distributeAcrossNonMeetingPool = (
+  pool: EligibleDay[],
+  gapMinutes: number,
+  stretchCapMinutes: number,
+  conversationDayKeys: Set<string>
+): Recommendation | null => {
+  if (pool.length === 0) return null
+
+  const minDaysAtStretch = Math.max(
+    2,
+    Math.ceil(gapMinutes / stretchCapMinutes)
+  )
+  const fitsAtStretch = minDaysAtStretch <= pool.length
+  const nSlots = fitsAtStretch ? minDaysAtStretch : pool.length
+
+  const baseSlotMinutes = fitsAtStretch
+    ? Math.ceil(gapMinutes / nSlots / 60) * 60
+    : stretchCapMinutes
+  const hoursPerSlot = baseSlotMinutes / 60
+
+  const conversationDays = pool.filter((d) =>
+    conversationDayKeys.has(d.m.format('YYYY-MM-DD'))
+  )
+  const nonConversationDays = pool.filter(
+    (d) => !conversationDayKeys.has(d.m.format('YYYY-MM-DD'))
   )
 
   const layered =
-    fitsAtSoftCap &&
+    fitsAtStretch &&
     conversationDays.length > 0 &&
     conversationDays.length < nSlots
       ? [
           ...conversationDays.slice(0, nSlots),
           ...pickEvenlySpacedDays(
             nonConversationDays,
-            nSlots - Math.min(conversationDays.length, nSlots)
+            nSlots - Math.min(conversationDays.length, nSlots),
+            true
           ),
         ]
-      : fitsAtSoftCap && conversationDays.length >= nSlots
-        ? conversationDays.slice(0, nSlots)
-        : pickEvenlySpacedDays(eligible, nSlots)
-  const chosen = layered.slice().sort((a, b) => (a.isBefore(b) ? -1 : 1))
+      : fitsAtStretch && conversationDays.length >= nSlots
+        ? conversationDays.slice(-nSlots)
+        : pickEvenlySpacedDays(pool, nSlots, true)
+  const chosen = layered.slice().sort((a, b) => (a.m.isBefore(b.m) ? -1 : 1))
 
   const layeredOnConversation =
-    fitsAtSoftCap &&
-    chosen.some((d) => conversationDayKeys.has(d.format('YYYY-MM-DD')))
+    fitsAtStretch &&
+    chosen.some((d) => conversationDayKeys.has(d.m.format('YYYY-MM-DD')))
 
-  const plans = chosen.map((d, i) => ({
-    date: d.toDate(),
-    minutes:
-      !fitsAtSoftCap || i < nSlots - 1
-        ? slotMinutes
-        : Math.max(slotMinutes, gapMinutes - slotMinutes * (nSlots - 1)),
-  }))
+  const plans = chosen.map((d, i) => {
+    if (!fitsAtStretch)
+      return { date: d.m.toDate(), minutes: stretchCapMinutes }
+    if (i < nSlots - 1) return { date: d.m.toDate(), minutes: baseSlotMinutes }
+    const remainder = gapMinutes - baseSlotMinutes * (nSlots - 1)
+    return { date: d.m.toDate(), minutes: Math.max(60, remainder) }
+  })
 
-  const rationaleCode: ReasonCode = !fitsAtSoftCap
+  const rationaleCode: ReasonCode = !fitsAtStretch
     ? 'best_effort_unreachable_goal'
     : layeredOnConversation
       ? 'layered_on_conversation_days'
@@ -283,19 +475,26 @@ const buildRecurring = (ctx: BuildContext): Recommendation | null => {
   const perSessionMinutes = perSessionHours * 60
   if (perSessionMinutes > absoluteCapMinutes) return null
 
+  // Recurring asks the user to commit to the same weekdays week after week,
+  // so meeting weekdays are unsuitable — pulling the pattern from the
+  // non-meeting subset only. If the gap requires more distinct weekdays than
+  // non-meeting days provide, recurring isn't a good fit and we fall back to
+  // the other shapes.
+  const nonMeetingEligible = eligible.filter((d) => !d.isMeetingDay)
   const seenWeekday = new Set<number>()
   const patternWeekdays: number[] = []
-  for (const d of eligible) {
-    const wd = d.day()
+  for (const d of nonMeetingEligible) {
+    const wd = d.m.day()
     if (seenWeekday.has(wd)) continue
     seenWeekday.add(wd)
     patternWeekdays.push(wd)
     if (patternWeekdays.length >= weekdaysPerWeek) break
   }
+  if (patternWeekdays.length < weekdaysPerWeek) return null
 
   const plans: ProposedDayPlan[] = eligible
-    .filter((d) => patternWeekdays.includes(d.day()))
-    .map((d) => ({ date: d.toDate(), minutes: perSessionMinutes }))
+    .filter((d) => patternWeekdays.includes(d.m.day()))
+    .map((d) => ({ date: d.m.toDate(), minutes: perSessionMinutes }))
 
   const weekdayList = patternWeekdays
     .slice()
@@ -333,18 +532,32 @@ const hasNegativeHistory = (
   return dismissed > accepted
 }
 
+/**
+ * Distributed is preferred until the gap is large enough that the user is
+ * effectively committing to almost every other day — at that point a weekly
+ * rhythm ("every Mon/Wed/Fri") is easier to internalise than "pick 8 random
+ * days across the month."
+ */
+const RECURRING_MIN_REQUIRED_DAYS = 7
+
 const decisionTreeShape = (
   gapMinutes: number,
   eligibleLen: number,
   params: EngineParams
 ): RecommendationShape => {
-  const softCapMinutes = params.softMaxHoursPerDay * 60
   const stretchCapMinutes = params.stretchMaxHoursPerDay * 60
-  if (gapMinutes <= softCapMinutes * 2) return 'concentrated'
-  if (gapMinutes <= eligibleLen * softCapMinutes) return 'distributed'
+  // Concentrated only fires when the gap fits in a single comfortable day
+  // (≤ stretchCap). Beyond that, splitting into a couple of medium days is
+  // mentally lighter than asking for one heroic 8-hour push.
+  if (gapMinutes <= stretchCapMinutes) return 'concentrated'
+  const minDaysAtStretch = Math.max(
+    2,
+    Math.ceil(gapMinutes / stretchCapMinutes)
+  )
   if (
-    gapMinutes <= eligibleLen * stretchCapMinutes &&
-    eligibleLen >= params.recurringMinHorizonDays
+    minDaysAtStretch >= RECURRING_MIN_REQUIRED_DAYS &&
+    eligibleLen >= params.recurringMinHorizonDays &&
+    gapMinutes <= eligibleLen * stretchCapMinutes
   )
     return 'recurring'
   return 'distributed'
@@ -375,6 +588,7 @@ export const generateRecommendation = (
     input.month,
     input.today,
     input.excludedWeekdays,
+    input.meetingWeekdays ?? [],
     input.dayPlans,
     input.recurringPlans
   )
@@ -445,15 +659,20 @@ const collectConversationDayKeys = (
   return keys
 }
 
-const pickEvenlySpacedDays = (
-  days: moment.Moment[],
-  n: number
-): moment.Moment[] => {
+const pickEvenlySpacedDays = <T>(
+  days: T[],
+  n: number,
+  biasEnd: boolean = false
+): T[] => {
   if (n >= days.length) return days.slice(0, n)
   const step = days.length / n
-  const result: moment.Moment[] = []
+  // When biasEnd is true, anchor the last pick at the final day and walk
+  // backward at the same step. This pushes the entire selection toward the
+  // end of the window while preserving the gap between picks.
+  const shift = biasEnd ? days.length - 1 - (n - 1) * step : 0
+  const result: T[] = []
   for (let i = 0; i < n; i++) {
-    result.push(days[Math.floor(i * step)])
+    result.push(days[Math.floor(i * step + shift)])
   }
   return result
 }

@@ -15,6 +15,7 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated'
 import useTheme from '@/contexts/theme'
+import useGlassColorScheme from '@/hooks/useGlassColorScheme'
 
 export interface ButtonProps extends PressableProps {
   onPress?: (event: GestureResponderEvent) => void
@@ -149,6 +150,7 @@ const PlainButton: React.FC<PropsWithChildren<ButtonProps>> = ({
   ...props
 }) => {
   const { baseStyle, isGlass } = useButtonBaseStyle(variant, glassTint)
+  const resolvedGlassColorScheme = useGlassColorScheme()
   const glassBorderRadius = isGlass
     ? StyleSheet.flatten([baseStyle, style as ViewStyle]).borderRadius
     : undefined
@@ -182,7 +184,7 @@ const PlainButton: React.FC<PropsWithChildren<ButtonProps>> = ({
           glassEffectStyle='regular'
           tintColor={glassTint}
           isInteractive
-          colorScheme={glassColorScheme}
+          colorScheme={glassColorScheme ?? resolvedGlassColorScheme}
           style={[StyleSheet.absoluteFill, { borderRadius: glassBorderRadius }]}
         />
       )}
@@ -205,6 +207,7 @@ const AnimatedButton: React.FC<PropsWithChildren<ButtonProps>> = ({
   const translateY = useSharedValue(0)
   const opacity = useSharedValue(1)
   const { baseStyle, isGlass } = useButtonBaseStyle(variant, glassTint)
+  const resolvedGlassColorScheme = useGlassColorScheme()
   const glassBorderRadius = isGlass
     ? StyleSheet.flatten([baseStyle, style as ViewStyle]).borderRadius
     : undefined
@@ -257,7 +260,7 @@ const AnimatedButton: React.FC<PropsWithChildren<ButtonProps>> = ({
           glassEffectStyle='regular'
           tintColor={glassTint}
           isInteractive
-          colorScheme={glassColorScheme}
+          colorScheme={glassColorScheme ?? resolvedGlassColorScheme}
           style={[StyleSheet.absoluteFill, { borderRadius: glassBorderRadius }]}
         />
       )}

@@ -44,15 +44,21 @@ const AvailabilityOnboardingSheet = ({
   const theme = useTheme()
   const {
     excludedWeekdays,
+    meetingWeekdays,
     setExcludedWeekdays,
+    setMeetingWeekdays,
     setHasSeenAvailabilityOnboarding,
   } = usePreferences()
 
   const [selected, setSelected] = useState<number[]>(excludedWeekdays)
+  const [meetings, setMeetings] = useState<number[]>(meetingWeekdays)
 
   useEffect(() => {
-    if (open) setSelected(excludedWeekdays)
-  }, [open, excludedWeekdays])
+    if (open) {
+      setSelected(excludedWeekdays)
+      setMeetings(meetingWeekdays)
+    }
+  }, [open, excludedWeekdays, meetingWeekdays])
 
   const toggle = useCallback((index: number) => {
     setSelected((prev) =>
@@ -60,13 +66,24 @@ const AvailabilityOnboardingSheet = ({
     )
   }, [])
 
+  const toggleMeeting = useCallback((index: number) => {
+    // A weekday can be both a work day and a meeting day — the engine resolves
+    // overlap (excluded wins) so the UI doesn't need to enforce it.
+    setMeetings((prev) =>
+      prev.includes(index) ? prev.filter((d) => d !== index) : [...prev, index]
+    )
+  }, [])
+
   const handleSave = useCallback(() => {
     setExcludedWeekdays(selected.slice().sort((a, b) => a - b))
+    setMeetingWeekdays(meetings.slice().sort((a, b) => a - b))
     if (markSeenOnDismiss) setHasSeenAvailabilityOnboarding(true)
     onOpenChange(false)
   }, [
     selected,
+    meetings,
     setExcludedWeekdays,
+    setMeetingWeekdays,
     markSeenOnDismiss,
     setHasSeenAvailabilityOnboarding,
     onOpenChange,
@@ -83,7 +100,7 @@ const AvailabilityOnboardingSheet = ({
       onOpenChange={onOpenChange}
       dismissOnSnapToBottom
       modal
-      snapPoints={[55]}
+      snapPoints={[80]}
     >
       <Sheet.Handle />
       <Sheet.Overlay zIndex={100_000 - 1} />
@@ -153,6 +170,69 @@ const AvailabilityOnboardingSheet = ({
                       color: isSelected
                         ? theme.colors.accent
                         : theme.colors.text,
+                      fontSize: theme.fontSize('sm'),
+                    }}
+                  >
+                    {i18n.t(i18nKey)}
+                  </Text>
+                </Pressable>
+              )
+            })}
+          </View>
+
+          <View style={{ gap: 8 }}>
+            <Text
+              style={{
+                fontSize: theme.fontSize('md'),
+                fontFamily: theme.fonts.semiBold,
+              }}
+            >
+              {i18n.t('availability.onboarding.meetingDaysTitle')}
+            </Text>
+            <Text
+              style={{
+                color: theme.colors.textAlt,
+                fontSize: theme.fontSize('sm'),
+                lineHeight: theme.fontSize('sm') * 1.4,
+              }}
+            >
+              {i18n.t('availability.onboarding.meetingDaysBody')}
+            </Text>
+          </View>
+
+          <View
+            style={{
+              flexDirection: 'row',
+              flexWrap: 'wrap',
+              gap: 8,
+              paddingVertical: 4,
+            }}
+          >
+            {WEEKDAY_KEYS.map(({ index, i18nKey }) => {
+              const isMeeting = meetings.includes(index)
+              return (
+                <Pressable
+                  key={`meeting-${index}`}
+                  onPress={() => toggleMeeting(index)}
+                  style={{
+                    paddingVertical: 10,
+                    paddingHorizontal: 14,
+                    borderRadius: theme.numbers.borderRadiusSm,
+                    borderWidth: 1,
+                    borderColor: isMeeting
+                      ? theme.colors.warn
+                      : theme.colors.border,
+                    backgroundColor: isMeeting
+                      ? theme.colors.warnTranslucent
+                      : 'transparent',
+                  }}
+                  accessibilityRole='button'
+                  accessibilityState={{ selected: isMeeting }}
+                >
+                  <Text
+                    style={{
+                      fontFamily: theme.fonts.semiBold,
+                      color: isMeeting ? theme.colors.warn : theme.colors.text,
                       fontSize: theme.fontSize('sm'),
                     }}
                   >

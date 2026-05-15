@@ -23,18 +23,29 @@ export default function CalendarHeader({
     <XView
       style={{
         justifyContent: 'space-between',
+        alignItems: 'flex-start',
         paddingBottom: 10,
         gap: 10,
       }}
     >
-      <Text
-        style={{
-          fontSize: theme.fontSize('xl'),
-          fontFamily: theme.fonts.semiBold,
-        }}
-      >
-        {i18n.t('schedule')}
-      </Text>
+      <View style={{ flexShrink: 1, gap: 2 }}>
+        <Text
+          style={{
+            fontSize: theme.fontSize('xl'),
+            fontFamily: theme.fonts.semiBold,
+          }}
+        >
+          {i18n.t('schedule')}
+        </Text>
+        <Text
+          style={{
+            color: theme.colors.textAlt,
+            fontSize: theme.fontSize('sm'),
+          }}
+        >
+          {i18n.t('tapDayToSchedule_description')}
+        </Text>
+      </View>
       {showToggle && (
         <View
           style={{

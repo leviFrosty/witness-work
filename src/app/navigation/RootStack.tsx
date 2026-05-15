@@ -14,7 +14,6 @@ import HomeTabStack from '@/app/navigation/HomeTabStack'
 import PreferencesScreen from '@/features/settings/screens/preferences/PreferencesScreen'
 import i18n from '@/lib/locales'
 import WhatsNewScreen from '@/features/updates/screens/WhatsNewScreen'
-import DonationInfoScreen from '@/features/supporter/screens/DonationInfoScreen'
 import PaywallScreen from '@/features/supporter/screens/PaywallScreen'
 import PaywallThankYouScreen from '@/features/supporter/screens/PaywallThankYouScreen'
 import ImportAndExportScreen from '@/features/settings/screens/ImportAndExportScreen'
@@ -31,7 +30,6 @@ import PreferencesiCloudScreen from '@/features/settings/screens/preferences/scr
 import PreferencesAppIconScreen from '@/features/settings/screens/preferences/screens/PreferencesAppIconScreen'
 import PreferencesCustomFieldsScreen from '@/features/settings/screens/preferences/screens/PreferencesCustomFieldsScreen'
 import RescheduleConversationScreen from '@/features/conversations/screens/RescheduleConversationScreen'
-import PlanScheduleScreen from '@/features/plans/screens/PlanScheduleScreen'
 import PlanDayScreen from '@/features/plans/screens/PlanDayScreen'
 import RolloverScreen from '@/features/service-reports/screens/RolloverScreen'
 import MilestoneShowcaseScreen from '@/features/milestones/screens/MilestoneShowcaseScreen'
@@ -142,13 +140,6 @@ const RootStackComponent = () => {
           }}
           name='Whats New'
           component={WhatsNewScreen}
-        />
-        <RootStack.Screen
-          options={{
-            header: () => <Header buttonType='back' title={''} />,
-          }}
-          name='Donate'
-          component={DonationInfoScreen}
         />
         <RootStack.Screen
           options={{
@@ -288,20 +279,6 @@ const RootStackComponent = () => {
           }}
           name='RescheduleConversation'
           component={RescheduleConversationScreen}
-        />
-        <RootStack.Screen
-          options={{
-            header: () => (
-              <Header
-                buttonType='back'
-                title={i18n.t('planSchedule')}
-                noInsets
-              />
-            ),
-            presentation: 'modal',
-          }}
-          name='PlanSchedule'
-          component={PlanScheduleScreen}
         />
         <RootStack.Screen
           options={({ route }) => {

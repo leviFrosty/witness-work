@@ -16,6 +16,7 @@ import {
 } from '@fortawesome/free-solid-svg-icons'
 
 import useTheme from '@/contexts/theme'
+import useGlassColorScheme from '@/hooks/useGlassColorScheme'
 import i18n, { TranslationKey } from '@/lib/locales'
 import IconButton from '@/components/ui/IconButton'
 import Text from '@/components/ui/MyText'
@@ -41,6 +42,7 @@ const TabBar = ({ state, descriptors, ...props }: BottomTabBarProps) => {
   const [sheetOpen, setSheetOpen] = useState(false)
   const theme = useTheme()
   const insets = useSafeAreaInsets()
+  const glassColorScheme = useGlassColorScheme()
   const isDark = theme.colors.background === '#121212'
 
   const renderTab = (route: (typeof state.routes)[number], index: number) => {
@@ -148,7 +150,12 @@ const TabBar = ({ state, descriptors, ...props }: BottomTabBarProps) => {
   )
 
   const mainPill = liquidGlass ? (
-    <GlassView key='main' glassEffectStyle='regular' style={pillShape}>
+    <GlassView
+      key='main'
+      glassEffectStyle='regular'
+      colorScheme={glassColorScheme}
+      style={pillShape}
+    >
       {tabsRow}
     </GlassView>
   ) : (
@@ -194,6 +201,7 @@ const TabBar = ({ state, descriptors, ...props }: BottomTabBarProps) => {
       key='accessory'
       glassEffectStyle='regular'
       tintColor={theme.colors.accent}
+      colorScheme={glassColorScheme}
       isInteractive
       style={accessoryShape}
     >

@@ -30,11 +30,17 @@ import AssistantSection from '@/components/AssistantSection'
 
 type Props = {
   scope: ProjectedTotalScope
+  /**
+   * When true, the planning Assistant is rendered inside the card. The Schedule
+   * screen opts in; Progress leaves it off so the card stays purely
+   * retrospective there.
+   */
+  showAssistant?: boolean
 }
 
 const formatHours = (minutes: number): string => `${_.round(minutes / 60, 1)}h`
 
-const ProjectedTotalCard = ({ scope }: Props) => {
+const ProjectedTotalCard = ({ scope, showAssistant = false }: Props) => {
   const theme = useTheme()
   const {
     monthlyGoalHours,
@@ -109,20 +115,18 @@ const ProjectedTotalCard = ({ scope }: Props) => {
   const overDisplay = formatHours(result.overMinutes)
 
   const hasPlanned = result.plannedMinutes > 0
-  // Special case from the plan: when there are no future plans, the
-  // "planned would put you at…" half is misleading. Swap to the explicit
-  // "No plans scheduled yet." line instead.
-  const useNoPlansCopy =
+  // When there are no future plans, the default status copy ("plans would
+  // put you at…") is misleading — drop it. The legend already shows 0h
+  // planned, so the user isn't missing information.
+  const hideStatus =
     !hasPlanned &&
     (result.state === 'reachable_gap' ||
       result.state === 'unreachable_gap' ||
       result.state === 'projected_over_goal')
 
-  const statusKey = useNoPlansCopy
-    ? 'projectedTotal.noPlansYet'
-    : (getStatusKey(result.state, tense) as TranslationKey)
+  const statusKey = getStatusKey(result.state, tense) as TranslationKey
 
-  const statusText = i18n.t(statusKey as TranslationKey, {
+  const statusText = i18n.t(statusKey, {
     period: periodLabel,
     projected: projectedDisplay,
     gap: gapDisplay,
@@ -244,32 +248,34 @@ const ProjectedTotalCard = ({ scope }: Props) => {
         </Text>
       </View>
 
-      <Text
-        style={{
-          fontSize: theme.fontSize('sm'),
-          color: theme.colors.text,
-          lineHeight: theme.fontSize('sm') * 1.4,
-        }}
-      >
-        {segments.map((s, i) => (
-          <Fragment key={i}>
-            <Text
-              style={
-                s.bold
-                  ? {
-                      fontFamily: theme.fonts.bold,
-                      fontSize: theme.fontSize('sm'),
-                    }
-                  : { fontSize: theme.fontSize('sm') }
-              }
-            >
-              {s.text}
-            </Text>
-          </Fragment>
-        ))}
-      </Text>
+      {result.state !== 'empty' && !hideStatus && (
+        <Text
+          style={{
+            fontSize: theme.fontSize('sm'),
+            color: theme.colors.text,
+            lineHeight: theme.fontSize('sm') * 1.4,
+          }}
+        >
+          {segments.map((s, i) => (
+            <Fragment key={i}>
+              <Text
+                style={
+                  s.bold
+                    ? {
+                        fontFamily: theme.fonts.bold,
+                        fontSize: theme.fontSize('sm'),
+                      }
+                    : { fontSize: theme.fontSize('sm') }
+                }
+              >
+                {s.text}
+              </Text>
+            </Fragment>
+          ))}
+        </Text>
+      )}
 
-      {scope.kind === 'month' && tense !== 'past' && (
+      {showAssistant && scope.kind === 'month' && tense !== 'past' && (
         <AssistantSection
           year={scope.year}
           month={scope.month}

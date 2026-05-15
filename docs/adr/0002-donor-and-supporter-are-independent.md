@@ -1,0 +1,3 @@
+# Donor and Supporter are independent statuses, not a tier ladder
+
+A User who makes a one-time **Tip** becomes a **Donor** (visible heart-icon recognition) but does NOT receive **Supporter** features (iCloud Sync, personalization). A User can be Donor, Supporter, both, or neither. We considered collapsing Tips into the Supporter tier — i.e., a one-time payment grants temporary Supporter status — and rejected it because the donation framing is intentional: Tips are gratitude, not a unit purchase. Conflating them would coerce tip-givers into a perceived purchase relationship and erode the distinction between "I want to say thanks" and "I want the gated features."

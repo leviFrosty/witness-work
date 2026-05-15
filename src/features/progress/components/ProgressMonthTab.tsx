@@ -43,44 +43,46 @@ const ProgressMonthTab = ({
   )
 
   return (
-    <KeyboardAwareScrollView
-      contentContainerStyle={{
-        paddingTop: 15,
-        paddingBottom: insets.bottom + 100,
-        gap: 24,
-      }}
+    <SwipeMonthNavigator
+      onSwipeForward={onSwipeForward}
+      onSwipeBack={onSwipeBack}
+      style={{ flex: 1 }}
     >
-      <SwipeMonthNavigator
-        onSwipeForward={onSwipeForward}
-        onSwipeBack={onSwipeBack}
-        style={{ paddingHorizontal: 15, paddingBottom: 20, gap: 12 }}
+      <KeyboardAwareScrollView
+        contentContainerStyle={{
+          paddingTop: 15,
+          paddingBottom: insets.bottom + 100,
+          gap: 24,
+        }}
       >
-        <MonthReport
-          month={month}
-          year={year}
-          monthsReports={thisMonthsReports}
-          showReportButton
-          hideTitle
-        />
-        <ProjectedTotalCard scope={{ kind: 'month', month, year }} />
-      </SwipeMonthNavigator>
+        <View style={{ paddingHorizontal: 15, paddingBottom: 20, gap: 12 }}>
+          <MonthReport
+            month={month}
+            year={year}
+            monthsReports={thisMonthsReports}
+            showReportButton
+            hideTitle
+          />
+          <ProjectedTotalCard scope={{ kind: 'month', month, year }} />
+        </View>
 
-      <View style={{ gap: 8 }}>
-        <Text
-          style={{
-            fontFamily: theme.fonts.semiBold,
-            color: theme.colors.textAlt,
-            fontSize: theme.fontSize('sm'),
-            textTransform: 'uppercase',
-            letterSpacing: 0.5,
-            paddingHorizontal: 15,
-          }}
-        >
-          {i18n.t('allDays')}
-        </Text>
-        <AllDaysList month={month} year={year} />
-      </View>
-    </KeyboardAwareScrollView>
+        <View style={{ gap: 8 }}>
+          <Text
+            style={{
+              fontFamily: theme.fonts.semiBold,
+              color: theme.colors.textAlt,
+              fontSize: theme.fontSize('sm'),
+              textTransform: 'uppercase',
+              letterSpacing: 0.5,
+              paddingHorizontal: 15,
+            }}
+          >
+            {i18n.t('allDays')}
+          </Text>
+          <AllDaysList month={month} year={year} />
+        </View>
+      </KeyboardAwareScrollView>
+    </SwipeMonthNavigator>
   )
 }
 

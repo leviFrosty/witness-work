@@ -65,7 +65,8 @@ const ContactsStatsHeader: React.FC<ContactsStatsHeaderProps> = ({
       style={{
         paddingVertical: 16,
         paddingHorizontal: 16,
-        backgroundColor: 'rgba(0,0,0,0.25)',
+        backgroundColor: theme.colors.background,
+        borderColor: theme.colors.border,
       }}
     >
       <View

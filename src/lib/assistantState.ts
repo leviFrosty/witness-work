@@ -6,6 +6,7 @@ export type RecommendationInputsHashInput = {
   recurringPlanFingerprints: string[]
   conversationDayKeys: string[]
   excludedWeekdays: number[]
+  meetingWeekdays?: number[]
 }
 
 /**
@@ -24,6 +25,10 @@ export const computeRecommendationInputsHash = (
     input.recurringPlanFingerprints.slice().sort().join('|'),
     input.conversationDayKeys.slice().sort().join('|'),
     input.excludedWeekdays
+      .slice()
+      .sort((a, b) => a - b)
+      .join(','),
+    (input.meetingWeekdays ?? [])
       .slice()
       .sort((a, b) => a - b)
       .join(','),

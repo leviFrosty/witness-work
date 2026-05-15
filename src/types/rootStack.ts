@@ -27,7 +27,6 @@ export type RootStackParamList = {
   Update: undefined
   Preferences: undefined
   'Whats New': undefined
-  Donate: undefined
   Paywall: { initialTier?: 'supporter' | 'tip' } | undefined
   'Thank You': undefined
   'Import and Export': undefined
@@ -44,7 +43,6 @@ export type RootStackParamList = {
   PreferencesAppIcon: undefined
   PreferencesCustomFields: undefined
   RescheduleConversation: { contactId: string; conversationId: string }
-  PlanSchedule: { month: number; year: number }
   PlanDay: {
     date?: string
     /** Existing plan ID for editing mode */
@@ -55,7 +53,7 @@ export type RootStackParamList = {
   }
   Rollover: undefined
   MilestoneShowcase: undefined
-  FAQ: undefined
+  FAQ: { scrollToCategory?: string } | undefined
   More: undefined
   ServiceReportView: { month: number; year: number }
   ServiceYearCatchUp: undefined

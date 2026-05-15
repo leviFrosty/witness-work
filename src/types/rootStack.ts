@@ -56,7 +56,7 @@ export type RootStackParamList = {
   FAQ: { scrollToCategory?: string } | undefined
   More: undefined
   ServiceReportView: { month: number; year: number }
-  ServiceYearCatchUp: undefined
+  OnboardingBackfill: undefined
 }
 
 export type RootStackNavigation = NativeStackNavigationProp<RootStackParamList>

@@ -40,7 +40,7 @@ const ProgressScreen = ({ route, navigation }: Props) => {
   const [month, setMonth] = useState(route.params?.month ?? currentMonth)
   const [year, setYear] = useState(route.params?.year ?? currentYear)
 
-  // Publisher types with no year goal (e.g. `publisher` or custom-at-0) cannot
+  // Publisher types with no annual goal (e.g. `publisher` or custom-at-0) cannot
   // meaningfully render the Year tab. Hide it from the selector and coerce
   // route-param landings away from `year`.
   const hideYearTab = (publisherHours[publisher] ?? 0) === 0

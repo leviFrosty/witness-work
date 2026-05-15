@@ -2,7 +2,7 @@ import { Publisher } from '@/types/publisher'
 
 /**
  * Hardcoded sensible milestone ladders per publisher type. Each array lists
- * interior checkpoints _below_ the annual goal; the final rung (year goal =
+ * interior checkpoints _below_ the annual goal; the final rung (annual goal =
  * `publisherHours[publisher] * 12`) is appended dynamically by
  * `getEffectiveMilestones` so the ladder always ends at the real goal even when
  * that goal changes in Settings.
@@ -22,14 +22,14 @@ export const DEFAULT_MILESTONES_BY_PUBLISHER: Record<Publisher, number[]> = {
 /**
  * Resolve the milestone ladder that should render for this user. Returns the
  * user's overrides when non-null, otherwise the publisher-type defaults — then
- * always appends the current `yearGoalHours` as the final rung, sorts
+ * always appends the current `annualGoalHours` as the final rung, sorts
  * ascending, dedupes, and filters out any value `<= 0` or strictly greater than
- * the year goal. (The year-goal value itself is always preserved.)
+ * the annual goal. (The annual-goal value itself is always preserved.)
  */
 export const getEffectiveMilestones = (
   publisher: Publisher,
   overrides: number[] | null,
-  yearGoalHours: number
+  annualGoalHours: number
 ): number[] => {
   const base =
     overrides !== null ? overrides : DEFAULT_MILESTONES_BY_PUBLISHER[publisher]
@@ -39,9 +39,9 @@ export const getEffectiveMilestones = (
     if (typeof v !== 'number' || !isFinite(v)) continue
     combined.push(v)
   }
-  if (yearGoalHours > 0) combined.push(yearGoalHours)
+  if (annualGoalHours > 0) combined.push(annualGoalHours)
 
-  const filtered = combined.filter((v) => v > 0 && v <= yearGoalHours)
+  const filtered = combined.filter((v) => v > 0 && v <= annualGoalHours)
   const unique = Array.from(new Set(filtered))
   unique.sort((a, b) => a - b)
   return unique
@@ -80,16 +80,16 @@ export const getMilestoneHitState = (
 
 /**
  * Clamp a user-entered milestone value into the legal range. Negative numbers
- * become 0 (caller typically drops those). Values above `yearGoalHours - 1`
- * collapse down to `yearGoalHours - 1` because the final row is reserved for
- * the year goal itself (locked and derived).
+ * become 0 (caller typically drops those). Values above `annualGoalHours - 1`
+ * collapse down to `annualGoalHours - 1` because the final row is reserved for
+ * the annual goal itself (locked and derived).
  */
 export const validateMilestoneValue = (
   value: number,
-  yearGoalHours: number
+  annualGoalHours: number
 ): number => {
   if (!isFinite(value) || value < 0) return 0
-  const ceiling = Math.max(0, yearGoalHours - 1)
+  const ceiling = Math.max(0, annualGoalHours - 1)
   if (value > ceiling) return ceiling
   return value
 }

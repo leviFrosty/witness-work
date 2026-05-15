@@ -17,7 +17,7 @@ import Text from '@/components/ui/MyText'
 interface MilestoneProgressBarPreviewProps {
   milestones: number[]
   hoursCompleted: number
-  yearGoalHours: number
+  annualGoalHours: number
 }
 
 const BAR_HEIGHT = 28
@@ -51,14 +51,14 @@ type LabelLayout = {
 
 /**
  * Pure, controlled variant of the milestone progress bar. Takes the milestone
- * ladder, hours completed, and year goal directly — no store access. Used by
+ * ladder, hours completed, and annual goal directly — no store access. Used by
  * the Milestone Adjust sheet's live preview as well as by the default
  * (connected) `MilestoneProgressBar` below.
  *
  * Visual:
  *
  * - Bar is split into segments at milestone boundaries, each sized proportionally
- *   to its share of the year goal.
+ *   to its share of the annual goal.
  * - Hit segments render as solid accent green.
  * - The in-progress segment renders the completed portion as solid accent with
  *   the remainder in a lighter pastel accent.
@@ -70,11 +70,11 @@ type LabelLayout = {
 export const MilestoneProgressBarPreview = ({
   milestones,
   hoursCompleted,
-  yearGoalHours,
+  annualGoalHours,
 }: MilestoneProgressBarPreviewProps) => {
   const theme = useTheme()
 
-  const safeGoal = yearGoalHours > 0 ? yearGoalHours : 1
+  const safeGoal = annualGoalHours > 0 ? annualGoalHours : 1
 
   const { segments, labels, labelsHeight } = useMemo(() => {
     const segs: Segment[] = []
@@ -218,7 +218,7 @@ export const MilestoneProgressBarPreview = ({
       >
         {labels.map((label) => {
           // Anchor edge labels to the bar edge instead of centering them on it,
-          // so the rightmost label (year goal) isn't half-clipped by ancestor
+          // so the rightmost label (annual goal) isn't half-clipped by ancestor
           // scroll views that don't honor `overflow: visible`.
           const isRightEdge = label.position >= 0.999
           const isLeftEdge = label.position <= 0.001
@@ -330,7 +330,7 @@ const MilestoneProgressBar = ({ year }: MilestoneProgressBarProps) => {
     <MilestoneProgressBarPreview
       milestones={milestones}
       hoursCompleted={hoursCompleted}
-      yearGoalHours={annualGoalHours}
+      annualGoalHours={annualGoalHours}
     />
   )
 }

@@ -65,16 +65,16 @@ describe('DayPlan.source field', () => {
 describe('Assistant preference defaults', () => {
   it('exposes the new assistant-related defaults so consumer code reads safe starting values without optional-chaining', () => {
     const state = usePreferences.getState()
-    expect(state.excludedWeekdays).toEqual([])
-    expect(state.meetingWeekdays).toEqual([])
+    expect(state.offDays).toEqual([])
+    expect(state.meetingDays).toEqual([])
     expect(state.hasSeenAvailabilityOnboarding).toBe(false)
     expect(state.assistantHistory).toEqual([])
     expect(state.hasDismissedRecommendationHash).toBeUndefined()
   })
 
   it('keeps the new assistant preferences syncable — they describe user intent and should follow the user across devices', () => {
-    expect(NON_SYNCABLE_PREFERENCE_KEYS.has('excludedWeekdays')).toBe(false)
-    expect(NON_SYNCABLE_PREFERENCE_KEYS.has('meetingWeekdays')).toBe(false)
+    expect(NON_SYNCABLE_PREFERENCE_KEYS.has('offDays')).toBe(false)
+    expect(NON_SYNCABLE_PREFERENCE_KEYS.has('meetingDays')).toBe(false)
     expect(
       NON_SYNCABLE_PREFERENCE_KEYS.has('hasSeenAvailabilityOnboarding')
     ).toBe(false)

@@ -26,7 +26,11 @@ export type ProjectedTotalInput = {
   recurringPlans: RecurringPlan[]
   /** Resolved credit cap in minutes, or null for unlimited. */
   creditCapMinutes: number | null
-  excludedWeekdays?: number[]
+  /**
+   * Off Days the user marked — passed through so the "is the gap reachable?"
+   * heuristic only counts days the user is actually willing to go out.
+   */
+  offDays?: number[]
   params?: {
     stretchMaxHoursPerDay?: number
   }
@@ -102,7 +106,7 @@ const DEFAULT_STRETCH_MAX_HOURS_PER_DAY = 6
 const eligibleRemainingDays = (
   scope: ProjectedTotalScope,
   today: Date,
-  excludedWeekdays: number[] = []
+  offDays: number[] = []
 ): number => {
   const { start, end } = periodBounds(scope)
   const todayDay = momentStoredDate(normalizeDateForStorage(today))
@@ -110,7 +114,7 @@ const eligibleRemainingDays = (
 
   let count = 0
   while (cursor.isSameOrBefore(end, 'day')) {
-    if (!excludedWeekdays.includes(cursor.day())) count++
+    if (!offDays.includes(cursor.day())) count++
     cursor.add(1, 'day')
   }
   return count
@@ -145,7 +149,7 @@ export const computeProjectedTotal = (
     const daysRemaining = eligibleRemainingDays(
       input.scope,
       input.today,
-      input.excludedWeekdays
+      input.offDays
     )
     const fillable =
       daysRemaining > 0 && gap <= daysRemaining * stretchMinutesPerDay

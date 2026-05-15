@@ -68,8 +68,8 @@ const AssistantSection = ({
   const theme = useTheme()
   const navigation = useNavigation<RootStackNavigation>()
   const {
-    excludedWeekdays,
-    meetingWeekdays,
+    offDays,
+    meetingDays,
     assistantHistory,
     hasDismissedRecommendationHash,
     hasSeenAvailabilityOnboarding,
@@ -110,8 +110,8 @@ const AssistantSection = ({
       dayPlans,
       recurringPlans,
       conversations,
-      excludedWeekdays,
-      meetingWeekdays,
+      offDays,
+      meetingDays,
       assistantHistory,
       minutesLoggedInPriorDays,
     })
@@ -125,8 +125,8 @@ const AssistantSection = ({
     dayPlans,
     recurringPlans,
     conversations,
-    excludedWeekdays,
-    meetingWeekdays,
+    offDays,
+    meetingDays,
     assistantHistory,
     minutesLoggedInPriorDays,
   ])
@@ -153,16 +153,16 @@ const AssistantSection = ({
               : null,
           ])
           .filter((s): s is string => s !== null),
-        excludedWeekdays,
-        meetingWeekdays,
+        offDays,
+        meetingDays,
       }),
     [
       loggedAdjustedMinutes,
       dayPlans,
       recurringPlans,
       conversations,
-      excludedWeekdays,
-      meetingWeekdays,
+      offDays,
+      meetingDays,
     ]
   )
 

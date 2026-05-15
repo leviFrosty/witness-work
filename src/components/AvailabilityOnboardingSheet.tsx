@@ -43,22 +43,22 @@ const AvailabilityOnboardingSheet = ({
 }: Props) => {
   const theme = useTheme()
   const {
-    excludedWeekdays,
-    meetingWeekdays,
-    setExcludedWeekdays,
-    setMeetingWeekdays,
+    offDays,
+    meetingDays,
+    setOffDays,
+    setMeetingDays,
     setHasSeenAvailabilityOnboarding,
   } = usePreferences()
 
-  const [selected, setSelected] = useState<number[]>(excludedWeekdays)
-  const [meetings, setMeetings] = useState<number[]>(meetingWeekdays)
+  const [selected, setSelected] = useState<number[]>(offDays)
+  const [meetings, setMeetings] = useState<number[]>(meetingDays)
 
   useEffect(() => {
     if (open) {
-      setSelected(excludedWeekdays)
-      setMeetings(meetingWeekdays)
+      setSelected(offDays)
+      setMeetings(meetingDays)
     }
-  }, [open, excludedWeekdays, meetingWeekdays])
+  }, [open, offDays, meetingDays])
 
   const toggle = useCallback((index: number) => {
     setSelected((prev) =>
@@ -67,23 +67,23 @@ const AvailabilityOnboardingSheet = ({
   }, [])
 
   const toggleMeeting = useCallback((index: number) => {
-    // A weekday can be both a work day and a meeting day — the engine resolves
-    // overlap (excluded wins) so the UI doesn't need to enforce it.
+    // A day can be both an Off Day and a Meeting Day — the engine resolves
+    // overlap (Off Day wins) so the UI doesn't need to enforce it.
     setMeetings((prev) =>
       prev.includes(index) ? prev.filter((d) => d !== index) : [...prev, index]
     )
   }, [])
 
   const handleSave = useCallback(() => {
-    setExcludedWeekdays(selected.slice().sort((a, b) => a - b))
-    setMeetingWeekdays(meetings.slice().sort((a, b) => a - b))
+    setOffDays(selected.slice().sort((a, b) => a - b))
+    setMeetingDays(meetings.slice().sort((a, b) => a - b))
     if (markSeenOnDismiss) setHasSeenAvailabilityOnboarding(true)
     onOpenChange(false)
   }, [
     selected,
     meetings,
-    setExcludedWeekdays,
-    setMeetingWeekdays,
+    setOffDays,
+    setMeetingDays,
     markSeenOnDismiss,
     setHasSeenAvailabilityOnboarding,
     onOpenChange,

@@ -21,6 +21,7 @@ import { useNavigation } from '@react-navigation/native'
 import { useRollover } from '@/features/service-reports/hooks/useRollover'
 import { RootStackNavigation } from '@/types/rootStack'
 import { useMilestoneRevealStore } from '@/features/milestones/stores/milestoneReveal'
+import { evaluateRevealOnLaunch } from '@/features/updates/lib/evaluateRevealOnLaunch'
 
 /**
  * Version that, on a returning install with `lastAppVersion` strictly less,
@@ -57,42 +58,36 @@ const HomeTabStack = () => {
     logger.log('[HomeTabStack] currentVersion', currentVersion)
     logger.log('[HomeTabStack] lastVersion', lastAppVersion)
 
-    // Milestone reveal — only fires when the user is crossing into the
-    // milestone version and hasn't already viewed (or just dismissed) it.
-    const crossingMilestone =
-      semver.lt(lastAppVersion, MILESTONE_UPDATE_VERSION) &&
-      semver.gte(currentVersion, MILESTONE_UPDATE_VERSION)
-    if (
-      crossingMilestone &&
-      !seenMilestoneUpdateReveal &&
-      !dismissedMilestoneRevealOnce
-    ) {
-      requestReveal()
-      // Stamp the version so the standard WhatsNew gate below can't also fire.
-      set({ lastAppVersion: currentVersion })
-      return
-    }
-
-    // Standard release-notes flow for all other version bumps. We still skip
-    // it if the milestone reveal is the controlling experience for this
-    // upgrade — `crossingMilestone && seenMilestoneUpdateReveal` means the
-    // user already viewed everything via the showcase.
-    if (crossingMilestone) {
-      set({ lastAppVersion: currentVersion })
-      return
-    }
-
-    const notesBetweenVersions = releaseNotes.filter(
+    const hasReleaseNotesBetween = releaseNotes.some(
       (note) =>
         semver.gt(note.version, lastAppVersion) &&
         semver.lte(note.version, currentVersion)
     )
-    logger.log('[HomeTabStack] notesBetweenVersions', notesBetweenVersions)
-    const isNewVersionMessages = notesBetweenVersions.length > 0
 
-    if (currentVersion !== lastAppVersion && isNewVersionMessages) {
-      setShowWhatsNew(true)
-      set({ lastAppVersion: currentVersion })
+    const action = evaluateRevealOnLaunch({
+      currentVersion,
+      lastAppVersion,
+      milestoneRevealVersion: MILESTONE_UPDATE_VERSION,
+      seenMilestoneUpdateReveal,
+      dismissedMilestoneRevealOnce,
+      hasReleaseNotesBetween,
+    })
+    logger.log('[HomeTabStack] launch reveal action', action)
+
+    switch (action) {
+      case 'milestone-reveal':
+        requestReveal()
+        set({ lastAppVersion: currentVersion })
+        return
+      case 'whats-new':
+        setShowWhatsNew(true)
+        set({ lastAppVersion: currentVersion })
+        return
+      case 'stamp-only':
+        set({ lastAppVersion: currentVersion })
+        return
+      case 'none':
+        return
     }
   }, [
     lastAppVersion,

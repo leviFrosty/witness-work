@@ -187,12 +187,12 @@ export type HomeScreenElementKey =
   | 'didYouKnow'
 
 export const DEFAULT_HOME_SCREEN_ELEMENTS_ORDER: HomeScreenElementKey[] = [
+  'contributionGraph',
   'approachingConversations',
   'tabletServiceYearSummary',
   'serviceReport',
   'thisWeek',
   'timer',
-  'contributionGraph',
   'didYouKnow',
 ]
 
@@ -641,6 +641,17 @@ export const PREFERENCE_DEFAULTS = {
    */
   dismissedMilestoneRevealOnce: false,
   /**
+   * Sticky one-shot flag set on dismissal of the Founding Supporter reveal
+   * (chained after the Milestone reveal for users who were active Supporters at
+   * upgrade time). Gates the Founding badge variant and prevents re-firing the
+   * reveal across future launches. **Never cleared.** A re-subscribing Founding
+   * Supporter regains the badge automatically; an erroneously-granted flag
+   * cannot be revoked without a migration. Per-device — a user crossing the
+   * Reveal version on a second device can re-experience the reveal there
+   * independently.
+   */
+  seenFoundingSupporterReveal: false,
+  /**
    * Stable IDs of "Did you know?" tips the user has dismissed from the
    * home-screen tip card. The card surfaces the first tip in
    * `DID_YOU_KNOW_TIPS` whose id isn't here; once all are present the card
@@ -655,6 +666,15 @@ export const PREFERENCE_DEFAULTS = {
    * is excluded; the calendar dims excluded weekdays as a hint.
    */
   excludedWeekdays: [] as number[],
+  /**
+   * Weekdays (0 = Sunday … 6 = Saturday) the user has Kingdom Hall meetings on.
+   * The Assistant treats these as "busier" days: it prefers other days first
+   * and, when a meeting day is used, caps the proposed session at a lower
+   * number of hours so the user still has time to study and attend. A weekday
+   * listed in both `excludedWeekdays` and `meetingWeekdays` is treated as
+   * excluded — the stricter rule wins.
+   */
+  meetingWeekdays: [] as number[],
   /**
    * One-shot flag for the Availability Onboarding sheet, which surfaces just in
    * time the first time a recommendation would render. Flipped true when the
@@ -724,6 +744,7 @@ export const NON_SYNCABLE_PREFERENCE_KEYS = new Set<string>([
   'devRolloverDateOverride',
   'seenMilestoneUpdateReveal',
   'dismissedMilestoneRevealOnce',
+  'seenFoundingSupporterReveal',
 ])
 
 export const usePreferences = create(
@@ -846,6 +867,8 @@ export const usePreferences = create(
           }),
         setExcludedWeekdays: (excludedWeekdays: number[]) =>
           set({ excludedWeekdays }),
+        setMeetingWeekdays: (meetingWeekdays: number[]) =>
+          set({ meetingWeekdays }),
         setHasSeenAvailabilityOnboarding: (value: boolean) =>
           set({ hasSeenAvailabilityOnboarding: value }),
         setHasDismissedRecommendationHash: (value: string | undefined) =>

@@ -47,8 +47,8 @@ type Props = {
  * whenever the draft mutates so the preview bar stays monotonic without
  * requiring the user to hand-sort.
  */
-const sanitizeDraft = (values: number[], yearGoalHours: number): number[] => {
-  const ceiling = Math.max(0, yearGoalHours - 1)
+const sanitizeDraft = (values: number[], annualGoalHours: number): number[] => {
+  const ceiling = Math.max(0, annualGoalHours - 1)
   const cleaned: number[] = []
   for (const raw of values) {
     if (typeof raw !== 'number' || !isFinite(raw)) continue
@@ -83,7 +83,7 @@ const MilestoneAdjustSheet = ({ visible, onClose }: Props) => {
   } = usePreferences()
   const { serviceReports } = useServiceReport()
 
-  const yearGoalHours = publisherHours[publisher] * 12
+  const annualGoalHours = publisherHours[publisher] * 12
 
   // Seed / re-seed the local draft whenever the sheet opens or the persisted
   // list changes (e.g. Reset to Defaults). We keep a local copy so the user
@@ -91,7 +91,7 @@ const MilestoneAdjustSheet = ({ visible, onClose }: Props) => {
   const [draft, setDraft] = useState<number[]>(() =>
     sanitizeDraft(
       milestoneOverrides ?? DEFAULT_MILESTONES_BY_PUBLISHER[publisher],
-      yearGoalHours
+      annualGoalHours
     )
   )
   // Per-row input buffer so typing doesn't immediately reorder the list — we
@@ -104,17 +104,17 @@ const MilestoneAdjustSheet = ({ visible, onClose }: Props) => {
     setDraft(
       sanitizeDraft(
         milestoneOverrides ?? DEFAULT_MILESTONES_BY_PUBLISHER[publisher],
-        yearGoalHours
+        annualGoalHours
       )
     )
     setInputBuffers({})
-  }, [visible, milestoneOverrides, publisher, yearGoalHours])
+  }, [visible, milestoneOverrides, publisher, annualGoalHours])
 
   // Live hours completed for the current service year — same math the rest of
   // the app uses. Must filter to just this service year first; passing the raw
   // store sums every year ever logged.
   const hoursCompleted = useMemo(() => {
-    if (yearGoalHours <= 0) return 0
+    if (annualGoalHours <= 0) return 0
     const serviceYearStart = currentServiceYearEnd() - 1
     const serviceYearReports = getServiceYearReports(
       serviceReports,
@@ -125,11 +125,11 @@ const MilestoneAdjustSheet = ({ visible, onClose }: Props) => {
       serviceYearStart
     )
     return _.round(totalMinutes / 60, 1)
-  }, [serviceReports, yearGoalHours])
+  }, [serviceReports, annualGoalHours])
 
   const milestonesWithGoal = useMemo(
-    () => (yearGoalHours > 0 ? [...draft, yearGoalHours] : draft),
-    [draft, yearGoalHours]
+    () => (annualGoalHours > 0 ? [...draft, annualGoalHours] : draft),
+    [draft, annualGoalHours]
   )
   const hitState = useMemo(
     () => getMilestoneHitState(milestonesWithGoal, hoursCompleted),
@@ -146,7 +146,7 @@ const MilestoneAdjustSheet = ({ visible, onClose }: Props) => {
   }
 
   const handleDone = () => {
-    setMilestoneOverrides(sanitizeDraft(draft, yearGoalHours))
+    setMilestoneOverrides(sanitizeDraft(draft, annualGoalHours))
     onClose()
   }
 
@@ -154,11 +154,11 @@ const MilestoneAdjustSheet = ({ visible, onClose }: Props) => {
     setDraft((current) => {
       const last = current.length > 0 ? current[current.length - 1] : 0
       const midpoint = Math.round(
-        current.length > 0 ? (last + yearGoalHours) / 2 : yearGoalHours / 2
+        current.length > 0 ? (last + annualGoalHours) / 2 : annualGoalHours / 2
       )
-      const candidate = validateMilestoneValue(midpoint, yearGoalHours)
+      const candidate = validateMilestoneValue(midpoint, annualGoalHours)
       if (candidate <= 0) return current
-      return sanitizeDraft([...current, candidate], yearGoalHours)
+      return sanitizeDraft([...current, candidate], annualGoalHours)
     })
   }
 
@@ -166,7 +166,7 @@ const MilestoneAdjustSheet = ({ visible, onClose }: Props) => {
     setDraft((current) =>
       sanitizeDraft(
         current.filter((v) => v !== value),
-        yearGoalHours
+        annualGoalHours
       )
     )
   }
@@ -177,11 +177,11 @@ const MilestoneAdjustSheet = ({ visible, onClose }: Props) => {
       if (idx === -1) return current
       const next = validateMilestoneValue(
         value + direction * MILESTONE_STEP,
-        yearGoalHours
+        annualGoalHours
       )
       const replaced = [...current]
       replaced[idx] = next
-      return sanitizeDraft(replaced, yearGoalHours)
+      return sanitizeDraft(replaced, annualGoalHours)
     })
   }
 
@@ -193,19 +193,19 @@ const MilestoneAdjustSheet = ({ visible, onClose }: Props) => {
       return copy
     })
     if (!isFinite(parsed)) return
-    const next = validateMilestoneValue(parsed, yearGoalHours)
+    const next = validateMilestoneValue(parsed, annualGoalHours)
     setDraft((current) => {
       const idx = current.indexOf(value)
       if (idx === -1) return current
       if (next <= 0) {
         return sanitizeDraft(
           current.filter((_v, i) => i !== idx),
-          yearGoalHours
+          annualGoalHours
         )
       }
       const replaced = [...current]
       replaced[idx] = next
-      return sanitizeDraft(replaced, yearGoalHours)
+      return sanitizeDraft(replaced, annualGoalHours)
     })
   }
 
@@ -223,7 +223,7 @@ const MilestoneAdjustSheet = ({ visible, onClose }: Props) => {
             setDraft(
               sanitizeDraft(
                 DEFAULT_MILESTONES_BY_PUBLISHER[publisher],
-                yearGoalHours
+                annualGoalHours
               )
             )
             setInputBuffers({})
@@ -244,7 +244,7 @@ const MilestoneAdjustSheet = ({ visible, onClose }: Props) => {
   }
 
   const renderSubtitle = () => {
-    if (yearGoalHours <= 0) return null
+    if (annualGoalHours <= 0) return null
     const hoursUnit = i18n.t('hours_lowercase')
     const parts: string[] = []
     parts.push(`${hoursCompleted} ${hoursUnit} logged`)
@@ -265,7 +265,7 @@ const MilestoneAdjustSheet = ({ visible, onClose }: Props) => {
     return parts.join(' · ')
   }
 
-  const noGoalSet = yearGoalHours <= 0
+  const noGoalSet = annualGoalHours <= 0
 
   return (
     <Sheet
@@ -374,7 +374,7 @@ const MilestoneAdjustSheet = ({ visible, onClose }: Props) => {
                 <MilestoneProgressBarPreview
                   milestones={milestonesWithGoal}
                   hoursCompleted={hoursCompleted}
-                  yearGoalHours={yearGoalHours}
+                  annualGoalHours={annualGoalHours}
                 />
                 <Text
                   style={{
@@ -506,7 +506,7 @@ const MilestoneAdjustSheet = ({ visible, onClose }: Props) => {
                   )
                 })}
 
-                {/* Locked year-goal row */}
+                {/* Locked annual-goal row */}
                 <Pressable
                   onPress={handleNavigateToSettings}
                   style={{
@@ -542,7 +542,7 @@ const MilestoneAdjustSheet = ({ visible, onClose }: Props) => {
                       textAlign: 'center',
                     }}
                   >
-                    {yearGoalHours}
+                    {annualGoalHours}
                   </Text>
                   <Text
                     style={{

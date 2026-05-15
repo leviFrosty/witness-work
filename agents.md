@@ -76,11 +76,11 @@ Sources: `src/constants/publisher.ts`, `src/stores/preferences.ts`, `src/lib/pub
 
 ### Single seam: `derivePublisherCapabilities`
 
-`src/lib/publisherCapabilities.ts` = **only** place role behavior encoded. React code reads via `usePublisher()` hook; pure callers use `derivePublisherCapabilities` or helpers (`getEntryMode`, `isPioneer`, `tracksPioneerStartDate`, `effectiveHasAnnualGoal`, `creditCapMinutesFor`).
+`src/lib/publisherCapabilities.ts` = **only** place role behavior encoded. React code reads via `usePublisher()` hook; pure callers use `derivePublisherCapabilities` or helpers (`getEntryMode`, `isInFullTimeService`, `tracksPioneerStartDate`, `effectiveHasAnnualGoal`, `creditCapMinutesFor`).
 
 ### Rules
 
-1. **Never branch on publisher string.** `if (publisher === 'specialPioneer')` wrong — add/use capability flag (`entryMode`, `hasAnnualGoal`, `isPioneer`, `tracksPioneerStartDate`, `showsTimer`, `showsYearTabs`, `creditCapMinutes`, `hasUnlimitedCreditDefault`).
+1. **Never branch on publisher string.** `if (publisher === 'specialPioneer')` wrong — add/use capability flag (`entryMode`, `hasAnnualGoal`, `isInFullTimeService`, `tracksPioneerStartDate`, `showsTimer`, `showsYearTabs`, `creditCapMinutes`, `hasUnlimitedCreditDefault`).
 2. **Capabilities fold in user overrides** (`userSpecifiedHasAnnualGoal`, `overrideCreditLimit`, `milestoneOverrides`). Read resolved value; don't re-derive.
 3. **Gate UI on capabilities, not role.** E.g. timer on `showsTimer`, year tab on `showsYearTabs`, start-date row on `tracksPioneerStartDate`, entry mode on `entryMode`.
 4. **`publisher` role = checkbox mode** — anything assuming hours breaks. Check `entryMode` / `hasAnnualGoal` / `showsTimer` first.

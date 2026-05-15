@@ -106,7 +106,7 @@ const ProfileCard = ({ preview, editable, onPressIncomplete }: Props) => {
   } = usePreferences()
   const {
     type: publisher,
-    isPioneer,
+    isInFullTimeService,
     name: trimmedName,
     hasName,
   } = usePublisher()
@@ -185,7 +185,7 @@ const ProfileCard = ({ preview, editable, onPressIncomplete }: Props) => {
     : i18n.t('profileGreetingNoName')
 
   const tenure: Tenure = (() => {
-    if (isPioneer && pioneerStartDate) {
+    if (isInFullTimeService && pioneerStartDate) {
       const tone: TenureTone =
         publisher === 'specialPioneer'
           ? 'specialPioneer'

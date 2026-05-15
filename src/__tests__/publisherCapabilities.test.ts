@@ -133,17 +133,17 @@ describe('derivePublisherCapabilities', () => {
     })
   })
 
-  describe('isPioneer', () => {
-    it('is true for regular, special, and circuit-overseer pioneers', () => {
-      expect(derive('regularPioneer').isPioneer).toBe(true)
-      expect(derive('specialPioneer').isPioneer).toBe(true)
-      expect(derive('circuitOverseer').isPioneer).toBe(true)
+  describe('isInFullTimeService', () => {
+    it('is true for regular pioneer, special pioneer, and circuit overseer', () => {
+      expect(derive('regularPioneer').isInFullTimeService).toBe(true)
+      expect(derive('specialPioneer').isInFullTimeService).toBe(true)
+      expect(derive('circuitOverseer').isInFullTimeService).toBe(true)
     })
 
-    it('is false for non-pioneer roles', () => {
-      expect(derive('publisher').isPioneer).toBe(false)
-      expect(derive('regularAuxiliary').isPioneer).toBe(false)
-      expect(derive('custom').isPioneer).toBe(false)
+    it('is false for roles outside full-time service', () => {
+      expect(derive('publisher').isInFullTimeService).toBe(false)
+      expect(derive('regularAuxiliary').isInFullTimeService).toBe(false)
+      expect(derive('custom').isInFullTimeService).toBe(false)
     })
   })
 

@@ -36,7 +36,7 @@ import MilestoneShowcaseScreen from '@/features/milestones/screens/MilestoneShow
 import FAQScreen from '@/features/updates/screens/FAQScreen'
 import MoreScreen from '@/features/settings/screens/MoreScreen'
 import ServiceReportViewScreen from '@/features/service-reports/screens/ServiceReportViewScreen'
-import ServiceYearCatchUpScreen from '@/features/service-reports/screens/ServiceYearCatchUpScreen'
+import OnboardingBackfillScreen from '@/features/service-reports/screens/OnboardingBackfillScreen'
 import { RootStackParamList } from '@/types/rootStack'
 
 const RootStack = createNativeStackNavigator<RootStackParamList>()
@@ -350,12 +350,12 @@ const RootStackComponent = () => {
             header: () => (
               <Header
                 buttonType='back'
-                title={i18n.t('serviceYearCatchUpScreenHeader')}
+                title={i18n.t('onboardingBackfillScreenHeader')}
               />
             ),
           }}
-          name='ServiceYearCatchUp'
-          component={ServiceYearCatchUpScreen}
+          name='OnboardingBackfill'
+          component={OnboardingBackfillScreen}
         />
       </RootStack.Group>
     </RootStack.Navigator>

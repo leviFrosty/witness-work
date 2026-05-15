@@ -19,8 +19,8 @@ import ICloudRestore from '@/features/onboarding/components/steps/iCloudRestore'
 import FounderNote from '@/features/onboarding/components/steps/FounderNote'
 import IntentPicker from '@/features/onboarding/components/steps/IntentPicker'
 import YourPlanPreview from '@/features/onboarding/components/steps/YourPlanPreview'
-import ServiceYearCatchUp from '@/features/onboarding/components/steps/ServiceYearCatchUp'
-import { hasReportsInCatchUpWindow } from '@/features/service-reports/components/ServiceYearCatchUpForm'
+import OnboardingBackfill from '@/features/onboarding/components/steps/OnboardingBackfill'
+import { hasReportsInCatchUpWindow } from '@/features/service-reports/components/OnboardingBackfillForm'
 import { usePreferences } from '@/stores/preferences'
 import useServiceReport from '@/stores/serviceReport'
 import { ServiceReportsByYears } from '@/types/serviceReport'
@@ -47,7 +47,7 @@ type StepId =
   | 'yourPlanPreview'
   | 'notifications'
   | 'defaultNav'
-  | 'serviceYearCatchUp'
+  | 'onboardingBackfill'
   | 'supporter'
 
 interface StepProps {
@@ -57,7 +57,7 @@ interface StepProps {
 
 /**
  * Context passed to `showIf`. Widened beyond `publisher` so steps can gate on
- * other onboarding state (e.g. the catch-up step needs `installedOn` and the
+ * other onboarding state (e.g. the backfill step needs `installedOn` and the
  * user's annual-goal override).
  */
 interface StepShowIfContext {
@@ -102,8 +102,8 @@ const allSteps: StepDef[] = [
   { id: 'notifications', Component: StepThree, countsTowardProgress: true },
   { id: 'defaultNav', Component: StepDefaultNav, countsTowardProgress: true },
   {
-    id: 'serviceYearCatchUp',
-    Component: ServiceYearCatchUp,
+    id: 'onboardingBackfill',
+    Component: OnboardingBackfill,
     countsTowardProgress: true,
     // Only annual-goal publishers who installed mid-service-year (any month
     // other than September) need to backdate. September installs have no

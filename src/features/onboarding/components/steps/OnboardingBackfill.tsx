@@ -2,14 +2,14 @@ import { View } from 'react-native'
 
 import OnboardingNav from '@/features/onboarding/components/OnboardingNav'
 import Wrapper from '@/components/ui/layout/Wrapper'
-import ServiceYearCatchUpForm from '@/features/service-reports/components/ServiceYearCatchUpForm'
+import OnboardingBackfillForm from '@/features/service-reports/components/OnboardingBackfillForm'
 
 interface Props {
   goBack: () => void
   goNext: () => void
 }
 
-const ServiceYearCatchUp = ({ goBack, goNext }: Props) => {
+const OnboardingBackfill = ({ goBack, goNext }: Props) => {
   return (
     <Wrapper
       style={{
@@ -21,10 +21,10 @@ const ServiceYearCatchUp = ({ goBack, goNext }: Props) => {
     >
       <OnboardingNav goBack={goBack} />
       <View style={{ flex: 1, paddingTop: 20 }}>
-        <ServiceYearCatchUpForm onComplete={goNext} onSkip={goNext} />
+        <OnboardingBackfillForm onComplete={goNext} onSkip={goNext} />
       </View>
     </Wrapper>
   )
 }
 
-export default ServiceYearCatchUp
+export default OnboardingBackfill

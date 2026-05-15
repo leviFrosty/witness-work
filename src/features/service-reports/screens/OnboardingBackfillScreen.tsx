@@ -2,10 +2,10 @@ import { useNavigation } from '@react-navigation/native'
 import { View } from 'react-native'
 
 import Wrapper from '@/components/ui/layout/Wrapper'
-import ServiceYearCatchUpForm from '@/features/service-reports/components/ServiceYearCatchUpForm'
+import OnboardingBackfillForm from '@/features/service-reports/components/OnboardingBackfillForm'
 import { RootStackNavigation } from '@/types/rootStack'
 
-const ServiceYearCatchUpScreen = () => {
+const OnboardingBackfillScreen = () => {
   const navigation = useNavigation<RootStackNavigation>()
 
   const handleClose = () => {
@@ -25,7 +25,7 @@ const ServiceYearCatchUpScreen = () => {
       }}
     >
       <View style={{ flex: 1 }}>
-        <ServiceYearCatchUpForm
+        <OnboardingBackfillForm
           onComplete={handleClose}
           onSkip={handleClose}
           setSkippedStatusOnSkip={false}
@@ -35,4 +35,4 @@ const ServiceYearCatchUpScreen = () => {
   )
 }
 
-export default ServiceYearCatchUpScreen
+export default OnboardingBackfillScreen

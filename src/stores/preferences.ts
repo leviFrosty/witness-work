@@ -567,8 +567,10 @@ export const PREFERENCE_DEFAULTS = {
    */
   onboardingStepId: null as string | null,
   /**
-   * Resolution state for the one-time service-year catch-up prompt shown to
-   * annual-goal publishers who installed mid-service-year. Lifecycle:
+   * Resolution state for the one-time Onboarding Backfill prompt shown to
+   * annual-goal publishers who installed mid-service-year. (Field name kept as
+   * `serviceYearCatchUpStatus` for persisted-key stability — see
+   * `docs/refactor-log.md`.) Lifecycle:
    *
    * - `null` — never engaged / ineligible on older persisted installs.
    * - `'pending'` — eligible user has not resolved the onboarding step yet.

@@ -134,11 +134,11 @@ const CatchUpMonthRow = ({
           onPress={() => hoursInput.current?.focus()}
           hitSlop={labelHitSlop}
           accessibilityRole='button'
-          accessibilityLabel={i18n.t('serviceYearCatchUpHoursLabel')}
+          accessibilityLabel={i18n.t('onboardingBackfillHoursLabel')}
           style={{ flex: 1 }}
         >
           <Text style={labelStyle}>
-            {i18n.t('serviceYearCatchUpHoursLabel')}
+            {i18n.t('onboardingBackfillHoursLabel')}
           </Text>
         </Pressable>
         <TextInput
@@ -163,11 +163,11 @@ const CatchUpMonthRow = ({
           onPress={() => creditInput.current?.focus()}
           hitSlop={labelHitSlop}
           accessibilityRole='button'
-          accessibilityLabel={i18n.t('serviceYearCatchUpCreditLabel')}
+          accessibilityLabel={i18n.t('onboardingBackfillCreditLabel')}
           style={{ flex: 1 }}
         >
           <Text style={labelStyle}>
-            {i18n.t('serviceYearCatchUpCreditLabel')}
+            {i18n.t('onboardingBackfillCreditLabel')}
           </Text>
         </Pressable>
         <TextInput
@@ -184,7 +184,7 @@ const CatchUpMonthRow = ({
   )
 }
 
-const ServiceYearCatchUpForm = ({
+const OnboardingBackfillForm = ({
   onComplete,
   onSkip,
   setSkippedStatusOnSkip = true,
@@ -282,7 +282,7 @@ const ServiceYearCatchUpForm = ({
             marginBottom: 12,
           }}
         >
-          {i18n.t('serviceYearCatchUpTitle')}
+          {i18n.t('onboardingBackfillTitle')}
         </Text>
         <Text
           style={{
@@ -292,7 +292,7 @@ const ServiceYearCatchUpForm = ({
             marginBottom: 16,
           }}
         >
-          {i18n.t('serviceYearCatchUpSubtitle')}
+          {i18n.t('onboardingBackfillSubtitle')}
         </Text>
         <Text
           style={{
@@ -302,7 +302,7 @@ const ServiceYearCatchUpForm = ({
             marginBottom: 24,
           }}
         >
-          {i18n.t('serviceYearCatchUpHelper')}
+          {i18n.t('onboardingBackfillHelper')}
         </Text>
 
         <View style={{ gap: 12 }}>
@@ -327,7 +327,7 @@ const ServiceYearCatchUpForm = ({
                 textDecorationLine: 'underline',
               }}
             >
-              {i18n.t('serviceYearCatchUpSkip')}
+              {i18n.t('onboardingBackfillSkip')}
             </Text>
           </Button>
         </View>
@@ -336,4 +336,4 @@ const ServiceYearCatchUpForm = ({
   )
 }
 
-export default ServiceYearCatchUpForm
+export default OnboardingBackfillForm

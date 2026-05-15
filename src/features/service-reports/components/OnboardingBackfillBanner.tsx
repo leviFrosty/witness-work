@@ -11,9 +11,9 @@ import { usePreferences } from '@/stores/preferences'
 import useServiceReport from '@/stores/serviceReport'
 import { effectiveHasAnnualGoal } from '@/lib/publisherCapabilities'
 import { RootStackNavigation } from '@/types/rootStack'
-import { hasReportsInCatchUpWindow } from '@/features/service-reports/components/ServiceYearCatchUpForm'
+import { hasReportsInCatchUpWindow } from '@/features/service-reports/components/OnboardingBackfillForm'
 
-const ServiceYearCatchUpBanner = () => {
+const OnboardingBackfillBanner = () => {
   const theme = useTheme()
   const navigation = useNavigation<RootStackNavigation>()
   const {
@@ -52,7 +52,7 @@ const ServiceYearCatchUpBanner = () => {
       }}
     >
       <Pressable
-        onPress={() => navigation.navigate('ServiceYearCatchUp')}
+        onPress={() => navigation.navigate('OnboardingBackfill')}
         style={{ flex: 1, gap: 2 }}
       >
         <Text
@@ -62,7 +62,7 @@ const ServiceYearCatchUpBanner = () => {
             fontSize: 14,
           }}
         >
-          {i18n.t('serviceYearCatchUpBannerTitle')}
+          {i18n.t('onboardingBackfillBannerTitle')}
         </Text>
         <Text
           style={{
@@ -71,7 +71,7 @@ const ServiceYearCatchUpBanner = () => {
             lineHeight: 16,
           }}
         >
-          {i18n.t('serviceYearCatchUpBannerSubtitle')}
+          {i18n.t('onboardingBackfillBannerSubtitle')}
         </Text>
       </Pressable>
       <IconButton
@@ -79,7 +79,7 @@ const ServiceYearCatchUpBanner = () => {
         size={16}
         color={theme.colors.textAlt}
         onPress={() => set({ serviceYearCatchUpStatus: 'dismissed' })}
-        accessibilityLabel={i18n.t('serviceYearCatchUpBannerDismissA11y')}
+        accessibilityLabel={i18n.t('onboardingBackfillBannerDismissA11y')}
         style={{
           padding: 8,
         }}
@@ -88,4 +88,4 @@ const ServiceYearCatchUpBanner = () => {
   )
 }
 
-export default ServiceYearCatchUpBanner
+export default OnboardingBackfillBanner

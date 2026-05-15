@@ -22,7 +22,7 @@ import SegmentedControl from '@/components/ui/SegmentedControl'
 import ProgressMonthTab from '@/features/progress/components/ProgressMonthTab'
 import ProgressYearTab from '@/features/progress/components/ProgressYearTab'
 import ProgressAllTimeTab from '@/features/progress/components/ProgressAllTimeTab'
-import ServiceYearCatchUpBanner from '@/features/service-reports/components/ServiceYearCatchUpBanner'
+import OnboardingBackfillBanner from '@/features/service-reports/components/OnboardingBackfillBanner'
 
 type Props = NativeStackScreenProps<HomeTabStackParamList, 'Progress'>
 
@@ -213,7 +213,7 @@ const ProgressScreen = ({ route, navigation }: Props) => {
       </View>
 
       <View style={{ flex: 1 }}>
-        <ServiceYearCatchUpBanner />
+        <OnboardingBackfillBanner />
         {activeTab === 'month' ? (
           <ProgressMonthTab
             month={month}

@@ -70,6 +70,13 @@ export const migrateServiceReports = (
  * - V0 → v1: reshape `ServiceReport[]` into `ServiceReportsByYears` (legacy).
  * - V1 → v2: anchor every persisted Date to noon UTC so calendar days survive
  *   device timezone changes. See `migrateNormalizeDates`.
+ * - V2 → v3: structural bump for the tag → Category refactor. The actual
+ *   tag-to-categoryId rewrite happens in a boot-time runner
+ *   (`migrateTagsToCategories` in `src/lib/categories.ts`) that needs to
+ *   coordinate writes across three stores; this version bump exists so the
+ *   ServiceReport store's persisted shape is tagged as post-migration once the
+ *   runner has executed. The migration step itself is a no-op at the persist
+ *   layer — the boot runner is the source of truth.
  *
  * Exported for unit testing.
  */
@@ -99,6 +106,10 @@ export const migrateServiceReportPersistedState = (
       recurringPlans: normalized.recurringPlans,
     }
   }
+  // v2 → v3: structural marker for the tag → categoryId rewrite. The rewrite
+  // itself is performed by the boot-time runner in `src/app/App.tsx`; this
+  // hook only exists so the persisted-state version reflects the on-disk
+  // schema once the runner has executed.
   return next
 }
 
@@ -536,7 +547,7 @@ export const useServiceReport = create(
       storage: createJSONStorage(() =>
         hasMigratedFromAsyncStorage() ? MmkvStorage : AsyncStorage
       ),
-      version: 2,
+      version: 3,
       migrate: (persistedState, version) =>
         migrateServiceReportPersistedState(persistedState, version),
     }

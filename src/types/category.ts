@@ -1,0 +1,38 @@
+/**
+ * Category — User-defined grouping of Time Entries (e.g. "Bethel", "Hospital",
+ * "Morning territory"). Each Category carries whether it counts as Credit Time;
+ * this is the single source of truth for credit attribution on a tagged entry.
+ *
+ * Replaces the legacy `tag: string` field on `ServiceReport` and the legacy
+ * `preferences.serviceReportTags` user-list. ServiceReports now reference a
+ * Category by id (`ServiceReport.categoryId`).
+ *
+ * Glossary: see CONTEXT.md → "Category".
+ */
+export type Category = {
+  /** Stable UUID. The id is what gets referenced by `ServiceReport.categoryId`. */
+  id: string
+  /** User-visible label (e.g. "Bethel", "Hospital"). */
+  name: string
+  /**
+   * Whether this Category counts as Credit Time toward the publisher's monthly
+   * cap. Source of truth for credit attribution on every Time Entry that
+   * references this category — the per-entry `credit` boolean is no longer
+   * authoritative.
+   */
+  isCredit: boolean
+  /**
+   * Epoch ms of the most recent change. Used for iCloud last-writer-wins merge.
+   * Optional for historical records that predate sync — backfilled lazily.
+   */
+  updatedAt?: number
+}
+
+/**
+ * Tombstone written when a Category is deleted so the deletion propagates
+ * across devices via iCloud sync. Mirrors `ServiceReportTombstone`.
+ */
+export type CategoryTombstone = {
+  id: string
+  deletedAt: number
+}

@@ -1,6 +1,7 @@
 import useContacts from '@/stores/contactsStore'
 import useConversations from '@/stores/conversationStore'
 import useServiceReport from '@/stores/serviceReport'
+import useCategories from '@/stores/categories'
 import { usePreferences } from '@/stores/preferences'
 import { NON_SYNCABLE_PREFERENCE_KEYS } from '@/stores/preferences'
 import { ProfileAvatar } from '@/types/avatar'
@@ -49,6 +50,17 @@ export type SyncPayload = {
     recurringPlans: any[]
     deletedServiceReports?: { id: string; deletedAt: number }[]
   }
+  /**
+   * User-defined Category records (the first-class shape that replaces the
+   * legacy `preferences.serviceReportTags`). Optional in the wire shape because
+   * pre-Category payloads from older app versions won't include it — consumers
+   * default to `[]` when absent.
+   */
+  categoryStore?: {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    categories: any[]
+    deletedCategories?: { id: string; deletedAt: number }[]
+  }
   preferencesStore: {
     // Partial because we only sync the allow-listed, cross-device-safe keys.
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -74,6 +86,7 @@ export function buildPayload(args: {
   const contacts = useContacts.getState()
   const conversations = useConversations.getState()
   const serviceReports = useServiceReport.getState()
+  const categories = useCategories.getState()
   const prefs = usePreferences.getState()
 
   const includeImages = prefs.iCloudSyncIncludeImages === true
@@ -119,6 +132,10 @@ export function buildPayload(args: {
       dayPlans: serviceReports.dayPlans,
       recurringPlans: serviceReports.recurringPlans,
       deletedServiceReports: serviceReports.deletedServiceReports,
+    },
+    categoryStore: {
+      categories: categories.categories,
+      deletedCategories: categories.deletedCategories,
     },
     preferencesStore: {
       values: syncablePrefs,

@@ -3,6 +3,7 @@ import moment from 'moment'
 import i18n from '@/lib/locales'
 import { usePreferences } from '@/stores/preferences'
 import useServiceReport from '@/stores/serviceReport'
+import useCategories from '@/stores/categories'
 import useConversations from '@/stores/conversationStore'
 import useContacts from '@/stores/contactsStore'
 import usePublisher from '@/hooks/usePublisher'
@@ -47,6 +48,7 @@ const useMonthReportData = (
   const { overrideCreditLimit, customCreditLimitHours } = usePreferences()
   const { type: publisher, entryMode } = usePublisher()
   const { serviceReports } = useServiceReport()
+  const { categories } = useCategories()
   const { conversations } = useConversations()
   const { contacts } = useContacts()
 
@@ -120,7 +122,11 @@ const useMonthReportData = (
 
     detailed.other.reports.forEach((report) => {
       if (!report.credit || report.minutes <= 0) return
-      creditLines.push(`${report.tag}: ${formatMinutesCompact(report.minutes)}`)
+      const liveCategory = report.categoryId
+        ? categories.find((c) => c.id === report.categoryId)
+        : undefined
+      const label = liveCategory?.name ?? report.tag
+      creditLines.push(`${label}: ${formatMinutesCompact(report.minutes)}`)
     })
 
     if (!creditLines.length && adjusted.creditOverage <= 0) return ''
@@ -145,7 +151,7 @@ const useMonthReportData = (
     }
 
     return lines.join('\n')
-  }, [adjusted.creditOverage, credit, month, monthReports, year])
+  }, [adjusted.creditOverage, credit, month, monthReports, year, categories])
 
   const reportAsString = useCallback(() => {
     if (month === undefined || year === undefined) return ''

@@ -16,6 +16,12 @@
  *   enum value — only the field name renamed; the leaf enum value `'publisher'`
  *   for Regular Publisher is canonical and unchanged)
  * - The matching keys inside `preferencesStore.updatedAt`
+ * - `serviceReportStore.serviceReports.*.*.tag` (per entry) is preserved
+ *   alongside any incoming `categoryId`. The receiving device runs the local
+ *   `migrateTagsToCategories` boot pass (idempotent) to seed Category records
+ *   from any straggler `tag` fields after the iCloud merge — see
+ *   `src/lib/categories.ts`. Doing the rewrite here would require access to the
+ *   Categories store, which violates the no-imports rule for this module.
  *
  * New name wins if both keys somehow coexist on the wire (defensive); the
  * legacy key is always dropped.

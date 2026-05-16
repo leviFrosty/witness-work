@@ -16,11 +16,9 @@ import DateTimePicker from '@/components/ui/DateTimePicker'
 import Wrapper from '@/components/ui/layout/Wrapper'
 import Select from '@/components/ui/Select'
 import SelectWheel from '@/components/ui/SelectWheel'
-import {
-  getTagName,
-  ServiceReportTag,
-  usePreferences,
-} from '@/stores/preferences'
+import { usePreferences } from '@/stores/preferences'
+import useCategories from '@/stores/categories'
+import { Category } from '@/types/category'
 import TextInput from '@/components/ui/TextInput'
 import Button from '@/components/ui/Button'
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
@@ -49,25 +47,20 @@ const AddTimeScreen = ({ route }: AddTimeScreenProps) => {
   const insets = useSafeAreaInsets()
   const navigation = useNavigation<RootStackNavigation>()
   const noteInput = useRef<RNTextInput>(null)
-  const {
-    serviceReportTags,
-    set,
-    role,
-    publisherHours,
-    overrideCreditLimit,
-    customCreditLimitHours,
-  } = usePreferences()
+  const { role, publisherHours, overrideCreditLimit, customCreditLimitHours } =
+    usePreferences()
   const { hasAnnualGoal } = usePublisher()
   const { playConfetti } = useAnimation()
-  const presetCategories: ServiceReportTag[] = [
-    { value: 'standard', credit: false },
-    { value: 'ldc', credit: true },
-  ]
-  const timeEntryTags: (TranslationKey | string | ServiceReportTag)[] = [
-    ...presetCategories,
-    ...serviceReportTags,
-    'custom',
-  ]
+  const { categories, addCategory, updateCategory, deleteCategory } =
+    useCategories()
+  /**
+   * Synthetic select values for the two preset entry types that don't
+   * correspond to a real Category record. Real categories use their UUID as the
+   * value.
+   */
+  const STANDARD = '__standard__'
+  const LDC = '__ldc__'
+  const CUSTOM = '__custom__'
 
   const {
     addServiceReport,
@@ -80,12 +73,28 @@ const AddTimeScreen = ({ route }: AddTimeScreenProps) => {
     ? getReport(serviceReports, JSON.parse(route.params.existingReport))
     : undefined
 
-  const [tag, setTag] = useState(
-    existingServiceReport && existingServiceReport?.report.ldc
-      ? timeEntryTags[1]
-      : (existingServiceReport?.report.tag ?? timeEntryTags[0])
-  )
-  const [customTag, setCustomTag] = useState<string>('')
+  // Initial picker value: prefer LDC if the entry is flagged LDC, else the
+  // referenced Category id (post-migration), else fall back to legacy `tag`
+  // string for unmigrated entries, else Standard.
+  const initialPickerValue: string = (() => {
+    if (existingServiceReport?.report.ldc) return LDC
+    if (existingServiceReport?.report.categoryId) {
+      return existingServiceReport.report.categoryId
+    }
+    if (existingServiceReport?.report.tag) {
+      // Try to resolve by name — entries that pre-date the migration but the
+      // user added a Category with the same name will collapse onto it.
+      const match = categories.find(
+        (c) => c.name === existingServiceReport.report.tag
+      )
+      if (match) return match.id
+      return existingServiceReport.report.tag
+    }
+    return STANDARD
+  })()
+
+  const [selectedValue, setSelectedValue] = useState<string>(initialPickerValue)
+  const [customCategoryName, setCustomCategoryName] = useState<string>('')
   const [serviceReport, setServiceReport] = useState<ServiceReport>({
     id: existingServiceReport?.report.id ?? Crypto.randomUUID(),
     hours: existingServiceReport?.report.hours || route.params?.hours || 0,
@@ -96,61 +105,62 @@ const AddTimeScreen = ({ route }: AddTimeScreenProps) => {
     ).toDate(),
     ldc: existingServiceReport?.report.ldc ?? false,
     credit: existingServiceReport?.report.credit ?? false,
+    categoryId: existingServiceReport?.report.categoryId,
     note: existingServiceReport?.report.note ?? '',
   })
   const toast = useToastController()
 
-  const handleSetTag = (type: string) => {
-    switch (type) {
-      case 'standard':
-        setTag(type)
+  // The Category currently in focus (null when Standard / LDC / Custom is selected).
+  const selectedCategory: Category | null =
+    selectedValue === STANDARD ||
+    selectedValue === LDC ||
+    selectedValue === CUSTOM
+      ? null
+      : (categories.find((c) => c.id === selectedValue) ?? null)
+
+  const handleSetSelectedValue = (value: string) => {
+    setSelectedValue(value)
+    switch (value) {
+      case STANDARD:
         setServiceReport({
           ...serviceReport,
           ldc: false,
+          categoryId: undefined,
           tag: undefined,
           credit: false,
         })
-        break
+        return
 
-      case 'ldc':
-        setTag(type)
+      case LDC:
         setServiceReport({
           ...serviceReport,
           ldc: true,
+          categoryId: undefined,
           tag: undefined,
           credit: true,
         })
-        break
+        return
 
-      case 'custom':
-        setTag(type)
+      case CUSTOM:
         setServiceReport({
           ...serviceReport,
           ldc: false,
-          tag: customTag,
+          categoryId: undefined,
+          tag: undefined,
           credit: false,
         })
-        break
+        return
 
       default: {
-        const savedTag = serviceReportTags.find((tag) => {
-          if (typeof tag === 'string') {
-            return tag === type
-          }
-          return tag.value === type
-        })
-
-        let credit = false
-        if (typeof savedTag === 'object') {
-          credit = savedTag.credit
-        }
-
-        setTag({ value: type, credit })
+        // A real Category id.
+        const category = categories.find((c) => c.id === value)
+        if (!category) return
         setServiceReport({
           ...serviceReport,
           ldc: false,
-          tag: type,
-          credit,
+          categoryId: category.id,
+          tag: undefined,
+          credit: category.isCredit,
         })
       }
     }
@@ -163,7 +173,21 @@ const AddTimeScreen = ({ route }: AddTimeScreenProps) => {
     })
   }
 
-  const updateExistingServiceReportsTags = (tag: ServiceReportTag) => {
+  /**
+   * Flips `isCredit` on the currently-selected Category record and re-stamps
+   * `credit` on every ServiceReport that references it. The Category record
+   * itself is now the source of truth; we re-stamp `credit` on entries only so
+   * legacy credit-math readers stay consistent with the Category value during
+   * the transition window.
+   */
+  const setCategoryIsCredit = (isCredit: boolean) => {
+    if (!selectedCategory) return
+    setServiceReport({
+      ...serviceReport,
+      credit: isCredit,
+    })
+    updateCategory({ id: selectedCategory.id, isCredit })
+
     const reports = { ...serviceReports }
     for (const year in reports) {
       for (const month in reports[year]) {
@@ -172,55 +196,16 @@ const AddTimeScreen = ({ route }: AddTimeScreenProps) => {
           parseInt(month),
           parseInt(year)
         )
-        const reportsWithUpdatedCreditTag = monthReports.map((r) => {
-          if (r.tag === tag.value) {
-            return {
-              ...r,
-              credit: tag.credit,
-            }
+        const reportsWithUpdatedCredit = monthReports.map((r) => {
+          if (r.categoryId === selectedCategory.id) {
+            return { ...r, credit: isCredit }
           }
           return r
         })
-        reports[year][month] = reportsWithUpdatedCreditTag
+        reports[year][month] = reportsWithUpdatedCredit
       }
     }
-
     setServiceReportStore({ serviceReports: reports })
-  }
-
-  const setCredit = (credit: boolean) => {
-    setServiceReport({
-      ...serviceReport,
-      credit,
-    })
-
-    // Updates according tag to be credit / or not in preferences
-    const tags: (string | ServiceReportTag)[] = [...serviceReportTags].map(
-      (t) => {
-        if (typeof t === 'string') {
-          if (t === serviceReport.tag) {
-            return {
-              value: t,
-              credit,
-            }
-          }
-          return t
-        }
-        if (t.value === serviceReport.tag) {
-          return {
-            value: t.value,
-            credit,
-          }
-        }
-        return t
-      }
-    )
-
-    if (serviceReport.tag) {
-      updateExistingServiceReportsTags({ credit, value: serviceReport.tag })
-    }
-
-    set({ serviceReportTags: tags })
   }
 
   const setMinutes = (minutes: number) => {
@@ -247,59 +232,48 @@ const AddTimeScreen = ({ route }: AddTimeScreenProps) => {
     })
   }
 
-  const handleAddCustomTag = () => {
-    const alreadyExists = serviceReportTags.some(
-      (t) => getTagName(t) === getTagName(customTag)
-    )
-    handleSetTag(customTag)
-    if (alreadyExists) {
-      return
+  const handleAddCustomCategory = () => {
+    const trimmed = customCategoryName.trim()
+    if (!trimmed) return
+    // Reuse an existing Category if the name matches (case-sensitive, mirrors
+    // the rest of the app); otherwise create a new record.
+    let target = categories.find((c) => c.name === trimmed)
+    if (!target) {
+      const newCategory: Category = {
+        id: Crypto.randomUUID(),
+        name: trimmed,
+        isCredit: false,
+      }
+      addCategory(newCategory)
+      target = newCategory
     }
-
-    set({
-      serviceReportTags: [
-        ...serviceReportTags,
-        { value: customTag, credit: false },
-      ],
-    })
+    handleSetSelectedValue(target.id)
+    setCustomCategoryName('')
   }
 
-  const handleDeleteCustomTag = () => {
-    set({
-      serviceReportTags: [...serviceReportTags].filter(
-        (t) => getTagName(t) !== getTagName(tag)
-      ),
-    })
-    setTag(presetCategories[0])
+  const handleDeleteCurrentCategory = () => {
+    if (!selectedCategory) return
+    deleteCategory(selectedCategory.id)
+    setSelectedValue(STANDARD)
     setServiceReport({
       ...serviceReport,
-      tag: undefined,
+      categoryId: undefined,
+      credit: false,
     })
   }
 
-  const typeOptions = timeEntryTags.map((tag) => ({
-    /**
-     * This allows i18n to translate to provided keys automatically. If the user
-     * inputs their own custom tag that doesn't have a valid translation, it
-     * will default to the to the user input value instead of saying "missing
-     * translation".
-     *
-     * @example
-     *   ;```ts
-     *
-     *   const timeEntryCategories = ['custom', 'Bethel'] // Bethel is user input
-     *   const typeOptions = timeEntryCategories.map((value) => ({
-     *    label: i18n.t(value as TranslationKey, { defaultValue: value }),
-     *   value,
-     *   })) // [{ label: 'custom', value: 'custom' }, { label: 'Bethel', value: 'Bethel' } ]
-     *
-     *   ```
-     */
-    label: i18n.t(getTagName(tag) as TranslationKey, {
-      defaultValue: getTagName(tag),
-    }),
-    value: getTagName(tag),
-  }))
+  type TypeOption = { label: string; value: string }
+  const typeOptions: TypeOption[] = [
+    { label: i18n.t('standard'), value: STANDARD },
+    { label: i18n.t('ldc'), value: LDC },
+    ...categories.map((c) => ({
+      // Allow i18n on preset-translatable names (e.g. legacy English-locale
+      // entries seeded from the migration); fall back to the stored name.
+      label: i18n.t(c.name as TranslationKey, { defaultValue: c.name }),
+      value: c.id,
+    })),
+    { label: i18n.t('custom'), value: CUSTOM },
+  ]
 
   const hourOptions = [...Array(100).keys()].map((value) => ({
     label: `${value}`,
@@ -438,7 +412,9 @@ const AddTimeScreen = ({ route }: AddTimeScreenProps) => {
 
   const hasEnteredTime =
     serviceReport.hours !== 0 || serviceReport.minutes !== 0
-  const hasSelectedCategory = tag !== 'custom'
+  // Custom is a transient picker state — until the user names the Category,
+  // we don't have anything to attach the entry to.
+  const hasSelectedCategory = selectedValue !== CUSTOM
   const submittable = hasEnteredTime && hasSelectedCategory
 
   return (
@@ -495,11 +471,11 @@ const AddTimeScreen = ({ route }: AddTimeScreenProps) => {
                   data={typeOptions}
                   style={{ width: '100%', flex: 1 }}
                   onChange={({ value: c }) => {
-                    handleSetTag(c)
+                    handleSetSelectedValue(c)
                   }}
-                  value={getTagName(tag)}
+                  value={selectedValue}
                 />
-                {getTagName(tag) === 'custom' ? (
+                {selectedValue === CUSTOM ? (
                   <View style={{ flexDirection: 'row', gap: 5 }}>
                     <View style={{ flex: 1, flexGrow: 1 }}>
                       <TextInput
@@ -512,23 +488,23 @@ const AddTimeScreen = ({ route }: AddTimeScreenProps) => {
                           paddingHorizontal: 10,
                           color: theme.colors.text,
                         }}
-                        onChangeText={(c) => setCustomTag(c)}
-                        value={customTag}
+                        onChangeText={(c) => setCustomCategoryName(c)}
+                        value={customCategoryName}
                         placeholder={i18n.t('enterCustomCategory')}
                       />
                     </View>
                     <Button
                       style={{
                         backgroundColor:
-                          customTag.length === 0
+                          customCategoryName.trim().length === 0
                             ? theme.colors.accentAlt
                             : theme.colors.accent,
                         borderRadius: theme.numbers.borderRadiusSm,
                         paddingVertical: 15,
                       }}
                       variant='outline'
-                      onPress={handleAddCustomTag}
-                      disabled={customTag.length === 0}
+                      onPress={handleAddCustomCategory}
+                      disabled={customCategoryName.trim().length === 0}
                     >
                       <Text
                         style={{
@@ -541,8 +517,7 @@ const AddTimeScreen = ({ route }: AddTimeScreenProps) => {
                     </Button>
                   </View>
                 ) : (
-                  typeof tag === 'object' &&
-                  !presetCategories.map((c) => c.value).includes(tag.value) && (
+                  selectedCategory && (
                     <View
                       style={{
                         gap: 5,
@@ -576,13 +551,8 @@ const AddTimeScreen = ({ route }: AddTimeScreenProps) => {
                               {i18n.t('credit')}
                             </Text>
                             <Switch
-                              value={
-                                serviceReport.ldc
-                                  ? true
-                                  : (serviceReport.credit ?? false)
-                              }
-                              onValueChange={(val) => setCredit(val)}
-                              disabled={presetCategories.includes(tag)}
+                              value={selectedCategory.isCredit}
+                              onValueChange={(val) => setCategoryIsCredit(val)}
                             />
                           </View>
                           <Text
@@ -601,7 +571,7 @@ const AddTimeScreen = ({ route }: AddTimeScreenProps) => {
                           justifyContent: 'flex-end',
                         }}
                       >
-                        <Button onPress={handleDeleteCustomTag}>
+                        <Button onPress={handleDeleteCurrentCategory}>
                           <Text
                             style={{
                               color: theme.colors.textAlt,

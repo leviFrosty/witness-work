@@ -7,6 +7,7 @@ import {
   ServiceReportsByYears,
   ServiceReportTombstone,
 } from '@/types/serviceReport'
+import { Category, CategoryTombstone } from '@/types/category'
 import { RecurringPlan } from '@/lib/serviceReport'
 import { SyncPayload } from '@/app/sync/payload'
 
@@ -30,6 +31,8 @@ export type MergeResult = {
   dayPlans: DayPlan[]
   recurringPlans: RecurringPlan[]
   deletedServiceReports: ServiceReportTombstone[]
+  categories: Category[]
+  deletedCategories: CategoryTombstone[]
   preferencesValues: Record<string, unknown>
   preferenceUpdatedAt: Record<string, number>
   /** True when any field above actually differs from local state. */
@@ -46,6 +49,8 @@ type LocalState = {
   dayPlans: DayPlan[]
   recurringPlans: RecurringPlan[]
   deletedServiceReports: ServiceReportTombstone[]
+  categories: Category[]
+  deletedCategories: CategoryTombstone[]
   preferencesValues: Record<string, unknown>
   preferenceUpdatedAt: Record<string, number>
 }
@@ -144,6 +149,25 @@ export function mergePayload(
       remote.serviceReportStore.recurringPlans as RecurringPlan[]
     )
 
+  // --- Categories (id-keyed records + tombstones, mirrors contacts) ---
+  const remoteCategoryStore = remote.categoryStore ?? {
+    categories: [] as Category[],
+    deletedCategories: [] as CategoryTombstone[],
+  }
+  const { merged: mergedCategories, changed: categoriesChanged } = mergeById(
+    local.categories,
+    (remoteCategoryStore.categories ?? []) as Category[]
+  )
+  const mergedCategoryTombstones = mergeTombstones(
+    local.deletedCategories,
+    remoteCategoryStore.deletedCategories ?? [],
+    now
+  )
+  const categoriesAfterTombstones = applyTombstones(
+    mergedCategories,
+    mergedCategoryTombstones
+  )
+
   // --- Preferences ---
   const {
     values: mergedPrefValues,
@@ -164,9 +188,11 @@ export function mergePayload(
     reportsChanged ||
     dayPlansChanged ||
     recurringPlansChanged ||
+    categoriesChanged ||
     prefsChanged ||
     mergedConversationTombstones.length !== local.deletedConversations.length ||
-    mergedReportTombstones.length !== local.deletedServiceReports.length
+    mergedReportTombstones.length !== local.deletedServiceReports.length ||
+    mergedCategoryTombstones.length !== local.deletedCategories.length
 
   return {
     contacts: contactsFinal,
@@ -178,6 +204,8 @@ export function mergePayload(
     dayPlans: mergedDayPlans,
     recurringPlans: mergedRecurringPlans,
     deletedServiceReports: mergedReportTombstones,
+    categories: categoriesAfterTombstones,
+    deletedCategories: mergedCategoryTombstones,
     preferencesValues: mergedPrefValues,
     preferenceUpdatedAt: mergedPrefTimestamps,
     changed,

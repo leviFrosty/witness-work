@@ -18,6 +18,8 @@ import CreditBadge from '@/features/service-reports/components/CreditBadge'
 import { RootStackNavigation } from '@/types/rootStack'
 import { useFormattedMinutes } from '@/lib/minutes'
 import { useCardStyle } from '@/components/ui/Card'
+import useCategories from '@/stores/categories'
+import { getCategoryLabel } from '@/lib/serviceReportCategory'
 
 interface TimeReportRowProps {
   report: ServiceReport
@@ -28,8 +30,10 @@ const TimeReportRow = ({ report, onPress }: TimeReportRowProps) => {
   const theme = useTheme()
   const cardStyle = useCardStyle()
   const { deleteServiceReport, deleteRolloverPair } = useServiceReport()
+  const { categories } = useCategories()
   const navigation = useNavigation<RootStackNavigation>()
   const toast = useToastController()
+  const categoryLabel = getCategoryLabel(report, categories)
 
   const totalMinutes = report.hours * 60 + report.minutes
   const formattedTime = useFormattedMinutes(Math.abs(totalMinutes))
@@ -198,9 +202,9 @@ const TimeReportRow = ({ report, onPress }: TimeReportRowProps) => {
             </Text>
           </View>
         )}
-        {!isRollover && (report.ldc || report.tag || report.note) && (
+        {!isRollover && (report.ldc || categoryLabel || report.note) && (
           <View style={{ gap: 5 }}>
-            {(report.ldc || report.tag) && (
+            {(report.ldc || categoryLabel) && (
               <View
                 style={{
                   flexDirection: 'row',
@@ -215,7 +219,7 @@ const TimeReportRow = ({ report, onPress }: TimeReportRowProps) => {
                     fontSize: theme.fontSize('sm'),
                   }}
                 >
-                  {report.ldc ? i18n.t('ldc') : report.tag}
+                  {report.ldc ? i18n.t('ldc') : categoryLabel}
                 </Text>
                 {(report.credit || report.ldc) && <CreditBadge />}
               </View>

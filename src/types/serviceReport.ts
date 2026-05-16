@@ -4,9 +4,28 @@ export type ServiceReport = {
   minutes: number
   date: Date
   ldc?: boolean
-  /** User input tag, solely for the purpose of displaying on the UI. */
+  /**
+   * Reference to a user-defined `Category` record (`types/category.ts`). When
+   * set, the entry counts as that category and inherits its `isCredit`
+   * attribute. Replaces the legacy `tag: string` field — all writers must use
+   * `categoryId` going forward.
+   */
+  categoryId?: string
+  /**
+   * Legacy free-text category name. Retained on the type so the one-time
+   * migration in `src/lib/categories.ts` can read it from persisted state; new
+   * code must not write to this field. Dropped by the migration on first run.
+   *
+   * @deprecated Use `categoryId` and look up the Category record instead.
+   */
   tag?: string
-  /** Used to denote the current tag is credit time, similar to LDC. */
+  /**
+   * Per-entry credit flag. Historically authoritative; now derived from the
+   * referenced `Category.isCredit` once `categoryId` is set. Still written by
+   * the LDC path and read by legacy/unmigrated entries during the transition
+   * window. Readers should prefer `Category.isCredit` when `categoryId` is
+   * present.
+   */
   credit?: boolean
   /**
    * True when the entry was created by the Time Rollover system to move

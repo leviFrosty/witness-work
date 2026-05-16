@@ -24,7 +24,7 @@ import { getStartDateLabels } from '@/constants/publisher'
 const PublisherPreferencesSection = () => {
   const {
     role,
-    pioneerStartDate,
+    tenureStartDate,
     overrideCreditLimit,
     customCreditLimitHours,
     autoRolloverEnabled,
@@ -40,7 +40,7 @@ const PublisherPreferencesSection = () => {
     type: publisherType,
     entryMode,
     hasUnlimitedCreditDefault,
-    tracksPioneerStartDate,
+    tracksTenure,
   } = usePublisher()
   const { hasName } = useUser()
   const theme = useTheme()
@@ -105,18 +105,16 @@ const PublisherPreferencesSection = () => {
             <PublisherTypeSelector />
           </View>
         </InputRowContainer>
-        {tracksPioneerStartDate && (
+        {tracksTenure && (
           <InputRowContainer
             label={i18n.t(getStartDateLabels(role).label)}
             lastInSection={isCheckboxMode}
           >
             <View style={{ flex: 1, alignItems: 'flex-end' }}>
               <DateTimePicker
-                value={
-                  pioneerStartDate ? new Date(pioneerStartDate) : new Date()
-                }
+                value={tenureStartDate ? new Date(tenureStartDate) : new Date()}
                 onChange={(_e, date) => {
-                  if (date) set({ pioneerStartDate: date })
+                  if (date) set({ tenureStartDate: date })
                 }}
                 maximumDate={new Date()}
                 iOSMode='date'

@@ -2,6 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage'
 import { create } from 'zustand'
 import { persist, combine, createJSONStorage } from 'zustand/middleware'
 import { Publisher, PublisherHours } from '@/types/publisher'
+import { getTenureType } from '@/lib/publisherCapabilities'
 import i18n, { TranslatedLocale } from '@/lib/locales'
 import Constants from 'expo-constants'
 import moment from 'moment'
@@ -237,15 +238,23 @@ export const PREFERENCE_DEFAULTS = {
    */
   onboardingIntents: [] as OnboardingIntent[],
   /**
-   * Date the user began their current publisher role. Despite the name, this
-   * stores the start date for any role that tracks one — see `tracksStartDate`
-   * in `constants/publisher.ts` (regular pioneer, special pioneer, circuit
-   * overseer, regular auxiliary). Used by ProfileCard / ProfileDetailOverlay to
-   * display duration (e.g. "Pioneering for 2 years"). Stays in Preferences
-   * because it's tied to the publisher _role_ (a setting), not the User's
-   * identity.
+   * **Tenure Start Date** — the date the User's current consecutive tenure in
+   * their current **Tenure Type** began. Persists across role changes _within_
+   * the same Tenure Type (e.g. regular pioneer → circuit overseer keeps the
+   * clock — both are Full-Time Service). Cleared on any cross-Tenure-Type
+   * transition, including moves to/from Regular Publisher or Custom (which have
+   * no Tenure Type). The reset is enforced by the `setRole` action below.
+   *
+   * Field renamed from `pioneerStartDate` in preferences v3 → v4 (see the
+   * `migratePioneerStartDateToTenureStartDate` migration). The legacy name was
+   * misleading: a regular auxiliary's tenure is also stored here, but auxiliary
+   * service is not called "pioneering" in JW vernacular.
+   *
+   * Display label is role-dependent — see `getStartDateLabels()` in
+   * `src/constants/publisher.ts`. Used by ProfileCard / ProfileDetailOverlay /
+   * the onboarding pioneerDate step / the Preferences Publisher screen.
    */
-  pioneerStartDate: null as Date | null,
+  tenureStartDate: null as Date | null,
   installedOn: new Date(),
   contactSort: 'suggested' as ContactSortKey,
   /**
@@ -798,6 +807,15 @@ export const NON_SYNCABLE_PREFERENCE_KEYS = new Set<string>([
  *   place; the boot runner is the single source of truth for both the seeding
  *   and the drop. The version bump still happens so a downgrade to v2 isn't
  *   silently re-promoted.
+ * - V3 → v4: rename `pioneerStartDate` → `tenureStartDate`. The glossary's
+ *   **Tenure Start Date** is the canonical name; the legacy `pioneerStartDate`
+ *   was misleading because regular auxiliary (not "pioneering" in JW
+ *   vernacular) also stored its tenure here. The migration also enforces the
+ *   shape rule that a User in a no-Tenure-Type role (Regular Publisher or
+ *   Custom) cannot hold a stale tenure date — those land as `null` even if the
+ *   legacy field carried a value. The matching key in `preferenceUpdatedAt` is
+ *   renamed (or dropped when the value is dropped) so iCloud LWW stays
+ *   consistent.
  *
  * Exported for unit testing. Idempotent — re-running on an already-migrated
  * blob is a no-op.
@@ -817,6 +835,9 @@ export const migratePreferencesPersistedState = (
   }
   if (version < 3) {
     next = migrateDropProfileFields(next)
+  }
+  if (version < 4) {
+    next = migratePioneerStartDateToTenureStartDate(next)
   }
   return next
 }
@@ -902,6 +923,59 @@ const migratePublisherToRole = (state: any): any => {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const migrateDropProfileFields = (state: any): any => state
 
+/**
+ * V3 → v4: rename `pioneerStartDate` → `tenureStartDate`. Also enforces the "no
+ * stale tenure date for a no-Tenure-Type role" rule from the new shape: users
+ * currently in `'publisher'` or `'custom'` whose legacy blob still carried a
+ * `pioneerStartDate` have that value dropped (the field lands as `null`) — they
+ * had no UI surfacing the value anyway.
+ *
+ * Matching key in `preferenceUpdatedAt` is renamed when the value carries over,
+ * or dropped when the value is dropped (so iCloud LWW stops tracking it for
+ * non-tenure-tracking roles).
+ *
+ * Idempotent: re-running on an already-v4 blob (no `pioneerStartDate` key) is a
+ * no-op.
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const migratePioneerStartDateToTenureStartDate = (state: any): any => {
+  if (!state || typeof state !== 'object') return state
+  if (!('pioneerStartDate' in state)) return state
+
+  const { pioneerStartDate, ...rest } = state
+  const next = { ...rest }
+  const role = next.role as Publisher | undefined
+  const tenureType = role ? getTenureType(role) : null
+  const valueShouldCarryOver = tenureType !== null
+
+  // If both keys somehow coexist (downgrade-then-upgrade defensive), prefer
+  // the new key — same precedence as the earlier renames in this module.
+  const hasNew = 'tenureStartDate' in next
+  if (!hasNew) {
+    next.tenureStartDate = valueShouldCarryOver ? pioneerStartDate : null
+  }
+
+  if (
+    next.preferenceUpdatedAt &&
+    typeof next.preferenceUpdatedAt === 'object'
+  ) {
+    const { pioneerStartDate: legacyTs, ...restTs } = next.preferenceUpdatedAt
+    const nextTs: Record<string, number> = { ...restTs }
+    if (
+      legacyTs !== undefined &&
+      valueShouldCarryOver &&
+      nextTs.tenureStartDate === undefined
+    ) {
+      nextTs.tenureStartDate = legacyTs
+    }
+    // When the value was dropped (no Tenure Type), the matching timestamp is
+    // dropped too — iCloud LWW should stop tracking the field for this peer.
+    next.preferenceUpdatedAt = nextTs
+  }
+
+  return next
+}
+
 export const usePreferences = create(
   persist(
     combine(PREFERENCE_DEFAULTS, (rawSet, getState) => {
@@ -940,7 +1014,35 @@ export const usePreferences = create(
 
       return {
         set,
-        setRole: (role: Publisher) => set({ role }),
+        /**
+         * Updates the User's Publisher role, enforcing the glossary's **Tenure
+         * Start Date** reset semantics:
+         *
+         * - Same Tenure Type (e.g. regular pioneer → circuit overseer) → tenure
+         *   clock persists.
+         * - Different Tenure Type (including any move to/from a no-Tenure-Type
+         *   role like Regular Publisher or Custom) → `tenureStartDate` is
+         *   cleared. The user must re-enter a date for the new tenure.
+         *
+         * Why the action owns this rather than UI code: every entry point that
+         * changes the role (settings, onboarding, tools screen) needs the same
+         * behavior; centralizing it in the store action is the only way to keep
+         * the invariant ("tenureStartDate is non-null ⇒ current role tracks
+         * tenure") true regardless of caller.
+         */
+        setRole: (role: Publisher) => {
+          const previousRole = getState().role
+          const oldType = getTenureType(previousRole)
+          const newType = getTenureType(role)
+          // Glossary: persist the clock only within the same Tenure Type, and
+          // only when that type is non-null. Any cross-type transition (or
+          // either side being null) resets.
+          if (oldType !== null && oldType === newType) {
+            set({ role })
+            return
+          }
+          set({ role, tenureStartDate: null })
+        },
         incrementGeocodeApiCallCount: () =>
           set(({ calledGoecodeApiTimes }) => ({
             calledGoecodeApiTimes: calledGoecodeApiTimes + 1,
@@ -1033,7 +1135,7 @@ export const usePreferences = create(
       storage: createJSONStorage(() =>
         hasMigratedFromAsyncStorage() ? MmkvStorage : AsyncStorage
       ),
-      version: 3,
+      version: 4,
       migrate: (persistedState, version) =>
         migratePreferencesPersistedState(persistedState, version),
     }

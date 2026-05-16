@@ -115,6 +115,49 @@ describe('normalizeLegacyPayloadFieldNames', () => {
     expect(d.preferencesStore.updatedAt.role).toBe(2)
     expect(d.preferencesStore.updatedAt).not.toHaveProperty('publisher')
   })
+
+  it('renames pioneerStartDate → tenureStartDate on values and updatedAt (legacy peer payload)', () => {
+    // Glossary: Tenure Start Date (canonical) supersedes pioneerStartDate
+    // (legacy). Older peers that pre-date wave-4 still write the legacy key.
+    const d = makePayload(
+      {
+        role: 'regularPioneer',
+        pioneerStartDate: '2020-01-01T00:00:00.000Z',
+      },
+      {
+        role: 1700000000000,
+        pioneerStartDate: 1700000001000,
+      }
+    )
+
+    normalizeLegacyPayloadFieldNames(d)
+
+    expect(d.preferencesStore.values.tenureStartDate).toBe(
+      '2020-01-01T00:00:00.000Z'
+    )
+    expect(d.preferencesStore.values).not.toHaveProperty('pioneerStartDate')
+    expect(d.preferencesStore.updatedAt.tenureStartDate).toBe(1700000001000)
+    expect(d.preferencesStore.updatedAt).not.toHaveProperty('pioneerStartDate')
+  })
+
+  it('prefers tenureStartDate when a payload carries both keys (defensive)', () => {
+    const d = makePayload(
+      {
+        pioneerStartDate: '2018-01-01T00:00:00.000Z',
+        tenureStartDate: '2022-05-15T00:00:00.000Z',
+      },
+      { pioneerStartDate: 1, tenureStartDate: 2 }
+    )
+
+    normalizeLegacyPayloadFieldNames(d)
+
+    expect(d.preferencesStore.values.tenureStartDate).toBe(
+      '2022-05-15T00:00:00.000Z'
+    )
+    expect(d.preferencesStore.values).not.toHaveProperty('pioneerStartDate')
+    expect(d.preferencesStore.updatedAt.tenureStartDate).toBe(2)
+    expect(d.preferencesStore.updatedAt).not.toHaveProperty('pioneerStartDate')
+  })
 })
 
 describe('normalizeLegacyPayloadFieldNames — profile-field routing (wave-3)', () => {

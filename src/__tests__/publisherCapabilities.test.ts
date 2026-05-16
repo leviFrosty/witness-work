@@ -1,5 +1,8 @@
 import { describe, it, expect } from 'vitest'
-import { derivePublisherCapabilities } from '@/lib/publisherCapabilities'
+import {
+  derivePublisherCapabilities,
+  getTenureType,
+} from '@/lib/publisherCapabilities'
 import type { Publisher } from '@/types/publisher'
 
 const baseInput = {
@@ -146,17 +149,17 @@ describe('derivePublisherCapabilities', () => {
     })
   })
 
-  describe('tracksPioneerStartDate', () => {
+  describe('tracksTenure', () => {
     it('is true for pioneer-class roles and regular auxiliary', () => {
-      expect(derive('regularPioneer').tracksPioneerStartDate).toBe(true)
-      expect(derive('specialPioneer').tracksPioneerStartDate).toBe(true)
-      expect(derive('circuitOverseer').tracksPioneerStartDate).toBe(true)
-      expect(derive('regularAuxiliary').tracksPioneerStartDate).toBe(true)
+      expect(derive('regularPioneer').tracksTenure).toBe(true)
+      expect(derive('specialPioneer').tracksTenure).toBe(true)
+      expect(derive('circuitOverseer').tracksTenure).toBe(true)
+      expect(derive('regularAuxiliary').tracksTenure).toBe(true)
     })
 
     it('is false for plain publisher and custom roles', () => {
-      expect(derive('publisher').tracksPioneerStartDate).toBe(false)
-      expect(derive('custom').tracksPioneerStartDate).toBe(false)
+      expect(derive('publisher').tracksTenure).toBe(false)
+      expect(derive('custom').tracksTenure).toBe(false)
     })
   })
 
@@ -200,6 +203,23 @@ describe('derivePublisherCapabilities', () => {
     })
   })
 
+  describe('tenureType', () => {
+    it("is 'fullTimeService' for the three full-time roles", () => {
+      expect(derive('regularPioneer').tenureType).toBe('fullTimeService')
+      expect(derive('specialPioneer').tenureType).toBe('fullTimeService')
+      expect(derive('circuitOverseer').tenureType).toBe('fullTimeService')
+    })
+
+    it("is 'auxiliaryPioneer' for the regularAuxiliary role", () => {
+      expect(derive('regularAuxiliary').tenureType).toBe('auxiliaryPioneer')
+    })
+
+    it('is null for roles that do not track a tenure clock', () => {
+      expect(derive('publisher').tenureType).toBeNull()
+      expect(derive('custom').tenureType).toBeNull()
+    })
+  })
+
   describe('hasUnlimitedCreditDefault', () => {
     it('is true for special pioneer and circuit overseer', () => {
       expect(derive('specialPioneer').hasUnlimitedCreditDefault).toBe(true)
@@ -220,5 +240,27 @@ describe('derivePublisherCapabilities', () => {
       })
       expect(caps.hasUnlimitedCreditDefault).toBe(true)
     })
+  })
+})
+
+describe('getTenureType', () => {
+  it("maps every Full-Time Service role to 'fullTimeService'", () => {
+    // Glossary: regular pioneer, special pioneer, and circuit overseer share
+    // a single Tenure clock. Moving between any two of these roles keeps the
+    // clock running — they all map to the same Tenure Type.
+    expect(getTenureType('regularPioneer')).toBe('fullTimeService')
+    expect(getTenureType('specialPioneer')).toBe('fullTimeService')
+    expect(getTenureType('circuitOverseer')).toBe('fullTimeService')
+  })
+
+  it("maps regularAuxiliary to 'auxiliaryPioneer'", () => {
+    expect(getTenureType('regularAuxiliary')).toBe('auxiliaryPioneer')
+  })
+
+  it('returns null for roles with no Tenure clock', () => {
+    // Regular Publisher (`'publisher'`) and Custom track no tenure — a move
+    // into either should clear the Tenure Start Date.
+    expect(getTenureType('publisher')).toBeNull()
+    expect(getTenureType('custom')).toBeNull()
   })
 })

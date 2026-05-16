@@ -727,7 +727,7 @@ export default function ToolsScreen() {
             onPress={() => {
               setPreferences({
                 onboardingComplete: true,
-                pioneerStartDate: null,
+                tenureStartDate: null,
               })
               setProfile({
                 hasCompletedProfileSetup: false,

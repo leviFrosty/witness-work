@@ -37,7 +37,7 @@ import WeekStripTeaser from '@/features/service-reports/components/WeekStripTeas
 import useTheme from '@/contexts/theme'
 import i18n, { TranslationKey } from '@/lib/locales'
 import { OnboardingIntent, usePreferences } from '@/stores/preferences'
-import usePublisher from '@/hooks/usePublisher'
+import useUser from '@/hooks/useUser'
 import { getEntryMode, isInFullTimeService } from '@/lib/publisherCapabilities'
 import { useMarkerColors } from '@/hooks/useMarkerColors'
 import { Theme } from '@/types/theme'
@@ -1138,7 +1138,7 @@ const YourPlanPreview = ({ goBack, goNext }: Props) => {
   const theme = useTheme()
   const { role, publisherHours, pioneerStartDate, onboardingIntents } =
     usePreferences()
-  const { name: trimmedName, hasName } = usePublisher()
+  const { name: trimmedName, hasName } = useUser()
 
   const monthlyGoalHours = publisherHours[role] ?? 0
   const publisherLabel = i18n.t(role)

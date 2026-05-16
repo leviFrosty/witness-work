@@ -225,7 +225,7 @@ export function getEffectiveHomeScreenOrder(
 }
 
 export const PREFERENCE_DEFAULTS = {
-  publisher: 'publisher' as Publisher,
+  role: 'publisher' as Publisher,
   publisherHours: publisherHours,
 
   /** Overrides publisherHours hour requirement for given month. */
@@ -603,8 +603,8 @@ export const PREFERENCE_DEFAULTS = {
    * ladder" from `src/lib/milestones.ts`. When non-null, these hours override
    * the defaults and persist across publisher-type changes (shared list, not
    * per-publisher). The final row — the annual goal — is derived from
-   * `publisherHours[publisher] * 12` at render time and is NOT stored here.
-   * "Reset to defaults" sets this back to `null`.
+   * `publisherHours[role] * 12` at render time and is NOT stored here. "Reset
+   * to defaults" sets this back to `null`.
    */
   milestoneOverrides: null as number[] | null,
   /**
@@ -761,6 +761,12 @@ export const NON_SYNCABLE_PREFERENCE_KEYS = new Set<string>([
  *   identical; only the field names change. We also migrate the
  *   `preferenceUpdatedAt` timestamp map so iCloud last-writer-wins continues to
  *   work across the rename. The legacy fields are dropped from disk.
+ * - V1 → v2: rename `publisher` → `role`. The field stores a `Publisher` enum
+ *   value (the user's field-ministry role); the new name reads more naturally
+ *   (`preferences.role === 'regularPioneer'`) and matches the glossary. The
+ *   leaf enum value `'publisher'` (Regular Publisher) is canonical and stays.
+ *   The `preferenceUpdatedAt` timestamp map is migrated alongside so iCloud
+ *   last-writer-wins continues to work across the rename.
  *
  * Exported for unit testing. Idempotent — re-running on an already-migrated
  * blob is a no-op.
@@ -774,6 +780,9 @@ export const migratePreferencesPersistedState = (
   let next = persistedState
   if (version < 1) {
     next = migrateExcludedMeetingWeekdaysToOffMeetingDays(next)
+  }
+  if (version < 2) {
+    next = migratePublisherToRole(next)
   }
   return next
 }
@@ -806,6 +815,30 @@ const migrateExcludedMeetingWeekdaysToOffMeetingDays = (state: any): any => {
     }
     if (meetingTs !== undefined && nextTs.meetingDays === undefined) {
       nextTs.meetingDays = meetingTs
+    }
+    next.preferenceUpdatedAt = nextTs
+  }
+  return next
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const migratePublisherToRole = (state: any): any => {
+  if (!state || typeof state !== 'object') return state
+  const { publisher, ...rest } = state
+  const next = { ...rest }
+  // If the new key already carries a value, it wins (defensive — a
+  // downgrade-then-upgrade could leave both keys present).
+  if (publisher !== undefined && next.role === undefined) {
+    next.role = publisher
+  }
+  if (
+    next.preferenceUpdatedAt &&
+    typeof next.preferenceUpdatedAt === 'object'
+  ) {
+    const { publisher: publisherTs, ...restTs } = next.preferenceUpdatedAt
+    const nextTs: Record<string, number> = { ...restTs }
+    if (publisherTs !== undefined && nextTs.role === undefined) {
+      nextTs.role = publisherTs
     }
     next.preferenceUpdatedAt = nextTs
   }
@@ -850,7 +883,7 @@ export const usePreferences = create(
 
       return {
         set,
-        setPublisher: (publisher: Publisher) => set({ publisher }),
+        setRole: (role: Publisher) => set({ role }),
         incrementGeocodeApiCallCount: () =>
           set(({ calledGoecodeApiTimes }) => ({
             calledGoecodeApiTimes: calledGoecodeApiTimes + 1,
@@ -943,7 +976,7 @@ export const usePreferences = create(
       storage: createJSONStorage(() =>
         hasMigratedFromAsyncStorage() ? MmkvStorage : AsyncStorage
       ),
-      version: 1,
+      version: 2,
       migrate: (persistedState, version) =>
         migratePreferencesPersistedState(persistedState, version),
     }

@@ -42,7 +42,7 @@ const Supporter = ({ goBack, goNext }: Props) => {
   const theme = useTheme()
   const navigation = useNavigation<RootStackNavigation>()
   const prefs = usePreferences()
-  const { publisher } = prefs
+  const { role } = prefs
 
   // Read `onboardingIntents` defensively — the field is being added by a
   // sibling worktree and may not exist in the preferences store yet. Typing
@@ -51,8 +51,8 @@ const Supporter = ({ goBack, goNext }: Props) => {
     (prefs as unknown as { onboardingIntents?: string[] }).onboardingIntents ??
     []
 
-  const personalizationKey = publisher
-    ? personalizationKeyByPublisher[publisher]
+  const personalizationKey = role
+    ? personalizationKeyByPublisher[role]
     : undefined
 
   const intentCount = intents.length

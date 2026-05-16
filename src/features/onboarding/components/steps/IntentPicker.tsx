@@ -37,8 +37,8 @@ interface IntentOption {
 
 const IntentPicker = ({ goBack, goNext }: Props) => {
   const theme = useTheme()
-  const { onboardingIntents, set, publisher } = usePreferences()
-  const isCheckbox = getEntryMode(publisher) === 'checkbox'
+  const { onboardingIntents, set, role } = usePreferences()
+  const isCheckbox = getEntryMode(role) === 'checkbox'
 
   const options: IntentOption[] = [
     {

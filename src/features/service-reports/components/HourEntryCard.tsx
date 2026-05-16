@@ -24,7 +24,7 @@ import { HomeTabStackNavigation } from '@/types/homeStack'
 export default function HourEntryCard() {
   const theme = useTheme()
   const {
-    publisher,
+    role,
     publisherHours,
     displayDetailsOnProgressBarHomeScreen,
     timeDisplayFormat,
@@ -35,7 +35,7 @@ export default function HourEntryCard() {
   const navigation = useNavigation<
     HomeTabStackNavigation & RootStackNavigation
   >()
-  const goalHours = publisherHours[publisher]
+  const goalHours = publisherHours[role]
   const monthReports = useMemo(
     () => getMonthsReports(serviceReports, moment().month(), moment().year()),
     [serviceReports]
@@ -47,13 +47,13 @@ export default function HourEntryCard() {
         monthReports,
         moment().month(),
         moment().year(),
-        publisher,
+        role,
         {
           enabled: overrideCreditLimit,
           customLimitHours: customCreditLimitHours,
         }
       ),
-    [monthReports, publisher, overrideCreditLimit, customCreditLimitHours]
+    [monthReports, role, overrideCreditLimit, customCreditLimitHours]
   )
 
   const progress = useMemo(

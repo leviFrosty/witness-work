@@ -81,20 +81,20 @@ const MonthReport = ({
 }: MonthReportProps) => {
   const theme = useTheme()
   const {
-    publisher,
+    role,
     publisherHours,
     overrideCreditLimit,
     customCreditLimitHours,
     celebratedTiers,
     markTierCelebrated,
   } = usePreferences()
-  const goalHours = publisherHours[publisher]
+  const goalHours = publisherHours[role]
   const navigation = useNavigation<RootStackNavigation>()
   const tabNavigation = useNavigation<HomeTabStackNavigation>()
   const rollover = useRollover()
 
   const adjustedMinutes: AdjustedMinutes = monthsReports
-    ? adjustedMinutesForSpecificMonth(monthsReports, month, year, publisher, {
+    ? adjustedMinutesForSpecificMonth(monthsReports, month, year, role, {
         enabled: overrideCreditLimit,
         customLimitHours: customCreditLimitHours,
       })
@@ -121,22 +121,16 @@ const MonthReport = ({
     const reports = getMonthsReports(serviceReports, prevMonth, prevMonthYear)
     if (!reports.length) return null
     return (
-      adjustedMinutesForSpecificMonth(
-        reports,
-        prevMonth,
-        prevMonthYear,
-        publisher,
-        {
-          enabled: overrideCreditLimit,
-          customLimitHours: customCreditLimitHours,
-        }
-      ).value / 60
+      adjustedMinutesForSpecificMonth(reports, prevMonth, prevMonthYear, role, {
+        enabled: overrideCreditLimit,
+        customLimitHours: customCreditLimitHours,
+      }).value / 60
     )
   }, [
     serviceReports,
     prevMonth,
     prevMonthYear,
-    publisher,
+    role,
     overrideCreditLimit,
     customCreditLimitHours,
   ])
@@ -219,7 +213,7 @@ const MonthReport = ({
       month,
       year,
       hoursCompleted,
-      publisher,
+      role,
       {
         enabled: overrideCreditLimit,
         customLimitHours: customCreditLimitHours,
@@ -232,7 +226,7 @@ const MonthReport = ({
     month,
     year,
     hoursCompleted,
-    publisher,
+    role,
     overrideCreditLimit,
     customCreditLimitHours,
   ])

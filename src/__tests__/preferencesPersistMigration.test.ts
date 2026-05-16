@@ -95,3 +95,103 @@ describe('preferences persist migrate v0 → v1 (excluded/meeting weekdays → o
     expect(migrated).not.toHaveProperty('meetingWeekdays')
   })
 })
+
+describe('preferences persist migrate v1 → v2 (publisher → role)', () => {
+  it('renames publisher → role preserving the value', () => {
+    const v1State = {
+      publisher: 'regularPioneer',
+      offDays: [0, 6],
+    }
+
+    const migrated = migratePreferencesPersistedState(v1State, 1)
+
+    expect(migrated.role).toBe('regularPioneer')
+    expect(migrated).not.toHaveProperty('publisher')
+  })
+
+  it('preserves the canonical leaf enum value `publisher` when stored under the publisher field', () => {
+    // The field name renames, but the *value* `'publisher'` (= Regular
+    // Publisher role) is canonical and unchanged.
+    const v1State = {
+      publisher: 'publisher',
+    }
+
+    const migrated = migratePreferencesPersistedState(v1State, 1)
+
+    expect(migrated.role).toBe('publisher')
+    expect(migrated).not.toHaveProperty('publisher')
+  })
+
+  it('also migrates the preferenceUpdatedAt timestamp map so iCloud LWW still works after rename', () => {
+    const v1State = {
+      publisher: 'circuitOverseer',
+      preferenceUpdatedAt: {
+        publisher: 1700000000000,
+        otherKey: 1700000002000,
+      },
+    }
+
+    const migrated = migratePreferencesPersistedState(v1State, 1)
+
+    expect(migrated.preferenceUpdatedAt.role).toBe(1700000000000)
+    expect(migrated.preferenceUpdatedAt.otherKey).toBe(1700000002000)
+    expect(migrated.preferenceUpdatedAt).not.toHaveProperty('publisher')
+  })
+
+  it('is idempotent — re-running on an already-v2 state is a no-op', () => {
+    const v1State = {
+      publisher: 'specialPioneer',
+      preferenceUpdatedAt: { publisher: 1700000000000 },
+    }
+    const v2State = migratePreferencesPersistedState(v1State, 1)
+    const v2Again = migratePreferencesPersistedState(v2State, 2)
+
+    expect(JSON.stringify(v2Again)).toEqual(JSON.stringify(v2State))
+  })
+
+  it('does not overwrite an existing role value if both publisher and role exist (new wins)', () => {
+    // Defensive: if a downgrade-then-upgrade leaves both keys present, the
+    // new field wins and the legacy key is dropped.
+    const mixedState = {
+      publisher: 'publisher',
+      role: 'specialPioneer',
+      preferenceUpdatedAt: {
+        publisher: 1700000000000,
+        role: 1700000001000,
+      },
+    }
+
+    const migrated = migratePreferencesPersistedState(mixedState, 1)
+
+    expect(migrated.role).toBe('specialPioneer')
+    expect(migrated).not.toHaveProperty('publisher')
+    expect(migrated.preferenceUpdatedAt.role).toBe(1700000001000)
+    expect(migrated.preferenceUpdatedAt).not.toHaveProperty('publisher')
+  })
+
+  it('chains cleanly through v0 → v2 when called with version 0', () => {
+    // A v0 blob being read on the v2 schema should get both renames applied.
+    const v0State = {
+      excludedWeekdays: [0, 6],
+      meetingWeekdays: [3],
+      publisher: 'regularPioneer',
+    }
+
+    const migrated = migratePreferencesPersistedState(v0State, 0)
+
+    expect(migrated.offDays).toEqual([0, 6])
+    expect(migrated.meetingDays).toEqual([3])
+    expect(migrated.role).toBe('regularPioneer')
+    expect(migrated).not.toHaveProperty('excludedWeekdays')
+    expect(migrated).not.toHaveProperty('meetingWeekdays')
+    expect(migrated).not.toHaveProperty('publisher')
+  })
+
+  it('fills sensible defaults when the publisher field was missing entirely', () => {
+    const migrated = migratePreferencesPersistedState({}, 1)
+
+    expect(migrated).not.toHaveProperty('publisher')
+    // The `role` default is filled at hydration time by combine(), so absence
+    // here is fine — the migration just shouldn't *introduce* the legacy field.
+  })
+})

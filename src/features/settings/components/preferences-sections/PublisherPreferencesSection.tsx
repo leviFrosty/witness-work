@@ -21,7 +21,7 @@ import { getStartDateLabels } from '@/constants/publisher'
 
 const PublisherPreferencesSection = () => {
   const {
-    publisher,
+    role,
     pioneerStartDate,
     hasCompletedProfileSetup,
     overrideCreditLimit,
@@ -103,7 +103,7 @@ const PublisherPreferencesSection = () => {
         </InputRowContainer>
         {tracksPioneerStartDate && (
           <InputRowContainer
-            label={i18n.t(getStartDateLabels(publisher).label)}
+            label={i18n.t(getStartDateLabels(role).label)}
             lastInSection={isCheckboxMode}
           >
             <View style={{ flex: 1, alignItems: 'flex-end' }}>

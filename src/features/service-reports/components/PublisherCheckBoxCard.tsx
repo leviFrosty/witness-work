@@ -4,7 +4,7 @@ import * as Crypto from 'expo-crypto'
 import LottieView from 'lottie-react-native'
 import { faSquare } from '@fortawesome/free-regular-svg-icons'
 import Button from '@/components/ui/Button'
-import { ServiceReport as ServiceReportType } from '@/types/serviceReport'
+import { TimeEntry } from '@/types/timeEntry'
 import useTheme from '@/contexts/theme'
 import Text from '@/components/ui/MyText'
 import i18n from '@/lib/locales'
@@ -19,7 +19,7 @@ import { CONFETTI_DELAY_MS } from '@/providers/AnimationViewProvider'
 const CheckMarkAnimationComponent = ({
   undoReport,
 }: {
-  undoReport?: ServiceReportType
+  undoReport?: TimeEntry
 }) => {
   const theme = useTheme()
   const { deleteServiceReport } = useServiceReport()
@@ -63,7 +63,7 @@ const CheckMarkAnimationComponent = ({
 
 export default function PublisherCheckBoxCard() {
   const theme = useTheme()
-  const [undoReport, setUndoReport] = useState<ServiceReportType>()
+  const [undoReport, setUndoReport] = useState<TimeEntry>()
   const { serviceReports, addServiceReport } = useServiceReport()
 
   const { playConfetti } = useAnimation()
@@ -75,7 +75,7 @@ export default function PublisherCheckBoxCard() {
 
   const handleSubmitDidService = () => {
     const id = Crypto.randomUUID()
-    const report: ServiceReportType = {
+    const report: TimeEntry = {
       date: new Date(),
       hours: 0,
       minutes: 0,

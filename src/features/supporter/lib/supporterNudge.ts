@@ -1,5 +1,5 @@
 import moment from 'moment'
-import { ServiceReportsByYears } from '@/types/serviceReport'
+import { TimeEntriesByYear } from '@/types/timeEntry'
 
 /**
  * Tenure, engagement, and cooldown thresholds for the Home supporter-nudge
@@ -34,7 +34,7 @@ export type SupporterNudgeEligibilityInput = {
    * caller stamps it. See `HomeScreen` for the stamping site.
    */
   supporterNudgeAvailableSince: number | null
-  serviceReports: ServiceReportsByYears
+  serviceReports: TimeEntriesByYear
   contactsCount: number
   conversationsCount: number
   /** Only honored when `__DEV__` is true. Callers pass `__DEV__` for `isDev`. */
@@ -48,7 +48,7 @@ export type SupporterNudgeEligibilityInput = {
  * Count of distinct (year, month) buckets that contain at least one service
  * report. "6 months of reports" across any calendar window, not 6 consecutive.
  */
-const countReportMonths = (reports: ServiceReportsByYears): number => {
+const countReportMonths = (reports: TimeEntriesByYear): number => {
   let count = 0
   for (const year of Object.keys(reports)) {
     const yearReports = reports[year]
@@ -63,7 +63,7 @@ const countReportMonths = (reports: ServiceReportsByYears): number => {
   return count
 }
 
-const sumTotalHours = (reports: ServiceReportsByYears): number => {
+const sumTotalHours = (reports: TimeEntriesByYear): number => {
   let total = 0
   for (const year of Object.keys(reports)) {
     const yearReports = reports[year]
@@ -80,7 +80,7 @@ const sumTotalHours = (reports: ServiceReportsByYears): number => {
 }
 
 const meetsEngagementFloor = (
-  reports: ServiceReportsByYears,
+  reports: TimeEntriesByYear,
   contactsCount: number,
   conversationsCount: number
 ): boolean => {

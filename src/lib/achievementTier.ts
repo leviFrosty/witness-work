@@ -3,7 +3,7 @@ import {
   adjustedMinutesForSpecificMonth,
   getMonthsReports,
 } from '@/lib/serviceReport'
-import { ServiceReportsByYears } from '@/types/serviceReport'
+import { TimeEntriesByYear } from '@/types/timeEntry'
 import { Publisher } from '@/types/publisher'
 
 export type AchievementTier = 'reached' | 'exceeded' | 'crushed' | 'record'
@@ -45,7 +45,7 @@ export const tierFromPercent = (
  * months exist in the window.
  */
 export const isPersonalBest12mo = (
-  serviceReports: ServiceReportsByYears,
+  serviceReports: TimeEntriesByYear,
   currentMonth: number,
   currentYear: number,
   hoursCompleted: number,

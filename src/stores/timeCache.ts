@@ -3,7 +3,7 @@ import { persist, createJSONStorage } from 'zustand/middleware'
 import { MmkvStorage } from '@/stores/mmkv'
 import { logger } from '@/lib/logger'
 import { getServiceYearReports } from '@/lib/serviceReport'
-import type { ServiceReportsByYears } from '@/types/serviceReport'
+import type { TimeEntriesByYear } from '@/types/timeEntry'
 
 /**
  * Cache key format: `{serviceYear}` for annual cache, `{year}-{month}` for
@@ -161,7 +161,7 @@ export const getAnnualServiceReportCacheKey = (
  * report IDs, hours, and minutes for all reports in the service year.
  */
 export const generateServiceReportsHash = (
-  serviceReports: ServiceReportsByYears,
+  serviceReports: TimeEntriesByYear,
   targetYear: number
 ): string => {
   const serviceYearsReports = getServiceYearReports(serviceReports, targetYear)
@@ -186,7 +186,7 @@ export const generateServiceReportsHash = (
  * count or the max `updatedAt`, so this reliably detects mutations.
  */
 export const generateDailyMinutesFingerprint = (
-  reports: ServiceReportsByYears
+  reports: TimeEntriesByYear
 ): string => {
   let count = 0
   let maxUpdated = 0

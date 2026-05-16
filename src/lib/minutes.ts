@@ -1,6 +1,6 @@
 import _ from 'lodash'
 import { usePreferences } from '@/stores/preferences'
-import { MinuteDisplayFormat } from '@/types/serviceReport'
+import { MinuteDisplayFormat } from '@/types/timeEntry'
 import i18n from '@/lib/locales'
 
 /**

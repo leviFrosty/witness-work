@@ -18,7 +18,7 @@ import i18n from '@/lib/locales'
 import { usePreferences } from '@/stores/preferences'
 import useServiceReport from '@/stores/serviceReport'
 import { getServiceYearFromDate } from '@/lib/serviceReport'
-import { ServiceReportsByYears } from '@/types/serviceReport'
+import { TimeEntriesByYear } from '@/types/timeEntry'
 import { LDC_BUILTIN_CATEGORY_ID } from '@/constants/categories'
 
 interface MonthRow {
@@ -65,7 +65,7 @@ export const buildCatchUpRows = (installedOn: Date): MonthRow[] => {
  * populated those months.
  */
 export const hasReportsInCatchUpWindow = (
-  serviceReports: ServiceReportsByYears,
+  serviceReports: TimeEntriesByYear,
   installedOn: Date
 ): boolean => {
   const installMoment = moment(installedOn)

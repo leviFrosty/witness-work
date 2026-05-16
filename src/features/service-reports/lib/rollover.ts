@@ -1,6 +1,6 @@
 import moment from 'moment'
 import { Publisher } from '@/types/publisher'
-import { ServiceReport, ServiceReportsByYears } from '@/types/serviceReport'
+import { TimeEntry, TimeEntriesByYear } from '@/types/timeEntry'
 import { normalizeDateForStorage } from '@/lib/normalizeDate'
 import {
   adjustedMinutesForSpecificMonth,
@@ -23,7 +23,7 @@ export const computePendingRollovers = ({
   creditLimitOverride,
   ignoreMarker = false,
 }: {
-  serviceReports: ServiceReportsByYears
+  serviceReports: TimeEntriesByYear
   today: moment.Moment
   hasAnnualGoal: boolean
   lastRolloverYearMonth: string | null
@@ -84,7 +84,7 @@ export const buildRolloverEntries = ({
   pending: PendingRollover[]
   today: moment.Moment
   genId: () => string
-}): ServiceReport[] => {
+}): TimeEntry[] => {
   if (pending.length === 0) return []
 
   // Shared id stamps every entry from this call so the pair (or set) can be
@@ -92,7 +92,7 @@ export const buildRolloverEntries = ({
   // destination positive sum to zero.
   const groupId = genId()
 
-  const entries: ServiceReport[] = pending.map(
+  const entries: TimeEntry[] = pending.map(
     ({ sourceYear, sourceMonth, minutes }) => {
       const lastDay = moment({ year: sourceYear, month: sourceMonth })
         .endOf('month')
@@ -124,7 +124,7 @@ export const buildRolloverEntries = ({
 }
 
 export type RolloverApplication = {
-  entries: ServiceReport[]
+  entries: TimeEntry[]
   markerKey: string
 }
 
@@ -137,7 +137,7 @@ export const applyRollover = ({
   creditLimitOverride,
   genId,
 }: {
-  serviceReports: ServiceReportsByYears
+  serviceReports: TimeEntriesByYear
   today: moment.Moment
   hasAnnualGoal: boolean
   lastRolloverYearMonth: string | null

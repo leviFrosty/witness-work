@@ -7,7 +7,7 @@ import {
   AdjustedMinutes,
   adjustedMinutesForSpecificMonth,
 } from '@/lib/serviceReport'
-import { ServiceReport } from '@/types/serviceReport'
+import { TimeEntry } from '@/types/timeEntry'
 import { usePreferences } from '@/stores/preferences'
 import useServiceReport from '@/stores/serviceReport'
 import i18n from '@/lib/locales'
@@ -51,7 +51,7 @@ const tierColor = (tier: AchievementTier, theme: Theme) =>
 export default function YearScreenMonthRow(props: {
   month: number
   year: number
-  monthsReports: ServiceReport[]
+  monthsReports: TimeEntry[]
 }) {
   const { month, year, monthsReports } = props
 

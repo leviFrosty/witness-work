@@ -1,4 +1,4 @@
-import type { DayPlan, RecurringPlan } from '@/types/serviceReport'
+import type { DayPlan, RecurringPlan } from '@/types/timeEntry'
 import { momentStoredDate, normalizeDateForStorage } from '@/lib/normalizeDate'
 import {
   getEffectiveMinutesForRecurringPlan,

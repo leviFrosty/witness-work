@@ -1,11 +1,11 @@
 import moment from 'moment'
-import { ServiceReportsByYears } from '@/types/serviceReport'
+import { TimeEntriesByYear } from '@/types/timeEntry'
 
 const dayKey = (d: moment.Moment) => d.format('YYYY-MM-DD')
 
 /** Flattens nested service reports into a day→minutes map. */
 export const flattenDailyMinutes = (
-  reports: ServiceReportsByYears
+  reports: TimeEntriesByYear
 ): Map<string, number> => {
   const out = new Map<string, number>()
   for (const year of Object.values(reports)) {

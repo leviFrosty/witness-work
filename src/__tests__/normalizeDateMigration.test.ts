@@ -14,7 +14,7 @@ import {
   momentStoredDate,
 } from '@/lib/normalizeDate'
 import { RecurringPlan, RecurringPlanFrequencies } from '@/lib/serviceReport'
-import { DayPlan, ServiceReport } from '@/types/serviceReport'
+import { DayPlan, TimeEntry } from '@/types/timeEntry'
 
 const originalTZ = process.env.TZ
 const setTZ = (tz: string) => {
@@ -35,7 +35,7 @@ const emptyState = (): PersistedServiceReportState => ({
 
 describe('migrateNormalizeDates — service reports', () => {
   it('normalizes a service report date in place to noon UTC', () => {
-    const report: ServiceReport = {
+    const report: TimeEntry = {
       id: 'r1',
       hours: 1,
       minutes: 0,
@@ -70,7 +70,7 @@ describe('migrateNormalizeDates — service reports', () => {
     // After migration the report should sit in whichever bucket matches its
     // normalized date in the *current* TZ (PST), so it's no longer orphaned.
     setTZ('America/Los_Angeles')
-    const reportAuthoredInJST: ServiceReport = {
+    const reportAuthoredInJST: TimeEntry = {
       id: 'orphan-1',
       hours: 1,
       minutes: 0,
@@ -94,14 +94,14 @@ describe('migrateNormalizeDates — service reports', () => {
 
   it('merges into an existing bucket when re-bucketing', () => {
     setTZ('America/Los_Angeles')
-    const existing: ServiceReport = {
+    const existing: TimeEntry = {
       id: 'existing',
       hours: 2,
       minutes: 0,
       date: moment('2026-04-30').toDate(),
     }
     // Same orphan-style report — should land in [2026][3] alongside `existing`.
-    const orphan: ServiceReport = {
+    const orphan: TimeEntry = {
       id: 'orphan',
       hours: 1,
       minutes: 0,

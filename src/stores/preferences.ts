@@ -9,7 +9,7 @@ import moment from 'moment'
 import * as Device from 'expo-device'
 import { hasMigratedFromAsyncStorage, MmkvStorage } from '@/stores/mmkv'
 import { Address } from '@/types/contact'
-import { MinuteDisplayFormat } from '@/types/serviceReport'
+import { MinuteDisplayFormat } from '@/types/timeEntry'
 import type { AssistantEvent } from '@/types/assistant'
 import { appendAssistantEventCapped } from '@/lib/assistantState'
 import type { ShaderId } from '@/shaders/types'
@@ -339,8 +339,8 @@ export const PREFERENCE_DEFAULTS = {
   /**
    * One-shot flag for the tag → Category migration. Boot runner gates on this:
    * when false, it scans the user's ServiceReports + legacy `serviceReportTags`
-   * and seeds the new `useCategories` store, rewriting each tagged
-   * ServiceReport to reference a `categoryId` instead of a free-text `tag`. See
+   * and seeds the new `useCategories` store, rewriting each tagged TimeEntry to
+   * reference a `categoryId` instead of a free-text `tag`. See
    * `src/lib/categories.ts` for the transform. Non-syncable — each device
    * migrates its own persisted state once.
    */
@@ -358,9 +358,9 @@ export const PREFERENCE_DEFAULTS = {
   /**
    * One-shot flag for the LDC → builtin Category migration. Boot runner gates
    * on this: when false, it seeds the LDC builtin Category record (stable id
-   * `LDC_BUILTIN_CATEGORY_ID`) and rewrites every ServiceReport with `ldc:
-   * true` to use `categoryId: LDC_BUILTIN_CATEGORY_ID, credit: true` instead.
-   * See `migrateLdcToCategory` in `src/lib/categories.ts`. Must run AFTER
+   * `LDC_BUILTIN_CATEGORY_ID`) and rewrites every TimeEntry with `ldc: true` to
+   * use `categoryId: LDC_BUILTIN_CATEGORY_ID, credit: true` instead. See
+   * `migrateLdcToCategory` in `src/lib/categories.ts`. Must run AFTER
    * `hasMigratedTagsToCategories` so the categories list is fully populated
    * before LDC is folded in. Non-syncable — each device migrates its own
    * persisted state once.

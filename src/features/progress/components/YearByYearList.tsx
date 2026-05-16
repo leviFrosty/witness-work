@@ -16,7 +16,7 @@ import {
   getAvailableEarlierEndYears,
   getServiceYearFromDate,
 } from '@/lib/serviceReport'
-import { ServiceReport } from '@/types/serviceReport'
+import { TimeEntry } from '@/types/timeEntry'
 import i18n from '@/lib/locales'
 import { formatMinutes } from '@/lib/minutes'
 import { usePreferences } from '@/stores/preferences'
@@ -26,10 +26,10 @@ import AddEarlierYearSheet from '@/features/progress/components/AddEarlierYearSh
 
 const EARLIER_YEAR_FLOOR_YEARS_BACK = 100
 
-const useFlatServiceReports = (): ServiceReport[] => {
+const useFlatServiceReports = (): TimeEntry[] => {
   const { serviceReports } = useServiceReport()
   return useMemo(() => {
-    const flat: ServiceReport[] = []
+    const flat: TimeEntry[] = []
     for (const year in serviceReports) {
       const months = serviceReports[year]
       for (const month in months) {

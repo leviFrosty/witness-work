@@ -1,7 +1,7 @@
 import { Swipeable } from 'react-native-gesture-handler'
 import useTheme from '@/contexts/theme'
 import Haptics from '@/lib/haptics'
-import { ServiceReport } from '@/types/serviceReport'
+import { TimeEntry } from '@/types/timeEntry'
 import SwipeableDelete from '@/components/ui/swipeableActions/Delete'
 import { Alert, View } from 'react-native'
 import i18n from '@/lib/locales'
@@ -22,7 +22,7 @@ import useCategories from '@/stores/categories'
 import { getCategoryLabel, isLdcEntry } from '@/lib/serviceReportCategory'
 
 interface TimeReportRowProps {
-  report: ServiceReport
+  report: TimeEntry
   onPress?: () => void
 }
 
@@ -42,11 +42,7 @@ const TimeReportRow = ({ report, onPress }: TimeReportRowProps) => {
   const sign = totalMinutes < 0 ? '−' : '+'
 
   const handleSwipeOpen = useCallback(
-    (
-      direction: 'left' | 'right',
-      swipeable: Swipeable,
-      report: ServiceReport
-    ) => {
+    (direction: 'left' | 'right', swipeable: Swipeable, report: TimeEntry) => {
       if (direction === 'right') {
         const isRolloverPair =
           report.rollover === true && report.rolloverGroupId !== undefined

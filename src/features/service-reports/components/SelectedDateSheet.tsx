@@ -3,7 +3,7 @@ import { Sheet } from 'tamagui'
 import Text from '@/components/ui/MyText'
 import i18n from '@/lib/locales'
 import useTheme from '@/contexts/theme'
-import { ServiceReport } from '@/types/serviceReport'
+import { TimeEntry } from '@/types/timeEntry'
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
 import ActionButton from '@/components/ui/ActionButton'
 import XView from '@/components/ui/layout/XView'
@@ -18,7 +18,7 @@ export type SelectedDateSheetState = {
 interface Props {
   sheet: SelectedDateSheetState
   setSheet: React.Dispatch<React.SetStateAction<SelectedDateSheetState>>
-  thisMonthsReports: ServiceReport[] | null
+  thisMonthsReports: TimeEntry[] | null
   onAddTime?: () => void
   onPlanDay?: () => void
   onNavigateToPlanDay?: (existingDayPlanId: string) => void
@@ -26,7 +26,7 @@ interface Props {
     existingRecurringPlanId: string,
     recurringPlanDate: string
   ) => void
-  onEditTimeReport?: (report: ServiceReport) => void
+  onEditTimeReport?: (report: TimeEntry) => void
 }
 
 const SelectedDateSheet: React.FC<Props> = ({

@@ -8,7 +8,7 @@ import {
   RecurringPlanFrequencies,
   type DayPlan,
   type RecurringPlan,
-} from '@/types/serviceReport'
+} from '@/types/timeEntry'
 
 const dayPlan = (isoDay: string, minutes: number): DayPlan => ({
   id: isoDay,

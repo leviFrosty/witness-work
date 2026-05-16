@@ -7,7 +7,7 @@ import useTheme from '@/contexts/theme'
 import Button from '@/components/ui/Button'
 import useServiceReport from '@/stores/serviceReport'
 import moment from 'moment'
-import { DayPlan, ServiceReport } from '@/types/serviceReport'
+import { DayPlan, TimeEntry } from '@/types/timeEntry'
 import {
   RecurringPlan,
   getPlansIntersectingDay,
@@ -72,7 +72,7 @@ const getNoteIndicatorColor = (
 const NonPlannedDay = (
   props: Omit<DayProps, 'date'> & {
     date?: DateData | undefined
-    serviceReports: ServiceReport[] | undefined
+    serviceReports: TimeEntry[] | undefined
     viewMode?: CalendarViewMode
     height?: number
   }
@@ -163,7 +163,7 @@ const NonPlannedDay = (
 const PlannedDay = (
   props: Omit<DayProps, 'date'> & {
     date?: DateData | undefined
-    serviceReports: ServiceReport[] | undefined
+    serviceReports: TimeEntry[] | undefined
     dayPlan?: DayPlan
     recurringPlans?: RecurringPlan[]
     viewMode?: CalendarViewMode
@@ -317,7 +317,7 @@ const CalendarDay = (
   props: Omit<DayProps, 'date'> & {
     date?: DateData | undefined
     planMode?: boolean
-    monthsReports: ServiceReport[] | null
+    monthsReports: TimeEntry[] | null
     viewMode?: CalendarViewMode
     height?: number
     /**

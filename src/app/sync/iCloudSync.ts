@@ -20,9 +20,9 @@ import { CustomFieldDefinition } from '@/types/customField'
 import { Visit, VisitTombstone } from '@/types/visit'
 import {
   DayPlan,
-  ServiceReportsByYears,
-  ServiceReportTombstone,
-} from '@/types/serviceReport'
+  TimeEntriesByYear,
+  TimeEntryTombstone,
+} from '@/types/timeEntry'
 import { Category, CategoryTombstone } from '@/types/category'
 import { RecurringPlan } from '@/lib/serviceReport'
 import { migrateNormalizeDates } from '@/lib/normalizeDate'
@@ -203,10 +203,10 @@ type LocalMergeState = {
   customFieldDefs: CustomFieldDefinition[]
   conversations: Visit[]
   deletedConversations: VisitTombstone[]
-  serviceReports: ServiceReportsByYears
+  serviceReports: TimeEntriesByYear
   dayPlans: DayPlan[]
   recurringPlans: RecurringPlan[]
-  deletedServiceReports: ServiceReportTombstone[]
+  deletedServiceReports: TimeEntryTombstone[]
   categories: Category[]
   deletedCategories: CategoryTombstone[]
   preferencesValues: Record<string, unknown>
@@ -237,7 +237,7 @@ function foldRemotePayloads(payloads: SyncPayload[]): SyncPayload | null {
     conversations: (first.conversationStore.conversations ?? []) as Visit[],
     deletedConversations: first.conversationStore.deletedConversations ?? [],
     serviceReports:
-      (first.serviceReportStore.serviceReports as ServiceReportsByYears) ?? {},
+      (first.serviceReportStore.serviceReports as TimeEntriesByYear) ?? {},
     dayPlans: (first.serviceReportStore.dayPlans ?? []) as DayPlan[],
     recurringPlans: (first.serviceReportStore.recurringPlans ??
       []) as RecurringPlan[],

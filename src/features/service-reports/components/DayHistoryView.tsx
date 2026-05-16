@@ -4,7 +4,7 @@ import i18n from '@/lib/locales'
 import useTheme from '@/contexts/theme'
 import moment from 'moment'
 import { FlashList } from '@shopify/flash-list'
-import { ServiceReport, DayPlan } from '@/types/serviceReport'
+import { TimeEntry, DayPlan } from '@/types/timeEntry'
 import TimeReportRow from '@/features/service-reports/components/TimeReportRow'
 import Card from '@/components/ui/Card'
 import { useMemo } from 'react'
@@ -25,11 +25,11 @@ import { getDateStatusColor } from '@/components/CalendarDay'
 
 interface DayHistoryViewProps {
   date: Date
-  serviceReports?: ServiceReport[]
+  serviceReports?: TimeEntry[]
   showHeader?: boolean
   onDayPlanPress?: (plan: DayPlan, date: Date) => void
   onRecurringPlanPress?: (plan: RecurringPlan, date: Date) => void
-  onTimeReportPress?: (report: ServiceReport) => void
+  onTimeReportPress?: (report: TimeEntry) => void
 }
 
 const DayHistoryView: React.FC<DayHistoryViewProps> = ({

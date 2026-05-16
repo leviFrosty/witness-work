@@ -16,7 +16,7 @@ import {
 import { getCategoryLabel, isLdcEntry } from '@/lib/serviceReportCategory'
 import { formatMinutes } from '@/lib/minutes'
 import { usePreferences } from '@/stores/preferences'
-import { ServiceReport } from '@/types/serviceReport'
+import { TimeEntry } from '@/types/timeEntry'
 import { RootStackNavigation } from '@/types/rootStack'
 
 import Button from '@/components/ui/Button'
@@ -127,7 +127,7 @@ const AllDaysList = ({ month, year }: AllDaysListProps) => {
   )
 
   const handleEditTimeReport = useCallback(
-    (report: ServiceReport) => {
+    (report: TimeEntry) => {
       pendingNavigation.current = () => {
         rootNavigation.navigate('Add Time', {
           existingReport: JSON.stringify(report),
@@ -211,7 +211,7 @@ const AllDaysList = ({ month, year }: AllDaysListProps) => {
         // builtin Category id like any other Category — `isLdcEntry` also
         // matches legacy `ldc: true` entries so unmigrated installs still
         // bucket correctly.
-        const keyFor = (r: ServiceReport): string => {
+        const keyFor = (r: TimeEntry): string => {
           if (r.rollover) return '__rollover__'
           if (isLdcEntry(r)) return '__ldc__'
           if (r.categoryId) return `cat:${r.categoryId}`

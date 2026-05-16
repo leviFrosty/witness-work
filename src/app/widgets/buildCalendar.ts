@@ -1,5 +1,5 @@
 import moment from 'moment'
-import { DayPlan, ServiceReportsByYears } from '@/types/serviceReport'
+import { DayPlan, TimeEntriesByYear } from '@/types/timeEntry'
 import { Publisher } from '@/types/publisher'
 import { getEntryMode } from '@/lib/publisherCapabilities'
 import {
@@ -72,7 +72,7 @@ export type WidgetCalendar = {
 }
 
 export type BuildCalendarArgs = {
-  serviceReports: ServiceReportsByYears
+  serviceReports: TimeEntriesByYear
   dayPlans: DayPlan[]
   recurringPlans: RecurringPlan[]
   publisher: Publisher

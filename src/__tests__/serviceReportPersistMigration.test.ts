@@ -11,7 +11,7 @@ vi.mock(
 import { migrateServiceReportPersistedState } from '@/stores/serviceReport'
 import { momentStoredDate } from '@/lib/normalizeDate'
 import { RecurringPlan, RecurringPlanFrequencies } from '@/lib/serviceReport'
-import { DayPlan, ServiceReport } from '@/types/serviceReport'
+import { DayPlan, TimeEntry } from '@/types/timeEntry'
 
 const originalTZ = process.env.TZ
 const setTZ = (tz: string) => {
@@ -36,7 +36,7 @@ describe('persist migrate v1 → v2', () => {
               minutes: 0,
               // Pre-fix midnight-local date (PST): 2026-05-15T07:00:00Z.
               date: moment('2026-05-15').toDate(),
-            } as ServiceReport,
+            } as TimeEntry,
           ],
         },
       },
@@ -83,8 +83,8 @@ describe('persist migrate v1 → v2', () => {
   })
 
   it('also runs the v0 → v1 path before normalizing when called from version 0', () => {
-    // v0 stored serviceReports as a flat ServiceReport[]; v1 reshaped that into
-    // ServiceReportsByYears via `migrateServiceReports`. v2 then normalizes.
+    // v0 stored serviceReports as a flat TimeEntry[]; v1 reshaped that into
+    // TimeEntriesByYear via `migrateServiceReports`. v2 then normalizes.
     // A migration starting at v0 should chain both: rebucket THEN normalize.
     const v0State = {
       serviceReports: [
@@ -118,7 +118,7 @@ describe('persist migrate v1 → v2', () => {
               hours: 1,
               minutes: 0,
               date: moment('2026-05-15').toDate(),
-            } as ServiceReport,
+            } as TimeEntry,
           ],
         },
       },

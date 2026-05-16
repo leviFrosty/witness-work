@@ -22,6 +22,14 @@ export type Category = {
    */
   isCredit: boolean
   /**
+   * App-seeded "builtin" Categories the User cannot rename or delete — LDC is
+   * the canonical example (`LDC_BUILTIN_CATEGORY_ID`). Absent/false on every
+   * user-created Category. UI surfaces (delete button, name edit) gate on this
+   * flag; the categories store hard-blocks mutations against it as a defensive
+   * fallback.
+   */
+  builtin?: boolean
+  /**
    * Epoch ms of the most recent change. Used for iCloud last-writer-wins merge.
    * Optional for historical records that predate sync — backfilled lazily.
    */

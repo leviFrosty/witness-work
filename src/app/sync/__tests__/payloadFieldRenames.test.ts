@@ -236,3 +236,102 @@ describe('normalizeLegacyPayloadFieldNames — profile-field routing (wave-3)', 
     expect(JSON.stringify(d)).toBe(snapshot)
   })
 })
+
+// Kept in sync with `src/constants/categories.ts`'s `LDC_BUILTIN_CATEGORY_ID`.
+// `payloadFieldRenames.ts` inlines it for the no-imports rule; the test
+// inlines it for the same reason.
+const LDC_BUILTIN = 'ldc-builtin-3f9c4a1d'
+
+const makeReportsPayload = (
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  reports: any[]
+) => ({
+  version: 1,
+  preferencesStore: { values: {}, updatedAt: {} },
+  serviceReportStore: {
+    serviceReports: {
+      '2026': {
+        '0': reports,
+      },
+    },
+  },
+})
+
+describe('normalizeLegacyPayloadFieldNames — ServiceReport.ldc collapse', () => {
+  it('rewrites a legacy `ldc: true` entry to the LDC builtin Category', () => {
+    const d = makeReportsPayload([
+      { id: 'r1', hours: 2, minutes: 0, ldc: true, credit: true },
+    ])
+
+    normalizeLegacyPayloadFieldNames(d)
+
+    const report = d.serviceReportStore.serviceReports['2026']['0'][0]
+    expect(report.categoryId).toBe(LDC_BUILTIN)
+    expect(report.credit).toBe(true)
+    expect(report).not.toHaveProperty('ldc')
+  })
+
+  it('keeps an existing non-LDC categoryId; drops the stray ldc flag', () => {
+    // Data corruption shape: ldc: true coexisting with a real user Category.
+    // Explicit Category wins, same precedence as `migrateLdcToCategory`.
+    const d = makeReportsPayload([
+      {
+        id: 'r1',
+        hours: 1,
+        minutes: 0,
+        ldc: true,
+        categoryId: 'user-cat-bethel',
+        credit: true,
+      },
+    ])
+
+    normalizeLegacyPayloadFieldNames(d)
+
+    const report = d.serviceReportStore.serviceReports['2026']['0'][0]
+    expect(report.categoryId).toBe('user-cat-bethel')
+    expect(report).not.toHaveProperty('ldc')
+  })
+
+  it('strips `ldc: false` so the on-disk shape matches the canonical type', () => {
+    const d = makeReportsPayload([
+      { id: 'r1', hours: 1, minutes: 0, ldc: false, credit: false },
+    ])
+
+    normalizeLegacyPayloadFieldNames(d)
+
+    const report = d.serviceReportStore.serviceReports['2026']['0'][0]
+    expect(report).not.toHaveProperty('ldc')
+    expect(report.categoryId).toBeUndefined()
+  })
+
+  it('is idempotent on an already-collapsed payload', () => {
+    const d = makeReportsPayload([
+      {
+        id: 'r1',
+        hours: 2,
+        minutes: 0,
+        categoryId: LDC_BUILTIN,
+        credit: true,
+      },
+    ])
+    normalizeLegacyPayloadFieldNames(d)
+    const snapshot = JSON.stringify(d)
+    normalizeLegacyPayloadFieldNames(d)
+    expect(JSON.stringify(d)).toBe(snapshot)
+  })
+
+  it('no-ops when serviceReportStore is missing or malformed', () => {
+    const d1 = { version: 1, preferencesStore: { values: {}, updatedAt: {} } }
+    expect(() =>
+      normalizeLegacyPayloadFieldNames(d1 as Record<string, unknown>)
+    ).not.toThrow()
+    const d2 = {
+      version: 1,
+      preferencesStore: { values: {}, updatedAt: {} },
+      serviceReportStore: { serviceReports: null },
+    }
+    expect(() =>
+      normalizeLegacyPayloadFieldNames(d2 as Record<string, unknown>)
+    ).not.toThrow()
+  })
+})

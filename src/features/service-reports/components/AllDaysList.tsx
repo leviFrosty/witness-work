@@ -9,7 +9,7 @@ import useCategories from '@/stores/categories'
 import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
 import { getMonthsReports } from '@/lib/serviceReport'
-import { getCategoryLabel } from '@/lib/serviceReportCategory'
+import { getCategoryLabel, isLdcEntry } from '@/lib/serviceReportCategory'
 import { ServiceReport } from '@/types/serviceReport'
 import { RootStackNavigation } from '@/types/rootStack'
 
@@ -150,13 +150,14 @@ const AllDaysList = ({ month, year }: AllDaysListProps) => {
       let categoryLabel = '—'
       if (reportsForDay.length > 0) {
         // Group by stable identity: prefer categoryId (post-migration), fall
-        // back to the legacy `tag` string for unmigrated entries, and use
-        // synthetic keys for rollover / ldc / plain-standard so the bucket
-        // logic doesn't collide a Category named "ldc" with the real LDC
-        // bucket.
+        // back to the legacy `tag` string for unmigrated entries, with
+        // synthetic keys for rollover / plain-standard. LDC is keyed by its
+        // builtin Category id like any other Category — `isLdcEntry` also
+        // matches legacy `ldc: true` entries so unmigrated installs still
+        // bucket correctly.
         const keyFor = (r: ServiceReport): string => {
           if (r.rollover) return '__rollover__'
-          if (r.ldc) return '__ldc__'
+          if (isLdcEntry(r)) return '__ldc__'
           if (r.categoryId) return `cat:${r.categoryId}`
           if (r.tag) return `tag:${r.tag}`
           return '__standard__'

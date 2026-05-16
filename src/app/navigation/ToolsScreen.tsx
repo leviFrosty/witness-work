@@ -7,6 +7,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import ActionButton from '@/components/ui/ActionButton'
 import useServiceReport from '@/stores/serviceReport'
 import useCategories from '@/stores/categories'
+import { LDC_BUILTIN_CATEGORY_ID } from '@/constants/categories'
 import useContacts from '@/stores/contactsStore'
 import Card from '@/components/ui/Card'
 import XView from '@/components/ui/layout/XView'
@@ -244,14 +245,19 @@ export default function ToolsScreen() {
         const hours = Math.floor(Math.pow(r, 2.5) * 17)
         const minutes = (seed * 7) % 12 === 0 ? 0 : ((seed * 7) % 12) * 5
         if (hours === 0 && minutes === 0) continue
+        // LDC is now a builtin Category (`LDC_BUILTIN_CATEGORY_ID`); the
+        // generator sprinkles LDC entries by setting categoryId on every
+        // fifth seed slot.
+        const isLdc = seed % 5 === 0
         addServiceReport({
           date: moment().subtract(i, 'day').toDate(),
           hours,
           id: `generated-${i}-${j}`,
           minutes,
-          credit: seed % 3 === 0,
-          ldc: seed % 5 === 0,
-          categoryId: seededIds[seed % seededIds.length],
+          credit: isLdc ? true : seed % 3 === 0,
+          categoryId: isLdc
+            ? LDC_BUILTIN_CATEGORY_ID
+            : seededIds[seed % seededIds.length],
         })
       }
       const gapR = ((i * 2654435761 + 12345) % 1000) / 1000

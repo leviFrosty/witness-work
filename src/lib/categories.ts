@@ -1,6 +1,14 @@
 import * as Crypto from 'expo-crypto'
 import { Category } from '@/types/category'
-import { ServiceReport, ServiceReportsByYears } from '@/types/serviceReport'
+import {
+  LegacyServiceReport,
+  ServiceReport,
+  ServiceReportsByYears,
+} from '@/types/serviceReport'
+import {
+  LDC_BUILTIN_CATEGORY_ID,
+  makeLdcBuiltinCategory,
+} from '@/constants/categories'
 
 /**
  * Shape of the legacy `preferences.serviceReportTags` entry. We accept both the
@@ -213,6 +221,148 @@ export function migrateTagsToCategories(
     categories,
     serviceReports: rebuiltReports,
     reconciledCreditMismatches,
+  }
+}
+
+export type LdcCollapseMigrationInput = {
+  /** Persisted ServiceReports — may still carry the legacy `ldc: true` flag. */
+  serviceReports: ServiceReportsByYears
+  /** Existing Category records (post tag-to-Category migration). */
+  categories: Category[]
+  /** Now() in epoch ms — stamped onto the seeded LDC builtin record. */
+  now: number
+}
+
+export type LdcCollapseMigrationResult = {
+  /**
+   * Updated Categories list. Includes the LDC builtin record if it wasn't
+   * already present. Existing categories are returned unchanged.
+   */
+  categories: Category[]
+  /**
+   * Rewritten ServiceReports tree. Every entry that carried `ldc: true` now has
+   * `categoryId: LDC_BUILTIN_CATEGORY_ID, credit: true` and no `ldc` field.
+   * Entries that already had a non-LDC `categoryId` keep that `categoryId` (the
+   * explicit Category wins per precedence rule); the `ldc` flag is dropped
+   * regardless.
+   */
+  serviceReports: ServiceReportsByYears
+  /**
+   * Number of entries rewritten from `ldc: true` → LDC builtin Category.
+   * Surfaced for observability — non-zero means the user had at least one LDC
+   * entry that was collapsed onto the builtin.
+   */
+  rewrittenCount: number
+  /**
+   * Number of entries that had BOTH `ldc: true` AND a non-LDC `categoryId`
+   * already set (data corruption — shouldn't happen but possible). The explicit
+   * Category wins; the `ldc` flag is dropped. Surfaced for the PR description /
+   * observability.
+   */
+  conflictedCount: number
+  /**
+   * True when the LDC builtin Category had to be seeded as part of this
+   * migration (i.e. it wasn't already present in the categories list). Used by
+   * the boot runner to decide whether to write the categories store.
+   */
+  seededLdcBuiltin: boolean
+}
+
+/**
+ * One-time migration that collapses the legacy `ServiceReport.ldc` boolean into
+ * the LDC builtin Category (`LDC_BUILTIN_CATEGORY_ID`). After this migration
+ * runs, the `ldc` field is no longer authoritative — LDC entries carry
+ * `categoryId: LDC_BUILTIN_CATEGORY_ID, credit: true` and look like any other
+ * credit-bearing Category to the cap math.
+ *
+ * Algorithm:
+ *
+ * 1. Ensure the LDC builtin Category record exists in the user's categories list.
+ *    If absent, seed it (`makeLdcBuiltinCategory(now)`).
+ * 2. Walk every ServiceReport:
+ *
+ *    - If `ldc !== true`: drop the field if present, otherwise return unchanged.
+ *    - If `ldc === true` AND `categoryId === undefined`: set `categoryId:
+ *         LDC_BUILTIN_CATEGORY_ID, credit: true`; drop `ldc`.
+ *    - If `ldc === true` AND `categoryId` is already set to a non-LDC value (data
+ *         corruption): keep `categoryId` as-is (explicit Category wins); drop
+ *         `ldc`. Count under `conflictedCount`.
+ * 3. Idempotent — entries that already have `categoryId: LDC_BUILTIN_CATEGORY_ID`
+ *    and no `ldc` field are returned unchanged; the builtin is only seeded if
+ *    it wasn't already present.
+ *
+ * The migration is pure: no store access, no side effects. The boot runner in
+ * `src/app/App.tsx` gates it on `preferences.hasCollapsedLdcIntoCategory` and
+ * sequences it after `migrateTagsToCategories` so the categories list is fully
+ * populated before LDC is folded in.
+ */
+export function migrateLdcToCategory(
+  args: LdcCollapseMigrationInput
+): LdcCollapseMigrationResult {
+  const { serviceReports, categories, now } = args
+
+  const hasLdcBuiltin = categories.some((c) => c.id === LDC_BUILTIN_CATEGORY_ID)
+  const seededLdcBuiltin = !hasLdcBuiltin
+
+  const outCategories: Category[] = hasLdcBuiltin
+    ? categories
+    : [...categories, makeLdcBuiltinCategory(now)]
+
+  let rewrittenCount = 0
+  let conflictedCount = 0
+  const rebuiltReports: ServiceReportsByYears = {}
+
+  for (const [yearKey, year] of Object.entries(serviceReports)) {
+    rebuiltReports[yearKey] = {}
+    for (const [monthKey, month] of Object.entries(year)) {
+      rebuiltReports[yearKey][monthKey] = month.map((report) => {
+        // Treat the input as the legacy shape so we can read `ldc` even
+        // though the canonical type no longer exposes it.
+        const legacy = report as LegacyServiceReport
+        if (legacy.ldc !== true) {
+          // Defensive: an entry might carry `ldc: false` from older writers.
+          // Strip the field so the on-disk shape matches the canonical type
+          // after migration.
+          if ('ldc' in (legacy as Record<string, unknown>)) {
+            const { ldc: _drop, ...rest } = legacy as ServiceReport & {
+              ldc?: boolean
+            }
+            return rest
+          }
+          return report
+        }
+        // `ldc === true` — figure out where the entry should land.
+        const hasNonLdcCategory =
+          typeof legacy.categoryId === 'string' &&
+          legacy.categoryId !== LDC_BUILTIN_CATEGORY_ID
+        if (hasNonLdcCategory) {
+          // Explicit Category wins; drop the LDC flag. Count under conflicts.
+          conflictedCount += 1
+          const { ldc: _drop, ...rest } = legacy as ServiceReport & {
+            ldc?: boolean
+          }
+          return rest
+        }
+        // Standard LDC entry (no other categoryId): fold onto the builtin.
+        rewrittenCount += 1
+        const { ldc: _drop, ...rest } = legacy as ServiceReport & {
+          ldc?: boolean
+        }
+        return {
+          ...rest,
+          categoryId: LDC_BUILTIN_CATEGORY_ID,
+          credit: true,
+        }
+      })
+    }
+  }
+
+  return {
+    categories: outCategories,
+    serviceReports: rebuiltReports,
+    rewrittenCount,
+    conflictedCount,
+    seededLdcBuiltin,
   }
 }
 

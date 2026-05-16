@@ -17,13 +17,24 @@ import {
   calculateMonthlyPlannedMinutesOptimized,
   calculateAnnualPlannedMinutesOptimized,
 } from '@/lib/serviceReport'
-import { ServiceReport, ServiceReportsByYears } from '@/types/serviceReport'
+import {
+  LegacyServiceReport,
+  ServiceReportsByYears,
+} from '@/types/serviceReport'
 import { Publisher } from '@/types/publisher'
 import { monthCreditMaxMinutes } from '@/constants/serviceReports'
 import { describe, expect, it, beforeEach, afterEach, vi } from 'vitest'
 
 // Mock the logger to avoid MMKV dependencies in tests
 vi.mock('@/lib/logger', () => import('@/__tests__/mocks/logger'))
+
+// Tree of LegacyServiceReports, used by tests that exercise the cap math
+// against the pre-collapse `ldc: true` shape. `LegacyServiceReport` extends
+// `ServiceReport` with the deprecated boolean, so it remains assignable to
+// the production helpers' parameter types.
+type LegacyServiceReportsByYears = {
+  [year: string]: { [month: string]: LegacyServiceReport[] }
+}
 
 describe('lib/serviceReport', () => {
   describe('calculateProgress', () => {
@@ -73,7 +84,7 @@ describe('lib/serviceReport', () => {
 
   describe('adjustedMinutesForSpecificMonth ', () => {
     it('should return the number of minutes in the month', () => {
-      const serviceReports: ServiceReport[] = [
+      const serviceReports: LegacyServiceReport[] = [
         {
           id: '1',
           date: new Date(),
@@ -116,7 +127,7 @@ describe('lib/serviceReport', () => {
     })
 
     it('should return 0 if no reports provided', () => {
-      const serviceReports: ServiceReport[] = []
+      const serviceReports: LegacyServiceReport[] = []
 
       const adjustedMinutes = adjustedMinutesForSpecificMonth(
         serviceReports,
@@ -128,7 +139,7 @@ describe('lib/serviceReport', () => {
     })
 
     it('should not include minutes from previous or upcoming months', () => {
-      const serviceReports: ServiceReport[] = [
+      const serviceReports: LegacyServiceReport[] = [
         {
           id: '1',
           date: moment().subtract(1, 'month').toDate(),
@@ -171,7 +182,7 @@ describe('lib/serviceReport', () => {
     })
 
     it("shouldn't allow a user to have greater than 55 hours solely of credit time", () => {
-      const serviceReports: ServiceReport[] = [
+      const serviceReports: LegacyServiceReport[] = [
         {
           id: '1',
           date: moment().toDate(),
@@ -191,7 +202,7 @@ describe('lib/serviceReport', () => {
     })
 
     it('should result in 55 hours if you have both standard and credit time', () => {
-      const serviceReports: ServiceReport[] = [
+      const serviceReports: LegacyServiceReport[] = [
         {
           id: '1',
           date: moment().toDate(),
@@ -218,7 +229,7 @@ describe('lib/serviceReport', () => {
     })
 
     it('should result in sum if you have both standard and credit time, but less than 55 hours', () => {
-      const serviceReports: ServiceReport[] = [
+      const serviceReports: LegacyServiceReport[] = [
         {
           id: '1',
           date: moment().toDate(),
@@ -245,7 +256,7 @@ describe('lib/serviceReport', () => {
     })
 
     it("should return as many standard hours even if it's over the credit cap", () => {
-      const serviceReports: ServiceReport[] = [
+      const serviceReports: LegacyServiceReport[] = [
         {
           id: '1',
           date: moment().toDate(),
@@ -272,7 +283,7 @@ describe('lib/serviceReport', () => {
     })
 
     it('should have no credit limit for special pioneers', () => {
-      const serviceReports: ServiceReport[] = [
+      const serviceReports: LegacyServiceReport[] = [
         {
           id: '1',
           date: moment().toDate(),
@@ -302,7 +313,7 @@ describe('lib/serviceReport', () => {
     })
 
     it('should have no credit limit for circuit overseers', () => {
-      const serviceReports: ServiceReport[] = [
+      const serviceReports: LegacyServiceReport[] = [
         {
           id: '1',
           date: moment().toDate(),
@@ -332,7 +343,7 @@ describe('lib/serviceReport', () => {
     })
 
     it('should still apply credit limit for regular pioneers', () => {
-      const serviceReports: ServiceReport[] = [
+      const serviceReports: LegacyServiceReport[] = [
         {
           id: '1',
           date: moment().toDate(),
@@ -362,7 +373,7 @@ describe('lib/serviceReport', () => {
     })
 
     it('should still apply credit limit for publishers', () => {
-      const serviceReports: ServiceReport[] = [
+      const serviceReports: LegacyServiceReport[] = [
         {
           id: '1',
           date: moment().toDate(),
@@ -392,7 +403,7 @@ describe('lib/serviceReport', () => {
     })
 
     it('should respect user credit limit override - no limit (0 hours)', () => {
-      const serviceReports: ServiceReport[] = [
+      const serviceReports: LegacyServiceReport[] = [
         {
           id: '1',
           date: moment().toDate(),
@@ -423,7 +434,7 @@ describe('lib/serviceReport', () => {
     })
 
     it('should respect user credit limit override - custom limit (70 hours)', () => {
-      const serviceReports: ServiceReport[] = [
+      const serviceReports: LegacyServiceReport[] = [
         {
           id: '1',
           date: moment().toDate(),
@@ -454,7 +465,7 @@ describe('lib/serviceReport', () => {
     })
 
     it('should use default behavior when override is disabled', () => {
-      const serviceReports: ServiceReport[] = [
+      const serviceReports: LegacyServiceReport[] = [
         {
           id: '1',
           date: moment().toDate(),
@@ -485,7 +496,7 @@ describe('lib/serviceReport', () => {
     })
 
     it('should still respect special pioneer exemption even with override disabled', () => {
-      const serviceReports: ServiceReport[] = [
+      const serviceReports: LegacyServiceReport[] = [
         {
           id: '1',
           date: moment().toDate(),
@@ -892,7 +903,7 @@ describe('lib/serviceReport', () => {
   describe('getTotalMinutesForServiceYear', () => {
     it('should not allow more than 55 hours per month of LDC for a single month', () => {
       const year = 2023
-      const serviceReports: ServiceReportsByYears = {
+      const serviceReports: LegacyServiceReportsByYears = {
         [year]: {
           10: [
             {
@@ -906,13 +917,16 @@ describe('lib/serviceReport', () => {
         },
       }
 
-      const minutes = getTotalMinutesForServiceYear(serviceReports, year)
+      const minutes = getTotalMinutesForServiceYear(
+        serviceReports as ServiceReportsByYears,
+        year
+      )
       expect(minutes).toBe(monthCreditMaxMinutes)
     })
 
     it('should not allow multiple entries to sum to more than 55', () => {
       const year = 2023
-      const serviceReports: ServiceReportsByYears = {
+      const serviceReports: LegacyServiceReportsByYears = {
         [year]: {
           10: [
             {
@@ -933,13 +947,16 @@ describe('lib/serviceReport', () => {
         },
       }
 
-      const minutes = getTotalMinutesForServiceYear(serviceReports, year)
+      const minutes = getTotalMinutesForServiceYear(
+        serviceReports as ServiceReportsByYears,
+        year
+      )
       expect(minutes).toBe(monthCreditMaxMinutes)
     })
 
     it('should properly add different months together, but not exceeding the ldc month cap', () => {
       const year = 2023
-      const reports: ServiceReportsByYears = {
+      const reports: LegacyServiceReportsByYears = {
         [year]: {
           10: [
             {
@@ -1005,7 +1022,10 @@ describe('lib/serviceReport', () => {
         },
       }
 
-      const minutes = getTotalMinutesForServiceYear(reports, year)
+      const minutes = getTotalMinutesForServiceYear(
+        reports as ServiceReportsByYears,
+        year
+      )
       expect(minutes).toBe(monthCreditMaxMinutes * 4)
     })
 

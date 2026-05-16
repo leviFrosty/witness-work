@@ -10,7 +10,7 @@ import {
   ServiceReportsByYears,
   ServiceYear,
 } from '@/types/serviceReport'
-import { hasCategory } from '@/lib/serviceReportCategory'
+import { hasCategory, isLdcEntry } from '@/lib/serviceReportCategory'
 import moment from 'moment'
 import { monthCreditMaxMinutes } from '@/constants/serviceReports'
 import { creditCapMinutesFor, getEntryMode } from '@/lib/publisherCapabilities'
@@ -65,15 +65,18 @@ export const getTotalMinutesDetailedForSpecificMonth = (
     const m = momentStoredDate(report.date)
     return m.month() === month && m.year() === year
   })
+  // "Other" deliberately excludes LDC entries — LDC has its own visual slice
+  // in the breakdown via `ldcMinutesForSpecificMonth`, and double-counting it
+  // here would inflate the credit total.
   const otherWithNonCreditMinutes = reportsForMonth.reduce((prev, report) => {
-    if (hasCategory(report) && !report.credit) {
+    if (hasCategory(report) && !isLdcEntry(report) && !report.credit) {
       return prev + report.hours * 60 + report.minutes
     }
     return prev
   }, 0)
 
   const otherWithCreditMinutes = reportsForMonth.reduce((prev, report) => {
-    if (hasCategory(report) && report.credit) {
+    if (hasCategory(report) && !isLdcEntry(report) && report.credit) {
       return prev + report.hours * 60 + report.minutes
     }
     return prev
@@ -217,7 +220,11 @@ export const ldcMinutesForSpecificMonth = (
   const totalMinutesForMonth = monthsReports
     .filter((report) => {
       const m = momentStoredDate(report.date)
-      return m.month() === targetMonth && m.year() === targetYear && report.ldc
+      return (
+        m.month() === targetMonth &&
+        m.year() === targetYear &&
+        isLdcEntry(report)
+      )
     })
     .reduce((accumulator, report) => {
       return accumulator + report.hours * 60 + report.minutes
@@ -253,7 +260,12 @@ export const otherMinutesForSpecificMonth = (
     const m = momentStoredDate(report.date)
     return m.month() === targetMonth && m.year() === targetYear
   })
-  const taggedReports = reportsForMonth.filter((report) => hasCategory(report))
+  // LDC entries are surfaced via their own breakdown slice (see
+  // `ldcMinutesForSpecificMonth`); exclude them from "other" so the LDC
+  // builtin doesn't appear as a duplicate row in the user Categories list.
+  const taggedReports = reportsForMonth.filter(
+    (report) => hasCategory(report) && !isLdcEntry(report)
+  )
 
   const otherReportsTotalMinutes = taggedReports.reduce<OtherReports>(
     (accumulator, report) => {
@@ -299,7 +311,7 @@ export const standardMinutesForSpecificMonth = (
       return (
         m.month() === targetMonth &&
         m.year() === targetYear &&
-        !report.ldc &&
+        !isLdcEntry(report) &&
         !hasCategory(report)
       )
     })
@@ -413,11 +425,13 @@ export const getTotalMinutesForServiceYear = (
       let otherWithoutCredit = 0
       for (const report of monthReports) {
         const m = report.hours * 60 + report.minutes
-        if (hasCategory(report)) {
+        if (isLdcEntry(report)) {
+          // LDC keeps its own bucket so visual breakdowns stay separable; the
+          // cap math below folds it back into the credit total anyway.
+          ldc += m
+        } else if (hasCategory(report)) {
           if (report.credit) otherWithCredit += m
           else otherWithoutCredit += m
-        } else if (report.ldc) {
-          ldc += m
         } else {
           standardOnly += m
         }

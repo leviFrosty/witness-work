@@ -19,6 +19,7 @@ import { usePreferences } from '@/stores/preferences'
 import useServiceReport from '@/stores/serviceReport'
 import { getServiceYearFromDate } from '@/lib/serviceReport'
 import { ServiceReportsByYears } from '@/types/serviceReport'
+import { LDC_BUILTIN_CATEGORY_ID } from '@/constants/categories'
 
 interface MonthRow {
   monthIndex: number
@@ -233,21 +234,22 @@ const OnboardingBackfillForm = ({
           date,
           hours,
           minutes: 0,
-          ldc: false,
           credit: false,
         })
       }
       if (creditHours > 0) {
-        // Bucket as `ldc: true` so the cap pipeline counts it as credit time
-        // (see `getTotalMinutesForServiceYear`). The cap math sums ldc and
-        // tag-with-credit into `credit`; we use ldc here to avoid surfacing
-        // a synthetic tag in the user's tag list.
+        // Attach to the LDC builtin Category so the cap pipeline counts it as
+        // credit time (see `getTotalMinutesForServiceYear` — LDC entries fold
+        // into the credit bucket alongside any other credit-bearing
+        // Category). LDC is the most-frequent credit category for backfill,
+        // and routing onboarding credit through it avoids inventing a
+        // synthetic category name.
         addServiceReport({
           id: Crypto.randomUUID(),
           date,
           hours: creditHours,
           minutes: 0,
-          ldc: true,
+          categoryId: LDC_BUILTIN_CATEGORY_ID,
           credit: true,
         })
       }

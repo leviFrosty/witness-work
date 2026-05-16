@@ -33,7 +33,7 @@ import {
   ContactImportData,
 } from '@/features/contacts/lib/contactImport'
 import { Contact } from '@/types/contact'
-import { Conversation } from '@/types/conversation'
+import { Visit } from '@/types/visit'
 import i18n from '@/lib/locales'
 
 const mockI18n = vi.mocked(i18n)
@@ -47,7 +47,7 @@ describe('validateContactImport', () => {
   // Helper to create valid import data
   const createValidImportData = (
     contact?: Partial<Contact>,
-    conversations?: Conversation[]
+    conversations?: Visit[]
   ): ContactImportData => {
     const fakeContact: Contact = {
       id: '123',
@@ -83,7 +83,7 @@ describe('validateContactImport', () => {
     })
 
     it('should return success for valid import data with conversations', () => {
-      const conversations: Conversation[] = [
+      const conversations: Visit[] = [
         {
           id: 'conv-1',
           contact: { id: 'contact-123' },

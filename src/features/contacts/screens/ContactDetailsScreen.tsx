@@ -29,7 +29,7 @@ import {
   contactMostRecentStudy,
   contactStudiedForGivenMonth,
 } from '@/lib/conversations'
-import { Conversation } from '@/types/conversation'
+import { Visit } from '@/types/visit'
 import Wrapper from '@/components/ui/layout/Wrapper'
 import { StatusBar } from 'expo-status-bar'
 import IconButton from '@/components/ui/IconButton'
@@ -91,7 +91,7 @@ type ContactExport = {
   type: 'witnesswork-contact'
   exportedAt: string
   contact: Contact
-  conversations?: Conversation[]
+  conversations?: Visit[]
 }
 
 const PhoneRow = ({ contact }: { contact: Contact }) => {
@@ -168,7 +168,7 @@ const Hero = ({
   heroBackground: string
   isBibleStudy?: boolean
   hasStudiedPreviously?: boolean
-  mostRecentStudy: Conversation | null
+  mostRecentStudy: Visit | null
 }) => {
   const theme = useTheme()
   const [viewerOpen, setViewerOpen] = useState(false)
@@ -589,13 +589,13 @@ const AddSheet = ({
 
   const handleAction = (action: 'notAtHome' | 'conversation') => {
     if (action === 'notAtHome') {
-      navigation.replace('Conversation Form', {
+      navigation.replace('Visit Form', {
         contactId: contact?.id,
         notAtHome: true,
       })
     }
     if (action === 'conversation') {
-      navigation.replace('Conversation Form', {
+      navigation.replace('Visit Form', {
         contactId: contact?.id,
       })
     }
@@ -698,8 +698,8 @@ const ContactDetailsScreen = ({ route, navigation }: Props) => {
   const heroBackground = useContactHeroBackground(contact)
 
   const highlightedConversation = useMemo(
-    () => conversations.find((c) => c.id === params.highlightedConversationId),
-    [conversations, params.highlightedConversationId]
+    () => conversations.find((c) => c.id === params.highlightedVisitId),
+    [conversations, params.highlightedVisitId]
   )
 
   const scrollViewRef = useRef<ScrollView>(null)
@@ -710,7 +710,7 @@ const ContactDetailsScreen = ({ route, navigation }: Props) => {
   // view so the user can immediately see which conversation the widget was
   // pointing at. Delayed slightly so the FlashList has time to lay out.
   useEffect(() => {
-    if (!params.highlightedConversationId || !highlightedConversation) return
+    if (!params.highlightedVisitId || !highlightedConversation) return
     const timer = setTimeout(() => {
       const sv = scrollViewRef.current
       const row = highlightedRowRef.current
@@ -725,7 +725,7 @@ const ContactDetailsScreen = ({ route, navigation }: Props) => {
       )
     }, 450)
     return () => clearTimeout(timer)
-  }, [params.highlightedConversationId, highlightedConversation])
+  }, [params.highlightedVisitId, highlightedConversation])
 
   const contactConversations = useMemo(
     () => conversations.filter(({ contact: { id } }) => id === contact?.id),

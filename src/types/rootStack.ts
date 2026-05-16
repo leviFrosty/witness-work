@@ -2,13 +2,13 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack'
 
 export type RootStackParamList = {
   Root: undefined
-  'Conversation Form': {
+  'Visit Form': {
     contactId?: string
-    conversationToEditId?: string
+    visitToEditId?: string
     notAtHome?: boolean
     fromContactForm?: boolean
   }
-  'Contact Details': { id: string; highlightedConversationId?: string } // Contact ID
+  'Contact Details': { id: string; highlightedVisitId?: string } // Contact ID
   'Contact Form': { id: string; edit?: boolean } // Contact ID
   'Contact Selector': undefined
   'Add Time':
@@ -42,7 +42,7 @@ export type RootStackParamList = {
   PreferencesiCloud: undefined
   PreferencesAppIcon: undefined
   PreferencesCustomFields: undefined
-  RescheduleConversation: { contactId: string; conversationId: string }
+  RescheduleVisit: { contactId: string; visitId: string }
   PlanDay: {
     date?: string
     /** Existing plan ID for editing mode */

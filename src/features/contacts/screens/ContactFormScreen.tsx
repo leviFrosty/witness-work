@@ -497,7 +497,7 @@ const ContactFormScreen = ({ route, navigation }: Props) => {
                     })
                     return
                   }
-                  navigation.replace('Conversation Form', {
+                  navigation.replace('Visit Form', {
                     contactId: (params as { id: string }).id,
                     fromContactForm: true,
                   })

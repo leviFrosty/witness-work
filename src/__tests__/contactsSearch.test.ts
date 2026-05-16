@@ -8,7 +8,7 @@ import {
   searchContactsFuzzy,
 } from '@/features/contacts/lib/contactsSearch'
 import { Contact } from '@/types/contact'
-import { Conversation } from '@/types/conversation'
+import { Visit } from '@/types/visit'
 
 const c = (
   overrides: Partial<Contact> & { id: string; name: string }
@@ -72,7 +72,7 @@ describe('lib/contactsSearch', () => {
     it('matches on a substring of a conversation note', () => {
       const target = c({ id: 't', name: 'Target Person' })
       const other = c({ id: 'o', name: 'Other Person' })
-      const conversations: Conversation[] = [
+      const conversations: Visit[] = [
         {
           id: 'conv1',
           contact: { id: target.id },

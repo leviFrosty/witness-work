@@ -1,5 +1,5 @@
 import { Contact } from '@/types/contact'
-import { Conversation, ConversationTombstone } from '@/types/conversation'
+import { Visit, VisitTombstone } from '@/types/visit'
 import { CustomFieldDefinition } from '@/types/customField'
 import {
   DayPlan,
@@ -25,8 +25,8 @@ export type MergeResult = {
   contacts: Contact[]
   deletedContacts: Contact[]
   customFieldDefs: CustomFieldDefinition[]
-  conversations: Conversation[]
-  deletedConversations: ConversationTombstone[]
+  conversations: Visit[]
+  deletedConversations: VisitTombstone[]
   serviceReports: ServiceReportsByYears
   dayPlans: DayPlan[]
   recurringPlans: RecurringPlan[]
@@ -43,8 +43,8 @@ type LocalState = {
   contacts: Contact[]
   deletedContacts: Contact[]
   customFieldDefs: CustomFieldDefinition[]
-  conversations: Conversation[]
-  deletedConversations: ConversationTombstone[]
+  conversations: Visit[]
+  deletedConversations: VisitTombstone[]
   serviceReports: ServiceReportsByYears
   dayPlans: DayPlan[]
   recurringPlans: RecurringPlan[]
@@ -110,7 +110,7 @@ export function mergePayload(
   const { merged: mergedConversations, changed: conversationsChanged } =
     mergeById(
       local.conversations,
-      remote.conversationStore.conversations as Conversation[]
+      remote.conversationStore.conversations as Visit[]
     )
   const mergedConversationTombstones = mergeTombstones(
     local.deletedConversations,

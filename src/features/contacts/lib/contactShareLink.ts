@@ -1,6 +1,6 @@
 import { gzipSync, gunzipSync, strToU8, strFromU8 } from 'fflate'
 import { Address, Contact } from '@/types/contact'
-import { Conversation } from '@/types/conversation'
+import { Visit } from '@/types/visit'
 import { CustomFieldDefinition } from '@/types/customField'
 import { ContactImportData } from '@/features/contacts/lib/contactImport'
 import { logger } from '@/lib/logger'
@@ -60,9 +60,9 @@ export const CONTACT_SHARE_LINK = {
  * device-local state and never travels with a share.
  *
  * Using `Record<keyof T, FieldPolicy>` forces every key of the source type to
- * be assigned a policy — if someone adds a new field to `Contact` /
- * `Conversation` / `Address` / `FollowUp` without updating the policy here,
- * TypeScript will error at the object literal below.
+ * be assigned a policy — if someone adds a new field to `Contact` / `Visit` /
+ * `Address` / `FollowUp` without updating the policy here, TypeScript will
+ * error at the object literal below.
  */
 type FieldPolicy = 'always' | 'optional' | 'omit'
 
@@ -109,7 +109,7 @@ const ADDRESS_POLICY: Record<keyof Address, FieldPolicy> = {
   country: 'optional',
 }
 
-type FollowUp = NonNullable<Conversation['followUp']>
+type FollowUp = NonNullable<Visit['followUp']>
 
 const FOLLOW_UP_POLICY: Record<keyof FollowUp, FieldPolicy> = {
   date: 'always',
@@ -119,7 +119,7 @@ const FOLLOW_UP_POLICY: Record<keyof FollowUp, FieldPolicy> = {
   dismissed: 'optional',
 }
 
-const CONVERSATION_POLICY: Record<keyof Conversation, FieldPolicy> = {
+const CONVERSATION_POLICY: Record<keyof Visit, FieldPolicy> = {
   id: 'always',
   contact: 'always',
   date: 'always',
@@ -181,11 +181,11 @@ function stripFollowUp(
   return stripByPolicy(followUp, FOLLOW_UP_POLICY)
 }
 
-function stripConversation(conversation: Conversation): Partial<Conversation> {
+function stripConversation(conversation: Visit): Partial<Visit> {
   const stripped = stripByPolicy(conversation, CONVERSATION_POLICY)
   const strippedFollowUp = stripFollowUp(stripped.followUp)
   if (strippedFollowUp) {
-    stripped.followUp = strippedFollowUp as Conversation['followUp']
+    stripped.followUp = strippedFollowUp as Visit['followUp']
   } else {
     delete stripped.followUp
   }
@@ -315,7 +315,7 @@ export type ContactShareLinkResult = {
  */
 export function buildContactShareLink(
   contact: Contact,
-  conversations: Conversation[],
+  conversations: Visit[],
   customFieldDefs: CustomFieldDefinition[] = [],
   now: Date = new Date()
 ): ContactShareLinkResult {
@@ -339,7 +339,7 @@ export function buildContactShareLink(
   // unchanged for users who never used the feature.
   const referencedDefs = pickReferencedDefs(strippedContact, customFieldDefs)
 
-  const tryBuild = (convs: Conversation[]): string => {
+  const tryBuild = (convs: Visit[]): string => {
     const importData: ContactImportData = {
       version: '1.0',
       type: 'witnesswork-contact',
@@ -347,9 +347,7 @@ export function buildContactShareLink(
       contact: strippedContact,
       ...(convs.length > 0
         ? {
-            conversations: convs.map(
-              (c) => stripConversation(c) as Conversation
-            ),
+            conversations: convs.map((c) => stripConversation(c) as Visit),
           }
         : {}),
       ...(referencedDefs.length > 0 ? { customFieldDefs: referencedDefs } : {}),

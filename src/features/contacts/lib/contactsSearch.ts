@@ -1,6 +1,6 @@
 import Fuse, { FuseResultMatch, IFuseOptions, RangeTuple } from 'fuse.js'
 import { Contact } from '@/types/contact'
-import { Conversation } from '@/types/conversation'
+import { Visit } from '@/types/visit'
 
 export type ContactSearchEntry = {
   contact: Contact
@@ -21,7 +21,7 @@ export type ContactSearchMatch = {
 
 const buildEntries = (
   contacts: Contact[],
-  conversations: Conversation[]
+  conversations: Visit[]
 ): ContactSearchEntry[] => {
   const notesByContactId = new Map<string, string[]>()
   for (const c of conversations) {
@@ -57,7 +57,7 @@ const FUSE_KEYS: IFuseOptions<ContactSearchEntry>['keys'] = [
 
 export const buildContactsFuse = (
   contacts: Contact[],
-  conversations: Conversation[]
+  conversations: Visit[]
 ): Fuse<ContactSearchEntry> => {
   const entries = buildEntries(contacts, conversations)
   return new Fuse(entries, {

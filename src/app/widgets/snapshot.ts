@@ -1,5 +1,5 @@
 import { Contact } from '@/types/contact'
-import { Conversation } from '@/types/conversation'
+import { Visit } from '@/types/visit'
 import { Publisher, PublisherHours } from '@/types/publisher'
 import {
   DayPlan,
@@ -153,7 +153,7 @@ export type BuildSnapshotArgs = {
 
   // Contacts/appointments inputs
   contacts: Contact[]
-  conversations: Conversation[]
+  conversations: Visit[]
   defaultNavigationMapProvider: DefaultNavigationMapProvider
   defaultPhoneRegionCode: string
 

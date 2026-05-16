@@ -1,17 +1,17 @@
 import Text from '@/components/ui/MyText'
 import i18n from '@/lib/locales'
 import DismissableCard from '@/components/DismissableCard'
-import { Conversation } from '@/types/conversation'
+import { Visit } from '@/types/visit'
 import { ThemeContext } from '@/contexts/theme'
 import { useContext, useMemo } from 'react'
 import { View } from 'react-native'
 import IconButton from '@/components/ui/IconButton'
-import ApproachingConversationRow from '@/features/conversations/components/ApproachingConversationsRow'
+import ApproachingConversationRow from '@/features/visits/components/ApproachingConversationsRow'
 import moment from 'moment'
 import { faPersonRunning, faThumbtack } from '@fortawesome/free-solid-svg-icons'
 
 interface Props {
-  conversations: Conversation[]
+  conversations: Visit[]
 }
 
 const ApproachingConversations = ({ conversations }: Props) => {

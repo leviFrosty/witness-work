@@ -98,7 +98,7 @@ export type DayPlan = {
    * are still synced via iCloud last-writer-wins, but consumers must treat
    * remote IDs as opaque (they cannot be cancelled from another device).
    */
-  notifications?: import('@/types/conversation').Notification[]
+  notifications?: import('@/types/visit').Notification[]
   /**
    * Origin of this plan. `'recommendation'` is stamped by the Assistant when
    * the engine inserts plans on the user's behalf; treated as `'manual'` when

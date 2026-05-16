@@ -1,6 +1,6 @@
 import moment from 'moment'
 import { Contact } from '@/types/contact'
-import { Conversation } from '@/types/conversation'
+import { Visit } from '@/types/visit'
 import { CustomFieldDefinition } from '@/types/customField'
 import {
   contactHasAtLeastOneStudy,
@@ -34,7 +34,7 @@ export type ActiveFilter =
   | { kind: 'isActiveStudy' }
 
 export type FilterContext = {
-  conversations: Conversation[]
+  conversations: Visit[]
   customFieldDefs: CustomFieldDefinition[]
 }
 

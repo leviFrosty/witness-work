@@ -7,12 +7,22 @@ export type Notification = {
  * Tombstone written when a record is deleted so the deletion propagates across
  * devices.
  */
-export type ConversationTombstone = {
+export type VisitTombstone = {
   id: string
   deletedAt: number
 }
 
-export type Conversation = {
+/**
+ * A single field-ministry interaction with a Contact on a given date. May
+ * result in a real conversation (someone home, talked) or a not-at-home outcome
+ * (no one answered). Carries an optional note, an optional follow-up, and a
+ * Bible Study flag for the user to indicate this Visit conducted a Bible
+ * study.
+ *
+ * Renamed from `Conversation` — the legacy name understated the type's actual
+ * scope (not every Visit is a conversation; see `notAtHome`).
+ */
+export type Visit = {
   id: string
   /**
    * Epoch ms of the most recent change. Used by iCloud sync's per-record
@@ -31,7 +41,7 @@ export type Conversation = {
     topic?: string
     /**
      * TODO: Refactor where there is only one notification enabled. Also
-     * simplifies ConversationForm.tsx submit function.
+     * simplifies VisitFormScreen submit function.
      */
     notifications?: Notification[] // Changing to only one
     /**

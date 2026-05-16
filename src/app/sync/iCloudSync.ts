@@ -16,7 +16,7 @@ import * as Device from 'expo-device'
 import { EventSubscription } from 'expo-modules-core'
 import { Contact } from '@/types/contact'
 import { CustomFieldDefinition } from '@/types/customField'
-import { Conversation, ConversationTombstone } from '@/types/conversation'
+import { Visit, VisitTombstone } from '@/types/visit'
 import {
   DayPlan,
   ServiceReportsByYears,
@@ -200,8 +200,8 @@ type LocalMergeState = {
   contacts: Contact[]
   deletedContacts: Contact[]
   customFieldDefs: CustomFieldDefinition[]
-  conversations: Conversation[]
-  deletedConversations: ConversationTombstone[]
+  conversations: Visit[]
+  deletedConversations: VisitTombstone[]
   serviceReports: ServiceReportsByYears
   dayPlans: DayPlan[]
   recurringPlans: RecurringPlan[]
@@ -231,8 +231,7 @@ function foldRemotePayloads(payloads: SyncPayload[]): SyncPayload | null {
     deletedContacts: (first.contactStore.deletedContacts ?? []) as Contact[],
     customFieldDefs: (first.contactStore.customFieldDefs ??
       []) as CustomFieldDefinition[],
-    conversations: (first.conversationStore.conversations ??
-      []) as Conversation[],
+    conversations: (first.conversationStore.conversations ?? []) as Visit[],
     deletedConversations: first.conversationStore.deletedConversations ?? [],
     serviceReports:
       (first.serviceReportStore.serviceReports as ServiceReportsByYears) ?? {},

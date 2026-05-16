@@ -4,7 +4,7 @@ vi.mock('@/lib/logger', () => import('@/__tests__/mocks/logger'))
 
 import { generateRecommendation } from '@/lib/assistantRecommendation'
 import { momentStoredDate, normalizeDateForStorage } from '@/lib/normalizeDate'
-import type { Conversation } from '@/types/conversation'
+import type { Visit } from '@/types/visit'
 import type { DayPlan, RecurringPlan } from '@/types/serviceReport'
 
 const baseInput = {
@@ -15,7 +15,7 @@ const baseInput = {
   loggedAdjustedMinutes: 0,
   dayPlans: [] as DayPlan[],
   recurringPlans: [] as RecurringPlan[],
-  conversations: [] as Conversation[],
+  conversations: [] as Visit[],
   offDays: [] as number[],
   meetingDays: [] as number[],
   assistantHistory: [],

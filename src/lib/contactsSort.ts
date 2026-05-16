@@ -1,6 +1,6 @@
 import moment from 'moment'
 import { Contact } from '@/types/contact'
-import { Conversation } from '@/types/conversation'
+import { Visit } from '@/types/visit'
 import { CustomFieldDefinition } from '@/types/customField'
 import { ContactStaleness, getContactStaleness } from '@/lib/contactStaleness'
 import {
@@ -31,7 +31,7 @@ export type ContactSortKey =
   | `customField:${string}`
 
 export type SortContext = {
-  conversations: Conversation[]
+  conversations: Visit[]
   customFieldDefs: CustomFieldDefinition[]
 }
 
@@ -168,9 +168,9 @@ const compareKey = (
  * "favorites first, then active bible studies, then lapsed studies, then by
  * recent conversation" tiering — it's what existing users expect from a smart
  * default. Every other sort key is a pure sort: no favorite or study pinning,
- * just the chosen axis. That keeps "Recent Conversation" honest (you asked for
- * a sort, you get a sort), and the user picks `'suggested'` when they want the
- * smart layering.
+ * just the chosen axis. That keeps "Recent Visit" honest (you asked for a sort,
+ * you get a sort), and the user picks `'suggested'` when they want the smart
+ * layering.
  *
  * Direction flips only the sort-key axis. Sentinels (undefined values) always
  * sort last regardless of direction.

@@ -39,7 +39,7 @@ import {
   usePreferences,
 } from '@/stores/preferences'
 import useNotifications from '@/hooks/notifications'
-import { Notification } from '@/types/conversation'
+import { Notification } from '@/types/visit'
 
 import TextInput from '@/components/ui/TextInput'
 import { RootStackParamList } from '@/types/rootStack'
@@ -749,7 +749,7 @@ const PlanDayScreen = ({ route, navigation }: PlanDayScreenProps) => {
   ): Promise<Notification[]> => {
     // Always cancel any prior notifications on this plan first; we re-create
     // below if (and only if) `notifyMe` is on and the trigger is still in the
-    // future. Same shape as ConversationFormScreen.
+    // future. Same shape as VisitFormScreen.
     if (existingNotifications) {
       for (const n of existingNotifications) {
         try {

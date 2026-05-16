@@ -1,7 +1,7 @@
 import moment from 'moment'
 import { parsePhoneNumber } from 'awesome-phonenumber'
 import { Contact } from '@/types/contact'
-import { Conversation } from '@/types/conversation'
+import { Visit } from '@/types/visit'
 import {
   DefaultNavigationMapProvider,
   WidgetContactSort,
@@ -49,7 +49,7 @@ export type WidgetContact = {
 
 export type BuildContactsArgs = {
   contacts: Contact[]
-  conversations: Conversation[]
+  conversations: Visit[]
   defaultNavigationMapProvider: DefaultNavigationMapProvider
   /**
    * Region code (`'US'`, `'GB'`, etc.) used to parse phone numbers that were

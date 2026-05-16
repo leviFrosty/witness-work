@@ -1,6 +1,6 @@
 import { Alert, View } from 'react-native'
 import Text from '@/components/ui/MyText'
-import { Conversation } from '@/types/conversation'
+import { Visit } from '@/types/visit'
 import moment from 'moment'
 import useTheme from '@/contexts/theme'
 import useConversations from '@/stores/conversationStore'
@@ -26,7 +26,7 @@ const ConversationRow = ({
   conversation,
   highlighted,
 }: {
-  conversation: Conversation
+  conversation: Visit
   highlighted?: boolean
 }) => {
   const navigation = useNavigation<RootStackNavigation>()
@@ -39,9 +39,9 @@ const ConversationRow = ({
   const hasNoConversationDetails = !conversation.note?.length
 
   const handleNavigateEdit = () => {
-    navigation.navigate('Conversation Form', {
+    navigation.navigate('Visit Form', {
       contactId: conversation.contact.id,
-      conversationToEditId: conversation.id,
+      visitToEditId: conversation.id,
       notAtHome: conversation.notAtHome,
     })
   }

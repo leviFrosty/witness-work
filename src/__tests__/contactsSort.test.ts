@@ -6,7 +6,7 @@ import {
   SortContext,
 } from '@/lib/contactsSort'
 import { Contact } from '@/types/contact'
-import { Conversation } from '@/types/conversation'
+import { Visit } from '@/types/visit'
 import { CustomFieldDefinition } from '@/types/customField'
 
 const c = (
@@ -54,7 +54,7 @@ describe('lib/contactsSort', () => {
       const active = c({ id: 'active', name: 'Active' })
       const lapsed = c({ id: 'lapsed', name: 'Lapsed' })
       const regular = c({ id: 'reg', name: 'Aaron Regular' })
-      const conversations: Conversation[] = [
+      const conversations: Visit[] = [
         {
           id: 'conv-active',
           contact: { id: active.id },
@@ -85,7 +85,7 @@ describe('lib/contactsSort', () => {
     it('inside the regular tier, sorts by recent conversation', () => {
       const recent = c({ id: 'recent', name: 'R' })
       const old = c({ id: 'old', name: 'O' })
-      const conversations: Conversation[] = [
+      const conversations: Visit[] = [
         {
           id: 'conv-recent',
           contact: { id: recent.id },
@@ -118,11 +118,11 @@ describe('lib/contactsSort', () => {
     })
 
     it('recentConversation asc keeps oldest first even if a newer contact is a study', () => {
-      // Reproduces the bug: with explicit "Recent Conversation" asc, a 2-day-old
+      // Reproduces the bug: with explicit "Recent Visit" asc, a 2-day-old
       // bible study should NOT jump above a 9-day-old non-study.
       const studyRecent = c({ id: 'study', name: 'Study' })
       const oldRegular = c({ id: 'old', name: 'Old' })
-      const conversations: Conversation[] = [
+      const conversations: Visit[] = [
         {
           id: 'conv-study',
           contact: { id: studyRecent.id },
@@ -154,7 +154,7 @@ describe('lib/contactsSort', () => {
       const weekContact = c({ id: 'week', name: 'W' })
       const recentContact = c({ id: 'recent', name: 'R' })
       const neverContact = c({ id: 'never', name: 'N' })
-      const conversations: Conversation[] = [
+      const conversations: Visit[] = [
         {
           id: 'conv-month',
           contact: { id: monthContact.id },
@@ -193,7 +193,7 @@ describe('lib/contactsSort', () => {
       const weekContact = c({ id: 'week', name: 'W' })
       const recentContact = c({ id: 'recent', name: 'R' })
       const neverContact = c({ id: 'never', name: 'N' })
-      const conversations: Conversation[] = [
+      const conversations: Visit[] = [
         {
           id: 'conv-month',
           contact: { id: monthContact.id },
@@ -253,7 +253,7 @@ describe('lib/contactsSort', () => {
       const recent = c({ id: 'recent', name: 'R' })
       const old = c({ id: 'old', name: 'O' })
       const none = c({ id: 'none', name: 'N' })
-      const conversations: Conversation[] = [
+      const conversations: Visit[] = [
         {
           id: 'conv-recent',
           contact: { id: recent.id },

@@ -7,6 +7,7 @@ import useConversations from '@/stores/conversationStore'
 import useServiceReport from '@/stores/serviceReport'
 import useCategories from '@/stores/categories'
 import { usePreferences } from '@/stores/preferences'
+import { useProfile } from '@/stores/profile'
 import { useSupporter } from '@/features/supporter/stores/supporter'
 import { buildPayload, parsePayload, SyncPayload } from '@/app/sync/payload'
 import { mergePayload } from '@/app/sync/merge'
@@ -210,6 +211,8 @@ type LocalMergeState = {
   deletedCategories: CategoryTombstone[]
   preferencesValues: Record<string, unknown>
   preferenceUpdatedAt: Record<string, number>
+  profileValues: Record<string, unknown>
+  profileUpdatedAt: Record<string, number>
 }
 
 /**
@@ -243,6 +246,8 @@ function foldRemotePayloads(payloads: SyncPayload[]): SyncPayload | null {
     deletedCategories: first.categoryStore?.deletedCategories ?? [],
     preferencesValues: first.preferencesStore?.values ?? {},
     preferenceUpdatedAt: first.preferencesStore?.updatedAt ?? {},
+    profileValues: first.profileStore?.values ?? {},
+    profileUpdatedAt: first.profileStore?.updatedAt ?? {},
   }
 
   for (let i = 1; i < payloads.length; i++) {
@@ -261,6 +266,8 @@ function foldRemotePayloads(payloads: SyncPayload[]): SyncPayload | null {
       deletedCategories: result.deletedCategories,
       preferencesValues: result.preferencesValues,
       preferenceUpdatedAt: result.preferenceUpdatedAt,
+      profileValues: result.profileValues,
+      profileUpdatedAt: result.profileUpdatedAt,
     }
   }
 
@@ -297,6 +304,10 @@ function foldRemotePayloads(payloads: SyncPayload[]): SyncPayload | null {
     preferencesStore: {
       values: acc.preferencesValues,
       updatedAt: acc.preferenceUpdatedAt,
+    },
+    profileStore: {
+      values: acc.profileValues,
+      updatedAt: acc.profileUpdatedAt,
     },
   }
 }
@@ -357,6 +368,15 @@ export function replaceLocalWithRemote(remote: SyncPayload): void {
     lastiCloudRemoteWrittenAt: remote.writtenAt,
     lastiCloudRemoteDeviceId: remote.deviceId,
     lastiCloudRemoteDeviceName: remote.deviceName ?? null,
+  })
+  // Profile slice — `parsePayload` has already lifted any legacy
+  // profile-shaped fields out of `preferencesStore.values` into
+  // `remote.profileStore` via `normalizeLegacyPayloadFieldNames`, so this
+  // single write covers both fresh-shape and legacy-shape remote payloads.
+  useProfile.setState({
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    ...((remote.profileStore?.values ?? {}) as any),
+    profileUpdatedAt: remote.profileStore?.updatedAt ?? {},
   })
 }
 
@@ -521,7 +541,7 @@ async function pushImagesIfEnabled(
   try {
     const sources = collectLocalAvatarSources({
       contacts: useContacts.getState().contacts,
-      profileAvatar: prefs.avatar,
+      profileAvatar: useProfile.getState().avatar,
       documentDirectory: DOCUMENT_DIR,
     })
     if (sources.length === 0) return
@@ -566,7 +586,7 @@ async function pullImagesIfEnabled(): Promise<void> {
   try {
     const sources = collectExpectedMarkerSources({
       contacts: useContacts.getState().contacts,
-      profileAvatar: prefs.avatar,
+      profileAvatar: useProfile.getState().avatar,
       documentDirectory: DOCUMENT_DIR,
     })
     if (sources.length === 0) return
@@ -583,19 +603,22 @@ async function pullImagesIfEnabled(): Promise<void> {
       return
     }
     const contactsState = useContacts.getState()
+    const profileState = useProfile.getState()
     const applied = applyDownloadedAvatars({
       contacts: contactsState.contacts,
-      profileAvatar: prefs.avatar,
+      profileAvatar: profileState.avatar,
       downloaded: result.downloaded,
     })
     // Write through the stores' own `set` to avoid bumping `updatedAt` — the
     // helper preserved the records' timestamps, and `set` is a raw state
-    // replacement (no stamping). Using `usePreferences.setState` directly
-    // bypasses the iCloud-sync stamping wrapper on the preferences store
-    // for the same reason.
+    // replacement (no stamping). Using `useProfile.setState` directly
+    // bypasses the stamping wrapper on the Profile store for the same reason.
     contactsState.set({ contacts: applied.contacts })
-    if (applied.profileAvatar && applied.profileAvatar !== prefs.avatar) {
-      usePreferences.setState({ avatar: applied.profileAvatar })
+    if (
+      applied.profileAvatar &&
+      applied.profileAvatar !== profileState.avatar
+    ) {
+      useProfile.setState({ avatar: applied.profileAvatar })
     }
     usePreferences.setState({ iCloudImageSync: result.bookkeeping })
     logger.log(`${tag()} image pull`, {
@@ -622,7 +645,9 @@ async function gcImagesIfEnabled(): Promise<void> {
     const active: ActiveIdentity[] = useContacts
       .getState()
       .contacts.map((c) => ({ kind: 'contact', id: c.id }))
-    if (prefs.avatar?.type === 'image') active.push({ kind: 'profile' })
+    if (useProfile.getState().avatar?.type === 'image') {
+      active.push({ kind: 'profile' })
+    }
     const deps = buildImageSyncDeps()
     const result = await gcOrphanImages({ activeIdentities: active, deps })
     if (result.deleted.length > 0) {
@@ -857,12 +882,19 @@ async function pullAndMergeInner(reason: string): Promise<boolean> {
   const serviceReportState = useServiceReport.getState()
   const categoriesState = useCategories.getState()
   const preferencesState = usePreferences.getState()
+  const profileState = useProfile.getState()
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const localPrefValues: Record<string, any> = {}
   for (const [key, value] of Object.entries(preferencesState)) {
     if (typeof value === 'function') continue
     localPrefValues[key] = value
+  }
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const localProfileValues: Record<string, any> = {}
+  for (const [key, value] of Object.entries(profileState)) {
+    if (typeof value === 'function') continue
+    localProfileValues[key] = value
   }
 
   logger.log(`${tag()} pullAndMerge: local snapshot`, {
@@ -893,6 +925,8 @@ async function pullAndMergeInner(reason: string): Promise<boolean> {
     deletedCategories: categoriesState.deletedCategories,
     preferencesValues: localPrefValues,
     preferenceUpdatedAt: preferencesState.preferenceUpdatedAt ?? {},
+    profileValues: localProfileValues,
+    profileUpdatedAt: profileState.profileUpdatedAt ?? {},
   }
 
   let anyChanged = false
@@ -913,6 +947,8 @@ async function pullAndMergeInner(reason: string): Promise<boolean> {
       deletedCategories: result.deletedCategories,
       preferencesValues: result.preferencesValues,
       preferenceUpdatedAt: result.preferenceUpdatedAt,
+      profileValues: result.profileValues,
+      profileUpdatedAt: result.profileUpdatedAt,
     }
   }
 
@@ -982,6 +1018,11 @@ async function pullAndMergeInner(reason: string): Promise<boolean> {
     preferenceUpdatedAt: acc.preferenceUpdatedAt,
     lastiCloudSyncAt: Date.now(),
     lastiCloudPulledAt: Date.now(),
+  })
+  useProfile.setState({
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    ...(acc.profileValues as any),
+    profileUpdatedAt: acc.profileUpdatedAt,
   })
 
   logger.log(`${tag()} pullAndMerge: applied merge to stores`, {
@@ -1119,6 +1160,14 @@ export function installiCloudSync(): () => void {
       schedulePush()
     }
   })
+  // Profile store mirrors the same per-key stamping pattern, so the same
+  // reference check on `profileUpdatedAt` is an accurate filter for
+  // "actual syncable change happened."
+  const unsubProfile = useProfile.subscribe((state, prev) => {
+    if (state.profileUpdatedAt !== prev.profileUpdatedAt) {
+      schedulePush()
+    }
+  })
 
   const onAppState = (state: AppStateStatus) => {
     if (state === 'active') {
@@ -1168,6 +1217,7 @@ export function installiCloudSync(): () => void {
     unsubServiceReports()
     unsubCategories()
     unsubPreferences()
+    unsubProfile()
     appStateSub.remove()
     remoteChangeSub?.remove()
     availabilitySub?.remove()

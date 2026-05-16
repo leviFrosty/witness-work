@@ -26,6 +26,8 @@ type LocalState = {
   deletedCategories: CategoryTombstone[]
   preferencesValues: Record<string, unknown>
   preferenceUpdatedAt: Record<string, number>
+  profileValues: Record<string, unknown>
+  profileUpdatedAt: Record<string, number>
 }
 
 const emptyLocal = (): LocalState => ({
@@ -42,6 +44,8 @@ const emptyLocal = (): LocalState => ({
   deletedCategories: [],
   preferencesValues: {},
   preferenceUpdatedAt: {},
+  profileValues: {},
+  profileUpdatedAt: {},
 })
 
 const makeRemote = (overrides: Partial<SyncPayload> = {}): SyncPayload => ({

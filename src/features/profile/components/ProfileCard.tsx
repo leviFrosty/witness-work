@@ -11,6 +11,7 @@ import {
 } from '@fortawesome/free-solid-svg-icons'
 import useTheme from '@/contexts/theme'
 import { usePreferences } from '@/stores/preferences'
+import { useProfile } from '@/stores/profile'
 import usePublisher from '@/hooks/usePublisher'
 import useIsSupporter from '@/hooks/useIsSupporter'
 import Card from '@/components/ui/Card'
@@ -94,16 +95,22 @@ const CARD_PADDING_H = 16
 const ProfileCard = ({ preview, editable, onPressIncomplete }: Props) => {
   const theme = useTheme()
   const {
+    installedOn,
+    pioneerStartDate,
+    profileCardShaderEnabled,
+    profileCardShaderId,
+  } = usePreferences()
+  // Profile-shaped fields live in the Profile store (wave-3 store split).
+  // ProfileCard reads + writes both stores because the card is the editing
+  // surface for *Profile* (name, avatar, avatar background, setup flag) while
+  // still rendering Preferences-driven chrome (shader toggle, tenure).
+  const {
     name,
     avatar,
     customAvatarBackground,
-    installedOn,
-    pioneerStartDate,
     hasCompletedProfileSetup,
-    profileCardShaderEnabled,
-    profileCardShaderId,
-    set,
-  } = usePreferences()
+    set: setProfile,
+  } = useProfile()
   const {
     type: publisher,
     isInFullTimeService,
@@ -244,11 +251,13 @@ const ProfileCard = ({ preview, editable, onPressIncomplete }: Props) => {
   const avatarEl = editable ? (
     <AvatarPickerPopover
       value={avatar}
-      onChange={(next) => set({ avatar: next })}
+      onChange={(next) => setProfile({ avatar: next })}
       name={trimmedName}
       size={44}
       backgroundValue={customAvatarBackground}
-      onBackgroundChange={(next) => set({ customAvatarBackground: next })}
+      onBackgroundChange={(next) =>
+        setProfile({ customAvatarBackground: next })
+      }
     />
   ) : (
     <Avatar avatar={avatar} name={trimmedName} size={44} />
@@ -257,7 +266,7 @@ const ProfileCard = ({ preview, editable, onPressIncomplete }: Props) => {
   const nameEl = editable ? (
     <RNTextInput
       value={name}
-      onChangeText={(val) => set({ name: val })}
+      onChangeText={(val) => setProfile({ name: val })}
       placeholder={i18n.t('firstNamePlaceholder')}
       placeholderTextColor={theme.colors.textAlt}
       autoCapitalize='words'

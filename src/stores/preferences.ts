@@ -8,7 +8,6 @@ import moment from 'moment'
 import * as Device from 'expo-device'
 import { hasMigratedFromAsyncStorage, MmkvStorage } from '@/stores/mmkv'
 import { Address } from '@/types/contact'
-import { ProfileAvatar } from '@/types/avatar'
 import { MinuteDisplayFormat } from '@/types/serviceReport'
 import type { AssistantEvent } from '@/types/assistant'
 import { appendAssistantEventCapped } from '@/lib/assistantState'
@@ -227,13 +226,11 @@ export const PREFERENCE_DEFAULTS = {
   /** Overrides publisherHours hour requirement for given month. */
   oneOffGoalHours: [] as GoalHours[],
   onboardingComplete: false,
-  /**
-   * Distinct from onboardingComplete so existing users — who installed before
-   * the profile step existed — can be prompted to fill it in post-onboarding.
-   */
-  hasCompletedProfileSetup: false,
-  /** User's first name. Collected during onboarding profile step. */
-  name: '',
+  // `name`, `avatar`, `customAvatarBackground`, and `hasCompletedProfileSetup`
+  // moved to `@/stores/profile` in preferences v3 — see `src/lib/profileMigration.ts`
+  // and the boot runner in `src/app/App.tsx`. Glossary disambiguation: those
+  // four fields are the User's *identity* (Profile), not the User's *settings*
+  // (Preferences).
   /**
    * Multi-select intents captured during onboarding (`IntentPicker` step).
    * Drives the post-onboarding `HomeChecklist` and personalizes later
@@ -246,11 +243,11 @@ export const PREFERENCE_DEFAULTS = {
    * stores the start date for any role that tracks one — see `tracksStartDate`
    * in `constants/publisher.ts` (regular pioneer, special pioneer, circuit
    * overseer, regular auxiliary). Used by ProfileCard / ProfileDetailOverlay to
-   * display duration (e.g. "Pioneering for 2 years").
+   * display duration (e.g. "Pioneering for 2 years"). Stays in Preferences
+   * because it's tied to the publisher _role_ (a setting), not the User's
+   * identity.
    */
   pioneerStartDate: null as Date | null,
-  /** Profile avatar — stored locally, never uploaded. */
-  avatar: { type: 'none', value: '' } as ProfileAvatar,
   installedOn: new Date(),
   contactSort: 'suggested' as ContactSortKey,
   /**
@@ -333,6 +330,16 @@ export const PREFERENCE_DEFAULTS = {
    * migrates its own persisted state once.
    */
   hasMigratedTagsToCategories: false,
+  /**
+   * One-shot flag for the Profile-store extraction (wave-3). Boot runner gates
+   * on this: when false, it splits the legacy `preferences` blob and seeds the
+   * new `useProfile()` store with the identity-shaped fields (`name`, `avatar`,
+   * `customAvatarBackground`, `hasCompletedProfileSetup`). The preferences
+   * persist `migrate` callback (v2→v3) drops those fields from disk in
+   * parallel. See `src/lib/profileMigration.ts`. Non-syncable — each device
+   * migrates its own persisted state once.
+   */
+  hasMigratedProfileFromPreferences: false,
   hasAttemptedToMigrateToMmkv: false,
   /**
    * Hidden dev tools for diagnosing issues. To enable/disable, navigate to
@@ -409,13 +416,10 @@ export const PREFERENCE_DEFAULTS = {
    * it only while supporter status is active.
    */
   customAccentColor: null as string | null,
-  /**
-   * Supporter-only override for the avatar/profile-picture background color.
-   * When null, the avatar background follows the accent color. Kept separate so
-   * users who want a different-colored avatar than their accent can opt in
-   * without affecting the rest of the app's tint.
-   */
-  customAvatarBackground: null as string | null,
+  // `customAvatarBackground` moved to `@/stores/profile` in preferences v3
+  // alongside `name` + `avatar` — see glossary: the avatar background is
+  // identity-shaped (it tints the User's avatar), while `customAccentColor`
+  // (theme) and `customAppIcon` (app icon) are settings and stay here.
   /**
    * Supporter-only override for the iOS Home Screen app icon. `null` /
    * `'Default'` use the bundle's primary icon. `'Seasonal'` is resolved at
@@ -727,6 +731,7 @@ export const NON_SYNCABLE_PREFERENCE_KEYS = new Set<string>([
   'hasMigratedToSyncSchema',
   'hasMigratedCustomFieldsToIds',
   'hasMigratedTagsToCategories',
+  'hasMigratedProfileFromPreferences',
   // Legacy field — removed from the schema but may still exist on disk for
   // installs that pre-date the id-keyed migration. Listed here so the boot
   // cleanup that wipes it doesn't propagate the deletion through sync.
@@ -766,6 +771,16 @@ export const NON_SYNCABLE_PREFERENCE_KEYS = new Set<string>([
  *   leaf enum value `'publisher'` (Regular Publisher) is canonical and stays.
  *   The `preferenceUpdatedAt` timestamp map is migrated alongside so iCloud
  *   last-writer-wins continues to work across the rename.
+ * - V2 → v3: split the identity-shaped fields (`name`, `avatar`,
+ *   `customAvatarBackground`, `hasCompletedProfileSetup`) out into the new
+ *   Profile store (`@/stores/profile`). This callback only sees the preferences
+ *   blob, so it can drop the fields here — but the cross-store _seeding_ runs
+ *   in a boot runner (`src/app/App.tsx`) gated on
+ *   `hasMigratedProfileFromPreferences`. To avoid losing the values between
+ *   `migrate` and the boot runner, the persist callback leaves the fields in
+ *   place; the boot runner is the single source of truth for both the seeding
+ *   and the drop. The version bump still happens so a downgrade to v2 isn't
+ *   silently re-promoted.
  *
  * Exported for unit testing. Idempotent — re-running on an already-migrated
  * blob is a no-op.
@@ -782,6 +797,9 @@ export const migratePreferencesPersistedState = (
   }
   if (version < 2) {
     next = migratePublisherToRole(next)
+  }
+  if (version < 3) {
+    next = migrateDropProfileFields(next)
   }
   return next
 }
@@ -843,6 +861,29 @@ const migratePublisherToRole = (state: any): any => {
   }
   return next
 }
+
+/**
+ * V2 → v3: the persist `migrate` callback is intentionally a no-op for the
+ * Profile extraction. The split runs in a boot runner (`src/app/App.tsx`, gated
+ * on `hasMigratedProfileFromPreferences`) because:
+ *
+ * 1. The boot runner needs to _seed_ a sibling MMKV store (`@/stores/profile`),
+ *    which a Zustand persist `migrate` callback can't do — it only sees its own
+ *    blob.
+ * 2. Leaving the legacy fields on the persisted preferences blob until the boot
+ *    runner copies them avoids any race where the values are lost between
+ *    `migrate` and the runner.
+ *
+ * The version bump still happens so the schema marker on disk advances —
+ * preventing a downgrade-then-upgrade from re-triggering this migration
+ * accidentally, and giving future migrations (v3 → v4) a stable base. The boot
+ * runner then drops the legacy fields from preferences via raw `setState({
+ * name: undefined, ... } as any)` and flips `hasMigratedProfileFromPreferences`
+ * so the runner is one-shot. See wave-2's `serviceReportTags` cleanup for the
+ * exact same pattern.
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const migrateDropProfileFields = (state: any): any => state
 
 export const usePreferences = create(
   persist(
@@ -975,7 +1016,7 @@ export const usePreferences = create(
       storage: createJSONStorage(() =>
         hasMigratedFromAsyncStorage() ? MmkvStorage : AsyncStorage
       ),
-      version: 2,
+      version: 3,
       migrate: (persistedState, version) =>
         migratePreferencesPersistedState(persistedState, version),
     }

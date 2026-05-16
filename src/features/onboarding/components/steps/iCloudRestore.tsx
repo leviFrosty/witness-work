@@ -22,6 +22,7 @@ import * as ICloudBridge from '../../../../../modules/icloud-bridge'
 import { iCloudSync } from '@/app/sync/iCloudSync'
 import { SyncPayload } from '@/app/sync/payload'
 import { usePreferences } from '@/stores/preferences'
+import { useProfile } from '@/stores/profile'
 import useFeatureAccess from '@/hooks/useFeatureAccess'
 
 interface Props {
@@ -77,6 +78,7 @@ function remoteReferencesImages(remote: SyncPayload): boolean {
 const ICloudRestore = ({ goBack, goNext }: Props) => {
   const theme = useTheme()
   const { set } = usePreferences()
+  const { set: setProfile } = useProfile()
   const { hasAccess: canEnableICloudSync } = useFeatureAccess('iCloudSync')
   const [probe, setProbe] = useState<Probe>({ state: 'probing' })
   const [restoring, setRestoring] = useState(false)
@@ -161,12 +163,12 @@ const ICloudRestore = ({ goBack, goNext }: Props) => {
       // revision, but an older remote payload may not contain them.)
       set({
         onboardingComplete: true,
-        hasCompletedProfileSetup: true,
         hasCompletedMapOnboarding: true,
         ...(canEnableICloudSync
           ? { iCloudSyncEnabled: true, iCloudSyncSetByUser: true }
           : {}),
       })
+      setProfile({ hasCompletedProfileSetup: true })
 
       // If the restored payload references images via iCloud markers, prompt
       // the user to also pull those photos down. Per-device consent means we

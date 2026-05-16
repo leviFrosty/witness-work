@@ -116,3 +116,123 @@ describe('normalizeLegacyPayloadFieldNames', () => {
     expect(d.preferencesStore.updatedAt).not.toHaveProperty('publisher')
   })
 })
+
+describe('normalizeLegacyPayloadFieldNames — profile-field routing (wave-3)', () => {
+  it('moves name + avatar from preferencesStore.values into a synthesized profileStore', () => {
+    const d = makePayload(
+      {
+        role: 'regularPioneer',
+        name: 'Bob',
+        avatar: { type: 'image', value: 'avatar://x' },
+      },
+      {
+        role: 1700000000000,
+        name: 1700000001000,
+        avatar: 1700000002000,
+      }
+    )
+
+    normalizeLegacyPayloadFieldNames(d)
+
+    // Profile slice was created and populated.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const profile = (d as any).profileStore
+    expect(profile).toBeDefined()
+    expect(profile.values.name).toBe('Bob')
+    expect(profile.values.avatar).toEqual({
+      type: 'image',
+      value: 'avatar://x',
+    })
+    expect(profile.updatedAt.name).toBe(1700000001000)
+    expect(profile.updatedAt.avatar).toBe(1700000002000)
+
+    // Legacy fields dropped from preferencesStore.
+    expect(d.preferencesStore.values).not.toHaveProperty('name')
+    expect(d.preferencesStore.values).not.toHaveProperty('avatar')
+    expect(d.preferencesStore.updatedAt).not.toHaveProperty('name')
+    expect(d.preferencesStore.updatedAt).not.toHaveProperty('avatar')
+
+    // Non-profile prefs survive untouched.
+    expect(d.preferencesStore.values.role).toBe('regularPioneer')
+    expect(d.preferencesStore.updatedAt.role).toBe(1700000000000)
+  })
+
+  it('routes customAvatarBackground + hasCompletedProfileSetup the same way', () => {
+    const d = makePayload(
+      {
+        customAvatarBackground: '#AABBCC',
+        hasCompletedProfileSetup: true,
+      },
+      {
+        customAvatarBackground: 1700000003000,
+        hasCompletedProfileSetup: 1700000004000,
+      }
+    )
+
+    normalizeLegacyPayloadFieldNames(d)
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const profile = (d as any).profileStore
+    expect(profile.values.customAvatarBackground).toBe('#AABBCC')
+    expect(profile.values.hasCompletedProfileSetup).toBe(true)
+    expect(profile.updatedAt.customAvatarBackground).toBe(1700000003000)
+    expect(profile.updatedAt.hasCompletedProfileSetup).toBe(1700000004000)
+    expect(d.preferencesStore.values).not.toHaveProperty(
+      'customAvatarBackground'
+    )
+    expect(d.preferencesStore.values).not.toHaveProperty(
+      'hasCompletedProfileSetup'
+    )
+  })
+
+  it('lands a legacy name value in the profile slice on read (spec test)', () => {
+    // Legacy peer (running an older app version) writes the user's name
+    // inside preferencesStore.values. On read, the canonical destination is
+    // the profile slice.
+    const d = makePayload({ name: 'Bob' }, {})
+    normalizeLegacyPayloadFieldNames(d)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    expect((d as any).profileStore.values.name).toBe('Bob')
+  })
+
+  it('prefers an existing profileStore slice when both schemas are present', () => {
+    // Defensive: a hybrid payload (post-wave-3 device that somehow re-included
+    // legacy fields) routes nothing — the canonical slice wins.
+    const d = {
+      version: 1,
+      preferencesStore: {
+        values: { name: 'OldName' },
+        updatedAt: { name: 1 },
+      },
+      profileStore: {
+        values: { name: 'NewName' },
+        updatedAt: { name: 2 },
+      },
+    }
+
+    normalizeLegacyPayloadFieldNames(d)
+
+    expect(d.profileStore.values.name).toBe('NewName')
+    expect(d.profileStore.updatedAt.name).toBe(2)
+    expect(d.preferencesStore.values).not.toHaveProperty('name')
+    expect(d.preferencesStore.updatedAt).not.toHaveProperty('name')
+  })
+
+  it('leaves a payload without profile fields untouched (no synthesized profileStore)', () => {
+    const d = makePayload({ role: 'publisher' }, { role: 1 })
+    normalizeLegacyPayloadFieldNames(d)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    expect((d as any).profileStore).toBeUndefined()
+  })
+
+  it('is idempotent — second call on the post-routed payload is a no-op', () => {
+    const d = makePayload(
+      { name: 'Bob', avatar: { type: 'emoji', value: '🌱' } },
+      { name: 1, avatar: 2 }
+    )
+    normalizeLegacyPayloadFieldNames(d)
+    const snapshot = JSON.stringify(d)
+    normalizeLegacyPayloadFieldNames(d)
+    expect(JSON.stringify(d)).toBe(snapshot)
+  })
+})

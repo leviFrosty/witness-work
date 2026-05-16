@@ -26,6 +26,7 @@ import Animated, {
 } from 'react-native-reanimated'
 import useTheme from '@/contexts/theme'
 import { usePreferences } from '@/stores/preferences'
+import { useProfile } from '@/stores/profile'
 import usePublisher from '@/hooks/usePublisher'
 import useIsSupporter from '@/hooks/useIsSupporter'
 import useConversations from '@/stores/conversationStore'
@@ -110,7 +111,8 @@ const ProfileDetailOverlay = ({ origin, open, onClose, onClosed }: Props) => {
   const insets = useSafeAreaInsets()
   const navigation = useNavigation<RootStackNavigation>()
   const { width: winW, height: winH } = useWindowDimensions()
-  const { avatar, pioneerStartDate } = usePreferences()
+  const { pioneerStartDate } = usePreferences()
+  const { avatar } = useProfile()
 
   const handleEdit = () => {
     onClose()

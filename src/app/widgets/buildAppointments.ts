@@ -1,10 +1,10 @@
 import moment from 'moment'
 import { Contact } from '@/types/contact'
-import { Conversation } from '@/types/conversation'
+import { Visit } from '@/types/visit'
 import { isAppointment } from '@/lib/conversations'
 
 export type WidgetAppointment = {
-  /** Conversation ID — used to deep-link with `highlightedConversationId`. */
+  /** Visit ID — used to deep-link with `highlightedVisitId`. */
   id: string
   contactId: string
   contactName: string
@@ -28,7 +28,7 @@ export type WidgetAppointment = {
 
 export type BuildAppointmentsArgs = {
   contacts: Contact[]
-  conversations: Conversation[]
+  conversations: Visit[]
 }
 
 /**

@@ -13,7 +13,7 @@ import {
 import { filterActivesContacts } from '@/lib/dismissedContacts'
 import { useMarkerColors } from '@/hooks/useMarkerColors'
 import { Contact } from '@/types/contact'
-import { Conversation } from '@/types/conversation'
+import { Visit } from '@/types/visit'
 import Text from '@/components/ui/MyText'
 import Card from '@/components/ui/Card'
 import Button from '@/components/ui/Button'
@@ -22,7 +22,7 @@ import StalenessColorKey from '@/components/StalenessColorKey'
 export type ContactsStatsHeaderProps = {
   /** All contacts, active AND dismissed. The component computes the splits. */
   contacts: Contact[]
-  conversations: Conversation[]
+  conversations: Visit[]
   onPressDismissed: () => void
 }
 

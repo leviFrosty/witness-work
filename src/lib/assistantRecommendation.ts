@@ -1,5 +1,5 @@
 import moment from 'moment'
-import type { Conversation } from '@/types/conversation'
+import type { Visit } from '@/types/visit'
 import type { DayPlan, RecurringPlan } from '@/types/serviceReport'
 import type { AssistantEvent, RecommendationShape } from '@/types/assistant'
 import { momentStoredDate, normalizeDateForStorage } from '@/lib/normalizeDate'
@@ -92,7 +92,7 @@ export type EngineInput = {
   loggedAdjustedMinutes: number
   dayPlans: DayPlan[]
   recurringPlans: RecurringPlan[]
-  conversations: Conversation[]
+  conversations: Visit[]
   /**
    * Off Days the user wants the engine to treat as a hard exclusion when
    * generating a recommendation. Today stored as weekday numbers (0–6); the
@@ -645,7 +645,7 @@ export const generateRecommendation = (
 const WEEKDAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 
 const collectConversationDayKeys = (
-  conversations: Conversation[],
+  conversations: Visit[],
   today: Date
 ): Set<string> => {
   const todayDay = momentStoredDate(normalizeDateForStorage(today))

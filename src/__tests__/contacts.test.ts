@@ -1,7 +1,7 @@
 import moment from 'moment'
 import { getStudiesForGivenMonth } from '@/lib/contacts'
 import { createFakeContacts } from '@/__tests__/__data__/contacts'
-import { Conversation } from '@/types/conversation'
+import { Visit } from '@/types/visit'
 import { describe, expect, it } from 'vitest'
 
 const testDate = moment({ year: 2023, month: 10 }).toDate()
@@ -10,7 +10,7 @@ describe('lib/contacts', () => {
   describe('getTotalStudiesCount', () => {
     it('returns 0 studies if 0 conversations', () => {
       const contacts = createFakeContacts()
-      const conversations: Conversation[] = []
+      const conversations: Visit[] = []
 
       const count = getStudiesForGivenMonth({
         contacts,
@@ -22,7 +22,7 @@ describe('lib/contacts', () => {
 
     it('returns 1 study if a contact has a single corresponding study', () => {
       const contacts = createFakeContacts()
-      const conversations: Conversation[] = [
+      const conversations: Visit[] = [
         {
           contact: {
             id: contacts[0].id,
@@ -44,7 +44,7 @@ describe('lib/contacts', () => {
 
     it('returns 1 study if a contact has multiple corresponding study', () => {
       const contacts = createFakeContacts()
-      const conversations: Conversation[] = [
+      const conversations: Visit[] = [
         {
           contact: {
             id: contacts[0].id,
@@ -74,7 +74,7 @@ describe('lib/contacts', () => {
 
     it('returns 0 studies if a contact has multiple studies that do not match the current month', () => {
       const contacts = createFakeContacts()
-      const conversations: Conversation[] = [
+      const conversations: Visit[] = [
         {
           contact: {
             id: contacts[0].id,
@@ -112,7 +112,7 @@ describe('lib/contacts', () => {
 
     it('returns multiple studies if there are multiple contacts with multiple studies within the current month', () => {
       const contacts = createFakeContacts()
-      const conversations: Conversation[] = [
+      const conversations: Visit[] = [
         {
           contact: {
             id: contacts[0].id,

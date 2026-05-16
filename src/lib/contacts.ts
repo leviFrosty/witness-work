@@ -1,6 +1,6 @@
 import moment from 'moment'
 import { Contact } from '@/types/contact'
-import { Conversation } from '@/types/conversation'
+import { Visit } from '@/types/visit'
 import { contactStudiedForGivenMonth } from '@/lib/conversations'
 
 export const getStudiesForGivenMonth = ({
@@ -9,7 +9,7 @@ export const getStudiesForGivenMonth = ({
   month,
 }: {
   contacts: Contact[]
-  conversations: Conversation[]
+  conversations: Visit[]
   month: Date
 }) => {
   return contacts.reduce((accumulator, contact) => {
@@ -24,7 +24,7 @@ export const getMostRecentConversationForContact = ({
   conversations,
   contact,
 }: {
-  conversations: Conversation[]
+  conversations: Visit[]
   contact: Contact
 }) => {
   const contactConversations = conversations.filter(

@@ -27,7 +27,7 @@ import {
 } from '@/features/contacts/lib/contactShareLink'
 import { validateContactImport } from '@/features/contacts/lib/contactImport'
 import { Contact } from '@/types/contact'
-import { Conversation } from '@/types/conversation'
+import { Visit } from '@/types/visit'
 
 const makeContact = (overrides: Partial<Contact> = {}): Contact => ({
   id: 'contact-1',
@@ -36,9 +36,7 @@ const makeContact = (overrides: Partial<Contact> = {}): Contact => ({
   ...overrides,
 })
 
-const makeConversation = (
-  overrides: Partial<Conversation> = {}
-): Conversation => ({
+const makeConversation = (overrides: Partial<Visit> = {}): Visit => ({
   id: 'conv-1',
   contact: { id: 'contact-1' },
   date: new Date('2026-04-10T12:00:00.000Z'),
@@ -79,7 +77,7 @@ describe('contactShareLink round-trip', () => {
     expect(includedConversations).toBe(2)
 
     const parsed = parseContactShareLink(url) as {
-      conversations: Conversation[]
+      conversations: Visit[]
     }
     expect(parsed.conversations.map((c) => c.id)).toEqual(['newer', 'older'])
   })
@@ -133,7 +131,7 @@ describe('isContactShareLink / parseContactShareLink URL matching', () => {
 })
 
 describe('buildContactShareLink trimming', () => {
-  const manyConversations = (count: number): Conversation[] =>
+  const manyConversations = (count: number): Visit[] =>
     Array.from({ length: count }, (_, i) =>
       makeConversation({
         id: `conv-${i}`,
@@ -160,7 +158,7 @@ describe('buildContactShareLink trimming', () => {
     const convs = manyConversations(CONTACT_SHARE_LINK.MAX_CONVERSATIONS + 5)
     const { url, includedConversations } = buildContactShareLink(contact, convs)
     const parsed = parseContactShareLink(url) as {
-      conversations: Conversation[]
+      conversations: Visit[]
     }
     const includedIds = parsed.conversations.map((c) => c.id)
     const expectedNewest = [...convs]
@@ -204,14 +202,11 @@ describe('buildContactShareLink trimming', () => {
 })
 
 describe('buildContactShareLink strip policy', () => {
-  const buildAndParse = (
-    contact: Contact,
-    conversations: Conversation[] = []
-  ) => {
+  const buildAndParse = (contact: Contact, conversations: Visit[] = []) => {
     const { url } = buildContactShareLink(contact, conversations)
     return parseContactShareLink(url) as {
       contact: Partial<Contact> & Record<string, unknown>
-      conversations?: (Partial<Conversation> & Record<string, unknown>)[]
+      conversations?: (Partial<Visit> & Record<string, unknown>)[]
     }
   }
 

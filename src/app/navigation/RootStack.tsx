@@ -1,7 +1,7 @@
 import { createNativeStackNavigator } from '@react-navigation/native-stack'
 import ContactFormScreen from '@/features/contacts/screens/ContactFormScreen'
 import Header from '@/components/ui/layout/Header'
-import ConversationFormScreen from '@/features/conversations/screens/ConversationFormScreen'
+import VisitFormScreen from '@/features/visits/screens/VisitFormScreen'
 import ContactDetailsScreen from '@/features/contacts/screens/ContactDetailsScreen'
 import AddTimeScreen from '@/features/service-reports/screens/AddTimeScreen'
 import RecoverContactsScreen from '@/features/contacts/screens/RecoverContactsScreen'
@@ -29,7 +29,7 @@ import PreferencesWidgetsScreen from '@/features/settings/screens/preferences/sc
 import PreferencesiCloudScreen from '@/features/settings/screens/preferences/screens/PreferencesiCloudScreen'
 import PreferencesAppIconScreen from '@/features/settings/screens/preferences/screens/PreferencesAppIconScreen'
 import PreferencesCustomFieldsScreen from '@/features/settings/screens/preferences/screens/PreferencesCustomFieldsScreen'
-import RescheduleConversationScreen from '@/features/conversations/screens/RescheduleConversationScreen'
+import RescheduleVisitScreen from '@/features/visits/screens/RescheduleVisitScreen'
 import PlanDayScreen from '@/features/plans/screens/PlanDayScreen'
 import RolloverScreen from '@/features/service-reports/screens/RolloverScreen'
 import MilestoneShowcaseScreen from '@/features/milestones/screens/MilestoneShowcaseScreen'
@@ -75,10 +75,7 @@ const RootStackComponent = () => {
           component={ContactDetailsScreen}
         />
         <RootStack.Screen name='Contact Form' component={ContactFormScreen} />
-        <RootStack.Screen
-          name='Conversation Form'
-          component={ConversationFormScreen}
-        />
+        <RootStack.Screen name='Visit Form' component={VisitFormScreen} />
         <RootStack.Screen
           name='Add Time'
           options={{
@@ -277,8 +274,8 @@ const RootStackComponent = () => {
               <Header noInsets buttonType='back' title={i18n.t('reschedule')} />
             ),
           }}
-          name='RescheduleConversation'
-          component={RescheduleConversationScreen}
+          name='RescheduleVisit'
+          component={RescheduleVisitScreen}
         />
         <RootStack.Screen
           options={({ route }) => {

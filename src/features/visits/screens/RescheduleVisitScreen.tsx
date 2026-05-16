@@ -31,12 +31,9 @@ import { handleCall, handleMessage } from '@/lib/phone'
 import i18n from '@/lib/locales'
 import { logger } from '@/lib/logger'
 import { RootStackParamList, RootStackNavigation } from '@/types/rootStack'
-import { Notification as ConvNotification } from '@/types/conversation'
+import { Notification as ConvNotification } from '@/types/visit'
 
-type Props = NativeStackScreenProps<
-  RootStackParamList,
-  'RescheduleConversation'
->
+type Props = NativeStackScreenProps<RootStackParamList, 'RescheduleVisit'>
 
 /**
  * Outlined icon-only button used for the contact card's call/text quick
@@ -275,10 +272,10 @@ const QuickDateChips = ({
  * text button at the bottom since it's destructive and rarely the intended
  * action.
  */
-const RescheduleConversationScreen = ({ route, navigation }: Props) => {
+const RescheduleVisitScreen = ({ route, navigation }: Props) => {
   const theme = useTheme()
   const insets = useSafeAreaInsets()
-  const { conversationId, contactId } = route.params
+  const { visitId, contactId } = route.params
   const { contacts } = useContacts()
   const { conversations, updateConversation } = useConversations()
   const { returnVisitNotificationOffset } = usePreferences()
@@ -288,8 +285,8 @@ const RescheduleConversationScreen = ({ route, navigation }: Props) => {
     [contacts, contactId]
   )
   const conversation = useMemo(
-    () => conversations.find((c) => c.id === conversationId),
-    [conversations, conversationId]
+    () => conversations.find((c) => c.id === visitId),
+    [conversations, visitId]
   )
 
   // Default the picker to "tomorrow at the original time" so the user can
@@ -439,14 +436,13 @@ const RescheduleConversationScreen = ({ route, navigation }: Props) => {
   const handleAddConversation = useCallback(() => {
     if (!contact) return
     // Not marking the original follow-up complete — this opens Add
-    // Conversation prefilled so the user can log the actual conversation
+    // Visit prefilled so the user can log the actual conversation
     // they had (or will have). The original follow-up stays attached to
     // the prior conversation until the user explicitly reschedules it.
     dismiss()
-    ;(navigation as unknown as RootStackNavigation).navigate(
-      'Conversation Form',
-      { contactId: contact.id }
-    )
+    ;(navigation as unknown as RootStackNavigation).navigate('Visit Form', {
+      contactId: contact.id,
+    })
   }, [contact, dismiss, navigation])
 
   const openContactDetails = useCallback(() => {
@@ -672,4 +668,4 @@ const RescheduleConversationScreen = ({ route, navigation }: Props) => {
   )
 }
 
-export default RescheduleConversationScreen
+export default RescheduleVisitScreen

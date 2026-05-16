@@ -6,7 +6,7 @@ import {
   FilterContext,
 } from '@/lib/contactsFilters'
 import { Contact } from '@/types/contact'
-import { Conversation } from '@/types/conversation'
+import { Visit } from '@/types/visit'
 import { CustomFieldDefinition } from '@/types/customField'
 
 const baseContact = (overrides: Partial<Contact> = {}): Contact => ({
@@ -311,7 +311,7 @@ describe('lib/contactsFilters', () => {
   describe('pinStaleness filter', () => {
     it('matches a contact whose most-recent conversation is ~2 months ago to bucket=month', () => {
       const c = baseContact({ id: 'c1', name: 'Stale' })
-      const conversations: Conversation[] = [
+      const conversations: Visit[] = [
         {
           id: 'conv1',
           contact: { id: c.id },
@@ -363,7 +363,7 @@ describe('lib/contactsFilters', () => {
     it('hasStudy keeps only contacts with at least one study conversation', () => {
       const study = baseContact({ id: 's', name: 'Studies' })
       const noStudy = baseContact({ id: 'n', name: 'No Studies' })
-      const conversations: Conversation[] = [
+      const conversations: Visit[] = [
         {
           id: 'conv1',
           contact: { id: study.id },
@@ -388,7 +388,7 @@ describe('lib/contactsFilters', () => {
     it('isActiveStudy keeps only contacts with a study conversation in current month', () => {
       const active = baseContact({ id: 'a', name: 'Active' })
       const lapsed = baseContact({ id: 'l', name: 'Lapsed' })
-      const conversations: Conversation[] = [
+      const conversations: Visit[] = [
         {
           id: 'conv1',
           contact: { id: active.id },

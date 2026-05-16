@@ -2,7 +2,7 @@ import { useContext, useMemo } from 'react'
 import { View } from 'react-native'
 import { ThemeContext } from '@/contexts/theme'
 import Card from '@/components/ui/Card'
-import { Conversation } from '@/types/conversation'
+import { Visit } from '@/types/visit'
 import Text from '@/components/ui/MyText'
 import useContacts from '@/stores/contactsStore'
 import moment from 'moment'
@@ -16,7 +16,7 @@ const ApproachingConversationRow = ({
   conversation,
   isOverdue = false,
 }: {
-  conversation: Conversation
+  conversation: Visit
   /**
    * When true, tap navigates to the Reschedule sheet instead of Contact
    * Details. Same UX as tapping an overdue follow-up from the Appointments
@@ -40,14 +40,14 @@ const ApproachingConversationRow = ({
     <Button
       onPress={() => {
         if (isOverdue) {
-          navigation.navigate('RescheduleConversation', {
+          navigation.navigate('RescheduleVisit', {
             contactId: contact.id,
-            conversationId: conversation.id,
+            visitId: conversation.id,
           })
         } else {
           navigation.navigate('Contact Details', {
             id: contact.id,
-            highlightedConversationId: conversation.id,
+            highlightedVisitId: conversation.id,
           })
         }
       }}

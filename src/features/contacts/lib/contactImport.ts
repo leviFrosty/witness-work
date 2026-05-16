@@ -2,7 +2,7 @@ import * as DocumentPicker from 'expo-document-picker'
 import * as FileSystem from 'expo-file-system/legacy'
 import { Alert } from 'react-native'
 import { Contact } from '@/types/contact'
-import { Conversation } from '@/types/conversation'
+import { Visit } from '@/types/visit'
 import { CustomFieldDefinition } from '@/types/customField'
 import i18n from '@/lib/locales'
 import { logger } from '@/lib/logger'
@@ -12,7 +12,7 @@ export type ContactImportData = {
   type: 'witnesswork-contact'
   exportedAt: string
   contact: Contact
-  conversations?: Conversation[]
+  conversations?: Visit[]
   /**
    * Custom field definitions referenced by `contact.customFields`. Embedded so
    * the recipient can render the values with their original labels — without
@@ -33,8 +33,8 @@ export type ImportResult = {
 export type ImportHandlerCallbacks = {
   addContact: (contact: Contact) => void
   updateContact: (contact: Partial<Contact>) => void
-  addConversation: (conversation: Conversation) => void
-  updateConversation: (conversation: Partial<Conversation>) => void
+  addConversation: (conversation: Visit) => void
+  updateConversation: (conversation: Partial<Visit>) => void
   recoverContact: (contactId: string) => void
   /**
    * Adds any defs from `incoming` whose id isn't already known locally. Local

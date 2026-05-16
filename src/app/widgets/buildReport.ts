@@ -18,7 +18,7 @@ import {
   MinuteDisplayFormat,
   ServiceReportsByYears,
 } from '@/types/serviceReport'
-import { Conversation } from '@/types/conversation'
+import { Visit } from '@/types/visit'
 
 export type ReportMode = 'hours' | 'checkbox'
 
@@ -82,7 +82,7 @@ export type BuildReportArgs = {
   timeDisplayFormat: MinuteDisplayFormat
   dayPlans: DayPlan[]
   recurringPlans: RecurringPlan[]
-  conversations: Conversation[]
+  conversations: Visit[]
 }
 
 /**

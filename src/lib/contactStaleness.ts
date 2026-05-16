@@ -1,6 +1,6 @@
 import moment from 'moment'
 import { Contact } from '@/types/contact'
-import { Conversation } from '@/types/conversation'
+import { Visit } from '@/types/visit'
 import { MarkerColors } from '@/types/markerColors'
 import { getMostRecentConversationForContact } from '@/lib/contacts'
 
@@ -17,7 +17,7 @@ export type ContactStaleness = 'never' | 'recent' | 'week' | 'month'
  */
 export function getContactStaleness(
   contact: Contact,
-  conversations: Conversation[]
+  conversations: Visit[]
 ): ContactStaleness {
   const mostRecent = getMostRecentConversationForContact({
     conversations,

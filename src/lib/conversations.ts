@@ -1,13 +1,13 @@
 import moment from 'moment'
 import { Contact } from '@/types/contact'
-import { Conversation } from '@/types/conversation'
+import { Visit } from '@/types/visit'
 
 export const contactStudiedForGivenMonth = ({
   conversations,
   contact,
   month,
 }: {
-  conversations: Conversation[]
+  conversations: Visit[]
   contact: Contact
   month: Date
 }) => {
@@ -30,7 +30,7 @@ export const contactHasAtLeastOneStudy = ({
   conversations,
   contact,
 }: {
-  conversations: Conversation[]
+  conversations: Visit[]
   contact: Contact
 }) => {
   const hasStudied = conversations.some(
@@ -45,7 +45,7 @@ export const contactMostRecentStudy = ({
   conversations,
   contact,
 }: {
-  conversations: Conversation[]
+  conversations: Visit[]
   contact: Contact
 }) => {
   const contactStudies = conversations.filter(
@@ -75,7 +75,7 @@ export const contactMostRecentStudy = ({
  * the widget appointments builder so all three places agree on what counts as
  * an appointment.
  */
-export const isAppointment = (conversation: Conversation): boolean => {
+export const isAppointment = (conversation: Visit): boolean => {
   const followUp = conversation.followUp
   if (!followUp) return false
   // A dismissed follow-up is preserved on the record (so the topic/date stay
@@ -90,7 +90,7 @@ export const upcomingFollowUpConversations = ({
   withinNextDays,
 }: {
   currentTime: Date
-  conversations: Conversation[]
+  conversations: Visit[]
   withinNextDays: number
 }) => {
   const endOfMorning = moment(currentTime).endOf('day').hour(16) // 4:59:59 pm
@@ -129,7 +129,7 @@ export const overdueFollowUpConversations = ({
   lookbackDays,
 }: {
   currentTime: Date
-  conversations: Conversation[]
+  conversations: Visit[]
   lookbackDays: number
 }) => {
   const max = moment(currentTime).subtract(4, 'hours')

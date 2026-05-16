@@ -6,7 +6,7 @@ import {
   contactStudiedForGivenMonth,
   upcomingFollowUpConversations,
 } from '@/lib/conversations'
-import { Conversation } from '@/types/conversation'
+import { Visit } from '@/types/visit'
 import { describe, expect, it } from 'vitest'
 
 const testDate = moment({ year: 2023, month: 10 }).toDate()
@@ -15,7 +15,7 @@ const contact = createFakeContact()
 describe('lib/conversations', () => {
   describe('contactStudiedForGivenMonth ', () => {
     it('should return false if no studies', () => {
-      const conversations: Conversation[] = []
+      const conversations: Visit[] = []
 
       const studied = contactStudiedForGivenMonth({
         contact,
@@ -26,7 +26,7 @@ describe('lib/conversations', () => {
     })
 
     it('should return false if studied in previous months', () => {
-      const conversations: Conversation[] = [
+      const conversations: Visit[] = [
         {
           contact: {
             id: contact.id,
@@ -46,7 +46,7 @@ describe('lib/conversations', () => {
     })
 
     it('should return true if studied this month', () => {
-      const conversations: Conversation[] = [
+      const conversations: Visit[] = [
         {
           contact: {
             id: contact.id,
@@ -68,7 +68,7 @@ describe('lib/conversations', () => {
 
   describe('contactHasAtLeastOneStudy', () => {
     it('returns true if contact has had a study at any point in time', () => {
-      const conversations: Conversation[] = [
+      const conversations: Visit[] = [
         {
           contact: {
             id: contact.id,
@@ -88,7 +88,7 @@ describe('lib/conversations', () => {
     })
 
     it('returns false if contact has not ever had a study', () => {
-      const conversations: Conversation[] = []
+      const conversations: Visit[] = []
 
       const hasEverStudied = contactHasAtLeastOneStudy({
         contact,
@@ -101,7 +101,7 @@ describe('lib/conversations', () => {
 
   describe('contactMostRecentStudy', () => {
     it('should not return null if there is no studies for contact', () => {
-      const conversations: Conversation[] = []
+      const conversations: Visit[] = []
 
       const mostRecentStudy = contactMostRecentStudy({
         contact,
@@ -112,7 +112,7 @@ describe('lib/conversations', () => {
     })
 
     it('should return the most recent study', () => {
-      const conversations: Conversation[] = [
+      const conversations: Visit[] = [
         {
           contact: {
             id: contact.id,
@@ -148,7 +148,7 @@ describe('lib/conversations', () => {
     })
 
     it('should return the most recent study not sorted', () => {
-      const conversations: Conversation[] = [
+      const conversations: Visit[] = [
         {
           contact: {
             id: contact.id,
@@ -186,7 +186,7 @@ describe('lib/conversations', () => {
 
   describe('upcomingFollowUpConversations', () => {
     const startOfDay = moment().startOf('day').toDate()
-    const conversationsYesterday: Conversation[] = [
+    const conversationsYesterday: Visit[] = [
       {
         contact: {
           id: contact.id,
@@ -200,7 +200,7 @@ describe('lib/conversations', () => {
         isBibleStudy: true,
       },
     ]
-    const morningConversations: Conversation[] = [
+    const morningConversations: Visit[] = [
       {
         contact: {
           id: contact.id,
@@ -238,7 +238,7 @@ describe('lib/conversations', () => {
         isBibleStudy: true,
       },
     ]
-    const conversationsInTheEvening: Conversation[] = [
+    const conversationsInTheEvening: Visit[] = [
       {
         contact: {
           id: contact.id,
@@ -265,7 +265,7 @@ describe('lib/conversations', () => {
         isBibleStudy: true,
       },
     ]
-    const conversationsTomorrow: Conversation[] = [
+    const conversationsTomorrow: Visit[] = [
       {
         contact: {
           id: contact.id,
@@ -296,7 +296,7 @@ describe('lib/conversations', () => {
       },
     ]
 
-    const allConversations: Conversation[] = [
+    const allConversations: Visit[] = [
       ...conversationsYesterday,
       ...morningConversations,
       ...conversationsInTheEvening,

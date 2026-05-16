@@ -12,7 +12,7 @@ import useTheme from '@/contexts/theme'
 import Divider from '@/components/ui/Divider'
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
 import Section from '@/components/ui/inputs/Section'
-import { Conversation, Notification } from '@/types/conversation'
+import { Visit, Notification } from '@/types/visit'
 import InputRowContainer from '@/components/ui/inputs/InputRowContainer'
 import { DateTimePickerEvent } from '@react-native-community/datetimepicker'
 import TextInputRow from '@/components/ui/inputs/TextInputRow'
@@ -40,21 +40,21 @@ import {
   DEFAULT_RETURN_VISIT_TIME_OFFSET,
   usePreferences,
 } from '@/stores/preferences'
-import { maybeRequestStoreReview } from '@/features/conversations/lib/storeReview'
+import { maybeRequestStoreReview } from '@/features/visits/lib/storeReview'
 import useNotifications from '@/hooks/notifications'
 import { useToastController } from '@tamagui/toast'
 import { RootStackParamList } from '@/types/rootStack'
 import { deriveOffsetFromDates } from '@/lib/notificationOffset'
 
-type Props = NativeStackScreenProps<RootStackParamList, 'Conversation Form'>
+type Props = NativeStackScreenProps<RootStackParamList, 'Visit Form'>
 type MomentOffset = {
   amount?: number | undefined
   unit?: moment.unitOfTime.DurationConstructor | undefined
 }
 
 const NotificationSection = (props: {
-  conversation: Conversation
-  setConversation: React.Dispatch<React.SetStateAction<Conversation>>
+  conversation: Visit
+  setConversation: React.Dispatch<React.SetStateAction<Visit>>
   setNotifyMeOffset: React.Dispatch<React.SetStateAction<MomentOffset>>
   notificationsAllowed: boolean
   notifyMeOffset: MomentOffset
@@ -171,7 +171,7 @@ const ContactRow = ({ selectedContact }: { selectedContact: Contact }) => {
   )
 }
 
-const ConversationFormScreen = ({ route, navigation }: Props) => {
+const VisitFormScreen = ({ route, navigation }: Props) => {
   const theme = useTheme()
   const insets = useSafeAreaInsets()
   const {
@@ -193,7 +193,7 @@ const ConversationFormScreen = ({ route, navigation }: Props) => {
   } = useConversations()
   const toast = useToastController()
 
-  const conversationToEditViaProps = params.conversationToEditId
+  const conversationToEditViaProps = params.visitToEditId
   const conversationToUpdate = conversationToEditViaProps
     ? [...conversations].find((c) => c.id === conversationToEditViaProps)
     : undefined
@@ -230,7 +230,7 @@ const ConversationFormScreen = ({ route, navigation }: Props) => {
     initialNotifyMeOffset()
   )
 
-  const getConversationDefaultValue = (): Conversation => {
+  const getConversationDefaultValue = (): Visit => {
     if (conversationToUpdate) {
       return {
         id: conversationToUpdate.id,
@@ -272,7 +272,7 @@ const ConversationFormScreen = ({ route, navigation }: Props) => {
     }
   }
 
-  const [conversation, setConversation] = useState<Conversation>(
+  const [conversation, setConversation] = useState<Visit>(
     getConversationDefaultValue()
   )
 
@@ -394,14 +394,14 @@ const ConversationFormScreen = ({ route, navigation }: Props) => {
       if (notificationsAllowed) {
         scheduleNotifications()
           .then((notifications) => {
-            const conversationWithNotificationIds: Conversation = {
+            const conversationWithNotificationIds: Visit = {
               ...conversation,
               followUp: {
                 ...conversation.followUp!,
                 notifications,
               },
             }
-            params.conversationToEditId
+            params.visitToEditId
               ? updateConversation(conversationWithNotificationIds)
               : addConversation(conversationWithNotificationIds)
             resolve(conversation)
@@ -411,7 +411,7 @@ const ConversationFormScreen = ({ route, navigation }: Props) => {
             resolve(false)
           })
       } else {
-        params.conversationToEditId
+        params.visitToEditId
           ? updateConversation(conversation)
           : addConversation(conversation)
         resolve(conversation)
@@ -430,7 +430,7 @@ const ConversationFormScreen = ({ route, navigation }: Props) => {
     notificationsAllowed,
     notifyMeOffset.amount,
     notifyMeOffset.unit,
-    params.conversationToEditId,
+    params.visitToEditId,
     selectedContact,
     toast,
     updateConversation,
@@ -577,7 +577,7 @@ const ConversationFormScreen = ({ route, navigation }: Props) => {
   }
 
   const getTitle = () => {
-    if (params?.conversationToEditId) {
+    if (params?.visitToEditId) {
       if (notAtHome) {
         return i18n.t('editNotAtHome')
       }
@@ -695,4 +695,4 @@ const ConversationFormScreen = ({ route, navigation }: Props) => {
   )
 }
 
-export default ConversationFormScreen
+export default VisitFormScreen

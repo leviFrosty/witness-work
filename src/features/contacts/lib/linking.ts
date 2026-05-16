@@ -23,7 +23,7 @@ export const navigationRef = createNavigationContainerRef<RootStackParamList>()
  * | `witnesswork://add-time/:date`                | Add Time, date pre-filled (calendar tap)   |
  * | `witnesswork://contact/:id`                   | Contact Details                            |
  * | `witnesswork://contact/:id/:convId`           | Contact Details with highlighted conv.     |
- * | `witnesswork://reschedule/:contactId/:convId` | Reschedule Conversation modal              |
+ * | `witnesswork://reschedule/:contactId/:convId` | Reschedule Visit modal                     |
  * | `witnesswork://shared-good-news`              | Home + triggers checkbox confetti (action) |
  * | `witnesswork://day`                           | Plan Day (empty form — widget "+" button)  |
  *
@@ -59,8 +59,8 @@ export const linking: LinkingOptions<RootStackParamList> = {
       // when a user taps a day cell, so the primary gesture logs hours for
       // that day rather than opening the plan editor.
       'Add Time': 'add-time/:date?',
-      'Contact Details': 'contact/:id/:highlightedConversationId?',
-      RescheduleConversation: 'reschedule/:contactId/:conversationId',
+      'Contact Details': 'contact/:id/:highlightedVisitId?',
+      RescheduleVisit: 'reschedule/:contactId/:visitId',
       // "+" button on the Calendar widget lands here with no date to start
       // a fresh plan; the in-app schedule UI owns per-date plan editing.
       PlanDay: 'day',

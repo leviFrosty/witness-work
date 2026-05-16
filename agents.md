@@ -10,6 +10,10 @@ WitnessWork = iOS-only field-service tracker for Jehovah's Witnesses. Expo + RN.
 
 No "magic" word or magic-wand iconography in i18n/copy.
 
+## Comitting & Merging
+
+Do not merge commit. Use rebase. Amend commits where reasonable instead of adding fix: commits.
+
 ## Key commands
 
 ```bash

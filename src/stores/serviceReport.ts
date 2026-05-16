@@ -77,6 +77,11 @@ export const migrateServiceReports = (
  *   ServiceReport store's persisted shape is tagged as post-migration once the
  *   runner has executed. The migration step itself is a no-op at the persist
  *   layer — the boot runner is the source of truth.
+ * - V3 → v4: structural bump for the LDC collapse refactor. The actual `ldc:
+ *   true` → `categoryId: LDC_BUILTIN_CATEGORY_ID, credit: true` rewrite happens
+ *   in a boot-time runner (`migrateLdcToCategory` in `src/lib/categories.ts`)
+ *   for the same multi-store coordination reason. Same no-op pattern — the
+ *   version bump tags the on-disk shape as post-collapse.
  *
  * Exported for unit testing.
  */
@@ -110,6 +115,11 @@ export const migrateServiceReportPersistedState = (
   // itself is performed by the boot-time runner in `src/app/App.tsx`; this
   // hook only exists so the persisted-state version reflects the on-disk
   // schema once the runner has executed.
+  // v3 → v4: structural marker for the LDC → builtin Category collapse. Same
+  // shape as v2 → v3 — no on-disk rewrite here; the boot runner in
+  // `src/app/App.tsx` (`migrateLdcToCategory`) coordinates the actual change
+  // because it needs to write across the categories + service reports +
+  // preferences stores in one shot.
   return next
 }
 
@@ -547,7 +557,7 @@ export const useServiceReport = create(
       storage: createJSONStorage(() =>
         hasMigratedFromAsyncStorage() ? MmkvStorage : AsyncStorage
       ),
-      version: 3,
+      version: 4,
       migrate: (persistedState, version) =>
         migrateServiceReportPersistedState(persistedState, version),
     }

@@ -37,16 +37,31 @@ export const useCategories = create(
         }),
       updateCategory: (category: Partial<Category> & { id: string }) =>
         set(({ categories }) => ({
-          categories: categories.map((c) =>
-            c.id === category.id
-              ? { ...c, ...category, updatedAt: Date.now() }
-              : c
-          ),
+          categories: categories.map((c) => {
+            if (c.id !== category.id) return c
+            // Builtin Categories (LDC) can have `isCredit` flipped but their
+            // identity (id, name, builtin flag) is immutable. Strip those
+            // fields from the partial update so a misbehaving caller can't
+            // rename the LDC Category to something else.
+            if (c.builtin) {
+              const {
+                name: _dropName,
+                builtin: _dropBuiltin,
+                id: _dropId,
+                ...rest
+              } = category
+              return { ...c, ...rest, updatedAt: Date.now() }
+            }
+            return { ...c, ...category, updatedAt: Date.now() }
+          }),
         })),
       deleteCategory: (id: string) =>
         set(({ categories, deletedCategories }) => {
           const found = categories.find((c) => c.id === id)
           if (!found) return {}
+          // Builtin Categories (LDC) cannot be deleted — they're seeded on
+          // every device and the cap math relies on a stable id.
+          if (found.builtin) return {}
           const now = Date.now()
           return {
             categories: categories.filter((c) => c.id !== id),

@@ -55,7 +55,7 @@ import useServiceReport from '@/stores/serviceReport'
 import { useProfile } from '@/stores/profile'
 import { extractProfileFromPreferences } from '@/lib/profileMigration'
 import { migrateCustomFieldsToIds } from '@/features/contacts/lib/customFieldsMigration'
-import { migrateTagsToCategories } from '@/lib/categories'
+import { migrateLdcToCategory, migrateTagsToCategories } from '@/lib/categories'
 import AnimationViewProvider from '@/providers/AnimationViewProvider'
 import ConfettiProvider from '@/providers/ConfettiProvider'
 import useUserLocalePrefs from '@/features/settings/hooks/useLocale'
@@ -465,6 +465,49 @@ export default function App() {
       }
       usePreferences.setState({ preferenceUpdatedAt: cleaned })
     }
+  }, [hasMigrated])
+
+  // Collapse the legacy `ServiceReport.ldc` boolean into the LDC builtin
+  // Category (see `migrateLdcToCategory` in `src/lib/categories.ts`). Runs
+  // once per install after MMKV is ready, gated on
+  // `hasCollapsedLdcIntoCategory`. Must run AFTER the tag → Category
+  // migration so the categories list is fully populated before LDC is folded
+  // in. The dependency on `hasMigratedTagsToCategories` is implicit: both
+  // runners gate on `hasMigrated` and write through raw setState, so by the
+  // time this effect fires the tag-migration useEffect has already flipped
+  // `hasMigratedTagsToCategories: true` synchronously in the same render
+  // tick.
+  useEffect(() => {
+    if (!hasMigrated) return
+    const prefs = usePreferences.getState()
+    if (prefs.hasCollapsedLdcIntoCategory) return
+
+    const reports = useServiceReport.getState()
+    const cats = useCategories.getState()
+
+    const result = migrateLdcToCategory({
+      serviceReports: reports.serviceReports,
+      categories: cats.categories,
+      now: Date.now(),
+    })
+
+    // Seed the LDC builtin Category record if it wasn't already present.
+    // Raw setState avoids re-stamping `updatedAt` on every existing record —
+    // `migrateLdcToCategory` stamps only the newly-seeded builtin.
+    if (result.seededLdcBuiltin) {
+      useCategories.setState({ categories: result.categories })
+    }
+
+    // Apply rewritten ServiceReports (categoryId + credit on former LDC
+    // entries; `ldc` stripped). Raw setState skips the per-store updatedAt
+    // re-stamp so existing entries keep their last-edit timestamp.
+    if (result.rewrittenCount > 0 || result.conflictedCount > 0) {
+      reports.set({ serviceReports: result.serviceReports })
+    }
+
+    usePreferences.setState({
+      hasCollapsedLdcIntoCategory: true,
+    } as never)
   }, [hasMigrated])
 
   // Normalize the legacy `'es-mx'` locale to `'es-es'` after the es-MX bundle

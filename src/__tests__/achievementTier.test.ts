@@ -6,7 +6,11 @@ import {
   resolveTier,
   tierFromPercent,
 } from '@/lib/achievementTier'
-import { ServiceReport, ServiceReportsByYears } from '@/types/serviceReport'
+import {
+  LegacyServiceReport,
+  ServiceReport,
+  ServiceReportsByYears,
+} from '@/types/serviceReport'
 import { Publisher } from '@/types/publisher'
 import { normalizeDateForStorage } from '@/lib/normalizeDate'
 
@@ -25,7 +29,7 @@ type ReportInput = {
   credit?: boolean
 }
 
-const buildReport = (input: ReportInput, idx: number): ServiceReport => ({
+const buildReport = (input: ReportInput, idx: number): LegacyServiceReport => ({
   id: `r-${idx}`,
   // Mid-month, anchored noon-UTC the same way the production write-path does
   // it. Using the 15th avoids any "first/last day rolls into adjacent month
@@ -45,7 +49,7 @@ const buildServiceReports = (inputs: ReportInput[]): ServiceReportsByYears => {
   inputs.forEach((input, idx) => {
     if (!out[input.year]) out[input.year] = {}
     if (!out[input.year][input.month]) out[input.year][input.month] = []
-    out[input.year][input.month].push(buildReport(input, idx))
+    out[input.year][input.month].push(buildReport(input, idx) as ServiceReport)
   })
   return out
 }

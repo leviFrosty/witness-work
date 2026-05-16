@@ -29,6 +29,14 @@
  *   from any straggler `tag` fields after the iCloud merge — see
  *   `src/lib/categories.ts`. Doing the rewrite here would require access to the
  *   Categories store, which violates the no-imports rule for this module.
+ * - `serviceReportStore.serviceReports.*.*.ldc: true` (per entry) is rewritten to
+ *   `categoryId: LDC_BUILTIN_CATEGORY_ID, credit: true` when the entry doesn't
+ *   already carry a `categoryId`. When an explicit non-LDC `categoryId` is
+ *   present, the `ldc` flag is dropped (the explicit Category wins; same
+ *   precedence as `migrateLdcToCategory`). The LDC builtin id is inlined as a
+ *   literal so this module stays free of cross-tier imports;
+ *   `LDC_BUILTIN_CATEGORY_ID` in `src/constants/categories.ts` is its canonical
+ *   home.
  *
  * New name wins if both keys somehow coexist on the wire (defensive); the
  * legacy key is always dropped.
@@ -40,17 +48,26 @@ const LEGACY_PROFILE_KEYS = [
   'hasCompletedProfileSetup',
 ] as const
 
+// Stable LDC builtin Category id. Kept in sync with
+// `src/constants/categories.ts`'s `LDC_BUILTIN_CATEGORY_ID`. Inlined here
+// because this module must remain import-free for the unit-test isolation
+// reason above. If you change one, change the other.
+const LDC_BUILTIN_CATEGORY_ID_LITERAL = 'ldc-builtin-3f9c4a1d'
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function normalizeLegacyPayloadFieldNames(d: any): void {
   const prefs = d?.preferencesStore
-  if (!prefs || typeof prefs !== 'object') return
-  renameKey(prefs.values, 'excludedWeekdays', 'offDays')
-  renameKey(prefs.values, 'meetingWeekdays', 'meetingDays')
-  renameKey(prefs.values, 'publisher', 'role')
-  renameKey(prefs.updatedAt, 'excludedWeekdays', 'offDays')
-  renameKey(prefs.updatedAt, 'meetingWeekdays', 'meetingDays')
-  renameKey(prefs.updatedAt, 'publisher', 'role')
+  if (prefs && typeof prefs === 'object') {
+    renameKey(prefs.values, 'excludedWeekdays', 'offDays')
+    renameKey(prefs.values, 'meetingWeekdays', 'meetingDays')
+    renameKey(prefs.values, 'publisher', 'role')
+    renameKey(prefs.updatedAt, 'excludedWeekdays', 'offDays')
+    renameKey(prefs.updatedAt, 'meetingWeekdays', 'meetingDays')
+    renameKey(prefs.updatedAt, 'publisher', 'role')
+  }
+
   routeLegacyProfileFields(d)
+  collapseLdcFlagOnServiceReports(d?.serviceReportStore?.serviceReports)
 }
 
 /**
@@ -114,6 +131,49 @@ function routeLegacyProfileFields(d: any): void {
         profile.updatedAt[key] = timestampsObj[key]
       }
       delete timestampsObj[key]
+    }
+  }
+}
+
+/**
+ * Per-ServiceReport rewrite of the legacy `ldc: true` flag onto the LDC builtin
+ * Category id. Mirrors the boot-time `migrateLdcToCategory` so payloads from
+ * older peers don't re-introduce `ldc` after the local install has already
+ * collapsed it.
+ *
+ * Precedence (matches the boot runner):
+ *
+ * - `ldc: true` + no `categoryId` → set `categoryId: <LDC builtin>` + `credit:
+ *   true`; drop `ldc`.
+ * - `ldc: true` + non-LDC `categoryId` → keep `categoryId` (explicit wins); drop
+ *   `ldc`.
+ * - `ldc: true` + LDC builtin `categoryId` → idempotent; drop `ldc`.
+ * - `ldc: false` or missing → drop the field if present.
+ */
+function collapseLdcFlagOnServiceReports(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  serviceReports: any
+): void {
+  if (!serviceReports || typeof serviceReports !== 'object') return
+  for (const yearKey of Object.keys(serviceReports)) {
+    const months = serviceReports[yearKey]
+    if (!months || typeof months !== 'object') continue
+    for (const monthKey of Object.keys(months)) {
+      const reports = months[monthKey]
+      if (!Array.isArray(reports)) continue
+      for (const report of reports) {
+        if (!report || typeof report !== 'object') continue
+        if (!('ldc' in report)) continue
+        const ldcTrue = report.ldc === true
+        delete report.ldc
+        if (!ldcTrue) continue
+        const hasNonLdcCategory =
+          typeof report.categoryId === 'string' &&
+          report.categoryId !== LDC_BUILTIN_CATEGORY_ID_LITERAL
+        if (hasNonLdcCategory) continue
+        report.categoryId = LDC_BUILTIN_CATEGORY_ID_LITERAL
+        report.credit = true
+      }
     }
   }
 }

@@ -19,7 +19,7 @@ import { RootStackNavigation } from '@/types/rootStack'
 import { useFormattedMinutes } from '@/lib/minutes'
 import { useCardStyle } from '@/components/ui/Card'
 import useCategories from '@/stores/categories'
-import { getCategoryLabel } from '@/lib/serviceReportCategory'
+import { getCategoryLabel, isLdcEntry } from '@/lib/serviceReportCategory'
 
 interface TimeReportRowProps {
   report: ServiceReport
@@ -34,6 +34,7 @@ const TimeReportRow = ({ report, onPress }: TimeReportRowProps) => {
   const navigation = useNavigation<RootStackNavigation>()
   const toast = useToastController()
   const categoryLabel = getCategoryLabel(report, categories)
+  const isLdc = isLdcEntry(report)
 
   const totalMinutes = report.hours * 60 + report.minutes
   const formattedTime = useFormattedMinutes(Math.abs(totalMinutes))
@@ -202,9 +203,9 @@ const TimeReportRow = ({ report, onPress }: TimeReportRowProps) => {
             </Text>
           </View>
         )}
-        {!isRollover && (report.ldc || categoryLabel || report.note) && (
+        {!isRollover && (isLdc || categoryLabel || report.note) && (
           <View style={{ gap: 5 }}>
-            {(report.ldc || categoryLabel) && (
+            {(isLdc || categoryLabel) && (
               <View
                 style={{
                   flexDirection: 'row',
@@ -212,16 +213,16 @@ const TimeReportRow = ({ report, onPress }: TimeReportRowProps) => {
                   alignItems: 'center',
                 }}
               >
-                {report.ldc && <IconButton icon={faPersonDigging} />}
+                {isLdc && <IconButton icon={faPersonDigging} />}
                 <Text
                   style={{
                     color: theme.colors.textAlt,
                     fontSize: theme.fontSize('sm'),
                   }}
                 >
-                  {report.ldc ? i18n.t('ldc') : categoryLabel}
+                  {isLdc ? i18n.t('ldc') : categoryLabel}
                 </Text>
-                {(report.credit || report.ldc) && <CreditBadge />}
+                {(report.credit || isLdc) && <CreditBadge />}
               </View>
             )}
             {report.note && (

@@ -13,7 +13,11 @@ import {
   migrateTagsToCategories,
   resolveCategoryForReport,
 } from '@/lib/categories'
-import { ServiceReport, ServiceReportsByYears } from '@/types/serviceReport'
+import {
+  LegacyServiceReport,
+  ServiceReport,
+  ServiceReportsByYears,
+} from '@/types/serviceReport'
 import { normalizeDateForStorage } from '@/lib/normalizeDate'
 
 type ReportInput = {
@@ -27,7 +31,7 @@ type ReportInput = {
   credit?: boolean
 }
 
-const makeReport = (input: ReportInput, idx: number): ServiceReport => ({
+const makeReport = (input: ReportInput, idx: number): LegacyServiceReport => ({
   id: input.id ?? `r-${idx}`,
   date: normalizeDateForStorage(
     new Date(Date.UTC(input.year, input.month, 15))
@@ -42,7 +46,7 @@ const makeReport = (input: ReportInput, idx: number): ServiceReport => ({
 const buildReports = (inputs: ReportInput[]): ServiceReportsByYears => {
   const out: ServiceReportsByYears = {}
   inputs.forEach((input, idx) => {
-    const report = makeReport(input, idx)
+    const report = makeReport(input, idx) as ServiceReport
     const m = moment(report.date)
     const y = m.year()
     const mo = m.month()
@@ -219,7 +223,9 @@ describe('migrateTagsToCategories', () => {
     const ldcReport = result.serviceReports[2026][1][0]
     expect(standard.categoryId).toBeUndefined()
     expect(ldcReport.categoryId).toBeUndefined()
-    expect(ldcReport.ldc).toBe(true)
+    // `migrateTagsToCategories` leaves the legacy LDC flag alone — the
+    // LDC → builtin Category collapse runs as a separate migration step.
+    expect((ldcReport as LegacyServiceReport).ldc).toBe(true)
   })
 
   it('trims tag names so "Hospital" and " Hospital " collapse to one Category', () => {

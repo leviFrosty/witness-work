@@ -340,6 +340,17 @@ export const PREFERENCE_DEFAULTS = {
    * migrates its own persisted state once.
    */
   hasMigratedProfileFromPreferences: false,
+  /**
+   * One-shot flag for the LDC → builtin Category migration. Boot runner gates
+   * on this: when false, it seeds the LDC builtin Category record (stable id
+   * `LDC_BUILTIN_CATEGORY_ID`) and rewrites every ServiceReport with `ldc:
+   * true` to use `categoryId: LDC_BUILTIN_CATEGORY_ID, credit: true` instead.
+   * See `migrateLdcToCategory` in `src/lib/categories.ts`. Must run AFTER
+   * `hasMigratedTagsToCategories` so the categories list is fully populated
+   * before LDC is folded in. Non-syncable — each device migrates its own
+   * persisted state once.
+   */
+  hasCollapsedLdcIntoCategory: false,
   hasAttemptedToMigrateToMmkv: false,
   /**
    * Hidden dev tools for diagnosing issues. To enable/disable, navigate to
@@ -732,6 +743,7 @@ export const NON_SYNCABLE_PREFERENCE_KEYS = new Set<string>([
   'hasMigratedCustomFieldsToIds',
   'hasMigratedTagsToCategories',
   'hasMigratedProfileFromPreferences',
+  'hasCollapsedLdcIntoCategory',
   // Legacy field — removed from the schema but may still exist on disk for
   // installs that pre-date the id-keyed migration. Listed here so the boot
   // cleanup that wipes it doesn't propagate the deletion through sync.

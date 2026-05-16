@@ -19,6 +19,7 @@ import SelectWheel from '@/components/ui/SelectWheel'
 import { usePreferences } from '@/stores/preferences'
 import useCategories from '@/stores/categories'
 import { Category } from '@/types/category'
+import { LDC_BUILTIN_CATEGORY_ID } from '@/constants/categories'
 import TextInput from '@/components/ui/TextInput'
 import Button from '@/components/ui/Button'
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
@@ -56,10 +57,12 @@ const AddTimeScreen = ({ route }: AddTimeScreenProps) => {
   /**
    * Synthetic select values for the two preset entry types that don't
    * correspond to a real Category record. Real categories use their UUID as the
-   * value.
+   * value. LDC is no longer synthetic — it's the LDC builtin Category (see
+   * `LDC_BUILTIN_CATEGORY_ID`); the constant is re-exported here so the picker
+   * can show it alongside the synthetic Standard / Custom presets.
    */
   const STANDARD = '__standard__'
-  const LDC = '__ldc__'
+  const LDC = LDC_BUILTIN_CATEGORY_ID
   const CUSTOM = '__custom__'
 
   const {
@@ -73,11 +76,11 @@ const AddTimeScreen = ({ route }: AddTimeScreenProps) => {
     ? getReport(serviceReports, JSON.parse(route.params.existingReport))
     : undefined
 
-  // Initial picker value: prefer LDC if the entry is flagged LDC, else the
-  // referenced Category id (post-migration), else fall back to legacy `tag`
-  // string for unmigrated entries, else Standard.
+  // Initial picker value: the referenced Category id (post-migration), else
+  // fall back to legacy `tag` string for unmigrated entries, else Standard.
+  // LDC is no longer special-cased — entries that point at the LDC builtin
+  // Category id pick it up here like any other Category.
   const initialPickerValue: string = (() => {
-    if (existingServiceReport?.report.ldc) return LDC
     if (existingServiceReport?.report.categoryId) {
       return existingServiceReport.report.categoryId
     }
@@ -103,18 +106,17 @@ const AddTimeScreen = ({ route }: AddTimeScreenProps) => {
     date: moment(
       existingServiceReport?.report.date ?? route.params?.date
     ).toDate(),
-    ldc: existingServiceReport?.report.ldc ?? false,
     credit: existingServiceReport?.report.credit ?? false,
     categoryId: existingServiceReport?.report.categoryId,
     note: existingServiceReport?.report.note ?? '',
   })
   const toast = useToastController()
 
-  // The Category currently in focus (null when Standard / LDC / Custom is selected).
+  // The Category currently in focus. Null when one of the synthetic preset
+  // values (Standard / Custom) is selected; non-null for a real Category id
+  // including the LDC builtin.
   const selectedCategory: Category | null =
-    selectedValue === STANDARD ||
-    selectedValue === LDC ||
-    selectedValue === CUSTOM
+    selectedValue === STANDARD || selectedValue === CUSTOM
       ? null
       : (categories.find((c) => c.id === selectedValue) ?? null)
 
@@ -124,27 +126,15 @@ const AddTimeScreen = ({ route }: AddTimeScreenProps) => {
       case STANDARD:
         setServiceReport({
           ...serviceReport,
-          ldc: false,
           categoryId: undefined,
           tag: undefined,
           credit: false,
         })
         return
 
-      case LDC:
-        setServiceReport({
-          ...serviceReport,
-          ldc: true,
-          categoryId: undefined,
-          tag: undefined,
-          credit: true,
-        })
-        return
-
       case CUSTOM:
         setServiceReport({
           ...serviceReport,
-          ldc: false,
           categoryId: undefined,
           tag: undefined,
           credit: false,
@@ -152,12 +142,11 @@ const AddTimeScreen = ({ route }: AddTimeScreenProps) => {
         return
 
       default: {
-        // A real Category id.
+        // A real Category id (user-created OR the LDC builtin).
         const category = categories.find((c) => c.id === value)
         if (!category) return
         setServiceReport({
           ...serviceReport,
-          ldc: false,
           categoryId: category.id,
           tag: undefined,
           credit: category.isCredit,
@@ -263,10 +252,18 @@ const AddTimeScreen = ({ route }: AddTimeScreenProps) => {
   }
 
   type TypeOption = { label: string; value: string }
+  // LDC is technically a Category record now (the builtin), but we still
+  // surface it as a preset slot above the user's own categories — it's the
+  // most common credit-bearing entry type and worth a stable position in the
+  // picker. Strip it from the user-categories spread so it doesn't appear
+  // twice.
+  const userCategories = categories.filter(
+    (c) => c.id !== LDC_BUILTIN_CATEGORY_ID
+  )
   const typeOptions: TypeOption[] = [
     { label: i18n.t('standard'), value: STANDARD },
     { label: i18n.t('ldc'), value: LDC },
-    ...categories.map((c) => ({
+    ...userCategories.map((c) => ({
       // Allow i18n on preset-translatable names (e.g. legacy English-locale
       // entries seeded from the migration); fall back to the stored name.
       label: i18n.t(c.name as TranslationKey, { defaultValue: c.name }),
@@ -524,7 +521,11 @@ const AddTimeScreen = ({ route }: AddTimeScreenProps) => {
                         flexShrink: 1,
                       }}
                     >
-                      {hasAnnualGoal && (
+                      {/* Builtin Categories (LDC) own their `isCredit` value
+                          and can't be renamed or deleted — hide the Credit
+                          toggle + remove button. The LDC builtin is always
+                          credit-bearing by definition. */}
+                      {hasAnnualGoal && !selectedCategory.builtin && (
                         <View
                           style={{
                             borderWidth: 1,
@@ -565,23 +566,25 @@ const AddTimeScreen = ({ route }: AddTimeScreenProps) => {
                           </Text>
                         </View>
                       )}
-                      <View
-                        style={{
-                          flexDirection: 'row',
-                          justifyContent: 'flex-end',
-                        }}
-                      >
-                        <Button onPress={handleDeleteCurrentCategory}>
-                          <Text
-                            style={{
-                              color: theme.colors.textAlt,
-                              textDecorationLine: 'underline',
-                            }}
-                          >
-                            {i18n.t('removeCategory')}
-                          </Text>
-                        </Button>
-                      </View>
+                      {!selectedCategory.builtin && (
+                        <View
+                          style={{
+                            flexDirection: 'row',
+                            justifyContent: 'flex-end',
+                          }}
+                        >
+                          <Button onPress={handleDeleteCurrentCategory}>
+                            <Text
+                              style={{
+                                color: theme.colors.textAlt,
+                                textDecorationLine: 'underline',
+                              }}
+                            >
+                              {i18n.t('removeCategory')}
+                            </Text>
+                          </Button>
+                        </View>
+                      )}
                     </View>
                   )
                 )}

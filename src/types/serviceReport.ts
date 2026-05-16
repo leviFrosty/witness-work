@@ -3,12 +3,16 @@ export type ServiceReport = {
   hours: number
   minutes: number
   date: Date
-  ldc?: boolean
   /**
    * Reference to a user-defined `Category` record (`types/category.ts`). When
    * set, the entry counts as that category and inherits its `isCredit`
    * attribute. Replaces the legacy `tag: string` field — all writers must use
    * `categoryId` going forward.
+   *
+   * The LDC builtin Category (`LDC_BUILTIN_CATEGORY_ID`) is what legacy `ldc:
+   * true` entries get rewritten to during the LDC collapse migration. After
+   * that migration there is no longer a separate "LDC" boolean — LDC is just a
+   * credit-bearing Category like Bethel or Hospital.
    */
   categoryId?: string
   /**
@@ -47,6 +51,21 @@ export type ServiceReport = {
    * — backfilled lazily.
    */
   updatedAt?: number
+}
+
+/**
+ * Pre-LDC-collapse ServiceReport shape. The canonical `ServiceReport` no longer
+ * carries the `ldc` boolean — LDC is now a builtin Category (see
+ * `src/constants/categories.ts`). This type is used by migration code that
+ * needs to read persisted state from before the collapse ran. Keep this narrow:
+ * nothing in the runtime should consume `ldc` outside the migration step + the
+ * iCloud field-rename shim.
+ *
+ * @deprecated For migration/sync-renames only. Do not write new code that reads
+ *   the `ldc` field.
+ */
+export type LegacyServiceReport = ServiceReport & {
+  ldc?: boolean
 }
 
 /**

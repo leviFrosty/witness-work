@@ -76,4 +76,43 @@ describe('normalizeLegacyPayloadFieldNames', () => {
     expect(() => normalizeLegacyPayloadFieldNames(d2)).not.toThrow()
     expect(() => normalizeLegacyPayloadFieldNames(d3)).not.toThrow()
   })
+
+  it('renames publisher → role on values and updatedAt (legacy peer payload)', () => {
+    const d = makePayload(
+      { publisher: 'regularPioneer' },
+      { publisher: 1700000010000 }
+    )
+
+    normalizeLegacyPayloadFieldNames(d)
+
+    expect(d.preferencesStore.values.role).toBe('regularPioneer')
+    expect(d.preferencesStore.values).not.toHaveProperty('publisher')
+    expect(d.preferencesStore.updatedAt.role).toBe(1700000010000)
+    expect(d.preferencesStore.updatedAt).not.toHaveProperty('publisher')
+  })
+
+  it('preserves the canonical leaf value `publisher` when carried under the legacy publisher field', () => {
+    // The field name renames, but the *value* `'publisher'` (= Regular
+    // Publisher role) stays as-is.
+    const d = makePayload({ publisher: 'publisher' }, {})
+
+    normalizeLegacyPayloadFieldNames(d)
+
+    expect(d.preferencesStore.values.role).toBe('publisher')
+    expect(d.preferencesStore.values).not.toHaveProperty('publisher')
+  })
+
+  it('prefers role when a payload carries both publisher and role', () => {
+    const d = makePayload(
+      { publisher: 'publisher', role: 'specialPioneer' },
+      { publisher: 1, role: 2 }
+    )
+
+    normalizeLegacyPayloadFieldNames(d)
+
+    expect(d.preferencesStore.values.role).toBe('specialPioneer')
+    expect(d.preferencesStore.values).not.toHaveProperty('publisher')
+    expect(d.preferencesStore.updatedAt.role).toBe(2)
+    expect(d.preferencesStore.updatedAt).not.toHaveProperty('publisher')
+  })
 })

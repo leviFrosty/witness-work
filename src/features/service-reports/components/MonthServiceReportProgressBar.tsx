@@ -134,12 +134,8 @@ const MonthServiceReportProgressBar = ({
 }: ProgressBarProps) => {
   const theme = useTheme()
   const { serviceReports } = useServiceReport()
-  const {
-    publisher,
-    publisherHours,
-    overrideCreditLimit,
-    customCreditLimitHours,
-  } = usePreferences()
+  const { role, publisherHours, overrideCreditLimit, customCreditLimitHours } =
+    usePreferences()
 
   // Animation setup
   const pulseAnimation = useRef(new Animated.Value(0)).current
@@ -149,11 +145,11 @@ const MonthServiceReportProgressBar = ({
     () => getMonthsReports(serviceReports, month, year),
     [month, serviceReports, year]
   )
-  const goalHours = publisherHours[publisher]
+  const goalHours = publisherHours[role]
 
   const adjustedMinutes = useMemo(
     () =>
-      adjustedMinutesForSpecificMonth(monthReports, month, year, publisher, {
+      adjustedMinutesForSpecificMonth(monthReports, month, year, role, {
         enabled: overrideCreditLimit,
         customLimitHours: customCreditLimitHours,
       }),
@@ -161,7 +157,7 @@ const MonthServiceReportProgressBar = ({
       month,
       monthReports,
       year,
-      publisher,
+      role,
       overrideCreditLimit,
       customCreditLimitHours,
     ]

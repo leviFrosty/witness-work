@@ -460,11 +460,11 @@ interface FeatureShowcaseProps {
 
 const FeatureShowcase = ({ style }: FeatureShowcaseProps) => {
   const theme = useTheme()
-  const { publisher } = usePreferences()
+  const { role } = usePreferences()
 
   const highlights = useMemo(
-    () => highlightsForPublisher(publisher).map((id) => HIGHLIGHTS[id]),
-    [publisher]
+    () => highlightsForPublisher(role).map((id) => HIGHLIGHTS[id]),
+    [role]
   )
 
   return (

@@ -18,8 +18,8 @@ interface Props {
 
 const ProfileSetupPioneerDate = ({ goBack, goNext }: Props) => {
   const theme = useTheme()
-  const { publisher, pioneerStartDate, set } = usePreferences()
-  const labels = getStartDateLabels(publisher)
+  const { role, pioneerStartDate, set } = usePreferences()
+  const labels = getStartDateLabels(role)
 
   const handleContinue = () => {
     goNext()

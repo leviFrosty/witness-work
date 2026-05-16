@@ -126,7 +126,7 @@ const allSteps: StepDef[] = [
 const OnBoarding = () => {
   const {
     set,
-    publisher,
+    role,
     onboardingStepId,
     installedOn,
     userSpecifiedHasAnnualGoal,
@@ -135,12 +135,12 @@ const OnBoarding = () => {
 
   const showIfCtx: StepShowIfContext = useMemo(
     () => ({
-      publisher,
+      publisher: role,
       installedOn,
       userSpecifiedHasAnnualGoal,
       serviceReports,
     }),
-    [publisher, installedOn, userSpecifiedHasAnnualGoal, serviceReports]
+    [role, installedOn, userSpecifiedHasAnnualGoal, serviceReports]
   )
 
   const visibleSteps = useMemo(

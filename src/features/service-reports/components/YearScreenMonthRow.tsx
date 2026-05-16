@@ -56,18 +56,14 @@ export default function YearScreenMonthRow(props: {
 }) {
   const { month, year, monthsReports } = props
 
-  const {
-    publisher,
-    publisherHours,
-    overrideCreditLimit,
-    customCreditLimitHours,
-  } = usePreferences()
+  const { role, publisherHours, overrideCreditLimit, customCreditLimitHours } =
+    usePreferences()
   const { serviceReports } = useServiceReport()
-  const goalHours = publisherHours[publisher]
+  const goalHours = publisherHours[role]
   const theme = useTheme()
 
   const adjustedMinutes: AdjustedMinutes = monthsReports
-    ? adjustedMinutesForSpecificMonth(monthsReports, month, year, publisher, {
+    ? adjustedMinutesForSpecificMonth(monthsReports, month, year, role, {
         enabled: overrideCreditLimit,
         customLimitHours: customCreditLimitHours,
       })
@@ -89,7 +85,7 @@ export default function YearScreenMonthRow(props: {
       month,
       year,
       hoursCompleted,
-      publisher,
+      role,
       {
         enabled: overrideCreditLimit,
         customLimitHours: customCreditLimitHours,
@@ -102,7 +98,7 @@ export default function YearScreenMonthRow(props: {
     serviceReports,
     month,
     year,
-    publisher,
+    role,
     overrideCreditLimit,
     customCreditLimitHours,
   ])

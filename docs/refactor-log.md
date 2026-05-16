@@ -6,11 +6,6 @@ Refactors flagged during glossary/domain clarifications. Each item is something 
 
 ### From CONTEXT.md alignment
 
-- **Preferences field rename: `publisher` → `role`**
-  Source: [`src/stores/preferences.ts:228`](src/stores/preferences.ts:228) (`publisher: 'publisher' as Publisher`).
-  Why: Glossary defines **Publisher** = the role. A field of type `Publisher` named `publisher` reads awkwardly. `role` matches the glossary directly.
-  Touches: preferences store, MMKV persisted shape (migration needed), every consumer of `usePreferences().publisher`, the `setPublisher` action, iCloud sync field mapping.
-
 - **Hook split: introduce `useUser()` for user-profile reads**
   Why: `usePublisher()` currently mixes role/capability data with user-profile data (name, displayName). Glossary now separates **User** (the human) from **Publisher** (their role). A `useUser()` hook for profile-only reads keeps the two concerns clean; `usePublisher()` stays as the role+capabilities accessor.
   Touches: `src/hooks/usePublisher.ts`, callers that only need name/avatar.
@@ -67,4 +62,4 @@ Refactors flagged during glossary/domain clarifications. Each item is something 
 
 ## Done
 
-_(none yet — move items here as they ship)_
+- **Preferences field rename: `publisher` → `role`** — shipped. MMKV v1 → v2 migration renames the `publisher` field to `role` (preserving the leaf enum value `'publisher'` for Regular Publisher), iCloud `payloadFieldRenames.ts` translates legacy peer payloads, `setPublisher` action renamed to `setRole`, all `usePreferences().publisher` consumers updated. `usePublisher()` hook name unchanged (returns role + capabilities). `Publisher` type unchanged.

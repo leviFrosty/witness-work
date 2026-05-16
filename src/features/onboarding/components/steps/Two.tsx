@@ -16,13 +16,13 @@ interface Props {
 }
 
 const StepTwo = ({ goBack, goNext }: Props) => {
-  const { publisher } = usePreferences()
+  const { role } = usePreferences()
   // Reflect the user's just-made selection in the CTA. For 'custom' the role
   // label would be "Custom" which isn't meaningful as a subject — fall back
   // to plain "Continue" there.
   const ctaLabel =
-    publisher && publisher !== 'custom'
-      ? i18n.t('continueAs', { role: i18n.t(publisher) })
+    role && role !== 'custom'
+      ? i18n.t('continueAs', { role: i18n.t(role) })
       : i18n.t('continue')
 
   return (

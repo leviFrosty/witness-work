@@ -38,7 +38,7 @@ const PublisherTypeSelector = () => {
     },
   ]
 
-  const { publisherHours, publisher, setPublisher, set } = usePreferences()
+  const { publisherHours, role, setRole, set } = usePreferences()
   const [goalHours, setGoalHours] = useState(publisherHours.custom.toString())
   const customHoursInput = useRef<RNTextInput>(null)
 
@@ -46,12 +46,12 @@ const PublisherTypeSelector = () => {
     <View>
       <Select
         data={items}
-        onChange={({ value }) => setPublisher(value)}
-        value={publisher}
+        onChange={({ value }) => setRole(value)}
+        value={role}
         style={{ marginBottom: 10 }}
       />
 
-      {publisher === 'custom' ? (
+      {role === 'custom' ? (
         <View>
           <Pressable
             onPress={() => customHoursInput.current?.focus()}
@@ -99,10 +99,10 @@ const PublisherTypeSelector = () => {
         </View>
       ) : (
         <Text style={{ fontSize: 12, color: theme.colors.textAlt }}>
-          {publisher === publishers[0]
+          {role === publishers[0]
             ? i18n.t('noHourRequirement')
             : i18n.t('hourMonthlyRequirement', {
-                count: publisherHours[publisher],
+                count: publisherHours[role],
               })}
         </Text>
       )}

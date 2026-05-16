@@ -52,7 +52,7 @@ const AddTimeScreen = ({ route }: AddTimeScreenProps) => {
   const {
     serviceReportTags,
     set,
-    publisher,
+    role,
     publisherHours,
     overrideCreditLimit,
     customCreditLimitHours,
@@ -325,7 +325,7 @@ const AddTimeScreen = ({ route }: AddTimeScreenProps) => {
     // queue anything, so the fireworks don't fire on every submission. The
     // queue is keyed by `(month, year)` so it only pops when the user is
     // actually viewing the month they crossed.
-    const goalHours = publisherHours[publisher]
+    const goalHours = publisherHours[role]
     if (goalHours > 0) {
       const reportMoment = moment(serviceReport.date)
       const reportMonth = reportMoment.month()
@@ -343,14 +343,14 @@ const AddTimeScreen = ({ route }: AddTimeScreenProps) => {
         beforeReports,
         reportMonth,
         reportYear,
-        publisher,
+        role,
         creditOverride
       ).value
       const afterMinutes = adjustedMinutesForSpecificMonth(
         [...beforeReports, serviceReport],
         reportMonth,
         reportYear,
-        publisher,
+        role,
         creditOverride
       ).value
       const goalMinutes = goalHours * 60

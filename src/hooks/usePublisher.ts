@@ -7,7 +7,7 @@ import i18n from '@/lib/locales'
 
 const usePublisher = (): PublisherCapabilities => {
   const {
-    publisher,
+    role,
     publisherHours,
     userSpecifiedHasAnnualGoal,
     milestoneOverrides,
@@ -17,7 +17,7 @@ const usePublisher = (): PublisherCapabilities => {
   } = usePreferences()
 
   const capabilities = derivePublisherCapabilities({
-    publisher,
+    publisher: role,
     publisherHours,
     userSpecifiedHasAnnualGoal,
     milestoneOverrides,

@@ -19,7 +19,7 @@ const OnboardingBackfillBanner = () => {
   const {
     serviceYearCatchUpStatus,
     installedOn,
-    publisher,
+    role,
     userSpecifiedHasAnnualGoal,
     set,
   } = usePreferences()
@@ -31,7 +31,7 @@ const OnboardingBackfillBanner = () => {
   // — even though `status` remains 'skipped'. Also hide when an iCloud
   // restore (or other prior data) already filled the catch-up window.
   const eligible =
-    effectiveHasAnnualGoal(publisher, userSpecifiedHasAnnualGoal) &&
+    effectiveHasAnnualGoal(role, userSpecifiedHasAnnualGoal) &&
     moment(installedOn).month() !== 8 &&
     !hasReportsInCatchUpWindow(serviceReports, installedOn)
 

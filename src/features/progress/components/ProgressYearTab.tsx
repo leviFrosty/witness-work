@@ -51,15 +51,11 @@ const MonthRow = ({
 }) => {
   const theme = useTheme()
   const cardStyle = useCardStyle()
-  const {
-    publisher,
-    publisherHours,
-    overrideCreditLimit,
-    customCreditLimitHours,
-  } = usePreferences()
+  const { role, publisherHours, overrideCreditLimit, customCreditLimitHours } =
+    usePreferences()
   const { serviceReports, dayPlans, recurringPlans } = useServiceReport()
 
-  const goalHours = publisherHours[publisher]
+  const goalHours = publisherHours[role]
 
   const monthsReports = useMemo(
     () => getMonthsReports(serviceReports, month, year),
@@ -71,7 +67,7 @@ const MonthRow = ({
       monthsReports,
       month,
       year,
-      publisher,
+      role,
       { enabled: overrideCreditLimit, customLimitHours: customCreditLimitHours }
     )
     return adjusted.value / 60
@@ -79,7 +75,7 @@ const MonthRow = ({
     monthsReports,
     month,
     year,
-    publisher,
+    role,
     overrideCreditLimit,
     customCreditLimitHours,
   ])

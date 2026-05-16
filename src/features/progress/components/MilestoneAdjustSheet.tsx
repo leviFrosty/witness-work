@@ -75,7 +75,7 @@ const MilestoneAdjustSheet = ({ visible, onClose }: Props) => {
   const theme = useTheme()
   const navigation = useNavigation<RootStackNavigation>()
   const {
-    publisher,
+    role,
     publisherHours,
     milestoneOverrides,
     setMilestoneOverrides,
@@ -83,14 +83,14 @@ const MilestoneAdjustSheet = ({ visible, onClose }: Props) => {
   } = usePreferences()
   const { serviceReports } = useServiceReport()
 
-  const annualGoalHours = publisherHours[publisher] * 12
+  const annualGoalHours = publisherHours[role] * 12
 
   // Seed / re-seed the local draft whenever the sheet opens or the persisted
   // list changes (e.g. Reset to Defaults). We keep a local copy so the user
   // can freely type / reorder without stomping preferences until they tap Done.
   const [draft, setDraft] = useState<number[]>(() =>
     sanitizeDraft(
-      milestoneOverrides ?? DEFAULT_MILESTONES_BY_PUBLISHER[publisher],
+      milestoneOverrides ?? DEFAULT_MILESTONES_BY_PUBLISHER[role],
       annualGoalHours
     )
   )
@@ -103,12 +103,12 @@ const MilestoneAdjustSheet = ({ visible, onClose }: Props) => {
     if (!visible) return
     setDraft(
       sanitizeDraft(
-        milestoneOverrides ?? DEFAULT_MILESTONES_BY_PUBLISHER[publisher],
+        milestoneOverrides ?? DEFAULT_MILESTONES_BY_PUBLISHER[role],
         annualGoalHours
       )
     )
     setInputBuffers({})
-  }, [visible, milestoneOverrides, publisher, annualGoalHours])
+  }, [visible, milestoneOverrides, role, annualGoalHours])
 
   // Live hours completed for the current service year — same math the rest of
   // the app uses. Must filter to just this service year first; passing the raw
@@ -222,7 +222,7 @@ const MilestoneAdjustSheet = ({ visible, onClose }: Props) => {
             resetMilestoneOverrides()
             setDraft(
               sanitizeDraft(
-                DEFAULT_MILESTONES_BY_PUBLISHER[publisher],
+                DEFAULT_MILESTONES_BY_PUBLISHER[role],
                 annualGoalHours
               )
             )

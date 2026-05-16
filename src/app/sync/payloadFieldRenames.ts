@@ -12,6 +12,9 @@
  *
  * - `preferencesStore.values.excludedWeekdays` → `offDays`
  * - `preferencesStore.values.meetingWeekdays` → `meetingDays`
+ * - `preferencesStore.values.publisher` → `role` (the field stores a `Publisher`
+ *   enum value — only the field name renamed; the leaf enum value `'publisher'`
+ *   for Regular Publisher is canonical and unchanged)
  * - The matching keys inside `preferencesStore.updatedAt`
  *
  * New name wins if both keys somehow coexist on the wire (defensive); the
@@ -23,8 +26,10 @@ export function normalizeLegacyPayloadFieldNames(d: any): void {
   if (!prefs || typeof prefs !== 'object') return
   renameKey(prefs.values, 'excludedWeekdays', 'offDays')
   renameKey(prefs.values, 'meetingWeekdays', 'meetingDays')
+  renameKey(prefs.values, 'publisher', 'role')
   renameKey(prefs.updatedAt, 'excludedWeekdays', 'offDays')
   renameKey(prefs.updatedAt, 'meetingWeekdays', 'meetingDays')
+  renameKey(prefs.updatedAt, 'publisher', 'role')
 }
 
 function renameKey(

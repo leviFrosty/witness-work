@@ -31,7 +31,7 @@ export type ProgressTab = 'month' | 'year' | 'allTime'
 const ProgressScreen = ({ route, navigation }: Props) => {
   const theme = useTheme()
   const insets = useSafeAreaInsets()
-  const { publisher, publisherHours } = usePreferences()
+  const { role, publisherHours } = usePreferences()
 
   const now = moment()
   const currentYear = now.year()
@@ -43,7 +43,7 @@ const ProgressScreen = ({ route, navigation }: Props) => {
   // Publisher types with no annual goal (e.g. `publisher` or custom-at-0) cannot
   // meaningfully render the Year tab. Hide it from the selector and coerce
   // route-param landings away from `year`.
-  const hideYearTab = (publisherHours[publisher] ?? 0) === 0
+  const hideYearTab = (publisherHours[role] ?? 0) === 0
 
   const initialTab: ProgressTab = (() => {
     const requested = route.params?.tab

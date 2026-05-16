@@ -98,17 +98,13 @@ export const hints = {
   howToAddPlan: true,
 }
 
-type LegacyServiceReportTag = string
-
-export function getTagName(tag: LegacyServiceReportTag | ServiceReportTag) {
-  return typeof tag === 'string' ? tag : tag.value
-}
-
-export type ServiceReportTag = {
-  /** Also acts as ID */
-  value: string
-  credit: boolean
-}
+// The legacy `serviceReportTags` field + its `ServiceReportTag` /
+// `LegacyServiceReportTag` types lived here until the tag → Category
+// refactor moved category data to `@/stores/categories`. The migration in
+// `@/lib/categories` consumes any remaining persisted-state `serviceReportTags`
+// blob via an `unknown` cast and then drops the field; new code should use
+// `useCategories()` instead. Kept the historical breadcrumb so the migration
+// flag's purpose is greppable.
 
 export const widgetContactSortOptions = [
   'longestContacted',
@@ -288,13 +284,6 @@ export const PREFERENCE_DEFAULTS = {
    * touched when this preference changes.
    */
   planAlwaysNotify: false,
-  /**
-   * Tags were originally only strings, like "Bethel Service". Later, tags
-   * needed more metadata - like whether or not a tag is a credit hour or not.
-   * Example: {value: 'Bethel Service', credit: true}. This is why later the
-   * data structure was changed to an object. The value also doubles as the id.
-   */
-  serviceReportTags: [] as (LegacyServiceReportTag | ServiceReportTag)[],
   displayDetailsOnProgressBarHomeScreen:
     Device.deviceType === Device.DeviceType.TABLET,
   monthlyRoutineHasShownInvalidMonthAlert: false,
@@ -335,6 +324,15 @@ export const PREFERENCE_DEFAULTS = {
    * for the rewrite, and `contactsStore.customFieldDefs` for the new home.
    */
   hasMigratedCustomFieldsToIds: false,
+  /**
+   * One-shot flag for the tag → Category migration. Boot runner gates on this:
+   * when false, it scans the user's ServiceReports + legacy `serviceReportTags`
+   * and seeds the new `useCategories` store, rewriting each tagged
+   * ServiceReport to reference a `categoryId` instead of a free-text `tag`. See
+   * `src/lib/categories.ts` for the transform. Non-syncable — each device
+   * migrates its own persisted state once.
+   */
+  hasMigratedTagsToCategories: false,
   hasAttemptedToMigrateToMmkv: false,
   /**
    * Hidden dev tools for diagnosing issues. To enable/disable, navigate to
@@ -728,6 +726,7 @@ export const NON_SYNCABLE_PREFERENCE_KEYS = new Set<string>([
   'preferenceUpdatedAt',
   'hasMigratedToSyncSchema',
   'hasMigratedCustomFieldsToIds',
+  'hasMigratedTagsToCategories',
   // Legacy field — removed from the schema but may still exist on disk for
   // installs that pre-date the id-keyed migration. Listed here so the boot
   // cleanup that wipes it doesn't propagate the deletion through sync.

@@ -50,7 +50,10 @@ import {
   resolvePluginIcon,
 } from '@/features/settings/lib/appIcon'
 import useContacts from '@/stores/contactsStore'
+import useCategories from '@/stores/categories'
+import useServiceReport from '@/stores/serviceReport'
 import { migrateCustomFieldsToIds } from '@/features/contacts/lib/customFieldsMigration'
+import { migrateTagsToCategories } from '@/lib/categories'
 import AnimationViewProvider from '@/providers/AnimationViewProvider'
 import ConfettiProvider from '@/providers/ConfettiProvider'
 import useUserLocalePrefs from '@/features/settings/hooks/useLocale'
@@ -335,6 +338,58 @@ export default function App() {
       // Drop the legacy field from in-memory state so it stops appearing in
       // future persist writes (JSON.stringify drops undefined values).
       ...({ customContactFields: undefined } as Record<string, unknown>),
+    } as never)
+  }, [hasMigrated])
+
+  // Promote the legacy `tag` field + `preferences.serviceReportTags` list into
+  // first-class `Category` records (see `src/lib/categories.ts`). Runs once
+  // per install after MMKV is ready, gated on `hasMigratedTagsToCategories`.
+  // Idempotent at the runner level: if the flag is false and there is nothing
+  // to migrate, it just flips the flag and exits. Cross-device iCloud pulls
+  // that re-introduce a tagged entry are absorbed by the next migration pass
+  // when the flag is re-armed via manual user action — for v1 we accept that
+  // the flag is one-shot per install (see CONTEXT.md for the wave-2 plan).
+  useEffect(() => {
+    if (!hasMigrated) return
+    const prefs = usePreferences.getState()
+    if (prefs.hasMigratedTagsToCategories) return
+
+    const reports = useServiceReport.getState()
+    const legacyTags = ((
+      prefs as unknown as {
+        serviceReportTags?: (string | { value: string; credit?: boolean })[]
+      }
+    ).serviceReportTags ?? []) as (
+      | string
+      | { value: string; credit?: boolean }
+    )[]
+
+    const result = migrateTagsToCategories({
+      serviceReports: reports.serviceReports,
+      legacyTags,
+      now: Date.now(),
+    })
+
+    // Seed the new Categories store. Use raw setState to skip the per-store
+    // stamping (we set updatedAt explicitly inside the migration result).
+    useCategories.setState({
+      categories: result.categories,
+      deletedCategories: [],
+    })
+
+    // Apply the rewritten ServiceReports (categoryId + reconciled credit).
+    // Raw setState bypasses the per-store `updatedAt` re-stamp — the
+    // migration intentionally preserves each entry's existing `updatedAt`.
+    if (result.categories.length > 0) {
+      reports.set({ serviceReports: result.serviceReports })
+    }
+
+    // Drop the legacy preferences.serviceReportTags field from in-memory state
+    // so it stops appearing in future persist writes (JSON.stringify drops
+    // undefined). Use raw setState to bypass the syncing wrapper.
+    usePreferences.setState({
+      hasMigratedTagsToCategories: true,
+      ...({ serviceReportTags: undefined } as Record<string, unknown>),
     } as never)
   }, [hasMigrated])
 

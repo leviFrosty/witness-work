@@ -6,6 +6,7 @@ import { Alert, Platform, Switch, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import ActionButton from '@/components/ui/ActionButton'
 import useServiceReport from '@/stores/serviceReport'
+import useCategories from '@/stores/categories'
 import useContacts from '@/stores/contactsStore'
 import Card from '@/components/ui/Card'
 import XView from '@/components/ui/layout/XView'
@@ -81,6 +82,7 @@ export default function ToolsScreen() {
     addRecurringPlan,
     set: setServiceReports,
   } = useServiceReport()
+  const { categories, addCategory } = useCategories()
   const {
     contacts,
     _WARNING_forceDeleteContacts,
@@ -217,7 +219,21 @@ export default function ToolsScreen() {
   }
 
   const generateServiceReports = () => {
-    const tags = ['Special', 'Campaign', 'Memorial', 'Convention', undefined]
+    // Seed a handful of named Categories if none exist yet; dev fixtures
+    // reference them by id so the generator exercises the new Category-keyed
+    // path rather than legacy `tag` strings.
+    const seedNames = ['Special', 'Campaign', 'Memorial', 'Convention']
+    const ensureCategory = (name: string): string => {
+      const existing = categories.find((c) => c.name === name)
+      if (existing) return existing.id
+      const id = `dev-cat-${name.toLowerCase()}`
+      addCategory({ id, name, isCredit: false })
+      return id
+    }
+    const seededIds: (string | undefined)[] = [
+      ...seedNames.map(ensureCategory),
+      undefined,
+    ]
     let i = 0
     while (i < 1000) {
       const reportsForDay = (i * 2654435761) % 4
@@ -234,7 +250,7 @@ export default function ToolsScreen() {
           minutes,
           credit: seed % 3 === 0,
           ldc: seed % 5 === 0,
-          tag: tags[seed % tags.length],
+          categoryId: seededIds[seed % seededIds.length],
         })
       }
       const gapR = ((i * 2654435761 + 12345) % 1000) / 1000

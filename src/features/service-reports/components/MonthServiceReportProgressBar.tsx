@@ -2,6 +2,7 @@ import { View, ViewProps, Animated, StyleProp, ViewStyle } from 'react-native'
 import { useCallback, useMemo, useEffect, useRef, useState } from 'react'
 import { usePreferences } from '@/stores/preferences'
 import { useServiceReport } from '@/stores/serviceReport'
+import useCategories from '@/stores/categories'
 import useTheme from '@/contexts/theme'
 import {
   adjustedMinutesForSpecificMonth,
@@ -134,6 +135,7 @@ const MonthServiceReportProgressBar = ({
 }: ProgressBarProps) => {
   const theme = useTheme()
   const { serviceReports } = useServiceReport()
+  const { categories } = useCategories()
   const { role, publisherHours, overrideCreditLimit, customCreditLimitHours } =
     usePreferences()
 
@@ -293,7 +295,7 @@ const MonthServiceReportProgressBar = ({
 
       return (
         <OtherHours
-          key={`${report.tag}-${index}`}
+          key={`${report.categoryId ?? report.tag}-${index}`}
           color={color}
           percentage={
             (report.minutes / adjustedMinutes.value) * segmentScalingFactor
@@ -318,15 +320,23 @@ const MonthServiceReportProgressBar = ({
       const color = otherColors[currentIndex]
       currentIndex += 1
 
+      // Prefer the live Category name so a rename propagates without
+      // re-mounting the progress bar; fall back to the stamped `tag` label
+      // for unmigrated entries.
+      const liveCategory = report.categoryId
+        ? categories.find((c) => c.id === report.categoryId)
+        : undefined
+      const label = liveCategory?.name ?? report.tag
+
       return (
         <ProgressBarKey
-          key={`${report.tag}-${index}`}
+          key={`${report.categoryId ?? report.tag}-${index}`}
           color={color}
-          label={report.tag}
+          label={label}
         />
       )
     })
-  }, [minutesDetailed.other, otherColors])
+  }, [minutesDetailed.other, otherColors, categories])
 
   return (
     <View

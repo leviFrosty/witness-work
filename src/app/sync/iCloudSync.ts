@@ -5,6 +5,7 @@ import * as ICloudBridge from '../../../modules/icloud-bridge'
 import useContacts from '@/stores/contactsStore'
 import useConversations from '@/stores/conversationStore'
 import useServiceReport from '@/stores/serviceReport'
+import useCategories from '@/stores/categories'
 import { usePreferences } from '@/stores/preferences'
 import { useSupporter } from '@/features/supporter/stores/supporter'
 import { buildPayload, parsePayload, SyncPayload } from '@/app/sync/payload'
@@ -21,6 +22,7 @@ import {
   ServiceReportsByYears,
   ServiceReportTombstone,
 } from '@/types/serviceReport'
+import { Category, CategoryTombstone } from '@/types/category'
 import { RecurringPlan } from '@/lib/serviceReport'
 import { migrateNormalizeDates } from '@/lib/normalizeDate'
 import {
@@ -188,6 +190,9 @@ export function hasMeaningfulLocalData(): boolean {
       if (month.length > 0) return true
     }
   }
+  const categories = useCategories.getState()
+  if (categories.categories.length > 0) return true
+  if (categories.deletedCategories.length > 0) return true
   return false
 }
 
@@ -201,6 +206,8 @@ type LocalMergeState = {
   dayPlans: DayPlan[]
   recurringPlans: RecurringPlan[]
   deletedServiceReports: ServiceReportTombstone[]
+  categories: Category[]
+  deletedCategories: CategoryTombstone[]
   preferencesValues: Record<string, unknown>
   preferenceUpdatedAt: Record<string, number>
 }
@@ -233,6 +240,8 @@ function foldRemotePayloads(payloads: SyncPayload[]): SyncPayload | null {
     recurringPlans: (first.serviceReportStore.recurringPlans ??
       []) as RecurringPlan[],
     deletedServiceReports: first.serviceReportStore.deletedServiceReports ?? [],
+    categories: (first.categoryStore?.categories ?? []) as Category[],
+    deletedCategories: first.categoryStore?.deletedCategories ?? [],
     preferencesValues: first.preferencesStore?.values ?? {},
     preferenceUpdatedAt: first.preferencesStore?.updatedAt ?? {},
   }
@@ -249,6 +258,8 @@ function foldRemotePayloads(payloads: SyncPayload[]): SyncPayload | null {
       dayPlans: result.dayPlans,
       recurringPlans: result.recurringPlans,
       deletedServiceReports: result.deletedServiceReports,
+      categories: result.categories,
+      deletedCategories: result.deletedCategories,
       preferencesValues: result.preferencesValues,
       preferenceUpdatedAt: result.preferenceUpdatedAt,
     }
@@ -279,6 +290,10 @@ function foldRemotePayloads(payloads: SyncPayload[]): SyncPayload | null {
       dayPlans: acc.dayPlans,
       recurringPlans: acc.recurringPlans,
       deletedServiceReports: acc.deletedServiceReports,
+    },
+    categoryStore: {
+      categories: acc.categories,
+      deletedCategories: acc.deletedCategories,
     },
     preferencesStore: {
       values: acc.preferencesValues,
@@ -327,6 +342,10 @@ export function replaceLocalWithRemote(remote: SyncPayload): void {
     recurringPlans: normalizedRemote.recurringPlans,
     deletedServiceReports:
       remote.serviceReportStore.deletedServiceReports ?? [],
+  })
+  useCategories.setState({
+    categories: (remote.categoryStore?.categories ?? []) as Category[],
+    deletedCategories: remote.categoryStore?.deletedCategories ?? [],
   })
 
   const now = Date.now()
@@ -837,6 +856,7 @@ async function pullAndMergeInner(reason: string): Promise<boolean> {
   const contactsState = useContacts.getState()
   const conversationsState = useConversations.getState()
   const serviceReportState = useServiceReport.getState()
+  const categoriesState = useCategories.getState()
   const preferencesState = usePreferences.getState()
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -870,6 +890,8 @@ async function pullAndMergeInner(reason: string): Promise<boolean> {
     dayPlans: serviceReportState.dayPlans,
     recurringPlans: serviceReportState.recurringPlans,
     deletedServiceReports: serviceReportState.deletedServiceReports,
+    categories: categoriesState.categories,
+    deletedCategories: categoriesState.deletedCategories,
     preferencesValues: localPrefValues,
     preferenceUpdatedAt: preferencesState.preferenceUpdatedAt ?? {},
   }
@@ -888,6 +910,8 @@ async function pullAndMergeInner(reason: string): Promise<boolean> {
       dayPlans: result.dayPlans,
       recurringPlans: result.recurringPlans,
       deletedServiceReports: result.deletedServiceReports,
+      categories: result.categories,
+      deletedCategories: result.deletedCategories,
       preferencesValues: result.preferencesValues,
       preferenceUpdatedAt: result.preferenceUpdatedAt,
     }
@@ -947,6 +971,10 @@ async function pullAndMergeInner(reason: string): Promise<boolean> {
     dayPlans: normalizedAcc.dayPlans,
     recurringPlans: normalizedAcc.recurringPlans,
     deletedServiceReports: acc.deletedServiceReports,
+  })
+  categoriesState.set({
+    categories: acc.categories,
+    deletedCategories: acc.deletedCategories,
   })
 
   usePreferences.setState({
@@ -1018,6 +1046,7 @@ export function backfillUpdatedAtIfNeeded(): void {
   const contacts = useContacts.getState()
   const conversations = useConversations.getState()
   const reports = useServiceReport.getState()
+  const categories = useCategories.getState()
 
   contacts.set({
     contacts: contacts.contacts.map((c) =>
@@ -1055,6 +1084,12 @@ export function backfillUpdatedAtIfNeeded(): void {
     ),
   })
 
+  categories.set({
+    categories: categories.categories.map((c) =>
+      c.updatedAt ? c : { ...c, updatedAt: now }
+    ),
+  })
+
   prefs.set({ hasMigratedToSyncSchema: true })
 }
 
@@ -1073,6 +1108,7 @@ export function installiCloudSync(): () => void {
   const unsubContacts = useContacts.subscribe(() => schedulePush())
   const unsubConversations = useConversations.subscribe(() => schedulePush())
   const unsubServiceReports = useServiceReport.subscribe(() => schedulePush())
+  const unsubCategories = useCategories.subscribe(() => schedulePush())
   // Only schedule a push when a *syncable* preference key changed. The
   // stamping wrapper in `usePreferences` re-allocates `preferenceUpdatedAt`
   // iff a non-bookkeeping key was written, so a reference check on that map
@@ -1131,6 +1167,7 @@ export function installiCloudSync(): () => void {
     unsubContacts()
     unsubConversations()
     unsubServiceReports()
+    unsubCategories()
     unsubPreferences()
     appStateSub.remove()
     remoteChangeSub?.remove()

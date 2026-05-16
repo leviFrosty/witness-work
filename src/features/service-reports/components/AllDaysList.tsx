@@ -5,9 +5,11 @@ import { faChevronRight } from '@fortawesome/free-solid-svg-icons'
 import moment from 'moment'
 
 import useServiceReport from '@/stores/serviceReport'
+import useCategories from '@/stores/categories'
 import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
 import { getMonthsReports } from '@/lib/serviceReport'
+import { getCategoryLabel } from '@/lib/serviceReportCategory'
 import { ServiceReport } from '@/types/serviceReport'
 import { RootStackNavigation } from '@/types/rootStack'
 
@@ -49,6 +51,7 @@ const AllDaysList = ({ month, year }: AllDaysListProps) => {
   const theme = useTheme()
   const cardStyle = useCardStyle()
   const { serviceReports } = useServiceReport()
+  const { categories } = useCategories()
   const rootNavigation = useRootNavigation<RootStackNavigation>()
 
   const [sheet, setSheet] = useState<SelectedDateSheetState>({
@@ -146,9 +149,15 @@ const AllDaysList = ({ month, year }: AllDaysListProps) => {
 
       let categoryLabel = '—'
       if (reportsForDay.length > 0) {
+        // Group by stable identity: prefer categoryId (post-migration), fall
+        // back to the legacy `tag` string for unmigrated entries, and use
+        // synthetic keys for rollover / ldc / plain-standard so the bucket
+        // logic doesn't collide a Category named "ldc" with the real LDC
+        // bucket.
         const keyFor = (r: ServiceReport): string => {
           if (r.rollover) return '__rollover__'
           if (r.ldc) return '__ldc__'
+          if (r.categoryId) return `cat:${r.categoryId}`
           if (r.tag) return `tag:${r.tag}`
           return '__standard__'
         }
@@ -164,7 +173,12 @@ const AllDaysList = ({ month, year }: AllDaysListProps) => {
           } else if (only === '__standard__') {
             categoryLabel = i18n.t('standard')
           } else {
-            categoryLabel = only.replace(/^tag:/, '')
+            // Either `cat:<id>` or `tag:<legacy>`. Resolve via the categories
+            // store so the user-visible label always reflects the Category's
+            // current name, not whatever was stamped at write time.
+            categoryLabel =
+              getCategoryLabel(reportsForDay[0], categories) ??
+              only.replace(/^(cat:|tag:)/, '')
           }
         }
       }
@@ -183,7 +197,7 @@ const AllDaysList = ({ month, year }: AllDaysListProps) => {
 
     // Most-recent first
     return entries.sort((a, b) => b.date.getTime() - a.date.getTime())
-  }, [thisMonthsReports, month, year])
+  }, [thisMonthsReports, month, year, categories])
 
   return (
     <View style={{ gap: 8 }}>

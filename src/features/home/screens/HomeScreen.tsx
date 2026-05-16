@@ -201,8 +201,7 @@ export const HomeScreen = () => {
   const { contacts } = useContacts()
   const { isTablet } = useDevice()
   const { hasAnnualGoal, showsTimer, entryMode } = usePublisher()
-  const { serviceReportTags, homeScreenElements, homeScreenElementsOrder } =
-    usePreferences()
+  const { homeScreenElements, homeScreenElementsOrder } = usePreferences()
   const effectiveOrder = useMemo(
     () => getEffectiveHomeScreenOrder(homeScreenElementsOrder),
     [homeScreenElementsOrder]
@@ -221,12 +220,13 @@ export const HomeScreen = () => {
     () => getMonthsReports(serviceReports, currentMonth, currentYear),
     [serviceReports, currentMonth, currentYear]
   )
-  const hasLegacyReports = useMemo(() => {
-    return serviceReportTags.some((t) => typeof t === 'string')
-  }, [serviceReportTags])
-  const [upgradeReportsSheet, setUpgradeReportSheet] = useState(
-    hasLegacyReports && hasAnnualGoal
-  )
+  // Legacy upgrade flow is now subsumed by the boot-time tag → Category
+  // migration (`src/lib/categories.ts`). Categories carry their own
+  // `isCredit` invariant, so the user no longer needs to retroactively
+  // classify free-text tag strings. The state remains hard-wired to false so
+  // the sheet stays mounted-but-inert for one release window; removing the
+  // component entirely is deferred to a follow-up.
+  const [upgradeReportsSheet, setUpgradeReportSheet] = useState(false)
   const approachingConversations = useMemo(
     () =>
       upcomingFollowUpConversations({

@@ -14,6 +14,7 @@ import {
   standardMinutesForSpecificMonth,
 } from '@/lib/serviceReport'
 import useServiceReport from '@/stores/serviceReport'
+import useCategories from '@/stores/categories'
 import { useCallback, useEffect, useMemo, useRef } from 'react'
 import useTheme from '@/contexts/theme'
 import { ServiceReport } from '@/types/serviceReport'
@@ -88,6 +89,7 @@ const MonthReport = ({
     celebratedTiers,
     markTierCelebrated,
   } = usePreferences()
+  const { categories } = useCategories()
   const goalHours = publisherHours[role]
   const navigation = useNavigation<RootStackNavigation>()
   const tabNavigation = useNavigation<HomeTabStackNavigation>()
@@ -196,12 +198,20 @@ const MonthReport = ({
       color: theme.colors.accentAlt,
       credit: true,
     },
-    ...(otherMinutes ?? []).map((report, i) => ({
-      title: report.tag,
-      minutes: report.minutes,
-      color: otherSegmentPalette[i % otherSegmentPalette.length],
-      credit: report.credit,
-    })),
+    ...(otherMinutes ?? []).map((report, i) => {
+      // Resolve the user-visible label live from the Categories store so a
+      // rename propagates without re-running the month aggregation.
+      const liveCategory = report.categoryId
+        ? categories.find((c) => c.id === report.categoryId)
+        : undefined
+      const title = liveCategory?.name ?? report.tag
+      return {
+        title,
+        minutes: report.minutes,
+        color: otherSegmentPalette[i % otherSegmentPalette.length],
+        credit: report.credit,
+      }
+    }),
   ]
   const hasCategorySegments = categorySegments.some((s) => s.minutes > 0)
 

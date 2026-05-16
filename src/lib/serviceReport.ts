@@ -10,6 +10,7 @@ import {
   ServiceReportsByYears,
   ServiceYear,
 } from '@/types/serviceReport'
+import { hasCategory } from '@/lib/serviceReportCategory'
 import moment from 'moment'
 import { monthCreditMaxMinutes } from '@/constants/serviceReports'
 import { creditCapMinutesFor, getEntryMode } from '@/lib/publisherCapabilities'
@@ -65,14 +66,14 @@ export const getTotalMinutesDetailedForSpecificMonth = (
     return m.month() === month && m.year() === year
   })
   const otherWithNonCreditMinutes = reportsForMonth.reduce((prev, report) => {
-    if (report.tag && !report.credit) {
+    if (hasCategory(report) && !report.credit) {
       return prev + report.hours * 60 + report.minutes
     }
     return prev
   }, 0)
 
   const otherWithCreditMinutes = reportsForMonth.reduce((prev, report) => {
-    if (report.tag && report.credit) {
+    if (hasCategory(report) && report.credit) {
       return prev + report.hours * 60 + report.minutes
     }
     return prev
@@ -225,7 +226,23 @@ export const ldcMinutesForSpecificMonth = (
   return totalMinutesForMonth
 }
 
-type OtherReports = { tag: string; minutes: number; credit?: boolean }[]
+/**
+ * Per-Category aggregation row used by the breakdown UI. `categoryId` is the
+ * canonical key after the tag → Category refactor; `tag` is the user-visible
+ * label sourced from the Category record's `name` (or the legacy `tag` string
+ * for unmigrated entries).
+ */
+type OtherReports = {
+  /**
+   * Stable id of the underlying Category record, or undefined for unmigrated
+   * entries.
+   */
+  categoryId?: string
+  /** Display label — Category name (post-migration) or legacy tag string. */
+  tag: string
+  minutes: number
+  credit?: boolean
+}[]
 
 export const otherMinutesForSpecificMonth = (
   monthsReports: ServiceReport[],
@@ -236,19 +253,29 @@ export const otherMinutesForSpecificMonth = (
     const m = momentStoredDate(report.date)
     return m.month() === targetMonth && m.year() === targetYear
   })
-  const taggedReports = reportsForMonth.filter((report) => report.tag)
+  const taggedReports = reportsForMonth.filter((report) => hasCategory(report))
 
   const otherReportsTotalMinutes = taggedReports.reduce<OtherReports>(
     (accumulator, report) => {
-      if (!report.tag) return accumulator
+      // Prefer grouping by categoryId so two entries pointing at the same
+      // Category record always collapse into one row even if their stored
+      // labels disagree (e.g. one was edited after the rename). Fall back to
+      // the legacy `tag` string for unmigrated entries.
+      const groupKey = report.categoryId ?? report.tag
+      if (!groupKey) return accumulator
 
-      const existingTag = accumulator.find((item) => item.tag === report.tag)
+      const existingTag = accumulator.find((item) =>
+        report.categoryId
+          ? item.categoryId === report.categoryId
+          : item.tag === report.tag
+      )
       if (existingTag) {
         existingTag.minutes += report.hours * 60 + report.minutes
       } else {
         const minutes = report.hours * 60 + report.minutes
         accumulator.push({
-          tag: report.tag,
+          categoryId: report.categoryId,
+          tag: report.tag ?? report.categoryId ?? '',
           minutes: minutes,
           credit: report.credit,
         })
@@ -273,7 +300,7 @@ export const standardMinutesForSpecificMonth = (
         m.month() === targetMonth &&
         m.year() === targetYear &&
         !report.ldc &&
-        !report.tag
+        !hasCategory(report)
       )
     })
     .reduce((accumulator, report) => {
@@ -386,7 +413,7 @@ export const getTotalMinutesForServiceYear = (
       let otherWithoutCredit = 0
       for (const report of monthReports) {
         const m = report.hours * 60 + report.minutes
-        if (report.tag) {
+        if (hasCategory(report)) {
           if (report.credit) otherWithCredit += m
           else otherWithoutCredit += m
         } else if (report.ldc) {

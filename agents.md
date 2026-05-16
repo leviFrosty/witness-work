@@ -83,18 +83,18 @@ Sources: `src/constants/publisher.ts`, `src/stores/preferences.ts`, `src/lib/pub
 
 ### Single seam: `derivePublisherCapabilities`
 
-`src/lib/publisherCapabilities.ts` = **only** place role behavior encoded. React code reads via `usePublisher()` hook; pure callers use `derivePublisherCapabilities` or helpers (`getEntryMode`, `isInFullTimeService`, `tracksPioneerStartDate`, `effectiveHasAnnualGoal`, `creditCapMinutesFor`).
+`src/lib/publisherCapabilities.ts` = **only** place role behavior encoded. React code reads via `usePublisher()` hook; pure callers use `derivePublisherCapabilities` or helpers (`getEntryMode`, `isInFullTimeService`, `getTenureType`, `tracksTenure`, `effectiveHasAnnualGoal`, `creditCapMinutesFor`).
 
 ### Rules
 
-1. **Never branch on publisher string.** `if (publisher === 'specialPioneer')` wrong — add/use capability flag (`entryMode`, `hasAnnualGoal`, `isInFullTimeService`, `tracksPioneerStartDate`, `showsTimer`, `showsYearTabs`, `creditCapMinutes`, `hasUnlimitedCreditDefault`).
+1. **Never branch on publisher string.** `if (publisher === 'specialPioneer')` wrong — add/use capability flag (`entryMode`, `hasAnnualGoal`, `isInFullTimeService`, `tenureType`, `tracksTenure`, `showsTimer`, `showsYearTabs`, `creditCapMinutes`, `hasUnlimitedCreditDefault`).
 2. **Capabilities fold in user overrides** (`userSpecifiedHasAnnualGoal`, `overrideCreditLimit`, `milestoneOverrides`). Read resolved value; don't re-derive.
-3. **Gate UI on capabilities, not role.** E.g. timer on `showsTimer`, year tab on `showsYearTabs`, start-date row on `tracksPioneerStartDate`, entry mode on `entryMode`.
+3. **Gate UI on capabilities, not role.** E.g. timer on `showsTimer`, year tab on `showsYearTabs`, tenure row on `tracksTenure`, entry mode on `entryMode`.
 4. **`publisher` role = checkbox mode** — anything assuming hours breaks. Check `entryMode` / `hasAnnualGoal` / `showsTimer` first.
 5. **Credit cap** → `creditCapMinutesFor()`. Never inline 55h (`monthCreditMaxMinutes`).
 6. **Milestone final rung** (annual goal) appended at read time by `getEffectiveMilestones`, never stored.
-7. **`pioneerStartDate` field** stores start date for any role where `tracksPioneerStartDate === true` (legacy name; labels via `getStartDateLabels`).
-8. **Adding a role** = touch tuple in `src/constants/publisher.ts`, defaults in `src/stores/preferences.ts`, `baseCreditCapMinutes` + `roleDefaultHasAnnualGoal` in `src/lib/publisherCapabilities.ts`, `DEFAULT_MILESTONES_BY_PUBLISHER` in `src/lib/milestones.ts`, selector in `src/components/PublisherTypeSelector.tsx`, `getStartDateLabels` if tenure, i18n in `en-US.json`. TS exhaustiveness catches most.
+7. **`tenureStartDate` field** stores the **Tenure Start Date** for any role where `tracksTenure === true` (= `tenureType !== null`). Reset semantics live in `setRole` — flipping to a different Tenure Type (including any move to/from a no-Tenure-Type role like Regular Publisher or Custom) clears the field. Labels via `getStartDateLabels`.
+8. **Adding a role** = touch tuple in `src/constants/publisher.ts`, defaults in `src/stores/preferences.ts`, `baseCreditCapMinutes` + `roleDefaultHasAnnualGoal` + `getTenureType` switch in `src/lib/publisherCapabilities.ts`, `DEFAULT_MILESTONES_BY_PUBLISHER` in `src/lib/milestones.ts`, selector in `src/components/PublisherTypeSelector.tsx`, `getStartDateLabels` if tenure, i18n in `en-US.json`. TS exhaustiveness catches most.
 
 ## Git
 

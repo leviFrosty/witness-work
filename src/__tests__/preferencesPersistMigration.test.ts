@@ -253,3 +253,164 @@ describe('preferences persist migrate v2 → v3 (Profile extraction marker)', ()
     expect(migrated.avatar).toEqual({ type: 'image', value: 'avatar://x' })
   })
 })
+
+describe('preferences persist migrate v3 → v4 (pioneerStartDate → tenureStartDate)', () => {
+  it('renames pioneerStartDate → tenureStartDate, preserving the value when the role tracks tenure', () => {
+    const v3State = {
+      role: 'regularPioneer',
+      pioneerStartDate: '2020-01-01T00:00:00.000Z',
+    }
+
+    const migrated = migratePreferencesPersistedState(v3State, 3)
+
+    expect(migrated.tenureStartDate).toBe('2020-01-01T00:00:00.000Z')
+    expect(migrated).not.toHaveProperty('pioneerStartDate')
+  })
+
+  it('keeps the value across all Full-Time Service roles', () => {
+    for (const role of [
+      'regularPioneer',
+      'specialPioneer',
+      'circuitOverseer',
+    ] as const) {
+      const migrated = migratePreferencesPersistedState(
+        { role, pioneerStartDate: '2021-06-15T00:00:00.000Z' },
+        3
+      )
+      expect(migrated.tenureStartDate).toBe('2021-06-15T00:00:00.000Z')
+    }
+  })
+
+  it('keeps the value for regularAuxiliary (Auxiliary Pioneer tenure)', () => {
+    const migrated = migratePreferencesPersistedState(
+      {
+        role: 'regularAuxiliary',
+        pioneerStartDate: '2024-03-01T00:00:00.000Z',
+      },
+      3
+    )
+    expect(migrated.tenureStartDate).toBe('2024-03-01T00:00:00.000Z')
+  })
+
+  it('drops a stale start date when the current role has no Tenure Type (publisher)', () => {
+    // Data inconsistency case: user set a pioneer date then switched to
+    // regular publisher without clearing it. The new shape forbids holding
+    // a tenure date for a role that doesn't track one.
+    const v3State = {
+      role: 'publisher',
+      pioneerStartDate: '2020-01-01T00:00:00.000Z',
+    }
+
+    const migrated = migratePreferencesPersistedState(v3State, 3)
+
+    expect(migrated.tenureStartDate).toBeNull()
+    expect(migrated).not.toHaveProperty('pioneerStartDate')
+  })
+
+  it('drops a stale start date when the current role is custom', () => {
+    const v3State = {
+      role: 'custom',
+      pioneerStartDate: '2020-01-01T00:00:00.000Z',
+    }
+
+    const migrated = migratePreferencesPersistedState(v3State, 3)
+
+    expect(migrated.tenureStartDate).toBeNull()
+    expect(migrated).not.toHaveProperty('pioneerStartDate')
+  })
+
+  it('also renames the matching preferenceUpdatedAt entry (and drops it on stale-date case)', () => {
+    const v3State = {
+      role: 'regularPioneer',
+      pioneerStartDate: '2020-01-01T00:00:00.000Z',
+      preferenceUpdatedAt: {
+        pioneerStartDate: 1700000000000,
+        otherKey: 1700000001000,
+      },
+    }
+
+    const migrated = migratePreferencesPersistedState(v3State, 3)
+
+    expect(migrated.preferenceUpdatedAt.tenureStartDate).toBe(1700000000000)
+    expect(migrated.preferenceUpdatedAt.otherKey).toBe(1700000001000)
+    expect(migrated.preferenceUpdatedAt).not.toHaveProperty('pioneerStartDate')
+  })
+
+  it('drops the preferenceUpdatedAt entry when the value is dropped (role has no Tenure Type)', () => {
+    const v3State = {
+      role: 'publisher',
+      pioneerStartDate: '2020-01-01T00:00:00.000Z',
+      preferenceUpdatedAt: {
+        pioneerStartDate: 1700000000000,
+        otherKey: 1700000001000,
+      },
+    }
+
+    const migrated = migratePreferencesPersistedState(v3State, 3)
+
+    expect(migrated.preferenceUpdatedAt).not.toHaveProperty('pioneerStartDate')
+    expect(migrated.preferenceUpdatedAt).not.toHaveProperty('tenureStartDate')
+    expect(migrated.preferenceUpdatedAt.otherKey).toBe(1700000001000)
+  })
+
+  it('is idempotent — re-running on an already-v4 state is a no-op', () => {
+    const v3State = {
+      role: 'regularPioneer',
+      pioneerStartDate: '2020-01-01T00:00:00.000Z',
+    }
+    const v4State = migratePreferencesPersistedState(v3State, 3)
+    const v4Again = migratePreferencesPersistedState(v4State, 4)
+
+    expect(JSON.stringify(v4Again)).toEqual(JSON.stringify(v4State))
+  })
+
+  it('prefers the new key when both pioneerStartDate and tenureStartDate exist (downgrade-then-upgrade defensive)', () => {
+    const mixedState = {
+      role: 'regularPioneer',
+      pioneerStartDate: '2018-01-01T00:00:00.000Z',
+      tenureStartDate: '2022-05-15T00:00:00.000Z',
+    }
+
+    const migrated = migratePreferencesPersistedState(mixedState, 3)
+
+    expect(migrated.tenureStartDate).toBe('2022-05-15T00:00:00.000Z')
+    expect(migrated).not.toHaveProperty('pioneerStartDate')
+  })
+
+  it('chains cleanly through v0 → v4 (rename + tenure rename apply, value preserved)', () => {
+    const v0State = {
+      excludedWeekdays: [0, 6],
+      publisher: 'regularPioneer',
+      pioneerStartDate: '2020-01-01T00:00:00.000Z',
+    }
+
+    const migrated = migratePreferencesPersistedState(v0State, 0)
+
+    expect(migrated.role).toBe('regularPioneer')
+    expect(migrated.tenureStartDate).toBe('2020-01-01T00:00:00.000Z')
+    expect(migrated.offDays).toEqual([0, 6])
+    expect(migrated).not.toHaveProperty('pioneerStartDate')
+    expect(migrated).not.toHaveProperty('publisher')
+    expect(migrated).not.toHaveProperty('excludedWeekdays')
+  })
+
+  it('treats a null pioneerStartDate as null tenureStartDate (no spurious drop)', () => {
+    const v3State = {
+      role: 'regularPioneer',
+      pioneerStartDate: null,
+    }
+    const migrated = migratePreferencesPersistedState(v3State, 3)
+    expect(migrated.tenureStartDate).toBeNull()
+    expect(migrated).not.toHaveProperty('pioneerStartDate')
+  })
+
+  it('leaves a payload without pioneerStartDate untouched (no synthesized field)', () => {
+    const v3State = { role: 'regularPioneer' }
+    const migrated = migratePreferencesPersistedState(v3State, 3)
+    expect(migrated).not.toHaveProperty('pioneerStartDate')
+    // The field default is filled at hydration time by combine(); the
+    // migration doesn't need to introduce the new key when no legacy value
+    // exists.
+    expect(migrated).not.toHaveProperty('tenureStartDate')
+  })
+})

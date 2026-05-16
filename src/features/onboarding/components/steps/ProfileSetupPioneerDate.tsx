@@ -18,7 +18,7 @@ interface Props {
 
 const ProfileSetupPioneerDate = ({ goBack, goNext }: Props) => {
   const theme = useTheme()
-  const { role, pioneerStartDate, set } = usePreferences()
+  const { role, tenureStartDate, set } = usePreferences()
   const labels = getStartDateLabels(role)
 
   const handleContinue = () => {
@@ -67,9 +67,9 @@ const ProfileSetupPioneerDate = ({ goBack, goNext }: Props) => {
               {i18n.t(labels.label)}
             </Text>
             <DateTimePicker
-              value={pioneerStartDate ? new Date(pioneerStartDate) : new Date()}
+              value={tenureStartDate ? new Date(tenureStartDate) : new Date()}
               onChange={(_e, date) => {
-                if (date) set({ pioneerStartDate: date })
+                if (date) set({ tenureStartDate: date })
               }}
               maximumDate={new Date()}
               iOSMode='date'

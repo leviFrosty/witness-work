@@ -2,6 +2,19 @@ import { monthCreditMaxMinutes } from '@/constants/serviceReports'
 import { getEffectiveMilestones } from '@/lib/milestones'
 import type { Publisher, PublisherHours } from '@/types/publisher'
 
+/**
+ * Glossary: **Tenure Type** — which Tenure clock applies to the User's current
+ * Publisher. Two values: `'fullTimeService'` (regular pioneer, special pioneer,
+ * circuit overseer — these three roles share a single clock) and
+ * `'auxiliaryPioneer'` (regularAuxiliary). Regular Publisher and Custom have no
+ * Tenure Type — they don't track tenure at all (`null`).
+ *
+ * The **Tenure Start Date** persists across Publisher changes _within_ the same
+ * Tenure Type and resets across Tenure Type changes (including any move to/from
+ * a no-Tenure-Type role).
+ */
+export type TenureType = 'fullTimeService' | 'auxiliaryPioneer'
+
 export type PublisherCapabilities = {
   type: Publisher
   entryMode: 'checkbox' | 'hours'
@@ -24,27 +37,60 @@ export type PublisherCapabilities = {
    */
   isInFullTimeService: boolean
   /**
-   * Whether this role has a pioneering/auxiliary tenure start date the app
-   * displays (e.g. "regular pioneer since 2018"). False for plain publishers
-   * and the custom role — they have no equivalent tenure milestone here.
+   * Which **Tenure Type** this role belongs to (`'fullTimeService'`,
+   * `'auxiliaryPioneer'`, or `null` for roles that don't track tenure). Drives
+   * the reset semantics on `setRole` (`src/stores/preferences.ts`): the Tenure
+   * Start Date persists across same-type transitions and resets on any
+   * cross-type transition.
    */
-  tracksPioneerStartDate: boolean
+  tenureType: TenureType | null
+  /**
+   * Whether this role has a tenure start date the app displays (e.g. "regular
+   * pioneer since 2018"). Convenience alias for `tenureType !== null`. False
+   * for plain publishers and the custom role — they have no Tenure Type.
+   */
+  tracksTenure: boolean
   showsTimer: boolean
   showsYearTabs: boolean
   milestones: number[]
 }
 
-const FULL_TIME_SERVICE_PUBLISHERS: ReadonlyArray<Publisher> = [
-  'regularPioneer',
-  'specialPioneer',
-  'circuitOverseer',
-]
+/**
+ * Maps a Publisher role to its **Tenure Type** (or `null` when the role has no
+ * Tenure clock). Single source of truth for the role → Tenure Type mapping
+ * defined in the glossary and in `CONTEXT.md`'s "Relationships" section:
+ *
+ * - Full-Time Service: `regularPioneer`, `specialPioneer`, `circuitOverseer`
+ * - Auxiliary Pioneer: `regularAuxiliary`
+ * - No Tenure Type: `publisher`, `custom`
+ *
+ * Used by the `setRole` reset semantics and by `tracksTenure`/
+ * `isInFullTimeService` capability flags.
+ */
+export const getTenureType = (publisher: Publisher): TenureType | null => {
+  switch (publisher) {
+    case 'regularPioneer':
+    case 'specialPioneer':
+    case 'circuitOverseer':
+      return 'fullTimeService'
+    case 'regularAuxiliary':
+      return 'auxiliaryPioneer'
+    case 'publisher':
+    case 'custom':
+      return null
+  }
+}
 
 export const isInFullTimeService = (publisher: Publisher): boolean =>
-  FULL_TIME_SERVICE_PUBLISHERS.includes(publisher)
+  getTenureType(publisher) === 'fullTimeService'
 
-export const tracksPioneerStartDate = (publisher: Publisher): boolean =>
-  isInFullTimeService(publisher) || publisher === 'regularAuxiliary'
+/**
+ * Whether the role has a Tenure clock at all (Full-Time Service OR Auxiliary
+ * Pioneer). Convenience predicate — equivalent to `getTenureType(publisher) !==
+ * null`.
+ */
+export const tracksTenure = (publisher: Publisher): boolean =>
+  getTenureType(publisher) !== null
 
 /**
  * Whether this role enters service time as a "did I go out?" checkbox (the
@@ -147,7 +193,8 @@ export const derivePublisherCapabilities = (
       userSpecifiedHasAnnualGoal
     ),
     isInFullTimeService: isInFullTimeService(publisher),
-    tracksPioneerStartDate: tracksPioneerStartDate(publisher),
+    tenureType: getTenureType(publisher),
+    tracksTenure: tracksTenure(publisher),
     showsTimer: hoursMode,
     showsYearTabs: hoursMode,
     milestones: getEffectiveMilestones(

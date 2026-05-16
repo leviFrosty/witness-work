@@ -111,14 +111,14 @@ const ProfileDetailOverlay = ({ origin, open, onClose }: Props) => {
   const insets = useSafeAreaInsets()
   const navigation = useNavigation<RootStackNavigation>()
   const { width: winW, height: winH } = useWindowDimensions()
-  const { pioneerStartDate } = usePreferences()
+  const { tenureStartDate } = usePreferences()
   const { avatar } = useProfile()
 
   const handleEdit = () => {
     onClose()
     navigation.navigate('PreferencesPublisher')
   }
-  const { type: publisher, tracksPioneerStartDate, entryMode } = usePublisher()
+  const { type: publisher, tracksTenure, entryMode } = usePublisher()
   const { name: trimmedName } = useUser()
   const { since: supporterSince } = useIsSupporter()
   const { conversations } = useConversations()
@@ -329,14 +329,13 @@ const ProfileDetailOverlay = ({ origin, open, onClose }: Props) => {
                 </View>
               )}
 
-              {(tracksPioneerStartDate && pioneerStartDate) ||
-              supporterSince ? (
+              {(tracksTenure && tenureStartDate) || supporterSince ? (
                 <View style={{ gap: 10 }}>
-                  {tracksPioneerStartDate && pioneerStartDate && (
+                  {tracksTenure && tenureStartDate && (
                     <SinceBadge
                       icon={faStar}
                       label={i18n.t(getStartDateLabels(publisher).badge)}
-                      value={moment(pioneerStartDate).format('MMMM YYYY')}
+                      value={moment(tenureStartDate).format('MMMM YYYY')}
                       tint={theme.colors.indigo}
                       tintBg={theme.colors.indigoTranslucent}
                     />

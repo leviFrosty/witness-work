@@ -1136,7 +1136,7 @@ const SegmentBar = ({
 
 const YourPlanPreview = ({ goBack, goNext }: Props) => {
   const theme = useTheme()
-  const { role, publisherHours, pioneerStartDate, onboardingIntents } =
+  const { role, publisherHours, tenureStartDate, onboardingIntents } =
     usePreferences()
   const { name: trimmedName, hasName } = useUser()
 
@@ -1144,11 +1144,11 @@ const YourPlanPreview = ({ goBack, goNext }: Props) => {
   const publisherLabel = i18n.t(role)
   const entryMode = getEntryMode(role)
 
-  const pioneering = isInFullTimeService(role) && pioneerStartDate
+  const pioneering = isInFullTimeService(role) && tenureStartDate
   const pioneeringLine = pioneering
     ? i18n.t('yourPlanPioneeringSince', {
-        date: moment(pioneerStartDate).format('MMM YYYY'),
-        days: Math.max(1, moment().diff(moment(pioneerStartDate), 'days')),
+        date: moment(tenureStartDate).format('MMM YYYY'),
+        days: Math.max(1, moment().diff(moment(tenureStartDate), 'days')),
       })
     : null
 

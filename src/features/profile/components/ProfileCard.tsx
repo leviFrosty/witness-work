@@ -102,7 +102,7 @@ const ProfileCard = ({ preview, editable, onPressIncomplete }: Props) => {
   const theme = useTheme()
   const {
     installedOn,
-    pioneerStartDate,
+    tenureStartDate,
     profileCardShaderEnabled,
     profileCardShaderId,
   } = usePreferences()
@@ -202,7 +202,7 @@ const ProfileCard = ({ preview, editable, onPressIncomplete }: Props) => {
     : i18n.t('profileGreetingNoName')
 
   const tenure: Tenure = (() => {
-    if (isInFullTimeService && pioneerStartDate) {
+    if (isInFullTimeService && tenureStartDate) {
       const tone: TenureTone =
         publisher === 'specialPioneer'
           ? 'specialPioneer'
@@ -213,17 +213,17 @@ const ProfileCard = ({ preview, editable, onPressIncomplete }: Props) => {
         tone,
         icon: faStar,
         tint: theme.colors.indigo,
-        text: buildTenureText(tone, daysSince(new Date(pioneerStartDate))),
+        text: buildTenureText(tone, daysSince(new Date(tenureStartDate))),
       }
     }
-    if (publisher === 'regularAuxiliary' && pioneerStartDate) {
+    if (publisher === 'regularAuxiliary' && tenureStartDate) {
       return {
         tone: 'regularAuxiliary',
         icon: faStar,
         tint: theme.colors.indigo,
         text: buildTenureText(
           'regularAuxiliary',
-          daysSince(new Date(pioneerStartDate))
+          daysSince(new Date(tenureStartDate))
         ),
       }
     }

@@ -15,6 +15,9 @@
  * - `preferencesStore.values.publisher` → `role` (the field stores a `Publisher`
  *   enum value — only the field name renamed; the leaf enum value `'publisher'`
  *   for Regular Publisher is canonical and unchanged)
+ * - `preferencesStore.values.pioneerStartDate` → `tenureStartDate` (wave-4 rename
+ *   — the glossary's **Tenure Start Date** is canonical; the legacy name was
+ *   misleading because regular auxiliary's tenure was also stored here)
  * - The matching keys inside `preferencesStore.updatedAt`
  * - `preferencesStore.values.{name,avatar,customAvatarBackground,hasCompletedProfileSetup}`
  *   → `profileStore.values.<same>` (wave-3 store split). Older peer devices
@@ -61,9 +64,11 @@ export function normalizeLegacyPayloadFieldNames(d: any): void {
     renameKey(prefs.values, 'excludedWeekdays', 'offDays')
     renameKey(prefs.values, 'meetingWeekdays', 'meetingDays')
     renameKey(prefs.values, 'publisher', 'role')
+    renameKey(prefs.values, 'pioneerStartDate', 'tenureStartDate')
     renameKey(prefs.updatedAt, 'excludedWeekdays', 'offDays')
     renameKey(prefs.updatedAt, 'meetingWeekdays', 'meetingDays')
     renameKey(prefs.updatedAt, 'publisher', 'role')
+    renameKey(prefs.updatedAt, 'pioneerStartDate', 'tenureStartDate')
   }
 
   routeLegacyProfileFields(d)

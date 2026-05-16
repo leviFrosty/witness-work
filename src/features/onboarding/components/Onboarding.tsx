@@ -26,7 +26,7 @@ import useServiceReport from '@/stores/serviceReport'
 import { ServiceReportsByYears } from '@/types/serviceReport'
 import {
   effectiveHasAnnualGoal,
-  tracksPioneerStartDate,
+  tracksTenure,
 } from '@/lib/publisherCapabilities'
 import { Publisher } from '@/types/publisher'
 import moment from 'moment'
@@ -92,7 +92,7 @@ const allSteps: StepDef[] = [
     id: 'pioneerDate',
     Component: ProfileSetupPioneerDate,
     countsTowardProgress: true,
-    showIf: ({ publisher }) => tracksPioneerStartDate(publisher),
+    showIf: ({ publisher }) => tracksTenure(publisher),
   },
   {
     id: 'yourPlanPreview',

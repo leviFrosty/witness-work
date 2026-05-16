@@ -5,7 +5,7 @@ import {
   isSupporterNudgeEligible,
   type SupporterNudgeEligibilityInput,
 } from '@/features/supporter/lib/supporterNudge'
-import { ServiceReportsByYears } from '@/types/serviceReport'
+import { TimeEntriesByYear } from '@/types/timeEntry'
 
 // Long-tenure, fully-engaged baseline: every gate other than the one under
 // test passes. Individual cases override only what they need.
@@ -15,7 +15,7 @@ const wellPastIntroGrace = moment(now)
   .subtract(SUPPORTER_NUDGE_THRESHOLDS.introGraceDays + 1, 'days')
   .valueOf()
 
-const reportsWithSixMonths: ServiceReportsByYears = {
+const reportsWithSixMonths: TimeEntriesByYear = {
   2025: {
     0: [{ id: 'a', hours: 10, minutes: 0, date: new Date() } as never],
     1: [{ id: 'b', hours: 10, minutes: 0, date: new Date() } as never],

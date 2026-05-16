@@ -16,8 +16,8 @@ import { getEntryMode } from '@/lib/publisherCapabilities'
 import {
   DayPlan,
   MinuteDisplayFormat,
-  ServiceReportsByYears,
-} from '@/types/serviceReport'
+  TimeEntriesByYear,
+} from '@/types/timeEntry'
 import { Visit } from '@/types/visit'
 
 export type ReportMode = 'hours' | 'checkbox'
@@ -74,7 +74,7 @@ export type ReportFields = {
 }
 
 export type BuildReportArgs = {
-  serviceReports: ServiceReportsByYears
+  serviceReports: TimeEntriesByYear
   publisher: Publisher
   publisherHours: PublisherHours
   overrideCreditLimit: boolean

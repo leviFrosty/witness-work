@@ -141,7 +141,7 @@ function routeLegacyProfileFields(d: any): void {
 }
 
 /**
- * Per-ServiceReport rewrite of the legacy `ldc: true` flag onto the LDC builtin
+ * Per-TimeEntry rewrite of the legacy `ldc: true` flag onto the LDC builtin
  * Category id. Mirrors the boot-time `migrateLdcToCategory` so payloads from
  * older peers don't re-introduce `ldc` after the local install has already
  * collapsed it.

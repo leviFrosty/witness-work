@@ -5,7 +5,7 @@ import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view
 
 import useServiceReport from '@/stores/serviceReport'
 import { getLifetimeHours } from '@/lib/serviceReport'
-import { ServiceReport } from '@/types/serviceReport'
+import { TimeEntry } from '@/types/timeEntry'
 import i18n from '@/lib/locales'
 
 import Empty from '@/components/ui/Empty'
@@ -31,8 +31,8 @@ const ProgressAllTimeTab = ({ onYearPress }: ProgressAllTimeTabProps) => {
   const insets = useSafeAreaInsets()
   const { serviceReports } = useServiceReport()
 
-  const flat = useMemo<ServiceReport[]>(() => {
-    const arr: ServiceReport[] = []
+  const flat = useMemo<TimeEntry[]>(() => {
+    const arr: TimeEntry[] = []
     for (const year in serviceReports) {
       const months = serviceReports[year]
       for (const month in months) {

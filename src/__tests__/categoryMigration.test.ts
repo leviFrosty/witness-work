@@ -14,10 +14,10 @@ import {
   resolveCategoryForReport,
 } from '@/lib/categories'
 import {
-  LegacyServiceReport,
-  ServiceReport,
-  ServiceReportsByYears,
-} from '@/types/serviceReport'
+  LegacyTimeEntry,
+  TimeEntry,
+  TimeEntriesByYear,
+} from '@/types/timeEntry'
 import { normalizeDateForStorage } from '@/lib/normalizeDate'
 
 type ReportInput = {
@@ -31,7 +31,7 @@ type ReportInput = {
   credit?: boolean
 }
 
-const makeReport = (input: ReportInput, idx: number): LegacyServiceReport => ({
+const makeReport = (input: ReportInput, idx: number): LegacyTimeEntry => ({
   id: input.id ?? `r-${idx}`,
   date: normalizeDateForStorage(
     new Date(Date.UTC(input.year, input.month, 15))
@@ -43,10 +43,10 @@ const makeReport = (input: ReportInput, idx: number): LegacyServiceReport => ({
   credit: input.credit,
 })
 
-const buildReports = (inputs: ReportInput[]): ServiceReportsByYears => {
-  const out: ServiceReportsByYears = {}
+const buildReports = (inputs: ReportInput[]): TimeEntriesByYear => {
+  const out: TimeEntriesByYear = {}
   inputs.forEach((input, idx) => {
-    const report = makeReport(input, idx) as ServiceReport
+    const report = makeReport(input, idx) as TimeEntry
     const m = moment(report.date)
     const y = m.year()
     const mo = m.month()
@@ -176,7 +176,7 @@ describe('migrateTagsToCategories', () => {
 
   it('absorbs unused preferences.serviceReportTags entries (object form)', () => {
     // The user defined "Bethel" as credit in their saved tag list but never
-    // attached a ServiceReport to it. The Category should still be created
+    // attached a TimeEntry to it. The Category should still be created
     // with isCredit: true so the user's intent isn't lost.
     const reports = buildReports([])
     const result = migrateTagsToCategories({
@@ -225,7 +225,7 @@ describe('migrateTagsToCategories', () => {
     expect(ldcReport.categoryId).toBeUndefined()
     // `migrateTagsToCategories` leaves the legacy LDC flag alone — the
     // LDC → builtin Category collapse runs as a separate migration step.
-    expect((ldcReport as LegacyServiceReport).ldc).toBe(true)
+    expect((ldcReport as LegacyTimeEntry).ldc).toBe(true)
   })
 
   it('trims tag names so "Hospital" and " Hospital " collapse to one Category', () => {
@@ -278,7 +278,7 @@ describe('resolveCategoryForReport', () => {
       name: 'Hospital',
       isCredit: true,
     }
-    const report: ServiceReport = {
+    const report: TimeEntry = {
       id: 'r1',
       hours: 1,
       minutes: 0,
@@ -289,7 +289,7 @@ describe('resolveCategoryForReport', () => {
   })
 
   it('falls back to a synthetic Category for legacy `tag`-only entries', () => {
-    const report: ServiceReport = {
+    const report: TimeEntry = {
       id: 'r1',
       hours: 1,
       minutes: 0,
@@ -304,7 +304,7 @@ describe('resolveCategoryForReport', () => {
   })
 
   it('returns null for entries with neither categoryId nor tag', () => {
-    const report: ServiceReport = {
+    const report: TimeEntry = {
       id: 'r1',
       hours: 1,
       minutes: 0,

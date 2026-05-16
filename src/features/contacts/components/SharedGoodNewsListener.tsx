@@ -12,7 +12,7 @@ import {
   navigationRef,
 } from '@/features/contacts/lib/linking'
 import { isContactShareLink } from '@/features/contacts/lib/contactShareLink'
-import { ServiceReport } from '@/types/serviceReport'
+import { TimeEntry } from '@/types/timeEntry'
 
 /**
  * Schemes that the host app must hand off to the system instead of trying to
@@ -72,7 +72,7 @@ export default function SharedGoodNewsListener() {
           .length > 0
       if (alreadyReported) return
 
-      const report: ServiceReport = {
+      const report: TimeEntry = {
         date: new Date(),
         hours: 0,
         minutes: 0,

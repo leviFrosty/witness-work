@@ -3,10 +3,10 @@ import { Visit, VisitTombstone } from '@/types/visit'
 import { CustomFieldDefinition } from '@/types/customField'
 import {
   DayPlan,
-  ServiceReport,
-  ServiceReportsByYears,
-  ServiceReportTombstone,
-} from '@/types/serviceReport'
+  TimeEntry,
+  TimeEntriesByYear,
+  TimeEntryTombstone,
+} from '@/types/timeEntry'
 import { Category, CategoryTombstone } from '@/types/category'
 import { RecurringPlan } from '@/lib/serviceReport'
 import { SyncPayload } from '@/app/sync/payload'
@@ -27,10 +27,10 @@ export type MergeResult = {
   customFieldDefs: CustomFieldDefinition[]
   conversations: Visit[]
   deletedConversations: VisitTombstone[]
-  serviceReports: ServiceReportsByYears
+  serviceReports: TimeEntriesByYear
   dayPlans: DayPlan[]
   recurringPlans: RecurringPlan[]
-  deletedServiceReports: ServiceReportTombstone[]
+  deletedServiceReports: TimeEntryTombstone[]
   categories: Category[]
   deletedCategories: CategoryTombstone[]
   preferencesValues: Record<string, unknown>
@@ -47,10 +47,10 @@ type LocalState = {
   customFieldDefs: CustomFieldDefinition[]
   conversations: Visit[]
   deletedConversations: VisitTombstone[]
-  serviceReports: ServiceReportsByYears
+  serviceReports: TimeEntriesByYear
   dayPlans: DayPlan[]
   recurringPlans: RecurringPlan[]
-  deletedServiceReports: ServiceReportTombstone[]
+  deletedServiceReports: TimeEntryTombstone[]
   categories: Category[]
   deletedCategories: CategoryTombstone[]
   preferencesValues: Record<string, unknown>
@@ -331,17 +331,17 @@ function applyTombstones<T extends WithId>(
 }
 
 function mergeServiceReports(
-  local: ServiceReportsByYears,
-  remote: ServiceReportsByYears
-): { reports: ServiceReportsByYears; changed: boolean } {
+  local: TimeEntriesByYear,
+  remote: TimeEntriesByYear
+): { reports: TimeEntriesByYear; changed: boolean } {
   // Flatten, merge by id, then rebuild the nested structure. O(n) total.
-  const flatLocal: ServiceReport[] = []
+  const flatLocal: TimeEntry[] = []
   for (const year of Object.values(local)) {
     for (const month of Object.values(year)) {
       flatLocal.push(...month)
     }
   }
-  const flatRemote: ServiceReport[] = []
+  const flatRemote: TimeEntry[] = []
   for (const year of Object.values(remote)) {
     for (const month of Object.values(year)) {
       flatRemote.push(...month)
@@ -349,7 +349,7 @@ function mergeServiceReports(
   }
   const { merged, changed } = mergeById(flatLocal, flatRemote)
 
-  const rebuilt: ServiceReportsByYears = {}
+  const rebuilt: TimeEntriesByYear = {}
   for (const r of merged) {
     const d = new Date(r.date)
     const year = d.getFullYear()
@@ -362,12 +362,12 @@ function mergeServiceReports(
 }
 
 function applyServiceReportTombstones(
-  reports: ServiceReportsByYears,
-  tombstones: ServiceReportTombstone[]
-): ServiceReportsByYears {
+  reports: TimeEntriesByYear,
+  tombstones: TimeEntryTombstone[]
+): TimeEntriesByYear {
   if (tombstones.length === 0) return reports
   const tombsById = new Map(tombstones.map((t) => [t.id, t]))
-  const out: ServiceReportsByYears = {}
+  const out: TimeEntriesByYear = {}
   for (const [yearKey, year] of Object.entries(reports)) {
     for (const [monthKey, month] of Object.entries(year)) {
       const kept = month.filter((r) => {

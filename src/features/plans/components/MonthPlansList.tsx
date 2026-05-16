@@ -6,7 +6,7 @@ import Text from '@/components/ui/MyText'
 import useTheme from '@/contexts/theme'
 import useServiceReport from '@/stores/serviceReport'
 import i18n from '@/lib/locales'
-import { DayPlan } from '@/types/serviceReport'
+import { DayPlan } from '@/types/timeEntry'
 import {
   RecurringPlan,
   getPlansIntersectingDay,

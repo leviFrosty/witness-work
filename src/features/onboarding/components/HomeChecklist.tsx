@@ -32,7 +32,7 @@ import { HomeTabStackNavigation } from '@/types/homeStack'
 import { RootStackNavigation } from '@/types/rootStack'
 import DismissableCard from '@/components/DismissableCard'
 import { getMonthsReports } from '@/lib/serviceReport'
-import { ServiceReport as ServiceReportType } from '@/types/serviceReport'
+import { TimeEntry } from '@/types/timeEntry'
 
 /**
  * Canonical checklist item ids. These strings are intentionally stable so Phase
@@ -123,7 +123,7 @@ const HomeChecklist = () => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const onboardingIntentsRaw = (prefs as any).onboardingIntents
 
-  // Any ServiceReport row (dayPlans/recurringPlans intentionally excluded —
+  // Any TimeEntry row (dayPlans/recurringPlans intentionally excluded —
   // the aha moment is a _logged_ minute, not a planned one).
   const hasAnyServiceReport = useMemo(() => {
     for (const year of Object.keys(serviceReports)) {
@@ -147,7 +147,7 @@ const HomeChecklist = () => {
 
   const handleCheckOffMonth = useCallback(() => {
     if (hasReportThisMonth) return
-    const report: ServiceReportType = {
+    const report: TimeEntry = {
       date: new Date(),
       hours: 0,
       minutes: 0,

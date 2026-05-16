@@ -4,8 +4,8 @@ import { Publisher, PublisherHours } from '@/types/publisher'
 import {
   DayPlan,
   MinuteDisplayFormat,
-  ServiceReportsByYears,
-} from '@/types/serviceReport'
+  TimeEntriesByYear,
+} from '@/types/timeEntry'
 import { RecurringPlan } from '@/lib/serviceReport'
 import {
   DefaultNavigationMapProvider,
@@ -142,7 +142,7 @@ export type WidgetSnapshot = {
 
 export type BuildSnapshotArgs = {
   // Report inputs
-  serviceReports: ServiceReportsByYears
+  serviceReports: TimeEntriesByYear
   publisher: Publisher
   publisherHours: PublisherHours
   overrideCreditLimit: boolean

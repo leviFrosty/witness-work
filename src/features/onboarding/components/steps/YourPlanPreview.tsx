@@ -41,7 +41,7 @@ import useUser from '@/hooks/useUser'
 import { getEntryMode, isInFullTimeService } from '@/lib/publisherCapabilities'
 import { useMarkerColors } from '@/hooks/useMarkerColors'
 import { Theme } from '@/types/theme'
-import type { DayPlan, ServiceReport } from '@/types/serviceReport'
+import type { DayPlan, TimeEntry } from '@/types/timeEntry'
 
 interface Props {
   goBack: () => void
@@ -531,7 +531,7 @@ const PlanWeekVisual = () => {
     [startOfDisplayWeek]
   )
 
-  const mockReports: ServiceReport[] = useMemo(
+  const mockReports: TimeEntry[] = useMemo(
     () => [
       {
         id: 'wp-mock-r-1',

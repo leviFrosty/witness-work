@@ -300,7 +300,7 @@ const makeReportsPayload = (
   },
 })
 
-describe('normalizeLegacyPayloadFieldNames — ServiceReport.ldc collapse', () => {
+describe('normalizeLegacyPayloadFieldNames — TimeEntry.ldc collapse', () => {
   it('rewrites a legacy `ldc: true` entry to the LDC builtin Category', () => {
     const d = makeReportsPayload([
       { id: 'r1', hours: 2, minutes: 0, ldc: true, credit: true },

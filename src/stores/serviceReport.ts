@@ -3,11 +3,11 @@ import { create } from 'zustand'
 import { persist, combine, createJSONStorage } from 'zustand/middleware'
 import {
   DayPlan,
-  ServiceReport,
-  ServiceReportsByYears,
-  ServiceReportTombstone,
-  ServiceYear,
-} from '@/types/serviceReport'
+  TimeEntry,
+  TimeEntriesByYear,
+  TimeEntryTombstone,
+  TimeEntriesByMonth,
+} from '@/types/timeEntry'
 import moment from 'moment'
 import {
   getReport,
@@ -26,26 +26,23 @@ import { hasMigratedFromAsyncStorage, MmkvStorage } from '@/stores/mmkv'
 import * as Notifications from 'expo-notifications'
 
 const initialState = {
-  serviceReports: {} as ServiceReportsByYears,
+  serviceReports: {} as TimeEntriesByYear,
   dayPlans: [] as DayPlan[],
   recurringPlans: [] as RecurringPlan[],
   /**
    * Tombstones for deleted service reports. Populated by `deleteServiceReport`
    * so iCloud sync can propagate deletions across devices.
    */
-  deletedServiceReports: [] as ServiceReportTombstone[],
+  deletedServiceReports: [] as TimeEntryTombstone[],
 }
 
-/**
- * Migrates legacy service report data: `ServiceReport[]` ->
- * `ServiceReportsByYears`
- */
+/** Migrates legacy service report data: `TimeEntry[]` -> `TimeEntriesByYear` */
 export const migrateServiceReports = (
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   oldServiceReports: any
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
 ): any => {
-  const years: ServiceReportsByYears = {}
+  const years: TimeEntriesByYear = {}
 
   for (const report of oldServiceReports) {
     const month = moment(report.date).month()
@@ -67,14 +64,14 @@ export const migrateServiceReports = (
 /**
  * Persist-middleware migration entry point. Chains:
  *
- * - V0 → v1: reshape `ServiceReport[]` into `ServiceReportsByYears` (legacy).
+ * - V0 → v1: reshape `TimeEntry[]` into `TimeEntriesByYear` (legacy).
  * - V1 → v2: anchor every persisted Date to noon UTC so calendar days survive
  *   device timezone changes. See `migrateNormalizeDates`.
  * - V2 → v3: structural bump for the tag → Category refactor. The actual
  *   tag-to-categoryId rewrite happens in a boot-time runner
  *   (`migrateTagsToCategories` in `src/lib/categories.ts`) that needs to
  *   coordinate writes across three stores; this version bump exists so the
- *   ServiceReport store's persisted shape is tagged as post-migration once the
+ *   TimeEntry store's persisted shape is tagged as post-migration once the
  *   runner has executed. The migration step itself is a no-op at the persist
  *   layer — the boot runner is the source of truth.
  * - V3 → v4: structural bump for the LDC collapse refactor. The actual `ldc:
@@ -93,7 +90,7 @@ export const migrateServiceReportPersistedState = (
 ): any => {
   let next = persistedState
   if (version === 0) {
-    const previousReports = (next as { serviceReports: ServiceReport[] })
+    const previousReports = (next as { serviceReports: TimeEntry[] })
       .serviceReports
     const years = migrateServiceReports(previousReports)
     next = { ...next, serviceReports: years }
@@ -127,7 +124,7 @@ export const useServiceReport = create(
   persist(
     combine(initialState, (set) => ({
       set,
-      addServiceReport: (report: ServiceReport) =>
+      addServiceReport: (report: TimeEntry) =>
         set(({ serviceReports }) => {
           const reports = { ...serviceReports }
           const normalizedDate = normalizeDateForStorage(report.date)
@@ -444,7 +441,7 @@ export const useServiceReport = create(
             recurringPlans: recurringPlans.filter((plan) => plan.id !== id),
           }
         }),
-      deleteServiceReport: (_report: ServiceReport) =>
+      deleteServiceReport: (_report: TimeEntry) =>
         set(({ serviceReports, deletedServiceReports }) => {
           const reports = { ...serviceReports }
           const foundReport = getReport(reports, _report)
@@ -472,11 +469,11 @@ export const useServiceReport = create(
             ],
           }
         }),
-      deleteRolloverPair: (_report: ServiceReport) =>
+      deleteRolloverPair: (_report: TimeEntry) =>
         set(({ serviceReports, deletedServiceReports }) => {
           const groupId = _report.rolloverGroupId
           const now = Date.now()
-          const reports: ServiceReportsByYears = {}
+          const reports: TimeEntriesByYear = {}
           const removedIds: string[] = []
 
           // Walk the whole tree once. With or without a groupId we always
@@ -484,7 +481,7 @@ export const useServiceReport = create(
           // sibling sharing it. Pre-grouping legacy entries hit the no-id
           // path and just delete the one row.
           for (const yearKey of Object.keys(serviceReports)) {
-            const yearMap: ServiceYear = {}
+            const yearMap: TimeEntriesByMonth = {}
             const months = serviceReports[yearKey]
             for (const monthKey of Object.keys(months)) {
               const filtered = months[monthKey].filter((r) => {
@@ -521,10 +518,10 @@ export const useServiceReport = create(
             ],
           }
         }),
-      updateServiceReport: (serviceReport: ServiceReport) => {
+      updateServiceReport: (serviceReport: TimeEntry) => {
         set(({ serviceReports }) => {
           const reports = { ...serviceReports }
-          const normalized: ServiceReport = {
+          const normalized: TimeEntry = {
             ...serviceReport,
             date: normalizeDateForStorage(serviceReport.date),
           }

@@ -3,8 +3,8 @@ import {
   DayPlan,
   RecurringPlan,
   RecurringPlanOverride,
-  ServiceReportsByYears,
-} from '@/types/serviceReport'
+  TimeEntriesByYear,
+} from '@/types/timeEntry'
 
 /**
  * Plans and time entries store a _calendar day_, not a moment in time. We carry
@@ -59,7 +59,7 @@ export const preserveOrNormalizeStoredDate = (date: Date | string): Date => {
 
 /**
  * Reads a stored calendar-day Date in UTC mode. Use this anywhere you'd
- * otherwise call `moment(d)` on a `ServiceReport.date`, `DayPlan.date`,
+ * otherwise call `moment(d)` on a `TimeEntry.date`, `DayPlan.date`,
  * `RecurringPlan.startDate`, etc. — anything that came through
  * `normalizeDateForStorage`. UTC components are immutable across TZ changes, so
  * the calendar day is stable.
@@ -111,7 +111,7 @@ export const normalizePartialRecurringPlan = (
 }
 
 export type PersistedServiceReportState = {
-  serviceReports: ServiceReportsByYears
+  serviceReports: TimeEntriesByYear
   dayPlans: DayPlan[]
   recurringPlans: RecurringPlan[]
 }
@@ -128,7 +128,7 @@ export type PersistedServiceReportState = {
 export const migrateNormalizeDates = (
   state: PersistedServiceReportState
 ): PersistedServiceReportState => {
-  const rebucketed: ServiceReportsByYears = {}
+  const rebucketed: TimeEntriesByYear = {}
   for (const yearKey of Object.keys(state.serviceReports)) {
     const months = state.serviceReports[yearKey]
     for (const monthKey of Object.keys(months)) {

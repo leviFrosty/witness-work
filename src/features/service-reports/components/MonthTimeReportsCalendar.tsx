@@ -1,5 +1,5 @@
 import { Calendar } from 'react-native-calendars'
-import { ServiceReport } from '@/types/serviceReport'
+import { TimeEntry } from '@/types/timeEntry'
 import moment from 'moment'
 import useTheme from '@/contexts/theme'
 import { MarkedDates } from 'react-native-calendars/src/types'
@@ -12,7 +12,7 @@ import type { CalendarViewMode } from '@/components/CalendarHeader'
 type MonthTimeReportsCalendarProps = {
   month: number
   year: number
-  monthsReports: ServiceReport[] | null
+  monthsReports: TimeEntry[] | null
   setSheet: React.Dispatch<React.SetStateAction<SelectedDateSheetState>>
   viewMode?: CalendarViewMode
 }

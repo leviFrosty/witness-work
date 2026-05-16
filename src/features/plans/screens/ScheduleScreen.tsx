@@ -26,7 +26,7 @@ import { useFormattedMinutes } from '@/lib/minutes'
 import { getStartTimeInMinutes } from '@/lib/normalizeDate'
 import { RootStackNavigation } from '@/types/rootStack'
 import { HomeTabStackParamList } from '@/types/homeStack'
-import { DayPlan, ServiceReport } from '@/types/serviceReport'
+import { DayPlan, TimeEntry } from '@/types/timeEntry'
 
 import SwipeMonthNavigator from '@/components/SwipeMonthNavigator'
 import CalendarHeader, { CalendarViewMode } from '@/components/CalendarHeader'
@@ -203,7 +203,7 @@ const ScheduleScreen = ({ route }: Props) => {
   )
 
   const handleEditTimeReport = useCallback(
-    (report: ServiceReport) => {
+    (report: TimeEntry) => {
       pendingNavigation.current = () => {
         rootNavigation.navigate('Add Time', {
           existingReport: JSON.stringify(report),

@@ -1,6 +1,6 @@
 import moment from 'moment'
 import type { Visit } from '@/types/visit'
-import type { DayPlan, RecurringPlan } from '@/types/serviceReport'
+import type { DayPlan, RecurringPlan } from '@/types/timeEntry'
 import type { AssistantEvent, RecommendationShape } from '@/types/assistant'
 import { momentStoredDate, normalizeDateForStorage } from '@/lib/normalizeDate'
 import {

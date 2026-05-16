@@ -23,7 +23,7 @@ import OnboardingBackfill from '@/features/onboarding/components/steps/Onboardin
 import { hasReportsInCatchUpWindow } from '@/features/service-reports/components/OnboardingBackfillForm'
 import { usePreferences } from '@/stores/preferences'
 import useServiceReport from '@/stores/serviceReport'
-import { ServiceReportsByYears } from '@/types/serviceReport'
+import { TimeEntriesByYear } from '@/types/timeEntry'
 import {
   effectiveHasAnnualGoal,
   tracksTenure,
@@ -64,7 +64,7 @@ interface StepShowIfContext {
   publisher: Publisher
   installedOn: Date
   userSpecifiedHasAnnualGoal: boolean | 'default'
-  serviceReports: ServiceReportsByYears
+  serviceReports: TimeEntriesByYear
 }
 
 interface StepDef {

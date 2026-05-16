@@ -14,9 +14,9 @@ import { getMonthsReports } from '@/lib/serviceReport'
 import {
   DayPlan,
   RecurringPlan,
-  ServiceReport,
-  ServiceReportsByYears,
-} from '@/types/serviceReport'
+  TimeEntry,
+  TimeEntriesByYear,
+} from '@/types/timeEntry'
 import { HomeTabStackNavigation } from '@/types/homeStack'
 import { faChevronRight } from '@fortawesome/free-solid-svg-icons'
 import CalendarDay from '@/components/CalendarDay'
@@ -25,7 +25,7 @@ import type { DateData } from 'react-native-calendars'
 type Props = {
   month: number
   year: number
-  monthsReports: ServiceReport[] | null
+  monthsReports: TimeEntry[] | null
   /**
    * Override "now" — used by onboarding previews so the highlighted day is
    * deterministic regardless of when the user runs through the flow.
@@ -38,7 +38,7 @@ type Props = {
    */
   dayPlansOverride?: DayPlan[]
   recurringPlansOverride?: RecurringPlan[]
-  serviceReportsOverride?: ServiceReportsByYears
+  serviceReportsOverride?: TimeEntriesByYear
   /** Defaults to navigating to Schedule. Override for previews / mock UI. */
   onOpenSchedule?: () => void
 }

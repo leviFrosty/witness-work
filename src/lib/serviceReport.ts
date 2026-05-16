@@ -6,10 +6,10 @@ import {
   RecurringPlan,
   RecurringPlanFrequencies,
   RecurringPlanOverride,
-  ServiceReport,
-  ServiceReportsByYears,
-  ServiceYear,
-} from '@/types/serviceReport'
+  TimeEntry,
+  TimeEntriesByYear,
+  TimeEntriesByMonth,
+} from '@/types/timeEntry'
 import { hasCategory, isLdcEntry } from '@/lib/serviceReportCategory'
 import moment from 'moment'
 import { monthCreditMaxMinutes } from '@/constants/serviceReports'
@@ -21,7 +21,7 @@ import {
   normalizeDateForStorage,
 } from '@/lib/normalizeDate'
 
-// Re-exported for backwards compatibility — canonical home is `types/serviceReport`.
+// Re-exported for backwards compatibility — canonical home is `types/timeEntry`.
 export { RecurringPlanFrequencies }
 export type { MonthlyByWeekdayConfig, RecurringPlan, RecurringPlanOverride }
 
@@ -53,7 +53,7 @@ export const calculateMinutesRemaining = ({
 }
 
 export const getTotalMinutesDetailedForSpecificMonth = (
-  monthsReports: ServiceReport[],
+  monthsReports: TimeEntry[],
   month: number,
   year: number
 ) => {
@@ -126,7 +126,7 @@ export type AdjustedMinutes = {
  * default. Users can override the default credit limit through preferences.
  */
 export const adjustedMinutesForSpecificMonth = (
-  monthsReports: ServiceReport[],
+  monthsReports: TimeEntry[],
   targetMonth: number,
   targetYear: number,
   publisher?: Publisher,
@@ -192,7 +192,7 @@ export const adjustedMinutesForSpecificMonth = (
 }
 
 export const totalMinutesForSpecificMonthUpToDayOfMonth = (
-  serviceReports: ServiceReport[],
+  serviceReports: TimeEntry[],
   targetDay: number,
   targetMonth: number,
   targetYear: number
@@ -213,7 +213,7 @@ export const totalMinutesForSpecificMonthUpToDayOfMonth = (
   return totalMinutesForMonth
 }
 export const ldcMinutesForSpecificMonth = (
-  monthsReports: ServiceReport[],
+  monthsReports: TimeEntry[],
   targetMonth: number,
   targetYear: number
 ): number => {
@@ -252,7 +252,7 @@ type OtherReports = {
 }[]
 
 export const otherMinutesForSpecificMonth = (
-  monthsReports: ServiceReport[],
+  monthsReports: TimeEntry[],
   targetMonth: number,
   targetYear: number
 ): OtherReports => {
@@ -301,7 +301,7 @@ export const otherMinutesForSpecificMonth = (
 }
 
 export const standardMinutesForSpecificMonth = (
-  monthsReports: ServiceReport[],
+  monthsReports: TimeEntry[],
   targetMonth: number,
   targetYear: number
 ): number => {
@@ -349,7 +349,7 @@ export const serviceReportHoursPerMonthToGoal = ({
   serviceReports,
   serviceYear,
 }: {
-  serviceReports: ServiceReportsByYears
+  serviceReports: TimeEntriesByYear
   currentDate: {
     month: number
 
@@ -400,7 +400,7 @@ export const serviceYearsDateRange = (serviceYear: number) => {
 }
 
 export const getTotalMinutesForServiceYear = (
-  serviceYearReports: ServiceReportsByYears,
+  serviceYearReports: TimeEntriesByYear,
   serviceYear: number
 ) => {
   serviceYearReports
@@ -465,8 +465,8 @@ export const getServiceYearFromDate = (moment: moment.Moment) => {
 // Lifetime / all-time aggregation helpers
 //
 // Used by the Progress screen's "All-time" tab (LifetimeHoursCard +
-// YearByYearList). These helpers operate over a FLAT `ServiceReport[]`
-// (callers flatten the store's `ServiceReportsByYears` before passing it in)
+// YearByYearList). These helpers operate over a FLAT `TimeEntry[]`
+// (callers flatten the store's `TimeEntriesByYear` before passing it in)
 // so they stay pure and easy to test. Lifetime hours are intentionally the
 // RAW sum of `hours + minutes/60` across every report — i.e. NOT adjusted for
 // the monthly credit cap. The surrounding UI shows an "unadjusted" info
@@ -474,18 +474,18 @@ export const getServiceYearFromDate = (moment: moment.Moment) => {
 // ---------------------------------------------------------------------------
 
 /**
- * Raw lifetime hours across every `ServiceReport` — unadjusted for credit caps.
+ * Raw lifetime hours across every `TimeEntry` — unadjusted for credit caps.
  * Rounded to 1 decimal place.
  */
-export const getLifetimeHours = (serviceReports: ServiceReport[]): number => {
+export const getLifetimeHours = (serviceReports: TimeEntry[]): number => {
   return _.round(getLifetimeMinutes(serviceReports) / 60, 1)
 }
 
 /**
- * Raw lifetime minutes across every `ServiceReport` — unadjusted for credit
+ * Raw lifetime minutes across every `TimeEntry` — unadjusted for credit
  * caps. Preferred for rendering, since the display formatter takes minutes.
  */
-export const getLifetimeMinutes = (serviceReports: ServiceReport[]): number => {
+export const getLifetimeMinutes = (serviceReports: TimeEntry[]): number => {
   return serviceReports.reduce(
     (sum, report) => sum + report.hours * 60 + report.minutes,
     0
@@ -494,7 +494,7 @@ export const getLifetimeMinutes = (serviceReports: ServiceReport[]): number => {
 
 /** Earliest `date` found across all reports, or `null` if none. */
 export const getEarliestReportDate = (
-  serviceReports: ServiceReport[]
+  serviceReports: TimeEntry[]
 ): Date | null => {
   if (serviceReports.length === 0) return null
   let earliestMs = Infinity
@@ -524,7 +524,7 @@ export const getEarliestReportDate = (
  * Returns an empty array when there are no reports.
  */
 export const getServiceYearEndYearsSpan = (
-  serviceReports: ServiceReport[],
+  serviceReports: TimeEntry[],
   nowMoment?: moment.Moment
 ): number[] => {
   const earliest = getEarliestReportDate(serviceReports)
@@ -550,7 +550,7 @@ export const getServiceYearEndYearsSpan = (
  * the service year ending Aug 31 of `endYear`). Rounded to 1 dp.
  */
 export const getHoursForServiceYearEndYear = (
-  serviceReports: ServiceReport[],
+  serviceReports: TimeEntry[],
   endYear: number
 ): number => {
   return _.round(
@@ -565,7 +565,7 @@ export const getHoursForServiceYearEndYear = (
  * time-display preference.
  */
 export const getMinutesForServiceYearEndYear = (
-  serviceReports: ServiceReport[],
+  serviceReports: TimeEntry[],
   endYear: number
 ): number => {
   const startYear = endYear - 1
@@ -1094,12 +1094,12 @@ export const calculateAnnualPlannedMinutesOptimized = (
 type ReportQueryResult = {
   month: number
   year: number
-  report: ServiceReport
+  report: TimeEntry
 }
 
 export const getReport = (
-  years: ServiceReportsByYears,
-  report: ServiceReport | undefined
+  years: TimeEntriesByYear,
+  report: TimeEntry | undefined
 ): ReportQueryResult | undefined => {
   if (!report) {
     return
@@ -1124,9 +1124,9 @@ export const getReport = (
 }
 
 export const getYearsReports = (
-  serviceReports: ServiceReportsByYears,
+  serviceReports: TimeEntriesByYear,
   year: number
-): ServiceYear => {
+): TimeEntriesByMonth => {
   if (!serviceReports[year]) {
     return {}
   }
@@ -1134,10 +1134,10 @@ export const getYearsReports = (
 }
 
 export const getMonthsReports = (
-  serviceReports: ServiceReportsByYears,
+  serviceReports: TimeEntriesByYear,
   month: number | undefined,
   _year: number | undefined
-): ServiceReport[] => {
+): TimeEntry[] => {
   if (_year === undefined || month === undefined) {
     return []
   }
@@ -1150,12 +1150,12 @@ export const getMonthsReports = (
 }
 
 export const getServiceYearReports = (
-  serviceReports: ServiceReportsByYears,
+  serviceReports: TimeEntriesByYear,
   serviceYear: number
-): ServiceReportsByYears => {
-  const result: ServiceReportsByYears = {}
+): TimeEntriesByYear => {
+  const result: TimeEntriesByYear = {}
   const first = getYearsReports(serviceReports, serviceYear)
-  const firstYear: ServiceYear = {}
+  const firstYear: TimeEntriesByMonth = {}
 
   for (let month = 8; month < 12; month++) {
     if (first[month]) {
@@ -1165,7 +1165,7 @@ export const getServiceYearReports = (
   result[serviceYear] = firstYear
 
   const second = getYearsReports(serviceReports, serviceYear + 1)
-  const secondYear: ServiceYear = {}
+  const secondYear: TimeEntriesByMonth = {}
   for (let month = 0; month < 8; month++) {
     if (second[month]) {
       secondYear[month] = second[month]

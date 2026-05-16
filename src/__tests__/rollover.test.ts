@@ -1,6 +1,6 @@
 import moment from 'moment'
 import { describe, expect, it, vi } from 'vitest'
-import { ServiceReport, ServiceReportsByYears } from '@/types/serviceReport'
+import { TimeEntry, TimeEntriesByYear } from '@/types/timeEntry'
 import {
   applyRollover,
   buildRolloverEntries,
@@ -13,8 +13,8 @@ vi.mock('@/lib/logger', () => import('@/__tests__/mocks/logger'))
 const reports = (
   year: number,
   month: number,
-  entries: Partial<ServiceReport>[]
-): ServiceReportsByYears => ({
+  entries: Partial<TimeEntry>[]
+): TimeEntriesByYear => ({
   [year]: {
     [month]: entries.map((e, i) => ({
       id: e.id ?? `id-${year}-${month}-${i}`,
@@ -26,8 +26,8 @@ const reports = (
   },
 })
 
-const merge = (...all: ServiceReportsByYears[]): ServiceReportsByYears => {
-  const out: ServiceReportsByYears = {}
+const merge = (...all: TimeEntriesByYear[]): TimeEntriesByYear => {
+  const out: TimeEntriesByYear = {}
   for (const part of all) {
     for (const y of Object.keys(part)) {
       out[y] = { ...(out[y] ?? {}), ...part[y] }

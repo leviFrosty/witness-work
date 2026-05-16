@@ -15,10 +15,7 @@ import {
   LDC_BUILTIN_CATEGORY_NAME,
 } from '@/constants/categories'
 import { Category } from '@/types/category'
-import {
-  LegacyServiceReport,
-  ServiceReportsByYears,
-} from '@/types/serviceReport'
+import { LegacyTimeEntry, TimeEntriesByYear } from '@/types/timeEntry'
 import { normalizeDateForStorage } from '@/lib/normalizeDate'
 import {
   adjustedMinutesForSpecificMonth,
@@ -36,7 +33,7 @@ type ReportInput = {
   credit?: boolean
 }
 
-const makeReport = (input: ReportInput, idx: number): LegacyServiceReport => ({
+const makeReport = (input: ReportInput, idx: number): LegacyTimeEntry => ({
   id: input.id ?? `r-${idx}`,
   date: normalizeDateForStorage(
     new Date(Date.UTC(input.year, input.month, 15))
@@ -48,8 +45,8 @@ const makeReport = (input: ReportInput, idx: number): LegacyServiceReport => ({
   credit: input.credit,
 })
 
-const buildReports = (inputs: ReportInput[]): ServiceReportsByYears => {
-  const out: ServiceReportsByYears = {}
+const buildReports = (inputs: ReportInput[]): TimeEntriesByYear => {
+  const out: TimeEntriesByYear = {}
   inputs.forEach((input, idx) => {
     const report = makeReport(input, idx)
     const m = moment(report.date)
@@ -120,7 +117,7 @@ describe('migrateLdcToCategory', () => {
     const migrated = result.serviceReports[2026][0][0]
     expect(migrated.categoryId).toBe(LDC_BUILTIN_CATEGORY_ID)
     expect(migrated.credit).toBe(true)
-    expect((migrated as LegacyServiceReport).ldc).toBeUndefined()
+    expect((migrated as LegacyTimeEntry).ldc).toBeUndefined()
     expect(result.rewrittenCount).toBe(1)
     expect(result.conflictedCount).toBe(0)
   })
@@ -191,7 +188,7 @@ describe('migrateLdcToCategory', () => {
 
     const migrated = result.serviceReports[2026][0][0]
     expect(migrated.categoryId).toBe('user-cat-bethel')
-    expect((migrated as LegacyServiceReport).ldc).toBeUndefined()
+    expect((migrated as LegacyTimeEntry).ldc).toBeUndefined()
     expect(result.conflictedCount).toBe(1)
     expect(result.rewrittenCount).toBe(0)
   })
@@ -206,7 +203,7 @@ describe('migrateLdcToCategory', () => {
       now: NOW,
     })
     const migrated = result.serviceReports[2026][0][0]
-    expect((migrated as LegacyServiceReport).ldc).toBeUndefined()
+    expect((migrated as LegacyTimeEntry).ldc).toBeUndefined()
     expect(migrated.categoryId).toBeUndefined()
   })
 
@@ -243,7 +240,7 @@ describe('migrateLdcToCategory', () => {
       { id: 'b', month, year, hours: 30 }, // standard
     ])
     const beforeMinutes = adjustedMinutesForSpecificMonth(
-      before[year][month] as LegacyServiceReport[],
+      before[year][month] as LegacyTimeEntry[],
       month,
       year,
       'regularPioneer'

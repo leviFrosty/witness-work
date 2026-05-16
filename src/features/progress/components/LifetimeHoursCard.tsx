@@ -10,7 +10,7 @@ import {
   getLifetimeMinutes,
   getServiceYearEndYearsSpan,
 } from '@/lib/serviceReport'
-import { ServiceReport } from '@/types/serviceReport'
+import { TimeEntry } from '@/types/timeEntry'
 import i18n from '@/lib/locales'
 import { usePreferences } from '@/stores/preferences'
 import { formatMinutes } from '@/lib/minutes'
@@ -20,14 +20,14 @@ import Chip from '@/components/ui/Chip'
 import Text from '@/components/ui/MyText'
 
 /**
- * Flattens the store's `ServiceReportsByYears` shape into a single
- * `ServiceReport[]`. Kept inline so the component stays a one-stop-shop for the
- * All-time tab's hero card.
+ * Flattens the store's `TimeEntriesByYear` shape into a single `TimeEntry[]`.
+ * Kept inline so the component stays a one-stop-shop for the All-time tab's
+ * hero card.
  */
-const useFlatServiceReports = (): ServiceReport[] => {
+const useFlatServiceReports = (): TimeEntry[] => {
   const { serviceReports } = useServiceReport()
   return useMemo(() => {
-    const flat: ServiceReport[] = []
+    const flat: TimeEntry[] = []
     for (const year in serviceReports) {
       const months = serviceReports[year]
       for (const month in months) {

@@ -467,7 +467,7 @@ export default function App() {
     }
   }, [hasMigrated])
 
-  // Collapse the legacy `ServiceReport.ldc` boolean into the LDC builtin
+  // Collapse the legacy `TimeEntry.ldc` boolean into the LDC builtin
   // Category (see `migrateLdcToCategory` in `src/lib/categories.ts`). Runs
   // once per install after MMKV is ready, gated on
   // `hasCollapsedLdcIntoCategory`. Must run AFTER the tag → Category

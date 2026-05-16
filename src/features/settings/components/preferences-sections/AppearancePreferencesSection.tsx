@@ -7,7 +7,7 @@ import { usePreferences } from '@/stores/preferences'
 import Text from '@/components/ui/MyText'
 import { useContext } from 'react'
 import { ThemeContext } from '@/contexts/theme'
-import { MinuteDisplayFormat } from '@/types/serviceReport'
+import { MinuteDisplayFormat } from '@/types/timeEntry'
 
 const AppearancePreferencesSection = () => {
   const { set, fontSizeOffset, colorScheme, timeDisplayFormat, startOfWeek } =

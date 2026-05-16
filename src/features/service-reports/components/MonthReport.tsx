@@ -18,7 +18,7 @@ import useServiceReport from '@/stores/serviceReport'
 import useCategories from '@/stores/categories'
 import { useCallback, useEffect, useMemo, useRef } from 'react'
 import useTheme from '@/contexts/theme'
-import { ServiceReport } from '@/types/serviceReport'
+import { TimeEntry } from '@/types/timeEntry'
 import { CategorySegment } from '@/features/service-reports/components/CategorySegmentBar'
 import CategoriesSection from '@/features/service-reports/components/CategoriesSection'
 import { usePreferences } from '@/stores/preferences'
@@ -60,7 +60,7 @@ import useFireworks from '@/hooks/useFireworks'
 import { FIREWORKS_AFTER_LOTTIE_BUFFER_MS } from '@/providers/ConfettiProvider'
 
 interface MonthReportProps {
-  monthsReports: ServiceReport[] | null
+  monthsReports: TimeEntry[] | null
   month: number
   year: number
   /** Show the report-view trigger icon. */

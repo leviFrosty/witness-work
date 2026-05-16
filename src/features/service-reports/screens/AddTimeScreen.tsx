@@ -9,7 +9,7 @@ import useServiceReport from '@/stores/serviceReport'
 import * as Crypto from 'expo-crypto'
 import { DateTimePickerEvent } from '@react-native-community/datetimepicker'
 import moment from 'moment'
-import { ServiceReport } from '@/types/serviceReport'
+import { TimeEntry } from '@/types/timeEntry'
 import { useNavigation } from '@react-navigation/native'
 import i18n, { TranslationKey } from '@/lib/locales'
 import DateTimePicker from '@/components/ui/DateTimePicker'
@@ -98,7 +98,7 @@ const AddTimeScreen = ({ route }: AddTimeScreenProps) => {
 
   const [selectedValue, setSelectedValue] = useState<string>(initialPickerValue)
   const [customCategoryName, setCustomCategoryName] = useState<string>('')
-  const [serviceReport, setServiceReport] = useState<ServiceReport>({
+  const [serviceReport, setServiceReport] = useState<TimeEntry>({
     id: existingServiceReport?.report.id ?? Crypto.randomUUID(),
     hours: existingServiceReport?.report.hours || route.params?.hours || 0,
     minutes:
@@ -164,10 +164,10 @@ const AddTimeScreen = ({ route }: AddTimeScreenProps) => {
 
   /**
    * Flips `isCredit` on the currently-selected Category record and re-stamps
-   * `credit` on every ServiceReport that references it. The Category record
-   * itself is now the source of truth; we re-stamp `credit` on entries only so
-   * legacy credit-math readers stay consistent with the Category value during
-   * the transition window.
+   * `credit` on every TimeEntry that references it. The Category record itself
+   * is now the source of truth; we re-stamp `credit` on entries only so legacy
+   * credit-math readers stay consistent with the Category value during the
+   * transition window.
    */
   const setCategoryIsCredit = (isCredit: boolean) => {
     if (!selectedCategory) return

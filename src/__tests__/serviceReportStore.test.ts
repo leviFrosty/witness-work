@@ -31,7 +31,7 @@ vi.mock(
   () => import('@/__tests__/mocks/asyncStorage')
 )
 
-describe('ServiceReport Store - Override Functionality', () => {
+describe('TimeEntry Store - Override Functionality', () => {
   beforeEach(() => {
     // Reset the store state before each test
     useServiceReport.getState()._WARNING_forceDeleteRecurringPlans()
@@ -762,7 +762,7 @@ describe('ServiceReport Store - Override Functionality', () => {
   })
 })
 
-describe('ServiceReport Store - Rollover pair deletion', () => {
+describe('TimeEntry Store - Rollover pair deletion', () => {
   beforeEach(() => {
     useServiceReport.getState()._WARNING_forceDeleteServiceReports()
   })

@@ -13,6 +13,7 @@ import useTheme from '@/contexts/theme'
 import { usePreferences } from '@/stores/preferences'
 import { useProfile } from '@/stores/profile'
 import usePublisher from '@/hooks/usePublisher'
+import useUser from '@/hooks/useUser'
 import useIsSupporter from '@/hooks/useIsSupporter'
 import Card from '@/components/ui/Card'
 import Text from '@/components/ui/MyText'
@@ -111,12 +112,8 @@ const ProfileCard = ({ preview, editable, onPressIncomplete }: Props) => {
     hasCompletedProfileSetup,
     set: setProfile,
   } = useProfile()
-  const {
-    type: publisher,
-    isInFullTimeService,
-    name: trimmedName,
-    hasName,
-  } = usePublisher()
+  const { name: trimmedName, hasName } = useUser()
+  const { type: publisher, isInFullTimeService } = usePublisher()
   const { since: supporterSince } = useIsSupporter()
   const [detailOpen, setDetailOpen] = useState(false)
   const [origin, setOrigin] = useState<OriginRect | null>(null)

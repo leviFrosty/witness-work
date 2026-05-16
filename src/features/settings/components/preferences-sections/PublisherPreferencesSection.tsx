@@ -18,6 +18,7 @@ import Divider from '@/components/ui/Divider'
 import CheckboxWithLabel from '@/components/ui/inputs/CheckboxWithLabel'
 import TextInputRow from '@/components/ui/inputs/TextInputRow'
 import usePublisher from '@/hooks/usePublisher'
+import useUser from '@/hooks/useUser'
 import { getStartDateLabels } from '@/constants/publisher'
 
 const PublisherPreferencesSection = () => {
@@ -38,10 +39,10 @@ const PublisherPreferencesSection = () => {
   const {
     type: publisherType,
     entryMode,
-    hasName,
     hasUnlimitedCreditDefault,
     tracksPioneerStartDate,
   } = usePublisher()
+  const { hasName } = useUser()
   const theme = useTheme()
   const isCheckboxMode = entryMode === 'checkbox'
   const [advancedOpen, setAdvancedOpen] = useState(false)

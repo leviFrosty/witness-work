@@ -26,7 +26,7 @@ import useTheme from '@/contexts/theme'
 import i18n, { _i18n } from '@/lib/locales'
 import Haptics from '@/lib/haptics'
 import useMonthReportData from '@/features/service-reports/hooks/useMonthReportData'
-import usePublisher from '@/hooks/usePublisher'
+import useUser from '@/hooks/useUser'
 import { RootStackParamList } from '@/types/rootStack'
 
 type Props = NativeStackScreenProps<RootStackParamList, 'ServiceReportView'>
@@ -125,7 +125,7 @@ const ServiceReportViewScreen = ({ route, navigation }: Props) => {
   const insets = useSafeAreaInsets()
   const { month, year } = route.params
   const data = useMonthReportData(month, year)
-  const { name, hasName } = usePublisher()
+  const { name, hasName } = useUser()
 
   const monthYearLabel = useMemo(
     () => moment().month(month).year(year).format('MMMM YYYY'),

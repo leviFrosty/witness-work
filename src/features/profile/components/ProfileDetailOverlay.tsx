@@ -28,6 +28,7 @@ import useTheme from '@/contexts/theme'
 import { usePreferences } from '@/stores/preferences'
 import { useProfile } from '@/stores/profile'
 import usePublisher from '@/hooks/usePublisher'
+import useUser from '@/hooks/useUser'
 import useIsSupporter from '@/hooks/useIsSupporter'
 import useConversations from '@/stores/conversationStore'
 import Text from '@/components/ui/MyText'
@@ -118,12 +119,8 @@ const ProfileDetailOverlay = ({ origin, open, onClose, onClosed }: Props) => {
     onClose()
     navigation.navigate('PreferencesPublisher')
   }
-  const {
-    type: publisher,
-    tracksPioneerStartDate,
-    entryMode,
-    name: trimmedName,
-  } = usePublisher()
+  const { type: publisher, tracksPioneerStartDate, entryMode } = usePublisher()
+  const { name: trimmedName } = useUser()
   const { since: supporterSince } = useIsSupporter()
   const { conversations } = useConversations()
   const daily = useDailyMinutes()

@@ -8,7 +8,7 @@ import Wrapper from '@/components/ui/layout/Wrapper'
 import ActionButton from '@/components/ui/ActionButton'
 import useTheme from '@/contexts/theme'
 import ProfileCard from '@/features/profile/components/ProfileCard'
-import { usePreferences } from '@/stores/preferences'
+import { useProfile } from '@/stores/profile'
 
 interface Props {
   goBack: () => void
@@ -17,7 +17,7 @@ interface Props {
 
 const ProfileSetup = ({ goBack, goNext }: Props) => {
   const theme = useTheme()
-  const { set } = usePreferences()
+  const { set } = useProfile()
 
   const handleContinue = () => {
     set({ hasCompletedProfileSetup: true })

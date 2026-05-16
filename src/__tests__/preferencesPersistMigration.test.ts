@@ -195,3 +195,61 @@ describe('preferences persist migrate v1 → v2 (publisher → role)', () => {
     // here is fine — the migration just shouldn't *introduce* the legacy field.
   })
 })
+
+describe('preferences persist migrate v2 → v3 (Profile extraction marker)', () => {
+  // The v2 → v3 step is intentionally a no-op inside the persist `migrate`
+  // callback — the actual split into the new Profile store runs in a boot
+  // runner (`src/app/App.tsx`) so the legacy fields stay readable until that
+  // runner has copied them. See the doc comment on
+  // `migratePreferencesPersistedState`.
+  it('passes the profile-shaped fields through unchanged so the boot runner can read them', () => {
+    const v2State = {
+      role: 'regularPioneer',
+      name: 'Alice',
+      avatar: { type: 'image', value: 'avatar://x' },
+      customAvatarBackground: '#FFAABB',
+      hasCompletedProfileSetup: true,
+      monthlyGoalOverride: 50,
+    }
+
+    const migrated = migratePreferencesPersistedState(v2State, 2)
+
+    expect(migrated.name).toBe('Alice')
+    expect(migrated.avatar).toEqual({ type: 'image', value: 'avatar://x' })
+    expect(migrated.customAvatarBackground).toBe('#FFAABB')
+    expect(migrated.hasCompletedProfileSetup).toBe(true)
+    expect(migrated.role).toBe('regularPioneer')
+    expect(migrated.monthlyGoalOverride).toBe(50)
+  })
+
+  it('is idempotent — re-running on an already-v3 state is a no-op', () => {
+    const v2State = {
+      role: 'regularPioneer',
+      name: 'Alice',
+    }
+    const v3State = migratePreferencesPersistedState(v2State, 2)
+    const v3Again = migratePreferencesPersistedState(v3State, 3)
+
+    expect(JSON.stringify(v3Again)).toEqual(JSON.stringify(v3State))
+  })
+
+  it('chains cleanly through v0 → v3 (renames still apply, profile fields pass through)', () => {
+    const v0State = {
+      excludedWeekdays: [0, 6],
+      meetingWeekdays: [3],
+      publisher: 'regularPioneer',
+      name: 'Alice',
+      avatar: { type: 'image', value: 'avatar://x' },
+    }
+
+    const migrated = migratePreferencesPersistedState(v0State, 0)
+
+    expect(migrated.offDays).toEqual([0, 6])
+    expect(migrated.meetingDays).toEqual([3])
+    expect(migrated.role).toBe('regularPioneer')
+    expect(migrated).not.toHaveProperty('publisher')
+    // Profile fields survive — the boot runner is responsible for moving them.
+    expect(migrated.name).toBe('Alice')
+    expect(migrated.avatar).toEqual({ type: 'image', value: 'avatar://x' })
+  })
+})

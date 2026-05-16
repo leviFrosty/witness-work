@@ -52,6 +52,8 @@ import {
 import useContacts from '@/stores/contactsStore'
 import useCategories from '@/stores/categories'
 import useServiceReport from '@/stores/serviceReport'
+import { useProfile } from '@/stores/profile'
+import { extractProfileFromPreferences } from '@/lib/profileMigration'
 import { migrateCustomFieldsToIds } from '@/features/contacts/lib/customFieldsMigration'
 import { migrateTagsToCategories } from '@/lib/categories'
 import AnimationViewProvider from '@/providers/AnimationViewProvider'
@@ -391,6 +393,78 @@ export default function App() {
       hasMigratedTagsToCategories: true,
       ...({ serviceReportTags: undefined } as Record<string, unknown>),
     } as never)
+  }, [hasMigrated])
+
+  // Split the identity-shaped fields out of the legacy preferences blob into
+  // the new Profile store (`@/stores/profile`). Runs once per install after
+  // MMKV is ready, gated on `hasMigratedProfileFromPreferences`. The
+  // preferences persist `migrate` callback at v2 → v3 is intentionally a
+  // no-op for this split (it can only return its own blob); this runner is
+  // the single source of truth for both the seeding AND the cleanup. See
+  // `src/lib/profileMigration.ts` for the pure transform.
+  //
+  // Wave-3 of the store-narrowing series (after customFieldsMigration and
+  // tagsToCategories). Mirrors that pattern: the runner reads legacy fields
+  // from the rehydrated preferences state via a cast (the keys are no longer
+  // in PREFERENCE_DEFAULTS, so combine() doesn't fill defaults for them and
+  // the persisted v2 values pass through untouched).
+  useEffect(() => {
+    if (!hasMigrated) return
+    const prefs = usePreferences.getState()
+    if (prefs.hasMigratedProfileFromPreferences) return
+
+    // Cast through unknown — the moved keys are gone from the typed state, but
+    // a v2 persisted blob still carries them in raw rehydrated form until we
+    // drop them below.
+    const legacyPrefs = prefs as unknown as Record<string, unknown>
+    const result = extractProfileFromPreferences(legacyPrefs)
+
+    // Seed the new Profile store with the extracted values + their existing
+    // updatedAt timestamps. Raw setState bypasses the stamping wrapper so we
+    // don't bump `profileUpdatedAt` to `Date.now()` on first-launch upgrade —
+    // we want LWW to reflect when the user last changed each field.
+    if (Object.keys(result.profile.values).length > 0) {
+      useProfile.setState({
+        ...result.profile.values,
+        profileUpdatedAt: result.profile.updatedAt,
+      } as never)
+    }
+
+    // Drop the legacy fields from preferences + flip the flag. `undefined`
+    // values are omitted by `JSON.stringify`, so the next persist write
+    // produces a v3-shaped blob with no profile-shaped keys.
+    usePreferences.setState({
+      hasMigratedProfileFromPreferences: true,
+      ...({
+        name: undefined,
+        avatar: undefined,
+        customAvatarBackground: undefined,
+        hasCompletedProfileSetup: undefined,
+      } as Record<string, unknown>),
+    } as never)
+
+    // Also drop the moved keys from `preferenceUpdatedAt` so settings-side
+    // LWW stops tracking them. Done as a second raw setState so we can pull
+    // the latest map (it may have been mutated by the seeding step above).
+    const latest = usePreferences.getState()
+    if (
+      latest.preferenceUpdatedAt &&
+      typeof latest.preferenceUpdatedAt === 'object'
+    ) {
+      const cleaned: Record<string, number> = {}
+      for (const [key, ts] of Object.entries(latest.preferenceUpdatedAt)) {
+        if (
+          key === 'name' ||
+          key === 'avatar' ||
+          key === 'customAvatarBackground' ||
+          key === 'hasCompletedProfileSetup'
+        ) {
+          continue
+        }
+        cleaned[key] = ts
+      }
+      usePreferences.setState({ preferenceUpdatedAt: cleaned })
+    }
   }, [hasMigrated])
 
   // Normalize the legacy `'es-mx'` locale to `'es-es'` after the es-MX bundle

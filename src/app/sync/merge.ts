@@ -35,6 +35,8 @@ export type MergeResult = {
   deletedCategories: CategoryTombstone[]
   preferencesValues: Record<string, unknown>
   preferenceUpdatedAt: Record<string, number>
+  profileValues: Record<string, unknown>
+  profileUpdatedAt: Record<string, number>
   /** True when any field above actually differs from local state. */
   changed: boolean
 }
@@ -53,6 +55,8 @@ type LocalState = {
   deletedCategories: CategoryTombstone[]
   preferencesValues: Record<string, unknown>
   preferenceUpdatedAt: Record<string, number>
+  profileValues: Record<string, unknown>
+  profileUpdatedAt: Record<string, number>
 }
 
 /**
@@ -180,6 +184,26 @@ export function mergePayload(
     remote.preferencesStore.updatedAt
   )
 
+  // --- Profile (per-key LWW, mirrors preferences) ---
+  // A pre-wave-3 peer payload won't carry `profileStore`; the legacy fields
+  // have already been routed into a synthesized slice by
+  // `normalizeLegacyPayloadFieldNames`. Defaulting here keeps the merge call
+  // shape uniform either way.
+  const remoteProfile = remote.profileStore ?? {
+    values: {},
+    updatedAt: {},
+  }
+  const {
+    values: mergedProfileValues,
+    updatedAt: mergedProfileTimestamps,
+    changed: profileChanged,
+  } = mergePreferences(
+    local.profileValues,
+    local.profileUpdatedAt,
+    remoteProfile.values,
+    remoteProfile.updatedAt
+  )
+
   const changed =
     contactsChanged ||
     deletedContactsChanged ||
@@ -190,6 +214,7 @@ export function mergePayload(
     recurringPlansChanged ||
     categoriesChanged ||
     prefsChanged ||
+    profileChanged ||
     mergedConversationTombstones.length !== local.deletedConversations.length ||
     mergedReportTombstones.length !== local.deletedServiceReports.length ||
     mergedCategoryTombstones.length !== local.deletedCategories.length
@@ -208,6 +233,8 @@ export function mergePayload(
     deletedCategories: mergedCategoryTombstones,
     preferencesValues: mergedPrefValues,
     preferenceUpdatedAt: mergedPrefTimestamps,
+    profileValues: mergedProfileValues,
+    profileUpdatedAt: mergedProfileTimestamps,
     changed,
   }
 }

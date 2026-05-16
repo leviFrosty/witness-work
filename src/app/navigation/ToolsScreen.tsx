@@ -20,6 +20,7 @@ import { useToastController } from '@tamagui/toast'
 import { RecurringPlanFrequencies } from '@/lib/serviceReport'
 import { useTimeCache } from '@/stores/timeCache'
 import { PREFERENCE_DEFAULTS, usePreferences } from '@/stores/preferences'
+import { useProfile, PROFILE_DEFAULTS } from '@/stores/profile'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { mmkvStorage } from '@/stores/mmkv'
 import DateTimePicker from '@/components/ui/DateTimePicker'
@@ -100,14 +101,14 @@ export default function ToolsScreen() {
     devShowAppIconAlerts,
     supporterNudgeDismissedAt,
     hideSupporterNudge,
-    hasCompletedProfileSetup,
-    name,
     devRolloverDateOverride,
     lastRolloverYearMonth,
     autoRolloverEnabled,
     celebratedTiers,
     set: setPreferences,
   } = preferences
+  // Profile-shaped fields live in the dedicated Profile store after wave-3.
+  const { hasCompletedProfileSetup, name, set: setProfile } = useProfile()
   const celebrationQueue = useCelebrationQueue()
   const { isSupporter, since: supporterSince } = useIsSupporter()
   const navigation = useNavigation<RootStackNavigation>()
@@ -485,6 +486,7 @@ export default function ToolsScreen() {
     _WARNING_forceDeleteConversations()
     invalidateAllCache()
     setPreferences({ ...PREFERENCE_DEFAULTS, iCloudSyncSetByUser: true })
+    setProfile({ ...PROFILE_DEFAULTS })
     mmkvStorage.clearAll()
     void AsyncStorage.clear()
   }
@@ -719,9 +721,11 @@ export default function ToolsScreen() {
             onPress={() => {
               setPreferences({
                 onboardingComplete: true,
+                pioneerStartDate: null,
+              })
+              setProfile({
                 hasCompletedProfileSetup: false,
                 name: '',
-                pioneerStartDate: null,
                 avatar: { type: 'none', value: '' },
               })
               showDone('Reset to pre-profile state')

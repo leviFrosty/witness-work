@@ -10,6 +10,7 @@ import AnnualGoalSelector from '@/features/settings/components/AnnualGoalSelecto
 import ProfileCard from '@/features/profile/components/ProfileCard'
 import DateTimePicker from '@/components/ui/DateTimePicker'
 import { usePreferences } from '@/stores/preferences'
+import { useProfile } from '@/stores/profile'
 import Text from '@/components/ui/MyText'
 import useTheme from '@/contexts/theme'
 import Card from '@/components/ui/Card'
@@ -23,7 +24,6 @@ const PublisherPreferencesSection = () => {
   const {
     role,
     pioneerStartDate,
-    hasCompletedProfileSetup,
     overrideCreditLimit,
     customCreditLimitHours,
     autoRolloverEnabled,
@@ -32,6 +32,9 @@ const PublisherPreferencesSection = () => {
     setAutoRolloverEnabled,
     set,
   } = usePreferences()
+  // `hasCompletedProfileSetup` lives in the Profile store after wave-3 because
+  // it gates Profile data (name + avatar) being filled in.
+  const { hasCompletedProfileSetup, set: setProfile } = useProfile()
   const {
     type: publisherType,
     entryMode,
@@ -45,9 +48,9 @@ const PublisherPreferencesSection = () => {
 
   useEffect(() => {
     if (!hasCompletedProfileSetup && hasName) {
-      set({ hasCompletedProfileSetup: true })
+      setProfile({ hasCompletedProfileSetup: true })
     }
-  }, [hasCompletedProfileSetup, hasName, set])
+  }, [hasCompletedProfileSetup, hasName, setProfile])
 
   const showAdvanced = !hasUnlimitedCreditDefault || !isCheckboxMode
 

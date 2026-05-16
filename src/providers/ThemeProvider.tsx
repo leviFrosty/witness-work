@@ -3,6 +3,7 @@ import { ThemeContext } from '@/contexts/theme'
 import getThemeFromColorScheme from '@/constants/theme'
 import { useColorScheme } from 'react-native'
 import { usePreferences } from '@/stores/preferences'
+import { useProfile } from '@/stores/profile'
 import useFeatureAccess from '@/hooks/useFeatureAccess'
 import { mix, withAlpha } from '@/lib/color'
 
@@ -10,11 +11,11 @@ interface Props {}
 
 const ThemeProvider: React.FC<PropsWithChildren<Props>> = ({ children }) => {
   const colorScheme = useColorScheme()
-  const {
-    colorScheme: theme,
-    customAccentColor,
-    customAvatarBackground,
-  } = usePreferences()
+  const { colorScheme: theme, customAccentColor } = usePreferences()
+  // `customAvatarBackground` is profile-shaped (it tints the User's avatar),
+  // so it lives in the Profile store. The theme still consumes it because the
+  // avatar background also drives `accentBackground` system-wide.
+  const { customAvatarBackground } = useProfile()
   const { hasAccess: canCustomizeAccent } =
     useFeatureAccess('customAccentColor')
   const scheme = colorScheme === 'unspecified' ? undefined : colorScheme

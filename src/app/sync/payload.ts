@@ -4,6 +4,7 @@ import useServiceReport from '@/stores/serviceReport'
 import useCategories from '@/stores/categories'
 import { usePreferences } from '@/stores/preferences'
 import { NON_SYNCABLE_PREFERENCE_KEYS } from '@/stores/preferences'
+import { useProfile, NON_SYNCABLE_PROFILE_KEYS } from '@/stores/profile'
 import { ProfileAvatar } from '@/types/avatar'
 import {
   sanitizeContactAvatar,
@@ -67,6 +68,18 @@ export type SyncPayload = {
     values: Record<string, any>
     updatedAt: Record<string, number>
   }
+  /**
+   * Identity-shaped fields (name, avatar, avatar background, profile-setup
+   * completion). Split out of `preferencesStore` in wave-3 of the
+   * store-narrowing series. Optional in the wire shape because older clients
+   * write profile fields _inside_ `preferencesStore.values`; on read we rewrite
+   * those into this slice via `normalizeLegacyPayloadFieldNames`.
+   */
+  profileStore?: {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    values: Record<string, any>
+    updatedAt: Record<string, number>
+  }
 }
 
 /**
@@ -88,6 +101,7 @@ export function buildPayload(args: {
   const serviceReports = useServiceReport.getState()
   const categories = useCategories.getState()
   const prefs = usePreferences.getState()
+  const profile = useProfile.getState()
 
   const includeImages = prefs.iCloudSyncIncludeImages === true
   const avatarOpts = { includeImages }
@@ -99,14 +113,29 @@ export function buildPayload(args: {
   for (const [key, value] of Object.entries(prefs)) {
     if (typeof value === 'function') continue
     if (NON_SYNCABLE_PREFERENCE_KEYS.has(key)) continue
+    syncablePrefs[key] = value
+  }
+
+  // Profile slice — same allow-list pattern. The avatar field is sanitized
+  // identically to how it used to be inside `preferencesStore.values`, just
+  // routed through the new slice so the wire shape matches the on-device
+  // store split. Older clients still pre-wave-3 will receive these values
+  // back in their `preferencesStore.values` because the receiving side keeps
+  // the legacy shape; the sync-time translation on read folds them back into
+  // `profileStore`. See `payloadFieldRenames.ts`.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const syncableProfile: Record<string, any> = {}
+  for (const [key, value] of Object.entries(profile)) {
+    if (typeof value === 'function') continue
+    if (NON_SYNCABLE_PROFILE_KEYS.has(key)) continue
     if (key === 'avatar') {
-      syncablePrefs[key] = sanitizeProfileAvatar(
+      syncableProfile[key] = sanitizeProfileAvatar(
         value as ProfileAvatar,
         avatarOpts
       )
       continue
     }
-    syncablePrefs[key] = value
+    syncableProfile[key] = value
   }
 
   return {
@@ -140,6 +169,10 @@ export function buildPayload(args: {
     preferencesStore: {
       values: syncablePrefs,
       updatedAt: prefs.preferenceUpdatedAt ?? {},
+    },
+    profileStore: {
+      values: syncableProfile,
+      updatedAt: profile.profileUpdatedAt ?? {},
     },
   }
 }

@@ -1,5 +1,5 @@
 import useTheme from '@/contexts/theme'
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import useConversations from '@/stores/conversationStore'
 import {
   overdueFollowUpConversations,
@@ -36,135 +36,12 @@ import ProfileCard from '@/features/profile/components/ProfileCard'
 import HomeChecklist from '@/features/onboarding/components/HomeChecklist'
 import SupporterNudgeCard from '@/features/supporter/components/SupporterNudgeCard'
 import DidYouKnowTipCard from '@/features/updates/components/DidYouKnowTipCard'
-import ContributionGraph from '@/features/profile/components/ContributionGraph'
-import useDailyMinutes from '@/features/profile/hooks/useDailyMinutes'
-import SelectedDateSheet, {
-  SelectedDateSheetState,
-} from '@/features/service-reports/components/SelectedDateSheet'
-import { ServiceReport } from '@/types/serviceReport'
 import useIsSupporter from '@/hooks/useIsSupporter'
 import { useServiceReport } from '@/stores/serviceReport'
 import { isSupporterNudgeEligible } from '@/features/supporter/lib/supporterNudge'
 import { HomeTabStackNavigation } from '@/types/homeStack'
 import { RootStackNavigation } from '@/types/rootStack'
 import { Fragment } from 'react'
-
-// Defined inline so `useDailyMinutes` only fires when the section is actually
-// mounted — for publisher (checkbox) users the case below returns null and we
-// never flatten the reports collection.
-const ContributionGraphSection = () => {
-  const theme = useTheme()
-  const daily = useDailyMinutes()
-  const { serviceReports } = useServiceReport()
-  const rootNavigation = useNavigation<RootStackNavigation>()
-
-  const [sheet, setSheet] = useState<SelectedDateSheetState>({
-    open: false,
-    date: new Date(),
-  })
-
-  // Reports for the selected day's month — `SelectedDateSheet` (→
-  // `DayHistoryView`) filters down to the day itself.
-  const sheetMonthsReports = useMemo(
-    () =>
-      getMonthsReports(
-        serviceReports,
-        sheet.date.getMonth(),
-        sheet.date.getFullYear()
-      ),
-    [serviceReports, sheet.date]
-  )
-
-  // Same pattern as `AllDaysList`: queue navigation until the sheet animates
-  // closed, then fire on the next tick so the dismissal isn't fighting a
-  // route push.
-  const pendingNavigation = useRef<(() => void) | null>(null)
-
-  useEffect(() => {
-    if (!sheet.open && pendingNavigation.current) {
-      const cb = pendingNavigation.current
-      pendingNavigation.current = null
-      setTimeout(cb, 125)
-    }
-  }, [sheet.open])
-
-  const handleDayPress = useCallback((date: Date) => {
-    setSheet({ open: true, date })
-  }, [])
-
-  const handleAddTime = useCallback(() => {
-    pendingNavigation.current = () => {
-      rootNavigation.navigate('Add Time', { date: sheet.date.toISOString() })
-    }
-  }, [rootNavigation, sheet.date])
-
-  const handlePlanDay = useCallback(() => {
-    pendingNavigation.current = () => {
-      rootNavigation.navigate('PlanDay', { date: sheet.date.toISOString() })
-    }
-  }, [rootNavigation, sheet.date])
-
-  const handleNavigateToPlanDay = useCallback(
-    (existingDayPlanId: string) => {
-      pendingNavigation.current = () => {
-        rootNavigation.navigate('PlanDay', {
-          date: sheet.date.toISOString(),
-          existingDayPlanId,
-        })
-      }
-    },
-    [rootNavigation, sheet.date]
-  )
-
-  const handleNavigateToRecurringPlan = useCallback(
-    (existingRecurringPlanId: string, recurringPlanDate: string) => {
-      pendingNavigation.current = () => {
-        rootNavigation.navigate('PlanDay', {
-          date: sheet.date.toISOString(),
-          existingRecurringPlanId,
-          recurringPlanDate,
-        })
-      }
-    },
-    [rootNavigation, sheet.date]
-  )
-
-  const handleEditTimeReport = useCallback(
-    (report: ServiceReport) => {
-      pendingNavigation.current = () => {
-        rootNavigation.navigate('Add Time', {
-          existingReport: JSON.stringify(report),
-        })
-      }
-    },
-    [rootNavigation]
-  )
-
-  return (
-    <View style={{ gap: 10 }}>
-      <Text
-        style={{
-          fontSize: 14,
-          fontFamily: theme.fonts.semiBold,
-          marginLeft: 5,
-        }}
-      >
-        {i18n.t('profileActivityTitle')}
-      </Text>
-      <ContributionGraph daily={daily} onDayPress={handleDayPress} />
-      <SelectedDateSheet
-        sheet={sheet}
-        setSheet={setSheet}
-        thisMonthsReports={sheetMonthsReports}
-        onAddTime={handleAddTime}
-        onPlanDay={handlePlanDay}
-        onNavigateToPlanDay={handleNavigateToPlanDay}
-        onNavigateToRecurringPlan={handleNavigateToRecurringPlan}
-        onEditTimeReport={handleEditTimeReport}
-      />
-    </View>
-  )
-}
 
 export const HomeScreen = () => {
   const theme = useTheme()
@@ -180,8 +57,20 @@ export const HomeScreen = () => {
     hideDonateHeart,
     hideSupporterNudge,
     supporterNudgeDismissedAt,
+    supporterNudgeAvailableSince,
     devSupporterNudgeForceShow,
+    set,
   } = usePreferences()
+
+  // First time this build runs on the device, stamp the intro grace start.
+  // The nudge predicate waits `introGraceDays` after this so existing
+  // long-tenure users updating to the nudge-introducing build aren't asked
+  // while WhatsNew and other update surfaces are still landing.
+  useEffect(() => {
+    if (supporterNudgeAvailableSince === null) {
+      set({ supporterNudgeAvailableSince: Date.now() })
+    }
+  }, [supporterNudgeAvailableSince, set])
   const { isSupporter } = useIsSupporter()
   const { serviceReports } = useServiceReport()
   const [refreshing, setRefreshing] = useState(false)
@@ -200,7 +89,7 @@ export const HomeScreen = () => {
   const { conversations } = useConversations()
   const { contacts } = useContacts()
   const { isTablet } = useDevice()
-  const { hasAnnualGoal, showsTimer, entryMode } = usePublisher()
+  const { hasAnnualGoal, showsTimer } = usePublisher()
   const { homeScreenElements, homeScreenElementsOrder } = usePreferences()
   const effectiveOrder = useMemo(
     () => getEffectiveHomeScreenOrder(homeScreenElementsOrder),
@@ -267,6 +156,7 @@ export const HomeScreen = () => {
         hideSupporterNudge,
         installedOn,
         supporterNudgeDismissedAt,
+        supporterNudgeAvailableSince,
         serviceReports,
         contactsCount: contacts.length,
         conversationsCount: conversations.length,
@@ -279,6 +169,7 @@ export const HomeScreen = () => {
       hideSupporterNudge,
       installedOn,
       supporterNudgeDismissedAt,
+      supporterNudgeAvailableSince,
       serviceReports,
       contacts.length,
       conversations.length,
@@ -438,14 +329,6 @@ export const HomeScreen = () => {
               case 'timer':
                 if (!showsTimer || !homeScreenElements.timer) return null
                 return <TimerSection key={key} />
-              case 'contributionGraph':
-                if (
-                  entryMode !== 'hours' ||
-                  !homeScreenElements.contributionGraph
-                ) {
-                  return null
-                }
-                return <ContributionGraphSection key={key} />
               case 'didYouKnow':
                 if (homeScreenElements.didYouKnow === false) return null
                 return (

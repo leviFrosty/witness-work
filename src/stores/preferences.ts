@@ -178,11 +178,9 @@ export type HomeScreenElementKey =
   | 'serviceReport'
   | 'thisWeek'
   | 'timer'
-  | 'contributionGraph'
   | 'didYouKnow'
 
 export const DEFAULT_HOME_SCREEN_ELEMENTS_ORDER: HomeScreenElementKey[] = [
-  'contributionGraph',
   'approachingConversations',
   'tabletServiceYearSummary',
   'serviceReport',
@@ -299,6 +297,14 @@ export const PREFERENCE_DEFAULTS = {
    */
   hideSupporterNudge: false,
   /**
+   * Epoch ms when the user first launched a build that has the nudge feature.
+   * Stamped lazily by `HomeScreen` when null. Drives the `introGraceDays` gate
+   * in `isSupporterNudgeEligible` so long-tenure users updating to the
+   * nudge-introducing build aren't asked the moment they open it. Syncable so
+   * the grace period persists across devices.
+   */
+  supporterNudgeAvailableSince: null as number | null,
+  /**
    * Dev override that bypasses tenure, engagement, and cooldown gates for the
    * supporter-nudge card. Only honored under `__DEV__` (production reads it but
    * ignores it, same pattern as `devSupporterOverride`). Non-syncable.
@@ -378,7 +384,6 @@ export const PREFERENCE_DEFAULTS = {
     thisWeek: true,
     serviceReport: true,
     timer: true,
-    contributionGraph: true,
     contacts: true,
     didYouKnow: true,
   },

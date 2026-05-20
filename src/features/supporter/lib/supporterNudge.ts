@@ -13,6 +13,13 @@ export const SUPPORTER_NUDGE_THRESHOLDS = {
   contacts: 20,
   conversations: 10,
   cooldownDays: 365,
+  /**
+   * Quiet period after the build that introduced the nudge first runs. Without
+   * this, existing long-tenure users who update would see the card immediately
+   * on first launch — at the same moment `WhatsNewSheet` and other update
+   * surfaces are competing for attention.
+   */
+  introGraceDays: 45,
 } as const
 
 export type SupporterNudgeEligibilityInput = {
@@ -21,6 +28,12 @@ export type SupporterNudgeEligibilityInput = {
   hideSupporterNudge: boolean
   installedOn: Date
   supporterNudgeDismissedAt: number | null
+  /**
+   * Epoch ms when the user first launched a build that has the nudge feature.
+   * `null` means the stamp hasn't run yet — predicate returns false until the
+   * caller stamps it. See `HomeScreen` for the stamping site.
+   */
+  supporterNudgeAvailableSince: number | null
   serviceReports: ServiceReportsByYears
   contactsCount: number
   conversationsCount: number
@@ -98,9 +111,12 @@ const meetsEngagementFloor = (
  * 4. At least one engagement floor is met (report-months, hours, or contacts +
  *    conversations).
  * 5. Either no prior dismissal, or ≥ `cooldownDays` since the last dismissal.
+ * 6. The feature-intro grace period (`introGraceDays`) has elapsed since the first
+ *    launch of a build that has the nudge — protects existing long-tenure users
+ *    from seeing the card the moment they update.
  *
- * The dev force-show flag (only under `__DEV__`) bypasses gates 3, 4, and 5 but
- * still respects gate 1 — a supporter never sees the nudge.
+ * The dev force-show flag (only under `__DEV__`) bypasses gates 3, 4, 5, and 6
+ * but still respects gate 1 — a supporter never sees the nudge.
  */
 export const isSupporterNudgeEligible = (
   input: SupporterNudgeEligibilityInput
@@ -111,6 +127,7 @@ export const isSupporterNudgeEligible = (
     hideSupporterNudge,
     installedOn,
     supporterNudgeDismissedAt,
+    supporterNudgeAvailableSince,
     serviceReports,
     contactsCount,
     conversationsCount,
@@ -142,6 +159,14 @@ export const isSupporterNudgeEligible = (
       .isSameOrBefore(moment(now))
     if (!cooldownOver) return false
   }
+
+  // Stamp hasn't run yet on this device — wait for HomeScreen to set it on
+  // next render rather than firing the card mid-stamp.
+  if (supporterNudgeAvailableSince === null) return false
+  const introGraceOver = moment(supporterNudgeAvailableSince)
+    .add(SUPPORTER_NUDGE_THRESHOLDS.introGraceDays, 'days')
+    .isSameOrBefore(moment(now))
+  if (!introGraceOver) return false
 
   return true
 }

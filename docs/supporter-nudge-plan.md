@@ -27,8 +27,11 @@ All of the following must be true. Evaluated reactively — the card renders whe
 | Tenure floor                           | `installedOn` ≥ 180 days ago                                                                                       |
 | Engagement floor (any one)             | ≥ 6 distinct months with a service report **or** ≥ 50 total hours logged **or** ≥ 20 contacts + ≥ 10 conversations |
 | Cooldown                               | `supporterNudgeDismissedAt === null` **or** ≥ 365 days since `supporterNudgeDismissedAt`                           |
+| Intro grace                            | `supporterNudgeAvailableSince` is non-null **and** ≥ 45 days have elapsed since it was stamped                     |
 
-Dev override (`devSupporterNudgeForceShow`) bypasses tenure, engagement, and cooldown gates under `__DEV__`, but still respects `!isSupporter`.
+The intro-grace gate exists to protect existing long-tenure users from being asked the moment they update to the nudge-introducing build — at the same time `WhatsNewSheet` and other new surfaces are landing. The stamp is set lazily by `HomeScreen` on first render that sees `supporterNudgeAvailableSince === null`; the predicate treats null as "not yet eligible" so a single render never both stamps and shows.
+
+Dev override (`devSupporterNudgeForceShow`) bypasses tenure, engagement, cooldown, and intro-grace gates under `__DEV__`, but still respects `!isSupporter`.
 
 ## Surface
 
@@ -67,12 +70,13 @@ Auto-translation via `pnpm run translate` will produce uneven results for "minis
 Added to `PREFERENCE_DEFAULTS` in `src/stores/preferences.ts`:
 
 ```ts
-supporterNudgeDismissedAt: null as number | null,  // epoch ms, syncable
-hideSupporterNudge: false,                         // syncable
-devSupporterNudgeForceShow: false,                 // non-syncable, __DEV__ only
+supporterNudgeDismissedAt: null as number | null,     // epoch ms, syncable
+hideSupporterNudge: false,                            // syncable
+supporterNudgeAvailableSince: null as number | null,  // epoch ms, syncable
+devSupporterNudgeForceShow: false,                    // non-syncable, __DEV__ only
 ```
 
-`supporterNudgeDismissedAt` and `hideSupporterNudge` sync across devices via the existing iCloud sync pipeline. They represent user intent and should follow the user. `devSupporterNudgeForceShow` is local dev bookkeeping and is added to `NON_SYNCABLE_PREFERENCE_KEYS`, matching the `devSupporterOverride` convention at `src/stores/preferences.ts:250`.
+`supporterNudgeDismissedAt`, `hideSupporterNudge`, and `supporterNudgeAvailableSince` sync across devices via the existing iCloud sync pipeline. They represent user intent / per-user timing and should follow the user. `devSupporterNudgeForceShow` is local dev bookkeeping and is added to `NON_SYNCABLE_PREFERENCE_KEYS`, matching the `devSupporterOverride` convention at `src/stores/preferences.ts:250`.
 
 ## Files touched
 
@@ -106,7 +110,7 @@ Added to the existing dev tools screen (`src/screens/ToolsScreen.tsx`):
 
 ## Migration
 
-No migration code needed. Existing users get the defaults (`supporterNudgeDismissedAt: null`, `hideSupporterNudge: false`), and the first time they qualify across the eligibility predicate the card renders naturally. `WhatsNewSheet` is unaffected — it's a modal-at-launch surface and doesn't collide with the Home feed.
+No schema migration needed. Existing users get the defaults (`supporterNudgeDismissedAt: null`, `hideSupporterNudge: false`, `supporterNudgeAvailableSince: null`). The intro-grace gate is what handles the upgrade case: the first Home render after updating stamps `supporterNudgeAvailableSince` to "now," and the predicate then waits `introGraceDays` before the card can render. Without this, an existing long-tenure / high-engagement user would see the nudge the moment they opened the build that ships it, alongside `WhatsNewSheet` and any other new surfaces.
 
 ## Open questions (out of scope for this PR)
 

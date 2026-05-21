@@ -478,11 +478,18 @@ export const getServiceYearFromDate = (moment: moment.Moment) => {
  * Rounded to 1 decimal place.
  */
 export const getLifetimeHours = (serviceReports: ServiceReport[]): number => {
-  const totalMinutes = serviceReports.reduce(
+  return _.round(getLifetimeMinutes(serviceReports) / 60, 1)
+}
+
+/**
+ * Raw lifetime minutes across every `ServiceReport` — unadjusted for credit
+ * caps. Preferred for rendering, since the display formatter takes minutes.
+ */
+export const getLifetimeMinutes = (serviceReports: ServiceReport[]): number => {
+  return serviceReports.reduce(
     (sum, report) => sum + report.hours * 60 + report.minutes,
     0
   )
-  return _.round(totalMinutes / 60, 1)
 }
 
 /** Earliest `date` found across all reports, or `null` if none. */
@@ -546,14 +553,28 @@ export const getHoursForServiceYearEndYear = (
   serviceReports: ServiceReport[],
   endYear: number
 ): number => {
+  return _.round(
+    getMinutesForServiceYearEndYear(serviceReports, endYear) / 60,
+    1
+  )
+}
+
+/**
+ * Raw minutes summed across reports whose service year matches `endYear`.
+ * Preferred for rendering so display formatters can respect the user's
+ * time-display preference.
+ */
+export const getMinutesForServiceYearEndYear = (
+  serviceReports: ServiceReport[],
+  endYear: number
+): number => {
   const startYear = endYear - 1
-  const totalMinutes = serviceReports.reduce((sum, report) => {
+  return serviceReports.reduce((sum, report) => {
     const m = momentStoredDate(report.date)
     const reportStartYear = getServiceYearFromDate(m)
     if (reportStartYear !== startYear) return sum
     return sum + report.hours * 60 + report.minutes
   }, 0)
-  return _.round(totalMinutes / 60, 1)
 }
 
 /**

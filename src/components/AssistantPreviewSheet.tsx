@@ -3,7 +3,6 @@ import { View, ScrollView, Switch } from 'react-native'
 import { Sheet } from 'tamagui'
 import { useToastController } from '@tamagui/toast'
 import * as Crypto from 'expo-crypto'
-import _ from 'lodash'
 
 import Text from '@/components/ui/MyText'
 import Button from '@/components/ui/Button'
@@ -21,6 +20,7 @@ import type { Recommendation } from '@/lib/assistantRecommendation'
 import type { ProjectedTotalResult } from '@/lib/projectedTotal'
 import useServiceReport from '@/stores/serviceReport'
 import { usePreferences } from '@/stores/preferences'
+import { formatMinutes } from '@/lib/minutes'
 import moment from 'moment'
 import { segmentBoldMarkup } from '@/lib/projectedTotalCopy'
 
@@ -63,7 +63,7 @@ const AssistantPreviewSheet = ({
   const theme = useTheme()
   const toast = useToastController()
   const { addDayPlan, deleteDayPlan } = useServiceReport()
-  const { planAlwaysNotify } = usePreferences()
+  const { planAlwaysNotify, timeDisplayFormat } = usePreferences()
 
   const [rows, setRows] = useState<Row[]>(() =>
     buildInitialRows(recommendation)
@@ -89,7 +89,10 @@ const AssistantPreviewSheet = ({
 
   const projectedAfter =
     projection.loggedMinutes + projection.plannedMinutes + totalProposedMinutes
-  const projectedAfterHours = _.round(projectedAfter / 60, 1)
+  const projectedAfterDisplay = formatMinutes(
+    projectedAfter,
+    timeDisplayFormat
+  ).formatted
   const reachesGoal = projectedAfter >= projection.goalMinutes
 
   const setRowMinutes = useCallback((rowId: string, delta: number) => {
@@ -154,7 +157,7 @@ const AssistantPreviewSheet = ({
   }, [pendingUndoIds, deleteDayPlan, onUndo])
 
   const footerText = i18n.t('assistant.preview.proposedTotal', {
-    projected: projectedAfterHours,
+    projected: projectedAfterDisplay,
   })
   const footerSegments = segmentBoldMarkup(footerText)
 
@@ -227,7 +230,7 @@ const AssistantPreviewSheet = ({
                         fontSize: theme.fontSize('xs'),
                       }}
                     >
-                      {_.round(row.minutes / 60, 1)}h
+                      {formatMinutes(row.minutes, timeDisplayFormat).formatted}
                     </Text>
                   </View>
                   <IconButton

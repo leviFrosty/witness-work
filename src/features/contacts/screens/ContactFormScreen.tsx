@@ -605,7 +605,7 @@ const ContactFormScreen = ({ route, navigation }: Props) => {
                 paddingVertical: 4,
               }}
             />
-            {errors.name ? (
+            {errors.name && (
               <Text
                 style={{
                   fontSize: 12,
@@ -615,16 +615,6 @@ const ContactFormScreen = ({ route, navigation }: Props) => {
                 }}
               >
                 {errors.name}
-              </Text>
-            ) : (
-              <Text
-                style={{
-                  fontSize: 12,
-                  color: theme.colors.textAlt,
-                  textAlign: 'center',
-                }}
-              >
-                {i18n.t('enterContactInformation')}
               </Text>
             )}
             <View

@@ -11,6 +11,7 @@ import {
   getMonthsReports,
   ldcMinutesForSpecificMonth,
   otherMinutesForSpecificMonth,
+  plannedMinutesToCurrentDayForMonth,
   standardMinutesForSpecificMonth,
 } from '@/lib/serviceReport'
 import useServiceReport from '@/stores/serviceReport'
@@ -21,6 +22,7 @@ import { ServiceReport } from '@/types/serviceReport'
 import { CategorySegment } from '@/features/service-reports/components/CategorySegmentBar'
 import CategoriesSection from '@/features/service-reports/components/CategoriesSection'
 import { usePreferences } from '@/stores/preferences'
+import { formatMinutes } from '@/lib/minutes'
 import Card from '@/components/ui/Card'
 import ActionButton from '@/components/ui/ActionButton'
 import Button from '@/components/ui/Button'
@@ -31,7 +33,6 @@ import {
   useIsFocused,
   useNavigation,
 } from '@react-navigation/native'
-import _ from 'lodash'
 import moment from 'moment'
 import GoalProgressStats from '@/features/service-reports/components/GoalProgressStats'
 import { RootStackNavigation } from '@/types/rootStack'
@@ -88,6 +89,7 @@ const MonthReport = ({
     customCreditLimitHours,
     celebratedTiers,
     markTierCelebrated,
+    timeDisplayFormat,
   } = usePreferences()
   const { categories } = useCategories()
   const goalHours = publisherHours[role]
@@ -116,18 +118,22 @@ const MonthReport = ({
   const hoursCompleted = adjustedMinutes.value / 60
   const hasMetGoal = hoursCompleted >= goalHours && goalHours > 0
 
-  const { serviceReports } = useServiceReport()
+  const { serviceReports, dayPlans, recurringPlans } = useServiceReport()
   const prevMonth = month === 0 ? 11 : month - 1
   const prevMonthYear = month === 0 ? year - 1 : year
-  const lastMonthHours = useMemo(() => {
+  const lastMonthMinutes = useMemo(() => {
     const reports = getMonthsReports(serviceReports, prevMonth, prevMonthYear)
     if (!reports.length) return null
-    return (
-      adjustedMinutesForSpecificMonth(reports, prevMonth, prevMonthYear, role, {
+    return adjustedMinutesForSpecificMonth(
+      reports,
+      prevMonth,
+      prevMonthYear,
+      role,
+      {
         enabled: overrideCreditLimit,
         customLimitHours: customCreditLimitHours,
-      }).value / 60
-    )
+      }
+    ).value
   }, [
     serviceReports,
     prevMonth,
@@ -136,12 +142,43 @@ const MonthReport = ({
     overrideCreditLimit,
     customCreditLimitHours,
   ])
-  const momDelta =
-    lastMonthHours !== null && (isCurrentMonth || isPastMonth)
-      ? _.round(hoursCompleted - lastMonthHours, 1)
+  const momDeltaMinutes =
+    lastMonthMinutes !== null && (isCurrentMonth || isPastMonth)
+      ? adjustedMinutes.value - lastMonthMinutes
+      : null
+  const momDeltaDisplay =
+    momDeltaMinutes !== null
+      ? formatMinutes(Math.abs(momDeltaMinutes), timeDisplayFormat).formatted
       : null
   const bothMonthsMetGoal =
-    hasMetGoal && lastMonthHours !== null && lastMonthHours >= goalHours
+    hasMetGoal &&
+    lastMonthMinutes !== null &&
+    lastMonthMinutes / 60 >= goalHours
+
+  // Pace vs plan — mirrors the widget's ahead/behind calc. Compares logged
+  // (credit-capped) minutes against the sum of day + recurring plans up to
+  // today. Hidden when there's no plan to compare against, or when viewing a
+  // non-current month (the concept of "month-to-date" only applies now).
+  const plannedMinutesToCurrentDay = useMemo(
+    () =>
+      isCurrentMonth
+        ? plannedMinutesToCurrentDayForMonth(
+            month,
+            year,
+            dayPlans,
+            recurringPlans
+          )
+        : 0,
+    [isCurrentMonth, month, year, dayPlans, recurringPlans]
+  )
+  const aheadBehindMinutes =
+    isCurrentMonth && plannedMinutesToCurrentDay > 0
+      ? adjustedMinutes.value - plannedMinutesToCurrentDay
+      : null
+  const aheadBehindDisplay =
+    aheadBehindMinutes !== null
+      ? formatMinutes(Math.abs(aheadBehindMinutes), timeDisplayFormat).formatted
+      : null
 
   const lastLoggedDate = useMemo(() => {
     if (!monthsReports || monthsReports.length === 0) return null
@@ -430,33 +467,28 @@ const MonthReport = ({
             </View>
           )}
 
-          {/* Hero + secondary line */}
+          {/* Hero + secondary line. When the parent suppressed the title row
+            the report-export affordance is passed into GoalProgressStats'
+            header slot so it sits to the right of the tier badge (or alone
+            on the trailing edge when no tier is celebrated). */}
           {!noDetails && (
-            <View
-              style={{
-                flexDirection: 'row',
-                alignItems: 'flex-start',
-                gap: 12,
-              }}
-            >
-              <View style={{ flex: 1 }}>
-                <GoalProgressStats
-                  hoursCompleted={hoursCompleted}
-                  goalHours={goalHours}
-                  hasMetGoal={hasMetGoal}
-                  periodState={
-                    isCurrentMonth ? 'current' : isPastMonth ? 'past' : 'future'
-                  }
-                  remainingLabel={`${daysRemaining} ${i18n.t('daysLeft')}`}
-                  totalLabel={`${daysInMonth} ${i18n.t('days_lowercase')}`}
-                  achievementTier={celebratingTier}
-                  sealAnimatedStyle={sealAnimatedStyle}
-                />
-              </View>
-              {hideTitle && showReportButton && (
-                <ViewReportButton month={month} year={year} />
-              )}
-            </View>
+            <GoalProgressStats
+              hoursCompleted={hoursCompleted}
+              goalHours={goalHours}
+              hasMetGoal={hasMetGoal}
+              periodState={
+                isCurrentMonth ? 'current' : isPastMonth ? 'past' : 'future'
+              }
+              remainingLabel={`${daysRemaining} ${i18n.t('daysLeft')}`}
+              totalLabel={`${daysInMonth} ${i18n.t('days_lowercase')}`}
+              achievementTier={celebratingTier}
+              sealAnimatedStyle={sealAnimatedStyle}
+              headerRightSlot={
+                hideTitle && showReportButton ? (
+                  <ViewReportButton month={month} year={year} />
+                ) : undefined
+              }
+            />
           )}
 
           {/* Category breakdown header — tap to open detailed sheet.
@@ -479,16 +511,25 @@ const MonthReport = ({
                 gap: 6,
               }}
             >
-              {momDelta !== null && momDelta !== 0 && (
+              {aheadBehindMinutes !== null && aheadBehindMinutes !== 0 && (
                 <Chip
-                  label={`${momDelta > 0 ? '↑' : '↓'} ${Math.abs(momDelta)} ${i18n.t('vsLastMonth')}`}
+                  label={`${aheadBehindMinutes > 0 ? '↑' : '↓'} ${i18n.t(
+                    aheadBehindMinutes > 0 ? 'aheadShort' : 'behindShort',
+                    { value: aheadBehindDisplay }
+                  )}`}
+                  tone={aheadBehindMinutes > 0 ? 'positive' : 'neutral'}
+                />
+              )}
+              {momDeltaMinutes !== null && momDeltaMinutes !== 0 && (
+                <Chip
+                  label={`${momDeltaMinutes > 0 ? '↑' : '↓'} ${momDeltaDisplay} ${i18n.t('vsLastMonth')}`}
                   tone={
                     // When both months cleared goal, a downward delta isn't a
                     // warning — it just means a very strong prior month. Keep
                     // tone neutral so the celebration card stays coherent.
                     bothMonthsMetGoal
                       ? 'neutral'
-                      : momDelta > 0
+                      : momDeltaMinutes > 0
                         ? 'positive'
                         : 'warn'
                   }

@@ -4,11 +4,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
 
 import useServiceReport from '@/stores/serviceReport'
-import useTheme from '@/contexts/theme'
 import { getMonthsReports } from '@/lib/serviceReport'
-import i18n from '@/lib/locales'
 
-import Text from '@/components/ui/MyText'
 import MonthReport from '@/features/service-reports/components/MonthReport'
 import ProjectedTotalCard from '@/components/ProjectedTotalCard'
 import AllDaysList from '@/features/service-reports/components/AllDaysList'
@@ -33,7 +30,6 @@ const ProgressMonthTab = ({
   onSwipeForward,
   onSwipeBack,
 }: ProgressMonthTabProps) => {
-  const theme = useTheme()
   const insets = useSafeAreaInsets()
   const { serviceReports } = useServiceReport()
 
@@ -66,21 +62,7 @@ const ProgressMonthTab = ({
           <ProjectedTotalCard scope={{ kind: 'month', month, year }} />
         </View>
 
-        <View style={{ gap: 8 }}>
-          <Text
-            style={{
-              fontFamily: theme.fonts.semiBold,
-              color: theme.colors.textAlt,
-              fontSize: theme.fontSize('sm'),
-              textTransform: 'uppercase',
-              letterSpacing: 0.5,
-              paddingHorizontal: 15,
-            }}
-          >
-            {i18n.t('allDays')}
-          </Text>
-          <AllDaysList month={month} year={year} />
-        </View>
+        <AllDaysList month={month} year={year} />
       </KeyboardAwareScrollView>
     </SwipeMonthNavigator>
   )

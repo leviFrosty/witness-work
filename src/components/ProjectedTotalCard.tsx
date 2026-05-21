@@ -1,9 +1,9 @@
 import { Fragment, useMemo } from 'react'
 import { View } from 'react-native'
-import _ from 'lodash'
 
 import Text from '@/components/ui/MyText'
 import Card from '@/components/ui/Card'
+import StripedFill from '@/components/ui/StripedFill'
 import useTheme from '@/contexts/theme'
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
 import { faChartLine } from '@fortawesome/free-solid-svg-icons'
@@ -26,6 +26,8 @@ import {
   getServiceYearReports,
   getTotalMinutesForServiceYear,
 } from '@/lib/serviceReport'
+import { formatMinutes } from '@/lib/minutes'
+import { usePreferences } from '@/stores/preferences'
 import AssistantSection from '@/components/AssistantSection'
 
 type Props = {
@@ -38,8 +40,6 @@ type Props = {
   showAssistant?: boolean
 }
 
-const formatHours = (minutes: number): string => `${_.round(minutes / 60, 1)}h`
-
 const ProjectedTotalCard = ({ scope, showAssistant = false }: Props) => {
   const theme = useTheme()
   const {
@@ -49,6 +49,9 @@ const ProjectedTotalCard = ({ scope, showAssistant = false }: Props) => {
     type: publisher,
   } = usePublisher()
   const { serviceReports, dayPlans, recurringPlans } = useServiceReport()
+  const { timeDisplayFormat } = usePreferences()
+  const formatHours = (minutes: number) =>
+    formatMinutes(minutes, timeDisplayFormat).formatted
 
   const goalHours = scope.kind === 'month' ? monthlyGoalHours : annualGoalHours
 
@@ -106,11 +109,10 @@ const ProjectedTotalCard = ({ scope, showAssistant = false }: Props) => {
       ? i18n.t('projectedTotal.period.thisMonth')
       : i18n.t('projectedTotal.period.thisServiceYear')
 
-  const projectedHours = _.round(result.projectedMinutes / 60, 1)
   const loggedDisplay = formatHours(result.loggedMinutes)
   const plannedDisplay = formatHours(result.plannedMinutes)
   const goalDisplay = formatHours(result.goalMinutes)
-  const projectedDisplay = `${projectedHours}h`
+  const projectedDisplay = formatHours(result.projectedMinutes)
   const gapDisplay = formatHours(result.gapMinutes)
   const overDisplay = formatHours(result.overMinutes)
 
@@ -161,11 +163,15 @@ const ProjectedTotalCard = ({ scope, showAssistant = false }: Props) => {
             letterSpacing: 0.5,
           }}
         >
-          {i18n.t('projectedTotal.header')}
+          {i18n.t(
+            scope.kind === 'month'
+              ? 'projectedTotal.headerMonth'
+              : 'projectedTotal.headerYear'
+          )}
         </Text>
       </View>
 
-      <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 6 }}>
+      <View>
         <Text
           style={{
             fontFamily: theme.fonts.bold,
@@ -173,13 +179,12 @@ const ProjectedTotalCard = ({ scope, showAssistant = false }: Props) => {
             letterSpacing: -0.5,
           }}
         >
-          {projectedHours}
+          {projectedDisplay}
         </Text>
         <Text
           style={{
             fontSize: theme.fontSize('sm'),
             color: theme.colors.textAlt,
-            flexShrink: 1,
           }}
         >
           {i18n.t('projectedTotal.heroSuffix')}
@@ -209,9 +214,11 @@ const ProjectedTotalCard = ({ scope, showAssistant = false }: Props) => {
           <View
             style={{
               width: `${plannedPct}%`,
-              backgroundColor: theme.colors.accentTranslucent,
+              height: '100%',
             }}
-          />
+          >
+            <StripedFill color={theme.colors.accent} />
+          </View>
         )}
       </View>
 
@@ -230,11 +237,11 @@ const ProjectedTotalCard = ({ scope, showAssistant = false }: Props) => {
           })}
         />
         <LegendItem
-          color={theme.colors.accentTranslucent}
+          color={theme.colors.accent}
           label={i18n.t('projectedTotal.legend.planned', {
             value: plannedDisplay,
           })}
-          dashed
+          striped
         />
         <Text
           style={{
@@ -292,11 +299,11 @@ const ProjectedTotalCard = ({ scope, showAssistant = false }: Props) => {
 const LegendItem = ({
   color,
   label,
-  dashed,
+  striped,
 }: {
   color: string
   label: string
-  dashed?: boolean
+  striped?: boolean
 }) => {
   const theme = useTheme()
   return (
@@ -306,16 +313,12 @@ const LegendItem = ({
           width: 10,
           height: 10,
           borderRadius: 3,
-          backgroundColor: color,
-          ...(dashed
-            ? {
-                borderWidth: 1,
-                borderStyle: 'dashed',
-                borderColor: theme.colors.accent,
-              }
-            : {}),
+          overflow: 'hidden',
+          backgroundColor: striped ? theme.colors.border : color,
         }}
-      />
+      >
+        {striped && <StripedFill color={color} size={4} strokeWidth={1.5} />}
+      </View>
       <Text
         style={{
           fontSize: theme.fontSize('xs'),

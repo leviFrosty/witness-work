@@ -28,6 +28,9 @@ pnpm run translate         # bun run src/scripts/translate.ts
 ## Conventions
 
 - **Render time** → `src/lib/minutes.ts` helpers only. No manual hours/minutes parse.
+  - User-facing time displays MUST go through `useFormattedMinutes(minutes)` (hook) or `formatMinutes(minutes, format)` (pure) — never hand-roll `_.round(minutes / 60, 1)`, never hardcode an `h`/`hrs` suffix in JSX or string templates, never pass a raw hour count into `i18n.t('…', { count })` for display. Reads must respect the user's `timeDisplayFormat` preference (`'decimal'` → `1.5h`, `'short'` → `1h 30m`).
+  - i18n templates that wrap a time value should accept a pre-formatted `{{value}}` (no inline `hrs`/`h`) and the caller supplies `formatMinutes(...).formatted`. Goal counts that the user explicitly entered in hours can stay as `${goalHours} ${i18n.t('hours')}`; only measured/computed time needs the formatter.
+  - Tight UI (calendar squares, contribution-graph tooltips, widgets) uses `formatMinutesCompact` / `useCompactFormattedMinutes` / `formatHoursCompact` instead — those are the only sanctioned bypass.
 - **Translations** → source of truth `src/locales/en-US.json`. Other locales human-approved only.
 - **Imports** → `@/*` alias (= `src/*`). Prefer `@/features/...` over relative.
 - **React Compiler enabled (beta)** → no manual `useMemo`/`useCallback` unless benchmarked. `react-compiler` ESLint rule active.

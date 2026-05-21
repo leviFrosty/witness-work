@@ -10,7 +10,7 @@ import Card from '@/components/ui/Card'
 import { useMemo } from 'react'
 import useServiceReport from '@/stores/serviceReport'
 import XView from '@/components/ui/layout/XView'
-import _ from 'lodash'
+import { useFormattedMinutes } from '@/lib/minutes'
 import {
   getPlansIntersectingDay,
   RecurringPlan,
@@ -48,17 +48,13 @@ const DayHistoryView: React.FC<DayHistoryViewProps> = ({
     [date, serviceReports]
   )
 
-  const actualHours = useMemo(() => {
+  const actualMinutes = useMemo(() => {
     if (!thisDaysReports) {
       return 0
     }
-
-    return _.round(
-      thisDaysReports.reduce(
-        (acc, report) => acc + report.hours + report.minutes / 60,
-        0
-      ),
-      1
+    return thisDaysReports.reduce(
+      (acc, report) => acc + report.hours * 60 + report.minutes,
+      0
     )
   }, [thisDaysReports])
 
@@ -76,7 +72,7 @@ const DayHistoryView: React.FC<DayHistoryViewProps> = ({
     )
   }, [recurringPlans, date])
 
-  const goalHours = useMemo(() => {
+  const goalMinutes = useMemo(() => {
     const dayPlan = dayPlans.find((dp) => moment(dp.date).isSame(date, 'day'))
 
     // Get the highest recurring plan for the day, but use effective minutes (with overrides)
@@ -88,19 +84,19 @@ const DayHistoryView: React.FC<DayHistoryViewProps> = ({
       .sort((a, b) => b.effectiveMinutes - a.effectiveMinutes)[0]
 
     if (!dayPlan?.minutes && !highestRecurringPlanForDay?.effectiveMinutes) {
-      return
+      return undefined
     }
 
-    return _.round(
-      (dayPlan?.minutes || highestRecurringPlanForDay.effectiveMinutes) / 60,
-      1
-    )
+    return dayPlan?.minutes || highestRecurringPlanForDay.effectiveMinutes
   }, [dayPlans, recurringPlansForToday, date])
+
+  const actualDisplay = useFormattedMinutes(actualMinutes)
+  const goalDisplay = useFormattedMinutes(goalMinutes ?? 0)
 
   const wentInService = !!thisDaysReports?.length
   const isToday = moment().isSame(date, 'day')
   const dateInPast = moment(date).isSameOrBefore(moment(), 'day')
-  const hitGoal = actualHours >= (goalHours || 0)
+  const hitGoal = actualMinutes >= (goalMinutes ?? 0)
 
   const statusColor = getDateStatusColor(
     theme,
@@ -126,7 +122,7 @@ const DayHistoryView: React.FC<DayHistoryViewProps> = ({
             </Text>
 
             <XView>
-              {goalHours && (
+              {goalMinutes ? (
                 <>
                   <Circle color={statusColor.bg} />
                   <Text
@@ -136,12 +132,12 @@ const DayHistoryView: React.FC<DayHistoryViewProps> = ({
                       fontFamily: theme.fonts.semiBold,
                     }}
                   >
-                    {`${actualHours} ${i18n.t('of')} ${goalHours} ${i18n.t(
+                    {`${actualDisplay.formatted} ${i18n.t('of')} ${goalDisplay.formatted} ${i18n.t(
                       'plannedHours'
                     )}`}
                   </Text>
                 </>
-              )}
+              ) : null}
             </XView>
           </XView>
           <Text

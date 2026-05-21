@@ -6,7 +6,6 @@ import { BottomTabScreenProps } from '@react-navigation/bottom-tabs'
 import { useNavigation as useRootNavigation } from '@react-navigation/native'
 import moment from 'moment'
 import { faArrowLeft, faArrowRight } from '@fortawesome/free-solid-svg-icons'
-import _ from 'lodash'
 
 import useServiceReport from '@/stores/serviceReport'
 import useTheme from '@/contexts/theme'
@@ -23,12 +22,12 @@ import {
 import { computeProjectedTotal } from '@/lib/projectedTotal'
 import { getPeriodTense } from '@/lib/projectedTotalCopy'
 import usePublisher from '@/hooks/usePublisher'
+import { useFormattedMinutes } from '@/lib/minutes'
 import { getStartTimeInMinutes } from '@/lib/normalizeDate'
 import { RootStackNavigation } from '@/types/rootStack'
 import { HomeTabStackParamList } from '@/types/homeStack'
 import { DayPlan, ServiceReport } from '@/types/serviceReport'
 
-import GlassCard from '@/components/ui/GlassCard'
 import SwipeMonthNavigator from '@/components/SwipeMonthNavigator'
 import CalendarHeader, { CalendarViewMode } from '@/components/CalendarHeader'
 import CalendarKey from '@/features/plans/components/CalendarKey'
@@ -39,6 +38,7 @@ import SelectedDateSheet, {
 } from '@/features/service-reports/components/SelectedDateSheet'
 import Card from '@/components/ui/Card'
 import Button from '@/components/ui/Button'
+import ActionButton from '@/components/ui/ActionButton'
 import IconButton from '@/components/ui/IconButton'
 import Text from '@/components/ui/MyText'
 import XView from '@/components/ui/layout/XView'
@@ -348,13 +348,13 @@ const ScheduleScreen = ({ route }: Props) => {
               <AnnualScheduleSection month={month} year={year} />
             </XView>
           </Card>
-          <GlassCard>
+          <Card>
             <CalendarHeader
               viewMode={calendarViewMode}
               onChangeViewMode={setCalendarViewMode}
             />
-            <CalendarKey />
-            <View style={{ marginTop: 4 }}>
+            <View>
+              <CalendarKey />
               <MonthTimeReportsCalendar
                 month={month}
                 year={year}
@@ -363,7 +363,12 @@ const ScheduleScreen = ({ route }: Props) => {
                 viewMode={calendarViewMode}
               />
             </View>
-          </GlassCard>
+            <ActionButton
+              onPress={() => rootNavigation.navigate('PlanDay', {})}
+            >
+              {i18n.t('createPlan')}
+            </ActionButton>
+          </Card>
           <MonthAssistantCard month={month} year={year} />
           <View style={{ gap: 8 }}>
             <XView style={{ justifyContent: 'space-between' }}>
@@ -495,6 +500,7 @@ const MonthScheduleSection = (props: { month: number; year: number }) => {
 
   const projectedHours = result.projectedMinutes / 60
   const percentProjected = goalHours > 0 ? projectedHours / goalHours : 0
+  const projectedDisplay = useFormattedMinutes(result.projectedMinutes)
 
   return (
     <View style={{ gap: 5, flex: 1 }}>
@@ -514,16 +520,16 @@ const MonthScheduleSection = (props: { month: number; year: number }) => {
               fontSize: theme.fontSize('xs'),
             }}
           >
-            {`${_.round(
-              projectedHours,
-              1
-            )} ${i18n.t('of')} ${goalHours} ${i18n.t('hours')}`}
+            {`${projectedDisplay.formatted} ${i18n.t(
+              'of'
+            )} ${goalHours} ${i18n.t('hours')}`}
           </Text>
         </XView>
       </XView>
       <SimpleProgressBar
         percentage={percentProjected}
-        color={percentProjected < 1 ? theme.colors.warn : theme.colors.accent}
+        color={theme.colors.accent}
+        animated={false}
       />
     </View>
   )
@@ -564,13 +570,14 @@ const AnnualScheduleSection = (props: { month: number; year: number }) => {
     ]
   )
 
-  if (!hasAnnualGoal) {
-    return null
-  }
-
   const projectedHours = result.projectedMinutes / 60
   const percentProjected =
     annualGoalHours > 0 ? projectedHours / annualGoalHours : 0
+  const projectedDisplay = useFormattedMinutes(result.projectedMinutes)
+
+  if (!hasAnnualGoal) {
+    return null
+  }
 
   return (
     <View style={{ gap: 5, flex: 1 }}>
@@ -589,15 +596,15 @@ const AnnualScheduleSection = (props: { month: number; year: number }) => {
             fontSize: theme.fontSize('xs'),
           }}
         >
-          {`${_.round(
-            projectedHours,
-            1
-          )} ${i18n.t('of')} ${annualGoalHours} ${i18n.t('hours')}`}
+          {`${projectedDisplay.formatted} ${i18n.t(
+            'of'
+          )} ${annualGoalHours} ${i18n.t('hours')}`}
         </Text>
       </XView>
       <SimpleProgressBar
         percentage={percentProjected}
-        color={percentProjected < 1 ? theme.colors.warn : theme.colors.accent}
+        color={theme.colors.accent}
+        animated={false}
       />
     </View>
   )
@@ -650,17 +657,15 @@ const MonthAssistantCard = ({
   if (monthlyGoalHours <= 0 || tense === 'past') return null
 
   return (
-    <Card>
-      <AssistantSection
-        year={year}
-        month={month}
-        today={today}
-        monthlyGoalHours={monthlyGoalHours}
-        loggedAdjustedMinutes={loggedAdjustedMinutes}
-        projection={projection}
-        standalone
-      />
-    </Card>
+    <AssistantSection
+      year={year}
+      month={month}
+      today={today}
+      monthlyGoalHours={monthlyGoalHours}
+      loggedAdjustedMinutes={loggedAdjustedMinutes}
+      projection={projection}
+      standalone
+    />
   )
 }
 

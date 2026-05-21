@@ -50,6 +50,7 @@ const FEATURE_ROWS: ReadonlyArray<{
   { labelKey: 'paywallFeatureWidgets', free: true, supporter: true },
   { labelKey: 'paywallFeatureSync', free: false, supporter: true },
   { labelKey: 'paywallFeatureAccent', free: false, supporter: true },
+  { labelKey: 'paywallFeatureAppIcons', free: false, supporter: true },
   { labelKey: 'paywallFeatureFuture', free: false, supporter: true },
 ]
 
@@ -649,7 +650,11 @@ const PaywallScreen = () => {
         await Purchases.purchasePackage(selectedPackage)
       if (productIdentifier) {
         revalidate()
-        navigation.replace('Thank You')
+        // Pass the purchased tier so the Thank You screen shows the right
+        // tone — a lifetime supporter who tips one-time should see the tip
+        // thank-you, not the full supporter celebration, even though
+        // `isSupporter` is still true.
+        navigation.replace('Thank You', { purchaseTier: tier })
       }
     } catch (error: unknown) {
       const code = (error as PurchasesError).code
@@ -661,7 +666,7 @@ const PaywallScreen = () => {
         Sentry.captureException(error)
       }
     }
-  }, [navigation, revalidate, selectedPackage])
+  }, [navigation, revalidate, selectedPackage, tier])
 
   const handleRestore = useCallback(async () => {
     try {
@@ -838,9 +843,11 @@ const PaywallScreen = () => {
         </Button>
 
         <Divider />
-        {hasPurchasedBefore && customer ? (
+        {hasPurchasedBefore && customer && (
           <PreviousDonations customer={customer} revalidate={revalidate} />
-        ) : (
+        )}
+
+        {!hasPurchasedBefore && (
           <Button
             onPress={handleRestore}
             style={{ alignSelf: 'center', paddingVertical: 10 }}
@@ -877,7 +884,7 @@ const PaywallScreen = () => {
               // The tip tier keeps the green accent fill, where textInverse is
               // already the right call.
               color:
-                tier === 'supporter' ? '#1A1A1A' : theme.colors.textInverse,
+                tier === 'supporter' ? '#343232' : theme.colors.textInverse,
               fontFamily: theme.fonts.bold,
             }}
           >

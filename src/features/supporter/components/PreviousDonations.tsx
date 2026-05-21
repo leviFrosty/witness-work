@@ -14,6 +14,7 @@ import useTheme from '@/contexts/theme'
 import Badge from '@/components/ui/Badge'
 import IconButton from '@/components/ui/IconButton'
 import { faRefresh } from '@fortawesome/free-solid-svg-icons'
+import { LIFETIME_SUPPORTER_ENTITLEMENT } from '@/lib/supporterSince'
 
 const MONTHLY_DONATOR_ENTITLEMENT = 'Monthly Donator'
 
@@ -60,6 +61,13 @@ const PreviousDonations = ({
       ? customer.entitlements.all[MONTHLY_DONATOR_ENTITLEMENT]
       : undefined
 
+  // Read from `active`, not `all`: a revoked lifetime grant should drop out
+  // entirely rather than appear here as inactive.
+  const lifetimeSupporterEntitlement =
+    LIFETIME_SUPPORTER_ENTITLEMENT in customer.entitlements.active
+      ? customer.entitlements.active[LIFETIME_SUPPORTER_ENTITLEMENT]
+      : undefined
+
   const monthlyDonationEntitlementProduct = useMemo(() => {
     const matchingProduct = products.find(
       (p) => p.identifier === monthlyDonatorEntitlement?.productIdentifier
@@ -85,6 +93,38 @@ const PreviousDonations = ({
           color={theme.colors.textAlt}
         />
       </XView>
+      {lifetimeSupporterEntitlement && (
+        <Card>
+          <Text
+            style={{
+              fontFamily: theme.fonts.semiBold,
+              fontSize: theme.fontSize('lg'),
+            }}
+          >
+            {i18n.t('lifetimeSupporter')}
+          </Text>
+          <XView style={{ gap: 10 }}>
+            <Text style={{ fontFamily: theme.fonts.bold }}>
+              {i18n.t('neverExpires')}
+            </Text>
+            <Badge color={theme.colors.accentTranslucent} size='sm'>
+              {i18n.t('active')}
+            </Badge>
+          </XView>
+          <Text
+            style={{
+              fontSize: theme.fontSize('sm'),
+              color: theme.colors.textAlt,
+            }}
+          >
+            {i18n.t('activatedOn', {
+              date: moment(
+                lifetimeSupporterEntitlement.originalPurchaseDate
+              ).format('LL'),
+            })}
+          </Text>
+        </Card>
+      )}
       {monthlyDonatorEntitlement && (
         <View style={{ gap: 10 }}>
           <Card>

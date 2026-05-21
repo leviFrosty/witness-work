@@ -1,6 +1,5 @@
 import { useMemo } from 'react'
 import { View, ViewStyle } from 'react-native'
-import Svg, { Defs, Path, Pattern, Rect } from 'react-native-svg'
 import _ from 'lodash'
 
 import useTheme from '@/contexts/theme'
@@ -12,6 +11,7 @@ import {
   getTotalMinutesForServiceYear,
 } from '@/lib/serviceReport'
 import { getEffectiveMilestones, getMilestoneHitState } from '@/lib/milestones'
+import StripedFill from '@/components/ui/StripedFill'
 import Text from '@/components/ui/MyText'
 
 interface MilestoneProgressBarPreviewProps {
@@ -62,7 +62,8 @@ type LabelLayout = {
  * - Hit segments render as solid accent green.
  * - The in-progress segment renders the completed portion as solid accent with
  *   the remainder in a lighter pastel accent.
- * - Future segments render as a subdued diagonal cross-hatch pattern.
+ * - Future segments render with the shared `StripedFill` diagonal pattern,
+ *   matching the planned portion of the projected-total bar.
  * - Milestone values are centered beneath their divider line; labels that would
  *   crowd a neighbor drop to a second row. The "next" value is emphasized in
  *   accent.
@@ -125,9 +126,8 @@ export const MilestoneProgressBarPreview = ({
     return { segments: segs, labels: labelLayout, labelsHeight: height }
   }, [milestones, hoursCompleted, safeGoal])
 
-  const separatorColor = theme.colors.textAlt
+  const separatorColor = theme.colors.text
   const pastelFill = theme.colors.accentTranslucent
-  const hatchLineColor = theme.colors.textAlt
 
   return (
     <View>
@@ -147,10 +147,13 @@ export const MilestoneProgressBarPreview = ({
             left: 0,
             right: 0,
             bottom: 0,
-            opacity: 0.25,
           }}
         >
-          <HatchBackground color={hatchLineColor} />
+          <StripedFill
+            color={theme.colors.textAlt}
+            opacity={0.35}
+            strokeWidth={1.5}
+          />
         </View>
         <View style={{ flexDirection: 'row', height: '100%' }}>
           {segments.map((seg, i) => (
@@ -265,23 +268,6 @@ export const MilestoneProgressBarPreview = ({
     </View>
   )
 }
-
-const HatchBackground = ({ color }: { color: string }) => (
-  <Svg
-    width='100%'
-    height='100%'
-    style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}
-  >
-    <Defs>
-      <Pattern id='hatch' width='14' height='14' patternUnits='userSpaceOnUse'>
-        <Path d='M0,14 L14,0' stroke={color} strokeWidth='1.5' />
-        <Path d='M-1,1 L1,-1' stroke={color} strokeWidth='1.5' />
-        <Path d='M13,15 L15,13' stroke={color} strokeWidth='1.5' />
-      </Pattern>
-    </Defs>
-    <Rect width='100%' height='100%' fill='url(#hatch)' />
-  </Svg>
-)
 
 interface MilestoneProgressBarProps {
   /**

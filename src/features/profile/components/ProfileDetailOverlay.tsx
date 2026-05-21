@@ -1,13 +1,13 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo } from 'react'
 import useDailyMinutes from '@/features/profile/hooks/useDailyMinutes'
 import {
-  Modal,
   Pressable,
   ScrollView,
   StatusBar,
   useWindowDimensions,
   View,
 } from 'react-native'
+import { FullWindowOverlay } from 'react-native-screens'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useNavigation } from '@react-navigation/native'
 import {
@@ -19,7 +19,6 @@ import { faHeart } from '@fortawesome/free-solid-svg-icons'
 import moment from 'moment'
 import Animated, {
   interpolate,
-  runOnJS,
   useAnimatedStyle,
   useSharedValue,
   withSpring,
@@ -35,6 +34,7 @@ import Text from '@/components/ui/MyText'
 import IconButton from '@/components/ui/IconButton'
 import Avatar from '@/components/ui/Avatar'
 import { RootStackNavigation } from '@/types/rootStack'
+import ContributionGraph from '@/features/profile/components/ContributionGraph'
 import MonthlyRoutine from '@/features/profile/components/MonthlyRoutine'
 import SinceBadge from '@/features/profile/components/SinceBadge'
 import i18n from '@/lib/locales'
@@ -46,6 +46,7 @@ import {
   minutesInTrailingDays,
   totalMinutes,
 } from '@/features/profile/lib/profileStats'
+import { useFormattedMinutes } from '@/lib/minutes'
 
 export type OriginRect = { x: number; y: number; width: number; height: number }
 
@@ -53,8 +54,6 @@ interface Props {
   origin: OriginRect | null
   open: boolean
   onClose: () => void
-  /** Called after the close animation completes so the small card can fade in. */
-  onClosed?: () => void
 }
 
 const SPRING = { damping: 20, stiffness: 180, mass: 0.7 }
@@ -107,7 +106,7 @@ const Stat = ({
   )
 }
 
-const ProfileDetailOverlay = ({ origin, open, onClose, onClosed }: Props) => {
+const ProfileDetailOverlay = ({ origin, open, onClose }: Props) => {
   const theme = useTheme()
   const insets = useSafeAreaInsets()
   const navigation = useNavigation<RootStackNavigation>()
@@ -128,46 +127,37 @@ const ProfileDetailOverlay = ({ origin, open, onClose, onClosed }: Props) => {
   const stats = useMemo(() => {
     const total = totalMinutes(daily)
     return {
-      totalHours: Math.round(total / 60),
+      totalMinutes: total,
       days: daysLogged(daily),
       streak:
         entryMode === 'hours'
           ? consecutiveMonthsStreak(daily)
           : consecutiveWeeksStreak(daily),
-      last30Hours: Math.round(minutesInTrailingDays(daily, 30) / 60),
+      last30Minutes: minutesInTrailingDays(daily, 30),
     }
   }, [daily, entryMode])
+  const totalDisplay = useFormattedMinutes(stats.totalMinutes)
+  const last30Display = useFormattedMinutes(stats.last30Minutes)
 
-  // `mounted` holds the Modal up for the full duration of both open and close
-  // animations. Decoupling it from `open` lets the close-spring play out
-  // before we unmount and relinquish the hero rect.
-  const [mounted, setMounted] = useState(false)
+  // Persistent mount once origin is known: heavy children render at expanded
+  // dimensions before the user taps so the open spring is pure opacity/morph.
+  // FullWindowOverlay (vs RN Modal) renders into a separate UIWindow whose
+  // hit-test correctly falls through transparent areas, so a closed-but-mounted
+  // overlay doesn't eat home-screen taps.
   const progress = useSharedValue(0)
 
-  useEffect(() => {
-    if (open) setMounted(true)
-  }, [open])
+  const targetX = EXPANDED_MARGIN
+  const targetY = insets.top + EXPANDED_MARGIN
+  const targetW = winW - EXPANDED_MARGIN * 2
+  const targetH = winH - insets.top - insets.bottom - EXPANDED_MARGIN * 2
 
   useEffect(() => {
-    if (!mounted || !origin) return
-    if (open) {
-      progress.value = withSpring(1, SPRING)
-    } else {
-      progress.value = withSpring(0, SPRING, (finished) => {
-        if (finished) {
-          runOnJS(setMounted)(false)
-          if (onClosed) runOnJS(onClosed)()
-        }
-      })
-    }
-  }, [open, mounted, origin, onClosed, progress])
+    if (!origin) return
+    progress.value = withSpring(open ? 1 : 0, SPRING)
+  }, [open, origin, progress])
 
   const containerStyle = useAnimatedStyle(() => {
     if (!origin) return {}
-    const targetX = EXPANDED_MARGIN
-    const targetY = insets.top + EXPANDED_MARGIN
-    const targetW = winW - EXPANDED_MARGIN * 2
-    const targetH = winH - insets.top - insets.bottom - EXPANDED_MARGIN * 2
     return {
       left: interpolate(progress.value, [0, 1], [origin.x, targetX]),
       top: interpolate(progress.value, [0, 1], [origin.y, targetY]),
@@ -189,18 +179,17 @@ const ProfileDetailOverlay = ({ origin, open, onClose, onClosed }: Props) => {
     opacity: interpolate(progress.value, [0, 0.15], [0, 1], 'clamp'),
   }))
 
-  if (!mounted || !origin) return null
+  if (!origin) return null
 
   return (
-    <Modal
-      transparent
-      visible
-      animationType='none'
-      statusBarTranslucent
-      onRequestClose={onClose}
-    >
-      <StatusBar barStyle='light-content' animated />
-      <View style={{ flex: 1 }}>
+    <FullWindowOverlay>
+      {open && <StatusBar barStyle='light-content' animated />}
+      <View
+        style={{ flex: 1 }}
+        pointerEvents={open ? 'auto' : 'none'}
+        accessibilityElementsHidden={!open}
+        importantForAccessibility={open ? 'auto' : 'no-hide-descendants'}
+      >
         <Pressable
           onPress={onClose}
           style={{
@@ -223,9 +212,9 @@ const ProfileDetailOverlay = ({ origin, open, onClose, onClosed }: Props) => {
               {
                 position: 'absolute',
                 top: 0,
-                right: 0,
-                bottom: 0,
                 left: 0,
+                width: targetW,
+                height: targetH,
                 backgroundColor: theme.colors.card,
               },
               surfaceStyle,
@@ -236,9 +225,9 @@ const ProfileDetailOverlay = ({ origin, open, onClose, onClosed }: Props) => {
               {
                 position: 'absolute',
                 top: 0,
-                right: 0,
-                bottom: 0,
                 left: 0,
+                width: targetW,
+                height: targetH,
               },
               contentStyle,
             ]}
@@ -329,12 +318,12 @@ const ProfileDetailOverlay = ({ origin, open, onClose, onClosed }: Props) => {
                 <View style={{ flexDirection: 'row', gap: 10 }}>
                   <Stat
                     label={i18n.t('profileStatHours')}
-                    value={String(stats.totalHours)}
+                    value={totalDisplay.formatted}
                     sub={i18n.t('profileStatHoursSub')}
                   />
                   <Stat
                     label={i18n.t('profileStatLast30')}
-                    value={`${stats.last30Hours}${i18n.t('hoursCompact')}`}
+                    value={last30Display.formatted}
                     sub={i18n.t('profileStatLast30Sub')}
                   />
                 </View>
@@ -376,11 +365,25 @@ const ProfileDetailOverlay = ({ origin, open, onClose, onClosed }: Props) => {
                 </Text>
                 <MonthlyRoutine onBeforeNavigate={onClose} />
               </View>
+              {entryMode === 'hours' && (
+                <View style={{ gap: 10 }}>
+                  <Text
+                    style={{
+                      fontSize: 13,
+                      fontFamily: theme.fonts.semiBold,
+                      color: theme.colors.text,
+                    }}
+                  >
+                    {i18n.t('profileActivityTitle')}
+                  </Text>
+                  <ContributionGraph daily={daily} />
+                </View>
+              )}
             </ScrollView>
           </Animated.View>
         </Animated.View>
       </View>
-    </Modal>
+    </FullWindowOverlay>
   )
 }
 

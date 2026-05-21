@@ -73,7 +73,7 @@ const MonthTimeReportsCalendar: React.FC<MonthTimeReportsCalendarProps> = ({
         />
       )}
       theme={{
-        calendarBackground: theme.colors.card,
+        calendarBackground: 'transparent',
         dayTextColor: theme.colors.text,
         textDisabledColor: theme.colors.textAlt,
         textDayHeaderFontSize: theme.fontSize('md'),

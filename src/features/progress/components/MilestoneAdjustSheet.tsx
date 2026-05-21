@@ -26,6 +26,7 @@ import {
   getMilestoneHitState,
   validateMilestoneValue,
 } from '@/lib/milestones'
+import { useFormattedMinutes } from '@/lib/minutes'
 import { RootStackNavigation } from '@/types/rootStack'
 
 import Text from '@/components/ui/MyText'
@@ -113,19 +114,16 @@ const MilestoneAdjustSheet = ({ visible, onClose }: Props) => {
   // Live hours completed for the current service year — same math the rest of
   // the app uses. Must filter to just this service year first; passing the raw
   // store sums every year ever logged.
-  const hoursCompleted = useMemo(() => {
+  const completedMinutes = useMemo(() => {
     if (annualGoalHours <= 0) return 0
     const serviceYearStart = currentServiceYearEnd() - 1
     const serviceYearReports = getServiceYearReports(
       serviceReports,
       serviceYearStart
     )
-    const totalMinutes = getTotalMinutesForServiceYear(
-      serviceYearReports,
-      serviceYearStart
-    )
-    return _.round(totalMinutes / 60, 1)
+    return getTotalMinutesForServiceYear(serviceYearReports, serviceYearStart)
   }, [serviceReports, annualGoalHours])
+  const hoursCompleted = _.round(completedMinutes / 60, 1)
 
   const milestonesWithGoal = useMemo(
     () => (annualGoalHours > 0 ? [...draft, annualGoalHours] : draft),
@@ -136,10 +134,14 @@ const MilestoneAdjustSheet = ({ visible, onClose }: Props) => {
     [milestonesWithGoal, hoursCompleted]
   )
 
-  const nextMilestoneRemaining =
+  const nextMilestoneRemainingMinutes =
     hitState.next !== null
-      ? _.round(Math.max(0, hitState.next - hoursCompleted), 1)
+      ? Math.max(0, Math.round(hitState.next * 60 - completedMinutes))
       : null
+  const nextMilestoneRemainingDisplay = useFormattedMinutes(
+    nextMilestoneRemainingMinutes ?? 0
+  )
+  const completedHoursDisplay = useFormattedMinutes(completedMinutes)
 
   const handleClose = () => {
     onClose()
@@ -245,20 +247,19 @@ const MilestoneAdjustSheet = ({ visible, onClose }: Props) => {
 
   const renderSubtitle = () => {
     if (annualGoalHours <= 0) return null
-    const hoursUnit = i18n.t('hours_lowercase')
     const parts: string[] = []
-    parts.push(`${hoursCompleted} ${hoursUnit} logged`)
+    parts.push(`${completedHoursDisplay.formatted} logged`)
     parts.push(
       i18n.t('milestonesHitChip', {
         hit: hitState.totalHit,
         total: hitState.total,
       })
     )
-    if (hitState.next !== null && nextMilestoneRemaining !== null) {
+    if (hitState.next !== null && nextMilestoneRemainingMinutes !== null) {
       parts.push(
         i18n.t('nextMilestoneLabel', {
           hours: hitState.next,
-          remaining: nextMilestoneRemaining,
+          remaining: nextMilestoneRemainingDisplay.formatted,
         })
       )
     }

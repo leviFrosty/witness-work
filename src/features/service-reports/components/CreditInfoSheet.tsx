@@ -1,13 +1,13 @@
 import { useState } from 'react'
 import { View } from 'react-native'
 import { Sheet } from 'tamagui'
-import _ from 'lodash'
 import Chip from '@/components/ui/Chip'
 import Text from '@/components/ui/MyText'
 import IconButton from '@/components/ui/IconButton'
 import { faTimes } from '@fortawesome/free-solid-svg-icons'
 import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
+import { useFormattedMinutes } from '@/lib/minutes'
 
 type Props = {
   creditOverageMinutes: number
@@ -16,14 +16,14 @@ type Props = {
 const CreditInfoSheet = ({ creditOverageMinutes }: Props) => {
   const theme = useTheme()
   const [open, setOpen] = useState(false)
-  const overageHours = _.round(creditOverageMinutes / 60, 1)
+  const overageDisplay = useFormattedMinutes(creditOverageMinutes)
 
   if (creditOverageMinutes <= 0) return null
 
   return (
     <>
       <Chip
-        label={i18n.t('creditOverageChip', { count: overageHours })}
+        label={i18n.t('creditOverageChip', { value: overageDisplay.formatted })}
         tone='warn'
         onPress={() => setOpen(true)}
       />

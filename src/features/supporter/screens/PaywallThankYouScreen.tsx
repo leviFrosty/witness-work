@@ -3,14 +3,14 @@ import { ScrollView, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
-import { useNavigation } from '@react-navigation/native'
+import { RouteProp, useNavigation, useRoute } from '@react-navigation/native'
 import Wrapper from '@/components/ui/layout/Wrapper'
 import Text from '@/components/ui/MyText'
 import ActionButton from '@/components/ui/ActionButton'
 import SupporterBenefits from '@/components/SupporterBenefits'
 import SupporterBadge from '@/components/SupporterBadge'
 import useIsSupporter from '@/hooks/useIsSupporter'
-import { RootStackNavigation } from '@/types/rootStack'
+import { RootStackNavigation, RootStackParamList } from '@/types/rootStack'
 import useAnimation from '@/hooks/useAnimation'
 import useFireworks from '@/hooks/useFireworks'
 import { FIREWORKS_AFTER_LOTTIE_BUFFER_MS } from '@/providers/ConfettiProvider'
@@ -38,7 +38,17 @@ const PaywallThankYouScreen = () => {
   const theme = useTheme()
   const insets = useSafeAreaInsets()
   const navigation = useNavigation<RootStackNavigation>()
+  const route = useRoute<RouteProp<RootStackParamList, 'Thank You'>>()
   const { isSupporter } = useIsSupporter()
+  // Prefer the just-purchased tier from nav params over the current supporter
+  // state. A lifetime supporter who sends a one-time tip is still
+  // `isSupporter === true`, but the screen tone should match what they
+  // actually bought. Falls back to `isSupporter` when the screen is reached
+  // without a tier (e.g. legacy nav paths).
+  const purchaseTier = route.params?.purchaseTier
+  const showSupporterCelebration = purchaseTier
+    ? purchaseTier === 'supporter'
+    : isSupporter
   const canGoBack = navigation.canGoBack()
   const { playConfetti } = useAnimation()
   const fireworks = useFireworks()
@@ -93,14 +103,14 @@ const PaywallThankYouScreen = () => {
             {i18n.t('thankYou')}
           </Text>
 
-          {isSupporter && <SupporterBadge size='md' />}
+          {showSupporterCelebration && <SupporterBadge size='md' />}
 
           <Text style={{ textAlign: 'center', maxWidth: 280 }}>
-            {isSupporter
+            {showSupporterCelebration
               ? i18n.t('thankYou_description')
               : i18n.t('thankYou_oneTimeDescription')}
           </Text>
-          {isSupporter && (
+          {showSupporterCelebration && (
             <Text
               style={{
                 textAlign: 'center',
@@ -114,7 +124,7 @@ const PaywallThankYouScreen = () => {
           )}
         </View>
 
-        {isSupporter && <SupporterBenefits />}
+        {showSupporterCelebration && <SupporterBenefits />}
       </ScrollView>
       <View
         style={{

@@ -9,6 +9,7 @@ import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
 import { usePreferences } from '@/stores/preferences'
 import { RootStackNavigation } from '@/types/rootStack'
+import SupporterCtaButton from '@/features/supporter/components/SupporterCtaButton'
 
 /**
  * Home-screen "thank you" card for long-tenure, high-engagement non-supporters.
@@ -84,25 +85,26 @@ const SupporterNudgeCard = () => {
             {i18n.t('supporterNudge_dismiss')}
           </Text>
         </Button>
-        <Button
+        <SupporterCtaButton
           onPress={handleLearnMore}
+          shimmer
           style={{
             paddingVertical: 8,
             paddingHorizontal: 14,
-            borderRadius: theme.numbers.borderRadiusMd,
-            backgroundColor: theme.colors.supporter,
           }}
         >
           <Text
             style={{
               fontSize: theme.fontSize('sm'),
               fontFamily: theme.fonts.semiBold,
-              color: theme.colors.textInverse,
+              // Gold supporter fill needs a dark foreground in both themes —
+              // textInverse flips to white in light mode and fails contrast.
+              color: '#343232',
             }}
           >
             {i18n.t('supporterNudge_cta')}
           </Text>
-        </Button>
+        </SupporterCtaButton>
       </XView>
     </View>
   )

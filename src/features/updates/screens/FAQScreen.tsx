@@ -1,6 +1,10 @@
 import { useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { Image, View, TextInput as RNTextInput, ScrollView } from 'react-native'
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
+import * as Clipboard from 'expo-clipboard'
+import * as Sentry from '@sentry/react-native'
+import Purchases from 'react-native-purchases'
+import { useToastController } from '@tamagui/toast'
 import {
   faBug,
   faCircleQuestion,
@@ -122,6 +126,21 @@ const FAQScreen = () => {
   const categoryRefs = useRef<Partial<Record<FAQCategory, View | null>>>({})
   const didScrollRef = useRef(false)
   const [search, setSearch] = useState('')
+  const toast = useToastController()
+
+  const handleCopyAccountId = useCallback(async () => {
+    try {
+      // Live SDK value, not `customer.originalAppUserId` — the dev reset flow
+      // can swap the active user via `logIn`, and the current ID is what
+      // matters for granting a promotional entitlement in the RC dashboard.
+      const id = await Purchases.getAppUserID()
+      await Clipboard.setStringAsync(id)
+      toast.show(i18n.t('accountIdCopied'), { message: '', native: true })
+    } catch (error) {
+      Sentry.captureException(error)
+      toast.show(i18n.t('copyAccountIdError'), { message: '', native: true })
+    }
+  }, [toast])
 
   const scrollToTargetCategory = useCallback(() => {
     if (didScrollRef.current) return
@@ -384,6 +403,22 @@ const FAQScreen = () => {
               </Text>
             </Text>
           </Card>
+        </View>
+
+        <View style={{ paddingHorizontal: 15, paddingTop: 4 }}>
+          <Button
+            onPress={handleCopyAccountId}
+            style={{ alignSelf: 'center', paddingVertical: 10 }}
+          >
+            <Text
+              style={{
+                fontSize: theme.fontSize('xs'),
+                color: theme.colors.textAlt,
+              }}
+            >
+              {i18n.t('copyAccountId')}
+            </Text>
+          </Button>
         </View>
       </KeyboardAwareScrollView>
     </Wrapper>

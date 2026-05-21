@@ -7,10 +7,13 @@ import useServiceReport from '@/stores/serviceReport'
 import {
   getEarliestReportDate,
   getLifetimeHours,
+  getLifetimeMinutes,
   getServiceYearEndYearsSpan,
 } from '@/lib/serviceReport'
 import { ServiceReport } from '@/types/serviceReport'
 import i18n from '@/lib/locales'
+import { usePreferences } from '@/stores/preferences'
+import { formatMinutes } from '@/lib/minutes'
 
 import GlassCard from '@/components/ui/GlassCard'
 import Chip from '@/components/ui/Chip'
@@ -51,15 +54,24 @@ const useFlatServiceReports = (): ServiceReport[] => {
 const LifetimeHoursCard = () => {
   const theme = useTheme()
   const reports = useFlatServiceReports()
+  const { timeDisplayFormat } = usePreferences()
 
+  const lifetimeMinutes = useMemo(() => getLifetimeMinutes(reports), [reports])
   const lifetimeHours = useMemo(() => getLifetimeHours(reports), [reports])
   const earliestDate = useMemo(() => getEarliestReportDate(reports), [reports])
   const endYears = useMemo(() => getServiceYearEndYearsSpan(reports), [reports])
 
+  const isDecimal = timeDisplayFormat === 'decimal'
+
   const formattedLifetime = useMemo(() => {
-    // Once we hit 3+ whole-number digits the hero text starts crowding the card,
-    // so floor sub-decimal noise; below that we keep a single decimal place only
-    // when the fractional part is non-zero to avoid "42.0" noise.
+    if (!isDecimal) {
+      // Short format owns its own unit and includes minutes, so render the full
+      // formatter output (e.g. "1,234h 30m") and suppress the trailing unit.
+      return formatMinutes(lifetimeMinutes, timeDisplayFormat).formatted
+    }
+    // Decimal: keep the existing hero treatment (thousands-separated, trim
+    // sub-decimal noise once we cross 3 digits) and let the unit suffix
+    // render alongside.
     if (lifetimeHours >= 100) {
       return Math.floor(lifetimeHours).toLocaleString()
     }
@@ -69,12 +81,16 @@ const LifetimeHoursCard = () => {
       minimumFractionDigits: hasFraction ? 1 : 0,
       maximumFractionDigits: 1,
     })
-  }, [lifetimeHours])
+  }, [lifetimeMinutes, lifetimeHours, isDecimal, timeDisplayFormat])
 
-  // At 100k+ even the "hours" label competes with the digits for space, so swap
-  // to the compact form ("h").
-  const hoursLabel =
-    lifetimeHours >= 100000 ? i18n.t('hoursCompact') : i18n.t('hours_lowercase')
+  // Decimal hero renders a bare number; pair it with the long-form unit
+  // (compact "h" at 100k+ to keep the row from wrapping). Short hero output
+  // already carries its own unit — suppress the trailing label.
+  const hoursLabel = !isDecimal
+    ? ''
+    : lifetimeHours >= 100000
+      ? i18n.t('hoursCompact')
+      : i18n.t('hours_lowercase')
 
   const subtitle = useMemo(() => {
     if (!earliestDate) return null
@@ -107,9 +123,11 @@ const LifetimeHoursCard = () => {
           }}
         >
           <Text
+            // "Short" mode emits e.g. "1,234h 30m" — at 64pt that's too wide
+            // for a single card row. Drop a tier instead of auto-shrinking.
             style={{
-              fontSize: 64,
-              lineHeight: 68,
+              fontSize: isDecimal ? 64 : 40,
+              lineHeight: isDecimal ? 68 : 44,
               fontFamily: theme.fonts.bold,
               color: theme.colors.text,
               letterSpacing: -1,
@@ -117,14 +135,16 @@ const LifetimeHoursCard = () => {
           >
             {formattedLifetime}
           </Text>
-          <Text
-            style={{
-              fontSize: theme.fontSize('lg'),
-              color: theme.colors.textAlt,
-            }}
-          >
-            {hoursLabel}
-          </Text>
+          {hoursLabel ? (
+            <Text
+              style={{
+                fontSize: theme.fontSize('lg'),
+                color: theme.colors.textAlt,
+              }}
+            >
+              {hoursLabel}
+            </Text>
+          ) : null}
         </View>
 
         {subtitle ? (

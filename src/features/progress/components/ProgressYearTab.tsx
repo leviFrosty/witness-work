@@ -3,7 +3,6 @@ import { Pressable, View } from 'react-native'
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import moment from 'moment'
-import _ from 'lodash'
 
 import useTheme from '@/contexts/theme'
 import usePublisher from '@/hooks/usePublisher'
@@ -14,6 +13,7 @@ import {
   calculateMonthlyPlannedMinutesOptimized,
   getMonthsReports,
 } from '@/lib/serviceReport'
+import { useFormattedMinutes } from '@/lib/minutes'
 import i18n from '@/lib/locales'
 
 import YearMilestoneCard from '@/components/YearMilestoneCard'
@@ -62,7 +62,7 @@ const MonthRow = ({
     [serviceReports, month, year]
   )
 
-  const hoursCompleted = useMemo(() => {
+  const completedMinutes = useMemo(() => {
     const adjusted = adjustedMinutesForSpecificMonth(
       monthsReports,
       month,
@@ -70,7 +70,7 @@ const MonthRow = ({
       role,
       { enabled: overrideCreditLimit, customLimitHours: customCreditLimitHours }
     )
-    return adjusted.value / 60
+    return adjusted.value
   }, [
     monthsReports,
     month,
@@ -80,35 +80,39 @@ const MonthRow = ({
     customCreditLimitHours,
   ])
 
-  const plannedHours = useMemo(() => {
+  const plannedMinutes = useMemo(() => {
     if (!isFuture) return 0
-    const planned = calculateMonthlyPlannedMinutesOptimized(
+    return calculateMonthlyPlannedMinutesOptimized(
       month,
       year,
       dayPlans,
       recurringPlans
     )
-    return planned / 60
   }, [isFuture, month, year, dayPlans, recurringPlans])
 
-  const hoursRounded = _.round(hoursCompleted, 1)
-  const plannedRounded = _.round(plannedHours, 1)
-  const delta = _.round(hoursCompleted - goalHours, 1)
+  const completedDisplay = useFormattedMinutes(completedMinutes)
+  const plannedDisplay = useFormattedMinutes(plannedMinutes)
+  const goalMinutes = Math.round(goalHours * 60)
+  const deltaMinutes = completedMinutes - goalMinutes
+  const deltaDisplay = useFormattedMinutes(Math.abs(deltaMinutes))
 
   // Only show delta when there's a meaningful goal and at least some activity,
   // or when the month is in the past (so an all-zero past month reads as a
   // miss). Future months with no activity should stay visually quiet.
-  const hasActivity = hoursCompleted > 0
+  const hasActivity = completedMinutes > 0
   const showDelta = goalHours > 0 && hasActivity
   // Future months haven't happened yet — surface planned hours instead of a
   // bare "0h", styled with textAlt so the eye still reads it as upcoming.
-  const showFuturePlanned = isFuture && !hasActivity && plannedHours > 0
+  const showFuturePlanned = isFuture && !hasActivity && plannedMinutes > 0
 
-  const deltaLabel = delta > 0 ? `+${delta}` : `${delta}`
+  const deltaLabel =
+    deltaMinutes === 0
+      ? deltaDisplay.formatted
+      : `${deltaMinutes > 0 ? '+' : '-'}${deltaDisplay.formatted}`
   const deltaColor =
-    !showDelta || delta === 0
+    !showDelta || deltaMinutes === 0
       ? theme.colors.textAlt
-      : delta > 0
+      : deltaMinutes > 0
         ? theme.colors.accent
         : theme.colors.warn
 
@@ -147,7 +151,9 @@ const MonthRow = ({
               letterSpacing: -0.3,
             }}
           >
-            {showFuturePlanned ? `${plannedRounded}h` : `${hoursRounded}h`}
+            {showFuturePlanned
+              ? plannedDisplay.formatted
+              : completedDisplay.formatted}
           </Text>
           {showDelta ? (
             <Text
@@ -204,6 +210,10 @@ const ProgressYearTab = ({
 
   const { hasAnnualGoal } = usePublisher()
 
+  const { role, publisherHours } = usePreferences()
+  const monthlyGoalHours = publisherHours[role]
+  const showDeltaColumn = monthlyGoalHours > 0
+
   return (
     <KeyboardAwareScrollView
       contentContainerStyle={{
@@ -224,19 +234,61 @@ const ProgressYearTab = ({
       />
 
       <View style={{ gap: 8, paddingTop: 10 }}>
-        <Text
-          style={{
-            fontFamily: theme.fonts.semiBold,
-            color: theme.colors.textAlt,
-            fontSize: theme.fontSize('sm'),
-            textTransform: 'uppercase',
-            letterSpacing: 0.5,
-            paddingHorizontal: 5,
-          }}
-        >
-          {i18n.t('allMonths')}
-        </Text>
         <View style={{ gap: 6 }}>
+          <XView
+            style={{
+              justifyContent: 'space-between',
+              gap: 12,
+              paddingHorizontal: 15,
+              paddingBottom: 2,
+            }}
+          >
+            <Text
+              style={{
+                fontFamily: theme.fonts.semiBold,
+                color: theme.colors.textAlt,
+                fontSize: theme.fontSize('xs'),
+                textTransform: 'uppercase',
+                letterSpacing: 0.5,
+              }}
+              numberOfLines={1}
+            >
+              {i18n.t('month')}
+            </Text>
+            <XView style={{ gap: 12 }}>
+              <Text
+                style={{
+                  fontFamily: theme.fonts.semiBold,
+                  color: theme.colors.textAlt,
+                  fontSize: theme.fontSize('xs'),
+                  textTransform: 'uppercase',
+                  letterSpacing: 0.5,
+                  textAlign: 'right',
+                }}
+                numberOfLines={1}
+              >
+                {i18n.t('hours')}
+              </Text>
+              {showDeltaColumn ? (
+                <Text
+                  style={{
+                    fontFamily: theme.fonts.semiBold,
+                    color: theme.colors.textAlt,
+                    fontSize: theme.fontSize('xs'),
+                    textTransform: 'uppercase',
+                    letterSpacing: 0.5,
+                    minWidth: 48,
+                    textAlign: 'right',
+                  }}
+                  numberOfLines={1}
+                >
+                  {i18n.t('vsGoal')}
+                </Text>
+              ) : (
+                <View style={{ minWidth: 48 }} />
+              )}
+            </XView>
+          </XView>
           {months.map(({ month, year: calendarYear }) => {
             const isCurrent =
               month === currentMonth && calendarYear === currentYear

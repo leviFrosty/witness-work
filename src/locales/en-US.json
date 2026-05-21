@@ -201,7 +201,7 @@
     "keepGoingStrong": "Keep going strong!",
     "onARoll": "On a roll!"
   },
-  "hoursLeft": "hours left",
+  "hoursLeft": "left",
   "goalBasedOnPublisherType": "Goal is based on your publisher type",
   "addTime": "Add Time",
   "updatedPlan": "Updated Plan",
@@ -405,7 +405,7 @@
   "export": "Export",
   "exportTo": "Export",
   "message": "Message",
-  "hoursPerDayToGoal": "hrs/day to goal!",
+  "hoursPerDayToGoal": "per day to goal!",
   "hoursRemaining": "Hours Remaining",
   "helpTranslate": "Help Translate",
   "iWouldLikeToHelpTranslate": "I would like to help translate WitnessWork! Please provide which languages you speak natively and what is your name. Thank you!",
@@ -883,6 +883,9 @@
   "tryAgainLater": "Please try again later.",
   "oneTimeDonations": "One Time Donations",
   "monthlyDonation": "Monthly Donation",
+  "lifetimeSupporter": "Lifetime Supporter",
+  "neverExpires": "Never expires",
+  "activatedOn": "Activated on {{date}}",
   "active": "Active",
   "inactive": "Inactive",
   "yourDonations": "Your donations",
@@ -990,7 +993,7 @@
   "failed": "Failed",
   "complete_description": "If you meet your planned time for a day, it is marked as complete.",
   "partial": "Partial",
-  "plannedHours": "Hours Planned",
+  "plannedHours": "planned",
   "projectedHoursTitle": "Projected Hours",
   "projectedHoursDescription": "Combines hours you've already logged with hours you have planned. Aim to reach 100% of your goal.",
   "planDay": "Plan Day",
@@ -1069,7 +1072,7 @@
   "recovered": "Recovered",
   "thisContactHasNoConversations": "This contact has no conversations yet.",
   "annualSchedule": "Annual Schedule",
-  "youHaveCreditOverage": "You have credit overage in the amount of {{count}} hours",
+  "youHaveCreditOverage": "You have credit overage in the amount of {{value}}",
   "credit": "Credit",
   "creditApplied": "Credit shown on report",
   "creditBreakdown": "Credit breakdown",
@@ -1234,7 +1237,7 @@
   "goalExceeded": "Beyond goal",
   "goalCrushed": "Crushed it",
   "goalRecord": "New record",
-  "beyondGoalShort": "{{count}} hrs past goal",
+  "beyondGoalShort": "{{value}} past goal",
   "bestMonthLastYear": "Best month in the last year",
   "remaining": "remaining",
   "needed": "needed",
@@ -1246,15 +1249,17 @@
   "onPace": "On pace",
   "hrsPerDayToGoal": "{{count}} hrs/day needed",
   "hrsPerMonthToGoal": "{{count}} hrs/month needed",
-  "hrsShort": "{{count}} hrs short",
-  "goalLabel": "Goal: {{count}} hrs",
+  "hrsShort": "{{value}} short",
+  "goalLabel": "Goal: {{value}}",
   "daysTotal": "{{count}} days total",
   "monthsLeft": "{{count}} months left",
   "vsLastMonth": "vs last month",
   "hrsAhead": "{{count}} hrs ahead",
   "hrsBehind": "{{count}} hrs behind",
+  "aheadShort": "{{value}} ahead",
+  "behindShort": "{{value}} behind",
   "cumulativePace": "Pace vs schedule",
-  "creditOverageChip": "+{{count}} hrs over cap",
+  "creditOverageChip": "+{{value}} over cap",
   "lastLoggedOn": "Last logged {{date}}",
   "nothingLoggedYet": "Nothing logged yet",
   "thisWeek": "This week",
@@ -1378,6 +1383,7 @@
   "paywallFeatureRestore": "iCloud restore",
   "paywallFeatureBadge": "Supporter badge",
   "paywallFeatureAccent": "Custom accent color",
+  "paywallFeatureAppIcons": "Custom app icons",
   "paywallFeatureSync": "iCloud sync",
   "paywallFeatureFuture": "New perks over time",
   "paywallTierSupporter": "Supporter",
@@ -1394,6 +1400,9 @@
   "paywallCtaSelectPrice": "Choose an amount",
   "paywallLearnMore": "Read FAQ",
   "paywallCtaSendTip": "Send a tip",
+  "copyAccountId": "Copy account ID",
+  "accountIdCopied": "Account ID copied",
+  "copyAccountIdError": "Couldn't copy account ID",
   "accentColor": "Accent color",
   "accentColorHelp": "Pick a color that replaces the default green across the app.",
   "avatarBackgroundColor": "Avatar background",
@@ -1576,8 +1585,8 @@
   "yearGoalSetInSettings": "ANNUAL GOAL · set in Settings",
   "adjustMilestones": "adjust milestones",
   "milestonesHitChip": "{{hit}} of {{total}} milestones",
-  "nextMilestoneLabel": "next milestone in {{remaining}}h",
-  "hoursToGoLabel": "{{hours}}h to go",
+  "nextMilestoneLabel": "next milestone in {{remaining}}",
+  "hoursToGoLabel": "{{value}} to go",
   "addMilestone": "+ Add milestone",
   "resetToDefaults": "Reset to defaults",
   "resetMilestonesConfirm_title": "Reset milestones?",
@@ -1590,8 +1599,10 @@
   "emptyAllTime_title": "No time logged yet",
   "emptyAllTime_description": "Your lifetime hours will appear here.",
   "multiple": "Multiple",
-  "allDays": "All Days",
-  "allMonths": "All Months",
+  "vsGoal": "vs Goal",
+  "category": "Category",
+  "showAllDays": "Show all days",
+  "hideFutureDays": "Hide future days",
   "now": "now",
   "timeRollover": "Time Rollover",
   "timeRollover_intro": "Your previous month had partial hours. We can roll those minutes into this month so your reports stay on whole hours.",
@@ -1800,9 +1811,9 @@
       "cta": "Set up Assistant"
     },
     "headline": {
-      "concentrated": "Plan **{{hours}}h** on **{{day}}** to reach your goal",
-      "distributed": "Plan **{{hours}}h** on **{{days}} days** to reach your goal",
-      "recurring": "Plan **{{hours}}h** every **{{weekdayList}}** for the next **{{weeks}} weeks**"
+      "concentrated": "Plan **{{hours}}** on **{{day}}** to reach your goal",
+      "distributed": "Plan **{{hours}}** on **{{days}} days** to reach your goal",
+      "recurring": "Plan **{{hours}}** every **{{weekdayList}}** for the next **{{weeks}} weeks**"
     },
     "rationale": {
       "small_gap_one_focused_plan": "A single focused plan is the fastest path.",
@@ -1823,7 +1834,7 @@
     "preview": {
       "notifyMe": "Notify me before each plan",
       "addAnotherDay": "Add another day",
-      "proposedTotal": "This will put you at **{{projected}} hrs**",
+      "proposedTotal": "This will put you at **{{projected}}**",
       "goalReached": "Goal reached"
     },
     "snackbar": {
@@ -1833,7 +1844,9 @@
   },
   "projectedTotal": {
     "header": "Projected Total",
-    "heroSuffix": "hrs if all planned hours come through",
+    "headerMonth": "Projected Month",
+    "headerYear": "Projected Year",
+    "heroSuffix": "if all planned hours come through",
     "legend": {
       "logged": "Logged · {{value}}",
       "planned": "Planned · {{value}}",
@@ -1846,21 +1859,21 @@
     "status": {
       "present": {
         "empty": "No hours logged or planned yet for {{period}}.",
-        "logged_over_goal": "You're already **{{over}} hrs** over goal. Planned hours would put you at **{{projected}}**.",
+        "logged_over_goal": "You're already **{{over}}** over goal. Planned hours would put you at **{{projected}}**.",
         "projected_over_goal": "On track — planned hours would put you at **{{projected}}**.",
-        "reachable_gap": "Planned hours put you at **{{projected}}** — **{{gap}} hrs** short of your goal.",
-        "unreachable_gap": "Planned hours put you at **{{projected}}**. **{{gap}} hrs** to goal — a stretch from here."
+        "reachable_gap": "Planned hours put you at **{{projected}}** — **{{gap}}** short of your goal.",
+        "unreachable_gap": "Planned hours put you at **{{projected}}**. **{{gap}}** to goal — a stretch from here."
       },
       "past": {
         "empty": "No hours were logged or planned for {{period}}.",
-        "logged_over_goal": "You ended **{{over}} hrs** over goal.",
-        "unreachable_gap": "You ended **{{gap}} hrs** short of goal."
+        "logged_over_goal": "You ended **{{over}}** over goal.",
+        "unreachable_gap": "You ended **{{gap}}** short of goal."
       },
       "future": {
         "empty": "No hours planned yet for {{period}}.",
         "projected_over_goal": "On track — planned hours would put you at **{{projected}}**.",
-        "reachable_gap": "Planned hours put you at **{{projected}}** — **{{gap}} hrs** short of goal.",
-        "unreachable_gap": "Planned hours put you at **{{projected}}**. **{{gap}} hrs** to goal — a stretch from here."
+        "reachable_gap": "Planned hours put you at **{{projected}}** — **{{gap}}** short of goal.",
+        "unreachable_gap": "Planned hours put you at **{{projected}}**. **{{gap}}** to goal — a stretch from here."
       }
     }
   }

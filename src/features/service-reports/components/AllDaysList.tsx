@@ -8,8 +8,14 @@ import useServiceReport from '@/stores/serviceReport'
 import useCategories from '@/stores/categories'
 import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
-import { getMonthsReports } from '@/lib/serviceReport'
+import {
+  getMonthsReports,
+  getPlansIntersectingDay,
+  getEffectiveMinutesForRecurringPlan,
+} from '@/lib/serviceReport'
 import { getCategoryLabel, isLdcEntry } from '@/lib/serviceReportCategory'
+import { formatMinutes } from '@/lib/minutes'
+import { usePreferences } from '@/stores/preferences'
 import { ServiceReport } from '@/types/serviceReport'
 import { RootStackNavigation } from '@/types/rootStack'
 
@@ -21,6 +27,8 @@ import SelectedDateSheet, {
 } from '@/features/service-reports/components/SelectedDateSheet'
 import Badge from '@/components/ui/Badge'
 import { useCardStyle } from '@/components/ui/Card'
+import Circle from '@/components/ui/Circle'
+import { getDateStatusColor } from '@/components/CalendarDay'
 
 interface AllDaysListProps {
   month: number
@@ -29,11 +37,13 @@ interface AllDaysListProps {
 
 type DayRow = {
   date: Date
-  dayLabel: string
+  dayOfWeekLabel: string
+  monthDayLabel: string
   isToday: boolean
   hoursLabel: string
   categoryLabel: string
   isEmpty: boolean
+  planDotColor: string | null
 }
 
 /**
@@ -50,14 +60,28 @@ type DayRow = {
 const AllDaysList = ({ month, year }: AllDaysListProps) => {
   const theme = useTheme()
   const cardStyle = useCardStyle()
-  const { serviceReports } = useServiceReport()
+  const { serviceReports, dayPlans, recurringPlans } = useServiceReport()
   const { categories } = useCategories()
+  const { timeDisplayFormat } = usePreferences()
   const rootNavigation = useRootNavigation<RootStackNavigation>()
 
   const [sheet, setSheet] = useState<SelectedDateSheetState>({
     open: false,
     date: new Date(),
   })
+
+  const [showAllDays, setShowAllDays] = useState(false)
+
+  const { isCurrentMonth, daysInMonth } = useMemo(() => {
+    const now = moment()
+    const base = moment().month(month).year(year).startOf('month')
+    return {
+      isCurrentMonth: now.month() === month && now.year() === year,
+      daysInMonth: base.daysInMonth(),
+    }
+  }, [month, year])
+
+  const hasFutureDays = isCurrentMonth && moment().date() < daysInMonth
 
   const pendingNavigation = useRef<(() => void) | null>(null)
 
@@ -128,24 +152,56 @@ const AllDaysList = ({ month, year }: AllDaysListProps) => {
 
   const rows = useMemo<DayRow[]>(() => {
     const now = moment()
-    const isCurrentMonth = now.month() === month && now.year() === year
     const base = moment().month(month).year(year).startOf('month')
-    const daysInMonth = base.daysInMonth()
-    const limit = isCurrentMonth ? now.date() : daysInMonth
+    const limit = isCurrentMonth && !showAllDays ? now.date() : daysInMonth
 
     const entries: DayRow[] = []
     for (let d = 1; d <= limit; d++) {
       const day = moment(base).date(d)
+      const dayDate = day.toDate()
       const reportsForDay = thisMonthsReports.filter((r) =>
         moment(r.date).isSame(day, 'day')
       )
 
-      const totalHours =
-        reportsForDay.reduce((acc, r) => acc + r.hours + r.minutes / 60, 0) || 0
+      const totalMinutes = reportsForDay.reduce(
+        (acc, r) => acc + r.hours * 60 + r.minutes,
+        0
+      )
       const hoursLabel =
         reportsForDay.length === 0
           ? '—'
-          : `${(Math.round(totalHours * 10) / 10).toString()}${i18n.t('hoursCompact')}`
+          : formatMinutes(totalMinutes, timeDisplayFormat).formatted
+
+      const dayPlanForDay = dayPlans.find((dp) =>
+        moment(dp.date).isSame(day, 'day')
+      )
+      const recurringPlansForDay = getPlansIntersectingDay(
+        dayDate,
+        recurringPlans
+      )
+      const highestRecurringPlanMinutes = recurringPlansForDay.reduce(
+        (max, plan) =>
+          Math.max(max, getEffectiveMinutesForRecurringPlan(plan, dayDate)),
+        0
+      )
+      const goalMinutes =
+        dayPlanForDay?.minutes || highestRecurringPlanMinutes || 0
+      const hasPlan = goalMinutes > 0
+
+      let planDotColor: string | null = null
+      if (hasPlan) {
+        const isTodayDate = now.isSame(day, 'day')
+        const dateInPast = day.isSameOrBefore(now, 'day')
+        const wentInService = reportsForDay.length > 0
+        const hitGoal = totalMinutes >= goalMinutes
+        planDotColor = getDateStatusColor(
+          theme,
+          wentInService,
+          isTodayDate,
+          dateInPast,
+          hitGoal
+        ).bg
+      }
 
       let categoryLabel = '—'
       if (reportsForDay.length > 0) {
@@ -187,22 +243,87 @@ const AllDaysList = ({ month, year }: AllDaysListProps) => {
       const isToday = isCurrentMonth && d === now.date()
 
       entries.push({
-        date: day.toDate(),
-        dayLabel: day.format('ddd · MMM D'),
+        date: dayDate,
+        dayOfWeekLabel: day.format('ddd'),
+        monthDayLabel: day.format('MMM D'),
         isToday,
         hoursLabel,
         categoryLabel,
         isEmpty: reportsForDay.length === 0,
+        planDotColor,
       })
     }
 
     // Most-recent first
     return entries.sort((a, b) => b.date.getTime() - a.date.getTime())
-  }, [thisMonthsReports, month, year, categories])
+  }, [
+    thisMonthsReports,
+    month,
+    year,
+    categories,
+    timeDisplayFormat,
+    dayPlans,
+    recurringPlans,
+    theme,
+    isCurrentMonth,
+    daysInMonth,
+    showAllDays,
+  ])
 
   return (
     <View style={{ gap: 8 }}>
       <View style={{ gap: 6 }}>
+        <View
+          style={{
+            marginHorizontal: 15,
+            paddingHorizontal: 15,
+            paddingBottom: 2,
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: 10,
+          }}
+        >
+          <Text
+            style={{
+              flex: 1,
+              fontFamily: theme.fonts.semiBold,
+              color: theme.colors.textAlt,
+              fontSize: theme.fontSize('xs'),
+              textTransform: 'uppercase',
+              letterSpacing: 0.5,
+            }}
+            numberOfLines={1}
+          >
+            {i18n.t('date')}
+          </Text>
+          <Text
+            style={{
+              fontFamily: theme.fonts.semiBold,
+              color: theme.colors.textAlt,
+              fontSize: theme.fontSize('xs'),
+              textTransform: 'uppercase',
+              letterSpacing: 0.5,
+            }}
+            numberOfLines={1}
+          >
+            {i18n.t('category')}
+          </Text>
+          <Text
+            style={{
+              fontFamily: theme.fonts.semiBold,
+              color: theme.colors.textAlt,
+              fontSize: theme.fontSize('xs'),
+              textTransform: 'uppercase',
+              letterSpacing: 0.5,
+              minWidth: 44,
+              textAlign: 'right',
+            }}
+            numberOfLines={1}
+          >
+            {i18n.t('hours')}
+          </Text>
+          <View style={{ width: 12 }} />
+        </View>
         {rows.map((row) => (
           <Button
             key={row.date.toISOString()}
@@ -225,15 +346,48 @@ const AllDaysList = ({ month, year }: AllDaysListProps) => {
                 gap: 8,
               }}
             >
-              <Text
+              <View
                 style={{
-                  fontFamily: theme.fonts.semiBold,
-                  color: row.isEmpty ? theme.colors.textAlt : theme.colors.text,
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  gap: 6,
                 }}
-                numberOfLines={1}
               >
-                {row.dayLabel}
-              </Text>
+                <Text
+                  style={{
+                    fontFamily: theme.fonts.semiBold,
+                    color: row.isEmpty
+                      ? theme.colors.textAlt
+                      : theme.colors.text,
+                  }}
+                  numberOfLines={1}
+                >
+                  {row.dayOfWeekLabel}
+                </Text>
+                {row.planDotColor ? (
+                  <Circle color={row.planDotColor} size={6} />
+                ) : (
+                  <Circle
+                    color='transparent'
+                    size={6}
+                    style={{
+                      borderWidth: 1,
+                      borderColor: theme.colors.textAlt,
+                    }}
+                  />
+                )}
+                <Text
+                  style={{
+                    fontFamily: theme.fonts.semiBold,
+                    color: row.isEmpty
+                      ? theme.colors.textAlt
+                      : theme.colors.text,
+                  }}
+                  numberOfLines={1}
+                >
+                  {row.monthDayLabel}
+                </Text>
+              </View>
               {row.isToday ? <Badge size='xs'>{i18n.t('today')}</Badge> : null}
             </View>
             <Text
@@ -258,6 +412,27 @@ const AllDaysList = ({ month, year }: AllDaysListProps) => {
             <IconButton icon={faChevronRight} size={12} />
           </Button>
         ))}
+        {hasFutureDays && (
+          <Button
+            onPress={() => setShowAllDays((v) => !v)}
+            style={{
+              alignSelf: 'center',
+              paddingVertical: 8,
+              paddingHorizontal: 12,
+            }}
+          >
+            <Text
+              style={{
+                color: theme.colors.textAlt,
+                fontSize: theme.fontSize('sm'),
+                fontFamily: theme.fonts.semiBold,
+                textDecorationLine: 'underline',
+              }}
+            >
+              {showAllDays ? i18n.t('hideFutureDays') : i18n.t('showAllDays')}
+            </Text>
+          </Button>
+        )}
       </View>
 
       <SelectedDateSheet

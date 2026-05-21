@@ -47,3 +47,29 @@ export const withAlpha = (hex: string, alpha: number): string => {
   const a = clamp(alpha).toString(16).padStart(2, '0').toUpperCase()
   return `#${h}${a}`
 }
+
+/**
+ * WCAG relative luminance (0 = black, 1 = white). Perceptual, not naive average
+ * — green carries far more weight than blue.
+ */
+export const relativeLuminance = (hex: string): number => {
+  const [r, g, b] = parseHex(hex)
+  const channel = (n: number) => {
+    const c = n / 255
+    return c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4)
+  }
+  return 0.2126 * channel(r) + 0.7152 * channel(g) + 0.0722 * channel(b)
+}
+
+/**
+ * Pick a contrasting foreground for a given background. Returns `light` on dark
+ * backgrounds and `dark` on light ones so text/icons stay legible regardless of
+ * the user-picked hero tint.
+ */
+export const getReadableTextColor = (
+  background: string,
+  {
+    light = '#FFFFFF',
+    dark = '#141414',
+  }: { light?: string; dark?: string } = {}
+): string => (relativeLuminance(background) > 0.45 ? dark : light)

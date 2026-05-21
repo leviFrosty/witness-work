@@ -10,7 +10,6 @@ import {
 import { ServiceReport } from '@/types/serviceReport'
 import { usePreferences } from '@/stores/preferences'
 import useServiceReport from '@/stores/serviceReport'
-import _ from 'lodash'
 import i18n from '@/lib/locales'
 import { View } from 'react-native'
 import { useFormattedMinutes } from '@/lib/minutes'
@@ -70,6 +69,9 @@ export default function YearScreenMonthRow(props: {
     : { value: 0, credit: 0, standard: 0, creditOverage: 0 }
 
   const adjustedMinutesWithFormat = useFormattedMinutes(adjustedMinutes.value)
+  const creditOverageDisplay = useFormattedMinutes(
+    adjustedMinutes.creditOverage
+  )
 
   // Tier indicator (static; no animation/haptic — those only fire on the
   // one-shot crossing moment in MonthSummary). Shown for every row that
@@ -150,7 +152,7 @@ export default function YearScreenMonthRow(props: {
           }}
         >
           {i18n.t('youHaveCreditOverage', {
-            count: _.round(adjustedMinutes.creditOverage / 60, 1),
+            value: creditOverageDisplay.formatted,
           })}
         </Text>
       )}

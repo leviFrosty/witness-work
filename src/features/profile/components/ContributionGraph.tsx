@@ -20,8 +20,6 @@ import i18n from '@/lib/locales'
 interface Props {
   daily: Map<string, number>
   weeks?: number
-  /** Tap on a cell with non-future data fires this with the cell's date. */
-  onDayPress?: (date: Date) => void
 }
 
 const GAP = 3
@@ -32,9 +30,8 @@ const LABEL_GAP = 4
 const POPOVER_WIDTH = 150
 const POPOVER_OFFSET = 8
 // Hold this long before the scrub gesture activates. Below this threshold the
-// touch falls through to the tap (navigate) or to the parent scroll view.
+// touch falls through to the parent scroll view.
 const SCRUB_LONG_PRESS_MS = 200
-const TAP_MAX_MS = 180
 
 const hexToHsl = (hex: string): [number, number, number] => {
   const h = hex.replace('#', '')
@@ -78,33 +75,23 @@ const LEVEL_SATURATION: Record<1 | 2 | 3 | 4, number> = {
   4: 1,
 }
 
-const levelToColor = (
-  level: ContributionCell['level'],
-  accent: string,
-  border: string,
-  future: boolean
-): string => {
-  if (future) return 'transparent'
-  if (level === 0) return border
-  return withSaturation(accent, LEVEL_SATURATION[level])
-}
+type ColorByLevel = Record<0 | 1 | 2 | 3 | 4, string>
 
 type CellGridProps = {
   grid: ContributionCell[][]
   cell: number
-  colors: {
-    accent: string
-    border: string
-  }
+  colorByLevel: ColorByLevel
 }
 
 /**
  * Stable cell rendering. Has no hover state of its own — the hover ring is a
  * separate Reanimated overlay so scrubbing across cells never re-renders this
  * subtree. Wrapped in `memo` with referential prop equality so the parent's
- * popover state updates skip this entirely.
+ * popover state updates skip this entirely. Color is looked up from a
+ * precomputed level→hex table so the per-cell HSL math doesn't run ~180× during
+ * the open animation.
  */
-const CellGrid = memo(({ grid, cell, colors }: CellGridProps) => {
+const CellGrid = memo(({ grid, cell, colorByLevel }: CellGridProps) => {
   return (
     <View style={{ flexDirection: 'row', gap: GAP }}>
       {grid.map((col, i) => (
@@ -116,12 +103,9 @@ const CellGrid = memo(({ grid, cell, colors }: CellGridProps) => {
                 width: cell,
                 height: cell,
                 borderRadius: 2,
-                backgroundColor: levelToColor(
-                  cellData.level,
-                  colors.accent,
-                  colors.border,
-                  cellData.future
-                ),
+                backgroundColor: cellData.future
+                  ? 'transparent'
+                  : colorByLevel[cellData.level],
               }}
             />
           ))}
@@ -132,7 +116,7 @@ const CellGrid = memo(({ grid, cell, colors }: CellGridProps) => {
 })
 CellGrid.displayName = 'CellGrid'
 
-const ContributionGraph = ({ daily, weeks = 26, onDayPress }: Props) => {
+const ContributionGraph = ({ daily, weeks = 26 }: Props) => {
   const theme = useTheme()
   const [width, setWidth] = useState(0)
   const [hovered, setHovered] = useState<{ col: number; row: number } | null>(
@@ -178,10 +162,16 @@ const ContributionGraph = ({ daily, weeks = 26, onDayPress }: Props) => {
     if (w && w !== width) setWidth(w)
   }
 
-  // Memoize props passed to CellGrid so referential equality holds across
-  // scrub-triggered popover re-renders.
-  const cellColors = useMemo(
-    () => ({ accent: theme.colors.accent, border: theme.colors.border }),
+  // Precompute the level→hex map so CellGrid never runs `withSaturation` per
+  // cell (~180×). Recomputes only when the accent/border tokens change.
+  const colorByLevel = useMemo<ColorByLevel>(
+    () => ({
+      0: theme.colors.border,
+      1: withSaturation(theme.colors.accent, LEVEL_SATURATION[1]),
+      2: withSaturation(theme.colors.accent, LEVEL_SATURATION[2]),
+      3: withSaturation(theme.colors.accent, LEVEL_SATURATION[3]),
+      4: withSaturation(theme.colors.accent, LEVEL_SATURATION[4]),
+    }),
     [theme.colors.accent, theme.colors.border]
   )
 
@@ -202,15 +192,6 @@ const ContributionGraph = ({ daily, weeks = 26, onDayPress }: Props) => {
   )
 
   const clearHover = useCallback(() => setHovered(null), [])
-
-  const handleTap = useCallback(
-    (col: number, row: number) => {
-      const cellData = grid[col]?.[row]
-      if (!cellData || cellData.future) return
-      onDayPress?.(cellData.date)
-    },
-    [grid, onDayPress]
-  )
 
   const pan = useMemo(
     () =>
@@ -253,53 +234,13 @@ const ContributionGraph = ({ daily, weeks = 26, onDayPress }: Props) => {
           ringOpacity.value = 1
           runOnJS(applyHover)(col, row)
         })
-        .onEnd(() => {
-          'worklet'
-          // Lift-off behaviour: if the user releases while still hovering a
-          // valid cell, treat it as a tap on that cell (navigate). Releasing
-          // off-grid leaves `lastIdx` at -1 so this no-ops.
-          if (lastIdx.value < 0) return
-          const col = Math.floor(lastIdx.value / 7)
-          const row = lastIdx.value % 7
-          runOnJS(handleTap)(col, row)
-        })
         .onFinalize(() => {
           'worklet'
           lastIdx.value = -1
           ringOpacity.value = 0
           runOnJS(clearHover)()
         }),
-    [
-      applyHover,
-      clearHover,
-      handleTap,
-      ringOpacity,
-      ringX,
-      ringY,
-      lastIdx,
-      stride,
-      weeks,
-    ]
-  )
-
-  const tap = useMemo(
-    () =>
-      Gesture.Tap()
-        .maxDuration(TAP_MAX_MS)
-        .onEnd((e, success) => {
-          'worklet'
-          if (!success) return
-          const col = Math.floor(e.x / stride)
-          const row = Math.floor(e.y / stride)
-          if (col < 0 || col >= weeks || row < 0 || row > 6) return
-          runOnJS(handleTap)(col, row)
-        }),
-    [handleTap, stride, weeks]
-  )
-
-  const composed = useMemo(
-    () => (onDayPress ? Gesture.Exclusive(tap, pan) : pan),
-    [onDayPress, tap, pan]
+    [applyHover, clearHover, ringOpacity, ringX, ringY, lastIdx, stride, weeks]
   )
 
   const ringStyle = useAnimatedStyle(() => ({
@@ -369,9 +310,9 @@ const ContributionGraph = ({ daily, weeks = 26, onDayPress }: Props) => {
             ) : null
           )}
         </View>
-        <GestureDetector gesture={composed}>
+        <GestureDetector gesture={pan}>
           <View style={{ position: 'relative' }}>
-            <CellGrid grid={grid} cell={cell} colors={cellColors} />
+            <CellGrid grid={grid} cell={cell} colorByLevel={colorByLevel} />
             <Animated.View
               pointerEvents='none'
               style={[
@@ -418,12 +359,7 @@ const ContributionGraph = ({ daily, weeks = 26, onDayPress }: Props) => {
               width: cell,
               height: cell,
               borderRadius: 2,
-              backgroundColor: levelToColor(
-                lv,
-                theme.colors.accent,
-                theme.colors.border,
-                false
-              ),
+              backgroundColor: colorByLevel[lv],
             }}
           />
         ))}

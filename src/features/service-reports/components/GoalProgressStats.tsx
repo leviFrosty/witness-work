@@ -1,6 +1,6 @@
+import { ReactNode } from 'react'
 import { View } from 'react-native'
 import Animated from 'react-native-reanimated'
-import _ from 'lodash'
 import {
   faCheck,
   faStar,
@@ -14,6 +14,8 @@ import i18n from '@/lib/locales'
 import useTheme from '@/contexts/theme'
 import { AchievementTier } from '@/lib/achievementTier'
 import { Theme } from '@/types/theme'
+import { useFormattedMinutes } from '@/lib/minutes'
+import { usePreferences } from '@/stores/preferences'
 
 export type PeriodState = 'current' | 'past' | 'future'
 
@@ -38,6 +40,13 @@ type GoalProgressStatsProps = {
    * crossed without pushing animation state down into this component.
    */
   sealAnimatedStyle?: Parameters<typeof Animated.View>[0]['style']
+  /**
+   * Optional element rendered on the trailing edge of the top row. When a tier
+   * seal is present the two share the row with space-between; otherwise the
+   * slot rides alone, right-aligned. Lets the parent (e.g. MonthReport) place
+   * its View Report affordance without owning a duplicate row.
+   */
+  headerRightSlot?: ReactNode
 }
 
 const tierIcon = (tier: AchievementTier): IconDefinition => {
@@ -82,10 +91,18 @@ const GoalProgressStats = ({
   totalLabel,
   achievementTier,
   sealAnimatedStyle,
+  headerRightSlot,
 }: GoalProgressStatsProps) => {
   const theme = useTheme()
-  const hoursRemaining = Math.max(0, goalHours - hoursCompleted)
-  const hoursBeyondGoal = _.round(Math.max(0, hoursCompleted - goalHours), 1)
+  const { timeDisplayFormat } = usePreferences()
+  const completedMinutes = Math.round(hoursCompleted * 60)
+  const goalMinutes = Math.round(goalHours * 60)
+  const remainingMinutes = Math.max(0, goalMinutes - completedMinutes)
+  const beyondMinutes = Math.max(0, completedMinutes - goalMinutes)
+  const completedDisplay = useFormattedMinutes(completedMinutes)
+  const goalDisplay = useFormattedMinutes(goalMinutes)
+  const remainingDisplay = useFormattedMinutes(remainingMinutes)
+  const beyondDisplay = useFormattedMinutes(beyondMinutes)
 
   if (goalHours <= 0) return null
 
@@ -103,60 +120,71 @@ const GoalProgressStats = ({
         : theme.colors.text
 
   // iOS Health-style hero split: gigantic numeric headline + small unit
-  // baseline-aligned (e.g. "40" + "hours"). Unit is the lowercase full word
-  // for parity with the Year and All-time hero cards. The goal target lives
-  // in the context line below alongside "hours left" / "days left" so all
-  // reference info shares one visual tier.
-  const heroBig =
-    periodState === 'future'
-      ? String(goalHours)
-      : String(_.round(hoursCompleted, 1))
-  const heroUnit = i18n.t('hours_lowercase')
+  // baseline-aligned. For decimal preference we keep a bare number + "hours"
+  // unit; for short preference the formatter already emits "Xh Ym", so let it
+  // own the hero and suppress the standalone unit.
+  const isDecimal = timeDisplayFormat === 'decimal'
+  const heroSource = periodState === 'future' ? goalDisplay : completedDisplay
+  const heroBig = isDecimal
+    ? String(heroSource.decimalHours)
+    : heroSource.formatted
+  const heroUnit = isDecimal ? i18n.t('hours_lowercase') : ''
 
-  // Context line under the hero. The actionable "hours left" is split off
-  // as an outlined pill so it reads as the most-actionable item without
-  // breaking the single-tier rhythm — the rest (days left / goal) trails as
-  // plain meta. For met-goal and future states there's no "left" value to
-  // pull out, so the whole line collapses to plain text.
-  const goalSuffix = i18n.t('goalLabel', { count: goalHours })
+  // Context line under the hero. The actionable "X left" pill respects the
+  // user's time-display preference (decimal vs short). The trailing meta
+  // line (days left / goal) shares the same single-tier rhythm.
+  const goalSuffix = i18n.t('goalLabel', { value: goalDisplay.formatted })
   let pillText: string | null = null
   const trailingParts: string[] = []
-  if (hasMetGoal && hoursBeyondGoal > 0) {
-    trailingParts.push(i18n.t('beyondGoalShort', { count: hoursBeyondGoal }))
+  if (hasMetGoal && beyondMinutes > 0) {
+    trailingParts.push(
+      i18n.t('beyondGoalShort', { value: beyondDisplay.formatted })
+    )
   } else if (hasMetGoal) {
     trailingParts.push(i18n.t('goalAchieved'))
   } else if (periodState === 'current') {
-    pillText = `${_.round(hoursRemaining, 1)} ${i18n.t('hoursLeft')}`
+    pillText = `${remainingDisplay.formatted} ${i18n.t('hoursLeft')}`
     if (remainingLabel) trailingParts.push(remainingLabel)
     trailingParts.push(goalSuffix)
   } else if (periodState === 'past') {
-    pillText = i18n.t('hrsShort', { count: _.round(hoursRemaining, 1) })
+    pillText = i18n.t('hrsShort', { value: remainingDisplay.formatted })
     trailingParts.push(goalSuffix)
   } else if (periodState === 'future' && totalLabel) {
     trailingParts.push(totalLabel)
   }
   const trailingText = trailingParts.join(' · ')
 
+  const tierBadge = tier ? (
+    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+      <Animated.View style={sealAnimatedStyle}>
+        <FontAwesomeIcon icon={tierIcon(tier)} color={heroColor} size={18} />
+      </Animated.View>
+      <Text
+        style={{
+          fontFamily: theme.fonts.semiBold,
+          fontSize: theme.fontSize('md'),
+          color: heroColor,
+        }}
+      >
+        {i18n.t(tierCopyKey(tier))}
+      </Text>
+    </View>
+  ) : null
+
   return (
     <View style={{ gap: 10 }}>
-      {tier && (
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-          <Animated.View style={sealAnimatedStyle}>
-            <FontAwesomeIcon
-              icon={tierIcon(tier)}
-              color={heroColor}
-              size={18}
-            />
-          </Animated.View>
-          <Text
-            style={{
-              fontFamily: theme.fonts.semiBold,
-              fontSize: theme.fontSize('md'),
-              color: heroColor,
-            }}
-          >
-            {i18n.t(tierCopyKey(tier))}
-          </Text>
+      {(tierBadge || headerRightSlot) && (
+        <View
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: 8,
+            marginBottom: -6,
+          }}
+        >
+          {tierBadge ?? <View />}
+          {headerRightSlot}
         </View>
       )}
       <View
@@ -168,9 +196,13 @@ const GoalProgressStats = ({
         }}
       >
         <Text
+          // Short preference renders "0 Hrs 10 Mins" — three tokens that
+          // don't fit at 64pt on a single card row. Drop one size class so
+          // the line wraps gracefully (or stays single-line) without the
+          // auto-shrink turning the hero into fine print.
           style={{
-            fontSize: 64,
-            lineHeight: 68,
+            fontSize: isDecimal ? 64 : 40,
+            lineHeight: isDecimal ? 68 : 44,
             fontFamily: theme.fonts.bold,
             color: heroColor,
           }}

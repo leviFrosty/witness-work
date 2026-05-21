@@ -109,6 +109,7 @@ export const HomeScreen = () => {
     () => getMonthsReports(serviceReports, currentMonth, currentYear),
     [serviceReports, currentMonth, currentYear]
   )
+
   // Legacy upgrade flow is now subsumed by the boot-time tag → Category
   // migration (`src/lib/categories.ts`). Categories carry their own
   // `isCredit` invariant, so the user no longer needs to retroactively

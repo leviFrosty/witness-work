@@ -1,10 +1,11 @@
-import { Fragment, useCallback, useMemo, useState } from 'react'
+import { Fragment, ReactNode, useCallback, useMemo, useState } from 'react'
 import { View } from 'react-native'
 import moment from 'moment'
 import { useNavigation } from '@react-navigation/native'
 
 import Text from '@/components/ui/MyText'
 import Button from '@/components/ui/Button'
+import Card from '@/components/ui/Card'
 import IconButton from '@/components/ui/IconButton'
 import useTheme from '@/contexts/theme'
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
@@ -18,6 +19,7 @@ import {
 } from '@/lib/assistantRecommendation'
 import { computeRecommendationInputsHash } from '@/lib/assistantState'
 import { usePreferences } from '@/stores/preferences'
+import { formatMinutes } from '@/lib/minutes'
 import useServiceReport from '@/stores/serviceReport'
 import useConversations from '@/stores/conversationStore'
 import { momentStoredDate, normalizeDateForStorage } from '@/lib/normalizeDate'
@@ -73,6 +75,7 @@ const AssistantSection = ({
     assistantHistory,
     hasDismissedRecommendationHash,
     hasSeenAvailabilityOnboarding,
+    timeDisplayFormat,
     recordAssistantEvent,
     replaceLastAssistantEvent,
     setHasDismissedRecommendationHash,
@@ -215,6 +218,24 @@ const AssistantSection = ({
     })
   }, [recommendation, replaceLastAssistantEvent])
 
+  const Wrapper = ({ gap, children }: { gap: number; children: ReactNode }) => {
+    if (standalone) {
+      return <Card style={{ gap }}>{children}</Card>
+    }
+    return (
+      <View
+        style={{
+          gap,
+          paddingTop: 12,
+          borderTopWidth: 1,
+          borderTopColor: theme.colors.border,
+        }}
+      >
+        {children}
+      </View>
+    )
+  }
+
   // Acceptance collapse — when the user has just accepted and the gap is
   // closed, show the "you've planned enough" affirmation. Detect this by:
   // - engine returns null (no gap)
@@ -225,17 +246,7 @@ const AssistantSection = ({
       last?.action === 'accepted' && projection.state === 'projected_over_goal'
     if (!justAccepted) return null
     return (
-      <View
-        style={
-          standalone
-            ? {}
-            : {
-                paddingTop: 12,
-                borderTopWidth: 1,
-                borderTopColor: theme.colors.border,
-              }
-        }
-      >
+      <Wrapper gap={0}>
         <Text
           style={{
             color: theme.colors.accent,
@@ -245,7 +256,7 @@ const AssistantSection = ({
         >
           {i18n.t('assistant.collapsedAfterAccept')}
         </Text>
-      </View>
+      </Wrapper>
     )
   }
 
@@ -255,18 +266,7 @@ const AssistantSection = ({
   // unavailable days. The user opts in by tapping "Set up Assistant".
   if (!hasSeenAvailabilityOnboarding) {
     return (
-      <View
-        style={{
-          gap: 10,
-          ...(standalone
-            ? {}
-            : {
-                paddingTop: 12,
-                borderTopWidth: 1,
-                borderTopColor: theme.colors.border,
-              }),
-        }}
-      >
+      <Wrapper gap={10}>
         <AssistantHeader onPressSettings={openPlanPreferences} />
         <Text
           style={{
@@ -311,14 +311,19 @@ const AssistantSection = ({
           open={availabilityOpen}
           onOpenChange={setAvailabilityOpen}
         />
-      </View>
+      </Wrapper>
     )
   }
 
+  const headlineHours = recommendation.headline.values.hours
+  const headlineHoursDisplay =
+    headlineHours !== undefined
+      ? formatMinutes(headlineHours * 60, timeDisplayFormat).formatted
+      : ''
   const headlineText = i18n.t(
     `assistant.headline.${recommendation.shape}` as TranslationKey,
     {
-      hours: recommendation.headline.values.hours,
+      hours: headlineHoursDisplay,
       days: recommendation.headline.values.days,
       day: recommendation.headline.values.day
         ? moment(recommendation.headline.values.day).format('ddd, MMM D')
@@ -336,18 +341,7 @@ const AssistantSection = ({
   const headlineSegments = segmentBoldMarkup(headlineText)
 
   return (
-    <View
-      style={{
-        gap: 10,
-        ...(standalone
-          ? {}
-          : {
-              paddingTop: 12,
-              borderTopWidth: 1,
-              borderTopColor: theme.colors.border,
-            }),
-      }}
-    >
+    <Wrapper gap={10}>
       <AssistantHeader onPressSettings={openPlanPreferences} />
 
       <Text
@@ -441,7 +435,7 @@ const AssistantSection = ({
         open={availabilityOpen}
         onOpenChange={setAvailabilityOpen}
       />
-    </View>
+    </Wrapper>
   )
 }
 

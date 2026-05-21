@@ -1,5 +1,4 @@
 import useTheme from '@/contexts/theme'
-import _ from 'lodash'
 import { useNavigation } from '@react-navigation/native'
 import MonthServiceReportProgressBar from '@/features/service-reports/components/MonthServiceReportProgressBar'
 import { usePreferences } from '@/stores/preferences'
@@ -153,15 +152,19 @@ export default function HourEntryCard() {
 
   const daysLeftInMonth = useMemo(() => getDaysLeftInCurrentMonth(), [])
 
-  // Returns hours remaining if the last day of the month because x/0 = infinity.
+  // Returns minutes remaining if the last day of the month because x/0 = infinity.
   // Which we don't want to display to the user
-  const hoursPerDayNeeded = useMemo(
+  const minutesPerDayNeeded = useMemo(
     () =>
       daysLeftInMonth === 0
-        ? minutesRemaining / 60
-        : _.round(minutesRemaining / 60 / daysLeftInMonth, 1),
+        ? minutesRemaining
+        : Math.round(minutesRemaining / daysLeftInMonth),
     [daysLeftInMonth, minutesRemaining]
   )
+  const perDayDisplay = formatMinutes(
+    minutesPerDayNeeded,
+    timeDisplayFormat
+  ).formatted
 
   const minutesWithFormat = formatMinutes(
     adjustedMinutes.value,
@@ -238,7 +241,7 @@ export default function HourEntryCard() {
             <Text style={{ fontFamily: theme.fonts.bold, maxWidth: 200 }}>
               {encouragementPhrase}
             </Text>
-            {hoursPerDayNeeded > 0 ? (
+            {minutesPerDayNeeded > 0 ? (
               <View style={{ gap: 5 }}>
                 <View
                   style={{
@@ -257,7 +260,7 @@ export default function HourEntryCard() {
                       display: 'flex',
                     }}
                   >
-                    {hoursPerDayNeeded} {i18n.t('hoursPerDayToGoal')}
+                    {perDayDisplay} {i18n.t('hoursPerDayToGoal')}
                   </Text>
                 </View>
                 <Text

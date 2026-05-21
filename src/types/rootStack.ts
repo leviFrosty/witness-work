@@ -28,7 +28,7 @@ export type RootStackParamList = {
   Preferences: undefined
   'Whats New': undefined
   Paywall: { initialTier?: 'supporter' | 'tip' } | undefined
-  'Thank You': undefined
+  'Thank You': { purchaseTier?: 'supporter' | 'tip' } | undefined
   'Import and Export': undefined
   PreferencesPublisher: undefined
   PreferencesConversation: undefined

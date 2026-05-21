@@ -20,9 +20,11 @@ import { Contact } from '@/types/contact'
  * avatar color, which is jarring (the disc itself only picks it up for image
  * fallback paths, so the colors wouldn't even agree visually).
  *
- * Both modes darken the identity so `textInverse` reads cleanly: light mode
- * darkens harder (white text) and dark mode darkens lightly (near-black text on
- * a still-mid-bright field).
+ * Slight dimming keeps the hero visually separate from the avatar disc that
+ * sits on top of it — light mode dims a touch more than dark so the depth cue
+ * reads at either end. Legibility itself is handled by `getReadableTextColor`
+ * flipping the foreground per render, so the tint doesn't have to do that job
+ * too.
  */
 export const useContactHeroBackground = (
   contact:
@@ -36,7 +38,7 @@ export const useContactHeroBackground = (
   const identity =
     contact?.heroBackground ?? contact?.avatarBackground ?? theme.colors.accent
   const isDark = colorScheme === 'dark'
-  return mix(identity, '#000000', isDark ? 0.25 : 0.5)
+  return mix(identity, '#000000', isDark ? 0.1 : 0.2)
 }
 
 export default useContactHeroBackground

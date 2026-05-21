@@ -12,6 +12,7 @@ import {
   getTotalMinutesForServiceYear,
 } from '@/lib/serviceReport'
 import { getEffectiveMilestones, getMilestoneHitState } from '@/lib/milestones'
+import { useFormattedMinutes } from '@/lib/minutes'
 import {
   generateServiceReportsHash,
   getAnnualServiceReportCacheKey,
@@ -53,7 +54,7 @@ const YearMilestoneCard = ({
 }: YearMilestoneCardProps) => {
   const theme = useTheme()
   const { type: publisher, annualGoalHours } = usePublisher()
-  const { milestoneOverrides } = usePreferences()
+  const { milestoneOverrides, timeDisplayFormat } = usePreferences()
   const { serviceReports } = useServiceReport()
   const { getCachedPlannedMinutes, setCachedPlannedMinutes } = useTimeCache()
 
@@ -151,18 +152,27 @@ const YearMilestoneCard = ({
 
   const titleText = `${serviceYear}–${serviceYear + 1}`
 
-  const hoursToGoal = useMemo(
+  const minutesToGoal = useMemo(
     () =>
       annualGoalHours > 0
-        ? _.round(Math.max(0, annualGoalHours - hoursCompleted), 1)
+        ? Math.max(
+            0,
+            Math.round(annualGoalHours * 60 - totalMinutesForServiceYear)
+          )
         : 0,
-    [annualGoalHours, hoursCompleted]
+    [annualGoalHours, totalMinutesForServiceYear]
   )
+  const minutesToGoalDisplay = useFormattedMinutes(minutesToGoal)
 
-  const nextMilestoneRemaining =
+  const nextMilestoneRemainingMinutes =
     hitState.next !== null
-      ? _.round(Math.max(0, hitState.next - hoursCompleted), 1)
+      ? Math.max(0, Math.round(hitState.next * 60 - totalMinutesForServiceYear))
       : null
+  const nextMilestoneRemainingDisplay = useFormattedMinutes(
+    nextMilestoneRemainingMinutes ?? 0
+  )
+  const completedHeroDisplay = useFormattedMinutes(totalMinutesForServiceYear)
+  const isDecimal = timeDisplayFormat === 'decimal'
 
   return (
     <Card style={{ flexGrow: 1 }}>
@@ -192,8 +202,8 @@ const YearMilestoneCard = ({
             }}
           >
             {daysRemaining} {i18n.t('daysLeft')}
-            {hoursToGoal > 0
-              ? ` · ${i18n.t('hoursToGoLabel', { hours: hoursToGoal })}`
+            {minutesToGoal > 0
+              ? ` · ${i18n.t('hoursToGoLabel', { value: minutesToGoalDisplay.formatted })}`
               : ''}
           </Text>
         ) : null}
@@ -212,14 +222,18 @@ const YearMilestoneCard = ({
           }}
         >
           <Text
+            // Drop a tier in "short" mode so "234h 56m / 600 hours" fits the
+            // card without auto-shrinking the hero to fine print.
             style={{
-              fontSize: 64,
-              lineHeight: 68,
+              fontSize: isDecimal ? 64 : 40,
+              lineHeight: isDecimal ? 68 : 44,
               fontFamily: theme.fonts.bold,
               color: theme.colors.text,
             }}
           >
-            {hoursCompleted}
+            {isDecimal
+              ? completedHeroDisplay.decimalHours
+              : completedHeroDisplay.formatted}
           </Text>
           <Text
             style={{
@@ -249,7 +263,7 @@ const YearMilestoneCard = ({
 
       <MilestoneProgressBar year={year} />
 
-      {hitState.next !== null && nextMilestoneRemaining !== null ? (
+      {hitState.next !== null && nextMilestoneRemainingMinutes !== null ? (
         <View
           style={{
             flexDirection: 'row',
@@ -276,7 +290,7 @@ const YearMilestoneCard = ({
             >
               {i18n.t('nextMilestoneLabel', {
                 hours: hitState.next,
-                remaining: nextMilestoneRemaining,
+                remaining: nextMilestoneRemainingDisplay.formatted,
               })}
             </Text>
           </View>

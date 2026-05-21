@@ -20,73 +20,73 @@ export default function CalendarHeader({
   const showToggle = !!viewMode && !!onChangeViewMode
 
   return (
-    <XView
-      style={{
-        justifyContent: 'space-between',
-        alignItems: 'flex-start',
-        paddingBottom: 10,
-        gap: 10,
-      }}
-    >
-      <View style={{ flexShrink: 1, gap: 2 }}>
+    <View style={{ paddingBottom: 10, gap: 6 }}>
+      <XView
+        style={{
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          gap: 10,
+        }}
+      >
         <Text
           style={{
+            flexShrink: 1,
             fontSize: theme.fontSize('xl'),
             fontFamily: theme.fonts.semiBold,
           }}
         >
           {i18n.t('schedule')}
         </Text>
-        <Text
-          style={{
-            color: theme.colors.textAlt,
-            fontSize: theme.fontSize('sm'),
-          }}
-        >
-          {i18n.t('tapDayToSchedule_description')}
-        </Text>
-      </View>
-      {showToggle && (
-        <View
-          style={{
-            flexDirection: 'row',
-            backgroundColor: theme.colors.background,
-            borderRadius: theme.numbers.borderRadiusSm,
-            padding: 2,
-          }}
-        >
-          {(['planned', 'actual'] as const).map((mode) => {
-            const selected = viewMode === mode
-            return (
-              <Button
-                key={mode}
-                noTransform
-                onPress={() => onChangeViewMode(mode)}
-                style={{
-                  backgroundColor: selected
-                    ? theme.colors.accent
-                    : 'transparent',
-                  paddingVertical: 4,
-                  paddingHorizontal: 10,
-                  borderRadius: theme.numbers.borderRadiusSm,
-                }}
-              >
-                <Text
+        {showToggle && (
+          <View
+            style={{
+              flexDirection: 'row',
+              backgroundColor: theme.colors.background,
+              borderRadius: theme.numbers.borderRadiusSm,
+              padding: 2,
+            }}
+          >
+            {(['planned', 'actual'] as const).map((mode) => {
+              const selected = viewMode === mode
+              return (
+                <Button
+                  key={mode}
+                  noTransform
+                  onPress={() => onChangeViewMode(mode)}
                   style={{
-                    color: selected
-                      ? theme.colors.textInverse
-                      : theme.colors.textAlt,
-                    fontSize: theme.fontSize('sm'),
-                    fontFamily: theme.fonts.semiBold,
+                    backgroundColor: selected
+                      ? theme.colors.accent
+                      : 'transparent',
+                    paddingVertical: 4,
+                    paddingHorizontal: 10,
+                    borderRadius: theme.numbers.borderRadiusSm,
                   }}
                 >
-                  {i18n.t(mode)}
-                </Text>
-              </Button>
-            )
-          })}
-        </View>
-      )}
-    </XView>
+                  <Text
+                    style={{
+                      color: selected
+                        ? theme.colors.textInverse
+                        : theme.colors.textAlt,
+                      fontSize: theme.fontSize('sm'),
+                      fontFamily: theme.fonts.semiBold,
+                    }}
+                  >
+                    {i18n.t(mode)}
+                  </Text>
+                </Button>
+              )
+            })}
+          </View>
+        )}
+      </XView>
+      <Text
+        style={{
+          color: theme.colors.textAlt,
+          fontSize: theme.fontSize('sm'),
+        }}
+      >
+        {i18n.t('tapDayToSchedule_description')}
+      </Text>
+    </View>
   )
 }

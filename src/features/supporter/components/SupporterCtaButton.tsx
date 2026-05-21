@@ -116,6 +116,23 @@ const ShimmerCta: React.FC<PropsWithChildren<Omit<Props, 'shimmer'>>> = ({
 
   return (
     <View>
+      <View onLayout={handleLayout}>
+        <Button
+          onPress={onPress}
+          disabled={disabled}
+          style={[
+            buttonStyle(
+              disabled,
+              theme.colors.supporter,
+              theme.colors.supporterAlt
+            ),
+            style as ViewStyle,
+          ]}
+          {...rest}
+        >
+          {children}
+        </Button>
+      </View>
       {size && !disabled && (
         <Canvas
           pointerEvents='none'
@@ -145,23 +162,6 @@ const ShimmerCta: React.FC<PropsWithChildren<Omit<Props, 'shimmer'>>> = ({
           </RoundedRect>
         </Canvas>
       )}
-      <View onLayout={handleLayout}>
-        <Button
-          onPress={onPress}
-          disabled={disabled}
-          style={[
-            buttonStyle(
-              disabled,
-              theme.colors.supporter,
-              theme.colors.supporterAlt
-            ),
-            style as ViewStyle,
-          ]}
-          {...rest}
-        >
-          {children}
-        </Button>
-      </View>
     </View>
   )
 }

@@ -31,11 +31,12 @@ const MissedConversations = ({ conversations }: Props) => {
   if (conversations.length === 0) return null
 
   const accentColor = theme.colors.warn
+  const headerColor = theme.colors.warnText
   const count = sorted.length
 
   return (
     <DismissableCard
-      titleColor={accentColor}
+      titleColor={headerColor}
       title={
         <View
           style={{
@@ -57,13 +58,13 @@ const MissedConversations = ({ conversations }: Props) => {
             <FontAwesomeIcon
               icon={faTriangleExclamation}
               size={14}
-              color={accentColor}
+              color={headerColor}
             />
           </View>
           <Text
             style={{
               fontSize: theme.fontSize('xl'),
-              color: accentColor,
+              color: headerColor,
               fontFamily: theme.fonts.bold,
               flex: 1,
             }}
@@ -84,7 +85,7 @@ const MissedConversations = ({ conversations }: Props) => {
               <Text
                 style={{
                   fontSize: theme.fontSize('xs'),
-                  color: accentColor,
+                  color: headerColor,
                   fontFamily: theme.fonts.bold,
                 }}
               >

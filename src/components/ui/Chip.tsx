@@ -1,6 +1,5 @@
 import { PropsWithChildren } from 'react'
-import { View, StyleSheet } from 'react-native'
-import { BlurView } from 'expo-blur'
+import { View } from 'react-native'
 import useTheme from '@/contexts/theme'
 import Button from '@/components/ui/Button'
 import Text from '@/components/ui/MyText'
@@ -43,29 +42,15 @@ const Chip: React.FC<PropsWithChildren<ChipProps>> = ({
       style={{
         flexDirection: 'row',
         alignItems: 'center',
-        gap: 5,
+        gap: 6,
         paddingHorizontal: 10,
-        paddingVertical: 5,
+        paddingVertical: 6,
         borderRadius: 999,
         borderCurve: 'continuous',
-        overflow: 'hidden',
+        borderWidth: 1,
+        borderColor: theme.colors.border,
       }}
     >
-      <BlurView
-        tint={theme.colors.background === '#121212' ? 'dark' : 'light'}
-        intensity={50}
-        style={StyleSheet.absoluteFill}
-      />
-      <View
-        pointerEvents='none'
-        style={[
-          StyleSheet.absoluteFill,
-          {
-            backgroundColor: theme.colors.card,
-            opacity: 0.55,
-          },
-        ]}
-      />
       {icon ? (
         <Text
           style={{

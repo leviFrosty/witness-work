@@ -11,12 +11,15 @@ import useServiceReport from '@/stores/serviceReport'
 import usePublisher from '@/hooks/usePublisher'
 import {
   getHoursForServiceYearEndYear,
+  getMinutesForServiceYearEndYear,
   getServiceYearEndYearsSpan,
   getAvailableEarlierEndYears,
   getServiceYearFromDate,
 } from '@/lib/serviceReport'
 import { ServiceReport } from '@/types/serviceReport'
 import i18n from '@/lib/locales'
+import { formatMinutes } from '@/lib/minutes'
+import { usePreferences } from '@/stores/preferences'
 
 import Text from '@/components/ui/MyText'
 import AddEarlierYearSheet from '@/features/progress/components/AddEarlierYearSheet'
@@ -60,6 +63,7 @@ const YearByYearList = ({ onYearPress }: YearByYearListProps) => {
   const theme = useTheme()
   const reports = useFlatServiceReports()
   const { annualGoalHours } = usePublisher()
+  const { timeDisplayFormat } = usePreferences()
 
   const endYears = useMemo(() => getServiceYearEndYearsSpan(reports), [reports])
 
@@ -67,6 +71,7 @@ const YearByYearList = ({ onYearPress }: YearByYearListProps) => {
     const data = endYears.map((endYear) => ({
       endYear,
       hours: getHoursForServiceYearEndYear(reports, endYear),
+      minutes: getMinutesForServiceYearEndYear(reports, endYear),
     }))
     // Most-recent first.
     data.sort((a, b) => b.endYear - a.endYear)
@@ -132,11 +137,15 @@ const YearByYearList = ({ onYearPress }: YearByYearListProps) => {
             gap: 6,
           }}
         >
-          {rows.map(({ endYear, hours }) => {
+          {rows.map(({ endYear, hours, minutes }) => {
             const ratio = Math.max(0, Math.min(1, hours / divisor))
             const startYear = endYear - 1
             const endShort = String(endYear % 100).padStart(2, '0')
             const label = `${startYear}—${endShort}`
+            const totalDisplay = formatMinutes(
+              minutes,
+              timeDisplayFormat
+            ).formatted
 
             return (
               <Pressable
@@ -194,8 +203,7 @@ const YearByYearList = ({ onYearPress }: YearByYearListProps) => {
                     textAlign: 'right',
                   }}
                 >
-                  {hours}
-                  {i18n.t('hoursCompact')}
+                  {totalDisplay}
                 </Text>
               </Pressable>
             )

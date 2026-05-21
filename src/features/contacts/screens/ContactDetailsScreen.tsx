@@ -1,11 +1,4 @@
-import {
-  View,
-  ScrollView,
-  useColorScheme,
-  Share,
-  Alert,
-  Pressable,
-} from 'react-native'
+import { View, ScrollView, Share, Alert, Pressable } from 'react-native'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import Text from '@/components/ui/MyText'
 import useTheme from '@/contexts/theme'
@@ -70,6 +63,7 @@ import XView from '@/components/ui/layout/XView'
 import { RootStackNavigation, RootStackParamList } from '@/types/rootStack'
 import { useMarkerColors } from '@/hooks/useMarkerColors'
 import { getContactStaleness, stalenessToColor } from '@/lib/contactStaleness'
+import { getReadableTextColor, relativeLuminance } from '@/lib/color'
 import DismissContactSheet from '@/features/contacts/components/DismissContactSheet'
 import {
   buildContactShareLink,
@@ -157,6 +151,7 @@ const Hero = ({
   avatar,
   avatarBackground,
   heroBackground,
+  heroForeground,
   isBibleStudy: isActiveBibleStudy,
   hasStudiedPreviously,
   mostRecentStudy,
@@ -166,6 +161,7 @@ const Hero = ({
   avatar: ProfileAvatar
   avatarBackground?: string | null
   heroBackground: string
+  heroForeground: string
   isBibleStudy?: boolean
   hasStudiedPreviously?: boolean
   mostRecentStudy: Visit | null
@@ -232,15 +228,6 @@ const Hero = ({
           onClose={() => setViewerOpen(false)}
         />
       )}
-      <Text
-        style={{
-          fontSize: 14,
-          fontFamily: theme.fonts.semiBold,
-          color: theme.colors.textInverse,
-        }}
-      >
-        {i18n.t('contact')}
-      </Text>
       <View
         style={{
           flexDirection: 'row',
@@ -255,7 +242,7 @@ const Hero = ({
             style: {
               fontSize: 40,
               fontFamily: theme.fonts.bold,
-              color: theme.colors.textInverse,
+              color: heroForeground,
               textAlign: 'center',
             },
           }}
@@ -266,7 +253,7 @@ const Hero = ({
           <GenderIcon
             gender={contact.gender}
             size={22}
-            color={theme.colors.textInverse}
+            color={heroForeground}
             opacity={0.7}
           />
         )}
@@ -277,7 +264,7 @@ const Hero = ({
             style={{
               fontSize: 16,
               fontFamily: theme.fonts.regular,
-              color: theme.colors.textInverse,
+              color: heroForeground,
             }}
           >
             {isActiveBibleStudy
@@ -286,17 +273,14 @@ const Hero = ({
                   'L'
                 )}`}
           </Text>
-          <IconButton
-            icon={faBook}
-            iconStyle={{ color: theme.colors.textInverse }}
-          />
+          <IconButton icon={faBook} iconStyle={{ color: heroForeground }} />
         </View>
       )}
       {!isActiveBibleStudy && hasStudiedPreviously && (
         <Text
           style={{
             fontSize: theme.fontSize('sm'),
-            color: theme.colors.textInverse,
+            color: heroForeground,
             maxWidth: 250,
           }}
         >
@@ -682,7 +666,6 @@ const AddSheet = ({
 }
 
 const ContactDetailsScreen = ({ route, navigation }: Props) => {
-  const colorScheme = useColorScheme()
   const theme = useTheme()
   const { developerTools } = usePreferences()
   const { params } = route
@@ -696,6 +679,18 @@ const ContactDetailsScreen = ({ route, navigation }: Props) => {
   const toast = useToastController()
   const { conversations } = useConversations()
   const heroBackground = useContactHeroBackground(contact)
+  // Hero tint is user-controllable per contact, so the fixed `textInverse`
+  // token can collide with mid-luminance picks (e.g. a medium green). Pick
+  // a contrasting foreground from the resolved background and reuse it for
+  // both the hero text and the header chrome that overlays it.
+  const heroForeground = useMemo(
+    () => getReadableTextColor(heroBackground),
+    [heroBackground]
+  )
+  const heroIsDark = useMemo(
+    () => relativeLuminance(heroBackground) <= 0.45,
+    [heroBackground]
+  )
 
   const highlightedConversation = useMemo(
     () => conversations.find((c) => c.id === params.highlightedVisitId),
@@ -749,7 +744,7 @@ const ContactDetailsScreen = ({ route, navigation }: Props) => {
         id: 'edit',
         title: i18n.t('edit'),
         image: 'pencil',
-        imageColor: theme.colors.text,
+        imageColor: '#000000',
       },
     ]
     if (contact && !isContactDismissed(contact)) {
@@ -757,7 +752,7 @@ const ContactDetailsScreen = ({ route, navigation }: Props) => {
         id: 'dismiss',
         title: i18n.t('dismiss'),
         image: 'clock',
-        imageColor: theme.colors.text,
+        imageColor: '#000000',
       })
     }
     actions.push({
@@ -768,7 +763,7 @@ const ContactDetailsScreen = ({ route, navigation }: Props) => {
       attributes: { destructive: true },
     })
     return actions
-  }, [contact, theme.colors.text, theme.colors.error])
+  }, [contact, theme.colors.error])
 
   const handleContactMenuAction = useCallback(
     (action: string) => {
@@ -936,10 +931,10 @@ const ContactDetailsScreen = ({ route, navigation }: Props) => {
     navigation.setOptions({
       header: () => (
         <Header
-          inverseTextAndIconColor
           noBottomBorder
           title=''
           buttonType='back'
+          foregroundColor={heroForeground}
           rightElement={
             <View
               style={{
@@ -956,15 +951,12 @@ const ContactDetailsScreen = ({ route, navigation }: Props) => {
                   handleContactMenuAction(nativeEvent.event)
                 }
               >
-                <IconButton
-                  icon={faEllipsisVertical}
-                  color={theme.colors.textInverse}
-                />
+                <IconButton icon={faEllipsisVertical} color={heroForeground} />
               </MenuView>
 
               <IconButton
                 icon={contact?.isFavorite ? faStar : faStarOutline}
-                color={theme.colors.textInverse}
+                color={heroForeground}
                 onPress={() => {
                   if (contact) {
                     toggleFavoriteContact(contact.id)
@@ -974,14 +966,14 @@ const ContactDetailsScreen = ({ route, navigation }: Props) => {
 
               <IconButton
                 icon={faArrowUpFromBracket}
-                color={theme.colors.textInverse}
+                color={heroForeground}
                 onPress={handleExportContact}
               />
 
               <Button onPress={() => setSheetOpen(true)}>
                 <XView
                   style={{
-                    borderColor: theme.colors.textInverse,
+                    borderColor: heroForeground,
                     borderWidth: 1,
                     paddingVertical: 5,
                     paddingHorizontal: 10,
@@ -989,12 +981,10 @@ const ContactDetailsScreen = ({ route, navigation }: Props) => {
                   }}
                 >
                   <IconButton
-                    iconStyle={{ color: theme.colors.textInverse }}
+                    iconStyle={{ color: heroForeground }}
                     icon={faPlus}
                   />
-                  <Text style={{ color: theme.colors.textInverse }}>
-                    {i18n.t('add')}
-                  </Text>
+                  <Text style={{ color: heroForeground }}>{i18n.t('add')}</Text>
                 </XView>
               </Button>
             </View>
@@ -1011,9 +1001,9 @@ const ContactDetailsScreen = ({ route, navigation }: Props) => {
     handleContactMenuAction,
     handleExportContact,
     heroBackground,
+    heroForeground,
     navigation,
     params.id,
-    theme.colors.textInverse,
     theme.numbers.borderRadiusSm,
     toggleFavoriteContact,
   ])
@@ -1078,7 +1068,7 @@ const ContactDetailsScreen = ({ route, navigation }: Props) => {
           backgroundColor: theme.colors.background,
         }}
       >
-        <StatusBar style={colorScheme === 'light' ? 'light' : 'dark'} />
+        <StatusBar style={heroIsDark ? 'light' : 'dark'} />
 
         <Wrapper
           insets='none'
@@ -1097,6 +1087,7 @@ const ContactDetailsScreen = ({ route, navigation }: Props) => {
             avatar={contact.avatar ?? { type: 'none', value: '' }}
             avatarBackground={contact.avatarBackground}
             heroBackground={heroBackground}
+            heroForeground={heroForeground}
           />
           {developerTools && (
             <JsonViewer label={i18n.t('data')} value={contact} />

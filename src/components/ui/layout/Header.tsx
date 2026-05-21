@@ -16,6 +16,12 @@ import { RootStackNavigation } from '@/types/rootStack'
 type Props = {
   backgroundColor?: string
   inverseTextAndIconColor?: boolean
+  /**
+   * Hard override for the chevron + title color. Wins over
+   * `inverseTextAndIconColor` so callers can react to a dynamic background
+   * (e.g. a contact's hero tint) and keep contrast.
+   */
+  foregroundColor?: string
   title?: string
   buttonType?: 'exit' | 'settings' | 'back' | 'none'
   onPressLeftIcon?: () => void
@@ -39,6 +45,7 @@ const Header = ({
   leftElement,
   backgroundColor,
   inverseTextAndIconColor,
+  foregroundColor,
   noBottomBorder,
   noInsets,
   onPressLeftIcon,
@@ -103,9 +110,11 @@ const Header = ({
               onPress={handleButtonAction}
               icon={iconName()}
               iconStyle={{
-                color: inverseTextAndIconColor
-                  ? theme.colors.textInverse
-                  : theme.colors.text,
+                color:
+                  foregroundColor ??
+                  (inverseTextAndIconColor
+                    ? theme.colors.textInverse
+                    : theme.colors.text),
               }}
               size={'xl'}
             />
@@ -120,9 +129,11 @@ const Header = ({
             style={{
               fontSize: 18,
               fontFamily: theme.fonts.semiBold,
-              color: inverseTextAndIconColor
-                ? theme.colors.textInverse
-                : theme.colors.text,
+              color:
+                foregroundColor ??
+                (inverseTextAndIconColor
+                  ? theme.colors.textInverse
+                  : theme.colors.text),
             }}
           >
             {title ?? moment().format('LL')}

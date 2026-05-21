@@ -28,6 +28,7 @@ import moment from 'moment'
 import Checkbox from 'expo-checkbox'
 import { NativeStackScreenProps } from '@react-navigation/native-stack'
 import { RecurringPlanFrequencies, getMonthsReports } from '@/lib/serviceReport'
+import { formatMinutes } from '@/lib/minutes'
 import {
   combineDateAndStartTime,
   formatStartTime,
@@ -634,7 +635,8 @@ const PlanDayScreen = ({ route, navigation }: PlanDayScreenProps) => {
     existingDayPlan?.note ?? recurringPlanData?.note ?? ''
   )
 
-  const { planNotificationOffset, planAlwaysNotify } = usePreferences()
+  const { planNotificationOffset, planAlwaysNotify, timeDisplayFormat } =
+    usePreferences()
   const { allowed: notificationsAllowed } = useNotifications()
 
   const defaultNotifyOffset: NotifyMeOffset = {
@@ -771,15 +773,8 @@ const PlanDayScreen = ({ route, navigation }: PlanDayScreenProps) => {
       return []
     }
 
-    const formatDuration = () => {
-      const h = Math.floor(plannedMinutes / 60)
-      const m = plannedMinutes % 60
-      const hLabel = i18n.t('hoursCompact')
-      const mLabel = i18n.t('minutesCompact')
-      if (h && m) return `${h}${hLabel} ${m}${mLabel}`
-      if (h) return `${h}${hLabel}`
-      return `${m}${mLabel}`
-    }
+    const formatDuration = () =>
+      formatMinutes(plannedMinutes, timeDisplayFormat).formatted
 
     try {
       const id = await Notifications.scheduleNotificationAsync({
@@ -1333,9 +1328,12 @@ const PlanDayScreen = ({ route, navigation }: PlanDayScreenProps) => {
                                   color: theme.colors.textAlt,
                                 }}
                               >
-                                {Math.floor(override.minutes / 60)}
-                                {i18n.t('hoursCompact')} {override.minutes % 60}
-                                {i18n.t('minutesCompact')}
+                                {
+                                  formatMinutes(
+                                    override.minutes,
+                                    timeDisplayFormat
+                                  ).formatted
+                                }
                                 {override.note && ` • ${override.note}`}
                               </Text>
                             </View>

@@ -48,10 +48,6 @@ const MapCarouselCard = ({ contact, setSheet }: Props) => {
     [contact, conversations]
   )
 
-  if (!contact.address) {
-    return null
-  }
-
   const address = addressToString(contact.address)
   const coord = coordinateAsString(contact)
 
@@ -59,8 +55,10 @@ const MapCarouselCard = ({ contact, setSheet }: Props) => {
     ? moment(mostRecentConversation.date)
     : null
 
+  // Fall back to coord when no address — covers pin-dragged contacts and legacy
+  // coords-only entries so the share link still resolves.
   const addressUriEncoded = encodeURI(
-    contact.userDraggedCoordinate ? coord : address
+    contact.userDraggedCoordinate || !address ? coord : address
   )
   const appleMapsLink = `${links.appleMapsBase}/?q=${addressUriEncoded}`
   const googleMapsLink = `${links.googleMapsBase}${addressUriEncoded}`

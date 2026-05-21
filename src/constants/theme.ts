@@ -24,6 +24,7 @@ export const lightModeColors = {
   warn: '#fac220',
   warnTranslucent: '#d19b0033',
   warnAlt: '#FFEAB8',
+  warnText: '#92520C',
   shadow: '#000000',
   // Feature showcase colors
   purple: '#8B5CF6',
@@ -73,6 +74,7 @@ const darkModeColors: Colors = {
   warn: '#FCC014',
   warnTranslucent: '#FCC01433',
   warnAlt: '#FFEAB8',
+  warnText: '#FCC014',
   shadow: '#000000',
   // Feature showcase colors
   purple: '#A78BFA',

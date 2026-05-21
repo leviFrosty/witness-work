@@ -883,6 +883,9 @@
   "tryAgainLater": "Vui lòng thử lại sau.",
   "oneTimeDonations": "Quyên góp một lần",
   "monthlyDonation": "Quyên góp hàng tháng",
+  "lifetimeSupporter": "Người ủng hộ trọn đời",
+  "neverExpires": "Không bao giờ hết hạn",
+  "activatedOn": "Kích hoạt vào {{date}}",
   "active": "Hoạt động",
   "inactive": "Không hoạt động",
   "yourDonations": "Quyên góp của bạn",
@@ -991,8 +994,8 @@
   "complete_description": "Nếu bạn đáp ứng được thời gian dự định trong một ngày, nó sẽ được đánh dấu là hoàn thành.",
   "partial": "Không đủ chỉ tiêu",
   "plannedHours": "Số giờ đã lên kế hoạch",
-  "projectedHoursTitle": "Projected Hours",
-  "projectedHoursDescription": "Combines hours you've already logged with hours you have planned. Aim to reach 100% of your goal.",
+  "projectedHoursTitle": "Số giờ dự kiến",
+  "projectedHoursDescription": "Kết hợp số giờ bạn đã ghi với số giờ bạn đã lên kế hoạch. Đặt mục tiêu đạt được 100% mục tiêu của bạn.",
   "planDay": "Ngày lập kế hoạch",
   "weekly": "Hàng tuần",
   "bi-weekly": "Hai tuần một lần",
@@ -1249,6 +1252,8 @@
   "vsLastMonth": "so với tháng trước",
   "hrsAhead": "Vượt {{count}} giờ",
   "hrsBehind": "Chậm {{count}} giờ",
+  "aheadShort": "{{value}} phía trước",
+  "behindShort": "{{value}} phía sau",
   "cumulativePace": "Tiến độ so với lịch",
   "creditOverageChip": "+{{count}} giờ vượt trần",
   "lastLoggedOn": "Lần ghi cuối {{date}}",
@@ -1374,6 +1379,7 @@
   "paywallFeatureRestore": "Khôi phục từ iCloud",
   "paywallFeatureBadge": "Huy hiệu Người ủng hộ",
   "paywallFeatureAccent": "Màu nhấn tùy chỉnh",
+  "paywallFeatureAppIcons": "Biểu tượng ứng dụng tùy chỉnh",
   "paywallFeatureSync": "Đồng bộ iCloud",
   "paywallFeatureFuture": "Đặc quyền mới theo thời gian",
   "paywallTierSupporter": "Người ủng hộ",
@@ -1390,6 +1396,9 @@
   "paywallCtaSelectPrice": "Chọn mức",
   "paywallLearnMore": "Đọc Câu hỏi thường gặp",
   "paywallCtaSendTip": "Gửi tiền boa",
+  "copyAccountId": "Sao chép ID tài khoản",
+  "accountIdCopied": "Đã sao chép ID tài khoản",
+  "copyAccountIdError": "Không thể sao chép ID tài khoản",
   "accentColor": "Màu nhấn",
   "accentColorHelp": "Chọn màu thay thế màu xanh lục mặc định trên toàn ứng dụng.",
   "avatarBackgroundColor": "Nền ảnh đại diện",
@@ -1529,16 +1538,16 @@
   "yourPlanActionMapContacts": "lập bản đồ khu vực",
   "yourPlanAutoTourAuto": "tự động",
   "yourPlanAutoTourPaused": "tạm dừng",
-  "onboardingBackfillTitle": "Pick up where you left off",
-  "onboardingBackfillSubtitle": "Your service year started in September. Tell us your hours so far and your annual goal will start accurate from day one.",
-  "onboardingBackfillHelper": "Enter regular hours and credit hours separately. We'll cap credit per month so nothing is lost across the year.",
-  "onboardingBackfillHoursLabel": "Hours",
-  "onboardingBackfillCreditLabel": "Credit hours",
-  "onboardingBackfillSkip": "Skip for now",
-  "onboardingBackfillScreenHeader": "Catch up your service year",
-  "onboardingBackfillBannerTitle": "Backdate your service year",
-  "onboardingBackfillBannerSubtitle": "Add your hours since September to get an accurate annual goal.",
-  "onboardingBackfillBannerDismissA11y": "Dismiss",
+  "onboardingBackfillTitle": "Tiếp tục từ nơi bạn đã dừng lại",
+  "onboardingBackfillSubtitle": "Năm phục vụ của bạn bắt đầu vào tháng Chín. Hãy cho chúng tôi biết số giờ của bạn cho đến nay và mục tiêu hàng năm của bạn sẽ bắt đầu chính xác ngay từ ngày đầu tiên.",
+  "onboardingBackfillHelper": "Nhập số giờ thông thường và số giờ tín dụng riêng biệt. Chúng tôi sẽ giới hạn tín dụng mỗi tháng để không có gì bị mất trong suốt cả năm.",
+  "onboardingBackfillHoursLabel": "Giờ",
+  "onboardingBackfillCreditLabel": "Giờ tín dụng",
+  "onboardingBackfillSkip": "Bỏ qua ngay bây giờ",
+  "onboardingBackfillScreenHeader": "Bắt kịp năm phục vụ của bạn",
+  "onboardingBackfillBannerTitle": "Lùi ngày năm dịch vụ của bạn",
+  "onboardingBackfillBannerSubtitle": "Thêm số giờ của bạn kể từ tháng Chín để có được mục tiêu hàng năm chính xác.",
+  "onboardingBackfillBannerDismissA11y": "Loại bỏ",
   "intentPickerTitle": "Bạn muốn WitnessWork giúp gì?",
   "intentPickerSubtitle": "Chúng tôi sẽ điều chỉnh trợ lý của bạn dựa trên điều này. Chọn bao nhiêu tùy thích! Không có câu trả lời sai.",
   "intentTrackTime": "Theo dõi thời gian phụng sự của tôi",
@@ -1568,8 +1577,8 @@
   "notNow": "Không phải bây giờ",
   "allTime": "Toàn thời gian",
   "milestones": "Cột mốc",
-  "milestonesOrderHint": "Order matters — progress fills through them in sequence. The last one is your annual goal.",
-  "yearGoalSetInSettings": "ANNUAL GOAL · set in Settings",
+  "milestonesOrderHint": "Thứ tự rất quan trọng — tiến độ đi qua các cột mốc theo trình tự. Cột mốc cuối là mục tiêu năm của bạn.",
+  "yearGoalSetInSettings": "MỤC TIÊU NĂM · đặt trong Cài đặt",
   "adjustMilestones": "điều chỉnh cột mốc",
   "milestonesHitChip": "{{hit}} trong số {{total}} cột mốc",
   "nextMilestoneLabel": "cột mốc kế tiếp trong {{remaining}} giờ",
@@ -1586,8 +1595,10 @@
   "emptyAllTime_title": "Chưa ghi thời gian nào",
   "emptyAllTime_description": "Số giờ cả đời của bạn sẽ hiện ở đây.",
   "multiple": "Nhiều",
-  "allDays": "Mọi ngày",
-  "allMonths": "Mọi tháng",
+  "vsGoal": "vs Mục tiêu",
+  "category": "Thể loại",
+  "showAllDays": "Hiển thị tất cả các ngày",
+  "hideFutureDays": "Ẩn những ngày trong tương lai",
   "now": "bây giờ",
   "timeRollover": "Chuyển tiếp thời gian",
   "timeRollover_intro": "Tháng trước của bạn có giờ lẻ. Chúng tôi có thể chuyển những phút đó sang tháng này để báo cáo của bạn ở số giờ nguyên.",
@@ -1750,113 +1761,115 @@
   "faq_dismissContact_a": "Mở liên hệ và nhấn vào \"Loại bỏ\". Bạn sẽ chọn thời gian để loại bỏ họ (1 tuần, 1 tháng, 3 tháng, 6 tháng hoặc 1 năm). Người liên hệ sẽ biến mất khỏi danh sách hoạt động của bạn trong khoảng thời gian đó và sau đó tự động quay lại khi hết thời gian. Nếu thông báo được bật, bạn cũng sẽ nhận được lời nhắc khi chúng xuất hiện trở lại, vì vậy các liên hệ bị loại bỏ sẽ không lặng lẽ lọt qua các vết nứt. Bạn có thể tìm hoặc khôi phục danh bạ bị loại bỏ bất kỳ lúc nào trong Cài đặt → Danh bạ bị loại bỏ.",
   "faq_reportBug_q": "Làm cách nào để báo cáo lỗi hoặc yêu cầu tính năng?",
   "faq_reportBug_a": "Nhấn vào một trong các nút bên dưới để mở trực tiếp báo cáo lỗi hoặc yêu cầu tính năng. Các báo cáo bao gồm ảnh chụp màn hình, thiết bị + phiên bản iOS của bạn và phiên bản WitnessWork (hiển thị ở cuối Cài đặt) là dễ sửa chữa nhanh nhất.",
-  "faq_becomeSupporter_q": "What do I get as a supporter?",
-  "faq_becomeSupporter_a": "Monthly supporters receive the Supporter badge and a few extra personalization options — a custom accent color today, with more rolling out over time. iCloud sync for your data across devices is the next big supporter perk coming soon. One-time donations are deeply appreciated too, but don't grant ongoing Supporter status.",
-  "faq_stillFree_q": "Is WitnessWork still free?",
-  "faq_stillFree_a": "Yes — and always will be. Every core feature stays free for everyone. Supporting is completely optional; it helps fund ongoing development and unlocks a few personal touches as a thank-you.",
-  "faq_stopSupporting_q": "What happens if I stop supporting?",
-  "faq_stopSupporting_a": "Nothing about your data changes. If a monthly subscription lapses, any supporter-only personalization gracefully reverts to its defaults — your reports, contacts, notes, and settings are preserved exactly as they are.",
-  "faq_acceptDonations_q": "Why are you accepting donations?",
-  "faq_acceptDonations_a": "As a brother in the hall, I consider it a privilege to be able to use my skills to help others in the congregation. Although free to everyone, developing, running, and maintaining this application, unfortunately costs a significant amount of money and time. I view donating as similar to how one might pay for another's gas after going in service with them - it's a loving gesture that goes greatly appreciated.",
-  "faq_donationsUsedFor_q": "What are the donations used for?",
-  "faq_donationsUsedFor_a": "Your donation helps keeps this app running! There are costs with purchasing real devices as development equipment, paying for location API service fees, build service API fees, app store fees, and opportunity cost of my many hours spent developing this app. Each piece of support is greatly appreciated!",
+  "faq_becomeSupporter_q": "Trở thành Người ủng hộ mở khóa điều gì?",
+  "faq_becomeSupporter_a": "WitnessWork đang và sẽ luôn miễn phí. Nếu ứng dụng hữu ích cho bạn, trở thành người ủng hộ là một cách để nói lời cảm ơn và giúp tiếp tục phát triển. Những người ủng hộ cũng nhận được một vài tính năng bổ sung về chất lượng cuộc sống như một lời cảm ơn nhỏ. Chạm vào Trở thành người ủng hộ từ ngăn Cài đặt để biết thông tin chi tiết hiện tại.",
+  "faq_stillFree_q": "WitnessWork có còn miễn phí không?",
+  "faq_stillFree_a": "Có - và sẽ luôn như vậy. Mọi tính năng cốt lõi đều miễn phí cho tất cả mọi người. Hỗ trợ là hoàn toàn tùy chọn; Nó giúp tài trợ cho sự phát triển liên tục và mở ra một vài liên lạc cá nhân như một lời cảm ơn.",
+  "faq_stopSupporting_q": "Điều gì xảy ra nếu tôi ngừng hỗ trợ?",
+  "faq_stopSupporting_a": "Không có gì về dữ liệu của bạn thay đổi. Nếu đăng ký hàng tháng hết hạn, mọi cá nhân hóa chỉ dành cho người hỗ trợ sẽ trở lại mặc định một cách duyên dáng — báo cáo, danh bạ, ghi chú và cài đặt của bạn được giữ nguyên chính xác.",
+  "faq_acceptDonations_q": "Tại sao bạn chấp nhận quyên góp?",
+  "faq_acceptDonations_a": "Là một anh trong hội trường, tôi coi đó là một đặc ân khi có thể sử dụng kỹ năng của mình để giúp đỡ những người khác trong hội thánh. Mặc dù miễn phí cho tất cả mọi người, nhưng việc phát triển, chạy và duy trì ứng dụng này, đáng tiếc là tốn một khoản tiền bạc và thời gian đáng kể. Tôi xem việc quyên góp tương tự như cách một người có thể trả tiền xăng cho người khác sau khi đi phục vụ với họ - đó là một cử chỉ yêu thương được đánh giá rất cao.",
+  "faq_donationsUsedFor_q": "Các khoản đóng góp được sử dụng để làm gì?",
+  "faq_donationsUsedFor_a": "Khoản đóng góp của bạn giúp ứng dụng này hoạt động! Có chi phí khi mua thiết bị thực làm thiết bị phát triển, thanh toán phí dịch vụ API vị trí, phí API dịch vụ xây dựng, phí cửa hàng ứng dụng và chi phí cơ hội cho nhiều giờ tôi dành cho việc phát triển ứng dụng này. Mỗi phần hỗ trợ đều được đánh giá rất cao!",
   "faq_whatsNew_q": "Tôi có thể xem những gì đã thay đổi trong bản cập nhật mới nhất ở đâu?",
   "faq_whatsNew_a": "Cài đặt → Có gì mới hiển thị tóm tắt các thay đổi gần đây. Các bản cập nhật lớn cũng bật lên một trang tính \"Có gì mới\" một lần trong lần đầu tiên bạn mở ứng dụng sau khi cập nhật.",
   "availability": {
-    "settingsRow": "Availability",
-    "settingsRowDescription": "Tell the Assistant which days are your off days and which are Kingdom Hall meeting days. It uses both to shape its recommendations.",
-    "settingsValueAllAvailable": "All days available",
-    "settingsValueNOff": "{{count}} off days",
-    "settingsValueNMeeting": "{{count}} meeting days",
-    "settingsValueNOffNMeeting": "{{off}} off · {{meeting}} meeting",
+    "settingsRow": "Tính khả dụng",
+    "settingsRowDescription": "Cho Trợ lý biết ngày nào là ngày nghỉ của bạn và ngày nào là ngày họp tại Phòng Nước Trời. Nó sử dụng cả hai để định hình các khuyến nghị của mình.",
+    "settingsValueAllAvailable": "Tất cả các ngày có sẵn",
+    "settingsValueNOff": "{{count}} ngày nghỉ",
+    "settingsValueNMeeting": "{{count}} ngày họp",
+    "settingsValueNOffNMeeting": "{{off}} tắt · Cuộc họp {{meeting}}",
     "onboarding": {
-      "title": "Which days are your off days?",
-      "body": "Tap the days the Assistant should skip entirely. We won't propose service on these days. You can change this anytime in Settings.",
-      "meetingDaysTitle": "Kingdom Hall meeting days",
-      "meetingDaysBody": "Tap the days you have meetings. The Assistant will keep those days lighter so you have time to attend and prepare.",
-      "save": "Save",
-      "skip": "Skip"
+      "title": "Những ngày nghỉ của bạn là ngày nào?",
+      "body": "Nhấn vào những ngày Trợ lý sẽ bỏ qua hoàn toàn. Chúng tôi sẽ không đề xuất dịch vụ vào những ngày này. Bạn có thể thay đổi điều này bất cứ lúc nào trong Cài đặt.",
+      "meetingDaysTitle": "Ngày họp tại Phòng Nước Trời",
+      "meetingDaysBody": "Nhấn vào những ngày bạn có cuộc họp. Trợ lý sẽ giữ cho những ngày đó nhẹ nhàng hơn để bạn có thời gian tham dự và chuẩn bị.",
+      "save": "Lưu",
+      "skip": "Bỏ qua"
     },
     "weekday": {
-      "sun": "Sun",
-      "mon": "Mon",
-      "tue": "Tue",
-      "wed": "Wed",
-      "thu": "Thu",
-      "fri": "Fri",
-      "sat": "Sat"
+      "sun": "Mặt trời",
+      "mon": "Thứ Hai",
+      "tue": "Thứ Ba",
+      "wed": "Thứ Tư",
+      "thu": "Thứ năm",
+      "fri": "Thứ Sáu",
+      "sat": "Thứ Bảy"
     }
   },
   "assistant": {
-    "label": "Assistant",
-    "settingsA11y": "Plan preferences",
+    "label": "Trợ lý",
+    "settingsA11y": "Tùy chọn gói",
     "intro": {
-      "title": "Get a recommended plan",
-      "body": "Tell the Assistant your off days and meeting days, and it'll suggest the strongest plan to reach your goal.",
-      "cta": "Set up Assistant"
+      "title": "Nhận gói đề xuất",
+      "body": "Hãy cho Trợ lý biết ngày nghỉ và ngày họp của bạn, trợ lý sẽ đề xuất kế hoạch mạnh nhất để đạt được mục tiêu của bạn.",
+      "cta": "Thiết lập Trợ lý"
     },
     "headline": {
-      "concentrated": "Plan **{{hours}}h** on **{{day}}** to reach your goal",
-      "distributed": "Plan **{{hours}}h** on **{{days}} days** to reach your goal",
-      "recurring": "Plan **{{hours}}h** every **{{weekdayList}}** for the next **{{weeks}} weeks**"
+      "concentrated": "Lập kế hoạch **{{hours}}** vào **{{day}}** để đạt được mục tiêu của bạn",
+      "distributed": "Lập kế hoạch **{{hours}}** vào **{{days}} ngày** để đạt được mục tiêu của bạn",
+      "recurring": "Lập kế hoạch **{{hours}}** mỗi **{{weekdayList}}** cho **{{weeks}} tuần tiếp theo**"
     },
     "rationale": {
-      "small_gap_one_focused_plan": "A single focused plan is the fastest path.",
-      "spread_to_sustainable_pace": "Spread out so no day pushes too hard.",
-      "pattern_fits_over_horizon": "A weekly rhythm makes the goal feel routine.",
-      "stretched_for_short_horizon": "A bit more per day — there's not much time left.",
-      "rest_recommended_then_resume": "Starts after a rest day — you've been pushing lately.",
-      "layered_on_conversation_days": "Layered on days you'll already be out.",
-      "best_effort_unreachable_goal": "Closing your full goal is a stretch this month — here's the strongest finish."
+      "small_gap_one_focused_plan": "Một kế hoạch tập trung duy nhất là con đường nhanh nhất.",
+      "spread_to_sustainable_pace": "Trải rộng ra để không có ngày nào đẩy quá mạnh.",
+      "pattern_fits_over_horizon": "Nhịp điệu hàng tuần làm cho mục tiêu trở nên thường xuyên.",
+      "stretched_for_short_horizon": "Thêm một chút mỗi ngày - không còn nhiều thời gian.",
+      "rest_recommended_then_resume": "Bắt đầu sau một ngày nghỉ ngơi - gần đây bạn đã thúc đẩy.",
+      "layered_on_conversation_days": "Nhiều lớp vào những ngày bạn đã ra ngoài.",
+      "best_effort_unreachable_goal": "Chốt mục tiêu đầy đủ của bạn là một sự kéo dài trong tháng này - đây là kết thúc mạnh nhất."
     },
     "button": {
-      "preview": "Preview",
-      "dismiss": "Dismiss",
-      "addToSchedule": "Add to Schedule",
-      "cancel": "Cancel",
-      "undo": "Undo"
+      "preview": "Xem trước",
+      "dismiss": "Loại bỏ",
+      "addToSchedule": "Thêm vào lịch trình",
+      "cancel": "Hủy bỏ",
+      "undo": "Hoàn tác"
     },
     "preview": {
-      "notifyMe": "Notify me before each plan",
-      "addAnotherDay": "Add another day",
-      "proposedTotal": "This will put you at **{{projected}} hrs**",
-      "goalReached": "Goal reached"
+      "notifyMe": "Thông báo cho tôi trước mỗi kế hoạch",
+      "addAnotherDay": "Thêm ngày khác",
+      "proposedTotal": "Điều này sẽ đưa bạn vào **{{projected}}**",
+      "goalReached": "Mục tiêu đạt được"
     },
     "snackbar": {
-      "addedPlans": "Assistant added {{count}} plans"
+      "addedPlans": "Trợ lý đã thêm {{count}} gói"
     },
-    "collapsedAfterAccept": "✓ You've planned enough"
+    "collapsedAfterAccept": "✓ Bạn đã lên kế hoạch đủ"
   },
   "projectedTotal": {
-    "header": "Projected Total",
-    "heroSuffix": "hrs if all planned hours come through",
+    "header": "Tổng dự kiến",
+    "headerMonth": "Tháng dự kiến",
+    "headerYear": "Năm dự kiến",
+    "heroSuffix": "nếu tất cả các giờ theo kế hoạch đều được thực hiện",
     "legend": {
-      "logged": "Logged · {{value}}",
-      "planned": "Planned · {{value}}",
-      "goal": "Goal · {{value}}"
+      "logged": "Đã đăng nhập · {{value}}",
+      "planned": "Đã lên kế hoạch · {{value}}",
+      "goal": "Mục tiêu · {{value}}"
     },
     "period": {
-      "thisMonth": "this month",
-      "thisServiceYear": "this service year"
+      "thisMonth": "tháng này",
+      "thisServiceYear": "Năm phục vụ này"
     },
     "status": {
       "present": {
-        "empty": "No hours logged or planned yet for {{period}}.",
-        "logged_over_goal": "You're already **{{over}} hrs** over goal. Planned hours would put you at **{{projected}}**.",
-        "projected_over_goal": "On track — planned hours would put you at **{{projected}}**.",
-        "reachable_gap": "Planned hours put you at **{{projected}}** — **{{gap}} hrs** short of your goal.",
-        "unreachable_gap": "Planned hours put you at **{{projected}}**. **{{gap}} hrs** to goal — a stretch from here."
+        "empty": "Chưa có giờ được ghi hoặc lên kế hoạch cho {{period}}.",
+        "logged_over_goal": "Bạn đã **{{over}}** trên mục tiêu. Giờ theo kế hoạch sẽ đưa bạn vào **{{projected}}**.",
+        "projected_over_goal": "Đi đúng hướng - giờ theo kế hoạch sẽ đưa bạn vào **{{projected}}**.",
+        "reachable_gap": "Giờ làm việc theo kế hoạch đặt bạn vào **{{projected}}** — **{{gap}}** thiếu mục tiêu của bạn.",
+        "unreachable_gap": "Giờ theo kế hoạch đặt bạn vào **{{projected}}**. **{{gap}}** đến mục tiêu - một đoạn từ đây."
       },
       "past": {
-        "empty": "No hours were logged or planned for {{period}}.",
-        "logged_over_goal": "You ended **{{over}} hrs** over goal.",
-        "unreachable_gap": "You ended **{{gap}} hrs** short of goal."
+        "empty": "Không có giờ nào được ghi lại hoặc lên kế hoạch cho {{period}}.",
+        "logged_over_goal": "Bạn đã kết thúc **{{over}}** trên khung thành.",
+        "unreachable_gap": "Bạn đã kết thúc **{{gap}}** thiếu mục tiêu."
       },
       "future": {
-        "empty": "No hours planned yet for {{period}}.",
-        "projected_over_goal": "On track — planned hours would put you at **{{projected}}**.",
-        "reachable_gap": "Planned hours put you at **{{projected}}** — **{{gap}} hrs** short of goal.",
-        "unreachable_gap": "Planned hours put you at **{{projected}}**. **{{gap}} hrs** to goal — a stretch from here."
+        "empty": "Chưa có giờ nào được lên kế hoạch cho {{period}}.",
+        "projected_over_goal": "Đi đúng hướng - giờ theo kế hoạch sẽ đưa bạn vào **{{projected}}**.",
+        "reachable_gap": "Số giờ theo kế hoạch đặt bạn vào **{{projected}}** — **{{gap}}** thiếu mục tiêu.",
+        "unreachable_gap": "Giờ theo kế hoạch đặt bạn vào **{{projected}}**. **{{gap}}** đến mục tiêu - một đoạn từ đây."
       }
     }
   }

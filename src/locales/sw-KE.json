@@ -883,6 +883,9 @@
   "tryAgainLater": "Tafadhali jaribu tena baadae.",
   "oneTimeDonations": "Michango ya Mara Moja",
   "monthlyDonation": "Mchango wa Kila Mwezi",
+  "lifetimeSupporter": "Msaidizi wa Maisha",
+  "neverExpires": "Muda wake hauishami",
+  "activatedOn": "Imeamilishwa kwenye {{date}}",
   "active": "Inayotumika",
   "inactive": "Isiyotumika",
   "yourDonations": "Michango yako",
@@ -991,8 +994,8 @@
   "complete_description": "Ukikutana na muda uliopangwa kwa siku, utawekwa alama kuwa umekamilika.",
   "partial": "Sehemu",
   "plannedHours": "Saa Zilizopangwa",
-  "projectedHoursTitle": "Projected Hours",
-  "projectedHoursDescription": "Combines hours you've already logged with hours you have planned. Aim to reach 100% of your goal.",
+  "projectedHoursTitle": "Masaa yaliyotarajiwa",
+  "projectedHoursDescription": "Inachanganya masaa ambayo tayari umeingia na masaa uliyopanga. Lengo la kufikia 100% ya lengo lako.",
   "planDay": "Siku ya Mpango",
   "weekly": "Kila wiki",
   "bi-weekly": "Bi-Wiki",
@@ -1249,6 +1252,8 @@
   "vsLastMonth": "ikilinganishwa na mwezi uliopita",
   "hrsAhead": "Saa {{count}} mbele",
   "hrsBehind": "Saa {{count}} nyuma",
+  "aheadShort": "{{value}} mbele",
+  "behindShort": "{{value}} nyuma",
   "cumulativePace": "Mwendo dhidi ya ratiba",
   "creditOverageChip": "+Saa {{count}} zaidi ya kikomo",
   "lastLoggedOn": "Ilirekodiwa mwisho {{date}}",
@@ -1374,6 +1379,7 @@
   "paywallFeatureRestore": "Kurejesha kwa iCloud",
   "paywallFeatureBadge": "Beji ya Mfadhili",
   "paywallFeatureAccent": "Rangi maalum ya msisitizo",
+  "paywallFeatureAppIcons": "Aikoni za programu maalum",
   "paywallFeatureSync": "Usawazishaji wa iCloud",
   "paywallFeatureFuture": "Faida mpya kwa muda",
   "paywallTierSupporter": "Mfadhili",
@@ -1390,6 +1396,9 @@
   "paywallCtaSelectPrice": "Chagua kiasi",
   "paywallLearnMore": "Soma Maswali Yanayoulizwa",
   "paywallCtaSendTip": "Tuma bahashishi",
+  "copyAccountId": "Nakili kitambulisho cha akaunti",
+  "accountIdCopied": "Kitambulisho cha Akaunti kimechakiliwa",
+  "copyAccountIdError": "Haikuweza kunakili kitambulisho cha akaunti",
   "accentColor": "Rangi ya msisitizo",
   "accentColorHelp": "Chagua rangi inayobadilisha kijani cha msingi katika programu yote.",
   "avatarBackgroundColor": "Mandharinyuma ya avatari",
@@ -1529,16 +1538,16 @@
   "yourPlanActionMapContacts": "kuramisha eneo lako",
   "yourPlanAutoTourAuto": "otomatiki",
   "yourPlanAutoTourPaused": "imesimamishwa",
-  "onboardingBackfillTitle": "Pick up where you left off",
-  "onboardingBackfillSubtitle": "Your service year started in September. Tell us your hours so far and your annual goal will start accurate from day one.",
-  "onboardingBackfillHelper": "Enter regular hours and credit hours separately. We'll cap credit per month so nothing is lost across the year.",
-  "onboardingBackfillHoursLabel": "Hours",
-  "onboardingBackfillCreditLabel": "Credit hours",
-  "onboardingBackfillSkip": "Skip for now",
-  "onboardingBackfillScreenHeader": "Catch up your service year",
-  "onboardingBackfillBannerTitle": "Backdate your service year",
-  "onboardingBackfillBannerSubtitle": "Add your hours since September to get an accurate annual goal.",
-  "onboardingBackfillBannerDismissA11y": "Dismiss",
+  "onboardingBackfillTitle": "Endelea pale ulipoishia",
+  "onboardingBackfillSubtitle": "Mwaka wako wa huduma ulianza Septemba. Tuambie saa zako hadi sasa na lengo lako la kila mwaka litaanza kwa usahihi kutoka siku ya kwanza.",
+  "onboardingBackfillHelper": "Ingiza saa za kawaida na saa za mkopo kando. Tutapunguza mkopo kwa mwezi kwa hivyo hakuna chochote kinachopotea kwa mwaka mzima.",
+  "onboardingBackfillHoursLabel": "Masaa",
+  "onboardingBackfillCreditLabel": "Saa za mkopo",
+  "onboardingBackfillSkip": "Ruka kwa sasa",
+  "onboardingBackfillScreenHeader": "Pata mwaka wako wa huduma",
+  "onboardingBackfillBannerTitle": "Rudisha nyuma mwaka wako wa huduma",
+  "onboardingBackfillBannerSubtitle": "Ongeza masaa yako tangu Septemba ili kupata lengo sahihi la kila mwaka.",
+  "onboardingBackfillBannerDismissA11y": "Kufukuza",
   "intentPickerTitle": "Unataka WitnessWork ikusaidie na nini?",
   "intentPickerSubtitle": "Tutabinafsisha msaidizi wako kulingana na hili. Chagua nyingi kadri unavyotaka! Hakuna majibu mabaya.",
   "intentTrackTime": "Fuatilia muda wangu wa huduma",
@@ -1568,8 +1577,8 @@
   "notNow": "Sio Sasa",
   "allTime": "Wakati wote",
   "milestones": "Hatua muhimu",
-  "milestonesOrderHint": "Order matters — progress fills through them in sequence. The last one is your annual goal.",
-  "yearGoalSetInSettings": "ANNUAL GOAL · set in Settings",
+  "milestonesOrderHint": "Mpangilio ni muhimu — maendeleo huzijaza kwa mfululizo. Ya mwisho ni lengo lako la mwaka.",
+  "yearGoalSetInSettings": "LENGO LA MWAKA · limewekwa kwenye Mipangilio",
   "adjustMilestones": "rekebisha hatua muhimu",
   "milestonesHitChip": "{{hit}} kati ya {{total}} hatua muhimu",
   "nextMilestoneLabel": "hatua inayofuata baada ya saa {{remaining}}",
@@ -1586,8 +1595,10 @@
   "emptyAllTime_title": "Hakuna muda uliorekodiwa bado",
   "emptyAllTime_description": "Saa zako za maisha yote zitaonekana hapa.",
   "multiple": "Nyingi",
-  "allDays": "Siku Zote",
-  "allMonths": "Miezi Yote",
+  "vsGoal": "vs Lengo",
+  "category": "Jamii",
+  "showAllDays": "Onyesha siku zote",
+  "hideFutureDays": "Ficha siku zijazo",
   "now": "sasa",
   "timeRollover": "Uhamishaji wa Muda",
   "timeRollover_intro": "Mwezi wako uliopita ulikuwa na saa za sehemu. Tunaweza kuhamisha dakika hizo kwenye mwezi huu ili ripoti zako zibaki kwenye saa kamili.",
@@ -1750,113 +1761,115 @@
   "faq_dismissContact_a": "Fungua anwani na uguse \"Futa.\" Utachagua muda gani wa kuwafukuza kwa (wiki 1, mwezi 1, miezi 3, miezi 6, au mwaka 1). Anwani hupotea kutoka kwa orodha zako zinazotumika kwa kipindi hicho na kisha kurudi kiotomatiki wakati umekwisha. Ikiwa arifa zimewashwa, pia utapata kikumbusho zitakapotokea tena, kwa hivyo anwani zilizofukuzwa hazitapita kimya kimya kwenye nyufa. Unaweza kupata au kurejesha anwani zilizofukuzwa wakati wowote chini ya Mipangilio → Anwani Zilizofukuzwa.",
   "faq_reportBug_q": "Je, ninawezaje kuripoti hitilafu au kuomba kipengele?",
   "faq_reportBug_a": "Gusa moja ya vitufe vilivyo hapa chini ili kufungua ripoti ya hitilafu au ombi la kipengele moja kwa moja. Ripoti zinazojumuisha picha ya skrini, kifaa chako + toleo la iOS, na toleo la WitnessWork (lililoonyeshwa chini ya Mipangilio) ni rahisi kurekebisha haraka.",
-  "faq_becomeSupporter_q": "What do I get as a supporter?",
-  "faq_becomeSupporter_a": "Monthly supporters receive the Supporter badge and a few extra personalization options — a custom accent color today, with more rolling out over time. iCloud sync for your data across devices is the next big supporter perk coming soon. One-time donations are deeply appreciated too, but don't grant ongoing Supporter status.",
-  "faq_stillFree_q": "Is WitnessWork still free?",
-  "faq_stillFree_a": "Yes — and always will be. Every core feature stays free for everyone. Supporting is completely optional; it helps fund ongoing development and unlocks a few personal touches as a thank-you.",
-  "faq_stopSupporting_q": "What happens if I stop supporting?",
-  "faq_stopSupporting_a": "Nothing about your data changes. If a monthly subscription lapses, any supporter-only personalization gracefully reverts to its defaults — your reports, contacts, notes, and settings are preserved exactly as they are.",
-  "faq_acceptDonations_q": "Why are you accepting donations?",
-  "faq_acceptDonations_a": "As a brother in the hall, I consider it a privilege to be able to use my skills to help others in the congregation. Although free to everyone, developing, running, and maintaining this application, unfortunately costs a significant amount of money and time. I view donating as similar to how one might pay for another's gas after going in service with them - it's a loving gesture that goes greatly appreciated.",
-  "faq_donationsUsedFor_q": "What are the donations used for?",
-  "faq_donationsUsedFor_a": "Your donation helps keeps this app running! There are costs with purchasing real devices as development equipment, paying for location API service fees, build service API fees, app store fees, and opportunity cost of my many hours spent developing this app. Each piece of support is greatly appreciated!",
+  "faq_becomeSupporter_q": "Kuwa Msaidizi kunafungua nini?",
+  "faq_becomeSupporter_a": "WitnessWork ni, na daima itakuwa, bure. Ikiwa programu imekuwa na manufaa kwako, kuwa mfuasi ni njia ya kusema asante na husaidia kuendeleza maendeleo. Wafuasi pia hupata vipengele vichache vya ziada vya ubora wa maisha kama shukrani ndogo. Gusa Kuwa Msaidizi kutoka kwa droo ya Mipangilio kwa maelezo ya sasa.",
+  "faq_stillFree_q": "Je, WitnessWork bado ni bure?",
+  "faq_stillFree_a": "Ndiyo - na daima itakuwa hivyo. Kila kipengele cha msingi hukaa bure kwa kila mtu. Kusaidia ni hiari kabisa; Inasaidia kufadhili maendeleo yanayoendelea na kufungua miguso michache ya kibinafsi kama shukrani.",
+  "faq_stopSupporting_q": "Nini kitatokea ikiwa nitaacha kuunga mkono?",
+  "faq_stopSupporting_a": "Hakuna chochote kuhusu mabadiliko yako ya data. Ikiwa usajili wa kila mwezi utaisha, ubinafsishaji wowote wa wafuasi pekee hurejea kwa chaguo-msingi - ripoti, anwani, madokezo na mipangilio yako huhifadhiwa kama ilivyo.",
+  "faq_acceptDonations_q": "Kwa nini unakubali michango?",
+  "faq_acceptDonations_a": "Kama ndugu ukumbini, ninaona kuwa ni fursa nzuri kuweza kutumia ujuzi wangu kusaidia wengine katika kutaniko. Ingawa ni bure kwa kila mtu, kuendeleza, kuendesha, na kudumisha programu hii, kwa bahati mbaya inagharimu kiasi kikubwa cha pesa na wakati. Ninaona kuchangia kama sawa na jinsi mtu anavyoweza kulipia gesi ya mwingine baada ya kwenda huduma nao - ni ishara ya upendo ambayo inathaminiwa sana.",
+  "faq_donationsUsedFor_q": "Michango inatumika kwa nini?",
+  "faq_donationsUsedFor_a": "Mchango wako husaidia kuweka programu hii ikifanya kazi! Kuna gharama za kununua vifaa halisi kama vifaa vya maendeleo, kulipia ada ya huduma ya API ya eneo, ada ya API ya huduma ya ujenzi, ada ya duka la programu, na gharama ya fursa ya masaa yangu mengi yaliyotumia kutengeneza programu hii. Kila kipande cha msaada kinathaminiwa sana!",
   "faq_whatsNew_q": "Ninaweza kuona wapi kile kilichobadilika katika sasisho la hivi punde?",
   "faq_whatsNew_a": "Mipangilio → Nini Kipya kinaonyesha muhtasari wa mabadiliko ya hivi majuzi. Masasisho makubwa pia hujitokeza laha ya mara moja ya \"Nini kipya\" mara ya kwanza unapofungua programu baada ya kusasisha.",
   "availability": {
-    "settingsRow": "Availability",
-    "settingsRowDescription": "Tell the Assistant which days are your off days and which are Kingdom Hall meeting days. It uses both to shape its recommendations.",
-    "settingsValueAllAvailable": "All days available",
-    "settingsValueNOff": "{{count}} off days",
-    "settingsValueNMeeting": "{{count}} meeting days",
-    "settingsValueNOffNMeeting": "{{off}} off · {{meeting}} meeting",
+    "settingsRow": "Upatikanaji",
+    "settingsRowDescription": "Mwambie Msaidizi ni siku gani za kupumzika na ni siku zipi za mikutano ya Majumba ya Ufalme. Inatumia zote mbili kuunda mapendekezo yake.",
+    "settingsValueAllAvailable": "Siku zote zinapatikana",
+    "settingsValueNOff": "{{count}} siku za kupumzika",
+    "settingsValueNMeeting": "Siku za mikutano {{count}}",
+    "settingsValueNOffNMeeting": "{{off}} mbali · Mkutano wa {{meeting}}",
     "onboarding": {
-      "title": "Which days are your off days?",
-      "body": "Tap the days the Assistant should skip entirely. We won't propose service on these days. You can change this anytime in Settings.",
-      "meetingDaysTitle": "Kingdom Hall meeting days",
-      "meetingDaysBody": "Tap the days you have meetings. The Assistant will keep those days lighter so you have time to attend and prepare.",
-      "save": "Save",
-      "skip": "Skip"
+      "title": "Siku zako za kupumzika ni siku gani?",
+      "body": "Gonga siku ambazo Msaidizi anapaswa kuruka kabisa. Hatutapendekeza huduma siku hizi. Unaweza kubadilisha hii wakati wowote katika Mipangilio.",
+      "meetingDaysTitle": "Siku za mikutano ya Jumba la Ufalme",
+      "meetingDaysBody": "Gonga siku ambazo una mikutano. Msaidizi ataweka siku hizo nyepesi ili uwe na wakati wa kuhudhuria na kujiandaa.",
+      "save": "Hifadhi",
+      "skip": "Ruka"
     },
     "weekday": {
-      "sun": "Sun",
-      "mon": "Mon",
-      "tue": "Tue",
-      "wed": "Wed",
-      "thu": "Thu",
-      "fri": "Fri",
-      "sat": "Sat"
+      "sun": "Jua",
+      "mon": "Jumatatu",
+      "tue": "Jumanne",
+      "wed": "Jumatano",
+      "thu": "Alhamisi",
+      "fri": "Ijumaa",
+      "sat": "Imeketi"
     }
   },
   "assistant": {
-    "label": "Assistant",
-    "settingsA11y": "Plan preferences",
+    "label": "Msaidizi",
+    "settingsA11y": "Mapendeleo ya mpango",
     "intro": {
-      "title": "Get a recommended plan",
-      "body": "Tell the Assistant your off days and meeting days, and it'll suggest the strongest plan to reach your goal.",
-      "cta": "Set up Assistant"
+      "title": "Pata mpango uliopendekezwa",
+      "body": "Mwambie Msaidizi siku zako za kupumzika na siku za mkutano, na itapendekeza mpango thabiti zaidi wa kufikia lengo lako.",
+      "cta": "Sanidi Msaidizi"
     },
     "headline": {
-      "concentrated": "Plan **{{hours}}h** on **{{day}}** to reach your goal",
-      "distributed": "Plan **{{hours}}h** on **{{days}} days** to reach your goal",
-      "recurring": "Plan **{{hours}}h** every **{{weekdayList}}** for the next **{{weeks}} weeks**"
+      "concentrated": "Panga **{{hours}}** kwenye **{{day}}** ili kufikia lengo lako",
+      "distributed": "Panga **{{hours}}** kwa **{{days}} siku** ili kufikia lengo lako",
+      "recurring": "Panga **{{hours}}** kila **{{weekdayList}}** kwa wiki zijazo za **{{weeks}}**"
     },
     "rationale": {
-      "small_gap_one_focused_plan": "A single focused plan is the fastest path.",
-      "spread_to_sustainable_pace": "Spread out so no day pushes too hard.",
-      "pattern_fits_over_horizon": "A weekly rhythm makes the goal feel routine.",
-      "stretched_for_short_horizon": "A bit more per day — there's not much time left.",
-      "rest_recommended_then_resume": "Starts after a rest day — you've been pushing lately.",
-      "layered_on_conversation_days": "Layered on days you'll already be out.",
-      "best_effort_unreachable_goal": "Closing your full goal is a stretch this month — here's the strongest finish."
+      "small_gap_one_focused_plan": "Mpango mmoja unaolenga ndio njia ya haraka zaidi.",
+      "spread_to_sustainable_pace": "Kueneza ili hakuna siku inayosukuma sana.",
+      "pattern_fits_over_horizon": "Mdundo wa kila wiki hufanya lengo lihisi utaratibu.",
+      "stretched_for_short_horizon": "Zaidi kidogo kwa siku - hakuna muda mwingi uliobaki.",
+      "rest_recommended_then_resume": "Huanza baada ya siku ya kupumzika - umekuwa ukisukuma hivi karibuni.",
+      "layered_on_conversation_days": "Imewekwa kwa siku ambazo tayari utakuwa nje.",
+      "best_effort_unreachable_goal": "Kufunga lengo lako kamili ni kunyoosha mwezi huu - hapa kuna kumaliza kwa nguvu zaidi."
     },
     "button": {
-      "preview": "Preview",
-      "dismiss": "Dismiss",
-      "addToSchedule": "Add to Schedule",
-      "cancel": "Cancel",
-      "undo": "Undo"
+      "preview": "Onyesho la kukagua",
+      "dismiss": "Kufukuza",
+      "addToSchedule": "Ongeza kwenye Ratiba",
+      "cancel": "Ghairi",
+      "undo": "Tendua"
     },
     "preview": {
-      "notifyMe": "Notify me before each plan",
-      "addAnotherDay": "Add another day",
-      "proposedTotal": "This will put you at **{{projected}} hrs**",
-      "goalReached": "Goal reached"
+      "notifyMe": "Nijulishe kabla ya kila mpango",
+      "addAnotherDay": "Ongeza siku nyingine",
+      "proposedTotal": "Hii itakuweka katika **{{projected}}**",
+      "goalReached": "Lengo limefikiwa"
     },
     "snackbar": {
-      "addedPlans": "Assistant added {{count}} plans"
+      "addedPlans": "Msaidizi aliongeza mipango ya {{count}}"
     },
-    "collapsedAfterAccept": "✓ You've planned enough"
+    "collapsedAfterAccept": "✓ Umepanga vya kutosha"
   },
   "projectedTotal": {
-    "header": "Projected Total",
-    "heroSuffix": "hrs if all planned hours come through",
+    "header": "Jumla ya makadirio",
+    "headerMonth": "Mwezi uliotarajiwa",
+    "headerYear": "Mwaka uliotarajiwa",
+    "heroSuffix": "ikiwa masaa yote yaliyopangwa yatakuja",
     "legend": {
-      "logged": "Logged · {{value}}",
-      "planned": "Planned · {{value}}",
-      "goal": "Goal · {{value}}"
+      "logged": "Imeingia · {{value}}",
+      "planned": "Imepangwa · {{value}}",
+      "goal": "Lengo · {{value}}"
     },
     "period": {
-      "thisMonth": "this month",
-      "thisServiceYear": "this service year"
+      "thisMonth": "mwezi huu",
+      "thisServiceYear": "mwaka huu wa huduma"
     },
     "status": {
       "present": {
-        "empty": "No hours logged or planned yet for {{period}}.",
-        "logged_over_goal": "You're already **{{over}} hrs** over goal. Planned hours would put you at **{{projected}}**.",
-        "projected_over_goal": "On track — planned hours would put you at **{{projected}}**.",
-        "reachable_gap": "Planned hours put you at **{{projected}}** — **{{gap}} hrs** short of your goal.",
-        "unreachable_gap": "Planned hours put you at **{{projected}}**. **{{gap}} hrs** to goal — a stretch from here."
+        "empty": "Bado hakuna saa zilizoingia au zilizopangwa kwa {{period}}.",
+        "logged_over_goal": "Tayari uko **{{over}}** juu ya bao. Saa zilizopangwa zingekuweka katika **{{projected}}**.",
+        "projected_over_goal": "Kwenye wimbo - saa zilizopangwa zingekuweka katika **{{projected}}**.",
+        "reachable_gap": "Saa zilizopangwa zinakuweka katika **{{projected}}** - **{{gap}}** pungufu ya lengo lako.",
+        "unreachable_gap": "Saa zilizopangwa zinakuweka katika **{{projected}}**. **{{gap}}** hadi lengo - kunyoosha kutoka hapa."
       },
       "past": {
-        "empty": "No hours were logged or planned for {{period}}.",
-        "logged_over_goal": "You ended **{{over}} hrs** over goal.",
-        "unreachable_gap": "You ended **{{gap}} hrs** short of goal."
+        "empty": "Hakuna masaa yaliyowekwa au kupangwa kwa {{period}}.",
+        "logged_over_goal": "Ulimaliza **{{over}}** juu ya bao.",
+        "unreachable_gap": "Ulimaliza **{{gap}}** pungufu ya bao."
       },
       "future": {
-        "empty": "No hours planned yet for {{period}}.",
-        "projected_over_goal": "On track — planned hours would put you at **{{projected}}**.",
-        "reachable_gap": "Planned hours put you at **{{projected}}** — **{{gap}} hrs** short of goal.",
-        "unreachable_gap": "Planned hours put you at **{{projected}}**. **{{gap}} hrs** to goal — a stretch from here."
+        "empty": "Bado hakuna masaa yaliyopangwa kwa {{period}}.",
+        "projected_over_goal": "Kwenye wimbo - masaa yaliyopangwa yangekuweka **{{projected}}**.",
+        "reachable_gap": "Saa zilizopangwa zinakuweka katika **{{projected}}** - **{{gap}}** pungufu ya lengo.",
+        "unreachable_gap": "Saa zilizopangwa zinakuweka katika **{{projected}}**. **{{gap}}** hadi lengo - kunyoosha kutoka hapa."
       }
     }
   }

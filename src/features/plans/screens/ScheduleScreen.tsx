@@ -2,7 +2,10 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
-import { BottomTabScreenProps } from '@react-navigation/bottom-tabs'
+import {
+  BottomTabScreenProps,
+  useBottomTabBarHeight,
+} from '@react-navigation/bottom-tabs'
 import { useNavigation as useRootNavigation } from '@react-navigation/native'
 import moment from 'moment'
 import { faArrowLeft, faArrowRight } from '@fortawesome/free-solid-svg-icons'
@@ -52,6 +55,7 @@ type Props = BottomTabScreenProps<HomeTabStackParamList, 'Schedule'>
 const ScheduleScreen = ({ route }: Props) => {
   const theme = useTheme()
   const insets = useSafeAreaInsets()
+  const tabBarHeight = useBottomTabBarHeight()
   const rootNavigation = useRootNavigation<RootStackNavigation>()
   const { serviceReports, dayPlans, recurringPlans } = useServiceReport()
 
@@ -253,7 +257,7 @@ const ScheduleScreen = ({ route }: Props) => {
           contentContainerStyle={{
             paddingTop: insets.top + 15,
             paddingHorizontal: 15,
-            paddingBottom: insets.bottom + 40,
+            paddingBottom: tabBarHeight + 40,
             gap: 15,
           }}
         >

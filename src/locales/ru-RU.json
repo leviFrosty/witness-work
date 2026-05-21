@@ -883,6 +883,9 @@
   "tryAgainLater": "Пожалуйста, повторите попытку позже.",
   "oneTimeDonations": "Разовые пожертвования",
   "monthlyDonation": "Ежемесячное пожертвование",
+  "lifetimeSupporter": "Пожизненный болельщик",
+  "neverExpires": "Никогда не истекает",
+  "activatedOn": "Активировано на {{date}}",
   "active": "Активный",
   "inactive": "Неактивный",
   "yourDonations": "Ваши пожертвования",
@@ -991,8 +994,8 @@
   "complete_description": "Если вы уложитесь в запланированное время на день, он помечается как выполненный.",
   "partial": "Частичный",
   "plannedHours": "Запланированные часы",
-  "projectedHoursTitle": "Projected Hours",
-  "projectedHoursDescription": "Combines hours you've already logged with hours you have planned. Aim to reach 100% of your goal.",
+  "projectedHoursTitle": "Прогнозируемые часы работы",
+  "projectedHoursDescription": "Объединяет уже набранные часы с запланированными часами. Стремитесь достичь 100% своей цели.",
   "planDay": "План дня",
   "weekly": "Еженедельно",
   "bi-weekly": "Раз в две недели",
@@ -1249,6 +1252,8 @@
   "vsLastMonth": "по сравнению с прошлым месяцем",
   "hrsAhead": "{{count}} часов вперед",
   "hrsBehind": "{{count}} часов позади",
+  "aheadShort": "{{value}} вперёд",
+  "behindShort": "{{value}} позади",
   "cumulativePace": "Темп по сравнению с расписанием",
   "creditOverageChip": "+{{count}} часов сверх цели",
   "lastLoggedOn": "Последний заход {{date}}",
@@ -1374,6 +1379,7 @@
   "paywallFeatureRestore": "восстановление iCloud",
   "paywallFeatureBadge": "Значок сторонника",
   "paywallFeatureAccent": "Пользовательский акцентный цвет",
+  "paywallFeatureAppIcons": "Пользовательские иконки приложений",
   "paywallFeatureSync": "синхронизация с iCloud",
   "paywallFeatureFuture": "Новые преимущества со временем",
   "paywallTierSupporter": "Сторонник",
@@ -1390,6 +1396,9 @@
   "paywallCtaSelectPrice": "Выберите сумму",
   "paywallLearnMore": "Читать часто задаваемые вопросы",
   "paywallCtaSendTip": "Отправить чаевые",
+  "copyAccountId": "Скопировать идентификатор аккаунта",
+  "accountIdCopied": "Копия идентификатора аккаунта",
+  "copyAccountIdError": "Не удалось скопировать идентификатор аккаунта",
   "accentColor": "Цвет акцента",
   "accentColorHelp": "Выберите цвет, который заменит зеленый по умолчанию во всем приложении.",
   "avatarBackgroundColor": "Фон аватара",
@@ -1529,16 +1538,16 @@
   "yourPlanActionMapContacts": "составьте карту своей территории",
   "yourPlanAutoTourAuto": "авто",
   "yourPlanAutoTourPaused": "пауза",
-  "onboardingBackfillTitle": "Pick up where you left off",
-  "onboardingBackfillSubtitle": "Your service year started in September. Tell us your hours so far and your annual goal will start accurate from day one.",
-  "onboardingBackfillHelper": "Enter regular hours and credit hours separately. We'll cap credit per month so nothing is lost across the year.",
-  "onboardingBackfillHoursLabel": "Hours",
-  "onboardingBackfillCreditLabel": "Credit hours",
-  "onboardingBackfillSkip": "Skip for now",
-  "onboardingBackfillScreenHeader": "Catch up your service year",
-  "onboardingBackfillBannerTitle": "Backdate your service year",
-  "onboardingBackfillBannerSubtitle": "Add your hours since September to get an accurate annual goal.",
-  "onboardingBackfillBannerDismissA11y": "Dismiss",
+  "onboardingBackfillTitle": "Продолжай с того места, где остановился",
+  "onboardingBackfillSubtitle": "Ваш год службы начинался в сентябре. Расскажите о своих часах на данный момент, и ваша годовая цель начнётся с первого дня.",
+  "onboardingBackfillHelper": "Вводите обычные часы и кредитные часы отдельно. Мы ограничим ежемесячные кредиты, чтобы ничего не потерялось за год.",
+  "onboardingBackfillHoursLabel": "Часы работы",
+  "onboardingBackfillCreditLabel": "Кредитные часы",
+  "onboardingBackfillSkip": "Пока пропусти",
+  "onboardingBackfillScreenHeader": "Наверстывайте свой год службы",
+  "onboardingBackfillBannerTitle": "Уведите назад дату службы",
+  "onboardingBackfillBannerSubtitle": "Добавьте часы с сентября, чтобы получить точную годовую цель.",
+  "onboardingBackfillBannerDismissA11y": "Отпустить",
   "intentPickerTitle": "В чем вы хотите, чтобы WitnessWork помог вам?",
   "intentPickerSubtitle": "Мы' разработаем ваш WitnessWork, основываясь на этом. Выбирайте сколько угодно - вы сможете изменить их позже.",
   "intentTrackTime": "Отслеживать время моего служения",
@@ -1568,8 +1577,8 @@
   "notNow": "Не сейчас",
   "allTime": "За все время",
   "milestones": "Вехи",
-  "milestonesOrderHint": "Order matters — progress fills through them in sequence. The last one is your annual goal.",
-  "yearGoalSetInSettings": "ANNUAL GOAL · set in Settings",
+  "milestonesOrderHint": "Порядок имеет значение - выполняйте их по порядку. Последняя - ваша цель на год.",
+  "yearGoalSetInSettings": "ГОДОВАЯ ЦЕЛЬ - устанавливается в Настройках",
   "adjustMilestones": "настроить вехи",
   "milestonesHitChip": "{{hit}} из {{total}} вех",
   "nextMilestoneLabel": "следующая веха в {{remaining}} ч",
@@ -1586,8 +1595,10 @@
   "emptyAllTime_title": "Пока нет зарегистрированного времени",
   "emptyAllTime_description": "Здесь будут отображаться часы вашей жизни.",
   "multiple": "Несколько",
-  "allDays": "Все дни",
-  "allMonths": "Все месяцы",
+  "vsGoal": "против гола",
+  "category": "Категория",
+  "showAllDays": "Покажите все дни",
+  "hideFutureDays": "Скрывать будущие дни",
   "now": "сейчас",
   "timeRollover": "Пролонгация времени",
   "timeRollover_intro": "В предыдущем месяце у вас были неполные часы. Мы можем перенести эти минуты в этот месяц, чтобы в ваших отчетах оставались целые часы.",
@@ -1750,113 +1761,115 @@
   "faq_dismissContact_a": "Откройте контакт и нажмите «Отпустить». Вы выбираете, на сколько времени их уволить (1 неделя, 1 месяц, 3 месяца, 6 месяцев или 1 год). Контакт исчезает из ваших активных списков на этот период, а затем автоматически возвращается, когда время истечёт. Если уведомления включены, вы также получите напоминание при их повторном появлении, так что отклонённые контакты не ускользают тихо сквозь щели. Вы можете найти или восстановить отклонённые контакты в любое время в разделе Настройки → Отклонённые контакты.",
   "faq_reportBug_q": "Как сообщить об ошибке или запросить функцию?",
   "faq_reportBug_a": "Нажмите одну из кнопок ниже, чтобы открыть отчёт об ошибке или запрос на функцию напрямую. Отчёты с скриншотами, версией вашего устройства + iOS и версией WitnessWork (показана внизу в настройках), легко исправить.",
-  "faq_becomeSupporter_q": "What do I get as a supporter?",
-  "faq_becomeSupporter_a": "Monthly supporters receive the Supporter badge and a few extra personalization options — a custom accent color today, with more rolling out over time. iCloud sync for your data across devices is the next big supporter perk coming soon. One-time donations are deeply appreciated too, but don't grant ongoing Supporter status.",
-  "faq_stillFree_q": "Is WitnessWork still free?",
-  "faq_stillFree_a": "Yes — and always will be. Every core feature stays free for everyone. Supporting is completely optional; it helps fund ongoing development and unlocks a few personal touches as a thank-you.",
-  "faq_stopSupporting_q": "What happens if I stop supporting?",
-  "faq_stopSupporting_a": "Nothing about your data changes. If a monthly subscription lapses, any supporter-only personalization gracefully reverts to its defaults — your reports, contacts, notes, and settings are preserved exactly as they are.",
-  "faq_acceptDonations_q": "Why are you accepting donations?",
-  "faq_acceptDonations_a": "As a brother in the hall, I consider it a privilege to be able to use my skills to help others in the congregation. Although free to everyone, developing, running, and maintaining this application, unfortunately costs a significant amount of money and time. I view donating as similar to how one might pay for another's gas after going in service with them - it's a loving gesture that goes greatly appreciated.",
-  "faq_donationsUsedFor_q": "What are the donations used for?",
-  "faq_donationsUsedFor_a": "Your donation helps keeps this app running! There are costs with purchasing real devices as development equipment, paying for location API service fees, build service API fees, app store fees, and opportunity cost of my many hours spent developing this app. Each piece of support is greatly appreciated!",
+  "faq_becomeSupporter_q": "Что открывает становиться Сторонником?",
+  "faq_becomeSupporter_a": "WitnessWork — и всегда будет бесплатным. Если приложение было вам полезным, стать сторонником — это способ поблагодарить и поддерживать развитие. Болельщики также получают несколько дополнительных функций для удобства жизни в знак небольшой благодарности. Нажмите «Стать поддержкой» из ящика настроек для актуальных деталей.",
+  "faq_stillFree_q": "WitnessWork всё ещё бесплатен?",
+  "faq_stillFree_a": "Да — и всегда будет. Каждая основная функция остаётся бесплатной для всех. Поддержка полностью необязательна; Это помогает финансировать дальнейшее развитие и открывает несколько личных деталей в знак благодарности.",
+  "faq_stopSupporting_q": "Что будет, если я перестану поддерживать?",
+  "faq_stopSupporting_a": "В ваших данных ничего не меняется. Если ежемесячная подписка заканчивается, любая персонализация только для поддержки удобно возвращается к своим стандартным настройкам — ваши отчёты, контакты, заметки и настройки сохраняются точно так, как есть.",
+  "faq_acceptDonations_q": "Почему вы принимаете пожертвования?",
+  "faq_acceptDonations_a": "Как брат в зале, я считаю привилегией использовать свои навыки, чтобы помогать другим в общине. Хотя это бесплатно для всех, разработка, запуск и поддержка этого приложения, к сожалению, требует значительных затрат и времени. Я считаю, что донорство похоже на то, как можно оплатить бензин другому после службы вместе с ним — это жест любви, который очень ценятся.",
+  "faq_donationsUsedFor_q": "Для чего используются пожертвования?",
+  "faq_donationsUsedFor_a": "Ваше пожертвование помогает поддерживать работу этого приложения! Есть затраты на покупку реальных устройств в качестве оборудования для разработки, оплату услуг API по локации, сборы за API для построек, сборы за магазины приложений и альтернативные расходы многих часов, потраченных на разработку этого приложения. Любая поддержка очень ценна!",
   "faq_whatsNew_q": "Где я могу увидеть, что изменилось в последнем обновлении?",
   "faq_whatsNew_a": "Настройки → What's New показывает сводку последних изменений. При первом открытии приложения после обновления появляется одноразовый лист «Что нового».",
   "availability": {
-    "settingsRow": "Availability",
-    "settingsRowDescription": "Tell the Assistant which days are your off days and which are Kingdom Hall meeting days. It uses both to shape its recommendations.",
-    "settingsValueAllAvailable": "All days available",
-    "settingsValueNOff": "{{count}} off days",
-    "settingsValueNMeeting": "{{count}} meeting days",
-    "settingsValueNOffNMeeting": "{{off}} off · {{meeting}} meeting",
+    "settingsRow": "Доступность",
+    "settingsRowDescription": "Скажи ассистенту, какие дни у тебя выходные, а какие — дни собраний в Зале Царства. Он использует оба варианта для формирования своих рекомендаций.",
+    "settingsValueAllAvailable": "Доступны все дни",
+    "settingsValueNOff": "{{count}} Выходные дни",
+    "settingsValueNMeeting": "{{count}} дни встреч",
+    "settingsValueNOffNMeeting": "{{off}} выключен · {{meeting}} встреча",
     "onboarding": {
-      "title": "Which days are your off days?",
-      "body": "Tap the days the Assistant should skip entirely. We won't propose service on these days. You can change this anytime in Settings.",
-      "meetingDaysTitle": "Kingdom Hall meeting days",
-      "meetingDaysBody": "Tap the days you have meetings. The Assistant will keep those days lighter so you have time to attend and prepare.",
-      "save": "Save",
-      "skip": "Skip"
+      "title": "Какие дни у тебя выходные?",
+      "body": "Нажмите на дни, которые Ассистент должен полностью пропустить. В эти дни мы не будем предлагать службу. Вы можете изменить это в любое время в настройках.",
+      "meetingDaysTitle": "Дни собраний в Зале Царства",
+      "meetingDaysBody": "Отмечайте дни, когда у вас собрания. Ассистент будет делать эти дни легче, чтобы у вас было время присутствовать и подготовиться.",
+      "save": "Сохранить",
+      "skip": "Пропустить"
     },
     "weekday": {
-      "sun": "Sun",
-      "mon": "Mon",
-      "tue": "Tue",
-      "wed": "Wed",
-      "thu": "Thu",
-      "fri": "Fri",
-      "sat": "Sat"
+      "sun": "Солнце",
+      "mon": "Мон",
+      "tue": "Вт",
+      "wed": "Ср",
+      "thu": "Чт",
+      "fri": "Пятница",
+      "sat": "Сб"
     }
   },
   "assistant": {
-    "label": "Assistant",
-    "settingsA11y": "Plan preferences",
+    "label": "Ассистент",
+    "settingsA11y": "Предпочтения плана",
     "intro": {
-      "title": "Get a recommended plan",
-      "body": "Tell the Assistant your off days and meeting days, and it'll suggest the strongest plan to reach your goal.",
+      "title": "Получите рекомендованный план",
+      "body": "Сообщите ассистенту о своих выходных и днях встреч, и он предложит самый сильный план для достижения цели.",
       "cta": "Set up Assistant"
     },
     "headline": {
-      "concentrated": "Plan **{{hours}}h** on **{{day}}** to reach your goal",
-      "distributed": "Plan **{{hours}}h** on **{{days}} days** to reach your goal",
-      "recurring": "Plan **{{hours}}h** every **{{weekdayList}}** for the next **{{weeks}} weeks**"
+      "concentrated": "Планируйте **{{hours}}** на **{{day}}**, чтобы достичь своей цели",
+      "distributed": "Планируйте **{{hours}}** в **{{days}} дни**, чтобы достичь своей цели",
+      "recurring": "Планируйте **{{hours}}** каждую **{{weekdayList}}** на следующие **{{weeks}} недели**"
     },
     "rationale": {
-      "small_gap_one_focused_plan": "A single focused plan is the fastest path.",
-      "spread_to_sustainable_pace": "Spread out so no day pushes too hard.",
-      "pattern_fits_over_horizon": "A weekly rhythm makes the goal feel routine.",
-      "stretched_for_short_horizon": "A bit more per day — there's not much time left.",
-      "rest_recommended_then_resume": "Starts after a rest day — you've been pushing lately.",
-      "layered_on_conversation_days": "Layered on days you'll already be out.",
-      "best_effort_unreachable_goal": "Closing your full goal is a stretch this month — here's the strongest finish."
+      "small_gap_one_focused_plan": "Один сфокусированный план — самый быстрый путь.",
+      "spread_to_sustainable_pace": "Распределяйтесь, чтобы ни один день не давил слишком сильно.",
+      "pattern_fits_over_horizon": "Еженедельный ритм делает цель рутинной.",
+      "stretched_for_short_horizon": "Чуть больше в день — времени осталось немного.",
+      "rest_recommended_then_resume": "Начинается после дня отдыха — в последнее время ты много стараешься.",
+      "layered_on_conversation_days": "Надевай на дни, когда ты уже будешь вне дома.",
+      "best_effort_unreachable_goal": "Завершить свою цель в этом месяце — это натяжка — вот самый сильный финал."
     },
     "button": {
-      "preview": "Preview",
-      "dismiss": "Dismiss",
-      "addToSchedule": "Add to Schedule",
-      "cancel": "Cancel",
-      "undo": "Undo"
+      "preview": "Превью",
+      "dismiss": "Отпустить",
+      "addToSchedule": "Добавить в расписание",
+      "cancel": "Отмена",
+      "undo": "Отменить"
     },
     "preview": {
-      "notifyMe": "Notify me before each plan",
-      "addAnotherDay": "Add another day",
-      "proposedTotal": "This will put you at **{{projected}} hrs**",
-      "goalReached": "Goal reached"
+      "notifyMe": "Уведомляйте меня перед каждым планом",
+      "addAnotherDay": "Добавь ещё один день",
+      "proposedTotal": "Это поставит тебя в **{{projected}}**",
+      "goalReached": "Достигнутая цель"
     },
     "snackbar": {
-      "addedPlans": "Assistant added {{count}} plans"
+      "addedPlans": "Assistant добавил планы {{count}}"
     },
-    "collapsedAfterAccept": "✓ You've planned enough"
+    "collapsedAfterAccept": "✓ Ты уже достаточно спланировал"
   },
   "projectedTotal": {
-    "header": "Projected Total",
-    "heroSuffix": "hrs if all planned hours come through",
+    "header": "Прогнозируемый итог",
+    "headerMonth": "Прогнозируемый месяц",
+    "headerYear": "Прогнозируемый год",
+    "heroSuffix": "если все запланированные часы будут выполнены",
     "legend": {
-      "logged": "Logged · {{value}}",
-      "planned": "Planned · {{value}}",
-      "goal": "Goal · {{value}}"
+      "logged": "Зарегистрировано · {{value}}",
+      "planned": "Планируется · {{value}}",
+      "goal": "Цель · {{value}}"
     },
     "period": {
-      "thisMonth": "this month",
-      "thisServiceYear": "this service year"
+      "thisMonth": "В этом месяце",
+      "thisServiceYear": "В этом году службы"
     },
     "status": {
       "present": {
-        "empty": "No hours logged or planned yet for {{period}}.",
-        "logged_over_goal": "You're already **{{over}} hrs** over goal. Planned hours would put you at **{{projected}}**.",
-        "projected_over_goal": "On track — planned hours would put you at **{{projected}}**.",
-        "reachable_gap": "Planned hours put you at **{{projected}}** — **{{gap}} hrs** short of your goal.",
-        "unreachable_gap": "Planned hours put you at **{{projected}}**. **{{gap}} hrs** to goal — a stretch from here."
+        "empty": "Пока нет зафиксированных или запланированных часов для {{period}}.",
+        "logged_over_goal": "Ты уже **{{over}}** пересёк цель. Запланированные часы расписания поставят тебя в **{{projected}}**.",
+        "projected_over_goal": "На плане — запланированные часы будут на уровне **{{projected}}**.",
+        "reachable_gap": "Запланированные часы ставят тебя на **{{projected}}** — **{{gap}}** меньше твоей цели.",
+        "unreachable_gap": "Запланированные часы показывают тебя в **{{projected}}**. **{{gap}}** до ворот — отсюда далеко."
       },
       "past": {
-        "empty": "No hours were logged or planned for {{period}}.",
-        "logged_over_goal": "You ended **{{over}} hrs** over goal.",
-        "unreachable_gap": "You ended **{{gap}} hrs** short of goal."
+        "empty": "Для {{period}} не было записано и не запланировано никаких часов.",
+        "logged_over_goal": "Ты закончил **{{over}}** над воротами.",
+        "unreachable_gap": "Ты закончил **{{gap}}*** до гола."
       },
       "future": {
-        "empty": "No hours planned yet for {{period}}.",
-        "projected_over_goal": "On track — planned hours would put you at **{{projected}}**.",
-        "reachable_gap": "Planned hours put you at **{{projected}}** — **{{gap}} hrs** short of goal.",
-        "unreachable_gap": "Planned hours put you at **{{projected}}**. **{{gap}} hrs** to goal — a stretch from here."
+        "empty": "Для {{period}} пока не запланировано часы.",
+        "projected_over_goal": "На правильном плане — запланированные часы расписания поставят вас в **{{projected}}**.",
+        "reachable_gap": "Запланированные часы ставят тебя на **{{projected}}** — **{{gap}}** до цели.",
+        "unreachable_gap": "Запланированные часы показывают тебя в **{{projected}}**. **{{gap}}** до ворот — отсюда ещё далеко."
       }
     }
   }

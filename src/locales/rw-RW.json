@@ -883,6 +883,9 @@
   "tryAgainLater": "Gerageza mukanya.",
   "oneTimeDonations": "Impano itangwa incuro imwe",
   "monthlyDonation": "Impano itangwa buri kwezi",
+  "lifetimeSupporter": "Umuterankunga w'ubuzima bwose",
+  "neverExpires": "Never expires",
+  "activatedOn": "Activated on {{date}}",
   "active": "Bikora",
   "inactive": "Bidakora",
   "yourDonations": "Impano watanze",
@@ -991,8 +994,8 @@
   "complete_description": "Nuhuza n'intego z'umunsi, birabarwa nk'ibyakozwe.",
   "partial": "Ibituzuye",
   "plannedHours": "Intego y'amasaha",
-  "projectedHoursTitle": "Projected Hours",
-  "projectedHoursDescription": "Combines hours you've already logged with hours you have planned. Aim to reach 100% of your goal.",
+  "projectedHoursTitle": "Amasaha yateganijwe",
+  "projectedHoursDescription": "Combines hours you've already logged with hours you have planned. Intego yawe ni ukugera ku ntego yawe 100%.",
   "planDay": "Umunsi wa gahunda",
   "weekly": "Buri cyumweru",
   "bi-weekly": "Buri byumweru 2",
@@ -1249,6 +1252,8 @@
   "vsLastMonth": "Ugereranyije n'ukwezi gushize",
   "hrsAhead": "{{count}} h imbere",
   "hrsBehind": "{{count}} h inyuma",
+  "aheadShort": "{{value}} imbere",
+  "behindShort": "{{value}} inyuma",
   "cumulativePace": "Umuvuduko mu rusange",
   "creditOverageChip": "+{{count}} h hejuru y'urugero",
   "lastLoggedOn": "Yanditswe bwa nyuma {{date}}",
@@ -1374,6 +1379,7 @@
   "paywallFeatureRestore": "Subiza amakuru",
   "paywallFeatureBadge": "Akamenyetso k'umufasha",
   "paywallFeatureAccent": "Amabara yihariye",
+  "paywallFeatureAppIcons": "Custom app icons",
   "paywallFeatureSync": "iCloud Sync",
   "paywallFeatureFuture": "Ibikorwa biraza",
   "paywallTierSupporter": "Umufasha",
@@ -1390,6 +1396,9 @@
   "paywallCtaSelectPrice": "Hitamo igiciro",
   "paywallLearnMore": "Menya byinshi",
   "paywallCtaSendTip": "Ohereza inkunga",
+  "copyAccountId": "Copy account ID",
+  "accountIdCopied": "Account ID copied",
+  "copyAccountIdError": "Cannot copy account ID",
   "accentColor": "Ibara ryihariye",
   "accentColorHelp": "Ibara rikoreshwa mu igenamiterere.",
   "avatarBackgroundColor": "Ibara ry'inyuma ry'ifoto",
@@ -1529,16 +1538,16 @@
   "yourPlanActionMapContacts": "Reba ku ikarita",
   "yourPlanAutoTourAuto": "Yikora",
   "yourPlanAutoTourPaused": "Yahagaze",
-  "onboardingBackfillTitle": "Pick up where you left off",
-  "onboardingBackfillSubtitle": "Your service year started in September. Tell us your hours so far and your annual goal will start accurate from day one.",
-  "onboardingBackfillHelper": "Enter regular hours and credit hours separately. We'll cap credit per month so nothing is lost across the year.",
-  "onboardingBackfillHoursLabel": "Hours",
-  "onboardingBackfillCreditLabel": "Credit hours",
+  "onboardingBackfillTitle": "Ngaho nimukomeze mujye aho mwasize",
+  "onboardingBackfillSubtitle": "Umwaka w'umurimo watangiye muri Nzeri uyu mwaka. Tubwire amasaha yawe kugeza ubu kandi intego yawe y'umwaka izatangira neza kuva ku munsi wa mbere.",
+  "onboardingBackfillHelper": "Andika amasaha asanzwe n'amasaha y'inguzanyo mu buryo butandukanye. Tuzatanga inguzanyo buri kwezi kugira ngo hatagira igihombo mu mwaka wose.",
+  "onboardingBackfillHoursLabel": "Amasaha",
+  "onboardingBackfillCreditLabel": "Amasaha y'inguzanyo",
   "onboardingBackfillSkip": "Skip for now",
-  "onboardingBackfillScreenHeader": "Catch up your service year",
-  "onboardingBackfillBannerTitle": "Backdate your service year",
-  "onboardingBackfillBannerSubtitle": "Add your hours since September to get an accurate annual goal.",
-  "onboardingBackfillBannerDismissA11y": "Dismiss",
+  "onboardingBackfillScreenHeader": "Fata umwaka w'umurimo wawe",
+  "onboardingBackfillBannerTitle": "Subiza inyuma umwaka w'umurimo wawe",
+  "onboardingBackfillBannerSubtitle": "Ongeraho amasaha yawe guhera muri Nzeri kugira ngo ugere ku ntego nyayo y'umwaka.",
+  "onboardingBackfillBannerDismissA11y": "Kwirukana",
   "intentPickerTitle": "Ushaka iki?",
   "intentPickerSubtitle": "Hitamo ibyo ushaka guhera nabyo.",
   "intentTrackTime": "Kwandika amasaha",
@@ -1568,8 +1577,8 @@
   "notNow": "Nyuma",
   "allTime": "Igihe cyose",
   "milestones": "Intambwe z'ingenzi",
-  "milestonesOrderHint": "Order matters — progress fills through them in sequence. The last one is your annual goal.",
-  "yearGoalSetInSettings": "ANNUAL GOAL · set in Settings",
+  "milestonesOrderHint": "Tondeka ku murongo wo hejuru ujyana hasi.",
+  "yearGoalSetInSettings": "Intego y'umwaka ishyirwaho mu igenamiterere.",
   "adjustMilestones": "Hindura intambwe z'ingenzi",
   "milestonesHitChip": "{{hit}} muri {{total}} intambwe",
   "nextMilestoneLabel": "intambwe ikurikira mu masaha {{remaining}}",
@@ -1586,8 +1595,10 @@
   "emptyAllTime_title": "Nta makuru y'igihe cyose",
   "emptyAllTime_description": "Tangira kwandika amasaha kugira ngo ubone amateka yawe.",
   "multiple": "Byinshi",
-  "allDays": "Iminsi yose",
-  "allMonths": "Amezi yose",
+  "vsGoal": "vs Goal",
+  "category": "Catégorie",
+  "showAllDays": "Show all days",
+  "hideFutureDays": "Hide future days",
   "now": "Nonaha",
   "timeRollover": "Gusubizaho amasaha",
   "timeRollover_intro": "Iyo urenze intego, amasaha asaga arashobora kujyanwa ku kwezi gukurikira.",
@@ -1750,113 +1761,115 @@
   "faq_dismissContact_a": "Fungura contact hanyuma ukande kuri \"Dismiss\". Uzahitamo igihe cyo kwirukana (icyumweru 1, ukwezi 1, amezi 3, amezi 6, cyangwa umwaka 1). The contact disappears from your active lists for that period and then comes back automatically when the time is over. Niba imenyesha ryemewe, uzabona kandi urwibutso igihe bongeye kugaragara, bityo abakoresha bahagaritswe ntibazatemba bucece. Urashobora kubona cyangwa kugarura contacts zaciwe igihe icyo ari cyo cyose ukoresheje Settings → Discharged Contacts.",
   "faq_reportBug_q": "How do I report a bug or request a feature?",
   "faq_reportBug_a": "Kanda kuri imwe muri buto hepfo kugirango ufungure raporo ya bug cyangwa ubusabe bw'ibintu mu buryo butaziguye. Raporo zikubiyemo screenshot, igikoresho cyawe + verisiyo ya iOS, na verisiyo ya WitnessWork (igaragara hepfo ya Settings) biroroshye gukosora byihuse.",
-  "faq_becomeSupporter_q": "What do I get as a supporter?",
-  "faq_becomeSupporter_a": "Monthly supporters receive the Supporter badge and a few extra personalization options — a custom accent color today, with more rolling out over time. iCloud sync for your data across devices is the next big supporter perk coming soon. One-time donations are deeply appreciated too, but don't grant ongoing Supporter status.",
-  "faq_stillFree_q": "Is WitnessWork still free?",
-  "faq_stillFree_a": "Yes — and always will be. Every core feature stays free for everyone. Supporting is completely optional; it helps fund ongoing development and unlocks a few personal touches as a thank-you.",
-  "faq_stopSupporting_q": "What happens if I stop supporting?",
-  "faq_stopSupporting_a": "Nothing about your data changes. If a monthly subscription lapses, any supporter-only personalization gracefully reverts to its defaults — your reports, contacts, notes, and settings are preserved exactly as they are.",
-  "faq_acceptDonations_q": "Why are you accepting donations?",
-  "faq_acceptDonations_a": "As a brother in the hall, I consider it a privilege to be able to use my skills to help others in the congregation. Although free to everyone, developing, running, and maintaining this application, unfortunately costs a significant amount of money and time. I view donating as similar to how one might pay for another's gas after going in service with them - it's a loving gesture that goes greatly appreciated.",
-  "faq_donationsUsedFor_q": "What are the donations used for?",
-  "faq_donationsUsedFor_a": "Your donation helps keeps this app running! There are costs with purchasing real devices as development equipment, paying for location API service fees, build service API fees, app store fees, and opportunity cost of my many hours spent developing this app. Each piece of support is greatly appreciated!",
+  "faq_becomeSupporter_q": "What does becoming a Supporter unlock?",
+  "faq_becomeSupporter_a": "Ubuhamya bw'Imana ni ubuntu kandi buzahoraho. Niba porogaramu yagufashije, kuba umuterankunga ni uburyo bwo gushimira no kugufasha gukomeza gutera imbere. Abakunzi b'umupira w'amaguru na bo bahabwa amahirwe yo gushimira abakunzi b'umupira w'amaguru. Kanda kuri Become a Supporter from the Settings drawer for the current details.",
+  "faq_stillFree_q": "Ese WitnessWork iracyafite ubuntu?",
+  "faq_stillFree_a": "Yes — and will always be. Buri kintu cy'ingenzi kiba ku buntu kuri buri wese. Supporting is completely optional; Ifasha mu gutera inkunga iterambere rikomeza kandi igafungura ibintu bike by'umuntu ku giti cye nk'ishimwe ryo gushimira.",
+  "faq_stopSupporting_q": "Bigenda bite mu gihe nahagaritse gushyigikirwa?",
+  "faq_stopSupporting_a": "Nta kintu na kimwe kijyanye n'amakuru yawe gihinduka. If a monthly subscription lapses, any supporter-only personalization gracefully reverts to its defaults — your reports, contacts, notes, and settings are kept exactly as they are.",
+  "faq_acceptDonations_q": "Kuki wemera gutanga amafaranga?",
+  "faq_acceptDonations_a": "Kubera ko ndi umuvandimwe wo mu Ngoro, mbona ari iby'agaciro gukoresha ubuhanga bwanjye mu gufasha abandi bo mu itorero. N'ubwo bimeze gutyo ariko, buri wese akoresha uburyo bwo kugenzura no kubungabunga ibidukikije, bitwara amafaranga menshi n'igihe. Njye mbona gutanga ari kimwe n'uburyo umuntu ashobora kwishyura gaz y'undi nyuma yo kujya mu murimo - ni igikorwa cy'urukundo gishimwa cyane.",
+  "faq_donationsUsedFor_q": "Impano zikoreshwa mu buhe buryo?",
+  "faq_donationsUsedFor_a": "Your donation helps keep this app running! There are costs with buying real devices as development equipment, paying for location API service fees, build service API fees, app store fees, and opportunity cost of my many hours spent developing this app. Buri gice cy'ubufasha kirashimwa cyane!",
   "faq_whatsNew_q": "Where can I see what changed in the latest update?",
   "faq_whatsNew_a": "Settings → What's New shows a summary of recent changes. Major updates also pop up a one-time \"What's New\" sheet the first time you open the app after updating.",
   "availability": {
-    "settingsRow": "Availability",
-    "settingsRowDescription": "Tell the Assistant which days are your off days and which are Kingdom Hall meeting days. It uses both to shape its recommendations.",
-    "settingsValueAllAvailable": "All days available",
-    "settingsValueNOff": "{{count}} off days",
+    "settingsRow": "Kuboneka",
+    "settingsRowDescription": "Bwira uwo mufasha iminsi yawe y'ikiruhuko n'iminsi y'amateraniro yo mu Nzu y'Ubwami. Ni yo mpamvu ikoresha impande zombi mu gutegura amahugurwa yayo.",
+    "settingsValueAllAvailable": "Iminsi yose irahari",
+    "settingsValueNOff": "{{count}} iminsi y'ikiruhuko",
     "settingsValueNMeeting": "{{count}} meeting days",
     "settingsValueNOffNMeeting": "{{off}} off · {{meeting}} meeting",
     "onboarding": {
-      "title": "Which days are your off days?",
-      "body": "Tap the days the Assistant should skip entirely. We won't propose service on these days. You can change this anytime in Settings.",
-      "meetingDaysTitle": "Kingdom Hall meeting days",
-      "meetingDaysBody": "Tap the days you have meetings. The Assistant will keep those days lighter so you have time to attend and prepare.",
-      "save": "Save",
+      "title": "Ni iyihe minsi yawe y'ikiruhuko?",
+      "body": "Tap the days the Assistant should skip completely. Ntabwo tuzatanga serivisi muri iyi minsi. Urashobora guhindura ibi igihe icyo aricyo cyose.",
+      "meetingDaysTitle": "Iminsi y'amateraniro yo mu Nzu y'Ubwami",
+      "meetingDaysBody": "Koresha iminsi mugirana amateraniro. Ni byiza ko iyo minsi iba yoroheje kugira ngo ubone umwanya wo kwitegura no kwitegura.",
+      "save": "Kuzigama",
       "skip": "Skip"
     },
     "weekday": {
-      "sun": "Sun",
+      "sun": "Izuba",
       "mon": "Mon",
-      "tue": "Tue",
+      "tue": "Ku wa kabiri",
       "wed": "Wed",
       "thu": "Thu",
-      "fri": "Fri",
+      "fri": "Ku wa Gatanu",
       "sat": "Sat"
     }
   },
   "assistant": {
-    "label": "Assistant",
+    "label": "Umufasha",
     "settingsA11y": "Plan preferences",
     "intro": {
-      "title": "Get a recommended plan",
-      "body": "Tell the Assistant your off days and meeting days, and it'll suggest the strongest plan to reach your goal.",
-      "cta": "Set up Assistant"
+      "title": "Gira gahunda ijyanye n'imiterere y'umubiri",
+      "body": "Bwira umufasha iminsi yawe y'ikiruhuko n'iminsi y'amakoraniro, kandi azatanga gahunda ikomeye yo kugera ku ntego yawe.",
+      "cta": "Gushiraho umufasha"
     },
     "headline": {
-      "concentrated": "Plan **{{hours}}h** on **{{day}}** to reach your goal",
-      "distributed": "Plan **{{hours}}h** on **{{days}} days** to reach your goal",
-      "recurring": "Plan **{{hours}}h** every **{{weekdayList}}** for the next **{{weeks}} weeks**"
+      "concentrated": "Plan **{{hours}}** on **{{{day}}** to reach your goal",
+      "distributed": "Plan **{{hours}}** on **{{days}} days** to reach your goal",
+      "recurring": "Plan **{{hours}}** every **{{weekdayList}}** for the next **{{weeks}} weeks**"
     },
     "rationale": {
-      "small_gap_one_focused_plan": "A single focused plan is the fastest path.",
+      "small_gap_one_focused_plan": "Inzira imwe rukumbi yihuta ni yo yihuta cyane.",
       "spread_to_sustainable_pace": "Spread out so no day pushes too hard.",
-      "pattern_fits_over_horizon": "A weekly rhythm makes the goal feel routine.",
-      "stretched_for_short_horizon": "A bit more per day — there's not much time left.",
+      "pattern_fits_over_horizon": "Umuvuduko w'icyumweru utuma intego iba ihoraho.",
+      "stretched_for_short_horizon": "A bit more per day — there's no much time left.",
       "rest_recommended_then_resume": "Starts after a rest day — you've been pushing lately.",
-      "layered_on_conversation_days": "Layered on days you'll already be out.",
-      "best_effort_unreachable_goal": "Closing your full goal is a stretch this month — here's the strongest finish."
+      "layered_on_conversation_days": "Mu minsi mike muzaba mwarasohotse.",
+      "best_effort_unreachable_goal": "Closing your full goal is a stretch this month — here is the strongest finish."
     },
     "button": {
       "preview": "Preview",
-      "dismiss": "Dismiss",
-      "addToSchedule": "Add to Schedule",
-      "cancel": "Cancel",
+      "dismiss": "Kwirukana",
+      "addToSchedule": "Ongeraho kuri gahunda",
+      "cancel": "Hagarika",
       "undo": "Undo"
     },
     "preview": {
       "notifyMe": "Notify me before each plan",
-      "addAnotherDay": "Add another day",
-      "proposedTotal": "This will put you at **{{projected}} hrs**",
-      "goalReached": "Goal reached"
+      "addAnotherDay": "Ongeraho undi munsi",
+      "proposedTotal": "Ibi bizatuma ugera ku ntego {{projected}}",
+      "goalReached": "Intego yagezweho"
     },
     "snackbar": {
       "addedPlans": "Assistant added {{count}} plans"
     },
-    "collapsedAfterAccept": "✓ You've planned enough"
+    "collapsedAfterAccept": "✓ Ufite gahunda ihagije"
   },
   "projectedTotal": {
     "header": "Projected Total",
-    "heroSuffix": "hrs if all planned hours come through",
+    "headerMonth": "Ukwezi kwateganijwe",
+    "headerYear": "Umwaka wateganijwe",
+    "heroSuffix": "Mu gihe amasaha yose yateguwe agera ku rwego rwo hejuru",
     "legend": {
       "logged": "Logged · {{value}}",
       "planned": "Planned · {{value}}",
-      "goal": "Goal · {{value}}"
+      "goal": "Intego · {{value}}"
     },
     "period": {
-      "thisMonth": "this month",
-      "thisServiceYear": "this service year"
+      "thisMonth": "Muri uku kwezi",
+      "thisServiceYear": "Uyu mwaka w'umurimo"
     },
     "status": {
       "present": {
         "empty": "No hours logged or planned yet for {{period}}.",
-        "logged_over_goal": "You're already **{{over}} hrs** over goal. Planned hours would put you at **{{projected}}**.",
+        "logged_over_goal": "You're already **{{over}}** over goal. Amasaha yateganijwe azagushyira ku **{{projected}}**.",
         "projected_over_goal": "On track — planned hours would put you at **{{projected}}**.",
-        "reachable_gap": "Planned hours put you at **{{projected}}** — **{{gap}} hrs** short of your goal.",
-        "unreachable_gap": "Planned hours put you at **{{projected}}**. **{{gap}} hrs** to goal — a stretch from here."
+        "reachable_gap": "Amasaha yateganijwe agushyira ku **{{projected}}** — **{{gap}}** gato kugera ku ntego yawe.",
+        "unreachable_gap": "Amasaha yateganijwe agushyira ku **{{projected}}**. **{{gap}}** to goal — a stretch from here."
       },
       "past": {
-        "empty": "No hours were logged or planned for {{period}}.",
-        "logged_over_goal": "You ended **{{over}} hrs** over goal.",
-        "unreachable_gap": "You ended **{{gap}} hrs** short of goal."
+        "empty": "Nta masaha yashyizweho cyangwa ngo ategu{{period}}rwe.",
+        "logged_over_goal": "You ended **{{over}}** over goal.",
+        "unreachable_gap": "You ended **{{gap}}** short of goal."
       },
       "future": {
-        "empty": "No hours planned yet for {{period}}.",
+        "empty": "No hours planned for {{period}}.",
         "projected_over_goal": "On track — planned hours would put you at **{{projected}}**.",
-        "reachable_gap": "Planned hours put you at **{{projected}}** — **{{gap}} hrs** short of goal.",
-        "unreachable_gap": "Planned hours put you at **{{projected}}**. **{{gap}} hrs** to goal — a stretch from here."
+        "reachable_gap": "Amasaha yateganijwe agushyira ku **{{projected}}** — **{{gap}}** gato y'igitego.",
+        "unreachable_gap": "Amasaha yateganijwe agushyira ku **{{projected}}**. **{{gap}}** to goal — a stretch from here."
       }
     }
   }

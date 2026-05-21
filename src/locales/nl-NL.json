@@ -883,6 +883,9 @@
   "tryAgainLater": "Probeer het later opnieuw.",
   "oneTimeDonations": "Eenmalige donaties",
   "monthlyDonation": "Maandelijkse donatie",
+  "lifetimeSupporter": "Levenslange Supporter",
+  "neverExpires": "Nooit verlopen",
+  "activatedOn": "Geactiveerd op {{date}}",
   "active": "Actief",
   "inactive": "Inactief",
   "yourDonations": "Jouw donaties",
@@ -991,8 +994,8 @@
   "complete_description": "Als u uw geplande tijd voor een dag haalt, wordt deze als voltooid gemarkeerd.",
   "partial": "Gedeeltelijk",
   "plannedHours": "Uren gepland",
-  "projectedHoursTitle": "Projected Hours",
-  "projectedHoursDescription": "Combines hours you've already logged with hours you have planned. Aim to reach 100% of your goal.",
+  "projectedHoursTitle": "Geprojecteerde uren",
+  "projectedHoursDescription": "Voegt uren die je al hebt geregistreerd samen met uren die je hebt gepland. Streef ernaar om 100% van je doel te bereiken.",
   "planDay": "Plan dag",
   "weekly": "Wekelijks",
   "bi-weekly": "Tweewekelijks",
@@ -1249,6 +1252,8 @@
   "vsLastMonth": "vs vorige maand",
   "hrsAhead": "{{count}} uur vooruit",
   "hrsBehind": "{{count}} uur achter",
+  "aheadShort": "{{value}} vooruit",
+  "behindShort": "{{value}} achter",
   "cumulativePace": "Tempo vs schema",
   "creditOverageChip": "+{{count}} uur over doel",
   "lastLoggedOn": "Laatst gelogde {{date}}",
@@ -1374,6 +1379,7 @@
   "paywallFeatureRestore": "iCloud herstellen",
   "paywallFeatureBadge": "Supporters badge",
   "paywallFeatureAccent": "Aangepaste accentkleur",
+  "paywallFeatureAppIcons": "Aangepaste app-iconen",
   "paywallFeatureSync": "iCloud-synchronisatie",
   "paywallFeatureFuture": "Nieuwe extraatjes na verloop van tijd",
   "paywallTierSupporter": "Supporter",
@@ -1390,6 +1396,9 @@
   "paywallCtaSelectPrice": "Kies een bedrag",
   "paywallLearnMore": "FAQ lezen",
   "paywallCtaSendTip": "Stuur een tip",
+  "copyAccountId": "Account-ID kopiëren",
+  "accountIdCopied": "Account-ID gekopieerd",
+  "copyAccountIdError": "Kon account-ID niet kopiëren",
   "accentColor": "Accent kleur",
   "accentColorHelp": "Kies een kleur die het standaardgroen in de app vervangt.",
   "avatarBackgroundColor": "Avatar achtergrond",
@@ -1529,16 +1538,16 @@
   "yourPlanActionMapContacts": "breng je territorium in kaart",
   "yourPlanAutoTourAuto": "auto",
   "yourPlanAutoTourPaused": "gepauzeerd",
-  "onboardingBackfillTitle": "Pick up where you left off",
-  "onboardingBackfillSubtitle": "Your service year started in September. Tell us your hours so far and your annual goal will start accurate from day one.",
-  "onboardingBackfillHelper": "Enter regular hours and credit hours separately. We'll cap credit per month so nothing is lost across the year.",
-  "onboardingBackfillHoursLabel": "Hours",
-  "onboardingBackfillCreditLabel": "Credit hours",
-  "onboardingBackfillSkip": "Skip for now",
-  "onboardingBackfillScreenHeader": "Catch up your service year",
-  "onboardingBackfillBannerTitle": "Backdate your service year",
-  "onboardingBackfillBannerSubtitle": "Add your hours since September to get an accurate annual goal.",
-  "onboardingBackfillBannerDismissA11y": "Dismiss",
+  "onboardingBackfillTitle": "Ga verder waar je gebleven was",
+  "onboardingBackfillSubtitle": "Je dienstjaar begon in september. Vertel ons wat je uren tot nu toe zijn, dan begint je jaarlijkse doel vanaf dag één nauwkeurig.",
+  "onboardingBackfillHelper": "Voer de reguliere uren en studiepunten apart in. We beperken het aantal kredietlimieten per maand zodat er het hele jaar door niets verloren gaat.",
+  "onboardingBackfillHoursLabel": "Openingstijden",
+  "onboardingBackfillCreditLabel": "Studiepunten",
+  "onboardingBackfillSkip": "Sla nu maar over",
+  "onboardingBackfillScreenHeader": "Haal je dienstjaar in",
+  "onboardingBackfillBannerTitle": "Terugwerk je dienstjaar",
+  "onboardingBackfillBannerSubtitle": "Tel je uren sinds september op om een nauwkeurig jaarlijks doel te krijgen.",
+  "onboardingBackfillBannerDismissA11y": "Ontslag",
   "intentPickerTitle": "Waar wil je dat WitnessWork bij helpt?",
   "intentPickerSubtitle": "Op basis hiervan maken we je GetuigenWerk op maat. Kies er zoveel als je wilt - je kunt ze later wijzigen.",
   "intentTrackTime": "Mijn servicetijd bijhouden",
@@ -1568,8 +1577,8 @@
   "notNow": "Nu niet",
   "allTime": "Aller tijden",
   "milestones": "Mijlpalen",
-  "milestonesOrderHint": "Order matters — progress fills through them in sequence. The last one is your annual goal.",
-  "yearGoalSetInSettings": "ANNUAL GOAL · set in Settings",
+  "milestonesOrderHint": "Volgorde is belangrijk - doorloop ze in volgorde. De laatste is je jaardoel.",
+  "yearGoalSetInSettings": "JAARDOEL - instellen in instellingen",
   "adjustMilestones": "mijlpalen aanpassen",
   "milestonesHitChip": "mijlpalen {{hit}} van {{total}}",
   "nextMilestoneLabel": "volgende mijlpaal in {{remaining}}h",
@@ -1586,8 +1595,10 @@
   "emptyAllTime_title": "Nog geen tijd gelogd",
   "emptyAllTime_description": "Je levensuren verschijnen hier.",
   "multiple": "Meerdere",
-  "allDays": "Alle dagen",
-  "allMonths": "Alle maanden",
+  "vsGoal": "vs Goal",
+  "category": "Categorie",
+  "showAllDays": "Show alle dagen",
+  "hideFutureDays": "Verberg toekomstige dagen",
   "now": "nu",
   "timeRollover": "Tijdsverloop",
   "timeRollover_intro": "Uw vorige maand had gedeeltelijke uren. We kunnen die minuten doorrollen naar deze maand, zodat uw rapporten op hele uren blijven staan.",
@@ -1750,113 +1761,115 @@
   "faq_dismissContact_a": "Open het contact en tik op \"Afwijzen\". Je kiest hoe lang je ze ontslaat (1 week, 1 maand, 3 maanden, 6 maanden of 1 jaar). Het contact verdwijnt voor die periode van je actieve lijsten en komt automatisch terug zodra de tijd om is. Als meldingen zijn ingeschakeld, krijg je ook een herinnering wanneer ze weer verschijnen, zodat afgewezen contacten niet stilletjes tussen wal en schip verdwijnen. Je kunt op elk moment geblokkeerde contacten vinden of herstellen onder Instellingen → Afgewezen contacten.",
   "faq_reportBug_q": "Hoe meld ik een bug of vraag ik een functie aan?",
   "faq_reportBug_a": "Tik op een van de knoppen hieronder om direct een bugrapport of functieverzoek te openen. Rapporten die een screenshot bevatten, je apparaat + iOS-versie en de WitnessWork-versie (onderaan de Instellingen) zijn het makkelijkst snel te repareren.",
-  "faq_becomeSupporter_q": "What do I get as a supporter?",
-  "faq_becomeSupporter_a": "Monthly supporters receive the Supporter badge and a few extra personalization options — a custom accent color today, with more rolling out over time. iCloud sync for your data across devices is the next big supporter perk coming soon. One-time donations are deeply appreciated too, but don't grant ongoing Supporter status.",
-  "faq_stillFree_q": "Is WitnessWork still free?",
-  "faq_stillFree_a": "Yes — and always will be. Every core feature stays free for everyone. Supporting is completely optional; it helps fund ongoing development and unlocks a few personal touches as a thank-you.",
-  "faq_stopSupporting_q": "What happens if I stop supporting?",
-  "faq_stopSupporting_a": "Nothing about your data changes. If a monthly subscription lapses, any supporter-only personalization gracefully reverts to its defaults — your reports, contacts, notes, and settings are preserved exactly as they are.",
-  "faq_acceptDonations_q": "Why are you accepting donations?",
-  "faq_acceptDonations_a": "As a brother in the hall, I consider it a privilege to be able to use my skills to help others in the congregation. Although free to everyone, developing, running, and maintaining this application, unfortunately costs a significant amount of money and time. I view donating as similar to how one might pay for another's gas after going in service with them - it's a loving gesture that goes greatly appreciated.",
-  "faq_donationsUsedFor_q": "What are the donations used for?",
-  "faq_donationsUsedFor_a": "Your donation helps keeps this app running! There are costs with purchasing real devices as development equipment, paying for location API service fees, build service API fees, app store fees, and opportunity cost of my many hours spent developing this app. Each piece of support is greatly appreciated!",
+  "faq_becomeSupporter_q": "Wat ontgrendelt het zijn van een Supporter?",
+  "faq_becomeSupporter_a": "WitnessWork is, en zal altijd zijn, gratis. Als de app je heeft geholpen, is het worden van een supporter een manier om dank te zeggen en helpt het om de ontwikkeling gaande te houden. Supporters krijgen ook een paar extra quality of life-functies als kleine dankjewel. Tik op Word Supporter in de Instellingen-lade voor de huidige gegevens.",
+  "faq_stillFree_q": "Is WitnessWork nog steeds gratis?",
+  "faq_stillFree_a": "Ja — en dat zal altijd zo blijven. Elke kernfunctie blijft gratis voor iedereen. Ondersteunen is volledig optioneel; Het helpt de voortdurende ontwikkeling te financieren en ontgrendelt een paar persoonlijke accenten als dankjewel.",
+  "faq_stopSupporting_q": "Wat gebeurt er als ik stop met steunen?",
+  "faq_stopSupporting_a": "Er verandert niets aan je data. Als een maandabonnement verloopt, keert elke personalisatie alleen voor supporters soepel terug naar de standaardwaarden — je rapporten, contacten, notities en instellingen blijven precies zoals ze zijn.",
+  "faq_acceptDonations_q": "Waarom accepteer je donaties?",
+  "faq_acceptDonations_a": "Als broeder in de zaal beschouw ik het als een voorrecht om mijn vaardigheden te kunnen gebruiken om anderen in de gemeente te helpen. Hoewel het gratis is voor iedereen, kost het ontwikkelen, draaien en onderhouden van deze applicatie helaas een aanzienlijk bedrag aan tijd en geld. Ik zie doneren als vergelijkbaar met hoe iemand anders voor de benzine betaalt nadat hij met hen in dienst is gegaan – het is een liefdevol gebaar dat zeer gewaardeerd wordt.",
+  "faq_donationsUsedFor_q": "Waar worden de donaties voor gebruikt?",
+  "faq_donationsUsedFor_a": "Jouw donatie helpt om deze app draaiende te houden! Er zijn kosten verbonden aan het kopen van echte apparaten als ontwikkelapparatuur, het betalen van locatie-API-servicekosten, bouwservice-API-kosten, appstorekosten en de opportuniteitskosten van mijn vele uren die ik heb besteed aan het ontwikkelen van deze app. Elke steun wordt zeer gewaardeerd!",
   "faq_whatsNew_q": "Waar kan ik zien wat er veranderd is in de laatste update?",
   "faq_whatsNew_a": "Settings → What's New toont een samenvatting van recente wijzigingen. Grote updates verschijnen ook een eenmalig \"Wat is er nieuw\"-blad zodra je de app voor het eerst opent na het updaten.",
   "availability": {
-    "settingsRow": "Availability",
-    "settingsRowDescription": "Tell the Assistant which days are your off days and which are Kingdom Hall meeting days. It uses both to shape its recommendations.",
-    "settingsValueAllAvailable": "All days available",
-    "settingsValueNOff": "{{count}} off days",
-    "settingsValueNMeeting": "{{count}} meeting days",
-    "settingsValueNOffNMeeting": "{{off}} off · {{meeting}} meeting",
+    "settingsRow": "Beschikbaarheid",
+    "settingsRowDescription": "Vertel de assistent welke dagen jouw vrije dagen zijn en welke dagen van de Koninkrijkszaal. Het gebruikt beide om zijn aanbevelingen te vormen.",
+    "settingsValueAllAvailable": "Alle beschikbare dagen",
+    "settingsValueNOff": "{{count}} Vrije dagen",
+    "settingsValueNMeeting": "{{count}} vergaderdagen",
+    "settingsValueNOffNMeeting": "{{off}} af · {{meeting}} Vergadering",
     "onboarding": {
-      "title": "Which days are your off days?",
-      "body": "Tap the days the Assistant should skip entirely. We won't propose service on these days. You can change this anytime in Settings.",
-      "meetingDaysTitle": "Kingdom Hall meeting days",
-      "meetingDaysBody": "Tap the days you have meetings. The Assistant will keep those days lighter so you have time to attend and prepare.",
-      "save": "Save",
+      "title": "Welke dagen zijn jouw vrije dagen?",
+      "body": "Tik de dagen aan waarop de Assistent helemaal moet overslaan. We zullen op deze dagen geen dienst aanbieden. Je kunt dit op elk moment wijzigen in de instellingen.",
+      "meetingDaysTitle": "Dagen van de bijeenkomst van de Koninkrijkszaal",
+      "meetingDaysBody": "Tap de dagen dat je vergaderingen hebt. De assistent houdt die dagen lichter zodat je tijd hebt om aanwezig te zijn en je voor te bereiden.",
+      "save": "Sla op",
       "skip": "Skip"
     },
     "weekday": {
-      "sun": "Sun",
+      "sun": "Zon",
       "mon": "Mon",
-      "tue": "Tue",
-      "wed": "Wed",
+      "tue": "Dinsdag",
+      "wed": "Echtgenootschap",
       "thu": "Thu",
-      "fri": "Fri",
-      "sat": "Sat"
+      "fri": "Vrijdag",
+      "sat": "Za"
     }
   },
   "assistant": {
-    "label": "Assistant",
-    "settingsA11y": "Plan preferences",
+    "label": "Assistent",
+    "settingsA11y": "Planvoorkeuren",
     "intro": {
-      "title": "Get a recommended plan",
-      "body": "Tell the Assistant your off days and meeting days, and it'll suggest the strongest plan to reach your goal.",
-      "cta": "Set up Assistant"
+      "title": "Krijg een aanbevolen plan",
+      "body": "Vertel de assistent je vrije dagen en vergaderdagen, en het zal het sterkste plan voorstellen om je doel te bereiken.",
+      "cta": "Assistent instellen"
     },
     "headline": {
-      "concentrated": "Plan **{{hours}}h** on **{{day}}** to reach your goal",
-      "distributed": "Plan **{{hours}}h** on **{{days}} days** to reach your goal",
-      "recurring": "Plan **{{hours}}h** every **{{weekdayList}}** for the next **{{weeks}} weeks**"
+      "concentrated": "Plan **{{hours}}** op **{{day}}** om je doel te bereiken",
+      "distributed": "Plan **{{hours}}** op **{{days}} dagen** om je doel te bereiken",
+      "recurring": "Plan **{{hours}}** elke **{{weekdayList}}** voor de komende **{{weeks}} weken**"
     },
     "rationale": {
-      "small_gap_one_focused_plan": "A single focused plan is the fastest path.",
-      "spread_to_sustainable_pace": "Spread out so no day pushes too hard.",
-      "pattern_fits_over_horizon": "A weekly rhythm makes the goal feel routine.",
-      "stretched_for_short_horizon": "A bit more per day — there's not much time left.",
-      "rest_recommended_then_resume": "Starts after a rest day — you've been pushing lately.",
-      "layered_on_conversation_days": "Layered on days you'll already be out.",
-      "best_effort_unreachable_goal": "Closing your full goal is a stretch this month — here's the strongest finish."
+      "small_gap_one_focused_plan": "Een enkel gericht plan is het snelste pad.",
+      "spread_to_sustainable_pace": "Verspreid je zodat geen dag te hard pusht.",
+      "pattern_fits_over_horizon": "Een wekelijks ritme zorgt ervoor dat het doel routinematig aanvoelt.",
+      "stretched_for_short_horizon": "Iets meer per dag — er is niet veel tijd meer over.",
+      "rest_recommended_then_resume": "Begint na een rustdag — je hebt de laatste tijd hard gepusht.",
+      "layered_on_conversation_days": "Op dagen dat je al weg bent, heb je er meerdere meerdere lagen.",
+      "best_effort_unreachable_goal": "Je volledige doel bereiken is deze maand een overdreven stap — hier is de sterkste finish."
     },
     "button": {
-      "preview": "Preview",
-      "dismiss": "Dismiss",
-      "addToSchedule": "Add to Schedule",
-      "cancel": "Cancel",
-      "undo": "Undo"
+      "preview": "Vooruitblik",
+      "dismiss": "Ontslag",
+      "addToSchedule": "Toevoegen aan schema",
+      "cancel": "Annuleren",
+      "undo": "Ongedaan maken"
     },
     "preview": {
-      "notifyMe": "Notify me before each plan",
-      "addAnotherDay": "Add another day",
-      "proposedTotal": "This will put you at **{{projected}} hrs**",
-      "goalReached": "Goal reached"
+      "notifyMe": "Laat het me weten vóór elk plan",
+      "addAnotherDay": "Voeg er nog een dag aan toe",
+      "proposedTotal": "Dit brengt je op **{{projected}}**",
+      "goalReached": "Doel bereikt"
     },
     "snackbar": {
-      "addedPlans": "Assistant added {{count}} plans"
+      "addedPlans": "Assistent voegde {{count}} plannen toe"
     },
-    "collapsedAfterAccept": "✓ You've planned enough"
+    "collapsedAfterAccept": "✓ Je hebt genoeg gepland"
   },
   "projectedTotal": {
-    "header": "Projected Total",
-    "heroSuffix": "hrs if all planned hours come through",
+    "header": "Verwacht totaal",
+    "headerMonth": "Verwachte maand",
+    "headerYear": "Geprojecteerd jaar",
+    "heroSuffix": "Als alle geplande uren worden uitgevoerd",
     "legend": {
-      "logged": "Logged · {{value}}",
-      "planned": "Planned · {{value}}",
-      "goal": "Goal · {{value}}"
+      "logged": "Gelogd · {{value}}",
+      "planned": "Gepland · {{value}}",
+      "goal": "Doel · {{value}}"
     },
     "period": {
-      "thisMonth": "this month",
-      "thisServiceYear": "this service year"
+      "thisMonth": "Deze maand",
+      "thisServiceYear": "Dit dienstjaar"
     },
     "status": {
       "present": {
-        "empty": "No hours logged or planned yet for {{period}}.",
-        "logged_over_goal": "You're already **{{over}} hrs** over goal. Planned hours would put you at **{{projected}}**.",
-        "projected_over_goal": "On track — planned hours would put you at **{{projected}}**.",
-        "reachable_gap": "Planned hours put you at **{{projected}}** — **{{gap}} hrs** short of your goal.",
-        "unreachable_gap": "Planned hours put you at **{{projected}}**. **{{gap}} hrs** to goal — a stretch from here."
+        "empty": "Nog geen uren geregistreerd of gepland voor {{period}}.",
+        "logged_over_goal": "Je bent al **{{over}}** over het doel. Geplande uren brengen je op **{{projected}}**.",
+        "projected_over_goal": "Op schema — geplande uren zouden je op **{{projected}}** brengen.",
+        "reachable_gap": "Geplande uren brengen je op **{{projected}}** — **{{gap}}**** onder je doel.",
+        "unreachable_gap": "Geplande uren brengen je op **{{projected}}}. **{{gap}}** naar doel — een stuk vanaf hier."
       },
       "past": {
-        "empty": "No hours were logged or planned for {{period}}.",
-        "logged_over_goal": "You ended **{{over}} hrs** over goal.",
-        "unreachable_gap": "You ended **{{gap}} hrs** short of goal."
+        "empty": "Er werden geen uren geregistreerd of gepland voor {{period}}.",
+        "logged_over_goal": "Je eindigde **{{over}}** over het doel.",
+        "unreachable_gap": "Je eindigde **{{gap}}** tekort van het doelpunt."
       },
       "future": {
-        "empty": "No hours planned yet for {{period}}.",
-        "projected_over_goal": "On track — planned hours would put you at **{{projected}}**.",
-        "reachable_gap": "Planned hours put you at **{{projected}}** — **{{gap}} hrs** short of goal.",
-        "unreachable_gap": "Planned hours put you at **{{projected}}**. **{{gap}} hrs** to goal — a stretch from here."
+        "empty": "Nog geen uren gepland voor {{period}}{}.",
+        "projected_over_goal": "Op schema — geplande uren zouden je op **{{projected}}** brengen.",
+        "reachable_gap": "Geplande uren brengen je op **{{projected}}** — **{{gap}}** tekort voor het doel.",
+        "unreachable_gap": "Geplande uren brengen je op **{{projected}}**. **{{gap}}** naar doel — een stuk vanaf hier."
       }
     }
   }

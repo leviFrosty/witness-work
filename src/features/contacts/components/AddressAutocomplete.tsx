@@ -1,4 +1,4 @@
-import React, { useEffect, useCallback, useRef } from 'react'
+import React, { useEffect, useCallback, useRef, useState } from 'react'
 import {
   View,
   TouchableOpacity,
@@ -6,7 +6,14 @@ import {
   AppState,
   Linking,
   ScrollView,
+  type DimensionValue,
 } from 'react-native'
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withRepeat,
+  withTiming,
+} from 'react-native-reanimated'
 import axios from 'axios'
 import * as Location from 'expo-location'
 import {
@@ -139,6 +146,49 @@ const LocationStatusPill: React.FC<{
   )
 }
 
+const SKELETON_ROW_WIDTHS: DimensionValue[] = ['70%', '55%', '80%']
+
+const SkeletonRow: React.FC<{ isLast: boolean; width: DimensionValue }> = ({
+  isLast,
+  width,
+}) => {
+  const theme = useTheme()
+  const opacity = useSharedValue(0.35)
+
+  useEffect(() => {
+    opacity.value = withRepeat(withTiming(0.85, { duration: 700 }), -1, true)
+  }, [opacity])
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    opacity: opacity.value,
+  }))
+
+  return (
+    <View
+      style={{
+        minHeight: SUGGESTION_ROW_HEIGHT,
+        paddingHorizontal: 12,
+        paddingVertical: 10,
+        justifyContent: 'center',
+        borderBottomWidth: isLast ? 0 : 1,
+        borderBottomColor: theme.colors.border,
+      }}
+    >
+      <Animated.View
+        style={[
+          {
+            height: 12,
+            width,
+            borderRadius: 4,
+            backgroundColor: theme.colors.border,
+          },
+          animatedStyle,
+        ]}
+      />
+    </View>
+  )
+}
+
 const AddressAutocomplete: React.FC<AddressAutocompleteProps> = ({
   query,
   setQuery,
@@ -153,6 +203,7 @@ const AddressAutocomplete: React.FC<AddressAutocompleteProps> = ({
   const textInputRef = useRef<TextInput>(null)
   const { location, status, requestLocation, refreshStatus } = useLocation()
   const theme = useTheme()
+  const [isLoading, setIsLoading] = useState(false)
 
   useEffect(() => {
     const subscription = AppState.addEventListener('change', (next) => {
@@ -212,6 +263,7 @@ const AddressAutocomplete: React.FC<AddressAutocompleteProps> = ({
     const fetchSuggestions = async () => {
       if (query.length < 3 || isResult) {
         setSuggestions([])
+        setIsLoading(false)
         return
       }
 
@@ -249,6 +301,8 @@ const AddressAutocomplete: React.FC<AddressAutocompleteProps> = ({
       } catch (error) {
         setError(true)
         setSuggestions([])
+      } finally {
+        setIsLoading(false)
       }
     }
 
@@ -256,7 +310,8 @@ const AddressAutocomplete: React.FC<AddressAutocompleteProps> = ({
     return () => clearTimeout(debounce)
   }, [getHighlightedText, isResult, location, query, setError, setSuggestions])
 
-  const showFloatingResults = !error && !isResult && suggestions.length > 0
+  const showFloatingResults =
+    !error && !isResult && (suggestions.length > 0 || isLoading)
 
   return (
     <View style={{ gap: 12, zIndex: 10 }}>
@@ -269,6 +324,10 @@ const AddressAutocomplete: React.FC<AddressAutocompleteProps> = ({
             onChangeText: (text: string) => {
               setQuery(text)
               setIsResult(false)
+              // Flip loading on synchronously so the popover surfaces skeleton
+              // rows the moment a fetch is queued — otherwise the user sees
+              // nothing until the 300ms debounce + network round-trip resolve.
+              setIsLoading(text.length >= 3)
               if (text === '') {
                 // Clearing the search box should also clear the structured
                 // address — otherwise stale fields (from prefill or a prior
@@ -283,7 +342,10 @@ const AddressAutocomplete: React.FC<AddressAutocompleteProps> = ({
                 })
               }
             },
-            onBlur: () => setSuggestions([]),
+            onBlur: () => {
+              setSuggestions([])
+              setIsLoading(false)
+            },
             placeholder: i18n.t('enterAddress'),
             value: query,
             // iOS RN bug (facebook/react-native#32726, #10218): a TextInput
@@ -323,27 +385,37 @@ const AddressAutocomplete: React.FC<AddressAutocompleteProps> = ({
                 suggestions.length > MAX_VISIBLE_SUGGESTIONS
               }
             >
-              {suggestions.map((item, index) => (
-                <TouchableOpacity
-                  key={index}
-                  onPress={() => {
-                    onSelect(item.address)
-                    setQuery(item.title)
-                    setIsResult(true)
-                    setSuggestions([])
-                  }}
-                  style={{
-                    minHeight: SUGGESTION_ROW_HEIGHT,
-                    paddingHorizontal: 12,
-                    paddingVertical: 10,
-                    justifyContent: 'center',
-                    borderBottomWidth: index === suggestions.length - 1 ? 0 : 1,
-                    borderBottomColor: theme.colors.border,
-                  }}
-                >
-                  <Text numberOfLines={2}>{item.highlightedTitle}</Text>
-                </TouchableOpacity>
-              ))}
+              {isLoading && suggestions.length === 0
+                ? SKELETON_ROW_WIDTHS.map((width, index) => (
+                    <SkeletonRow
+                      key={`skeleton-${index}`}
+                      width={width}
+                      isLast={index === SKELETON_ROW_WIDTHS.length - 1}
+                    />
+                  ))
+                : suggestions.map((item, index) => (
+                    <TouchableOpacity
+                      key={index}
+                      onPress={() => {
+                        onSelect(item.address)
+                        setQuery(item.title)
+                        setIsResult(true)
+                        setSuggestions([])
+                        setIsLoading(false)
+                      }}
+                      style={{
+                        minHeight: SUGGESTION_ROW_HEIGHT,
+                        paddingHorizontal: 12,
+                        paddingVertical: 10,
+                        justifyContent: 'center',
+                        borderBottomWidth:
+                          index === suggestions.length - 1 ? 0 : 1,
+                        borderBottomColor: theme.colors.border,
+                      }}
+                    >
+                      <Text numberOfLines={2}>{item.highlightedTitle}</Text>
+                    </TouchableOpacity>
+                  ))}
             </ScrollView>
           </View>
         )}

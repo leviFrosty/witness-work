@@ -883,6 +883,9 @@
   "tryAgainLater": "後でもう一度試してください。",
   "oneTimeDonations": "ワンタイム寄付",
   "monthlyDonation": "毎月の寄付",
+  "lifetimeSupporter": "生涯サポーター",
+  "neverExpires": "期限切れはない",
+  "activatedOn": "{{date}}で起動",
   "active": "アクティブ",
   "inactive": "非活性",
   "yourDonations": "あなたの寄付",
@@ -991,8 +994,8 @@
   "complete_description": "1 日の計画時間を達成した場合、完了としてマークされます。",
   "partial": "一部",
   "plannedHours": "計画時間",
-  "projectedHoursTitle": "Projected Hours",
-  "projectedHoursDescription": "Combines hours you've already logged with hours you have planned. Aim to reach 100% of your goal.",
+  "projectedHoursTitle": "予定時間",
+  "projectedHoursDescription": "すでに記録した時間と計画している時間を組み合わせます。目標の100%を達成することを目指しましょう。",
   "planDay": "日計画",
   "weekly": "毎週",
   "bi-weekly": "隔週",
@@ -1249,6 +1252,8 @@
   "vsLastMonth": "対先月",
   "hrsAhead": "{{count}}}時間先",
   "hrsBehind": "{{count}} 時間遅れ",
+  "aheadShort": "{{value}} 前方",
+  "behindShort": "{{value}} 後ろ",
   "cumulativePace": "ペース対スケジュール",
   "creditOverageChip": "+{{count}}時間超過",
   "lastLoggedOn": "最後に記録した{{date}}",
@@ -1374,6 +1379,7 @@
   "paywallFeatureRestore": "iCloudリストア",
   "paywallFeatureBadge": "サポーターバッジ",
   "paywallFeatureAccent": "カスタムアクセントカラー",
+  "paywallFeatureAppIcons": "カスタムアプリのアイコン",
   "paywallFeatureSync": "iCloud同期",
   "paywallFeatureFuture": "新しい特典",
   "paywallTierSupporter": "サポーター",
@@ -1390,6 +1396,9 @@
   "paywallCtaSelectPrice": "金額を選択",
   "paywallLearnMore": "よくある質問を読む",
   "paywallCtaSendTip": "チップを送る",
+  "copyAccountId": "アカウントIDをコピーしてください",
+  "accountIdCopied": "アカウントIDをコピーしました",
+  "copyAccountIdError": "アカウントIDをコピーできませんでした",
   "accentColor": "アクセントカラー",
   "accentColorHelp": "アプリ全体のデフォルトの緑に代わる色を選んでください。",
   "avatarBackgroundColor": "アバター背景",
@@ -1529,16 +1538,16 @@
   "yourPlanActionMapContacts": "自分のテリトリーを描く",
   "yourPlanAutoTourAuto": "自動車",
   "yourPlanAutoTourPaused": "一時停止",
-  "onboardingBackfillTitle": "Pick up where you left off",
-  "onboardingBackfillSubtitle": "Your service year started in September. Tell us your hours so far and your annual goal will start accurate from day one.",
-  "onboardingBackfillHelper": "Enter regular hours and credit hours separately. We'll cap credit per month so nothing is lost across the year.",
-  "onboardingBackfillHoursLabel": "Hours",
-  "onboardingBackfillCreditLabel": "Credit hours",
-  "onboardingBackfillSkip": "Skip for now",
-  "onboardingBackfillScreenHeader": "Catch up your service year",
-  "onboardingBackfillBannerTitle": "Backdate your service year",
-  "onboardingBackfillBannerSubtitle": "Add your hours since September to get an accurate annual goal.",
-  "onboardingBackfillBannerDismissA11y": "Dismiss",
+  "onboardingBackfillTitle": "続きから始めましょう",
+  "onboardingBackfillSubtitle": "あなたの奉仕年は9月に始まりました。これまでの労働時間を教えてください。年間目標は初日から正確にスタートします。",
+  "onboardingBackfillHelper": "通常の時間と単位時間は別々に入力してください。年間を通じて損失がないように、月額のクレジットに上限を設定します。",
+  "onboardingBackfillHoursLabel": "営業時間",
+  "onboardingBackfillCreditLabel": "単位時間",
+  "onboardingBackfillSkip": "今はスキップしておきます",
+  "onboardingBackfillScreenHeader": "勤務期間を取り戻しましょう",
+  "onboardingBackfillBannerTitle": "勤務期間を遡って確認してください",
+  "onboardingBackfillBannerSubtitle": "正確な年間目標を得るために、9月以降の勤務時間を加算してください。",
+  "onboardingBackfillBannerDismissA11y": "解雇",
   "intentPickerTitle": "ウィットネス・ワークに 何を頼みますか？",
   "intentPickerSubtitle": "これに基づいてWitnessWorkをカスタマイズします。好きなだけ選んでください。",
   "intentTrackTime": "奉仕時間を記録する",
@@ -1568,8 +1577,8 @@
   "notNow": "今は違う",
   "allTime": "全時間",
   "milestones": "マイルストーン",
-  "milestonesOrderHint": "Order matters — progress fills through them in sequence. The last one is your annual goal.",
-  "yearGoalSetInSettings": "ANNUAL GOAL · set in Settings",
+  "milestonesOrderHint": "順番が重要である。最後があなたの1年の目標です。",
+  "yearGoalSetInSettings": "年間目標 - 設定",
   "adjustMilestones": "マイルストーンの調整",
   "milestonesHitChip": "{{total}}個中{{hit}}個のマイルストーン",
   "nextMilestoneLabel": "次のマイルストーンまで{{remaining}}時間",
@@ -1586,8 +1595,10 @@
   "emptyAllTime_title": "まだ記録されていない",
   "emptyAllTime_description": "生涯記録時間はここに表示されます。",
   "multiple": "複数",
-  "allDays": "全日",
-  "allMonths": "全月",
+  "vsGoal": "対ゴール",
+  "category": "カテゴリー",
+  "showAllDays": "すべての日をショー",
+  "hideFutureDays": "未来の日々を隠す",
   "now": "今",
   "timeRollover": "時間ロールオーバー",
   "timeRollover_intro": "前月は部分時間でした。その分を今月にロールオーバーすることで、レポートが全時間で表示されるようになります。",
@@ -1750,113 +1761,115 @@
   "faq_dismissContact_a": "連絡先を開き、「解雇」をタップしてください。解雇期間(1週間、1ヶ月、3ヶ月、6ヶ月、または1年)を選びます。その期間は連絡先がアクティブリストから消え、期間が来ると自動的に戻ってきます。通知を有効にすると、通知が再表示された際にリマインダーも受け取れるので、無視された連絡先がこっそり見落とされることはありません。「設定」→「キャンセルされた連絡先」から、いつでもキャンセルされた連絡先を検索または復元できます。",
   "faq_reportBug_q": "バグを報告したり、機能をリクエストしたりするにはどうすればいいですか?",
   "faq_reportBug_a": "下のボタンのいずれかをタップすると、バグ報告や機能リクエストを直接開いてください。スクリーンショット、デバイス+iOS版、WitnessWork版(設定の下部に表示)を含むレポートは、迅速に修正しやすいです。",
-  "faq_becomeSupporter_q": "What do I get as a supporter?",
-  "faq_becomeSupporter_a": "Monthly supporters receive the Supporter badge and a few extra personalization options — a custom accent color today, with more rolling out over time. iCloud sync for your data across devices is the next big supporter perk coming soon. One-time donations are deeply appreciated too, but don't grant ongoing Supporter status.",
-  "faq_stillFree_q": "Is WitnessWork still free?",
-  "faq_stillFree_a": "Yes — and always will be. Every core feature stays free for everyone. Supporting is completely optional; it helps fund ongoing development and unlocks a few personal touches as a thank-you.",
-  "faq_stopSupporting_q": "What happens if I stop supporting?",
-  "faq_stopSupporting_a": "Nothing about your data changes. If a monthly subscription lapses, any supporter-only personalization gracefully reverts to its defaults — your reports, contacts, notes, and settings are preserved exactly as they are.",
-  "faq_acceptDonations_q": "Why are you accepting donations?",
-  "faq_acceptDonations_a": "As a brother in the hall, I consider it a privilege to be able to use my skills to help others in the congregation. Although free to everyone, developing, running, and maintaining this application, unfortunately costs a significant amount of money and time. I view donating as similar to how one might pay for another's gas after going in service with them - it's a loving gesture that goes greatly appreciated.",
-  "faq_donationsUsedFor_q": "What are the donations used for?",
-  "faq_donationsUsedFor_a": "Your donation helps keeps this app running! There are costs with purchasing real devices as development equipment, paying for location API service fees, build service API fees, app store fees, and opportunity cost of my many hours spent developing this app. Each piece of support is greatly appreciated!",
+  "faq_becomeSupporter_q": "サポーターになることで何が解放されるのでしょうか?",
+  "faq_becomeSupporter_a": "WitnessWorkは、そしてこれからも、これからも無料です。もしアプリが役立ったなら、サポーターになることは感謝の気持ちを伝える方法であり、開発を続ける助けになります。サポーターには、ささやかな感謝の気持ちとして、いくつかの追加の生活の質向上機能も提供されます。設定ドロワーから「支持者になろう」をクリックして、最新の詳細をご覧ください。",
+  "faq_stillFree_q": "WitnessWorkはまだ無料ですか?",
+  "faq_stillFree_a": "はい、そしてこれからもそうでしょう。すべてのコア機能は全員に無料で提供されます。サポートは完全に任意です。継続的な開発資金となり、感謝の気持ちとしていくつかの個人的な要素が解放されます。",
+  "faq_stopSupporting_q": "もし私がサポートをやめたらどうなりますか?",
+  "faq_stopSupporting_a": "データが変わったことについては何もありません。月額サブスクリプションが終了すると、サポーター限定のパーソナライズ機能は自然にデフォルトに戻り、レポート、連絡先、メモ、設定はそのまま保持されます。",
+  "faq_acceptDonations_q": "なぜ寄付を受け付けているのですか?",
+  "faq_acceptDonations_a": "ホールの兄弟として、自分のスキルを使って会衆の他の人々を助けられることを特権だと感じています。このアプリケーションは誰でも無料で利用可能ですが、開発、運用、保守には残念ながら多額の費用と時間がかかります。私は寄付を、サービスに入った後に他の人のガソリン代を支払うのと同じようなものだと考えています。愛情深いジェスチャーであり、とても感謝されています。",
+  "faq_donationsUsedFor_q": "寄付金は何に使われているのですか?",
+  "faq_donationsUsedFor_a": "皆さんのご寄付が、このアプリを運営し続けるのに役立っています!実際のデバイスを開発し機器として購入するコスト、ロケーションAPIサービス料、ビルドサービスAPI料、アプリストア料金、そしてこのアプリ開発に費やした多くの時間の機会費用などがあります。皆さんのご支援に心から感謝いたします!",
   "faq_whatsNew_q": "最新のアップデートで何が変わったのかどこで確認できますか?",
   "faq_whatsNew_a": "設定→「What's New」には最近の変更点の概要が表示されます。また、大きなアップデートは、アップデート後にアプリを初めて開いた際に一度だけ「新しい情報」シートが表示されます。",
   "availability": {
-    "settingsRow": "Availability",
-    "settingsRowDescription": "Tell the Assistant which days are your off days and which are Kingdom Hall meeting days. It uses both to shape its recommendations.",
-    "settingsValueAllAvailable": "All days available",
-    "settingsValueNOff": "{{count}} off days",
-    "settingsValueNMeeting": "{{count}} meeting days",
-    "settingsValueNOffNMeeting": "{{off}} off · {{meeting}} meeting",
+    "settingsRow": "入手可能性",
+    "settingsRowDescription": "アシスタントに、どの日が休みでどの日がキングダムホールの集会日かを伝えてください。両方を用いて推奨事項を形成しています。",
+    "settingsValueAllAvailable": "全日空席",
+    "settingsValueNOff": "{{count}} オフの日",
+    "settingsValueNMeeting": "{{count}} 会議日",
+    "settingsValueNOffNMeeting": "{{off}} オフ ·{{meeting}}会議",
     "onboarding": {
-      "title": "Which days are your off days?",
-      "body": "Tap the days the Assistant should skip entirely. We won't propose service on these days. You can change this anytime in Settings.",
-      "meetingDaysTitle": "Kingdom Hall meeting days",
-      "meetingDaysBody": "Tap the days you have meetings. The Assistant will keep those days lighter so you have time to attend and prepare.",
-      "save": "Save",
-      "skip": "Skip"
+      "title": "休みの日は何ですか?",
+      "body": "アシスタントが完全にスキップすべき日をタップしてください。この日は礼拝を提案しません。設定でいつでも変更できます。",
+      "meetingDaysTitle": "王国会館の集会日",
+      "meetingDaysBody": "会議がある日を把握しましょう。アシスタントがその日を軽くしてくれて、出席や準備の時間を確保します。",
+      "save": "セーブ",
+      "skip": "スキップ"
     },
     "weekday": {
-      "sun": "Sun",
-      "mon": "Mon",
-      "tue": "Tue",
-      "wed": "Wed",
-      "thu": "Thu",
-      "fri": "Fri",
-      "sat": "Sat"
+      "sun": "太陽",
+      "mon": "モン",
+      "tue": "火曜日",
+      "wed": "ウェディング",
+      "thu": "木",
+      "fri": "金曜日",
+      "sat": "土曜"
     }
   },
   "assistant": {
-    "label": "Assistant",
-    "settingsA11y": "Plan preferences",
+    "label": "助手",
+    "settingsA11y": "プランの好み",
     "intro": {
-      "title": "Get a recommended plan",
-      "body": "Tell the Assistant your off days and meeting days, and it'll suggest the strongest plan to reach your goal.",
-      "cta": "Set up Assistant"
+      "title": "推奨されるプランを入手しましょう",
+      "body": "アシスタントに休みの日や会議日を伝えれば、目標達成のための最も強力な計画を提案してもらえます。",
+      "cta": "セットアップアシスタント"
     },
     "headline": {
-      "concentrated": "Plan **{{hours}}h** on **{{day}}** to reach your goal",
-      "distributed": "Plan **{{hours}}h** on **{{days}} days** to reach your goal",
-      "recurring": "Plan **{{hours}}h** every **{{weekdayList}}** for the next **{{weeks}} weeks**"
+      "concentrated": "目標達成のために**{{hours}}**を**{{day}}**に計画してください",
+      "distributed": "目標達成のために**{{hours}}**を**{{days}}日**に計画しましょう",
+      "recurring": "これからの**{{{hours}}週間の**{{weekdayList}}**を毎回**{{weeks}}**計画しろ**"
     },
     "rationale": {
-      "small_gap_one_focused_plan": "A single focused plan is the fastest path.",
-      "spread_to_sustainable_pace": "Spread out so no day pushes too hard.",
-      "pattern_fits_over_horizon": "A weekly rhythm makes the goal feel routine.",
-      "stretched_for_short_horizon": "A bit more per day — there's not much time left.",
-      "rest_recommended_then_resume": "Starts after a rest day — you've been pushing lately.",
-      "layered_on_conversation_days": "Layered on days you'll already be out.",
-      "best_effort_unreachable_goal": "Closing your full goal is a stretch this month — here's the strongest finish."
+      "small_gap_one_focused_plan": "一つの集中した計画が最も速い道です。",
+      "spread_to_sustainable_pace": "一日が無理に進まないように分散して考えましょう。",
+      "pattern_fits_over_horizon": "週ごとのリズムが目標をルーティンに感じさせます。",
+      "stretched_for_short_horizon": "1日少し多く――残された時間はあまりない。",
+      "rest_recommended_then_resume": "休息日の後に始まる — 最近は無理をしている。",
+      "layered_on_conversation_days": "すでに外出している日は重ね着しましょう。",
+      "best_effort_unreachable_goal": "今月、目標を達成するのは無理があります。これが最も強いフィニッシュです。"
     },
     "button": {
-      "preview": "Preview",
-      "dismiss": "Dismiss",
-      "addToSchedule": "Add to Schedule",
-      "cancel": "Cancel",
-      "undo": "Undo"
+      "preview": "プレビュー",
+      "dismiss": "解雇",
+      "addToSchedule": "スケジュールに追加",
+      "cancel": "キャンセル",
+      "undo": "元に戻す"
     },
     "preview": {
-      "notifyMe": "Notify me before each plan",
-      "addAnotherDay": "Add another day",
-      "proposedTotal": "This will put you at **{{projected}} hrs**",
-      "goalReached": "Goal reached"
+      "notifyMe": "各プランの前に通知してください",
+      "addAnotherDay": "もう一日追加",
+      "proposedTotal": "これで**{{projected}}**になります。",
+      "goalReached": "ゴール到達"
     },
     "snackbar": {
-      "addedPlans": "Assistant added {{count}} plans"
+      "addedPlans": "アシスタントが{{count}}プランを追加しました"
     },
-    "collapsedAfterAccept": "✓ You've planned enough"
+    "collapsedAfterAccept": "✓ もう十分計画しています"
   },
   "projectedTotal": {
-    "header": "Projected Total",
-    "heroSuffix": "hrs if all planned hours come through",
+    "header": "予想総額",
+    "headerMonth": "予想月間",
+    "headerYear": "予想年数",
+    "heroSuffix": "予定された時間がすべて揃った場合",
     "legend": {
-      "logged": "Logged · {{value}}",
-      "planned": "Planned · {{value}}",
-      "goal": "Goal · {{value}}"
+      "logged": "ログ・{{value}}",
+      "planned": "計画・{{value}}",
+      "goal": "ゴール ·{{value}}"
     },
     "period": {
-      "thisMonth": "this month",
-      "thisServiceYear": "this service year"
+      "thisMonth": "今月のことだ",
+      "thisServiceYear": "この奉仕の年は"
     },
     "status": {
       "present": {
-        "empty": "No hours logged or planned yet for {{period}}.",
-        "logged_over_goal": "You're already **{{over}} hrs** over goal. Planned hours would put you at **{{projected}}**.",
-        "projected_over_goal": "On track — planned hours would put you at **{{projected}}**.",
-        "reachable_gap": "Planned hours put you at **{{projected}}** — **{{gap}} hrs** short of your goal.",
-        "unreachable_gap": "Planned hours put you at **{{projected}}**. **{{gap}} hrs** to goal — a stretch from here."
+        "empty": "{{period}}の時間はまだ記録も計画もありません。",
+        "logged_over_goal": "もう目標を**{{over}}**超えてるよ。予定された勤務時間は**{{projected}}**になります。",
+        "projected_over_goal": "計画された時間帯は**{{projected}}**になります。",
+        "reachable_gap": "予定された時間帯は目標に届かない**{{projected}}** — **{{gap}}****に追い込まれます。",
+        "unreachable_gap": "予定された勤務時間は**{{projected}}**です。**{{gap}}** ゴールまで — ここからはもう少し。"
       },
       "past": {
-        "empty": "No hours were logged or planned for {{period}}.",
-        "logged_over_goal": "You ended **{{over}} hrs** over goal.",
-        "unreachable_gap": "You ended **{{gap}} hrs** short of goal."
+        "empty": "{{period}}の時間は記録も計画もありません。",
+        "logged_over_goal": "あなたはゴール上で**{{over}}**を終えました。",
+        "unreachable_gap": "ゴールに届かなかった。{{gap}}"
       },
       "future": {
-        "empty": "No hours planned yet for {{period}}.",
-        "projected_over_goal": "On track — planned hours would put you at **{{projected}}**.",
-        "reachable_gap": "Planned hours put you at **{{projected}}** — **{{gap}} hrs** short of goal.",
-        "unreachable_gap": "Planned hours put you at **{{projected}}**. **{{gap}} hrs** to goal — a stretch from here."
+        "empty": "{{period}}の時間はまだ予定されていません。",
+        "projected_over_goal": "順調です — 計画された時間帯は**{{projected}}**になります。",
+        "reachable_gap": "予定された時間帯は目標に届かない**{{projected}}** — **{{gap}}****です。",
+        "unreachable_gap": "予定時間は**{{projected}}**になります。{{{gap}}** ゴールまで — ここからはもう少し。"
       }
     }
   }

@@ -883,6 +883,9 @@
   "tryAgainLater": "Будь-ласка спробуйте пізніше.",
   "oneTimeDonations": "Одноразові пожертви",
   "monthlyDonation": "Щомісячна пожертва",
+  "lifetimeSupporter": "Довічний прихильник",
+  "neverExpires": "Ніколи не закінчується",
+  "activatedOn": "Активовано на {{date}}",
   "active": "Активний",
   "inactive": "Неактивний",
   "yourDonations": "Ваші пожертви",
@@ -991,8 +994,8 @@
   "complete_description": "Якщо ви виконуєте запланований час на день, він позначається як виконаний.",
   "partial": "Частковий",
   "plannedHours": "Заплановані години",
-  "projectedHoursTitle": "Projected Hours",
-  "projectedHoursDescription": "Combines hours you've already logged with hours you have planned. Aim to reach 100% of your goal.",
+  "projectedHoursTitle": "Прогнозовані години роботи",
+  "projectedHoursDescription": "Поєднує вже відбуті години з запланованими годинами. Прагніть досягти 100% своєї мети.",
   "planDay": "День планування",
   "weekly": "Щотижня",
   "bi-weekly": "Раз на два тижні",
@@ -1249,6 +1252,8 @@
   "vsLastMonth": "порівняно з минулим місяцем",
   "hrsAhead": "{{count}} години вперед",
   "hrsBehind": "{{count}} годинами пізніше",
+  "aheadShort": "{{value}} вперед",
+  "behindShort": "{{value}} позаду",
   "cumulativePace": "Темп проти розкладу",
   "creditOverageChip": "+{{count}} годин понад ліміт",
   "lastLoggedOn": "Остання реєстрація {{date}}",
@@ -1374,6 +1379,7 @@
   "paywallFeatureRestore": "відновлення iCloud",
   "paywallFeatureBadge": "Значок прихильника",
   "paywallFeatureAccent": "Спеціальний колір акценту",
+  "paywallFeatureAppIcons": "Іконки кастомних додатків",
   "paywallFeatureSync": "синхронізація з iCloud",
   "paywallFeatureFuture": "Нові привілеї з часом",
   "paywallTierSupporter": "Прихильник",
@@ -1390,6 +1396,9 @@
   "paywallCtaSelectPrice": "Оберіть суму",
   "paywallLearnMore": "Прочитати FAQ",
   "paywallCtaSendTip": "Надіслати чайові",
+  "copyAccountId": "Скопіювати ідентифікатор облікового запису",
+  "accountIdCopied": "Скопіювано ідентифікатор акаунта",
+  "copyAccountIdError": "Не вдалося скопіювати ідентифікатор акаунта",
   "accentColor": "Акцентний колір",
   "accentColorHelp": "Виберіть колір, який замінить зелений за замовчуванням у всьому додатку.",
   "avatarBackgroundColor": "Тло аватара",
@@ -1529,16 +1538,16 @@
   "yourPlanActionMapContacts": "нанести на карту свою територію",
   "yourPlanAutoTourAuto": "авто",
   "yourPlanAutoTourPaused": "призупинено",
-  "onboardingBackfillTitle": "Pick up where you left off",
-  "onboardingBackfillSubtitle": "Your service year started in September. Tell us your hours so far and your annual goal will start accurate from day one.",
-  "onboardingBackfillHelper": "Enter regular hours and credit hours separately. We'll cap credit per month so nothing is lost across the year.",
-  "onboardingBackfillHoursLabel": "Hours",
-  "onboardingBackfillCreditLabel": "Credit hours",
-  "onboardingBackfillSkip": "Skip for now",
-  "onboardingBackfillScreenHeader": "Catch up your service year",
-  "onboardingBackfillBannerTitle": "Backdate your service year",
-  "onboardingBackfillBannerSubtitle": "Add your hours since September to get an accurate annual goal.",
-  "onboardingBackfillBannerDismissA11y": "Dismiss",
+  "onboardingBackfillTitle": "Продовжуй з того місця, де зупинився",
+  "onboardingBackfillSubtitle": "Ваш рік служби починався у вересні. Розкажіть про свої години на сьогодні, і ваша річна ціль почнеться точно з першого дня.",
+  "onboardingBackfillHelper": "Введіть звичайні години та кредитні години окремо. Ми обмежимо кредит на місяць, щоб нічого не втрачалося протягом року.",
+  "onboardingBackfillHoursLabel": "Години роботи",
+  "onboardingBackfillCreditLabel": "Кредитні години",
+  "onboardingBackfillSkip": "Поки що пропустити",
+  "onboardingBackfillScreenHeader": "Наздоганяйте свій рік служби",
+  "onboardingBackfillBannerTitle": "Встановіть назад рік служби",
+  "onboardingBackfillBannerSubtitle": "Додайте години з вересня, щоб отримати точну річну ціль.",
+  "onboardingBackfillBannerDismissA11y": "Відпустити",
   "intentPickerTitle": "З чим ви хочете, щоб програма допомогла вам?",
   "intentPickerSubtitle": "На основі цього ми адаптуємо вашу програму роботи зі свідками. Виберіть стільки пунктів, скільки вам потрібно - ви можете змінити їх пізніше.",
   "intentTrackTime": "Відстежувати час мого служіння",
@@ -1568,8 +1577,8 @@
   "notNow": "Not Now",
   "allTime": "All-time",
   "milestones": "Milestones",
-  "milestonesOrderHint": "Order matters — progress fills through them in sequence. The last one is your annual goal.",
-  "yearGoalSetInSettings": "ANNUAL GOAL · set in Settings",
+  "milestonesOrderHint": "Порядок має значення - прогрес заповнює їх у певній послідовності. Остання - твоя мета на рік.",
+  "yearGoalSetInSettings": "ЦІЛЬ НА РІК - встановлюється в Налаштуваннях",
   "adjustMilestones": "налаштуйте проміжні цілі",
   "milestonesHitChip": "{{hit}} етапів {{total}}",
   "nextMilestoneLabel": "наступна віха через {{remaining}}год",
@@ -1586,8 +1595,10 @@
   "emptyAllTime_title": "Час ще не зареєстровано",
   "emptyAllTime_description": "Тут з'являться ваші години життя.",
   "multiple": "Кілька",
-  "allDays": "All Days",
-  "allMonths": "Всі місяці",
+  "vsGoal": "vs Goal",
+  "category": "Категорія",
+  "showAllDays": "Показувати всі дні",
+  "hideFutureDays": "Сховати майбутні дні",
   "now": "зараз",
   "timeRollover": "Перемотка часу",
   "timeRollover_intro": "У попередньому місяці ви працювали в неповних годинах. Ми можемо перенести ці хвилини в цей місяць, щоб ваші звіти залишалися в повних годинах.",
@@ -1750,113 +1761,115 @@
   "faq_dismissContact_a": "Відкрий контакт і натисни «Відпустити». Ти обираєш, на який термін їх звільнити (1 тиждень, 1 місяць, 3 місяці, 6 місяців або 1 рік). Контакт зникає з ваших активних списків на цей період, а потім автоматично повертається, коли час закінчується. Якщо сповіщення увімкнені, ви також отримаєте нагадування, коли вони з'являться, тож відхилені контакти не прослизнуть непомітно. Ви можете знайти або відновити відхилені контакти у будь-який час у розділі Налаштування → Відхилені контакти.",
   "faq_reportBug_q": "Як повідомити про баг або запросити функцію?",
   "faq_reportBug_a": "Натисніть одну з кнопок нижче, щоб відкрити звіт про баг або запит на функцію напряму. Повідомлення, які містять скріншот, версію вашого пристрою + iOS та версію WitnessWork (показану внизу Налаштувань), найпростіше швидко виправити.",
-  "faq_becomeSupporter_q": "What do I get as a supporter?",
-  "faq_becomeSupporter_a": "Monthly supporters receive the Supporter badge and a few extra personalization options — a custom accent color today, with more rolling out over time. iCloud sync for your data across devices is the next big supporter perk coming soon. One-time donations are deeply appreciated too, but don't grant ongoing Supporter status.",
-  "faq_stillFree_q": "Is WitnessWork still free?",
-  "faq_stillFree_a": "Yes — and always will be. Every core feature stays free for everyone. Supporting is completely optional; it helps fund ongoing development and unlocks a few personal touches as a thank-you.",
-  "faq_stopSupporting_q": "What happens if I stop supporting?",
-  "faq_stopSupporting_a": "Nothing about your data changes. If a monthly subscription lapses, any supporter-only personalization gracefully reverts to its defaults — your reports, contacts, notes, and settings are preserved exactly as they are.",
-  "faq_acceptDonations_q": "Why are you accepting donations?",
-  "faq_acceptDonations_a": "As a brother in the hall, I consider it a privilege to be able to use my skills to help others in the congregation. Although free to everyone, developing, running, and maintaining this application, unfortunately costs a significant amount of money and time. I view donating as similar to how one might pay for another's gas after going in service with them - it's a loving gesture that goes greatly appreciated.",
-  "faq_donationsUsedFor_q": "What are the donations used for?",
-  "faq_donationsUsedFor_a": "Your donation helps keeps this app running! There are costs with purchasing real devices as development equipment, paying for location API service fees, build service API fees, app store fees, and opportunity cost of my many hours spent developing this app. Each piece of support is greatly appreciated!",
+  "faq_becomeSupporter_q": "Що відкриває статус Прихильника?",
+  "faq_becomeSupporter_a": "WitnessWork є і завжди буде безкоштовним. Якщо додаток був для вас корисним, стати підтримкою — це спосіб подякувати і допомогти продовжити розробку. Прихильники також отримують кілька додаткових функцій для покращення якості життя як невелику подяку. Натисніть «Стати підтримкою» у шухляді налаштувань для поточних деталей.",
+  "faq_stillFree_q": "WitnessWork досі безкоштовний?",
+  "faq_stillFree_a": "Так — і завжди буде. Кожна основна функція залишається безкоштовною для всіх. Підтримка є повністю необов'язковою; Це допомагає фінансувати подальший розвиток і відкриває кілька особистих штрихів як подяку.",
+  "faq_stopSupporting_q": "Що станеться, якщо я припиню підтримку?",
+  "faq_stopSupporting_a": "У ваших даних нічого не змінюється. Якщо щомісячна підписка закінчується, будь-яка персоналізація лише для прихильників зручно повертається до своїх стандартних — ваші звіти, контакти, нотатки та налаштування залишаються точно такими, якими вони є.",
+  "faq_acceptDonations_q": "Чому ви приймаєте пожертви?",
+  "faq_acceptDonations_a": "Як брат у залі, я вважаю привілеєм мати можливість використовувати свої навички, щоб допомагати іншим у громаді. Хоча додаток безкоштовний для всіх, розробка, запуск і підтримка цього додатку, на жаль, коштує значних коштів і часу. Я вважаю, що донорство — це схоже на те, як можна оплатити бензин іншому після служби разом із ним — це люблячий жест, який я дуже ціную.",
+  "faq_donationsUsedFor_q": "Для чого використовуються ці пожертви?",
+  "faq_donationsUsedFor_a": "Ваша пожертва допомагає підтримувати цей додаток! Є витрати на купівлю реальних пристроїв як обладнання для розробки, оплату послуг API за місцезнаходження, збори за створення сервісу, комісію за магазин додатків і альтернативні витрати багатьох годин, витрачених на розробку цього додатку. Кожна підтримка дуже цінна!",
   "faq_whatsNew_q": "Де я можу побачити, що змінилося в останньому оновленні?",
   "faq_whatsNew_a": "Налаштування → What Has New показує підсумок останніх змін. Великі оновлення також з'являються одноразовий лист «Що нового» при першому відкритті додатку після оновлення.",
   "availability": {
-    "settingsRow": "Availability",
-    "settingsRowDescription": "Tell the Assistant which days are your off days and which are Kingdom Hall meeting days. It uses both to shape its recommendations.",
-    "settingsValueAllAvailable": "All days available",
-    "settingsValueNOff": "{{count}} off days",
-    "settingsValueNMeeting": "{{count}} meeting days",
-    "settingsValueNOffNMeeting": "{{off}} off · {{meeting}} meeting",
+    "settingsRow": "Доступність",
+    "settingsRowDescription": "Скажіть Помічнику, які дні у вас вихідні, а які — дні зустрічей у Залі Царства. Вона використовує обидва варіанти для формування своїх рекомендацій.",
+    "settingsValueAllAvailable": "Доступні всі дні",
+    "settingsValueNOff": "{{count}} вихідні дні",
+    "settingsValueNMeeting": "{{count}} дні зустрічей",
+    "settingsValueNOffNMeeting": "{{off}} вимкнено · {{meeting}} зустріч",
     "onboarding": {
-      "title": "Which days are your off days?",
-      "body": "Tap the days the Assistant should skip entirely. We won't propose service on these days. You can change this anytime in Settings.",
-      "meetingDaysTitle": "Kingdom Hall meeting days",
-      "meetingDaysBody": "Tap the days you have meetings. The Assistant will keep those days lighter so you have time to attend and prepare.",
-      "save": "Save",
-      "skip": "Skip"
+      "title": "Які дні у тебе вихідні?",
+      "body": "Натисни на дні, які Асистент має повністю пропустити. Ми не будемо пропонувати послугу в ці дні. Ви можете змінити це у будь-який час у налаштуваннях.",
+      "meetingDaysTitle": "Дні зборів у Царстві Холі",
+      "meetingDaysBody": "Відзначайте дні, коли у вас зустрічі. Асистент зробить ці дні легшими, щоб у вас був час на присутність і підготовку.",
+      "save": "Збереження",
+      "skip": "Пропустити"
     },
     "weekday": {
-      "sun": "Sun",
-      "mon": "Mon",
-      "tue": "Tue",
-      "wed": "Wed",
-      "thu": "Thu",
-      "fri": "Fri",
+      "sun": "Сонце",
+      "mon": "Мон",
+      "tue": "Вт",
+      "wed": "Середа",
+      "thu": "Чт",
+      "fri": "Пт",
       "sat": "Sat"
     }
   },
   "assistant": {
-    "label": "Assistant",
-    "settingsA11y": "Plan preferences",
+    "label": "Асистент",
+    "settingsA11y": "Вподобання плану",
     "intro": {
-      "title": "Get a recommended plan",
-      "body": "Tell the Assistant your off days and meeting days, and it'll suggest the strongest plan to reach your goal.",
-      "cta": "Set up Assistant"
+      "title": "Отримайте рекомендований план",
+      "body": "Скажіть асистенту про свої вихідні та дні зустрічей, і він запропонує найсильніший план для досягнення мети.",
+      "cta": "Налаштуйте асистента"
     },
     "headline": {
-      "concentrated": "Plan **{{hours}}h** on **{{day}}** to reach your goal",
-      "distributed": "Plan **{{hours}}h** on **{{days}} days** to reach your goal",
-      "recurring": "Plan **{{hours}}h** every **{{weekdayList}}** for the next **{{weeks}} weeks**"
+      "concentrated": "Плануйте **{{hours}}** на **{{day}}**, щоб досягти своєї мети",
+      "distributed": "Плануйте **{{hours}}** у **{{days}} дні**, щоб досягти своєї мети",
+      "recurring": "Плануйте **{{hours}}** кожен **{{weekdayList}}** на наступні **{{weeks}} тижні**"
     },
     "rationale": {
-      "small_gap_one_focused_plan": "A single focused plan is the fastest path.",
-      "spread_to_sustainable_pace": "Spread out so no day pushes too hard.",
-      "pattern_fits_over_horizon": "A weekly rhythm makes the goal feel routine.",
-      "stretched_for_short_horizon": "A bit more per day — there's not much time left.",
-      "rest_recommended_then_resume": "Starts after a rest day — you've been pushing lately.",
-      "layered_on_conversation_days": "Layered on days you'll already be out.",
-      "best_effort_unreachable_goal": "Closing your full goal is a stretch this month — here's the strongest finish."
+      "small_gap_one_focused_plan": "Єдиний сфокусований план — це найшвидший шлях.",
+      "spread_to_sustainable_pace": "Розподіляйтеся, щоб жоден день не був надто напруженим.",
+      "pattern_fits_over_horizon": "Щотижневий ритм робить ціль рутинною.",
+      "stretched_for_short_horizon": "Трохи більше на день — часу залишилося небагато.",
+      "rest_recommended_then_resume": "Починається після дня відпочинку — останнім часом ти дуже стараєшся.",
+      "layered_on_conversation_days": "У дні ти вже будеш на вулиці.",
+      "best_effort_unreachable_goal": "Досягти повної мети цього місяця — це справжній виклик, ось найсильніший фінал."
     },
     "button": {
-      "preview": "Preview",
-      "dismiss": "Dismiss",
-      "addToSchedule": "Add to Schedule",
-      "cancel": "Cancel",
-      "undo": "Undo"
+      "preview": "Анонс",
+      "dismiss": "Відпустити",
+      "addToSchedule": "Додати до розкладу",
+      "cancel": "Скасувати",
+      "undo": "Скасувати"
     },
     "preview": {
-      "notifyMe": "Notify me before each plan",
-      "addAnotherDay": "Add another day",
-      "proposedTotal": "This will put you at **{{projected}} hrs**",
-      "goalReached": "Goal reached"
+      "notifyMe": "Повідомляйте мене перед кожним планом",
+      "addAnotherDay": "Додай ще один день",
+      "proposedTotal": "Це поставить тебе на **{{projected}}**",
+      "goalReached": "Досягнута мета"
     },
     "snackbar": {
-      "addedPlans": "Assistant added {{count}} plans"
+      "addedPlans": "Асистент додав {{count}} плани"
     },
-    "collapsedAfterAccept": "✓ You've planned enough"
+    "collapsedAfterAccept": "✓ Ти вже достатньо спланував"
   },
   "projectedTotal": {
-    "header": "Projected Total",
-    "heroSuffix": "hrs if all planned hours come through",
+    "header": "Прогнозований загальний результат",
+    "headerMonth": "Прогнозований місяць",
+    "headerYear": "Прогнозований рік",
+    "heroSuffix": "якщо всі заплановані години виконаються",
     "legend": {
-      "logged": "Logged · {{value}}",
-      "planned": "Planned · {{value}}",
-      "goal": "Goal · {{value}}"
+      "logged": "Зареєстровано · {{value}}",
+      "planned": "Заплановано · {{value}}",
+      "goal": "Мета · {{value}}"
     },
     "period": {
-      "thisMonth": "this month",
-      "thisServiceYear": "this service year"
+      "thisMonth": "цього місяця",
+      "thisServiceYear": "Цей рік служби"
     },
     "status": {
       "present": {
-        "empty": "No hours logged or planned yet for {{period}}.",
-        "logged_over_goal": "You're already **{{over}} hrs** over goal. Planned hours would put you at **{{projected}}**.",
-        "projected_over_goal": "On track — planned hours would put you at **{{projected}}**.",
-        "reachable_gap": "Planned hours put you at **{{projected}}** — **{{gap}} hrs** short of your goal.",
-        "unreachable_gap": "Planned hours put you at **{{projected}}**. **{{gap}} hrs** to goal — a stretch from here."
+        "empty": "Для {{period}} поки що немає запланованих чи запланованих годин.",
+        "logged_over_goal": "Ти вже **{{over}}** перевершив ворота. Заплановані години — це буде **{{projected}}**.",
+        "projected_over_goal": "На правильному шляху — заплановані години ставили б тебе до **{{projected}}**.",
+        "reachable_gap": "Запланований графік ставить тебе на **{{projected}}** — **{{gap}}** менше до твоєї мети.",
+        "unreachable_gap": "Запланований графік показує тебе на **{{projected}}**. **{{gap}}** до воріт — ще далеко звідси."
       },
       "past": {
-        "empty": "No hours were logged or planned for {{period}}.",
-        "logged_over_goal": "You ended **{{over}} hrs** over goal.",
-        "unreachable_gap": "You ended **{{gap}} hrs** short of goal."
+        "empty": "Жодних годин не було зафіксовано чи заплановано для {{period}}.",
+        "logged_over_goal": "Ти завершив **{{over}}** над воротами.",
+        "unreachable_gap": "Ти закінчив **{{gap}}** не дотягуючи до гола."
       },
       "future": {
-        "empty": "No hours planned yet for {{period}}.",
-        "projected_over_goal": "On track — planned hours would put you at **{{projected}}**.",
-        "reachable_gap": "Planned hours put you at **{{projected}}** — **{{gap}} hrs** short of goal.",
-        "unreachable_gap": "Planned hours put you at **{{projected}}**. **{{gap}} hrs** to goal — a stretch from here."
+        "empty": "Поки що не запланованих годин для {{period}}.",
+        "projected_over_goal": "На правильному шляху — запланований графік ставив би тебе до **{{projected}}**.",
+        "reachable_gap": "Заплановані години ставлять тебе на **{{projected}}** — **{{gap}}** до мети.",
+        "unreachable_gap": "Запланований графік ставить тебе на **{{projected}}**. **{{gap}}** до воріт — ще одна відтяжка звідси."
       }
     }
   }

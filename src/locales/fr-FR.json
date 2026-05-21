@@ -883,6 +883,9 @@
   "tryAgainLater": "Veuillez réessayer plus tard.",
   "oneTimeDonations": "Dons ponctuels",
   "monthlyDonation": "Don mensuel",
+  "lifetimeSupporter": "Soutien à vie",
+  "neverExpires": "Ne expire jamais",
+  "activatedOn": "Activé sur {{date}}",
   "active": "Actif",
   "inactive": "Inactif",
   "yourDonations": "Vos dons",
@@ -991,8 +994,8 @@
   "complete_description": "Si vous respectez l'heure prévue pour une journée, celle-ci est marquée comme terminée.",
   "partial": "Partiel",
   "plannedHours": "Heures prévues",
-  "projectedHoursTitle": "Projected Hours",
-  "projectedHoursDescription": "Combines hours you've already logged with hours you have planned. Aim to reach 100% of your goal.",
+  "projectedHoursTitle": "Heures prévues",
+  "projectedHoursDescription": "Combine les heures déjà enregistrées avec celles que vous avez prévues. Visez à atteindre 100 % de votre objectif.",
   "planDay": "Jour du Plan",
   "weekly": "Hebdomadaire",
   "bi-weekly": "Bihebdomadaire",
@@ -1249,6 +1252,8 @@
   "vsLastMonth": "par rapport au mois dernier",
   "hrsAhead": "{{count}} heures d'avance",
   "hrsBehind": "{{count}} heures de retard",
+  "aheadShort": "{{value}} devant",
+  "behindShort": "{{value}} derrière",
   "cumulativePace": "Rythme par rapport à l'horaire",
   "creditOverageChip": "+{{count}} hrs over cap",
   "lastLoggedOn": "Dernier enregistrement {{date}}",
@@ -1374,6 +1379,7 @@
   "paywallFeatureRestore": "restauration iCloud",
   "paywallFeatureBadge": "Badge de supporter",
   "paywallFeatureAccent": "Couleur d'accent personnalisée",
+  "paywallFeatureAppIcons": "Icônes d’applications personnalisées",
   "paywallFeatureSync": "synchronisation iCloud",
   "paywallFeatureFuture": "Nouveaux avantages au fil du temps",
   "paywallTierSupporter": "Supporter",
@@ -1390,6 +1396,9 @@
   "paywallCtaSelectPrice": "Choisissez un montant",
   "paywallLearnMore": "Lire la FAQ",
   "paywallCtaSendTip": "Envoyer un pourboire",
+  "copyAccountId": "Copiez l’ID du compte",
+  "accountIdCopied": "ID de compte copié",
+  "copyAccountIdError": "Impossible de copier l'ID du compte",
   "accentColor": "Couleur d'accentuation",
   "accentColorHelp": "Choisissez une couleur qui remplace le vert par défaut de l'application.",
   "avatarBackgroundColor": "Fond de l'avatar",
@@ -1529,16 +1538,16 @@
   "yourPlanActionMapContacts": "cartographier votre territoire",
   "yourPlanAutoTourAuto": "auto",
   "yourPlanAutoTourPaused": "pausé",
-  "onboardingBackfillTitle": "Pick up where you left off",
-  "onboardingBackfillSubtitle": "Your service year started in September. Tell us your hours so far and your annual goal will start accurate from day one.",
-  "onboardingBackfillHelper": "Enter regular hours and credit hours separately. We'll cap credit per month so nothing is lost across the year.",
-  "onboardingBackfillHoursLabel": "Hours",
-  "onboardingBackfillCreditLabel": "Credit hours",
-  "onboardingBackfillSkip": "Skip for now",
-  "onboardingBackfillScreenHeader": "Catch up your service year",
-  "onboardingBackfillBannerTitle": "Backdate your service year",
-  "onboardingBackfillBannerSubtitle": "Add your hours since September to get an accurate annual goal.",
-  "onboardingBackfillBannerDismissA11y": "Dismiss",
+  "onboardingBackfillTitle": "Reprenez là où vous vous étiez arrêté",
+  "onboardingBackfillSubtitle": "Votre année de service a commencé en septembre. Indiquez-nous vos horaires jusqu’à présent et votre objectif annuel commencera avec précision dès le premier jour.",
+  "onboardingBackfillHelper": "Inscrivez séparément les heures normales et les crédits. Nous plafonnerons le crédit par mois pour ne rien perdre sur l'année.",
+  "onboardingBackfillHoursLabel": "Horaires",
+  "onboardingBackfillCreditLabel": "Crédits",
+  "onboardingBackfillSkip": "Passez pour l’instant",
+  "onboardingBackfillScreenHeader": "Rattrapez votre année de service",
+  "onboardingBackfillBannerTitle": "Rétrodater votre année de service",
+  "onboardingBackfillBannerSubtitle": "Ajoutez vos heures depuis septembre pour obtenir un objectif annuel précis.",
+  "onboardingBackfillBannerDismissA11y": "Libérez",
   "intentPickerTitle": "Que voulez-vous que WitnessWork vous aide à faire ?",
   "intentPickerSubtitle": "Nous adapterons votre Travailleur Témoin en fonction de ces éléments. Choisissez-en autant que vous le souhaitez - vous pourrez les modifier plus tard.",
   "intentTrackTime": "Suivre mon temps de service",
@@ -1568,8 +1577,8 @@
   "notNow": "Pas maintenant",
   "allTime": "Tout le temps",
   "milestones": "Jalons",
-  "milestonesOrderHint": "Order matters — progress fills through them in sequence. The last one is your annual goal.",
-  "yearGoalSetInSettings": "ANNUAL GOAL · set in Settings",
+  "milestonesOrderHint": "L'ordre est important - les progrès se font dans l'ordre. Le dernier est votre objectif annuel.",
+  "yearGoalSetInSettings": "OBJECTIF ANNUEL - défini dans les paramètres",
   "adjustMilestones": "ajuster les étapes",
   "milestonesHitChip": "{{hit}} des {{total}} jalons",
   "nextMilestoneLabel": "prochain jalon dans {{remaining}} h",
@@ -1586,8 +1595,10 @@
   "emptyAllTime_title": "Pas encore de temps enregistré",
   "emptyAllTime_description": "Vos heures de vie apparaîtront ici.",
   "multiple": "Multiple",
-  "allDays": "Tous les jours",
-  "allMonths": "Tous les mois",
+  "vsGoal": "contre Goal",
+  "category": "Catégorie",
+  "showAllDays": "Afficher tous les jours",
+  "hideFutureDays": "Cacher les jours futurs",
   "now": "maintenant",
   "timeRollover": "Temps de renouvellement",
   "timeRollover_intro": "Votre mois précédent comportait des heures partielles. Nous pouvons reporter ces minutes sur ce mois-ci afin que vos rapports portent sur des heures entières.",
@@ -1750,113 +1761,115 @@
   "faq_dismissContact_a": "Ouvre le contact et tape sur « Rejeter ». Vous choisirez la durée pendant laquelle les congédier (1 semaine, 1 mois, 3 mois, 6 mois ou 1 an). Le contact disparaît de vos listes d’actifs pendant cette période puis revient automatiquement à la fin du temps. Si les notifications sont activées, vous recevrez aussi un rappel lorsqu'elles réapparaissent, afin que les contacts ignorés ne passent pas discrètement entre les mailles du filet. Vous pouvez trouver ou restaurer les contacts ignorés à tout moment dans Paramètres → Contacts renvoyés.",
   "faq_reportBug_q": "Comment signaler un bug ou demander une fonctionnalité ?",
   "faq_reportBug_a": "Appuyez sur l’un des boutons ci-dessous pour ouvrir directement un rapport de bug ou une demande de fonctionnalité. Les rapports incluant une capture d’écran, votre appareil + version iOS, et la version WitnessWork (affichée en bas des Paramètres) sont les plus faciles à corriger rapidement.",
-  "faq_becomeSupporter_q": "What do I get as a supporter?",
-  "faq_becomeSupporter_a": "Monthly supporters receive the Supporter badge and a few extra personalization options — a custom accent color today, with more rolling out over time. iCloud sync for your data across devices is the next big supporter perk coming soon. One-time donations are deeply appreciated too, but don't grant ongoing Supporter status.",
-  "faq_stillFree_q": "Is WitnessWork still free?",
-  "faq_stillFree_a": "Yes — and always will be. Every core feature stays free for everyone. Supporting is completely optional; it helps fund ongoing development and unlocks a few personal touches as a thank-you.",
-  "faq_stopSupporting_q": "What happens if I stop supporting?",
-  "faq_stopSupporting_a": "Nothing about your data changes. If a monthly subscription lapses, any supporter-only personalization gracefully reverts to its defaults — your reports, contacts, notes, and settings are preserved exactly as they are.",
-  "faq_acceptDonations_q": "Why are you accepting donations?",
-  "faq_acceptDonations_a": "As a brother in the hall, I consider it a privilege to be able to use my skills to help others in the congregation. Although free to everyone, developing, running, and maintaining this application, unfortunately costs a significant amount of money and time. I view donating as similar to how one might pay for another's gas after going in service with them - it's a loving gesture that goes greatly appreciated.",
-  "faq_donationsUsedFor_q": "What are the donations used for?",
-  "faq_donationsUsedFor_a": "Your donation helps keeps this app running! There are costs with purchasing real devices as development equipment, paying for location API service fees, build service API fees, app store fees, and opportunity cost of my many hours spent developing this app. Each piece of support is greatly appreciated!",
+  "faq_becomeSupporter_q": "Que débloque-t-il devenir Supporter ?",
+  "faq_becomeSupporter_a": "WitnessWork est, et sera toujours, gratuit. Si l’application vous a été utile, devenir un supporter est une façon de dire merci et aide à poursuivre le développement. Les supporters bénéficient aussi de quelques fonctionnalités supplémentaires pour améliorer la qualité de vie en guise de petit remerciement. Appuyez sur Devenir un soutien dans le tiroir des Paramètres pour les détails actuels.",
+  "faq_stillFree_q": "WitnessWork est-il toujours gratuit ?",
+  "faq_stillFree_a": "Oui — et le sera toujours. Chaque fonctionnalité de base reste gratuite pour tout le monde. Le soutien est totalement optionnel ; Cela aide à financer le développement continu et débloque quelques touches personnelles en guise de remerciement.",
+  "faq_stopSupporting_q": "Que se passe-t-il si j’arrête de soutenir ?",
+  "faq_stopSupporting_a": "Rien ne change dans vos données. Si un abonnement mensuel expire, toute personnalisation réservée aux supporters revient gracieusement à ses paramètres par défaut — vos rapports, contacts, notes et paramètres sont conservés exactement tels qu’ils sont.",
+  "faq_acceptDonations_q": "Pourquoi acceptez-vous des dons ?",
+  "faq_acceptDonations_a": "En tant que frère dans la salle, je considère comme un privilège de pouvoir utiliser mes compétences pour aider les autres membres de la congrégation. Bien que gratuite pour tous, développer, faire fonctionner et maintenir cette application coûte malheureusement beaucoup d’argent et de temps. Je considère le don comme un peu comme on paie l'essence d'un autre après être entré en service avec eux – c'est un geste d'amour qui est très apprécié.",
+  "faq_donationsUsedFor_q": "À quoi servent les dons ?",
+  "faq_donationsUsedFor_a": "Votre don aide à maintenir cette application en activité ! Il y a des coûts liés à l’achat de véritables appareils comme équipements de développement, au paiement des frais de localisation de l’API API, des frais de l’API du service de construction, des frais de la boutique d’applications, et le coût d’opportunité de mes nombreuses heures consacrées au développement de cette application. Chaque soutien est grandement apprécié !",
   "faq_whatsNew_q": "Où puis-je voir ce qui a changé dans la dernière mise à jour ?",
   "faq_whatsNew_a": "Paramètres → What's New montre un résumé des changements récents. Les mises à jour majeures affichent aussi une fiche ponctuelle « Nouveautés » la première fois que vous ouvrez l'application après la mise à jour.",
   "availability": {
-    "settingsRow": "Availability",
-    "settingsRowDescription": "Tell the Assistant which days are your off days and which are Kingdom Hall meeting days. It uses both to shape its recommendations.",
-    "settingsValueAllAvailable": "All days available",
-    "settingsValueNOff": "{{count}} off days",
-    "settingsValueNMeeting": "{{count}} meeting days",
-    "settingsValueNOffNMeeting": "{{off}} off · {{meeting}} meeting",
+    "settingsRow": "Disponibilité",
+    "settingsRowDescription": "Dis à l’Assistant quels sont tes jours de repos et lesquels sont les jours de réunion de la Salle du Royaume. Il utilise les deux pour orienter ses recommandations.",
+    "settingsValueAllAvailable": "Tous les jours disponibles",
+    "settingsValueNOff": "{{count}} jours de repos",
+    "settingsValueNMeeting": "{{count}} Journées de réunion",
+    "settingsValueNOffNMeeting": "{{off}} éteint · {{meeting}} réunion",
     "onboarding": {
-      "title": "Which days are your off days?",
-      "body": "Tap the days the Assistant should skip entirely. We won't propose service on these days. You can change this anytime in Settings.",
-      "meetingDaysTitle": "Kingdom Hall meeting days",
-      "meetingDaysBody": "Tap the days you have meetings. The Assistant will keep those days lighter so you have time to attend and prepare.",
-      "save": "Save",
+      "title": "Quels sont tes jours de repos ?",
+      "body": "Tapez les jours que l’Assistant devrait complètement sauter. Nous ne proposerons pas de service ces jours-là. Vous pouvez changer cela à tout moment dans les Paramètres.",
+      "meetingDaysTitle": "Journées de réunion à Kingdom Hall",
+      "meetingDaysBody": "Profitez des jours où vous avez des réunions. L’assistant gardera ces journées plus légères pour que vous ayez le temps d’assister et de vous préparer.",
+      "save": "Sauvegarder",
       "skip": "Skip"
     },
     "weekday": {
       "sun": "Sun",
       "mon": "Mon",
-      "tue": "Tue",
-      "wed": "Wed",
-      "thu": "Thu",
-      "fri": "Fri",
-      "sat": "Sat"
+      "tue": "Mar",
+      "wed": "Married",
+      "thu": "Jeu",
+      "fri": "Ven",
+      "sat": "Samedi"
     }
   },
   "assistant": {
     "label": "Assistant",
-    "settingsA11y": "Plan preferences",
+    "settingsA11y": "Préférences de plan",
     "intro": {
-      "title": "Get a recommended plan",
-      "body": "Tell the Assistant your off days and meeting days, and it'll suggest the strongest plan to reach your goal.",
-      "cta": "Set up Assistant"
+      "title": "Obtenez un plan recommandé",
+      "body": "Dites à l'assistant vos jours de repos et de réunion, et cela vous suggérera le plan le plus solide pour atteindre votre objectif.",
+      "cta": "Assistant de mise en place"
     },
     "headline": {
-      "concentrated": "Plan **{{hours}}h** on **{{day}}** to reach your goal",
-      "distributed": "Plan **{{hours}}h** on **{{days}} days** to reach your goal",
-      "recurring": "Plan **{{hours}}h** every **{{weekdayList}}** for the next **{{weeks}} weeks**"
+      "concentrated": "Planifiez **{{hours}}** sur **{{day}}** pour atteindre votre objectif",
+      "distributed": "Planifiez **{{hours}}** les **{{days}} jours** pour atteindre votre objectif",
+      "recurring": "Planifiez **{{hours}}** tous les **{{weekdayList}}** pour les prochaines **{{weeks}} semaines**"
     },
     "rationale": {
-      "small_gap_one_focused_plan": "A single focused plan is the fastest path.",
-      "spread_to_sustainable_pace": "Spread out so no day pushes too hard.",
-      "pattern_fits_over_horizon": "A weekly rhythm makes the goal feel routine.",
-      "stretched_for_short_horizon": "A bit more per day — there's not much time left.",
-      "rest_recommended_then_resume": "Starts after a rest day — you've been pushing lately.",
-      "layered_on_conversation_days": "Layered on days you'll already be out.",
-      "best_effort_unreachable_goal": "Closing your full goal is a stretch this month — here's the strongest finish."
+      "small_gap_one_focused_plan": "Un plan ciblé unique est le chemin le plus rapide.",
+      "spread_to_sustainable_pace": "Écartez-vous pour qu’aucun jour ne pousse trop fort.",
+      "pattern_fits_over_horizon": "Un rythme hebdomadaire rend l’objectif routinier.",
+      "stretched_for_short_horizon": "Un peu plus par jour — il ne reste plus beaucoup de temps.",
+      "rest_recommended_then_resume": "Ça commence après une journée de repos — tu as poussé ces derniers temps.",
+      "layered_on_conversation_days": "Superposez les jours où vous serez déjà dehors.",
+      "best_effort_unreachable_goal": "Conclure votre objectif complet est un défi ce mois-ci — voici la meilleure conclusion."
     },
     "button": {
-      "preview": "Preview",
-      "dismiss": "Dismiss",
-      "addToSchedule": "Add to Schedule",
-      "cancel": "Cancel",
-      "undo": "Undo"
+      "preview": "Aperçu",
+      "dismiss": "Libérez",
+      "addToSchedule": "Ajouter au planning",
+      "cancel": "Annuler",
+      "undo": "Annuler"
     },
     "preview": {
-      "notifyMe": "Notify me before each plan",
-      "addAnotherDay": "Add another day",
-      "proposedTotal": "This will put you at **{{projected}} hrs**",
-      "goalReached": "Goal reached"
+      "notifyMe": "Prévenez-moi avant chaque plan",
+      "addAnotherDay": "Ajoutez un jour de plus",
+      "proposedTotal": "Cela vous placera à **{{projected}}**",
+      "goalReached": "Objectif atteint"
     },
     "snackbar": {
-      "addedPlans": "Assistant added {{count}} plans"
+      "addedPlans": "Assistant ajouté {{count}} plans"
     },
-    "collapsedAfterAccept": "✓ You've planned enough"
+    "collapsedAfterAccept": "✓ Tu as assez planifié"
   },
   "projectedTotal": {
-    "header": "Projected Total",
-    "heroSuffix": "hrs if all planned hours come through",
+    "header": "Total projeté",
+    "headerMonth": "Mois projeté",
+    "headerYear": "Année prévue",
+    "heroSuffix": "si toutes les heures prévues se réalisent",
     "legend": {
-      "logged": "Logged · {{value}}",
-      "planned": "Planned · {{value}}",
-      "goal": "Goal · {{value}}"
+      "logged": "Connecté · {{value}}",
+      "planned": "Prévu · {{value}}",
+      "goal": "But · {{value}}"
     },
     "period": {
-      "thisMonth": "this month",
-      "thisServiceYear": "this service year"
+      "thisMonth": "Ce mois-ci",
+      "thisServiceYear": "Cette année de service"
     },
     "status": {
       "present": {
-        "empty": "No hours logged or planned yet for {{period}}.",
-        "logged_over_goal": "You're already **{{over}} hrs** over goal. Planned hours would put you at **{{projected}}**.",
-        "projected_over_goal": "On track — planned hours would put you at **{{projected}}**.",
-        "reachable_gap": "Planned hours put you at **{{projected}}** — **{{gap}} hrs** short of your goal.",
-        "unreachable_gap": "Planned hours put you at **{{projected}}**. **{{gap}} hrs** to goal — a stretch from here."
+        "empty": "Aucune heure enregistrée ou planifiée pour {{period}}.",
+        "logged_over_goal": "Tu es déjà **{{over}}** au-dessus du but. Les horaires prévus vous placeraient à **{{projected}}**.",
+        "projected_over_goal": "Sur la bonne voie — les heures planifiées vous placeraient à **{{projected}}**.",
+        "reachable_gap": "Les horaires planifiés vous placent **{{projected}}** — **{{gap}}** en dessous de votre objectif.",
+        "unreachable_gap": "Les horaires planifiés vous placent à **{{projected}}**. **{{gap}}** jusqu’au but — un étirement à partir d’ici."
       },
       "past": {
-        "empty": "No hours were logged or planned for {{period}}.",
-        "logged_over_goal": "You ended **{{over}} hrs** over goal.",
-        "unreachable_gap": "You ended **{{gap}} hrs** short of goal."
+        "empty": "Aucune heure n’a été enregistrée ni planifiée pour {{period}}.",
+        "logged_over_goal": "Tu as terminé **{{over}}** au-dessus du but.",
+        "unreachable_gap": "Tu as fini **{{gap}}** avant le but."
       },
       "future": {
-        "empty": "No hours planned yet for {{period}}.",
-        "projected_over_goal": "On track — planned hours would put you at **{{projected}}**.",
-        "reachable_gap": "Planned hours put you at **{{projected}}** — **{{gap}} hrs** short of goal.",
-        "unreachable_gap": "Planned hours put you at **{{projected}}**. **{{gap}} hrs** to goal — a stretch from here."
+        "empty": "Aucune heure prévue pour {{period}}.",
+        "projected_over_goal": "Sur la bonne voie — les heures prévues vous placeraient à **{{projected}}**.",
+        "reachable_gap": "Les horaires planifiés vous placent **{{projected}}** — **{{gap}}** en dessous de l’objectif.",
+        "unreachable_gap": "Les horaires planifiés vous placent à **{{projected}}**. **{{gap}}** vers le but — un étirement à partir d’ici."
       }
     }
   }

@@ -883,6 +883,9 @@
   "tryAgainLater": "请稍后再试。",
   "oneTimeDonations": "一次性捐款",
   "monthlyDonation": "每月捐款",
+  "lifetimeSupporter": "終身支持者",
+  "neverExpires": "永不過期",
+  "activatedOn": "啟動於{{date}}",
   "active": "积极的",
   "inactive": "不活跃",
   "yourDonations": "您的捐款",
@@ -991,8 +994,8 @@
   "complete_description": "如果您满足了一天的计划时间，则该天将被标记为已完成。",
   "partial": "部分",
   "plannedHours": "计划小时数",
-  "projectedHoursTitle": "Projected Hours",
-  "projectedHoursDescription": "Combines hours you've already logged with hours you have planned. Aim to reach 100% of your goal.",
+  "projectedHoursTitle": "預計時數",
+  "projectedHoursDescription": "將你已記錄的工時與你已規劃的工時合併計算。目標是達成你的目標100%。",
   "planDay": "计划日",
   "weekly": "每周",
   "bi-weekly": "每两周",
@@ -1249,6 +1252,8 @@
   "vsLastMonth": "與上月相比",
   "hrsAhead": "{{count}} 小時",
   "hrsBehind": "{{count}}小時之後",
+  "aheadShort": "{{value}} 前方",
+  "behindShort": "{{value}} 後面",
   "cumulativePace": "速度與時間表",
   "creditOverageChip": "+{{count}}小時超過上限",
   "lastLoggedOn": "最近記錄的{{date}}小時",
@@ -1374,6 +1379,7 @@
   "paywallFeatureRestore": "iCloud 還原",
   "paywallFeatureBadge": "支持者徽章",
   "paywallFeatureAccent": "自訂重點顏色",
+  "paywallFeatureAppIcons": "自訂應用程式圖示",
   "paywallFeatureSync": "iCloud 同步",
   "paywallFeatureFuture": "隨時間推移的新福利",
   "paywallTierSupporter": "支持者",
@@ -1390,6 +1396,9 @@
   "paywallCtaSelectPrice": "選擇金額",
   "paywallLearnMore": "閱讀常見問題",
   "paywallCtaSendTip": "發送小費",
+  "copyAccountId": "複製帳號 ID",
+  "accountIdCopied": "帳號 ID 已複製",
+  "copyAccountIdError": "無法複製帳號 ID",
   "accentColor": "重音顏色",
   "accentColorHelp": "選取一種顏色，取代整個應用程式的預設綠色。",
   "avatarBackgroundColor": "頭像背景",
@@ -1529,16 +1538,16 @@
   "yourPlanActionMapContacts": "規劃您的領域",
   "yourPlanAutoTourAuto": "自動",
   "yourPlanAutoTourPaused": "停頓",
-  "onboardingBackfillTitle": "Pick up where you left off",
-  "onboardingBackfillSubtitle": "Your service year started in September. Tell us your hours so far and your annual goal will start accurate from day one.",
-  "onboardingBackfillHelper": "Enter regular hours and credit hours separately. We'll cap credit per month so nothing is lost across the year.",
-  "onboardingBackfillHoursLabel": "Hours",
-  "onboardingBackfillCreditLabel": "Credit hours",
-  "onboardingBackfillSkip": "Skip for now",
-  "onboardingBackfillScreenHeader": "Catch up your service year",
-  "onboardingBackfillBannerTitle": "Backdate your service year",
-  "onboardingBackfillBannerSubtitle": "Add your hours since September to get an accurate annual goal.",
-  "onboardingBackfillBannerDismissA11y": "Dismiss",
+  "onboardingBackfillTitle": "從你停下的地方繼續",
+  "onboardingBackfillSubtitle": "你的服務年從九月開始。告訴我們你目前的工時，你的年度目標將從第一天開始準確計算。",
+  "onboardingBackfillHelper": "請分別輸入常規時數與學分時數。我們會限制每月信用額度，這樣全年不會損失任何信用額度。",
+  "onboardingBackfillHoursLabel": "營業時間",
+  "onboardingBackfillCreditLabel": "學分時數",
+  "onboardingBackfillSkip": "先跳過",
+  "onboardingBackfillScreenHeader": "補上你的服役年數",
+  "onboardingBackfillBannerTitle": "請回溯你的服務年份",
+  "onboardingBackfillBannerSubtitle": "將自九月以來的工時加入，以獲得準確的年度目標。",
+  "onboardingBackfillBannerDismissA11y": "解散",
   "intentPickerTitle": "您希望 WitnessWork 幫助什麼？",
   "intentPickerSubtitle": "我們將據此為您量身定制 WitnessWork。您可以隨意選擇 - 您可以稍後更改。",
   "intentTrackTime": "追蹤我的服務時間",
@@ -1568,8 +1577,8 @@
   "notNow": "現在不是",
   "allTime": "全部時間",
   "milestones": "里程碑",
-  "milestonesOrderHint": "Order matters — progress fills through them in sequence. The last one is your annual goal.",
-  "yearGoalSetInSettings": "ANNUAL GOAL · set in Settings",
+  "milestonesOrderHint": "順序很重要 - 依序填寫。最後一個是您的年度目標。",
+  "yearGoalSetInSettings": "年度目標 - 設定中",
   "adjustMilestones": "調整里程碑",
   "milestonesHitChip": "{{hit}} 的 {{total}} 里程碑",
   "nextMilestoneLabel": "下一個里程碑在 {{remaining}}h",
@@ -1586,8 +1595,10 @@
   "emptyAllTime_title": "尚未記錄時間",
   "emptyAllTime_description": "您的終生時數將會顯示在這裡。",
   "multiple": "多個",
-  "allDays": "所有天數",
-  "allMonths": "所有月份",
+  "vsGoal": "對陣目標",
+  "category": "分類",
+  "showAllDays": "全天候節目",
+  "hideFutureDays": "隱藏未來的日子",
   "now": "現在",
   "timeRollover": "時間展期",
   "timeRollover_intro": "您上一個月有部分時間。我們可以將這些時間滾動到這個月，這樣您的報告就可以保持完整的小時。",
@@ -1750,113 +1761,115 @@
   "faq_dismissContact_a": "打開聯絡人並點選「解散」。你會選擇解僱期限（1週、1個月、3個月、6個月或1年）。該聯絡人會在這段期間從你的活躍名單中消失，然後在時間結束時自動回歸。如果啟用通知，當通知重新出現時也會收到提醒，避免被拒絕的聯絡人悄悄溜走。你可以隨時在設定→已解散聯絡人中尋找或恢復被駁回的聯絡人。",
   "faq_reportBug_q": "我要如何回報錯誤或請求功能？",
   "faq_reportBug_a": "點擊下方其中一個按鈕即可直接開啟錯誤回報或功能請求。包含截圖、你的裝置 + iOS 版本，以及 WitnessWork 版本（顯示在設定底部）的報告，最容易快速修復。",
-  "faq_becomeSupporter_q": "What do I get as a supporter?",
-  "faq_becomeSupporter_a": "Monthly supporters receive the Supporter badge and a few extra personalization options — a custom accent color today, with more rolling out over time. iCloud sync for your data across devices is the next big supporter perk coming soon. One-time donations are deeply appreciated too, but don't grant ongoing Supporter status.",
-  "faq_stillFree_q": "Is WitnessWork still free?",
-  "faq_stillFree_a": "Yes — and always will be. Every core feature stays free for everyone. Supporting is completely optional; it helps fund ongoing development and unlocks a few personal touches as a thank-you.",
-  "faq_stopSupporting_q": "What happens if I stop supporting?",
-  "faq_stopSupporting_a": "Nothing about your data changes. If a monthly subscription lapses, any supporter-only personalization gracefully reverts to its defaults — your reports, contacts, notes, and settings are preserved exactly as they are.",
-  "faq_acceptDonations_q": "Why are you accepting donations?",
-  "faq_acceptDonations_a": "As a brother in the hall, I consider it a privilege to be able to use my skills to help others in the congregation. Although free to everyone, developing, running, and maintaining this application, unfortunately costs a significant amount of money and time. I view donating as similar to how one might pay for another's gas after going in service with them - it's a loving gesture that goes greatly appreciated.",
-  "faq_donationsUsedFor_q": "What are the donations used for?",
-  "faq_donationsUsedFor_a": "Your donation helps keeps this app running! There are costs with purchasing real devices as development equipment, paying for location API service fees, build service API fees, app store fees, and opportunity cost of my many hours spent developing this app. Each piece of support is greatly appreciated!",
+  "faq_becomeSupporter_q": "成為支持者能解鎖什麼？",
+  "faq_becomeSupporter_a": "WitnessWork 是免費的，也將永遠是免費的。如果這個應用程式對你有幫助，成為支持者是一種感謝的方式，也有助於持續開發。支持者還會獲得一些額外的生活品質功能，作為一點小小的感謝。從設定抽屜點選「成為支持者」即可查看最新細節。",
+  "faq_stillFree_q": "WitnessWork 還免費嗎？",
+  "faq_stillFree_a": "是的——而且永遠都會如此。所有核心功能對所有人都免費。支援完全是可選的;它有助於資助持續開發，並解鎖一些個人化的感謝元素。",
+  "faq_stopSupporting_q": "如果我停止支持會怎樣？",
+  "faq_stopSupporting_a": "你的資料沒有任何變動。如果月費訂閱中斷，任何僅限支持者的個人化功能都會優雅地回復預設狀態——你的報告、聯絡人、筆記和設定都會保持原狀。",
+  "faq_acceptDonations_q": "你為什麼接受捐款？",
+  "faq_acceptDonations_a": "作為會堂的弟兄，我認為能運用我的技能幫助會眾中的他人是一種榮幸。雖然對所有人免費，但開發、執行及維護此應用程式仍需花費大量金錢與時間。我把捐款看作是服役後幫別人付油錢一樣——這是一種充滿愛的心意，讓人非常感激。",
+  "faq_donationsUsedFor_q": "這些捐款是用來做什麼的？",
+  "faq_donationsUsedFor_a": "您的捐款幫助這個應用程式持續運作！購買實體裝置作為開發設備、支付位置 API 服務費、建置服務 API 費用、應用程式商店費用，以及我花大量時間開發這個應用程式的機會成本，都有成本。每一份支持都非常感激！",
   "faq_whatsNew_q": "我在哪裡可以看到最新更新的改變？",
   "faq_whatsNew_a": "設定→「新增內容」會顯示近期變更摘要。重大更新在更新後首次開啟應用程式時，會跳出一次性的「最新資訊」頁面。",
   "availability": {
-    "settingsRow": "Availability",
-    "settingsRowDescription": "Tell the Assistant which days are your off days and which are Kingdom Hall meeting days. It uses both to shape its recommendations.",
-    "settingsValueAllAvailable": "All days available",
-    "settingsValueNOff": "{{count}} off days",
-    "settingsValueNMeeting": "{{count}} meeting days",
-    "settingsValueNOffNMeeting": "{{off}} off · {{meeting}} meeting",
+    "settingsRow": "可取得性",
+    "settingsRowDescription": "告訴助理哪些天是你的休息日，哪些是王國聚會所的聚會日。它同時利用兩者來制定建議。",
+    "settingsValueAllAvailable": "所有天數皆可預約",
+    "settingsValueNOff": "{{count}} 休息日",
+    "settingsValueNMeeting": "{{count}} 會議日",
+    "settingsValueNOffNMeeting": "{{off}} 關掉 ·{{meeting}}會議",
     "onboarding": {
-      "title": "Which days are your off days?",
-      "body": "Tap the days the Assistant should skip entirely. We won't propose service on these days. You can change this anytime in Settings.",
-      "meetingDaysTitle": "Kingdom Hall meeting days",
-      "meetingDaysBody": "Tap the days you have meetings. The Assistant will keep those days lighter so you have time to attend and prepare.",
-      "save": "Save",
-      "skip": "Skip"
+      "title": "你的休息日是哪些？",
+      "body": "點選助理應該完全跳過的日子。我們不會在這些日子提議禮拜。你可以隨時在設定裡更改這個設定。",
+      "meetingDaysTitle": "王國聚會所時期",
+      "meetingDaysBody": "點擊你有會議的日子。助理會讓這些天較輕鬆，讓你有時間參加和準備。",
+      "save": "存檔",
+      "skip": "跳過"
     },
     "weekday": {
-      "sun": "Sun",
+      "sun": "太陽",
       "mon": "Mon",
-      "tue": "Tue",
-      "wed": "Wed",
-      "thu": "Thu",
-      "fri": "Fri",
-      "sat": "Sat"
+      "tue": "星期二",
+      "wed": "結婚",
+      "thu": "星期四",
+      "fri": "星期五",
+      "sat": "星期六"
     }
   },
   "assistant": {
-    "label": "Assistant",
-    "settingsA11y": "Plan preferences",
+    "label": "助理",
+    "settingsA11y": "方案偏好",
     "intro": {
-      "title": "Get a recommended plan",
-      "body": "Tell the Assistant your off days and meeting days, and it'll suggest the strongest plan to reach your goal.",
-      "cta": "Set up Assistant"
+      "title": "取得建議的計畫",
+      "body": "告訴助理你的休息日和會議日，它會建議最強的計畫來達成目標。",
+      "cta": "設定助理"
     },
     "headline": {
-      "concentrated": "Plan **{{hours}}h** on **{{day}}** to reach your goal",
-      "distributed": "Plan **{{hours}}h** on **{{days}} days** to reach your goal",
-      "recurring": "Plan **{{hours}}h** every **{{weekdayList}}** for the next **{{weeks}} weeks**"
+      "concentrated": "在 **{{hours}}** 上規劃 **{{day}}** 以達成你的目標",
+      "distributed": "在**{{hours}}天**規劃**{{days}}**以達成目標",
+      "recurring": "每隔 **{{hours}}** 規劃 **{{weekdayList}} 週**{{weeks}}**"
     },
     "rationale": {
-      "small_gap_one_focused_plan": "A single focused plan is the fastest path.",
-      "spread_to_sustainable_pace": "Spread out so no day pushes too hard.",
-      "pattern_fits_over_horizon": "A weekly rhythm makes the goal feel routine.",
-      "stretched_for_short_horizon": "A bit more per day — there's not much time left.",
-      "rest_recommended_then_resume": "Starts after a rest day — you've been pushing lately.",
-      "layered_on_conversation_days": "Layered on days you'll already be out.",
-      "best_effort_unreachable_goal": "Closing your full goal is a stretch this month — here's the strongest finish."
+      "small_gap_one_focused_plan": "一個專注的計畫是最快的路徑。",
+      "spread_to_sustainable_pace": "分散開來，讓每天都不會太緊。",
+      "pattern_fits_over_horizon": "每週的節奏讓目標變得有規律。",
+      "stretched_for_short_horizon": "每天多一點——時間不多了。",
+      "rest_recommended_then_resume": "休息日後開始——你最近一直在努力。",
+      "layered_on_conversation_days": "在你已經不在的日子穿多層衣服。",
+      "best_effort_unreachable_goal": "這個月要完成完整目標真的很難——這是最強的結局。"
     },
     "button": {
-      "preview": "Preview",
-      "dismiss": "Dismiss",
-      "addToSchedule": "Add to Schedule",
-      "cancel": "Cancel",
-      "undo": "Undo"
+      "preview": "預覽",
+      "dismiss": "解散",
+      "addToSchedule": "加入行程表",
+      "cancel": "取消",
+      "undo": "還原"
     },
     "preview": {
-      "notifyMe": "Notify me before each plan",
-      "addAnotherDay": "Add another day",
-      "proposedTotal": "This will put you at **{{projected}} hrs**",
-      "goalReached": "Goal reached"
+      "notifyMe": "每次計畫前請通知我",
+      "addAnotherDay": "再加一天",
+      "proposedTotal": "這會讓你達到**{{projected}}**",
+      "goalReached": "達陣"
     },
     "snackbar": {
-      "addedPlans": "Assistant added {{count}} plans"
+      "addedPlans": "助理新增了{{count}}圖紙"
     },
-    "collapsedAfterAccept": "✓ You've planned enough"
+    "collapsedAfterAccept": "✓ 你已經計畫夠多了"
   },
   "projectedTotal": {
-    "header": "Projected Total",
-    "heroSuffix": "hrs if all planned hours come through",
+    "header": "預計總數",
+    "headerMonth": "預計月份",
+    "headerYear": "預計年份",
+    "heroSuffix": "如果所有預定時數都能完成",
     "legend": {
-      "logged": "Logged · {{value}}",
-      "planned": "Planned · {{value}}",
-      "goal": "Goal · {{value}}"
+      "logged": "記錄 ·{{value}}",
+      "planned": "計畫中·{{value}}",
+      "goal": "目標 ·{{value}}"
     },
     "period": {
-      "thisMonth": "this month",
-      "thisServiceYear": "this service year"
+      "thisMonth": "本月",
+      "thisServiceYear": "本服務年度"
     },
     "status": {
       "present": {
-        "empty": "No hours logged or planned yet for {{period}}.",
-        "logged_over_goal": "You're already **{{over}} hrs** over goal. Planned hours would put you at **{{projected}}**.",
-        "projected_over_goal": "On track — planned hours would put you at **{{projected}}**.",
-        "reachable_gap": "Planned hours put you at **{{projected}}** — **{{gap}} hrs** short of your goal.",
-        "unreachable_gap": "Planned hours put you at **{{projected}}**. **{{gap}} hrs** to goal — a stretch from here."
+        "empty": "{{period}} 還沒有記錄或規劃工時。",
+        "logged_over_goal": "你{{over}}已經超標了。計畫工時會讓你達到**{{projected}}**。",
+        "projected_over_goal": "進度正常——規劃的工時會讓你達到**{{projected}}**。",
+        "reachable_gap": "規劃工時會讓你的目標還差 **{{projected}}** — **{{gap}}**。",
+        "unreachable_gap": "計畫上班時間會讓你達到**{{projected}}**。**{{gap}}** 到球門——還有一段距離。"
       },
       "past": {
-        "empty": "No hours were logged or planned for {{period}}.",
-        "logged_over_goal": "You ended **{{over}} hrs** over goal.",
-        "unreachable_gap": "You ended **{{gap}} hrs** short of goal."
+        "empty": "{{period}} 沒有記錄或規劃任何工時。",
+        "logged_over_goal": "你以**{{over}}**超過球門結束比賽。",
+        "unreachable_gap": "你{{gap}}差點進球。"
       },
       "future": {
-        "empty": "No hours planned yet for {{period}}.",
-        "projected_over_goal": "On track — planned hours would put you at **{{projected}}**.",
-        "reachable_gap": "Planned hours put you at **{{projected}}** — **{{gap}} hrs** short of goal.",
-        "unreachable_gap": "Planned hours put you at **{{projected}}**. **{{gap}} hrs** to goal — a stretch from here."
+        "empty": "{{period}} 還沒有安排工時。",
+        "projected_over_goal": "進度正常——規劃時數會讓你達到**{{projected}}**。",
+        "reachable_gap": "計畫時間讓你的目標還差一點{{projected}}{{gap}}}**。",
+        "unreachable_gap": "計畫時數會讓你達到**{{projected}}**。**{{gap}}** 到球門——從這裡拉長一段路。"
       }
     }
   }

@@ -521,7 +521,11 @@ const FullMapView = ({
           <Marker
             onPress={() => handlePinPress(c.id)}
             identifier={c.id}
-            key={c.id}
+            // Include pinColor in the key so the marker remounts when its
+            // staleness color changes. react-native-maps only applies
+            // `pinColor` at mount on iOS — without the remount, logging a
+            // conversation never updates the pin tint until reload.
+            key={`${c.id}-${c.pinColor}`}
             coordinate={c.coordinate!}
             pinColor={c.pinColor}
             draggable

@@ -426,7 +426,11 @@ const AddressRow = ({ contact }: { contact: Contact }) => {
           >
             <Marker
               identifier={contact.id}
-              key={contact.id}
+              // Include pinColor in the key so the marker remounts when its
+              // staleness color changes. react-native-maps only applies
+              // `pinColor` at mount on iOS — without the remount, logging a
+              // conversation never updates the pin tint until reload.
+              key={`${contact.id}-${pinColor}`}
               coordinate={contact.coordinate}
               pinColor={pinColor}
               draggable

@@ -57,7 +57,9 @@ const ScheduleScreen = ({ route }: Props) => {
   const insets = useSafeAreaInsets()
   const tabBarHeight = useBottomTabBarHeight()
   const rootNavigation = useRootNavigation<RootStackNavigation>()
-  const { serviceReports, dayPlans, recurringPlans } = useServiceReport()
+  const serviceReports = useServiceReport((s) => s.serviceReports)
+  const dayPlans = useServiceReport((s) => s.dayPlans)
+  const recurringPlans = useServiceReport((s) => s.recurringPlans)
 
   const [year, setYear] = useState(route.params?.year ?? moment().year())
   const [month, setMonth] = useState(route.params?.month ?? moment().month())
@@ -458,7 +460,9 @@ const navButtonStyle = (theme: ReturnType<typeof useTheme>) => ({
 
 const MonthScheduleSection = (props: { month: number; year: number }) => {
   const theme = useTheme()
-  const { dayPlans, recurringPlans, serviceReports } = useServiceReport()
+  const serviceReports = useServiceReport((s) => s.serviceReports)
+  const dayPlans = useServiceReport((s) => s.dayPlans)
+  const recurringPlans = useServiceReport((s) => s.recurringPlans)
   const {
     monthlyGoalHours: goalHours,
     creditCapMinutes,
@@ -542,7 +546,9 @@ const MonthScheduleSection = (props: { month: number; year: number }) => {
 const AnnualScheduleSection = (props: { month: number; year: number }) => {
   const { month, year } = props
   const theme = useTheme()
-  const { dayPlans, recurringPlans, serviceReports } = useServiceReport()
+  const serviceReports = useServiceReport((s) => s.serviceReports)
+  const dayPlans = useServiceReport((s) => s.dayPlans)
+  const recurringPlans = useServiceReport((s) => s.recurringPlans)
   const { annualGoalHours, hasAnnualGoal } = usePublisher()
   const serviceYear = getServiceYearFromDate(moment().month(month).year(year))
 
@@ -622,7 +628,9 @@ const MonthAssistantCard = ({
   year: number
 }) => {
   const { monthlyGoalHours, creditCapMinutes, type: publisher } = usePublisher()
-  const { serviceReports, dayPlans, recurringPlans } = useServiceReport()
+  const serviceReports = useServiceReport((s) => s.serviceReports)
+  const dayPlans = useServiceReport((s) => s.dayPlans)
+  const recurringPlans = useServiceReport((s) => s.recurringPlans)
   const today = useMemo(() => new Date(), [])
 
   const tense = getPeriodTense({ kind: 'month', month, year }, today)

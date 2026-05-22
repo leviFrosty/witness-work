@@ -5,6 +5,7 @@ import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view
 
 import useServiceReport from '@/stores/serviceReport'
 import { getMonthsReports } from '@/lib/serviceReport'
+import type { ProjectedTotalScope } from '@/lib/projectedTotal'
 
 import MonthReport from '@/features/service-reports/components/MonthReport'
 import ProjectedTotalCard from '@/components/ProjectedTotalCard'
@@ -31,11 +32,18 @@ const ProgressMonthTab = ({
   onSwipeBack,
 }: ProgressMonthTabProps) => {
   const insets = useSafeAreaInsets()
-  const { serviceReports } = useServiceReport()
+  const serviceReports = useServiceReport((s) => s.serviceReports)
 
   const thisMonthsReports = useMemo(
     () => getMonthsReports(serviceReports, month, year),
     [month, serviceReports, year]
+  )
+
+  // Stable reference so ProjectedTotalCard's memoized derivations don't
+  // invalidate every render of this tab.
+  const scope = useMemo<ProjectedTotalScope>(
+    () => ({ kind: 'month', month, year }),
+    [month, year]
   )
 
   return (
@@ -59,7 +67,7 @@ const ProgressMonthTab = ({
             showReportButton
             hideTitle
           />
-          <ProjectedTotalCard scope={{ kind: 'month', month, year }} />
+          <ProjectedTotalCard scope={scope} />
         </View>
 
         <AllDaysList month={month} year={year} />

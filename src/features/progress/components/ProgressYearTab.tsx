@@ -13,6 +13,7 @@ import {
   calculateMonthlyPlannedMinutesOptimized,
   getMonthsReports,
 } from '@/lib/serviceReport'
+import type { ProjectedTotalScope } from '@/lib/projectedTotal'
 import { useFormattedMinutes } from '@/lib/minutes'
 import i18n from '@/lib/locales'
 
@@ -53,7 +54,9 @@ const MonthRow = ({
   const cardStyle = useCardStyle()
   const { role, publisherHours, overrideCreditLimit, customCreditLimitHours } =
     usePreferences()
-  const { serviceReports, dayPlans, recurringPlans } = useServiceReport()
+  const serviceReports = useServiceReport((s) => s.serviceReports)
+  const dayPlans = useServiceReport((s) => s.dayPlans)
+  const recurringPlans = useServiceReport((s) => s.recurringPlans)
 
   const goalHours = publisherHours[role]
 
@@ -214,6 +217,13 @@ const ProgressYearTab = ({
   const monthlyGoalHours = publisherHours[role]
   const showDeltaColumn = monthlyGoalHours > 0
 
+  // Stable reference so ProjectedTotalCard's memoized derivations don't
+  // invalidate every render of this tab.
+  const projectedScope = useMemo<ProjectedTotalScope>(
+    () => ({ kind: 'serviceYear', serviceYear: year - 1 }),
+    [year]
+  )
+
   return (
     <KeyboardAwareScrollView
       contentContainerStyle={{
@@ -229,9 +239,7 @@ const ProgressYearTab = ({
         />
       ) : null}
 
-      <ProjectedTotalCard
-        scope={{ kind: 'serviceYear', serviceYear: year - 1 }}
-      />
+      <ProjectedTotalCard scope={projectedScope} />
 
       <View style={{ gap: 8, paddingTop: 10 }}>
         <View style={{ gap: 6 }}>

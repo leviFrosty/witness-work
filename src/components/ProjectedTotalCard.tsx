@@ -48,7 +48,14 @@ const ProjectedTotalCard = ({ scope, showAssistant = false }: Props) => {
     creditCapMinutes,
     type: publisher,
   } = usePublisher()
-  const { serviceReports, dayPlans, recurringPlans } = useServiceReport()
+  // Subscribe to the three slices the projection reads. Without explicit
+  // selectors, the destructure pattern Zustand v4 falls back to runs against
+  // the whole-store reference — which is fine for reactivity but masks the
+  // intent. Selecting per-slice also avoids re-rendering on unrelated store
+  // mutations (rollover tombstones, etc.) that don't affect this card.
+  const serviceReports = useServiceReport((s) => s.serviceReports)
+  const dayPlans = useServiceReport((s) => s.dayPlans)
+  const recurringPlans = useServiceReport((s) => s.recurringPlans)
   const { timeDisplayFormat } = usePreferences()
   const formatHours = (minutes: number) =>
     formatMinutes(minutes, timeDisplayFormat).formatted

@@ -80,7 +80,9 @@ const AssistantSection = ({
     replaceLastAssistantEvent,
     setHasDismissedRecommendationHash,
   } = usePreferences()
-  const { dayPlans, recurringPlans, serviceReports } = useServiceReport()
+  const serviceReports = useServiceReport((s) => s.serviceReports)
+  const dayPlans = useServiceReport((s) => s.dayPlans)
+  const recurringPlans = useServiceReport((s) => s.recurringPlans)
   const { conversations } = useConversations()
 
   const minutesLoggedInPriorDays = useMemo(() => {

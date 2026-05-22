@@ -38,6 +38,7 @@ import IconButton from '@/components/ui/IconButton'
 import { faRotate } from '@fortawesome/free-solid-svg-icons'
 import useCelebrationQueue from '@/features/service-reports/stores/celebrationQueue'
 import { monthCelebrationKey } from '@/lib/achievementTier'
+import { milestoneCelebrationKey } from '@/lib/milestones'
 
 const MONO = Platform.select({
   ios: 'Menlo',
@@ -106,6 +107,7 @@ export default function ToolsScreen() {
     lastRolloverYearMonth,
     autoRolloverEnabled,
     celebratedTiers,
+    celebratedMilestones,
     set: setPreferences,
   } = preferences
   // Profile-shaped fields live in the dedicated Profile store after wave-3.
@@ -1081,6 +1083,96 @@ export default function ToolsScreen() {
             label='celebratedTiers'
             value={celebratedTiers}
             count={Object.keys(celebratedTiers).length}
+          />
+        </Card>
+
+        <SectionHeader title='Year milestones' />
+        <Card style={{ gap: 10 }}>
+          <Text
+            style={{
+              fontSize: theme.fontSize('sm'),
+              color: theme.colors.textAlt,
+            }}
+          >
+            Year-tab analogue of celebratedTiers. Resetting an entry replays the
+            seal pulse + haptic (and, for the annual goal, fireworks) the next
+            time the Year tab is focused with a hit milestone the user hasn’t
+            been shown yet. Computes the current service year the same way
+            YearMilestoneCard does: Sep–Aug, keyed by the START year.
+          </Text>
+          {(() => {
+            // Service-year start = current year if we’re past Sep 1, otherwise
+            // the prior calendar year. Matches the Sep→Aug window used by
+            // YearMilestoneCard / MilestoneProgressBar.
+            const now = moment()
+            const currentServiceYear =
+              now.month() >= 8 ? now.year() : now.year() - 1
+            const prevServiceYear = currentServiceYear - 1
+            const currentKey = milestoneCelebrationKey(currentServiceYear)
+            const prevKey = milestoneCelebrationKey(prevServiceYear)
+            const celebratedYearCount = Object.keys(celebratedMilestones).length
+            const currentMilestones = celebratedMilestones[currentKey] ?? []
+            return (
+              <>
+                <XView style={{ justifyContent: 'space-between' }}>
+                  <Text>celebratedMilestones years:</Text>
+                  <Text style={{ fontFamily: theme.fonts.bold }}>
+                    {celebratedYearCount}
+                  </Text>
+                </XView>
+                <XView style={{ justifyContent: 'space-between' }}>
+                  <Text>Current service-year key:</Text>
+                  <Text
+                    style={{ color: theme.colors.textAlt, fontFamily: MONO }}
+                  >
+                    {currentKey}
+                  </Text>
+                </XView>
+                <XView style={{ justifyContent: 'space-between' }}>
+                  <Text>Celebrated this year:</Text>
+                  <Text style={{ fontFamily: theme.fonts.bold }}>
+                    {currentMilestones.length === 0
+                      ? '—'
+                      : currentMilestones.join(', ')}
+                  </Text>
+                </XView>
+                <ActionButton
+                  onPress={() => {
+                    const { [currentKey]: _removed, ...rest } =
+                      celebratedMilestones
+                    setPreferences({ celebratedMilestones: rest })
+                    showDone(`Cleared ${currentKey} from celebratedMilestones`)
+                  }}
+                >
+                  {`Reset celebratedMilestones for current year (${currentServiceYear}-${currentServiceYear + 1})`}
+                </ActionButton>
+                <ActionButton
+                  onPress={() => {
+                    const { [prevKey]: _removed, ...rest } =
+                      celebratedMilestones
+                    setPreferences({ celebratedMilestones: rest })
+                    showDone(`Cleared ${prevKey} from celebratedMilestones`)
+                  }}
+                >
+                  {`Reset celebratedMilestones for previous year (${prevServiceYear}-${prevServiceYear + 1})`}
+                </ActionButton>
+                <ActionButton
+                  onPress={() =>
+                    confirmDestructive('Reset all celebratedMilestones', () => {
+                      setPreferences({ celebratedMilestones: {} })
+                      showDone('All celebratedMilestones cleared')
+                    })
+                  }
+                >
+                  Reset ALL celebratedMilestones
+                </ActionButton>
+              </>
+            )
+          })()}
+          <JsonViewer
+            label='celebratedMilestones'
+            value={celebratedMilestones}
+            count={Object.keys(celebratedMilestones).length}
           />
         </Card>
 

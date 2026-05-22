@@ -625,6 +625,18 @@ export const PREFERENCE_DEFAULTS = {
    */
   celebratedTiers: {} as Record<string, string[]>,
   /**
+   * Year-tab analogue of `celebratedTiers`. Tracks which annual milestones have
+   * already triggered the one-time congrats banner + haptic + seal pulse per
+   * service year, so re-opening the Year tab doesn't re-fire the animation.
+   * Keyed by service-year start year as a string (`"2024"` for the 2024–2025
+   * service year — matches `milestoneCelebrationKey`); values are the milestone
+   * hour values already celebrated. The annual-goal value (= the top rung of
+   * the ladder) is stored here too, so the "You did it!" fireworks only fire on
+   * the first focus after crossing. Non-syncable for the same reason as
+   * `celebratedTiers`.
+   */
+  celebratedMilestones: {} as Record<string, number[]>,
+  /**
    * User-customized milestone ladder for the Year tab's `YearMilestoneCard` /
    * `MilestoneAdjustSheet`. `null` means "use the publisher-type default
    * ladder" from `src/lib/milestones.ts`. When non-null, these hours override
@@ -774,6 +786,7 @@ export const NON_SYNCABLE_PREFERENCE_KEYS = new Set<string>([
   'lastBackupDate',
   'onboardingStepId',
   'celebratedTiers',
+  'celebratedMilestones',
   'homeChecklistAllDoneCelebrated',
   'devRolloverDateOverride',
   'seenMilestoneUpdateReveal',
@@ -1098,6 +1111,20 @@ export const usePreferences = create(
               celebratedTiers: {
                 ...celebratedTiers,
                 [monthKey]: [...existing, tier],
+              },
+            }
+          }),
+        markMilestoneCelebrated: (
+          serviceYearKey: string,
+          milestoneHours: number
+        ) =>
+          set(({ celebratedMilestones }) => {
+            const existing = celebratedMilestones[serviceYearKey] ?? []
+            if (existing.includes(milestoneHours)) return {}
+            return {
+              celebratedMilestones: {
+                ...celebratedMilestones,
+                [serviceYearKey]: [...existing, milestoneHours],
               },
             }
           }),

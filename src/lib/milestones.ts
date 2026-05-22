@@ -79,6 +79,16 @@ export const getMilestoneHitState = (
 }
 
 /**
+ * Stable key used by the `celebratedMilestones` preference map. Mirrors
+ * `monthCelebrationKey` in shape — a single stringified identifier for the
+ * service year the milestones live in. We key by the service-year START year
+ * (Sep 1 of that year → Aug 31 of the next) because `YearMilestoneCard` and the
+ * `MilestoneProgressBar` already work in that frame.
+ */
+export const milestoneCelebrationKey = (serviceYear: number): string =>
+  String(serviceYear)
+
+/**
  * Clamp a user-entered milestone value into the legal range. Negative numbers
  * become 0 (caller typically drops those). Values above `annualGoalHours - 1`
  * collapse down to `annualGoalHours - 1` because the final row is reserved for

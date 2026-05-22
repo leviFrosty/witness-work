@@ -2,6 +2,15 @@ import { useEffect, useMemo } from 'react'
 import { Pressable, View } from 'react-native'
 import moment from 'moment'
 import _ from 'lodash'
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withSequence,
+  withTiming,
+} from 'react-native-reanimated'
+import { useIsFocused } from '@react-navigation/native'
+import { faCrown, faStar } from '@fortawesome/free-solid-svg-icons'
+import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
 
 import useTheme from '@/contexts/theme'
 import usePublisher from '@/hooks/usePublisher'
@@ -11,7 +20,11 @@ import {
   getServiceYearReports,
   getTotalMinutesForServiceYear,
 } from '@/lib/serviceReport'
-import { getEffectiveMilestones, getMilestoneHitState } from '@/lib/milestones'
+import {
+  getEffectiveMilestones,
+  getMilestoneHitState,
+  milestoneCelebrationKey,
+} from '@/lib/milestones'
 import { useFormattedMinutes } from '@/lib/minutes'
 import {
   generateServiceReportsHash,
@@ -20,6 +33,8 @@ import {
 } from '@/stores/timeCache'
 import i18n from '@/lib/locales'
 import { logger } from '@/lib/logger'
+import Haptics from '@/lib/haptics'
+import useFireworks from '@/hooks/useFireworks'
 
 import Card from '@/components/ui/Card'
 import Chip from '@/components/ui/Chip'
@@ -54,9 +69,16 @@ const YearMilestoneCard = ({
 }: YearMilestoneCardProps) => {
   const theme = useTheme()
   const { type: publisher, annualGoalHours } = usePublisher()
-  const { milestoneOverrides, timeDisplayFormat } = usePreferences()
+  const {
+    milestoneOverrides,
+    timeDisplayFormat,
+    celebratedMilestones,
+    markMilestoneCelebrated,
+  } = usePreferences()
   const { serviceReports } = useServiceReport()
   const { getCachedPlannedMinutes, setCachedPlannedMinutes } = useTimeCache()
+  const fireworks = useFireworks()
+  const isFocused = useIsFocused()
 
   const serviceYear = year - 1
 
@@ -122,6 +144,35 @@ const YearMilestoneCard = ({
     [milestones, hoursCompleted]
   )
 
+  // One-time crossing celebration. Mirrors MonthReport: pulse a seal, fire a
+  // haptic, and (annual-goal only) trigger the fireworks burst — but only the
+  // first time the user lands on the Year tab after the milestone was crossed.
+  // Persisted via `celebratedMilestones` so re-opening the screen, or switching
+  // between Year and other tabs, doesn't re-fire. We celebrate every milestone
+  // the user has hit but not yet been shown the animation for; the largest such
+  // value drives the inline banner.
+  const serviceYearKey = milestoneCelebrationKey(serviceYear)
+  const celebratedForYear = celebratedMilestones[serviceYearKey] ?? []
+  const justHitMilestones = useMemo(
+    () => hitState.hit.filter((m) => !celebratedForYear.includes(m)),
+    // celebratedForYear is intentionally read once per render — re-deriving on
+    // every prefs write would invalidate the memo every keystroke.
+    // eslint-disable-next-line react-compiler/react-compiler
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [hitState.hit]
+  )
+  const justHitTop =
+    justHitMilestones.length > 0 ? Math.max(...justHitMilestones) : null
+  const isGoalComplete =
+    annualGoalHours > 0 && hoursCompleted >= annualGoalHours
+  const isJustHitAnnualGoal =
+    justHitTop !== null && justHitTop === annualGoalHours
+
+  const sealScale = useSharedValue(1)
+  const sealAnimatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: sealScale.value }],
+  }))
+
   // Service-year span: Sep 1 of `serviceYear` → Aug 31 of `serviceYear + 1`.
   const serviceYearStart = useMemo(
     () => moment().month(8).year(serviceYear).startOf('month'),
@@ -150,6 +201,40 @@ const YearMilestoneCard = ({
       ? 0
       : Math.max(0, serviceYearEnd.diff(serviceYearStart, 'days'))
 
+  // Reserve the active crossing animation for the in-progress service year —
+  // past years that the user simply met still get the persistent glow + "You
+  // did it!" badge below, but no haptic / fireworks burst on visit. Future
+  // service years can't have unhit milestones (no reports yet), so they're
+  // naturally excluded by `justHitTop === null`.
+  useEffect(() => {
+    if (!isFocused) return
+    if (!isCurrentServiceYear) return
+    if (justHitTop === null) return
+    sealScale.value = withSequence(
+      withTiming(1.3, { duration: 180 }),
+      withTiming(1, { duration: 220 })
+    )
+    if (isJustHitAnnualGoal) {
+      Haptics.heavy()
+      fireworks.fire()
+    } else {
+      Haptics.light()
+    }
+    for (const m of justHitMilestones) {
+      markMilestoneCelebrated(serviceYearKey, m)
+    }
+  }, [
+    isFocused,
+    isCurrentServiceYear,
+    justHitTop,
+    isJustHitAnnualGoal,
+    justHitMilestones,
+    serviceYearKey,
+    markMilestoneCelebrated,
+    sealScale,
+    fireworks,
+  ])
+
   const titleText = `${serviceYear}–${serviceYear + 1}`
 
   const minutesToGoal = useMemo(
@@ -174,8 +259,26 @@ const YearMilestoneCard = ({
   const completedHeroDisplay = useFormattedMinutes(totalMinutesForServiceYear)
   const isDecimal = timeDisplayFormat === 'decimal'
 
+  // Mirror the month card's `record` tier treatment: amber border + translucent
+  // supporter background reads as celebratory without overpowering the chart.
+  // We apply it for any service year that hit the annual goal — past, present,
+  // or future (future can't actually hit goal yet, but the check is safe). The
+  // active crossing animation upstream is the gated one.
+  const showCompletionTreatment = isGoalComplete && annualGoalHours > 0
+
   return (
-    <Card style={{ flexGrow: 1 }}>
+    <Card
+      style={{
+        flexGrow: 1,
+        ...(showCompletionTreatment
+          ? {
+              borderWidth: 2,
+              borderColor: theme.colors.supporter,
+              backgroundColor: theme.colors.supporterTranslucent,
+            }
+          : {}),
+      }}
+    >
       <View
         style={{
           flexDirection: 'row',
@@ -194,7 +297,32 @@ const YearMilestoneCard = ({
         >
           {titleText}
         </Text>
-        {isCurrentServiceYear ? (
+        {showCompletionTreatment ? (
+          <View
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              gap: 6,
+            }}
+          >
+            <Animated.View style={sealAnimatedStyle}>
+              <FontAwesomeIcon
+                icon={faCrown}
+                color={theme.colors.supporter}
+                size={16}
+              />
+            </Animated.View>
+            <Text
+              style={{
+                fontSize: theme.fontSize('sm'),
+                fontFamily: theme.fonts.semiBold,
+                color: theme.colors.supporter,
+              }}
+            >
+              {i18n.t('annualGoalCompleteBadge')}
+            </Text>
+          </View>
+        ) : isCurrentServiceYear ? (
           <Text
             style={{
               fontSize: theme.fontSize('xs'),
@@ -263,7 +391,82 @@ const YearMilestoneCard = ({
 
       <MilestoneProgressBar year={year} />
 
-      {hitState.next !== null && nextMilestoneRemainingMinutes !== null ? (
+      {/* Transient "just hit a milestone" banner — only renders when the user
+        lands on the tab right after crossing a non-final rung. Marked as
+        celebrated in the focus effect above so a re-visit drops the banner.
+        For the annual goal itself we suppress it (the top-row "You did it!"
+        badge already carries that message). */}
+      {justHitTop !== null && !isJustHitAnnualGoal ? (
+        <View
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: 8,
+            paddingHorizontal: 10,
+            paddingVertical: 8,
+            borderRadius: theme.numbers.borderRadiusSm,
+            backgroundColor: theme.colors.accentTranslucent,
+            borderWidth: 1,
+            borderColor: theme.colors.accent,
+          }}
+        >
+          <Animated.View style={sealAnimatedStyle}>
+            <FontAwesomeIcon
+              icon={faStar}
+              color={theme.colors.accent}
+              size={16}
+            />
+          </Animated.View>
+          <Text
+            style={{
+              flex: 1,
+              fontSize: theme.fontSize('sm'),
+              fontFamily: theme.fonts.semiBold,
+              color: theme.colors.text,
+            }}
+          >
+            {i18n.t('milestoneJustHitBanner', { hours: justHitTop })}
+          </Text>
+        </View>
+      ) : null}
+
+      {showCompletionTreatment ? (
+        <View
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: 8,
+          }}
+        >
+          <Text
+            style={{
+              fontSize: theme.fontSize('sm'),
+              fontFamily: theme.fonts.semiBold,
+              color: theme.colors.supporter,
+            }}
+          >
+            {i18n.t('annualGoalCompleteCongrats')}
+          </Text>
+          {onAdjustMilestones ? (
+            <Pressable
+              onPress={onAdjustMilestones}
+              accessibilityRole='button'
+              hitSlop={8}
+            >
+              <Text
+                style={{
+                  fontSize: theme.fontSize('sm'),
+                  color: theme.colors.accent,
+                  fontFamily: theme.fonts.semiBold,
+                }}
+              >
+                {i18n.t('adjustMilestones')} ›
+              </Text>
+            </Pressable>
+          ) : null}
+        </View>
+      ) : hitState.next !== null && nextMilestoneRemainingMinutes !== null ? (
         <View
           style={{
             flexDirection: 'row',

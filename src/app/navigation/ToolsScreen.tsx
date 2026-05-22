@@ -132,6 +132,39 @@ export default function ToolsScreen() {
       const catchphraseDef = addCustomFieldDef('Catchphrase')
       const bsDef = addCustomFieldDef('BS')
 
+      // Apple's default simulator location (San Francisco, near the Embarcadero).
+      // Spread across ~7 miles so contacts cover most of SF rather than piling
+      // up in one neighborhood. xmur3-style hash on the index gives a flatter
+      // distribution than Math.imul(index, knuth) % 1000, which clusters badly
+      // at low index counts.
+      const SF_LAT = 37.785834
+      const SF_LNG = -122.406417
+      const SPREAD = 0.1
+      const hashUnit = (n: number, salt: number) => {
+        let h = ((n + 1) * salt) >>> 0
+        h = Math.imul(h ^ (h >>> 16), 2246822507) >>> 0
+        h = Math.imul(h ^ (h >>> 13), 3266489917) >>> 0
+        h = (h ^ (h >>> 16)) >>> 0
+        return (h % 10000) / 10000 - 0.5
+      }
+
+      // First N contacts hit explicit staleness buckets so every "age band" is
+      // represented; remaining contacts get a deterministic pseudo-random age
+      // up to ~3 years so the list isn't all clustered around one date.
+      const stalenessBuckets: {
+        value: number
+        unit: moment.unitOfTime.DurationConstructor
+      }[] = [
+        { value: 0, unit: 'hours' },
+        { value: 3, unit: 'days' },
+        { value: 1, unit: 'weeks' },
+        { value: 3, unit: 'weeks' },
+        { value: 2, unit: 'months' },
+        { value: 6, unit: 'months' },
+        { value: 1, unit: 'years' },
+        { value: 2, unit: 'years' },
+      ]
+
       data.forEach((contact, index) => {
         const customFields: Record<string, string> = {}
         if (companyDef && contact.company?.name) {
@@ -143,10 +176,24 @@ export default function ToolsScreen() {
         if (bsDef && contact.company?.bs) {
           customFields[bsDef.id] = contact.company.bs
         }
+        const latSeed = hashUnit(index, 0x9e3779b1)
+        const lngSeed = hashUnit(index, 0x85ebca6b)
+        const createdAt =
+          index < stalenessBuckets.length
+            ? moment()
+                .subtract(
+                  stalenessBuckets[index].value,
+                  stalenessBuckets[index].unit
+                )
+                .toDate()
+            : moment()
+                .subtract(
+                  ((index * 1103515245 + 12345) % (3 * 365)) + 1,
+                  'days'
+                )
+                .toDate()
         addContact({
-          createdAt: moment()
-            .subtract(index + 1 * 3, 'weeks')
-            .toDate(),
+          createdAt,
           id: `generated-${index}`,
           name: contact.name,
           address: {
@@ -155,8 +202,8 @@ export default function ToolsScreen() {
             zip: contact.address.zipcode,
           },
           coordinate: {
-            latitude: contact.address.geo.lat,
-            longitude: contact.address.geo.lng,
+            latitude: SF_LAT + latSeed * SPREAD,
+            longitude: SF_LNG + lngSeed * SPREAD,
           },
           email: contact.email,
           customFields,

@@ -42,6 +42,7 @@ import { ContactMarker } from '@/features/map/types/map'
 import {
   faAddressBook,
   faCircleInfo,
+  faLocationArrow,
   faMapLocationDot,
   faMagnifyingGlass,
   faPlus,
@@ -81,6 +82,12 @@ const FullMapView = ({
   const carouselRef = useRef<ICarouselInstance>(null)
   const { isTablet } = useDevice()
   const [locationPermission, setLocationPermission] = useState(false)
+  const [isTrackingUser, setIsTrackingUser] = useState(false)
+  const locationSubscriptionRef = useRef<Location.LocationSubscription | null>(
+    null
+  )
+  const [emptyStateHeight, setEmptyStateHeight] = useState(0)
+  const [noResultsHeight, setNoResultsHeight] = useState(0)
   const [sheet, setSheet] = useState<MapShareSheet>({
     open: false,
     appleMapsUri: '',
@@ -242,8 +249,143 @@ const FullMapView = ({
     getLocation()
   }, [])
 
+  const stopTrackingUser = useCallback(() => {
+    if (locationSubscriptionRef.current) {
+      locationSubscriptionRef.current.remove()
+      locationSubscriptionRef.current = null
+    }
+    setIsTrackingUser(false)
+  }, [])
+
+  const startTrackingUser = useCallback(async () => {
+    let granted = locationPermission
+    if (!granted) {
+      const existing = await Location.getForegroundPermissionsAsync()
+      granted = existing.granted
+      if (!granted) {
+        const requested = await Location.requestForegroundPermissionsAsync()
+        granted = requested.granted
+      }
+      if (granted) setLocationPermission(true)
+    }
+    if (!granted) return
+
+    // 0.005 deltas ≈ Google Maps zoom level ~16–17 (street level),
+    // which is what Google/Apple Maps land on when you tap "my location".
+    // Formula: latitudeDelta ≈ 360 / 2^zoom → 360 / 2^16 ≈ 0.0055.
+    const ZOOM_DELTA = 0.005
+    const PAN_DURATION_MS = 500
+
+    // Track when the initial zoom-in animation was fired. Subsequent
+    // watcher updates must NOT call `animateCamera` while it is still
+    // running — on Apple Maps that interrupts the in-flight region
+    // animation and freezes the camera at whatever mid-interpolation
+    // zoom it had reached, which is the bug that made the "snap" look
+    // like it didn't zoom at all.
+    let initialZoomFiredAt = 0
+
+    // Instant initial jump using whatever fix iOS already has cached, so
+    // the button feels responsive even when the GPS is cold. The watcher
+    // below refines this to a live position within a couple of seconds.
+    const lastKnown = await Location.getLastKnownPositionAsync({
+      maxAge: 60_000,
+    })
+    if (lastKnown) {
+      mapRef.current?.animateToRegion(
+        {
+          latitude: lastKnown.coords.latitude,
+          longitude: lastKnown.coords.longitude,
+          latitudeDelta: ZOOM_DELTA,
+          longitudeDelta: ZOOM_DELTA,
+        },
+        PAN_DURATION_MS
+      )
+      initialZoomFiredAt = Date.now()
+    }
+
+    if (!locationSubscriptionRef.current) {
+      locationSubscriptionRef.current = await Location.watchPositionAsync(
+        {
+          // BestForNavigation = highest accuracy with sensor fusion, the
+          // documented choice for continuous "follow-me" tracking.
+          accuracy: Location.Accuracy.BestForNavigation,
+          // 5 m → fires while walking, doesn't spam while stationary.
+          // `timeInterval` is Android-only on expo-location, so omitted.
+          distanceInterval: 5,
+        },
+        (loc) => {
+          const center = {
+            latitude: loc.coords.latitude,
+            longitude: loc.coords.longitude,
+          }
+          const now = Date.now()
+
+          if (initialZoomFiredAt === 0) {
+            // No cached fix was available — do the initial zoom-in on
+            // the first fresh sample so the user still sees the snap.
+            initialZoomFiredAt = now
+            mapRef.current?.animateToRegion(
+              {
+                ...center,
+                latitudeDelta: ZOOM_DELTA,
+                longitudeDelta: ZOOM_DELTA,
+              },
+              PAN_DURATION_MS
+            )
+            return
+          }
+
+          // Initial zoom still in flight — drop this update so we
+          // don't interrupt the in-progress region animation. A small
+          // buffer past PAN_DURATION_MS guards against frame jitter.
+          if (now - initialZoomFiredAt < PAN_DURATION_MS + 50) return
+
+          mapRef.current?.animateCamera(
+            { center },
+            { duration: PAN_DURATION_MS }
+          )
+        }
+      )
+    }
+
+    setIsTrackingUser(true)
+  }, [locationPermission])
+
+  const toggleLocationTracking = () => {
+    if (isTrackingUser) {
+      stopTrackingUser()
+    } else {
+      startTrackingUser()
+    }
+  }
+
+  useEffect(() => {
+    return () => {
+      if (locationSubscriptionRef.current) {
+        locationSubscriptionRef.current.remove()
+        locationSubscriptionRef.current = null
+      }
+    }
+  }, [])
+
   const parallaxScrollingScale =
     visibleContactMarkers.length === 1 ? 0.9 : isTablet ? 0.92 : 0.8025
+
+  // Sit the location FAB just above whichever bottom UI is on screen:
+  // the empty-state card, the no-search-results card, or the carousel.
+  // Heights for the variable cards come from onLayout; the carousel is
+  // fixed at CARD_HEIGHT.
+  const locationButtonBottom =
+    contactMarkers.length === 0
+      ? insets.bottom + TAB_BAR_HEIGHT + 12 + emptyStateHeight + 8
+      : visibleContactMarkers.length === 0
+        ? insets.bottom + TAB_BAR_HEIGHT + 4 + noResultsHeight + 8
+        : insets.bottom +
+          TAB_BAR_HEIGHT +
+          LEGAL_LABEL_HEIGHT -
+          5 +
+          CARD_HEIGHT +
+          8
 
   const mapControlStyle = {
     width: 44,
@@ -292,6 +434,13 @@ const FullMapView = ({
     }
   }
 
+  const handlePanDrag = () => {
+    dismissSearchKeyboard()
+    if (isTrackingUser) {
+      stopTrackingUser()
+    }
+  }
+
   const animatedSearchContainerStyle = useAnimatedStyle(() => ({
     width:
       SEARCH_COLLAPSED_WIDTH +
@@ -325,6 +474,7 @@ const FullMapView = ({
   const renderEmptyState = () => (
     <View
       pointerEvents='box-none'
+      onLayout={(e) => setEmptyStateHeight(e.nativeEvent.layout.height)}
       style={{
         position: 'absolute',
         left: 16,
@@ -508,7 +658,7 @@ const FullMapView = ({
         ref={mapRef}
         onLayout={handleMapLayout}
         onPress={collapseSearch}
-        onPanDrag={dismissSearchKeyboard}
+        onPanDrag={handlePanDrag}
         mapPadding={{
           top: 0,
           right: 0,
@@ -617,6 +767,7 @@ const FullMapView = ({
         renderEmptyState()
       ) : visibleContactMarkers.length === 0 ? (
         <View
+          onLayout={(e) => setNoResultsHeight(e.nativeEvent.layout.height)}
           style={{
             position: 'absolute',
             bottom: insets.bottom + TAB_BAR_HEIGHT + 4,
@@ -757,6 +908,32 @@ const FullMapView = ({
             <MapKey />
           </Popover.Content>
         </Popover>
+      </View>
+      <View
+        style={{
+          position: 'absolute',
+          right: 16,
+          bottom: locationButtonBottom,
+        }}
+      >
+        <Button
+          accessibilityLabel={
+            isTrackingUser
+              ? i18n.t('map_stopFollowingLocation')
+              : i18n.t('map_centerOnMyLocation')
+          }
+          variant='glass'
+          onPress={toggleLocationTracking}
+          style={mapControlStyle}
+        >
+          <FontAwesomeIcon
+            icon={faLocationArrow}
+            size={theme.fontSize('sm')}
+            style={{
+              color: isTrackingUser ? theme.colors.accent : theme.colors.text,
+            }}
+          />
+        </Button>
       </View>
     </>
   )

@@ -125,7 +125,23 @@ export default ({ config }: ConfigContext): ExpoConfig => {
       'expo-background-task',
       'expo-font',
       'expo-image',
-      'expo-audio',
+      [
+        'expo-audio',
+        {
+          // The only audio we play is a short foreground "success" chime on
+          // the confetti celebration (see AnimationViewProvider) — never in
+          // the background. The plugin defaults `enableBackgroundPlayback` to
+          // true, which adds the `audio` UIBackgroundMode to Info.plist. App
+          // Review rejects that under guideline 2.5.4 without a persistent
+          // background-audio feature, so keep it off. `playsInSilentMode`
+          // (the silent-switch override we use) is unrelated and still works.
+          enableBackgroundPlayback: false,
+          // We only ever play audio, never record. The plugin otherwise adds
+          // a generic NSMicrophoneUsageDescription that App Review flags as an
+          // unused permission. `false` deletes the key from Info.plist.
+          microphonePermission: false,
+        },
+      ],
       'expo-localization',
       'expo-sharing',
       [
@@ -156,6 +172,15 @@ export default ({ config }: ConfigContext): ExpoConfig => {
         {
           photosPermission:
             '$(PRODUCT_NAME) uses your photos only to set a profile picture. Images stay on your device.',
+          // Camera is used to take profile/contact avatar photos. Give it a
+          // specific purpose string instead of the plugin's generic default
+          // (better for App Review than "Allow … to access your camera").
+          cameraPermission:
+            '$(PRODUCT_NAME) uses your camera to take a profile or contact photo.',
+          // We only pick still images, never video, so the microphone usage
+          // string the plugin adds by default is unused — App Review flags
+          // unused permissions (2.5.4 / 5.1.1). `false` deletes the key.
+          microphonePermission: false,
         },
       ],
     ],

@@ -883,6 +883,8 @@
   "tryAgainLater": "Probeer het later opnieuw.",
   "oneTimeDonations": "Eenmalige donaties",
   "monthlyDonation": "Maandelijkse donatie",
+  "annualDonation": "Jaarlijkse donatie",
+  "recurringDonation": "Terugkerende donatie",
   "lifetimeSupporter": "Levenslange Supporter",
   "neverExpires": "Nooit verlopen",
   "activatedOn": "Geactiveerd op {{date}}",

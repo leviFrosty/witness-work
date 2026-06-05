@@ -883,6 +883,8 @@
   "tryAgainLater": "Veuillez réessayer plus tard.",
   "oneTimeDonations": "Dons ponctuels",
   "monthlyDonation": "Don mensuel",
+  "annualDonation": "Don annuel",
+  "recurringDonation": "Don récurrent",
   "lifetimeSupporter": "Soutien à vie",
   "neverExpires": "Ne expire jamais",
   "activatedOn": "Activé sur {{date}}",

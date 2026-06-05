@@ -883,6 +883,8 @@
   "tryAgainLater": "请稍后再试。",
   "oneTimeDonations": "一次性捐款",
   "monthlyDonation": "每月捐款",
+  "annualDonation": "每年捐款",
+  "recurringDonation": "定期捐款",
   "lifetimeSupporter": "終身支持者",
   "neverExpires": "永不過期",
   "activatedOn": "啟動於{{date}}",

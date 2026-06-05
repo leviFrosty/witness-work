@@ -883,6 +883,8 @@
   "tryAgainLater": "Vui lòng thử lại sau.",
   "oneTimeDonations": "Quyên góp một lần",
   "monthlyDonation": "Quyên góp hàng tháng",
+  "annualDonation": "Quyên góp hàng năm",
+  "recurringDonation": "Quyên góp định kỳ",
   "lifetimeSupporter": "Người ủng hộ trọn đời",
   "neverExpires": "Không bao giờ hết hạn",
   "activatedOn": "Kích hoạt vào {{date}}",

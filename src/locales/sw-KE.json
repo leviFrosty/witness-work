@@ -883,6 +883,8 @@
   "tryAgainLater": "Tafadhali jaribu tena baadae.",
   "oneTimeDonations": "Michango ya Mara Moja",
   "monthlyDonation": "Mchango wa Kila Mwezi",
+  "annualDonation": "Mchango wa Kila Mwaka",
+  "recurringDonation": "Mchango wa Mara kwa Mara",
   "lifetimeSupporter": "Msaidizi wa Maisha",
   "neverExpires": "Muda wake hauishami",
   "activatedOn": "Imeamilishwa kwenye {{date}}",

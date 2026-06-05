@@ -812,6 +812,8 @@
   "tryAgainLater": "Please try again later.",
   "oneTimeDonations": "One Time Donations",
   "monthlyDonation": "Monthly Donation",
+  "annualDonation": "Annual Donation",
+  "recurringDonation": "Recurring Donation",
   "active": "Active",
   "inactive": "Inactive",
   "yourDonations": "Your donations",

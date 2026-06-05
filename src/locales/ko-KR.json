@@ -885,6 +885,8 @@
   "tryAgainLater": "나중에 다시 시도 해주십시오.",
   "oneTimeDonations": "일회성 기부",
   "monthlyDonation": "월간 기부",
+  "annualDonation": "연간 기부",
+  "recurringDonation": "정기 기부",
   "lifetimeSupporter": "평생 후원자",
   "neverExpires": "절대 만료되지 않습니다",
   "activatedOn": "{{date}}에서 활성화됨",

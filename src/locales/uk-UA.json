@@ -885,6 +885,8 @@
   "tryAgainLater": "Будь-ласка спробуйте пізніше.",
   "oneTimeDonations": "Одноразові пожертви",
   "monthlyDonation": "Щомісячна пожертва",
+  "annualDonation": "Щорічна пожертва",
+  "recurringDonation": "Регулярна пожертва",
   "lifetimeSupporter": "Довічний прихильник",
   "neverExpires": "Ніколи не закінчується",
   "activatedOn": "Активовано на {{date}}",

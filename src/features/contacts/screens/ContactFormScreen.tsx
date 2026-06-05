@@ -396,18 +396,24 @@ const ContactFormScreen = ({ route, navigation }: Props) => {
         contact.address
       )
       if (contact.userDraggedCoordinate && addressChanged) {
-        // Ask the user if they wanna update their coordinate automatically
+        // Ask the user if they wanna update their coordinate automatically.
+        // This path persists the contact inside the alert handlers.
         await askUserToUpdateCoordinatesAutomatically(newContact, resolve)
-      } else {
-        if (addressChanged || !contact.coordinate) {
-          handleFetchCoordinate(newContact).finally(() => {
-            updateContact(newContact)
-            resolve(newContact)
-          })
-          return
-        }
-        updateContact(newContact)
-        resolve(newContact)
+        return
+      }
+      // Persist the edit immediately so a changed address can't be lost to a
+      // slow or hung geocode request (axios has no timeout) — previously the
+      // write lived inside the geocode's completion callback, which the
+      // changed address always triggers. The coordinate refresh below runs in
+      // the background and patches the contact once it resolves.
+      updateContact(newContact)
+      resolve(newContact)
+      if (addressChanged || !contact.coordinate) {
+        handleFetchCoordinate(newContact).then((c) => {
+          if (c.coordinate) {
+            updateContact(c)
+          }
+        })
       }
     },
     [

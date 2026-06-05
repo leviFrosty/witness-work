@@ -885,6 +885,8 @@
   "tryAgainLater": "後でもう一度試してください。",
   "oneTimeDonations": "ワンタイム寄付",
   "monthlyDonation": "毎月の寄付",
+  "annualDonation": "毎年の寄付",
+  "recurringDonation": "継続的な寄付",
   "lifetimeSupporter": "生涯サポーター",
   "neverExpires": "期限切れはない",
   "activatedOn": "{{date}}で起動",

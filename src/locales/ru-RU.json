@@ -885,6 +885,8 @@
   "tryAgainLater": "Пожалуйста, повторите попытку позже.",
   "oneTimeDonations": "Разовые пожертвования",
   "monthlyDonation": "Ежемесячное пожертвование",
+  "annualDonation": "Ежегодное пожертвование",
+  "recurringDonation": "Регулярное пожертвование",
   "lifetimeSupporter": "Пожизненный болельщик",
   "neverExpires": "Никогда не истекает",
   "activatedOn": "Активировано на {{date}}",

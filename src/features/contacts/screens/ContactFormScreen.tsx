@@ -423,23 +423,27 @@ const ContactFormScreen = ({ route, navigation }: Props) => {
     (resolve: (value: unknown) => void) => {
       const newContact = { ...contact }
       updatePrefillAddress(newContact.address)
-      if (
-        !newContact.userDraggedCoordinate &&
-        newContact.address &&
-        !!Object.keys(newContact.address)
-      ) {
-        handleFetchCoordinate(newContact).finally(() => {
-          addContact(newContact)
-          setFetching(false)
-          resolve(newContact)
+      // Persist immediately so the contact lands in the list right away.
+      // Geocoding is best-effort enrichment — gating the write on it meant a
+      // slow or hung request (axios has no timeout) delayed, or silently
+      // dropped, the new contact.
+      addContact(newContact)
+      resolve(newContact)
+      if (!newContact.userDraggedCoordinate && newContact.address) {
+        handleFetchCoordinate(newContact).then((c) => {
+          if (c.coordinate) {
+            updateContact(c)
+          }
         })
-      } else {
-        // User input custom coordinate
-        addContact(newContact)
-        resolve(newContact)
       }
     },
-    [addContact, contact, handleFetchCoordinate, updatePrefillAddress]
+    [
+      addContact,
+      contact,
+      handleFetchCoordinate,
+      updateContact,
+      updatePrefillAddress,
+    ]
   )
 
   const submit = useCallback(() => {

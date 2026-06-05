@@ -885,6 +885,8 @@
   "tryAgainLater": "Gerageza mukanya.",
   "oneTimeDonations": "Impano itangwa incuro imwe",
   "monthlyDonation": "Impano itangwa buri kwezi",
+  "annualDonation": "Impano itangwa buri mwaka",
+  "recurringDonation": "Impano isubiramo",
   "lifetimeSupporter": "Umuterankunga w'ubuzima bwose",
   "neverExpires": "Never expires",
   "activatedOn": "Activated on {{date}}",

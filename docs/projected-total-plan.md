@@ -30,10 +30,11 @@ Used on both month and year screens. Renders:
 #### Projected total definition
 
 ```
-projected = logged_to_date + sum(future plans from today onward through period end)
+projected = same monthly cap formula the report uses, run on the combined
+            logged + planned standard/credit buckets, month by month
 ```
 
-Credit caps are applied (so a projected total exceeding the LDC cap is truncated to the truthful number).
+The projection mirrors the report's cap semantics (ADR 0005): standard time is never capped; credit only fills the headroom under the cap. The displayed "planned" portion is the plans' effective contribution (`projected − loggedAdjusted`), not their raw sum.
 
 #### Per-period scope behavior
 

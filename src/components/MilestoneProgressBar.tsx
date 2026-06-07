@@ -284,7 +284,8 @@ interface MilestoneProgressBarProps {
  */
 const MilestoneProgressBar = ({ year }: MilestoneProgressBarProps) => {
   const { type: publisher, annualGoalHours } = usePublisher()
-  const { milestoneOverrides } = usePreferences()
+  const { milestoneOverrides, overrideCreditLimit, customCreditLimitHours } =
+    usePreferences()
   const { serviceReports } = useServiceReport()
 
   const serviceYear = year - 1
@@ -294,8 +295,19 @@ const MilestoneProgressBar = ({ year }: MilestoneProgressBarProps) => {
       serviceReports,
       serviceYear
     )
-    return getTotalMinutesForServiceYear(serviceYearsReports, serviceYear)
-  }, [serviceReports, serviceYear])
+    return getTotalMinutesForServiceYear(
+      serviceYearsReports,
+      serviceYear,
+      publisher,
+      { enabled: overrideCreditLimit, customLimitHours: customCreditLimitHours }
+    )
+  }, [
+    serviceReports,
+    serviceYear,
+    publisher,
+    overrideCreditLimit,
+    customCreditLimitHours,
+  ])
 
   const hoursCompleted = useMemo(
     () => _.round(totalMinutesForServiceYear / 60, 1),

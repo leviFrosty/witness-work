@@ -21,10 +21,11 @@ import {
 import usePublisher from '@/hooks/usePublisher'
 import useServiceReport from '@/stores/serviceReport'
 import {
-  adjustedMinutesForSpecificMonth,
   getMonthsReports,
+  getServiceYearMonthlyBreakdowns,
   getServiceYearReports,
-  getTotalMinutesForServiceYear,
+  getTotalMinutesDetailedForSpecificMonth,
+  type MonthlyLoggedBreakdown,
 } from '@/lib/serviceReport'
 import { formatMinutes } from '@/lib/minutes'
 import { usePreferences } from '@/stores/preferences'
@@ -42,12 +43,7 @@ type Props = {
 
 const ProjectedTotalCard = ({ scope, showAssistant = false }: Props) => {
   const theme = useTheme()
-  const {
-    monthlyGoalHours,
-    annualGoalHours,
-    creditCapMinutes,
-    type: publisher,
-  } = usePublisher()
+  const { monthlyGoalHours, annualGoalHours, creditCapMinutes } = usePublisher()
   // Subscribe to the three slices the projection reads. Without explicit
   // selectors, the destructure pattern Zustand v4 falls back to runs against
   // the whole-store reference — which is fine for reactivity but masks the
@@ -66,21 +62,22 @@ const ProjectedTotalCard = ({ scope, showAssistant = false }: Props) => {
   // useMemos stable across renders that didn't actually cross midnight.
   const today = useMemo(() => new Date(), [])
 
-  const loggedAdjustedMinutes = useMemo(() => {
+  // Raw standard/credit buckets per month — the projection applies the cap
+  // itself, month by month, so logged and planned time run through the same
+  // formula a finished report gets (ADR 0005).
+  const loggedMonths = useMemo<MonthlyLoggedBreakdown[]>(() => {
     if (scope.kind === 'month') {
       const reports = getMonthsReports(serviceReports, scope.month, scope.year)
-      return (
-        adjustedMinutesForSpecificMonth(
-          reports,
-          scope.month,
-          scope.year,
-          publisher
-        ).value ?? 0
+      const { standard, credit } = getTotalMinutesDetailedForSpecificMonth(
+        reports,
+        scope.month,
+        scope.year
       )
+      return [{ year: scope.year, month: scope.month, standard, credit }]
     }
     const reports = getServiceYearReports(serviceReports, scope.serviceYear)
-    return getTotalMinutesForServiceYear(reports, scope.serviceYear)
-  }, [scope, serviceReports, publisher])
+    return getServiceYearMonthlyBreakdowns(reports)
+  }, [scope, serviceReports])
 
   const result = useMemo(
     () =>
@@ -88,19 +85,16 @@ const ProjectedTotalCard = ({ scope, showAssistant = false }: Props) => {
         scope,
         today,
         goalMinutes: goalHours * 60,
-        loggedAdjustedMinutes,
+        loggedMonths,
         dayPlans,
         recurringPlans,
-        // Service-year planned minutes are summed without per-month cap
-        // truncation — passing null avoids re-capping against an annual
-        // cap that doesn't exist.
-        creditCapMinutes: scope.kind === 'month' ? creditCapMinutes : null,
+        creditCapMinutes,
       }),
     [
       scope,
       today,
       goalHours,
-      loggedAdjustedMinutes,
+      loggedMonths,
       dayPlans,
       recurringPlans,
       creditCapMinutes,
@@ -295,7 +289,7 @@ const ProjectedTotalCard = ({ scope, showAssistant = false }: Props) => {
           month={scope.month}
           today={today}
           monthlyGoalHours={monthlyGoalHours}
-          loggedAdjustedMinutes={loggedAdjustedMinutes}
+          loggedAdjustedMinutes={result.loggedMinutes}
           projection={result}
         />
       )}

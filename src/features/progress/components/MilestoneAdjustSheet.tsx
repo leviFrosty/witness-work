@@ -81,6 +81,8 @@ const MilestoneAdjustSheet = ({ visible, onClose }: Props) => {
     milestoneOverrides,
     setMilestoneOverrides,
     resetMilestoneOverrides,
+    overrideCreditLimit,
+    customCreditLimitHours,
   } = usePreferences()
   const { serviceReports } = useServiceReport()
 
@@ -121,8 +123,19 @@ const MilestoneAdjustSheet = ({ visible, onClose }: Props) => {
       serviceReports,
       serviceYearStart
     )
-    return getTotalMinutesForServiceYear(serviceYearReports, serviceYearStart)
-  }, [serviceReports, annualGoalHours])
+    return getTotalMinutesForServiceYear(
+      serviceYearReports,
+      serviceYearStart,
+      role,
+      { enabled: overrideCreditLimit, customLimitHours: customCreditLimitHours }
+    )
+  }, [
+    serviceReports,
+    annualGoalHours,
+    role,
+    overrideCreditLimit,
+    customCreditLimitHours,
+  ])
   const hoursCompleted = _.round(completedMinutes / 60, 1)
 
   const milestonesWithGoal = useMemo(

@@ -1,3 +1,4 @@
+import type { Category } from '@/types/category'
 import type { DayPlan, RecurringPlan } from '@/types/timeEntry'
 import { momentStoredDate, normalizeDateForStorage } from '@/lib/normalizeDate'
 import {
@@ -6,6 +7,7 @@ import {
   getPlansIntersectingDay,
   type MonthlyLoggedBreakdown,
 } from '@/lib/serviceReport'
+import { isPlanCreditTime } from '@/lib/serviceReportCategory'
 import moment from 'moment'
 
 export type ProjectedTotalScope =
@@ -35,6 +37,12 @@ export type ProjectedTotalInput = {
   dayPlans: DayPlan[]
   recurringPlans: RecurringPlan[]
   /**
+   * Category records used to derive each plan's credit-ness from its
+   * `categoryId` at read time (`isPlanCreditTime`). Plans with no/dangling
+   * Category forecast Standard.
+   */
+  categories: Category[]
+  /**
    * Resolved monthly credit cap in minutes, or null for unlimited. Applied per
    * month for both scopes — the month is the unit the cap governs; there is no
    * annual cap.
@@ -58,6 +66,49 @@ export type ProjectedTotalResult = {
   state: ProjectedTotalState
   gapMinutes: number
   overMinutes: number
+  /**
+   * Additional planned STANDARD minutes required for the projection to reach
+   * the goal under the mirror cap semantics. Differs from `gapMinutes` when the
+   * goal exceeds the credit cap: added standard time first displaces capped
+   * credit 1:1 before the projected total moves, so closing the displayed gap
+   * takes more standard time than `goal − projected`. The Assistant sizes its
+   * (Standard-only) recommendations with this.
+   */
+  standardGapMinutes: number
+  /**
+   * Month scope only: the combined logged+planned buckets and the cap the
+   * formula ran on — lets month-scoped consumers (Assistant preview) re-run the
+   * projection with hypothetical extra standard minutes via
+   * `projectStandardAddition`.
+   */
+  month?: {
+    standard: number
+    credit: number
+    creditCapMinutes: number | null
+  }
+}
+
+/**
+ * Projected total after adding hypothetical standard minutes on top of an
+ * existing projection. Month scope re-runs the mirror formula on the stored
+ * buckets (added standard can displace capped credit, so the total may move
+ * less than the addition); without buckets (year scope) the addition counts
+ * linearly, which matches placing the time in a month where standard counts in
+ * full.
+ */
+export const projectStandardAddition = (
+  projection: ProjectedTotalResult,
+  additionalStandardMinutes: number
+): number => {
+  if (!projection.month) {
+    return projection.projectedMinutes + additionalStandardMinutes
+  }
+  const { standard, credit, creditCapMinutes } = projection.month
+  return applyMonthCreditCap(
+    standard + additionalStandardMinutes,
+    credit,
+    creditCapMinutes
+  )
 }
 
 const periodBounds = (
@@ -76,16 +127,25 @@ const periodBounds = (
 
 const monthKey = (year: number, month: number) => `${year}-${month}`
 
+type PlannedMonthBuckets = { standard: number; credit: number }
+
 /**
- * Sums future planned minutes per month. One winner per day: a Day Plan takes
- * the whole day; otherwise the highest-minutes recurring instance counts.
+ * Sums future planned minutes per month, split into standard/credit by each
+ * plan's Category (derived at read time — `isPlanCreditTime`). One winner per
+ * day: a Day Plan takes the whole day; otherwise the highest-minutes recurring
+ * instance counts. The winner's Type tags the day's whole contribution.
+ * Recurring ties on minutes break deterministically — credit beats standard
+ * (the conservative forecast: the projection never overpromises), then lowest
+ * id — so two devices holding the same plans in different array orders after an
+ * iCloud merge project the same number.
  */
 const futurePlannedMinutesByMonth = (
   scope: ProjectedTotalScope,
   today: Date,
   dayPlans: DayPlan[],
-  recurringPlans: RecurringPlan[]
-): Map<string, number> => {
+  recurringPlans: RecurringPlan[],
+  categories: Category[]
+): Map<string, PlannedMonthBuckets> => {
   const { start, end } = periodBounds(scope)
   const todayDay = momentStoredDate(normalizeDateForStorage(today))
   const cursor = (todayDay.isAfter(start, 'day') ? todayDay : start).clone()
@@ -93,31 +153,51 @@ const futurePlannedMinutesByMonth = (
   const dayPlanByKey = new Map(
     dayPlans.map((p) => [momentStoredDate(p.date).format('YYYY-MM-DD'), p])
   )
+  // Credit-ness is per-plan, not per-instance — resolve each recurring plan
+  // once instead of per day of the walk.
+  const recurringIsCredit = new Map(
+    recurringPlans.map((p) => [p.id, isPlanCreditTime(p, categories)])
+  )
 
-  const plannedByMonth = new Map<string, number>()
+  const plannedByMonth = new Map<string, PlannedMonthBuckets>()
   while (cursor.isSameOrBefore(end, 'day')) {
     const key = cursor.format('YYYY-MM-DD')
+    const dayDate = cursor.toDate()
     const dp = dayPlanByKey.get(key)
     let minutes = 0
+    let isCredit = false
     if (dp) {
       minutes = dp.minutes
+      isCredit = isPlanCreditTime(dp, categories)
     } else {
-      const recurringForDay = getPlansIntersectingDay(
-        cursor.toDate(),
-        recurringPlans
-      )
-      minutes = recurringForDay.reduce(
-        (max, plan) =>
-          Math.max(
-            max,
-            getEffectiveMinutesForRecurringPlan(plan, cursor.toDate())
-          ),
-        0
-      )
+      const recurringForDay = getPlansIntersectingDay(dayDate, recurringPlans)
+      let winner: RecurringPlan | null = null
+      for (const plan of recurringForDay) {
+        const effective = getEffectiveMinutesForRecurringPlan(plan, dayDate)
+        if (effective < minutes) continue
+        const credit = recurringIsCredit.get(plan.id) ?? false
+        const beats =
+          effective > minutes ||
+          winner === null ||
+          (credit && !isCredit) ||
+          (credit === isCredit && plan.id < winner.id)
+        if (beats) {
+          minutes = effective
+          winner = plan
+          isCredit = credit
+        }
+      }
+      if (winner === null) isCredit = false
     }
     if (minutes > 0) {
-      const bucket = monthKey(cursor.year(), cursor.month())
-      plannedByMonth.set(bucket, (plannedByMonth.get(bucket) ?? 0) + minutes)
+      const bucketKey = monthKey(cursor.year(), cursor.month())
+      const bucket = plannedByMonth.get(bucketKey) ?? {
+        standard: 0,
+        credit: 0,
+      }
+      if (isCredit) bucket.credit += minutes
+      else bucket.standard += minutes
+      plannedByMonth.set(bucketKey, bucket)
     }
     cursor.add(1, 'day')
   }
@@ -162,7 +242,8 @@ export const computeProjectedTotal = (
     input.scope,
     input.today,
     input.dayPlans,
-    input.recurringPlans
+    input.recurringPlans,
+    input.categories
   )
   const loggedByMonth = new Map(
     input.loggedMonths.map((m) => [monthKey(m.year, m.month), m])
@@ -172,18 +253,24 @@ export const computeProjectedTotal = (
   const { start, end } = periodBounds(input.scope)
   let logged = 0
   let projected = 0
+  let combinedStandard = 0
+  let combinedCredit = 0
   const cursor = start.clone()
   while (cursor.isSameOrBefore(end, 'month')) {
     const key = monthKey(cursor.year(), cursor.month())
     const loggedMonth = loggedByMonth.get(key)
     const loggedStandard = loggedMonth?.standard ?? 0
     const loggedCredit = loggedMonth?.credit ?? 0
-    const plannedStandard = plannedByMonth.get(key) ?? 0
+    const plannedMonth = plannedByMonth.get(key)
+    const plannedStandard = plannedMonth?.standard ?? 0
+    const plannedCredit = plannedMonth?.credit ?? 0
 
+    combinedStandard += loggedStandard + plannedStandard
+    combinedCredit += loggedCredit + plannedCredit
     logged += applyMonthCreditCap(loggedStandard, loggedCredit, cap)
     projected += applyMonthCreditCap(
       loggedStandard + plannedStandard,
-      loggedCredit,
+      loggedCredit + plannedCredit,
       cap
     )
     cursor.add(1, 'month')
@@ -193,6 +280,26 @@ export const computeProjectedTotal = (
   const goal = input.goalMinutes
   const gap = Math.max(0, goal - projected)
   const over = Math.max(0, projected - goal)
+
+  const month =
+    input.scope.kind === 'month'
+      ? {
+          standard: combinedStandard,
+          credit: combinedCredit,
+          creditCapMinutes: cap,
+        }
+      : undefined
+
+  // How much MORE standard time reaches the goal. When the goal sits above
+  // the cap, only combined standard can carry the projection there — added
+  // standard first displaces whatever credit the cap was admitting.
+  const standardGap = (() => {
+    if (projected >= goal) return 0
+    if (month && cap !== null && goal > cap) {
+      return Math.max(0, goal - month.standard)
+    }
+    return goal - projected
+  })()
 
   const state: ProjectedTotalState = (() => {
     if (logged >= goal) return 'logged_over_goal'
@@ -219,5 +326,7 @@ export const computeProjectedTotal = (
     state,
     gapMinutes: gap,
     overMinutes: over,
+    standardGapMinutes: standardGap,
+    month,
   }
 }

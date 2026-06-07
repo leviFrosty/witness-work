@@ -1,4 +1,4 @@
-import { View, Alert, Switch, TextInput as RNTextInput } from 'react-native'
+import { View, Alert, TextInput as RNTextInput } from 'react-native'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import Section from '@/components/ui/inputs/Section'
 import InputRowContainer from '@/components/ui/inputs/InputRowContainer'
@@ -11,17 +11,18 @@ import { DateTimePickerEvent } from '@react-native-community/datetimepicker'
 import moment from 'moment'
 import { TimeEntry } from '@/types/timeEntry'
 import { useNavigation } from '@react-navigation/native'
-import i18n, { TranslationKey } from '@/lib/locales'
+import i18n from '@/lib/locales'
 import DateTimePicker from '@/components/ui/DateTimePicker'
 import Wrapper from '@/components/ui/layout/Wrapper'
-import Select from '@/components/ui/Select'
 import SelectWheel from '@/components/ui/SelectWheel'
 import { usePreferences } from '@/stores/preferences'
 import useCategories from '@/stores/categories'
-import { Category } from '@/types/category'
-import { LDC_BUILTIN_CATEGORY_ID } from '@/constants/categories'
+import TypeSelectorRow, {
+  CUSTOM_TYPE_VALUE,
+  STANDARD_TYPE_VALUE,
+  type TypeSelection,
+} from '@/components/TypeSelectorRow'
 import TextInput from '@/components/ui/TextInput'
-import Button from '@/components/ui/Button'
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { NativeStackScreenProps } from '@react-navigation/native-stack'
@@ -29,7 +30,6 @@ import { useToastController } from '@tamagui/toast'
 import Header from '@/components/ui/layout/Header'
 import { faTrash } from '@fortawesome/free-solid-svg-icons'
 import IconButton from '@/components/ui/IconButton'
-import usePublisher from '@/hooks/usePublisher'
 import {
   adjustedMinutesForSpecificMonth,
   getMonthsReports,
@@ -50,27 +50,14 @@ const AddTimeScreen = ({ route }: AddTimeScreenProps) => {
   const noteInput = useRef<RNTextInput>(null)
   const { role, publisherHours, overrideCreditLimit, customCreditLimitHours } =
     usePreferences()
-  const { hasAnnualGoal } = usePublisher()
   const { playConfetti } = useAnimation()
-  const { categories, addCategory, updateCategory, deleteCategory } =
-    useCategories()
-  /**
-   * Synthetic select values for the two preset entry types that don't
-   * correspond to a real Category record. Real categories use their UUID as the
-   * value. LDC is no longer synthetic — it's the LDC builtin Category (see
-   * `LDC_BUILTIN_CATEGORY_ID`); the constant is re-exported here so the picker
-   * can show it alongside the synthetic Standard / Custom presets.
-   */
-  const STANDARD = '__standard__'
-  const LDC = LDC_BUILTIN_CATEGORY_ID
-  const CUSTOM = '__custom__'
+  const { categories } = useCategories()
 
   const {
     addServiceReport,
     serviceReports,
     updateServiceReport,
     deleteServiceReport,
-    set: setServiceReportStore,
   } = useServiceReport()
   const existingServiceReport = route.params?.existingReport
     ? getReport(serviceReports, JSON.parse(route.params.existingReport))
@@ -93,11 +80,10 @@ const AddTimeScreen = ({ route }: AddTimeScreenProps) => {
       if (match) return match.id
       return existingServiceReport.report.tag
     }
-    return STANDARD
+    return STANDARD_TYPE_VALUE
   })()
 
   const [selectedValue, setSelectedValue] = useState<string>(initialPickerValue)
-  const [customCategoryName, setCustomCategoryName] = useState<string>('')
   const [serviceReport, setServiceReport] = useState<TimeEntry>({
     id: existingServiceReport?.report.id ?? Crypto.randomUUID(),
     hours: existingServiceReport?.report.hours || route.params?.hours || 0,
@@ -112,47 +98,17 @@ const AddTimeScreen = ({ route }: AddTimeScreenProps) => {
   })
   const toast = useToastController()
 
-  // The Category currently in focus. Null when one of the synthetic preset
-  // values (Standard / Custom) is selected; non-null for a real Category id
-  // including the LDC builtin.
-  const selectedCategory: Category | null =
-    selectedValue === STANDARD || selectedValue === CUSTOM
-      ? null
-      : (categories.find((c) => c.id === selectedValue) ?? null)
-
-  const handleSetSelectedValue = (value: string) => {
+  // Maps the Type row's report back onto the in-progress entry. The row owns
+  // the Category-store side (create/delete/credit-flip + global re-stamp);
+  // the entry only records the reference and the legacy `credit` stamp.
+  const handleTypeChange = ({ value, category }: TypeSelection) => {
     setSelectedValue(value)
-    switch (value) {
-      case STANDARD:
-        setServiceReport({
-          ...serviceReport,
-          categoryId: undefined,
-          tag: undefined,
-          credit: false,
-        })
-        return
-
-      case CUSTOM:
-        setServiceReport({
-          ...serviceReport,
-          categoryId: undefined,
-          tag: undefined,
-          credit: false,
-        })
-        return
-
-      default: {
-        // A real Category id (user-created OR the LDC builtin).
-        const category = categories.find((c) => c.id === value)
-        if (!category) return
-        setServiceReport({
-          ...serviceReport,
-          categoryId: category.id,
-          tag: undefined,
-          credit: category.isCredit,
-        })
-      }
-    }
+    setServiceReport({
+      ...serviceReport,
+      categoryId: category?.id,
+      tag: undefined,
+      credit: category?.isCredit ?? false,
+    })
   }
 
   const setHours = (hours: number) => {
@@ -160,41 +116,6 @@ const AddTimeScreen = ({ route }: AddTimeScreenProps) => {
       ...serviceReport,
       hours,
     })
-  }
-
-  /**
-   * Flips `isCredit` on the currently-selected Category record and re-stamps
-   * `credit` on every TimeEntry that references it. The Category record itself
-   * is now the source of truth; we re-stamp `credit` on entries only so legacy
-   * credit-math readers stay consistent with the Category value during the
-   * transition window.
-   */
-  const setCategoryIsCredit = (isCredit: boolean) => {
-    if (!selectedCategory) return
-    setServiceReport({
-      ...serviceReport,
-      credit: isCredit,
-    })
-    updateCategory({ id: selectedCategory.id, isCredit })
-
-    const reports = { ...serviceReports }
-    for (const year in reports) {
-      for (const month in reports[year]) {
-        const monthReports = getMonthsReports(
-          reports,
-          parseInt(month),
-          parseInt(year)
-        )
-        const reportsWithUpdatedCredit = monthReports.map((r) => {
-          if (r.categoryId === selectedCategory.id) {
-            return { ...r, credit: isCredit }
-          }
-          return r
-        })
-        reports[year][month] = reportsWithUpdatedCredit
-      }
-    }
-    setServiceReportStore({ serviceReports: reports })
   }
 
   const setMinutes = (minutes: number) => {
@@ -220,57 +141,6 @@ const AddTimeScreen = ({ route }: AddTimeScreenProps) => {
       date,
     })
   }
-
-  const handleAddCustomCategory = () => {
-    const trimmed = customCategoryName.trim()
-    if (!trimmed) return
-    // Reuse an existing Category if the name matches (case-sensitive, mirrors
-    // the rest of the app); otherwise create a new record.
-    let target = categories.find((c) => c.name === trimmed)
-    if (!target) {
-      const newCategory: Category = {
-        id: Crypto.randomUUID(),
-        name: trimmed,
-        isCredit: false,
-      }
-      addCategory(newCategory)
-      target = newCategory
-    }
-    handleSetSelectedValue(target.id)
-    setCustomCategoryName('')
-  }
-
-  const handleDeleteCurrentCategory = () => {
-    if (!selectedCategory) return
-    deleteCategory(selectedCategory.id)
-    setSelectedValue(STANDARD)
-    setServiceReport({
-      ...serviceReport,
-      categoryId: undefined,
-      credit: false,
-    })
-  }
-
-  type TypeOption = { label: string; value: string }
-  // LDC is technically a Category record now (the builtin), but we still
-  // surface it as a preset slot above the user's own categories — it's the
-  // most common credit-bearing entry type and worth a stable position in the
-  // picker. Strip it from the user-categories spread so it doesn't appear
-  // twice.
-  const userCategories = categories.filter(
-    (c) => c.id !== LDC_BUILTIN_CATEGORY_ID
-  )
-  const typeOptions: TypeOption[] = [
-    { label: i18n.t('standard'), value: STANDARD },
-    { label: i18n.t('ldc'), value: LDC },
-    ...userCategories.map((c) => ({
-      // Allow i18n on preset-translatable names (e.g. legacy English-locale
-      // entries seeded from the migration); fall back to the stored name.
-      label: i18n.t(c.name as TranslationKey, { defaultValue: c.name }),
-      value: c.id,
-    })),
-    { label: i18n.t('custom'), value: CUSTOM },
-  ]
 
   const hourOptions = [...Array(100).keys()].map((value) => ({
     label: `${value}`,
@@ -411,7 +281,7 @@ const AddTimeScreen = ({ route }: AddTimeScreenProps) => {
     serviceReport.hours !== 0 || serviceReport.minutes !== 0
   // Custom is a transient picker state — until the user names the Category,
   // we don't have anything to attach the entry to.
-  const hasSelectedCategory = selectedValue !== CUSTOM
+  const hasSelectedCategory = selectedValue !== CUSTOM_TYPE_VALUE
   const submittable = hasEnteredTime && hasSelectedCategory
 
   return (
@@ -452,144 +322,11 @@ const AddTimeScreen = ({ route }: AddTimeScreenProps) => {
                 onChange={handleDateChange}
               />
             </InputRowContainer>
-            <InputRowContainer
-              label={i18n.t('type')}
+            <TypeSelectorRow
+              value={selectedValue}
+              onChange={handleTypeChange}
               lastInSection
-              justifyContent='space-between'
-            >
-              <View
-                style={{
-                  gap: 5,
-                  width: '100%',
-                  flexShrink: 1,
-                }}
-              >
-                <Select
-                  data={typeOptions}
-                  style={{ width: '100%', flex: 1 }}
-                  onChange={({ value: c }) => {
-                    handleSetSelectedValue(c)
-                  }}
-                  value={selectedValue}
-                />
-                {selectedValue === CUSTOM ? (
-                  <View style={{ flexDirection: 'row', gap: 5 }}>
-                    <View style={{ flex: 1, flexGrow: 1 }}>
-                      <TextInput
-                        maxLength={20}
-                        style={{
-                          borderColor: theme.colors.border,
-                          borderWidth: 1,
-                          borderRadius: theme.numbers.borderRadiusSm,
-                          paddingVertical: 15,
-                          paddingHorizontal: 10,
-                          color: theme.colors.text,
-                        }}
-                        onChangeText={(c) => setCustomCategoryName(c)}
-                        value={customCategoryName}
-                        placeholder={i18n.t('enterCustomCategory')}
-                      />
-                    </View>
-                    <Button
-                      style={{
-                        backgroundColor:
-                          customCategoryName.trim().length === 0
-                            ? theme.colors.accentAlt
-                            : theme.colors.accent,
-                        borderRadius: theme.numbers.borderRadiusSm,
-                        paddingVertical: 15,
-                      }}
-                      variant='outline'
-                      onPress={handleAddCustomCategory}
-                      disabled={customCategoryName.trim().length === 0}
-                    >
-                      <Text
-                        style={{
-                          color: theme.colors.textInverse,
-                          fontFamily: theme.fonts.semiBold,
-                        }}
-                      >
-                        {i18n.t('add')}
-                      </Text>
-                    </Button>
-                  </View>
-                ) : (
-                  selectedCategory && (
-                    <View
-                      style={{
-                        gap: 5,
-                        flexShrink: 1,
-                      }}
-                    >
-                      {/* Builtin Categories (LDC) own their `isCredit` value
-                          and can't be renamed or deleted — hide the Credit
-                          toggle + remove button. The LDC builtin is always
-                          credit-bearing by definition. */}
-                      {hasAnnualGoal && !selectedCategory.builtin && (
-                        <View
-                          style={{
-                            borderWidth: 1,
-                            borderRadius: theme.numbers.borderRadiusSm,
-                            padding: 10,
-                            borderColor: theme.colors.border,
-                            gap: 10,
-                          }}
-                        >
-                          <View
-                            style={{
-                              flexDirection: 'row',
-                              flexShrink: 1,
-                              alignItems: 'center',
-                              justifyContent: 'space-between',
-                            }}
-                          >
-                            <Text
-                              style={{
-                                fontFamily: theme.fonts.semiBold,
-                                fontSize: theme.fontSize('lg'),
-                              }}
-                            >
-                              {i18n.t('credit')}
-                            </Text>
-                            <Switch
-                              value={selectedCategory.isCredit}
-                              onValueChange={(val) => setCategoryIsCredit(val)}
-                            />
-                          </View>
-                          <Text
-                            style={{
-                              fontSize: theme.fontSize('sm'),
-                              color: theme.colors.textAlt,
-                            }}
-                          >
-                            {i18n.t('credit_description')}
-                          </Text>
-                        </View>
-                      )}
-                      {!selectedCategory.builtin && (
-                        <View
-                          style={{
-                            flexDirection: 'row',
-                            justifyContent: 'flex-end',
-                          }}
-                        >
-                          <Button onPress={handleDeleteCurrentCategory}>
-                            <Text
-                              style={{
-                                color: theme.colors.textAlt,
-                                textDecorationLine: 'underline',
-                              }}
-                            >
-                              {i18n.t('removeCategory')}
-                            </Text>
-                          </Button>
-                        </View>
-                      )}
-                    </View>
-                  )
-                )}
-              </View>
-            </InputRowContainer>
+            />
           </Section>
           <Section>
             {!route.params?.hours &&

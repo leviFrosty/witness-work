@@ -3,10 +3,7 @@ import type { Visit } from '@/types/visit'
 import type { DayPlan, RecurringPlan } from '@/types/timeEntry'
 import type { AssistantEvent, RecommendationShape } from '@/types/assistant'
 import { momentStoredDate, normalizeDateForStorage } from '@/lib/normalizeDate'
-import {
-  getEffectiveMinutesForRecurringPlan,
-  getPlansIntersectingDay,
-} from '@/lib/serviceReport'
+import { getPlansIntersectingDay } from '@/lib/serviceReport'
 
 export type {
   AssistantAction,
@@ -89,7 +86,16 @@ export type EngineInput = {
   month: number
   today: Date
   monthlyGoalHours: number
-  loggedAdjustedMinutes: number
+  /**
+   * Additional planned STANDARD minutes needed to reach the goal, under the
+   * Projected Total's mirror cap semantics
+   * (`ProjectedTotalResult.standardGapMinutes`). The engine sizes its
+   * (Standard-only) proposals against this instead of re-deriving a raw logged
+   * + planned sum — so it can never disagree with the Projected Total card it
+   * renders beneath (e.g. vanish while the card shows a reachable gap, or
+   * under-propose when planned credit is squeezed by the cap).
+   */
+  standardGapMinutes: number
   dayPlans: DayPlan[]
   recurringPlans: RecurringPlan[]
   conversations: Visit[]
@@ -116,48 +122,6 @@ export type EngineInput = {
    */
   minutesLoggedInPriorDays?: number
   params?: Partial<EngineParams>
-}
-
-const futurePlannedMinutes = (
-  year: number,
-  month: number,
-  today: Date,
-  dayPlans: DayPlan[],
-  recurringPlans: RecurringPlan[]
-): number => {
-  const start = moment.utc({ year, month, day: 1 })
-  const end = start.clone().endOf('month')
-  const todayDay = momentStoredDate(normalizeDateForStorage(today))
-  const cursor = (todayDay.isAfter(start, 'day') ? todayDay : start).clone()
-
-  const dayPlanByKey = new Map(
-    dayPlans.map((p) => [momentStoredDate(p.date).format('YYYY-MM-DD'), p])
-  )
-
-  let sum = 0
-  while (cursor.isSameOrBefore(end, 'day')) {
-    const key = cursor.format('YYYY-MM-DD')
-    const dp = dayPlanByKey.get(key)
-    if (dp) {
-      sum += dp.minutes
-    } else {
-      const recurringForDay = getPlansIntersectingDay(
-        cursor.toDate(),
-        recurringPlans
-      )
-      const highest = recurringForDay.reduce(
-        (max, plan) =>
-          Math.max(
-            max,
-            getEffectiveMinutesForRecurringPlan(plan, cursor.toDate())
-          ),
-        0
-      )
-      sum += highest
-    }
-    cursor.add(1, 'day')
-  }
-  return sum
 }
 
 type EligibleDay = {
@@ -574,18 +538,9 @@ export const generateRecommendation = (
   const goalMinutes = input.monthlyGoalHours * 60
   if (goalMinutes <= 0) return null
 
-  const logged = input.loggedAdjustedMinutes
-  if (logged >= goalMinutes) return null
-
-  const planned = futurePlannedMinutes(
-    input.year,
-    input.month,
-    input.today,
-    input.dayPlans,
-    input.recurringPlans
-  )
-  const projected = logged + planned
-  if (projected >= goalMinutes) return null
+  // The caller's mirror-capped projection already reached the goal — nothing
+  // to recommend. (Covers logged ≥ goal too.)
+  if (input.standardGapMinutes <= 0) return null
 
   const params = { ...DEFAULT_ENGINE_PARAMS, ...(input.params ?? {}) }
   const eligible = eligibleDays(
@@ -600,7 +555,7 @@ export const generateRecommendation = (
   if (eligible.length === 0) return null
 
   const ctx: BuildContext = {
-    gapMinutes: goalMinutes - projected,
+    gapMinutes: input.standardGapMinutes,
     eligible,
     params,
     conversationDayKeys: collectConversationDayKeys(

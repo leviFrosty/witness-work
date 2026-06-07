@@ -59,7 +59,7 @@ A specific, common variety of Credit Time: volunteer construction work for Kingd
 _Avoid_: treating LDC as a separate bucket from Credit — it isn't.
 
 **Category**:
-A User-defined grouping of Time Entries (e.g. "Bethel", "Hospital", "Morning territory"). Each Category carries whether it counts as Credit Time. Categories are the User's organizing scheme for breaking their monthly time into meaningful slices on the Service Report.
+A User-defined grouping of Time Entries and Plans (e.g. "Bethel", "Hospital", "Morning territory"). Each Category carries whether it counts as Credit Time — for a Plan, the Category is the single source of truth for credit-ness (changing the Category's credit setting retroactively changes the forecast of every Plan referencing it). Categories are the User's organizing scheme for breaking their monthly time into meaningful slices on the Service Report.
 _Avoid_: "tag" (legacy field name, less precise — Category is the canonical term).
 
 **Service Year**:
@@ -103,7 +103,7 @@ _Avoid_: "extra field", "user field" (Custom Field is the canonical term).
 ### Plans
 
 **Plan**:
-The umbrella term for a User's intent to do field-ministry work on a date. Two kinds: **Day Plan** (one specific date) and **Recurring Plan** (a pattern over time). Plans are forecast, not history — they are never "consumed" or "completed" by a Time Entry. Reality lives separately in Time Entries; the app reconciles them visually.
+The umbrella term for a User's intent to do field-ministry work on a date. Two kinds: **Day Plan** (one specific date) and **Recurring Plan** (a pattern over time). Plans are forecast, not history — they are never "consumed" or "completed" by a Time Entry. Reality lives separately in Time Entries; the app reconciles them visually. A Plan may reference a **Category** (surfaced in the UI as the Plan's "Type", mirroring the Time Entry form); the Category alone determines whether the planned minutes are forecast as **Credit Time**. A Plan with no Category — or whose Category no longer exists — forecasts Standard time.
 _Avoid_: "schedule" (that's the surface that displays Plans, not a synonym), "goal" (that's the hour target).
 
 **Day Plan**:
@@ -115,7 +115,7 @@ A repeating Plan pattern (weekly, biweekly, monthly, or monthly-by-weekday) anch
 _Avoid_: "repeat plan", "schedule rule".
 
 **Recurring Plan Override**:
-A per-instance modification to a Recurring Plan for a specific date — adjusts minutes, start time, or note for that one occurrence without changing the underlying pattern.
+A per-instance modification to a Recurring Plan for a specific date — adjusts minutes, start time, or note for that one occurrence without changing the underlying pattern. An Override cannot change the Plan's Category: Type is pattern-level. To do a different kind of work on one occurrence, the User skips that instance and creates a Day Plan in its place.
 _Avoid_: "exception" (sounds error-related; an override is intentional).
 
 ### Assistant
@@ -125,7 +125,7 @@ The in-app recommendation engine that proposes Day Plans on the User's behalf to
 _Avoid_: "AI" — the Assistant is rule-based, not an LLM.
 
 **Recommendation**:
-A proposal produced by the Assistant — a set of one or more proposed Day Plans plus a headline and a rationale. The User can accept (the Day Plans are inserted with `source: 'recommendation'`) or dismiss it. Accepted Recommendations live on as ordinary Day Plans.
+A proposal produced by the Assistant — a set of one or more proposed Day Plans plus a headline and a rationale. The User can accept (the Day Plans are inserted with `source: 'recommendation'`) or dismiss it. Accepted Recommendations live on as ordinary Day Plans. Recommended Day Plans always forecast Standard time — the Assistant never proposes Credit Time, because Credit Time near the cap contributes nothing toward the goal gap the Assistant exists to close.
 _Avoid_: "suggestion" (Recommendation is the canonical term across the codebase and i18n keys).
 
 **Recommendation Shape**:
@@ -197,6 +197,10 @@ _Avoid_: "monthly hour goal", "monthly target".
 **Annual Goal**:
 The User's target field-ministry hours across one Service Year. Always derived as **Monthly Goal × 12** — not independently settable. Drives the milestone ladder's terminal rung and the Year tab's progress math.
 _Avoid_: "year goal", "yearly goal" (ambiguous between calendar year and Service Year — Annual Goal is the canonical term and is always reckoned by Service Year).
+
+**Projected Total**:
+The adjusted total a User's Service Report would show if every remaining Plan in the period became reality. Logged and planned time are combined into Standard and Credit buckets and the same credit-cap rules that govern a finished month are applied to the combined result — so a Projected Total never displays a number the actual report could not reach. The "planned" portion shown alongside it is the Plans' _effective contribution_ to that reachable total, not their raw sum (planned Credit Time squeezed out by the cap doesn't count). For a Service-Year scope the cap is applied month by month — the month is the unit the credit cap governs; there is no annual cap. Standalone "planned" figures elsewhere in the app are raw intent (what the User scheduled) and are never cap-adjusted; the cap is solely the Projected Total's concern.
+_Avoid_: "estimated total", "forecast total" (Projected Total is the canonical term); treating projected as logged + raw planned (the cap can make those differ).
 
 **Milestone**:
 An interim hour rung the User progresses through on the way to their Annual Goal. Each Publisher has a default ladder (e.g. 30, 50, 100, 200, 350 for regular pioneer); the Annual Goal itself is appended as the final rung at read time, never stored. Users can override the interior ladder.

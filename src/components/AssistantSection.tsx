@@ -17,10 +17,15 @@ import {
   generateRecommendation,
   type Recommendation,
 } from '@/lib/assistantRecommendation'
-import { computeRecommendationInputsHash } from '@/lib/assistantState'
+import {
+  computeRecommendationInputsHash,
+  dayPlanFingerprint,
+  recurringPlanFingerprint,
+} from '@/lib/assistantState'
 import { usePreferences } from '@/stores/preferences'
 import { formatMinutes } from '@/lib/minutes'
 import useServiceReport from '@/stores/serviceReport'
+import useCategories from '@/stores/categories'
 import useConversations from '@/stores/conversationStore'
 import { momentStoredDate, normalizeDateForStorage } from '@/lib/normalizeDate'
 import { getMonthsReports } from '@/lib/serviceReport'
@@ -40,9 +45,11 @@ type Props = {
   /** "Today" — passed in so the parent and child agree. */
   today: Date
   monthlyGoalHours: number
-  /** Resolved per the parent's publisher capabilities. */
-  loggedAdjustedMinutes: number
-  /** Projection result the parent already computed. */
+  /**
+   * Projection result the parent already computed — the engine's gap sizing and
+   * the dismissal hash both read from it so the Assistant can never disagree
+   * with the Projected Total it renders beneath.
+   */
   projection: ProjectedTotalResult
   /**
    * When true, omit the top divider/padding the section uses to separate itself
@@ -63,7 +70,6 @@ const AssistantSection = ({
   month,
   today,
   monthlyGoalHours,
-  loggedAdjustedMinutes,
   projection,
   standalone = false,
 }: Props) => {
@@ -83,6 +89,9 @@ const AssistantSection = ({
   const serviceReports = useServiceReport((s) => s.serviceReports)
   const dayPlans = useServiceReport((s) => s.dayPlans)
   const recurringPlans = useServiceReport((s) => s.recurringPlans)
+  // Plans derive credit-ness from their referenced Category at read time —
+  // subscribed so the dismissal hash recomputes when a Category flips.
+  const categories = useCategories((s) => s.categories)
   const { conversations } = useConversations()
 
   const minutesLoggedInPriorDays = useMemo(() => {
@@ -111,7 +120,7 @@ const AssistantSection = ({
       month,
       today,
       monthlyGoalHours,
-      loggedAdjustedMinutes,
+      standardGapMinutes: projection.standardGapMinutes,
       dayPlans,
       recurringPlans,
       conversations,
@@ -122,11 +131,11 @@ const AssistantSection = ({
     })
   }, [
     projection.state,
+    projection.standardGapMinutes,
     year,
     month,
     today,
     monthlyGoalHours,
-    loggedAdjustedMinutes,
     dayPlans,
     recurringPlans,
     conversations,
@@ -142,13 +151,15 @@ const AssistantSection = ({
   const inputsHash = useMemo(
     () =>
       computeRecommendationInputsHash({
-        loggedAdjustedMinutes,
-        dayPlanFingerprints: dayPlans.map(
-          (p) => `${momentStoredDate(p.date).format('YYYY-MM-DD')}:${p.minutes}`
+        loggedAdjustedMinutes: projection.loggedMinutes,
+        // Resolved credit-ness is part of each plan's fingerprint: a plan's
+        // Type (or its Category's credit flag) changes the projection, so it
+        // must re-arm a dismissed recommendation.
+        dayPlanFingerprints: dayPlans.map((p) =>
+          dayPlanFingerprint(p, categories)
         ),
-        recurringPlanFingerprints: recurringPlans.map(
-          (r) =>
-            `${r.id}:${momentStoredDate(r.startDate).format('YYYY-MM-DD')}:${r.minutes}`
+        recurringPlanFingerprints: recurringPlans.map((r) =>
+          recurringPlanFingerprint(r, categories)
         ),
         conversationDayKeys: conversations
           .flatMap((c) => [
@@ -162,9 +173,10 @@ const AssistantSection = ({
         meetingDays,
       }),
     [
-      loggedAdjustedMinutes,
+      projection.loggedMinutes,
       dayPlans,
       recurringPlans,
+      categories,
       conversations,
       offDays,
       meetingDays,

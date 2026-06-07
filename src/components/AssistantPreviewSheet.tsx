@@ -17,7 +17,10 @@ import {
 
 import i18n from '@/lib/locales'
 import type { Recommendation } from '@/lib/assistantRecommendation'
-import type { ProjectedTotalResult } from '@/lib/projectedTotal'
+import {
+  projectStandardAddition,
+  type ProjectedTotalResult,
+} from '@/lib/projectedTotal'
 import useServiceReport from '@/stores/serviceReport'
 import { usePreferences } from '@/stores/preferences'
 import { formatMinutes } from '@/lib/minutes'
@@ -87,8 +90,13 @@ const AssistantPreviewSheet = ({
     [rows]
   )
 
-  const projectedAfter =
-    projection.loggedMinutes + projection.plannedMinutes + totalProposedMinutes
+  // Mirror cap semantics (ADR 0005): proposed standard time can displace
+  // capped credit, so the post-accept total is re-run through the month's
+  // cap formula instead of summed linearly.
+  const projectedAfter = projectStandardAddition(
+    projection,
+    totalProposedMinutes
+  )
   const projectedAfterDisplay = formatMinutes(
     projectedAfter,
     timeDisplayFormat

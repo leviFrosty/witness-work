@@ -17,15 +17,11 @@ import {
   getPlansIntersectingDay,
   getEffectiveStartTimeInMinutesForRecurringPlan,
   getServiceYearFromDate,
-  getServiceYearMonthlyBreakdowns,
-  getServiceYearReports,
-  getTotalMinutesDetailedForSpecificMonth,
   RecurringPlan,
-  type MonthlyLoggedBreakdown,
 } from '@/lib/serviceReport'
-import { computeProjectedTotal } from '@/lib/projectedTotal'
 import { getPeriodTense } from '@/lib/projectedTotalCopy'
 import usePublisher from '@/hooks/usePublisher'
+import useProjectedTotal from '@/hooks/useProjectedTotal'
 import { useFormattedMinutes } from '@/lib/minutes'
 import { getStartTimeInMinutes } from '@/lib/normalizeDate'
 import { RootStackNavigation } from '@/types/rootStack'
@@ -461,44 +457,11 @@ const navButtonStyle = (theme: ReturnType<typeof useTheme>) => ({
 
 const MonthScheduleSection = (props: { month: number; year: number }) => {
   const theme = useTheme()
-  const serviceReports = useServiceReport((s) => s.serviceReports)
-  const dayPlans = useServiceReport((s) => s.dayPlans)
-  const recurringPlans = useServiceReport((s) => s.recurringPlans)
-  const { monthlyGoalHours: goalHours, creditCapMinutes } = usePublisher()
+  const { monthlyGoalHours: goalHours } = usePublisher()
 
-  const today = useMemo(() => new Date(), [])
-
-  const loggedMonths = useMemo<MonthlyLoggedBreakdown[]>(() => {
-    const reports = getMonthsReports(serviceReports, props.month, props.year)
-    const { standard, credit } = getTotalMinutesDetailedForSpecificMonth(
-      reports,
-      props.month,
-      props.year
-    )
-    return [{ year: props.year, month: props.month, standard, credit }]
-  }, [serviceReports, props.month, props.year])
-
-  const result = useMemo(
-    () =>
-      computeProjectedTotal({
-        scope: { kind: 'month', month: props.month, year: props.year },
-        today,
-        goalMinutes: goalHours * 60,
-        loggedMonths,
-        dayPlans,
-        recurringPlans,
-        creditCapMinutes,
-      }),
-    [
-      props.month,
-      props.year,
-      today,
-      goalHours,
-      loggedMonths,
-      dayPlans,
-      recurringPlans,
-      creditCapMinutes,
-    ]
+  const { projection: result } = useProjectedTotal(
+    { kind: 'month', month: props.month, year: props.year },
+    goalHours * 60
   )
 
   const projectedHours = result.projectedMinutes / 60
@@ -541,41 +504,12 @@ const MonthScheduleSection = (props: { month: number; year: number }) => {
 const AnnualScheduleSection = (props: { month: number; year: number }) => {
   const { month, year } = props
   const theme = useTheme()
-  const serviceReports = useServiceReport((s) => s.serviceReports)
-  const dayPlans = useServiceReport((s) => s.dayPlans)
-  const recurringPlans = useServiceReport((s) => s.recurringPlans)
-  const { annualGoalHours, hasAnnualGoal, creditCapMinutes } = usePublisher()
+  const { annualGoalHours, hasAnnualGoal } = usePublisher()
   const serviceYear = getServiceYearFromDate(moment().month(month).year(year))
 
-  const today = useMemo(() => new Date(), [])
-
-  const loggedMonths = useMemo(() => {
-    const reports = getServiceYearReports(serviceReports, serviceYear)
-    return getServiceYearMonthlyBreakdowns(reports)
-  }, [serviceReports, serviceYear])
-
-  const result = useMemo(
-    () =>
-      computeProjectedTotal({
-        scope: { kind: 'serviceYear', serviceYear },
-        today,
-        goalMinutes: annualGoalHours * 60,
-        loggedMonths,
-        dayPlans,
-        recurringPlans,
-        // Applied per month inside the projection — the month is the unit
-        // the credit cap governs; there is no annual cap.
-        creditCapMinutes,
-      }),
-    [
-      serviceYear,
-      today,
-      annualGoalHours,
-      loggedMonths,
-      dayPlans,
-      recurringPlans,
-      creditCapMinutes,
-    ]
+  const { projection: result } = useProjectedTotal(
+    { kind: 'serviceYear', serviceYear },
+    annualGoalHours * 60
   )
 
   const projectedHours = result.projectedMinutes / 60
@@ -625,46 +559,14 @@ const MonthAssistantCard = ({
   month: number
   year: number
 }) => {
-  const { monthlyGoalHours, creditCapMinutes } = usePublisher()
-  const serviceReports = useServiceReport((s) => s.serviceReports)
-  const dayPlans = useServiceReport((s) => s.dayPlans)
-  const recurringPlans = useServiceReport((s) => s.recurringPlans)
-  const today = useMemo(() => new Date(), [])
+  const { monthlyGoalHours } = usePublisher()
+
+  const { projection, today } = useProjectedTotal(
+    { kind: 'month', month, year },
+    monthlyGoalHours * 60
+  )
 
   const tense = getPeriodTense({ kind: 'month', month, year }, today)
-
-  const loggedMonths = useMemo<MonthlyLoggedBreakdown[]>(() => {
-    const reports = getMonthsReports(serviceReports, month, year)
-    const { standard, credit } = getTotalMinutesDetailedForSpecificMonth(
-      reports,
-      month,
-      year
-    )
-    return [{ year, month, standard, credit }]
-  }, [serviceReports, month, year])
-
-  const projection = useMemo(
-    () =>
-      computeProjectedTotal({
-        scope: { kind: 'month', month, year },
-        today,
-        goalMinutes: monthlyGoalHours * 60,
-        loggedMonths,
-        dayPlans,
-        recurringPlans,
-        creditCapMinutes,
-      }),
-    [
-      month,
-      year,
-      today,
-      monthlyGoalHours,
-      loggedMonths,
-      dayPlans,
-      recurringPlans,
-      creditCapMinutes,
-    ]
-  )
 
   if (monthlyGoalHours <= 0 || tense === 'past') return null
 
@@ -674,7 +576,6 @@ const MonthAssistantCard = ({
       month={month}
       today={today}
       monthlyGoalHours={monthlyGoalHours}
-      loggedAdjustedMinutes={projection.loggedMinutes}
       projection={projection}
       standalone
     />

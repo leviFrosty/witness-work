@@ -391,3 +391,49 @@ export function resolveCategoryForReport(
   }
   return null
 }
+
+export type CreditRestampResult = {
+  /** False when no entry references the Category — nothing to write back. */
+  changed: boolean
+  serviceReports: TimeEntriesByYear
+}
+
+/**
+ * Re-stamps the legacy per-entry `credit` boolean on every TimeEntry
+ * referencing `categoryId` after the Category's `isCredit` flips. The Category
+ * record is the source of truth; the stamp only keeps legacy credit-math
+ * readers consistent during the transition window. (Plans are never re-stamped
+ * — they derive credit-ness from the Category at read time.)
+ *
+ * Pure and identity-preserving: untouched month buckets keep their array
+ * identity (so report-keyed memoization survives), nothing in the input tree is
+ * mutated, and `changed: false` tells the caller to skip the store write
+ * entirely.
+ */
+export function restampTimeEntriesCredit(
+  serviceReports: TimeEntriesByYear,
+  categoryId: string,
+  isCredit: boolean
+): CreditRestampResult {
+  let changed = false
+  const next: TimeEntriesByYear = {}
+
+  for (const year of Object.keys(serviceReports)) {
+    const months = serviceReports[year]
+    const nextMonths: TimeEntriesByYear[string] = {}
+    for (const month of Object.keys(months)) {
+      const bucket = months[month]
+      if (bucket.some((r) => r.categoryId === categoryId)) {
+        changed = true
+        nextMonths[month] = bucket.map((r) =>
+          r.categoryId === categoryId ? { ...r, credit: isCredit } : r
+        )
+      } else {
+        nextMonths[month] = bucket
+      }
+    }
+    next[year] = nextMonths
+  }
+
+  return { changed, serviceReports: next }
+}

@@ -109,6 +109,15 @@ export type DayPlan = {
   date: Date
   minutes: number
   /**
+   * Reference to a user-defined `Category` record (`types/category.ts`) —
+   * surfaced in the UI as the Plan's "Type". Unlike Time Entries, Plans carry
+   * no stamped `credit` boolean: the Category is the single source of truth for
+   * whether the planned minutes forecast as Credit Time, derived at read time
+   * (`isPlanCreditTime`). Absent or dangling (Category deleted) → forecasts
+   * Standard. See ADR 0005.
+   */
+  categoryId?: string
+  /**
    * Local-wall-clock start time as minutes since midnight (0–1439). Independent
    * of timezone — `date` carries the calendar day, this carries the time. When
    * undefined, treat as noon (720) via `getStartTimeInMinutes`.
@@ -165,6 +174,13 @@ export type RecurringPlan = {
   id: string
   startDate: Date
   minutes: number
+  /**
+   * Reference to a user-defined `Category` record — the pattern's "Type".
+   * Pattern-level only: `RecurringPlanOverride` cannot change it (skip the
+   * instance and create a Day Plan instead). Same derive-at-read-time semantics
+   * as `DayPlan.categoryId`. See ADR 0005.
+   */
+  categoryId?: string
   /**
    * Local-wall-clock start time as minutes since midnight (0–1439). Applies to
    * every instance unless an override sets its own. When undefined, treat as

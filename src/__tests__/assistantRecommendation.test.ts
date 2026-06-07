@@ -12,7 +12,10 @@ const baseInput = {
   month: 4, // May
   today: normalizeDateForStorage('2026-05-01'),
   monthlyGoalHours: 50,
-  loggedAdjustedMinutes: 0,
+  // Mirror-capped standard gap the caller (AssistantSection) derives from
+  // computeProjectedTotal — the engine no longer re-derives a raw
+  // logged+planned sum. Tests state the gap directly.
+  standardGapMinutes: 50 * 60,
   dayPlans: [] as DayPlan[],
   recurringPlans: [] as RecurringPlan[],
   conversations: [] as Visit[],
@@ -28,20 +31,22 @@ describe('generateRecommendation', () => {
     ).toBeNull()
   })
 
-  it('returns null when logged already meets or exceeds the goal', () => {
+  it('returns null when there is no remaining standard gap (logged meets the goal)', () => {
     expect(
       generateRecommendation({
         ...baseInput,
-        loggedAdjustedMinutes: 50 * 60,
+        standardGapMinutes: 0,
       })
     ).toBeNull()
   })
 
-  it('returns null when projected (logged + planned) already meets the goal', () => {
+  it('returns null when the projection (logged + planned) already meets the goal', () => {
+    // 30h logged + 20h planned → the caller's projection reaches the 50h
+    // goal, so it hands the engine a zero gap.
     expect(
       generateRecommendation({
         ...baseInput,
-        loggedAdjustedMinutes: 30 * 60,
+        standardGapMinutes: 0,
         dayPlans: [
           {
             id: 'p1',
@@ -60,7 +65,7 @@ describe('generateRecommendation', () => {
       const rec = generateRecommendation({
         ...baseInput,
         today: normalizeDateForStorage('2026-05-22'),
-        loggedAdjustedMinutes: 30 * 60,
+        standardGapMinutes: 20 * 60,
       })
 
       expect(rec).not.toBeNull()
@@ -82,7 +87,7 @@ describe('generateRecommendation', () => {
       const rec = generateRecommendation({
         ...baseInput,
         today: normalizeDateForStorage('2026-05-14'),
-        loggedAdjustedMinutes: 42 * 60,
+        standardGapMinutes: 8 * 60,
       })
 
       expect(rec).not.toBeNull()
@@ -111,7 +116,7 @@ describe('generateRecommendation', () => {
       const rec = generateRecommendation({
         ...baseInput,
         today: normalizeDateForStorage('2026-05-10'),
-        loggedAdjustedMinutes: 40 * 60,
+        standardGapMinutes: 10 * 60,
       })
 
       expect(rec).not.toBeNull()
@@ -136,7 +141,7 @@ describe('generateRecommendation', () => {
         ...baseInput,
         today: normalizeDateForStorage('2026-05-18'),
         monthlyGoalHours: 60,
-        loggedAdjustedMinutes: 0,
+        standardGapMinutes: 60 * 60,
       })
 
       expect(rec).not.toBeNull()
@@ -158,7 +163,7 @@ describe('generateRecommendation', () => {
       const rec = generateRecommendation({
         ...baseInput,
         today: normalizeDateForStorage('2026-05-22'),
-        loggedAdjustedMinutes: 44 * 60,
+        standardGapMinutes: 6 * 60,
         offDays: [5],
       })
 
@@ -172,7 +177,7 @@ describe('generateRecommendation', () => {
       const rec = generateRecommendation({
         ...baseInput,
         today: normalizeDateForStorage('2026-05-22'),
-        loggedAdjustedMinutes: 30 * 60,
+        standardGapMinutes: 20 * 60,
         conversations: [
           {
             id: 'c1',
@@ -200,7 +205,7 @@ describe('generateRecommendation', () => {
       const rec = generateRecommendation({
         ...baseInput,
         today: normalizeDateForStorage('2026-05-22'),
-        loggedAdjustedMinutes: 44 * 60,
+        standardGapMinutes: 6 * 60,
         minutesLoggedInPriorDays: 13 * 60,
       })
 
@@ -229,7 +234,7 @@ describe('generateRecommendation', () => {
         ...baseInput,
         today: normalizeDateForStorage('2026-05-22'),
         monthlyGoalHours: 50,
-        loggedAdjustedMinutes: 43 * 60,
+        standardGapMinutes: 7 * 60,
         assistantHistory: [dismissed(1), dismissed(2), dismissed(3)],
       })
 
@@ -244,7 +249,7 @@ describe('generateRecommendation', () => {
         ...baseInput,
         today: normalizeDateForStorage('2026-05-27'),
         monthlyGoalHours: 50,
-        loggedAdjustedMinutes: 10 * 60,
+        standardGapMinutes: 40 * 60,
       })
 
       expect(rec).not.toBeNull()
@@ -256,10 +261,11 @@ describe('generateRecommendation', () => {
 
     it('skips days that already have a DayPlan', () => {
       // May 15 has an existing 1h plan. Engine must propose on a different day.
+      // Gap: 50h goal − 44h logged − 1h planned = 5h.
       const rec = generateRecommendation({
         ...baseInput,
         today: normalizeDateForStorage('2026-05-15'),
-        loggedAdjustedMinutes: 44 * 60,
+        standardGapMinutes: 5 * 60,
         dayPlans: [
           {
             id: 'existing',
@@ -281,7 +287,7 @@ describe('generateRecommendation', () => {
       const rec = generateRecommendation({
         ...baseInput,
         today: normalizeDateForStorage('2026-05-15'),
-        loggedAdjustedMinutes: 44 * 60,
+        standardGapMinutes: 6 * 60,
       })
 
       expect(rec).not.toBeNull()
@@ -302,7 +308,7 @@ describe('generateRecommendation', () => {
       const rec = generateRecommendation({
         ...baseInput,
         today: normalizeDateForStorage('2026-05-22'),
-        loggedAdjustedMinutes: 44 * 60,
+        standardGapMinutes: 6 * 60,
         meetingDays: [5],
       })
 
@@ -318,7 +324,7 @@ describe('generateRecommendation', () => {
       const rec = generateRecommendation({
         ...baseInput,
         today: normalizeDateForStorage('2026-05-10'),
-        loggedAdjustedMinutes: 30 * 60,
+        standardGapMinutes: 20 * 60,
         meetingDays: [0, 3],
       })
 
@@ -336,7 +342,7 @@ describe('generateRecommendation', () => {
       const rec = generateRecommendation({
         ...baseInput,
         today: normalizeDateForStorage('2026-05-22'),
-        loggedAdjustedMinutes: 44 * 60,
+        standardGapMinutes: 6 * 60,
         offDays: [5],
         meetingDays: [5],
       })
@@ -355,7 +361,7 @@ describe('generateRecommendation', () => {
       const rec = generateRecommendation({
         ...baseInput,
         today: normalizeDateForStorage('2026-05-28'),
-        loggedAdjustedMinutes: 47 * 60,
+        standardGapMinutes: 3 * 60,
         meetingDays: [0, 4, 5, 6],
       })
 
@@ -374,7 +380,7 @@ describe('generateRecommendation', () => {
       const rec = generateRecommendation({
         ...baseInput,
         today: normalizeDateForStorage('2026-05-28'),
-        loggedAdjustedMinutes: 44 * 60,
+        standardGapMinutes: 6 * 60,
         meetingDays: [0, 4, 5, 6],
       })
 
@@ -393,7 +399,7 @@ describe('generateRecommendation', () => {
         ...baseInput,
         today: normalizeDateForStorage('2026-05-18'),
         monthlyGoalHours: 60,
-        loggedAdjustedMinutes: 0,
+        standardGapMinutes: 60 * 60,
         meetingDays: [1],
       })
 

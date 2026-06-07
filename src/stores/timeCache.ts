@@ -158,7 +158,8 @@ export const getAnnualServiceReportCacheKey = (
 
 /**
  * Generates a stable hash for service reports to detect changes. Hash includes
- * report IDs, hours, and minutes for all reports in the service year.
+ * report IDs, hours, minutes, and credit attribution for all reports in the
+ * service year.
  */
 export const generateServiceReportsHash = (
   serviceReports: TimeEntriesByYear,
@@ -171,7 +172,13 @@ export const generateServiceReportsHash = (
     for (const monthKey in serviceYearsReports[yearKey]) {
       const monthReports = serviceYearsReports[yearKey][monthKey]
       reportIds.push(
-        ...monthReports.map((r) => `${r.id}:${r.hours}:${r.minutes}`)
+        // `credit` participates because the cached year total branches on it
+        // (standard vs credit buckets before the monthly cap) — a Category
+        // credit flip re-stamps entries without changing id/hours/minutes,
+        // and the cache must rotate when it does.
+        ...monthReports.map(
+          (r) => `${r.id}:${r.hours}:${r.minutes}:${r.credit ? 1 : 0}`
+        )
       )
     }
   }

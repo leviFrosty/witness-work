@@ -242,13 +242,16 @@ export const useServiceReport = create(
                 ) {
                   return c
                 }
-                return { ...c, ...normalized }
+                return { ...c, ...normalized, updatedAt: Date.now() }
               }),
             }
           }
 
           return {
-            recurringPlans: [...recurringPlans, normalized],
+            recurringPlans: [
+              ...recurringPlans,
+              { ...normalized, updatedAt: Date.now() },
+            ],
           }
         }),
       updateRecurringPlan: (recurringPlan: Partial<RecurringPlan>) => {
@@ -259,7 +262,10 @@ export const useServiceReport = create(
               if (c.id !== normalized.id) {
                 return c
               }
-              return { ...c, ...normalized }
+              // Stamp updatedAt (mirrors the day-plan actions) — iCloud merge
+              // is whole-object last-writer-wins on this timestamp; without
+              // it a remote copy always beats a local edit.
+              return { ...c, ...normalized, updatedAt: Date.now() }
             }),
           }
         })

@@ -39,10 +39,16 @@ import {
   DEFAULT_PLAN_NOTIFICATION_OFFSET,
   usePreferences,
 } from '@/stores/preferences'
+import useCategories from '@/stores/categories'
 import useNotifications from '@/hooks/notifications'
 import { Notification } from '@/types/visit'
 
 import TextInput from '@/components/ui/TextInput'
+import TypeSelectorRow, {
+  CUSTOM_TYPE_VALUE,
+  STANDARD_TYPE_VALUE,
+  type TypeSelection,
+} from '@/components/TypeSelectorRow'
 import { RootStackParamList } from '@/types/rootStack'
 import DayHistoryView from '@/features/service-reports/components/DayHistoryView'
 
@@ -88,6 +94,8 @@ const OneTimePlan = (props: {
   notifyMeOffset: NotifyMeOffset
   setNotifyMeOffset: React.Dispatch<React.SetStateAction<NotifyMeOffset>>
   notificationsAllowed: boolean
+  /** The shared Add Time "Type" row — the parent owns its state. */
+  typeSelector: React.ReactNode
 }) => {
   const theme = useTheme()
   const noteInput = useRef<RNTextInput>(null)
@@ -101,6 +109,7 @@ const OneTimePlan = (props: {
           iOSMode='datetime'
         />
       </InputRowContainer>
+      {props.typeSelector}
       <InputRowContainer
         label={i18n.t('note')}
         onLabelPress={() => noteInput.current?.focus()}
@@ -232,6 +241,11 @@ const RecurringPlan = (props: {
   note?: string
   setNote: React.Dispatch<React.SetStateAction<string>>
   getRecurringDescription: () => string
+  /**
+   * The shared Add Time "Type" row — the parent owns its state. Null in
+   * override mode: Type is pattern-level, an Override cannot change it.
+   */
+  typeSelector: React.ReactNode
 }) => {
   const [willEnd, setWillEnd] = useState(!!props.endDate)
   const theme = useTheme()
@@ -277,6 +291,7 @@ const RecurringPlan = (props: {
           iOSMode='datetime'
         />
       </InputRowContainer>
+      {props.typeSelector}
       <InputRowContainer label={i18n.t('frequency')}>
         <View style={{ flex: 1 }}>
           <Select
@@ -530,6 +545,48 @@ const PlanDayScreen = ({ route, navigation }: PlanDayScreenProps) => {
     existingRecurringPlan?.recurrence.monthlyByWeekdayConfig?.weekOfMonth ?? 1
   )
 
+  const { categories } = useCategories()
+
+  // Initial Type picker value: the plan's referenced Category when it still
+  // resolves; Standard otherwise — a dangling reference (Category deleted)
+  // shows as Standard, which is also how the projection forecasts it.
+  const resolveInitialTypeValue = (): string => {
+    const categoryId =
+      existingDayPlan?.categoryId ?? existingRecurringPlan?.categoryId
+    if (categoryId && categories.some((c) => c.id === categoryId)) {
+      return categoryId
+    }
+    return STANDARD_TYPE_VALUE
+  }
+  const [typeValue, setTypeValue] = useState<string>(resolveInitialTypeValue)
+
+  const handleTypeChange = ({ value }: TypeSelection) => {
+    setTypeValue(value)
+  }
+
+  // Category id to persist on save. A dangling reference (the plan's
+  // Category no longer resolves — e.g. deleted on another device, or the
+  // Category hasn't synced here yet) DISPLAYS as Standard but must not be
+  // destroyed by an unrelated edit: the Standard fallback is read-time-only
+  // (ADR 0005). Since a dangling plan initializes the picker to Standard,
+  // "still on Standard" means the user never retyped it — preserve the
+  // reference. Picking a real Category replaces it; for plans whose Category
+  // resolves, picking Standard clears it as before.
+  const existingCategoryId =
+    existingDayPlan?.categoryId ?? existingRecurringPlan?.categoryId
+  const danglingExistingCategoryId =
+    existingCategoryId && !categories.some((c) => c.id === existingCategoryId)
+      ? existingCategoryId
+      : undefined
+  const selectedCategoryId =
+    typeValue !== STANDARD_TYPE_VALUE &&
+    typeValue !== CUSTOM_TYPE_VALUE &&
+    categories.some((c) => c.id === typeValue)
+      ? typeValue
+      : typeValue === STANDARD_TYPE_VALUE
+        ? danglingExistingCategoryId
+        : undefined
+
   // Helper function to calculate week of month for a given date
   const calculateWeekOfMonth = (targetDate: Date): number => {
     const momentDate = moment(targetDate)
@@ -738,6 +795,7 @@ const PlanDayScreen = ({ route, navigation }: PlanDayScreenProps) => {
     setNote(existingDayPlan?.note ?? recurringPlanData?.note ?? '')
     setNotifyMe(existingDayPlan ? !!existingDayPlan.notifyMe : planAlwaysNotify)
     setNotifyMeOffset(initialNotifyOffset())
+    setTypeValue(resolveInitialTypeValue())
     // eslint-disable-next-line react-compiler/react-compiler
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [editingContext]) // Only depend on the stable editing context key
@@ -816,6 +874,7 @@ const PlanDayScreen = ({ route, navigation }: PlanDayScreenProps) => {
           date: storedDate,
           startTimeInMinutes,
           minutes: hours * 60 + minutes,
+          categoryId: selectedCategoryId,
           note: note || undefined,
           notifyMe,
           notifications,
@@ -842,12 +901,14 @@ const PlanDayScreen = ({ route, navigation }: PlanDayScreenProps) => {
             addRecurringPlanOverride(existingRecurringPlan.id, override)
           }
         } else {
-          // Update the entire recurring plan
+          // Update the entire recurring plan. Type is pattern-level — the
+          // override branch above never touches categoryId.
           updateRecurringPlan({
             id: existingRecurringPlan.id,
             startDate: storedDate,
             startTimeInMinutes,
             minutes: hours * 60 + minutes,
+            categoryId: selectedCategoryId,
             recurrence: {
               endDate,
               frequency,
@@ -884,6 +945,7 @@ const PlanDayScreen = ({ route, navigation }: PlanDayScreenProps) => {
           date: storedDate,
           startTimeInMinutes,
           minutes: hours * 60 + minutes,
+          categoryId: selectedCategoryId,
           note: note || undefined,
           notifyMe,
           notifications,
@@ -894,6 +956,7 @@ const PlanDayScreen = ({ route, navigation }: PlanDayScreenProps) => {
           startDate: storedDate,
           startTimeInMinutes,
           minutes: hours * 60 + minutes,
+          categoryId: selectedCategoryId,
           recurrence: {
             endDate,
             frequency,
@@ -1138,6 +1201,12 @@ const PlanDayScreen = ({ route, navigation }: PlanDayScreenProps) => {
                 notifyMeOffset={notifyMeOffset}
                 setNotifyMeOffset={setNotifyMeOffset}
                 notificationsAllowed={notificationsAllowed}
+                typeSelector={
+                  <TypeSelectorRow
+                    value={typeValue}
+                    onChange={handleTypeChange}
+                  />
+                }
               />
             ) : (
               <RecurringPlan
@@ -1160,13 +1229,34 @@ const PlanDayScreen = ({ route, navigation }: PlanDayScreenProps) => {
                 note={note}
                 setNote={setNote}
                 getRecurringDescription={getRecurringDescription}
+                typeSelector={
+                  // Type is pattern-level: an Override cannot change it. To
+                  // do a different kind of work on one occurrence, skip the
+                  // instance and create a Day Plan instead.
+                  isOverrideMode ? null : (
+                    <TypeSelectorRow
+                      value={typeValue}
+                      onChange={handleTypeChange}
+                    />
+                  )
+                }
               />
             )}
 
+            {typeValue === CUSTOM_TYPE_VALUE && (
+              <Text style={{ fontSize: 12, color: theme.colors.textAlt }}>
+                {i18n.t('categoryNeeded')}
+              </Text>
+            )}
             <View style={{ paddingRight: 20, paddingVertical: 15 }}>
               <ActionButton
                 onPress={handleAddPlan}
-                disabled={hours === 0 && minutes === 0}
+                disabled={
+                  (hours === 0 && minutes === 0) ||
+                  // Custom is a transient picker state — until the user names
+                  // the Category, there is nothing to attach the plan to.
+                  typeValue === CUSTOM_TYPE_VALUE
+                }
               >
                 <Text
                   style={{

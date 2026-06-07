@@ -1,4 +1,4 @@
-import { Fragment, useMemo } from 'react'
+import { Fragment } from 'react'
 import { View } from 'react-native'
 
 import Text from '@/components/ui/MyText'
@@ -9,24 +9,14 @@ import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
 import { faChartLine } from '@fortawesome/free-solid-svg-icons'
 
 import i18n, { TranslationKey } from '@/lib/locales'
-import {
-  computeProjectedTotal,
-  type ProjectedTotalScope,
-} from '@/lib/projectedTotal'
+import { type ProjectedTotalScope } from '@/lib/projectedTotal'
 import {
   getPeriodTense,
   getStatusKey,
   segmentBoldMarkup,
 } from '@/lib/projectedTotalCopy'
 import usePublisher from '@/hooks/usePublisher'
-import useServiceReport from '@/stores/serviceReport'
-import {
-  getMonthsReports,
-  getServiceYearMonthlyBreakdowns,
-  getServiceYearReports,
-  getTotalMinutesDetailedForSpecificMonth,
-  type MonthlyLoggedBreakdown,
-} from '@/lib/serviceReport'
+import useProjectedTotal from '@/hooks/useProjectedTotal'
 import { formatMinutes } from '@/lib/minutes'
 import { usePreferences } from '@/stores/preferences'
 import AssistantSection from '@/components/AssistantSection'
@@ -43,63 +33,14 @@ type Props = {
 
 const ProjectedTotalCard = ({ scope, showAssistant = false }: Props) => {
   const theme = useTheme()
-  const { monthlyGoalHours, annualGoalHours, creditCapMinutes } = usePublisher()
-  // Subscribe to the three slices the projection reads. Without explicit
-  // selectors, the destructure pattern Zustand v4 falls back to runs against
-  // the whole-store reference — which is fine for reactivity but masks the
-  // intent. Selecting per-slice also avoids re-rendering on unrelated store
-  // mutations (rollover tombstones, etc.) that don't affect this card.
-  const serviceReports = useServiceReport((s) => s.serviceReports)
-  const dayPlans = useServiceReport((s) => s.dayPlans)
-  const recurringPlans = useServiceReport((s) => s.recurringPlans)
+  const { monthlyGoalHours, annualGoalHours } = usePublisher()
   const { timeDisplayFormat } = usePreferences()
   const formatHours = (minutes: number) =>
     formatMinutes(minutes, timeDisplayFormat).formatted
 
   const goalHours = scope.kind === 'month' ? monthlyGoalHours : annualGoalHours
 
-  // `today` is captured once per render. Memoizing keeps the downstream
-  // useMemos stable across renders that didn't actually cross midnight.
-  const today = useMemo(() => new Date(), [])
-
-  // Raw standard/credit buckets per month — the projection applies the cap
-  // itself, month by month, so logged and planned time run through the same
-  // formula a finished report gets (ADR 0005).
-  const loggedMonths = useMemo<MonthlyLoggedBreakdown[]>(() => {
-    if (scope.kind === 'month') {
-      const reports = getMonthsReports(serviceReports, scope.month, scope.year)
-      const { standard, credit } = getTotalMinutesDetailedForSpecificMonth(
-        reports,
-        scope.month,
-        scope.year
-      )
-      return [{ year: scope.year, month: scope.month, standard, credit }]
-    }
-    const reports = getServiceYearReports(serviceReports, scope.serviceYear)
-    return getServiceYearMonthlyBreakdowns(reports)
-  }, [scope, serviceReports])
-
-  const result = useMemo(
-    () =>
-      computeProjectedTotal({
-        scope,
-        today,
-        goalMinutes: goalHours * 60,
-        loggedMonths,
-        dayPlans,
-        recurringPlans,
-        creditCapMinutes,
-      }),
-    [
-      scope,
-      today,
-      goalHours,
-      loggedMonths,
-      dayPlans,
-      recurringPlans,
-      creditCapMinutes,
-    ]
-  )
+  const { projection: result, today } = useProjectedTotal(scope, goalHours * 60)
 
   // Hide entirely when there's no goal to project against.
   if (goalHours <= 0) return null
@@ -289,7 +230,6 @@ const ProjectedTotalCard = ({ scope, showAssistant = false }: Props) => {
           month={scope.month}
           today={today}
           monthlyGoalHours={monthlyGoalHours}
-          loggedAdjustedMinutes={result.loggedMinutes}
           projection={result}
         />
       )}

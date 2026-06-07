@@ -72,3 +72,19 @@ export const isReportCreditTime = (
   }
   return report.credit === true
 }
+
+/**
+ * Resolves the credit attribution for a Plan (Day Plan or Recurring Plan).
+ * Unlike Time Entries, Plans carry no stamped `credit` boolean — the referenced
+ * Category is the single source of truth, derived at read time, so flipping a
+ * Category's credit setting retroactively re-forecasts every Plan referencing
+ * it. A Plan with no `categoryId`, or whose Category no longer exists,
+ * forecasts Standard (ADR 0005).
+ */
+export const isPlanCreditTime = (
+  plan: { categoryId?: string },
+  categories: Category[]
+): boolean => {
+  if (!plan.categoryId) return false
+  return categories.find((c) => c.id === plan.categoryId)?.isCredit ?? false
+}

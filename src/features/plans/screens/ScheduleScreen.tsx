@@ -13,14 +13,15 @@ import { faArrowLeft, faArrowRight } from '@fortawesome/free-solid-svg-icons'
 import useServiceReport from '@/stores/serviceReport'
 import useTheme from '@/contexts/theme'
 import {
-  adjustedMinutesForSpecificMonth,
   getMonthsReports,
   getPlansIntersectingDay,
   getEffectiveStartTimeInMinutesForRecurringPlan,
   getServiceYearFromDate,
+  getServiceYearMonthlyBreakdowns,
   getServiceYearReports,
-  getTotalMinutesForServiceYear,
+  getTotalMinutesDetailedForSpecificMonth,
   RecurringPlan,
+  type MonthlyLoggedBreakdown,
 } from '@/lib/serviceReport'
 import { computeProjectedTotal } from '@/lib/projectedTotal'
 import { getPeriodTense } from '@/lib/projectedTotalCopy'
@@ -463,25 +464,19 @@ const MonthScheduleSection = (props: { month: number; year: number }) => {
   const serviceReports = useServiceReport((s) => s.serviceReports)
   const dayPlans = useServiceReport((s) => s.dayPlans)
   const recurringPlans = useServiceReport((s) => s.recurringPlans)
-  const {
-    monthlyGoalHours: goalHours,
-    creditCapMinutes,
-    type: publisher,
-  } = usePublisher()
+  const { monthlyGoalHours: goalHours, creditCapMinutes } = usePublisher()
 
   const today = useMemo(() => new Date(), [])
 
-  const loggedAdjustedMinutes = useMemo(() => {
+  const loggedMonths = useMemo<MonthlyLoggedBreakdown[]>(() => {
     const reports = getMonthsReports(serviceReports, props.month, props.year)
-    return (
-      adjustedMinutesForSpecificMonth(
-        reports,
-        props.month,
-        props.year,
-        publisher
-      ).value ?? 0
+    const { standard, credit } = getTotalMinutesDetailedForSpecificMonth(
+      reports,
+      props.month,
+      props.year
     )
-  }, [serviceReports, props.month, props.year, publisher])
+    return [{ year: props.year, month: props.month, standard, credit }]
+  }, [serviceReports, props.month, props.year])
 
   const result = useMemo(
     () =>
@@ -489,7 +484,7 @@ const MonthScheduleSection = (props: { month: number; year: number }) => {
         scope: { kind: 'month', month: props.month, year: props.year },
         today,
         goalMinutes: goalHours * 60,
-        loggedAdjustedMinutes,
+        loggedMonths,
         dayPlans,
         recurringPlans,
         creditCapMinutes,
@@ -499,7 +494,7 @@ const MonthScheduleSection = (props: { month: number; year: number }) => {
       props.year,
       today,
       goalHours,
-      loggedAdjustedMinutes,
+      loggedMonths,
       dayPlans,
       recurringPlans,
       creditCapMinutes,
@@ -549,14 +544,14 @@ const AnnualScheduleSection = (props: { month: number; year: number }) => {
   const serviceReports = useServiceReport((s) => s.serviceReports)
   const dayPlans = useServiceReport((s) => s.dayPlans)
   const recurringPlans = useServiceReport((s) => s.recurringPlans)
-  const { annualGoalHours, hasAnnualGoal } = usePublisher()
+  const { annualGoalHours, hasAnnualGoal, creditCapMinutes } = usePublisher()
   const serviceYear = getServiceYearFromDate(moment().month(month).year(year))
 
   const today = useMemo(() => new Date(), [])
 
-  const loggedMinutes = useMemo(() => {
+  const loggedMonths = useMemo(() => {
     const reports = getServiceYearReports(serviceReports, serviceYear)
-    return getTotalMinutesForServiceYear(reports, serviceYear)
+    return getServiceYearMonthlyBreakdowns(reports)
   }, [serviceReports, serviceYear])
 
   const result = useMemo(
@@ -565,18 +560,21 @@ const AnnualScheduleSection = (props: { month: number; year: number }) => {
         scope: { kind: 'serviceYear', serviceYear },
         today,
         goalMinutes: annualGoalHours * 60,
-        loggedAdjustedMinutes: loggedMinutes,
+        loggedMonths,
         dayPlans,
         recurringPlans,
-        creditCapMinutes: null,
+        // Applied per month inside the projection — the month is the unit
+        // the credit cap governs; there is no annual cap.
+        creditCapMinutes,
       }),
     [
       serviceYear,
       today,
       annualGoalHours,
-      loggedMinutes,
+      loggedMonths,
       dayPlans,
       recurringPlans,
+      creditCapMinutes,
     ]
   )
 
@@ -627,7 +625,7 @@ const MonthAssistantCard = ({
   month: number
   year: number
 }) => {
-  const { monthlyGoalHours, creditCapMinutes, type: publisher } = usePublisher()
+  const { monthlyGoalHours, creditCapMinutes } = usePublisher()
   const serviceReports = useServiceReport((s) => s.serviceReports)
   const dayPlans = useServiceReport((s) => s.dayPlans)
   const recurringPlans = useServiceReport((s) => s.recurringPlans)
@@ -635,13 +633,15 @@ const MonthAssistantCard = ({
 
   const tense = getPeriodTense({ kind: 'month', month, year }, today)
 
-  const loggedAdjustedMinutes = useMemo(() => {
+  const loggedMonths = useMemo<MonthlyLoggedBreakdown[]>(() => {
     const reports = getMonthsReports(serviceReports, month, year)
-    return (
-      adjustedMinutesForSpecificMonth(reports, month, year, publisher).value ??
-      0
+    const { standard, credit } = getTotalMinutesDetailedForSpecificMonth(
+      reports,
+      month,
+      year
     )
-  }, [serviceReports, month, year, publisher])
+    return [{ year, month, standard, credit }]
+  }, [serviceReports, month, year])
 
   const projection = useMemo(
     () =>
@@ -649,7 +649,7 @@ const MonthAssistantCard = ({
         scope: { kind: 'month', month, year },
         today,
         goalMinutes: monthlyGoalHours * 60,
-        loggedAdjustedMinutes,
+        loggedMonths,
         dayPlans,
         recurringPlans,
         creditCapMinutes,
@@ -659,7 +659,7 @@ const MonthAssistantCard = ({
       year,
       today,
       monthlyGoalHours,
-      loggedAdjustedMinutes,
+      loggedMonths,
       dayPlans,
       recurringPlans,
       creditCapMinutes,
@@ -674,7 +674,7 @@ const MonthAssistantCard = ({
       month={month}
       today={today}
       monthlyGoalHours={monthlyGoalHours}
-      loggedAdjustedMinutes={loggedAdjustedMinutes}
+      loggedAdjustedMinutes={projection.loggedMinutes}
       projection={projection}
       standalone
     />

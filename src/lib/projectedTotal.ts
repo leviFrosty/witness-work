@@ -1,8 +1,10 @@
 import type { DayPlan, RecurringPlan } from '@/types/timeEntry'
 import { momentStoredDate, normalizeDateForStorage } from '@/lib/normalizeDate'
 import {
+  applyMonthCreditCap,
   getEffectiveMinutesForRecurringPlan,
   getPlansIntersectingDay,
+  type MonthlyLoggedBreakdown,
 } from '@/lib/serviceReport'
 import moment from 'moment'
 
@@ -21,10 +23,22 @@ export type ProjectedTotalInput = {
   scope: ProjectedTotalScope
   today: Date
   goalMinutes: number
-  loggedAdjustedMinutes: number
+  /**
+   * Raw (uncapped) logged standard/credit minutes per month in scope. Month
+   * scope expects the single matching bucket
+   * (`getTotalMinutesDetailedForSpecificMonth`); service-year scope one entry
+   * per month with logged time (`getServiceYearMonthlyBreakdowns`). Months
+   * without an entry are treated as zero; entries outside the scope are
+   * ignored.
+   */
+  loggedMonths: MonthlyLoggedBreakdown[]
   dayPlans: DayPlan[]
   recurringPlans: RecurringPlan[]
-  /** Resolved credit cap in minutes, or null for unlimited. */
+  /**
+   * Resolved monthly credit cap in minutes, or null for unlimited. Applied per
+   * month for both scopes — the month is the unit the cap governs; there is no
+   * annual cap.
+   */
   creditCapMinutes: number | null
   /**
    * Off Days the user marked — passed through so the "is the gap reachable?"
@@ -60,12 +74,18 @@ const periodBounds = (
   return { start, end }
 }
 
-const futurePlannedMinutes = (
+const monthKey = (year: number, month: number) => `${year}-${month}`
+
+/**
+ * Sums future planned minutes per month. One winner per day: a Day Plan takes
+ * the whole day; otherwise the highest-minutes recurring instance counts.
+ */
+const futurePlannedMinutesByMonth = (
   scope: ProjectedTotalScope,
   today: Date,
   dayPlans: DayPlan[],
   recurringPlans: RecurringPlan[]
-): number => {
+): Map<string, number> => {
   const { start, end } = periodBounds(scope)
   const todayDay = momentStoredDate(normalizeDateForStorage(today))
   const cursor = (todayDay.isAfter(start, 'day') ? todayDay : start).clone()
@@ -74,18 +94,19 @@ const futurePlannedMinutes = (
     dayPlans.map((p) => [momentStoredDate(p.date).format('YYYY-MM-DD'), p])
   )
 
-  let sum = 0
+  const plannedByMonth = new Map<string, number>()
   while (cursor.isSameOrBefore(end, 'day')) {
     const key = cursor.format('YYYY-MM-DD')
     const dp = dayPlanByKey.get(key)
+    let minutes = 0
     if (dp) {
-      sum += dp.minutes
+      minutes = dp.minutes
     } else {
       const recurringForDay = getPlansIntersectingDay(
         cursor.toDate(),
         recurringPlans
       )
-      const highest = recurringForDay.reduce(
+      minutes = recurringForDay.reduce(
         (max, plan) =>
           Math.max(
             max,
@@ -93,11 +114,14 @@ const futurePlannedMinutes = (
           ),
         0
       )
-      sum += highest
+    }
+    if (minutes > 0) {
+      const bucket = monthKey(cursor.year(), cursor.month())
+      plannedByMonth.set(bucket, (plannedByMonth.get(bucket) ?? 0) + minutes)
     }
     cursor.add(1, 'day')
   }
-  return sum
+  return plannedByMonth
 }
 
 /** Stretch cap from the recommendation engine — used to decide reachability. */
@@ -120,21 +144,52 @@ const eligibleRemainingDays = (
   return count
 }
 
+/**
+ * A Projected Total is the adjusted total the Service Report would show if
+ * every remaining Plan became reality: logged and planned time are combined
+ * into standard/credit buckets and run through the same monthly cap formula a
+ * finished month gets (`applyMonthCreditCap`), month by month. The returned
+ * `plannedMinutes` is the Plans' effective contribution (`projected −
+ * loggedAdjusted`), not their raw sum — planned standard time that pushes
+ * combined standard past the cap retroactively squeezes out logged credit, and
+ * only this mirror accounting keeps the projection a number the report can
+ * actually reach. See ADR 0005 and CONTEXT.md → "Projected Total".
+ */
 export const computeProjectedTotal = (
   input: ProjectedTotalInput
 ): ProjectedTotalResult => {
-  const rawPlanned = futurePlannedMinutes(
+  const plannedByMonth = futurePlannedMinutesByMonth(
     input.scope,
     input.today,
     input.dayPlans,
     input.recurringPlans
   )
-
-  const logged = input.loggedAdjustedMinutes
+  const loggedByMonth = new Map(
+    input.loggedMonths.map((m) => [monthKey(m.year, m.month), m])
+  )
   const cap = input.creditCapMinutes
-  const planned =
-    cap !== null ? Math.max(0, Math.min(rawPlanned, cap - logged)) : rawPlanned
-  const projected = logged + planned
+
+  const { start, end } = periodBounds(input.scope)
+  let logged = 0
+  let projected = 0
+  const cursor = start.clone()
+  while (cursor.isSameOrBefore(end, 'month')) {
+    const key = monthKey(cursor.year(), cursor.month())
+    const loggedMonth = loggedByMonth.get(key)
+    const loggedStandard = loggedMonth?.standard ?? 0
+    const loggedCredit = loggedMonth?.credit ?? 0
+    const plannedStandard = plannedByMonth.get(key) ?? 0
+
+    logged += applyMonthCreditCap(loggedStandard, loggedCredit, cap)
+    projected += applyMonthCreditCap(
+      loggedStandard + plannedStandard,
+      loggedCredit,
+      cap
+    )
+    cursor.add(1, 'month')
+  }
+
+  const planned = projected - logged
   const goal = input.goalMinutes
   const gap = Math.max(0, goal - projected)
   const over = Math.max(0, projected - goal)

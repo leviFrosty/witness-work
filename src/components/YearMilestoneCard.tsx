@@ -68,12 +68,14 @@ const YearMilestoneCard = ({
   onAdjustMilestones,
 }: YearMilestoneCardProps) => {
   const theme = useTheme()
-  const { type: publisher, annualGoalHours } = usePublisher()
+  const { type: publisher, annualGoalHours, creditCapMinutes } = usePublisher()
   const {
     milestoneOverrides,
     timeDisplayFormat,
     celebratedMilestones,
     markMilestoneCelebrated,
+    overrideCreditLimit,
+    customCreditLimitHours,
   } = usePreferences()
   const { serviceReports } = useServiceReport()
   const { getCachedPlannedMinutes, setCachedPlannedMinutes } = useTimeCache()
@@ -85,7 +87,13 @@ const YearMilestoneCard = ({
   const { totalMinutesForServiceYear, cacheKey, reportsHash, needsCache } =
     useMemo(() => {
       const cacheKey = getAnnualServiceReportCacheKey(serviceYear)
-      const reportsHash = generateServiceReportsHash(serviceReports, year - 1)
+      // The total is cap-dependent, so the cache key folds the resolved
+      // credit cap in — otherwise a role/override change would keep serving
+      // the stale total until the next report edit.
+      const reportsHash = `${generateServiceReportsHash(
+        serviceReports,
+        year - 1
+      )}:cap=${creditCapMinutes ?? 'unlimited'}`
 
       const cached = getCachedPlannedMinutes(cacheKey)
       if (cached && cached.planHash === reportsHash) {
@@ -103,7 +111,12 @@ const YearMilestoneCard = ({
       )
       const total = getTotalMinutesForServiceYear(
         serviceYearsReports,
-        serviceYear
+        serviceYear,
+        publisher,
+        {
+          enabled: overrideCreditLimit,
+          customLimitHours: customCreditLimitHours,
+        }
       )
 
       return {
@@ -114,7 +127,15 @@ const YearMilestoneCard = ({
       }
       // eslint-disable-next-line react-compiler/react-compiler
       // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [serviceReports, serviceYear, year])
+    }, [
+      serviceReports,
+      serviceYear,
+      year,
+      publisher,
+      creditCapMinutes,
+      overrideCreditLimit,
+      customCreditLimitHours,
+    ])
 
   useEffect(() => {
     if (needsCache) {

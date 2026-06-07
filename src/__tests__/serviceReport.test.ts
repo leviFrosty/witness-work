@@ -1058,6 +1058,58 @@ describe('lib/serviceReport', () => {
       const minutes = getTotalMinutesForServiceYear(reports, year)
       expect(minutes).toBe(20 * 60)
     })
+
+    it('should not cap credit for publishers with an unlimited credit default', () => {
+      // Circuit overseers / special pioneers have no monthly credit cap, so
+      // the year total must mirror the role-aware cap the month report uses
+      // instead of the hardcoded 55h default.
+      const year = 2023
+      const serviceReports: LegacyTimeEntriesByYear = {
+        [year]: {
+          10: [
+            {
+              minutes: 0,
+              ldc: true,
+              date: moment().year(year).month(10).toDate(),
+              hours: 70,
+              id: '0',
+            },
+          ],
+        },
+      }
+
+      const minutes = getTotalMinutesForServiceYear(
+        serviceReports as TimeEntriesByYear,
+        year,
+        'circuitOverseer'
+      )
+      expect(minutes).toBe(70 * 60)
+    })
+
+    it("should respect the user's credit-limit override", () => {
+      const year = 2023
+      const serviceReports: LegacyTimeEntriesByYear = {
+        [year]: {
+          10: [
+            {
+              minutes: 0,
+              ldc: true,
+              date: moment().year(year).month(10).toDate(),
+              hours: 70,
+              id: '0',
+            },
+          ],
+        },
+      }
+
+      const minutes = getTotalMinutesForServiceYear(
+        serviceReports as TimeEntriesByYear,
+        year,
+        'regularPioneer',
+        { enabled: true, customLimitHours: 60 }
+      )
+      expect(minutes).toBe(60 * 60)
+    })
   })
 
   describe('RecurringPlan Overrides', () => {

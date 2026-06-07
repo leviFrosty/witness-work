@@ -98,6 +98,28 @@ export const getTotalMinutesDetailedForSpecificMonth = (
   }
 }
 
+/**
+ * The monthly credit-cap formula every Service Report total runs through:
+ * standard time always counts in full (it can exceed the cap on its own);
+ * credit only fills whatever headroom remains under the cap. `null` cap means
+ * unlimited (special pioneer / circuit overseer / user override).
+ *
+ * Single source of the formula — `adjustedMinutesForSpecificMonth`,
+ * `getTotalMinutesForServiceYear`, and the Projected Total
+ * (`src/lib/projectedTotal.ts`) all defer here so a projection can never
+ * disagree with the report it mirrors (ADR 0005).
+ */
+export const applyMonthCreditCap = (
+  standardMinutes: number,
+  creditMinutes: number,
+  creditCapMinutes: number | null
+): number =>
+  creditCapMinutes === null
+    ? standardMinutes + creditMinutes
+    : standardMinutes > creditCapMinutes
+      ? standardMinutes
+      : Math.min(standardMinutes + creditMinutes, creditCapMinutes)
+
 export type AdjustedMinutes = {
   /**
    * Total adjusted hours possible to submit to report, including all possible
@@ -138,9 +160,6 @@ export const adjustedMinutesForSpecificMonth = (
     targetYear
   )
 
-  let minutes = 0
-  let creditOverage = 0
-
   // Effective credit cap is derived once, in publisherCapabilities — both
   // role defaults (specialPioneer/circuitOverseer = unlimited) and the
   // user's override live behind that single seam.
@@ -148,46 +167,19 @@ export const adjustedMinutesForSpecificMonth = (
     ? creditCapMinutesFor(publisher, creditLimitOverride)
     : monthCreditMaxMinutes
 
-  const hasNoCreditLimit = effectiveCreditLimitMinutes === null
-
-  if (hasNoCreditLimit) {
-    // No credit limit - sum all time
-    minutes = standard + credit
-    creditOverage = 0
-  } else {
-    // effectiveCreditLimitMinutes is guaranteed to be a number here since hasNoCreditLimit is false
-    const limitMinutes = effectiveCreditLimitMinutes!
-
-    if (standard > limitMinutes) {
-      minutes = standard
-      if (credit) {
-        creditOverage = credit
-      }
-    } else {
-      const standardWithCredit = standard + credit
-      if (standardWithCredit > limitMinutes) {
-        minutes = limitMinutes
-        creditOverage = standardWithCredit - limitMinutes
-      } else {
-        minutes = standardWithCredit
-      }
-    }
-  }
+  const value = applyMonthCreditCap(
+    standard,
+    credit,
+    effectiveCreditLimitMinutes
+  )
 
   return {
-    value: minutes,
+    value,
     standard,
-    credit: hasNoCreditLimit
-      ? credit
-      : (() => {
-          const limitMinutes = effectiveCreditLimitMinutes!
-          return standard < limitMinutes
-            ? credit < limitMinutes - standard
-              ? credit
-              : limitMinutes - standard
-            : 0
-        })(),
-    creditOverage: creditOverage,
+    // Credit that made it into the value vs. credit the cap squeezed out.
+    // `value` is always ≥ standard, so both deltas are non-negative.
+    credit: value - standard,
+    creditOverage: standard + credit - value,
   }
 }
 
@@ -399,13 +391,29 @@ export const serviceYearsDateRange = (serviceYear: number) => {
   return { minDate, maxDate }
 }
 
-export const getTotalMinutesForServiceYear = (
-  serviceYearReports: TimeEntriesByYear,
-  serviceYear: number
-) => {
-  serviceYearReports
-  serviceYear
-  let minutes = 0
+/**
+ * Raw standard/credit logged minutes for one calendar month, before any credit
+ * cap is applied. Produced by `getServiceYearMonthlyBreakdowns` and consumed by
+ * the Projected Total (`src/lib/projectedTotal.ts`), which runs the cap formula
+ * per month on the combined logged + planned buckets.
+ */
+export type MonthlyLoggedBreakdown = {
+  year: number
+  /** 0-indexed month, 0-11. */
+  month: number
+  standard: number
+  credit: number
+}
+
+/**
+ * Walks a service year's report buckets and returns the raw (uncapped)
+ * standard/credit minutes per month. Shared by `getTotalMinutesForServiceYear`
+ * and the year-scope Projected Total so both read the months identically.
+ */
+export const getServiceYearMonthlyBreakdowns = (
+  serviceYearReports: TimeEntriesByYear
+): MonthlyLoggedBreakdown[] => {
+  const breakdowns: MonthlyLoggedBreakdown[] = []
 
   for (const year in serviceYearReports) {
     for (const month in serviceYearReports[year]) {
@@ -427,7 +435,7 @@ export const getTotalMinutesForServiceYear = (
         const m = report.hours * 60 + report.minutes
         if (isLdcEntry(report)) {
           // LDC keeps its own bucket so visual breakdowns stay separable; the
-          // cap math below folds it back into the credit total anyway.
+          // cap math folds it back into the credit total anyway.
           ldc += m
         } else if (hasCategory(report)) {
           if (report.credit) otherWithCredit += m
@@ -437,17 +445,37 @@ export const getTotalMinutesForServiceYear = (
         }
       }
 
-      const standard = standardOnly + otherWithoutCredit
-      const credit = ldc + otherWithCredit
-      const limit = monthCreditMaxMinutes
-      const monthMinutes =
-        standard > limit ? standard : Math.min(standard + credit, limit)
-
-      minutes += monthMinutes
+      breakdowns.push({
+        year: parseInt(year),
+        month: parseInt(month),
+        standard: standardOnly + otherWithoutCredit,
+        credit: ldc + otherWithCredit,
+      })
     }
   }
 
-  return minutes
+  return breakdowns
+}
+
+export const getTotalMinutesForServiceYear = (
+  serviceYearReports: TimeEntriesByYear,
+  _serviceYear: number,
+  publisher?: Publisher,
+  creditLimitOverride?: { enabled: boolean; customLimitHours: number }
+) => {
+  // Same effective-cap resolution as `adjustedMinutesForSpecificMonth`: role
+  // defaults and the user's override live behind `creditCapMinutesFor`;
+  // callers that don't know the publisher keep the legacy 55h default.
+  const effectiveCreditLimitMinutes = publisher
+    ? creditCapMinutesFor(publisher, creditLimitOverride)
+    : monthCreditMaxMinutes
+
+  return getServiceYearMonthlyBreakdowns(serviceYearReports).reduce(
+    (minutes, m) =>
+      minutes +
+      applyMonthCreditCap(m.standard, m.credit, effectiveCreditLimitMinutes),
+    0
+  )
 }
 
 export const getServiceYearFromDate = (moment: moment.Moment) => {
@@ -482,8 +510,8 @@ export const getLifetimeHours = (serviceReports: TimeEntry[]): number => {
 }
 
 /**
- * Raw lifetime minutes across every `TimeEntry` — unadjusted for credit
- * caps. Preferred for rendering, since the display formatter takes minutes.
+ * Raw lifetime minutes across every `TimeEntry` — unadjusted for credit caps.
+ * Preferred for rendering, since the display formatter takes minutes.
  */
 export const getLifetimeMinutes = (serviceReports: TimeEntry[]): number => {
   return serviceReports.reduce(

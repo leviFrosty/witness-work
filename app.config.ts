@@ -86,6 +86,13 @@ export default ({ config }: ConfigContext): ExpoConfig => {
     updates: {
       url: 'https://u.expo.dev/a67257dc-2fb8-4942-97f2-e9364b80d318',
     },
+    // MUST stay top-level. `@expo/config-plugins` reads this key to write
+    // EXUpdatesRuntimeVersion into Expo.plist at prebuild; the expo-updates
+    // plugin accepts no props, so moving it into the plugin entry silently
+    // drops the key and expo-updates disables itself at launch (no OTA,
+    // "checkForUpdatesAsync() is not supported" in Settings > Updates).
+    // That regression shipped in every 1.38.2 store build (Apr–May 2026).
+    runtimeVersion: { policy: 'appVersion' },
     plugins: [
       './plugins/with-force-load-local-modules',
       [
@@ -144,16 +151,8 @@ export default ({ config }: ConfigContext): ExpoConfig => {
       ],
       'expo-localization',
       'expo-sharing',
-      [
-        'expo-updates',
-        {
-          username: 'levi_frosty',
-          // Resolved into Info.plist at prebuild time so the bare workflow
-          // (post-prebuild) doesn't reject the policy. Was previously a
-          // top-level `runtimeVersion: { policy: 'appVersion' }`.
-          runtimeVersion: { policy: 'appVersion' },
-        },
-      ],
+      // No props: the plugin ignores them (see runtimeVersion note above).
+      'expo-updates',
       [
         'expo-location',
         {

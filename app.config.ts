@@ -140,8 +140,8 @@ export default ({ config }: ConfigContext): ExpoConfig => {
           // the background. The plugin defaults `enableBackgroundPlayback` to
           // true, which adds the `audio` UIBackgroundMode to Info.plist. App
           // Review rejects that under guideline 2.5.4 without a persistent
-          // background-audio feature, so keep it off. `playsInSilentMode`
-          // (the silent-switch override we use) is unrelated and still works.
+          // background-audio feature, so keep it off. The chime respects the
+          // ring/silent switch (default ambient session category — see #365).
           enableBackgroundPlayback: false,
           // We only ever play audio, never record. The plugin otherwise adds
           // a generic NSMicrophoneUsageDescription that App Review flags as an

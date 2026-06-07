@@ -13,7 +13,7 @@ import {
   AnimationViewCtx,
 } from '@/contexts/AnimationView'
 import confetti from '@/assets/lottie/confetti.json'
-import { setAudioModeAsync, useAudioPlayer } from 'expo-audio'
+import { useAudioPlayer } from 'expo-audio'
 // @ts-expect-error MP3 doesn't export module
 import chime from '@/assets/audio/success-chime.mp3'
 
@@ -41,11 +41,14 @@ const AnimationViewProvider: React.FC<PropsWithChildren<Props>> = ({
 
   const playSound = useCallback(() => {
     try {
-      setAudioModeAsync({ playsInSilentMode: true })
+      // No setAudioModeAsync here: the default audio mode keeps the iOS
+      // session in the ambient category, so the chime respects the device's
+      // ring/silent switch (#365). Don't re-add `playsInSilentMode: true` —
+      // it flips the session to `.playback`, which bypasses the mute switch.
       player.seekTo(0)
       player.play()
     } catch {
-      // Silently fail if audio session cannot be activated
+      // Silently fail if playback cannot start
     }
   }, [player])
 

@@ -810,6 +810,16 @@
       "c16": "Le code régional téléphonique persiste désormais sur les nouveaux contacts. La recherche par région téléphonique est plus rapide et plus précise.",
       "c17": "L’état vide de la carte, les invites de localisation et le regroupement de cartes de contact ont tous été peaufinés.",
       "c18": "D’innombrables petits correctifs de bugs, des améliorations de performance et des améliorations visuelles dans toute l’application."
+    },
+    "1383": {
+      "c1": "Les plans ont désormais un Type. Attribuez une catégorie à un plan programmé et vos totaux prévus refléteront le bon type de crédit.",
+      "c2": "Les totaux prévus sont plus précis. Ils respectent votre plafond de crédit mensuel et ne comptent plus en double le temps déjà enregistré aujourd'hui.",
+      "c3": "Le carillon de célébration respecte désormais l'interrupteur sonnerie/silencieux de votre appareil.",
+      "c5": "Les nouveaux contacts et les modifications d'adresse sont désormais enregistrés immédiatement, même avant que la carte ait fini de les localiser.",
+      "c6": "Le calendrier se met à jour aussitôt après l'ajout, la modification ou la suppression d'un plan.",
+      "c7": "Les épingles de la carte restent au premier plan après que vous les avez touchées.",
+      "c8": "Défilement plus fluide dans la liste des Contacts.",
+      "c4": "Vos dons affichent désormais la bonne période de facturation et le bon prix pour les abonnements Supporter annuels et octroyés."
     }
   },
   "installed": "installée",

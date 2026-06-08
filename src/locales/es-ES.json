@@ -810,6 +810,16 @@
       "c16": "El código de región del teléfono ahora persiste en los nuevos contactos. La búsqueda por regiones telefónicas es más rápida y precisa.",
       "c17": "El estado vacío del mapa, las indicaciones de ubicación y el agrupamiento de contactos del mapa han sido pulidos.",
       "c18": "Incontables pequeñas correcciones de errores, mejoras de rendimiento y mejoras visuales en toda la aplicación."
+    },
+    "1383": {
+      "c1": "Los planes ahora tienen un Tipo. Asigna una categoría a un plan programado y tus totales proyectados reflejarán el tipo de crédito correcto.",
+      "c2": "Los totales proyectados son más precisos. Respetan tu límite de crédito mensual y ya no cuentan dos veces el tiempo que ya has registrado hoy.",
+      "c3": "El sonido de celebración ahora respeta el interruptor de silencio de tu iPhone.",
+      "c5": "Los nuevos contactos y las ediciones de direcciones ahora se guardan al instante, incluso antes de que el mapa termine de ubicarlos.",
+      "c6": "El calendario se actualiza al momento cuando añades, editas o eliminas un plan.",
+      "c7": "Los pines del mapa se mantienen enfocados después de tocarlos.",
+      "c8": "Desplazamiento más fluido en la lista de Contactos.",
+      "c4": "Tus Donaciones ahora muestran el periodo de facturación y el precio correctos para las suscripciones de colaborador anuales y concedidas."
     }
   },
   "installed": "Instalado",

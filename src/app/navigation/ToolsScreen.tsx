@@ -3,6 +3,7 @@ import Text from '@/components/ui/MyText'
 import i18n from '@/lib/locales'
 import useTheme from '@/contexts/theme'
 import { Alert, Platform, Switch, View } from 'react-native'
+import TextInput from '@/components/ui/TextInput'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import ActionButton from '@/components/ui/ActionButton'
 import useServiceReport from '@/stores/serviceReport'
@@ -45,6 +46,15 @@ const MONO = Platform.select({
   android: 'monospace',
   default: 'monospace',
 })
+
+const DEFAULT_MOCK_CONTACT_COUNT = 30
+
+const parseMockContactCount = (value: string) => {
+  const parsed = Number.parseInt(value, 10)
+  return Number.isFinite(parsed) && parsed > 0
+    ? parsed
+    : DEFAULT_MOCK_CONTACT_COUNT
+}
 
 const SectionHeader = ({ title, color }: { title: string; color?: string }) => {
   const theme = useTheme()
@@ -116,15 +126,19 @@ export default function ToolsScreen() {
   const { isSupporter, since: supporterSince } = useIsSupporter()
   const navigation = useNavigation<RootStackNavigation>()
   const rollover = useRollover()
+  const [mockContactCountInput, setMockContactCountInput] = useState(
+    `${DEFAULT_MOCK_CONTACT_COUNT}`
+  )
+  const mockContactCount = parseMockContactCount(mockContactCountInput)
 
   const showDone = (label: string) =>
     toast.show(label, { message: '', native: true })
 
-  const generateContacts = async () => {
+  const generateContacts = async (count = DEFAULT_MOCK_CONTACT_COUNT) => {
     const { data } = await axios.get(
       'https://jsonplaceholder.typicode.com/users'
     )
-    if (Array.isArray(data)) {
+    if (Array.isArray(data) && data.length > 0) {
       // customFields is id-keyed against contactsStore.customFieldDefs (see
       // customFieldsMigration.ts) — writing the raw company object would
       // produce label-keyed values that no renderer can resolve. Create defs
@@ -167,7 +181,16 @@ export default function ToolsScreen() {
         { value: 2, unit: 'years' },
       ]
 
-      data.forEach((contact, index) => {
+      const nameCounts = new Map<string, number>()
+      const nextContactName = (name: string, index: number) => {
+        const baseName = name.trim() || `Generated Contact ${index + 1}`
+        const countForName = nameCounts.get(baseName) ?? 0
+        nameCounts.set(baseName, countForName + 1)
+        return countForName === 0 ? baseName : `${baseName} ${countForName + 1}`
+      }
+
+      Array.from({ length: count }).forEach((_, index) => {
+        const contact = data[index % data.length]
         const customFields: Record<string, string> = {}
         if (companyDef && contact.company?.name) {
           customFields[companyDef.id] = contact.company.name
@@ -197,7 +220,7 @@ export default function ToolsScreen() {
         addContact({
           createdAt,
           id: `generated-${index}`,
-          name: contact.name,
+          name: nextContactName(contact.name, index),
           address: {
             line1: contact.address.street,
             city: contact.address.city,
@@ -207,14 +230,17 @@ export default function ToolsScreen() {
             latitude: SF_LAT + latSeed * SPREAD,
             longitude: SF_LNG + lngSeed * SPREAD,
           },
-          email: contact.email,
+          email:
+            typeof contact.email === 'string' && contact.email.includes('@')
+              ? contact.email.replace('@', `+${index + 1}@`)
+              : contact.email,
           customFields,
           phone: contact.phone,
           isFavorite: index < 2,
         })
       })
 
-      data.forEach((_: unknown, index: number) => {
+      Array.from({ length: count }).forEach((_, index) => {
         const contactId = `generated-${index}`
         const conversationCount = index < 4 ? 5 : 2
 
@@ -890,13 +916,46 @@ export default function ToolsScreen() {
 
         <SectionHeader title={i18n.t('generateMockData')} />
         <Card style={{ gap: 5 }}>
+          <XView
+            style={{
+              alignItems: 'center',
+              gap: 10,
+              justifyContent: 'space-between',
+            }}
+          >
+            <Text style={{ fontFamily: theme.fonts.bold }}>Mock contacts</Text>
+            <TextInput
+              value={mockContactCountInput}
+              placeholder={`${DEFAULT_MOCK_CONTACT_COUNT}`}
+              onChangeText={(value) =>
+                setMockContactCountInput(value.replace(/[^0-9]/g, ''))
+              }
+              onBlur={() => {
+                setMockContactCountInput(`${mockContactCount}`)
+              }}
+              keyboardType='number-pad'
+              returnKeyType='done'
+              selectTextOnFocus
+              textAlign='center'
+              maxLength={4}
+              style={{
+                minWidth: 72,
+                borderColor: theme.colors.border,
+                borderWidth: 1,
+                borderRadius: theme.numbers.borderRadiusSm,
+                paddingVertical: 8,
+                paddingHorizontal: 12,
+                color: theme.colors.text,
+              }}
+            />
+          </XView>
           <ActionButton
-            onPress={() => {
-              generateContacts()
+            onPress={async () => {
+              await generateContacts(mockContactCount)
               showDone(i18n.t('generated'))
             }}
           >
-            {i18n.t('contacts')}
+            {`${i18n.t('contacts')} (${mockContactCount})`}
           </ActionButton>
           <ActionButton
             onPress={() => {

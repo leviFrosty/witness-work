@@ -59,6 +59,7 @@ build-*
 
 # Agentic tools
 .cursor
+.codex
 .claude
 
 credentials.json

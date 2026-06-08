@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef } from 'react'
-import { TextInput, View } from 'react-native'
+import { TextInput, useWindowDimensions, View } from 'react-native'
 import { FlashList, FlashListRef } from '@shopify/flash-list'
 import { useNavigation } from '@react-navigation/native'
 import * as Crypto from 'expo-crypto'
@@ -41,6 +41,7 @@ import { Contact } from '@/types/contact'
 const ContactsScreen = () => {
   const theme = useTheme()
   const insets = useSafeAreaInsets()
+  const { height: windowHeight } = useWindowDimensions()
   const navigation = useNavigation<RootStackNavigation>()
 
   const { contacts, customFieldDefs } = useContacts()
@@ -50,6 +51,7 @@ const ContactsScreen = () => {
   const setSearch = useContactsSearchStore((s) => s.setSearch)
   const searchInputRef = useRef<TextInput>(null)
   const listRef = useRef<FlashListRef<Contact>>(null)
+  const flashListDrawDistance = Math.ceil(windowHeight)
 
   const {
     contactsFilters,
@@ -346,6 +348,7 @@ const ContactsScreen = () => {
         ListEmptyComponent={renderEmpty()}
         keyboardShouldPersistTaps='handled'
         keyboardDismissMode='on-drag'
+        drawDistance={flashListDrawDistance}
         contentContainerStyle={{
           paddingHorizontal: 12,
           paddingBottom: insets.bottom + TAB_BAR_HEIGHT + 16,

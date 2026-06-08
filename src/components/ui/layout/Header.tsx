@@ -109,6 +109,7 @@ const Header = ({
               style={{ position: 'absolute', left: 0 }}
               onPress={handleButtonAction}
               icon={iconName()}
+              hitSlop={24}
               iconStyle={{
                 color:
                   foregroundColor ??

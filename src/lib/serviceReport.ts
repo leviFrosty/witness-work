@@ -457,6 +457,16 @@ export const getServiceYearMonthlyBreakdowns = (
   return breakdowns
 }
 
+/**
+ * Calendar-day keys (`YYYY-MM-DD`, stored-UTC) for every day with at least one
+ * logged TimeEntry. The Projected Total uses this to drop a day's Plans once
+ * actual time exists for that day so planned minutes never stack on top of a
+ * logged day (issue #366). Keys use the same stored-UTC format the projection's
+ * day walk and the Day Plan lookup use, so they line up exactly.
+ */
+export const getLoggedDayKeys = (reports: TimeEntry[]): Set<string> =>
+  new Set(reports.map((r) => momentStoredDate(r.date).format('YYYY-MM-DD')))
+
 export const getTotalMinutesForServiceYear = (
   serviceYearReports: TimeEntriesByYear,
   _serviceYear: number,

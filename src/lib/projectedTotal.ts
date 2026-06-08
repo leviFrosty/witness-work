@@ -34,6 +34,16 @@ export type ProjectedTotalInput = {
    * ignored.
    */
   loggedMonths: MonthlyLoggedBreakdown[]
+  /**
+   * Calendar-day keys (`YYYY-MM-DD`, stored-UTC) for days that already have a
+   * logged TimeEntry. A day in this set is fully represented by `loggedMonths`,
+   * so its Plans are dropped from the projection — actual time wins over
+   * planned for the same day, and counting both would double-count it (issue
+   * #366: the current day's plan inflated the projection on top of today's
+   * logged time, then vanished the next day once the day fell behind the walk).
+   * Omit/empty = no day-level exclusion (every future Plan counts).
+   */
+  loggedDayKeys?: Set<string>
   dayPlans: DayPlan[]
   recurringPlans: RecurringPlan[]
   /**
@@ -138,13 +148,19 @@ type PlannedMonthBuckets = { standard: number; credit: number }
  * (the conservative forecast: the projection never overpromises), then lowest
  * id — so two devices holding the same plans in different array orders after an
  * iCloud merge project the same number.
+ *
+ * Days in `loggedDayKeys` are skipped entirely: a day with actual logged time
+ * is already counted via `loggedMonths`, so its plan is dropped rather than
+ * stacked on top (issue #366). The walk starts at `today`, so this matters
+ * mainly for today itself (and any future day the user pre-logged).
  */
 const futurePlannedMinutesByMonth = (
   scope: ProjectedTotalScope,
   today: Date,
   dayPlans: DayPlan[],
   recurringPlans: RecurringPlan[],
-  categories: Category[]
+  categories: Category[],
+  loggedDayKeys: Set<string>
 ): Map<string, PlannedMonthBuckets> => {
   const { start, end } = periodBounds(scope)
   const todayDay = momentStoredDate(normalizeDateForStorage(today))
@@ -162,6 +178,12 @@ const futurePlannedMinutesByMonth = (
   const plannedByMonth = new Map<string, PlannedMonthBuckets>()
   while (cursor.isSameOrBefore(end, 'day')) {
     const key = cursor.format('YYYY-MM-DD')
+    // A day with actual logged time is already in `loggedMonths`; its plan must
+    // not stack on top (issue #366) — actual wins for the day, so skip it.
+    if (loggedDayKeys.has(key)) {
+      cursor.add(1, 'day')
+      continue
+    }
     const dayDate = cursor.toDate()
     const dp = dayPlanByKey.get(key)
     let minutes = 0
@@ -243,7 +265,8 @@ export const computeProjectedTotal = (
     input.today,
     input.dayPlans,
     input.recurringPlans,
-    input.categories
+    input.categories,
+    input.loggedDayKeys ?? new Set()
   )
   const loggedByMonth = new Map(
     input.loggedMonths.map((m) => [monthKey(m.year, m.month), m])

@@ -4,6 +4,7 @@ import usePublisher from '@/hooks/usePublisher'
 import useServiceReport from '@/stores/serviceReport'
 import useCategories from '@/stores/categories'
 import {
+  getLoggedDayKeys,
   getMonthsReports,
   getServiceYearMonthlyBreakdowns,
   getServiceYearReports,
@@ -55,10 +56,15 @@ const useProjectedTotal = (
   // across renders that didn't actually cross midnight.
   const today = useMemo(() => new Date(), [])
 
-  // Raw standard/credit buckets per month — the projection applies the cap
-  // itself, month by month, so logged and planned time run through the same
-  // formula a finished report gets.
-  const loggedMonths = useMemo<MonthlyLoggedBreakdown[]>(() => {
+  // Raw standard/credit buckets per month plus the set of days that already
+  // have a logged entry. The projection applies the cap itself, month by month,
+  // so logged and planned time run through the same formula a finished report
+  // gets; `loggedDayKeys` lets it drop a day's plan once actual time exists so
+  // the two never double-count the same day (issue #366).
+  const { loggedMonths, loggedDayKeys } = useMemo<{
+    loggedMonths: MonthlyLoggedBreakdown[]
+    loggedDayKeys: Set<string>
+  }>(() => {
     if (stableScope.kind === 'month') {
       const reports = getMonthsReports(
         serviceReports,
@@ -70,20 +76,29 @@ const useProjectedTotal = (
         stableScope.month,
         stableScope.year
       )
-      return [
-        {
-          year: stableScope.year,
-          month: stableScope.month,
-          standard,
-          credit,
-        },
-      ]
+      return {
+        loggedMonths: [
+          {
+            year: stableScope.year,
+            month: stableScope.month,
+            standard,
+            credit,
+          },
+        ],
+        loggedDayKeys: getLoggedDayKeys(reports),
+      }
     }
     const reports = getServiceYearReports(
       serviceReports,
       stableScope.serviceYear
     )
-    return getServiceYearMonthlyBreakdowns(reports)
+    const flat = Object.values(reports).flatMap((months) =>
+      Object.values(months).flat()
+    )
+    return {
+      loggedMonths: getServiceYearMonthlyBreakdowns(reports),
+      loggedDayKeys: getLoggedDayKeys(flat),
+    }
   }, [stableScope, serviceReports])
 
   const projection = useMemo(
@@ -93,6 +108,7 @@ const useProjectedTotal = (
         today,
         goalMinutes,
         loggedMonths,
+        loggedDayKeys,
         dayPlans,
         recurringPlans,
         categories,
@@ -103,6 +119,7 @@ const useProjectedTotal = (
       today,
       goalMinutes,
       loggedMonths,
+      loggedDayKeys,
       dayPlans,
       recurringPlans,
       categories,

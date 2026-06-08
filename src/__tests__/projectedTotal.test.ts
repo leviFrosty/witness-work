@@ -55,7 +55,15 @@ const STANDARD_CATEGORY: Category = {
 }
 const categories = [CREDIT_CATEGORY, STANDARD_CATEGORY]
 
-/** Raw per-month logged breakdown — standard/credit minutes before any cap. */
+/**
+ * Terse builder for a `MonthlyLoggedBreakdown` — the per-month `{ year, month,
+ * standard, credit }` shape `computeProjectedTotal` consumes as `loggedMonths`
+ * (raw standard/credit minutes, before any cap). Pure data, no logic; it exists
+ * only so each test reads as a scenario instead of a wall of object literals.
+ * Positional args trim the boilerplate at ~15 call sites, and the `credit = 0`
+ * default lets the common standard-only cases omit it — the few that exercise
+ * credit pass the 4th arg, e.g. `logged(2026, 4, 30 * 60, 10 * 60)`.
+ */
 const logged = (year: number, month: number, standard: number, credit = 0) => ({
   year,
   month,
@@ -103,6 +111,69 @@ describe('computeProjectedTotal', () => {
 
     expect(result.plannedMinutes).toBe(300)
     expect(result.projectedMinutes).toBe(10 * 60 + 300)
+  })
+
+  describe('drops plans for days that already have logged time (issue #366)', () => {
+    // Issue #366: with a 5h entry AND a 5h plan on the *current* day, the
+    // projection showed 10h — the plan stacked on top of the logged time, then
+    // dropped to 5h the next day once the day fell behind the walk. A day with
+    // actual time is fully represented by `loggedMonths`; its plan must not
+    // count again.
+    it("ignores the current day's plan when actual time is logged for today", () => {
+      const result = computeProjectedTotal({
+        scope: { kind: 'month', year: 2026, month: 5 },
+        today: normalizeDateForStorage('2026-06-07'),
+        goalMinutes: 50 * 60,
+        loggedMonths: [logged(2026, 5, 5 * 60)],
+        loggedDayKeys: new Set(['2026-06-07']),
+        dayPlans: [dayPlan('2026-06-07', 5 * 60)],
+        recurringPlans: [],
+        categories: [],
+        creditCapMinutes: 55 * 60,
+      })
+
+      expect(result.plannedMinutes).toBe(0)
+      expect(result.projectedMinutes).toBe(5 * 60)
+    })
+
+    it('still counts the current day plan when no actual time is logged for it', () => {
+      // Same shape, but the day has no logged entry — the plan is the only
+      // signal for the day, so it counts (control for the skip not over-firing).
+      const result = computeProjectedTotal({
+        scope: { kind: 'month', year: 2026, month: 5 },
+        today: normalizeDateForStorage('2026-06-07'),
+        goalMinutes: 50 * 60,
+        loggedMonths: [],
+        loggedDayKeys: new Set(),
+        dayPlans: [dayPlan('2026-06-07', 5 * 60)],
+        recurringPlans: [],
+        categories: [],
+        creditCapMinutes: 55 * 60,
+      })
+
+      expect(result.plannedMinutes).toBe(5 * 60)
+      expect(result.projectedMinutes).toBe(5 * 60)
+    })
+
+    it('drops a recurring instance on a logged day but keeps later instances', () => {
+      // Weekly recurring 90 min starting 2026-06-07. From today=2026-06-07 the
+      // June instances are 7, 14, 21, 28. June 7 has a logged entry, so its
+      // instance is dropped; 14/21/28 still count → 270 min on top of 2h logged.
+      const result = computeProjectedTotal({
+        scope: { kind: 'month', year: 2026, month: 5 },
+        today: normalizeDateForStorage('2026-06-07'),
+        goalMinutes: 50 * 60,
+        loggedMonths: [logged(2026, 5, 2 * 60)],
+        loggedDayKeys: new Set(['2026-06-07']),
+        dayPlans: [],
+        recurringPlans: [weeklyRecurring('rec-1', '2026-06-07', 90)],
+        categories: [],
+        creditCapMinutes: 55 * 60,
+      })
+
+      expect(result.plannedMinutes).toBe(270)
+      expect(result.projectedMinutes).toBe(2 * 60 + 270)
+    })
   })
 
   it('sums recurring plan instances on future days within scope', () => {

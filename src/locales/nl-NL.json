@@ -810,6 +810,16 @@
       "c16": "De telefoonregiocode blijft nu aanwezig bij nieuwe contacten. Telefoonregio-zoekopdrachten zijn sneller en nauwkeuriger.",
       "c17": "Kaart lege status, locatieprompts en clustering van contactkaarten zijn allemaal verfijnd.",
       "c18": "Ontelbare kleine bugfixes, prestatieverbeteringen en visuele verfijningen door de hele app."
+    },
+    "1383": {
+      "c1": "Plannen hebben nu een Type. Wijs een categorie toe aan een gepland plan en je geprojecteerde totalen weerspiegelen de juiste soort krediet.",
+      "c2": "Geprojecteerde totalen zijn nauwkeuriger. Ze respecteren je maandelijkse kredietlimiet en tellen tijd die je vandaag al hebt geregistreerd niet langer dubbel.",
+      "c3": "Het feestgeluid respecteert nu je bel-/stilschakelaar.",
+      "c5": "Nieuwe contacten en adreswijzigingen worden nu meteen opgeslagen, zelfs voordat de kaart ze heeft gelokaliseerd.",
+      "c6": "De kalender vernieuwt meteen nadat je een plan toevoegt, bewerkt of verwijdert.",
+      "c7": "Pins op de kaart blijven in beeld nadat je erop tikt.",
+      "c8": "Soepeler scrollen in de lijst met contacten.",
+      "c4": "Jouw donaties toont nu de juiste factureringsperiode en prijs voor jaarlijkse en toegekende supporterabonnementen."
     }
   },
   "installed": "Geïnstalleerd",

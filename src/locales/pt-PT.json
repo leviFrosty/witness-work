@@ -810,6 +810,16 @@
       "c16": "Phone region code now persists across new contacts. Phone region search is faster and more accurate.",
       "c17": "Map empty state, location prompts, and contact map clustering have all been polished.",
       "c18": "Countless small bug fixes, performance improvements, and visual refinements throughout the app."
+    },
+    "1383": {
+      "c1": "As programações passam a ter um Tipo. Atribua uma categoria a uma programação agendada e os seus totais previstos refletem o tipo de crédito certo.",
+      "c2": "Os totais previstos estão mais precisos. Respeitam o seu limite de crédito mensal e deixam de contar em duplicado o tempo que já registou hoje.",
+      "c3": "O som de celebração passa a respeitar o interruptor de toque/silêncio.",
+      "c5": "Os novos contactos e as edições de morada passam a guardar de imediato, mesmo antes de o mapa terminar de os localizar.",
+      "c6": "O calendário atualiza-se logo a seguir a adicionar, editar ou remover uma programação.",
+      "c7": "Os pins do mapa mantêm-se em foco depois de lhes tocar.",
+      "c8": "Deslocamento mais suave na lista de Contactos.",
+      "c4": "As suas doações mostram agora o período de faturação e o preço corretos para subscrições de apoiante anuais e concedidas."
     }
   },
   "installed": "Instalado",

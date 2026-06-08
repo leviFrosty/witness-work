@@ -48,3 +48,28 @@ export function reconcileActiveContact(params: {
   )
   return { activeId: nextContactMarkers[fallback].id, index: fallback }
 }
+
+/**
+ * Resolve the Contact selected by a carousel snap.
+ *
+ * Marker taps kick off an animated carousel scroll, but the carousel can report
+ * a stale snap index at animation end. When a marker tap is pending, the marker
+ * id is the source of truth; otherwise the carousel index is trusted.
+ */
+export function resolveCarouselSnapContact(params: {
+  contactMarkers: Pick<ContactMarker, 'id'>[]
+  snappedIndex: number
+  pendingMarkerId: string | undefined
+}): { activeId: string; index: number } | undefined {
+  const { contactMarkers, snappedIndex, pendingMarkerId } = params
+
+  const pendingIndex = findContactIndexById(contactMarkers, pendingMarkerId)
+  if (pendingIndex >= 0 && pendingMarkerId) {
+    return { activeId: pendingMarkerId, index: pendingIndex }
+  }
+
+  const snappedContact = contactMarkers[snappedIndex]
+  if (!snappedContact) return undefined
+
+  return { activeId: snappedContact.id, index: snappedIndex }
+}

@@ -55,6 +55,7 @@ import { getContactStaleness, stalenessToColor } from '@/lib/contactStaleness'
 import {
   findContactIndexById,
   reconcileActiveContact,
+  resolveCarouselSnapContact,
 } from '@/features/map/lib/mapCarousel'
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
 import { addressToString, coordinateAsString } from '@/lib/address'
@@ -132,6 +133,7 @@ const FullMapView = ({
     () => contactMarkers[0]?.id
   )
   const lastReconciledIndexRef = useRef<number>(0)
+  const pendingMarkerSnapIdRef = useRef<string | undefined>(undefined)
 
   const handleDragContactPin = (id: string, coordinate: LatLng) => {
     updateContact({
@@ -158,11 +160,17 @@ const FullMapView = ({
 
   const handleCarouselSnap = useCallback(
     (index: number) => {
-      const contact = visibleContactMarkers[index]
-      if (!contact) return
-      lastReconciledIndexRef.current = index
-      setActiveContactId(contact.id)
-      fitToContactId(contact.id)
+      const resolved = resolveCarouselSnapContact({
+        contactMarkers: visibleContactMarkers,
+        snappedIndex: index,
+        pendingMarkerId: pendingMarkerSnapIdRef.current,
+      })
+      pendingMarkerSnapIdRef.current = undefined
+
+      if (!resolved) return
+      lastReconciledIndexRef.current = resolved.index
+      setActiveContactId(resolved.activeId)
+      fitToContactId(resolved.activeId)
     },
     [visibleContactMarkers, fitToContactId]
   )
@@ -180,12 +188,23 @@ const FullMapView = ({
       // index so onSnapToItem won't fire — refocus the map directly so the
       // user gets the same zoom-in behaviour as the first tap.
       if (id === activeContactId) {
+        pendingMarkerSnapIdRef.current = undefined
         fitToContactId(id)
         return
       }
 
+      pendingMarkerSnapIdRef.current = id
       setActiveContactId(id)
-      carouselRef.current?.scrollTo({ index: idx, animated: true })
+      fitToContactId(id)
+      carouselRef.current?.scrollTo({
+        index: idx,
+        animated: true,
+        onFinished: () => {
+          if (pendingMarkerSnapIdRef.current !== id) return
+          pendingMarkerSnapIdRef.current = undefined
+          fitToContactId(id)
+        },
+      })
     },
     [visibleContactMarkers, activeContactId, fitToContactId]
   )

@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import {
   findContactIndexById,
   reconcileActiveContact,
+  resolveCarouselSnapContact,
 } from '@/features/map/lib/mapCarousel'
 import { ContactMarker } from '@/features/map/types/map'
 
@@ -136,6 +137,54 @@ describe('lib/mapCarousel', () => {
 
       // id-based behaviour: scrolls to the right contact
       expect(findContactIndexById(renderNPlus1, tappedId)).toBe(2)
+    })
+  })
+
+  describe('resolveCarouselSnapContact', () => {
+    it('uses the snapped carousel index when there is no pending marker tap', () => {
+      const markers = [marker('contact1'), marker('contact2')]
+
+      expect(
+        resolveCarouselSnapContact({
+          contactMarkers: markers,
+          snappedIndex: 1,
+          pendingMarkerId: undefined,
+        })
+      ).toEqual({ activeId: 'contact2', index: 1 })
+    })
+
+    it('keeps the marker-tap contact when the carousel reports a stale snap index', () => {
+      const markers = [marker('contact1'), marker('contact2')]
+
+      expect(
+        resolveCarouselSnapContact({
+          contactMarkers: markers,
+          snappedIndex: 0,
+          pendingMarkerId: 'contact2',
+        })
+      ).toEqual({ activeId: 'contact2', index: 1 })
+    })
+
+    it('falls back to the snapped index when the pending marker is gone', () => {
+      const markers = [marker('contact1'), marker('contact2')]
+
+      expect(
+        resolveCarouselSnapContact({
+          contactMarkers: markers,
+          snappedIndex: 0,
+          pendingMarkerId: 'deleted',
+        })
+      ).toEqual({ activeId: 'contact1', index: 0 })
+    })
+
+    it('returns undefined when neither pending marker nor snapped index resolves', () => {
+      expect(
+        resolveCarouselSnapContact({
+          contactMarkers: [],
+          snappedIndex: 0,
+          pendingMarkerId: 'contact2',
+        })
+      ).toBeUndefined()
     })
   })
 })

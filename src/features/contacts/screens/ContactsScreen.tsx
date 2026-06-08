@@ -334,6 +334,15 @@ const ContactsScreen = () => {
       <FlashList
         ref={listRef}
         data={searchSortedAndFilteredContacts}
+        // FlashList v2 enables maintainVisibleContentPosition by default — it's
+        // meant for chat UIs and anchors the viewport to a content item when the
+        // data changes. On a search/filter list that's wrong: clearing the query
+        // makes the data jump from a small filtered set back to the full list,
+        // and MVCP anchors to the old item instead of re-laying-out, leaving the
+        // list blank until a manual scroll forces a recompute. We always want to
+        // pin to the top on data change (see the scrollToOffset effect above),
+        // so disable it here.
+        maintainVisibleContentPosition={{ disabled: true }}
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
           <ContactRow

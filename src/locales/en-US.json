@@ -810,6 +810,16 @@
       "c16": "Phone region code now persists across new contacts. Phone region search is faster and more accurate.",
       "c17": "Map empty state, location prompts, and contact map clustering have all been polished.",
       "c18": "Countless small bug fixes, performance improvements, and visual refinements throughout the app."
+    },
+    "1383": {
+      "c1": "Plans now have a Type. Assign a category to a scheduled plan and your projected totals reflect the right kind of credit.",
+      "c2": "Projected totals are more accurate. They respect your monthly credit cap and no longer double-count time you've already logged today.",
+      "c3": "The celebration chime once again respects your ring/silent switch.",
+      "c5": "New contacts and address edits now save immediately, even before the geocode api finishes locating them.",
+      "c6": "The calendar refreshes right away after you add, edit, or remove a plan.",
+      "c7": "Map pins stay in focus after you tap them. Resolve intermittent issue with map refocusing incorrect contact pin.",
+      "c8": "Smoother scrolling in the Contacts list. Resolve issues with contacts disappearing.",
+      "c4": "Your Donations now shows the correct billing period and price for annual and granted supporter subscriptions."
     }
   },
   "installed": "Installed",

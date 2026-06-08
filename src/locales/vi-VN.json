@@ -808,6 +808,16 @@
       "c16": "Mã vùng điện thoại hiện vẫn tồn tại trên các liên hệ mới. Tìm kiếm khu vực điện thoại nhanh hơn và chính xác hơn.",
       "c17": "Trạng thái trống của bản đồ, lời nhắc vị trí và phân cụm bản đồ liên hệ đều đã được đánh bóng.",
       "c18": "Vô số bản sửa lỗi nhỏ, cải thiện hiệu suất và tinh chỉnh hình ảnh trong toàn bộ ứng dụng."
+    },
+    "1383": {
+      "c1": "Kế hoạch giờ đây có Kiểu. Hãy gán một danh mục cho kế hoạch đã lên lịch và tổng số dự kiến của bạn sẽ phản ánh đúng loại tín dụng.",
+      "c2": "Tổng số dự kiến giờ đây chính xác hơn. Chúng tôn trọng trần tín dụng hàng tháng của bạn và không còn tính trùng thời gian bạn đã ghi trong ngày hôm nay.",
+      "c3": "Âm thanh chúc mừng giờ đây tuân theo công tắc chuông/im lặng của bạn.",
+      "c4": "Mục Quyên góp của bạn giờ đây hiển thị đúng chu kỳ thanh toán và giá cho các đăng ký người ủng hộ hàng năm và được cấp.",
+      "c5": "Liên hệ mới và các chỉnh sửa địa chỉ giờ đây được lưu ngay lập tức, ngay cả trước khi bản đồ xác định xong vị trí của chúng.",
+      "c6": "Lịch sẽ làm mới ngay sau khi bạn thêm, chỉnh sửa hoặc xóa một kế hoạch.",
+      "c7": "Ghim trên bản đồ vẫn giữ tiêu điểm sau khi bạn nhấn vào chúng.",
+      "c8": "Cuộn mượt mà hơn trong danh sách Danh bạ."
     }
   },
   "installed": "Cài đặt",

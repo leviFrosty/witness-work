@@ -721,6 +721,16 @@
       "c1": "Novo: Os widgets do ecrã inicial estão aqui! Veja o seu calendário mensal, os próximos compromissos e os principais contactos - tudo a partir do seu ecrã inicial. Os widgets combinam com o tema da aplicação e suportam ligações profundas para abrir o ecrã certo com um toque.",
       "c2": "Resolvido o problema em que o fundo do dia do calendário não ficava verde ao adicionar tempo a uma data futura.",
       "c3": "Foi resolvido um problema em que os minutos podiam ser apresentados como um número decimal em vez de um número inteiro."
+    },
+    "1383": {
+      "c1": "As programações passam a ter um Tipo. Atribua uma categoria a uma programação agendada e os seus totais previstos refletem o tipo de crédito certo.",
+      "c2": "Os totais previstos estão mais precisos. Respeitam o seu limite de crédito mensal e deixam de contar em duplicado o tempo que já registou hoje.",
+      "c3": "O som de celebração passa a respeitar o interruptor de toque/silêncio.",
+      "c4": "As suas doações mostram agora o período de faturação e o preço corretos para subscrições de apoiante anuais e concedidas.",
+      "c5": "Os novos contactos e as edições de morada passam a guardar de imediato, mesmo antes de o mapa terminar de os localizar.",
+      "c6": "O calendário atualiza-se logo a seguir a adicionar, editar ou remover uma programação.",
+      "c7": "Os pins do mapa mantêm-se em foco depois de lhes tocar.",
+      "c8": "Deslocamento mais suave na lista de Contactos."
     }
   },
   "installed": "Instalado",

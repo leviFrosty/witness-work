@@ -76,9 +76,15 @@ export function useContactsSorted() {
     [contactSort, contactSortDirection, conversations, customFieldDefs]
   )
 
+  // With an active query, `filtered` is already in Fuse relevance order — the
+  // best name match comes first. Applying the comparator here would discard that
+  // ranking and re-sort by the default `suggested`/`desc` rule, which buries a
+  // freshly-typed match (no conversations → missing-value sentinel sorts last)
+  // at the bottom. Only sort when there is no query to rank by.
+  const hasSearch = search.trim().length > 0
   const searchSortedAndFilteredContacts = useMemo(
-    () => [...filtered].sort(comparator),
-    [filtered, comparator]
+    () => (hasSearch ? filtered : [...filtered].sort(comparator)),
+    [filtered, comparator, hasSearch]
   )
 
   return {
@@ -89,7 +95,7 @@ export function useContactsSorted() {
     customFieldDefs,
     contactSort,
     contactSortDirection,
-    hasSearch: search.trim().length > 0,
+    hasSearch,
     hasActiveFilters: contactsFilters.length > 0,
     isSortNonDefault:
       contactSort !== 'suggested' || contactSortDirection !== 'desc',

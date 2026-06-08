@@ -2,12 +2,14 @@ import { Calendar } from 'react-native-calendars'
 import { TimeEntry } from '@/types/timeEntry'
 import moment from 'moment'
 import useTheme from '@/contexts/theme'
-import { MarkedDates } from 'react-native-calendars/src/types'
+import type { MarkedDates } from 'react-native-calendars/src/types'
 import { SelectedDateSheetState } from '@/features/service-reports/components/SelectedDateSheet'
 import CalendarDay from '@/components/CalendarDay'
 import { useMemo } from 'react'
 import { usePreferences } from '@/stores/preferences'
 import type { CalendarViewMode } from '@/components/CalendarHeader'
+import useServiceReport from '@/stores/serviceReport'
+import { buildMonthCalendarMarkedDates } from '@/features/service-reports/lib/monthCalendarMarkedDates'
 
 type MonthTimeReportsCalendarProps = {
   month: number
@@ -25,23 +27,23 @@ const MonthTimeReportsCalendar: React.FC<MonthTimeReportsCalendarProps> = ({
   viewMode = 'planned',
 }) => {
   const { startOfWeek } = usePreferences()
+  const dayPlans = useServiceReport((s) => s.dayPlans)
+  const recurringPlans = useServiceReport((s) => s.recurringPlans)
   const theme = useTheme()
   const monthToView = moment().month(month).year(year).format('YYYY-MM-DD')
 
-  const markedDates: MarkedDates = useMemo(() => {
-    if (monthsReports === null) {
-      return {}
-    }
-
-    const markedDates: MarkedDates = {}
-
-    monthsReports.forEach((report) => {
-      const date = moment(report.date).format('YYYY-MM-DD')
-      markedDates[date] = { marked: true, dotColor: theme.colors.accent }
-    })
-
-    return markedDates
-  }, [monthsReports, theme.colors.accent])
+  const markedDates: MarkedDates = useMemo(
+    () =>
+      buildMonthCalendarMarkedDates({
+        month,
+        year,
+        monthsReports,
+        dayPlans,
+        recurringPlans,
+        reportDotColor: theme.colors.accent,
+      }),
+    [dayPlans, month, monthsReports, recurringPlans, theme.colors.accent, year]
+  )
 
   return (
     <Calendar
@@ -69,6 +71,8 @@ const MonthTimeReportsCalendar: React.FC<MonthTimeReportsCalendarProps> = ({
         <CalendarDay
           monthsReports={monthsReports}
           viewMode={viewMode}
+          dayPlansOverride={dayPlans}
+          recurringPlansOverride={recurringPlans}
           {...props}
         />
       )}

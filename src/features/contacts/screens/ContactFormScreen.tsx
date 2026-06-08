@@ -43,6 +43,14 @@ import IsSupporter from '@/components/IsSupporter'
 type Props = NativeStackScreenProps<RootStackParamList, 'Contact Form'>
 
 /**
+ * Max time Save keeps the user on the form (spinner showing) waiting for a
+ * geocode before navigating anyway. The geocode keeps running in the background
+ * past this and patches the coordinate when it resolves, so a slow or hung
+ * request (axios has no timeout) can never stall navigation.
+ */
+const GEOCODE_NAV_TIMEOUT_MS = 4000
+
+/**
  * Compact entry-point for editing the per-contact background color. Always
  * opens a popover — non-supporters see the swatch row dimmed via `IsSupporter`
  * so they discover the perk without a separate gate sheet.
@@ -355,6 +363,48 @@ const ContactFormScreen = ({ route, navigation }: Props) => {
     [incrementGeocodeApiCallCount]
   )
 
+  /**
+   * Saves `c` via `commit` immediately so it can never be lost to a slow or
+   * hung geocode, then — when `shouldGeocode` — runs the geocode while showing
+   * the Save spinner. Resolves (which unblocks the caller's navigation) as soon
+   * as the geocode lands OR after {@link GEOCODE_NAV_TIMEOUT_MS}, whichever
+   * comes first. The geocode keeps running past a timeout and patches the
+   * coordinate via `updateContact` once it resolves.
+   */
+  const persistThenGeocode = useCallback(
+    (
+      c: Contact,
+      commit: (c: Contact) => void,
+      shouldGeocode: boolean,
+      resolve: (value: unknown) => void
+    ) => {
+      commit(c)
+      if (!shouldGeocode) {
+        resolve(c)
+        return
+      }
+      setFetching(true)
+      let settled = false
+      const proceed = () => {
+        if (settled) {
+          return
+        }
+        settled = true
+        setFetching(false)
+        resolve(c)
+      }
+      const timeout = setTimeout(proceed, GEOCODE_NAV_TIMEOUT_MS)
+      handleFetchCoordinate(c).then((geocoded) => {
+        if (geocoded.coordinate) {
+          updateContact(geocoded)
+        }
+        clearTimeout(timeout)
+        proceed()
+      })
+    },
+    [handleFetchCoordinate, updateContact]
+  )
+
   const askUserToUpdateCoordinatesAutomatically = useCallback(
     async (contact: Contact, resolve: (value: unknown) => void) => {
       setFetching(true)
@@ -401,26 +451,18 @@ const ContactFormScreen = ({ route, navigation }: Props) => {
         await askUserToUpdateCoordinatesAutomatically(newContact, resolve)
         return
       }
-      // Persist the edit immediately so a changed address can't be lost to a
-      // slow or hung geocode request (axios has no timeout) — previously the
-      // write lived inside the geocode's completion callback, which the
-      // changed address always triggers. The coordinate refresh below runs in
-      // the background and patches the contact once it resolves.
-      updateContact(newContact)
-      resolve(newContact)
-      if (addressChanged || !contact.coordinate) {
-        handleFetchCoordinate(newContact).then((c) => {
-          if (c.coordinate) {
-            updateContact(c)
-          }
-        })
-      }
+      persistThenGeocode(
+        newContact,
+        updateContact,
+        addressChanged || !contact.coordinate,
+        resolve
+      )
     },
     [
       askUserToUpdateCoordinatesAutomatically,
       contact,
       contactToUpdate?.address,
-      handleFetchCoordinate,
+      persistThenGeocode,
       updateContact,
     ]
   )
@@ -429,27 +471,14 @@ const ContactFormScreen = ({ route, navigation }: Props) => {
     (resolve: (value: unknown) => void) => {
       const newContact = { ...contact }
       updatePrefillAddress(newContact.address)
-      // Persist immediately so the contact lands in the list right away.
-      // Geocoding is best-effort enrichment — gating the write on it meant a
-      // slow or hung request (axios has no timeout) delayed, or silently
-      // dropped, the new contact.
-      addContact(newContact)
-      resolve(newContact)
-      if (!newContact.userDraggedCoordinate && newContact.address) {
-        handleFetchCoordinate(newContact).then((c) => {
-          if (c.coordinate) {
-            updateContact(c)
-          }
-        })
-      }
+      persistThenGeocode(
+        newContact,
+        addContact,
+        !newContact.userDraggedCoordinate && !!newContact.address,
+        resolve
+      )
     },
-    [
-      addContact,
-      contact,
-      handleFetchCoordinate,
-      updateContact,
-      updatePrefillAddress,
-    ]
+    [addContact, contact, persistThenGeocode, updatePrefillAddress]
   )
 
   const submit = useCallback(() => {

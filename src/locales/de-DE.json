@@ -810,6 +810,16 @@
       "c16": "Die Telefon-Regionnummer bleibt jetzt bei neuen Kontakten bestehen. Die Suche nach Telefonregionen ist schneller und genauer.",
       "c17": "Kartenleerer Zustand, Ortsaufforderungen und Kontaktkartenclustering wurden alle ausgearbeitet.",
       "c18": "Unzählige kleine Fehlerbehebungen, Leistungsverbesserungen und visuelle Verbesserungen in der gesamten App."
+    },
+    "1383": {
+      "c1": "Pläne haben jetzt einen Typ. Weise einem geplanten Plan eine Kategorie zu, und deine prognostizierten Gesamtwerte berücksichtigen die richtige Art von Gutschrift.",
+      "c2": "Prognostizierte Gesamtwerte sind genauer. Sie berücksichtigen deine monatliche Kreditobergrenze und zählen heute bereits erfasste Zeit nicht mehr doppelt.",
+      "c3": "Der Feier-Klang richtet sich jetzt nach deinem Klingel-/Lautlos-Schalter.",
+      "c5": "Neue Kontakte und Adressänderungen werden jetzt sofort gespeichert, schon bevor die Karte sie verortet hat.",
+      "c6": "Der Kalender aktualisiert sich jetzt sofort, nachdem du einen Plan hinzufügst, bearbeitest oder entfernst.",
+      "c7": "Karten-Pins bleiben im Fokus, nachdem du sie angetippt hast.",
+      "c8": "Flüssigeres Scrollen in der Kontaktliste.",
+      "c4": "Unter „Ihre Spenden“ werden jetzt der richtige Abrechnungszeitraum und Preis für jährliche und gewährte Unterstützer-Abonnements angezeigt."
     }
   },
   "installed": "Eingerichtet",

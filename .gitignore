@@ -65,3 +65,6 @@ build-*
 credentials.json
 .pnpm-store
 credentials/ios
+
+# App store connect CLI
+.asc

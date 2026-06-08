@@ -810,6 +810,16 @@
       "c16": "Il prefisso regionale del telefono ora persiste su nuovi contatti. La ricerca per regioni telefoniche è più veloce e precisa.",
       "c17": "Lo stato vuoto della mappa, i prompt di posizione e il clustering delle mappe di contatto sono stati tutti rifiniti.",
       "c18": "Innumerevoli piccole correzioni di bug, miglioramenti delle prestazioni e affinamenti visivi in tutta l'app."
+    },
+    "1383": {
+      "c1": "I piani ora hanno un Tipo. Assegna una categoria a un piano programmato e i tuoi totali previsti rifletteranno il tipo di credito corretto.",
+      "c2": "I totali previsti sono più precisi. Rispettano il tuo tetto massimo di credito mensile e non conteggiano più due volte il tempo che hai già registrato oggi.",
+      "c3": "Il suono di celebrazione ora rispetta l'interruttore suoneria/silenzioso.",
+      "c5": "I nuovi contatti e le modifiche agli indirizzi ora vengono salvati subito, anche prima che la mappa finisca di localizzarli.",
+      "c6": "Il calendario si aggiorna immediatamente dopo che aggiungi, modifichi o rimuovi un piano.",
+      "c7": "I pin della mappa restano a fuoco dopo che li tocchi.",
+      "c8": "Scorrimento più fluido nell'elenco dei contatti.",
+      "c4": "Le tue donazioni ora mostrano il periodo di fatturazione e il prezzo corretti per gli abbonamenti sostenitore annuali e conferiti."
     }
   },
   "installed": "Installato",

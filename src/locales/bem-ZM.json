@@ -721,6 +721,16 @@
       "c1": "Cipya: Widget ya home screen yaisa! Moneni kalenda ya mweshi, ukukumana ukuleya, na bantunse banensu — fyonse ukufuma pa home screen yenu. Widget shilingana ne misango ya app no kutwala mu screen iilingana ne kutinika kumo.",
       "c2": "Yapwiswa amafya ayo umulu wa bushiku ku kalenda taulesanguka mubicufyala ilyo mwalundako inshita ku bushiku bwa kuntanshi.",
       "c3": "Yapwiswa amafya ayo aminiti yalemoneka nge ica decimal mucinjeni ca ica fyonse."
+    },
+    "1383": {
+      "c1": "Plans now have a Type. Assign a category to a scheduled plan and your projected totals reflect the right kind of credit.",
+      "c2": "Projected totals are more accurate. They respect your monthly credit cap and no longer double-count time you've already logged today.",
+      "c3": "The celebration chime now respects your ring/silent switch.",
+      "c4": "Your Donations now shows the correct billing period and price for annual and granted supporter subscriptions.",
+      "c5": "New contacts and address edits now save immediately, even before the map finishes locating them.",
+      "c6": "The calendar refreshes right away after you add, edit, or remove a plan.",
+      "c7": "Map pins stay in focus after you tap them.",
+      "c8": "Smoother scrolling in the Contacts list."
     }
   },
   "installed": "Installed",

@@ -808,6 +808,16 @@
       "c16": "Telephone region code now persists across new contacts. Porogaramu yo kugenzura ibicuruzwa bya elegitoroniki byihuse kandi byihuse.",
       "c17": "Map empty state, location prompts, and contact map clustering have all been polished.",
       "c18": "Ibicuruzwa bito bitabarika, impinduka mu mikorere, no kunoza amashusho muri porogaramu."
+    },
+    "1383": {
+      "c1": "Gahunda ubu zigira ikiciro. Shyira ikiciro kuri gahunda wateganyije maze igiteranyo giteganyijwe kigaragaze ubwoko bwa credit bukwiriye.",
+      "c2": "Igiteranyo giteganyijwe ubu ni cyo cyukuri. Cyubahiriza urugero rwa credit rwawe rwa buri kwezi kandi ntikibarira inshuro ebyiri igihe wamaze kwandika uyu munsi.",
+      "c3": "Ijwi ryo kwishima ubu ryubahiriza buto yo kuvuza cyangwa guceceka ya telefoni yawe.",
+      "c4": "Impano watanze ubu zigaragaza neza igihe cyo kwishyura n'igiciro by'umufasha wiyandikishije buri mwaka cyangwa wahawe.",
+      "c5": "Aderesi nshya n'impinduka ku makuru y'aho atuye ubu bibikwa ako kanya, ndetse na mbere y'uko ikarita irangiza kubona aho biherereye.",
+      "c6": "Kalendari yihuza n'igihe ako kanya numara kongeraho, guhindura, cyangwa kuvanaho gahunda.",
+      "c7": "Pin zo ku ikarita ziguma zigaragara nyuma yo kuzikandaho.",
+      "c8": "Kugenda hejuru na hasi kuworoshye ku rutonde rw'Aderesi."
     }
   },
   "installed": "Yagiye mu gikoresho cyawe",

@@ -125,3 +125,4 @@ Size to diff. Goal = fast review, not effort demo. One-line PR with one-line bod
 - **Issues** → `gh` CLI on `leviFrosty/witness-work`. See `docs/agents/issue-tracker.md`.
 - **Triage labels** → `needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `wontfix`. See `docs/agents/triage-labels.md`.
 - **Domain docs** → `CONTEXT.md` + `docs/adr/`. See `docs/agents/domain.md`.
+- **App Store Connect** → `asc` CLI (from Rork) is installed and authenticated for WitnessWork (default keychain profile). Use it for versions, metadata, screenshots, TestFlight, pricing, analytics/finance, etc. `asc doctor` diagnoses auth; `asc <subcommand> --help` for usage. JSON output by default — pipe to `jq`.

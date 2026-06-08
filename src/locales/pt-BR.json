@@ -810,6 +810,16 @@
       "c16": "O código regional do telefone agora persiste entre novos contatos. A busca por regiões do telefone é mais rápida e precisa.",
       "c17": "O estado vazio do mapa, os prompts de localização e o agrupamento do mapa de contato foram todos aprimorados.",
       "c18": "Inúmeras pequenas correções de bugs, melhorias de desempenho e aprimoramentos visuais em todo o app."
+    },
+    "1383": {
+      "c1": "Os planos agora têm um Tipo. Atribua uma categoria a um plano agendado e seus totais projetados refletirão o tipo certo de crédito.",
+      "c2": "Os totais projetados ficaram mais precisos. Eles respeitam seu limite de crédito mensal e não contam mais em dobro o tempo que você já registrou hoje.",
+      "c3": "O som de comemoração agora respeita o botão de silenciar do seu aparelho.",
+      "c5": "Novos contatos e edições de endereço agora são salvos imediatamente, mesmo antes de o mapa terminar de localizá-los.",
+      "c6": "O calendário é atualizado na hora depois que você adiciona, edita ou remove um plano.",
+      "c7": "Os pinos do mapa permanecem em foco depois que você toca neles.",
+      "c8": "Rolagem mais suave na lista de Contatos.",
+      "c4": "Suas doações agora mostram o período de cobrança e o preço corretos para assinaturas de apoiador anuais e concedidas."
     }
   },
   "installed": "Instalado",

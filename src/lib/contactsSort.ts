@@ -2,12 +2,7 @@ import moment from 'moment'
 import { Contact } from '@/types/contact'
 import { Visit } from '@/types/visit'
 import { CustomFieldDefinition } from '@/types/customField'
-import { ContactStaleness, getContactStaleness } from '@/lib/contactStaleness'
-import {
-  contactMostRecentStudy,
-  contactStudiedForGivenMonth,
-} from '@/lib/conversations'
-import { getMostRecentConversationForContact } from '@/lib/contacts'
+import { ContactStaleness } from '@/lib/contactStaleness'
 
 export type ContactSortDirection = 'asc' | 'desc'
 
@@ -94,11 +89,79 @@ const numberCmp = (
   return localeCmp(a, b)
 }
 
+/**
+ * Per-contact sort values, computed once in a single pass over `conversations`
+ * (see {@link buildConversationAggregates}). The comparator reads these in O(1)
+ * instead of re-scanning every conversation — and re-allocating `moment`
+ * objects — inside each of the O(n log n) comparisons.
+ */
+type ConversationAggregates = {
+  mostRecentConvUnix: Map<string, number>
+  mostRecentStudyUnix: Map<string, number>
+  studyContactIds: Set<string>
+  studiedThisMonthIds: Set<string>
+  stalenessRankFor: (contactId: string) => number
+}
+
+const buildConversationAggregates = (
+  conversations: Visit[]
+): ConversationAggregates => {
+  const mostRecentConvUnix = new Map<string, number>()
+  const mostRecentStudyUnix = new Map<string, number>()
+  const studyContactIds = new Set<string>()
+  const studiedThisMonthIds = new Set<string>()
+  const currentMonth = moment()
+
+  for (const c of conversations) {
+    const id = c.contact.id
+    const m = moment(c.date)
+    const unix = m.unix()
+
+    const prevConv = mostRecentConvUnix.get(id)
+    if (prevConv === undefined || unix > prevConv) {
+      mostRecentConvUnix.set(id, unix)
+    }
+
+    if (c.isBibleStudy) {
+      studyContactIds.add(id)
+      const prevStudy = mostRecentStudyUnix.get(id)
+      if (prevStudy === undefined || unix > prevStudy) {
+        mostRecentStudyUnix.set(id, unix)
+      }
+      if (m.isSame(currentMonth, 'month')) {
+        studiedThisMonthIds.add(id)
+      }
+    }
+  }
+
+  // Pre-resolve the staleness bucket thresholds to plain unix seconds so the
+  // per-contact classification is integer comparison, not moment construction.
+  // Mirrors getContactStaleness: before(now - 1 month) → month, etc.
+  const monthAgoUnix = moment().subtract(1, 'month').unix()
+  const weekAgoUnix = moment().subtract(1, 'week').unix()
+  const stalenessRankFor = (contactId: string): number => {
+    const unix = mostRecentConvUnix.get(contactId)
+    if (unix === undefined) return stalenessRank.never
+    if (unix < monthAgoUnix) return stalenessRank.month
+    if (unix < weekAgoUnix) return stalenessRank.week
+    return stalenessRank.recent
+  }
+
+  return {
+    mostRecentConvUnix,
+    mostRecentStudyUnix,
+    studyContactIds,
+    studiedThisMonthIds,
+    stalenessRankFor,
+  }
+}
+
 const compareKey = (
   a: Contact,
   b: Contact,
   sort: ContactSortKey,
-  ctx: SortContext
+  ctx: SortContext,
+  agg: ConversationAggregates
 ): KeyCompare => {
   if (sort.startsWith('customField:')) {
     const defId = sort.slice('customField:'.length)
@@ -112,38 +175,27 @@ const compareKey = (
   switch (sort) {
     case 'suggested':
     case 'recentConversation': {
-      const ar = getMostRecentConversationForContact({
-        conversations: ctx.conversations,
-        contact: a,
-      })
-      const br = getMostRecentConversationForContact({
-        conversations: ctx.conversations,
-        contact: b,
-      })
-      if (!ar || !br) return missing(!!ar, !!br)
-      return moment(ar.date).unix() - moment(br.date).unix()
+      const ar = agg.mostRecentConvUnix.get(a.id)
+      const br = agg.mostRecentConvUnix.get(b.id)
+      if (ar === undefined || br === undefined) {
+        return missing(ar !== undefined, br !== undefined)
+      }
+      return ar - br
     }
     case 'az':
       return a.name.localeCompare(b.name)
     case 'za':
       return b.name.localeCompare(a.name)
     case 'bibleStudy': {
-      const ar = contactMostRecentStudy({
-        conversations: ctx.conversations,
-        contact: a,
-      })
-      const br = contactMostRecentStudy({
-        conversations: ctx.conversations,
-        contact: b,
-      })
-      if (!ar || !br) return missing(!!ar, !!br)
-      return moment(ar.date).unix() - moment(br.date).unix()
+      const ar = agg.mostRecentStudyUnix.get(a.id)
+      const br = agg.mostRecentStudyUnix.get(b.id)
+      if (ar === undefined || br === undefined) {
+        return missing(ar !== undefined, br !== undefined)
+      }
+      return ar - br
     }
     case 'pinStaleness':
-      return (
-        stalenessRank[getContactStaleness(a, ctx.conversations)] -
-        stalenessRank[getContactStaleness(b, ctx.conversations)]
-      )
+      return agg.stalenessRankFor(a.id) - agg.stalenessRankFor(b.id)
     case 'createdAt': {
       const am = a.createdAt ? moment(a.createdAt) : null
       const bm = b.createdAt ? moment(b.createdAt) : null
@@ -181,19 +233,11 @@ export const buildContactComparator = (
   ctx: SortContext
 ) => {
   const applyPinning = sort === 'suggested'
-  const studyContactIds = new Set(
-    ctx.conversations.filter((c) => c.isBibleStudy).map((c) => c.contact.id)
-  )
-  const isStudy = (c: Contact) => studyContactIds.has(c.id)
-  const isActive = (c: Contact) =>
-    contactStudiedForGivenMonth({
-      conversations: ctx.conversations,
-      contact: c,
-      month: new Date(),
-    })
+  // Single pass over conversations; the comparator reads these maps in O(1).
+  const agg = buildConversationAggregates(ctx.conversations)
   const studyTier = (c: Contact): number => {
-    if (!isStudy(c)) return 0
-    return isActive(c) ? 2 : 1
+    if (!agg.studyContactIds.has(c.id)) return 0
+    return agg.studiedThisMonthIds.has(c.id) ? 2 : 1
   }
   const dirMul = direction === 'desc' ? -1 : 1
 
@@ -204,7 +248,7 @@ export const buildContactComparator = (
       const bt = studyTier(b)
       if (at !== bt) return bt - at
     }
-    const result = compareKey(a, b, sort, ctx)
+    const result = compareKey(a, b, sort, ctx, agg)
     if (isMissingResult(result)) {
       // Both missing → tie; one missing → that side goes last regardless of
       // direction. The user's intent for "undefineds last" doesn't flip with

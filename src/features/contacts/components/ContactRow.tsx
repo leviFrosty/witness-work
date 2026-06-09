@@ -3,14 +3,9 @@ import Text from '@/components/ui/MyText'
 import useTheme from '@/contexts/theme'
 import Card from '@/components/ui/Card'
 import { Contact } from '@/types/contact'
-import useConversations from '@/stores/conversationStore'
 import { useMemo, useState } from 'react'
 import moment from 'moment'
 import i18n from '@/lib/locales'
-import {
-  contactHasAtLeastOneStudy,
-  contactStudiedForGivenMonth,
-} from '@/lib/conversations'
 import IconButton from '@/components/ui/IconButton'
 import {
   faBook,
@@ -34,7 +29,8 @@ import SwipeableDismiss from '@/features/contacts/components/swipeableActions/Di
 import DismissContactSheet from '@/features/contacts/components/DismissContactSheet'
 import { useToastController } from '@tamagui/toast'
 import Avatar from '@/components/ui/Avatar'
-import { getContactStaleness, stalenessToColor } from '@/lib/contactStaleness'
+import { stalenessToColor } from '@/lib/contactStaleness'
+import { ConversationIndex } from '@/lib/conversationIndex'
 import { useMarkerColors } from '@/hooks/useMarkerColors'
 import {
   findNameMatch,
@@ -58,6 +54,7 @@ const ContactRow = ({
   contact,
   onPress,
   searchMatches,
+  index,
 }: {
   contact: Contact
   onPress?: () => void
@@ -68,10 +65,15 @@ const ContactRow = ({
    * conversation note, phone, email, or address).
    */
   searchMatches?: readonly FuseResultMatch[]
+  /**
+   * Shared per-contact conversation index built once by the list. Staleness,
+   * study flags, and the most-recent conversation are O(1) lookups against it —
+   * the row never scans the full conversations array.
+   */
+  index: ConversationIndex
 }) => {
   const theme = useTheme()
   const { deleteContact } = useContacts()
-  const { conversations } = useConversations()
   const markerColors = useMarkerColors()
   const toast = useToastController()
   const [dismissSheetOpen, setDismissSheetOpen] = useState(false)
@@ -83,43 +85,24 @@ const ContactRow = ({
   )
 
   const stripeColor = useMemo(
-    () =>
-      stalenessToColor(
-        getContactStaleness(contact, conversations),
-        markerColors
-      ),
-    [contact, conversations, markerColors]
+    () => stalenessToColor(index.stalenessFor(contact.id), markerColors),
+    [contact.id, index, markerColors]
   )
 
   const isActiveBibleStudy = useMemo(
-    () =>
-      contactStudiedForGivenMonth({
-        contact,
-        conversations,
-        month: new Date(),
-      }),
-    [contact, conversations]
+    () => index.studiedThisMonthIds.has(contact.id),
+    [contact.id, index]
   )
 
   const hasStudiedPreviously = useMemo(
-    () =>
-      contactHasAtLeastOneStudy({
-        conversations,
-        contact,
-      }),
-    [contact, conversations]
+    () => index.studyContactIds.has(contact.id),
+    [contact.id, index]
   )
 
-  const mostRecentConversation = useMemo(() => {
-    const filteredConversations = conversations.filter(
-      (c) => c.contact.id === contact.id
-    )
-    const sortedConversations = filteredConversations.sort((a, b) =>
-      moment(a.date).unix() < moment(b.date).unix() ? 1 : -1
-    )
-
-    return sortedConversations.length > 0 ? sortedConversations[0] : null
-  }, [contact.id, conversations])
+  const mostRecentConversation = useMemo(
+    () => index.mostRecentConvByContact.get(contact.id) ?? null,
+    [contact.id, index]
+  )
 
   const handleSwipeOpen = (
     direction: 'left' | 'right',

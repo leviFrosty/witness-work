@@ -11,6 +11,7 @@ import {
   searchContactsFuzzy,
 } from '@/features/contacts/lib/contactsSearch'
 import { filterActivesContacts } from '@/lib/dismissedContacts'
+import { buildConversationIndex } from '@/lib/conversationIndex'
 
 /**
  * Single source of truth for the active contacts pipeline. The Contacts tab and
@@ -29,6 +30,14 @@ export function useContactsSorted() {
   const search = useContactsSearchStore((s) => s.search)
 
   const actives = useMemo(() => filterActivesContacts(contacts), [contacts])
+
+  // Single per-contact conversation index, shared with the comparator below and
+  // handed down to the stats header and every row — so the whole screen scans
+  // the conversations array once instead of once per contact.
+  const conversationIndex = useMemo(
+    () => buildConversationIndex(conversations),
+    [conversations]
+  )
 
   const fuse = useMemo(
     () => buildContactsFuse(actives, conversations),
@@ -69,11 +78,19 @@ export function useContactsSorted() {
 
   const comparator = useMemo(
     () =>
-      buildContactComparator(contactSort, contactSortDirection, {
-        conversations,
-        customFieldDefs,
-      }),
-    [contactSort, contactSortDirection, conversations, customFieldDefs]
+      buildContactComparator(
+        contactSort,
+        contactSortDirection,
+        { conversations, customFieldDefs },
+        conversationIndex
+      ),
+    [
+      contactSort,
+      contactSortDirection,
+      conversations,
+      customFieldDefs,
+      conversationIndex,
+    ]
   )
 
   // With an active query, `filtered` is already in Fuse relevance order — the
@@ -90,6 +107,7 @@ export function useContactsSorted() {
   return {
     searchSortedAndFilteredContacts,
     searchMatchesById,
+    conversationIndex,
     search,
     contactsFilters,
     customFieldDefs,

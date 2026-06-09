@@ -14,7 +14,6 @@ import {
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
 import useTheme from '@/contexts/theme'
 import useContacts from '@/stores/contactsStore'
-import useConversations from '@/stores/conversationStore'
 import useContactsSearchStore from '@/features/contacts/stores/contactsSearchStore'
 import { builtInContactSortOptions } from '@/stores/preferences'
 import i18n from '@/lib/locales'
@@ -45,7 +44,6 @@ const ContactsScreen = () => {
   const navigation = useNavigation<RootStackNavigation>()
 
   const { contacts, customFieldDefs } = useContacts()
-  const { conversations } = useConversations()
 
   const search = useContactsSearchStore((s) => s.search)
   const setSearch = useContactsSearchStore((s) => s.setSearch)
@@ -61,6 +59,7 @@ const ContactsScreen = () => {
     isSortNonDefault,
     searchSortedAndFilteredContacts,
     searchMatchesById,
+    conversationIndex,
   } = useContactsSorted()
 
   // Keep the list pinned to the top as the query, filters, or sort change —
@@ -190,7 +189,7 @@ const ContactsScreen = () => {
 
             <ContactsStatsHeader
               contacts={contacts}
-              conversations={conversations}
+              index={conversationIndex}
               onPressDismissed={() => navigation.navigate('Dismissed Contacts')}
             />
 
@@ -347,6 +346,7 @@ const ContactsScreen = () => {
         renderItem={({ item }) => (
           <ContactRow
             contact={item}
+            index={conversationIndex}
             searchMatches={searchMatchesById.get(item.id)}
             onPress={() =>
               navigation.navigate('Contact Details', { id: item.id })

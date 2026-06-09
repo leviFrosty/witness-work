@@ -5,15 +5,11 @@ import { faChevronRight } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
 import useTheme from '@/contexts/theme'
 import i18n, { TranslationKey } from '@/lib/locales'
-import {
-  ContactStaleness,
-  getContactStaleness,
-  stalenessToColor,
-} from '@/lib/contactStaleness'
+import { ContactStaleness, stalenessToColor } from '@/lib/contactStaleness'
 import { filterActivesContacts } from '@/lib/dismissedContacts'
+import { ConversationIndex } from '@/lib/conversationIndex'
 import { useMarkerColors } from '@/hooks/useMarkerColors'
 import { Contact } from '@/types/contact'
-import { Visit } from '@/types/visit'
 import Text from '@/components/ui/MyText'
 import Card from '@/components/ui/Card'
 import Button from '@/components/ui/Button'
@@ -22,7 +18,8 @@ import StalenessColorKey from '@/components/StalenessColorKey'
 export type ContactsStatsHeaderProps = {
   /** All contacts, active AND dismissed. The component computes the splits. */
   contacts: Contact[]
-  conversations: Visit[]
+  /** Shared per-contact conversation index; staleness is an O(1) lookup. */
+  index: ConversationIndex
   onPressDismissed: () => void
 }
 
@@ -34,7 +31,7 @@ const STALENESS_ORDER: ContactStaleness[] = ['month', 'week', 'recent', 'never']
 
 const ContactsStatsHeader: React.FC<ContactsStatsHeaderProps> = ({
   contacts,
-  conversations,
+  index,
   onPressDismissed,
 }) => {
   const theme = useTheme()
@@ -50,7 +47,7 @@ const ContactsStatsHeader: React.FC<ContactsStatsHeaderProps> = ({
       month: 0,
     }
     for (const contact of active) {
-      const bucket = getContactStaleness(contact, conversations)
+      const bucket = index.stalenessFor(contact.id)
       counts[bucket] += 1
     }
     return {
@@ -58,7 +55,7 @@ const ContactsStatsHeader: React.FC<ContactsStatsHeaderProps> = ({
       dismissedCount: contacts.length - active.length,
       stalenessCounts: counts,
     }
-  }, [contacts, conversations])
+  }, [contacts, index])
 
   return (
     <Card

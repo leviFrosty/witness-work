@@ -473,6 +473,8 @@
   "deselectAll": "Deselect All",
   "contactsMissingCoordinates": "{{count}} contacts are missing coordinates.",
   "contactsMissingCoordinates_one": "{{count}} contact is missing coordinates.",
+  "skipFetchInProgress_title": "Skip while fetching?",
+  "skipFetchInProgress_description": "Coordinates are still being fetched. If you skip now, the remaining contacts won't be updated automatically. You can fetch coordinates for each contact later from their details.",
   "viewMap": "View Map",
   "fetchCoordinates": "Fetch Coordinates",
   "coordinatesAllowMapView": "Coordinates allow you to view this contact on the map.",

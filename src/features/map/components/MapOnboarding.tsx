@@ -1,5 +1,6 @@
 import {
   ActivityIndicator,
+  Alert,
   FlatList,
   ScrollView,
   TouchableOpacity,
@@ -111,6 +112,7 @@ export default function MapOnboarding() {
 
       const worker = async () => {
         while (queue.length > 0) {
+          if (abortController.current?.signal.aborted) break
           const contact = queue.shift()
           if (!contact) break
           try {
@@ -119,6 +121,7 @@ export default function MapOnboarding() {
               contact.address,
               abortController.current ?? undefined
             )
+            if (abortController.current?.signal.aborted) break
             if (position) {
               updateContact({ ...contact, coordinate: position })
               setStatuses((prev) => ({ ...prev, [contact.id]: 'success' }))
@@ -126,6 +129,7 @@ export default function MapOnboarding() {
               setStatuses((prev) => ({ ...prev, [contact.id]: 'error' }))
             }
           } catch {
+            if (abortController.current?.signal.aborted) break
             setStatuses((prev) => ({ ...prev, [contact.id]: 'error' }))
           }
         }
@@ -149,6 +153,33 @@ export default function MapOnboarding() {
   const goNext = () => {
     setStep((s) => s + 1)
   }
+
+  const handleSkipFetchPress = () => {
+    if (!fetching) {
+      goNext()
+      return
+    }
+    Alert.alert(
+      i18n.t('skipFetchInProgress_title'),
+      i18n.t('skipFetchInProgress_description'),
+      [
+        { text: i18n.t('cancel'), style: 'cancel' },
+        {
+          text: i18n.t('skip'),
+          style: 'destructive',
+          onPress: () => {
+            abortController.current?.abort()
+            setFetching(false)
+            goNext()
+          },
+        },
+      ]
+    )
+  }
+
+  const updatedCount = Object.values(statuses).filter(
+    (s) => s === 'success'
+  ).length
 
   const handleFetchPress = () => {
     const toFetch =
@@ -244,14 +275,28 @@ export default function MapOnboarding() {
       {step === 0 && (
         <View style={{ flex: 1, gap: 16 }}>
           <View style={{ gap: 6 }}>
-            <Text
+            <View
               style={{
-                fontSize: theme.fontSize('xl'),
-                fontFamily: theme.fonts.bold,
+                flexDirection: 'row',
+                alignItems: 'baseline',
+                justifyContent: 'space-between',
+                gap: 10,
               }}
             >
-              {i18n.t('updateContacts')}
-            </Text>
+              <Text
+                style={{
+                  fontSize: theme.fontSize('xl'),
+                  fontFamily: theme.fonts.bold,
+                }}
+              >
+                {i18n.t('updateContacts')}
+              </Text>
+              {listData.length > 0 && (
+                <Text style={{ color: theme.colors.textAlt }}>
+                  {`${updatedCount}/${listData.length}`}
+                </Text>
+              )}
+            </View>
             {!hasFetched && (
               <Text style={{ color: theme.colors.textAlt }}>
                 {i18n.t('contactsMissingCoordinates', {
@@ -330,7 +375,7 @@ export default function MapOnboarding() {
               </ActionButton>
             )}
             {oldContactsWithAddressWithoutCoordinates.length > 0 && (
-              <Button onPress={goNext}>
+              <Button onPress={handleSkipFetchPress}>
                 <Text
                   style={{
                     textAlign: 'center',

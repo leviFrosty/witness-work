@@ -62,6 +62,7 @@ import useUserLocalePrefs from '@/features/settings/hooks/useLocale'
 import { installWidgetSync } from '@/app/widgets/widgetSync'
 import { installiCloudSync, iCloudSync } from '@/app/sync/iCloudSync'
 import { linking, navigationRef } from '@/features/contacts/lib/linking'
+import { setDevRemountListener } from '@/lib/devRemount'
 import DeepLinkListeners from '@/app/deep-links/DeepLinkListeners'
 import useIsSupporter from '@/hooks/useIsSupporter'
 import useCustomer from '@/hooks/useCustomer'
@@ -287,6 +288,16 @@ export default function App() {
     MaShanZheng_400Regular,
   })
   const [hasMigrated, setHasMigrated] = useState(hasMigratedFromAsyncStorage())
+
+  // Dev-only: bumping this key remounts the whole navigation tree (every
+  // screen back to initial state) without a Metro bundle reload, so an
+  // attached profiler session survives. Triggered via triggerDevRemount().
+  const [devRemountKey, setDevRemountKey] = useState(0)
+  useEffect(() => {
+    if (!__DEV__) return
+    setDevRemountListener(() => setDevRemountKey((k) => k + 1))
+    return () => setDevRemountListener(null)
+  }, [])
 
   useEffect(() => {
     if (!hasMigratedFromAsyncStorage()) {
@@ -565,7 +576,11 @@ export default function App() {
         <ThemeProvider>
           <SafeAreaProvider>
             <GestureHandlerRootView style={{ flex: 1 }}>
-              <NavigationContainer ref={navigationRef} linking={linking}>
+              <NavigationContainer
+                key={devRemountKey}
+                ref={navigationRef}
+                linking={linking}
+              >
                 {/*
                  * ToastProvider must wrap TamaguiProvider — TamaguiProvider
                  * mounts its own PortalProvider internally, and tamagui Sheets

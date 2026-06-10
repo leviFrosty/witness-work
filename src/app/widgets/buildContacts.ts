@@ -7,8 +7,8 @@ import {
   WidgetContactSort,
 } from '@/stores/preferences'
 import { addressToString, coordinateAsString } from '@/lib/address'
-import { getMostRecentConversationForContact } from '@/lib/contacts'
-import { ContactStaleness, getContactStaleness } from '@/lib/contactStaleness'
+import { ContactStaleness } from '@/lib/contactStaleness'
+import { buildConversationIndex } from '@/lib/conversationIndex'
 import links from '@/constants/links'
 
 export type WidgetContact = {
@@ -109,12 +109,21 @@ function buildMapsUrl(
 }
 
 /**
+ * The subset of fields sorting needs — built for every visible contact, while
+ * the expensive display fields are only built for the final slice.
+ */
+type SortableContact = Pick<
+  WidgetContact,
+  'name' | 'lastConversationAt' | 'isBibleStudy' | 'isFavorite'
+>
+
+/**
  * Compare two contacts by the user-selected widget sort. Used as the inner
  * comparator after favorites/studies tiering has been applied.
  */
 function compareBySort(
-  a: WidgetContact,
-  b: WidgetContact,
+  a: SortableContact,
+  b: SortableContact,
   sort: WidgetContactSort
 ): number {
   switch (sort) {
@@ -145,47 +154,47 @@ function compareBySort(
 
 export function buildContacts(args: BuildContactsArgs): WidgetContact[] {
   const now = Date.now()
-  const studyIds = new Set(
-    args.conversations.filter((c) => c.isBibleStudy).map((c) => c.contact.id)
-  )
+  // Single O(conversations) pass shared by every per-contact read below —
+  // re-scanning the conversations array per contact made this builder the
+  // dominant cost of the whole snapshot on large accounts.
+  const index = buildConversationIndex(args.conversations)
 
   // Skip contacts the user has dismissed (snoozed) until that date passes.
   const visible = args.contacts.filter((c) => {
     if (!c.dismissedUntil) return true
-    return moment(c.dismissedUntil).valueOf() <= now
+    return new Date(c.dismissedUntil).getTime() <= now
   })
 
-  const enriched = visible.map((contact): WidgetContact => {
-    const recent = getMostRecentConversationForContact({
-      contact,
-      conversations: args.conversations,
-    })
-    const lastConversationAt = recent ? moment(recent.date).valueOf() : null
-    const lastContactedRelative = recent ? moment(recent.date).fromNow() : null
-
-    return {
-      id: contact.id,
-      name: contact.name,
-      ...buildPhoneUrls(contact, args.defaultPhoneRegionCode),
-      mapsUrl: buildMapsUrl(contact, args.defaultNavigationMapProvider),
-      lastConversationAt,
-      lastContactedRelative,
-      isBibleStudy: studyIds.has(contact.id),
-      isFavorite: !!contact.isFavorite,
-      staleness: getContactStaleness(contact, args.conversations),
-    }
-  })
+  const sortable = visible.map((contact) => ({
+    contact,
+    name: contact.name,
+    lastConversationAt: index.mostRecentConvMs.get(contact.id) ?? null,
+    isBibleStudy: index.studyContactIds.has(contact.id),
+    isFavorite: !!contact.isFavorite,
+  }))
 
   // Tier ordering: favorites → bible studies → user-selected sort.
   // Studies-first only applies *outside* the bibleStudy sort (which already
   // surfaces studies via its own ordering).
   const studiesAboveOthers = args.sort !== 'bibleStudy'
-  enriched.sort((a, b) => {
+  sortable.sort((a, b) => {
     if (a.isFavorite !== b.isFavorite) return a.isFavorite ? -1 : 1
     if (studiesAboveOthers && a.isBibleStudy !== b.isBibleStudy)
       return a.isBibleStudy ? -1 : 1
     return compareBySort(a, b, args.sort)
   })
 
-  return enriched.slice(0, MAX_CONTACTS)
+  // Expensive display enrichment (phone parsing, URL building, relative-date
+  // formatting) only for the contacts the widget can actually render.
+  return sortable.slice(0, MAX_CONTACTS).map(({ contact, ...keys }) => {
+    const recent = index.mostRecentConvByContact.get(contact.id)
+    return {
+      id: contact.id,
+      ...keys,
+      ...buildPhoneUrls(contact, args.defaultPhoneRegionCode),
+      mapsUrl: buildMapsUrl(contact, args.defaultNavigationMapProvider),
+      lastContactedRelative: recent ? moment(recent.date).fromNow() : null,
+      staleness: index.stalenessFor(contact.id),
+    }
+  })
 }

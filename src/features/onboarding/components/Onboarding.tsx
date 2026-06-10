@@ -16,6 +16,7 @@ import ProfileSetup from '@/features/onboarding/components/steps/ProfileSetup'
 import ProfileSetupPioneerDate from '@/features/onboarding/components/steps/ProfileSetupPioneerDate'
 import Supporter from '@/features/onboarding/components/steps/Supporter'
 import ICloudRestore from '@/features/onboarding/components/steps/iCloudRestore'
+import MytimeImport from '@/features/onboarding/components/steps/MytimeImport'
 import FounderNote from '@/features/onboarding/components/steps/FounderNote'
 import IntentPicker from '@/features/onboarding/components/steps/IntentPicker'
 import YourPlanPreview from '@/features/onboarding/components/steps/YourPlanPreview'
@@ -40,6 +41,7 @@ type StepId =
   | 'founderNote'
   | 'privacyFirst'
   | 'iCloudRestore'
+  | 'mytimeImport'
   | 'publisherType'
   | 'intentPicker'
   | 'profileSetup'
@@ -85,6 +87,7 @@ const allSteps: StepDef[] = [
   { id: 'founderNote', Component: FounderNote, countsTowardProgress: false },
   { id: 'privacyFirst', Component: PrivacyFirst, countsTowardProgress: true },
   { id: 'iCloudRestore', Component: ICloudRestore, countsTowardProgress: true },
+  { id: 'mytimeImport', Component: MytimeImport, countsTowardProgress: true },
   { id: 'publisherType', Component: StepTwo, countsTowardProgress: true },
   { id: 'intentPicker', Component: IntentPicker, countsTowardProgress: true },
   { id: 'profileSetup', Component: ProfileSetup, countsTowardProgress: true },

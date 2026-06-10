@@ -30,6 +30,7 @@ export type RootStackParamList = {
   Paywall: { initialTier?: 'supporter' | 'tip' } | undefined
   'Thank You': { purchaseTier?: 'supporter' | 'tip' } | undefined
   'Import and Export': undefined
+  MytimeImport: undefined
   PreferencesPublisher: undefined
   PreferencesConversation: undefined
   PreferencesPlans: undefined

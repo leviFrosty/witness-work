@@ -7,6 +7,7 @@ import {
   faCloud,
   faEllipsisH,
   faFileExport,
+  faFileImport,
 } from '@fortawesome/free-solid-svg-icons'
 import IconButton from '@/components/ui/IconButton'
 import SectionTitle from '@/features/settings/components/shared/SectionTitle'
@@ -24,6 +25,13 @@ const AppSection = ({ handleNavigate }: SettingsSectionProps) => {
           leftIcon={faFileExport}
           label={i18n.t('backupAndRestore')}
           onPress={() => handleNavigate('Import and Export')}
+        >
+          <IconButton icon={faChevronRight} />
+        </InputRowButton>
+        <InputRowButton
+          leftIcon={faFileImport}
+          label={i18n.t('mytimeImport')}
+          onPress={() => handleNavigate('MytimeImport')}
         >
           <IconButton icon={faChevronRight} />
         </InputRowButton>

@@ -17,6 +17,7 @@ import WhatsNewScreen from '@/features/updates/screens/WhatsNewScreen'
 import PaywallScreen from '@/features/supporter/screens/PaywallScreen'
 import PaywallThankYouScreen from '@/features/supporter/screens/PaywallThankYouScreen'
 import ImportAndExportScreen from '@/features/settings/screens/ImportAndExportScreen'
+import MytimeImportScreen from '@/features/mytime-import/screens/MytimeImportScreen'
 import PreferencesPublisherScreen from '@/features/settings/screens/preferences/screens/PreferencesPublisherScreen'
 import PreferencesConversationScreen from '@/features/settings/screens/preferences/screens/PreferencesConversationScreen'
 import PreferencesPlansScreen from '@/features/settings/screens/preferences/screens/PreferencesPlansScreen'
@@ -160,6 +161,15 @@ const RootStackComponent = () => {
           }}
           name='Import and Export'
           component={ImportAndExportScreen}
+        />
+        <RootStack.Screen
+          options={{
+            header: () => (
+              <Header buttonType='back' title={i18n.t('mytimeImport')} />
+            ),
+          }}
+          name='MytimeImport'
+          component={MytimeImportScreen}
         />
         <RootStack.Screen
           options={{

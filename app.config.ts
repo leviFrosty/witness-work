@@ -130,6 +130,7 @@ export default ({ config }: ConfigContext): ExpoConfig => {
       ],
       'expo-asset',
       'expo-background-task',
+      'expo-sqlite',
       'expo-font',
       'expo-image',
       [

@@ -1,10 +1,8 @@
 import { View } from 'react-native'
 import useTheme from '@/contexts/theme'
-import useConversations from '@/stores/conversationStore'
 import moment from 'moment'
-import { useMemo } from 'react'
 import Text from '@/components/ui/MyText'
-import { getMostRecentConversationForContact } from '@/lib/contacts'
+import { ConversationIndex } from '@/lib/conversationIndex'
 import i18n from '@/lib/locales'
 import Button from '@/components/ui/Button'
 import IconButton from '@/components/ui/IconButton'
@@ -29,11 +27,11 @@ import { ContactMarker } from '@/features/map/types/map'
 
 interface Props {
   contact: ContactMarker
+  index: ConversationIndex
   setSheet: React.Dispatch<React.SetStateAction<MapShareSheet>>
 }
 
-const MapCarouselCard = ({ contact, setSheet }: Props) => {
-  const { conversations } = useConversations()
+const MapCarouselCard = ({ contact, index, setSheet }: Props) => {
   const theme = useTheme()
   const navigation = useNavigation<RootStackNavigation>()
   const locales = getLocales()
@@ -43,10 +41,8 @@ const MapCarouselCard = ({ contact, setSheet }: Props) => {
     regionCode: contact.phoneRegionCode || locales[0].regionCode || '',
   })
 
-  const mostRecentConversation = useMemo(
-    () => getMostRecentConversationForContact({ contact, conversations }),
-    [contact, conversations]
-  )
+  const mostRecentConversation =
+    index.mostRecentConvByContact.get(contact.id) ?? null
 
   const address = addressToString(contact.address)
   const coord = coordinateAsString(contact)

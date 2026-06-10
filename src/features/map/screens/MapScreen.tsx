@@ -51,7 +51,11 @@ import {
 import { Popover } from 'tamagui'
 import MapKey from '@/features/map/components/MapColorKey'
 import { useMarkerColors } from '@/hooks/useMarkerColors'
-import { getContactStaleness, stalenessToColor } from '@/lib/contactStaleness'
+import { stalenessToColor } from '@/lib/contactStaleness'
+import {
+  buildConversationIndex,
+  ConversationIndex,
+} from '@/lib/conversationIndex'
 import {
   findContactIndexById,
   reconcileActiveContact,
@@ -69,11 +73,13 @@ const LEGAL_LABEL_HEIGHT = 20
 interface FullMapViewProps {
   contactMarkers: ContactMarker[]
   activeContactCount: number
+  conversationIndex: ConversationIndex
 }
 
 const FullMapView = ({
   contactMarkers,
   activeContactCount,
+  conversationIndex,
 }: FullMapViewProps) => {
   const navigation = useNavigation<HomeTabStackNavigation>()
   const { width, height } = Dimensions.get('window')
@@ -848,9 +854,17 @@ const FullMapView = ({
           ref={carouselRef}
           data={visibleContactMarkers}
           renderItem={({ item }) => (
-            <MapCarouselCard contact={item} setSheet={setSheet} />
+            <MapCarouselCard
+              contact={item}
+              index={conversationIndex}
+              setSheet={setSheet}
+            />
           )}
           scrollAnimationDuration={125}
+          // Only mount the visible card plus a few neighbors on each side —
+          // without this the carousel renders every contact's card up front,
+          // which was the dominant cost of the map screen's first paint.
+          windowSize={7}
           mode='parallax'
           modeConfig={{
             parallaxScrollingScale,
@@ -969,15 +983,23 @@ const MapScreen = () => {
     return filterActivesContacts(contacts)
   }, [contacts])
 
+  // Single O(conversations) index shared by the pin-color loop and every
+  // carousel card — replaces the per-contact full-array scans that made the
+  // screen take seconds to open (same pattern as the Contacts list).
+  const conversationIndex = useMemo(
+    () => buildConversationIndex(conversations),
+    [conversations]
+  )
+
   const contactMarkers: ContactMarker[] = useMemo(() => {
     const contactsWithCoords = activeContacts.filter(
       (c) => c.coordinate?.latitude && c.coordinate.longitude
     )
     return contactsWithCoords.map((c) => ({
       ...c,
-      pinColor: stalenessToColor(getContactStaleness(c, conversations), colors),
+      pinColor: stalenessToColor(conversationIndex.stalenessFor(c.id), colors),
     }))
-  }, [activeContacts, colors, conversations])
+  }, [activeContacts, colors, conversationIndex])
 
   if (!hasCompletedMapOnboarding) {
     return (
@@ -992,6 +1014,7 @@ const MapScreen = () => {
       <FullMapView
         contactMarkers={contactMarkers}
         activeContactCount={activeContacts.length}
+        conversationIndex={conversationIndex}
       />
     </Wrapper>
   )

@@ -6,7 +6,9 @@ import IconButton from '@/components/ui/IconButton'
 import { faHeart as faHeartRegular } from '@fortawesome/free-regular-svg-icons'
 import { Platform, View } from 'react-native'
 import useTheme from '@/contexts/theme'
-import { faHeart } from '@fortawesome/free-solid-svg-icons'
+import { faArrowsRotate, faHeart } from '@fortawesome/free-solid-svg-icons'
+import { DevSettings } from 'react-native'
+import { triggerDevRemount } from '@/lib/devRemount'
 import useCustomer from '@/hooks/useCustomer'
 import useIsSupporter from '@/hooks/useIsSupporter'
 import { usePreferences } from '@/stores/preferences'
@@ -54,6 +56,14 @@ const DrawerNavigator = () => {
                   gap: 12,
                 }}
               >
+                {__DEV__ && (
+                  <IconButton
+                    icon={faArrowsRotate}
+                    accessibilityLabel='DEV: remount all screens (hold to reload JS)'
+                    onPress={triggerDevRemount}
+                    onLongPress={() => DevSettings.reload()}
+                  />
+                )}
                 <MilestoneRevealRecoveryIcon />
                 {showSyncPopover ? (
                   <SyncPopover />

@@ -12,6 +12,7 @@ import { ThemeSizes } from '@/types/theme'
 type Props = {
   icon: IconProp
   onPress?: () => void
+  onLongPress?: () => void
   size?: ThemeSizes | number
   style?: StyleProp<ViewStyle>
   iconStyle?: FontAwesomeIconStyle
@@ -29,6 +30,7 @@ type Props = {
 
 const IconButton = ({
   onPress,
+  onLongPress,
   icon,
   style,
   size: _size,
@@ -45,8 +47,9 @@ const IconButton = ({
     <Button
       style={style}
       noTransform={noTransform ?? !onPress}
-      disabled={!onPress}
+      disabled={!onPress && !onLongPress}
       onPress={onPress}
+      onLongPress={onLongPress}
       hitSlop={hitSlop}
       accessibilityLabel={accessibilityLabel}
     >

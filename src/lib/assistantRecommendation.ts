@@ -2,7 +2,11 @@ import moment from 'moment'
 import type { Visit } from '@/types/visit'
 import type { DayPlan, RecurringPlan } from '@/types/timeEntry'
 import type { AssistantEvent, RecommendationShape } from '@/types/assistant'
-import { momentStoredDate, normalizeDateForStorage } from '@/lib/normalizeDate'
+import {
+  localDayFromUtcCursor,
+  momentStoredDate,
+  normalizeDateForStorage,
+} from '@/lib/normalizeDate'
 import { getPlansIntersectingDay } from '@/lib/serviceReport'
 
 export type {
@@ -91,9 +95,10 @@ export type EngineInput = {
    * Projected Total's mirror cap semantics
    * (`ProjectedTotalResult.standardGapMinutes`). The engine sizes its
    * (Standard-only) proposals against this instead of re-deriving a raw logged
-   * + planned sum — so it can never disagree with the Projected Total card it
-   * renders beneath (e.g. vanish while the card shows a reachable gap, or
-   * under-propose when planned credit is squeezed by the cap).
+   *
+   * - Planned sum — so it can never disagree with the Projected Total card it
+   *   renders beneath (e.g. vanish while the card shows a reachable gap, or
+   *   under-propose when planned credit is squeezed by the cap).
    */
   standardGapMinutes: number
   dayPlans: DayPlan[]
@@ -159,7 +164,8 @@ const eligibleDays = (
     const key = cursor.format('YYYY-MM-DD')
     const hasDayPlan = dayPlanKeys.has(key)
     const hasRecurring =
-      getPlansIntersectingDay(cursor.toDate(), recurringPlans).length > 0
+      getPlansIntersectingDay(localDayFromUtcCursor(cursor), recurringPlans)
+        .length > 0
     if (!isOffDay && !hasDayPlan && !hasRecurring) {
       days.push({
         m: cursor.clone(),

@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from 'vitest'
+import { afterEach, describe, it, expect, vi } from 'vitest'
 
 vi.mock('@/lib/logger', () => import('@/__tests__/mocks/logger'))
 
@@ -644,6 +644,68 @@ describe('computeProjectedTotal', () => {
         loggedMonths: [logged(2026, 4, 5 * 60)],
       })
       expect(r.state).toBe('unreachable_gap')
+    })
+  })
+
+  // The day-walk must probe the same calendar day it buckets, regardless of
+  // device TZ. The walk's cursor is a UTC moment; handing its instant to
+  // getPlansIntersectingDay (which re-extracts the *local* calendar day) shifts
+  // every probe by a day in TZs west of UTC (future scopes start at midnight
+  // UTC = previous local day) or east of UTC+11 (noon-UTC `today` anchor =
+  // next local day).
+  describe('day-walk TZ stability', () => {
+    const originalTZ = process.env.TZ
+    afterEach(() => {
+      if (originalTZ === undefined) delete process.env.TZ
+      else process.env.TZ = originalTZ
+    })
+
+    it('a fully future month counts every recurring instance and none from the prior month (US TZ)', () => {
+      // The issue-report scenario: viewed from June 10, July 2026 has five
+      // Friday instances at 8h (3, 10, 17, 24, 31) plus a Tuesday plan that
+      // ends June 30. Expected planned = 40h. The shifted walk instead probed
+      // June 30–July 30: it missed Friday the 31st and leaked the June 30
+      // Tuesday instance into July → 36h, matching the screenshot.
+      process.env.TZ = 'America/Los_Angeles'
+      const result = computeProjectedTotal({
+        scope: { kind: 'month', year: 2026, month: 6 },
+        today: normalizeDateForStorage('2026-06-10'),
+        goalMinutes: 50 * 60,
+        loggedMonths: [],
+        dayPlans: [],
+        recurringPlans: [
+          weeklyRecurring('rec-friday', '2026-01-02', 8 * 60),
+          weeklyRecurring('rec-tuesday', '2026-01-06', 4 * 60, '2026-06-30'),
+        ],
+        categories: [],
+        creditCapMinutes: 55 * 60,
+      })
+
+      expect(result.plannedMinutes).toBe(5 * 8 * 60)
+    })
+
+    it("counts today's recurring instance in the current month (UTC+12)", () => {
+      // In NZST the noon-UTC `today` anchor is midnight the *next* local day,
+      // so the shifted walk probed June 11 onward and dropped today's
+      // instance. Weekly Wednesdays 10/17/24 (ends the 24th) from today June
+      // 10 must all count.
+      process.env.TZ = 'Pacific/Auckland'
+      const result = computeProjectedTotal({
+        scope: { kind: 'month', year: 2026, month: 5 },
+        // A live instant (the production input — useProjectedTotal passes
+        // `new Date()`), not a pre-normalized stored date: 9am local NZST.
+        today: new Date(2026, 5, 10, 9, 0, 0),
+        goalMinutes: 50 * 60,
+        loggedMonths: [],
+        dayPlans: [],
+        recurringPlans: [
+          weeklyRecurring('rec-wednesday', '2026-06-10', 60, '2026-06-24'),
+        ],
+        categories: [],
+        creditCapMinutes: 55 * 60,
+      })
+
+      expect(result.plannedMinutes).toBe(3 * 60)
     })
   })
 })

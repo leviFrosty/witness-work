@@ -1,6 +1,10 @@
 import type { Category } from '@/types/category'
 import type { DayPlan, RecurringPlan } from '@/types/timeEntry'
-import { momentStoredDate, normalizeDateForStorage } from '@/lib/normalizeDate'
+import {
+  localDayFromUtcCursor,
+  momentStoredDate,
+  normalizeDateForStorage,
+} from '@/lib/normalizeDate'
 import {
   applyMonthCreditCap,
   getEffectiveMinutesForRecurringPlan,
@@ -184,7 +188,7 @@ const futurePlannedMinutesByMonth = (
       cursor.add(1, 'day')
       continue
     }
-    const dayDate = cursor.toDate()
+    const dayDate = localDayFromUtcCursor(cursor)
     const dp = dayPlanByKey.get(key)
     let minutes = 0
     let isCredit = false
@@ -209,7 +213,6 @@ const futurePlannedMinutesByMonth = (
           isCredit = credit
         }
       }
-      if (winner === null) isCredit = false
     }
     if (minutes > 0) {
       const bucketKey = monthKey(cursor.year(), cursor.month())

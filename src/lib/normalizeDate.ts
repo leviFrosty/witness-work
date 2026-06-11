@@ -67,6 +67,17 @@ export const preserveOrNormalizeStoredDate = (date: Date | string): Date => {
 export const momentStoredDate = (date: Date | string): moment.Moment =>
   moment.utc(date)
 
+/**
+ * Converts a UTC-mode day cursor (e.g. a `moment.utc` walk) into a local-mode
+ * noon Date carrying the same calendar day. Use when handing a walk's day to
+ * APIs that re-extract the _local_ calendar day via `normalizeDateForStorage`
+ * (`getPlansIntersectingDay`, `getEffectiveMinutesForRecurringPlan`) — passing
+ * `cursor.toDate()` (an instant) lands on the previous local day in TZs west of
+ * UTC and the next one east of UTC+11.
+ */
+export const localDayFromUtcCursor = (cursor: moment.Moment): Date =>
+  new Date(cursor.year(), cursor.month(), cursor.date(), 12)
+
 /** Normalize every Date field on a RecurringPlan to noon-UTC anchor. */
 export const normalizeRecurringPlan = (plan: RecurringPlan): RecurringPlan => ({
   ...plan,

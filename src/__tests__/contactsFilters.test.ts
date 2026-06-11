@@ -8,6 +8,7 @@ import {
 import { Contact } from '@/types/contact'
 import { Visit } from '@/types/visit'
 import { CustomFieldDefinition } from '@/types/customField'
+import { DEFAULT_STALENESS_BREAKPOINTS } from '@/constants/staleness'
 
 const baseContact = (overrides: Partial<Contact> = {}): Contact => ({
   id: 'c1',
@@ -19,6 +20,7 @@ const baseContact = (overrides: Partial<Contact> = {}): Contact => ({
 const emptyCtx = (overrides: Partial<FilterContext> = {}): FilterContext => ({
   conversations: [],
   customFieldDefs: [],
+  stalenessBreakpoints: DEFAULT_STALENESS_BREAKPOINTS,
   ...overrides,
 })
 

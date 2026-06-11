@@ -8,6 +8,7 @@ import {
 } from '@/stores/preferences'
 import { addressToString, coordinateAsString } from '@/lib/address'
 import { ContactStaleness } from '@/lib/contactStaleness'
+import { StalenessBreakpoints } from '@/types/staleness'
 import { buildConversationIndex } from '@/lib/conversationIndex'
 import links from '@/constants/links'
 
@@ -58,6 +59,8 @@ export type BuildContactsArgs = {
   defaultPhoneRegionCode: string
   /** User-selected sort for the Contacts widget. */
   sort: WidgetContactSort
+  /** User thresholds for the staleness dot — mirrors the in-app pin colors. */
+  stalenessBreakpoints: StalenessBreakpoints
 }
 
 /** Cap how many contacts we serialize. The widget renders 1/4/8 per family. */
@@ -157,7 +160,10 @@ export function buildContacts(args: BuildContactsArgs): WidgetContact[] {
   // Single O(conversations) pass shared by every per-contact read below —
   // re-scanning the conversations array per contact made this builder the
   // dominant cost of the whole snapshot on large accounts.
-  const index = buildConversationIndex(args.conversations)
+  const index = buildConversationIndex(
+    args.conversations,
+    args.stalenessBreakpoints
+  )
 
   // Skip contacts the user has dismissed (snoozed) until that date passes.
   const visible = args.contacts.filter((c) => {

@@ -25,8 +25,12 @@ import { buildConversationIndex } from '@/lib/conversationIndex'
 export function useContactsSorted() {
   const { contacts, customFieldDefs } = useContacts()
   const { conversations } = useConversations()
-  const { contactSort, contactSortDirection, contactsFilters } =
-    usePreferences()
+  const {
+    contactSort,
+    contactSortDirection,
+    contactsFilters,
+    stalenessBreakpoints,
+  } = usePreferences()
   const search = useContactsSearchStore((s) => s.search)
 
   const actives = useMemo(() => filterActivesContacts(contacts), [contacts])
@@ -35,8 +39,8 @@ export function useContactsSorted() {
   // handed down to the stats header and every row — so the whole screen scans
   // the conversations array once instead of once per contact.
   const conversationIndex = useMemo(
-    () => buildConversationIndex(conversations),
-    [conversations]
+    () => buildConversationIndex(conversations, stalenessBreakpoints),
+    [conversations, stalenessBreakpoints]
   )
 
   const fuse = useMemo(
@@ -72,8 +76,15 @@ export function useContactsSorted() {
       applyFilters(matchedContacts, contactsFilters, {
         conversations,
         customFieldDefs,
+        stalenessBreakpoints,
       }),
-    [matchedContacts, contactsFilters, conversations, customFieldDefs]
+    [
+      matchedContacts,
+      contactsFilters,
+      conversations,
+      customFieldDefs,
+      stalenessBreakpoints,
+    ]
   )
 
   const comparator = useMemo(

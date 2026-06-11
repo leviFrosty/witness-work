@@ -1,5 +1,6 @@
 import { Contact } from '@/types/contact'
 import { Visit } from '@/types/visit'
+import { StalenessBreakpoints } from '@/types/staleness'
 import { Publisher, PublisherHours } from '@/types/publisher'
 import {
   DayPlan,
@@ -156,6 +157,8 @@ export type BuildSnapshotArgs = {
   conversations: Visit[]
   defaultNavigationMapProvider: DefaultNavigationMapProvider
   defaultPhoneRegionCode: string
+  /** Mirrors `preferences.stalenessBreakpoints` — drives the staleness dot. */
+  stalenessBreakpoints: StalenessBreakpoints
 
   // Widget configuration (source of truth = preferences)
   widgetContactSort: WidgetContactSort
@@ -195,6 +198,7 @@ export function buildWidgetSnapshot(args: BuildSnapshotArgs): WidgetSnapshot {
     defaultNavigationMapProvider: args.defaultNavigationMapProvider,
     defaultPhoneRegionCode: args.defaultPhoneRegionCode,
     sort: args.widgetContactSort,
+    stalenessBreakpoints: args.stalenessBreakpoints,
   })
 
   const appointments = buildAppointments({

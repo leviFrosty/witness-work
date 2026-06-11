@@ -18,6 +18,8 @@ import { DEFAULT_SHADER_ID } from '@/shaders/registry'
 import type { ContactSortDirection, ContactSortKey } from '@/lib/contactsSort'
 import type { ActiveFilter } from '@/lib/contactsFilters'
 import type { MarkerColors } from '@/types/markerColors'
+import type { StalenessBreakpoints } from '@/types/staleness'
+import { DEFAULT_STALENESS_BREAKPOINTS } from '@/constants/staleness'
 
 export type { MarkerColors }
 
@@ -428,6 +430,13 @@ export const PREFERENCE_DEFAULTS = {
    */
   formatRegion: undefined as FormatRegion | undefined,
   mapKeyColors: undefined as Partial<MarkerColors> | undefined,
+  /**
+   * User-adjustable day thresholds for the staleness color buckets (map pins,
+   * contact rows, color key, widgets). Always read through
+   * `normalizeStalenessBreakpoints` — synced/imported values may be malformed
+   * or inverted. Edited on the Color Key settings screen.
+   */
+  stalenessBreakpoints: DEFAULT_STALENESS_BREAKPOINTS as StalenessBreakpoints,
   /**
    * Start of week. 0 = Sunday … 6 = Saturday. `undefined` = Auto — follow the
    * Format Region (or device). Resolved at read time via `resolveStartOfWeek`

@@ -1,6 +1,10 @@
 import { Platform, Switch, View } from 'react-native'
 import { useNavigation } from '@react-navigation/native'
-import { faChevronRight, faIcons } from '@fortawesome/free-solid-svg-icons'
+import {
+  faChevronRight,
+  faIcons,
+  faPalette,
+} from '@fortawesome/free-solid-svg-icons'
 import { useContext } from 'react'
 import Section from '@/components/ui/inputs/Section'
 import InputRowContainer from '@/components/ui/inputs/InputRowContainer'
@@ -66,6 +70,17 @@ const PersonalizationPreferencesSection = () => {
     <View style={{ gap: 3 }}>
       <Section style={{ paddingLeft: 20, paddingRight: 20 }} noPadding>
         <AccentColorPicker />
+      </Section>
+      <Divider marginVertical={20} />
+      <Section>
+        <InputRowButton
+          leftIcon={faPalette}
+          label={i18n.t('colorKeyScreenTitle')}
+          onPress={() => navigation.navigate('PreferencesColorKey')}
+          lastInSection
+        >
+          <IconButton icon={faChevronRight} />
+        </InputRowButton>
       </Section>
       {Platform.OS === 'ios' && (
         <>

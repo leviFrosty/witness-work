@@ -75,6 +75,7 @@ function pushSnapshot(reason: string): void {
       conversations: conversationsState.conversations,
       defaultNavigationMapProvider: prefs.defaultNavigationMapProvider,
       defaultPhoneRegionCode,
+      stalenessBreakpoints: prefs.stalenessBreakpoints,
       widgetContactSort: prefs.widgetContactSort,
       widgetContactAction: prefs.widgetContactAction,
       widgetAppointmentWindow: prefs.widgetAppointmentWindow,

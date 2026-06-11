@@ -42,6 +42,7 @@ export type RootStackParamList = {
   PreferencesWidgets: undefined
   PreferencesiCloud: undefined
   PreferencesAppIcon: undefined
+  PreferencesColorKey: undefined
   PreferencesCustomFields: undefined
   RescheduleVisit: { contactId: string; visitId: string }
   PlanDay: {

@@ -1022,7 +1022,7 @@ const FullMapView = ({
 const MapScreen = () => {
   const { contacts } = useContacts()
   const { conversations } = useConversations()
-  const { hasCompletedMapOnboarding } = usePreferences()
+  const { hasCompletedMapOnboarding, stalenessBreakpoints } = usePreferences()
   const colors = useMarkerColors()
 
   const activeContacts = useMemo(() => {
@@ -1034,8 +1034,8 @@ const MapScreen = () => {
   // carousel card — replaces the per-contact full-array scans that made the
   // screen take seconds to open (same pattern as the Contacts list).
   const conversationIndex = useMemo(
-    () => buildConversationIndex(conversations),
-    [conversations]
+    () => buildConversationIndex(conversations, stalenessBreakpoints),
+    [conversations, stalenessBreakpoints]
   )
 
   const contactMarkers: ContactMarker[] = useMemo(() => {

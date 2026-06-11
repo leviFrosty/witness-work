@@ -1,4 +1,6 @@
 import { Visit } from '@/types/visit'
+import { StalenessBreakpoints } from '@/types/staleness'
+import { normalizeStalenessBreakpoints } from '@/constants/staleness'
 import { ContactStaleness } from '@/lib/contactStaleness'
 
 /**
@@ -42,8 +44,15 @@ export type ConversationIndex = {
   stalenessRankFor: (contactId: string) => number
 }
 
+/**
+ * `breakpoints` (the user's `stalenessBreakpoints` preference) is required so
+ * memoized callers are forced to thread it through — and therefore to include
+ * it in their dependency arrays, which is what invalidates the index when the
+ * user edits the thresholds in settings.
+ */
 export function buildConversationIndex(
-  conversations: Visit[]
+  conversations: Visit[],
+  breakpoints: StalenessBreakpoints
 ): ConversationIndex {
   const mostRecentConvMs = new Map<string, number>()
   const mostRecentConvByContact = new Map<string, Visit>()
@@ -85,11 +94,12 @@ export function buildConversationIndex(
   }
 
   // Staleness thresholds as plain epoch ms. Mirrors getContactStaleness:
-  // before(now − 1 month) → month, before(now − 1 week) → week, else recent.
-  const monthAgo = new Date(now)
-  monthAgo.setMonth(monthAgo.getMonth() - 1)
-  const monthAgoMs = monthAgo.getTime()
-  const weekAgoMs = now.getTime() - 7 * 24 * 60 * 60 * 1000
+  // before(now − monthDays) → month, before(now − weekDays) → week, else
+  // recent.
+  const { weekDays, monthDays } = normalizeStalenessBreakpoints(breakpoints)
+  const DAY_MS = 24 * 60 * 60 * 1000
+  const monthAgoMs = now.getTime() - monthDays * DAY_MS
+  const weekAgoMs = now.getTime() - weekDays * DAY_MS
 
   const stalenessFor = (contactId: string): ContactStaleness => {
     const ms = mostRecentConvMs.get(contactId)

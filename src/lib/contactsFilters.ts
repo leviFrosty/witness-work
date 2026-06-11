@@ -7,6 +7,7 @@ import {
   contactStudiedForGivenMonth,
 } from '@/lib/conversations'
 import { ContactStaleness, getContactStaleness } from '@/lib/contactStaleness'
+import { StalenessBreakpoints } from '@/types/staleness'
 
 export type TextOperator =
   | 'equals'
@@ -36,6 +37,8 @@ export type ActiveFilter =
 export type FilterContext = {
   conversations: Visit[]
   customFieldDefs: CustomFieldDefinition[]
+  /** User thresholds for the `pinStaleness` filter (see `usePreferences`). */
+  stalenessBreakpoints: StalenessBreakpoints
 }
 
 const norm = (v: unknown): string =>
@@ -136,7 +139,13 @@ const passesFilter = (
       return matchesText(raw, filter.op, filter.value)
     }
     case 'pinStaleness':
-      return getContactStaleness(contact, ctx.conversations) === filter.value
+      return (
+        getContactStaleness(
+          contact,
+          ctx.conversations,
+          ctx.stalenessBreakpoints
+        ) === filter.value
+      )
     case 'isFavorite':
       return !!contact.isFavorite
     case 'hasStudy':

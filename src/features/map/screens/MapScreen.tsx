@@ -140,6 +140,18 @@ const FullMapView = ({
   )
   const lastReconciledIndexRef = useRef<number>(0)
   const pendingMarkerSnapIdRef = useRef<string | undefined>(undefined)
+  // The carousel fires onScrollStart for programmatic scrollTo calls, not
+  // just user swipes. Programmatic scrolls happen while the user is typing
+  // (search narrows results → reconcile effect re-syncs the carousel), and
+  // letting them dismiss the keyboard blurs the search input mid-word.
+  const programmaticScrollRef = useRef(false)
+  // The flag above can't catch every non-user scroll: remounting the
+  // carousel across the single/multi key boundary fires a spurious
+  // onScrollStart from the *new* instance that no scrollTo of ours
+  // initiated. Instead, ignore scroll-start dismissals for a short window
+  // after any list change — a genuine user swipe never coincides with a
+  // keystroke-driven reconcile.
+  const suppressCarouselDismissUntilRef = useRef(0)
 
   const handleDragContactPin = (id: string, coordinate: LatLng) => {
     updateContact({
@@ -172,6 +184,9 @@ const FullMapView = ({
         pendingMarkerId: pendingMarkerSnapIdRef.current,
       })
       pendingMarkerSnapIdRef.current = undefined
+      // Snap completion is the end of any scroll — clear the programmatic
+      // flag here too in case a remount swallowed a scrollTo's onFinished.
+      programmaticScrollRef.current = false
 
       if (!resolved) return
       lastReconciledIndexRef.current = resolved.index
@@ -181,8 +196,27 @@ const FullMapView = ({
     [visibleContactMarkers, fitToContactId]
   )
 
+  const dismissSearchKeyboard = useCallback(() => {
+    if (searchInputRef.current?.isFocused()) {
+      searchInputRef.current.blur()
+    }
+  }, [])
+
+  // Only dismiss the keyboard when the user actually swipes the carousel —
+  // programmatic scrolls (search-driven reconciles) must not steal focus.
+  const handleCarouselScrollStart = useCallback(() => {
+    if (
+      programmaticScrollRef.current ||
+      Date.now() < suppressCarouselDismissUntilRef.current
+    ) {
+      return
+    }
+    dismissSearchKeyboard()
+  }, [dismissSearchKeyboard])
+
   const handlePinPress = useCallback(
     (id: string) => {
+      dismissSearchKeyboard()
       // Resolve the index from the *current* contactMarkers rather than a
       // captured render-time index — otherwise an upstream reorder between
       // render and tap scrolls the carousel to the wrong card.
@@ -202,17 +236,24 @@ const FullMapView = ({
       pendingMarkerSnapIdRef.current = id
       setActiveContactId(id)
       fitToContactId(id)
+      programmaticScrollRef.current = true
       carouselRef.current?.scrollTo({
         index: idx,
         animated: true,
         onFinished: () => {
+          programmaticScrollRef.current = false
           if (pendingMarkerSnapIdRef.current !== id) return
           pendingMarkerSnapIdRef.current = undefined
           fitToContactId(id)
         },
       })
     },
-    [visibleContactMarkers, activeContactId, fitToContactId]
+    [
+      visibleContactMarkers,
+      activeContactId,
+      fitToContactId,
+      dismissSearchKeyboard,
+    ]
   )
 
   // Reconcile carousel + active id when the underlying list changes.
@@ -222,6 +263,11 @@ const FullMapView = ({
   // - If it disappeared (dismissed, deleted), pick a deterministic neighbour
   //   based on its previous index rather than snapping back to 0.
   useEffect(() => {
+    // Arm the dismiss-suppression window on every list change — covers both
+    // the programmatic scrollTo below and the spurious onScrollStart a
+    // remounted carousel emits on its own.
+    suppressCarouselDismissUntilRef.current = Date.now() + 600
+
     const { activeId, index } = reconcileActiveContact({
       previousActiveId: activeContactId,
       previousIndex: lastReconciledIndexRef.current,
@@ -241,7 +287,14 @@ const FullMapView = ({
 
     const currentCarouselIndex = carouselRef.current?.getCurrentIndex()
     if (currentCarouselIndex !== undefined && currentCarouselIndex !== index) {
-      carouselRef.current?.scrollTo({ index, animated: false })
+      programmaticScrollRef.current = true
+      carouselRef.current?.scrollTo({
+        index,
+        animated: false,
+        onFinished: () => {
+          programmaticScrollRef.current = false
+        },
+      })
     }
   }, [activeContactId, visibleContactMarkers])
 
@@ -451,12 +504,6 @@ const FullMapView = ({
     searchInputRef.current?.blur()
     searchExpand.value = withSpring(0, SEARCH_SPRING_CLOSE)
     setSearchExpanded(false)
-  }
-
-  const dismissSearchKeyboard = () => {
-    if (searchInputRef.current?.isFocused()) {
-      searchInputRef.current.blur()
-    }
   }
 
   const handlePanDrag = () => {
@@ -849,7 +896,7 @@ const FullMapView = ({
           // looping internals and renders blank otherwise.
           key={visibleContactMarkers.length === 1 ? 'single' : 'multi'}
           onSnapToItem={handleCarouselSnap}
-          onScrollStart={dismissSearchKeyboard}
+          onScrollStart={handleCarouselScrollStart}
           defaultIndex={0}
           ref={carouselRef}
           data={visibleContactMarkers}

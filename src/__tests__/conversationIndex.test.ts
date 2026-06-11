@@ -1,6 +1,7 @@
 import moment from 'moment'
 import { describe, expect, it } from 'vitest'
 import { buildConversationIndex } from '@/lib/conversationIndex'
+import { DEFAULT_STALENESS_BREAKPOINTS } from '@/constants/staleness'
 import { Visit } from '@/types/visit'
 
 const visit = (overrides: Partial<Visit> & { contactId: string }): Visit => ({
@@ -28,13 +29,55 @@ describe('lib/conversationIndex', () => {
       }),
     ]
 
-    const index = buildConversationIndex(conversations)
+    const index = buildConversationIndex(
+      conversations,
+      DEFAULT_STALENESS_BREAKPOINTS
+    )
 
     expect(index.stalenessFor('recent')).toBe('recent')
     expect(index.stalenessFor('week')).toBe('week')
     expect(index.stalenessFor('month')).toBe('month')
     // No conversations recorded → never.
     expect(index.stalenessFor('unknown')).toBe('never')
+  })
+
+  it('classifies against custom breakpoints and normalizes inverted ones', () => {
+    const conversations: Visit[] = [
+      visit({
+        contactId: 'a',
+        date: moment().subtract(5, 'days').toDate(),
+      }),
+    ]
+
+    expect(
+      buildConversationIndex(conversations, {
+        weekDays: 3,
+        monthDays: 10,
+      }).stalenessFor('a')
+    ).toBe('week')
+    expect(
+      buildConversationIndex(conversations, {
+        weekDays: 1,
+        monthDays: 4,
+      }).stalenessFor('a')
+    ).toBe('month')
+    // Stale too close to recent: monthDays is raised to weekDays +
+    // MIN_STALENESS_GAP_DAYS (3 + 2 = 5), so a 5-day-old conversation sits on
+    // the threshold and stays 'week' instead of 'month'.
+    expect(
+      buildConversationIndex(conversations, {
+        weekDays: 3,
+        monthDays: 4,
+      }).stalenessFor('a')
+    ).toBe('week')
+    // Inverted thresholds normalize the same way, and a 5-day-old
+    // conversation is still within the 7-day recent window.
+    expect(
+      buildConversationIndex(conversations, {
+        weekDays: 7,
+        monthDays: 2,
+      }).stalenessFor('a')
+    ).toBe('recent')
   })
 
   it('keeps the most recent conversation per contact', () => {
@@ -49,7 +92,10 @@ describe('lib/conversationIndex', () => {
       date: moment().subtract(1, 'day').toDate(),
     })
     // Intentionally out of order to prove it picks max, not last-seen.
-    const index = buildConversationIndex([newer, older])
+    const index = buildConversationIndex(
+      [newer, older],
+      DEFAULT_STALENESS_BREAKPOINTS
+    )
 
     expect(index.mostRecentConvByContact.get('a')?.id).toBe('newer')
   })
@@ -69,7 +115,10 @@ describe('lib/conversationIndex', () => {
       }),
     ]
 
-    const index = buildConversationIndex(conversations)
+    const index = buildConversationIndex(
+      conversations,
+      DEFAULT_STALENESS_BREAKPOINTS
+    )
 
     expect(index.studyContactIds.has('studiedNow')).toBe(true)
     expect(index.studyContactIds.has('studiedBefore')).toBe(true)
@@ -84,7 +133,10 @@ describe('lib/conversationIndex', () => {
       visit({ contactId: 'bad', date: 'not-a-date' as unknown as Date }),
     ]
 
-    const index = buildConversationIndex(conversations)
+    const index = buildConversationIndex(
+      conversations,
+      DEFAULT_STALENESS_BREAKPOINTS
+    )
 
     expect(index.mostRecentConvMs.has('bad')).toBe(false)
     expect(index.stalenessFor('bad')).toBe('never')

@@ -29,6 +29,7 @@ import PreferencesPersonalizationScreen from '@/features/settings/screens/prefer
 import PreferencesWidgetsScreen from '@/features/settings/screens/preferences/screens/PreferencesWidgetsScreen'
 import PreferencesiCloudScreen from '@/features/settings/screens/preferences/screens/PreferencesiCloudScreen'
 import PreferencesAppIconScreen from '@/features/settings/screens/preferences/screens/PreferencesAppIconScreen'
+import PreferencesColorKeyScreen from '@/features/settings/screens/preferences/screens/PreferencesColorKeyScreen'
 import PreferencesCustomFieldsScreen from '@/features/settings/screens/preferences/screens/PreferencesCustomFieldsScreen'
 import RescheduleVisitScreen from '@/features/visits/screens/RescheduleVisitScreen'
 import PlanDayScreen from '@/features/plans/screens/PlanDayScreen'
@@ -276,6 +277,15 @@ const RootStackComponent = () => {
           }}
           name='PreferencesAppIcon'
           component={PreferencesAppIconScreen}
+        />
+        <RootStack.Screen
+          options={{
+            header: () => (
+              <Header buttonType='back' title={i18n.t('colorKeyScreenTitle')} />
+            ),
+          }}
+          name='PreferencesColorKey'
+          component={PreferencesColorKeyScreen}
         />
         <RootStack.Screen
           options={{

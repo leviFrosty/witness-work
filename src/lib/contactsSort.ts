@@ -6,6 +6,7 @@ import {
   buildConversationIndex,
   ConversationIndex,
 } from '@/lib/conversationIndex'
+import { DEFAULT_STALENESS_BREAKPOINTS } from '@/constants/staleness'
 
 export type ContactSortDirection = 'asc' | 'desc'
 
@@ -164,9 +165,14 @@ export const buildContactComparator = (
    * Prebuilt conversation index. The Contacts screen builds this once per
    * (conversations) change and shares it with the stats header and rows, so
    * pass it here to avoid a redundant pass. Omitted in tests and any caller
-   * that only needs a one-off comparator — we build it from `ctx` then.
+   * that only needs a one-off comparator — we build it from `ctx` with stock
+   * breakpoints then; anything reflecting the user's `stalenessBreakpoints`
+   * preference must pass an index built from it.
    */
-  index: ConversationIndex = buildConversationIndex(ctx.conversations)
+  index: ConversationIndex = buildConversationIndex(
+    ctx.conversations,
+    DEFAULT_STALENESS_BREAKPOINTS
+  )
 ) => {
   const applyPinning = sort === 'suggested'
   const studyTier = (c: Contact): number => {

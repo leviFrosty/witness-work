@@ -1,159 +1,136 @@
-import { useState } from 'react'
-import { Pressable, View } from 'react-native'
+import { View } from 'react-native'
+import { useNavigation } from '@react-navigation/native'
+import { faPencil } from '@fortawesome/free-solid-svg-icons'
 import useTheme from '@/contexts/theme'
 import i18n, { TranslationKey } from '@/lib/locales'
-import { ContactStaleness, stalenessToColor } from '@/lib/contactStaleness'
+import {
+  STALENESS_DISPLAY_ORDER,
+  stalenessToColor,
+} from '@/lib/contactStaleness'
+import { getStalenessCriteriaText } from '@/lib/stalenessText'
 import { useMarkerColors } from '@/hooks/useMarkerColors'
-import { MarkerColors, usePreferences } from '@/stores/preferences'
+import { usePreferences } from '@/stores/preferences'
 import Text from '@/components/ui/MyText'
-import Button from '@/components/ui/Button'
-import ColorPickerSheet from '@/components/ColorPickerSheet'
-
-/**
- * Order shown left-to-right / top-to-bottom: most stale first so the eye lands
- * on red (needs attention) before grey (no data). Mirrors ContactsStatsHeader.
- */
-const STALENESS_ORDER: ContactStaleness[] = ['month', 'week', 'recent', 'never']
-
-const stalenessToMarkerKey: Record<ContactStaleness, keyof MarkerColors> = {
-  never: 'noConversations',
-  recent: 'withinThePastWeek',
-  week: 'longerThanAWeekAgo',
-  month: 'longerThanAMonthAgo',
-}
+import IconButton from '@/components/ui/IconButton'
+import { RootStackNavigation } from '@/types/rootStack'
 
 type Props = {
   /** Hide the title/subtitle header — useful when the host already shows one. */
   showHeader?: boolean
+  /**
+   * Called right before navigating to the Color Key settings screen — hosts
+   * that render this inside a popover/sheet close it here so it isn't still
+   * open when the user navigates back.
+   */
+  onBeforeNavigate?: () => void
 }
 
-export default function StalenessColorKey({ showHeader = true }: Props) {
+/**
+ * Read-only legend for the staleness colors. Editing (colors and day
+ * thresholds) lives on the Color Key settings screen — the pencil in the header
+ * is the way there.
+ */
+export default function StalenessColorKey({
+  showHeader = true,
+  onBeforeNavigate,
+}: Props) {
   const theme = useTheme()
+  const navigation = useNavigation<RootStackNavigation>()
   const colors = useMarkerColors()
-  const { set, mapKeyColors } = usePreferences()
-  const [activeBucket, setActiveBucket] = useState<ContactStaleness | null>(
-    null
-  )
+  const { stalenessBreakpoints } = usePreferences()
 
-  const updateBucket = (bucket: ContactStaleness, hex: string | null) => {
-    const key = stalenessToMarkerKey[bucket]
-    set({
-      mapKeyColors: {
-        ...mapKeyColors,
-        [key]: hex ?? undefined,
-      },
-    })
+  const goToSettings = () => {
+    onBeforeNavigate?.()
+    navigation.navigate('PreferencesColorKey')
   }
 
-  const isOverridden = (bucket: ContactStaleness) =>
-    mapKeyColors?.[stalenessToMarkerKey[bucket]] !== undefined
-
-  const activeColor = activeBucket
-    ? stalenessToColor(activeBucket, colors)
-    : '#000000'
-
   return (
-    <View style={{ gap: 10 }}>
+    <View style={{ gap: 10, paddingHorizontal: 10 }}>
       {showHeader && (
-        <View style={{ gap: 2 }}>
-          <Text
-            style={{
-              fontFamily: theme.fonts.semiBold,
-              fontSize: theme.fontSize('md'),
-              color: theme.colors.text,
-            }}
-          >
-            {i18n.t('contacts_stalenessInfo_title')}
-          </Text>
-          <Text
-            style={{
-              fontSize: theme.fontSize('xs'),
-              color: theme.colors.textAlt,
-            }}
-          >
-            {i18n.t('contacts_stalenessInfo_subtitle')}
-          </Text>
+        <View
+          style={{
+            flexDirection: 'row',
+            alignItems: 'flex-start',
+            gap: 10,
+          }}
+        >
+          {/*
+            flexShrink (not flex: 1) — inside the stats-header popover the
+            container has no fixed width, so the title's intrinsic width is
+            what sizes the whole popover. flex: 1 zeroes that out and the
+            popover collapses to one character per line.
+          */}
+          <View style={{ gap: 2, flexShrink: 1, flexGrow: 1 }}>
+            <Text
+              style={{
+                fontFamily: theme.fonts.semiBold,
+                fontSize: theme.fontSize('md'),
+                color: theme.colors.text,
+              }}
+            >
+              {i18n.t('contacts_stalenessInfo_title')}
+            </Text>
+            <Text
+              style={{
+                fontSize: theme.fontSize('xs'),
+                color: theme.colors.textAlt,
+              }}
+            >
+              {i18n.t('contacts_stalenessInfo_subtitle')}
+            </Text>
+          </View>
+          <IconButton
+            hitSlop={20}
+            icon={faPencil}
+            size='sm'
+            onPress={goToSettings}
+            accessibilityLabel={i18n.t('colorKey_edit')}
+          />
         </View>
       )}
 
       <View style={{ gap: 8 }}>
-        {STALENESS_ORDER.map((bucket) => {
-          const color = stalenessToColor(bucket, colors)
-          return (
-            <View
-              key={bucket}
-              style={{
-                flexDirection: 'row',
-                alignItems: 'center',
-                gap: 10,
-              }}
-            >
-              <View style={{ flex: 1 }}>
-                <Text
-                  style={{
-                    fontFamily: theme.fonts.semiBold,
-                    fontSize: theme.fontSize('sm'),
-                    color: theme.colors.text,
-                  }}
-                >
-                  {i18n.t(`contacts_pinStaleness_${bucket}` as TranslationKey)}
-                </Text>
-                <Text
-                  style={{
-                    fontSize: theme.fontSize('xs'),
-                    color: theme.colors.textAlt,
-                  }}
-                >
-                  {i18n.t(
-                    `contacts_stalenessCriteria_${bucket}` as TranslationKey
-                  )}
-                </Text>
-              </View>
-              {isOverridden(bucket) && (
-                <Button onPress={() => updateBucket(bucket, null)}>
-                  <Text
-                    style={{
-                      textDecorationLine: 'underline',
-                      color: theme.colors.textAlt,
-                      fontSize: theme.fontSize('xs'),
-                    }}
-                  >
-                    {i18n.t('reset')}
-                  </Text>
-                </Button>
-              )}
-              <Pressable
-                onPress={() => setActiveBucket(bucket)}
-                accessibilityLabel={i18n.t(
-                  `contacts_pinStaleness_${bucket}` as TranslationKey
-                )}
-                accessibilityRole='button'
+        {STALENESS_DISPLAY_ORDER.map((bucket) => (
+          <View
+            key={bucket}
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              gap: 10,
+            }}
+          >
+            <View style={{ flex: 1 }}>
+              <Text
                 style={{
-                  width: 28,
-                  height: 28,
-                  borderRadius: 14,
-                  backgroundColor: color,
-                  borderWidth: 1,
-                  borderColor: theme.colors.border,
+                  fontFamily: theme.fonts.semiBold,
+                  fontSize: theme.fontSize('sm'),
+                  color: theme.colors.text,
                 }}
-              />
+              >
+                {i18n.t(`contacts_pinStaleness_${bucket}` as TranslationKey)}
+              </Text>
+              <Text
+                style={{
+                  fontSize: theme.fontSize('xs'),
+                  color: theme.colors.textAlt,
+                }}
+              >
+                {getStalenessCriteriaText(bucket, stalenessBreakpoints)}
+              </Text>
             </View>
-          )
-        })}
+            <View
+              style={{
+                width: 28,
+                height: 28,
+                borderRadius: 14,
+                backgroundColor: stalenessToColor(bucket, colors),
+                borderWidth: 1,
+                borderColor: theme.colors.border,
+              }}
+            />
+          </View>
+        ))}
       </View>
-      <ColorPickerSheet
-        visible={activeBucket !== null}
-        value={activeColor}
-        onClose={() => setActiveBucket(null)}
-        onChange={(hex) => {
-          if (activeBucket) updateBucket(activeBucket, hex)
-        }}
-        title={
-          activeBucket
-            ? i18n.t(`contacts_pinStaleness_${activeBucket}` as TranslationKey)
-            : undefined
-        }
-      />
     </View>
   )
 }

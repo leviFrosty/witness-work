@@ -175,7 +175,7 @@ const ContactsStatsHeader: React.FC<ContactsStatsHeaderProps> = ({
               borderColor={theme.colors.border}
               backgroundColor={theme.colors.card}
             />
-            <StalenessColorKey />
+            <StalenessColorKey onBeforeNavigate={() => setInfoOpen(false)} />
           </Popover.Content>
         </Popover>
 

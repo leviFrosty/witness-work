@@ -1405,7 +1405,7 @@ const PlanDayScreen = ({ route, navigation }: PlanDayScreenProps) => {
                               <Text
                                 style={{ fontFamily: theme.fonts.semiBold }}
                               >
-                                {moment(override.date).format('MMM D, YYYY')}
+                                {moment(override.date).format('ll')}
                                 {' · '}
                                 {formatStartTime(
                                   override.startTimeInMinutes ??
@@ -1505,7 +1505,7 @@ const PlanDayScreen = ({ route, navigation }: PlanDayScreenProps) => {
                             }}
                           >
                             <Text style={{ fontFamily: theme.fonts.semiBold }}>
-                              {moment(deletedDate).format('MMM D, YYYY')}
+                              {moment(deletedDate).format('ll')}
                             </Text>
                             <Button
                               onPress={() => {

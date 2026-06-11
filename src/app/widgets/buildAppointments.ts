@@ -2,6 +2,7 @@ import moment from 'moment'
 import { Contact } from '@/types/contact'
 import { Visit } from '@/types/visit'
 import { isAppointment } from '@/lib/conversations'
+import { formatMonthDayCompact } from '@/lib/dates'
 
 export type WidgetAppointment = {
   /** Visit ID — used to deep-link with `highlightedVisitId`. */
@@ -63,7 +64,7 @@ function formatAppointmentTime(
   if (isTomorrow) return `${date.calendar(now, { sameElse: 'LT' })}` // localized "Tomorrow at HH:mm"
   if (isYesterday) return date.calendar(now, { sameElse: 'LT' })
   if (isThisWeek) return date.format('ddd LT')
-  return date.format('MMM D')
+  return formatMonthDayCompact(date)
 }
 
 export function buildAppointments(

@@ -26,8 +26,7 @@ const SettingsScreen = (props: DrawerContentComponentProps) => {
   const { developerTools, set } = usePreferences()
   const [count, setCount] = useState(0)
 
-  const navigateAndCloseDrawer = (destination: keyof RootStackParamList) => {
-    props.navigation.closeDrawer()
+  const handleNavigate = (destination: keyof RootStackParamList) => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     navigation.navigate(destination as any)
   }
@@ -59,11 +58,11 @@ const SettingsScreen = (props: DrawerContentComponentProps) => {
         {...props}
       >
         <View style={{ gap: 25 }}>
-          <PreferencesSection handleNavigate={navigateAndCloseDrawer} />
-          <AppSection handleNavigate={navigateAndCloseDrawer} />
+          <PreferencesSection handleNavigate={handleNavigate} />
+          <AppSection handleNavigate={handleNavigate} />
           <SupportSection />
           <ContactSection />
-          <MiscSection handleNavigate={navigateAndCloseDrawer} />
+          <MiscSection handleNavigate={handleNavigate} />
         </View>
         <View style={{ paddingTop: 15, paddingBottom: 45, gap: 5 }}>
           <Text

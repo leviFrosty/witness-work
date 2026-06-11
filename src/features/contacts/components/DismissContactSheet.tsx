@@ -336,7 +336,7 @@ const DismissContactSheet: React.FC<DismissContactSheetProps> = ({
             {dismissOptions.map((option) => {
               const exampleDate = moment()
                 .add(option.duration, option.unit)
-                .format('MMM D, YYYY')
+                .format('ll')
 
               return (
                 <Button

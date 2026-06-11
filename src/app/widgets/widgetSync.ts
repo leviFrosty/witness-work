@@ -9,7 +9,12 @@ import { usePreferences } from '@/stores/preferences'
 import { useContacts } from '@/stores/contactsStore'
 import { useConversations } from '@/stores/conversationStore'
 import { useSupporter } from '@/features/supporter/stores/supporter'
-import { DEFAULT_LOCALE } from '@/lib/locales'
+import {
+  DEFAULT_LOCALE,
+  formatLocaleForMoment,
+  handleLangFallback,
+} from '@/lib/locales'
+import { applyFormatRegion, resolveStartOfWeek } from '@/lib/dates'
 import { buildWidgetSnapshot } from '@/app/widgets/snapshot'
 import { logger } from '@/lib/logger'
 import { iCloudSync } from '@/app/sync/iCloudSync'
@@ -42,6 +47,21 @@ function pushSnapshot(reason: string): void {
     // lapsed supporter's preference stops taking effect in widgets too.
     const accentColor = isSupporter ? (prefs.customAccentColor ?? null) : null
 
+    // Re-apply Language + Format Region to moment before building. The
+    // background-refresh task can run in a fresh JS context where only the
+    // module-load default was applied — without this, background snapshots
+    // revert to US formatting (ADR 0006).
+    const { locale: language } = handleLangFallback(
+      prefs.locale ?? getLocales()[0].languageTag.toLowerCase()
+    )
+    applyFormatRegion({
+      language: formatLocaleForMoment(language),
+      region: prefs.formatRegion,
+      startOfWeekOverride: prefs.startOfWeek,
+      timeFormatOverride: prefs.timeFormat,
+      dateOrderOverride: prefs.dateOrder,
+    })
+
     const snapshot = buildWidgetSnapshot({
       serviceReports: sr.serviceReports,
       publisher: prefs.role,
@@ -58,7 +78,10 @@ function pushSnapshot(reason: string): void {
       widgetContactSort: prefs.widgetContactSort,
       widgetContactAction: prefs.widgetContactAction,
       widgetAppointmentWindow: prefs.widgetAppointmentWindow,
-      startOfWeek: prefs.startOfWeek,
+      startOfWeek: resolveStartOfWeek({
+        override: prefs.startOfWeek,
+        region: prefs.formatRegion,
+      }),
       locale: prefs.locale ?? DEFAULT_LOCALE,
       accentColor,
     })

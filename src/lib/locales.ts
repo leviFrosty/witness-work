@@ -49,9 +49,9 @@ import 'moment/locale/es-us'
 import 'moment/locale/es'
 import 'moment/locale/sw'
 import 'moment/locale/uk'
-import moment from 'moment'
 import { mmkvStorage } from '@/stores/mmkv'
 import { getLocales } from 'expo-localization'
+import { applyFormatRegion } from '@/lib/dates'
 
 export const translations = {
   'en-us': enUS,
@@ -107,9 +107,19 @@ try {
     preferences.state.locale ?? getLocales()[0].languageTag.toLowerCase() // Guaranteed to return at least one element
   const { locale: localeOrFallback } = handleLangFallback(rawLocale)
   const locale = formatLocaleForMoment(localeOrFallback)
-  moment.locale(locale)
+  // Sets moment.locale to the Language and overlays the Format Region's
+  // conventions (ADR 0006). Reads the raw persisted blob pre-migration, so a
+  // legacy `startOfWeek: 0` may briefly act as an explicit override until
+  // `useUserLocalePrefs` re-applies post-hydration.
+  applyFormatRegion({
+    language: locale,
+    region: preferences.state.formatRegion ?? undefined,
+    startOfWeekOverride: preferences.state.startOfWeek ?? undefined,
+    timeFormatOverride: preferences.state.timeFormat ?? undefined,
+    dateOrderOverride: preferences.state.dateOrder ?? undefined,
+  })
 } catch (err) {
-  moment.locale(DEFAULT_LOCALE)
+  applyFormatRegion({ language: DEFAULT_LOCALE })
 }
 
 export function handleLangFallback(locale: string): {

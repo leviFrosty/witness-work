@@ -73,7 +73,7 @@ const DismissedContactRow = ({ contact }: { contact: Contact }) => {
           <Text style={{ color: theme.colors.textAlt, fontSize: 12 }}>
             {contact.dismissedUntil
               ? i18n.t('dismissedUntil', {
-                  date: moment(contact.dismissedUntil).format('MMM D, YYYY'),
+                  date: moment(contact.dismissedUntil).format('ll'),
                 })
               : ''}
           </Text>

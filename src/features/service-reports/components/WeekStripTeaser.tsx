@@ -8,7 +8,7 @@ import IconButton from '@/components/ui/IconButton'
 import GlassCard from '@/components/ui/GlassCard'
 import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
-import { usePreferences } from '@/stores/preferences'
+import useStartOfWeek from '@/hooks/useStartOfWeek'
 import useServiceReport from '@/stores/serviceReport'
 import { getMonthsReports } from '@/lib/serviceReport'
 import {
@@ -54,7 +54,7 @@ const WeekStripTeaser = ({
   onOpenSchedule,
 }: Props) => {
   const theme = useTheme()
-  const { startOfWeek } = usePreferences()
+  const startOfWeek = useStartOfWeek()
   const { serviceReports: storeServiceReports } = useServiceReport()
   const serviceReports = serviceReportsOverride ?? storeServiceReports
   const navigation = useNavigation<HomeTabStackNavigation>()

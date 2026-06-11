@@ -1708,9 +1708,26 @@
   "contacts_stalenessInfo_title": "What the colors mean",
   "contacts_stalenessInfo_subtitle": "Based on the most recent visit. \"Not at homes\" count as visits.",
   "contacts_stalenessCriteria_never": "No visits recorded yet",
-  "contacts_stalenessCriteria_recent": "Last visit within the past week",
-  "contacts_stalenessCriteria_week": "Last visit more than a week ago",
-  "contacts_stalenessCriteria_month": "Last visit more than a month ago",
+  "contacts_stalenessCriteriaDays_recent": {
+    "one": "Last visit within the past day",
+    "other": "Last visit within the past {{count}} days"
+  },
+  "contacts_stalenessCriteriaDays_week": {
+    "one": "Last visit more than a day ago",
+    "other": "Last visit more than {{count}} days ago"
+  },
+  "contacts_stalenessCriteriaDays_month": {
+    "one": "Last visit more than a day ago",
+    "other": "Last visit more than {{count}} days ago"
+  },
+  "colorKeyScreenTitle": "Color Key",
+  "colorKey_edit": "Edit color key",
+  "colorKey_timePeriods": "Time Periods",
+  "colorKey_timePeriods_description": "Set how many days since the last visit move a contact from one color to the next.",
+  "colorKey_recentDays": "Recent period (days)",
+  "colorKey_recentDays_description": "Contacts whose last visit is within this many days show as \"{{label}}\".",
+  "colorKey_staleDays": "Stale period (days)",
+  "colorKey_staleDays_description": "Contacts whose last visit is more than this many days ago show as \"{{label}}\".",
   "contacts_sortBy": "Ordenar por",
   "contacts_sortBySuggested": "Sugerido",
   "contacts_sortByPin": "Pin de color (antigüedad)",

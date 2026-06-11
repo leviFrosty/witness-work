@@ -224,6 +224,20 @@ _Avoid_: "legacy supporter" (sounds deprecated), "existing supporter" (administr
 An app version bump that earns its own dedicated full-screen reveal on first launch. `WhatsNewSheet` is **suppressed entirely** for that version transition — the reveal IS the update intro for the audience(s) it serves. Reserved for major rollups or moments worth a ceremony (e.g. the 1.38.2 Milestone Update). A single Reveal update can chain multiple audience-specific reveals (e.g. a universal MilestoneReveal followed by a Supporter-only thank-you for users who were already Supporters at upgrade). Each reveal in the chain has its own `seen…` preference flag for one-shot semantics. Non-audience users on a Supporter-targeted Reveal update still see `WhatsNewSheet` — they need to know about the version.
 _Avoid_: "modal update", "big update" — **Reveal update** is the canonical term.
 
+### Localization
+
+**Language**:
+The User's chosen translation locale — which set of strings (English, Español, 日本語, …) the app renders. One of the supported `TranslatedLocale` values. Controls the _words_ the User reads, including month and weekday **names**. Defaults to the device language when the User has made no choice.
+_Avoid_: "locale" alone (ambiguous — it historically meant both Language and formatting; the two are now distinct concerns), "region" (region governs format, not words).
+
+**Format Region**:
+The User's chosen formatting conventions — date ordering (`DD/MM` vs `MM/DD`), 12- vs 24-hour time, and the default first day of week — selected **independently of Language**, so "English language, Australian formats" is expressible. Supplies the _defaults_ for the per-axis controls below; each can still be overridden individually. Defaults to the device region. Sourced from the conventions moment already carries for each locale, not a separate dataset.
+_Avoid_: "locale" (Language and Format Region are deliberately separable), "date format" (date order is only one of the three things Region governs).
+
+**Start of Week**:
+Which weekday a calendar week begins on across the app (calendar grids, weekday-label rows, recurring-plan math). A standalone preference that defaults from the **Format Region** but is independently overridable.
+_Avoid_: "first day" alone (ambiguous with first-of-month).
+
 ## Relationships
 
 - A **User** has exactly one **Publisher** at a time.

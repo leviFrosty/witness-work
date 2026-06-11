@@ -4,6 +4,7 @@ import { persist, combine, createJSONStorage } from 'zustand/middleware'
 import { Publisher, PublisherHours } from '@/types/publisher'
 import { getTenureType } from '@/lib/publisherCapabilities'
 import i18n, { TranslatedLocale } from '@/lib/locales'
+import type { DateOrder, FormatRegion, TimeFormat } from '@/lib/dates'
 import Constants from 'expo-constants'
 import moment from 'moment'
 import * as Device from 'expo-device'
@@ -419,12 +420,31 @@ export const PREFERENCE_DEFAULTS = {
   profileCardShaderId: DEFAULT_SHADER_ID as ShaderId,
   timeDisplayFormat: 'decimal' as MinuteDisplayFormat,
   locale: undefined as TranslatedLocale | undefined,
+  /**
+   * Format Region — a moment locale key (e.g. `'en-au'`) whose date/time
+   * conventions (date order, 12/24-hour clock, default start of week) are
+   * overlaid onto the Language. `undefined` = Auto (follow the device). See
+   * `docs/adr/0006-format-region-decoupled-from-language.md`.
+   */
+  formatRegion: undefined as FormatRegion | undefined,
   mapKeyColors: undefined as Partial<MarkerColors> | undefined,
   /**
-   * Start of week for localization. 0 starts on Sunday, 1 starts on Monday,
-   * etc.
+   * Start of week. 0 = Sunday … 6 = Saturday. `undefined` = Auto — follow the
+   * Format Region (or device). Resolved at read time via `resolveStartOfWeek`
+   * in `@/lib/dates`.
    */
-  startOfWeek: 0,
+  startOfWeek: undefined as number | undefined,
+  /**
+   * 12. Vs 24-hour clock override. `undefined` = Auto — follow the Format Region
+   *     (or device).
+   */
+  timeFormat: undefined as TimeFormat | undefined,
+  /**
+   * Date order override — governs numeric date forms (`L`/`l`) and the compact
+   * helpers only; textual month-name dates keep Region ordering. `undefined` =
+   * Auto.
+   */
+  dateOrder: undefined as DateOrder | undefined,
   /** Whether the user wants to override the default credit limit of 55 hours */
   overrideCreditLimit: false,
   /** Custom credit limit in hours (only used if overrideCreditLimit is true) */
@@ -829,6 +849,14 @@ export const NON_SYNCABLE_PREFERENCE_KEYS = new Set<string>([
  *   legacy field carried a value. The matching key in `preferenceUpdatedAt` is
  *   renamed (or dropped when the value is dropped) so iCloud LWW stays
  *   consistent.
+ * - V4 → v5: `startOfWeek` becomes Auto-able for the Format Region feature (ADR
+ *   0006). Every install carried `startOfWeek: 0` from the old hardcoded
+ *   default, so a stored `0` is converted to Auto (key dropped — Region/device
+ *   now drives it; US users see no change, UK/EU users get Monday
+ *   automatically). A stored `1–6` was a deliberate choice and is preserved as
+ *   an explicit override. The matching `preferenceUpdatedAt` timestamp is
+ *   dropped alongside a dropped value so iCloud LWW lets an explicit value from
+ *   another device win.
  *
  * Exported for unit testing. Idempotent — re-running on an already-migrated
  * blob is a no-op.
@@ -851,6 +879,31 @@ export const migratePreferencesPersistedState = (
   }
   if (version < 4) {
     next = migratePioneerStartDateToTenureStartDate(next)
+  }
+  if (version < 5) {
+    next = migrateStartOfWeekZeroToAuto(next)
+  }
+  return next
+}
+
+/**
+ * V4 → v5: convert the legacy hardcoded `startOfWeek: 0` default to Auto
+ * (absent) so the Format Region / device drives it; preserve `1–6` as an
+ * explicit override. See the version history above for the rationale.
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const migrateStartOfWeekZeroToAuto = (state: any): any => {
+  if (!state || typeof state !== 'object') return state
+  if (state.startOfWeek !== 0) return state
+
+  const { startOfWeek: _dropped, ...rest } = state
+  const next = { ...rest }
+  if (
+    next.preferenceUpdatedAt &&
+    typeof next.preferenceUpdatedAt === 'object'
+  ) {
+    const { startOfWeek: _droppedTs, ...restTs } = next.preferenceUpdatedAt
+    next.preferenceUpdatedAt = restTs
   }
   return next
 }
@@ -1162,7 +1215,7 @@ export const usePreferences = create(
       storage: createJSONStorage(() =>
         hasMigratedFromAsyncStorage() ? MmkvStorage : AsyncStorage
       ),
-      version: 4,
+      version: 5,
       migrate: (persistedState, version) =>
         migratePreferencesPersistedState(persistedState, version),
     }

@@ -36,6 +36,7 @@ import type {
 } from '@/lib/projectedTotal'
 import AssistantPreviewSheet from '@/components/AssistantPreviewSheet'
 import AvailabilityOnboardingSheet from '@/components/AvailabilityOnboardingSheet'
+import { formatWeekdayMonthDayCompact } from '@/lib/dates'
 
 type Props = {
   /** Calendar year of the month being shown. */
@@ -340,7 +341,9 @@ const AssistantSection = ({
       hours: headlineHoursDisplay,
       days: recommendation.headline.values.days,
       day: recommendation.headline.values.day
-        ? moment(recommendation.headline.values.day).format('ddd, MMM D')
+        ? formatWeekdayMonthDayCompact(
+            moment(recommendation.headline.values.day)
+          )
         : '',
       weekdayList: recommendation.headline.values.weekdayList,
       weeks: recommendation.headline.values.weeks,

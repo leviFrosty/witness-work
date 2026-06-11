@@ -58,6 +58,7 @@ import {
 } from '@/providers/AnimationViewProvider'
 import useFireworks from '@/hooks/useFireworks'
 import { FIREWORKS_AFTER_LOTTIE_BUFFER_MS } from '@/providers/ConfettiProvider'
+import { formatMonthDayCompact } from '@/lib/dates'
 
 interface MonthReportProps {
   monthsReports: TimeEntry[] | null
@@ -541,7 +542,7 @@ const MonthReport = ({
               {lastLoggedDate && (
                 <Chip
                   label={i18n.t('lastLoggedOn', {
-                    date: lastLoggedDate.format('MMM D'),
+                    date: formatMonthDayCompact(lastLoggedDate),
                   })}
                   tone='neutral'
                 />

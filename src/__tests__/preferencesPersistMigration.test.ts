@@ -414,3 +414,59 @@ describe('preferences persist migrate v3 → v4 (pioneerStartDate → tenureStar
     expect(migrated).not.toHaveProperty('tenureStartDate')
   })
 })
+
+describe('preferences persist migrate v4 → v5 (startOfWeek 0 → Auto)', () => {
+  it('drops a stored startOfWeek of 0 (the legacy hardcoded default) so Region/device drives it', () => {
+    const v4State = {
+      startOfWeek: 0,
+      preferenceUpdatedAt: { startOfWeek: 1700000000000, role: 1700000001000 },
+    }
+
+    const migrated = migratePreferencesPersistedState(v4State, 4)
+
+    expect(migrated).not.toHaveProperty('startOfWeek')
+    // The timestamp is dropped too so iCloud LWW lets an explicit value from
+    // another device win.
+    expect(migrated.preferenceUpdatedAt).not.toHaveProperty('startOfWeek')
+    expect(migrated.preferenceUpdatedAt.role).toBe(1700000001000)
+  })
+
+  it('preserves an explicit 1–6 startOfWeek as a deliberate override, timestamp included', () => {
+    const v4State = {
+      startOfWeek: 1,
+      preferenceUpdatedAt: { startOfWeek: 1700000000000 },
+    }
+
+    const migrated = migratePreferencesPersistedState(v4State, 4)
+
+    expect(migrated.startOfWeek).toBe(1)
+    expect(migrated.preferenceUpdatedAt.startOfWeek).toBe(1700000000000)
+  })
+
+  it('leaves a payload without startOfWeek untouched', () => {
+    const migrated = migratePreferencesPersistedState({ role: 'publisher' }, 4)
+    expect(migrated).not.toHaveProperty('startOfWeek')
+    expect(migrated.role).toBe('publisher')
+  })
+
+  it('is idempotent — re-running on an already-v5 state is a no-op', () => {
+    const v4State = { startOfWeek: 0 }
+    const v5State = migratePreferencesPersistedState(v4State, 4)
+    const v5Again = migratePreferencesPersistedState(v5State, 5)
+    expect(JSON.stringify(v5Again)).toEqual(JSON.stringify(v5State))
+  })
+
+  it('chains cleanly from v0 with a legacy default startOfWeek', () => {
+    const v0State = {
+      excludedWeekdays: [0, 6],
+      publisher: 'regularPioneer',
+      startOfWeek: 0,
+    }
+
+    const migrated = migratePreferencesPersistedState(v0State, 0)
+
+    expect(migrated).not.toHaveProperty('startOfWeek')
+    expect(migrated.role).toBe('regularPioneer')
+    expect(migrated.offDays).toEqual([0, 6])
+  })
+})

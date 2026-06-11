@@ -26,6 +26,7 @@ import { usePreferences } from '@/stores/preferences'
 import { formatMinutes } from '@/lib/minutes'
 import moment from 'moment'
 import { segmentBoldMarkup } from '@/lib/projectedTotalCopy'
+import { formatWeekdayMonthDayCompact } from '@/lib/dates'
 
 type Row = {
   /** Local-only id — never persisted; used as React key + stepper target. */
@@ -230,7 +231,7 @@ const AssistantPreviewSheet = ({
                         fontSize: theme.fontSize('sm'),
                       }}
                     >
-                      {moment(row.date).format('ddd, MMM D')}
+                      {formatWeekdayMonthDayCompact(moment(row.date))}
                     </Text>
                     <Text
                       style={{

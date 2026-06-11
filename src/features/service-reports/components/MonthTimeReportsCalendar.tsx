@@ -6,7 +6,7 @@ import type { MarkedDates } from 'react-native-calendars/src/types'
 import { SelectedDateSheetState } from '@/features/service-reports/components/SelectedDateSheet'
 import CalendarDay from '@/components/CalendarDay'
 import { useMemo } from 'react'
-import { usePreferences } from '@/stores/preferences'
+import useStartOfWeek from '@/hooks/useStartOfWeek'
 import type { CalendarViewMode } from '@/components/CalendarHeader'
 import useServiceReport from '@/stores/serviceReport'
 import { buildMonthCalendarMarkedDates } from '@/features/service-reports/lib/monthCalendarMarkedDates'
@@ -26,7 +26,7 @@ const MonthTimeReportsCalendar: React.FC<MonthTimeReportsCalendarProps> = ({
   setSheet,
   viewMode = 'planned',
 }) => {
-  const { startOfWeek } = usePreferences()
+  const startOfWeek = useStartOfWeek()
   const dayPlans = useServiceReport((s) => s.dayPlans)
   const recurringPlans = useServiceReport((s) => s.recurringPlans)
   const theme = useTheme()

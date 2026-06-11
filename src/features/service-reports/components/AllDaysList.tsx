@@ -29,6 +29,7 @@ import Badge from '@/components/ui/Badge'
 import { useCardStyle } from '@/components/ui/Card'
 import Circle from '@/components/ui/Circle'
 import { getDateStatusColor } from '@/components/CalendarDay'
+import { formatMonthDayCompact } from '@/lib/dates'
 
 interface AllDaysListProps {
   month: number
@@ -245,7 +246,7 @@ const AllDaysList = ({ month, year }: AllDaysListProps) => {
       entries.push({
         date: dayDate,
         dayOfWeekLabel: day.format('ddd'),
-        monthDayLabel: day.format('MMM D'),
+        monthDayLabel: formatMonthDayCompact(day),
         isToday,
         hoursLabel,
         categoryLabel,

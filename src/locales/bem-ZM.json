@@ -731,6 +731,15 @@
       "c6": "The calendar refreshes right away after you add, edit, or remove a plan.",
       "c7": "Map pins stay in focus after you tap them.",
       "c8": "Smoother scrolling in the Contacts list."
+    },
+    "1400": {
+      "c1": "Switching from MyTime? You can now import your contacts and visit history straight from a MyTime backup, with a preview before anything is added, so there's no manual re-entry.",
+      "c2": "Date format, clock style, and start of the week are now separate from your app language. Set each one in Settings > Date & Time, with an Auto option that follows your region or device.",
+      "c3": "You can now customize the day thresholds and colors behind contact staleness. Tune them in Settings > Personalization > Color Key.",
+      "c4": "The map search box keeps focus while you type, so filtering contacts no longer interrupts you.",
+      "c5": "Locating contacts on the map now shows live progress, and you can skip it midway without losing your place.",
+      "c6": "Faster, smoother scrolling in the Contacts list, plus quicker home screen widget updates.",
+      "c7": "Fixed projected totals around time zone changes, enlarged header buttons for easier tapping, and polished countless small details throughout the app."
     }
   },
   "installed": "Installed",

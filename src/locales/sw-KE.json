@@ -828,6 +828,15 @@
       "c7": "Pini za ramani zinabaki zikilenga baada ya kuzigusa.",
       "c8": "Utelezeshaji laini zaidi kwenye orodha ya Anwani.",
       "c4": "Michango yako sasa inaonyesha kipindi sahihi cha malipo na bei kwa usajili wa Mfadhili wa kila mwaka na ule uliotolewa."
+    },
+    "1400": {
+      "c1": "Unahama kutoka MyTime? Sasa unaweza kuingiza anwani zako na historia ya ziara moja kwa moja kutoka nakala rudufu ya MyTime, ukiwa na onyesho la awali kabla ya kuongeza chochote, bila kuandika upya kwa mkono.",
+      "c2": "Muundo wa tarehe, mtindo wa saa, na mwanzo wa wiki sasa ni vya kujitegemea kutoka lugha ya programu. Weka kila kimoja katika Mipangilio > Tarehe na Saa, ikiwa na chaguo la Otomatiki linalofuata eneo au kifaa chako.",
+      "c3": "Sasa unaweza kubinafsisha vizingiti vya siku na rangi za uchakavu wa anwani. Virekebishe katika Mipangilio > Ubinafsishaji > Ufunguo wa Rangi.",
+      "c4": "Kisanduku cha kutafuta cha ramani kinabaki na umakini unapoandika, hivyo kuchuja anwani hakukukatishi tena.",
+      "c5": "Kutafuta mahali pa anwani kwenye ramani sasa kunaonyesha maendeleo ya papo hapo, na unaweza kukiruka katikati bila kupoteza nafasi yako.",
+      "c6": "Kusogeza kwa kasi na laini zaidi katika orodha ya Anwani, pamoja na masasisho ya haraka zaidi ya wijeti za skrini ya kwanza.",
+      "c7": "Imerekebisha jumla zinazokadiriwa wakati wa mabadiliko ya saa za eneo, imepanua vitufe vya kichwa ili kugusa kwa urahisi, na imeboresha maelezo madogo mengi katika programu yote."
     }
   },
   "installed": "Imesakinishwa",

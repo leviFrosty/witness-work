@@ -828,6 +828,15 @@
       "c7": "Los pines del mapa se mantienen enfocados después de tocarlos.",
       "c8": "Desplazamiento más fluido en la lista de Contactos.",
       "c4": "Tus Donaciones ahora muestran el periodo de facturación y el precio correctos para las suscripciones de colaborador anuales y concedidas."
+    },
+    "1400": {
+      "c1": "¿Te cambias desde MyTime? Ahora puedes importar tus contactos y tu historial de visitas directamente desde una copia de seguridad de MyTime, con una vista previa antes de añadir nada, sin tener que volver a introducirlos manualmente.",
+      "c2": "El formato de fecha, el estilo de reloj y el inicio de la semana ahora son independientes del idioma de la app. Configura cada uno en Ajustes > Fecha y hora, con una opción Automática que sigue tu región o tu dispositivo.",
+      "c3": "Ahora puedes personalizar los umbrales de días y los colores de la antigüedad de los contactos. Ajústalos en Ajustes > Personalización > Clave de color.",
+      "c4": "El cuadro de búsqueda del mapa mantiene el foco mientras escribes, para que filtrar contactos ya no te interrumpa.",
+      "c5": "Ubicar contactos en el mapa ahora muestra el progreso en tiempo real, y puedes omitirlo a mitad sin perder tu lugar.",
+      "c6": "Desplazamiento más rápido y fluido en la lista de Contactos, además de actualizaciones más rápidas de los widgets de la pantalla de inicio.",
+      "c7": "Se corrigieron los totales proyectados ante cambios de zona horaria, se agrandaron los botones del encabezado para tocarlos más fácilmente y se pulieron innumerables detalles en toda la app."
     }
   },
   "installed": "Instalado",

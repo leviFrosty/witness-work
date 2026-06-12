@@ -828,6 +828,15 @@
       "c7": "Karten-Pins bleiben im Fokus, nachdem du sie angetippt hast.",
       "c8": "Flüssigeres Scrollen in der Kontaktliste.",
       "c4": "Unter „Ihre Spenden“ werden jetzt der richtige Abrechnungszeitraum und Preis für jährliche und gewährte Unterstützer-Abonnements angezeigt."
+    },
+    "1400": {
+      "c1": "Wechselst du von MyTime? Du kannst deine Kontakte und deinen Besuchsverlauf jetzt direkt aus einem MyTime-Backup importieren, mit einer Vorschau, bevor etwas hinzugefügt wird – ganz ohne erneutes manuelles Eingeben.",
+      "c2": "Datumsformat, Uhrzeitstil und Wochenbeginn sind jetzt von der App-Sprache getrennt. Stelle jedes davon unter Einstellungen > Datum & Uhrzeit ein, mit einer Auto-Option, die deiner Region oder deinem Gerät folgt.",
+      "c3": "Du kannst jetzt die Tagesschwellen und Farben hinter der Aktualität von Kontakten anpassen. Stelle sie unter Einstellungen > Personalisierung > Farbschlüssel ein.",
+      "c4": "Das Suchfeld der Karte behält den Fokus, während du tippst, sodass das Filtern von Kontakten dich nicht mehr unterbricht.",
+      "c5": "Das Verorten von Kontakten auf der Karte zeigt jetzt den Live-Fortschritt, und du kannst es mittendrin überspringen, ohne deinen Platz zu verlieren.",
+      "c6": "Schnelleres, flüssigeres Scrollen in der Kontaktliste sowie schnellere Aktualisierungen der Startbildschirm-Widgets.",
+      "c7": "Prognostizierte Gesamtwerte rund um Zeitzonenwechsel korrigiert, Kopfzeilen-Schaltflächen zum leichteren Antippen vergrößert und unzählige kleine Details in der ganzen App verfeinert."
     }
   },
   "installed": "Eingerichtet",

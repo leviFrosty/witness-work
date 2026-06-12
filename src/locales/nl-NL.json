@@ -828,6 +828,15 @@
       "c7": "Pins op de kaart blijven in beeld nadat je erop tikt.",
       "c8": "Soepeler scrollen in de lijst met contacten.",
       "c4": "Jouw donaties toont nu de juiste factureringsperiode en prijs voor jaarlijkse en toegekende supporterabonnementen."
+    },
+    "1400": {
+      "c1": "Stap je over van MyTime? Je kunt je contacten en bezoekgeschiedenis nu rechtstreeks importeren uit een MyTime-back-up, met een voorbeeld voordat er iets wordt toegevoegd, zonder handmatig opnieuw in te voeren.",
+      "c2": "Datumnotatie, klokstijl en begin van de week staan nu los van de taal van de app. Stel ze elk in via Instellingen > Datum en tijd, met een Auto-optie die je regio of apparaat volgt.",
+      "c3": "Je kunt nu de dagdrempels en kleuren achter de actualiteit van contacten aanpassen. Stel ze in via Instellingen > Personalisatie > Kleurenlegenda.",
+      "c4": "Het zoekvak van de kaart houdt de focus terwijl je typt, zodat het filteren van contacten je niet meer onderbreekt.",
+      "c5": "Het lokaliseren van contacten op de kaart toont nu live voortgang, en je kunt het halverwege overslaan zonder je plek te verliezen.",
+      "c6": "Sneller, soepeler scrollen in de contactenlijst, plus snellere updates van de widgets op het beginscherm.",
+      "c7": "Verwachte totalen rond tijdzonewijzigingen gecorrigeerd, kopknoppen vergroot zodat ze makkelijker aan te tikken zijn, en talloze kleine details in de hele app verfijnd."
     }
   },
   "installed": "Geïnstalleerd",

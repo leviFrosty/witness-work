@@ -731,6 +731,15 @@
       "c6": "O calendário atualiza-se logo a seguir a adicionar, editar ou remover uma programação.",
       "c7": "Os pins do mapa mantêm-se em foco depois de lhes tocar.",
       "c8": "Deslocamento mais suave na lista de Contactos."
+    },
+    "1400": {
+      "c1": "Vens do MyTime? Agora podes importar os teus contactos e o histórico de visitas diretamente de uma cópia de segurança do MyTime, com uma pré-visualização antes de adicionar seja o que for, sem teres de introduzir tudo de novo.",
+      "c2": "O formato da data, o estilo do relógio e o início da semana são agora independentes do idioma da aplicação. Define cada um em Definições > Data e hora, com uma opção Automática que segue a tua região ou dispositivo.",
+      "c3": "Agora podes personalizar os limites de dias e as cores por trás do tempo desde o último contacto. Ajusta-os em Definições > Personalização > Legenda de cores.",
+      "c4": "A caixa de pesquisa do mapa mantém o foco enquanto escreves, para que filtrar contactos já não te interrompa.",
+      "c5": "Localizar contactos no mapa mostra agora o progresso em tempo real, e podes ignorá-lo a meio sem perderes o teu lugar.",
+      "c6": "Deslocação mais rápida e fluida na lista de Contactos, além de atualizações mais rápidas dos widgets do ecrã principal.",
+      "c7": "Corrigidos os totais previstos em mudanças de fuso horário, aumentados os botões do cabeçalho para tocar mais facilmente e aperfeiçoados inúmeros pequenos detalhes em toda a aplicação."
     }
   },
   "installed": "Instalado",

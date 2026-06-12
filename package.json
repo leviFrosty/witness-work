@@ -1,6 +1,6 @@
 {
   "name": "witness-work",
-  "version": "1.38.3",
+  "version": "1.40.0",
   "main": "src/index.js",
   "scripts": {
     "dev": "APP_VARIANT=development expo start --ios",

@@ -828,6 +828,15 @@
       "c7": "Map pins stay in focus after you tap them. Resolve intermittent issue with map refocusing incorrect contact pin.",
       "c8": "Smoother scrolling in the Contacts list. Resolve issues with contacts disappearing.",
       "c4": "Your Donations now shows the correct billing period and price for annual and granted supporter subscriptions."
+    },
+    "1400": {
+      "c1": "Switching from MyTime? You can now import your contacts and visit history straight from a MyTime backup, with a preview before anything is added, so there's no manual re-entry.",
+      "c2": "Date format, clock style, and start of the week are now separate from your app language. Set each one in Settings > Date & Time, with an Auto option that follows your region or device.",
+      "c3": "You can now customize the day thresholds and colors behind contact staleness. Tune them in Settings > Personalization > Color Key.",
+      "c4": "Resolved an issue with the map search auto closing.",
+      "c5": "Locating contacts on the map now shows live progress, and you can skip it midway without losing your place.",
+      "c6": "Faster, smoother scrolling in the Contacts list, plus quicker home screen widget updates.",
+      "c7": "Fixed projected totals around time zone changes, enlarged header buttons for easier tapping, and polished countless small details throughout the app."
     }
   },
   "installed": "Instalado",

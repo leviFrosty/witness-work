@@ -828,6 +828,15 @@
       "c7": "Les épingles de la carte restent au premier plan après que vous les avez touchées.",
       "c8": "Défilement plus fluide dans la liste des Contacts.",
       "c4": "Vos dons affichent désormais la bonne période de facturation et le bon prix pour les abonnements Supporter annuels et octroyés."
+    },
+    "1400": {
+      "c1": "Vous venez de MyTime ? Vous pouvez désormais importer vos contacts et votre historique de visites directement depuis une sauvegarde MyTime, avec un aperçu avant tout ajout, sans aucune ressaisie manuelle.",
+      "c2": "Le format de date, le style d'horloge et le début de semaine sont désormais distincts de la langue de l'application. Réglez chacun dans Réglages > Date et heure, avec une option Auto qui suit votre région ou votre appareil.",
+      "c3": "Vous pouvez désormais personnaliser les seuils en jours et les couleurs liés à l'ancienneté des contacts. Ajustez-les dans Réglages > Personnalisation > Légende des couleurs.",
+      "c4": "Le champ de recherche de la carte conserve le focus pendant que vous tapez, pour que le filtrage des contacts ne vous interrompe plus.",
+      "c5": "La localisation des contacts sur la carte affiche désormais une progression en direct, et vous pouvez l'ignorer en cours de route sans perdre votre place.",
+      "c6": "Défilement plus rapide et plus fluide dans la liste des Contacts, ainsi que des mises à jour plus rapides des widgets de l'écran d'accueil.",
+      "c7": "Correction des totaux prévus lors des changements de fuseau horaire, agrandissement des boutons d'en-tête pour faciliter le toucher, et peaufinage d'innombrables petits détails dans toute l'application."
     }
   },
   "installed": "installée",

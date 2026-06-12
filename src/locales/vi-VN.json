@@ -828,6 +828,15 @@
       "c7": "Ghim trên bản đồ vẫn giữ tiêu điểm sau khi bạn nhấn vào chúng.",
       "c8": "Cuộn mượt mà hơn trong danh sách Danh bạ.",
       "c4": "Mục Quyên góp của bạn giờ đây hiển thị đúng chu kỳ thanh toán và giá cho các đăng ký người ủng hộ hàng năm và được cấp."
+    },
+    "1400": {
+      "c1": "Chuyển từ MyTime? Giờ đây bạn có thể nhập danh bạ và lịch sử thăm viếng trực tiếp từ bản sao lưu MyTime, có xem trước trước khi thêm bất cứ thứ gì, nên không phải nhập lại thủ công.",
+      "c2": "Định dạng ngày, kiểu đồng hồ và ngày bắt đầu tuần giờ đã tách khỏi ngôn ngữ ứng dụng. Đặt từng mục trong Cài đặt > Ngày và giờ, với tùy chọn Tự động theo khu vực hoặc thiết bị của bạn.",
+      "c3": "Giờ đây bạn có thể tùy chỉnh ngưỡng theo ngày và màu sắc thể hiện mức độ cũ của liên hệ. Điều chỉnh trong Cài đặt > Cá nhân hóa > Chú thích màu.",
+      "c4": "Ô tìm kiếm trên bản đồ vẫn giữ tiêu điểm khi bạn gõ, nên việc lọc liên hệ không còn bị gián đoạn.",
+      "c5": "Việc định vị liên hệ trên bản đồ giờ hiển thị tiến trình trực tiếp, và bạn có thể bỏ qua giữa chừng mà không mất vị trí đang xem.",
+      "c6": "Cuộn nhanh và mượt hơn trong danh sách Liên hệ, cùng với cập nhật tiện ích màn hình chính nhanh hơn.",
+      "c7": "Đã sửa tổng dự kiến khi đổi múi giờ, phóng to các nút ở tiêu đề để dễ chạm hơn, và trau chuốt vô số chi tiết nhỏ trong toàn ứng dụng."
     }
   },
   "installed": "Cài đặt",

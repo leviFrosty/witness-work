@@ -127,7 +127,7 @@
     "zustand": "^4.5.7"
   },
   "devDependencies": {
-    "@babel/core": "^7.28.4",
+    "@babel/core": "^7.29.6",
     "@eslint/js": "10.0.1",
     "@testing-library/react-native": "^12.9.0",
     "@types/lodash": "^4.17.20",

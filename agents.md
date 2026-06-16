@@ -132,11 +132,12 @@ Size to diff. Goal = fast review, not effort demo. One-line PR with one-line bod
 App ID `6469723047`, bundle `com.leviwilkerson.jwtime`. **Submitting a build that's already uploaded** (the normal case — EAS/Xcode already pushed it):
 
 1. **Find the build.** `asc builds list --app 6469723047` — `.attributes.version` is the **CFBundleVersion** (e.g. `148`), NOT the marketing version. Marketing version (`1.38.3`) lives on its `preReleaseVersion`: `asc testflight pre-release list --app 6469723047` and match the id.
-2. **Stage everything in one shot** (creates version + copies text metadata + attaches build + readiness check, stops before submit):
+2. **Stage everything in one shot** (creates version + copies text metadata + attaches build + readiness check, stops before submit). `--copy-metadata-from` takes the previous **version STRING** (`1.38.3`), NOT its version ID — passing an ID fails `apply_metadata` with `source version "<id>" not found`:
    ```
    asc release stage --app 6469723047 --version 1.38.3 --build <BUILD_ID> \
-     --copy-metadata-from <PREV_VERSION> --exclude-fields whatsNew --platform IOS --confirm
+     --copy-metadata-from <PREV_VERSION_STRING> --exclude-fields whatsNew --platform IOS --confirm
    ```
+   **Plain "bug fixes" release** where the previous version already has the desired "What's New": drop `--exclude-fields whatsNew` so the existing translations copy over, and skip step 3 entirely.
 3. **Set "What's New" per locale** (version localizations, `--version` = the **version ID**):
    `asc localizations update --version <VERSION_ID> --locale en-US --whats-new "…"`
 4. **Preflight then submit:** `asc review doctor --app 6469723047` (look for `nextAction: No submission blockers`), optionally `asc review submit … --dry-run`, then:
@@ -149,6 +150,7 @@ App ID `6469723047`, bundle `com.leviwilkerson.jwtime`. **Submitting a build tha
 - **ASC release-note locales ≠ app i18n codes.** The 13 ASC locales: `en-US fr-FR de-DE nl-NL it pt-BR es-MX ru vi ja ko zh-Hans zh-Hant`. Do NOT use the app's `it-IT/ko-KR/ja-JP/ru-RU/vi-VN/zh-CN/zh-TW/es-ES`. `asc localizations supported-locales --version <ID>` if unsure.
 - **`releaseNotes.ts` / `src/locales/*` are the in-app "What's New" — unrelated** to ASC store release notes. Don't confuse them.
 - **Screenshots auto-carry** from the previous version; **text metadata does not** (hence `--copy-metadata-from`; copyable fields: `description,keywords,marketingUrl,promotionalText,supportUrl,whatsNew`).
+- **A failed `release stage` step leaves a stale checkpoint** under `.asc/release/checkpoints/stage_<app>_<version>_<build>_<platform>.json`. Re-running with corrected args then errors `checkpoint does not match current run arguments`. The version itself is already created (the `ensure_version` step ran) — just `rm` the checkpoint file and re-run `stage`; it reuses the existing version and resumes.
 - **No `-o` shorthand** — invalid flags make `asc` silently dump `--help` instead of erroring. Use `--output`.
 - **`asc versions view --version-id <ID>`** returns a FLATTENED object (`id/versionString/state/buildId/buildVersion`), not JSON:API `.data.attributes`. For `releaseType`/`appStoreState` use `asc versions list`.
 - **Release type** defaults to `AFTER_APPROVAL` (auto-release after approval) — matches all prior releases.

@@ -1,0 +1,7 @@
+{
+  "name": "keychain-uuid",
+  "version": "0.1.0",
+  "description": "Local Expo module storing a stable per-install UUID in the iOS Keychain (AfterFirstUnlockThisDeviceOnly, non-syncing) so it survives reinstall.",
+  "main": "index.ts",
+  "private": true
+}

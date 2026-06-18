@@ -22,6 +22,18 @@ const envVariables = z.object({
     .string()
     .optional()
     .describe('BOOLEAN, Set to true to silence all logs. Defaults to false.'),
+  EXPO_PUBLIC_NOTES_IMPORT_BASE_URL: z
+    .string()
+    .optional()
+    .describe(
+      'Override the proxy base URL for Notes Import (e.g. a dev/staging worker) so the App Attest dev-bypass never hits production. Defaults to the prod proxy.'
+    ),
+  EXPO_PUBLIC_NOTES_IMPORT_DEV_BYPASS: z
+    .string()
+    .optional()
+    .describe(
+      'DEV ONLY. When set, Notes Import skips App Attest and sends this token as the x-ww-dev-bypass header so the iOS simulator (no Secure Enclave) can exercise the flow against a dev worker sharing the token. Never set in production.'
+    ),
 })
 
 // Validate runtime env in all builds. In dev we throw to fail fast; in

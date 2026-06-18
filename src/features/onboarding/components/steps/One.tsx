@@ -18,7 +18,7 @@ import useTheme from '@/contexts/theme'
 interface Props {
   goNext: () => void
   goBack?: () => void
-  goToStep?: (stepId: 'iCloudRestore') => void
+  goToStep?: (stepId: 'pickUpWhereLeftOff') => void
 }
 
 const EASE_OUT = Easing.out(Easing.cubic)
@@ -150,7 +150,7 @@ const StepOne = ({ goNext, goToStep }: Props) => {
 
   const handleReturningUser = () => {
     if (goToStep) {
-      goToStep('iCloudRestore')
+      goToStep('pickUpWhereLeftOff')
       return
     }
     goNext()

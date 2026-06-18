@@ -18,6 +18,7 @@ import PaywallScreen from '@/features/supporter/screens/PaywallScreen'
 import PaywallThankYouScreen from '@/features/supporter/screens/PaywallThankYouScreen'
 import ImportAndExportScreen from '@/features/settings/screens/ImportAndExportScreen'
 import MytimeImportScreen from '@/features/mytime-import/screens/MytimeImportScreen'
+import NotesImportScreen from '@/features/notes-import/screens/NotesImportScreen'
 import PreferencesPublisherScreen from '@/features/settings/screens/preferences/screens/PreferencesPublisherScreen'
 import PreferencesConversationScreen from '@/features/settings/screens/preferences/screens/PreferencesConversationScreen'
 import PreferencesPlansScreen from '@/features/settings/screens/preferences/screens/PreferencesPlansScreen'
@@ -171,6 +172,15 @@ const RootStackComponent = () => {
           }}
           name='MytimeImport'
           component={MytimeImportScreen}
+        />
+        <RootStack.Screen
+          options={{
+            header: () => (
+              <Header buttonType='back' title={i18n.t('notesImport')} />
+            ),
+          }}
+          name='NotesImport'
+          component={NotesImportScreen}
         />
         <RootStack.Screen
           options={{

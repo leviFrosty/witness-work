@@ -67,6 +67,7 @@ import DeepLinkListeners from '@/app/deep-links/DeepLinkListeners'
 import useIsSupporter from '@/hooks/useIsSupporter'
 import useCustomer from '@/hooks/useCustomer'
 import { useSupporter } from '@/features/supporter/stores/supporter'
+import { isOfflineError } from '@/lib/offlineError'
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
@@ -95,6 +96,12 @@ Sentry.init({
   enabled: !__DEV__,
   debug: __DEV__,
   attachScreenshot: true,
+  // Drop expected "device is offline" errors. RevenueCat / RN native modules
+  // reject with these when the user has no connection; they are not bugs and a
+  // single offline user retrying can generate hundreds of duplicate events
+  // (JW-TIME-5B, JW-TIME-BW). Returning null discards the event.
+  beforeSend: (event, hint) =>
+    isOfflineError(hint?.originalException) ? null : event,
 })
 
 Sentry.setTag('deviceId', Constants.sessionId)

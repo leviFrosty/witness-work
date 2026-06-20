@@ -36,6 +36,7 @@ import { RouteProp, useNavigation, useRoute } from '@react-navigation/native'
 import { RootStackNavigation, RootStackParamList } from '@/types/rootStack'
 import { logger } from '@/lib/logger'
 import { TranslationKey } from '@/lib/locales'
+import { isOfflineError } from '@/lib/offlineError'
 
 type Tier = 'supporter' | 'tip'
 type SupporterBilling = 'monthly' | 'annual'
@@ -537,7 +538,9 @@ const PaywallScreen = () => {
       })
       hasFetchedOfferings.current = false
       Alert.alert(i18n.t('errorFetchingOfferings'), i18n.t('tryAgainLater'))
-      Sentry.captureException(error)
+      // Offline is expected, not a bug — surface the Alert but don't page Sentry
+      // (JW-TIME-BW). Other failures still report.
+      if (!isOfflineError(error)) Sentry.captureException(error)
       throw error
     }
   }, [])
@@ -663,7 +666,9 @@ const PaywallScreen = () => {
       const cancelled = code === PURCHASES_ERROR_CODE.PURCHASE_CANCELLED_ERROR
       if (!cancelled) {
         Alert.alert(i18n.t('error'), i18n.t('errorCheckingOut'))
-        Sentry.captureException(error)
+        // Offline mid-checkout is expected — the Alert already explains the
+        // network instability; don't page Sentry for it (JW-TIME-BW).
+        if (!isOfflineError(error)) Sentry.captureException(error)
       }
     }
   }, [navigation, revalidate, selectedPackage, tier])
@@ -676,7 +681,9 @@ const PaywallScreen = () => {
       }
       setCustomer(restored)
     } catch (error: unknown) {
-      Sentry.captureException(error)
+      // Offline during restore is expected — show the Alert, skip Sentry
+      // (JW-TIME-BW).
+      if (!isOfflineError(error)) Sentry.captureException(error)
       Alert.alert(i18n.t('error_restoring_account'))
     }
   }, [setCustomer])

@@ -134,6 +134,18 @@ describe('applyFormatRegion', () => {
     expect(moment.localeData().firstDayOfWeek()).toBe(3)
   })
 
+  it('never lazy-requires an unbundled locale for a region-suffixed language', () => {
+    // Regression for JW-TIME-CH: `moment.locale('ko-kr')` triggered moment's
+    // `require('./locale/ko-kr')`, an uncatchable fatal under Metro. The
+    // language must collapse to a loaded base ('ja' is imported above) or 'en'
+    // without throwing.
+    expect(() => applyFormatRegion({ language: 'ja-jp' })).not.toThrow()
+    expect(moment.locale()).toBe('ja')
+    expect(() => applyFormatRegion({ language: 'ko-kr' })).not.toThrow()
+    // 'ko' isn't imported in this test bundle, so it falls back to 'en'.
+    expect(moment.locale()).toBe('en')
+  })
+
   it('falls back to device calendar settings when Region is Auto', () => {
     device.uses24hourClock = true
     device.firstWeekday = 2 // expo MONDAY

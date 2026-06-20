@@ -93,6 +93,28 @@ const safeLocaleData = (key: string | undefined): moment.Locale | null => {
   }
 }
 
+/**
+ * Activates a moment locale without ever triggering moment's lazy
+ * `require('./locale/<key>')`. Under Metro that dynamic require throws an
+ * UNCATCHABLE fatal ("Requiring unknown module …/locale/ko-kr") for any locale
+ * file we didn't statically import in `src/lib/locales.ts` — so a device whose
+ * language resolves to a region-suffixed key (`ko-kr`, `ja-jp`, …) crashed the
+ * app at init. We only ever hand `moment.locale` a key it already loaded:
+ * the full tag, else its base language, else moment's built-in default.
+ *
+ * Returns the key moment ended up on, which is what every patch below targets.
+ */
+const safeMomentLocale = (key: string): string => {
+  const loaded = moment.locales()
+  if (loaded.includes(key)) {
+    moment.locale(key)
+  } else {
+    const language = key.split('-')[0]
+    moment.locale(loaded.includes(language) ? language : 'en')
+  }
+  return moment.locale()
+}
+
 /** First of D/M/Y appearing in a numeric pattern wins. */
 export const getDateOrderFromPattern = (pattern: string): DateOrder => {
   const d = pattern.indexOf('D')
@@ -264,10 +286,12 @@ export const getPristineLongDateFormat = (
 export const applyFormatRegion = (
   config: FormatRegionConfig
 ): ResolvedFormatSettings => {
-  // Activate the language; moment resolves missing keys (e.g. 'en-us') to a
-  // loaded parent ('en'). The resolved key is the one we patch.
-  moment.locale(config.language)
-  const activeKey = moment.locale()
+  // Activate the language. `safeMomentLocale` collapses region-suffixed keys
+  // we never bundled (`ko-kr`, `ja-jp`, …) down to their loaded base language
+  // ('ko', 'ja') or 'en', side-stepping moment's lazy `require('./locale/…')`
+  // — that dynamic require is an uncatchable fatal under Metro. The resolved
+  // key is the one we patch.
+  const activeKey = safeMomentLocale(config.language)
 
   // Reset the previous overlay so every localeData read below is pristine —
   // including the case where the chosen Region IS the active language key.

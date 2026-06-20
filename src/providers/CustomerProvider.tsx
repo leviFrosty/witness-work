@@ -10,6 +10,7 @@ import { CustomerContext, CustomerCtx } from '@/contexts/customer'
 import Purchases, { CustomerInfo, LOG_LEVEL } from 'react-native-purchases'
 import * as Sentry from '@sentry/react-native'
 import { logger } from '@/lib/logger'
+import { isOfflineError } from '@/lib/offlineError'
 import { getOrCreateInstallId } from '@/lib/installId'
 
 interface Props {}
@@ -29,6 +30,13 @@ const CustomerProvider: React.FC<PropsWithChildren<Props>> = ({ children }) => {
       const customerInfo = await Purchases.getCustomerInfo()
       setCustomer(customerInfo)
     } catch (error) {
+      // Offline is an expected, unrecoverable condition here — log it but don't
+      // report to Sentry, otherwise an offline user revalidating in a loop
+      // floods the dashboard (JW-TIME-5B).
+      if (isOfflineError(error)) {
+        logger.warn('[CustomerProvider] getCustomerInfo offline', error)
+        return
+      }
       Sentry.captureException(error)
     }
   }, [])

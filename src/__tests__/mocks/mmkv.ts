@@ -15,3 +15,9 @@ export const MmkvStorage = {
   setItem: () => {},
   removeItem: () => {},
 }
+
+export const GuardedAsyncStorage = {
+  getItem: () => Promise.resolve(null),
+  setItem: () => Promise.resolve(),
+  removeItem: () => Promise.resolve(),
+}

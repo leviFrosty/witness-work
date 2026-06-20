@@ -1,8 +1,11 @@
-import AsyncStorage from '@react-native-async-storage/async-storage'
 import { create } from 'zustand'
 import { persist, combine, createJSONStorage } from 'zustand/middleware'
 import { Category, CategoryTombstone } from '@/types/category'
-import { hasMigratedFromAsyncStorage, MmkvStorage } from '@/stores/mmkv'
+import {
+  hasMigratedFromAsyncStorage,
+  MmkvStorage,
+  SafeAsyncStorage,
+} from '@/stores/mmkv'
 
 const initialState = {
   categories: [] as Category[],
@@ -77,7 +80,7 @@ export const useCategories = create(
     {
       name: 'categories',
       storage: createJSONStorage(() =>
-        hasMigratedFromAsyncStorage() ? MmkvStorage : AsyncStorage
+        hasMigratedFromAsyncStorage() ? MmkvStorage : SafeAsyncStorage
       ),
       version: 0,
     }

@@ -95,6 +95,27 @@ Sentry.init({
   enabled: !__DEV__,
   debug: __DEV__,
   attachScreenshot: true,
+  beforeSend: (event) => {
+    /**
+     * Drop transient iOS AsyncStorage permission/IO failures
+     * (NSCocoaErrorDomain Code=513 "You don't have permission to save the file
+     * … in the folder RCTAsyncLocalStorage_V1"). These are unactionable — the
+     * OS denies the container write during backup/restore, while the
+     * data-protection class is locked, or under disk pressure — and the storage
+     * layer now degrades gracefully instead of throwing (JW-TIME-C5/C8/C9).
+     * Filtered here as defense-in-depth so any remaining AsyncStorage code path
+     * doesn't keep paging us.
+     */
+    const message = event.exception?.values?.[0]?.value ?? ''
+    if (
+      message.includes('RCTAsyncLocalStorage_V1') &&
+      (message.includes('Code=513') ||
+        message.includes("don't have permission to save"))
+    ) {
+      return null
+    }
+    return event
+  },
 })
 
 Sentry.setTag('deviceId', Constants.sessionId)

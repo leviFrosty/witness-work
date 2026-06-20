@@ -1,10 +1,13 @@
-import AsyncStorage from '@react-native-async-storage/async-storage'
 import { create } from 'zustand'
 import { persist, combine, createJSONStorage } from 'zustand/middleware'
 import * as Crypto from 'expo-crypto'
 import { Contact } from '@/types/contact'
 import { CustomFieldDefinition } from '@/types/customField'
-import { hasMigratedFromAsyncStorage, MmkvStorage } from '@/stores/mmkv'
+import {
+  hasMigratedFromAsyncStorage,
+  MmkvStorage,
+  SafeAsyncStorage,
+} from '@/stores/mmkv'
 
 const initialState = {
   contacts: [] as Contact[],
@@ -273,7 +276,7 @@ export const useContacts = create(
     {
       name: 'contacts',
       storage: createJSONStorage(() =>
-        hasMigratedFromAsyncStorage() ? MmkvStorage : AsyncStorage
+        hasMigratedFromAsyncStorage() ? MmkvStorage : SafeAsyncStorage
       ),
     }
   )

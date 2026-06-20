@@ -32,6 +32,49 @@ export async function migrateFromAsyncStorage(): Promise<void> {
   mmkvStorage.set('hasMigratedFromAsyncStorage', true)
 }
 
+/**
+ * IOS occasionally denies writes to the AsyncStorage container with
+ * `NSCocoaErrorDomain Code=513` ("You don't have permission to save the file …
+ * in the folder RCTAsyncLocalStorage_V1"), backed by a POSIX `Operation not
+ * permitted`. This is transient — typically during backup/restore, while the
+ * data-protection class has the container locked, or under low-disk pressure —
+ * and not something the user can act on. Left unguarded, zustand-persist's
+ * value write rejects and surfaces as an unhandled rejection in Sentry
+ * (JW-TIME-C9). Swallow the expected permission/IO failure so persistence
+ * degrades gracefully (the value simply isn't persisted this cycle) instead of
+ * crashing the write. Only relevant for users still on AsyncStorage who haven't
+ * migrated to MMKV yet.
+ */
+const isExpectedStorageWriteError = (error: unknown): boolean => {
+  const message = error instanceof Error ? error.message : String(error)
+  return (
+    message.includes('Code=513') ||
+    message.includes("don't have permission to save") ||
+    message.includes('Operation not permitted') ||
+    message.includes('Failed to write value')
+  )
+}
+
+/**
+ * AsyncStorage wrapped so value writes that hit the transient iOS permission/IO
+ * failure above don't throw. Reads and removals pass through unchanged.
+ */
+export const SafeAsyncStorage: StateStorage = {
+  getItem: (name) => AsyncStorage.getItem(name),
+  setItem: async (name, value) => {
+    try {
+      await AsyncStorage.setItem(name, value)
+    } catch (error) {
+      if (isExpectedStorageWriteError(error)) {
+        /** Expected transient failure — skip this write, don't report. */
+        return
+      }
+      throw error
+    }
+  },
+  removeItem: (name) => AsyncStorage.removeItem(name),
+}
+
 /** MMKV storage interface for Zustand middleware */
 export const MmkvStorage: StateStorage = {
   setItem: (name, value) => {

@@ -1,4 +1,3 @@
-import AsyncStorage from '@react-native-async-storage/async-storage'
 import { create } from 'zustand'
 import { persist, combine, createJSONStorage } from 'zustand/middleware'
 import { Publisher, PublisherHours } from '@/types/publisher'
@@ -8,7 +7,11 @@ import type { DateOrder, FormatRegion, TimeFormat } from '@/lib/dates'
 import Constants from 'expo-constants'
 import moment from 'moment'
 import * as Device from 'expo-device'
-import { hasMigratedFromAsyncStorage, MmkvStorage } from '@/stores/mmkv'
+import {
+  hasMigratedFromAsyncStorage,
+  MmkvStorage,
+  SafeAsyncStorage,
+} from '@/stores/mmkv'
 import { Address } from '@/types/contact'
 import { MinuteDisplayFormat } from '@/types/timeEntry'
 import type { AssistantEvent } from '@/types/assistant'
@@ -1222,7 +1225,7 @@ export const usePreferences = create(
     {
       name: 'preferences',
       storage: createJSONStorage(() =>
-        hasMigratedFromAsyncStorage() ? MmkvStorage : AsyncStorage
+        hasMigratedFromAsyncStorage() ? MmkvStorage : SafeAsyncStorage
       ),
       version: 5,
       migrate: (persistedState, version) =>

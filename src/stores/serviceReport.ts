@@ -1,4 +1,3 @@
-import AsyncStorage from '@react-native-async-storage/async-storage'
 import { create } from 'zustand'
 import { persist, combine, createJSONStorage } from 'zustand/middleware'
 import {
@@ -22,7 +21,11 @@ import {
   normalizeRecurringPlan,
   PersistedServiceReportState,
 } from '@/lib/normalizeDate'
-import { hasMigratedFromAsyncStorage, MmkvStorage } from '@/stores/mmkv'
+import {
+  GuardedAsyncStorage,
+  hasMigratedFromAsyncStorage,
+  MmkvStorage,
+} from '@/stores/mmkv'
 import * as Notifications from 'expo-notifications'
 
 const initialState = {
@@ -558,7 +561,7 @@ export const useServiceReport = create(
     {
       name: 'serviceReports',
       storage: createJSONStorage(() =>
-        hasMigratedFromAsyncStorage() ? MmkvStorage : AsyncStorage
+        hasMigratedFromAsyncStorage() ? MmkvStorage : GuardedAsyncStorage
       ),
       version: 4,
       migrate: (persistedState, version) =>

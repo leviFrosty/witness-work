@@ -1,7 +1,10 @@
-import AsyncStorage from '@react-native-async-storage/async-storage'
 import { create } from 'zustand'
 import { persist, combine, createJSONStorage } from 'zustand/middleware'
-import { hasMigratedFromAsyncStorage, MmkvStorage } from '@/stores/mmkv'
+import {
+  GuardedAsyncStorage,
+  hasMigratedFromAsyncStorage,
+  MmkvStorage,
+} from '@/stores/mmkv'
 import type { ProfileAvatar } from '@/types/avatar'
 
 /**
@@ -101,7 +104,7 @@ export const useProfile = create(
     {
       name: 'profile',
       storage: createJSONStorage(() =>
-        hasMigratedFromAsyncStorage() ? MmkvStorage : AsyncStorage
+        hasMigratedFromAsyncStorage() ? MmkvStorage : GuardedAsyncStorage
       ),
       version: 0,
     }

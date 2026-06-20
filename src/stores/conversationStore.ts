@@ -1,9 +1,12 @@
-import AsyncStorage from '@react-native-async-storage/async-storage'
 import { create } from 'zustand'
 import { persist, combine, createJSONStorage } from 'zustand/middleware'
 import { Visit, VisitTombstone } from '@/types/visit'
 import * as Notifications from 'expo-notifications'
-import { hasMigratedFromAsyncStorage, MmkvStorage } from '@/stores/mmkv'
+import {
+  GuardedAsyncStorage,
+  hasMigratedFromAsyncStorage,
+  MmkvStorage,
+} from '@/stores/mmkv'
 
 const initialState = {
   // Persisted key kept as `conversations` for backward compatibility with
@@ -84,7 +87,7 @@ export const useConversations = create(
     {
       name: 'conversations',
       storage: createJSONStorage(() =>
-        hasMigratedFromAsyncStorage() ? MmkvStorage : AsyncStorage
+        hasMigratedFromAsyncStorage() ? MmkvStorage : GuardedAsyncStorage
       ),
     }
   )

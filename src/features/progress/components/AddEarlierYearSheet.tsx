@@ -106,21 +106,31 @@ const AddEarlierYearSheet = ({
               </Text>
             </Pressable>
           </View>
-          <Picker
-            style={{ height: 216 }}
-            selectedValue={draftValue}
-            onValueChange={(next) => setDraftValue(Number(next))}
-            itemStyle={{ color: theme.colors.text }}
-          >
-            {availableEndYears.map((endYear) => (
-              <Picker.Item
-                key={endYear}
-                label={formatPickerLabel(endYear)}
-                value={endYear}
-                color={theme.colors.text}
-              />
-            ))}
-          </Picker>
+          {/* Only mount the native UIPickerView while the sheet is open.
+              During the dismiss animation the Modal stays mounted (see the
+              300ms unmount delay above), but the native UIPickerView tears
+              down its backing UITableView cells. A touch landing on the
+              picker in that window hit-tests freed cells and crashes with
+              EXC_BAD_ACCESS in -[UIPickerView hitTest:withEvent:]
+              (Sentry JW-TIME-BK). Unmounting on close removes it from the
+              hit-test hierarchy before teardown. */}
+          {open && (
+            <Picker
+              style={{ height: 216 }}
+              selectedValue={draftValue}
+              onValueChange={(next) => setDraftValue(Number(next))}
+              itemStyle={{ color: theme.colors.text }}
+            >
+              {availableEndYears.map((endYear) => (
+                <Picker.Item
+                  key={endYear}
+                  label={formatPickerLabel(endYear)}
+                  value={endYear}
+                  color={theme.colors.text}
+                />
+              ))}
+            </Picker>
+          )}
         </Sheet.Frame>
       </Sheet>
     </Modal>

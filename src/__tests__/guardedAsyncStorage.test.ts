@@ -35,7 +35,7 @@ vi.mock('@sentry/react-native', () => ({
   addBreadcrumb: (...args: unknown[]) => addBreadcrumb(...args),
 }))
 
-import { GuardedAsyncStorage } from '@/stores/mmkv'
+import { GuardedAsyncStorage, isTransientStorageReadError } from '@/stores/mmkv'
 
 describe('GuardedAsyncStorage', () => {
   beforeEach(() => {
@@ -62,7 +62,7 @@ describe('GuardedAsyncStorage', () => {
     expect(addBreadcrumb).toHaveBeenCalledTimes(1)
   })
 
-  it('passes reads and removes straight through', async () => {
+  it('passes successful reads and removes straight through', async () => {
     getItem.mockResolvedValueOnce('value')
     removeItem.mockResolvedValueOnce(undefined)
 
@@ -71,5 +71,43 @@ describe('GuardedAsyncStorage', () => {
 
     expect(getItem).toHaveBeenCalledWith('k')
     expect(removeItem).toHaveBeenCalledWith('k')
+    expect(addBreadcrumb).not.toHaveBeenCalled()
+  })
+
+  it('degrades transient read failures to a cache-miss (JW-TIME-C5)', async () => {
+    // iOS NSCocoaErrorDomain 257 (device locked) read rejection.
+    getItem.mockRejectedValueOnce(
+      new Error(
+        'Failed to read storage file.Error Domain=NSCocoaErrorDomain Code=257 "The file “manifest.json” couldn’t be opened because you don’t have permission to view it."'
+      )
+    )
+
+    await expect(GuardedAsyncStorage.getItem('k')).resolves.toBeNull()
+    expect(addBreadcrumb).toHaveBeenCalledTimes(1)
+  })
+
+  it('rethrows non-transient read errors', async () => {
+    getItem.mockRejectedValueOnce(new Error('boom'))
+    await expect(GuardedAsyncStorage.getItem('k')).rejects.toThrow('boom')
+  })
+})
+
+describe('isTransientStorageReadError', () => {
+  it('matches iOS file-protection / locked-device read failures', () => {
+    expect(
+      isTransientStorageReadError(new Error('Failed to read storage file'))
+    ).toBe(true)
+    expect(
+      isTransientStorageReadError(new Error('NSCocoaErrorDomain Code=513'))
+    ).toBe(true)
+    expect(
+      isTransientStorageReadError(new Error('Operation not permitted'))
+    ).toBe(true)
+  })
+
+  it('does not match unrelated errors', () => {
+    expect(isTransientStorageReadError(new Error('boom'))).toBe(false)
+    expect(isTransientStorageReadError(undefined)).toBe(false)
+    expect(isTransientStorageReadError(null)).toBe(false)
   })
 })

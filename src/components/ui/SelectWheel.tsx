@@ -170,21 +170,31 @@ const SelectWheel = <T,>({
                 </Text>
               </Pressable>
             </View>
-            <Picker
-              style={{ height: 216 }}
-              selectedValue={draftValue}
-              onValueChange={(next) => setDraftValue(String(next))}
-              itemStyle={{ color: theme.colors.text }}
-            >
-              {items.map((item) => (
-                <Picker.Item
-                  key={String(item.value)}
-                  label={item.label}
-                  value={String(item.value)}
-                  color={theme.colors.text}
-                />
-              ))}
-            </Picker>
+            {/* Only mount the native UIPickerView while the sheet is open.
+                During the dismiss animation the Modal stays mounted (see the
+                300ms unmount delay above), but the native UIPickerView tears
+                down its backing UITableView cells. A touch landing on the
+                picker in that window hit-tests freed cells and crashes with
+                EXC_BAD_ACCESS in -[UIPickerView hitTest:withEvent:]
+                (Sentry JW-TIME-BK). Unmounting on close removes it from the
+                hit-test hierarchy before teardown. */}
+            {open && (
+              <Picker
+                style={{ height: 216 }}
+                selectedValue={draftValue}
+                onValueChange={(next) => setDraftValue(String(next))}
+                itemStyle={{ color: theme.colors.text }}
+              >
+                {items.map((item) => (
+                  <Picker.Item
+                    key={String(item.value)}
+                    label={item.label}
+                    value={String(item.value)}
+                    color={theme.colors.text}
+                  />
+                ))}
+              </Picker>
+            )}
           </Sheet.Frame>
         </Sheet>
       </Modal>

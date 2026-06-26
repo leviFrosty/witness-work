@@ -1,6 +1,9 @@
 import { describe, it, expect } from 'vitest'
 import { mapNotesImport } from '@/features/notes-import/lib/mapNotesImport'
-import { LDC_BUILTIN_CATEGORY_ID } from '@/constants/categories'
+import {
+  LDC_BUILTIN_CATEGORY_ID,
+  STANDARD_CATEGORY_ID,
+} from '@/constants/categories'
 import type {
   NotesImportResult,
   NotesImportDtoContact,
@@ -19,6 +22,8 @@ const emptyResult = (): NotesImportResult => ({
   categories: [],
   publisher: null,
   warnings: [],
+  summary: '',
+  assistantMessage: '',
 })
 
 const map = (over: Partial<NotesImportResult>) =>
@@ -218,6 +223,14 @@ describe('mapNotesImport — time entries & categories', () => {
       timeEntries: [time({ ref: 't1', categoryId: 'existing-cat-1' })],
     })
     expect(r.timeEntries[0].categoryId).toBe('existing-cat-1')
+    expect(r.categories).toHaveLength(0)
+  })
+
+  it('drops the synthetic Standard sentinel — ordinary time has no category', () => {
+    const r = map({
+      timeEntries: [time({ ref: 't1', categoryId: STANDARD_CATEGORY_ID })],
+    })
+    expect(r.timeEntries[0].categoryId).toBeUndefined()
     expect(r.categories).toHaveLength(0)
   })
 

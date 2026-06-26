@@ -1,6 +1,10 @@
 import useContacts from '@/stores/contactsStore'
 import useCategories from '@/stores/categories'
 import { usePreferences } from '@/stores/preferences'
+import {
+  STANDARD_CATEGORY_ID,
+  STANDARD_CATEGORY_NAME,
+} from '@/constants/categories'
 import type {
   NotesImportContext,
   ExistingContactRef,
@@ -56,11 +60,21 @@ export const buildNotesImportContext = (
       return ref
     })
 
-  const existingCategories: ExistingCategoryRef[] = categories.map((c) => ({
-    id: c.id,
-    name: c.name,
-    isCredit: c.isCredit,
-  }))
+  // Lead with the synthetic "Standard" type so the model has a concrete id to
+  // attach ordinary field-service time to, instead of inventing a duplicate
+  // "Standard" category. `mapNotesImport` maps this id back to "no category".
+  const existingCategories: ExistingCategoryRef[] = [
+    {
+      id: STANDARD_CATEGORY_ID,
+      name: STANDARD_CATEGORY_NAME,
+      isCredit: false,
+    },
+    ...categories.map((c) => ({
+      id: c.id,
+      name: c.name,
+      isCredit: c.isCredit,
+    })),
+  ]
 
   return {
     now: localIsoWithOffset(now),

@@ -5,6 +5,7 @@ import type { Category } from '@/types/category'
 import type { MappedImport, MappedPublisher } from '@/lib/import/types'
 import {
   LDC_BUILTIN_CATEGORY_ID,
+  STANDARD_CATEGORY_ID,
   makeLdcBuiltinCategory,
 } from '@/constants/categories'
 import type {
@@ -260,9 +261,12 @@ export const mapNotesImport = (
     let categoryIsCredit = false
     const existingCategoryId = clean(t.categoryId)
     const newCategoryName = clean(t.categoryName)
-    if (existingCategoryId) {
+    // The synthetic "Standard" sentinel means ordinary field service — it has
+    // no real Category record, so leave `categoryId` unset rather than
+    // persisting a dangling id.
+    if (existingCategoryId && existingCategoryId !== STANDARD_CATEGORY_ID) {
       resolvedCategoryId = existingCategoryId
-    } else if (newCategoryName) {
+    } else if (!existingCategoryId && newCategoryName) {
       const credit = t.credit === true || isLdcLike(newCategoryName)
       resolvedCategoryId = resolveNewCategory(newCategoryName, credit)
       categoryIsCredit = credit

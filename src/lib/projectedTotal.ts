@@ -7,12 +7,11 @@ import {
 } from '@/lib/normalizeDate'
 import {
   applyMonthCreditCap,
-  getEffectiveMinutesForRecurringPlan,
-  getPlansIntersectingDay,
   type MonthlyLoggedBreakdown,
 } from '@/lib/serviceReport'
+import { resolveDayPlanWinner } from '@/lib/recurrence'
+import { periodBounds } from '@/lib/serviceYear'
 import { isPlanCreditTime } from '@/lib/serviceReportCategory'
-import moment from 'moment'
 
 export type ProjectedTotalScope =
   | { kind: 'month'; year: number; month: number }
@@ -125,20 +124,6 @@ export const projectStandardAddition = (
   )
 }
 
-const periodBounds = (
-  scope: ProjectedTotalScope
-): { start: moment.Moment; end: moment.Moment } => {
-  if (scope.kind === 'month') {
-    const m = moment.utc({ year: scope.year, month: scope.month, day: 1 })
-    return { start: m.clone().startOf('month'), end: m.clone().endOf('month') }
-  }
-  const start = moment.utc({ year: scope.serviceYear, month: 8, day: 1 })
-  const end = moment
-    .utc({ year: scope.serviceYear + 1, month: 7, day: 1 })
-    .endOf('month')
-  return { start, end }
-}
-
 const monthKey = (year: number, month: number) => `${year}-${month}`
 
 type PlannedMonthBuckets = { standard: number; credit: number }
@@ -190,38 +175,22 @@ const futurePlannedMinutesByMonth = (
     }
     const dayDate = localDayFromUtcCursor(cursor)
     const dp = dayPlanByKey.get(key)
-    let minutes = 0
-    let isCredit = false
-    if (dp) {
-      minutes = dp.minutes
-      isCredit = isPlanCreditTime(dp, categories)
-    } else {
-      const recurringForDay = getPlansIntersectingDay(dayDate, recurringPlans)
-      let winner: RecurringPlan | null = null
-      for (const plan of recurringForDay) {
-        const effective = getEffectiveMinutesForRecurringPlan(plan, dayDate)
-        if (effective < minutes) continue
-        const credit = recurringIsCredit.get(plan.id) ?? false
-        const beats =
-          effective > minutes ||
-          winner === null ||
-          (credit && !isCredit) ||
-          (credit === isCredit && plan.id < winner.id)
-        if (beats) {
-          minutes = effective
-          winner = plan
-          isCredit = credit
-        }
-      }
-    }
-    if (minutes > 0) {
+    // One winner per day, resolved by the shared recurrence primitive: a Day
+    // Plan takes the whole day; otherwise the highest effective-minutes
+    // recurring instance, ties broken credit-first then lowest id. Credit-ness
+    // tags the day's whole contribution.
+    const winner = resolveDayPlanWinner(dayDate, dp, recurringPlans, {
+      dayPlanIsCredit: dp ? isPlanCreditTime(dp, categories) : false,
+      recurringIsCredit: (plan) => recurringIsCredit.get(plan.id) ?? false,
+    })
+    if (winner && winner.minutes > 0) {
       const bucketKey = monthKey(cursor.year(), cursor.month())
       const bucket = plannedByMonth.get(bucketKey) ?? {
         standard: 0,
         credit: 0,
       }
-      if (isCredit) bucket.credit += minutes
-      else bucket.standard += minutes
+      if (winner.isCredit) bucket.credit += winner.minutes
+      else bucket.standard += winner.minutes
       plannedByMonth.set(bucketKey, bucket)
     }
     cursor.add(1, 'day')

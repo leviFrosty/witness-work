@@ -6,9 +6,11 @@ import {
   calculateProgress,
   getDaysLeftInCurrentMonth,
   getMonthsReports,
+} from '@/lib/serviceReport'
+import {
   plannedMinutesToCurrentDayForMonth,
   RecurringPlan,
-} from '@/lib/serviceReport'
+} from '@/lib/recurrence'
 import { formatMinutes } from '@/lib/minutes'
 import i18n, { TranslationKey } from '@/lib/locales'
 import { Publisher, PublisherHours } from '@/types/publisher'

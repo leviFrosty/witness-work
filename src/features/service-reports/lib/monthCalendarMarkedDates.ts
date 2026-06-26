@@ -5,10 +5,10 @@ import {
   getEffectiveNoteForRecurringPlan,
   getEffectiveStartTimeInMinutesForRecurringPlan,
   getPlansIntersectingDay,
-} from '@/lib/serviceReport'
+} from '@/lib/recurrence'
 import { momentStoredDate } from '@/lib/normalizeDate'
 import type { DayPlan, TimeEntry } from '@/types/timeEntry'
-import type { RecurringPlan } from '@/lib/serviceReport'
+import type { RecurringPlan } from '@/lib/recurrence'
 
 export type MonthCalendarMarkedDates = Record<
   string,

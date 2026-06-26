@@ -3,6 +3,7 @@ import type {
   ProjectedTotalScope,
   ProjectedTotalState,
 } from '@/lib/projectedTotal'
+import { periodBounds } from '@/lib/serviceYear'
 
 export type PeriodTense = 'past' | 'present' | 'future'
 
@@ -56,20 +57,6 @@ export const segmentBoldMarkup = (input: string): MarkupSegment[] => {
     segments.push({ text: input.slice(lastIndex), bold: false })
   }
   return segments
-}
-
-const periodBounds = (
-  scope: ProjectedTotalScope
-): { start: moment.Moment; end: moment.Moment } => {
-  if (scope.kind === 'month') {
-    const m = moment.utc({ year: scope.year, month: scope.month, day: 1 })
-    return { start: m.clone().startOf('month'), end: m.clone().endOf('month') }
-  }
-  const start = moment.utc({ year: scope.serviceYear, month: 8, day: 1 })
-  const end = moment
-    .utc({ year: scope.serviceYear + 1, month: 7, day: 1 })
-    .endOf('month')
-  return { start, end }
 }
 
 export const getPeriodTense = (

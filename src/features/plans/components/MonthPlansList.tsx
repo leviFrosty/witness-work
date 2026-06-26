@@ -11,7 +11,7 @@ import {
   RecurringPlan,
   getPlansIntersectingDay,
   getEffectiveStartTimeInMinutesForRecurringPlan,
-} from '@/lib/serviceReport'
+} from '@/lib/recurrence'
 import {
   DEFAULT_START_TIME_IN_MINUTES,
   getStartTimeInMinutes,

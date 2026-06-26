@@ -17,10 +17,8 @@ import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
 import { usePreferences } from '@/stores/preferences'
 import useServiceReport from '@/stores/serviceReport'
-import {
-  getServiceYearReports,
-  getTotalMinutesForServiceYear,
-} from '@/lib/serviceReport'
+import { getTotalMinutesForServiceYear } from '@/lib/serviceReport'
+import { getServiceYearReports } from '@/lib/serviceYear'
 import {
   DEFAULT_MILESTONES_BY_PUBLISHER,
   getMilestoneHitState,

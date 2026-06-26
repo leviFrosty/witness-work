@@ -2,8 +2,6 @@ import _ from 'lodash'
 import moment from 'moment'
 import {
   adjustedMinutesForSpecificMonth,
-  calculateMinutesRemaining,
-  calculateProgress,
   getDaysLeftInCurrentMonth,
   getMonthsReports,
 } from '@/lib/serviceReport'
@@ -11,6 +9,7 @@ import {
   plannedMinutesToCurrentDayForMonth,
   RecurringPlan,
 } from '@/lib/recurrence'
+import { goalProgress } from '@/lib/goalProgress'
 import { formatMinutes } from '@/lib/minutes'
 import i18n, { TranslationKey } from '@/lib/locales'
 import { Publisher, PublisherHours } from '@/types/publisher'
@@ -188,10 +187,11 @@ export function buildReport(args: BuildReportArgs): ReportFields {
   )
 
   const goalHours = args.publisherHours[args.publisher]
-  const progress = calculateProgress({
+  const goalMinutes = goalHours * 60
+  const progress = goalProgress({
     minutes: adjusted.value,
-    goalHours,
-  })
+    goalMinutes,
+  }).fraction
 
   const formatted = formatMinutes(adjusted.value, args.timeDisplayFormat)
   const monthHoursFormatted =
@@ -199,10 +199,10 @@ export function buildReport(args: BuildReportArgs): ReportFields {
       ? formatted.decimalHours.toString()
       : formatted.formatted
 
-  const minutesRemaining = calculateMinutesRemaining({
+  const minutesRemaining = goalProgress({
     minutes: adjusted.value,
-    goalHours,
-  })
+    goalMinutes,
+  }).remaining
   const daysLeftInMonth = getDaysLeftInCurrentMonth()
 
   // Mirrors HourEntryCard's hoursPerDayNeeded calc, but null when ≤ 0 so the

@@ -6,10 +6,10 @@ import useCategories from '@/stores/categories'
 import useTheme from '@/contexts/theme'
 import {
   adjustedMinutesForSpecificMonth,
-  calculateProgress,
   getMonthsReports,
   getTotalMinutesDetailedForSpecificMonth,
 } from '@/lib/serviceReport'
+import { goalProgress } from '@/lib/goalProgress'
 import Text from '@/components/ui/MyText'
 import i18n from '@/lib/locales'
 import Circle from '@/components/ui/Circle'
@@ -166,7 +166,11 @@ const MonthServiceReportProgressBar = ({
   )
 
   const rawProgress = useMemo(
-    () => calculateProgress({ minutes: adjustedMinutes.value, goalHours }),
+    () =>
+      goalProgress({
+        minutes: adjustedMinutes.value,
+        goalMinutes: goalHours * 60,
+      }).fraction,
     [adjustedMinutes, goalHours]
   )
 

@@ -24,7 +24,7 @@ import IconButton from '@/components/ui/IconButton'
 import { faArrowUp } from '@fortawesome/free-solid-svg-icons'
 import { usePreferences } from '@/stores/preferences'
 import { Theme } from '@/types/theme'
-import { useCompactFormattedMinutes } from '@/lib/minutes'
+import { formatMinutesCompact } from '@/lib/minutes'
 import type { CalendarViewMode } from '@/components/CalendarHeader'
 
 const boxSize = 40
@@ -83,7 +83,7 @@ const NonPlannedDay = (
       (acc, report) => acc + report.minutes + report.hours * 60,
       0
     ) || 0
-  const actualDurationText = useCompactFormattedMinutes(minutesForDay)
+  const actualDurationText = formatMinutesCompact(minutesForDay)
 
   if (!props.date) return null
   const disabled = props.state === 'disabled'
@@ -196,8 +196,8 @@ const PlannedDay = (
 
   const plannedMinutes =
     props.dayPlan?.minutes || highestRecurringPlanEffectiveMinutes || 0
-  const plannedDurationText = useCompactFormattedMinutes(plannedMinutes)
-  const actualDurationText = useCompactFormattedMinutes(minutesForDay)
+  const plannedDurationText = formatMinutesCompact(plannedMinutes)
+  const actualDurationText = formatMinutesCompact(minutesForDay)
   const showActual = props.viewMode === 'actual'
 
   const wentInService = !!props.serviceReports?.length

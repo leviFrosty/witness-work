@@ -14,7 +14,7 @@ import {
   getMonthsReports,
 } from '@/lib/serviceReport'
 import { getStudiesForGivenMonth } from '@/lib/contacts'
-import { formatHoursCompact, formatMinutesCompact } from '@/lib/minutes'
+import { formatMinutesCompact } from '@/lib/minutes'
 
 export type MonthReportData = {
   /** Whether the publisher has any reports logged for this month. */
@@ -134,7 +134,7 @@ const useMonthReportData = (
     const lines = [
       i18n.t('creditBreakdown'),
       ...creditLines,
-      `${i18n.t('creditApplied')}: ${formatHoursCompact(credit)}`,
+      `${i18n.t('creditApplied')}: ${formatMinutesCompact(credit, { unit: 'hours' })}`,
     ]
 
     if (adjusted.creditOverage > 0) {

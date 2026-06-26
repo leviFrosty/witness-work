@@ -5,8 +5,13 @@ import { HomeScreen } from '@/features/home/screens/HomeScreen'
 import IconButton from '@/components/ui/IconButton'
 import { faHeart as faHeartRegular } from '@fortawesome/free-regular-svg-icons'
 import { Platform, View } from 'react-native'
+import { useEffect } from 'react'
 import useTheme from '@/contexts/theme'
-import { faArrowsRotate, faHeart } from '@fortawesome/free-solid-svg-icons'
+import {
+  faArrowsRotate,
+  faBars,
+  faHeart,
+} from '@fortawesome/free-solid-svg-icons'
 import { DevSettings } from 'react-native'
 import { triggerDevRemount } from '@/lib/devRemount'
 import useCustomer from '@/hooks/useCustomer'
@@ -14,6 +19,10 @@ import useIsSupporter from '@/hooks/useIsSupporter'
 import { usePreferences } from '@/stores/preferences'
 import SyncPopover from '@/app/sync/components/SyncPopover'
 import MilestoneRevealRecoveryIcon from '@/features/milestones/components/MilestoneRevealRecoveryIcon'
+import { useNotesImportManager } from '@/features/notes-import/hooks/useNotesImportManager'
+import { unviewedReadyImportCount } from '@/features/notes-import/lib/notesImportLedger'
+import NotesImportReadyDot from '@/features/notes-import/components/NotesImportReadyDot'
+import i18n from '@/lib/locales'
 
 const DrawerNavigator = () => {
   const Drawer = createDrawerNavigator()
@@ -21,8 +30,17 @@ const DrawerNavigator = () => {
   const { isSupporter } = useIsSupporter()
   const { hideDonateHeart, set } = usePreferences()
   const theme = useTheme()
+  const notesImportReadyCount = useNotesImportManager((s) =>
+    unviewedReadyImportCount(s.entries)
+  )
+  const focusNotesImports = useNotesImportManager((s) => s.focus)
 
   const showSyncPopover = isSupporter && Platform.OS === 'ios'
+
+  // Populate settings-level status immediately and resume persisted work.
+  useEffect(() => {
+    focusNotesImports()
+  }, [focusNotesImports])
 
   // Dev-only reset for the milestone-reveal flow. Long-press the date in the
   // header to clear both flags so the grand reveal fires fresh on next mount.
@@ -44,7 +62,25 @@ const DrawerNavigator = () => {
       screenOptions={{
         header: ({ navigation }) => (
           <Header
-            onPressLeftIcon={() => navigation.toggleDrawer()}
+            leftElement={
+              <View style={{ position: 'relative' }}>
+                <IconButton
+                  icon={faBars}
+                  size='xl'
+                  hitSlop={24}
+                  accessibilityLabel={
+                    notesImportReadyCount > 0
+                      ? `${i18n.t('settings')}. ${i18n.t('notesImport_readyCount', { count: notesImportReadyCount })}.`
+                      : i18n.t('settings')
+                  }
+                  onPress={() => navigation.toggleDrawer()}
+                />
+                <NotesImportReadyDot
+                  visible={notesImportReadyCount > 0}
+                  style={{ position: 'absolute', top: -2, right: -3 }}
+                />
+              </View>
+            }
             onLongPressTitle={onLongPressTitle}
             rightElement={
               <View

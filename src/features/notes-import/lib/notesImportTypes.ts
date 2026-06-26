@@ -140,4 +140,17 @@ export interface NotesImportResult {
   categories: NotesImportDtoCategory[]
   publisher: NotesImportDtoPublisher | null
   warnings: NotesImportWarning[]
+  /**
+   * A ≤5-word model-generated label for the batch. Becomes the import's history
+   * row title once Ready. May be an empty string on the rare reasoning-channel
+   * recovery path, so callers fall back to the provisional title / counts.
+   */
+  summary: string
+  /**
+   * A single, friendly chat message from WWork AI to the user — whole-import
+   * assumptions worth verifying plus any clarifying questions about what's
+   * missing or ambiguous. Rendered as a chat bubble beneath the import preview
+   * (NOT a per-record warning). Empty string when there's nothing to say.
+   */
+  assistantMessage: string
 }

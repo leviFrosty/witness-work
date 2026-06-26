@@ -3,9 +3,24 @@ import type {
   MappedWarning,
 } from '@/features/notes-import/lib/mapNotesImport'
 import type { MappedImport } from '@/lib/import/types'
+import type { Contact } from '@/types/contact'
 import type { NotesImportSeverity } from '@/features/notes-import/lib/notesImportTypes'
 
 export type PreviewKind = 'contact' | 'visit' | 'timeEntry'
+
+/** Imported contact fields, surfaced in the contact details modal. */
+export interface PreviewContactInfo {
+  phone?: string
+  email?: string
+  gender?: string
+  /** A single human-readable address line, pre-joined for display. */
+  addressLine?: string
+}
+
+export interface PreviewFollowUp {
+  date: Date
+  topic?: string
+}
 
 export interface PreviewRow {
   kind: PreviewKind
@@ -17,10 +32,19 @@ export interface PreviewRow {
   minutes?: number
   isBibleStudy?: boolean
   notAtHome?: boolean
+  /** Follow-up attached to a visit, shown in full during import review. */
+  followUp?: PreviewFollowUp
   /** Warnings whose target is this row. */
   warnings: MappedWarning[]
   /** Highest severity among this row's warnings, if any. */
   severity?: NotesImportSeverity
+  /**
+   * For visit rows: the final store id of the contact this visit belongs to.
+   * Lets the preview nest visits under their contact instead of a flat list.
+   */
+  contactId?: string
+  /** For contact rows: imported fields, for the details modal. */
+  info?: PreviewContactInfo
 }
 
 export interface NotesImportPreview {
@@ -42,13 +66,73 @@ export interface PreviewSelection {
   publisher: boolean
 }
 
+/** True when a parsed preview has nothing importable — no records, no publisher. */
+export const isEmptyPreview = (preview: NotesImportPreview): boolean =>
+  preview.counts.contacts === 0 &&
+  preview.counts.visits === 0 &&
+  preview.counts.timeEntries === 0 &&
+  !preview.hasPublisher
+
+/**
+ * Pure transitions over {@link PreviewSelection}. Each returns a NEW selection
+ * with a NEW `ids` Set — never mutating the input — so they're trivially
+ * unit-testable and safe inside a React `setState` updater. The selection hook
+ * (`useNotesImportSelection`) is a thin wrapper over these.
+ */
+
+/** Toggles a single row id; leaves the publisher flag untouched. */
+export const toggleRowSelection = (
+  selection: PreviewSelection,
+  id: string
+): PreviewSelection => {
+  const ids = new Set(selection.ids)
+  if (ids.has(id)) ids.delete(id)
+  else ids.add(id)
+  return { ...selection, ids }
+}
+
+/** Flips only the publisher flag. */
+export const togglePublisherSelection = (
+  selection: PreviewSelection
+): PreviewSelection => ({ ...selection, publisher: !selection.publisher })
+
+/** Adds (`value` true) or removes (`value` false) a batch of row ids. */
+export const setRowsSelection = (
+  selection: PreviewSelection,
+  ids: string[],
+  value: boolean
+): PreviewSelection => {
+  const next = new Set(selection.ids)
+  for (const id of ids) {
+    if (value) next.add(id)
+    else next.delete(id)
+  }
+  return { ...selection, ids: next }
+}
+
+/**
+ * Adds or removes every row in `rows` (the already-resolved rows for a group —
+ * the caller maps a {@link PreviewKind} to its rows and passes them in, keeping
+ * this free of the preview shape).
+ */
+export const setGroupSelection = (
+  selection: PreviewSelection,
+  rows: { id: string }[],
+  value: boolean
+): PreviewSelection =>
+  setRowsSelection(
+    selection,
+    rows.map((r) => r.id),
+    value
+  )
+
 const SEVERITY_RANK: Record<NotesImportSeverity, number> = {
   info: 0,
   warning: 1,
   error: 2,
 }
 
-const highestSeverity = (
+export const highestSeverity = (
   warnings: MappedWarning[]
 ): NotesImportSeverity | undefined => {
   let top: NotesImportSeverity | undefined
@@ -56,6 +140,40 @@ const highestSeverity = (
     if (!top || SEVERITY_RANK[w.severity] > SEVERITY_RANK[top]) top = w.severity
   }
   return top
+}
+
+/** Picks the higher of two severities (used to roll visits up into a contact). */
+export const maxSeverity = (
+  a: NotesImportSeverity | undefined,
+  b: NotesImportSeverity | undefined
+): NotesImportSeverity | undefined => {
+  if (a == null) return b
+  if (b == null) return a
+  return SEVERITY_RANK[a] >= SEVERITY_RANK[b] ? a : b
+}
+
+/** Flattens a contact's imported fields into the display-only info object. */
+const buildContactInfo = (c: Contact): PreviewContactInfo | undefined => {
+  const addressLine = c.address
+    ? [
+        c.address.line1,
+        c.address.line2,
+        c.address.city,
+        c.address.state,
+        c.address.zip,
+        c.address.country,
+      ]
+        .map((p) => p?.trim())
+        .filter((p): p is string => !!p)
+        .join(', ') || undefined
+    : undefined
+  const gender = c.gender && c.gender !== 'unknown' ? c.gender : undefined
+  const info: PreviewContactInfo = {}
+  if (c.phone) info.phone = c.phone
+  if (c.email) info.email = c.email
+  if (gender) info.gender = gender
+  if (addressLine) info.addressLine = addressLine
+  return Object.keys(info).length ? info : undefined
 }
 
 /**
@@ -89,6 +207,7 @@ export const buildNotesImportPreview = (
       title: c.name,
       warnings,
       severity: highestSeverity(warnings),
+      info: buildContactInfo(c),
     }
   })
 
@@ -101,8 +220,12 @@ export const buildNotesImportPreview = (
       date: v.date,
       isBibleStudy: v.isBibleStudy,
       notAtHome: v.notAtHome,
+      followUp: v.followUp
+        ? { date: v.followUp.date, topic: v.followUp.topic }
+        : undefined,
       warnings,
       severity: highestSeverity(warnings),
+      contactId: v.contact.id,
     }
   })
 

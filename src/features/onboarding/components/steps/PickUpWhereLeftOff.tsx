@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { View } from 'react-native'
+import { useNavigation } from '@react-navigation/native'
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
 import { IconProp } from '@fortawesome/fontawesome-svg-core'
@@ -19,6 +20,9 @@ import i18n, { TranslationKey } from '@/lib/locales'
 import MytimeImport from '@/features/onboarding/components/steps/MytimeImport'
 import ICloudRestore from '@/features/onboarding/components/steps/iCloudRestore'
 import NotesImportWizard from '@/features/notes-import/components/NotesImportWizard'
+import { useNotesImportAvailability } from '@/features/notes-import/hooks/useNotesImportAvailability'
+import NotesImportSupporterCta from '@/app/components/NotesImportSupporterCta'
+import type { RootStackNavigation } from '@/types/rootStack'
 import * as ICloudBridge from '../../../../../modules/icloud-bridge'
 
 interface StepProps {
@@ -100,9 +104,11 @@ const OptionCard = ({
  */
 const PickUpWhereLeftOff = ({ goBack, goNext }: StepProps) => {
   const theme = useTheme()
+  const navigation = useNavigation<RootStackNavigation>()
   const [mode, setMode] = useState<Mode>('choose')
   const toChooser = () => setMode('choose')
   const icloudAvailable = ICloudBridge.isAvailable()
+  const notesImport = useNotesImportAvailability()
 
   if (mode === 'mytime') {
     return <MytimeImport goBack={toChooser} goNext={goNext} />
@@ -122,7 +128,14 @@ const PickUpWhereLeftOff = ({ goBack, goNext }: StepProps) => {
       >
         <OnboardingNav goBack={toChooser} />
         <View style={{ flex: 1, paddingTop: 20 }}>
-          <NotesImportWizard publisherMode='overwrite' onComplete={goNext} />
+          <NotesImportWizard
+            publisherMode='overwrite'
+            onComplete={goNext}
+            onRequestUpgrade={() => navigation.navigate('Paywall')}
+            renderSupporterCta={({ onPress }) => (
+              <NotesImportSupporterCta onPress={onPress} />
+            )}
+          />
         </View>
       </Wrapper>
     )
@@ -167,6 +180,8 @@ const PickUpWhereLeftOff = ({ goBack, goNext }: StepProps) => {
             color={theme.colors.cyan}
             titleKey='onboardingPickUp_notes'
             descKey='onboardingPickUp_notesDesc'
+            disabled={!notesImport.available}
+            disabledNoteKey='notesImport_unavailable'
             onPress={() => setMode('notes')}
           />
           <OptionCard

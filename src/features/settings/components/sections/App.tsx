@@ -15,9 +15,17 @@ import SectionTitle from '@/features/settings/components/shared/SectionTitle'
 import { SettingsSectionProps } from '@/features/settings/screens/settingScreen'
 import { useNavigation } from '@react-navigation/native'
 import { RootStackNavigation } from '@/types/rootStack'
+import { useNotesImportAvailability } from '@/features/notes-import/hooks/useNotesImportAvailability'
+import { useNotesImportManager } from '@/features/notes-import/hooks/useNotesImportManager'
+import { unviewedReadyImportCount } from '@/features/notes-import/lib/notesImportLedger'
+import NotesImportReadyDot from '@/features/notes-import/components/NotesImportReadyDot'
 
 const AppSection = ({ handleNavigate }: SettingsSectionProps) => {
   const navigation = useNavigation<RootStackNavigation>()
+  const notesImport = useNotesImportAvailability()
+  const notesImportReadyCount = useNotesImportManager((s) =>
+    unviewedReadyImportCount(s.entries)
+  )
   return (
     <View style={{ gap: 3 }}>
       <SectionTitle text={i18n.t('app')} />
@@ -38,10 +46,19 @@ const AppSection = ({ handleNavigate }: SettingsSectionProps) => {
         </InputRowButton>
         <InputRowButton
           leftIcon={faFileLines}
-          label={i18n.t('notesImport')}
-          onPress={() => handleNavigate('NotesImport')}
+          label={i18n.t('notesImport_settingsLabel')}
+          disabled={!notesImport.available}
+          sublabel={
+            notesImport.available
+              ? undefined
+              : i18n.t('notesImport_unavailable')
+          }
+          onPress={() => handleNavigate('NotesImportComposer')}
         >
-          <IconButton icon={faChevronRight} />
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+            <NotesImportReadyDot visible={notesImportReadyCount > 0} />
+            <IconButton icon={faChevronRight} />
+          </View>
         </InputRowButton>
         {Platform.OS === 'ios' && (
           <InputRowButton

@@ -22,33 +22,6 @@ export type {
   RecurringPlanOverride,
 } from '@/types/timeEntry'
 
-export const calculateProgress = ({
-  minutes,
-  goalHours,
-}: {
-  minutes: number
-  goalHours: number
-}) => {
-  const percentage = minutes / (goalHours * 60)
-  return percentage < 0 ? 0 : percentage <= 1 ? percentage : 1
-}
-
-export const calculateMinutesRemaining = ({
-  minutes,
-  goalHours,
-}: {
-  minutes: number
-  goalHours: number
-}) => {
-  const goalMinutes = goalHours * 60
-  const minutesRemaining = goalMinutes - minutes
-  return minutesRemaining < 0
-    ? 0
-    : minutesRemaining > goalMinutes
-      ? goalMinutes
-      : minutesRemaining
-}
-
 export const getTotalMinutesDetailedForSpecificMonth = (
   monthsReports: TimeEntry[],
   month: number,

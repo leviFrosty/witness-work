@@ -1,19 +1,12 @@
 import { ReactNode } from 'react'
 import { View } from 'react-native'
 import Animated from 'react-native-reanimated'
-import {
-  faCheck,
-  faStar,
-  faTrophy,
-  faCrown,
-  IconDefinition,
-} from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
 import Text from '@/components/ui/MyText'
 import i18n from '@/lib/locales'
 import useTheme from '@/contexts/theme'
-import { AchievementTier } from '@/lib/achievementTier'
-import { Theme } from '@/types/theme'
+import { AchievementTier, tierColor, tierIcon } from '@/lib/achievementTier'
+import { goalProgress } from '@/lib/goalProgress'
 import { useFormattedMinutes } from '@/lib/minutes'
 import { usePreferences } from '@/stores/preferences'
 
@@ -49,19 +42,6 @@ type GoalProgressStatsProps = {
   headerRightSlot?: ReactNode
 }
 
-const tierIcon = (tier: AchievementTier): IconDefinition => {
-  switch (tier) {
-    case 'reached':
-      return faCheck
-    case 'exceeded':
-      return faStar
-    case 'crushed':
-      return faTrophy
-    case 'record':
-      return faCrown
-  }
-}
-
 const tierCopyKey = (tier: AchievementTier) => {
   switch (tier) {
     case 'reached':
@@ -73,13 +53,6 @@ const tierCopyKey = (tier: AchievementTier) => {
     case 'record':
       return 'goalRecord' as const
   }
-}
-
-const tierColor = (tier: AchievementTier, theme: Theme) => {
-  // Gold (`supporter`) is reserved for an actual 12-month personal best.
-  // `crushed` is just 150%+ of goal — celebratory, but not record-tier — so it
-  // shares the regular accent palette with `reached` / `exceeded`.
-  return tier === 'record' ? theme.colors.supporter : theme.colors.accent
 }
 
 const GoalProgressStats = ({
@@ -97,8 +70,10 @@ const GoalProgressStats = ({
   const { timeDisplayFormat } = usePreferences()
   const completedMinutes = Math.round(hoursCompleted * 60)
   const goalMinutes = Math.round(goalHours * 60)
-  const remainingMinutes = Math.max(0, goalMinutes - completedMinutes)
-  const beyondMinutes = Math.max(0, completedMinutes - goalMinutes)
+  const { remaining: remainingMinutes, over: beyondMinutes } = goalProgress({
+    minutes: completedMinutes,
+    goalMinutes,
+  })
   const completedDisplay = useFormattedMinutes(completedMinutes)
   const goalDisplay = useFormattedMinutes(goalMinutes)
   const remainingDisplay = useFormattedMinutes(remainingMinutes)

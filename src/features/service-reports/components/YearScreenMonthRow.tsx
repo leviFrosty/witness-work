@@ -17,36 +17,11 @@ import {
   AchievementTier,
   isPersonalBest12mo,
   resolveTier,
+  tierColor,
+  tierIcon,
 } from '@/lib/achievementTier'
-import {
-  faCheck,
-  faCrown,
-  faStar,
-  faTrophy,
-  IconDefinition,
-} from '@fortawesome/free-solid-svg-icons'
+import { goalProgress } from '@/lib/goalProgress'
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
-import { Theme } from '@/types/theme'
-
-const tierIcon = (tier: AchievementTier): IconDefinition => {
-  switch (tier) {
-    case 'reached':
-      return faCheck
-    case 'exceeded':
-      return faStar
-    case 'crushed':
-      return faTrophy
-    case 'record':
-      return faCrown
-  }
-}
-
-const tierColor = (tier: AchievementTier, theme: Theme) =>
-  // Gold (`supporter`) is reserved for the `record` personal-best tier; every
-  // other goal-met tier (including `crushed` at 150%+) shares the regular
-  // accent palette. Mirrors GoalProgressStats so the two surfaces tell the
-  // same color story.
-  tier === 'record' ? theme.colors.supporter : theme.colors.accent
 
 export default function YearScreenMonthRow(props: {
   month: number
@@ -81,7 +56,10 @@ export default function YearScreenMonthRow(props: {
     if (goalHours <= 0) return null
     const hoursCompleted = adjustedMinutes.value / 60
     if (hoursCompleted < goalHours) return null
-    const percent = (hoursCompleted / goalHours) * 100
+    const { percent } = goalProgress({
+      minutes: adjustedMinutes.value,
+      goalMinutes: goalHours * 60,
+    })
     const isBest = isPersonalBest12mo(
       serviceReports,
       month,

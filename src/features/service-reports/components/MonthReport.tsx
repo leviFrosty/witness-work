@@ -42,6 +42,7 @@ import {
   monthCelebrationKey,
   resolveTier,
 } from '@/lib/achievementTier'
+import { goalProgress } from '@/lib/goalProgress'
 import { useRollover } from '@/features/service-reports/hooks/useRollover'
 import { faRightLeft } from '@fortawesome/free-solid-svg-icons'
 import {
@@ -253,7 +254,13 @@ const MonthReport = ({
   ]
   const hasCategorySegments = categorySegments.some((s) => s.minutes > 0)
 
-  const percentOfGoal = goalHours > 0 ? (hoursCompleted / goalHours) * 100 : 0
+  const percentOfGoal =
+    goalHours > 0
+      ? goalProgress({
+          minutes: adjustedMinutes.value,
+          goalMinutes: goalHours * 60,
+        }).percent
+      : 0
   const isPersonalBest = useMemo(() => {
     if (!hasMetGoal || !isCurrentMonth) return false
     return isPersonalBest12mo(

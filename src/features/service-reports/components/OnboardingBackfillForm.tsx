@@ -17,7 +17,7 @@ import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
 import { usePreferences } from '@/stores/preferences'
 import useServiceReport from '@/stores/serviceReport'
-import { getServiceYearFromDate } from '@/lib/serviceReport'
+import { getServiceYearFromDate } from '@/lib/serviceYear'
 import { TimeEntriesByYear } from '@/types/timeEntry'
 import { LDC_BUILTIN_CATEGORY_ID } from '@/constants/categories'
 

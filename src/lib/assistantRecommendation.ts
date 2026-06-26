@@ -7,7 +7,7 @@ import {
   momentStoredDate,
   normalizeDateForStorage,
 } from '@/lib/normalizeDate'
-import { getPlansIntersectingDay } from '@/lib/serviceReport'
+import { getPlansIntersectingDay } from '@/lib/recurrence'
 
 export type {
   AssistantAction,

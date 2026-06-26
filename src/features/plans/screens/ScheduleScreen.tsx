@@ -12,13 +12,13 @@ import { faArrowLeft, faArrowRight } from '@fortawesome/free-solid-svg-icons'
 
 import useServiceReport from '@/stores/serviceReport'
 import useTheme from '@/contexts/theme'
+import { getMonthsReports } from '@/lib/serviceReport'
 import {
-  getMonthsReports,
   getPlansIntersectingDay,
   getEffectiveStartTimeInMinutesForRecurringPlan,
-  getServiceYearFromDate,
   RecurringPlan,
-} from '@/lib/serviceReport'
+} from '@/lib/recurrence'
+import { getServiceYearFromDate } from '@/lib/serviceYear'
 import { getPeriodTense } from '@/lib/projectedTotalCopy'
 import usePublisher from '@/hooks/usePublisher'
 import useProjectedTotal from '@/hooks/useProjectedTotal'

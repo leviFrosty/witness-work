@@ -14,8 +14,8 @@ import {
   getMinutesForServiceYearEndYear,
   getServiceYearEndYearsSpan,
   getAvailableEarlierEndYears,
-  getServiceYearFromDate,
 } from '@/lib/serviceReport'
+import { getServiceYearFromDate } from '@/lib/serviceYear'
 import { TimeEntry } from '@/types/timeEntry'
 import i18n from '@/lib/locales'
 import { formatMinutes } from '@/lib/minutes'

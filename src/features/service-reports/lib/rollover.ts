@@ -5,8 +5,8 @@ import { normalizeDateForStorage } from '@/lib/normalizeDate'
 import {
   adjustedMinutesForSpecificMonth,
   getMonthsReports,
-  getServiceYearFromDate,
 } from '@/lib/serviceReport'
+import { getServiceYearFromDate } from '@/lib/serviceYear'
 
 export type PendingRollover = {
   sourceYear: number

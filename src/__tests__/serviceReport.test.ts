@@ -5,20 +5,17 @@ import {
   RecurringPlanOverride,
   calculateMinutesRemaining,
   calculateProgress,
-  getPlansIntersectingDay,
-  getTimeAsMinutesForHourglass,
   getTotalMinutesForServiceYear,
-  serviceReportHoursPerMonthToGoal,
   adjustedMinutesForSpecificMonth,
+} from '@/lib/serviceReport'
+import {
+  getPlansIntersectingDay,
   plannedMinutesToCurrentDayForMonth,
   getEffectiveMinutesForRecurringPlan,
   getEffectiveNoteForRecurringPlan,
-  generatePlanHash,
   calculateMonthlyPlannedMinutesOptimized,
-  calculateAnnualPlannedMinutesOptimized,
-} from '@/lib/serviceReport'
+} from '@/lib/recurrence'
 import { LegacyTimeEntry, TimeEntriesByYear } from '@/types/timeEntry'
-import { Publisher } from '@/types/publisher'
 import { monthCreditMaxMinutes } from '@/constants/serviceReports'
 import { describe, expect, it, beforeEach, afterEach, vi } from 'vitest'
 
@@ -521,202 +518,6 @@ describe('lib/serviceReport', () => {
       expect(adjustedMinutes.creditOverage).toBe(0) // No overage for special pioneers
       expect(adjustedMinutes.standard).toBe(80 * 60)
       expect(adjustedMinutes.credit).toBe(50 * 60)
-    })
-  })
-
-  describe('getTimeAsMinutesForHourglass', () => {
-    it('should return 1 if you are a publisher and went out for the month', () => {
-      const publisher: Publisher = 'publisher'
-
-      const minutes = getTimeAsMinutesForHourglass(publisher, true, 0)
-
-      expect(minutes).toBe(1)
-    })
-
-    it('should return 0 if you are a publisher and did not go out for the month', () => {
-      const publisher: Publisher = 'publisher'
-
-      const minutes = getTimeAsMinutesForHourglass(publisher, false, 0)
-
-      expect(minutes).toBe(0)
-    })
-
-    it('should return your minutes if you are a non-publisher', () => {
-      const publisher: Publisher = 'regularPioneer'
-
-      const minutes = getTimeAsMinutesForHourglass(publisher, true, 600)
-
-      expect(minutes).toBe(600)
-    })
-  })
-
-  describe('serviceYearMinutesPerMonthToGoal', () => {
-    it("should be the publisher's goal minutes if 0 entries for year", () => {
-      const serviceReports: TimeEntriesByYear = {}
-
-      const goalHours = 50
-
-      const hoursPerMonthToGoal = serviceReportHoursPerMonthToGoal({
-        serviceReports,
-        currentDate: {
-          month: 8,
-          year: 2022,
-        },
-        goalHours,
-        serviceYear: 2022,
-      })
-
-      expect(hoursPerMonthToGoal).toBe(goalHours)
-    })
-
-    it('the hours/mo should increase if the user has less than the goal hours for the first month', () => {
-      const serviceReports: TimeEntriesByYear = {
-        2022: {
-          8: [
-            {
-              date: moment().month(8).year(2022).toDate(),
-              hours: 25,
-              id: '1',
-              minutes: 0,
-            },
-          ],
-        },
-      }
-
-      const goalHours = 50
-
-      const hoursPerMonthToGoal = serviceReportHoursPerMonthToGoal({
-        serviceReports,
-        currentDate: {
-          month: 8,
-          year: 2022,
-        },
-        goalHours,
-        serviceYear: 2022,
-      })
-
-      expect(hoursPerMonthToGoal).toBeGreaterThan(goalHours)
-    })
-
-    it("the hours/mo should stay at goal hour if they hit exactly the goal last month and they're on the second month", () => {
-      const serviceReports: TimeEntriesByYear = {
-        2022: {
-          8: [
-            {
-              date: moment().month(8).year(2022).toDate(),
-              hours: 50,
-              id: '1',
-              minutes: 0,
-            },
-          ],
-        },
-      }
-      const goalHours = 50
-
-      const hoursPerMonthToGoal = serviceReportHoursPerMonthToGoal({
-        serviceReports,
-        currentDate: {
-          month: 9,
-          year: 2022,
-        },
-        goalHours,
-        serviceYear: 2022,
-      })
-
-      expect(hoursPerMonthToGoal).toBe(goalHours)
-    })
-
-    it("should return exactly the annual goal hours if you're on the last month and haven't got out the entire service year", () => {
-      const serviceReports: TimeEntriesByYear = {}
-
-      const goalHours = 50
-      const annualGoalHours = goalHours * 12
-
-      const hoursPerMonthToGoal = serviceReportHoursPerMonthToGoal({
-        serviceReports,
-        currentDate: {
-          month: 7,
-          year: 2023,
-        },
-        goalHours,
-        serviceYear: 2022,
-      })
-
-      expect(hoursPerMonthToGoal).toBe(annualGoalHours)
-    })
-
-    it("should return only the hours remaining if you're on the last month", () => {
-      const hours = 500
-      const serviceReports: TimeEntriesByYear = {
-        2022: {
-          8: [
-            {
-              date: moment().month(8).year(2022).toDate(),
-              hours,
-              id: '1',
-              minutes: 0,
-            },
-          ],
-        },
-      }
-
-      const goalHours = 50
-      const annualGoalHours = goalHours * 12
-
-      const hoursPerMonthToGoal = serviceReportHoursPerMonthToGoal({
-        serviceReports,
-        currentDate: {
-          month: 7,
-          year: 2023,
-        },
-        goalHours,
-        serviceYear: 2022,
-      })
-
-      expect(hoursPerMonthToGoal).toBe(annualGoalHours - hours)
-    })
-
-    it("should return only the hours remaining if you're on the last month and made a report on the last month", () => {
-      const report1Hours = 500
-      const report2Hours = 20
-      const serviceReports: TimeEntriesByYear = {
-        2022: {
-          8: [
-            {
-              date: moment().month(8).year(2022).toDate(),
-              hours: report1Hours,
-              id: '1',
-              minutes: 0,
-            },
-          ],
-        },
-        2023: {
-          7: [
-            {
-              date: moment().month(7).year(2023).toDate(),
-              hours: report2Hours,
-              id: '2',
-              minutes: 0,
-            },
-          ],
-        },
-      }
-      const goalHours = 50
-      const annualGoalHours = goalHours * 12
-
-      const hoursPerMonthToGoal = serviceReportHoursPerMonthToGoal({
-        serviceReports,
-        currentDate: {
-          month: 7,
-          year: 2023,
-        },
-        goalHours,
-        serviceYear: 2022,
-      })
-
-      expect(hoursPerMonthToGoal).toBe(
-        annualGoalHours - report1Hours - report2Hours
-      )
     })
   })
 
@@ -1504,46 +1305,6 @@ describe('lib/serviceReport', () => {
     })
   })
 
-  describe('generatePlanHash', () => {
-    it('should generate consistent hash for same plans', () => {
-      const dayPlans = [
-        { id: '1', date: new Date(), minutes: 60 },
-        { id: '2', date: new Date(), minutes: 120 },
-      ]
-      const recurringPlans: RecurringPlan[] = [
-        {
-          id: 'r1',
-          startDate: new Date(),
-          minutes: 60,
-          recurrence: {
-            frequency: RecurringPlanFrequencies.WEEKLY,
-            interval: 1,
-            endDate: null,
-          },
-        },
-      ]
-
-      const hash1 = generatePlanHash(dayPlans, recurringPlans)
-      const hash2 = generatePlanHash(dayPlans, recurringPlans)
-
-      expect(hash1).toBe(hash2)
-    })
-
-    it('should generate different hash when plans change', () => {
-      const dayPlans1 = [{ id: '1', date: new Date(), minutes: 60 }]
-      const dayPlans2 = [
-        { id: '1', date: new Date(), minutes: 60 },
-        { id: '2', date: new Date(), minutes: 120 },
-      ]
-      const recurringPlans: RecurringPlan[] = []
-
-      const hash1 = generatePlanHash(dayPlans1, recurringPlans)
-      const hash2 = generatePlanHash(dayPlans2, recurringPlans)
-
-      expect(hash1).not.toBe(hash2)
-    })
-  })
-
   describe('calculateMonthlyPlannedMinutesOptimized', () => {
     it('should calculate same result as original function', () => {
       const dayPlans = [
@@ -1584,43 +1345,6 @@ describe('lib/serviceReport', () => {
 
     it('should handle empty plans', () => {
       const result = calculateMonthlyPlannedMinutesOptimized(0, 2024, [], [])
-      expect(result).toBe(0)
-    })
-  })
-
-  describe('calculateAnnualPlannedMinutesOptimized', () => {
-    it('should calculate annual minutes correctly', () => {
-      const dayPlans = [
-        {
-          id: '1',
-          date: moment('2024-09-15').toDate(),
-          minutes: 120,
-        },
-      ]
-      const recurringPlans: RecurringPlan[] = [
-        {
-          id: 'r1',
-          startDate: moment('2024-09-01').toDate(),
-          minutes: 60,
-          recurrence: {
-            frequency: RecurringPlanFrequencies.WEEKLY,
-            interval: 1,
-            endDate: null,
-          },
-        },
-      ]
-
-      const result = calculateAnnualPlannedMinutesOptimized(
-        2024,
-        dayPlans,
-        recurringPlans
-      )
-
-      expect(result).toBeGreaterThan(0)
-    })
-
-    it('should handle empty plans', () => {
-      const result = calculateAnnualPlannedMinutesOptimized(2024, [], [])
       expect(result).toBe(0)
     })
   })

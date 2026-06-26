@@ -2,7 +2,7 @@ import { create } from 'zustand'
 import { persist, createJSONStorage } from 'zustand/middleware'
 import { MmkvStorage } from '@/stores/mmkv'
 import { logger } from '@/lib/logger'
-import { getServiceYearReports } from '@/lib/serviceReport'
+import { getServiceYearReports } from '@/lib/serviceYear'
 import type { TimeEntriesByYear } from '@/types/timeEntry'
 
 /**

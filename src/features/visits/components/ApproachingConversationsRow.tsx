@@ -5,8 +5,8 @@ import Card from '@/components/ui/Card'
 import { Visit } from '@/types/visit'
 import Text from '@/components/ui/MyText'
 import useContacts from '@/stores/contactsStore'
-import moment from 'moment'
 import Button from '@/components/ui/Button'
+import { formatRelative } from '@/lib/dates'
 import { useNavigation } from '@react-navigation/native'
 import IconButton from '@/components/ui/IconButton'
 import { faChevronRight } from '@fortawesome/free-solid-svg-icons'
@@ -79,7 +79,7 @@ const ApproachingConversationRow = ({
             }}
             numberOfLines={2}
           >
-            {moment(conversation.followUp?.date).fromNow()}
+            {formatRelative(conversation.followUp?.date)}
             {conversation.followUp?.topic
               ? ` · ${conversation.followUp.topic}`
               : ''}

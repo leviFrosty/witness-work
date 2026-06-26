@@ -11,6 +11,7 @@ import { FlashList } from '@shopify/flash-list'
 import { RootStackParamList } from '@/types/rootStack'
 import i18n from '@/lib/locales'
 import moment from 'moment'
+import { formatDate } from '@/lib/dates'
 import IconButton from '@/components/ui/IconButton'
 import { faUndo } from '@fortawesome/free-solid-svg-icons'
 import { Contact } from '@/types/contact'
@@ -73,7 +74,7 @@ const DismissedContactRow = ({ contact }: { contact: Contact }) => {
           <Text style={{ color: theme.colors.textAlt, fontSize: 12 }}>
             {contact.dismissedUntil
               ? i18n.t('dismissedUntil', {
-                  date: moment(contact.dismissedUntil).format('ll'),
+                  date: formatDate(contact.dismissedUntil, { style: 'medium' }),
                 })
               : ''}
           </Text>

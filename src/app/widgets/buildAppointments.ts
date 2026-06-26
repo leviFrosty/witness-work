@@ -2,7 +2,7 @@ import moment from 'moment'
 import { Contact } from '@/types/contact'
 import { Visit } from '@/types/visit'
 import { isAppointment } from '@/lib/conversations'
-import { formatMonthDayCompact } from '@/lib/dates'
+import { formatCalendar, formatMonthDayCompact, formatTime } from '@/lib/dates'
 
 export type WidgetAppointment = {
   /** Visit ID — used to deep-link with `highlightedVisitId`. */
@@ -60,9 +60,19 @@ function formatAppointmentTime(
 
   // moment honors locale for these tokens — `LT` is short time, `ddd` is short
   // day name, `MMM D` is short date.
-  if (isSameDay) return date.format('LT')
-  if (isTomorrow) return `${date.calendar(now, { sameElse: 'LT' })}` // localized "Tomorrow at HH:mm"
-  if (isYesterday) return date.calendar(now, { sameElse: 'LT' })
+  if (isSameDay) return formatTime(date)
+  // localized "Tomorrow at HH:mm" / "Yesterday at HH:mm" via the locale's
+  // nextDay/lastDay calendar templates.
+  if (isTomorrow)
+    return formatCalendar(date, {
+      referenceTime: now,
+      formats: { sameElse: 'LT' },
+    })
+  if (isYesterday)
+    return formatCalendar(date, {
+      referenceTime: now,
+      formats: { sameElse: 'LT' },
+    })
   if (isThisWeek) return date.format('ddd LT')
   return formatMonthDayCompact(date)
 }

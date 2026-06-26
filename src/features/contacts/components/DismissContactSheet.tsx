@@ -13,6 +13,7 @@ import { usePreferences } from '@/stores/preferences'
 import { useToastController } from '@tamagui/toast'
 import { useNavigation } from '@react-navigation/native'
 import moment from 'moment'
+import { formatDate, formatTime } from '@/lib/dates'
 import * as Notifications from 'expo-notifications'
 import * as Sentry from '@sentry/react-native'
 import useNotifications from '@/hooks/notifications'
@@ -204,19 +205,19 @@ const DismissContactSheet: React.FC<DismissContactSheetProps> = ({
           // Navigate back to close the ContactDetailsScreen
           navigation.goBack()
 
-          const untilFormat =
+          const until =
             option.unit === 'seconds' || option.unit === 'minutes'
-              ? 'LTS' // Time format like "3:45:20 PM"
-              : 'MMM D, YYYY' // Date format like "Dec 25, 2024"
+              ? formatTime(dismissedUntil, { withSeconds: true }) // "3:45:20 PM"
+              : formatDate(dismissedUntil, { style: 'medium' }) // "Dec 25, 2024"
 
           const successMessage = notificationId
             ? i18n.t('contactDismissedWithNotificationMessage', {
                 name: contact.name,
-                until: moment(dismissedUntil).format(untilFormat),
+                until,
               })
             : i18n.t('contactDismissedMessage', {
                 name: contact.name,
-                until: moment(dismissedUntil).format(untilFormat),
+                until,
               })
 
           toast.show(i18n.t('contactDismissed'), {
@@ -334,9 +335,10 @@ const DismissContactSheet: React.FC<DismissContactSheetProps> = ({
               </>
             )}
             {dismissOptions.map((option) => {
-              const exampleDate = moment()
-                .add(option.duration, option.unit)
-                .format('ll')
+              const exampleDate = formatDate(
+                moment().add(option.duration, option.unit),
+                { style: 'medium' }
+              )
 
               return (
                 <Button

@@ -1,5 +1,5 @@
-import moment from 'moment'
 import { parsePhoneNumber } from 'awesome-phonenumber'
+import { formatRelative } from '@/lib/dates'
 import { Contact } from '@/types/contact'
 import { Visit } from '@/types/visit'
 import {
@@ -199,7 +199,7 @@ export function buildContacts(args: BuildContactsArgs): WidgetContact[] {
       ...keys,
       ...buildPhoneUrls(contact, args.defaultPhoneRegionCode),
       mapsUrl: buildMapsUrl(contact, args.defaultNavigationMapProvider),
-      lastContactedRelative: recent ? moment(recent.date).fromNow() : null,
+      lastContactedRelative: recent ? formatRelative(recent.date) : null,
       staleness: index.stalenessFor(contact.id),
     }
   })

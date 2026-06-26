@@ -1,5 +1,6 @@
 import moment from 'moment'
 import { getCalendars, getLocales } from 'expo-localization'
+import { DEFAULT_START_TIME_IN_MINUTES } from '@/lib/normalizeDate'
 
 /**
  * Format Region seam — see
@@ -99,8 +100,8 @@ const safeLocaleData = (key: string | undefined): moment.Locale | null => {
  * UNCATCHABLE fatal ("Requiring unknown module …/locale/ko-kr") for any locale
  * file we didn't statically import in `src/lib/locales.ts` — so a device whose
  * language resolves to a region-suffixed key (`ko-kr`, `ja-jp`, …) crashed the
- * app at init. We only ever hand `moment.locale` a key it already loaded:
- * the full tag, else its base language, else moment's built-in default.
+ * app at init. We only ever hand `moment.locale` a key it already loaded: the
+ * full tag, else its base language, else moment's built-in default.
  *
  * Returns the key moment ended up on, which is what every patch below targets.
  */
@@ -380,3 +381,93 @@ export const formatMonthDayCompact = (m: moment.Moment): string =>
 /** Compact weekday + month/day variant — `Thu, 11 Jun` vs `Thu, Jun 11`. */
 export const formatWeekdayMonthDayCompact = (m: moment.Moment): string =>
   activeDayFirst() ? m.format('ddd, D MMM') : m.format('ddd, MMM D')
+
+/* ────────────────────────────────────────────────────────────────────────
+ * Read-time display intents (ADR-0006)
+ *
+ * Every user-facing date/time must render through one of these so the Format
+ * Region + Clock Format + Language patch reaches it. Hardcoded patterns like
+ * `MMM D, YYYY` (defeats Date Order) or `h:mm A` (defeats Clock Format) bypass
+ * the patch and are bugs. ISO storage keys (`YYYY-MM-DD`) are NOT display and
+ * stay hardcoded — do not route them through here.
+ *
+ * Pick the helper by INTENT, not by token:
+ *   - a clock time            → `formatTime`     (honors Clock Format)
+ *   - a calendar date         → `formatDate`     (honors Format Region)
+ *   - a date + time           → `formatDateTime` (honors both)
+ *   - "3 days ago"            → `formatRelative`
+ *   - "Today at 9:00 AM"      → `formatCalendar`
+ *   - a tight year-less date  → `formatMonthDayCompact` / `formatWeekdayMonthDayCompact`
+ * ──────────────────────────────────────────────────────────────────────── */
+
+/**
+ * `long` → written-out month (`LL`/`LLL`): "June 11, 2026". `medium` →
+ * abbreviated month (`ll`/`lll`): "Jun 11, 2026".
+ */
+export type DateStyle = 'long' | 'medium'
+
+/**
+ * Point-in-time: a clock time honoring the user's Clock Format (12/24-hour) via
+ * the `LT`/`LTS` tokens — "9:00 AM" (en) vs "09:00" (de). Pass `withSeconds`
+ * for `LTS` ("9:00:00 AM").
+ */
+export const formatTime = (
+  input: moment.MomentInput,
+  options?: { withSeconds?: boolean }
+): string => moment(input).format(options?.withSeconds ? 'LTS' : 'LT')
+
+/**
+ * Full calendar date honoring the user's Format Region (date order) and
+ * Language (month names) via `LL`/`ll` — "June 11, 2026" vs "11 June 2026".
+ */
+export const formatDate = (
+  input: moment.MomentInput,
+  options?: { style?: DateStyle }
+): string => moment(input).format(options?.style === 'medium' ? 'll' : 'LL')
+
+/**
+ * Date + time honoring both Format Region and Clock Format. Uses `LLL`/`lll`;
+ * with `withSeconds` it composes the locale date with `LTS`, since no locale
+ * token embeds seconds inside a datetime.
+ */
+export const formatDateTime = (
+  input: moment.MomentInput,
+  options?: { style?: DateStyle; withSeconds?: boolean }
+): string => {
+  const m = moment(input)
+  const date = m.format(options?.style === 'medium' ? 'll' : 'LL')
+  if (options?.withSeconds) return `${date} ${m.format('LTS')}`
+  return m.format(options?.style === 'medium' ? 'lll' : 'LLL')
+}
+
+/**
+ * Relative time ("3 days ago", "in 2 hours") wrapping moment's `fromNow`.
+ * `withoutSuffix` drops the "ago"/"in" wrapper ("3 days").
+ */
+export const formatRelative = (
+  input: moment.MomentInput,
+  options?: { withoutSuffix?: boolean }
+): string => moment(input).fromNow(options?.withoutSuffix)
+
+/**
+ * Calendar-relative time ("Today at 9:00 AM", "Yesterday", "06/11/2026")
+ * wrapping moment's `calendar`. `referenceTime` defaults to now; `formats`
+ * overrides the per-bucket patterns (use locale tokens like `LT`).
+ */
+export const formatCalendar = (
+  input: moment.MomentInput,
+  options?: {
+    referenceTime?: moment.MomentInput
+    formats?: moment.CalendarSpec
+  }
+): string => moment(input).calendar(options?.referenceTime, options?.formats)
+
+/**
+ * A plan's start time rendered via the active locale's `LT` token ("9:00 AM"
+ * en-US, "09:00" de-DE). Pass an explicit minutes-since-midnight value or
+ * `undefined` to fall through to the default (noon).
+ */
+export const formatStartTime = (startTimeInMinutes?: number): string => {
+  const minutes = startTimeInMinutes ?? DEFAULT_START_TIME_IN_MINUTES
+  return formatTime(moment().startOf('day').add(minutes, 'minutes'))
+}

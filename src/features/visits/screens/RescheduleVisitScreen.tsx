@@ -1,6 +1,7 @@
 import React, { useCallback, useMemo, useState } from 'react'
 import { Alert, Pressable, View } from 'react-native'
 import moment from 'moment'
+import { formatDateTime, formatRelative } from '@/lib/dates'
 import * as Notifications from 'expo-notifications'
 import { NativeStackScreenProps } from '@react-navigation/native-stack'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
@@ -472,7 +473,7 @@ const RescheduleVisitScreen = ({ route, navigation }: Props) => {
   // "ago", letting us compose a localized "{time} overdue" label that's more
   // scannable than the absolute timestamp alone.
   const overdueLabel = i18n.t('overdueBy', {
-    time: moment(originalDate).fromNow(true),
+    time: formatRelative(originalDate, { withoutSuffix: true }),
   })
 
   return (
@@ -534,7 +535,7 @@ const RescheduleVisitScreen = ({ route, navigation }: Props) => {
                 fontFamily: theme.fonts.semiBold,
               }}
             >
-              {moment(originalDate).format('LLL')}
+              {formatDateTime(originalDate)}
             </Text>
             {conversation.note ? (
               <View style={{ marginTop: 8, gap: 2 }}>

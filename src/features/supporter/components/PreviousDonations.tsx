@@ -8,6 +8,7 @@ import Text from '@/components/ui/MyText'
 import i18n from '@/lib/locales'
 import XView from '@/components/ui/layout/XView'
 import moment from 'moment'
+import { formatDate } from '@/lib/dates'
 import React, { useEffect, useMemo, useState } from 'react'
 import Card from '@/components/ui/Card'
 import useTheme from '@/contexts/theme'
@@ -159,9 +160,9 @@ const PreviousDonations = ({
             }}
           >
             {i18n.t('activatedOn', {
-              date: moment(
+              date: formatDate(
                 lifetimeSupporterEntitlement.originalPurchaseDate
-              ).format('LL'),
+              ),
             })}
           </Text>
         </Card>
@@ -238,7 +239,7 @@ const PreviousDonations = ({
                 <Text style={{ fontFamily: theme.fonts.bold }}>
                   {transaction.name}
                 </Text>
-                <Text>{moment(transaction.purchaseDate).format('LL')}</Text>
+                <Text>{formatDate(transaction.purchaseDate)}</Text>
               </XView>
             )
           })}

@@ -24,7 +24,13 @@ import 'moment/locale/es'
 import 'moment/locale/ja'
 import {
   applyFormatRegion,
+  formatCalendar,
+  formatDate,
+  formatDateTime,
   formatMonthDayCompact,
+  formatRelative,
+  formatStartTime,
+  formatTime,
   formatWeekdayMonthDayCompact,
   getDateOrderFromPattern,
   getPristineLongDateFormat,
@@ -205,5 +211,90 @@ describe('compact helpers', () => {
   it('follows the Date Order override', () => {
     applyFormatRegion({ language: 'en', dateOrderOverride: 'dmy' })
     expect(formatMonthDayCompact(sample())).toBe('11 Jun')
+  })
+})
+
+describe('formatTime (point-in-time, honors Clock Format)', () => {
+  it('renders the locale `LT`/`LTS` clock', () => {
+    expect(formatTime(sample())).toBe('1:30 PM')
+    expect(formatTime(sample(), { withSeconds: true })).toBe('1:30:00 PM')
+  })
+
+  it('honors a 24-hour Time Format (the hardcoded `h:mm A` bug fix)', () => {
+    applyFormatRegion({ language: 'en', timeFormatOverride: '24' })
+    expect(formatTime(sample())).toBe('13:30')
+    expect(formatTime(sample(), { withSeconds: true })).toBe('13:30:00')
+  })
+})
+
+describe('formatDate (full date, honors Format Region)', () => {
+  it('renders written-out and abbreviated month dates', () => {
+    expect(formatDate(sample())).toBe('June 11, 2026')
+    expect(formatDate(sample(), { style: 'medium' })).toBe('Jun 11, 2026')
+  })
+
+  it('honors Region date order (the hardcoded `MMM D, YYYY` bug fix)', () => {
+    applyFormatRegion({ language: 'en', region: 'en-au' })
+    expect(formatDate(sample())).toBe('11 June 2026')
+    expect(formatDate(sample(), { style: 'medium' })).toBe('11 Jun 2026')
+  })
+})
+
+describe('formatDateTime (date + time, honors both axes)', () => {
+  it('renders `LLL`/`lll`', () => {
+    expect(formatDateTime(sample())).toBe('June 11, 2026 1:30 PM')
+    expect(formatDateTime(sample(), { style: 'medium' })).toBe(
+      'Jun 11, 2026 1:30 PM'
+    )
+  })
+
+  it('composes a seconds timestamp honoring Region + 24-hour clock', () => {
+    expect(
+      formatDateTime(sample(), { style: 'medium', withSeconds: true })
+    ).toBe('Jun 11, 2026 1:30:00 PM')
+    applyFormatRegion({
+      language: 'en',
+      region: 'en-au',
+      timeFormatOverride: '24',
+    })
+    expect(
+      formatDateTime(sample(), { style: 'medium', withSeconds: true })
+    ).toBe('11 Jun 2026 13:30:00')
+  })
+})
+
+describe('formatRelative (relative time)', () => {
+  it('wraps fromNow with and without the ago/in suffix', () => {
+    const threeDaysAgo = moment().subtract(3, 'days')
+    expect(formatRelative(threeDaysAgo)).toBe('3 days ago')
+    expect(formatRelative(threeDaysAgo, { withoutSuffix: true })).toBe('3 days')
+  })
+})
+
+describe('formatCalendar (calendar-relative time)', () => {
+  it('uses the locale calendar buckets relative to a reference time', () => {
+    const ref = sample()
+    expect(
+      formatCalendar(ref.clone().subtract(1, 'day'), { referenceTime: ref })
+    ).toMatch(/Yesterday/)
+  })
+
+  it('falls through to the supplied sameElse pattern outside the window', () => {
+    const ref = sample().clone().add(30, 'days')
+    expect(
+      formatCalendar(sample(), {
+        referenceTime: ref,
+        formats: { sameElse: 'LL' },
+      })
+    ).toBe('June 11, 2026')
+  })
+})
+
+describe('formatStartTime (plan start time, honors Clock Format)', () => {
+  it('renders minutes-since-midnight via the locale clock', () => {
+    expect(formatStartTime(540)).toBe('9:00 AM')
+    expect(formatStartTime(undefined)).toBe(formatStartTime(720))
+    applyFormatRegion({ language: 'en', timeFormatOverride: '24' })
+    expect(formatStartTime(540)).toBe('09:00')
   })
 })

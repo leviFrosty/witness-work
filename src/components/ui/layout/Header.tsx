@@ -1,6 +1,7 @@
 import { Platform, Pressable, View } from 'react-native'
 import useTheme from '@/contexts/theme'
 import moment from 'moment'
+import { formatDate } from '@/lib/dates'
 import Text from '@/components/ui/MyText'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useNavigation } from '@react-navigation/native'
@@ -137,7 +138,7 @@ const Header = ({
                   : theme.colors.text),
             }}
           >
-            {title ?? moment().format('LL')}
+            {title ?? formatDate(moment())}
           </Text>
         </Pressable>
         {rightElement}

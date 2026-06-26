@@ -16,6 +16,7 @@ import useConversations from '@/stores/conversationStore'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import Divider from '@/components/ui/Divider'
 import moment from 'moment'
+import { formatDate } from '@/lib/dates'
 import i18n from '@/lib/locales'
 import {
   contactHasAtLeastOneStudy,
@@ -553,7 +554,7 @@ const CreatedAt = ({ contact }: { contact: Contact }) => {
           textAlign: 'center',
         }}
       >
-        {i18n.t('created')} {moment(contact.createdAt).format('LL')}
+        {i18n.t('created')} {formatDate(contact.createdAt)}
       </Text>
     </View>
   )

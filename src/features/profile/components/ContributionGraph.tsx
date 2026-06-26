@@ -7,6 +7,7 @@ import Animated, {
   useSharedValue,
 } from 'react-native-reanimated'
 import moment from 'moment'
+import { formatDate } from '@/lib/dates'
 import useTheme from '@/contexts/theme'
 import Text from '@/components/ui/MyText'
 import Haptics from '@/lib/haptics'
@@ -442,7 +443,7 @@ const ScrubPopover = ({
         }}
         numberOfLines={1}
       >
-        {moment(hoveredCell.date).format('LL')}
+        {formatDate(hoveredCell.date)}
       </Text>
       <Text
         style={{

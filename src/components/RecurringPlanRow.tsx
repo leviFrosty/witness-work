@@ -14,7 +14,7 @@ import { useFormattedMinutes } from '@/lib/minutes'
 import Button from '@/components/ui/Button'
 import Badge from '@/components/ui/Badge'
 import Copyeable from '@/components/ui/Copyeable'
-import { formatStartTime } from '@/lib/normalizeDate'
+import { formatDate, formatStartTime } from '@/lib/dates'
 import { useCardStyle } from '@/components/ui/Card'
 
 const RecurringPlanRow = (props: {
@@ -159,7 +159,7 @@ const RecurringPlanRow = (props: {
               numberOfLines={1}
               ellipsizeMode='tail'
             >
-              {moment(props.date).format('LL')}
+              {formatDate(props.date)}
               {' · '}
               {formatStartTime(displayStartTimeInMinutes)}
             </Text>

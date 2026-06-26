@@ -8,8 +8,8 @@ import {
   faTimes,
 } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
-import moment from 'moment'
 import useTheme from '@/contexts/theme'
+import { formatRelative } from '@/lib/dates'
 import i18n from '@/lib/locales'
 import Text from '@/components/ui/MyText'
 import IconButton from '@/components/ui/IconButton'
@@ -42,7 +42,7 @@ const FirstEnableSheet: React.FC<Props> = ({
   const remoteSummary = remote
     ? i18n.t('iCloudFoundBackupSummary', {
         device: remote.deviceName || i18n.t('iCloudAnotherDevice'),
-        relative: moment(remote.writtenAt).fromNow(),
+        relative: formatRelative(remote.writtenAt),
       })
     : ''
 

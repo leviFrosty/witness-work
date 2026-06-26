@@ -7,7 +7,7 @@ import { Alert, View } from 'react-native'
 import i18n from '@/lib/locales'
 import useServiceReport from '@/stores/serviceReport'
 import Text from '@/components/ui/MyText'
-import moment from 'moment'
+import { formatDate } from '@/lib/dates'
 import IconButton from '@/components/ui/IconButton'
 import { faPersonDigging, faRightLeft } from '@fortawesome/free-solid-svg-icons'
 import { useCallback } from 'react'
@@ -165,7 +165,7 @@ const TimeReportRow = ({ report, onPress }: TimeReportRowProps) => {
               numberOfLines={1}
               ellipsizeMode='tail'
             >
-              {`${moment(report.date).format('LL')}`}
+              {formatDate(report.date)}
             </Text>
           </View>
           <Text

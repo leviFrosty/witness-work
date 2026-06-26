@@ -31,9 +31,9 @@ import { RecurringPlanFrequencies, getMonthsReports } from '@/lib/serviceReport'
 import { formatMinutes } from '@/lib/minutes'
 import {
   combineDateAndStartTime,
-  formatStartTime,
   splitDateAndStartTime,
 } from '@/lib/normalizeDate'
+import { formatDate, formatStartTime } from '@/lib/dates'
 import { deriveOffsetFromDates } from '@/lib/notificationOffset'
 import {
   DEFAULT_PLAN_NOTIFICATION_OFFSET,
@@ -1405,7 +1405,7 @@ const PlanDayScreen = ({ route, navigation }: PlanDayScreenProps) => {
                               <Text
                                 style={{ fontFamily: theme.fonts.semiBold }}
                               >
-                                {moment(override.date).format('ll')}
+                                {formatDate(override.date, { style: 'medium' })}
                                 {' · '}
                                 {formatStartTime(
                                   override.startTimeInMinutes ??
@@ -1505,7 +1505,7 @@ const PlanDayScreen = ({ route, navigation }: PlanDayScreenProps) => {
                             }}
                           >
                             <Text style={{ fontFamily: theme.fonts.semiBold }}>
-                              {moment(deletedDate).format('ll')}
+                              {formatDate(deletedDate, { style: 'medium' })}
                             </Text>
                             <Button
                               onPress={() => {

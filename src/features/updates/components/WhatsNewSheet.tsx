@@ -9,6 +9,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useEffect, useMemo, useRef } from 'react'
 import { releaseNotes } from '@/features/updates/constants/releaseNotes'
 import moment from 'moment'
+import { formatRelative } from '@/lib/dates'
 import { FlashList } from '@shopify/flash-list'
 import Divider from '@/components/ui/Divider'
 import { usePreferences } from '@/stores/preferences'
@@ -131,7 +132,7 @@ export const WhatsNewContent = ({ lastVersion }: { lastVersion: string }) => {
                   color: theme.colors.textAlt,
                 }}
               >
-                {moment(item.date).fromNow()}
+                {formatRelative(item.date)}
               </Text>
             </View>
             {item.content.map((c, index) => {

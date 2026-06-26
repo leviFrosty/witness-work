@@ -226,12 +226,4 @@ export const splitDateAndStartTime = (
   startTimeInMinutes: localDate.getHours() * 60 + localDate.getMinutes(),
 })
 
-/**
- * Formats a plan's start time using the active moment locale's `LT` token
- * (e.g., "9:00 AM" en-US, "09:00" de-DE). Pass either an explicit
- * minutes-since-midnight value or `undefined` to fall through to the default.
- */
-export const formatStartTime = (startTimeInMinutes?: number): string => {
-  const minutes = startTimeInMinutes ?? DEFAULT_START_TIME_IN_MINUTES
-  return moment().startOf('day').add(minutes, 'minutes').format('LT')
-}
+// `formatStartTime` moved to `@/lib/dates` (the read-time display module).

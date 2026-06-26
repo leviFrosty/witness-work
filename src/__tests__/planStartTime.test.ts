@@ -11,7 +11,6 @@ import {
 import {
   DEFAULT_START_TIME_IN_MINUTES,
   combineDateAndStartTime,
-  formatStartTime,
   getStartTimeInMinutes,
   momentStoredDate,
   normalizeDateForStorage,
@@ -19,8 +18,16 @@ import {
 } from '@/lib/normalizeDate'
 import { RecurringPlanFrequencies } from '@/lib/serviceReport'
 import { getEffectiveStartTimeInMinutesForRecurringPlan } from '@/lib/recurrence'
+import { formatStartTime } from '@/lib/dates'
 import useServiceReport from '@/stores/serviceReport'
 
+// `formatStartTime` now lives in `@/lib/dates`, which imports
+// `expo-localization` (a react-native-backed native module). Stub it so this
+// node test doesn't try to parse react-native's Flow `import typeof` source.
+vi.mock('expo-localization', () => ({
+  getLocales: () => [{ languageTag: 'en-US' }],
+  getCalendars: () => [{ uses24hourClock: false, firstWeekday: 1 }],
+}))
 vi.mock('@/lib/logger', () => import('@/__tests__/mocks/logger'))
 vi.mock('@/stores/mmkv', () => import('@/__tests__/mocks/mmkv'))
 vi.mock(

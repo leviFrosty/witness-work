@@ -3,6 +3,7 @@ import Text from '@/components/ui/MyText'
 import i18n from '@/lib/locales'
 import useTheme from '@/contexts/theme'
 import moment from 'moment'
+import { formatDate } from '@/lib/dates'
 import { FlashList } from '@shopify/flash-list'
 import { TimeEntry, DayPlan } from '@/types/timeEntry'
 import TimeReportRow from '@/features/service-reports/components/TimeReportRow'
@@ -118,7 +119,7 @@ const DayHistoryView: React.FC<DayHistoryViewProps> = ({
                 fontFamily: theme.fonts.bold,
               }}
             >
-              {moment(date).format('LL')}
+              {formatDate(date)}
             </Text>
 
             <XView>

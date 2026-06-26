@@ -13,7 +13,7 @@ import {
   getPlansIntersectingDay,
   getEffectiveMinutesForRecurringPlan,
   getEffectiveNoteForRecurringPlan,
-} from '@/lib/serviceReport'
+} from '@/lib/recurrence'
 import Animated, {
   useAnimatedStyle,
   useSharedValue,

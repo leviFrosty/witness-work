@@ -21,9 +21,9 @@ import {
   RecurringPlanFrequencies,
   adjustedMinutesForSpecificMonth,
   getMonthsReports,
-  getPlansIntersectingDay,
   standardMinutesForSpecificMonth,
 } from '@/lib/serviceReport'
+import { getPlansIntersectingDay } from '@/lib/recurrence'
 
 const originalTZ = process.env.TZ
 const setTZ = (tz: string) => {

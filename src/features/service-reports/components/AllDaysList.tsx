@@ -8,11 +8,11 @@ import useServiceReport from '@/stores/serviceReport'
 import useCategories from '@/stores/categories'
 import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
+import { getMonthsReports } from '@/lib/serviceReport'
 import {
-  getMonthsReports,
   getPlansIntersectingDay,
   getEffectiveMinutesForRecurringPlan,
-} from '@/lib/serviceReport'
+} from '@/lib/recurrence'
 import { getCategoryLabel, isLdcEntry } from '@/lib/serviceReportCategory'
 import { formatMinutes } from '@/lib/minutes'
 import { usePreferences } from '@/stores/preferences'

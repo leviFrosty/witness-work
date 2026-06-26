@@ -2,13 +2,13 @@ import moment from 'moment'
 import { DayPlan, TimeEntriesByYear } from '@/types/timeEntry'
 import { Publisher } from '@/types/publisher'
 import { getEntryMode } from '@/lib/publisherCapabilities'
+import { getMonthsReports } from '@/lib/serviceReport'
 import {
   RecurringPlan,
   getEffectiveMinutesForRecurringPlan,
   getEffectiveNoteForRecurringPlan,
   getPlansIntersectingDay,
-  getMonthsReports,
-} from '@/lib/serviceReport'
+} from '@/lib/recurrence'
 import { formatMinutesCompact } from '@/lib/minutes'
 
 /** Pre-computed calendar cell mirroring `CalendarDay.tsx`'s render inputs. */

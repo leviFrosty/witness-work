@@ -10,9 +10,9 @@ import useServiceReport from '@/stores/serviceReport'
 import { usePreferences } from '@/stores/preferences'
 import {
   adjustedMinutesForSpecificMonth,
-  calculateMonthlyPlannedMinutesOptimized,
   getMonthsReports,
 } from '@/lib/serviceReport'
+import { calculateMonthlyPlannedMinutesOptimized } from '@/lib/recurrence'
 import type { ProjectedTotalScope } from '@/lib/projectedTotal'
 import { useFormattedMinutes } from '@/lib/minutes'
 import i18n from '@/lib/locales'

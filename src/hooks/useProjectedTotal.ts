@@ -7,10 +7,10 @@ import {
   getLoggedDayKeys,
   getMonthsReports,
   getServiceYearMonthlyBreakdowns,
-  getServiceYearReports,
   getTotalMinutesDetailedForSpecificMonth,
   type MonthlyLoggedBreakdown,
 } from '@/lib/serviceReport'
+import { getServiceYearReports } from '@/lib/serviceYear'
 import {
   computeProjectedTotal,
   type ProjectedTotalResult,

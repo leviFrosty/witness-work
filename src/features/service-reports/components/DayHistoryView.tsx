@@ -16,7 +16,7 @@ import {
   RecurringPlan,
   getEffectiveMinutesForRecurringPlan,
   getEffectiveStartTimeInMinutesForRecurringPlan,
-} from '@/lib/serviceReport'
+} from '@/lib/recurrence'
 import { getStartTimeInMinutes } from '@/lib/normalizeDate'
 import DayPlanRow from '@/components/DayPlanRow'
 import RecurringPlanRow from '@/components/RecurringPlanRow'

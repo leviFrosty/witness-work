@@ -16,10 +16,8 @@ import useTheme from '@/contexts/theme'
 import usePublisher from '@/hooks/usePublisher'
 import useServiceReport from '@/stores/serviceReport'
 import { usePreferences } from '@/stores/preferences'
-import {
-  getServiceYearReports,
-  getTotalMinutesForServiceYear,
-} from '@/lib/serviceReport'
+import { getTotalMinutesForServiceYear } from '@/lib/serviceReport'
+import { getServiceYearReports } from '@/lib/serviceYear'
 import {
   getEffectiveMilestones,
   getMilestoneHitState,

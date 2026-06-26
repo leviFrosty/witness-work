@@ -11,9 +11,9 @@ import {
   getMonthsReports,
   ldcMinutesForSpecificMonth,
   otherMinutesForSpecificMonth,
-  plannedMinutesToCurrentDayForMonth,
   standardMinutesForSpecificMonth,
 } from '@/lib/serviceReport'
+import { plannedMinutesToCurrentDayForMonth } from '@/lib/recurrence'
 import useServiceReport from '@/stores/serviceReport'
 import useCategories from '@/stores/categories'
 import { useCallback, useEffect, useMemo, useRef } from 'react'

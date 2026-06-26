@@ -17,10 +17,8 @@ import {
   normalizeDateForStorage,
   splitDateAndStartTime,
 } from '@/lib/normalizeDate'
-import {
-  RecurringPlanFrequencies,
-  getEffectiveStartTimeInMinutesForRecurringPlan,
-} from '@/lib/serviceReport'
+import { RecurringPlanFrequencies } from '@/lib/serviceReport'
+import { getEffectiveStartTimeInMinutesForRecurringPlan } from '@/lib/recurrence'
 import useServiceReport from '@/stores/serviceReport'
 
 vi.mock('@/lib/logger', () => import('@/__tests__/mocks/logger'))

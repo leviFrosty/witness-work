@@ -6,11 +6,10 @@ import useServiceReport from '@/stores/serviceReport'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import {
   adjustedMinutesForSpecificMonth,
-  calculateMinutesRemaining,
-  calculateProgress,
   getDaysLeftInCurrentMonth,
   getMonthsReports,
 } from '@/lib/serviceReport'
+import { goalProgress } from '@/lib/goalProgress'
 import moment from 'moment'
 import i18n from '@/lib/locales'
 import Button from '@/components/ui/Button'
@@ -56,7 +55,11 @@ export default function HourEntryCard() {
   )
 
   const progress = useMemo(
-    () => calculateProgress({ minutes: adjustedMinutes.value, goalHours }),
+    () =>
+      goalProgress({
+        minutes: adjustedMinutes.value,
+        goalMinutes: goalHours * 60,
+      }).fraction,
     [adjustedMinutes, goalHours]
   )
 
@@ -146,7 +149,10 @@ export default function HourEntryCard() {
 
   const minutesRemaining = useMemo(
     () =>
-      calculateMinutesRemaining({ minutes: adjustedMinutes.value, goalHours }),
+      goalProgress({
+        minutes: adjustedMinutes.value,
+        goalMinutes: goalHours * 60,
+      }).remaining,
     [adjustedMinutes, goalHours]
   )
 

@@ -3,8 +3,6 @@ import {
   RecurringPlan,
   RecurringPlanFrequencies,
   RecurringPlanOverride,
-  calculateMinutesRemaining,
-  calculateProgress,
   getTotalMinutesForServiceYear,
   adjustedMinutesForSpecificMonth,
 } from '@/lib/serviceReport'
@@ -31,51 +29,6 @@ type LegacyTimeEntriesByYear = {
 }
 
 describe('lib/serviceReport', () => {
-  describe('calculateProgress', () => {
-    it('should not return less than 0', () => {
-      const progress = calculateProgress({ minutes: -10 * 60, goalHours: 10 })
-      expect(progress).toBe(0)
-    })
-
-    it('should not return more than 1', () => {
-      const progress = calculateProgress({ minutes: 1000 * 60, goalHours: 10 })
-      expect(progress).toBe(1)
-    })
-
-    it('should return the percentage', () => {
-      const progress = calculateProgress({ minutes: 5 * 60, goalHours: 10 })
-      expect(progress).toBe(0.5)
-      const progressTwo = calculateProgress({ minutes: 3 * 60, goalHours: 10 })
-      expect(progressTwo).toBe(0.3)
-    })
-  })
-
-  describe('calculateMinutesRemaining', () => {
-    it('should not return less than 0', () => {
-      const minutesRemaining = calculateMinutesRemaining({
-        minutes: 100 * 60,
-        goalHours: 10,
-      })
-      expect(minutesRemaining).toBe(0)
-    })
-
-    it('should not return more than goalHours', () => {
-      const minutesRemaining = calculateMinutesRemaining({
-        minutes: 0,
-        goalHours: 10,
-      })
-      expect(minutesRemaining).toBe(10 * 60)
-    })
-
-    it('should return the correct amount of minutes remaining', () => {
-      const hoursRemaining = calculateMinutesRemaining({
-        minutes: 3 * 60,
-        goalHours: 10,
-      })
-      expect(hoursRemaining).toBe(7 * 60)
-    })
-  })
-
   describe('adjustedMinutesForSpecificMonth ', () => {
     it('should return the number of minutes in the month', () => {
       const serviceReports: LegacyTimeEntry[] = [

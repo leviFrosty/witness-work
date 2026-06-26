@@ -1,12 +1,46 @@
 import moment from 'moment'
 import {
+  faCheck,
+  faStar,
+  faTrophy,
+  faCrown,
+  IconDefinition,
+} from '@fortawesome/free-solid-svg-icons'
+import {
   adjustedMinutesForSpecificMonth,
   getMonthsReports,
 } from '@/lib/serviceReport'
 import { TimeEntriesByYear } from '@/types/timeEntry'
 import { Publisher } from '@/types/publisher'
+import { Theme } from '@/types/theme'
 
 export type AchievementTier = 'reached' | 'exceeded' | 'crushed' | 'record'
+
+/**
+ * Canonical icon for each Achievement Tier. Single source of truth shared by
+ * every surface that renders a tier seal (month hero, year-row glance).
+ */
+export const tierIcon = (tier: AchievementTier): IconDefinition => {
+  switch (tier) {
+    case 'reached':
+      return faCheck
+    case 'exceeded':
+      return faStar
+    case 'crushed':
+      return faTrophy
+    case 'record':
+      return faCrown
+  }
+}
+
+/**
+ * Canonical accent color for each Achievement Tier. Gold (`supporter`) is
+ * reserved for the `record` personal-best tier; every other goal-met tier
+ * (including `crushed` at 150%+) shares the regular accent palette so all
+ * surfaces tell the same color story.
+ */
+export const tierColor = (tier: AchievementTier, theme: Theme): string =>
+  tier === 'record' ? theme.colors.supporter : theme.colors.accent
 
 /**
  * Resolves the threshold-based celebration tier for a given percent-of-goal.

@@ -37,7 +37,7 @@ import {
   faRotateLeft,
   faXmark,
 } from '@fortawesome/free-solid-svg-icons'
-import moment from 'moment'
+import { formatDateTime } from '@/lib/dates'
 import useTheme from '@/contexts/theme'
 import Text from '@/components/ui/MyText'
 import i18n from '@/lib/locales'
@@ -653,7 +653,7 @@ const ContactAvatarViewer = ({ visible, contact, onClose }: Props) => {
                   label={i18n.t('capturedAt')}
                   value={
                     contact.avatarMeta?.capturedAt
-                      ? moment(contact.avatarMeta.capturedAt).format('LLL')
+                      ? formatDateTime(contact.avatarMeta.capturedAt)
                       : '—'
                   }
                 />
@@ -661,7 +661,7 @@ const ContactAvatarViewer = ({ visible, contact, onClose }: Props) => {
                   label={i18n.t('addedAt')}
                   value={
                     contact.avatarMeta?.croppedAt
-                      ? moment(contact.avatarMeta.croppedAt).format('LLL')
+                      ? formatDateTime(contact.avatarMeta.croppedAt)
                       : '—'
                   }
                 />

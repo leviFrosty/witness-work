@@ -2,6 +2,7 @@ import { Alert, View } from 'react-native'
 import Text from '@/components/ui/MyText'
 import { Visit } from '@/types/visit'
 import moment from 'moment'
+import { formatTime } from '@/lib/dates'
 import useTheme from '@/contexts/theme'
 import useConversations from '@/stores/conversationStore'
 import i18n from '@/lib/locales'
@@ -137,7 +138,7 @@ const ConversationRow = ({
                   color: theme.colors.textAlt,
                 }}
               >
-                {moment(conversation.date).format('LT')}
+                {formatTime(conversation.date)}
               </Text>
             </View>
             {(conversation.isBibleStudy || conversation.notAtHome) && (

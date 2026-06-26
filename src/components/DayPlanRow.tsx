@@ -14,7 +14,7 @@ import Button from '@/components/ui/Button'
 import moment from 'moment'
 import Copyeable from '@/components/ui/Copyeable'
 import Badge from '@/components/ui/Badge'
-import { formatStartTime } from '@/lib/normalizeDate'
+import { formatDate, formatStartTime } from '@/lib/dates'
 import { useCardStyle } from '@/components/ui/Card'
 
 const DayPlanRow = (props: {
@@ -109,7 +109,7 @@ const DayPlanRow = (props: {
               numberOfLines={1}
               ellipsizeMode='tail'
             >
-              {moment(props.date).format('LL')}
+              {formatDate(props.date)}
               {' · '}
               {formatStartTime(props.plan.startTimeInMinutes)}
             </Text>

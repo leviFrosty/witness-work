@@ -4,8 +4,8 @@ import useTheme from '@/contexts/theme'
 import Card from '@/components/ui/Card'
 import { Contact } from '@/types/contact'
 import { useMemo, useState } from 'react'
-import moment from 'moment'
 import i18n from '@/lib/locales'
+import { formatRelative } from '@/lib/dates'
 import IconButton from '@/components/ui/IconButton'
 import {
   faBook,
@@ -228,7 +228,7 @@ const ContactRow = ({
                   numberOfLines={1}
                 >
                   {mostRecentConversation
-                    ? moment(mostRecentConversation.date).fromNow()
+                    ? formatRelative(mostRecentConversation.date)
                     : i18n.t('noRecentConversation_plural')}
                   {contact.address?.city ? ` · ${contact.address.city}` : ''}
                 </Text>

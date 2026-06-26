@@ -4,6 +4,7 @@ import useTheme from '@/contexts/theme'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import useContacts from '@/stores/contactsStore'
 import moment from 'moment'
+import { formatDate } from '@/lib/dates'
 import Card from '@/components/ui/Card'
 import useConversations from '@/stores/conversationStore'
 import { FlashList } from '@shopify/flash-list'
@@ -112,9 +113,7 @@ const RecoverContactsScreen = () => {
                             color: theme.colors.textAlt,
                           }}
                         >
-                          {`${i18n.t('created')} ${moment(
-                            item.createdAt
-                          ).format('LL')}`}
+                          {`${i18n.t('created')} ${formatDate(item.createdAt)}`}
                         </Text>
                         <View
                           style={{

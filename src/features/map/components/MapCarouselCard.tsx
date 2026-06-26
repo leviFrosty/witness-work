@@ -1,6 +1,7 @@
 import { View } from 'react-native'
 import useTheme from '@/contexts/theme'
 import moment from 'moment'
+import { formatRelative } from '@/lib/dates'
 import Text from '@/components/ui/MyText'
 import { ConversationIndex } from '@/lib/conversationIndex'
 import i18n from '@/lib/locales'
@@ -125,7 +126,7 @@ const MapCarouselCard = ({ contact, index, setSheet }: Props) => {
         />
         <Text>
           {mostRecentDate
-            ? mostRecentDate.fromNow()
+            ? formatRelative(mostRecentDate)
             : i18n.t('noConversationYet')}
         </Text>
       </View>

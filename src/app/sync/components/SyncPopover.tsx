@@ -8,8 +8,8 @@ import {
   faGear,
   faTriangleExclamation,
 } from '@fortawesome/free-solid-svg-icons'
-import moment from 'moment'
 import { useNavigation } from '@react-navigation/native'
+import { formatRelative } from '@/lib/dates'
 import useTheme from '@/contexts/theme'
 import { usePreferences } from '@/stores/preferences'
 import { iCloudSync } from '@/app/sync/iCloudSync'
@@ -31,7 +31,7 @@ const statusLabel = (
   if (!available) return i18n.t('iCloudStatusUnavailable')
   if (!lastiCloudSyncAt) return i18n.t('iCloudStatusWaitingForFirstSync')
   return i18n.t('iCloudStatusLastSynced', {
-    relative: moment(lastiCloudSyncAt).fromNow(),
+    relative: formatRelative(lastiCloudSyncAt),
   })
 }
 

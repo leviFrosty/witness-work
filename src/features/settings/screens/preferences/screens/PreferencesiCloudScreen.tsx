@@ -7,7 +7,6 @@ import {
   Switch,
   View,
 } from 'react-native'
-import moment from 'moment'
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
 import { Popover } from 'tamagui'
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
@@ -29,8 +28,7 @@ import FirstEnableSheet, {
 } from '@/app/sync/components/FirstEnableSheet'
 import { SyncPayload } from '@/app/sync/payload'
 import { useToastController } from '@tamagui/toast'
-
-const TIMESTAMP_FMT = 'MMM D, YYYY h:mm:ss A'
+import { formatDateTime, formatRelative } from '@/lib/dates'
 
 type StatusDisplay = { text: string; subtitle?: string }
 
@@ -46,14 +44,17 @@ const buildStatus = (
   if (!mostRecent) return { text: i18n.t('iCloudStatusWaitingForFirstSync') }
   return {
     text: i18n.t('iCloudStatusLastSynced', {
-      relative: moment(mostRecent).fromNow(),
+      relative: formatRelative(mostRecent),
     }),
-    subtitle: moment(mostRecent).format(TIMESTAMP_FMT),
+    subtitle: formatDateTime(mostRecent, {
+      style: 'medium',
+      withSeconds: true,
+    }),
   }
 }
 
 const formatOrDash = (ts: number | null): string =>
-  ts ? moment(ts).format(TIMESTAMP_FMT) : '—'
+  ts ? formatDateTime(ts, { style: 'medium', withSeconds: true }) : '—'
 
 const PreferencesiCloudScreenInner = () => {
   const theme = useTheme()

@@ -7,8 +7,8 @@ import {
   faCloud,
   faFloppyDisk,
 } from '@fortawesome/free-solid-svg-icons'
-import moment from 'moment'
 import { Spinner } from 'tamagui'
+import { formatRelative } from '@/lib/dates'
 import { styles } from '@/features/onboarding/components/Onboarding.styles'
 import OnboardingNav from '@/features/onboarding/components/OnboardingNav'
 import Text from '@/components/ui/MyText'
@@ -402,7 +402,7 @@ const ICloudRestore = ({ goBack, goNext }: Props) => {
                 {i18n.t('iCloudRestoreFoundSummary', {
                   device:
                     probe.remote.deviceName || i18n.t('iCloudAnotherDevice'),
-                  relative: moment(probe.remote.writtenAt).fromNow(),
+                  relative: formatRelative(probe.remote.writtenAt),
                 })}
               </Text>
               {canEnableICloudSync && (

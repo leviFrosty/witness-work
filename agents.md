@@ -2,6 +2,11 @@
 
 WitnessWork = iOS-only field-service tracker for Jehovah's Witnesses. Expo + RN. Domain glossary in `CONTEXT.md` — read before discussing Publisher, Service Report, Plan, Assistant, Supporter, Tenure, etc.
 
+## ww-proxy / backend API
+
+ww-proxy is the backend api providing functionality to this app. Find the code at ~/dev/witness-work.
+It's a project deployed to Cloudflare workers. Read the documentation within that repository for up to date information before making assumptions. There are two environments: dev and production.
+
 ## NEVER destroy unstaged work
 
 `git checkout <path>`, `git restore <path>`, `git reset --hard`, `git clean` discard working-tree changes with **no recoverable trace**. Before any destructive path-level git op: `git status` + `git diff <path>` first. If working tree dirty with changes not made this session, file off-limits — re-edit instead. To undo own mods: `git stash push -- <paths>` → fix → `stash pop` or `stash drop`. No exceptions.

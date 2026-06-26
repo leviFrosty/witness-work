@@ -29,7 +29,7 @@ export type WidgetCalendarDay = {
   /**
    * Pre-formatted compact planned-hours string (e.g. `"1.5h"`, `"30m"`). Empty
    * string when there is no plan or it would be zero. Matches
-   * `useCompactFormattedMinutes` in-app.
+   * `formatMinutesCompact` in-app.
    */
   plannedText: string
   /**

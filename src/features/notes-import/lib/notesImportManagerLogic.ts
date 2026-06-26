@@ -10,13 +10,11 @@ import {
   type ReconcileResult,
 } from '@/features/notes-import/lib/reconcileMappedImport'
 import type {
+  ImportStatus,
   ImportStreamEvent,
   NotesImportErrorCode,
   NotesImportRunHandle,
 } from '@/features/notes-import/lib/notesImportClient'
-// Type-only — erased at runtime, so it introduces no import cycle even though
-// the hook imports this module's values. Keeps `ImportRuntime` canonical.
-import type { ImportRuntime } from '@/features/notes-import/hooks/useNotesImportManager'
 
 /**
  * Pure decision logic for the multi-import manager store (ADR 0009). Kept out
@@ -32,6 +30,37 @@ import type { ImportRuntime } from '@/features/notes-import/hooks/useNotesImport
  */
 export const FREE_IMPORT_CAP = 2
 export const SUPPORTER_IMPORT_CAP = 5
+
+/** Live, ephemeral per-run UI state for a Working import. */
+export interface ImportRuntime {
+  /** Coarse model phase off the stream (queued/starting/thinking/structuring). */
+  phase: ImportStatus | null
+  /** Accumulated model reasoning (when emitted), tail-trimmed. Usually empty. */
+  reasoning: string
+  /** Chars of structured output streamed so far — a "still working" heartbeat. */
+  chars: number
+  /**
+   * Epoch ms the current run attempt began streaming, for the in-flight
+   * inference timer. Null until a run starts.
+   */
+  startedAt: number | null
+  /**
+   * Approximate tokens processed this run (reasoning + structured-output deltas
+   * at ~4 chars/token) — the "it's working" heartbeat shown beside the timer.
+   * Counted in every build; only the reasoning TEXT itself is dev-only.
+   */
+  tokens: number
+  /** A run/resume promise is in flight (the import is Running, not just Queued). */
+  running: boolean
+  /** In-place error within Working (retry in place); null when none. */
+  error: NotesImportErrorCode | null
+  /**
+   * User stopped this run; it stays Working but the queue will NOT auto-start
+   * it until an explicit resume/retry. Distinct from `error` (a failure) and
+   * from Queued (waiting for a slot). In-memory only — a relaunch resumes it.
+   */
+  paused: boolean
+}
 
 export const clientImportCap = (isSupporter: boolean): number =>
   isSupporter ? SUPPORTER_IMPORT_CAP : FREE_IMPORT_CAP

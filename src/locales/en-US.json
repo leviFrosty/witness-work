@@ -1095,6 +1095,8 @@
   "notesImport_limitCta": "Become a Supporter",
   "notesImport_tryAgain": "Try again",
   "notesImport_unavailable": "Temporarily unavailable. Please try again later.",
+  "notesImport_unavailableBanner": "WWork AI is temporarily unavailable. Please check again later.",
+  "notesImport_unavailableBannerDetail": "WWork AI is temporarily unavailable. Please check again later. {{detail}}",
   "notesImport_listEmptyTitle": "No imports yet",
   "notesImport_listEmptyBody": "Paste field-ministry notes and WWork AI will turn them into Contacts, Visits, and Time Entries for you to review.",
   "notesImport_newImport": "New WWork AI import",

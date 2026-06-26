@@ -69,6 +69,7 @@ export type NotesImportErrorCode =
   | 'model_error'
   | 'bad_request'
   | 'active_cap'
+  | 'unavailable'
   | 'network'
   | 'unknown'
 
@@ -103,7 +104,13 @@ export type NotesImportUnavailableReason = 'disabled' | 'no_provider'
 
 export interface NotesImportStatus {
   available: boolean
-  reason?: NotesImportUnavailableReason
+  /**
+   * Why the feature is down: a known machine code
+   * ({@link NotesImportUnavailableReason}) OR operator-supplied free text from
+   * the KV kill-switch (e.g. "Down for maintenance until 5pm"). The latter is
+   * safe to surface to users as a detail line; the codes are not.
+   */
+  reason?: string
 }
 
 /**

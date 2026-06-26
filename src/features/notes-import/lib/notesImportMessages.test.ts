@@ -13,6 +13,7 @@ import type { NotesImportResult } from '@/features/notes-import/lib/notesImportT
 import {
   errorMessageKey,
   notesImportCountsLine,
+  unavailableDetail,
   visitCountLabel,
 } from '@/features/notes-import/lib/notesImportMessages'
 
@@ -52,6 +53,34 @@ describe('errorMessageKey', () => {
 
   it('falls back to the generic error key', () => {
     expect(errorMessageKey('limit_reached')).toBe('notesImport_error')
+  })
+
+  it('maps the unavailable code to the reusable unavailable key', () => {
+    expect(errorMessageKey('unavailable')).toBe('notesImport_unavailable')
+  })
+})
+
+describe('unavailableDetail', () => {
+  it('returns operator-supplied free text', () => {
+    expect(unavailableDetail('Down for maintenance until 5pm')).toBe(
+      'Down for maintenance until 5pm'
+    )
+  })
+
+  it('suppresses machine reason codes', () => {
+    expect(unavailableDetail('disabled')).toBeUndefined()
+    expect(unavailableDetail('no_provider')).toBeUndefined()
+  })
+
+  it('treats empty/whitespace/nullish reasons as no detail', () => {
+    expect(unavailableDetail('')).toBeUndefined()
+    expect(unavailableDetail('   ')).toBeUndefined()
+    expect(unavailableDetail(null)).toBeUndefined()
+    expect(unavailableDetail(undefined)).toBeUndefined()
+  })
+
+  it('trims surrounding whitespace from real detail', () => {
+    expect(unavailableDetail('  Back at noon  ')).toBe('Back at noon')
   })
 })
 

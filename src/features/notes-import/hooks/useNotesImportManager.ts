@@ -14,10 +14,8 @@ import {
   resumeNotesImport,
   destroyNotesImport,
   NotesImportClientError,
-  type NotesImportErrorCode,
   type NotesImportCredits,
   type ImportStreamEvent,
-  type ImportStatus,
   type NotesImportRunHandle,
 } from '@/features/notes-import/lib/notesImportClient'
 import { notesContentHash } from '@/features/notes-import/lib/notesContentHash'
@@ -33,6 +31,7 @@ import {
   classifyRunOutcome,
   classifyStartRun,
   buildQueueItems,
+  type ImportRuntime,
 } from '@/features/notes-import/lib/notesImportManagerLogic'
 import {
   getAllLedgerEntries,
@@ -65,37 +64,6 @@ import {
  * queue). It replaces the single-import `useNotesImport` on the Settings
  * surface; onboarding keeps its single-shot wizard.
  */
-
-/** Live, ephemeral per-run UI state for a Working import. */
-export interface ImportRuntime {
-  /** Coarse model phase off the stream (queued/starting/thinking/structuring). */
-  phase: ImportStatus | null
-  /** Accumulated model reasoning (when emitted), tail-trimmed. Usually empty. */
-  reasoning: string
-  /** Chars of structured output streamed so far — a "still working" heartbeat. */
-  chars: number
-  /**
-   * Epoch ms the current run attempt began streaming, for the in-flight
-   * inference timer. Null until a run starts.
-   */
-  startedAt: number | null
-  /**
-   * Approximate tokens processed this run (reasoning + structured-output deltas
-   * at ~4 chars/token) — the "it's working" heartbeat shown beside the timer.
-   * Counted in every build; only the reasoning TEXT itself is dev-only.
-   */
-  tokens: number
-  /** A run/resume promise is in flight (the import is Running, not just Queued). */
-  running: boolean
-  /** In-place error within Working (retry in place); null when none. */
-  error: NotesImportErrorCode | null
-  /**
-   * User stopped this run; it stays Working but the queue will NOT auto-start
-   * it until an explicit resume/retry. Distinct from `error` (a failure) and
-   * from Queued (waiting for a slot). In-memory only — a relaunch resumes it.
-   */
-  paused: boolean
-}
 
 const DEFAULT_RUNTIME: ImportRuntime = {
   phase: null,

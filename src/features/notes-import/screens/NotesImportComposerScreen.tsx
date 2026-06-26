@@ -39,6 +39,7 @@ import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
 import type { RootStackNavigation, RootStackParamList } from '@/types/rootStack'
 import { useNotesImportManager } from '@/features/notes-import/hooks/useNotesImportManager'
+import { useNotesImportAvailability } from '@/features/notes-import/hooks/useNotesImportAvailability'
 import { useNotesImportSelection } from '@/features/notes-import/hooks/useNotesImportSelection'
 import NotesImportHelpSheet from '@/features/notes-import/components/NotesImportHelpSheet'
 import NotesImportThinking from '@/features/notes-import/components/NotesImportThinking'
@@ -59,6 +60,7 @@ import {
 import {
   errorMessageKey,
   notesImportCountsLine,
+  unavailableDetail,
 } from '@/features/notes-import/lib/notesImportMessages'
 import type { NotesImportResult } from '@/features/notes-import/lib/notesImportTypes'
 import type { NotesImportErrorCode } from '@/features/notes-import/lib/notesImportClient'
@@ -130,6 +132,11 @@ const NotesImportComposerScreen = ({ renderSupporterCta }: Props) => {
   const stop = useNotesImportManager((s) => s.stop)
   const retry = useNotesImportManager((s) => s.retry)
   const focus = useNotesImportManager((s) => s.focus)
+
+  // Status probe on screen load: when the proxy reports the feature is down
+  // (kill-switch or no healthy provider), surface a banner instead of letting a
+  // user paste into a feature that will only reject the import server-side.
+  const availability = useNotesImportAvailability()
 
   const [text, setText] = useState('')
   const [instruction, setInstruction] = useState('')
@@ -221,8 +228,11 @@ const NotesImportComposerScreen = ({ renderSupporterCta }: Props) => {
   const canConfirm =
     !committing && (selection.ids.size > 0 || selection.publisher)
   // A run in flight locks the composer until it settles (or is stopped/edited,
-  // both of which end the run and free the input).
-  const composerDisabled = submitting || isWorking
+  // both of which end the run and free the input). The composer is also locked
+  // while the proxy reports the feature down — there's nothing to send to. The
+  // probe is optimistic (available until it definitively reports otherwise), so
+  // this never blocks the input while the status check is still in flight.
+  const composerDisabled = submitting || isWorking || !availability.available
   const selectedCount = selection.ids.size
   const confirmLabel =
     selectedCount > 0
@@ -348,7 +358,7 @@ const NotesImportComposerScreen = ({ renderSupporterCta }: Props) => {
 
   // A "WWork AI" message bubble: branded avatar + a short title/body lead-in,
   // with the wider response content rendered full width beneath it.
-  const aiHeader = (title: string, body: string) => (
+  const aiHeader = (title: string, body?: string) => (
     <View style={{ flexDirection: 'row', gap: 10, alignItems: 'flex-end' }}>
       <NotesImportAvatar />
       <View
@@ -373,15 +383,17 @@ const NotesImportComposerScreen = ({ renderSupporterCta }: Props) => {
           {i18n.t('notesImport')}
         </Text>
         <Text style={{ fontFamily: theme.fonts.semiBold }}>{title}</Text>
-        <Text
-          style={{
-            color: theme.colors.textAlt,
-            fontSize: theme.fontSize('sm'),
-            lineHeight: 19,
-          }}
-        >
-          {body}
-        </Text>
+        {!!body && (
+          <Text
+            style={{
+              color: theme.colors.textAlt,
+              fontSize: theme.fontSize('sm'),
+              lineHeight: 19,
+            }}
+          >
+            {body}
+          </Text>
+        )}
       </View>
     </View>
   )
@@ -443,6 +455,40 @@ const NotesImportComposerScreen = ({ renderSupporterCta }: Props) => {
       )}
     </Card>
   )
+
+  // Pinned top-of-screen notice when the proxy reports the feature is down,
+  // appending the operator's detail (e.g. a maintenance window) when present.
+  const unavailableBanner = () => {
+    const detail = unavailableDetail(availability.reason)
+    return (
+      <View style={{ paddingHorizontal: 15, paddingTop: 12 }}>
+        <Card style={{ backgroundColor: theme.colors.error }}>
+          <View
+            style={{ flexDirection: 'row', gap: 12, alignItems: 'flex-start' }}
+          >
+            <FontAwesomeIcon
+              icon={faCircleExclamation}
+              size={18}
+              // Fixed white on the fixed red — never the theme-flipping inverse,
+              // which would go dark (unreadable) on the red in dark mode.
+              color='#fff'
+            />
+            <Text
+              style={{
+                flex: 1,
+                color: '#fff',
+                lineHeight: 20,
+              }}
+            >
+              {detail
+                ? i18n.t('notesImport_unavailableBannerDetail', { detail })
+                : i18n.t('notesImport_unavailableBanner')}
+            </Text>
+          </View>
+        </Card>
+      </View>
+    )
+  }
 
   const errorBlock = () => (
     <Card style={{ gap: 14 }}>
@@ -514,10 +560,7 @@ const NotesImportComposerScreen = ({ renderSupporterCta }: Props) => {
     } else if (isReady) {
       aiTurn = emptyPreview ? (
         <View style={{ gap: 14 }}>
-          {aiHeader(
-            i18n.t('notesImport_emptyTitle'),
-            i18n.t('notesImport_emptyBody')
-          )}
+          {aiHeader(i18n.t('notesImport_emptyTitle'))}
           {!!result.assistantMessage && aiMessage(result.assistantMessage)}
         </View>
       ) : (
@@ -691,6 +734,9 @@ const NotesImportComposerScreen = ({ renderSupporterCta }: Props) => {
   return (
     <Wrapper insets='bottom' style={{ flex: 1 }}>
       <KeyboardAvoidingView behavior='padding' style={{ flex: 1 }}>
+        {!availability.available &&
+          !availability.loading &&
+          unavailableBanner()}
         <ScrollView
           ref={scrollRef}
           onContentSizeChange={() => {

@@ -1,13 +1,15 @@
 import { useEffect, useState } from 'react'
-import {
-  getNotesImportStatus,
-  type NotesImportUnavailableReason,
-} from '@/features/notes-import/lib/notesImportClient'
+import { getNotesImportStatus } from '@/features/notes-import/lib/notesImportClient'
 
 interface NotesImportAvailability {
   /** False only once the proxy definitively reports the feature is down. */
   available: boolean
-  reason: NotesImportUnavailableReason | null
+  /**
+   * Why it's down — a machine code or operator-supplied detail text. Null while
+   * available or before the probe resolves. See
+   * {@link NotesImportStatus.reason}.
+   */
+  reason: string | null
   loading: boolean
 }
 
@@ -21,9 +23,7 @@ interface NotesImportAvailability {
  */
 export const useNotesImportAvailability = (): NotesImportAvailability => {
   const [available, setAvailable] = useState(true)
-  const [reason, setReason] = useState<NotesImportUnavailableReason | null>(
-    null
-  )
+  const [reason, setReason] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {

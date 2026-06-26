@@ -20,9 +20,28 @@ export const errorMessageKey = (code: NotesImportErrorCode): string => {
       return 'notesImport_attestationError'
     case 'refinement_limit':
       return 'notesImport_refinementLimit'
+    case 'unavailable':
+      return 'notesImport_unavailable'
     default:
       return 'notesImport_error'
   }
+}
+
+/** Machine reason codes the proxy emits; everything else is operator free text. */
+const MACHINE_UNAVAILABLE_REASONS = new Set(['disabled', 'no_provider'])
+
+/**
+ * The operator-supplied detail to show beneath the generic "unavailable"
+ * message (e.g. "Down for maintenance until 5pm"), or undefined when the reason
+ * is just a machine code — those have no extra info worth surfacing to a user.
+ */
+export const unavailableDetail = (
+  reason?: string | null
+): string | undefined => {
+  const trimmed = reason?.trim()
+  return trimmed && !MACHINE_UNAVAILABLE_REASONS.has(trimmed)
+    ? trimmed
+    : undefined
 }
 
 /**

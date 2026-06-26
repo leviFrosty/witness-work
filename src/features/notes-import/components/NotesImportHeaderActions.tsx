@@ -24,7 +24,7 @@ import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
 import type { RootStackNavigation, RootStackParamList } from '@/types/rootStack'
 import { useNotesImportManager } from '@/features/notes-import/hooks/useNotesImportManager'
-import type { ImportRuntime } from '@/features/notes-import/hooks/useNotesImportManager'
+import type { ImportRuntime } from '@/features/notes-import/lib/notesImportManagerLogic'
 import {
   ledgerEntryTitle,
   readyImportCount,
@@ -33,6 +33,7 @@ import {
   type NotesImportLedgerEntry,
 } from '@/features/notes-import/lib/notesImportLedger'
 import { notesImportCountsLine } from '@/features/notes-import/lib/notesImportMessages'
+import { formatRelative } from '@/lib/dates'
 import NotesImportReadyDot from '@/features/notes-import/components/NotesImportReadyDot'
 
 interface StatusVisual {
@@ -122,6 +123,7 @@ const HistoryRow = ({
   const status = useStatusVisual(entry, runtime)
   const title = ledgerEntryTitle(entry) || i18n.t('notesImport_newImport')
   const counts = entry.result ? notesImportCountsLine(entry.result) : ''
+  const relativeTime = formatRelative(entry.updatedAt)
 
   return (
     <View
@@ -135,7 +137,7 @@ const HistoryRow = ({
       <Button
         onPress={onPress}
         accessibilityRole='button'
-        accessibilityLabel={`${title}. ${status.label}.${counts ? ` ${counts}.` : ''}`}
+        accessibilityLabel={`${title}. ${status.label}.${counts ? ` ${counts}.` : ''} ${relativeTime}.`}
         style={{
           flex: 1,
           flexDirection: 'row',
@@ -163,15 +165,27 @@ const HistoryRow = ({
         </View>
 
         <View style={{ flex: 1, gap: 2 }}>
-          <Text
-            numberOfLines={1}
-            style={{
-              fontFamily: theme.fonts.semiBold,
-              fontSize: theme.fontSize('sm'),
-            }}
-          >
-            {title}
-          </Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+            <Text
+              numberOfLines={1}
+              style={{
+                flex: 1,
+                fontFamily: theme.fonts.semiBold,
+                fontSize: theme.fontSize('sm'),
+              }}
+            >
+              {title}
+            </Text>
+            <Text
+              numberOfLines={1}
+              style={{
+                color: theme.colors.textAlt,
+                fontSize: theme.fontSize('xs'),
+              }}
+            >
+              {relativeTime}
+            </Text>
+          </View>
           <Text
             numberOfLines={1}
             style={{ color: status.color, fontSize: theme.fontSize('xs') }}

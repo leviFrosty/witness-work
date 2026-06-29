@@ -63,14 +63,13 @@ const CustomerProvider: React.FC<PropsWithChildren<Props>> = ({ children }) => {
       return
     }
 
-    // Reuse the stable Keychain install id as the RevenueCat App User ID so
-    // entitlements correlate with the same identity the Notes-Import proxy
-    // meters (ADR 0007). Configure-time (not post-configure logIn) avoids
-    // anonymous→identified alias churn. If it can't resolve, fall back to
-    // anonymous rather than configuring with an empty id.
-    let appUserID: string | undefined
+    // Resolve the stable Keychain install id. We identify the RevenueCat user as
+    // this id so entitlements correlate with the identity the Notes-Import proxy
+    // meters (ADR 0007). If it can't resolve, stay anonymous rather than passing
+    // an empty id.
+    let installId: string | undefined
     try {
-      appUserID = getOrCreateInstallId()
+      installId = getOrCreateInstallId()
     } catch (error) {
       logger.error('[CustomerProvider] install id resolution failed', error)
       Sentry.captureException(error)
@@ -78,10 +77,16 @@ const CustomerProvider: React.FC<PropsWithChildren<Props>> = ({ children }) => {
 
     try {
       if (__DEV__) Purchases.setLogLevel(LOG_LEVEL.DEBUG)
-      Purchases.configure(appUserID ? { apiKey, appUserID } : { apiKey })
-      logger.log('[CustomerProvider] Purchases.configure completed', {
-        identified: !!appUserID,
-      })
+      // Configure anonymously, THEN identify via logIn — NOT configure({
+      // appUserID }) directly. Calling logIn from an anonymous user aliases that
+      // user's purchases onto installId, so an existing supporter (whose
+      // entitlement is filed under their old anonymous id) keeps Supporter status
+      // automatically, with no manual "Restore Purchases". A direct
+      // configure({ appUserID }) would leave those anonymous purchases stranded.
+      // logIn is idempotent (a no-op once installId is already the active user),
+      // so running it on every launch is safe.
+      Purchases.configure({ apiKey })
+      logger.log('[CustomerProvider] Purchases.configure completed')
       setReady(true)
     } catch (error) {
       // Misconfigured API key or unsupported platform — subsequent SDK calls
@@ -91,19 +96,42 @@ const CustomerProvider: React.FC<PropsWithChildren<Props>> = ({ children }) => {
       return
     }
 
-    // Best-effort initial customer fetch. Swallow network/launch errors —
-    // the user may be offline and we can't recover here.
-    Purchases.getCustomerInfo()
-      .then((info) => {
-        logger.log('[CustomerProvider] initial getCustomerInfo success', {
-          originalAppUserId: info.originalAppUserId,
-          activeEntitlements: Object.keys(info.entitlements.active),
+    const seedCustomer = (info: CustomerInfo) => {
+      logger.log('[CustomerProvider] initial customer info', {
+        originalAppUserId: info.originalAppUserId,
+        activeEntitlements: Object.keys(info.entitlements.active),
+      })
+      setCustomer(info)
+    }
+
+    // Identify (migrating any anonymous purchases onto installId) and seed
+    // customer state. logIn resolves with the post-migration CustomerInfo;
+    // getCustomerInfo is the anonymous path when there's no install id.
+    // Best-effort: on failure (usually offline) fall back to cached CustomerInfo
+    // so existing entitlements still render, and logIn retries next launch.
+    const identify = installId
+      ? Purchases.logIn(installId).then(({ customerInfo, created }) => {
+          logger.log('[CustomerProvider] Purchases.logIn completed', {
+            created,
+          })
+          seedCustomer(customerInfo)
         })
-        setCustomer(info)
-      })
-      .catch((error) => {
-        logger.warn('[CustomerProvider] initial getCustomerInfo failed', error)
-      })
+      : Purchases.getCustomerInfo().then(seedCustomer)
+
+    identify.catch((error) => {
+      if (installId && !isOfflineError(error)) {
+        logger.warn('[CustomerProvider] Purchases.logIn failed', error)
+        Sentry.captureException(error)
+      } else {
+        logger.warn('[CustomerProvider] initial customer info failed', error)
+      }
+      // Last-resort fall back to whatever CustomerInfo the SDK has cached.
+      if (installId) {
+        Purchases.getCustomerInfo()
+          .then(seedCustomer)
+          .catch(() => {})
+      }
+    })
   }, [])
 
   const hasPurchasedBefore = useMemo(

@@ -31,6 +31,7 @@ export type RootStackParamList = {
   'Thank You': { purchaseTier?: 'supporter' | 'tip' } | undefined
   'Import and Export': undefined
   MytimeImport: undefined
+  NotesImportComposer: { hash?: string } | undefined
   PreferencesPublisher: undefined
   PreferencesConversation: undefined
   PreferencesPlans: undefined

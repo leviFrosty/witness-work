@@ -11,6 +11,7 @@ import Purchases, { CustomerInfo, LOG_LEVEL } from 'react-native-purchases'
 import * as Sentry from '@sentry/react-native'
 import { logger } from '@/lib/logger'
 import { isOfflineError } from '@/lib/offlineError'
+import { getOrCreateInstallId } from '@/lib/installId'
 
 interface Props {}
 
@@ -62,10 +63,25 @@ const CustomerProvider: React.FC<PropsWithChildren<Props>> = ({ children }) => {
       return
     }
 
+    // Reuse the stable Keychain install id as the RevenueCat App User ID so
+    // entitlements correlate with the same identity the Notes-Import proxy
+    // meters (ADR 0007). Configure-time (not post-configure logIn) avoids
+    // anonymous→identified alias churn. If it can't resolve, fall back to
+    // anonymous rather than configuring with an empty id.
+    let appUserID: string | undefined
+    try {
+      appUserID = getOrCreateInstallId()
+    } catch (error) {
+      logger.error('[CustomerProvider] install id resolution failed', error)
+      Sentry.captureException(error)
+    }
+
     try {
       if (__DEV__) Purchases.setLogLevel(LOG_LEVEL.DEBUG)
-      Purchases.configure({ apiKey })
-      logger.log('[CustomerProvider] Purchases.configure completed')
+      Purchases.configure(appUserID ? { apiKey, appUserID } : { apiKey })
+      logger.log('[CustomerProvider] Purchases.configure completed', {
+        identified: !!appUserID,
+      })
       setReady(true)
     } catch (error) {
       // Misconfigured API key or unsupported platform — subsequent SDK calls

@@ -9,6 +9,9 @@ export const lightModeColors = {
   accentTranslucent: '#1BD15D33',
   accentBackground: '#4BD27C',
   accentAlt: '#B7DDC5',
+  // Solid fill for the user's chat bubble — the opaque equivalent of
+  // accentTranslucent over `background`, so the bubble reads as one flat color.
+  accentBubble: '#C0E4CD',
   background: '#E9E9E9',
   backgroundLightest: '#F0F0F0',
   border: '#dbdbdb',
@@ -21,6 +24,7 @@ export const lightModeColors = {
   error: '#E30909',
   errorTranslucent: '#E3090933',
   errorAlt: '#FA6868',
+  info: '#3B82F6',
   warn: '#fac220',
   warnTranslucent: '#d19b0033',
   warnAlt: '#FFEAB8',
@@ -59,6 +63,8 @@ const darkModeColors: Colors = {
   accentTranslucent: '#1BD15D33',
   accentBackground: '#4BD27C',
   accentAlt: '#99BFA7',
+  // Solid fill for the user's chat bubble (see light mode).
+  accentBubble: '#143821',
   background: '#121212',
   backgroundLightest: '#0D0D0D',
   border: '#333333',
@@ -71,6 +77,7 @@ const darkModeColors: Colors = {
   error: '#F20A0A',
   errorTranslucent: '#F20A0A33',
   errorAlt: '#FA6868',
+  info: '#60A5FA',
   warn: '#FCC014',
   warnTranslucent: '#FCC01433',
   warnAlt: '#FFEAB8',

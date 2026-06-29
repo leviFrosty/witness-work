@@ -43,17 +43,27 @@ type SupporterBilling = 'monthly' | 'annual'
 
 const FEATURE_ROWS: ReadonlyArray<{
   labelKey: TranslationKey
-  free: boolean
-  supporter: boolean
+  // `true`/`false` render a check/dash; a TranslationKey renders that text
+  // (e.g. the `5` vs. `Unlimited` Notes Import allowance).
+  free: boolean | TranslationKey
+  supporter: boolean | TranslationKey
 }> = [
   { labelKey: 'paywallFeatureCore', free: true, supporter: true },
   { labelKey: 'paywallFeaturePrivacy', free: true, supporter: true },
   { labelKey: 'paywallFeatureWidgets', free: true, supporter: true },
+  {
+    labelKey: 'paywallFeatureNotesImport',
+    free: 'paywallFeatureNotesImportFree',
+    supporter: 'paywallFeatureNotesImportUnlimited',
+  },
   { labelKey: 'paywallFeatureSync', free: false, supporter: true },
   { labelKey: 'paywallFeatureAccent', free: false, supporter: true },
   { labelKey: 'paywallFeatureAppIcons', free: false, supporter: true },
   { labelKey: 'paywallFeatureFuture', free: false, supporter: true },
 ]
+
+const resolveCell = (value: boolean | TranslationKey): boolean | string =>
+  typeof value === 'boolean' ? value : i18n.t(value)
 
 const FounderLetter = () => {
   const theme = useTheme()
@@ -151,24 +161,37 @@ const SUPPORTER_COL_WIDTH = 100
 const ROW_PADDING_HORIZONTAL = 18
 
 const CompareCell = ({
-  included,
+  value,
   width,
   highlight,
 }: {
-  included: boolean
+  value: boolean | string
   width: number
   highlight?: boolean
 }) => {
   const theme = useTheme()
-  const includedColor = highlight
-    ? theme.colors.supporter
-    : theme.colors.textAlt
+  const accentColor = highlight ? theme.colors.supporter : theme.colors.textAlt
+  if (typeof value === 'string') {
+    return (
+      <View style={{ width, alignItems: 'center' }}>
+        <Text
+          style={{
+            fontSize: 13,
+            fontFamily: theme.fonts.semiBold,
+            color: accentColor,
+          }}
+        >
+          {value}
+        </Text>
+      </View>
+    )
+  }
   return (
     <View style={{ width, alignItems: 'center' }}>
       <FontAwesomeIcon
-        icon={included ? faCheck : faMinus}
+        icon={value ? faCheck : faMinus}
         size={13}
-        color={included ? includedColor : theme.colors.textAlt}
+        color={value ? accentColor : theme.colors.textAlt}
       />
     </View>
   )
@@ -272,9 +295,12 @@ const ComparisonChart = () => {
             >
               {i18n.t(row.labelKey)}
             </Text>
-            <CompareCell included={row.free} width={FREE_COL_WIDTH + 20} />
             <CompareCell
-              included={row.supporter}
+              value={resolveCell(row.free)}
+              width={FREE_COL_WIDTH + 20}
+            />
+            <CompareCell
+              value={resolveCell(row.supporter)}
               width={SUPPORTER_COL_WIDTH - 10}
               highlight
             />

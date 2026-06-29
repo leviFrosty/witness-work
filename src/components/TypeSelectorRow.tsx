@@ -14,7 +14,10 @@ import useServiceReport from '@/stores/serviceReport'
 import usePublisher from '@/hooks/usePublisher'
 import { restampTimeEntriesCredit } from '@/lib/categories'
 import { Category } from '@/types/category'
-import { LDC_BUILTIN_CATEGORY_ID } from '@/constants/categories'
+import {
+  LDC_BUILTIN_CATEGORY_ID,
+  STANDARD_CATEGORY_ID,
+} from '@/constants/categories'
 
 /**
  * Synthetic select values for the two preset entry types that don't correspond
@@ -22,7 +25,7 @@ import { LDC_BUILTIN_CATEGORY_ID } from '@/constants/categories'
  * is no longer synthetic — it's the LDC builtin Category (see
  * `LDC_BUILTIN_CATEGORY_ID`), surfaced alongside these presets.
  */
-export const STANDARD_TYPE_VALUE = '__standard__'
+export const STANDARD_TYPE_VALUE = STANDARD_CATEGORY_ID
 export const CUSTOM_TYPE_VALUE = '__custom__'
 
 export type TypeSelection = {

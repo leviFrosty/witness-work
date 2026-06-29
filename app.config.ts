@@ -71,6 +71,13 @@ export default ({ config }: ConfigContext): ExpoConfig => {
             ? 'group.com.leviwilkerson.jwtimedev'
             : 'group.com.leviwilkerson.jwtime',
         ],
+        // App Attest (Notes Import request auth — ADR 0007). The environment
+        // must track the build variant: dev builds attest against Apple's
+        // development environment, store builds against production. A mismatch
+        // makes every attestation fail.
+        'com.apple.developer.devicecheck.appattest-environment': IS_DEV
+          ? 'development'
+          : 'production',
         // iCloud entitlements are populated at prebuild time by
         // `plugins/with-icloud-container.js` so the container identifier
         // stays in lockstep with the plugin's Info.plist edits.

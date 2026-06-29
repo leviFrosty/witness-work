@@ -18,24 +18,11 @@ import {
   coreDataRefToDateOrNull,
 } from '@/features/mytime-import/lib/coreDataDate'
 
-export interface MappedPublisher {
-  role: Publisher
-  tenureStartDate: Date | null
-}
-
-/**
- * The fully-denormalized, WitnessWork-shaped result of translating a MyTime
- * backup. Every record carries a deterministic `mytime-*` id so a re-import is
- * idempotent (the stores' `add*` actions skip ids they already hold).
- */
-export interface MappedImport {
-  contacts: Contact[]
-  visits: Visit[]
-  timeEntries: TimeEntry[]
-  categories: Category[]
-  customFieldDefs: CustomFieldDefinition[]
-  publisher: MappedPublisher | null
-}
+// MappedImport / MappedPublisher are shared infrastructure (both MyTime and
+// Notes import produce them). Imported for local use and re-exported so existing
+// `@/features/mytime-import/lib/mapMytimeData` importers keep resolving.
+import type { MappedImport, MappedPublisher } from '@/lib/import/types'
+export type { MappedImport, MappedPublisher }
 
 export const callContactId = (zpk: number) => `mytime-call-${zpk}`
 export const returnVisitId = (zpk: number) => `mytime-rv-${zpk}`

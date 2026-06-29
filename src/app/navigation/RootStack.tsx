@@ -18,6 +18,8 @@ import PaywallScreen from '@/features/supporter/screens/PaywallScreen'
 import PaywallThankYouScreen from '@/features/supporter/screens/PaywallThankYouScreen'
 import ImportAndExportScreen from '@/features/settings/screens/ImportAndExportScreen'
 import MytimeImportScreen from '@/features/mytime-import/screens/MytimeImportScreen'
+import NotesImportComposerRouteScreen from '@/app/navigation/NotesImportComposerRouteScreen'
+import NotesImportHeaderActions from '@/features/notes-import/components/NotesImportHeaderActions'
 import PreferencesPublisherScreen from '@/features/settings/screens/preferences/screens/PreferencesPublisherScreen'
 import PreferencesConversationScreen from '@/features/settings/screens/preferences/screens/PreferencesConversationScreen'
 import PreferencesPlansScreen from '@/features/settings/screens/preferences/screens/PreferencesPlansScreen'
@@ -171,6 +173,19 @@ const RootStackComponent = () => {
           }}
           name='MytimeImport'
           component={MytimeImportScreen}
+        />
+        <RootStack.Screen
+          options={{
+            header: () => (
+              <Header
+                buttonType='back'
+                title={i18n.t('notesImport_title')}
+                rightElement={<NotesImportHeaderActions />}
+              />
+            ),
+          }}
+          name='NotesImportComposer'
+          component={NotesImportComposerRouteScreen}
         />
         <RootStack.Screen
           options={{

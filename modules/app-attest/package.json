@@ -1,0 +1,7 @@
+{
+  "name": "app-attest",
+  "version": "0.1.0",
+  "description": "Local Expo module wrapping DCAppAttestService (Apple App Attest) for proving requests come from a genuine, unmodified app instance.",
+  "main": "index.ts",
+  "private": true
+}

@@ -68,6 +68,7 @@ const DrawerNavigator = () => {
                   icon={faBars}
                   size='xl'
                   hitSlop={24}
+                  color={theme.colors.text}
                   accessibilityLabel={
                     notesImportReadyCount > 0
                       ? `${i18n.t('settings')}. ${i18n.t('notesImport_readyCount', { count: notesImportReadyCount })}.`

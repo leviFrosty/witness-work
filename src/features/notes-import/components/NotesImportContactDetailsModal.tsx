@@ -1,6 +1,7 @@
 import { Sheet } from 'tamagui'
 import { ScrollView, View } from 'react-native'
 import Checkbox from 'expo-checkbox'
+import _ from 'lodash'
 import moment from 'moment'
 import { faTimes } from '@fortawesome/free-solid-svg-icons'
 import useTheme from '@/contexts/theme'
@@ -9,6 +10,7 @@ import Button from '@/components/ui/Button'
 import IconButton from '@/components/ui/IconButton'
 import Divider from '@/components/ui/Divider'
 import i18n from '@/lib/locales'
+import { formatDate, formatDateTime } from '@/lib/dates'
 import { WarningLine } from '@/features/notes-import/components/NotesImportRecordRow'
 import { visitCountLabel } from '@/features/notes-import/lib/notesImportMessages'
 import type {
@@ -43,8 +45,6 @@ interface Props {
   disabled?: boolean
 }
 
-const titleCase = (s: string) => s.charAt(0).toUpperCase() + s.slice(1)
-
 const isDateOnly = (date: Date) =>
   date.getUTCHours() === 12 &&
   date.getUTCMinutes() === 0 &&
@@ -53,12 +53,13 @@ const isDateOnly = (date: Date) =>
 
 /**
  * The mapper anchors date-only values at noon UTC. Keep those on their original
- * calendar day; show a local time only when the imported value had one.
+ * calendar day — read in UTC so a far-east timezone can't roll noon onto the
+ * next day — and show a local time only when the imported value had one.
  */
 const formatReviewDate = (date: Date) =>
   isDateOnly(date)
-    ? moment.utc(date).format('MMM D, YYYY')
-    : moment(date).format('MMM D, YYYY · LT')
+    ? formatDate(moment.utc(date), { style: 'medium' })
+    : formatDateTime(date)
 
 const SectionLabel = ({ children }: { children: string }) => {
   const theme = useTheme()
@@ -229,7 +230,7 @@ const NotesImportContactDetailsModal = ({
         },
         group.info.gender && {
           label: i18n.t('notesImport_detailGender'),
-          value: titleCase(group.info.gender),
+          value: _.upperFirst(group.info.gender),
         },
       ].filter((d): d is { label: string; value: string } => !!d)
     : []

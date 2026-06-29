@@ -27,8 +27,6 @@ import { useNotesImportManager } from '@/features/notes-import/hooks/useNotesImp
 import type { ImportRuntime } from '@/features/notes-import/lib/notesImportManagerLogic'
 import {
   ledgerEntryTitle,
-  readyImportCount,
-  unviewedReadyImportCount,
   isUnviewedReady,
   type NotesImportLedgerEntry,
 } from '@/features/notes-import/lib/notesImportLedger'
@@ -239,11 +237,17 @@ const NotesImportHeaderActions = () => {
   const remove = useNotesImportManager((s) => s.remove)
   const clearCompleted = useNotesImportManager((s) => s.clearCompleted)
 
-  const readyCount = readyImportCount(entries)
-  // The dot tracks *unread* Ready imports; the "N ready for review" text below
-  // still counts every Ready row (a viewed-but-unaccepted one is still ready).
-  const unviewedCount = unviewedReadyImportCount(entries)
-  const hasDone = entries.some((e) => e.state === 'done')
+  // One pass over entries: how many are Ready (awaiting Accept), how many of
+  // those are still unread (the dot tracks *unread* Ready imports — a
+  // viewed-but-unaccepted row is still ready), and whether any are Done.
+  let readyCount = 0
+  let unviewedCount = 0
+  let hasDone = false
+  for (const entry of entries) {
+    if (entry.state === 'ready') readyCount += 1
+    if (isUnviewedReady(entry)) unviewedCount += 1
+    if (entry.state === 'done') hasDone = true
+  }
   const popoverWidth = Math.min(width - 24, 380)
 
   const open = (hash: string) => navigation.setParams({ hash })

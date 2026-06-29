@@ -193,7 +193,7 @@ describe('mapNotesImport — contact note seeding', () => {
     })
     expect(r.visits).toHaveLength(1)
     expect(r.visits[0]).toMatchObject({
-      id: `notes-${HASH}-c-c1-note`,
+      id: `notes-${HASH}-vn-c1`,
       contact: { id: `notes-${HASH}-c-c1` },
       note: 'Met at door',
       date: IMPORTED_AT,

@@ -55,11 +55,12 @@ import { WarningLine } from '@/features/notes-import/components/NotesImportRecor
 import {
   highestSeverity,
   isEmptyPreview,
+  selectMappedImport,
   type NotesImportPreview as Preview,
-  type PreviewSelection,
 } from '@/features/notes-import/lib/buildNotesImportPreview'
 import {
   errorMessageKey,
+  notesImportCommitCountsLine,
   notesImportCountsLine,
   unavailableDetail,
 } from '@/features/notes-import/lib/notesImportMessages'
@@ -87,19 +88,25 @@ const EMPTY_RESULT: NotesImportResult = {
  * flag (warning- or error-severity). Drives the confirm-before-import prompt so
  * a user can't silently commit data WWork AI flagged for review. Info-severity
  * notes don't count — they're informational, not something to "take care of".
+ *
+ * Counts only rows that will ACTUALLY commit (`committedIds` is the id set from
+ * `selectMappedImport`), so a warning on a visit whose contact was deselected —
+ * and therefore dropped at commit — never triggers the prompt for a record that
+ * won't import.
  */
 const selectedFlagCount = (
   preview: Preview,
-  selection: PreviewSelection
+  committedIds: Set<string>,
+  publisherCommitted: boolean
 ): number => {
   let count = 0
   for (const rows of [preview.contacts, preview.visits, preview.timeEntries]) {
     for (const row of rows) {
-      if (!selection.ids.has(row.id)) continue
+      if (!committedIds.has(row.id)) continue
       if (row.severity === 'warning' || row.severity === 'error') count++
     }
   }
-  if (selection.publisher) {
+  if (publisherCommitted) {
     const sev = highestSeverity(preview.publisherWarnings)
     if (sev === 'warning' || sev === 'error') count++
   }
@@ -149,6 +156,11 @@ const NotesImportComposerScreen = ({ renderSupporterCta }: Props) => {
   const [helpOpen, setHelpOpen] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [committing, setCommitting] = useState(false)
+  // Synchronous double-tap latch for commit(): the async `committing` state
+  // can't gate a second tap that lands in the same frame (before the re-render),
+  // and a second accept would see the row already non-Ready and pop a spurious
+  // error even though the first import succeeded.
+  const committingRef = useRef(false)
   const scrollRef = useRef<ScrollView | null>(null)
   const inputRef = useRef<TextInput | null>(null)
   const autoScrollRef = useRef(false)
@@ -200,16 +212,24 @@ const NotesImportComposerScreen = ({ renderSupporterCta }: Props) => {
   const history = activeEntry?.history ?? []
 
   const result = activeEntry?.result ?? EMPTY_RESULT
-  const { preview, selection, toggleRow, togglePublisher, setGroup, setRows } =
-    useNotesImportSelection(
-      result,
-      activeHash ?? '',
-      activeEntry?.parsedAt ?? 0
-    )
+  const {
+    mapped,
+    preview,
+    selection,
+    toggleRow,
+    togglePublisher,
+    setGroup,
+    setRows,
+  } = useNotesImportSelection(
+    result,
+    activeHash ?? '',
+    activeEntry?.parsedAt ?? 0
+  )
 
   const isWorking = activeEntry?.state === 'working'
   const isReady = activeEntry?.state === 'ready'
   const isDone = activeEntry?.state === 'done'
+  const isStopped = activeEntry?.state === 'stopped'
 
   // Showing a Ready import on screen — whether opened from history or freshly
   // finished while watching — counts as reviewing it, so clear its unread dot.
@@ -226,15 +246,27 @@ const NotesImportComposerScreen = ({ renderSupporterCta }: Props) => {
 
   const emptyPreview = isEmptyPreview(preview)
 
+  // The records that will ACTUALLY commit. `selectMappedImport` drops a visit
+  // whose new contact is deselected, so the confirm count and the flagged-import
+  // prompt must read from this projection — not the raw `selection`, which would
+  // count orphaned visits that never write. Equals `selection.ids.size` exactly
+  // when nothing is deselected.
+  const committed = selectMappedImport(mapped, selection)
+  const committedIds = new Set<string>([
+    ...committed.contacts.map((c) => c.id),
+    ...committed.visits.map((v) => v.id),
+    ...committed.timeEntries.map((t) => t.id),
+  ])
+
   const canConfirm =
-    !committing && (selection.ids.size > 0 || selection.publisher)
+    !committing && (committedIds.size > 0 || committed.publisher != null)
   // A run in flight locks the composer until it settles (or is stopped/edited,
   // both of which end the run and free the input). The composer is also locked
   // while the proxy reports the feature down — there's nothing to send to. The
   // probe is optimistic (available until it definitively reports otherwise), so
   // this never blocks the input while the status check is still in flight.
   const composerDisabled = submitting || isWorking || !availability.available
-  const selectedCount = selection.ids.size
+  const selectedCount = committedIds.size
   const confirmLabel =
     selectedCount > 0
       ? i18n.t('notesImport_confirmCount', { count: selectedCount })
@@ -276,6 +308,11 @@ const NotesImportComposerScreen = ({ renderSupporterCta }: Props) => {
 
   const commit = () => {
     if (!activeHash) return
+    // Latch synchronously so a fast double-tap can't queue a second accept: the
+    // second would see the row already committed (no longer Ready) and pop a
+    // misleading error even though the first import succeeded.
+    if (committingRef.current) return
+    committingRef.current = true
     setCommitting(true)
     // Defer the synchronous store writes a frame so the spinner paints first.
     requestAnimationFrame(() => {
@@ -283,6 +320,7 @@ const NotesImportComposerScreen = ({ renderSupporterCta }: Props) => {
         selection,
         publisherMode: 'fillIfUnset',
       })
+      committingRef.current = false
       setCommitting(false)
       if (!ok) {
         Alert.alert(
@@ -297,7 +335,11 @@ const NotesImportComposerScreen = ({ renderSupporterCta }: Props) => {
     if (!activeHash) return
     // Importing records WWork AI flagged is intentional but rarely the user's
     // intent — confirm first so an unresolved flag can't slip in unnoticed.
-    const flagged = selectedFlagCount(preview, selection)
+    const flagged = selectedFlagCount(
+      preview,
+      committedIds,
+      committed.publisher != null
+    )
     if (flagged > 0) {
       Alert.alert(
         i18n.t('notesImport_flaggedConfirmTitle'),
@@ -332,6 +374,12 @@ const NotesImportComposerScreen = ({ renderSupporterCta }: Props) => {
   const editPrompt = () => {
     if (!activeHash) return
     const draft = promptText
+    // A Done import's commit must be undone before we forget the row: `remove`
+    // deletes the ledger row WITHOUT touching committed data, so editing and
+    // resending would mint a new content hash → new record ids → the same
+    // visits/time entries committed a SECOND time. `undo` deletes exactly what
+    // it inserted first, so the edit re-sends against a clean slate.
+    if (isDone) undo(activeHash)
     remove(activeHash)
     // Drop the route back to a blank composer; the routeHash effect clears the
     // refine scratch and refocuses. setText below seeds the editable copy.
@@ -357,15 +405,16 @@ const NotesImportComposerScreen = ({ renderSupporterCta }: Props) => {
     ])
   }
 
-  // A "WWork AI" message bubble: branded avatar + a short title/body lead-in,
-  // with the wider response content rendered full width beneath it.
-  const aiHeader = (title: string, body?: string) => (
+  // The shared "WWork AI" chat-bubble scaffold: branded avatar + a rounded card
+  // tagged with the accent "WWork AI" label, wrapping whatever body the caller
+  // supplies. `gap` tunes the inner spacing per bubble kind.
+  const aiBubble = (children: ReactNode, gap: number) => (
     <View style={{ flexDirection: 'row', gap: 10, alignItems: 'flex-end' }}>
       <NotesImportAvatar />
       <View
         style={{
           flexShrink: 1,
-          gap: 2,
+          gap,
           backgroundColor: theme.colors.card,
           borderRadius: 20,
           borderBottomLeftRadius: 4,
@@ -383,6 +432,16 @@ const NotesImportComposerScreen = ({ renderSupporterCta }: Props) => {
         >
           {i18n.t('notesImport')}
         </Text>
+        {children}
+      </View>
+    </View>
+  )
+
+  // A "WWork AI" message bubble: a short title/body lead-in, with the wider
+  // response content rendered full width beneath it.
+  const aiHeader = (title: string, body?: string) =>
+    aiBubble(
+      <>
         <Text style={{ fontFamily: theme.fonts.semiBold }}>{title}</Text>
         {!!body && (
           <Text
@@ -395,42 +454,16 @@ const NotesImportComposerScreen = ({ renderSupporterCta }: Props) => {
             {body}
           </Text>
         )}
-      </View>
-    </View>
-  )
+      </>,
+      2
+    )
 
   // A standalone "WWork AI" chat message: the model's single conversational
   // note about whole-import assumptions and any clarifying questions. Rendered
   // beneath the import preview so it reads as the assistant's follow-up, not a
   // warnings panel. (Per-record flags still render inline on their rows.)
-  const aiMessage = (message: string) => (
-    <View style={{ flexDirection: 'row', gap: 10, alignItems: 'flex-end' }}>
-      <NotesImportAvatar />
-      <View
-        style={{
-          flexShrink: 1,
-          gap: 3,
-          backgroundColor: theme.colors.card,
-          borderRadius: 20,
-          borderBottomLeftRadius: 4,
-          borderCurve: 'continuous',
-          paddingHorizontal: 14,
-          paddingVertical: 11,
-        }}
-      >
-        <Text
-          style={{
-            color: theme.colors.accent,
-            fontFamily: theme.fonts.bold,
-            fontSize: theme.fontSize('xs'),
-          }}
-        >
-          {i18n.t('notesImport')}
-        </Text>
-        <Text style={{ lineHeight: 21 }}>{message}</Text>
-      </View>
-    </View>
-  )
+  const aiMessage = (message: string) =>
+    aiBubble(<Text style={{ lineHeight: 21 }}>{message}</Text>, 3)
 
   const limitBlock = () => (
     <Card style={{ gap: 10 }}>
@@ -605,6 +638,14 @@ const NotesImportComposerScreen = ({ renderSupporterCta }: Props) => {
         </View>
       )
     } else if (isDone) {
+      // Show what the commit ACTUALLY inserted (after deselection + reconcile
+      // drops), not the full parse — a partial import must never overstate its
+      // counts. A Done row always has `commit`; fall back to the parse defensively.
+      const countsLine = activeEntry.commit
+        ? notesImportCommitCountsLine(activeEntry.commit)
+        : activeEntry.result
+          ? notesImportCountsLine(activeEntry.result)
+          : ''
       aiTurn = (
         <View style={{ gap: 14 }}>
           {aiHeader(
@@ -615,10 +656,8 @@ const NotesImportComposerScreen = ({ renderSupporterCta }: Props) => {
             <Text style={{ fontFamily: theme.fonts.semiBold }}>
               {i18n.t('notesImport_success')}
             </Text>
-            {activeEntry.result && (
-              <Text style={{ color: theme.colors.textAlt }}>
-                {notesImportCountsLine(activeEntry.result)}
-              </Text>
+            {!!countsLine && (
+              <Text style={{ color: theme.colors.textAlt }}>{countsLine}</Text>
             )}
             <Button
               onPress={() => activeHash && undo(activeHash)}
@@ -653,6 +692,30 @@ const NotesImportComposerScreen = ({ renderSupporterCta }: Props) => {
           )}
         </View>
       )
+    } else if (isStopped) {
+      // A stopped run is terminal but keeps whatever it had parsed. When a
+      // (credit-charged) result survived — e.g. the user stopped a refinement of
+      // an already-Ready import — keep it on screen as a read-only review so the
+      // reviewed preview doesn't vanish; otherwise just note the stop. (Re-importing
+      // a stopped result would need a manager change — `accept` only takes a Ready
+      // row — so no Import action is offered here; the user can edit & resend.)
+      aiTurn =
+        activeEntry.result && !emptyPreview ? (
+          <View style={{ gap: 14 }}>
+            {aiHeader(i18n.t('notesImport_stateStopped'))}
+            <NotesImportPreview
+              preview={preview}
+              selection={selection}
+              toggleRow={toggleRow}
+              togglePublisher={togglePublisher}
+              setGroup={setGroup}
+              setRows={setRows}
+              disabled
+            />
+          </View>
+        ) : (
+          aiHeader(i18n.t('notesImport_stateStopped'))
+        )
     }
 
     return (

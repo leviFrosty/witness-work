@@ -62,6 +62,150 @@ const flagCountLabel = (count: number) =>
     { count }
   )
 
+/**
+ * A single contact row in the preview: name, visit count, a warning badge, and
+ * (for new contacts) an include checkbox. Module-level so its identity stays
+ * stable across NotesImportPreview re-renders — declared inline it would
+ * remount every card (and its checkbox) on each selection change.
+ */
+const ContactCard = ({
+  group,
+  selection,
+  disabled,
+  toggleRow,
+  onOpen,
+}: {
+  group: ContactGroup
+  selection: PreviewSelection
+  disabled?: boolean
+  toggleRow: (id: string) => void
+  onOpen: () => void
+}) => {
+  const theme = useTheme()
+  const severity = groupSeverity(group)
+  const warnCount = groupWarningCount(group)
+  const included = group.isExisting || selection.ids.has(group.id)
+  const tint =
+    severity === 'error'
+      ? theme.colors.errorTranslucent
+      : severity === 'warning'
+        ? theme.colors.warnTranslucent
+        : theme.colors.backgroundLighter
+  const { color, icon } = severityVisual(theme, severity)
+
+  return (
+    <Card
+      style={{
+        paddingVertical: 0,
+        paddingHorizontal: 0,
+        gap: 0,
+        overflow: 'hidden',
+      }}
+    >
+      <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+        <Button
+          noTransform
+          disabled={disabled}
+          onPress={onOpen}
+          style={{ flex: 1, padding: 16, gap: 4 }}
+        >
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+            <FontAwesomeIcon
+              icon={faAddressBook}
+              size={14}
+              color={theme.colors.textAlt}
+            />
+            <Text
+              style={{ flex: 1, fontFamily: theme.fonts.semiBold }}
+              numberOfLines={1}
+            >
+              {group.name}
+            </Text>
+            {group.isExisting && (
+              <View
+                style={{
+                  paddingHorizontal: 8,
+                  paddingVertical: 2,
+                  borderRadius: 999,
+                  borderCurve: 'continuous',
+                  backgroundColor: theme.colors.backgroundLighter,
+                }}
+              >
+                <Text
+                  style={{
+                    fontSize: theme.fontSize('xs'),
+                    color: theme.colors.textAlt,
+                    fontFamily: theme.fonts.semiBold,
+                  }}
+                >
+                  {i18n.t('notesImport_existingTag')}
+                </Text>
+              </View>
+            )}
+          </View>
+          <Text
+            style={{
+              color: theme.colors.textAlt,
+              fontSize: theme.fontSize('sm'),
+            }}
+          >
+            {group.visits.length > 0
+              ? visitCountLabel(group.visits.length)
+              : i18n.t('notesImport_noVisits')}
+          </Text>
+          {severity && warnCount > 0 && (
+            <View
+              accessibilityLabel={`${warnCount}`}
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: 5,
+                alignSelf: 'flex-start',
+                marginTop: 2,
+                paddingHorizontal: 8,
+                paddingVertical: 3,
+                borderRadius: 999,
+                borderCurve: 'continuous',
+                backgroundColor: tint,
+              }}
+            >
+              <FontAwesomeIcon icon={icon} size={10} color={color} />
+              <Text
+                style={{
+                  color,
+                  fontSize: theme.fontSize('xs'),
+                  fontFamily: theme.fonts.semiBold,
+                }}
+              >
+                {flagCountLabel(warnCount)}
+              </Text>
+            </View>
+          )}
+        </Button>
+
+        {!group.isExisting && (
+          <Button
+            noTransform
+            disabled={disabled}
+            onPress={() => toggleRow(group.id)}
+            style={{ paddingHorizontal: 14, paddingVertical: 16 }}
+          >
+            <View pointerEvents='none'>
+              <Checkbox value={included} color={theme.colors.accent} />
+            </View>
+          </Button>
+        )}
+        <FontAwesomeIcon
+          icon={faChevronRight}
+          size={14}
+          color={theme.colors.textAlt}
+          style={{ marginRight: 14 }}
+        />
+      </View>
+    </Card>
+  )
+}
+
 const NotesImportPreview = ({
   preview,
   selection,
@@ -123,133 +267,6 @@ const NotesImportPreview = ({
     preview.timeEntries.length > 0 &&
     preview.timeEntries.every((r) => selection.ids.has(r.id))
 
-  const ContactCard = ({ group }: { group: ContactGroup }) => {
-    const severity = groupSeverity(group)
-    const warnCount = groupWarningCount(group)
-    const included = group.isExisting || selection.ids.has(group.id)
-    const tint =
-      severity === 'error'
-        ? theme.colors.errorTranslucent
-        : severity === 'warning'
-          ? theme.colors.warnTranslucent
-          : theme.colors.backgroundLighter
-    const { color, icon } = severityVisual(theme, severity)
-
-    return (
-      <Card
-        style={{
-          paddingVertical: 0,
-          paddingHorizontal: 0,
-          gap: 0,
-          overflow: 'hidden',
-        }}
-      >
-        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-          <Button
-            noTransform
-            disabled={disabled}
-            onPress={() => setOpenGroupId(group.id)}
-            style={{ flex: 1, padding: 16, gap: 4 }}
-          >
-            <View
-              style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}
-            >
-              <FontAwesomeIcon
-                icon={faAddressBook}
-                size={14}
-                color={theme.colors.textAlt}
-              />
-              <Text
-                style={{ flex: 1, fontFamily: theme.fonts.semiBold }}
-                numberOfLines={1}
-              >
-                {group.name}
-              </Text>
-              {group.isExisting && (
-                <View
-                  style={{
-                    paddingHorizontal: 8,
-                    paddingVertical: 2,
-                    borderRadius: 999,
-                    borderCurve: 'continuous',
-                    backgroundColor: theme.colors.backgroundLighter,
-                  }}
-                >
-                  <Text
-                    style={{
-                      fontSize: theme.fontSize('xs'),
-                      color: theme.colors.textAlt,
-                      fontFamily: theme.fonts.semiBold,
-                    }}
-                  >
-                    {i18n.t('notesImport_existingTag')}
-                  </Text>
-                </View>
-              )}
-            </View>
-            <Text
-              style={{
-                color: theme.colors.textAlt,
-                fontSize: theme.fontSize('sm'),
-              }}
-            >
-              {group.visits.length > 0
-                ? visitCountLabel(group.visits.length)
-                : i18n.t('notesImport_noVisits')}
-            </Text>
-            {severity && warnCount > 0 && (
-              <View
-                accessibilityLabel={`${warnCount}`}
-                style={{
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  gap: 5,
-                  alignSelf: 'flex-start',
-                  marginTop: 2,
-                  paddingHorizontal: 8,
-                  paddingVertical: 3,
-                  borderRadius: 999,
-                  borderCurve: 'continuous',
-                  backgroundColor: tint,
-                }}
-              >
-                <FontAwesomeIcon icon={icon} size={10} color={color} />
-                <Text
-                  style={{
-                    color,
-                    fontSize: theme.fontSize('xs'),
-                    fontFamily: theme.fonts.semiBold,
-                  }}
-                >
-                  {flagCountLabel(warnCount)}
-                </Text>
-              </View>
-            )}
-          </Button>
-
-          {!group.isExisting && (
-            <Button
-              noTransform
-              disabled={disabled}
-              onPress={() => toggleRow(group.id)}
-              style={{ paddingHorizontal: 14, paddingVertical: 16 }}
-            >
-              <View pointerEvents='none'>
-                <Checkbox value={included} color={theme.colors.accent} />
-              </View>
-            </Button>
-          )}
-          <FontAwesomeIcon
-            icon={faChevronRight}
-            size={14}
-            color={theme.colors.textAlt}
-            style={{ marginRight: 14 }}
-          />
-        </View>
-      </Card>
-    )
-  }
-
   return (
     <View style={{ gap: 16 }}>
       {groups.length > 0 && (
@@ -264,7 +281,14 @@ const NotesImportPreview = ({
             {i18n.t('notesImport_contacts')} ({groups.length})
           </Text>
           {groups.map((group) => (
-            <ContactCard key={group.id} group={group} />
+            <ContactCard
+              key={group.id}
+              group={group}
+              selection={selection}
+              disabled={disabled}
+              toggleRow={toggleRow}
+              onOpen={() => setOpenGroupId(group.id)}
+            />
           ))}
         </View>
       )}

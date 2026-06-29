@@ -90,7 +90,17 @@ describe('notesImportCountsLine', () => {
       notesImportCountsLine(
         result({ contacts: rows(3) as never, timeEntries: rows(2) as never })
       )
-    ).toBe('notesImport_contactCount:3 · notesImport_timeEntryCount:2')
+    ).toBe(
+      'notesImport_contactCount_plural:3 · notesImport_timeEntryCount_plural:2'
+    )
+  })
+
+  it('uses singular keys for a count of one', () => {
+    expect(
+      notesImportCountsLine(
+        result({ contacts: rows(1) as never, timeEntries: rows(1) as never })
+      )
+    ).toBe('notesImport_contactCount:1 · notesImport_timeEntryCount:1')
   })
 
   it('returns an empty string when nothing was imported', () => {

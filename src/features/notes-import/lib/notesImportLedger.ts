@@ -101,7 +101,11 @@ export interface NotesImportLedgerEntry {
   viewedAt: number | null
   /** Epoch ms the import was accepted (committed), if it has been. */
   acceptedAt: number | null
-  /** Epoch ms of the last mutation — drives list sort + the >1yr prune. */
+  /**
+   * Epoch ms of the last mutation — drives the >1yr prune. (The history list
+   * itself is ordered by `createdAt`, so viewing/refining a row doesn't
+   * reshuffle the list.)
+   */
   updatedAt: number
 }
 
@@ -434,8 +438,11 @@ const writeEntry = (entry: NotesImportLedgerEntry): void => {
   store().set(key(entry.hash), JSON.stringify(entry))
 }
 
-export const getLedgerEntry = (hash: string): NotesImportLedgerEntry | null => {
-  const raw = store().getString(key(hash))
+/** Parse → migrate → revive one stored record; null if absent or corrupt. */
+const parseStoredEntry = (
+  raw: string | undefined,
+  nowMs: number
+): NotesImportLedgerEntry | null => {
   if (!raw) return null
   let parsed: unknown
   try {
@@ -443,9 +450,12 @@ export const getLedgerEntry = (hash: string): NotesImportLedgerEntry | null => {
   } catch {
     return null
   }
-  const entry = migrateLedgerEntry(parsed, Date.now())
+  const entry = migrateLedgerEntry(parsed, nowMs)
   return entry ? reviveEntry(entry) : null
 }
+
+export const getLedgerEntry = (hash: string): NotesImportLedgerEntry | null =>
+  parseStoredEntry(store().getString(key(hash)), Date.now())
 
 export const hasLedgerEntry = (hash: string): boolean =>
   store().contains(key(hash))
@@ -460,16 +470,8 @@ export const getAllLedgerEntries = (): NotesImportLedgerEntry[] => {
   const entries: NotesImportLedgerEntry[] = []
   for (const k of store().getAllKeys()) {
     if (!k.startsWith(KEY_PREFIX)) continue
-    const raw = store().getString(k)
-    if (!raw) continue
-    let parsed: unknown
-    try {
-      parsed = JSON.parse(raw)
-    } catch {
-      continue
-    }
-    const entry = migrateLedgerEntry(parsed, now)
-    if (entry) entries.push(reviveEntry(entry))
+    const entry = parseStoredEntry(store().getString(k), now)
+    if (entry) entries.push(entry)
   }
   return entries.sort((a, b) => b.createdAt - a.createdAt)
 }
@@ -602,14 +604,13 @@ export const deleteLedgerEntry = (hash: string): void => {
   store().delete(key(hash))
 }
 
-/**
- * Removes every **Done** row ("Clear completed"). Returns how many were
- * removed.
- */
-export const clearCompletedLedgerEntries = (): number => {
+/** Deletes every ledger row matching `predicate`; returns how many were removed. */
+const deleteEntriesWhere = (
+  predicate: (entry: NotesImportLedgerEntry) => boolean
+): number => {
   let removed = 0
   for (const entry of getAllLedgerEntries()) {
-    if (entry.state === 'done') {
+    if (predicate(entry)) {
       store().delete(key(entry.hash))
       removed += 1
     }
@@ -617,17 +618,16 @@ export const clearCompletedLedgerEntries = (): number => {
   return removed
 }
 
+/**
+ * Removes every **Done** row ("Clear completed"). Returns how many were
+ * removed.
+ */
+export const clearCompletedLedgerEntries = (): number =>
+  deleteEntriesWhere((entry) => entry.state === 'done')
+
 /** Auto-prunes rows older than {@link LEDGER_MAX_AGE_MS}. Returns the count. */
 export const pruneLedgerEntries = (
   nowMs: number = Date.now(),
   maxAgeMs: number = LEDGER_MAX_AGE_MS
-): number => {
-  let removed = 0
-  for (const entry of getAllLedgerEntries()) {
-    if (isPrunableLedgerEntry(entry, nowMs, maxAgeMs)) {
-      store().delete(key(entry.hash))
-      removed += 1
-    }
-  }
-  return removed
-}
+): number =>
+  deleteEntriesWhere((entry) => isPrunableLedgerEntry(entry, nowMs, maxAgeMs))

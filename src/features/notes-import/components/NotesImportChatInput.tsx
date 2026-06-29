@@ -1,6 +1,5 @@
 import { forwardRef } from 'react'
 import { TextInput, View } from 'react-native'
-import { Spinner } from 'tamagui'
 import { faArrowUp, faStop } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
 import Button from '@/components/ui/Button'
@@ -17,11 +16,9 @@ export interface NotesImportChatInputProps {
   submitAccessibilityLabel: string
   /** Disables typing and the send button (e.g. while a run is in flight). */
   editable?: boolean
-  /** Show a spinner in the trailing button instead of the send arrow. */
-  busy?: boolean
   /**
    * When provided, the trailing button becomes a Stop button that calls this —
-   * used while an interruptible run streams. Takes precedence over `busy`.
+   * used while an interruptible run streams.
    */
   onStop?: () => void
   stopAccessibilityLabel?: string
@@ -30,10 +27,10 @@ export interface NotesImportChatInputProps {
 /**
  * The one Notes Import chat input (ADR 0009). A rounded prompt pill with a
  * grow-to-fit multiline field and a single trailing action whose identity is
- * driven by props — Stop while a run is interruptible, a spinner while busy,
- * otherwise Send. Both the initial paste and the refinement prompt render this
- * same component; callers differ only in value/placeholder/onSubmit, so the
- * footer never swaps layouts.
+ * driven by props — Stop while a run is interruptible, otherwise Send. Both the
+ * initial paste and the refinement prompt render this same component; callers
+ * differ only in value/placeholder/onSubmit, so the footer never swaps
+ * layouts.
  */
 const NotesImportChatInput = forwardRef<TextInput, NotesImportChatInputProps>(
   (
@@ -46,7 +43,6 @@ const NotesImportChatInput = forwardRef<TextInput, NotesImportChatInputProps>(
       accessibilityHint,
       submitAccessibilityLabel,
       editable = true,
-      busy = false,
       onStop,
       stopAccessibilityLabel,
     },
@@ -81,7 +77,7 @@ const NotesImportChatInput = forwardRef<TextInput, NotesImportChatInputProps>(
       </Button>
     ) : (
       <Button
-        disabled={!canSubmit || busy}
+        disabled={!canSubmit}
         onPress={onSubmit}
         accessibilityRole='button'
         accessibilityLabel={submitAccessibilityLabel}
@@ -97,15 +93,11 @@ const NotesImportChatInput = forwardRef<TextInput, NotesImportChatInputProps>(
             : theme.colors.accentAlt,
         }}
       >
-        {busy ? (
-          <Spinner size='small' color={theme.colors.textInverse} />
-        ) : (
-          <FontAwesomeIcon
-            icon={faArrowUp}
-            size={18}
-            color={theme.colors.textInverse}
-          />
-        )}
+        <FontAwesomeIcon
+          icon={faArrowUp}
+          size={18}
+          color={theme.colors.textInverse}
+        />
       </Button>
     )
 

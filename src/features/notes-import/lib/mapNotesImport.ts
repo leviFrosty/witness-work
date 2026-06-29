@@ -6,6 +6,7 @@ import type { MappedImport, MappedPublisher } from '@/lib/import/types'
 import {
   LDC_BUILTIN_CATEGORY_ID,
   STANDARD_CATEGORY_ID,
+  STANDARD_CATEGORY_NAME,
   makeLdcBuiltinCategory,
 } from '@/constants/categories'
 import type {
@@ -55,8 +56,11 @@ const slug = (s: string): string =>
     .replace(/^-+|-+$/g, '') || 'x'
 
 const contactId = (hash: string, tempId: string) => `notes-${hash}-c-${tempId}`
+// Own namespace (`-vn-`), NOT the contact namespace: a contact whose tempId
+// happened to be `<other>-note` would otherwise collide with this synthesized
+// note-visit id and share its slot in the preview's single selection Set.
 const noteVisitId = (hash: string, tempId: string) =>
-  `notes-${hash}-c-${tempId}-note`
+  `notes-${hash}-vn-${tempId}`
 const visitId = (hash: string, ref: string) => `notes-${hash}-v-${ref}`
 const timeEntryId = (hash: string, ref: string) => `notes-${hash}-t-${ref}`
 const categoryId = (hash: string, name: string) =>
@@ -263,10 +267,16 @@ export const mapNotesImport = (
     const newCategoryName = clean(t.categoryName)
     // The synthetic "Standard" sentinel means ordinary field service — it has
     // no real Category record, so leave `categoryId` unset rather than
-    // persisting a dangling id.
+    // persisting a dangling id. Guard the name path too: a model that echoes
+    // "Standard" as a categoryName (instead of the sentinel id) must not seed a
+    // junk "Standard" category.
+    const isStandardName =
+      !!newCategoryName &&
+      newCategoryName.trim().toLowerCase() ===
+        STANDARD_CATEGORY_NAME.toLowerCase()
     if (existingCategoryId && existingCategoryId !== STANDARD_CATEGORY_ID) {
       resolvedCategoryId = existingCategoryId
-    } else if (!existingCategoryId && newCategoryName) {
+    } else if (!existingCategoryId && newCategoryName && !isStandardName) {
       const credit = t.credit === true || isLdcLike(newCategoryName)
       resolvedCategoryId = resolveNewCategory(newCategoryName, credit)
       categoryIsCredit = credit

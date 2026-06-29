@@ -1,6 +1,5 @@
 import { View } from 'react-native'
 import Checkbox from 'expo-checkbox'
-import moment from 'moment'
 import {
   faCircleExclamation,
   faCircleInfo,
@@ -12,6 +11,7 @@ import Text from '@/components/ui/MyText'
 import Button from '@/components/ui/Button'
 import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
+import { formatDate } from '@/lib/dates'
 import { formatMinutes } from '@/lib/minutes'
 import type { MinuteDisplayFormat } from '@/types/timeEntry'
 import type { PreviewRow } from '@/features/notes-import/lib/buildNotesImportPreview'
@@ -87,7 +87,7 @@ export const rowSubtitle = (
   format: MinuteDisplayFormat
 ): string | undefined => {
   const parts: string[] = []
-  if (row.date) parts.push(moment(row.date).format('MMM D, YYYY'))
+  if (row.date) parts.push(formatDate(row.date, { style: 'medium' }))
   if (row.kind === 'timeEntry') {
     parts.push(formatMinutes(row.minutes ?? 0, format).formatted)
   }

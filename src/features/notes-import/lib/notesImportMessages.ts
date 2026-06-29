@@ -1,4 +1,5 @@
 import i18n from '@/lib/locales'
+import type { ImportCommitResult } from '@/lib/import/writeMappedData'
 import type { NotesImportErrorCode } from '@/features/notes-import/lib/notesImportClient'
 import type { NotesImportResult } from '@/features/notes-import/lib/notesImportTypes'
 
@@ -44,30 +45,60 @@ export const unavailableDetail = (
     : undefined
 }
 
+type CountKind = 'contact' | 'visit' | 'timeEntry'
+
+const COUNT_KEYS: Record<CountKind, readonly [string, string]> = {
+  contact: ['notesImport_contactCount', 'notesImport_contactCount_plural'],
+  visit: ['notesImport_visitCount', 'notesImport_visitCount_plural'],
+  timeEntry: [
+    'notesImport_timeEntryCount',
+    'notesImport_timeEntryCount_plural',
+  ],
+}
+
+/**
+ * "N contact(s)/visit(s)/time entr(y/ies)" via the locale's singular OR plural
+ * key.
+ */
+const countLabel = (kind: CountKind, count: number): string => {
+  const [singular, plural] = COUNT_KEYS[kind]
+  return i18n.t((count === 1 ? singular : plural) as 'notesImport_visitCount', {
+    count,
+  })
+}
+
+/** Joins present groups with ' · ', omitting any zero-count group. */
+const joinCounts = (parts: [CountKind, number][]): string =>
+  parts
+    .filter(([, n]) => n > 0)
+    .map(([kind, n]) => countLabel(kind, n))
+    .join(' · ')
+
 /**
  * Deterministic "3 contacts · 5 visits · 2 time entries" summary from a result.
  * Omits any zero-count group; returns '' when nothing was imported.
  */
 export const notesImportCountsLine = (result: NotesImportResult): string =>
-  [
-    result.contacts.length
-      ? i18n.t('notesImport_contactCount', { count: result.contacts.length })
-      : null,
-    result.visits.length
-      ? i18n.t('notesImport_visitCount', { count: result.visits.length })
-      : null,
-    result.timeEntries.length
-      ? i18n.t('notesImport_timeEntryCount', {
-          count: result.timeEntries.length,
-        })
-      : null,
-  ]
-    .filter((s): s is string => !!s)
-    .join(' · ')
+  joinCounts([
+    ['contact', result.contacts.length],
+    ['visit', result.visits.length],
+    ['timeEntry', result.timeEntries.length],
+  ])
+
+/**
+ * Like {@link notesImportCountsLine} but counts what a commit ACTUALLY inserted
+ * (after deselection + reconcile drops), so a success card never overstates a
+ * partial import.
+ */
+export const notesImportCommitCountsLine = (
+  commit: ImportCommitResult
+): string =>
+  joinCounts([
+    ['contact', commit.insertedContactIds.length],
+    ['visit', commit.insertedVisitIds.length],
+    ['timeEntry', commit.insertedTimeEntries.length],
+  ])
 
 /** Pluralized "N visit(s)" label. */
 export const visitCountLabel = (count: number): string =>
-  i18n.t(
-    count === 1 ? 'notesImport_visitCount' : 'notesImport_visitCount_plural',
-    { count }
-  )
+  countLabel('visit', count)

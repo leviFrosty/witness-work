@@ -192,6 +192,24 @@ export const writeMappedDataToStores = (
  * per commit. A builtin Category (LDC) the import seeded cannot be deleted (the
  * store hard-blocks it) and is intentionally left in place — it is shared
  * infra, not user data.
+ *
+ * Reference-aware (F44): the Accept-time reconcile (notes-import) dedupes a NEW
+ * import's contacts/categories against CURRENT local data BY NAME, so a later
+ * sibling import can be re-pointed onto a contact/category THIS commit inserted
+ * — its own visit/time-entry record then references our inserted id while its
+ * own id stays out of our commit. Blindly deleting every inserted id would
+ * orphan that sibling's live record (a visit pointing at a deleted contact, a
+ * time entry pointing at a deleted category). So before deleting we scan the
+ * stores for any visit/time entry that (a) references one of our inserted
+ * contacts/ categories and (b) is NOT itself part of this commit — those
+ * inserted records are KEPT, leaving the sibling's data intact.
+ *
+ * Accepted trade-off: if BOTH imports that share such a record are later
+ * undone, the shared contact/category survives both undos (each kept it for the
+ * other's record, but those records are gone by the time the second undo's
+ * keep-check ran). That is a benign leak the user can delete manually —
+ * strictly better than orphaning live data while a sibling import is still in
+ * place.
  */
 export const undoImport = (commit: ImportCommitResult): void => {
   const contacts = useContacts.getState()
@@ -199,7 +217,35 @@ export const undoImport = (commit: ImportCommitResult): void => {
   const serviceReport = useServiceReport.getState()
   const categories = useCategories.getState()
 
+  // Contacts referenced by a visit that is NOT part of this commit (a sibling
+  // import's, or the user's own) — deleting them would orphan that visit.
+  const ownVisitIds = new Set(commit.insertedVisitIds)
+  const externallyReferencedContactIds = new Set<string>()
+  for (const v of conversations.conversations) {
+    if (ownVisitIds.has(v.id)) continue
+    externallyReferencedContactIds.add(v.contact.id)
+  }
+
+  // Categories referenced by a time entry that is NOT part of this commit.
+  // Time entries are the ONLY import-inserted record that carries `categoryId`
+  // (Visit has no category; Plans do, but imports never create Plans), so
+  // scanning time entries fully covers what reconcile can re-point onto a
+  // category.
+  const ownTimeEntryIds = new Set(commit.insertedTimeEntries.map((e) => e.id))
+  const externallyReferencedCategoryIds = new Set<string>()
+  for (const year of Object.values(serviceReport.serviceReports)) {
+    for (const month of Object.values(year)) {
+      for (const entry of month) {
+        if (ownTimeEntryIds.has(entry.id)) continue
+        if (entry.categoryId)
+          externallyReferencedCategoryIds.add(entry.categoryId)
+      }
+    }
+  }
+
   for (const id of commit.insertedContactIds) {
+    // Kept: a sibling import (or the user) still has a visit on this contact.
+    if (externallyReferencedContactIds.has(id)) continue
     contacts.deleteContact(id)
     // Purge from the recycle bin too, so an undone import leaves no trace.
     contacts.removeDeletedContact(id)
@@ -208,7 +254,11 @@ export const undoImport = (commit: ImportCommitResult): void => {
   for (const entry of commit.insertedTimeEntries) {
     serviceReport.deleteServiceReport(entry)
   }
-  for (const id of commit.insertedCategoryIds) categories.deleteCategory(id)
+  for (const id of commit.insertedCategoryIds) {
+    // Kept: a sibling import still has a time entry pointing at this category.
+    if (externallyReferencedCategoryIds.has(id)) continue
+    categories.deleteCategory(id)
+  }
   for (const id of commit.insertedCustomFieldDefIds) {
     contacts.purgeCustomFieldDef(id)
   }

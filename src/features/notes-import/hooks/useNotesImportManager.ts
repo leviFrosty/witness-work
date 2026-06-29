@@ -231,6 +231,10 @@ export const useNotesImportManager = create<NotesImportManagerState>(
 
       runPromise
         .then((res) => {
+          // The run was torn down (stop/remove) mid-flight — its controller is
+          // aborted. Don't write the result: it would resurrect a stopped row,
+          // or re-create a deleted one as an empty Ready row with no notes.
+          if (controller.signal.aborted) return
           pendingRefinement.delete(hash)
           set({ credits: res.credits })
           putParsedResult(hash, res.result, Date.now())
@@ -266,8 +270,14 @@ export const useNotesImportManager = create<NotesImportManagerState>(
           }
         })
         .finally(() => {
-          inFlight.delete(hash)
-          controllers.delete(hash)
+          // Only clear bookkeeping THIS run still owns. stop()/remove() may have
+          // already torn this run down and a same-hash resubmit started a NEW
+          // run; blindly deleting here would orphan that newer run's controller
+          // (unabortable) and its in-flight guard (a duplicate concurrent run).
+          if (controllers.get(hash) === controller) {
+            controllers.delete(hash)
+            inFlight.delete(hash)
+          }
           get().hydrate()
           get().tick()
         })
@@ -288,7 +298,14 @@ export const useNotesImportManager = create<NotesImportManagerState>(
         for (const h of Object.keys(prevRuntimes)) {
           if (present.has(h)) runtimes[h] = prevRuntimes[h]
         }
-        set({ entries, runtimes, hydrated: true })
+        // Drop warnings for vanished rows too, or removed/cleared/pruned imports
+        // leak entries in this map for the life of the store.
+        const prevWarnings = get().reconcileWarnings
+        const reconcileWarnings: Record<string, MappedWarning[]> = {}
+        for (const h of Object.keys(prevWarnings)) {
+          if (present.has(h)) reconcileWarnings[h] = prevWarnings[h]
+        }
+        set({ entries, runtimes, reconcileWarnings, hydrated: true })
       },
 
       focus: () => {
@@ -375,7 +392,9 @@ export const useNotesImportManager = create<NotesImportManagerState>(
         try {
           const mapped = mapNotesImport(entry.result, {
             contentHash: hash,
-            importedAt: new Date(),
+            // Stable per-import clock (when the result was parsed) so synthesized
+            // fallback dates match what the preview showed and never drift.
+            importedAt: new Date(entry.parsedAt ?? entry.createdAt),
           })
           const snapshot = {
             contacts: useContacts.getState().contacts,

@@ -1,3 +1,4 @@
+import moment from 'moment'
 import useContacts from '@/stores/contactsStore'
 import useCategories from '@/stores/categories'
 import { usePreferences } from '@/stores/preferences'
@@ -15,19 +16,6 @@ import type {
 // heavy user. Dedupe quality degrades gracefully past this; the model just
 // can't match against contacts beyond the cap (it creates new ones + warns).
 const MAX_EXISTING_CONTACTS = 1000
-
-/** Local ISO-8601 with the device's UTC offset (e.g. 2026-06-18T09:30:00-05:00). */
-const localIsoWithOffset = (d: Date): string => {
-  const pad = (n: number) => String(n).padStart(2, '0')
-  const offsetMin = -d.getTimezoneOffset()
-  const sign = offsetMin >= 0 ? '+' : '-'
-  const abs = Math.abs(offsetMin)
-  const offset = `${sign}${pad(Math.floor(abs / 60))}:${pad(abs % 60)}`
-  return (
-    `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}` +
-    `T${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}${offset}`
-  )
-}
 
 const resolveTimeZone = (): string => {
   try {
@@ -77,7 +65,9 @@ export const buildNotesImportContext = (
   ]
 
   return {
-    now: localIsoWithOffset(now),
+    // moment's default format is local ISO-8601 with the UTC offset
+    // (e.g. 2026-06-18T09:30:00-05:00) — exactly the shape the model expects.
+    now: moment(now).format(),
     timeZone: resolveTimeZone(),
     currentRole: role,
     existingContacts,

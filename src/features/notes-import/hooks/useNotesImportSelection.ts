@@ -22,12 +22,14 @@ import type { NotesImportResult } from '@/features/notes-import/lib/notesImportT
  * state. Record ids are hash-derived, so the selection stays valid across the
  * separate `mapNotesImport` call the manager makes at Accept.
  *
- * `resultToken` (the entry's `parsedAt`) is the recompute/reset key — NOT the
- * `result` object reference. The manager's `hydrate()` rebuilds every ledger
- * entry (and `entry.result`) as a fresh object on each call, fired by unrelated
- * background queue activity; keying on the reference would silently wipe the
- * user's in-progress deselections. Keying on `parsedAt` resets the selection
- * only on a genuine new parse (a refinement landing).
+ * The selection RESET keys on `(contentHash, resultToken)` — NOT the `result`
+ * object reference. The manager's `hydrate()` rebuilds every ledger entry (and
+ * `entry.result`) as a fresh object on each call, fired by unrelated background
+ * queue activity; resetting on that reference would silently wipe the user's
+ * in-progress deselections. Keying the reset on `(contentHash, parsedAt)` fires
+ * only on a genuine new parse (a refinement landing) or a switch to a different
+ * import. (`resultToken` is the entry's `parsedAt`; it also seeds the mapper's
+ * clock so synthesized fallback dates match what Accept later commits.)
  */
 export const useNotesImportSelection = (
   result: NotesImportResult,
@@ -45,7 +47,9 @@ export const useNotesImportSelection = (
   const { mapped, preview, initialSelection } = useMemo(() => {
     const m = mapNotesImport(result, {
       contentHash,
-      importedAt: new Date(),
+      // Stable per-parse clock so synthesized fallback dates match what Accept
+      // commits (the manager maps again from the same `parsedAt`).
+      importedAt: new Date(resultToken),
     })
     const built = buildNotesImportPreview(m)
     return {
@@ -53,21 +57,22 @@ export const useNotesImportSelection = (
       preview: built.preview,
       initialSelection: built.selection,
     }
-  }, [result, contentHash])
+  }, [result, contentHash, resultToken])
 
   const [selection, setSelection] = useState<PreviewSelection>(initialSelection)
 
-  // Reset the selection ONLY on a genuine new parse (parsedAt changed) — never on
-  // the reference churn of an unrelated background hydrate(). The memo above may
-  // recompute a fresh (content-identical) preview on every hydrate, but the
-  // user's in-progress deselections survive because the reset keys on the token.
-  const tokenRef = useRef(resultToken)
+  // Reset the selection on a genuine new parse (parsedAt changed) OR a switch to
+  // a different import (contentHash changed) — never on the reference churn of an
+  // unrelated background hydrate(). Keying on parsedAt alone would miss a switch
+  // between two imports that happened to parse in the same millisecond.
+  const resetKey = `${contentHash}:${resultToken}`
+  const resetKeyRef = useRef(resetKey)
   useEffect(() => {
-    if (tokenRef.current !== resultToken) {
-      tokenRef.current = resultToken
+    if (resetKeyRef.current !== resetKey) {
+      resetKeyRef.current = resetKey
       setSelection(initialSelection)
     }
-  }, [resultToken, initialSelection])
+  }, [resetKey, initialSelection])
 
   const toggleRow = useCallback((id: string) => {
     setSelection((s) => toggleRowSelection(s, id))

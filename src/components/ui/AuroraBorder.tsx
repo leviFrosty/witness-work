@@ -1,4 +1,4 @@
-import { PropsWithChildren, useState } from 'react'
+import { PropsWithChildren, useEffect, useState } from 'react'
 import { LayoutChangeEvent, StyleProp, View, ViewStyle } from 'react-native'
 import {
   BlurMask,
@@ -67,11 +67,19 @@ const AuroraBorder: React.FC<PropsWithChildren<Props>> = ({
   const time = useSharedValue(0)
   const reduceMotion = useReducedMotion()
 
-  useFrameCallback((frame) => {
+  const frameCallback = useFrameCallback((frame) => {
     'worklet'
     if (reduceMotion) return
     time.value = frame.timeSinceFirstFrame / 1000
   })
+
+  // Deactivate the per-frame callback entirely under Reduce Motion (so it isn't
+  // burning a frame callback only to early-return inside the worklet), and react
+  // to a runtime toggle of the setting. The worklet's own `reduceMotion` guard
+  // stays as a belt-and-suspenders.
+  useEffect(() => {
+    frameCallback.setActive(!reduceMotion)
+  }, [reduceMotion, frameCallback])
 
   const handleLayout = (e: LayoutChangeEvent) => {
     const { width: w, height: h } = e.nativeEvent.layout

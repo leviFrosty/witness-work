@@ -67,62 +67,83 @@ const indexByName = (
   return byName
 }
 
+type WarningKind = NonNullable<MappedWarning['target']>['kind']
+
+/**
+ * Re-points a set of NEW records onto uniquely-named existing records: a unique
+ * name match drops the record from the insert set and records the remap; an
+ * ambiguous match (two existing records share the name) keeps it and raises a
+ * warning. `skip` opts a record out of matching entirely (e.g. the shared LDC
+ * builtin, already deduped by id).
+ */
+const reconcileRecords = <T extends { id: string; name: string }>(
+  records: T[],
+  snapshot: { id: string; name: string }[],
+  opts: {
+    skip?: (record: T) => boolean
+    warningKind: WarningKind
+    warningIdPrefix: string
+    ambiguousMessage: (name: string) => string
+  }
+): { kept: T[]; remap: Map<string, string>; warnings: MappedWarning[] } => {
+  const byName = indexByName(snapshot)
+  const remap = new Map<string, string>() // mapped id → existing id
+  const kept: T[] = []
+  const warnings: MappedWarning[] = []
+  for (const r of records) {
+    if (opts.skip?.(r)) {
+      kept.push(r)
+      continue
+    }
+    const matches = (byName.get(normalizeReconcileName(r.name)) ?? []).filter(
+      (id) => id !== r.id
+    )
+    if (matches.length === 1) {
+      remap.set(r.id, matches[0]) // attach to existing — don't insert
+      continue
+    }
+    kept.push(r)
+    if (matches.length > 1) {
+      warnings.push({
+        id: `${opts.warningIdPrefix}${r.id}`,
+        severity: 'warning',
+        message: opts.ambiguousMessage(r.name),
+        target: { kind: opts.warningKind, id: r.id },
+      })
+    }
+  }
+  return { kept, remap, warnings }
+}
+
 export const reconcileMappedImport = (
   mapped: MappedImport,
   snapshot: ReconcileSnapshot,
   messages: ReconcileMessages = DEFAULT_MESSAGES
 ): ReconcileResult => {
-  const warnings: MappedWarning[] = []
-
   // --- Contacts ---
-  const contactsByName = indexByName(snapshot.contacts)
-  const contactRemap = new Map<string, string>() // mapped id → existing id
-  const keptContacts: Contact[] = []
-  for (const c of mapped.contacts) {
-    const matches = (
-      contactsByName.get(normalizeReconcileName(c.name)) ?? []
-    ).filter((id) => id !== c.id)
-    if (matches.length === 1) {
-      contactRemap.set(c.id, matches[0]) // attach to existing — don't insert
-      continue
-    }
-    keptContacts.push(c)
-    if (matches.length > 1) {
-      warnings.push({
-        id: `reconcile-c-${c.id}`,
-        severity: 'warning',
-        message: messages.ambiguousContact(c.name),
-        target: { kind: 'contact', id: c.id },
-      })
-    }
-  }
+  const {
+    kept: keptContacts,
+    remap: contactRemap,
+    warnings: contactWarnings,
+  } = reconcileRecords(mapped.contacts, snapshot.contacts, {
+    warningKind: 'contact',
+    warningIdPrefix: 'reconcile-c-',
+    ambiguousMessage: messages.ambiguousContact,
+  })
 
   // --- Categories (the shared LDC builtin already dedupes by id — leave it) ---
-  const categoriesByName = indexByName(snapshot.categories)
-  const categoryRemap = new Map<string, string>()
-  const keptCategories: Category[] = []
-  for (const c of mapped.categories) {
-    if (c.id === LDC_BUILTIN_CATEGORY_ID) {
-      keptCategories.push(c)
-      continue
-    }
-    const matches = (
-      categoriesByName.get(normalizeReconcileName(c.name)) ?? []
-    ).filter((id) => id !== c.id)
-    if (matches.length === 1) {
-      categoryRemap.set(c.id, matches[0])
-      continue
-    }
-    keptCategories.push(c)
-    if (matches.length > 1) {
-      warnings.push({
-        id: `reconcile-cat-${c.id}`,
-        severity: 'warning',
-        message: messages.ambiguousCategory(c.name),
-        target: { kind: 'category', id: c.id },
-      })
-    }
-  }
+  const {
+    kept: keptCategories,
+    remap: categoryRemap,
+    warnings: categoryWarnings,
+  } = reconcileRecords(mapped.categories, snapshot.categories, {
+    skip: (c) => c.id === LDC_BUILTIN_CATEGORY_ID,
+    warningKind: 'category',
+    warningIdPrefix: 'reconcile-cat-',
+    ambiguousMessage: messages.ambiguousCategory,
+  })
+
+  const warnings: MappedWarning[] = [...contactWarnings, ...categoryWarnings]
 
   // --- Re-point references onto the matched existing records ---
   const visits = contactRemap.size

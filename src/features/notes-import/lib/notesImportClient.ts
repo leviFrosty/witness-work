@@ -35,7 +35,12 @@ import * as AppAttest from '../../../../modules/app-attest'
  */
 
 const DEV_BYPASS_TOKEN = process.env.EXPO_PUBLIC_NOTES_IMPORT_DEV_BYPASS || ''
-const DEV_IMPORTS_UNLIMITED = __DEV__ && DEV_BYPASS_TOKEN.length > 0
+// Hard-gate the App Attest dev-bypass on __DEV__ so a production bundle can NEVER
+// skip attestation, even if the bypass env var leaks into a release build. (The
+// dev worker also has to honor the header — production rejects it — but
+// client-side defense-in-depth is cheap.)
+const DEV_BYPASS_ENABLED = __DEV__ && DEV_BYPASS_TOKEN.length > 0
+const DEV_IMPORTS_UNLIMITED = DEV_BYPASS_ENABLED
 const REQUEST_TIMEOUT_MS = 90_000
 
 export type { NotesImportCredits } from '@/features/notes-import/lib/notesImportUsage'
@@ -168,21 +173,37 @@ const getChallenge = async (): Promise<string> => {
  * re-attests even if a keyId is cached (used when the server reports it doesn't
  * know the key).
  */
+let _attestInFlight: Promise<string> | null = null
+
 const ensureAttested = async (uuid: string, force = false): Promise<string> => {
   const cached = attestStore().getString(KEY_ID_KEY)
   if (cached && !force) return cached
+  // Coalesce concurrent first-time attestations so two simultaneous kickoffs
+  // don't each burn a Secure Enclave key + attest round-trip (and leave the
+  // cache pointing at only one of them). `force` re-attests unconditionally.
+  if (!force && _attestInFlight) return _attestInFlight
 
-  const keyId = await AppAttest.generateKey()
-  const challenge = await getChallenge()
-  const clientDataHash = await base64Sha256(challenge)
-  const attestation = await AppAttest.attestKey(keyId, clientDataHash)
-  await axios.post(
-    apis.notesImportAttest,
-    { keyId, attestation, challenge, uuid },
-    { timeout: REQUEST_TIMEOUT_MS }
-  )
-  attestStore().set(KEY_ID_KEY, keyId)
-  return keyId
+  const run = (async (): Promise<string> => {
+    const keyId = await AppAttest.generateKey()
+    const challenge = await getChallenge()
+    const clientDataHash = await base64Sha256(challenge)
+    const attestation = await AppAttest.attestKey(keyId, clientDataHash)
+    await axios.post(
+      apis.notesImportAttest,
+      { keyId, attestation, challenge, uuid },
+      { timeout: REQUEST_TIMEOUT_MS }
+    )
+    attestStore().set(KEY_ID_KEY, keyId)
+    return keyId
+  })()
+
+  if (force) return run
+  _attestInFlight = run
+  try {
+    return await run
+  } finally {
+    if (_attestInFlight === run) _attestInFlight = null
+  }
 }
 
 /**
@@ -242,7 +263,7 @@ const postAttested = async <T>(
   uuid: string,
   contentHash: string
 ): Promise<T> => {
-  if (DEV_BYPASS_TOKEN) {
+  if (DEV_BYPASS_ENABLED) {
     const { data } = await axios.post<T>(url, baseBody, {
       timeout: REQUEST_TIMEOUT_MS,
       headers: { 'x-ww-dev-bypass': DEV_BYPASS_TOKEN },
@@ -477,13 +498,14 @@ export const consumeStream = async (
 /** Final-result snapshot for reconnect after the stream closed. */
 export const fetchNotesImportResult = async (
   importId: string,
-  subscribeToken: string
+  subscribeToken: string,
+  signal?: AbortSignal
 ): Promise<ResultSnapshot> => {
   const { data } = await axios.get<WireResultSnapshot>(
     `${apis.notesImportResult(importId)}?token=${encodeURIComponent(
       subscribeToken
     )}`,
-    { timeout: 15_000 }
+    { timeout: 15_000, signal }
   )
   return {
     ...data,
@@ -497,33 +519,6 @@ export const fetchNotesImportResult = async (
 export interface NotesImportRunHandle {
   importId: string
   subscribeToken: string
-}
-
-/**
- * Interrupt a running import server-side: aborts the in-flight model call so it
- * stops spending tokens AND — because the credit is only charged on success —
- * is never billed. Authorized by the same `?token=` capability as the result
- * snapshot (cancel can't spend inference, so it needs no App Attest).
- * Best-effort and fire-and-forget: swallows errors, since the only cost of a
- * missed cancel is the pre-existing behavior (the abandoned run finishes and
- * charges). Used by the "edit & resend" flow before kicking off the edited
- * import.
- */
-export const cancelNotesImport = async (
-  run: NotesImportRunHandle
-): Promise<void> => {
-  try {
-    await axios.post(
-      `${apis.notesImportCancel(run.importId)}?token=${encodeURIComponent(
-        run.subscribeToken
-      )}`,
-      undefined,
-      { timeout: 10_000 }
-    )
-  } catch {
-    // Best-effort: a failed cancel just falls back to the run completing as it
-    // would have before this endpoint existed.
-  }
 }
 
 /**
@@ -585,6 +580,7 @@ const streamRunToCompletion = async (
     if (signal?.aborted) {
       throw new NotesImportClientError('unknown', 'Import cancelled')
     }
+    const cursorBefore = lastEventId
     let outcome: StreamOutcome
     try {
       outcome = await consumeStream(
@@ -610,11 +606,22 @@ const streamRunToCompletion = async (
       )
     }
 
+    // The connection delivered new events before dropping — it's healthy, just
+    // flaky — so reset the consecutive-failure counter. Otherwise `attempts`
+    // would count total drops over a long run and abort a healthy import.
+    if (lastEventId !== cursorBefore) attempts = 0
+
     // Stream dropped without a terminal event (e.g. iOS backgrounding). Prefer
     // a result snapshot; otherwise reconnect from the last seen event id.
-    const snap = await fetchNotesImportResult(importId, subscribeToken).catch(
-      () => null
-    )
+    const snap = await fetchNotesImportResult(
+      importId,
+      subscribeToken,
+      signal
+    ).catch(() => null)
+    // A cancel/stop during the snapshot fetch must not resolve as a success.
+    if (signal?.aborted) {
+      throw new NotesImportClientError('unknown', 'Import cancelled')
+    }
     if (snap?.status === 'done' && snap.payload) return snap.payload
     if (snap?.status === 'error' && snap.error) {
       throw new NotesImportClientError(

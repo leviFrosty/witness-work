@@ -1,11 +1,7 @@
 import { useState } from 'react'
 import { TextInput, View } from 'react-native'
 import { Spinner } from 'tamagui'
-import {
-  faArrowUp,
-  faCheck,
-  faCircleExclamation,
-} from '@fortawesome/free-solid-svg-icons'
+import { faArrowUp, faCheck } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
 import AuroraBorder from '@/components/ui/AuroraBorder'
 import Button from '@/components/ui/Button'
@@ -92,7 +88,6 @@ interface Props {
   instruction: string
   lastAppliedInstruction: string
   refining: boolean
-  errorMessage?: string
   onChangeInstruction: (value: string) => void
   onSubmit: () => void
 }
@@ -107,7 +102,6 @@ const NotesImportRefinementComposer = ({
   instruction,
   lastAppliedInstruction,
   refining,
-  errorMessage,
   onChangeInstruction,
   onSubmit,
 }: Props) => {
@@ -227,34 +221,6 @@ const NotesImportRefinementComposer = ({
           {sendButton}
         </View>
       </AuroraBorder>
-
-      {!!errorMessage && !refining && (
-        <View
-          accessibilityLiveRegion='polite'
-          style={{
-            flexDirection: 'row',
-            alignItems: 'flex-start',
-            gap: 7,
-            paddingHorizontal: 4,
-          }}
-        >
-          <FontAwesomeIcon
-            icon={faCircleExclamation}
-            size={13}
-            color={theme.colors.error}
-            style={{ marginTop: 2 }}
-          />
-          <Text
-            style={{
-              flex: 1,
-              color: theme.colors.error,
-              fontSize: theme.fontSize('sm'),
-            }}
-          >
-            {errorMessage}
-          </Text>
-        </View>
-      )}
     </View>
   )
 }

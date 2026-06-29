@@ -154,3 +154,151 @@ describe('undoImport', () => {
     expect(usePreferences.getState().tenureStartDate).toBeNull()
   })
 })
+
+const allTimeEntries = () => {
+  const reports = useServiceReport.getState().serviceReports
+  return Object.values(reports).flatMap((y) => Object.values(y).flat())
+}
+
+// F44: the Accept-time reconcile can re-point import B's visit/time entry onto a
+// contact/category that import A inserted (matched by name). Undoing A must not
+// delete a record B still references — otherwise B's live data is orphaned.
+describe('undoImport — reference-aware retention (F44)', () => {
+  it('keeps a contact a sibling import still references on its own visit', () => {
+    // Import A: inserts contact + visit on it.
+    const commitA = writeMappedDataToStores(
+      {
+        ...emptyMapped(),
+        contacts: [aContact('A_maria', 'Maria')],
+        visits: [
+          {
+            id: 'A_visit_june1',
+            contact: { id: 'A_maria' },
+            date: AT,
+            isBibleStudy: false,
+          },
+        ],
+      },
+      { publisherMode: 'overwrite' }
+    )
+
+    // Import B: reconcile already re-pointed B's Maria onto A's contact, so B
+    // inserts NO contact, just a visit referencing the shared id.
+    const commitB = writeMappedDataToStores(
+      {
+        ...emptyMapped(),
+        visits: [
+          {
+            id: 'B_visit_june8',
+            contact: { id: 'A_maria' },
+            date: AT,
+            isBibleStudy: false,
+          },
+        ],
+      },
+      { publisherMode: 'overwrite' }
+    )
+    expect(commitB.insertedContactIds).toEqual([])
+    expect(commitB.insertedVisitIds).toEqual(['B_visit_june8'])
+
+    undoImport(commitA)
+
+    // Shared contact kept (B still needs it), A's own visit gone…
+    expect(useContacts.getState().contacts.map((c) => c.id)).toEqual([
+      'A_maria',
+    ])
+    const visits = useConversations.getState().conversations
+    expect(visits.map((v) => v.id)).toEqual(['B_visit_june8'])
+    // …and B's visit is NOT orphaned — it still resolves to a live contact.
+    expect(visits[0].contact.id).toBe('A_maria')
+  })
+
+  it('keeps a category a sibling import still references on its own time entry', () => {
+    // Import A: inserts category + a time entry using it.
+    const commitA = writeMappedDataToStores(
+      {
+        ...emptyMapped(),
+        categories: [{ id: 'A_cat', name: 'Bethel', isCredit: true }],
+        timeEntries: [
+          {
+            id: 'A_entry',
+            hours: 1,
+            minutes: 0,
+            date: AT,
+            categoryId: 'A_cat',
+          },
+        ],
+      },
+      { publisherMode: 'overwrite' }
+    )
+
+    // Import B: reconcile re-pointed B's category onto A's, so B inserts NO
+    // category, just a time entry referencing the shared id.
+    const commitB = writeMappedDataToStores(
+      {
+        ...emptyMapped(),
+        timeEntries: [
+          {
+            id: 'B_entry',
+            hours: 2,
+            minutes: 0,
+            date: AT,
+            categoryId: 'A_cat',
+          },
+        ],
+      },
+      { publisherMode: 'overwrite' }
+    )
+    expect(commitB.insertedCategoryIds).toEqual([])
+    expect(commitB.insertedTimeEntries.map((e) => e.id)).toEqual(['B_entry'])
+
+    undoImport(commitA)
+
+    // Shared category kept, A's own entry gone…
+    expect(useCategories.getState().categories.map((c) => c.id)).toEqual([
+      'A_cat',
+    ])
+    const entries = allTimeEntries()
+    expect(entries.map((e) => e.id)).toEqual(['B_entry'])
+    // …and B's entry is NOT orphaned.
+    expect(entries[0].categoryId).toBe('A_cat')
+  })
+
+  it('still fully deletes when only this commit references its records', () => {
+    // No sibling import — the inserted contact/category are referenced solely by
+    // this commit's own visit/time entry. Guards against a false "externally
+    // referenced" positive from the commit's own records.
+    const commit = writeMappedDataToStores(
+      {
+        ...emptyMapped(),
+        contacts: [aContact('solo_c', 'Solo')],
+        visits: [
+          {
+            id: 'solo_v',
+            contact: { id: 'solo_c' },
+            date: AT,
+            isBibleStudy: false,
+          },
+        ],
+        categories: [{ id: 'solo_cat', name: 'Bethel', isCredit: true }],
+        timeEntries: [
+          {
+            id: 'solo_t',
+            hours: 1,
+            minutes: 0,
+            date: AT,
+            categoryId: 'solo_cat',
+          },
+        ],
+      },
+      { publisherMode: 'overwrite' }
+    )
+
+    undoImport(commit)
+
+    expect(useContacts.getState().contacts).toHaveLength(0)
+    expect(useConversations.getState().conversations).toHaveLength(0)
+    expect(useCategories.getState().categories).toHaveLength(0)
+    expect(allTimeEntries()).toHaveLength(0)
+  })
+})

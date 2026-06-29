@@ -87,8 +87,15 @@ export interface ResolvedFormatSettings {
 
 const safeLocaleData = (key: string | undefined): moment.Locale | null => {
   if (!key) return null
+  const loaded = moment.locales()
+  const safeKey = loaded.includes(key)
+    ? key
+    : loaded.includes(key.split('-')[0])
+      ? key.split('-')[0]
+      : null
+  if (!safeKey) return null
   try {
-    return moment.localeData(key) ?? null
+    return moment.localeData(safeKey) ?? null
   } catch {
     return null
   }

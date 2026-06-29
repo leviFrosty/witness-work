@@ -152,6 +152,16 @@ describe('applyFormatRegion', () => {
     expect(moment.locale()).toBe('en')
   })
 
+  it('never lazy-requires an unbundled region key when reading format data', () => {
+    // Regression for JW-TIME-CH: persisted/device regions like `es-es` are not
+    // separate moment bundles. Reading localeData for the full key can trigger
+    // Metro's fatal dynamic require; use an already-loaded base locale instead.
+    expect(() =>
+      applyFormatRegion({ language: 'en', region: 'es-es' })
+    ).not.toThrow()
+    expect(sample().format('L')).toBe('11/06/2026')
+  })
+
   it('falls back to device calendar settings when Region is Auto', () => {
     device.uses24hourClock = true
     device.firstWeekday = 2 // expo MONDAY

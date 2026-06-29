@@ -2,6 +2,9 @@ packages:
   - '.'
 nodeLinker: hoisted
 minimumReleaseAge: 10080
+minimumReleaseAgeExclude:
+  - typescript
+  - '@typescript/*'
 allowBuilds:
   '@sentry/cli': true
   '@shopify/react-native-skia': true

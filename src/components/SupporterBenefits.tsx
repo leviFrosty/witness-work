@@ -2,9 +2,10 @@ import { View } from 'react-native'
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
 import {
   faCloudArrowUp,
+  faFileLines,
   faIcons,
   faPalette,
-  faWandMagicSparkles,
+  faPlus,
 } from '@fortawesome/free-solid-svg-icons'
 import { IconProp } from '@fortawesome/fontawesome-svg-core'
 import useTheme from '@/contexts/theme'
@@ -148,6 +149,11 @@ const SupporterBenefits = ({ compact }: Props) => {
           {i18n.t('supporterPerksLabel')}
         </Text> */}
         <PerkRow
+          icon={faFileLines}
+          title={i18n.t('supporterPerkAiTitle')}
+          desc={i18n.t('supporterPerkAiDesc')}
+        />
+        <PerkRow
           icon={faPalette}
           title={i18n.t('supporterPerkAccentTitle')}
           desc={i18n.t('supporterPerkAccentDesc')}
@@ -158,7 +164,7 @@ const SupporterBenefits = ({ compact }: Props) => {
           desc={i18n.t('supporterPerkAppIconDesc')}
         />
         <PerkRow
-          icon={faWandMagicSparkles}
+          icon={faPlus}
           title={i18n.t('supporterPerkMoreTitle')}
           desc={i18n.t('supporterPerkMoreDesc')}
         />

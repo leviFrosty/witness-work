@@ -31,6 +31,8 @@ const LOCAL_MODULES = [
   { importName: 'WidgetBridge', className: 'WidgetBridgeModule' },
   { importName: 'StopwatchBridge', className: 'StopwatchBridgeModule' },
   { importName: 'ICloudBridge', className: 'ICloudBridgeModule' },
+  { importName: 'KeychainUuid', className: 'KeychainUuidModule' },
+  { importName: 'AppAttest', className: 'AppAttestModule' },
 ]
 
 const IMPORT_MARKER = '// with-force-load-local-modules:imports'

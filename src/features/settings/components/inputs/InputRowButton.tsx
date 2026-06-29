@@ -22,6 +22,10 @@ interface Props {
     | 'space-evenly'
     | undefined
   onPress?: ((event: GestureResponderEvent) => void) | undefined
+  /** When true, dims the row and blocks the press. */
+  disabled?: boolean
+  /** Optional secondary line under the label (e.g. a reason it's disabled). */
+  sublabel?: string
   style?: ViewStyle
 }
 
@@ -32,6 +36,8 @@ const InputRowButton: React.FC<PropsWithChildren<Props>> = ({
   label,
   justifyContent,
   onPress,
+  disabled,
+  sublabel,
   style,
   leftIcon,
 }: Props) => {
@@ -40,6 +46,7 @@ const InputRowButton: React.FC<PropsWithChildren<Props>> = ({
   return (
     <Button
       noTransform
+      disabled={disabled}
       style={{
         flexDirection: 'row',
         borderColor: theme.colors.border,
@@ -50,17 +57,26 @@ const InputRowButton: React.FC<PropsWithChildren<Props>> = ({
         flexGrow: 1,
         justifyContent: justifyContent ?? 'space-between',
         gap: 15,
+        opacity: disabled ? 0.4 : 1,
         ...style,
       }}
       onPress={onPress}
     >
       <View style={{ flexDirection: 'row', gap: 8, alignItems: 'center' }}>
         {leftIcon && <IconButton icon={leftIcon} />}
-        <Text
-          style={{ fontFamily: theme.fonts.semiBold, flexDirection: 'column' }}
-        >
-          {label}
-        </Text>
+        <View style={{ flexDirection: 'column', flexShrink: 1 }}>
+          <Text style={{ fontFamily: theme.fonts.semiBold }}>{label}</Text>
+          {sublabel && (
+            <Text
+              style={{
+                fontSize: theme.fontSize('xs'),
+                color: theme.colors.textAlt,
+              }}
+            >
+              {sublabel}
+            </Text>
+          )}
+        </View>
       </View>
       {children}
     </Button>

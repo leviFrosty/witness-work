@@ -434,7 +434,7 @@ try {
 
   console.log('')
   info('Next steps:')
-  info(`   git push origin development --follow-tags`)
+  info(`   git push origin main --follow-tags`)
   info(`   → This will trigger the production build workflow`)
 
   console.log('')

@@ -2,6 +2,7 @@ import { ReactNode, useEffect, useRef, useState } from 'react'
 import {
   Modal,
   Pressable,
+  ScrollView,
   StatusBar,
   StyleProp,
   useWindowDimensions,
@@ -23,7 +24,17 @@ export type ResolveAnchorPosition = (args: {
   windowWidth: number
   windowHeight: number
   contentWidth: number
-}) => { top?: number; bottom?: number; left: number }
+}) => {
+  top?: number
+  bottom?: number
+  left: number
+  /**
+   * Caps the content's height and scrolls any overflow, so a tall popover
+   * anchored near a screen edge stays fully on-screen. Omit to size to content
+   * (the default — unconstrained, no scroll).
+   */
+  maxHeight?: number
+}
 
 interface Props {
   /**
@@ -140,7 +151,12 @@ const AnchoredPopover = ({
 
   const close = () => setOpen(false)
 
-  const positionStyle: { top?: number; bottom?: number; left: number } = anchor
+  const positionStyle: {
+    top?: number
+    bottom?: number
+    left: number
+    maxHeight?: number
+  } = anchor
     ? resolvePosition({
         anchor,
         windowWidth: dims.width,
@@ -148,6 +164,13 @@ const AnchoredPopover = ({
         contentWidth,
       })
     : { top: 0, left: 0 }
+
+  // When the resolver caps the height, the content scrolls inside the cap so it
+  // never spills off-screen; padding/gap move onto the scroll content so the
+  // bar/sections keep their spacing. Otherwise the popover sizes to content.
+  const { maxHeight, ...placement } = positionStyle
+  const content =
+    typeof children === 'function' ? children({ close }) : children
 
   const backdropAnimatedStyle = useAnimatedStyle(() => ({
     opacity: progress.value,
@@ -192,19 +215,32 @@ const AnchoredPopover = ({
               borderWidth: 1,
               borderColor: theme.colors.border,
               backgroundColor: theme.colors.card,
-              padding: 12,
               shadowColor: '#000',
               shadowOffset: { width: 0, height: 4 },
               shadowOpacity: 0.15,
               shadowRadius: 12,
               elevation: 8,
             },
-            contentStyle,
-            positionStyle,
+            // A capped popover clips its scroll content to the rounded corners;
+            // an uncapped one keeps padding on the box and renders children flat.
+            maxHeight != null
+              ? { overflow: 'hidden' }
+              : [{ padding: 12 }, contentStyle],
+            placement,
             contentAnimatedStyle,
           ]}
         >
-          {typeof children === 'function' ? children({ close }) : children}
+          {maxHeight != null ? (
+            <ScrollView
+              style={{ maxHeight }}
+              contentContainerStyle={[{ padding: 12 }, contentStyle]}
+              showsVerticalScrollIndicator
+            >
+              {content}
+            </ScrollView>
+          ) : (
+            content
+          )}
         </Animated.View>
         <StatusBar translucent />
       </Modal>

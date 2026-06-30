@@ -21,6 +21,7 @@ import Animated, {
 } from 'react-native-reanimated'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import * as Clipboard from 'expo-clipboard'
+import LottieView from 'lottie-react-native'
 import Haptics from '@/lib/haptics'
 import {
   useFocusEffect,
@@ -57,7 +58,10 @@ import NotesImportHistoryPopover, {
   isInProgress,
 } from '@/features/notes-import/components/NotesImportHistoryPopover'
 import { useOnboardingHandoff } from '@/stores/onboardingHandoff'
-import { NotesImportRefinementHistory } from '@/features/notes-import/components/NotesImportRefinementComposer'
+import {
+  NotesImportRefinementBubble,
+  notesImportUserBubbleStyle,
+} from '@/features/notes-import/components/NotesImportRefinementBubble'
 import NotesImportUsage, {
   type RenderNotesImportSupporterCta,
 } from '@/features/notes-import/components/NotesImportUsage'
@@ -145,6 +149,7 @@ const NotesImportComposerScreen = ({ renderSupporterCta }: Props) => {
   const reconcileWarningsMap = useNotesImportManager((s) => s.reconcileWarnings)
   const submit = useNotesImportManager((s) => s.submit)
   const refine = useNotesImportManager((s) => s.refine)
+  const interruptAndRefine = useNotesImportManager((s) => s.interruptAndRefine)
   const accept = useNotesImportManager((s) => s.accept)
   const markViewed = useNotesImportManager((s) => s.markViewed)
   const undo = useNotesImportManager((s) => s.undo)
@@ -158,8 +163,12 @@ const NotesImportComposerScreen = ({ renderSupporterCta }: Props) => {
   // user paste into a feature that will only reject the import server-side.
   const availability = useNotesImportAvailability()
 
-  const [text, setText] = useState('')
-  const [instruction, setInstruction] = useState('')
+  // A single draft buffer backs the footer input across every mode (new import,
+  // refine, interrupt-refine). Keeping ONE source of truth is what fixes
+  // follow-up text from vanishing when a reply settles: the input's mode flips
+  // (e.g. an empty/errored result swaps refine → new-import), but the buffer it
+  // reads never changes, so half-typed text survives the transition.
+  const [draft, setDraft] = useState('')
   // The route's `hash` param is the single source of truth for which import is
   // on screen. The header's History popover swaps it with `setParams` (a param
   // merge, not a screen navigation), so loading a past import never grows the
@@ -168,11 +177,25 @@ const NotesImportComposerScreen = ({ renderSupporterCta }: Props) => {
   const [helpOpen, setHelpOpen] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [committing, setCommitting] = useState(false)
+  // The hash whose commit just landed in THIS session. Gates the celebratory
+  // success screen (animated checkmark + home/import-another CTAs) so it fires
+  // only on a fresh import — reopening an already-imported row from history
+  // keeps the calmer "already added" card instead of re-celebrating.
+  const [celebratedHash, setCelebratedHash] = useState<string | null>(null)
   // Synchronous double-tap latch for commit(): the async `committing` state
   // can't gate a second tap that lands in the same frame (before the re-render),
   // and a second accept would see the row already non-Ready and pop a spurious
   // error even though the first import succeeded.
   const committingRef = useRef(false)
+  // Synchronous double-tap latch for the interrupt-and-refine Send: its manager
+  // guard (state === 'working') stays true right after it re-opens the row, so —
+  // unlike a plain refine, which the ready-state guard naturally blocks — a second
+  // tap in the same frame would tear the new run down and duplicate the thread turn.
+  const interruptingRef = useRef(false)
+  // editPrompt lifts a sent message back into a fresh composer. It stashes the
+  // text here so the routeHash reset effect SEEDS the draft with it instead of
+  // clearing — the two fire off the same `setParams({ hash: undefined })`.
+  const pendingDraftRef = useRef<string | null>(null)
   const scrollRef = useRef<ScrollView | null>(null)
   const inputRef = useRef<TextInput | null>(null)
   const autoScrollRef = useRef(false)
@@ -228,7 +251,10 @@ const NotesImportComposerScreen = ({ renderSupporterCta }: Props) => {
   // newest message rather than the intro, and — when clearing back to a blank
   // composer — refocus the input for an immediate paste.
   useEffect(() => {
-    setInstruction('')
+    // editPrompt preloads the box with the message being edited; every other
+    // route swap (history select, New Import) clears the per-view draft.
+    setDraft(pendingDraftRef.current ?? '')
+    pendingDraftRef.current = null
     pendingBottomRef.current = true
     if (!routeHash) requestAnimationFrame(() => inputRef.current?.focus())
   }, [routeHash])
@@ -330,12 +356,14 @@ const NotesImportComposerScreen = ({ renderSupporterCta }: Props) => {
 
   const canConfirm =
     !committing && (committedIds.size > 0 || committed.publisher != null)
-  // A run in flight locks the composer until it settles (or is stopped/edited,
-  // both of which end the run and free the input). The composer is also locked
-  // while the proxy reports the feature down — there's nothing to send to. The
-  // probe is optimistic (available until it definitively reports otherwise), so
-  // this never blocks the input while the status check is still in flight.
-  const composerDisabled = submitting || isWorking || !availability.available
+  // The composer stays editable WHILE the model is thinking (isCancellable), so
+  // the user can type a follow-up mid-thought — sending then interrupts the run
+  // and re-sends as a refinement. It locks only while a Working run is parked on
+  // an error/limit/paused block (those carry their own retry/resume CTAs), during
+  // the brief submit handoff, or while the proxy reports the feature down (the
+  // probe is optimistic, so this never blocks the input mid-status-check).
+  const composerDisabled =
+    submitting || !availability.available || (isWorking && !isCancellable)
   const selectedCount = committedIds.size
   const confirmLabel =
     selectedCount > 0
@@ -349,31 +377,55 @@ const NotesImportComposerScreen = ({ renderSupporterCta }: Props) => {
   const onRequestUpgrade = () => navigation.navigate('Paywall')
 
   const onSubmit = async () => {
-    const trimmed = text.trim()
+    const trimmed = draft.trim()
     if (!trimmed || submitting) return
+    // After Scribe AI found "nothing to import", a follow-up is almost always
+    // more context for the SAME notes, not a brand-new import. Concatenating it
+    // onto the original (instead of submitting the follow-up alone) re-parses the
+    // combined text together — so the original message is augmented, never
+    // replaced. Chains across repeated empty results, since each combined parse
+    // becomes the next `promptText`.
+    const combineWithEmpty = isReady && emptyPreview && !!promptText
+    const text = combineWithEmpty ? `${promptText}\n\n${trimmed}` : trimmed
     Keyboard.dismiss()
     setSubmitting(true)
     let hash: string | null = null
     try {
-      hash = await submit(trimmed)
+      hash = await submit(text)
     } finally {
       setSubmitting(false)
     }
     if (!hash) return
     // Point the screen at the new import; the routeHash effect clears scratch.
     navigation.setParams({ hash })
-    setText('')
+    setDraft('')
   }
 
   const onRefine = async () => {
     if (!activeHash) return
-    const next = instruction.trim()
+    const next = draft.trim()
     if (!next) return
     const applied = await refine(activeHash, next)
     if (!applied) return
     // The instruction is now an appended turn in the ledger thread (see refine);
     // just clear the composer for the next message.
-    setInstruction('')
+    setDraft('')
+  }
+
+  // Send mid-thought: stop the in-flight run and re-send the typed text as a
+  // fresh refinement. On the rare race where the run just settled, the manager
+  // returns false and we keep the text so the user can send it as a plain refine.
+  const onInterruptRefine = async () => {
+    if (!activeHash || interruptingRef.current) return
+    const next = draft.trim()
+    if (!next) return
+    interruptingRef.current = true
+    try {
+      const applied = await interruptAndRefine(activeHash, next)
+      if (applied) setDraft('')
+    } finally {
+      interruptingRef.current = false
+    }
   }
 
   const commit = () => {
@@ -397,9 +449,27 @@ const NotesImportComposerScreen = ({ renderSupporterCta }: Props) => {
           i18n.t('notesImport_errorTitle'),
           i18n.t('notesImport_error')
         )
+        return
       }
+      // Mark this row as freshly committed so the Done turn renders the
+      // celebratory success screen, and punctuate the moment with a haptic.
+      setCelebratedHash(activeHash)
+      void Haptics.success()
     })
   }
+
+  // "Import another": leave the just-committed import in place (it stays
+  // imported) and drop the route back to a blank composer for a new session.
+  // The routeHash effect clears the refine scratch and refocuses the input.
+  const importAnother = () => {
+    setCelebratedHash(null)
+    // routeHash → undefined runs the reset effect, which clears the draft.
+    navigation.setParams({ hash: undefined })
+    requestAnimationFrame(() => inputRef.current?.focus())
+  }
+
+  // "Take me home": pop the whole Notes Import stack back to the home tabs.
+  const takeHome = () => navigation.popToTop()
 
   const onAccept = () => {
     if (!activeHash) return
@@ -443,7 +513,7 @@ const NotesImportComposerScreen = ({ renderSupporterCta }: Props) => {
    */
   const editPrompt = () => {
     if (!activeHash) return
-    const draft = promptText
+    const messageDraft = promptText
     // A Done import's commit must be undone before we forget the row: `remove`
     // deletes the ledger row WITHOUT touching committed data, so editing and
     // resending would mint a new content hash → new record ids → the same
@@ -451,10 +521,11 @@ const NotesImportComposerScreen = ({ renderSupporterCta }: Props) => {
     // it inserted first, so the edit re-sends against a clean slate.
     if (isDone) undo(activeHash)
     remove(activeHash)
-    // Drop the route back to a blank composer; the routeHash effect clears the
-    // refine scratch and refocuses. setText below seeds the editable copy.
+    // Drop the route back to a blank composer. The routeHash reset effect would
+    // normally clear the draft; stashing the text in pendingDraftRef makes that
+    // same effect seed the editable copy instead, then refocus.
+    pendingDraftRef.current = messageDraft
     navigation.setParams({ hash: undefined })
-    setText(draft)
     requestAnimationFrame(() => inputRef.current?.focus())
   }
 
@@ -744,7 +815,105 @@ const NotesImportComposerScreen = ({ renderSupporterCta }: Props) => {
         : activeEntry.result
           ? notesImportCountsLine(activeEntry.result)
           : ''
-      aiTurn = (
+      // Celebrate only the commit that just landed this session; a Done row
+      // reopened from history keeps the calmer "already added" card.
+      const justImported = celebratedHash === activeHash
+
+      // Subtle revert affordance — present in both the celebratory and the
+      // reopened layouts so a committed import is always undoable from here.
+      const undoButton = (
+        <Button
+          onPress={() => activeHash && undo(activeHash)}
+          noTransform
+          style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}
+        >
+          <FontAwesomeIcon
+            icon={faRotateLeft}
+            size={14}
+            color={theme.colors.accent}
+          />
+          <Text
+            style={{
+              color: theme.colors.accent,
+              fontFamily: theme.fonts.semiBold,
+            }}
+          >
+            {i18n.t('notesImport_undo')}
+          </Text>
+        </Button>
+      )
+
+      const reconcileCard =
+        reconcileWarnings && reconcileWarnings.length > 0 ? (
+          <Card style={{ gap: 10 }}>
+            <Text style={{ fontFamily: theme.fonts.semiBold }}>
+              {i18n.t('notesImport_reconcileWarningsTitle')}
+            </Text>
+            {reconcileWarnings.map((w) => (
+              <WarningLine key={w.id} warning={w} />
+            ))}
+          </Card>
+        ) : null
+
+      aiTurn = justImported ? (
+        // Fresh import: a standard, centered success screen — animated
+        // checkmark (the same Lottie as the publisher check-in), the counts,
+        // then "import another" (primary) / "take me home" (secondary) CTAs.
+        <View style={{ gap: 14 }}>
+          <Card style={{ gap: 18, alignItems: 'center', paddingVertical: 28 }}>
+            <LottieView
+              autoPlay
+              loop={false}
+              speed={0.875}
+              style={{ width: 120, height: 104 }}
+              source={require('@/assets/lottie/checkMark.json')}
+            />
+            <View style={{ gap: 4, alignItems: 'center' }}>
+              <Text
+                style={{
+                  fontFamily: theme.fonts.bold,
+                  fontSize: theme.fontSize('lg'),
+                }}
+              >
+                {i18n.t('notesImport_success')}
+              </Text>
+              {!!countsLine && (
+                <Text style={{ color: theme.colors.textAlt }}>
+                  {countsLine}
+                </Text>
+              )}
+            </View>
+            <View style={{ alignSelf: 'stretch', gap: 10 }}>
+              <ActionButton onPress={importAnother}>
+                {i18n.t('notesImport_importAnother')}
+              </ActionButton>
+              <Button
+                onPress={takeHome}
+                style={{
+                  alignItems: 'center',
+                  paddingVertical: 12,
+                  paddingHorizontal: 24,
+                  borderRadius: theme.numbers.borderRadiusSm,
+                  borderWidth: 1,
+                  borderColor: theme.colors.border,
+                  backgroundColor: theme.colors.background,
+                }}
+              >
+                <Text
+                  style={{
+                    color: theme.colors.text,
+                    fontFamily: theme.fonts.semiBold,
+                  }}
+                >
+                  {i18n.t('notesImport_takeHome')}
+                </Text>
+              </Button>
+            </View>
+            {undoButton}
+          </Card>
+          {reconcileCard}
+        </View>
+      ) : (
         <View style={{ gap: 14 }}>
           {aiHeader(
             i18n.t('notesImport_chatImportedTitle'),
@@ -757,37 +926,9 @@ const NotesImportComposerScreen = ({ renderSupporterCta }: Props) => {
             {!!countsLine && (
               <Text style={{ color: theme.colors.textAlt }}>{countsLine}</Text>
             )}
-            <Button
-              onPress={() => activeHash && undo(activeHash)}
-              noTransform
-              style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}
-            >
-              <FontAwesomeIcon
-                icon={faRotateLeft}
-                size={14}
-                color={theme.colors.accent}
-              />
-              <Text
-                style={{
-                  color: theme.colors.accent,
-                  fontFamily: theme.fonts.semiBold,
-                }}
-              >
-                {i18n.t('notesImport_undo')}
-              </Text>
-            </Button>
+            {undoButton}
           </Card>
-
-          {reconcileWarnings && reconcileWarnings.length > 0 && (
-            <Card style={{ gap: 10 }}>
-              <Text style={{ fontFamily: theme.fonts.semiBold }}>
-                {i18n.t('notesImport_reconcileWarningsTitle')}
-              </Text>
-              {reconcileWarnings.map((w) => (
-                <WarningLine key={w.id} warning={w} />
-              ))}
-            </Card>
-          )}
+          {reconcileCard}
         </View>
       )
     } else if (isStopped) {
@@ -816,21 +957,18 @@ const NotesImportComposerScreen = ({ renderSupporterCta }: Props) => {
         )
     }
 
+    // Refinement credits are spent per source text, so the thread itself is the
+    // ledger: the k-th refinement (k-th user message) spent the k-th credit.
+    // Counting down from the limit keeps the bottom-most caption in step with
+    // the pinned usage meter without depending on stale per-message snapshots.
+    const refineLimit = credits?.refinements.limit ?? 0
+    let refinementsUsed = 0
+
     return (
       <View style={{ gap: 18 }}>
-        {/* Persistent chat header: the usage meter, available the whole
-            conversation (not just at review time). Deleting an import now lives
-            in the history view's per-row menu, not here. */}
-        {credits && (
-          <NotesImportUsage
-            compact
-            credits={credits}
-            onRequestUpgrade={onRequestUpgrade}
-            renderSupporterCta={renderSupporterCta}
-          />
-        )}
-
-        {/* Your message: the pasted notes. Long-press to copy or edit & resend. */}
+        {/* Your message: the pasted notes. Long-press to copy or edit & resend.
+            The usage meter that used to lead this thread is now pinned above the
+            scroll view, so it stays put as the conversation scrolls. */}
         <Pressable
           onLongPress={onPromptLongPress}
           delayLongPress={300}
@@ -840,12 +978,7 @@ const NotesImportComposerScreen = ({ renderSupporterCta }: Props) => {
           style={{
             alignSelf: 'flex-end',
             maxWidth: '86%',
-            borderRadius: 20,
-            borderBottomRightRadius: 4,
-            borderCurve: 'continuous',
-            backgroundColor: theme.colors.accentBubble,
-            paddingHorizontal: 16,
-            paddingVertical: 12,
+            ...notesImportUserBubbleStyle(theme),
           }}
         >
           {/* Show the message in full — never clip the user's own input. When a
@@ -868,30 +1001,42 @@ const NotesImportComposerScreen = ({ renderSupporterCta }: Props) => {
             refinement renders as a user bubble, so a multi-round refine reads
             top-to-bottom as a real chat rather than collapsing to the latest
             turn. Persisted on the ledger entry, so it survives app restarts. */}
-        {history.map((message, index) =>
-          message.role === 'assistant' ? (
-            <Fragment key={`${index}-a`}>{aiMessage(message.text)}</Fragment>
-          ) : (
-            <NotesImportRefinementHistory
+        {history.map((message, index) => {
+          if (message.role === 'assistant') {
+            return (
+              <Fragment key={`${index}-a`}>{aiMessage(message.text)}</Fragment>
+            )
+          }
+          refinementsUsed += 1
+          return (
+            <NotesImportRefinementBubble
               key={`${index}-u`}
-              lastAppliedInstruction={message.text}
-              refining={false}
+              instruction={message.text}
+              remaining={Math.max(0, refineLimit - refinementsUsed)}
             />
           )
-        )}
+        })}
 
         {aiTurn}
       </View>
     )
   }
 
-  // One footer input drives both modes. When a non-empty preview is ready it
-  // refines that preview; otherwise it starts a new import. A working run
-  // disables typing, and an interruptible run swaps Send for Stop.
-  const refineMode = isReady && !emptyPreview
-  const composerValue = refineMode ? instruction : text
-  const setComposerValue = refineMode ? setInstruction : setText
-  const onComposerSubmit = refineMode ? onRefine : onSubmit
+  // One footer input drives every mode off a single `draft` buffer, so a mode
+  // flip never drops half-typed text. The MODE still varies: it's a refine when
+  // there's a preview to refine OR the model is mid-thought, otherwise a
+  // brand-new import. While thinking the input stays live — an empty field shows
+  // Stop, and typing swaps it for Send, which interrupts the run and re-sends the
+  // text as a refinement.
+  const isThinking = isCancellable
+  const refineMode = (isReady && !emptyPreview) || isThinking
+  const composerValue = draft
+  const setComposerValue = setDraft
+  const onComposerSubmit = isThinking
+    ? onInterruptRefine
+    : refineMode
+      ? onRefine
+      : onSubmit
 
   return (
     <Wrapper insets='bottom' style={{ flex: 1 }}>
@@ -991,60 +1136,6 @@ const NotesImportComposerScreen = ({ renderSupporterCta }: Props) => {
             backgroundColor: theme.colors.background,
           }}
         >
-          {/* Callout wired to the same history popover as the header clock — a
-              second, in-chat way to reach in-flight or ready-to-review imports.
-              Shown only when there's another such import to jump to. Opens
-              upward so it clears the keyboard/input. */}
-          {actionableOther.length > 0 && (
-            <NotesImportHistoryPopover
-              openDirection='up'
-              align='left'
-              renderTrigger={({ onPress, anchorRef }) => (
-                <View
-                  ref={anchorRef}
-                  collapsable={false}
-                  style={{ alignSelf: 'center', marginBottom: 10 }}
-                >
-                  <Button
-                    onPress={onPress}
-                    accessibilityRole='button'
-                    accessibilityLabel={i18n.t('notesImport_viewHistory')}
-                    noTransform
-                    style={{
-                      flexDirection: 'row',
-                      alignItems: 'center',
-                      gap: 8,
-                      paddingVertical: 6,
-                      paddingHorizontal: 14,
-                      borderRadius: theme.numbers.borderRadiusXl,
-                      borderWidth: 1,
-                      borderColor: theme.colors.border,
-                      backgroundColor: theme.colors.card,
-                    }}
-                  >
-                    <NotesImportReadyDot
-                      visible
-                      color={calloutInProgress ? theme.colors.warn : undefined}
-                    />
-                    <Text
-                      style={{
-                        color: theme.colors.textAlt,
-                        fontFamily: theme.fonts.semiBold,
-                        fontSize: theme.fontSize('sm'),
-                      }}
-                    >
-                      {i18n.t('notesImport_viewHistory')}
-                    </Text>
-                    <FontAwesomeIcon
-                      icon={faClockRotateLeft}
-                      size={12}
-                      color={theme.colors.textAlt}
-                    />
-                  </Button>
-                </View>
-              )}
-            />
-          )}
           <NotesImportChatInput
             ref={inputRef}
             value={composerValue}
@@ -1078,9 +1169,87 @@ const NotesImportComposerScreen = ({ renderSupporterCta }: Props) => {
             onStop={
               // Stop ends the run for good (terminal `stopped` state) — no pause,
               // no resume prompt. The notes stay; the composer frees up after.
-              isCancellable && activeHash ? () => stop(activeHash) : undefined
+              // Only while the field is EMPTY, though: once the user types a
+              // follow-up mid-thought the trailing action becomes Send, which
+              // interrupts the run and re-sends as a refinement (onInterruptRefine).
+              isThinking && activeHash && !composerValue.trim()
+                ? () => stop(activeHash)
+                : undefined
             }
             stopAccessibilityLabel={i18n.t('cancel')}
+            // "View imports" callout sits at the LEFT of the control row — the
+            // in-chat entry point to the history list (the header no longer has
+            // a clock). Shown whenever any import is saved; opens upward so it
+            // clears the keyboard. Its dot lights only when another import is
+            // in-flight or ready to review.
+            leading={
+              entries.length > 0 ? (
+                <NotesImportHistoryPopover
+                  openDirection='up'
+                  align='left'
+                  renderTrigger={({ onPress, anchorRef }) => (
+                    <View
+                      ref={anchorRef}
+                      collapsable={false}
+                      style={{ flexShrink: 1 }}
+                    >
+                      <Button
+                        onPress={onPress}
+                        accessibilityRole='button'
+                        accessibilityLabel={i18n.t('notesImport_viewHistory')}
+                        noTransform
+                        style={{
+                          flexDirection: 'row',
+                          alignItems: 'center',
+                          gap: 7,
+                          paddingVertical: 6,
+                          paddingHorizontal: 12,
+                          borderRadius: theme.numbers.borderRadiusXl,
+                          borderWidth: 1,
+                          borderColor: theme.colors.border,
+                          backgroundColor: theme.colors.card,
+                        }}
+                      >
+                        <NotesImportReadyDot
+                          visible={actionableOther.length > 0}
+                          color={
+                            calloutInProgress ? theme.colors.warn : undefined
+                          }
+                        />
+                        <Text
+                          numberOfLines={1}
+                          style={{
+                            flexShrink: 1,
+                            color: theme.colors.textAlt,
+                            fontFamily: theme.fonts.semiBold,
+                            fontSize: theme.fontSize('sm'),
+                          }}
+                        >
+                          {i18n.t('notesImport_viewHistory')}
+                        </Text>
+                        <FontAwesomeIcon
+                          icon={faClockRotateLeft}
+                          size={12}
+                          color={theme.colors.textAlt}
+                        />
+                      </Button>
+                    </View>
+                  )}
+                />
+              ) : undefined
+            }
+            // Usage ring rides the composer's control row instead of a pinned
+            // banner; tapping it opens the same usage popover. Shown once a
+            // conversation exists and credits are known — never on the intro.
+            accessory={
+              activeEntry && credits ? (
+                <NotesImportUsage
+                  credits={credits}
+                  onRequestUpgrade={onRequestUpgrade}
+                  renderSupporterCta={renderSupporterCta}
+                />
+              ) : undefined
+            }
           />
         </View>
 

@@ -1,4 +1,4 @@
-import { forwardRef } from 'react'
+import { forwardRef, type ReactNode } from 'react'
 import { TextInput, View } from 'react-native'
 import { faArrowUp, faStop } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
@@ -22,15 +22,28 @@ export interface NotesImportChatInputProps {
    */
   onStop?: () => void
   stopAccessibilityLabel?: string
+  /**
+   * Optional control pinned to the LEFT of the bottom row (e.g. the "View
+   * imports" callout), opposite the trailing actions.
+   */
+  leading?: ReactNode
+  /**
+   * Optional control rendered in the bottom row just left of Send — the usage
+   * ring lives here so the meter rides the composer instead of a pinned
+   * banner.
+   */
+  accessory?: ReactNode
 }
 
 /**
- * The one Notes Import chat input (ADR 0009). A rounded prompt pill with a
- * grow-to-fit multiline field and a single trailing action whose identity is
- * driven by props — Stop while a run is interruptible, otherwise Send. Both the
- * initial paste and the refinement prompt render this same component; callers
- * differ only in value/placeholder/onSubmit, so the footer never swaps
- * layouts.
+ * The one Notes Import chat input (ADR 0009). A rounded prompt card with a
+ * grow-to-fit multiline field on top and a control row beneath it (ChatGPT
+ * style): the field never has to share its line with the buttons, so long
+ * pastes stay readable. The trailing action's identity is driven by props —
+ * Stop while a run is interruptible, otherwise Send — and an optional
+ * `accessory` (the usage ring) sits to its left. Both the initial paste and the
+ * refinement prompt render this same component; callers differ only in
+ * value/placeholder/onSubmit, so the footer never swaps layouts.
  */
 const NotesImportChatInput = forwardRef<TextInput, NotesImportChatInputProps>(
   (
@@ -45,6 +58,8 @@ const NotesImportChatInput = forwardRef<TextInput, NotesImportChatInputProps>(
       editable = true,
       onStop,
       stopAccessibilityLabel,
+      leading,
+      accessory,
     },
     ref
   ) => {
@@ -60,10 +75,6 @@ const NotesImportChatInput = forwardRef<TextInput, NotesImportChatInputProps>(
           width: 32,
           height: 32,
           borderRadius: 16,
-          // Pin the action to the bottom (ChatGPT-style) so it stays anchored
-          // to the last line as the field grows, while the row stays centered
-          // for the common single-line case.
-          alignSelf: 'flex-end',
           alignItems: 'center',
           justifyContent: 'center',
           backgroundColor: theme.colors.accent,
@@ -85,7 +96,6 @@ const NotesImportChatInput = forwardRef<TextInput, NotesImportChatInputProps>(
           width: 32,
           height: 32,
           borderRadius: 16,
-          alignSelf: 'flex-end',
           alignItems: 'center',
           justifyContent: 'center',
           backgroundColor: canSubmit
@@ -104,16 +114,14 @@ const NotesImportChatInput = forwardRef<TextInput, NotesImportChatInputProps>(
     return (
       <View
         style={{
-          flexDirection: 'row',
-          alignItems: 'center',
           gap: 8,
-          borderRadius: 22,
+          borderRadius: 24,
           borderWidth: 1,
           borderColor: theme.colors.border,
           backgroundColor: theme.colors.card,
-          paddingLeft: 18,
-          paddingRight: 5,
-          paddingVertical: 5,
+          paddingHorizontal: 16,
+          paddingTop: 12,
+          paddingBottom: 8,
           shadowOffset: { width: 0, height: 1 },
           shadowColor: theme.colors.shadow,
           shadowOpacity: theme.numbers.shadowOpacity,
@@ -130,10 +138,9 @@ const NotesImportChatInput = forwardRef<TextInput, NotesImportChatInputProps>(
           placeholder={placeholder}
           placeholderTextColor={theme.colors.textAlt}
           style={{
-            flex: 1,
-            // Starts a single line, grows with content, then caps near ten
+            // Starts a single line, grows with content, then caps near nine
             // lines and scrolls internally.
-            maxHeight: 220,
+            maxHeight: 200,
             textAlignVertical: 'top',
             color: theme.colors.text,
             fontFamily: theme.fonts.regular,
@@ -146,7 +153,15 @@ const NotesImportChatInput = forwardRef<TextInput, NotesImportChatInputProps>(
             paddingBottom: 2,
           }}
         />
-        {trailing}
+        {/* Control row beneath the field: an optional leading control on the
+            left, then a spacer that pushes the usage ring and Send to the
+            trailing edge. */}
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+          {leading}
+          <View style={{ flex: 1 }} />
+          {accessory}
+          {trailing}
+        </View>
       </View>
     )
   }

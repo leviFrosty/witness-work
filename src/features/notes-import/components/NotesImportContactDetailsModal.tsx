@@ -1,5 +1,5 @@
 import { Sheet } from 'tamagui'
-import { ScrollView, View } from 'react-native'
+import { View } from 'react-native'
 import Checkbox from 'expo-checkbox'
 import _ from 'lodash'
 import moment from 'moment'
@@ -247,7 +247,7 @@ const NotesImportContactDetailsModal = ({
       <Sheet.Overlay zIndex={100_000 - 1} />
       <Sheet.Frame>
         {group && (
-          <ScrollView
+          <Sheet.ScrollView
             contentContainerStyle={{ padding: 24, paddingBottom: 40, gap: 20 }}
           >
             {/* Header */}
@@ -451,7 +451,7 @@ const NotesImportContactDetailsModal = ({
                 </Text>
               )}
             </View>
-          </ScrollView>
+          </Sheet.ScrollView>
         )}
       </Sheet.Frame>
     </Sheet>

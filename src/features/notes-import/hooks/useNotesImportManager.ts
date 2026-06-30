@@ -18,11 +18,16 @@ import {
   type ImportStreamEvent,
   type NotesImportRunHandle,
 } from '@/features/notes-import/lib/notesImportClient'
+import {
+  loadPersistedCredits,
+  persistCredits,
+} from '@/features/notes-import/lib/notesImportCreditsStore'
 import { notesContentHash } from '@/features/notes-import/lib/notesContentHash'
 import { buildNotesImportContext } from '@/features/notes-import/lib/buildNotesImportContext'
 import { mapNotesImport } from '@/features/notes-import/lib/mapNotesImport'
 import type { MappedWarning } from '@/features/notes-import/lib/mapNotesImport'
 import type { PreviewSelection } from '@/features/notes-import/lib/buildNotesImportPreview'
+import type { NotesImportResult } from '@/features/notes-import/lib/notesImportTypes'
 import {
   clientImportCap,
   planImportsToStart,
@@ -39,6 +44,7 @@ import {
   beginWorkingEntry,
   setActiveRun,
   appendLedgerHistory,
+  replaceLedgerHistory,
   putParsedResult,
   markAccepted,
   markViewed as markViewedEntry,
@@ -78,6 +84,23 @@ const DEFAULT_RUNTIME: ImportRuntime = {
 
 /** Backoff before re-attempting a run the backend rejected as over its cap. */
 const ACTIVE_CAP_COOLDOWN_MS = 4_000
+
+/**
+ * A valid empty parse, used as the refinement baseline when a live FIRST parse
+ * is interrupted before it ever produced a result — the typed instruction then
+ * layers onto an empty result (a baseline the refine path already supports)
+ * instead of being lost.
+ */
+const EMPTY_PARSE_RESULT: NotesImportResult = {
+  contacts: [],
+  visits: [],
+  timeEntries: [],
+  categories: [],
+  publisher: null,
+  warnings: [],
+  summary: '',
+  assistantMessage: '',
+}
 
 // In-memory machinery, deliberately OUTSIDE the reactive state (not serializable,
 // must survive re-renders): abort controllers + the in-flight set are the source
@@ -122,6 +145,15 @@ interface NotesImportManagerState {
    * Ready.
    */
   refine: (hash: string, instruction: string) => Promise<boolean>
+  /**
+   * Interrupt a live (thinking) run and re-send the typed text as a fresh
+   * refinement: tears the in-flight run down (freeing it server-side), seals
+   * the interrupted turn into the conversation thread, and re-opens the SAME
+   * row as Working with the new instruction queued. Returns false if the run
+   * already settled (raced to Ready/Done) so the caller can fall back to a
+   * plain refine.
+   */
+  interruptAndRefine: (hash: string, instruction: string) => Promise<boolean>
   /** Accept a Ready import: reconcile against current data, commit, mark Done. */
   accept: (
     hash: string,
@@ -207,6 +239,11 @@ export const useNotesImportManager = create<NotesImportManagerState>(
         setActiveRun(hash, run)
         get().hydrate()
       }
+      // The kickoff returns the current usage, so the meter populates the moment
+      // the run starts — not only when it finishes. Display only: the kickoff
+      // value is optimistic (the credit is charged only on success), so the
+      // durable snapshot is written from the authoritative `done` payload below.
+      const onCredits = (credits: NotesImportCredits) => set({ credits })
       const context = buildNotesImportContext()
       const refinement = pendingRefinement.get(hash)
 
@@ -218,6 +255,7 @@ export const useNotesImportManager = create<NotesImportManagerState>(
             refinement,
             onEvent,
             onKickoff,
+            onCredits,
             signal: controller.signal,
           })
         : runNotesImportStreaming({
@@ -226,6 +264,7 @@ export const useNotesImportManager = create<NotesImportManagerState>(
             refinement,
             onEvent,
             onKickoff,
+            onCredits,
             signal: controller.signal,
           })
 
@@ -236,7 +275,10 @@ export const useNotesImportManager = create<NotesImportManagerState>(
           // or re-create a deleted one as an empty Ready row with no notes.
           if (controller.signal.aborted) return
           pendingRefinement.delete(hash)
+          // Persist alongside the in-memory snapshot so the usage meter still
+          // has values to show on the next conversation — and after a restart.
           set({ credits: res.credits })
+          persistCredits(res.credits)
           putParsedResult(hash, res.result, Date.now())
           patchRuntime(hash, { phase: 'done', running: false, error: null })
         })
@@ -249,7 +291,13 @@ export const useNotesImportManager = create<NotesImportManagerState>(
           switch (decision.kind) {
             case 'cancelled':
               // User/teardown cancel: stays Working (Queued), no error surfaced.
-              patchRuntime(hash, { running: false, phase: null })
+              // Only patch if THIS run still owns the slot — an interrupt-and-
+              // refine (or stop) may have already torn this run down and started
+              // a NEWER run for the same hash; patching running:false here would
+              // wrongly paint that live run as idle.
+              if (controllers.get(hash) === controller) {
+                patchRuntime(hash, { running: false, phase: null })
+              }
               break
             case 'cooldown':
               // Raced past the backend cap — back off and retry, no error shown.
@@ -311,6 +359,14 @@ export const useNotesImportManager = create<NotesImportManagerState>(
       focus: () => {
         pruneLedgerEntries()
         get().hydrate()
+        // Seed the usage meter from the last persisted snapshot so it shows on
+        // any conversation from the first frame — before this session's first
+        // run completes and refreshes it. A live snapshot is never older than
+        // the persisted one, so only fill when we don't already have credits.
+        if (!get().credits) {
+          const persisted = loadPersistedCredits()
+          if (persisted) set({ credits: persisted })
+        }
         get().tick()
       },
 
@@ -377,6 +433,66 @@ export const useNotesImportManager = create<NotesImportManagerState>(
           notesText: entry.notesText,
           activeRun: null,
           nowMs: Date.now(),
+        })
+        get().hydrate()
+        get().tick()
+        return true
+      },
+
+      interruptAndRefine: async (hash, instruction) => {
+        const trimmed = instruction.trim()
+        if (!trimmed) return false
+        const entry = getLedgerEntry(hash)
+        // Only a live (Working) run can be interrupted mid-thought. If it already
+        // settled (raced to Ready/Done), bail so the caller falls back to a plain
+        // refine and keeps the composer text.
+        if (!entry || entry.state !== 'working') return false
+
+        // Tear the in-flight run down for good — abort the local stream and free
+        // the server run (credit is charged only on success, so an interrupted
+        // run is never billed). Unlike stop(), we re-open the SAME row as Working
+        // with the new refinement below, so it never lands in the terminal
+        // `stopped` state. The startRun catch is slot-guarded, so the aborted
+        // run can't clobber the new one's runtime.
+        const activeRun = entry.activeRun
+        if (activeRun) void destroyNotesImport(activeRun)
+        controllers.get(hash)?.abort()
+        controllers.delete(hash)
+        inFlight.delete(hash)
+        cooldownUntil.delete(hash)
+
+        // Refine against the last COMPLETED result — the in-flight turn we just
+        // aborted never produced one. With a prior result (a refine loop, or a
+        // re-thinking Ready import) that's the cached result; on a first parse
+        // there's none yet, so the instruction layers onto an empty baseline (a
+        // case the refine path already supports).
+        const now = Date.now()
+        pendingRefinement.set(hash, {
+          previousResultJSON: JSON.stringify(
+            entry.result ?? EMPTY_PARSE_RESULT
+          ),
+          instruction: trimmed,
+        })
+        // Seal the new instruction as the live turn. While Working, the trailing
+        // user message in `history` is the in-flight instruction we just aborted —
+        // never charged and now superseded — so drop it and put this one in its
+        // place. (A first parse has no such trailing turn; its history is empty.)
+        // This keeps the refinement-credit caption — which counts user turns — in
+        // step with what the meter actually charged.
+        const priorTurns = entry.history
+        const base =
+          priorTurns.length > 0 &&
+          priorTurns[priorTurns.length - 1].role === 'user'
+            ? priorTurns.slice(0, -1)
+            : priorTurns
+        replaceLedgerHistory(hash, [
+          ...base,
+          { role: 'user', text: trimmed, at: now },
+        ])
+        beginWorkingEntry(hash, {
+          notesText: entry.notesText,
+          activeRun: null,
+          nowMs: now,
         })
         get().hydrate()
         get().tick()

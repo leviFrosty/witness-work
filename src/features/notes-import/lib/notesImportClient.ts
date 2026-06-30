@@ -549,6 +549,13 @@ interface NotesImportKickoffResponse {
   importId: string
   subscribeToken: string
   refinement: boolean
+  /**
+   * The caller's usage snapshot at kickoff, so the meter can show the moment a
+   * run starts instead of waiting for the `done` event. Optional: a proxy from
+   * before this field shipped simply omits it (the meter then fills on
+   * `done`).
+   */
+  credits?: NotesImportCreditsWire
 }
 
 interface ResultSnapshot {
@@ -747,6 +754,12 @@ export interface RunStreamingArgs extends RequestNotesImportArgs {
    * streaming.
    */
   onKickoff?: (run: NotesImportRunHandle) => void
+  /**
+   * Fires with the usage snapshot the kickoff returned (when present), so the
+   * meter can show as soon as the run starts. The authoritative final snapshot
+   * still arrives in the `done` payload. No-op if the proxy omits credits.
+   */
+  onCredits?: (credits: NotesImportCredits) => void
   /** Cancels the kickoff + stream (e.g. on unmount / user cancel). */
   signal?: AbortSignal
 }
@@ -844,14 +857,23 @@ export const runNotesImportStreaming = async ({
   refinement,
   onEvent,
   onKickoff,
+  onCredits,
   signal,
 }: RunStreamingArgs): Promise<NotesImportResponse> => {
-  const { importId, subscribeToken } = await kickoffNotesImport({
+  const { importId, subscribeToken, credits } = await kickoffNotesImport({
     notesText,
     context,
     refinement,
   })
   onKickoff?.({ importId, subscribeToken })
+  // Surface the usage snapshot up front so the meter populates at run start.
+  if (credits) {
+    onCredits?.(
+      normalizeNotesImportCredits(credits, {
+        unlimitedImports: DEV_IMPORTS_UNLIMITED,
+      })
+    )
+  }
   onEvent?.({ type: 'status', status: 'queued' })
 
   return streamRunToCompletion({ importId, subscribeToken }, onEvent, signal)
@@ -881,6 +903,7 @@ export const resumeNotesImport = async ({
   refinement,
   onEvent,
   onKickoff,
+  onCredits,
   signal,
 }: ResumeNotesImportArgs): Promise<NotesImportResponse> => {
   try {
@@ -897,6 +920,7 @@ export const resumeNotesImport = async ({
       refinement,
       onEvent,
       onKickoff,
+      onCredits,
       signal,
     })
   }

@@ -1,11 +1,11 @@
 import type { ReactNode } from 'react'
 import { useWindowDimensions, View } from 'react-native'
-import { faChevronRight, faCircleInfo } from '@fortawesome/free-solid-svg-icons'
-import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import AnchoredPopover, {
   type ResolveAnchorPosition,
 } from '@/components/ui/AnchoredPopover'
 import Button from '@/components/ui/Button'
+import CircularProgress from '@/components/ui/CircularProgress'
 import Text from '@/components/ui/MyText'
 import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
@@ -22,84 +22,37 @@ interface Props {
   credits: NotesImportCredits
   onRequestUpgrade?: () => void
   renderSupporterCta?: RenderNotesImportSupporterCta
-  /**
-   * One-line chip for the chat header; full guidance and policy stay in the
-   * popover.
-   */
-  compact?: boolean
 }
 
-interface UsageRowProps {
-  label: string
-  used: number | null
-  remaining: number | null
-  limit: number | null
-  color: string
-  unlimited?: boolean
-}
-
-const UsageRow = ({
-  label,
+/** A thin progress bar (fills by fraction used) with a trailing usage label. */
+const UsageBar = ({
   used,
-  remaining,
   limit,
   color,
   unlimited,
-}: UsageRowProps) => {
+}: {
+  used: number | null
+  limit: number | null
+  color: string
+  unlimited?: boolean
+}) => {
   const theme = useTheme()
   const percentage =
     unlimited || used === null || limit === null || limit === 0
       ? 1
       : Math.min(1, Math.max(0, used / limit))
-  const valueLabel = unlimited
-    ? i18n.t('notesImport_usageUnlimited')
-    : i18n.t('notesImport_usageUsed', { used, limit })
-  const remainingLabel = unlimited
+  const label = unlimited
     ? i18n.t('notesImport_usageNoLimit')
-    : i18n.t('notesImport_usageRemaining', { count: remaining ?? 0 })
+    : i18n.t('notesImport_usagePercentUsed', {
+        percent: Math.round(percentage * 100),
+      })
 
   return (
-    <View style={{ gap: 6 }}>
+    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
       <View
         style={{
-          flexDirection: 'row',
-          alignItems: 'baseline',
-          justifyContent: 'space-between',
-          gap: 10,
-        }}
-      >
-        <Text
-          style={{
-            flex: 1,
-            fontFamily: theme.fonts.semiBold,
-            fontSize: theme.fontSize('sm'),
-          }}
-        >
-          {label}
-        </Text>
-        <Text
-          style={{
-            color: theme.colors.textAlt,
-            fontSize: theme.fontSize('xs'),
-          }}
-        >
-          {valueLabel}
-        </Text>
-        <Text
-          style={{
-            minWidth: 45,
-            color,
-            fontFamily: theme.fonts.semiBold,
-            fontSize: theme.fontSize('xs'),
-            textAlign: 'right',
-          }}
-        >
-          {remainingLabel}
-        </Text>
-      </View>
-      <View
-        style={{
-          height: 5,
+          flex: 1,
+          height: 6,
           overflow: 'hidden',
           borderRadius: 3,
           backgroundColor: theme.colors.background,
@@ -115,15 +68,35 @@ const UsageRow = ({
           }}
         />
       </View>
+      <Text
+        style={{
+          minWidth: 58,
+          textAlign: 'right',
+          color: theme.colors.textAlt,
+          fontSize: theme.fontSize('xs'),
+        }}
+      >
+        {label}
+      </Text>
     </View>
   )
 }
 
-const Detail = ({ title, body }: { title: string; body: string }) => {
+const Detail = ({
+  title,
+  body,
+  bar,
+}: {
+  title: string
+  body: string
+  /** Optional progress bar rendered between the section title and its body. */
+  bar?: ReactNode
+}) => {
   const theme = useTheme()
   return (
-    <View style={{ gap: 4 }}>
+    <View style={{ gap: 8 }}>
       <Text style={{ fontFamily: theme.fonts.semiBold }}>{title}</Text>
+      {bar}
       <Text
         style={{
           color: theme.colors.textAlt,
@@ -137,14 +110,22 @@ const Detail = ({ title, body }: { title: string; body: string }) => {
   )
 }
 
-/** Usage disclosure with a card treatment or a one-line review variant. */
+/**
+ * The Scribe AI usage affordance: a ghost button whose ring fills with the
+ * fraction of import credits spent (full and muted when imports are unlimited).
+ * Tapping opens the usage popover — the same imports/refinements breakdown and
+ * Supporter CTA as before. It lives inline in the composer's control row (the
+ * remaining refinement count is shown per-message in the chat, so this no
+ * longer spells out numbers), with the popover carrying the full detail one tap
+ * away.
+ */
 const NotesImportUsage = ({
   credits,
   onRequestUpgrade,
   renderSupporterCta,
-  compact = false,
 }: Props) => {
   const theme = useTheme()
+  const insets = useSafeAreaInsets()
   const { width: windowWidth } = useWindowDimensions()
   const contentWidth = Math.min(340, windowWidth - 24)
   const importsUnlimited = credits.isSupporter || credits.remaining === null
@@ -157,6 +138,18 @@ const NotesImportUsage = ({
     credits.refinements.limit - credits.refinements.remaining
   )
 
+  // The ring fills as import credits are spent (Claude-usage style). Unlimited
+  // plans show a full, muted ring; a depleted balance goes warn-colored.
+  const ringProgress =
+    importsUnlimited || importsUsed === null || !credits.limit
+      ? 1
+      : importsUsed / credits.limit
+  const ringColor = importsUnlimited
+    ? theme.colors.accentTranslucent
+    : credits.remaining === 0
+      ? theme.colors.warn
+      : theme.colors.accent
+
   const resolvePosition: ResolveAnchorPosition = ({
     anchor,
     windowWidth: width,
@@ -164,15 +157,20 @@ const NotesImportUsage = ({
     contentWidth: popoverWidth,
   }) => {
     const margin = 12
-    const estimatedHeight = importsUnlimited ? 240 : 340
+    const gap = 8
+    // The trigger sits low in the composer, so pin the popover's BOTTOM just
+    // above it and let it grow upward — capped to the room down from the top
+    // safe inset so it can never run off the top, with any overflow scrolling.
+    const topSafe = insets.top + margin
+    const maxHeight = Math.max(160, anchor.y - gap - topSafe)
     const left = Math.min(
-      Math.max(margin, anchor.x),
+      Math.max(margin, anchor.x + anchor.width - popoverWidth),
       width - popoverWidth - margin
     )
-    const below = anchor.y + anchor.height + 8
     return {
-      top: Math.max(margin, Math.min(below, windowHeight - estimatedHeight)),
+      bottom: windowHeight - anchor.y + gap,
       left,
+      maxHeight,
     }
   }
 
@@ -195,172 +193,21 @@ const NotesImportUsage = ({
               refinements: credits.refinements.remaining,
             })}
             accessibilityHint={i18n.t('notesImport_usageHint')}
-            style={
-              compact
-                ? {
-                    minHeight: 32,
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    gap: 7,
-                    paddingHorizontal: 2,
-                    paddingVertical: 4,
-                  }
-                : {
-                    gap: 10,
-                    padding: 14,
-                    borderWidth: 1,
-                    borderColor: theme.colors.border,
-                    borderRadius: theme.numbers.borderRadiusMd,
-                    backgroundColor: theme.colors.backgroundLighter,
-                  }
-            }
+            hitSlop={8}
+            style={{
+              width: 32,
+              height: 32,
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
           >
-            {compact ? (
-              <View
-                style={{
-                  flex: 1,
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  gap: 7,
-                }}
-              >
-                <FontAwesomeIcon
-                  icon={faCircleInfo}
-                  size={12}
-                  color={theme.colors.textAlt}
-                />
-                <Text
-                  numberOfLines={1}
-                  style={{
-                    flex: 1,
-                    fontFamily: theme.fonts.semiBold,
-                    fontSize: theme.fontSize('sm'),
-                  }}
-                >
-                  {i18n.t('notesImport_usageTitle')}
-                </Text>
-                <View
-                  style={{
-                    flexShrink: 1,
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    gap: 3,
-                  }}
-                >
-                  <Text
-                    style={{
-                      color: theme.colors.accent,
-                      fontFamily: theme.fonts.semiBold,
-                      fontSize: theme.fontSize('xs'),
-                    }}
-                  >
-                    {importsUnlimited ? '∞' : credits.remaining}
-                  </Text>
-                  <Text
-                    numberOfLines={1}
-                    style={{
-                      flexShrink: 1,
-                      color: theme.colors.textAlt,
-                      fontSize: theme.fontSize('xs'),
-                    }}
-                  >
-                    {i18n.t('notesImport_usageImports')}
-                  </Text>
-                </View>
-                <Text
-                  style={{
-                    color: theme.colors.textAlt,
-                    fontSize: theme.fontSize('xs'),
-                  }}
-                >
-                  ·
-                </Text>
-                <View
-                  style={{
-                    flexShrink: 1,
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    gap: 3,
-                  }}
-                >
-                  <Text
-                    style={{
-                      color: theme.colors.indigo,
-                      fontFamily: theme.fonts.semiBold,
-                      fontSize: theme.fontSize('xs'),
-                    }}
-                  >
-                    {credits.refinements.remaining}
-                  </Text>
-                  <Text
-                    numberOfLines={1}
-                    style={{
-                      flexShrink: 1,
-                      color: theme.colors.textAlt,
-                      fontSize: theme.fontSize('xs'),
-                    }}
-                  >
-                    {i18n.t('notesImport_usageRefinements')}
-                  </Text>
-                </View>
-                <FontAwesomeIcon
-                  icon={faChevronRight}
-                  size={9}
-                  color={theme.colors.textAlt}
-                />
-              </View>
-            ) : (
-              <>
-                <View
-                  style={{
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    gap: 12,
-                  }}
-                >
-                  <Text style={{ fontFamily: theme.fonts.semiBold }}>
-                    {i18n.t('notesImport_usageTitle')}
-                  </Text>
-                  <View
-                    style={{
-                      flexDirection: 'row',
-                      alignItems: 'center',
-                      gap: 5,
-                    }}
-                  >
-                    <Text
-                      style={{
-                        color: theme.colors.textAlt,
-                        fontSize: theme.fontSize('xs'),
-                      }}
-                    >
-                      {i18n.t('notesImport_usageDetails')}
-                    </Text>
-                    <FontAwesomeIcon
-                      icon={faChevronRight}
-                      size={9}
-                      color={theme.colors.textAlt}
-                    />
-                  </View>
-                </View>
-                <UsageRow
-                  label={i18n.t('notesImport_usageImports')}
-                  used={importsUsed}
-                  remaining={credits.remaining}
-                  limit={credits.limit}
-                  color={theme.colors.accent}
-                  unlimited={importsUnlimited}
-                />
-                <UsageRow
-                  label={i18n.t('notesImport_usageRefinements')}
-                  used={refinementsUsed}
-                  remaining={credits.refinements.remaining}
-                  limit={credits.refinements.limit}
-                  color={theme.colors.indigo}
-                />
-              </>
-            )}
+            <CircularProgress
+              progress={ringProgress}
+              size={22}
+              strokeWidth={2.5}
+              color={ringColor}
+              trackColor={theme.colors.border}
+            />
           </Button>
         </View>
       )}
@@ -392,12 +239,27 @@ const NotesImportUsage = ({
           <Detail
             title={i18n.t('notesImport_usageImports')}
             body={i18n.t('notesImport_usageImportsBody')}
+            bar={
+              <UsageBar
+                used={importsUsed}
+                limit={credits.limit}
+                color={theme.colors.accent}
+                unlimited={importsUnlimited}
+              />
+            }
           />
           <Detail
             title={i18n.t('notesImport_usageRefinements')}
             body={i18n.t('notesImport_usageRefinementsBody', {
               count: credits.refinements.limit,
             })}
+            bar={
+              <UsageBar
+                used={refinementsUsed}
+                limit={credits.refinements.limit}
+                color={theme.colors.indigo}
+              />
+            }
           />
           {shouldShowNotesImportSupporterCta(credits) &&
             onRequestUpgrade &&

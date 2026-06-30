@@ -533,6 +533,22 @@ export const appendLedgerHistory = (
 }
 
 /**
+ * Overwrites a row's entire conversation `history`, preserving everything else.
+ * No-op if the row is gone. Used when interrupting a live refinement: the
+ * superseded in-flight instruction (the trailing user turn) is dropped and the
+ * new one sealed in its place, which append alone can't do.
+ */
+export const replaceLedgerHistory = (
+  hash: string,
+  history: NotesImportChatMessage[],
+  nowMs: number = Date.now()
+): void => {
+  const existing = getLedgerEntry(hash)
+  if (!existing) return
+  writeEntry({ ...existing, history, updatedAt: nowMs })
+}
+
+/**
  * Caches a freshly-parsed (not yet accepted) result and moves the row to
  * **Ready** — the run finished, so the live run handle is cleared (its
  * concurrency slot is already released server-side). Creates the row if missing

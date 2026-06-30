@@ -3,6 +3,7 @@ import { View } from 'react-native'
 import { faStopwatch } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
 import Text from '@/components/ui/MyText'
+import ShimmerText from '@/components/ui/ShimmerText'
 import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
 import type { TranslationKey } from '@/lib/locales'
@@ -64,7 +65,7 @@ const NotesImportThinking = ({
   // so surface the hint immediately rather than waiting out another 15s.
   const [showLeaveHint, setShowLeaveHint] = useState(false)
   useEffect(() => {
-    const id = setTimeout(() => setShowLeaveHint(true), 15_000)
+    const id = setTimeout(() => setShowLeaveHint(true), 25_000)
     return () => clearTimeout(id)
   }, [])
 
@@ -115,14 +116,14 @@ const NotesImportThinking = ({
           >
             {i18n.t('notesImport')}
           </Text>
-          <Text
+          <ShimmerText
             style={{
               fontFamily: theme.fonts.semiBold,
               fontSize: theme.fontSize('md'),
             }}
           >
             {i18n.t(statusKeys[statusIndex % statusKeys.length])}
-          </Text>
+          </ShimmerText>
         </View>
 
         {leaveHint && (showLeaveHint || reconnecting) ? (

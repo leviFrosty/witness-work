@@ -44,6 +44,7 @@ import {
   beginWorkingEntry,
   setActiveRun,
   appendLedgerHistory,
+  replaceLedgerHistory,
   putParsedResult,
   markAccepted,
   clearAccepted,
@@ -532,6 +533,37 @@ describe('ledger lifecycle (store-backed)', () => {
     appendLedgerHistory('he', [], 2)
     expect(getLedgerEntry('he')!.history).toEqual([])
     appendLedgerHistory('gone', [{ role: 'user', text: 'x', at: 1 }], 2)
+    expect(getLedgerEntry('gone')).toBeNull()
+  })
+
+  it('replaceLedgerHistory overwrites the whole thread (interrupt-and-refine)', () => {
+    beginWorkingEntry('hr', { notesText: 'n', activeRun: null, nowMs: 1 })
+    putParsedResult('hr', result(), 2)
+    // A refine sealed the prior reply + the now in-flight instruction.
+    appendLedgerHistory(
+      'hr',
+      [
+        { role: 'assistant', text: 'reply 0', at: 3 },
+        { role: 'user', text: 'add Maria', at: 3 },
+      ],
+      3
+    )
+    // Interrupting drops the trailing (uncharged) instruction and seals the new
+    // one in its place — leaving the completed reply intact.
+    replaceLedgerHistory(
+      'hr',
+      [
+        { role: 'assistant', text: 'reply 0', at: 3 },
+        { role: 'user', text: 'actually drop Maria', at: 4 },
+      ],
+      4
+    )
+    expect(getLedgerEntry('hr')!.history.map((m) => m.text)).toEqual([
+      'reply 0',
+      'actually drop Maria',
+    ])
+    // No-op on a missing row.
+    replaceLedgerHistory('gone', [{ role: 'user', text: 'x', at: 1 }], 2)
     expect(getLedgerEntry('gone')).toBeNull()
   })
 

@@ -60,7 +60,9 @@ build-*
 # Agentic tools
 .cursor
 .codex
-.claude
+.claude/*
+# ...but track the workspace skills (a symlink → .agents/skills, which is itself tracked)
+!.claude/skills
 
 credentials.json
 .pnpm-store

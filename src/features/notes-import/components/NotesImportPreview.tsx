@@ -365,7 +365,7 @@ const NotesImportPreview = ({
 
       {/* Whole-import notes no longer render here as a "warnings" card — the
           model now folds them into a single conversational `assistantMessage`,
-          shown as a WWork AI chat bubble beneath the import button (see
+          shown as a Scribe AI chat bubble beneath the import button (see
           NotesImportComposerScreen). Per-record warnings still render inline on
           their rows. */}
 

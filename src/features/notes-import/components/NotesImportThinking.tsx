@@ -20,6 +20,17 @@ const RESUMING_STATUS_KEYS: TranslationKey[] = [
   ...ACTIVE_STATUS_KEYS,
 ]
 
+/**
+ * Token-count readout: absolute below 1,000, then a single-decimal "k" form so
+ * the heartbeat stays narrow as it climbs (e.g. 999 → "999", 1000 → "1k", 1234
+ * → "1.2k").
+ */
+const formatTokens = (tokens: number): string => {
+  if (tokens < 1000) return `${tokens}`
+  const thousands = Math.round((tokens / 1000) * 10) / 10
+  return `${thousands}k`
+}
+
 interface Props {
   reasoning?: string
   reconnecting?: boolean
@@ -27,6 +38,12 @@ interface Props {
   startedAt?: number | null
   /** Approximate tokens processed — a dev-only "it's reasoning" heartbeat. */
   tokens?: number
+  /**
+   * Show the generic "you can leave and come back" subtext after ~15s. Defaults
+   * to true; onboarding turns it off because it shows a richer continue-setup
+   * message in its place.
+   */
+  leaveHint?: boolean
 }
 
 /** Compact, continuously changing processing state for a live Notes Import. */
@@ -35,10 +52,21 @@ const NotesImportThinking = ({
   reconnecting,
   startedAt,
   tokens,
+  leaveHint = true,
 }: Props) => {
   const theme = useTheme()
   const [statusIndex, setStatusIndex] = useState(0)
   const statusKeys = reconnecting ? RESUMING_STATUS_KEYS : ACTIVE_STATUS_KEYS
+
+  // Once a run has been working a little while, reassure the user it isn't stuck
+  // and they don't have to wait on this screen — the import persists and resumes,
+  // so they can leave and come back. A reconnecting run has already been going,
+  // so surface the hint immediately rather than waiting out another 15s.
+  const [showLeaveHint, setShowLeaveHint] = useState(false)
+  useEffect(() => {
+    const id = setTimeout(() => setShowLeaveHint(true), 15_000)
+    return () => clearTimeout(id)
+  }, [])
 
   // Live inference readout (elapsed + approximate tokens), shown in every build
   // while the model works so the user can see it's actively reasoning. Only the
@@ -97,6 +125,18 @@ const NotesImportThinking = ({
           </Text>
         </View>
 
+        {leaveHint && (showLeaveHint || reconnecting) ? (
+          <Text
+            style={{
+              color: theme.colors.textAlt,
+              fontSize: theme.fontSize('sm'),
+              lineHeight: 18,
+            }}
+          >
+            {i18n.t('notesImport_leaveHint')}
+          </Text>
+        ) : null}
+
         {showInferenceStats ? (
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 7 }}>
             <FontAwesomeIcon
@@ -111,7 +151,7 @@ const NotesImportThinking = ({
                 fontVariant: ['tabular-nums'],
               }}
             >
-              {`${elapsedSec.toFixed(1)}s · ~${tokens ?? 0} tok`}
+              {`${elapsedSec.toFixed(1)}s · ~${formatTokens(tokens ?? 0)} tok`}
             </Text>
             {__DEV__ ? (
               <View

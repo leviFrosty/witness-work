@@ -48,9 +48,9 @@ export interface NotesImportActiveRun {
 
 /**
  * One finalized message in an import's conversation thread: a refinement the
- * user sent (`user`) or a reply WWork AI gave (`assistant`). The original notes
- * (round-0 user message) and the live current reply are NOT stored here — they
- * render from `notesText` and `result`. See `history` below.
+ * user sent (`user`) or a reply Scribe AI gave (`assistant`). The original
+ * notes (round-0 user message) and the live current reply are NOT stored here —
+ * they render from `notesText` and `result`. See `history` below.
  */
 export interface NotesImportChatMessage {
   role: 'user' | 'assistant'

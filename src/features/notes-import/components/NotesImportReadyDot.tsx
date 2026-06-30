@@ -4,11 +4,13 @@ import useTheme from '@/contexts/theme'
 interface Props {
   visible: boolean
   size?: number
+  /** Dot fill; defaults to the unread/info blue. Pass `warn` for in-progress. */
+  color?: string
   style?: StyleProp<ViewStyle>
 }
 
 /** Consistent unread-style indicator for Notes Imports awaiting review. */
-const NotesImportReadyDot = ({ visible, size = 8, style }: Props) => {
+const NotesImportReadyDot = ({ visible, size = 8, color, style }: Props) => {
   const theme = useTheme()
 
   if (!visible) return null
@@ -22,7 +24,7 @@ const NotesImportReadyDot = ({ visible, size = 8, style }: Props) => {
           width: size,
           height: size,
           borderRadius: size / 2,
-          backgroundColor: theme.colors.info,
+          backgroundColor: color ?? theme.colors.info,
         },
         style,
       ]}

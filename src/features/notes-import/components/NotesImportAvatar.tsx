@@ -5,7 +5,7 @@ interface Props {
   working?: boolean
 }
 
-/** Branded WWork AI avatar used by the Notes Import conversation surfaces. */
+/** Branded Scribe AI avatar used by the Notes Import conversation surfaces. */
 const NotesImportAvatar = ({ working = false }: Props) => {
   const theme = useTheme()
 

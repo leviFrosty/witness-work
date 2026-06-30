@@ -23,7 +23,7 @@ export type ResolveAnchorPosition = (args: {
   windowWidth: number
   windowHeight: number
   contentWidth: number
-}) => { top: number; left: number }
+}) => { top?: number; bottom?: number; left: number }
 
 interface Props {
   /**
@@ -140,7 +140,7 @@ const AnchoredPopover = ({
 
   const close = () => setOpen(false)
 
-  const positionStyle: { top: number; left: number } = anchor
+  const positionStyle: { top?: number; bottom?: number; left: number } = anchor
     ? resolvePosition({
         anchor,
         windowWidth: dims.width,

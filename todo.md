@@ -6,7 +6,6 @@
 - Update documentation for project structure
 - Add a "pet" feature. To define later.
 - "What's the sloppiest part of this codebase, and how can we fix it?"
-- Add milestone celebration page with animated present.
 - Add year wrapped golden present.
 - Change backup messaging on @backupreminder to also mention "or turn on icloud sync"
 - Add a "this year, wrapped" spotify style animations and service "year end" card that shows their interesting stats, information, etc. Final card should be sharable as image for social media, etc. Also make sure we have app branding included in this polish UI.

@@ -19,9 +19,7 @@ import useTheme from '@/contexts/theme'
 import i18n, { TranslationKey } from '@/lib/locales'
 import MytimeImport from '@/features/onboarding/components/steps/MytimeImport'
 import ICloudRestore from '@/features/onboarding/components/steps/iCloudRestore'
-import NotesImportWizard from '@/features/notes-import/components/NotesImportWizard'
 import { useNotesImportAvailability } from '@/features/notes-import/hooks/useNotesImportAvailability'
-import NotesImportSupporterCta from '@/app/components/NotesImportSupporterCta'
 import type { RootStackNavigation } from '@/types/rootStack'
 import * as ICloudBridge from '../../../../../modules/icloud-bridge'
 
@@ -30,7 +28,7 @@ interface StepProps {
   goNext: () => void
 }
 
-type Mode = 'choose' | 'notes' | 'mytime' | 'icloud'
+type Mode = 'choose' | 'mytime' | 'icloud'
 
 const OptionCard = ({
   icon,
@@ -99,7 +97,10 @@ const OptionCard = ({
  * Onboarding "Pick up where you left off" chooser — replaces the separate
  * iCloud-restore and MyTime-import steps with one fork into Notes / MyTime /
  * iCloud (decision 9). MyTime + iCloud reuse their existing step components
- * inline; iCloud is grayed when the device has no iCloud. Notes + MyTime return
+ * inline; iCloud is grayed when the device has no iCloud. The Notes option
+ * navigates to the shared NotesImportComposer screen — the same surface as
+ * Settings, not a one-off — whose import persists and resumes, so the user can
+ * leave and come back; backing out returns here to keep going. MyTime returns
  * to the flow (`goNext`); iCloud restore completes onboarding on its own.
  */
 const PickUpWhereLeftOff = ({ goBack, goNext }: StepProps) => {
@@ -115,30 +116,6 @@ const PickUpWhereLeftOff = ({ goBack, goNext }: StepProps) => {
   }
   if (mode === 'icloud') {
     return <ICloudRestore goBack={toChooser} goNext={goNext} />
-  }
-  if (mode === 'notes') {
-    return (
-      <Wrapper
-        style={{
-          flex: 1,
-          paddingHorizontal: 20,
-          paddingTop: 60,
-          paddingBottom: 40,
-        }}
-      >
-        <OnboardingNav goBack={toChooser} />
-        <View style={{ flex: 1, paddingTop: 20 }}>
-          <NotesImportWizard
-            publisherMode='overwrite'
-            onComplete={goNext}
-            onRequestUpgrade={() => navigation.navigate('Paywall')}
-            renderSupporterCta={({ onPress }) => (
-              <NotesImportSupporterCta onPress={onPress} />
-            )}
-          />
-        </View>
-      </Wrapper>
-    )
   }
 
   return (
@@ -182,7 +159,11 @@ const PickUpWhereLeftOff = ({ goBack, goNext }: StepProps) => {
             descKey='onboardingPickUp_notesDesc'
             disabled={!notesImport.available}
             disabledNoteKey='notesImport_unavailable'
-            onPress={() => setMode('notes')}
+            onPress={() =>
+              navigation.navigate('NotesImportComposer', {
+                fromOnboarding: true,
+              })
+            }
           />
           <OptionCard
             icon={faFileImport}

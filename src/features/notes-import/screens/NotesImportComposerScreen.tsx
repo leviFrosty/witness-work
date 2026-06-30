@@ -26,6 +26,7 @@ import {
 } from '@react-navigation/native'
 import {
   faCircleExclamation,
+  faClockRotateLeft,
   faDownload,
   faRotateLeft,
 } from '@fortawesome/free-solid-svg-icons'
@@ -47,6 +48,11 @@ import NotesImportThinking from '@/features/notes-import/components/NotesImportT
 import NotesImportAvatar from '@/features/notes-import/components/NotesImportAvatar'
 import NotesImportPreview from '@/features/notes-import/components/NotesImportPreview'
 import NotesImportChatInput from '@/features/notes-import/components/NotesImportChatInput'
+import NotesImportReadyDot from '@/features/notes-import/components/NotesImportReadyDot'
+import NotesImportHistoryPopover, {
+  isInProgress,
+} from '@/features/notes-import/components/NotesImportHistoryPopover'
+import { useOnboardingHandoff } from '@/stores/onboardingHandoff'
 import { NotesImportRefinementHistory } from '@/features/notes-import/components/NotesImportRefinementComposer'
 import NotesImportUsage, {
   type RenderNotesImportSupporterCta,
@@ -86,7 +92,7 @@ const EMPTY_RESULT: NotesImportResult = {
 /**
  * How many of the records the user is about to import still carry an unresolved
  * flag (warning- or error-severity). Drives the confirm-before-import prompt so
- * a user can't silently commit data WWork AI flagged for review. Info-severity
+ * a user can't silently commit data Scribe AI flagged for review. Info-severity
  * notes don't count — they're informational, not something to "take care of".
  *
  * Counts only rows that will ACTUALLY commit (`committedIds` is the id set from
@@ -115,7 +121,7 @@ const selectedFlagCount = (
 
 /**
  * The single Notes Import surface (ADR 0009). One chat-style screen that runs
- * an import end to end inline — paste → live "WWork AI" progress → reviewable
+ * an import end to end inline — paste → live "Scribe AI" progress → reviewable
  * preview → refine → confirm/undo — so the whole flow reads chronologically in
  * one place instead of bouncing the user across screens. Past imports stay in
  * the history list (header action) and reopen here by hash.
@@ -123,9 +129,11 @@ const selectedFlagCount = (
 const NotesImportComposerScreen = ({ renderSupporterCta }: Props) => {
   const theme = useTheme()
   const navigation = useNavigation<RootStackNavigation>()
-  const routeHash =
-    useRoute<RouteProp<RootStackParamList, 'NotesImportComposer'>>().params
-      ?.hash
+  const route = useRoute<RouteProp<RootStackParamList, 'NotesImportComposer'>>()
+  const routeHash = route.params?.hash
+  // Launched from the onboarding "From Notes" step: after a while we offer a
+  // "continue setup" handoff so a slow import never blocks onboarding.
+  const fromOnboarding = route.params?.fromOnboarding ?? false
 
   const entries = useNotesImportManager((s) => s.entries)
   const runtimes = useNotesImportManager((s) => s.runtimes)
@@ -244,6 +252,42 @@ const NotesImportComposerScreen = ({ renderSupporterCta }: Props) => {
   // showing an error/limit/paused block (those have their own retry/resume CTAs).
   const isCancellable = isWorking && !errorCode && !isPaused
 
+  // Onboarding handoff: the "From Notes" step pushes this screen, so a slow
+  // import can't be left blocking setup. After 15s of a live run, offer a
+  // Scribe AI bubble that lets the user continue onboarding; tapping it asks
+  // onboarding to advance and pops back to it — the import keeps running and
+  // resumes from the ledger.
+  const requestContinueOnboarding = useOnboardingHandoff(
+    (s) => s.requestContinue
+  )
+  const [onboardingPromptDue, setOnboardingPromptDue] = useState(false)
+  useEffect(() => {
+    if (!fromOnboarding) return
+    const live = isWorking && !errorCode && !isPaused
+    if (!live) {
+      setOnboardingPromptDue(false)
+      return
+    }
+    const id = setTimeout(() => setOnboardingPromptDue(true), 15_000)
+    return () => clearTimeout(id)
+  }, [fromOnboarding, isWorking, errorCode, isPaused, activeHash])
+
+  const continueOnboarding = () => {
+    requestContinueOnboarding()
+    navigation.goBack()
+  }
+
+  // Imports worth jumping to from the bottom callout: anything in progress or
+  // ready to review that isn't already the one on screen.
+  const actionableOther = entries.filter(
+    (entry) =>
+      entry.hash !== activeHash &&
+      (entry.state === 'ready' || isInProgress(entry, runtimes[entry.hash]))
+  )
+  const calloutInProgress = actionableOther.some((entry) =>
+    isInProgress(entry, runtimes[entry.hash])
+  )
+
   const emptyPreview = isEmptyPreview(preview)
 
   // The records that will ACTUALLY commit. `selectMappedImport` drops a visit
@@ -333,7 +377,7 @@ const NotesImportComposerScreen = ({ renderSupporterCta }: Props) => {
 
   const onAccept = () => {
     if (!activeHash) return
-    // Importing records WWork AI flagged is intentional but rarely the user's
+    // Importing records Scribe AI flagged is intentional but rarely the user's
     // intent — confirm first so an unresolved flag can't slip in unnoticed.
     const flagged = selectedFlagCount(
       preview,
@@ -405,8 +449,8 @@ const NotesImportComposerScreen = ({ renderSupporterCta }: Props) => {
     ])
   }
 
-  // The shared "WWork AI" chat-bubble scaffold: branded avatar + a rounded card
-  // tagged with the accent "WWork AI" label, wrapping whatever body the caller
+  // The shared "Scribe AI" chat-bubble scaffold: branded avatar + a rounded card
+  // tagged with the accent "Scribe AI" label, wrapping whatever body the caller
   // supplies. `gap` tunes the inner spacing per bubble kind.
   const aiBubble = (children: ReactNode, gap: number) => (
     <View style={{ flexDirection: 'row', gap: 10, alignItems: 'flex-end' }}>
@@ -437,7 +481,7 @@ const NotesImportComposerScreen = ({ renderSupporterCta }: Props) => {
     </View>
   )
 
-  // A "WWork AI" message bubble: a short title/body lead-in, with the wider
+  // A "Scribe AI" message bubble: a short title/body lead-in, with the wider
   // response content rendered full width beneath it.
   const aiHeader = (title: string, body?: string) =>
     aiBubble(
@@ -458,12 +502,34 @@ const NotesImportComposerScreen = ({ renderSupporterCta }: Props) => {
       2
     )
 
-  // A standalone "WWork AI" chat message: the model's single conversational
+  // A standalone "Scribe AI" chat message: the model's single conversational
   // note about whole-import assumptions and any clarifying questions. Rendered
   // beneath the import preview so it reads as the assistant's follow-up, not a
   // warnings panel. (Per-record flags still render inline on their rows.)
   const aiMessage = (message: string) =>
     aiBubble(<Text style={{ lineHeight: 21 }}>{message}</Text>, 3)
+
+  // Onboarding-only follow-up beneath the live thinking indicator: invites the
+  // user to keep setting up while a slow import finishes in the background.
+  const onboardingContinueBubble = () =>
+    aiBubble(
+      <View style={{ gap: 12 }}>
+        <Text style={{ lineHeight: 21 }}>
+          {i18n.t('notesImport_onboardingContinueBody')}
+        </Text>
+        <ActionButton onPress={continueOnboarding}>
+          <Text
+            style={{
+              color: theme.colors.textInverse,
+              fontFamily: theme.fonts.bold,
+            }}
+          >
+            {i18n.t('notesImport_onboardingContinueCta')}
+          </Text>
+        </ActionButton>
+      </View>,
+      3
+    )
 
   const limitBlock = () => (
     <Card style={{ gap: 10 }}>
@@ -584,12 +650,18 @@ const NotesImportComposerScreen = ({ renderSupporterCta }: Props) => {
         // No inline cancel here — the composer's Send button becomes a Stop
         // button while the run is in flight (see isCancellable below).
         aiTurn = (
-          <NotesImportThinking
-            reasoning={runtime?.reasoning}
-            reconnecting={Boolean(activeEntry.activeRun) && !runtime?.phase}
-            startedAt={runtime?.startedAt}
-            tokens={runtime?.tokens}
-          />
+          <View style={{ gap: 14 }}>
+            <NotesImportThinking
+              reasoning={runtime?.reasoning}
+              reconnecting={Boolean(activeEntry.activeRun) && !runtime?.phase}
+              startedAt={runtime?.startedAt}
+              tokens={runtime?.tokens}
+              leaveHint={!fromOnboarding}
+            />
+            {fromOnboarding &&
+              onboardingPromptDue &&
+              onboardingContinueBubble()}
+          </View>
         )
     } else if (isReady) {
       aiTurn = emptyPreview ? (
@@ -630,7 +702,7 @@ const NotesImportComposerScreen = ({ renderSupporterCta }: Props) => {
               {confirmLabel}
             </Text>
           </ActionButton>
-          {/* WWork AI's follow-up: a single conversational note about the
+          {/* Scribe AI's follow-up: a single conversational note about the
               assumptions it made and anything it needs the user to clarify.
               Sits below the import action so the user can import now and reply
               via the composer to refine. */}
@@ -893,6 +965,60 @@ const NotesImportComposerScreen = ({ renderSupporterCta }: Props) => {
             backgroundColor: theme.colors.background,
           }}
         >
+          {/* Callout wired to the same history popover as the header clock — a
+              second, in-chat way to reach in-flight or ready-to-review imports.
+              Shown only when there's another such import to jump to. Opens
+              upward so it clears the keyboard/input. */}
+          {actionableOther.length > 0 && (
+            <NotesImportHistoryPopover
+              openDirection='up'
+              align='left'
+              renderTrigger={({ onPress, anchorRef }) => (
+                <View
+                  ref={anchorRef}
+                  collapsable={false}
+                  style={{ alignSelf: 'center', marginBottom: 10 }}
+                >
+                  <Button
+                    onPress={onPress}
+                    accessibilityRole='button'
+                    accessibilityLabel={i18n.t('notesImport_viewHistory')}
+                    noTransform
+                    style={{
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      gap: 8,
+                      paddingVertical: 6,
+                      paddingHorizontal: 14,
+                      borderRadius: theme.numbers.borderRadiusXl,
+                      borderWidth: 1,
+                      borderColor: theme.colors.border,
+                      backgroundColor: theme.colors.card,
+                    }}
+                  >
+                    <NotesImportReadyDot
+                      visible
+                      color={calloutInProgress ? theme.colors.warn : undefined}
+                    />
+                    <Text
+                      style={{
+                        color: theme.colors.textAlt,
+                        fontFamily: theme.fonts.semiBold,
+                        fontSize: theme.fontSize('sm'),
+                      }}
+                    >
+                      {i18n.t('notesImport_viewHistory')}
+                    </Text>
+                    <FontAwesomeIcon
+                      icon={faClockRotateLeft}
+                      size={12}
+                      color={theme.colors.textAlt}
+                    />
+                  </Button>
+                </View>
+              )}
+            />
+          )}
           <NotesImportChatInput
             ref={inputRef}
             value={composerValue}

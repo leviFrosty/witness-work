@@ -147,7 +147,7 @@ export interface NotesImportResult {
    */
   summary: string
   /**
-   * A single, friendly chat message from WWork AI to the user — whole-import
+   * A single, friendly chat message from Scribe AI to the user — whole-import
    * assumptions worth verifying plus any clarifying questions about what's
    * missing or ambiguous. Rendered as a chat bubble beneath the import preview
    * (NOT a per-record warning). Empty string when there's nothing to say.

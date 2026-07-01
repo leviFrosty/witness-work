@@ -15,7 +15,7 @@
 import fs from 'fs'
 import path from 'path'
 import readline from 'readline'
-import { execSync } from 'child_process'
+import { execSync, execFileSync } from 'child_process'
 import semver from 'semver'
 
 // Color output helpers
@@ -97,7 +97,25 @@ if (!['major', 'minor', 'patch'].includes(bumpType)) {
 const rootDir = path.resolve(__dirname, '..')
 const packageJsonPath = path.join(rootDir, 'package.json')
 const appConfigPath = path.join(rootDir, 'app.config.ts')
-const releaseNotesPath = path.join(rootDir, 'src/constants/releaseNotes.ts')
+const releaseNotesPath = path.join(
+  rootDir,
+  'src/features/updates/constants/releaseNotes.ts'
+)
+
+const enUsPath = path.join(rootDir, 'src/locales/en-US.json')
+
+// Fail fast if the files release-notes generation will write to have moved or
+// gone missing — before we burn an LLM call and interactive review.
+if (!skipNotes) {
+  for (const p of [releaseNotesPath, enUsPath]) {
+    if (!fs.existsSync(p)) {
+      error(
+        `Expected file not found: ${path.relative(rootDir, p)}. ` +
+          `Update the path in scripts/bump-version.js, or pass --skip-notes.`
+      )
+    }
+  }
+}
 
 // Check if we're in a git repository
 try {
@@ -193,7 +211,6 @@ try {
 // Get previous release notes so Claude knows what users have already seen
 let previousNotes = ''
 try {
-  const enUsPath = path.join(rootDir, 'src/locales/en-US.json')
   const enUs = JSON.parse(fs.readFileSync(enUsPath, 'utf-8'))
   if (enUs.updates) {
     const versionKeys = Object.keys(enUs.updates)
@@ -255,24 +272,118 @@ OUTPUT: ONLY valid JSON, no markdown fences, no explanation:
 
 If no user-facing changes exist, output: {"notes": ["Bug fixes and performance improvements."]}`
 
-function parseClaudeNotes(claudeOutput) {
-  const parsed = JSON.parse(claudeOutput)
-  if (typeof parsed.result === 'string') {
-    const cleaned = stripMarkdownFences(parsed.result)
-    return JSON.parse(cleaned).notes
-  } else if (parsed.notes) {
-    return parsed.notes
+/**
+ * Extracts the `notes` array from a chunk of text that should contain
+ * `{"notes": [...]}`. Tolerates surrounding prose and markdown fences — Claude
+ * occasionally prefixes JSON with an explanation ("I'll ...") despite being
+ * asked not to.
+ */
+function extractNotesFromText(text) {
+  const cleaned = stripMarkdownFences(text)
+
+  // Happy path: the whole thing is the JSON object.
+  try {
+    const obj = JSON.parse(cleaned)
+    if (Array.isArray(obj.notes)) return obj.notes
+  } catch {
+    // fall through to regex extraction
   }
-  throw new Error(
-    `Unexpected Claude output shape: ${claudeOutput.slice(0, 200)}`
-  )
+
+  // Fallback: pull the first {...} block that mentions "notes".
+  const match = cleaned.match(/\{[\s\S]*"notes"[\s\S]*\}/)
+  if (match) {
+    try {
+      const obj = JSON.parse(match[0])
+      if (Array.isArray(obj.notes)) return obj.notes
+    } catch {
+      // fall through
+    }
+  }
+
+  return null
 }
 
+function parseClaudeNotes(claudeOutput) {
+  // With `--output-format json` the CLI wraps the answer in an envelope
+  // ({ type, result, ... }); the model's actual reply lives in `result`.
+  let resultText = claudeOutput
+  try {
+    const envelope = JSON.parse(claudeOutput)
+    if (typeof envelope.result === 'string') {
+      resultText = envelope.result
+    } else if (Array.isArray(envelope.notes)) {
+      return envelope.notes
+    }
+  } catch {
+    // Not an envelope — treat the raw output as the reply text.
+  }
+
+  const notes = extractNotesFromText(resultText)
+  if (!notes) {
+    throw new Error(
+      `Could not parse notes from Claude output: ${resultText.slice(0, 200)}`
+    )
+  }
+  return notes
+}
+
+/**
+ * Invokes the Claude CLI via execFileSync (no shell) so the prompt — which
+ * contains backticks, `$`, and other shell metacharacters — is passed verbatim
+ * as a single argv entry instead of being interpreted by /bin/sh.
+ */
 function callClaude(promptText) {
-  return execSync(
-    `claude -p ${JSON.stringify(promptText)} --model opus --output-format json --allowedTools Bash Read`,
-    { cwd: rootDir, encoding: 'utf-8', timeout: 120000 }
+  return execFileSync(
+    'claude',
+    [
+      '-p',
+      promptText,
+      '--model',
+      'opus',
+      '--output-format',
+      'json',
+      '--allowedTools',
+      'Bash',
+      'Read',
+    ],
+    {
+      cwd: rootDir,
+      encoding: 'utf-8',
+      timeout: 120000,
+      maxBuffer: 10 * 1024 * 1024,
+    }
   ).trim()
+}
+
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
+
+/**
+ * Calls Claude and parses the release notes, retrying on failure (CLI errors,
+ * timeouts, or unparseable output). Returns a non-empty notes array.
+ */
+async function generateNotesWithRetry(promptText, { retries = 3 } = {}) {
+  let lastError
+  for (let attempt = 1; attempt <= retries; attempt++) {
+    try {
+      const output = callClaude(promptText)
+      const notes = parseClaudeNotes(output)
+      if (!Array.isArray(notes) || notes.length === 0) {
+        throw new Error('Claude returned an empty notes array')
+      }
+      return notes
+    } catch (e) {
+      lastError = e
+      if (attempt < retries) {
+        const delayMs = attempt * 3000
+        warning(`Claude attempt ${attempt}/${retries} failed: ${e.message}`)
+        info(`Retrying in ${delayMs / 1000}s...`)
+        await sleep(delayMs)
+      }
+    }
+  }
+  throw new Error(
+    `Claude generation failed after ${retries} attempts: ${lastError.message}`
+  )
 }
 
 function displayNotes(notes) {
@@ -293,16 +404,7 @@ async function generateAndReviewNotes() {
 
   // Initial generation
   info('Generating release notes with Claude...')
-  try {
-    const output = callClaude(currentPrompt)
-    notes = parseClaudeNotes(output)
-  } catch (e) {
-    throw new Error(`Claude generation failed: ${e.message}`)
-  }
-
-  if (!Array.isArray(notes) || notes.length === 0) {
-    throw new Error('Claude returned empty notes array')
-  }
+  notes = await generateNotesWithRetry(currentPrompt)
 
   // Review loop
 
@@ -333,15 +435,10 @@ REVIEWER FEEDBACK — apply these changes:
 ${feedback}`
 
     try {
-      const output = callClaude(revisionPrompt)
-      notes = parseClaudeNotes(output)
+      notes = await generateNotesWithRetry(revisionPrompt)
     } catch (e) {
       warning(`Revision failed: ${e.message}`)
       warning('Keeping previous version. You can try again.')
-    }
-
-    if (!Array.isArray(notes) || notes.length === 0) {
-      warning('Claude returned empty notes. Keeping previous version.')
     }
   }
 
@@ -379,7 +476,6 @@ try {
     success('Updated releaseNotes.ts')
 
     // 2. Update en-US.json — add i18n keys under "updates"
-    const enUsPath = path.join(rootDir, 'src/locales/en-US.json')
     const enUsContent = JSON.parse(fs.readFileSync(enUsPath, 'utf-8'))
     if (!enUsContent.updates) {
       error('Could not find "updates" key in en-US.json')

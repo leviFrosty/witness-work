@@ -488,13 +488,19 @@ try {
     fs.writeFileSync(enUsPath, JSON.stringify(enUsContent, null, 2) + '\n')
     success('Updated en-US.json')
 
-    // 3. Run auto-translate
+    // 3. Run auto-translate. Each target locale is translated sequentially
+    // with a ~60s pause between them (to let Azure F0's rate-limit window
+    // recover), so the timeout must scale with the number of locales.
     info('Running auto-translate...')
+    const localeCount = fs
+      .readdirSync(path.join(rootDir, 'src/locales'))
+      .filter((f) => f.endsWith('.json') && f !== 'en-US.json').length
+    const translateTimeout = Math.max(600000, localeCount * 120000)
     try {
       execSync('pnpm translate --force', {
         cwd: rootDir,
         stdio: 'inherit',
-        timeout: 300000,
+        timeout: translateTimeout,
       })
       success('Auto-translate complete')
     } catch (e) {
@@ -509,7 +515,7 @@ try {
   // Git commit and tag — only after release notes are accepted
   const filesToAdd = ['package.json', 'app.config.ts']
   if (releaseNotesGenerated) {
-    filesToAdd.push('src/constants/releaseNotes.ts', 'src/locales/')
+    filesToAdd.push(path.relative(rootDir, releaseNotesPath), 'src/locales/')
   }
   execSync(`git add ${filesToAdd.join(' ')}`, {
     cwd: rootDir,

@@ -270,7 +270,7 @@ function parseClaudeNotes(claudeOutput) {
 
 function callClaude(promptText) {
   return execSync(
-    `claude -p ${JSON.stringify(promptText)} --model sonnet --output-format json --allowedTools Bash Read`,
+    `claude -p ${JSON.stringify(promptText)} --model opus --output-format json --allowedTools Bash Read`,
     { cwd: rootDir, encoding: 'utf-8', timeout: 120000 }
   ).trim()
 }

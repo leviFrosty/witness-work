@@ -838,6 +838,12 @@
       "c5": "Locating contacts on the map now shows live progress, and you can skip it midway without losing your place.",
       "c6": "Faster, smoother scrolling in the Contacts list, plus quicker home screen widget updates.",
       "c7": "Fixed projected totals around time zone changes, enlarged header buttons for easier tapping, and polished countless small details throughout the app."
+    },
+    "1410": {
+      "c1": "New: Meet Scribe AI. Paste your field-ministry notes — a handwritten-style log or an export from another app — and Scribe AI turns them into contacts, visits, and time entries for you to review before anything is saved. No more manual re-entry, and you can start an import right from onboarding.",
+      "c2": "Your Supporter status now restores more reliably across sign-ins and devices.",
+      "c3": "Resolved a rare crash that could occur when closing a picker.",
+      "c4": "Improved reliability when the app hits a temporary storage or location hiccup, so your contacts and edits save dependably even on a flaky connection."
     }
   },
   "installed": "Installed",
@@ -1270,10 +1276,8 @@
   "manageCustomFields": "Manage Custom Fields",
   "manageCustomFields_description": "Rename, reorder, or archive custom fields. Renaming a field updates it everywhere — your contact data is never lost.",
   "addNewField": "Add New Field",
-  "active": "Active",
   "archived": "Archived",
   "archiveField": "Archive Field",
-  "archive": "Archive",
   "archiveField_description": "Archiving \"{{label}}\" hides this field from contacts but keeps every contact's value safe. You can restore it from the manage screen any time.",
   "archivedFields_description": "Archived fields are hidden everywhere. Restore one to put it back on the contact form with all its values intact.",
   "customFields_empty": "No custom fields yet.",
@@ -1297,7 +1301,6 @@
   "updateTime": "Update Time",
   "updateTime_description": "Edit or delete a previous service report",
   "deleted": "Deleted",
-  "archived": "Archived",
   "recovered": "Recovered",
   "thisContactHasNoConversations": "This contact has no conversations yet.",
   "annualSchedule": "Annual Schedule",
@@ -1377,7 +1380,6 @@
   "fetchCoordinate": "Fetch Coordinate",
   "keepExisting": "Keep Existing",
   "pinLocation_description": "A pin will automatically be created based on an address you enter. If you wish, you can add a custom pin location below.",
-  "address": "Address",
   "pinOnMap": "Pin on Map",
   "pinOnMap_descriptionAuto": "Derived from the address above. Tap to set a custom pin.",
   "pinOnMap_customSet": "Custom pin set.",

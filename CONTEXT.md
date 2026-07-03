@@ -85,8 +85,12 @@ An Import whose source is arbitrary free text the User pastes or shares (handwri
 _Avoid_: "AI import" in user copy where it implies the in-app Assistant (the Assistant is rule-based and unrelated); "paste import" (Notes Import also covers shared/picked text).
 
 **Import Credit**:
-The unit metering free Notes Import usage. A non-**Supporter** gets a fixed number of Import Credits (5); a Supporter is unlimited. One Credit is consumed per distinct source text (identified by content hash) the first time it is parsed — follow-up refinements of that same text and re-imports of an already-seen text cost nothing.
+The unit metering free Notes Import usage. A non-**Supporter** gets a fixed number of Import Credits (5); a Supporter is unlimited. One Credit is consumed per distinct source text (identified by content hash) the first time it is parsed — follow-up refinements of that same text and re-imports of an already-seen text cost nothing. An **Empty Import** also costs nothing, up to an anti-abuse limit past which repeated Empty Imports begin consuming Credits again.
 _Avoid_: "token" (tokens are the LLM's internal cost unit, separate), "import count" (Credit carries the per-distinct-source and Supporter-exemption semantics).
+
+**Empty Import**:
+A **Notes Import** that completes successfully but produces zero records — no contacts, visits, time entries, and no detected Publisher (the `isEmptyPreview` predicate; produced Categories and Warnings alone do not count as records). The import ran correctly; the pasted text simply held nothing to bring in. An Empty Import does not consume an **Import Credit**, so a User's Credits are never spent on a paste that yields nothing — subject to an anti-abuse limit, beyond which further Empty Imports within the window consume a Credit again (a **Supporter**, being unmetered, is exempt from the limit entirely). Distinct from an **Import Warning**, which flags a produced record; an Empty Import produces no records at all.
+_Avoid_: "failed import" (an Empty Import succeeded — nothing errored), "import attempt", "non-valid import" (nothing invalid happened).
 
 **Import Warning**:
 A model-emitted flag on a Notes Import about an assumption, ambiguity, or low-confidence guess. Carries a severity (info / warning / error) and optionally targets one specific produced record so the preview can highlight that contact, visit, or time entry. An error-severity Warning marks data unsafe to commit and is deselected by default in the preview.

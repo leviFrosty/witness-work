@@ -51,17 +51,28 @@ export interface NotesImportResponse {
   result: NotesImportResult
   contentHash: string
   refinement: boolean
+  /**
+   * The run produced no records (an Empty Import) AND still charged an Import
+   * Credit because the anti-abuse empty window was exhausted (ADR 0012). Drives
+   * the composer's fixed Scribe AI "this one counted" notice. A within-window
+   * free empty — or any non-empty run — is false.
+   */
+  emptyCharged: boolean
   credits: NotesImportCredits
 }
 
-interface NotesImportWireResponse extends Omit<NotesImportResponse, 'credits'> {
+interface NotesImportWireResponse
+  extends Omit<NotesImportResponse, 'credits' | 'emptyCharged'> {
   credits: NotesImportCreditsWire
+  /** Absent on older proxy payloads → normalized to false. */
+  emptyCharged?: boolean
 }
 
 const normalizeNotesImportResponse = (
   response: NotesImportWireResponse
 ): NotesImportResponse => ({
   ...response,
+  emptyCharged: response.emptyCharged ?? false,
   credits: normalizeNotesImportCredits(response.credits, {
     unlimitedImports: DEV_IMPORTS_UNLIMITED,
   }),

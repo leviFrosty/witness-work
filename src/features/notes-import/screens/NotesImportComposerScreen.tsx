@@ -765,6 +765,11 @@ const NotesImportComposerScreen = ({ renderSupporterCta }: Props) => {
         <View style={{ gap: 14 }}>
           {aiHeader(i18n.t('notesImport_emptyTitle'))}
           {!!result.assistantMessage && aiMessage(result.assistantMessage)}
+          {/* Past the free-empty window, an empty parse still costs a credit
+              (ADR 0012). Scribe AI owns the message so the user is told in-voice,
+              not via a system banner. Within-window empties leave this false. */}
+          {activeEntry.emptyCharged &&
+            aiMessage(i18n.t('notesImport_emptyChargedNotice'))}
         </View>
       ) : (
         <View style={{ gap: 14 }}>

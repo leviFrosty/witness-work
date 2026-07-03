@@ -1090,6 +1090,7 @@
   "notesImport_takeHome": "Take me home",
   "notesImport_emptyTitle": "Nothing to import",
   "notesImport_emptyBody": "Scribe AI couldn't find any Contacts, Visits, or Time Entries in that text. Try adding more detail and importing again.",
+  "notesImport_emptyChargedNotice": "Heads up — I've come up empty a few times recently, so this attempt counted toward your imports. The next paste with real details won't be wasted.",
   "notesImport_errorTitle": "Import didn't finish",
   "notesImport_error": "Something went wrong. Please try again.",
   "notesImport_modelError": "Scribe AI couldn't make sense of those notes. Try rephrasing or adding detail, then import again.",

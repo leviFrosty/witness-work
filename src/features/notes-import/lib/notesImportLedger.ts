@@ -70,6 +70,13 @@ export interface NotesImportLedgerEntry {
   /** The model's full structured output; null while Working with no result yet. */
   result: NotesImportResult | null
   /**
+   * The latest parse produced no records AND was charged an Import Credit
+   * anyway because the anti-abuse empty window was exhausted (ADR 0012). Drives
+   * the composer's fixed Scribe AI "this one counted" notice. False for a free
+   * within-window empty and for any non-empty parse; reset on every re-parse.
+   */
+  emptyCharged: boolean
+  /**
    * Finalized conversation messages preceding the live result, oldest first:
    * every superseded AI reply and every refinement instruction. Excludes the
    * original notes (round-0 user message — renders from `notesText`) and the
@@ -242,6 +249,7 @@ export const migrateLedgerEntry = (
     notesText,
     provisionalTitle,
     result,
+    emptyCharged: o.emptyCharged === true,
     history: sanitizeHistory(o.history),
     summary,
     commit,
@@ -289,6 +297,9 @@ export const beginWorkingTransition = (
     provisionalTitle:
       provisionalTitleFromNotes(notesText) || existing?.provisionalTitle || '',
     result: existing?.result ?? null,
+    // Preserve the prior notice while the cached result is still on screen; a
+    // successful re-parse overwrites it (refinements never charge an empty).
+    emptyCharged: existing?.emptyCharged ?? false,
     // A refinement folds into the same row; its conversation thread carries over.
     history: existing?.history ?? [],
     summary: existing?.summary ?? '',
@@ -313,13 +324,17 @@ export const beginWorkingTransition = (
 export const putParsedTransition = (
   existing: NotesImportLedgerEntry | null,
   result: NotesImportResult,
-  parsedAtMs: number
+  parsedAtMs: number,
+  emptyCharged = false
 ): NotesImportLedgerEntry => ({
   hash: existing?.hash ?? '',
   state: 'ready',
   notesText: existing?.notesText ?? '',
   provisionalTitle: existing?.provisionalTitle ?? '',
   result,
+  // Per-parse: a refinement re-parse (never an empty charge) rebuilds this entry
+  // and so clears any prior notice.
+  emptyCharged,
   // The prior turns persist; only the live `result` advances to the new reply.
   history: existing?.history ?? [],
   summary: result.summary ?? existing?.summary ?? '',
@@ -557,10 +572,14 @@ export const replaceLedgerHistory = (
 export const putParsedResult = (
   hash: string,
   result: NotesImportResult,
-  parsedAtMs: number
+  parsedAtMs: number,
+  emptyCharged = false
 ): void => {
   const existing = getLedgerEntry(hash)
-  writeEntry({ ...putParsedTransition(existing, result, parsedAtMs), hash })
+  writeEntry({
+    ...putParsedTransition(existing, result, parsedAtMs, emptyCharged),
+    hash,
+  })
 }
 
 /** Records the accepted commit (for undo) and moves the row to **Done**. */

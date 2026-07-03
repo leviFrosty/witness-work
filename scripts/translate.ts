@@ -243,15 +243,27 @@ if (args.destination) {
 }
 
 if (!args.force) {
+  let stagedFiles: string[] = []
   try {
-    execSync(`git diff --cached --name-only | grep -e 'src/locales*'`, {
+    const output = execSync('git diff --cached --name-only', {
       encoding: 'utf8',
     })
-    log('Found changed files!')
+    stagedFiles = output.split('\n').filter(Boolean)
   } catch (error: unknown) {
-    logError('Error detecting to detect changes: ', error)
+    logError('Failed to detect staged changes: ', error)
+    process.exit(1)
+  }
+
+  const changedLocaleFiles = stagedFiles.filter((file) =>
+    file.startsWith(`${LOCALE_DIR}/`)
+  )
+  if (changedLocaleFiles.length === 0) {
+    log(
+      `No staged changes under ${LOCALE_DIR}/ — nothing to translate. Stage your source locale, or pass --force to run anyway.`
+    )
     process.exit(0)
   }
+  log(`Found ${changedLocaleFiles.length} changed locale file(s)!`)
 } else {
   log(
     '🚀 Force flag detected - skipping git check and running translations anyway'
@@ -292,6 +304,7 @@ interface TranslationResult {
   success: boolean
   error?: Error
   rateLimited?: boolean
+  noop?: boolean
 }
 
 interface RenameOptions {
@@ -370,12 +383,17 @@ const FAILURE_PATTERNS = [
 ]
 const RATE_LIMIT_PATTERN =
   /Status Code: 429|Too Many Requests|exceeded request limits/i
+// i18n-auto-translation prints this per file when the target locale is already
+// fully translated — meaning it never hit Azure, so no sliding-window recovery
+// pause is needed before the next locale.
+const NO_OP_PATTERN = /Everything already translated/i
 
 interface RunResult {
   ok: boolean
   error?: Error
   output: string
   rateLimited: boolean
+  noop: boolean
 }
 
 const runTranslateOnce = (locale: string): Promise<RunResult> => {
@@ -388,6 +406,7 @@ const runTranslateOnce = (locale: string): Promise<RunResult> => {
         error: new Error('AZURE_TRANSLATOR_KEY is not set'),
         output: '',
         rateLimited: false,
+        noop: false,
       })
       return
     }
@@ -397,6 +416,7 @@ const runTranslateOnce = (locale: string): Promise<RunResult> => {
         error: new Error('AZURE_TRANSLATOR_REGION is not set'),
         output: '',
         rateLimited: false,
+        noop: false,
       })
       return
     }
@@ -447,6 +467,7 @@ const runTranslateOnce = (locale: string): Promise<RunResult> => {
         error,
         output: captured,
         rateLimited: RATE_LIMIT_PATTERN.test(captured),
+        noop: false,
       })
     })
 
@@ -461,6 +482,7 @@ const runTranslateOnce = (locale: string): Promise<RunResult> => {
           error: new Error(`killed by signal ${signal}`),
           output: captured,
           rateLimited,
+          noop: false,
         })
         return
       }
@@ -478,10 +500,16 @@ const runTranslateOnce = (locale: string): Promise<RunResult> => {
           error: new Error(reason),
           output: captured,
           rateLimited,
+          noop: false,
         })
         return
       }
-      resolve({ ok: true, output: captured, rateLimited: false })
+      resolve({
+        ok: true,
+        output: captured,
+        rateLimited: false,
+        noop: NO_OP_PATTERN.test(captured),
+      })
     })
   })
 }
@@ -518,8 +546,12 @@ const translateLocale = async (locale: string): Promise<TranslationResult> => {
 
     const result = await runTranslateOnce(locale)
     if (result.ok) {
-      spinner?.stop(`[translate] - ✅ Successfully translated: ${locale}`)
-      return { locale, success: true }
+      spinner?.stop(
+        result.noop
+          ? `[translate] - ✅ Already up to date: ${locale}`
+          : `[translate] - ✅ Successfully translated: ${locale}`
+      )
+      return { locale, success: true, noop: result.noop }
     }
     lastError = result.error
     lastOutput = result.output
@@ -596,7 +628,9 @@ const processTranslationsSequentially = async (): Promise<
       }
     }
 
-    if (i < locales.length - 1) {
+    // A no-op locale never touched Azure, so there's no sliding window to let
+    // recover — skip the pause and move straight to the next locale.
+    if (i < locales.length - 1 && !result.noop) {
       log(
         `Pausing ${REQUEST_DELAY_MS / 1000}s before next locale (lets Azure F0's sliding window recover)...`
       )

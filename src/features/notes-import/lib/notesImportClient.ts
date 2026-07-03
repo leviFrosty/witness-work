@@ -253,10 +253,11 @@ export interface NotesImportAuthDebugReport {
 /**
  * Exercises the auth boundary end to end for the dev Tools screen, reporting
  * each hop separately so a failure pinpoints itself: status probe → challenge →
- * (if needed or forced) the full App Attest handshake → a local assertion
- * signature. Uses the same primitives and cache as the real import path, so a
- * forced handshake here genuinely re-attests the device. No inference is spent
- * — the metered endpoints are never called.
+ * (if needed or forced) the full App Attest handshake → an assertion signed
+ * locally and verified by ww-api's attested no-op endpoint — the exact
+ * verifyAssertion path kickoff runs. Uses the same primitives and cache as the
+ * real import path, so a forced handshake here genuinely re-attests the device.
+ * No inference is spent and no credits are touched.
  */
 export const runNotesImportAuthDiagnostics = async (
   options: { forceReattest?: boolean } = {}
@@ -345,19 +346,41 @@ export const runNotesImportAuthDiagnostics = async (
     steps.push({ step: 'device key', ok: true, ms: 0, detail: 'using cache' })
   }
 
-  // Signs the same canonical clientData the real calls use, proving the
-  // Secure Enclave key is still usable. Local-only: verifying it server-side
-  // would require a metered endpoint.
-  await run(
+  // Sign the same canonical clientData the real calls use over a fixed probe
+  // hash, then have ww-api run the full verifyAssertion path — challenge
+  // consumption, signature check, and sign-count advance, exactly as kickoff
+  // does, minus metering and inference.
+  const accountId = getOrCreateAccountId()
+  const contentHash = await notesContentHash('notes-import auth diagnostics')
+  const freshChallenge = await run(
+    'challenge (assertion)',
+    getChallenge,
+    (c) => (c ? `${c.length} chars` : 'empty')
+  )
+  if (freshChallenge === null) return report()
+  const assertion = await run(
     'sign assertion (local)',
     async () => {
-      const freshChallenge = await getChallenge()
-      const accountId = getOrCreateAccountId()
-      const clientData = `${freshChallenge}|${uuid}|${accountId}|debug`
+      const clientData = `${freshChallenge}|${uuid}|${accountId}|${contentHash}`
       return AppAttest.generateAssertion(keyId!, await base64Sha256(clientData))
     },
     (a) => `${a.length} chars CBOR`
   )
+  if (assertion === null) return report()
+  await run('verify assertion (ww-api)', async () => {
+    await axios.post(
+      apis.notesImportVerify,
+      {
+        uuid,
+        accountId,
+        keyId,
+        challenge: freshChallenge,
+        assertion,
+        contentHash,
+      },
+      { timeout: REQUEST_TIMEOUT_MS }
+    )
+  })
   return report()
 }
 

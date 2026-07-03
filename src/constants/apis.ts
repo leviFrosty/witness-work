@@ -14,6 +14,9 @@ export default {
   notesImportStatus: `${NOTES_BASE_URL}/notes-import/status`,
   notesImportChallenge: `${NOTES_BASE_URL}/notes-import/challenge`,
   notesImportAttest: `${NOTES_BASE_URL}/notes-import/attest`,
+  // Attested no-op — dev Tools diagnostics verify an assertion server-side
+  // without spending credits or inference.
+  notesImportVerify: `${NOTES_BASE_URL}/notes-import/verify`,
   // Streaming import: attested kickoff → SSE progress stream → result snapshot.
   notesImportKickoff: `${NOTES_BASE_URL}/notes-import/kickoff`,
   notesImportEvents: (importId: string) =>

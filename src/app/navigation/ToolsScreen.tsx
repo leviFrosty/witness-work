@@ -176,6 +176,7 @@ export default function ToolsScreen() {
     autoRolloverEnabled,
     celebratedTiers,
     celebratedMilestones,
+    submittedReportMonths,
     set: setPreferences,
   } = preferences
   // Profile-shaped fields live in the dedicated Profile store after wave-3.
@@ -1345,6 +1346,37 @@ export default function ToolsScreen() {
             value={scheduledNotifications}
             count={scheduledNotifications.length}
           />
+        </Card>
+
+        <SectionHeader title='Report submission' />
+        <Card style={{ gap: 10 }}>
+          <Text
+            style={{
+              fontSize: theme.fontSize('sm'),
+              color: theme.colors.textAlt,
+            }}
+          >
+            submittedReportMonths drives the Home-screen &quot;Submit
+            &lt;month&gt;&apos;s Report&quot; reminder — it appears while the
+            previous month&apos;s YYYY-MM key is absent. Clearing brings the
+            reminder (and the report screen&apos;s submit CTA state) back.
+          </Text>
+          <XView style={{ justifyContent: 'space-between' }}>
+            <Text>Submitted months:</Text>
+            <Text style={{ color: theme.colors.textAlt, fontFamily: MONO }}>
+              {submittedReportMonths.length === 0
+                ? '—'
+                : submittedReportMonths.join(', ')}
+            </Text>
+          </XView>
+          <ActionButton
+            onPress={() => {
+              setPreferences({ submittedReportMonths: [] })
+              showDone('Submitted reports cleared')
+            }}
+          >
+            Clear submitted reports
+          </ActionButton>
         </Card>
 
         <SectionHeader title='Celebrations' />

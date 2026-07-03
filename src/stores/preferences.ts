@@ -63,6 +63,19 @@ const publisherHours: PublisherHours = {
 
 export type DefaultNavigationMapProvider = 'apple' | 'waze' | 'google' | null
 
+/**
+ * The ways a monthly service report can be sent onward from the report view
+ * screen. Mirrors the `MenuView` share actions on `ServiceReportViewScreen` —
+ * keep the two in sync when adding a method.
+ */
+export const reportExportMethods = [
+  'copy',
+  'share',
+  'hourglass',
+  'nwpublisher',
+] as const
+export type ReportExportMethod = (typeof reportExportMethods)[number]
+
 interface TimeOffset {
   amount?: number
   unit?: moment.unitOfTime.DurationConstructor
@@ -733,6 +746,22 @@ export const PREFERENCE_DEFAULTS = {
    */
   seenTipIds: [] as string[],
   /**
+   * How the user usually submits their monthly report (copy, share sheet,
+   * Hourglass, or NW Publisher). Picked during onboarding and editable from
+   * Preferences → Publisher or the report view screen. Drives the one-tap
+   * submit CTA on `ServiceReportViewScreen`. Syncable — it's user intent.
+   */
+  defaultExportMethod: 'copy' as ReportExportMethod,
+  /**
+   * `YYYY-MM` keys of months whose report the user has sent onward via any
+   * export method (copy, share, Hourglass, NW Publisher). Drives the
+   * post-rollover "Review <month>" reminder on the Home screen — only the most
+   * recent completed month is ever checked, so this list is capped rather than
+   * grown forever. Syncable so submitting on one device clears the reminder on
+   * another.
+   */
+  submittedReportMonths: [] as string[],
+  /**
    * Off Days the user wants the Assistant to treat as a hard exclusion when
    * generating recommended day plans. Empty by default — no exclusion. Today
    * stored as weekday numbers (0 = Sunday … 6 = Saturday); the concept covers
@@ -1193,6 +1222,22 @@ export const usePreferences = create(
               },
             }
           }),
+        /**
+         * Records that the report for the given `YYYY-MM` month has been sent
+         * onward via any export method. Capped to the most recent 24 entries —
+         * the reminder logic only ever looks at the previous month.
+         */
+        markReportSubmitted: (monthKey: string) =>
+          set(({ submittedReportMonths }) =>
+            submittedReportMonths.includes(monthKey)
+              ? {}
+              : {
+                  submittedReportMonths: [
+                    ...submittedReportMonths,
+                    monthKey,
+                  ].slice(-24),
+                }
+          ),
         markTipSeen: (tipId: string) =>
           set(({ seenTipIds }) =>
             seenTipIds.includes(tipId)

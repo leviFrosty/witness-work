@@ -11,6 +11,7 @@ import StepOne from '@/features/onboarding/components/steps/One'
 import StepTwo from '@/features/onboarding/components/steps/Two'
 import StepThree from '@/features/onboarding/components/steps/Three'
 import StepDefaultNav from '@/features/onboarding/components/steps/DefaultNav'
+import StepDefaultExportMethod from '@/features/onboarding/components/steps/DefaultExportMethod'
 import PrivacyFirst from '@/features/onboarding/components/steps/PrivacyFirst'
 import ProfileSetup from '@/features/onboarding/components/steps/ProfileSetup'
 import ProfileSetupPioneerDate from '@/features/onboarding/components/steps/ProfileSetupPioneerDate'
@@ -48,6 +49,7 @@ type StepId =
   | 'yourPlanPreview'
   | 'notifications'
   | 'defaultNav'
+  | 'defaultExportMethod'
   | 'onboardingBackfill'
   | 'supporter'
 
@@ -106,6 +108,11 @@ const allSteps: StepDef[] = [
   },
   { id: 'notifications', Component: StepThree, countsTowardProgress: true },
   { id: 'defaultNav', Component: StepDefaultNav, countsTowardProgress: true },
+  {
+    id: 'defaultExportMethod',
+    Component: StepDefaultExportMethod,
+    countsTowardProgress: true,
+  },
   {
     id: 'onboardingBackfill',
     Component: OnboardingBackfill,

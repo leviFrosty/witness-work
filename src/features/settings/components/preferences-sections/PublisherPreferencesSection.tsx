@@ -6,6 +6,7 @@ import i18n from '@/lib/locales'
 import Section from '@/components/ui/inputs/Section'
 import InputRowContainer from '@/components/ui/inputs/InputRowContainer'
 import PublisherTypeSelector from '@/components/PublisherTypeSelector'
+import DefaultExportMethodSelector from '@/components/DefaultExportMethodSelector'
 import AnnualGoalSelector from '@/features/settings/components/AnnualGoalSelector'
 import ProfileCard from '@/features/profile/components/ProfileCard'
 import DateTimePicker from '@/components/ui/DateTimePicker'
@@ -106,10 +107,7 @@ const PublisherPreferencesSection = () => {
           </View>
         </InputRowContainer>
         {tracksTenure && (
-          <InputRowContainer
-            label={i18n.t(getStartDateLabels(role).label)}
-            lastInSection={isCheckboxMode}
-          >
+          <InputRowContainer label={i18n.t(getStartDateLabels(role).label)}>
             <View style={{ flex: 1, alignItems: 'flex-end' }}>
               <DateTimePicker
                 value={tenureStartDate ? new Date(tenureStartDate) : new Date()}
@@ -123,12 +121,13 @@ const PublisherPreferencesSection = () => {
           </InputRowContainer>
         )}
         {!isCheckboxMode && (
-          <InputRowContainer label={i18n.t('annualGoal')} lastInSection>
+          <InputRowContainer label={i18n.t('annualGoal')}>
             <View style={{ flex: 1 }}>
               <AnnualGoalSelector />
             </View>
           </InputRowContainer>
         )}
+        <DefaultExportMethodSelector lastInSection />
       </Section>
 
       {showAdvanced && (

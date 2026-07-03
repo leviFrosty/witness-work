@@ -19,7 +19,11 @@ import Svg, {
 } from 'react-native-svg'
 
 import IconButton from '@/components/ui/IconButton'
+import ActionButton from '@/components/ui/ActionButton'
+import Button from '@/components/ui/Button'
 import Text from '@/components/ui/MyText'
+import { exportMethodSelectionOptions } from '@/components/DefaultExportMethodSelector'
+import { usePreferences, type ReportExportMethod } from '@/stores/preferences'
 import useTheme from '@/contexts/theme'
 import i18n, { _i18n } from '@/lib/locales'
 import Haptics from '@/lib/haptics'
@@ -114,6 +118,12 @@ const ServiceReportViewScreen = ({ route, navigation }: Props) => {
   const { month, year } = route.params
   const data = useMonthReportData(month, year)
   const { name, hasName } = useUser()
+  const { defaultExportMethod, markReportSubmitted, set } = usePreferences()
+
+  const reportMonthKey = useMemo(
+    () => moment().month(month).year(year).format('YYYY-MM'),
+    [month, year]
+  )
 
   const monthYearLabel = useMemo(
     () => moment().month(month).year(year).format('MMMM YYYY'),
@@ -172,10 +182,12 @@ const ServiceReportViewScreen = ({ route, navigation }: Props) => {
       if (action === 'copy') {
         Haptics.success()
         await Clipboard.setStringAsync(data.reportAsString())
+        markReportSubmitted(reportMonthKey)
         return
       }
       if (action === 'share') {
         await Share.share({ message: data.reportAsString() })
+        markReportSubmitted(reportMonthKey)
         return
       }
 
@@ -196,6 +208,7 @@ const ServiceReportViewScreen = ({ route, navigation }: Props) => {
             remarks,
           })
         )
+        markReportSubmitted(reportMonthKey)
       } else if (action === 'nwpublisher' && data.isLastMonth) {
         await openURL(
           buildNwPublisherLink({
@@ -206,9 +219,49 @@ const ServiceReportViewScreen = ({ route, navigation }: Props) => {
             remarks,
           })
         )
+        markReportSubmitted(reportMonthKey)
       }
     },
-    [data, month, year]
+    [data, month, year, markReportSubmitted, reportMonthKey]
+  )
+
+  // One-tap submit via the user's default method, always available on any
+  // report. Records the submission (which clears the Home-screen reminder for
+  // the previous month) and leaves the report open. NW Publisher only accepts
+  // the previous month's report, so the CTA disables outside that window.
+  const submitDisabled =
+    defaultExportMethod === 'nwpublisher' && !data.isLastMonth
+  const submitCtaLabel = useMemo(() => {
+    switch (defaultExportMethod) {
+      case 'hourglass':
+        return i18n.t('submitToApp', { app: i18n.t('hourglass') })
+      case 'nwpublisher':
+        return i18n.t('submitToApp', { app: i18n.t('nwPublisher') })
+      case 'share':
+        return i18n.t('share')
+      case 'copy':
+      default:
+        return i18n.t('copyToClipboard')
+    }
+  }, [defaultExportMethod])
+
+  const handleSubmitCta = useCallback(
+    () => handleShareAction(defaultExportMethod),
+    [handleShareAction, defaultExportMethod]
+  )
+
+  const methodActions: MenuAction[] = useMemo(
+    () =>
+      exportMethodSelectionOptions.map((opt) => ({
+        id: opt.value,
+        title: opt.label,
+        state: opt.value === defaultExportMethod ? ('on' as const) : undefined,
+        attributes:
+          opt.value === 'nwpublisher' && !data.isLastMonth
+            ? { disabled: true }
+            : undefined,
+      })),
+    [defaultExportMethod, data.isLastMonth]
   )
 
   return (
@@ -256,7 +309,7 @@ const ServiceReportViewScreen = ({ route, navigation }: Props) => {
       <ScrollView
         contentContainerStyle={{
           paddingTop: 28,
-          paddingBottom: insets.bottom + 64,
+          paddingBottom: insets.bottom + 130,
           paddingHorizontal: 16,
           alignItems: 'center',
         }}
@@ -287,7 +340,53 @@ const ServiceReportViewScreen = ({ route, navigation }: Props) => {
             onLayoutContent={handlePaperLayout}
           />
         </View>
+
+        <MenuView
+          actions={methodActions}
+          onPressAction={({ nativeEvent }) =>
+            set({
+              defaultExportMethod: nativeEvent.event as ReportExportMethod,
+            })
+          }
+        >
+          <Button style={{ alignItems: 'center', paddingVertical: 12 }}>
+            <Text
+              style={{
+                color: theme.colors.textAlt,
+                fontSize: theme.fontSize('sm'),
+                textDecorationLine: 'underline',
+              }}
+            >
+              {i18n.t('changeSubmissionMethod')}
+            </Text>
+          </Button>
+        </MenuView>
       </ScrollView>
+
+      <View
+        style={{
+          position: 'absolute',
+          left: 20,
+          right: 20,
+          bottom: insets.bottom + 12,
+          gap: 6,
+        }}
+      >
+        {submitDisabled && (
+          <Text
+            style={{
+              color: theme.colors.textAlt,
+              fontSize: theme.fontSize('sm'),
+              textAlign: 'center',
+            }}
+          >
+            {i18n.t('nwPublisherOnlyAllowsLastMonth')}
+          </Text>
+        )}
+        <ActionButton onPress={handleSubmitCta} disabled={submitDisabled}>
+          {submitCtaLabel}
+        </ActionButton>
+      </View>
     </View>
   )
 }

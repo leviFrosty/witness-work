@@ -10,6 +10,7 @@ import HourEntryCard from '@/features/service-reports/components/HourEntryCard'
 import PublisherCheckBoxCard from '@/features/service-reports/components/PublisherCheckBoxCard'
 import StudiesCard from '@/features/service-reports/components/StudiesCard'
 import ViewReportButton from '@/features/service-reports/components/ViewReportButton'
+import SubmitPreviousReportButton from '@/features/service-reports/components/SubmitPreviousReportButton'
 
 const RowSectionTitle = ({
   title,
@@ -59,6 +60,8 @@ const ServiceReportSection = () => {
         </Text>
         <ViewReportButton month={moment().month()} year={moment().year()} />
       </View>
+
+      <SubmitPreviousReportButton />
 
       <Card>
         <View

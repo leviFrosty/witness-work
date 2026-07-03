@@ -932,6 +932,8 @@
   "supporterBenefitsTitle": "What's included",
   "thankYou_benefitsIntro": "Here's what your support unlocks as a little thank-you.",
   "thankYou_oneTimeDescription": "Your one-time donation is deeply appreciated and helps keep WitnessWork running.",
+  "thankYou_multiDeviceTitle": "Using WitnessWork on another device?",
+  "thankYou_multiDeviceBody": "iCloud isn't available on this device, so your Supporter status can't reach your other devices automatically. On each other device, open Donate and tap Restore Purchases to activate it there.",
   "monthlySupporterExplainer": "Monthly supporters receive the Supporter badge and every perk below. One-time donations are warmly appreciated too, but don't grant ongoing Supporter status.",
   "grantsSupporterStatus": "Grants Supporter status",
   "oneTimeNoSupporterNote": "One-time — a warmly welcomed gift, but doesn't grant ongoing Supporter status.",

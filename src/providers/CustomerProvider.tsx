@@ -11,7 +11,7 @@ import Purchases, { CustomerInfo, LOG_LEVEL } from 'react-native-purchases'
 import * as Sentry from '@sentry/react-native'
 import { logger } from '@/lib/logger'
 import { isOfflineError } from '@/lib/offlineError'
-import { getOrCreateInstallId } from '@/lib/installId'
+import { getOrCreateAccountId } from '@/lib/account'
 
 interface Props {}
 
@@ -63,15 +63,16 @@ const CustomerProvider: React.FC<PropsWithChildren<Props>> = ({ children }) => {
       return
     }
 
-    // Resolve the stable Keychain install id. We identify the RevenueCat user as
-    // this id so entitlements correlate with the identity the Notes-Import proxy
-    // meters (ADR 0007). If it can't resolve, stay anonymous rather than passing
-    // an empty id.
-    let installId: string | undefined
+    // Resolve the stable account id: the iCloud-adopted shared id when this
+    // device has joined another device's claim (ADR 0011), else the Keychain
+    // install id (ADR 0007). Identifying RevenueCat as this id keeps
+    // entitlements correlated with the identity the Notes-Import proxy meters.
+    // If it can't resolve, stay anonymous rather than passing an empty id.
+    let accountId: string | undefined
     try {
-      installId = getOrCreateInstallId()
+      accountId = getOrCreateAccountId()
     } catch (error) {
-      logger.error('[CustomerProvider] install id resolution failed', error)
+      logger.error('[CustomerProvider] account id resolution failed', error)
       Sentry.captureException(error)
     }
 
@@ -79,11 +80,11 @@ const CustomerProvider: React.FC<PropsWithChildren<Props>> = ({ children }) => {
       if (__DEV__) Purchases.setLogLevel(LOG_LEVEL.DEBUG)
       // Configure anonymously, THEN identify via logIn — NOT configure({
       // appUserID }) directly. Calling logIn from an anonymous user aliases that
-      // user's purchases onto installId, so an existing supporter (whose
+      // user's purchases onto accountId, so an existing supporter (whose
       // entitlement is filed under their old anonymous id) keeps Supporter status
       // automatically, with no manual "Restore Purchases". A direct
       // configure({ appUserID }) would leave those anonymous purchases stranded.
-      // logIn is idempotent (a no-op once installId is already the active user),
+      // logIn is idempotent (a no-op once accountId is already the active user),
       // so running it on every launch is safe.
       Purchases.configure({ apiKey })
       logger.log('[CustomerProvider] Purchases.configure completed')
@@ -104,13 +105,13 @@ const CustomerProvider: React.FC<PropsWithChildren<Props>> = ({ children }) => {
       setCustomer(info)
     }
 
-    // Identify (migrating any anonymous purchases onto installId) and seed
+    // Identify (migrating any anonymous purchases onto accountId) and seed
     // customer state. logIn resolves with the post-migration CustomerInfo;
-    // getCustomerInfo is the anonymous path when there's no install id.
+    // getCustomerInfo is the anonymous path when there's no account id.
     // Best-effort: on failure (usually offline) fall back to cached CustomerInfo
     // so existing entitlements still render, and logIn retries next launch.
-    const identify = installId
-      ? Purchases.logIn(installId).then(({ customerInfo, created }) => {
+    const identify = accountId
+      ? Purchases.logIn(accountId).then(({ customerInfo, created }) => {
           logger.log('[CustomerProvider] Purchases.logIn completed', {
             created,
           })
@@ -119,14 +120,14 @@ const CustomerProvider: React.FC<PropsWithChildren<Props>> = ({ children }) => {
       : Purchases.getCustomerInfo().then(seedCustomer)
 
     identify.catch((error) => {
-      if (installId && !isOfflineError(error)) {
+      if (accountId && !isOfflineError(error)) {
         logger.warn('[CustomerProvider] Purchases.logIn failed', error)
         Sentry.captureException(error)
       } else {
         logger.warn('[CustomerProvider] initial customer info failed', error)
       }
       // Last-resort fall back to whatever CustomerInfo the SDK has cached.
-      if (installId) {
+      if (accountId) {
         Purchases.getCustomerInfo()
           .then(seedCustomer)
           .catch(() => {})

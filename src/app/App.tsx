@@ -38,6 +38,7 @@ import { TamaguiProvider } from 'tamagui'
 import tamaguiConfig from '../../tamagui.config'
 import ThemeProvider from '@/providers/ThemeProvider'
 import CustomerProvider from '@/providers/CustomerProvider'
+import AccountProvider from '@/providers/AccountProvider'
 import { ToastProvider, ToastViewport } from '@tamagui/toast'
 import {
   hasMigratedFromAsyncStorage,
@@ -576,51 +577,55 @@ export default function App() {
   try {
     return (
       <CustomerProvider>
-        <SupporterStoreSync />
-        <SupporterSyncDefault />
-        <SupporterSyncLapseGate />
-        <AppIconSync />
-        <ThemeProvider>
-          <SafeAreaProvider>
-            <GestureHandlerRootView style={{ flex: 1 }}>
-              <NavigationContainer
-                key={devRemountKey}
-                ref={navigationRef}
-                linking={linking}
-              >
-                {/*
-                 * ToastProvider must wrap TamaguiProvider — TamaguiProvider
-                 * mounts its own PortalProvider internally, and tamagui Sheets
-                 * (with `modal`) render their content via that portal host.
-                 * If ToastProvider sat inside TamaguiProvider, portaled sheet
-                 * content would render outside the toast context and
-                 * useToastController() would return an empty default, so
-                 * toast.show inside a Sheet (e.g. SelectedDateSheet on the
-                 * Progress screen) would throw "show is not a function".
-                 * ToastViewport stays inside TamaguiProvider since it's a
-                 * styled component that needs the Tamagui theme.
-                 */}
-                <ToastProvider>
-                  <TamaguiProvider
-                    defaultTheme={
-                      colorScheme ? colorScheme : systemColorScheme || undefined
-                    }
-                    config={tamaguiConfig}
-                  >
-                    <StatusBar />
-                    <ToastViewport />
-                    <ConfettiProvider>
-                      <AnimationViewProvider>
-                        <DeepLinkListeners />
-                        <RootStackComponent />
-                      </AnimationViewProvider>
-                    </ConfettiProvider>
-                  </TamaguiProvider>
-                </ToastProvider>
-              </NavigationContainer>
-            </GestureHandlerRootView>
-          </SafeAreaProvider>
-        </ThemeProvider>
+        <AccountProvider>
+          <SupporterStoreSync />
+          <SupporterSyncDefault />
+          <SupporterSyncLapseGate />
+          <AppIconSync />
+          <ThemeProvider>
+            <SafeAreaProvider>
+              <GestureHandlerRootView style={{ flex: 1 }}>
+                <NavigationContainer
+                  key={devRemountKey}
+                  ref={navigationRef}
+                  linking={linking}
+                >
+                  {/*
+                   * ToastProvider must wrap TamaguiProvider — TamaguiProvider
+                   * mounts its own PortalProvider internally, and tamagui Sheets
+                   * (with `modal`) render their content via that portal host.
+                   * If ToastProvider sat inside TamaguiProvider, portaled sheet
+                   * content would render outside the toast context and
+                   * useToastController() would return an empty default, so
+                   * toast.show inside a Sheet (e.g. SelectedDateSheet on the
+                   * Progress screen) would throw "show is not a function".
+                   * ToastViewport stays inside TamaguiProvider since it's a
+                   * styled component that needs the Tamagui theme.
+                   */}
+                  <ToastProvider>
+                    <TamaguiProvider
+                      defaultTheme={
+                        colorScheme
+                          ? colorScheme
+                          : systemColorScheme || undefined
+                      }
+                      config={tamaguiConfig}
+                    >
+                      <StatusBar />
+                      <ToastViewport />
+                      <ConfettiProvider>
+                        <AnimationViewProvider>
+                          <DeepLinkListeners />
+                          <RootStackComponent />
+                        </AnimationViewProvider>
+                      </ConfettiProvider>
+                    </TamaguiProvider>
+                  </ToastProvider>
+                </NavigationContainer>
+              </GestureHandlerRootView>
+            </SafeAreaProvider>
+          </ThemeProvider>
+        </AccountProvider>
       </CustomerProvider>
     )
   } catch (error) {

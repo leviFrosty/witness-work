@@ -11,6 +11,8 @@ import { useProfile } from '@/stores/profile'
 import { useSupporter } from '@/features/supporter/stores/supporter'
 import { buildPayload, parsePayload, SyncPayload } from '@/app/sync/payload'
 import { mergePayload } from '@/app/sync/merge'
+import { isAccountFilename } from '@/lib/accountFile'
+import { reclaimAccountFile } from '@/lib/account'
 import { logger } from '@/lib/logger'
 import * as Sentry from '@sentry/react-native'
 import * as Device from 'expo-device'
@@ -89,6 +91,10 @@ function filenameForDevice(deviceId: string): string {
  * duplicates `witness-work 2.json`, `witness-work 3.json`, etc. These can still
  * contain valuable data (one of ours had 23KB stranded in `witness-work
  * 4.json`), so the reader absorbs them and then deletes them.
+ *
+ * The account file (`witness-work-account.json`, ADR 0011) shares the sync
+ * namespace but is NOT a sync payload — every reader must skip it via
+ * `isAccountFilename` before parsing.
  */
 function isLegacyFilename(filename: string): boolean {
   return !filename.startsWith(`${SYNC_FILE_PREFIX}-`)
@@ -392,6 +398,9 @@ export async function overwriteRemoteWithLocal(): Promise<void> {
     logger.error(`${tag()} failed to clear remote before overwrite`, e)
     Sentry.captureException(e, { tags: { iCloudSync: 'overwrite' } })
   }
+  // deleteAll also removed the account file (same namespace); re-claim it so
+  // another device can't win the empty-file race before the next reconcile.
+  void reclaimAccountFile(useSupporter.getState().isSupporter)
   await push('overwrite-remote')
 }
 
@@ -418,6 +427,7 @@ export async function peekRemotePayload(): Promise<SyncPayload | null> {
     const files = await ICloudBridge.readAll()
     const payloads: SyncPayload[] = []
     for (const file of files) {
+      if (isAccountFilename(file.filename)) continue
       const parsed = parsePayload(file.json)
       if (parsed) payloads.push(parsed)
     }
@@ -818,6 +828,7 @@ async function pullAndMergeInner(reason: string): Promise<boolean> {
   const legacyFilenames: string[] = []
   for (const file of files) {
     if (file.filename === ownFilename) continue
+    if (isAccountFilename(file.filename)) continue
     const parsed = parsePayload(file.json)
     if (!parsed) {
       logger.warn(`${tag()} pullAndMerge: skipping invalid file`, {

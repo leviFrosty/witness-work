@@ -10,12 +10,16 @@ import {
   Alert,
   InteractionManager,
   Keyboard,
-  KeyboardAvoidingView,
   Pressable,
   ScrollView,
   TextInput,
   View,
 } from 'react-native'
+import Animated, {
+  useAnimatedKeyboard,
+  useAnimatedStyle,
+} from 'react-native-reanimated'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import * as Clipboard from 'expo-clipboard'
 import Haptics from '@/lib/haptics'
 import {
@@ -175,6 +179,28 @@ const NotesImportComposerScreen = ({ renderSupporterCta }: Props) => {
   // Land at the newest message on first layout (and whenever a different import
   // loads), so the screen opens at the bottom of the conversation, not the intro.
   const pendingBottomRef = useRef(true)
+
+  // Keyboard avoidance is driven by hand from the animated keyboard frame:
+  // RN's KeyboardAvoidingView never reacts to the keyboard on this screen
+  // (new-arch iOS + native-stack), leaving the composer buried behind it. The
+  // padding is the keyboard's overlap beyond the bottom safe-area inset that
+  // Wrapper already applies, so the footer rides exactly on the keyboard's
+  // top edge — including while it animates in/out.
+  const keyboard = useAnimatedKeyboard()
+  const safeArea = useSafeAreaInsets()
+  const keyboardPadding = useAnimatedStyle(() => ({
+    paddingBottom: Math.max(keyboard.height.value - safeArea.bottom, 0),
+  }))
+
+  // Opening the keyboard shrinks the thread's viewport; snap to the newest
+  // message so the composer's context (the prompt or latest reply) never hides
+  // behind the keyboard — same bottom-anchored behavior as any chat app.
+  useEffect(() => {
+    const sub = Keyboard.addListener('keyboardWillShow', () => {
+      scrollRef.current?.scrollToEnd({ animated: true })
+    })
+    return () => sub.remove()
+  }, [])
 
   // Hydrates the header's History action and resumes any in-flight imports.
   useFocusEffect(
@@ -869,7 +895,7 @@ const NotesImportComposerScreen = ({ renderSupporterCta }: Props) => {
 
   return (
     <Wrapper insets='bottom' style={{ flex: 1 }}>
-      <KeyboardAvoidingView behavior='padding' style={{ flex: 1 }}>
+      <Animated.View style={[{ flex: 1 }, keyboardPadding]}>
         {!availability.available &&
           !availability.loading &&
           unavailableBanner()}
@@ -1059,7 +1085,7 @@ const NotesImportComposerScreen = ({ renderSupporterCta }: Props) => {
         </View>
 
         <NotesImportHelpSheet open={helpOpen} setOpen={setHelpOpen} />
-      </KeyboardAvoidingView>
+      </Animated.View>
     </Wrapper>
   )
 }

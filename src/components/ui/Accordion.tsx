@@ -10,7 +10,7 @@ import Animated, {
 } from 'react-native-reanimated'
 import XView from '@/components/ui/layout/XView'
 import IconButton from '@/components/ui/IconButton'
-import { faCaretUp } from '@fortawesome/free-solid-svg-icons'
+import { faCaretUp } from '@fortawesome/free-solid-svg-icons/faCaretUp'
 import Button from '@/components/ui/Button'
 import useTheme from '@/contexts/theme'
 

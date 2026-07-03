@@ -6,11 +6,9 @@ import Text from '@/components/ui/MyText'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useNavigation } from '@react-navigation/native'
 import IconButton from '@/components/ui/IconButton'
-import {
-  faBars,
-  faChevronLeft,
-  faTimes,
-} from '@fortawesome/free-solid-svg-icons'
+import { faBars } from '@fortawesome/free-solid-svg-icons/faBars'
+import { faChevronLeft } from '@fortawesome/free-solid-svg-icons/faChevronLeft'
+import { faTimes } from '@fortawesome/free-solid-svg-icons/faTimes'
 import { IconProp } from '@fortawesome/fontawesome-svg-core'
 import { RootStackNavigation } from '@/types/rootStack'
 

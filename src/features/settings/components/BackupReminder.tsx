@@ -6,11 +6,9 @@ import Button from '@/components/ui/Button'
 import { usePreferences } from '@/stores/preferences'
 import XView from '@/components/ui/layout/XView'
 import IconButton from '@/components/ui/IconButton'
-import {
-  faChevronRight,
-  faTimes,
-  faWarning,
-} from '@fortawesome/free-solid-svg-icons'
+import { faChevronRight } from '@fortawesome/free-solid-svg-icons/faChevronRight'
+import { faTimes } from '@fortawesome/free-solid-svg-icons/faTimes'
+import { faWarning } from '@fortawesome/free-solid-svg-icons/faWarning'
 import { useNavigation } from '@react-navigation/native'
 import { RootStackNavigation } from '@/types/rootStack'
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'

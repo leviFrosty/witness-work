@@ -1,5 +1,5 @@
 import { View, type ViewStyle } from 'react-native'
-import { faArrowsRotate } from '@fortawesome/free-solid-svg-icons'
+import { faArrowsRotate } from '@fortawesome/free-solid-svg-icons/faArrowsRotate'
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
 import Text from '@/components/ui/MyText'
 import useTheme from '@/contexts/theme'

@@ -28,7 +28,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { NativeStackScreenProps } from '@react-navigation/native-stack'
 import { useToastController } from '@tamagui/toast'
 import Header from '@/components/ui/layout/Header'
-import { faTrash } from '@fortawesome/free-solid-svg-icons'
+import { faTrash } from '@fortawesome/free-solid-svg-icons/faTrash'
 import IconButton from '@/components/ui/IconButton'
 import {
   adjustedMinutesForSpecificMonth,

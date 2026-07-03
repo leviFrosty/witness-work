@@ -4,11 +4,9 @@ import { useNavigation } from '@react-navigation/native'
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
 import { IconProp } from '@fortawesome/fontawesome-svg-core'
-import {
-  faFileLines,
-  faFileImport,
-  faCloud,
-} from '@fortawesome/free-solid-svg-icons'
+import { faFileLines } from '@fortawesome/free-solid-svg-icons/faFileLines'
+import { faFileImport } from '@fortawesome/free-solid-svg-icons/faFileImport'
+import { faCloud } from '@fortawesome/free-solid-svg-icons/faCloud'
 import { styles } from '@/features/onboarding/components/Onboarding.styles'
 import OnboardingNav from '@/features/onboarding/components/OnboardingNav'
 import Text from '@/components/ui/MyText'

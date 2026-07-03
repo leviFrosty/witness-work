@@ -1,11 +1,9 @@
 import { useMemo, useState } from 'react'
 import { View } from 'react-native'
 import Checkbox from 'expo-checkbox'
-import {
-  faAddressBook,
-  faChevronRight,
-  faClock,
-} from '@fortawesome/free-solid-svg-icons'
+import { faAddressBook } from '@fortawesome/free-solid-svg-icons/faAddressBook'
+import { faChevronRight } from '@fortawesome/free-solid-svg-icons/faChevronRight'
+import { faClock } from '@fortawesome/free-solid-svg-icons/faClock'
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
 import Text from '@/components/ui/MyText'
 import Card from '@/components/ui/Card'

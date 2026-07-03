@@ -1,10 +1,8 @@
 import { View } from 'react-native'
 import { Spinner } from 'tamagui'
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
-import {
-  faCircleExclamation,
-  faFileImport,
-} from '@fortawesome/free-solid-svg-icons'
+import { faCircleExclamation } from '@fortawesome/free-solid-svg-icons/faCircleExclamation'
+import { faFileImport } from '@fortawesome/free-solid-svg-icons/faFileImport'
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
 import Text from '@/components/ui/MyText'
 import Wrapper from '@/components/ui/layout/Wrapper'

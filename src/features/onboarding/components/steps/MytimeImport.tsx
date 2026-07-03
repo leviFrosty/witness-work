@@ -1,11 +1,9 @@
 import { View } from 'react-native'
 import { Spinner } from 'tamagui'
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
-import {
-  faCheckCircle,
-  faCircleExclamation,
-  faFileImport,
-} from '@fortawesome/free-solid-svg-icons'
+import { faCheckCircle } from '@fortawesome/free-solid-svg-icons/faCheckCircle'
+import { faCircleExclamation } from '@fortawesome/free-solid-svg-icons/faCircleExclamation'
+import { faFileImport } from '@fortawesome/free-solid-svg-icons/faFileImport'
 import { styles } from '@/features/onboarding/components/Onboarding.styles'
 import OnboardingNav from '@/features/onboarding/components/OnboardingNav'
 import Text from '@/components/ui/MyText'

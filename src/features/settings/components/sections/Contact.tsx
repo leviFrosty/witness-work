@@ -2,10 +2,8 @@ import { View } from 'react-native'
 import i18n from '@/lib/locales'
 import Section from '@/components/ui/inputs/Section'
 import InputRowButton from '@/features/settings/components/inputs/InputRowButton'
-import {
-  faChevronRight,
-  faCircleQuestion,
-} from '@fortawesome/free-solid-svg-icons'
+import { faChevronRight } from '@fortawesome/free-solid-svg-icons/faChevronRight'
+import { faCircleQuestion } from '@fortawesome/free-solid-svg-icons/faCircleQuestion'
 import IconButton from '@/components/ui/IconButton'
 import SectionTitle from '@/features/settings/components/shared/SectionTitle'
 import { useNavigation } from '@react-navigation/native'

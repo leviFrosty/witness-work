@@ -4,7 +4,7 @@ import {
   useRoute,
   type RouteProp,
 } from '@react-navigation/native'
-import { faPlus } from '@fortawesome/free-solid-svg-icons'
+import { faPlus } from '@fortawesome/free-solid-svg-icons/faPlus'
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
 import Button from '@/components/ui/Button'
 import useTheme from '@/contexts/theme'

@@ -2,16 +2,14 @@ import Wrapper from '@/components/ui/layout/Wrapper'
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
 import Section from '@/components/ui/inputs/Section'
 import InputRowButton from '@/features/settings/components/inputs/InputRowButton'
-import {
-  faCalendarDay,
-  faChevronRight,
-  faComments,
-  faFileExport,
-  faHome,
-  faRoute,
-  faSliders,
-  faTableCellsLarge,
-} from '@fortawesome/free-solid-svg-icons'
+import { faCalendarDay } from '@fortawesome/free-solid-svg-icons/faCalendarDay'
+import { faChevronRight } from '@fortawesome/free-solid-svg-icons/faChevronRight'
+import { faComments } from '@fortawesome/free-solid-svg-icons/faComments'
+import { faFileExport } from '@fortawesome/free-solid-svg-icons/faFileExport'
+import { faHome } from '@fortawesome/free-solid-svg-icons/faHome'
+import { faRoute } from '@fortawesome/free-solid-svg-icons/faRoute'
+import { faSliders } from '@fortawesome/free-solid-svg-icons/faSliders'
+import { faTableCellsLarge } from '@fortawesome/free-solid-svg-icons/faTableCellsLarge'
 import { Platform } from 'react-native'
 import i18n from '@/lib/locales'
 import { useNavigation } from '@react-navigation/native'

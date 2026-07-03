@@ -1,11 +1,9 @@
 import moment from 'moment'
-import {
-  faCheck,
-  faStar,
-  faTrophy,
-  faCrown,
-  IconDefinition,
-} from '@fortawesome/free-solid-svg-icons'
+import { faCheck } from '@fortawesome/free-solid-svg-icons/faCheck'
+import { faStar } from '@fortawesome/free-solid-svg-icons/faStar'
+import { faTrophy } from '@fortawesome/free-solid-svg-icons/faTrophy'
+import { faCrown } from '@fortawesome/free-solid-svg-icons/faCrown'
+import { IconDefinition } from '@fortawesome/fontawesome-svg-core'
 import {
   adjustedMinutesForSpecificMonth,
   getMonthsReports,

@@ -5,13 +5,11 @@ import * as Clipboard from 'expo-clipboard'
 import * as Sentry from '@sentry/react-native'
 import Purchases from 'react-native-purchases'
 import { useToastController } from '@tamagui/toast'
-import {
-  faBug,
-  faCircleQuestion,
-  faHand,
-  faMagnifyingGlass,
-  faThumbtack,
-} from '@fortawesome/free-solid-svg-icons'
+import { faBug } from '@fortawesome/free-solid-svg-icons/faBug'
+import { faCircleQuestion } from '@fortawesome/free-solid-svg-icons/faCircleQuestion'
+import { faHand } from '@fortawesome/free-solid-svg-icons/faHand'
+import { faMagnifyingGlass } from '@fortawesome/free-solid-svg-icons/faMagnifyingGlass'
+import { faThumbtack } from '@fortawesome/free-solid-svg-icons/faThumbtack'
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
 import { RouteProp, useNavigation, useRoute } from '@react-navigation/native'
 

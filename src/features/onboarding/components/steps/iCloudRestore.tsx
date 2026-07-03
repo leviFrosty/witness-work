@@ -1,12 +1,10 @@
 import { useEffect, useRef, useState } from 'react'
 import { Alert, Animated, Easing, Platform, View } from 'react-native'
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
-import {
-  faCheckCircle,
-  faCircleExclamation,
-  faCloud,
-  faFloppyDisk,
-} from '@fortawesome/free-solid-svg-icons'
+import { faCheckCircle } from '@fortawesome/free-solid-svg-icons/faCheckCircle'
+import { faCircleExclamation } from '@fortawesome/free-solid-svg-icons/faCircleExclamation'
+import { faCloud } from '@fortawesome/free-solid-svg-icons/faCloud'
+import { faFloppyDisk } from '@fortawesome/free-solid-svg-icons/faFloppyDisk'
 import { Spinner } from 'tamagui'
 import { formatRelative } from '@/lib/dates'
 import { styles } from '@/features/onboarding/components/Onboarding.styles'

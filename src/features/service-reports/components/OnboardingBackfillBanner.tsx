@@ -1,6 +1,6 @@
 import { useNavigation } from '@react-navigation/native'
 import { Pressable, View } from 'react-native'
-import { faXmark } from '@fortawesome/free-solid-svg-icons'
+import { faXmark } from '@fortawesome/free-solid-svg-icons/faXmark'
 import moment from 'moment'
 
 import Text from '@/components/ui/MyText'

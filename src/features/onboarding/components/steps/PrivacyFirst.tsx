@@ -2,12 +2,10 @@ import { View } from 'react-native'
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
 import { IconProp } from '@fortawesome/fontawesome-svg-core'
-import {
-  faWifi,
-  faMobileScreen,
-  faLink,
-  faUserShield,
-} from '@fortawesome/free-solid-svg-icons'
+import { faWifi } from '@fortawesome/free-solid-svg-icons/faWifi'
+import { faMobileScreen } from '@fortawesome/free-solid-svg-icons/faMobileScreen'
+import { faLink } from '@fortawesome/free-solid-svg-icons/faLink'
+import { faUserShield } from '@fortawesome/free-solid-svg-icons/faUserShield'
 import { styles } from '@/features/onboarding/components/Onboarding.styles'
 import OnboardingNav from '@/features/onboarding/components/OnboardingNav'
 import Text from '@/components/ui/MyText'

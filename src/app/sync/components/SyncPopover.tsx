@@ -1,13 +1,11 @@
 import { useEffect, useState } from 'react'
 import { ActivityIndicator, Alert, View } from 'react-native'
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
-import {
-  faCloud,
-  faCloudArrowUp,
-  faRotate,
-  faGear,
-  faTriangleExclamation,
-} from '@fortawesome/free-solid-svg-icons'
+import { faCloud } from '@fortawesome/free-solid-svg-icons/faCloud'
+import { faCloudArrowUp } from '@fortawesome/free-solid-svg-icons/faCloudArrowUp'
+import { faRotate } from '@fortawesome/free-solid-svg-icons/faRotate'
+import { faGear } from '@fortawesome/free-solid-svg-icons/faGear'
+import { faTriangleExclamation } from '@fortawesome/free-solid-svg-icons/faTriangleExclamation'
 import { useNavigation } from '@react-navigation/native'
 import { formatRelative } from '@/lib/dates'
 import useTheme from '@/contexts/theme'

@@ -11,11 +11,9 @@ import PinLocation from '@/features/contacts/components/PinLocation'
 import AddressAutocomplete, {
   Suggestion,
 } from '@/features/contacts/components/AddressAutocomplete'
-import {
-  faCircleInfo,
-  faMagnifyingGlass,
-  faPenToSquare,
-} from '@fortawesome/free-solid-svg-icons'
+import { faCircleInfo } from '@fortawesome/free-solid-svg-icons/faCircleInfo'
+import { faMagnifyingGlass } from '@fortawesome/free-solid-svg-icons/faMagnifyingGlass'
+import { faPenToSquare } from '@fortawesome/free-solid-svg-icons/faPenToSquare'
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
 import { IconProp } from '@fortawesome/fontawesome-svg-core'
 import { addressToString } from '@/lib/address'

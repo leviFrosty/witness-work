@@ -21,7 +21,8 @@ import Badge from '@/components/ui/Badge'
 import XView from '@/components/ui/layout/XView'
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
 import IconButton from '@/components/ui/IconButton'
-import { faFileImport, faUpload } from '@fortawesome/free-solid-svg-icons'
+import { faFileImport } from '@fortawesome/free-solid-svg-icons/faFileImport'
+import { faUpload } from '@fortawesome/free-solid-svg-icons/faUpload'
 import { useTimeCache } from '@/stores/timeCache'
 
 /**

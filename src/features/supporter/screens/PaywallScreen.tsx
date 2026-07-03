@@ -20,13 +20,11 @@ import SegmentedControl from '@/components/ui/SegmentedControl'
 import PreviousDonations from '@/features/supporter/components/PreviousDonations'
 import Divider from '@/components/ui/Divider'
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
-import {
-  faCheck,
-  faHeart,
-  faMinus,
-  faRotate,
-  faTrash,
-} from '@fortawesome/free-solid-svg-icons'
+import { faCheck } from '@fortawesome/free-solid-svg-icons/faCheck'
+import { faHeart } from '@fortawesome/free-solid-svg-icons/faHeart'
+import { faMinus } from '@fortawesome/free-solid-svg-icons/faMinus'
+import { faRotate } from '@fortawesome/free-solid-svg-icons/faRotate'
+import { faTrash } from '@fortawesome/free-solid-svg-icons/faTrash'
 import type { IconDefinition } from '@fortawesome/fontawesome-svg-core'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import SupporterCtaButton from '@/features/supporter/components/SupporterCtaButton'

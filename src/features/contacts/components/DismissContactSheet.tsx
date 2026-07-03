@@ -1,7 +1,7 @@
 import React from 'react'
 import { View, Alert } from 'react-native'
 import { Sheet, XStack } from 'tamagui'
-import { faTimes } from '@fortawesome/free-solid-svg-icons'
+import { faTimes } from '@fortawesome/free-solid-svg-icons/faTimes'
 import { Contact } from '@/types/contact'
 import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'

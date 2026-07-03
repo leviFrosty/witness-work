@@ -8,12 +8,10 @@ import {
 import moment from 'moment'
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
 import { IconDefinition } from '@fortawesome/fontawesome-svg-core'
-import {
-  faChevronRight,
-  faClock,
-  faHeart,
-  faStar,
-} from '@fortawesome/free-solid-svg-icons'
+import { faChevronRight } from '@fortawesome/free-solid-svg-icons/faChevronRight'
+import { faClock } from '@fortawesome/free-solid-svg-icons/faClock'
+import { faHeart } from '@fortawesome/free-solid-svg-icons/faHeart'
+import { faStar } from '@fortawesome/free-solid-svg-icons/faStar'
 import useTheme from '@/contexts/theme'
 import { usePreferences } from '@/stores/preferences'
 import { useProfile } from '@/stores/profile'

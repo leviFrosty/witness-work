@@ -7,16 +7,14 @@ import { useMemo, useState } from 'react'
 import i18n from '@/lib/locales'
 import { formatRelative } from '@/lib/dates'
 import IconButton from '@/components/ui/IconButton'
-import {
-  faBook,
-  faChevronRight,
-  faComment,
-  faEnvelope,
-  faLocationDot,
-  faPhone,
-  faStar,
-  faTag,
-} from '@fortawesome/free-solid-svg-icons'
+import { faBook } from '@fortawesome/free-solid-svg-icons/faBook'
+import { faChevronRight } from '@fortawesome/free-solid-svg-icons/faChevronRight'
+import { faComment } from '@fortawesome/free-solid-svg-icons/faComment'
+import { faEnvelope } from '@fortawesome/free-solid-svg-icons/faEnvelope'
+import { faLocationDot } from '@fortawesome/free-solid-svg-icons/faLocationDot'
+import { faPhone } from '@fortawesome/free-solid-svg-icons/faPhone'
+import { faStar } from '@fortawesome/free-solid-svg-icons/faStar'
+import { faTag } from '@fortawesome/free-solid-svg-icons/faTag'
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
 import { IconDefinition } from '@fortawesome/fontawesome-svg-core'
 import { FuseResultMatch } from 'fuse.js'

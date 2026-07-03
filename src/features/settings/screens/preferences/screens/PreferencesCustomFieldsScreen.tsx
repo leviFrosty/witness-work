@@ -1,12 +1,10 @@
 import { useMemo, useState } from 'react'
 import { Alert, View } from 'react-native'
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
-import {
-  faArrowDown,
-  faArrowUp,
-  faMinus,
-  faRotateLeft,
-} from '@fortawesome/free-solid-svg-icons'
+import { faArrowDown } from '@fortawesome/free-solid-svg-icons/faArrowDown'
+import { faArrowUp } from '@fortawesome/free-solid-svg-icons/faArrowUp'
+import { faMinus } from '@fortawesome/free-solid-svg-icons/faMinus'
+import { faRotateLeft } from '@fortawesome/free-solid-svg-icons/faRotateLeft'
 import Wrapper from '@/components/ui/layout/Wrapper'
 import Section from '@/components/ui/inputs/Section'
 import InputRowContainer from '@/components/ui/inputs/InputRowContainer'

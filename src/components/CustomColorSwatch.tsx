@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Pressable } from 'react-native'
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
-import { faEyeDropper } from '@fortawesome/free-solid-svg-icons'
+import { faEyeDropper } from '@fortawesome/free-solid-svg-icons/faEyeDropper'
 import useTheme from '@/contexts/theme'
 import ColorPickerSheet from '@/components/ColorPickerSheet'
 

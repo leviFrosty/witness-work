@@ -31,7 +31,8 @@ import { HomeTabStackNavigation } from '@/types/homeStack'
 import MapKey from '@/features/map/components/MapColorKey'
 import Checkbox from 'expo-checkbox'
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
-import { faCheck, faCircleExclamation } from '@fortawesome/free-solid-svg-icons'
+import { faCheck } from '@fortawesome/free-solid-svg-icons/faCheck'
+import { faCircleExclamation } from '@fortawesome/free-solid-svg-icons/faCircleExclamation'
 
 type FetchStatus = 'idle' | 'loading' | 'success' | 'error'
 

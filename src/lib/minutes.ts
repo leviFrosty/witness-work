@@ -1,4 +1,4 @@
-import _ from 'lodash'
+import round from 'lodash/round'
 import { usePreferences } from '@/stores/preferences'
 import { MinuteDisplayFormat } from '@/types/timeEntry'
 import i18n from '@/lib/locales'
@@ -32,8 +32,8 @@ export const formatMinutes = (
 ) => {
   let formatted: string
   const hours = Math.floor(totalMinutes / 60)
-  const minutes = _.round(totalMinutes % 60, 0)
-  const decimalHours = _.round(totalMinutes / 60, 1)
+  const minutes = round(totalMinutes % 60, 0)
+  const decimalHours = round(totalMinutes / 60, 1)
 
   switch (format) {
     case 'decimal': {

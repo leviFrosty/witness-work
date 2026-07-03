@@ -1,6 +1,6 @@
 import { View } from 'react-native'
 import { useNavigation } from '@react-navigation/native'
-import { faHeart } from '@fortawesome/free-solid-svg-icons'
+import { faHeart } from '@fortawesome/free-solid-svg-icons/faHeart'
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
 import Text from '@/components/ui/MyText'
 import Button from '@/components/ui/Button'

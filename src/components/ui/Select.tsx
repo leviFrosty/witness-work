@@ -1,7 +1,7 @@
 import { StyleProp, View, ViewStyle } from 'react-native'
 import { MenuView, MenuAction } from '@react-native-menu/menu'
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
-import { faChevronDown } from '@fortawesome/free-solid-svg-icons'
+import { faChevronDown } from '@fortawesome/free-solid-svg-icons/faChevronDown'
 import useTheme from '@/contexts/theme'
 import Text from '@/components/ui/MyText'
 

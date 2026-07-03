@@ -28,19 +28,17 @@ import Wrapper from '@/components/ui/layout/Wrapper'
 import { StatusBar } from 'expo-status-bar'
 import IconButton from '@/components/ui/IconButton'
 import { logger } from '@/lib/logger'
-import {
-  faArrowUpFromBracket,
-  faBook,
-  faCaravan,
-  faComment,
-  faComments,
-  faEllipsisVertical,
-  faEnvelope,
-  faPhone,
-  faPlus,
-  faStar,
-} from '@fortawesome/free-solid-svg-icons'
-import { faStar as faStarOutline } from '@fortawesome/free-regular-svg-icons'
+import { faArrowUpFromBracket } from '@fortawesome/free-solid-svg-icons/faArrowUpFromBracket'
+import { faBook } from '@fortawesome/free-solid-svg-icons/faBook'
+import { faCaravan } from '@fortawesome/free-solid-svg-icons/faCaravan'
+import { faComment } from '@fortawesome/free-solid-svg-icons/faComment'
+import { faComments } from '@fortawesome/free-solid-svg-icons/faComments'
+import { faEllipsisVertical } from '@fortawesome/free-solid-svg-icons/faEllipsisVertical'
+import { faEnvelope } from '@fortawesome/free-solid-svg-icons/faEnvelope'
+import { faPhone } from '@fortawesome/free-solid-svg-icons/faPhone'
+import { faPlus } from '@fortawesome/free-solid-svg-icons/faPlus'
+import { faStar } from '@fortawesome/free-solid-svg-icons/faStar'
+import { faStar as faStarOutline } from '@fortawesome/free-regular-svg-icons/faStar'
 import Copyeable from '@/components/ui/Copyeable'
 import Button from '@/components/ui/Button'
 import { Sheet } from 'tamagui'

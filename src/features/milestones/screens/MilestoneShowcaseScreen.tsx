@@ -13,24 +13,22 @@ import Animated, {
 } from 'react-native-reanimated'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useNavigation } from '@react-navigation/native'
-import {
-  faAddressCard,
-  faArrowsRotate,
-  faBell,
-  faBurst,
-  faCalendarDays,
-  faCamera,
-  faClockRotateLeft,
-  faCloud,
-  faForward,
-  faGift,
-  faHeart,
-  faIcons,
-  faMapPin,
-  faPalette,
-  faStar,
-  faXmark,
-} from '@fortawesome/free-solid-svg-icons'
+import { faAddressCard } from '@fortawesome/free-solid-svg-icons/faAddressCard'
+import { faArrowsRotate } from '@fortawesome/free-solid-svg-icons/faArrowsRotate'
+import { faBell } from '@fortawesome/free-solid-svg-icons/faBell'
+import { faBurst } from '@fortawesome/free-solid-svg-icons/faBurst'
+import { faCalendarDays } from '@fortawesome/free-solid-svg-icons/faCalendarDays'
+import { faCamera } from '@fortawesome/free-solid-svg-icons/faCamera'
+import { faClockRotateLeft } from '@fortawesome/free-solid-svg-icons/faClockRotateLeft'
+import { faCloud } from '@fortawesome/free-solid-svg-icons/faCloud'
+import { faForward } from '@fortawesome/free-solid-svg-icons/faForward'
+import { faGift } from '@fortawesome/free-solid-svg-icons/faGift'
+import { faHeart } from '@fortawesome/free-solid-svg-icons/faHeart'
+import { faIcons } from '@fortawesome/free-solid-svg-icons/faIcons'
+import { faMapPin } from '@fortawesome/free-solid-svg-icons/faMapPin'
+import { faPalette } from '@fortawesome/free-solid-svg-icons/faPalette'
+import { faStar } from '@fortawesome/free-solid-svg-icons/faStar'
+import { faXmark } from '@fortawesome/free-solid-svg-icons/faXmark'
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
 import { BlurView } from 'expo-blur'
 import Constants from 'expo-constants'

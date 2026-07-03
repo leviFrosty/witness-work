@@ -4,13 +4,11 @@ import { FlashList, FlashListRef } from '@shopify/flash-list'
 import { useNavigation } from '@react-navigation/native'
 import * as Crypto from 'expo-crypto'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import {
-  faArrowDown,
-  faArrowUp,
-  faPlus,
-  faSearch,
-  faSliders,
-} from '@fortawesome/free-solid-svg-icons'
+import { faArrowDown } from '@fortawesome/free-solid-svg-icons/faArrowDown'
+import { faArrowUp } from '@fortawesome/free-solid-svg-icons/faArrowUp'
+import { faPlus } from '@fortawesome/free-solid-svg-icons/faPlus'
+import { faSearch } from '@fortawesome/free-solid-svg-icons/faSearch'
+import { faSliders } from '@fortawesome/free-solid-svg-icons/faSliders'
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
 import useTheme from '@/contexts/theme'
 import useContacts from '@/stores/contactsStore'

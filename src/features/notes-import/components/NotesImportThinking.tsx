@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { View } from 'react-native'
-import { faStopwatch } from '@fortawesome/free-solid-svg-icons'
+import { faStopwatch } from '@fortawesome/free-solid-svg-icons/faStopwatch'
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
 import Text from '@/components/ui/MyText'
 import ShimmerText from '@/components/ui/ShimmerText'

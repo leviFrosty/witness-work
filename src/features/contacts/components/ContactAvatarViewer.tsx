@@ -29,14 +29,12 @@ import Animated, {
 } from 'react-native-reanimated'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
-import {
-  faArrowUpFromBracket,
-  faCircleInfo,
-  faDownload,
-  faPenToSquare,
-  faRotateLeft,
-  faXmark,
-} from '@fortawesome/free-solid-svg-icons'
+import { faArrowUpFromBracket } from '@fortawesome/free-solid-svg-icons/faArrowUpFromBracket'
+import { faCircleInfo } from '@fortawesome/free-solid-svg-icons/faCircleInfo'
+import { faDownload } from '@fortawesome/free-solid-svg-icons/faDownload'
+import { faPenToSquare } from '@fortawesome/free-solid-svg-icons/faPenToSquare'
+import { faRotateLeft } from '@fortawesome/free-solid-svg-icons/faRotateLeft'
+import { faXmark } from '@fortawesome/free-solid-svg-icons/faXmark'
 import { formatDateTime } from '@/lib/dates'
 import useTheme from '@/contexts/theme'
 import Text from '@/components/ui/MyText'

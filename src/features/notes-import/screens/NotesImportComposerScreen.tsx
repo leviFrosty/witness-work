@@ -29,12 +29,10 @@ import {
   useRoute,
   type RouteProp,
 } from '@react-navigation/native'
-import {
-  faCircleExclamation,
-  faClockRotateLeft,
-  faDownload,
-  faRotateLeft,
-} from '@fortawesome/free-solid-svg-icons'
+import { faCircleExclamation } from '@fortawesome/free-solid-svg-icons/faCircleExclamation'
+import { faClockRotateLeft } from '@fortawesome/free-solid-svg-icons/faClockRotateLeft'
+import { faDownload } from '@fortawesome/free-solid-svg-icons/faDownload'
+import { faRotateLeft } from '@fortawesome/free-solid-svg-icons/faRotateLeft'
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
 import Wrapper from '@/components/ui/layout/Wrapper'
 import Text from '@/components/ui/MyText'

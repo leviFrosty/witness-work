@@ -1,13 +1,11 @@
 import { View } from 'react-native'
 import Section from '@/components/ui/inputs/Section'
 import InputRowButton from '@/features/settings/components/inputs/InputRowButton'
-import {
-  faChevronRight,
-  faCircleHalfStroke,
-  faCog,
-  faPalette,
-  faUser,
-} from '@fortawesome/free-solid-svg-icons'
+import { faChevronRight } from '@fortawesome/free-solid-svg-icons/faChevronRight'
+import { faCircleHalfStroke } from '@fortawesome/free-solid-svg-icons/faCircleHalfStroke'
+import { faCog } from '@fortawesome/free-solid-svg-icons/faCog'
+import { faPalette } from '@fortawesome/free-solid-svg-icons/faPalette'
+import { faUser } from '@fortawesome/free-solid-svg-icons/faUser'
 import i18n from '@/lib/locales'
 import IconButton from '@/components/ui/IconButton'
 import { SettingsSectionProps } from '@/features/settings/screens/settingScreen'

@@ -1,14 +1,12 @@
 import React, { useMemo, useState } from 'react'
 import { ScrollView, StyleSheet, View } from 'react-native'
 import { useNavigation } from '@react-navigation/native'
-import {
-  faArrowDown,
-  faArrowUp,
-  faCheck,
-  faPlus,
-  faTimes,
-  faTimesCircle,
-} from '@fortawesome/free-solid-svg-icons'
+import { faArrowDown } from '@fortawesome/free-solid-svg-icons/faArrowDown'
+import { faArrowUp } from '@fortawesome/free-solid-svg-icons/faArrowUp'
+import { faCheck } from '@fortawesome/free-solid-svg-icons/faCheck'
+import { faPlus } from '@fortawesome/free-solid-svg-icons/faPlus'
+import { faTimes } from '@fortawesome/free-solid-svg-icons/faTimes'
+import { faTimesCircle } from '@fortawesome/free-solid-svg-icons/faTimesCircle'
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
 
 import useTheme from '@/contexts/theme'

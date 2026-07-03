@@ -1,5 +1,7 @@
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
-import { faMars, faQuestion, faVenus } from '@fortawesome/free-solid-svg-icons'
+import { faMars } from '@fortawesome/free-solid-svg-icons/faMars'
+import { faQuestion } from '@fortawesome/free-solid-svg-icons/faQuestion'
+import { faVenus } from '@fortawesome/free-solid-svg-icons/faVenus'
 import { Contact } from '@/types/contact'
 import useTheme from '@/contexts/theme'
 

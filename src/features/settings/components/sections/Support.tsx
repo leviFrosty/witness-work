@@ -3,13 +3,11 @@ import moment from 'moment'
 import Section from '@/components/ui/inputs/Section'
 import i18n from '@/lib/locales'
 import InputRowButton from '@/features/settings/components/inputs/InputRowButton'
-import {
-  faArrowUpRightFromSquare,
-  faChevronRight,
-  faGlobe,
-  faHeart,
-  faRankingStar,
-} from '@fortawesome/free-solid-svg-icons'
+import { faArrowUpRightFromSquare } from '@fortawesome/free-solid-svg-icons/faArrowUpRightFromSquare'
+import { faChevronRight } from '@fortawesome/free-solid-svg-icons/faChevronRight'
+import { faGlobe } from '@fortawesome/free-solid-svg-icons/faGlobe'
+import { faHeart } from '@fortawesome/free-solid-svg-icons/faHeart'
+import { faRankingStar } from '@fortawesome/free-solid-svg-icons/faRankingStar'
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
 import links from '@/constants/links'
 import IconButton from '@/components/ui/IconButton'

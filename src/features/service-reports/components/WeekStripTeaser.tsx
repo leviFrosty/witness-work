@@ -18,7 +18,7 @@ import {
   TimeEntriesByYear,
 } from '@/types/timeEntry'
 import { HomeTabStackNavigation } from '@/types/homeStack'
-import { faChevronRight } from '@fortawesome/free-solid-svg-icons'
+import { faChevronRight } from '@fortawesome/free-solid-svg-icons/faChevronRight'
 import CalendarDay from '@/components/CalendarDay'
 import type { DateData } from 'react-native-calendars'
 

@@ -13,12 +13,10 @@ import Haptics from '@/lib/haptics'
 import SwipeableDelete from '@/components/ui/swipeableActions/Delete'
 import SwipeableEdit from '@/components/ui/swipeableActions/Edit'
 import IconButton from '@/components/ui/IconButton'
-import {
-  faBell,
-  faBellSlash,
-  faBook,
-  faCaravan,
-} from '@fortawesome/free-solid-svg-icons'
+import { faBell } from '@fortawesome/free-solid-svg-icons/faBell'
+import { faBellSlash } from '@fortawesome/free-solid-svg-icons/faBellSlash'
+import { faBook } from '@fortawesome/free-solid-svg-icons/faBook'
+import { faCaravan } from '@fortawesome/free-solid-svg-icons/faCaravan'
 import Copyeable from '@/components/ui/Copyeable'
 import Button from '@/components/ui/Button'
 import { RootStackNavigation } from '@/types/rootStack'

@@ -1,9 +1,9 @@
 import { Sheet } from 'tamagui'
 import { View } from 'react-native'
 import Checkbox from 'expo-checkbox'
-import _ from 'lodash'
+import upperFirst from 'lodash/upperFirst'
 import moment from 'moment'
-import { faTimes } from '@fortawesome/free-solid-svg-icons'
+import { faTimes } from '@fortawesome/free-solid-svg-icons/faTimes'
 import useTheme from '@/contexts/theme'
 import Text from '@/components/ui/MyText'
 import Button from '@/components/ui/Button'
@@ -230,7 +230,7 @@ const NotesImportContactDetailsModal = ({
         },
         group.info.gender && {
           label: i18n.t('notesImport_detailGender'),
-          value: _.upperFirst(group.info.gender),
+          value: upperFirst(group.info.gender),
         },
       ].filter((d): d is { label: string; value: string } => !!d)
     : []

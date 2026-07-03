@@ -3,7 +3,7 @@ import { Pressable, View } from 'react-native'
 
 import * as Crypto from 'expo-crypto'
 import moment from 'moment'
-import { faPlus } from '@fortawesome/free-solid-svg-icons'
+import { faPlus } from '@fortawesome/free-solid-svg-icons/faPlus'
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
 
 import useTheme from '@/contexts/theme'

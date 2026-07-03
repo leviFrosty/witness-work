@@ -7,13 +7,11 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { parsePhoneNumber } from 'awesome-phonenumber'
 import { getLocales } from 'expo-localization'
-import {
-  faPhone,
-  faComment,
-  faPenToSquare,
-  faCalendarDay,
-  faTrash,
-} from '@fortawesome/free-solid-svg-icons'
+import { faPhone } from '@fortawesome/free-solid-svg-icons/faPhone'
+import { faComment } from '@fortawesome/free-solid-svg-icons/faComment'
+import { faPenToSquare } from '@fortawesome/free-solid-svg-icons/faPenToSquare'
+import { faCalendarDay } from '@fortawesome/free-solid-svg-icons/faCalendarDay'
+import { faTrash } from '@fortawesome/free-solid-svg-icons/faTrash'
 
 import Wrapper from '@/components/ui/layout/Wrapper'
 import Text from '@/components/ui/MyText'

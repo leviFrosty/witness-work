@@ -3,6 +3,7 @@ import { fetch as expoFetch } from 'expo/fetch'
 import * as Crypto from 'expo-crypto'
 import { MMKV } from 'react-native-mmkv'
 import apis from '@/constants/apis'
+import { getOrCreateAccountId } from '@/lib/account'
 import { getOrCreateInstallId } from '@/lib/installId'
 import { notesContentHash } from '@/features/notes-import/lib/notesContentHash'
 import type {
@@ -17,10 +18,11 @@ import {
 import * as AppAttest from '../../../../modules/app-attest'
 
 /**
- * Notes Import network client. Owns identity (Keychain UUID), the App Attest
- * handshake + per-request assertion, and the metered model call. A configured
- * dev-bypass token (dev/staging worker only) skips App Attest so the simulator
- * — which has no Secure Enclave — can exercise the full flow.
+ * Notes Import network client. Owns identity (the Keychain install UUID for App
+ * Attest, plus the shared account id for Supporter status/metering — ADR 0011),
+ * the App Attest handshake + per-request assertion, and the metered model call.
+ * A configured dev-bypass token (dev/staging worker only) skips App Attest so
+ * the simulator — which has no Secure Enclave — can exercise the full flow.
  *
  * Two model paths exist:
  *
@@ -261,6 +263,7 @@ const postAttested = async <T>(
   url: string,
   baseBody: Record<string, unknown>,
   uuid: string,
+  accountId: string,
   contentHash: string
 ): Promise<T> => {
   if (DEV_BYPASS_ENABLED) {
@@ -273,7 +276,10 @@ const postAttested = async <T>(
 
   const signedBody = async (keyId: string) => {
     const challenge = await getChallenge()
-    const clientData = `${challenge}|${uuid}|${contentHash}`
+    // MUST stay byte-for-byte identical to ww-api's buildAssertionClientData:
+    // binding the account id into the signature means a proxying user can't
+    // swap in someone else's account id post-signature.
+    const clientData = `${challenge}|${uuid}|${accountId}|${contentHash}`
     const assertion = await AppAttest.generateAssertion(
       keyId,
       await base64Sha256(clientData)
@@ -314,19 +320,20 @@ export const requestNotesImport = async ({
   context,
   refinement,
 }: RequestNotesImportArgs): Promise<NotesImportResponse> => {
-  // Install id, NOT the shared account id (ADR 0011): ww-api pins each uuid
-  // to the ONE App Attest keyId that first claimed it, so a second device
-  // sending an adopted account id would be locked out at re-attest. Until
-  // ww-api verifies Supporter against an account id, a device that adopted a
-  // foreign account id is metered here under its own install id — meaning
-  // its RevenueCat entitlement is not visible to the proxy's supporter check.
+  // Two identities (ADR 0011). `uuid` is this device's install id — the App
+  // Attest identity ww-api pins device keys to, so an adopted account id can
+  // never lock a device out at re-attest. `accountId` is the shared account id
+  // RevenueCat knows; ww-api verifies Supporter status and meters credits
+  // per-person against it, and it's bound into the signed clientData.
   const uuid = getOrCreateInstallId()
+  const accountId = getOrCreateAccountId()
   const contentHash = await notesContentHash(notesText)
   try {
     const response = await postAttested<NotesImportWireResponse>(
       apis.notesImport,
-      { uuid, notesText, contentHash, context, refinement },
+      { uuid, accountId, notesText, contentHash, context, refinement },
       uuid,
+      accountId,
       contentHash
     )
     return normalizeNotesImportResponse(response)
@@ -389,14 +396,16 @@ const kickoffNotesImport = async ({
   context,
   refinement,
 }: RequestNotesImportArgs): Promise<NotesImportKickoffResponse> => {
-  // Same identity rule as `requestNotesImport` — see the comment there.
+  // Same identity rules as `requestNotesImport` — see the comment there.
   const uuid = getOrCreateInstallId()
+  const accountId = getOrCreateAccountId()
   const contentHash = await notesContentHash(notesText)
   try {
     return await postAttested<NotesImportKickoffResponse>(
       apis.notesImportKickoff,
-      { uuid, notesText, contentHash, context, refinement },
+      { uuid, accountId, notesText, contentHash, context, refinement },
       uuid,
+      accountId,
       contentHash
     )
   } catch (e) {

@@ -2,9 +2,9 @@
 
 WitnessWork = iOS-only field-service tracker for Jehovah's Witnesses (Expo + React Native). It helps publishers schedule their service time toward their goals, track contacts & appointments, and see progress without mental math. Domain glossary in `CONTEXT.md` — read it before discussing Publisher, Service Report, Plan, Assistant, Supporter, Tenure, etc.
 
-## ww-proxy / backend API
+## ww-api / backend API
 
-ww-proxy is the backend api providing functionality to this app. Find the code at ~/dev/witness-work.
+ww-api is the backend api providing functionality to this app. Find the code at ~/dev/ww-api.
 It's a project deployed to Cloudflare workers. Read the documentation within that repository for up to date information before making assumptions. There are two environments: dev and production.
 
 ## Guardrails (always apply)

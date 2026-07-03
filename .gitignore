@@ -29,6 +29,7 @@ npm-debug.*
 # local env files
 .env*.local
 .env
+.env.production
 
 # typescript
 *.tsbuildinfo
@@ -52,7 +53,7 @@ targets/*/Assets.xcassets/**/Contents.json
 .tamagui/
 
 # Local Builds
-build-*
+/build-*
 
 # Cache
 .cache

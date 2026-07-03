@@ -33,6 +33,10 @@ WitnessWork is available in 16 languages. Some of these translations are done by
 
 [Not sure how to use Crowdin?](https://support.crowdin.com/crowdin-intro/)
 
+## Building
+
+Development setup and the production build process are documented in [docs/build.md](./docs/build.md). Production builds are intentionally done **locally** (`pnpm run build:prod-auto-submit`) rather than on EAS Build cloud services.
+
 ## License
 
 WitnessWork © 2023-2026 by Levi Wilkerson is licensed under [Attribution-NonCommercial 4.0 International](./LICENSE)

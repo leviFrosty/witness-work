@@ -45,15 +45,23 @@ Push from `main`:
 git push origin main --follow-tags
 ```
 
-Pushing the tag is what matters — `production-release.yml` triggers on any `v*.*.*` tag push regardless of branch. That workflow re-runs lint/typecheck/test/circular-dep check, then `eas build --platform ios --profile production --auto-submit` (submits straight to App Store) and creates a GitHub Release with an auto-generated changelog since the previous release.
+Then build and upload **locally** — we intentionally don't use EAS Build cloud services for production (no build credits; everything runs on our own hardware):
+
+```bash
+pnpm run build:prod-auto-submit
+```
+
+That script builds via `eas build --local` to the single idempotent artifact `./build-production.ipa` and uploads it to App Store Connect with `asc builds upload`. Prerequisites and env-file details are in `docs/build.md` ("Production build & App Store upload").
+
+⚠️ `production-release.yml` still triggers on any `v*.*.*` tag push and runs a **cloud** EAS build + auto-submit — the legacy path this local flow replaces. Until that workflow is disabled or its build step removed, pushing a tag after a local upload will double-build and double-submit.
 
 For App Store Connect-side steps (TestFlight, "What's New" per-locale, submission), see [[app-store-release]].
 
 ## Workflows reference
 
-| File                     | Trigger                                         | Does                                                                         |
-| ------------------------ | ----------------------------------------------- | ---------------------------------------------------------------------------- |
-| `pr-preview-build.yml`   | manual (`workflow_dispatch`)                    | lint/typecheck/test/deps, then EAS iOS preview build                         |
-| `tests.yml`              | push → `main`                                   | lint/typecheck/test/deps                                                     |
-| `production-release.yml` | tag push `v*.*.*`                               | lint/typecheck/test/deps, EAS production build + auto-submit, GitHub Release |
-| `claude.yml`             | `@claude` mention on issue/PR comment or review | Claude Code responds inline                                                  |
+| File                     | Trigger                                         | Does                                                                                                                   |
+| ------------------------ | ----------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| `pr-preview-build.yml`   | manual (`workflow_dispatch`)                    | lint/typecheck/test/deps, then EAS iOS preview build                                                                   |
+| `tests.yml`              | push → `main`                                   | lint/typecheck/test/deps                                                                                               |
+| `production-release.yml` | tag push `v*.*.*`                               | lint/typecheck/test/deps, **cloud** EAS build + auto-submit (legacy — production is built locally now), GitHub Release |
+| `claude.yml`             | `@claude` mention on issue/PR comment or review | Claude Code responds inline                                                                                            |

@@ -115,6 +115,7 @@ describe('ledgerEntryTitle', () => {
     notesText: 'Visited Maria',
     provisionalTitle: 'Visited Maria',
     result: result(),
+    emptyCharged: false,
     history: [],
     summary: 'Three return visits',
     commit: null,
@@ -212,6 +213,16 @@ describe('migrateLedgerEntry', () => {
     expect(e?.state).toBe('ready')
     expect(e?.activeRun).toBeNull()
   })
+
+  it('defaults emptyCharged to false on legacy rows and preserves true', () => {
+    expect(
+      migrateLedgerEntry({ hash: 'a', result: result() }, 1)?.emptyCharged
+    ).toBe(false)
+    expect(
+      migrateLedgerEntry({ hash: 'b', result: result(), emptyCharged: true }, 1)
+        ?.emptyCharged
+    ).toBe(true)
+  })
 })
 
 describe('isPrunableLedgerEntry', () => {
@@ -235,6 +246,7 @@ describe('ledger lifecycle transitions (pure)', () => {
     notesText: 'Visited Maria\nmore',
     provisionalTitle: 'Visited Maria',
     result: result({ summary: 'Maria visit' }),
+    emptyCharged: false,
     history: [{ role: 'assistant', text: 'reply 0', at: 5 }],
     summary: 'Maria visit',
     commit: null,
@@ -348,6 +360,20 @@ describe('ledger lifecycle transitions (pure)', () => {
       expect(e.history).toEqual([])
       expect(e.createdAt).toBe(70)
       expect(e.parsedAt).toBe(70)
+    })
+
+    it('carries emptyCharged from the parse, defaulting false (ADR 0012)', () => {
+      expect(putParsedTransition(null, result(), 70).emptyCharged).toBe(false)
+      expect(putParsedTransition(null, result(), 70, true).emptyCharged).toBe(
+        true
+      )
+    })
+
+    it('clears a prior emptyCharged notice on a subsequent (refinement) re-parse', () => {
+      const charged = readyEntry({ emptyCharged: true })
+      // A refinement never charges an empty, so it re-parses with the default.
+      const e = putParsedTransition(charged, result({ summary: 'S' }), 80)
+      expect(e.emptyCharged).toBe(false)
     })
   })
 
@@ -634,6 +660,7 @@ describe('readyImportCount', () => {
     notesText: 'n',
     provisionalTitle: 'n',
     result: result(),
+    emptyCharged: false,
     history: [],
     summary: '',
     commit: null,
@@ -670,6 +697,7 @@ describe('viewed / unread dot', () => {
     notesText: 'n',
     provisionalTitle: 'n',
     result: result(),
+    emptyCharged: false,
     history: [],
     summary: '',
     commit: null,

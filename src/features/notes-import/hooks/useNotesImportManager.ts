@@ -279,7 +279,7 @@ export const useNotesImportManager = create<NotesImportManagerState>(
           // has values to show on the next conversation — and after a restart.
           set({ credits: res.credits })
           persistCredits(res.credits)
-          putParsedResult(hash, res.result, Date.now())
+          putParsedResult(hash, res.result, Date.now(), res.emptyCharged)
           patchRuntime(hash, { phase: 'done', running: false, error: null })
         })
         .catch((e) => {

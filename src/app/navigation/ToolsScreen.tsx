@@ -40,6 +40,31 @@ import { faRotate } from '@fortawesome/free-solid-svg-icons'
 import useCelebrationQueue from '@/features/service-reports/stores/celebrationQueue'
 import { monthCelebrationKey } from '@/lib/achievementTier'
 import { milestoneCelebrationKey } from '@/lib/milestones'
+import apis from '@/constants/apis'
+import useAccount from '@/hooks/useAccount'
+import useCustomer from '@/hooks/useCustomer'
+import { supporterSinceDate } from '@/lib/supporterSince'
+import { getOrCreateInstallId } from '@/lib/installId'
+import {
+  clearAdoptedAccountId,
+  getOrCreateAccountId,
+  readAccountFile,
+} from '@/lib/account'
+import {
+  decideAccountAction,
+  type AccountAction,
+  type AccountFile,
+} from '@/lib/accountFile'
+import {
+  clearCachedAttestKey,
+  getNotesImportAuthSnapshot,
+  getNotesImportStatus,
+  runNotesImportAuthDiagnostics,
+  type NotesImportAuthDebugReport,
+  type NotesImportStatus,
+} from '@/features/notes-import/lib/notesImportClient'
+import { useNotesImportManager } from '@/features/notes-import/hooks/useNotesImportManager'
+import { clientImportCap } from '@/features/notes-import/lib/notesImportManagerLogic'
 
 const MONO = Platform.select({
   ios: 'Menlo',
@@ -72,6 +97,39 @@ const SectionHeader = ({ title, color }: { title: string; color?: string }) => {
     </Text>
   )
 }
+
+/** Label/value row in the debug cards; values render in mono and are selectable. */
+const InfoRow = ({ label, value }: { label: string; value: string }) => {
+  const theme = useTheme()
+  return (
+    <XView style={{ justifyContent: 'space-between', gap: 10 }}>
+      <Text style={{ fontFamily: theme.fonts.bold }}>{label}</Text>
+      <Text
+        selectable
+        style={{
+          color: theme.colors.textAlt,
+          fontFamily: MONO,
+          fontSize: theme.fontSize('sm'),
+          flexShrink: 1,
+          textAlign: 'right',
+        }}
+      >
+        {value}
+      </Text>
+    </XView>
+  )
+}
+
+/**
+ * Middle-elide long opaque ids so rows stay one line; full value is selectable
+ * via the JSON viewers.
+ */
+const shortId = (value: string | null | undefined): string =>
+  !value
+    ? '—'
+    : value.length > 20
+      ? `${value.slice(0, 8)}…${value.slice(-6)}`
+      : value
 
 const confirmDestructive = (title: string, onConfirm: () => void) => {
   Alert.alert(title, 'This cannot be undone.', [
@@ -130,6 +188,79 @@ export default function ToolsScreen() {
     `${DEFAULT_MOCK_CONTACT_COUNT}`
   )
   const mockContactCount = parseMockContactCount(mockContactCountInput)
+
+  // --- Notes Import auth / usage / supporter-sync debug -----------------
+  const { accountId, iCloudSharingAvailable } = useAccount()
+  const { customer } = useCustomer()
+  const entitled = supporterSinceDate(customer) !== null
+  const notesImportCredits = useNotesImportManager((s) => s.credits)
+  // Cheap MMKV/Keychain reads; recomputed per render so it reflects the
+  // buttons below (clear key, clear adopted id) immediately.
+  const authSnapshot = getNotesImportAuthSnapshot()
+  const [authBusy, setAuthBusy] = useState(false)
+  const [authReport, setAuthReport] =
+    useState<NotesImportAuthDebugReport | null>(null)
+  const [proxyProbe, setProxyProbe] = useState<{
+    health: unknown
+    status: NotesImportStatus | { error: string }
+    probedAt: string
+  } | null>(null)
+  const [accountFileInspection, setAccountFileInspection] = useState<
+    | { file: AccountFile | null; action: AccountAction; readAt: string }
+    | { error: string }
+    | null
+  >(null)
+
+  const runAuthDiagnostics = async (forceReattest: boolean) => {
+    if (authBusy) return
+    setAuthBusy(true)
+    try {
+      const report = await runNotesImportAuthDiagnostics({ forceReattest })
+      setAuthReport(report)
+      toast.show(report.ok ? 'Auth diagnostics passed' : 'Auth step failed', {
+        message: report.ok
+          ? `${report.steps.length} steps ok`
+          : (report.steps.find((s) => !s.ok)?.step ?? ''),
+        native: true,
+      })
+    } finally {
+      setAuthBusy(false)
+    }
+  }
+
+  const probeProxy = async () => {
+    const [health, status] = await Promise.all([
+      axios
+        .get(apis.notesImportHealth, { timeout: 10_000 })
+        .then((r) => r.data as unknown)
+        .catch((e) => ({ error: (e as Error).message })),
+      getNotesImportStatus().catch((e) => ({
+        error: (e as Error).message,
+      })),
+    ])
+    setProxyProbe({ health, status, probedAt: new Date().toISOString() })
+  }
+
+  const inspectAccountFile = async () => {
+    try {
+      const file = await readAccountFile()
+      // The same pure decision AccountProvider's reconcile pass would make
+      // right now — shows WHY the device is claiming/adopting/idle.
+      const action = decideAccountAction({
+        accountId: getOrCreateAccountId(),
+        entitled,
+        file,
+      })
+      setAccountFileInspection({
+        file,
+        action,
+        readAt: new Date().toISOString(),
+      })
+    } catch (e) {
+      // Rejection means iCloud unavailable (signed out / Drive disabled).
+      setAccountFileInspection({ error: (e as Error).message })
+    }
+  }
 
   const showDone = (label: string) =>
     toast.show(label, { message: '', native: true })
@@ -743,6 +874,184 @@ export default function ToolsScreen() {
             </Card>
           </>
         )}
+
+        <SectionHeader title='Notes Import — auth & attestation' />
+        <Card style={{ gap: 10 }}>
+          <Text
+            style={{
+              fontSize: theme.fontSize('sm'),
+              color: theme.colors.textAlt,
+            }}
+          >
+            The proxy gates inference behind App Attest: challenge → one-time
+            key attestation → a per-request assertion signed over
+            challenge|installId|accountId|contentHash. Diagnostics replay that
+            handshake step-by-step against the live worker without spending any
+            import credits. Force re-attest burns a new Secure Enclave key and
+            re-registers it (same as the server forgetting the key).
+          </Text>
+          <InfoRow label='Proxy base' value={authSnapshot.baseUrl} />
+          <InfoRow
+            label='Dev bypass'
+            value={String(authSnapshot.devBypassEnabled)}
+          />
+          <InfoRow
+            label='App Attest supported'
+            value={String(authSnapshot.appAttestSupported)}
+          />
+          <InfoRow
+            label='Cached device key'
+            value={shortId(authSnapshot.cachedKeyId)}
+          />
+          <InfoRow
+            label='Install id (uuid)'
+            value={shortId(authSnapshot.installId)}
+          />
+          <InfoRow label='Account id' value={shortId(authSnapshot.accountId)} />
+          <InfoRow
+            label='Adopted shared id'
+            value={String(authSnapshot.accountIdAdopted)}
+          />
+          <ActionButton
+            disabled={authBusy}
+            onPress={() => void runAuthDiagnostics(false)}
+          >
+            {authBusy ? 'Running…' : 'Run auth diagnostics'}
+          </ActionButton>
+          <ActionButton
+            disabled={authBusy}
+            onPress={() => void runAuthDiagnostics(true)}
+          >
+            Force full re-attest + diagnostics
+          </ActionButton>
+          <ActionButton onPress={() => void probeProxy()}>
+            Probe /health + /status
+          </ActionButton>
+          <ActionButton
+            onPress={() =>
+              confirmDestructive('Clear cached attest key', () => {
+                clearCachedAttestKey()
+                showDone('Attest key cleared — next import re-attests')
+              })
+            }
+          >
+            Clear cached attest key
+          </ActionButton>
+          <JsonViewer
+            label='Auth snapshot (full ids)'
+            value={authSnapshot}
+            count={Object.keys(authSnapshot).length}
+          />
+          <JsonViewer
+            label='Diagnostics report'
+            value={authReport}
+            count={authReport?.steps.length ?? 0}
+          />
+          <JsonViewer
+            label='Proxy health / status'
+            value={proxyProbe}
+            count={proxyProbe ? 2 : 0}
+          />
+        </Card>
+
+        <SectionHeader title='Notes Import — usage & limits' />
+        <Card style={{ gap: 10 }}>
+          <Text
+            style={{
+              fontSize: theme.fontSize('sm'),
+              color: theme.colors.textAlt,
+            }}
+          >
+            The proxy meters by account id (1 credit per distinct source text;
+            replays and refinements are free, refinements capped per import;
+            Supporters unmetered). There is no read-only usage endpoint — the
+            snapshot below is the credits object from the most recent
+            kickoff/done response this session, so it&apos;s empty until an
+            import runs.
+          </Text>
+          <InfoRow
+            label='Server isSupporter'
+            value={
+              notesImportCredits ? String(notesImportCredits.isSupporter) : '—'
+            }
+          />
+          <InfoRow
+            label='Imports remaining'
+            value={
+              notesImportCredits
+                ? notesImportCredits.remaining === null
+                  ? '∞'
+                  : `${notesImportCredits.remaining} / ${notesImportCredits.limit}`
+                : '—'
+            }
+          />
+          <InfoRow
+            label='Refinements remaining'
+            value={
+              notesImportCredits
+                ? `${notesImportCredits.refinements.remaining} / ${notesImportCredits.refinements.limit}`
+                : '—'
+            }
+          />
+          <InfoRow
+            label='Client concurrency cap'
+            value={`${clientImportCap(isSupporter)} (isSupporter=${String(isSupporter)})`}
+          />
+          <JsonViewer
+            label='Last credits snapshot'
+            value={notesImportCredits}
+            count={notesImportCredits ? 1 : 0}
+          />
+        </Card>
+
+        <SectionHeader title='Supporter sync (iCloud account id)' />
+        <Card style={{ gap: 10 }}>
+          <Text
+            style={{
+              fontSize: theme.fontSize('sm'),
+              color: theme.colors.textAlt,
+            }}
+          >
+            One account id per Apple ID, agreed via the account file in the
+            iCloud container: the entitled device claims it, every other device
+            adopts it (RevenueCat logIn), so Supporter status follows with no
+            sign-in. Read the file to see the current claim and the reconcile
+            action THIS device would take right now.
+          </Text>
+          <InfoRow label='Account id (context)' value={shortId(accountId)} />
+          <InfoRow label='Install id' value={shortId(getOrCreateInstallId())} />
+          <InfoRow
+            label='iCloud sharing available'
+            value={String(iCloudSharingAvailable)}
+          />
+          <InfoRow label='Entitled (RevenueCat)' value={String(entitled)} />
+          <InfoRow
+            label='isSupporter (effective)'
+            value={String(isSupporter)}
+          />
+          <InfoRow
+            label='Supporter since'
+            value={supporterSince ? moment(supporterSince).format('ll') : '—'}
+          />
+          <ActionButton onPress={() => void inspectAccountFile()}>
+            Read iCloud account file
+          </ActionButton>
+          <ActionButton
+            onPress={() =>
+              confirmDestructive('Clear adopted account id', () => {
+                clearAdoptedAccountId()
+                showDone('Adopted id cleared — falls back to install id')
+              })
+            }
+          >
+            Clear adopted account id
+          </ActionButton>
+          <JsonViewer
+            label='Account file + reconcile decision'
+            value={accountFileInspection}
+            count={accountFileInspection ? 1 : 0}
+          />
+        </Card>
 
         {Platform.OS === 'ios' && (
           <>

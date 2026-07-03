@@ -208,6 +208,159 @@ const ensureAttested = async (uuid: string, force = false): Promise<string> => {
   }
 }
 
+// --- Dev-tools diagnostics (ToolsScreen) --------------------------------
+
+/**
+ * Static snapshot of everything the auth boundary depends on — identities,
+ * bypass state, App Attest support, and the cached device key. Read-only; safe
+ * to render in the dev Tools screen.
+ */
+export const getNotesImportAuthSnapshot = () => {
+  const installId = getOrCreateInstallId()
+  const accountId = getOrCreateAccountId()
+  return {
+    baseUrl: apis.notesImport.replace(/\/notes-import$/, ''),
+    devBypassEnabled: DEV_BYPASS_ENABLED,
+    appAttestSupported: AppAttest.isSupported(),
+    cachedKeyId: attestStore().getString(KEY_ID_KEY) ?? null,
+    installId,
+    accountId,
+    accountIdAdopted: accountId !== installId,
+  }
+}
+
+/**
+ * Dev-tools only: drop the cached App Attest keyId so the next attested call
+ * runs the full handshake again (mirrors the server forgetting the key).
+ */
+export const clearCachedAttestKey = (): void => {
+  attestStore().delete(KEY_ID_KEY)
+}
+
+export interface NotesImportAuthDebugStep {
+  step: string
+  ok: boolean
+  ms: number
+  detail?: string
+}
+
+export interface NotesImportAuthDebugReport {
+  ok: boolean
+  steps: NotesImportAuthDebugStep[]
+  keyId: string | null
+}
+
+/**
+ * Exercises the auth boundary end to end for the dev Tools screen, reporting
+ * each hop separately so a failure pinpoints itself: status probe → challenge →
+ * (if needed or forced) the full App Attest handshake → a local assertion
+ * signature. Uses the same primitives and cache as the real import path, so a
+ * forced handshake here genuinely re-attests the device. No inference is spent
+ * — the metered endpoints are never called.
+ */
+export const runNotesImportAuthDiagnostics = async (
+  options: { forceReattest?: boolean } = {}
+): Promise<NotesImportAuthDebugReport> => {
+  const steps: NotesImportAuthDebugStep[] = []
+  const run = async <T>(
+    step: string,
+    fn: () => Promise<T>,
+    detail?: (result: T) => string
+  ): Promise<T | null> => {
+    const started = Date.now()
+    try {
+      const result = await fn()
+      steps.push({
+        step,
+        ok: true,
+        ms: Date.now() - started,
+        detail: detail?.(result),
+      })
+      return result
+    } catch (e) {
+      const err = toClientError(e)
+      steps.push({
+        step,
+        ok: false,
+        ms: Date.now() - started,
+        detail: err.debug ?? `${err.code}: ${err.message}`,
+      })
+      return null
+    }
+  }
+  const report = (): NotesImportAuthDebugReport => ({
+    ok: steps.every((s) => s.ok),
+    steps,
+    keyId: attestStore().getString(KEY_ID_KEY) ?? null,
+  })
+
+  await run('status probe', getNotesImportStatus, (s) => JSON.stringify(s))
+
+  const challenge = await run('challenge', getChallenge, (c) =>
+    c ? `${c.length} chars` : 'empty'
+  )
+  if (challenge === null) return report()
+
+  if (DEV_BYPASS_ENABLED) {
+    steps.push({
+      step: 'attestation',
+      ok: true,
+      ms: 0,
+      detail: 'skipped — dev bypass header active',
+    })
+    return report()
+  }
+  if (!AppAttest.isSupported()) {
+    steps.push({
+      step: 'attestation',
+      ok: false,
+      ms: 0,
+      detail: 'App Attest unsupported (simulator or non-iOS build)',
+    })
+    return report()
+  }
+
+  const uuid = getOrCreateInstallId()
+  const cached = attestStore().getString(KEY_ID_KEY)
+  let keyId: string | null = cached ?? null
+  if (!cached || options.forceReattest) {
+    keyId = await run('generate key', () => AppAttest.generateKey())
+    if (keyId === null) return report()
+    const attestation = await run(
+      'attest key (Secure Enclave → Apple)',
+      async () => AppAttest.attestKey(keyId!, await base64Sha256(challenge)),
+      (a) => `${a.length} chars CBOR`
+    )
+    if (attestation === null) return report()
+    const registered = await run('register attestation (ww-api)', async () => {
+      await axios.post(
+        apis.notesImportAttest,
+        { keyId, attestation, challenge, uuid },
+        { timeout: REQUEST_TIMEOUT_MS }
+      )
+      attestStore().set(KEY_ID_KEY, keyId!)
+    })
+    if (registered === null) return report()
+  } else {
+    steps.push({ step: 'device key', ok: true, ms: 0, detail: 'using cache' })
+  }
+
+  // Signs the same canonical clientData the real calls use, proving the
+  // Secure Enclave key is still usable. Local-only: verifying it server-side
+  // would require a metered endpoint.
+  await run(
+    'sign assertion (local)',
+    async () => {
+      const freshChallenge = await getChallenge()
+      const accountId = getOrCreateAccountId()
+      const clientData = `${freshChallenge}|${uuid}|${accountId}|debug`
+      return AppAttest.generateAssertion(keyId!, await base64Sha256(clientData))
+    },
+    (a) => `${a.length} chars CBOR`
+  )
+  return report()
+}
+
 /**
  * In DEV only, format the raw HTTP exchange for developer logs — including the
  * proxy's dev-only `detail` field (e.g. the underlying gateway error behind an

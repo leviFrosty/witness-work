@@ -7,9 +7,11 @@ import { RouteProp, useNavigation, useRoute } from '@react-navigation/native'
 import Wrapper from '@/components/ui/layout/Wrapper'
 import Text from '@/components/ui/MyText'
 import ActionButton from '@/components/ui/ActionButton'
+import Card from '@/components/ui/Card'
 import SupporterBenefits from '@/components/SupporterBenefits'
 import SupporterBadge from '@/components/SupporterBadge'
 import useIsSupporter from '@/hooks/useIsSupporter'
+import useAccount from '@/hooks/useAccount'
 import { RootStackNavigation, RootStackParamList } from '@/types/rootStack'
 import useAnimation from '@/hooks/useAnimation'
 import useFireworks from '@/hooks/useFireworks'
@@ -40,6 +42,7 @@ const PaywallThankYouScreen = () => {
   const navigation = useNavigation<RootStackNavigation>()
   const route = useRoute<RouteProp<RootStackParamList, 'Thank You'>>()
   const { isSupporter } = useIsSupporter()
+  const { iCloudSharingAvailable } = useAccount()
   // Prefer the just-purchased tier from nav params over the current supporter
   // state. A lifetime supporter who sends a one-time tip is still
   // `isSupporter === true`, but the screen tone should match what they
@@ -125,6 +128,32 @@ const PaywallThankYouScreen = () => {
         </View>
 
         {showSupporterCelebration && <SupporterBenefits />}
+
+        {/*
+         * With iCloud reachable, Supporter status reaches the user's other
+         * devices automatically (ADR 0011) — say nothing. Only when it can't
+         * (signed out, or iCloud Drive disabled for WitnessWork) does the
+         * user have something to do, so only then surface the manual path.
+         */}
+        {showSupporterCelebration && !iCloudSharingAvailable && (
+          <Card style={{ marginTop: 15 }}>
+            <Text
+              style={{
+                fontFamily: theme.fonts.semiBold,
+              }}
+            >
+              {i18n.t('thankYou_multiDeviceTitle')}
+            </Text>
+            <Text
+              style={{
+                fontSize: theme.fontSize('sm'),
+                color: theme.colors.textAlt,
+              }}
+            >
+              {i18n.t('thankYou_multiDeviceBody')}
+            </Text>
+          </Card>
+        )}
       </ScrollView>
       <View
         style={{

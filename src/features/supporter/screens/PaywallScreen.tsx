@@ -37,6 +37,7 @@ import { RootStackNavigation, RootStackParamList } from '@/types/rootStack'
 import { logger } from '@/lib/logger'
 import { TranslationKey } from '@/lib/locales'
 import { isOfflineError } from '@/lib/offlineError'
+import { clearAdoptedAccountId } from '@/lib/account'
 
 type Tier = 'supporter' | 'tip'
 type SupporterBilling = 'monthly' | 'annual'
@@ -620,6 +621,9 @@ const PaywallScreen = () => {
               const freshId = `dev-reset-${Date.now()}-${Math.random()
                 .toString(36)
                 .slice(2, 10)}`
+              // Also drop any iCloud-adopted account id, otherwise the next
+              // account reconcile would immediately log back in as it.
+              clearAdoptedAccountId()
               logger.log('[Paywall] dev reset — logging in as', { freshId })
               const { customerInfo } = await Purchases.logIn(freshId)
               setCustomer(customerInfo)

@@ -314,6 +314,12 @@ export const requestNotesImport = async ({
   context,
   refinement,
 }: RequestNotesImportArgs): Promise<NotesImportResponse> => {
+  // Install id, NOT the shared account id (ADR 0011): ww-api pins each uuid
+  // to the ONE App Attest keyId that first claimed it, so a second device
+  // sending an adopted account id would be locked out at re-attest. Until
+  // ww-api verifies Supporter against an account id, a device that adopted a
+  // foreign account id is metered here under its own install id — meaning
+  // its RevenueCat entitlement is not visible to the proxy's supporter check.
   const uuid = getOrCreateInstallId()
   const contentHash = await notesContentHash(notesText)
   try {
@@ -383,6 +389,7 @@ const kickoffNotesImport = async ({
   context,
   refinement,
 }: RequestNotesImportArgs): Promise<NotesImportKickoffResponse> => {
+  // Same identity rule as `requestNotesImport` — see the comment there.
   const uuid = getOrCreateInstallId()
   const contentHash = await notesContentHash(notesText)
   try {

@@ -26,6 +26,11 @@ export type MonthReportData = {
   /** Whole-hour credit time over the cap (rendered into notes). */
   creditOverageHours: number
   studies: number | null
+  /**
+   * Minutes value for Hourglass submission: total adjusted minutes for hourly
+   * publishers, or 1/0 (shared / didn't share) for checkbox-mode publishers.
+   */
+  hourglassMinutes: number
   /** Notes string with the raw credit breakdown and credit overage. */
   notes: string
   /** Last-month-only flag (kept for nwpublisher submission gating). */
@@ -103,6 +108,8 @@ const useMonthReportData = (
   const hours = Math.floor(adjusted.standard / 60)
   const credit = Math.max(0, Math.floor(adjusted.value / 60) - hours)
   const creditOverageHours = Math.floor(adjusted.creditOverage / 60)
+  const hourglassMinutes =
+    entryMode === 'checkbox' ? (sharedInMinistry ? 1 : 0) : adjusted.value
 
   const notes = useMemo(() => {
     if (month === undefined || year === undefined) return ''
@@ -177,6 +184,7 @@ const useMonthReportData = (
     credit,
     creditOverageHours,
     studies,
+    hourglassMinutes,
     notes,
     isLastMonth,
     showHours: entryMode !== 'checkbox',

@@ -24,6 +24,11 @@ import useTheme from '@/contexts/theme'
 import i18n, { _i18n } from '@/lib/locales'
 import Haptics from '@/lib/haptics'
 import useMonthReportData from '@/features/service-reports/hooks/useMonthReportData'
+import {
+  buildHourglassLink,
+  buildNwPublisherLink,
+} from '@/features/service-reports/lib/submitLinks'
+import { openURL } from '@/lib/links'
 import { useHandwritingFonts } from '@/features/service-reports/lib/handwritingFont'
 import useUser from '@/hooks/useUser'
 import { RootStackParamList } from '@/types/rootStack'
@@ -142,21 +147,68 @@ const ServiceReportViewScreen = ({ route, navigation }: Props) => {
         image: 'square.and.arrow.up',
         imageColor: theme.colors.text,
       },
+      {
+        id: 'hourglass',
+        title: i18n.t('hourglass'),
+        image: 'hourglass',
+        imageColor: theme.colors.text,
+      },
+      {
+        id: 'nwpublisher',
+        title: i18n.t('nwPublisher'),
+        subtitle: data.isLastMonth
+          ? undefined
+          : i18n.t('nwPublisherOnlyAllowsLastMonth'),
+        image: 'globe.americas',
+        imageColor: theme.colors.text,
+        attributes: { disabled: !data.isLastMonth },
+      },
     ],
-    [theme.colors.text]
+    [theme.colors.text, data.isLastMonth]
   )
 
   const handleShareAction = useCallback(
     async (action: string) => {
-      const message = data.reportAsString()
       if (action === 'copy') {
         Haptics.success()
-        await Clipboard.setStringAsync(message)
-      } else if (action === 'share') {
-        await Share.share({ message })
+        await Clipboard.setStringAsync(data.reportAsString())
+        return
+      }
+      if (action === 'share') {
+        await Share.share({ message: data.reportAsString() })
+        return
+      }
+
+      const remarks =
+        data.creditOverageHours > 0
+          ? i18n.t('creditOverageInTheAmountOf', {
+              count: data.creditOverageHours,
+            })
+          : undefined
+
+      if (action === 'hourglass') {
+        await openURL(
+          buildHourglassLink({
+            month: month + 1,
+            year,
+            minutes: data.hourglassMinutes,
+            studies: data.studies,
+            remarks,
+          })
+        )
+      } else if (action === 'nwpublisher' && data.isLastMonth) {
+        await openURL(
+          buildNwPublisherLink({
+            sharedInMinistry: data.sharedInMinistry,
+            hours: data.showHours ? data.hours : undefined,
+            credit: data.credit,
+            bibleStudies: data.studies,
+            remarks,
+          })
+        )
       }
     },
-    [data]
+    [data, month, year]
   )
 
   return (

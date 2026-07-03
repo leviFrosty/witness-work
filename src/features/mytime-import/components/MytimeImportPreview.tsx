@@ -1,11 +1,9 @@
 import { View } from 'react-native'
 import Checkbox from 'expo-checkbox'
-import {
-  faAddressBook,
-  faClock,
-  faComments,
-  faUser,
-} from '@fortawesome/free-solid-svg-icons'
+import { faAddressBook } from '@fortawesome/free-solid-svg-icons/faAddressBook'
+import { faClock } from '@fortawesome/free-solid-svg-icons/faClock'
+import { faComments } from '@fortawesome/free-solid-svg-icons/faComments'
+import { faUser } from '@fortawesome/free-solid-svg-icons/faUser'
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
 import { IconProp } from '@fortawesome/fontawesome-svg-core'
 import Text from '@/components/ui/MyText'

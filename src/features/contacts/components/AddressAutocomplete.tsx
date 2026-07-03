@@ -16,10 +16,8 @@ import Animated, {
 } from 'react-native-reanimated'
 import axios from 'axios'
 import * as Location from 'expo-location'
-import {
-  faLocationArrow,
-  faLocationCrosshairs,
-} from '@fortawesome/free-solid-svg-icons'
+import { faLocationArrow } from '@fortawesome/free-solid-svg-icons/faLocationArrow'
+import { faLocationCrosshairs } from '@fortawesome/free-solid-svg-icons/faLocationCrosshairs'
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
 import apis from '@/constants/apis'
 import Text from '@/components/ui/MyText'

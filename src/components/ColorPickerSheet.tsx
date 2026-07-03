@@ -6,7 +6,7 @@ import ColorPicker, {
   Panel1,
   Preview,
 } from 'reanimated-color-picker'
-import { faTimes } from '@fortawesome/free-solid-svg-icons'
+import { faTimes } from '@fortawesome/free-solid-svg-icons/faTimes'
 import useTheme from '@/contexts/theme'
 import Text from '@/components/ui/MyText'
 import Button from '@/components/ui/Button'

@@ -21,7 +21,7 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated'
 import IconButton from '@/components/ui/IconButton'
-import { faArrowUp } from '@fortawesome/free-solid-svg-icons'
+import { faArrowUp } from '@fortawesome/free-solid-svg-icons/faArrowUp'
 import { usePreferences } from '@/stores/preferences'
 import { Theme } from '@/types/theme'
 import { formatMinutesCompact } from '@/lib/minutes'

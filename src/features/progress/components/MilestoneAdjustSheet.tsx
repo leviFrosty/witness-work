@@ -3,14 +3,12 @@ import { Alert, Pressable, StyleSheet, View } from 'react-native'
 import { Sheet } from 'tamagui'
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
 import { useNavigation } from '@react-navigation/native'
-import _ from 'lodash'
-import {
-  faCheck,
-  faLock,
-  faMinus,
-  faPlus,
-  faTimes,
-} from '@fortawesome/free-solid-svg-icons'
+import round from 'lodash/round'
+import { faCheck } from '@fortawesome/free-solid-svg-icons/faCheck'
+import { faLock } from '@fortawesome/free-solid-svg-icons/faLock'
+import { faMinus } from '@fortawesome/free-solid-svg-icons/faMinus'
+import { faPlus } from '@fortawesome/free-solid-svg-icons/faPlus'
+import { faTimes } from '@fortawesome/free-solid-svg-icons/faTimes'
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
 
 import useTheme from '@/contexts/theme'
@@ -134,7 +132,7 @@ const MilestoneAdjustSheet = ({ visible, onClose }: Props) => {
     overrideCreditLimit,
     customCreditLimitHours,
   ])
-  const hoursCompleted = _.round(completedMinutes / 60, 1)
+  const hoursCompleted = round(completedMinutes / 60, 1)
 
   const milestonesWithGoal = useMemo(
     () => (annualGoalHours > 0 ? [...draft, annualGoalHours] : draft),

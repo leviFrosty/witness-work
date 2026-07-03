@@ -6,10 +6,8 @@ import * as Clipboard from 'expo-clipboard'
 import moment from 'moment'
 import { useCallback, useMemo, useState } from 'react'
 import type { LayoutChangeEvent } from 'react-native'
-import {
-  faArrowUpFromBracket,
-  faTimes,
-} from '@fortawesome/free-solid-svg-icons'
+import { faArrowUpFromBracket } from '@fortawesome/free-solid-svg-icons/faArrowUpFromBracket'
+import { faTimes } from '@fortawesome/free-solid-svg-icons/faTimes'
 import Svg, {
   Path,
   Defs,
@@ -26,6 +24,7 @@ import useTheme from '@/contexts/theme'
 import i18n, { _i18n } from '@/lib/locales'
 import Haptics from '@/lib/haptics'
 import useMonthReportData from '@/features/service-reports/hooks/useMonthReportData'
+import { useHandwritingFonts } from '@/features/service-reports/lib/handwritingFont'
 import useUser from '@/hooks/useUser'
 import { RootStackParamList } from '@/types/rootStack'
 
@@ -104,22 +103,6 @@ function buildRaggedPaperPath(
   return d
 }
 
-function getHandwritingFont(locale: string): string {
-  const lower = locale.toLowerCase()
-  if (lower.startsWith('ko')) return 'Gaegu_400Regular'
-  if (lower.startsWith('ja')) return 'KleeOne_400Regular'
-  if (lower.startsWith('zh')) return 'MaShanZheng_400Regular'
-  return 'Kalam_400Regular'
-}
-
-function getHandwritingFontBold(locale: string): string {
-  const lower = locale.toLowerCase()
-  if (lower.startsWith('ko')) return 'Gaegu_700Bold'
-  if (lower.startsWith('ja')) return 'KleeOne_600SemiBold'
-  if (lower.startsWith('zh')) return 'MaShanZheng_400Regular'
-  return 'Kalam_700Bold'
-}
-
 const ServiceReportViewScreen = ({ route, navigation }: Props) => {
   const theme = useTheme()
   const insets = useSafeAreaInsets()
@@ -132,11 +115,8 @@ const ServiceReportViewScreen = ({ route, navigation }: Props) => {
     [month, year]
   )
 
-  const handwritingFont = useMemo(() => getHandwritingFont(_i18n.locale), [])
-  const handwritingFontBold = useMemo(
-    () => getHandwritingFontBold(_i18n.locale),
-    []
-  )
+  const { regular: handwritingFont, bold: handwritingFontBold } =
+    useHandwritingFonts(_i18n.locale)
 
   const [paperHeight, setPaperHeight] = useState(PAPER_HEIGHT_MIN)
   const handlePaperLayout = useCallback(

@@ -1,7 +1,7 @@
 import { Sheet } from 'tamagui'
 import { Modal, ScrollView, View } from 'react-native'
 import { useEffect, useState } from 'react'
-import { faTimes } from '@fortawesome/free-solid-svg-icons'
+import { faTimes } from '@fortawesome/free-solid-svg-icons/faTimes'
 import { useNavigation } from '@react-navigation/native'
 import useTheme from '@/contexts/theme'
 import Text from '@/components/ui/MyText'

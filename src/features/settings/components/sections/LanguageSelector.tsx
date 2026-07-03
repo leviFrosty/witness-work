@@ -11,7 +11,7 @@ import useUserLocalePrefs from '@/features/settings/hooks/useLocale'
 import Text from '@/components/ui/MyText'
 import { getLocales } from 'expo-localization'
 import useTheme from '@/contexts/theme'
-import { faLanguage } from '@fortawesome/free-solid-svg-icons'
+import { faLanguage } from '@fortawesome/free-solid-svg-icons/faLanguage'
 import * as Updates from 'expo-updates'
 import { DevSettings } from 'react-native'
 

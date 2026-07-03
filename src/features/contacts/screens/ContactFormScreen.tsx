@@ -9,7 +9,9 @@ import {
 } from 'react-native'
 import { Popover } from 'tamagui'
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
-import { faMars, faQuestion, faVenus } from '@fortawesome/free-solid-svg-icons'
+import { faMars } from '@fortawesome/free-solid-svg-icons/faMars'
+import { faQuestion } from '@fortawesome/free-solid-svg-icons/faQuestion'
+import { faVenus } from '@fortawesome/free-solid-svg-icons/faVenus'
 import { GENDER_COLORS } from '@/features/contacts/components/GenderIcon'
 import Text from '@/components/ui/MyText'
 import { NativeStackScreenProps } from '@react-navigation/native-stack'
@@ -23,7 +25,7 @@ import Wrapper from '@/components/ui/layout/Wrapper'
 import * as Localization from 'expo-localization'
 import { fetchCoordinateFromAddress } from '@/lib/address'
 import Loader from '@/components/ui/Loader'
-import _ from 'lodash'
+import isEqual from 'lodash/isEqual'
 import Button from '@/components/ui/Button'
 import { usePreferences } from '@/stores/preferences'
 import moment from 'moment'
@@ -441,10 +443,7 @@ const ContactFormScreen = ({ route, navigation }: Props) => {
     async (resolve: (value: unknown) => void) => {
       /** This gets mutated in the conditionals below. */
       const newContact = { ...contact }
-      const addressChanged = !_.isEqual(
-        contactToUpdate?.address,
-        contact.address
-      )
+      const addressChanged = !isEqual(contactToUpdate?.address, contact.address)
       if (contact.userDraggedCoordinate && addressChanged) {
         // Ask the user if they wanna update their coordinate automatically.
         // This path persists the contact inside the alert handlers.

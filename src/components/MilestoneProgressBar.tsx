@@ -1,6 +1,6 @@
 import { useMemo } from 'react'
 import { View, ViewStyle } from 'react-native'
-import _ from 'lodash'
+import round from 'lodash/round'
 
 import useTheme from '@/contexts/theme'
 import usePublisher from '@/hooks/usePublisher'
@@ -308,7 +308,7 @@ const MilestoneProgressBar = ({ year }: MilestoneProgressBarProps) => {
   ])
 
   const hoursCompleted = useMemo(
-    () => _.round(totalMinutesForServiceYear / 60, 1),
+    () => round(totalMinutesForServiceYear / 60, 1),
     [totalMinutesForServiceYear]
   )
 

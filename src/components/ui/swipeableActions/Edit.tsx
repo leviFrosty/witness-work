@@ -4,7 +4,7 @@ import { ThemeContext } from '@/contexts/theme'
 import Text from '@/components/ui/MyText'
 import i18n from '@/lib/locales'
 import IconButton from '@/components/ui/IconButton'
-import { faEdit } from '@fortawesome/free-solid-svg-icons'
+import { faEdit } from '@fortawesome/free-solid-svg-icons/faEdit'
 
 const SwipeableEdit = () => {
   const theme = useContext(ThemeContext)

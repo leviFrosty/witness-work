@@ -14,7 +14,8 @@ import XView from '@/components/ui/layout/XView'
 import { rowPaddingVertical } from '@/constants/Inputs'
 import useDevice from '@/hooks/useDevice'
 import IconButton from '@/components/ui/IconButton'
-import { faArrowDown, faArrowUp } from '@fortawesome/free-solid-svg-icons'
+import { faArrowDown } from '@fortawesome/free-solid-svg-icons/faArrowDown'
+import { faArrowUp } from '@fortawesome/free-solid-svg-icons/faArrowUp'
 import { useMemo } from 'react'
 
 const DetailedProgressBar = () => {

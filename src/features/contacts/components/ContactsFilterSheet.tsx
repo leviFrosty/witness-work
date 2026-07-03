@@ -6,7 +6,7 @@ import {
   TextInput,
   View,
 } from 'react-native'
-import { faTimes } from '@fortawesome/free-solid-svg-icons'
+import { faTimes } from '@fortawesome/free-solid-svg-icons/faTimes'
 
 import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'

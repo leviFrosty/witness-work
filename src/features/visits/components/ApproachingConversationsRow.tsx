@@ -9,7 +9,7 @@ import Button from '@/components/ui/Button'
 import { formatRelative } from '@/lib/dates'
 import { useNavigation } from '@react-navigation/native'
 import IconButton from '@/components/ui/IconButton'
-import { faChevronRight } from '@fortawesome/free-solid-svg-icons'
+import { faChevronRight } from '@fortawesome/free-solid-svg-icons/faChevronRight'
 import { RootStackNavigation } from '@/types/rootStack'
 
 const ApproachingConversationRow = ({

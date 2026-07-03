@@ -10,12 +10,10 @@ import {
 import { FullWindowOverlay } from 'react-native-screens'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useNavigation } from '@react-navigation/native'
-import {
-  faPenToSquare,
-  faStar,
-  faTimes,
-} from '@fortawesome/free-solid-svg-icons'
-import { faHeart } from '@fortawesome/free-solid-svg-icons'
+import { faPenToSquare } from '@fortawesome/free-solid-svg-icons/faPenToSquare'
+import { faStar } from '@fortawesome/free-solid-svg-icons/faStar'
+import { faTimes } from '@fortawesome/free-solid-svg-icons/faTimes'
+import { faHeart } from '@fortawesome/free-solid-svg-icons/faHeart'
 import moment from 'moment'
 import Animated, {
   interpolate,

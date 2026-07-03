@@ -14,7 +14,7 @@ import Card from '@/components/ui/Card'
 import useTheme from '@/contexts/theme'
 import Badge from '@/components/ui/Badge'
 import IconButton from '@/components/ui/IconButton'
-import { faRefresh } from '@fortawesome/free-solid-svg-icons'
+import { faRefresh } from '@fortawesome/free-solid-svg-icons/faRefresh'
 import { LIFETIME_SUPPORTER_ENTITLEMENT } from '@/lib/supporterSince'
 
 /**

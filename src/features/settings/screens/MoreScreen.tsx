@@ -3,14 +3,12 @@ import Wrapper from '@/components/ui/layout/Wrapper'
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
 import Section from '@/components/ui/inputs/Section'
 import InputRowButton from '@/features/settings/components/inputs/InputRowButton'
-import {
-  faChevronRight,
-  faClock,
-  faDownload,
-  faFileImport,
-  faSeedling,
-  faUndo,
-} from '@fortawesome/free-solid-svg-icons'
+import { faChevronRight } from '@fortawesome/free-solid-svg-icons/faChevronRight'
+import { faClock } from '@fortawesome/free-solid-svg-icons/faClock'
+import { faDownload } from '@fortawesome/free-solid-svg-icons/faDownload'
+import { faFileImport } from '@fortawesome/free-solid-svg-icons/faFileImport'
+import { faSeedling } from '@fortawesome/free-solid-svg-icons/faSeedling'
+import { faUndo } from '@fortawesome/free-solid-svg-icons/faUndo'
 import IconButton from '@/components/ui/IconButton'
 import i18n from '@/lib/locales'
 import { StackActions, useNavigation } from '@react-navigation/native'

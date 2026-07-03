@@ -1,4 +1,4 @@
-import _ from 'lodash'
+import round from 'lodash/round'
 import moment from 'moment'
 import {
   adjustedMinutesForSpecificMonth,
@@ -213,7 +213,7 @@ export function buildReport(args: BuildReportArgs): ReportFields {
   } else if (daysLeftInMonth === 0) {
     hoursPerDayNeeded = minutesRemaining / 60
   } else {
-    hoursPerDayNeeded = _.round(minutesRemaining / 60 / daysLeftInMonth, 1)
+    hoursPerDayNeeded = round(minutesRemaining / 60 / daysLeftInMonth, 1)
   }
 
   const plannedMinutesToCurrentDay = plannedMinutesToCurrentDayForMonth(

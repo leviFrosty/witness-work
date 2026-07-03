@@ -8,7 +8,8 @@ import { View } from 'react-native'
 import IconButton from '@/components/ui/IconButton'
 import ApproachingConversationRow from '@/features/visits/components/ApproachingConversationsRow'
 import moment from 'moment'
-import { faPersonRunning, faThumbtack } from '@fortawesome/free-solid-svg-icons'
+import { faPersonRunning } from '@fortawesome/free-solid-svg-icons/faPersonRunning'
+import { faThumbtack } from '@fortawesome/free-solid-svg-icons/faThumbtack'
 
 interface Props {
   conversations: Visit[]

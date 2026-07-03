@@ -8,12 +8,10 @@ import Text from '@/components/ui/MyText'
 import Button from '@/components/ui/Button'
 import IconButton from '@/components/ui/IconButton'
 import useTheme from '@/contexts/theme'
-import {
-  faTimes,
-  faMinus,
-  faPlus,
-  faTrash,
-} from '@fortawesome/free-solid-svg-icons'
+import { faTimes } from '@fortawesome/free-solid-svg-icons/faTimes'
+import { faMinus } from '@fortawesome/free-solid-svg-icons/faMinus'
+import { faPlus } from '@fortawesome/free-solid-svg-icons/faPlus'
+import { faTrash } from '@fortawesome/free-solid-svg-icons/faTrash'
 
 import i18n from '@/lib/locales'
 import type { Recommendation } from '@/lib/assistantRecommendation'

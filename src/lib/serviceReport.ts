@@ -1,4 +1,4 @@
-import _ from 'lodash'
+import round from 'lodash/round'
 import { Publisher } from '@/types/publisher'
 import {
   TimeEntry,
@@ -384,7 +384,7 @@ export const getTotalMinutesForServiceYear = (
  * Rounded to 1 decimal place.
  */
 export const getLifetimeHours = (serviceReports: TimeEntry[]): number => {
-  return _.round(getLifetimeMinutes(serviceReports) / 60, 1)
+  return round(getLifetimeMinutes(serviceReports) / 60, 1)
 }
 
 /**
@@ -459,10 +459,7 @@ export const getHoursForServiceYearEndYear = (
   serviceReports: TimeEntry[],
   endYear: number
 ): number => {
-  return _.round(
-    getMinutesForServiceYearEndYear(serviceReports, endYear) / 60,
-    1
-  )
+  return round(getMinutesForServiceYearEndYear(serviceReports, endYear) / 60, 1)
 }
 
 /**

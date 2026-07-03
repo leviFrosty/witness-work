@@ -6,15 +6,13 @@ import {
   useRoute,
   type RouteProp,
 } from '@react-navigation/native'
-import {
-  faCircleCheck,
-  faCirclePause,
-  faCircleStop,
-  faClock,
-  faTrashCan,
-  faTriangleExclamation,
-  type IconDefinition,
-} from '@fortawesome/free-solid-svg-icons'
+import { faCircleCheck } from '@fortawesome/free-solid-svg-icons/faCircleCheck'
+import { faCirclePause } from '@fortawesome/free-solid-svg-icons/faCirclePause'
+import { faCircleStop } from '@fortawesome/free-solid-svg-icons/faCircleStop'
+import { faClock } from '@fortawesome/free-solid-svg-icons/faClock'
+import { faTrashCan } from '@fortawesome/free-solid-svg-icons/faTrashCan'
+import { faTriangleExclamation } from '@fortawesome/free-solid-svg-icons/faTriangleExclamation'
+import { type IconDefinition } from '@fortawesome/fontawesome-svg-core'
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
 import Text from '@/components/ui/MyText'
 import Button from '@/components/ui/Button'

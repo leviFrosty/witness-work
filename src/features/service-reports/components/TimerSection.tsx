@@ -5,11 +5,9 @@ import Card from '@/components/ui/Card'
 import IconButton from '@/components/ui/IconButton'
 import i18n from '@/lib/locales'
 import XView from '@/components/ui/layout/XView'
-import {
-  faArrowRotateLeft,
-  faPause,
-  faPlay,
-} from '@fortawesome/free-solid-svg-icons'
+import { faArrowRotateLeft } from '@fortawesome/free-solid-svg-icons/faArrowRotateLeft'
+import { faPause } from '@fortawesome/free-solid-svg-icons/faPause'
+import { faPlay } from '@fortawesome/free-solid-svg-icons/faPlay'
 import { useStopWatch } from '@/features/service-reports/hooks/useStopWatch'
 import useTheme from '@/contexts/theme'
 import Button from '@/components/ui/Button'

@@ -1,7 +1,7 @@
 import { AppState, AppStateStatus, Platform } from 'react-native'
 import * as BackgroundTask from 'expo-background-task'
 import * as TaskManager from 'expo-task-manager'
-import _ from 'lodash'
+import debounce from 'lodash/debounce'
 import { getLocales } from 'expo-localization'
 import * as WidgetBridge from '../../../modules/widget-bridge'
 import { useServiceReport } from '@/stores/serviceReport'
@@ -94,7 +94,7 @@ function pushSnapshot(reason: string): void {
   }
 }
 
-const debouncedPush = _.debounce(() => pushSnapshot('store-change'), 500, {
+const debouncedPush = debounce(() => pushSnapshot('store-change'), 500, {
   leading: false,
   trailing: true,
 })

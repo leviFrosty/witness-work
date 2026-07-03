@@ -19,7 +19,9 @@ import { usePreferences } from '@/stores/preferences'
 import { Publisher } from '@/types/publisher'
 import { getEntryMode } from '@/lib/publisherCapabilities'
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
-import { faCheck, faStopwatch, faBell } from '@fortawesome/free-solid-svg-icons'
+import { faCheck } from '@fortawesome/free-solid-svg-icons/faCheck'
+import { faStopwatch } from '@fortawesome/free-solid-svg-icons/faStopwatch'
+import { faBell } from '@fortawesome/free-solid-svg-icons/faBell'
 
 const EASE = Easing.out(Easing.cubic)
 const PREVIEW_SIZE = 56

@@ -1,7 +1,7 @@
 import { useMemo, useRef, useState, useCallback, useEffect } from 'react'
 import { View } from 'react-native'
 import { useNavigation as useRootNavigation } from '@react-navigation/native'
-import { faChevronRight } from '@fortawesome/free-solid-svg-icons'
+import { faChevronRight } from '@fortawesome/free-solid-svg-icons/faChevronRight'
 import moment from 'moment'
 
 import useServiceReport from '@/stores/serviceReport'

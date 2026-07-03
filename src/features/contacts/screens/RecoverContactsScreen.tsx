@@ -12,7 +12,8 @@ import i18n from '@/lib/locales'
 import { useMemo } from 'react'
 import Wrapper from '@/components/ui/layout/Wrapper'
 import IconButton from '@/components/ui/IconButton'
-import { faTrash, faUndo } from '@fortawesome/free-solid-svg-icons'
+import { faTrash } from '@fortawesome/free-solid-svg-icons/faTrash'
+import { faUndo } from '@fortawesome/free-solid-svg-icons/faUndo'
 import { useToastController } from '@tamagui/toast'
 
 const RecoverContactsScreen = () => {

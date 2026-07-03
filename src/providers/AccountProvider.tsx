@@ -8,7 +8,7 @@ import {
 import { AppState, Platform } from 'react-native'
 import Purchases from 'react-native-purchases'
 import * as Sentry from '@sentry/react-native'
-import _ from 'lodash'
+import debounce from 'lodash/debounce'
 import * as ICloudBridge from '../../modules/icloud-bridge'
 import { AccountContext, AccountCtx } from '@/contexts/account'
 import useCustomer from '@/hooks/useCustomer'
@@ -193,7 +193,7 @@ const AccountProvider: React.FC<PropsWithChildren<Props>> = ({ children }) => {
 
     // Same echo-burst problem the sync engine has: iCloud re-stamps mtimes as
     // a write replicates, producing trailing notifications ~500ms apart.
-    const debouncedReconcile = _.debounce(
+    const debouncedReconcile = debounce(
       (reason: string) => void reconcile(reason),
       500,
       { leading: true, trailing: true }

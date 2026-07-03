@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Pressable, View } from 'react-native'
-import { faChevronRight } from '@fortawesome/free-solid-svg-icons'
+import { faChevronRight } from '@fortawesome/free-solid-svg-icons/faChevronRight'
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
 import i18n from '@/lib/locales'
 import Section from '@/components/ui/inputs/Section'

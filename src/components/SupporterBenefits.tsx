@@ -1,12 +1,10 @@
 import { View } from 'react-native'
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
-import {
-  faCloudArrowUp,
-  faFileLines,
-  faIcons,
-  faPalette,
-  faPlus,
-} from '@fortawesome/free-solid-svg-icons'
+import { faCloudArrowUp } from '@fortawesome/free-solid-svg-icons/faCloudArrowUp'
+import { faFileLines } from '@fortawesome/free-solid-svg-icons/faFileLines'
+import { faIcons } from '@fortawesome/free-solid-svg-icons/faIcons'
+import { faPalette } from '@fortawesome/free-solid-svg-icons/faPalette'
+import { faPlus } from '@fortawesome/free-solid-svg-icons/faPlus'
 import { IconProp } from '@fortawesome/fontawesome-svg-core'
 import useTheme from '@/contexts/theme'
 import Text from '@/components/ui/MyText'

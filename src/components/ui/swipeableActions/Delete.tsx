@@ -4,7 +4,7 @@ import { ThemeContext } from '@/contexts/theme'
 import Text from '@/components/ui/MyText'
 import i18n from '@/lib/locales'
 import IconButton from '@/components/ui/IconButton'
-import { faTrash } from '@fortawesome/free-solid-svg-icons'
+import { faTrash } from '@fortawesome/free-solid-svg-icons/faTrash'
 import { ThemeSizes } from '@/types/theme'
 
 const SwipeableDelete = ({

@@ -1,10 +1,8 @@
 import { useCallback, useEffect, useMemo } from 'react'
 import { Pressable, View } from 'react-native'
-import {
-  faCheck,
-  faCircle,
-  faCircleCheck,
-} from '@fortawesome/free-solid-svg-icons'
+import { faCheck } from '@fortawesome/free-solid-svg-icons/faCheck'
+import { faCircle } from '@fortawesome/free-solid-svg-icons/faCircle'
+import { faCircleCheck } from '@fortawesome/free-solid-svg-icons/faCircleCheck'
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
 import { useIsFocused, useNavigation } from '@react-navigation/native'
 import Animated, {

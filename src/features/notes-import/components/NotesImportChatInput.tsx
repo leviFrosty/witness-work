@@ -1,6 +1,7 @@
 import { forwardRef, type ReactNode } from 'react'
 import { TextInput, View } from 'react-native'
-import { faArrowUp, faStop } from '@fortawesome/free-solid-svg-icons'
+import { faArrowUp } from '@fortawesome/free-solid-svg-icons/faArrowUp'
+import { faStop } from '@fortawesome/free-solid-svg-icons/faStop'
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
 import Button from '@/components/ui/Button'
 import useTheme from '@/contexts/theme'

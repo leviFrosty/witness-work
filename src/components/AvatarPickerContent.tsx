@@ -3,12 +3,10 @@ import { Alert, Pressable, ScrollView, View } from 'react-native'
 import * as ImagePicker from 'expo-image-picker'
 import * as FileSystem from 'expo-file-system/legacy'
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
-import {
-  faCamera,
-  faCheck,
-  faLink,
-  faTrash,
-} from '@fortawesome/free-solid-svg-icons'
+import { faCamera } from '@fortawesome/free-solid-svg-icons/faCamera'
+import { faCheck } from '@fortawesome/free-solid-svg-icons/faCheck'
+import { faLink } from '@fortawesome/free-solid-svg-icons/faLink'
+import { faTrash } from '@fortawesome/free-solid-svg-icons/faTrash'
 import useTheme from '@/contexts/theme'
 import { ProfileAvatar } from '@/types/avatar'
 import Text from '@/components/ui/MyText'

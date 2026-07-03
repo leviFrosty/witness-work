@@ -1,12 +1,10 @@
 import React from 'react'
 import { Alert, View } from 'react-native'
 import { Sheet, XStack } from 'tamagui'
-import {
-  faCloudArrowDown,
-  faCloudArrowUp,
-  faShuffle,
-  faTimes,
-} from '@fortawesome/free-solid-svg-icons'
+import { faCloudArrowDown } from '@fortawesome/free-solid-svg-icons/faCloudArrowDown'
+import { faCloudArrowUp } from '@fortawesome/free-solid-svg-icons/faCloudArrowUp'
+import { faShuffle } from '@fortawesome/free-solid-svg-icons/faShuffle'
+import { faTimes } from '@fortawesome/free-solid-svg-icons/faTimes'
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
 import useTheme from '@/contexts/theme'
 import { formatRelative } from '@/lib/dates'

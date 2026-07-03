@@ -1,7 +1,7 @@
 import { useEffect, useMemo } from 'react'
 import { Pressable, View } from 'react-native'
 import moment from 'moment'
-import _ from 'lodash'
+import round from 'lodash/round'
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
@@ -9,7 +9,8 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated'
 import { useIsFocused } from '@react-navigation/native'
-import { faCrown, faStar } from '@fortawesome/free-solid-svg-icons'
+import { faCrown } from '@fortawesome/free-solid-svg-icons/faCrown'
+import { faStar } from '@fortawesome/free-solid-svg-icons/faStar'
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
 
 import useTheme from '@/contexts/theme'
@@ -149,7 +150,7 @@ const YearMilestoneCard = ({
   ])
 
   const hoursCompleted = useMemo(
-    () => _.round(totalMinutesForServiceYear / 60, 1),
+    () => round(totalMinutesForServiceYear / 60, 1),
     [totalMinutesForServiceYear]
   )
 

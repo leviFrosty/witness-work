@@ -1,10 +1,8 @@
 import { Platform, Switch, View } from 'react-native'
 import { useNavigation } from '@react-navigation/native'
-import {
-  faChevronRight,
-  faIcons,
-  faPalette,
-} from '@fortawesome/free-solid-svg-icons'
+import { faChevronRight } from '@fortawesome/free-solid-svg-icons/faChevronRight'
+import { faIcons } from '@fortawesome/free-solid-svg-icons/faIcons'
+import { faPalette } from '@fortawesome/free-solid-svg-icons/faPalette'
 import { useContext } from 'react'
 import Section from '@/components/ui/inputs/Section'
 import InputRowContainer from '@/components/ui/inputs/InputRowContainer'

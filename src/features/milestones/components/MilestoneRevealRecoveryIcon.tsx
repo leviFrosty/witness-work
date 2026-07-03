@@ -10,7 +10,7 @@ import Animated, {
   withSequence,
   withTiming,
 } from 'react-native-reanimated'
-import { faGift } from '@fortawesome/free-solid-svg-icons'
+import { faGift } from '@fortawesome/free-solid-svg-icons/faGift'
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
 import useTheme from '@/contexts/theme'
 import { usePreferences } from '@/stores/preferences'

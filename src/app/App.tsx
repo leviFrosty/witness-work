@@ -17,12 +17,9 @@ import {
   Inter_700Bold,
 } from '@expo-google-fonts/inter'
 import { Kalam_400Regular, Kalam_700Bold } from '@expo-google-fonts/kalam'
-import { Gaegu_400Regular, Gaegu_700Bold } from '@expo-google-fonts/gaegu'
-import {
-  KleeOne_400Regular,
-  KleeOne_600SemiBold,
-} from '@expo-google-fonts/klee-one'
-import { MaShanZheng_400Regular } from '@expo-google-fonts/ma-shan-zheng'
+// CJK handwriting faces (Gaegu/Klee One/Ma Shan Zheng) are ~26MB combined and
+// only used in the Service Report view for ko/ja/zh users. They are downloaded
+// on demand instead of bundled — see features/service-reports/lib/handwritingFont.
 import {
   ActivityIndicator,
   AppState,
@@ -289,11 +286,6 @@ export default function App() {
     InterBold: require('@tamagui/font-inter/otf/Inter-Bold.otf'),
     Kalam_400Regular,
     Kalam_700Bold,
-    Gaegu_400Regular,
-    Gaegu_700Bold,
-    KleeOne_400Regular,
-    KleeOne_600SemiBold,
-    MaShanZheng_400Regular,
   })
   const [hasMigrated, setHasMigrated] = useState(hasMigratedFromAsyncStorage())
 

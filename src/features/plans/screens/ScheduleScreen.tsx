@@ -8,7 +8,8 @@ import {
 } from '@react-navigation/bottom-tabs'
 import { useNavigation as useRootNavigation } from '@react-navigation/native'
 import moment from 'moment'
-import { faArrowLeft, faArrowRight } from '@fortawesome/free-solid-svg-icons'
+import { faArrowLeft } from '@fortawesome/free-solid-svg-icons/faArrowLeft'
+import { faArrowRight } from '@fortawesome/free-solid-svg-icons/faArrowRight'
 
 import useServiceReport from '@/stores/serviceReport'
 import useTheme from '@/contexts/theme'

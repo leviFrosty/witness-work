@@ -26,13 +26,11 @@ import Checkbox from 'expo-checkbox'
 import Select from '@/components/ui/Select'
 import Wrapper from '@/components/ui/layout/Wrapper'
 import IconButton from '@/components/ui/IconButton'
-import {
-  faCaravan,
-  faComments,
-  faIdCard,
-  faTrash,
-} from '@fortawesome/free-solid-svg-icons'
-import _ from 'lodash'
+import { faCaravan } from '@fortawesome/free-solid-svg-icons/faCaravan'
+import { faComments } from '@fortawesome/free-solid-svg-icons/faComments'
+import { faIdCard } from '@fortawesome/free-solid-svg-icons/faIdCard'
+import { faTrash } from '@fortawesome/free-solid-svg-icons/faTrash'
+import isEqual from 'lodash/isEqual'
 import Button from '@/components/ui/Button'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import {
@@ -322,7 +320,7 @@ const VisitFormScreen = ({ route, navigation }: Props) => {
           return []
         }
 
-        const notificationChanged = !_.isEqual(
+        const notificationChanged = !isEqual(
           conversationToUpdate?.followUp,
           conversation.followUp
         )

@@ -2,7 +2,7 @@ import { View } from 'react-native'
 import Text from '@/components/ui/MyText'
 import i18n from '@/lib/locales'
 import MonthServiceReportProgressBar from '@/features/service-reports/components/MonthServiceReportProgressBar'
-import { faPlus } from '@fortawesome/free-solid-svg-icons'
+import { faPlus } from '@fortawesome/free-solid-svg-icons/faPlus'
 import ViewReportButton from '@/features/service-reports/components/ViewReportButton'
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
 import {
@@ -44,7 +44,7 @@ import {
 } from '@/lib/achievementTier'
 import { goalProgress } from '@/lib/goalProgress'
 import { useRollover } from '@/features/service-reports/hooks/useRollover'
-import { faRightLeft } from '@fortawesome/free-solid-svg-icons'
+import { faRightLeft } from '@fortawesome/free-solid-svg-icons/faRightLeft'
 import {
   useAnimatedStyle,
   useSharedValue,

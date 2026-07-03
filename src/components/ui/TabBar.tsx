@@ -4,16 +4,14 @@ import { BottomTabBarProps } from '@react-navigation/bottom-tabs'
 import { BlurView } from 'expo-blur'
 import { GlassView, isLiquidGlassAvailable } from 'expo-glass-effect'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import {
-  faAddressBook,
-  faCalendarDays,
-  faChartLine,
-  faHome,
-  faMapLocation,
-  faPlus,
-  faQuestion,
-  faWrench,
-} from '@fortawesome/free-solid-svg-icons'
+import { faAddressBook } from '@fortawesome/free-solid-svg-icons/faAddressBook'
+import { faCalendarDays } from '@fortawesome/free-solid-svg-icons/faCalendarDays'
+import { faChartLine } from '@fortawesome/free-solid-svg-icons/faChartLine'
+import { faHome } from '@fortawesome/free-solid-svg-icons/faHome'
+import { faMapLocation } from '@fortawesome/free-solid-svg-icons/faMapLocation'
+import { faPlus } from '@fortawesome/free-solid-svg-icons/faPlus'
+import { faQuestion } from '@fortawesome/free-solid-svg-icons/faQuestion'
+import { faWrench } from '@fortawesome/free-solid-svg-icons/faWrench'
 
 import useTheme from '@/contexts/theme'
 import useGlassColorScheme from '@/hooks/useGlassColorScheme'

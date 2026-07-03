@@ -1,18 +1,16 @@
-import {
-  faBell,
-  faClockRotateLeft,
-  faClone,
-  faCloudArrowUp,
-  faCrosshairs,
-  faEye,
-  faHouse,
-  faLocationDot,
-  faPalette,
-  faPenToSquare,
-  faSliders,
-  faTextHeight,
-  faTrash,
-} from '@fortawesome/free-solid-svg-icons'
+import { faBell } from '@fortawesome/free-solid-svg-icons/faBell'
+import { faClockRotateLeft } from '@fortawesome/free-solid-svg-icons/faClockRotateLeft'
+import { faClone } from '@fortawesome/free-solid-svg-icons/faClone'
+import { faCloudArrowUp } from '@fortawesome/free-solid-svg-icons/faCloudArrowUp'
+import { faCrosshairs } from '@fortawesome/free-solid-svg-icons/faCrosshairs'
+import { faEye } from '@fortawesome/free-solid-svg-icons/faEye'
+import { faHouse } from '@fortawesome/free-solid-svg-icons/faHouse'
+import { faLocationDot } from '@fortawesome/free-solid-svg-icons/faLocationDot'
+import { faPalette } from '@fortawesome/free-solid-svg-icons/faPalette'
+import { faPenToSquare } from '@fortawesome/free-solid-svg-icons/faPenToSquare'
+import { faSliders } from '@fortawesome/free-solid-svg-icons/faSliders'
+import { faTextHeight } from '@fortawesome/free-solid-svg-icons/faTextHeight'
+import { faTrash } from '@fortawesome/free-solid-svg-icons/faTrash'
 
 export type DidYouKnowTip = {
   /**

@@ -7,12 +7,10 @@ import { ConversationIndex } from '@/lib/conversationIndex'
 import i18n from '@/lib/locales'
 import Button from '@/components/ui/Button'
 import IconButton from '@/components/ui/IconButton'
-import {
-  faArrowUpFromBracket,
-  faDiamondTurnRight,
-  faMessage,
-  faPhone,
-} from '@fortawesome/free-solid-svg-icons'
+import { faArrowUpFromBracket } from '@fortawesome/free-solid-svg-icons/faArrowUpFromBracket'
+import { faDiamondTurnRight } from '@fortawesome/free-solid-svg-icons/faDiamondTurnRight'
+import { faMessage } from '@fortawesome/free-solid-svg-icons/faMessage'
+import { faPhone } from '@fortawesome/free-solid-svg-icons/faPhone'
 import { useNavigation } from '@react-navigation/native'
 import { addressToString, coordinateAsString, navigateTo } from '@/lib/address'
 import Copyeable from '@/components/ui/Copyeable'

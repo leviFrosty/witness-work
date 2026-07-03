@@ -6,7 +6,7 @@ import Card from '@/components/ui/Card'
 import StripedFill from '@/components/ui/StripedFill'
 import useTheme from '@/contexts/theme'
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
-import { faChartLine } from '@fortawesome/free-solid-svg-icons'
+import { faChartLine } from '@fortawesome/free-solid-svg-icons/faChartLine'
 
 import i18n, { TranslationKey } from '@/lib/locales'
 import { type ProjectedTotalScope } from '@/lib/projectedTotal'

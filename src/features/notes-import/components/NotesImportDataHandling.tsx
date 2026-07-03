@@ -1,8 +1,6 @@
 import { View } from 'react-native'
-import {
-  faArrowUpRightFromSquare,
-  faShieldHalved,
-} from '@fortawesome/free-solid-svg-icons'
+import { faArrowUpRightFromSquare } from '@fortawesome/free-solid-svg-icons/faArrowUpRightFromSquare'
+import { faShieldHalved } from '@fortawesome/free-solid-svg-icons/faShieldHalved'
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
 import Text from '@/components/ui/MyText'
 import Button from '@/components/ui/Button'

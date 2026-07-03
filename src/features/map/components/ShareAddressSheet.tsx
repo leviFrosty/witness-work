@@ -4,7 +4,8 @@ import i18n from '@/lib/locales'
 import Button from '@/components/ui/Button'
 import { Share, View } from 'react-native'
 import IconButton from '@/components/ui/IconButton'
-import { faApple, faGoogle } from '@fortawesome/free-brands-svg-icons'
+import { faApple } from '@fortawesome/free-brands-svg-icons/faApple'
+import { faGoogle } from '@fortawesome/free-brands-svg-icons/faGoogle'
 import useTheme from '@/contexts/theme'
 
 export type MapShareSheet = {

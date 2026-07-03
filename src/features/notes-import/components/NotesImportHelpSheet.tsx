@@ -1,10 +1,8 @@
 import { Sheet } from 'tamagui'
 import { View } from 'react-native'
-import {
-  faCircleCheck,
-  faShareFromSquare,
-  faTimes,
-} from '@fortawesome/free-solid-svg-icons'
+import { faCircleCheck } from '@fortawesome/free-solid-svg-icons/faCircleCheck'
+import { faShareFromSquare } from '@fortawesome/free-solid-svg-icons/faShareFromSquare'
+import { faTimes } from '@fortawesome/free-solid-svg-icons/faTimes'
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
 import useTheme from '@/contexts/theme'
 import Text from '@/components/ui/MyText'

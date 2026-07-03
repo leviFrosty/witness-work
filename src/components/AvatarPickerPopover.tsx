@@ -1,6 +1,6 @@
 import { Pressable, View } from 'react-native'
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
-import { faPencil } from '@fortawesome/free-solid-svg-icons'
+import { faPencil } from '@fortawesome/free-solid-svg-icons/faPencil'
 import useTheme from '@/contexts/theme'
 import { ProfileAvatar } from '@/types/avatar'
 import Avatar from '@/components/ui/Avatar'

@@ -15,7 +15,7 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated'
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
-import { faUser } from '@fortawesome/free-solid-svg-icons'
+import { faUser } from '@fortawesome/free-solid-svg-icons/faUser'
 import useTheme from '@/contexts/theme'
 import Text from '@/components/ui/MyText'
 import { ProfileAvatar } from '@/types/avatar'

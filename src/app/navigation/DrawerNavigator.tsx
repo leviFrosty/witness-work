@@ -3,15 +3,13 @@ import Header from '@/components/ui/layout/Header'
 import SettingsScreen from '@/features/settings/screens/SettingsScreen'
 import { HomeScreen } from '@/features/home/screens/HomeScreen'
 import IconButton from '@/components/ui/IconButton'
-import { faHeart as faHeartRegular } from '@fortawesome/free-regular-svg-icons'
+import { faHeart as faHeartRegular } from '@fortawesome/free-regular-svg-icons/faHeart'
 import { Platform, View } from 'react-native'
 import { useEffect } from 'react'
 import useTheme from '@/contexts/theme'
-import {
-  faArrowsRotate,
-  faBars,
-  faHeart,
-} from '@fortawesome/free-solid-svg-icons'
+import { faArrowsRotate } from '@fortawesome/free-solid-svg-icons/faArrowsRotate'
+import { faBars } from '@fortawesome/free-solid-svg-icons/faBars'
+import { faHeart } from '@fortawesome/free-solid-svg-icons/faHeart'
 import { DevSettings } from 'react-native'
 import { triggerDevRemount } from '@/lib/devRemount'
 import useCustomer from '@/hooks/useCustomer'

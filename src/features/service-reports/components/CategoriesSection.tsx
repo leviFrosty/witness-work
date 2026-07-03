@@ -9,7 +9,8 @@ import CategorySegmentBar, {
 } from '@/features/service-reports/components/CategorySegmentBar'
 import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
-import { faChevronRight, faTimes } from '@fortawesome/free-solid-svg-icons'
+import { faChevronRight } from '@fortawesome/free-solid-svg-icons/faChevronRight'
+import { faTimes } from '@fortawesome/free-solid-svg-icons/faTimes'
 
 type Props = {
   segments: CategorySegment[]

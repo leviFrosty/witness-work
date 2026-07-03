@@ -1,6 +1,6 @@
 import { ColorValue, StyleProp, View, ViewStyle } from 'react-native'
 import { ReactNode, useState } from 'react'
-import { faTimes } from '@fortawesome/free-solid-svg-icons'
+import { faTimes } from '@fortawesome/free-solid-svg-icons/faTimes'
 import useTheme from '@/contexts/theme'
 import CardWithTitle from '@/components/CardWithTitle'
 import IconButton from '@/components/ui/IconButton'

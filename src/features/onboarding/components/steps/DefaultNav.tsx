@@ -1,6 +1,8 @@
 import { View, Pressable } from 'react-native'
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
-import { faApple, faGoogle, faWaze } from '@fortawesome/free-brands-svg-icons'
+import { faApple } from '@fortawesome/free-brands-svg-icons/faApple'
+import { faGoogle } from '@fortawesome/free-brands-svg-icons/faGoogle'
+import { faWaze } from '@fortawesome/free-brands-svg-icons/faWaze'
 import type { IconDefinition } from '@fortawesome/fontawesome-svg-core'
 import i18n from '@/lib/locales'
 import {

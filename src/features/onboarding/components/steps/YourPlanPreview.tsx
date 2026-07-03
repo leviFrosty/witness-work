@@ -15,18 +15,16 @@ import { scheduleOnRN, scheduleOnUI } from 'react-native-worklets'
 import MapView, { Marker } from 'react-native-maps'
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
 import { IconProp } from '@fortawesome/fontawesome-svg-core'
-import {
-  faStopwatch,
-  faComments,
-  faCalendar,
-  faCalendarCheck,
-  faBullseye,
-  faMap,
-  faPlay,
-  faPause,
-  faBell,
-  faCheck,
-} from '@fortawesome/free-solid-svg-icons'
+import { faStopwatch } from '@fortawesome/free-solid-svg-icons/faStopwatch'
+import { faComments } from '@fortawesome/free-solid-svg-icons/faComments'
+import { faCalendar } from '@fortawesome/free-solid-svg-icons/faCalendar'
+import { faCalendarCheck } from '@fortawesome/free-solid-svg-icons/faCalendarCheck'
+import { faBullseye } from '@fortawesome/free-solid-svg-icons/faBullseye'
+import { faMap } from '@fortawesome/free-solid-svg-icons/faMap'
+import { faPlay } from '@fortawesome/free-solid-svg-icons/faPlay'
+import { faPause } from '@fortawesome/free-solid-svg-icons/faPause'
+import { faBell } from '@fortawesome/free-solid-svg-icons/faBell'
+import { faCheck } from '@fortawesome/free-solid-svg-icons/faCheck'
 import moment from 'moment'
 import { styles } from '@/features/onboarding/components/Onboarding.styles'
 import OnboardingNav from '@/features/onboarding/components/OnboardingNav'

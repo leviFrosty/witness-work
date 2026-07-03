@@ -4,7 +4,7 @@ import { ThemeContext } from '@/contexts/theme'
 import Text from '@/components/ui/MyText'
 import i18n from '@/lib/locales'
 import IconButton from '@/components/ui/IconButton'
-import { faClock } from '@fortawesome/free-solid-svg-icons'
+import { faClock } from '@fortawesome/free-solid-svg-icons/faClock'
 import { ThemeSizes } from '@/types/theme'
 
 const SwipeableDismiss = ({ size }: { size?: ThemeSizes }) => {

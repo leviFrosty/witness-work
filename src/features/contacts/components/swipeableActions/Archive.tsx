@@ -4,7 +4,7 @@ import { ThemeContext } from '@/contexts/theme'
 import Text from '@/components/ui/MyText'
 import i18n from '@/lib/locales'
 import IconButton from '@/components/ui/IconButton'
-import { faArchive } from '@fortawesome/free-solid-svg-icons'
+import { faArchive } from '@fortawesome/free-solid-svg-icons/faArchive'
 import { ThemeSizes } from '@/types/theme'
 
 const SwipeableArchive = ({ size }: { size?: ThemeSizes }) => {

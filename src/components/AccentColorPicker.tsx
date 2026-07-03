@@ -1,6 +1,6 @@
 import { Pressable, View } from 'react-native'
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
-import { faCheck } from '@fortawesome/free-solid-svg-icons'
+import { faCheck } from '@fortawesome/free-solid-svg-icons/faCheck'
 import useTheme from '@/contexts/theme'
 import Text from '@/components/ui/MyText'
 import IsSupporter from '@/components/IsSupporter'

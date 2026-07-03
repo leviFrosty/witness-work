@@ -18,7 +18,7 @@ import Animated, {
 import i18n from '@/lib/locales'
 import { ThemeContext } from '@/contexts/theme'
 import IconButton from '@/components/ui/IconButton'
-import { faCaretDown } from '@fortawesome/free-solid-svg-icons'
+import { faCaretDown } from '@fortawesome/free-solid-svg-icons/faCaretDown'
 
 const AnimatedView = Animated.createAnimatedComponent(View)
 

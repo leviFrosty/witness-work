@@ -2,13 +2,11 @@ import { View } from 'react-native'
 import i18n from '@/lib/locales'
 import Section from '@/components/ui/inputs/Section'
 import InputRowButton from '@/features/settings/components/inputs/InputRowButton'
-import {
-  faArrowUpRightFromSquare,
-  faChevronRight,
-  faCode,
-  faFileContract,
-  faTag,
-} from '@fortawesome/free-solid-svg-icons'
+import { faArrowUpRightFromSquare } from '@fortawesome/free-solid-svg-icons/faArrowUpRightFromSquare'
+import { faChevronRight } from '@fortawesome/free-solid-svg-icons/faChevronRight'
+import { faCode } from '@fortawesome/free-solid-svg-icons/faCode'
+import { faFileContract } from '@fortawesome/free-solid-svg-icons/faFileContract'
+import { faTag } from '@fortawesome/free-solid-svg-icons/faTag'
 import IconButton from '@/components/ui/IconButton'
 import links from '@/constants/links'
 import SectionTitle from '@/features/settings/components/shared/SectionTitle'

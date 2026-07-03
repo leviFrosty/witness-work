@@ -1,6 +1,6 @@
 import { AppState, AppStateStatus, Platform } from 'react-native'
 import * as FileSystem from 'expo-file-system/legacy'
-import _ from 'lodash'
+import debounce from 'lodash/debounce'
 import * as ICloudBridge from '../../../modules/icloud-bridge'
 import useContacts from '@/stores/contactsStore'
 import useConversations from '@/stores/conversationStore'
@@ -730,7 +730,7 @@ export async function push(reason: string): Promise<void> {
   }
 }
 
-const debouncedPush = _.debounce(
+const debouncedPush = debounce(
   () => {
     pushScheduled = false
     push('store-change')
@@ -1204,7 +1204,7 @@ export function installiCloudSync(): () => void {
 
   let remoteChangeSub: EventSubscription | null = null
   let availabilitySub: EventSubscription | null = null
-  const debouncedRemotePull = _.debounce(
+  const debouncedRemotePull = debounce(
     () => {
       if (!canSync()) return
       void pullAndMerge('remote-change')

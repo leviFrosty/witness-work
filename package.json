@@ -28,11 +28,8 @@
   },
   "dependencies": {
     "@bacons/apple-targets": "0.2.1",
-    "@expo-google-fonts/gaegu": "^0.4.1",
     "@expo-google-fonts/inter": "^0.2.3",
     "@expo-google-fonts/kalam": "^0.4.1",
-    "@expo-google-fonts/klee-one": "^0.4.1",
-    "@expo-google-fonts/ma-shan-zheng": "^0.4.2",
     "@fortawesome/fontawesome-svg-core": "^6.7.2",
     "@fortawesome/free-brands-svg-icons": "^6.7.2",
     "@fortawesome/free-regular-svg-icons": "^6.7.2",

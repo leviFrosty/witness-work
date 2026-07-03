@@ -39,15 +39,13 @@ import useDevice from '@/hooks/useDevice'
 import { RootStackNavigation } from '@/types/rootStack'
 import { HomeTabStackNavigation } from '@/types/homeStack'
 import { ContactMarker } from '@/features/map/types/map'
-import {
-  faAddressBook,
-  faCircleInfo,
-  faLocationArrow,
-  faMapLocationDot,
-  faMagnifyingGlass,
-  faPlus,
-  faUpRightAndDownLeftFromCenter,
-} from '@fortawesome/free-solid-svg-icons'
+import { faAddressBook } from '@fortawesome/free-solid-svg-icons/faAddressBook'
+import { faCircleInfo } from '@fortawesome/free-solid-svg-icons/faCircleInfo'
+import { faLocationArrow } from '@fortawesome/free-solid-svg-icons/faLocationArrow'
+import { faMapLocationDot } from '@fortawesome/free-solid-svg-icons/faMapLocationDot'
+import { faMagnifyingGlass } from '@fortawesome/free-solid-svg-icons/faMagnifyingGlass'
+import { faPlus } from '@fortawesome/free-solid-svg-icons/faPlus'
+import { faUpRightAndDownLeftFromCenter } from '@fortawesome/free-solid-svg-icons/faUpRightAndDownLeftFromCenter'
 import { Popover } from 'tamagui'
 import MapKey from '@/features/map/components/MapColorKey'
 import { useMarkerColors } from '@/hooks/useMarkerColors'

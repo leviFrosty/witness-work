@@ -26,6 +26,7 @@ pnpm run lint         # after ANY import / file-tree change (boundaries are lint
 - **Three tiers, lint-enforced:** `src/app/` (entry, nav, widgets, sync) → `src/features/<domain>/` → shared (`src/components|lib|hooks|stores|...`).
 - **React Compiler** (beta) is on — no manual `useMemo`/`useCallback` unless benchmarked.
 - **Styling** via Tamagui + RN StyleSheet through `ThemeProvider`; prefer tokens. Reuse `@/components/**` — no one-off badges.
+- **Bundle size — deep imports only.** Metro doesn't tree-shake barrel files. Import lodash per-method (`import round from 'lodash/round'`, never `import _ from 'lodash'`) and FontAwesome icons per-icon (`import { faX } from '@fortawesome/free-solid-svg-icons/faX'`, never from the pack root). Types like `IconDefinition`/`IconProp` come from `@fortawesome/fontawesome-svg-core`.
 - `clean` nukes `ios/ .expo/ .tamagui/ .cache/ node_modules/` — destructive.
 
 Reference docs: `CONTEXT.md`, `docs/adr/`, `docs/project-structure.md`, `docs/architecture-features.md`.

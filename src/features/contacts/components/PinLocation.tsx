@@ -14,7 +14,7 @@ import Button from '@/components/ui/Button'
 import Text from '@/components/ui/MyText'
 import { View } from 'react-native'
 import IconButton from '@/components/ui/IconButton'
-import { faTimes } from '@fortawesome/free-solid-svg-icons'
+import { faTimes } from '@fortawesome/free-solid-svg-icons/faTimes'
 import useContacts from '@/stores/contactsStore'
 import { usePreferences } from '@/stores/preferences'
 

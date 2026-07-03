@@ -78,13 +78,16 @@ subscription.
 - A device can client-side `logIn` as any known account id — a uuid is an
   identifier, not a secret (same stance as ADR 0007). We never display it,
   and the container file isn't document-scope public.
-- **Notes-Import still uses the per-device install id.** ww-api pins each
-  uuid to the ONE App Attest keyId that first claimed it (first-writer-wins,
-  ADR 0007), so an adopted account id would lock the second device out at
-  re-attest. Until ww-api verifies Supporter against an account id bound into
-  the signed assertion, a Supporter's _second_ device is metered as a free
-  user by the proxy. Follow-up lives in ww-api.
+- **Notes-Import sends both identities.** App Attest keys stay pinned
+  first-writer-wins to the per-device install id (ADR 0007) — so an adopted
+  account id never locks a device out at re-attest — while the account id is
+  additionally bound into the signed assertion
+  (`challenge|uuid|accountId|contentHash`). ww-api verifies Supporter status
+  and meters against `accountId ?? uuid`, so a Supporter's second device is
+  recognized. The ww-api change must be deployed before a client sending the
+  account id ships (old three-field signatures stay accepted, not vice versa).
 - The dev "Reset purchases" tool clears the adopted id, else reconcile would
   immediately re-adopt it.
-- Free Notes-Import credits remain per-device for adopted devices (see
-  above); once ww-api understands account ids they become per-person.
+- Free Notes-Import credits are per-person: the meter keys on the account id
+  (falling back to the install id for pre-account clients), so a two-device
+  free user shares one pool instead of getting two.

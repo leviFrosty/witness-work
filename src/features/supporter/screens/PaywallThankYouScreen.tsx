@@ -82,6 +82,10 @@ const PaywallThankYouScreen = () => {
       }}
     >
       <ScrollView
+        // Must flex — RN 0.86's Yoga no longer clamps an unflexed ScrollView
+        // to its parent's bounds, so without this the scroll area sizes to
+        // its content and pushes the footer button off-screen.
+        style={{ flex: 1 }}
         contentContainerStyle={{
           paddingTop: 30,
           paddingHorizontal: 20,

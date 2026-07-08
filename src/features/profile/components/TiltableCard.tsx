@@ -22,7 +22,7 @@ interface Props {
    * Renders a visual overlay on top of the children, transformed with the same
    * 3D tilt. Given the live tilt + size so effects (e.g. Skia shaders) can
    * drive their own uniforms. Returned nodes should position themselves with
-   * `StyleSheet.absoluteFillObject` and be `pointerEvents='none'`.
+   * `StyleSheet.absoluteFill` and be `pointerEvents='none'`.
    */
   renderOverlay?: (ctx: TiltShaderContext) => ReactNode
   /** Border radius forwarded to `renderOverlay` for masking. */

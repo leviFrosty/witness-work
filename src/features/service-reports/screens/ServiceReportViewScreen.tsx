@@ -52,13 +52,21 @@ import { RootStackParamList } from '@/types/rootStack'
 
 type Props = NativeStackScreenProps<RootStackParamList, 'ServiceReportView'>
 
-/** Icons for each method — popover rows and the submit segment itself. */
+/** FontAwesome icons for the submit segment itself. */
 const exportMethodCtaIcons = {
   copy: faCopy,
   share: faArrowUpFromBracket,
   hourglass: faHourglass,
   nwpublisher: faEarthAmericas,
 } as const satisfies Record<ReportExportMethod, unknown>
+
+/** SF Symbols for the native method menu rows. */
+const exportMethodSfSymbols = {
+  copy: 'doc.on.doc',
+  share: 'square.and.arrow.up',
+  hourglass: 'hourglass',
+  nwpublisher: 'globe.americas',
+} as const satisfies Record<ReportExportMethod, string>
 
 const PAPER_BG = '#F5ECD6'
 const PAPER_BG_EDGE = '#E6D9B4'
@@ -306,7 +314,7 @@ const ServiceReportViewScreen = ({ route, navigation }: Props) => {
       exportMethodSelectionOptions.map((opt) => ({
         id: opt.value,
         title: opt.label,
-        icon: exportMethodCtaIcons[opt.value],
+        sfSymbol: exportMethodSfSymbols[opt.value],
       })),
     []
   )
@@ -354,6 +362,10 @@ const ServiceReportViewScreen = ({ route, navigation }: Props) => {
 
       <ScrollView
         automaticallyAdjustKeyboardInsets
+        // Must flex — RN 0.86's Yoga no longer clamps an unflexed ScrollView
+        // to its parent's bounds; without this it sizes to the report paper
+        // and stops scrolling once the content exceeds the screen.
+        style={{ flex: 1 }}
         contentContainerStyle={{
           paddingTop: 28,
           paddingBottom: insets.bottom + 130,

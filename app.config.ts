@@ -16,11 +16,6 @@ export default ({ config }: ConfigContext): ExpoConfig => {
     orientation: 'portrait',
     icon: './src/assets/icon.png',
     userInterfaceStyle: 'automatic',
-    splash: {
-      image: './src/assets/splash.png',
-      resizeMode: 'contain',
-      backgroundColor: '#4BD27C',
-    },
     assetBundlePatterns: ['**/*'],
     ios: {
       supportsTablet: true,
@@ -158,6 +153,17 @@ export default ({ config }: ConfigContext): ExpoConfig => {
         },
       ],
       'expo-localization',
+      // SDK 57 removed the top-level `splash` config key; the splash screen
+      // is now configured exclusively through this plugin.
+      [
+        'expo-splash-screen',
+        {
+          image: './src/assets/splash.png',
+          resizeMode: 'contain',
+          backgroundColor: '#4BD27C',
+        },
+      ],
+      'expo-status-bar',
       'expo-sharing',
       // No props: the plugin ignores them (see runtimeVersion note above).
       'expo-updates',

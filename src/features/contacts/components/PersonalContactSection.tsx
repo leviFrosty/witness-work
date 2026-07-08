@@ -298,7 +298,7 @@ export default function PersonalContactSection({
           ref={emailInput}
           textInputProps={{
             placeholder: i18n.t('email_placeholder'),
-            keyboardType: 'email-address',
+            type: 'email',
             onChangeText: (val: string) => setEmail(val),
             value: contact.email,
             autoCapitalize: 'none',

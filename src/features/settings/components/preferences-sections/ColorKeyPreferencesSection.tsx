@@ -238,7 +238,7 @@ const ColorKeyPreferencesSection = () => {
             value: stalenessBreakpoints.weekDays.toString(),
             onChangeText: (value) => setBreakpoint('weekDays', value),
             onEndEditing: commitBreakpoints,
-            keyboardType: 'numeric',
+            type: 'number',
             placeholder: DEFAULT_STALENESS_BREAKPOINTS.weekDays.toString(),
           }}
         />
@@ -259,7 +259,7 @@ const ColorKeyPreferencesSection = () => {
             value: stalenessBreakpoints.monthDays.toString(),
             onChangeText: (value) => setBreakpoint('monthDays', value),
             onEndEditing: commitBreakpoints,
-            keyboardType: 'numeric',
+            type: 'number',
             placeholder: DEFAULT_STALENESS_BREAKPOINTS.monthDays.toString(),
           }}
           lastInSection

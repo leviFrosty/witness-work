@@ -1243,8 +1243,8 @@ export default function ToolsScreen() {
               onBlur={() => {
                 setMockContactCountInput(`${mockContactCount}`)
               }}
-              keyboardType='number-pad'
-              returnKeyType='done'
+              inputMode='numeric'
+              enterKeyHint='done'
               selectTextOnFocus
               textAlign='center'
               maxLength={4}

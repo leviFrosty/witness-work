@@ -145,7 +145,7 @@ const CatchUpMonthRow = ({
         <TextInput
           ref={hoursInput}
           style={inputStyle}
-          keyboardType='decimal-pad'
+          inputMode='decimal'
           value={row.hours}
           onChangeText={(v) => onChange(index, 'hours', v)}
           placeholder='0'
@@ -174,7 +174,7 @@ const CatchUpMonthRow = ({
         <TextInput
           ref={creditInput}
           style={inputStyle}
-          keyboardType='decimal-pad'
+          inputMode='decimal'
           value={row.creditHours}
           onChangeText={(v) => onChange(index, 'creditHours', v)}
           placeholder='0'

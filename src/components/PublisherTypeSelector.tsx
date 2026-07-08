@@ -140,7 +140,7 @@ const PublisherTypeSelector = () => {
               }
             }}
             value={goalHours.toString()}
-            keyboardType='decimal-pad'
+            inputMode='decimal'
           />
         </View>
       ) : (

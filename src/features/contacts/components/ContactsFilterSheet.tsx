@@ -7,6 +7,7 @@ import {
   TextInput,
   View,
 } from 'react-native'
+import { Input, InputProps } from 'tamagui'
 
 import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
@@ -385,11 +386,11 @@ const ContactsFilterSheet: React.FC<ContactsFilterSheetProps> = ({
   // fields surface specialised keyboards / placeholders so the user knows what
   // shape of value the comparator expects.
   const valueInputProps: {
-    keyboardType?: 'numeric' | 'default'
+    type?: 'number'
     placeholder?: string
   } = {}
   if (isCustomFieldKey(field) && customDef?.type === 'number') {
-    valueInputProps.keyboardType = 'numeric'
+    valueInputProps.type = 'number'
   } else if (isCustomFieldKey(field) && customDef?.type === 'date') {
     valueInputProps.placeholder = 'YYYY-MM-DD'
   }
@@ -511,13 +512,16 @@ const ContactsFilterSheet: React.FC<ContactsFilterSheetProps> = ({
                       {i18n.t('contacts_filterValue')}
                     </Text>
                   </Pressable>
-                  <TextInput
+                  <Input
+                    unstyled
                     ref={valueInput}
                     value={value}
                     onChangeText={setValue}
                     placeholder={valueInputProps.placeholder}
-                    keyboardType={valueInputProps.keyboardType ?? 'default'}
-                    placeholderTextColor={theme.colors.textAlt}
+                    type={valueInputProps.type}
+                    placeholderTextColor={
+                      theme.colors.textAlt as InputProps['placeholderTextColor']
+                    }
                     style={{
                       backgroundColor: theme.colors.backgroundLighter,
                       borderColor: theme.colors.border,

@@ -13,7 +13,7 @@ import {
   useWindowDimensions,
   View,
 } from 'react-native'
-import { Popover } from 'tamagui'
+import { Input, InputProps, Popover } from 'tamagui'
 import { GENDER_COLORS } from '@/features/contacts/components/GenderIcon'
 import Text from '@/components/ui/MyText'
 import { NativeStackScreenProps } from '@react-navigation/native-stack'
@@ -623,7 +623,8 @@ const ContactFormScreen = ({ route, navigation }: Props) => {
             }
           />
           <View style={{ alignItems: 'center', gap: 6, width: '100%' }}>
-            <TextInput
+            <Input
+              unstyled
               ref={nameInput}
               value={contact.name}
               onChangeText={(val) => {
@@ -631,11 +632,13 @@ const ContactFormScreen = ({ route, navigation }: Props) => {
                 if (errors.name) setErrors({ ...errors, name: '' })
               }}
               placeholder={i18n.t('name_placeholder')}
-              placeholderTextColor={theme.colors.textAlt}
+              placeholderTextColor={
+                theme.colors.textAlt as InputProps['placeholderTextColor']
+              }
               autoCapitalize='words'
               autoCorrect={false}
               autoFocus={!editMode}
-              returnKeyType='next'
+              enterKeyHint='next'
               style={{
                 fontSize: 26,
                 fontFamily: theme.fonts.bold,

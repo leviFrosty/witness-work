@@ -296,7 +296,7 @@ export default function AddressSection({
                     onSubmitEditing: () => countryInput.current?.focus(),
                     onChangeText: (val: string) => setZip(val),
                     value: contact.address?.zip || '',
-                    keyboardType: 'number-pad',
+                    inputMode: 'numeric',
                   }}
                   lastInSection
                 />

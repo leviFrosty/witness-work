@@ -637,7 +637,6 @@ const VisitFormScreen = ({ route, navigation }: Props) => {
               multiline: true,
               defaultValue: conversation.note,
               textAlign: 'left',
-              returnKeyType: 'default',
               onChangeText: (note: string) =>
                 setConversation({ ...conversation, note }),
             }}
@@ -671,7 +670,6 @@ const VisitFormScreen = ({ route, navigation }: Props) => {
               multiline: true,
               defaultValue: conversation.followUp?.topic,
               textAlign: 'left',
-              returnKeyType: 'default',
               onChangeText: (topic: string) =>
                 setConversation({
                   ...conversation,

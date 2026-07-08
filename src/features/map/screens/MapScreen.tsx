@@ -24,6 +24,7 @@ import {
   TextInput,
   View,
 } from 'react-native'
+import { Input, InputProps } from 'tamagui'
 import { BlurView } from 'expo-blur'
 import { GlassView, isLiquidGlassAvailable } from 'expo-glass-effect'
 import Animated, {
@@ -814,16 +815,19 @@ const FullMapView = ({
             style={[{ flex: 1, paddingRight: 14 }, animatedSearchInputStyle]}
             pointerEvents={searchExpanded ? 'auto' : 'none'}
           >
-            <TextInput
+            <Input
+              unstyled
               ref={searchInputRef}
               value={search}
               onChangeText={setSearch}
               onBlur={handleSearchBlur}
-              editable={searchExpanded}
+              disabled={!searchExpanded}
               placeholder={i18n.t('map_searchContacts')}
-              placeholderTextColor={theme.colors.textAlt}
+              placeholderTextColor={
+                theme.colors.textAlt as InputProps['placeholderTextColor']
+              }
               clearButtonMode='while-editing'
-              returnKeyType='search'
+              enterKeyHint='search'
               style={{
                 color: theme.colors.text,
                 fontFamily: theme.fonts.regular,

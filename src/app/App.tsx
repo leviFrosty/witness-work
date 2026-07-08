@@ -23,7 +23,6 @@ import { Kalam_400Regular, Kalam_700Bold } from '@expo-google-fonts/kalam'
 import {
   ActivityIndicator,
   AppState,
-  InteractionManager,
   LogBox,
   Platform,
   useColorScheme,
@@ -301,7 +300,9 @@ export default function App() {
 
   useEffect(() => {
     if (!hasMigratedFromAsyncStorage()) {
-      InteractionManager.runAfterInteractions(async () => {
+      // Deferred to idle so the migration doesn't jank the launch animation
+      // (InteractionManager is deprecated as of RN 0.86).
+      requestIdleCallback(async () => {
         try {
           await migrateFromAsyncStorage()
           await Updates.reloadAsync() // Reloads JS and causes stores to point to new MMKV store

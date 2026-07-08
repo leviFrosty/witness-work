@@ -1,10 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import {
-  InteractionManager,
-  Pressable,
-  TextInput as RNTextInput,
-  View,
-} from 'react-native'
+import { Pressable, TextInput as RNTextInput, View } from 'react-native'
 import moment from 'moment'
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
 import { IconDefinition } from '@fortawesome/fontawesome-svg-core'
@@ -140,12 +135,12 @@ const ProfileCard = ({ preview, editable, onPressIncomplete }: Props) => {
   // subtree before any tap — without this, the open spring snaps content in.
   useEffect(() => {
     if (preview || editable || isIncomplete) return
-    const handle = InteractionManager.runAfterInteractions(() => {
+    const handle = requestIdleCallback(() => {
       anchorRef.current?.measureInWindow((x, y, width, height) => {
         setOrigin({ x, y, width, height })
       })
     })
-    return () => handle.cancel()
+    return () => cancelIdleCallback(handle)
   }, [preview, editable, isIncomplete])
 
   if (isIncomplete) {

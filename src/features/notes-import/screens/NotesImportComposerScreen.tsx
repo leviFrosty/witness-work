@@ -8,7 +8,6 @@ import {
 } from 'react'
 import {
   Alert,
-  InteractionManager,
   Keyboard,
   Pressable,
   ScrollView,
@@ -231,17 +230,17 @@ const NotesImportComposerScreen = ({ renderSupporterCta }: Props) => {
   )
 
   // Pop the keyboard as soon as a fresh composer settles so the user can paste
-  // or type right away. Deferred past the navigation transition (focusing
-  // mid-animation gets dropped), and skipped when reopening a past import by
-  // hash — the composer input may not even be shown there.
+  // or type right away. Deferred past the navigation transition via the
+  // native-stack `transitionEnd` event (focusing mid-animation gets dropped),
+  // and skipped when reopening a past import by hash — the composer input may
+  // not even be shown there.
   useFocusEffect(
     useCallback(() => {
       if (routeHash) return
-      const task = InteractionManager.runAfterInteractions(() => {
+      return navigation.addListener('transitionEnd', () => {
         inputRef.current?.focus()
       })
-      return () => task.cancel()
-    }, [routeHash])
+    }, [routeHash, navigation])
   )
 
   // Swapping the active import (history select, New Import, or a fresh submit)

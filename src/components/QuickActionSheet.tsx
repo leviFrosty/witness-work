@@ -56,7 +56,7 @@ export default function QuickActionSheet({
       snapPoints={[30]}
       onOpenChange={(o: boolean) => setSheetOpen(o)}
       dismissOnSnapToBottom
-      animation='quick'
+      transition='quick'
     >
       <Sheet.Handle />
       <Sheet.Overlay zIndex={100_000 - 1} />

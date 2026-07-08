@@ -71,7 +71,7 @@ const FirstEnableSheet: React.FC<Props> = ({
       snapPoints={[85]}
       onOpenChange={setOpen}
       dismissOnSnapToBottom
-      animation='quick'
+      transition='quick'
     >
       <Sheet.Handle />
       <Sheet.Overlay zIndex={100_000 - 1} />

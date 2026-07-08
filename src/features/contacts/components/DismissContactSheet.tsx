@@ -236,7 +236,7 @@ const DismissContactSheet: React.FC<DismissContactSheetProps> = ({
       snapPoints={[80]}
       onOpenChange={setOpen}
       dismissOnSnapToBottom
-      animation='quick'
+      transition='quick'
     >
       <Sheet.Handle />
       <Sheet.Overlay zIndex={100_000 - 1} />

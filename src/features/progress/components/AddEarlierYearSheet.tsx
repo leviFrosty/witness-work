@@ -69,7 +69,7 @@ const AddEarlierYearSheet = ({
         onOpenChange={(next: boolean) => {
           if (!next) onClose()
         }}
-        animation='quick'
+        transition='quick'
         disableDrag
       >
         <Sheet.Overlay zIndex={100_000 - 1} />

@@ -130,7 +130,7 @@ const BackgroundEditButton = ({
         backgroundColor={theme.colors.card}
         padding={popoverPadding}
         elevate
-        animation={[
+        transition={[
           'quick',
           {
             opacity: { overshootClamping: true },

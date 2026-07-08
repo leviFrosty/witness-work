@@ -177,7 +177,7 @@ export default function PinLocation(props: {
         disableDrag
         onOpenChange={setOpen}
         dismissOnSnapToBottom
-        animation='quick'
+        transition='quick'
         snapPoints={[92]}
       >
         <Sheet.Overlay zIndex={100_000 - 1} />

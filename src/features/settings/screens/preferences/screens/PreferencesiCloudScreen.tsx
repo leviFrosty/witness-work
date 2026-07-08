@@ -452,7 +452,7 @@ const PreferencesiCloudScreenInner = () => {
                 backgroundColor={theme.colors.card}
                 padding={12}
                 elevate
-                animation={['quick', { opacity: { overshootClamping: true } }]}
+                transition={['quick', { opacity: { overshootClamping: true } }]}
                 enterStyle={{ y: -8, opacity: 0 }}
                 exitStyle={{ y: -8, opacity: 0 }}
                 maxWidth={300}

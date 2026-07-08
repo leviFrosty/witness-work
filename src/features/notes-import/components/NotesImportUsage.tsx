@@ -24,26 +24,26 @@ interface Props {
   renderSupporterCta?: RenderNotesImportSupporterCta
 }
 
-/** A thin progress bar (fills by fraction used) with a trailing usage label. */
+/** A thin progress bar (fills by fraction remaining) with a trailing label. */
 const UsageBar = ({
-  used,
+  remaining,
   limit,
   color,
   unlimited,
 }: {
-  used: number | null
+  remaining: number | null
   limit: number | null
   color: string
   unlimited?: boolean
 }) => {
   const theme = useTheme()
   const percentage =
-    unlimited || used === null || limit === null || limit === 0
+    unlimited || remaining === null || limit === null || limit === 0
       ? 1
-      : Math.min(1, Math.max(0, used / limit))
+      : Math.min(1, Math.max(0, remaining / limit))
   const label = unlimited
     ? i18n.t('notesImport_usageNoLimit')
-    : i18n.t('notesImport_usagePercentUsed', {
+    : i18n.t('notesImport_usagePercentRemaining', {
         percent: Math.round(percentage * 100),
       })
 
@@ -129,21 +129,13 @@ const NotesImportUsage = ({
   const { width: windowWidth } = useWindowDimensions()
   const contentWidth = Math.min(340, windowWidth - 24)
   const importsUnlimited = credits.isSupporter || credits.remaining === null
-  const importsUsed =
-    credits.limit === null || credits.remaining === null
-      ? null
-      : Math.max(0, credits.limit - credits.remaining)
-  const refinementsUsed = Math.max(
-    0,
-    credits.refinements.limit - credits.refinements.remaining
-  )
 
-  // The ring fills as import credits are spent (Claude-usage style). Unlimited
-  // plans show a full, muted ring; a depleted balance goes warn-colored.
+  // The ring shows the import-credit balance remaining. Unlimited plans show a
+  // full, muted ring; a depleted balance goes warn-colored.
   const ringProgress =
-    importsUnlimited || importsUsed === null || !credits.limit
+    importsUnlimited || credits.remaining === null || !credits.limit
       ? 1
-      : importsUsed / credits.limit
+      : credits.remaining / credits.limit
   const ringColor = importsUnlimited
     ? theme.colors.accentTranslucent
     : credits.remaining === 0
@@ -241,7 +233,7 @@ const NotesImportUsage = ({
             body={i18n.t('notesImport_usageImportsBody')}
             bar={
               <UsageBar
-                used={importsUsed}
+                remaining={credits.remaining}
                 limit={credits.limit}
                 color={theme.colors.accent}
                 unlimited={importsUnlimited}
@@ -255,7 +247,7 @@ const NotesImportUsage = ({
             })}
             bar={
               <UsageBar
-                used={refinementsUsed}
+                remaining={credits.refinements.remaining}
                 limit={credits.refinements.limit}
                 color={theme.colors.indigo}
               />

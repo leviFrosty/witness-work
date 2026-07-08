@@ -54,6 +54,10 @@ describe('normalizeNotesImportCredits', () => {
     expect(shouldShowNotesImportSupporterCta(credits)).toBe(true)
   })
 
+  it('hides the Supporter CTA for active Supporters', () => {
+    expect(shouldShowNotesImportSupporterCta({ isSupporter: true })).toBe(false)
+  })
+
   it('corrects the transitional dev proxy response that conflated bypass with Supporter', () => {
     const credits = normalizeNotesImportCredits(
       { remaining: null, isSupporter: true },

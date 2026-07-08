@@ -1036,7 +1036,7 @@
   "notesImport_usageRefinements": "Refinements",
   "notesImport_usageUsed": "{{used}} of {{limit}} used",
   "notesImport_usageRemaining": "{{count}} left",
-  "notesImport_usagePercentUsed": "{{percent}}% used",
+  "notesImport_usagePercentRemaining": "{{percent}}% left",
   "notesImport_usageUnlimited": "Unlimited",
   "notesImport_usageNoLimit": "No limit",
   "notesImport_usagePopoverTitle": "Scribe AI usage",

@@ -161,6 +161,11 @@ export default ({ config }: ConfigContext): ExpoConfig => {
           image: './src/assets/splash.png',
           resizeMode: 'contain',
           backgroundColor: '#4BD27C',
+          // The checked-in asset is a full-device splash composition. Without
+          // this, SDK 57 constrains it to the plugin default 100px image width.
+          ios: {
+            enableFullScreenImage_legacy: true,
+          },
         },
       ],
       'expo-status-bar',

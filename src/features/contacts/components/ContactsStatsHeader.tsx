@@ -158,7 +158,7 @@ const ContactsStatsHeader: React.FC<ContactsStatsHeaderProps> = ({
             backgroundColor={theme.colors.card}
             padding={14}
             elevate
-            animation={[
+            transition={[
               'quick',
               {
                 opacity: {

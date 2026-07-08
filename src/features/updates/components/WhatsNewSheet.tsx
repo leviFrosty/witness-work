@@ -180,7 +180,7 @@ const WhatsNewSheet: React.FC<Props> = ({ show, setShow }) => {
       modal
       onOpenChange={(o: boolean) => setShow(o)}
       dismissOnSnapToBottom
-      animation='quick'
+      transition='quick'
     >
       <Sheet.Handle />
       <Sheet.Overlay zIndex={100_000 - 1} />

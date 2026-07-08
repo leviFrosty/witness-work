@@ -975,7 +975,7 @@ const FullMapView = ({
             backgroundColor={theme.colors.card}
             padding={12}
             elevate
-            animation={['quick', { opacity: { overshootClamping: true } }]}
+            transition={['quick', { opacity: { overshootClamping: true } }]}
             enterStyle={{ x: -8, opacity: 0 }}
             exitStyle={{ x: -8, opacity: 0 }}
             maxWidth={300}

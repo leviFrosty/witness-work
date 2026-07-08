@@ -124,7 +124,7 @@ const SelectWheel = <T,>({
             if (!next) done()
             else setOpen(true)
           }}
-          animation='quick'
+          transition='quick'
           disableDrag
         >
           <Sheet.Overlay zIndex={100_000 - 1} />

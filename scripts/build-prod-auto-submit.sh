@@ -42,6 +42,12 @@ fi
 set -a
 # shellcheck disable=SC1091
 source .env.production
+# SDK 57's @expo/env no longer defaults NODE_ENV and warns ("Proceeding
+# without mode-specific .env") during the build's config read. The .env files
+# are gitignored so they never reach the build archive anyway — the exports
+# above are what feed the build — but set the mode explicitly so env loading
+# is deterministic and the warning goes away.
+NODE_ENV=production
 set +a
 if [ -z "${SENTRY_AUTH_TOKEN:-}" ]; then
   echo "error: SENTRY_AUTH_TOKEN not set in .env.production" >&2

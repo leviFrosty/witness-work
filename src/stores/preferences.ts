@@ -1257,7 +1257,18 @@ export const usePreferences = create(
       // `NON_SYNCABLE_PREFERENCE_KEYS` are excluded from stamping so local
       // bookkeeping (e.g. the sync timestamps themselves) doesn't generate
       // churn on the map.
-      const set: typeof rawSet = (partial, replace) => {
+      //
+      // Annotated explicitly (not `typeof rawSet`): under zustand v5 the
+      // middleware-mutated setter type doesn't survive re-exposure through
+      // combine's action object — call sites would see `unknown` returns.
+      const set: (
+        partial:
+          | Partial<typeof PREFERENCE_DEFAULTS>
+          | ((
+              state: typeof PREFERENCE_DEFAULTS
+            ) => Partial<typeof PREFERENCE_DEFAULTS>),
+        replace?: boolean
+      ) => void = (partial, replace) => {
         const resolved =
           typeof partial === 'function' ? partial(getState()) : partial
 

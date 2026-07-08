@@ -21,7 +21,7 @@
     "testVitest": "",
     "updateSnapshots": "jest -u --coverage=false",
     "fmt": "prettier --write . --log-level warn --cache",
-    "typecheck": "tsc -p ./tsconfig.json",
+    "typecheck": "node_modules/typescript-go/bin/tsc -p ./tsconfig.json",
     "lint": "eslint . --cache --cache-location .cache/.eslintcache",
     "doctor": "expo-doctor",
     "deps": "madge --ts-config ./tsconfig.json src/app/App.tsx -c"
@@ -148,6 +148,7 @@
     "react-test-renderer": "^19.2.0",
     "typescript": "~6.0.3",
     "typescript-eslint": "8.59.3",
+    "typescript-go": "npm:typescript@7.0.1-rc",
     "vitest": "^3.2.6"
   },
   "private": true,

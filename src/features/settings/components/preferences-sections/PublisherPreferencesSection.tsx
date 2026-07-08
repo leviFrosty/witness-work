@@ -29,9 +29,11 @@ const PublisherPreferencesSection = () => {
     overrideCreditLimit,
     customCreditLimitHours,
     autoRolloverEnabled,
+    rolloverIncludesCredit,
     setOverrideCreditLimit,
     setCustomCreditLimitHours,
     setAutoRolloverEnabled,
+    setRolloverIncludesCredit,
     set,
   } = usePreferences()
   // `hasCompletedProfileSetup` lives in the Profile store after wave-3 because
@@ -229,6 +231,31 @@ const PublisherPreferencesSection = () => {
                     }}
                   >
                     {i18n.t('autoRollover_description')}
+                  </Text>
+                </Section>
+              )}
+              {!isCheckboxMode && (
+                <Section>
+                  <InputRowContainer
+                    label={i18n.t('rolloverIncludesCredit')}
+                    lastInSection
+                  >
+                    <View style={{ flex: 1, alignItems: 'flex-end' }}>
+                      <CheckboxWithLabel
+                        value={rolloverIncludesCredit}
+                        setValue={setRolloverIncludesCredit}
+                        label=''
+                        labelPosition='right'
+                      />
+                    </View>
+                  </InputRowContainer>
+                  <Text
+                    style={{
+                      fontSize: theme.fontSize('sm'),
+                      color: theme.colors.textAlt,
+                    }}
+                  >
+                    {i18n.t('rolloverIncludesCredit_description')}
                   </Text>
                 </Section>
               )}

@@ -705,6 +705,12 @@ export const PREFERENCE_DEFAULTS = {
    */
   autoRolloverEnabled: false,
   /**
+   * When true, fractional credit minutes are included in the rollover amount
+   * (the pre-v1.44 behavior). Off by default: credit time is not eligible for
+   * rollover, so only standard-time minutes are moved. Syncable.
+   */
+  rolloverIncludesCredit: false,
+  /**
    * Dev-only clock override for the Time Rollover system. When set, the
    * rollover hook uses this date as "today" instead of `moment()`. Lets a
    * developer simulate opening the app on, say, April 1st with March's
@@ -1203,6 +1209,8 @@ export const usePreferences = create(
           set({ customCreditLimitHours }),
         setAutoRolloverEnabled: (autoRolloverEnabled: boolean) =>
           set({ autoRolloverEnabled }),
+        setRolloverIncludesCredit: (rolloverIncludesCredit: boolean) =>
+          set({ rolloverIncludesCredit }),
         setMilestoneOverrides: (values: number[]) =>
           set({ milestoneOverrides: values }),
         resetMilestoneOverrides: () => set({ milestoneOverrides: null }),

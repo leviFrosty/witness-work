@@ -4,6 +4,7 @@ import { TimeEntry, TimeEntriesByYear } from '@/types/timeEntry'
 import {
   applyRollover,
   buildRolloverEntries,
+  computeExcludedCreditMinutes,
   computePendingRollovers,
 } from '@/features/service-reports/lib/rollover'
 import { normalizeDateForStorage } from '@/lib/normalizeDate'
@@ -217,6 +218,111 @@ describe('computePendingRollovers', () => {
     })
 
     expect(result).toEqual([])
+  })
+
+  it('excludes credit time by default — credit-only fraction produces no rollover', () => {
+    // 5h20m of LDC credit, standard time whole. Credit isn't eligible for
+    // rollover (issue #393), so nothing is pending.
+    const today = moment('2026-04-15')
+    const serviceReports = reports(2026, 2, [
+      { hours: 10, minutes: 0 },
+      { hours: 5, minutes: 20, ldc: true } as Partial<TimeEntry>,
+    ])
+
+    const result = computePendingRollovers({
+      serviceReports,
+      today,
+      hasAnnualGoal: true,
+      lastRolloverYearMonth: null,
+    })
+
+    expect(result).toEqual([])
+  })
+
+  it('rolls only the standard fraction when both standard and credit are fractional', () => {
+    const today = moment('2026-04-15')
+    const serviceReports = reports(2026, 2, [
+      { hours: 1, minutes: 24 },
+      { hours: 0, minutes: 30, ldc: true } as Partial<TimeEntry>,
+    ])
+
+    const result = computePendingRollovers({
+      serviceReports,
+      today,
+      hasAnnualGoal: true,
+      lastRolloverYearMonth: null,
+    })
+
+    expect(result).toEqual([{ sourceYear: 2026, sourceMonth: 2, minutes: 24 }])
+  })
+
+  it('includes credit in the fraction when includeCredit is on (legacy behavior)', () => {
+    const today = moment('2026-04-15')
+    const serviceReports = reports(2026, 2, [
+      { hours: 1, minutes: 24 },
+      { hours: 0, minutes: 30, ldc: true } as Partial<TimeEntry>,
+    ])
+
+    const result = computePendingRollovers({
+      serviceReports,
+      today,
+      hasAnnualGoal: true,
+      lastRolloverYearMonth: null,
+      includeCredit: true,
+    })
+
+    // (84 + 30) % 60 = 54
+    expect(result).toEqual([{ sourceYear: 2026, sourceMonth: 2, minutes: 54 }])
+  })
+})
+
+describe('computeExcludedCreditMinutes', () => {
+  it('reports the fractional credit minutes excluded from rollover', () => {
+    const today = moment('2026-04-15')
+    const serviceReports = reports(2026, 2, [
+      { hours: 10, minutes: 0 },
+      { hours: 5, minutes: 20, ldc: true } as Partial<TimeEntry>,
+    ])
+
+    expect(
+      computeExcludedCreditMinutes({
+        serviceReports,
+        today,
+        hasAnnualGoal: true,
+      })
+    ).toBe(20)
+  })
+
+  it('returns 0 when includeCredit is on', () => {
+    const today = moment('2026-04-15')
+    const serviceReports = reports(2026, 2, [
+      { hours: 5, minutes: 20, ldc: true } as Partial<TimeEntry>,
+    ])
+
+    expect(
+      computeExcludedCreditMinutes({
+        serviceReports,
+        today,
+        hasAnnualGoal: true,
+        includeCredit: true,
+      })
+    ).toBe(0)
+  })
+
+  it('returns 0 when credit is whole-hour', () => {
+    const today = moment('2026-04-15')
+    const serviceReports = reports(2026, 2, [
+      { hours: 1, minutes: 24 },
+      { hours: 5, minutes: 0, ldc: true } as Partial<TimeEntry>,
+    ])
+
+    expect(
+      computeExcludedCreditMinutes({
+        serviceReports,
+        today,
+        hasAnnualGoal: true,
+      })
+    ).toBe(0)
   })
 })
 

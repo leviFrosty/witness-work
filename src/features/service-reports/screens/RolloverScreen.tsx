@@ -15,8 +15,14 @@ import { RootStackNavigation } from '@/types/rootStack'
 const RolloverScreen = () => {
   const theme = useTheme()
   const navigation = useNavigation<RootStackNavigation>()
-  const { availablePending, apply, dismiss, autoEnabled, setAutoEnabled } =
-    useRollover()
+  const {
+    availablePending,
+    excludedCreditMinutes,
+    apply,
+    dismiss,
+    autoEnabled,
+    setAutoEnabled,
+  } = useRollover()
   // Display-side computations need the marker-agnostic list — the screen can
   // be reached via the inline "Roll over previous month?" card after the user
   // already pressed "Not now" or deleted the entries, in which case the
@@ -113,6 +119,18 @@ const RolloverScreen = () => {
               </Text>
             )
           })}
+          {excludedCreditMinutes > 0 && (
+            <Text
+              style={{
+                fontSize: 13,
+                color: theme.colors.textAlt,
+              }}
+            >
+              {i18n.t('timeRollover_creditExcluded', {
+                minutes: excludedCreditMinutes,
+              })}
+            </Text>
+          )}
         </View>
 
         <View

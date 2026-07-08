@@ -5,6 +5,7 @@ import { usePreferences } from '@/stores/preferences'
 import useServiceReport from '@/stores/serviceReport'
 import {
   applyRollover,
+  computeExcludedCreditMinutes,
   computePendingRollovers,
   PendingRollover,
 } from '@/features/service-reports/lib/rollover'
@@ -19,6 +20,12 @@ type RolloverContext = {
    */
   availablePending: PendingRollover[]
   totalMinutes: number
+  /**
+   * Fractional credit minutes in the source month that are excluded from the
+   * rollover (credit isn't eligible unless `rolloverIncludesCredit` is on). UI
+   * shows a "your partial hour is credit time" notice when > 0.
+   */
+  excludedCreditMinutes: number
   markerKey: string
   /** Apply pending rollover entries and stamp the marker. No-op if none. */
   apply: () => void
@@ -34,6 +41,7 @@ export const useRollover = (): RolloverContext => {
   const {
     lastRolloverYearMonth,
     autoRolloverEnabled,
+    rolloverIncludesCredit,
     overrideCreditLimit,
     customCreditLimitHours,
     devRolloverDateOverride,
@@ -62,6 +70,7 @@ export const useRollover = (): RolloverContext => {
           enabled: overrideCreditLimit,
           customLimitHours: customCreditLimitHours,
         },
+        includeCredit: rolloverIncludesCredit,
       }),
     [
       serviceReports,
@@ -71,6 +80,7 @@ export const useRollover = (): RolloverContext => {
       publisher,
       overrideCreditLimit,
       customCreditLimitHours,
+      rolloverIncludesCredit,
     ]
   )
 
@@ -86,6 +96,7 @@ export const useRollover = (): RolloverContext => {
           enabled: overrideCreditLimit,
           customLimitHours: customCreditLimitHours,
         },
+        includeCredit: rolloverIncludesCredit,
         ignoreMarker: true,
       }),
     [
@@ -96,6 +107,31 @@ export const useRollover = (): RolloverContext => {
       publisher,
       overrideCreditLimit,
       customCreditLimitHours,
+      rolloverIncludesCredit,
+    ]
+  )
+
+  const excludedCreditMinutes = useMemo(
+    () =>
+      computeExcludedCreditMinutes({
+        serviceReports,
+        today,
+        hasAnnualGoal,
+        publisher,
+        creditLimitOverride: {
+          enabled: overrideCreditLimit,
+          customLimitHours: customCreditLimitHours,
+        },
+        includeCredit: rolloverIncludesCredit,
+      }),
+    [
+      serviceReports,
+      today,
+      hasAnnualGoal,
+      publisher,
+      overrideCreditLimit,
+      customCreditLimitHours,
+      rolloverIncludesCredit,
     ]
   )
 
@@ -117,6 +153,7 @@ export const useRollover = (): RolloverContext => {
         enabled: overrideCreditLimit,
         customLimitHours: customCreditLimitHours,
       },
+      includeCredit: prefs.rolloverIncludesCredit,
       genId: () => Crypto.randomUUID(),
     })
     if (!result) {
@@ -150,6 +187,7 @@ export const useRollover = (): RolloverContext => {
     pending,
     availablePending,
     totalMinutes,
+    excludedCreditMinutes,
     markerKey,
     apply,
     dismiss,

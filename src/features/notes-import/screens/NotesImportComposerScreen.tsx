@@ -1049,6 +1049,10 @@ const NotesImportComposerScreen = ({ renderSupporterCta }: Props) => {
           unavailableBanner()}
         <ScrollView
           ref={scrollRef}
+          // Must flex — RN 0.86's Yoga no longer clamps an unflexed
+          // ScrollView to its parent's bounds, so without this the chat
+          // history sizes to its content and pushes the input bar off-screen.
+          style={{ flex: 1 }}
           onContentSizeChange={() => {
             if (pendingBottomRef.current) {
               pendingBottomRef.current = false

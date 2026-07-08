@@ -306,11 +306,11 @@ const MilestoneRevealOverlay = ({ show, onDismiss, onSeeWhatsNew }: Props) => {
   return (
     <Animated.View
       pointerEvents='auto'
-      style={[StyleSheet.absoluteFillObject, styles.backdrop, backdropStyle]}
+      style={[StyleSheet.absoluteFill, styles.backdrop, backdropStyle]}
     >
       {/* Tap-anywhere skip target. Sits behind the content so the CTAs catch
           their own presses without colliding with the dismiss handler. */}
-      <Pressable style={StyleSheet.absoluteFillObject} onPress={handleSkip} />
+      <Pressable style={StyleSheet.absoluteFill} onPress={handleSkip} />
 
       <View style={[styles.content, { paddingTop: insets.top + 80 }]}>
         <Animated.View style={welcomeStyle} pointerEvents='none'>

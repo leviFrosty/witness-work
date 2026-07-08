@@ -14,7 +14,7 @@ Pod::Spec.new do |s|
   # guarded with `@available(iOS 16.1/16.2/17, *)` in the Swift sources —
   # raising this to 16.2 causes expo-modules-autolinking to silently skip the
   # pod on projects that target iOS 15.1.
-  s.platforms      = { :ios => '15.1' }
+  s.platforms      = { :ios => '16.4' }
   s.swift_version  = '5.9'
   s.source         = { git: '' }
   s.static_framework = true

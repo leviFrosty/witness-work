@@ -188,7 +188,7 @@ const HolographicShader = ({
     <Canvas
       pointerEvents='none'
       style={[
-        StyleSheet.absoluteFillObject,
+        StyleSheet.absoluteFill,
         {
           borderRadius,
           borderCurve: 'continuous',

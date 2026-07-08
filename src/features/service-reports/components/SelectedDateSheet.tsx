@@ -62,7 +62,13 @@ const SelectedDateSheet: React.FC<Props> = ({
             backgroundColor: theme.colors.backgroundLighter,
           }}
         >
-          <KeyboardAwareScrollView contentContainerStyle={{ minHeight: 10 }}>
+          {/* Must flex — RN 0.86's Yoga no longer clamps an unflexed scroll
+              view to its parent's bounds, so without this it sizes to its
+              content and pushes the action bar below off-screen. */}
+          <KeyboardAwareScrollView
+            style={{ flex: 1 }}
+            contentContainerStyle={{ minHeight: 10 }}
+          >
             <DayHistoryView
               date={sheet.date}
               serviceReports={thisMonthsReports || []}

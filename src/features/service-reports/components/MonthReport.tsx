@@ -664,6 +664,46 @@ const MonthReport = ({
           </Text>
         </Button>
       )}
+
+      {/* Credit-only fraction: the previous month has a partial hour but it
+        comes entirely from credit time, which isn't eligible for rollover.
+        Plain notice (not a button) so the user knows why no rollover is
+        offered; the advanced publisher preference can re-include credit. */}
+      {isCurrentMonth &&
+        !noDetails &&
+        rollover.availablePending.length === 0 &&
+        rollover.excludedCreditMinutes > 0 && (
+          <View
+            style={{
+              marginTop: 8,
+              flexDirection: 'row',
+              alignItems: 'center',
+              gap: 10,
+              paddingVertical: 10,
+              paddingHorizontal: 14,
+              borderRadius: theme.numbers.borderRadiusSm,
+              backgroundColor: theme.colors.backgroundLighter,
+              borderWidth: 1,
+              borderStyle: 'dashed',
+              borderColor: theme.colors.border,
+            }}
+          >
+            <FontAwesomeIcon
+              icon={faRightLeft}
+              size={12}
+              style={{ color: theme.colors.textAlt }}
+            />
+            <Text
+              style={{
+                flex: 1,
+                color: theme.colors.textAlt,
+                fontSize: theme.fontSize('sm'),
+              }}
+            >
+              {i18n.t('timeRollover_creditOnlyNotice')}
+            </Text>
+          </View>
+        )}
     </View>
   )
 }

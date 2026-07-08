@@ -1,12 +1,26 @@
-import { ScrollView, Share, View } from 'react-native'
+import {
+  Alert,
+  Keyboard,
+  ScrollView,
+  Share,
+  TextInput,
+  View,
+} from 'react-native'
 import { NativeStackScreenProps } from '@react-navigation/native-stack'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { MenuView, MenuAction } from '@react-native-menu/menu'
+import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
 import * as Clipboard from 'expo-clipboard'
 import moment from 'moment'
 import { useCallback, useMemo, useState } from 'react'
 import type { LayoutChangeEvent } from 'react-native'
 import { faArrowUpFromBracket } from '@fortawesome/free-solid-svg-icons/faArrowUpFromBracket'
+import { faArrowUpRightFromSquare } from '@fortawesome/free-solid-svg-icons/faArrowUpRightFromSquare'
+import { faCopy } from '@fortawesome/free-solid-svg-icons/faCopy'
+import { faEarthAmericas } from '@fortawesome/free-solid-svg-icons/faEarthAmericas'
+import { faHourglass } from '@fortawesome/free-solid-svg-icons/faHourglass'
+import { faArrowRotateLeft } from '@fortawesome/free-solid-svg-icons/faArrowRotateLeft'
+import { faCheck } from '@fortawesome/free-solid-svg-icons/faCheck'
+import { faPencil } from '@fortawesome/free-solid-svg-icons/faPencil'
 import { faTimes } from '@fortawesome/free-solid-svg-icons/faTimes'
 import Svg, {
   Path,
@@ -19,8 +33,7 @@ import Svg, {
 } from 'react-native-svg'
 
 import IconButton from '@/components/ui/IconButton'
-import ActionButton from '@/components/ui/ActionButton'
-import Button from '@/components/ui/Button'
+import SplitButton, { SplitButtonAction } from '@/components/ui/SplitButton'
 import Text from '@/components/ui/MyText'
 import { exportMethodSelectionOptions } from '@/components/DefaultExportMethodSelector'
 import { usePreferences, type ReportExportMethod } from '@/stores/preferences'
@@ -38,6 +51,14 @@ import useUser from '@/hooks/useUser'
 import { RootStackParamList } from '@/types/rootStack'
 
 type Props = NativeStackScreenProps<RootStackParamList, 'ServiceReportView'>
+
+/** Icons for each method — popover rows and the submit segment itself. */
+const exportMethodCtaIcons = {
+  copy: faCopy,
+  share: faArrowUpFromBracket,
+  hourglass: faHourglass,
+  nwpublisher: faEarthAmericas,
+} as const satisfies Record<ReportExportMethod, unknown>
 
 const PAPER_BG = '#F5ECD6'
 const PAPER_BG_EDGE = '#E6D9B4'
@@ -118,7 +139,13 @@ const ServiceReportViewScreen = ({ route, navigation }: Props) => {
   const { month, year } = route.params
   const data = useMonthReportData(month, year)
   const { name, hasName } = useUser()
-  const { defaultExportMethod, markReportSubmitted, set } = usePreferences()
+  const {
+    defaultExportMethod,
+    markReportSubmitted,
+    set,
+    setReportCommentOverride,
+    clearReportCommentOverride,
+  } = usePreferences()
 
   const reportMonthKey = useMemo(
     () => moment().month(month).year(year).format('YYYY-MM'),
@@ -143,39 +170,48 @@ const ServiceReportViewScreen = ({ route, navigation }: Props) => {
     [paperHeight]
   )
 
-  const shareActions: MenuAction[] = useMemo(
-    () => [
-      {
-        id: 'copy',
-        title: i18n.t('copyToClipboard'),
-        image: 'doc.on.doc',
-        imageColor: theme.colors.text,
-      },
-      {
-        id: 'share',
-        title: i18n.t('share'),
-        image: 'square.and.arrow.up',
-        imageColor: theme.colors.text,
-      },
-      {
-        id: 'hourglass',
-        title: i18n.t('hourglass'),
-        image: 'hourglass',
-        imageColor: theme.colors.text,
-      },
-      {
-        id: 'nwpublisher',
-        title: i18n.t('nwPublisher'),
-        subtitle: data.isLastMonth
-          ? undefined
-          : i18n.t('nwPublisherOnlyAllowsLastMonth'),
-        image: 'globe.americas',
-        imageColor: theme.colors.text,
-        attributes: { disabled: !data.isLastMonth },
-      },
-    ],
-    [theme.colors.text, data.isLastMonth]
-  )
+  const [isEditingNotes, setIsEditingNotes] = useState(false)
+  const [notesDraft, setNotesDraft] = useState('')
+
+  const handleStartEditNotes = useCallback(() => {
+    setNotesDraft(data.notes)
+    setIsEditingNotes(true)
+  }, [data.notes])
+
+  const handleSaveNotes = useCallback(() => {
+    // Saving text identical to the auto-generated comments is a no-op override
+    // — drop it so the reset affordance doesn't linger for nothing.
+    if (notesDraft === data.defaultNotes) {
+      clearReportCommentOverride(reportMonthKey)
+    } else {
+      setReportCommentOverride(reportMonthKey, notesDraft)
+    }
+    setIsEditingNotes(false)
+  }, [
+    notesDraft,
+    data.defaultNotes,
+    reportMonthKey,
+    setReportCommentOverride,
+    clearReportCommentOverride,
+  ])
+
+  const handleResetNotes = useCallback(() => {
+    Alert.alert(
+      i18n.t('resetCommentsConfirm_title'),
+      i18n.t('resetCommentsConfirm_description'),
+      [
+        { text: i18n.t('cancel'), style: 'cancel' },
+        {
+          text: i18n.t('reset'),
+          style: 'destructive',
+          onPress: () => {
+            clearReportCommentOverride(reportMonthKey)
+            setIsEditingNotes(false)
+          },
+        },
+      ]
+    )
+  }, [clearReportCommentOverride, reportMonthKey])
 
   const handleShareAction = useCallback(
     async (action: string) => {
@@ -191,8 +227,10 @@ const ServiceReportViewScreen = ({ route, navigation }: Props) => {
         return
       }
 
-      const remarks =
-        data.creditOverageHours > 0
+      // A user-edited comment replaces the auto-generated overage remark.
+      const remarks = data.hasNotesOverride
+        ? data.notes || undefined
+        : data.creditOverageHours > 0
           ? i18n.t('creditOverageInTheAmountOf', {
               count: data.creditOverageHours,
             })
@@ -245,24 +283,38 @@ const ServiceReportViewScreen = ({ route, navigation }: Props) => {
     }
   }, [defaultExportMethod])
 
-  const handleSubmitCta = useCallback(
-    () => handleShareAction(defaultExportMethod),
-    [handleShareAction, defaultExportMethod]
-  )
+  const handleSubmitCta = useCallback(() => {
+    // Mid-edit, the first press commits the comment draft (the report data in
+    // this render still holds the pre-edit text); the next press submits.
+    if (isEditingNotes) {
+      handleSaveNotes()
+      return
+    }
+    handleShareAction(defaultExportMethod)
+  }, [isEditingNotes, handleSaveNotes, handleShareAction, defaultExportMethod])
 
-  const methodActions: MenuAction[] = useMemo(
+  // Commit any in-progress comment edit before the popover takes over, so a
+  // method switched from the menu submits the fresh text, and drop the
+  // keyboard while the menu is up.
+  const handleMenuOpen = useCallback(() => {
+    if (isEditingNotes) handleSaveNotes()
+    Keyboard.dismiss()
+  }, [isEditingNotes, handleSaveNotes])
+
+  const methodActions: SplitButtonAction[] = useMemo(
     () =>
       exportMethodSelectionOptions.map((opt) => ({
         id: opt.value,
         title: opt.label,
-        state: opt.value === defaultExportMethod ? ('on' as const) : undefined,
-        attributes:
-          opt.value === 'nwpublisher' && !data.isLastMonth
-            ? { disabled: true }
-            : undefined,
+        icon: exportMethodCtaIcons[opt.value],
       })),
-    [defaultExportMethod, data.isLastMonth]
+    []
   )
+
+  // Hourglass / NW Publisher hand off to another app or website — flag that
+  // on the CTA with an external-link icon.
+  const submitIsExternal =
+    defaultExportMethod === 'hourglass' || defaultExportMethod === 'nwpublisher'
 
   return (
     <View
@@ -296,17 +348,12 @@ const ServiceReportViewScreen = ({ route, navigation }: Props) => {
         >
           {i18n.t('fieldServiceReport')}
         </Text>
-        <MenuView
-          actions={shareActions}
-          onPressAction={({ nativeEvent }) =>
-            handleShareAction(nativeEvent.event)
-          }
-        >
-          <IconButton icon={faArrowUpFromBracket} size={15} />
-        </MenuView>
+        {/* Spacer mirroring the close button so the title stays centered */}
+        <View style={{ width: 18 }} />
       </View>
 
       <ScrollView
+        automaticallyAdjustKeyboardInsets
         contentContainerStyle={{
           paddingTop: 28,
           paddingBottom: insets.bottom + 130,
@@ -336,31 +383,50 @@ const ServiceReportViewScreen = ({ route, navigation }: Props) => {
             showHours={data.showHours}
             showCredit={data.showCredit}
             notes={data.notes}
+            notesEditing={isEditingNotes}
+            notesDraft={notesDraft}
+            onChangeNotesDraft={setNotesDraft}
+            notesAccessory={
+              <View
+                style={{ flexDirection: 'row', gap: 16, alignItems: 'center' }}
+              >
+                {isEditingNotes ? (
+                  <IconButton
+                    icon={faCheck}
+                    size={14}
+                    color={PAPER_LABEL}
+                    hitSlop={8}
+                    onPress={handleSaveNotes}
+                    accessibilityLabel={i18n.t('save')}
+                  />
+                ) : (
+                  <>
+                    {data.hasNotesOverride && (
+                      <IconButton
+                        icon={faArrowRotateLeft}
+                        size={13}
+                        color={PAPER_LABEL}
+                        hitSlop={8}
+                        onPress={handleResetNotes}
+                        accessibilityLabel={i18n.t('reset')}
+                      />
+                    )}
+                    <IconButton
+                      icon={faPencil}
+                      size={13}
+                      color={PAPER_LABEL}
+                      hitSlop={8}
+                      onPress={handleStartEditNotes}
+                      accessibilityLabel={i18n.t('edit')}
+                    />
+                  </>
+                )}
+              </View>
+            }
             height={paperHeight}
             onLayoutContent={handlePaperLayout}
           />
         </View>
-
-        <MenuView
-          actions={methodActions}
-          onPressAction={({ nativeEvent }) =>
-            set({
-              defaultExportMethod: nativeEvent.event as ReportExportMethod,
-            })
-          }
-        >
-          <Button style={{ alignItems: 'center', paddingVertical: 12 }}>
-            <Text
-              style={{
-                color: theme.colors.textAlt,
-                fontSize: theme.fontSize('sm'),
-                textDecorationLine: 'underline',
-              }}
-            >
-              {i18n.t('changeSubmissionMethod')}
-            </Text>
-          </Button>
-        </MenuView>
       </ScrollView>
 
       <View
@@ -383,9 +449,42 @@ const ServiceReportViewScreen = ({ route, navigation }: Props) => {
             {i18n.t('nwPublisherOnlyAllowsLastMonth')}
           </Text>
         )}
-        <ActionButton onPress={handleSubmitCta} disabled={submitDisabled}>
-          {submitCtaLabel}
-        </ActionButton>
+        <SplitButton
+          onPress={handleSubmitCta}
+          disabled={submitDisabled}
+          actions={methodActions}
+          menuTitle={i18n.t('defaultExportMethod')}
+          selectedActionId={defaultExportMethod}
+          menuAccessibilityLabel={i18n.t('changeSubmissionMethod')}
+          onOpenMenu={handleMenuOpen}
+          onSelectAction={(actionId) =>
+            set({ defaultExportMethod: actionId as ReportExportMethod })
+          }
+        >
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+            <FontAwesomeIcon
+              icon={exportMethodCtaIcons[defaultExportMethod]}
+              size={15}
+              style={{ color: theme.colors.textInverse }}
+            />
+            <Text
+              style={{
+                fontSize: theme.fontSize('lg'),
+                color: theme.colors.textInverse,
+                fontFamily: theme.fonts.bold,
+              }}
+            >
+              {submitCtaLabel}
+            </Text>
+            {submitIsExternal && (
+              <FontAwesomeIcon
+                icon={faArrowUpRightFromSquare}
+                size={11}
+                style={{ color: theme.colors.textInverse }}
+              />
+            )}
+          </View>
+        </SplitButton>
       </View>
     </View>
   )
@@ -439,6 +538,10 @@ type PaperSheetProps = {
   showHours: boolean
   showCredit: boolean
   notes: string
+  notesEditing: boolean
+  notesDraft: string
+  onChangeNotesDraft: (text: string) => void
+  notesAccessory: React.ReactNode
   height: number
   onLayoutContent: (e: LayoutChangeEvent) => void
 }
@@ -455,6 +558,10 @@ const PaperSheet = ({
   showHours,
   showCredit,
   notes,
+  notesEditing,
+  notesDraft,
+  onChangeNotesDraft,
+  notesAccessory,
   height,
   onLayoutContent,
 }: PaperSheetProps) => {
@@ -626,8 +733,31 @@ const PaperSheet = ({
             </PaperRow>
           )}
 
-          <PaperRow label={i18n.t('comments')} extraGap>
-            <HandwrittenNote text={notes} fontFamily={handwritingFont} />
+          <PaperRow
+            label={i18n.t('comments')}
+            extraGap
+            accessory={notesAccessory}
+          >
+            {notesEditing ? (
+              <TextInput
+                value={notesDraft}
+                onChangeText={onChangeNotesDraft}
+                multiline
+                autoFocus
+                scrollEnabled={false}
+                style={{
+                  fontFamily: handwritingFont,
+                  fontSize: 15,
+                  color: PAPER_INK_SOFT,
+                  lineHeight: 21,
+                  minHeight: 48,
+                  paddingTop: 0,
+                  paddingBottom: 0,
+                }}
+              />
+            ) : (
+              <HandwrittenNote text={notes} fontFamily={handwritingFont} />
+            )}
           </PaperRow>
         </View>
       </View>
@@ -639,26 +769,37 @@ const PaperRow = ({
   label,
   children,
   extraGap,
+  accessory,
 }: {
   label: string
   children: React.ReactNode
   extraGap?: boolean
+  accessory?: React.ReactNode
 }) => {
   const theme = useTheme()
   return (
     <View style={{ marginTop: extraGap ? 16 : 14 }}>
-      <Text
+      <View
         style={{
-          color: PAPER_LABEL,
-          fontFamily: theme.fonts.semiBold,
-          fontSize: 11,
-          letterSpacing: 1.4,
-          textTransform: 'uppercase',
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'space-between',
           marginBottom: 4,
         }}
       >
-        {label}
-      </Text>
+        <Text
+          style={{
+            color: PAPER_LABEL,
+            fontFamily: theme.fonts.semiBold,
+            fontSize: 11,
+            letterSpacing: 1.4,
+            textTransform: 'uppercase',
+          }}
+        >
+          {label}
+        </Text>
+        {accessory}
+      </View>
       <View style={{ flexDirection: 'row', alignItems: 'flex-end' }}>
         <View style={{ flex: 1 }}>{children}</View>
       </View>

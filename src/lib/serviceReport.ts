@@ -481,6 +481,24 @@ export const getMinutesForServiceYearEndYear = (
 }
 
 /**
+ * Number of reports whose service year matches `endYear`. Distinguishes a year
+ * that merely falls inside the rendered span (no entries) from one holding
+ * actual entries — even zero-hour placeholders count.
+ */
+export const getReportCountForServiceYearEndYear = (
+  serviceReports: TimeEntry[],
+  endYear: number
+): number => {
+  const startYear = endYear - 1
+  return serviceReports.reduce((count, report) => {
+    const reportStartYear = getServiceYearFromDate(
+      momentStoredDate(report.date)
+    )
+    return reportStartYear === startYear ? count + 1 : count
+  }, 0)
+}
+
+/**
  * Compute the list of service-year `endYear`s the user is allowed to backdate
  * into from the All-time tab's "Add earlier year" picker.
  *

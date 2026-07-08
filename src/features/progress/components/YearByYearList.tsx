@@ -1,9 +1,12 @@
 import { useMemo, useState } from 'react'
-import { Pressable, View } from 'react-native'
+import { Alert, Pressable, View } from 'react-native'
 
 import * as Crypto from 'expo-crypto'
 import moment from 'moment'
+import { useToastController } from '@tamagui/toast'
+import { faEllipsis } from '@fortawesome/free-solid-svg-icons/faEllipsis'
 import { faPlus } from '@fortawesome/free-solid-svg-icons/faPlus'
+import { faTrashCan } from '@fortawesome/free-solid-svg-icons/faTrashCan'
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
 
 import useTheme from '@/contexts/theme'
@@ -12,6 +15,7 @@ import usePublisher from '@/hooks/usePublisher'
 import {
   getHoursForServiceYearEndYear,
   getMinutesForServiceYearEndYear,
+  getReportCountForServiceYearEndYear,
   getServiceYearEndYearsSpan,
   getAvailableEarlierEndYears,
 } from '@/lib/serviceReport'
@@ -22,6 +26,7 @@ import { formatMinutes } from '@/lib/minutes'
 import { usePreferences } from '@/stores/preferences'
 
 import Text from '@/components/ui/MyText'
+import AnchoredPopover from '@/components/ui/AnchoredPopover'
 import AddEarlierYearSheet from '@/features/progress/components/AddEarlierYearSheet'
 
 const EARLIER_YEAR_FLOOR_YEARS_BACK = 100
@@ -72,15 +77,38 @@ const YearByYearList = ({ onYearPress }: YearByYearListProps) => {
       endYear,
       hours: getHoursForServiceYearEndYear(reports, endYear),
       minutes: getMinutesForServiceYearEndYear(reports, endYear),
+      reportCount: getReportCountForServiceYearEndYear(reports, endYear),
     }))
     // Most-recent first.
     data.sort((a, b) => b.endYear - a.endYear)
     return data
   }, [endYears, reports])
 
-  const { addServiceReport } = useServiceReport()
+  const { addServiceReport, deleteServiceYearReports } = useServiceReport()
+  const toast = useToastController()
 
   const [sheetOpen, setSheetOpen] = useState(false)
+
+  const confirmDeleteYear = (endYear: number, label: string) => {
+    Alert.alert(
+      i18n.t('deleteYearTime_title', { year: label }),
+      i18n.t('deleteYearTime_description', { year: label }),
+      [
+        { text: i18n.t('cancel'), style: 'cancel' },
+        {
+          text: i18n.t('delete'),
+          style: 'destructive',
+          onPress: () => {
+            deleteServiceYearReports(endYear)
+            toast.show(i18n.t('success'), {
+              message: i18n.t('deleted'),
+              native: true,
+            })
+          },
+        },
+      ]
+    )
+  }
 
   const availableEndYears = useMemo(() => {
     if (endYears.length === 0) return []
@@ -137,7 +165,7 @@ const YearByYearList = ({ onYearPress }: YearByYearListProps) => {
             gap: 6,
           }}
         >
-          {rows.map(({ endYear, hours, minutes }) => {
+          {rows.map(({ endYear, hours, minutes, reportCount }) => {
             const ratio = Math.max(0, Math.min(1, hours / divisor))
             const startYear = endYear - 1
             const endShort = String(endYear % 100).padStart(2, '0')
@@ -205,6 +233,69 @@ const YearByYearList = ({ onYearPress }: YearByYearListProps) => {
                 >
                   {totalDisplay}
                 </Text>
+
+                {reportCount > 0 && (
+                  <AnchoredPopover
+                    contentWidth={220}
+                    contentStyle={{ padding: 4 }}
+                    renderTrigger={({ onPress, anchorRef }) => (
+                      <View ref={anchorRef} collapsable={false}>
+                        <Pressable
+                          accessibilityRole='button'
+                          accessibilityLabel={i18n.t('yearRow_moreActions', {
+                            year: label,
+                          })}
+                          onPress={onPress}
+                          hitSlop={10}
+                          style={({ pressed }) => ({
+                            opacity: pressed ? 0.7 : 1,
+                            paddingLeft: 2,
+                          })}
+                        >
+                          <FontAwesomeIcon
+                            icon={faEllipsis}
+                            color={theme.colors.textAlt}
+                            size={16}
+                          />
+                        </Pressable>
+                      </View>
+                    )}
+                  >
+                    {({ close }) => (
+                      <Pressable
+                        accessibilityRole='button'
+                        onPress={() => {
+                          close()
+                          confirmDeleteYear(endYear, label)
+                        }}
+                        style={({ pressed }) => ({
+                          opacity: pressed ? 0.7 : 1,
+                          flexDirection: 'row',
+                          alignItems: 'center',
+                          gap: 10,
+                          paddingVertical: 10,
+                          paddingHorizontal: 10,
+                          borderRadius: theme.numbers.borderRadiusSm,
+                        })}
+                      >
+                        <FontAwesomeIcon
+                          icon={faTrashCan}
+                          color={theme.colors.error}
+                          size={14}
+                        />
+                        <Text
+                          style={{
+                            fontFamily: theme.fonts.semiBold,
+                            color: theme.colors.error,
+                            fontSize: theme.fontSize('sm'),
+                          }}
+                        >
+                          {i18n.t('deleteYearTime')}
+                        </Text>
+                      </Pressable>
+                    )}
+                  </AnchoredPopover>
+                )}
               </Pressable>
             )
           })}

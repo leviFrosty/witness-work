@@ -27,6 +27,7 @@ import {
   MmkvStorage,
 } from '@/stores/mmkv'
 import * as Notifications from 'expo-notifications'
+import { getServiceYearFromDate } from '@/lib/serviceYear'
 
 const initialState = {
   serviceReports: {} as TimeEntriesByYear,
@@ -524,6 +525,49 @@ export const useServiceReport = create(
             deletedServiceReports: [
               ...deletedServiceReports.filter((t) => !removedSet.has(t.id)),
               ...newTombstones,
+            ],
+          }
+        }),
+      deleteServiceYearReports: (endYear: number) =>
+        set(({ serviceReports, deletedServiceReports }) => {
+          // Service year Sep `endYear - 1` → Aug `endYear`; entries carry the
+          // start year, so match on that.
+          const startYear = endYear - 1
+          const now = Date.now()
+          const reports: TimeEntriesByYear = {}
+          const removedIds: string[] = []
+
+          for (const yearKey of Object.keys(serviceReports)) {
+            const yearMap: TimeEntriesByMonth = {}
+            const months = serviceReports[yearKey]
+            for (const monthKey of Object.keys(months)) {
+              const filtered = months[monthKey].filter((r) => {
+                const reportStartYear = getServiceYearFromDate(
+                  momentStoredDate(r.date)
+                )
+                if (reportStartYear === startYear) {
+                  removedIds.push(r.id)
+                  return false
+                }
+                return true
+              })
+              if (filtered.length > 0) {
+                yearMap[monthKey] = filtered
+              }
+            }
+            if (Object.keys(yearMap).length > 0) {
+              reports[yearKey] = yearMap
+            }
+          }
+
+          if (removedIds.length === 0) return {}
+
+          const removedSet = new Set(removedIds)
+          return {
+            serviceReports: reports,
+            deletedServiceReports: [
+              ...deletedServiceReports.filter((t) => !removedSet.has(t.id)),
+              ...removedIds.map((id) => ({ id, deletedAt: now })),
             ],
           }
         }),

@@ -1,3 +1,11 @@
+import {
+  Check as CheckIcon,
+  Heart as HeartIcon,
+  Minus as MinusIcon,
+  RotateCw as RotateCwIcon,
+  Trash2 as Trash2Icon,
+} from 'lucide-react-native'
+import LucideIcon, { type AppIcon } from '@/components/ui/LucideIcon'
 import { Alert, ScrollView, View } from 'react-native'
 import { Image } from 'expo-image'
 import * as Sentry from '@sentry/react-native'
@@ -19,13 +27,6 @@ import GlassCard from '@/components/ui/GlassCard'
 import SegmentedControl from '@/components/ui/SegmentedControl'
 import PreviousDonations from '@/features/supporter/components/PreviousDonations'
 import Divider from '@/components/ui/Divider'
-import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
-import { faCheck } from '@fortawesome/free-solid-svg-icons/faCheck'
-import { faHeart } from '@fortawesome/free-solid-svg-icons/faHeart'
-import { faMinus } from '@fortawesome/free-solid-svg-icons/faMinus'
-import { faRotate } from '@fortawesome/free-solid-svg-icons/faRotate'
-import { faTrash } from '@fortawesome/free-solid-svg-icons/faTrash'
-import type { IconDefinition } from '@fortawesome/fontawesome-svg-core'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import SupporterCtaButton from '@/features/supporter/components/SupporterCtaButton'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
@@ -79,8 +80,8 @@ const FounderLetter = () => {
             justifyContent: 'center',
           }}
         >
-          <FontAwesomeIcon
-            icon={faHeart}
+          <LucideIcon
+            icon={HeartIcon}
             size={10}
             color={theme.colors.supporter}
           />
@@ -144,8 +145,8 @@ const FounderLetter = () => {
           >
             {i18n.t('founderNoteSignOff')}
           </Text>
-          <FontAwesomeIcon
-            icon={faHeart}
+          <LucideIcon
+            icon={HeartIcon}
             size={11}
             color={theme.colors.supporter}
           />
@@ -187,8 +188,8 @@ const CompareCell = ({
   }
   return (
     <View style={{ width, alignItems: 'center' }}>
-      <FontAwesomeIcon
-        icon={value ? faCheck : faMinus}
+      <LucideIcon
+        icon={value ? CheckIcon : MinusIcon}
         size={13}
         color={value ? accentColor : theme.colors.textAlt}
       />
@@ -254,8 +255,8 @@ const ComparisonChart = () => {
           </View>
           <View style={{ width: SUPPORTER_COL_WIDTH }}>
             <XView style={{ alignItems: 'center', gap: 4, marginLeft: 15 }}>
-              <FontAwesomeIcon
-                icon={faHeart}
+              <LucideIcon
+                icon={HeartIcon}
                 size={10}
                 color={theme.colors.supporter}
               />
@@ -366,8 +367,8 @@ const PriceOption = ({
           }}
         >
           {selected && (
-            <FontAwesomeIcon
-              icon={faCheck}
+            <LucideIcon
+              icon={CheckIcon}
               size={10}
               color={theme.colors.textInverse}
             />
@@ -422,7 +423,7 @@ const PriceOption = ({
 }
 
 interface DevPillButtonProps {
-  icon: IconDefinition
+  icon: AppIcon
   label: string
   busy: boolean
   onPress: () => void
@@ -455,7 +456,7 @@ const DevPillButton = ({
       {busy ? (
         <Spinner size='small' />
       ) : (
-        <FontAwesomeIcon icon={icon} size={14} color={color} />
+        <LucideIcon icon={icon} size={14} color={color} />
       )}
       {!busy && (
         <Text
@@ -787,13 +788,13 @@ const PaywallScreen = () => {
         {__DEV__ && (
           <XView style={{ alignSelf: 'flex-end', gap: 6 }}>
             <DevPillButton
-              icon={faRotate}
+              icon={RotateCwIcon}
               label='Refresh'
               busy={isRefreshing}
               onPress={handleDevRefresh}
             />
             <DevPillButton
-              icon={faTrash}
+              icon={Trash2Icon}
               label='Reset'
               busy={isResetting}
               onPress={handleDevReset}

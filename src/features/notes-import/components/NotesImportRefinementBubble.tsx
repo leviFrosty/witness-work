@@ -1,6 +1,6 @@
+import { RefreshCw as RefreshCwIcon } from 'lucide-react-native'
+import LucideIcon from '@/components/ui/LucideIcon'
 import { View, type ViewStyle } from 'react-native'
-import { faArrowsRotate } from '@fortawesome/free-solid-svg-icons/faArrowsRotate'
-import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
 import Text from '@/components/ui/MyText'
 import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
@@ -65,8 +65,8 @@ export const NotesImportRefinementBubble = ({
           paddingRight: 4,
         }}
       >
-        <FontAwesomeIcon
-          icon={faArrowsRotate}
+        <LucideIcon
+          icon={RefreshCwIcon}
           size={10}
           color={theme.colors.textAlt}
         />

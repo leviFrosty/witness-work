@@ -1,3 +1,11 @@
+import {
+  Bug as BugIcon,
+  CircleQuestionMark as CircleQuestionMarkIcon,
+  Hand as HandIcon,
+  Pin as PinIcon,
+  Search as SearchIcon,
+} from 'lucide-react-native'
+import LucideIcon from '@/components/ui/LucideIcon'
 import { useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { Image, View, TextInput as RNTextInput, ScrollView } from 'react-native'
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
@@ -5,12 +13,6 @@ import * as Clipboard from 'expo-clipboard'
 import * as Sentry from '@sentry/react-native'
 import Purchases from 'react-native-purchases'
 import { useToastController } from '@tamagui/toast'
-import { faBug } from '@fortawesome/free-solid-svg-icons/faBug'
-import { faCircleQuestion } from '@fortawesome/free-solid-svg-icons/faCircleQuestion'
-import { faHand } from '@fortawesome/free-solid-svg-icons/faHand'
-import { faMagnifyingGlass } from '@fortawesome/free-solid-svg-icons/faMagnifyingGlass'
-import { faThumbtack } from '@fortawesome/free-solid-svg-icons/faThumbtack'
-import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
 import { RouteProp, useNavigation, useRoute } from '@react-navigation/native'
 
 import Header from '@/components/ui/layout/Header'
@@ -54,7 +56,7 @@ const ReportLinks = () => {
           backgroundColor: theme.colors.backgroundLighter,
         }}
       >
-        <IconButton icon={faBug} />
+        <IconButton icon={BugIcon} />
         <Text style={{ fontFamily: theme.fonts.semiBold }}>
           {i18n.t('bugReport')}
         </Text>
@@ -73,7 +75,7 @@ const ReportLinks = () => {
           backgroundColor: theme.colors.backgroundLighter,
         }}
       >
-        <IconButton icon={faHand} />
+        <IconButton icon={HandIcon} />
         <Text style={{ fontFamily: theme.fonts.semiBold }}>
           {i18n.t('featureRequest')}
         </Text>
@@ -168,7 +170,7 @@ const FAQScreen = () => {
           rightElement={
             <IconButton
               style={{ position: 'absolute', right: 0 }}
-              icon={faCircleQuestion}
+              icon={CircleQuestionMarkIcon}
               size='xl'
               accessibilityLabel={i18n.t('faq_jumpToStillNeedHelp')}
               onPress={() => scrollRef.current?.scrollToEnd({ animated: true })}
@@ -272,8 +274,8 @@ const FAQScreen = () => {
               backgroundColor: theme.colors.backgroundLighter,
             }}
           >
-            <FontAwesomeIcon
-              icon={faMagnifyingGlass}
+            <LucideIcon
+              icon={SearchIcon}
               size={theme.fontSize('xs')}
               style={{ color: theme.colors.textAlt }}
             />
@@ -306,8 +308,8 @@ const FAQScreen = () => {
                 paddingHorizontal: 20,
               }}
             >
-              <FontAwesomeIcon
-                icon={faThumbtack}
+              <LucideIcon
+                icon={PinIcon}
                 size={theme.fontSize('xs')}
                 style={{ color: theme.colors.textAlt }}
               />

@@ -1,11 +1,12 @@
+import {
+  CloudUpload as CloudUploadIcon,
+  FileText as FileTextIcon,
+  Palette as PaletteIcon,
+  Plus as PlusIcon,
+  Shapes as ShapesIcon,
+} from 'lucide-react-native'
+import LucideIcon, { type AppIcon } from '@/components/ui/LucideIcon'
 import { View } from 'react-native'
-import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
-import { faCloudArrowUp } from '@fortawesome/free-solid-svg-icons/faCloudArrowUp'
-import { faFileLines } from '@fortawesome/free-solid-svg-icons/faFileLines'
-import { faIcons } from '@fortawesome/free-solid-svg-icons/faIcons'
-import { faPalette } from '@fortawesome/free-solid-svg-icons/faPalette'
-import { faPlus } from '@fortawesome/free-solid-svg-icons/faPlus'
-import { IconProp } from '@fortawesome/fontawesome-svg-core'
 import useTheme from '@/contexts/theme'
 import Text from '@/components/ui/MyText'
 import i18n from '@/lib/locales'
@@ -34,8 +35,8 @@ const HeroCard = () => {
             justifyContent: 'center',
           }}
         >
-          <FontAwesomeIcon
-            icon={faCloudArrowUp}
+          <LucideIcon
+            icon={CloudUploadIcon}
             size={18}
             color={theme.colors.textInverse}
           />
@@ -68,7 +69,7 @@ const HeroCard = () => {
   )
 }
 
-type PerkProps = { icon: IconProp; title: string; desc: string }
+type PerkProps = { icon: AppIcon; title: string; desc: string }
 
 const PerkRow = ({ icon, title, desc }: PerkProps) => {
   const theme = useTheme()
@@ -85,7 +86,7 @@ const PerkRow = ({ icon, title, desc }: PerkProps) => {
           marginTop: 2,
         }}
       >
-        <FontAwesomeIcon icon={icon} size={12} color={theme.colors.supporter} />
+        <LucideIcon icon={icon} size={12} color={theme.colors.supporter} />
       </View>
       <View style={{ flex: 1 }}>
         <Text
@@ -147,22 +148,22 @@ const SupporterBenefits = ({ compact }: Props) => {
           {i18n.t('supporterPerksLabel')}
         </Text> */}
         <PerkRow
-          icon={faFileLines}
+          icon={FileTextIcon}
           title={i18n.t('supporterPerkAiTitle')}
           desc={i18n.t('supporterPerkAiDesc')}
         />
         <PerkRow
-          icon={faPalette}
+          icon={PaletteIcon}
           title={i18n.t('supporterPerkAccentTitle')}
           desc={i18n.t('supporterPerkAccentDesc')}
         />
         <PerkRow
-          icon={faIcons}
+          icon={ShapesIcon}
           title={i18n.t('supporterPerkAppIconTitle')}
           desc={i18n.t('supporterPerkAppIconDesc')}
         />
         <PerkRow
-          icon={faPlus}
+          icon={PlusIcon}
           title={i18n.t('supporterPerkMoreTitle')}
           desc={i18n.t('supporterPerkMoreDesc')}
         />

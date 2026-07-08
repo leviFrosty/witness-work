@@ -1,7 +1,7 @@
+import { Pipette as PipetteIcon } from 'lucide-react-native'
+import LucideIcon from '@/components/ui/LucideIcon'
 import { useState } from 'react'
 import { Pressable } from 'react-native'
-import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
-import { faEyeDropper } from '@fortawesome/free-solid-svg-icons/faEyeDropper'
 import useTheme from '@/contexts/theme'
 import ColorPickerSheet from '@/components/ColorPickerSheet'
 
@@ -59,8 +59,8 @@ const CustomColorSwatch = ({
           backgroundColor: isCustom ? value : theme.colors.backgroundLighter,
         }}
       >
-        <FontAwesomeIcon
-          icon={faEyeDropper}
+        <LucideIcon
+          icon={PipetteIcon}
           size={iconSize}
           color={isCustom ? theme.colors.textInverse : theme.colors.text}
         />

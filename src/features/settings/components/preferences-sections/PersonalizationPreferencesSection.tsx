@@ -1,8 +1,10 @@
+import {
+  ChevronRight as ChevronRightIcon,
+  Palette as PaletteIcon,
+  Shapes as ShapesIcon,
+} from 'lucide-react-native'
 import { Platform, Switch, View } from 'react-native'
 import { useNavigation } from '@react-navigation/native'
-import { faChevronRight } from '@fortawesome/free-solid-svg-icons/faChevronRight'
-import { faIcons } from '@fortawesome/free-solid-svg-icons/faIcons'
-import { faPalette } from '@fortawesome/free-solid-svg-icons/faPalette'
 import { useContext } from 'react'
 import Section from '@/components/ui/inputs/Section'
 import InputRowContainer from '@/components/ui/inputs/InputRowContainer'
@@ -72,12 +74,12 @@ const PersonalizationPreferencesSection = () => {
       <Divider marginVertical={20} />
       <Section>
         <InputRowButton
-          leftIcon={faPalette}
+          leftIcon={PaletteIcon}
           label={i18n.t('colorKeyScreenTitle')}
           onPress={() => navigation.navigate('PreferencesColorKey')}
           lastInSection
         >
-          <IconButton icon={faChevronRight} />
+          <IconButton icon={ChevronRightIcon} />
         </InputRowButton>
       </Section>
       {Platform.OS === 'ios' && (
@@ -85,12 +87,12 @@ const PersonalizationPreferencesSection = () => {
           <Divider marginVertical={20} />
           <Section>
             <InputRowButton
-              leftIcon={faIcons}
+              leftIcon={ShapesIcon}
               label={i18n.t('appIconScreenTitle')}
               onPress={() => navigation.navigate('PreferencesAppIcon')}
               lastInSection
             >
-              <IconButton icon={faChevronRight} />
+              <IconButton icon={ChevronRightIcon} />
             </InputRowButton>
           </Section>
         </>

@@ -1,10 +1,12 @@
+import {
+  ArrowDown as ArrowDownIcon,
+  ArrowUp as ArrowUpIcon,
+  Minus as MinusIcon,
+  RotateCcw as RotateCcwIcon,
+} from 'lucide-react-native'
 import { useMemo, useState } from 'react'
 import { Alert, View } from 'react-native'
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
-import { faArrowDown } from '@fortawesome/free-solid-svg-icons/faArrowDown'
-import { faArrowUp } from '@fortawesome/free-solid-svg-icons/faArrowUp'
-import { faMinus } from '@fortawesome/free-solid-svg-icons/faMinus'
-import { faRotateLeft } from '@fortawesome/free-solid-svg-icons/faRotateLeft'
 import Wrapper from '@/components/ui/layout/Wrapper'
 import Section from '@/components/ui/inputs/Section'
 import InputRowContainer from '@/components/ui/inputs/InputRowContainer'
@@ -132,14 +134,14 @@ const PreferencesCustomFieldsScreen = () => {
                   style={{ alignItems: 'center', gap: 6 }}
                 >
                   <IconButton
-                    icon={faArrowUp}
+                    icon={ArrowUpIcon}
                     onPress={idx === 0 ? undefined : () => move(def.id, -1)}
                     color={
                       idx === 0 ? theme.colors.border : theme.colors.textAlt
                     }
                   />
                   <IconButton
-                    icon={faArrowDown}
+                    icon={ArrowDownIcon}
                     onPress={
                       idx === activeDefs.length - 1
                         ? undefined
@@ -180,7 +182,7 @@ const PreferencesCustomFieldsScreen = () => {
                     />
                   </View>
                   <IconButton
-                    icon={faMinus}
+                    icon={MinusIcon}
                     color={theme.colors.error}
                     onPress={() => confirmArchive(def.id, def.label)}
                   />
@@ -215,7 +217,7 @@ const PreferencesCustomFieldsScreen = () => {
                     {def.label}
                   </Text>
                   <IconButton
-                    icon={faRotateLeft}
+                    icon={RotateCcwIcon}
                     color={theme.colors.accent}
                     onPress={() => restoreCustomFieldDef(def.id)}
                   />

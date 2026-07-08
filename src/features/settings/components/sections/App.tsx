@@ -1,13 +1,15 @@
+import {
+  ChevronRight as ChevronRightIcon,
+  Cloud as CloudIcon,
+  Ellipsis as EllipsisIcon,
+  FileInput as FileInputIcon,
+  FileOutput as FileOutputIcon,
+  FileText as FileTextIcon,
+} from 'lucide-react-native'
 import { View, Platform } from 'react-native'
 import i18n from '@/lib/locales'
 import Section from '@/components/ui/inputs/Section'
 import InputRowButton from '@/features/settings/components/inputs/InputRowButton'
-import { faChevronRight } from '@fortawesome/free-solid-svg-icons/faChevronRight'
-import { faCloud } from '@fortawesome/free-solid-svg-icons/faCloud'
-import { faEllipsisH } from '@fortawesome/free-solid-svg-icons/faEllipsisH'
-import { faFileExport } from '@fortawesome/free-solid-svg-icons/faFileExport'
-import { faFileImport } from '@fortawesome/free-solid-svg-icons/faFileImport'
-import { faFileLines } from '@fortawesome/free-solid-svg-icons/faFileLines'
 import IconButton from '@/components/ui/IconButton'
 import SectionTitle from '@/features/settings/components/shared/SectionTitle'
 import { SettingsSectionProps } from '@/features/settings/screens/settingScreen'
@@ -29,21 +31,21 @@ const AppSection = ({ handleNavigate }: SettingsSectionProps) => {
       <SectionTitle text={i18n.t('app')} />
       <Section>
         <InputRowButton
-          leftIcon={faFileExport}
+          leftIcon={FileOutputIcon}
           label={i18n.t('backupAndRestore')}
           onPress={() => handleNavigate('Import and Export')}
         >
-          <IconButton icon={faChevronRight} />
+          <IconButton icon={ChevronRightIcon} />
         </InputRowButton>
         <InputRowButton
-          leftIcon={faFileImport}
+          leftIcon={FileInputIcon}
           label={i18n.t('mytimeImport')}
           onPress={() => handleNavigate('MytimeImport')}
         >
-          <IconButton icon={faChevronRight} />
+          <IconButton icon={ChevronRightIcon} />
         </InputRowButton>
         <InputRowButton
-          leftIcon={faFileLines}
+          leftIcon={FileTextIcon}
           label={i18n.t('notesImport_settingsLabel')}
           disabled={!notesImport.available}
           sublabel={
@@ -55,25 +57,25 @@ const AppSection = ({ handleNavigate }: SettingsSectionProps) => {
         >
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
             <NotesImportReadyDot visible={notesImportReadyCount > 0} />
-            <IconButton icon={faChevronRight} />
+            <IconButton icon={ChevronRightIcon} />
           </View>
         </InputRowButton>
         {Platform.OS === 'ios' && (
           <InputRowButton
-            leftIcon={faCloud}
+            leftIcon={CloudIcon}
             label={i18n.t('iCloudSync')}
             onPress={() => handleNavigate('PreferencesiCloud')}
           >
-            <IconButton icon={faChevronRight} />
+            <IconButton icon={ChevronRightIcon} />
           </InputRowButton>
         )}
         <InputRowButton
-          leftIcon={faEllipsisH}
+          leftIcon={EllipsisIcon}
           label={i18n.t('more')}
           onPress={() => navigation.navigate('More')}
           lastInSection
         >
-          <IconButton icon={faChevronRight} />
+          <IconButton icon={ChevronRightIcon} />
         </InputRowButton>
       </Section>
     </View>

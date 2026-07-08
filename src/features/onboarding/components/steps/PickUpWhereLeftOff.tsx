@@ -1,12 +1,13 @@
+import {
+  Cloud as CloudIcon,
+  FileInput as FileInputIcon,
+  FileText as FileTextIcon,
+} from 'lucide-react-native'
+import LucideIcon, { type AppIcon } from '@/components/ui/LucideIcon'
 import { useState } from 'react'
 import { View } from 'react-native'
 import { useNavigation } from '@react-navigation/native'
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
-import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
-import { IconProp } from '@fortawesome/fontawesome-svg-core'
-import { faFileLines } from '@fortawesome/free-solid-svg-icons/faFileLines'
-import { faFileImport } from '@fortawesome/free-solid-svg-icons/faFileImport'
-import { faCloud } from '@fortawesome/free-solid-svg-icons/faCloud'
 import { styles } from '@/features/onboarding/components/Onboarding.styles'
 import OnboardingNav from '@/features/onboarding/components/OnboardingNav'
 import Text from '@/components/ui/MyText'
@@ -37,7 +38,7 @@ const OptionCard = ({
   disabledNoteKey,
   onPress,
 }: {
-  icon: IconProp
+  icon: AppIcon
   color: string
   titleKey: TranslationKey
   descKey: TranslationKey
@@ -67,11 +68,7 @@ const OptionCard = ({
             alignItems: 'center',
           }}
         >
-          <FontAwesomeIcon
-            icon={icon}
-            size={18}
-            color={theme.colors.textInverse}
-          />
+          <LucideIcon icon={icon} size={18} color={theme.colors.textInverse} />
         </View>
         <View style={{ flex: 1 }}>
           <Text style={{ fontFamily: theme.fonts.semiBold }}>
@@ -151,7 +148,7 @@ const PickUpWhereLeftOff = ({ goBack, goNext }: StepProps) => {
           </Text>
 
           <OptionCard
-            icon={faFileLines}
+            icon={FileTextIcon}
             color={theme.colors.cyan}
             titleKey='onboardingPickUp_notes'
             descKey='onboardingPickUp_notesDesc'
@@ -164,14 +161,14 @@ const PickUpWhereLeftOff = ({ goBack, goNext }: StepProps) => {
             }
           />
           <OptionCard
-            icon={faFileImport}
+            icon={FileInputIcon}
             color={theme.colors.indigo}
             titleKey='onboardingPickUp_mytime'
             descKey='onboardingPickUp_mytimeDesc'
             onPress={() => setMode('mytime')}
           />
           <OptionCard
-            icon={faCloud}
+            icon={CloudIcon}
             color={theme.colors.purple}
             titleKey='onboardingPickUp_icloud'
             descKey='onboardingPickUp_icloudDesc'

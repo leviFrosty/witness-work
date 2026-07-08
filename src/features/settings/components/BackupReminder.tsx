@@ -1,3 +1,9 @@
+import {
+  ChevronRight as ChevronRightIcon,
+  TriangleAlert as TriangleAlertIcon,
+  X as XIcon,
+} from 'lucide-react-native'
+import LucideIcon from '@/components/ui/LucideIcon'
 import { View } from 'react-native'
 import useTheme from '@/contexts/theme'
 import Text from '@/components/ui/MyText'
@@ -6,12 +12,8 @@ import Button from '@/components/ui/Button'
 import { usePreferences } from '@/stores/preferences'
 import XView from '@/components/ui/layout/XView'
 import IconButton from '@/components/ui/IconButton'
-import { faChevronRight } from '@fortawesome/free-solid-svg-icons/faChevronRight'
-import { faTimes } from '@fortawesome/free-solid-svg-icons/faTimes'
-import { faWarning } from '@fortawesome/free-solid-svg-icons/faWarning'
 import { useNavigation } from '@react-navigation/native'
 import { RootStackNavigation } from '@/types/rootStack'
-import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
 
 type Props = {
   /**
@@ -46,8 +48,8 @@ const BackupReminder = ({ compact }: Props) => {
         }}
       >
         <XView style={{ gap: 8, flex: 1 }}>
-          <FontAwesomeIcon
-            icon={faWarning}
+          <LucideIcon
+            icon={TriangleAlertIcon}
             color={theme.colors.warn}
             size={theme.fontSize('xs')}
           />
@@ -63,13 +65,13 @@ const BackupReminder = ({ compact }: Props) => {
           </Text>
         </XView>
         <XView style={{ gap: 4 }}>
-          <FontAwesomeIcon
-            icon={faChevronRight}
+          <LucideIcon
+            icon={ChevronRightIcon}
             color={theme.colors.textAlt}
             size={theme.fontSize('xs')}
           />
           <IconButton
-            icon={faTimes}
+            icon={XIcon}
             color={theme.colors.textAlt}
             size='xs'
             onPress={() => set({ lastBackupDate: new Date() })}
@@ -92,7 +94,7 @@ const BackupReminder = ({ compact }: Props) => {
     >
       <XView style={{ justifyContent: 'space-between' }}>
         <XView>
-          <IconButton icon={faWarning} color={theme.colors.error} />
+          <IconButton icon={TriangleAlertIcon} color={theme.colors.error} />
           <Text
             style={{
               fontSize: theme.fontSize('lg'),
@@ -104,7 +106,7 @@ const BackupReminder = ({ compact }: Props) => {
           </Text>
         </XView>
         <IconButton
-          icon={faTimes}
+          icon={XIcon}
           color={theme.colors.text}
           onPress={() => set({ lastBackupDate: new Date() })}
         />

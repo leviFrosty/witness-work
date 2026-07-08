@@ -1,9 +1,11 @@
+import {
+  ChevronRight as ChevronRightIcon,
+  Heart as HeartIcon,
+} from 'lucide-react-native'
+import LucideIcon from '@/components/ui/LucideIcon'
 import { View } from 'react-native'
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
 import { useNavigation } from '@react-navigation/native'
-import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
-import { faChevronRight } from '@fortawesome/free-solid-svg-icons/faChevronRight'
-import { faHeart } from '@fortawesome/free-solid-svg-icons/faHeart'
 import { styles } from '@/features/onboarding/components/Onboarding.styles'
 import OnboardingNav from '@/features/onboarding/components/OnboardingNav'
 import Text from '@/components/ui/MyText'
@@ -173,8 +175,8 @@ const Supporter = ({ goBack, goNext }: Props) => {
             }}
             onPress={() => navigation.navigate('Paywall')}
           >
-            <FontAwesomeIcon
-              icon={faHeart}
+            <LucideIcon
+              icon={HeartIcon}
               size={14}
               color={theme.colors.supporter}
             />
@@ -187,8 +189,8 @@ const Supporter = ({ goBack, goNext }: Props) => {
             >
               {i18n.t('supporterOnboardingLearnMore')}
             </Text>
-            <FontAwesomeIcon
-              icon={faChevronRight}
+            <LucideIcon
+              icon={ChevronRightIcon}
               size={12}
               color={theme.colors.supporter}
             />

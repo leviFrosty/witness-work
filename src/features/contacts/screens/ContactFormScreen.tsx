@@ -1,3 +1,9 @@
+import {
+  CircleQuestionMark as CircleQuestionMarkIcon,
+  Mars as MarsIcon,
+  Venus as VenusIcon,
+} from 'lucide-react-native'
+import LucideIcon from '@/components/ui/LucideIcon'
 import React, { useRef, useState, useCallback, useEffect } from 'react'
 import {
   Alert,
@@ -8,10 +14,6 @@ import {
   View,
 } from 'react-native'
 import { Popover } from 'tamagui'
-import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
-import { faMars } from '@fortawesome/free-solid-svg-icons/faMars'
-import { faQuestion } from '@fortawesome/free-solid-svg-icons/faQuestion'
-import { faVenus } from '@fortawesome/free-solid-svg-icons/faVenus'
 import { GENDER_COLORS } from '@/features/contacts/components/GenderIcon'
 import Text from '@/components/ui/MyText'
 import { NativeStackScreenProps } from '@react-navigation/native-stack'
@@ -666,11 +668,15 @@ const ContactFormScreen = ({ route, navigation }: Props) => {
             >
               {(
                 [
-                  { key: 'male', icon: faMars, color: GENDER_COLORS.male },
-                  { key: 'female', icon: faVenus, color: GENDER_COLORS.female },
+                  { key: 'male', icon: MarsIcon, color: GENDER_COLORS.male },
+                  {
+                    key: 'female',
+                    icon: VenusIcon,
+                    color: GENDER_COLORS.female,
+                  },
                   {
                     key: 'unknown',
-                    icon: faQuestion,
+                    icon: CircleQuestionMarkIcon,
                     color: theme.colors.textAlt,
                   },
                 ] as const
@@ -699,7 +705,7 @@ const ContactFormScreen = ({ route, navigation }: Props) => {
                       borderColor: selected ? color : theme.colors.border,
                     }}
                   >
-                    <FontAwesomeIcon
+                    <LucideIcon
                       icon={icon}
                       size={14}
                       style={{

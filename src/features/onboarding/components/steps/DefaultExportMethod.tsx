@@ -1,10 +1,11 @@
+import {
+  Copy as CopyIcon,
+  Earth as EarthIcon,
+  Hourglass as HourglassIcon,
+  Share as ShareIcon,
+} from 'lucide-react-native'
+import LucideIcon, { type AppIcon } from '@/components/ui/LucideIcon'
 import { View, Pressable } from 'react-native'
-import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
-import { faCopy } from '@fortawesome/free-solid-svg-icons/faCopy'
-import { faArrowUpFromBracket } from '@fortawesome/free-solid-svg-icons/faArrowUpFromBracket'
-import { faHourglass } from '@fortawesome/free-solid-svg-icons/faHourglass'
-import { faEarthAmericas } from '@fortawesome/free-solid-svg-icons/faEarthAmericas'
-import type { IconDefinition } from '@fortawesome/fontawesome-svg-core'
 import i18n from '@/lib/locales'
 import { usePreferences, type ReportExportMethod } from '@/stores/preferences'
 import ActionButton from '@/components/ui/ActionButton'
@@ -21,11 +22,11 @@ interface Props {
   goNext: () => void
 }
 
-const METHOD_ICON: Record<ReportExportMethod, IconDefinition> = {
-  copy: faCopy,
-  share: faArrowUpFromBracket,
-  hourglass: faHourglass,
-  nwpublisher: faEarthAmericas,
+const METHOD_ICON: Record<ReportExportMethod, AppIcon> = {
+  copy: CopyIcon,
+  share: ShareIcon,
+  hourglass: HourglassIcon,
+  nwpublisher: EarthIcon,
 }
 
 const StepDefaultExportMethod = ({ goNext, goBack }: Props) => {
@@ -97,7 +98,7 @@ const StepDefaultExportMethod = ({ goNext, goBack }: Props) => {
                     : theme.colors.card,
                 }}
               >
-                <FontAwesomeIcon
+                <LucideIcon
                   icon={METHOD_ICON[opt.value]}
                   size={18}
                   color={theme.colors.text}

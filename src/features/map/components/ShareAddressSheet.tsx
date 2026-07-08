@@ -1,11 +1,13 @@
+import {
+  Apple as AppleIcon,
+  MapPinned as MapPinnedIcon,
+} from 'lucide-react-native'
 import { Sheet } from 'tamagui'
 import Text from '@/components/ui/MyText'
 import i18n from '@/lib/locales'
 import Button from '@/components/ui/Button'
 import { Share, View } from 'react-native'
 import IconButton from '@/components/ui/IconButton'
-import { faApple } from '@fortawesome/free-brands-svg-icons/faApple'
-import { faGoogle } from '@fortawesome/free-brands-svg-icons/faGoogle'
 import useTheme from '@/contexts/theme'
 
 export type MapShareSheet = {
@@ -80,7 +82,7 @@ const ShareAddressSheet = ({ sheet, setSheet }: Props) => {
             onPress={() => handleShare('apple')}
           >
             <IconButton
-              icon={faApple}
+              icon={AppleIcon}
               iconStyle={{ color: theme.colors.text }}
             />
             <Text style={{ color: theme.colors.text }}>
@@ -95,7 +97,7 @@ const ShareAddressSheet = ({ sheet, setSheet }: Props) => {
           >
             <IconButton
               iconStyle={{ color: theme.colors.text }}
-              icon={faGoogle}
+              icon={MapPinnedIcon}
             />
             <Text style={{ color: theme.colors.text }}>
               {i18n.t('googleMaps')}

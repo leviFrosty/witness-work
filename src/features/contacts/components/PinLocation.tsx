@@ -1,3 +1,4 @@
+import { X as XIcon } from 'lucide-react-native'
 import Card from '@/components/ui/Card'
 import { Sheet, Spinner } from 'tamagui'
 import MapView, { Marker, Region } from 'react-native-maps'
@@ -14,7 +15,6 @@ import Button from '@/components/ui/Button'
 import Text from '@/components/ui/MyText'
 import { View } from 'react-native'
 import IconButton from '@/components/ui/IconButton'
-import { faTimes } from '@fortawesome/free-solid-svg-icons/faTimes'
 import useContacts from '@/stores/contactsStore'
 import { usePreferences } from '@/stores/preferences'
 
@@ -196,7 +196,7 @@ export default function PinLocation(props: {
             </Text>
             <IconButton
               noTransform
-              icon={faTimes}
+              icon={XIcon}
               color={theme.colors.text}
               onPress={() => setOpen(false)}
               size={'lg'}

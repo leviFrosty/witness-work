@@ -1,3 +1,9 @@
+import {
+  Bell as BellIcon,
+  Check as CheckIcon,
+  Timer as TimerIcon,
+} from 'lucide-react-native'
+import LucideIcon from '@/components/ui/LucideIcon'
 import { View } from 'react-native'
 import { useEffect, useMemo } from 'react'
 import Animated, {
@@ -18,10 +24,6 @@ import i18n, { TranslationKey } from '@/lib/locales'
 import { usePreferences } from '@/stores/preferences'
 import { Publisher } from '@/types/publisher'
 import { getEntryMode } from '@/lib/publisherCapabilities'
-import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
-import { faCheck } from '@fortawesome/free-solid-svg-icons/faCheck'
-import { faStopwatch } from '@fortawesome/free-solid-svg-icons/faStopwatch'
-import { faBell } from '@fortawesome/free-solid-svg-icons/faBell'
 
 const EASE = Easing.out(Easing.cubic)
 const PREVIEW_SIZE = 56
@@ -80,7 +82,7 @@ const GoalProgressPreview = ({ color }: { color: string }) => {
           transform={`rotate(-90 ${PREVIEW_SIZE / 2} ${PREVIEW_SIZE / 2})`}
         />
       </Svg>
-      <FontAwesomeIcon icon={faStopwatch} size={18} color={color} />
+      <LucideIcon icon={TimerIcon} size={18} color={color} />
     </View>
   )
 }
@@ -147,8 +149,8 @@ const TimeCheckPreview = ({ color }: { color: string }) => {
           ]}
         />
         <Animated.View style={tickStyle}>
-          <FontAwesomeIcon
-            icon={faCheck}
+          <LucideIcon
+            icon={CheckIcon}
             size={20}
             color={theme.colors.textInverse}
           />
@@ -319,7 +321,7 @@ const RemindersPreview = ({ color }: { color: string }) => {
   return (
     <View style={previewBoxStyle}>
       <Animated.View style={bellStyle}>
-        <FontAwesomeIcon icon={faBell} size={26} color={color} />
+        <LucideIcon icon={BellIcon} size={26} color={color} />
       </Animated.View>
       <Animated.View
         style={[

@@ -1,4 +1,4 @@
-import { faTimes } from '@fortawesome/free-solid-svg-icons/faTimes'
+import { X as XIcon } from 'lucide-react-native'
 import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
 import Card from '@/components/ui/Card'
@@ -29,7 +29,7 @@ export default function MapWarningLocationSharingDisabled(props: {
           {i18n.t('locationSharingDisabled')}
         </Text>
         <IconButton
-          icon={faTimes}
+          icon={XIcon}
           color={theme.colors.text}
           onPress={() => setShow(false)}
           size={'lg'}

@@ -1,10 +1,11 @@
+import {
+  CircleAlert as CircleAlertIcon,
+  Info as InfoIcon,
+  TriangleAlert as TriangleAlertIcon,
+} from 'lucide-react-native'
+import LucideIcon, { type AppIcon } from '@/components/ui/LucideIcon'
 import { View } from 'react-native'
 import Checkbox from 'expo-checkbox'
-import { faCircleExclamation } from '@fortawesome/free-solid-svg-icons/faCircleExclamation'
-import { faCircleInfo } from '@fortawesome/free-solid-svg-icons/faCircleInfo'
-import { faTriangleExclamation } from '@fortawesome/free-solid-svg-icons/faTriangleExclamation'
-import { IconProp } from '@fortawesome/fontawesome-svg-core'
-import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
 import Text from '@/components/ui/MyText'
 import Button from '@/components/ui/Button'
 import useTheme from '@/contexts/theme'
@@ -24,14 +25,14 @@ import type { NotesImportSeverity } from '@/features/notes-import/lib/notesImpor
 export const severityVisual = (
   theme: ReturnType<typeof useTheme>,
   severity: NotesImportSeverity | undefined
-): { color: string; icon: IconProp } => {
+): { color: string; icon: AppIcon } => {
   switch (severity) {
     case 'error':
-      return { color: theme.colors.error, icon: faCircleExclamation }
+      return { color: theme.colors.error, icon: CircleAlertIcon }
     case 'warning':
-      return { color: theme.colors.warnText, icon: faTriangleExclamation }
+      return { color: theme.colors.warnText, icon: TriangleAlertIcon }
     default:
-      return { color: theme.colors.textAlt, icon: faCircleInfo }
+      return { color: theme.colors.textAlt, icon: InfoIcon }
   }
 }
 
@@ -51,7 +52,7 @@ export const WarningLine = ({ warning }: { warning: MappedWarning }) => {
         marginTop: 4,
       }}
     >
-      <FontAwesomeIcon
+      <LucideIcon
         icon={icon}
         size={11}
         color={color}

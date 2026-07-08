@@ -1,6 +1,6 @@
+import { Check as CheckIcon } from 'lucide-react-native'
+import LucideIcon from '@/components/ui/LucideIcon'
 import { Pressable, View } from 'react-native'
-import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
-import { faCheck } from '@fortawesome/free-solid-svg-icons/faCheck'
 import useTheme from '@/contexts/theme'
 import Text from '@/components/ui/MyText'
 import IsSupporter from '@/components/IsSupporter'
@@ -51,8 +51,8 @@ const Swatch = ({
       }}
     >
       {selected && (
-        <FontAwesomeIcon
-          icon={faCheck}
+        <LucideIcon
+          icon={CheckIcon}
           size={14}
           color={theme.colors.textInverse}
         />

@@ -1,9 +1,10 @@
+import {
+  Apple as AppleIcon,
+  MapPinned as MapPinnedIcon,
+  Navigation as NavigationIcon,
+} from 'lucide-react-native'
+import LucideIcon, { type AppIcon } from '@/components/ui/LucideIcon'
 import { View, Pressable } from 'react-native'
-import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
-import { faApple } from '@fortawesome/free-brands-svg-icons/faApple'
-import { faGoogle } from '@fortawesome/free-brands-svg-icons/faGoogle'
-import { faWaze } from '@fortawesome/free-brands-svg-icons/faWaze'
-import type { IconDefinition } from '@fortawesome/fontawesome-svg-core'
 import i18n from '@/lib/locales'
 import {
   usePreferences,
@@ -24,11 +25,11 @@ interface Props {
 
 const PROVIDER_ICON: Record<
   Exclude<DefaultNavigationMapProvider, null>,
-  IconDefinition
+  AppIcon
 > = {
-  apple: faApple,
-  google: faGoogle,
-  waze: faWaze,
+  apple: AppleIcon,
+  google: MapPinnedIcon,
+  waze: NavigationIcon,
 }
 
 const StepDefaultNav = ({ goNext, goBack }: Props) => {
@@ -104,11 +105,7 @@ const StepDefaultNav = ({ goNext, goBack }: Props) => {
                     : theme.colors.card,
                 }}
               >
-                <FontAwesomeIcon
-                  icon={icon}
-                  size={18}
-                  color={theme.colors.text}
-                />
+                <LucideIcon icon={icon} size={18} color={theme.colors.text} />
               </Pressable>
             )
           })}

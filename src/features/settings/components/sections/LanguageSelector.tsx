@@ -1,3 +1,4 @@
+import { Languages as LanguagesIcon } from 'lucide-react-native'
 import { View } from 'react-native'
 import InputRowContainer from '@/components/ui/inputs/InputRowContainer'
 import i18n, {
@@ -11,7 +12,6 @@ import useUserLocalePrefs from '@/features/settings/hooks/useLocale'
 import Text from '@/components/ui/MyText'
 import { getLocales } from 'expo-localization'
 import useTheme from '@/contexts/theme'
-import { faLanguage } from '@fortawesome/free-solid-svg-icons/faLanguage'
 import * as Updates from 'expo-updates'
 import { DevSettings } from 'react-native'
 
@@ -42,7 +42,7 @@ export default function LanguageSelector() {
 
   return (
     <InputRowContainer
-      leftIcon={faLanguage}
+      leftIcon={LanguagesIcon}
       label={i18n.t('language')}
       style={{ justifyContent: 'space-between' }}
       lastInSection

@@ -1,9 +1,11 @@
+import {
+  CircleAlert as CircleAlertIcon,
+  FileInput as FileInputIcon,
+} from 'lucide-react-native'
+import LucideIcon from '@/components/ui/LucideIcon'
 import { View } from 'react-native'
 import { Spinner } from 'tamagui'
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
-import { faCircleExclamation } from '@fortawesome/free-solid-svg-icons/faCircleExclamation'
-import { faFileImport } from '@fortawesome/free-solid-svg-icons/faFileImport'
-import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
 import Text from '@/components/ui/MyText'
 import Wrapper from '@/components/ui/layout/Wrapper'
 import Card from '@/components/ui/Card'
@@ -124,8 +126,8 @@ const MytimeImportScreen = () => {
                   gap: 12,
                 }}
               >
-                <FontAwesomeIcon
-                  icon={faCircleExclamation}
+                <LucideIcon
+                  icon={CircleAlertIcon}
                   size={18}
                   color={theme.colors.textAlt}
                 />
@@ -146,7 +148,7 @@ const MytimeImportScreen = () => {
                 ) : (
                   <XView>
                     <IconButton
-                      icon={faFileImport}
+                      icon={FileInputIcon}
                       color={theme.colors.textInverse}
                     />
                     <Text

@@ -1,8 +1,8 @@
+import { ChevronDown as ChevronDownIcon } from 'lucide-react-native'
+import LucideIcon from '@/components/ui/LucideIcon'
 import React, { PropsWithChildren } from 'react'
 import { Pressable, View } from 'react-native'
 import { MenuView, MenuAction } from '@react-native-menu/menu'
-import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
-import { faChevronDown } from '@fortawesome/free-solid-svg-icons/faChevronDown'
 
 import Text from '@/components/ui/MyText'
 import Button from '@/components/ui/Button'
@@ -137,8 +137,8 @@ const SplitButton = ({
             justifyContent: 'center',
           })}
         >
-          <FontAwesomeIcon
-            icon={faChevronDown}
+          <LucideIcon
+            icon={ChevronDownIcon}
             size={14}
             style={{ color: theme.colors.textInverse }}
           />

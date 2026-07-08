@@ -1,11 +1,13 @@
+import {
+  Cloud as CloudIcon,
+  CloudUpload as CloudUploadIcon,
+  RotateCw as RotateCwIcon,
+  Settings as SettingsIcon,
+  TriangleAlert as TriangleAlertIcon,
+} from 'lucide-react-native'
+import LucideIcon from '@/components/ui/LucideIcon'
 import { useEffect, useState } from 'react'
 import { ActivityIndicator, Alert, View } from 'react-native'
-import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
-import { faCloud } from '@fortawesome/free-solid-svg-icons/faCloud'
-import { faCloudArrowUp } from '@fortawesome/free-solid-svg-icons/faCloudArrowUp'
-import { faRotate } from '@fortawesome/free-solid-svg-icons/faRotate'
-import { faGear } from '@fortawesome/free-solid-svg-icons/faGear'
-import { faTriangleExclamation } from '@fortawesome/free-solid-svg-icons/faTriangleExclamation'
 import { useNavigation } from '@react-navigation/native'
 import { formatRelative } from '@/lib/dates'
 import useTheme from '@/contexts/theme'
@@ -54,10 +56,10 @@ const SyncPopover = () => {
   }, [])
 
   const triggerIcon = !available
-    ? faTriangleExclamation
+    ? TriangleAlertIcon
     : syncing
-      ? faCloudArrowUp
-      : faCloud
+      ? CloudUploadIcon
+      : CloudIcon
   const triggerColor = !iCloudSyncEnabled
     ? theme.colors.textAlt
     : !available
@@ -82,7 +84,7 @@ const SyncPopover = () => {
       renderTrigger={({ onPress, anchorRef }) => (
         <View ref={anchorRef} collapsable={false}>
           <Button onPress={onPress}>
-            <FontAwesomeIcon
+            <LucideIcon
               icon={triggerIcon}
               size={theme.fontSize('lg')}
               style={{ color: triggerColor }}
@@ -127,8 +129,8 @@ const SyncPopover = () => {
             <View
               style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}
             >
-              <FontAwesomeIcon
-                icon={faCloud}
+              <LucideIcon
+                icon={CloudIcon}
                 size={theme.fontSize('md')}
                 style={{ color: theme.colors.text }}
               />
@@ -169,8 +171,8 @@ const SyncPopover = () => {
                 {syncing ? (
                   <ActivityIndicator color={theme.colors.accent} />
                 ) : (
-                  <FontAwesomeIcon
-                    icon={faRotate}
+                  <LucideIcon
+                    icon={RotateCwIcon}
                     size={theme.fontSize('sm')}
                     style={{ color: theme.colors.accent }}
                   />
@@ -197,8 +199,8 @@ const SyncPopover = () => {
                   backgroundColor: theme.colors.backgroundLighter,
                 }}
               >
-                <FontAwesomeIcon
-                  icon={faGear}
+                <LucideIcon
+                  icon={SettingsIcon}
                   size={theme.fontSize('sm')}
                   style={{ color: theme.colors.text }}
                 />

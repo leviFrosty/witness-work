@@ -1,21 +1,26 @@
-import { IconProp } from '@fortawesome/fontawesome-svg-core'
 import Button from '@/components/ui/Button'
-import { Insets, StyleProp, ViewStyle } from 'react-native'
+import type { LucideProps } from 'lucide-react-native'
 import {
-  FontAwesomeIcon,
-  FontAwesomeIconStyle,
-} from '@fortawesome/react-native-fontawesome'
+  Insets,
+  StyleProp,
+  StyleSheet,
+  TextStyle,
+  ViewStyle,
+} from 'react-native'
 import { ThemeContext } from '@/contexts/theme'
 import { useContext } from 'react'
 import { ThemeSizes } from '@/types/theme'
+import type { AppIcon } from '@/components/ui/LucideIcon'
+
+export type IconButtonIcon = AppIcon
 
 type Props = {
-  icon: IconProp
+  icon: IconButtonIcon
   onPress?: () => void
   onLongPress?: () => void
   size?: ThemeSizes | number
   style?: StyleProp<ViewStyle>
-  iconStyle?: FontAwesomeIconStyle
+  iconStyle?: StyleProp<TextStyle>
   color?: string
   noTransform?: boolean
   accessibilityLabel?: string
@@ -42,6 +47,12 @@ const IconButton = ({
 }: Props) => {
   const theme = useContext(ThemeContext)
   const size = typeof _size === 'number' ? _size : theme.fontSize(_size)
+  const Icon = icon
+  const iconStyleWithFallback = [
+    { color: color || theme.colors.textAlt },
+    iconStyle,
+  ] satisfies StyleProp<TextStyle>
+  const iconColor = StyleSheet.flatten(iconStyleWithFallback)?.color
 
   return (
     <Button
@@ -53,10 +64,10 @@ const IconButton = ({
       hitSlop={hitSlop}
       accessibilityLabel={accessibilityLabel}
     >
-      <FontAwesomeIcon
-        icon={icon}
-        style={[[{ color: color || theme.colors.textAlt }], [iconStyle]]}
+      <Icon
+        color={iconColor}
         size={size}
+        style={iconStyleWithFallback as LucideProps['style']}
       />
     </Button>
   )

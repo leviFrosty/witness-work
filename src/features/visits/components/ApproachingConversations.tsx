@@ -1,3 +1,7 @@
+import {
+  Footprints as FootprintsIcon,
+  Pin as PinIcon,
+} from 'lucide-react-native'
 import Text from '@/components/ui/MyText'
 import i18n from '@/lib/locales'
 import DismissableCard from '@/components/DismissableCard'
@@ -8,8 +12,6 @@ import { View } from 'react-native'
 import IconButton from '@/components/ui/IconButton'
 import ApproachingConversationRow from '@/features/visits/components/ApproachingConversationsRow'
 import moment from 'moment'
-import { faPersonRunning } from '@fortawesome/free-solid-svg-icons/faPersonRunning'
-import { faThumbtack } from '@fortawesome/free-solid-svg-icons/faThumbtack'
 
 interface Props {
   conversations: Visit[]
@@ -33,7 +35,7 @@ const ApproachingConversations = ({ conversations }: Props) => {
   const endOfDay = moment().endOf('day').hour(16) // 4:59:59 PM
   const isMorning = now.isBefore(endOfDay)
 
-  const titleIcon = isMorning ? faPersonRunning : faThumbtack
+  const titleIcon = isMorning ? FootprintsIcon : PinIcon
   const titleLabel = isMorning
     ? i18n.t('todaysConversations')
     : i18n.t('upcomingConversations')

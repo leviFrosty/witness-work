@@ -1,15 +1,17 @@
+import {
+  ArrowDown as ArrowDownIcon,
+  ArrowUp as ArrowUpIcon,
+  Plus as PlusIcon,
+  Search as SearchIcon,
+  SlidersHorizontal as SlidersHorizontalIcon,
+} from 'lucide-react-native'
+import LucideIcon from '@/components/ui/LucideIcon'
 import { useEffect, useMemo, useRef } from 'react'
 import { TextInput, useWindowDimensions, View } from 'react-native'
 import { FlashList, FlashListRef } from '@shopify/flash-list'
 import { useNavigation } from '@react-navigation/native'
 import * as Crypto from 'expo-crypto'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { faArrowDown } from '@fortawesome/free-solid-svg-icons/faArrowDown'
-import { faArrowUp } from '@fortawesome/free-solid-svg-icons/faArrowUp'
-import { faPlus } from '@fortawesome/free-solid-svg-icons/faPlus'
-import { faSearch } from '@fortawesome/free-solid-svg-icons/faSearch'
-import { faSliders } from '@fortawesome/free-solid-svg-icons/faSliders'
-import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
 import useTheme from '@/contexts/theme'
 import useContacts from '@/stores/contactsStore'
 import useContactsSearchStore from '@/features/contacts/stores/contactsSearchStore'
@@ -164,7 +166,7 @@ const ContactsScreen = () => {
                 {i18n.t('contacts_screen_title')}
               </Text>
               <IconButton
-                icon={faPlus}
+                icon={PlusIcon}
                 size='lg'
                 style={{
                   backgroundColor: theme.colors.accentTranslucent,
@@ -215,8 +217,8 @@ const ContactsScreen = () => {
                   backgroundColor: theme.colors.background,
                 }}
               >
-                <FontAwesomeIcon
-                  icon={faSearch}
+                <LucideIcon
+                  icon={SearchIcon}
                   size={theme.fontSize('xs')}
                   style={{ color: theme.colors.textAlt }}
                 />
@@ -254,8 +256,8 @@ const ContactsScreen = () => {
                   justifyContent: 'center',
                 }}
               >
-                <FontAwesomeIcon
-                  icon={faSliders}
+                <LucideIcon
+                  icon={SlidersHorizontalIcon}
                   size={theme.fontSize('sm')}
                   style={{
                     color: hasActiveFilters
@@ -303,9 +305,9 @@ const ContactsScreen = () => {
                   marginTop: -4,
                 }}
               >
-                <FontAwesomeIcon
+                <LucideIcon
                   icon={
-                    contactSortDirection === 'asc' ? faArrowUp : faArrowDown
+                    contactSortDirection === 'asc' ? ArrowUpIcon : ArrowDownIcon
                   }
                   size={theme.fontSize('xs')}
                   style={{ color: theme.colors.textAlt }}

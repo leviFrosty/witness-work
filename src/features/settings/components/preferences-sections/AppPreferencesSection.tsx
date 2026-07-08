@@ -1,3 +1,10 @@
+import {
+  Bell as BellIcon,
+  BellOff as BellOffIcon,
+  ChevronRight as ChevronRightIcon,
+  LocateFixed as LocateFixedIcon,
+  Navigation as NavigationIcon,
+} from 'lucide-react-native'
 import { Alert, View } from 'react-native'
 import * as Linking from 'expo-linking'
 import i18n from '@/lib/locales'
@@ -5,11 +12,6 @@ import Section from '@/components/ui/inputs/Section'
 import InputRowButton from '@/features/settings/components/inputs/InputRowButton'
 import { requestLocationPermission } from '@/lib/address'
 import IconButton from '@/components/ui/IconButton'
-import { faBell } from '@fortawesome/free-solid-svg-icons/faBell'
-import { faBellSlash } from '@fortawesome/free-solid-svg-icons/faBellSlash'
-import { faChevronRight } from '@fortawesome/free-solid-svg-icons/faChevronRight'
-import { faLocationArrow } from '@fortawesome/free-solid-svg-icons/faLocationArrow'
-import { faLocationCrosshairs } from '@fortawesome/free-solid-svg-icons/faLocationCrosshairs'
 import { useEffect, useState } from 'react'
 import * as Location from 'expo-location'
 import useNotifications from '@/hooks/notifications'
@@ -52,7 +54,7 @@ const AppPreferencesSection = () => {
     <View style={{ gap: 3 }}>
       <Section>
         <InputRowButton
-          leftIcon={notifications.allowed ? faBell : faBellSlash}
+          leftIcon={notifications.allowed ? BellIcon : BellOffIcon}
           label={
             notifications.allowed
               ? i18n.t('pushNotificationsEnabled')
@@ -60,11 +62,11 @@ const AppPreferencesSection = () => {
           }
           onPress={notifications.allowed ? undefined : askToTakeToSettings}
         >
-          {!notifications.allowed && <IconButton icon={faChevronRight} />}
+          {!notifications.allowed && <IconButton icon={ChevronRightIcon} />}
         </InputRowButton>
         <InputRowButton
           lastInSection
-          leftIcon={locationEnabled ? faLocationArrow : faLocationCrosshairs}
+          leftIcon={locationEnabled ? NavigationIcon : LocateFixedIcon}
           label={
             locationEnabled
               ? i18n.t('locationEnabled')
@@ -78,7 +80,7 @@ const AppPreferencesSection = () => {
                 )
           }
         >
-          {!locationEnabled && <IconButton icon={faChevronRight} />}
+          {!locationEnabled && <IconButton icon={ChevronRightIcon} />}
         </InputRowButton>
       </Section>
     </View>

@@ -1,7 +1,7 @@
+import { ChevronDown as ChevronDownIcon } from 'lucide-react-native'
+import LucideIcon from '@/components/ui/LucideIcon'
 import { StyleProp, View, ViewStyle } from 'react-native'
 import { MenuView, MenuAction } from '@react-native-menu/menu'
-import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
-import { faChevronDown } from '@fortawesome/free-solid-svg-icons/faChevronDown'
 import useTheme from '@/contexts/theme'
 import Text from '@/components/ui/MyText'
 
@@ -76,8 +76,8 @@ const Select = <T,>({
         >
           {selectedLabel ?? placeholder ?? ''}
         </Text>
-        <FontAwesomeIcon
-          icon={faChevronDown}
+        <LucideIcon
+          icon={ChevronDownIcon}
           color={theme.colors.text}
           size={12}
         />

@@ -1,3 +1,4 @@
+import { ChevronRight as ChevronRightIcon } from 'lucide-react-native'
 import { useContext, useMemo } from 'react'
 import { View } from 'react-native'
 import { ThemeContext } from '@/contexts/theme'
@@ -9,7 +10,6 @@ import Button from '@/components/ui/Button'
 import { formatRelative } from '@/lib/dates'
 import { useNavigation } from '@react-navigation/native'
 import IconButton from '@/components/ui/IconButton'
-import { faChevronRight } from '@fortawesome/free-solid-svg-icons/faChevronRight'
 import { RootStackNavigation } from '@/types/rootStack'
 
 const ApproachingConversationRow = ({
@@ -85,7 +85,7 @@ const ApproachingConversationRow = ({
               : ''}
           </Text>
         </View>
-        <IconButton icon={faChevronRight} />
+        <IconButton icon={ChevronRightIcon} />
       </Card>
     </Button>
   )

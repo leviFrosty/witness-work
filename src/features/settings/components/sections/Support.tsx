@@ -1,14 +1,16 @@
+import {
+  ChevronRight as ChevronRightIcon,
+  ExternalLink as ExternalLinkIcon,
+  Globe as GlobeIcon,
+  Heart as HeartIcon,
+  Medal as MedalIcon,
+} from 'lucide-react-native'
+import LucideIcon from '@/components/ui/LucideIcon'
 import { Alert, View } from 'react-native'
 import moment from 'moment'
 import Section from '@/components/ui/inputs/Section'
 import i18n from '@/lib/locales'
 import InputRowButton from '@/features/settings/components/inputs/InputRowButton'
-import { faArrowUpRightFromSquare } from '@fortawesome/free-solid-svg-icons/faArrowUpRightFromSquare'
-import { faChevronRight } from '@fortawesome/free-solid-svg-icons/faChevronRight'
-import { faGlobe } from '@fortawesome/free-solid-svg-icons/faGlobe'
-import { faHeart } from '@fortawesome/free-solid-svg-icons/faHeart'
-import { faRankingStar } from '@fortawesome/free-solid-svg-icons/faRankingStar'
-import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
 import links from '@/constants/links'
 import IconButton from '@/components/ui/IconButton'
 import SectionTitle from '@/features/settings/components/shared/SectionTitle'
@@ -49,8 +51,8 @@ const SupporterCard = () => {
           backgroundColor: theme.colors.supporter,
         }}
       >
-        <FontAwesomeIcon
-          icon={faHeart}
+        <LucideIcon
+          icon={HeartIcon}
           size={13}
           color={theme.colors.textInverse}
         />
@@ -91,14 +93,14 @@ const SupportSection = () => {
 
       <Section>
         <InputRowButton
-          leftIcon={faHeart}
+          leftIcon={HeartIcon}
           label={i18n.t('becomeSupporter')}
           onPress={() => navigation.navigate('Paywall')}
         >
-          <IconButton icon={faChevronRight} />
+          <IconButton icon={ChevronRightIcon} />
         </InputRowButton>
         <InputRowButton
-          leftIcon={faRankingStar}
+          leftIcon={MedalIcon}
           label={i18n.t('rateWitnessWorkOnAppStore')}
           onPress={() => {
             try {
@@ -111,11 +113,11 @@ const SupportSection = () => {
             }
           }}
         >
-          <IconButton icon={faArrowUpRightFromSquare} />
+          <IconButton icon={ExternalLinkIcon} />
         </InputRowButton>
 
         <InputRowButton
-          leftIcon={faGlobe}
+          leftIcon={GlobeIcon}
           label={i18n.t('helpTranslate')}
           onPress={async () => {
             Alert.alert(
@@ -135,7 +137,7 @@ const SupportSection = () => {
           }}
           lastInSection
         >
-          <IconButton icon={faArrowUpRightFromSquare} />
+          <IconButton icon={ExternalLinkIcon} />
         </InputRowButton>
       </Section>
     </View>

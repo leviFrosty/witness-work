@@ -1,8 +1,8 @@
+import { Square as SquareIcon } from 'lucide-react-native'
 import { getMonthsReports } from '@/lib/serviceReport'
 import { useServiceReport } from '@/stores/serviceReport'
 import * as Crypto from 'expo-crypto'
 import LottieView from 'lottie-react-native'
-import { faSquare } from '@fortawesome/free-regular-svg-icons/faSquare'
 import Button from '@/components/ui/Button'
 import { TimeEntry } from '@/types/timeEntry'
 import useTheme from '@/contexts/theme'
@@ -125,7 +125,7 @@ export default function PublisherCheckBoxCard() {
         >
           <View style={{ flexDirection: 'row', gap: 10, alignItems: 'center' }}>
             <IconButton
-              icon={faSquare}
+              icon={SquareIcon}
               size='xl'
               iconStyle={{ color: theme.colors.textInverse }}
             />

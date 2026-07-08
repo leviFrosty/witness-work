@@ -1,3 +1,4 @@
+import { RefreshCw as RefreshCwIcon } from 'lucide-react-native'
 import { View } from 'react-native'
 import * as Sentry from '@sentry/react-native'
 import Purchases, {
@@ -14,7 +15,6 @@ import Card from '@/components/ui/Card'
 import useTheme from '@/contexts/theme'
 import Badge from '@/components/ui/Badge'
 import IconButton from '@/components/ui/IconButton'
-import { faRefresh } from '@fortawesome/free-solid-svg-icons/faRefresh'
 import { LIFETIME_SUPPORTER_ENTITLEMENT } from '@/lib/supporterSince'
 
 /**
@@ -130,7 +130,7 @@ const PreviousDonations = ({
           {i18n.t('yourDonations')}
         </Text>
         <IconButton
-          icon={faRefresh}
+          icon={RefreshCwIcon}
           onPress={revalidate}
           color={theme.colors.textAlt}
         />

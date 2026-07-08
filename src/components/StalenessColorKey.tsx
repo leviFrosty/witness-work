@@ -1,6 +1,6 @@
+import { Pencil as PencilIcon } from 'lucide-react-native'
 import { View } from 'react-native'
 import { useNavigation } from '@react-navigation/native'
-import { faPencil } from '@fortawesome/free-solid-svg-icons/faPencil'
 import useTheme from '@/contexts/theme'
 import i18n, { TranslationKey } from '@/lib/locales'
 import {
@@ -81,7 +81,7 @@ export default function StalenessColorKey({
           </View>
           <IconButton
             hitSlop={20}
-            icon={faPencil}
+            icon={PencilIcon}
             size='sm'
             onPress={goToSettings}
             accessibilityLabel={i18n.t('colorKey_edit')}

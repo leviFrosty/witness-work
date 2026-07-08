@@ -1,3 +1,7 @@
+import {
+  ChevronDown as ChevronDownIcon,
+  Minus as MinusIcon,
+} from 'lucide-react-native'
 import PhoneInput, {
   ICountry,
   ITheme,
@@ -20,8 +24,6 @@ import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
 import Section from '@/components/ui/inputs/Section'
 import IconButton from '@/components/ui/IconButton'
-import { faCaretDown } from '@fortawesome/free-solid-svg-icons/faCaretDown'
-import { faMinus } from '@fortawesome/free-solid-svg-icons/faMinus'
 import Text from '@/components/ui/MyText'
 import XView from '@/components/ui/layout/XView'
 import { RootStackNavigation } from '@/types/rootStack'
@@ -168,7 +170,7 @@ export default function PersonalContactSection({
             return (
               <XView key={def.id}>
                 <IconButton
-                  icon={faMinus}
+                  icon={MinusIcon}
                   color={theme.colors.error}
                   onPress={() => handleDeletePrompt(def.id)}
                   style={{ paddingBottom: isLast ? 0 : 15 }}
@@ -236,7 +238,7 @@ export default function PersonalContactSection({
               theme={colorScheme as ITheme}
               inputMode='numeric'
               clearButtonMode='while-editing'
-              customCaret={<IconButton icon={faCaretDown} />}
+              customCaret={<IconButton icon={ChevronDownIcon} />}
               phoneInputStyles={{
                 container: {
                   borderWidth: 0,

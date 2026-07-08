@@ -1,15 +1,16 @@
+import {
+  Heart as HeartIcon,
+  Menu as MenuIcon,
+  RefreshCw as RefreshCwIcon,
+} from 'lucide-react-native'
 import { createDrawerNavigator } from '@react-navigation/drawer'
 import Header from '@/components/ui/layout/Header'
 import SettingsScreen from '@/features/settings/screens/SettingsScreen'
 import { HomeScreen } from '@/features/home/screens/HomeScreen'
 import IconButton from '@/components/ui/IconButton'
-import { faHeart as faHeartRegular } from '@fortawesome/free-regular-svg-icons/faHeart'
 import { Platform, View } from 'react-native'
 import { useEffect } from 'react'
 import useTheme from '@/contexts/theme'
-import { faArrowsRotate } from '@fortawesome/free-solid-svg-icons/faArrowsRotate'
-import { faBars } from '@fortawesome/free-solid-svg-icons/faBars'
-import { faHeart } from '@fortawesome/free-solid-svg-icons/faHeart'
 import { DevSettings } from 'react-native'
 import { triggerDevRemount } from '@/lib/devRemount'
 import useCustomer from '@/hooks/useCustomer'
@@ -63,7 +64,7 @@ const DrawerNavigator = () => {
             leftElement={
               <View style={{ position: 'relative' }}>
                 <IconButton
-                  icon={faBars}
+                  icon={MenuIcon}
                   size='xl'
                   hitSlop={24}
                   color={theme.colors.text}
@@ -93,7 +94,7 @@ const DrawerNavigator = () => {
               >
                 {__DEV__ && (
                   <IconButton
-                    icon={faArrowsRotate}
+                    icon={RefreshCwIcon}
                     accessibilityLabel='DEV: remount all screens (hold to reload JS)'
                     onPress={triggerDevRemount}
                     onLongPress={() => DevSettings.reload()}
@@ -106,7 +107,7 @@ const DrawerNavigator = () => {
                   !hideDonateHeart && (
                     <IconButton
                       onPress={() => navigation.navigate('Paywall')}
-                      icon={hasPurchasedBefore ? faHeart : faHeartRegular}
+                      icon={hasPurchasedBefore ? HeartIcon : HeartIcon}
                       color={
                         hasPurchasedBefore
                           ? theme.colors.errorAlt

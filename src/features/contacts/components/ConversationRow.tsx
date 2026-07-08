@@ -1,3 +1,9 @@
+import {
+  Bell as BellIcon,
+  BellOff as BellOffIcon,
+  BookOpen as BookOpenIcon,
+  Caravan as CaravanIcon,
+} from 'lucide-react-native'
 import { Alert, View } from 'react-native'
 import Text from '@/components/ui/MyText'
 import { Visit } from '@/types/visit'
@@ -13,10 +19,6 @@ import Haptics from '@/lib/haptics'
 import SwipeableDelete from '@/components/ui/swipeableActions/Delete'
 import SwipeableEdit from '@/components/ui/swipeableActions/Edit'
 import IconButton from '@/components/ui/IconButton'
-import { faBell } from '@fortawesome/free-solid-svg-icons/faBell'
-import { faBellSlash } from '@fortawesome/free-solid-svg-icons/faBellSlash'
-import { faBook } from '@fortawesome/free-solid-svg-icons/faBook'
-import { faCaravan } from '@fortawesome/free-solid-svg-icons/faCaravan'
 import Copyeable from '@/components/ui/Copyeable'
 import Button from '@/components/ui/Button'
 import { RootStackNavigation } from '@/types/rootStack'
@@ -150,7 +152,7 @@ const ConversationRow = ({
                     }}
                   >
                     <IconButton
-                      icon={conversation.notAtHome ? faCaravan : faBook}
+                      icon={conversation.notAtHome ? CaravanIcon : BookOpenIcon}
                       iconStyle={{ color: theme.colors.textInverse }}
                       size='sm'
                     />
@@ -218,7 +220,9 @@ const ConversationRow = ({
                     >
                       <IconButton
                         icon={
-                          conversation.followUp.notifyMe ? faBell : faBellSlash
+                          conversation.followUp.notifyMe
+                            ? BellIcon
+                            : BellOffIcon
                         }
                         iconStyle={{
                           color: notificationHasPassed

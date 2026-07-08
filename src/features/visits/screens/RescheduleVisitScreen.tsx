@@ -1,3 +1,10 @@
+import {
+  Calendar1 as Calendar1Icon,
+  MessageCircle as MessageCircleIcon,
+  Phone as PhoneIcon,
+  SquarePen as SquarePenIcon,
+  Trash2 as Trash2Icon,
+} from 'lucide-react-native'
 import React, { useCallback, useMemo, useState } from 'react'
 import { Alert, Pressable, View } from 'react-native'
 import moment from 'moment'
@@ -7,11 +14,6 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { parsePhoneNumber } from 'awesome-phonenumber'
 import { getLocales } from 'expo-localization'
-import { faPhone } from '@fortawesome/free-solid-svg-icons/faPhone'
-import { faComment } from '@fortawesome/free-solid-svg-icons/faComment'
-import { faPenToSquare } from '@fortawesome/free-solid-svg-icons/faPenToSquare'
-import { faCalendarDay } from '@fortawesome/free-solid-svg-icons/faCalendarDay'
-import { faTrash } from '@fortawesome/free-solid-svg-icons/faTrash'
 
 import Wrapper from '@/components/ui/layout/Wrapper'
 import Text from '@/components/ui/MyText'
@@ -43,7 +45,7 @@ const QuickActionIconButton = ({
   icon,
   onPress,
 }: {
-  icon: typeof faPhone
+  icon: typeof PhoneIcon
   onPress: () => void
 }) => {
   const theme = useTheme()
@@ -81,7 +83,7 @@ const ChoiceCard = ({
   variant = 'primary',
   children,
 }: {
-  icon: typeof faPhone
+  icon: typeof PhoneIcon
   title: string
   description: string
   ctaLabel: string
@@ -576,7 +578,7 @@ const RescheduleVisitScreen = ({ route, navigation }: Props) => {
           {phoneFormatted?.valid ? (
             <View style={{ flexDirection: 'row', gap: 8 }}>
               <QuickActionIconButton
-                icon={faPhone}
+                icon={PhoneIcon}
                 onPress={() =>
                   handleCall(
                     contact,
@@ -586,7 +588,7 @@ const RescheduleVisitScreen = ({ route, navigation }: Props) => {
                 }
               />
               <QuickActionIconButton
-                icon={faComment}
+                icon={MessageCircleIcon}
                 onPress={() =>
                   handleMessage(
                     contact,
@@ -603,7 +605,7 @@ const RescheduleVisitScreen = ({ route, navigation }: Props) => {
             secondary (log the visit that already happened) is outlined. */}
         <View>
           <ChoiceCard
-            icon={faCalendarDay}
+            icon={Calendar1Icon}
             title={i18n.t('pickNewDate')}
             description={i18n.t('rescheduleDescription')}
             ctaLabel={i18n.t('reschedule')}
@@ -628,7 +630,7 @@ const RescheduleVisitScreen = ({ route, navigation }: Props) => {
           <OrDivider />
 
           <ChoiceCard
-            icon={faPenToSquare}
+            icon={SquarePenIcon}
             title={i18n.t('alreadyHadVisit')}
             description={i18n.t('alreadyHadVisitDescription')}
             ctaLabel={i18n.t('logVisit')}
@@ -649,7 +651,7 @@ const RescheduleVisitScreen = ({ route, navigation }: Props) => {
           }}
         >
           <IconButton
-            icon={faTrash}
+            icon={Trash2Icon}
             size={12}
             iconStyle={{ color: theme.colors.textAlt }}
           />

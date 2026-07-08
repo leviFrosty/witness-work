@@ -1,9 +1,11 @@
+import {
+  CircleCheck as CircleCheckIcon,
+  Share as ShareIcon,
+  X as XIcon,
+} from 'lucide-react-native'
+import LucideIcon from '@/components/ui/LucideIcon'
 import { Sheet } from 'tamagui'
 import { View } from 'react-native'
-import { faCircleCheck } from '@fortawesome/free-solid-svg-icons/faCircleCheck'
-import { faShareFromSquare } from '@fortawesome/free-solid-svg-icons/faShareFromSquare'
-import { faTimes } from '@fortawesome/free-solid-svg-icons/faTimes'
-import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
 import useTheme from '@/contexts/theme'
 import Text from '@/components/ui/MyText'
 import IconButton from '@/components/ui/IconButton'
@@ -93,7 +95,7 @@ const NotesImportHelpSheet = ({ open, setOpen }: Props) => {
             </View>
             <IconButton
               noTransform
-              icon={faTimes}
+              icon={XIcon}
               size='xl'
               onPress={() => setOpen(false)}
               accessibilityLabel={i18n.t('close')}
@@ -105,8 +107,8 @@ const NotesImportHelpSheet = ({ open, setOpen }: Props) => {
             <View
               style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}
             >
-              <FontAwesomeIcon
-                icon={faShareFromSquare}
+              <LucideIcon
+                icon={ShareIcon}
                 size={16}
                 color={theme.colors.accent}
               />
@@ -156,8 +158,8 @@ const NotesImportHelpSheet = ({ open, setOpen }: Props) => {
                   gap: 10,
                 }}
               >
-                <FontAwesomeIcon
-                  icon={faCircleCheck}
+                <LucideIcon
+                  icon={CircleCheckIcon}
                   size={15}
                   color={theme.colors.accent}
                   style={{ marginTop: 2 }}

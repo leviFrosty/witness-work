@@ -1,3 +1,4 @@
+import { X as XIcon } from 'lucide-react-native'
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 import {
   Pressable,
@@ -6,7 +7,6 @@ import {
   TextInput,
   View,
 } from 'react-native'
-import { faTimes } from '@fortawesome/free-solid-svg-icons/faTimes'
 
 import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
@@ -439,7 +439,7 @@ const ContactsFilterSheet: React.FC<ContactsFilterSheetProps> = ({
           <IconButton
             onPress={handleCancel}
             size={20}
-            icon={faTimes}
+            icon={XIcon}
             color={theme.colors.text}
           />
         </View>

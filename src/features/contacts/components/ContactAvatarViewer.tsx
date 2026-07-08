@@ -1,3 +1,12 @@
+import {
+  Download as DownloadIcon,
+  Info as InfoIcon,
+  RotateCcw as RotateCcwIcon,
+  Share as ShareIcon,
+  SquarePen as SquarePenIcon,
+  X as XIcon,
+} from 'lucide-react-native'
+import LucideIcon from '@/components/ui/LucideIcon'
 import { useEffect, useMemo, useState } from 'react'
 import {
   ActivityIndicator,
@@ -28,13 +37,6 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
-import { faArrowUpFromBracket } from '@fortawesome/free-solid-svg-icons/faArrowUpFromBracket'
-import { faCircleInfo } from '@fortawesome/free-solid-svg-icons/faCircleInfo'
-import { faDownload } from '@fortawesome/free-solid-svg-icons/faDownload'
-import { faPenToSquare } from '@fortawesome/free-solid-svg-icons/faPenToSquare'
-import { faRotateLeft } from '@fortawesome/free-solid-svg-icons/faRotateLeft'
-import { faXmark } from '@fortawesome/free-solid-svg-icons/faXmark'
 import { formatDateTime } from '@/lib/dates'
 import useTheme from '@/contexts/theme'
 import Text from '@/components/ui/MyText'
@@ -73,7 +75,7 @@ const HeaderButton = ({
   onPress,
   label,
 }: {
-  icon: typeof faXmark
+  icon: typeof XIcon
   onPress: () => void
   label: string
 }) => {
@@ -109,7 +111,7 @@ const HeaderButton = ({
             backgroundColor: 'transparent',
           }}
         >
-          <FontAwesomeIcon icon={icon} size={16} color='#fff' />
+          <LucideIcon icon={icon} size={16} color='#fff' />
         </View>
       </View>
     </Pressable>
@@ -123,7 +125,7 @@ const ToolbarButton = ({
   disabled,
   destructive,
 }: {
-  icon: typeof faXmark
+  icon: typeof XIcon
   label: string
   onPress: () => void
   disabled?: boolean
@@ -146,7 +148,7 @@ const ToolbarButton = ({
         opacity: disabled ? 0.4 : 1,
       }}
     >
-      <FontAwesomeIcon icon={icon} size={20} color={tint} />
+      <LucideIcon icon={icon} size={20} color={tint} />
       <Text style={{ color: tint, fontSize: 11 }}>{label}</Text>
     </Pressable>
   )
@@ -478,12 +480,12 @@ const ContactAvatarViewer = ({ visible, contact, onClose }: Props) => {
           }}
         >
           <HeaderButton
-            icon={faXmark}
+            icon={XIcon}
             onPress={onClose}
             label={i18n.t('cancel')}
           />
           <HeaderButton
-            icon={faCircleInfo}
+            icon={InfoIcon}
             onPress={() => setInfoOpen((v) => !v)}
             label={i18n.t('photoInfo')}
           />
@@ -545,25 +547,25 @@ const ContactAvatarViewer = ({ visible, contact, onClose }: Props) => {
             }}
           >
             <ToolbarButton
-              icon={faPenToSquare}
+              icon={SquarePenIcon}
               label={i18n.t('editPhoto')}
               onPress={handleEdit}
               disabled={busy}
             />
             <ToolbarButton
-              icon={faDownload}
+              icon={DownloadIcon}
               label={i18n.t('savePhoto')}
               onPress={handleSave}
               disabled={busy}
             />
             <ToolbarButton
-              icon={faArrowUpFromBracket}
+              icon={ShareIcon}
               label={i18n.t('sharePhoto')}
               onPress={handleShare}
               disabled={busy}
             />
             <ToolbarButton
-              icon={faRotateLeft}
+              icon={RotateCcwIcon}
               label={i18n.t('resetPhoto')}
               onPress={handleReset}
               disabled={busy || !hasOriginal}

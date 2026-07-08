@@ -1,3 +1,8 @@
+import {
+  Building as BuildingIcon,
+  Navigation as NavigationIcon,
+} from 'lucide-react-native'
+import LucideIcon from '@/components/ui/LucideIcon'
 import { useEffect } from 'react'
 import { View, StyleSheet } from 'react-native'
 import Animated, {
@@ -13,9 +18,6 @@ import Animated, {
 } from 'react-native-reanimated'
 import { scheduleOnUI } from 'react-native-worklets'
 import Svg, { Rect, Path, Circle } from 'react-native-svg'
-import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
-import { faBuilding } from '@fortawesome/free-solid-svg-icons/faBuilding'
-import { faLocationArrow } from '@fortawesome/free-solid-svg-icons/faLocationArrow'
 import Text from '@/components/ui/MyText'
 import useTheme from '@/contexts/theme'
 import i18n, { TranslationKey } from '@/lib/locales'
@@ -385,8 +387,8 @@ const NavMapPreview = ({ provider }: Props) => {
           <View
             style={[styles.originPin, { backgroundColor: theme.colors.text }]}
           >
-            <FontAwesomeIcon
-              icon={faBuilding}
+            <LucideIcon
+              icon={BuildingIcon}
               size={11}
               color={theme.colors.card}
             />
@@ -526,11 +528,7 @@ const NavMapPreview = ({ provider }: Props) => {
             startPressStyle,
           ]}
         >
-          <FontAwesomeIcon
-            icon={faLocationArrow}
-            size={11}
-            color={mt.startFg}
-          />
+          <LucideIcon icon={NavigationIcon} size={11} color={mt.startFg} />
           <Text
             style={{
               fontSize: 12,
@@ -607,7 +605,7 @@ const DestinationPin = ({
             borderColor: '#FFFFFF',
           }}
         >
-          <FontAwesomeIcon icon={faLocationArrow} size={10} color={'#1E2150'} />
+          <LucideIcon icon={NavigationIcon} size={10} color={'#1E2150'} />
         </View>
         <View
           style={{

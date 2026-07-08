@@ -1,3 +1,7 @@
+import {
+  ArrowDown as ArrowDownIcon,
+  ArrowUp as ArrowUpIcon,
+} from 'lucide-react-native'
 import { Switch, View } from 'react-native'
 import i18n from '@/lib/locales'
 import Section from '@/components/ui/inputs/Section'
@@ -14,8 +18,6 @@ import XView from '@/components/ui/layout/XView'
 import { rowPaddingVertical } from '@/constants/Inputs'
 import useDevice from '@/hooks/useDevice'
 import IconButton from '@/components/ui/IconButton'
-import { faArrowDown } from '@fortawesome/free-solid-svg-icons/faArrowDown'
-import { faArrowUp } from '@fortawesome/free-solid-svg-icons/faArrowUp'
 import { useMemo } from 'react'
 
 const DetailedProgressBar = () => {
@@ -209,7 +211,7 @@ const HomeElements = () => {
               <XView style={{ justifyContent: 'space-between', gap: 6 }}>
                 <XView style={{ gap: 8 }}>
                   <IconButton
-                    icon={faArrowUp}
+                    icon={ArrowUpIcon}
                     onPress={isFirst ? undefined : () => move(idx, -1)}
                     color={isFirst ? theme.colors.border : theme.colors.textAlt}
                     // Asymmetric slop so the up arrow's right-slop and the
@@ -219,7 +221,7 @@ const HomeElements = () => {
                     hitSlop={{ top: 10, bottom: 10, left: 10, right: 0 }}
                   />
                   <IconButton
-                    icon={faArrowDown}
+                    icon={ArrowDownIcon}
                     onPress={isLast ? undefined : () => move(idx, 1)}
                     color={isLast ? theme.colors.border : theme.colors.textAlt}
                     hitSlop={{ top: 10, bottom: 10, left: 0, right: 10 }}

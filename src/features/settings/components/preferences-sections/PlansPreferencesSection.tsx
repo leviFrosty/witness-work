@@ -1,6 +1,6 @@
+import { ChevronRight as ChevronRightIcon } from 'lucide-react-native'
 import { Switch, View } from 'react-native'
 import { useState } from 'react'
-import { faChevronRight } from '@fortawesome/free-solid-svg-icons/faChevronRight'
 import Text from '@/components/ui/MyText'
 import useTheme from '@/contexts/theme'
 import i18n, { TranslationKey } from '@/lib/locales'
@@ -145,7 +145,7 @@ const PlansPreferencesSection = () => {
           <Text style={{ color: theme.colors.textAlt }}>
             {availabilitySummary}
           </Text>
-          <IconButton icon={faChevronRight} />
+          <IconButton icon={ChevronRightIcon} />
         </InputRowButton>
       </Section>
       <AvailabilityOnboardingSheet

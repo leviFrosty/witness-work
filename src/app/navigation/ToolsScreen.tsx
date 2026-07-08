@@ -1,3 +1,4 @@
+import { RotateCw as RotateCwIcon } from 'lucide-react-native'
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
 import Text from '@/components/ui/MyText'
 import i18n from '@/lib/locales'
@@ -36,7 +37,6 @@ import * as ICloudBridge from '../../../modules/icloud-bridge/index'
 import * as Notifications from 'expo-notifications'
 import { splitDateAndStartTime } from '@/lib/normalizeDate'
 import IconButton from '@/components/ui/IconButton'
-import { faRotate } from '@fortawesome/free-solid-svg-icons/faRotate'
 import useCelebrationQueue from '@/features/service-reports/stores/celebrationQueue'
 import { monthCelebrationKey } from '@/lib/achievementTier'
 import { milestoneCelebrationKey } from '@/lib/milestones'
@@ -1333,7 +1333,7 @@ export default function ToolsScreen() {
               Scheduled (OS queue)
             </Text>
             <IconButton
-              icon={faRotate}
+              icon={RotateCwIcon}
               color={theme.colors.text}
               onPress={async () => {
                 const count = await refreshScheduledNotifications()

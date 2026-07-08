@@ -1,6 +1,6 @@
+import { X as XIcon } from 'lucide-react-native'
 import { useNavigation } from '@react-navigation/native'
 import { Pressable, View } from 'react-native'
-import { faXmark } from '@fortawesome/free-solid-svg-icons/faXmark'
 import moment from 'moment'
 
 import Text from '@/components/ui/MyText'
@@ -75,7 +75,7 @@ const OnboardingBackfillBanner = () => {
         </Text>
       </Pressable>
       <IconButton
-        icon={faXmark}
+        icon={XIcon}
         size={16}
         color={theme.colors.textAlt}
         onPress={() => set({ serviceYearCatchUpStatus: 'dismissed' })}

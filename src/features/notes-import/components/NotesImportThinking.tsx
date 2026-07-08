@@ -1,7 +1,7 @@
+import { Timer as TimerIcon } from 'lucide-react-native'
+import LucideIcon from '@/components/ui/LucideIcon'
 import { useEffect, useState } from 'react'
 import { View } from 'react-native'
-import { faStopwatch } from '@fortawesome/free-solid-svg-icons/faStopwatch'
-import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
 import Text from '@/components/ui/MyText'
 import ShimmerText from '@/components/ui/ShimmerText'
 import useTheme from '@/contexts/theme'
@@ -140,8 +140,8 @@ const NotesImportThinking = ({
 
         {showInferenceStats ? (
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 7 }}>
-            <FontAwesomeIcon
-              icon={faStopwatch}
+            <LucideIcon
+              icon={TimerIcon}
               size={11}
               color={theme.colors.textAlt}
             />

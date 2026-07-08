@@ -1,3 +1,4 @@
+import { X as XIcon } from 'lucide-react-native'
 import { useCallback, useEffect, useState } from 'react'
 import { Pressable, View } from 'react-native'
 import { Sheet } from 'tamagui'
@@ -6,7 +7,6 @@ import Text from '@/components/ui/MyText'
 import Button from '@/components/ui/Button'
 import IconButton from '@/components/ui/IconButton'
 import useTheme from '@/contexts/theme'
-import { faTimes } from '@fortawesome/free-solid-svg-icons/faTimes'
 
 import i18n, { TranslationKey } from '@/lib/locales'
 import { usePreferences } from '@/stores/preferences'
@@ -123,7 +123,7 @@ const AvailabilityOnboardingSheet = ({
             >
               {i18n.t('availability.onboarding.title')}
             </Text>
-            <IconButton noTransform icon={faTimes} onPress={handleSkip} />
+            <IconButton noTransform icon={XIcon} onPress={handleSkip} />
           </View>
           <Text
             style={{

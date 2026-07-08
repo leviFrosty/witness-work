@@ -1,3 +1,5 @@
+import { Info as InfoIcon } from 'lucide-react-native'
+import LucideIcon from '@/components/ui/LucideIcon'
 import { useEffect, useState } from 'react'
 import {
   ActivityIndicator,
@@ -9,8 +11,6 @@ import {
 } from 'react-native'
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
 import { Popover } from 'tamagui'
-import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
-import { faCircleInfo } from '@fortawesome/free-solid-svg-icons/faCircleInfo'
 import Wrapper from '@/components/ui/layout/Wrapper'
 import Section from '@/components/ui/inputs/Section'
 import InputRowContainer from '@/components/ui/inputs/InputRowContainer'
@@ -437,8 +437,8 @@ const PreferencesiCloudScreenInner = () => {
                       >
                         {i18n.t('beta')}
                       </Text>
-                      <FontAwesomeIcon
-                        icon={faCircleInfo}
+                      <LucideIcon
+                        icon={InfoIcon}
                         size={theme.fontSize('xs')}
                         style={{ color: theme.colors.accent }}
                       />

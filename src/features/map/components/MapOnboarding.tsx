@@ -1,4 +1,9 @@
 import {
+  Check as CheckIcon,
+  CircleAlert as CircleAlertIcon,
+} from 'lucide-react-native'
+import LucideIcon from '@/components/ui/LucideIcon'
+import {
   ActivityIndicator,
   Alert,
   FlatList,
@@ -30,9 +35,6 @@ import Button from '@/components/ui/Button'
 import { HomeTabStackNavigation } from '@/types/homeStack'
 import MapKey from '@/features/map/components/MapColorKey'
 import Checkbox from 'expo-checkbox'
-import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
-import { faCheck } from '@fortawesome/free-solid-svg-icons/faCheck'
-import { faCircleExclamation } from '@fortawesome/free-solid-svg-icons/faCircleExclamation'
 
 type FetchStatus = 'idle' | 'loading' | 'success' | 'error'
 
@@ -245,15 +247,15 @@ export default function MapOnboarding() {
             <ActivityIndicator size='small' color={theme.colors.accent} />
           )}
           {status === 'success' && (
-            <FontAwesomeIcon
-              icon={faCheck}
+            <LucideIcon
+              icon={CheckIcon}
               color={theme.colors.accent}
               size={14}
             />
           )}
           {status === 'error' && (
-            <FontAwesomeIcon
-              icon={faCircleExclamation}
+            <LucideIcon
+              icon={CircleAlertIcon}
               color={theme.colors.warn}
               size={14}
             />

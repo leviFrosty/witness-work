@@ -1,17 +1,19 @@
+import {
+  BookUser as BookUserIcon,
+  CalendarDays as CalendarDaysIcon,
+  ChartLine as ChartLineIcon,
+  CircleQuestionMark as CircleQuestionMarkIcon,
+  House as HouseIcon,
+  MapPinned as MapPinnedIcon,
+  Plus as PlusIcon,
+  Wrench as WrenchIcon,
+} from 'lucide-react-native'
 import { useState } from 'react'
 import { Pressable, StyleSheet, View } from 'react-native'
 import { BottomTabBarProps } from '@react-navigation/bottom-tabs'
 import { BlurView } from 'expo-blur'
 import { GlassView, isLiquidGlassAvailable } from 'expo-glass-effect'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { faAddressBook } from '@fortawesome/free-solid-svg-icons/faAddressBook'
-import { faCalendarDays } from '@fortawesome/free-solid-svg-icons/faCalendarDays'
-import { faChartLine } from '@fortawesome/free-solid-svg-icons/faChartLine'
-import { faHome } from '@fortawesome/free-solid-svg-icons/faHome'
-import { faMapLocation } from '@fortawesome/free-solid-svg-icons/faMapLocation'
-import { faPlus } from '@fortawesome/free-solid-svg-icons/faPlus'
-import { faQuestion } from '@fortawesome/free-solid-svg-icons/faQuestion'
-import { faWrench } from '@fortawesome/free-solid-svg-icons/faWrench'
 
 import useTheme from '@/contexts/theme'
 import useGlassColorScheme from '@/hooks/useGlassColorScheme'
@@ -69,19 +71,19 @@ const TabBar = ({ state, descriptors, ...props }: BottomTabBarProps) => {
     const icon = (() => {
       switch (label) {
         case 'Home':
-          return faHome
+          return HouseIcon
         case 'Contacts':
-          return faAddressBook
+          return BookUserIcon
         case 'Map':
-          return faMapLocation
+          return MapPinnedIcon
         case 'Tools':
-          return faWrench
+          return WrenchIcon
         case 'Progress':
-          return faChartLine
+          return ChartLineIcon
         case 'Schedule':
-          return faCalendarDays
+          return CalendarDaysIcon
         default:
-          return faQuestion
+          return CircleQuestionMarkIcon
       }
     })()
 
@@ -190,7 +192,7 @@ const TabBar = ({ state, descriptors, ...props }: BottomTabBarProps) => {
         backgroundColor: 'transparent',
       }}
     >
-      <IconButton icon={faPlus} color={theme.colors.textInverse} size={22} />
+      <IconButton icon={PlusIcon} color={theme.colors.textInverse} size={22} />
     </Button>
   )
 

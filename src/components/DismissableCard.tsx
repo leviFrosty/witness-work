@@ -1,6 +1,6 @@
+import { X as XIcon } from 'lucide-react-native'
 import { ColorValue, StyleProp, View, ViewStyle } from 'react-native'
 import { ReactNode, useState } from 'react'
-import { faTimes } from '@fortawesome/free-solid-svg-icons/faTimes'
 import useTheme from '@/contexts/theme'
 import CardWithTitle from '@/components/CardWithTitle'
 import IconButton from '@/components/ui/IconButton'
@@ -38,7 +38,7 @@ const DismissableCard = ({
     <View style={{ flexDirection: 'row', gap: 10, alignItems: 'center' }}>
       <View style={{ flex: 1 }}>{title}</View>
       <IconButton
-        icon={faTimes}
+        icon={XIcon}
         color={dismissIconColor ?? theme.colors.textAlt}
         onPress={handleDismiss}
       />

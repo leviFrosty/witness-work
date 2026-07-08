@@ -1,6 +1,6 @@
+import { Share as ShareIcon } from 'lucide-react-native'
+import LucideIcon from '@/components/ui/LucideIcon'
 import { useNavigation } from '@react-navigation/native'
-import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
-import { faArrowUpFromBracket } from '@fortawesome/free-solid-svg-icons/faArrowUpFromBracket'
 import moment from 'moment'
 import Button from '@/components/ui/Button'
 import ShimmerText from '@/components/ui/ShimmerText'
@@ -50,8 +50,8 @@ const SubmitPreviousReportButton = () => {
         borderCurve: 'continuous',
       }}
     >
-      <FontAwesomeIcon
-        icon={faArrowUpFromBracket}
+      <LucideIcon
+        icon={ShareIcon}
         size={theme.fontSize('sm')}
         style={{ color: theme.colors.textInverse }}
       />

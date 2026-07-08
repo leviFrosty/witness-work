@@ -1,7 +1,7 @@
+import { Pencil as PencilIcon } from 'lucide-react-native'
+import LucideIcon from '@/components/ui/LucideIcon'
 import { useState } from 'react'
 import { Pressable, StyleProp, View, ViewStyle } from 'react-native'
-import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
-import { faPencil } from '@fortawesome/free-solid-svg-icons/faPencil'
 import useTheme from '@/contexts/theme'
 import i18n, { TranslationKey } from '@/lib/locales'
 import {
@@ -195,8 +195,8 @@ const ColorKeyPreferencesSection = () => {
                     justifyContent: 'center',
                   }}
                 >
-                  <FontAwesomeIcon
-                    icon={faPencil}
+                  <LucideIcon
+                    icon={PencilIcon}
                     size={9}
                     color={theme.colors.textAlt}
                   />

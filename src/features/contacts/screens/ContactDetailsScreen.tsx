@@ -1,3 +1,15 @@
+import {
+  BookOpen as BookOpenIcon,
+  Caravan as CaravanIcon,
+  EllipsisVertical as EllipsisVerticalIcon,
+  Mail as MailIcon,
+  MessageCircle as MessageCircleIcon,
+  MessagesSquare as MessagesSquareIcon,
+  Phone as PhoneIcon,
+  Plus as PlusIcon,
+  Share as ShareIcon,
+  Star as StarIcon,
+} from 'lucide-react-native'
 import { View, ScrollView, Share, Alert, Pressable } from 'react-native'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import Text from '@/components/ui/MyText'
@@ -28,17 +40,6 @@ import Wrapper from '@/components/ui/layout/Wrapper'
 import { StatusBar } from 'expo-status-bar'
 import IconButton from '@/components/ui/IconButton'
 import { logger } from '@/lib/logger'
-import { faArrowUpFromBracket } from '@fortawesome/free-solid-svg-icons/faArrowUpFromBracket'
-import { faBook } from '@fortawesome/free-solid-svg-icons/faBook'
-import { faCaravan } from '@fortawesome/free-solid-svg-icons/faCaravan'
-import { faComment } from '@fortawesome/free-solid-svg-icons/faComment'
-import { faComments } from '@fortawesome/free-solid-svg-icons/faComments'
-import { faEllipsisVertical } from '@fortawesome/free-solid-svg-icons/faEllipsisVertical'
-import { faEnvelope } from '@fortawesome/free-solid-svg-icons/faEnvelope'
-import { faPhone } from '@fortawesome/free-solid-svg-icons/faPhone'
-import { faPlus } from '@fortawesome/free-solid-svg-icons/faPlus'
-import { faStar } from '@fortawesome/free-solid-svg-icons/faStar'
-import { faStar as faStarOutline } from '@fortawesome/free-regular-svg-icons/faStar'
 import Copyeable from '@/components/ui/Copyeable'
 import Button from '@/components/ui/Button'
 import { Sheet } from 'tamagui'
@@ -127,13 +128,13 @@ const PhoneRow = ({ contact }: { contact: Contact }) => {
           }}
         >
           <IconButton
-            icon={faPhone}
+            icon={PhoneIcon}
             size='lg'
             iconStyle={{ color: theme.colors.accent }}
             onPress={() => handleCall(contact, formatted, navigation)}
           />
           <IconButton
-            icon={faComment}
+            icon={MessageCircleIcon}
             size='lg'
             iconStyle={{ color: theme.colors.accent }}
             onPress={() => handleMessage(contact, formatted, navigation)}
@@ -272,7 +273,10 @@ const Hero = ({
                   'L'
                 )}`}
           </Text>
-          <IconButton icon={faBook} iconStyle={{ color: heroForeground }} />
+          <IconButton
+            icon={BookOpenIcon}
+            iconStyle={{ color: heroForeground }}
+          />
         </View>
       )}
       {!isActiveBibleStudy && hasStudiedPreviously && (
@@ -532,7 +536,7 @@ const EmailRow = ({ contact }: { contact: Contact }) => {
           <IconButton
             size='lg'
             iconStyle={{ color: theme.colors.accent }}
-            icon={faEnvelope}
+            icon={MailIcon}
           />
         </View>
       </Button>
@@ -633,7 +637,7 @@ const AddSheet = ({
           >
             <IconButton
               iconStyle={{ color: theme.colors.text }}
-              icon={faCaravan}
+              icon={CaravanIcon}
             />
             <Text
               style={{
@@ -651,7 +655,7 @@ const AddSheet = ({
             onPress={async () => handleAction('conversation')}
           >
             <IconButton
-              icon={faComments}
+              icon={MessagesSquareIcon}
               iconStyle={{
                 color: theme.colors.textInverse,
               }}
@@ -957,11 +961,14 @@ const ContactDetailsScreen = ({ route, navigation }: Props) => {
                   handleContactMenuAction(nativeEvent.event)
                 }
               >
-                <IconButton icon={faEllipsisVertical} color={heroForeground} />
+                <IconButton
+                  icon={EllipsisVerticalIcon}
+                  color={heroForeground}
+                />
               </MenuView>
 
               <IconButton
-                icon={contact?.isFavorite ? faStar : faStarOutline}
+                icon={contact?.isFavorite ? StarIcon : StarIcon}
                 color={heroForeground}
                 onPress={() => {
                   if (contact) {
@@ -971,7 +978,7 @@ const ContactDetailsScreen = ({ route, navigation }: Props) => {
               />
 
               <IconButton
-                icon={faArrowUpFromBracket}
+                icon={ShareIcon}
                 color={heroForeground}
                 onPress={handleExportContact}
               />
@@ -988,7 +995,7 @@ const ContactDetailsScreen = ({ route, navigation }: Props) => {
                 >
                   <IconButton
                     iconStyle={{ color: heroForeground }}
-                    icon={faPlus}
+                    icon={PlusIcon}
                   />
                   <Text style={{ color: heroForeground }}>{i18n.t('add')}</Text>
                 </XView>
@@ -1142,7 +1149,7 @@ const ContactDetailsScreen = ({ route, navigation }: Props) => {
                   >
                     <IconButton
                       iconStyle={{ color: theme.colors.text }}
-                      icon={faPlus}
+                      icon={PlusIcon}
                       size={'sm'}
                     />
                     <Text

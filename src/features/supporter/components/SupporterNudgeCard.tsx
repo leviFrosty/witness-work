@@ -1,7 +1,7 @@
+import { Heart as HeartIcon } from 'lucide-react-native'
+import LucideIcon from '@/components/ui/LucideIcon'
 import { View } from 'react-native'
 import { useNavigation } from '@react-navigation/native'
-import { faHeart } from '@fortawesome/free-solid-svg-icons/faHeart'
-import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
 import Text from '@/components/ui/MyText'
 import Button from '@/components/ui/Button'
 import XView from '@/components/ui/layout/XView'
@@ -44,11 +44,7 @@ const SupporterNudgeCard = () => {
       }}
     >
       <XView style={{ gap: 8 }}>
-        <FontAwesomeIcon
-          icon={faHeart}
-          size={14}
-          color={theme.colors.supporter}
-        />
+        <LucideIcon icon={HeartIcon} size={14} color={theme.colors.supporter} />
         <Text
           style={{
             fontSize: theme.fontSize('lg'),

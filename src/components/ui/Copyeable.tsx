@@ -1,3 +1,4 @@
+import { ChevronDown as ChevronDownIcon } from 'lucide-react-native'
 import {
   View,
   GestureResponderEvent,
@@ -18,7 +19,6 @@ import Animated, {
 import i18n from '@/lib/locales'
 import { ThemeContext } from '@/contexts/theme'
 import IconButton from '@/components/ui/IconButton'
-import { faCaretDown } from '@fortawesome/free-solid-svg-icons/faCaretDown'
 
 const AnimatedView = Animated.createAnimatedComponent(View)
 
@@ -116,7 +116,7 @@ const Copyeable: React.FC<PropsWithChildren<Props>> = ({
                 left: -4,
                 bottom: -22,
               }}
-              icon={faCaretDown}
+              icon={ChevronDownIcon}
               iconStyle={{ color: theme.colors.backgroundLighter }}
             />
           </View>

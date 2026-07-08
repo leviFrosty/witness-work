@@ -1,4 +1,11 @@
 import {
+  CircleAlert as CircleAlertIcon,
+  Download as DownloadIcon,
+  History as HistoryIcon,
+  RotateCcw as RotateCcwIcon,
+} from 'lucide-react-native'
+import LucideIcon from '@/components/ui/LucideIcon'
+import {
   Fragment,
   useCallback,
   useEffect,
@@ -28,11 +35,6 @@ import {
   useRoute,
   type RouteProp,
 } from '@react-navigation/native'
-import { faCircleExclamation } from '@fortawesome/free-solid-svg-icons/faCircleExclamation'
-import { faClockRotateLeft } from '@fortawesome/free-solid-svg-icons/faClockRotateLeft'
-import { faDownload } from '@fortawesome/free-solid-svg-icons/faDownload'
-import { faRotateLeft } from '@fortawesome/free-solid-svg-icons/faRotateLeft'
-import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
 import Wrapper from '@/components/ui/layout/Wrapper'
 import Text from '@/components/ui/MyText'
 import Button from '@/components/ui/Button'
@@ -660,8 +662,8 @@ const NotesImportComposerScreen = ({ renderSupporterCta }: Props) => {
           <View
             style={{ flexDirection: 'row', gap: 12, alignItems: 'flex-start' }}
           >
-            <FontAwesomeIcon
-              icon={faCircleExclamation}
+            <LucideIcon
+              icon={CircleAlertIcon}
               size={18}
               // Fixed white on the fixed red — never the theme-flipping inverse,
               // which would go dark (unreadable) on the red in dark mode.
@@ -687,8 +689,8 @@ const NotesImportComposerScreen = ({ renderSupporterCta }: Props) => {
   const errorBlock = () => (
     <Card style={{ gap: 14 }}>
       <View style={{ flexDirection: 'row', gap: 12, alignItems: 'flex-start' }}>
-        <FontAwesomeIcon
-          icon={faCircleExclamation}
+        <LucideIcon
+          icon={CircleAlertIcon}
           size={18}
           color={theme.colors.error}
         />
@@ -786,8 +788,8 @@ const NotesImportComposerScreen = ({ renderSupporterCta }: Props) => {
           {/* The import action lives with the preview it commits, so it reads as
               the next step in the conversation and never crowds the composer. */}
           <ActionButton disabled={!canConfirm} onPress={onAccept}>
-            <FontAwesomeIcon
-              icon={faDownload}
+            <LucideIcon
+              icon={DownloadIcon}
               size={15}
               color={theme.colors.textInverse}
               style={{ marginRight: 10 }}
@@ -829,8 +831,8 @@ const NotesImportComposerScreen = ({ renderSupporterCta }: Props) => {
           noTransform
           style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}
         >
-          <FontAwesomeIcon
-            icon={faRotateLeft}
+          <LucideIcon
+            icon={RotateCcwIcon}
             size={14}
             color={theme.colors.accent}
           />
@@ -1233,8 +1235,8 @@ const NotesImportComposerScreen = ({ renderSupporterCta }: Props) => {
                         >
                           {i18n.t('notesImport_viewHistory')}
                         </Text>
-                        <FontAwesomeIcon
-                          icon={faClockRotateLeft}
+                        <LucideIcon
+                          icon={HistoryIcon}
                           size={12}
                           color={theme.colors.textAlt}
                         />

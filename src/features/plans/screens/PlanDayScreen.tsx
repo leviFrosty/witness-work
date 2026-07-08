@@ -1,6 +1,10 @@
+import {
+  Calendar1 as Calendar1Icon,
+  CornerDownRight as CornerDownRightIcon,
+  Repeat as RepeatIcon,
+  X as XIcon,
+} from 'lucide-react-native'
 import { Modal, Pressable, TextInput as RNTextInput, View } from 'react-native'
-import type { IconDefinition } from '@fortawesome/fontawesome-svg-core'
-import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
 import ActionButton from '@/components/ui/ActionButton'
 import useServiceReport from '@/stores/serviceReport'
@@ -18,10 +22,7 @@ import CheckboxWithLabel from '@/components/ui/inputs/CheckboxWithLabel'
 import XView from '@/components/ui/layout/XView'
 import Button from '@/components/ui/Button'
 import IconButton from '@/components/ui/IconButton'
-import { faArrowTurnDown } from '@fortawesome/free-solid-svg-icons/faArrowTurnDown'
-import { faCalendarDay } from '@fortawesome/free-solid-svg-icons/faCalendarDay'
-import { faRepeat } from '@fortawesome/free-solid-svg-icons/faRepeat'
-import { faXmark } from '@fortawesome/free-solid-svg-icons/faXmark'
+import LucideIcon, { type AppIcon } from '@/components/ui/LucideIcon'
 import RNDateTimePicker from '@react-native-community/datetimepicker'
 import DateTimePicker from '@/components/ui/DateTimePicker'
 import Select from '@/components/ui/Select'
@@ -149,7 +150,7 @@ const PlanKindToggle = (props: {
           onPress={() => props.setOneTime(true)}
         >
           <IconButton
-            icon={faCalendarDay}
+            icon={Calendar1Icon}
             color={props.oneTime ? theme.colors.accent : theme.colors.text}
           />
           <Text
@@ -180,7 +181,7 @@ const PlanKindToggle = (props: {
           onPress={() => props.setOneTime(false)}
         >
           <IconButton
-            icon={faRepeat}
+            icon={RepeatIcon}
             color={!props.oneTime ? theme.colors.accent : theme.colors.text}
           />
           <Text
@@ -522,7 +523,7 @@ const PlanFields = (props: {
 type ScopeOptionConfig = {
   scope: RecurringSaveScope
   title: string
-  icon: IconDefinition
+  icon: AppIcon
   dots: [boolean, boolean, boolean]
   lines: [boolean, boolean]
 }
@@ -610,7 +611,7 @@ const ScopeOption = (props: {
             justifyContent: 'center',
           }}
         >
-          <FontAwesomeIcon
+          <LucideIcon
             icon={props.option.icon}
             size={18}
             color={props.selected ? theme.colors.accent : theme.colors.textAlt}
@@ -649,21 +650,21 @@ const RecurringSaveScopeModal = (props: {
     {
       scope: 'instance',
       title: i18n.t('saveScope_instance_title'),
-      icon: faCalendarDay,
+      icon: Calendar1Icon,
       dots: [false, true, false],
       lines: [false, false],
     },
     {
       scope: 'future',
       title: i18n.t('saveScope_future_title'),
-      icon: faArrowTurnDown,
+      icon: CornerDownRightIcon,
       dots: [false, true, true],
       lines: [false, true],
     },
     {
       scope: 'all',
       title: i18n.t('saveScope_all_title'),
-      icon: faRepeat,
+      icon: RepeatIcon,
       dots: [true, true, true],
       lines: [true, true],
     },
@@ -729,8 +730,8 @@ const RecurringSaveScopeModal = (props: {
               onPress={props.onCancel}
               style={{ padding: 8 }}
             >
-              <FontAwesomeIcon
-                icon={faXmark}
+              <LucideIcon
+                icon={XIcon}
                 size={22}
                 color={theme.colors.text}
               />

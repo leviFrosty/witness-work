@@ -1,3 +1,4 @@
+import { X as XIcon } from 'lucide-react-native'
 import { useEffect, useState } from 'react'
 import { Modal, View } from 'react-native'
 import { Sheet } from 'tamagui'
@@ -6,7 +7,6 @@ import ColorPicker, {
   Panel1,
   Preview,
 } from 'reanimated-color-picker'
-import { faTimes } from '@fortawesome/free-solid-svg-icons/faTimes'
 import useTheme from '@/contexts/theme'
 import Text from '@/components/ui/MyText'
 import Button from '@/components/ui/Button'
@@ -107,7 +107,7 @@ const ColorPickerSheet = ({
               </Text>
               <IconButton
                 noTransform
-                icon={faTimes}
+                icon={XIcon}
                 size='lg'
                 onPress={onClose}
               />

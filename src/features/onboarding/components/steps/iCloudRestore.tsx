@@ -1,10 +1,12 @@
+import {
+  CircleAlert as CircleAlertIcon,
+  CircleCheck as CircleCheckIcon,
+  Cloud as CloudIcon,
+  Save as SaveIcon,
+} from 'lucide-react-native'
+import LucideIcon from '@/components/ui/LucideIcon'
 import { useEffect, useRef, useState } from 'react'
 import { Alert, Animated, Easing, Platform, View } from 'react-native'
-import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
-import { faCheckCircle } from '@fortawesome/free-solid-svg-icons/faCheckCircle'
-import { faCircleExclamation } from '@fortawesome/free-solid-svg-icons/faCircleExclamation'
-import { faCloud } from '@fortawesome/free-solid-svg-icons/faCloud'
-import { faFloppyDisk } from '@fortawesome/free-solid-svg-icons/faFloppyDisk'
 import { Spinner } from 'tamagui'
 import { formatRelative } from '@/lib/dates'
 import { styles } from '@/features/onboarding/components/Onboarding.styles'
@@ -264,8 +266,8 @@ const ICloudRestore = ({ goBack, goNext }: Props) => {
               ],
             }}
           >
-            <FontAwesomeIcon
-              icon={faCloud}
+            <LucideIcon
+              icon={CloudIcon}
               size={28}
               color={theme.colors.accent}
             />
@@ -311,8 +313,8 @@ const ICloudRestore = ({ goBack, goNext }: Props) => {
               paddingHorizontal: 16,
             }}
           >
-            <FontAwesomeIcon
-              icon={faCircleExclamation}
+            <LucideIcon
+              icon={CircleAlertIcon}
               size={18}
               color={theme.colors.textAlt}
             />
@@ -339,8 +341,8 @@ const ICloudRestore = ({ goBack, goNext }: Props) => {
               paddingHorizontal: 16,
             }}
           >
-            <FontAwesomeIcon
-              icon={faCheckCircle}
+            <LucideIcon
+              icon={CircleCheckIcon}
               size={18}
               color={theme.colors.textAlt}
             />
@@ -380,8 +382,8 @@ const ICloudRestore = ({ goBack, goNext }: Props) => {
                 marginTop: 2,
               }}
             >
-              <FontAwesomeIcon
-                icon={faFloppyDisk}
+              <LucideIcon
+                icon={SaveIcon}
                 size={16}
                 color={theme.colors.accent}
               />

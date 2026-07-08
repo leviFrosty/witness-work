@@ -1,7 +1,7 @@
+import { ChevronRight as ChevronRightIcon } from 'lucide-react-native'
 import { useMemo, useRef, useState, useCallback, useEffect } from 'react'
 import { View } from 'react-native'
 import { useNavigation as useRootNavigation } from '@react-navigation/native'
-import { faChevronRight } from '@fortawesome/free-solid-svg-icons/faChevronRight'
 import moment from 'moment'
 
 import useServiceReport from '@/stores/serviceReport'
@@ -410,7 +410,7 @@ const AllDaysList = ({ month, year }: AllDaysListProps) => {
             >
               {row.hoursLabel}
             </Text>
-            <IconButton icon={faChevronRight} size={12} />
+            <IconButton icon={ChevronRightIcon} size={12} />
           </Button>
         ))}
         {hasFutureDays && (

@@ -1,3 +1,8 @@
+import {
+  Pause as PauseIcon,
+  Play as PlayIcon,
+  RotateCcw as RotateCcwIcon,
+} from 'lucide-react-native'
 import React from 'react'
 import { View } from 'react-native'
 import Text from '@/components/ui/MyText'
@@ -5,9 +10,6 @@ import Card from '@/components/ui/Card'
 import IconButton from '@/components/ui/IconButton'
 import i18n from '@/lib/locales'
 import XView from '@/components/ui/layout/XView'
-import { faArrowRotateLeft } from '@fortawesome/free-solid-svg-icons/faArrowRotateLeft'
-import { faPause } from '@fortawesome/free-solid-svg-icons/faPause'
-import { faPlay } from '@fortawesome/free-solid-svg-icons/faPlay'
 import { useStopWatch } from '@/features/service-reports/hooks/useStopWatch'
 import useTheme from '@/contexts/theme'
 import Button from '@/components/ui/Button'
@@ -90,7 +92,7 @@ export const TimerSection = () => {
             onPress={isRunning ? stop : start}
           >
             <IconButton
-              icon={isRunning ? faPause : faPlay}
+              icon={isRunning ? PauseIcon : PlayIcon}
               color={isRunning ? theme.colors.error : theme.colors.accent}
               size={theme.fontSize('lg')}
             />
@@ -105,7 +107,7 @@ export const TimerSection = () => {
             }}
             onPress={reset}
           >
-            <IconButton icon={faArrowRotateLeft} size={theme.fontSize('lg')} />
+            <IconButton icon={RotateCcwIcon} size={theme.fontSize('lg')} />
           </Button>
 
           <Button

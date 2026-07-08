@@ -1,11 +1,11 @@
+import { Plus as PlusIcon } from 'lucide-react-native'
+import LucideIcon from '@/components/ui/LucideIcon'
 import { View } from 'react-native'
 import {
   useNavigation,
   useRoute,
   type RouteProp,
 } from '@react-navigation/native'
-import { faPlus } from '@fortawesome/free-solid-svg-icons/faPlus'
-import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
 import Button from '@/components/ui/Button'
 import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
@@ -50,11 +50,7 @@ const NotesImportHeaderActions = () => {
             justifyContent: 'center',
           }}
         >
-          <FontAwesomeIcon
-            icon={faPlus}
-            size={15}
-            color={theme.colors.accent}
-          />
+          <LucideIcon icon={PlusIcon} size={15} color={theme.colors.accent} />
         </Button>
       )}
     </View>

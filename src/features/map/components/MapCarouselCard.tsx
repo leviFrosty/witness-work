@@ -1,3 +1,9 @@
+import {
+  MessageCircle as MessageCircleIcon,
+  Phone as PhoneIcon,
+  Route as RouteIcon,
+  Share as ShareIcon,
+} from 'lucide-react-native'
 import { View } from 'react-native'
 import useTheme from '@/contexts/theme'
 import moment from 'moment'
@@ -7,10 +13,6 @@ import { ConversationIndex } from '@/lib/conversationIndex'
 import i18n from '@/lib/locales'
 import Button from '@/components/ui/Button'
 import IconButton from '@/components/ui/IconButton'
-import { faArrowUpFromBracket } from '@fortawesome/free-solid-svg-icons/faArrowUpFromBracket'
-import { faDiamondTurnRight } from '@fortawesome/free-solid-svg-icons/faDiamondTurnRight'
-import { faMessage } from '@fortawesome/free-solid-svg-icons/faMessage'
-import { faPhone } from '@fortawesome/free-solid-svg-icons/faPhone'
 import { useNavigation } from '@react-navigation/native'
 import { addressToString, coordinateAsString, navigateTo } from '@/lib/address'
 import Copyeable from '@/components/ui/Copyeable'
@@ -161,7 +163,7 @@ const MapCarouselCard = ({ contact, index, setSheet }: Props) => {
           }}
         >
           <IconButton
-            icon={faDiamondTurnRight}
+            icon={RouteIcon}
             size='xl'
             iconStyle={{
               color: theme.colors.textInverse,
@@ -182,7 +184,7 @@ const MapCarouselCard = ({ contact, index, setSheet }: Props) => {
             variant='outline'
             style={{ gap: 10, paddingHorizontal: 20 }}
           >
-            <IconButton icon={faPhone} />
+            <IconButton icon={PhoneIcon} />
           </Button>
         )}
         {contact.phone && (
@@ -191,7 +193,7 @@ const MapCarouselCard = ({ contact, index, setSheet }: Props) => {
             variant='outline'
             style={{ gap: 10, paddingHorizontal: 20 }}
           >
-            <IconButton icon={faMessage} />
+            <IconButton icon={MessageCircleIcon} />
           </Button>
         )}
         <Button
@@ -206,7 +208,7 @@ const MapCarouselCard = ({ contact, index, setSheet }: Props) => {
           variant='outline'
           style={{ gap: 10, paddingHorizontal: 20 }}
         >
-          <IconButton icon={faArrowUpFromBracket} />
+          <IconButton icon={ShareIcon} />
         </Button>
       </View>
     </Button>

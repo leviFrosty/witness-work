@@ -1,3 +1,9 @@
+import {
+  ChevronLeft as ChevronLeftIcon,
+  Menu as MenuIcon,
+  X as XIcon,
+} from 'lucide-react-native'
+import type { AppIcon } from '@/components/ui/LucideIcon'
 import { Platform, Pressable, View } from 'react-native'
 import useTheme from '@/contexts/theme'
 import moment from 'moment'
@@ -6,10 +12,6 @@ import Text from '@/components/ui/MyText'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useNavigation } from '@react-navigation/native'
 import IconButton from '@/components/ui/IconButton'
-import { faBars } from '@fortawesome/free-solid-svg-icons/faBars'
-import { faChevronLeft } from '@fortawesome/free-solid-svg-icons/faChevronLeft'
-import { faTimes } from '@fortawesome/free-solid-svg-icons/faTimes'
-import { IconProp } from '@fortawesome/fontawesome-svg-core'
 import { RootStackNavigation } from '@/types/rootStack'
 
 type Props = {
@@ -66,18 +68,18 @@ const Header = ({
     }
   }
 
-  const iconName = (): IconProp => {
+  const iconName = (): AppIcon => {
     if (buttonType === 'settings') {
-      return faBars
+      return MenuIcon
     }
     if (buttonType === 'exit') {
-      return faTimes
+      return XIcon
     }
     if (buttonType === 'back') {
-      return faChevronLeft
+      return ChevronLeftIcon
     }
 
-    return faBars
+    return MenuIcon
   }
 
   return (

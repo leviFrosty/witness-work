@@ -1,11 +1,10 @@
+import LucideIcon, { type AppIcon } from '@/components/ui/LucideIcon'
 import { View } from 'react-native'
-import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
-import { IconDefinition } from '@fortawesome/fontawesome-svg-core'
 import useTheme from '@/contexts/theme'
 import Text from '@/components/ui/MyText'
 
 interface Props {
-  icon: IconDefinition
+  icon: AppIcon
   label: string
   value: string
   tint: string
@@ -35,7 +34,7 @@ const SinceBadge = ({ icon, label, value, tint, tintBg }: Props) => {
           backgroundColor: tintBg,
         }}
       >
-        <FontAwesomeIcon icon={icon} size={15} color={tint} />
+        <LucideIcon icon={icon} size={15} color={tint} />
       </View>
       <View style={{ flex: 1 }}>
         <Text

@@ -1,7 +1,7 @@
+import { ChevronRight as ChevronRightIcon } from 'lucide-react-native'
+import LucideIcon from '@/components/ui/LucideIcon'
 import { useEffect, useState } from 'react'
 import { Pressable, View } from 'react-native'
-import { faChevronRight } from '@fortawesome/free-solid-svg-icons/faChevronRight'
-import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
 import i18n from '@/lib/locales'
 import Section from '@/components/ui/inputs/Section'
 import InputRowContainer from '@/components/ui/inputs/InputRowContainer'
@@ -155,8 +155,8 @@ const PublisherPreferencesSection = () => {
             >
               {i18n.t('advanced')}
             </Text>
-            <FontAwesomeIcon
-              icon={faChevronRight}
+            <LucideIcon
+              icon={ChevronRightIcon}
               size={12}
               color={theme.colors.textAlt}
               style={{

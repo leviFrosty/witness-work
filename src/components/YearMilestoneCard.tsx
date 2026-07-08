@@ -1,3 +1,5 @@
+import { Crown as CrownIcon, Star as StarIcon } from 'lucide-react-native'
+import LucideIcon from '@/components/ui/LucideIcon'
 import { useEffect, useMemo } from 'react'
 import { Pressable, View } from 'react-native'
 import moment from 'moment'
@@ -9,9 +11,6 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated'
 import { useIsFocused } from '@react-navigation/native'
-import { faCrown } from '@fortawesome/free-solid-svg-icons/faCrown'
-import { faStar } from '@fortawesome/free-solid-svg-icons/faStar'
-import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
 
 import useTheme from '@/contexts/theme'
 import usePublisher from '@/hooks/usePublisher'
@@ -326,8 +325,8 @@ const YearMilestoneCard = ({
             }}
           >
             <Animated.View style={sealAnimatedStyle}>
-              <FontAwesomeIcon
-                icon={faCrown}
+              <LucideIcon
+                icon={CrownIcon}
                 color={theme.colors.supporter}
                 size={16}
               />
@@ -431,11 +430,7 @@ const YearMilestoneCard = ({
           }}
         >
           <Animated.View style={sealAnimatedStyle}>
-            <FontAwesomeIcon
-              icon={faStar}
-              color={theme.colors.accent}
-              size={16}
-            />
+            <LucideIcon icon={StarIcon} color={theme.colors.accent} size={16} />
           </Animated.View>
           <Text
             style={{

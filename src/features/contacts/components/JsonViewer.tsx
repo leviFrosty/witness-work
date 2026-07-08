@@ -1,8 +1,8 @@
+import { Copy as CopyIcon } from 'lucide-react-native'
 import { Platform, View } from 'react-native'
 import { useMemo, useState } from 'react'
 import { useToastController } from '@tamagui/toast'
 import * as Clipboard from 'expo-clipboard'
-import { faCopy } from '@fortawesome/free-solid-svg-icons/faCopy'
 import Text from '@/components/ui/MyText'
 import Card from '@/components/ui/Card'
 import XView from '@/components/ui/layout/XView'
@@ -119,7 +119,7 @@ const JsonViewer = ({
         </XView>
         <XView style={{ gap: 12 }}>
           <IconButton
-            icon={faCopy}
+            icon={CopyIcon}
             onPress={handleCopy}
             color={theme.colors.textAlt}
           />

@@ -1,3 +1,5 @@
+import { TriangleAlert as TriangleAlertIcon } from 'lucide-react-native'
+import LucideIcon from '@/components/ui/LucideIcon'
 import Text from '@/components/ui/MyText'
 import i18n from '@/lib/locales'
 import DismissableCard from '@/components/DismissableCard'
@@ -5,10 +7,8 @@ import { Visit } from '@/types/visit'
 import { ThemeContext } from '@/contexts/theme'
 import { useContext, useMemo } from 'react'
 import { View } from 'react-native'
-import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
 import ApproachingConversationRow from '@/features/visits/components/ApproachingConversationsRow'
 import moment from 'moment'
-import { faTriangleExclamation } from '@fortawesome/free-solid-svg-icons/faTriangleExclamation'
 
 interface Props {
   conversations: Visit[]
@@ -55,8 +55,8 @@ const MissedConversations = ({ conversations }: Props) => {
               justifyContent: 'center',
             }}
           >
-            <FontAwesomeIcon
-              icon={faTriangleExclamation}
+            <LucideIcon
+              icon={TriangleAlertIcon}
               size={14}
               color={headerColor}
             />

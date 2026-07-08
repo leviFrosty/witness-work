@@ -1,15 +1,17 @@
+import {
+  Check as CheckIcon,
+  Lock as LockIcon,
+  Minus as MinusIcon,
+  Plus as PlusIcon,
+  X as XIcon,
+} from 'lucide-react-native'
+import LucideIcon from '@/components/ui/LucideIcon'
 import { useEffect, useMemo, useState } from 'react'
 import { Alert, Pressable, StyleSheet, View } from 'react-native'
 import { Sheet } from 'tamagui'
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
 import { useNavigation } from '@react-navigation/native'
 import round from 'lodash/round'
-import { faCheck } from '@fortawesome/free-solid-svg-icons/faCheck'
-import { faLock } from '@fortawesome/free-solid-svg-icons/faLock'
-import { faMinus } from '@fortawesome/free-solid-svg-icons/faMinus'
-import { faPlus } from '@fortawesome/free-solid-svg-icons/faPlus'
-import { faTimes } from '@fortawesome/free-solid-svg-icons/faTimes'
-import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
 
 import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
@@ -320,7 +322,7 @@ const MilestoneAdjustSheet = ({ visible, onClose }: Props) => {
             {noGoalSet ? (
               <IconButton
                 noTransform
-                icon={faTimes}
+                icon={XIcon}
                 size='xl'
                 onPress={handleClose}
               />
@@ -436,8 +438,8 @@ const MilestoneAdjustSheet = ({ visible, onClose }: Props) => {
                           backgroundColor: theme.colors.card,
                         }}
                       >
-                        <FontAwesomeIcon
-                          icon={faMinus}
+                        <LucideIcon
+                          icon={MinusIcon}
                           size={theme.fontSize('xs')}
                           style={{ color: theme.colors.textAlt }}
                         />
@@ -487,8 +489,8 @@ const MilestoneAdjustSheet = ({ visible, onClose }: Props) => {
                           backgroundColor: theme.colors.card,
                         }}
                       >
-                        <FontAwesomeIcon
-                          icon={faPlus}
+                        <LucideIcon
+                          icon={PlusIcon}
                           size={theme.fontSize('xs')}
                           style={{ color: theme.colors.textAlt }}
                         />
@@ -507,7 +509,7 @@ const MilestoneAdjustSheet = ({ visible, onClose }: Props) => {
                       <View style={{ flex: 1, alignItems: 'flex-end' }}>
                         <IconButton
                           noTransform
-                          icon={faTimes}
+                          icon={XIcon}
                           size='sm'
                           onPress={() => handleRemove(value)}
                         />
@@ -537,8 +539,8 @@ const MilestoneAdjustSheet = ({ visible, onClose }: Props) => {
                       justifyContent: 'center',
                     }}
                   >
-                    <FontAwesomeIcon
-                      icon={faLock}
+                    <LucideIcon
+                      icon={LockIcon}
                       size={theme.fontSize('sm')}
                       style={{ color: theme.colors.textAlt }}
                     />
@@ -645,8 +647,8 @@ const HitIndicator = ({ state }: { state: 'hit' | 'next' | 'future' }) => {
           },
         ]}
       >
-        <FontAwesomeIcon
-          icon={faCheck}
+        <LucideIcon
+          icon={CheckIcon}
           size={theme.fontSize('xs')}
           style={{ color: theme.colors.textInverse }}
         />

@@ -1,9 +1,9 @@
+import { X as XIcon } from 'lucide-react-native'
 import { Sheet } from 'tamagui'
 import { View } from 'react-native'
 import Checkbox from 'expo-checkbox'
 import upperFirst from 'lodash/upperFirst'
 import moment from 'moment'
-import { faTimes } from '@fortawesome/free-solid-svg-icons/faTimes'
 import useTheme from '@/contexts/theme'
 import Text from '@/components/ui/MyText'
 import Button from '@/components/ui/Button'
@@ -281,7 +281,7 @@ const NotesImportContactDetailsModal = ({
               </View>
               <IconButton
                 noTransform
-                icon={faTimes}
+                icon={XIcon}
                 size='xl'
                 onPress={() => setOpen(false)}
               />

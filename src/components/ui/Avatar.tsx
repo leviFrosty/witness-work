@@ -1,3 +1,5 @@
+import { User as UserIcon } from 'lucide-react-native'
+import LucideIcon from '@/components/ui/LucideIcon'
 import { useEffect, useRef, useState } from 'react'
 import {
   Modal,
@@ -14,8 +16,6 @@ import Animated, {
   useSharedValue,
   withTiming,
 } from 'react-native-reanimated'
-import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
-import { faUser } from '@fortawesome/free-solid-svg-icons/faUser'
 import useTheme from '@/contexts/theme'
 import Text from '@/components/ui/MyText'
 import { ProfileAvatar } from '@/types/avatar'
@@ -189,8 +189,8 @@ const Avatar = ({ avatar, name, size = 44, background, focusable }: Props) => {
 
     return (
       <View style={{ ...base, backgroundColor: bg }}>
-        <FontAwesomeIcon
-          icon={faUser}
+        <LucideIcon
+          icon={UserIcon}
           size={size * 0.42}
           color={theme.colors.textInverse}
         />

@@ -1,3 +1,7 @@
+import {
+  ChevronRight as ChevronRightIcon,
+  X as XIcon,
+} from 'lucide-react-native'
 import { useState } from 'react'
 import { View } from 'react-native'
 import { Sheet } from 'tamagui'
@@ -9,8 +13,6 @@ import CategorySegmentBar, {
 } from '@/features/service-reports/components/CategorySegmentBar'
 import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
-import { faChevronRight } from '@fortawesome/free-solid-svg-icons/faChevronRight'
-import { faTimes } from '@fortawesome/free-solid-svg-icons/faTimes'
 
 type Props = {
   segments: CategorySegment[]
@@ -44,7 +46,7 @@ const CategoriesSection = ({ segments }: Props) => {
             {i18n.t('categories')}
           </Text>
           <IconButton
-            icon={faChevronRight}
+            icon={ChevronRightIcon}
             size={12}
             iconStyle={{ color: theme.colors.textAlt }}
           />
@@ -85,7 +87,7 @@ const CategoriesSection = ({ segments }: Props) => {
               </Text>
               <IconButton
                 noTransform
-                icon={faTimes}
+                icon={XIcon}
                 onPress={() => setOpen(false)}
               />
             </View>

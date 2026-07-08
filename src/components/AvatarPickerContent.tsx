@@ -1,12 +1,14 @@
+import {
+  Camera as CameraIcon,
+  Check as CheckIcon,
+  Link as LinkIcon,
+  Trash2 as Trash2Icon,
+} from 'lucide-react-native'
+import LucideIcon from '@/components/ui/LucideIcon'
 import { useState } from 'react'
 import { Alert, Pressable, ScrollView, View } from 'react-native'
 import * as ImagePicker from 'expo-image-picker'
 import * as FileSystem from 'expo-file-system/legacy'
-import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
-import { faCamera } from '@fortawesome/free-solid-svg-icons/faCamera'
-import { faCheck } from '@fortawesome/free-solid-svg-icons/faCheck'
-import { faLink } from '@fortawesome/free-solid-svg-icons/faLink'
-import { faTrash } from '@fortawesome/free-solid-svg-icons/faTrash'
 import useTheme from '@/contexts/theme'
 import { ProfileAvatar } from '@/types/avatar'
 import Text from '@/components/ui/MyText'
@@ -178,8 +180,8 @@ export const BackgroundSwatches = ({
               value === null ? theme.colors.text : theme.colors.border,
           }}
         >
-          <FontAwesomeIcon
-            icon={value === null ? faCheck : faLink}
+          <LucideIcon
+            icon={value === null ? CheckIcon : LinkIcon}
             size={10}
             color={theme.colors.textInverse}
           />
@@ -202,8 +204,8 @@ export const BackgroundSwatches = ({
               }}
             >
               {selected && (
-                <FontAwesomeIcon
-                  icon={faCheck}
+                <LucideIcon
+                  icon={CheckIcon}
                   size={10}
                   color={theme.colors.textInverse}
                 />
@@ -387,11 +389,7 @@ const AvatarPickerContent = ({
             justifyContent: 'center',
           }}
         >
-          <FontAwesomeIcon
-            icon={faCamera}
-            size={13}
-            color={theme.colors.text}
-          />
+          <LucideIcon icon={CameraIcon} size={13} color={theme.colors.text} />
           <Text style={{ color: theme.colors.text, fontSize: 14 }}>
             {i18n.t('choosePhoto')}
           </Text>
@@ -407,11 +405,7 @@ const AvatarPickerContent = ({
               justifyContent: 'center',
             }}
           >
-            <FontAwesomeIcon
-              icon={faTrash}
-              size={13}
-              color={theme.colors.text}
-            />
+            <LucideIcon icon={Trash2Icon} size={13} color={theme.colors.text} />
             <Text style={{ color: theme.colors.text, fontSize: 14 }}>
               {i18n.t('remove')}
             </Text>

@@ -1,3 +1,9 @@
+import {
+  Minus as MinusIcon,
+  Plus as PlusIcon,
+  Trash2 as Trash2Icon,
+  X as XIcon,
+} from 'lucide-react-native'
 import { Fragment, useCallback, useEffect, useMemo, useState } from 'react'
 import { View, ScrollView, Switch } from 'react-native'
 import { Sheet } from 'tamagui'
@@ -8,10 +14,6 @@ import Text from '@/components/ui/MyText'
 import Button from '@/components/ui/Button'
 import IconButton from '@/components/ui/IconButton'
 import useTheme from '@/contexts/theme'
-import { faTimes } from '@fortawesome/free-solid-svg-icons/faTimes'
-import { faMinus } from '@fortawesome/free-solid-svg-icons/faMinus'
-import { faPlus } from '@fortawesome/free-solid-svg-icons/faPlus'
-import { faTrash } from '@fortawesome/free-solid-svg-icons/faTrash'
 
 import i18n from '@/lib/locales'
 import type { Recommendation } from '@/lib/assistantRecommendation'
@@ -198,7 +200,7 @@ const AssistantPreviewSheet = ({
               </Text>
               <IconButton
                 noTransform
-                icon={faTimes}
+                icon={XIcon}
                 onPress={() => onOpenChange(false)}
               />
             </View>
@@ -241,19 +243,19 @@ const AssistantPreviewSheet = ({
                     </Text>
                   </View>
                   <IconButton
-                    icon={faMinus}
+                    icon={MinusIcon}
                     onPress={() => setRowMinutes(row.rowId, -HOUR_STEP_MINUTES)}
                     size={12}
                     color={theme.colors.textAlt}
                   />
                   <IconButton
-                    icon={faPlus}
+                    icon={PlusIcon}
                     onPress={() => setRowMinutes(row.rowId, HOUR_STEP_MINUTES)}
                     size={12}
                     color={theme.colors.textAlt}
                   />
                   <IconButton
-                    icon={faTrash}
+                    icon={Trash2Icon}
                     onPress={() => toggleDropped(row.rowId)}
                     size={12}
                     color={

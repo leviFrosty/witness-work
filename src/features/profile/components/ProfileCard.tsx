@@ -1,12 +1,13 @@
+import {
+  ChevronRight as ChevronRightIcon,
+  Clock as ClockIcon,
+  Heart as HeartIcon,
+  Star as StarIcon,
+} from 'lucide-react-native'
+import LucideIcon, { type AppIcon } from '@/components/ui/LucideIcon'
 import { useEffect, useRef, useState } from 'react'
 import { Pressable, TextInput as RNTextInput, View } from 'react-native'
 import moment from 'moment'
-import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
-import { IconDefinition } from '@fortawesome/fontawesome-svg-core'
-import { faChevronRight } from '@fortawesome/free-solid-svg-icons/faChevronRight'
-import { faClock } from '@fortawesome/free-solid-svg-icons/faClock'
-import { faHeart } from '@fortawesome/free-solid-svg-icons/faHeart'
-import { faStar } from '@fortawesome/free-solid-svg-icons/faStar'
 import useTheme from '@/contexts/theme'
 import { usePreferences } from '@/stores/preferences'
 import { useProfile } from '@/stores/profile'
@@ -53,7 +54,7 @@ type TenureTone =
 
 type Tenure = {
   tone: TenureTone
-  icon: IconDefinition
+  icon: AppIcon
   tint: string
   text: string
 }
@@ -180,8 +181,8 @@ const ProfileCard = ({ preview, editable, onPressIncomplete }: Props) => {
               {i18n.t('profileIncompleteSubtitle')}
             </Text>
           </View>
-          <FontAwesomeIcon
-            icon={faChevronRight}
+          <LucideIcon
+            icon={ChevronRightIcon}
             size={13}
             color={theme.colors.textAlt}
           />
@@ -204,7 +205,7 @@ const ProfileCard = ({ preview, editable, onPressIncomplete }: Props) => {
             : 'pioneer'
       return {
         tone,
-        icon: faStar,
+        icon: StarIcon,
         tint: theme.colors.indigo,
         text: buildTenureText(tone, daysSince(new Date(tenureStartDate))),
       }
@@ -212,7 +213,7 @@ const ProfileCard = ({ preview, editable, onPressIncomplete }: Props) => {
     if (publisher === 'regularAuxiliary' && tenureStartDate) {
       return {
         tone: 'regularAuxiliary',
-        icon: faStar,
+        icon: StarIcon,
         tint: theme.colors.indigo,
         text: buildTenureText(
           'regularAuxiliary',
@@ -223,14 +224,14 @@ const ProfileCard = ({ preview, editable, onPressIncomplete }: Props) => {
     if (supporterSince) {
       return {
         tone: 'supporter',
-        icon: faHeart,
+        icon: HeartIcon,
         tint: theme.colors.supporter,
         text: buildTenureText('supporter', daysSince(supporterSince)),
       }
     }
     return {
       tone: 'installed',
-      icon: faClock,
+      icon: ClockIcon,
       tint: theme.colors.textAlt,
       text: buildTenureText('installed', daysSince(new Date(installedOn))),
     }
@@ -325,7 +326,7 @@ const ProfileCard = ({ preview, editable, onPressIncomplete }: Props) => {
         </View>
       </View>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-        <FontAwesomeIcon icon={tenure.icon} size={11} color={tenureIconTint} />
+        <LucideIcon icon={tenure.icon} size={11} color={tenureIconTint} />
         <Text style={{ fontSize: 12, color: subtitleColor }}>
           {tenure.text}
         </Text>

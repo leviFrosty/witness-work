@@ -1,7 +1,9 @@
+import {
+  ExternalLink as ExternalLinkIcon,
+  ShieldHalf as ShieldHalfIcon,
+} from 'lucide-react-native'
+import LucideIcon from '@/components/ui/LucideIcon'
 import { View } from 'react-native'
-import { faArrowUpRightFromSquare } from '@fortawesome/free-solid-svg-icons/faArrowUpRightFromSquare'
-import { faShieldHalved } from '@fortawesome/free-solid-svg-icons/faShieldHalved'
-import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
 import Text from '@/components/ui/MyText'
 import Button from '@/components/ui/Button'
 import links from '@/constants/links'
@@ -34,8 +36,8 @@ const NotesImportDataHandling = () => {
           justifyContent: 'center',
         }}
       >
-        <FontAwesomeIcon
-          icon={faShieldHalved}
+        <LucideIcon
+          icon={ShieldHalfIcon}
           size={13}
           color={theme.colors.textAlt}
         />
@@ -69,8 +71,8 @@ const NotesImportDataHandling = () => {
           >
             {i18n.t('notesImport_privacyLink')}
           </Text>
-          <FontAwesomeIcon
-            icon={faArrowUpRightFromSquare}
+          <LucideIcon
+            icon={ExternalLinkIcon}
             size={10}
             color={theme.colors.accent}
           />

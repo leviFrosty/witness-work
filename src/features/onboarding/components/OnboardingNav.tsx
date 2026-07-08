@@ -1,3 +1,4 @@
+import { ChevronLeft as ChevronLeftIcon } from 'lucide-react-native'
 import { useEffect } from 'react'
 import { View } from 'react-native'
 import Animated, {
@@ -17,7 +18,6 @@ import { styles } from '@/features/onboarding/components/Onboarding.styles'
 import Text from '@/components/ui/MyText'
 import i18n from '@/lib/locales'
 import IconButton from '@/components/ui/IconButton'
-import { faChevronLeft } from '@fortawesome/free-solid-svg-icons/faChevronLeft'
 import Button from '@/components/ui/Button'
 import useTheme from '@/contexts/theme'
 import { useOnboardingProgress } from '@/features/onboarding/components/OnboardingProgressContext'
@@ -117,7 +117,7 @@ const OnboardingNav = ({
       <View style={styles.navTitleRow}>
         {!noActions ? (
           <Button style={styles.navBack} onPress={goBack}>
-            <IconButton icon={faChevronLeft} />
+            <IconButton icon={ChevronLeftIcon} />
           </Button>
         ) : null}
         <Text style={styles.navTitle}>{i18n.t('witnessWork')}</Text>

@@ -1,7 +1,7 @@
+import { X as XIcon } from 'lucide-react-native'
 import React from 'react'
 import { View, Alert } from 'react-native'
 import { Sheet, XStack } from 'tamagui'
-import { faTimes } from '@fortawesome/free-solid-svg-icons/faTimes'
 import { Contact } from '@/types/contact'
 import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
@@ -255,7 +255,7 @@ const DismissContactSheet: React.FC<DismissContactSheetProps> = ({
             noTransform
             onPress={() => setOpen(false)}
             size={20}
-            icon={faTimes}
+            icon={XIcon}
             color={theme.colors.text}
           />
         </XStack>

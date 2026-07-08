@@ -1,3 +1,4 @@
+import { ChevronUp as ChevronUpIcon } from 'lucide-react-native'
 import { PropsWithChildren, useState } from 'react'
 import { ViewProps } from 'react-native'
 import Card from '@/components/ui/Card'
@@ -10,7 +11,6 @@ import Animated, {
 } from 'react-native-reanimated'
 import XView from '@/components/ui/layout/XView'
 import IconButton from '@/components/ui/IconButton'
-import { faCaretUp } from '@fortawesome/free-solid-svg-icons/faCaretUp'
 import Button from '@/components/ui/Button'
 import useTheme from '@/contexts/theme'
 
@@ -66,7 +66,7 @@ const Accordion: React.FC<PropsWithChildren<Props>> = ({
         <XView style={{ justifyContent: 'space-between' }}>
           {header}
           <Animated.View style={animatedStyle}>
-            <IconButton icon={faCaretUp} color={theme.colors.text} />
+            <IconButton icon={ChevronUpIcon} color={theme.colors.text} />
           </Animated.View>
         </XView>
         <Animated.View style={[{ height: expanded ? 'auto' : 0 }, [viewStyle]]}>

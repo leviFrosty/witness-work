@@ -1,7 +1,9 @@
+import {
+  Calendar1 as Calendar1Icon,
+  Repeat as RepeatIcon,
+} from 'lucide-react-native'
+import LucideIcon from '@/components/ui/LucideIcon'
 import { Alert, View } from 'react-native'
-import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
-import { faCalendarDay } from '@fortawesome/free-solid-svg-icons/faCalendarDay'
-import { faRepeat } from '@fortawesome/free-solid-svg-icons/faRepeat'
 import { Swipeable } from 'react-native-gesture-handler'
 import moment from 'moment'
 import Text from '@/components/ui/MyText'
@@ -73,8 +75,8 @@ const PlanKindIcon = (props: { recurring: boolean }) => {
         justifyContent: 'center',
       }}
     >
-      <FontAwesomeIcon
-        icon={props.recurring ? faRepeat : faCalendarDay}
+      <LucideIcon
+        icon={props.recurring ? RepeatIcon : Calendar1Icon}
         size={15}
         color={oneTime ? theme.colors.accent : theme.colors.textAlt}
       />

@@ -1,9 +1,11 @@
+import {
+  CircleAlert as CircleAlertIcon,
+  CircleCheck as CircleCheckIcon,
+  FileInput as FileInputIcon,
+} from 'lucide-react-native'
+import LucideIcon from '@/components/ui/LucideIcon'
 import { View } from 'react-native'
 import { Spinner } from 'tamagui'
-import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
-import { faCheckCircle } from '@fortawesome/free-solid-svg-icons/faCheckCircle'
-import { faCircleExclamation } from '@fortawesome/free-solid-svg-icons/faCircleExclamation'
-import { faFileImport } from '@fortawesome/free-solid-svg-icons/faFileImport'
 import { styles } from '@/features/onboarding/components/Onboarding.styles'
 import OnboardingNav from '@/features/onboarding/components/OnboardingNav'
 import Text from '@/components/ui/MyText'
@@ -73,8 +75,8 @@ const MytimeImport = ({ goBack, goNext }: Props) => {
             backgroundColor: theme.colors.accentTranslucent,
           }}
         >
-          <FontAwesomeIcon
-            icon={faFileImport}
+          <LucideIcon
+            icon={FileInputIcon}
             size={28}
             color={theme.colors.accent}
           />
@@ -126,8 +128,8 @@ const MytimeImport = ({ goBack, goNext }: Props) => {
               borderColor: theme.colors.accentTranslucent,
             }}
           >
-            <FontAwesomeIcon
-              icon={faCheckCircle}
+            <LucideIcon
+              icon={CircleCheckIcon}
               size={18}
               color={theme.colors.accent}
             />
@@ -145,8 +147,8 @@ const MytimeImport = ({ goBack, goNext }: Props) => {
               gap: 12,
             }}
           >
-            <FontAwesomeIcon
-              icon={faCircleExclamation}
+            <LucideIcon
+              icon={CircleAlertIcon}
               size={18}
               color={theme.colors.textAlt}
             />

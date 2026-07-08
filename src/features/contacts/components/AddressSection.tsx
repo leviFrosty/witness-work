@@ -1,3 +1,9 @@
+import {
+  Info as InfoIcon,
+  Search as SearchIcon,
+  SquarePen as SquarePenIcon,
+} from 'lucide-react-native'
+import LucideIcon, { type AppIcon } from '@/components/ui/LucideIcon'
 import { TextInput, TouchableOpacity, View } from 'react-native'
 import { Address, Contact } from '@/types/contact'
 import useTheme from '@/contexts/theme'
@@ -11,18 +17,13 @@ import PinLocation from '@/features/contacts/components/PinLocation'
 import AddressAutocomplete, {
   Suggestion,
 } from '@/features/contacts/components/AddressAutocomplete'
-import { faCircleInfo } from '@fortawesome/free-solid-svg-icons/faCircleInfo'
-import { faMagnifyingGlass } from '@fortawesome/free-solid-svg-icons/faMagnifyingGlass'
-import { faPenToSquare } from '@fortawesome/free-solid-svg-icons/faPenToSquare'
-import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
-import { IconProp } from '@fortawesome/fontawesome-svg-core'
 import { addressToString } from '@/lib/address'
 
 type Mode = 'search' | 'manual'
 
 const ModeSegment: React.FC<{
   active: boolean
-  icon: IconProp
+  icon: AppIcon
   labelKey: TranslationKey
   onPress: () => void
 }> = ({ active, icon, labelKey, onPress }) => {
@@ -50,7 +51,7 @@ const ModeSegment: React.FC<{
         shadowOffset: { width: 0, height: 1 },
       }}
     >
-      <FontAwesomeIcon
+      <LucideIcon
         icon={icon}
         size={13}
         style={{
@@ -204,13 +205,13 @@ export default function AddressSection({
       >
         <ModeSegment
           active={mode === 'search'}
-          icon={faMagnifyingGlass}
+          icon={SearchIcon}
           labelKey='searchAddress'
           onPress={() => switchMode('search')}
         />
         <ModeSegment
           active={mode === 'manual'}
-          icon={faPenToSquare}
+          icon={SquarePenIcon}
           labelKey='enterManually'
           onPress={() => switchMode('manual')}
         />
@@ -336,8 +337,8 @@ export default function AddressSection({
             gap: 6,
           }}
         >
-          <FontAwesomeIcon
-            icon={faCircleInfo}
+          <LucideIcon
+            icon={InfoIcon}
             size={11}
             style={{ color: theme.colors.textAlt }}
           />

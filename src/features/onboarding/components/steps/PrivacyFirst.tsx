@@ -1,11 +1,12 @@
+import {
+  Link as LinkIcon,
+  ShieldUser as ShieldUserIcon,
+  Smartphone as SmartphoneIcon,
+  Wifi as WifiIcon,
+} from 'lucide-react-native'
+import LucideIcon, { type AppIcon } from '@/components/ui/LucideIcon'
 import { View } from 'react-native'
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
-import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
-import { IconProp } from '@fortawesome/fontawesome-svg-core'
-import { faWifi } from '@fortawesome/free-solid-svg-icons/faWifi'
-import { faMobileScreen } from '@fortawesome/free-solid-svg-icons/faMobileScreen'
-import { faLink } from '@fortawesome/free-solid-svg-icons/faLink'
-import { faUserShield } from '@fortawesome/free-solid-svg-icons/faUserShield'
 import { styles } from '@/features/onboarding/components/Onboarding.styles'
 import OnboardingNav from '@/features/onboarding/components/OnboardingNav'
 import Text from '@/components/ui/MyText'
@@ -22,7 +23,7 @@ interface Props {
 
 interface Highlight {
   id: string
-  icon: IconProp
+  icon: AppIcon
   titleKey: TranslationKey
   descriptionKey: TranslationKey
   color: string
@@ -34,28 +35,28 @@ const PrivacyFirst = ({ goBack, goNext }: Props) => {
   const highlights: Highlight[] = [
     {
       id: 'offline',
-      icon: faWifi,
+      icon: WifiIcon,
       titleKey: 'privacyOfflineTitle',
       descriptionKey: 'privacyOfflineDesc',
       color: theme.colors.accent,
     },
     {
       id: 'on-device',
-      icon: faMobileScreen,
+      icon: SmartphoneIcon,
       titleKey: 'privacyOnDeviceTitle',
       descriptionKey: 'privacyOnDeviceDesc',
       color: theme.colors.indigo,
     },
     {
       id: 'share-in-link',
-      icon: faLink,
+      icon: LinkIcon,
       titleKey: 'privacyShareInLinkTitle',
       descriptionKey: 'privacyShareInLinkDesc',
       color: theme.colors.teal,
     },
     {
       id: 'your-data',
-      icon: faUserShield,
+      icon: ShieldUserIcon,
       titleKey: 'privacyYourDataTitle',
       descriptionKey: 'privacyYourDataDesc',
       color: theme.colors.purple,
@@ -116,7 +117,7 @@ const PrivacyFirst = ({ goBack, goNext }: Props) => {
                   marginRight: 12,
                 }}
               >
-                <FontAwesomeIcon
+                <LucideIcon
                   icon={h.icon}
                   size={18}
                   color={theme.colors.textInverse}

@@ -1,10 +1,10 @@
+import { Pencil as PencilIcon } from 'lucide-react-native'
 import { View } from 'react-native'
 import { useContext } from 'react'
 import { ThemeContext } from '@/contexts/theme'
 import Text from '@/components/ui/MyText'
 import i18n from '@/lib/locales'
 import IconButton from '@/components/ui/IconButton'
-import { faEdit } from '@fortawesome/free-solid-svg-icons/faEdit'
 
 const SwipeableEdit = () => {
   const theme = useContext(ThemeContext)
@@ -19,7 +19,7 @@ const SwipeableEdit = () => {
         justifyContent: 'center',
       }}
     >
-      <IconButton icon={faEdit} size='lg' />
+      <IconButton icon={PencilIcon} size='lg' />
       <Text style={{ color: theme.colors.textAlt }}>{i18n.t('edit')}</Text>
     </View>
   )

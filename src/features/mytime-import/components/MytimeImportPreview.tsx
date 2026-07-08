@@ -1,11 +1,12 @@
+import {
+  BookUser as BookUserIcon,
+  Clock as ClockIcon,
+  MessagesSquare as MessagesSquareIcon,
+  User as UserIcon,
+} from 'lucide-react-native'
+import LucideIcon, { type AppIcon } from '@/components/ui/LucideIcon'
 import { View } from 'react-native'
 import Checkbox from 'expo-checkbox'
-import { faAddressBook } from '@fortawesome/free-solid-svg-icons/faAddressBook'
-import { faClock } from '@fortawesome/free-solid-svg-icons/faClock'
-import { faComments } from '@fortawesome/free-solid-svg-icons/faComments'
-import { faUser } from '@fortawesome/free-solid-svg-icons/faUser'
-import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
-import { IconProp } from '@fortawesome/fontawesome-svg-core'
 import Text from '@/components/ui/MyText'
 import Card from '@/components/ui/Card'
 import Button from '@/components/ui/Button'
@@ -34,7 +35,7 @@ const Row = ({
   disabled,
   onToggle,
 }: {
-  icon: IconProp
+  icon: AppIcon
   label: string
   value: string
   checked: boolean
@@ -57,7 +58,7 @@ const Row = ({
       <View
         style={{ flexDirection: 'row', alignItems: 'center', gap: 10, flex: 1 }}
       >
-        <FontAwesomeIcon icon={icon} size={16} color={theme.colors.textAlt} />
+        <LucideIcon icon={icon} size={16} color={theme.colors.textAlt} />
         <Text style={{ color: theme.colors.textAlt }}>{label}</Text>
       </View>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
@@ -92,7 +93,7 @@ const MytimeImportPreview = ({
     <Card style={{ gap: 14 }}>
       {preview.contacts > 0 && (
         <Row
-          icon={faAddressBook}
+          icon={BookUserIcon}
           label={i18n.t('mytimeImport_contacts')}
           value={String(preview.contacts)}
           checked={selection.contacts}
@@ -102,7 +103,7 @@ const MytimeImportPreview = ({
       )}
       {preview.visits > 0 && (
         <Row
-          icon={faComments}
+          icon={MessagesSquareIcon}
           label={i18n.t('mytimeImport_visits')}
           value={String(preview.visits)}
           checked={selection.visits}
@@ -112,7 +113,7 @@ const MytimeImportPreview = ({
       )}
       {preview.timeEntries > 0 && (
         <Row
-          icon={faClock}
+          icon={ClockIcon}
           label={i18n.t('mytimeImport_time')}
           value={time.formatted}
           checked={selection.time}
@@ -122,7 +123,7 @@ const MytimeImportPreview = ({
       )}
       {preview.publisherRole && (
         <Row
-          icon={faUser}
+          icon={UserIcon}
           label={i18n.t('mytimeImport_role')}
           value={i18n.t(preview.publisherRole as TranslationKey)}
           checked={selection.publisher}

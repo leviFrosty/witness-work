@@ -1,7 +1,9 @@
-import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
-import { faMars } from '@fortawesome/free-solid-svg-icons/faMars'
-import { faQuestion } from '@fortawesome/free-solid-svg-icons/faQuestion'
-import { faVenus } from '@fortawesome/free-solid-svg-icons/faVenus'
+import {
+  CircleQuestionMark as CircleQuestionMarkIcon,
+  Mars as MarsIcon,
+  Venus as VenusIcon,
+} from 'lucide-react-native'
+import LucideIcon from '@/components/ui/LucideIcon'
 import { Contact } from '@/types/contact'
 import useTheme from '@/contexts/theme'
 
@@ -25,7 +27,11 @@ type Props = {
 const GenderIcon = ({ gender, size = 12, opacity = 1, color }: Props) => {
   const theme = useTheme()
   const icon =
-    gender === 'male' ? faMars : gender === 'female' ? faVenus : faQuestion
+    gender === 'male'
+      ? MarsIcon
+      : gender === 'female'
+        ? VenusIcon
+        : CircleQuestionMarkIcon
   const resolved =
     color ??
     (gender === 'male'
@@ -34,11 +40,7 @@ const GenderIcon = ({ gender, size = 12, opacity = 1, color }: Props) => {
         ? GENDER_COLORS.female
         : theme.colors.textAlt)
   return (
-    <FontAwesomeIcon
-      icon={icon}
-      size={size}
-      style={{ color: resolved, opacity }}
-    />
+    <LucideIcon icon={icon} size={size} style={{ color: resolved, opacity }} />
   )
 }
 

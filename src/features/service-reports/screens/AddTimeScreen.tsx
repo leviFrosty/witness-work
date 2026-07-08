@@ -1,3 +1,4 @@
+import { Trash2 as Trash2Icon } from 'lucide-react-native'
 import { View, Alert, TextInput as RNTextInput } from 'react-native'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import Section from '@/components/ui/inputs/Section'
@@ -28,7 +29,6 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { NativeStackScreenProps } from '@react-navigation/native-stack'
 import { useToastController } from '@tamagui/toast'
 import Header from '@/components/ui/layout/Header'
-import { faTrash } from '@fortawesome/free-solid-svg-icons/faTrash'
 import IconButton from '@/components/ui/IconButton'
 import {
   adjustedMinutesForSpecificMonth,
@@ -259,7 +259,7 @@ const AddTimeScreen = ({ route }: AddTimeScreenProps) => {
                 }}
               >
                 <IconButton
-                  icon={faTrash}
+                  icon={Trash2Icon}
                   color={theme.colors.text}
                   onPress={handleRequestDelete}
                 />

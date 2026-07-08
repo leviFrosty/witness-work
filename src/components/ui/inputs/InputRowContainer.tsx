@@ -1,14 +1,14 @@
+import type { AppIcon } from '@/components/ui/LucideIcon'
 import React, { PropsWithChildren, ReactNode } from 'react'
 import { Pressable, StyleProp, View, ViewStyle } from 'react-native'
 import useTheme from '@/contexts/theme'
 import { rowPaddingVertical } from '@/constants/Inputs'
 import Text from '@/components/ui/MyText'
 import IconButton from '@/components/ui/IconButton'
-import { IconProp } from '@fortawesome/fontawesome-svg-core'
 
 export interface InputRowContainerProps {
   children?: ReactNode
-  leftIcon?: IconProp
+  leftIcon?: AppIcon
   lastInSection?: boolean
   noHorizontalPadding?: boolean
   label?: string

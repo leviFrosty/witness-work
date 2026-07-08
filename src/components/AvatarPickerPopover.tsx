@@ -1,6 +1,6 @@
+import { Pencil as PencilIcon } from 'lucide-react-native'
+import LucideIcon from '@/components/ui/LucideIcon'
 import { Pressable, View } from 'react-native'
-import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
-import { faPencil } from '@fortawesome/free-solid-svg-icons/faPencil'
 import useTheme from '@/contexts/theme'
 import { ProfileAvatar } from '@/types/avatar'
 import Avatar from '@/components/ui/Avatar'
@@ -95,8 +95,8 @@ const AvatarPickerPopover = ({
                   borderColor: theme.colors.card,
                 }}
               >
-                <FontAwesomeIcon
-                  icon={faPencil}
+                <LucideIcon
+                  icon={PencilIcon}
                   size={8}
                   color={theme.colors.textInverse}
                 />

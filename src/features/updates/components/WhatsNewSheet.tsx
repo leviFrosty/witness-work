@@ -1,10 +1,11 @@
+import { Gift as GiftIcon, X as XIcon } from 'lucide-react-native'
+import LucideIcon from '@/components/ui/LucideIcon'
 import { View } from 'react-native'
 import { Sheet, XStack } from 'tamagui'
 import i18n, { TranslationKey } from '@/lib/locales'
 import Text from '@/components/ui/MyText'
 import useTheme from '@/contexts/theme'
 import IconButton from '@/components/ui/IconButton'
-import { faTimes } from '@fortawesome/free-solid-svg-icons/faTimes'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useEffect, useMemo, useRef } from 'react'
 import { releaseNotes } from '@/features/updates/constants/releaseNotes'
@@ -16,8 +17,6 @@ import { usePreferences } from '@/stores/preferences'
 import Constants from 'expo-constants'
 import Badge from '@/components/ui/Badge'
 import semver from 'semver'
-import { faGift } from '@fortawesome/free-solid-svg-icons/faGift'
-import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
 
 interface Props {
   setShow: React.Dispatch<React.SetStateAction<boolean>>
@@ -96,8 +95,8 @@ export const WhatsNewContent = ({ lastVersion }: { lastVersion: string }) => {
                       backgroundColor: theme.colors.accent,
                     }}
                   >
-                    <FontAwesomeIcon
-                      icon={faGift}
+                    <LucideIcon
+                      icon={GiftIcon}
                       size={10}
                       color={theme.colors.textInverse}
                     />
@@ -201,7 +200,7 @@ const WhatsNewSheet: React.FC<Props> = ({ show, setShow }) => {
             noTransform
             onPress={() => setShow(false)}
             size={20}
-            icon={faTimes}
+            icon={XIcon}
             color={theme.colors.text}
           />
         </XStack>

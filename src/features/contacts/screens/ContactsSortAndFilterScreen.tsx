@@ -1,13 +1,15 @@
+import {
+  ArrowDown as ArrowDownIcon,
+  ArrowUp as ArrowUpIcon,
+  Check as CheckIcon,
+  CircleX as CircleXIcon,
+  Plus as PlusIcon,
+  X as XIcon,
+} from 'lucide-react-native'
+import LucideIcon from '@/components/ui/LucideIcon'
 import React, { useMemo, useState } from 'react'
 import { ScrollView, StyleSheet, View } from 'react-native'
 import { useNavigation } from '@react-navigation/native'
-import { faArrowDown } from '@fortawesome/free-solid-svg-icons/faArrowDown'
-import { faArrowUp } from '@fortawesome/free-solid-svg-icons/faArrowUp'
-import { faCheck } from '@fortawesome/free-solid-svg-icons/faCheck'
-import { faPlus } from '@fortawesome/free-solid-svg-icons/faPlus'
-import { faTimes } from '@fortawesome/free-solid-svg-icons/faTimes'
-import { faTimesCircle } from '@fortawesome/free-solid-svg-icons/faTimesCircle'
-import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
 
 import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
@@ -207,8 +209,8 @@ const ContactsSortAndFilterScreen = () => {
         {label}
       </Text>
       {selected && (
-        <FontAwesomeIcon
-          icon={faCheck}
+        <LucideIcon
+          icon={CheckIcon}
           size={theme.fontSize('md')}
           style={{ color: theme.colors.accent }}
         />
@@ -219,7 +221,7 @@ const ContactsSortAndFilterScreen = () => {
   const renderDirectionButton = (
     value: 'asc' | 'desc',
     label: string,
-    icon: typeof faArrowUp
+    icon: typeof ArrowUpIcon
   ) => {
     const selected = contactSortDirection === value
     return (
@@ -241,7 +243,7 @@ const ContactsSortAndFilterScreen = () => {
           borderColor: selected ? theme.colors.accent : theme.colors.border,
         }}
       >
-        <FontAwesomeIcon
+        <LucideIcon
           icon={icon}
           size={theme.fontSize('sm')}
           style={{
@@ -289,7 +291,7 @@ const ContactsSortAndFilterScreen = () => {
         <IconButton
           onPress={handleClose}
           size={20}
-          icon={faTimes}
+          icon={XIcon}
           color={theme.colors.text}
         />
       </View>
@@ -388,8 +390,8 @@ const ContactsSortAndFilterScreen = () => {
                           alignItems: 'center',
                         }}
                       >
-                        <FontAwesomeIcon
-                          icon={faTimesCircle}
+                        <LucideIcon
+                          icon={CircleXIcon}
                           size={theme.fontSize('md')}
                           style={{ color: theme.colors.accent }}
                         />
@@ -415,8 +417,8 @@ const ContactsSortAndFilterScreen = () => {
                 borderColor: theme.colors.textAlt,
               }}
             >
-              <FontAwesomeIcon
-                icon={faPlus}
+              <LucideIcon
+                icon={PlusIcon}
                 size={theme.fontSize('xs')}
                 style={{ color: theme.colors.textAlt }}
               />
@@ -481,12 +483,12 @@ const ContactsSortAndFilterScreen = () => {
               {renderDirectionButton(
                 'asc',
                 i18n.t('contacts_sortAscending'),
-                faArrowUp
+                ArrowUpIcon
               )}
               {renderDirectionButton(
                 'desc',
                 i18n.t('contacts_sortDescending'),
-                faArrowDown
+                ArrowDownIcon
               )}
             </View>
           </View>

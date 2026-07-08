@@ -1,9 +1,4 @@
 import moment from 'moment'
-import { faCheck } from '@fortawesome/free-solid-svg-icons/faCheck'
-import { faStar } from '@fortawesome/free-solid-svg-icons/faStar'
-import { faTrophy } from '@fortawesome/free-solid-svg-icons/faTrophy'
-import { faCrown } from '@fortawesome/free-solid-svg-icons/faCrown'
-import { IconDefinition } from '@fortawesome/fontawesome-svg-core'
 import {
   adjustedMinutesForSpecificMonth,
   getMonthsReports,
@@ -13,23 +8,6 @@ import { Publisher } from '@/types/publisher'
 import { Theme } from '@/types/theme'
 
 export type AchievementTier = 'reached' | 'exceeded' | 'crushed' | 'record'
-
-/**
- * Canonical icon for each Achievement Tier. Single source of truth shared by
- * every surface that renders a tier seal (month hero, year-row glance).
- */
-export const tierIcon = (tier: AchievementTier): IconDefinition => {
-  switch (tier) {
-    case 'reached':
-      return faCheck
-    case 'exceeded':
-      return faStar
-    case 'crushed':
-      return faTrophy
-    case 'record':
-      return faCrown
-  }
-}
 
 /**
  * Canonical accent color for each Achievement Tier. Gold (`supporter`) is

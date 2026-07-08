@@ -1,11 +1,13 @@
+import {
+  CloudDownload as CloudDownloadIcon,
+  CloudUpload as CloudUploadIcon,
+  Shuffle as ShuffleIcon,
+  X as XIcon,
+} from 'lucide-react-native'
+import LucideIcon from '@/components/ui/LucideIcon'
 import React from 'react'
 import { Alert, View } from 'react-native'
 import { Sheet, XStack } from 'tamagui'
-import { faCloudArrowDown } from '@fortawesome/free-solid-svg-icons/faCloudArrowDown'
-import { faCloudArrowUp } from '@fortawesome/free-solid-svg-icons/faCloudArrowUp'
-import { faShuffle } from '@fortawesome/free-solid-svg-icons/faShuffle'
-import { faTimes } from '@fortawesome/free-solid-svg-icons/faTimes'
-import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
 import useTheme from '@/contexts/theme'
 import { formatRelative } from '@/lib/dates'
 import i18n from '@/lib/locales'
@@ -88,7 +90,7 @@ const FirstEnableSheet: React.FC<Props> = ({
             noTransform
             onPress={() => setOpen(false)}
             size={20}
-            icon={faTimes}
+            icon={XIcon}
             color={theme.colors.text}
           />
         </XStack>
@@ -112,7 +114,7 @@ const FirstEnableSheet: React.FC<Props> = ({
         >
           <View style={{ gap: 12, paddingHorizontal: 20 }}>
             <ChoiceCard
-              icon={faCloudArrowUp}
+              icon={CloudUploadIcon}
               iconColor={theme.colors.accent}
               title={i18n.t('iCloudChoiceKeepLocalTitle')}
               description={i18n.t('iCloudChoiceKeepLocalDesc')}
@@ -122,7 +124,7 @@ const FirstEnableSheet: React.FC<Props> = ({
               }}
             />
             <ChoiceCard
-              icon={faCloudArrowDown}
+              icon={CloudDownloadIcon}
               iconColor={theme.colors.error}
               title={i18n.t('iCloudChoiceUseRemoteTitle')}
               description={i18n.t('iCloudChoiceUseRemoteDesc')}
@@ -130,7 +132,7 @@ const FirstEnableSheet: React.FC<Props> = ({
               onPress={confirmUseRemote}
             />
             <ChoiceCard
-              icon={faShuffle}
+              icon={ShuffleIcon}
               iconColor={theme.colors.textAlt}
               title={i18n.t('iCloudChoiceMergeTitle')}
               description={i18n.t('iCloudChoiceMergeDesc')}
@@ -147,7 +149,7 @@ const FirstEnableSheet: React.FC<Props> = ({
 }
 
 interface ChoiceCardProps {
-  icon: typeof faCloudArrowUp
+  icon: typeof CloudUploadIcon
   iconColor: string
   title: string
   description: string
@@ -190,7 +192,7 @@ const ChoiceCard: React.FC<ChoiceCardProps> = ({
             backgroundColor: theme.colors.background,
           }}
         >
-          <FontAwesomeIcon icon={icon} size={16} color={iconColor} />
+          <LucideIcon icon={icon} size={16} color={iconColor} />
         </View>
         <View style={{ flex: 1, gap: 4 }}>
           <Text

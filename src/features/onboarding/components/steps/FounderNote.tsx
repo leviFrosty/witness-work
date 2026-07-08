@@ -1,3 +1,5 @@
+import { Heart as HeartIcon } from 'lucide-react-native'
+import LucideIcon from '@/components/ui/LucideIcon'
 import { useState } from 'react'
 import {
   LayoutChangeEvent,
@@ -7,8 +9,6 @@ import {
 } from 'react-native'
 import { Image as ExpoImage } from 'expo-image'
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
-import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
-import { faHeart } from '@fortawesome/free-solid-svg-icons/faHeart'
 import OnboardingNav from '@/features/onboarding/components/OnboardingNav'
 import Text from '@/components/ui/MyText'
 import Wrapper from '@/components/ui/layout/Wrapper'
@@ -98,8 +98,8 @@ const FounderNote = ({ goBack, goNext }: Props) => {
               justifyContent: 'center',
             }}
           >
-            <FontAwesomeIcon
-              icon={faHeart}
+            <LucideIcon
+              icon={HeartIcon}
               size={11}
               color={theme.colors.supporter}
             />
@@ -224,8 +224,8 @@ const FounderNote = ({ goBack, goNext }: Props) => {
               >
                 {i18n.t('founderNoteSignOff')}
               </Text>
-              <FontAwesomeIcon
-                icon={faHeart}
+              <LucideIcon
+                icon={HeartIcon}
                 size={12}
                 color={theme.colors.supporter}
               />

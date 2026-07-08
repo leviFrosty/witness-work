@@ -1,10 +1,10 @@
+import { X as XIcon } from 'lucide-react-native'
 import { useState } from 'react'
 import { View } from 'react-native'
 import { Sheet } from 'tamagui'
 import Chip from '@/components/ui/Chip'
 import Text from '@/components/ui/MyText'
 import IconButton from '@/components/ui/IconButton'
-import { faTimes } from '@fortawesome/free-solid-svg-icons/faTimes'
 import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
 import { useFormattedMinutes } from '@/lib/minutes'
@@ -61,7 +61,7 @@ const CreditInfoSheet = ({ creditOverageMinutes }: Props) => {
               </Text>
               <IconButton
                 noTransform
-                icon={faTimes}
+                icon={XIcon}
                 onPress={() => setOpen(false)}
               />
             </View>

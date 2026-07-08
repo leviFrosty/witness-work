@@ -1,3 +1,5 @@
+import { ChartLine as ChartLineIcon } from 'lucide-react-native'
+import LucideIcon from '@/components/ui/LucideIcon'
 import { Fragment } from 'react'
 import { View } from 'react-native'
 
@@ -5,8 +7,6 @@ import Text from '@/components/ui/MyText'
 import Card from '@/components/ui/Card'
 import StripedFill from '@/components/ui/StripedFill'
 import useTheme from '@/contexts/theme'
-import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
-import { faChartLine } from '@fortawesome/free-solid-svg-icons/faChartLine'
 
 import i18n, { TranslationKey } from '@/lib/locales'
 import { type ProjectedTotalScope } from '@/lib/projectedTotal'
@@ -91,8 +91,8 @@ const ProjectedTotalCard = ({ scope, showAssistant = false }: Props) => {
   return (
     <Card>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-        <FontAwesomeIcon
-          icon={faChartLine}
+        <LucideIcon
+          icon={ChartLineIcon}
           size={14}
           style={{ color: theme.colors.textAlt }}
         />

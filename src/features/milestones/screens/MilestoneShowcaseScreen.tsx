@@ -1,3 +1,22 @@
+import {
+  Bell as BellIcon,
+  CalendarDays as CalendarDaysIcon,
+  Camera as CameraIcon,
+  Cloud as CloudIcon,
+  FastForward as FastForwardIcon,
+  Gift as GiftIcon,
+  Heart as HeartIcon,
+  History as HistoryIcon,
+  IdCard as IdCardIcon,
+  MapPin as MapPinIcon,
+  Palette as PaletteIcon,
+  RefreshCw as RefreshCwIcon,
+  Shapes as ShapesIcon,
+  Sparkles as SparklesIcon,
+  Star as StarIcon,
+  X as XIcon,
+} from 'lucide-react-native'
+import LucideIcon from '@/components/ui/LucideIcon'
 import { useCallback, useEffect } from 'react'
 import { ScrollView, StyleSheet, View } from 'react-native'
 import Animated, {
@@ -13,23 +32,6 @@ import Animated, {
 } from 'react-native-reanimated'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useNavigation } from '@react-navigation/native'
-import { faAddressCard } from '@fortawesome/free-solid-svg-icons/faAddressCard'
-import { faArrowsRotate } from '@fortawesome/free-solid-svg-icons/faArrowsRotate'
-import { faBell } from '@fortawesome/free-solid-svg-icons/faBell'
-import { faBurst } from '@fortawesome/free-solid-svg-icons/faBurst'
-import { faCalendarDays } from '@fortawesome/free-solid-svg-icons/faCalendarDays'
-import { faCamera } from '@fortawesome/free-solid-svg-icons/faCamera'
-import { faClockRotateLeft } from '@fortawesome/free-solid-svg-icons/faClockRotateLeft'
-import { faCloud } from '@fortawesome/free-solid-svg-icons/faCloud'
-import { faForward } from '@fortawesome/free-solid-svg-icons/faForward'
-import { faGift } from '@fortawesome/free-solid-svg-icons/faGift'
-import { faHeart } from '@fortawesome/free-solid-svg-icons/faHeart'
-import { faIcons } from '@fortawesome/free-solid-svg-icons/faIcons'
-import { faMapPin } from '@fortawesome/free-solid-svg-icons/faMapPin'
-import { faPalette } from '@fortawesome/free-solid-svg-icons/faPalette'
-import { faStar } from '@fortawesome/free-solid-svg-icons/faStar'
-import { faXmark } from '@fortawesome/free-solid-svg-icons/faXmark'
-import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
 import { BlurView } from 'expo-blur'
 import Constants from 'expo-constants'
 import { Image as ExpoImage } from 'expo-image'
@@ -49,20 +51,20 @@ const HERO_FEATURES = [
   'iCloudSync',
 ] as const
 
-const SECONDARY_FEATURES: { id: string; icon: typeof faStar }[] = [
-  { id: 'rollover', icon: faForward },
-  { id: 'avatars', icon: faCamera },
-  { id: 'sharing', icon: faAddressCard },
-  { id: 'onboardingFounder', icon: faHeart },
-  { id: 'fireworks', icon: faBurst },
-  { id: 'missedConversations', icon: faBell },
-  { id: 'followUpRework', icon: faClockRotateLeft },
-  { id: 'recurring', icon: faArrowsRotate },
-  { id: 'supporter', icon: faStar },
-  { id: 'appIcon', icon: faIcons },
-  { id: 'schedule', icon: faCalendarDays },
-  { id: 'shaders', icon: faPalette },
-  { id: 'mapEmpty', icon: faMapPin },
+const SECONDARY_FEATURES: { id: string; icon: typeof StarIcon }[] = [
+  { id: 'rollover', icon: FastForwardIcon },
+  { id: 'avatars', icon: CameraIcon },
+  { id: 'sharing', icon: IdCardIcon },
+  { id: 'onboardingFounder', icon: HeartIcon },
+  { id: 'fireworks', icon: SparklesIcon },
+  { id: 'missedConversations', icon: BellIcon },
+  { id: 'followUpRework', icon: HistoryIcon },
+  { id: 'recurring', icon: RefreshCwIcon },
+  { id: 'supporter', icon: StarIcon },
+  { id: 'appIcon', icon: ShapesIcon },
+  { id: 'schedule', icon: CalendarDaysIcon },
+  { id: 'shaders', icon: PaletteIcon },
+  { id: 'mapEmpty', icon: MapPinIcon },
 ]
 
 /**
@@ -108,7 +110,7 @@ const MilestoneShowcaseScreen = () => {
         <IconButton
           onPress={handleClose}
           size={20}
-          icon={faXmark}
+          icon={XIcon}
           color={theme.colors.text}
         />
       </View>
@@ -164,7 +166,7 @@ const ShowcaseHeader = () => {
       <View
         style={[styles.kicker, { backgroundColor: theme.colors.accent + '22' }]}
       >
-        <FontAwesomeIcon icon={faGift} size={11} color={theme.colors.accent} />
+        <LucideIcon icon={GiftIcon} size={11} color={theme.colors.accent} />
         <Text
           style={{
             color: theme.colors.accent,
@@ -530,8 +532,8 @@ const ContactsVisual = () => {
               { backgroundColor: theme.colors.accent + '88' },
             ]}
           >
-            <FontAwesomeIcon
-              icon={faCamera}
+            <LucideIcon
+              icon={CameraIcon}
               size={10}
               color={theme.colors.textInverse}
             />
@@ -583,7 +585,7 @@ const ICloudSyncVisual = () => {
     <View style={styles.cloudStage}>
       <DeviceMock kind='phone' side='left' theme={theme} />
       <Animated.View style={[styles.cloudIcon, cloudStyle]}>
-        <FontAwesomeIcon icon={faCloud} size={36} color={theme.colors.accent} />
+        <LucideIcon icon={CloudIcon} size={36} color={theme.colors.accent} />
         <View style={styles.cloudDots}>
           {[0, 1, 2].map((i) => (
             <CloudDot
@@ -907,7 +909,7 @@ const SecondaryGrid = () => {
   )
 }
 
-const SecondaryCard = ({ id, icon }: { id: string; icon: typeof faStar }) => {
+const SecondaryCard = ({ id, icon }: { id: string; icon: typeof StarIcon }) => {
   const theme = useTheme()
   return (
     <View
@@ -925,7 +927,7 @@ const SecondaryCard = ({ id, icon }: { id: string; icon: typeof faStar }) => {
           { backgroundColor: theme.colors.accent + '1F' },
         ]}
       >
-        <FontAwesomeIcon icon={icon} size={14} color={theme.colors.accent} />
+        <LucideIcon icon={icon} size={14} color={theme.colors.accent} />
       </View>
       <View style={{ flex: 1, gap: 3 }}>
         <Text

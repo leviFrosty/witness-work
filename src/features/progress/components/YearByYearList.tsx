@@ -1,13 +1,15 @@
+import {
+  Ellipsis as EllipsisIcon,
+  Plus as PlusIcon,
+  Trash2 as Trash2Icon,
+} from 'lucide-react-native'
+import LucideIcon from '@/components/ui/LucideIcon'
 import { useMemo, useState } from 'react'
 import { Alert, Pressable, View } from 'react-native'
 
 import * as Crypto from 'expo-crypto'
 import moment from 'moment'
 import { useToastController } from '@tamagui/toast'
-import { faEllipsis } from '@fortawesome/free-solid-svg-icons/faEllipsis'
-import { faPlus } from '@fortawesome/free-solid-svg-icons/faPlus'
-import { faTrashCan } from '@fortawesome/free-solid-svg-icons/faTrashCan'
-import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
 
 import useTheme from '@/contexts/theme'
 import useServiceReport from '@/stores/serviceReport'
@@ -252,8 +254,8 @@ const YearByYearList = ({ onYearPress }: YearByYearListProps) => {
                             paddingLeft: 2,
                           })}
                         >
-                          <FontAwesomeIcon
-                            icon={faEllipsis}
+                          <LucideIcon
+                            icon={EllipsisIcon}
                             color={theme.colors.textAlt}
                             size={16}
                           />
@@ -278,8 +280,8 @@ const YearByYearList = ({ onYearPress }: YearByYearListProps) => {
                           borderRadius: theme.numbers.borderRadiusSm,
                         })}
                       >
-                        <FontAwesomeIcon
-                          icon={faTrashCan}
+                        <LucideIcon
+                          icon={Trash2Icon}
                           color={theme.colors.error}
                           size={14}
                         />
@@ -316,11 +318,7 @@ const YearByYearList = ({ onYearPress }: YearByYearListProps) => {
                 gap: 12,
               })}
             >
-              <FontAwesomeIcon
-                icon={faPlus}
-                color={theme.colors.text}
-                size={14}
-              />
+              <LucideIcon icon={PlusIcon} color={theme.colors.text} size={14} />
               <Text
                 style={{
                   fontFamily: theme.fonts.semiBold,

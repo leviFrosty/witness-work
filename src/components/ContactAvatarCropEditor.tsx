@@ -1,3 +1,5 @@
+import { RotateCcw as RotateCcwIcon, X as XIcon } from 'lucide-react-native'
+import LucideIcon from '@/components/ui/LucideIcon'
 import { useEffect, useMemo, useState } from 'react'
 import {
   Modal,
@@ -19,9 +21,6 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
-import { faRotateLeft } from '@fortawesome/free-solid-svg-icons/faRotateLeft'
-import { faXmark } from '@fortawesome/free-solid-svg-icons/faXmark'
 import * as Haptics from 'expo-haptics'
 import { GlassView } from 'expo-glass-effect'
 import { BlurView } from 'expo-blur'
@@ -68,7 +67,7 @@ const GlassHeaderButton = ({
   onPress,
   label,
 }: {
-  icon: typeof faXmark
+  icon: typeof XIcon
   iconSize?: number
   onPress: () => void
   label: string
@@ -105,7 +104,7 @@ const GlassHeaderButton = ({
             backgroundColor: 'transparent',
           }}
         >
-          <FontAwesomeIcon icon={icon} size={iconSize} color='#fff' />
+          <LucideIcon icon={icon} size={iconSize} color='#fff' />
         </View>
       </View>
     </Pressable>
@@ -341,7 +340,7 @@ const ContactAvatarCropEditor = ({
           }}
         >
           <GlassHeaderButton
-            icon={faXmark}
+            icon={XIcon}
             onPress={onClose}
             label={i18n.t('cancel')}
           />
@@ -357,7 +356,7 @@ const ContactAvatarCropEditor = ({
           </Text>
 
           <GlassHeaderButton
-            icon={faRotateLeft}
+            icon={RotateCcwIcon}
             iconSize={14}
             onPress={handleReset}
             label={i18n.t('reset')}

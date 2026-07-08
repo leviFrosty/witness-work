@@ -1,14 +1,16 @@
+import {
+  ChevronRight as ChevronRightIcon,
+  Clock as ClockIcon,
+  Download as DownloadIcon,
+  FileInput as FileInputIcon,
+  Sprout as SproutIcon,
+  Undo2 as Undo2Icon,
+} from 'lucide-react-native'
 import { Alert } from 'react-native'
 import Wrapper from '@/components/ui/layout/Wrapper'
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
 import Section from '@/components/ui/inputs/Section'
 import InputRowButton from '@/features/settings/components/inputs/InputRowButton'
-import { faChevronRight } from '@fortawesome/free-solid-svg-icons/faChevronRight'
-import { faClock } from '@fortawesome/free-solid-svg-icons/faClock'
-import { faDownload } from '@fortawesome/free-solid-svg-icons/faDownload'
-import { faFileImport } from '@fortawesome/free-solid-svg-icons/faFileImport'
-import { faSeedling } from '@fortawesome/free-solid-svg-icons/faSeedling'
-import { faUndo } from '@fortawesome/free-solid-svg-icons/faUndo'
 import IconButton from '@/components/ui/IconButton'
 import i18n from '@/lib/locales'
 import { StackActions, useNavigation } from '@react-navigation/native'
@@ -93,42 +95,42 @@ const MoreScreen = () => {
         <AppPreferencesSection />
         <Section>
           <InputRowButton
-            leftIcon={faUndo}
+            leftIcon={Undo2Icon}
             label={i18n.t('recoverContacts')}
             onPress={() => pushScreen('Recover Contacts')}
           >
-            <IconButton icon={faChevronRight} />
+            <IconButton icon={ChevronRightIcon} />
           </InputRowButton>
           <InputRowButton
-            leftIcon={faClock}
+            leftIcon={ClockIcon}
             label={i18n.t('dismissedContacts')}
             onPress={() => pushScreen('Dismissed Contacts')}
           >
-            <IconButton icon={faChevronRight} />
+            <IconButton icon={ChevronRightIcon} />
           </InputRowButton>
           <InputRowButton
-            leftIcon={faFileImport}
+            leftIcon={FileInputIcon}
             label={i18n.t('importContact')}
             onPress={handleImportContact}
           >
-            <IconButton icon={faChevronRight} />
+            <IconButton icon={ChevronRightIcon} />
           </InputRowButton>
           <InputRowButton
-            leftIcon={faDownload}
+            leftIcon={DownloadIcon}
             label={i18n.t('checkForUpdate')}
             onPress={() => fetchUpdate(pushScreen)}
           >
-            <IconButton icon={faChevronRight} />
+            <IconButton icon={ChevronRightIcon} />
           </InputRowButton>
           <InputRowButton
-            leftIcon={faSeedling}
+            leftIcon={SproutIcon}
             label={i18n.t('restartOnboarding')}
             onPress={() =>
               set({ onboardingComplete: false, onboardingStepId: null })
             }
             lastInSection
           >
-            <IconButton icon={faChevronRight} />
+            <IconButton icon={ChevronRightIcon} />
           </InputRowButton>
         </Section>
       </KeyboardAwareScrollView>

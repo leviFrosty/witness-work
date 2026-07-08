@@ -1,6 +1,6 @@
+import { Bell as BellIcon } from 'lucide-react-native'
+import LucideIcon from '@/components/ui/LucideIcon'
 import { View } from 'react-native'
-import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
-import { faBell } from '@fortawesome/free-solid-svg-icons/faBell'
 import Text from '@/components/ui/MyText'
 import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
@@ -46,8 +46,8 @@ const NotificationPreview = () => {
           justifyContent: 'center',
         }}
       >
-        <FontAwesomeIcon
-          icon={faBell}
+        <LucideIcon
+          icon={BellIcon}
           size={18}
           color={theme.colors.textInverse}
         />

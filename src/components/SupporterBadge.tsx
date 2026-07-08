@@ -1,6 +1,6 @@
+import { Heart as HeartIcon } from 'lucide-react-native'
+import LucideIcon from '@/components/ui/LucideIcon'
 import { View, ViewStyle } from 'react-native'
-import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
-import { faHeart } from '@fortawesome/free-solid-svg-icons/faHeart'
 import useTheme from '@/contexts/theme'
 import Text from '@/components/ui/MyText'
 import i18n from '@/lib/locales'
@@ -37,8 +37,8 @@ const SupporterBadge = ({ iconOnly, size = 'sm', style }: Props) => {
         style,
       ]}
     >
-      <FontAwesomeIcon
-        icon={faHeart}
+      <LucideIcon
+        icon={HeartIcon}
         size={iconSize}
         color={theme.colors.supporter}
       />

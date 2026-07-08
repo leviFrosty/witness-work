@@ -1,10 +1,12 @@
+import {
+  BookUser as BookUserIcon,
+  ChevronRight as ChevronRightIcon,
+  Clock as ClockIcon,
+} from 'lucide-react-native'
+import LucideIcon from '@/components/ui/LucideIcon'
 import { useMemo, useState } from 'react'
 import { View } from 'react-native'
 import Checkbox from 'expo-checkbox'
-import { faAddressBook } from '@fortawesome/free-solid-svg-icons/faAddressBook'
-import { faChevronRight } from '@fortawesome/free-solid-svg-icons/faChevronRight'
-import { faClock } from '@fortawesome/free-solid-svg-icons/faClock'
-import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
 import Text from '@/components/ui/MyText'
 import Card from '@/components/ui/Card'
 import Button from '@/components/ui/Button'
@@ -108,8 +110,8 @@ const ContactCard = ({
           style={{ flex: 1, padding: 16, gap: 4 }}
         >
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-            <FontAwesomeIcon
-              icon={faAddressBook}
+            <LucideIcon
+              icon={BookUserIcon}
               size={14}
               color={theme.colors.textAlt}
             />
@@ -167,7 +169,7 @@ const ContactCard = ({
                 backgroundColor: tint,
               }}
             >
-              <FontAwesomeIcon icon={icon} size={10} color={color} />
+              <LucideIcon icon={icon} size={10} color={color} />
               <Text
                 style={{
                   color,
@@ -193,8 +195,8 @@ const ContactCard = ({
             </View>
           </Button>
         )}
-        <FontAwesomeIcon
-          icon={faChevronRight}
+        <LucideIcon
+          icon={ChevronRightIcon}
           size={14}
           color={theme.colors.textAlt}
           style={{ marginRight: 14 }}
@@ -304,8 +306,8 @@ const NotesImportPreview = ({
             <View
               style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}
             >
-              <FontAwesomeIcon
-                icon={faClock}
+              <LucideIcon
+                icon={ClockIcon}
                 size={14}
                 color={theme.colors.textAlt}
               />

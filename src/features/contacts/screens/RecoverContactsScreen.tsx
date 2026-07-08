@@ -1,3 +1,4 @@
+import { Trash2 as Trash2Icon, Undo2 as Undo2Icon } from 'lucide-react-native'
 import { Alert, ScrollView, View } from 'react-native'
 import Text from '@/components/ui/MyText'
 import useTheme from '@/contexts/theme'
@@ -12,8 +13,6 @@ import i18n from '@/lib/locales'
 import { useMemo } from 'react'
 import Wrapper from '@/components/ui/layout/Wrapper'
 import IconButton from '@/components/ui/IconButton'
-import { faTrash } from '@fortawesome/free-solid-svg-icons/faTrash'
-import { faUndo } from '@fortawesome/free-solid-svg-icons/faUndo'
 import { useToastController } from '@tamagui/toast'
 
 const RecoverContactsScreen = () => {
@@ -125,13 +124,13 @@ const RecoverContactsScreen = () => {
                         >
                           <IconButton
                             onPress={() => recover(item.id)}
-                            icon={faUndo}
+                            icon={Undo2Icon}
                           />
                           <Text>{item.name}</Text>
                         </View>
                       </View>
                       <IconButton
-                        icon={faTrash}
+                        icon={Trash2Icon}
                         onPress={() =>
                           Alert.alert(
                             i18n.t('permanentlyDelete'),

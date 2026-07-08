@@ -1,3 +1,8 @@
+import {
+  LocateFixed as LocateFixedIcon,
+  Navigation as NavigationIcon,
+} from 'lucide-react-native'
+import LucideIcon from '@/components/ui/LucideIcon'
 import React, { useEffect, useCallback, useRef, useState } from 'react'
 import {
   View,
@@ -16,9 +21,6 @@ import Animated, {
 } from 'react-native-reanimated'
 import axios from 'axios'
 import * as Location from 'expo-location'
-import { faLocationArrow } from '@fortawesome/free-solid-svg-icons/faLocationArrow'
-import { faLocationCrosshairs } from '@fortawesome/free-solid-svg-icons/faLocationCrosshairs'
-import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
 import apis from '@/constants/apis'
 import Text from '@/components/ui/MyText'
 import useTheme from '@/contexts/theme'
@@ -90,8 +92,8 @@ const LocationStatusPill: React.FC<{
           paddingVertical: 2,
         }}
       >
-        <FontAwesomeIcon
-          icon={faLocationArrow}
+        <LucideIcon
+          icon={NavigationIcon}
           size={10}
           style={{ color: theme.colors.accent }}
         />
@@ -126,8 +128,8 @@ const LocationStatusPill: React.FC<{
         backgroundColor: theme.colors.background,
       }}
     >
-      <FontAwesomeIcon
-        icon={faLocationCrosshairs}
+      <LucideIcon
+        icon={LocateFixedIcon}
         size={12}
         style={{ color: theme.colors.textAlt }}
       />

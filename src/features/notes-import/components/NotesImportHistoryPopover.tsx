@@ -1,3 +1,12 @@
+import {
+  CircleCheck as CircleCheckIcon,
+  CirclePause as CirclePauseIcon,
+  CircleStop as CircleStopIcon,
+  Clock as ClockIcon,
+  Trash2 as Trash2Icon,
+  TriangleAlert as TriangleAlertIcon,
+} from 'lucide-react-native'
+import LucideIcon, { type AppIcon } from '@/components/ui/LucideIcon'
 import type { ReactNode, RefObject } from 'react'
 import { Alert, ScrollView, useWindowDimensions, View } from 'react-native'
 import { Spinner } from 'tamagui'
@@ -6,14 +15,6 @@ import {
   useRoute,
   type RouteProp,
 } from '@react-navigation/native'
-import { faCircleCheck } from '@fortawesome/free-solid-svg-icons/faCircleCheck'
-import { faCirclePause } from '@fortawesome/free-solid-svg-icons/faCirclePause'
-import { faCircleStop } from '@fortawesome/free-solid-svg-icons/faCircleStop'
-import { faClock } from '@fortawesome/free-solid-svg-icons/faClock'
-import { faTrashCan } from '@fortawesome/free-solid-svg-icons/faTrashCan'
-import { faTriangleExclamation } from '@fortawesome/free-solid-svg-icons/faTriangleExclamation'
-import { type IconDefinition } from '@fortawesome/fontawesome-svg-core'
-import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
 import Text from '@/components/ui/MyText'
 import Button from '@/components/ui/Button'
 import AnchoredPopover, {
@@ -80,7 +81,7 @@ export const useNotesImportHistorySummary = (): NotesImportHistorySummary => {
 interface StatusVisual {
   label: string
   color: string
-  icon: IconDefinition | null
+  icon: AppIcon | null
   spinner?: boolean
   readyDot?: boolean
 }
@@ -94,7 +95,7 @@ const useStatusVisual = (
     return {
       label: i18n.t('notesImport_stateDone'),
       color: theme.colors.accent,
-      icon: faCircleCheck,
+      icon: CircleCheckIcon,
     }
   }
   if (entry.state === 'ready') {
@@ -111,7 +112,7 @@ const useStatusVisual = (
     return {
       label: i18n.t('notesImport_stateStopped'),
       color: theme.colors.textAlt,
-      icon: faCircleStop,
+      icon: CircleStopIcon,
     }
   }
   // Working sub-states.
@@ -119,14 +120,14 @@ const useStatusVisual = (
     return {
       label: i18n.t('notesImport_stateError'),
       color: theme.colors.error,
-      icon: faTriangleExclamation,
+      icon: TriangleAlertIcon,
     }
   }
   if (runtime?.paused) {
     return {
       label: i18n.t('notesImport_subPaused'),
       color: theme.colors.textAlt,
-      icon: faCirclePause,
+      icon: CirclePauseIcon,
     }
   }
   if (runtime?.running) {
@@ -140,7 +141,7 @@ const useStatusVisual = (
   return {
     label: i18n.t('notesImport_subQueued'),
     color: theme.colors.textAlt,
-    icon: faClock,
+    icon: ClockIcon,
   }
 }
 
@@ -197,11 +198,7 @@ const HistoryRow = ({
           ) : status.readyDot ? (
             <NotesImportReadyDot visible size={9} />
           ) : status.icon ? (
-            <FontAwesomeIcon
-              icon={status.icon}
-              size={16}
-              color={status.color}
-            />
+            <LucideIcon icon={status.icon} size={16} color={status.color} />
           ) : null}
         </View>
 
@@ -249,11 +246,7 @@ const HistoryRow = ({
           justifyContent: 'center',
         }}
       >
-        <FontAwesomeIcon
-          icon={faTrashCan}
-          size={14}
-          color={theme.colors.textAlt}
-        />
+        <LucideIcon icon={Trash2Icon} size={14} color={theme.colors.textAlt} />
       </Button>
     </View>
   )

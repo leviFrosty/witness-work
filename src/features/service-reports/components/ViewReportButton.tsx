@@ -1,6 +1,6 @@
+import { FileText as FileTextIcon } from 'lucide-react-native'
+import LucideIcon from '@/components/ui/LucideIcon'
 import { useNavigation } from '@react-navigation/native'
-import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
-import { faFileLines } from '@fortawesome/free-solid-svg-icons/faFileLines'
 import Button from '@/components/ui/Button'
 import Text from '@/components/ui/MyText'
 import useTheme from '@/contexts/theme'
@@ -32,8 +32,8 @@ const ViewReportButton = ({ month, year }: ViewReportButtonProps) => {
         borderCurve: 'continuous',
       }}
     >
-      <FontAwesomeIcon
-        icon={faFileLines}
+      <LucideIcon
+        icon={FileTextIcon}
         size={theme.fontSize('sm')}
         style={{ color: theme.colors.textAlt }}
       />

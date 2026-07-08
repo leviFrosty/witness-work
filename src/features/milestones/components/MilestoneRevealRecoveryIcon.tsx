@@ -1,3 +1,5 @@
+import { Gift as GiftIcon } from 'lucide-react-native'
+import LucideIcon from '@/components/ui/LucideIcon'
 import { useEffect } from 'react'
 import { Pressable, StyleSheet, View } from 'react-native'
 import Animated, {
@@ -10,8 +12,6 @@ import Animated, {
   withSequence,
   withTiming,
 } from 'react-native-reanimated'
-import { faGift } from '@fortawesome/free-solid-svg-icons/faGift'
-import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
 import useTheme from '@/contexts/theme'
 import { usePreferences } from '@/stores/preferences'
 import { useMilestoneRevealStore } from '@/features/milestones/stores/milestoneReveal'
@@ -113,8 +113,8 @@ const MilestoneRevealRecoveryIcon = () => {
             },
           ]}
         >
-          <FontAwesomeIcon
-            icon={faGift}
+          <LucideIcon
+            icon={GiftIcon}
             size={16}
             color={theme.colors.textInverse}
           />

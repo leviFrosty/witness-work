@@ -1,8 +1,8 @@
+import { ChevronRight as ChevronRightIcon } from 'lucide-react-native'
+import LucideIcon from '@/components/ui/LucideIcon'
 import { useMemo, useState } from 'react'
 import { View } from 'react-native'
 import { Popover } from 'tamagui'
-import { faChevronRight } from '@fortawesome/free-solid-svg-icons/faChevronRight'
-import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
 import useTheme from '@/contexts/theme'
 import i18n, { TranslationKey } from '@/lib/locales'
 import { ContactStaleness, stalenessToColor } from '@/lib/contactStaleness'
@@ -201,8 +201,8 @@ const ContactsStatsHeader: React.FC<ContactsStatsHeaderProps> = ({
                   count: dismissedCount,
                 })}
               </Text>
-              <FontAwesomeIcon
-                icon={faChevronRight}
+              <LucideIcon
+                icon={ChevronRightIcon}
                 size={theme.fontSize('xs')}
                 style={{ color: theme.colors.textAlt }}
               />

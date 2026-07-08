@@ -1,3 +1,13 @@
+import {
+  BookUser as BookUserIcon,
+  Expand as ExpandIcon,
+  Info as InfoIcon,
+  MapPinned as MapPinnedIcon,
+  Navigation as NavigationIcon,
+  Plus as PlusIcon,
+  Search as SearchIcon,
+} from 'lucide-react-native'
+import LucideIcon from '@/components/ui/LucideIcon'
 import useGlassColorScheme from '@/hooks/useGlassColorScheme'
 import Wrapper from '@/components/ui/layout/Wrapper'
 import MapView, { LatLng, Marker } from 'react-native-maps'
@@ -39,13 +49,6 @@ import useDevice from '@/hooks/useDevice'
 import { RootStackNavigation } from '@/types/rootStack'
 import { HomeTabStackNavigation } from '@/types/homeStack'
 import { ContactMarker } from '@/features/map/types/map'
-import { faAddressBook } from '@fortawesome/free-solid-svg-icons/faAddressBook'
-import { faCircleInfo } from '@fortawesome/free-solid-svg-icons/faCircleInfo'
-import { faLocationArrow } from '@fortawesome/free-solid-svg-icons/faLocationArrow'
-import { faMapLocationDot } from '@fortawesome/free-solid-svg-icons/faMapLocationDot'
-import { faMagnifyingGlass } from '@fortawesome/free-solid-svg-icons/faMagnifyingGlass'
-import { faPlus } from '@fortawesome/free-solid-svg-icons/faPlus'
-import { faUpRightAndDownLeftFromCenter } from '@fortawesome/free-solid-svg-icons/faUpRightAndDownLeftFromCenter'
 import { Popover } from 'tamagui'
 import MapKey from '@/features/map/components/MapColorKey'
 import { useMarkerColors } from '@/hooks/useMarkerColors'
@@ -59,7 +62,6 @@ import {
   reconcileActiveContact,
   resolveCarouselSnapContact,
 } from '@/features/map/lib/mapCarousel'
-import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
 import { addressToString, coordinateAsString } from '@/lib/address'
 
 const liquidGlass = isLiquidGlassAvailable()
@@ -536,7 +538,7 @@ const FullMapView = ({
   const emptyStatePrimaryLabel = hasSavedActiveContacts
     ? i18n.t('map_reviewContacts')
     : i18n.t('addContact')
-  const emptyStatePrimaryIcon = hasSavedActiveContacts ? faAddressBook : faPlus
+  const emptyStatePrimaryIcon = hasSavedActiveContacts ? BookUserIcon : PlusIcon
   const emptyStatePrimaryAction = hasSavedActiveContacts
     ? () => navigation.navigate('Contacts')
     : addContact
@@ -603,8 +605,8 @@ const FullMapView = ({
                 borderColor: theme.colors.accent,
               }}
             >
-              <FontAwesomeIcon
-                icon={faMapLocationDot}
+              <LucideIcon
+                icon={MapPinnedIcon}
                 size={theme.fontSize('lg')}
                 style={{ color: theme.colors.accent }}
               />
@@ -665,7 +667,7 @@ const FullMapView = ({
                 paddingHorizontal: 16,
               }}
             >
-              <FontAwesomeIcon
+              <LucideIcon
                 icon={emptyStatePrimaryIcon}
                 size={theme.fontSize('sm')}
                 style={{ color: theme.colors.textInverse }}
@@ -696,8 +698,8 @@ const FullMapView = ({
                   paddingHorizontal: 16,
                 }}
               >
-                <FontAwesomeIcon
-                  icon={faPlus}
+                <LucideIcon
+                  icon={PlusIcon}
                   size={theme.fontSize('sm')}
                   style={{ color: theme.colors.text }}
                 />
@@ -802,8 +804,8 @@ const FullMapView = ({
               justifyContent: 'center',
             }}
           >
-            <FontAwesomeIcon
-              icon={faMagnifyingGlass}
+            <LucideIcon
+              icon={SearchIcon}
               size={theme.fontSize('sm')}
               style={{ color: theme.colors.text }}
             />
@@ -939,8 +941,8 @@ const FullMapView = ({
             onPress={fitToMarkers}
             style={mapControlStyle}
           >
-            <FontAwesomeIcon
-              icon={faUpRightAndDownLeftFromCenter}
+            <LucideIcon
+              icon={ExpandIcon}
               size={theme.fontSize('sm')}
               style={{ color: theme.colors.text }}
             />
@@ -960,8 +962,8 @@ const FullMapView = ({
               onPress={() => setShowInfo((v) => !v)}
               style={mapControlStyle}
             >
-              <FontAwesomeIcon
-                icon={faCircleInfo}
+              <LucideIcon
+                icon={InfoIcon}
                 size={theme.fontSize('sm')}
                 style={{ color: theme.colors.text }}
               />
@@ -1004,8 +1006,8 @@ const FullMapView = ({
           onPress={toggleLocationTracking}
           style={mapControlStyle}
         >
-          <FontAwesomeIcon
-            icon={faLocationArrow}
+          <LucideIcon
+            icon={NavigationIcon}
             size={theme.fontSize('sm')}
             style={{
               color: isTrackingUser ? theme.colors.accent : theme.colors.text,

@@ -1,8 +1,10 @@
+import {
+  ArrowUp as ArrowUpIcon,
+  Square as SquareIcon,
+} from 'lucide-react-native'
+import LucideIcon from '@/components/ui/LucideIcon'
 import { forwardRef, type ReactNode } from 'react'
 import { TextInput, View } from 'react-native'
-import { faArrowUp } from '@fortawesome/free-solid-svg-icons/faArrowUp'
-import { faStop } from '@fortawesome/free-solid-svg-icons/faStop'
-import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
 import Button from '@/components/ui/Button'
 import useTheme from '@/contexts/theme'
 
@@ -81,8 +83,8 @@ const NotesImportChatInput = forwardRef<TextInput, NotesImportChatInputProps>(
           backgroundColor: theme.colors.accent,
         }}
       >
-        <FontAwesomeIcon
-          icon={faStop}
+        <LucideIcon
+          icon={SquareIcon}
           size={14}
           color={theme.colors.textInverse}
         />
@@ -104,8 +106,8 @@ const NotesImportChatInput = forwardRef<TextInput, NotesImportChatInputProps>(
             : theme.colors.accentAlt,
         }}
       >
-        <FontAwesomeIcon
-          icon={faArrowUp}
+        <LucideIcon
+          icon={ArrowUpIcon}
           size={18}
           color={theme.colors.textInverse}
         />

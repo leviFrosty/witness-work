@@ -1,3 +1,8 @@
+import {
+  Lightbulb as LightbulbIcon,
+  Settings as SettingsIcon,
+} from 'lucide-react-native'
+import LucideIcon from '@/components/ui/LucideIcon'
 import { Fragment, ReactNode, useCallback, useMemo, useState } from 'react'
 import { View } from 'react-native'
 import moment from 'moment'
@@ -8,9 +13,6 @@ import Button from '@/components/ui/Button'
 import Card from '@/components/ui/Card'
 import IconButton from '@/components/ui/IconButton'
 import useTheme from '@/contexts/theme'
-import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
-import { faGear } from '@fortawesome/free-solid-svg-icons/faGear'
-import { faLightbulb } from '@fortawesome/free-solid-svg-icons/faLightbulb'
 import { RootStackNavigation } from '@/types/rootStack'
 
 import i18n, { TranslationKey } from '@/lib/locales'
@@ -471,8 +473,8 @@ const AssistantHeader = ({
         gap: 8,
       }}
     >
-      <FontAwesomeIcon
-        icon={faLightbulb}
+      <LucideIcon
+        icon={LightbulbIcon}
         size={12}
         style={{ color: theme.colors.warn }}
       />
@@ -489,7 +491,7 @@ const AssistantHeader = ({
         {i18n.t('assistant.label')}
       </Text>
       <IconButton
-        icon={faGear}
+        icon={SettingsIcon}
         size='xs'
         color={theme.colors.textAlt}
         onPress={onPressSettings}

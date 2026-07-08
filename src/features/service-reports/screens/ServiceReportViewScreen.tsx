@@ -1,4 +1,16 @@
 import {
+  Check as CheckIcon,
+  Copy as CopyIcon,
+  Earth as EarthIcon,
+  ExternalLink as ExternalLinkIcon,
+  Hourglass as HourglassIcon,
+  Pencil as PencilIcon,
+  RotateCcw as RotateCcwIcon,
+  Share as ShareIcon,
+  X as XIcon,
+} from 'lucide-react-native'
+import LucideIcon from '@/components/ui/LucideIcon'
+import {
   Alert,
   Keyboard,
   ScrollView,
@@ -8,20 +20,10 @@ import {
 } from 'react-native'
 import { NativeStackScreenProps } from '@react-navigation/native-stack'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
 import * as Clipboard from 'expo-clipboard'
 import moment from 'moment'
 import { useCallback, useMemo, useState } from 'react'
 import type { LayoutChangeEvent } from 'react-native'
-import { faArrowUpFromBracket } from '@fortawesome/free-solid-svg-icons/faArrowUpFromBracket'
-import { faArrowUpRightFromSquare } from '@fortawesome/free-solid-svg-icons/faArrowUpRightFromSquare'
-import { faCopy } from '@fortawesome/free-solid-svg-icons/faCopy'
-import { faEarthAmericas } from '@fortawesome/free-solid-svg-icons/faEarthAmericas'
-import { faHourglass } from '@fortawesome/free-solid-svg-icons/faHourglass'
-import { faArrowRotateLeft } from '@fortawesome/free-solid-svg-icons/faArrowRotateLeft'
-import { faCheck } from '@fortawesome/free-solid-svg-icons/faCheck'
-import { faPencil } from '@fortawesome/free-solid-svg-icons/faPencil'
-import { faTimes } from '@fortawesome/free-solid-svg-icons/faTimes'
 import Svg, {
   Path,
   Defs,
@@ -52,12 +54,12 @@ import { RootStackParamList } from '@/types/rootStack'
 
 type Props = NativeStackScreenProps<RootStackParamList, 'ServiceReportView'>
 
-/** FontAwesome icons for the submit segment itself. */
+/** Lucide icons for the submit segment itself. */
 const exportMethodCtaIcons = {
-  copy: faCopy,
-  share: faArrowUpFromBracket,
-  hourglass: faHourglass,
-  nwpublisher: faEarthAmericas,
+  copy: CopyIcon,
+  share: ShareIcon,
+  hourglass: HourglassIcon,
+  nwpublisher: EarthIcon,
 } as const satisfies Record<ReportExportMethod, unknown>
 
 /** SF Symbols for the native method menu rows. */
@@ -343,7 +345,7 @@ const ServiceReportViewScreen = ({ route, navigation }: Props) => {
         }}
       >
         <IconButton
-          icon={faTimes}
+          icon={XIcon}
           size={18}
           onPress={() => navigation.goBack()}
         />
@@ -404,7 +406,7 @@ const ServiceReportViewScreen = ({ route, navigation }: Props) => {
               >
                 {isEditingNotes ? (
                   <IconButton
-                    icon={faCheck}
+                    icon={CheckIcon}
                     size={14}
                     color={PAPER_LABEL}
                     hitSlop={8}
@@ -415,7 +417,7 @@ const ServiceReportViewScreen = ({ route, navigation }: Props) => {
                   <>
                     {data.hasNotesOverride && (
                       <IconButton
-                        icon={faArrowRotateLeft}
+                        icon={RotateCcwIcon}
                         size={13}
                         color={PAPER_LABEL}
                         hitSlop={8}
@@ -424,7 +426,7 @@ const ServiceReportViewScreen = ({ route, navigation }: Props) => {
                       />
                     )}
                     <IconButton
-                      icon={faPencil}
+                      icon={PencilIcon}
                       size={13}
                       color={PAPER_LABEL}
                       hitSlop={8}
@@ -474,7 +476,7 @@ const ServiceReportViewScreen = ({ route, navigation }: Props) => {
           }
         >
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-            <FontAwesomeIcon
+            <LucideIcon
               icon={exportMethodCtaIcons[defaultExportMethod]}
               size={15}
               style={{ color: theme.colors.textInverse }}
@@ -489,8 +491,8 @@ const ServiceReportViewScreen = ({ route, navigation }: Props) => {
               {submitCtaLabel}
             </Text>
             {submitIsExternal && (
-              <FontAwesomeIcon
-                icon={faArrowUpRightFromSquare}
+              <LucideIcon
+                icon={ExternalLinkIcon}
                 size={11}
                 style={{ color: theme.colors.textInverse }}
               />

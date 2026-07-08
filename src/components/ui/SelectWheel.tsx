@@ -1,9 +1,9 @@
+import { ChevronDown as ChevronDownIcon } from 'lucide-react-native'
+import LucideIcon from '@/components/ui/LucideIcon'
 import { useEffect, useRef, useState } from 'react'
 import { Modal, Pressable, View } from 'react-native'
 import { Picker } from '@react-native-picker/picker'
 import { Sheet } from 'tamagui'
-import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
-import { faChevronDown } from '@fortawesome/free-solid-svg-icons/faChevronDown'
 import useTheme from '@/contexts/theme'
 import Text from '@/components/ui/MyText'
 import { SelectDataItem, SelectProps } from '@/components/ui/Select'
@@ -106,8 +106,8 @@ const SelectWheel = <T,>({
           >
             {selectedLabel ?? placeholder ?? ''}
           </Text>
-          <FontAwesomeIcon
-            icon={faChevronDown}
+          <LucideIcon
+            icon={ChevronDownIcon}
             color={theme.colors.text}
             size={12}
           />

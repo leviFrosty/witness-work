@@ -1,10 +1,10 @@
+import { Clock as ClockIcon } from 'lucide-react-native'
 import { View } from 'react-native'
 import { useContext } from 'react'
 import { ThemeContext } from '@/contexts/theme'
 import Text from '@/components/ui/MyText'
 import i18n from '@/lib/locales'
 import IconButton from '@/components/ui/IconButton'
-import { faClock } from '@fortawesome/free-solid-svg-icons/faClock'
 import { ThemeSizes } from '@/types/theme'
 
 const SwipeableDismiss = ({ size }: { size?: ThemeSizes }) => {
@@ -20,7 +20,7 @@ const SwipeableDismiss = ({ size }: { size?: ThemeSizes }) => {
         justifyContent: 'center',
       }}
     >
-      <IconButton icon={faClock} size={size || 'lg'} />
+      <IconButton icon={ClockIcon} size={size || 'lg'} />
       <Text style={{ color: theme.colors.textAlt }}>
         {i18n.t('dismissForLater')}
       </Text>

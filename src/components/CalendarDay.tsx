@@ -1,3 +1,4 @@
+import { ArrowUp as ArrowUpIcon } from 'lucide-react-native'
 import { useCallback, useEffect, useMemo } from 'react'
 import { View } from 'react-native'
 import { DateData } from 'react-native-calendars'
@@ -21,7 +22,6 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated'
 import IconButton from '@/components/ui/IconButton'
-import { faArrowUp } from '@fortawesome/free-solid-svg-icons/faArrowUp'
 import { usePreferences } from '@/stores/preferences'
 import { Theme } from '@/types/theme'
 import { formatMinutesCompact } from '@/lib/minutes'
@@ -424,7 +424,11 @@ const CalendarDay = (
             animatedStyle,
           ]}
         >
-          <IconButton icon={faArrowUp} size={30} color={theme.colors.accent} />
+          <IconButton
+            icon={ArrowUpIcon}
+            size={30}
+            color={theme.colors.accent}
+          />
         </Animated.View>
       )}
     </View>

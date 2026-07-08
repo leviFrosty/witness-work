@@ -1,3 +1,9 @@
+import {
+  Heart as HeartIcon,
+  SquarePen as SquarePenIcon,
+  Star as StarIcon,
+  X as XIcon,
+} from 'lucide-react-native'
 import { useEffect, useMemo } from 'react'
 import useDailyMinutes from '@/features/profile/hooks/useDailyMinutes'
 import {
@@ -10,10 +16,6 @@ import {
 import { FullWindowOverlay } from 'react-native-screens'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useNavigation } from '@react-navigation/native'
-import { faPenToSquare } from '@fortawesome/free-solid-svg-icons/faPenToSquare'
-import { faStar } from '@fortawesome/free-solid-svg-icons/faStar'
-import { faTimes } from '@fortawesome/free-solid-svg-icons/faTimes'
-import { faHeart } from '@fortawesome/free-solid-svg-icons/faHeart'
 import moment from 'moment'
 import Animated, {
   interpolate,
@@ -251,11 +253,11 @@ const ProfileDetailOverlay = ({ origin, open, onClose }: Props) => {
                 }}
               >
                 <IconButton
-                  icon={faPenToSquare}
+                  icon={SquarePenIcon}
                   size='lg'
                   onPress={handleEdit}
                 />
-                <IconButton icon={faTimes} size='xl' onPress={onClose} />
+                <IconButton icon={XIcon} size='xl' onPress={onClose} />
               </View>
               <View
                 style={{
@@ -331,7 +333,7 @@ const ProfileDetailOverlay = ({ origin, open, onClose }: Props) => {
                 <View style={{ gap: 10 }}>
                   {tracksTenure && tenureStartDate && (
                     <SinceBadge
-                      icon={faStar}
+                      icon={StarIcon}
                       label={i18n.t(getStartDateLabels(publisher).badge)}
                       value={moment(tenureStartDate).format('MMMM YYYY')}
                       tint={theme.colors.indigo}
@@ -340,7 +342,7 @@ const ProfileDetailOverlay = ({ origin, open, onClose }: Props) => {
                   )}
                   {supporterSince && (
                     <SinceBadge
-                      icon={faHeart}
+                      icon={HeartIcon}
                       label={i18n.t('profileStatSupporter')}
                       value={moment(supporterSince).format('MMMM YYYY')}
                       tint={theme.colors.supporter}

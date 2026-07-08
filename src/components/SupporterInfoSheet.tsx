@@ -1,7 +1,7 @@
+import { X as XIcon } from 'lucide-react-native'
 import { Sheet } from 'tamagui'
 import { Modal, ScrollView, View } from 'react-native'
 import { useEffect, useState } from 'react'
-import { faTimes } from '@fortawesome/free-solid-svg-icons/faTimes'
 import { useNavigation } from '@react-navigation/native'
 import useTheme from '@/contexts/theme'
 import Text from '@/components/ui/MyText'
@@ -117,7 +117,7 @@ const SupporterInfoSheet = ({ open, setOpen, featureKey }: Props) => {
               </View>
               <IconButton
                 noTransform
-                icon={faTimes}
+                icon={XIcon}
                 size='xl'
                 onPress={() => setOpen(false)}
               />

@@ -1,3 +1,7 @@
+import {
+  FileInput as FileInputIcon,
+  Upload as UploadIcon,
+} from 'lucide-react-native'
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState } from 'react'
 import ActionButton from '@/components/ui/ActionButton'
@@ -21,8 +25,6 @@ import Badge from '@/components/ui/Badge'
 import XView from '@/components/ui/layout/XView'
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
 import IconButton from '@/components/ui/IconButton'
-import { faFileImport } from '@fortawesome/free-solid-svg-icons/faFileImport'
-import { faUpload } from '@fortawesome/free-solid-svg-icons/faUpload'
 import { useTimeCache } from '@/stores/timeCache'
 
 /**
@@ -172,7 +174,10 @@ const ImportAndExportScreen = () => {
               <Spinner />
             ) : (
               <XView>
-                <IconButton icon={faUpload} color={theme.colors.textInverse} />
+                <IconButton
+                  icon={UploadIcon}
+                  color={theme.colors.textInverse}
+                />
                 <Text
                   style={{
                     color: theme.colors.textInverse,
@@ -201,7 +206,7 @@ const ImportAndExportScreen = () => {
             ) : (
               <XView>
                 <IconButton
-                  icon={faFileImport}
+                  icon={FileInputIcon}
                   color={theme.colors.textInverse}
                 />
                 <Text

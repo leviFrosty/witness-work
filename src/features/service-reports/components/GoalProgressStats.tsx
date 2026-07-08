@@ -1,14 +1,15 @@
+import LucideIcon from '@/components/ui/LucideIcon'
 import { ReactNode } from 'react'
 import { View } from 'react-native'
 import Animated from 'react-native-reanimated'
-import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
 import Text from '@/components/ui/MyText'
 import i18n from '@/lib/locales'
 import useTheme from '@/contexts/theme'
-import { AchievementTier, tierColor, tierIcon } from '@/lib/achievementTier'
+import { AchievementTier, tierColor } from '@/lib/achievementTier'
 import { goalProgress } from '@/lib/goalProgress'
 import { useFormattedMinutes } from '@/lib/minutes'
 import { usePreferences } from '@/stores/preferences'
+import { tierIcon } from '@/features/service-reports/lib/achievementTierIcon'
 
 export type PeriodState = 'current' | 'past' | 'future'
 
@@ -132,7 +133,7 @@ const GoalProgressStats = ({
   const tierBadge = tier ? (
     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
       <Animated.View style={sealAnimatedStyle}>
-        <FontAwesomeIcon icon={tierIcon(tier)} color={heroColor} size={18} />
+        <LucideIcon icon={tierIcon(tier)} color={heroColor} size={18} />
       </Animated.View>
       <Text
         style={{

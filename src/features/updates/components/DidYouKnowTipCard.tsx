@@ -1,7 +1,7 @@
+import { X as XIcon } from 'lucide-react-native'
+import LucideIcon from '@/components/ui/LucideIcon'
 import { useState } from 'react'
 import { Pressable, StyleProp, StyleSheet, View, ViewStyle } from 'react-native'
-import { faXmark } from '@fortawesome/free-solid-svg-icons/faXmark'
-import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
 import useTheme from '@/contexts/theme'
 import i18n, { TranslationKey } from '@/lib/locales'
 import { usePreferences } from '@/stores/preferences'
@@ -56,11 +56,7 @@ const DidYouKnowTipCard = ({ style }: { style?: StyleProp<ViewStyle> }) => {
       ]}
     >
       <View style={{ paddingTop: 2 }}>
-        <FontAwesomeIcon
-          icon={tip.icon}
-          size={12}
-          color={theme.colors.textAlt}
-        />
+        <LucideIcon icon={tip.icon} size={12} color={theme.colors.textAlt} />
       </View>
 
       <View style={{ flex: 1, gap: 2 }}>
@@ -98,11 +94,7 @@ const DidYouKnowTipCard = ({ style }: { style?: StyleProp<ViewStyle> }) => {
         accessibilityLabel={i18n.t('gotIt')}
         style={{ padding: 2 }}
       >
-        <FontAwesomeIcon
-          icon={faXmark}
-          size={12}
-          color={theme.colors.textAlt}
-        />
+        <LucideIcon icon={XIcon} size={12} color={theme.colors.textAlt} />
       </Pressable>
     </View>
   )

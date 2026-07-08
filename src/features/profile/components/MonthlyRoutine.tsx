@@ -1,3 +1,8 @@
+import {
+  Check as CheckIcon,
+  Minus as MinusIcon,
+  X as XIcon,
+} from 'lucide-react-native'
 import { View } from 'react-native'
 import { useCallback, useMemo } from 'react'
 import moment from 'moment'
@@ -9,9 +14,6 @@ import { usePreferences } from '@/stores/preferences'
 import usePublisher from '@/hooks/usePublisher'
 import { useNavigation } from '@react-navigation/native'
 import IconButton from '@/components/ui/IconButton'
-import { faCheck } from '@fortawesome/free-solid-svg-icons/faCheck'
-import { faMinus } from '@fortawesome/free-solid-svg-icons/faMinus'
-import { faTimes } from '@fortawesome/free-solid-svg-icons/faTimes'
 import Button from '@/components/ui/Button'
 import { getMonthsReports } from '@/lib/serviceReport'
 import { HomeTabStackNavigation } from '@/types/homeStack'
@@ -86,10 +88,10 @@ const Month = ({
           }}
           icon={
             !didNotGoOutInService
-              ? faCheck
+              ? CheckIcon
               : monthWasBeforeInstalled
-                ? faMinus
-                : faTimes
+                ? MinusIcon
+                : XIcon
           }
         />
       </View>

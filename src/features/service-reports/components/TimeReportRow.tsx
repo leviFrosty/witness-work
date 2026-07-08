@@ -1,3 +1,7 @@
+import {
+  ArrowLeftRight as ArrowLeftRightIcon,
+  Construction as ConstructionIcon,
+} from 'lucide-react-native'
 import { Swipeable } from 'react-native-gesture-handler'
 import useTheme from '@/contexts/theme'
 import Haptics from '@/lib/haptics'
@@ -9,8 +13,6 @@ import useServiceReport from '@/stores/serviceReport'
 import Text from '@/components/ui/MyText'
 import { formatDate } from '@/lib/dates'
 import IconButton from '@/components/ui/IconButton'
-import { faPersonDigging } from '@fortawesome/free-solid-svg-icons/faPersonDigging'
-import { faRightLeft } from '@fortawesome/free-solid-svg-icons/faRightLeft'
 import { useCallback } from 'react'
 import Button from '@/components/ui/Button'
 import { useNavigation } from '@react-navigation/native'
@@ -189,7 +191,7 @@ const TimeReportRow = ({ report, onPress }: TimeReportRowProps) => {
               alignItems: 'center',
             }}
           >
-            <IconButton icon={faRightLeft} />
+            <IconButton icon={ArrowLeftRightIcon} />
             <Text
               style={{
                 color: theme.colors.textAlt,
@@ -210,7 +212,7 @@ const TimeReportRow = ({ report, onPress }: TimeReportRowProps) => {
                   alignItems: 'center',
                 }}
               >
-                {isLdc && <IconButton icon={faPersonDigging} />}
+                {isLdc && <IconButton icon={ConstructionIcon} />}
                 <Text
                   style={{
                     color: theme.colors.textAlt,

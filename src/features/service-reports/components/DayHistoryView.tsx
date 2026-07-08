@@ -1,6 +1,6 @@
+import { Plus as PlusIcon } from 'lucide-react-native'
+import LucideIcon from '@/components/ui/LucideIcon'
 import { View } from 'react-native'
-import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
-import { faPlus } from '@fortawesome/free-solid-svg-icons/faPlus'
 import Text from '@/components/ui/MyText'
 import i18n from '@/lib/locales'
 import useTheme from '@/contexts/theme'
@@ -54,7 +54,7 @@ const EmptyActionButton = (props: { label: string; onPress?: () => void }) => {
         alignItems: 'center',
       }}
     >
-      <FontAwesomeIcon icon={faPlus} size={12} color={theme.colors.text} />
+      <LucideIcon icon={PlusIcon} size={12} color={theme.colors.text} />
       <Text
         style={{
           color: theme.colors.text,
@@ -211,7 +211,7 @@ const DayHistoryView: React.FC<DayHistoryViewProps> = ({
           {hasTimeReports && onAddTime && (
             <IconButton
               noTransform
-              icon={faPlus}
+              icon={PlusIcon}
               onPress={onAddTime}
               accessibilityLabel={i18n.t('addTime')}
               size={13}
@@ -275,7 +275,7 @@ const DayHistoryView: React.FC<DayHistoryViewProps> = ({
           {hasPlans && onPlanDay && (
             <IconButton
               noTransform
-              icon={faPlus}
+              icon={PlusIcon}
               onPress={onPlanDay}
               accessibilityLabel={i18n.t('planDay')}
               size={13}

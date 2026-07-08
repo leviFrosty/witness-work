@@ -1,8 +1,8 @@
+import { Check as CheckIcon } from 'lucide-react-native'
+import LucideIcon from '@/components/ui/LucideIcon'
 import { useEffect, useMemo, useState } from 'react'
 import { Image, Pressable, View } from 'react-native'
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
-import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
-import { faCheck } from '@fortawesome/free-solid-svg-icons/faCheck'
 import { useToastController } from '@tamagui/toast'
 import Wrapper from '@/components/ui/layout/Wrapper'
 import Text from '@/components/ui/MyText'
@@ -219,8 +219,8 @@ const PreferencesAppIconPicker = () => {
                       justifyContent: 'center',
                     }}
                   >
-                    <FontAwesomeIcon
-                      icon={faCheck}
+                    <LucideIcon
+                      icon={CheckIcon}
                       size={14}
                       color={theme.colors.textInverse}
                     />

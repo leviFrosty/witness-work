@@ -1,3 +1,4 @@
+import LucideIcon from '@/components/ui/LucideIcon'
 import moment from 'moment'
 import { useMemo } from 'react'
 import useTheme from '@/contexts/theme'
@@ -18,10 +19,9 @@ import {
   isPersonalBest12mo,
   resolveTier,
   tierColor,
-  tierIcon,
 } from '@/lib/achievementTier'
 import { goalProgress } from '@/lib/goalProgress'
-import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
+import { tierIcon } from '@/features/service-reports/lib/achievementTierIcon'
 
 export default function YearScreenMonthRow(props: {
   month: number
@@ -100,7 +100,7 @@ export default function YearScreenMonthRow(props: {
       >
         <XView style={{ gap: 8 }}>
           {tier && (
-            <FontAwesomeIcon
+            <LucideIcon
               icon={tierIcon(tier)}
               color={tierColor(tier, theme)}
               size={14}

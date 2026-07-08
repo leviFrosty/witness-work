@@ -1,3 +1,14 @@
+import {
+  BookOpen as BookOpenIcon,
+  ChevronRight as ChevronRightIcon,
+  Mail as MailIcon,
+  MapPin as MapPinIcon,
+  MessageCircle as MessageCircleIcon,
+  Phone as PhoneIcon,
+  Star as StarIcon,
+  Tag as TagIcon,
+} from 'lucide-react-native'
+import LucideIcon, { type AppIcon } from '@/components/ui/LucideIcon'
 import { View, Alert } from 'react-native'
 import Text from '@/components/ui/MyText'
 import useTheme from '@/contexts/theme'
@@ -7,16 +18,6 @@ import { useMemo, useState } from 'react'
 import i18n from '@/lib/locales'
 import { formatRelative } from '@/lib/dates'
 import IconButton from '@/components/ui/IconButton'
-import { faBook } from '@fortawesome/free-solid-svg-icons/faBook'
-import { faChevronRight } from '@fortawesome/free-solid-svg-icons/faChevronRight'
-import { faComment } from '@fortawesome/free-solid-svg-icons/faComment'
-import { faEnvelope } from '@fortawesome/free-solid-svg-icons/faEnvelope'
-import { faLocationDot } from '@fortawesome/free-solid-svg-icons/faLocationDot'
-import { faPhone } from '@fortawesome/free-solid-svg-icons/faPhone'
-import { faStar } from '@fortawesome/free-solid-svg-icons/faStar'
-import { faTag } from '@fortawesome/free-solid-svg-icons/faTag'
-import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
-import { IconDefinition } from '@fortawesome/fontawesome-svg-core'
 import { FuseResultMatch } from 'fuse.js'
 import Button from '@/components/ui/Button'
 import { Swipeable } from 'react-native-gesture-handler'
@@ -40,12 +41,12 @@ import GenderIcon from '@/features/contacts/components/GenderIcon'
 
 const SNIPPET_CONTEXT_CHARS = 24
 
-const ICON_BY_SOURCE: Record<Exclude<MatchSource, 'name'>, IconDefinition> = {
-  customField: faTag,
-  note: faComment,
-  phone: faPhone,
-  email: faEnvelope,
-  address: faLocationDot,
+const ICON_BY_SOURCE: Record<Exclude<MatchSource, 'name'>, AppIcon> = {
+  customField: TagIcon,
+  note: MessageCircleIcon,
+  phone: PhoneIcon,
+  email: MailIcon,
+  address: MapPinIcon,
 }
 
 const ContactRow = ({
@@ -202,7 +203,7 @@ const ContactRow = ({
                     gap: 6,
                   }}
                 >
-                  <FontAwesomeIcon
+                  <LucideIcon
                     icon={ICON_BY_SOURCE[previewMatch.source]}
                     size={9}
                     style={{ color: theme.colors.textAlt }}
@@ -240,12 +241,12 @@ const ContactRow = ({
                       ? theme.colors.text
                       : theme.colors.textAlt,
                   }}
-                  icon={faBook}
+                  icon={BookOpenIcon}
                 />
               )}
               {contact.isFavorite && (
                 <IconButton
-                  icon={faStar}
+                  icon={StarIcon}
                   iconStyle={{ color: theme.colors.warn }}
                   size='sm'
                 />
@@ -256,7 +257,7 @@ const ContactRow = ({
                     ? theme.colors.text
                     : theme.colors.textAlt,
                 }}
-                icon={faChevronRight}
+                icon={ChevronRightIcon}
               />
             </View>
           </View>

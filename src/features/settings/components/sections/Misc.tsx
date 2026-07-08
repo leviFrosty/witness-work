@@ -1,12 +1,14 @@
+import {
+  ChevronRight as ChevronRightIcon,
+  Code as CodeIcon,
+  ExternalLink as ExternalLinkIcon,
+  ScrollText as ScrollTextIcon,
+  Tag as TagIcon,
+} from 'lucide-react-native'
 import { View } from 'react-native'
 import i18n from '@/lib/locales'
 import Section from '@/components/ui/inputs/Section'
 import InputRowButton from '@/features/settings/components/inputs/InputRowButton'
-import { faArrowUpRightFromSquare } from '@fortawesome/free-solid-svg-icons/faArrowUpRightFromSquare'
-import { faChevronRight } from '@fortawesome/free-solid-svg-icons/faChevronRight'
-import { faCode } from '@fortawesome/free-solid-svg-icons/faCode'
-import { faFileContract } from '@fortawesome/free-solid-svg-icons/faFileContract'
-import { faTag } from '@fortawesome/free-solid-svg-icons/faTag'
 import IconButton from '@/components/ui/IconButton'
 import links from '@/constants/links'
 import SectionTitle from '@/features/settings/components/shared/SectionTitle'
@@ -20,33 +22,33 @@ const MiscSection = ({ handleNavigate }: SettingsSectionProps) => {
 
       <Section>
         <InputRowButton
-          leftIcon={faTag}
+          leftIcon={TagIcon}
           label={i18n.t('whatsNew')}
           onPress={() => handleNavigate('Whats New')}
         >
-          <IconButton icon={faChevronRight} />
+          <IconButton icon={ChevronRightIcon} />
         </InputRowButton>
         <InputRowButton
-          leftIcon={faCode}
+          leftIcon={CodeIcon}
           label={i18n.t('viewSource')}
           onPress={() => openURL(links.githubRepo)}
         >
-          <IconButton icon={faArrowUpRightFromSquare} />
+          <IconButton icon={ExternalLinkIcon} />
         </InputRowButton>
         <InputRowButton
-          leftIcon={faFileContract}
+          leftIcon={ScrollTextIcon}
           label={i18n.t('privacyPolicy')}
           onPress={() => openURL(links.privacyPolicy)}
         >
-          <IconButton icon={faArrowUpRightFromSquare} />
+          <IconButton icon={ExternalLinkIcon} />
         </InputRowButton>
         <InputRowButton
-          leftIcon={faFileContract}
+          leftIcon={ScrollTextIcon}
           label={i18n.t('termsOfUse')}
           onPress={() => openURL(links.termsOfUse)}
           lastInSection
         >
-          <IconButton icon={faArrowUpRightFromSquare} />
+          <IconButton icon={ExternalLinkIcon} />
         </InputRowButton>
       </Section>
     </View>

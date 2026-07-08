@@ -1,11 +1,13 @@
+import {
+  ArrowLeft as ArrowLeftIcon,
+  ArrowRight as ArrowRightIcon,
+} from 'lucide-react-native'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { View, StyleSheet } from 'react-native'
 import { BlurView } from 'expo-blur'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { NativeStackScreenProps } from '@react-navigation/native-stack'
 import moment from 'moment'
-import { faArrowLeft } from '@fortawesome/free-solid-svg-icons/faArrowLeft'
-import { faArrowRight } from '@fortawesome/free-solid-svg-icons/faArrowRight'
 
 import useTheme from '@/contexts/theme'
 import { usePreferences } from '@/stores/preferences'
@@ -179,7 +181,7 @@ const ProgressScreen = ({ route, navigation }: Props) => {
                       alignItems: 'center',
                     }}
                   >
-                    <IconButton icon={faArrowLeft} size={15} />
+                    <IconButton icon={ArrowLeftIcon} size={15} />
                     <Text style={{ color: theme.colors.textAlt }}>
                       {moment(selectedMonth).subtract(1, 'month').format('MMM')}
                     </Text>
@@ -204,7 +206,7 @@ const ProgressScreen = ({ route, navigation }: Props) => {
                     <Text style={{ color: theme.colors.textAlt }}>
                       {moment(selectedMonth).add(1, 'month').format('MMM')}
                     </Text>
-                    <IconButton icon={faArrowRight} size={15} />
+                    <IconButton icon={ArrowRightIcon} size={15} />
                   </View>
                 </Button>
               </XView>

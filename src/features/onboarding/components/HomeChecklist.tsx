@@ -1,9 +1,11 @@
+import {
+  Check as CheckIcon,
+  Circle as CircleIcon,
+  CircleCheck as CircleCheckIcon,
+} from 'lucide-react-native'
+import LucideIcon from '@/components/ui/LucideIcon'
 import { useCallback, useEffect, useMemo } from 'react'
 import { Pressable, View } from 'react-native'
-import { faCheck } from '@fortawesome/free-solid-svg-icons/faCheck'
-import { faCircle } from '@fortawesome/free-solid-svg-icons/faCircle'
-import { faCircleCheck } from '@fortawesome/free-solid-svg-icons/faCircleCheck'
-import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
 import { useIsFocused, useNavigation } from '@react-navigation/native'
 import Animated, {
   useAnimatedStyle,
@@ -309,8 +311,8 @@ const HomeChecklist = () => {
               accessibilityLabel={item.label}
             >
               <XView style={{ gap: 12 }}>
-                <FontAwesomeIcon
-                  icon={done ? faCircleCheck : faCircle}
+                <LucideIcon
+                  icon={done ? CircleCheckIcon : CircleIcon}
                   size={theme.fontSize('xl')}
                   style={{
                     color: done ? theme.colors.accent : theme.colors.border,
@@ -327,8 +329,8 @@ const HomeChecklist = () => {
                   {item.label}
                 </Text>
                 {done && (
-                  <FontAwesomeIcon
-                    icon={faCheck}
+                  <LucideIcon
+                    icon={CheckIcon}
                     size={theme.fontSize('sm')}
                     style={{ color: theme.colors.accent }}
                   />
@@ -353,8 +355,8 @@ const HomeChecklist = () => {
               sealAnimatedStyle,
             ]}
           >
-            <FontAwesomeIcon
-              icon={faCircleCheck}
+            <LucideIcon
+              icon={CircleCheckIcon}
               size={theme.fontSize('3xl')}
               style={{ color: theme.colors.accent }}
             />

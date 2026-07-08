@@ -1,3 +1,16 @@
+import {
+  Bell as BellIcon,
+  Calendar as CalendarIcon,
+  CalendarCheck as CalendarCheckIcon,
+  Check as CheckIcon,
+  Map as MapIcon,
+  MessagesSquare as MessagesSquareIcon,
+  Pause as PauseIcon,
+  Play as PlayIcon,
+  Target as TargetIcon,
+  Timer as TimerIcon,
+} from 'lucide-react-native'
+import LucideIcon, { type AppIcon } from '@/components/ui/LucideIcon'
 import { View, Pressable } from 'react-native'
 import { useEffect, useMemo, useState } from 'react'
 import Animated, {
@@ -13,18 +26,6 @@ import Animated, {
 } from 'react-native-reanimated'
 import { scheduleOnRN, scheduleOnUI } from 'react-native-worklets'
 import MapView, { Marker } from 'react-native-maps'
-import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
-import { IconProp } from '@fortawesome/fontawesome-svg-core'
-import { faStopwatch } from '@fortawesome/free-solid-svg-icons/faStopwatch'
-import { faComments } from '@fortawesome/free-solid-svg-icons/faComments'
-import { faCalendar } from '@fortawesome/free-solid-svg-icons/faCalendar'
-import { faCalendarCheck } from '@fortawesome/free-solid-svg-icons/faCalendarCheck'
-import { faBullseye } from '@fortawesome/free-solid-svg-icons/faBullseye'
-import { faMap } from '@fortawesome/free-solid-svg-icons/faMap'
-import { faPlay } from '@fortawesome/free-solid-svg-icons/faPlay'
-import { faPause } from '@fortawesome/free-solid-svg-icons/faPause'
-import { faBell } from '@fortawesome/free-solid-svg-icons/faBell'
-import { faCheck } from '@fortawesome/free-solid-svg-icons/faCheck'
 import moment from 'moment'
 import { styles } from '@/features/onboarding/components/Onboarding.styles'
 import OnboardingNav from '@/features/onboarding/components/OnboardingNav'
@@ -48,7 +49,7 @@ interface Props {
 
 type IntentMeta = {
   id: OnboardingIntent
-  icon: IconProp
+  icon: AppIcon
   accent: (t: Theme) => string
   tint: (t: Theme) => string
   headerKey: TranslationKey
@@ -58,7 +59,7 @@ type IntentMeta = {
 const INTENT_META: Record<OnboardingIntent, IntentMeta> = {
   trackTime: {
     id: 'trackTime',
-    icon: faStopwatch,
+    icon: TimerIcon,
     accent: (t) => t.colors.purple,
     tint: (t) => t.colors.purpleAlt,
     headerKey: 'yourPlanTrackTimeHeader',
@@ -66,7 +67,7 @@ const INTENT_META: Record<OnboardingIntent, IntentMeta> = {
   },
   returnVisits: {
     id: 'returnVisits',
-    icon: faComments,
+    icon: MessagesSquareIcon,
     accent: (t) => t.colors.cyan,
     tint: (t) => t.colors.cyanAlt,
     headerKey: 'yourPlanReturnVisitsHeader',
@@ -74,7 +75,7 @@ const INTENT_META: Record<OnboardingIntent, IntentMeta> = {
   },
   planWeek: {
     id: 'planWeek',
-    icon: faCalendar,
+    icon: CalendarIcon,
     accent: (t) => t.colors.indigo,
     tint: (t) => t.colors.indigoAlt,
     headerKey: 'yourPlanPlanWeekHeader',
@@ -82,7 +83,7 @@ const INTENT_META: Record<OnboardingIntent, IntentMeta> = {
   },
   monthlyGoal: {
     id: 'monthlyGoal',
-    icon: faBullseye,
+    icon: TargetIcon,
     accent: (t) => t.colors.rose,
     tint: (t) => t.colors.roseAlt,
     headerKey: 'yourPlanMonthlyGoalHeader',
@@ -90,7 +91,7 @@ const INTENT_META: Record<OnboardingIntent, IntentMeta> = {
   },
   mapContacts: {
     id: 'mapContacts',
-    icon: faMap,
+    icon: MapIcon,
     accent: (t) => t.colors.orange,
     tint: (t) => t.colors.orangeAlt,
     headerKey: 'yourPlanMapHeader',
@@ -108,7 +109,7 @@ const effectiveMeta = (
   if (id === 'trackTime' && entryMode === 'checkbox') {
     return {
       ...INTENT_META.trackTime,
-      icon: faCalendarCheck,
+      icon: CalendarCheckIcon,
       headerKey: 'yourPlanTrackTimeCheckboxHeader',
       actionKey: 'yourPlanActionTrackTimeCheckbox',
     }
@@ -329,8 +330,8 @@ const CheckOffMonthVisual = ({
           ]}
         />
         <Animated.View style={tickStyle}>
-          <FontAwesomeIcon
-            icon={faCheck}
+          <LucideIcon
+            icon={CheckIcon}
             size={28}
             color={theme.colors.textInverse}
           />
@@ -424,7 +425,7 @@ const ShakingBell = ({
         animatedStyle,
       ]}
     >
-      <FontAwesomeIcon icon={faBell} size={12} color={accent} />
+      <LucideIcon icon={BellIcon} size={12} color={accent} />
     </Animated.View>
   )
 }
@@ -911,7 +912,7 @@ const Stage = ({
                 justifyContent: 'center',
               }}
             >
-              <FontAwesomeIcon
+              <LucideIcon
                 icon={meta.icon}
                 size={18}
                 color={theme.colors.textInverse}
@@ -950,8 +951,8 @@ const Stage = ({
                 opacity: 0.7,
               }}
             >
-              <FontAwesomeIcon
-                icon={paused ? faPlay : faPause}
+              <LucideIcon
+                icon={paused ? PlayIcon : PauseIcon}
                 size={9}
                 color={theme.colors.textAlt}
               />
@@ -1068,7 +1069,7 @@ const Stage = ({
                 backgroundColor: on ? t : 'transparent',
               }}
             >
-              <FontAwesomeIcon
+              <LucideIcon
                 icon={m.icon}
                 size={9}
                 color={on ? a : theme.colors.textAlt}

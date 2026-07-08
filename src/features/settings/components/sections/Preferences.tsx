@@ -1,11 +1,13 @@
+import {
+  ChevronRight as ChevronRightIcon,
+  Contrast as ContrastIcon,
+  Palette as PaletteIcon,
+  Settings as SettingsIcon,
+  User as UserIcon,
+} from 'lucide-react-native'
 import { View } from 'react-native'
 import Section from '@/components/ui/inputs/Section'
 import InputRowButton from '@/features/settings/components/inputs/InputRowButton'
-import { faChevronRight } from '@fortawesome/free-solid-svg-icons/faChevronRight'
-import { faCircleHalfStroke } from '@fortawesome/free-solid-svg-icons/faCircleHalfStroke'
-import { faCog } from '@fortawesome/free-solid-svg-icons/faCog'
-import { faPalette } from '@fortawesome/free-solid-svg-icons/faPalette'
-import { faUser } from '@fortawesome/free-solid-svg-icons/faUser'
 import i18n from '@/lib/locales'
 import IconButton from '@/components/ui/IconButton'
 import { SettingsSectionProps } from '@/features/settings/screens/settingScreen'
@@ -20,33 +22,33 @@ const PreferencesSection = ({ handleNavigate }: SettingsSectionProps) => {
       <View style={{ height: 12 }} />
       <Section>
         <InputRowButton
-          leftIcon={faCircleHalfStroke}
+          leftIcon={ContrastIcon}
           label={i18n.t('appearance')}
           onPress={() => handleNavigate('PreferencesAppearance')}
         >
-          <IconButton icon={faChevronRight} />
+          <IconButton icon={ChevronRightIcon} />
         </InputRowButton>
         <InputRowButton
-          leftIcon={faPalette}
+          leftIcon={PaletteIcon}
           label={i18n.t('personalization')}
           onPress={() => handleNavigate('PreferencesPersonalization')}
         >
-          <IconButton icon={faChevronRight} />
+          <IconButton icon={ChevronRightIcon} />
         </InputRowButton>
         <InputRowButton
-          leftIcon={faUser}
+          leftIcon={UserIcon}
           label={i18n.t('publisher')}
           onPress={() => handleNavigate('PreferencesPublisher')}
         >
-          <IconButton icon={faChevronRight} />
+          <IconButton icon={ChevronRightIcon} />
         </InputRowButton>
         <InputRowButton
-          leftIcon={faCog}
+          leftIcon={SettingsIcon}
           label={i18n.t('preferences')}
           onPress={() => handleNavigate('Preferences')}
           lastInSection
         >
-          <IconButton icon={faChevronRight} />
+          <IconButton icon={ChevronRightIcon} />
         </InputRowButton>
       </Section>
     </View>

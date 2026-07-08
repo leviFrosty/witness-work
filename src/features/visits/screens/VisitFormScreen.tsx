@@ -1,3 +1,9 @@
+import {
+  Caravan as CaravanIcon,
+  IdCard as IdCardIcon,
+  MessagesSquare as MessagesSquareIcon,
+  Trash2 as Trash2Icon,
+} from 'lucide-react-native'
 import { useCallback } from 'react'
 import { View, Alert } from 'react-native'
 import Text from '@/components/ui/MyText'
@@ -26,10 +32,6 @@ import Checkbox from 'expo-checkbox'
 import Select from '@/components/ui/Select'
 import Wrapper from '@/components/ui/layout/Wrapper'
 import IconButton from '@/components/ui/IconButton'
-import { faCaravan } from '@fortawesome/free-solid-svg-icons/faCaravan'
-import { faComments } from '@fortawesome/free-solid-svg-icons/faComments'
-import { faIdCard } from '@fortawesome/free-solid-svg-icons/faIdCard'
-import { faTrash } from '@fortawesome/free-solid-svg-icons/faTrash'
 import isEqual from 'lodash/isEqual'
 import Button from '@/components/ui/Button'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
@@ -159,7 +161,7 @@ const ContactRow = ({ selectedContact }: { selectedContact: Contact }) => {
             gap: 10,
           }}
         >
-          <IconButton icon={faIdCard} />
+          <IconButton icon={IdCardIcon} />
           <Text style={{ fontFamily: theme.fonts.semiBold, fontSize: 16 }}>
             {selectedContact?.name}
           </Text>
@@ -467,7 +469,7 @@ const VisitFormScreen = ({ route, navigation }: Props) => {
             >
               {isEditing && (
                 <IconButton
-                  icon={faTrash}
+                  icon={Trash2Icon}
                   color={theme.colors.text}
                   onPress={() =>
                     Alert.alert(
@@ -600,7 +602,7 @@ const VisitFormScreen = ({ route, navigation }: Props) => {
         <View style={{ padding: 25, paddingBottom: 0, gap: 5 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
             <IconButton
-              icon={conversation.notAtHome ? faCaravan : faComments}
+              icon={conversation.notAtHome ? CaravanIcon : MessagesSquareIcon}
               size={20}
               iconStyle={{ color: theme.colors.text }}
             />

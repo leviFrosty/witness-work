@@ -1,18 +1,20 @@
+import {
+  Calendar as CalendarIcon,
+  Clock as ClockIcon,
+  IdCard as IdCardIcon,
+  X as XIcon,
+} from 'lucide-react-native'
+import type { AppIcon } from '@/components/ui/LucideIcon'
 import { Sheet, XStack } from 'tamagui'
 import usePublisher from '@/hooks/usePublisher'
 import * as Crypto from 'expo-crypto'
 import XView from '@/components/ui/layout/XView'
-import { faIdCard } from '@fortawesome/free-regular-svg-icons/faIdCard'
 import Text from '@/components/ui/MyText'
 import i18n, { TranslationKey } from '@/lib/locales'
-import { faCalendar } from '@fortawesome/free-solid-svg-icons/faCalendar'
-import { faClock } from '@fortawesome/free-solid-svg-icons/faClock'
-import { faTimes } from '@fortawesome/free-solid-svg-icons/faTimes'
 import useTheme from '@/contexts/theme'
 import IconButton from '@/components/ui/IconButton'
 import { View } from 'react-native'
 import Button from '@/components/ui/Button'
-import { IconProp } from '@fortawesome/fontawesome-svg-core'
 import { RootStackNavigation } from '@/types/rootStack'
 import { HomeTabStackNavigation } from '@/types/homeStack'
 
@@ -73,7 +75,7 @@ export default function QuickActionSheet({
             noTransform
             onPress={() => setSheetOpen(false)}
             size={20}
-            icon={faTimes}
+            icon={XIcon}
             color={theme.colors.text}
           />
         </XStack>
@@ -83,19 +85,19 @@ export default function QuickActionSheet({
               <>
                 <ActionButton
                   text='addTime'
-                  icon={faClock}
+                  icon={ClockIcon}
                   onPress={() => handleQuickAction('addTime')}
                 />
               </>
             )}
             <ActionButton
               text='createPlan'
-              icon={faCalendar}
+              icon={CalendarIcon}
               onPress={() => handleQuickAction('addPlan')}
             />
             <ActionButton
               text='addContact'
-              icon={faIdCard}
+              icon={IdCardIcon}
               onPress={() => handleQuickAction('addContact')}
             />
           </View>
@@ -108,7 +110,7 @@ export default function QuickActionSheet({
 function ActionButton(props: {
   onPress?: () => void
   text: TranslationKey
-  icon: IconProp
+  icon: AppIcon
 }) {
   const theme = useTheme()
   return (

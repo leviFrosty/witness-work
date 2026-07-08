@@ -1,14 +1,15 @@
+import {
+  Calendar as CalendarIcon,
+  CalendarCheck as CalendarCheckIcon,
+  Check as CheckIcon,
+  Map as MapIcon,
+  MessagesSquare as MessagesSquareIcon,
+  Target as TargetIcon,
+  Timer as TimerIcon,
+} from 'lucide-react-native'
+import LucideIcon, { type AppIcon } from '@/components/ui/LucideIcon'
 import { View } from 'react-native'
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
-import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
-import { IconProp } from '@fortawesome/fontawesome-svg-core'
-import { faStopwatch } from '@fortawesome/free-solid-svg-icons/faStopwatch'
-import { faComments } from '@fortawesome/free-solid-svg-icons/faComments'
-import { faCalendar } from '@fortawesome/free-solid-svg-icons/faCalendar'
-import { faCalendarCheck } from '@fortawesome/free-solid-svg-icons/faCalendarCheck'
-import { faBullseye } from '@fortawesome/free-solid-svg-icons/faBullseye'
-import { faMap } from '@fortawesome/free-solid-svg-icons/faMap'
-import { faCheck } from '@fortawesome/free-solid-svg-icons/faCheck'
 import { styles } from '@/features/onboarding/components/Onboarding.styles'
 import OnboardingNav from '@/features/onboarding/components/OnboardingNav'
 import Text from '@/components/ui/MyText'
@@ -28,7 +29,7 @@ interface Props {
 
 interface IntentOption {
   id: OnboardingIntent
-  icon: IconProp
+  icon: AppIcon
   labelKey: TranslationKey
   color: string
 }
@@ -41,31 +42,31 @@ const IntentPicker = ({ goBack, goNext }: Props) => {
   const options: IntentOption[] = [
     {
       id: 'trackTime',
-      icon: isCheckbox ? faCalendarCheck : faStopwatch,
+      icon: isCheckbox ? CalendarCheckIcon : TimerIcon,
       labelKey: isCheckbox ? 'intentTrackTimeCheckbox' : 'intentTrackTime',
       color: theme.colors.purple,
     },
     {
       id: 'returnVisits',
-      icon: faComments,
+      icon: MessagesSquareIcon,
       labelKey: 'intentReturnVisits',
       color: theme.colors.cyan,
     },
     {
       id: 'planWeek',
-      icon: faCalendar,
+      icon: CalendarIcon,
       labelKey: 'intentPlanWeek',
       color: theme.colors.indigo,
     },
     {
       id: 'monthlyGoal',
-      icon: faBullseye,
+      icon: TargetIcon,
       labelKey: 'intentMonthlyGoal',
       color: theme.colors.rose,
     },
     {
       id: 'mapContacts',
-      icon: faMap,
+      icon: MapIcon,
       labelKey: 'intentMapContacts',
       color: theme.colors.orange,
     },
@@ -152,7 +153,7 @@ const IntentPicker = ({ goBack, goNext }: Props) => {
                       marginRight: 12,
                     }}
                   >
-                    <FontAwesomeIcon
+                    <LucideIcon
                       icon={opt.icon}
                       size={18}
                       color={theme.colors.textInverse}
@@ -185,8 +186,8 @@ const IntentPicker = ({ goBack, goNext }: Props) => {
                     }}
                   >
                     {isSelected ? (
-                      <FontAwesomeIcon
-                        icon={faCheck}
+                      <LucideIcon
+                        icon={CheckIcon}
                         size={14}
                         color={theme.colors.textInverse}
                       />

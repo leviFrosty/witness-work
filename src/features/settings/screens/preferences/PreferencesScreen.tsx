@@ -1,15 +1,17 @@
+import {
+  Calendar1 as Calendar1Icon,
+  ChevronRight as ChevronRightIcon,
+  FileOutput as FileOutputIcon,
+  House as HouseIcon,
+  LayoutGrid as LayoutGridIcon,
+  MessagesSquare as MessagesSquareIcon,
+  Route as RouteIcon,
+  SlidersHorizontal as SlidersHorizontalIcon,
+} from 'lucide-react-native'
 import Wrapper from '@/components/ui/layout/Wrapper'
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
 import Section from '@/components/ui/inputs/Section'
 import InputRowButton from '@/features/settings/components/inputs/InputRowButton'
-import { faCalendarDay } from '@fortawesome/free-solid-svg-icons/faCalendarDay'
-import { faChevronRight } from '@fortawesome/free-solid-svg-icons/faChevronRight'
-import { faComments } from '@fortawesome/free-solid-svg-icons/faComments'
-import { faFileExport } from '@fortawesome/free-solid-svg-icons/faFileExport'
-import { faHome } from '@fortawesome/free-solid-svg-icons/faHome'
-import { faRoute } from '@fortawesome/free-solid-svg-icons/faRoute'
-import { faSliders } from '@fortawesome/free-solid-svg-icons/faSliders'
-import { faTableCellsLarge } from '@fortawesome/free-solid-svg-icons/faTableCellsLarge'
 import { Platform } from 'react-native'
 import i18n from '@/lib/locales'
 import { useNavigation } from '@react-navigation/native'
@@ -28,56 +30,56 @@ const PreferencesScreen = () => {
         <View style={{ gap: 5 }}>
           <Section>
             <InputRowButton
-              leftIcon={faComments}
+              leftIcon={MessagesSquareIcon}
               label={i18n.t('conversations')}
               onPress={() => navigation.navigate('PreferencesConversation')}
             >
-              <IconButton icon={faChevronRight} />
+              <IconButton icon={ChevronRightIcon} />
             </InputRowButton>
             <InputRowButton
-              leftIcon={faCalendarDay}
+              leftIcon={Calendar1Icon}
               label={i18n.t('plans')}
               onPress={() => navigation.navigate('PreferencesPlans')}
             >
-              <IconButton icon={faChevronRight} />
+              <IconButton icon={ChevronRightIcon} />
             </InputRowButton>
             <InputRowButton
-              leftIcon={faRoute}
+              leftIcon={RouteIcon}
               label={i18n.t('navigation')}
               onPress={() => navigation.navigate('PreferencesNavigation')}
             >
-              <IconButton icon={faChevronRight} />
+              <IconButton icon={ChevronRightIcon} />
             </InputRowButton>
             <InputRowButton
-              leftIcon={faSliders}
+              leftIcon={SlidersHorizontalIcon}
               label={i18n.t('customFields')}
               onPress={() => navigation.navigate('PreferencesCustomFields')}
             >
-              <IconButton icon={faChevronRight} />
+              <IconButton icon={ChevronRightIcon} />
             </InputRowButton>
             <InputRowButton
-              leftIcon={faHome}
+              leftIcon={HouseIcon}
               label={i18n.t('homeScreen')}
               onPress={() => navigation.navigate('PreferencesHomeScreen')}
             >
-              <IconButton icon={faChevronRight} />
+              <IconButton icon={ChevronRightIcon} />
             </InputRowButton>
             {Platform.OS === 'ios' && (
               <InputRowButton
-                leftIcon={faTableCellsLarge}
+                leftIcon={LayoutGridIcon}
                 label={i18n.t('widgets')}
                 onPress={() => navigation.navigate('PreferencesWidgets')}
               >
-                <IconButton icon={faChevronRight} />
+                <IconButton icon={ChevronRightIcon} />
               </InputRowButton>
             )}
             <InputRowButton
-              leftIcon={faFileExport}
+              leftIcon={FileOutputIcon}
               label={i18n.t('backups')}
               onPress={() => navigation.navigate('PreferencesBackups')}
               lastInSection
             >
-              <IconButton icon={faChevronRight} />
+              <IconButton icon={ChevronRightIcon} />
             </InputRowButton>
           </Section>
         </View>

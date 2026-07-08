@@ -1,3 +1,4 @@
+import { Undo2 as Undo2Icon } from 'lucide-react-native'
 import React, { useMemo } from 'react'
 import { View, Alert } from 'react-native'
 import { NativeStackScreenProps } from '@react-navigation/native-stack'
@@ -13,7 +14,6 @@ import i18n from '@/lib/locales'
 import moment from 'moment'
 import { formatDate } from '@/lib/dates'
 import IconButton from '@/components/ui/IconButton'
-import { faUndo } from '@fortawesome/free-solid-svg-icons/faUndo'
 import { Contact } from '@/types/contact'
 import { useToastController } from '@tamagui/toast'
 import * as Notifications from 'expo-notifications'
@@ -81,7 +81,7 @@ const DismissedContactRow = ({ contact }: { contact: Contact }) => {
         </View>
         <IconButton
           onPress={handleUndismiss}
-          icon={faUndo}
+          icon={Undo2Icon}
           size='lg'
           style={{
             backgroundColor: theme.colors.accentTranslucent,

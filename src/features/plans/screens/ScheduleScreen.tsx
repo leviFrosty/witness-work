@@ -1,3 +1,7 @@
+import {
+  ArrowLeft as ArrowLeftIcon,
+  ArrowRight as ArrowRightIcon,
+} from 'lucide-react-native'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
@@ -8,8 +12,6 @@ import {
 } from '@react-navigation/bottom-tabs'
 import { useNavigation as useRootNavigation } from '@react-navigation/native'
 import moment from 'moment'
-import { faArrowLeft } from '@fortawesome/free-solid-svg-icons/faArrowLeft'
-import { faArrowRight } from '@fortawesome/free-solid-svg-icons/faArrowRight'
 
 import useServiceReport from '@/stores/serviceReport'
 import useTheme from '@/contexts/theme'
@@ -275,7 +277,7 @@ const ScheduleScreen = ({ route }: Props) => {
                   alignItems: 'center',
                 }}
               >
-                <IconButton icon={faArrowLeft} size={15} />
+                <IconButton icon={ArrowLeftIcon} size={15} />
                 <Text style={{ color: theme.colors.textAlt }}>
                   {moment(selectedMonth).subtract(1, 'month').format('MMM')}
                 </Text>
@@ -303,7 +305,7 @@ const ScheduleScreen = ({ route }: Props) => {
                 <Text style={{ color: theme.colors.textAlt }}>
                   {moment(selectedMonth).add(1, 'month').format('MMM')}
                 </Text>
-                <IconButton icon={faArrowRight} size={15} />
+                <IconButton icon={ArrowRightIcon} size={15} />
               </View>
             </Button>
           </XView>

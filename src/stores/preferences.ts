@@ -762,6 +762,15 @@ export const PREFERENCE_DEFAULTS = {
    */
   submittedReportMonths: [] as string[],
   /**
+   * Per-month manual override of the report Comments text, keyed `YYYY-MM`.
+   * When a key is present its value replaces the auto-generated credit
+   * breakdown everywhere the report is rendered or exported (preview,
+   * copy/share text, Hourglass / NW Publisher remarks) — including an empty
+   * string, which blanks the comments. Removing the key restores the
+   * auto-generated text. Syncable — it's report content the user authored.
+   */
+  reportCommentOverrides: {} as Record<string, string>,
+  /**
    * Off Days the user wants the Assistant to treat as a hard exclusion when
    * generating recommended day plans. Empty by default — no exclusion. Today
    * stored as weekday numbers (0 = Sunday … 6 = Saturday); the concept covers
@@ -1238,6 +1247,20 @@ export const usePreferences = create(
                   ].slice(-24),
                 }
           ),
+        setReportCommentOverride: (monthKey: string, text: string) =>
+          set(({ reportCommentOverrides }) => ({
+            reportCommentOverrides: {
+              ...reportCommentOverrides,
+              [monthKey]: text,
+            },
+          })),
+        clearReportCommentOverride: (monthKey: string) =>
+          set(({ reportCommentOverrides }) => {
+            if (!(monthKey in reportCommentOverrides)) return {}
+            const next = { ...reportCommentOverrides }
+            delete next[monthKey]
+            return { reportCommentOverrides: next }
+          }),
         markTipSeen: (tipId: string) =>
           set(({ seenTipIds }) =>
             seenTipIds.includes(tipId)

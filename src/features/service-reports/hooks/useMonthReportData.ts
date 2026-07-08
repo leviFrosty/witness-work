@@ -31,8 +31,15 @@ export type MonthReportData = {
    * publishers, or 1/0 (shared / didn't share) for checkbox-mode publishers.
    */
   hourglassMinutes: number
-  /** Notes string with the raw credit breakdown and credit overage. */
+  /**
+   * Comments text for the report. The auto-generated credit breakdown, unless
+   * the user saved a month-specific override (see `hasNotesOverride`).
+   */
   notes: string
+  /** The auto-generated comments, ignoring any user override. */
+  defaultNotes: string
+  /** True when `notes` comes from a user-saved month-specific override. */
+  hasNotesOverride: boolean
   /** Last-month-only flag (kept for nwpublisher submission gating). */
   isLastMonth: boolean
   /** Hide the hours row for checkbox-mode publishers. */
@@ -50,7 +57,11 @@ const useMonthReportData = (
   month: number | undefined,
   year: number | undefined
 ): MonthReportData => {
-  const { overrideCreditLimit, customCreditLimitHours } = usePreferences()
+  const {
+    overrideCreditLimit,
+    customCreditLimitHours,
+    reportCommentOverrides,
+  } = usePreferences()
   const { type: publisher, entryMode } = usePublisher()
   const { serviceReports } = useServiceReport()
   const { categories } = useCategories()
@@ -111,7 +122,7 @@ const useMonthReportData = (
   const hourglassMinutes =
     entryMode === 'checkbox' ? (sharedInMinistry ? 1 : 0) : adjusted.value
 
-  const notes = useMemo(() => {
+  const defaultNotes = useMemo(() => {
     if (month === undefined || year === undefined) return ''
 
     const detailed = getTotalMinutesDetailedForSpecificMonth(
@@ -160,6 +171,15 @@ const useMonthReportData = (
     return lines.join('\n')
   }, [adjusted.creditOverage, credit, month, monthReports, year, categories])
 
+  const monthKey =
+    month !== undefined && year !== undefined
+      ? moment().month(month).year(year).format('YYYY-MM')
+      : undefined
+  const notesOverride =
+    monthKey !== undefined ? reportCommentOverrides[monthKey] : undefined
+  const hasNotesOverride = notesOverride !== undefined
+  const notes = notesOverride ?? defaultNotes
+
   const reportAsString = useCallback(() => {
     if (month === undefined || year === undefined) return ''
     const hoursForPublisherOrPioneer = () => {
@@ -186,6 +206,8 @@ const useMonthReportData = (
     studies,
     hourglassMinutes,
     notes,
+    defaultNotes,
+    hasNotesOverride,
     isLastMonth,
     showHours: entryMode !== 'checkbox',
     showCredit: true,

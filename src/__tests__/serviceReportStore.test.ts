@@ -856,3 +856,82 @@ describe('TimeEntry Store - Rollover pair deletion', () => {
     expect(allFlat).toEqual([])
   })
 })
+
+describe('TimeEntry Store - Service year deletion', () => {
+  beforeEach(() => {
+    useServiceReport.getState()._WARNING_forceDeleteServiceReports()
+  })
+
+  const flatIds = () =>
+    (
+      Object.values(useServiceReport.getState().serviceReports).flatMap((y) =>
+        Object.values(y).flat()
+      ) as { id: string }[]
+    )
+      .map((r) => r.id)
+      .sort()
+
+  it('deletes every report in the Sep–Aug service year and tombstones them', () => {
+    const { addServiceReport, deleteServiceYearReports } =
+      useServiceReport.getState()
+
+    // Service year ending 2025 = Sep 1 2024 → Aug 31 2025.
+    const inSep = {
+      id: 'in-sep',
+      hours: 1,
+      minutes: 0,
+      date: moment('2024-09-15').toDate(),
+    }
+    const inAug = {
+      id: 'in-aug',
+      hours: 0,
+      minutes: 30,
+      date: moment('2025-08-20').toDate(),
+    }
+    // Boundary neighbors in adjacent service years — must survive.
+    const beforeYear = {
+      id: 'before-year',
+      hours: 2,
+      minutes: 0,
+      date: moment('2024-08-31').toDate(),
+    }
+    const afterYear = {
+      id: 'after-year',
+      hours: 3,
+      minutes: 0,
+      date: moment('2025-09-01').toDate(),
+    }
+
+    addServiceReport(inSep)
+    addServiceReport(inAug)
+    addServiceReport(beforeYear)
+    addServiceReport(afterYear)
+
+    deleteServiceYearReports(2025)
+
+    expect(flatIds()).toEqual(['after-year', 'before-year'])
+
+    const tombstones = useServiceReport
+      .getState()
+      .deletedServiceReports.map((t) => t.id)
+      .sort()
+    expect(tombstones).toEqual(['in-aug', 'in-sep'])
+  })
+
+  it('is a no-op when the service year has no reports', () => {
+    const { addServiceReport, deleteServiceYearReports } =
+      useServiceReport.getState()
+
+    addServiceReport({
+      id: 'kept',
+      hours: 1,
+      minutes: 0,
+      date: moment('2024-10-01').toDate(),
+    })
+
+    deleteServiceYearReports(2020)
+
+    expect(flatIds()).toEqual(['kept'])
+    expect(useServiceReport.getState().deletedServiceReports).toEqual([])
+  })
+})

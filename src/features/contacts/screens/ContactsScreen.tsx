@@ -8,6 +8,7 @@ import {
 import LucideIcon from '@/components/ui/LucideIcon'
 import { useEffect, useMemo, useRef } from 'react'
 import { TextInput, useWindowDimensions, View } from 'react-native'
+import { Input, InputProps } from 'tamagui'
 import { FlashList, FlashListRef } from '@shopify/flash-list'
 import { useNavigation } from '@react-navigation/native'
 import * as Crypto from 'expo-crypto'
@@ -222,14 +223,17 @@ const ContactsScreen = () => {
                   size={theme.fontSize('xs')}
                   style={{ color: theme.colors.textAlt }}
                 />
-                <TextInput
+                <Input
+                  unstyled
                   ref={searchInputRef}
                   value={search}
                   onChangeText={setSearch}
                   placeholder={i18n.t('searchForContact')}
-                  placeholderTextColor={theme.colors.textAlt}
+                  placeholderTextColor={
+                    theme.colors.textAlt as InputProps['placeholderTextColor']
+                  }
                   clearButtonMode='while-editing'
-                  returnKeyType='search'
+                  enterKeyHint='search'
                   style={{
                     flex: 1,
                     color: theme.colors.text,

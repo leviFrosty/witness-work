@@ -12,14 +12,8 @@ import {
   X as XIcon,
 } from 'lucide-react-native'
 import LucideIcon from '@/components/ui/LucideIcon'
-import {
-  Alert,
-  Keyboard,
-  ScrollView,
-  Share,
-  TextInput,
-  View,
-} from 'react-native'
+import { Alert, Keyboard, ScrollView, Share, View } from 'react-native'
+import { TextArea } from 'tamagui'
 import { NativeStackScreenProps } from '@react-navigation/native-stack'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import * as Clipboard from 'expo-clipboard'
@@ -878,7 +872,8 @@ const PaperSheet = ({
             accessory={notesAccessory}
           >
             {notesEditing ? (
-              <TextInput
+              <TextArea
+                unstyled
                 value={notesDraft}
                 onChangeText={onChangeNotesDraft}
                 multiline

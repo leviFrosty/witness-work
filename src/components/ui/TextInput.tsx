@@ -1,26 +1,27 @@
 import React, { forwardRef } from 'react'
-import {
-  TextInput as RNTextInput,
-  TextInputProps as RNTextInputProps,
-} from 'react-native'
+import { Input, InputProps, InputRef, TextArea } from 'tamagui'
 import useTheme from '@/contexts/theme'
 import { Errors } from '@/types/textInput'
 
-export interface TextInputProps extends RNTextInputProps {
+export interface TextInputProps
+  extends Omit<InputProps, 'placeholderTextColor' | 'selectionColor'> {
   error?: string
   errors?: Errors
   setErrors?: React.Dispatch<React.SetStateAction<Errors>>
-  placeholder?: string
-  textAlign?: 'right' | 'left' | 'center' | undefined
+  placeholderTextColor?: InputProps['placeholderTextColor'] | (string & {})
+  selectionColor?: InputProps['selectionColor'] | (string & {})
 }
 
-const TextInput = forwardRef<RNTextInput, TextInputProps>((props, ref) => {
-  const { error, setErrors, errors, placeholder, textAlign, ...rest } = props
+const TextInput = forwardRef<InputRef, TextInputProps>((props, ref) => {
+  const { error, setErrors, errors, ...rest } = props
   const theme = useTheme()
 
+  const Component = (rest.multiline ? TextArea : Input) as typeof Input
+
   return (
-    <RNTextInput
+    <Component
       ref={ref}
+      unstyled
       style={{
         borderWidth: error ? 1 : 0,
         padding: 3,
@@ -28,14 +29,15 @@ const TextInput = forwardRef<RNTextInput, TextInputProps>((props, ref) => {
         borderColor: theme.colors.error,
         color: theme.colors.text,
       }}
-      placeholderTextColor={theme.colors.textAlt}
+      placeholderTextColor={
+        theme.colors.textAlt as InputProps['placeholderTextColor']
+      }
       onChangeText={() => setErrors?.({ ...errors, id: '' })}
       hitSlop={{ top: 20, bottom: 20 }}
-      placeholder={placeholder}
-      textAlign={textAlign ?? 'right'}
+      textAlign='right'
       clearButtonMode='while-editing'
-      returnKeyType='next'
-      {...rest}
+      enterKeyHint='next'
+      {...(rest as InputProps)}
     />
   )
 })

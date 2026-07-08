@@ -403,9 +403,9 @@ const AddTimeScreen = ({ route }: AddTimeScreenProps) => {
                     paddingVertical: 12,
                     paddingHorizontal: 10,
                     color: theme.colors.text,
-                    textAlignVertical: 'top',
                     minHeight: 80,
                   }}
+                  textAlignVertical='top'
                   textAlign='left'
                   onChangeText={setNote}
                   value={serviceReport.note}

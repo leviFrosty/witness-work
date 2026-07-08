@@ -70,7 +70,7 @@ const TextInputRow: React.ForwardRefExoticComponent<
             hitSlop={{ top: 20, bottom: 20 }}
             textAlign='right'
             clearButtonMode='while-editing'
-            returnKeyType='next'
+            enterKeyHint='next'
             {...textInputProps}
           />
           {error && (

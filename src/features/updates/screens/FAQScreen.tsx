@@ -7,7 +7,8 @@ import {
 } from 'lucide-react-native'
 import LucideIcon from '@/components/ui/LucideIcon'
 import { useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react'
-import { Image, View, TextInput as RNTextInput, ScrollView } from 'react-native'
+import { Image, View, ScrollView } from 'react-native'
+import { Input, InputProps } from 'tamagui'
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
 import * as Clipboard from 'expo-clipboard'
 import * as Sentry from '@sentry/react-native'
@@ -279,13 +280,16 @@ const FAQScreen = () => {
               size={theme.fontSize('xs')}
               style={{ color: theme.colors.textAlt }}
             />
-            <RNTextInput
+            <Input
+              unstyled
               value={search}
               onChangeText={setSearch}
               placeholder={i18n.t('faq_searchPlaceholder')}
-              placeholderTextColor={theme.colors.textAlt}
+              placeholderTextColor={
+                theme.colors.textAlt as InputProps['placeholderTextColor']
+              }
               clearButtonMode='while-editing'
-              returnKeyType='search'
+              enterKeyHint='search'
               autoCorrect={false}
               autoCapitalize='none'
               style={{

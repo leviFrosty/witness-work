@@ -6,7 +6,8 @@ import {
 } from 'lucide-react-native'
 import LucideIcon, { type AppIcon } from '@/components/ui/LucideIcon'
 import { useEffect, useRef, useState } from 'react'
-import { Pressable, TextInput as RNTextInput, View } from 'react-native'
+import { Pressable, View } from 'react-native'
+import { Input, InputProps } from 'tamagui'
 import moment from 'moment'
 import useTheme from '@/contexts/theme'
 import { usePreferences } from '@/stores/preferences'
@@ -268,16 +269,19 @@ const ProfileCard = ({ preview, editable, onPressIncomplete }: Props) => {
   )
 
   const nameEl = editable ? (
-    <RNTextInput
+    <Input
+      unstyled
       value={name}
       onChangeText={(val) => setProfile({ name: val })}
       placeholder={i18n.t('firstNamePlaceholder')}
-      placeholderTextColor={theme.colors.textAlt}
+      placeholderTextColor={
+        theme.colors.textAlt as InputProps['placeholderTextColor']
+      }
       autoCapitalize='words'
       autoCorrect={false}
       autoFocus={!name}
       maxLength={40}
-      returnKeyType='done'
+      enterKeyHint='done'
       style={{
         fontFamily: theme.fonts.semiBold,
         fontSize: 16,

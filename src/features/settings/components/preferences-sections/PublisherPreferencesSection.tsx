@@ -202,7 +202,7 @@ const PublisherPreferencesSection = () => {
                             setCustomCreditLimitHours(numValue)
                           }
                         },
-                        keyboardType: 'numeric',
+                        type: 'number',
                         placeholder: '55',
                       }}
                     />

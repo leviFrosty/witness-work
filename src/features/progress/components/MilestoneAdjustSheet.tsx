@@ -455,7 +455,7 @@ const MilestoneAdjustSheet = ({ visible, onClose }: Props) => {
                       >
                         <TextInput
                           value={displayValue}
-                          keyboardType='number-pad'
+                          inputMode='numeric'
                           textAlign='center'
                           onChangeText={(text) =>
                             setInputBuffers((prev) => ({

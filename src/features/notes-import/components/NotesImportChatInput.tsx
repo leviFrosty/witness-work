@@ -5,6 +5,7 @@ import {
 import LucideIcon from '@/components/ui/LucideIcon'
 import { forwardRef, type ReactNode } from 'react'
 import { TextInput, View } from 'react-native'
+import { TextArea, InputProps } from 'tamagui'
 import Button from '@/components/ui/Button'
 import useTheme from '@/contexts/theme'
 
@@ -130,21 +131,24 @@ const NotesImportChatInput = forwardRef<TextInput, NotesImportChatInputProps>(
           shadowOpacity: theme.numbers.shadowOpacity,
         }}
       >
-        <TextInput
+        <TextArea
+          unstyled
           ref={ref}
           value={value}
           onChangeText={onChangeText}
-          editable={editable}
+          disabled={!editable}
           multiline
           accessibilityLabel={accessibilityLabel}
           accessibilityHint={accessibilityHint}
           placeholder={placeholder}
-          placeholderTextColor={theme.colors.textAlt}
+          placeholderTextColor={
+            theme.colors.textAlt as InputProps['placeholderTextColor']
+          }
+          textAlignVertical='top'
           style={{
             // Starts a single line, grows with content, then caps near nine
             // lines and scrolls internally.
             maxHeight: 200,
-            textAlignVertical: 'top',
             color: theme.colors.text,
             fontFamily: theme.fonts.regular,
             fontSize: theme.fontSize('md'),

@@ -44,8 +44,8 @@ import IconButton from '@/components/ui/IconButton'
 import Text from '@/components/ui/MyText'
 import XView from '@/components/ui/layout/XView'
 import SimpleProgressBar from '@/components/ui/SimpleProgressBar'
-import DayPlanRow from '@/components/DayPlanRow'
-import RecurringPlanRow from '@/components/RecurringPlanRow'
+import PlanRow from '@/components/PlanRow'
+import type { PlanListItem } from '@/components/PlanRow'
 import i18n from '@/lib/locales'
 
 type Props = BottomTabScreenProps<HomeTabStackParamList, 'Schedule'>
@@ -82,9 +82,7 @@ const ScheduleScreen = ({ route }: Props) => {
     [month, serviceReports, year]
   )
 
-  type PlanInstance =
-    | { kind: 'day'; date: Date; plan: DayPlan; sortKey: number }
-    | { kind: 'recurring'; date: Date; plan: RecurringPlan; sortKey: number }
+  type PlanInstance = PlanListItem & { sortKey: number }
 
   const { pastPlans, currentAndFuturePlans } = useMemo(() => {
     const base = moment().month(month).year(year).startOf('month')
@@ -101,7 +99,7 @@ const ScheduleScreen = ({ route }: Props) => {
       )
       for (const plan of dayPlansForDay) {
         items.push({
-          kind: 'day',
+          type: 'day',
           date: dayDate,
           plan,
           sortKey: dayStartMs + getStartTimeInMinutes(plan),
@@ -111,7 +109,7 @@ const ScheduleScreen = ({ route }: Props) => {
       const recurringForDay = getPlansIntersectingDay(dayDate, recurringPlans)
       for (const plan of recurringForDay) {
         items.push({
-          kind: 'recurring',
+          type: 'recurring',
           date: dayDate,
           plan,
           sortKey:
@@ -141,7 +139,7 @@ const ScheduleScreen = ({ route }: Props) => {
 
   const hasAnyPlans = pastPlans.length > 0 || currentAndFuturePlans.length > 0
   const visiblePlans = showPastPlans
-    ? [...pastPlans, ...currentAndFuturePlans]
+    ? [...currentAndFuturePlans, ...[...pastPlans].reverse()]
     : currentAndFuturePlans
 
   const handleEditDayPlan = useCallback(
@@ -410,25 +408,22 @@ const ScheduleScreen = ({ route }: Props) => {
                   <Text>{i18n.t('noPlansScheduledForThisMonth')}</Text>
                 </Card>
               ) : (
-                visiblePlans.map((item) =>
-                  item.kind === 'day' ? (
-                    <DayPlanRow
-                      key={`day-${item.plan.id}-${item.date.toISOString()}`}
-                      plan={item.plan}
-                      date={item.date}
-                      onPress={() => handleEditDayPlan(item.plan, item.date)}
-                    />
-                  ) : (
-                    <RecurringPlanRow
-                      key={`recurring-${item.plan.id}-${item.date.toISOString()}`}
-                      plan={item.plan}
-                      date={item.date}
-                      onPress={() =>
+                visiblePlans.map((item) => (
+                  <PlanRow
+                    key={`${item.type}-${item.plan.id}-${item.date.toISOString()}`}
+                    item={item}
+                    dateDisplay='monthList'
+                    contextMonth={month}
+                    contextYear={year}
+                    onPress={() => {
+                      if (item.type === 'day') {
+                        handleEditDayPlan(item.plan, item.date)
+                      } else {
                         handleEditRecurringPlanInstance(item.plan, item.date)
                       }
-                    />
-                  )
-                )
+                    }}
+                  />
+                ))
               )}
             </View>
           </View>

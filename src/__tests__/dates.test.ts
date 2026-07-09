@@ -31,6 +31,7 @@ import {
   formatRelative,
   formatStartTime,
   formatTime,
+  formatWeekdayDayCompact,
   formatWeekdayMonthDayCompact,
   getDateOrderFromPattern,
   getPristineLongDateFormat,
@@ -211,10 +212,12 @@ describe('compact helpers', () => {
   it('flips day/month order by Region while staying short', () => {
     applyFormatRegion({ language: 'en', region: 'en-au' })
     expect(formatMonthDayCompact(sample())).toBe('11 Jun')
+    expect(formatWeekdayDayCompact(sample())).toBe('Thu 11')
     expect(formatWeekdayMonthDayCompact(sample())).toBe('Thu, 11 Jun')
 
     applyFormatRegion({ language: 'en', region: 'en' })
     expect(formatMonthDayCompact(sample())).toBe('Jun 11')
+    expect(formatWeekdayDayCompact(sample())).toBe('Thu 11')
     expect(formatWeekdayMonthDayCompact(sample())).toBe('Thu, Jun 11')
   })
 

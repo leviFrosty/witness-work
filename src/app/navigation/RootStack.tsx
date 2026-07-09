@@ -317,15 +317,8 @@ const RootStackComponent = () => {
             const params = route.params as RootStackParamList['PlanDay']
             let title = i18n.t('createPlan')
 
-            if (params?.existingDayPlanId) {
-              title = i18n.t('editingDayPlan')
-            } else if (params?.existingRecurringPlanId) {
-              if (params?.recurringPlanDate) {
-                // This is an override scenario
-                title = `${i18n.t('editingOverride')}`
-              } else {
-                title = i18n.t('editingRecurringPlan')
-              }
+            if (params?.existingDayPlanId || params?.existingRecurringPlanId) {
+              title = i18n.t('editPlan')
             }
 
             return {

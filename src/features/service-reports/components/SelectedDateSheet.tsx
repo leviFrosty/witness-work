@@ -1,13 +1,8 @@
 import { View } from 'react-native'
 import { Sheet } from 'tamagui'
-import Text from '@/components/ui/MyText'
-import i18n from '@/lib/locales'
 import useTheme from '@/contexts/theme'
 import { TimeEntry } from '@/types/timeEntry'
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
-import ActionButton from '@/components/ui/ActionButton'
-import XView from '@/components/ui/layout/XView'
-import Button from '@/components/ui/Button'
 import DayHistoryView from '@/features/service-reports/components/DayHistoryView'
 
 export type SelectedDateSheetState = {
@@ -58,13 +53,13 @@ const SelectedDateSheet: React.FC<Props> = ({
             gap: 10,
             flex: 1,
             paddingTop: 30,
-            paddingBottom: 50,
+            paddingBottom: 30,
             backgroundColor: theme.colors.backgroundLighter,
           }}
         >
           {/* Must flex — RN 0.86's Yoga no longer clamps an unflexed scroll
               view to its parent's bounds, so without this it sizes to its
-              content and pushes the action bar below off-screen. */}
+              content instead of the sheet frame. */}
           <KeyboardAwareScrollView
             style={{ flex: 1 }}
             contentContainerStyle={{ minHeight: 10 }}
@@ -85,55 +80,16 @@ const SelectedDateSheet: React.FC<Props> = ({
                 setSheet({ ...sheet, open: false })
                 onEditTimeReport?.(report)
               }}
-            />
-          </KeyboardAwareScrollView>
-          <XView style={{ maxHeight: 70, gap: 8 }}>
-            <Button
-              noTransform
-              onPress={() => {
-                setSheet({
-                  ...sheet,
-                  open: false,
-                })
+              onAddTime={() => {
+                setSheet({ ...sheet, open: false })
                 onAddTime?.()
               }}
-              style={{
-                paddingHorizontal: 20,
-                borderColor: theme.colors.border,
-                backgroundColor: theme.colors.background,
-                borderWidth: 1,
-                borderRadius: theme.numbers.borderRadiusSm,
-                height: '100%',
-                flexShrink: 0,
-                alignItems: 'center',
-                justifyContent: 'center',
+              onPlanDay={() => {
+                setSheet({ ...sheet, open: false })
+                onPlanDay?.()
               }}
-            >
-              <Text style={{ textAlign: 'center' }}>{i18n.t('addTime')}</Text>
-            </Button>
-            <View style={{ flex: 1 }}>
-              <ActionButton
-                noTransform
-                onPress={() => {
-                  setSheet({
-                    ...sheet,
-                    open: false,
-                  })
-                  onPlanDay?.()
-                }}
-              >
-                <Text
-                  style={{
-                    color: theme.colors.textInverse,
-                    fontSize: theme.fontSize('lg'),
-                    fontFamily: theme.fonts.semiBold,
-                  }}
-                >
-                  {i18n.t('planDay')}
-                </Text>
-              </ActionButton>
-            </View>
-          </XView>
+            />
+          </KeyboardAwareScrollView>
         </View>
       </Sheet.Frame>
     </Sheet>

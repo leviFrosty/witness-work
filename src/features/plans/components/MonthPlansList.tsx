@@ -6,27 +6,12 @@ import Text from '@/components/ui/MyText'
 import useTheme from '@/contexts/theme'
 import useServiceReport from '@/stores/serviceReport'
 import i18n from '@/lib/locales'
-import { DayPlan } from '@/types/timeEntry'
-import {
-  RecurringPlan,
-  getPlansIntersectingDay,
-  getEffectiveStartTimeInMinutesForRecurringPlan,
-} from '@/lib/recurrence'
-import {
-  DEFAULT_START_TIME_IN_MINUTES,
-  getStartTimeInMinutes,
-} from '@/lib/normalizeDate'
-import DayPlanRow from '@/components/DayPlanRow'
-import RecurringPlanRow from '@/components/RecurringPlanRow'
+import { getPlansIntersectingDay } from '@/lib/recurrence'
+import PlanRow, { getPlanItemStartTime } from '@/components/PlanRow'
+import type { PlanListItem } from '@/components/PlanRow'
 import { useNavigation } from '@react-navigation/native'
 import { RootStackNavigation } from '@/types/rootStack'
 import Card from '@/components/ui/Card'
-
-interface PlanItem {
-  type: 'day' | 'recurring'
-  date: Date
-  plan: DayPlan | RecurringPlan
-}
 
 interface MonthPlansListProps {
   month: number
@@ -41,7 +26,7 @@ const MonthPlansList = ({ month, year }: MonthPlansListProps) => {
   const monthPlans = useMemo(() => {
     const selectedMonth = moment().month(month).year(year)
     const daysInMonth = selectedMonth.daysInMonth()
-    const planItems: PlanItem[] = []
+    const planItems: PlanListItem[] = []
 
     // Go through each day of the month
     for (let day = 1; day <= daysInMonth; day++) {
@@ -75,28 +60,18 @@ const MonthPlansList = ({ month, year }: MonthPlansListProps) => {
       })
     }
 
-    // Sort newest day first; within a day, ascending by start time so 9 AM
-    // appears above 2 PM.
-    const planTime = (item: PlanItem): number => {
-      if (item.type === 'day') {
-        return getStartTimeInMinutes(item.plan as DayPlan)
-      }
-      return getEffectiveStartTimeInMinutesForRecurringPlan(
-        item.plan as RecurringPlan,
-        item.date
-      )
-    }
+    // Sort chronologically so the list answers “what’s next?” first.
+    // Within a day, keep earlier start times above later ones.
     return planItems.sort((a, b) => {
-      const dayDiff = moment(b.date).unix() - moment(a.date).unix()
+      const dayDiff =
+        moment(a.date).startOf('day').valueOf() -
+        moment(b.date).startOf('day').valueOf()
       if (dayDiff !== 0) return dayDiff
-      return (
-        (planTime(a) ?? DEFAULT_START_TIME_IN_MINUTES) -
-        (planTime(b) ?? DEFAULT_START_TIME_IN_MINUTES)
-      )
+      return getPlanItemStartTime(a) - getPlanItemStartTime(b)
     })
   }, [month, year, dayPlans, recurringPlans])
 
-  const handlePlanPress = (planItem: PlanItem) => {
+  const handlePlanPress = (planItem: PlanListItem) => {
     if (planItem.type === 'day') {
       navigation.navigate('PlanDay', {
         date: moment(planItem.date).toISOString(),
@@ -111,21 +86,15 @@ const MonthPlansList = ({ month, year }: MonthPlansListProps) => {
     }
   }
 
-  const renderPlanItem = ({ item }: { item: PlanItem }) => {
-    return item.type === 'day' ? (
-      <DayPlanRow
-        plan={item.plan as DayPlan}
-        date={item.date}
-        onPress={() => handlePlanPress(item)}
-      />
-    ) : (
-      <RecurringPlanRow
-        plan={item.plan as RecurringPlan}
-        date={item.date}
-        onPress={() => handlePlanPress(item)}
-      />
-    )
-  }
+  const renderPlanItem = ({ item }: { item: PlanListItem }) => (
+    <PlanRow
+      item={item}
+      dateDisplay='monthList'
+      contextMonth={month}
+      contextYear={year}
+      onPress={() => handlePlanPress(item)}
+    />
+  )
 
   if (monthPlans.length === 0) {
     return (

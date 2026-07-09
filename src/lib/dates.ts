@@ -385,6 +385,10 @@ const activeDayFirst = (): boolean =>
 export const formatMonthDayCompact = (m: moment.Moment): string =>
   activeDayFirst() ? m.format('D MMM') : m.format('MMM D')
 
+/** Tight weekday + day-of-month variant for month-scoped lists — `Thu 11`. */
+export const formatWeekdayDayCompact = (m: moment.Moment): string =>
+  m.format('ddd D')
+
 /** Compact weekday + month/day variant — `Thu, 11 Jun` vs `Thu, Jun 11`. */
 export const formatWeekdayMonthDayCompact = (m: moment.Moment): string =>
   activeDayFirst() ? m.format('ddd, D MMM') : m.format('ddd, MMM D')

@@ -43,7 +43,6 @@ const RecurringPlanRow = (props: {
   const displayStartTimeInMinutes =
     dateOverride?.startTimeInMinutes ?? props.plan.startTimeInMinutes
   const formattedTime = useFormattedMinutes(displayMinutes)
-  const hasOverride = !!dateOverride
   const isToday = moment(props.date).isSame(moment(), 'day')
 
   const getFrequencyText = (freq: RecurringPlanFrequencies) => {
@@ -195,18 +194,6 @@ const RecurringPlanRow = (props: {
               {getFrequencyText(props.plan.recurrence.frequency)}
             </Text>
           </Badge>
-          {hasOverride && (
-            <Badge color={theme.colors.warn} size='xs'>
-              <Text
-                style={{
-                  fontFamily: theme.fonts.semiBold,
-                  color: theme.colors.textInverse,
-                }}
-              >
-                {i18n.t('override')}
-              </Text>
-            </Badge>
-          )}
         </View>
 
         {/* Schedule Info */}

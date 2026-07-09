@@ -13,6 +13,8 @@ interface EmptyProps {
   description?: string
   /** Optional call-to-action (button, link, etc.) rendered below the copy. */
   action?: ReactNode
+  /** Draws a faint dashed outline around the empty surface. */
+  dashedOutline?: boolean
 }
 
 /**
@@ -20,7 +22,13 @@ interface EmptyProps {
  * generous padding, subdued palette. Used across the new Progress subscreens
  * for zero-data surfaces (e.g. All-time tab with no reports yet).
  */
-const Empty = ({ icon, title, description, action }: EmptyProps) => {
+const Empty = ({
+  icon,
+  title,
+  description,
+  action,
+  dashedOutline,
+}: EmptyProps) => {
   const theme = useTheme()
 
   return (
@@ -31,6 +39,10 @@ const Empty = ({ icon, title, description, action }: EmptyProps) => {
         paddingVertical: 40,
         paddingHorizontal: 24,
         gap: 12,
+        borderWidth: dashedOutline ? 1 : 0,
+        borderStyle: dashedOutline ? 'dashed' : undefined,
+        borderColor: theme.colors.border,
+        borderRadius: theme.numbers.borderRadiusLg,
       }}
     >
       {icon ? (

@@ -1247,6 +1247,16 @@
   "plannedHours": "planned",
   "projectedHoursTitle": "Projected Hours",
   "projectedHoursDescription": "Combines hours you've already logged with hours you have planned. Aim to reach 100% of your goal.",
+  "scheduleStatus": {
+    "ahead": "Ahead",
+    "behind": "Behind",
+    "onTrack": "On track",
+    "noPlan": "No plan",
+    "upcoming": "Upcoming",
+    "matched": "Matched",
+    "noPlannedTime": "No planned time",
+    "notStarted": "Not started"
+  },
   "planDay": "Plan Day",
   "weekly": "Weekly",
   "bi-weekly": "Bi-Weekly",

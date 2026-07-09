@@ -14,6 +14,7 @@ import { useNavigation as useRootNavigation } from '@react-navigation/native'
 import moment from 'moment'
 
 import useServiceReport from '@/stores/serviceReport'
+import { usePreferences } from '@/stores/preferences'
 import useTheme from '@/contexts/theme'
 import { getMonthsReports } from '@/lib/serviceReport'
 import {
@@ -60,6 +61,8 @@ const ScheduleScreen = ({ route }: Props) => {
   const serviceReports = useServiceReport((s) => s.serviceReports)
   const dayPlans = useServiceReport((s) => s.dayPlans)
   const recurringPlans = useServiceReport((s) => s.recurringPlans)
+  const timeDisplayFormat = usePreferences((s) => s.timeDisplayFormat)
+  const usesVerboseDurations = timeDisplayFormat === 'short'
 
   const [year, setYear] = useState(route.params?.year ?? moment().year())
   const [month, setMonth] = useState(route.params?.month ?? moment().month())
@@ -347,10 +350,16 @@ const ScheduleScreen = ({ route }: Props) => {
                 {i18n.t('projectedHoursDescription')}
               </Text>
             </View>
-            <XView style={{ flex: 1, gap: 10 }}>
+            <View
+              style={{
+                flexDirection: usesVerboseDurations ? 'column' : 'row',
+                alignItems: 'stretch',
+                gap: usesVerboseDurations ? 12 : 10,
+              }}
+            >
               <MonthScheduleSection month={month} year={year} />
               <AnnualScheduleSection month={month} year={year} />
-            </XView>
+            </View>
           </Card>
           <Card>
             <CalendarHeader
@@ -467,28 +476,36 @@ const MonthScheduleSection = (props: { month: number; year: number }) => {
   const projectedDisplay = useFormattedMinutes(result.projectedMinutes)
 
   return (
-    <View style={{ gap: 5, flex: 1 }}>
-      <XView style={{ justifyContent: 'space-between' }}>
+    <View style={{ gap: 5, flex: 1, minWidth: 0 }}>
+      <XView
+        style={{
+          justifyContent: 'space-between',
+          alignItems: 'flex-start',
+          gap: 8,
+        }}
+      >
         <Text
           style={{
             fontFamily: theme.fonts.semiBold,
+            flexShrink: 0,
           }}
         >
           {i18n.t('month')}
         </Text>
-        <XView>
-          <Text
-            style={{
-              fontFamily: theme.fonts.semiBold,
-              color: theme.colors.textAlt,
-              fontSize: theme.fontSize('xs'),
-            }}
-          >
-            {`${projectedDisplay.formatted} ${i18n.t(
-              'of'
-            )} ${goalHours} ${i18n.t('hours')}`}
-          </Text>
-        </XView>
+        <Text
+          style={{
+            flex: 1,
+            flexShrink: 1,
+            fontFamily: theme.fonts.semiBold,
+            color: theme.colors.textAlt,
+            fontSize: theme.fontSize('xs'),
+            textAlign: 'right',
+          }}
+        >
+          {`${projectedDisplay.formatted} ${i18n.t(
+            'of'
+          )} ${goalHours} ${i18n.t('hours')}`}
+        </Text>
       </XView>
       <SimpleProgressBar
         percentage={percentProjected}
@@ -520,20 +537,30 @@ const AnnualScheduleSection = (props: { month: number; year: number }) => {
   }
 
   return (
-    <View style={{ gap: 5, flex: 1 }}>
-      <XView style={{ justifyContent: 'space-between' }}>
+    <View style={{ gap: 5, flex: 1, minWidth: 0 }}>
+      <XView
+        style={{
+          justifyContent: 'space-between',
+          alignItems: 'flex-start',
+          gap: 8,
+        }}
+      >
         <Text
           style={{
             fontFamily: theme.fonts.semiBold,
+            flexShrink: 0,
           }}
         >
           {i18n.t('year')}
         </Text>
         <Text
           style={{
+            flex: 1,
+            flexShrink: 1,
             fontFamily: theme.fonts.semiBold,
             color: theme.colors.textAlt,
             fontSize: theme.fontSize('xs'),
+            textAlign: 'right',
           }}
         >
           {`${projectedDisplay.formatted} ${i18n.t(

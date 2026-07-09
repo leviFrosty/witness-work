@@ -1,3 +1,4 @@
+import { CalendarCheck as TodayIcon } from 'lucide-react-native'
 import { useMemo } from 'react'
 import { Pressable, View } from 'react-native'
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
@@ -20,8 +21,8 @@ import i18n from '@/lib/locales'
 import YearMilestoneCard from '@/components/YearMilestoneCard'
 import ProjectedTotalCard from '@/components/ProjectedTotalCard'
 import Text from '@/components/ui/MyText'
+import LucideIcon from '@/components/ui/LucideIcon'
 import XView from '@/components/ui/layout/XView'
-import Badge from '@/components/ui/Badge'
 import { useCardStyle } from '@/components/ui/Card'
 
 interface ProgressYearTabProps {
@@ -31,6 +32,32 @@ interface ProgressYearTabProps {
   onAdjustMilestones: () => void
   /** Invoked when the user taps a month row — parent switches to Month tab. */
   onMonthPress: (month: number, year: number) => void
+}
+
+const CurrentMonthIcon = () => {
+  const theme = useTheme()
+
+  return (
+    <View
+      accessible
+      accessibilityRole='image'
+      accessibilityLabel={i18n.t('today')}
+      style={{
+        width: 16,
+        height: 16,
+        alignItems: 'center',
+        justifyContent: 'center',
+        flexShrink: 0,
+      }}
+    >
+      <LucideIcon
+        icon={TodayIcon}
+        size={15}
+        strokeWidth={2.5}
+        color={theme.colors.accent}
+      />
+    </View>
+  )
 }
 
 /**
@@ -144,7 +171,7 @@ const MonthRow = ({
           >
             {monthYearLabel}
           </Text>
-          {isCurrent ? <Badge size='xs'>{i18n.t('today')}</Badge> : null}
+          {isCurrent ? <CurrentMonthIcon /> : null}
         </XView>
         <XView style={{ gap: 12 }}>
           <Text

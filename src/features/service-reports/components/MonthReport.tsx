@@ -19,7 +19,7 @@ import {
 import { plannedMinutesToCurrentDayForMonth } from '@/lib/recurrence'
 import useServiceReport from '@/stores/serviceReport'
 import useCategories from '@/stores/categories'
-import { useCallback, useEffect, useMemo, useRef } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import useTheme from '@/contexts/theme'
 import { TimeEntry } from '@/types/timeEntry'
 import { CategorySegment } from '@/features/service-reports/components/CategorySegmentBar'
@@ -62,6 +62,10 @@ import {
 import useFireworks from '@/hooks/useFireworks'
 import { FIREWORKS_AFTER_LOTTIE_BUFFER_MS } from '@/providers/ConfettiProvider'
 import { formatMonthDayCompact } from '@/lib/dates'
+import useMonthlyGoal from '@/hooks/useMonthlyGoal'
+import usePublisher from '@/hooks/usePublisher'
+import MonthGoalButton from '@/features/service-reports/components/MonthGoalButton'
+import MonthGoalEditorSheet from '@/features/service-reports/components/MonthGoalEditorSheet'
 
 interface MonthReportProps {
   monthsReports: TimeEntry[] | null
@@ -73,6 +77,8 @@ interface MonthReportProps {
   hideTitle?: boolean
   noDetails?: boolean
   highlightAsCurrentMonth?: boolean
+  /** Exposes the selected month's goal editor on the Progress Month screen. */
+  allowGoalEditing?: boolean
 }
 
 const MonthReport = ({
@@ -84,19 +90,27 @@ const MonthReport = ({
   hideTitle,
   noDetails,
   highlightAsCurrentMonth,
+  allowGoalEditing = false,
 }: MonthReportProps) => {
   const theme = useTheme()
   const {
     role,
-    publisherHours,
     overrideCreditLimit,
     customCreditLimitHours,
     celebratedTiers,
     markTierCelebrated,
     timeDisplayFormat,
   } = usePreferences()
+  const {
+    baseGoalHours,
+    effectiveGoalHours: goalHours,
+    isOverridden,
+    setOverride: setMonthlyGoalOverride,
+    clearOverride: clearMonthlyGoalOverride,
+  } = useMonthlyGoal({ month, year })
+  const { annualGoalHours, hasAnnualGoal } = usePublisher()
+  const [goalEditorOpen, setGoalEditorOpen] = useState(false)
   const { categories } = useCategories()
-  const goalHours = publisherHours[role]
   const navigation = useNavigation<RootStackNavigation>()
   const tabNavigation = useNavigation<HomeTabStackNavigation>()
   const rollover = useRollover()
@@ -125,6 +139,10 @@ const MonthReport = ({
   const { serviceReports, dayPlans, recurringPlans } = useServiceReport()
   const prevMonth = month === 0 ? 11 : month - 1
   const prevMonthYear = month === 0 ? year - 1 : year
+  const { effectiveGoalHours: previousMonthGoalHours } = useMonthlyGoal({
+    month: prevMonth,
+    year: prevMonthYear,
+  })
   const lastMonthMinutes = useMemo(() => {
     const reports = getMonthsReports(serviceReports, prevMonth, prevMonthYear)
     if (!reports.length) return null
@@ -157,7 +175,7 @@ const MonthReport = ({
   const bothMonthsMetGoal =
     hasMetGoal &&
     lastMonthMinutes !== null &&
-    lastMonthMinutes / 60 >= goalHours
+    lastMonthMinutes / 60 >= previousMonthGoalHours
 
   // Pace vs plan — mirrors the widget's ahead/behind calc. Compares logged
   // (credit-capped) minutes against the sum of day + recurring plans up to
@@ -390,14 +408,31 @@ const MonthReport = ({
     return (
       <View>
         <Card>
-          <Text
+          <View
             style={{
-              fontSize: theme.fontSize('xl'),
-              fontFamily: theme.fonts.bold,
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: 12,
             }}
           >
-            {i18n.t('noTimeReports')}
-          </Text>
+            <Text
+              style={{
+                flex: 1,
+                fontSize: theme.fontSize('xl'),
+                fontFamily: theme.fonts.bold,
+              }}
+            >
+              {i18n.t('noTimeReports')}
+            </Text>
+            {allowGoalEditing && baseGoalHours > 0 ? (
+              <MonthGoalButton
+                goalHours={goalHours}
+                isOverridden={isOverridden}
+                onPress={() => setGoalEditorOpen(true)}
+              />
+            ) : null}
+          </View>
           <Text
             style={{
               fontSize: theme.fontSize('sm'),
@@ -428,6 +463,19 @@ const MonthReport = ({
             </ActionButton>
           )}
         </Card>
+        {allowGoalEditing && baseGoalHours > 0 ? (
+          <MonthGoalEditorSheet
+            open={goalEditorOpen}
+            onOpenChange={setGoalEditorOpen}
+            month={month}
+            year={year}
+            regularGoalHours={baseGoalHours}
+            effectiveGoalHours={goalHours}
+            annualGoalHours={hasAnnualGoal ? annualGoalHours : null}
+            onSaveGoal={setMonthlyGoalOverride}
+            onUseRegularGoal={clearMonthlyGoalOverride}
+          />
+        ) : null}
       </View>
     )
   }
@@ -477,6 +525,26 @@ const MonthReport = ({
             </View>
           )}
 
+          {allowGoalEditing && baseGoalHours > 0 ? (
+            <View
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                gap: 8,
+              }}
+            >
+              <MonthGoalButton
+                goalHours={goalHours}
+                isOverridden={isOverridden}
+                onPress={() => setGoalEditorOpen(true)}
+              />
+              {hideTitle && showReportButton ? (
+                <ViewReportButton month={month} year={year} />
+              ) : null}
+            </View>
+          ) : null}
+
           {/* Hero + secondary line. When the parent suppressed the title row
             the report-export affordance is passed into GoalProgressStats'
             header slot so it sits to the right of the tier badge (or alone
@@ -493,8 +561,9 @@ const MonthReport = ({
               totalLabel={`${daysInMonth} ${i18n.t('days_lowercase')}`}
               achievementTier={celebratingTier}
               sealAnimatedStyle={sealAnimatedStyle}
+              hideGoalLabel={allowGoalEditing}
               headerRightSlot={
-                hideTitle && showReportButton ? (
+                !allowGoalEditing && hideTitle && showReportButton ? (
                   <ViewReportButton month={month} year={year} />
                 ) : undefined
               }
@@ -706,6 +775,20 @@ const MonthReport = ({
             </Text>
           </View>
         )}
+
+      {allowGoalEditing && baseGoalHours > 0 ? (
+        <MonthGoalEditorSheet
+          open={goalEditorOpen}
+          onOpenChange={setGoalEditorOpen}
+          month={month}
+          year={year}
+          regularGoalHours={baseGoalHours}
+          effectiveGoalHours={goalHours}
+          annualGoalHours={hasAnnualGoal ? annualGoalHours : null}
+          onSaveGoal={setMonthlyGoalOverride}
+          onUseRegularGoal={clearMonthlyGoalOverride}
+        />
+      ) : null}
     </View>
   )
 }

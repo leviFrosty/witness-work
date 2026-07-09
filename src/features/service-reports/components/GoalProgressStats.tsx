@@ -41,6 +41,8 @@ type GoalProgressStatsProps = {
    * its View Report affordance without owning a duplicate row.
    */
   headerRightSlot?: ReactNode
+  /** Suppress the plain goal suffix when the parent renders an editable goal. */
+  hideGoalLabel?: boolean
 }
 
 const tierCopyKey = (tier: AchievementTier) => {
@@ -66,6 +68,7 @@ const GoalProgressStats = ({
   achievementTier,
   sealAnimatedStyle,
   headerRightSlot,
+  hideGoalLabel = false,
 }: GoalProgressStatsProps) => {
   const theme = useTheme()
   const { timeDisplayFormat } = usePreferences()
@@ -121,10 +124,10 @@ const GoalProgressStats = ({
   } else if (periodState === 'current') {
     pillText = `${remainingDisplay.formatted} ${i18n.t('hoursLeft')}`
     if (remainingLabel) trailingParts.push(remainingLabel)
-    trailingParts.push(goalSuffix)
+    if (!hideGoalLabel) trailingParts.push(goalSuffix)
   } else if (periodState === 'past') {
     pillText = i18n.t('hrsShort', { value: remainingDisplay.formatted })
-    trailingParts.push(goalSuffix)
+    if (!hideGoalLabel) trailingParts.push(goalSuffix)
   } else if (periodState === 'future' && totalLabel) {
     trailingParts.push(totalLabel)
   }

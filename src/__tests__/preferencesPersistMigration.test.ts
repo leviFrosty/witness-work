@@ -470,3 +470,119 @@ describe('preferences persist migrate v4 → v5 (startOfWeek 0 → Auto)', () =>
     expect(migrated.offDays).toEqual([0, 6])
   })
 })
+
+describe('preferences persist migrate v5 → v6 (Monthly Goal overrides)', () => {
+  it('converts serialized Date entries to YYYY-MM keys and preserves decimal hours', () => {
+    const migrated = migratePreferencesPersistedState(
+      {
+        oneOffGoalHours: [
+          { month: '2026-11-01T00:00:00.000Z', hours: 60.5 },
+          { month: '2027-01-15T12:00:00.000Z', hours: 42.25 },
+        ],
+      },
+      5
+    )
+
+    expect(migrated.monthlyGoalOverrides).toEqual({
+      '2026-11': 60.5,
+      '2027-01': 42.25,
+    })
+    expect(migrated).not.toHaveProperty('oneOffGoalHours')
+  })
+
+  it('uses the last valid duplicate for a month and filters malformed, negative, and nonfinite entries', () => {
+    const migrated = migratePreferencesPersistedState(
+      {
+        oneOffGoalHours: [
+          { month: '2026-11-01T00:00:00.000Z', hours: 55 },
+          { month: 'not-a-date', hours: 70 },
+          { month: '2026-12-01T00:00:00.000Z', hours: -1 },
+          { month: '2027-01-01T00:00:00.000Z', hours: Number.NaN },
+          { month: '2026-11-28T00:00:00.000Z', hours: 65.75 },
+          null,
+        ],
+      },
+      5
+    )
+
+    expect(migrated.monthlyGoalOverrides).toEqual({ '2026-11': 65.75 })
+  })
+
+  it('also supports an in-memory Date value', () => {
+    const migrated = migratePreferencesPersistedState(
+      {
+        oneOffGoalHours: [{ month: new Date(2026, 6, 15), hours: 30.5 }],
+      },
+      5
+    )
+
+    expect(migrated.monthlyGoalOverrides).toEqual({ '2026-07': 30.5 })
+  })
+
+  it('renames the iCloud LWW timestamp key', () => {
+    const migrated = migratePreferencesPersistedState(
+      {
+        oneOffGoalHours: [],
+        preferenceUpdatedAt: {
+          oneOffGoalHours: 1700000000000,
+          role: 1700000001000,
+        },
+      },
+      5
+    )
+
+    expect(migrated.preferenceUpdatedAt.monthlyGoalOverrides).toBe(
+      1700000000000
+    )
+    expect(migrated.preferenceUpdatedAt.role).toBe(1700000001000)
+    expect(migrated.preferenceUpdatedAt).not.toHaveProperty('oneOffGoalHours')
+  })
+
+  it('prefers and sanitizes the canonical map when both shapes coexist', () => {
+    const migrated = migratePreferencesPersistedState(
+      {
+        oneOffGoalHours: [{ month: '2026-11-01T00:00:00.000Z', hours: 60 }],
+        monthlyGoalOverrides: {
+          '2026-11': 70.5,
+          'bad-key': 80,
+          '2026-12': -10,
+        },
+        preferenceUpdatedAt: {
+          oneOffGoalHours: 1,
+          monthlyGoalOverrides: 2,
+        },
+      },
+      5
+    )
+
+    expect(migrated.monthlyGoalOverrides).toEqual({ '2026-11': 70.5 })
+    expect(migrated.preferenceUpdatedAt.monthlyGoalOverrides).toBe(2)
+    expect(migrated.preferenceUpdatedAt).not.toHaveProperty('oneOffGoalHours')
+  })
+
+  it('is idempotent on an already-v6 state', () => {
+    const v5State = {
+      oneOffGoalHours: [{ month: '2026-11-01T00:00:00.000Z', hours: 60 }],
+    }
+    const v6State = migratePreferencesPersistedState(v5State, 5)
+    const v6Again = migratePreferencesPersistedState(v6State, 6)
+
+    expect(JSON.stringify(v6Again)).toEqual(JSON.stringify(v6State))
+  })
+
+  it('chains cleanly from v0 through all preference migrations', () => {
+    const migrated = migratePreferencesPersistedState(
+      {
+        publisher: 'regularPioneer',
+        excludedWeekdays: [0, 6],
+        oneOffGoalHours: [{ month: '2026-11-01T00:00:00.000Z', hours: 60 }],
+      },
+      0
+    )
+
+    expect(migrated.role).toBe('regularPioneer')
+    expect(migrated.offDays).toEqual([0, 6])
+    expect(migrated.monthlyGoalOverrides).toEqual({ '2026-11': 60 })
+    expect(migrated).not.toHaveProperty('oneOffGoalHours')
+  })
+})

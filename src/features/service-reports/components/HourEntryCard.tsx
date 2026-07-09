@@ -18,12 +18,12 @@ import Text from '@/components/ui/MyText'
 import { formatMinutes } from '@/lib/minutes'
 import { RootStackNavigation } from '@/types/rootStack'
 import { HomeTabStackNavigation } from '@/types/homeStack'
+import useMonthlyGoal from '@/hooks/useMonthlyGoal'
 
 export default function HourEntryCard() {
   const theme = useTheme()
   const {
     role,
-    publisherHours,
     displayDetailsOnProgressBarHomeScreen,
     timeDisplayFormat,
     overrideCreditLimit,
@@ -33,7 +33,11 @@ export default function HourEntryCard() {
   const navigation = useNavigation<
     HomeTabStackNavigation & RootStackNavigation
   >()
-  const goalHours = publisherHours[role]
+  const now = moment()
+  const { effectiveGoalHours: goalHours, isOverridden } = useMonthlyGoal({
+    month: now.month(),
+    year: now.year(),
+  })
   const monthReports = useMemo(
     () => getMonthsReports(serviceReports, moment().month(), moment().year()),
     [serviceReports]
@@ -276,7 +280,11 @@ export default function HourEntryCard() {
                     textAlign: 'center',
                   }}
                 >
-                  {i18n.t('goalBasedOnPublisherType')}
+                  {i18n.t(
+                    isOverridden
+                      ? 'goalAdjustedForMonth'
+                      : 'goalBasedOnPublisherType'
+                  )}
                 </Text>
               </View>
             ) : null}

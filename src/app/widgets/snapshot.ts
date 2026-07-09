@@ -2,6 +2,7 @@ import { Contact } from '@/types/contact'
 import { Visit } from '@/types/visit'
 import { StalenessBreakpoints } from '@/types/staleness'
 import { Publisher, PublisherHours } from '@/types/publisher'
+import type { MonthlyGoalOverrides } from '@/lib/monthlyGoals'
 import {
   DayPlan,
   MinuteDisplayFormat,
@@ -146,6 +147,7 @@ export type BuildSnapshotArgs = {
   serviceReports: TimeEntriesByYear
   publisher: Publisher
   publisherHours: PublisherHours
+  monthlyGoalOverrides: MonthlyGoalOverrides
   overrideCreditLimit: boolean
   customCreditLimitHours: number
   timeDisplayFormat: MinuteDisplayFormat
@@ -184,6 +186,7 @@ export function buildWidgetSnapshot(args: BuildSnapshotArgs): WidgetSnapshot {
     serviceReports: args.serviceReports,
     publisher: args.publisher,
     publisherHours: args.publisherHours,
+    monthlyGoalOverrides: args.monthlyGoalOverrides,
     overrideCreditLimit: args.overrideCreditLimit,
     customCreditLimitHours: args.customCreditLimitHours,
     timeDisplayFormat: args.timeDisplayFormat,

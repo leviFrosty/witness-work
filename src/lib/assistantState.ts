@@ -6,6 +6,7 @@ import { isPlanCreditTime } from '@/lib/serviceReportCategory'
 
 export type RecommendationInputsHashInput = {
   loggedAdjustedMinutes: number
+  monthlyGoalMinutes: number
   dayPlanFingerprints: string[]
   recurringPlanFingerprints: string[]
   conversationDayKeys: string[]
@@ -63,6 +64,9 @@ export const recurringPlanFingerprint = (
  * states must produce the same hash regardless of array order — so we sort the
  * set-like fields before stringifying.
  *
+ * V3: includes the effective Monthly Goal so a one-month goal change re-arms a
+ * previously dismissed recommendation.
+ *
  * V2: plan fingerprints carry the plan's resolved credit-ness (Plan Type) —
  * re-typing a plan or flipping its Category's credit setting moves the
  * projection, so it must re-arm — plus the recurring pattern's recurrence,
@@ -72,8 +76,9 @@ export const computeRecommendationInputsHash = (
   input: RecommendationInputsHashInput
 ): string => {
   const parts: (string | number)[] = [
-    'v2',
+    'v3',
     input.loggedAdjustedMinutes,
+    input.monthlyGoalMinutes,
     input.dayPlanFingerprints.slice().sort().join('|'),
     input.recurringPlanFingerprints.slice().sort().join('|'),
     input.conversationDayKeys.slice().sort().join('|'),

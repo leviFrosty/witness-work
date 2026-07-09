@@ -20,6 +20,7 @@ import useProjectedTotal from '@/hooks/useProjectedTotal'
 import { formatMinutes } from '@/lib/minutes'
 import { usePreferences } from '@/stores/preferences'
 import AssistantSection from '@/components/AssistantSection'
+import useMonthlyGoal from '@/hooks/useMonthlyGoal'
 
 type Props = {
   scope: ProjectedTotalScope
@@ -33,11 +34,17 @@ type Props = {
 
 const ProjectedTotalCard = ({ scope, showAssistant = false }: Props) => {
   const theme = useTheme()
-  const { monthlyGoalHours, annualGoalHours } = usePublisher()
+  const { annualGoalHours } = usePublisher()
   const { timeDisplayFormat } = usePreferences()
   const formatHours = (minutes: number) =>
     formatMinutes(minutes, timeDisplayFormat).formatted
 
+  const fallbackToday = new Date()
+  const monthTarget =
+    scope.kind === 'month'
+      ? { month: scope.month, year: scope.year }
+      : { month: fallbackToday.getMonth(), year: fallbackToday.getFullYear() }
+  const { effectiveGoalHours: monthlyGoalHours } = useMonthlyGoal(monthTarget)
   const goalHours = scope.kind === 'month' ? monthlyGoalHours : annualGoalHours
 
   const { projection: result, today } = useProjectedTotal(scope, goalHours * 60)

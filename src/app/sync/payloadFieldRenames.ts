@@ -18,6 +18,9 @@
  * - `preferencesStore.values.pioneerStartDate` → `tenureStartDate` (wave-4 rename
  *   — the glossary's **Tenure Start Date** is canonical; the legacy name was
  *   misleading because regular auxiliary's tenure was also stored here)
+ * - `preferencesStore.values.oneOffGoalHours` → `monthlyGoalOverrides` (legacy `{
+ *   month: Date, hours }[]` entries become a `YYYY-MM` keyed map;
+ *   malformed/negative goals are discarded and the last valid duplicate wins)
  * - The matching keys inside `preferencesStore.updatedAt`
  * - `preferencesStore.values.{name,avatar,customAvatarBackground,hasCompletedProfileSetup}`
  *   → `profileStore.values.<same>` (wave-3 store split). Older peer devices
@@ -65,14 +68,57 @@ export function normalizeLegacyPayloadFieldNames(d: any): void {
     renameKey(prefs.values, 'meetingWeekdays', 'meetingDays')
     renameKey(prefs.values, 'publisher', 'role')
     renameKey(prefs.values, 'pioneerStartDate', 'tenureStartDate')
+    migrateLegacyMonthlyGoalOverrides(prefs.values)
     renameKey(prefs.updatedAt, 'excludedWeekdays', 'offDays')
     renameKey(prefs.updatedAt, 'meetingWeekdays', 'meetingDays')
     renameKey(prefs.updatedAt, 'publisher', 'role')
     renameKey(prefs.updatedAt, 'pioneerStartDate', 'tenureStartDate')
+    renameKey(prefs.updatedAt, 'oneOffGoalHours', 'monthlyGoalOverrides')
   }
 
   routeLegacyProfileFields(d)
   collapseLdcFlagOnServiceReports(d?.serviceReportStore?.serviceReports)
+}
+
+/**
+ * Payloads have already passed through JSON, so legacy Date values arrive as
+ * ISO strings. Extract their written year/month directly to avoid time-zone
+ * month drift. This mirrors the preferences persist migration while keeping
+ * this wire-normalization module import-free.
+ */
+function migrateLegacyMonthlyGoalOverrides(
+  values: Record<string, unknown> | undefined
+): void {
+  if (!values || typeof values !== 'object' || !('oneOffGoalHours' in values)) {
+    return
+  }
+
+  if (!('monthlyGoalOverrides' in values)) {
+    const overrides: Record<string, number> = {}
+    const legacy = values.oneOffGoalHours
+    if (Array.isArray(legacy)) {
+      for (const item of legacy) {
+        if (!item || typeof item !== 'object') continue
+        const { month, hours } = item as {
+          month?: unknown
+          hours?: unknown
+        }
+        if (
+          typeof month !== 'string' ||
+          typeof hours !== 'number' ||
+          !Number.isFinite(hours) ||
+          hours < 0
+        ) {
+          continue
+        }
+        const match = /^(\d{4})-(0[1-9]|1[0-2])/.exec(month)
+        if (match) overrides[`${match[1]}-${match[2]}`] = hours
+      }
+    }
+    values.monthlyGoalOverrides = overrides
+  }
+
+  delete values.oneOffGoalHours
 }
 
 /**

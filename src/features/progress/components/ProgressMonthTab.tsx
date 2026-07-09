@@ -66,6 +66,7 @@ const ProgressMonthTab = ({
             monthsReports={thisMonthsReports}
             showReportButton
             hideTitle
+            allowGoalEditing
           />
           <ProjectedTotalCard scope={scope} />
         </View>

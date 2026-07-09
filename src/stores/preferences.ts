@@ -23,6 +23,14 @@ import type { ActiveFilter } from '@/lib/contactsFilters'
 import type { MarkerColors } from '@/types/markerColors'
 import type { StalenessBreakpoints } from '@/types/staleness'
 import { DEFAULT_STALENESS_BREAKPOINTS } from '@/constants/staleness'
+import {
+  isValidMonthlyGoalHours,
+  monthlyGoalOverridesFromLegacy,
+  monthlyGoalKey,
+  normalizeMonthlyGoalOverrides,
+  type CalendarMonth,
+  type MonthlyGoalOverrides,
+} from '@/lib/monthlyGoals'
 
 export type { MarkerColors }
 
@@ -46,11 +54,6 @@ export const builtInContactSortOptions: {
   { label: () => i18n.t('contacts_sortByState'), value: 'state' },
   { label: () => i18n.t('contacts_sortByZip'), value: 'zip' },
 ]
-
-export type GoalHours = {
-  month: Date
-  hours: number
-}
 
 const publisherHours: PublisherHours = {
   publisher: 0,
@@ -241,8 +244,13 @@ export const PREFERENCE_DEFAULTS = {
   role: 'publisher' as Publisher,
   publisherHours: publisherHours,
 
-  /** Overrides publisherHours hour requirement for given month. */
-  oneOffGoalHours: [] as GoalHours[],
+  /**
+   * Per-calendar-month Monthly Goal overrides keyed as `YYYY-MM`. A missing key
+   * means the Publisher-derived regular goal applies. This is syncable user
+   * intent and therefore participates in iCloud's per-preference LWW merge as
+   * one record.
+   */
+  monthlyGoalOverrides: {} as MonthlyGoalOverrides,
   onboardingComplete: false,
   // `name`, `avatar`, `customAvatarBackground`, and `hasCompletedProfileSetup`
   // moved to `@/stores/profile` in preferences v3 — see `src/lib/profileMigration.ts`
@@ -913,6 +921,11 @@ export const NON_SYNCABLE_PREFERENCE_KEYS = new Set<string>([
  *   an explicit override. The matching `preferenceUpdatedAt` timestamp is
  *   dropped alongside a dropped value so iCloud LWW lets an explicit value from
  *   another device win.
+ * - V5 → v6: replace the unused `oneOffGoalHours: { month: Date, hours }[]` shape
+ *   with `monthlyGoalOverrides: Record<YYYY-MM, number>`. Date values persisted
+ *   as ISO strings are converted without time-zone month drift;
+ *   malformed/negative goals are discarded. The matching iCloud LWW timestamp
+ *   key is renamed alongside the value.
  *
  * Exported for unit testing. Idempotent — re-running on an already-migrated
  * blob is a no-op.
@@ -939,6 +952,48 @@ export const migratePreferencesPersistedState = (
   if (version < 5) {
     next = migrateStartOfWeekZeroToAuto(next)
   }
+  if (version < 6) {
+    next = migrateOneOffGoalHoursToMonthlyGoalOverrides(next)
+  }
+  return next
+}
+
+/**
+ * V5 → v6: migrate the legacy array-based one-off goal placeholder to the
+ * canonical calendar-month override map. Exported so the iCloud payload
+ * compatibility layer can apply the exact same conversion before merging.
+ */
+export const migrateOneOffGoalHoursToMonthlyGoalOverrides = (
+  state: unknown
+): unknown => {
+  if (!state || typeof state !== 'object') return state
+  const record = state as Record<string, unknown>
+
+  const hasLegacy = 'oneOffGoalHours' in record
+  const hasCanonical = 'monthlyGoalOverrides' in record
+  if (!hasLegacy && !hasCanonical) return state
+
+  const { oneOffGoalHours, ...rest } = record
+  const next: Record<string, unknown> = { ...rest }
+  next.monthlyGoalOverrides = hasCanonical
+    ? normalizeMonthlyGoalOverrides(next.monthlyGoalOverrides)
+    : monthlyGoalOverridesFromLegacy(oneOffGoalHours)
+
+  if (
+    next.preferenceUpdatedAt &&
+    typeof next.preferenceUpdatedAt === 'object'
+  ) {
+    const timestamps = next.preferenceUpdatedAt as Record<string, unknown>
+    const { oneOffGoalHours: legacyTs, ...restTs } = timestamps
+    const nextTs: Record<string, unknown> = { ...restTs }
+    // As with earlier field renames, an existing canonical timestamp wins in a
+    // downgrade-then-upgrade payload carrying both keys.
+    if (legacyTs !== undefined && nextTs.monthlyGoalOverrides === undefined) {
+      nextTs.monthlyGoalOverrides = legacyTs
+    }
+    next.preferenceUpdatedAt = nextTs
+  }
+
   return next
 }
 
@@ -1207,6 +1262,48 @@ export const usePreferences = create(
           set({ overrideCreditLimit }),
         setCustomCreditLimitHours: (customCreditLimitHours: number) =>
           set({ customCreditLimitHours }),
+        /**
+         * Saves a Monthly Goal for one exact calendar month. Entering the
+         * Publisher-derived regular goal clears any existing override so a
+         * future role/custom-goal change naturally flows through that month.
+         */
+        setMonthlyGoalOverride: (target: CalendarMonth, hours: number) => {
+          if (!isValidMonthlyGoalHours(hours)) {
+            throw new RangeError(
+              'Monthly Goal hours must be a finite, nonnegative number'
+            )
+          }
+
+          const key = monthlyGoalKey(target)
+          set((state) => {
+            const baseGoalHours = state.publisherHours[state.role]
+            const existing = state.monthlyGoalOverrides[key]
+
+            if (hours === baseGoalHours) {
+              if (existing === undefined) return {}
+              const next = { ...state.monthlyGoalOverrides }
+              delete next[key]
+              return { monthlyGoalOverrides: next }
+            }
+
+            if (existing === hours) return {}
+            return {
+              monthlyGoalOverrides: {
+                ...state.monthlyGoalOverrides,
+                [key]: hours,
+              },
+            }
+          })
+        },
+        clearMonthlyGoalOverride: (target: CalendarMonth) => {
+          const key = monthlyGoalKey(target)
+          set((state) => {
+            if (!(key in state.monthlyGoalOverrides)) return {}
+            const next = { ...state.monthlyGoalOverrides }
+            delete next[key]
+            return { monthlyGoalOverrides: next }
+          })
+        },
         setAutoRolloverEnabled: (autoRolloverEnabled: boolean) =>
           set({ autoRolloverEnabled }),
         setRolloverIncludesCredit: (rolloverIncludesCredit: boolean) =>
@@ -1303,7 +1400,7 @@ export const usePreferences = create(
       storage: createJSONStorage(() =>
         hasMigratedFromAsyncStorage() ? MmkvStorage : GuardedAsyncStorage
       ),
-      version: 5,
+      version: 6,
       migrate: (persistedState, version) =>
         migratePreferencesPersistedState(persistedState, version),
     }

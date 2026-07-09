@@ -1,10 +1,6 @@
 import {
   ArrowLeft as ArrowLeftIcon,
   ArrowRight as ArrowRightIcon,
-  CalendarClock as CalendarClockIcon,
-  CircleCheck as CircleCheckIcon,
-  TrendingDown as TrendingDownIcon,
-  TrendingUp as TrendingUpIcon,
 } from 'lucide-react-native'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { View } from 'react-native'
@@ -18,7 +14,6 @@ import { useNavigation as useRootNavigation } from '@react-navigation/native'
 import moment from 'moment'
 
 import useServiceReport from '@/stores/serviceReport'
-import { usePreferences } from '@/stores/preferences'
 import useTheme from '@/contexts/theme'
 import { getMonthsReports } from '@/lib/serviceReport'
 import {
@@ -29,11 +24,6 @@ import {
 import { getPeriodTense } from '@/lib/projectedTotalCopy'
 import usePublisher from '@/hooks/usePublisher'
 import useProjectedTotal from '@/hooks/useProjectedTotal'
-import { useFormattedMinutes } from '@/lib/minutes'
-import {
-  getScheduleStatusForMonth,
-  type ScheduleStatusState,
-} from '@/lib/scheduleStatus'
 import { getStartTimeInMinutes } from '@/lib/normalizeDate'
 import { RootStackNavigation } from '@/types/rootStack'
 import { HomeTabStackParamList } from '@/types/homeStack'
@@ -51,13 +41,14 @@ import Card from '@/components/ui/Card'
 import Button from '@/components/ui/Button'
 import ActionButton from '@/components/ui/ActionButton'
 import IconButton from '@/components/ui/IconButton'
-import LucideIcon from '@/components/ui/LucideIcon'
 import Text from '@/components/ui/MyText'
 import XView from '@/components/ui/layout/XView'
-import SimpleProgressBar from '@/components/ui/SimpleProgressBar'
 import PlanRow from '@/components/PlanRow'
 import type { PlanListItem } from '@/components/PlanRow'
-import i18n, { type TranslationKey } from '@/lib/locales'
+import i18n from '@/lib/locales'
+import useMonthlyGoal from '@/hooks/useMonthlyGoal'
+import MonthGoalEditorSheet from '@/features/service-reports/components/MonthGoalEditorSheet'
+import ScheduleInsights from '@/features/plans/components/ScheduleInsights'
 
 type Props = BottomTabScreenProps<HomeTabStackParamList, 'Schedule'>
 
@@ -74,6 +65,7 @@ const ScheduleScreen = ({ route }: Props) => {
   const [calendarViewMode, setCalendarViewMode] =
     useState<CalendarViewMode>('planned')
   const [showPastPlans, setShowPastPlans] = useState(false)
+  const [goalEditorOpen, setGoalEditorOpen] = useState(false)
   const [selectedDateSheet, setSelectedDateSheet] =
     useState<SelectedDateSheetState>({
       open: false,
@@ -86,6 +78,14 @@ const ScheduleScreen = ({ route }: Props) => {
     [month, year]
   )
   const isCurrentMonth = month === moment().month() && year === moment().year()
+  const isPastMonth = selectedMonth.isBefore(moment(), 'month')
+  const {
+    baseGoalHours,
+    effectiveGoalHours,
+    setOverride: setMonthlyGoalOverride,
+    clearOverride: clearMonthlyGoalOverride,
+  } = useMonthlyGoal({ month, year })
+  const { annualGoalHours, hasAnnualGoal } = usePublisher()
 
   const thisMonthsReports = useMemo(
     () => getMonthsReports(serviceReports, month, year),
@@ -336,7 +336,15 @@ const ScheduleScreen = ({ route }: Props) => {
               </Text>
             </Button>
           )}
-          <ScheduleStatusCard month={month} year={year} />
+          <ScheduleInsights
+            month={month}
+            year={year}
+            onEditGoal={
+              baseGoalHours > 0 && !isPastMonth
+                ? () => setGoalEditorOpen(true)
+                : undefined
+            }
+          />
           <Card>
             <CalendarHeader
               viewMode={calendarViewMode}
@@ -426,6 +434,19 @@ const ScheduleScreen = ({ route }: Props) => {
         onNavigateToRecurringPlan={handleNavigateToRecurringPlan}
         onEditTimeReport={handleEditTimeReport}
       />
+      {baseGoalHours > 0 && !isPastMonth ? (
+        <MonthGoalEditorSheet
+          open={goalEditorOpen}
+          onOpenChange={setGoalEditorOpen}
+          month={month}
+          year={year}
+          regularGoalHours={baseGoalHours}
+          effectiveGoalHours={effectiveGoalHours}
+          annualGoalHours={hasAnnualGoal ? annualGoalHours : null}
+          onSaveGoal={setMonthlyGoalOverride}
+          onUseRegularGoal={clearMonthlyGoalOverride}
+        />
+      ) : null}
     </View>
   )
 }
@@ -438,175 +459,6 @@ const navButtonStyle = (theme: ReturnType<typeof useTheme>) => ({
   paddingVertical: 5,
 })
 
-const STATUS_TITLE_KEYS: Record<ScheduleStatusState, TranslationKey> = {
-  ahead: 'scheduleStatus.ahead',
-  behind: 'scheduleStatus.behind',
-  onTrack: 'scheduleStatus.onTrack',
-  noPlan: 'scheduleStatus.noPlan',
-  notStarted: 'scheduleStatus.upcoming',
-}
-
-const ScheduleStatusCard = (props: { month: number; year: number }) => {
-  const { month, year } = props
-  const theme = useTheme()
-  const serviceReports = useServiceReport((s) => s.serviceReports)
-  const dayPlans = useServiceReport((s) => s.dayPlans)
-  const recurringPlans = useServiceReport((s) => s.recurringPlans)
-  const { role, overrideCreditLimit, customCreditLimitHours } = usePreferences()
-
-  const status = getScheduleStatusForMonth({
-    month,
-    year,
-    serviceReports,
-    dayPlans,
-    recurringPlans,
-    publisher: role,
-    creditLimit: {
-      enabled: overrideCreditLimit,
-      customLimitHours: customCreditLimitHours,
-    },
-  })
-
-  const actualDisplay = useFormattedMinutes(status.actualMinutes)
-  const plannedDisplay = useFormattedMinutes(status.plannedMinutes)
-  const differenceDisplay = useFormattedMinutes(
-    Math.abs(status.differenceMinutes)
-  )
-
-  const statusColor = (() => {
-    switch (status.state) {
-      case 'ahead':
-      case 'onTrack':
-        return theme.colors.accent
-      case 'behind':
-        return theme.colors.warn
-      default:
-        return theme.colors.textAlt
-    }
-  })()
-  const iconBackground = (() => {
-    switch (status.state) {
-      case 'ahead':
-      case 'onTrack':
-        return theme.colors.accentTranslucent
-      case 'behind':
-        return theme.colors.warnTranslucent
-      default:
-        return theme.colors.backgroundLighter
-    }
-  })()
-  const StatusIcon = (() => {
-    switch (status.state) {
-      case 'ahead':
-        return TrendingUpIcon
-      case 'behind':
-        return TrendingDownIcon
-      case 'onTrack':
-        return CircleCheckIcon
-      default:
-        return CalendarClockIcon
-    }
-  })()
-  const statusMeta = (() => {
-    switch (status.state) {
-      case 'ahead':
-        return `+${differenceDisplay.formatted}`
-      case 'behind':
-        return `-${differenceDisplay.formatted}`
-      case 'onTrack':
-        return i18n.t('scheduleStatus.matched')
-      case 'noPlan':
-        return i18n.t('scheduleStatus.noPlannedTime')
-      case 'notStarted':
-        return i18n.t('scheduleStatus.notStarted')
-    }
-  })()
-  const progress =
-    status.plannedMinutes > 0
-      ? Math.max(0, status.actualMinutes / status.plannedMinutes)
-      : status.actualMinutes > 0
-        ? 1
-        : 0
-
-  return (
-    <Card style={{ gap: 12 }}>
-      <XView style={{ alignItems: 'center', gap: 12 }}>
-        <View
-          style={{
-            width: 44,
-            height: 44,
-            borderRadius: 22,
-            alignItems: 'center',
-            justifyContent: 'center',
-            backgroundColor: iconBackground,
-          }}
-        >
-          <LucideIcon icon={StatusIcon} color={statusColor} size={22} />
-        </View>
-        <View style={{ flex: 1, gap: 2 }}>
-          <Text
-            style={{
-              fontFamily: theme.fonts.bold,
-              fontSize: theme.fontSize('xl'),
-              color: statusColor,
-            }}
-          >
-            {i18n.t(STATUS_TITLE_KEYS[status.state])}
-          </Text>
-          <Text
-            style={{
-              color: theme.colors.textAlt,
-              fontFamily: theme.fonts.semiBold,
-            }}
-          >
-            {statusMeta}
-          </Text>
-        </View>
-      </XView>
-
-      <SimpleProgressBar
-        percentage={progress}
-        color={statusColor}
-        height={10}
-        animated={false}
-      />
-
-      <XView style={{ justifyContent: 'space-between', gap: 12 }}>
-        <View style={{ flex: 1, gap: 2 }}>
-          <Text
-            style={{
-              color: theme.colors.textAlt,
-              fontSize: theme.fontSize('xs'),
-              textTransform: 'uppercase',
-              letterSpacing: 0.5,
-            }}
-          >
-            {i18n.t('actual')}
-          </Text>
-          <Text style={{ fontFamily: theme.fonts.semiBold }}>
-            {actualDisplay.formatted}
-          </Text>
-        </View>
-        <View style={{ flex: 1, gap: 2, alignItems: 'flex-end' }}>
-          <Text
-            style={{
-              color: theme.colors.textAlt,
-              fontSize: theme.fontSize('xs'),
-              textTransform: 'uppercase',
-              letterSpacing: 0.5,
-            }}
-          >
-            {i18n.t('planned')}
-          </Text>
-          <Text style={{ fontFamily: theme.fonts.semiBold }}>
-            {plannedDisplay.formatted}
-          </Text>
-        </View>
-      </XView>
-    </Card>
-  )
-}
-
 const MonthAssistantCard = ({
   month,
   year,
@@ -614,7 +466,10 @@ const MonthAssistantCard = ({
   month: number
   year: number
 }) => {
-  const { monthlyGoalHours } = usePublisher()
+  const { effectiveGoalHours: monthlyGoalHours } = useMonthlyGoal({
+    month,
+    year,
+  })
 
   const { projection, today } = useProjectedTotal(
     { kind: 'month', month, year },

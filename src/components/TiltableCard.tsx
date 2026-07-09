@@ -10,7 +10,7 @@ import Animated, {
 import { Gesture, GestureDetector } from 'react-native-gesture-handler'
 import type { TiltShaderContext } from '@/shaders/types'
 
-interface Props {
+export interface TiltableCardProps {
   /** Disables the tilt gesture (e.g. in previews). */
   disabled?: boolean
   /** Max tilt in degrees at the corners. */
@@ -39,7 +39,7 @@ const TiltableCard = ({
   style,
   renderOverlay,
   overlayBorderRadius = 15,
-}: PropsWithChildren<Props>) => {
+}: PropsWithChildren<TiltableCardProps>) => {
   const touchTiltX = useSharedValue(0)
   const touchTiltY = useSharedValue(0)
   const pressScale = useSharedValue(1)

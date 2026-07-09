@@ -207,7 +207,7 @@ const PlannedDay = (
   const recurringPlanHasNote = props.recurringPlans?.some((plan) => {
     const effectiveNote = getEffectiveNoteForRecurringPlan(
       plan,
-      new Date(props.date!.dateString)
+      moment(props.date!.dateString).toDate()
     )
     return !!effectiveNote
   })

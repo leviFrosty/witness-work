@@ -82,3 +82,22 @@ export const normalizeNotesImportCredits = (
 export const shouldShowNotesImportSupporterCta = (
   credits: Pick<NotesImportCredits, 'isSupporter'>
 ): boolean => !credits.isSupporter
+
+/**
+ * Chooses the balance shown by the compact usage meter beside the composer.
+ * Import credits are irrelevant when they are unlimited, so Supporters and
+ * dev-bypass users see the per-import refinement balance instead.
+ */
+export const notesImportPrimaryUsage = (
+  credits: NotesImportCredits
+): { kind: 'imports' | 'refinements'; remaining: number; limit: number } => {
+  if (credits.remaining === null || credits.limit === null) {
+    return { kind: 'refinements', ...credits.refinements }
+  }
+
+  return {
+    kind: 'imports',
+    remaining: credits.remaining,
+    limit: credits.limit,
+  }
+}

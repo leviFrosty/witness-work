@@ -10,6 +10,7 @@ import Text from '@/components/ui/MyText'
 import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
 import {
+  notesImportPrimaryUsage,
   shouldShowNotesImportSupporterCta,
   type NotesImportCredits,
 } from '@/features/notes-import/lib/notesImportUsage'
@@ -112,12 +113,12 @@ const Detail = ({
 
 /**
  * The Scribe AI usage affordance: a ghost button whose ring fills with the
- * fraction of import credits spent (full and muted when imports are unlimited).
- * Tapping opens the usage popover — the same imports/refinements breakdown and
- * Supporter CTA as before. It lives inline in the composer's control row (the
- * remaining refinement count is shown per-message in the chat, so this no
- * longer spells out numbers), with the popover carrying the full detail one tap
- * away.
+ * relevant balance remaining: imports for metered users, or refinements when
+ * imports are unlimited. Tapping opens the usage popover — the same
+ * imports/refinements breakdown and Supporter CTA as before. It lives inline in
+ * the composer's control row (the remaining refinement count is shown
+ * per-message in the chat, so this no longer spells out numbers), with the
+ * popover carrying the full detail one tap away.
  */
 const NotesImportUsage = ({
   credits,
@@ -129,18 +130,17 @@ const NotesImportUsage = ({
   const { width: windowWidth } = useWindowDimensions()
   const contentWidth = Math.min(340, windowWidth - 24)
   const importsUnlimited = credits.isSupporter || credits.remaining === null
+  const primaryUsage = notesImportPrimaryUsage(credits)
 
-  // The ring shows the import-credit balance remaining. Unlimited plans show a
-  // full, muted ring; a depleted balance goes warn-colored.
-  const ringProgress =
-    importsUnlimited || credits.remaining === null || !credits.limit
-      ? 1
-      : credits.remaining / credits.limit
-  const ringColor = importsUnlimited
-    ? theme.colors.accentTranslucent
-    : credits.remaining === 0
+  const ringProgress = primaryUsage.limit
+    ? primaryUsage.remaining / primaryUsage.limit
+    : 1
+  const ringColor =
+    primaryUsage.remaining === 0
       ? theme.colors.warn
-      : theme.colors.accent
+      : primaryUsage.kind === 'refinements'
+        ? theme.colors.indigo
+        : theme.colors.accent
 
   const resolvePosition: ResolveAnchorPosition = ({
     anchor,

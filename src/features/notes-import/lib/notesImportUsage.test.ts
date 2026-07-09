@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
+  notesImportPrimaryUsage,
   normalizeNotesImportCredits,
   shouldShowNotesImportSupporterCta,
 } from '@/features/notes-import/lib/notesImportUsage'
@@ -65,5 +66,47 @@ describe('normalizeNotesImportCredits', () => {
     )
     expect(credits.isSupporter).toBe(false)
     expect(shouldShowNotesImportSupporterCta(credits)).toBe(true)
+  })
+})
+
+describe('notesImportPrimaryUsage', () => {
+  it('shows import progress when import credits are metered', () => {
+    expect(
+      notesImportPrimaryUsage({
+        remaining: 3,
+        limit: 5,
+        isSupporter: false,
+        refinements: { remaining: 1, limit: 5 },
+      })
+    ).toEqual({ kind: 'imports', remaining: 3, limit: 5 })
+  })
+
+  it('shows refinement progress when imports are unlimited', () => {
+    expect(
+      notesImportPrimaryUsage({
+        remaining: null,
+        limit: null,
+        isSupporter: true,
+        refinements: { remaining: 2, limit: 5 },
+      })
+    ).toEqual({ kind: 'refinements', remaining: 2, limit: 5 })
+  })
+
+  it('shows refinement progress for dev-bypass usage', () => {
+    const credits = normalizeNotesImportCredits(
+      {
+        remaining: 3,
+        limit: 5,
+        isSupporter: false,
+        refinements: { remaining: 4, limit: 5 },
+      },
+      { unlimitedImports: true }
+    )
+
+    expect(notesImportPrimaryUsage(credits)).toEqual({
+      kind: 'refinements',
+      remaining: 4,
+      limit: 5,
+    })
   })
 })

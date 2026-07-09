@@ -1,5 +1,4 @@
 import {
-  CalendarRange as CalendarRangeIcon,
   CalendarClock as CalendarClockIcon,
   ChevronRight as ChevronRightIcon,
   CircleCheck as CircleCheckIcon,
@@ -21,6 +20,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import Card from '@/components/ui/Card'
 import Button from '@/components/ui/Button'
+import CircularProgress from '@/components/ui/CircularProgress'
 import IconButton from '@/components/ui/IconButton'
 import LucideIcon, { type AppIcon } from '@/components/ui/LucideIcon'
 import Text from '@/components/ui/MyText'
@@ -176,7 +176,6 @@ const ScheduleInsightOverlay = ({
   if (!origin) return null
 
   const isPace = kind === 'pace'
-  const detailIcon = isPace ? statusIcon : CalendarRangeIcon
   const detailColor = isPace ? statusColor : theme.colors.accent
   const detailTitle = isPace
     ? i18n.t('scheduleInsights.schedulePace')
@@ -232,18 +231,32 @@ const ScheduleInsightOverlay = ({
               <View
                 style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}
               >
-                <View
-                  style={{
-                    width: 38,
-                    height: 38,
-                    borderRadius: 19,
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    backgroundColor: theme.colors.backgroundLighter,
-                  }}
-                >
-                  <LucideIcon icon={detailIcon} color={detailColor} size={20} />
-                </View>
+                {isPace ? (
+                  <View
+                    style={{
+                      width: 38,
+                      height: 38,
+                      borderRadius: 19,
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      backgroundColor: theme.colors.backgroundLighter,
+                    }}
+                  >
+                    <LucideIcon
+                      icon={statusIcon}
+                      color={detailColor}
+                      size={20}
+                    />
+                  </View>
+                ) : (
+                  <CircularProgress
+                    progress={goalProgress}
+                    size={38}
+                    strokeWidth={4}
+                    color={theme.colors.textAlt}
+                    trackColor={theme.colors.border}
+                  />
+                )}
                 <Text
                   accessibilityRole='header'
                   style={{
@@ -518,9 +531,7 @@ const ScheduleInsights = ({
     {
       kind: 'goal' as const,
       ref: goalRef,
-      icon: CalendarRangeIcon,
       color: theme.colors.text,
-      iconColor: theme.colors.textAlt,
       tint: theme.colors.backgroundLighter,
       value: i18n.t('scheduleInsights.percentPlanned', {
         percent: plannedPercent,
@@ -563,22 +574,32 @@ const ScheduleInsights = ({
                     justifyContent: 'space-between',
                   }}
                 >
-                  <View
-                    style={{
-                      width: 30,
-                      height: 30,
-                      borderRadius: 15,
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      backgroundColor: card.tint,
-                    }}
-                  >
-                    <LucideIcon
-                      icon={card.icon}
-                      color={'iconColor' in card ? card.iconColor : card.color}
-                      size={16}
+                  {card.kind === 'goal' ? (
+                    <CircularProgress
+                      progress={goalProgress}
+                      size={30}
+                      strokeWidth={3.5}
+                      color={theme.colors.textAlt}
+                      trackColor={theme.colors.border}
                     />
-                  </View>
+                  ) : (
+                    <View
+                      style={{
+                        width: 30,
+                        height: 30,
+                        borderRadius: 15,
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        backgroundColor: card.tint,
+                      }}
+                    >
+                      <LucideIcon
+                        icon={card.icon}
+                        color={card.color}
+                        size={16}
+                      />
+                    </View>
+                  )}
                   <LucideIcon
                     icon={ChevronRightIcon}
                     color={theme.colors.textAlt}

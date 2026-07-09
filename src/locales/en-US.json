@@ -1275,6 +1275,23 @@
     "paceDescriptionMonth": "Compares logged time with your Plans for the full month.",
     "tapForDetails": "Tap for more details"
   },
+  "homeDashboard": {
+    "editor": {
+      "title": "Customize This Month",
+      "description": "Choose and arrange up to {{count}} cards.",
+      "moveUp": "Move {{card}} up",
+      "moveDown": "Move {{card}} down",
+      "limitReached": "You can show up to {{count}} cards.",
+      "cards": {
+        "schedulePace": "Schedule pace",
+        "projectedMonth": "Projected month",
+        "serviceYearProgress": "Service Year progress",
+        "creditTime": "Credit Time",
+        "remainingToGoal": "Remaining to goal",
+        "plannedTotal": "Planned total"
+      }
+    }
+  },
   "planDay": "Plan Day",
   "weekly": "Weekly",
   "bi-weekly": "Bi-Weekly",
@@ -1311,6 +1328,7 @@
   "howDoYouSubmitYourReport": "How do you submit your report?",
   "howDoYouSubmitYourReport_description": "At the end of each month, WitnessWork reminds you to submit your report and makes it one tap using your preferred method. You can change this anytime in Preferences.",
   "submitMonthsReport": "Submit {{month}}'s Report",
+  "reportSubmitted": "Report Submitted",
   "submitToApp": "Submit to {{app}}",
   "changeSubmissionMethod": "Change submission method",
   "dontSeeYourCongregationsApp": "Don't see your congregation's app?",

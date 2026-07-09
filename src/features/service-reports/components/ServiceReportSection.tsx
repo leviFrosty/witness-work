@@ -1,86 +1,91 @@
 import { View } from 'react-native'
+import {
+  ChevronRight as ChevronRightIcon,
+  Plus as PlusIcon,
+} from 'lucide-react-native'
 import useTheme from '@/contexts/theme'
 import usePublisher from '@/hooks/usePublisher'
 import Card from '@/components/ui/Card'
+import Button from '@/components/ui/Button'
+import LucideIcon from '@/components/ui/LucideIcon'
 import Text from '@/components/ui/MyText'
 import moment from 'moment'
 import i18n from '@/lib/locales'
-import useDevice from '@/hooks/useDevice'
 import HourEntryCard from '@/features/service-reports/components/HourEntryCard'
 import PublisherCheckBoxCard from '@/features/service-reports/components/PublisherCheckBoxCard'
 import StudiesCard from '@/features/service-reports/components/StudiesCard'
-import ViewReportButton from '@/features/service-reports/components/ViewReportButton'
 import SubmitPreviousReportButton from '@/features/service-reports/components/SubmitPreviousReportButton'
-
-const RowSectionTitle = ({
-  title,
-  underline,
-}: {
-  title: string
-  underline?: boolean
-}) => {
-  const theme = useTheme()
-
-  return (
-    <Text
-      style={{
-        color: theme.colors.textAlt,
-        fontFamily: theme.fonts.semiBold,
-        textDecorationLine: underline ? 'underline' : 'none',
-      }}
-    >
-      {title}
-    </Text>
-  )
-}
+import { useNavigation } from '@react-navigation/native'
+import { RootStackNavigation } from '@/types/rootStack'
 
 const ServiceReportSection = () => {
   const theme = useTheme()
   const { entryMode } = usePublisher()
-  const { isTablet } = useDevice()
+  const navigation = useNavigation<RootStackNavigation>()
+  const month = moment().month()
+  const year = moment().year()
+
+  const viewReport = () =>
+    navigation.navigate('ServiceReportView', { month, year })
 
   return (
-    <View style={{ gap: 10 }}>
-      <View
+    <Card
+      style={{
+        paddingHorizontal: 0,
+        paddingVertical: 0,
+        gap: 0,
+        overflow: 'hidden',
+      }}
+    >
+      <Button
+        accessibilityLabel={i18n.t('viewReport')}
+        onPress={viewReport}
         style={{
+          minHeight: 48,
+          paddingHorizontal: 20,
+          paddingVertical: 10,
           flexDirection: 'row',
           alignItems: 'center',
           justifyContent: 'space-between',
-          gap: 5,
         }}
       >
         <Text
           style={{
-            fontSize: 14,
+            fontSize: theme.fontSize('lg'),
             fontFamily: theme.fonts.semiBold,
-            marginLeft: 5,
           }}
         >
           {i18n.t('serviceReport')}
         </Text>
-        <ViewReportButton month={moment().month()} year={moment().year()} />
-      </View>
+        <LucideIcon
+          icon={ChevronRightIcon}
+          size={16}
+          color={theme.colors.textAlt}
+        />
+      </Button>
 
-      <SubmitPreviousReportButton />
-
-      <Card>
+      <View
+        style={{
+          gap: 18,
+          padding: 20,
+          paddingTop: 16,
+          borderTopWidth: 1,
+          borderTopColor: theme.colors.border,
+        }}
+      >
+        <SubmitPreviousReportButton />
         <View
           style={{
             flexDirection: 'row',
-            gap: 3,
+            gap: 18,
+            alignItems: 'stretch',
           }}
         >
           <View
             style={{
-              flex: 2,
-              gap: 5,
-              width: '100%',
-              maxWidth: isTablet ? 800 : '60%',
+              flex: entryMode === 'checkbox' ? 2 : 1,
             }}
           >
-            <View style={{ flexDirection: 'row' }}>
-              <RowSectionTitle title={i18n.t('hours')} />
-            </View>
             {entryMode === 'checkbox' ? (
               <PublisherCheckBoxCard />
             ) : (
@@ -89,18 +94,52 @@ const ServiceReportSection = () => {
           </View>
           <View
             style={{
-              flexDirection: 'column',
-              gap: 5,
-              flexGrow: 1,
-              maxWidth: '40%',
+              flex: 1,
+              paddingLeft: 18,
+              borderLeftWidth: 1,
+              borderLeftColor: theme.colors.border,
             }}
           >
-            <RowSectionTitle title={i18n.t('studies')} />
             <StudiesCard />
           </View>
         </View>
-      </Card>
-    </View>
+
+        {entryMode === 'hours' ? (
+          <Button
+            variant='glass'
+            glassTint={theme.colors.accent}
+            accessibilityLabel={i18n.t('addTime')}
+            onPress={() => navigation.navigate('Add Time')}
+            style={{
+              width: '100%',
+              minHeight: 48,
+              paddingVertical: 13,
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 8,
+              backgroundColor: theme.colors.accent,
+              borderRadius: theme.numbers.borderRadiusMd,
+            }}
+          >
+            <LucideIcon
+              icon={PlusIcon}
+              size={18}
+              color={theme.colors.textInverse}
+            />
+            <Text
+              style={{
+                color: theme.colors.textInverse,
+                fontFamily: theme.fonts.semiBold,
+                fontSize: theme.fontSize('md'),
+              }}
+            >
+              {i18n.t('addTime')}
+            </Text>
+          </Button>
+        ) : null}
+      </View>
+    </Card>
   )
 }
 

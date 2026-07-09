@@ -1,146 +1,140 @@
-import { Square as SquareIcon } from 'lucide-react-native'
-import { getMonthsReports } from '@/lib/serviceReport'
-import { useServiceReport } from '@/stores/serviceReport'
+import {
+  CircleCheck as CircleCheckIcon,
+  Square as SquareIcon,
+} from 'lucide-react-native'
 import * as Crypto from 'expo-crypto'
-import LottieView from 'lottie-react-native'
-import Button from '@/components/ui/Button'
-import { TimeEntry } from '@/types/timeEntry'
-import useTheme from '@/contexts/theme'
-import Text from '@/components/ui/MyText'
-import i18n from '@/lib/locales'
-import { View } from 'react-native'
-import { useMemo, useState } from 'react'
 import moment from 'moment'
-import IconButton from '@/components/ui/IconButton'
-import Haptics from '@/lib/haptics'
+import { useMemo, useState } from 'react'
+import { View } from 'react-native'
+import Button from '@/components/ui/Button'
+import LucideIcon from '@/components/ui/LucideIcon'
+import Text from '@/components/ui/MyText'
 import useAnimation from '@/hooks/useAnimation'
+import useTheme from '@/contexts/theme'
+import Haptics from '@/lib/haptics'
+import i18n from '@/lib/locales'
+import { getMonthsReports } from '@/lib/serviceReport'
 import { CONFETTI_DELAY_MS } from '@/providers/AnimationViewProvider'
-
-const CheckMarkAnimationComponent = ({
-  undoReport,
-}: {
-  undoReport?: TimeEntry
-}) => {
-  const theme = useTheme()
-  const { deleteServiceReport } = useServiceReport()
-
-  return (
-    <View
-      style={{
-        backgroundColor: theme.colors.backgroundLighter,
-        alignItems: 'center',
-        justifyContent: 'center',
-        flex: 1,
-      }}
-    >
-      <LottieView
-        autoPlay={true}
-        loop={false}
-        style={{
-          width: 140,
-          height: 120,
-        }}
-        speed={0.875}
-        // Find more Lottie files at https://lottiefiles.com/featured
-        source={require('@/assets/lottie/checkMark.json')}
-      />
-      {undoReport && (
-        <Button onPress={() => deleteServiceReport(undoReport)}>
-          <Text
-            style={{
-              fontSize: 10,
-              color: theme.colors.textAlt,
-              textDecorationLine: 'underline',
-            }}
-          >
-            {i18n.t('undo')}
-          </Text>
-        </Button>
-      )}
-    </View>
-  )
-}
+import { useServiceReport } from '@/stores/serviceReport'
+import { TimeEntry } from '@/types/timeEntry'
+import LottieView from 'lottie-react-native'
 
 export default function PublisherCheckBoxCard() {
   const theme = useTheme()
   const [undoReport, setUndoReport] = useState<TimeEntry>()
-  const { serviceReports, addServiceReport } = useServiceReport()
-
+  const { serviceReports, addServiceReport, deleteServiceReport } =
+    useServiceReport()
   const { playConfetti } = useAnimation()
   const monthReports = useMemo(
     () => getMonthsReports(serviceReports, moment().month(), moment().year()),
     [serviceReports]
   )
-  const hasGoneOutInServiceThisMonth = !!monthReports.length
+  const hasParticipated = monthReports.length > 0
 
   const handleSubmitDidService = () => {
-    const id = Crypto.randomUUID()
     const report: TimeEntry = {
       date: new Date(),
       hours: 0,
       minutes: 0,
-      id,
+      id: Crypto.randomUUID(),
     }
     addServiceReport(report)
     setUndoReport(report)
     Haptics.heavy()
-    setTimeout(() => {
-      Haptics.success()
-    }, CONFETTI_DELAY_MS + 100)
+    setTimeout(() => Haptics.success(), CONFETTI_DELAY_MS + 100)
     playConfetti()
   }
 
-  return (
-    <View>
-      {hasGoneOutInServiceThisMonth ? (
-        <View
+  if (hasParticipated) {
+    return (
+      <View
+        style={{
+          flex: 1,
+          minHeight: 128,
+          gap: 8,
+          alignItems: 'center',
+          justifyContent: 'center',
+          width: '100%',
+        }}
+      >
+        {undoReport ? (
+          <LottieView
+            autoPlay
+            loop={false}
+            speed={0.875}
+            style={{ width: 130, height: 96, marginVertical: -16 }}
+            source={require('@/assets/lottie/checkMark.json')}
+          />
+        ) : (
+          <LucideIcon
+            icon={CircleCheckIcon}
+            size={54}
+            color={theme.colors.accent}
+          />
+        )}
+        <Text
           style={{
-            backgroundColor: hasGoneOutInServiceThisMonth
-              ? theme.colors.backgroundLighter
-              : theme.colors.accent,
-            borderColor: theme.colors.border,
-            paddingVertical: hasGoneOutInServiceThisMonth ? 5 : 46,
-            justifyContent: 'center',
-            alignItems: 'center',
-            borderRadius: theme.numbers.borderRadiusSm,
-            overflow: 'hidden',
+            fontFamily: theme.fonts.semiBold,
+            fontSize: theme.fontSize('md'),
+            textAlign: 'center',
           }}
         >
-          <CheckMarkAnimationComponent undoReport={undoReport} />
-        </View>
-      ) : (
-        <Button
-          style={{
-            backgroundColor: hasGoneOutInServiceThisMonth
-              ? theme.colors.backgroundLighter
-              : theme.colors.accent,
-            borderColor: theme.colors.border,
-            paddingVertical: hasGoneOutInServiceThisMonth ? 5 : 46,
-            justifyContent: 'center',
-            alignItems: 'center',
-            borderRadius: theme.numbers.borderRadiusLg,
-            paddingHorizontal: 25,
-          }}
-          onPress={handleSubmitDidService}
-        >
-          <View style={{ flexDirection: 'row', gap: 10, alignItems: 'center' }}>
-            <IconButton
-              icon={SquareIcon}
-              size='xl'
-              iconStyle={{ color: theme.colors.textInverse }}
-            />
+          {i18n.t('sharedTheGoodNews')}
+        </Text>
+        {undoReport ? (
+          <Button onPress={() => deleteServiceReport(undoReport)}>
             <Text
               style={{
-                color: theme.colors.textInverse,
-                fontSize: 18,
-                fontFamily: theme.fonts.semiBold,
+                color: theme.colors.textAlt,
+                fontSize: theme.fontSize('xs'),
+                textDecorationLine: 'underline',
               }}
             >
-              {i18n.t('sharedTheGoodNews')}
+              {i18n.t('undo')}
             </Text>
-          </View>
-        </Button>
-      )}
-    </View>
+          </Button>
+        ) : null}
+      </View>
+    )
+  }
+
+  return (
+    <Button
+      accessibilityLabel={i18n.t('sharedTheGoodNews')}
+      onPress={handleSubmitDidService}
+      style={{
+        flex: 1,
+        minHeight: 128,
+        flexDirection: 'column',
+        gap: 12,
+        alignItems: 'center',
+        justifyContent: 'center',
+        paddingVertical: 4,
+        width: '100%',
+      }}
+    >
+      <View
+        style={{
+          width: 58,
+          height: 58,
+          borderRadius: 29,
+          alignItems: 'center',
+          justifyContent: 'center',
+          backgroundColor: theme.colors.accentTranslucent,
+        }}
+      >
+        <LucideIcon icon={SquareIcon} size={30} color={theme.colors.accent} />
+      </View>
+      <Text
+        style={{
+          color: theme.colors.text,
+          fontFamily: theme.fonts.semiBold,
+          fontSize: theme.fontSize('md'),
+          textAlign: 'center',
+        }}
+      >
+        {i18n.t('sharedTheGoodNews')}
+      </Text>
+    </Button>
   )
 }

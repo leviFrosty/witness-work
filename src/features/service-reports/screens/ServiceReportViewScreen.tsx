@@ -1,4 +1,6 @@
 import {
+  ArrowLeft as ArrowLeftIcon,
+  ArrowRight as ArrowRightIcon,
   Check as CheckIcon,
   Copy as CopyIcon,
   Earth as EarthIcon,
@@ -22,7 +24,7 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import * as Clipboard from 'expo-clipboard'
 import moment from 'moment'
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { LayoutChangeEvent } from 'react-native'
 import Svg, {
   Path,
@@ -35,6 +37,7 @@ import Svg, {
 } from 'react-native-svg'
 
 import IconButton from '@/components/ui/IconButton'
+import Button from '@/components/ui/Button'
 import SplitButton, { SplitButtonAction } from '@/components/ui/SplitButton'
 import Text from '@/components/ui/MyText'
 import { exportMethodSelectionOptions } from '@/components/DefaultExportMethodSelector'
@@ -84,6 +87,7 @@ const PAPER_HEIGHT_MIN = 480
 const RAGGED_INSET = 6
 const RAGGED_SEGMENTS_X = 14
 const RAGGED_SEGMENTS_Y = 20
+const SUBMIT_CONFIRMATION_DURATION_MS = 2000
 
 // Deterministic pseudo-random in [-1, 1] from a seed.
 function pseudoRandom(seed: number): number {
@@ -166,6 +170,18 @@ const ServiceReportViewScreen = ({ route, navigation }: Props) => {
     () => moment().month(month).year(year).format('MMMM YYYY'),
     [month, year]
   )
+  const selectedMonth = useMemo(
+    () => moment().month(month).year(year).startOf('month'),
+    [month, year]
+  )
+  const canNavigateForward = selectedMonth.isBefore(moment(), 'month')
+  const navigateMonth = useCallback(
+    (direction: -1 | 1) => {
+      const next = moment(selectedMonth).add(direction, 'month')
+      navigation.setParams({ month: next.month(), year: next.year() })
+    },
+    [navigation, selectedMonth]
+  )
 
   const { regular: handwritingFont, bold: handwritingFontBold } =
     useHandwritingFonts(_i18n.locale)
@@ -182,6 +198,40 @@ const ServiceReportViewScreen = ({ route, navigation }: Props) => {
 
   const [isEditingNotes, setIsEditingNotes] = useState(false)
   const [notesDraft, setNotesDraft] = useState('')
+  const [isSubmitConfirmed, setIsSubmitConfirmed] = useState(false)
+  const submitConfirmationTimerRef = useRef<ReturnType<
+    typeof setTimeout
+  > | null>(null)
+
+  useEffect(() => {
+    setIsEditingNotes(false)
+    setNotesDraft('')
+    setIsSubmitConfirmed(false)
+    Keyboard.dismiss()
+  }, [month, year])
+
+  useEffect(
+    () => () => {
+      if (submitConfirmationTimerRef.current !== null) {
+        clearTimeout(submitConfirmationTimerRef.current)
+      }
+    },
+    []
+  )
+
+  const confirmSubmission = useCallback(() => {
+    markReportSubmitted(reportMonthKey)
+    setIsSubmitConfirmed(true)
+    Haptics.success()
+
+    if (submitConfirmationTimerRef.current !== null) {
+      clearTimeout(submitConfirmationTimerRef.current)
+    }
+    submitConfirmationTimerRef.current = setTimeout(() => {
+      submitConfirmationTimerRef.current = null
+      setIsSubmitConfirmed(false)
+    }, SUBMIT_CONFIRMATION_DURATION_MS)
+  }, [markReportSubmitted, reportMonthKey])
 
   const handleStartEditNotes = useCallback(() => {
     setNotesDraft(data.notes)
@@ -226,14 +276,13 @@ const ServiceReportViewScreen = ({ route, navigation }: Props) => {
   const handleShareAction = useCallback(
     async (action: string) => {
       if (action === 'copy') {
-        Haptics.success()
         await Clipboard.setStringAsync(data.reportAsString())
-        markReportSubmitted(reportMonthKey)
+        confirmSubmission()
         return
       }
       if (action === 'share') {
         await Share.share({ message: data.reportAsString() })
-        markReportSubmitted(reportMonthKey)
+        confirmSubmission()
         return
       }
 
@@ -256,7 +305,7 @@ const ServiceReportViewScreen = ({ route, navigation }: Props) => {
             remarks,
           })
         )
-        markReportSubmitted(reportMonthKey)
+        confirmSubmission()
       } else if (action === 'nwpublisher' && data.isLastMonth) {
         await openURL(
           buildNwPublisherLink({
@@ -267,10 +316,10 @@ const ServiceReportViewScreen = ({ route, navigation }: Props) => {
             remarks,
           })
         )
-        markReportSubmitted(reportMonthKey)
+        confirmSubmission()
       }
     },
-    [data, month, year, markReportSubmitted, reportMonthKey]
+    [confirmSubmission, data, month, year]
   )
 
   // One-tap submit via the user's default method, always available on any
@@ -362,6 +411,65 @@ const ServiceReportViewScreen = ({ route, navigation }: Props) => {
         <View style={{ width: 18 }} />
       </View>
 
+      <View
+        style={{
+          paddingHorizontal: 16,
+          paddingTop: 6,
+          paddingBottom: 8,
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+        }}
+      >
+        <Button
+          accessibilityLabel={moment(selectedMonth)
+            .subtract(1, 'month')
+            .format('MMMM YYYY')}
+          onPress={() => navigateMonth(-1)}
+          style={monthNavButtonStyle(theme)}
+        >
+          <LucideIcon
+            icon={ArrowLeftIcon}
+            size={15}
+            color={theme.colors.textAlt}
+          />
+          <Text style={{ color: theme.colors.textAlt }}>
+            {moment(selectedMonth).subtract(1, 'month').format('MMM')}
+          </Text>
+        </Button>
+
+        <Text
+          style={{
+            color: theme.colors.text,
+            fontFamily: theme.fonts.semiBold,
+            fontSize: theme.fontSize('md'),
+          }}
+        >
+          {monthYearLabel}
+        </Text>
+
+        {canNavigateForward ? (
+          <Button
+            accessibilityLabel={moment(selectedMonth)
+              .add(1, 'month')
+              .format('MMMM YYYY')}
+            onPress={() => navigateMonth(1)}
+            style={monthNavButtonStyle(theme)}
+          >
+            <Text style={{ color: theme.colors.textAlt }}>
+              {moment(selectedMonth).add(1, 'month').format('MMM')}
+            </Text>
+            <LucideIcon
+              icon={ArrowRightIcon}
+              size={15}
+              color={theme.colors.textAlt}
+            />
+          </Button>
+        ) : (
+          <View style={{ width: 72 }} />
+        )}
+      </View>
+
       <ScrollView
         automaticallyAdjustKeyboardInsets
         // Must flex — RN 0.86's Yoga no longer clamps an unflexed ScrollView
@@ -369,7 +477,7 @@ const ServiceReportViewScreen = ({ route, navigation }: Props) => {
         // and stops scrolling once the content exceeds the screen.
         style={{ flex: 1 }}
         contentContainerStyle={{
-          paddingTop: 28,
+          paddingTop: 18,
           paddingBottom: insets.bottom + 130,
           paddingHorizontal: 16,
           alignItems: 'center',
@@ -477,7 +585,11 @@ const ServiceReportViewScreen = ({ route, navigation }: Props) => {
         >
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
             <LucideIcon
-              icon={exportMethodCtaIcons[defaultExportMethod]}
+              icon={
+                isSubmitConfirmed
+                  ? CheckIcon
+                  : exportMethodCtaIcons[defaultExportMethod]
+              }
               size={15}
               style={{ color: theme.colors.textInverse }}
             />
@@ -488,9 +600,9 @@ const ServiceReportViewScreen = ({ route, navigation }: Props) => {
                 fontFamily: theme.fonts.bold,
               }}
             >
-              {submitCtaLabel}
+              {isSubmitConfirmed ? i18n.t('reportSubmitted') : submitCtaLabel}
             </Text>
-            {submitIsExternal && (
+            {submitIsExternal && !isSubmitConfirmed && (
               <LucideIcon
                 icon={ExternalLinkIcon}
                 size={11}
@@ -503,6 +615,19 @@ const ServiceReportViewScreen = ({ route, navigation }: Props) => {
     </View>
   )
 }
+
+const monthNavButtonStyle = (theme: ReturnType<typeof useTheme>) => ({
+  minWidth: 72,
+  paddingHorizontal: 12,
+  paddingVertical: 6,
+  borderWidth: 1,
+  borderColor: theme.colors.border,
+  borderRadius: theme.numbers.borderRadiusLg,
+  flexDirection: 'row' as const,
+  alignItems: 'center' as const,
+  justifyContent: 'center' as const,
+  gap: 5,
+})
 
 const BackPaperSheet = ({ height }: { height: number }) => {
   const path = useMemo(

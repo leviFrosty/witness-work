@@ -66,6 +66,7 @@ function pushSnapshot(reason: string): void {
       serviceReports: sr.serviceReports,
       publisher: prefs.role,
       publisherHours: prefs.publisherHours,
+      monthlyGoalOverrides: prefs.monthlyGoalOverrides,
       overrideCreditLimit: prefs.overrideCreditLimit,
       customCreditLimitHours: prefs.customCreditLimitHours,
       timeDisplayFormat: prefs.timeDisplayFormat,

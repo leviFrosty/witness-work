@@ -13,6 +13,7 @@ import type { AssistantEvent } from '@/lib/assistantRecommendation'
 describe('computeRecommendationInputsHash', () => {
   const base = {
     loggedAdjustedMinutes: 600,
+    monthlyGoalMinutes: 3000,
     dayPlanFingerprints: ['2026-05-15:120', '2026-05-20:120'],
     recurringPlanFingerprints: ['rp-1:weekly'],
     conversationDayKeys: ['2026-05-18'],
@@ -29,6 +30,12 @@ describe('computeRecommendationInputsHash', () => {
   it('changes when logged minutes change', () => {
     expect(computeRecommendationInputsHash(base)).not.toBe(
       computeRecommendationInputsHash({ ...base, loggedAdjustedMinutes: 660 })
+    )
+  })
+
+  it('changes when the effective Monthly Goal changes', () => {
+    expect(computeRecommendationInputsHash(base)).not.toBe(
+      computeRecommendationInputsHash({ ...base, monthlyGoalMinutes: 3600 })
     )
   })
 

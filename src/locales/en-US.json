@@ -107,7 +107,7 @@
   "contributionMore": "More",
   "whatTypePublisherAreYou": "What is your current publisher status?",
   "noHourRequirement": "No Hour Requirement",
-  "hourMonthlyRequirement": "{{count}} Hour Monthly Requirement",
+  "hourMonthlyRequirement": "Regular monthly goal: {{count}} hours",
   "publisher": "Publisher",
   "regularAuxiliary": "Regular Auxiliary",
   "regularPioneer": "Regular Pioneer",
@@ -203,6 +203,7 @@
   },
   "hoursLeft": "left",
   "goalBasedOnPublisherType": "Goal is based on your publisher type",
+  "goalAdjustedForMonth": "Custom goal for this month",
   "addTime": "Add Time",
   "updatedPlan": "Updated Plan",
   "editPlan": "Edit Plan",
@@ -397,7 +398,8 @@
   "todaysConversations": "Today's Conversations",
   "upcomingConversations": "Upcoming Conversations",
   "noTopicProvided": "No Topic Provided.",
-  "customHourRequirement": "Custom Hour Requirement",
+  "customHourRequirement": "Default Monthly Goal",
+  "defaultMonthlyGoal_description": "This applies to every month. To change one month, open Progress.",
   "custom": "Custom",
   "pleaseDescribeYourIssue": "Please describe your issue in detail",
   "invalidPhone": "Invalid Phone Number",
@@ -1261,6 +1263,17 @@
     "matched": "Matched",
     "noPlannedTime": "No planned time",
     "notStarted": "Not started"
+  },
+  "scheduleInsights": {
+    "schedulePace": "Schedule pace",
+    "goalPlanned": "Monthly goal planned",
+    "percentPlanned": "{{percent}}% planned",
+    "ofGoal": "of {{goal}} goal",
+    "monthlyGoal": "Monthly goal",
+    "leftToPlan": "Left to plan",
+    "paceDescriptionCurrent": "Compares logged time with your Plans through today.",
+    "paceDescriptionMonth": "Compares logged time with your Plans for the full month.",
+    "tapForDetails": "Tap for more details"
   },
   "planDay": "Plan Day",
   "weekly": "Weekly",
@@ -2169,6 +2182,22 @@
       "addedPlans": "Assistant added {{count}} plans"
     },
     "collapsedAfterAccept": "✓ You've planned enough"
+  },
+  "monthGoalEditor": {
+    "title": "Goal for {{month}}",
+    "regularGoal": "Regular monthly goal",
+    "monthGoal": "Goal this month",
+    "inputHint": "Enter the goal in hours. Decimals are allowed.",
+    "invalidGoal": "Enter a valid goal of zero hours or more.",
+    "editAccessibility": "Edit the {{goal}} goal for this month",
+    "goalBadge": "Goal {{goal}}",
+    "roleChangeTitle": "Keep custom monthly goals?",
+    "roleChangeDescription": "Your publisher type is changing. Choose whether current and future custom monthly goals should keep their existing values.",
+    "keepGoals": "Keep Goals",
+    "resetFutureGoals": "Reset Future Goals",
+    "explanation": "Only {{month}} changes. Your regular monthly goal and Annual Goal stay the same.",
+    "explanationWithoutAnnualGoal": "Only {{month}} changes. Your regular monthly goal stays the same.",
+    "useRegularGoal": "Use regular {{goal}} goal"
   },
   "projectedTotal": {
     "header": "Projected Total",

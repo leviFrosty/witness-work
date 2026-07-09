@@ -13,6 +13,7 @@ import { goalProgress } from '@/lib/goalProgress'
 import Text from '@/components/ui/MyText'
 import i18n from '@/lib/locales'
 import Circle from '@/components/ui/Circle'
+import useMonthlyGoal from '@/hooks/useMonthlyGoal'
 
 interface ProgressBarSegmentBaseProps extends ViewProps {
   borderRadiusLeft?: boolean
@@ -136,8 +137,8 @@ const MonthServiceReportProgressBar = ({
   const theme = useTheme()
   const { serviceReports } = useServiceReport()
   const { categories } = useCategories()
-  const { role, publisherHours, overrideCreditLimit, customCreditLimitHours } =
-    usePreferences()
+  const { role, overrideCreditLimit, customCreditLimitHours } = usePreferences()
+  const { effectiveGoalHours: goalHours } = useMonthlyGoal({ month, year })
 
   // Animation setup
   const pulseAnimation = useRef(new Animated.Value(0)).current
@@ -147,8 +148,6 @@ const MonthServiceReportProgressBar = ({
     () => getMonthsReports(serviceReports, month, year),
     [month, serviceReports, year]
   )
-  const goalHours = publisherHours[role]
-
   const adjustedMinutes = useMemo(
     () =>
       adjustedMinutesForSpecificMonth(monthReports, month, year, role, {

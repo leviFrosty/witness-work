@@ -156,6 +156,7 @@ const AssistantSection = ({
     () =>
       computeRecommendationInputsHash({
         loggedAdjustedMinutes: projection.loggedMinutes,
+        monthlyGoalMinutes: Math.round(monthlyGoalHours * 60),
         // Resolved credit-ness is part of each plan's fingerprint: a plan's
         // Type (or its Category's credit flag) changes the projection, so it
         // must re-arm a dismissed recommendation.
@@ -178,6 +179,7 @@ const AssistantSection = ({
       }),
     [
       projection.loggedMinutes,
+      monthlyGoalHours,
       dayPlans,
       recurringPlans,
       categories,

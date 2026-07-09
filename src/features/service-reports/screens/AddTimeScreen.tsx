@@ -40,6 +40,8 @@ import { RootStackNavigation, RootStackParamList } from '@/types/rootStack'
 import Haptics from '@/lib/haptics'
 import { CONFETTI_DELAY_MS } from '@/providers/AnimationViewProvider'
 import useCelebrationQueue from '@/features/service-reports/stores/celebrationQueue'
+import { didCrossMonthlyGoal } from '@/features/service-reports/lib/monthlyGoalCelebration'
+import { resolveMonthlyGoalHours } from '@/lib/monthlyGoals'
 
 type AddTimeScreenProps = NativeStackScreenProps<RootStackParamList, 'Add Time'>
 
@@ -48,8 +50,13 @@ const AddTimeScreen = ({ route }: AddTimeScreenProps) => {
   const insets = useSafeAreaInsets()
   const navigation = useNavigation<RootStackNavigation>()
   const noteInput = useRef<RNTextInput>(null)
-  const { role, publisherHours, overrideCreditLimit, customCreditLimitHours } =
-    usePreferences()
+  const {
+    role,
+    publisherHours,
+    monthlyGoalOverrides,
+    overrideCreditLimit,
+    customCreditLimitHours,
+  } = usePreferences()
   const { playConfetti } = useAnimation()
   const { categories } = useCategories()
 
@@ -166,11 +173,16 @@ const AddTimeScreen = ({ route }: AddTimeScreenProps) => {
     // queue anything, so the fireworks don't fire on every submission. The
     // queue is keyed by `(month, year)` so it only pops when the user is
     // actually viewing the month they crossed.
-    const goalHours = publisherHours[role]
-    if (goalHours > 0) {
-      const reportMoment = moment(serviceReport.date)
-      const reportMonth = reportMoment.month()
-      const reportYear = reportMoment.year()
+    const reportMoment = moment(serviceReport.date)
+    const reportMonth = reportMoment.month()
+    const reportYear = reportMoment.year()
+    const goalTarget = { month: reportMonth, year: reportYear }
+    const effectiveGoalHours = resolveMonthlyGoalHours(
+      publisherHours[role],
+      monthlyGoalOverrides,
+      goalTarget
+    )
+    if (effectiveGoalHours > 0) {
       const creditOverride = {
         enabled: overrideCreditLimit,
         customLimitHours: customCreditLimitHours,
@@ -194,9 +206,13 @@ const AddTimeScreen = ({ route }: AddTimeScreenProps) => {
         role,
         creditOverride
       ).value
-      const goalMinutes = goalHours * 60
-      const crossedGoal =
-        beforeMinutes < goalMinutes && afterMinutes >= goalMinutes
+      const crossedGoal = didCrossMonthlyGoal({
+        beforeMinutes,
+        afterMinutes,
+        baseGoalHours: publisherHours[role],
+        monthlyGoalOverrides,
+        target: goalTarget,
+      })
       if (crossedGoal) {
         useCelebrationQueue.getState().queue(reportMonth, reportYear)
       }

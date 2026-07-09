@@ -1,4 +1,5 @@
-import { Pressable, TextInput as RNTextInput, View } from 'react-native'
+import { Alert, Pressable, TextInput as RNTextInput, View } from 'react-native'
+import moment from 'moment'
 import useTheme from '@/contexts/theme'
 import Text from '@/components/ui/MyText'
 import i18n from '@/lib/locales'
@@ -8,6 +9,7 @@ import Select, { SelectData } from '@/components/ui/Select'
 import TextInput from '@/components/ui/TextInput'
 import { Publisher } from '@/types/publisher'
 import { useRef, useState } from 'react'
+import { monthlyGoalKey } from '@/lib/monthlyGoals'
 
 const PublisherTypeSelector = () => {
   const theme = useTheme()
@@ -38,15 +40,59 @@ const PublisherTypeSelector = () => {
     },
   ]
 
-  const { publisherHours, role, setRole, set } = usePreferences()
+  const { publisherHours, role, monthlyGoalOverrides, setRole, set } =
+    usePreferences()
   const [goalHours, setGoalHours] = useState(publisherHours.custom.toString())
   const customHoursInput = useRef<RNTextInput>(null)
+
+  const handleRoleChange = (nextRole: Publisher) => {
+    if (nextRole === role) return
+
+    const now = moment()
+    const currentMonthKey = monthlyGoalKey({
+      year: now.year(),
+      month: now.month(),
+    })
+    const futureOverrideKeys = Object.keys(monthlyGoalOverrides).filter(
+      (key) => key >= currentMonthKey
+    )
+
+    if (futureOverrideKeys.length === 0) {
+      setRole(nextRole)
+      return
+    }
+
+    Alert.alert(
+      i18n.t('monthGoalEditor.roleChangeTitle'),
+      i18n.t('monthGoalEditor.roleChangeDescription'),
+      [
+        { text: i18n.t('cancel'), style: 'cancel' },
+        {
+          text: i18n.t('monthGoalEditor.keepGoals'),
+          onPress: () => setRole(nextRole),
+        },
+        {
+          text: i18n.t('monthGoalEditor.resetFutureGoals'),
+          style: 'destructive',
+          onPress: () => {
+            const pastOverrides = Object.fromEntries(
+              Object.entries(monthlyGoalOverrides).filter(
+                ([key]) => key < currentMonthKey
+              )
+            )
+            set({ monthlyGoalOverrides: pastOverrides })
+            setRole(nextRole)
+          },
+        },
+      ]
+    )
+  }
 
   return (
     <View>
       <Select
         data={items}
-        onChange={({ value }) => setRole(value)}
+        onChange={({ value }) => handleRoleChange(value)}
         value={role}
         style={{ marginBottom: 10 }}
       />
@@ -106,6 +152,17 @@ const PublisherTypeSelector = () => {
               })}
         </Text>
       )}
+      {role !== publishers[0] ? (
+        <Text
+          style={{
+            marginTop: 6,
+            fontSize: 12,
+            color: theme.colors.textAlt,
+          }}
+        >
+          {i18n.t('defaultMonthlyGoal_description')}
+        </Text>
+      ) : null}
     </View>
   )
 }

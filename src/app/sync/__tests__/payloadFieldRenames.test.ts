@@ -158,6 +158,50 @@ describe('normalizeLegacyPayloadFieldNames', () => {
     expect(d.preferencesStore.updatedAt.tenureStartDate).toBe(2)
     expect(d.preferencesStore.updatedAt).not.toHaveProperty('pioneerStartDate')
   })
+
+  it('converts legacy one-off goal Dates to the canonical Monthly Goal map', () => {
+    const d = makePayload(
+      {
+        oneOffGoalHours: [
+          { month: '2026-11-01T00:00:00.000Z', hours: 55 },
+          { month: '2026-11-25T00:00:00.000Z', hours: 60.5 },
+          { month: '2026-12-01T00:00:00.000Z', hours: -1 },
+          { month: 'invalid', hours: 70 },
+        ],
+      },
+      { oneOffGoalHours: 1700000010000 }
+    )
+
+    normalizeLegacyPayloadFieldNames(d)
+
+    expect(d.preferencesStore.values.monthlyGoalOverrides).toEqual({
+      '2026-11': 60.5,
+    })
+    expect(d.preferencesStore.values).not.toHaveProperty('oneOffGoalHours')
+    expect(d.preferencesStore.updatedAt.monthlyGoalOverrides).toBe(
+      1700000010000
+    )
+    expect(d.preferencesStore.updatedAt).not.toHaveProperty('oneOffGoalHours')
+  })
+
+  it('prefers canonical Monthly Goal overrides when a payload carries both shapes', () => {
+    const d = makePayload(
+      {
+        oneOffGoalHours: [{ month: '2026-11-01T00:00:00.000Z', hours: 60 }],
+        monthlyGoalOverrides: { '2026-11': 70 },
+      },
+      { oneOffGoalHours: 1, monthlyGoalOverrides: 2 }
+    )
+
+    normalizeLegacyPayloadFieldNames(d)
+
+    expect(d.preferencesStore.values.monthlyGoalOverrides).toEqual({
+      '2026-11': 70,
+    })
+    expect(d.preferencesStore.values).not.toHaveProperty('oneOffGoalHours')
+    expect(d.preferencesStore.updatedAt.monthlyGoalOverrides).toBe(2)
+    expect(d.preferencesStore.updatedAt).not.toHaveProperty('oneOffGoalHours')
+  })
 })
 
 describe('normalizeLegacyPayloadFieldNames — profile-field routing (wave-3)', () => {

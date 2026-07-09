@@ -20,6 +20,10 @@ import {
   TimeEntriesByYear,
 } from '@/types/timeEntry'
 import { Visit } from '@/types/visit'
+import {
+  resolveMonthlyGoalHours,
+  type MonthlyGoalOverrides,
+} from '@/lib/monthlyGoals'
 
 export type ReportMode = 'hours' | 'checkbox'
 
@@ -78,6 +82,7 @@ export type BuildReportArgs = {
   serviceReports: TimeEntriesByYear
   publisher: Publisher
   publisherHours: PublisherHours
+  monthlyGoalOverrides: MonthlyGoalOverrides
   overrideCreditLimit: boolean
   customCreditLimitHours: number
   timeDisplayFormat: MinuteDisplayFormat
@@ -186,7 +191,11 @@ export function buildReport(args: BuildReportArgs): ReportFields {
     }
   )
 
-  const goalHours = args.publisherHours[args.publisher]
+  const goalHours = resolveMonthlyGoalHours(
+    args.publisherHours[args.publisher],
+    args.monthlyGoalOverrides,
+    { month, year }
+  )
   const goalMinutes = goalHours * 60
   const progress = goalProgress({
     minutes: adjusted.value,

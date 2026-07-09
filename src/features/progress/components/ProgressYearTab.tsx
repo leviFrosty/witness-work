@@ -24,6 +24,7 @@ import Text from '@/components/ui/MyText'
 import LucideIcon from '@/components/ui/LucideIcon'
 import XView from '@/components/ui/layout/XView'
 import { useCardStyle } from '@/components/ui/Card'
+import useMonthlyGoal from '@/hooks/useMonthlyGoal'
 
 interface ProgressYearTabProps {
   /** End year of the service year (Sep 1 of `year - 1` → Aug 31 of `year`). */
@@ -79,13 +80,15 @@ const MonthRow = ({
 }) => {
   const theme = useTheme()
   const cardStyle = useCardStyle()
-  const { role, publisherHours, overrideCreditLimit, customCreditLimitHours } =
-    usePreferences()
+  const { role, overrideCreditLimit, customCreditLimitHours } = usePreferences()
   const serviceReports = useServiceReport((s) => s.serviceReports)
   const dayPlans = useServiceReport((s) => s.dayPlans)
   const recurringPlans = useServiceReport((s) => s.recurringPlans)
 
-  const goalHours = publisherHours[role]
+  const { effectiveGoalHours: goalHours, isOverridden } = useMonthlyGoal({
+    month,
+    year,
+  })
 
   const monthsReports = useMemo(
     () => getMonthsReports(serviceReports, month, year),
@@ -123,6 +126,7 @@ const MonthRow = ({
   const completedDisplay = useFormattedMinutes(completedMinutes)
   const plannedDisplay = useFormattedMinutes(plannedMinutes)
   const goalMinutes = Math.round(goalHours * 60)
+  const goalDisplay = useFormattedMinutes(goalMinutes)
   const deltaMinutes = completedMinutes - goalMinutes
   const deltaDisplay = useFormattedMinutes(Math.abs(deltaMinutes))
 
@@ -160,19 +164,44 @@ const MonthRow = ({
       })}
     >
       <XView style={{ justifyContent: 'space-between', gap: 12 }}>
-        <XView style={{ gap: 8, flexShrink: 1 }}>
-          <Text
-            style={{
-              fontFamily: theme.fonts.semiBold,
-              fontSize: theme.fontSize('md'),
-              color: theme.colors.text,
-              minWidth: 44,
-            }}
-          >
-            {monthYearLabel}
-          </Text>
-          {isCurrent ? <CurrentMonthIcon /> : null}
-        </XView>
+        <View style={{ gap: 4, flexShrink: 1 }}>
+          <XView style={{ gap: 8 }}>
+            <Text
+              style={{
+                fontFamily: theme.fonts.semiBold,
+                fontSize: theme.fontSize('md'),
+                color: theme.colors.text,
+                minWidth: 44,
+              }}
+            >
+              {monthYearLabel}
+            </Text>
+            {isCurrent ? <CurrentMonthIcon /> : null}
+          </XView>
+          {isOverridden ? (
+            <View
+              style={{
+                alignSelf: 'flex-start',
+                paddingHorizontal: 6,
+                paddingVertical: 2,
+                borderRadius: theme.numbers.borderRadiusSm,
+                backgroundColor: theme.colors.accentTranslucent,
+              }}
+            >
+              <Text
+                style={{
+                  color: theme.colors.accent,
+                  fontFamily: theme.fonts.semiBold,
+                  fontSize: theme.fontSize('xs'),
+                }}
+              >
+                {i18n.t('monthGoalEditor.goalBadge', {
+                  goal: goalDisplay.formatted,
+                })}
+              </Text>
+            </View>
+          ) : null}
+        </View>
         <XView style={{ gap: 12 }}>
           <Text
             style={{
@@ -238,10 +267,7 @@ const ProgressYearTab = ({
     return list
   }, [year])
 
-  const { hasAnnualGoal } = usePublisher()
-
-  const { role, publisherHours } = usePreferences()
-  const monthlyGoalHours = publisherHours[role]
+  const { hasAnnualGoal, monthlyGoalHours } = usePublisher()
   const showDeltaColumn = monthlyGoalHours > 0
 
   // Stable reference so ProjectedTotalCard's memoized derivations don't

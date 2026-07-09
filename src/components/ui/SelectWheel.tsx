@@ -2,11 +2,11 @@ import { ChevronDown as ChevronDownIcon } from 'lucide-react-native'
 import LucideIcon from '@/components/ui/LucideIcon'
 import { useEffect, useRef, useState } from 'react'
 import { Modal, Pressable, View } from 'react-native'
-import { Picker } from '@react-native-picker/picker'
 import { Sheet } from 'tamagui'
 import useTheme from '@/contexts/theme'
 import Text from '@/components/ui/MyText'
 import { SelectDataItem, SelectProps } from '@/components/ui/Select'
+import WheelPicker from '@/components/ui/WheelPicker'
 import i18n from '@/lib/locales'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
@@ -42,17 +42,8 @@ const SelectWheel = <T,>({
     (i) => String(i.value) === stringValue
   )?.label
 
-  // Keep the authoritative state LOCAL to SelectWheel while the sheet is
-  // open. This matters because the native event handler in PickerIOS.ios.js
-  // calls two setStates back-to-back: ours (for the controlled value) and
-  // its own internal `setNativeSelectedIndex`. If those two live in
-  // different component subtrees (e.g. parent state + library state), React
-  // commits them in separate passes — and between those passes the library
-  // re-runs its reconciliation effect with a stale `selectedValue`, sees
-  // disagreement, and shoves the native wheel back to the old value before
-  // the fresh prop arrives. Keeping both setStates in the same subtree lets
-  // React batch them into one commit, so they update together and the
-  // reconciler never sees a stale state.
+  // Keep changes local until Done so opening, canceling, and committing retain
+  // the same behavior as the previous native picker.
   const [draftValue, setDraftValue] = useState<string | undefined>(stringValue)
   const draftRef = useRef(draftValue)
   draftRef.current = draftValue
@@ -170,31 +161,16 @@ const SelectWheel = <T,>({
                 </Text>
               </Pressable>
             </View>
-            {/* Only mount the native UIPickerView while the sheet is open.
-                During the dismiss animation the Modal stays mounted (see the
-                300ms unmount delay above), but the native UIPickerView tears
-                down its backing UITableView cells. A touch landing on the
-                picker in that window hit-tests freed cells and crashes with
-                EXC_BAD_ACCESS in -[UIPickerView hitTest:withEvent:]
-                (Sentry JW-TIME-BK). Unmounting on close removes it from the
-                hit-test hierarchy before teardown. */}
-            {open && (
-              <Picker
-                style={{ height: 216 }}
-                selectedValue={draftValue}
-                onValueChange={(next) => setDraftValue(String(next))}
-                itemStyle={{ color: theme.colors.text }}
-              >
-                {items.map((item) => (
-                  <Picker.Item
-                    key={String(item.value)}
-                    label={item.label}
-                    value={String(item.value)}
-                    color={theme.colors.text}
-                  />
-                ))}
-              </Picker>
-            )}
+            {open && draftValue !== undefined ? (
+              <WheelPicker
+                data={items.map((item) => ({
+                  label: item.label,
+                  value: String(item.value),
+                }))}
+                value={draftValue}
+                onValueChange={setDraftValue}
+              />
+            ) : null}
           </Sheet.Frame>
         </Sheet>
       </Modal>

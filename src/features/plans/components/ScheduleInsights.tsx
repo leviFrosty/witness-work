@@ -251,7 +251,7 @@ const ScheduleInsightOverlay = ({
                 ) : (
                   <CircularProgress
                     progress={goalProgress}
-                    size={38}
+                    size={32}
                     strokeWidth={4}
                     color={theme.colors.textAlt}
                     trackColor={theme.colors.border}
@@ -577,8 +577,8 @@ const ScheduleInsights = ({
                   {card.kind === 'goal' ? (
                     <CircularProgress
                       progress={goalProgress}
-                      size={30}
-                      strokeWidth={3.5}
+                      size={24}
+                      strokeWidth={4}
                       color={theme.colors.textAlt}
                       trackColor={theme.colors.border}
                     />

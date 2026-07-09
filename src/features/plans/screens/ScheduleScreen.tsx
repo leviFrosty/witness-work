@@ -1,6 +1,10 @@
 import {
   ArrowLeft as ArrowLeftIcon,
   ArrowRight as ArrowRightIcon,
+  CalendarClock as CalendarClockIcon,
+  CircleCheck as CircleCheckIcon,
+  TrendingDown as TrendingDownIcon,
+  TrendingUp as TrendingUpIcon,
 } from 'lucide-react-native'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { View } from 'react-native'
@@ -22,11 +26,14 @@ import {
   getEffectiveStartTimeInMinutesForRecurringPlan,
   RecurringPlan,
 } from '@/lib/recurrence'
-import { getServiceYearFromDate } from '@/lib/serviceYear'
 import { getPeriodTense } from '@/lib/projectedTotalCopy'
 import usePublisher from '@/hooks/usePublisher'
 import useProjectedTotal from '@/hooks/useProjectedTotal'
 import { useFormattedMinutes } from '@/lib/minutes'
+import {
+  getScheduleStatusForMonth,
+  type ScheduleStatusState,
+} from '@/lib/scheduleStatus'
 import { getStartTimeInMinutes } from '@/lib/normalizeDate'
 import { RootStackNavigation } from '@/types/rootStack'
 import { HomeTabStackParamList } from '@/types/homeStack'
@@ -44,12 +51,13 @@ import Card from '@/components/ui/Card'
 import Button from '@/components/ui/Button'
 import ActionButton from '@/components/ui/ActionButton'
 import IconButton from '@/components/ui/IconButton'
+import LucideIcon from '@/components/ui/LucideIcon'
 import Text from '@/components/ui/MyText'
 import XView from '@/components/ui/layout/XView'
 import SimpleProgressBar from '@/components/ui/SimpleProgressBar'
 import PlanRow from '@/components/PlanRow'
 import type { PlanListItem } from '@/components/PlanRow'
-import i18n from '@/lib/locales'
+import i18n, { type TranslationKey } from '@/lib/locales'
 
 type Props = BottomTabScreenProps<HomeTabStackParamList, 'Schedule'>
 
@@ -61,9 +69,6 @@ const ScheduleScreen = ({ route }: Props) => {
   const serviceReports = useServiceReport((s) => s.serviceReports)
   const dayPlans = useServiceReport((s) => s.dayPlans)
   const recurringPlans = useServiceReport((s) => s.recurringPlans)
-  const timeDisplayFormat = usePreferences((s) => s.timeDisplayFormat)
-  const usesVerboseDurations = timeDisplayFormat === 'short'
-
   const [year, setYear] = useState(route.params?.year ?? moment().year())
   const [month, setMonth] = useState(route.params?.month ?? moment().month())
   const [calendarViewMode, setCalendarViewMode] =
@@ -331,36 +336,7 @@ const ScheduleScreen = ({ route }: Props) => {
               </Text>
             </Button>
           )}
-          <Card style={{ gap: 10 }}>
-            <View style={{ gap: 4 }}>
-              <Text
-                style={{
-                  fontFamily: theme.fonts.bold,
-                  fontSize: theme.fontSize('xl'),
-                }}
-              >
-                {i18n.t('projectedHoursTitle')}
-              </Text>
-              <Text
-                style={{
-                  color: theme.colors.textAlt,
-                  fontSize: theme.fontSize('sm'),
-                }}
-              >
-                {i18n.t('projectedHoursDescription')}
-              </Text>
-            </View>
-            <View
-              style={{
-                flexDirection: usesVerboseDurations ? 'column' : 'row',
-                alignItems: 'stretch',
-                gap: usesVerboseDurations ? 12 : 10,
-              }}
-            >
-              <MonthScheduleSection month={month} year={year} />
-              <AnnualScheduleSection month={month} year={year} />
-            </View>
-          </Card>
+          <ScheduleStatusCard month={month} year={year} />
           <Card>
             <CalendarHeader
               viewMode={calendarViewMode}
@@ -462,118 +438,172 @@ const navButtonStyle = (theme: ReturnType<typeof useTheme>) => ({
   paddingVertical: 5,
 })
 
-const MonthScheduleSection = (props: { month: number; year: number }) => {
-  const theme = useTheme()
-  const { monthlyGoalHours: goalHours } = usePublisher()
-
-  const { projection: result } = useProjectedTotal(
-    { kind: 'month', month: props.month, year: props.year },
-    goalHours * 60
-  )
-
-  const projectedHours = result.projectedMinutes / 60
-  const percentProjected = goalHours > 0 ? projectedHours / goalHours : 0
-  const projectedDisplay = useFormattedMinutes(result.projectedMinutes)
-
-  return (
-    <View style={{ gap: 5, flex: 1, minWidth: 0 }}>
-      <XView
-        style={{
-          justifyContent: 'space-between',
-          alignItems: 'flex-start',
-          gap: 8,
-        }}
-      >
-        <Text
-          style={{
-            fontFamily: theme.fonts.semiBold,
-            flexShrink: 0,
-          }}
-        >
-          {i18n.t('month')}
-        </Text>
-        <Text
-          style={{
-            flex: 1,
-            flexShrink: 1,
-            fontFamily: theme.fonts.semiBold,
-            color: theme.colors.textAlt,
-            fontSize: theme.fontSize('xs'),
-            textAlign: 'right',
-          }}
-        >
-          {`${projectedDisplay.formatted} ${i18n.t(
-            'of'
-          )} ${goalHours} ${i18n.t('hours')}`}
-        </Text>
-      </XView>
-      <SimpleProgressBar
-        percentage={percentProjected}
-        color={theme.colors.accent}
-        animated={false}
-      />
-    </View>
-  )
+const STATUS_TITLE_KEYS: Record<ScheduleStatusState, TranslationKey> = {
+  ahead: 'scheduleStatus.ahead',
+  behind: 'scheduleStatus.behind',
+  onTrack: 'scheduleStatus.onTrack',
+  noPlan: 'scheduleStatus.noPlan',
+  notStarted: 'scheduleStatus.upcoming',
 }
 
-const AnnualScheduleSection = (props: { month: number; year: number }) => {
+const ScheduleStatusCard = (props: { month: number; year: number }) => {
   const { month, year } = props
   const theme = useTheme()
-  const { annualGoalHours, hasAnnualGoal } = usePublisher()
-  const serviceYear = getServiceYearFromDate(moment().month(month).year(year))
+  const serviceReports = useServiceReport((s) => s.serviceReports)
+  const dayPlans = useServiceReport((s) => s.dayPlans)
+  const recurringPlans = useServiceReport((s) => s.recurringPlans)
+  const { role, overrideCreditLimit, customCreditLimitHours } = usePreferences()
 
-  const { projection: result } = useProjectedTotal(
-    { kind: 'serviceYear', serviceYear },
-    annualGoalHours * 60
+  const status = getScheduleStatusForMonth({
+    month,
+    year,
+    serviceReports,
+    dayPlans,
+    recurringPlans,
+    publisher: role,
+    creditLimit: {
+      enabled: overrideCreditLimit,
+      customLimitHours: customCreditLimitHours,
+    },
+  })
+
+  const actualDisplay = useFormattedMinutes(status.actualMinutes)
+  const plannedDisplay = useFormattedMinutes(status.plannedMinutes)
+  const differenceDisplay = useFormattedMinutes(
+    Math.abs(status.differenceMinutes)
   )
 
-  const projectedHours = result.projectedMinutes / 60
-  const percentProjected =
-    annualGoalHours > 0 ? projectedHours / annualGoalHours : 0
-  const projectedDisplay = useFormattedMinutes(result.projectedMinutes)
-
-  if (!hasAnnualGoal) {
-    return null
-  }
+  const statusColor = (() => {
+    switch (status.state) {
+      case 'ahead':
+      case 'onTrack':
+        return theme.colors.accent
+      case 'behind':
+        return theme.colors.warn
+      default:
+        return theme.colors.textAlt
+    }
+  })()
+  const iconBackground = (() => {
+    switch (status.state) {
+      case 'ahead':
+      case 'onTrack':
+        return theme.colors.accentTranslucent
+      case 'behind':
+        return theme.colors.warnTranslucent
+      default:
+        return theme.colors.backgroundLighter
+    }
+  })()
+  const StatusIcon = (() => {
+    switch (status.state) {
+      case 'ahead':
+        return TrendingUpIcon
+      case 'behind':
+        return TrendingDownIcon
+      case 'onTrack':
+        return CircleCheckIcon
+      default:
+        return CalendarClockIcon
+    }
+  })()
+  const statusMeta = (() => {
+    switch (status.state) {
+      case 'ahead':
+        return `+${differenceDisplay.formatted}`
+      case 'behind':
+        return `-${differenceDisplay.formatted}`
+      case 'onTrack':
+        return i18n.t('scheduleStatus.matched')
+      case 'noPlan':
+        return i18n.t('scheduleStatus.noPlannedTime')
+      case 'notStarted':
+        return i18n.t('scheduleStatus.notStarted')
+    }
+  })()
+  const progress =
+    status.plannedMinutes > 0
+      ? Math.max(0, status.actualMinutes / status.plannedMinutes)
+      : status.actualMinutes > 0
+        ? 1
+        : 0
 
   return (
-    <View style={{ gap: 5, flex: 1, minWidth: 0 }}>
-      <XView
-        style={{
-          justifyContent: 'space-between',
-          alignItems: 'flex-start',
-          gap: 8,
-        }}
-      >
-        <Text
+    <Card style={{ gap: 12 }}>
+      <XView style={{ alignItems: 'center', gap: 12 }}>
+        <View
           style={{
-            fontFamily: theme.fonts.semiBold,
-            flexShrink: 0,
+            width: 44,
+            height: 44,
+            borderRadius: 22,
+            alignItems: 'center',
+            justifyContent: 'center',
+            backgroundColor: iconBackground,
           }}
         >
-          {i18n.t('year')}
-        </Text>
-        <Text
-          style={{
-            flex: 1,
-            flexShrink: 1,
-            fontFamily: theme.fonts.semiBold,
-            color: theme.colors.textAlt,
-            fontSize: theme.fontSize('xs'),
-            textAlign: 'right',
-          }}
-        >
-          {`${projectedDisplay.formatted} ${i18n.t(
-            'of'
-          )} ${annualGoalHours} ${i18n.t('hours')}`}
-        </Text>
+          <LucideIcon icon={StatusIcon} color={statusColor} size={22} />
+        </View>
+        <View style={{ flex: 1, gap: 2 }}>
+          <Text
+            style={{
+              fontFamily: theme.fonts.bold,
+              fontSize: theme.fontSize('xl'),
+              color: statusColor,
+            }}
+          >
+            {i18n.t(STATUS_TITLE_KEYS[status.state])}
+          </Text>
+          <Text
+            style={{
+              color: theme.colors.textAlt,
+              fontFamily: theme.fonts.semiBold,
+            }}
+          >
+            {statusMeta}
+          </Text>
+        </View>
       </XView>
+
       <SimpleProgressBar
-        percentage={percentProjected}
-        color={theme.colors.accent}
+        percentage={progress}
+        color={statusColor}
+        height={10}
         animated={false}
       />
-    </View>
+
+      <XView style={{ justifyContent: 'space-between', gap: 12 }}>
+        <View style={{ flex: 1, gap: 2 }}>
+          <Text
+            style={{
+              color: theme.colors.textAlt,
+              fontSize: theme.fontSize('xs'),
+              textTransform: 'uppercase',
+              letterSpacing: 0.5,
+            }}
+          >
+            {i18n.t('actual')}
+          </Text>
+          <Text style={{ fontFamily: theme.fonts.semiBold }}>
+            {actualDisplay.formatted}
+          </Text>
+        </View>
+        <View style={{ flex: 1, gap: 2, alignItems: 'flex-end' }}>
+          <Text
+            style={{
+              color: theme.colors.textAlt,
+              fontSize: theme.fontSize('xs'),
+              textTransform: 'uppercase',
+              letterSpacing: 0.5,
+            }}
+          >
+            {i18n.t('planned')}
+          </Text>
+          <Text style={{ fontFamily: theme.fonts.semiBold }}>
+            {plannedDisplay.formatted}
+          </Text>
+        </View>
+      </XView>
+    </Card>
   )
 }
 

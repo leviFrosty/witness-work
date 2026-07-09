@@ -265,23 +265,20 @@ export const resolveDayPlanWinner = (
   return { source: 'recurring', plan: winner, minutes, isCredit }
 }
 
-export const plannedMinutesToCurrentDayForMonth = (
+export const plannedMinutesThroughDayForMonth = (
   month: number,
   year: number,
+  throughDay: number,
   dayPlans: DayPlan[],
   recurringPlans: RecurringPlan[]
 ) => {
-  const selectedMonth = moment().month(month).year(year)
-
-  const dayOfMonth = selectedMonth.isBefore(moment(), 'month')
-    ? selectedMonth.daysInMonth()
-    : moment().date()
+  const selectedMonth = moment({ year, month, date: 1 }).startOf('month')
+  const dayOfMonth = Math.max(
+    0,
+    Math.min(throughDay, selectedMonth.daysInMonth())
+  )
 
   let count = 0
-
-  if (selectedMonth.isAfter(moment(), 'month')) {
-    return 0
-  }
 
   Array(dayOfMonth)
     .fill(1)
@@ -303,6 +300,32 @@ export const plannedMinutesToCurrentDayForMonth = (
     })
 
   return count
+}
+
+export const plannedMinutesToCurrentDayForMonth = (
+  month: number,
+  year: number,
+  dayPlans: DayPlan[],
+  recurringPlans: RecurringPlan[]
+) => {
+  const currentDay = moment()
+  const selectedMonth = moment({ year, month, date: 1 }).startOf('month')
+
+  if (selectedMonth.isAfter(currentDay, 'month')) {
+    return 0
+  }
+
+  const dayOfMonth = selectedMonth.isBefore(currentDay, 'month')
+    ? selectedMonth.daysInMonth()
+    : currentDay.date()
+
+  return plannedMinutesThroughDayForMonth(
+    month,
+    year,
+    dayOfMonth,
+    dayPlans,
+    recurringPlans
+  )
 }
 
 /**

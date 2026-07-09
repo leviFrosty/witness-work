@@ -856,7 +856,12 @@
       "c1": "New: Meet Scribe AI. Paste your field-ministry notes — a handwritten-style log or an export from another app — and Scribe AI turns them into contacts, visits, and time entries for you to review before anything is saved. No more manual re-entry, and you can start an import right from onboarding.",
       "c2": "Your Supporter status now restores more reliably across sign-ins and devices.",
       "c3": "Resolved a rare crash that could occur when closing a picker.",
-      "c4": "Improved reliability when the app hits a temporary storage or location hiccup, so your contacts and edits save dependably even on a flaky connection."
+      "c4": "Improved reliability when the app hits a temporary storage or location hiccup, so your contacts and edits save dependably even on a flaky connection.",
+      "c5": "Hourglass and NW Publisher export are back, so submitting your Service Report through your congregation's app is just a tap away again.",
+      "c6": "Choose your default Service Report submission method once, then WitnessWork can remind you at month-end and open your preferred option automatically.",
+      "c7": "Plans are simpler to manage, with cleaner lists, faster editing, and clear choices for changing one recurring date, future dates, or the whole plan.",
+      "c8": "Schedule now shows each day's status at a glance, including ahead, behind, on track, upcoming, matched, or no plan.",
+      "c9": "Time rollover now keeps Credit Time in its original month by default, with a preference if you want Credit Time included in rollover."
     }
   },
   "installed": "Installed",

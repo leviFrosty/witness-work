@@ -1,11 +1,13 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo } from 'react'
+import { View } from 'react-native'
+import { BookOpenCheck as StudyIcon } from 'lucide-react-native'
+import LucideIcon from '@/components/ui/LucideIcon'
+import Text from '@/components/ui/MyText'
 import useTheme from '@/contexts/theme'
+import { getStudiesForGivenMonth } from '@/lib/contacts'
 import useContacts from '@/stores/contactsStore'
 import useConversations from '@/stores/conversationStore'
-import { getStudiesForGivenMonth } from '@/lib/contacts'
 import i18n from '@/lib/locales'
-import { View } from 'react-native'
-import Text from '@/components/ui/MyText'
 
 export default function StudiesCard() {
   const theme = useTheme()
@@ -16,88 +18,46 @@ export default function StudiesCard() {
       getStudiesForGivenMonth({ contacts, conversations, month: new Date() }),
     [contacts, conversations]
   )
-  const encouragementStudiesPhrase = (studies: number) => {
-    let phrases: string[] = []
 
-    if (studies === 0) {
-      phrases = [
-        i18n.t('phrasesStudiesNone.keepGoing'),
-        i18n.t('phrasesStudiesNone.stayStrong'),
-        i18n.t('phrasesStudiesNone.stayPositive'),
-        i18n.t('phrasesStudiesNone.grindOn'),
-        i18n.t('phrasesStudiesNone.keepSearching'),
-        i18n.t('phrasesStudiesNone.stayResilient'),
-      ]
-    }
-    if (studies > 0 && studies <= 15) {
-      phrases = [
-        i18n.t('phrasesStudiesDone.bravo'),
-        i18n.t('phrasesStudiesDone.wellDone'),
-        i18n.t('phrasesStudiesDone.amazingJob'),
-        i18n.t('phrasesStudiesDone.wayToGo'),
-        i18n.t('phrasesStudiesDone.victoryLap'),
-        i18n.t('phrasesStudiesDone.fantastic'),
-        i18n.t('phrasesStudiesDone.wow'),
-      ]
-    }
-    if (studies > 15) {
-      phrases = ['🤩🤯🎉']
-    }
-
-    const random = Math.floor(Math.random() * phrases.length)
-    return phrases[random]
-  }
-  const [encouragementPhrase, setEncouragementPhrase] = useState(
-    encouragementStudiesPhrase(studies)
-  )
-
-  useEffect(() => {
-    setEncouragementPhrase(encouragementStudiesPhrase(studies))
-  }, [studies])
   return (
     <View
       style={{
-        flexDirection: 'column',
-        paddingHorizontal: 6,
-        paddingVertical: 10,
-        backgroundColor: theme.colors.backgroundLighter,
-        borderRadius: theme.numbers.borderRadiusSm,
-        flexGrow: 1,
+        flex: 1,
+        minHeight: 92,
+        justifyContent: 'center',
+        alignItems: 'flex-start',
+        gap: 8,
+        paddingVertical: 4,
       }}
     >
       <View
         style={{
-          gap: 10,
-          justifyContent: 'center',
+          width: 32,
+          height: 32,
+          borderRadius: 16,
           alignItems: 'center',
-          flexGrow: 1,
+          justifyContent: 'center',
+          backgroundColor: theme.colors.accentTranslucent,
         }}
       >
-        <Text
-          style={{
-            fontSize: theme.fontSize('4xl'),
-            fontFamily: theme.fonts.bold,
-          }}
-        >
-          {studies}
-        </Text>
-        <Text
-          style={{
-            fontFamily: theme.fonts.bold,
-            maxWidth: 125,
-          }}
-        >
-          {encouragementPhrase}
-        </Text>
+        <LucideIcon icon={StudyIcon} size={17} color={theme.colors.accent} />
       </View>
       <Text
         style={{
-          fontSize: 8,
-          color: theme.colors.textAlt,
-          textAlign: 'center',
+          fontSize: theme.fontSize('2xl'),
+          fontFamily: theme.fonts.bold,
         }}
       >
-        {i18n.t('basedOnContacts')}
+        {studies}
+      </Text>
+      <Text
+        style={{
+          color: theme.colors.textAlt,
+          fontFamily: theme.fonts.semiBold,
+          fontSize: theme.fontSize('sm'),
+        }}
+      >
+        {i18n.t('studies')}
       </Text>
     </View>
   )

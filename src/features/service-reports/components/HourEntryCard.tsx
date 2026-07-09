@@ -1,316 +1,87 @@
+import { useMemo } from 'react'
+import { View } from 'react-native'
+import moment from 'moment'
+import { Clock3 as ClockIcon } from 'lucide-react-native'
+import LucideIcon from '@/components/ui/LucideIcon'
+import Text from '@/components/ui/MyText'
 import useTheme from '@/contexts/theme'
-import { useNavigation } from '@react-navigation/native'
-import MonthServiceReportProgressBar from '@/features/service-reports/components/MonthServiceReportProgressBar'
-import { usePreferences } from '@/stores/preferences'
-import useServiceReport from '@/stores/serviceReport'
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import usePublisher from '@/hooks/usePublisher'
+import { useFormattedMinutes } from '@/lib/minutes'
 import {
   adjustedMinutesForSpecificMonth,
-  getDaysLeftInCurrentMonth,
   getMonthsReports,
 } from '@/lib/serviceReport'
-import { goalProgress } from '@/lib/goalProgress'
-import moment from 'moment'
 import i18n from '@/lib/locales'
-import Button from '@/components/ui/Button'
-import { View } from 'react-native'
-import Text from '@/components/ui/MyText'
-import { formatMinutes } from '@/lib/minutes'
-import { RootStackNavigation } from '@/types/rootStack'
-import { HomeTabStackNavigation } from '@/types/homeStack'
-import useMonthlyGoal from '@/hooks/useMonthlyGoal'
+import { usePreferences } from '@/stores/preferences'
+import useServiceReport from '@/stores/serviceReport'
 
 export default function HourEntryCard() {
   const theme = useTheme()
-  const {
-    role,
-    displayDetailsOnProgressBarHomeScreen,
-    timeDisplayFormat,
-    overrideCreditLimit,
-    customCreditLimitHours,
-  } = usePreferences()
+  const { type: publisher } = usePublisher()
+  const { overrideCreditLimit, customCreditLimitHours } = usePreferences()
   const { serviceReports } = useServiceReport()
-  const navigation = useNavigation<
-    HomeTabStackNavigation & RootStackNavigation
-  >()
   const now = moment()
-  const { effectiveGoalHours: goalHours, isOverridden } = useMonthlyGoal({
-    month: now.month(),
-    year: now.year(),
-  })
-  const monthReports = useMemo(
-    () => getMonthsReports(serviceReports, moment().month(), moment().year()),
-    [serviceReports]
-  )
 
+  const monthReports = useMemo(
+    () => getMonthsReports(serviceReports, now.month(), now.year()),
+    [now, serviceReports]
+  )
   const adjustedMinutes = useMemo(
     () =>
       adjustedMinutesForSpecificMonth(
         monthReports,
-        moment().month(),
-        moment().year(),
-        role,
+        now.month(),
+        now.year(),
+        publisher,
         {
           enabled: overrideCreditLimit,
           customLimitHours: customCreditLimitHours,
         }
-      ),
-    [monthReports, role, overrideCreditLimit, customCreditLimitHours]
+      ).value,
+    [customCreditLimitHours, monthReports, now, overrideCreditLimit, publisher]
   )
-
-  const progress = useMemo(
-    () =>
-      goalProgress({
-        minutes: adjustedMinutes.value,
-        goalMinutes: goalHours * 60,
-      }).fraction,
-    [adjustedMinutes, goalHours]
-  )
-
-  const encouragementHourPhrase = useCallback((progress: number) => {
-    let phrases: string[] = []
-
-    if (progress < 0.6) {
-      phrases = [
-        i18n.t('phrasesFar.keepGoing'),
-        i18n.t('phrasesFar.youCanDoThis'),
-        i18n.t('phrasesFar.neverGiveUp'),
-        i18n.t('phrasesFar.preachTheWord'),
-        i18n.t('phrasesFar.stayFocused'),
-        i18n.t('phrasesFar.haveFaith'),
-        i18n.t('phrasesFar.stayStrong'),
-        i18n.t('phrasesFar.everyStepCounts'),
-        i18n.t('phrasesFar.youGotThis'),
-        i18n.t('phrasesFar.timeToShine'),
-        i18n.t('phrasesFar.makingProgress'),
-        i18n.t('phrasesFar.greatStart'),
-        i18n.t('phrasesFar.keepItUp'),
-        i18n.t('phrasesFar.momentumBuilding'),
-        i18n.t('phrasesFar.onYourWay'),
-        i18n.t('phrasesFar.smallStepsBigResults'),
-      ]
-    }
-
-    if (progress >= 0.6 && progress < 1) {
-      phrases = [
-        i18n.t('phrasesClose.oneStepCloser'),
-        i18n.t('phrasesClose.almostThere'),
-        i18n.t('phrasesClose.keepMovingForward'),
-        i18n.t('phrasesClose.successOnTheHorizon'),
-        i18n.t('phrasesClose.momentumIsYours'),
-        i18n.t('phrasesClose.nearingAchievement'),
-        i18n.t('phrasesClose.youreClosingIn'),
-        i18n.t('phrasesClose.closerThanEver'),
-        i18n.t('phrasesClose.homeStretch'),
-        i18n.t('phrasesClose.finishStrong'),
-        i18n.t('phrasesClose.soClose'),
-        i18n.t('phrasesClose.finalPush'),
-        i18n.t('phrasesClose.youreOnFire'),
-        i18n.t('phrasesClose.pushThroughToday'),
-        i18n.t('phrasesClose.goalInSight'),
-        i18n.t('phrasesClose.crushingIt'),
-        i18n.t('phrasesClose.unstoppable'),
-        i18n.t('phrasesClose.powerThrough'),
-      ]
-    }
-
-    if (progress >= 1) {
-      phrases = [
-        i18n.t('phrasesDone.youDidIt'),
-        i18n.t('phrasesDone.goalAchieved'),
-        i18n.t('phrasesDone.youNailedIt'),
-        i18n.t('phrasesDone.congratulations'),
-        i18n.t('phrasesDone.takeYourShoesOff'),
-        i18n.t('phrasesDone.hatsOffToYou'),
-        i18n.t('phrasesDone.missionComplete'),
-        i18n.t('phrasesDone.success'),
-        i18n.t('phrasesDone.phenomenal'),
-        i18n.t('phrasesDone.excellent'),
-        i18n.t('phrasesDone.outstanding'),
-        i18n.t('phrasesDone.incredible'),
-        i18n.t('phrasesDone.amazingWork'),
-        i18n.t('phrasesDone.goalCrushed'),
-        i18n.t('phrasesDone.victorious'),
-        i18n.t('phrasesDone.fantastic'),
-        i18n.t('phrasesDone.wellDone'),
-        i18n.t('phrasesDone.superb'),
-        i18n.t('phrasesDone.keepGoingStrong'),
-        i18n.t('phrasesDone.onARoll'),
-      ]
-    }
-
-    const random = Math.floor(Math.random() * phrases.length)
-    return phrases[random]
-  }, [])
-
-  const [encouragementPhrase, setEncouragementPhrase] = useState(
-    encouragementHourPhrase(progress)
-  )
-
-  useEffect(() => {
-    setEncouragementPhrase(encouragementHourPhrase(progress))
-  }, [encouragementHourPhrase, progress])
-
-  const minutesRemaining = useMemo(
-    () =>
-      goalProgress({
-        minutes: adjustedMinutes.value,
-        goalMinutes: goalHours * 60,
-      }).remaining,
-    [adjustedMinutes, goalHours]
-  )
-
-  const daysLeftInMonth = useMemo(() => getDaysLeftInCurrentMonth(), [])
-
-  // Returns minutes remaining if the last day of the month because x/0 = infinity.
-  // Which we don't want to display to the user
-  const minutesPerDayNeeded = useMemo(
-    () =>
-      daysLeftInMonth === 0
-        ? minutesRemaining
-        : Math.round(minutesRemaining / daysLeftInMonth),
-    [daysLeftInMonth, minutesRemaining]
-  )
-  const perDayDisplay = formatMinutes(
-    minutesPerDayNeeded,
-    timeDisplayFormat
-  ).formatted
-
-  const minutesWithFormat = formatMinutes(
-    adjustedMinutes.value,
-    timeDisplayFormat
-  )
+  const time = useFormattedMinutes(adjustedMinutes)
 
   return (
-    <View style={{ width: '100%' }}>
-      <Button
+    <View
+      style={{
+        flex: 1,
+        minHeight: 92,
+        justifyContent: 'center',
+        alignItems: 'flex-start',
+        gap: 8,
+        paddingVertical: 4,
+      }}
+    >
+      <View
         style={{
-          flexDirection: 'column',
-          borderRadius: theme.numbers.borderRadiusSm,
-          backgroundColor: theme.colors.backgroundLighter,
-          gap: 5,
-          paddingTop: 5,
-          position: 'relative',
-        }}
-        onPress={() =>
-          navigation.navigate('Progress', {
-            month: moment().month(),
-            year: moment().year(),
-          })
-        }
-      >
-        <View style={{ paddingHorizontal: 5, gap: 7 }}>
-          <MonthServiceReportProgressBar
-            month={moment().month()}
-            year={moment().year()}
-            minimal={!displayDetailsOnProgressBarHomeScreen}
-            style={{ paddingHorizontal: 10, paddingVertical: 10 }}
-          />
-          <View
-            style={{
-              justifyContent: 'center',
-              alignItems: 'center',
-              flexDirection: 'column',
-              gap: 7,
-              paddingBottom: 10,
-            }}
-          >
-            <View>
-              <Text
-                style={{
-                  fontSize:
-                    timeDisplayFormat !== 'decimal'
-                      ? theme.fontSize('lg')
-                      : theme.fontSize('4xl'),
-                  fontFamily: theme.fonts.bold,
-                }}
-              >
-                {timeDisplayFormat === 'decimal'
-                  ? minutesWithFormat.decimalHours
-                  : minutesWithFormat.formatted}
-              </Text>
-              <View
-                style={{
-                  position: 'absolute',
-                  right: -25,
-                  bottom: 0,
-                }}
-              >
-                <Text
-                  style={{
-                    fontSize: 12,
-                    color: theme.colors.textAlt,
-                    fontFamily: theme.fonts.semiBold,
-                  }}
-                >
-                  /{goalHours}
-                </Text>
-              </View>
-            </View>
-
-            <Text style={{ fontFamily: theme.fonts.bold, maxWidth: 200 }}>
-              {encouragementPhrase}
-            </Text>
-            {minutesPerDayNeeded > 0 ? (
-              <View style={{ gap: 5 }}>
-                <View
-                  style={{
-                    borderRadius: theme.numbers.borderRadiusLg,
-                    backgroundColor: theme.colors.accent3,
-                    paddingHorizontal: 20,
-                    marginHorizontal: 15,
-                    paddingVertical: 5,
-                  }}
-                >
-                  <Text
-                    style={{
-                      fontSize: theme.fontSize('xs'),
-                      color: theme.colors.textInverse,
-                      fontFamily: theme.fonts.semiBold,
-                      display: 'flex',
-                    }}
-                  >
-                    {perDayDisplay} {i18n.t('hoursPerDayToGoal')}
-                  </Text>
-                </View>
-                <Text
-                  style={{
-                    fontSize: 8,
-                    color: theme.colors.textAlt,
-                    textAlign: 'center',
-                  }}
-                >
-                  {i18n.t(
-                    isOverridden
-                      ? 'goalAdjustedForMonth'
-                      : 'goalBasedOnPublisherType'
-                  )}
-                </Text>
-              </View>
-            ) : null}
-          </View>
-        </View>
-      </Button>
-      <Button
-        onPress={() => navigation.navigate('Add Time')}
-        style={{
+          width: 32,
+          height: 32,
+          borderRadius: 16,
           alignItems: 'center',
+          justifyContent: 'center',
           backgroundColor: theme.colors.accentTranslucent,
-          paddingVertical: 10,
-          borderRadius: theme.numbers.borderRadiusSm,
-          borderWidth: 1,
-          borderColor: theme.colors.accent,
         }}
       >
-        <Text
-          style={{
-            color: theme.colors.accent,
-            fontFamily: theme.fonts.bold,
-          }}
-        >
-          {i18n.t('addTime')}
-        </Text>
-      </Button>
+        <LucideIcon icon={ClockIcon} size={17} color={theme.colors.accent} />
+      </View>
+      <Text
+        style={{
+          fontSize: theme.fontSize('2xl'),
+          fontFamily: theme.fonts.bold,
+        }}
+      >
+        {time.formatted}
+      </Text>
+      <Text
+        style={{
+          color: theme.colors.textAlt,
+          fontFamily: theme.fonts.semiBold,
+          fontSize: theme.fontSize('sm'),
+        }}
+      >
+        {i18n.t('hours')}
+      </Text>
     </View>
   )
 }

@@ -20,58 +20,6 @@ import useDevice from '@/hooks/useDevice'
 import IconButton from '@/components/ui/IconButton'
 import { useMemo } from 'react'
 
-const DetailedProgressBar = () => {
-  const { displayDetailsOnProgressBarHomeScreen, set } = usePreferences()
-  const { entryMode } = usePublisher()
-  const theme = useTheme()
-
-  if (entryMode === 'checkbox') return null
-
-  return (
-    <InputRowContainer
-      lastInSection
-      style={{
-        flexDirection: 'column',
-        gap: 10,
-        alignItems: 'flex-start',
-      }}
-    >
-      <View
-        style={{
-          width: '100%',
-          flexDirection: 'row',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-        }}
-      >
-        <Text
-          style={{
-            fontFamily: theme.fonts.semiBold,
-            flexDirection: 'column',
-            gap: 10,
-          }}
-        >
-          {i18n.t('detailedProgressBar')}
-        </Text>
-        <Switch
-          value={displayDetailsOnProgressBarHomeScreen}
-          onValueChange={(value) =>
-            set({ displayDetailsOnProgressBarHomeScreen: value })
-          }
-        />
-      </View>
-      <Text
-        style={{
-          fontSize: theme.fontSize('xs'),
-          color: theme.colors.textAlt,
-        }}
-      >
-        {i18n.t('detailedProgressBar_description')}
-      </Text>
-    </InputRowContainer>
-  )
-}
-
 const HideDonateHeart = () => {
   const { hideDonateHeart, set } = usePreferences()
 
@@ -138,6 +86,8 @@ const HomeElements = () => {
         return i18n.t('approachingConversations')
       case 'tabletServiceYearSummary':
         return i18n.t('serviceYearSummary')
+      case 'ministryDashboard':
+        return i18n.t('thisMonth')
       case 'serviceReport':
         return i18n.t('serviceReport')
       case 'thisWeek':
@@ -258,7 +208,6 @@ const HomeScreenPreferencesSection = () => {
         <HomeElements />
         <HideDonateHeart />
         <HideSupporterNudge />
-        <DetailedProgressBar />
       </Section>
     </View>
   )

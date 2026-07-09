@@ -1,0 +1,4 @@
+interface:
+  display_name: 'UI Feedback Loop'
+  short_description: 'Use human review before costly simulator inspection'
+  default_prompt: 'Use $ui-feedback-loop to implement this UI change with the right visual review path.'

@@ -27,6 +27,7 @@ pnpm run lint         # after ANY import / file-tree change (boundaries are lint
 - **Three tiers, lint-enforced:** `src/app/` (entry, nav, widgets, sync) → `src/features/<domain>/` → shared (`src/components|lib|hooks|stores|...`).
 - **React Compiler** (beta) is on — no manual `useMemo`/`useCallback` unless benchmarked.
 - **Styling** via Tamagui + RN StyleSheet through `ThemeProvider`; prefer tokens. Reuse `@/components/**` — no one-off badges.
+- **UI feedback:** Follow the `ui-feedback-loop` skill. Levi is the default taste/visual reviewer; visual simulator computer use is an expensive exception for genuinely complex or pixel-precise work, not routine UI verification. Automated tests and nonvisual checks remain agent-owned.
 - **Bundle size — deep imports when packages require it.** Metro doesn't tree-shake barrel files. Import lodash per-method (`import round from 'lodash/round'`, never `import _ from 'lodash'`). For Lucide icons, use named static imports from `lucide-react-native` and never `import * as icons from 'lucide-react-native/icons'`, which imports the full icon set.
 - `clean` nukes `ios/ .expo/ .tamagui/ .cache/ node_modules/` — destructive.
 

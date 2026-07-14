@@ -7,20 +7,15 @@ import {
   X as XIcon,
 } from 'lucide-react-native'
 import moment from 'moment'
-import { useEffect, useRef, useState } from 'react'
-import { Pressable, StatusBar, useWindowDimensions, View } from 'react-native'
-import Animated, {
-  interpolate,
-  useAnimatedStyle,
-  useSharedValue,
-  withSpring,
-} from 'react-native-reanimated'
-import { FullWindowOverlay } from 'react-native-screens'
-import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import { useRef, useState } from 'react'
+import { View } from 'react-native'
 
 import Card from '@/components/ui/Card'
 import Button from '@/components/ui/Button'
 import CircularProgress from '@/components/ui/CircularProgress'
+import ExpandingCardOverlay, {
+  type ExpandingCardOrigin,
+} from '@/components/ui/ExpandingCardOverlay'
 import IconButton from '@/components/ui/IconButton'
 import LucideIcon, { type AppIcon } from '@/components/ui/LucideIcon'
 import Text from '@/components/ui/MyText'
@@ -39,7 +34,6 @@ import { usePreferences } from '@/stores/preferences'
 import useServiceReport from '@/stores/serviceReport'
 
 type InsightKind = 'pace' | 'goal'
-type OriginRect = { x: number; y: number; width: number; height: number }
 
 const STATUS_TITLE_KEYS: Record<ScheduleStatusState, TranslationKey> = {
   ahead: 'scheduleStatus.ahead',
@@ -48,10 +42,6 @@ const STATUS_TITLE_KEYS: Record<ScheduleStatusState, TranslationKey> = {
   noPlan: 'scheduleStatus.noPlan',
   notStarted: 'scheduleStatus.upcoming',
 }
-
-const MORPH_SPRING = { damping: 20, stiffness: 180, mass: 0.7 }
-const EXPANDED_MARGIN = 16
-const EXPANDED_HEIGHT = 310
 
 const InsightStat = ({ label, value }: { label: string; value: string }) => {
   const theme = useTheme()
@@ -108,7 +98,7 @@ const ScheduleInsightOverlay = ({
   isCurrentMonth,
   onEditGoal,
 }: {
-  origin: OriginRect | null
+  origin: ExpandingCardOrigin | null
   open: boolean
   onClose: () => void
   kind: InsightKind
@@ -128,52 +118,6 @@ const ScheduleInsightOverlay = ({
   onEditGoal?: () => void
 }) => {
   const theme = useTheme()
-  const insets = useSafeAreaInsets()
-  const { width: windowWidth, height: windowHeight } = useWindowDimensions()
-  const progress = useSharedValue(0)
-
-  const targetWidth = windowWidth - EXPANDED_MARGIN * 2
-  const targetHeight = Math.min(
-    EXPANDED_HEIGHT,
-    windowHeight - insets.top - insets.bottom - EXPANDED_MARGIN * 2
-  )
-  const targetX = EXPANDED_MARGIN
-  const targetY = Math.max(
-    insets.top + EXPANDED_MARGIN,
-    (windowHeight - targetHeight) / 2
-  )
-
-  useEffect(() => {
-    if (!origin) return
-    progress.value = withSpring(open ? 1 : 0, MORPH_SPRING)
-  }, [open, origin, progress])
-
-  const containerStyle = useAnimatedStyle(() => {
-    if (!origin) return {}
-    return {
-      left: interpolate(progress.value, [0, 1], [origin.x, targetX]),
-      top: interpolate(progress.value, [0, 1], [origin.y, targetY]),
-      width: interpolate(progress.value, [0, 1], [origin.width, targetWidth]),
-      height: interpolate(
-        progress.value,
-        [0, 1],
-        [origin.height, targetHeight]
-      ),
-      borderRadius: theme.numbers.borderRadiusLg,
-    }
-  })
-
-  const backdropStyle = useAnimatedStyle(() => ({
-    opacity: interpolate(progress.value, [0, 1], [0, 0.5]),
-  }))
-  const contentStyle = useAnimatedStyle(() => ({
-    opacity: interpolate(progress.value, [0.35, 1], [0, 1], 'clamp'),
-  }))
-  const surfaceStyle = useAnimatedStyle(() => ({
-    opacity: interpolate(progress.value, [0, 0.15], [0, 1], 'clamp'),
-  }))
-
-  if (!origin) return null
 
   const isPace = kind === 'pace'
   const detailColor = isPace ? statusColor : theme.colors.accent
@@ -182,44 +126,96 @@ const ScheduleInsightOverlay = ({
     : i18n.t('scheduleInsights.goalPlanned')
 
   return (
-    <FullWindowOverlay>
-      {open ? <StatusBar barStyle='light-content' animated /> : null}
+    <ExpandingCardOverlay origin={origin} open={open} onClose={onClose}>
       <View
-        pointerEvents={open ? 'auto' : 'none'}
-        accessibilityElementsHidden={!open}
-        importantForAccessibility={open ? 'auto' : 'no-hide-descendants'}
-        style={{ flex: 1 }}
+        style={{
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+        }}
       >
-        <Pressable onPress={onClose} style={{ flex: 1 }}>
-          <Animated.View
-            style={[{ flex: 1, backgroundColor: '#000' }, backdropStyle]}
-          />
-        </Pressable>
-        <Animated.View
-          style={[{ position: 'absolute', overflow: 'hidden' }, containerStyle]}
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+          {isPace ? (
+            <View
+              style={{
+                width: 38,
+                height: 38,
+                borderRadius: 19,
+                alignItems: 'center',
+                justifyContent: 'center',
+                backgroundColor: theme.colors.backgroundLighter,
+              }}
+            >
+              <LucideIcon icon={statusIcon} color={detailColor} size={20} />
+            </View>
+          ) : (
+            <CircularProgress
+              progress={goalProgress}
+              size={32}
+              strokeWidth={4}
+              color={theme.colors.textAlt}
+              trackColor={theme.colors.border}
+            />
+          )}
+          <Text
+            accessibilityRole='header'
+            style={{
+              color: theme.colors.text,
+              fontFamily: theme.fonts.bold,
+              fontSize: theme.fontSize('xl'),
+            }}
+          >
+            {detailTitle}
+          </Text>
+        </View>
+        <IconButton icon={XIcon} size='lg' onPress={onClose} />
+      </View>
+
+      <View style={{ gap: 8 }}>
+        <View
+          style={{
+            flexDirection: 'row',
+            alignItems: 'baseline',
+            justifyContent: 'space-between',
+            gap: 12,
+          }}
         >
-          <Animated.View
-            style={[
-              {
-                position: 'absolute',
-                width: targetWidth,
-                height: targetHeight,
-                backgroundColor: theme.colors.card,
-              },
-              surfaceStyle,
-            ]}
-          />
-          <Animated.View
-            style={[
-              {
-                position: 'absolute',
-                width: targetWidth,
-                height: targetHeight,
-                padding: 20,
-                gap: 18,
-              },
-              contentStyle,
-            ]}
+          <Text
+            style={{
+              color: detailColor,
+              fontFamily: theme.fonts.bold,
+              fontSize: theme.fontSize('2xl'),
+            }}
+          >
+            {isPace
+              ? statusTitle
+              : i18n.t('scheduleInsights.percentPlanned', {
+                  percent: plannedPercent,
+                })}
+          </Text>
+          {isPace ? (
+            <Text
+              style={{
+                color: theme.colors.textAlt,
+                fontFamily: theme.fonts.semiBold,
+              }}
+            >
+              {statusMeta}
+            </Text>
+          ) : null}
+        </View>
+        {!isPace ? (
+          <Button
+            noTransform
+            accessibilityRole={onEditGoal ? 'button' : undefined}
+            onPress={
+              onEditGoal
+                ? () => {
+                    onClose()
+                    setTimeout(onEditGoal, 150)
+                  }
+                : undefined
+            }
           >
             <View
               style={{
@@ -228,183 +224,84 @@ const ScheduleInsightOverlay = ({
                 justifyContent: 'space-between',
               }}
             >
-              <View
-                style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}
-              >
-                {isPace ? (
-                  <View
-                    style={{
-                      width: 38,
-                      height: 38,
-                      borderRadius: 19,
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      backgroundColor: theme.colors.backgroundLighter,
-                    }}
-                  >
-                    <LucideIcon
-                      icon={statusIcon}
-                      color={detailColor}
-                      size={20}
-                    />
-                  </View>
-                ) : (
-                  <CircularProgress
-                    progress={goalProgress}
-                    size={32}
-                    strokeWidth={4}
-                    color={theme.colors.textAlt}
-                    trackColor={theme.colors.border}
-                  />
-                )}
-                <Text
-                  accessibilityRole='header'
-                  style={{
-                    color: theme.colors.text,
-                    fontFamily: theme.fonts.bold,
-                    fontSize: theme.fontSize('xl'),
-                  }}
-                >
-                  {detailTitle}
-                </Text>
-              </View>
-              <IconButton icon={XIcon} size='lg' onPress={onClose} />
-            </View>
-
-            <View style={{ gap: 8 }}>
-              <View
-                style={{
-                  flexDirection: 'row',
-                  alignItems: 'baseline',
-                  justifyContent: 'space-between',
-                  gap: 12,
-                }}
-              >
-                <Text
-                  style={{
-                    color: detailColor,
-                    fontFamily: theme.fonts.bold,
-                    fontSize: theme.fontSize('2xl'),
-                  }}
-                >
-                  {isPace
-                    ? statusTitle
-                    : i18n.t('scheduleInsights.percentPlanned', {
-                        percent: plannedPercent,
-                      })}
-                </Text>
-                {isPace ? (
-                  <Text
-                    style={{
-                      color: theme.colors.textAlt,
-                      fontFamily: theme.fonts.semiBold,
-                    }}
-                  >
-                    {statusMeta}
-                  </Text>
-                ) : null}
-              </View>
-              {!isPace ? (
-                <Button
-                  noTransform
-                  accessibilityRole={onEditGoal ? 'button' : undefined}
-                  onPress={
-                    onEditGoal
-                      ? () => {
-                          onClose()
-                          setTimeout(onEditGoal, 150)
-                        }
-                      : undefined
-                  }
-                >
-                  <View
-                    style={{
-                      flexDirection: 'row',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                    }}
-                  >
-                    <Text
-                      style={{
-                        color: theme.colors.textAlt,
-                        fontFamily: theme.fonts.semiBold,
-                        fontSize: theme.fontSize('sm'),
-                        textTransform: 'uppercase',
-                        letterSpacing: 0.5,
-                      }}
-                    >
-                      {i18n.t('scheduleInsights.monthlyGoal')}
-                    </Text>
-                    <View
-                      style={{
-                        flexDirection: 'row',
-                        alignItems: 'center',
-                        gap: 6,
-                      }}
-                    >
-                      <Text
-                        style={{
-                          color: theme.colors.textAlt,
-                          fontFamily: theme.fonts.semiBold,
-                        }}
-                      >
-                        {goal}
-                      </Text>
-                      {onEditGoal ? (
-                        <LucideIcon
-                          icon={ChevronRightIcon}
-                          color={theme.colors.textAlt}
-                          size={12}
-                        />
-                      ) : null}
-                    </View>
-                  </View>
-                </Button>
-              ) : null}
-              <SimpleProgressBar
-                percentage={isPace ? statusProgress : goalProgress}
-                color={detailColor}
-                height={10}
-                animated={false}
-              />
-            </View>
-
-            <View style={{ flexDirection: 'row', gap: 10 }}>
-              {isPace ? (
-                <>
-                  <InsightStat label={i18n.t('actual')} value={actual} />
-                  <InsightStat label={i18n.t('planned')} value={pacePlanned} />
-                </>
-              ) : (
-                <>
-                  <InsightStat label={i18n.t('planned')} value={monthPlanned} />
-                  <InsightStat
-                    label={i18n.t('scheduleInsights.leftToPlan')}
-                    value={leftToPlan}
-                  />
-                </>
-              )}
-            </View>
-
-            {isPace ? (
               <Text
                 style={{
                   color: theme.colors.textAlt,
+                  fontFamily: theme.fonts.semiBold,
                   fontSize: theme.fontSize('sm'),
-                  lineHeight: 19,
+                  textTransform: 'uppercase',
+                  letterSpacing: 0.5,
                 }}
               >
-                {i18n.t(
-                  isCurrentMonth
-                    ? 'scheduleInsights.paceDescriptionCurrent'
-                    : 'scheduleInsights.paceDescriptionMonth'
-                )}
+                {i18n.t('scheduleInsights.monthlyGoal')}
               </Text>
-            ) : null}
-          </Animated.View>
-        </Animated.View>
+              <View
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  gap: 6,
+                }}
+              >
+                <Text
+                  style={{
+                    color: theme.colors.textAlt,
+                    fontFamily: theme.fonts.semiBold,
+                  }}
+                >
+                  {goal}
+                </Text>
+                {onEditGoal ? (
+                  <LucideIcon
+                    icon={ChevronRightIcon}
+                    color={theme.colors.textAlt}
+                    size={12}
+                  />
+                ) : null}
+              </View>
+            </View>
+          </Button>
+        ) : null}
+        <SimpleProgressBar
+          percentage={isPace ? statusProgress : goalProgress}
+          color={detailColor}
+          height={10}
+          animated={false}
+        />
       </View>
-    </FullWindowOverlay>
+
+      <View style={{ flexDirection: 'row', gap: 10 }}>
+        {isPace ? (
+          <>
+            <InsightStat label={i18n.t('actual')} value={actual} />
+            <InsightStat label={i18n.t('planned')} value={pacePlanned} />
+          </>
+        ) : (
+          <>
+            <InsightStat label={i18n.t('planned')} value={monthPlanned} />
+            <InsightStat
+              label={i18n.t('scheduleInsights.leftToPlan')}
+              value={leftToPlan}
+            />
+          </>
+        )}
+      </View>
+
+      {isPace ? (
+        <Text
+          style={{
+            color: theme.colors.textAlt,
+            fontSize: theme.fontSize('sm'),
+            lineHeight: 19,
+          }}
+        >
+          {i18n.t(
+            isCurrentMonth
+              ? 'scheduleInsights.paceDescriptionCurrent'
+              : 'scheduleInsights.paceDescriptionMonth'
+          )}
+        </Text>
+      ) : null}
+    </ExpandingCardOverlay>
   )
 }
 
@@ -427,7 +324,7 @@ const ScheduleInsights = ({
   const goalRef = useRef<View>(null)
   const [detailKind, setDetailKind] = useState<InsightKind>('pace')
   const [detailOpen, setDetailOpen] = useState(false)
-  const [origin, setOrigin] = useState<OriginRect | null>(null)
+  const [origin, setOrigin] = useState<ExpandingCardOrigin | null>(null)
 
   const status = getScheduleStatusForMonth({
     month,

@@ -1276,6 +1276,18 @@
     "tapForDetails": "Tap for more details"
   },
   "homeDashboard": {
+    "openDestination": "Open {{destination}}",
+    "details": {
+      "logged": "Logged",
+      "projected": "Projected",
+      "throughToday": "Through today",
+      "ofGoal": "of {{goal}} goal",
+      "projectedMonth": "Combines logged time with the effective contribution of remaining Plans, after applying the Credit Time cap.",
+      "serviceYearProgress": "Shows logged Service Year progress, with the Projected total if remaining Plans become reality.",
+      "creditTime": "Credit Time and Standard time combine into this month's adjusted Service Report total.",
+      "remainingToGoal": "Shows what remains between logged time and this month's goal. Projected includes remaining Plans.",
+      "plannedTotal": "Shows all time planned for this month. Through today is the amount used to compare Schedule pace."
+    },
     "editor": {
       "title": "Customize This Month",
       "description": "Choose and arrange up to {{count}} cards.",

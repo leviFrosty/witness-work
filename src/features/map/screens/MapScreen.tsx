@@ -1016,6 +1016,7 @@ const FullMapView = ({
             style={{
               color: isTrackingUser ? theme.colors.accent : theme.colors.text,
             }}
+            {...(isTrackingUser ? { fill: theme.colors.accent } : {})}
           />
         </Button>
       </View>

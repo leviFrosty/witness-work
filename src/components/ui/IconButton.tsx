@@ -22,6 +22,7 @@ type Props = {
   style?: StyleProp<ViewStyle>
   iconStyle?: StyleProp<TextStyle>
   color?: string
+  fill?: string
   noTransform?: boolean
   accessibilityLabel?: string
   /**
@@ -41,6 +42,7 @@ const IconButton = ({
   size: _size,
   iconStyle,
   color,
+  fill,
   noTransform,
   accessibilityLabel,
   hitSlop,
@@ -66,6 +68,7 @@ const IconButton = ({
     >
       <Icon
         color={iconColor}
+        {...(fill === undefined ? {} : { fill })}
         size={size}
         style={iconStyleWithFallback as LucideProps['style']}
       />

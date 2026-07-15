@@ -248,6 +248,7 @@ const ContactRow = ({
                 <IconButton
                   icon={StarIcon}
                   iconStyle={{ color: theme.colors.warn }}
+                  fill={theme.colors.warn}
                   size='sm'
                 />
               )}

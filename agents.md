@@ -28,6 +28,7 @@ pnpm run lint         # after ANY import / file-tree change (boundaries are lint
 - **React Compiler** (beta) is on — no manual `useMemo`/`useCallback` unless benchmarked.
 - **Styling** via Tamagui + RN StyleSheet through `ThemeProvider`; prefer tokens. Reuse `@/components/**` — no one-off badges.
 - **Bundle size — deep imports when packages require it.** Metro doesn't tree-shake barrel files. Import lodash per-method (`import round from 'lodash/round'`, never `import _ from 'lodash'`). For Lucide icons, use named static imports from `lucide-react-native` and never `import * as icons from 'lucide-react-native/icons'`, which imports the full icon set.
+- **Lucide `fill` quirk.** Never pass `fill={undefined}`; Lucide renders it as a black fill, while omitting the prop preserves the default empty fill. When rendering a Lucide icon directly, conditionally spread the prop: `{...(isTrackingUser ? { fill: theme.colors.accent } : {})}`. `@/components/ui/IconButton` already handles this omission.
 - `clean` nukes `ios/ .expo/ .tamagui/ .cache/ node_modules/` — destructive.
 
 Reference docs: `CONTEXT.md`, `docs/adr/`, `docs/project-structure.md`, `docs/architecture-features.md`.

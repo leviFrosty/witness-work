@@ -152,17 +152,6 @@ const PublisherTypeSelector = () => {
               })}
         </Text>
       )}
-      {role !== publishers[0] ? (
-        <Text
-          style={{
-            marginTop: 6,
-            fontSize: 12,
-            color: theme.colors.textAlt,
-          }}
-        >
-          {i18n.t('defaultMonthlyGoal_description')}
-        </Text>
-      ) : null}
     </View>
   )
 }

@@ -414,7 +414,6 @@ const PreferencesiCloudScreenInner = () => {
             >
               <Popover.Trigger asChild>
                 <Pressable
-                  onPress={() => setBetaInfoOpen((v) => !v)}
                   accessibilityRole='button'
                   accessibilityLabel={i18n.t('iCloudBetaNotice')}
                   hitSlop={8}

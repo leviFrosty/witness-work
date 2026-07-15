@@ -105,7 +105,6 @@ const ContactsStatsHeader: React.FC<ContactsStatsHeaderProps> = ({
         >
           <Popover.Trigger asChild>
             <Button
-              onPress={() => setInfoOpen((v) => !v)}
               accessibilityLabel={i18n.t('contacts_stalenessInfo_title')}
               accessibilityRole='button'
               hitSlop={6}

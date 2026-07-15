@@ -963,7 +963,7 @@ const FullMapView = ({
             <Button
               accessibilityLabel={i18n.t('map_showLegend')}
               variant='glass'
-              onPress={() => setShowInfo((v) => !v)}
+              noTransform
               style={mapControlStyle}
             >
               <LucideIcon

@@ -98,7 +98,6 @@ const BackgroundEditButton = ({
     >
       <Popover.Trigger asChild>
         <Pressable
-          onPress={() => setPickerOpen((v) => !v)}
           accessibilityRole='button'
           accessibilityLabel={i18n.t('contactHeroBackgroundColor')}
           style={triggerStyle}

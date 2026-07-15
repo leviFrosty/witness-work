@@ -1746,6 +1746,8 @@
   "paywallCtaTip": "Send {{price}} tip",
   "paywallCtaSelectPrice": "Choose an amount",
   "paywallLearnMore": "Read FAQ",
+  "paywallShowAllOptions": "Show all options",
+  "paywallAllOptionsTitle": "All options",
   "paywallCtaSendTip": "Send a tip",
   "copyAccountId": "Copy account ID",
   "accountIdCopied": "Account ID copied",

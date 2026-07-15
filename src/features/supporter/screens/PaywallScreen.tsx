@@ -1,5 +1,7 @@
 import {
   Check as CheckIcon,
+  ChevronDown as ChevronDownIcon,
+  CircleQuestionMark as CircleQuestionMarkIcon,
   Heart as HeartIcon,
   Minus as MinusIcon,
   RotateCw as RotateCwIcon,
@@ -15,7 +17,7 @@ import i18n from '@/lib/locales'
 import XView from '@/components/ui/layout/XView'
 import Button from '@/components/ui/Button'
 import Wrapper from '@/components/ui/layout/Wrapper'
-import { Spinner } from 'tamagui'
+import { Sheet, Spinner } from 'tamagui'
 import Purchases, {
   PURCHASES_ERROR_CODE,
   PurchasesError,
@@ -27,7 +29,17 @@ import GlassCard from '@/components/ui/GlassCard'
 import SegmentedControl from '@/components/ui/SegmentedControl'
 import PreviousDonations from '@/features/supporter/components/PreviousDonations'
 import Divider from '@/components/ui/Divider'
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import {
+  type ReactNode,
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react'
+import Header from '@/components/ui/layout/Header'
+import IconButton from '@/components/ui/IconButton'
 import SupporterCtaButton from '@/features/supporter/components/SupporterCtaButton'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import useCustomer from '@/hooks/useCustomer'
@@ -40,6 +52,20 @@ import { clearAdoptedAccountId } from '@/lib/account'
 
 type Tier = 'supporter' | 'tip'
 type SupporterBilling = 'monthly' | 'annual'
+// Each price list keeps its own independent selection — switching
+// monthly↔annual (or to tips) never remaps a choice across views.
+type PriceView = SupporterBilling | 'tip'
+
+const pkgKey = (pkg: PurchasesPackage) =>
+  `${pkg.offeringIdentifier}:${pkg.product.identifier}`
+
+// Compressed price lists: only these indexes (into the price-sorted package
+// list) render by default; the rest live behind the "Show all options" sheet.
+// Monthly keeps the "most popular" tier (1) and one step up (3); annual keeps
+// its two middle tiers. Tips stay cheapest-first, capped at 5.
+const MONTHLY_DEFAULT_VISIBLE = [1, 3]
+const ANNUAL_DEFAULT_VISIBLE = [1, 2]
+const TIP_DEFAULT_VISIBLE = [0, 1, 2, 3, 4]
 
 const FEATURE_ROWS: ReadonlyArray<{
   labelKey: TranslationKey
@@ -475,13 +501,61 @@ const DevPillButton = ({
   )
 }
 
+const AllOptionsSheet = ({
+  visible,
+  onClose,
+  children,
+}: {
+  visible: boolean
+  onClose: () => void
+  children: ReactNode
+}) => {
+  const theme = useTheme()
+  const insets = useSafeAreaInsets()
+  return (
+    <Sheet
+      open={visible}
+      onOpenChange={(o: boolean) => {
+        if (!o) onClose()
+      }}
+      dismissOnSnapToBottom
+      modal
+      snapPointsMode='fit'
+      animation='quick'
+    >
+      <Sheet.Handle />
+      <Sheet.Overlay zIndex={100_000 - 1} />
+      <Sheet.Frame>
+        <View
+          style={{
+            paddingHorizontal: 24,
+            paddingTop: 24,
+            paddingBottom: insets.bottom + 24,
+            gap: 16,
+            backgroundColor: theme.colors.backgroundLighter,
+          }}
+        >
+          <Text
+            style={{
+              fontSize: theme.fontSize('xl'),
+              fontFamily: theme.fonts.semiBold,
+              color: theme.colors.text,
+            }}
+          >
+            {i18n.t('paywallAllOptionsTitle')}
+          </Text>
+          <View style={{ gap: 6 }}>{children}</View>
+        </View>
+      </Sheet.Frame>
+    </Sheet>
+  )
+}
+
 const PaywallScreen = () => {
   const theme = useTheme()
   const insets = useSafeAreaInsets()
   const route = useRoute<RouteProp<RootStackParamList, 'Paywall'>>()
   const initialTier: Tier = route.params?.initialTier ?? 'supporter'
-  const [selectedPackage, setSelectedPackage] =
-    useState<PurchasesPackage | null>(null)
   const [currentOfferings, setCurrentOfferings] =
     useState<PurchasesOfferings | null>(null)
   const { customer, setCustomer, hasPurchasedBefore, revalidate, ready } =
@@ -490,6 +564,38 @@ const PaywallScreen = () => {
   const [supporterBilling, setSupporterBilling] =
     useState<SupporterBilling>('monthly')
   const navigation = useNavigation<RootStackNavigation>()
+
+  const priceView: PriceView = tier === 'tip' ? 'tip' : supporterBilling
+  const [selectedByView, setSelectedByView] = useState<
+    Partial<Record<PriceView, PurchasesPackage>>
+  >({})
+  const selectedPackage = selectedByView[priceView] ?? null
+  const setSelectedPackage = (pkg: PurchasesPackage) =>
+    setSelectedByView((prev) => ({ ...prev, [priceView]: pkg }))
+
+  // FAQ lives in the header as a "?" icon instead of an inline text link —
+  // keeps the pricing column focused on a single decision.
+  useLayoutEffect(() => {
+    navigation.setOptions({
+      header: () => (
+        <Header
+          buttonType='back'
+          title={i18n.t('donate')}
+          rightElement={
+            <IconButton
+              style={{ position: 'absolute', right: 0 }}
+              icon={CircleQuestionMarkIcon}
+              size='xl'
+              accessibilityLabel={i18n.t('paywallLearnMore')}
+              onPress={() =>
+                navigation.navigate('FAQ', { scrollToCategory: 'supporter' })
+              }
+            />
+          }
+        />
+      ),
+    })
+  }, [navigation])
 
   const allOfferings = useMemo(() => {
     if (!currentOfferings) return []
@@ -529,6 +635,37 @@ const PaywallScreen = () => {
     }
     return monthlyPackages
   }, [tier, supporterBilling, monthlyPackages, annualPackages, tipPackages])
+
+  const [showAllOptions, setShowAllOptions] = useState(false)
+  const selectedKey = selectedPackage ? pkgKey(selectedPackage) : null
+
+  const compressedIndexes =
+    tier === 'supporter'
+      ? supporterBilling === 'annual'
+        ? ANNUAL_DEFAULT_VISIBLE
+        : MONTHLY_DEFAULT_VISIBLE
+      : TIP_DEFAULT_VISIBLE
+
+  // The compressed default view. A package picked from the "all options"
+  // sheet stays visible here even when it's outside the default indexes, so
+  // the user can always see (and re-tap) their current selection.
+  const visiblePackages = useMemo(() => {
+    const visible = activePackages.filter(
+      (pkg, index) =>
+        compressedIndexes.includes(index) ||
+        (selectedKey !== null && pkgKey(pkg) === selectedKey)
+    )
+    // Offering too small for the configured indexes — nothing to compress.
+    return visible.length > 0 ? visible : activePackages
+  }, [activePackages, compressedIndexes, selectedKey])
+
+  const hasHiddenOptions = visiblePackages.length < activePackages.length
+
+  // Close the sheet when its contents swap out from under it (tier or
+  // billing switch) rather than showing a different list mid-gesture.
+  useEffect(() => {
+    setShowAllOptions(false)
+  }, [tier, supporterBilling])
 
   // Fetches latest offerings from RevenueCat. Must wait until
   // `Purchases.configure` has run in CustomerProvider, otherwise the native
@@ -644,33 +781,32 @@ const PaywallScreen = () => {
     )
   }, [fetchOfferings, isResetting, revalidate, setCustomer])
 
-  // Preselect a sensible default whenever the active list changes. Compares on
-  // per-month-equivalent price so switching monthly↔annual maps $0.99/mo to
-  // the ~$0.83/mo annual tier (and back) rather than treating the annual's
-  // $9.99 total as a monthly price.
-  const currentMonthlyPrice = selectedPackage
-    ? (selectedPackage.product.pricePerMonth ?? selectedPackage.product.price)
-    : undefined
+  // Preselect a default for the active view the first time it's shown, and
+  // replace a selection that no longer exists in the list (e.g. after an
+  // offerings refetch). An existing valid selection is left alone — each view
+  // remembers its own choice independently.
   useEffect(() => {
-    if (activePackages.length === 0) {
-      setSelectedPackage(null)
-      return
-    }
-    if (currentMonthlyPrice !== undefined) {
-      const closest = activePackages.reduce((best, pkg) => {
-        const pkgPerMonth = pkg.product.pricePerMonth ?? pkg.product.price
-        const bestPerMonth = best.product.pricePerMonth ?? best.product.price
-        const diff = Math.abs(pkgPerMonth - currentMonthlyPrice)
-        const bestDiff = Math.abs(bestPerMonth - currentMonthlyPrice)
-        return diff < bestDiff ? pkg : best
-      }, activePackages[0])
-      setSelectedPackage(closest)
-    } else {
-      setSelectedPackage(activePackages[0])
-    }
-    // We intentionally exclude selectedPackage from deps — this effect only
-    // reacts to the active list changing (tier/billing switch).
-  }, [activePackages, currentMonthlyPrice])
+    setSelectedByView((prev) => {
+      const current = prev[priceView]
+      if (
+        current &&
+        activePackages.some((p) => pkgKey(p) === pkgKey(current))
+      ) {
+        return prev
+      }
+      if (activePackages.length === 0) {
+        if (!current) return prev
+        const next = { ...prev }
+        delete next[priceView]
+        return next
+      }
+      // The cheapest tier is hidden in the compressed supporter lists, so
+      // preselect the "most popular" slot instead of an invisible option.
+      const defaultIndex =
+        tier === 'supporter' && activePackages.length > 1 ? 1 : 0
+      return { ...prev, [priceView]: activePackages[defaultIndex] }
+    })
+  }, [activePackages, priceView, tier])
 
   const handlePurchase = useCallback(async () => {
     if (!selectedPackage) {
@@ -736,6 +872,48 @@ const PaywallScreen = () => {
   }
 
   const showBillingToggle = tier === 'supporter' && annualPackages.length > 0
+
+  const renderPriceOption = (
+    pkg: PurchasesPackage,
+    afterSelect?: () => void
+  ) => {
+    const key = pkgKey(pkg)
+    const index = activePackages.findIndex((p) => pkgKey(p) === key)
+    const monthlyEquivalent =
+      tier === 'supporter' &&
+      supporterBilling === 'annual' &&
+      pkg.product.pricePerMonthString
+        ? `≈ ${pkg.product.pricePerMonthString} ${i18n.t('eachMonth')}`
+        : undefined
+    // Nudge toward the second-cheapest monthly tier — RocketMoney-style
+    // social proof without endorsing the floor or the ceiling.
+    const isPopular =
+      tier === 'supporter' &&
+      supporterBilling === 'monthly' &&
+      activePackages.length >= 2 &&
+      index === 1
+    return (
+      <PriceOption
+        key={key}
+        pkg={pkg}
+        selected={selectedKey === key}
+        onPress={() => {
+          setSelectedPackage(pkg)
+          afterSelect?.()
+        }}
+        highlight={tier === 'supporter'}
+        suffix={
+          tier === 'tip'
+            ? undefined
+            : supporterBilling === 'annual'
+              ? i18n.t('eachYear')
+              : i18n.t('eachMonth')
+        }
+        secondary={monthlyEquivalent}
+        popular={isPopular}
+      />
+    )
+  }
   const tierExplainer =
     tier === 'supporter'
       ? i18n.t('paywallSupporterTabDesc')
@@ -822,61 +1000,38 @@ const PaywallScreen = () => {
         )}
 
         <View style={{ gap: 6 }}>
-          {activePackages.map((pkg, index) => {
-            const key = `${pkg.offeringIdentifier}:${pkg.product.identifier}`
-            const selectedKey = selectedPackage
-              ? `${selectedPackage.offeringIdentifier}:${selectedPackage.product.identifier}`
-              : null
-            const monthlyEquivalent =
-              tier === 'supporter' &&
-              supporterBilling === 'annual' &&
-              pkg.product.pricePerMonthString
-                ? `≈ ${pkg.product.pricePerMonthString} ${i18n.t('eachMonth')}`
-                : undefined
-            // Nudge toward the second-cheapest monthly tier — RocketMoney-style
-            // social proof without endorsing the floor or the ceiling.
-            const isPopular =
-              tier === 'supporter' &&
-              supporterBilling === 'monthly' &&
-              activePackages.length >= 2 &&
-              index === 1
-            return (
-              <PriceOption
-                key={key}
-                pkg={pkg}
-                selected={selectedKey === key}
-                onPress={() => setSelectedPackage(pkg)}
-                highlight={tier === 'supporter'}
-                suffix={
-                  tier === 'tip'
-                    ? undefined
-                    : supporterBilling === 'annual'
-                      ? i18n.t('eachYear')
-                      : i18n.t('eachMonth')
-                }
-                secondary={monthlyEquivalent}
-                popular={isPopular}
+          {visiblePackages.map((pkg) => renderPriceOption(pkg))}
+          {hasHiddenOptions && (
+            <Button
+              onPress={() => setShowAllOptions(true)}
+              style={{
+                paddingHorizontal: 16,
+                paddingVertical: 12,
+                borderRadius: theme.numbers.borderRadiusMd,
+                backgroundColor: theme.colors.backgroundLightest,
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 6,
+              }}
+            >
+              <LucideIcon
+                icon={ChevronDownIcon}
+                size={14}
+                color={theme.colors.textAlt}
               />
-            )
-          })}
+              <Text
+                style={{
+                  fontSize: 14,
+                  fontFamily: theme.fonts.semiBold,
+                  color: theme.colors.textAlt,
+                }}
+              >
+                {i18n.t('paywallShowAllOptions')}
+              </Text>
+            </Button>
+          )}
         </View>
-
-        <Button
-          onPress={() =>
-            navigation.navigate('FAQ', { scrollToCategory: 'supporter' })
-          }
-          style={{ alignSelf: 'center', paddingVertical: 10 }}
-        >
-          <Text
-            style={{
-              fontSize: theme.fontSize('sm'),
-              color: theme.colors.textAlt,
-              textDecorationLine: 'underline',
-            }}
-          >
-            {i18n.t('paywallLearnMore')}
-          </Text>
-        </Button>
 
         <Divider />
         {hasPurchasedBefore && customer && (
@@ -900,6 +1055,14 @@ const PaywallScreen = () => {
           </Button>
         )}
       </ScrollView>
+      <AllOptionsSheet
+        visible={showAllOptions}
+        onClose={() => setShowAllOptions(false)}
+      >
+        {activePackages.map((pkg) =>
+          renderPriceOption(pkg, () => setShowAllOptions(false))
+        )}
+      </AllOptionsSheet>
       <View
         style={{
           paddingHorizontal: 15,

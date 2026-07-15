@@ -1,3 +1,6 @@
+import 'react-native-gesture-handler'
+import '@tamagui/native/setup-burnt'
+import '@tamagui/native/setup-gesture-handler'
 import { registerRootComponent } from 'expo'
 
 import App from './app/App'

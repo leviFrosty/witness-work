@@ -521,7 +521,6 @@ const AllOptionsSheet = ({
       dismissOnSnapToBottom
       modal
       snapPointsMode='fit'
-      animation='quick'
     >
       <Sheet.Handle />
       <Sheet.Overlay zIndex={100_000 - 1} />

@@ -635,6 +635,7 @@ const VisitFormScreen = ({ route, navigation }: Props) => {
             textInputProps={{
               placeholder: i18n.t('note_placeholder'),
               multiline: true,
+              enterKeyHint: 'enter',
               defaultValue: conversation.note,
               textAlign: 'left',
               onChangeText: (note: string) =>
@@ -668,6 +669,7 @@ const VisitFormScreen = ({ route, navigation }: Props) => {
             textInputProps={{
               placeholder: i18n.t('topic_placeholder'),
               multiline: true,
+              enterKeyHint: 'enter',
               defaultValue: conversation.followUp?.topic,
               textAlign: 'left',
               onChangeText: (topic: string) =>

@@ -638,6 +638,7 @@ const ContactFormScreen = ({ route, navigation }: Props) => {
               autoCapitalize='words'
               autoCorrect={false}
               autoFocus={!editMode}
+              autoFocusNative={!editMode}
               enterKeyHint='next'
               style={{
                 fontSize: 26,

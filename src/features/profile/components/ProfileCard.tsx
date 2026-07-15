@@ -280,6 +280,7 @@ const ProfileCard = ({ preview, editable, onPressIncomplete }: Props) => {
       autoCapitalize='words'
       autoCorrect={false}
       autoFocus={!name}
+      autoFocusNative={!name}
       maxLength={40}
       enterKeyHint='done'
       style={{

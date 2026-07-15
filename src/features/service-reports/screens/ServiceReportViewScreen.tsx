@@ -878,6 +878,7 @@ const PaperSheet = ({
                 onChangeText={onChangeNotesDraft}
                 multiline
                 autoFocus
+                autoFocusNative
                 scrollEnabled={false}
                 style={{
                   fontFamily: handwritingFont,

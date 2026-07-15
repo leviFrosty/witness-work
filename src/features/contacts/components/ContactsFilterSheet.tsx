@@ -386,11 +386,11 @@ const ContactsFilterSheet: React.FC<ContactsFilterSheetProps> = ({
   // fields surface specialised keyboards / placeholders so the user knows what
   // shape of value the comparator expects.
   const valueInputProps: {
-    type?: 'number'
+    inputMode?: 'decimal'
     placeholder?: string
   } = {}
   if (isCustomFieldKey(field) && customDef?.type === 'number') {
-    valueInputProps.type = 'number'
+    valueInputProps.inputMode = 'decimal'
   } else if (isCustomFieldKey(field) && customDef?.type === 'date') {
     valueInputProps.placeholder = 'YYYY-MM-DD'
   }
@@ -518,7 +518,7 @@ const ContactsFilterSheet: React.FC<ContactsFilterSheetProps> = ({
                     value={value}
                     onChangeText={setValue}
                     placeholder={valueInputProps.placeholder}
-                    type={valueInputProps.type}
+                    inputMode={valueInputProps.inputMode}
                     placeholderTextColor={
                       theme.colors.textAlt as InputProps['placeholderTextColor']
                     }

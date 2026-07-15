@@ -9,9 +9,10 @@ interface Props {
   value: string
   tint: string
   tintBg: string
+  iconFill?: string
 }
 
-const SinceBadge = ({ icon, label, value, tint, tintBg }: Props) => {
+const SinceBadge = ({ icon, label, value, tint, tintBg, iconFill }: Props) => {
   const theme = useTheme()
   return (
     <View
@@ -34,7 +35,7 @@ const SinceBadge = ({ icon, label, value, tint, tintBg }: Props) => {
           backgroundColor: tintBg,
         }}
       >
-        <LucideIcon icon={icon} size={15} color={tint} />
+        <LucideIcon icon={icon} size={15} color={tint} fill={iconFill} />
       </View>
       <View style={{ flex: 1 }}>
         <Text

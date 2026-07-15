@@ -347,6 +347,7 @@ const ProfileDetailOverlay = ({ origin, open, onClose }: Props) => {
                       value={moment(supporterSince).format('MMMM YYYY')}
                       tint={theme.colors.supporter}
                       tintBg={theme.colors.supporterTranslucent}
+                      iconFill={theme.colors.supporter}
                     />
                   )}
                 </View>

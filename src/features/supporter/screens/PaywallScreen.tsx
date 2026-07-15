@@ -59,13 +59,9 @@ type PriceView = SupporterBilling | 'tip'
 const pkgKey = (pkg: PurchasesPackage) =>
   `${pkg.offeringIdentifier}:${pkg.product.identifier}`
 
-// Compressed price lists: only these indexes (into the price-sorted package
-// list) render by default; the rest live behind the "Show all options" sheet.
-// Monthly keeps the "most popular" tier (1) and one step up (3); annual keeps
-// its two middle tiers. Tips stay cheapest-first, capped at 5.
-const MONTHLY_DEFAULT_VISIBLE = [1, 3]
-const ANNUAL_DEFAULT_VISIBLE = [1, 2]
-const TIP_DEFAULT_VISIBLE = [0, 1, 2, 3, 4]
+// Keep the price lists compact; later options live behind "Show all options."
+const SUPPORTER_VISIBLE_OPTION_LIMIT = 4
+const TIP_VISIBLE_OPTION_LIMIT = 5
 
 const FEATURE_ROWS: ReadonlyArray<{
   labelKey: TranslationKey
@@ -110,6 +106,7 @@ const FounderLetter = () => {
             icon={HeartIcon}
             size={10}
             color={theme.colors.supporter}
+            fill={theme.colors.supporter}
           />
         </View>
         <Text
@@ -175,6 +172,7 @@ const FounderLetter = () => {
             icon={HeartIcon}
             size={11}
             color={theme.colors.supporter}
+            fill={theme.colors.supporter}
           />
         </XView>
       </View>
@@ -279,13 +277,14 @@ const ComparisonChart = () => {
               {i18n.t('paywallColFree')}
             </Text>
           </View>
-          <View style={{ width: SUPPORTER_COL_WIDTH }}>
-            <XView style={{ alignItems: 'center', gap: 4, marginLeft: 15 }}>
-              <LucideIcon
-                icon={HeartIcon}
-                size={10}
-                color={theme.colors.supporter}
-              />
+          <View
+            style={{
+              width: SUPPORTER_COL_WIDTH + ROW_PADDING_HORIZONTAL,
+              marginRight: -ROW_PADDING_HORIZONTAL,
+              alignItems: 'center',
+            }}
+          >
+            <View>
               <Text
                 style={{
                   fontSize: 11,
@@ -297,7 +296,7 @@ const ComparisonChart = () => {
               >
                 {i18n.t('paywallColSupporter')}
               </Text>
-            </XView>
+            </View>
           </View>
         </View>
         {FEATURE_ROWS.map((row, index) => (
@@ -344,7 +343,6 @@ interface PriceOptionProps {
   suffix?: string
   secondary?: string
   highlight?: boolean
-  popular?: boolean
 }
 
 const PriceOption = ({
@@ -354,7 +352,6 @@ const PriceOption = ({
   suffix,
   secondary,
   highlight,
-  popular,
 }: PriceOptionProps) => {
   const theme = useTheme()
   const tint = highlight ? theme.colors.supporter : theme.colors.accent
@@ -422,28 +419,6 @@ const PriceOption = ({
           ) : null}
         </View>
       </XView>
-      {popular && (
-        <View
-          style={{
-            paddingHorizontal: 8,
-            paddingVertical: 3,
-            borderRadius: 999,
-            backgroundColor: tint,
-          }}
-        >
-          <Text
-            style={{
-              fontSize: 9,
-              fontFamily: theme.fonts.semiBold,
-              color: theme.colors.textInverse,
-              letterSpacing: 0.6,
-              textTransform: 'uppercase',
-            }}
-          >
-            {i18n.t('paywallMostPopular')}
-          </Text>
-        </View>
-      )}
     </Button>
   )
 }
@@ -638,25 +613,11 @@ const PaywallScreen = () => {
   const [showAllOptions, setShowAllOptions] = useState(false)
   const selectedKey = selectedPackage ? pkgKey(selectedPackage) : null
 
-  const compressedIndexes =
+  const visibleOptionLimit =
     tier === 'supporter'
-      ? supporterBilling === 'annual'
-        ? ANNUAL_DEFAULT_VISIBLE
-        : MONTHLY_DEFAULT_VISIBLE
-      : TIP_DEFAULT_VISIBLE
-
-  // The compressed default view. A package picked from the "all options"
-  // sheet stays visible here even when it's outside the default indexes, so
-  // the user can always see (and re-tap) their current selection.
-  const visiblePackages = useMemo(() => {
-    const visible = activePackages.filter(
-      (pkg, index) =>
-        compressedIndexes.includes(index) ||
-        (selectedKey !== null && pkgKey(pkg) === selectedKey)
-    )
-    // Offering too small for the configured indexes — nothing to compress.
-    return visible.length > 0 ? visible : activePackages
-  }, [activePackages, compressedIndexes, selectedKey])
+      ? SUPPORTER_VISIBLE_OPTION_LIMIT
+      : TIP_VISIBLE_OPTION_LIMIT
+  const visiblePackages = activePackages.slice(0, visibleOptionLimit)
 
   const hasHiddenOptions = visiblePackages.length < activePackages.length
 
@@ -799,11 +760,7 @@ const PaywallScreen = () => {
         delete next[priceView]
         return next
       }
-      // The cheapest tier is hidden in the compressed supporter lists, so
-      // preselect the "most popular" slot instead of an invisible option.
-      const defaultIndex =
-        tier === 'supporter' && activePackages.length > 1 ? 1 : 0
-      return { ...prev, [priceView]: activePackages[defaultIndex] }
+      return { ...prev, [priceView]: activePackages[0] }
     })
   }, [activePackages, priceView, tier])
 
@@ -877,20 +834,12 @@ const PaywallScreen = () => {
     afterSelect?: () => void
   ) => {
     const key = pkgKey(pkg)
-    const index = activePackages.findIndex((p) => pkgKey(p) === key)
     const monthlyEquivalent =
       tier === 'supporter' &&
       supporterBilling === 'annual' &&
       pkg.product.pricePerMonthString
         ? `≈ ${pkg.product.pricePerMonthString} ${i18n.t('eachMonth')}`
         : undefined
-    // Nudge toward the second-cheapest monthly tier — RocketMoney-style
-    // social proof without endorsing the floor or the ceiling.
-    const isPopular =
-      tier === 'supporter' &&
-      supporterBilling === 'monthly' &&
-      activePackages.length >= 2 &&
-      index === 1
     return (
       <PriceOption
         key={key}
@@ -909,7 +858,6 @@ const PaywallScreen = () => {
               : i18n.t('eachMonth')
         }
         secondary={monthlyEquivalent}
-        popular={isPopular}
       />
     )
   }

@@ -41,6 +41,7 @@ const SupporterBadge = ({ iconOnly, size = 'sm', style }: Props) => {
         icon={HeartIcon}
         size={iconSize}
         color={theme.colors.supporter}
+        fill={theme.colors.supporter}
       />
       {!iconOnly && (
         <Text

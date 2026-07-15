@@ -13,6 +13,8 @@ interface Props {
   noHorizontalPadding?: boolean
   label?: string
   leftIcon?: AppIcon
+  leftIconColor?: string
+  leftIconFill?: string
   justifyContent?:
     | 'flex-start'
     | 'flex-end'
@@ -40,6 +42,8 @@ const InputRowButton: React.FC<PropsWithChildren<Props>> = ({
   sublabel,
   style,
   leftIcon,
+  leftIconColor,
+  leftIconFill,
 }: Props) => {
   const theme = useTheme()
 
@@ -63,7 +67,13 @@ const InputRowButton: React.FC<PropsWithChildren<Props>> = ({
       onPress={onPress}
     >
       <View style={{ flexDirection: 'row', gap: 8, alignItems: 'center' }}>
-        {leftIcon && <IconButton icon={leftIcon} />}
+        {leftIcon && (
+          <IconButton
+            icon={leftIcon}
+            color={leftIconColor}
+            fill={leftIconFill}
+          />
+        )}
         <View style={{ flexDirection: 'column', flexShrink: 1 }}>
           <Text style={{ fontFamily: theme.fonts.semiBold }}>{label}</Text>
           {sublabel && (

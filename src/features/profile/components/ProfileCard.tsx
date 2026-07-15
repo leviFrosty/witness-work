@@ -331,7 +331,12 @@ const ProfileCard = ({ preview, editable, onPressIncomplete }: Props) => {
         </View>
       </View>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-        <LucideIcon icon={tenure.icon} size={11} color={tenureIconTint} />
+        <LucideIcon
+          icon={tenure.icon}
+          size={11}
+          color={tenureIconTint}
+          fill={tenure.tone === 'supporter' ? tenureIconTint : undefined}
+        />
         <Text style={{ fontSize: 12, color: subtitleColor }}>
           {tenure.text}
         </Text>

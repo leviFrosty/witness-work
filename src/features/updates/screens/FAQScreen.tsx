@@ -1,7 +1,7 @@
 import {
   Bug as BugIcon,
-  CircleQuestionMark as CircleQuestionMarkIcon,
   Hand as HandIcon,
+  MessageCircle as MessageCircleIcon,
   Pin as PinIcon,
   Search as SearchIcon,
 } from 'lucide-react-native'
@@ -171,7 +171,7 @@ const FAQScreen = () => {
           rightElement={
             <IconButton
               style={{ position: 'absolute', right: 0 }}
-              icon={CircleQuestionMarkIcon}
+              icon={MessageCircleIcon}
               size='xl'
               accessibilityLabel={i18n.t('faq_jumpToStillNeedHelp')}
               onPress={() => scrollRef.current?.scrollToEnd({ animated: true })}

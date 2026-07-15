@@ -44,7 +44,12 @@ const SupporterNudgeCard = () => {
       }}
     >
       <XView style={{ gap: 8 }}>
-        <LucideIcon icon={HeartIcon} size={14} color={theme.colors.supporter} />
+        <LucideIcon
+          icon={HeartIcon}
+          size={14}
+          color={theme.colors.supporter}
+          fill={theme.colors.supporter}
+        />
         <Text
           style={{
             fontSize: theme.fontSize('lg'),

@@ -48,13 +48,13 @@ const SupporterCard = () => {
           borderRadius: 16,
           alignItems: 'center',
           justifyContent: 'center',
-          backgroundColor: theme.colors.supporter,
         }}
       >
         <LucideIcon
           icon={HeartIcon}
           size={13}
-          color={theme.colors.textInverse}
+          color={theme.colors.supporter}
+          fill={theme.colors.supporter}
         />
       </View>
       <View style={{ flex: 1, gap: 2 }}>
@@ -83,6 +83,7 @@ const SupporterCard = () => {
 }
 
 const SupportSection = () => {
+  const theme = useTheme()
   const navigation = useNavigation<RootStackNavigation>()
 
   return (
@@ -94,6 +95,8 @@ const SupportSection = () => {
       <Section>
         <InputRowButton
           leftIcon={HeartIcon}
+          leftIconColor={theme.colors.supporter}
+          leftIconFill={theme.colors.supporter}
           label={i18n.t('becomeSupporter')}
           onPress={() => navigation.navigate('Paywall')}
         >

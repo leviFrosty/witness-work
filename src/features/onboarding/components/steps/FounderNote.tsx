@@ -102,6 +102,7 @@ const FounderNote = ({ goBack, goNext }: Props) => {
               icon={HeartIcon}
               size={11}
               color={theme.colors.supporter}
+              fill={theme.colors.supporter}
             />
           </View>
           <Text
@@ -228,6 +229,7 @@ const FounderNote = ({ goBack, goNext }: Props) => {
                 icon={HeartIcon}
                 size={12}
                 color={theme.colors.supporter}
+                fill={theme.colors.supporter}
               />
             </View>
           </View>

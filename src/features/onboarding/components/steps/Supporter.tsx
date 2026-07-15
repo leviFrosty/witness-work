@@ -179,6 +179,7 @@ const Supporter = ({ goBack, goNext }: Props) => {
               icon={HeartIcon}
               size={14}
               color={theme.colors.supporter}
+              fill={theme.colors.supporter}
             />
             <Text
               style={{

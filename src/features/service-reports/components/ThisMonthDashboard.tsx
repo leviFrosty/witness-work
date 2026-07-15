@@ -1,22 +1,19 @@
 import { useNavigation } from '@react-navigation/native'
 import {
   ArrowUpRight as ArrowUpRightIcon,
-  CalendarClock as CalendarClockIcon,
   CalendarRange as CalendarRangeIcon,
   ChartLine as ChartLineIcon,
-  CircleCheck as CircleCheckIcon,
   Clock3 as ClockIcon,
   Gauge as GaugeIcon,
   Pencil as PencilIcon,
-  TrendingDown as TrendingDownIcon,
-  TrendingUp as TrendingUpIcon,
 } from 'lucide-react-native'
 import moment from 'moment'
 import { useRef, useState } from 'react'
-import { View } from 'react-native'
+import { Pressable, View } from 'react-native'
 
-import TiltableCard from '@/components/TiltableCard'
+import SchedulePaceInsight from '@/components/SchedulePaceInsight'
 import Card from '@/components/ui/Card'
+import CircularProgress from '@/components/ui/CircularProgress'
 import ExpandingCardOverlay, {
   type ExpandingCardOrigin,
 } from '@/components/ui/ExpandingCardOverlay'
@@ -28,17 +25,14 @@ import useTheme from '@/contexts/theme'
 import useMonthlyGoal from '@/hooks/useMonthlyGoal'
 import useProjectedTotal from '@/hooks/useProjectedTotal'
 import usePublisher from '@/hooks/usePublisher'
-import i18n, { type TranslationKey } from '@/lib/locales'
+import useScheduleStatus from '@/hooks/useScheduleStatus'
+import i18n from '@/lib/locales'
 import { useFormattedMinutes } from '@/lib/minutes'
 import { calculateMonthlyPlannedMinutesOptimized } from '@/lib/recurrence'
 import {
   adjustedMinutesForSpecificMonth,
   getMonthsReports,
 } from '@/lib/serviceReport'
-import {
-  getScheduleStatusForMonth,
-  type ScheduleStatusState,
-} from '@/lib/scheduleStatus'
 import { getServiceYearFromDate } from '@/lib/serviceYear'
 import { usePreferences } from '@/stores/preferences'
 import useServiceReport from '@/stores/serviceReport'
@@ -62,14 +56,6 @@ type Props = {
   onEdit: () => void
 }
 
-const STATUS_TITLE_KEYS: Record<ScheduleStatusState, TranslationKey> = {
-  ahead: 'scheduleStatus.ahead',
-  behind: 'scheduleStatus.behind',
-  onTrack: 'scheduleStatus.onTrack',
-  noPlan: 'scheduleStatus.noPlan',
-  notStarted: 'scheduleStatus.upcoming',
-}
-
 type DashboardCard = {
   key: ThisMonthDashboardCardKey
   icon: AppIcon
@@ -78,6 +64,7 @@ type DashboardCard = {
   color?: string
   destination: 'Progress' | 'Schedule'
   progress?: number
+  progressDisplay?: 'bar' | 'ring'
   detail: {
     title: string
     headline: string
@@ -159,7 +146,13 @@ const DashboardTile = ({
   return (
     <>
       <View ref={cardRef} collapsable={false} style={{ width: '48.5%' }}>
-        <TiltableCard onTap={openDetail} maxTilt={5}>
+        <Pressable
+          onPress={openDetail}
+          accessibilityRole='button'
+          accessibilityLabel={`${card.label}. ${card.value}`}
+          accessibilityHint={i18n.t('scheduleInsights.tapForDetails')}
+          style={({ pressed }) => ({ opacity: pressed ? 0.6 : 1 })}
+        >
           <Card
             style={{
               minHeight: 112,
@@ -168,30 +161,34 @@ const DashboardTile = ({
               justifyContent: 'space-between',
             }}
           >
-            <View
-              accessible
-              accessibilityRole='button'
-              accessibilityLabel={`${card.label}. ${card.value}`}
-              accessibilityHint={i18n.t('scheduleInsights.tapForDetails')}
-              onAccessibilityTap={openDetail}
-              style={{ flex: 1, justifyContent: 'space-between', gap: 10 }}
-            >
-              <View
-                style={{
-                  width: 30,
-                  height: 30,
-                  borderRadius: 15,
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  backgroundColor: theme.colors.backgroundLighter,
-                }}
-              >
-                <LucideIcon
-                  icon={card.icon}
-                  color={card.color ?? theme.colors.textAlt}
-                  size={16}
+            <View style={{ flex: 1, justifyContent: 'space-between', gap: 10 }}>
+              {card.progressDisplay === 'ring' &&
+              card.progress !== undefined ? (
+                <CircularProgress
+                  progress={card.progress}
+                  size={30}
+                  strokeWidth={4}
+                  color={card.color ?? theme.colors.accent}
+                  trackColor={theme.colors.border}
                 />
-              </View>
+              ) : (
+                <View
+                  style={{
+                    width: 30,
+                    height: 30,
+                    borderRadius: 15,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    backgroundColor: theme.colors.backgroundLighter,
+                  }}
+                >
+                  <LucideIcon
+                    icon={card.icon}
+                    color={card.color ?? theme.colors.textAlt}
+                    size={16}
+                  />
+                </View>
+              )}
 
               <View
                 style={{
@@ -222,7 +219,8 @@ const DashboardTile = ({
                   >
                     {card.label}
                   </Text>
-                  {card.progress !== undefined ? (
+                  {card.progress !== undefined &&
+                  card.progressDisplay !== 'ring' ? (
                     <SimpleProgressBar
                       percentage={card.progress}
                       color={card.color ?? theme.colors.accent}
@@ -234,7 +232,7 @@ const DashboardTile = ({
               </View>
             </View>
           </Card>
-        </TiltableCard>
+        </Pressable>
       </View>
 
       <ExpandingCardOverlay
@@ -361,18 +359,7 @@ const ThisMonthDashboard = ({
     { kind: 'serviceYear', serviceYear },
     annualGoalHours * 60
   )
-  const scheduleStatus = getScheduleStatusForMonth({
-    month,
-    year,
-    serviceReports,
-    dayPlans,
-    recurringPlans,
-    publisher,
-    creditLimit: {
-      enabled: overrideCreditLimit,
-      customLimitHours: customCreditLimitHours,
-    },
-  })
+  const scheduleStatus = useScheduleStatus({ month, year })
   const totalPlannedMinutes = calculateMonthlyPlannedMinutesOptimized(
     month,
     year,
@@ -390,9 +377,6 @@ const ThisMonthDashboard = ({
     }
   )
 
-  const paceDifference = useFormattedMinutes(
-    Math.abs(scheduleStatus.differenceMinutes)
-  )
   const projected = useFormattedMinutes(monthProjection.projectedMinutes)
   const yearLogged = useFormattedMinutes(yearProjection.loggedMinutes)
   const credit = useFormattedMinutes(monthAdjusted.credit)
@@ -414,36 +398,6 @@ const ThisMonthDashboard = ({
   const adjustedTotal = useFormattedMinutes(monthAdjusted.value)
 
   const hasMonthlyGoal = entryMode === 'hours' && goalMinutes > 0
-  const paceColor =
-    scheduleStatus.state === 'behind'
-      ? theme.colors.warn
-      : scheduleStatus.state === 'ahead' || scheduleStatus.state === 'onTrack'
-        ? theme.colors.accent
-        : theme.colors.textAlt
-  const paceIcon: AppIcon =
-    scheduleStatus.state === 'ahead'
-      ? TrendingUpIcon
-      : scheduleStatus.state === 'behind'
-        ? TrendingDownIcon
-        : scheduleStatus.state === 'onTrack'
-          ? CircleCheckIcon
-          : CalendarClockIcon
-  const paceValue =
-    scheduleStatus.state === 'ahead'
-      ? `+${paceDifference.formatted}`
-      : scheduleStatus.state === 'behind'
-        ? `-${paceDifference.formatted}`
-        : i18n.t(STATUS_TITLE_KEYS[scheduleStatus.state])
-  const paceStatusTitle = i18n.t(STATUS_TITLE_KEYS[scheduleStatus.state])
-  const paceProgress =
-    scheduleStatus.plannedMinutes > 0
-      ? Math.max(
-          0,
-          scheduleStatus.actualMinutes / scheduleStatus.plannedMinutes
-        )
-      : scheduleStatus.actualMinutes > 0
-        ? 1
-        : 0
   const monthGoalProgress =
     goalMinutes > 0 ? monthProjection.loggedMinutes / goalMinutes : 0
   const monthProjectedProgress =
@@ -454,25 +408,6 @@ const ThisMonthDashboard = ({
       : 0
 
   const cards: DashboardCard[] = [
-    {
-      key: 'schedulePace',
-      icon: paceIcon,
-      value: paceValue,
-      label: i18n.t('scheduleInsights.schedulePace'),
-      color: paceColor,
-      destination: 'Schedule',
-      detail: {
-        title: i18n.t('scheduleInsights.schedulePace'),
-        headline: paceStatusTitle,
-        meta: paceValue === paceStatusTitle ? undefined : paceValue,
-        progress: paceProgress,
-        stats: [
-          { label: i18n.t('actual'), value: paceActual.formatted },
-          { label: i18n.t('planned'), value: pacePlanned.formatted },
-        ],
-        description: i18n.t('scheduleInsights.paceDescriptionCurrent'),
-      },
-    },
     ...(hasMonthlyGoal
       ? [
           {
@@ -559,7 +494,9 @@ const ThisMonthDashboard = ({
             value: remaining.formatted,
             label: i18n.t('remaining'),
             destination: 'Progress' as const,
+            color: theme.colors.accent,
             progress: monthGoalProgress,
+            progressDisplay: 'ring' as const,
             detail: {
               title: i18n.t('homeDashboard.editor.cards.remainingToGoal'),
               headline: remaining.formatted,
@@ -608,10 +545,9 @@ const ThisMonthDashboard = ({
 
   const cardByKey = new Map(cards.map((card) => [card.key, card]))
   const visible = new Set(visibleCardKeys)
-  const orderedCards = orderedCardKeys.flatMap((key) => {
-    const card = cardByKey.get(key)
-    return card && visible.has(key) ? [card] : []
-  })
+  const orderedCards = orderedCardKeys.filter(
+    (key) => visible.has(key) && (key === 'schedulePace' || cardByKey.has(key))
+  )
 
   const open = (destination: DashboardCard['destination']) => {
     if (destination === 'Schedule') {
@@ -657,13 +593,30 @@ const ThisMonthDashboard = ({
             gap: 10,
           }}
         >
-          {orderedCards.map((card) => (
-            <DashboardTile
-              key={card.key}
-              card={card}
-              onNavigate={() => open(card.destination)}
-            />
-          ))}
+          {orderedCards.map((key) => {
+            if (key === 'schedulePace') {
+              return (
+                <SchedulePaceInsight
+                  key={key}
+                  month={month}
+                  year={year}
+                  variant='dashboard'
+                  onOpenSchedule={() => open('Schedule')}
+                />
+              )
+            }
+
+            const card = cardByKey.get(key)
+            if (!card) return null
+
+            return (
+              <DashboardTile
+                key={card.key}
+                card={card}
+                onNavigate={() => open(card.destination)}
+              />
+            )
+          })}
         </View>
       ) : null}
     </View>

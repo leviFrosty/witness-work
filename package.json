@@ -4,6 +4,7 @@
   "main": "src/index.js",
   "scripts": {
     "dev": "APP_VARIANT=development expo start --ios",
+    "prototype:scribe-usage": "EXPO_PUBLIC_SCRIBE_USAGE_PROTOTYPE=1 APP_VARIANT=development expo start --ios",
     "dev:prod": "expo start --no-dev --minify",
     "ios": "expo run:ios",
     "clean": "rm -rf node_modules .tamagui .expo .cache *.tar.gz ios",

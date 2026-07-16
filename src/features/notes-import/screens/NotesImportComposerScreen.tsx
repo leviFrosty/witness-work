@@ -64,6 +64,7 @@ import {
 import NotesImportUsage, {
   type RenderNotesImportSupporterCta,
 } from '@/features/notes-import/components/NotesImportUsage'
+import NotesImportUsageWindowPrototypeScreen from '@/features/notes-import/screens/NotesImportUsageWindowPrototypeScreen'
 import { WarningLine } from '@/features/notes-import/components/NotesImportRecordRow'
 import {
   highestSeverity,
@@ -1267,4 +1268,12 @@ const NotesImportComposerScreen = ({ renderSupporterCta }: Props) => {
   )
 }
 
-export default NotesImportComposerScreen
+const NotesImportComposerRoute = (props: Props) => {
+  if (__DEV__ && process.env.EXPO_PUBLIC_SCRIBE_USAGE_PROTOTYPE === '1') {
+    return <NotesImportUsageWindowPrototypeScreen />
+  }
+
+  return <NotesImportComposerScreen {...props} />
+}
+
+export default NotesImportComposerRoute

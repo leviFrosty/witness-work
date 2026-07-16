@@ -968,8 +968,9 @@ const ContactDetailsScreen = ({ route, navigation }: Props) => {
               </MenuView>
 
               <IconButton
-                icon={contact?.isFavorite ? StarIcon : StarIcon}
+                icon={StarIcon}
                 color={heroForeground}
+                fill={contact?.isFavorite ? heroForeground : 'none'}
                 onPress={() => {
                   if (contact) {
                     toggleFavoriteContact(contact.id)

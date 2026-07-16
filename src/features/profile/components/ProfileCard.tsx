@@ -184,7 +184,7 @@ const ProfileCard = ({ preview, editable, onPressIncomplete }: Props) => {
           </View>
           <LucideIcon
             icon={ChevronRightIcon}
-            size={13}
+            size={16}
             color={theme.colors.textAlt}
           />
         </Card>
@@ -309,6 +309,7 @@ const ProfileCard = ({ preview, editable, onPressIncomplete }: Props) => {
       style={{
         paddingVertical: CARD_PADDING_V,
         paddingHorizontal: CARD_PADDING_H,
+        paddingRight: !preview && !editable ? 40 : CARD_PADDING_H,
         gap: 10,
         backgroundColor: cardBg,
         borderWidth: 1,
@@ -341,6 +342,19 @@ const ProfileCard = ({ preview, editable, onPressIncomplete }: Props) => {
           {tenure.text}
         </Text>
       </View>
+      {!preview && !editable && (
+        <View
+          style={{
+            position: 'absolute',
+            right: CARD_PADDING_H,
+            top: 0,
+            bottom: 0,
+            justifyContent: 'center',
+          }}
+        >
+          <LucideIcon icon={ChevronRightIcon} size={16} color={subtitleColor} />
+        </View>
+      )}
     </Card>
   )
 

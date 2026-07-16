@@ -1,6 +1,8 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterAll, beforeEach, describe, expect, it, vi } from 'vitest'
 
 // Mutable device state the mocked expo-localization reads from.
+const originalTZ = process.env.TZ
+
 const device = {
   languageTag: 'en-US',
   uses24hourClock: false as boolean | null,
@@ -45,6 +47,11 @@ import {
 // creation, and importing locale files above moved it. Each test wants the
 // locale applyFormatRegion just configured.
 const sample = () => moment('2026-06-11T13:30:00') // Thursday
+
+afterAll(() => {
+  if (originalTZ === undefined) delete process.env.TZ
+  else process.env.TZ = originalTZ
+})
 
 beforeEach(() => {
   device.languageTag = 'en-US'
@@ -250,6 +257,17 @@ describe('formatDate (full date, honors Format Region)', () => {
     applyFormatRegion({ language: 'en', region: 'en-au' })
     expect(formatDate(sample())).toBe('11 June 2026')
     expect(formatDate(sample(), { style: 'medium' })).toBe('11 Jun 2026')
+  })
+
+  it('renders a Scribe reset in the device timezone with independent Language and Format Region', () => {
+    process.env.TZ = 'America/Los_Angeles'
+    const reset = '2026-06-11T00:30:00.000Z' // June 10 at 5:30 PM locally
+
+    applyFormatRegion({ language: 'es', region: 'en-au' })
+    expect(formatDate(reset)).toBe('10 junio 2026')
+
+    applyFormatRegion({ language: 'en', region: 'en' })
+    expect(formatDate(reset)).toBe('June 10, 2026')
   })
 })
 

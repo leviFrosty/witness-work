@@ -22,6 +22,10 @@ import {
   loadPersistedCredits,
   persistCredits,
 } from '@/features/notes-import/lib/notesImportCreditsStore'
+import {
+  notesImportCreditsForHash,
+  type NotesImportRefinementsByHash,
+} from '@/features/notes-import/lib/notesImportUsage'
 import { notesContentHash } from '@/features/notes-import/lib/notesContentHash'
 import { buildNotesImportContext } from '@/features/notes-import/lib/buildNotesImportContext'
 import { mapNotesImport } from '@/features/notes-import/lib/mapNotesImport'
@@ -36,6 +40,9 @@ import {
   classifyRunOutcome,
   classifyStartRun,
   buildQueueItems,
+  decideCreditsUpdate,
+  type CreditsProvenance,
+  type CreditsUpdateSource,
   type ImportRuntime,
 } from '@/features/notes-import/lib/notesImportManagerLogic'
 import {
@@ -128,10 +135,29 @@ interface NotesImportManagerState {
   runtimes: Record<string, ImportRuntime>
   /** Ambiguity warnings raised at the last Accept, per import. */
   reconcileWarnings: Record<string, MappedWarning[]>
-  /** Latest credit snapshot from a completed run (drives the cap + usage UI). */
+  /** Latest global import-allowance display snapshot. */
   credits: NotesImportCredits | null
+  /** Whether global display came from kickoff or persisted server authority. */
+  creditsProvenance: CreditsProvenance | null
+  /** Hash that owns the current global kickoff projection, if any. */
+  creditsKickoffHash: string | null
+  /** Last terminal/denial/persisted authority; never replaced by kickoff. */
+  authoritativeCredits: NotesImportCredits | null
+  /** Display refinement allowance keyed by source-text content hash. */
+  refinementCredits: NotesImportRefinementsByHash
+  /** Per-hash display provenance, parallel to {@link refinementCredits}. */
+  refinementCreditsProvenance: Record<string, CreditsProvenance>
+  /** Durable per-hash refinement authority. */
+  authoritativeRefinementCredits: NotesImportRefinementsByHash
   hydrated: boolean
 
+  /**
+   * Complete display snapshot for one import, or null when hash state is
+   * unknown.
+   */
+  creditsForImport: (hash: string) => NotesImportCredits | null
+  /** AppState lifecycle seam: normalize rollover, re-arm stale denials, tick. */
+  appBecameActive: () => void
   /** Reload the list from the ledger, dropping runtimes for vanished rows. */
   hydrate: () => void
   /** Launch/focus entry point: prune → hydrate → drive the queue. */
@@ -185,6 +211,192 @@ export const useNotesImportManager = create<NotesImportManagerState>(
     const patchRuntime = (hash: string, patch: Partial<ImportRuntime>) => {
       const prev = get().runtimes[hash] ?? DEFAULT_RUNTIME
       set({ runtimes: { ...get().runtimes, [hash]: { ...prev, ...patch } } })
+    }
+
+    const persistAuthority = (
+      credits: NotesImportCredits | null,
+      refinementsByHash: NotesImportRefinementsByHash
+    ) => {
+      if (credits) persistCredits({ credits, refinementsByHash })
+    }
+
+    /** Apply a hash-bound network snapshot (kickoff, terminal, or denial). */
+    const applyCredits = (
+      hash: string,
+      incoming: unknown,
+      source: Extract<CreditsUpdateSource, 'kickoff' | 'terminal' | 'denial'>
+    ) => {
+      const state = get()
+      const decision = decideCreditsUpdate({
+        current: state.credits,
+        currentProvenance: state.creditsProvenance,
+        authoritative: state.authoritativeCredits,
+        incoming,
+        source,
+        now: Date.now(),
+      })
+      const acceptedIncoming =
+        source === 'kickoff'
+          ? decision.provenance === 'kickoff' &&
+            decision.credits !== state.credits
+          : decision.persist
+      if (!acceptedIncoming || !decision.credits) return
+
+      const refinementCredits = {
+        ...state.refinementCredits,
+        [hash]: decision.credits.refinements,
+      }
+      const refinementCreditsProvenance = {
+        ...state.refinementCreditsProvenance,
+        [hash]: decision.provenance as CreditsProvenance,
+      }
+
+      if (source === 'kickoff') {
+        set({
+          credits: decision.credits,
+          creditsProvenance: 'kickoff',
+          creditsKickoffHash: hash,
+          refinementCredits,
+          refinementCreditsProvenance,
+        })
+        return
+      }
+
+      const authoritativeRefinementCredits = {
+        ...state.authoritativeRefinementCredits,
+        [hash]: decision.credits.refinements,
+      }
+      set({
+        credits: decision.credits,
+        creditsProvenance: 'authoritative',
+        creditsKickoffHash: null,
+        authoritativeCredits: decision.authoritative,
+        refinementCredits,
+        refinementCreditsProvenance,
+        authoritativeRefinementCredits,
+      })
+      persistAuthority(decision.authoritative, authoritativeRefinementCredits)
+    }
+
+    /**
+     * Normalize persisted authority at a lifecycle boundary without ever using
+     * display-only kickoff state as the input. Returns true only on rollover.
+     */
+    const refreshCreditsForLifecycle = (
+      source: Extract<CreditsUpdateSource, 'hydrate' | 'focus' | 'app-active'>
+    ): boolean => {
+      const state = get()
+      const persisted = state.authoritativeCredits
+        ? null
+        : loadPersistedCredits()
+      const authoritativeCredits =
+        state.authoritativeCredits ?? persisted?.credits ?? null
+      const authoritativeRefinementCredits = state.authoritativeCredits
+        ? state.authoritativeRefinementCredits
+        : (persisted?.refinementsByHash ?? {})
+      const decision = decideCreditsUpdate({
+        current: state.credits,
+        currentProvenance: state.creditsProvenance,
+        authoritative: authoritativeCredits,
+        incoming: persisted?.credits,
+        source,
+        now: Date.now(),
+      })
+
+      if (!decision.authoritative) return false
+
+      // Seed known authoritative per-hash values without overwriting any live
+      // kickoff projection. A real rollover drops every projection back to its
+      // authoritative value before persistence.
+      const refinementCredits = decision.refreshed
+        ? authoritativeRefinementCredits
+        : {
+            ...authoritativeRefinementCredits,
+            ...state.refinementCredits,
+          }
+      const refinementCreditsProvenance = decision.refreshed
+        ? Object.fromEntries(
+            Object.keys(authoritativeRefinementCredits).map((hash) => [
+              hash,
+              'authoritative' as const,
+            ])
+          )
+        : {
+            ...Object.fromEntries(
+              Object.keys(authoritativeRefinementCredits).map((hash) => [
+                hash,
+                'authoritative' as const,
+              ])
+            ),
+            ...state.refinementCreditsProvenance,
+          }
+
+      set({
+        credits: decision.credits,
+        creditsProvenance: decision.provenance,
+        creditsKickoffHash:
+          decision.provenance === 'kickoff' ? state.creditsKickoffHash : null,
+        authoritativeCredits: decision.authoritative,
+        refinementCredits,
+        refinementCreditsProvenance,
+        authoritativeRefinementCredits,
+      })
+      if (decision.persist) {
+        persistAuthority(decision.authoritative, authoritativeRefinementCredits)
+      }
+      return decision.refreshed
+    }
+
+    /** Roll back only the kickoff projection owned by this failed hash. */
+    const restoreKickoffProjection = (hash: string) => {
+      const state = get()
+      const patch: Partial<NotesImportManagerState> = {}
+      if (
+        state.creditsProvenance === 'kickoff' &&
+        state.creditsKickoffHash === hash
+      ) {
+        patch.credits = state.authoritativeCredits
+        patch.creditsProvenance = state.authoritativeCredits
+          ? 'authoritative'
+          : null
+        patch.creditsKickoffHash = null
+      }
+      if (state.refinementCreditsProvenance[hash] === 'kickoff') {
+        const refinementCredits = { ...state.refinementCredits }
+        const refinementCreditsProvenance = {
+          ...state.refinementCreditsProvenance,
+        }
+        const authoritative = state.authoritativeRefinementCredits[hash]
+        if (authoritative) {
+          refinementCredits[hash] = authoritative
+          refinementCreditsProvenance[hash] = 'authoritative'
+        } else {
+          delete refinementCredits[hash]
+          delete refinementCreditsProvenance[hash]
+        }
+        patch.refinementCredits = refinementCredits
+        patch.refinementCreditsProvenance = refinementCreditsProvenance
+      }
+      if (Object.keys(patch).length) set(patch)
+    }
+
+    /** A refreshed import window makes prior import-limit denials retryable. */
+    const rearmExpiredImportDenials = () => {
+      const state = get()
+      let runtimes = state.runtimes
+      for (const entry of state.entries) {
+        const runtime = runtimes[entry.hash]
+        if (entry.state !== 'working' || runtime?.error !== 'limit_reached') {
+          continue
+        }
+        if (runtimes === state.runtimes) runtimes = { ...runtimes }
+        runtimes[entry.hash] = {
+          ...runtime,
+          error: null,
+          paused: false,
+        }
+      }
+      if (runtimes !== state.runtimes) set({ runtimes })
     }
 
     /** Fold a cosmetic stream event into the import's live runtime. */
@@ -243,7 +455,8 @@ export const useNotesImportManager = create<NotesImportManagerState>(
       // the run starts — not only when it finishes. Display only: the kickoff
       // value is optimistic (the credit is charged only on success), so the
       // durable snapshot is written from the authoritative `done` payload below.
-      const onCredits = (credits: NotesImportCredits) => set({ credits })
+      const onCredits = (credits: NotesImportCredits) =>
+        applyCredits(hash, credits, 'kickoff')
       const context = buildNotesImportContext()
       const refinement = pendingRefinement.get(hash)
 
@@ -275,19 +488,35 @@ export const useNotesImportManager = create<NotesImportManagerState>(
           // or re-create a deleted one as an empty Ready row with no notes.
           if (controller.signal.aborted) return
           pendingRefinement.delete(hash)
-          // Persist alongside the in-memory snapshot so the usage meter still
-          // has values to show on the next conversation — and after a restart.
-          set({ credits: res.credits })
-          persistCredits(res.credits)
+          // Terminal success is authoritative after the server commits usage.
+          // A malformed/missing snapshot leaves the last valid state untouched.
+          applyCredits(hash, res.credits, 'terminal')
           putParsedResult(hash, res.result, Date.now(), res.emptyCharged)
           patchRuntime(hash, { phase: 'done', running: false, error: null })
         })
         .catch((e) => {
           const code = e instanceof NotesImportClientError ? e.code : 'unknown'
+          if (
+            e instanceof NotesImportClientError &&
+            e.credits &&
+            (code === 'limit_reached' || code === 'refinement_limit')
+          ) {
+            applyCredits(hash, e.credits, 'denial')
+          }
           const decision = classifyRunOutcome(
             { aborted: controller.signal.aborted, code },
             { cooldownMs: ACTIVE_CAP_COOLDOWN_MS }
           )
+          // A kickoff preview is optimistic. If this attempt still owns the
+          // hash and did not end in an authoritative allowance denial, restore
+          // display from authority so a failed/cancelled run never looks spent.
+          if (
+            controllers.get(hash) === controller &&
+            code !== 'limit_reached' &&
+            code !== 'refinement_limit'
+          ) {
+            restoreKickoffProjection(hash)
+          }
           switch (decision.kind) {
             case 'cancelled':
               // User/teardown cancel: stays Working (Queued), no error surfaced.
@@ -336,7 +565,22 @@ export const useNotesImportManager = create<NotesImportManagerState>(
       runtimes: {},
       reconcileWarnings: {},
       credits: null,
+      creditsProvenance: null,
+      creditsKickoffHash: null,
+      authoritativeCredits: null,
+      refinementCredits: {},
+      refinementCreditsProvenance: {},
+      authoritativeRefinementCredits: {},
       hydrated: false,
+
+      creditsForImport: (hash) =>
+        notesImportCreditsForHash(get().credits, get().refinementCredits, hash),
+
+      appBecameActive: () => {
+        const refreshed = refreshCreditsForLifecycle('app-active')
+        if (refreshed) rearmExpiredImportDenials()
+        get().tick()
+      },
 
       hydrate: () => {
         const entries = getAllLedgerEntries()
@@ -354,19 +598,31 @@ export const useNotesImportManager = create<NotesImportManagerState>(
           if (present.has(h)) reconcileWarnings[h] = prevWarnings[h]
         }
         set({ entries, runtimes, reconcileWarnings, hydrated: true })
+
+        // Credits hydrate independently from the import ledger. Only persisted
+        // authority is eligible for expiration and durable rollover.
+        const refreshed = refreshCreditsForLifecycle('hydrate')
+        if (refreshed) rearmExpiredImportDenials()
       },
 
       focus: () => {
         pruneLedgerEntries()
-        get().hydrate()
-        // Seed the usage meter from the last persisted snapshot so it shows on
-        // any conversation from the first frame — before this session's first
-        // run completes and refreshes it. A live snapshot is never older than
-        // the persisted one, so only fill when we don't already have credits.
-        if (!get().credits) {
-          const persisted = loadPersistedCredits()
-          if (persisted) set({ credits: persisted })
-        }
+        // Keep focus as its own lifecycle source rather than delegating to the
+        // public hydrate action; this makes provenance/rollover behavior
+        // observable at the intended manager seam.
+        const entries = getAllLedgerEntries()
+        const present = new Set(entries.map((e) => e.hash))
+        const runtimes = Object.fromEntries(
+          Object.entries(get().runtimes).filter(([hash]) => present.has(hash))
+        )
+        const reconcileWarnings = Object.fromEntries(
+          Object.entries(get().reconcileWarnings).filter(([hash]) =>
+            present.has(hash)
+          )
+        )
+        set({ entries, runtimes, reconcileWarnings, hydrated: true })
+        const refreshed = refreshCreditsForLifecycle('focus')
+        if (refreshed) rearmExpiredImportDenials()
         get().tick()
       },
 

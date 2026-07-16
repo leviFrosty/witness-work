@@ -73,11 +73,6 @@ const FEATURE_ROWS: ReadonlyArray<{
   // Differentiators lead; the "always free" rows close the table as a
   // trust signal rather than opening it with reasons not to pay.
   { labelKey: 'paywallFeatureSync', free: false, supporter: true },
-  {
-    labelKey: 'paywallFeatureNotesImport',
-    free: 'paywallFeatureNotesImportFree',
-    supporter: 'paywallFeatureNotesImportUnlimited',
-  },
   { labelKey: 'paywallFeatureAccent', free: false, supporter: true },
   { labelKey: 'paywallFeatureAppIcons', free: false, supporter: true },
   { labelKey: 'paywallFeatureFuture', free: false, supporter: true },
@@ -233,6 +228,7 @@ const CompareCell = ({
             fontSize: 13,
             fontFamily: theme.fonts.semiBold,
             color: accentColor,
+            textAlign: 'center',
           }}
         >
           {value}
@@ -251,8 +247,36 @@ const CompareCell = ({
   )
 }
 
-const ComparisonChart = () => {
+export interface NotesImportPaywallAllowance {
+  free: string
+  supporter: string
+}
+
+const ComparisonChart = ({
+  notesImportAllowance,
+}: {
+  notesImportAllowance?: NotesImportPaywallAllowance
+}) => {
   const theme = useTheme()
+  const rows: Array<{
+    key: string
+    label: string
+    free: boolean | string
+    supporter: boolean | string
+  }> = FEATURE_ROWS.map((row) => ({
+    key: row.labelKey,
+    label: i18n.t(row.labelKey),
+    free: resolveCell(row.free),
+    supporter: resolveCell(row.supporter),
+  }))
+  if (notesImportAllowance) {
+    rows.splice(1, 0, {
+      key: 'notes-import',
+      label: i18n.t('paywallFeatureNotesImport'),
+      free: notesImportAllowance.free,
+      supporter: notesImportAllowance.supporter,
+    })
+  }
   return (
     <GlassCard padding={0}>
       <View
@@ -329,15 +353,15 @@ const ComparisonChart = () => {
             </View>
           </View>
         </View>
-        {FEATURE_ROWS.map((row, index) => (
+        {rows.map((row, index) => (
           <View
-            key={row.labelKey}
+            key={row.key}
             style={{
               flexDirection: 'row',
               alignItems: 'center',
               paddingHorizontal: ROW_PADDING_HORIZONTAL,
               paddingVertical: 12,
-              borderBottomWidth: index === FEATURE_ROWS.length - 1 ? 0 : 1,
+              borderBottomWidth: index === rows.length - 1 ? 0 : 1,
               borderBottomColor: theme.colors.border,
             }}
           >
@@ -348,14 +372,11 @@ const ComparisonChart = () => {
                 color: theme.colors.text,
               }}
             >
-              {i18n.t(row.labelKey)}
+              {row.label}
             </Text>
+            <CompareCell value={row.free} width={FREE_COL_WIDTH + 20} />
             <CompareCell
-              value={resolveCell(row.free)}
-              width={FREE_COL_WIDTH + 20}
-            />
-            <CompareCell
-              value={resolveCell(row.supporter)}
+              value={row.supporter}
               width={SUPPORTER_COL_WIDTH - 10}
               highlight
             />
@@ -555,7 +576,11 @@ const AllOptionsSheet = ({
   )
 }
 
-const PaywallScreen = () => {
+const PaywallScreen = ({
+  notesImportAllowance,
+}: {
+  notesImportAllowance?: NotesImportPaywallAllowance
+}) => {
   const theme = useTheme()
   const insets = useSafeAreaInsets()
   const route = useRoute<RouteProp<RootStackParamList, 'Paywall'>>()
@@ -921,7 +946,7 @@ const PaywallScreen = () => {
       >
         <FounderLetter />
         <SocialProofRow />
-        <ComparisonChart />
+        <ComparisonChart notesImportAllowance={notesImportAllowance} />
 
         {/* Supporter is the primary flow; the one-time Tip path lives behind
             a quiet text link below the price list rather than competing as an

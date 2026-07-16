@@ -65,6 +65,7 @@ import useIsSupporter from '@/hooks/useIsSupporter'
 import useCustomer from '@/hooks/useCustomer'
 import { useSupporter } from '@/features/supporter/stores/supporter'
 import { isOfflineError } from '@/lib/offlineError'
+import { useNotesImportManager } from '@/features/notes-import/hooks/useNotesImportManager'
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
@@ -296,6 +297,19 @@ export default function App() {
     if (!__DEV__) return
     setDevRemountListener(() => setDevRemountKey((k) => k + 1))
     return () => setDevRemountListener(null)
+  }, [])
+
+  // A focused native-stack screen does not receive another navigation-focus
+  // event when iOS backgrounds and foregrounds the app. Normalize Scribe's
+  // persisted allowance on every AppState→active transition so a window that
+  // expired in the background immediately re-arms stale limit-denied imports.
+  useEffect(() => {
+    const activate = () => useNotesImportManager.getState().appBecameActive()
+    activate()
+    const sub = AppState.addEventListener('change', (state) => {
+      if (state === 'active') activate()
+    })
+    return () => sub.remove()
   }, [])
 
   useEffect(() => {

@@ -12,10 +12,13 @@ import IconButton from '@/components/ui/IconButton'
 import i18n from '@/lib/locales'
 import type { TranslationKey } from '@/lib/locales'
 import NotesImportDataHandling from '@/features/notes-import/components/NotesImportDataHandling'
+import { notesImportScheduleCopy } from '@/features/notes-import/lib/notesImportScheduleCopy'
+import type { NotesImportPublicSchedule } from '@/features/notes-import/lib/notesImportUsage'
 
 interface Props {
   open: boolean
   setOpen: (open: boolean) => void
+  schedule: NotesImportPublicSchedule | null
 }
 
 const STEP_KEYS: TranslationKey[] = [
@@ -36,8 +39,9 @@ const INCLUDE_KEYS: TranslationKey[] = [
  * useful to paste. Keeps the import screen itself visual — the step-by-step
  * detail lives here instead of as inline walls of text.
  */
-const NotesImportHelpSheet = ({ open, setOpen }: Props) => {
+const NotesImportHelpSheet = ({ open, setOpen, schedule }: Props) => {
   const theme = useTheme()
+  const scheduleCopy = schedule ? notesImportScheduleCopy(schedule) : null
 
   const sectionTitle = (text: string) => (
     <Text
@@ -182,18 +186,20 @@ const NotesImportHelpSheet = ({ open, setOpen }: Props) => {
 
           <NotesImportDataHandling />
 
-          <View style={{ gap: 10 }}>
-            {sectionTitle(i18n.t('notesImport_helpUsageTitle'))}
-            <Text
-              style={{
-                color: theme.colors.textAlt,
-                fontSize: theme.fontSize('sm'),
-                lineHeight: 20,
-              }}
-            >
-              {i18n.t('notesImport_helpUsageBody')}
-            </Text>
-          </View>
+          {scheduleCopy && (
+            <View style={{ gap: 10 }}>
+              {sectionTitle(i18n.t('notesImport_helpUsageTitle'))}
+              <Text
+                style={{
+                  color: theme.colors.textAlt,
+                  fontSize: theme.fontSize('sm'),
+                  lineHeight: 20,
+                }}
+              >
+                {i18n.t('notesImport_helpUsageBody', scheduleCopy)}
+              </Text>
+            </View>
+          )}
         </Sheet.ScrollView>
       </Sheet.Frame>
     </Sheet>

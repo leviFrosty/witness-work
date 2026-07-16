@@ -203,7 +203,7 @@ export default function ToolsScreen() {
     useState<NotesImportAuthDebugReport | null>(null)
   const [proxyProbe, setProxyProbe] = useState<{
     health: unknown
-    status: NotesImportStatus | { error: string }
+    status: NotesImportStatus | { error: string } | null
     probedAt: string
   } | null>(null)
   const [accountFileInspection, setAccountFileInspection] = useState<

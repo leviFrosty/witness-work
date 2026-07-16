@@ -12,8 +12,9 @@ import type {
 } from '@/features/notes-import/lib/notesImportTypes'
 import {
   normalizeNotesImportCredits,
+  normalizeNotesImportStatus,
   type NotesImportCredits,
-  type NotesImportCreditsWire,
+  type NotesImportStatus,
 } from '@/features/notes-import/lib/notesImportUsage'
 import * as AppAttest from '../../../../modules/app-attest'
 
@@ -42,7 +43,6 @@ const DEV_BYPASS_TOKEN = process.env.EXPO_PUBLIC_NOTES_IMPORT_DEV_BYPASS || ''
 // dev worker also has to honor the header — production rejects it — but
 // client-side defense-in-depth is cheap.)
 const DEV_BYPASS_ENABLED = __DEV__ && DEV_BYPASS_TOKEN.length > 0
-const DEV_IMPORTS_UNLIMITED = DEV_BYPASS_ENABLED
 const REQUEST_TIMEOUT_MS = 90_000
 
 export type { NotesImportCredits } from '@/features/notes-import/lib/notesImportUsage'
@@ -58,12 +58,13 @@ export interface NotesImportResponse {
    * free empty — or any non-empty run — is false.
    */
   emptyCharged: boolean
-  credits: NotesImportCredits
+  /** Null only when a malformed/missing server snapshot must be ignored. */
+  credits: NotesImportCredits | null
 }
 
 interface NotesImportWireResponse
   extends Omit<NotesImportResponse, 'credits' | 'emptyCharged'> {
-  credits: NotesImportCreditsWire
+  credits: unknown
   /** Absent on older proxy payloads → normalized to false. */
   emptyCharged?: boolean
 }
@@ -73,9 +74,7 @@ const normalizeNotesImportResponse = (
 ): NotesImportResponse => ({
   ...response,
   emptyCharged: response.emptyCharged ?? false,
-  credits: normalizeNotesImportCredits(response.credits, {
-    unlimitedImports: DEV_IMPORTS_UNLIMITED,
-  }),
+  credits: normalizeNotesImportCredits(response.credits),
 })
 
 export type NotesImportErrorCode =
@@ -104,53 +103,43 @@ export class NotesImportClientError extends Error {
    * `__DEV__` for developer logs; never surfaced in production builds.
    */
   debug?: string
+  /** Authoritative usage attached to an allowance denial, when valid. */
+  credits?: NotesImportCredits
   constructor(
     code: NotesImportErrorCode,
     message: string,
     status?: number,
-    debug?: string
+    debug?: string,
+    credits?: NotesImportCredits
   ) {
     super(message)
     this.name = 'NotesImportClientError'
     this.code = code
     this.status = status
     this.debug = debug
+    this.credits = credits
   }
 }
 
 export type NotesImportUnavailableReason = 'disabled' | 'no_provider'
-
-export interface NotesImportStatus {
-  available: boolean
-  /**
-   * Why the feature is down: a known machine code
-   * ({@link NotesImportUnavailableReason}) OR operator-supplied free text from
-   * the KV kill-switch (e.g. "Down for maintenance until 5pm"). The latter is
-   * safe to surface to users as a detail line; the codes are not.
-   */
-  reason?: string
-}
+export type { NotesImportStatus } from '@/features/notes-import/lib/notesImportUsage'
 
 /**
- * Cheap, unauthenticated availability probe (no App Attest, no inference). The
- * proxy reports `available: false` when the feature is manually disabled or no
- * vetted ZDR provider is currently healthy. Fails OPEN: any network/parse error
- * resolves to `{ available: true }` so a flaky probe never blocks a feature
- * that would actually work — the real import path still enforces everything.
+ * Cheap, unauthenticated availability probe (no App Attest, no inference).
+ * Returns null on network or contract failure: callers remain fail-open for
+ * access, but have no public schedule from which to make Help/Paywall claims.
  */
-export const getNotesImportStatus = async (): Promise<NotesImportStatus> => {
-  try {
-    const { data } = await axios.get<NotesImportStatus>(
-      apis.notesImportStatus,
-      {
+export const getNotesImportStatus =
+  async (): Promise<NotesImportStatus | null> => {
+    try {
+      const { data } = await axios.get<unknown>(apis.notesImportStatus, {
         timeout: 8_000,
-      }
-    )
-    return { available: data?.available !== false, reason: data?.reason }
-  } catch {
-    return { available: true }
+      })
+      return normalizeNotesImportStatus(data)
+    } catch {
+      return null
+    }
   }
-}
 
 export interface RequestNotesImportArgs {
   notesText: string
@@ -421,12 +410,15 @@ const toClientError = (e: unknown): NotesImportClientError => {
   if (isAxiosError(e)) {
     const status = e.response?.status
     const debug = buildDebugInfo(e)
-    const code = (e.response?.data as { code?: string } | undefined)?.code as
-      | NotesImportErrorCode
+    const payload = e.response?.data as
+      | { code?: string; error?: string; credits?: unknown }
       | undefined
-    const message =
-      (e.response?.data as { error?: string } | undefined)?.error ?? e.message
-    if (code) return new NotesImportClientError(code, message, status, debug)
+    const code = payload?.code as NotesImportErrorCode | undefined
+    const message = payload?.error ?? e.message
+    const credits = normalizeNotesImportCredits(payload?.credits) ?? undefined
+    if (code) {
+      return new NotesImportClientError(code, message, status, debug, credits)
+    }
     if (!e.response) {
       return new NotesImportClientError(
         'network',
@@ -550,38 +542,45 @@ export type ImportStreamEvent =
   | { type: 'reasoning'; text: string }
   | { type: 'progress'; chars: number }
   | { type: 'done'; payload: NotesImportResponse }
-  | { type: 'error'; code: string; message: string }
+  | {
+      type: 'error'
+      code: string
+      message: string
+      credits?: NotesImportCredits
+    }
 
 type ImportStreamWireEvent =
-  | Exclude<ImportStreamEvent, { type: 'done' }>
+  | Exclude<ImportStreamEvent, { type: 'done' } | { type: 'error' }>
   | { type: 'done'; payload: NotesImportWireResponse }
+  | { type: 'error'; code: string; message: string; credits?: unknown }
 
 interface NotesImportKickoffResponse {
   importId: string
   subscribeToken: string
   refinement: boolean
-  /**
-   * The caller's usage snapshot at kickoff, so the meter can show the moment a
-   * run starts instead of waiting for the `done` event. Optional: a proxy from
-   * before this field shipped simply omits it (the meter then fills on
-   * `done`).
-   */
-  credits?: NotesImportCreditsWire
+  /** Required current usage snapshot; validated before reaching the manager. */
+  credits: unknown
 }
 
 interface ResultSnapshot {
   status: ImportStatus | null
   payload?: NotesImportResponse
-  error?: { code: string; message: string }
+  error?: { code: string; message: string; credits?: NotesImportCredits }
 }
 
-interface WireResultSnapshot extends Omit<ResultSnapshot, 'payload'> {
+interface WireResultSnapshot extends Omit<ResultSnapshot, 'payload' | 'error'> {
   payload?: NotesImportWireResponse
+  error?: { code: string; message: string; credits?: unknown }
 }
 
 type StreamOutcome =
   | { kind: 'done'; payload: NotesImportResponse }
-  | { kind: 'error'; code: string; message: string }
+  | {
+      kind: 'error'
+      code: string
+      message: string
+      credits?: NotesImportCredits
+    }
   | { kind: 'closed' }
 
 /** Attested kickoff: gate inference, reserve a concurrency slot, return ids. */
@@ -682,13 +681,18 @@ export const consumeStream = async (
         let ev: ImportStreamEvent | null = null
         try {
           const wireEvent = JSON.parse(data) as ImportStreamWireEvent
-          ev =
-            wireEvent.type === 'done'
-              ? {
-                  ...wireEvent,
-                  payload: normalizeNotesImportResponse(wireEvent.payload),
-                }
-              : wireEvent
+          if (wireEvent.type === 'done') {
+            ev = {
+              ...wireEvent,
+              payload: normalizeNotesImportResponse(wireEvent.payload),
+            }
+          } else if (wireEvent.type === 'error') {
+            const credits =
+              normalizeNotesImportCredits(wireEvent.credits) ?? undefined
+            ev = { ...wireEvent, credits }
+          } else {
+            ev = wireEvent
+          }
         } catch {
           ev = null
         }
@@ -696,7 +700,12 @@ export const consumeStream = async (
           onEvent(ev)
           if (ev.type === 'done') return { kind: 'done', payload: ev.payload }
           if (ev.type === 'error') {
-            return { kind: 'error', code: ev.code, message: ev.message }
+            return {
+              kind: 'error',
+              code: ev.code,
+              message: ev.message,
+              credits: ev.credits,
+            }
           }
         }
       }
@@ -721,6 +730,13 @@ export const fetchNotesImportResult = async (
     ...data,
     payload: data.payload
       ? normalizeNotesImportResponse(data.payload)
+      : undefined,
+    error: data.error
+      ? {
+          code: data.error.code,
+          message: data.error.message,
+          credits: normalizeNotesImportCredits(data.error.credits) ?? undefined,
+        }
       : undefined,
   }
 }
@@ -818,7 +834,10 @@ const streamRunToCompletion = async (
     if (outcome.kind === 'error') {
       throw new NotesImportClientError(
         outcome.code as NotesImportErrorCode,
-        outcome.message
+        outcome.message,
+        undefined,
+        undefined,
+        outcome.credits
       )
     }
 
@@ -842,7 +861,10 @@ const streamRunToCompletion = async (
     if (snap?.status === 'error' && snap.error) {
       throw new NotesImportClientError(
         snap.error.code as NotesImportErrorCode,
-        snap.error.message
+        snap.error.message,
+        undefined,
+        undefined,
+        snap.error.credits
       )
     }
     if (++attempts >= 4) {
@@ -878,13 +900,8 @@ export const runNotesImportStreaming = async ({
   })
   onKickoff?.({ importId, subscribeToken })
   // Surface the usage snapshot up front so the meter populates at run start.
-  if (credits) {
-    onCredits?.(
-      normalizeNotesImportCredits(credits, {
-        unlimitedImports: DEV_IMPORTS_UNLIMITED,
-      })
-    )
-  }
+  const kickoffCredits = normalizeNotesImportCredits(credits)
+  if (kickoffCredits) onCredits?.(kickoffCredits)
   onEvent?.({ type: 'status', status: 'queued' })
 
   return streamRunToCompletion({ importId, subscribeToken }, onEvent, signal)

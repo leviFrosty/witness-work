@@ -43,6 +43,7 @@ import Card from '@/components/ui/Card'
 import ActionButton from '@/components/ui/ActionButton'
 import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
+import { formatDate } from '@/lib/dates'
 import type { RootStackNavigation, RootStackParamList } from '@/types/rootStack'
 import { useNotesImportManager } from '@/features/notes-import/hooks/useNotesImportManager'
 import { useNotesImportAvailability } from '@/features/notes-import/hooks/useNotesImportAvailability'
@@ -144,7 +145,7 @@ const NotesImportComposerScreen = ({ renderSupporterCta }: Props) => {
 
   const entries = useNotesImportManager((s) => s.entries)
   const runtimes = useNotesImportManager((s) => s.runtimes)
-  const credits = useNotesImportManager((s) => s.credits)
+  const creditsForImport = useNotesImportManager((s) => s.creditsForImport)
   const reconcileWarningsMap = useNotesImportManager((s) => s.reconcileWarnings)
   const submit = useNotesImportManager((s) => s.submit)
   const refine = useNotesImportManager((s) => s.refine)
@@ -173,6 +174,7 @@ const NotesImportComposerScreen = ({ renderSupporterCta }: Props) => {
   // merge, not a screen navigation), so loading a past import never grows the
   // back stack — see NotesImportHeaderActions.
   const activeHash = routeHash ?? null
+  const credits = activeHash ? creditsForImport(activeHash) : null
   const [helpOpen, setHelpOpen] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [committing, setCommitting] = useState(false)
@@ -627,30 +629,65 @@ const NotesImportComposerScreen = ({ renderSupporterCta }: Props) => {
       3
     )
 
-  const limitBlock = () => (
-    <Card style={{ gap: 10 }}>
-      <Text style={{ fontFamily: theme.fonts.bold }}>
-        {i18n.t('notesImport_limitTitle')}
-      </Text>
-      <Text style={{ color: theme.colors.textAlt }}>
-        {i18n.t('notesImport_limitBody')}
-      </Text>
-      {renderSupporterCta ? (
-        renderSupporterCta({ onPress: onRequestUpgrade })
-      ) : (
-        <ActionButton onPress={onRequestUpgrade}>
-          <Text
-            style={{
-              color: theme.colors.textInverse,
-              fontFamily: theme.fonts.bold,
-            }}
-          >
-            {i18n.t('notesImport_limitCta')}
-          </Text>
-        </ActionButton>
-      )}
-    </Card>
-  )
+  const limitBlock = () => {
+    const noImports = credits?.limit === 0
+    const resetDate = credits?.resetsAt ? formatDate(credits.resetsAt) : null
+    const body = noImports
+      ? i18n.t('notesImport_limitBodyNone')
+      : resetDate
+        ? i18n.t('notesImport_limitBodyReset', { date: resetDate })
+        : i18n.t('notesImport_limitBodyNoReset')
+
+    return (
+      <Card style={{ gap: 10 }}>
+        <Text style={{ fontFamily: theme.fonts.bold }}>
+          {i18n.t(
+            noImports ? 'notesImport_usageNoImports' : 'notesImport_limitTitle'
+          )}
+        </Text>
+        <Text style={{ color: theme.colors.textAlt, lineHeight: 20 }}>
+          {body}
+        </Text>
+        {credits?.isSupporter !== true &&
+          (renderSupporterCta ? (
+            renderSupporterCta({ onPress: onRequestUpgrade })
+          ) : (
+            <ActionButton onPress={onRequestUpgrade}>
+              <Text
+                style={{
+                  color: theme.colors.textInverse,
+                  fontFamily: theme.fonts.bold,
+                }}
+              >
+                {i18n.t('notesImport_limitCta')}
+              </Text>
+            </ActionButton>
+          ))}
+      </Card>
+    )
+  }
+
+  const refinementLimitBlock = () => {
+    const balance =
+      credits?.refinements.limit === 0
+        ? i18n.t('notesImport_usageNoRefinements')
+        : credits?.refinements.limit == null
+          ? i18n.t('notesImport_usageUnavailable')
+          : i18n.t('notesImport_usageRefinementsLeft', {
+              remaining: credits.refinements.remaining,
+              limit: credits.refinements.limit,
+            })
+    return (
+      <Card style={{ gap: 10 }}>
+        <Text style={{ fontFamily: theme.fonts.bold }}>
+          {i18n.t('notesImport_refinementLimitTitle')}
+        </Text>
+        <Text style={{ color: theme.colors.textAlt, lineHeight: 20 }}>
+          {i18n.t('notesImport_refinementLimitBody', { balance })}
+        </Text>
+      </Card>
+    )
+  }
 
   // Pinned top-of-screen notice when the proxy reports the feature is down,
   // appending the operator's detail (e.g. a maintenance window) when present.
@@ -740,7 +777,9 @@ const NotesImportComposerScreen = ({ renderSupporterCta }: Props) => {
     let aiTurn: ReactNode = null
     if (isWorking) {
       if (errorCode === 'limit_reached') aiTurn = limitBlock()
-      else if (errorCode) aiTurn = errorBlock()
+      else if (errorCode === 'refinement_limit') {
+        aiTurn = refinementLimitBlock()
+      } else if (errorCode) aiTurn = errorBlock()
       else if (isPaused) aiTurn = pausedBlock()
       else
         // No inline cancel here — the composer's Send button becomes a Stop
@@ -965,7 +1004,7 @@ const NotesImportComposerScreen = ({ renderSupporterCta }: Props) => {
     // ledger: the k-th refinement (k-th user message) spent the k-th credit.
     // Counting down from the limit keeps the bottom-most caption in step with
     // the pinned usage meter without depending on stale per-message snapshots.
-    const refineLimit = credits?.refinements.limit ?? 0
+    const refineLimit = credits?.refinements.limit
     let refinementsUsed = 0
 
     return (
@@ -1016,7 +1055,12 @@ const NotesImportComposerScreen = ({ renderSupporterCta }: Props) => {
             <NotesImportRefinementBubble
               key={`${index}-u`}
               instruction={message.text}
-              remaining={Math.max(0, refineLimit - refinementsUsed)}
+              limit={refineLimit}
+              remaining={
+                typeof refineLimit === 'number'
+                  ? Math.max(0, refineLimit - refinementsUsed)
+                  : refineLimit
+              }
             />
           )
         })}
@@ -1261,7 +1305,11 @@ const NotesImportComposerScreen = ({ renderSupporterCta }: Props) => {
           />
         </View>
 
-        <NotesImportHelpSheet open={helpOpen} setOpen={setHelpOpen} />
+        <NotesImportHelpSheet
+          open={helpOpen}
+          setOpen={setHelpOpen}
+          schedule={availability.schedule}
+        />
       </Animated.View>
     </Wrapper>
   )

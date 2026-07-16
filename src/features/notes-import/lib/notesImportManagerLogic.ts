@@ -15,6 +15,10 @@ import type {
   NotesImportErrorCode,
   NotesImportRunHandle,
 } from '@/features/notes-import/lib/notesImportClient'
+import {
+  normalizeNotesImportCredits,
+  type NotesImportCredits,
+} from '@/features/notes-import/lib/notesImportUsage'
 
 /**
  * Pure decision logic for the multi-import manager store (ADR 0009). Kept out
@@ -172,7 +176,12 @@ export const foldStreamEvent = (
 export type RunOutcomeDecision =
   | { kind: 'cancelled' }
   | { kind: 'cooldown'; cooldownMs: number }
-  | { kind: 'failed'; code: NotesImportErrorCode; report: boolean }
+  | {
+      kind: 'failed'
+      code: NotesImportErrorCode
+      report: boolean
+      retryable: boolean
+    }
 
 /**
  * Classify a failed run. An aborted run was a user/teardown cancel (stays
@@ -188,7 +197,142 @@ export const classifyRunOutcome = (
   if (args.code === 'active_cap')
     return { kind: 'cooldown', cooldownMs: opts.cooldownMs }
   const report = args.code === 'unknown' || args.code === 'model_error'
-  return { kind: 'failed', code: args.code, report }
+  const retryable =
+    args.code !== 'limit_reached' && args.code !== 'refinement_limit'
+  return { kind: 'failed', code: args.code, report, retryable }
+}
+
+export type CreditsProvenance = 'kickoff' | 'authoritative'
+export type CreditsUpdateSource =
+  | 'kickoff'
+  | 'terminal'
+  | 'denial'
+  | 'hydrate'
+  | 'focus'
+  | 'app-active'
+
+export interface CreditsUpdateDecision {
+  /** Snapshot used for immediate display. */
+  credits: NotesImportCredits | null
+  provenance: CreditsProvenance | null
+  /** Last terminal/denial/persisted snapshot; kickoff can never replace it. */
+  authoritative: NotesImportCredits | null
+  persist: boolean
+  /** A finite import window rolled at this lifecycle boundary. */
+  refreshed: boolean
+}
+
+const unchangedCreditsDecision = (args: {
+  current: NotesImportCredits | null
+  currentProvenance: CreditsProvenance | null
+  authoritative: NotesImportCredits | null
+}): CreditsUpdateDecision => ({
+  credits: args.current,
+  provenance: args.currentProvenance,
+  authoritative: args.authoritative,
+  persist: false,
+  refreshed: false,
+})
+
+const mergeAuthoritativeCredits = (
+  current: NotesImportCredits | null,
+  incoming: NotesImportCredits
+): NotesImportCredits => {
+  if (
+    current !== null &&
+    current.remaining !== null &&
+    current.limit !== null &&
+    current.resetsAt !== null &&
+    incoming.remaining !== null &&
+    incoming.limit !== null &&
+    incoming.limit === current.limit &&
+    incoming.resetsAt === current.resetsAt &&
+    incoming.isSupporter === current.isSupporter
+  ) {
+    return {
+      ...incoming,
+      remaining: Math.min(current.remaining, incoming.remaining),
+    }
+  }
+
+  return incoming
+}
+
+/**
+ * Applies CreditsSnapshot authority rules at the public manager-logic seam.
+ * Kickoff is explicitly display-only; terminal/denial snapshots replace
+ * authority, except out-of-order responses for the same finite window merge the
+ * global balance monotonically while retaining incoming per-hash refinement
+ * authority. Hydrate/focus/AppState-active normalize only persisted authority,
+ * so a projected kickoff decrement can never be promoted by a later lifecycle
+ * pass. When authority expires, it replaces display state and is persisted.
+ */
+export const decideCreditsUpdate = (args: {
+  current: NotesImportCredits | null
+  currentProvenance: CreditsProvenance | null
+  authoritative: NotesImportCredits | null
+  incoming: unknown
+  source: CreditsUpdateSource
+  now: number
+}): CreditsUpdateDecision => {
+  if (args.source === 'kickoff') {
+    const normalized = normalizeNotesImportCredits(args.incoming, {
+      now: args.now,
+    })
+    return normalized
+      ? {
+          credits: normalized,
+          provenance: 'kickoff',
+          authoritative: args.authoritative,
+          persist: false,
+          refreshed: false,
+        }
+      : unchangedCreditsDecision(args)
+  }
+
+  if (args.source === 'terminal' || args.source === 'denial') {
+    const normalized = normalizeNotesImportCredits(args.incoming, {
+      now: args.now,
+    })
+    if (!normalized) return unchangedCreditsDecision(args)
+
+    const merged = mergeAuthoritativeCredits(args.authoritative, normalized)
+    return {
+      credits: merged,
+      provenance: 'authoritative',
+      authoritative: merged,
+      persist: true,
+      refreshed: false,
+    }
+  }
+
+  // On first hydrate, `incoming` carries persisted authority. Every later
+  // lifecycle pass uses the separately retained authoritative snapshot.
+  const authorityInput = args.authoritative ?? args.incoming
+  const normalizedAuthority = normalizeNotesImportCredits(authorityInput, {
+    now: args.now,
+  })
+  if (!normalizedAuthority) return unchangedCreditsDecision(args)
+
+  const authoritativeReset =
+    args.authoritative?.resetsAt ??
+    (typeof authorityInput === 'object' &&
+    authorityInput !== null &&
+    'resetsAt' in authorityInput &&
+    typeof authorityInput.resetsAt === 'string'
+      ? authorityInput.resetsAt
+      : null)
+  const refreshed =
+    authoritativeReset !== null && normalizedAuthority.resetsAt === null
+  const replaceDisplay = refreshed || args.current === null
+
+  return {
+    credits: replaceDisplay ? normalizedAuthority : args.current,
+    provenance: replaceDisplay ? 'authoritative' : args.currentProvenance,
+    authoritative: normalizedAuthority,
+    persist: refreshed,
+    refreshed,
+  }
 }
 
 /**

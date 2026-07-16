@@ -14,7 +14,7 @@ import HomeTabStack from '@/app/navigation/HomeTabStack'
 import PreferencesScreen from '@/features/settings/screens/preferences/PreferencesScreen'
 import i18n from '@/lib/locales'
 import WhatsNewScreen from '@/features/updates/screens/WhatsNewScreen'
-import PaywallScreen from '@/features/supporter/screens/PaywallScreen'
+import PaywallRouteScreen from '@/app/navigation/PaywallRouteScreen'
 import PaywallThankYouScreen from '@/features/supporter/screens/PaywallThankYouScreen'
 import ImportAndExportScreen from '@/features/settings/screens/ImportAndExportScreen'
 import MytimeImportScreen from '@/features/mytime-import/screens/MytimeImportScreen'
@@ -147,7 +147,7 @@ const RootStackComponent = () => {
             header: () => <Header buttonType='back' title={i18n.t('donate')} />,
           }}
           name='Paywall'
-          component={PaywallScreen}
+          component={PaywallRouteScreen}
         />
         <RootStack.Screen
           options={{

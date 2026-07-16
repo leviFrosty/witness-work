@@ -11,6 +11,7 @@ import {
   buildQueueItems,
   approxTokens,
   REASONING_TAIL,
+  decideCreditsUpdate,
   type QueuePlanItem,
 } from '@/features/notes-import/lib/notesImportManagerLogic'
 import type { MappedNotesImport } from '@/features/notes-import/lib/mapNotesImport'
@@ -220,20 +221,260 @@ describe('classifyRunOutcome', () => {
   it('unknown and model_error fail WITH a report (logged + Sentry)', () => {
     expect(
       classifyRunOutcome({ aborted: false, code: 'unknown' }, opts)
-    ).toEqual({ kind: 'failed', code: 'unknown', report: true })
+    ).toEqual({
+      kind: 'failed',
+      code: 'unknown',
+      report: true,
+      retryable: true,
+    })
     expect(
       classifyRunOutcome({ aborted: false, code: 'model_error' }, opts)
-    ).toEqual({ kind: 'failed', code: 'model_error', report: true })
+    ).toEqual({
+      kind: 'failed',
+      code: 'model_error',
+      report: true,
+      retryable: true,
+    })
   })
 
   it('other codes fail WITHOUT a report (surfaced only)', () => {
     expect(
       classifyRunOutcome({ aborted: false, code: 'too_large' }, opts)
-    ).toEqual({ kind: 'failed', code: 'too_large', report: false })
+    ).toEqual({
+      kind: 'failed',
+      code: 'too_large',
+      report: false,
+      retryable: true,
+    })
+  })
+
+  it('keeps import and refinement allowance denials non-retryable', () => {
     expect(
       classifyRunOutcome({ aborted: false, code: 'limit_reached' }, opts)
-    ).toEqual({ kind: 'failed', code: 'limit_reached', report: false })
+    ).toEqual({
+      kind: 'failed',
+      code: 'limit_reached',
+      report: false,
+      retryable: false,
+    })
+    expect(
+      classifyRunOutcome({ aborted: false, code: 'refinement_limit' }, opts)
+    ).toEqual({
+      kind: 'failed',
+      code: 'refinement_limit',
+      report: false,
+      retryable: false,
+    })
   })
+})
+
+describe('decideCreditsUpdate', () => {
+  const authoritative = {
+    remaining: 4,
+    limit: 5,
+    resetsAt: '2026-09-01T00:00:00.000Z',
+    isSupporter: false,
+    refinements: { remaining: 4, limit: 5 },
+  }
+  const kickoff = {
+    remaining: 3,
+    limit: 5,
+    resetsAt: '2026-09-01T00:00:00.000Z',
+    isSupporter: false,
+    refinements: { remaining: 2, limit: 5 },
+  }
+  const now = Date.parse('2026-08-01T00:00:00.000Z')
+
+  it('keeps kickoff display separate from persisted authority', () => {
+    expect(
+      decideCreditsUpdate({
+        current: authoritative,
+        currentProvenance: 'authoritative',
+        authoritative,
+        incoming: kickoff,
+        source: 'kickoff',
+        now,
+      })
+    ).toEqual({
+      credits: kickoff,
+      provenance: 'kickoff',
+      authoritative,
+      persist: false,
+      refreshed: false,
+    })
+  })
+
+  it.each(['terminal', 'denial'] as const)(
+    'persists an authoritative %s snapshot',
+    (source) => {
+      expect(
+        decideCreditsUpdate({
+          current: authoritative,
+          currentProvenance: 'authoritative',
+          authoritative,
+          incoming: kickoff,
+          source,
+          now,
+        })
+      ).toEqual({
+        credits: kickoff,
+        provenance: 'authoritative',
+        authoritative: kickoff,
+        persist: true,
+        refreshed: false,
+      })
+    }
+  )
+
+  it.each(['terminal', 'denial'] as const)(
+    'does not let a stale same-window %s increase remaining',
+    (source) => {
+      const current = {
+        ...authoritative,
+        remaining: 3,
+        refinements: { remaining: 1, limit: 5 },
+      }
+      const stale = {
+        ...authoritative,
+        remaining: 4,
+        refinements: { remaining: 2, limit: 5 },
+      }
+
+      expect(
+        decideCreditsUpdate({
+          current,
+          currentProvenance: 'authoritative',
+          authoritative: current,
+          incoming: stale,
+          source,
+          now,
+        })
+      ).toEqual({
+        credits: { ...stale, remaining: 3 },
+        provenance: 'authoritative',
+        authoritative: { ...stale, remaining: 3 },
+        persist: true,
+        refreshed: false,
+      })
+    }
+  )
+
+  it.each([
+    [
+      'window',
+      { ...authoritative, remaining: 4, resetsAt: '2026-10-01T00:00:00.000Z' },
+    ],
+    ['config', { ...authoritative, remaining: 4, limit: 6 }],
+    ['tier', { ...authoritative, remaining: 4, isSupporter: true }],
+  ] as const)(
+    'lets a changed %s replace remaining authoritatively',
+    (_kind, incoming) => {
+      const current = { ...authoritative, remaining: 3 }
+
+      expect(
+        decideCreditsUpdate({
+          current,
+          currentProvenance: 'authoritative',
+          authoritative: current,
+          incoming,
+          source: 'terminal',
+          now,
+        })
+      ).toEqual({
+        credits: incoming,
+        provenance: 'authoritative',
+        authoritative: incoming,
+        persist: true,
+        refreshed: false,
+      })
+    }
+  )
+
+  it('preserves the prior valid state when an incoming snapshot is malformed', () => {
+    expect(
+      decideCreditsUpdate({
+        current: authoritative,
+        currentProvenance: 'authoritative',
+        authoritative,
+        incoming: { remaining: 2, isSupporter: false },
+        source: 'terminal',
+        now,
+      })
+    ).toEqual({
+      credits: authoritative,
+      provenance: 'authoritative',
+      authoritative,
+      persist: false,
+      refreshed: false,
+    })
+  })
+
+  it('keeps usage unavailable when there is no prior or valid incoming snapshot', () => {
+    expect(
+      decideCreditsUpdate({
+        current: null,
+        currentProvenance: null,
+        authoritative: null,
+        incoming: undefined,
+        source: 'denial',
+        now,
+      })
+    ).toEqual({
+      credits: null,
+      provenance: null,
+      authoritative: null,
+      persist: false,
+      refreshed: false,
+    })
+  })
+
+  it.each(['hydrate', 'focus', 'app-active'] as const)(
+    'normalizes authority and replaces display-only kickoff state after expiry on %s',
+    (source) => {
+      expect(
+        decideCreditsUpdate({
+          current: kickoff,
+          currentProvenance: 'kickoff',
+          authoritative,
+          incoming: undefined,
+          source,
+          now: Date.parse(authoritative.resetsAt),
+        })
+      ).toEqual({
+        credits: { ...authoritative, remaining: 5, resetsAt: null },
+        provenance: 'authoritative',
+        authoritative: {
+          ...authoritative,
+          remaining: 5,
+          resetsAt: null,
+        },
+        persist: true,
+        refreshed: true,
+      })
+    }
+  )
+
+  it.each(['hydrate', 'focus', 'app-active'] as const)(
+    'does not promote a future display-only kickoff snapshot on %s',
+    (source) => {
+      expect(
+        decideCreditsUpdate({
+          current: kickoff,
+          currentProvenance: 'kickoff',
+          authoritative,
+          incoming: undefined,
+          source,
+          now,
+        })
+      ).toEqual({
+        credits: kickoff,
+        provenance: 'kickoff',
+        authoritative,
+        persist: false,
+        refreshed: false,
+      })
+    }
+  )
 })
 
 describe('classifyStartRun', () => {

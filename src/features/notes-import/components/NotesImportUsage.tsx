@@ -9,6 +9,7 @@ import CircularProgress from '@/components/ui/CircularProgress'
 import Text from '@/components/ui/MyText'
 import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
+import { formatDate } from '@/lib/dates'
 import {
   notesImportPrimaryUsage,
   shouldShowNotesImportSupporterCta,
@@ -25,28 +26,25 @@ interface Props {
   renderSupporterCta?: RenderNotesImportSupporterCta
 }
 
-/** A thin progress bar (fills by fraction remaining) with a trailing label. */
+/** A thin progress bar (fills by fraction remaining) with a direct balance. */
 const UsageBar = ({
   remaining,
   limit,
   color,
-  unlimited,
+  label,
 }: {
   remaining: number | null
   limit: number | null
   color: string
-  unlimited?: boolean
+  label: string
 }) => {
   const theme = useTheme()
-  const percentage =
-    unlimited || remaining === null || limit === null || limit === 0
-      ? 1
-      : Math.min(1, Math.max(0, remaining / limit))
-  const label = unlimited
-    ? i18n.t('notesImport_usageNoLimit')
-    : i18n.t('notesImport_usagePercentRemaining', {
-        percent: Math.round(percentage * 100),
-      })
+  const unlimited = remaining === null && limit === null
+  const percentage = unlimited
+    ? 1
+    : limit === 0
+      ? 0
+      : Math.min(1, Math.max(0, (remaining ?? 0) / (limit ?? 1)))
 
   return (
     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
@@ -71,7 +69,7 @@ const UsageBar = ({
       </View>
       <Text
         style={{
-          minWidth: 58,
+          flexShrink: 1,
           textAlign: 'right',
           color: theme.colors.textAlt,
           fontSize: theme.fontSize('xs'),
@@ -87,17 +85,30 @@ const Detail = ({
   title,
   body,
   bar,
+  caption,
 }: {
   title: string
   body: string
   /** Optional progress bar rendered between the section title and its body. */
   bar?: ReactNode
+  caption?: string
 }) => {
   const theme = useTheme()
   return (
     <View style={{ gap: 8 }}>
       <Text style={{ fontFamily: theme.fonts.semiBold }}>{title}</Text>
       {bar}
+      {caption && (
+        <Text
+          style={{
+            color: theme.colors.text,
+            fontFamily: theme.fonts.semiBold,
+            fontSize: theme.fontSize('sm'),
+          }}
+        >
+          {caption}
+        </Text>
+      )}
       <Text
         style={{
           color: theme.colors.textAlt,
@@ -129,12 +140,40 @@ const NotesImportUsage = ({
   const insets = useSafeAreaInsets()
   const { width: windowWidth } = useWindowDimensions()
   const contentWidth = Math.min(340, windowWidth - 24)
-  const importsUnlimited = credits.isSupporter || credits.remaining === null
+  const importsUnlimited = credits.remaining === null && credits.limit === null
   const primaryUsage = notesImportPrimaryUsage(credits)
+  const importBalance = importsUnlimited
+    ? i18n.t('notesImport_usageUnlimitedImports')
+    : credits.limit === 0
+      ? i18n.t('notesImport_usageNoImports')
+      : credits.remaining === 0
+        ? i18n.t('notesImport_usageImportAllowanceReached')
+        : i18n.t('notesImport_usageImportsLeft', {
+            remaining: credits.remaining,
+            limit: credits.limit,
+          })
+  const refinementsUnlimited =
+    credits.refinements.remaining === null && credits.refinements.limit === null
+  const refinementBalance = refinementsUnlimited
+    ? i18n.t('notesImport_usageUnlimitedRefinements')
+    : credits.refinements.limit === 0
+      ? i18n.t('notesImport_usageNoRefinements')
+      : i18n.t('notesImport_usageRefinementsLeft', {
+          remaining: credits.refinements.remaining,
+          limit: credits.refinements.limit,
+        })
+  const resetCaption = credits.resetsAt
+    ? i18n.t('notesImport_usageRefreshes', {
+        date: formatDate(credits.resetsAt),
+      })
+    : undefined
 
-  const ringProgress = primaryUsage.limit
-    ? primaryUsage.remaining / primaryUsage.limit
-    : 1
+  const ringProgress =
+    primaryUsage.limit === null
+      ? 1
+      : primaryUsage.limit === 0
+        ? 0
+        : (primaryUsage.remaining ?? 0) / primaryUsage.limit
   const ringColor =
     primaryUsage.remaining === 0
       ? theme.colors.warn
@@ -178,11 +217,8 @@ const NotesImportUsage = ({
             onPress={onPress}
             accessibilityRole='button'
             accessibilityLabel={i18n.t('notesImport_usageAccessibilityLabel', {
-              imports:
-                credits.remaining === null
-                  ? i18n.t('notesImport_usageUnlimited')
-                  : credits.remaining,
-              refinements: credits.refinements.remaining,
+              imports: importBalance,
+              refinements: refinementBalance,
             })}
             accessibilityHint={i18n.t('notesImport_usageHint')}
             hitSlop={8}
@@ -221,35 +257,33 @@ const NotesImportUsage = ({
                 fontSize: theme.fontSize('sm'),
               }}
             >
-              {importsUnlimited
-                ? credits.isSupporter
-                  ? i18n.t('notesImport_usageSupporterStatus')
-                  : i18n.t('notesImport_usageDevelopmentStatus')
+              {importsUnlimited && credits.isSupporter
+                ? i18n.t('notesImport_usageSupporterStatus')
                 : i18n.t('notesImport_usageIncludedStatus')}
             </Text>
           </View>
           <Detail
             title={i18n.t('notesImport_usageImports')}
             body={i18n.t('notesImport_usageImportsBody')}
+            caption={resetCaption}
             bar={
               <UsageBar
                 remaining={credits.remaining}
                 limit={credits.limit}
                 color={theme.colors.accent}
-                unlimited={importsUnlimited}
+                label={importBalance}
               />
             }
           />
           <Detail
             title={i18n.t('notesImport_usageRefinements')}
-            body={i18n.t('notesImport_usageRefinementsBody', {
-              count: credits.refinements.limit,
-            })}
+            body={i18n.t('notesImport_usageRefinementsBody')}
             bar={
               <UsageBar
                 remaining={credits.refinements.remaining}
                 limit={credits.refinements.limit}
                 color={theme.colors.indigo}
+                label={refinementBalance}
               />
             }
           />

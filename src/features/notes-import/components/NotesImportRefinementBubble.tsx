@@ -25,8 +25,9 @@ export const notesImportUserBubbleStyle = (theme: Theme): ViewStyle => ({
 interface Props {
   /** The refinement instruction the user sent, verbatim. */
   instruction: string
-  /** Refinements left for this source text after this one was spent. */
-  remaining: number
+  /** Undefined when usage is unavailable; null when refinements are unlimited. */
+  remaining?: number | null
+  limit?: number | null
 }
 
 /**
@@ -41,8 +42,15 @@ interface Props {
 export const NotesImportRefinementBubble = ({
   instruction,
   remaining,
+  limit,
 }: Props) => {
   const theme = useTheme()
+  const refinementLabel =
+    remaining === undefined || limit === undefined
+      ? null
+      : remaining === null && limit === null
+        ? i18n.t('notesImport_refinementMetaUnlimited')
+        : i18n.t('notesImport_refinementMeta', { remaining, limit })
   return (
     <View style={{ alignSelf: 'flex-end', maxWidth: '86%', gap: 4 }}>
       <View style={notesImportUserBubbleStyle(theme)}>
@@ -56,29 +64,31 @@ export const NotesImportRefinementBubble = ({
           {instruction}
         </Text>
       </View>
-      <View
-        style={{
-          flexDirection: 'row',
-          alignSelf: 'flex-end',
-          alignItems: 'center',
-          gap: 5,
-          paddingRight: 4,
-        }}
-      >
-        <LucideIcon
-          icon={RefreshCwIcon}
-          size={10}
-          color={theme.colors.textAlt}
-        />
-        <Text
+      {refinementLabel && (
+        <View
           style={{
-            color: theme.colors.textAlt,
-            fontSize: theme.fontSize('xs'),
+            flexDirection: 'row',
+            alignSelf: 'flex-end',
+            alignItems: 'center',
+            gap: 5,
+            paddingRight: 4,
           }}
         >
-          {i18n.t('notesImport_refinementMeta', { remaining })}
-        </Text>
-      </View>
+          <LucideIcon
+            icon={RefreshCwIcon}
+            size={10}
+            color={theme.colors.textAlt}
+          />
+          <Text
+            style={{
+              color: theme.colors.textAlt,
+              fontSize: theme.fontSize('xs'),
+            }}
+          >
+            {refinementLabel}
+          </Text>
+        </View>
+      )}
     </View>
   )
 }

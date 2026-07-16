@@ -19,8 +19,8 @@ describe('notesImportScheduleCopy', () => {
         windowDays: 1,
       })
     ).toEqual({
-      freeImports: '1 new import per 1-day window',
-      supporterImports: '2 new imports per 1-day window',
+      freeImports: '1 / 1-day window',
+      supporterImports: '2 / 1-day window',
       freeRefinements: '1 refinement per import',
       supporterRefinements: '2 refinements per import',
     })

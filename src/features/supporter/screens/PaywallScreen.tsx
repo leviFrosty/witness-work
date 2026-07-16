@@ -5,6 +5,7 @@ import {
   Heart as HeartIcon,
   Minus as MinusIcon,
   RotateCw as RotateCwIcon,
+  Star as StarIcon,
   Trash2 as Trash2Icon,
 } from 'lucide-react-native'
 import LucideIcon, { type AppIcon } from '@/components/ui/LucideIcon'
@@ -24,7 +25,6 @@ import Purchases, {
   PurchasesOfferings,
   PurchasesPackage,
 } from 'react-native-purchases'
-import SupporterBadge from '@/components/SupporterBadge'
 import GlassCard from '@/components/ui/GlassCard'
 import SegmentedControl from '@/components/ui/SegmentedControl'
 import PreviousDonations from '@/features/supporter/components/PreviousDonations'
@@ -70,18 +70,20 @@ const FEATURE_ROWS: ReadonlyArray<{
   free: boolean | TranslationKey
   supporter: boolean | TranslationKey
 }> = [
-  { labelKey: 'paywallFeatureCore', free: true, supporter: true },
-  { labelKey: 'paywallFeaturePrivacy', free: true, supporter: true },
-  { labelKey: 'paywallFeatureWidgets', free: true, supporter: true },
+  // Differentiators lead; the "always free" rows close the table as a
+  // trust signal rather than opening it with reasons not to pay.
+  { labelKey: 'paywallFeatureSync', free: false, supporter: true },
   {
     labelKey: 'paywallFeatureNotesImport',
     free: 'paywallFeatureNotesImportFree',
     supporter: 'paywallFeatureNotesImportUnlimited',
   },
-  { labelKey: 'paywallFeatureSync', free: false, supporter: true },
   { labelKey: 'paywallFeatureAccent', free: false, supporter: true },
   { labelKey: 'paywallFeatureAppIcons', free: false, supporter: true },
   { labelKey: 'paywallFeatureFuture', free: false, supporter: true },
+  { labelKey: 'paywallFeatureCore', free: true, supporter: true },
+  { labelKey: 'paywallFeaturePrivacy', free: true, supporter: true },
+  { labelKey: 'paywallFeatureWidgets', free: true, supporter: true },
 ]
 
 const resolveCell = (value: boolean | TranslationKey): boolean | string =>
@@ -177,6 +179,34 @@ const FounderLetter = () => {
         </XView>
       </View>
     </GlassCard>
+  )
+}
+
+const SocialProofRow = () => {
+  const theme = useTheme()
+  return (
+    <View style={{ alignItems: 'center', gap: 2 }}>
+      <XView style={{ alignItems: 'center', gap: 5 }}>
+        <LucideIcon
+          icon={StarIcon}
+          size={13}
+          color={theme.colors.supporter}
+          fill={theme.colors.supporter}
+        />
+        <Text
+          style={{
+            fontSize: 13,
+            fontFamily: theme.fonts.semiBold,
+            color: theme.colors.text,
+          }}
+        >
+          {i18n.t('paywallSocialProofRating')}
+        </Text>
+      </XView>
+      <Text style={{ fontSize: 12, color: theme.colors.textAlt }}>
+        {i18n.t('paywallSocialProofReach')}
+      </Text>
+    </View>
   )
 }
 
@@ -535,8 +565,9 @@ const PaywallScreen = () => {
   const { customer, setCustomer, hasPurchasedBefore, revalidate, ready } =
     useCustomer()
   const [tier, setTier] = useState<Tier>(initialTier)
+  // Annual-first anchors the better value; monthly stays one tap away.
   const [supporterBilling, setSupporterBilling] =
-    useState<SupporterBilling>('monthly')
+    useState<SupporterBilling>('annual')
   const navigation = useNavigation<RootStackNavigation>()
 
   const priceView: PriceView = tier === 'tip' ? 'tip' : supporterBilling
@@ -554,7 +585,7 @@ const PaywallScreen = () => {
       header: () => (
         <Header
           buttonType='back'
-          title={i18n.t('donate')}
+          title={i18n.t('paywallTitle')}
           rightElement={
             <IconButton
               style={{ position: 'absolute', right: 0 }}
@@ -760,7 +791,12 @@ const PaywallScreen = () => {
         delete next[priceView]
         return next
       }
-      return { ...prev, [priceView]: activePackages[0] }
+      // Default to the second-cheapest option — a gentle anchor above the
+      // floor while the cheapest choice stays visibly one tap away.
+      return {
+        ...prev,
+        [priceView]: activePackages[1] ?? activePackages[0],
+      }
     })
   }, [activePackages, priceView, tier])
 
@@ -884,21 +920,24 @@ const PaywallScreen = () => {
         showsVerticalScrollIndicator={false}
       >
         <FounderLetter />
+        <SocialProofRow />
         <ComparisonChart />
 
-        <SegmentedControl<Tier>
-          variant='pill'
-          value={tier}
-          onChange={setTier}
-          options={[
-            {
-              key: 'supporter',
-              label: i18n.t('paywallTierSupporter'),
-              trailing: <SupporterBadge iconOnly size='sm' />,
-            },
-            { key: 'tip', label: i18n.t('paywallTierTip') },
-          ]}
-        />
+        {/* Supporter is the primary flow; the one-time Tip path lives behind
+            a quiet text link below the price list rather than competing as an
+            equal tab up front. */}
+        {tier === 'tip' && (
+          <Text
+            style={{
+              fontSize: theme.fontSize('md'),
+              fontFamily: theme.fonts.semiBold,
+              color: theme.colors.text,
+              paddingHorizontal: 4,
+            }}
+          >
+            {i18n.t('paywallTierTip')}
+          </Text>
+        )}
 
         <Text
           style={{
@@ -980,6 +1019,23 @@ const PaywallScreen = () => {
           )}
         </View>
 
+        <Button
+          onPress={() => setTier(tier === 'supporter' ? 'tip' : 'supporter')}
+          style={{ alignSelf: 'center', paddingVertical: 6 }}
+        >
+          <Text
+            style={{
+              fontSize: theme.fontSize('sm'),
+              color: theme.colors.textAlt,
+              textDecorationLine: 'underline',
+            }}
+          >
+            {tier === 'supporter'
+              ? i18n.t('paywallSwitchToTip')
+              : i18n.t('paywallSwitchToSupporter')}
+          </Text>
+        </Button>
+
         <Divider />
         {hasPurchasedBefore && customer && (
           <PreviousDonations customer={customer} revalidate={revalidate} />
@@ -1037,6 +1093,18 @@ const PaywallScreen = () => {
             {ctaLabel}
           </Text>
         </SupporterCtaButton>
+        <Text
+          style={{
+            fontSize: 12,
+            color: theme.colors.textAlt,
+            textAlign: 'center',
+            marginTop: 8,
+          }}
+        >
+          {tier === 'supporter'
+            ? i18n.t('paywallCtaReassuranceSupporter')
+            : i18n.t('paywallCtaReassuranceTip')}
+        </Text>
       </View>
     </Wrapper>
   )

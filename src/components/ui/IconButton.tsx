@@ -68,7 +68,7 @@ const IconButton = ({
     >
       <Icon
         color={iconColor}
-        fill={fill}
+        fill={fill ?? 'none'}
         size={size}
         style={iconStyleWithFallback as LucideProps['style']}
       />

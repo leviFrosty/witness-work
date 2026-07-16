@@ -13,12 +13,13 @@ type Props = Omit<LucideProps, 'color' | 'style'> & {
   style?: AppIconStyle
 }
 
-const LucideIcon = ({ icon: Icon, color, style, ...props }: Props) => {
+const LucideIcon = ({ icon: Icon, color, fill, style, ...props }: Props) => {
   const styleColor = StyleSheet.flatten(style)?.color
 
   return (
     <Icon
       color={color ?? styleColor}
+      fill={fill ?? 'none'}
       style={style as LucideProps['style']}
       {...props}
     />

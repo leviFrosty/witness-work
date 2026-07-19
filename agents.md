@@ -7,6 +7,10 @@ WitnessWork = iOS-only field-service tracker for Jehovah's Witnesses (Expo + Rea
 ww-api is the backend api providing functionality to this app. Find the code at ~/dev/ww-api.
 It's a project deployed to Cloudflare workers. Read the documentation within that repository for up to date information before making assumptions. There are two environments: dev and production.
 
+## Domain Specific Language
+
+If discussing domain-specific items, please read [`CONTEXT.md`](./CONTEXT.md)
+
 ## Guardrails (always apply)
 
 - **Never destroy unstaged work.** `git checkout/restore <path>`, `git reset --hard`, `git clean` discard working-tree changes with no recoverable trace. Run `git status` + `git diff <path>` before any destructive path-level git op; undo your _own_ edits with `git stash` (recoverable), and treat files dirtied outside this session as off-limits.

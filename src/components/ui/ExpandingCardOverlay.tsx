@@ -1,6 +1,12 @@
 import type { ReactNode } from 'react'
 import { useEffect } from 'react'
-import { Pressable, StatusBar, useWindowDimensions, View } from 'react-native'
+import {
+  Pressable,
+  ScrollView,
+  StatusBar,
+  useWindowDimensions,
+  View,
+} from 'react-native'
 import Animated, {
   interpolate,
   useAnimatedStyle,
@@ -11,6 +17,7 @@ import { FullWindowOverlay } from 'react-native-screens'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import useTheme from '@/contexts/theme'
+import i18n from '@/lib/locales'
 
 export type ExpandingCardOrigin = {
   x: number
@@ -96,10 +103,16 @@ const ExpandingCardOverlay = ({
       <View
         pointerEvents={open ? 'auto' : 'none'}
         accessibilityElementsHidden={!open}
+        accessibilityViewIsModal={open}
         importantForAccessibility={open ? 'auto' : 'no-hide-descendants'}
         style={{ flex: 1 }}
       >
-        <Pressable onPress={onClose} style={{ flex: 1 }}>
+        <Pressable
+          onPress={onClose}
+          accessibilityRole='button'
+          accessibilityLabel={i18n.t('close')}
+          style={{ flex: 1 }}
+        >
           <Animated.View
             style={[{ flex: 1, backgroundColor: '#000' }, backdropStyle]}
           />
@@ -124,13 +137,16 @@ const ExpandingCardOverlay = ({
                 position: 'absolute',
                 width: targetWidth,
                 height: targetHeight,
-                padding: 20,
-                gap: 18,
               },
               contentStyle,
             ]}
           >
-            {children}
+            <ScrollView
+              contentContainerStyle={{ padding: 20, gap: 18, flexGrow: 1 }}
+              showsVerticalScrollIndicator={false}
+            >
+              {children}
+            </ScrollView>
           </Animated.View>
         </Animated.View>
       </View>

@@ -69,8 +69,10 @@ const CircularProgress = ({
             strokeWidth={strokeWidth}
             fill='none'
             strokeLinecap='round'
-            strokeDasharray={circumference}
-            strokeDashoffset={circumference * (1 - clamped)}
+            strokeDasharray={clamped < 1 ? circumference : undefined}
+            strokeDashoffset={
+              clamped < 1 ? circumference * (1 - clamped) : undefined
+            }
           />
         </Svg>
       </View>

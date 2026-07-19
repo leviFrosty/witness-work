@@ -16,8 +16,6 @@ import { Address } from '@/types/contact'
 import { MinuteDisplayFormat } from '@/types/timeEntry'
 import type { AssistantEvent } from '@/types/assistant'
 import { appendAssistantEventCapped } from '@/lib/assistantState'
-import type { ShaderId } from '@/shaders/types'
-import { DEFAULT_SHADER_ID } from '@/shaders/registry'
 import type { ContactSortDirection, ContactSortKey } from '@/lib/contactsSort'
 import type { ActiveFilter } from '@/lib/contactsFilters'
 import type { MarkerColors } from '@/types/markerColors'
@@ -527,19 +525,6 @@ export const PREFERENCE_DEFAULTS = {
     ...DEFAULT_HOME_DASHBOARD_CARD_VISIBILITY,
   } as HomeDashboardCardVisibility,
   colorScheme: undefined as 'light' | 'dark' | undefined,
-  /**
-   * Toggles the Skia-backed shader overlay on `ProfileCard`. Off by default
-   * while the effect is still being tuned — the preference is only surfaced
-   * under `__DEV__` today and will be revisited before wider release.
-   */
-  profileCardShaderEnabled: false,
-  /**
-   * Which shader from `src/shaders/registry.ts` is active on the profile card.
-   * Reserved for a future picker + unlock flow. Today only `holographic` is
-   * surfaced in the UI, but the preference is already typed as `ShaderId` so
-   * adding new entries is a pure registry change.
-   */
-  profileCardShaderId: DEFAULT_SHADER_ID as ShaderId,
   timeDisplayFormat: 'decimal' as MinuteDisplayFormat,
   locale: undefined as TranslatedLocale | undefined,
   /**
@@ -1022,6 +1007,8 @@ export const NON_SYNCABLE_PREFERENCE_KEYS = new Set<string>([
  *   as ISO strings are converted without time-zone month drift;
  *   malformed/negative goals are discarded. The matching iCloud LWW timestamp
  *   key is renamed alongside the value.
+ * - V6 → v7: remove the retired holographic Profile Card preferences and their
+ *   iCloud LWW timestamps.
  *
  * Exported for unit testing. Idempotent — re-running on an already-migrated
  * blob is a no-op.
@@ -1051,6 +1038,47 @@ export const migratePreferencesPersistedState = (
   if (version < 6) {
     next = migrateOneOffGoalHoursToMonthlyGoalOverrides(next)
   }
+  if (version < 7) {
+    next = migrateDropProfileCardShaderPreferences(next)
+  }
+  return next
+}
+
+/** V6 → v7: remove the retired holographic Profile Card preferences. */
+export const migrateDropProfileCardShaderPreferences = (
+  state: unknown
+): unknown => {
+  if (!state || typeof state !== 'object') return state
+  const record = state as Record<string, unknown>
+  const timestamps =
+    record.preferenceUpdatedAt && typeof record.preferenceUpdatedAt === 'object'
+      ? (record.preferenceUpdatedAt as Record<string, unknown>)
+      : null
+  const hasValues =
+    'profileCardShaderEnabled' in record || 'profileCardShaderId' in record
+  const hasTimestamps =
+    timestamps !== null &&
+    ('profileCardShaderEnabled' in timestamps ||
+      'profileCardShaderId' in timestamps)
+
+  if (!hasValues && !hasTimestamps) return state
+
+  const {
+    profileCardShaderEnabled: _enabled,
+    profileCardShaderId: _shaderId,
+    ...rest
+  } = record
+  const next: Record<string, unknown> = { ...rest }
+
+  if (timestamps) {
+    const {
+      profileCardShaderEnabled: _enabledTs,
+      profileCardShaderId: _shaderIdTs,
+      ...restTs
+    } = timestamps
+    next.preferenceUpdatedAt = restTs
+  }
+
   return next
 }
 
@@ -1507,7 +1535,7 @@ export const usePreferences = create(
       storage: createJSONStorage(() =>
         hasMigratedFromAsyncStorage() ? MmkvStorage : GuardedAsyncStorage
       ),
-      version: 6,
+      version: 7,
       migrate: (persistedState, version) =>
         migratePreferencesPersistedState(persistedState, version),
     }

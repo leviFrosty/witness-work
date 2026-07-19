@@ -19,7 +19,6 @@ vi.mock('expo-localization', () => ({
   getLocales: () => [{ languageTag: 'en-US' }],
 }))
 vi.mock('@/lib/locales', () => ({ default: { t: (k: string) => k } }))
-vi.mock('@/shaders/registry', () => ({ DEFAULT_SHADER_ID: 'holographic' }))
 vi.mock('expo-notifications', () => ({
   cancelScheduledNotificationAsync: vi.fn(),
 }))

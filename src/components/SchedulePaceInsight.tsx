@@ -8,14 +8,9 @@ import {
   X as XIcon,
 } from 'lucide-react-native'
 import moment from 'moment'
-import { useRef, useState } from 'react'
-import { Pressable, View } from 'react-native'
+import { View } from 'react-native'
 
-import TiltableCard from '@/components/TiltableCard'
-import Card from '@/components/ui/Card'
-import ExpandingCardOverlay, {
-  type ExpandingCardOrigin,
-} from '@/components/ui/ExpandingCardOverlay'
+import PopoverCard from '@/components/PopoverCard'
 import IconButton from '@/components/ui/IconButton'
 import LucideIcon, { type AppIcon } from '@/components/ui/LucideIcon'
 import Text from '@/components/ui/MyText'
@@ -90,9 +85,6 @@ const SchedulePaceInsight = (props: Props) => {
   const { month, year, variant } = props
   const theme = useTheme()
   const status = useScheduleStatus({ month, year })
-  const cardRef = useRef<View>(null)
-  const [detailOpen, setDetailOpen] = useState(false)
-  const [origin, setOrigin] = useState<ExpandingCardOrigin | null>(null)
 
   const difference = useFormattedMinutes(Math.abs(status.differenceMinutes))
   const actual = useFormattedMinutes(status.actualMinutes)
@@ -143,27 +135,136 @@ const SchedulePaceInsight = (props: Props) => {
         ? 1
         : 0
 
-  const openDetail = () => {
-    cardRef.current?.measureInWindow((x, y, width, height) => {
-      setOrigin({ x, y, width, height })
-      setDetailOpen(true)
-    })
-  }
-
-  const openSchedule = () => {
+  const openSchedule = (close: () => void) => {
     if (variant !== 'dashboard') return
-    setDetailOpen(false)
+    close()
     setTimeout(props.onOpenSchedule, 150)
   }
 
-  const card = (
-    <Card
-      style={{
+  return (
+    <PopoverCard
+      containerStyle={
+        variant === 'dashboard' ? { width: '48.5%' } : { flex: 1 }
+      }
+      cardStyle={{
         minHeight: variant === 'dashboard' ? 112 : 102,
         padding: 12,
         gap: 10,
         justifyContent: 'space-between',
       }}
+      fill={variant === 'schedule'}
+      accessibilityLabel={`${statusTitle}. ${statusMeta}`}
+      accessibilityHint={i18n.t('scheduleInsights.tapForDetails')}
+      popoverContent={({ close }) => (
+        <>
+          <View
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+            }}
+          >
+            <View
+              style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}
+            >
+              <View
+                style={{
+                  width: 38,
+                  height: 38,
+                  borderRadius: 19,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  backgroundColor: theme.colors.backgroundLighter,
+                }}
+              >
+                <LucideIcon icon={statusIcon} color={statusColor} size={20} />
+              </View>
+              <Text
+                accessibilityRole='header'
+                style={{
+                  color: theme.colors.text,
+                  fontFamily: theme.fonts.bold,
+                  fontSize: theme.fontSize('xl'),
+                }}
+              >
+                {i18n.t('scheduleInsights.schedulePace')}
+              </Text>
+            </View>
+            {variant === 'dashboard' ? (
+              <IconButton
+                icon={ArrowUpRightIcon}
+                size='lg'
+                noTransform
+                onPress={() => openSchedule(close)}
+                accessibilityLabel={i18n.t('homeDashboard.openDestination', {
+                  destination: i18n.t('schedule'),
+                })}
+              />
+            ) : (
+              <IconButton
+                icon={XIcon}
+                size='lg'
+                onPress={close}
+                accessibilityLabel={i18n.t('close')}
+              />
+            )}
+          </View>
+
+          <View style={{ gap: 8 }}>
+            <View
+              style={{
+                flexDirection: 'row',
+                alignItems: 'baseline',
+                justifyContent: 'space-between',
+                gap: 12,
+              }}
+            >
+              <Text
+                style={{
+                  color: statusColor,
+                  fontFamily: theme.fonts.bold,
+                  fontSize: theme.fontSize('2xl'),
+                }}
+              >
+                {statusTitle}
+              </Text>
+              <Text
+                style={{
+                  color: theme.colors.textAlt,
+                  fontFamily: theme.fonts.semiBold,
+                }}
+              >
+                {statusMeta}
+              </Text>
+            </View>
+            <SimpleProgressBar
+              percentage={progress}
+              color={statusColor}
+              height={variant === 'dashboard' ? 8 : 10}
+              animated={false}
+            />
+          </View>
+
+          <View style={{ flexDirection: 'row', gap: 10 }}>
+            <DetailStat label={i18n.t('actual')} value={actual.formatted} />
+            <DetailStat label={i18n.t('planned')} value={planned.formatted} />
+          </View>
+
+          <Text
+            style={{
+              color: theme.colors.textAlt,
+              fontSize: theme.fontSize('sm'),
+              lineHeight: 19,
+            }}
+          >
+            {i18n.t(
+              moment({ year, month }).isSame(moment(), 'month')
+                ? 'scheduleInsights.paceDescriptionCurrent'
+                : 'scheduleInsights.paceDescriptionMonth'
+            )}
+          </Text>
+        </>
+      )}
     >
       <View
         style={{
@@ -216,151 +317,7 @@ const SchedulePaceInsight = (props: Props) => {
           {statusMeta}
         </Text>
       </View>
-    </Card>
-  )
-
-  return (
-    <>
-      <View
-        ref={cardRef}
-        collapsable={false}
-        style={variant === 'dashboard' ? { width: '48.5%' } : { flex: 1 }}
-      >
-        {variant === 'dashboard' ? (
-          <Pressable
-            onPress={openDetail}
-            accessibilityRole='button'
-            accessibilityLabel={`${statusTitle}. ${statusMeta}`}
-            accessibilityHint={i18n.t('scheduleInsights.tapForDetails')}
-            style={({ pressed }) => ({ opacity: pressed ? 0.6 : 1 })}
-          >
-            {card}
-          </Pressable>
-        ) : (
-          <View
-            accessible
-            accessibilityRole='button'
-            accessibilityLabel={`${statusTitle}. ${statusMeta}`}
-            accessibilityHint={i18n.t('scheduleInsights.tapForDetails')}
-            onAccessibilityTap={openDetail}
-          >
-            <TiltableCard onTap={openDetail} maxTilt={5}>
-              {card}
-            </TiltableCard>
-          </View>
-        )}
-      </View>
-
-      <ExpandingCardOverlay
-        origin={origin}
-        open={detailOpen}
-        onClose={() => setDetailOpen(false)}
-      >
-        <View
-          style={{
-            flexDirection: 'row',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-          }}
-        >
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-            <View
-              style={{
-                width: 38,
-                height: 38,
-                borderRadius: 19,
-                alignItems: 'center',
-                justifyContent: 'center',
-                backgroundColor: theme.colors.backgroundLighter,
-              }}
-            >
-              <LucideIcon icon={statusIcon} color={statusColor} size={20} />
-            </View>
-            <Text
-              accessibilityRole='header'
-              style={{
-                color: theme.colors.text,
-                fontFamily: theme.fonts.bold,
-                fontSize: theme.fontSize('xl'),
-              }}
-            >
-              {i18n.t('scheduleInsights.schedulePace')}
-            </Text>
-          </View>
-          {variant === 'dashboard' ? (
-            <IconButton
-              icon={ArrowUpRightIcon}
-              size='lg'
-              noTransform
-              onPress={openSchedule}
-              accessibilityLabel={i18n.t('homeDashboard.openDestination', {
-                destination: i18n.t('schedule'),
-              })}
-            />
-          ) : (
-            <IconButton
-              icon={XIcon}
-              size='lg'
-              onPress={() => setDetailOpen(false)}
-            />
-          )}
-        </View>
-
-        <View style={{ gap: 8 }}>
-          <View
-            style={{
-              flexDirection: 'row',
-              alignItems: 'baseline',
-              justifyContent: 'space-between',
-              gap: 12,
-            }}
-          >
-            <Text
-              style={{
-                color: statusColor,
-                fontFamily: theme.fonts.bold,
-                fontSize: theme.fontSize('2xl'),
-              }}
-            >
-              {statusTitle}
-            </Text>
-            <Text
-              style={{
-                color: theme.colors.textAlt,
-                fontFamily: theme.fonts.semiBold,
-              }}
-            >
-              {statusMeta}
-            </Text>
-          </View>
-          <SimpleProgressBar
-            percentage={progress}
-            color={statusColor}
-            height={variant === 'dashboard' ? 8 : 10}
-            animated={false}
-          />
-        </View>
-
-        <View style={{ flexDirection: 'row', gap: 10 }}>
-          <DetailStat label={i18n.t('actual')} value={actual.formatted} />
-          <DetailStat label={i18n.t('planned')} value={planned.formatted} />
-        </View>
-
-        <Text
-          style={{
-            color: theme.colors.textAlt,
-            fontSize: theme.fontSize('sm'),
-            lineHeight: 19,
-          }}
-        >
-          {i18n.t(
-            moment({ year, month }).isSame(moment(), 'month')
-              ? 'scheduleInsights.paceDescriptionCurrent'
-              : 'scheduleInsights.paceDescriptionMonth'
-          )}
-        </Text>
-      </ExpandingCardOverlay>
-    </>
+    </PopoverCard>
   )
 }
 

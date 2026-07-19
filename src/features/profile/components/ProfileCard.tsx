@@ -18,13 +18,11 @@ import useIsSupporter from '@/hooks/useIsSupporter'
 import Card from '@/components/ui/Card'
 import Text from '@/components/ui/MyText'
 import Avatar from '@/components/ui/Avatar'
-import TiltableCard from '@/components/TiltableCard'
 import ProfileDetailOverlay, {
   OriginRect,
 } from '@/features/profile/components/ProfileDetailOverlay'
 import AvatarPickerPopover from '@/components/AvatarPickerPopover'
 import i18n from '@/lib/locales'
-import { ShaderOverlay } from '@/shaders'
 
 interface Props {
   /** Disables interaction; used for the live preview inside onboarding. */
@@ -95,16 +93,10 @@ const CARD_PADDING_H = 16
 
 const ProfileCard = ({ preview, editable, onPressIncomplete }: Props) => {
   const theme = useTheme()
-  const {
-    installedOn,
-    tenureStartDate,
-    profileCardShaderEnabled,
-    profileCardShaderId,
-  } = usePreferences()
+  const { installedOn, tenureStartDate } = usePreferences()
   // Profile-shaped fields live in the Profile store (wave-3 store split).
   // ProfileCard reads + writes both stores because the card is the editing
-  // surface for *Profile* (name, avatar, avatar background, setup flag) while
-  // still rendering Preferences-driven chrome (shader toggle, tenure).
+  // surface for Profile while tenure remains a Preference.
   const {
     name,
     avatar,
@@ -238,20 +230,9 @@ const ProfileCard = ({ preview, editable, onPressIncomplete }: Props) => {
     }
   })()
 
-  // When the holographic shader is on we swap the whole card to a warm
-  // cream cardstock + dark text. A Balatro holo is defined by its *light*
-  // cardstock underneath the foil — a dark card with pastels over it reads
-  // as neon, not holographic. Text colors flip too so they stay legible.
-  const holoActive = !preview && !editable && profileCardShaderEnabled
-  const cardBg = holoActive ? '#F2E9D2' : theme.colors.card
-  const cardBorder = holoActive ? '#D9CDAD' : theme.colors.border
-  const titleColor = holoActive ? '#1A1A1A' : theme.colors.text
-  const subtitleColor = holoActive ? '#5A5244' : theme.colors.textAlt
-  const tenureIconTint = holoActive
-    ? tenure.tone === 'installed'
-      ? '#5A5244'
-      : tenure.tint
-    : tenure.tint
+  const titleColor = theme.colors.text
+  const subtitleColor = theme.colors.textAlt
+  const tenureIconTint = tenure.tint
 
   const avatarEl = editable ? (
     <AvatarPickerPopover
@@ -311,9 +292,6 @@ const ProfileCard = ({ preview, editable, onPressIncomplete }: Props) => {
         paddingHorizontal: CARD_PADDING_H,
         paddingRight: !preview && !editable ? 40 : CARD_PADDING_H,
         gap: 10,
-        backgroundColor: cardBg,
-        borderWidth: 1,
-        borderColor: cardBorder,
       }}
     >
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
@@ -365,19 +343,14 @@ const ProfileCard = ({ preview, editable, onPressIncomplete }: Props) => {
   return (
     <>
       <View ref={anchorRef} collapsable={false}>
-        <TiltableCard
-          onTap={handleTap}
-          overlayBorderRadius={theme.numbers.borderRadiusLg}
-          renderOverlay={(ctx) => (
-            <ShaderOverlay
-              {...ctx}
-              enabled={profileCardShaderEnabled}
-              shaderId={profileCardShaderId}
-            />
-          )}
+        <Pressable
+          onPress={handleTap}
+          accessibilityRole='button'
+          accessibilityLabel={`${greeting}. ${i18n.t(publisher)}. ${tenure.text}`}
+          style={({ pressed }) => ({ opacity: pressed ? 0.6 : 1 })}
         >
           {cardBody}
-        </TiltableCard>
+        </Pressable>
       </View>
       <ProfileDetailOverlay
         origin={origin}

@@ -2,23 +2,19 @@ import {
   ChevronRight as ChevronRightIcon,
   X as XIcon,
 } from 'lucide-react-native'
-import { useRef, useState } from 'react'
 import { View } from 'react-native'
 
+import PopoverCard from '@/components/PopoverCard'
 import SchedulePaceInsight from '@/components/SchedulePaceInsight'
-import TiltableCard from '@/components/TiltableCard'
 import Button from '@/components/ui/Button'
-import Card from '@/components/ui/Card'
 import CircularProgress from '@/components/ui/CircularProgress'
-import ExpandingCardOverlay, {
-  type ExpandingCardOrigin,
-} from '@/components/ui/ExpandingCardOverlay'
 import IconButton from '@/components/ui/IconButton'
 import LucideIcon from '@/components/ui/LucideIcon'
 import Text from '@/components/ui/MyText'
 import SimpleProgressBar from '@/components/ui/SimpleProgressBar'
 import useTheme from '@/contexts/theme'
 import useMonthlyGoal from '@/hooks/useMonthlyGoal'
+import { goalProgress } from '@/lib/goalProgress'
 import i18n from '@/lib/locales'
 import { useFormattedMinutes } from '@/lib/minutes'
 import { calculateMonthlyPlannedMinutesOptimized } from '@/lib/recurrence'
@@ -60,9 +56,7 @@ const GoalStat = ({ label, value }: { label: string; value: string }) => {
   )
 }
 
-const GoalInsightOverlay = ({
-  origin,
-  open,
+const GoalInsightContent = ({
   onClose,
   plannedPercent,
   monthPlanned,
@@ -71,8 +65,6 @@ const GoalInsightOverlay = ({
   goalProgress,
   onEditGoal,
 }: {
-  origin: ExpandingCardOrigin | null
-  open: boolean
   onClose: () => void
   plannedPercent: number
   monthPlanned: string
@@ -84,7 +76,7 @@ const GoalInsightOverlay = ({
   const theme = useTheme()
 
   return (
-    <ExpandingCardOverlay origin={origin} open={open} onClose={onClose}>
+    <>
       <View
         style={{
           flexDirection: 'row',
@@ -97,7 +89,7 @@ const GoalInsightOverlay = ({
             progress={goalProgress}
             size={32}
             strokeWidth={4}
-            color={theme.colors.textAlt}
+            color={theme.colors.accent}
             trackColor={theme.colors.border}
           />
           <Text
@@ -111,7 +103,12 @@ const GoalInsightOverlay = ({
             {i18n.t('scheduleInsights.goalPlanned')}
           </Text>
         </View>
-        <IconButton icon={XIcon} size='lg' onPress={onClose} />
+        <IconButton
+          icon={XIcon}
+          size='lg'
+          onPress={onClose}
+          accessibilityLabel={i18n.t('close')}
+        />
       </View>
 
       <View style={{ gap: 8 }}>
@@ -192,7 +189,7 @@ const GoalInsightOverlay = ({
           value={leftToPlan}
         />
       </View>
-    </ExpandingCardOverlay>
+    </>
   )
 }
 
@@ -209,9 +206,6 @@ const ScheduleInsights = ({
   const dayPlans = useServiceReport((state) => state.dayPlans)
   const recurringPlans = useServiceReport((state) => state.recurringPlans)
   const { effectiveGoalHours } = useMonthlyGoal({ month, year })
-  const goalRef = useRef<View>(null)
-  const [detailOpen, setDetailOpen] = useState(false)
-  const [origin, setOrigin] = useState<ExpandingCardOrigin | null>(null)
 
   const monthPlannedMinutes = calculateMonthlyPlannedMinutesOptimized(
     month,
@@ -220,11 +214,15 @@ const ScheduleInsights = ({
     recurringPlans
   )
   const goalMinutes = Math.round(effectiveGoalHours * 60)
-  const plannedPercent =
-    goalMinutes > 0 ? Math.round((monthPlannedMinutes / goalMinutes) * 100) : 0
-  const goalProgress =
-    goalMinutes > 0 ? Math.max(0, monthPlannedMinutes / goalMinutes) : 0
-  const leftToPlanMinutes = Math.max(0, goalMinutes - monthPlannedMinutes)
+  const plannedGoalProgress =
+    goalMinutes > 0
+      ? goalProgress({ minutes: monthPlannedMinutes, goalMinutes })
+      : null
+  const plannedPercent = plannedGoalProgress
+    ? Math.round(plannedGoalProgress.percent)
+    : 0
+  const goalProgressFraction = plannedGoalProgress?.fraction ?? 0
+  const leftToPlanMinutes = plannedGoalProgress?.remaining ?? 0
 
   const monthPlanned = useFormattedMinutes(monthPlannedMinutes)
   const goal = useFormattedMinutes(goalMinutes)
@@ -236,98 +234,78 @@ const ScheduleInsights = ({
     goal: goal.formatted,
   })
 
-  const openDetail = () => {
-    goalRef.current?.measureInWindow((x, y, width, height) => {
-      setOrigin({ x, y, width, height })
-      setDetailOpen(true)
-    })
-  }
-
   return (
-    <>
-      <View style={{ flexDirection: 'row', gap: 10 }}>
-        <SchedulePaceInsight month={month} year={year} variant='schedule' />
+    <View style={{ flexDirection: 'row', gap: 10 }}>
+      <SchedulePaceInsight month={month} year={year} variant='schedule' />
+      <PopoverCard
+        containerStyle={{ flex: 1 }}
+        cardStyle={{
+          minHeight: 102,
+          padding: 12,
+          gap: 10,
+          justifyContent: 'space-between',
+        }}
+        fill
+        accessibilityLabel={`${value}. ${label}`}
+        accessibilityHint={i18n.t('scheduleInsights.tapForDetails')}
+        popoverContent={({ close }) => (
+          <GoalInsightContent
+            onClose={close}
+            plannedPercent={plannedPercent}
+            monthPlanned={monthPlanned.formatted}
+            goal={goal.formatted}
+            leftToPlan={leftToPlan.formatted}
+            goalProgress={goalProgressFraction}
+            onEditGoal={onEditGoal}
+          />
+        )}
+      >
         <View
-          ref={goalRef}
-          collapsable={false}
-          accessible
-          accessibilityRole='button'
-          accessibilityLabel={`${value}. ${label}`}
-          accessibilityHint={i18n.t('scheduleInsights.tapForDetails')}
-          onAccessibilityTap={openDetail}
-          style={{ flex: 1 }}
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+          }}
         >
-          <TiltableCard onTap={openDetail} maxTilt={5}>
-            <Card
-              style={{
-                minHeight: 102,
-                padding: 12,
-                gap: 10,
-                borderWidth: 1,
-                borderColor: theme.colors.border,
-              }}
-            >
-              <View
-                style={{
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                }}
-              >
-                <CircularProgress
-                  progress={goalProgress}
-                  size={24}
-                  strokeWidth={4}
-                  color={theme.colors.textAlt}
-                  trackColor={theme.colors.border}
-                />
-                <LucideIcon
-                  icon={ChevronRightIcon}
-                  color={theme.colors.textAlt}
-                  size={12}
-                />
-              </View>
-              <View style={{ gap: 1 }}>
-                <Text
-                  numberOfLines={1}
-                  adjustsFontSizeToFit
-                  style={{
-                    color: theme.colors.text,
-                    fontFamily: theme.fonts.bold,
-                    fontSize: theme.fontSize('lg'),
-                  }}
-                >
-                  {value}
-                </Text>
-                <Text
-                  numberOfLines={1}
-                  adjustsFontSizeToFit
-                  style={{
-                    color: theme.colors.textAlt,
-                    fontFamily: theme.fonts.semiBold,
-                    fontSize: theme.fontSize('sm'),
-                  }}
-                >
-                  {label}
-                </Text>
-              </View>
-            </Card>
-          </TiltableCard>
+          <CircularProgress
+            progress={goalProgressFraction}
+            size={24}
+            strokeWidth={4}
+            color={theme.colors.accent}
+            trackColor={theme.colors.border}
+          />
+          <LucideIcon
+            icon={ChevronRightIcon}
+            color={theme.colors.textAlt}
+            size={12}
+          />
         </View>
-      </View>
-
-      <GoalInsightOverlay
-        origin={origin}
-        open={detailOpen}
-        onClose={() => setDetailOpen(false)}
-        plannedPercent={plannedPercent}
-        monthPlanned={monthPlanned.formatted}
-        goal={goal.formatted}
-        leftToPlan={leftToPlan.formatted}
-        goalProgress={goalProgress}
-        onEditGoal={onEditGoal}
-      />
-    </>
+        <View style={{ gap: 1 }}>
+          <Text
+            numberOfLines={1}
+            adjustsFontSizeToFit
+            style={{
+              color: theme.colors.text,
+              fontFamily: theme.fonts.bold,
+              fontSize: theme.fontSize('lg'),
+            }}
+          >
+            {value}
+          </Text>
+          <Text
+            numberOfLines={1}
+            adjustsFontSizeToFit
+            style={{
+              color: theme.colors.textAlt,
+              fontFamily: theme.fonts.semiBold,
+              fontSize: theme.fontSize('sm'),
+            }}
+          >
+            {label}
+          </Text>
+        </View>
+      </PopoverCard>
+    </View>
   )
 }
 

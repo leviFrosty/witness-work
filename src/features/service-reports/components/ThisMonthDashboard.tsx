@@ -8,15 +8,11 @@ import {
   Pencil as PencilIcon,
 } from 'lucide-react-native'
 import moment from 'moment'
-import { useRef, useState } from 'react'
-import { Pressable, View } from 'react-native'
+import { View } from 'react-native'
 
+import PopoverCard from '@/components/PopoverCard'
 import SchedulePaceInsight from '@/components/SchedulePaceInsight'
-import Card from '@/components/ui/Card'
 import CircularProgress from '@/components/ui/CircularProgress'
-import ExpandingCardOverlay, {
-  type ExpandingCardOrigin,
-} from '@/components/ui/ExpandingCardOverlay'
 import IconButton from '@/components/ui/IconButton'
 import LucideIcon, { type AppIcon } from '@/components/ui/LucideIcon'
 import Text from '@/components/ui/MyText'
@@ -127,125 +123,124 @@ const DashboardTile = ({
   onNavigate: () => void
 }) => {
   const theme = useTheme()
-  const cardRef = useRef<View>(null)
-  const [detailOpen, setDetailOpen] = useState(false)
-  const [origin, setOrigin] = useState<ExpandingCardOrigin | null>(null)
 
-  const openDetail = () => {
-    cardRef.current?.measureInWindow((x, y, width, height) => {
-      setOrigin({ x, y, width, height })
-      setDetailOpen(true)
-    })
-  }
-
-  const navigateFromDetail = () => {
-    setDetailOpen(false)
+  const navigateFromDetail = (close: () => void) => {
+    close()
     setTimeout(onNavigate, 150)
   }
 
   return (
-    <>
-      <View ref={cardRef} collapsable={false} style={{ width: '48.5%' }}>
-        <Pressable
-          onPress={openDetail}
-          accessibilityRole='button'
-          accessibilityLabel={`${card.label}. ${card.value}`}
-          accessibilityHint={i18n.t('scheduleInsights.tapForDetails')}
-          style={({ pressed }) => ({ opacity: pressed ? 0.6 : 1 })}
-        >
-          <Card
+    <PopoverCard
+      containerStyle={{ width: '48.5%' }}
+      cardStyle={{
+        minHeight: 112,
+        padding: 12,
+        gap: 10,
+        justifyContent: 'space-between',
+      }}
+      accessibilityLabel={`${card.label}. ${card.value}`}
+      accessibilityHint={i18n.t('scheduleInsights.tapForDetails')}
+      popoverContent={({ close }) => (
+        <>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+            <View
+              style={{
+                width: 38,
+                height: 38,
+                borderRadius: 19,
+                alignItems: 'center',
+                justifyContent: 'center',
+                backgroundColor: theme.colors.backgroundLighter,
+              }}
+            >
+              <LucideIcon
+                icon={card.icon}
+                color={card.color ?? theme.colors.textAlt}
+                size={16}
+              />
+            </View>
+            <Text
+              accessibilityRole='header'
+              style={{
+                flex: 1,
+                color: theme.colors.text,
+                fontFamily: theme.fonts.bold,
+                fontSize: theme.fontSize('xl'),
+              }}
+            >
+              {card.detail.title}
+            </Text>
+            <IconButton
+              icon={ArrowUpRightIcon}
+              size='lg'
+              noTransform
+              onPress={() => navigateFromDetail(close)}
+              accessibilityLabel={i18n.t('homeDashboard.openDestination', {
+                destination: i18n.t(
+                  card.destination === 'Schedule' ? 'schedule' : 'progress'
+                ),
+              })}
+            />
+          </View>
+
+          <View style={{ gap: 8 }}>
+            <Text
+              style={{
+                color: card.color ?? theme.colors.text,
+                fontFamily: theme.fonts.bold,
+                fontSize: theme.fontSize('2xl'),
+              }}
+            >
+              {card.detail.headline}
+            </Text>
+            {card.detail.meta ? (
+              <Text style={{ color: theme.colors.textAlt }}>
+                {card.detail.meta}
+              </Text>
+            ) : null}
+            {card.detail.progress !== undefined ? (
+              <SimpleProgressBar
+                percentage={card.detail.progress}
+                color={card.color ?? theme.colors.accent}
+                height={8}
+                animated={false}
+              />
+            ) : null}
+          </View>
+
+          <View style={{ flexDirection: 'row', gap: 10 }}>
+            {card.detail.stats.map((stat) => (
+              <DashboardDetailStat key={stat.label} {...stat} />
+            ))}
+          </View>
+
+          <Text
             style={{
-              minHeight: 112,
-              padding: 12,
-              gap: 10,
-              justifyContent: 'space-between',
+              color: theme.colors.textAlt,
+              fontSize: theme.fontSize('sm'),
+              lineHeight: 19,
             }}
           >
-            <View style={{ flex: 1, justifyContent: 'space-between', gap: 10 }}>
-              {card.progressDisplay === 'ring' &&
-              card.progress !== undefined ? (
-                <CircularProgress
-                  progress={card.progress}
-                  size={30}
-                  strokeWidth={4}
-                  color={card.color ?? theme.colors.accent}
-                  trackColor={theme.colors.border}
-                />
-              ) : (
-                <View
-                  style={{
-                    width: 30,
-                    height: 30,
-                    borderRadius: 15,
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    backgroundColor: theme.colors.backgroundLighter,
-                  }}
-                >
-                  <LucideIcon
-                    icon={card.icon}
-                    color={card.color ?? theme.colors.textAlt}
-                    size={16}
-                  />
-                </View>
-              )}
-
-              <View
-                style={{
-                  justifyContent: 'space-between',
-                  gap: 10,
-                }}
-              >
-                <View style={{ gap: 2 }}>
-                  <Text
-                    numberOfLines={1}
-                    adjustsFontSizeToFit
-                    style={{
-                      color: card.color ?? theme.colors.text,
-                      fontFamily: theme.fonts.bold,
-                      fontSize: theme.fontSize('lg'),
-                    }}
-                  >
-                    {card.value}
-                  </Text>
-                  <Text
-                    numberOfLines={1}
-                    adjustsFontSizeToFit
-                    style={{
-                      color: theme.colors.textAlt,
-                      fontFamily: theme.fonts.semiBold,
-                      fontSize: theme.fontSize('sm'),
-                    }}
-                  >
-                    {card.label}
-                  </Text>
-                  {card.progress !== undefined &&
-                  card.progressDisplay !== 'ring' ? (
-                    <SimpleProgressBar
-                      percentage={card.progress}
-                      color={card.color ?? theme.colors.accent}
-                      height={4}
-                      animated={false}
-                    />
-                  ) : null}
-                </View>
-              </View>
-            </View>
-          </Card>
-        </Pressable>
-      </View>
-
-      <ExpandingCardOverlay
-        origin={origin}
-        open={detailOpen}
-        onClose={() => setDetailOpen(false)}
-      >
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+            {card.detail.description}
+          </Text>
+        </>
+      )}
+    >
+      <View style={{ flex: 1, justifyContent: 'space-between', gap: 10 }}>
+        {card.progressDisplay === 'ring' && card.progress !== undefined ? (
+          <CircularProgress
+            progress={card.progress}
+            size={30}
+            strokeWidth={4}
+            color={card.color ?? theme.colors.accent}
+            trackColor={theme.colors.border}
+          />
+        ) : (
           <View
             style={{
-              width: 38,
-              height: 38,
-              borderRadius: 19,
+              width: 30,
+              height: 30,
+              borderRadius: 15,
               alignItems: 'center',
               justifyContent: 'center',
               backgroundColor: theme.colors.backgroundLighter,
@@ -257,72 +252,44 @@ const DashboardTile = ({
               size={16}
             />
           </View>
-          <Text
-            accessibilityRole='header'
-            style={{
-              flex: 1,
-              color: theme.colors.text,
-              fontFamily: theme.fonts.bold,
-              fontSize: theme.fontSize('xl'),
-            }}
-          >
-            {card.detail.title}
-          </Text>
-          <IconButton
-            icon={ArrowUpRightIcon}
-            size='lg'
-            noTransform
-            onPress={navigateFromDetail}
-            accessibilityLabel={i18n.t('homeDashboard.openDestination', {
-              destination: i18n.t(
-                card.destination === 'Schedule' ? 'schedule' : 'progress'
-              ),
-            })}
-          />
-        </View>
+        )}
 
-        <View style={{ gap: 8 }}>
-          <Text
-            style={{
-              color: card.color ?? theme.colors.text,
-              fontFamily: theme.fonts.bold,
-              fontSize: theme.fontSize('2xl'),
-            }}
-          >
-            {card.detail.headline}
-          </Text>
-          {card.detail.meta ? (
-            <Text style={{ color: theme.colors.textAlt }}>
-              {card.detail.meta}
+        <View style={{ justifyContent: 'space-between', gap: 10 }}>
+          <View style={{ gap: 2 }}>
+            <Text
+              numberOfLines={1}
+              adjustsFontSizeToFit
+              style={{
+                color: card.color ?? theme.colors.text,
+                fontFamily: theme.fonts.bold,
+                fontSize: theme.fontSize('lg'),
+              }}
+            >
+              {card.value}
             </Text>
-          ) : null}
-          {card.detail.progress !== undefined ? (
-            <SimpleProgressBar
-              percentage={card.detail.progress}
-              color={card.color ?? theme.colors.accent}
-              height={8}
-              animated={false}
-            />
-          ) : null}
+            <Text
+              numberOfLines={1}
+              adjustsFontSizeToFit
+              style={{
+                color: theme.colors.textAlt,
+                fontFamily: theme.fonts.semiBold,
+                fontSize: theme.fontSize('sm'),
+              }}
+            >
+              {card.label}
+            </Text>
+            {card.progress !== undefined && card.progressDisplay !== 'ring' ? (
+              <SimpleProgressBar
+                percentage={card.progress}
+                color={card.color ?? theme.colors.accent}
+                height={4}
+                animated={false}
+              />
+            ) : null}
+          </View>
         </View>
-
-        <View style={{ flexDirection: 'row', gap: 10 }}>
-          {card.detail.stats.map((stat) => (
-            <DashboardDetailStat key={stat.label} {...stat} />
-          ))}
-        </View>
-
-        <Text
-          style={{
-            color: theme.colors.textAlt,
-            fontSize: theme.fontSize('sm'),
-            lineHeight: 19,
-          }}
-        >
-          {card.detail.description}
-        </Text>
-      </ExpandingCardOverlay>
-    </>
+      </View>
+    </PopoverCard>
   )
 }
 

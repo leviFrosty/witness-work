@@ -21,9 +21,6 @@ vi.mock('expo-localization', () => ({
 vi.mock('@/lib/locales', () => ({
   default: { t: (k: string) => k },
 }))
-vi.mock('@/shaders/registry', () => ({
-  DEFAULT_SHADER_ID: 'holographic',
-}))
 
 import useContacts from '@/stores/contactsStore'
 import useConversations from '@/stores/conversationStore'

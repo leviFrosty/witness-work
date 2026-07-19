@@ -8,9 +8,6 @@ vi.mock('expo-device', () => ({ DeviceType: { TABLET: 2 }, deviceType: 1 }))
 vi.mock('@/lib/locales', () => ({
   default: { t: (key: string) => key },
 }))
-vi.mock('@/shaders/registry', () => ({
-  DEFAULT_SHADER_ID: 'holographic',
-}))
 
 import {
   DEFAULT_HOME_DASHBOARD_CARD_ORDER,

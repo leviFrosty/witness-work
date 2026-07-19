@@ -16,9 +16,6 @@ vi.mock('expo-localization', () => ({
 vi.mock('@/lib/locales', () => ({
   default: { t: (k: string) => k },
 }))
-vi.mock('@/shaders/registry', () => ({
-  DEFAULT_SHADER_ID: 'holographic',
-}))
 
 import { migratePreferencesPersistedState } from '@/stores/preferences'
 
@@ -584,5 +581,39 @@ describe('preferences persist migrate v5 → v6 (Monthly Goal overrides)', () =>
     expect(migrated.offDays).toEqual([0, 6])
     expect(migrated.monthlyGoalOverrides).toEqual({ '2026-11': 60 })
     expect(migrated).not.toHaveProperty('oneOffGoalHours')
+  })
+})
+
+describe('preferences persist migrate v6 → v7 (remove Profile Card shader)', () => {
+  it('drops the retired shader preferences and their iCloud timestamps', () => {
+    const migrated = migratePreferencesPersistedState(
+      {
+        profileCardShaderEnabled: true,
+        profileCardShaderId: 'holographic',
+        role: 'regularPioneer',
+        preferenceUpdatedAt: {
+          profileCardShaderEnabled: 1700000000000,
+          profileCardShaderId: 1700000001000,
+          role: 1700000002000,
+        },
+      },
+      6
+    )
+
+    expect(migrated).not.toHaveProperty('profileCardShaderEnabled')
+    expect(migrated).not.toHaveProperty('profileCardShaderId')
+    expect(migrated.preferenceUpdatedAt).not.toHaveProperty(
+      'profileCardShaderEnabled'
+    )
+    expect(migrated.preferenceUpdatedAt).not.toHaveProperty(
+      'profileCardShaderId'
+    )
+    expect(migrated.preferenceUpdatedAt.role).toBe(1700000002000)
+    expect(migrated.role).toBe('regularPioneer')
+  })
+
+  it('is idempotent on an already-v7 state', () => {
+    const v7State = { role: 'publisher' }
+    expect(migratePreferencesPersistedState(v7State, 7)).toBe(v7State)
   })
 })

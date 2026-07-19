@@ -1,5 +1,5 @@
 import useTheme from '@/contexts/theme'
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import useConversations from '@/stores/conversationStore'
 import {
   overdueFollowUpConversations,
@@ -21,6 +21,9 @@ import useDevice from '@/hooks/useDevice'
 import { getMonthsReports } from '@/lib/serviceReport'
 import { getServiceYearFromDate } from '@/lib/serviceYear'
 import WeekStripTeaser from '@/features/service-reports/components/WeekStripTeaser'
+import SelectedDateSheet, {
+  SelectedDateSheetState,
+} from '@/features/service-reports/components/SelectedDateSheet'
 import i18n from '@/lib/locales'
 import Text from '@/components/ui/MyText'
 import Button from '@/components/ui/Button'
@@ -45,6 +48,7 @@ import { isSupporterNudgeEligible } from '@/features/supporter/lib/supporterNudg
 import { HomeTabStackNavigation } from '@/types/homeStack'
 import { RootStackNavigation } from '@/types/rootStack'
 import { Fragment } from 'react'
+import type { TimeEntry } from '@/types/timeEntry'
 import HomeDashboardEditorSheet from '@/features/settings/components/HomeDashboardEditorSheet'
 
 export const HomeScreen = () => {
@@ -79,6 +83,12 @@ export const HomeScreen = () => {
   const { serviceReports } = useServiceReport()
   const [refreshing, setRefreshing] = useState(false)
   const [dashboardEditorOpen, setDashboardEditorOpen] = useState(false)
+  const [selectedDateSheet, setSelectedDateSheet] =
+    useState<SelectedDateSheetState>({
+      open: false,
+      date: new Date(),
+    })
+  const pendingNavigation = useRef<(() => void) | null>(null)
 
   const handleRefresh = useCallback(async () => {
     setRefreshing(true)
@@ -127,6 +137,66 @@ export const HomeScreen = () => {
     () => getMonthsReports(serviceReports, currentMonth, currentYear),
     [serviceReports, currentMonth, currentYear]
   )
+  const selectedDateReports = useMemo(
+    () =>
+      getMonthsReports(
+        serviceReports,
+        moment(selectedDateSheet.date).month(),
+        moment(selectedDateSheet.date).year()
+      ),
+    [selectedDateSheet.date, serviceReports]
+  )
+
+  const handleAddTime = () => {
+    const date = selectedDateSheet.date.toISOString()
+    pendingNavigation.current = () => {
+      rootNavigation.navigate('Add Time', { date })
+    }
+  }
+
+  const handlePlanDay = () => {
+    const date = selectedDateSheet.date.toISOString()
+    pendingNavigation.current = () => {
+      rootNavigation.navigate('PlanDay', { date })
+    }
+  }
+
+  const handleNavigateToPlanDay = (existingDayPlanId: string) => {
+    const date = selectedDateSheet.date.toISOString()
+    pendingNavigation.current = () => {
+      rootNavigation.navigate('PlanDay', { date, existingDayPlanId })
+    }
+  }
+
+  const handleNavigateToRecurringPlan = (
+    existingRecurringPlanId: string,
+    recurringPlanDate: string
+  ) => {
+    const date = selectedDateSheet.date.toISOString()
+    pendingNavigation.current = () => {
+      rootNavigation.navigate('PlanDay', {
+        date,
+        existingRecurringPlanId,
+        recurringPlanDate,
+      })
+    }
+  }
+
+  const handleEditTimeReport = (report: TimeEntry) => {
+    pendingNavigation.current = () => {
+      rootNavigation.navigate('Add Time', {
+        existingReport: JSON.stringify(report),
+      })
+    }
+  }
+
+  useEffect(() => {
+    if (!selectedDateSheet.open && pendingNavigation.current) {
+      const callback = pendingNavigation.current
+      pendingNavigation.current = null
+      setTimeout(callback, 125)
+    }
+  }, [selectedDateSheet.open])
 
   // Legacy upgrade flow is now subsumed by the boot-time tag → Category
   // migration (`src/lib/categories.ts`). Categories carry their own
@@ -356,6 +426,9 @@ export const HomeScreen = () => {
                     month={currentMonth}
                     year={currentYear}
                     monthsReports={currentMonthsReports}
+                    onSelectDay={(date) =>
+                      setSelectedDateSheet({ open: true, date })
+                    }
                   />
                 )
               case 'timer':
@@ -382,6 +455,16 @@ export const HomeScreen = () => {
       <HomeDashboardEditorSheet
         open={dashboardEditorOpen}
         onOpenChange={setDashboardEditorOpen}
+      />
+      <SelectedDateSheet
+        sheet={selectedDateSheet}
+        setSheet={setSelectedDateSheet}
+        thisMonthsReports={selectedDateReports}
+        onAddTime={handleAddTime}
+        onPlanDay={handlePlanDay}
+        onNavigateToPlanDay={handleNavigateToPlanDay}
+        onNavigateToRecurringPlan={handleNavigateToRecurringPlan}
+        onEditTimeReport={handleEditTimeReport}
       />
     </View>
   )

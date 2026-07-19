@@ -17,9 +17,6 @@ vi.mock('expo-localization', () => ({
 vi.mock('@/lib/locales', () => ({
   default: { t: (k: string) => k },
 }))
-vi.mock('@/shaders/registry', () => ({
-  DEFAULT_SHADER_ID: 'holographic',
-}))
 
 import useServiceReport from '@/stores/serviceReport'
 import {

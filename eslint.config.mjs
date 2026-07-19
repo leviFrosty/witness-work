@@ -98,7 +98,6 @@ export default tseslint.config(
             'src/contexts/**/*',
             'src/assets/**/*',
             'src/locales/**/*',
-            'src/shaders/**/*',
             'src/vendor/**/*',
           ],
         },

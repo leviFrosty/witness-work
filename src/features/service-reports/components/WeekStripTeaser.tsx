@@ -6,7 +6,7 @@ import { useNavigation } from '@react-navigation/native'
 import Text from '@/components/ui/MyText'
 import Button from '@/components/ui/Button'
 import IconButton from '@/components/ui/IconButton'
-import GlassCard from '@/components/ui/GlassCard'
+import Card from '@/components/ui/Card'
 import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
 import useStartOfWeek from '@/hooks/useStartOfWeek'
@@ -41,6 +41,8 @@ type Props = {
   serviceReportsOverride?: TimeEntriesByYear
   /** Defaults to navigating to Schedule. Override for previews / mock UI. */
   onOpenSchedule?: () => void
+  /** Opens the selected day without changing tabs. */
+  onSelectDay?: (date: Date) => void
 }
 
 const WeekStripTeaser = ({
@@ -52,6 +54,7 @@ const WeekStripTeaser = ({
   recurringPlansOverride,
   serviceReportsOverride,
   onOpenSchedule,
+  onSelectDay,
 }: Props) => {
   const theme = useTheme()
   const startOfWeek = useStartOfWeek()
@@ -111,8 +114,13 @@ const WeekStripTeaser = ({
   const openSchedule =
     onOpenSchedule ?? (() => navigation.navigate('Schedule', { month, year }))
 
+  const openSelectedDay = (day: DateData | undefined) => {
+    if (!day) return
+    onSelectDay?.(moment(day.dateString).toDate())
+  }
+
   return (
-    <GlassCard padding={20}>
+    <Card>
       <View style={{ gap: 12 }}>
         <Button onPress={openSchedule} noTransform>
           <View
@@ -192,7 +200,7 @@ const WeekStripTeaser = ({
                   date={dateData}
                   state={inSelectedMonth ? '' : 'disabled'}
                   monthsReports={weekReports}
-                  onPress={openSchedule}
+                  onPress={openSelectedDay}
                   height={50}
                   dayPlansOverride={dayPlansOverride}
                   recurringPlansOverride={recurringPlansOverride}
@@ -202,7 +210,7 @@ const WeekStripTeaser = ({
           })}
         </View>
       </View>
-    </GlassCard>
+    </Card>
   )
 }
 

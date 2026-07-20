@@ -44,7 +44,7 @@
     "@tamagui/config": "^2.4.2",
     "@tamagui/toast": "^2.4.2",
     "awesome-phonenumber": "^7.8.0",
-    "axios": "1.18.1",
+    "axios": "1.18.0",
     "babel-plugin-react-compiler": "19.0.0-beta-af1b7da-20250417",
     "burnt": "^0.13.0",
     "dotenv": "^16.6.1",

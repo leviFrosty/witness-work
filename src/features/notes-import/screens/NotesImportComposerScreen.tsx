@@ -3,6 +3,7 @@ import {
   Download as DownloadIcon,
   History as HistoryIcon,
   RotateCcw as RotateCcwIcon,
+  Sparkles as SparklesIcon,
 } from 'lucide-react-native'
 import LucideIcon from '@/components/ui/LucideIcon'
 import {
@@ -60,6 +61,7 @@ import NotesImportHistoryPopover, {
 import { useOnboardingHandoff } from '@/stores/onboardingHandoff'
 import {
   NotesImportRefinementBubble,
+  NotesImportRefinementMeta,
   notesImportUserBubbleStyle,
 } from '@/features/notes-import/components/NotesImportRefinementBubble'
 import NotesImportUsage, {
@@ -145,6 +147,7 @@ const NotesImportComposerScreen = ({ renderSupporterCta }: Props) => {
 
   const entries = useNotesImportManager((s) => s.entries)
   const runtimes = useNotesImportManager((s) => s.runtimes)
+  const globalCredits = useNotesImportManager((s) => s.credits)
   const creditsForImport = useNotesImportManager((s) => s.creditsForImport)
   const reconcileWarningsMap = useNotesImportManager((s) => s.reconcileWarnings)
   const submit = useNotesImportManager((s) => s.submit)
@@ -174,7 +177,7 @@ const NotesImportComposerScreen = ({ renderSupporterCta }: Props) => {
   // merge, not a screen navigation), so loading a past import never grows the
   // back stack — see NotesImportHeaderActions.
   const activeHash = routeHash ?? null
-  const credits = activeHash ? creditsForImport(activeHash) : null
+  const credits = activeHash ? creditsForImport(activeHash) : globalCredits
   const [helpOpen, setHelpOpen] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [committing, setCommitting] = useState(false)
@@ -377,6 +380,12 @@ const NotesImportComposerScreen = ({ renderSupporterCta }: Props) => {
 
   const onRequestUpgrade = () => navigation.navigate('Paywall')
 
+  const openHelp = () => {
+    inputRef.current?.blur()
+    Keyboard.dismiss()
+    setHelpOpen(true)
+  }
+
   const onSubmit = async () => {
     const trimmed = draft.trim()
     if (!trimmed || submitting) return
@@ -551,7 +560,7 @@ const NotesImportComposerScreen = ({ renderSupporterCta }: Props) => {
   // tagged with the accent "Scribe AI" label, wrapping whatever body the caller
   // supplies. `gap` tunes the inner spacing per bubble kind.
   const aiBubble = (children: ReactNode, gap: number) => (
-    <View style={{ flexDirection: 'row', gap: 10, alignItems: 'flex-end' }}>
+    <View style={{ flexDirection: 'row', gap: 12, alignItems: 'flex-end' }}>
       <NotesImportAvatar />
       <View
         style={{
@@ -667,27 +676,11 @@ const NotesImportComposerScreen = ({ renderSupporterCta }: Props) => {
     )
   }
 
-  const refinementLimitBlock = () => {
-    const balance =
-      credits?.refinements.limit === 0
-        ? i18n.t('notesImport_usageNoRefinements')
-        : credits?.refinements.limit == null
-          ? i18n.t('notesImport_usageUnavailable')
-          : i18n.t('notesImport_usageRefinementsLeft', {
-              remaining: credits.refinements.remaining,
-              limit: credits.refinements.limit,
-            })
-    return (
-      <Card style={{ gap: 10 }}>
-        <Text style={{ fontFamily: theme.fonts.bold }}>
-          {i18n.t('notesImport_refinementLimitTitle')}
-        </Text>
-        <Text style={{ color: theme.colors.textAlt, lineHeight: 20 }}>
-          {i18n.t('notesImport_refinementLimitBody', { balance })}
-        </Text>
-      </Card>
+  const refinementLimitBlock = () =>
+    aiHeader(
+      i18n.t('notesImport_refinementLimitTitle'),
+      i18n.t('notesImport_refinementLimitAction')
     )
-  }
 
   // Pinned top-of-screen notice when the proxy reports the feature is down,
   // appending the operator's detail (e.g. a maintenance window) when present.
@@ -1000,12 +993,20 @@ const NotesImportComposerScreen = ({ renderSupporterCta }: Props) => {
         )
     }
 
-    // Refinement credits are spent per source text, so the thread itself is the
-    // ledger: the k-th refinement (k-th user message) spent the k-th credit.
-    // Counting down from the limit keeps the bottom-most caption in step with
-    // the pinned usage meter without depending on stale per-message snapshots.
-    const refineLimit = credits?.refinements.limit
-    let refinementsUsed = 0
+    // Refinement allowance is intentionally quiet and local to the active chat.
+    // Keep one current balance directly beneath the latest Scribe AI turn rather
+    // than repeating historical snapshots beneath every user instruction.
+    const showRefinementMeta =
+      (isReady && !emptyPreview) ||
+      (isWorking &&
+        !isPaused &&
+        (!errorCode || errorCode === 'refinement_limit'))
+    const refinementMeta = showRefinementMeta ? (
+      <NotesImportRefinementMeta
+        remaining={credits?.refinements.remaining}
+        limit={credits?.refinements.limit}
+      />
+    ) : null
 
     return (
       <View style={{ gap: 18 }}>
@@ -1050,22 +1051,18 @@ const NotesImportComposerScreen = ({ renderSupporterCta }: Props) => {
               <Fragment key={`${index}-a`}>{aiMessage(message.text)}</Fragment>
             )
           }
-          refinementsUsed += 1
           return (
             <NotesImportRefinementBubble
               key={`${index}-u`}
               instruction={message.text}
-              limit={refineLimit}
-              remaining={
-                typeof refineLimit === 'number'
-                  ? Math.max(0, refineLimit - refinementsUsed)
-                  : refineLimit
-              }
             />
           )
         })}
 
-        {aiTurn}
+        <View style={{ gap: refinementMeta ? 6 : 0 }}>
+          {aiTurn}
+          {refinementMeta}
+        </View>
       </View>
     )
   }
@@ -1134,6 +1131,11 @@ const NotesImportComposerScreen = ({ renderSupporterCta }: Props) => {
                   gap: 10,
                 }}
               >
+                <LucideIcon
+                  icon={SparklesIcon}
+                  size={20}
+                  color={theme.colors.accent}
+                />
                 <Text
                   style={{
                     fontFamily: theme.fonts.bold,
@@ -1160,7 +1162,7 @@ const NotesImportComposerScreen = ({ renderSupporterCta }: Props) => {
                 {i18n.t('notesImport_description')}
               </Text>
               <Button
-                onPress={() => setHelpOpen(true)}
+                onPress={openHelp}
                 accessibilityRole='button'
                 style={{ alignSelf: 'flex-start', paddingVertical: 5 }}
               >
@@ -1290,17 +1292,14 @@ const NotesImportComposerScreen = ({ renderSupporterCta }: Props) => {
                 />
               ) : undefined
             }
-            // Usage ring rides the composer's control row instead of a pinned
-            // banner; tapping it opens the same usage popover. Shown once a
-            // conversation exists and credits are known — never on the intro.
+            // Compact Import Credit balance rides the composer's control row;
+            // refinement limits stay in the active conversation instead.
             accessory={
-              activeEntry && credits ? (
-                <NotesImportUsage
-                  credits={credits}
-                  onRequestUpgrade={onRequestUpgrade}
-                  renderSupporterCta={renderSupporterCta}
-                />
-              ) : undefined
+              <NotesImportUsage
+                credits={credits}
+                onRequestUpgrade={onRequestUpgrade}
+                renderSupporterCta={renderSupporterCta}
+              />
             }
           />
         </View>

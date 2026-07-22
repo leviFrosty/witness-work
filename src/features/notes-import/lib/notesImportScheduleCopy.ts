@@ -12,27 +12,12 @@ const importAllowance = (value: number | null, windowDays: number): string => {
   )
 }
 
-const refinementAllowance = (value: number | null): string => {
-  if (value === null) {
-    return i18n.t('notesImport_scheduleRefinementsUnlimited')
-  }
-  if (value === 0) return i18n.t('notesImport_scheduleRefinementsNone')
-  return i18n.t(
-    value === 1
-      ? 'notesImport_scheduleRefinementsFinite'
-      : 'notesImport_scheduleRefinementsFinite_plural',
-    { count: value }
-  )
-}
-
 export interface NotesImportScheduleCopy {
   freeImports: string
   supporterImports: string
-  freeRefinements: string
-  supporterRefinements: string
 }
 
-/** Turns a fresh session schedule into explicit zero/finite/unlimited copy. */
+/** Turns a fresh session schedule into explicit import-allowance copy. */
 export const notesImportScheduleCopy = (
   schedule: NotesImportPublicSchedule
 ): NotesImportScheduleCopy => ({
@@ -41,6 +26,4 @@ export const notesImportScheduleCopy = (
     schedule.imports.supporter,
     schedule.windowDays
   ),
-  freeRefinements: refinementAllowance(schedule.refinements.free),
-  supporterRefinements: refinementAllowance(schedule.refinements.supporter),
 })

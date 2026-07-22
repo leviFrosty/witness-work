@@ -74,6 +74,12 @@ _Avoid_: "month rollover" alone (ambiguous with Onboarding Backfill); confusing 
 A one-time, ephemeral flow shown during onboarding to a User with an annual goal who installs the app mid-Service-Year. Lets them enter prior months of the current Service Year so projections, milestones, and the Year tab aren't broken by zero history. Runs once per Service Year per install; not a recurring screen.
 _Avoid_: "Service Year Catch Up" (legacy file/route name; superseded), "Catch Up" alone (collides with overdue follow-ups in visit context).
 
+### AI-powered features
+
+**Scribe AI**:
+The user-facing identity for WitnessWork functionality powered by a third-party large language model (LLM). Scribe AI currently interprets free-form text for **Notes Import**, including follow-up refinements and model-emitted **Import Warnings**. It is distinct from the **Assistant**, which is deterministic and does not use an LLM. Any UI surface that uses AI or an LLM — including Scribe AI — should use sparkles iconography where relevant (such as titles, entry points, and primary actions) to make the AI-powered behavior recognizable.
+_Avoid_: calling the rule-based Assistant "AI" or "Scribe AI"; presenting LLM-generated output as if it were deterministic.
+
 ### Imports
 
 **Import**:
@@ -81,7 +87,7 @@ Bringing a User's prior field-ministry history into the app from an outside sour
 _Avoid_: "sync" (Import is a one-time backfill; iCloud Sync is ongoing replication), "migration".
 
 **Notes Import**:
-An Import whose source is arbitrary free text the User pastes or shares (handwritten-style logs, an export from another app, scattered notes). A third-party LLM translates the text into structured WitnessWork records under a zero-data-retention arrangement. Distinct from MyTime Import (structured database) and iCloud Restore (prior backup) — Notes Import is the only Import that is interpreted rather than mechanically mapped.
+An Import whose source is arbitrary free text the User pastes or shares (handwritten-style logs, an export from another app, scattered notes). **Scribe AI** uses a third-party LLM to translate the text into structured WitnessWork records under a zero-data-retention arrangement. Distinct from MyTime Import (structured database) and iCloud Restore (prior backup) — Notes Import is the only Import that is interpreted rather than mechanically mapped.
 _Avoid_: "AI import" in user copy where it implies the in-app Assistant (the Assistant is rule-based and unrelated); "paste import" (Notes Import also covers shared/picked text).
 
 **Import Credit**:

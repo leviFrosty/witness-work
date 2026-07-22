@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
   notesImportCreditsForHash,
-  notesImportPrimaryUsage,
   normalizeNotesImportCredits,
   normalizeNotesImportStatus,
   shouldShowNotesImportSupporterCta,
@@ -249,35 +248,5 @@ describe('notesImportCreditsForHash', () => {
         'a'
       )
     ).toBeNull()
-  })
-})
-
-describe('notesImportPrimaryUsage', () => {
-  it('shows import progress for finite and zero import allowances', () => {
-    expect(notesImportPrimaryUsage(finiteSnapshot)).toEqual({
-      kind: 'imports',
-      remaining: 3,
-      limit: 5,
-    })
-    expect(
-      notesImportPrimaryUsage({
-        ...finiteSnapshot,
-        remaining: 0,
-        limit: 0,
-        resetsAt: null,
-      })
-    ).toEqual({ kind: 'imports', remaining: 0, limit: 0 })
-  })
-
-  it('shows refinement progress when imports are unlimited', () => {
-    expect(
-      notesImportPrimaryUsage({
-        ...finiteSnapshot,
-        remaining: null,
-        limit: null,
-        resetsAt: null,
-        refinements: { remaining: null, limit: null },
-      })
-    ).toEqual({ kind: 'refinements', remaining: null, limit: null })
   })
 })

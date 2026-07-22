@@ -108,10 +108,6 @@ const TimeInsightContent = ({ onClose }: { onClose: () => void }) => {
   const goal = useFormattedMinutes(goalMinutes)
   const planned = useFormattedMinutes(plannedMinutes)
   const projected = useFormattedMinutes(projection.projectedMinutes)
-  const timeOfGoal = i18n.t('serviceReportInsights.timeOfGoal', {
-    current: logged.formatted,
-    goal: goal.formatted,
-  })
   const ofGoal =
     goalMinutes > 0
       ? i18n.t('serviceReportInsights.ofGoal', { goal: goal.formatted })
@@ -171,7 +167,16 @@ const TimeInsightContent = ({ onClose }: { onClose: () => void }) => {
                 fontSize: theme.fontSize('3xl'),
               }}
             >
-              {timeOfGoal}
+              {logged.formatted}
+              <Text
+                style={{
+                  color: theme.colors.textAlt,
+                  fontFamily: theme.fonts.semiBold,
+                }}
+              >
+                {' / '}
+                {goal.formatted}
+              </Text>
             </Text>
           </View>
         </View>

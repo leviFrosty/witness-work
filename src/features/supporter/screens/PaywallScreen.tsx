@@ -2,6 +2,7 @@ import {
   Check as CheckIcon,
   ChevronDown as ChevronDownIcon,
   CircleQuestionMark as CircleQuestionMarkIcon,
+  Gift as GiftIcon,
   Heart as HeartIcon,
   Minus as MinusIcon,
   RotateCw as RotateCwIcon,
@@ -41,6 +42,10 @@ import {
 import Header from '@/components/ui/layout/Header'
 import IconButton from '@/components/ui/IconButton'
 import SupporterCtaButton from '@/features/supporter/components/SupporterCtaButton'
+import {
+  getPackageKey,
+  getVisiblePackages,
+} from '@/features/supporter/lib/paywallOptions'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import useCustomer from '@/hooks/useCustomer'
 import { RouteProp, useNavigation, useRoute } from '@react-navigation/native'
@@ -56,12 +61,9 @@ type SupporterBilling = 'monthly' | 'annual'
 // monthly↔annual (or to tips) never remaps a choice across views.
 type PriceView = SupporterBilling | 'tip'
 
-const pkgKey = (pkg: PurchasesPackage) =>
-  `${pkg.offeringIdentifier}:${pkg.product.identifier}`
-
-// Keep the price lists compact; later options live behind "Show all options."
-const SUPPORTER_VISIBLE_OPTION_LIMIT = 4
-const TIP_VISIBLE_OPTION_LIMIT = 5
+// Keep the price lists compact; unselected later options live behind "Show all options."
+const SUPPORTER_VISIBLE_OPTION_LIMIT = __DEV__ ? 1 : 4
+const TIP_VISIBLE_OPTION_LIMIT = __DEV__ ? 1 : 5
 
 const FEATURE_ROWS: ReadonlyArray<{
   labelKey: TranslationKey
@@ -75,7 +77,6 @@ const FEATURE_ROWS: ReadonlyArray<{
   { labelKey: 'paywallFeatureSync', free: false, supporter: true },
   { labelKey: 'paywallFeatureAccent', free: false, supporter: true },
   { labelKey: 'paywallFeatureAppIcons', free: false, supporter: true },
-  { labelKey: 'paywallFeatureFuture', free: false, supporter: true },
   { labelKey: 'paywallFeatureCore', free: true, supporter: true },
   { labelKey: 'paywallFeaturePrivacy', free: true, supporter: true },
   { labelKey: 'paywallFeatureWidgets', free: true, supporter: true },
@@ -201,6 +202,92 @@ const SocialProofRow = () => {
       <Text style={{ fontSize: 12, color: theme.colors.textAlt }}>
         {i18n.t('paywallSocialProofReach')}
       </Text>
+    </View>
+  )
+}
+
+const TierSwitchCard = ({
+  targetTier,
+  onPress,
+}: {
+  targetTier: Tier
+  onPress: () => void
+}) => {
+  const theme = useTheme()
+  const isSupporter = targetTier === 'supporter'
+  const tint = isSupporter ? theme.colors.supporter : theme.colors.textAlt
+  const ctaBackground = isSupporter
+    ? theme.colors.supporter
+    : theme.colors.backgroundLighter
+
+  return (
+    <View
+      style={{
+        alignSelf: 'center',
+        maxWidth: '100%',
+        paddingVertical: 8,
+        paddingHorizontal: 10,
+        borderRadius: theme.numbers.borderRadiusMd,
+        borderWidth: 1,
+        borderColor: theme.colors.border,
+        backgroundColor: theme.colors.backgroundLightest,
+        marginVertical: 10,
+      }}
+    >
+      <XView style={{ gap: 8 }}>
+        <View
+          style={{
+            width: 26,
+            height: 26,
+            borderRadius: 13,
+            alignItems: 'center',
+            justifyContent: 'center',
+            backgroundColor: theme.colors.backgroundLighter,
+          }}
+        >
+          <LucideIcon
+            icon={isSupporter ? HeartIcon : GiftIcon}
+            size={14}
+            color={tint}
+            fill={isSupporter ? tint : undefined}
+          />
+        </View>
+        <Text
+          style={{
+            flexShrink: 1,
+            fontSize: theme.fontSize('sm'),
+            fontFamily: theme.fonts.semiBold,
+            color: theme.colors.text,
+          }}
+        >
+          {isSupporter
+            ? i18n.t('becomeSupporter')
+            : i18n.t('paywallTipCardTitle')}
+        </Text>
+        <Button
+          onPress={onPress}
+          style={{
+            paddingVertical: 6,
+            paddingHorizontal: 9,
+            borderRadius: theme.numbers.borderRadiusSm,
+            borderWidth: 1,
+            borderColor: isSupporter ? tint : theme.colors.border,
+            backgroundColor: ctaBackground,
+          }}
+        >
+          <Text
+            style={{
+              fontSize: theme.fontSize('xs'),
+              fontFamily: theme.fonts.semiBold,
+              color: isSupporter ? '#343232' : theme.colors.text,
+            }}
+          >
+            {isSupporter
+              ? i18n.t('paywallSupporterCardCta')
+              : i18n.t('paywallCtaSendTip')}
+          </Text>
+        </Button>
+      </XView>
     </View>
   )
 }
@@ -546,31 +633,32 @@ const AllOptionsSheet = ({
       }}
       dismissOnSnapToBottom
       modal
-      snapPointsMode='fit'
+      snapPoints={[70]}
+      snapPointsMode='percent'
     >
       <Sheet.Handle />
       <Sheet.Overlay zIndex={100_000 - 1} />
-      <Sheet.Frame>
-        <View
-          style={{
+      <Sheet.Frame backgroundColor={theme.colors.backgroundLighter}>
+        <Sheet.ScrollView
+          contentContainerStyle={{
             paddingHorizontal: 24,
             paddingTop: 24,
             paddingBottom: insets.bottom + 24,
-            gap: 16,
-            backgroundColor: theme.colors.backgroundLighter,
           }}
         >
-          <Text
-            style={{
-              fontSize: theme.fontSize('xl'),
-              fontFamily: theme.fonts.semiBold,
-              color: theme.colors.text,
-            }}
-          >
-            {i18n.t('paywallAllOptionsTitle')}
-          </Text>
-          <View style={{ gap: 6 }}>{children}</View>
-        </View>
+          <View style={{ gap: 16 }}>
+            <Text
+              style={{
+                fontSize: theme.fontSize('xl'),
+                fontFamily: theme.fonts.semiBold,
+                color: theme.colors.text,
+              }}
+            >
+              {i18n.t('paywallAllOptionsTitle')}
+            </Text>
+            <View style={{ gap: 6 }}>{children}</View>
+          </View>
+        </Sheet.ScrollView>
       </Sheet.Frame>
     </Sheet>
   )
@@ -594,6 +682,26 @@ const PaywallScreen = ({
   const [supporterBilling, setSupporterBilling] =
     useState<SupporterBilling>('annual')
   const navigation = useNavigation<RootStackNavigation>()
+  const scrollViewRef = useRef<ScrollView>(null)
+  const pendingTierScroll = useRef<Tier | null>(null)
+
+  const handleTierSwitch = (nextTier: Tier) => {
+    pendingTierScroll.current = nextTier
+    setTier(nextTier)
+  }
+
+  const handleTierSectionLayout = (section: Tier, y: number) => {
+    if (pendingTierScroll.current !== section) return
+
+    requestAnimationFrame(() => {
+      if (pendingTierScroll.current !== section) return
+      pendingTierScroll.current = null
+      scrollViewRef.current?.scrollTo({
+        y: Math.max(0, y - 10),
+        animated: true,
+      })
+    })
+  }
 
   const priceView: PriceView = tier === 'tip' ? 'tip' : supporterBilling
   const [selectedByView, setSelectedByView] = useState<
@@ -667,13 +775,17 @@ const PaywallScreen = ({
   }, [tier, supporterBilling, monthlyPackages, annualPackages, tipPackages])
 
   const [showAllOptions, setShowAllOptions] = useState(false)
-  const selectedKey = selectedPackage ? pkgKey(selectedPackage) : null
+  const selectedKey = selectedPackage ? getPackageKey(selectedPackage) : null
 
   const visibleOptionLimit =
     tier === 'supporter'
       ? SUPPORTER_VISIBLE_OPTION_LIMIT
       : TIP_VISIBLE_OPTION_LIMIT
-  const visiblePackages = activePackages.slice(0, visibleOptionLimit)
+  const visiblePackages = getVisiblePackages(
+    activePackages,
+    visibleOptionLimit,
+    selectedKey
+  )
 
   const hasHiddenOptions = visiblePackages.length < activePackages.length
 
@@ -806,7 +918,7 @@ const PaywallScreen = ({
       const current = prev[priceView]
       if (
         current &&
-        activePackages.some((p) => pkgKey(p) === pkgKey(current))
+        activePackages.some((p) => getPackageKey(p) === getPackageKey(current))
       ) {
         return prev
       }
@@ -894,7 +1006,7 @@ const PaywallScreen = ({
     pkg: PurchasesPackage,
     afterSelect?: () => void
   ) => {
-    const key = pkgKey(pkg)
+    const key = getPackageKey(pkg)
     const monthlyEquivalent =
       tier === 'supporter' &&
       supporterBilling === 'annual' &&
@@ -935,6 +1047,7 @@ const PaywallScreen = ({
       }}
     >
       <ScrollView
+        ref={scrollViewRef}
         style={{ flex: 1 }}
         contentContainerStyle={{
           paddingTop: 20,
@@ -946,22 +1059,34 @@ const PaywallScreen = ({
       >
         <FounderLetter />
         <SocialProofRow />
-        <ComparisonChart notesImportAllowance={notesImportAllowance} />
-
-        {/* Supporter is the primary flow; the one-time Tip path lives behind
-            a quiet text link below the price list rather than competing as an
-            equal tab up front. */}
-        {tier === 'tip' && (
-          <Text
-            style={{
-              fontSize: theme.fontSize('md'),
-              fontFamily: theme.fonts.semiBold,
-              color: theme.colors.text,
-              paddingHorizontal: 4,
-            }}
+        {tier === 'supporter' && (
+          <View
+            onLayout={(event) =>
+              handleTierSectionLayout('supporter', event.nativeEvent.layout.y)
+            }
           >
-            {i18n.t('paywallTierTip')}
-          </Text>
+            <ComparisonChart notesImportAllowance={notesImportAllowance} />
+          </View>
+        )}
+
+        {/* Supporter is the primary flow; Tip gets its own heading when selected. */}
+        {tier === 'tip' && (
+          <View
+            onLayout={(event) =>
+              handleTierSectionLayout('tip', event.nativeEvent.layout.y)
+            }
+          >
+            <Text
+              style={{
+                fontSize: theme.fontSize('md'),
+                fontFamily: theme.fonts.semiBold,
+                color: theme.colors.text,
+                paddingHorizontal: 4,
+              }}
+            >
+              {i18n.t('paywallTierTip')}
+            </Text>
+          </View>
         )}
 
         <Text
@@ -1044,23 +1169,13 @@ const PaywallScreen = ({
           )}
         </View>
 
-        <Button
-          onPress={() => setTier(tier === 'supporter' ? 'tip' : 'supporter')}
-          style={{ alignSelf: 'center', paddingVertical: 6 }}
-        >
-          <Text
-            style={{
-              fontSize: theme.fontSize('sm'),
-              color: theme.colors.textAlt,
-              textDecorationLine: 'underline',
-            }}
-          >
-            {tier === 'supporter'
-              ? i18n.t('paywallSwitchToTip')
-              : i18n.t('paywallSwitchToSupporter')}
-          </Text>
-        </Button>
-
+        <Divider />
+        <TierSwitchCard
+          targetTier={tier === 'supporter' ? 'tip' : 'supporter'}
+          onPress={() =>
+            handleTierSwitch(tier === 'supporter' ? 'tip' : 'supporter')
+          }
+        />
         <Divider />
         {hasPurchasedBefore && customer && (
           <PreviousDonations customer={customer} revalidate={revalidate} />

@@ -18,66 +18,81 @@ const NotesImportDataHandling = () => {
   return (
     <View
       style={{
-        flexDirection: 'row',
-        alignItems: 'flex-start',
-        gap: 12,
-        paddingTop: 18,
+        gap: 10,
+        paddingTop: 24,
         borderTopWidth: 1,
         borderColor: theme.colors.border,
       }}
     >
       <View
         style={{
-          width: 30,
-          height: 30,
-          borderRadius: 15,
-          backgroundColor: theme.colors.backgroundLighter,
+          flexDirection: 'row',
           alignItems: 'center',
-          justifyContent: 'center',
+          gap: 10,
         }}
       >
-        <LucideIcon
-          icon={ShieldHalfIcon}
-          size={13}
-          color={theme.colors.textAlt}
-        />
-      </View>
-      <View style={{ flex: 1, gap: 7 }}>
-        <Text style={{ fontFamily: theme.fonts.semiBold }}>
-          {i18n.t('notesImport_privacyTitle')}
-        </Text>
-        <Text
+        <View
           style={{
-            color: theme.colors.textAlt,
-            fontSize: theme.fontSize('sm'),
-            lineHeight: 19,
+            width: 30,
+            height: 30,
+            borderRadius: 15,
+            backgroundColor: theme.colors.backgroundLighter,
+            alignItems: 'center',
+            justifyContent: 'center',
           }}
         >
-          {i18n.t('notesImport_privacySummary')}
-        </Text>
-        <Button
-          noTransform
-          accessibilityRole='link'
-          accessibilityLabel={i18n.t('notesImport_privacyLink')}
-          onPress={() => openURL(links.openRouterZdr)}
-          style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}
-        >
-          <Text
-            style={{
-              color: theme.colors.accent,
-              fontFamily: theme.fonts.semiBold,
-              fontSize: theme.fontSize('sm'),
-            }}
-          >
-            {i18n.t('notesImport_privacyLink')}
-          </Text>
           <LucideIcon
-            icon={ExternalLinkIcon}
-            size={10}
-            color={theme.colors.accent}
+            icon={ShieldHalfIcon}
+            size={13}
+            color={theme.colors.textAlt}
           />
-        </Button>
+        </View>
+        <Text
+          style={{
+            flex: 1,
+            fontFamily: theme.fonts.semiBold,
+            fontSize: theme.fontSize('lg'),
+          }}
+        >
+          {i18n.t('notesImport_privacyTitle')}
+        </Text>
       </View>
+      <Text
+        style={{
+          color: theme.colors.textAlt,
+          fontSize: theme.fontSize('md'),
+          lineHeight: 21,
+        }}
+      >
+        {i18n.t('notesImport_privacySummary')}
+      </Text>
+      <Button
+        noTransform
+        accessibilityRole='link'
+        accessibilityLabel={i18n.t('notesImport_privacyLink')}
+        onPress={() => openURL(links.openRouterZdr)}
+        style={{
+          alignSelf: 'flex-start',
+          flexDirection: 'row',
+          alignItems: 'center',
+          gap: 6,
+        }}
+      >
+        <Text
+          style={{
+            color: theme.colors.accent,
+            fontFamily: theme.fonts.semiBold,
+            fontSize: theme.fontSize('md'),
+          }}
+        >
+          {i18n.t('notesImport_privacyLink')}
+        </Text>
+        <LucideIcon
+          icon={ExternalLinkIcon}
+          size={10}
+          color={theme.colors.accent}
+        />
+      </Button>
     </View>
   )
 }

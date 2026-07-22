@@ -27,3 +27,9 @@ Imports use the `@/*` alias (= `src/*`). Prefer `@/features/...` / `@/app/...` /
 
 - `docs/project-structure.md` — full directory map, one-line summary of every feature folder.
 - `docs/architecture-features.md` — tier rules, boundaries lint config, why some features are classified as `app`, and the `components/ui/` vs `components/` (root) decision.
+
+## Screens and component file organization
+
+When editing or creating new screens, prefer to keep "Screen" files, like HomeScreen.tsx, extremely high level. It should essentially be the page orchestrator, handling higher-level state, and importing lower level "blocks" or components that make up that given page. Those components should be created as _separate_ files and the primary screen page should import them. Do not add components and util functions directly onto a screen file, it pollutes the file and makes it hard to navigate.
+
+Of course, there are exceptions to this rule, such as extremely simple screens with minimal nested components. But prefer this architecture in majority of cases.

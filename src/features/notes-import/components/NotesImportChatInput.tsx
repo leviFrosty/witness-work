@@ -32,9 +32,8 @@ export interface NotesImportChatInputProps {
    */
   leading?: ReactNode
   /**
-   * Optional control rendered in the bottom row just left of Send — the usage
-   * ring lives here so the meter rides the composer instead of a pinned
-   * banner.
+   * Optional control rendered in the bottom row just left of Send — the compact
+   * Import Credit balance lives here instead of in a pinned banner.
    */
   accessory?: ReactNode
 }
@@ -45,9 +44,10 @@ export interface NotesImportChatInputProps {
  * style): the field never has to share its line with the buttons, so long
  * pastes stay readable. The trailing action's identity is driven by props —
  * Stop while a run is interruptible, otherwise Send — and an optional
- * `accessory` (the usage ring) sits to its left. Both the initial paste and the
- * refinement prompt render this same component; callers differ only in
- * value/placeholder/onSubmit, so the footer never swaps layouts.
+ * `accessory` sits to its left. Both the initial paste and the refinement
+ * prompt render this same component; callers differ only in
+ * value/placeholder/onSubmit, so the footer never swaps layouts. The optional
+ * `accessory` keeps the Import Credit balance beside the trailing action.
  */
 const NotesImportChatInput = forwardRef<TextInput, NotesImportChatInputProps>(
   (
@@ -161,8 +161,8 @@ const NotesImportChatInput = forwardRef<TextInput, NotesImportChatInputProps>(
           }}
         />
         {/* Control row beneath the field: an optional leading control on the
-            left, then a spacer that pushes the usage ring and Send to the
-            trailing edge. */}
+            left, then a spacer that pushes the balance and Send to the trailing
+            edge. */}
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
           {leading}
           <View style={{ flex: 1 }} />

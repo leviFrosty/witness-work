@@ -5,13 +5,11 @@ import AnchoredPopover, {
   type ResolveAnchorPosition,
 } from '@/components/ui/AnchoredPopover'
 import Button from '@/components/ui/Button'
-import CircularProgress from '@/components/ui/CircularProgress'
 import Text from '@/components/ui/MyText'
 import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
 import { formatDate } from '@/lib/dates'
 import {
-  notesImportPrimaryUsage,
   shouldShowNotesImportSupporterCta,
   type NotesImportCredits,
 } from '@/features/notes-import/lib/notesImportUsage'
@@ -21,115 +19,61 @@ export type RenderNotesImportSupporterCta = (props: {
 }) => ReactNode
 
 interface Props {
-  credits: NotesImportCredits
+  credits: NotesImportCredits | null
   onRequestUpgrade?: () => void
   renderSupporterCta?: RenderNotesImportSupporterCta
 }
 
-/** A thin progress bar (fills by fraction remaining) with a direct balance. */
+const usagePercentage = (
+  remaining: number | null,
+  limit: number | null
+): number =>
+  limit === null
+    ? 1
+    : limit === 0
+      ? 0
+      : Math.min(1, Math.max(0, (remaining ?? 0) / limit))
+
+/** A thin progress bar that fills by the fraction of imports remaining. */
 const UsageBar = ({
   remaining,
   limit,
   color,
-  label,
 }: {
   remaining: number | null
   limit: number | null
   color: string
-  label: string
 }) => {
   const theme = useTheme()
   const unlimited = remaining === null && limit === null
-  const percentage = unlimited
-    ? 1
-    : limit === 0
-      ? 0
-      : Math.min(1, Math.max(0, (remaining ?? 0) / (limit ?? 1)))
+  const percentage = usagePercentage(remaining, limit)
 
   return (
-    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+    <View
+      style={{
+        height: 6,
+        overflow: 'hidden',
+        borderRadius: 3,
+        backgroundColor: theme.colors.background,
+      }}
+    >
       <View
         style={{
-          flex: 1,
-          height: 6,
-          overflow: 'hidden',
+          width: `${percentage * 100}%`,
+          height: '100%',
           borderRadius: 3,
-          backgroundColor: theme.colors.background,
+          backgroundColor: color,
+          opacity: unlimited ? 0.55 : 1,
         }}
-      >
-        <View
-          style={{
-            width: `${percentage * 100}%`,
-            height: '100%',
-            borderRadius: 3,
-            backgroundColor: color,
-            opacity: unlimited ? 0.55 : 1,
-          }}
-        />
-      </View>
-      <Text
-        style={{
-          flexShrink: 1,
-          textAlign: 'right',
-          color: theme.colors.textAlt,
-          fontSize: theme.fontSize('xs'),
-        }}
-      >
-        {label}
-      </Text>
-    </View>
-  )
-}
-
-const Detail = ({
-  title,
-  body,
-  bar,
-  caption,
-}: {
-  title: string
-  body: string
-  /** Optional progress bar rendered between the section title and its body. */
-  bar?: ReactNode
-  caption?: string
-}) => {
-  const theme = useTheme()
-  return (
-    <View style={{ gap: 8 }}>
-      <Text style={{ fontFamily: theme.fonts.semiBold }}>{title}</Text>
-      {bar}
-      {caption && (
-        <Text
-          style={{
-            color: theme.colors.text,
-            fontFamily: theme.fonts.semiBold,
-            fontSize: theme.fontSize('sm'),
-          }}
-        >
-          {caption}
-        </Text>
-      )}
-      <Text
-        style={{
-          color: theme.colors.textAlt,
-          fontSize: theme.fontSize('sm'),
-          lineHeight: 19,
-        }}
-      >
-        {body}
-      </Text>
+      />
     </View>
   )
 }
 
 /**
- * The Scribe AI usage affordance: a ghost button whose ring fills with the
- * relevant balance remaining: imports for metered users, or refinements when
- * imports are unlimited. Tapping opens the usage popover — the same
- * imports/refinements breakdown and Supporter CTA as before. It lives inline in
- * the composer's control row (the remaining refinement count is shown
- * per-message in the chat, so this no longer spells out numbers), with the
- * popover carrying the full detail one tap away.
+ * Compact Import Credit balance beside the composer. The trigger always refers
+ * to imports (for example, “5 left”); refinement allowances stay in the active
+ * conversation instead. Tapping opens a dense import-only breakdown.
  */
 const NotesImportUsage = ({
   credits,
@@ -139,47 +83,29 @@ const NotesImportUsage = ({
   const theme = useTheme()
   const insets = useSafeAreaInsets()
   const { width: windowWidth } = useWindowDimensions()
-  const contentWidth = Math.min(340, windowWidth - 24)
-  const importsUnlimited = credits.remaining === null && credits.limit === null
-  const primaryUsage = notesImportPrimaryUsage(credits)
-  const importBalance = importsUnlimited
-    ? i18n.t('notesImport_usageUnlimitedImports')
-    : credits.limit === 0
-      ? i18n.t('notesImport_usageNoImports')
-      : credits.remaining === 0
-        ? i18n.t('notesImport_usageImportAllowanceReached')
-        : i18n.t('notesImport_usageImportsLeft', {
-            remaining: credits.remaining,
-            limit: credits.limit,
-          })
-  const refinementsUnlimited =
-    credits.refinements.remaining === null && credits.refinements.limit === null
-  const refinementBalance = refinementsUnlimited
-    ? i18n.t('notesImport_usageUnlimitedRefinements')
-    : credits.refinements.limit === 0
-      ? i18n.t('notesImport_usageNoRefinements')
-      : i18n.t('notesImport_usageRefinementsLeft', {
-          remaining: credits.refinements.remaining,
-          limit: credits.refinements.limit,
+  const contentWidth = Math.min(300, windowWidth - 24)
+  const importsUnlimited =
+    !!credits && credits.remaining === null && credits.limit === null
+  const importBalance = !credits
+    ? i18n.t('notesImport_usageUnavailable')
+    : importsUnlimited
+      ? i18n.t('notesImport_usageUnlimitedImports')
+      : i18n.t('notesImport_usageImportsLeft', {
+          remaining: credits.remaining ?? 0,
+          limit: credits.limit ?? 0,
         })
-  const resetCaption = credits.resetsAt
+  const triggerLabel = !credits
+    ? i18n.t('notesImport_usageUnavailableShort')
+    : importsUnlimited
+      ? i18n.t('notesImport_usageUnlimitedShort')
+      : i18n.t('notesImport_usageRemainingShort', {
+          remaining: credits.remaining ?? 0,
+        })
+  const resetCaption = credits?.resetsAt
     ? i18n.t('notesImport_usageRefreshes', {
         date: formatDate(credits.resetsAt),
       })
     : undefined
-
-  const ringProgress =
-    primaryUsage.limit === null
-      ? 1
-      : primaryUsage.limit === 0
-        ? 0
-        : (primaryUsage.remaining ?? 0) / primaryUsage.limit
-  const ringColor =
-    primaryUsage.remaining === 0
-      ? theme.colors.warn
-      : primaryUsage.kind === 'refinements'
-        ? theme.colors.indigo
-        : theme.colors.accent
 
   const resolvePosition: ResolveAnchorPosition = ({
     anchor,
@@ -209,109 +135,113 @@ const NotesImportUsage = ({
     <AnchoredPopover
       contentWidth={contentWidth}
       resolvePosition={resolvePosition}
-      contentStyle={{ padding: 16, gap: 16 }}
+      contentStyle={{ padding: 14, gap: 12 }}
       renderTrigger={({ onPress, anchorRef }) => (
         <View ref={anchorRef} collapsable={false}>
           <Button
             noTransform
             onPress={onPress}
             accessibilityRole='button'
-            accessibilityLabel={i18n.t('notesImport_usageAccessibilityLabel', {
-              imports: importBalance,
-              refinements: refinementBalance,
-            })}
+            accessibilityLabel={i18n.t(
+              'notesImport_importUsageAccessibilityLabel',
+              { imports: importBalance }
+            )}
             accessibilityHint={i18n.t('notesImport_usageHint')}
             hitSlop={8}
             style={{
-              width: 32,
+              minWidth: 50,
               height: 32,
+              paddingHorizontal: 10,
+              borderRadius: theme.numbers.borderRadiusXl,
               alignItems: 'center',
               justifyContent: 'center',
+              backgroundColor: theme.colors.accentTranslucent,
             }}
           >
-            <CircularProgress
-              progress={ringProgress}
-              size={22}
-              strokeWidth={2.5}
-              color={ringColor}
-              trackColor={theme.colors.border}
-            />
+            <Text
+              numberOfLines={1}
+              style={{
+                color: theme.colors.accent,
+                fontFamily: theme.fonts.semiBold,
+                fontSize: theme.fontSize('xs'),
+              }}
+            >
+              {triggerLabel}
+            </Text>
           </Button>
         </View>
       )}
     >
       {({ close }) => (
         <>
-          <View style={{ gap: 4 }}>
-            <Text
+          <View style={{ gap: 8 }}>
+            <View
               style={{
-                fontFamily: theme.fonts.bold,
-                fontSize: theme.fontSize('lg'),
+                flexDirection: 'row',
+                alignItems: 'baseline',
+                justifyContent: 'space-between',
+                gap: 12,
               }}
             >
-              {i18n.t('notesImport_usagePopoverTitle')}
-            </Text>
-            <Text
-              style={{
-                color: theme.colors.textAlt,
-                fontSize: theme.fontSize('sm'),
-              }}
-            >
-              {importsUnlimited && credits.isSupporter
-                ? i18n.t('notesImport_usageSupporterStatus')
-                : i18n.t('notesImport_usageIncludedStatus')}
-            </Text>
-          </View>
-          <Detail
-            title={i18n.t('notesImport_usageImports')}
-            body={i18n.t('notesImport_usageImportsBody')}
-            caption={resetCaption}
-            bar={
+              <Text
+                style={{
+                  flex: 1,
+                  fontFamily: theme.fonts.bold,
+                  fontSize: theme.fontSize('lg'),
+                }}
+              >
+                {i18n.t('notesImport_usagePopoverTitle')}
+              </Text>
+              <Text
+                style={{
+                  flexShrink: 1,
+                  color: theme.colors.accent,
+                  fontFamily: theme.fonts.semiBold,
+                  fontSize: theme.fontSize('sm'),
+                  textAlign: 'right',
+                }}
+              >
+                {importBalance}
+              </Text>
+            </View>
+            {credits && (
               <UsageBar
                 remaining={credits.remaining}
                 limit={credits.limit}
                 color={theme.colors.accent}
-                label={importBalance}
               />
-            }
-          />
-          <Detail
-            title={i18n.t('notesImport_usageRefinements')}
-            body={i18n.t('notesImport_usageRefinementsBody')}
-            bar={
-              <UsageBar
-                remaining={credits.refinements.remaining}
-                limit={credits.refinements.limit}
-                color={theme.colors.indigo}
-                label={refinementBalance}
-              />
-            }
-          />
-          {shouldShowNotesImportSupporterCta(credits) &&
+            )}
+            {resetCaption && (
+              <Text
+                style={{
+                  color: theme.colors.textAlt,
+                  fontSize: theme.fontSize('xs'),
+                }}
+              >
+                {resetCaption}
+              </Text>
+            )}
+            <Text
+              style={{
+                color: theme.colors.textAlt,
+                fontSize: theme.fontSize('sm'),
+                lineHeight: 18,
+              }}
+            >
+              {i18n.t('notesImport_usageImportsBody')}
+            </Text>
+          </View>
+          {credits &&
+            shouldShowNotesImportSupporterCta(credits) &&
             onRequestUpgrade &&
             renderSupporterCta && (
               <View
                 style={{
-                  gap: 10,
-                  paddingTop: 14,
+                  paddingTop: 12,
                   borderTopWidth: 1,
                   borderColor: theme.colors.border,
                 }}
               >
-                <View style={{ gap: 3 }}>
-                  <Text style={{ fontFamily: theme.fonts.semiBold }}>
-                    {i18n.t('notesImport_usageSupporterTitle')}
-                  </Text>
-                  <Text
-                    style={{
-                      color: theme.colors.textAlt,
-                      fontSize: theme.fontSize('sm'),
-                      lineHeight: 19,
-                    }}
-                  >
-                    {i18n.t('notesImport_usageSupporterBody')}
-                  </Text>
-                </View>
                 {renderSupporterCta({
                   onPress: () => {
                     close()

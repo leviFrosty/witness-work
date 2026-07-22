@@ -194,26 +194,3 @@ export const notesImportCreditsForHash = (
 export const shouldShowNotesImportSupporterCta = (
   credits: Pick<NotesImportCredits, 'isSupporter'>
 ): boolean => !credits.isSupporter
-
-/**
- * Chooses the balance shown by the compact usage meter beside the composer.
- * Import allowance is irrelevant when it is unlimited, so the ring displays
- * this import's refinement allowance instead.
- */
-export const notesImportPrimaryUsage = (
-  credits: NotesImportCredits
-): {
-  kind: 'imports' | 'refinements'
-  remaining: number | null
-  limit: number | null
-} => {
-  if (credits.remaining === null && credits.limit === null) {
-    return { kind: 'refinements', ...credits.refinements }
-  }
-
-  return {
-    kind: 'imports',
-    remaining: credits.remaining,
-    limit: credits.limit,
-  }
-}

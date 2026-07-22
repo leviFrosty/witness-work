@@ -11,7 +11,7 @@ vi.mock('@/lib/locales', async () => {
 import { notesImportScheduleCopy } from '@/features/notes-import/lib/notesImportScheduleCopy'
 
 describe('notesImportScheduleCopy', () => {
-  it('uses singular English grammar for configured allowances of one', () => {
+  it('uses singular English grammar for import windows of one day', () => {
     expect(
       notesImportScheduleCopy({
         imports: { free: 1, supporter: 2 },
@@ -21,8 +21,6 @@ describe('notesImportScheduleCopy', () => {
     ).toEqual({
       freeImports: '1 / 1-day window',
       supporterImports: '2 / 1-day window',
-      freeRefinements: '1 refinement per import',
-      supporterRefinements: '2 refinements per import',
     })
   })
 })

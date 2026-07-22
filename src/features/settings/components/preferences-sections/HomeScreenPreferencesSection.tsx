@@ -86,8 +86,6 @@ const HomeElements = () => {
         return i18n.t('approachingConversations')
       case 'tabletServiceYearSummary':
         return i18n.t('serviceYearSummary')
-      case 'ministryDashboard':
-        return i18n.t('thisMonth')
       case 'serviceReport':
         return i18n.t('serviceReport')
       case 'thisWeek':

@@ -12,8 +12,10 @@ import Text from '@/components/ui/MyText'
 import moment from 'moment'
 import i18n from '@/lib/locales'
 import HourEntryCard from '@/features/service-reports/components/HourEntryCard'
+import ServiceReportTimeOverlay from '@/features/service-reports/components/ServiceReportTimeOverlay'
 import PublisherCheckBoxCard from '@/features/service-reports/components/PublisherCheckBoxCard'
 import StudiesCard from '@/features/service-reports/components/StudiesCard'
+import ServiceReportStudiesOverlay from '@/features/service-reports/components/ServiceReportStudiesOverlay'
 import SubmitPreviousReportButton from '@/features/service-reports/components/SubmitPreviousReportButton'
 import { useNavigation } from '@react-navigation/native'
 import { RootStackNavigation } from '@/types/rootStack'
@@ -81,19 +83,17 @@ const ServiceReportSection = () => {
             alignItems: 'stretch',
           }}
         >
-          <View
-            style={{
-              flex: entryMode === 'checkbox' ? 2 : 1,
-            }}
-          >
-            {entryMode === 'checkbox' ? (
+          {entryMode === 'checkbox' ? (
+            <View style={{ flex: 2 }}>
               <PublisherCheckBoxCard />
-            ) : (
+            </View>
+          ) : (
+            <ServiceReportTimeOverlay containerStyle={{ flex: 1 }}>
               <HourEntryCard />
-            )}
-          </View>
-          <View
-            style={{
+            </ServiceReportTimeOverlay>
+          )}
+          <ServiceReportStudiesOverlay
+            containerStyle={{
               flex: 1,
               paddingLeft: 18,
               borderLeftWidth: 1,
@@ -101,7 +101,7 @@ const ServiceReportSection = () => {
             }}
           >
             <StudiesCard />
-          </View>
+          </ServiceReportStudiesOverlay>
         </View>
 
         {entryMode === 'hours' ? (

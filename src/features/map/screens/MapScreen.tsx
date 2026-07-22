@@ -50,7 +50,7 @@ import useDevice from '@/hooks/useDevice'
 import { RootStackNavigation } from '@/types/rootStack'
 import { HomeTabStackNavigation } from '@/types/homeStack'
 import { ContactMarker } from '@/features/map/types/map'
-import { Popover } from 'tamagui'
+import AnchoredPopover from '@/components/ui/AnchoredPopover'
 import MapKey from '@/features/map/components/MapColorKey'
 import { useMarkerColors } from '@/hooks/useMarkerColors'
 import { stalenessToColor } from '@/lib/contactStaleness'
@@ -101,7 +101,6 @@ const FullMapView = ({
     appleMapsUri: '',
     googleMapsUri: '',
   })
-  const [showInfo, setShowInfo] = useState(false)
   const [search, setSearch] = useState('')
   const [searchExpanded, setSearchExpanded] = useState(false)
   const searchInputRef = useRef<TextInput>(null)
@@ -952,46 +951,45 @@ const FullMapView = ({
             />
           </Button>
         )}
-        <Popover
-          open={showInfo}
-          onOpenChange={setShowInfo}
-          placement='right-start'
-          allowFlip
-          offset={8}
+        <AnchoredPopover
+          contentWidth={280}
+          // Legend opens to the right of the control column, top-aligned to the
+          // info button, clamped on-screen — matches the old 'right-start'.
+          resolvePosition={({
+            anchor,
+            windowWidth,
+            windowHeight,
+            contentWidth,
+          }) => {
+            const margin = 12
+            const left = Math.min(
+              anchor.x + anchor.width + 8,
+              windowWidth - contentWidth - margin
+            )
+            return {
+              top: Math.min(anchor.y, windowHeight - margin),
+              left,
+            }
+          }}
+          renderTrigger={({ onPress, anchorRef }) => (
+            <View ref={anchorRef} collapsable={false}>
+              <Button
+                accessibilityLabel={i18n.t('map_showLegend')}
+                variant='glass'
+                onPress={onPress}
+                style={mapControlStyle}
+              >
+                <LucideIcon
+                  icon={InfoIcon}
+                  size={theme.fontSize('sm')}
+                  style={{ color: theme.colors.text }}
+                />
+              </Button>
+            </View>
+          )}
         >
-          <Popover.Trigger asChild>
-            <Button
-              accessibilityLabel={i18n.t('map_showLegend')}
-              variant='glass'
-              onPress={() => setShowInfo((v) => !v)}
-              style={mapControlStyle}
-            >
-              <LucideIcon
-                icon={InfoIcon}
-                size={theme.fontSize('sm')}
-                style={{ color: theme.colors.text }}
-              />
-            </Button>
-          </Popover.Trigger>
-          <Popover.Content
-            borderWidth={1}
-            borderColor={theme.colors.border}
-            backgroundColor={theme.colors.card}
-            padding={12}
-            elevate
-            transition={['quick', { opacity: { overshootClamping: true } }]}
-            enterStyle={{ x: -8, opacity: 0 }}
-            exitStyle={{ x: -8, opacity: 0 }}
-            maxWidth={300}
-          >
-            <Popover.Arrow
-              borderWidth={1}
-              borderColor={theme.colors.border}
-              backgroundColor={theme.colors.card}
-            />
-            <MapKey />
-          </Popover.Content>
-        </Popover>
+          <MapKey />
+        </AnchoredPopover>
       </View>
       <View
         style={{

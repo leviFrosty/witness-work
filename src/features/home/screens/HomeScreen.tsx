@@ -11,7 +11,6 @@ import useContacts from '@/stores/contactsStore'
 import { RefreshControl, View } from 'react-native'
 import { iCloudSync } from '@/app/sync/iCloudSync'
 import ServiceReportSection from '@/features/service-reports/components/ServiceReportSection'
-import ThisMonthDashboard from '@/features/service-reports/components/ThisMonthDashboard'
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import XView from '@/components/ui/layout/XView'
@@ -31,7 +30,6 @@ import { useNavigation } from '@react-navigation/native'
 import usePublisher from '@/hooks/usePublisher'
 import {
   getEffectiveHomeScreenOrder,
-  getEffectiveHomeDashboardCards,
   HomeScreenElementKey,
   usePreferences,
 } from '@/stores/preferences'
@@ -49,7 +47,6 @@ import { HomeTabStackNavigation } from '@/types/homeStack'
 import { RootStackNavigation } from '@/types/rootStack'
 import { Fragment } from 'react'
 import type { TimeEntry } from '@/types/timeEntry'
-import HomeDashboardEditorSheet from '@/features/settings/components/HomeDashboardEditorSheet'
 
 export const HomeScreen = () => {
   const theme = useTheme()
@@ -82,7 +79,6 @@ export const HomeScreen = () => {
   const { isSupporter } = useIsSupporter()
   const { serviceReports } = useServiceReport()
   const [refreshing, setRefreshing] = useState(false)
-  const [dashboardEditorOpen, setDashboardEditorOpen] = useState(false)
   const [selectedDateSheet, setSelectedDateSheet] =
     useState<SelectedDateSheetState>({
       open: false,
@@ -105,23 +101,10 @@ export const HomeScreen = () => {
   const { contacts } = useContacts()
   const { isTablet } = useDevice()
   const { hasAnnualGoal, showsTimer } = usePublisher()
-  const {
-    homeScreenElements,
-    homeScreenElementsOrder,
-    homeDashboardCardOrder,
-    homeDashboardCardVisibility,
-  } = usePreferences()
+  const { homeScreenElements, homeScreenElementsOrder } = usePreferences()
   const effectiveOrder = useMemo(
     () => getEffectiveHomeScreenOrder(homeScreenElementsOrder),
     [homeScreenElementsOrder]
-  )
-  const dashboardCards = useMemo(
-    () =>
-      getEffectiveHomeDashboardCards(
-        homeDashboardCardOrder,
-        homeDashboardCardVisibility
-      ),
-    [homeDashboardCardOrder, homeDashboardCardVisibility]
   )
   // Anchor the "Did you know" tip card to the bottom of the scroll view only
   // when the user has it in its default trailing position. Once they reorder
@@ -405,19 +388,6 @@ export const HomeScreen = () => {
                 if (!homeScreenElements.serviceReport) return null
                 return <ServiceReportSection key={key} />
 
-              case 'ministryDashboard':
-                if (homeScreenElements.ministryDashboard === false) return null
-                return (
-                  <ThisMonthDashboard
-                    key={key}
-                    orderedCardKeys={dashboardCards.order}
-                    visibleCardKeys={dashboardCards.order.filter(
-                      (cardKey) => dashboardCards.visibility[cardKey]
-                    )}
-                    onEdit={() => setDashboardEditorOpen(true)}
-                  />
-                )
-
               case 'thisWeek':
                 if (!homeScreenElements.thisWeek) return null
                 return (
@@ -451,10 +421,6 @@ export const HomeScreen = () => {
       <UpgradeLegacyTimeReportsSheet
         sheet={upgradeReportsSheet}
         setSheet={setUpgradeReportSheet}
-      />
-      <HomeDashboardEditorSheet
-        open={dashboardEditorOpen}
-        onOpenChange={setDashboardEditorOpen}
       />
       <SelectedDateSheet
         sheet={selectedDateSheet}

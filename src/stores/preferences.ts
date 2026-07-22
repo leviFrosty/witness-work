@@ -196,7 +196,6 @@ export type AppIconVariant =
 export type HomeScreenElementKey =
   | 'approachingConversations'
   | 'tabletServiceYearSummary'
-  | 'ministryDashboard'
   | 'serviceReport'
   | 'thisWeek'
   | 'timer'
@@ -207,106 +206,19 @@ export const DEFAULT_HOME_SCREEN_ELEMENTS_ORDER: HomeScreenElementKey[] = [
   'tabletServiceYearSummary',
   'serviceReport',
   'thisWeek',
-  'ministryDashboard',
   'timer',
   'didYouKnow',
 ]
 
-/** Customizable cards in the Home progress dashboard. */
-export type HomeDashboardCardKey =
-  | 'schedulePace'
-  | 'projectedMonth'
-  | 'serviceYearProgress'
-  | 'creditTime'
-  | 'remainingToGoal'
-  | 'plannedTotal'
-
-export const DEFAULT_HOME_DASHBOARD_CARD_ORDER: HomeDashboardCardKey[] = [
-  'schedulePace',
-  'projectedMonth',
-  'remainingToGoal',
-  'plannedTotal',
-  'serviceYearProgress',
-  'creditTime',
-]
-
-export const MAX_VISIBLE_HOME_DASHBOARD_CARDS = 5
-
-export type HomeDashboardCardVisibility = Record<HomeDashboardCardKey, boolean>
-
-export const DEFAULT_HOME_DASHBOARD_CARD_VISIBILITY: HomeDashboardCardVisibility =
-  {
-    schedulePace: true,
-    projectedMonth: true,
-    remainingToGoal: true,
-    plannedTotal: false,
-    serviceYearProgress: false,
-    creditTime: false,
-  }
-
-/**
- * Normalizes persisted/synced dashboard preferences. Unknown and duplicate keys
- * are removed, newly introduced cards are appended, and visibility is capped
- * without disturbing the User's chosen order.
- */
-export function getEffectiveHomeDashboardCards(
-  storedOrder: string[] | undefined,
-  storedVisibility: Partial<Record<string, boolean>> | undefined
-): {
-  order: HomeDashboardCardKey[]
-  visibility: HomeDashboardCardVisibility
-} {
-  const valid = new Set<HomeDashboardCardKey>(DEFAULT_HOME_DASHBOARD_CARD_ORDER)
-  const order: HomeDashboardCardKey[] = []
-  for (const key of storedOrder ?? []) {
-    if (
-      valid.has(key as HomeDashboardCardKey) &&
-      !order.includes(key as HomeDashboardCardKey)
-    ) {
-      order.push(key as HomeDashboardCardKey)
-    }
-  }
-  for (const key of DEFAULT_HOME_DASHBOARD_CARD_ORDER) {
-    if (!order.includes(key)) order.push(key)
-  }
-
-  let visibleCount = 0
-  const visibility = { ...DEFAULT_HOME_DASHBOARD_CARD_VISIBILITY }
-  for (const key of order) {
-    const requested = storedVisibility?.[key]
-    const isVisible =
-      requested === undefined
-        ? DEFAULT_HOME_DASHBOARD_CARD_VISIBILITY[key]
-        : requested
-    visibility[key] =
-      isVisible && visibleCount < MAX_VISIBLE_HOME_DASHBOARD_CARDS
-    if (visibility[key]) visibleCount += 1
-  }
-
-  return { order, visibility }
-}
-
 /**
  * Returns the user's stored order with any missing keys appended in their
- * default position. Tolerates legacy entries (e.g. `monthlyRoutine`) by
- * dropping anything not in the current key set.
+ * default position. Tolerates legacy entries (for example, `monthlyRoutine` or
+ * the retired `ministryDashboard`) by dropping anything not in the current key
+ * set.
  */
 export function getEffectiveHomeScreenOrder(
   stored: string[] | undefined
 ): HomeScreenElementKey[] {
-  const previousPreviewDefault: HomeScreenElementKey[] = [
-    'approachingConversations',
-    'tabletServiceYearSummary',
-    'ministryDashboard',
-    'serviceReport',
-    'thisWeek',
-    'timer',
-    'didYouKnow',
-  ]
-  if (stored?.join('|') === previousPreviewDefault.join('|')) {
-    return [...DEFAULT_HOME_SCREEN_ELEMENTS_ORDER]
-  }
-
   const valid = new Set<HomeScreenElementKey>(
     DEFAULT_HOME_SCREEN_ELEMENTS_ORDER
   )
@@ -504,7 +416,6 @@ export const PREFERENCE_DEFAULTS = {
     approachingConversations: true,
     monthlyRoutine: true,
     tabletServiceYearSummary: true,
-    ministryDashboard: true,
     thisWeek: true,
     serviceReport: true,
     timer: true,
@@ -518,12 +429,6 @@ export const PREFERENCE_DEFAULTS = {
    */
   homeScreenElementsOrder:
     DEFAULT_HOME_SCREEN_ELEMENTS_ORDER as HomeScreenElementKey[],
-  /** User-selected order and visibility for Home's secondary data cards. */
-  homeDashboardCardOrder:
-    DEFAULT_HOME_DASHBOARD_CARD_ORDER as HomeDashboardCardKey[],
-  homeDashboardCardVisibility: {
-    ...DEFAULT_HOME_DASHBOARD_CARD_VISIBILITY,
-  } as HomeDashboardCardVisibility,
   colorScheme: undefined as 'light' | 'dark' | undefined,
   timeDisplayFormat: 'decimal' as MinuteDisplayFormat,
   locale: undefined as TranslatedLocale | undefined,

@@ -3,22 +3,23 @@ import { Contact } from '@/types/contact'
 import { Visit } from '@/types/visit'
 import { contactStudiedForGivenMonth } from '@/lib/conversations'
 
-export const getStudiesForGivenMonth = ({
-  contacts,
-  conversations,
-  month,
-}: {
+type StudiesForMonthArgs = {
   contacts: Contact[]
   conversations: Visit[]
   month: Date
-}) => {
-  return contacts.reduce((accumulator, contact) => {
-    if (contactStudiedForGivenMonth({ contact, conversations, month })) {
-      return accumulator + 1
-    }
-    return accumulator
-  }, 0)
 }
+
+export const getStudyContactsForGivenMonth = ({
+  contacts,
+  conversations,
+  month,
+}: StudiesForMonthArgs) =>
+  contacts.filter((contact) =>
+    contactStudiedForGivenMonth({ contact, conversations, month })
+  )
+
+export const getStudiesForGivenMonth = (args: StudiesForMonthArgs) =>
+  getStudyContactsForGivenMonth(args).length
 
 export const getMostRecentConversationForContact = ({
   conversations,

@@ -14,11 +14,10 @@ import Text from '@/components/ui/MyText'
 import SimpleProgressBar from '@/components/ui/SimpleProgressBar'
 import useTheme from '@/contexts/theme'
 import useMonthlyGoal from '@/hooks/useMonthlyGoal'
+import useProjectedTotal from '@/hooks/useProjectedTotal'
 import { goalProgress } from '@/lib/goalProgress'
 import i18n from '@/lib/locales'
 import { useFormattedMinutes } from '@/lib/minutes'
-import { calculateMonthlyPlannedMinutesOptimized } from '@/lib/recurrence'
-import useServiceReport from '@/stores/serviceReport'
 
 const GoalStat = ({ label, value }: { label: string; value: string }) => {
   const theme = useTheme()
@@ -58,16 +57,16 @@ const GoalStat = ({ label, value }: { label: string; value: string }) => {
 
 const GoalInsightContent = ({
   onClose,
-  plannedPercent,
-  monthPlanned,
+  coveredPercent,
+  projected,
   goal,
   leftToPlan,
   goalProgress,
   onEditGoal,
 }: {
   onClose: () => void
-  plannedPercent: number
-  monthPlanned: string
+  coveredPercent: number
+  projected: string
   goal: string
   leftToPlan: string
   goalProgress: number
@@ -84,11 +83,11 @@ const GoalInsightContent = ({
           justifyContent: 'space-between',
         }}
       >
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
           <CircularProgress
             progress={goalProgress}
-            size={32}
-            strokeWidth={4}
+            size={18}
+            strokeWidth={3}
             color={theme.colors.accent}
             trackColor={theme.colors.border}
           />
@@ -100,7 +99,7 @@ const GoalInsightContent = ({
               fontSize: theme.fontSize('xl'),
             }}
           >
-            {i18n.t('scheduleInsights.goalPlanned')}
+            {i18n.t('scheduleInsights.goalCoverage')}
           </Text>
         </View>
         <IconButton
@@ -119,8 +118,8 @@ const GoalInsightContent = ({
             fontSize: theme.fontSize('2xl'),
           }}
         >
-          {i18n.t('scheduleInsights.percentPlanned', {
-            percent: plannedPercent,
+          {i18n.t('scheduleInsights.percentCovered', {
+            percent: coveredPercent,
           })}
         </Text>
         <Button
@@ -183,12 +182,25 @@ const GoalInsightContent = ({
       </View>
 
       <View style={{ flexDirection: 'row', gap: 10 }}>
-        <GoalStat label={i18n.t('planned')} value={monthPlanned} />
+        <GoalStat
+          label={i18n.t('scheduleInsights.projected')}
+          value={projected}
+        />
         <GoalStat
           label={i18n.t('scheduleInsights.leftToPlan')}
           value={leftToPlan}
         />
       </View>
+
+      <Text
+        style={{
+          color: theme.colors.textAlt,
+          fontSize: theme.fontSize('sm'),
+          lineHeight: 19,
+        }}
+      >
+        {i18n.t('scheduleInsights.coverageDescription')}
+      </Text>
     </>
   )
 }
@@ -203,32 +215,30 @@ const ScheduleInsights = ({
   onEditGoal?: () => void
 }) => {
   const theme = useTheme()
-  const dayPlans = useServiceReport((state) => state.dayPlans)
-  const recurringPlans = useServiceReport((state) => state.recurringPlans)
   const { effectiveGoalHours } = useMonthlyGoal({ month, year })
 
-  const monthPlannedMinutes = calculateMonthlyPlannedMinutesOptimized(
-    month,
-    year,
-    dayPlans,
-    recurringPlans
-  )
   const goalMinutes = Math.round(effectiveGoalHours * 60)
-  const plannedGoalProgress =
+  const { projection } = useProjectedTotal(
+    { kind: 'month', month, year },
+    goalMinutes
+  )
+  const coverageProgress =
     goalMinutes > 0
-      ? goalProgress({ minutes: monthPlannedMinutes, goalMinutes })
+      ? goalProgress({
+          minutes: projection.projectedMinutes,
+          goalMinutes,
+        })
       : null
-  const plannedPercent = plannedGoalProgress
-    ? Math.round(plannedGoalProgress.percent)
+  const coveredPercent = coverageProgress
+    ? Math.round(coverageProgress.percent)
     : 0
-  const goalProgressFraction = plannedGoalProgress?.fraction ?? 0
-  const leftToPlanMinutes = plannedGoalProgress?.remaining ?? 0
+  const goalProgressFraction = coverageProgress?.fraction ?? 0
 
-  const monthPlanned = useFormattedMinutes(monthPlannedMinutes)
+  const projected = useFormattedMinutes(projection.projectedMinutes)
   const goal = useFormattedMinutes(goalMinutes)
-  const leftToPlan = useFormattedMinutes(leftToPlanMinutes)
-  const value = i18n.t('scheduleInsights.percentPlanned', {
-    percent: plannedPercent,
+  const leftToPlan = useFormattedMinutes(projection.standardGapMinutes)
+  const value = i18n.t('scheduleInsights.percentCovered', {
+    percent: coveredPercent,
   })
   const label = i18n.t('scheduleInsights.ofGoal', {
     goal: goal.formatted,
@@ -236,11 +246,11 @@ const ScheduleInsights = ({
 
   return (
     <View style={{ flexDirection: 'row', gap: 10 }}>
-      <SchedulePaceInsight month={month} year={year} variant='schedule' />
+      <SchedulePaceInsight month={month} year={year} />
       <PopoverCard
         containerStyle={{ flex: 1 }}
         cardStyle={{
-          minHeight: 102,
+          minHeight: 84,
           padding: 12,
           gap: 10,
           justifyContent: 'space-between',
@@ -251,8 +261,8 @@ const ScheduleInsights = ({
         popoverContent={({ close }) => (
           <GoalInsightContent
             onClose={close}
-            plannedPercent={plannedPercent}
-            monthPlanned={monthPlanned.formatted}
+            coveredPercent={coveredPercent}
+            projected={projected.formatted}
             goal={goal.formatted}
             leftToPlan={leftToPlan.formatted}
             goalProgress={goalProgressFraction}
@@ -260,49 +270,60 @@ const ScheduleInsights = ({
           />
         )}
       >
-        <View
-          style={{
-            flexDirection: 'row',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-          }}
-        >
-          <CircularProgress
-            progress={goalProgressFraction}
-            size={24}
-            strokeWidth={4}
-            color={theme.colors.accent}
-            trackColor={theme.colors.border}
-          />
-          <LucideIcon
-            icon={ChevronRightIcon}
-            color={theme.colors.textAlt}
-            size={12}
-          />
-        </View>
-        <View style={{ gap: 1 }}>
+        <View style={{ flex: 1, justifyContent: 'center', gap: 6 }}>
           <Text
             numberOfLines={1}
             adjustsFontSizeToFit
             style={{
               color: theme.colors.text,
               fontFamily: theme.fonts.bold,
-              fontSize: theme.fontSize('lg'),
+              fontSize: theme.fontSize('2xl'),
             }}
           >
             {value}
           </Text>
-          <Text
-            numberOfLines={1}
-            adjustsFontSizeToFit
+          <View
             style={{
-              color: theme.colors.textAlt,
-              fontFamily: theme.fonts.semiBold,
-              fontSize: theme.fontSize('sm'),
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: 6,
             }}
           >
-            {label}
-          </Text>
+            <View
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: 6,
+                flexShrink: 1,
+              }}
+            >
+              <CircularProgress
+                progress={goalProgressFraction}
+                size={16}
+                strokeWidth={3}
+                color={theme.colors.accent}
+                trackColor={theme.colors.border}
+              />
+              <Text
+                numberOfLines={1}
+                adjustsFontSizeToFit
+                style={{
+                  flexShrink: 1,
+                  color: theme.colors.textAlt,
+                  fontFamily: theme.fonts.semiBold,
+                  fontSize: theme.fontSize('sm'),
+                }}
+              >
+                {label}
+              </Text>
+            </View>
+            <LucideIcon
+              icon={ChevronRightIcon}
+              color={theme.colors.textAlt}
+              size={12}
+            />
+          </View>
         </View>
       </PopoverCard>
     </View>

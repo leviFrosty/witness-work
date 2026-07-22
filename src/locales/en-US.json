@@ -1273,43 +1273,36 @@
   },
   "scheduleInsights": {
     "schedulePace": "Schedule pace",
-    "goalPlanned": "Monthly goal planned",
-    "percentPlanned": "{{percent}}% planned",
+    "goalCoverage": "Monthly goal coverage",
+    "percentCovered": "{{percent}}% covered",
     "ofGoal": "of {{goal}} goal",
     "monthlyGoal": "Monthly goal",
+    "projected": "Projected",
     "leftToPlan": "Left to plan",
+    "coverageDescription": "Combines logged time with the effective contribution of remaining Plans. Left to plan accounts for the Credit Time cap.",
     "paceDescriptionCurrent": "Compares logged time with your Plans through today.",
     "paceDescriptionMonth": "Compares logged time with your Plans for the full month.",
     "tapForDetails": "Tap for more details"
   },
-  "homeDashboard": {
-    "openDestination": "Open {{destination}}",
-    "details": {
-      "logged": "Logged",
-      "projected": "Projected",
-      "throughToday": "Through today",
-      "ofGoal": "of {{goal}} goal",
-      "projectedMonth": "Combines logged time with the effective contribution of remaining Plans, after applying the Credit Time cap.",
-      "serviceYearProgress": "Shows logged Service Year progress, with the Projected total if remaining Plans become reality.",
-      "creditTime": "Credit Time and Standard time combine into this month's adjusted Service Report total.",
-      "remainingToGoal": "Shows what remains between logged time and this month's goal. Projected includes remaining Plans.",
-      "plannedTotal": "Shows all time planned for this month. Through today is the amount used to compare Schedule pace."
-    },
-    "editor": {
-      "title": "Customize This Month",
-      "description": "Choose and arrange up to {{count}} cards.",
-      "moveUp": "Move {{card}} up",
-      "moveDown": "Move {{card}} down",
-      "limitReached": "You can show up to {{count}} cards.",
-      "cards": {
-        "schedulePace": "Schedule pace",
-        "projectedMonth": "Projected month",
-        "serviceYearProgress": "Service Year progress",
-        "creditTime": "Credit Time",
-        "remainingToGoal": "Remaining to goal",
-        "plannedTotal": "Planned total"
-      }
-    }
+  "serviceReportInsights": {
+    "openTime": "Open time details",
+    "timeOfGoal": "{{current}} / {{goal}}",
+    "timeToGoal": "Time to goal",
+    "ofGoal": "of {{goal}} goal",
+    "percentComplete": "{{percent}}% complete",
+    "projectionDescription": "Projected combines logged time with the effective contribution of remaining Plans after applying the Credit Time cap.",
+    "openStudies": "Open study details",
+    "studiesTitle": "Studies this month",
+    "studiesDescription": "Each contact with a Bible Study visit counts once.",
+    "studyContacts": "Contacts included",
+    "noStudies": "No contacts count toward this month's studies yet.",
+    "openContact": "Open {{name}}"
+  },
+  "pagination": {
+    "previous": "Previous",
+    "next": "Next",
+    "page": "Page {{page}}",
+    "morePages": "More pages"
   },
   "planDay": "Plan Day",
   "weekly": "Weekly",
@@ -1638,7 +1631,6 @@
   "noContactsYet": "No contacts yet",
   "text": "Text",
   "directions": "Directions",
-  "thisMonth": "This Month",
   "widgets": "Widgets",
   "widgetsDescription": "Configure how home screen widgets look and behave.",
   "contactsWidget": "Contacts Widget",

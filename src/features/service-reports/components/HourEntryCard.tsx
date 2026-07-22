@@ -46,42 +46,33 @@ export default function HourEntryCard() {
     <View
       style={{
         flex: 1,
-        minHeight: 92,
+        minHeight: 64,
         justifyContent: 'center',
         alignItems: 'flex-start',
-        gap: 8,
+        gap: 6,
         paddingVertical: 4,
       }}
     >
-      <View
-        style={{
-          width: 32,
-          height: 32,
-          borderRadius: 16,
-          alignItems: 'center',
-          justifyContent: 'center',
-          backgroundColor: theme.colors.accentTranslucent,
-        }}
-      >
-        <LucideIcon icon={ClockIcon} size={17} color={theme.colors.accent} />
-      </View>
       <Text
         style={{
-          fontSize: theme.fontSize('2xl'),
+          fontSize: theme.fontSize('3xl'),
           fontFamily: theme.fonts.bold,
         }}
       >
         {time.formatted}
       </Text>
-      <Text
-        style={{
-          color: theme.colors.textAlt,
-          fontFamily: theme.fonts.semiBold,
-          fontSize: theme.fontSize('sm'),
-        }}
-      >
-        {i18n.t('hours')}
-      </Text>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+        <LucideIcon icon={ClockIcon} size={14} color={theme.colors.accent} />
+        <Text
+          style={{
+            color: theme.colors.textAlt,
+            fontFamily: theme.fonts.semiBold,
+            fontSize: theme.fontSize('sm'),
+          }}
+        >
+          {i18n.t('hours')}
+        </Text>
+      </View>
     </View>
   )
 }

@@ -1,5 +1,8 @@
 import moment from 'moment'
-import { getStudiesForGivenMonth } from '@/lib/contacts'
+import {
+  getStudiesForGivenMonth,
+  getStudyContactsForGivenMonth,
+} from '@/lib/contacts'
 import { createFakeContacts } from '@/__tests__/__data__/contacts'
 import { Visit } from '@/types/visit'
 import { describe, expect, it } from 'vitest'
@@ -138,6 +141,53 @@ describe('lib/contacts', () => {
       })
 
       expect(count).toBe(2)
+    })
+  })
+
+  describe('getStudyContactsForGivenMonth', () => {
+    it('returns the Contact sources once and matches the report count', () => {
+      const contacts = createFakeContacts()
+      contacts[0].dismissedUntil = moment(testDate).add(1, 'month').toDate()
+      const conversations: Visit[] = [
+        {
+          contact: { id: contacts[0].id },
+          date: testDate,
+          id: '1',
+          isBibleStudy: true,
+        },
+        {
+          contact: { id: contacts[0].id },
+          date: testDate,
+          id: '2',
+          isBibleStudy: true,
+        },
+        {
+          contact: { id: contacts[1].id },
+          date: testDate,
+          id: '3',
+          isBibleStudy: true,
+        },
+        {
+          contact: { id: 'orphaned-contact' },
+          date: testDate,
+          id: '4',
+          isBibleStudy: true,
+        },
+      ]
+
+      const studyContacts = getStudyContactsForGivenMonth({
+        contacts,
+        conversations,
+        month: testDate,
+      })
+
+      expect(studyContacts.map((contact) => contact.id)).toEqual([
+        contacts[0].id,
+        contacts[1].id,
+      ])
+      expect(studyContacts).toHaveLength(
+        getStudiesForGivenMonth({ contacts, conversations, month: testDate })
+      )
     })
   })
 })

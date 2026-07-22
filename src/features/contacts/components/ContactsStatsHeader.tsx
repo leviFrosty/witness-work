@@ -1,8 +1,7 @@
 import { ChevronRight as ChevronRightIcon } from 'lucide-react-native'
 import LucideIcon from '@/components/ui/LucideIcon'
-import { useMemo, useState } from 'react'
+import { useMemo } from 'react'
 import { View } from 'react-native'
-import { Popover } from 'tamagui'
 import useTheme from '@/contexts/theme'
 import i18n, { TranslationKey } from '@/lib/locales'
 import { ContactStaleness, stalenessToColor } from '@/lib/contactStaleness'
@@ -13,6 +12,7 @@ import { Contact } from '@/types/contact'
 import Text from '@/components/ui/MyText'
 import Card from '@/components/ui/Card'
 import Button from '@/components/ui/Button'
+import AnchoredPopover from '@/components/ui/AnchoredPopover'
 import StalenessColorKey from '@/components/StalenessColorKey'
 
 export type ContactsStatsHeaderProps = {
@@ -36,7 +36,6 @@ const ContactsStatsHeader: React.FC<ContactsStatsHeaderProps> = ({
 }) => {
   const theme = useTheme()
   const markerColors = useMarkerColors()
-  const [infoOpen, setInfoOpen] = useState(false)
 
   const { activeCount, dismissedCount, stalenessCounts } = useMemo(() => {
     const active = filterActivesContacts(contacts)
@@ -96,88 +95,61 @@ const ContactsStatsHeader: React.FC<ContactsStatsHeaderProps> = ({
         </View>
 
         {/* Staleness breakdown pill — tap to reveal what each color means. */}
-        <Popover
-          open={infoOpen}
-          onOpenChange={setInfoOpen}
-          placement='bottom'
-          allowFlip
-          offset={8}
-        >
-          <Popover.Trigger asChild>
-            <Button
-              onPress={() => setInfoOpen((v) => !v)}
-              accessibilityLabel={i18n.t('contacts_stalenessInfo_title')}
-              accessibilityRole='button'
-              hitSlop={6}
-              noTransform
-              style={{
-                flexDirection: 'row',
-                alignItems: 'center',
-                gap: 6,
-                paddingHorizontal: 10,
-                paddingVertical: 6,
-                backgroundColor: theme.colors.backgroundLighter,
-                borderRadius: theme.numbers.borderRadiusMd,
-                flexShrink: 1,
-              }}
-            >
-              {STALENESS_ORDER.map((bucket) => (
-                <View
-                  key={bucket}
-                  style={{
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    gap: 4,
-                  }}
-                >
+        <AnchoredPopover
+          contentWidth={280}
+          renderTrigger={({ onPress, anchorRef }) => (
+            <View ref={anchorRef} collapsable={false} style={{ flexShrink: 1 }}>
+              <Button
+                onPress={onPress}
+                accessibilityLabel={i18n.t('contacts_stalenessInfo_title')}
+                accessibilityRole='button'
+                hitSlop={6}
+                noTransform
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  gap: 6,
+                  paddingHorizontal: 10,
+                  paddingVertical: 6,
+                  backgroundColor: theme.colors.backgroundLighter,
+                  borderRadius: theme.numbers.borderRadiusMd,
+                  flexShrink: 1,
+                }}
+              >
+                {STALENESS_ORDER.map((bucket) => (
                   <View
+                    key={bucket}
                     style={{
-                      width: 8,
-                      height: 8,
-                      borderRadius: 4,
-                      backgroundColor: stalenessToColor(bucket, markerColors),
-                    }}
-                  />
-                  <Text
-                    style={{
-                      fontFamily: theme.fonts.semiBold,
-                      fontSize: theme.fontSize('xs'),
-                      color: theme.colors.text,
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      gap: 4,
                     }}
                   >
-                    {stalenessCounts[bucket]}
-                  </Text>
-                </View>
-              ))}
-            </Button>
-          </Popover.Trigger>
-
-          <Popover.Content
-            borderWidth={1}
-            borderColor={theme.colors.border}
-            backgroundColor={theme.colors.card}
-            padding={14}
-            elevate
-            transition={[
-              'quick',
-              {
-                opacity: {
-                  overshootClamping: true,
-                },
-              },
-            ]}
-            enterStyle={{ y: -8, opacity: 0 }}
-            exitStyle={{ y: -8, opacity: 0 }}
-            maxWidth={300}
-          >
-            <Popover.Arrow
-              borderWidth={1}
-              borderColor={theme.colors.border}
-              backgroundColor={theme.colors.card}
-            />
-            <StalenessColorKey onBeforeNavigate={() => setInfoOpen(false)} />
-          </Popover.Content>
-        </Popover>
+                    <View
+                      style={{
+                        width: 8,
+                        height: 8,
+                        borderRadius: 4,
+                        backgroundColor: stalenessToColor(bucket, markerColors),
+                      }}
+                    />
+                    <Text
+                      style={{
+                        fontFamily: theme.fonts.semiBold,
+                        fontSize: theme.fontSize('xs'),
+                        color: theme.colors.text,
+                      }}
+                    >
+                      {stalenessCounts[bucket]}
+                    </Text>
+                  </View>
+                ))}
+              </Button>
+            </View>
+          )}
+        >
+          {({ close }) => <StalenessColorKey onBeforeNavigate={close} />}
+        </AnchoredPopover>
 
         {/* Dismissed/archived count */}
         {dismissedCount > 0 && (

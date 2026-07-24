@@ -1,10 +1,11 @@
 import axios, { isAxiosError } from 'axios'
 import { fetch as expoFetch } from 'expo/fetch'
-import * as Crypto from 'expo-crypto'
-import { MMKV } from 'react-native-mmkv'
 import apis from '@/constants/apis'
-import { getOrCreateAccountId } from '@/lib/account'
-import { getOrCreateInstallId } from '@/lib/installId'
+import {
+  NotesImportAppAttestError,
+  NotesImportAppAttestHttpError,
+} from '@/features/notes-import/lib/notesImportAppAttest'
+import { notesImportAppAttest } from '@/features/notes-import/lib/notesImportAppAttestRuntime'
 import { notesContentHash } from '@/features/notes-import/lib/notesContentHash'
 import type {
   NotesImportContext,
@@ -16,14 +17,12 @@ import {
   type NotesImportCredits,
   type NotesImportStatus,
 } from '@/features/notes-import/lib/notesImportUsage'
-import * as AppAttest from '../../../../modules/app-attest'
 
 /**
- * Notes Import network client. Owns identity (the Keychain install UUID for App
- * Attest, plus the shared account id for Supporter status/metering — ADR 0011),
- * the App Attest handshake + per-request assertion, and the metered model call.
- * A configured dev-bypass token (dev/staging worker only) skips App Attest so
- * the simulator — which has no Secure Enclave — can exercise the full flow.
+ * Notes Import network client. Delegates authenticated kickoff/legacy posts,
+ * identity injection, App Attest lifecycle, recovery, and dev bypass to the
+ * deep Notes Import App Attest module. This file owns model-response
+ * normalization and the kickoff → SSE/result lifecycle only.
  *
  * Two model paths exist:
  *
@@ -36,14 +35,6 @@ import * as AppAttest from '../../../../modules/app-attest'
  * - {@link requestNotesImport} (legacy): one blocking request/response. Kept as a
  *   fallback during the streaming cutover.
  */
-
-const DEV_BYPASS_TOKEN = process.env.EXPO_PUBLIC_NOTES_IMPORT_DEV_BYPASS || ''
-// Hard-gate the App Attest dev-bypass on __DEV__ so a production bundle can NEVER
-// skip attestation, even if the bypass env var leaks into a release build. (The
-// dev worker also has to honor the header — production rejects it — but
-// client-side defense-in-depth is cheap.)
-const DEV_BYPASS_ENABLED = __DEV__ && DEV_BYPASS_TOKEN.length > 0
-const REQUEST_TIMEOUT_MS = 90_000
 
 export type { NotesImportCredits } from '@/features/notes-import/lib/notesImportUsage'
 
@@ -88,6 +79,7 @@ export type NotesImportErrorCode =
   | 'active_cap'
   | 'unavailable'
   | 'network'
+  | 'cancelled'
   | 'unknown'
 
 /**
@@ -98,19 +90,24 @@ export class NotesImportClientError extends Error {
   code: NotesImportErrorCode
   status?: number
   /**
-   * Human-readable dump of the raw HTTP exchange (method, URL, status, response
-   * body — including the server's dev-only `detail`). Populated only in
-   * `__DEV__` for developer logs; never surfaced in production builds.
+   * Redacted developer metadata (method/URL/status/stable code only). Populated
+   * only in `__DEV__`; never contains request/response bodies or auth
+   * material.
    */
   debug?: string
   /** Authoritative usage attached to an allowance denial, when valid. */
   credits?: NotesImportCredits
+  /** Stable App Attest semantic metadata, when supplied by the backend. */
+  reason?: string
+  action?: string
   constructor(
     code: NotesImportErrorCode,
     message: string,
     status?: number,
     debug?: string,
-    credits?: NotesImportCredits
+    credits?: NotesImportCredits,
+    reason?: string,
+    action?: string
   ) {
     super(message)
     this.name = 'NotesImportClientError'
@@ -118,6 +115,8 @@ export class NotesImportClientError extends Error {
     this.status = status
     this.debug = debug
     this.credits = credits
+    this.reason = reason
+    this.action = action
   }
 }
 
@@ -148,276 +147,127 @@ export interface RequestNotesImportArgs {
   refinement?: { previousResultJSON: string; instruction: string }
 }
 
-// --- App Attest device-key persistence ---------------------------------
-
-let _attestStore: MMKV | null = null
-const attestStore = (): MMKV =>
-  (_attestStore ??= new MMKV({ id: 'app-attest' }))
-const KEY_ID_KEY = 'keyId'
-
-const base64Sha256 = (data: string): Promise<string> =>
-  Crypto.digestStringAsync(Crypto.CryptoDigestAlgorithm.SHA256, data, {
-    encoding: Crypto.CryptoEncoding.BASE64,
-  })
-
-const getChallenge = async (): Promise<string> => {
-  const { data } = await axios.post<{ challenge: string }>(
-    apis.notesImportChallenge,
-    {},
-    { timeout: REQUEST_TIMEOUT_MS }
-  )
-  return data.challenge
-}
-
-/**
- * Ensures this device has an attested App Attest key bound to `uuid`,
- * performing the one-time handshake if needed. Returns the keyId. `force`
- * re-attests even if a keyId is cached (used when the server reports it doesn't
- * know the key).
- */
-let _attestInFlight: Promise<string> | null = null
-
-const ensureAttested = async (uuid: string, force = false): Promise<string> => {
-  const cached = attestStore().getString(KEY_ID_KEY)
-  if (cached && !force) return cached
-  // Coalesce concurrent first-time attestations so two simultaneous kickoffs
-  // don't each burn a Secure Enclave key + attest round-trip (and leave the
-  // cache pointing at only one of them). `force` re-attests unconditionally.
-  if (!force && _attestInFlight) return _attestInFlight
-
-  const run = (async (): Promise<string> => {
-    const keyId = await AppAttest.generateKey()
-    const challenge = await getChallenge()
-    const clientDataHash = await base64Sha256(challenge)
-    const attestation = await AppAttest.attestKey(keyId, clientDataHash)
-    await axios.post(
-      apis.notesImportAttest,
-      { keyId, attestation, challenge, uuid },
-      { timeout: REQUEST_TIMEOUT_MS }
-    )
-    attestStore().set(KEY_ID_KEY, keyId)
-    return keyId
-  })()
-
-  if (force) return run
-  _attestInFlight = run
-  try {
-    return await run
-  } finally {
-    if (_attestInFlight === run) _attestInFlight = null
-  }
-}
-
-// --- Dev-tools diagnostics (ToolsScreen) --------------------------------
-
-/**
- * Static snapshot of everything the auth boundary depends on — identities,
- * bypass state, App Attest support, and the cached device key. Read-only; safe
- * to render in the dev Tools screen.
- */
-export const getNotesImportAuthSnapshot = () => {
-  const installId = getOrCreateInstallId()
-  const accountId = getOrCreateAccountId()
-  return {
-    baseUrl: apis.notesImport.replace(/\/notes-import$/, ''),
-    devBypassEnabled: DEV_BYPASS_ENABLED,
-    appAttestSupported: AppAttest.isSupported(),
-    cachedKeyId: attestStore().getString(KEY_ID_KEY) ?? null,
-    installId,
-    accountId,
-    accountIdAdopted: accountId !== installId,
-  }
-}
-
-/**
- * Dev-tools only: drop the cached App Attest keyId so the next attested call
- * runs the full handshake again (mirrors the server forgetting the key).
- */
-export const clearCachedAttestKey = (): void => {
-  attestStore().delete(KEY_ID_KEY)
-}
-
-export interface NotesImportAuthDebugStep {
-  step: string
-  ok: boolean
-  ms: number
-  detail?: string
-}
-
-export interface NotesImportAuthDebugReport {
-  ok: boolean
-  steps: NotesImportAuthDebugStep[]
-  keyId: string | null
-}
-
-/**
- * Exercises the auth boundary end to end for the dev Tools screen, reporting
- * each hop separately so a failure pinpoints itself: status probe → challenge →
- * (if needed or forced) the full App Attest handshake → an assertion signed
- * locally and verified by ww-api's attested no-op endpoint — the exact
- * verifyAssertion path kickoff runs. Uses the same primitives and cache as the
- * real import path, so a forced handshake here genuinely re-attests the device.
- * No inference is spent and no credits are touched.
- */
-export const runNotesImportAuthDiagnostics = async (
-  options: { forceReattest?: boolean } = {}
-): Promise<NotesImportAuthDebugReport> => {
-  const steps: NotesImportAuthDebugStep[] = []
-  const run = async <T>(
-    step: string,
-    fn: () => Promise<T>,
-    detail?: (result: T) => string
-  ): Promise<T | null> => {
-    const started = Date.now()
-    try {
-      const result = await fn()
-      steps.push({
-        step,
-        ok: true,
-        ms: Date.now() - started,
-        detail: detail?.(result),
-      })
-      return result
-    } catch (e) {
-      const err = toClientError(e)
-      steps.push({
-        step,
-        ok: false,
-        ms: Date.now() - started,
-        detail: err.debug ?? `${err.code}: ${err.message}`,
-      })
-      return null
-    }
-  }
-  const report = (): NotesImportAuthDebugReport => ({
-    ok: steps.every((s) => s.ok),
-    steps,
-    keyId: attestStore().getString(KEY_ID_KEY) ?? null,
-  })
-
-  await run('status probe', getNotesImportStatus, (s) => JSON.stringify(s))
-
-  const challenge = await run('challenge', getChallenge, (c) =>
-    c ? `${c.length} chars` : 'empty'
-  )
-  if (challenge === null) return report()
-
-  if (DEV_BYPASS_ENABLED) {
-    steps.push({
-      step: 'attestation',
-      ok: true,
-      ms: 0,
-      detail: 'skipped — dev bypass header active',
-    })
-    return report()
-  }
-  if (!AppAttest.isSupported()) {
-    steps.push({
-      step: 'attestation',
-      ok: false,
-      ms: 0,
-      detail: 'App Attest unsupported (simulator or non-iOS build)',
-    })
-    return report()
-  }
-
-  const uuid = getOrCreateInstallId()
-  const cached = attestStore().getString(KEY_ID_KEY)
-  let keyId: string | null = cached ?? null
-  if (!cached || options.forceReattest) {
-    keyId = await run('generate key', () => AppAttest.generateKey())
-    if (keyId === null) return report()
-    const attestation = await run(
-      'attest key (Secure Enclave → Apple)',
-      async () => AppAttest.attestKey(keyId!, await base64Sha256(challenge)),
-      (a) => `${a.length} chars CBOR`
-    )
-    if (attestation === null) return report()
-    const registered = await run('register attestation (ww-api)', async () => {
-      await axios.post(
-        apis.notesImportAttest,
-        { keyId, attestation, challenge, uuid },
-        { timeout: REQUEST_TIMEOUT_MS }
-      )
-      attestStore().set(KEY_ID_KEY, keyId!)
-    })
-    if (registered === null) return report()
-  } else {
-    steps.push({ step: 'device key', ok: true, ms: 0, detail: 'using cache' })
-  }
-
-  // Sign the same canonical clientData the real calls use over a fixed probe
-  // hash, then have ww-api run the full verifyAssertion path — challenge
-  // consumption, signature check, and sign-count advance, exactly as kickoff
-  // does, minus metering and inference.
-  const accountId = getOrCreateAccountId()
-  const contentHash = await notesContentHash('notes-import auth diagnostics')
-  const freshChallenge = await run(
-    'challenge (assertion)',
-    getChallenge,
-    (c) => (c ? `${c.length} chars` : 'empty')
-  )
-  if (freshChallenge === null) return report()
-  const assertion = await run(
-    'sign assertion (local)',
-    async () => {
-      const clientData = `${freshChallenge}|${uuid}|${accountId}|${contentHash}`
-      return AppAttest.generateAssertion(keyId!, await base64Sha256(clientData))
-    },
-    (a) => `${a.length} chars CBOR`
-  )
-  if (assertion === null) return report()
-  await run('verify assertion (ww-api)', async () => {
-    await axios.post(
-      apis.notesImportVerify,
-      {
-        uuid,
-        accountId,
-        keyId,
-        challenge: freshChallenge,
-        assertion,
-        contentHash,
-      },
-      { timeout: REQUEST_TIMEOUT_MS }
-    )
-  })
-  return report()
-}
-
-/**
- * In DEV only, format the raw HTTP exchange for developer logs — including the
- * proxy's dev-only `detail` field (e.g. the underlying gateway error behind an
- * opaque `model_error`). Returns undefined in production.
- */
+/** DEV-only exchange metadata. Raw bodies and auth material are never included. */
 const buildDebugInfo = (e: unknown): string | undefined => {
-  if (!__DEV__ || !isAxiosError(e)) return undefined
+  if (typeof __DEV__ === 'undefined' || !__DEV__ || !isAxiosError(e)) {
+    return undefined
+  }
   const method = e.config?.method?.toUpperCase() ?? 'POST'
   const url = e.config?.url ?? '(unknown url)'
   const status = e.response?.status ?? '(no response)'
-  let bodyStr: string
-  try {
-    bodyStr =
-      e.response?.data != null
-        ? JSON.stringify(e.response.data, null, 2)
-        : e.message
-  } catch {
-    bodyStr = String(e.response?.data ?? e.message)
-  }
-  return `${method} ${url}\n→ ${status}\n${bodyStr}`
+  const payload = isRecord(e.response?.data) ? e.response.data : null
+  const code = typeof payload?.code === 'string' ? payload.code : 'none'
+  return `${method} ${url}\n→ ${status}\ncode=${code}`
 }
 
+const NOTES_IMPORT_ERROR_CODES = new Set<NotesImportErrorCode>([
+  'limit_reached',
+  'refinement_limit',
+  'too_large',
+  'attestation_required',
+  'attestation_failed',
+  'model_error',
+  'bad_request',
+  'active_cap',
+  'unavailable',
+  'network',
+  'cancelled',
+  'unknown',
+])
+
+const isNotesImportErrorCode = (
+  value: unknown
+): value is NotesImportErrorCode =>
+  typeof value === 'string' &&
+  NOTES_IMPORT_ERROR_CODES.has(value as NotesImportErrorCode)
+
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === 'object' && value !== null && !Array.isArray(value)
+
+const developerDebug = (value: string): string | undefined =>
+  typeof __DEV__ !== 'undefined' && __DEV__ ? value : undefined
+
 const toClientError = (e: unknown): NotesImportClientError => {
+  if (e instanceof NotesImportClientError) return e
+  if (e instanceof NotesImportAppAttestError) {
+    const code =
+      e.code === 'cancelled'
+        ? 'cancelled'
+        : e.code === 'network'
+          ? 'network'
+          : 'attestation_failed'
+    const message =
+      code === 'cancelled'
+        ? 'Import cancelled'
+        : code === 'network'
+          ? 'Network error'
+          : 'Device verification failed'
+    return new NotesImportClientError(
+      code,
+      message,
+      e.status,
+      developerDebug(`auth=${e.code}`),
+      undefined,
+      e.reason,
+      e.action
+    )
+  }
+  if (e instanceof NotesImportAppAttestHttpError) {
+    const code = isNotesImportErrorCode(e.serverCode)
+      ? e.serverCode
+      : e.kind === 'cancelled'
+        ? 'cancelled'
+        : e.kind === 'network'
+          ? 'network'
+          : 'unknown'
+    const message =
+      code === 'cancelled'
+        ? 'Import cancelled'
+        : code === 'network'
+          ? 'Network error'
+          : 'Notes Import request failed'
+    return new NotesImportClientError(
+      code,
+      message,
+      e.status,
+      e.serverCode ? developerDebug(`server=${e.serverCode}`) : undefined,
+      normalizeNotesImportCredits(e.credits) ?? undefined,
+      e.reason,
+      e.action
+    )
+  }
   if (isAxiosError(e)) {
     const status = e.response?.status
     const debug = buildDebugInfo(e)
-    const payload = e.response?.data as
-      | { code?: string; error?: string; credits?: unknown }
-      | undefined
-    const code = payload?.code as NotesImportErrorCode | undefined
-    const message = payload?.error ?? e.message
+    if (e.code === 'ERR_CANCELED') {
+      return new NotesImportClientError(
+        'cancelled',
+        'Import cancelled',
+        status,
+        debug
+      )
+    }
+    const payload = isRecord(e.response?.data) ? e.response.data : null
+    const code = isNotesImportErrorCode(payload?.code)
+      ? payload.code
+      : undefined
+    const message =
+      typeof payload?.error === 'string' ? payload.error : e.message
     const credits = normalizeNotesImportCredits(payload?.credits) ?? undefined
+    const reason =
+      typeof payload?.reason === 'string' ? payload.reason : undefined
+    const action =
+      typeof payload?.action === 'string' ? payload.action : undefined
     if (code) {
-      return new NotesImportClientError(code, message, status, debug, credits)
+      return new NotesImportClientError(
+        code,
+        message,
+        status,
+        debug,
+        credits,
+        reason,
+        action
+      )
     }
     if (!e.response) {
       return new NotesImportClientError(
@@ -427,66 +277,42 @@ const toClientError = (e: unknown): NotesImportClientError => {
         debug
       )
     }
-    return new NotesImportClientError('unknown', message, status, debug)
+    return new NotesImportClientError(
+      'unknown',
+      message,
+      status,
+      debug,
+      undefined,
+      reason,
+      action
+    )
   }
-  if (e instanceof NotesImportClientError) return e
-  return new NotesImportClientError('unknown', (e as Error).message)
+  if (e instanceof Error && e.name === 'AbortError') {
+    return new NotesImportClientError('cancelled', 'Import cancelled')
+  }
+  return new NotesImportClientError(
+    'unknown',
+    e instanceof Error ? e.message : 'Unknown error'
+  )
 }
 
 /**
- * POST a body through the App Attest boundary (or the dev bypass), with one
- * re-attest retry if the server has forgotten our key (KV reset / new env).
- * Shared by the legacy and streaming-kickoff calls so both sign identically.
+ * The single caller seam for protected model posts. The deep module injects
+ * both identities and owns protocol negotiation, FIFO authorization, and every
+ * key lifecycle transition.
  */
-const postAttested = async <T>(
-  url: string,
-  baseBody: Record<string, unknown>,
-  uuid: string,
-  accountId: string,
-  contentHash: string
-): Promise<T> => {
-  if (DEV_BYPASS_ENABLED) {
-    const { data } = await axios.post<T>(url, baseBody, {
-      timeout: REQUEST_TIMEOUT_MS,
-      headers: { 'x-ww-dev-bypass': DEV_BYPASS_TOKEN },
-    })
-    return data
-  }
-
-  const signedBody = async (keyId: string) => {
-    const challenge = await getChallenge()
-    // MUST stay byte-for-byte identical to ww-api's buildAssertionClientData:
-    // binding the account id into the signature means a proxying user can't
-    // swap in someone else's account id post-signature.
-    const clientData = `${challenge}|${uuid}|${accountId}|${contentHash}`
-    const assertion = await AppAttest.generateAssertion(
-      keyId,
-      await base64Sha256(clientData)
-    )
-    return { ...baseBody, keyId, challenge, assertion }
-  }
-
-  let keyId = await ensureAttested(uuid)
-  try {
-    const { data } = await axios.post<T>(url, await signedBody(keyId), {
-      timeout: REQUEST_TIMEOUT_MS,
-    })
-    return data
-  } catch (e) {
-    const err = toClientError(e)
-    if (
-      err.code === 'attestation_failed' ||
-      err.code === 'attestation_required'
-    ) {
-      keyId = await ensureAttested(uuid, true)
-      const { data } = await axios.post<T>(url, await signedBody(keyId), {
-        timeout: REQUEST_TIMEOUT_MS,
-      })
-      return data
-    }
-    throw e
-  }
-}
+const postAttested = <T>(
+  endpoint: 'kickoff' | 'legacy',
+  payload: Record<string, unknown>,
+  contentHash: string,
+  signal?: AbortSignal
+): Promise<T> =>
+  notesImportAppAttest.post<T>({
+    endpoint,
+    payload,
+    contentHash,
+    signal,
+  })
 
 /**
  * Runs a Notes Import (or a follow-up refinement) end to end via the LEGACY
@@ -499,20 +325,11 @@ export const requestNotesImport = async ({
   context,
   refinement,
 }: RequestNotesImportArgs): Promise<NotesImportResponse> => {
-  // Two identities (ADR 0011). `uuid` is this device's install id — the App
-  // Attest identity ww-api pins device keys to, so an adopted account id can
-  // never lock a device out at re-attest. `accountId` is the shared account id
-  // RevenueCat knows; ww-api verifies Supporter status and meters credits
-  // per-person against it, and it's bound into the signed clientData.
-  const uuid = getOrCreateInstallId()
-  const accountId = getOrCreateAccountId()
   const contentHash = await notesContentHash(notesText)
   try {
     const response = await postAttested<NotesImportWireResponse>(
-      apis.notesImport,
-      { uuid, accountId, notesText, contentHash, context, refinement },
-      uuid,
-      accountId,
+      'legacy',
+      { notesText, context, refinement },
       contentHash
     )
     return normalizeNotesImportResponse(response)
@@ -588,18 +405,17 @@ const kickoffNotesImport = async ({
   notesText,
   context,
   refinement,
-}: RequestNotesImportArgs): Promise<NotesImportKickoffResponse> => {
-  // Same identity rules as `requestNotesImport` — see the comment there.
-  const uuid = getOrCreateInstallId()
-  const accountId = getOrCreateAccountId()
+  signal,
+}: RequestNotesImportArgs & {
+  signal?: AbortSignal
+}): Promise<NotesImportKickoffResponse> => {
   const contentHash = await notesContentHash(notesText)
   try {
     return await postAttested<NotesImportKickoffResponse>(
-      apis.notesImportKickoff,
-      { uuid, accountId, notesText, contentHash, context, refinement },
-      uuid,
-      accountId,
-      contentHash
+      'kickoff',
+      { notesText, context, refinement },
+      contentHash,
+      signal
     )
   } catch (e) {
     throw toClientError(e)
@@ -810,7 +626,7 @@ const streamRunToCompletion = async (
   let attempts = 0
   for (;;) {
     if (signal?.aborted) {
-      throw new NotesImportClientError('unknown', 'Import cancelled')
+      throw new NotesImportClientError('cancelled', 'Import cancelled')
     }
     const cursorBefore = lastEventId
     let outcome: StreamOutcome
@@ -855,7 +671,7 @@ const streamRunToCompletion = async (
     ).catch(() => null)
     // A cancel/stop during the snapshot fetch must not resolve as a success.
     if (signal?.aborted) {
-      throw new NotesImportClientError('unknown', 'Import cancelled')
+      throw new NotesImportClientError('cancelled', 'Import cancelled')
     }
     if (snap?.status === 'done' && snap.payload) return snap.payload
     if (snap?.status === 'error' && snap.error) {
@@ -897,6 +713,7 @@ export const runNotesImportStreaming = async ({
     notesText,
     context,
     refinement,
+    signal,
   })
   onKickoff?.({ importId, subscribeToken })
   // Surface the usage snapshot up front so the meter populates at run start.

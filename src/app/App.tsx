@@ -67,6 +67,7 @@ import { useSupporter } from '@/features/supporter/stores/supporter'
 import { isOfflineError } from '@/lib/offlineError'
 import { isLocationTemporarilyUnavailableError } from '@/lib/locationError'
 import { useNotesImportManager } from '@/features/notes-import/hooks/useNotesImportManager'
+import { prepareNotesImportAppAttestRecovery } from '@/features/notes-import/lib/notesImportAppAttestRuntime'
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
@@ -123,6 +124,21 @@ function SupporterStoreSync() {
   useEffect(() => {
     useSupporter.getState().setSupporter(isSupporter)
   }, [isSupporter])
+  return null
+}
+
+/**
+ * Enrolls the reinstall-recovery credential promptly after a native upgrade for
+ * installs that already have a Notes Import key. First-time users remain lazy:
+ * preparation never generates an App Attest key.
+ */
+function NotesImportAttestPreparation() {
+  useEffect(() => {
+    void prepareNotesImportAppAttestRecovery().catch(() => {
+      // Best effort. The normal Notes Import path retries through the same module
+      // and presents its localized error if enrollment still cannot complete.
+    })
+  }, [])
   return null
 }
 
@@ -587,6 +603,7 @@ export default function App() {
     return (
       <CustomerProvider>
         <AccountProvider>
+          <NotesImportAttestPreparation />
           <SupporterStoreSync />
           <SupporterSyncDefault />
           <SupporterSyncLapseGate />

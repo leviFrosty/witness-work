@@ -56,13 +56,14 @@ import {
   type AccountFile,
 } from '@/lib/accountFile'
 import {
-  clearCachedAttestKey,
-  getNotesImportAuthSnapshot,
   getNotesImportStatus,
-  runNotesImportAuthDiagnostics,
-  type NotesImportAuthDebugReport,
   type NotesImportStatus,
 } from '@/features/notes-import/lib/notesImportClient'
+import {
+  getNotesImportAuthSnapshot,
+  runNotesImportAuthDiagnostics,
+  type NotesImportAuthDebugReport,
+} from '@/features/notes-import/lib/notesImportAppAttestRuntime'
 import { useNotesImportManager } from '@/features/notes-import/hooks/useNotesImportManager'
 import { clientImportCap } from '@/features/notes-import/lib/notesImportManagerLogic'
 
@@ -195,8 +196,8 @@ export default function ToolsScreen() {
   const { customer } = useCustomer()
   const entitled = supporterSinceDate(customer) !== null
   const notesImportCredits = useNotesImportManager((s) => s.credits)
-  // Cheap MMKV/Keychain reads; recomputed per render so it reflects the
-  // buttons below (clear key, clear adopted id) immediately.
+  // Cheap MMKV/Keychain reads; recomputed per render so recent lifecycle state
+  // changes are reflected immediately.
   const authSnapshot = getNotesImportAuthSnapshot()
   const [authBusy, setAuthBusy] = useState(false)
   const [authReport, setAuthReport] =
@@ -212,11 +213,11 @@ export default function ToolsScreen() {
     | null
   >(null)
 
-  const runAuthDiagnostics = async (forceReattest: boolean) => {
+  const runAuthDiagnostics = async () => {
     if (authBusy) return
     setAuthBusy(true)
     try {
-      const report = await runNotesImportAuthDiagnostics({ forceReattest })
+      const report = await runNotesImportAuthDiagnostics()
       setAuthReport(report)
       toast.show(report.ok ? 'Auth diagnostics passed' : 'Auth step failed', {
         message: report.ok
@@ -884,12 +885,10 @@ export default function ToolsScreen() {
               color: theme.colors.textAlt,
             }}
           >
-            The proxy gates inference behind App Attest: challenge → one-time
-            key attestation → a per-request assertion signed over
-            challenge|installId|accountId|contentHash. Diagnostics replay that
-            handshake step-by-step against the live worker without spending any
-            import credits. Force re-attest burns a new Secure Enclave key and
-            re-registers it (same as the server forgetting the key).
+            The Notes Import auth module negotiates the worker protocol and
+            serializes challenge → assertion → protected response per key.
+            Diagnostics use the existing key through that same lane; they never
+            generate, rotate, enroll, recover, or clear lifecycle state.
           </Text>
           <InfoRow label='Proxy base' value={authSnapshot.baseUrl} />
           <InfoRow
@@ -901,45 +900,42 @@ export default function ToolsScreen() {
             value={String(authSnapshot.appAttestSupported)}
           />
           <InfoRow
-            label='Cached device key'
-            value={shortId(authSnapshot.cachedKeyId)}
+            label='Negotiated protocol'
+            value={
+              authSnapshot.negotiatedProtocolVersion
+                ? `v${authSnapshot.negotiatedProtocolVersion}`
+                : 'not negotiated'
+            }
+          />
+          <InfoRow label='Active key' value={authSnapshot.activeKey} />
+          <InfoRow label='Recovery token' value={authSnapshot.recoveryToken} />
+          <InfoRow
+            label='Install identity'
+            value={authSnapshot.installIdentity}
           />
           <InfoRow
-            label='Install id (uuid)'
-            value={shortId(authSnapshot.installId)}
+            label='Account identity'
+            value={authSnapshot.accountIdentity}
           />
-          <InfoRow label='Account id' value={shortId(authSnapshot.accountId)} />
           <InfoRow
-            label='Adopted shared id'
-            value={String(authSnapshot.accountIdAdopted)}
+            label='Pending lifecycle operation'
+            value={
+              authSnapshot.pendingOperation
+                ? `${authSnapshot.pendingOperation.kind}/${authSnapshot.pendingOperation.stage}`
+                : 'none'
+            }
           />
           <ActionButton
             disabled={authBusy}
-            onPress={() => void runAuthDiagnostics(false)}
+            onPress={() => void runAuthDiagnostics()}
           >
             {authBusy ? 'Running…' : 'Run auth diagnostics'}
-          </ActionButton>
-          <ActionButton
-            disabled={authBusy}
-            onPress={() => void runAuthDiagnostics(true)}
-          >
-            Force full re-attest + diagnostics
           </ActionButton>
           <ActionButton onPress={() => void probeProxy()}>
             Probe /health + /status
           </ActionButton>
-          <ActionButton
-            onPress={() =>
-              confirmDestructive('Clear cached attest key', () => {
-                clearCachedAttestKey()
-                showDone('Attest key cleared — next import re-attests')
-              })
-            }
-          >
-            Clear cached attest key
-          </ActionButton>
           <JsonViewer
-            label='Auth snapshot (full ids)'
+            label='Auth snapshot (redacted)'
             value={authSnapshot}
             count={Object.keys(authSnapshot).length}
           />

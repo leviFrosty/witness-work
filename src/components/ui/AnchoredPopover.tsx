@@ -1,5 +1,6 @@
 import { ReactNode, useEffect, useRef, useState } from 'react'
 import {
+  Keyboard,
   Modal,
   Pressable,
   ScrollView,
@@ -70,6 +71,10 @@ interface Props {
 }
 
 const ANIMATION_MS = 140
+const KEYBOARD_SETTLE_FALLBACK_MS = 600
+// While the keyboard animates there is no Modal backdrop yet. Keep rapid taps on
+// separate triggers from preparing two native popovers for the same hide event.
+let cancelActivePopoverPreparation: (() => void) | null = null
 /**
  * Hold the Modal mounted past the close animation so any in-flight Reanimated
  * worklet commit lands on a live shadow node. Without this slack, rapid
@@ -117,6 +122,14 @@ const AnchoredPopover = ({
   const navigation = useNavigation()
   const dims = useWindowDimensions()
   const anchorRef = useRef<View>(null)
+  const keyboardRaised = useRef(Keyboard.isVisible())
+  const keyboardDidHideSubscription = useRef<ReturnType<
+    typeof Keyboard.addListener
+  > | null>(null)
+  const keyboardFallback = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const pendingOpenCancellation = useRef<(() => void) | null>(null)
+  const openFrame = useRef<number | null>(null)
+  const openRequest = useRef(0)
   const [anchor, setAnchor] = useState<AnchorRect | null>(null)
   const [open, setOpen] = useState(false)
   const [mounted, setMounted] = useState(false)
@@ -133,20 +146,154 @@ const AnchoredPopover = ({
     return () => clearTimeout(t)
   }, [open, progress])
 
+  // Track the keyboard from WILL-show onward: Keyboard.isVisible() does not flip
+  // until DID-show, but the anchor is already moving during that opening window.
+  useEffect(() => {
+    const markRaised = () => {
+      keyboardRaised.current = true
+    }
+    const markHidden = () => {
+      keyboardRaised.current = false
+    }
+    const subscriptions = [
+      Keyboard.addListener('keyboardWillShow', markRaised),
+      Keyboard.addListener('keyboardDidShow', markRaised),
+      Keyboard.addListener('keyboardDidHide', markHidden),
+    ]
+
+    return () => {
+      subscriptions.forEach((subscription) => subscription.remove())
+      pendingOpenCancellation.current?.()
+      openRequest.current += 1
+      keyboardDidHideSubscription.current?.remove()
+      keyboardDidHideSubscription.current = null
+      if (keyboardFallback.current != null)
+        clearTimeout(keyboardFallback.current)
+      keyboardFallback.current = null
+      if (openFrame.current != null) cancelAnimationFrame(openFrame.current)
+      openFrame.current = null
+    }
+  }, [])
+
   // Close when the host screen loses focus. Without this, a Modal opened
   // before navigation (e.g. an in-popover supporter gate that pushes the
   // paywall) leaves its backdrop floating over the screen on return,
   // blocking every tap.
   useEffect(() => {
-    const unsubscribe = navigation.addListener('blur', () => setOpen(false))
+    const unsubscribe = navigation.addListener('blur', () => {
+      pendingOpenCancellation.current?.()
+      openRequest.current += 1
+      keyboardDidHideSubscription.current?.remove()
+      keyboardDidHideSubscription.current = null
+      if (keyboardFallback.current != null)
+        clearTimeout(keyboardFallback.current)
+      keyboardFallback.current = null
+      if (openFrame.current != null) cancelAnimationFrame(openFrame.current)
+      openFrame.current = null
+      setOpen(false)
+    })
     return unsubscribe
   }, [navigation])
 
-  const handlePress = () => {
-    anchorRef.current?.measureInWindow((x, y, width, height) => {
-      setAnchor({ x, y, width, height })
-      setOpen(true)
+  const measureAndOpen = (requestId: number, skipKeyboardWait = false) => {
+    if (requestId !== openRequest.current) return
+    keyboardDidHideSubscription.current?.remove()
+    keyboardDidHideSubscription.current = null
+    if (keyboardFallback.current != null) clearTimeout(keyboardFallback.current)
+    keyboardFallback.current = null
+
+    const keyboardIsRaised = keyboardRaised.current || Keyboard.isVisible()
+    if (keyboardIsRaised && !skipKeyboardWait) {
+      // RN Modal moves the popover into a separate native window, which dismisses
+      // the keyboard on iOS. Do that first and wait for the host layout to settle;
+      // otherwise the anchor snapshot points to the keyboard-raised location.
+      keyboardDidHideSubscription.current = Keyboard.addListener(
+        'keyboardDidHide',
+        () => measureAndOpen(requestId)
+      )
+      // The event is reliable on iOS, but never leave a tap stranded if native
+      // keyboard state gets out of sync. By this point its animation has settled.
+      keyboardFallback.current = setTimeout(
+        () => measureAndOpen(requestId, true),
+        KEYBOARD_SETTLE_FALLBACK_MS
+      )
+      Keyboard.dismiss()
+      return
+    }
+
+    openFrame.current = requestAnimationFrame(() => {
+      openFrame.current = null
+      if (requestId !== openRequest.current) return
+      if (
+        !skipKeyboardWait &&
+        (keyboardRaised.current || Keyboard.isVisible())
+      ) {
+        measureAndOpen(requestId)
+        return
+      }
+
+      anchorRef.current?.measureInWindow((x, y, width, height) => {
+        if (requestId !== openRequest.current) return
+        if (
+          !skipKeyboardWait &&
+          (keyboardRaised.current || Keyboard.isVisible())
+        ) {
+          measureAndOpen(requestId)
+          return
+        }
+
+        setAnchor({ x, y, width, height })
+        // Give a keyboardWillShow that raced the native measurement one final
+        // frame to invalidate the open before the Modal becomes visible.
+        openFrame.current = requestAnimationFrame(() => {
+          openFrame.current = null
+          if (requestId !== openRequest.current) return
+          if (
+            !skipKeyboardWait &&
+            (keyboardRaised.current || Keyboard.isVisible())
+          ) {
+            measureAndOpen(requestId)
+            return
+          }
+          const cancellation = pendingOpenCancellation.current
+          if (cancelActivePopoverPreparation === cancellation)
+            cancelActivePopoverPreparation = null
+          pendingOpenCancellation.current = null
+          setOpen(true)
+        })
+      })
     })
+  }
+
+  const handlePress = () => {
+    cancelActivePopoverPreparation?.()
+    const requestId = ++openRequest.current
+    keyboardDidHideSubscription.current?.remove()
+    keyboardDidHideSubscription.current = null
+    if (keyboardFallback.current != null) clearTimeout(keyboardFallback.current)
+    keyboardFallback.current = null
+    if (openFrame.current != null) cancelAnimationFrame(openFrame.current)
+    openFrame.current = null
+
+    const cancelRequest = () => {
+      if (requestId === openRequest.current) {
+        openRequest.current += 1
+        keyboardDidHideSubscription.current?.remove()
+        keyboardDidHideSubscription.current = null
+        if (keyboardFallback.current != null)
+          clearTimeout(keyboardFallback.current)
+        keyboardFallback.current = null
+        if (openFrame.current != null) cancelAnimationFrame(openFrame.current)
+        openFrame.current = null
+      }
+      if (cancelActivePopoverPreparation === cancelRequest)
+        cancelActivePopoverPreparation = null
+      if (pendingOpenCancellation.current === cancelRequest)
+        pendingOpenCancellation.current = null
+    }
+    pendingOpenCancellation.current = cancelRequest
+    cancelActivePopoverPreparation = cancelRequest
+    measureAndOpen(requestId)
   }
 
   const close = () => setOpen(false)

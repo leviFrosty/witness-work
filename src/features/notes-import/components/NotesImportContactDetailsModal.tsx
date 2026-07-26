@@ -248,70 +248,28 @@ const NotesImportContactDetailsModal = ({
       <Sheet.Frame>
         {group && (
           <Sheet.ScrollView
-            contentContainerStyle={{ padding: 24, paddingBottom: 40, gap: 20 }}
+            contentContainerStyle={{ padding: 24, paddingBottom: 40 }}
           >
-            {/* Header */}
-            <View
-              style={{
-                flexDirection: 'row',
-                justifyContent: 'space-between',
-                alignItems: 'flex-start',
-                gap: 12,
-              }}
-            >
-              <View style={{ flex: 1, gap: 4 }}>
-                <Text
-                  style={{
-                    fontSize: theme.fontSize('2xl'),
-                    fontFamily: theme.fonts.bold,
-                  }}
-                >
-                  {group.name}
-                </Text>
-                <Text
-                  style={{
-                    color: theme.colors.textAlt,
-                    fontSize: theme.fontSize('sm'),
-                  }}
-                >
-                  {group.visits.length > 0
-                    ? visitCountLabel(group.visits.length)
-                    : i18n.t('notesImport_noVisits')}
-                </Text>
-              </View>
-              <IconButton
-                noTransform
-                icon={XIcon}
-                size='xl'
-                onPress={() => setOpen(false)}
-              />
-            </View>
-
-            {/* Include toggle (new contacts only) */}
-            {!group.isExisting && (
-              <Button
-                noTransform
-                onPress={() => toggleRow(group.id)}
-                disabled={disabled}
+            {/* Sheet.ScrollView adds its own measuring wrapper, so section spacing
+                must live on a real child rather than contentContainerStyle. */}
+            <View style={{ gap: 20 }}>
+              {/* Header */}
+              <View
                 style={{
                   flexDirection: 'row',
-                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  alignItems: 'flex-start',
                   gap: 12,
-                  padding: 14,
-                  borderRadius: theme.numbers.borderRadiusLg,
-                  borderCurve: 'continuous',
-                  borderWidth: 1,
-                  borderColor: included
-                    ? theme.colors.accent
-                    : theme.colors.border,
-                  backgroundColor: included
-                    ? theme.colors.accentTranslucent
-                    : theme.colors.card,
                 }}
               >
-                <View style={{ flex: 1 }}>
-                  <Text style={{ fontFamily: theme.fonts.semiBold }}>
-                    {i18n.t('notesImport_addContact')}
+                <View style={{ flex: 1, gap: 4 }}>
+                  <Text
+                    style={{
+                      fontSize: theme.fontSize('2xl'),
+                      fontFamily: theme.fonts.bold,
+                    }}
+                  >
+                    {group.name}
                   </Text>
                   <Text
                     style={{
@@ -319,137 +277,185 @@ const NotesImportContactDetailsModal = ({
                       fontSize: theme.fontSize('sm'),
                     }}
                   >
-                    {i18n.t('notesImport_addContactHint')}
+                    {group.visits.length > 0
+                      ? visitCountLabel(group.visits.length)
+                      : i18n.t('notesImport_noVisits')}
                   </Text>
                 </View>
-                <View pointerEvents='none'>
-                  <Checkbox value={included} color={theme.colors.accent} />
-                </View>
-              </Button>
-            )}
+                <IconButton
+                  noTransform
+                  icon={XIcon}
+                  size='xl'
+                  onPress={() => setOpen(false)}
+                />
+              </View>
 
-            {group.isExisting && (
-              <Text
-                style={{
-                  color: theme.colors.textAlt,
-                  fontSize: theme.fontSize('sm'),
-                  lineHeight: 20,
-                }}
-              >
-                {i18n.t('notesImport_existingContactNote')}
-              </Text>
-            )}
-
-            {/* Imported contact fields */}
-            {details.length > 0 && (
-              <View style={{ gap: 8 }}>
-                <Text style={{ fontFamily: theme.fonts.bold }}>
-                  {i18n.t('notesImport_contactDetails')}
-                </Text>
-                <View
+              {/* Include toggle (new contacts only) */}
+              {!group.isExisting && (
+                <Button
+                  noTransform
+                  onPress={() => toggleRow(group.id)}
+                  disabled={disabled}
                   style={{
-                    paddingHorizontal: 14,
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    gap: 12,
+                    padding: 14,
                     borderRadius: theme.numbers.borderRadiusLg,
                     borderCurve: 'continuous',
-                    backgroundColor: theme.colors.backgroundLighter,
+                    borderWidth: 1,
+                    borderColor: included
+                      ? theme.colors.accent
+                      : theme.colors.border,
+                    backgroundColor: included
+                      ? theme.colors.accentTranslucent
+                      : theme.colors.card,
                   }}
                 >
-                  {details.map((detail, index) => (
-                    <View
-                      key={detail.label}
-                      style={{
-                        gap: 4,
-                        paddingVertical: 12,
-                        borderBottomWidth:
-                          index < details.length - 1 ? 1 : undefined,
-                        borderBottomColor: theme.colors.border,
-                      }}
-                    >
-                      <SectionLabel>{detail.label}</SectionLabel>
-                      <Text style={{ lineHeight: theme.fontSize('md') * 1.35 }}>
-                        {detail.value}
-                      </Text>
-                    </View>
-                  ))}
-                </View>
-              </View>
-            )}
-
-            {/* Contact-level warnings */}
-            {group.warnings.length > 0 && (
-              <View style={{ gap: 2 }}>
-                {group.warnings.map((w) => (
-                  <WarningLine key={w.id} warning={w} />
-                ))}
-              </View>
-            )}
-
-            {/* Visits */}
-            <View style={{ gap: 12 }}>
-              <View
-                style={{
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  gap: 12,
-                }}
-              >
-                <Text style={{ fontFamily: theme.fonts.bold }}>
-                  {i18n.t('notesImport_visits')} ({group.visits.length})
-                </Text>
-                {group.visits.length > 0 && (
-                  <Button
-                    noTransform
-                    disabled={visitsDisabled}
-                    onPress={() => setRows(visitIds, !allVisitsSelected)}
-                  >
+                  <View style={{ flex: 1 }}>
+                    <Text style={{ fontFamily: theme.fonts.semiBold }}>
+                      {i18n.t('notesImport_addContact')}
+                    </Text>
                     <Text
                       style={{
-                        color: theme.colors.accent,
+                        color: theme.colors.textAlt,
                         fontSize: theme.fontSize('sm'),
-                        opacity: visitsDisabled ? 0.5 : 1,
                       }}
                     >
-                      {allVisitsSelected
-                        ? i18n.t('notesImport_deselectAll')
-                        : i18n.t('notesImport_selectAll')}
+                      {i18n.t('notesImport_addContactHint')}
                     </Text>
-                  </Button>
-                )}
-              </View>
+                  </View>
+                  <View pointerEvents='none'>
+                    <Checkbox value={included} color={theme.colors.accent} />
+                  </View>
+                </Button>
+              )}
 
-              {group.visits.length === 0 ? (
+              {group.isExisting && (
                 <Text
                   style={{
                     color: theme.colors.textAlt,
                     fontSize: theme.fontSize('sm'),
+                    lineHeight: 20,
                   }}
                 >
-                  {i18n.t('notesImport_noVisits')}
+                  {i18n.t('notesImport_existingContactNote')}
                 </Text>
-              ) : (
-                group.visits.map((v) => (
-                  <VisitReviewCard
-                    key={v.id}
-                    visit={v}
-                    checked={selection.ids.has(v.id)}
-                    disabled={visitsDisabled}
-                    onToggle={() => toggleRow(v.id)}
-                  />
-                ))
               )}
 
-              {visitsDisabled && !disabled && (
-                <Text
+              {/* Imported contact fields */}
+              {details.length > 0 && (
+                <View style={{ gap: 8 }}>
+                  <Text style={{ fontFamily: theme.fonts.bold }}>
+                    {i18n.t('notesImport_contactDetails')}
+                  </Text>
+                  <View
+                    style={{
+                      paddingHorizontal: 14,
+                      borderRadius: theme.numbers.borderRadiusLg,
+                      borderCurve: 'continuous',
+                      backgroundColor: theme.colors.backgroundLighter,
+                    }}
+                  >
+                    {details.map((detail, index) => (
+                      <View
+                        key={detail.label}
+                        style={{
+                          gap: 4,
+                          paddingVertical: 12,
+                          borderBottomWidth:
+                            index < details.length - 1 ? 1 : undefined,
+                          borderBottomColor: theme.colors.border,
+                        }}
+                      >
+                        <SectionLabel>{detail.label}</SectionLabel>
+                        <Text
+                          style={{ lineHeight: theme.fontSize('md') * 1.35 }}
+                        >
+                          {detail.value}
+                        </Text>
+                      </View>
+                    ))}
+                  </View>
+                </View>
+              )}
+
+              {/* Contact-level warnings */}
+              {group.warnings.length > 0 && (
+                <View style={{ gap: 2 }}>
+                  {group.warnings.map((w) => (
+                    <WarningLine key={w.id} warning={w} />
+                  ))}
+                </View>
+              )}
+
+              {/* Visits */}
+              <View style={{ gap: 12 }}>
+                <View
                   style={{
-                    color: theme.colors.textAlt,
-                    fontSize: theme.fontSize('xs'),
-                    fontStyle: 'italic',
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    gap: 12,
                   }}
                 >
-                  {i18n.t('notesImport_contactDisabledHint')}
-                </Text>
-              )}
+                  <Text style={{ fontFamily: theme.fonts.bold }}>
+                    {i18n.t('notesImport_visits')} ({group.visits.length})
+                  </Text>
+                  {group.visits.length > 0 && (
+                    <Button
+                      noTransform
+                      disabled={visitsDisabled}
+                      onPress={() => setRows(visitIds, !allVisitsSelected)}
+                    >
+                      <Text
+                        style={{
+                          color: theme.colors.accent,
+                          fontSize: theme.fontSize('sm'),
+                          opacity: visitsDisabled ? 0.5 : 1,
+                        }}
+                      >
+                        {allVisitsSelected
+                          ? i18n.t('notesImport_deselectAll')
+                          : i18n.t('notesImport_selectAll')}
+                      </Text>
+                    </Button>
+                  )}
+                </View>
+
+                {group.visits.length === 0 ? (
+                  <Text
+                    style={{
+                      color: theme.colors.textAlt,
+                      fontSize: theme.fontSize('sm'),
+                    }}
+                  >
+                    {i18n.t('notesImport_noVisits')}
+                  </Text>
+                ) : (
+                  group.visits.map((v) => (
+                    <VisitReviewCard
+                      key={v.id}
+                      visit={v}
+                      checked={selection.ids.has(v.id)}
+                      disabled={visitsDisabled}
+                      onToggle={() => toggleRow(v.id)}
+                    />
+                  ))
+                )}
+
+                {visitsDisabled && !disabled && (
+                  <Text
+                    style={{
+                      color: theme.colors.textAlt,
+                      fontSize: theme.fontSize('xs'),
+                      fontStyle: 'italic',
+                    }}
+                  >
+                    {i18n.t('notesImport_contactDisabledHint')}
+                  </Text>
+                )}
+              </View>
             </View>
           </Sheet.ScrollView>
         )}

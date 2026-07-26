@@ -895,6 +895,9 @@ const NotesImportComposerScreen = ({ renderSupporterCta }: Props) => {
         // Fresh import: a standard, centered success screen — animated
         // checkmark (the same Lottie as the publisher check-in), the counts,
         // then "import another" (primary) / "take me home" (secondary) CTAs.
+        // From onboarding those swap: setup isn't finished, so continuing the
+        // flow is the primary action and "take me home" would dump the user
+        // back at the step they just came from.
         <View style={{ gap: 14 }}>
           <Card style={{ gap: 18, alignItems: 'center', paddingVertical: 28 }}>
             <LottieView
@@ -920,11 +923,15 @@ const NotesImportComposerScreen = ({ renderSupporterCta }: Props) => {
               )}
             </View>
             <View style={{ alignSelf: 'stretch', gap: 10 }}>
-              <ActionButton onPress={importAnother}>
-                {i18n.t('notesImport_importAnother')}
+              <ActionButton
+                onPress={fromOnboarding ? continueOnboarding : importAnother}
+              >
+                {fromOnboarding
+                  ? i18n.t('notesImport_onboardingContinueCta')
+                  : i18n.t('notesImport_importAnother')}
               </ActionButton>
               <Button
-                onPress={takeHome}
+                onPress={fromOnboarding ? importAnother : takeHome}
                 style={{
                   alignItems: 'center',
                   paddingVertical: 12,
@@ -941,7 +948,9 @@ const NotesImportComposerScreen = ({ renderSupporterCta }: Props) => {
                     fontFamily: theme.fonts.semiBold,
                   }}
                 >
-                  {i18n.t('notesImport_takeHome')}
+                  {fromOnboarding
+                    ? i18n.t('notesImport_importAnother')
+                    : i18n.t('notesImport_takeHome')}
                 </Text>
               </Button>
             </View>

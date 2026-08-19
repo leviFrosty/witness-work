@@ -124,7 +124,20 @@ public class AppAttestModule: Module {
     }
   }
 
+  /**
+   * Sends the code twice: as the rejection's `code` and inside its description.
+   *
+   * `code` is the intended channel, but expo-modules-jsi < 57.0.2 dropped it on
+   * every async rejection (`JavaScriptPromise.reject` recognized only
+   * `JavaScriptError`, never the `JavaScriptThrowable` carrying the code). JS
+   * then saw a bare `Error` whose message was this description, and classified
+   * every failure as `unknown` — which cost Notes Import its `invalidKey`
+   * recovery signal. On a working runtime the description is unused (the
+   * message becomes the exception's debug description, which already leads with
+   * this same token as the exception name), so naming the code here only ever
+   * helps. The token is our own constant, never a system-localized string.
+   */
   private func reject(_ promise: Promise, code: String) {
-    promise.reject(code, "App Attest operation failed")
+    promise.reject(code, "App Attest operation failed (\(code))")
   }
 }

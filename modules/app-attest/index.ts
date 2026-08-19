@@ -1,4 +1,9 @@
 import { Platform, requireOptionalNativeModule } from 'expo-modules-core'
+import {
+  AppAttestError,
+  codeFromNativeError,
+  type AppAttestErrorCode,
+} from './errorCodes'
 
 interface AppAttestNative {
   isSupported(): boolean
@@ -10,48 +15,9 @@ interface AppAttestNative {
   ): Promise<string>
 }
 
-export type AppAttestErrorCode =
-  | 'unsupported'
-  | 'invalidInput'
-  | 'invalidKey'
-  | 'serverUnavailable'
-  | 'systemFailure'
-  | 'unknown'
-
-export class AppAttestError extends Error {
-  readonly code: AppAttestErrorCode
-
-  constructor(code: AppAttestErrorCode) {
-    super(`App Attest operation failed (${code})`)
-    this.name = 'AppAttestError'
-    this.code = code
-  }
-}
-
 const native = requireOptionalNativeModule<AppAttestNative>('AppAttest')
 
-const codeFromNativeError = (error: unknown): AppAttestErrorCode => {
-  if (error instanceof AppAttestError) return error.code
-  const code =
-    typeof error === 'object' && error !== null && 'code' in error
-      ? (error as { code?: unknown }).code
-      : undefined
-  switch (code) {
-    case 'APP_ATTEST_UNSUPPORTED':
-      return 'unsupported'
-    case 'APP_ATTEST_INVALID_INPUT':
-      return 'invalidInput'
-    case 'APP_ATTEST_INVALID_KEY':
-      return 'invalidKey'
-    case 'APP_ATTEST_SERVER_UNAVAILABLE':
-      return 'serverUnavailable'
-    case 'APP_ATTEST_SYSTEM_FAILURE':
-      return 'systemFailure'
-    case 'APP_ATTEST_UNKNOWN':
-    default:
-      return 'unknown'
-  }
-}
+export { AppAttestError, type AppAttestErrorCode }
 
 /** Whether this device + build support App Attest (real iOS 14+ device only). */
 export function isSupported(): boolean {
@@ -75,7 +41,10 @@ const invoke = async <T>(operation: () => Promise<T>): Promise<T> => {
   }
 }
 
-/** Stable taxonomy for lifecycle decisions; never inspects localized messages. */
+/**
+ * Stable taxonomy for lifecycle decisions; see `./errorCodes` for how a native
+ * rejection is classified. Never inspects localized text.
+ */
 export function classifyError(error: unknown): AppAttestErrorCode | null {
   return error instanceof AppAttestError ? error.code : null
 }

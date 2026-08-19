@@ -349,7 +349,9 @@ function callClaude(promptText) {
     {
       cwd: rootDir,
       encoding: 'utf-8',
-      timeout: 120000,
+      // Notes generation is agentic (git-diff investigation with tools) and
+      // regularly outlives 2 minutes; give it headroom before retrying.
+      timeout: 600000,
       maxBuffer: 10 * 1024 * 1024,
     }
   ).trim()

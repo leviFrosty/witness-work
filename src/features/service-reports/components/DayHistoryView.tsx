@@ -5,6 +5,7 @@ import Text from '@/components/ui/MyText'
 import i18n from '@/lib/locales'
 import useTheme from '@/contexts/theme'
 import moment from 'moment'
+import { isStoredDateOnLocalDay } from '@/lib/normalizeDate'
 import { formatDate } from '@/lib/dates'
 import { FlashList } from '@shopify/flash-list'
 import { TimeEntry, DayPlan } from '@/types/timeEntry'
@@ -82,7 +83,7 @@ const DayHistoryView: React.FC<DayHistoryViewProps> = ({
   const { dayPlans, recurringPlans } = useServiceReport()
 
   const thisDaysReports = useMemo(
-    () => serviceReports?.filter((r) => moment(r.date).isSame(date, 'day')),
+    () => serviceReports?.filter((r) => isStoredDateOnLocalDay(r.date, date)),
     [date, serviceReports]
   )
 
@@ -97,7 +98,7 @@ const DayHistoryView: React.FC<DayHistoryViewProps> = ({
   }, [thisDaysReports])
 
   const dayPlansForToday = useMemo(() => {
-    return dayPlans.filter((dp) => moment(dp.date).isSame(date, 'day'))
+    return dayPlans.filter((dp) => isStoredDateOnLocalDay(dp.date, date))
   }, [dayPlans, date])
 
   const recurringPlansForToday = useMemo(() => {
@@ -124,7 +125,7 @@ const DayHistoryView: React.FC<DayHistoryViewProps> = ({
   }, [date, dayPlansForToday, recurringPlansForToday])
 
   const goalMinutes = useMemo(() => {
-    const dayPlan = dayPlans.find((dp) => moment(dp.date).isSame(date, 'day'))
+    const dayPlan = dayPlans.find((dp) => isStoredDateOnLocalDay(dp.date, date))
 
     // Get the highest recurring plan for the day, but use effective minutes (with overrides)
     const highestRecurringPlanForDay = recurringPlansForToday

@@ -10,6 +10,7 @@ import useServiceReport from '@/stores/serviceReport'
 import * as Crypto from 'expo-crypto'
 import { DateTimePickerEvent } from '@react-native-community/datetimepicker'
 import moment from 'moment'
+import { storedDateToLocalDate } from '@/lib/normalizeDate'
 import { TimeEntry } from '@/types/timeEntry'
 import { useNavigation } from '@react-navigation/native'
 import i18n from '@/lib/locales'
@@ -96,9 +97,9 @@ const AddTimeScreen = ({ route }: AddTimeScreenProps) => {
     hours: existingServiceReport?.report.hours || route.params?.hours || 0,
     minutes:
       existingServiceReport?.report.minutes ?? (route.params?.minutes || 0),
-    date: moment(
-      existingServiceReport?.report.date ?? route.params?.date
-    ).toDate(),
+    date: existingServiceReport
+      ? storedDateToLocalDate(existingServiceReport.report.date)
+      : moment(route.params?.date).toDate(),
     credit: existingServiceReport?.report.credit ?? false,
     categoryId: existingServiceReport?.report.categoryId,
     note: existingServiceReport?.report.note ?? '',

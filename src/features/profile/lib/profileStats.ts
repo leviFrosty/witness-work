@@ -1,5 +1,6 @@
 import moment from 'moment'
 import { TimeEntriesByYear } from '@/types/timeEntry'
+import { storedDayKey } from '@/lib/normalizeDate'
 
 const dayKey = (d: moment.Moment) => d.format('YYYY-MM-DD')
 
@@ -11,7 +12,7 @@ export const flattenDailyMinutes = (
   for (const year of Object.values(reports)) {
     for (const month of Object.values(year)) {
       for (const r of month) {
-        const key = dayKey(moment(r.date))
+        const key = storedDayKey(r.date)
         const minutes = (r.hours || 0) * 60 + (r.minutes || 0)
         out.set(key, (out.get(key) || 0) + minutes)
       }

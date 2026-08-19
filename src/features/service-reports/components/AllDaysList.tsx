@@ -3,6 +3,7 @@ import { useMemo, useRef, useState, useCallback, useEffect } from 'react'
 import { View } from 'react-native'
 import { useNavigation as useRootNavigation } from '@react-navigation/native'
 import moment from 'moment'
+import { isStoredDateOnLocalDay } from '@/lib/normalizeDate'
 
 import useServiceReport from '@/stores/serviceReport'
 import useCategories from '@/stores/categories'
@@ -161,7 +162,7 @@ const AllDaysList = ({ month, year }: AllDaysListProps) => {
       const day = moment(base).date(d)
       const dayDate = day.toDate()
       const reportsForDay = thisMonthsReports.filter((r) =>
-        moment(r.date).isSame(day, 'day')
+        isStoredDateOnLocalDay(r.date, day)
       )
 
       const totalMinutes = reportsForDay.reduce(
@@ -174,7 +175,7 @@ const AllDaysList = ({ month, year }: AllDaysListProps) => {
           : formatMinutes(totalMinutes, timeDisplayFormat).formatted
 
       const dayPlanForDay = dayPlans.find((dp) =>
-        moment(dp.date).isSame(day, 'day')
+        isStoredDateOnLocalDay(dp.date, day)
       )
       const recurringPlansForDay = getPlansIntersectingDay(
         dayDate,

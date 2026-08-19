@@ -12,6 +12,7 @@ import i18n from '@/lib/locales'
 import useServiceReport from '@/stores/serviceReport'
 import Text from '@/components/ui/MyText'
 import { formatDate } from '@/lib/dates'
+import { momentStoredDate } from '@/lib/normalizeDate'
 import IconButton from '@/components/ui/IconButton'
 import { useCallback } from 'react'
 import Button from '@/components/ui/Button'
@@ -168,7 +169,7 @@ const TimeReportRow = ({ report, onPress }: TimeReportRowProps) => {
               numberOfLines={1}
               ellipsizeMode='tail'
             >
-              {formatDate(report.date)}
+              {formatDate(momentStoredDate(report.date))}
             </Text>
           </View>
           <Text

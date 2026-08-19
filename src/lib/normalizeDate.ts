@@ -78,6 +78,29 @@ export const momentStoredDate = (date: Date | string): moment.Moment =>
 export const localDayFromUtcCursor = (cursor: moment.Moment): Date =>
   new Date(cursor.year(), cursor.month(), cursor.date(), 12)
 
+/** The `YYYY-MM-DD` calendar day carried by a stored noon-UTC anchor. */
+export const storedDayKey = (date: Date | string): string =>
+  momentStoredDate(date).format('YYYY-MM-DD')
+
+/**
+ * True when a stored calendar-day anchor falls on the given local calendar day.
+ * `localDay` expresses a day in _local_ mode — a `YYYY-MM-DD` string (e.g.
+ * react-native-calendars' `dateString`), a local-mode Date, or a local-mode
+ * moment cursor. Never pass another stored anchor as `localDay`; compare
+ * `storedDayKey`s instead.
+ */
+export const isStoredDateOnLocalDay = (
+  stored: Date | string,
+  localDay: Date | string | moment.Moment
+): boolean => storedDayKey(stored) === moment(localDay).format('YYYY-MM-DD')
+
+/**
+ * Converts a stored calendar-day anchor into a local-mode Date carrying the
+ * same calendar day, for date-picker `value` props and local-mode formatting.
+ */
+export const storedDateToLocalDate = (date: Date | string): Date =>
+  localDayFromUtcCursor(momentStoredDate(date))
+
 /** Normalize every Date field on a RecurringPlan to noon-UTC anchor. */
 export const normalizeRecurringPlan = (plan: RecurringPlan): RecurringPlan => ({
   ...plan,

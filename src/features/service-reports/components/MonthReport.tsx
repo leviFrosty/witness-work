@@ -37,6 +37,7 @@ import {
   useNavigation,
 } from '@react-navigation/native'
 import moment from 'moment'
+import { momentStoredDate } from '@/lib/normalizeDate'
 import GoalProgressStats from '@/features/service-reports/components/GoalProgressStats'
 import { RootStackNavigation } from '@/types/rootStack'
 import { HomeTabStackNavigation } from '@/types/homeStack'
@@ -207,7 +208,7 @@ const MonthReport = ({
     const latest = monthsReports.reduce((prev, curr) =>
       moment(curr.date).isAfter(prev.date) ? curr : prev
     )
-    return moment(latest.date)
+    return momentStoredDate(latest.date)
   }, [monthsReports])
 
   const ldcMinutes = useMemo(

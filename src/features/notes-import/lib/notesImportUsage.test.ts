@@ -130,10 +130,13 @@ describe('normalizeNotesImportCredits', () => {
 
   it('treats allowance fields as authoritative despite Supporter status', () => {
     expect(
-      normalizeNotesImportCredits({
-        ...finiteSnapshot,
-        isSupporter: true,
-      })
+      normalizeNotesImportCredits(
+        {
+          ...finiteSnapshot,
+          isSupporter: true,
+        },
+        { now: Date.parse('2026-08-01T00:00:00.000Z') }
+      )
     ).toEqual({ ...finiteSnapshot, isSupporter: true })
 
     expect(

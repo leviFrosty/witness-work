@@ -8,6 +8,7 @@ import useTheme from '@/contexts/theme'
 import Button from '@/components/ui/Button'
 import useServiceReport from '@/stores/serviceReport'
 import moment from 'moment'
+import { isStoredDateOnLocalDay } from '@/lib/normalizeDate'
 import { DayPlan, TimeEntry } from '@/types/timeEntry'
 import {
   RecurringPlan,
@@ -365,7 +366,7 @@ const CalendarDay = (
     }
 
     return props.monthsReports.filter((report) =>
-      moment(report.date).isSame(props.date?.dateString, 'day')
+      isStoredDateOnLocalDay(report.date, props.date!.dateString)
     )
   }, [props.date, props.monthsReports])
 
@@ -373,7 +374,7 @@ const CalendarDay = (
     () =>
       props.date?.dateString
         ? dayPlans.find((plan) =>
-            moment(plan.date).isSame(props.date?.dateString, 'day')
+            isStoredDateOnLocalDay(plan.date, props.date!.dateString)
           )
         : undefined,
     [dayPlans, props.date]

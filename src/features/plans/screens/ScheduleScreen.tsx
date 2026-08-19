@@ -24,7 +24,10 @@ import {
 import { getPeriodTense } from '@/lib/projectedTotalCopy'
 import usePublisher from '@/hooks/usePublisher'
 import useProjectedTotal from '@/hooks/useProjectedTotal'
-import { getStartTimeInMinutes } from '@/lib/normalizeDate'
+import {
+  getStartTimeInMinutes,
+  isStoredDateOnLocalDay,
+} from '@/lib/normalizeDate'
 import { RootStackNavigation } from '@/types/rootStack'
 import { HomeTabStackParamList } from '@/types/homeStack'
 import { DayPlan, TimeEntry } from '@/types/timeEntry'
@@ -105,7 +108,7 @@ const ScheduleScreen = ({ route }: Props) => {
       const dayStartMs = moment(base).date(d).startOf('day').valueOf()
 
       const dayPlansForDay = dayPlans.filter((dp) =>
-        moment(dp.date).isSame(dayDate, 'day')
+        isStoredDateOnLocalDay(dp.date, dayDate)
       )
       for (const plan of dayPlansForDay) {
         items.push({

@@ -1,5 +1,6 @@
 import round from 'lodash/round'
 import moment from 'moment'
+import { isStoredDateOnLocalDay } from '@/lib/normalizeDate'
 import {
   adjustedMinutesForSpecificMonth,
   getDaysLeftInCurrentMonth,
@@ -177,7 +178,7 @@ export function buildReport(args: BuildReportArgs): ReportFields {
   const monthReports = getMonthsReports(args.serviceReports, month, year)
   const hasReportedThisMonth = monthReports.length > 0
   const hasReportedToday = monthReports.some((r) =>
-    moment(r.date).isSame(now, 'day')
+    isStoredDateOnLocalDay(r.date, now)
   )
 
   const adjusted = adjustedMinutesForSpecificMonth(

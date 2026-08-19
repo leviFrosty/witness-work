@@ -1,4 +1,5 @@
 import moment from 'moment'
+import { isStoredDateOnLocalDay } from '@/lib/normalizeDate'
 import { DayPlan, TimeEntriesByYear } from '@/types/timeEntry'
 import { Publisher } from '@/types/publisher'
 import { getEntryMode } from '@/lib/publisherCapabilities'
@@ -132,7 +133,7 @@ export function buildCalendar(args: BuildCalendarArgs): WidgetCalendar {
 
     // Reports only live in the current month bucket; skip the cross-month tail.
     const reportsForDay = isCurrentMonth
-      ? monthReports.filter((r) => moment(r.date).isSame(d, 'day'))
+      ? monthReports.filter((r) => isStoredDateOnLocalDay(r.date, d))
       : []
     const wentInService = reportsForDay.length > 0
     const workedMinutes = reportsForDay.reduce(
@@ -140,7 +141,7 @@ export function buildCalendar(args: BuildCalendarArgs): WidgetCalendar {
       0
     )
 
-    const dayPlan = args.dayPlans.find((p) => moment(p.date).isSame(d, 'day'))
+    const dayPlan = args.dayPlans.find((p) => isStoredDateOnLocalDay(p.date, d))
     const recurringPlansForDay = getPlansIntersectingDay(
       dDate,
       args.recurringPlans

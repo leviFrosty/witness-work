@@ -2,6 +2,7 @@ import { View } from 'react-native'
 import { useMemo } from 'react'
 import { FlashList } from '@shopify/flash-list'
 import moment from 'moment'
+import { isStoredDateOnLocalDay } from '@/lib/normalizeDate'
 import Text from '@/components/ui/MyText'
 import useTheme from '@/contexts/theme'
 import useServiceReport from '@/stores/serviceReport'
@@ -34,7 +35,7 @@ const MonthPlansList = ({ month, year }: MonthPlansListProps) => {
 
       // Check for day plans
       const dayPlan = dayPlans.find((plan) =>
-        moment(plan.date).isSame(currentDate, 'day')
+        isStoredDateOnLocalDay(plan.date, currentDate)
       )
 
       if (dayPlan) {

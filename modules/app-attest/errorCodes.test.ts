@@ -20,6 +20,7 @@ const uncodedRejection = (token: string): Error =>
 
 const CASES: [string, AppAttestErrorCode][] = [
   ['APP_ATTEST_UNSUPPORTED', 'unsupported'],
+  ['APP_ATTEST_INVALID_ARGUMENT', 'invalidArgument'],
   ['APP_ATTEST_INVALID_INPUT', 'invalidInput'],
   ['APP_ATTEST_INVALID_KEY', 'invalidKey'],
   ['APP_ATTEST_SERVER_UNAVAILABLE', 'serverUnavailable'],
@@ -63,6 +64,15 @@ describe('codeFromNativeError', () => {
         )
       )
     ).toBe('invalidKey')
+  })
+
+  it('keeps our own precondition failure distinct from Apple invalidInput', () => {
+    expect(
+      codeFromNativeError(codedRejection('APP_ATTEST_INVALID_ARGUMENT'))
+    ).toBe('invalidArgument')
+    expect(
+      codeFromNativeError(codedRejection('APP_ATTEST_INVALID_INPUT'))
+    ).toBe('invalidInput')
   })
 
   it('prefers the code property over a conflicting message token', () => {

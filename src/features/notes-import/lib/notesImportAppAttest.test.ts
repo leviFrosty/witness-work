@@ -1549,6 +1549,65 @@ describe('Notes Import App Attest', () => {
     ).toHaveLength(1)
   })
 
+  it('performs one controlled recovery after native invalidInput', async () => {
+    // The adapter validates the key id and hash before Apple sees them, so an
+    // invalidInput surfacing here means Apple rejected the key id itself.
+    const invalidInput = { nativeCode: 'invalidInput' as const }
+    let assertions = 0
+    const harness = createHarness({
+      activeKeyId: 'apple-rejected-key',
+      recoveryToken: 'enrolled-recovery-token',
+      generateAssertion: async () => {
+        if (assertions++ === 0) throw invalidInput
+        return 'assertion'
+      },
+      classifyError: (error) =>
+        error === invalidInput ? 'invalidInput' : null,
+      post: ({ endpoint }) =>
+        endpoint === 'challenge' ? { challenge: 'challenge' } : { ok: true },
+    })
+
+    await harness.module.post({
+      endpoint: 'kickoff',
+      payload: REQUEST_PAYLOAD,
+      contentHash: CONTENT_HASH,
+    })
+
+    expect(harness.generateKey).toHaveBeenCalledTimes(1)
+    expect(harness.secure.activeKeyId).toMatch(/^generated-key-/)
+    expect(
+      harness.posts.filter((call) => call.endpoint === 'kickoff')
+    ).toHaveLength(1)
+  })
+
+  it('never rotates the key for a local invalidArgument failure', async () => {
+    // Our own precondition failure is a caller bug. Rotating keys would not fix
+    // it, and would burn an App Attest key on every attempt.
+    const invalidArgument = { nativeCode: 'invalidArgument' as const }
+    const harness = createHarness({
+      activeKeyId: 'healthy-key',
+      recoveryToken: 'enrolled-recovery-token',
+      generateAssertion: async () => {
+        throw invalidArgument
+      },
+      classifyError: (error) =>
+        error === invalidArgument ? 'invalidArgument' : null,
+      post: ({ endpoint }) =>
+        endpoint === 'challenge' ? { challenge: 'challenge' } : { ok: true },
+    })
+
+    await expect(
+      harness.module.post({
+        endpoint: 'kickoff',
+        payload: REQUEST_PAYLOAD,
+        contentHash: CONTENT_HASH,
+      })
+    ).rejects.toMatchObject({ code: 'invalidArgument' })
+
+    expect(harness.generateKey).not.toHaveBeenCalled()
+    expect(harness.secure.activeKeyId).toBe('healthy-key')
+  })
+
   it('performs one controlled recovery for typed server key_not_active', async () => {
     let kickoffAttempts = 0
     const harness = createHarness({

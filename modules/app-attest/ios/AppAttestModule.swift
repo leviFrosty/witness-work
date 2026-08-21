@@ -14,6 +14,9 @@ import Foundation
 public class AppAttestModule: Module {
   private enum Code {
     static let unsupported = "APP_ATTEST_UNSUPPORTED"
+    /// This module rejected the arguments before calling Apple.
+    static let invalidArgument = "APP_ATTEST_INVALID_ARGUMENT"
+    /// Apple returned `DCError.invalidInput`.
     static let invalidInput = "APP_ATTEST_INVALID_INPUT"
     static let invalidKey = "APP_ATTEST_INVALID_KEY"
     static let serverUnavailable = "APP_ATTEST_SERVER_UNAVAILABLE"
@@ -58,7 +61,7 @@ public class AppAttestModule: Module {
       guard !keyId.isEmpty,
             let hash = Data(base64Encoded: clientDataHashBase64),
             hash.count == 32 else {
-        self.reject(promise, code: Code.invalidInput)
+        self.reject(promise, code: Code.invalidArgument)
         return
       }
       DCAppAttestService.shared.attestKey(keyId, clientDataHash: hash) {
@@ -84,7 +87,7 @@ public class AppAttestModule: Module {
       guard !keyId.isEmpty,
             let hash = Data(base64Encoded: clientDataHashBase64),
             hash.count == 32 else {
-        self.reject(promise, code: Code.invalidInput)
+        self.reject(promise, code: Code.invalidArgument)
         return
       }
       DCAppAttestService.shared.generateAssertion(keyId, clientDataHash: hash) {

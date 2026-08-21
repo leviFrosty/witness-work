@@ -9,6 +9,7 @@ export type NotesImportProtectedEndpoint = 'kickoff' | 'legacy'
 
 export type AppAttestNativeFailureCode =
   | 'unsupported'
+  | 'invalidArgument'
   | 'invalidInput'
   | 'invalidKey'
   | 'serverUnavailable'
@@ -17,6 +18,7 @@ export type AppAttestNativeFailureCode =
 
 export type NotesImportAppAttestErrorCode =
   | 'unsupported'
+  | 'invalidArgument'
   | 'invalidInput'
   | 'invalidKey'
   | 'serverUnavailable'
@@ -629,6 +631,7 @@ const nativeFailureToErrorCode = (
 ): NotesImportAppAttestErrorCode => {
   switch (code) {
     case 'unsupported':
+    case 'invalidArgument':
     case 'invalidInput':
     case 'invalidKey':
     case 'serverUnavailable':
@@ -638,6 +641,23 @@ const nativeFailureToErrorCode = (
       return 'nativeUnknown'
   }
 }
+
+/**
+ * Whether a native failure means the locally stored key can no longer produce
+ * assertions, so the only way forward is re-registering under the recovery
+ * credential.
+ *
+ * `invalidKey` is Apple naming that outright. `invalidInput` needs the same
+ * treatment because the adapter validates both arguments before Apple ever sees
+ * them — a non-empty key id and a hash it decoded to exactly 32 bytes — and
+ * emits `invalidArgument` when that check fails. So an `invalidInput` reaching
+ * here is Apple objecting to arguments we already know are well formed, and the
+ * key id is the only one it can be objecting to. `invalidArgument` is
+ * deliberately excluded: that is a caller bug, and rotating keys would neither
+ * fix it nor stop it recurring.
+ */
+const isDeadKeyFailure = (code: NotesImportAppAttestErrorCode): boolean =>
+  code === 'invalidKey' || code === 'invalidInput'
 
 const httpAuthError = (
   error: NotesImportAppAttestHttpError
@@ -1539,7 +1559,7 @@ export const createNotesImportAppAttest = (
     } catch (error) {
       if (
         error instanceof NotesImportAppAttestError &&
-        error.code === 'invalidKey'
+        isDeadKeyFailure(error.code)
       ) {
         // Enrollment may have committed before its response was lost and the app
         // was then reinstalled. Try a token that predates this enrollment once;
@@ -1835,7 +1855,7 @@ export const createNotesImportAppAttest = (
           if (
             input.allowRecovery &&
             error instanceof NotesImportAppAttestError &&
-            error.code === 'invalidKey'
+            isDeadKeyFailure(error.code)
           ) {
             return { kind: 'recover' }
           }

@@ -8,6 +8,9 @@
 
 export type AppAttestErrorCode =
   | 'unsupported'
+  /** This module rejected the arguments before Apple saw them; never a dead key. */
+  | 'invalidArgument'
+  /** Apple returned `DCError.invalidInput` for arguments we already validated. */
   | 'invalidInput'
   | 'invalidKey'
   | 'serverUnavailable'
@@ -31,6 +34,7 @@ export class AppAttestError extends Error {
  */
 const NATIVE_TOKENS = {
   APP_ATTEST_UNSUPPORTED: 'unsupported',
+  APP_ATTEST_INVALID_ARGUMENT: 'invalidArgument',
   APP_ATTEST_INVALID_INPUT: 'invalidInput',
   APP_ATTEST_INVALID_KEY: 'invalidKey',
   APP_ATTEST_SERVER_UNAVAILABLE: 'serverUnavailable',

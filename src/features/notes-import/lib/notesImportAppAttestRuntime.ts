@@ -9,6 +9,7 @@ import {
   NotesImportAppAttestHttpError,
   type NotesImportAppAttestEndpoint,
   type NotesImportAuthDebugReport,
+  type NotesImportAuthRepairReport,
   type NotesImportAuthSnapshot,
 } from '@/features/notes-import/lib/notesImportAppAttest'
 import * as AppAttest from '../../../../modules/app-attest'
@@ -238,7 +239,11 @@ export const runNotesImportAuthDiagnostics =
   (): Promise<NotesImportAuthDebugReport> =>
     notesImportAppAttest.runDiagnostics()
 
+export const runNotesImportAuthRepair =
+  (): Promise<NotesImportAuthRepairReport> => notesImportAppAttest.runRepair()
+
 export type {
   NotesImportAuthDebugReport,
+  NotesImportAuthRepairReport,
   NotesImportAuthSnapshot,
 } from '@/features/notes-import/lib/notesImportAppAttest'

@@ -62,7 +62,9 @@ import {
 import {
   getNotesImportAuthSnapshot,
   runNotesImportAuthDiagnostics,
+  runNotesImportAuthRepair,
   type NotesImportAuthDebugReport,
+  type NotesImportAuthRepairReport,
 } from '@/features/notes-import/lib/notesImportAppAttestRuntime'
 import { useNotesImportManager } from '@/features/notes-import/hooks/useNotesImportManager'
 import { clientImportCap } from '@/features/notes-import/lib/notesImportManagerLogic'
@@ -202,6 +204,8 @@ export default function ToolsScreen() {
   const [authBusy, setAuthBusy] = useState(false)
   const [authReport, setAuthReport] =
     useState<NotesImportAuthDebugReport | null>(null)
+  const [repairReport, setRepairReport] =
+    useState<NotesImportAuthRepairReport | null>(null)
   const [proxyProbe, setProxyProbe] = useState<{
     health: unknown
     status: NotesImportStatus | { error: string } | null
@@ -225,6 +229,31 @@ export default function ToolsScreen() {
           : (report.steps.find((s) => !s.ok)?.step ?? ''),
         native: true,
       })
+    } finally {
+      setAuthBusy(false)
+    }
+  }
+
+  const runAuthRepair = async () => {
+    if (authBusy) return
+    setAuthBusy(true)
+    try {
+      const report = await runNotesImportAuthRepair()
+      setRepairReport(report)
+      const lastFailed = report.steps.filter((s) => !s.ok).pop()
+      toast.show(
+        report.ok
+          ? report.keyRotated
+            ? 'Repaired — key rotated'
+            : 'Verified — key healthy'
+          : 'Repair failed',
+        {
+          message: report.ok
+            ? `${report.steps.length} steps`
+            : `${lastFailed?.step ?? ''} ${lastFailed?.code ?? ''}`.trim(),
+          native: true,
+        }
+      )
     } finally {
       setAuthBusy(false)
     }
@@ -888,7 +917,10 @@ export default function ToolsScreen() {
             The Notes Import auth module negotiates the worker protocol and
             serializes challenge → assertion → protected response per key.
             Diagnostics use the existing key through that same lane; they never
-            generate, rotate, enroll, recover, or clear lifecycle state.
+            generate, rotate, enroll, recover, or clear lifecycle state. Repair
+            runs the attested no-op verify through the REAL protected path — if
+            Apple refuses to sign with the stored key, it re-registers under the
+            enrolled recovery credential and retries, rotating the key.
           </Text>
           <InfoRow label='Proxy base' value={authSnapshot.baseUrl} />
           <InfoRow
@@ -909,6 +941,10 @@ export default function ToolsScreen() {
           />
           <InfoRow label='Active key' value={authSnapshot.activeKey} />
           <InfoRow label='Recovery token' value={authSnapshot.recoveryToken} />
+          <InfoRow
+            label='Recovery enrollment'
+            value={authSnapshot.recoveryEnrollment}
+          />
           <InfoRow
             label='Install identity'
             value={authSnapshot.installIdentity}
@@ -931,6 +967,12 @@ export default function ToolsScreen() {
           >
             {authBusy ? 'Running…' : 'Run auth diagnostics'}
           </ActionButton>
+          <ActionButton
+            disabled={authBusy}
+            onPress={() => void runAuthRepair()}
+          >
+            {authBusy ? 'Running…' : 'Run attestation repair (verify)'}
+          </ActionButton>
           <ActionButton onPress={() => void probeProxy()}>
             Probe /health + /status
           </ActionButton>
@@ -943,6 +985,11 @@ export default function ToolsScreen() {
             label='Diagnostics report'
             value={authReport}
             count={authReport?.steps.length ?? 0}
+          />
+          <JsonViewer
+            label='Repair report'
+            value={repairReport}
+            count={repairReport?.steps.length ?? 0}
           />
           <JsonViewer
             label='Proxy health / status'

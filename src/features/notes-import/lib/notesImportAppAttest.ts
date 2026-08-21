@@ -171,6 +171,17 @@ export interface NotesImportAuthSnapshot {
   accountIdentity: 'local' | 'adopted' | 'missing' | 'error'
   activeKey: 'keychain' | 'legacyMigrationPending' | 'missing' | 'error'
   recoveryToken: 'present' | 'missing' | 'error'
+  /**
+   * Whether the server-acknowledged recovery-enrollment receipt names the
+   * active key. 'acknowledged' means a dead active key should be repairable by
+   * re-registering under the enrolled recovery credential.
+   */
+  recoveryEnrollment:
+    | 'acknowledged'
+    | 'stale'
+    | 'missing'
+    | 'unsupported'
+    | 'error'
   pendingOperation: null | {
     kind: 'bootstrap' | 'bind' | 'recovery' | 'enrollment' | 'invalid'
     stage: string
@@ -192,6 +203,12 @@ export interface NotesImportAuthDebugReport {
   steps: NotesImportAuthDebugStep[]
 }
 
+export interface NotesImportAuthRepairReport
+  extends NotesImportAuthDebugReport {
+  /** True when the repair replaced the active key via the recovery credential. */
+  keyRotated: boolean
+}
+
 export interface NotesImportAppAttest {
   post<T>(request: NotesImportProtectedPost): Promise<T>
   /** Enrolls recovery for an existing key; never creates a first-use key. */
@@ -200,6 +217,13 @@ export interface NotesImportAppAttest {
   getSnapshot(): NotesImportAuthSnapshot
   /** Uses an existing key only; never binds, enrolls, recovers, or promotes. */
   runDiagnostics(): Promise<NotesImportAuthDebugReport>
+  /**
+   * Attested no-op through the full protected path — the one flow that can
+   * replace a key Apple refuses to sign with. Unlike diagnostics it may bind,
+   * enroll, and recover, exactly as a real protected request would; it spends
+   * no credits and runs no inference.
+   */
+  runRepair(): Promise<NotesImportAuthRepairReport>
 }
 
 const APP_ATTEST_PROTOCOL = 'witnesswork.app-attest'
@@ -1779,6 +1803,43 @@ export const createNotesImportAppAttest = (
     throw new NotesImportAppAttestError('network')
   }
 
+  const diagnosticErrorCode = (
+    error: unknown
+  ): NotesImportAppAttestErrorCode => {
+    if (error instanceof NotesImportAppAttestError) return error.code
+    if (error instanceof NotesImportAppAttestHttpError) {
+      return httpAuthError(error)?.code ?? 'authorizationFailed'
+    }
+    return nativeError(error).code
+  }
+
+  /** Records one redacted repair-report step around an operation, rethrowing. */
+  const traced = async <T>(
+    trace: ((step: NotesImportAuthDebugStep) => void) | undefined,
+    name: string,
+    operation: () => Promise<T>
+  ): Promise<T> => {
+    if (!trace) return operation()
+    const started = dependencies.now()
+    try {
+      const value = await operation()
+      trace({
+        step: name,
+        ok: true,
+        ms: Math.max(0, dependencies.now() - started),
+      })
+      return value
+    } catch (error) {
+      trace({
+        step: name,
+        ok: false,
+        ms: Math.max(0, dependencies.now() - started),
+        code: diagnosticErrorCode(error),
+      })
+      throw error
+    }
+  }
+
   const protectedAttempt = async <T>(input: {
     protocol: ProtocolVersion
     endpoint: NotesImportProtectedEndpoint | 'verify'
@@ -1793,6 +1854,9 @@ export const createNotesImportAppAttest = (
     allowRecovery: boolean
     allowFreshOperation: boolean
     signal?: AbortSignal
+    trace?: (step: NotesImportAuthDebugStep) => void
+    /** Rejects a structurally invalid protected acknowledgement. */
+    validate?: (data: unknown, operationId: string) => boolean
   }): Promise<ProtectedAttempt<T>> =>
     authorizationLane.run(
       input.keyId,
@@ -1804,18 +1868,20 @@ export const createNotesImportAppAttest = (
 
         let challenge: string
         try {
-          challenge = await requestChallenge({
-            protocolVersion: input.protocol,
-            operation: 'assert',
-            operationId: input.operationId,
-            uuid: input.uuid,
-            keyId: input.keyId,
-            purpose: input.purpose,
-            accountId: input.accountId,
-            contentHash: input.contentHash,
-            requestHash: input.requestHash,
-            signal: input.signal,
-          })
+          challenge = await traced(input.trace, 'challenge', () =>
+            requestChallenge({
+              protocolVersion: input.protocol,
+              operation: 'assert',
+              operationId: input.operationId,
+              uuid: input.uuid,
+              keyId: input.keyId,
+              purpose: input.purpose,
+              accountId: input.accountId,
+              contentHash: input.contentHash,
+              requestHash: input.requestHash,
+              signal: input.signal,
+            })
+          )
         } catch (error) {
           if (input.allowRecovery && recoveryRequested(error)) {
             return { kind: 'recover' }
@@ -1843,13 +1909,15 @@ export const createNotesImportAppAttest = (
 
         let assertion: string
         try {
-          assertion = await invokeNative(
-            () =>
-              dependencies.appAttest.generateAssertion(
-                input.keyId,
-                clientDataHash
-              ),
-            input.signal
+          assertion = await traced(input.trace, 'assertion', () =>
+            invokeNative(
+              () =>
+                dependencies.appAttest.generateAssertion(
+                  input.keyId,
+                  clientDataHash
+                ),
+              input.signal
+            )
           )
         } catch (error) {
           if (
@@ -1881,11 +1949,20 @@ export const createNotesImportAppAttest = (
           assertion,
         }
         try {
-          const data = await dependencies.transport.post<T>(
-            input.endpoint,
-            body,
-            { signal: input.signal }
-          )
+          const data = await traced(input.trace, input.endpoint, async () => {
+            const response = await dependencies.transport.post<T>(
+              input.endpoint,
+              body,
+              { signal: input.signal }
+            )
+            if (
+              input.validate &&
+              !input.validate(response, input.operationId)
+            ) {
+              throw new NotesImportAppAttestError('authorizationFailed')
+            }
+            return response
+          })
           return { kind: 'success', data }
         } catch (error) {
           if (input.allowRecovery && recoveryRequested(error)) {
@@ -1912,6 +1989,8 @@ export const createNotesImportAppAttest = (
     uuid: string
     accountId: string
     signal?: AbortSignal
+    trace?: (step: NotesImportAuthDebugStep) => void
+    validate?: (data: unknown, operationId: string) => boolean
   }): Promise<T> => {
     let keyId = input.keyId
     let operationId = input.operationId
@@ -1939,7 +2018,9 @@ export const createNotesImportAppAttest = (
       if (!allowRecovery) {
         throw new NotesImportAppAttestError('keyInactive')
       }
-      keyId = await recoverKey(input.protocol, keyId, input.uuid, input.signal)
+      keyId = await traced(input.trace, 'recover-key', () =>
+        recoverKey(input.protocol, keyId, input.uuid, input.signal)
+      )
       // A challenge operation is bound to the old key in v2, so a controlled
       // recovery retry needs a fresh correlation id rather than conflicting
       // with that rejected descriptor.
@@ -1954,21 +2035,13 @@ export const createNotesImportAppAttest = (
     return storage(() => dependencies.persistence.readLegacyKeyId())
   }
 
-  const diagnosticErrorCode = (
-    error: unknown
-  ): NotesImportAppAttestErrorCode => {
-    if (error instanceof NotesImportAppAttestError) return error.code
-    if (error instanceof NotesImportAppAttestHttpError) {
-      return httpAuthError(error)?.code ?? 'authorizationFailed'
-    }
-    return nativeError(error).code
-  }
-
   const getSnapshot = (): NotesImportAuthSnapshot => {
     let installIdentity: NotesImportAuthSnapshot['installIdentity'] = 'missing'
     let accountIdentity: NotesImportAuthSnapshot['accountIdentity'] = 'missing'
     let activeKey: NotesImportAuthSnapshot['activeKey'] = 'missing'
     let tokenState: NotesImportAuthSnapshot['recoveryToken'] = 'missing'
+    let recoveryEnrollment: NotesImportAuthSnapshot['recoveryEnrollment'] =
+      'unsupported'
     let pendingOperation: NotesImportAuthSnapshot['pendingOperation'] = null
 
     let uuid: string | null = null
@@ -1986,11 +2059,13 @@ export const createNotesImportAppAttest = (
         accountIdentity = 'error'
       }
     }
+    let activeKeyId: string | null = null
     try {
       const secure = recoveryStorageSupported()
         ? dependencies.secureStore.readActiveKeyId()
         : null
       const legacy = dependencies.persistence.readLegacyKeyId()
+      activeKeyId = secure ?? legacy
       activeKey = secure
         ? 'keychain'
         : legacy
@@ -2007,6 +2082,24 @@ export const createNotesImportAppAttest = (
           : 'missing'
     } catch {
       tokenState = 'error'
+    }
+    try {
+      if (recoveryStorageSupported()) {
+        const marker = dependencies.secureStore.readRecoveryEnrollmentKeyId()
+        if (!marker) {
+          recoveryEnrollment = 'missing'
+        } else {
+          // The token-hash half needs async crypto; the key-id half is the
+          // signal that matters for "can a repair rotate the current key".
+          const markerKeyId = marker.split('|')[0]
+          recoveryEnrollment =
+            markerKeyId && activeKeyId && markerKeyId === activeKeyId
+              ? 'acknowledged'
+              : 'stale'
+        }
+      }
+    } catch {
+      recoveryEnrollment = 'error'
     }
     try {
       const raw = dependencies.persistence.readJournal()
@@ -2042,8 +2135,116 @@ export const createNotesImportAppAttest = (
       accountIdentity,
       activeKey,
       recoveryToken: tokenState,
+      recoveryEnrollment,
       pendingOperation,
     }
+  }
+
+  const stepRunner =
+    (steps: NotesImportAuthDebugStep[]) =>
+    async <T>(
+      name: string,
+      operation: () => Promise<T>
+    ): Promise<{ ok: true; value: T } | { ok: false }> => {
+      const started = dependencies.now()
+      try {
+        const value = await operation()
+        steps.push({
+          step: name,
+          ok: true,
+          ms: Math.max(0, dependencies.now() - started),
+        })
+        return { ok: true, value }
+      } catch (error) {
+        steps.push({
+          step: name,
+          ok: false,
+          ms: Math.max(0, dependencies.now() - started),
+          code: diagnosticErrorCode(error),
+        })
+        return { ok: false }
+      }
+    }
+
+  /** Attested no-op via the dev bypass header; shared by diagnostics and repair. */
+  const runDevBypassVerify = async <R extends NotesImportAuthDebugReport>(
+    report: R,
+    operationId: string
+  ): Promise<R> =>
+    authorizationLane.run('dev-bypass', async () => {
+      const step = stepRunner(report.steps)
+      const capability = await step('capability', () => protocolVersion())
+      if (!capability.ok) return report
+      const protocol = capability.value
+      report.protocolVersion = protocol
+      const identity = await step('identity', async () => ({
+        uuid: storage(() => dependencies.identity.getOrCreateUuid()),
+        accountId: storage(() => dependencies.identity.getAccountId()),
+      }))
+      if (!identity.ok) return report
+      const verify = await step('verify', async () => {
+        const response = await dependencies.transport.post<unknown>(
+          'verify',
+          {
+            ...(protocol === 2
+              ? {
+                  protocolVersion: 2,
+                  operation: 'assert',
+                  purpose: 'notes-import-verify',
+                  operationId,
+                  requestHash: DIAGNOSTIC_CONTENT_HASH,
+                }
+              : {}),
+            uuid: identity.value.uuid,
+            accountId: identity.value.accountId,
+            contentHash: DIAGNOSTIC_CONTENT_HASH,
+          },
+          {
+            headers: {
+              'x-ww-dev-bypass': dependencies.devBypass.token,
+            },
+          }
+        )
+        if (!isAssertionAcknowledgement(response, protocol, operationId)) {
+          throw new NotesImportAppAttestError('authorizationFailed')
+        }
+        return response
+      })
+      report.ok = verify.ok
+      return report
+    })
+
+  /**
+   * A diagnostics run is read-only, so it can never demonstrate recovery — but
+   * it can say whether recovery is possible. When the failing step reports a
+   * key the system will no longer sign with, record whether the recovery
+   * credential a repair would re-register under actually exists.
+   */
+  const appendRecoverabilityNote = (
+    report: NotesImportAuthDebugReport
+  ): void => {
+    const failed = report.steps.find((entry) => !entry.ok)
+    if (
+      !failed?.code ||
+      !(isDeadKeyFailure(failed.code) || failed.code === 'keyInactive')
+    ) {
+      return
+    }
+    let available = false
+    try {
+      available =
+        report.protocolVersion === 2 &&
+        recoveryStorageSupported() &&
+        recoveryToken(false) !== null
+    } catch {
+      available = false
+    }
+    report.steps.push({
+      step: 'recovery-available',
+      ok: available,
+      ms: 0,
+      ...(available ? {} : { code: 'recoveryUnavailable' as const }),
+    })
   }
 
   const runDiagnostics = async (): Promise<NotesImportAuthDebugReport> => {
@@ -2054,73 +2255,10 @@ export const createNotesImportAppAttest = (
       correlationId: operationId,
       steps: [],
     }
-    const step = async <T>(
-      name: string,
-      operation: () => Promise<T>
-    ): Promise<{ ok: true; value: T } | { ok: false }> => {
-      const started = dependencies.now()
-      try {
-        const value = await operation()
-        report.steps.push({
-          step: name,
-          ok: true,
-          ms: Math.max(0, dependencies.now() - started),
-        })
-        return { ok: true, value }
-      } catch (error) {
-        report.steps.push({
-          step: name,
-          ok: false,
-          ms: Math.max(0, dependencies.now() - started),
-          code: diagnosticErrorCode(error),
-        })
-        return { ok: false }
-      }
-    }
-
     if (dependencies.devBypass.enabled) {
-      return authorizationLane.run('dev-bypass', async () => {
-        const capability = await step('capability', () => protocolVersion())
-        if (!capability.ok) return report
-        const protocol = capability.value
-        report.protocolVersion = protocol
-        const identity = await step('identity', async () => ({
-          uuid: storage(() => dependencies.identity.getOrCreateUuid()),
-          accountId: storage(() => dependencies.identity.getAccountId()),
-        }))
-        if (!identity.ok) return report
-        const verify = await step('verify', async () => {
-          const response = await dependencies.transport.post<unknown>(
-            'verify',
-            {
-              ...(protocol === 2
-                ? {
-                    protocolVersion: 2,
-                    operation: 'assert',
-                    purpose: 'notes-import-verify',
-                    operationId,
-                    requestHash: DIAGNOSTIC_CONTENT_HASH,
-                  }
-                : {}),
-              uuid: identity.value.uuid,
-              accountId: identity.value.accountId,
-              contentHash: DIAGNOSTIC_CONTENT_HASH,
-            },
-            {
-              headers: {
-                'x-ww-dev-bypass': dependencies.devBypass.token,
-              },
-            }
-          )
-          if (!isAssertionAcknowledgement(response, protocol, operationId)) {
-            throw new NotesImportAppAttestError('authorizationFailed')
-          }
-          return response
-        })
-        report.ok = verify.ok
-        return report
-      })
+      return runDevBypassVerify(report, operationId)
     }
+    const step = stepRunner(report.steps)
 
     let keyId: string | null
     let uuid: string | null
@@ -2146,7 +2284,7 @@ export const createNotesImportAppAttest = (
       return report
     }
 
-    return authorizationLane.run(keyId, async () => {
+    const completed = await authorizationLane.run(keyId, async () => {
       const capability = await step('capability', () => protocolVersion())
       if (!capability.ok) return report
       const protocol = capability.value
@@ -2222,6 +2360,94 @@ export const createNotesImportAppAttest = (
       report.ok = verify.ok
       return report
     })
+    appendRecoverabilityNote(completed)
+    return completed
+  }
+
+  const runRepair = async (): Promise<NotesImportAuthRepairReport> => {
+    const operationId = dependencies.crypto.randomUuid()
+    const report: NotesImportAuthRepairReport = {
+      ok: false,
+      protocolVersion: null,
+      correlationId: operationId,
+      keyRotated: false,
+      steps: [],
+    }
+    if (dependencies.devBypass.enabled) {
+      // The bypass path has no device key, so there is nothing to rotate.
+      return runDevBypassVerify(report, operationId)
+    }
+    const step = stepRunner(report.steps)
+
+    const peekActiveKey = (): string | null => {
+      try {
+        return readonlyActiveKey()
+      } catch {
+        return null
+      }
+    }
+    const initialKeyId = peekActiveKey()
+    const noteRotation = (): void => {
+      const finalKeyId = peekActiveKey()
+      report.keyRotated =
+        initialKeyId !== null &&
+        finalKeyId !== null &&
+        finalKeyId !== initialKeyId
+    }
+
+    const supported = await step('supported', async () => {
+      let value = false
+      try {
+        value = dependencies.appAttest.isSupported()
+      } catch {
+        throw new NotesImportAppAttestError('nativeUnknown')
+      }
+      if (!value) throw new NotesImportAppAttestError('unsupported')
+    })
+    if (!supported.ok) return report
+
+    const capability = await step('capability', () => protocolVersion())
+    if (!capability.ok) return report
+    const protocol = capability.value
+    report.protocolVersion = protocol
+
+    // The same readiness pass every protected post runs: it may resume a
+    // journaled operation, enroll recovery, or replace a key that dies during
+    // enrollment — all of which this repair exists to exercise.
+    const ready = await step('ensure-ready', () => ensureReady(protocol))
+    if (!ready.ok) {
+      noteRotation()
+      return report
+    }
+
+    try {
+      await postProtected<unknown>({
+        protocol,
+        endpoint: 'verify',
+        purpose: 'notes-import-verify',
+        payload: {},
+        contentHash: DIAGNOSTIC_CONTENT_HASH,
+        requestHash: protocol === 2 ? DIAGNOSTIC_CONTENT_HASH : undefined,
+        operationId,
+        keyId: ready.value.keyId,
+        uuid: ready.value.uuid,
+        accountId: ready.value.accountId,
+        trace: (entry) => report.steps.push(entry),
+        validate: (value, usedOperationId) =>
+          isAssertionAcknowledgement(value, protocol, usedOperationId),
+      })
+      report.ok = true
+    } catch (error) {
+      const code = diagnosticErrorCode(error)
+      const last = report.steps[report.steps.length - 1]
+      // Traced steps already recorded their own failures; this keeps untraced
+      // throws (exhausted recovery, cancellation) visible in the report.
+      if (!last || last.ok || last.code !== code) {
+        report.steps.push({ step: 'protected-verify', ok: false, ms: 0, code })
+      }
+    }
+    noteRotation()
+    return report
   }
 
   return {
@@ -2317,5 +2543,6 @@ export const createNotesImportAppAttest = (
     },
     getSnapshot,
     runDiagnostics,
+    runRepair,
   }
 }

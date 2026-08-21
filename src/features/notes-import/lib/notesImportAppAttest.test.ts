@@ -1843,6 +1843,7 @@ describe('Notes Import App Attest', () => {
       installIdentity: 'present',
       activeKey: 'keychain',
       recoveryToken: 'present',
+      recoveryEnrollment: 'acknowledged',
     })
     expect(harness.generateKey).not.toHaveBeenCalled()
     expect(harness.dependencies.appAttest.attestKey).not.toHaveBeenCalled()
@@ -1896,6 +1897,256 @@ describe('Notes Import App Attest', () => {
         requestHash: DIAGNOSTIC_HASH,
         contentHash: DIAGNOSTIC_HASH,
       },
+    })
+    expect(harness.generateAssertion).not.toHaveBeenCalled()
+  })
+
+  it('reports a dead key as recoverable when the recovery credential exists', async () => {
+    const invalidInput = { nativeCode: 'invalidInput' as const }
+    const harness = createHarness({
+      activeKeyId: 'apple-rejected-key',
+      recoveryToken: 'enrolled-recovery-token',
+      generateAssertion: async () => {
+        throw invalidInput
+      },
+      classifyError: (error) =>
+        error === invalidInput ? 'invalidInput' : null,
+    })
+
+    const report = await harness.module.runDiagnostics()
+
+    expect(report.ok).toBe(false)
+    expect(report.steps.at(-2)).toMatchObject({
+      step: 'assertion',
+      ok: false,
+      code: 'invalidInput',
+    })
+    expect(report.steps.at(-1)).toEqual({
+      step: 'recovery-available',
+      ok: true,
+      ms: 0,
+    })
+    expect(harness.generateKey).not.toHaveBeenCalled()
+    expect(harness.secure.activeKeyId).toBe('apple-rejected-key')
+  })
+
+  it('reports a dead key as unrecoverable without a recovery token', async () => {
+    const invalidKey = { nativeCode: 'invalidKey' as const }
+    const harness = createHarness({
+      activeKeyId: 'stale-keychain-key-id',
+      recoveryToken: null,
+      generateAssertion: async () => {
+        throw invalidKey
+      },
+      classifyError: (error) => (error === invalidKey ? 'invalidKey' : null),
+    })
+
+    const report = await harness.module.runDiagnostics()
+
+    expect(report.ok).toBe(false)
+    expect(report.steps.at(-1)).toMatchObject({
+      step: 'recovery-available',
+      ok: false,
+      code: 'recoveryUnavailable',
+    })
+  })
+
+  it('repairs a dead key through the attested verify no-op', async () => {
+    const invalidInput = { nativeCode: 'invalidInput' as const }
+    let assertions = 0
+    const harness = createHarness({
+      activeKeyId: 'apple-rejected-key',
+      recoveryToken: 'enrolled-recovery-token',
+      generateAssertion: async () => {
+        if (assertions++ === 0) throw invalidInput
+        return 'signed-assertion-value'
+      },
+      classifyError: (error) =>
+        error === invalidInput ? 'invalidInput' : null,
+      post: ({ endpoint }) =>
+        endpoint === 'challenge'
+          ? { challenge: 'issued-challenge-value' }
+          : { ok: true },
+    })
+
+    const report = await harness.module.runRepair()
+
+    expect(report.ok).toBe(true)
+    expect(report.keyRotated).toBe(true)
+    expect(report.protocolVersion).toBe(2)
+    expect(
+      report.steps.map(
+        (entry) => `${entry.step}:${entry.ok ? 'ok' : (entry.code ?? 'fail')}`
+      )
+    ).toEqual([
+      'supported:ok',
+      'capability:ok',
+      'ensure-ready:ok',
+      'challenge:ok',
+      'assertion:invalidInput',
+      'recover-key:ok',
+      'challenge:ok',
+      'assertion:ok',
+      'verify:ok',
+    ])
+    expect(harness.generateKey).toHaveBeenCalledTimes(1)
+    expect(harness.secure.activeKeyId).toMatch(/^generated-key-/)
+    expect(
+      harness.posts.find((call) => call.endpoint === 'registration')?.body
+    ).toMatchObject({
+      protocolVersion: 2,
+      operation: 'bind',
+      recoveryToken: 'enrolled-recovery-token',
+    })
+    const verifies = harness.posts.filter((call) => call.endpoint === 'verify')
+    expect(verifies).toHaveLength(1)
+    expect(verifies[0]?.body).toMatchObject({
+      protocolVersion: 2,
+      operation: 'assert',
+      purpose: 'notes-import-verify',
+      contentHash: DIAGNOSTIC_HASH,
+      requestHash: DIAGNOSTIC_HASH,
+      uuid: 'install-uuid',
+      accountId: 'account-id',
+    })
+    expect(
+      harness.posts.filter((call) => call.endpoint === 'kickoff')
+    ).toHaveLength(0)
+    const serialized = JSON.stringify(report)
+    for (const secret of [
+      'apple-rejected-key',
+      'generated-key',
+      'enrolled-recovery-token',
+      'issued-challenge-value',
+      'signed-assertion-value',
+      'install-uuid',
+      'account-id',
+    ]) {
+      expect(serialized).not.toContain(secret)
+    }
+  })
+
+  it('verifies a healthy key without rotating through repair', async () => {
+    const harness = createHarness({
+      activeKeyId: 'healthy-key',
+      recoveryToken: 'enrolled-recovery-token',
+      post: ({ endpoint }) =>
+        endpoint === 'challenge' ? { challenge: 'challenge' } : { ok: true },
+    })
+
+    const report = await harness.module.runRepair()
+
+    expect(report.ok).toBe(true)
+    expect(report.keyRotated).toBe(false)
+    expect(report.steps.map((entry) => entry.step)).toEqual([
+      'supported',
+      'capability',
+      'ensure-ready',
+      'challenge',
+      'assertion',
+      'verify',
+    ])
+    expect(report.steps.every((entry) => entry.ok)).toBe(true)
+    expect(harness.generateKey).not.toHaveBeenCalled()
+    expect(harness.secure.activeKeyId).toBe('healthy-key')
+  })
+
+  it('reports a failed rotation when the server rejects the recovery token', async () => {
+    const invalidKey = { nativeCode: 'invalidKey' as const }
+    const harness = createHarness({
+      activeKeyId: 'apple-rejected-key',
+      recoveryToken: 'mismatched-recovery-token',
+      generateAssertion: async () => {
+        throw invalidKey
+      },
+      classifyError: (error) => (error === invalidKey ? 'invalidKey' : null),
+      post: ({ endpoint }) => {
+        if (endpoint === 'challenge') return { challenge: 'challenge' }
+        if (endpoint === 'registration') {
+          throw new NotesImportAppAttestHttpError({
+            kind: 'http',
+            status: 401,
+            serverCode: 'attestation_failed',
+            reason: 'recovery_token_mismatch',
+            action: 'none',
+          })
+        }
+        return { ok: true }
+      },
+    })
+
+    const report = await harness.module.runRepair()
+
+    expect(report.ok).toBe(false)
+    expect(report.keyRotated).toBe(false)
+    expect(report.steps.at(-1)).toMatchObject({
+      step: 'recover-key',
+      ok: false,
+      code: 'recoveryUnavailable',
+    })
+    expect(harness.secure.activeKeyId).toBe('apple-rejected-key')
+  })
+
+  it('fails repair at readiness when a dead key has no recovery token', async () => {
+    const invalidKey = { nativeCode: 'invalidKey' as const }
+    const harness = createHarness({
+      activeKeyId: 'stale-keychain-key-id',
+      recoveryToken: null,
+      generateAssertion: async () => {
+        throw invalidKey
+      },
+      classifyError: (error) => (error === invalidKey ? 'invalidKey' : null),
+    })
+
+    const report = await harness.module.runRepair()
+
+    expect(report.ok).toBe(false)
+    expect(report.keyRotated).toBe(false)
+    expect(report.steps.at(-1)).toMatchObject({
+      step: 'ensure-ready',
+      ok: false,
+      code: 'recoveryUnavailable',
+    })
+    expect(harness.generateKey).not.toHaveBeenCalled()
+  })
+
+  it('rejects mismatched verify acknowledgement metadata in repair', async () => {
+    const harness = createHarness({
+      activeKeyId: 'healthy-key',
+      recoveryToken: 'enrolled-recovery-token',
+      post: ({ endpoint }) => {
+        if (endpoint === 'challenge') return { challenge: 'challenge' }
+        if (endpoint === 'verify') {
+          return { ok: true, operationId: 'different-operation' }
+        }
+        return { ok: true }
+      },
+    })
+
+    const report = await harness.module.runRepair()
+
+    expect(report.ok).toBe(false)
+    expect(report.keyRotated).toBe(false)
+    expect(report.steps.at(-1)).toMatchObject({
+      step: 'verify',
+      ok: false,
+      code: 'authorizationFailed',
+    })
+    expect(harness.generateKey).not.toHaveBeenCalled()
+  })
+
+  it('proves the development bypass through repair without lifecycle access', async () => {
+    const harness = createHarness({ devBypass: true, uuid: null })
+
+    const report = await harness.module.runRepair()
+
+    expect(report.ok).toBe(true)
+    expect(report.keyRotated).toBe(false)
+    expect(harness.posts).toHaveLength(1)
+    expect(harness.posts[0]).toMatchObject({
+      endpoint: 'verify',
+      headers: { 'x-ww-dev-bypass': 'dev-bypass-token' },
+      body: { purpose: 'notes-import-verify' },
     })
     expect(harness.generateAssertion).not.toHaveBeenCalled()
   })

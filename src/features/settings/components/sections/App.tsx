@@ -51,7 +51,9 @@ const AppSection = ({ handleNavigate }: SettingsSectionProps) => {
           sublabel={
             notesImport.available
               ? undefined
-              : i18n.t('notesImport_unavailable')
+              : notesImport.updateRequired
+                ? i18n.t('notesImport_updateRequired')
+                : i18n.t('notesImport_unavailable')
           }
           onPress={() => handleNavigate('NotesImportComposer')}
         >

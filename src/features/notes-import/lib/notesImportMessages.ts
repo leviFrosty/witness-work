@@ -29,7 +29,11 @@ export const errorMessageKey = (code: NotesImportErrorCode): string => {
 }
 
 /** Machine reason codes the proxy emits; everything else is operator free text. */
-const MACHINE_UNAVAILABLE_REASONS = new Set(['disabled', 'no_provider'])
+const MACHINE_UNAVAILABLE_REASONS = new Set([
+  'disabled',
+  'no_provider',
+  'version_below_min',
+])
 
 /**
  * The operator-supplied detail to show beneath the generic "unavailable"

@@ -37,9 +37,34 @@ export interface NotesImportPublicSchedule {
   windowDays: number
 }
 
-export type NotesImportStatus =
-  | { available: true; limits: NotesImportPublicSchedule }
-  | { available: false; reason?: string }
+/**
+ * Optional minimum app version (`major.minor.patch`) the proxy advertises on
+ * every status response. Absent when no floor is configured.
+ */
+interface NotesImportStatusVersionFloor {
+  minAppVersion?: string
+}
+
+export type NotesImportStatus = NotesImportStatusVersionFloor &
+  (
+    | { available: true; limits: NotesImportPublicSchedule }
+    | { available: false; reason?: string }
+  )
+
+const MIN_APP_VERSION_PATTERN = /^\d+\.\d+\.\d+$/
+
+/**
+ * A malformed `minAppVersion` is dropped (fail open) rather than rejecting the
+ * whole status payload — the floor is advisory and must never take the
+ * allowance schedule or availability down with it.
+ */
+const statusVersionFloor = (
+  value: Record<string, unknown>
+): NotesImportStatusVersionFloor =>
+  typeof value.minAppVersion === 'string' &&
+  MIN_APP_VERSION_PATTERN.test(value.minAppVersion)
+    ? { minAppVersion: value.minAppVersion }
+    : {}
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null && !Array.isArray(value)
@@ -83,9 +108,12 @@ export const normalizeNotesImportStatus = (
     if (value.reason !== undefined && typeof value.reason !== 'string') {
       return null
     }
-    return value.reason === undefined
-      ? { available: false }
-      : { available: false, reason: value.reason }
+    return {
+      ...statusVersionFloor(value),
+      ...(value.reason === undefined
+        ? { available: false as const }
+        : { available: false as const, reason: value.reason }),
+    }
   }
 
   const limits = value.limits
@@ -105,6 +133,7 @@ export const normalizeNotesImportStatus = (
   }
 
   return {
+    ...statusVersionFloor(value),
     available: true,
     limits: {
       imports: {

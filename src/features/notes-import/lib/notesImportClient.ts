@@ -120,7 +120,15 @@ export class NotesImportClientError extends Error {
   }
 }
 
-export type NotesImportUnavailableReason = 'disabled' | 'no_provider'
+/**
+ * `disabled` / `no_provider` come from the proxy; `version_below_min` is
+ * synthesized client-side when this build is under the advertised
+ * `minAppVersion` floor.
+ */
+export type NotesImportUnavailableReason =
+  | 'disabled'
+  | 'no_provider'
+  | 'version_below_min'
 export type { NotesImportStatus } from '@/features/notes-import/lib/notesImportUsage'
 
 /**

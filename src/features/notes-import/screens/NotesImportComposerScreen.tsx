@@ -45,6 +45,8 @@ import ActionButton from '@/components/ui/ActionButton'
 import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
 import { formatDate } from '@/lib/dates'
+import { openURL } from '@/lib/links'
+import links from '@/constants/links'
 import type { RootStackNavigation, RootStackParamList } from '@/types/rootStack'
 import { useNotesImportManager } from '@/features/notes-import/hooks/useNotesImportManager'
 import { useNotesImportAvailability } from '@/features/notes-import/hooks/useNotesImportAvailability'
@@ -684,11 +686,15 @@ const NotesImportComposerScreen = ({ renderSupporterCta }: Props) => {
 
   // Pinned top-of-screen notice when the proxy reports the feature is down,
   // appending the operator's detail (e.g. a maintenance window) when present.
+  // When this build is under the proxy's minimum app version the message
+  // explains the version gap instead and offers an App Store jump — the only
+  // unavailable state the user can fix themselves.
   const unavailableBanner = () => {
     const detail = unavailableDetail(availability.reason)
+    const updateRequired = availability.updateRequired
     return (
       <View style={{ paddingHorizontal: 15, paddingTop: 12 }}>
-        <Card style={{ backgroundColor: theme.colors.error }}>
+        <Card style={{ backgroundColor: theme.colors.error, gap: 12 }}>
           <View
             style={{ flexDirection: 'row', gap: 12, alignItems: 'flex-start' }}
           >
@@ -706,11 +712,38 @@ const NotesImportComposerScreen = ({ renderSupporterCta }: Props) => {
                 lineHeight: 20,
               }}
             >
-              {detail
-                ? i18n.t('notesImport_unavailableBannerDetail', { detail })
-                : i18n.t('notesImport_unavailableBanner')}
+              {updateRequired
+                ? i18n.t('notesImport_updateRequiredBanner', {
+                    current: updateRequired.currentVersion,
+                    min: updateRequired.minVersion,
+                  })
+                : detail
+                  ? i18n.t('notesImport_unavailableBannerDetail', { detail })
+                  : i18n.t('notesImport_unavailableBanner')}
             </Text>
           </View>
+          {updateRequired && (
+            <Button
+              onPress={() => openURL(links.appStore)}
+              style={{
+                alignSelf: 'flex-start',
+                backgroundColor: '#fff',
+                borderRadius: theme.numbers.borderRadiusSm,
+                paddingVertical: 8,
+                paddingHorizontal: 16,
+                marginLeft: 30,
+              }}
+            >
+              <Text
+                style={{
+                  color: theme.colors.error,
+                  fontFamily: theme.fonts.bold,
+                }}
+              >
+                {i18n.t('update')}
+              </Text>
+            </Button>
+          )}
         </Card>
       </View>
     )

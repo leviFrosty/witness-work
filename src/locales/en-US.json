@@ -1136,6 +1136,8 @@
   "notesImport_unavailable": "Temporarily unavailable. Please try again later.",
   "notesImport_unavailableBanner": "Scribe AI is temporarily unavailable. Please check again later.",
   "notesImport_unavailableBannerDetail": "Scribe AI is temporarily unavailable. Please check again later. {{detail}}",
+  "notesImport_updateRequired": "Update WitnessWork to use Notes Import.",
+  "notesImport_updateRequiredBanner": "Your app version {{current}} is below the minimum {{min}} required for Notes Import. Update WitnessWork to continue.",
   "notesImport_listEmptyTitle": "No imports yet",
   "notesImport_listEmptyBody": "Paste field-ministry notes and Scribe AI will turn them into Contacts, Visits, and Time Entries for you to review.",
   "notesImport_newImport": "New Scribe AI import",

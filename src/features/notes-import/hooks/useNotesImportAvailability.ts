@@ -1,7 +1,12 @@
 import { useEffect, useState } from 'react'
+import Constants from 'expo-constants'
 import { create } from 'zustand'
 import { getNotesImportStatus } from '@/features/notes-import/lib/notesImportClient'
 import type { NotesImportPublicSchedule } from '@/features/notes-import/lib/notesImportUsage'
+import {
+  notesImportUpdateRequired,
+  type NotesImportUpdateRequired,
+} from '@/features/notes-import/lib/notesImportVersionGate'
 
 export interface NotesImportAvailability {
   /** False only once the proxy definitively reports the feature is down. */
@@ -10,6 +15,11 @@ export interface NotesImportAvailability {
   reason: string | null
   /** Fresh public allowance schedule held in memory for this app session only. */
   schedule: NotesImportPublicSchedule | null
+  /**
+   * Set when this build is below the proxy's advertised minimum app version.
+   * `available` is false and `reason` is `'version_below_min'` in that case.
+   */
+  updateRequired: NotesImportUpdateRequired | null
   loading: boolean
 }
 
@@ -28,18 +38,48 @@ const useAvailabilityStore = create<AvailabilityStore>((set) => ({
   available: true,
   reason: null,
   schedule: null,
+  updateRequired: null,
   loading: true,
 
   probe: async () => {
     const probe = ++latestProbe
     // Access remains fail-open, but schedule claims disappear while this fresh
     // probe is pending (including when another surface mounts later).
-    set({ available: true, reason: null, schedule: null, loading: true })
+    set({
+      available: true,
+      reason: null,
+      schedule: null,
+      updateRequired: null,
+      loading: true,
+    })
     const status = await getNotesImportStatus().catch(() => null)
     if (probe !== latestProbe) return
 
     if (!status) {
-      set({ available: true, reason: null, schedule: null, loading: false })
+      set({
+        available: true,
+        reason: null,
+        schedule: null,
+        updateRequired: null,
+        loading: false,
+      })
+      return
+    }
+    // The version floor wins over every other state: it is the one condition
+    // the user can resolve themselves, and an update is required regardless of
+    // whether the proxy is also down right now.
+    const updateRequired = notesImportUpdateRequired(
+      Constants.expoConfig?.version,
+      status.minAppVersion
+    )
+    if (updateRequired) {
+      set({
+        available: false,
+        reason: 'version_below_min',
+        schedule: null,
+        updateRequired,
+        loading: false,
+      })
       return
     }
     if (!status.available) {
@@ -47,6 +87,7 @@ const useAvailabilityStore = create<AvailabilityStore>((set) => ({
         available: false,
         reason: status.reason ?? null,
         schedule: null,
+        updateRequired: null,
         loading: false,
       })
       return
@@ -55,6 +96,7 @@ const useAvailabilityStore = create<AvailabilityStore>((set) => ({
       available: true,
       reason: null,
       schedule: status.limits,
+      updateRequired: null,
       loading: false,
     })
   },
@@ -70,6 +112,7 @@ export const useNotesImportAvailability = (): NotesImportAvailability => {
   const available = useAvailabilityStore((state) => state.available)
   const reason = useAvailabilityStore((state) => state.reason)
   const schedule = useAvailabilityStore((state) => state.schedule)
+  const updateRequired = useAvailabilityStore((state) => state.updateRequired)
   const loading = useAvailabilityStore((state) => state.loading)
   const probe = useAvailabilityStore((state) => state.probe)
 
@@ -89,6 +132,7 @@ export const useNotesImportAvailability = (): NotesImportAvailability => {
     available: pending ? true : available,
     reason: pending ? null : reason,
     schedule: pending ? null : schedule,
+    updateRequired: pending ? null : updateRequired,
     loading: pending,
   }
 }

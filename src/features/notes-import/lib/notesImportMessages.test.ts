@@ -70,6 +70,7 @@ describe('unavailableDetail', () => {
   it('suppresses machine reason codes', () => {
     expect(unavailableDetail('disabled')).toBeUndefined()
     expect(unavailableDetail('no_provider')).toBeUndefined()
+    expect(unavailableDetail('version_below_min')).toBeUndefined()
   })
 
   it('treats empty/whitespace/nullish reasons as no detail', () => {

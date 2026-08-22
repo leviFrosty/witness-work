@@ -189,6 +189,40 @@ describe('normalizeNotesImportStatus', () => {
     ).toEqual({ available: false, reason: 'maintenance' })
   })
 
+  it('carries a well-formed minAppVersion on either state', () => {
+    expect(
+      normalizeNotesImportStatus({
+        available: true,
+        limits,
+        minAppVersion: '1.42.0',
+      })
+    ).toEqual({ available: true, limits, minAppVersion: '1.42.0' })
+    expect(
+      normalizeNotesImportStatus({
+        available: false,
+        reason: 'disabled',
+        minAppVersion: '1.42.0',
+      })
+    ).toEqual({ available: false, reason: 'disabled', minAppVersion: '1.42.0' })
+  })
+
+  it('drops a malformed minAppVersion without rejecting the status', () => {
+    expect(
+      normalizeNotesImportStatus({
+        available: true,
+        limits,
+        minAppVersion: 'v1.42',
+      })
+    ).toEqual({ available: true, limits })
+    expect(
+      normalizeNotesImportStatus({
+        available: true,
+        limits,
+        minAppVersion: 142,
+      })
+    ).toEqual({ available: true, limits })
+  })
+
   it.each([
     ['missing limits', { available: true }],
     [

@@ -1,9 +1,9 @@
 import {
+  BellOff as BellOffIcon,
   Calendar1 as Calendar1Icon,
   MessageCircle as MessageCircleIcon,
   Phone as PhoneIcon,
   SquarePen as SquarePenIcon,
-  Trash2 as Trash2Icon,
 } from 'lucide-react-native'
 import React, { useCallback, useMemo, useState } from 'react'
 import { Alert, Pressable, View } from 'react-native'
@@ -651,7 +651,9 @@ const RescheduleVisitScreen = ({ route, navigation }: Props) => {
           }}
         >
           <IconButton
-            icon={Trash2Icon}
+            // Soft dismiss — the reminder is silenced, the conversation and
+            // its data stay put. A trash icon over-promised destruction.
+            icon={BellOffIcon}
             size={12}
             iconStyle={{ color: theme.colors.textAlt }}
           />

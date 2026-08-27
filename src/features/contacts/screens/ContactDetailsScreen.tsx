@@ -30,6 +30,7 @@ import Divider from '@/components/ui/Divider'
 import moment from 'moment'
 import { formatDate } from '@/lib/dates'
 import i18n from '@/lib/locales'
+import confirmDestructive from '@/lib/confirmDestructive'
 import {
   contactHasAtLeastOneStudy,
   contactMostRecentStudy,
@@ -767,8 +768,8 @@ const ContactDetailsScreen = ({ route, navigation }: Props) => {
     }
     actions.push({
       id: 'delete',
-      title: i18n.t('delete'),
-      image: 'trash',
+      title: i18n.t('archive'),
+      image: 'archivebox',
       imageColor: theme.colors.error,
       attributes: { destructive: true },
     })
@@ -786,25 +787,19 @@ const ContactDetailsScreen = ({ route, navigation }: Props) => {
           setDismissSheetOpen(true)
           break
         case 'delete':
-          Alert.alert(
-            i18n.t('archiveContact_question'),
-            i18n.t('archiveContact_description'),
-            [
-              { text: i18n.t('cancel'), style: 'cancel' },
-              {
-                text: i18n.t('delete'),
-                style: 'destructive',
-                onPress: () => {
-                  deleteContact(contact.id)
-                  toast.show(i18n.t('success'), {
-                    message: i18n.t('archived'),
-                    native: true,
-                  })
-                  navigation.popToTop()
-                },
-              },
-            ]
-          )
+          confirmDestructive({
+            title: i18n.t('archiveContact_question'),
+            description: i18n.t('archiveContact_description'),
+            confirmLabel: i18n.t('archive'),
+            onConfirm: () => {
+              deleteContact(contact.id)
+              toast.show(i18n.t('success'), {
+                message: i18n.t('archived'),
+                native: true,
+              })
+              navigation.popToTop()
+            },
+          })
           break
       }
     },

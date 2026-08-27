@@ -3,8 +3,10 @@ import {
   BellOff as BellOffIcon,
   BookOpen as BookOpenIcon,
   Caravan as CaravanIcon,
+  Pencil as PencilIcon,
+  Trash2 as Trash2Icon,
 } from 'lucide-react-native'
-import { Alert, View } from 'react-native'
+import { View } from 'react-native'
 import Text from '@/components/ui/MyText'
 import { Visit } from '@/types/visit'
 import moment from 'moment'
@@ -17,10 +19,12 @@ import { Swipeable } from 'react-native-gesture-handler'
 import Badge from '@/components/ui/Badge'
 import Haptics from '@/lib/haptics'
 import SwipeableDelete from '@/components/ui/swipeableActions/Delete'
-import SwipeableEdit from '@/components/ui/swipeableActions/Edit'
 import IconButton from '@/components/ui/IconButton'
 import Copyeable from '@/components/ui/Copyeable'
 import Button from '@/components/ui/Button'
+import RowActionsMenu from '@/components/RowActionsMenu'
+import confirmDestructive from '@/lib/confirmDestructive'
+import { useToastController } from '@tamagui/toast'
 import { RootStackNavigation } from '@/types/rootStack'
 
 const ConversationRow = ({
@@ -33,6 +37,7 @@ const ConversationRow = ({
   const navigation = useNavigation<RootStackNavigation>()
   const theme = useTheme()
   const { deleteConversation } = useConversations()
+  const toast = useToastController()
   const notificationHasPassed =
     conversation.followUp &&
     moment(conversation.followUp.date).isSameOrBefore(moment())
@@ -47,43 +52,40 @@ const ConversationRow = ({
     })
   }
 
+  /**
+   * The one delete flow for this row — the overflow menu and the right-swipe
+   * both land here.
+   */
+  const handleRequestDelete = () => {
+    confirmDestructive({
+      title: i18n.t('deleteConversation'),
+      description: i18n.t('deleteConversation_description'),
+      onConfirm: () => {
+        deleteConversation(conversation.id)
+        toast.show(i18n.t('success'), {
+          message: i18n.t('deleted'),
+          native: true,
+        })
+      },
+    })
+  }
+
   const handleSwipeOpen = (
     direction: 'left' | 'right',
     swipeable: Swipeable
   ) => {
-    if (direction === 'left') {
-      handleNavigateEdit()
-      swipeable.reset()
-    } else {
-      Alert.alert(
-        i18n.t('deleteConversation'),
-        i18n.t('deleteConversation_description'),
-        [
-          {
-            text: i18n.t('cancel'),
-            style: 'cancel',
-            onPress: () => {
-              swipeable.reset()
-            },
-          },
-          {
-            text: i18n.t('delete'),
-            style: 'destructive',
-            onPress: () => {
-              swipeable.reset()
-              deleteConversation(conversation.id)
-            },
-          },
-        ]
-      )
-    }
+    if (direction !== 'right') return
+
+    // Snap the row back before the confirmation lands — the alert owns the
+    // interaction from here, whichever way the user answers it.
+    swipeable.reset()
+    handleRequestDelete()
   }
 
   return (
     <Swipeable
       onSwipeableWillOpen={() => Haptics.light()}
       containerStyle={{ backgroundColor: theme.colors.backgroundLighter }}
-      renderLeftActions={() => <SwipeableEdit />}
       renderRightActions={() => <SwipeableDelete />}
       onSwipeableOpen={handleSwipeOpen}
     >
@@ -173,6 +175,26 @@ const ConversationRow = ({
                 </Badge>
               </View>
             )}
+            <RowActionsMenu
+              accessibilityLabel={i18n.t('moreActionsFor', {
+                name: moment(conversation.date).format('dddd, L'),
+              })}
+              actions={[
+                {
+                  id: 'edit-conversation',
+                  label: i18n.t('edit'),
+                  icon: PencilIcon,
+                  onPress: handleNavigateEdit,
+                },
+                {
+                  id: 'delete-conversation',
+                  label: i18n.t('delete'),
+                  icon: Trash2Icon,
+                  destructive: true,
+                  onPress: handleRequestDelete,
+                },
+              ]}
+            />
           </View>
 
           {/* Content Section */}

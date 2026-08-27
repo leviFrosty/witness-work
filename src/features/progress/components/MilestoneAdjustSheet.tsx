@@ -25,6 +25,7 @@ import {
   validateMilestoneValue,
 } from '@/lib/milestones'
 import { useFormattedMinutes } from '@/lib/minutes'
+import confirmDestructive from '@/lib/confirmDestructive'
 import { RootStackNavigation } from '@/types/rootStack'
 
 import Text from '@/components/ui/MyText'
@@ -175,13 +176,27 @@ const MilestoneAdjustSheet = ({ visible, onClose }: Props) => {
     })
   }
 
-  const handleRemove = (value: number) => {
+  const removeMilestone = (value: number) => {
     setDraft((current) =>
       sanitizeDraft(
         current.filter((v) => v !== value),
         annualGoalHours
       )
     )
+  }
+
+  /**
+   * Single confirmation gate for every path that drops a rung — the X button
+   * and typing a non-positive value into a rung's input both land here so a
+   * milestone never disappears without the user agreeing to it.
+   */
+  const confirmRemoveMilestone = (value: number) => {
+    confirmDestructive({
+      title: i18n.t('removeMilestone_title', { hours: value }),
+      description: i18n.t('removeMilestone_description'),
+      confirmLabel: i18n.t('remove'),
+      onConfirm: () => removeMilestone(value),
+    })
   }
 
   const handleStep = (value: number, direction: 1 | -1) => {
@@ -207,15 +222,16 @@ const MilestoneAdjustSheet = ({ visible, onClose }: Props) => {
     })
     if (!isFinite(parsed)) return
     const next = validateMilestoneValue(parsed, annualGoalHours)
+    // Typing the value down to nothing is a removal — route it through the
+    // same confirm as the X button instead of silently dropping the rung. The
+    // buffer was already cleared above, so cancelling restores the old value.
+    if (next <= 0) {
+      if (draft.includes(value)) confirmRemoveMilestone(value)
+      return
+    }
     setDraft((current) => {
       const idx = current.indexOf(value)
       if (idx === -1) return current
-      if (next <= 0) {
-        return sanitizeDraft(
-          current.filter((_v, i) => i !== idx),
-          annualGoalHours
-        )
-      }
       const replaced = [...current]
       replaced[idx] = next
       return sanitizeDraft(replaced, annualGoalHours)
@@ -511,7 +527,7 @@ const MilestoneAdjustSheet = ({ visible, onClose }: Props) => {
                           noTransform
                           icon={XIcon}
                           size='sm'
-                          onPress={() => handleRemove(value)}
+                          onPress={() => confirmRemoveMilestone(value)}
                         />
                       </View>
                     </View>

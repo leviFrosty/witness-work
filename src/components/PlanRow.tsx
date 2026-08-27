@@ -1,9 +1,11 @@
 import {
   Calendar1 as Calendar1Icon,
+  Pencil as PencilIcon,
   Repeat as RepeatIcon,
+  Trash2 as Trash2Icon,
 } from 'lucide-react-native'
 import LucideIcon from '@/components/ui/LucideIcon'
-import { Alert, View } from 'react-native'
+import { View } from 'react-native'
 import { Swipeable } from 'react-native-gesture-handler'
 import moment from 'moment'
 import Text from '@/components/ui/MyText'
@@ -13,7 +15,8 @@ import i18n, { TranslationKey } from '@/lib/locales'
 import useTheme from '@/contexts/theme'
 import Haptics from '@/lib/haptics'
 import SwipeableDelete from '@/components/ui/swipeableActions/Delete'
-import SwipeableEdit from '@/components/ui/swipeableActions/Edit'
+import RowActionsMenu from '@/components/RowActionsMenu'
+import confirmDeletePlan from '@/lib/confirmDeletePlan'
 import { DayPlan } from '@/types/timeEntry'
 import { useFormattedMinutes } from '@/lib/minutes'
 import Button from '@/components/ui/Button'
@@ -149,70 +152,46 @@ const PlanRow = (props: {
         : formatWeekdayMonthDayCompact(dateMoment)
       : formatDate(date)
 
-  const handleSwipeOpen = (
-    direction: 'left' | 'right',
-    swipeable: Swipeable
-  ) => {
-    if (direction === 'left') {
-      props.onPress?.()
-      swipeable.reset()
-      return
-    }
+  /**
+   * The one delete flow for this row — the overflow menu and the right-swipe
+   * both land here so the confirmation copy and the recurring-scope choices
+   * stay identical.
+   */
+  const handleRequestDelete = () => {
+    confirmDeletePlan({
+      recurring: isRecurring,
+      onDelete: (scope) => {
+        if (props.item.type === 'day') {
+          deleteDayPlan(props.item.plan.id)
+          return
+        }
 
-    if (props.item.type === 'day') {
-      Alert.alert(
-        i18n.t('deletePlan_title'),
-        i18n.t('deletePlan_description'),
-        [
-          {
-            text: i18n.t('cancel'),
-            style: 'cancel',
-            onPress: () => swipeable.reset(),
-          },
-          {
-            text: i18n.t('delete'),
-            style: 'destructive',
-            onPress: () => {
-              swipeable.reset()
-              deleteDayPlan(props.item.plan.id)
-            },
-          },
-        ]
-      )
-      return
-    }
-
-    Alert.alert(i18n.t('deletePlan_title'), i18n.t('deletePlan_description'), [
-      {
-        text: i18n.t('cancel'),
-        style: 'cancel',
-        onPress: () => swipeable.reset(),
-      },
-      {
-        text: i18n.t('deleteThisPlan'),
-        onPress: () => {
-          swipeable.reset()
+        if (scope === 'instance') {
           deleteSingleEventFromRecurringPlan(
             props.item.plan.id,
             props.item.date
           )
-        },
-      },
-      {
-        text: i18n.t('deleteThisAndFollowingPlans'),
-        onPress: () => {
-          swipeable.reset()
+          return
+        }
+        if (scope === 'future') {
           deleteEventAndFutureEvents(props.item.plan.id, props.item.date)
-        },
+          return
+        }
+        deleteRecurringPlan(props.item.plan.id)
       },
-      {
-        text: i18n.t('deleteAllPlans'),
-        onPress: () => {
-          swipeable.reset()
-          deleteRecurringPlan(props.item.plan.id)
-        },
-      },
-    ])
+    })
+  }
+
+  const handleSwipeOpen = (
+    direction: 'left' | 'right',
+    swipeable: Swipeable
+  ) => {
+    if (direction !== 'right') return
+
+    // Snap the row back before the confirmation lands — the alert owns the
+    // interaction from here, whichever way the user answers it.
+    swipeable.reset()
+    handleRequestDelete()
   }
 
   return (
@@ -222,7 +201,6 @@ const PlanRow = (props: {
         backgroundColor: theme.colors.background,
         borderRadius: cardStyle.borderRadius,
       }}
-      renderLeftActions={() => <SwipeableEdit />}
       renderRightActions={() => <SwipeableDelete />}
       onSwipeableOpen={(direction, swipeable) =>
         handleSwipeOpen(direction, swipeable)
@@ -283,6 +261,26 @@ const PlanRow = (props: {
               >
                 {formattedDuration.formatted}
               </Text>
+              <RowActionsMenu
+                accessibilityLabel={i18n.t('moreActionsFor', {
+                  name: dateLabel,
+                })}
+                actions={[
+                  {
+                    id: 'edit-plan',
+                    label: i18n.t('edit'),
+                    icon: PencilIcon,
+                    onPress: () => props.onPress?.(),
+                  },
+                  {
+                    id: 'delete-plan',
+                    label: i18n.t('delete'),
+                    icon: Trash2Icon,
+                    destructive: true,
+                    onPress: handleRequestDelete,
+                  },
+                ]}
+              />
             </View>
 
             {displayNote && (

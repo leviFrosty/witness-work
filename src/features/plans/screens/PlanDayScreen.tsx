@@ -2,6 +2,7 @@ import {
   Calendar1 as Calendar1Icon,
   CornerDownRight as CornerDownRightIcon,
   Repeat as RepeatIcon,
+  Trash2 as Trash2Icon,
   X as XIcon,
 } from 'lucide-react-native'
 import { Modal, Pressable, TextInput as RNTextInput, View } from 'react-native'
@@ -11,7 +12,7 @@ import useServiceReport from '@/stores/serviceReport'
 import * as Crypto from 'expo-crypto'
 import * as Notifications from 'expo-notifications'
 import * as Sentry from '@sentry/react-native'
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useToastController } from '@tamagui/toast'
 import i18n, { TranslationKey } from '@/lib/locales'
 import Text from '@/components/ui/MyText'
@@ -29,6 +30,8 @@ import Select from '@/components/ui/Select'
 import SelectWheel from '@/components/ui/SelectWheel'
 import { getLocales } from 'expo-localization'
 import Wrapper from '@/components/ui/layout/Wrapper'
+import Header from '@/components/ui/layout/Header'
+import confirmDeletePlan from '@/lib/confirmDeletePlan'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import moment from 'moment'
 import Checkbox from 'expo-checkbox'
@@ -730,11 +733,7 @@ const RecurringSaveScopeModal = (props: {
               onPress={props.onCancel}
               style={{ padding: 8 }}
             >
-              <LucideIcon
-                icon={XIcon}
-                size={22}
-                color={theme.colors.text}
-              />
+              <LucideIcon icon={XIcon} size={22} color={theme.colors.text} />
             </Button>
           </View>
 
@@ -788,6 +787,9 @@ const PlanDayScreen = ({ route, navigation }: PlanDayScreenProps) => {
     updateRecurringPlanOverride,
     removeRecurringPlanOverride,
     getRecurringPlanForDate,
+    deleteDayPlan,
+    deleteRecurringPlan,
+    deleteEventAndFutureEvents,
     deleteSingleEventFromRecurringPlan,
   } = useServiceReport()
 
@@ -1285,6 +1287,89 @@ const PlanDayScreen = ({ route, navigation }: PlanDayScreenProps) => {
 
     savePlan()
   }
+
+  const existingDayPlanId = existingDayPlan?.id
+  const existingRecurringPlanId = existingRecurringPlan?.id
+  // Kept as a timestamp so the header effect below doesn't re-run every render
+  // on a freshly-constructed Date.
+  const recurringInstanceTime = existingRecurringPlan
+    ? editingWriteDate.getTime()
+    : undefined
+
+  const handleRequestDelete = useCallback(() => {
+    confirmDeletePlan({
+      recurring: !!existingRecurringPlanId,
+      onDelete: (scope) => {
+        if (existingDayPlanId) {
+          deleteDayPlan(existingDayPlanId)
+        } else if (
+          existingRecurringPlanId &&
+          recurringInstanceTime !== undefined
+        ) {
+          const instanceDate = new Date(recurringInstanceTime)
+          if (scope === 'instance') {
+            deleteSingleEventFromRecurringPlan(
+              existingRecurringPlanId,
+              instanceDate
+            )
+          } else if (scope === 'future') {
+            deleteEventAndFutureEvents(existingRecurringPlanId, instanceDate)
+          } else {
+            deleteRecurringPlan(existingRecurringPlanId)
+          }
+        } else {
+          return
+        }
+
+        toast.show(i18n.t('success'), {
+          message: i18n.t('deleted'),
+          native: true,
+        })
+        navigation.goBack()
+      },
+    })
+  }, [
+    deleteDayPlan,
+    deleteEventAndFutureEvents,
+    deleteRecurringPlan,
+    deleteSingleEventFromRecurringPlan,
+    existingDayPlanId,
+    existingRecurringPlanId,
+    navigation,
+    recurringInstanceTime,
+    toast,
+  ])
+
+  useEffect(() => {
+    navigation.setOptions({
+      header: () => (
+        <Header
+          buttonType='back'
+          noInsets
+          title={i18n.t(isEditMode ? 'editPlan' : 'createPlan')}
+          rightElement={
+            isEditMode ? (
+              <View
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  gap: 20,
+                  position: 'absolute',
+                  right: 10,
+                }}
+              >
+                <IconButton
+                  icon={Trash2Icon}
+                  color={theme.colors.text}
+                  onPress={handleRequestDelete}
+                />
+              </View>
+            ) : undefined
+          }
+        />
+      ),
+    })
+  }, [handleRequestDelete, isEditMode, navigation, theme.colors.text])
 
   return (
     <Wrapper

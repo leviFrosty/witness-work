@@ -13,6 +13,7 @@ import { useNavigation } from '@react-navigation/native'
 
 import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
+import confirmDestructive from '@/lib/confirmDestructive'
 import useContacts from '@/stores/contactsStore'
 import { builtInContactSortOptions, usePreferences } from '@/stores/preferences'
 import {
@@ -146,7 +147,12 @@ const ContactsSortAndFilterScreen = () => {
     setContactsFilters(contactsFilters.filter((_, i) => i !== index))
   }
   const handleClearAllFilters = () => {
-    setContactsFilters([])
+    confirmDestructive({
+      title: i18n.t('clearAllFilters_title'),
+      description: i18n.t('clearAllFilters_description'),
+      confirmLabel: i18n.t('contacts_filter_clear_all'),
+      onConfirm: () => setContactsFilters([]),
+    })
   }
   const handleSaveFilter = (
     filter: Parameters<typeof setContactsFilters>[0][number],

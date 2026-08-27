@@ -9,6 +9,7 @@ import Button from '@/components/ui/Button'
 import Text from '@/components/ui/MyText'
 import useTheme from '@/contexts/theme'
 import i18n, { TranslationKey } from '@/lib/locales'
+import confirmDestructive from '@/lib/confirmDestructive'
 import useCategories from '@/stores/categories'
 import useServiceReport from '@/stores/serviceReport'
 import { restampTimeEntriesCredit } from '@/lib/categories'
@@ -133,8 +134,16 @@ const TypeSelectorRow = ({ value, onChange, lastInSection }: Props) => {
 
   const handleDeleteCurrentCategory = () => {
     if (!selectedCategory) return
-    deleteCategory(selectedCategory.id)
-    onChange({ value: STANDARD_TYPE_VALUE, category: null })
+    const category = selectedCategory
+    confirmDestructive({
+      title: i18n.t('removeCategory_title', { name: category.name }),
+      description: i18n.t('removeCategory_description'),
+      confirmLabel: i18n.t('removeCategory'),
+      onConfirm: () => {
+        deleteCategory(category.id)
+        onChange({ value: STANDARD_TYPE_VALUE, category: null })
+      },
+    })
   }
 
   type TypeOption = { label: string; value: string }

@@ -2,6 +2,7 @@ import { RotateCw as RotateCwIcon } from 'lucide-react-native'
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
 import Text from '@/components/ui/MyText'
 import i18n from '@/lib/locales'
+import confirmDestructive from '@/lib/confirmDestructive'
 import useTheme from '@/contexts/theme'
 import { Alert, Platform, Switch, View } from 'react-native'
 import TextInput from '@/components/ui/TextInput'
@@ -134,12 +135,13 @@ const shortId = (value: string | null | undefined): string =>
       ? `${value.slice(0, 8)}…${value.slice(-6)}`
       : value
 
-const confirmDestructive = (title: string, onConfirm: () => void) => {
-  Alert.alert(title, 'This cannot be undone.', [
-    { text: i18n.t('cancel'), style: 'cancel' },
-    { text: i18n.t('delete'), style: 'destructive', onPress: onConfirm },
-  ])
-}
+/** Dev-tools destructive actions all share the same warning copy. */
+const confirmDevAction = (title: string, onConfirm: () => void) =>
+  confirmDestructive({
+    title,
+    description: 'This cannot be undone.',
+    onConfirm,
+  })
 
 export default function ToolsScreen() {
   const theme = useTheme()
@@ -709,7 +711,7 @@ export default function ToolsScreen() {
   }
 
   const cancelAllScheduledNotifications = () =>
-    confirmDestructive('Cancel all scheduled notifications', async () => {
+    confirmDevAction('Cancel all scheduled notifications', async () => {
       await Notifications.cancelAllScheduledNotificationsAsync()
       const count = await refreshScheduledNotifications()
       showDone(`Cancelled · queue=${count}`)
@@ -1082,7 +1084,7 @@ export default function ToolsScreen() {
           </ActionButton>
           <ActionButton
             onPress={() =>
-              confirmDestructive('Clear adopted account id', () => {
+              confirmDevAction('Clear adopted account id', () => {
                 clearAdoptedAccountId()
                 showDone('Adopted id cleared — falls back to install id')
               })
@@ -1506,7 +1508,7 @@ export default function ToolsScreen() {
                 </ActionButton>
                 <ActionButton
                   onPress={() =>
-                    confirmDestructive('Reset all celebratedTiers', () => {
+                    confirmDevAction('Reset all celebratedTiers', () => {
                       setPreferences({ celebratedTiers: {} })
                       showDone('All celebratedTiers cleared')
                     })
@@ -1601,7 +1603,7 @@ export default function ToolsScreen() {
                 </ActionButton>
                 <ActionButton
                   onPress={() =>
-                    confirmDestructive('Reset all celebratedMilestones', () => {
+                    confirmDevAction('Reset all celebratedMilestones', () => {
                       setPreferences({ celebratedMilestones: {} })
                       showDone('All celebratedMilestones cleared')
                     })
@@ -1623,7 +1625,7 @@ export default function ToolsScreen() {
         <Card style={{ gap: 5 }}>
           <ActionButton
             onPress={() =>
-              confirmDestructive(i18n.t('forceDeleteContacts'), () => {
+              confirmDevAction(i18n.t('forceDeleteContacts'), () => {
                 _WARNING_forceDeleteContacts()
                 showDone(i18n.t('deleted'))
               })
@@ -1633,7 +1635,7 @@ export default function ToolsScreen() {
           </ActionButton>
           <ActionButton
             onPress={() =>
-              confirmDestructive(i18n.t('deleteReports'), () => {
+              confirmDevAction(i18n.t('deleteReports'), () => {
                 _WARNING_forceDeleteServiceReports()
                 showDone(i18n.t('deleted'))
               })
@@ -1643,7 +1645,7 @@ export default function ToolsScreen() {
           </ActionButton>
           <ActionButton
             onPress={() =>
-              confirmDestructive(i18n.t('deleteDayPlans'), () => {
+              confirmDevAction(i18n.t('deleteDayPlans'), () => {
                 setServiceReports({ dayPlans: [] })
                 showDone(i18n.t('deleted'))
               })
@@ -1653,7 +1655,7 @@ export default function ToolsScreen() {
           </ActionButton>
           <ActionButton
             onPress={() =>
-              confirmDestructive(i18n.t('deleteRecurringPlans'), () => {
+              confirmDevAction(i18n.t('deleteRecurringPlans'), () => {
                 setServiceReports({ recurringPlans: [] })
                 showDone(i18n.t('deleted'))
               })
@@ -1663,7 +1665,7 @@ export default function ToolsScreen() {
           </ActionButton>
           <ActionButton
             onPress={() =>
-              confirmDestructive(i18n.t('clearArchivedContacts'), () => {
+              confirmDevAction(i18n.t('clearArchivedContacts'), () => {
                 _WARNING_clearDeleted()
                 showDone(i18n.t('deleted'))
               })
@@ -1673,7 +1675,7 @@ export default function ToolsScreen() {
           </ActionButton>
           <ActionButton
             onPress={() =>
-              confirmDestructive(i18n.t('deleteAllConversations'), () => {
+              confirmDevAction(i18n.t('deleteAllConversations'), () => {
                 _WARNING_forceDeleteConversations()
                 showDone(i18n.t('deleted'))
               })
@@ -1691,7 +1693,7 @@ export default function ToolsScreen() {
           </ActionButton>
           <ActionButton
             onPress={() =>
-              confirmDestructive('Reset all (fresh install)', () => {
+              confirmDevAction('Reset all (fresh install)', () => {
                 resetLocal()
                 showDone('All data cleared — restart the app')
               })

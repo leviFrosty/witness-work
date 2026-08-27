@@ -893,6 +893,16 @@ const FullMapView = ({
         </View>
       ) : (
         <Carousel
+          // TODO: react-native-reanimated-carousel@4.0.3 is patched
+          // (patches/react-native-reanimated-carousel@4.0.3.patch): unpatched,
+          // scrollTo({ index }) mirrors the target after a backward swipe in
+          // loop mode, centering the wrong contact's card on pin taps.
+          // Upstream fixed this in the v5 rewrite — upgrading to v5 removes
+          // the patch, but changes this component's API (layout replaces
+          // mode/modeConfig; windowSize and scrollAnimationDuration are
+          // dropped). Guarded by mapCarouselScrollToDirection.test.ts, which
+          // goes red if an upgrade drops the patch.
+          //
           // Remount when crossing the 1↔many boundary. `loop` cannot be
           // toggled mid-life on react-native-reanimated-carousel — when a
           // search narrows results to a single match the carousel keeps its

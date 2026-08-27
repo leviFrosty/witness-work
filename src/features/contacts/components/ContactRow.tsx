@@ -241,6 +241,7 @@ const ContactRow = ({
                       ? theme.colors.text
                       : theme.colors.textAlt,
                   }}
+                  fill={isActiveBibleStudy ? theme.colors.text : 'none'}
                   icon={BookOpenIcon}
                 />
               )}

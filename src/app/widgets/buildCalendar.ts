@@ -141,7 +141,9 @@ export function buildCalendar(args: BuildCalendarArgs): WidgetCalendar {
       0
     )
 
-    const dayPlan = args.dayPlans.find((p) => isStoredDateOnLocalDay(p.date, d))
+    const dayPlansForDay = args.dayPlans.filter((p) =>
+      isStoredDateOnLocalDay(p.date, d)
+    )
     const recurringPlansForDay = getPlansIntersectingDay(
       dDate,
       args.recurringPlans
@@ -151,15 +153,20 @@ export function buildCalendar(args: BuildCalendarArgs): WidgetCalendar {
       .map((plan) => getEffectiveMinutesForRecurringPlan(plan, dDate))
       .sort((a, b) => b - a)[0]
 
-    const plannedMinutes =
-      dayPlan?.minutes || highestRecurringEffectiveMinutes || 0
-    const hasPlan = !!dayPlan || recurringPlansForDay.length > 0
+    // Day Plans stack additively and take the day; recurring counts only when
+    // no Day Plan exists.
+    const plannedMinutes = dayPlansForDay.length
+      ? dayPlansForDay.reduce((acc, p) => acc + p.minutes, 0)
+      : highestRecurringEffectiveMinutes || 0
+    const hasPlan = dayPlansForDay.length > 0 || recurringPlansForDay.length > 0
 
     const recurringHasNote = recurringPlansForDay.some(
       (plan) => !!getEffectiveNoteForRecurringPlan(plan, dDate)
     )
     const hasNote =
-      !!dayPlan?.note || reportsForDay.some((r) => !!r.note) || recurringHasNote
+      dayPlansForDay.some((p) => !!p.note) ||
+      reportsForDay.some((r) => !!r.note) ||
+      recurringHasNote
 
     const hitGoal = wentInService && hasPlan && workedMinutes >= plannedMinutes
 

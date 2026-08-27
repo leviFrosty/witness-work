@@ -75,24 +75,42 @@ describe('addDayPlan', () => {
     expectAnchoredCalendarDay(stored.date, '2026-05-15')
   })
 
-  it('replaces an existing day plan when the same calendar day is added again, regardless of time-of-day on the input', () => {
+  it('keeps multiple day plans on the same calendar day — they stack additively', () => {
     const { addDayPlan } = useServiceReport.getState()
     addDayPlan({
-      id: 'd-original',
+      id: 'd-standard',
       date: moment('2026-05-15').toDate(),
       minutes: 60,
     })
-    // Same calendar day, different time-of-day → should override.
+    // Same calendar day, different time-of-day → coexists, does not replace.
     addDayPlan({
-      id: 'd-replacement',
+      id: 'd-ldc',
       date: new Date('2026-05-15T22:30:00.000Z'),
+      minutes: 180,
+    })
+
+    const plans = useServiceReport.getState().dayPlans
+    expect(plans).toHaveLength(2)
+    expect(plans.map((p) => p.minutes).sort((a, b) => a - b)).toEqual([60, 180])
+    plans.forEach((p) => expectAnchoredCalendarDay(p.date, '2026-05-15'))
+  })
+
+  it('ignores a day plan whose id already exists', () => {
+    const { addDayPlan } = useServiceReport.getState()
+    addDayPlan({
+      id: 'd-dupe',
+      date: moment('2026-05-15').toDate(),
+      minutes: 60,
+    })
+    addDayPlan({
+      id: 'd-dupe',
+      date: moment('2026-05-16').toDate(),
       minutes: 90,
     })
 
     const plans = useServiceReport.getState().dayPlans
     expect(plans).toHaveLength(1)
-    expect(plans[0].minutes).toBe(90)
-    expectAnchoredCalendarDay(plans[0].date, '2026-05-15')
+    expect(plans[0].minutes).toBe(60)
   })
 })
 

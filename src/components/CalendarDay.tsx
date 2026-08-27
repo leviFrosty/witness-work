@@ -165,7 +165,7 @@ const PlannedDay = (
   props: Omit<DayProps, 'date'> & {
     date?: DateData | undefined
     serviceReports: TimeEntry[] | undefined
-    dayPlan?: DayPlan
+    dayPlans?: DayPlan[]
     recurringPlans?: RecurringPlan[]
     viewMode?: CalendarViewMode
     height?: number
@@ -195,14 +195,21 @@ const PlannedDay = (
       (a, b) => b.effectiveMinutes - a.effectiveMinutes
     )[0]?.effectiveMinutes
 
-  const plannedMinutes =
-    props.dayPlan?.minutes || highestRecurringPlanEffectiveMinutes || 0
+  // Day Plans take the whole day and stack additively; recurring only counts
+  // when no Day Plan exists, and then only the highest instance.
+  const hasDayPlans = !!props.dayPlans?.length
+  const dayPlanMinutes =
+    props.dayPlans?.reduce((acc, plan) => acc + plan.minutes, 0) ?? 0
+
+  const plannedMinutes = hasDayPlans
+    ? dayPlanMinutes
+    : highestRecurringPlanEffectiveMinutes || 0
   const plannedDurationText = formatMinutesCompact(plannedMinutes)
   const actualDurationText = formatMinutesCompact(minutesForDay)
   const showActual = props.viewMode === 'actual'
 
   const wentInService = !!props.serviceReports?.length
-  const hasAPlan = !!(props.dayPlan || props.recurringPlans?.length)
+  const hasAPlan = hasDayPlans || !!props.recurringPlans?.length
 
   // Check for notes from day plans, service reports, and recurring plans (with overrides)
   const recurringPlanHasNote = props.recurringPlans?.some((plan) => {
@@ -214,21 +221,19 @@ const PlannedDay = (
   })
 
   const hasNote = !!(
-    props.dayPlan?.note ||
+    props.dayPlans?.some((plan) => plan.note) ||
     props.serviceReports?.some((report) => report.note) ||
     recurringPlanHasNote
   )
   const hitDayPlanGoal =
-    wentInService &&
-    props.dayPlan?.minutes &&
-    minutesForDay >= props.dayPlan?.minutes
+    wentInService && dayPlanMinutes && minutesForDay >= dayPlanMinutes
 
   const hitRecurringPlanGoal =
     wentInService &&
     highestRecurringPlanEffectiveMinutes &&
     minutesForDay >= highestRecurringPlanEffectiveMinutes
 
-  const hitGoal = props.dayPlan ? !!hitDayPlanGoal : !!hitRecurringPlanGoal
+  const hitGoal = hasDayPlans ? !!hitDayPlanGoal : !!hitRecurringPlanGoal
   const dateInPast = moment(props.date?.dateString).isSameOrBefore(
     moment(),
     'day'
@@ -370,13 +375,13 @@ const CalendarDay = (
     )
   }, [props.date, props.monthsReports])
 
-  const dayPlan = useMemo(
+  const dayPlansForDay = useMemo(
     () =>
       props.date?.dateString
-        ? dayPlans.find((plan) =>
+        ? dayPlans.filter((plan) =>
             isStoredDateOnLocalDay(plan.date, props.date!.dateString)
           )
-        : undefined,
+        : [],
     [dayPlans, props.date]
   )
 
@@ -403,11 +408,11 @@ const CalendarDay = (
           opacity: props.state === 'disabled' ? 0.4 : isOffDay ? 0.55 : 1,
         }}
       >
-        {(dayPlan ?? !!recurringPlansForDay?.length) ? (
+        {dayPlansForDay.length || recurringPlansForDay?.length ? (
           <PlannedDay
             {...props}
             serviceReports={reportsForDay}
-            dayPlan={dayPlan}
+            dayPlans={dayPlansForDay}
             recurringPlans={recurringPlansForDay}
           />
         ) : (

@@ -174,8 +174,12 @@ const AllDaysList = ({ month, year }: AllDaysListProps) => {
           ? '—'
           : formatMinutes(totalMinutes, timeDisplayFormat).formatted
 
-      const dayPlanForDay = dayPlans.find((dp) =>
+      const dayPlansForDay = dayPlans.filter((dp) =>
         isStoredDateOnLocalDay(dp.date, day)
+      )
+      const dayPlanMinutes = dayPlansForDay.reduce(
+        (acc, dp) => acc + dp.minutes,
+        0
       )
       const recurringPlansForDay = getPlansIntersectingDay(
         dayDate,
@@ -186,8 +190,11 @@ const AllDaysList = ({ month, year }: AllDaysListProps) => {
           Math.max(max, getEffectiveMinutesForRecurringPlan(plan, dayDate)),
         0
       )
-      const goalMinutes =
-        dayPlanForDay?.minutes || highestRecurringPlanMinutes || 0
+      // Day Plans stack additively and take the day; recurring counts only
+      // when no Day Plan exists.
+      const goalMinutes = dayPlansForDay.length
+        ? dayPlanMinutes
+        : highestRecurringPlanMinutes || 0
       const hasPlan = goalMinutes > 0
 
       let planDotColor: string | null = null

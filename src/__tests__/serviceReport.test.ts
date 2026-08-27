@@ -1300,6 +1300,50 @@ describe('lib/serviceReport', () => {
       const result = calculateMonthlyPlannedMinutesOptimized(0, 2024, [], [])
       expect(result).toBe(0)
     })
+
+    it('sums multiple day plans on the same day and excludes recurring plans on that day', () => {
+      // Jan 15, 2024 is a Monday — the weekly plan below also lands on it.
+      const dayPlans = [
+        {
+          id: 'standard',
+          date: moment('2024-01-15').toDate(),
+          minutes: 60,
+        },
+        {
+          id: 'ldc',
+          date: moment('2024-01-15').toDate(),
+          minutes: 180,
+        },
+      ]
+      const recurringPlans: RecurringPlan[] = [
+        {
+          id: 'r1',
+          startDate: moment('2024-01-01').toDate(), // Mondays: 1, 8, 15, 22, 29
+          minutes: 60,
+          recurrence: {
+            frequency: RecurringPlanFrequencies.WEEKLY,
+            interval: 1,
+            endDate: null,
+          },
+        },
+      ]
+
+      // 4 recurring Mondays (the 15th is taken by the day plans) + 60 + 180.
+      const expected = 4 * 60 + 60 + 180
+
+      expect(
+        calculateMonthlyPlannedMinutesOptimized(
+          0,
+          2024,
+          dayPlans,
+          recurringPlans
+        )
+      ).toBe(expected)
+      // Parity with the unoptimized walk.
+      expect(
+        plannedMinutesToCurrentDayForMonth(0, 2024, dayPlans, recurringPlans)
+      ).toBe(expected)
+    })
   })
 
   describe('Override calculations', () => {

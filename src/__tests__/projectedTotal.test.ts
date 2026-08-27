@@ -378,6 +378,43 @@ describe('computeProjectedTotal', () => {
       expect(result.projectedMinutes).toBe(57 * 60)
     })
 
+    it('stacks multiple Day Plans on one day additively, each with its own Type', () => {
+      // Wed 2026-05-20 holds two Day Plans: 1h standard + 3h credit. Together
+      // they take the day (the 3h-credit recurring instance that also lands on
+      // the 20th is excluded), and each contributes under its own Type:
+      // standard 51h + 1h = 52h, credit 3h fits fully under the 55h cap.
+      const result = computeProjectedTotal({
+        scope: { kind: 'month', year: 2026, month: 4 },
+        today: normalizeDateForStorage('2026-05-15'),
+        goalMinutes: 50 * 60,
+        loggedMonths: [logged(2026, 4, 51 * 60)],
+        dayPlans: [
+          {
+            ...dayPlan('2026-05-20', 1 * 60, STANDARD_CATEGORY.id),
+            id: 'dp-standard',
+          },
+          {
+            ...dayPlan('2026-05-20', 3 * 60, CREDIT_CATEGORY.id),
+            id: 'dp-credit',
+          },
+        ],
+        recurringPlans: [
+          weeklyRecurring(
+            'rec-credit',
+            '2026-05-20',
+            3 * 60,
+            '2026-05-20',
+            CREDIT_CATEGORY.id
+          ),
+        ],
+        categories,
+        creditCapMinutes: 55 * 60,
+      })
+
+      expect(result.plannedMinutes).toBe(4 * 60)
+      expect(result.projectedMinutes).toBe(55 * 60)
+    })
+
     it('breaks recurring minute-ties deterministically — credit beats standard regardless of array order', () => {
       // Two recurring instances tie at 2h on Wed 2026-05-20. The conservative
       // forecast (credit, which the cap can squeeze) must win on BOTH array

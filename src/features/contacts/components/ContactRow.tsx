@@ -9,7 +9,7 @@ import {
   Tag as TagIcon,
 } from 'lucide-react-native'
 import LucideIcon, { type AppIcon } from '@/components/ui/LucideIcon'
-import { View, Alert } from 'react-native'
+import { View } from 'react-native'
 import Text from '@/components/ui/MyText'
 import useTheme from '@/contexts/theme'
 import Card from '@/components/ui/Card'
@@ -38,6 +38,7 @@ import {
 } from '@/features/contacts/lib/contactsSearch'
 import HighlightedText from '@/features/contacts/components/HighlightedText'
 import GenderIcon from '@/features/contacts/components/GenderIcon'
+import confirmDestructive from '@/lib/confirmDestructive'
 
 const SNIPPET_CONTEXT_CHARS = 24
 
@@ -103,42 +104,43 @@ const ContactRow = ({
     [contact.id, index]
   )
 
+  const handleDismiss = () => {
+    setDismissSheetOpen(true)
+  }
+
+  const handleArchive = () => {
+    confirmDestructive({
+      title: i18n.t('archiveContact_question'),
+      description: i18n.t('archiveContact_description'),
+      confirmLabel: i18n.t('archive'),
+      onConfirm: () => {
+        toast.show(i18n.t('success'), {
+          message: i18n.t('archived'),
+          native: true,
+        })
+        deleteContact(contact.id)
+      },
+    })
+  }
+
+  // Reset the row before confirming: the confirm Alert can be cancelled, and a
+  // half-open row behind a dismissed Alert reads as stuck.
   const handleSwipeOpen = (
     direction: 'left' | 'right',
     swipeable: Swipeable
   ) => {
+    swipeable.reset()
     if (direction === 'left') {
-      // Dismiss action
-      setDismissSheetOpen(true)
-      swipeable.reset()
-    } else if (direction === 'right') {
-      // Archive action
-      Alert.alert(
-        i18n.t('archiveContact_question'),
-        i18n.t('archiveContact_description'),
-        [
-          {
-            text: i18n.t('cancel'),
-            style: 'cancel',
-            onPress: () => swipeable.reset(),
-          },
-          {
-            text: i18n.t('delete'),
-            style: 'destructive',
-            onPress: () => {
-              swipeable.reset()
-              toast.show(i18n.t('success'), {
-                message: i18n.t('archived'),
-                native: true,
-              })
-              deleteContact(contact.id)
-            },
-          },
-        ]
-      )
+      handleDismiss()
+    } else {
+      handleArchive()
     }
   }
 
+  // NOTE: the `Swipeable` is nested *inside* the tap `Button` rather than
+  // wrapping it, so the row's press target and its gesture target are inverted
+  // from the usual arrangement. Left as-is — untangling it changes the row's
+  // layout/press behaviour and belongs in its own change.
   return (
     <Button onPress={onPress}>
       <Card

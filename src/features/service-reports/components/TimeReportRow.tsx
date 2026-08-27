@@ -1,6 +1,8 @@
 import {
   ArrowLeftRight as ArrowLeftRightIcon,
   Construction as ConstructionIcon,
+  Pencil as PencilIcon,
+  Trash2 as Trash2Icon,
 } from 'lucide-react-native'
 import { Swipeable } from 'react-native-gesture-handler'
 import useTheme from '@/contexts/theme'
@@ -14,6 +16,8 @@ import Text from '@/components/ui/MyText'
 import { formatDate } from '@/lib/dates'
 import { momentStoredDate } from '@/lib/normalizeDate'
 import IconButton from '@/components/ui/IconButton'
+import RowActionsMenu, { RowAction } from '@/components/RowActionsMenu'
+import confirmDestructive from '@/lib/confirmDestructive'
 import { useCallback } from 'react'
 import Button from '@/components/ui/Button'
 import { useNavigation } from '@react-navigation/native'
@@ -45,46 +49,79 @@ const TimeReportRow = ({ report, onPress }: TimeReportRowProps) => {
   const isRollover = report.rollover === true
   const sign = totalMinutes < 0 ? '−' : '+'
 
+  /**
+   * The one delete flow for this row — the overflow menu and the right-swipe
+   * both land here, so the rollover-pair warning can't be reachable from only
+   * one of them.
+   */
+  const handleRequestDelete = useCallback(() => {
+    const isRolloverPair =
+      report.rollover === true && report.rolloverGroupId !== undefined
+
+    confirmDestructive({
+      title: isRolloverPair
+        ? i18n.t('timeRollover_deletePair_title')
+        : i18n.t('deleteTime_title'),
+      description: isRolloverPair
+        ? i18n.t('timeRollover_deletePair_description')
+        : i18n.t('deleteTime_description'),
+      onConfirm: () => {
+        if (isRolloverPair) {
+          deleteRolloverPair(report)
+        } else {
+          deleteServiceReport(report)
+        }
+        toast.show(i18n.t('success'), {
+          message: i18n.t('deleted'),
+          native: true,
+        })
+      },
+    })
+  }, [deleteRolloverPair, deleteServiceReport, report, toast])
+
   const handleSwipeOpen = useCallback(
-    (direction: 'left' | 'right', swipeable: Swipeable, report: TimeEntry) => {
-      if (direction === 'right') {
-        const isRolloverPair =
-          report.rollover === true && report.rolloverGroupId !== undefined
-        Alert.alert(
-          isRolloverPair
-            ? i18n.t('timeRollover_deletePair_title')
-            : i18n.t('deleteTime_title'),
-          isRolloverPair
-            ? i18n.t('timeRollover_deletePair_description')
-            : i18n.t('deleteTime_description'),
-          [
-            {
-              text: i18n.t('cancel'),
-              style: 'cancel',
-              onPress: () => swipeable.reset(),
-            },
-            {
-              text: i18n.t('delete'),
-              style: 'destructive',
-              onPress: () => {
-                swipeable.reset()
-                toast.show(i18n.t('success'), {
-                  message: i18n.t('deleted'),
-                  native: true,
-                })
-                if (isRolloverPair) {
-                  deleteRolloverPair(report)
-                } else {
-                  deleteServiceReport(report)
-                }
-              },
-            },
-          ]
-        )
-      }
+    (direction: 'left' | 'right', swipeable: Swipeable) => {
+      if (direction !== 'right') return
+
+      // Snap the row back before the confirmation lands — the alert owns the
+      // interaction from here, whichever way the user answers it.
+      swipeable.reset()
+      handleRequestDelete()
     },
-    [deleteRolloverPair, deleteServiceReport, toast]
+    [handleRequestDelete]
   )
+
+  const handleEdit = useCallback(() => {
+    if (onPress) {
+      onPress()
+      return
+    }
+    navigation.navigate('Add Time', {
+      existingReport: JSON.stringify(report),
+    })
+  }, [navigation, onPress, report])
+
+  const actions: RowAction[] = [
+    // Rollover entries are paired and must never be edited — see the press
+    // handler below.
+    ...(isRollover
+      ? []
+      : [
+          {
+            id: 'edit-time',
+            label: i18n.t('edit'),
+            icon: PencilIcon,
+            onPress: handleEdit,
+          },
+        ]),
+    {
+      id: 'delete-time',
+      label: i18n.t('delete'),
+      icon: Trash2Icon,
+      destructive: true,
+      onPress: handleRequestDelete,
+    },
+  ]
 
   return (
     <Swipeable
@@ -98,7 +135,7 @@ const TimeReportRow = ({ report, onPress }: TimeReportRowProps) => {
         <SwipeableDelete size='xs' style={{ flexDirection: 'row' }} />
       )}
       onSwipeableOpen={(direction, swipeable) =>
-        handleSwipeOpen(direction, swipeable, report)
+        handleSwipeOpen(direction, swipeable)
       }
     >
       <Button
@@ -115,13 +152,7 @@ const TimeReportRow = ({ report, onPress }: TimeReportRowProps) => {
             )
             return
           }
-          if (onPress) {
-            onPress()
-            return
-          }
-          navigation.navigate('Add Time', {
-            existingReport: JSON.stringify(report),
-          })
+          handleEdit()
         }}
         style={
           isRollover
@@ -183,6 +214,12 @@ const TimeReportRow = ({ report, onPress }: TimeReportRowProps) => {
               ? `${sign} ${formattedTime.formatted}`
               : formattedTime.formatted}
           </Text>
+          <RowActionsMenu
+            accessibilityLabel={i18n.t('moreActionsFor', {
+              name: formatDate(momentStoredDate(report.date)),
+            })}
+            actions={actions}
+          />
         </View>
         {isRollover && (
           <View

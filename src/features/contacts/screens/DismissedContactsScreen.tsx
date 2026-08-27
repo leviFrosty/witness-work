@@ -1,6 +1,6 @@
 import { Undo2 as Undo2Icon } from 'lucide-react-native'
 import React, { useMemo } from 'react'
-import { View, Alert } from 'react-native'
+import { View } from 'react-native'
 import { NativeStackScreenProps } from '@react-navigation/native-stack'
 import Wrapper from '@/components/ui/layout/Wrapper'
 import Text from '@/components/ui/MyText'
@@ -26,37 +26,24 @@ const DismissedContactRow = ({ contact }: { contact: Contact }) => {
   const { undismissContact } = useContacts()
   const toast = useToastController()
 
-  const handleUndismiss = () => {
-    Alert.alert(
-      i18n.t('undismissContact', { name: contact.name }),
-      i18n.t('undismissContactDescription'),
-      [
-        {
-          text: i18n.t('cancel'),
-          style: 'cancel',
-        },
-        {
-          text: i18n.t('undismiss'),
-          onPress: async () => {
-            // Cancel scheduled notification if it exists
-            if (contact.dismissedNotificationId) {
-              try {
-                await Notifications.cancelScheduledNotificationAsync(
-                  contact.dismissedNotificationId
-                )
-              } catch (error) {
-                Sentry.captureException(error)
-              }
-            }
+  // Undismissing only puts the contact back in the list — nothing is lost, so
+  // it runs immediately rather than behind a confirmation.
+  const handleUndismiss = async () => {
+    // Cancel scheduled notification if it exists
+    if (contact.dismissedNotificationId) {
+      try {
+        await Notifications.cancelScheduledNotificationAsync(
+          contact.dismissedNotificationId
+        )
+      } catch (error) {
+        Sentry.captureException(error)
+      }
+    }
 
-            undismissContact(contact.id)
-            toast.show(i18n.t('contactUndismissed', { name: contact.name }), {
-              native: true,
-            })
-          },
-        },
-      ]
-    )
+    undismissContact(contact.id)
+    toast.show(i18n.t('contactUndismissed', { name: contact.name }), {
+      native: true,
+    })
   }
 
   return (

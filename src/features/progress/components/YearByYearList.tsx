@@ -1,11 +1,7 @@
-import {
-  Ellipsis as EllipsisIcon,
-  Plus as PlusIcon,
-  Trash2 as Trash2Icon,
-} from 'lucide-react-native'
+import { Plus as PlusIcon, Trash2 as Trash2Icon } from 'lucide-react-native'
 import LucideIcon from '@/components/ui/LucideIcon'
 import { useMemo, useState } from 'react'
-import { Alert, Pressable, View } from 'react-native'
+import { Pressable, View } from 'react-native'
 
 import * as Crypto from 'expo-crypto'
 import moment from 'moment'
@@ -28,7 +24,8 @@ import { formatMinutes } from '@/lib/minutes'
 import { usePreferences } from '@/stores/preferences'
 
 import Text from '@/components/ui/MyText'
-import AnchoredPopover from '@/components/ui/AnchoredPopover'
+import RowActionsMenu from '@/components/RowActionsMenu'
+import confirmDestructive from '@/lib/confirmDestructive'
 import AddEarlierYearSheet from '@/features/progress/components/AddEarlierYearSheet'
 
 const EARLIER_YEAR_FLOOR_YEARS_BACK = 100
@@ -92,24 +89,17 @@ const YearByYearList = ({ onYearPress }: YearByYearListProps) => {
   const [sheetOpen, setSheetOpen] = useState(false)
 
   const confirmDeleteYear = (endYear: number, label: string) => {
-    Alert.alert(
-      i18n.t('deleteYearTime_title', { year: label }),
-      i18n.t('deleteYearTime_description', { year: label }),
-      [
-        { text: i18n.t('cancel'), style: 'cancel' },
-        {
-          text: i18n.t('delete'),
-          style: 'destructive',
-          onPress: () => {
-            deleteServiceYearReports(endYear)
-            toast.show(i18n.t('success'), {
-              message: i18n.t('deleted'),
-              native: true,
-            })
-          },
-        },
-      ]
-    )
+    confirmDestructive({
+      title: i18n.t('deleteYearTime_title', { year: label }),
+      description: i18n.t('deleteYearTime_description', { year: label }),
+      onConfirm: () => {
+        deleteServiceYearReports(endYear)
+        toast.show(i18n.t('success'), {
+          message: i18n.t('deleted'),
+          native: true,
+        })
+      },
+    })
   }
 
   const availableEndYears = useMemo(() => {
@@ -237,66 +227,20 @@ const YearByYearList = ({ onYearPress }: YearByYearListProps) => {
                 </Text>
 
                 {reportCount > 0 && (
-                  <AnchoredPopover
-                    contentWidth={220}
-                    contentStyle={{ padding: 4 }}
-                    renderTrigger={({ onPress, anchorRef }) => (
-                      <View ref={anchorRef} collapsable={false}>
-                        <Pressable
-                          accessibilityRole='button'
-                          accessibilityLabel={i18n.t('yearRow_moreActions', {
-                            year: label,
-                          })}
-                          onPress={onPress}
-                          hitSlop={10}
-                          style={({ pressed }) => ({
-                            opacity: pressed ? 0.7 : 1,
-                            paddingLeft: 2,
-                          })}
-                        >
-                          <LucideIcon
-                            icon={EllipsisIcon}
-                            color={theme.colors.textAlt}
-                            size={16}
-                          />
-                        </Pressable>
-                      </View>
-                    )}
-                  >
-                    {({ close }) => (
-                      <Pressable
-                        accessibilityRole='button'
-                        onPress={() => {
-                          close()
-                          confirmDeleteYear(endYear, label)
-                        }}
-                        style={({ pressed }) => ({
-                          opacity: pressed ? 0.7 : 1,
-                          flexDirection: 'row',
-                          alignItems: 'center',
-                          gap: 10,
-                          paddingVertical: 10,
-                          paddingHorizontal: 10,
-                          borderRadius: theme.numbers.borderRadiusSm,
-                        })}
-                      >
-                        <LucideIcon
-                          icon={Trash2Icon}
-                          color={theme.colors.error}
-                          size={14}
-                        />
-                        <Text
-                          style={{
-                            fontFamily: theme.fonts.semiBold,
-                            color: theme.colors.error,
-                            fontSize: theme.fontSize('sm'),
-                          }}
-                        >
-                          {i18n.t('deleteYearTime')}
-                        </Text>
-                      </Pressable>
-                    )}
-                  </AnchoredPopover>
+                  <RowActionsMenu
+                    accessibilityLabel={i18n.t('yearRow_moreActions', {
+                      year: label,
+                    })}
+                    actions={[
+                      {
+                        id: 'delete-year',
+                        label: i18n.t('deleteYearTime'),
+                        icon: Trash2Icon,
+                        destructive: true,
+                        onPress: () => confirmDeleteYear(endYear, label),
+                      },
+                    ]}
+                  />
                 )}
               </Pressable>
             )

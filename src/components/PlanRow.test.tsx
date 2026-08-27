@@ -11,7 +11,9 @@ const categoriesState = vi.hoisted(() => ({
 
 vi.mock('lucide-react-native', () => ({
   Calendar1: 'Calendar1',
+  Pencil: 'Pencil',
   Repeat: 'Repeat',
+  Trash2: 'Trash2',
 }))
 
 vi.mock('react-native', async () => {
@@ -65,7 +67,7 @@ vi.mock('@/components/ui/Badge', async () => {
 vi.mock('@/components/ui/swipeableActions/Delete', () => ({
   default: () => null,
 }))
-vi.mock('@/components/ui/swipeableActions/Edit', () => ({
+vi.mock('@/components/RowActionsMenu', () => ({
   default: () => null,
 }))
 

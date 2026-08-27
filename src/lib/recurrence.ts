@@ -21,7 +21,8 @@ export type { MonthlyByWeekdayConfig, RecurringPlan, RecurringPlanOverride }
 
 // ---------------------------------------------------------------------------
 // Recurrence: expanding a Recurring Plan into the dated instances it produces,
-// resolving per-day overrides, and reducing a day's plans to a single winner.
+// resolving per-day overrides, and reducing a day's plans to its contributions
+// (additive Day Plans, else one recurring winner).
 //
 // This module is the one true home for "does this Recurring Plan fall on this
 // day, and what are its effective minutes/note/start-time there?" — previously
@@ -198,47 +199,51 @@ export const getEffectiveStartTimeInMinutesForRecurringPlan = (
 }
 
 /**
- * The single winning planned contribution for one calendar day.
+ * The planned contributions for one calendar day.
  *
  * Resolution rule (the one true reduction, previously re-derived per consumer):
- * a Day Plan present for the day wins the whole day outright; otherwise the
- * recurring instance with the highest effective minutes wins. Recurring ties on
- * minutes break deterministically — credit beats standard (the conservative
- * forecast), then lowest id — so two devices holding the same plans in
- * different array orders after an iCloud merge resolve the same winner.
+ * Day Plans present for the day take the whole day outright and are _additive_
+ * with each other — every Day Plan on the date contributes its own minutes and
+ * its own credit-ness. Otherwise the recurring instance with the highest
+ * effective minutes wins alone. Recurring ties on minutes break
+ * deterministically — credit beats standard (the conservative forecast), then
+ * lowest id — so two devices holding the same plans in different array orders
+ * after an iCloud merge resolve the same winner.
  *
  * `isCredit` is only meaningful when the caller supplies the credit predicates;
  * callers that don't care about credit (the UI's minutes-only reductions) can
  * omit them and read `minutes` alone.
  */
-export type DayPlanWinner = {
+export type PlannedDayContribution = {
   source: 'day' | 'recurring'
   plan: DayPlan | RecurringPlan
   minutes: number
   isCredit: boolean
 }
 
-export const resolveDayPlanWinner = (
+export const resolvePlannedContributionsForDay = (
   day: Date,
-  dayPlan: DayPlan | undefined,
+  /** The Day Plans that fall on `day` — caller pre-filters by date. */
+  dayPlansForDay: DayPlan[],
   recurringPlans: RecurringPlan[],
   opts?: {
-    /** Credit-ness of the Day Plan, when one is present. Default false. */
-    dayPlanIsCredit?: boolean
+    /** Per-plan credit-ness for Day Plans. Default () => false. */
+    dayPlanIsCredit?: (plan: DayPlan) => boolean
     /** Per-plan credit-ness for recurring instances. Default () => false. */
     recurringIsCredit?: (plan: RecurringPlan) => boolean
   }
-): DayPlanWinner | null => {
-  // A Day Plan takes the whole day — even at zero minutes — matching the
-  // projection's and `plannedMinutesToCurrentDayForMonth`'s `if (dayPlan)`
-  // precedence. Callers gate on `minutes > 0` themselves where needed.
-  if (dayPlan) {
-    return {
-      source: 'day',
-      plan: dayPlan,
-      minutes: dayPlan.minutes,
-      isCredit: opts?.dayPlanIsCredit ?? false,
-    }
+): PlannedDayContribution[] => {
+  // Day Plans take the whole day — even at zero minutes — matching the
+  // projection's and `plannedMinutesToCurrentDayForMonth`'s precedence, and
+  // stack additively with each other. Callers gate on `minutes > 0`
+  // themselves where needed.
+  if (dayPlansForDay.length > 0) {
+    return dayPlansForDay.map((plan) => ({
+      source: 'day' as const,
+      plan,
+      minutes: plan.minutes,
+      isCredit: opts?.dayPlanIsCredit?.(plan) ?? false,
+    }))
   }
 
   const recurringForDay = getPlansIntersectingDay(day, recurringPlans)
@@ -261,9 +266,23 @@ export const resolveDayPlanWinner = (
     }
   }
 
-  if (!winner) return null
-  return { source: 'recurring', plan: winner, minutes, isCredit }
+  if (!winner) return []
+  return [{ source: 'recurring', plan: winner, minutes, isCredit }]
 }
+
+/**
+ * The day's total planned minutes under the resolution rule above: the sum of
+ * all Day Plan minutes when any exist, else the highest recurring instance.
+ */
+export const plannedMinutesForDay = (
+  day: Date,
+  dayPlansForDay: DayPlan[],
+  recurringPlans: RecurringPlan[]
+): number =>
+  resolvePlannedContributionsForDay(day, dayPlansForDay, recurringPlans).reduce(
+    (acc, c) => acc + c.minutes,
+    0
+  )
 
 export const plannedMinutesThroughDayForMonth = (
   month: number,
@@ -286,17 +305,14 @@ export const plannedMinutesThroughDayForMonth = (
       const day = selectedMonth.clone().date(i + 1)
       const dayDate = day.toDate()
 
-      const dayPlan = dayPlans.find((plan) =>
+      const dayPlansForDay = dayPlans.filter((plan) =>
         momentStoredDate(plan.date).isSame(
           momentStoredDate(normalizeDateForStorage(dayDate)),
           'day'
         )
       )
 
-      const winner = resolveDayPlanWinner(dayDate, dayPlan, recurringPlans)
-      if (winner) {
-        count += winner.minutes
-      }
+      count += plannedMinutesForDay(dayDate, dayPlansForDay, recurringPlans)
     })
 
   return count
@@ -397,10 +413,15 @@ export const calculateMonthlyPlannedMinutesOptimized = (
     `[calculateMonthlyOptimized] Calculating for ${selectedMonth.format('MMMM YYYY')} with ${dayPlans.length} day plans and ${recurringPlans.length} recurring plans`
   )
 
-  // Create day plan lookup map for O(1) access
-  const dayPlanMap = new Map(
-    dayPlans.map((p) => [momentStoredDate(p.date).format('YYYY-MM-DD'), p])
-  )
+  // Create day plan lookup map for O(1) access — plural per date, since
+  // multiple Day Plans on the same day stack additively.
+  const dayPlanMap = new Map<string, DayPlan[]>()
+  dayPlans.forEach((p) => {
+    const key = momentStoredDate(p.date).format('YYYY-MM-DD')
+    const existing = dayPlanMap.get(key)
+    if (existing) existing.push(p)
+    else dayPlanMap.set(key, [p])
+  })
   logger.log(
     `[calculateMonthlyOptimized] Created day plan map with ${dayPlanMap.size} entries`
   )
@@ -420,10 +441,10 @@ export const calculateMonthlyPlannedMinutesOptimized = (
     const day = selectedMonth.clone().date(i + 1)
     const dayKey = day.format('YYYY-MM-DD')
 
-    const dayPlan = dayPlanMap.get(dayKey)
+    const dayPlansForDay = dayPlanMap.get(dayKey)
 
-    if (dayPlan) {
-      count += dayPlan.minutes
+    if (dayPlansForDay?.length) {
+      count += dayPlansForDay.reduce((acc, p) => acc + p.minutes, 0)
     } else {
       // Get pre-computed recurring plans for this day
       const recurringPlansForDay = recurringPlanCache.get(dayKey) || []

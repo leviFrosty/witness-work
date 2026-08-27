@@ -125,9 +125,13 @@ const DayHistoryView: React.FC<DayHistoryViewProps> = ({
   }, [date, dayPlansForToday, recurringPlansForToday])
 
   const goalMinutes = useMemo(() => {
-    const dayPlan = dayPlans.find((dp) => isStoredDateOnLocalDay(dp.date, date))
+    // Day Plans take the whole day and stack additively; otherwise the highest
+    // recurring plan for the day counts, at effective minutes (with overrides).
+    const dayPlanMinutes = dayPlansForToday.reduce(
+      (acc, plan) => acc + plan.minutes,
+      0
+    )
 
-    // Get the highest recurring plan for the day, but use effective minutes (with overrides)
     const highestRecurringPlanForDay = recurringPlansForToday
       .map((plan) => ({
         plan,
@@ -135,12 +139,12 @@ const DayHistoryView: React.FC<DayHistoryViewProps> = ({
       }))
       .sort((a, b) => b.effectiveMinutes - a.effectiveMinutes)[0]
 
-    if (!dayPlan?.minutes && !highestRecurringPlanForDay?.effectiveMinutes) {
+    if (!dayPlanMinutes && !highestRecurringPlanForDay?.effectiveMinutes) {
       return undefined
     }
 
-    return dayPlan?.minutes || highestRecurringPlanForDay.effectiveMinutes
-  }, [dayPlans, recurringPlansForToday, date])
+    return dayPlanMinutes || highestRecurringPlanForDay.effectiveMinutes
+  }, [dayPlansForToday, recurringPlansForToday, date])
 
   const actualDisplay = useFormattedMinutes(actualMinutes)
   const goalDisplay = useFormattedMinutes(goalMinutes ?? 0)

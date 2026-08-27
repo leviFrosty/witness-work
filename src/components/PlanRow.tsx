@@ -8,7 +8,8 @@ import { Swipeable } from 'react-native-gesture-handler'
 import moment from 'moment'
 import Text from '@/components/ui/MyText'
 import useServiceReport from '@/stores/serviceReport'
-import i18n from '@/lib/locales'
+import useCategories from '@/stores/categories'
+import i18n, { TranslationKey } from '@/lib/locales'
 import useTheme from '@/contexts/theme'
 import Haptics from '@/lib/haptics'
 import SwipeableDelete from '@/components/ui/swipeableActions/Delete'
@@ -99,6 +100,7 @@ const PlanRow = (props: {
     deleteSingleEventFromRecurringPlan,
     deleteEventAndFutureEvents,
   } = useServiceReport()
+  const categories = useCategories((state) => state.categories)
 
   const isRecurring = props.item.type === 'recurring'
   const plan = props.item.plan
@@ -114,6 +116,15 @@ const PlanRow = (props: {
   const displayStartTimeInMinutes = recurringPlan
     ? getEffectiveStartTimeInMinutesForRecurringPlan(recurringPlan, date)
     : dayPlan?.startTimeInMinutes
+  const category = plan.categoryId
+    ? categories.find((candidate) => candidate.id === plan.categoryId)
+    : undefined
+  const categoryLabel = category
+    ? i18n.t(category.name as TranslationKey, {
+        defaultValue: category.name,
+      })
+    : i18n.t('standard')
+  const typeLabel = `${i18n.t('type')}: ${categoryLabel}`
   const formattedDuration = useFormattedMinutes(displayMinutes)
   const dateMoment = moment(date)
   const isToday = dateMoment.isSame(moment(), 'day')
@@ -270,11 +281,10 @@ const PlanRow = (props: {
               </Copyeable>
             )}
 
-            {isToday && (
-              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
-                <Badge size='xs'>{i18n.t('today')}</Badge>
-              </View>
-            )}
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
+              <Badge size='xs'>{typeLabel}</Badge>
+              {isToday && <Badge size='xs'>{i18n.t('today')}</Badge>}
+            </View>
           </View>
         </View>
       </Button>

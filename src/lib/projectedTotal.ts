@@ -9,7 +9,7 @@ import {
   applyMonthCreditCap,
   type MonthlyLoggedBreakdown,
 } from '@/lib/serviceReport'
-import { resolveDayPlanWinner } from '@/lib/recurrence'
+import { resolvePlannedContributionsForDay } from '@/lib/recurrence'
 import { periodBounds } from '@/lib/serviceYear'
 import { isPlanCreditTime } from '@/lib/serviceReportCategory'
 
@@ -130,9 +130,9 @@ type PlannedMonthBuckets = { standard: number; credit: number }
 
 /**
  * Sums future planned minutes per month, split into standard/credit by each
- * plan's Category (derived at read time — `isPlanCreditTime`). One winner per
- * day: a Day Plan takes the whole day; otherwise the highest-minutes recurring
- * instance counts. The winner's Type tags the day's whole contribution.
+ * plan's Category (derived at read time — `isPlanCreditTime`). Day Plans take
+ * the whole day and stack additively, each tagging its own minutes with its own
+ * Type; otherwise the single highest-minutes recurring instance counts.
  * Recurring ties on minutes break deterministically — credit beats standard
  * (the conservative forecast: the projection never overpromises), then lowest
  * id — so two devices holding the same plans in different array orders after an
@@ -155,9 +155,13 @@ const futurePlannedMinutesByMonth = (
   const todayDay = momentStoredDate(normalizeDateForStorage(today))
   const cursor = (todayDay.isAfter(start, 'day') ? todayDay : start).clone()
 
-  const dayPlanByKey = new Map(
-    dayPlans.map((p) => [momentStoredDate(p.date).format('YYYY-MM-DD'), p])
-  )
+  const dayPlansByKey = new Map<string, DayPlan[]>()
+  dayPlans.forEach((p) => {
+    const key = momentStoredDate(p.date).format('YYYY-MM-DD')
+    const existing = dayPlansByKey.get(key)
+    if (existing) existing.push(p)
+    else dayPlansByKey.set(key, [p])
+  })
   // Credit-ness is per-plan, not per-instance — resolve each recurring plan
   // once instead of per day of the walk.
   const recurringIsCredit = new Map(
@@ -174,23 +178,28 @@ const futurePlannedMinutesByMonth = (
       continue
     }
     const dayDate = localDayFromUtcCursor(cursor)
-    const dp = dayPlanByKey.get(key)
-    // One winner per day, resolved by the shared recurrence primitive: a Day
-    // Plan takes the whole day; otherwise the highest effective-minutes
-    // recurring instance, ties broken credit-first then lowest id. Credit-ness
-    // tags the day's whole contribution.
-    const winner = resolveDayPlanWinner(dayDate, dp, recurringPlans, {
-      dayPlanIsCredit: dp ? isPlanCreditTime(dp, categories) : false,
-      recurringIsCredit: (plan) => recurringIsCredit.get(plan.id) ?? false,
-    })
-    if (winner && winner.minutes > 0) {
+    // Resolved by the shared recurrence primitive: Day Plans take the whole
+    // day and stack additively, each with its own credit-ness; otherwise the
+    // highest effective-minutes recurring instance, ties broken credit-first
+    // then lowest id.
+    const contributions = resolvePlannedContributionsForDay(
+      dayDate,
+      dayPlansByKey.get(key) ?? [],
+      recurringPlans,
+      {
+        dayPlanIsCredit: (plan) => isPlanCreditTime(plan, categories),
+        recurringIsCredit: (plan) => recurringIsCredit.get(plan.id) ?? false,
+      }
+    )
+    for (const contribution of contributions) {
+      if (contribution.minutes <= 0) continue
       const bucketKey = monthKey(cursor.year(), cursor.month())
       const bucket = plannedByMonth.get(bucketKey) ?? {
         standard: 0,
         credit: 0,
       }
-      if (winner.isCredit) bucket.credit += winner.minutes
-      else bucket.standard += winner.minutes
+      if (contribution.isCredit) bucket.credit += contribution.minutes
+      else bucket.standard += contribution.minutes
       plannedByMonth.set(bucketKey, bucket)
     }
     cursor.add(1, 'day')

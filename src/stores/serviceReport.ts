@@ -159,31 +159,9 @@ export const useServiceReport = create(
             ...dayPlan,
             date: normalizeDateForStorage(dayPlan.date),
           }
+          // Multiple Day Plans may coexist on the same calendar day — they
+          // stack additively. Only an identical id is rejected as a duplicate.
           const foundDayPlan = dayPlans.find((c) => c.id === normalized.id)
-          const foundDayPlanDate = dayPlans.find((c) =>
-            momentStoredDate(c.date).isSame(
-              momentStoredDate(normalized.date),
-              'day'
-            )
-          )
-
-          // Overrides existing day if already added.
-          if (foundDayPlanDate) {
-            return {
-              dayPlans: dayPlans.map((c) => {
-                if (
-                  !momentStoredDate(c.date).isSame(
-                    momentStoredDate(normalized.date),
-                    'day'
-                  )
-                ) {
-                  return c
-                }
-                return { ...c, ...normalized, updatedAt: Date.now() }
-              }),
-            }
-          }
-
           if (foundDayPlan) {
             return {}
           }

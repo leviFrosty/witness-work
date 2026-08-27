@@ -33,18 +33,16 @@ const MonthPlansList = ({ month, year }: MonthPlansListProps) => {
     for (let day = 1; day <= daysInMonth; day++) {
       const currentDate = selectedMonth.clone().date(day)
 
-      // Check for day plans
-      const dayPlan = dayPlans.find((plan) =>
-        isStoredDateOnLocalDay(plan.date, currentDate)
-      )
-
-      if (dayPlan) {
-        planItems.push({
-          type: 'day',
-          date: currentDate.toDate(),
-          plan: dayPlan,
+      // Check for day plans — a date can hold several, each its own row
+      dayPlans
+        .filter((plan) => isStoredDateOnLocalDay(plan.date, currentDate))
+        .forEach((plan) => {
+          planItems.push({
+            type: 'day',
+            date: currentDate.toDate(),
+            plan,
+          })
         })
-      }
 
       // Check for recurring plans
       const recurringPlansForDay = getPlansIntersectingDay(

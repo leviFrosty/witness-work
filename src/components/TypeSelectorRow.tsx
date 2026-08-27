@@ -11,7 +11,6 @@ import useTheme from '@/contexts/theme'
 import i18n, { TranslationKey } from '@/lib/locales'
 import useCategories from '@/stores/categories'
 import useServiceReport from '@/stores/serviceReport'
-import usePublisher from '@/hooks/usePublisher'
 import { restampTimeEntriesCredit } from '@/lib/categories'
 import { Category } from '@/types/category'
 import {
@@ -64,7 +63,6 @@ const TypeSelectorRow = ({ value, onChange, lastInSection }: Props) => {
   const theme = useTheme()
   const { categories, addCategory, updateCategory, deleteCategory } =
     useCategories()
-  const { hasAnnualGoal } = usePublisher()
   const serviceReports = useServiceReport((s) => s.serviceReports)
   const setServiceReportStore = useServiceReport((s) => s.set)
 
@@ -234,7 +232,7 @@ const TypeSelectorRow = ({ value, onChange, lastInSection }: Props) => {
                   and can't be renamed or deleted — hide the Credit
                   toggle + remove button. The LDC builtin is always
                   credit-bearing by definition. */}
-              {hasAnnualGoal && !selectedCategory.builtin && (
+              {!selectedCategory.builtin && (
                 <View
                   style={{
                     borderWidth: 1,

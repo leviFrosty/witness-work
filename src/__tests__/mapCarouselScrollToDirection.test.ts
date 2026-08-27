@@ -1,220 +1,160 @@
 import { describe, expect, it } from 'vitest'
 
-import { computeScrollToTargetOffset } from 'react-native-reanimated-carousel/src/utils/compute-scroll-to-target-offset'
-import { round } from 'react-native-reanimated-carousel/src/utils/log'
+// v5 intentionally exports only its public component API. This test imports
+// the installed package's dependency-free source helpers by file path so it
+// exercises the exact target-page math used by useCarouselController without
+// pretending these helpers are part of the app's production API surface.
+import {
+  getLogicalProgress,
+  getNearestLogicalPage,
+  getOffsetForLogicalPage,
+  getSettledRawIndex,
+  getShortestLoopTargetPage,
+  positiveModulo,
+  reconcileOffsetAfterDataChange,
+} from '../../node_modules/react-native-reanimated-carousel/src/utils/carousel-math'
 
 /**
- * Regression test for the map screen's "tap a pin, the carousel shows the wrong
- * person" bug (react-native-reanimated-carousel@4.0.3).
+ * Regression coverage for the map screen's "tap a Marker, show the wrong
+ * Contact" bug. In v4, scrollTo({ index }) mirrored its target after a single
+ * backward swipe in loop mode. WitnessWork patched that offset formula.
  *
- * MapScreen's pin tap calls carouselRef.scrollTo({ index }) and presents the
- * centered card as "the tapped person". Unpatched, the library's `to()`
- * (src/hooks/useCarouselController.tsx) targets `index * size * direction`
- * where direction is the sign of the current offset — so once handlerOffset is
- * positive (the user swiped backwards past the start in loop mode) every
- * scrollTo visually centers item `dataLength - index`, the wrong person, while
- * onSnapToItem and getCurrentIndex report that same mirrored value and the
- * app's id-based reconciliation cannot detect the mismatch.
- *
- * `patches/react-native-reanimated-carousel@4.0.3.patch` fixes this by
- * extracting the target-offset math into computeScrollToTargetOffset (which
- * this test imports — the exact code Metro bundles, since the package's
- * `react-native` entry points at src/) and making the loop-mode path anchor on
- * the resting page instead of mirroring. The surrounding pipeline below is
- * simulated with formulas copied verbatim from the (unpatched) library:
- *
- * - Active-index reaction — src/hooks/useCarouselController.tsx:92-116
- * - `offsetX` normalization — src/components/CarouselLayout.tsx:58-65
- * - Per-item translate sawtooth — src/hooks/useOffsetX.ts:27-76
- *
- * If a future package upgrade drops the patch, the import above fails and this
- * suite goes red — re-verify the upstream scrollTo math before removing.
+ * V5 models the carousel as continuous logical pages. scrollTo converts the
+ * current offset to a page, picks the nearest page whose modulo is the target
+ * index, then converts that page back to an offset. This simulation composes
+ * those real pure helpers and verifies both the visually centered and settled
+ * indices across the same exhaustive sweep that guarded the v4 patch.
  */
 
-const SIZE = 390 // card width; any positive size behaves identically
+const SIZE = 390
+const MARKER_COUNT = 57
 
-// interpolate(..., Extrapolation.CLAMP) — piecewise linear, clamped ends
-function interpolateClamp(
-  x: number,
-  inputRange: number[],
-  outputRange: number[]
-): number {
-  if (x <= inputRange[0]) return outputRange[0]
-  if (x >= inputRange[inputRange.length - 1])
-    return outputRange[outputRange.length - 1]
-  for (let k = 0; k < inputRange.length - 1; k++) {
-    const [a, b] = [inputRange[k], inputRange[k + 1]]
-    if (x >= a && x <= b) {
-      const t = b === a ? 0 : (x - a) / (b - a)
-      return outputRange[k] + t * (outputRange[k + 1] - outputRange[k])
-    }
-  }
-  return outputRange[outputRange.length - 1]
-}
-
-// useCarouselController `to()` — computes the new handlerOffset for a
-// scrollTo({ index: i }) call, via the real (patched) library util.
-function scrollToIndex(params: {
-  i: number
-  handlerOffset: number
-  dataLength: number
-  loop: boolean
-}): number {
-  const { i, handlerOffset, dataLength, loop } = params
-  return computeScrollToTargetOffset({
-    index: i,
-    size: SIZE,
-    handlerOffsetValue: handlerOffset,
-    dataLength,
-    loop,
-  })
-}
-
-// useCarouselController's useAnimatedReaction — the index reported through
-// getCurrentIndex()/onSnapToItem once the offset settles.
-function reportedIndex(handlerOffset: number, dataLength: number): number {
-  const toInt = round(handlerOffset / SIZE) % dataLength
-  const isPositive = handlerOffset <= 0
-  return isPositive
-    ? Math.abs(toInt)
-    : Math.abs(toInt > 0 ? dataLength - toInt : 0)
-}
-
-// CarouselLayout offsetX + useOffsetX — which item the user actually sees
-// centered in the viewport (translate x === 0).
-function visuallyCenteredIndex(
-  handlerOffset: number,
-  dataLength: number
-): number | undefined {
-  const totalSize = SIZE * dataLength
-  const offsetX = handlerOffset % totalSize
-
-  const VALID_LENGTH = dataLength - 1
-  const viewCount = Math.round((dataLength - 1) / 2)
-  const positiveCount = viewCount
-  const MAX = positiveCount * SIZE
-  const MIN = -(VALID_LENGTH - positiveCount) * SIZE
-  const HALF = 0.5 * SIZE
-
-  let centered: number | undefined
-  for (let index = 0; index < dataLength; index++) {
-    let startPos = SIZE * index
-    if (index > positiveCount) startPos = (index - dataLength) * SIZE
-
-    const inputRange = [
-      -totalSize,
-      MIN - HALF - startPos - Number.MIN_VALUE,
-      MIN - HALF - startPos,
-      0,
-      MAX + HALF - startPos,
-      MAX + HALF - startPos + Number.MIN_VALUE,
-      totalSize,
-    ]
-    const outputRange = [
-      startPos,
-      MAX + HALF - Number.MIN_VALUE,
-      MIN - HALF,
-      startPos,
-      MAX + HALF,
-      MIN - HALF + Number.MIN_VALUE,
-      startPos,
-    ]
-
-    const x = interpolateClamp(offsetX, inputRange, outputRange)
-    if (Math.abs(x) < 1e-6) centered = index
-  }
-  return centered
-}
-
-// One simulated pin tap on the map screen: scrollTo({ index }) then read what
-// the user sees and what the carousel reports back to the app.
-function tapPin(params: {
+function tapMarker(params: {
   tappedIndex: number
   handlerOffset: number
   dataLength: number
 }) {
   const { tappedIndex, handlerOffset, dataLength } = params
-  const settled = scrollToIndex({
-    i: tappedIndex,
-    handlerOffset,
-    dataLength,
-    loop: true,
+  const currentPage = getNearestLogicalPage(handlerOffset, SIZE)
+  const targetPage = getShortestLoopTargetPage({
+    currentPage,
+    targetIndex: tappedIndex,
+    count: dataLength,
   })
+  const settledOffset = getOffsetForLogicalPage(targetPage, SIZE)
+  const settledProgress = getLogicalProgress(settledOffset, SIZE)
+
   return {
-    settledOffset: settled,
-    visible: visuallyCenteredIndex(settled, dataLength),
-    reported: reportedIndex(settled, dataLength),
+    currentPage,
+    targetPage,
+    settledOffset,
+    // The helper preserves JavaScript's -0 for page zero; normalize it for
+    // identity assertions because carousel index 0 and -0 are equivalent.
+    visible:
+      positiveModulo(getNearestLogicalPage(settledOffset, SIZE), dataLength) ||
+      0,
+    reported: getSettledRawIndex(settledProgress, dataLength) || 0,
   }
 }
 
-const MARKER_COUNT = 57 // the reporting user's backup: 57 contacts with pins
-
-describe('reanimated-carousel scrollTo({index}) direction bug (map pin taps)', () => {
-  it('control: from a fresh carousel (offset 0), every pin tap centers the tapped contact', () => {
-    for (let i = 1; i < MARKER_COUNT; i++) {
-      const { visible, reported } = tapPin({
+describe('reanimated-carousel v5 looped scrollTo({ index }) (map Marker taps)', () => {
+  it('centers every requested Contact from a fresh carousel', () => {
+    for (let i = 0; i < MARKER_COUNT; i++) {
+      const result = tapMarker({
         tappedIndex: i,
         handlerOffset: 0,
         dataLength: MARKER_COUNT,
       })
-      expect(visible, `tapped ${i}`).toBe(i)
-      expect(reported, `tapped ${i}`).toBe(i)
+      expect(result.visible, `tapped ${i}`).toBe(i)
+      expect(result.reported, `tapped ${i}`).toBe(i)
     }
   })
 
-  it('control: after forward swipes (negative offset), pin taps center the tapped contact', () => {
-    for (let i = 0; i < MARKER_COUNT; i++) {
-      if (i === 3) continue // scrollTo is a no-op when already on the index
-      const { visible } = tapPin({
-        tappedIndex: i,
-        handlerOffset: -3 * SIZE, // user swiped forward to card 3
-        dataLength: MARKER_COUNT,
-      })
-      expect(visible, `tapped ${i}`).toBe(i)
-    }
-  })
+  it('does not mirror Marker targets after one backward swipe', () => {
+    // Backward from the first card wraps to logical page -1 (raw index 56),
+    // represented by the positive offset that triggered the v4 regression.
+    const handlerOffset = SIZE
 
-  it('after one backward swipe (positive offset), pin taps still center the tapped contact', () => {
-    // User swipes backwards once from the first card: loop wraps to the last
-    // card and handlerOffset settles at +SIZE.
-    const handlerOffset = +SIZE
-
-    const failures: Array<{
-      tapped: number
-      visible?: number
-      reported: number
-    }> = []
     for (let i = 0; i < MARKER_COUNT; i++) {
-      const { visible, reported } = tapPin({
+      const result = tapMarker({
         tappedIndex: i,
         handlerOffset,
         dataLength: MARKER_COUNT,
       })
-      if (visible !== i || reported !== i)
-        failures.push({ tapped: i, visible, reported })
+      expect(result.visible, `tapped ${i}`).toBe(i)
+      expect(result.reported, `tapped ${i}`).toBe(i)
+      expect(result.settledOffset).toBe(
+        result.targetPage === 0 ? 0 : -result.targetPage * SIZE
+      )
     }
-
-    // Red on the unpatched library: every tap lands on
-    // (dataLength - tapped) % dataLength — and onSnapToItem/getCurrentIndex
-    // report that same mirrored value, so MapScreen's id-based reconciliation
-    // could never catch it. Green with the patch.
-    expect(failures).toEqual([])
   })
 
-  it('holds for every marker count, target, and resting offset', () => {
-    for (let n = 3; n <= 60; n++) {
-      for (const pages of [-2, -1, 1, 2, n - 1, -(n - 1)]) {
-        for (let i = 0; i < n; i++) {
-          const { visible, reported } = tapPin({
-            tappedIndex: i,
-            handlerOffset: pages * SIZE,
-            dataLength: n,
+  it('holds for every Marker count, target, and resting direction', () => {
+    for (let count = 3; count <= 60; count++) {
+      const restingPages = [
+        -count - 1,
+        -(count - 1),
+        -2,
+        -1,
+        0,
+        1,
+        2,
+        count - 1,
+        count + 1,
+      ]
+
+      for (const currentPage of restingPages) {
+        for (let tappedIndex = 0; tappedIndex < count; tappedIndex++) {
+          const result = tapMarker({
+            tappedIndex,
+            handlerOffset: getOffsetForLogicalPage(currentPage, SIZE),
+            dataLength: count,
           })
-          const at = `n=${n} offset=${pages} tapped=${i}`
-          expect(visible, at).toBe(i)
-          expect(reported, at).toBe(i)
+          const at = `count=${count} page=${currentPage} tapped=${tappedIndex}`
+
+          expect(result.visible, at).toBe(tappedIndex)
+          expect(result.reported, at).toBe(tappedIndex)
+          expect(
+            Math.abs(result.targetPage - currentPage),
+            at
+          ).toBeLessThanOrEqual(Math.ceil(count / 2))
         }
       }
     }
+  })
+
+  it('chooses logical forward on an exact shortest-route tie', () => {
+    expect(
+      getShortestLoopTargetPage({ currentPage: 0, targetIndex: 2, count: 4 })
+    ).toBe(2)
+    expect(
+      getShortestLoopTargetPage({ currentPage: -1, targetIndex: 1, count: 4 })
+    ).toBe(1)
+  })
+
+  it('reconciles the selected Contact while filtering from many to one and back', () => {
+    const narrowedOffset = reconcileOffsetAfterDataChange({
+      offset: getOffsetForLogicalPage(23, SIZE),
+      itemSize: SIZE,
+      previousCount: MARKER_COUNT,
+      nextCount: 1,
+      defaultIndex: 0,
+      loop: false,
+      retainedIndex: 0,
+    })
+    expect(narrowedOffset).toBe(0)
+
+    const expandedOffset = reconcileOffsetAfterDataChange({
+      offset: narrowedOffset,
+      itemSize: SIZE,
+      previousCount: 1,
+      nextCount: MARKER_COUNT,
+      defaultIndex: 0,
+      loop: true,
+      retainedIndex: 23,
+    })
+    expect(
+      getSettledRawIndex(getLogicalProgress(expandedOffset, SIZE), 57)
+    ).toBe(23)
   })
 })

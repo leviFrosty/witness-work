@@ -28,11 +28,12 @@ import { Input, InputProps } from 'tamagui'
 import { BlurView } from 'expo-blur'
 import { GlassView, isLiquidGlassAvailable } from 'expo-glass-effect'
 import Animated, {
+  Easing,
   useAnimatedStyle,
   useSharedValue,
   withSpring,
 } from 'react-native-reanimated'
-import Carousel, { ICarouselInstance } from 'react-native-reanimated-carousel'
+import { Carousel, type CarouselRef } from 'react-native-reanimated-carousel'
 import MapCarouselCard from '@/features/map/components/MapCarouselCard'
 import * as Location from 'expo-location'
 import * as Crypto from 'expo-crypto'
@@ -71,6 +72,15 @@ const liquidGlass = isLiquidGlassAvailable()
 // attribution, which `mapPadding` lifts up out from behind the carousel.
 const LEGAL_LABEL_HEIGHT = 20
 
+// v4 used the same ease-out curve for gesture settling and ref commands. Its
+// gesture path silently added 100ms to scrollAnimationDuration, so 225ms keeps
+// the previous swipe feel while avoiding v5's much slower 500ms default.
+const CAROUSEL_ANIMATION = {
+  type: 'timing' as const,
+  duration: 225,
+  easing: Easing.bezier(0.25, 1, 0.5, 1),
+}
+
 interface FullMapViewProps {
   contactMarkers: ContactMarker[]
   activeContactCount: number
@@ -87,7 +97,7 @@ const FullMapView = ({
   const { colorScheme } = usePreferences()
   const mapRef = useRef<MapView>(null)
   const insets = useSafeAreaInsets()
-  const carouselRef = useRef<ICarouselInstance>(null)
+  const carouselRef = useRef<CarouselRef>(null)
   const { isTablet } = useDevice()
   const [locationPermission, setLocationPermission] = useState(false)
   const [isTrackingUser, setIsTrackingUser] = useState(false)
@@ -145,14 +155,6 @@ const FullMapView = ({
   // (search narrows results → reconcile effect re-syncs the carousel), and
   // letting them dismiss the keyboard blurs the search input mid-word.
   const programmaticScrollRef = useRef(false)
-  // The flag above can't catch every non-user scroll: remounting the
-  // carousel across the single/multi key boundary fires a spurious
-  // onScrollStart from the *new* instance that no scrollTo of ours
-  // initiated. Instead, ignore scroll-start dismissals for a short window
-  // after any list change — a genuine user swipe never coincides with a
-  // keystroke-driven reconcile.
-  const suppressCarouselDismissUntilRef = useRef(0)
-
   const handleDragContactPin = (id: string, coordinate: LatLng) => {
     updateContact({
       ...contacts.find((c) => c.id === id),
@@ -184,8 +186,8 @@ const FullMapView = ({
         pendingMarkerId: pendingMarkerSnapIdRef.current,
       })
       pendingMarkerSnapIdRef.current = undefined
-      // Snap completion is the end of any scroll — clear the programmatic
-      // flag here too in case a remount swallowed a scrollTo's onFinished.
+      // v5 emits onSnapToItem only after movement settles. Keep this defensive
+      // clear in case callback scheduling ever changes.
       programmaticScrollRef.current = false
 
       if (!resolved) return
@@ -205,14 +207,27 @@ const FullMapView = ({
   // Only dismiss the keyboard when the user actually swipes the carousel —
   // programmatic scrolls (search-driven reconciles) must not steal focus.
   const handleCarouselScrollStart = useCallback(() => {
-    if (
-      programmaticScrollRef.current ||
-      Date.now() < suppressCarouselDismissUntilRef.current
-    ) {
+    if (programmaticScrollRef.current) {
       return
     }
     dismissSearchKeyboard()
   }, [dismissSearchKeyboard])
+
+  // v5 removed the public command-level onFinished hook. Its ref commands
+  // invoke onScrollStart synchronously, so the flag only needs to wrap the
+  // command call; onSnapToItem remains the settled-state callback.
+  const scrollCarouselTo = useCallback((index: number, animated: boolean) => {
+    const carousel = carouselRef.current
+    if (!carousel || carousel.getCurrentIndex() === index) return false
+
+    programmaticScrollRef.current = true
+    try {
+      carousel.scrollTo({ index, animated })
+    } finally {
+      programmaticScrollRef.current = false
+    }
+    return true
+  }, [])
 
   const handlePinPress = useCallback(
     (id: string) => {
@@ -236,23 +251,16 @@ const FullMapView = ({
       pendingMarkerSnapIdRef.current = id
       setActiveContactId(id)
       fitToContactId(id)
-      programmaticScrollRef.current = true
-      carouselRef.current?.scrollTo({
-        index: idx,
-        animated: true,
-        onFinished: () => {
-          programmaticScrollRef.current = false
-          if (pendingMarkerSnapIdRef.current !== id) return
-          pendingMarkerSnapIdRef.current = undefined
-          fitToContactId(id)
-        },
-      })
+      if (!scrollCarouselTo(idx, true)) {
+        pendingMarkerSnapIdRef.current = undefined
+      }
     },
     [
       visibleContactMarkers,
       activeContactId,
       fitToContactId,
       dismissSearchKeyboard,
+      scrollCarouselTo,
     ]
   )
 
@@ -263,11 +271,6 @@ const FullMapView = ({
   // - If it disappeared (dismissed, deleted), pick a deterministic neighbour
   //   based on its previous index rather than snapping back to 0.
   useEffect(() => {
-    // Arm the dismiss-suppression window on every list change — covers both
-    // the programmatic scrollTo below and the spurious onScrollStart a
-    // remounted carousel emits on its own.
-    suppressCarouselDismissUntilRef.current = Date.now() + 600
-
     const { activeId, index } = reconcileActiveContact({
       previousActiveId: activeContactId,
       previousIndex: lastReconciledIndexRef.current,
@@ -285,18 +288,17 @@ const FullMapView = ({
 
     lastReconciledIndexRef.current = index
 
+    // getCurrentIndex() is settled-only in v5. While a marker-triggered
+    // animation is in flight it still reports the previous card, so an
+    // immediate reconciliation here would replace the 225ms animation with a
+    // non-animated jump. onSnapToItem performs the settled reconciliation.
+    if (pendingMarkerSnapIdRef.current) return
+
     const currentCarouselIndex = carouselRef.current?.getCurrentIndex()
     if (currentCarouselIndex !== undefined && currentCarouselIndex !== index) {
-      programmaticScrollRef.current = true
-      carouselRef.current?.scrollTo({
-        index,
-        animated: false,
-        onFinished: () => {
-          programmaticScrollRef.current = false
-        },
-      })
+      scrollCarouselTo(index, false)
     }
-  }, [activeContactId, visibleContactMarkers])
+  }, [activeContactId, scrollCarouselTo, visibleContactMarkers])
 
   useEffect(() => {
     const unsubscribe = navigation.addListener('tabPress', (e) => {
@@ -893,26 +895,12 @@ const FullMapView = ({
         </View>
       ) : (
         <Carousel
-          // TODO: react-native-reanimated-carousel@4.0.3 is patched
-          // (patches/react-native-reanimated-carousel@4.0.3.patch): unpatched,
-          // scrollTo({ index }) mirrors the target after a backward swipe in
-          // loop mode, centering the wrong contact's card on pin taps.
-          // Upstream fixed this in the v5 rewrite — upgrading to v5 removes
-          // the patch, but changes this component's API (layout replaces
-          // mode/modeConfig; windowSize and scrollAnimationDuration are
-          // dropped). Guarded by mapCarouselScrollToDirection.test.ts, which
-          // goes red if an upgrade drops the patch.
-          //
-          // Remount when crossing the 1↔many boundary. `loop` cannot be
-          // toggled mid-life on react-native-reanimated-carousel — when a
-          // search narrows results to a single match the carousel keeps its
-          // looping internals and renders blank otherwise.
-          key={visibleContactMarkers.length === 1 ? 'single' : 'multi'}
           onSnapToItem={handleCarouselSnap}
           onScrollStart={handleCarouselScrollStart}
           defaultIndex={0}
           ref={carouselRef}
           data={visibleContactMarkers}
+          keyExtractor={(contact) => contact.id}
           renderItem={({ item }) => (
             <MapCarouselCard
               contact={item}
@@ -920,21 +908,23 @@ const FullMapView = ({
               setSheet={setSheet}
             />
           )}
-          scrollAnimationDuration={125}
+          animation={CAROUSEL_ANIMATION}
           // Only mount the visible card plus a few neighbors on each side —
-          // without this the carousel renders every contact's card up front,
-          // which was the dominant cost of the map screen's first paint.
-          windowSize={7}
-          mode='parallax'
-          modeConfig={{
-            parallaxScrollingScale,
+          // without renderWindowSize the v5 renderer mounts every Contact's
+          // card up front, regressing the map screen's first paint.
+          renderWindowSize={7}
+          layout={{
+            type: 'parallax',
+            offset: 100,
+            scale: parallaxScrollingScale,
+            adjacentScale: parallaxScrollingScale ** 2,
           }}
           loop={visibleContactMarkers.length !== 1}
-          width={width}
-          height={CARD_HEIGHT}
           style={{
             position: 'absolute',
             bottom: insets.bottom + TAB_BAR_HEIGHT + LEGAL_LABEL_HEIGHT - 5,
+            width,
+            height: CARD_HEIGHT,
           }}
         />
       )}

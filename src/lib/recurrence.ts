@@ -214,11 +214,110 @@ export const getEffectiveStartTimeInMinutesForRecurringPlan = (
  * callers that don't care about credit (the UI's minutes-only reductions) can
  * omit them and read `minutes` alone.
  */
-export type PlannedDayContribution = {
-  source: 'day' | 'recurring'
-  plan: DayPlan | RecurringPlan
+type PlannedDayContributionFields = {
   minutes: number
   isCredit: boolean
+}
+
+export type PlannedDayContribution =
+  | (PlannedDayContributionFields & {
+      source: 'day'
+      plan: DayPlan
+    })
+  | (PlannedDayContributionFields & {
+      source: 'recurring'
+      plan: RecurringPlan
+    })
+
+export type NotCountedPlannedDayContribution = PlannedDayContribution & {
+  reason: 'replacedByDayPlans' | 'lowerRecurringPriority'
+}
+
+export type PlannedDayResolution = {
+  counted: PlannedDayContribution[]
+  notCounted: NotCountedPlannedDayContribution[]
+}
+
+type PlannedDayResolutionOptions = {
+  /** Per-plan credit-ness for Day Plans. Default () => false. */
+  dayPlanIsCredit?: (plan: DayPlan) => boolean
+  /** Per-plan credit-ness for recurring instances. Default () => false. */
+  recurringIsCredit?: (plan: RecurringPlan) => boolean
+}
+
+/**
+ * Resolves every Plan touching one calendar day into the Plans that contribute
+ * to its forecast and the Plans that remain visible but do not contribute.
+ *
+ * Calculation consumers should continue using
+ * `resolvePlannedContributionsForDay`; UI consumers that need to explain the
+ * full resolution can use this richer grouped result.
+ */
+export const resolvePlannedDay = (
+  day: Date,
+  /** The Day Plans that fall on `day` — caller pre-filters by date. */
+  dayPlansForDay: DayPlan[],
+  recurringPlans: RecurringPlan[],
+  opts?: PlannedDayResolutionOptions
+): PlannedDayResolution => {
+  const recurringForDay: PlannedDayContribution[] = getPlansIntersectingDay(
+    day,
+    recurringPlans
+  ).map((plan) => ({
+    source: 'recurring',
+    plan,
+    minutes: getEffectiveMinutesForRecurringPlan(plan, day),
+    isCredit: opts?.recurringIsCredit?.(plan) ?? false,
+  }))
+
+  // Day Plans take the whole day — even at zero minutes — matching the
+  // projection's and `plannedMinutesToCurrentDayForMonth`'s precedence, and
+  // stack additively with each other. Callers gate on `minutes > 0`
+  // themselves where needed.
+  if (dayPlansForDay.length > 0) {
+    return {
+      counted: dayPlansForDay.map((plan) => ({
+        source: 'day',
+        plan,
+        minutes: plan.minutes,
+        isCredit: opts?.dayPlanIsCredit?.(plan) ?? false,
+      })),
+      notCounted: recurringForDay.map((contribution) => ({
+        ...contribution,
+        reason: 'replacedByDayPlans',
+      })),
+    }
+  }
+
+  let winner: PlannedDayContribution | null = null
+  let winningMinutes = 0
+  let winningIsCredit = false
+  for (const contribution of recurringForDay) {
+    if (contribution.minutes < winningMinutes) continue
+    const beats =
+      contribution.minutes > winningMinutes ||
+      winner === null ||
+      (contribution.isCredit && !winningIsCredit) ||
+      (contribution.isCredit === winningIsCredit &&
+        contribution.plan.id < winner.plan.id)
+    if (beats) {
+      winner = contribution
+      winningMinutes = contribution.minutes
+      winningIsCredit = contribution.isCredit
+    }
+  }
+
+  if (!winner) return { counted: [], notCounted: [] }
+
+  return {
+    counted: [winner],
+    notCounted: recurringForDay
+      .filter((contribution) => contribution !== winner)
+      .map((contribution) => ({
+        ...contribution,
+        reason: 'lowerRecurringPriority',
+      })),
+  }
 }
 
 export const resolvePlannedContributionsForDay = (
@@ -226,49 +325,9 @@ export const resolvePlannedContributionsForDay = (
   /** The Day Plans that fall on `day` — caller pre-filters by date. */
   dayPlansForDay: DayPlan[],
   recurringPlans: RecurringPlan[],
-  opts?: {
-    /** Per-plan credit-ness for Day Plans. Default () => false. */
-    dayPlanIsCredit?: (plan: DayPlan) => boolean
-    /** Per-plan credit-ness for recurring instances. Default () => false. */
-    recurringIsCredit?: (plan: RecurringPlan) => boolean
-  }
-): PlannedDayContribution[] => {
-  // Day Plans take the whole day — even at zero minutes — matching the
-  // projection's and `plannedMinutesToCurrentDayForMonth`'s precedence, and
-  // stack additively with each other. Callers gate on `minutes > 0`
-  // themselves where needed.
-  if (dayPlansForDay.length > 0) {
-    return dayPlansForDay.map((plan) => ({
-      source: 'day' as const,
-      plan,
-      minutes: plan.minutes,
-      isCredit: opts?.dayPlanIsCredit?.(plan) ?? false,
-    }))
-  }
-
-  const recurringForDay = getPlansIntersectingDay(day, recurringPlans)
-  let winner: RecurringPlan | null = null
-  let minutes = 0
-  let isCredit = false
-  for (const plan of recurringForDay) {
-    const effective = getEffectiveMinutesForRecurringPlan(plan, day)
-    if (effective < minutes) continue
-    const credit = opts?.recurringIsCredit?.(plan) ?? false
-    const beats =
-      effective > minutes ||
-      winner === null ||
-      (credit && !isCredit) ||
-      (credit === isCredit && plan.id < winner.id)
-    if (beats) {
-      minutes = effective
-      winner = plan
-      isCredit = credit
-    }
-  }
-
-  if (!winner) return []
-  return [{ source: 'recurring', plan: winner, minutes, isCredit }]
-}
+  opts?: PlannedDayResolutionOptions
+): PlannedDayContribution[] =>
+  resolvePlannedDay(day, dayPlansForDay, recurringPlans, opts).counted
 
 /**
  * The day's total planned minutes under the resolution rule above: the sum of

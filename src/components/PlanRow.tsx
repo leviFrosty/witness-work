@@ -57,9 +57,13 @@ export const getPlanItemStartTime = (item: PlanListItem): number => {
   return getEffectiveStartTimeInMinutesForRecurringPlan(item.plan, item.date)
 }
 
-const PlanKindIcon = (props: { recurring: boolean }) => {
+const PlanKindIcon = (props: {
+  recurring: boolean
+  countingStatus: 'counted' | 'notCounted'
+}) => {
   const theme = useTheme()
-  const oneTime = !props.recurring
+  const emphasizedOneTime =
+    !props.recurring && props.countingStatus === 'counted'
 
   return (
     <View
@@ -68,8 +72,10 @@ const PlanKindIcon = (props: { recurring: boolean }) => {
         height: 38,
         borderRadius: theme.numbers.borderRadiusMd,
         borderWidth: 1,
-        borderColor: oneTime ? theme.colors.accent : theme.colors.border,
-        backgroundColor: oneTime
+        borderColor: emphasizedOneTime
+          ? theme.colors.accent
+          : theme.colors.border,
+        backgroundColor: emphasizedOneTime
           ? theme.colors.accentTranslucent
           : theme.colors.backgroundLighter,
         alignItems: 'center',
@@ -79,7 +85,7 @@ const PlanKindIcon = (props: { recurring: boolean }) => {
       <LucideIcon
         icon={props.recurring ? RepeatIcon : Calendar1Icon}
         size={15}
-        color={oneTime ? theme.colors.accent : theme.colors.textAlt}
+        color={emphasizedOneTime ? theme.colors.accent : theme.colors.textAlt}
       />
     </View>
   )
@@ -91,6 +97,7 @@ const PlanRow = (props: {
   dateDisplay?: 'full' | 'monthList'
   contextMonth?: number
   contextYear?: number
+  countingStatus?: 'counted' | 'notCounted'
 }) => {
   const theme = useTheme()
   const cardStyle = useCardStyle()
@@ -101,6 +108,8 @@ const PlanRow = (props: {
     deleteEventAndFutureEvents,
   } = useServiceReport()
   const categories = useCategories((state) => state.categories)
+  const countingStatus = props.countingStatus ?? 'counted'
+  const isNotCounted = countingStatus === 'notCounted'
 
   const isRecurring = props.item.type === 'recurring'
   const plan = props.item.plan
@@ -124,7 +133,6 @@ const PlanRow = (props: {
         defaultValue: category.name,
       })
     : i18n.t('standard')
-  const typeLabel = `${i18n.t('type')}: ${categoryLabel}`
   const formattedDuration = useFormattedMinutes(displayMinutes)
   const dateMoment = moment(date)
   const isToday = dateMoment.isSame(moment(), 'day')
@@ -222,8 +230,15 @@ const PlanRow = (props: {
     >
       <Button
         onPress={props.onPress}
+        accessibilityHint={
+          isNotCounted ? i18n.t('notCountedPlanAccessibilityHint') : undefined
+        }
         style={{
           ...cardStyle,
+          backgroundColor: isNotCounted
+            ? theme.colors.backgroundLighter
+            : cardStyle.backgroundColor,
+          shadowOpacity: isNotCounted ? 0 : cardStyle.shadowOpacity,
           paddingVertical: 12,
           paddingHorizontal: 14,
         }}
@@ -231,7 +246,10 @@ const PlanRow = (props: {
         <View
           style={{ flexDirection: 'row', gap: 12, alignItems: 'flex-start' }}
         >
-          <PlanKindIcon recurring={isRecurring} />
+          <PlanKindIcon
+            recurring={isRecurring}
+            countingStatus={countingStatus}
+          />
           <View style={{ flex: 1, gap: 8 }}>
             <View
               style={{
@@ -282,7 +300,12 @@ const PlanRow = (props: {
             )}
 
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
-              <Badge size='xs'>{typeLabel}</Badge>
+              {isNotCounted && (
+                <Badge size='xs' color={theme.colors.background}>
+                  {i18n.t('notCounted')}
+                </Badge>
+              )}
+              <Badge size='xs'>{categoryLabel}</Badge>
               {isToday && <Badge size='xs'>{i18n.t('today')}</Badge>}
             </View>
           </View>

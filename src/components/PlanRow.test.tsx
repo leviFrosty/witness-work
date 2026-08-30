@@ -159,7 +159,7 @@ describe('PlanRow', () => {
     ]
   })
 
-  it('visibly distinguishes multiple same-day Day Plans by Type', () => {
+  it('visibly distinguishes multiple same-day Day Plans by category', () => {
     let rows: ReturnType<typeof create>
 
     act(() => {
@@ -184,7 +184,8 @@ describe('PlanRow', () => {
     })
 
     const text = visibleText(rows!.toJSON())
-    expect(text).toContain('Type: Metro')
-    expect(text).toContain('Type: Credit')
+    expect(text).toContain('Metro')
+    expect(text).toContain('Credit')
+    expect(text).not.toContain('Type:')
   })
 })

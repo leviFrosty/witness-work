@@ -65,6 +65,7 @@ const SelectedDateSheet: React.FC<Props> = ({
             contentContainerStyle={{ minHeight: 10 }}
           >
             <DayHistoryView
+              key={`${sheet.open}-${sheet.date.getTime()}`}
               date={sheet.date}
               serviceReports={thisMonthsReports || []}
               showHeader={true}

@@ -1,4 +1,12 @@
-import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest'
+import {
+  afterAll,
+  afterEach,
+  beforeAll,
+  describe,
+  expect,
+  it,
+  vi,
+} from 'vitest'
 import moment from 'moment'
 import {
   momentStoredDate,
@@ -142,6 +150,83 @@ describe('preserveOrNormalizeStoredDate', () => {
     const out = preserveOrNormalizeStoredDate(preFix)
     expect(out.getUTCHours()).toBe(12)
     expect(momentStoredDate(out).format('YYYY-MM-DD')).toBe('2026-05-01')
+  })
+})
+
+describe('momentStoredDate', () => {
+  afterEach(() => {
+    setTZ('America/Los_Angeles')
+  })
+
+  it('reads an anchored value by its UTC calendar day in every TZ', () => {
+    setTZ('America/Los_Angeles')
+    const stored = normalizeDateForStorage(moment('2026-08-31').toDate())
+    const tzs = [
+      'Etc/GMT+12',
+      'America/New_York',
+      'UTC',
+      'Asia/Tokyo',
+      'Pacific/Kiritimati',
+    ]
+    for (const tz of tzs) {
+      setTZ(tz)
+      expect({
+        tz,
+        day: momentStoredDate(stored).format('YYYY-MM-DD'),
+      }).toEqual({
+        tz,
+        day: '2026-08-31',
+      })
+    }
+  })
+
+  it('reads an un-anchored instant as the local calendar day it falls on, not its UTC day', () => {
+    // 03:29 UTC on Sep 1 is still the evening of Aug 31 west of UTC. Reading
+    // the UTC day would move a report logged "now" into September — the
+    // month-boundary failure this guards against.
+    const lateEveningWest = new Date('2026-09-01T03:29:00.000Z')
+    setTZ('America/New_York')
+    expect(momentStoredDate(lateEveningWest).format('YYYY-MM-DD')).toBe(
+      '2026-08-31'
+    )
+    setTZ('UTC')
+    expect(momentStoredDate(lateEveningWest).format('YYYY-MM-DD')).toBe(
+      '2026-09-01'
+    )
+
+    // 20:30 UTC on Aug 31 is already the morning of Sep 1 east of UTC.
+    const earlyMorningEast = new Date('2026-08-31T20:30:00.000Z')
+    setTZ('Asia/Tokyo')
+    expect(momentStoredDate(earlyMorningEast).format('YYYY-MM-DD')).toBe(
+      '2026-09-01'
+    )
+    setTZ('UTC')
+    expect(momentStoredDate(earlyMorningEast).format('YYYY-MM-DD')).toBe(
+      '2026-08-31'
+    )
+  })
+
+  it('agrees with the day the write path would have stored for an un-anchored instant', () => {
+    const instant = new Date('2026-09-01T03:29:00.000Z')
+    const tzs = [
+      'Etc/GMT+12',
+      'America/New_York',
+      'UTC',
+      'Asia/Tokyo',
+      'Pacific/Kiritimati',
+    ]
+    for (const tz of tzs) {
+      setTZ(tz)
+      expect({
+        tz,
+        day: momentStoredDate(instant).format('YYYY-MM-DD'),
+      }).toEqual({
+        tz,
+        day: momentStoredDate(normalizeDateForStorage(instant)).format(
+          'YYYY-MM-DD'
+        ),
+      })
+    }
   })
 })
 

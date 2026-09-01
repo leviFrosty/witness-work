@@ -63,9 +63,22 @@ export const preserveOrNormalizeStoredDate = (date: Date | string): Date => {
  * `RecurringPlan.startDate`, etc. — anything that came through
  * `normalizeDateForStorage`. UTC components are immutable across TZ changes, so
  * the calendar day is stable.
+ *
+ * A value that never went through the write path — a raw `new Date()` instant,
+ * or pre-normalization data the persist migration hasn't re-anchored yet — is
+ * read as the _local_ calendar day it falls on: the day
+ * `normalizeDateForStorage` would have locked in. Reading such a value's UTC
+ * day instead lands it on the wrong day (and, at a month boundary, in the wrong
+ * month) every evening west of UTC and every morning east of it. Anchored
+ * values are detected the same way `preserveOrNormalizeStoredDate` does and
+ * share its caveat; this is a read-side safety net, not a substitute for
+ * normalizing on write.
  */
-export const momentStoredDate = (date: Date | string): moment.Moment =>
-  moment.utc(date)
+export const momentStoredDate = (date: Date | string): moment.Moment => {
+  const instant = date instanceof Date ? date : new Date(date)
+  if (isAnchoredNoonUtc(instant)) return moment.utc(instant)
+  return moment.utc(normalizeDateForStorage(date))
+}
 
 /**
  * Converts a UTC-mode day cursor (e.g. a `moment.utc` walk) into a local-mode

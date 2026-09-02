@@ -90,7 +90,11 @@ const CategorySegmentBar = ({ segments, compact }: CategorySegmentBarProps) => {
       ) : (
         <View style={{ gap: 4 }}>
           {visible.map((segment, i) => (
-            <LegendRow key={`${segment.title}-${i}`} segment={segment} />
+            <LegendRow
+              key={`${segment.title}-${i}`}
+              segment={segment}
+              percentage={Math.round((segment.minutes / total) * 1000) / 10}
+            />
           ))}
         </View>
       )}
@@ -98,7 +102,13 @@ const CategorySegmentBar = ({ segments, compact }: CategorySegmentBarProps) => {
   )
 }
 
-const LegendRow = ({ segment }: { segment: CategorySegment }) => {
+const LegendRow = ({
+  segment,
+  percentage,
+}: {
+  segment: CategorySegment
+  percentage: number
+}) => {
   const theme = useTheme()
   const minutesWithFormat = useFormattedMinutes(segment.minutes)
   return (
@@ -107,9 +117,12 @@ const LegendRow = ({ segment }: { segment: CategorySegment }) => {
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
+        gap: 8,
       }}
     >
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+      <View
+        style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flex: 1 }}
+      >
         <View
           style={{
             width: 10,
@@ -118,11 +131,13 @@ const LegendRow = ({ segment }: { segment: CategorySegment }) => {
             backgroundColor: segment.color,
           }}
         />
-        <Text style={{ color: theme.colors.text }}>{segment.title}</Text>
+        <Text style={{ color: theme.colors.text, flexShrink: 1 }}>
+          {segment.title}
+        </Text>
         {segment.credit && <CreditBadge />}
       </View>
       <Text style={{ color: theme.colors.textAlt }}>
-        {minutesWithFormat.formatted}
+        {minutesWithFormat.formatted} ({percentage}%)
       </Text>
     </View>
   )

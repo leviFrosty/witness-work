@@ -20,6 +20,7 @@ import { plannedMinutesToCurrentDayForMonth } from '@/lib/recurrence'
 import useServiceReport from '@/stores/serviceReport'
 import useCategories from '@/stores/categories'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { getCategorySegmentColors } from '@/features/service-reports/lib/categorySegmentColors'
 import useTheme from '@/contexts/theme'
 import { TimeEntry } from '@/types/timeEntry'
 import { CategorySegment } from '@/features/service-reports/components/CategorySegmentBar'
@@ -235,17 +236,7 @@ const MonthReport = ({
     [month, monthsReports, year]
   )
 
-  // Must stay in sync with MonthServiceReportProgressBar's palette — the
-  // categories sheet and the progress bar render side-by-side and need to
-  // tell the same color story.
-  const otherSegmentPalette = [
-    theme.colors.accent2,
-    theme.colors.accent2Alt,
-    theme.colors.warn,
-    theme.colors.warnAlt,
-    theme.colors.accent3,
-    theme.colors.accent3Alt,
-  ]
+  const otherSegmentPalette = getCategorySegmentColors(theme.colors)
   const categorySegments: CategorySegment[] = [
     {
       title: i18n.t('standard'),

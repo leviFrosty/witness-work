@@ -1,6 +1,6 @@
 import { Crown as CrownIcon, Star as StarIcon } from 'lucide-react-native'
 import LucideIcon from '@/components/ui/LucideIcon'
-import { useEffect, useMemo } from 'react'
+import { useEffect, useMemo, type ReactNode } from 'react'
 import { Pressable, View } from 'react-native'
 import moment from 'moment'
 import round from 'lodash/round'
@@ -53,6 +53,10 @@ interface YearMilestoneCardProps {
    * screen's Year tab).
    */
   onAdjustMilestones?: () => void
+  /** Optional category details row between the annual total and progress bar. */
+  categoriesSlot?: ReactNode
+  /** Show milestone details in a second card on the Year screen. */
+  separateMilestones?: boolean
 }
 
 /**
@@ -64,6 +68,8 @@ interface YearMilestoneCardProps {
 const YearMilestoneCard = ({
   year,
   onAdjustMilestones,
+  categoriesSlot,
+  separateMilestones = false,
 }: YearMilestoneCardProps) => {
   const theme = useTheme()
   const { type: publisher, annualGoalHours, creditCapMinutes } = usePublisher()
@@ -285,129 +291,22 @@ const YearMilestoneCard = ({
   // active crossing animation upstream is the gated one.
   const showCompletionTreatment = isGoalComplete && annualGoalHours > 0
 
-  return (
-    <Card
-      style={{
-        flexGrow: 1,
-        ...(showCompletionTreatment
-          ? {
-              borderWidth: 2,
-              borderColor: theme.colors.supporter,
-              backgroundColor: theme.colors.supporterTranslucent,
-            }
-          : {}),
-      }}
-    >
-      <View
-        style={{
-          flexDirection: 'row',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          gap: 8,
-        }}
-      >
-        <Text
-          style={{
-            fontSize: theme.fontSize('sm'),
-            fontFamily: theme.fonts.semiBold,
-            color: theme.colors.textAlt,
-            letterSpacing: 0.5,
-          }}
-        >
-          {titleText}
-        </Text>
-        {showCompletionTreatment ? (
-          <View
-            style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              gap: 6,
-            }}
-          >
-            <Animated.View style={sealAnimatedStyle}>
-              <LucideIcon
-                icon={CrownIcon}
-                color={theme.colors.supporter}
-                size={16}
-              />
-            </Animated.View>
-            <Text
-              style={{
-                fontSize: theme.fontSize('sm'),
-                fontFamily: theme.fonts.semiBold,
-                color: theme.colors.supporter,
-              }}
-            >
-              {i18n.t('annualGoalCompleteBadge')}
-            </Text>
-          </View>
-        ) : isCurrentServiceYear ? (
-          <Text
-            style={{
-              fontSize: theme.fontSize('xs'),
-              color: theme.colors.textAlt,
-            }}
-          >
-            {daysRemaining} {i18n.t('daysLeft')}
-            {minutesToGoal > 0
-              ? ` · ${i18n.t('hoursToGoLabel', { value: minutesToGoalDisplay.formatted })}`
-              : ''}
-          </Text>
-        ) : null}
+  const milestoneCount =
+    hitState.total > 0 ? (
+      <View style={{ flexDirection: 'row', marginLeft: -10 }}>
+        <Chip
+          icon='✓'
+          tone={hitState.totalHit === hitState.total ? 'positive' : 'neutral'}
+          label={i18n.t('milestonesHitChip', {
+            hit: hitState.totalHit,
+            total: hitState.total,
+          })}
+        />
       </View>
+    ) : null
 
-      {/* Hero number + milestones chip share a tight inner rhythm — matches
-        the month card's GoalProgressStats inner gap so the chip reads as
-        sub-info to the hero rather than a sibling section. */}
-      <View style={{ gap: 10 }}>
-        <View
-          style={{
-            flexDirection: 'row',
-            alignItems: 'baseline',
-            gap: 2,
-            flexWrap: 'wrap',
-          }}
-        >
-          <Text
-            // Drop a tier in "short" mode so "234h 56m / 600 hours" fits the
-            // card without auto-shrinking the hero to fine print.
-            style={{
-              fontSize: isDecimal ? 64 : 40,
-              lineHeight: isDecimal ? 68 : 44,
-              fontFamily: theme.fonts.bold,
-              color: theme.colors.text,
-            }}
-          >
-            {isDecimal
-              ? completedHeroDisplay.decimalHours
-              : completedHeroDisplay.formatted}
-          </Text>
-          <Text
-            style={{
-              fontSize: theme.fontSize('lg'),
-              color: theme.colors.textAlt,
-            }}
-          >
-            / {annualGoalHours} {i18n.t('hours_lowercase')}
-          </Text>
-        </View>
-
-        {hitState.total > 0 ? (
-          <View style={{ flexDirection: 'row', marginLeft: -10 }}>
-            <Chip
-              icon='✓'
-              tone={
-                hitState.totalHit === hitState.total ? 'positive' : 'neutral'
-              }
-              label={i18n.t('milestonesHitChip', {
-                hit: hitState.totalHit,
-                total: hitState.total,
-              })}
-            />
-          </View>
-        ) : null}
-      </View>
-
+  const milestoneDetails = (
+    <>
       <MilestoneProgressBar year={year} />
 
       {/* Transient "just hit a milestone" banner — only renders when the user
@@ -549,7 +448,139 @@ const YearMilestoneCard = ({
           </Pressable>
         </View>
       ) : null}
-    </Card>
+    </>
+  )
+
+  return (
+    <>
+      <Card
+        style={{
+          flexGrow: 1,
+          ...(showCompletionTreatment
+            ? {
+                borderWidth: 2,
+                borderColor: theme.colors.supporter,
+                backgroundColor: theme.colors.supporterTranslucent,
+              }
+            : {}),
+        }}
+      >
+        <View
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: 8,
+          }}
+        >
+          <Text
+            style={{
+              fontSize: theme.fontSize('sm'),
+              fontFamily: theme.fonts.semiBold,
+              color: theme.colors.textAlt,
+              letterSpacing: 0.5,
+            }}
+          >
+            {titleText}
+          </Text>
+          {showCompletionTreatment ? (
+            <View
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: 6,
+              }}
+            >
+              <Animated.View style={sealAnimatedStyle}>
+                <LucideIcon
+                  icon={CrownIcon}
+                  color={theme.colors.supporter}
+                  size={16}
+                />
+              </Animated.View>
+              <Text
+                style={{
+                  fontSize: theme.fontSize('sm'),
+                  fontFamily: theme.fonts.semiBold,
+                  color: theme.colors.supporter,
+                }}
+              >
+                {i18n.t('annualGoalCompleteBadge')}
+              </Text>
+            </View>
+          ) : isCurrentServiceYear ? (
+            <Text
+              style={{
+                fontSize: theme.fontSize('xs'),
+                color: theme.colors.textAlt,
+              }}
+            >
+              {daysRemaining} {i18n.t('daysLeft')}
+              {minutesToGoal > 0
+                ? ` · ${i18n.t('hoursToGoLabel', { value: minutesToGoalDisplay.formatted })}`
+                : ''}
+            </Text>
+          ) : null}
+        </View>
+
+        <View style={{ gap: 10 }}>
+          <View
+            style={{
+              flexDirection: 'row',
+              alignItems: 'baseline',
+              gap: 2,
+              flexWrap: 'wrap',
+            }}
+          >
+            <Text
+              // Drop a tier in "short" mode so "234h 56m / 600 hours" fits the
+              // card without auto-shrinking the hero to fine print.
+              style={{
+                fontSize: isDecimal ? 64 : 40,
+                lineHeight: isDecimal ? 68 : 44,
+                fontFamily: theme.fonts.bold,
+                color: theme.colors.text,
+              }}
+            >
+              {isDecimal
+                ? completedHeroDisplay.decimalHours
+                : completedHeroDisplay.formatted}
+            </Text>
+            <Text
+              style={{
+                fontSize: theme.fontSize('lg'),
+                color: theme.colors.textAlt,
+              }}
+            >
+              / {annualGoalHours} {i18n.t('hours_lowercase')}
+            </Text>
+          </View>
+
+          {!separateMilestones && milestoneCount}
+        </View>
+
+        {categoriesSlot}
+
+        {!separateMilestones && milestoneDetails}
+      </Card>
+      {separateMilestones ? (
+        <Card>
+          <Text
+            style={{
+              fontFamily: theme.fonts.semiBold,
+              fontSize: theme.fontSize('sm'),
+              color: theme.colors.textAlt,
+              textTransform: 'uppercase',
+              letterSpacing: 0.5,
+            }}
+          >
+            {i18n.t('milestones')}
+          </Text>
+          {milestoneCount}
+          {milestoneDetails}
+        </Card>
+      ) : null}
+    </>
   )
 }
 

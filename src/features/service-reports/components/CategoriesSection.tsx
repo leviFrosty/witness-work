@@ -16,9 +16,13 @@ import i18n from '@/lib/locales'
 
 type Props = {
   segments: CategorySegment[]
+  description?: string
 }
 
-const CategoriesSection = ({ segments }: Props) => {
+const CategoriesSection = ({
+  segments,
+  description = i18n.t('categoryBreakdown_description'),
+}: Props) => {
   const theme = useTheme()
   const [open, setOpen] = useState(false)
   const visible = segments.filter((s) => s.minutes > 0)
@@ -97,7 +101,7 @@ const CategoriesSection = ({ segments }: Props) => {
                 fontSize: theme.fontSize('sm'),
               }}
             >
-              {i18n.t('categoryBreakdown_description')}
+              {description}
             </Text>
             <CategorySegmentBar segments={segments} />
           </View>

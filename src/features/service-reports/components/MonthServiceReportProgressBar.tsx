@@ -3,6 +3,7 @@ import { useCallback, useMemo, useEffect, useRef, useState } from 'react'
 import { usePreferences } from '@/stores/preferences'
 import { useServiceReport } from '@/stores/serviceReport'
 import useCategories from '@/stores/categories'
+import { getCategorySegmentColors } from '@/features/service-reports/lib/categorySegmentColors'
 import useTheme from '@/contexts/theme'
 import {
   adjustedMinutesForSpecificMonth,
@@ -262,29 +263,7 @@ const MonthServiceReportProgressBar = ({
     [minutesDetailed.ldc]
   )
 
-  const otherColors = useMemo(
-    () =>
-      minimal
-        ? [theme.colors.accent]
-        : [
-            theme.colors.accent2,
-            theme.colors.accent2Alt,
-            theme.colors.warn,
-            theme.colors.warnAlt,
-            theme.colors.accent3,
-            theme.colors.accent3Alt,
-          ],
-    [
-      minimal,
-      theme.colors.accent,
-      theme.colors.accent2,
-      theme.colors.accent2Alt,
-      theme.colors.accent3,
-      theme.colors.accent3Alt,
-      theme.colors.warn,
-      theme.colors.warnAlt,
-    ]
-  )
+  const otherColors = getCategorySegmentColors(theme.colors, minimal)
 
   const renderOtherHours = useCallback(() => {
     let currentIndex = 0

@@ -850,16 +850,17 @@
       "c6": "Faster, smoother scrolling in the Contacts list, plus quicker home screen widget updates.",
       "c7": "Fixed projected totals around time zone changes, enlarged header buttons for easier tapping, and polished countless small details throughout the app."
     },
-    "1410": {
-      "c1": "New: Meet Scribe AI. Paste your field-ministry notes — a handwritten-style log or an export from another app — and Scribe AI turns them into contacts, visits, and time entries for you to review before anything is saved. No more manual re-entry, and you can start an import right from onboarding.",
-      "c2": "Your Supporter status now restores more reliably across sign-ins and devices.",
-      "c3": "Resolved a rare crash that could occur when closing a picker.",
-      "c4": "Improved reliability when the app hits a temporary storage or location hiccup, so your contacts and edits save dependably even on a flaky connection.",
-      "c5": "Hourglass and NW Publisher export are back, so submitting your Service Report through your congregation's app is just a tap away again.",
-      "c6": "Choose your default Service Report submission method once, then WitnessWork can remind you at month-end and open your preferred option automatically.",
-      "c7": "Plans are simpler to manage, with cleaner lists, faster editing, and clear choices for changing one recurring date, future dates, or the whole plan.",
-      "c8": "Schedule now shows each day's status at a glance, including ahead, behind, on track, upcoming, matched, or no plan.",
-      "c9": "Time rollover now keeps Credit Time in its original month by default, with a preference if you want Credit Time included in rollover."
+    "1411": {
+      "c1": "New: Meet Scribe AI. Paste your field-ministry notes, whether a handwritten-style log or an export from another app, and Scribe AI turns them into contacts, visits, and time entries for you to review before anything is saved. Refine the results by chatting inline, start an import right from onboarding, and never lose a credit on an import that finds nothing.",
+      "c2": "A new customizable This Month dashboard on the home screen. Your goal, projection, and schedule pace live in cards you can arrange and expand, while your Service Report stays in one clean card. Tap the report for a full breakdown.",
+      "c3": "Monthly goal overrides. Set a different goal for a single month when your circumstances change, and see your planned hours as their own progress ring.",
+      "c4": "Plan more than one thing per day. Day plans on the same date now add together, each keeping its own category, and plans that do not count toward a day are clearly marked.",
+      "c5": "Easier editing everywhere. Plans, time entries, and conversations now have an ellipsis menu for Edit and Delete, and recurring plans offer clear choices for changing one date, future dates, or the whole series.",
+      "c6": "Service Reports: Hourglass and NW Publisher submission are back, you can pick a default submission method, edit the report comment before sending, and get a month-end reminder. The year-by-year history can now be trimmed or backfilled with earlier years.",
+      "c7": "Schedule now shows each day's status at a glance: ahead, behind, on track, upcoming, matched, or no plan.",
+      "c8": "Supporter status now follows your Apple ID across devices, Scribe AI allowances roll over on a schedule, and the Supporter screen has been simplified.",
+      "c9": "Fixed time entries and plans landing on the wrong day in time zones at UTC+12 and beyond, plus wrong-day dates late in the evening west of UTC. Fixed map pins opening the wrong contact after swiping the card carousel. Time rollover now keeps Credit Time in its original month by default.",
+      "c10": "The Credit toggle on categories is now available to every hours-based role. Also fixed a rare crash when closing a picker, restored favorite stars and the current-month Bible study icon, updated to Expo SDK 57, and trimmed the app size."
     }
   },
   "installed": "Installed",

@@ -4,8 +4,11 @@ import {
   RecurringPlanFrequencies,
   RecurringPlanOverride,
   getTotalMinutesForServiceYear,
+  getCategoryBreakdownForServiceYear,
   adjustedMinutesForSpecificMonth,
 } from '@/lib/serviceReport'
+import { getServiceYearReports } from '@/lib/serviceYear'
+import { LDC_BUILTIN_CATEGORY_ID } from '@/constants/categories'
 import {
   getPlansIntersectingDay,
   plannedMinutesToCurrentDayForMonth,
@@ -863,6 +866,189 @@ describe('lib/serviceReport', () => {
         { enabled: true, customLimitHours: 60 }
       )
       expect(minutes).toBe(60 * 60)
+    })
+  })
+
+  describe('getCategoryBreakdownForServiceYear', () => {
+    it('splits standard, LDC, and per-category minutes across both halves of the service year', () => {
+      const year = 2023
+      const serviceReports: TimeEntriesByYear = {
+        [year]: {
+          8: [
+            {
+              minutes: 30,
+              date: moment().year(year).month(8).toDate(),
+              hours: 2,
+              id: '0',
+            },
+            {
+              minutes: 0,
+              date: moment().year(year).month(8).toDate(),
+              hours: 3,
+              id: '1',
+              categoryId: 'cards',
+              tag: 'Cart Witnessing',
+            },
+          ],
+          10: [
+            {
+              minutes: 0,
+              date: moment().year(year).month(10).toDate(),
+              hours: 5,
+              id: '2',
+              categoryId: LDC_BUILTIN_CATEGORY_ID,
+              credit: true,
+            },
+          ],
+        },
+        [year + 1]: {
+          1: [
+            {
+              minutes: 15,
+              date: moment()
+                .year(year + 1)
+                .month(1)
+                .toDate(),
+              hours: 1,
+              id: '3',
+              categoryId: 'cards',
+              tag: 'Cart Witnessing',
+            },
+          ],
+        },
+      }
+
+      const breakdown = getCategoryBreakdownForServiceYear(
+        getServiceYearReports(serviceReports, year)
+      )
+
+      expect(breakdown.standard).toBe(2 * 60 + 30)
+      expect(breakdown.ldc).toBe(5 * 60)
+      // Both halves of the service year collapse into a single category row.
+      expect(breakdown.other).toEqual([
+        {
+          categoryId: 'cards',
+          tag: 'Cart Witnessing',
+          minutes: 4 * 60 + 15,
+          credit: undefined,
+        },
+      ])
+    })
+
+    it('excludes months outside the service year', () => {
+      const year = 2023
+      const serviceReports: TimeEntriesByYear = {
+        [year]: {
+          // Aug 2023 belongs to the PRIOR service year (2022-2023).
+          7: [
+            {
+              minutes: 0,
+              date: moment().year(year).month(7).toDate(),
+              hours: 10,
+              id: '0',
+              categoryId: 'cards',
+              tag: 'Cart Witnessing',
+            },
+          ],
+          8: [
+            {
+              minutes: 0,
+              date: moment().year(year).month(8).toDate(),
+              hours: 1,
+              id: '1',
+              categoryId: 'cards',
+              tag: 'Cart Witnessing',
+            },
+          ],
+        },
+      }
+
+      const breakdown = getCategoryBreakdownForServiceYear(
+        getServiceYearReports(serviceReports, year)
+      )
+
+      expect(breakdown.other).toEqual([
+        {
+          categoryId: 'cards',
+          tag: 'Cart Witnessing',
+          minutes: 60,
+          credit: undefined,
+        },
+      ])
+    })
+
+    it('handles legacy entries: `ldc: true` counts as LDC and tag-only entries group by tag', () => {
+      const year = 2023
+      const serviceReports: LegacyTimeEntriesByYear = {
+        [year]: {
+          9: [
+            {
+              minutes: 0,
+              ldc: true,
+              date: moment().year(year).month(9).toDate(),
+              hours: 4,
+              id: '0',
+            },
+            {
+              minutes: 0,
+              date: moment().year(year).month(9).toDate(),
+              hours: 2,
+              id: '1',
+              tag: 'Letter Writing',
+            },
+          ],
+          11: [
+            {
+              minutes: 30,
+              date: moment().year(year).month(11).toDate(),
+              hours: 0,
+              id: '2',
+              tag: 'Letter Writing',
+            },
+          ],
+        },
+      }
+
+      const breakdown = getCategoryBreakdownForServiceYear(
+        getServiceYearReports(serviceReports as TimeEntriesByYear, year)
+      )
+
+      expect(breakdown.standard).toBe(0)
+      expect(breakdown.ldc).toBe(4 * 60)
+      expect(breakdown.other).toEqual([
+        {
+          categoryId: undefined,
+          tag: 'Letter Writing',
+          minutes: 2 * 60 + 30,
+          credit: undefined,
+        },
+      ])
+    })
+
+    it('returns raw sums, unadjusted for the monthly credit cap', () => {
+      const year = 2023
+      const serviceReports: TimeEntriesByYear = {
+        [year]: {
+          10: [
+            {
+              minutes: 0,
+              date: moment().year(year).month(10).toDate(),
+              hours: 70,
+              id: '0',
+              categoryId: LDC_BUILTIN_CATEGORY_ID,
+              credit: true,
+            },
+          ],
+        },
+      }
+
+      const breakdown = getCategoryBreakdownForServiceYear(
+        getServiceYearReports(serviceReports, year)
+      )
+
+      // 70h > the 55h monthly credit cap — the per-category view reports what
+      // was logged, mirroring the lifetime helpers' unadjusted stance.
+      expect(breakdown.ldc).toBe(70 * 60)
     })
   })
 

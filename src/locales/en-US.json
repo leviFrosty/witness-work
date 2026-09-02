@@ -1623,6 +1623,7 @@
   "viewFullSchedule": "View full schedule",
   "categoryBreakdown": "Category breakdown",
   "categoryBreakdown_description": "How your hours are distributed across service categories this month.",
+  "categoryBreakdown_serviceYear_description": "How your hours are distributed across service categories this service year. Totals are raw logged time, not adjusted for credit caps.",
   "aboutCreditCap": "About your credit cap",
   "aboutCreditCap_description": "Your credit cap limits how much credit time counts toward your monthly goal. Hours logged beyond the cap are still tracked but don't reduce the hours you need to hit.",
   "Progress": "Progress",

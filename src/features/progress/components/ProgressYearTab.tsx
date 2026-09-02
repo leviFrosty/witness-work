@@ -20,6 +20,7 @@ import i18n from '@/lib/locales'
 
 import YearMilestoneCard from '@/components/YearMilestoneCard'
 import ProjectedTotalCard from '@/components/ProjectedTotalCard'
+import YearCategoryBreakdownCard from '@/features/progress/components/YearCategoryBreakdownCard'
 import Text from '@/components/ui/MyText'
 import LucideIcon from '@/components/ui/LucideIcon'
 import XView from '@/components/ui/layout/XView'
@@ -293,6 +294,8 @@ const ProgressYearTab = ({
       ) : null}
 
       <ProjectedTotalCard scope={projectedScope} />
+
+      <YearCategoryBreakdownCard year={year} />
 
       <View style={{ gap: 8, paddingTop: 10 }}>
         <View style={{ gap: 6 }}>

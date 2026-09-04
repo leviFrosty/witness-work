@@ -858,6 +858,18 @@
       "c7": "Mipango ni rahisi kudhibiti, na orodha safi, uhariri wa haraka, na chaguo wazi za kubadilisha tarehe moja ya mara kwa mara, tarehe zijazo, au mpango mzima.",
       "c8": "Ratiba sasa inaonyesha hali ya kila siku kwa muhtasari, ikiwa ni pamoja na mbele, nyuma, kwenye wimbo, ujao, unaolingana, au hakuna mpango.",
       "c9": "Muda wa kurejesha sasa huweka Muda wa Mkopo katika mwezi wake wa awali kwa chaguo-msingi, kwa upendeleo ikiwa unataka Muda wa Mkopo ujumuishwe katika rollover."
+    },
+    "1411": {
+      "c1": "Mpya: Kutana na Scribe AI. Bandika maelezo yako ya huduma ya shambani, iwe ni kumbukumbu iliyoandikwa kwa mkono au data iliyohamishwa kutoka programu nyingine, na Scribe AI itayageuza kuwa anwani, ziara na maingizo ya muda ili uyakague kabla chochote hakijahifadhiwa. Boresha matokeo kwa kuzungumza ndani ya ukurasa, anza uingizaji moja kwa moja wakati wa usanidi wa mwanzo, na usipoteze Kamwe Salio la Uingizaji ikiwa hakuna kilichopatikana.",
+      "c2": "Dashibodi mpya ya Mwezi Huu inayoweza kubadilishwa kwenye skrini ya mwanzo. Lengo lako, makadirio na mwendo wa ratiba vinaonekana katika kadi unazoweza kupanga na kupanua, huku Ripoti yako ya Huduma ikibaki katika kadi moja safi. Gusa ripoti ili kuona uchanganuzi kamili.",
+      "c3": "Mabadiliko ya Lengo la Mwezi. Weka lengo tofauti kwa mwezi mmoja hali zako zinapobadilika, na uone saa ulizopanga katika duara lake la maendeleo.",
+      "c4": "Panga zaidi ya jambo moja kwa siku. Mipango ya Siku ya tarehe ileile sasa hujumlishwa, huku kila mmoja ukihifadhi aina yake, na mipango isiyohesabiwa katika siku huonyeshwa wazi.",
+      "c5": "Uhariri rahisi kila mahali. Mipango, maingizo ya muda na mazungumzo sasa yana menyu ya nukta tatu ya Hariri na Futa, na mipango inayojirudia hutoa chaguo wazi za kubadilisha tarehe moja, tarehe zijazo au mfululizo wote.",
+      "c6": "Ripoti za Huduma: Uwasilishaji kupitia Hourglass na NW Publisher umerudi, unaweza kuchagua njia msingi ya kuwasilisha, kuhariri maoni ya ripoti kabla ya kuituma, na kupata kikumbusho cha mwisho wa mwezi. Historia ya kila mwaka sasa inaweza kupunguzwa au kujazwa kwa miaka ya awali.",
+      "c7": "Ratiba sasa inaonyesha hali ya kila siku kwa muhtasari: mbele, nyuma, sawa na mpango, inayokuja, inayolingana, au hakuna mpango.",
+      "c8": "Hali ya Mfadhili sasa hufuata Apple ID yako kwenye vifaa vyote, marupurupu ya Scribe AI huhamishwa kwa ratiba, na skrini ya Mfadhili imerahisishwa.",
+      "c9": "Maingizo ya muda na mipango yaliyokuwa yakiwekwa siku isiyo sahihi katika saa za maeneo ya UTC+12 na zaidi yamerekebishwa, pamoja na tarehe za siku isiyo sahihi usiku sana magharibi mwa UTC. Pini za ramani zilizokuwa zikifungua anwani isiyo sahihi baada ya kutelezesha mfululizo wa kadi zimerekebishwa. Uhamisho wa Muda sasa huacha Muda wa Ziada katika mwezi wake wa awali kwa msingi.",
+      "c10": "Kigeuzi cha Muda wa Ziada kwenye aina sasa kinapatikana kwa kila mhubiri anayeingiza saa. Pia, hitilafu nadra wakati wa kufunga kichagua imerekebishwa, nyota za vipendwa na ikoni ya funzo la Biblia ya mwezi huu zimerejeshwa, programu imesasishwa hadi Expo SDK 57, na ukubwa wake umepunguzwa."
     }
   },
   "installed": "Imesakinishwa",
@@ -2274,5 +2286,20 @@
         "unreachable_gap": "Saa zilizopangwa zinakuweka katika **{{projected}}**. **{{gap}}** hadi lengo - kunyoosha kutoka hapa."
       }
     }
-  }
+  },
+  "moreActions": "Vitendo zaidi",
+  "moreActionsFor": "Vitendo zaidi kwa {{name}}",
+  "removeCategory_title": "Uondoe \"{{name}}\"?",
+  "removeCategory_description": "Aina hii itaondolewa kwenye kichagua na ingizo hili litarudi kuwa la Kawaida. Maingizo ya muda yaliyohifadhiwa tayari nayo yataendelea kuirejelea. Kitendo hiki hakiwezi kutenduliwa.",
+  "notesImport_updateRequired": "Sasisha WitnessWork ili utumie Uingizaji wa Vidokezo.",
+  "notesImport_updateRequiredBanner": "Toleo la programu yako {{current}} ni la chini kuliko toleo la chini kabisa {{min}} linalohitajika kwa Uingizaji kutoka Maelezo. Sasisha WitnessWork ili kuendelea.",
+  "notCounted": "Haijahesabiwa",
+  "notCountedToday": "Haijahesabiwa leo ({{count}})",
+  "notCountedPlanAccessibilityHint": "Mpango huu hauchangii jumla ya muda uliopangwa leo.",
+  "dayPlansReplaceRecurringPlans_description": "Mipango ya mara moja huchukua nafasi ya mipango inayojirudia kwa tarehe hii.",
+  "highestRecurringPlanCounts_description": "Ni mpango unaojirudia wenye muda mwingi zaidi pekee unaohesabiwa kwa tarehe hii.",
+  "removeMilestone_title": "Uondoe hatua muhimu ya saa {{hours}}?",
+  "removeMilestone_description": "Hatua hii muhimu itaondolewa kwenye mwambaa wako wa maendeleo. Muda ulioingiza hautaathiriwa, na unaweza kuiongeza tena baadaye.",
+  "clearAllFilters_title": "Ufute vichujio vyote?",
+  "clearAllFilters_description": "Kila kichujio kilichohifadhiwa kitaondolewa na orodha yako ya anwani itaonyesha kila mtu tena. Unaweza kuongeza vichujio wakati wowote."
 }

@@ -858,6 +858,18 @@
       "c7": "Les plans sont plus simples à gérer, avec des listes plus nettes, une édition plus rapide et des choix clairs pour changer une date récurrente, des dates futures ou l’ensemble du plan.",
       "c8": "Le planning affiche désormais le statut de chaque jour en un coup d'œil, incluant en avance, en retard, sur la piste, à venir, correspondant ou sans plan.",
       "c9": "Le transfert de temps conserve désormais le temps de crédit dans son mois d’origine par défaut, avec une préférence si vous voulez que le temps de crédit soit inclus dans le roulement."
+    },
+    "1411": {
+      "c1": "Nouveau : découvrez Scribe AI. Collez vos notes de service du champ, qu’il s’agisse d’un journal manuscrit ou d’un export d’une autre application, et Scribe AI les transforme en contacts, visites et saisies de temps que vous pouvez vérifier avant tout enregistrement. Affinez les résultats en discutant directement dans l’écran, lancez une importation dès l’accueil et ne perdez jamais de crédit pour une importation qui ne trouve rien.",
+      "c2": "Un nouveau tableau de bord « Ce mois-ci » personnalisable sur l’écran d’accueil. Votre objectif, votre projection et votre rythme par rapport au programme figurent dans des cartes que vous pouvez organiser et développer, tandis que votre rapport de service reste dans une seule carte épurée. Touchez le rapport pour voir le détail complet.",
+      "c3": "Objectifs mensuels personnalisés. Définissez un objectif différent pour un mois précis lorsque votre situation change, et consultez vos heures planifiées dans leur propre anneau de progression.",
+      "c4": "Planifiez plusieurs activités par jour. Les plans journaliers d’une même date s’additionnent désormais, chacun conserve sa propre catégorie, et les plans qui ne comptent pas pour une journée sont clairement signalés.",
+      "c5": "La modification est plus simple partout. Les plans, saisies de temps et visites disposent désormais d’un menu à points de suspension pour modifier ou supprimer, et les plans récurrents proposent des choix clairs pour modifier une date, les dates futures ou toute la série.",
+      "c6": "Rapports de service : les envois par Hourglass et NW Publisher sont de retour. Vous pouvez choisir une méthode d’envoi par défaut, modifier le commentaire du rapport avant l’envoi et recevoir un rappel en fin de mois. L’historique annuel peut désormais être raccourci ou complété avec des années antérieures.",
+      "c7": "Le programme affiche désormais l’état de chaque journée en un coup d’œil : en avance, en retard, dans les temps, à venir, correspondant ou sans plan.",
+      "c8": "Votre statut de Supporter est désormais lié à votre identifiant Apple sur tous vos appareils, les quotas Scribe AI sont renouvelés selon un calendrier et l’écran Supporter a été simplifié.",
+      "c9": "Correction des saisies de temps et des plans placés au mauvais jour dans les fuseaux horaires UTC+12 et au-delà, ainsi que des dates indiquant le mauvais jour tard le soir à l’ouest d’UTC. Correction également des marqueurs de carte qui ouvraient le mauvais contact après avoir fait défiler le carrousel de cartes. Le report de temps conserve désormais le temps crédité dans son mois d’origine par défaut.",
+      "c10": "Le bouton Temps crédité des catégories est désormais disponible pour tous les rôles de Proclamateur basés sur les heures. Correction également d’un plantage rare à la fermeture d’un sélecteur, restauration des étoiles de favoris et de l’icône d’étude biblique du mois en cours, mise à jour vers Expo SDK 57 et réduction de la taille de l’application."
     }
   },
   "installed": "installée",
@@ -2274,5 +2286,20 @@
         "unreachable_gap": "Les horaires planifiés vous placent à **{{projected}}**. **{{gap}}** vers le but — un étirement à partir d’ici."
       }
     }
-  }
+  },
+  "moreActions": "Plus d’actions",
+  "moreActionsFor": "Plus d’actions pour {{name}}",
+  "removeCategory_title": "Supprimer « {{name}} » ?",
+  "removeCategory_description": "Cette catégorie est retirée du sélecteur et cette saisie repasse en Standard. Les saisies de temps déjà enregistrées avec cette catégorie continuent d’y faire référence. Cette action est irréversible.",
+  "notesImport_updateRequired": "Mettez WitnessWork à jour pour utiliser l’importation de notes.",
+  "notesImport_updateRequiredBanner": "La version {{current}} de votre application est antérieure à la version minimale {{min}} requise pour l’importation de notes. Mettez WitnessWork à jour pour continuer.",
+  "notCounted": "Non comptabilisé",
+  "notCountedToday": "Non comptabilisé aujourd’hui ({{count}})",
+  "notCountedPlanAccessibilityHint": "Ce plan ne contribue pas au total planifié d’aujourd’hui.",
+  "dayPlansReplaceRecurringPlans_description": "Les plans ponctuels remplacent les plans récurrents à cette date.",
+  "highestRecurringPlanCounts_description": "Seul le plan récurrent comportant le plus de temps compte pour cette date.",
+  "removeMilestone_title": "Supprimer le jalon de {{hours}} heures ?",
+  "removeMilestone_description": "Ce jalon est retiré de votre barre de progression. Votre temps enregistré n’est pas modifié et vous pourrez ajouter de nouveau ce jalon plus tard.",
+  "clearAllFilters_title": "Effacer tous les filtres ?",
+  "clearAllFilters_description": "Tous les filtres enregistrés sont supprimés et votre liste de contacts affiche de nouveau tout le monde. Vous pouvez ajouter des filtres à tout moment."
 }

@@ -858,6 +858,18 @@
       "c7": "Các gói đơn giản hơn để quản lý, với danh sách gọn gàng hơn, chỉnh sửa nhanh hơn và các lựa chọn rõ ràng để thay đổi một ngày định kỳ, ngày trong tương lai hoặc toàn bộ gói.",
       "c8": "Lịch trình hiện hiển thị nhanh trạng thái của mỗi ngày, bao gồm phía trước, phía sau, đang đi đua, sắp tới, phù hợp hoặc không có kế hoạch.",
       "c9": "Giờ đây, tính năng chuyển đổi thời gian hiện giữ Thời gian tín dụng trong tháng ban đầu theo mặc định, với tùy chọn nếu bạn muốn Thời gian tín dụng được bao gồm trong chuyển đổi."
+    },
+    "1411": {
+      "c1": "Mới: Làm quen với Scribe AI. Dán ghi chú rao giảng của bạn, dù là nhật ký theo kiểu viết tay hay dữ liệu xuất từ ứng dụng khác, và Scribe AI sẽ chuyển chúng thành người liên hệ, lần thăm và mục ghi thời gian để bạn xem lại trước khi lưu. Tinh chỉnh kết quả bằng cách trò chuyện ngay trên màn hình, bắt đầu nhập dữ liệu từ quá trình thiết lập ban đầu và không bao giờ mất lượt nhập nếu quá trình nhập không tìm thấy gì.",
+      "c2": "Bảng điều khiển Tháng này mới và có thể tùy chỉnh trên màn hình chính. Mục tiêu, dự tính và tiến độ theo lịch của bạn nằm trong các thẻ có thể sắp xếp và mở rộng, còn Báo cáo rao giảng vẫn gọn gàng trong một thẻ. Chạm vào báo cáo để xem đầy đủ chi tiết.",
+      "c3": "Ghi đè mục tiêu theo tháng. Đặt mục tiêu khác cho một tháng cụ thể khi hoàn cảnh thay đổi và xem số giờ đã lên kế hoạch trong vòng tiến độ riêng.",
+      "c4": "Lên kế hoạch cho nhiều hoạt động trong một ngày. Các kế hoạch ngày cùng ngày giờ đây được cộng lại, mỗi kế hoạch vẫn giữ danh mục riêng, và những kế hoạch không được tính cho ngày đó sẽ được đánh dấu rõ ràng.",
+      "c5": "Chỉnh sửa dễ dàng hơn ở mọi nơi. Kế hoạch, mục ghi thời gian và lần thăm giờ có menu dấu ba chấm để Chỉnh sửa và Xóa; kế hoạch định kỳ cũng có lựa chọn rõ ràng để thay đổi một ngày, các ngày trong tương lai hoặc toàn bộ chuỗi.",
+      "c6": "Báo cáo rao giảng: tính năng gửi qua Hourglass và NW Publisher đã trở lại. Bạn có thể chọn phương thức gửi mặc định, sửa nhận xét của báo cáo trước khi gửi và nhận lời nhắc cuối tháng. Lịch sử theo năm giờ có thể được rút gọn hoặc bổ sung các năm trước.",
+      "c7": "Lịch giờ hiển thị trạng thái từng ngày trong nháy mắt: vượt trước, chậm tiến độ, đúng tiến độ, sắp tới, khớp hoặc không có kế hoạch.",
+      "c8": "Trạng thái Người ủng hộ giờ theo Apple ID của bạn trên các thiết bị, hạn mức Scribe AI được làm mới theo lịch và màn hình Người ủng hộ đã được đơn giản hóa.",
+      "c9": "Đã sửa lỗi khiến mục ghi thời gian và kế hoạch rơi vào sai ngày ở múi giờ UTC+12 trở lên, cũng như ngày bị sai vào buổi tối muộn ở phía tây UTC. Đã sửa lỗi ghim bản đồ mở sai người liên hệ sau khi vuốt băng chuyền thẻ. Chuyển tiếp thời gian giờ mặc định giữ Thời gian tín dụng trong tháng ban đầu.",
+      "c10": "Nút chuyển Tín dụng trên danh mục giờ khả dụng cho mọi vai trò Người công bố ghi theo giờ. Cũng đã sửa lỗi hiếm gặp khi đóng bộ chọn, khôi phục dấu sao yêu thích và biểu tượng học hỏi Kinh Thánh của tháng hiện tại, cập nhật lên Expo SDK 57 và giảm kích thước ứng dụng."
     }
   },
   "installed": "Cài đặt",
@@ -2274,5 +2286,20 @@
         "unreachable_gap": "Giờ theo kế hoạch đặt bạn vào **{{projected}}**. **{{gap}}** đến mục tiêu - một đoạn từ đây."
       }
     }
-  }
+  },
+  "moreActions": "Thêm thao tác",
+  "moreActionsFor": "Thêm thao tác cho {{name}}",
+  "removeCategory_title": "Xóa “{{name}}”?",
+  "removeCategory_description": "Danh mục này sẽ bị xóa khỏi bộ chọn và mục ghi này chuyển về Tiêu chuẩn. Những mục ghi thời gian đã lưu với danh mục này vẫn tiếp tục tham chiếu đến nó. Bạn không thể hoàn tác thao tác này.",
+  "notesImport_updateRequired": "Cập nhật WitnessWork để sử dụng tính năng Nhập ghi chú.",
+  "notesImport_updateRequiredBanner": "Phiên bản ứng dụng {{current}} thấp hơn phiên bản tối thiểu {{min}} cần có để Nhập ghi chú. Hãy cập nhật WitnessWork để tiếp tục.",
+  "notCounted": "Không được tính",
+  "notCountedToday": "Không được tính hôm nay ({{count}})",
+  "notCountedPlanAccessibilityHint": "Kế hoạch này không đóng góp vào tổng thời gian đã lên kế hoạch hôm nay.",
+  "dayPlansReplaceRecurringPlans_description": "Kế hoạch một lần thay thế kế hoạch định kỳ cho ngày này.",
+  "highestRecurringPlanCounts_description": "Chỉ kế hoạch định kỳ có nhiều thời gian nhất được tính cho ngày này.",
+  "removeMilestone_title": "Xóa cột mốc {{hours}} giờ?",
+  "removeMilestone_description": "Cột mốc này sẽ bị xóa khỏi thanh tiến độ. Thời gian đã ghi không bị ảnh hưởng và bạn có thể thêm lại sau.",
+  "clearAllFilters_title": "Xóa tất cả bộ lọc?",
+  "clearAllFilters_description": "Mọi bộ lọc đã lưu sẽ bị xóa và danh sách người liên hệ trở lại hiển thị tất cả mọi người. Bạn có thể thêm lại bộ lọc bất cứ lúc nào."
 }

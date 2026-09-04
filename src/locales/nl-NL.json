@@ -858,6 +858,18 @@
       "c7": "Plannen zijn eenvoudiger te beheren, met strakkere lijsten, snellere bewerkingen en duidelijke keuzes om één terugkerende datum, toekomstige data of het hele plan te wijzigen.",
       "c8": "Het schema toont nu in één oogopslag de status van elke dag, inclusief vooruit, achter, op schema, aankomend, gematcht of geen plan.",
       "c9": "Tijdsoverdracht houdt Credit Time nu standaard in de oorspronkelijke maand, met een voorkeur als je Credit Time in de rollover wilt meenemen."
+    },
+    "1411": {
+      "c1": "Nieuw: maak kennis met Scribe AI. Plak je velddienstnotities, of het nu om een handgeschreven logboek of een export uit een andere app gaat, en Scribe AI zet ze om in contacten, bezoeken en tijdinvoer die je kunt controleren voordat er iets wordt opgeslagen. Verfijn de resultaten via de chat in het scherm, start een import rechtstreeks vanuit de eerste configuratie en verlies nooit een tegoed aan een import die niets vindt.",
+      "c2": "Een nieuw, aanpasbaar dashboard ‘Deze maand’ op het beginscherm. Je doel, prognose en voortgang op het schema staan in kaarten die je kunt rangschikken en uitvouwen, terwijl je velddienstverslag in één overzichtelijke kaart blijft. Tik op het verslag voor een volledige uitsplitsing.",
+      "c3": "Aangepaste maanddoelen. Stel voor één maand een ander doel in wanneer je omstandigheden veranderen en bekijk je geplande uren in een eigen voortgangsring.",
+      "c4": "Plan meer dan één activiteit per dag. Dagplannen op dezelfde datum worden nu bij elkaar opgeteld, elk plan behoudt zijn eigen categorie en plannen die voor een dag niet meetellen worden duidelijk gemarkeerd.",
+      "c5": "Overal eenvoudiger bewerken. Plannen, tijdinvoer en bezoeken hebben nu een menu met drie puntjes voor Bewerken en Verwijderen. Bij terugkerende plannen kun je duidelijk kiezen of je één datum, toekomstige datums of de hele reeks wilt wijzigen.",
+      "c6": "Velddienstverslagen: indienen via Hourglass en NW Publisher is terug. Je kunt een standaardmethode kiezen, de opmerking bij het verslag vóór verzending bewerken en aan het einde van de maand een herinnering krijgen. De jaarhistorie kan nu worden ingekort of met eerdere jaren worden aangevuld.",
+      "c7": "Het schema toont nu de status van elke dag in één oogopslag: voor, achter, op schema, aanstaand, overeenkomend of geen plan.",
+      "c8": "Je Supporterstatus volgt nu je Apple ID op al je apparaten, Scribe AI-tegoeden worden volgens een schema vernieuwd en het Supporterscherm is vereenvoudigd.",
+      "c9": "Problemen opgelost waarbij tijdinvoer en plannen in tijdzones vanaf UTC+12 op de verkeerde dag terechtkwamen en datums ten westen van UTC laat op de avond de verkeerde dag aangaven. Ook opgelost dat kaartmarkeringen na het vegen door de kaartencarrousel het verkeerde contact openden. Tijdoverdracht houdt gecrediteerde tijd nu standaard in de oorspronkelijke maand.",
+      "c10": "De schakelaar Gecrediteerde tijd bij categorieën is nu beschikbaar voor elke Verkondigersrol die uren registreert. Ook zijn een zeldzame crash bij het sluiten van een kiezer opgelost, favorietensterren en het Bijbelstudie-pictogram van de huidige maand hersteld, is bijgewerkt naar Expo SDK 57 en is de app kleiner gemaakt."
     }
   },
   "installed": "Geïnstalleerd",
@@ -2274,5 +2286,20 @@
         "unreachable_gap": "Geplande uren brengen je op **{{projected}}**. **{{gap}}** naar doel — een stuk vanaf hier."
       }
     }
-  }
+  },
+  "moreActions": "Meer acties",
+  "moreActionsFor": "Meer acties voor {{name}}",
+  "removeCategory_title": "‘{{name}}’ verwijderen?",
+  "removeCategory_description": "Deze categorie wordt uit de kiezer verwijderd en deze invoer schakelt terug naar Standaard. Tijdinvoer die al met deze categorie is opgeslagen blijft ernaar verwijzen. Dit kan niet ongedaan worden gemaakt.",
+  "notesImport_updateRequired": "Werk WitnessWork bij om Notities importeren te gebruiken.",
+  "notesImport_updateRequiredBanner": "Je appversie {{current}} is ouder dan de minimaal vereiste versie {{min}} voor Notities importeren. Werk WitnessWork bij om door te gaan.",
+  "notCounted": "Niet meegeteld",
+  "notCountedToday": "Vandaag niet meegeteld ({{count}})",
+  "notCountedPlanAccessibilityHint": "Dit plan draagt niet bij aan het geplande totaal van vandaag.",
+  "dayPlansReplaceRecurringPlans_description": "Eenmalige plannen vervangen terugkerende plannen voor deze datum.",
+  "highestRecurringPlanCounts_description": "Alleen het terugkerende plan met de meeste tijd telt voor deze datum mee.",
+  "removeMilestone_title": "De mijlpaal van {{hours}} uur verwijderen?",
+  "removeMilestone_description": "Deze mijlpaal wordt van je voortgangsbalk verwijderd. Je geregistreerde tijd verandert niet en je kunt de mijlpaal later opnieuw toevoegen.",
+  "clearAllFilters_title": "Alle filters wissen?",
+  "clearAllFilters_description": "Alle opgeslagen filters worden verwijderd en je contactenlijst toont weer iedereen. Je kunt op elk moment opnieuw filters toevoegen."
 }

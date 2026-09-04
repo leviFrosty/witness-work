@@ -858,6 +858,18 @@
       "c7": "Os planos são mais simples de gerenciar, com listas mais limpas, edição mais rápida e escolhas claras para mudar uma data recorrente, datas futuras ou todo o plano.",
       "c8": "O cronograma agora mostra o status de cada dia em um vislumbre, incluindo adiantado, atrás, no caminho, futuro, combinado ou sem plano.",
       "c9": "O rollover de tempo agora mantém o Tempo de Crédito no mês original por padrão, com preferência se você quiser que o Tempo de Crédito seja incluído no rollover."
+    },
+    "1411": {
+      "c1": "Novidade: conheça o Scribe AI. Cole suas anotações do ministério de campo, seja um registro em estilo manuscrito ou uma exportação de outro aplicativo, e o Scribe AI as transforma em contatos, visitas e registros de tempo para você revisar antes de qualquer coisa ser salva. Refine os resultados conversando na própria tela, inicie uma importação diretamente na configuração inicial e nunca perca um crédito em uma importação que não encontrar nada.",
+      "c2": "Um novo painel personalizável de Este mês na tela inicial. Sua meta, projeção e ritmo da programação ficam em cartões que você pode organizar e expandir, enquanto seu relatório de serviço permanece em um único cartão organizado. Toque no relatório para ver todos os detalhes.",
+      "c3": "Substituições de meta mensal. Defina uma meta diferente para um único mês quando suas circunstâncias mudarem e veja suas horas planejadas em um anel de progresso próprio.",
+      "c4": "Planeje mais de uma atividade por dia. Os planos diários na mesma data agora são somados, cada um mantém sua própria categoria, e os planos que não contam para um dia são claramente identificados.",
+      "c5": "Edição mais fácil em todos os lugares. Planos, registros de tempo e visitas agora têm um menu de reticências para Editar e Excluir, e os planos recorrentes oferecem opções claras para alterar uma data, datas futuras ou toda a série.",
+      "c6": "Relatórios de serviço: os envios pelo Hourglass e pelo NW Publisher estão de volta. Você pode escolher um método de envio padrão, editar o comentário do relatório antes de enviar e receber um lembrete no fim do mês. O histórico por ano agora pode ser reduzido ou preenchido com anos anteriores.",
+      "c7": "A programação agora mostra rapidamente o status de cada dia: adiantado, atrasado, no ritmo, próximo, correspondente ou sem plano.",
+      "c8": "O status de Apoiador agora acompanha seu ID Apple em todos os dispositivos, as cotas do Scribe AI são renovadas de acordo com uma programação e a tela de Apoiador foi simplificada.",
+      "c9": "Foram corrigidos registros de tempo e planos que caíam no dia errado em fusos horários UTC+12 ou posteriores, além de datas que mostravam o dia errado tarde da noite a oeste de UTC. Também foi corrigido o problema em que os marcadores do mapa abriam o contato errado depois de deslizar pelo carrossel de cartões. A transferência de tempo agora mantém por padrão o Tempo de Crédito no mês original.",
+      "c10": "A opção Crédito nas categorias agora está disponível para todas as funções de Publicador que registram horas. Também foi corrigida uma falha rara ao fechar um seletor, restauradas as estrelas de favoritos e o ícone de estudo bíblico do mês atual, feita a atualização para o Expo SDK 57 e reduzido o tamanho do aplicativo."
     }
   },
   "installed": "Instalado",
@@ -2274,5 +2286,20 @@
         "unreachable_gap": "As horas planejadas te colocam em **{{projected}}**. **{{gap}}** para o gol — um trecho a partir daqui."
       }
     }
-  }
+  },
+  "moreActions": "Mais ações",
+  "moreActionsFor": "Mais ações para {{name}}",
+  "removeCategory_title": "Remover “{{name}}”?",
+  "removeCategory_description": "Esta categoria é removida do seletor e este registro volta para Padrão. Os registros de tempo já salvos com ela continuam fazendo referência à categoria. Isso não pode ser desfeito.",
+  "notesImport_updateRequired": "Atualize o WitnessWork para usar a Importação de Anotações.",
+  "notesImport_updateRequiredBanner": "A versão {{current}} do seu aplicativo é anterior à versão mínima {{min}} exigida para a Importação de Anotações. Atualize o WitnessWork para continuar.",
+  "notCounted": "Não contabilizado",
+  "notCountedToday": "Não contabilizado hoje ({{count}})",
+  "notCountedPlanAccessibilityHint": "Este plano não contribui para o total planejado de hoje.",
+  "dayPlansReplaceRecurringPlans_description": "Planos únicos substituem planos recorrentes nesta data.",
+  "highestRecurringPlanCounts_description": "Somente o plano recorrente com mais tempo conta para esta data.",
+  "removeMilestone_title": "Remover o marco de {{hours}} horas?",
+  "removeMilestone_description": "Este marco é removido da sua barra de progresso. O tempo registrado não é afetado, e você pode adicioná-lo novamente mais tarde.",
+  "clearAllFilters_title": "Limpar todos os filtros?",
+  "clearAllFilters_description": "Todos os filtros salvos são removidos e sua lista de contatos volta a mostrar todas as pessoas. Você pode adicionar filtros novamente a qualquer momento."
 }

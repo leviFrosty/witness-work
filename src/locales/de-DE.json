@@ -858,6 +858,18 @@
       "c7": "Pläne sind einfacher zu verwalten, mit übersichtlicheren Listen, schnellerem Bearbeiten und klaren Optionen für die Änderung eines wiederkehrenden Datums, zukünftiger Daten oder des gesamten Plans.",
       "c8": "Der Zeitplan zeigt nun den Status jedes Tages auf einen Blick an, einschließlich voraus, zurück, auf Kurs, bevorstehend, abgestimmt oder kein Plan.",
       "c9": "Time Rollover behält Credit Time jetzt standardmäßig im ursprünglichen Monat, mit einer Präferenz, wenn Sie Credit Time in den Rollover einbeziehen möchten."
+    },
+    "1411": {
+      "c1": "Neu: Lerne Scribe AI kennen. Füge deine Notizen aus dem Predigtdienst ein – ob als handschriftlich geführtes Protokoll oder als Export aus einer anderen App – und Scribe AI verwandelt sie in Kontakte, Besuche und Zeiteinträge, die du prüfen kannst, bevor etwas gespeichert wird. Verfeinere die Ergebnisse direkt im Chat, starte einen Import schon während des Onboardings und verliere niemals ein Guthaben für einen Import, bei dem nichts gefunden wird.",
+      "c2": "Ein neues, anpassbares Dashboard „Dieser Monat“ auf dem Startbildschirm. Dein Ziel, deine Prognose und dein Zeitplanfortschritt werden in Karten angezeigt, die du anordnen und erweitern kannst, während dein Predigtdienstbericht übersichtlich in einer einzigen Karte bleibt. Tippe auf den Bericht, um eine vollständige Aufschlüsselung zu sehen.",
+      "c3": "Monatliche Zielüberschreibungen. Lege für einen einzelnen Monat ein anderes Ziel fest, wenn sich deine Umstände ändern, und sieh deine geplanten Stunden in einem eigenen Fortschrittsring.",
+      "c4": "Plane mehr als eine Aktivität pro Tag. Tagespläne am selben Datum werden jetzt addiert, wobei jeder seine eigene Kategorie behält. Pläne, die für einen Tag nicht mitgezählt werden, sind klar gekennzeichnet.",
+      "c5": "Einfacheres Bearbeiten überall. Pläne, Zeiteinträge und Besuche haben jetzt ein Drei-Punkte-Menü zum Bearbeiten und Löschen. Bei wiederkehrenden Plänen kannst du klar auswählen, ob du ein Datum, alle zukünftigen Daten oder die ganze Serie ändern möchtest.",
+      "c6": "Predigtdienstberichte: Die Übermittlung über Hourglass und NW Publisher ist wieder verfügbar. Du kannst eine Standardmethode für die Übermittlung auswählen, den Berichtskommentar vor dem Senden bearbeiten und dich zum Monatsende erinnern lassen. Der Jahresverlauf kann jetzt gekürzt oder um frühere Jahre ergänzt werden.",
+      "c7": "Der Zeitplan zeigt jetzt den Status jedes Tages auf einen Blick: voraus, zurück, im Plan, bevorstehend, übereinstimmend oder kein Plan.",
+      "c8": "Der Unterstützerstatus folgt jetzt Ihrer Apple-ID über mehrere Geräte hinweg, Scribe-KI-Kontingente werden nach einem Zeitplan erneuert und der Unterstützer-Bildschirm wurde vereinfacht.",
+      "c9": "Fehler behoben, durch die Zeiteinträge und Pläne in Zeitzonen ab UTC+12 am falschen Tag landeten sowie Datumsangaben westlich von UTC spätabends den falschen Tag zeigten. Außerdem wurde behoben, dass Kartenmarkierungen nach dem Wischen im Kartenkarussell den falschen Kontakt öffneten. Beim Zeitübertrag bleibt Guthabenzeit jetzt standardmäßig im ursprünglichen Monat.",
+      "c10": "Der Schalter für Anrechnungszeit bei Kategorien ist jetzt für jede stundenbasierte Verkündigerrolle verfügbar. Außerdem wurden ein seltener Absturz beim Schließen einer Auswahl behoben, Favoritensterne und das Bibelstudium-Symbol für den aktuellen Monat wiederhergestellt, auf Expo SDK 57 aktualisiert und die App-Größe reduziert."
     }
   },
   "installed": "Eingerichtet",
@@ -2274,5 +2286,20 @@
         "unreachable_gap": "Geplante Arbeitszeiten bringen dich bei **{{projected}}}. **{{gap}}** bis zum Ziel – ein Stück von hier."
       }
     }
-  }
+  },
+  "moreActions": "Weitere Aktionen",
+  "moreActionsFor": "Weitere Aktionen für {{name}}",
+  "removeCategory_title": "„{{name}}“ entfernen?",
+  "removeCategory_description": "Diese Kategorie wird aus der Auswahl entfernt und dieser Eintrag auf Standard zurückgesetzt. Bereits damit gespeicherte Zeiteinträge verweisen weiterhin darauf. Dies kann nicht rückgängig gemacht werden.",
+  "notesImport_updateRequired": "Aktualisiere WitnessWork, um den Notizenimport zu verwenden.",
+  "notesImport_updateRequiredBanner": "Deine App-Version {{current}} liegt unter der für den Notizenimport erforderlichen Mindestversion {{min}}. Aktualisiere WitnessWork, um fortzufahren.",
+  "notCounted": "Nicht mitgezählt",
+  "notCountedToday": "Heute nicht mitgezählt ({{count}})",
+  "notCountedPlanAccessibilityHint": "Dieser Plan trägt nicht zur heutigen geplanten Gesamtzeit bei.",
+  "dayPlansReplaceRecurringPlans_description": "Einmalige Pläne ersetzen für dieses Datum wiederkehrende Pläne.",
+  "highestRecurringPlanCounts_description": "Für dieses Datum zählt nur der wiederkehrende Plan mit der längsten Zeit.",
+  "removeMilestone_title": "Den Meilenstein bei {{hours}} Stunden entfernen?",
+  "removeMilestone_description": "Dieser Meilenstein wird von deiner Fortschrittsleiste entfernt. Deine erfasste Zeit bleibt unverändert und du kannst ihn später wieder hinzufügen.",
+  "clearAllFilters_title": "Alle Filter löschen?",
+  "clearAllFilters_description": "Alle gespeicherten Filter werden entfernt und deine Kontaktliste zeigt wieder alle Personen. Du kannst jederzeit erneut Filter hinzufügen."
 }

@@ -180,7 +180,7 @@ export const ldcMinutesForSpecificMonth = (
  * label sourced from the Category record's `name` (or the legacy `tag` string
  * for unmigrated entries).
  */
-type OtherReports = {
+export type OtherReports = {
   /**
    * Stable id of the underlying Category record, or undefined for unmigrated
    * entries.
@@ -365,6 +365,75 @@ export const getTotalMinutesForServiceYear = (
       applyMonthCreditCap(m.standard, m.credit, effectiveCreditLimitMinutes),
     0
   )
+}
+
+/**
+ * Annual counterpart of the Month breakdown's Standard/LDC/other split. `other`
+ * groups by `categoryId ?? tag` with the same semantics as
+ * `otherMinutesForSpecificMonth`, so the Year view's rows collapse identically
+ * to the Month view's.
+ *
+ * All numbers are RAW logged minutes — deliberately unadjusted for the monthly
+ * credit cap. The cap applies to a month's combined total, so squeezed-out
+ * minutes can't be attributed to any single category; raw sums are the only
+ * per-category number that stays truthful (same stance as the lifetime helpers
+ * below and their "unadjusted" info affordance).
+ */
+export type ServiceYearCategoryBreakdown = {
+  /** Minutes with no category (and not LDC). */
+  standard: number
+  /** Minutes on the LDC builtin Category (or legacy `ldc: true`). */
+  ldc: number
+  /** Per-category minutes for user Categories, excluding LDC. */
+  other: OtherReports
+}
+
+export const getCategoryBreakdownForServiceYear = (
+  serviceYearReports: TimeEntriesByYear
+): ServiceYearCategoryBreakdown => {
+  let standard = 0
+  let ldc = 0
+  const other: OtherReports = []
+
+  for (const year in serviceYearReports) {
+    for (const month in serviceYearReports[year]) {
+      const monthReports = getMonthsReports(
+        serviceYearReports,
+        parseInt(month),
+        parseInt(year)
+      )
+
+      // Trust the bucket key, same as `getServiceYearMonthlyBreakdowns` —
+      // re-filtering by `report.date` would drop legacy entries whose stored
+      // UTC calendar day drifted off their bucket.
+      for (const report of monthReports) {
+        const minutes = report.hours * 60 + report.minutes
+        if (isLdcEntry(report)) {
+          ldc += minutes
+        } else if (hasCategory(report)) {
+          const existing = other.find((item) =>
+            report.categoryId
+              ? item.categoryId === report.categoryId
+              : item.tag === report.tag
+          )
+          if (existing) {
+            existing.minutes += minutes
+          } else {
+            other.push({
+              categoryId: report.categoryId,
+              tag: report.tag ?? report.categoryId ?? '',
+              minutes,
+              credit: report.credit,
+            })
+          }
+        } else {
+          standard += minutes
+        }
+      }
+    }
+  }
+
+  return { standard, ldc, other }
 }
 
 // ---------------------------------------------------------------------------

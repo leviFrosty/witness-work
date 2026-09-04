@@ -858,6 +858,18 @@
       "c7": "Los planes son más sencillos de gestionar, con listas más limpias, edición más rápida y elecciones claras para cambiar una fecha recurrente, fechas futuras o todo el plan.",
       "c8": "El horario ahora muestra el estado de cada día de un vistazo, incluyendo adelantado, por detrás, en la pista, próximo, emparejado o sin plan.",
       "c9": "El rollover temporal ahora mantiene el tiempo de crédito en su mes original por defecto, con preferencia si quieres que el tiempo de crédito se incluya en el rollover."
+    },
+    "1411": {
+      "c1": "Novedad: conoce Scribe AI. Pega tus notas del ministerio del campo, ya sean un registro escrito a mano o una exportación de otra aplicación, y Scribe AI las convertirá en contactos, visitas y registros de tiempo para que los revises antes de guardar nada. Perfecciona los resultados chateando en la propia pantalla, inicia una importación directamente desde la configuración inicial y no pierdas nunca un crédito cuando una importación no encuentre nada.",
+      "c2": "Un nuevo panel personalizable «Este mes» en la pantalla de inicio. Tu objetivo, proyección y ritmo del horario aparecen en tarjetas que puedes ordenar y ampliar, mientras que el informe de servicio permanece en una única tarjeta despejada. Toca el informe para ver un desglose completo.",
+      "c3": "Objetivos mensuales personalizados. Establece un objetivo diferente para un mes concreto cuando cambien tus circunstancias y consulta tus horas planificadas en su propio anillo de progreso.",
+      "c4": "Planifica más de una actividad al día. Los planes diarios de la misma fecha ahora se suman, cada uno conserva su propia categoría y los planes que no cuentan para un día aparecen claramente marcados.",
+      "c5": "Editar es más fácil en todas partes. Los planes, los registros de tiempo y las visitas ahora tienen un menú de puntos suspensivos con las opciones Editar y Eliminar, y los planes recurrentes ofrecen opciones claras para cambiar una fecha, las fechas futuras o toda la serie.",
+      "c6": "Informes de servicio: vuelven los envíos mediante Hourglass y NW Publisher; puedes elegir un método de envío predeterminado, editar el comentario del informe antes de enviarlo y recibir un recordatorio al final del mes. Ahora también puedes recortar el historial por años o completarlo con años anteriores.",
+      "c7": "El horario ahora muestra el estado de cada día de un vistazo: adelantado, atrasado, según lo previsto, próximo, coincidente o sin plan.",
+      "c8": "Tu estado de Colaborador ahora se vincula a tu Apple ID en todos tus dispositivos, las asignaciones de Scribe AI se renuevan según un calendario y la pantalla de Colaborador se ha simplificado.",
+      "c9": "Se corrigieron los registros de tiempo y los planes que aparecían en el día equivocado en las zonas horarias UTC+12 y posteriores, así como las fechas del día incorrecto a última hora de la tarde al oeste de UTC. También se corrigieron los marcadores del mapa que abrían el contacto equivocado tras deslizar el carrusel de tarjetas. El traspaso de tiempo ahora mantiene de forma predeterminada el tiempo acreditable en su mes original.",
+      "c10": "El interruptor de tiempo acreditable de las categorías ahora está disponible para todos los tipos de publicador que registran horas. También se corrigió un fallo poco frecuente al cerrar un selector, se restauraron las estrellas de favoritos y el icono de curso bíblico del mes actual, se actualizó a Expo SDK 57 y se redujo el tamaño de la aplicación."
     }
   },
   "installed": "Instalado",
@@ -2274,5 +2286,20 @@
         "unreachable_gap": "Las horas planificadas te sitúan en **{{projected}}**. **{{gap}}** a portería — un reto difícil desde aquí."
       }
     }
-  }
+  },
+  "moreActions": "Más acciones",
+  "moreActionsFor": "Más acciones para {{name}}",
+  "removeCategory_title": "¿Eliminar «{{name}}»?",
+  "removeCategory_description": "Esta categoría se elimina del selector y este registro vuelve a Estándar. Los registros de tiempo que ya se hayan guardado con ella seguirán haciendo referencia a la categoría. Esta acción no se puede deshacer.",
+  "notesImport_updateRequired": "Actualiza WitnessWork para usar la importación de notas.",
+  "notesImport_updateRequiredBanner": "La versión {{current}} de tu aplicación es anterior a la versión mínima {{min}} necesaria para importar notas. Actualiza WitnessWork para continuar.",
+  "notCounted": "No contabilizado",
+  "notCountedToday": "No contabilizado hoy ({{count}})",
+  "notCountedPlanAccessibilityHint": "Este plan no contribuye al total planificado de hoy.",
+  "dayPlansReplaceRecurringPlans_description": "Los planes puntuales sustituyen a los planes recurrentes en esta fecha.",
+  "highestRecurringPlanCounts_description": "En esta fecha solo cuenta el plan recurrente con más tiempo.",
+  "removeMilestone_title": "¿Eliminar el hito de {{hours}} horas?",
+  "removeMilestone_description": "Este hito se elimina de tu barra de progreso. El tiempo registrado no se ve afectado y puedes volver a añadirlo más adelante.",
+  "clearAllFilters_title": "¿Borrar todos los filtros?",
+  "clearAllFilters_description": "Se eliminan todos los filtros guardados y tu lista de contactos vuelve a mostrar a todos. Puedes volver a añadir filtros en cualquier momento."
 }

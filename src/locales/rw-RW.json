@@ -858,6 +858,18 @@
       "c7": "Gahunda zoroshye gucunga, hamwe n'urutonde rusukuye, gutunganya byihuse, hamwe n'amahitamo asobanutse yo guhindura itariki imwe isubiramo, amatariki y'igihe kizaza, cyangwa gahunda yose.",
       "c8": "Gahunda ubu yerekana uko buri munsi uhagaze, harimo imbere, inyuma, inzira, imbere, guhuza, cyangwa kutagira gahunda.",
       "c9": "Time rollover now keeps Credit Time in its original month by default, with a preference if you want Credit Time included in rollover."
+    },
+    "1411": {
+      "c1": "Gishya: Menya Scribe AI. Omekaho inyandiko zawe z'umurimo wo kubwiriza, zaba zanditse nk'inyandiko y'intoki cyangwa amakuru yoherejwe n'indi porogaramu, maze Scribe AI izihindure aderesi, gusura n'ibyanditswe by'igihe kugira ngo ubanze ubisuzume mbere yo kubika. Ushobora kunoza ibyavuyemo ubiganiraho ako kanya, gutangira kwinjiza amakuru mu itangira rya porogaramu, kandi nta Nguzanyo yo Kwinjiza uzatakaza igihe nta makuru yabonetse.",
+      "c2": "Hongewe ahantu hashya h'Uku Kwezi kuri ecran y'ibanze ushobora guhindura. Intego, igiteranyo giteganyijwe n'umuvuduko wa gahunda byawe biri ku makarita ushobora gutondeka no kwagura, naho Raporo y'Umurimo ikaguma ku ikarita imwe itondetse neza. Kanda raporo kugira ngo urebe ibisobanuro byose.",
+      "c3": "Hindura intego y'ukwezi kumwe. Shyiraho intego itandukanye y'ukwezi kumwe igihe imimerere yawe ihindutse, kandi urebe amasaha wateganyije ku ruziga rwayo rw'iterambere.",
+      "c4": "Teganya ibintu birenze kimwe ku munsi. Gahunda z'umunsi zo ku itariki imwe ubu zirateranywa, buri imwe igakomeza kugira icyiciro cyayo, kandi gahunda zitabarwa kuri uwo munsi zigaragazwa neza.",
+      "c5": "Guhindura ibintu byaroroshye hose. Gahunda, ibyanditswe by'igihe n'ibiganiro ubu bifite akamenyetso k'utudomo dutatu karimo Guhindura no Gusiba; gahunda zisubirwamo na zo zitanga amahitamo asobanutse yo guhindura itariki imwe, amatariki azaza cyangwa gahunda yose.",
+      "c6": "Raporo z'Umurimo: Kongera gutanga raporo ukoresheje Hourglass na NW Publisher birahari, ushobora guhitamo uburyo busanzwe bwo kuyitanga, guhindura ibisobanuro bya raporo mbere yo kuyohereza no kubona urwibutso ku mpera z'ukwezi. Ubu ushobora no kugabanya amateka y'imyaka cyangwa kongeramo imyaka yabanje.",
+      "c7": "Gahunda ubu igaragaza uko buri munsi uhagaze mu kanya gato: uri imbere, uri inyuma, uri ku murongo, uraza, urahuye cyangwa nta gahunda ihari.",
+      "c8": "Ubu kuba Umufasha bikurikira Apple ID yawe ku bikoresho byose, umubare w'ibyo Scribe AI yemera kwimurirwa ku yindi gahunda, kandi ecran y'Umufasha yarorohejwe.",
+      "c9": "Hakosowe ibyanditswe by'igihe na gahunda byajyaga ku munsi utari wo mu turere tw'isaha twa UTC+12 no hejuru yaho, hamwe n'amatariki yajyaga ku munsi utari wo nijoro mu burengerazuba bwa UTC. Hakosowe n'udushusho two ku ikarita twafunguraga aderesi itari yo nyuma yo kunyereza amakarita. Ubu kwimurira igihe mu kwezi gukurikira bisiga Igihe cy'Inguzanyo mu kwezi kwacyo.",
+      "c10": "Akamenyetso k'Inguzanyo ku byiciro ubu karaboneka ku Mubwiriza wese wandika amasaha. Hakosowe kandi ikibazo kidasanzwe cyafungaga porogaramu igihe ufunze igikoresho cyo guhitamo, hagarurwa inyenyeri z'abo ukunda n'ikimenyetso cy'icyigisho cya Bibiliya cy'ukwezi turimo, havugururwa Expo SDK 57, kandi ingano ya porogaramu iragabanywa."
     }
   },
   "installed": "Yagiye mu gikoresho cyawe",
@@ -2274,5 +2286,20 @@
         "unreachable_gap": "Amasaha yateganijwe agushyira ku **{{projected}}**. **{{gap}}** to goal — a stretch from here."
       }
     }
-  }
+  },
+  "moreActions": "Ibindi bikorwa",
+  "moreActionsFor": "Ibindi bikorwa kuri {{name}}",
+  "removeCategory_title": "Gukuraho \"{{name}}\"?",
+  "removeCategory_description": "Iki cyiciro kizakurwaho mu mahitamo kandi iki cyanditswe gisubire kuba Igihe Gisanzwe. Ibyanditswe by'igihe byakibitswe na cyo bizakomeza kukigenderaho. Ibi ntibishobora gusubirwaho.",
+  "notesImport_updateRequired": "Vugurura WitnessWork kugira ngo ukoreshe Kwinjiza amakuru avuye mu Nyandiko.",
+  "notesImport_updateRequiredBanner": "Verisiyo ya porogaramu yawe {{current}} iri munsi ya verisiyo ntoya {{min}} isabwa kugira ngo ukoreshe Kwinjiza amakuru avuye mu Nyandiko. Vugurura WitnessWork kugira ngo ukomeze.",
+  "notCounted": "Ntibibarwa",
+  "notCountedToday": "Ntibibarwa uyu munsi ({{count}})",
+  "notCountedPlanAccessibilityHint": "Iyi gahunda ntigira icyo yongera ku gihe cyose giteganyijwe uyu munsi.",
+  "dayPlansReplaceRecurringPlans_description": "Gahunda z'umunsi umwe zisimbura gahunda zisubirwamo kuri iyi tariki.",
+  "highestRecurringPlanCounts_description": "Gahunda isubirwamo ifite igihe kinini kuruta izindi ni yo yonyine ibarwa kuri iyi tariki.",
+  "removeMilestone_title": "Gukuraho intambwe y'ingenzi y'amasaha {{hours}}?",
+  "removeMilestone_description": "Iyi ntambwe y'ingenzi izakurwaho ku murongo w'iterambere. Igihe wanditse ntikizahinduka, kandi ushobora kongera kuyishyiraho nyuma.",
+  "clearAllFilters_title": "Gukuraho muyunguruzi zose?",
+  "clearAllFilters_description": "Buri muyunguruzi yabitswe izakurwaho maze urutonde rw'aderesi rwongere kwerekana abantu bose. Ushobora kongera muyunguruzi igihe icyo ari cyo cyose."
 }

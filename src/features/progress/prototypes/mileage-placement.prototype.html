@@ -1,0 +1,1576 @@
+<!doctype html>
+<!-- THROWAWAY: Three placements on the browser facsimile of Progress/Home,
+     switchable with ?variant=A|B|C. Never imported by the native app. -->
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>WitnessWork · Mileage placement prototype</title>
+    <style>
+      @font-face {
+        font-family: Inter;
+        src: url('/regular.ttf');
+        font-weight: 400;
+      }
+      @font-face {
+        font-family: Inter;
+        src: url('/medium.ttf');
+        font-weight: 500 600;
+      }
+      @font-face {
+        font-family: Inter;
+        src: url('/bold.ttf');
+        font-weight: 700 900;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      :root {
+        color-scheme: dark;
+        font-family:
+          Inter,
+          -apple-system,
+          sans-serif;
+        --accent: #06cf63;
+        --bg: #121212;
+        --card: #242424;
+        --muted: #898989;
+      }
+      body {
+        margin: 0;
+        background: #0c1115;
+        color: #ebedee;
+      }
+      button,
+      select {
+        font: inherit;
+        color: inherit;
+      }
+      button {
+        border: 0;
+        background: none;
+        cursor: pointer;
+        -webkit-tap-highlight-color: transparent;
+      }
+      button:focus-visible,
+      select:focus-visible,
+      summary:focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 4px;
+      }
+      button:hover {
+        filter: brightness(1.12);
+      }
+      svg {
+        width: 20px;
+        height: 20px;
+        fill: none;
+        stroke: currentColor;
+        stroke-width: 1.7;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+        flex-shrink: 0;
+      }
+      .workspace {
+        min-height: 100svh;
+        display: flex;
+        gap: clamp(40px, 7vw, 110px);
+        align-items: center;
+        justify-content: center;
+        padding: 24px 28px 105px;
+      }
+      .review {
+        width: 348px;
+        flex-shrink: 0;
+      }
+      .eyebrow {
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 1.8px;
+        color: #97a6af;
+        font-weight: 600;
+      }
+      h1 {
+        font-size: 32px;
+        line-height: 1.16;
+        margin: 14px 0;
+        letter-spacing: -0.9px;
+        font-weight: 600;
+      }
+      .intro {
+        color: #9ba6ad;
+        line-height: 1.65;
+        font-size: 14px;
+        margin: 0 0 27px;
+      }
+      .choices {
+        display: grid;
+        gap: 9px;
+      }
+      .choice {
+        display: flex;
+        text-align: left;
+        align-items: flex-start;
+        gap: 13px;
+        border: 1px solid #293039;
+        border-radius: 13px;
+        padding: 15px;
+        background: #11181e;
+      }
+      .choice.active {
+        border-color: #65887a;
+        background: #192824;
+      }
+      .choice-key {
+        font-size: 12px;
+        border: 1px solid #39434b;
+        border-radius: 7px;
+        padding: 6px 8px;
+        color: #b9c3cb;
+      }
+      .choice.active .choice-key {
+        background: #c5ead8;
+        border-color: #c5ead8;
+        color: #183126;
+      }
+      .choice strong {
+        font-size: 14px;
+        display: block;
+        margin: 2px 0 5px;
+        font-weight: 600;
+      }
+      .choice small {
+        display: block;
+        color: #99a7b0;
+        font-size: 12px;
+        line-height: 1.5;
+      }
+      .tradeoff {
+        margin-top: 22px;
+        font-size: 13px;
+        line-height: 1.65;
+        color: #aebac2;
+        min-height: 66px;
+      }
+      .tradeoff b {
+        color: #e8eef2;
+        font-weight: 500;
+      }
+      .review-actions {
+        display: flex;
+        gap: 8px;
+        margin: 14px 0 22px;
+      }
+      .review-actions button {
+        font-size: 12px;
+        padding: 10px 13px;
+        background: #24313a;
+        border: 1px solid #374852;
+        border-radius: 8px;
+      }
+      .breadcrumb {
+        font-size: 12px;
+        color: #b8c9d3;
+        background: #11181e;
+        padding: 12px;
+        border-radius: 8px;
+        border-left: 2px solid #65887a;
+      }
+      details {
+        margin-top: 16px;
+        color: #758792;
+        font-size: 11px;
+      }
+      summary {
+        cursor: pointer;
+        padding: 4px 0;
+      }
+      pre {
+        font-size: 10px;
+        line-height: 1.6;
+        background: #091014;
+        padding: 12px;
+        border-radius: 8px;
+        overflow: auto;
+        max-height: 175px;
+        color: #91a7b1;
+      }
+      .device {
+        width: 390px;
+        height: min(810px, calc(100svh - 132px));
+        min-height: 630px;
+        padding: 7px;
+        background: #050505;
+        border: 1px solid #4b4b4d;
+        border-radius: 51px;
+        box-shadow:
+          0 26px 75px #0007,
+          inset 0 0 0 3px #202123;
+        position: relative;
+        flex-shrink: 0;
+      }
+      .screen {
+        height: 100%;
+        border-radius: 44px;
+        background: var(--bg);
+        overflow: hidden;
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        color: #d8d8d8;
+      }
+      .status {
+        height: 57px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 24px;
+        flex-shrink: 0;
+        color: #ddd;
+        font-size: 14px;
+        font-weight: 600;
+      }
+      .island {
+        background: #000;
+        position: absolute;
+        width: 111px;
+        height: 31px;
+        border-radius: 25px;
+        left: 50%;
+        top: 12px;
+        transform: translateX(-50%);
+      }
+      .status-icons {
+        display: flex;
+        gap: 5px;
+        align-items: center;
+      }
+      .status-icons svg {
+        width: 15px;
+        height: 15px;
+      }
+      #app {
+        flex: 1;
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
+      }
+      .app-header {
+        min-height: 48px;
+        padding: 3px 17px 11px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-shrink: 0;
+      }
+      .app-header h2 {
+        font-size: 25px;
+        font-weight: 700;
+        margin: 0;
+        letter-spacing: -0.6px;
+      }
+      .app-header .date-title {
+        font-size: 15px;
+        letter-spacing: 0;
+        font-weight: 600;
+      }
+      .header-switch {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        font-size: 26px;
+        font-weight: 700;
+        letter-spacing: -0.7px;
+        padding: 0;
+      }
+      .header-switch .chevron {
+        width: 23px;
+        height: 23px;
+        background: #262626;
+        border-radius: 50%;
+        display: grid;
+        place-items: center;
+        color: #aaa;
+      }
+      .header-switch svg {
+        width: 14px;
+        height: 14px;
+      }
+      .icon-button {
+        width: 32px;
+        height: 32px;
+        display: grid;
+        place-items: center;
+        color: var(--muted);
+        border-radius: 50%;
+      }
+      .stack-header {
+        display: grid;
+        grid-template-columns: 90px 1fr 90px;
+        align-items: center;
+        height: 43px;
+        padding: 0 13px 6px;
+        flex-shrink: 0;
+      }
+      .stack-header strong {
+        text-align: center;
+        font-size: 16px;
+        font-weight: 600;
+      }
+      .back {
+        color: var(--accent);
+        display: flex;
+        align-items: center;
+        gap: 1px;
+        padding: 0;
+        font-size: 13px;
+      }
+      .period-controls {
+        padding: 0 15px;
+        flex-shrink: 0;
+      }
+      .segments {
+        display: flex;
+        border: 1px solid #292929;
+        border-radius: 23px;
+        padding: 4px;
+        background: #1e1e1e;
+      }
+      .segments button {
+        flex: 1;
+        font-size: 12px;
+        white-space: nowrap;
+        color: #858585;
+        border-radius: 18px;
+        padding: 8px 5px;
+        font-weight: 500;
+      }
+      .segments button.selected {
+        background: #1b402c;
+        color: var(--accent);
+      }
+      .month-nav {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        height: 58px;
+      }
+      .month-nav strong {
+        font-size: 14px;
+        font-weight: 600;
+      }
+      .month-nav button {
+        border: 1px solid #333;
+        border-radius: 20px;
+        width: 41px;
+        height: 28px;
+        color: #888;
+        display: grid;
+        place-items: center;
+      }
+      .month-nav svg {
+        width: 16px;
+        height: 16px;
+      }
+      .scroll {
+        overflow-y: auto;
+        flex: 1;
+        padding: 10px 15px 25px;
+        scrollbar-width: none;
+        overscroll-behavior: contain;
+      }
+      .scroll::-webkit-scrollbar {
+        display: none;
+      }
+      .card {
+        background: var(--card);
+        border: 1px solid #303030;
+        border-radius: 17px;
+        padding: 17px;
+        margin-bottom: 14px;
+      }
+      .card-top {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 13px;
+      }
+      .label {
+        font-size: 12px;
+        color: #8b8b8b;
+        font-weight: 500;
+      }
+      .report-pill {
+        font-size: 10px;
+        border: 1px solid #363636;
+        color: #8b8b8b;
+        border-radius: 20px;
+        padding: 6px 9px;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+      }
+      .report-pill svg {
+        width: 12px;
+        height: 12px;
+      }
+      .hero-value {
+        font-size: 58px;
+        line-height: 1.08;
+        letter-spacing: -2px;
+        font-weight: 700;
+        margin-bottom: 15px;
+      }
+      .hero-value span {
+        font-size: 16px;
+        letter-spacing: 0;
+        color: #8b8b8b;
+        font-weight: 500;
+        margin-left: 6px;
+      }
+      .subtle-link {
+        padding: 0;
+        font-size: 11px;
+        color: #8a8a8a;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+      }
+      .subtle-link svg {
+        width: 12px;
+        height: 12px;
+      }
+      .card-foot {
+        border-top: 1px solid #343434;
+        margin-top: 19px;
+        padding-top: 13px;
+      }
+      .add-link {
+        color: var(--accent);
+        padding: 3px 0;
+        font-size: 11px;
+        font-weight: 500;
+      }
+      .filter {
+        width: 100%;
+        background: #121212;
+        border: 1px solid #353535;
+        border-radius: 5px;
+        padding: 10px;
+        color: #c3c3c3;
+        font-size: 13px;
+        margin: 0 0 14px;
+      }
+      .entry {
+        width: 100%;
+        text-align: left;
+        display: block;
+        background: var(--card);
+        border: 1px solid #2b2b2b;
+        border-radius: 14px;
+        padding: 13px 14px;
+        margin: 0 0 9px;
+      }
+      .entry-top {
+        display: flex;
+        justify-content: space-between;
+        font-size: 12px;
+        font-weight: 500;
+        gap: 8px;
+      }
+      .entry-top .distance {
+        color: var(--accent);
+      }
+      .entry small {
+        display: block;
+        margin-top: 5px;
+        font-size: 10px;
+        color: #818181;
+      }
+      .management {
+        display: flex;
+        gap: 20px;
+        margin: 16px 0;
+      }
+      .progress-track {
+        height: 8px;
+        background: #121212;
+        border-radius: 5px;
+        margin-top: 12px;
+        overflow: hidden;
+      }
+      .progress-track span {
+        display: block;
+        height: 100%;
+        width: 32%;
+        background: var(--accent);
+        border-radius: 5px;
+      }
+      .time-meta {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        font-size: 10px;
+        color: #858585;
+      }
+      .time-meta b {
+        font-weight: 500;
+        background: #303030;
+        padding: 4px 5px;
+        border-radius: 5px;
+        color: #d0d0d0;
+      }
+      .time-summary .hero-value {
+        font-size: 53px;
+        margin-bottom: 10px;
+      }
+      .projection {
+        padding: 16px 17px;
+      }
+      .small-heading {
+        font-size: 10px;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        color: #999;
+        font-weight: 500;
+      }
+      .projection-value {
+        font-size: 25px;
+        margin: 8px 0 5px;
+        font-weight: 700;
+      }
+      .projection p {
+        font-size: 10px;
+        line-height: 1.6;
+        color: #858585;
+        margin: 0;
+      }
+      .mileage-card {
+        padding: 0;
+        overflow: hidden;
+      }
+      .mileage-entrypoint {
+        width: 100%;
+        padding: 16px 17px;
+        display: flex;
+        align-items: center;
+        gap: 13px;
+        text-align: left;
+      }
+      .car-icon {
+        border-radius: 12px;
+        background: #1d3728;
+        color: var(--accent);
+        width: 40px;
+        height: 40px;
+        display: grid;
+        place-items: center;
+        flex-shrink: 0;
+      }
+      .mileage-entrypoint .text {
+        flex: 1;
+      }
+      .mileage-entrypoint strong {
+        font-size: 13px;
+        font-weight: 500;
+      }
+      .mileage-entrypoint small {
+        display: block;
+        color: #898989;
+        font-size: 10px;
+        margin-top: 5px;
+      }
+      .mileage-entrypoint .amount {
+        font-size: 23px;
+        font-weight: 600;
+        letter-spacing: -0.7px;
+        text-align: right;
+      }
+      .mileage-entrypoint .amount small {
+        font-size: 10px;
+        letter-spacing: 0;
+      }
+      .mileage-entrypoint > svg {
+        width: 13px;
+        color: #777;
+      }
+      .home-mileage .mileage-entrypoint {
+        padding-bottom: 8px;
+      }
+      .home-mileage .home-mileage-value {
+        display: flex;
+        align-items: flex-end;
+        justify-content: space-between;
+        padding: 0 17px 15px;
+      }
+      .home-mileage .home-mileage-value strong {
+        font-size: 35px;
+        font-weight: 700;
+        letter-spacing: -1px;
+      }
+      .home-mileage .home-mileage-value span {
+        color: #898989;
+        font-size: 13px;
+        margin-left: 3px;
+      }
+      .profile {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+      .avatar {
+        width: 38px;
+        height: 38px;
+        border-radius: 50%;
+        background: #36ae6b;
+        color: #122619;
+        display: grid;
+        place-items: center;
+        font-weight: 600;
+      }
+      .profile strong {
+        font-size: 13px;
+        font-weight: 500;
+      }
+      .profile small {
+        display: block;
+        font-size: 10px;
+        color: #929292;
+        margin-top: 4px;
+      }
+      .home-report .card-top {
+        border-bottom: 1px solid #353535;
+        padding-bottom: 12px;
+      }
+      .home-report .card-top strong {
+        font-size: 13px;
+        font-weight: 500;
+      }
+      .home-report .stats {
+        display: flex;
+        gap: 24px;
+        margin: 17px 0;
+      }
+      .home-report .stats > div {
+        flex: 1;
+      }
+      .home-report .stats b {
+        font-size: 26px;
+        font-weight: 600;
+      }
+      .home-report .stats small {
+        display: block;
+        color: #888;
+        font-size: 10px;
+        margin-top: 4px;
+      }
+      .primary {
+        width: 100%;
+        padding: 10px;
+        border-radius: 5px;
+        background: var(--accent);
+        color: #072513;
+        font-weight: 600;
+        font-size: 12px;
+      }
+      .week {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 17px;
+        font-size: 12px;
+        text-align: center;
+      }
+      .week span {
+        padding: 8px 7px;
+        border-radius: 7px;
+      }
+      .week small {
+        display: block;
+        font-size: 8px;
+        color: #777;
+        margin-bottom: 8px;
+      }
+      .week .today {
+        border: 1px solid #bbb;
+      }
+      .tabs {
+        flex-shrink: 0;
+        padding: 8px 9px 18px;
+        display: flex;
+        align-items: center;
+        gap: 2px;
+        border-top: 1px solid #292929;
+        background: #171717;
+      }
+      .tabs button {
+        padding: 7px 1px;
+        color: #858585;
+        display: flex;
+        flex: 1;
+        flex-direction: column;
+        align-items: center;
+        gap: 5px;
+        font-size: 8px;
+      }
+      .tabs button.active {
+        color: #e2e2e2;
+      }
+      .tabs button svg {
+        width: 18px;
+        height: 18px;
+      }
+      .tabs .quick-add {
+        flex: none;
+        margin-left: 3px;
+        width: 39px;
+        height: 39px;
+        border-radius: 50%;
+        background: var(--accent);
+        color: #08351e;
+        justify-content: center;
+        padding: 0;
+      }
+      .tabs .quick-add svg {
+        width: 22px;
+        height: 22px;
+      }
+      .home-indicator {
+        position: absolute;
+        bottom: 7px;
+        height: 4px;
+        width: 120px;
+        background: #dadada;
+        border-radius: 3px;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 20;
+        pointer-events: none;
+      }
+      .stack-bottom {
+        height: 20px;
+        flex-shrink: 0;
+      }
+      .menu-scrim {
+        position: absolute;
+        inset: 54px 0 0;
+        z-index: 8;
+        background: #0005;
+      }
+      .title-menu {
+        position: absolute;
+        left: 15px;
+        top: 103px;
+        width: 220px;
+        padding: 6px;
+        background: #2c2c2eee;
+        border: 1px solid #414144;
+        box-shadow: 0 12px 35px #0008;
+        border-radius: 14px;
+        z-index: 9;
+        backdrop-filter: blur(20px);
+      }
+      .title-menu button {
+        display: flex;
+        align-items: center;
+        width: 100%;
+        padding: 13px 10px;
+        gap: 10px;
+        font-size: 14px;
+        text-align: left;
+      }
+      .title-menu button + button {
+        border-top: 1px solid #414141;
+      }
+      .title-menu .check {
+        margin-left: auto;
+        color: var(--accent);
+      }
+      .overlay {
+        position: absolute;
+        inset: 0;
+        z-index: 12;
+        background: #0009;
+        display: flex;
+        align-items: flex-end;
+      }
+      .sheet {
+        width: 100%;
+        background: #1c1c1e;
+        padding: 10px 20px 35px;
+        border-radius: 24px 24px 0 0;
+        box-shadow: 0 -10px 45px #0004;
+      }
+      .handle {
+        width: 34px;
+        height: 4px;
+        background: #4c4c4c;
+        border-radius: 4px;
+        margin: 0 auto 19px;
+      }
+      .sheet-title {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 17px;
+      }
+      .sheet h3 {
+        margin: 0;
+        font-size: 18px;
+        font-weight: 600;
+      }
+      .sheet p {
+        color: #929292;
+        font-size: 12px;
+        line-height: 1.6;
+      }
+      .sheet-row {
+        display: flex;
+        justify-content: space-between;
+        padding: 14px 0;
+        border-top: 1px solid #333;
+        font-size: 13px;
+        align-items: center;
+      }
+      .sheet-action {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        padding: 17px 0;
+        border-top: 1px solid #333;
+        width: 100%;
+        text-align: left;
+        font-size: 15px;
+      }
+      .sheet-action svg {
+        color: var(--accent);
+      }
+      .paper {
+        margin: 16px 10px 23px;
+        padding: 29px 24px 45px;
+        min-height: 335px;
+        background: #efe7c9;
+        color: #243449;
+        transform: rotate(-0.5deg);
+        box-shadow:
+          6px -5px #d5c8a3,
+          -3px -3px #e4d9b9;
+      }
+      .paper h3 {
+        text-align: center;
+        font-size: 22px;
+        font-family: Georgia, serif;
+        font-style: italic;
+      }
+      .paper .paper-heading {
+        text-align: center;
+        margin-top: -7px;
+        margin-bottom: 27px;
+        font-family: Georgia, serif;
+        font-style: italic;
+      }
+      .paper .paper-total {
+        font-family: Georgia, serif;
+        font-style: italic;
+        font-size: 30px;
+        margin-top: 8px;
+      }
+      .paper small {
+        font-size: 9px;
+        letter-spacing: 1.1px;
+        color: #8a8067;
+        text-transform: uppercase;
+      }
+      .paper .sheet-row {
+        font-family: Georgia, serif;
+        font-style: italic;
+        border-color: #d8d0b8;
+        font-size: 12px;
+      }
+      .notice {
+        position: absolute;
+        z-index: 30;
+        bottom: 92px;
+        left: 25px;
+        right: 25px;
+        padding: 13px 16px;
+        border: 1px solid #4b5b51;
+        border-radius: 13px;
+        color: #e0ece5;
+        background: #233329;
+        text-align: center;
+        font-size: 12px;
+        box-shadow: 0 8px 20px #0005;
+      }
+      .switcher {
+        position: fixed;
+        z-index: 50;
+        bottom: 22px;
+        left: 50%;
+        transform: translateX(-50%);
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        border: 1px solid #c5d3db;
+        background: #e8eff3;
+        color: #16222b;
+        border-radius: 40px;
+        padding: 8px;
+        box-shadow: 0 10px 40px #0006;
+        white-space: nowrap;
+      }
+      .switcher button {
+        border-radius: 50%;
+        background: #d6e0e6;
+        width: 35px;
+        height: 35px;
+        display: grid;
+        place-items: center;
+      }
+      .switcher div {
+        width: 225px;
+        text-align: center;
+        font-size: 12px;
+        font-weight: 600;
+      }
+      .switcher small {
+        display: block;
+        font-size: 9px;
+        font-weight: 400;
+        color: #687a88;
+        margin-top: 3px;
+      }
+      @media (max-width: 820px) {
+        .workspace {
+          gap: 30px;
+          padding-inline: 16px;
+        }
+        .review {
+          width: 290px;
+        }
+        .device {
+          width: 365px;
+        }
+        h1 {
+          font-size: 28px;
+        }
+      }
+      @media (max-width: 690px) {
+        .workspace {
+          flex-direction: column;
+          padding: 24px 12px 110px;
+          gap: 22px;
+        }
+        .review {
+          width: min(390px, 100%);
+        }
+        .intro,
+        .tradeoff,
+        .review-actions,
+        .breadcrumb,
+        details {
+          display: none;
+        }
+        h1 {
+          font-size: 24px;
+          margin: 10px 0 20px;
+        }
+        .choices {
+          grid-template-columns: repeat(3, 1fr);
+          gap: 6px;
+        }
+        .choice {
+          padding: 10px 8px;
+          gap: 7px;
+          align-items: center;
+        }
+        .choice strong {
+          font-size: 10px;
+          margin: 0;
+        }
+        .choice small {
+          display: none;
+        }
+        .choice-key {
+          padding: 4px 6px;
+          font-size: 10px;
+        }
+        .device {
+          width: min(390px, 100%);
+          height: 770px;
+          min-height: 0;
+        }
+        .switcher {
+          bottom: 15px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="workspace">
+      <aside class="review">
+        <div class="eyebrow">WitnessWork / Placement study</div>
+        <h1>Where does<br />mileage belong?</h1>
+        <p class="intro">
+          Three ways to remove the stacked navigation. Try the entry point and
+          the return path in each.
+        </p>
+        <nav class="choices" aria-label="Prototype variants" id="choices"></nav>
+        <div class="tradeoff" id="tradeoff"></div>
+        <div class="review-actions">
+          <button data-action="open-mileage">Open mileage</button
+          ><button data-action="reset">Start again</button>
+        </div>
+        <div class="breadcrumb" id="breadcrumb" aria-live="polite"></div>
+        <details>
+          <summary>Prototype state · fictional sample data</summary>
+          <pre id="state"></pre>
+        </details>
+      </aside>
+      <section class="device" aria-label="Interactive iPhone preview">
+        <div class="screen">
+          <div class="status">
+            <span>6:25</span><span class="island"></span
+            ><span class="status-icons" id="status-icons"></span>
+          </div>
+          <div id="app"></div>
+          <div id="overlay"></div>
+          <div class="home-indicator"></div>
+        </div>
+      </section>
+    </main>
+    <nav class="switcher" aria-label="Floating prototype switcher">
+      <button
+        data-action="previous-variant"
+        aria-label="Previous variant"
+        id="previous"
+      ></button>
+      <div>
+        <span id="variant-label"></span
+        ><small>THROWAWAY PROTOTYPE · ← → to compare</small>
+      </div>
+      <button
+        data-action="next-variant"
+        aria-label="Next variant"
+        id="next"
+      ></button>
+    </nav>
+    <script>
+      // This file is served only by the development-only prototype runner.
+      const icons = {
+        left: '<path d="m14 7-5 5 5 5"/>',
+        right: '<path d="m10 7 5 5-5 5"/>',
+        down: '<path d="m7 10 5 5 5-5"/>',
+        arrowLeft: '<path d="M19 12H5m6-6-6 6 6 6"/>',
+        arrowRight: '<path d="M5 12h14m-6-6 6 6-6 6"/>',
+        plus: '<path d="M12 5v14M5 12h14"/>',
+        close: '<path d="m6 6 12 12M6 18 18 6"/>',
+        check: '<path d="m5 12 4 4L19 6"/>',
+        home: '<path d="m3 10 9-7 9 7v10H3zM9 20v-7h6v7"/>',
+        contacts:
+          '<rect x="5" y="3" width="15" height="18" rx="2"/><path d="M3 7h4M3 12h4M3 17h4m3-1c0-3 6-3 6 0"/><circle cx="13" cy="9" r="2"/>',
+        progress: '<path d="M4 3v17h17M7 14l4-5 4 3 6-7"/>',
+        calendar:
+          '<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M7 3v4m10-4v4M3 10h18M7 14h1m3 0h1m3 0h1m-9 3h1m3 0h1"/>',
+        map: '<path d="m3 6 6-3 6 3 6-3v16l-6 3-6-3-6 3zM9 3v16m6-13v16"/>',
+        car: '<path d="m4 10 2-6h12l2 6M4 10h16l1 3v5H3v-5zM5 18v3m14-3v3M6 14h2m8 0h2"/>',
+        clock: '<circle cx="12" cy="12" r="9"/><path d="M12 6v6l4 2"/>',
+        report:
+          '<rect x="5" y="4" width="14" height="17" rx="2"/><rect x="9" y="2" width="6" height="4" rx="1"/><path d="M9 11h6m-6 4h6"/>',
+        pie: '<path d="M12 3v9h9a9 9 0 1 1-9-9Zm3 0a9 9 0 0 1 6 6h-6Z"/>',
+        menu: '<path d="M5 7h14M5 12h14M5 17h14"/>',
+        more: '<circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/>',
+        heart:
+          '<path d="M20 5c-3-3-7-1-8 2C11 4 7 2 4 5c-4 5 3 10 8 14 5-4 12-9 8-14Z"/>',
+        wifi: '<path d="M3 8c5-5 13-5 18 0M6 11c3-3 9-3 12 0m-9 3c2-2 4-2 6 0"/><circle cx="12" cy="18" r=".5"/>',
+        battery:
+          '<rect x="2" y="6" width="18" height="12" rx="3"/><path d="M23 10v4M5 9h11v6H5Z"/>',
+      }
+      const icon = (name) =>
+        `<svg aria-hidden="true" viewBox="0 0 24 24">${icons[name] || icons.more}</svg>`
+      const variants = {
+        A: {
+          name: 'Title menu',
+          short: 'Compact switch',
+          description: 'Choose Time or Mileage from the page title.',
+          tradeoff:
+            '<b>Fast to switch, less visible.</b> One compact menu replaces the full-width control. The two trackers still share Progress.',
+        },
+        B: {
+          name: 'Progress card',
+          short: 'Inside Progress',
+          description: 'A mileage summary opens its own detail screen.',
+          tradeoff:
+            '<b>My starting preference.</b> Mileage stays alongside time, with a visible entry point. Viewing history takes one extra tap.',
+        },
+        C: {
+          name: 'Home card',
+          short: 'Alongside reports',
+          description: 'Enter mileage from the daily Home screen.',
+          tradeoff:
+            '<b>Easy to find during daily use.</b> Mileage gets its own destination. The extra card makes Home longer.',
+        },
+      }
+      const fixture = [
+        {
+          date: '2026-09-04',
+          car: 'corolla',
+          category: 'Congregation',
+          distance: 22.5,
+        },
+        {
+          date: '2026-09-04',
+          car: 'corolla',
+          category: 'Ministry',
+          distance: 12.5,
+        },
+        {
+          date: '2026-09-03',
+          car: 'civic',
+          category: 'Ministry',
+          distance: 67,
+        },
+        {
+          date: '2026-09-02',
+          car: 'corolla',
+          category: 'Congregation',
+          distance: 76.6,
+        },
+        {
+          date: '2026-09-01',
+          car: 'corolla',
+          category: 'Uncategorized',
+          distance: 70,
+        },
+      ]
+      const cars = { corolla: '2026 Toyota Corolla', civic: '2022 Honda Civic' }
+      const keys = Object.keys(variants)
+      const requested = new URLSearchParams(location.search).get('variant')
+      let variant = keys.includes(requested) ? requested : 'A'
+      let state, toastTimer
+      const reset = () => {
+        state = {
+          tab: variant === 'C' ? 'Home' : 'Progress',
+          screen: 'landing',
+          mode: variant === 'A' ? 'mileage' : 'time',
+          period: 'month',
+          month: 8,
+          year: 2026,
+          vehicle: 'all',
+          menu: false,
+          sheet: null,
+        }
+        render()
+      }
+      const dateLabel = () =>
+        new Date(state.year, state.month, 1).toLocaleDateString('en-US', {
+          month: 'long',
+          year: 'numeric',
+        })
+      const serviceYear = () => state.year - (state.month < 8 ? 1 : 0)
+      const periodLabel = () =>
+        state.period === 'month'
+          ? dateLabel()
+          : state.period === 'year'
+            ? `${serviceYear()}–${serviceYear() + 1}`
+            : 'All time'
+      const scopedEntries = () =>
+        fixture.filter(
+          (e) =>
+            (state.vehicle === 'all' || e.car === state.vehicle) &&
+            (state.period === 'allTime' ||
+              (state.period === 'year'
+                ? serviceYear() === 2026
+                : state.month === 8 && state.year === 2026))
+        )
+      const total = () =>
+        scopedEntries().reduce((sum, entry) => sum + entry.distance, 0)
+      const number = (value) =>
+        new Intl.NumberFormat('en-US', { maximumFractionDigits: 2 }).format(
+          value
+        )
+      const mileageOpen = () =>
+        state.screen === 'mileage' ||
+        (state.screen === 'landing' &&
+          variant === 'A' &&
+          state.tab === 'Progress' &&
+          state.mode === 'mileage')
+      function periods(mileage) {
+        return `<div class="period-controls"><div class="segments" role="tablist" aria-label="Period">${[
+          ['month', 'Month'],
+          ['year', mileage ? 'Service Year' : 'Year'],
+          ['allTime', 'All-time'],
+        ]
+          .map(
+            ([key, label]) =>
+              `<button role="tab" aria-selected="${state.period === key}" class="${state.period === key ? 'selected' : ''}" data-period="${key}">${label}</button>`
+          )
+          .join(
+            ''
+          )}</div>${state.period !== 'allTime' ? `<div class="month-nav"><button data-action="previous-month" aria-label="Previous period">${icon('arrowLeft')}</button><strong>${periodLabel()}</strong><button data-action="next-month" aria-label="Next period">${icon('arrowRight')}</button></div>` : '<div style="height:12px"></div>'}</div>`
+      }
+      function tabs() {
+        return `<nav class="tabs" aria-label="App tabs">${[
+          ['Home', 'home'],
+          ['Contacts', 'contacts'],
+          ['Progress', 'progress'],
+          ['Schedule', 'calendar'],
+          ['Map', 'map'],
+        ]
+          .map(
+            ([label, glyph]) =>
+              `<button data-tab="${label}" class="${state.tab === label ? 'active' : ''}">${icon(glyph)}${label}</button>`
+          )
+          .join(
+            ''
+          )}<button class="quick-add" data-action="quick" aria-label="Quick actions">${icon('plus')}</button></nav>`
+      }
+      function stackHeader(label, parent) {
+        return `<div class="stack-header"><button class="back" data-action="back">${icon('left')}${parent}</button><strong>${label}</strong><span></span></div>`
+      }
+      function timeCard() {
+        return `<section class="card time-summary"><div class="card-top"><span class="label">Goal · 50 Hrs ›</span><button class="report-pill" data-action="time-report">${icon('report')} View Report</button></div><div class="hero-value">16<span>hours</span></div><div class="time-meta"><b>34 Hrs left</b><span>26 days left</span></div><div class="progress-track"><span></span></div><div class="card-foot"><button class="add-link" data-action="add-time">+ Add Time</button></div></section>`
+      }
+      function mileageCard(home = false) {
+        return `<section class="card mileage-card ${home ? 'home-mileage' : ''}"><button class="mileage-entrypoint" data-action="open-mileage"><span class="car-icon">${icon('car')}</span><span class="text"><strong>Mileage</strong><small>September 2026 · 2 vehicles</small></span>${!home ? '<span class="amount">248.6<small>mi this month</small></span>' : ''}${icon('right')}</button>${home ? '<div class="home-mileage-value"><div><strong>248.6</strong><span>mi</span></div><button class="add-link" data-action="add-mileage">+ Add Mileage</button></div>' : ''}</section>`
+      }
+      function timeBody(showMileageCard) {
+        return `<div class="scroll">${timeCard()}${showMileageCard ? mileageCard() : ''}<section class="card projection"><div class="small-heading">Projected month</div><div class="projection-value">54 Hrs</div><p>If all plans come through this month</p><div class="progress-track"><span style="width:100%;background:linear-gradient(to right,var(--accent) 30%,#306442 30%)"></span></div><p style="margin-top:12px">Your plans put you on pace for your monthly goal.</p></section><div class="small-heading" style="padding:7px 2px 13px">Recent time</div><button class="entry" data-action="add-time"><span class="entry-top"><span>Fri · Sep 4</span><span>3 Hrs</span></span><small>Ministry</small></button></div>`
+      }
+      function VariantA() {
+        const mileage = state.mode === 'mileage'
+        return `<div class="app-header"><button class="header-switch" data-action="title-menu" aria-expanded="${state.menu}">${mileage ? 'Mileage' : 'Time'}<span class="chevron">${icon('down')}</span></button><button class="icon-button" data-action="manage" aria-label="Manage mileage">${icon('more')}</button></div>${periods(mileage)}${mileage ? mileageBody() : timeBody(false)}${tabs()}`
+      }
+      function VariantB() {
+        return `<div class="app-header"><h2>Progress</h2></div>${periods(false)}${timeBody(true)}${tabs()}`
+      }
+      function VariantC() {
+        return home(true)
+      }
+      function home(withMileage) {
+        return `<div class="app-header"><button class="icon-button" data-action="settings" aria-label="Open menu">${icon('menu')}</button><h2 class="date-title">September 4, 2026</h2><button class="icon-button" data-action="supporter" aria-label="Supporter">${icon('heart')}</button></div><div class="scroll"><section class="card profile"><span class="avatar">J</span><div><strong>Hi, Jordan</strong><small>Special Pioneer</small></div></section><section class="card home-report"><div class="card-top"><strong>Service Report</strong>${icon('right')}</div><div class="stats"><div><b>16 Hrs</b><small>Hours</small></div><div><b>2</b><small>Bible Studies</small></div></div><button class="primary" data-action="add-time">+ Add Time</button></section>${withMileage ? mileageCard(true) : ''}<section class="card"><div class="small-heading">This week</div><div class="week">${['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day, i) => `<span class="${i === 5 ? 'today' : ''}"><small>${day}</small>${i === 0 ? 30 : i === 1 ? 31 : i - 1}</span>`).join('')}</div></section></div>${tabs()}`
+      }
+      function mileageBody() {
+        const entries = scopedEntries()
+        let rows
+        if (state.period === 'month') {
+          rows =
+            entries
+              .map(
+                (entry) =>
+                  `<button class="entry" data-entry="${fixture.indexOf(entry)}"><span class="entry-top"><span>Sep ${Number(entry.date.slice(-2))}, 2026</span><span class="distance">${number(entry.distance)} mi</span></span><small>${cars[entry.car]}</small><small>${entry.category}</small></button>`
+              )
+              .join('') ||
+            '<p class="label" style="padding:15px 2px">No mileage logged this month.</p>'
+        } else if (state.period === 'year') {
+          rows = Array.from({ length: 12 }, (_, i) => {
+            const date = new Date(serviceYear(), 8 + i, 1)
+            return `<button class="entry" data-month="${date.getMonth()}" data-year="${date.getFullYear()}"><span class="entry-top"><span>${date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}</span><span>${number(date.getMonth() === 8 && date.getFullYear() === 2026 ? total() : 0)} mi ›</span></span></button>`
+          }).join('')
+        } else {
+          rows = `<button class="entry" data-action="drill-year"><span class="entry-top"><span>Service Year 2026–2027</span><span>${number(total())} mi ›</span></span></button>`
+        }
+        return `<div class="scroll"><select class="filter" aria-label="Vehicle filter" id="vehicle-filter"><option value="all">All Vehicles</option>${Object.entries(
+          cars
+        )
+          .map(
+            ([key, name]) =>
+              `<option value="${key}" ${state.vehicle === key ? 'selected' : ''}>${name}</option>`
+          )
+          .join(
+            ''
+          )}</select><section class="card"><div class="card-top"><span class="label">Completed Distance</span>${state.period === 'month' ? `<button class="report-pill" data-action="report">${icon('report')} View Report</button>` : ''}</div><div class="hero-value">${number(total())}<span>mi</span></div><button class="subtle-link" data-action="categories">${icon('pie')} Categories ${icon('right')}</button><div class="card-foot"><button class="add-link" data-action="add-mileage">+ Add Mileage</button></div></section>${rows}<div class="management"><button class="add-link" data-action="manage">Vehicles</button><button class="add-link" data-action="categories">Mileage Categories</button></div></div>`
+      }
+      function mileageDetail() {
+        return `${stackHeader('Mileage', variant === 'C' ? 'Home' : 'Progress')}${periods(true)}${mileageBody()}<div class="stack-bottom"></div>`
+      }
+      function report() {
+        const entries = scopedEntries()
+        return `${stackHeader('Mileage Report', 'Mileage')}<div class="scroll"><div class="paper"><h3>${dateLabel()}</h3><div class="paper-heading">Mileage</div><small>Total</small><div class="paper-total">${number(total())} mi</div>${Object.entries(
+          cars
+        )
+          .filter(([id]) => entries.some((e) => e.car === id))
+          .map(([id, name]) => {
+            const carEntries = entries.filter((e) => e.car === id)
+            return `<div style="margin-top:22px"><small>${name}</small><div class="paper-total" style="font-size:23px">${number(carEntries.reduce((s, e) => s + e.distance, 0))} mi</div>${[...new Set(carEntries.map((e) => e.category))].map((category) => `<div class="sheet-row"><span>${category}</span><span>${number(carEntries.filter((e) => e.category === category).reduce((s, e) => s + e.distance, 0))} mi</span></div>`).join('')}</div>`
+          })
+          .join(
+            ''
+          )}</div><button class="primary" data-action="copy-preview">${icon('report')} Copy Summary</button><p class="label" style="font-size:10px;line-height:1.65;margin-top:16px">Reimbursement rules and limits may apply. Log only eligible travel and check your current branch guidance before submitting.</p></div><div class="stack-bottom"></div>`
+      }
+      function renderOverlay() {
+        if (state.menu)
+          return `<button class="menu-scrim" data-action="close" aria-label="Dismiss menu"></button><div class="title-menu">${[
+            ['time', 'Time', 'clock'],
+            ['mileage', 'Mileage', 'car'],
+          ]
+            .map(
+              ([key, label, glyph]) =>
+                `<button data-mode="${key}">${icon(glyph)}${label}${state.mode === key ? `<span class="check">${icon('check')}</span>` : ''}</button>`
+            )
+            .join('')}</div>`
+        if (state.sheet === null) return ''
+        let title, content
+        if (state.sheet === 'quick') {
+          title = 'Quick actions'
+          content = [
+            ['Add Time', 'clock', 'add-time'],
+            ['Add Mileage', 'car', 'add-mileage'],
+            ['Create Plan', 'calendar', 'plan'],
+            ['Add Contact', 'contacts', 'contact'],
+          ]
+            .map(
+              ([label, glyph, action]) =>
+                `<button class="sheet-action" data-action="${action}">${icon(glyph)}${label}</button>`
+            )
+            .join('')
+        } else if (state.sheet === 'categories') {
+          title = 'Categories'
+          content =
+            [...new Set(scopedEntries().map((e) => e.category))]
+              .map(
+                (category) =>
+                  `<div class="sheet-row"><span>${category}</span><span>${number(
+                    scopedEntries()
+                      .filter((e) => e.category === category)
+                      .reduce((s, e) => s + e.distance, 0)
+                  )} mi</span></div>`
+              )
+              .join('') || '<p>No mileage in this period.</p>'
+        } else if (state.sheet === 'manage') {
+          title = 'Vehicles'
+          content =
+            Object.entries(cars)
+              .map(
+                ([key, name]) =>
+                  `<div class="sheet-row"><span>🚗 ${name}</span><span>${key === 'corolla' ? '32.5' : '30'} MPG</span></div>`
+              )
+              .join('') +
+            '<p>Vehicle editing stays in the existing setup flow.</p>'
+        } else if (typeof state.sheet === 'number') {
+          const entry = fixture[state.sheet]
+          title = 'Mileage Entry'
+          content = `<div class="sheet-row"><span>Date</span><span>Sep ${Number(entry.date.slice(-2))}, 2026</span></div><div class="sheet-row"><span>${cars[entry.car]}</span><span>${number(entry.distance)} mi</span></div><div class="sheet-row"><span>Category</span><span>${entry.category}</span></div><p>Entry editing uses the existing mileage form. This prototype only explores placement.</p>`
+        } else {
+          title = 'Add Mileage'
+          content =
+            '<p>The existing entry editor opens here, using the last-used vehicle. Saving would return you to this screen.</p><div class="sheet-row"><span>🚗 2026 Toyota Corolla</span><span>Last used</span></div><button class="primary" data-action="close">Return to preview</button>'
+        }
+        return `<div class="overlay" data-action="dismiss-overlay"><section class="sheet"><div class="handle"></div><div class="sheet-title"><h3>${title}</h3><button class="icon-button" data-action="close" aria-label="Close sheet">${icon('close')}</button></div>${content}</section></div>`
+      }
+      function render() {
+        const root = document.querySelector('#app')
+        if (state.screen === 'report') root.innerHTML = report()
+        else if (state.screen === 'mileage') root.innerHTML = mileageDetail()
+        else if (state.tab === 'Home')
+          root.innerHTML = variant === 'C' ? VariantC() : home(false)
+        else if (state.tab === 'Progress')
+          root.innerHTML =
+            variant === 'A'
+              ? VariantA()
+              : variant === 'B'
+                ? VariantB()
+                : `<div class="app-header"><h2>Progress</h2></div>${periods(false)}${timeBody(false)}${tabs()}`
+        else
+          root.innerHTML = `<div class="app-header"><h2>${state.tab}</h2></div><div class="scroll"><section class="card"><p class="label">${state.tab === 'Map' ? 'Map keeps its own tab in every option.' : 'This screen keeps its existing layout.'}</p><button class="add-link" data-tab="${variant === 'C' ? 'Home' : 'Progress'}">Return to ${variant === 'C' ? 'Home' : 'Progress'} ${icon('right')}</button></section></div>${tabs()}`
+        document.querySelector('#overlay').innerHTML = renderOverlay()
+        document.querySelector('#choices').innerHTML = keys
+          .map(
+            (key) =>
+              `<button class="choice ${variant === key ? 'active' : ''}" data-variant="${key}" aria-pressed="${variant === key}"><span class="choice-key">${key}</span><span><strong>${variants[key].name}</strong><small>${variants[key].description}</small></span></button>`
+          )
+          .join('')
+        document.querySelector('#tradeoff').innerHTML =
+          variants[variant].tradeoff
+        document.querySelector('#variant-label').textContent =
+          `${variant} / ${variants[variant].name}`
+        const path =
+          state.screen === 'report'
+            ? `${variant === 'C' ? 'Home' : 'Progress'} → Mileage → Report`
+            : state.screen === 'mileage'
+              ? `${variant === 'C' ? 'Home' : 'Progress'} → Mileage`
+              : mileageOpen()
+                ? 'Progress → Mileage (title menu)'
+                : state.tab
+        document.querySelector('#breadcrumb').textContent =
+          `You are here: ${path}`
+        const relevantState = {
+          variant,
+          ...state,
+          mileageEnabled: true,
+          distanceUnit: 'mi',
+          completedDistance: total(),
+          fixtureEntries: fixture.length,
+          storage: 'memory only',
+        }
+        document.querySelector('#state').textContent = JSON.stringify(
+          relevantState,
+          null,
+          2
+        )
+        console.info('Mileage placement prototype', relevantState)
+      }
+      function selectVariant(key) {
+        variant = key
+        const url = new URL(location.href)
+        url.searchParams.set('variant', key)
+        history.replaceState({}, '', url)
+        reset()
+      }
+      function cycle(step) {
+        selectVariant(
+          keys[(keys.indexOf(variant) + step + keys.length) % keys.length]
+        )
+      }
+      function openMileage() {
+        state.tab = variant === 'C' ? 'Home' : 'Progress'
+        state.period = 'month'
+        state.month = 8
+        state.year = 2026
+        state.screen = variant === 'A' ? 'landing' : 'mileage'
+        state.mode = 'mileage'
+        state.menu = false
+        state.sheet = null
+      }
+      function notify(message) {
+        clearTimeout(toastTimer)
+        document.querySelector('.notice')?.remove()
+        const el = document.createElement('div')
+        el.className = 'notice'
+        el.setAttribute('role', 'status')
+        el.textContent = message
+        document.querySelector('.screen').append(el)
+        toastTimer = setTimeout(() => el.remove(), 2400)
+      }
+      document.addEventListener('click', (event) => {
+        const button = event.target.closest(
+          '[data-action],[data-variant],[data-mode],[data-period],[data-tab],[data-entry],[data-month]'
+        )
+        if (!button) return
+        if (button.dataset.variant) {
+          selectVariant(button.dataset.variant)
+          return
+        }
+        if (button.dataset.mode) {
+          state.mode = button.dataset.mode
+          state.menu = false
+        } else if (button.dataset.period) {
+          state.period = button.dataset.period
+        } else if (button.dataset.tab) {
+          state.tab = button.dataset.tab
+          state.screen = 'landing'
+          state.menu = false
+          state.sheet = null
+          state.period = 'month'
+        } else if (button.dataset.entry !== undefined) {
+          state.sheet = Number(button.dataset.entry)
+        } else if (button.dataset.month !== undefined) {
+          state.month = Number(button.dataset.month)
+          state.year = Number(button.dataset.year)
+          state.period = 'month'
+        } else
+          switch (button.dataset.action) {
+            case 'previous-variant':
+              cycle(-1)
+              return
+            case 'next-variant':
+              cycle(1)
+              return
+            case 'reset':
+              reset()
+              return
+            case 'open-mileage':
+              openMileage()
+              break
+            case 'title-menu':
+              state.menu = !state.menu
+              break
+            case 'back':
+              if (state.screen === 'report') {
+                state.screen = variant === 'A' ? 'landing' : 'mileage'
+              } else {
+                state.screen = 'landing'
+                state.mode = 'time'
+              }
+              break
+            case 'close':
+              state.menu = false
+              state.sheet = null
+              break
+            case 'dismiss-overlay':
+              if (event.target !== button) return
+              state.sheet = null
+              break
+            case 'categories':
+              state.sheet = 'categories'
+              break
+            case 'quick':
+              state.sheet = 'quick'
+              break
+            case 'manage':
+              state.sheet = 'manage'
+              break
+            case 'add-mileage':
+              state.sheet = 'entry'
+              break
+            case 'report':
+              state.screen = 'report'
+              break
+            case 'drill-year':
+              state.period = 'year'
+              state.year = 2026
+              state.month = 8
+              break
+            case 'next-month':
+            case 'previous-month': {
+              const step = button.dataset.action === 'next-month' ? 1 : -1
+              const date = new Date(
+                state.year,
+                state.month + (state.period === 'year' ? step * 12 : step),
+                1
+              )
+              state.month = date.getMonth()
+              state.year = date.getFullYear()
+              break
+            }
+            case 'copy-preview':
+              notify('Report preview only — clipboard unchanged.')
+              return
+            default:
+              notify('This opens the existing app flow.')
+              return
+          }
+        render()
+      })
+      document.addEventListener('change', (event) => {
+        if (event.target.id === 'vehicle-filter') {
+          state.vehicle = event.target.value
+          render()
+        }
+      })
+      document.addEventListener('keydown', (event) => {
+        if (event.target.closest('input,textarea,select,[contenteditable]'))
+          return
+        if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
+          event.preventDefault()
+          cycle(event.key === 'ArrowRight' ? 1 : -1)
+        }
+        if (event.key === 'Escape') {
+          state.menu = false
+          state.sheet = null
+          render()
+        }
+      })
+      window.addEventListener('popstate', () => {
+        const key = new URLSearchParams(location.search).get('variant')
+        variant = keys.includes(key) ? key : 'A'
+        reset()
+      })
+      document.querySelector('#status-icons').innerHTML =
+        icon('wifi') + icon('battery')
+      document.querySelector('#previous').innerHTML = icon('arrowLeft')
+      document.querySelector('#next').innerHTML = icon('arrowRight')
+      reset()
+    </script>
+  </body>
+</html>

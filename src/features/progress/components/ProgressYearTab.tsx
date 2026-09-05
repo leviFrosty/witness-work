@@ -24,6 +24,7 @@ import Text from '@/components/ui/MyText'
 import LucideIcon from '@/components/ui/LucideIcon'
 import XView from '@/components/ui/layout/XView'
 import { useCardStyle } from '@/components/ui/Card'
+import MileageProgressCard from '@/features/mileage/components/MileageProgressCard'
 import useMonthlyGoal from '@/hooks/useMonthlyGoal'
 
 interface ProgressYearTabProps {
@@ -292,6 +293,7 @@ const ProgressYearTab = ({
         />
       ) : null}
 
+      <MileageProgressCard period={{ kind: 'year', startYear: year - 1 }} />
       <ProjectedTotalCard scope={projectedScope} />
 
       <View style={{ gap: 8, paddingTop: 10 }}>

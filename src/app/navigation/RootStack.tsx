@@ -1,6 +1,7 @@
 import { createNativeStackNavigator } from '@react-navigation/native-stack'
 import ContactFormScreen from '@/features/contacts/screens/ContactFormScreen'
 import Header from '@/components/ui/layout/Header'
+import usePublisher from '@/hooks/usePublisher'
 import VisitFormScreen from '@/features/visits/screens/VisitFormScreen'
 import ContactDetailsScreen from '@/features/contacts/screens/ContactDetailsScreen'
 import AddTimeScreen from '@/features/service-reports/screens/AddTimeScreen'
@@ -43,10 +44,18 @@ import ServiceReportViewScreen from '@/features/service-reports/screens/ServiceR
 import OnboardingBackfillScreen from '@/features/service-reports/screens/OnboardingBackfillScreen'
 import { RootStackParamList } from '@/types/rootStack'
 
+import MileageEntryScreen from '@/features/mileage/screens/MileageEntryScreen'
+import MileageCategoriesScreen from '@/features/mileage/screens/MileageCategoriesScreen'
+import MileageVehiclesScreen from '@/features/mileage/screens/MileageVehiclesScreen'
+import MileageVehicleScreen from '@/features/mileage/screens/MileageVehicleScreen'
+import MileageReportScreen from '@/features/mileage/screens/MileageReportScreen'
+import MileageScreen from '@/features/mileage/screens/MileageScreen'
+
 const RootStack = createNativeStackNavigator<RootStackParamList>()
 
 const RootStackComponent = () => {
   const { onboardingComplete } = usePreferences()
+  const { tracksMileage } = usePublisher()
 
   return (
     <RootStack.Navigator>
@@ -80,6 +89,82 @@ const RootStackComponent = () => {
         />
         <RootStack.Screen name='Contact Form' component={ContactFormScreen} />
         <RootStack.Screen name='Visit Form' component={VisitFormScreen} />
+        {tracksMileage && (
+          <RootStack.Group>
+            <RootStack.Screen
+              name='Mileage'
+              component={MileageScreen}
+              options={{
+                header: () => (
+                  <Header
+                    buttonType='back'
+                    title={i18n.t('mileage.dashboard.mileage')}
+                  />
+                ),
+              }}
+            />
+            <RootStack.Screen
+              name='MileageEntry'
+              component={MileageEntryScreen}
+              options={{
+                header: () => (
+                  <Header
+                    buttonType='back'
+                    title={i18n.t('mileage.dashboard.entryTitle')}
+                  />
+                ),
+              }}
+            />
+            <RootStack.Screen
+              name='MileageCategories'
+              component={MileageCategoriesScreen}
+              options={{
+                header: () => (
+                  <Header
+                    buttonType='back'
+                    title={i18n.t('mileage.dashboard.manageCategories')}
+                  />
+                ),
+              }}
+            />
+            <RootStack.Screen
+              name='MileageVehicles'
+              component={MileageVehiclesScreen}
+              options={{
+                header: () => (
+                  <Header
+                    buttonType='back'
+                    title={i18n.t('mileage.dashboard.manageVehicles')}
+                  />
+                ),
+              }}
+            />
+            <RootStack.Screen
+              name='MileageVehicle'
+              component={MileageVehicleScreen}
+              options={{
+                header: () => (
+                  <Header
+                    buttonType='back'
+                    title={i18n.t('mileage.dashboard.vehicleTitle')}
+                  />
+                ),
+              }}
+            />
+            <RootStack.Screen
+              name='MileageReport'
+              component={MileageReportScreen}
+              options={{
+                header: () => (
+                  <Header
+                    buttonType='back'
+                    title={i18n.t('mileage.dashboard.reportTitle')}
+                  />
+                ),
+              }}
+            />
+          </RootStack.Group>
+        )}
         <RootStack.Screen
           name='Add Time'
           options={{

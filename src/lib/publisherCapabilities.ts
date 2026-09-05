@@ -50,6 +50,10 @@ export type PublisherCapabilities = {
    * for plain publishers and the custom role — they have no Tenure Type.
    */
   tracksTenure: boolean
+  /** Effective mileage enablement, including the User's explicit override. */
+  tracksMileage: boolean
+  /** Role default; only this flag gates the onboarding offer. */
+  offersMileageOnboarding: boolean
   showsTimer: boolean
   showsYearTabs: boolean
   milestones: number[]
@@ -103,6 +107,7 @@ export type PublisherCapabilitiesInput = {
   publisher: Publisher
   publisherHours: PublisherHours
   userSpecifiedHasAnnualGoal: boolean | 'default'
+  userSpecifiedMileageTracking?: boolean | 'default'
   milestoneOverrides: number[] | null
   overrideCreditLimit: boolean
   customCreditLimitHours: number
@@ -162,6 +167,17 @@ export const effectiveHasAnnualGoal = (
   return roleDefaultHasAnnualGoal(publisher)
 }
 
+export const offersMileageOnboarding = (publisher: Publisher): boolean =>
+  publisher === 'specialPioneer' || publisher === 'circuitOverseer'
+
+export const effectiveMileageTracking = (
+  publisher: Publisher,
+  userSpecified: boolean | 'default' = 'default'
+): boolean =>
+  userSpecified === 'default'
+    ? offersMileageOnboarding(publisher)
+    : userSpecified
+
 export const derivePublisherCapabilities = (
   input: PublisherCapabilitiesInput
 ): PublisherCapabilities => {
@@ -195,6 +211,11 @@ export const derivePublisherCapabilities = (
     isInFullTimeService: isInFullTimeService(publisher),
     tenureType: getTenureType(publisher),
     tracksTenure: tracksTenure(publisher),
+    tracksMileage: effectiveMileageTracking(
+      publisher,
+      input.userSpecifiedMileageTracking
+    ),
+    offersMileageOnboarding: offersMileageOnboarding(publisher),
     showsTimer: hoursMode,
     showsYearTabs: hoursMode,
     milestones: getEffectiveMilestones(

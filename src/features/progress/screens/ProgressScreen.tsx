@@ -3,14 +3,15 @@ import {
   ArrowRight as ArrowRightIcon,
 } from 'lucide-react-native'
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { View, StyleSheet } from 'react-native'
+import { ScrollView, View, StyleSheet } from 'react-native'
 import { BlurView } from 'expo-blur'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { NativeStackScreenProps } from '@react-navigation/native-stack'
 import moment from 'moment'
 
 import useTheme from '@/contexts/theme'
-import { usePreferences } from '@/stores/preferences'
+import usePublisher from '@/hooks/usePublisher'
+import MileageProgressCard from '@/features/mileage/components/MileageProgressCard'
 import i18n from '@/lib/locales'
 
 import MilestoneAdjustSheet from '@/features/progress/components/MilestoneAdjustSheet'
@@ -34,7 +35,8 @@ export type ProgressTab = 'month' | 'year' | 'allTime'
 const ProgressScreen = ({ route, navigation }: Props) => {
   const theme = useTheme()
   const insets = useSafeAreaInsets()
-  const { role, publisherHours } = usePreferences()
+  const { monthlyGoalHours, showsTimer, tracksMileage } = usePublisher()
+  const showTime = showsTimer
 
   const now = moment()
   const currentYear = now.year()
@@ -46,7 +48,7 @@ const ProgressScreen = ({ route, navigation }: Props) => {
   // Publisher types with no annual goal (e.g. `publisher` or custom-at-0) cannot
   // meaningfully render the Year tab. Hide it from the selector and coerce
   // route-param landings away from `year`.
-  const hideYearTab = (publisherHours[role] ?? 0) === 0
+  const hideYearTab = monthlyGoalHours === 0
 
   const initialTab: ProgressTab = (() => {
     const requested = route.params?.tab
@@ -57,6 +59,10 @@ const ProgressScreen = ({ route, navigation }: Props) => {
   const [activeTab, setActiveTab] = useState<ProgressTab>(initialTab)
 
   const [milestoneSheetOpen, setMilestoneSheetOpen] = useState(false)
+
+  useEffect(() => {
+    if (!showTime) setMilestoneSheetOpen(false)
+  }, [showTime])
 
   // Keep activeTab sane if publisher type changes mid-session.
   useEffect(() => {
@@ -155,101 +161,133 @@ const ProgressScreen = ({ route, navigation }: Props) => {
             gap: 6,
           }}
         >
-          <SegmentedControl<ProgressTab>
-            value={activeTab}
-            onChange={setActiveTab}
-            options={[
-              { key: 'month', label: i18n.t('month') },
-              ...(hideYearTab
-                ? []
-                : ([{ key: 'year', label: i18n.t('year') }] as const)),
-              { key: 'allTime', label: i18n.t('allTime') },
-            ]}
-            style={{ marginHorizontal: 15 }}
-          />
-          {activeTab === 'month' ? (
-            <View style={{ paddingHorizontal: 15 }}>
-              <XView style={{ justifyContent: 'space-between' }}>
-                <Button
-                  onPress={() => handleMonthNav('back')}
-                  style={navButtonStyle(theme)}
-                >
-                  <View
-                    style={{
-                      flexDirection: 'row',
-                      gap: 5,
-                      alignItems: 'center',
-                    }}
-                  >
-                    <IconButton icon={ArrowLeftIcon} size={15} />
-                    <Text style={{ color: theme.colors.textAlt }}>
-                      {moment(selectedMonth).subtract(1, 'month').format('MMM')}
-                    </Text>
-                  </View>
-                </Button>
-                <TodayTitleStack
-                  title={selectedMonth.format('MMMM YYYY')}
-                  showTodayBadge={!isCurrentMonth}
-                  onPressToday={jumpToToday}
-                />
-                <Button
-                  onPress={() => handleMonthNav('forward')}
-                  style={navButtonStyle(theme)}
-                >
-                  <View
-                    style={{
-                      flexDirection: 'row',
-                      gap: 5,
-                      alignItems: 'center',
-                    }}
-                  >
-                    <Text style={{ color: theme.colors.textAlt }}>
-                      {moment(selectedMonth).add(1, 'month').format('MMM')}
-                    </Text>
-                    <IconButton icon={ArrowRightIcon} size={15} />
-                  </View>
-                </Button>
-              </XView>
-            </View>
-          ) : null}
+          <Text
+            accessibilityRole='header'
+            style={{
+              marginHorizontal: 15,
+              paddingBottom: 8,
+              fontSize: 28,
+              fontFamily: theme.fonts.bold,
+            }}
+          >
+            {i18n.t('progress')}
+          </Text>
+          {showTime && (
+            <>
+              <SegmentedControl<ProgressTab>
+                value={activeTab}
+                onChange={setActiveTab}
+                options={[
+                  { key: 'month', label: i18n.t('month') },
+                  ...(hideYearTab
+                    ? []
+                    : ([{ key: 'year', label: i18n.t('year') }] as const)),
+                  { key: 'allTime', label: i18n.t('allTime') },
+                ]}
+                style={{ marginHorizontal: 15 }}
+              />
+              {activeTab === 'month' ? (
+                <View style={{ paddingHorizontal: 15 }}>
+                  <XView style={{ justifyContent: 'space-between' }}>
+                    <Button
+                      onPress={() => handleMonthNav('back')}
+                      style={navButtonStyle(theme)}
+                    >
+                      <View
+                        style={{
+                          flexDirection: 'row',
+                          gap: 5,
+                          alignItems: 'center',
+                        }}
+                      >
+                        <IconButton icon={ArrowLeftIcon} size={15} />
+                        <Text style={{ color: theme.colors.textAlt }}>
+                          {moment(selectedMonth)
+                            .subtract(1, 'month')
+                            .format('MMM')}
+                        </Text>
+                      </View>
+                    </Button>
+                    <TodayTitleStack
+                      title={selectedMonth.format('MMMM YYYY')}
+                      showTodayBadge={!isCurrentMonth}
+                      onPressToday={jumpToToday}
+                    />
+                    <Button
+                      onPress={() => handleMonthNav('forward')}
+                      style={navButtonStyle(theme)}
+                    >
+                      <View
+                        style={{
+                          flexDirection: 'row',
+                          gap: 5,
+                          alignItems: 'center',
+                        }}
+                      >
+                        <Text style={{ color: theme.colors.textAlt }}>
+                          {moment(selectedMonth).add(1, 'month').format('MMM')}
+                        </Text>
+                        <IconButton icon={ArrowRightIcon} size={15} />
+                      </View>
+                    </Button>
+                  </XView>
+                </View>
+              ) : null}
+            </>
+          )}
         </View>
       </View>
 
       <View style={{ flex: 1 }}>
-        <OnboardingBackfillBanner />
-        {activeTab === 'month' ? (
-          <ProgressMonthTab
-            month={month}
-            year={year}
-            onSwipeForward={() => handleMonthNav('forward')}
-            onSwipeBack={() => handleMonthNav('back')}
-          />
-        ) : null}
-        {activeTab === 'year' && !hideYearTab ? (
-          <ProgressYearTab
-            year={serviceYear}
-            onAdjustMilestones={() => setMilestoneSheetOpen(true)}
-            onMonthPress={(m, y) => {
-              setMonth(m)
-              setYear(y)
-              setActiveTab('month')
+        {showTime ? (
+          <>
+            <OnboardingBackfillBanner />
+            {activeTab === 'month' ? (
+              <ProgressMonthTab
+                month={month}
+                year={year}
+                onSwipeForward={() => handleMonthNav('forward')}
+                onSwipeBack={() => handleMonthNav('back')}
+              />
+            ) : null}
+            {activeTab === 'year' && !hideYearTab ? (
+              <ProgressYearTab
+                year={serviceYear}
+                onAdjustMilestones={() => setMilestoneSheetOpen(true)}
+                onMonthPress={(m, y) => {
+                  setMonth(m)
+                  setYear(y)
+                  setActiveTab('month')
+                }}
+              />
+            ) : null}
+            {activeTab === 'allTime' ? (
+              <ProgressAllTimeTab
+                onYearPress={(endYear) => {
+                  setYear(endYear)
+                  setActiveTab(hideYearTab ? 'month' : 'year')
+                }}
+              />
+            ) : null}
+          </>
+        ) : tracksMileage ? (
+          <ScrollView
+            contentContainerStyle={{
+              padding: 15,
+              paddingBottom: insets.bottom + 100,
             }}
-          />
-        ) : null}
-        {activeTab === 'allTime' ? (
-          <ProgressAllTimeTab
-            onYearPress={(endYear) => {
-              setYear(endYear)
-              setActiveTab(hideYearTab ? 'month' : 'year')
-            }}
-          />
+          >
+            <MileageProgressCard period={{ kind: 'month', month, year }} />
+          </ScrollView>
         ) : null}
       </View>
 
-      <MilestoneAdjustSheet
-        visible={milestoneSheetOpen}
-        onClose={() => setMilestoneSheetOpen(false)}
-      />
+      {showTime && milestoneSheetOpen && (
+        <MilestoneAdjustSheet
+          visible={milestoneSheetOpen}
+          onClose={() => setMilestoneSheetOpen(false)}
+        />
+      )}
     </View>
   )
 }

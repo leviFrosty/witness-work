@@ -18,11 +18,12 @@ src/
     conversations/   screens/ components/ lib/
     home/            screens/                           (treated as app — pure orchestrator, no own UI/lib)
     map/             screens/ components/ lib/ types/
+    mileage/         screens/ components/ lib/          (vehicle history + independent mileage reports)
     milestones/      screens/ components/ stores/
     onboarding/      components/                        (treated as app — uses app/sync infra)
     plans/           screens/ components/               (treated as app — composes plans + service-reports)
     profile/         components/ hooks/ lib/            (profile card, contribution graph, profile stats)
-    progress/        screens/ components/               (treated as app — composes reports + milestones)
+    progress/        screens/ components/               (treated as app — composes time reports, milestones, mileage)
     service-reports/ screens/ components/ hooks/ lib/ stores/
     settings/        screens/ components/ hooks/ lib/   (treated as app — composes every other feature)
     supporter/       screens/ components/ lib/ stores/

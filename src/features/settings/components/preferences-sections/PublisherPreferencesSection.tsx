@@ -1,3 +1,6 @@
+import { useNavigation } from '@react-navigation/native'
+import { RootStackNavigation } from '@/types/rootStack'
+import MileagePreferences from '@/features/mileage/components/MileagePreferences'
 import { ChevronRight as ChevronRightIcon } from 'lucide-react-native'
 import LucideIcon from '@/components/ui/LucideIcon'
 import { useEffect, useState } from 'react'
@@ -47,6 +50,7 @@ const PublisherPreferencesSection = () => {
   } = usePublisher()
   const { hasName } = useUser()
   const theme = useTheme()
+  const navigation = useNavigation<RootStackNavigation>()
   const isCheckboxMode = entryMode === 'checkbox'
   const [advancedOpen, setAdvancedOpen] = useState(false)
 
@@ -131,6 +135,10 @@ const PublisherPreferencesSection = () => {
         )}
         <DefaultExportMethodSelector lastInSection />
       </Section>
+
+      <MileagePreferences
+        onManageVehicles={() => navigation.navigate('MileageVehicles')}
+      />
 
       {showAdvanced && (
         <View style={{ marginTop: 10 }}>

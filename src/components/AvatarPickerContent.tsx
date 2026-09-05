@@ -37,6 +37,25 @@ export type AvatarMetaCapture = {
  * iOS emoji keyboard has no public programmatic invocation, so we ship a small,
  * appropriate set instead of pulling a third-party library.
  */
+export const VEHICLE_EMOJI_OPTIONS = [
+  '🚗',
+  '🚙',
+  '🚘',
+  '🚕',
+  '🛻',
+  '🚐',
+  '🚌',
+  '🏍️',
+  '🛵',
+  '🚲',
+  '🚚',
+  '🚎',
+  '🚑',
+  '🚓',
+  '🚒',
+  '🚜',
+] as const
+
 const EMOJI_OPTIONS = [
   '😊',
   '😃',
@@ -108,6 +127,13 @@ export const BACKGROUND_SWATCHES_WIDTH =
   (BACKGROUND_SWATCH_COUNT - 1) * SWATCH_GAP
 
 interface Props {
+  /** Restricts the picker to emoji avatars, without photo or removal controls. */
+  emojiOnly?: boolean
+  /**
+   * Optional domain-specific emoji grid; profile/contact defaults stay
+   * unchanged.
+   */
+  emojiOptions?: readonly string[]
   /** Currently-selected avatar (drives the highlighted state in the grid). */
   value: ProfileAvatar
   /**
@@ -233,6 +259,8 @@ const AvatarPickerContent = ({
   backgroundValue = null,
   onBackgroundChange,
   onImageMeta,
+  emojiOnly = false,
+  emojiOptions,
 }: Props) => {
   const theme = useTheme()
   const destPath = `${FileSystem.documentDirectory}${imageFileName}`
@@ -355,7 +383,7 @@ const AvatarPickerContent = ({
           gap: EMOJI_GAP,
         }}
       >
-        {EMOJI_OPTIONS.map((emoji) => {
+        {(emojiOptions ?? EMOJI_OPTIONS).map((emoji) => {
           const selected = value.type === 'emoji' && value.value === emoji
           return (
             <Pressable
@@ -377,41 +405,53 @@ const AvatarPickerContent = ({
           )
         })}
       </View>
-      <View style={{ height: 1, backgroundColor: theme.colors.border }} />
-      <View style={{ flexDirection: 'row', gap: 8 }}>
-        <Button
-          variant='outline'
-          onPress={pickImage}
-          style={{
-            flex: 1,
-            paddingVertical: 10,
-            gap: 8,
-            justifyContent: 'center',
-          }}
-        >
-          <LucideIcon icon={CameraIcon} size={13} color={theme.colors.text} />
-          <Text style={{ color: theme.colors.text, fontSize: 14 }}>
-            {i18n.t('choosePhoto')}
-          </Text>
-        </Button>
-        {hasAvatar && (
-          <Button
-            variant='outline'
-            onPress={clearAvatar}
-            style={{
-              paddingVertical: 10,
-              paddingHorizontal: 14,
-              gap: 8,
-              justifyContent: 'center',
-            }}
-          >
-            <LucideIcon icon={Trash2Icon} size={13} color={theme.colors.text} />
-            <Text style={{ color: theme.colors.text, fontSize: 14 }}>
-              {i18n.t('remove')}
-            </Text>
-          </Button>
-        )}
-      </View>
+      {!emojiOnly && (
+        <>
+          <View style={{ height: 1, backgroundColor: theme.colors.border }} />
+          <View style={{ flexDirection: 'row', gap: 8 }}>
+            <Button
+              variant='outline'
+              onPress={pickImage}
+              style={{
+                flex: 1,
+                paddingVertical: 10,
+                gap: 8,
+                justifyContent: 'center',
+              }}
+            >
+              <LucideIcon
+                icon={CameraIcon}
+                size={13}
+                color={theme.colors.text}
+              />
+              <Text style={{ color: theme.colors.text, fontSize: 14 }}>
+                {i18n.t('choosePhoto')}
+              </Text>
+            </Button>
+            {hasAvatar && (
+              <Button
+                variant='outline'
+                onPress={clearAvatar}
+                style={{
+                  paddingVertical: 10,
+                  paddingHorizontal: 14,
+                  gap: 8,
+                  justifyContent: 'center',
+                }}
+              >
+                <LucideIcon
+                  icon={Trash2Icon}
+                  size={13}
+                  color={theme.colors.text}
+                />
+                <Text style={{ color: theme.colors.text, fontSize: 14 }}>
+                  {i18n.t('remove')}
+                </Text>
+              </Button>
+            )}
+          </View>
+        </>
+      )}
       {pendingPick && (
         <ContactAvatarCropEditor
           visible

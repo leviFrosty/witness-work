@@ -40,7 +40,7 @@ const HomeTabStack = () => {
     dismissedMilestoneRevealOnce,
     set,
   } = usePreferences()
-  const { showsYearTabs } = usePublisher()
+  const { showsYearTabs, tracksMileage } = usePublisher()
   const [lastVersion] = useState(lastAppVersion)
   const [showWhatsNew, setShowWhatsNew] = useState(false)
   const showMilestoneReveal = useMilestoneRevealStore((s) => s.show)
@@ -145,7 +145,7 @@ const HomeTabStack = () => {
         <Tab.Screen name='Home' component={DrawerNavigator} />
         <Tab.Screen name='Contacts' component={ContactsScreen} />
         {developerTools && <Tab.Screen name='Tools' component={ToolsScreen} />}
-        {showsYearTabs && (
+        {(showsYearTabs || tracksMileage) && (
           <Tab.Screen name='Progress' component={ProgressScreen} />
         )}
         <Tab.Screen name='Schedule' component={ScheduleScreen} />

@@ -11,6 +11,7 @@ import MonthReport from '@/features/service-reports/components/MonthReport'
 import ProjectedTotalCard from '@/components/ProjectedTotalCard'
 import AllDaysList from '@/features/service-reports/components/AllDaysList'
 import SwipeMonthNavigator from '@/components/SwipeMonthNavigator'
+import MileageProgressCard from '@/features/mileage/components/MileageProgressCard'
 
 interface ProgressMonthTabProps {
   month: number
@@ -68,6 +69,7 @@ const ProgressMonthTab = ({
             hideTitle
             allowGoalEditing
           />
+          <MileageProgressCard period={{ kind: 'month', month, year }} />
           <ProjectedTotalCard scope={scope} />
         </View>
 

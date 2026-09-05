@@ -15,6 +15,7 @@ const baseInput = {
     custom: 50,
   },
   userSpecifiedHasAnnualGoal: 'default' as boolean | 'default',
+  userSpecifiedMileageTracking: 'default' as boolean | 'default',
   milestoneOverrides: null as number[] | null,
   overrideCreditLimit: false,
   customCreditLimitHours: 55,
@@ -262,5 +263,58 @@ describe('getTenureType', () => {
     // into either should clear the Tenure Start Date.
     expect(getTenureType('publisher')).toBeNull()
     expect(getTenureType('custom')).toBeNull()
+  })
+})
+
+describe('mileage capabilities', () => {
+  const roles: Publisher[] = [
+    'publisher',
+    'regularAuxiliary',
+    'regularPioneer',
+    'specialPioneer',
+    'circuitOverseer',
+    'custom',
+  ]
+
+  it('defaults on only for the two Publishers offered mileage onboarding', () => {
+    for (const role of roles) {
+      const expected = role === 'specialPioneer' || role === 'circuitOverseer'
+      expect(derive(role).tracksMileage).toBe(expected)
+      expect(derive(role).offersMileageOnboarding).toBe(expected)
+    }
+  })
+
+  it('honors explicit On and Off across every Publisher change without expanding onboarding', () => {
+    for (const role of roles) {
+      expect(
+        derive(role, { userSpecifiedMileageTracking: true }).tracksMileage
+      ).toBe(true)
+      expect(
+        derive(role, { userSpecifiedMileageTracking: false }).tracksMileage
+      ).toBe(false)
+      expect(
+        derive(role, { userSpecifiedMileageTracking: true })
+          .offersMileageOnboarding
+      ).toBe(derive(role).offersMileageOnboarding)
+    }
+  })
+
+  it('makes mileage available in checkbox mode without time affordances', () => {
+    const caps = derive('publisher', { userSpecifiedMileageTracking: true })
+    expect(caps.tracksMileage).toBe(true)
+    expect(caps.entryMode).toBe('checkbox')
+    expect(caps.showsTimer).toBe(false)
+    expect(caps.showsYearTabs).toBe(false)
+    expect(caps.hasAnnualGoal).toBe(false)
+  })
+
+  it('falls back to Publisher defaults for older capability callers', () => {
+    expect(
+      derivePublisherCapabilities({
+        ...baseInput,
+        publisher: 'specialPioneer',
+        userSpecifiedMileageTracking: undefined,
+      }).tracksMileage
+    ).toBe(true)
   })
 })

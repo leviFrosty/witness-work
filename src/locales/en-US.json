@@ -2290,5 +2290,151 @@
         "unreachable_gap": "Planned hours put you at **{{projected}}**. **{{gap}}** to goal — a stretch from here."
       }
     }
+  },
+  "mileage": {
+    "common": {
+      "vehicle": "Vehicle",
+      "category": "Mileage Category",
+      "uncategorized": "Uncategorized",
+      "active": "Active",
+      "archived": "Archived",
+      "archive": "Archive",
+      "restore": "Restore",
+      "rename": "Rename"
+    },
+    "entries": {
+      "add": "Add Mileage",
+      "edit": "Edit Mileage",
+      "inProgress": "Trips in progress",
+      "resume": "Finish trip",
+      "saved": "Mileage saved",
+      "cannotSave": "Unable to save mileage",
+      "vehicleNeeded": "Add a vehicle to start recording mileage.",
+      "createVehicle": "Add Vehicle",
+      "selectVehicle": "Choose a vehicle",
+      "distanceMode": "Distance",
+      "odometerMode": "Odometer",
+      "distance": "Distance (%{unit})",
+      "startOdometer": "Starting reading (%{unit})",
+      "endOdometer": "Ending reading (%{unit})",
+      "finishLater": "Finish later",
+      "odometerHelp": "Leave the ending reading empty to save a trip in progress. Finish it later; its distance will count on the date you selected.",
+      "saveStart": "Save Starting Reading",
+      "deleteTitle": "Delete mileage entry?",
+      "deleteDescription": "This entry will be removed from your mileage history and totals.",
+      "errors": {
+        "date": "Choose a valid date that is today or earlier.",
+        "vehicle": "Choose an active vehicle.",
+        "category": "Choose an active Mileage Category or Uncategorized.",
+        "distance": "Enter a distance greater than zero.",
+        "odometer": "Enter a valid starting reading. The ending reading must be greater than the starting reading.",
+        "inProgress": "This vehicle already has a trip in progress. Finish that trip before starting another.",
+        "name": "Enter a name.",
+        "combinedMpg": "Enter a combined MPG greater than zero.",
+        "avatar": "Choose an emoji avatar."
+      },
+      "unavailable": "This mileage entry is no longer available.",
+      "calculatedDistance": "Distance: %{distance}",
+      "notePlaceholder": "Optional trip details"
+    },
+    "categories": {
+      "title": "Mileage Categories",
+      "description": "Organize mileage independently from your time categories. Archived categories remain in your history.",
+      "name": "Name",
+      "add": "Add Mileage Category",
+      "new": "Add another category",
+      "empty": "No Mileage Categories yet. Entries can stay uncategorized.",
+      "deleteTitle": "Delete Mileage Category?",
+      "deleteDescription": "This unused Mileage Category will be permanently removed."
+    },
+    "preferences": {
+      "on": "On",
+      "off": "Off",
+      "tracking": "Mileage tracking",
+      "description": "Track mileage separately from service time. Turning this off keeps your vehicles and mileage history.",
+      "submission": "Mileage report action",
+      "distanceUnit": "Distance unit",
+      "miles": "Miles",
+      "kilometers": "Kilometers"
+    },
+    "vehicles": {
+      "manage": "Manage vehicles",
+      "name": "Vehicle name",
+      "namePlaceholder": "e.g., %{year} Toyota Corolla",
+      "combinedMpg": "Combined MPG",
+      "mpgDescription": "Optional and informational only. Use the combined MPG from your vehicle record. This is not used to calculate reimbursement.",
+      "nameRequired": "Enter a vehicle name.",
+      "mpgInvalid": "Enter a combined MPG greater than zero, or leave it blank.",
+      "unavailable": "This vehicle is no longer available.",
+      "avatar": "Vehicle avatar",
+      "description": "Choose the vehicle for each mileage entry. Archived vehicles keep their mileage history and can be restored.",
+      "active": "Active vehicles",
+      "archived": "Archived vehicles",
+      "add": "Add vehicle",
+      "empty": "Add your first vehicle to start logging mileage.",
+      "editNamed": "Edit %{name}",
+      "mpgValue": "%{value} combined MPG",
+      "restore": "Restore",
+      "archive": "Archive",
+      "deleteTitle": "Delete vehicle?",
+      "deleteDescription": "Delete %{name}? This vehicle has no mileage entries.",
+      "mpgPlaceholder": "Optional"
+    },
+    "onboarding": {
+      "title": "Set up mileage",
+      "description": "Keep a separate record of travel with your vehicle. You can log distance directly or use odometer readings, then copy or share a monthly mileage report.",
+      "skip": "Set up later"
+    },
+    "progressCard": {
+      "vehicles": {
+        "one": "%{count} vehicle",
+        "other": "%{count} vehicles"
+      },
+      "pendingTrips": {
+        "one": "%{count} trip in progress",
+        "other": "%{count} trips in progress"
+      },
+      "openHint": "View mileage history and reports."
+    },
+    "dashboard": {
+      "time": "Time",
+      "mileage": "Mileage",
+      "serviceYear": "Service Year",
+      "serviceYearRange": "Service Year %{start}–%{end}",
+      "previousPeriod": "Previous period",
+      "nextPeriod": "Next period",
+      "allVehicles": "All Vehicles",
+      "archivedVehicle": "%{name} (Archived)",
+      "categories": "Categories",
+      "uncategorized": "Uncategorized",
+      "unknownCategory": "Mileage Category",
+      "unknownVehicle": "Vehicle",
+      "noCompletedEntries": "No completed mileage entries in this period.",
+      "noEntries": "No mileage entries this month.",
+      "inProgress": "In Progress",
+      "completedDistance": "Completed Distance",
+      "setupHint": "Add a Vehicle to start recording your mileage.",
+      "addMileage": "Add Mileage",
+      "setupVehicle": "Set Up a Vehicle",
+      "viewReport": "View Report",
+      "manageVehicles": "Vehicles",
+      "manageCategories": "Mileage Categories",
+      "entryTitle": "Mileage Entry",
+      "vehicleTitle": "Vehicle",
+      "reportTitle": "Mileage Report"
+    },
+    "report": {
+      "mileage": "Mileage",
+      "total": "Total",
+      "heading": "%{month} — Mileage",
+      "copy": "Copy",
+      "share": "Share",
+      "copySummary": "Copy Summary",
+      "shareSummary": "Share Summary",
+      "copied": "Mileage summary copied.",
+      "shared": "Mileage summary shared.",
+      "exportFailed": "Couldn't export your mileage summary. Please try again.",
+      "guidance": "Reimbursement rules and limits may apply. Log only eligible travel and check your current branch guidance before submitting."
+    }
   }
 }

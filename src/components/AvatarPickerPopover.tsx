@@ -11,6 +11,13 @@ import AnchoredPopover from '@/components/ui/AnchoredPopover'
 import i18n from '@/lib/locales'
 
 interface Props {
+  /** Restricts the picker to emoji avatars, without photo or removal controls. */
+  emojiOnly?: boolean
+  /**
+   * Optional domain-specific emoji grid; profile/contact defaults stay
+   * unchanged.
+   */
+  emojiOptions?: readonly string[]
   /** Currently-selected avatar to render in the anchor + drive picker state. */
   value: ProfileAvatar
   /** Persisted by the caller (preferences for the user, contact store per-row). */
@@ -59,6 +66,8 @@ const AvatarPickerPopover = ({
   onBackgroundChange,
   accessibilityLabel,
   onImageMeta,
+  emojiOnly = false,
+  emojiOptions,
 }: Props) => {
   const theme = useTheme()
 
@@ -109,6 +118,8 @@ const AvatarPickerPopover = ({
       {({ close }) => (
         <AvatarPickerContent
           value={value}
+          emojiOnly={emojiOnly}
+          emojiOptions={emojiOptions}
           onChange={(next) => {
             onChange(next)
             close()

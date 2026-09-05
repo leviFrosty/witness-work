@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import Constants from 'expo-constants'
 import { create } from 'zustand'
+import { beginStartupWork } from '@/lib/deferUntilNotBlocking'
 import { getNotesImportStatus } from '@/features/notes-import/lib/notesImportClient'
 import type { NotesImportPublicSchedule } from '@/features/notes-import/lib/notesImportUsage'
 import {
@@ -42,6 +43,7 @@ const useAvailabilityStore = create<AvailabilityStore>((set) => ({
   loading: true,
 
   probe: async () => {
+    const finishStartup = beginStartupWork()
     const probe = ++latestProbe
     // Access remains fail-open, but schedule claims disappear while this fresh
     // probe is pending (including when another surface mounts later).
@@ -52,7 +54,9 @@ const useAvailabilityStore = create<AvailabilityStore>((set) => ({
       updateRequired: null,
       loading: true,
     })
-    const status = await getNotesImportStatus().catch(() => null)
+    const status = await getNotesImportStatus()
+      .catch(() => null)
+      .finally(finishStartup)
     if (probe !== latestProbe) return
 
     if (!status) {

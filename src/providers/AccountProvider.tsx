@@ -22,6 +22,7 @@ import {
 } from '@/lib/account'
 import { logger } from '@/lib/logger'
 import { isOfflineError } from '@/lib/offlineError'
+import { beginStartupWork } from '@/lib/deferUntilNotBlocking'
 
 interface Props {}
 
@@ -83,6 +84,7 @@ const AccountProvider: React.FC<PropsWithChildren<Props>> = ({ children }) => {
         return
       }
       inFlightRef.current = true
+      const finishStartup = beginStartupWork()
       try {
         if (!ICloudBridge.isAvailable()) {
           setICloudSharingAvailable(false)
@@ -172,6 +174,7 @@ const AccountProvider: React.FC<PropsWithChildren<Props>> = ({ children }) => {
           Sentry.captureException(error)
         }
       } finally {
+        finishStartup()
         inFlightRef.current = false
         const queued = queuedReasonRef.current
         queuedReasonRef.current = null

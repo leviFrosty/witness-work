@@ -68,6 +68,8 @@ import { isOfflineError } from '@/lib/offlineError'
 import { isLocationTemporarilyUnavailableError } from '@/lib/locationError'
 import { useNotesImportManager } from '@/features/notes-import/hooks/useNotesImportManager'
 import { prepareNotesImportAppAttestRecovery } from '@/features/notes-import/lib/notesImportAppAttestRuntime'
+import { beginStartupWork } from '@/lib/deferUntilNotBlocking'
+import AnnouncementStartup from '@/app/components/AnnouncementStartup'
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
@@ -134,10 +136,13 @@ function SupporterStoreSync() {
  */
 function NotesImportAttestPreparation() {
   useEffect(() => {
-    void prepareNotesImportAppAttestRecovery().catch(() => {
-      // Best effort. The normal Notes Import path retries through the same module
-      // and presents its localized error if enrollment still cannot complete.
-    })
+    const finishStartup = beginStartupWork()
+    void prepareNotesImportAppAttestRecovery()
+      .catch(() => {
+        // Best effort. The normal Notes Import path retries through the same module
+        // and presents its localized error if enrollment still cannot complete.
+      })
+      .finally(finishStartup)
   }, [])
   return null
 }
@@ -306,6 +311,7 @@ export default function App() {
     Kalam_700Bold,
   })
   const [hasMigrated, setHasMigrated] = useState(hasMigratedFromAsyncStorage())
+  const [navigationReady, setNavigationReady] = useState(false)
 
   // Dev-only: bumping this key remounts the whole navigation tree (every
   // screen back to initial state) without a Metro bundle reload, so an
@@ -615,6 +621,7 @@ export default function App() {
                   key={devRemountKey}
                   ref={navigationRef}
                   linking={linking}
+                  onReady={() => setNavigationReady(true)}
                 >
                   {/*
                    * ToastProvider must wrap TamaguiProvider — TamaguiProvider
@@ -643,6 +650,7 @@ export default function App() {
                         <AnimationViewProvider>
                           <DeepLinkListeners />
                           <RootStackComponent />
+                          {navigationReady && <AnnouncementStartup />}
                         </AnimationViewProvider>
                       </ConfettiProvider>
                     </TamaguiProvider>

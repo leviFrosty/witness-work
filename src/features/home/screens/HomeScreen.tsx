@@ -47,6 +47,7 @@ import { HomeTabStackNavigation } from '@/types/homeStack'
 import { RootStackNavigation } from '@/types/rootStack'
 import { Fragment } from 'react'
 import type { TimeEntry } from '@/types/timeEntry'
+import AnnouncementBanner from '@/features/announcements/components/AnnouncementBanner'
 
 export const HomeScreen = () => {
   const theme = useTheme()
@@ -326,6 +327,7 @@ export const HomeScreen = () => {
         }
       >
         <View style={{ gap: 20, paddingBottom: insets.bottom, flex: 1 }}>
+          <AnnouncementBanner />
           <ProfileCard
             onPressIncomplete={() =>
               rootNavigation.navigate('PreferencesPublisher')

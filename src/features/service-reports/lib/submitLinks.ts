@@ -48,11 +48,12 @@ export type HourglassReport = {
   month: number
   year: number
   /**
-   * Total ministry minutes. Checkbox-mode publishers send 1 to indicate sharing
-   * in the ministry.
+   * Preaching minutes, excluding Credit Time. Checkbox-mode publishers send 1
+   * to indicate sharing in the ministry.
    */
   minutes: number
   studies?: number | null
+  /** Credit Time breakdown or the user's report comment override. */
   remarks?: string
 }
 

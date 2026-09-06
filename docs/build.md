@@ -22,6 +22,8 @@ Build dependencies: [XCode](https://docs.expo.dev/workflow/ios-simulator/#instal
 
 ## Production build & App Store upload (fully local)
 
+For the complete release workflow, invoke `/cut-release` (see `.agents/skills/cut-release/SKILL.md`). Tag pushes run validation and create a GitHub Release; they do not build or upload.
+
 **We intentionally do not use EAS Build cloud services for production.** Every production build runs on our own hardware via `eas build --local` so we never pay for build credits. The EAS CLI is still used as the local build orchestrator and for `autoIncrement` (fetching the next build number from EAS — free; only cloud builder minutes cost money).
 
 ```bash

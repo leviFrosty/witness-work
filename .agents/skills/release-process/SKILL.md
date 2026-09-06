@@ -26,42 +26,34 @@ EAS preview builds don't run automatically (they're expensive) — kick one off 
 
 ## Cutting a release
 
+Use `/cut-release` for the complete main → local build → App Review workflow. It is explicitly user-invoked; its source is `.agents/skills/cut-release/SKILL.md`.
+
+`scripts/bump-version.js` is a deterministic preparation tool. The invoking agent writes notes and translations; the script does not call a model or Azure.
+
 ```bash
-pnpm run bump-version patch   # or minor, major
+pnpm run bump-version minor --notes-file .asc/cut-release-notes.json --prepare
+# Or maintenance without an in-app announcement:
+pnpm run bump-version patch --skip-notes --prepare
 ```
 
-This script (`scripts/bump-version.js`) does the whole release-notes flow for you — don't hand-edit `releaseNotes.ts` first:
+The notes file contains `{ "notes": ["User-facing change"] }`; `[]` omits the announcement. `--prepare` changes package/app versions and optional `src/features/updates/constants/releaseNotes.ts` / English updates keys, without committing. It requires a clean tree. Validate inputs before mutation; failures retain files/history for recovery.
 
-1. Bumps `version` in `package.json` and `app.config.ts`.
-2. Unless `--skip-notes`, shells out to the `claude` CLI with the git log since the last tag (plus the last 3 versions of existing notes for context) to draft 3-8 user-facing bullets, then prompts you to accept or give feedback for a revision — loops until accepted.
-3. Prepends the accepted notes into `src/constants/releaseNotes.ts` and `src/locales/en-US.json` (`updates.<versionKey>`), then runs `pnpm translate --force` to auto-translate into other locales.
-4. Stages `package.json`, `app.config.ts`, plus the release-notes/locale files if notes were generated, commits as `chore: bump version to X.Y.Z`, and creates annotated tag `vX.Y.Z`.
+After translation, run `pnpm run check:locales`, `pnpm run check:all` and `pnpm run deps`. Stage explicit release files, commit `chore: bump version to X.Y.Z`, and create annotated `vX.Y.Z` with message `Release X.Y.Z`. Hooks stay enabled. The helper requires `--prepare` and never commits, tags or generates translations; the release skill owns those stages.
 
-Requires a clean working tree and the `claude` CLI on PATH (unless `--skip-notes`).
-
-Push from `main`:
+Push main and the specific release tag atomically:
 
 ```bash
-git push origin main --follow-tags
-```
-
-Then build and upload **locally** — we intentionally don't use EAS Build cloud services for production (no build credits; everything runs on our own hardware):
-
-```bash
+git push --atomic origin main refs/tags/vX.Y.Z
 pnpm run build:prod-auto-submit
 ```
 
-That script builds via `eas build --local` to the single idempotent artifact `./build-production.ipa` and uploads it to App Store Connect with `asc builds upload`. Prerequisites and env-file details are in `docs/build.md` ("Production build & App Store upload").
-
-⚠️ `production-release.yml` still triggers on any `v*.*.*` tag push and runs a **cloud** EAS build + auto-submit — the legacy path this local flow replaces. Until that workflow is disabled or its build step removed, pushing a tag after a local upload will double-build and double-submit.
-
-For App Store Connect-side steps (TestFlight, "What's New" per-locale, submission), see [[app-store-release]].
+The tag workflow validates and creates a GitHub Release; it does not build or upload. Production builds run locally via `eas build --local`, then upload with `asc builds upload`. Prerequisites are in `docs/build.md`. Upload is separate from Apple processing and App Review submission; see `../app-store-release/SKILL.md` for ASC operations.
 
 ## Workflows reference
 
-| File                     | Trigger                                         | Does                                                                                                                   |
-| ------------------------ | ----------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
-| `pr-preview-build.yml`   | manual (`workflow_dispatch`)                    | lint/typecheck/test/deps, then EAS iOS preview build                                                                   |
-| `tests.yml`              | push → `main`                                   | lint/typecheck/test/deps                                                                                               |
-| `production-release.yml` | tag push `v*.*.*`                               | lint/typecheck/test/deps, **cloud** EAS build + auto-submit (legacy — production is built locally now), GitHub Release |
-| `claude.yml`             | `@claude` mention on issue/PR comment or review | Claude Code responds inline                                                                                            |
+| File                     | Trigger                                         | Does                                                                           |
+| ------------------------ | ----------------------------------------------- | ------------------------------------------------------------------------------ |
+| `pr-preview-build.yml`   | manual (`workflow_dispatch`)                    | lint/typecheck/test/deps, then EAS iOS preview build                           |
+| `tests.yml`              | push → `main`                                   | lint/typecheck/test/deps                                                       |
+| `production-release.yml` | tag push `v*.*.*`                               | locale completeness/lint/typecheck/test/deps, GitHub Release (no build/upload) |
+| `claude.yml`             | `@claude` mention on issue/PR comment or review | Claude Code responds inline                                                    |

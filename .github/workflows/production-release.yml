@@ -6,22 +6,13 @@ on:
       - 'v*.*.*'
 
 jobs:
-  production-build:
-    name: EAS Production Build & Submit
+  release:
+    name: Validate & Create GitHub Release
     runs-on: ubuntu-latest
     permissions:
       contents: write
     environment: Production
     steps:
-      - name: Check for EXPO_TOKEN
-        env:
-          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
-        run: |
-          if [ -z "$EXPO_TOKEN" ]; then
-            echo "You must provide an EXPO_TOKEN secret linked to this project's Expo account in this repo's secrets. Learn more: https://docs.expo.dev/eas-update/github-actions"
-            exit 1
-          fi
-
       - name: Checkout repository
         uses: actions/checkout@v4
 
@@ -34,14 +25,25 @@ jobs:
           node-version: 24.15.0
           cache: pnpm
 
-      - name: Setup EAS
-        uses: expo/expo-github-action@v8
-        with:
-          eas-version: latest
-          token: ${{ secrets.EXPO_TOKEN }}
-
       - name: Install dependencies
-        run: pnpm install
+        run: pnpm install --frozen-lockfile
+
+      - name: Verify release version
+        run: |
+          node <<'NODE'
+          const fs = require('node:fs');
+          const semver = require('semver');
+          const version = require('./package.json').version;
+          const config = fs.readFileSync('app.config.ts', 'utf8');
+          const versions = [...config.matchAll(/\bversion:\s*['"]([\d.]+)['"]/g)];
+          if (!semver.valid(version) || process.env.GITHUB_REF_NAME !== `v${version}` ||
+              versions.length !== 1 || versions[0][1] !== version) {
+            throw new Error('Release tag, package.json and app.config.ts must match');
+          }
+          NODE
+
+      - name: Check locale completeness
+        run: pnpm run check:locales
 
       - name: Run lint
         run: pnpm run lint
@@ -55,15 +57,21 @@ jobs:
       - name: Check for circular dependencies
         run: pnpm run deps
 
-      - name: Build and submit iOS to App Store
-        run: eas build --platform ios --profile production --auto-submit --non-interactive --no-wait
-
       - name: Create GitHub Release
         uses: actions/github-script@v7
         with:
           script: |
             const tag = context.ref.replace('refs/tags/', '');
             const version = tag.replace('v', '');
+            try {
+              await github.rest.repos.getReleaseByTag({
+                owner: context.repo.owner, repo: context.repo.repo, tag
+              });
+              console.log(`Release ${tag} already exists`);
+              return;
+            } catch (error) {
+              if (error.status !== 404) throw error;
+            }
 
             // Get the previous release to compare commits
             let previousTag = null;
@@ -113,7 +121,7 @@ jobs:
             const body = `### Changes${previousTag ? ` since ${previousTag}` : ''}
             ${changelog || 'No changes recorded'}`;
 
-            github.rest.repos.createRelease({
+            await github.rest.repos.createRelease({
               owner: context.repo.owner,
               repo: context.repo.repo,
               tag_name: tag,

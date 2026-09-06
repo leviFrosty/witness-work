@@ -15,6 +15,7 @@ import {
 } from '@/lib/serviceReport'
 import { getStudiesForGivenMonth } from '@/lib/contacts'
 import { formatMinutesCompact } from '@/lib/minutes'
+import type { HourglassReport } from '@/features/service-reports/lib/submitLinks'
 
 export type MonthReportData = {
   /** Whether the publisher has any reports logged for this month. */
@@ -27,10 +28,10 @@ export type MonthReportData = {
   creditOverageHours: number
   studies: number | null
   /**
-   * Minutes value for Hourglass submission: total adjusted minutes for hourly
-   * publishers, or 1/0 (shared / didn't share) for checkbox-mode publishers.
+   * Hourglass submission fields. Preaching minutes and Credit Time remarks stay
+   * separate; checkbox mode uses 1/0 for participation.
    */
-  hourglassMinutes: number
+  hourglassReport: Pick<HourglassReport, 'minutes' | 'studies' | 'remarks'>
   /**
    * Comments text for the report. The auto-generated credit breakdown, unless
    * the user saved a month-specific override (see `hasNotesOverride`).
@@ -120,7 +121,7 @@ const useMonthReportData = (
   const credit = Math.max(0, Math.floor(adjusted.value / 60) - hours)
   const creditOverageHours = Math.floor(adjusted.creditOverage / 60)
   const hourglassMinutes =
-    entryMode === 'checkbox' ? (sharedInMinistry ? 1 : 0) : adjusted.value
+    entryMode === 'checkbox' ? (sharedInMinistry ? 1 : 0) : adjusted.standard
 
   const defaultNotes = useMemo(() => {
     if (month === undefined || year === undefined) return ''
@@ -204,7 +205,11 @@ const useMonthReportData = (
     credit,
     creditOverageHours,
     studies,
-    hourglassMinutes,
+    hourglassReport: {
+      minutes: hourglassMinutes,
+      studies,
+      remarks: notes || undefined,
+    },
     notes,
     defaultNotes,
     hasNotesOverride,

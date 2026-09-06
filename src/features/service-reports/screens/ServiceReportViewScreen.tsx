@@ -280,7 +280,8 @@ const ServiceReportViewScreen = ({ route, navigation }: Props) => {
         return
       }
 
-      // A user-edited comment replaces the auto-generated overage remark.
+      // NW Publisher has a separate credit field, so its default remark only
+      // needs the overage. Hourglass carries the credit breakdown in remarks.
       const remarks = data.hasNotesOverride
         ? data.notes || undefined
         : data.creditOverageHours > 0
@@ -294,9 +295,7 @@ const ServiceReportViewScreen = ({ route, navigation }: Props) => {
           buildHourglassLink({
             month: month + 1,
             year,
-            minutes: data.hourglassMinutes,
-            studies: data.studies,
-            remarks,
+            ...data.hourglassReport,
           })
         )
         confirmSubmission()

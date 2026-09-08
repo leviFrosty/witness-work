@@ -21,9 +21,7 @@ import {
   getEffectiveStartTimeInMinutesForRecurringPlan,
   RecurringPlan,
 } from '@/lib/recurrence'
-import { getPeriodTense } from '@/lib/projectedTotalCopy'
 import usePublisher from '@/hooks/usePublisher'
-import useProjectedTotal from '@/hooks/useProjectedTotal'
 import {
   getStartTimeInMinutes,
   isStoredDateOnLocalDay,
@@ -36,7 +34,7 @@ import SwipeMonthNavigator from '@/components/SwipeMonthNavigator'
 import CalendarHeader, { CalendarViewMode } from '@/components/CalendarHeader'
 import CalendarKey from '@/features/plans/components/CalendarKey'
 import MonthTimeReportsCalendar from '@/features/service-reports/components/MonthTimeReportsCalendar'
-import AssistantSection from '@/components/AssistantSection'
+import ScheduleScreenSections from '@/features/plans/components/ScheduleScreenSections'
 import SelectedDateSheet, {
   SelectedDateSheetState,
 } from '@/features/service-reports/components/SelectedDateSheet'
@@ -369,7 +367,7 @@ const ScheduleScreen = ({ route }: Props) => {
               {i18n.t('createPlan')}
             </ActionButton>
           </Card>
-          <MonthAssistantCard month={month} year={year} />
+          <ScheduleScreenSections month={month} year={year} />
           <View style={{ gap: 8 }}>
             <XView style={{ justifyContent: 'space-between' }}>
               <Text
@@ -461,38 +459,5 @@ const navButtonStyle = (theme: ReturnType<typeof useTheme>) => ({
   paddingHorizontal: 15,
   paddingVertical: 5,
 })
-
-const MonthAssistantCard = ({
-  month,
-  year,
-}: {
-  month: number
-  year: number
-}) => {
-  const { effectiveGoalHours: monthlyGoalHours } = useMonthlyGoal({
-    month,
-    year,
-  })
-
-  const { projection, today } = useProjectedTotal(
-    { kind: 'month', month, year },
-    monthlyGoalHours * 60
-  )
-
-  const tense = getPeriodTense({ kind: 'month', month, year }, today)
-
-  if (monthlyGoalHours <= 0 || tense === 'past') return null
-
-  return (
-    <AssistantSection
-      year={year}
-      month={month}
-      today={today}
-      monthlyGoalHours={monthlyGoalHours}
-      projection={projection}
-      standalone
-    />
-  )
-}
 
 export default ScheduleScreen

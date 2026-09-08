@@ -24,6 +24,7 @@ import PreferencesPublisherScreen from '@/features/settings/screens/preferences/
 import PreferencesConversationScreen from '@/features/settings/screens/preferences/screens/PreferencesConversationScreen'
 import PreferencesPlansScreen from '@/features/settings/screens/preferences/screens/PreferencesPlansScreen'
 import PreferencesNavigationScreen from '@/features/settings/screens/preferences/screens/PreferencesNavigationScreen'
+import PreferencesScheduleScreen from '@/features/settings/screens/preferences/screens/PreferencesScheduleScreen'
 import PreferencesHomeScreen from '@/features/settings/screens/preferences/screens/PreferencesHomeScreen'
 import PreferencesBackupsScreen from '@/features/settings/screens/preferences/screens/PreferencesBackupsScreen'
 import PreferencesAppearanceScreen from '@/features/settings/screens/preferences/screens/PreferencesAppearanceScreen'
@@ -238,6 +239,18 @@ const RootStackComponent = () => {
           }}
           name='PreferencesHomeScreen'
           component={PreferencesHomeScreen}
+        />
+        <RootStack.Screen
+          options={{
+            header: () => (
+              <Header
+                buttonType='back'
+                title={i18n.t('milestoneSecondary_schedule_title')}
+              />
+            ),
+          }}
+          name='PreferencesScheduleScreen'
+          component={PreferencesScheduleScreen}
         />
         <RootStack.Screen
           options={{

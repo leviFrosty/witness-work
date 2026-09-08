@@ -61,6 +61,8 @@ type Props = {
    * its container (e.g. its own Card).
    */
   standalone?: boolean
+  /** When provided, the parent owns visibility instead of the saved input hash. */
+  onDismiss?: () => void
 }
 
 const ASSISTANT_VISIBLE_STATES: ReadonlySet<ProjectedTotalState> = new Set([
@@ -76,6 +78,7 @@ const AssistantSection = ({
   monthlyGoalHours,
   projection,
   standalone = false,
+  onDismiss,
 }: Props) => {
   const theme = useTheme()
   const navigation = useNavigation<RootStackNavigation>()
@@ -207,12 +210,14 @@ const AssistantSection = ({
       action: 'dismissed',
       at: Date.now(),
     })
-    setHasDismissedRecommendationHash(inputsHash)
+    if (onDismiss) onDismiss()
+    else setHasDismissedRecommendationHash(inputsHash)
   }, [
     recommendation,
     recordAssistantEvent,
     setHasDismissedRecommendationHash,
     inputsHash,
+    onDismiss,
   ])
 
   const handleAccepted = useCallback(() => {
@@ -280,7 +285,7 @@ const AssistantSection = ({
     )
   }
 
-  if (isDismissedForCurrentInputs) return null
+  if (!onDismiss && isDismissedForCurrentInputs) return null
 
   // Pre-onboarding: show an explicit CTA instead of instantly prompting for
   // unavailable days. The user opts in by tapping "Set up Assistant".

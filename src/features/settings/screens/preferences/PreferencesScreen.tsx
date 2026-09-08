@@ -64,6 +64,13 @@ const PreferencesScreen = () => {
             >
               <IconButton icon={ChevronRightIcon} />
             </InputRowButton>
+            <InputRowButton
+              leftIcon={Calendar1Icon}
+              label={i18n.t('milestoneSecondary_schedule_title')}
+              onPress={() => navigation.navigate('PreferencesScheduleScreen')}
+            >
+              <IconButton icon={ChevronRightIcon} />
+            </InputRowButton>
             {Platform.OS === 'ios' && (
               <InputRowButton
                 leftIcon={LayoutGridIcon}

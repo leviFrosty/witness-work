@@ -1,3 +1,4 @@
+import { DEFAULT_SCHEDULE_SCREEN_ELEMENTS_ORDER } from '@/lib/scheduleScreenPreferences'
 import { create } from 'zustand'
 import { persist, combine, createJSONStorage } from 'zustand/middleware'
 import { Publisher, PublisherHours } from '@/types/publisher'
@@ -412,6 +413,8 @@ export const PREFERENCE_DEFAULTS = {
    * device locale.
    */
   defaultPhoneRegionCode: null as string | null,
+  scheduleScreenElements: { assistant: true },
+  scheduleScreenElementsOrder: DEFAULT_SCHEDULE_SCREEN_ELEMENTS_ORDER,
   homeScreenElements: {
     approachingConversations: true,
     monthlyRoutine: true,

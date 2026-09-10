@@ -144,7 +144,7 @@ const YearByYearList = ({ onYearPress }: YearByYearListProps) => {
             color: theme.colors.textAlt,
             fontSize: theme.fontSize('sm'),
             letterSpacing: 0.5,
-            paddingHorizontal: 15,
+            paddingHorizontal: 29,
             textTransform: 'uppercase',
           }}
         >

@@ -6,6 +6,7 @@ import { usePreferences } from '@/stores/preferences'
 import { NON_SYNCABLE_PREFERENCE_KEYS } from '@/stores/preferences'
 import { useProfile, NON_SYNCABLE_PROFILE_KEYS } from '@/stores/profile'
 import { ProfileAvatar } from '@/types/avatar'
+import type { CustomFieldTombstone } from '@/types/customField'
 import {
   sanitizeContactAvatar,
   sanitizeProfileAvatar,
@@ -36,6 +37,7 @@ export type SyncPayload = {
      */
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     customFieldDefs?: any[]
+    deletedCustomFieldDefs?: CustomFieldTombstone[]
   }
   conversationStore: {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -151,6 +153,7 @@ export function buildPayload(args: {
         sanitizeContactAvatar(c, avatarOpts)
       ),
       customFieldDefs: contacts.customFieldDefs,
+      deletedCustomFieldDefs: contacts.deletedCustomFieldDefs,
     },
     conversationStore: {
       conversations: conversations.conversations,

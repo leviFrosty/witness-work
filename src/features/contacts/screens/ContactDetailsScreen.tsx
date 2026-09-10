@@ -1,11 +1,12 @@
 import {
+  getContactInformationFields,
+  hasContactInformationValue,
+} from '@/lib/contactInformationFields'
+import {
   BookOpen as BookOpenIcon,
   Caravan as CaravanIcon,
   EllipsisVertical as EllipsisVerticalIcon,
-  Mail as MailIcon,
-  MessageCircle as MessageCircleIcon,
   MessagesSquare as MessagesSquareIcon,
-  Phone as PhoneIcon,
   Plus as PlusIcon,
   Share as ShareIcon,
   Star as StarIcon,
@@ -50,18 +51,13 @@ import {
   fetchCoordinateFromAddress,
   navigateTo,
 } from '@/lib/address'
-import { parsePhoneNumber } from 'awesome-phonenumber'
-import { getLocales } from 'expo-localization'
-import { useNavigation } from '@react-navigation/native'
 import { usePreferences } from '@/stores/preferences'
-import { handleCall, handleMessage } from '@/lib/phone'
-import { openURL } from '@/lib/links'
 import MapView, { Marker } from 'react-native-maps'
 import useLocation from '@/features/contacts/hooks/useLocation'
 import * as FileSystem from 'expo-file-system/legacy'
 import { useToastController } from '@tamagui/toast'
 import XView from '@/components/ui/layout/XView'
-import { RootStackNavigation, RootStackParamList } from '@/types/rootStack'
+import { RootStackParamList } from '@/types/rootStack'
 import { useMarkerColors } from '@/hooks/useMarkerColors'
 import { getContactStaleness, stalenessToColor } from '@/lib/contactStaleness'
 import { getReadableTextColor, relativeLuminance } from '@/lib/color'
@@ -77,6 +73,7 @@ import GenderIcon from '@/features/contacts/components/GenderIcon'
 import { ProfileAvatar } from '@/types/avatar'
 import JsonViewer from '@/features/contacts/components/JsonViewer'
 import ContactAvatarViewer from '@/features/contacts/components/ContactAvatarViewer'
+import ContactInformationRows from '@/features/contacts/components/ContactInformationRows'
 import useContactHeroBackground from '@/features/contacts/hooks/useContactHeroBackground'
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Contact Details'>
@@ -87,63 +84,6 @@ type ContactExport = {
   exportedAt: string
   contact: Contact
   conversations?: Visit[]
-}
-
-const PhoneRow = ({ contact }: { contact: Contact }) => {
-  const theme = useTheme()
-  const navigation = useNavigation<RootStackNavigation>()
-  const locales = getLocales()
-
-  const formatted = parsePhoneNumber(contact.phone || '', {
-    regionCode: contact.phoneRegionCode || locales[0].regionCode || '',
-  })
-  return (
-    <View style={{ gap: 10 }}>
-      <Text
-        style={{
-          fontSize: 14,
-          fontFamily: theme.fonts.semiBold,
-          color: theme.colors.textAlt,
-        }}
-      >
-        {i18n.t('phone')}
-      </Text>
-      <View
-        style={{
-          flexDirection: 'row',
-          justifyContent: 'space-between',
-        }}
-      >
-        <Copyeable
-          textProps={{
-            onPress: () => handleCall(contact, formatted, navigation),
-          }}
-        >
-          {formatted.number?.international}
-        </Copyeable>
-        <View
-          style={{
-            flexDirection: 'row',
-            gap: 25,
-            alignItems: 'center',
-          }}
-        >
-          <IconButton
-            icon={PhoneIcon}
-            size='lg'
-            iconStyle={{ color: theme.colors.accent }}
-            onPress={() => handleCall(contact, formatted, navigation)}
-          />
-          <IconButton
-            icon={MessageCircleIcon}
-            size='lg'
-            iconStyle={{ color: theme.colors.accent }}
-            onPress={() => handleMessage(contact, formatted, navigation)}
-          />
-        </View>
-      </View>
-    </View>
-  )
 }
 
 const Hero = ({
@@ -456,95 +396,6 @@ const AddressRow = ({ contact }: { contact: Contact }) => {
   )
 }
 
-const CustomFieldsRow = (props: { contact: Contact }) => {
-  const theme = useTheme()
-  const { customFields } = props.contact
-  const customFieldDefs = useContacts((s) => s.customFieldDefs)
-
-  if (!customFields) {
-    return null
-  }
-
-  // Render in def.order, skip archived defs entirely (their values stay in
-  // storage; restoring the def re-exposes them). Iterating defs (rather than
-  // contact keys) also drops orphan ids from view — those exist only when a
-  // def was hard-purged but the contact still references the id, which is
-  // not reachable through the standard archive flow.
-  const visible = [...customFieldDefs]
-    .filter((d) => !d.archived && customFields[d.id])
-    .sort((a, b) => a.order - b.order)
-
-  if (visible.length === 0) return null
-
-  return visible.map((def) => (
-    <View style={{ gap: 10 }} key={def.id}>
-      <Text
-        style={{
-          fontSize: 14,
-          fontFamily: theme.fonts.semiBold,
-          color: theme.colors.textAlt,
-        }}
-      >
-        {def.label}
-      </Text>
-      <Copyeable>{customFields[def.id]}</Copyeable>
-    </View>
-  ))
-}
-
-const EmailRow = ({ contact }: { contact: Contact }) => {
-  const theme = useTheme()
-  const { email } = contact
-  if (!email) {
-    return null
-  }
-
-  const openMail = async () => {
-    openURL(`mailTo:${email}`, {
-      alert: {
-        description: i18n.t('failedToOpenMailApplication'),
-      },
-    })
-  }
-
-  return (
-    <View style={{ gap: 10 }}>
-      <Text
-        style={{
-          fontSize: 14,
-          fontFamily: theme.fonts.semiBold,
-          color: theme.colors.textAlt,
-        }}
-      >
-        {i18n.t('email')}
-      </Text>
-      <Button onPress={openMail}>
-        <View
-          style={{
-            flexDirection: 'row',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-          }}
-        >
-          <View
-            style={{
-              flexDirection: 'column',
-              justifyContent: 'space-between',
-            }}
-          >
-            <Copyeable>{email}</Copyeable>
-          </View>
-          <IconButton
-            size='lg'
-            iconStyle={{ color: theme.colors.accent }}
-            icon={MailIcon}
-          />
-        </View>
-      </Button>
-    </View>
-  )
-}
-
 const CreatedAt = ({ contact }: { contact: Contact }) => {
   const theme = useTheme()
 
@@ -678,7 +529,12 @@ const AddSheet = ({
 
 const ContactDetailsScreen = ({ route, navigation }: Props) => {
   const theme = useTheme()
-  const { developerTools } = usePreferences()
+  const {
+    developerTools,
+    contactInformationOrder,
+    showContactPhone,
+    showContactEmail,
+  } = usePreferences()
   const { params } = route
   const insets = useSafeAreaInsets()
   const { contacts, deleteContact, toggleFavoriteContact, customFieldDefs } =
@@ -1055,16 +911,18 @@ const ContactDetailsScreen = ({ route, navigation }: Props) => {
     )
   }
 
-  const { name, address, phone, email, customFields, coordinate } = contact
+  const { name, address, coordinate } = contact
 
   const hasAddress =
     address && Object.values(address).some((v) => v?.length > 0)
-  // True only when at least one non-archived def has a value on this contact.
-  // Archived defs (and orphan ids referencing purged defs) hold data but are
-  // hidden by design — see CustomFieldsRow.
-  const hasCustomFields =
-    customFields !== undefined &&
-    customFieldDefs.some((d) => !d.archived && !!customFields[d.id]?.length)
+  const hasInformation = getContactInformationFields(
+    customFieldDefs,
+    contactInformationOrder,
+    {
+      phone: showContactPhone,
+      email: showContactEmail,
+    }
+  ).some((field) => hasContactInformationValue(contact, field))
 
   return (
     <View style={{ flexGrow: 1 }}>
@@ -1104,15 +962,13 @@ const ContactDetailsScreen = ({ route, navigation }: Props) => {
           <View style={{ gap: 30 }}>
             <CardWithTitle
               titlePosition='inside'
-              title='Details'
+              title={i18n.t('information')}
               style={{ margin: 20 }}
             >
               <View style={{ gap: 15 }}>
                 {(hasAddress || coordinate) && <AddressRow contact={contact} />}
-                {phone && <PhoneRow contact={contact} />}
-                {email && <EmailRow contact={contact} />}
-                {hasCustomFields && <CustomFieldsRow contact={contact} />}
-                {!hasAddress && !phone && !email && !hasCustomFields && (
+                <ContactInformationRows contact={contact} />
+                {!hasAddress && !coordinate && !hasInformation && (
                   <Text>{i18n.t('noPersonalInformationSaved')}</Text>
                 )}
               </View>

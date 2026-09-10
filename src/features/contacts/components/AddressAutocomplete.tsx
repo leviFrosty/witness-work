@@ -1,7 +1,4 @@
-import {
-  LocateFixed as LocateFixedIcon,
-  Navigation as NavigationIcon,
-} from 'lucide-react-native'
+import { LocateFixed as LocateFixedIcon } from 'lucide-react-native'
 import LucideIcon from '@/components/ui/LucideIcon'
 import React, { useEffect, useCallback, useRef, useState } from 'react'
 import {
@@ -26,7 +23,8 @@ import Text from '@/components/ui/MyText'
 import useTheme from '@/contexts/theme'
 import { Address } from '@/types/contact'
 import i18n from '@/lib/locales'
-import TextInputRow from '@/components/ui/inputs/TextInputRow'
+import MyTextInput from '@/components/ui/TextInput'
+import InfoPopover from '@/components/ui/InfoPopover'
 import useLocation from '@/features/contacts/hooks/useLocation'
 
 const SUGGESTION_ROW_HEIGHT = 44
@@ -54,7 +52,7 @@ const SEARCH_RADIUS = 1000000
 const DEBOUNCE_TIMEOUT_MS = 300
 const MAX_SUGGESTIONS = 5
 
-const LocationStatusPill: React.FC<{
+const LocationStatusControl: React.FC<{
   status: Location.PermissionStatus | null
   onRequest: () => void
 }> = ({ status, onRequest }) => {
@@ -80,33 +78,7 @@ const LocationStatusPill: React.FC<{
   }
 
   if (granted) {
-    return (
-      <View
-        accessibilityRole='text'
-        accessibilityLabel={label}
-        style={{
-          flexDirection: 'row',
-          alignItems: 'center',
-          gap: 6,
-          alignSelf: 'flex-start',
-          paddingVertical: 2,
-        }}
-      >
-        <LucideIcon
-          icon={NavigationIcon}
-          size={10}
-          style={{ color: theme.colors.accent }}
-        />
-        <Text
-          style={{
-            color: theme.colors.textAlt,
-            fontSize: theme.fontSize('xs'),
-          }}
-        >
-          {label}
-        </Text>
-      </View>
-    )
+    return <InfoPopover title={i18n.t('searchAddress')} description={label} />
   }
 
   return (
@@ -116,32 +88,17 @@ const LocationStatusPill: React.FC<{
       accessibilityRole='button'
       accessibilityLabel={label}
       style={{
-        flexDirection: 'row',
+        width: 44,
+        height: 44,
         alignItems: 'center',
-        gap: 8,
-        alignSelf: 'flex-start',
-        paddingVertical: 6,
-        paddingHorizontal: 12,
-        borderRadius: theme.numbers.borderRadiusLg,
-        borderWidth: 1,
-        borderColor: theme.colors.textAlt,
-        backgroundColor: theme.colors.background,
+        justifyContent: 'center',
       }}
     >
       <LucideIcon
         icon={LocateFixedIcon}
-        size={12}
+        size={theme.fontSize('md')}
         style={{ color: theme.colors.textAlt }}
       />
-      <Text
-        style={{
-          color: theme.colors.textAlt,
-          fontSize: theme.fontSize('sm'),
-          fontFamily: theme.fonts.semiBold,
-        }}
-      >
-        {label}
-      </Text>
     </TouchableOpacity>
   )
 }
@@ -314,24 +271,28 @@ const AddressAutocomplete: React.FC<AddressAutocompleteProps> = ({
     !error && !isResult && (suggestions.length > 0 || isLoading)
 
   return (
-    <View style={{ gap: 12, zIndex: 10 }}>
-      <LocationStatusPill status={status} onRequest={requestLocation} />
+    <View style={{ gap: 8, zIndex: 10 }}>
       <View style={{ position: 'relative', zIndex: 20 }}>
-        <TextInputRow
-          ref={textInputRef}
-          label={i18n.t('searchAddress')}
-          textInputProps={{
-            onChangeText: (text: string) => {
+        <View
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            paddingLeft: 12,
+            paddingRight: status === null ? 12 : 0,
+            paddingBottom: 8,
+          }}
+        >
+          <MyTextInput
+            ref={textInputRef}
+            accessibilityLabel={i18n.t('enterAddress')}
+            style={{ flex: 1, minWidth: 0 }}
+            onChangeText={(text: string) => {
               setQuery(text)
               setIsResult(false)
-              // Flip loading on synchronously so the popover surfaces skeleton
-              // rows the moment a fetch is queued — otherwise the user sees
-              // nothing until the 300ms debounce + network round-trip resolve.
+              // Show loading rows while debounce and the request are pending.
               setIsLoading(text.length >= 3)
               if (text === '') {
-                // Clearing the search box should also clear the structured
-                // address — otherwise stale fields (from prefill or a prior
-                // selection) silently survive and get geocoded on save.
+                // Clear structured fields too, so stale values cannot survive save.
                 onSelect({
                   line1: '',
                   line2: '',
@@ -341,21 +302,17 @@ const AddressAutocomplete: React.FC<AddressAutocompleteProps> = ({
                   country: '',
                 })
               }
-            },
-            onBlur: () => {
+            }}
+            onBlur={() => {
               setSuggestions([])
               setIsLoading(false)
-            },
-            placeholder: i18n.t('enterAddress'),
-            value: query,
-            // iOS RN bug (facebook/react-native#32726, #10218): a TextInput
-            // with textAlign='right' queues space characters and only flushes
-            // them once a non-space is typed. TextInputRow defaults to right
-            // alignment; force left for this search field to dodge the bug.
-            textAlign: 'left',
-          }}
-          lastInSection
-        />
+            }}
+            placeholder={i18n.t('enterAddress')}
+            value={query}
+            textAlign='left'
+          />
+          <LocationStatusControl status={status} onRequest={requestLocation} />
+        </View>
         {showFloatingResults && (
           <View
             style={{
@@ -396,6 +353,8 @@ const AddressAutocomplete: React.FC<AddressAutocompleteProps> = ({
                 : suggestions.map((item, index) => (
                     <TouchableOpacity
                       key={index}
+                      accessibilityRole='button'
+                      accessibilityLabel={item.title}
                       onPress={() => {
                         onSelect(item.address)
                         setQuery(item.title)
@@ -421,14 +380,16 @@ const AddressAutocomplete: React.FC<AddressAutocompleteProps> = ({
         )}
       </View>
       {error && (
-        <Text
-          style={{
-            color: theme.colors.error,
-            fontFamily: theme.fonts.semiBold,
-          }}
-        >
-          {i18n.t('errorFetchingAddress')}
-        </Text>
+        <View style={{ paddingHorizontal: 12 }}>
+          <Text
+            style={{
+              color: theme.colors.error,
+              fontFamily: theme.fonts.semiBold,
+            }}
+          >
+            {i18n.t('errorFetchingAddress')}
+          </Text>
+        </View>
       )}
     </View>
   )

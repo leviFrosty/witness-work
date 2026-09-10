@@ -18,6 +18,7 @@ import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
 import { useMytimeImport } from '@/features/mytime-import/hooks/useMytimeImport'
 import MytimeImportPreview from '@/features/mytime-import/components/MytimeImportPreview'
+import { inputLayout } from '@/components/ui/inputs/InputLayout'
 
 /**
  * Settings surface for the MyTime importer. Uses `'fillIfUnset'` so importing
@@ -39,8 +40,17 @@ const MytimeImportScreen = () => {
   } = useMytimeImport({ publisherMode: 'fillIfUnset' })
 
   return (
-    <Wrapper insets='bottom' style={{ paddingHorizontal: 15, paddingTop: 30 }}>
-      <KeyboardAwareScrollView contentContainerStyle={{ gap: 24 }}>
+    <Wrapper insets='bottom' style={{ paddingTop: 24 }}>
+      <KeyboardAwareScrollView
+        contentContainerStyle={{
+          gap: 24,
+          paddingHorizontal: inputLayout.horizontalPadding,
+          paddingBottom: 24,
+          width: '100%',
+          maxWidth: inputLayout.contentMaxWidth,
+          alignSelf: 'center',
+        }}
+      >
         <Text
           style={{
             fontSize: theme.fontSize('xl'),

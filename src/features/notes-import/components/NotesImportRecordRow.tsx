@@ -4,8 +4,7 @@ import {
   TriangleAlert as TriangleAlertIcon,
 } from 'lucide-react-native'
 import LucideIcon, { type AppIcon } from '@/components/ui/LucideIcon'
-import { View } from 'react-native'
-import Checkbox from 'expo-checkbox'
+import { Switch, View } from 'react-native'
 import Text from '@/components/ui/MyText'
 import Button from '@/components/ui/Button'
 import useTheme from '@/contexts/theme'
@@ -106,7 +105,7 @@ interface RecordRowProps {
 
 /**
  * A selectable record line: title, optional subtitle, its warnings, and a
- * checkbox. Reused for time entries and the publisher role row.
+ * switch. Reused for time entries and the publisher role row.
  */
 const RecordRow = ({
   title,
@@ -122,6 +121,9 @@ const RecordRow = ({
       onPress={onToggle}
       disabled={disabled}
       noTransform
+      accessibilityRole='switch'
+      accessibilityLabel={title}
+      accessibilityState={{ checked, disabled: !!disabled }}
       style={{
         flexDirection: 'row',
         alignItems: 'flex-start',
@@ -148,7 +150,7 @@ const RecordRow = ({
         ))}
       </View>
       <View pointerEvents='none' style={{ paddingTop: 2 }}>
-        <Checkbox value={checked} color={theme.colors.accent} />
+        <Switch value={checked} disabled={disabled} accessible={false} />
       </View>
     </Button>
   )

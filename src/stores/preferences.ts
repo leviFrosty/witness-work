@@ -413,6 +413,10 @@ export const PREFERENCE_DEFAULTS = {
    * device locale.
    */
   defaultPhoneRegionCode: null as string | null,
+  // Presentation only: hiding built-in fields never clears contact data.
+  contactInformationOrder: [] as string[],
+  showContactPhone: true,
+  showContactEmail: true,
   scheduleScreenElements: { assistant: true },
   scheduleScreenElementsOrder: DEFAULT_SCHEDULE_SCREEN_ELEMENTS_ORDER,
   homeScreenElements: {
@@ -698,7 +702,7 @@ export const PREFERENCE_DEFAULTS = {
   /**
    * When true, fractional minutes are rolled over silently on first app launch
    * in a new month — no full-screen prompt. Set via the "Automatically handle
-   * for future months" checkbox on the rollover screen. Syncable.
+   * for future months" switch on the rollover screen. Syncable.
    */
   autoRolloverEnabled: false,
   /**

@@ -5,8 +5,7 @@ import {
 } from 'lucide-react-native'
 import LucideIcon from '@/components/ui/LucideIcon'
 import { useMemo, useState } from 'react'
-import { View } from 'react-native'
-import Checkbox from 'expo-checkbox'
+import { Switch, View } from 'react-native'
 import Text from '@/components/ui/MyText'
 import Card from '@/components/ui/Card'
 import Button from '@/components/ui/Button'
@@ -64,9 +63,9 @@ const flagCountLabel = (count: number) =>
 
 /**
  * A single contact row in the preview: name, visit count, a warning badge, and
- * (for new contacts) an include checkbox. Module-level so its identity stays
+ * (for new contacts) an include switch. Module-level so its identity stays
  * stable across NotesImportPreview re-renders — declared inline it would
- * remount every card (and its checkbox) on each selection change.
+ * remount every card (and its switch) on each selection change.
  */
 const ContactCard = ({
   group,
@@ -188,10 +187,13 @@ const ContactCard = ({
             noTransform
             disabled={disabled}
             onPress={() => toggleRow(group.id)}
+            accessibilityRole='switch'
+            accessibilityLabel={i18n.t('notesImport_addContact')}
+            accessibilityState={{ checked: included, disabled: !!disabled }}
             style={{ paddingHorizontal: 14, paddingVertical: 16 }}
           >
             <View pointerEvents='none'>
-              <Checkbox value={included} color={theme.colors.accent} />
+              <Switch value={included} disabled={disabled} accessible={false} />
             </View>
           </Button>
         )}

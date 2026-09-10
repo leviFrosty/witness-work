@@ -1,11 +1,12 @@
 import { ChevronRight as ChevronRightIcon } from 'lucide-react-native'
-import { Switch, View } from 'react-native'
+import { View } from 'react-native'
 import { useState } from 'react'
 import Text from '@/components/ui/MyText'
 import useTheme from '@/contexts/theme'
 import i18n, { TranslationKey } from '@/lib/locales'
 import Section from '@/components/ui/inputs/Section'
 import InputRowContainer from '@/components/ui/inputs/InputRowContainer'
+import InputRowSwitch from '@/components/ui/inputs/InputRowSwitch'
 import InputRowButton from '@/features/settings/components/inputs/InputRowButton'
 import IconButton from '@/components/ui/IconButton'
 import Select from '@/components/ui/Select'
@@ -63,7 +64,10 @@ const PlansPreferencesSection = () => {
     <View style={{ gap: 3 }}>
       <Section>
         <InputRowContainer
+          label={i18n.t('notificationOffset')}
           lastInSection
+          controlWidth='full'
+          description={i18n.t('planNotificationOffset_description')}
           style={{
             flexDirection: 'column',
             gap: 10,
@@ -77,15 +81,6 @@ const PlansPreferencesSection = () => {
               gap: 10,
             }}
           >
-            <Text
-              style={{
-                fontFamily: theme.fonts.semiBold,
-                flexDirection: 'column',
-                gap: 10,
-              }}
-            >
-              {i18n.t('notificationOffset')}
-            </Text>
             <View style={{ flex: 1 }}>
               <Select
                 data={amountOptions}
@@ -119,33 +114,23 @@ const PlansPreferencesSection = () => {
               {i18n.t('before')}
             </Text>
           </View>
-          <Text
-            style={{
-              fontSize: theme.fontSize('xs'),
-              color: theme.colors.textAlt,
-            }}
-          >
-            {i18n.t('planNotificationOffset_description')}
-          </Text>
         </InputRowContainer>
-        <InputRowContainer
+        <InputRowSwitch
           label={i18n.t('planAlwaysNotify')}
-          style={{ justifyContent: 'space-between' }}
-        >
-          <Switch
-            value={planAlwaysNotify}
-            onValueChange={(value) => set({ planAlwaysNotify: value })}
-          />
-        </InputRowContainer>
+          value={planAlwaysNotify}
+          onValueChange={(value) => set({ planAlwaysNotify: value })}
+        />
         <InputRowButton
           lastInSection
           label={i18n.t('availability.settingsRow')}
           onPress={() => setAvailabilityOpen(true)}
         >
-          <Text style={{ color: theme.colors.textAlt }}>
-            {availabilitySummary}
-          </Text>
-          <IconButton icon={ChevronRightIcon} />
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+            <Text style={{ color: theme.colors.textAlt, flexShrink: 1 }}>
+              {availabilitySummary}
+            </Text>
+            <IconButton icon={ChevronRightIcon} />
+          </View>
         </InputRowButton>
       </Section>
       <AvailabilityOnboardingSheet

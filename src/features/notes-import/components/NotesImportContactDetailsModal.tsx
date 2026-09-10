@@ -1,7 +1,6 @@
 import { X as XIcon } from 'lucide-react-native'
 import { Sheet } from 'tamagui'
-import { View } from 'react-native'
-import Checkbox from 'expo-checkbox'
+import { Switch, View } from 'react-native'
 import upperFirst from 'lodash/upperFirst'
 import moment from 'moment'
 import useTheme from '@/contexts/theme'
@@ -112,7 +111,7 @@ const VisitReviewCard = ({
         noTransform
         disabled={disabled}
         onPress={onToggle}
-        accessibilityRole='checkbox'
+        accessibilityRole='switch'
         accessibilityState={{ checked, disabled: !!disabled }}
         style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 12 }}
       >
@@ -132,7 +131,7 @@ const VisitReviewCard = ({
           </Text>
         </View>
         <View pointerEvents='none' style={{ paddingTop: 2 }}>
-          <Checkbox value={checked} color={theme.colors.accent} />
+          <Switch value={checked} disabled={disabled} accessible={false} />
         </View>
       </Button>
 
@@ -296,6 +295,12 @@ const NotesImportContactDetailsModal = ({
                   noTransform
                   onPress={() => toggleRow(group.id)}
                   disabled={disabled}
+                  accessibilityRole='switch'
+                  accessibilityLabel={i18n.t('notesImport_addContact')}
+                  accessibilityState={{
+                    checked: included,
+                    disabled: !!disabled,
+                  }}
                   style={{
                     flexDirection: 'row',
                     alignItems: 'center',
@@ -326,7 +331,11 @@ const NotesImportContactDetailsModal = ({
                     </Text>
                   </View>
                   <View pointerEvents='none'>
-                    <Checkbox value={included} color={theme.colors.accent} />
+                    <Switch
+                      value={included}
+                      disabled={disabled}
+                      accessible={false}
+                    />
                   </View>
                 </Button>
               )}

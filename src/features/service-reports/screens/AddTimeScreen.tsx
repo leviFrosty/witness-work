@@ -43,6 +43,7 @@ import { CONFETTI_DELAY_MS } from '@/providers/AnimationViewProvider'
 import useCelebrationQueue from '@/features/service-reports/stores/celebrationQueue'
 import { didCrossMonthlyGoal } from '@/features/service-reports/lib/monthlyGoalCelebration'
 import { resolveMonthlyGoalHours } from '@/lib/monthlyGoals'
+import { inputLayout } from '@/components/ui/inputs/InputLayout'
 
 type AddTimeScreenProps = NativeStackScreenProps<RootStackParamList, 'Add Time'>
 
@@ -314,10 +315,14 @@ const AddTimeScreen = ({ route }: AddTimeScreenProps) => {
           flexGrow: 1,
           justifyContent: 'space-between',
           paddingBottom: insets.bottom + 30,
+          paddingHorizontal: inputLayout.horizontalPadding,
+          width: '100%',
+          maxWidth: inputLayout.contentMaxWidth,
+          alignSelf: 'center',
         }}
       >
         <View style={{ gap: 30 }}>
-          <View style={{ padding: 25, gap: 5 }}>
+          <View style={{ paddingTop: 12, paddingBottom: 0, gap: 5 }}>
             <Text style={{ fontSize: 32, fontFamily: theme.fonts.bold }}>
               {i18n.t(existingServiceReport ? 'updateTime' : 'addTime')}
             </Text>
@@ -333,6 +338,7 @@ const AddTimeScreen = ({ route }: AddTimeScreenProps) => {
             <InputRowContainer
               label={i18n.t('date')}
               justifyContent='space-between'
+              controlStyle={{ alignItems: 'flex-end' }}
             >
               <DateTimePicker
                 value={serviceReport.date}
@@ -355,33 +361,35 @@ const AddTimeScreen = ({ route }: AddTimeScreenProps) => {
                 {i18n.t('providedTimeIsLessThanOneMinute')}
               </Text>
             ) : null}
-            <View
-              style={{ flexDirection: 'row', justifyContent: 'space-between' }}
-            >
-              <View style={{ width: '50%' }}>
-                <InputRowContainer label={i18n.t('hours')} lastInSection>
-                  <View style={{ flex: 1 }}>
-                    <SelectWheel
-                      data={hourOptions}
-                      placeholder={serviceReport.hours.toString()}
-                      onChange={({ value }) => setHours(value)}
-                      value={serviceReport.hours.toString()}
-                    />
-                  </View>
-                </InputRowContainer>
-              </View>
-              <View style={{ width: '50%' }}>
-                <InputRowContainer label={i18n.t('minutes')} lastInSection>
-                  <View style={{ flex: 1 }}>
-                    <SelectWheel
-                      data={minuteOptions}
-                      placeholder={serviceReport.minutes.toString()}
-                      onChange={({ value }) => setMinutes(value)}
-                      value={serviceReport.minutes.toString()}
-                    />
-                  </View>
-                </InputRowContainer>
-              </View>
+            <View style={{ flexDirection: 'row' }}>
+              <InputRowContainer
+                label={i18n.t('hours')}
+                lastInSection
+                style={{ width: '50%' }}
+                gap={6}
+              >
+                <SelectWheel
+                  data={hourOptions}
+                  accessibilityLabel={i18n.t('hours')}
+                  placeholder={serviceReport.hours.toString()}
+                  onChange={({ value }) => setHours(value)}
+                  value={serviceReport.hours.toString()}
+                />
+              </InputRowContainer>
+              <InputRowContainer
+                label={i18n.t('minutes')}
+                lastInSection
+                style={{ width: '50%' }}
+                gap={6}
+              >
+                <SelectWheel
+                  data={minuteOptions}
+                  accessibilityLabel={i18n.t('minutes')}
+                  placeholder={serviceReport.minutes.toString()}
+                  onChange={({ value }) => setMinutes(value)}
+                  value={serviceReport.minutes.toString()}
+                />
+              </InputRowContainer>
             </View>
           </Section>
           <Section>
@@ -390,6 +398,8 @@ const AddTimeScreen = ({ route }: AddTimeScreenProps) => {
               lastInSection
               justifyContent='flex-start'
               onLabelPress={() => noteInput.current?.focus()}
+              controlWidth='full'
+              style={{ gap: 8 }}
             >
               <View style={{ flex: 1, paddingTop: 10 }}>
                 <TextInput
@@ -417,7 +427,7 @@ const AddTimeScreen = ({ route }: AddTimeScreenProps) => {
             </InputRowContainer>
           </Section>
         </View>
-        <View style={{ paddingHorizontal: 20, gap: 8, paddingTop: 20 }}>
+        <View style={{ gap: 8, paddingTop: 20 }}>
           {!submittable && !hasEnteredTime && (
             <Text style={{ fontSize: 12, color: theme.colors.textAlt }}>
               {i18n.t('timeNeeded')}

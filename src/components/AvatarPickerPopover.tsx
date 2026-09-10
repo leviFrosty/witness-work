@@ -42,6 +42,9 @@ interface Props {
 
 // Width of the picker content (8 cols × 36 cell + 7 × 2 gap) plus padding.
 const CONTENT_WIDTH = 8 * 36 + 7 * 2 + 24
+const EDIT_BADGE_SIZE = 24
+const EDIT_BADGE_BORDER_WIDTH = 2
+const EDIT_ICON_SIZE = 12
 
 /**
  * Tappable avatar that opens an inline picker above the avatar. Delegates the
@@ -83,21 +86,21 @@ const AvatarPickerPopover = ({
               <View
                 style={{
                   position: 'absolute',
-                  right: -2,
-                  bottom: -2,
-                  width: 18,
-                  height: 18,
-                  borderRadius: 9,
+                  right: -3,
+                  bottom: -3,
+                  width: EDIT_BADGE_SIZE,
+                  height: EDIT_BADGE_SIZE,
+                  borderRadius: EDIT_BADGE_SIZE / 2,
                   backgroundColor: theme.colors.accent,
                   alignItems: 'center',
                   justifyContent: 'center',
-                  borderWidth: 2,
+                  borderWidth: EDIT_BADGE_BORDER_WIDTH,
                   borderColor: theme.colors.card,
                 }}
               >
                 <LucideIcon
                   icon={PencilIcon}
-                  size={8}
+                  size={EDIT_ICON_SIZE}
                   color={theme.colors.textInverse}
                 />
               </View>

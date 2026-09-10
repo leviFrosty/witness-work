@@ -2,7 +2,6 @@ import { Check as CheckIcon } from 'lucide-react-native'
 import LucideIcon from '@/components/ui/LucideIcon'
 import { Pressable, View } from 'react-native'
 import useTheme from '@/contexts/theme'
-import Text from '@/components/ui/MyText'
 import IsSupporter from '@/components/IsSupporter'
 import CustomColorSwatch from '@/components/CustomColorSwatch'
 import { usePreferences } from '@/stores/preferences'
@@ -62,7 +61,6 @@ const Swatch = ({
 }
 
 const PickerContents = () => {
-  const theme = useTheme()
   const { customAccentColor, set } = usePreferences()
 
   const selectedValue = customAccentColor ?? ACCENT_PRESETS[0].value
@@ -105,14 +103,6 @@ const PickerContents = () => {
           size={36}
         />
       </View>
-      <Text
-        style={{
-          fontSize: theme.fontSize('sm'),
-          color: theme.colors.textAlt,
-        }}
-      >
-        {i18n.t('accentColorHelp')}
-      </Text>
     </View>
   )
 }

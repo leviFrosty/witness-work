@@ -8,7 +8,7 @@ import Header from '@/components/ui/layout/Header'
 import SettingsScreen from '@/features/settings/screens/SettingsScreen'
 import { HomeScreen } from '@/features/home/screens/HomeScreen'
 import IconButton from '@/components/ui/IconButton'
-import { Platform, View } from 'react-native'
+import { Platform, View, useWindowDimensions } from 'react-native'
 import { useEffect } from 'react'
 import useTheme from '@/contexts/theme'
 import { DevSettings } from 'react-native'
@@ -29,6 +29,7 @@ const DrawerNavigator = () => {
   const { isSupporter } = useIsSupporter()
   const { hideDonateHeart, set } = usePreferences()
   const theme = useTheme()
+  const { width } = useWindowDimensions()
   const notesImportReadyCount = useNotesImportManager((s) =>
     unviewedReadyImportCount(s.entries)
   )
@@ -59,6 +60,10 @@ const DrawerNavigator = () => {
   return (
     <Drawer.Navigator
       screenOptions={{
+        drawerStyle: {
+          width: Math.min(width * 0.88, 380),
+          backgroundColor: theme.colors.background,
+        },
         header: ({ navigation }) => (
           <Header
             leftElement={

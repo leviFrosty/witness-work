@@ -168,150 +168,132 @@ const TypeSelectorRow = ({ value, onChange, lastInSection }: Props) => {
     { label: i18n.t('custom'), value: CUSTOM_TYPE_VALUE },
   ]
 
+  const hasDetails =
+    value === CUSTOM_TYPE_VALUE ||
+    Boolean(selectedCategory && !selectedCategory.builtin)
+
   return (
-    <InputRowContainer
-      label={i18n.t('type')}
-      lastInSection={lastInSection}
-      justifyContent='space-between'
-    >
-      <View
-        style={{
-          gap: 5,
-          width: '100%',
-          flexShrink: 1,
-        }}
+    <>
+      <InputRowContainer
+        label={i18n.t('type')}
+        lastInSection={!hasDetails && lastInSection}
+        justifyContent='space-between'
       >
         <Select
           data={typeOptions}
-          style={{ width: '100%', flex: 1 }}
-          onChange={({ value: c }) => {
-            handleSelect(c)
-          }}
+          onChange={({ value: c }) => handleSelect(c)}
           value={value}
         />
-        {value === CUSTOM_TYPE_VALUE ? (
-          <View style={{ flexDirection: 'row', gap: 5 }}>
-            <View style={{ flex: 1, flexGrow: 1 }}>
-              <TextInput
-                maxLength={20}
-                style={{
-                  borderColor: theme.colors.border,
-                  borderWidth: 1,
-                  borderRadius: theme.numbers.borderRadiusSm,
-                  paddingVertical: 15,
-                  paddingHorizontal: 10,
-                  color: theme.colors.text,
-                }}
-                onChangeText={(c) => setCustomCategoryName(c)}
-                value={customCategoryName}
-                placeholder={i18n.t('enterCustomCategory')}
-              />
-            </View>
-            <Button
+      </InputRowContainer>
+
+      {value === CUSTOM_TYPE_VALUE ? (
+        <InputRowContainer
+          controlWidth='full'
+          lastInSection={lastInSection}
+          style={{ gap: 8 }}
+          controlStyle={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}
+        >
+          <View style={{ flex: 1, flexGrow: 1 }}>
+            <TextInput
+              maxLength={20}
               style={{
-                backgroundColor:
-                  customCategoryName.trim().length === 0
-                    ? theme.colors.accentAlt
-                    : theme.colors.accent,
+                borderColor: theme.colors.border,
+                borderWidth: 1,
                 borderRadius: theme.numbers.borderRadiusSm,
                 paddingVertical: 15,
+                paddingHorizontal: 10,
+                color: theme.colors.text,
               }}
-              variant='outline'
-              onPress={handleAddCustomCategory}
-              disabled={customCategoryName.trim().length === 0}
+              onChangeText={(c) => setCustomCategoryName(c)}
+              value={customCategoryName}
+              placeholder={i18n.t('enterCustomCategory')}
+            />
+          </View>
+          <Button
+            style={{
+              backgroundColor:
+                customCategoryName.trim().length === 0
+                  ? theme.colors.accentAlt
+                  : theme.colors.accent,
+              borderRadius: theme.numbers.borderRadiusSm,
+              paddingVertical: 15,
+            }}
+            variant='outline'
+            onPress={handleAddCustomCategory}
+            disabled={customCategoryName.trim().length === 0}
+          >
+            <Text
+              style={{
+                color: theme.colors.textInverse,
+                fontFamily: theme.fonts.semiBold,
+              }}
             >
-              <Text
+              {i18n.t('add')}
+            </Text>
+          </Button>
+        </InputRowContainer>
+      ) : selectedCategory && !selectedCategory.builtin ? (
+        <InputRowContainer
+          controlWidth='full'
+          lastInSection={lastInSection}
+          style={{ gap: 5 }}
+        >
+          <View style={{ gap: 10 }}>
+            <View
+              style={{
+                flexDirection: 'row',
+                flexShrink: 1,
+                alignItems: 'center',
+                justifyContent: 'space-between',
+              }}
+            >
+              <View
                 style={{
-                  color: theme.colors.textInverse,
-                  fontFamily: theme.fonts.semiBold,
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  flexShrink: 1,
                 }}
               >
-                {i18n.t('add')}
+                <Text
+                  style={{
+                    flexShrink: 1,
+                    fontFamily: theme.fonts.semiBold,
+                    fontSize: theme.fontSize('lg'),
+                  }}
+                >
+                  {i18n.t('credit')}
+                </Text>
+                <InfoPopover
+                  title={i18n.t('credit')}
+                  description={i18n.t('credit_description')}
+                />
+              </View>
+              <Switch
+                value={selectedCategory.isCredit}
+                onValueChange={(val) => setCategoryIsCredit(val)}
+              />
+            </View>
+          </View>
+          <View
+            style={{
+              flexDirection: 'row',
+              justifyContent: 'flex-end',
+            }}
+          >
+            <Button onPress={handleDeleteCurrentCategory}>
+              <Text
+                style={{
+                  color: theme.colors.textAlt,
+                  textDecorationLine: 'underline',
+                }}
+              >
+                {i18n.t('removeCategory')}
               </Text>
             </Button>
           </View>
-        ) : (
-          selectedCategory && (
-            <View
-              style={{
-                gap: 5,
-                flexShrink: 1,
-              }}
-            >
-              {/* Builtin Categories (LDC) own their `isCredit` value
-                  and can't be renamed or deleted — hide the Credit
-                  toggle + remove button. The LDC builtin is always
-                  credit-bearing by definition. */}
-              {!selectedCategory.builtin && (
-                <View
-                  style={{
-                    borderWidth: 1,
-                    borderRadius: theme.numbers.borderRadiusSm,
-                    padding: 10,
-                    borderColor: theme.colors.border,
-                    gap: 10,
-                  }}
-                >
-                  <View
-                    style={{
-                      flexDirection: 'row',
-                      flexShrink: 1,
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                    }}
-                  >
-                    <View
-                      style={{
-                        flexDirection: 'row',
-                        alignItems: 'center',
-                        flexShrink: 1,
-                      }}
-                    >
-                      <Text
-                        style={{
-                          flexShrink: 1,
-                          fontFamily: theme.fonts.semiBold,
-                          fontSize: theme.fontSize('lg'),
-                        }}
-                      >
-                        {i18n.t('credit')}
-                      </Text>
-                      <InfoPopover
-                        title={i18n.t('credit')}
-                        description={i18n.t('credit_description')}
-                      />
-                    </View>
-                    <Switch
-                      value={selectedCategory.isCredit}
-                      onValueChange={(val) => setCategoryIsCredit(val)}
-                    />
-                  </View>
-                </View>
-              )}
-              {!selectedCategory.builtin && (
-                <View
-                  style={{
-                    flexDirection: 'row',
-                    justifyContent: 'flex-end',
-                  }}
-                >
-                  <Button onPress={handleDeleteCurrentCategory}>
-                    <Text
-                      style={{
-                        color: theme.colors.textAlt,
-                        textDecorationLine: 'underline',
-                      }}
-                    >
-                      {i18n.t('removeCategory')}
-                    </Text>
-                  </Button>
-                </View>
-              )}
-            </View>
-          )
-        )}
-      </View>
-    </InputRowContainer>
+        </InputRowContainer>
+      ) : null}
+    </>
   )
 }
 

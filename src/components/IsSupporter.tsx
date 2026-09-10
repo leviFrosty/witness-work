@@ -54,6 +54,7 @@ const IsSupporter = ({
   const titleEl = title ? (
     <Text
       style={{
+        flexShrink: 1,
         fontFamily: theme.fonts.semiBold,
         color: theme.colors.text,
       }}
@@ -91,6 +92,8 @@ const IsSupporter = ({
             flexDirection: 'row',
             alignItems: 'center',
             justifyContent: title ? 'space-between' : 'flex-end',
+            gap: 12,
+            ...(fill ? { paddingHorizontal: 12 } : null),
           }}
         >
           {titleEl}

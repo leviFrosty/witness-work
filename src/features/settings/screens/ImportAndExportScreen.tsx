@@ -26,6 +26,7 @@ import XView from '@/components/ui/layout/XView'
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
 import IconButton from '@/components/ui/IconButton'
 import { useTimeCache } from '@/stores/timeCache'
+import SettingsInputLayout from '@/features/settings/components/shared/SettingsInputLayout'
 
 /**
  * Any new stores should be added to this type to be included in the
@@ -155,78 +156,80 @@ const ImportAndExportScreen = () => {
   }
 
   return (
-    <Wrapper insets='bottom' style={{ paddingHorizontal: 15, paddingTop: 30 }}>
-      <KeyboardAwareScrollView contentContainerStyle={{ gap: 30 }}>
-        <Text
-          style={{
-            fontSize: theme.fontSize('xl'),
-            fontFamily: theme.fonts.semiBold,
-          }}
-        >
-          {i18n.t('backup')}
-        </Text>
-        <View style={{ gap: 10 }}>
-          <Text>{i18n.t('backupRecommendations')}</Text>
-        </View>
-        <Card>
-          <ActionButton disabled={loading} onPress={handleExport}>
-            {loading ? (
-              <Spinner />
-            ) : (
-              <XView>
-                <IconButton
-                  icon={UploadIcon}
-                  color={theme.colors.textInverse}
-                />
-                <Text
-                  style={{
-                    color: theme.colors.textInverse,
-                    fontFamily: theme.fonts.bold,
-                  }}
-                >
-                  {i18n.t('createBackup')}
-                </Text>
-              </XView>
-            )}
-          </ActionButton>
-        </Card>
+    <SettingsInputLayout>
+      <Wrapper insets='bottom' style={{ paddingTop: 30 }}>
+        <KeyboardAwareScrollView contentContainerStyle={{ gap: 30 }}>
+          <Text
+            style={{
+              fontSize: theme.fontSize('xl'),
+              fontFamily: theme.fonts.semiBold,
+            }}
+          >
+            {i18n.t('backup')}
+          </Text>
+          <View style={{ gap: 10 }}>
+            <Text>{i18n.t('backupRecommendations')}</Text>
+          </View>
+          <Card>
+            <ActionButton disabled={loading} onPress={handleExport}>
+              {loading ? (
+                <Spinner />
+              ) : (
+                <XView>
+                  <IconButton
+                    icon={UploadIcon}
+                    color={theme.colors.textInverse}
+                  />
+                  <Text
+                    style={{
+                      color: theme.colors.textInverse,
+                      fontFamily: theme.fonts.bold,
+                    }}
+                  >
+                    {i18n.t('createBackup')}
+                  </Text>
+                </XView>
+              )}
+            </ActionButton>
+          </Card>
 
-        <Divider />
-        <Card>
-          {successfulImport && (
-            <XView>
-              <Badge color={theme.colors.accentTranslucent}>
-                <Text>{i18n.t('successfulImport')}</Text>
-              </Badge>
-            </XView>
-          )}
-          <ActionButton disabled={loading} onPress={handleImport}>
-            {loading ? (
-              <Spinner />
-            ) : (
+          <Divider />
+          <Card>
+            {successfulImport && (
               <XView>
-                <IconButton
-                  icon={FileInputIcon}
-                  color={theme.colors.textInverse}
-                />
-                <Text
-                  style={{
-                    color: theme.colors.textInverse,
-                    fontFamily: theme.fonts.bold,
-                  }}
-                >
-                  {i18n.t('restoreFromBackup')}
-                </Text>
+                <Badge color={theme.colors.accentTranslucent}>
+                  <Text>{i18n.t('successfulImport')}</Text>
+                </Badge>
               </XView>
             )}
-          </ActionButton>
-        </Card>
-        <Divider />
-        <Text style={{ color: theme.colors.textAlt }}>
-          {i18n.t('backupReasoning')}
-        </Text>
-      </KeyboardAwareScrollView>
-    </Wrapper>
+            <ActionButton disabled={loading} onPress={handleImport}>
+              {loading ? (
+                <Spinner />
+              ) : (
+                <XView>
+                  <IconButton
+                    icon={FileInputIcon}
+                    color={theme.colors.textInverse}
+                  />
+                  <Text
+                    style={{
+                      color: theme.colors.textInverse,
+                      fontFamily: theme.fonts.bold,
+                    }}
+                  >
+                    {i18n.t('restoreFromBackup')}
+                  </Text>
+                </XView>
+              )}
+            </ActionButton>
+          </Card>
+          <Divider />
+          <Text style={{ color: theme.colors.textAlt }}>
+            {i18n.t('backupReasoning')}
+          </Text>
+        </KeyboardAwareScrollView>
+      </Wrapper>
+    </SettingsInputLayout>
   )
 }
 

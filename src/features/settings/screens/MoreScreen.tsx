@@ -27,6 +27,7 @@ import useConversations from '@/stores/conversationStore'
 import { useToastController } from '@tamagui/toast'
 import { logger } from '@/lib/logger'
 import AppPreferencesSection from '@/features/settings/components/preferences-sections/AppPreferencesSection'
+import SettingsInputLayout from '@/features/settings/components/shared/SettingsInputLayout'
 
 const MoreScreen = () => {
   const navigation = useNavigation<RootStackNavigation>()
@@ -88,53 +89,55 @@ const MoreScreen = () => {
   }
 
   return (
-    <Wrapper insets='bottom'>
-      <KeyboardAwareScrollView
-        contentContainerStyle={{ gap: 30, paddingTop: 30, paddingBottom: 30 }}
-      >
-        <AppPreferencesSection />
-        <Section>
-          <InputRowButton
-            leftIcon={Undo2Icon}
-            label={i18n.t('recoverContacts')}
-            onPress={() => pushScreen('Recover Contacts')}
-          >
-            <IconButton icon={ChevronRightIcon} />
-          </InputRowButton>
-          <InputRowButton
-            leftIcon={ClockIcon}
-            label={i18n.t('dismissedContacts')}
-            onPress={() => pushScreen('Dismissed Contacts')}
-          >
-            <IconButton icon={ChevronRightIcon} />
-          </InputRowButton>
-          <InputRowButton
-            leftIcon={FileInputIcon}
-            label={i18n.t('importContact')}
-            onPress={handleImportContact}
-          >
-            <IconButton icon={ChevronRightIcon} />
-          </InputRowButton>
-          <InputRowButton
-            leftIcon={DownloadIcon}
-            label={i18n.t('checkForUpdate')}
-            onPress={() => fetchUpdate(pushScreen)}
-          >
-            <IconButton icon={ChevronRightIcon} />
-          </InputRowButton>
-          <InputRowButton
-            leftIcon={SproutIcon}
-            label={i18n.t('restartOnboarding')}
-            onPress={() =>
-              set({ onboardingComplete: false, onboardingStepId: null })
-            }
-            lastInSection
-          >
-            <IconButton icon={ChevronRightIcon} />
-          </InputRowButton>
-        </Section>
-      </KeyboardAwareScrollView>
-    </Wrapper>
+    <SettingsInputLayout>
+      <Wrapper insets='bottom'>
+        <KeyboardAwareScrollView
+          contentContainerStyle={{ gap: 30, paddingTop: 30, paddingBottom: 30 }}
+        >
+          <AppPreferencesSection />
+          <Section>
+            <InputRowButton
+              leftIcon={Undo2Icon}
+              label={i18n.t('recoverContacts')}
+              onPress={() => pushScreen('Recover Contacts')}
+            >
+              <IconButton icon={ChevronRightIcon} />
+            </InputRowButton>
+            <InputRowButton
+              leftIcon={ClockIcon}
+              label={i18n.t('dismissedContacts')}
+              onPress={() => pushScreen('Dismissed Contacts')}
+            >
+              <IconButton icon={ChevronRightIcon} />
+            </InputRowButton>
+            <InputRowButton
+              leftIcon={FileInputIcon}
+              label={i18n.t('importContact')}
+              onPress={handleImportContact}
+            >
+              <IconButton icon={ChevronRightIcon} />
+            </InputRowButton>
+            <InputRowButton
+              leftIcon={DownloadIcon}
+              label={i18n.t('checkForUpdate')}
+              onPress={() => fetchUpdate(pushScreen)}
+            >
+              <IconButton icon={ChevronRightIcon} />
+            </InputRowButton>
+            <InputRowButton
+              leftIcon={SproutIcon}
+              label={i18n.t('restartOnboarding')}
+              onPress={() =>
+                set({ onboardingComplete: false, onboardingStepId: null })
+              }
+              lastInSection
+            >
+              <IconButton icon={ChevronRightIcon} />
+            </InputRowButton>
+          </Section>
+        </KeyboardAwareScrollView>
+      </Wrapper>
+    </SettingsInputLayout>
   )
 }
 

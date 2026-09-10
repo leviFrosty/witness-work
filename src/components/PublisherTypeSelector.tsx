@@ -1,22 +1,20 @@
-import { Alert, Pressable, TextInput as RNTextInput, View } from 'react-native'
+import { Alert, TextInput as RNTextInput, View } from 'react-native'
 import moment from 'moment'
-import useTheme from '@/contexts/theme'
-import Text from '@/components/ui/MyText'
 import i18n from '@/lib/locales'
 import { usePreferences } from '@/stores/preferences'
 import { publishers } from '@/constants/publisher'
 import Select, { SelectData } from '@/components/ui/Select'
-import TextInput from '@/components/ui/TextInput'
 import { Publisher } from '@/types/publisher'
 import { useRef, useState } from 'react'
 import { monthlyGoalKey } from '@/lib/monthlyGoals'
+import InputRowContainer from '@/components/ui/inputs/InputRowContainer'
+import TextInputRow from '@/components/ui/inputs/TextInputRow'
 
 const PublisherTypeSelector = ({
   showGoalDescription = true,
 }: {
   showGoalDescription?: boolean
 }) => {
-  const theme = useTheme()
   const items: SelectData<Publisher> = [
     {
       label: i18n.t('publisher'),
@@ -92,81 +90,63 @@ const PublisherTypeSelector = ({
     )
   }
 
+  const saveCustomHours = () => {
+    if (goalHours) {
+      set({
+        publisherHours: {
+          ...publisherHours,
+          custom: parseFloat(goalHours) ?? 0,
+        },
+      })
+    }
+  }
+
+  const requirement =
+    role === publishers[0]
+      ? i18n.t('noHourRequirement')
+      : i18n.t('hourMonthlyRequirement', {
+          count: publisherHours[role],
+        })
+  const select = (
+    <Select
+      accessibilityLabel={i18n.t('status')}
+      data={items}
+      onChange={({ value }) => handleRoleChange(value)}
+      value={role}
+    />
+  )
+
   return (
     <View>
-      <Select
-        data={items}
-        onChange={({ value }) => handleRoleChange(value)}
-        value={role}
-        style={{ marginBottom: 10 }}
-      />
+      <InputRowContainer
+        label={i18n.t('status')}
+        info={
+          showGoalDescription && role !== publishers[0]
+            ? i18n.t('defaultMonthlyGoal_description')
+            : undefined
+        }
+        description={requirement}
+      >
+        {select}
+      </InputRowContainer>
 
-      {role === 'custom' ? (
-        <View>
-          <Pressable
-            onPress={() => customHoursInput.current?.focus()}
-            hitSlop={{ top: 8, bottom: 8 }}
-            accessibilityRole='button'
-            accessibilityLabel={i18n.t('customHourRequirement')}
-          >
-            <Text
-              style={{
-                fontSize: 12,
-                color: theme.colors.textAlt,
-              }}
-            >
-              {i18n.t('customHourRequirement')}
-            </Text>
-          </Pressable>
-          <TextInput
-            ref={customHoursInput}
-            textAlign='left'
-            style={{
-              marginVertical: 5,
-              borderColor: theme.colors.border,
-              borderWidth: 1,
-              borderRadius: theme.numbers.borderRadiusSm,
-              paddingVertical: 5,
-              paddingHorizontal: 10,
-              color: theme.colors.text,
-            }}
-            maxLength={5}
-            placeholder={publisherHours.custom.toString()}
-            onChangeText={(val: string) => setGoalHours(val)}
-            onBlur={() => {
-              if (goalHours) {
-                set({
-                  publisherHours: {
-                    ...publisherHours,
-                    custom: parseFloat(goalHours) ?? 0,
-                  },
-                })
-              }
-            }}
-            value={goalHours.toString()}
-            inputMode='decimal'
-          />
-        </View>
-      ) : (
-        <Text style={{ fontSize: 12, color: theme.colors.textAlt }}>
-          {role === publishers[0]
-            ? i18n.t('noHourRequirement')
-            : i18n.t('hourMonthlyRequirement', {
-                count: publisherHours[role],
-              })}
-        </Text>
-      )}
-      {showGoalDescription && role !== publishers[0] ? (
-        <Text
-          style={{
-            marginTop: 6,
-            fontSize: 12,
-            color: theme.colors.textAlt,
+      {role === 'custom' && (
+        <TextInputRow
+          ref={customHoursInput}
+          label={i18n.t('customHourRequirement')}
+          info={i18n.t('defaultMonthlyGoal_description')}
+          controlStyle={{ width: 96 }}
+          textInputProps={{
+            accessibilityLabel: i18n.t('customHourRequirement'),
+            maxLength: 5,
+            value: goalHours,
+            onChangeText: setGoalHours,
+            onBlur: saveCustomHours,
+            inputMode: 'decimal',
+            textAlign: 'left',
           }}
-        >
-          {i18n.t('defaultMonthlyGoal_description')}
-        </Text>
-      ) : null}
+        />
+      )}
     </View>
   )
 }

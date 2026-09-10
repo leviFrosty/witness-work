@@ -1,6 +1,10 @@
 import { Contact } from '@/types/contact'
 import { Visit, VisitTombstone } from '@/types/visit'
-import { CustomFieldDefinition } from '@/types/customField'
+import {
+  CustomFieldDefinition,
+  CustomFieldTombstone,
+} from '@/types/customField'
+import { stripTombstonedCustomFields } from '@/lib/customFields'
 import {
   DayPlan,
   TimeEntry,
@@ -25,6 +29,7 @@ export type MergeResult = {
   contacts: Contact[]
   deletedContacts: Contact[]
   customFieldDefs: CustomFieldDefinition[]
+  deletedCustomFieldDefs: CustomFieldTombstone[]
   conversations: Visit[]
   deletedConversations: VisitTombstone[]
   serviceReports: TimeEntriesByYear
@@ -45,6 +50,7 @@ type LocalState = {
   contacts: Contact[]
   deletedContacts: Contact[]
   customFieldDefs: CustomFieldDefinition[]
+  deletedCustomFieldDefs: CustomFieldTombstone[]
   conversations: Visit[]
   deletedConversations: VisitTombstone[]
   serviceReports: TimeEntriesByYear
@@ -92,22 +98,60 @@ export function mergePayload(
       remote.contactStore.deletedContacts as Contact[]
     )
 
+  // --- Custom field definitions ---
+  // Merged by id with per-def updatedAt LWW. Permanent deletion carries an
+  // explicit tombstone because a missing def otherwise looks like local-only
+  // data and a stale peer would reintroduce it on the next merge.
+  const remoteDefs = (remote.contactStore.customFieldDefs ??
+    []) as CustomFieldDefinition[]
+  const { merged: mergedDefs, changed: defsChanged } = mergeById(
+    local.customFieldDefs,
+    remoteDefs
+  )
+  const mergedCustomFieldTombstones = mergeTombstones(
+    local.deletedCustomFieldDefs,
+    remote.contactStore.deletedCustomFieldDefs ?? [],
+    now
+  )
+  const customFieldTombstonesChanged = !sameTombstones(
+    local.deletedCustomFieldDefs,
+    mergedCustomFieldTombstones
+  )
+  const deletedCustomFieldIds = new Set(
+    mergedCustomFieldTombstones.map((tombstone) => tombstone.id)
+  )
+  const customFieldDefsAfterTombstones = mergedDefs.filter(
+    (def) => !deletedCustomFieldIds.has(def.id)
+  )
+
   // Apply contact tombstones: if a contact exists both in the active list
   // and the deleted list, whichever has the larger updatedAt wins. Drop the
   // loser from the other side.
   const { activeFinal: contactsFinal, deletedFinal: deletedContactsFinal } =
     reconcileActiveAndDeletedContacts(mergedContacts, mergedDeletedContacts)
 
-  // --- Custom field definitions ---
-  // Merged by id with per-def updatedAt LWW. Hard-deletion produces a
-  // tombstone via the def disappearing from one side; we don't track that
-  // separately because archive is the user-facing delete, and an archived
-  // def with a newer updatedAt naturally wins over an active one.
-  const remoteDefs = (remote.contactStore.customFieldDefs ??
-    []) as CustomFieldDefinition[]
-  const { merged: mergedDefs, changed: defsChanged } = mergeById(
-    local.customFieldDefs,
-    remoteDefs
+  // A stale contact payload can carry values for a definition deleted on this
+  // device. Sanitize only after the contact LWW winner is selected so cleanup
+  // cannot change active/deleted chronology and resurrect a contact.
+  const sanitizedContactsFinal = contactsFinal.map((contact) =>
+    stripTombstonedCustomFields(
+      contact,
+      mergedCustomFieldTombstones,
+      contact.updatedAt
+    )
+  )
+  const sanitizedDeletedContactsFinal = deletedContactsFinal.map((contact) =>
+    stripTombstonedCustomFields(
+      contact,
+      mergedCustomFieldTombstones,
+      contact.updatedAt
+    )
+  )
+  const contactsSanitized = sanitizedContactsFinal.some(
+    (contact, index) => contact !== contactsFinal[index]
+  )
+  const deletedContactsSanitized = sanitizedDeletedContactsFinal.some(
+    (contact, index) => contact !== deletedContactsFinal[index]
   )
 
   // --- Conversations ---
@@ -208,6 +252,10 @@ export function mergePayload(
     contactsChanged ||
     deletedContactsChanged ||
     defsChanged ||
+    customFieldDefsAfterTombstones.length !== mergedDefs.length ||
+    contactsSanitized ||
+    deletedContactsSanitized ||
+    customFieldTombstonesChanged ||
     conversationsChanged ||
     reportsChanged ||
     dayPlansChanged ||
@@ -220,9 +268,10 @@ export function mergePayload(
     mergedCategoryTombstones.length !== local.deletedCategories.length
 
   return {
-    contacts: contactsFinal,
-    deletedContacts: deletedContactsFinal,
-    customFieldDefs: mergedDefs,
+    contacts: sanitizedContactsFinal,
+    deletedContacts: sanitizedDeletedContactsFinal,
+    customFieldDefs: customFieldDefsAfterTombstones,
+    deletedCustomFieldDefs: mergedCustomFieldTombstones,
     conversations: conversationsAfterTombstones,
     deletedConversations: mergedConversationTombstones,
     serviceReports: reportsAfterTombstones,
@@ -313,6 +362,18 @@ function mergeTombstones<T extends { id: string; deletedAt: number }>(
   }
   const cutoff = now - TOMBSTONE_RETENTION_MS
   return Array.from(byId.values()).filter((t) => t.deletedAt >= cutoff)
+}
+
+function sameTombstones<T extends { id: string; deletedAt: number }>(
+  left: T[],
+  right: T[]
+): boolean {
+  if (left.length !== right.length) return false
+  const rightById = new Map(right.map((tombstone) => [tombstone.id, tombstone]))
+  return left.every(
+    (tombstone) =>
+      rightById.get(tombstone.id)?.deletedAt === tombstone.deletedAt
+  )
 }
 
 function applyTombstones<T extends WithId>(

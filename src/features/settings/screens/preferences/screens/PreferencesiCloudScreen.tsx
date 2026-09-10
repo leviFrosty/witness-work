@@ -4,6 +4,7 @@ import { ActivityIndicator, Alert, Linking, Switch, View } from 'react-native'
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
 import Wrapper from '@/components/ui/layout/Wrapper'
 import Section from '@/components/ui/inputs/Section'
+import { inputLayout } from '@/components/ui/inputs/InputLayout'
 import InputRowContainer from '@/components/ui/inputs/InputRowContainer'
 import InputRowButton from '@/features/settings/components/inputs/InputRowButton'
 import Text from '@/components/ui/MyText'
@@ -20,6 +21,7 @@ import FirstEnableSheet, {
 import { SyncPayload } from '@/app/sync/payload'
 import { useToastController } from '@tamagui/toast'
 import { formatDateTime, formatRelative } from '@/lib/dates'
+import SettingsInputLayout from '@/features/settings/components/shared/SettingsInputLayout'
 
 type StatusDisplay = { text: string; subtitle?: string }
 
@@ -384,7 +386,9 @@ const PreferencesiCloudScreenInner = () => {
       <KeyboardAwareScrollView
         contentContainerStyle={{ gap: 30, paddingTop: 30, paddingBottom: 30 }}
       >
-        <View style={{ paddingHorizontal: 15, gap: 6 }}>
+        <View
+          style={{ gap: 6, paddingHorizontal: inputLayout.horizontalPadding }}
+        >
           <View
             style={{
               flexDirection: 'row',
@@ -436,6 +440,7 @@ const PreferencesiCloudScreenInner = () => {
         <Section>
           <InputRowContainer
             label={i18n.t('iCloudEnableLabel')}
+            controlWidth='auto'
             style={{ justifyContent: 'space-between' }}
           >
             <View
@@ -496,7 +501,8 @@ const PreferencesiCloudScreenInner = () => {
                 fontSize: 12,
                 color: theme.colors.textAlt,
                 paddingTop: 4,
-                paddingRight: 15,
+                paddingHorizontal: 12,
+                paddingBottom: 16,
               }}
             >
               {i18n.t('iCloudOpenSettingsHelp')}
@@ -504,7 +510,7 @@ const PreferencesiCloudScreenInner = () => {
           </Section>
         )}
 
-        <View style={{ paddingHorizontal: 15 }}>
+        <View>
           <Text style={{ fontSize: 12, color: theme.colors.textAlt }}>
             {i18n.t('iCloudPrivacyNote')}
           </Text>
@@ -597,7 +603,7 @@ const PreferencesiCloudScreenInner = () => {
           <View style={{ gap: 8 }}>
             <View
               style={{
-                paddingHorizontal: 15,
+                paddingHorizontal: inputLayout.horizontalPadding,
                 flexDirection: 'row',
                 alignItems: 'center',
               }}
@@ -619,6 +625,7 @@ const PreferencesiCloudScreenInner = () => {
             <Section>
               <InputRowContainer
                 label={i18n.t('iCloudImagesToggleLabel')}
+                controlWidth='auto'
                 style={{ justifyContent: 'space-between' }}
               >
                 <View
@@ -651,7 +658,7 @@ const PreferencesiCloudScreenInner = () => {
                 </Text>
               </InputRowButton>
             </Section>
-            <View style={{ paddingHorizontal: 15 }}>
+            <View>
               <Text style={{ fontSize: 12, color: theme.colors.textAlt }}>
                 {i18n.t('iCloudImagesToggleSubtitle')}
               </Text>
@@ -696,9 +703,11 @@ const PreferencesiCloudScreenInner = () => {
 }
 
 const PreferencesiCloudScreen = () => (
-  <IsSupporter feature='iCloudSync' fill>
-    <PreferencesiCloudScreenInner />
-  </IsSupporter>
+  <SettingsInputLayout>
+    <IsSupporter feature='iCloudSync' fill>
+      <PreferencesiCloudScreenInner />
+    </IsSupporter>
+  </SettingsInputLayout>
 )
 
 export default PreferencesiCloudScreen

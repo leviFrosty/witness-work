@@ -69,6 +69,7 @@ import {
 } from '@/features/notes-import/lib/notesImportAppAttestRuntime'
 import { useNotesImportManager } from '@/features/notes-import/hooks/useNotesImportManager'
 import { clientImportCap } from '@/features/notes-import/lib/notesImportManagerLogic'
+import { inputLayout } from '@/components/ui/inputs/InputLayout'
 
 const MONO = Platform.select({
   ios: 'Menlo',
@@ -1295,6 +1296,9 @@ export default function ToolsScreen() {
               maxLength={4}
               style={{
                 minWidth: 72,
+                width: 120,
+                maxWidth: inputLayout.controlMaxWidth,
+                minHeight: inputLayout.controlMinHeight,
                 borderColor: theme.colors.border,
                 borderWidth: 1,
                 borderRadius: theme.numbers.borderRadiusSm,

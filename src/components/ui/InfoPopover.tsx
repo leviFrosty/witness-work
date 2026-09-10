@@ -17,9 +17,12 @@ import i18n from '@/lib/locales'
 const InfoPopover = ({
   title,
   description,
+  inline = false,
 }: {
   title: string
   description: string
+  /** Keep the 44pt target without making a text line 44pt tall. */
+  inline?: boolean
 }) => {
   const theme = useTheme()
   const { width } = useWindowDimensions()
@@ -60,6 +63,7 @@ const InfoPopover = ({
           style={({ pressed }) => ({
             width: 44,
             height: 44,
+            marginVertical: inline ? -12 : 0,
             flexShrink: 0,
             alignItems: 'flex-start',
             paddingLeft: 6,

@@ -19,6 +19,7 @@ import {
   resolvePluginIcon,
 } from '@/features/settings/lib/appIcon'
 import type { Hemisphere } from '@/features/settings/lib/hemisphere'
+import SettingsInputLayout from '@/features/settings/components/shared/SettingsInputLayout'
 
 const TILES = [
   {
@@ -70,7 +71,7 @@ const ArtistCallout = () => {
   return (
     <View
       style={{
-        marginHorizontal: 20,
+        marginHorizontal: 0,
         padding: 16,
         borderRadius: theme.numbers.borderRadiusLg,
         backgroundColor: theme.colors.backgroundLighter,
@@ -245,18 +246,20 @@ const PreferencesAppIconPicker = () => {
 }
 
 const PreferencesAppIconScreen = () => (
-  <Wrapper insets='bottom'>
-    <KeyboardAwareScrollView
-      contentContainerStyle={{ gap: 24, paddingTop: 24, paddingBottom: 120 }}
-    >
-      <ArtistCallout />
-      <View style={{ paddingHorizontal: 20 }}>
-        <IsSupporter feature='customAppIcon'>
-          <PreferencesAppIconPicker />
-        </IsSupporter>
-      </View>
-    </KeyboardAwareScrollView>
-  </Wrapper>
+  <SettingsInputLayout>
+    <Wrapper insets='bottom'>
+      <KeyboardAwareScrollView
+        contentContainerStyle={{ gap: 24, paddingTop: 24, paddingBottom: 120 }}
+      >
+        <ArtistCallout />
+        <View>
+          <IsSupporter feature='customAppIcon'>
+            <PreferencesAppIconPicker />
+          </IsSupporter>
+        </View>
+      </KeyboardAwareScrollView>
+    </Wrapper>
+  </SettingsInputLayout>
 )
 
 export default PreferencesAppIconScreen

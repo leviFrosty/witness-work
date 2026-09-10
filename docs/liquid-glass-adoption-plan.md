@@ -135,7 +135,7 @@ The following are confirmed **content layer** — do not adopt glass even though
 
 - Content cards: `Card`, `CardWithTitle`, `ProfileCard`, `HintCard`, `LifetimeHoursCard`, `StudiesCard`, `SupporterNudgeCard`, `YearMilestoneCard`, `HourEntryCard`, `PublisherCheckBoxCard`
 - Static badges: `Badge`, `CreditBadge`, `SinceBadge`, `SupporterBadge`
-- Form inputs: `TextInput`, `TextInputRow`, `CheckboxWithLabel`
+- Form inputs: `TextInput`, `TextInputRow`, and native checkbox selection rows
 - Layout scaffolding: `Wrapper`, `XView`
 - Static visualizations: `CategorySegmentBar`, `MilestoneProgressBar`, `SimpleProgressBar`, `MonthServiceReportProgressBar`, contribution graphs, etc.
 - Native iOS `Alert` dialogs (system-rendered)

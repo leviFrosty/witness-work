@@ -1,6 +1,6 @@
 import moment from 'moment'
 import { useEffect, useRef, useState } from 'react'
-import { Pressable, TextInput as RNTextInput, View } from 'react-native'
+import { TextInput as RNTextInput, View } from 'react-native'
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
 import { Sheet } from 'tamagui'
 
@@ -8,9 +8,12 @@ import ActionButton from '@/components/ui/ActionButton'
 import Button from '@/components/ui/Button'
 import Text from '@/components/ui/MyText'
 import TextInput from '@/components/ui/TextInput'
+import Section from '@/components/ui/inputs/Section'
+import InputRowContainer from '@/components/ui/inputs/InputRowContainer'
 import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
 import { useFormattedMinutes } from '@/lib/minutes'
+import { inputLayout } from '@/components/ui/inputs/InputLayout'
 
 export interface MonthGoalEditorSheetProps {
   open: boolean
@@ -92,13 +95,16 @@ const MonthGoalEditorSheet = ({
     >
       <Sheet.Handle />
       <Sheet.Overlay zIndex={100_000 - 1} />
-      <Sheet.Frame backgroundColor={theme.colors.backgroundLighter}>
+      <Sheet.Frame backgroundColor={theme.colors.background}>
         <KeyboardAwareScrollView
           keyboardShouldPersistTaps='handled'
           extraScrollHeight={20}
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{
-            paddingHorizontal: 24,
+            paddingHorizontal: inputLayout.horizontalPadding,
+            width: '100%',
+            maxWidth: inputLayout.contentMaxWidth,
+            alignSelf: 'center',
             paddingTop: 22,
             paddingBottom: 32,
             gap: 20,
@@ -110,77 +116,42 @@ const MonthGoalEditorSheet = ({
               color: theme.colors.text,
               fontFamily: theme.fonts.semiBold,
               fontSize: theme.fontSize('xl'),
+              paddingHorizontal: inputLayout.horizontalPadding,
             }}
           >
             {i18n.t('monthGoalEditor.title', { month: monthLabel })}
           </Text>
 
-          <View
-            style={{
-              gap: 16,
-              padding: 16,
-              borderRadius: theme.numbers.borderRadiusMd,
-              backgroundColor: theme.colors.background,
-            }}
-          >
-            <View
-              style={{
-                flexDirection: 'row',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                gap: 16,
-              }}
+          <Section>
+            <InputRowContainer
+              label={i18n.t('monthGoalEditor.regularGoal')}
+              info={i18n.t('monthGoalEditor.regularGoalDescription')}
+              controlWidth='auto'
             >
               <Text
                 style={{
                   color: theme.colors.textAlt,
-                  fontSize: theme.fontSize('sm'),
-                }}
-              >
-                {i18n.t('monthGoalEditor.regularGoal')}
-              </Text>
-              <Text
-                style={{
-                  color: theme.colors.text,
-                  fontFamily: theme.fonts.semiBold,
-                  fontSize: theme.fontSize('md'),
+                  fontSize: theme.fontSize('lg'),
+                  textAlign: 'right',
                 }}
               >
                 {regularGoalDisplay.formatted}
               </Text>
-            </View>
-
-            <View
-              style={{
-                height: 1,
-                backgroundColor: theme.colors.border,
-              }}
-            />
-
-            <View style={{ gap: 8 }}>
-              <Pressable
-                accessibilityRole='button'
-                accessibilityLabel={i18n.t('monthGoalEditor.monthGoal')}
-                accessibilityHint={i18n.t('monthGoalEditor.inputHint')}
-                hitSlop={{ top: 8, bottom: 8 }}
-                onPress={() => inputRef.current?.focus()}
-              >
-                <Text
-                  style={{
-                    color: theme.colors.text,
-                    fontFamily: theme.fonts.semiBold,
-                    fontSize: theme.fontSize('md'),
-                  }}
-                >
-                  {i18n.t('monthGoalEditor.monthGoal')}
-                </Text>
-              </Pressable>
+            </InputRowContainer>
+            <InputRowContainer
+              label={i18n.t('monthGoalEditor.monthGoal')}
+              info={
+                annualGoalHours === null
+                  ? i18n.t('monthGoalEditor.explanationWithoutAnnualGoal', {
+                      month: monthLabel,
+                    })
+                  : i18n.t('monthGoalEditor.explanation', { month: monthLabel })
+              }
+              onLabelPress={() => inputRef.current?.focus()}
+              lastInSection
+            >
               <View
-                style={{
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  gap: 10,
-                }}
+                style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}
               >
                 <TextInput
                   ref={inputRef}
@@ -196,27 +167,18 @@ const MonthGoalEditorSheet = ({
                   returnKeyType='done'
                   selectTextOnFocus
                   maxLength={7}
-                  textAlign='left'
-                  style={{
-                    flex: 1,
-                    minHeight: 46,
-                    paddingHorizontal: 12,
-                    paddingVertical: 10,
-                    borderWidth: 1,
-                    borderColor: showValidationError
-                      ? theme.colors.error
-                      : theme.colors.border,
-                    borderRadius: theme.numbers.borderRadiusSm,
-                    color: theme.colors.text,
-                    fontFamily: theme.fonts.semiBold,
-                    fontSize: theme.fontSize('lg'),
-                    backgroundColor: theme.colors.backgroundLighter,
-                  }}
+                  error={
+                    showValidationError
+                      ? i18n.t('monthGoalEditor.invalidGoal')
+                      : undefined
+                  }
+                  style={{ flex: 1, minWidth: 0 }}
                 />
                 <Text
                   style={{
                     color: theme.colors.textAlt,
-                    fontSize: theme.fontSize('md'),
+                    fontSize: theme.fontSize('sm'),
+                    flexShrink: 1,
                   }}
                 >
                   {i18n.t('hours_lowercase')}
@@ -228,27 +190,14 @@ const MonthGoalEditorSheet = ({
                   style={{
                     color: theme.colors.error,
                     fontSize: theme.fontSize('sm'),
+                    marginTop: 4,
                   }}
                 >
                   {i18n.t('monthGoalEditor.invalidGoal')}
                 </Text>
               )}
-            </View>
-          </View>
-
-          <Text
-            style={{
-              color: theme.colors.textAlt,
-              fontSize: theme.fontSize('sm'),
-              lineHeight: 20,
-            }}
-          >
-            {annualGoalHours === null
-              ? i18n.t('monthGoalEditor.explanationWithoutAnnualGoal', {
-                  month: monthLabel,
-                })
-              : i18n.t('monthGoalEditor.explanation', { month: monthLabel })}
-          </Text>
+            </InputRowContainer>
+          </Section>
 
           {hasOverride && (
             <Button

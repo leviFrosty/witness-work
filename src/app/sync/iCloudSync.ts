@@ -18,7 +18,10 @@ import * as Sentry from '@sentry/react-native'
 import * as Device from 'expo-device'
 import { EventSubscription } from 'expo-modules-core'
 import { Contact } from '@/types/contact'
-import { CustomFieldDefinition } from '@/types/customField'
+import {
+  CustomFieldDefinition,
+  CustomFieldTombstone,
+} from '@/types/customField'
 import { Visit, VisitTombstone } from '@/types/visit'
 import {
   DayPlan,
@@ -28,6 +31,7 @@ import {
 import { Category, CategoryTombstone } from '@/types/category'
 import { RecurringPlan } from '@/lib/serviceReport'
 import { migrateNormalizeDates } from '@/lib/normalizeDate'
+import { stripTombstonedCustomFields } from '@/lib/customFields'
 import {
   pushAllImages,
   pullMissingImages,
@@ -183,6 +187,8 @@ export function hasMeaningfulLocalData(): boolean {
   const contacts = useContacts.getState()
   if (contacts.contacts.length > 0) return true
   if (contacts.deletedContacts.length > 0) return true
+  if (contacts.customFieldDefs.length > 0) return true
+  if (contacts.deletedCustomFieldDefs.length > 0) return true
 
   const conversations = useConversations.getState()
   if (conversations.conversations.length > 0) return true
@@ -207,6 +213,7 @@ type LocalMergeState = {
   contacts: Contact[]
   deletedContacts: Contact[]
   customFieldDefs: CustomFieldDefinition[]
+  deletedCustomFieldDefs: CustomFieldTombstone[]
   conversations: Visit[]
   deletedConversations: VisitTombstone[]
   serviceReports: TimeEntriesByYear
@@ -240,6 +247,7 @@ function foldRemotePayloads(payloads: SyncPayload[]): SyncPayload | null {
     deletedContacts: (first.contactStore.deletedContacts ?? []) as Contact[],
     customFieldDefs: (first.contactStore.customFieldDefs ??
       []) as CustomFieldDefinition[],
+    deletedCustomFieldDefs: first.contactStore.deletedCustomFieldDefs ?? [],
     conversations: (first.conversationStore.conversations ?? []) as Visit[],
     deletedConversations: first.conversationStore.deletedConversations ?? [],
     serviceReports:
@@ -262,6 +270,7 @@ function foldRemotePayloads(payloads: SyncPayload[]): SyncPayload | null {
       contacts: result.contacts,
       deletedContacts: result.deletedContacts,
       customFieldDefs: result.customFieldDefs,
+      deletedCustomFieldDefs: result.deletedCustomFieldDefs,
       conversations: result.conversations,
       deletedConversations: result.deletedConversations,
       serviceReports: result.serviceReports,
@@ -292,6 +301,7 @@ function foldRemotePayloads(payloads: SyncPayload[]): SyncPayload | null {
       contacts: acc.contacts,
       deletedContacts: acc.deletedContacts,
       customFieldDefs: acc.customFieldDefs,
+      deletedCustomFieldDefs: acc.deletedCustomFieldDefs,
     },
     conversationStore: {
       conversations: acc.conversations,
@@ -334,11 +344,22 @@ function foldRemotePayloads(payloads: SyncPayload[]): SyncPayload | null {
  * merges).
  */
 export function replaceLocalWithRemote(remote: SyncPayload): void {
+  const deletedCustomFieldDefs =
+    remote.contactStore.deletedCustomFieldDefs ?? []
+  const deletedCustomFieldIds = new Set(
+    deletedCustomFieldDefs.map((tombstone) => tombstone.id)
+  )
   useContacts.setState({
-    contacts: remote.contactStore.contacts ?? [],
-    deletedContacts: remote.contactStore.deletedContacts ?? [],
-    customFieldDefs: (remote.contactStore.customFieldDefs ??
-      []) as CustomFieldDefinition[],
+    contacts: (remote.contactStore.contacts ?? []).map((contact) =>
+      stripTombstonedCustomFields(contact, deletedCustomFieldDefs)
+    ),
+    deletedContacts: (remote.contactStore.deletedContacts ?? []).map(
+      (contact) => stripTombstonedCustomFields(contact, deletedCustomFieldDefs)
+    ),
+    customFieldDefs: (
+      (remote.contactStore.customFieldDefs ?? []) as CustomFieldDefinition[]
+    ).filter((def) => !deletedCustomFieldIds.has(def.id)),
+    deletedCustomFieldDefs,
   })
   useConversations.setState({
     conversations: remote.conversationStore.conversations ?? [],
@@ -926,6 +947,7 @@ async function pullAndMergeInner(reason: string): Promise<boolean> {
     contacts: contactsState.contacts,
     deletedContacts: contactsState.deletedContacts,
     customFieldDefs: contactsState.customFieldDefs,
+    deletedCustomFieldDefs: contactsState.deletedCustomFieldDefs,
     conversations: conversationsState.conversations,
     deletedConversations: conversationsState.deletedConversations,
     serviceReports: serviceReportState.serviceReports,
@@ -948,6 +970,7 @@ async function pullAndMergeInner(reason: string): Promise<boolean> {
       contacts: result.contacts,
       deletedContacts: result.deletedContacts,
       customFieldDefs: result.customFieldDefs,
+      deletedCustomFieldDefs: result.deletedCustomFieldDefs,
       conversations: result.conversations,
       deletedConversations: result.deletedConversations,
       serviceReports: result.serviceReports,
@@ -1000,6 +1023,7 @@ async function pullAndMergeInner(reason: string): Promise<boolean> {
     contacts: acc.contacts,
     deletedContacts: acc.deletedContacts,
     customFieldDefs: acc.customFieldDefs,
+    deletedCustomFieldDefs: acc.deletedCustomFieldDefs,
   })
   conversationsState.set({
     conversations: acc.conversations,

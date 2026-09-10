@@ -7,6 +7,7 @@ import useContacts from '@/stores/contactsStore'
 import moment from 'moment'
 import { formatDate } from '@/lib/dates'
 import Card from '@/components/ui/Card'
+import Empty from '@/components/ui/Empty'
 import useConversations from '@/stores/conversationStore'
 import { FlashList } from '@shopify/flash-list'
 import i18n from '@/lib/locales'
@@ -88,9 +89,7 @@ const RecoverContactsScreen = () => {
             }}
           >
             {deletedContacts.length === 0 && (
-              <Text style={{ paddingHorizontal: 20 }}>
-                {i18n.t('deletedContactsWillAppearHere')}
-              </Text>
+              <Empty title={i18n.t('deletedContactsWillAppearHere')} />
             )}
             <View style={{ minHeight: 2 }}>
               <FlashList

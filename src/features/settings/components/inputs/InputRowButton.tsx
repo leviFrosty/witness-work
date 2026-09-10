@@ -1,11 +1,16 @@
 import type { AppIcon } from '@/components/ui/LucideIcon'
 import React, { PropsWithChildren, ReactNode } from 'react'
-import { GestureResponderEvent, ViewStyle, View } from 'react-native'
+import { GestureResponderEvent, Pressable, ViewStyle, View } from 'react-native'
 import useTheme from '@/contexts/theme'
-import { rowPaddingVertical } from '@/constants/Inputs'
 import Text from '@/components/ui/MyText'
 import Button from '@/components/ui/Button'
-import IconButton from '@/components/ui/IconButton'
+import LucideIcon from '@/components/ui/LucideIcon'
+import {
+  drawerLayout,
+  inputLayout,
+  useInputLayout,
+} from '@/components/ui/inputs/InputLayout'
+import Haptics from '@/lib/haptics'
 
 interface Props {
   children?: ReactNode
@@ -46,6 +51,68 @@ const InputRowButton: React.FC<PropsWithChildren<Props>> = ({
   leftIconFill,
 }: Props) => {
   const theme = useTheme()
+  const layout = useInputLayout()
+
+  if (layout === 'drawer') {
+    return (
+      <Pressable
+        accessibilityRole='button'
+        accessibilityLabel={label}
+        accessibilityState={{ disabled: !!disabled }}
+        disabled={disabled}
+        onPress={(event) => {
+          Haptics.light()
+          onPress?.(event)
+        }}
+        style={({ pressed }) => [
+          {
+            flexDirection: 'row',
+            alignItems: 'center',
+            minHeight: drawerLayout.rowMinHeight,
+            paddingHorizontal: drawerLayout.horizontalPadding,
+            paddingVertical: drawerLayout.rowPaddingVertical,
+            gap: drawerLayout.labelGap,
+            borderRadius: theme.numbers.borderRadiusLg,
+            backgroundColor: pressed ? theme.colors.card : 'transparent',
+            opacity: disabled ? 0.4 : 1,
+          },
+          style,
+        ]}
+      >
+        {leftIcon && (
+          <LucideIcon
+            icon={leftIcon}
+            size={drawerLayout.iconSize}
+            color={leftIconColor ?? theme.colors.textAlt}
+            fill={leftIconFill}
+          />
+        )}
+        <View style={{ flex: 1, gap: 5 }}>
+          <Text
+            style={{
+              fontFamily: theme.fonts.medium,
+              fontSize: theme.fontSize('lg'),
+            }}
+          >
+            {label}
+          </Text>
+          {sublabel && (
+            <Text
+              style={{
+                fontSize: theme.fontSize('sm'),
+                color: theme.colors.textAlt,
+              }}
+            >
+              {sublabel}
+            </Text>
+          )}
+        </View>
+        <View pointerEvents='none' style={{ opacity: 0.6 }}>
+          {children}
+        </View>
+      </Pressable>
+    )
+  }
 
   return (
     <Button
@@ -55,27 +122,45 @@ const InputRowButton: React.FC<PropsWithChildren<Props>> = ({
         flexDirection: 'row',
         borderColor: theme.colors.border,
         borderBottomWidth: lastInSection ? 0 : 1,
-        paddingBottom: lastInSection ? 0 : rowPaddingVertical,
-        paddingRight: noHorizontalPadding ? 0 : 20,
+        paddingBottom: 12,
+        paddingTop: 12,
+        paddingLeft: noHorizontalPadding ? 0 : inputLayout.horizontalPadding,
+        paddingRight: noHorizontalPadding ? 0 : inputLayout.horizontalPadding,
+        minHeight: 64,
         alignItems: 'center',
-        flexGrow: 1,
+        flexGrow: 0,
         justifyContent: justifyContent ?? 'space-between',
-        gap: 15,
+        gap: inputLayout.controlGap,
         opacity: disabled ? 0.4 : 1,
         ...style,
       }}
       onPress={onPress}
     >
-      <View style={{ flexDirection: 'row', gap: 8, alignItems: 'center' }}>
+      <View
+        style={{
+          flexDirection: 'row',
+          gap: 14,
+          alignItems: 'center',
+          flexShrink: 1,
+        }}
+      >
         {leftIcon && (
-          <IconButton
+          <LucideIcon
             icon={leftIcon}
-            color={leftIconColor}
+            size={21}
+            color={leftIconColor ?? theme.colors.textAlt}
             fill={leftIconFill}
           />
         )}
-        <View style={{ flexDirection: 'column', flexShrink: 1 }}>
-          <Text style={{ fontFamily: theme.fonts.semiBold }}>{label}</Text>
+        <View style={{ flexDirection: 'column', flexShrink: 1, gap: 4 }}>
+          <Text
+            style={{
+              fontFamily: theme.fonts.medium,
+              fontSize: theme.fontSize('lg'),
+            }}
+          >
+            {label}
+          </Text>
           {sublabel && (
             <Text
               style={{
@@ -88,7 +173,7 @@ const InputRowButton: React.FC<PropsWithChildren<Props>> = ({
           )}
         </View>
       </View>
-      {children}
+      <View style={{ flexShrink: 0, alignItems: 'flex-end' }}>{children}</View>
     </Button>
   )
 }

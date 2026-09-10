@@ -1,5 +1,6 @@
 import {
   Calendar as CalendarIcon,
+  Car as CarIcon,
   Clock as ClockIcon,
   IdCard as IdCardIcon,
   X as XIcon,
@@ -24,14 +25,14 @@ export type QuickActionSheetProps = {
   setSheetOpen: React.Dispatch<React.SetStateAction<boolean>>
 }
 
-type QuickActionOption = 'addTime' | 'addContact' | 'addPlan'
+type QuickActionOption = 'addTime' | 'addMileage' | 'addContact' | 'addPlan'
 
 export default function QuickActionSheet({
   sheetOpen,
   setSheetOpen,
   navigation,
 }: QuickActionSheetProps) {
-  const { showsTimer } = usePublisher()
+  const { showsTimer, tracksMileage } = usePublisher()
   const theme = useTheme()
 
   const handleQuickAction = (action: QuickActionOption): void => {
@@ -39,6 +40,9 @@ export default function QuickActionSheet({
     switch (action) {
       case 'addTime':
         navigation.navigate('Add Time')
+        break
+      case 'addMileage':
+        navigation.navigate('MileageEntry')
         break
       case 'addContact':
         navigation.navigate('Contact Form', { id: Crypto.randomUUID() })
@@ -53,7 +57,7 @@ export default function QuickActionSheet({
     <Sheet
       open={sheetOpen}
       modal
-      snapPoints={[30]}
+      snapPoints={[tracksMileage ? 40 : 30]}
       onOpenChange={(o: boolean) => setSheetOpen(o)}
       dismissOnSnapToBottom
       transition='quick'
@@ -89,6 +93,13 @@ export default function QuickActionSheet({
                   onPress={() => handleQuickAction('addTime')}
                 />
               </>
+            )}
+            {tracksMileage && (
+              <ActionButton
+                text='mileage.dashboard.addMileage'
+                icon={CarIcon}
+                onPress={() => handleQuickAction('addMileage')}
+              />
             )}
             <ActionButton
               text='createPlan'

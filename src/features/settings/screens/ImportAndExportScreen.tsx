@@ -26,6 +26,9 @@ import XView from '@/components/ui/layout/XView'
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
 import IconButton from '@/components/ui/IconButton'
 import { useTimeCache } from '@/stores/timeCache'
+import useMileage from '@/stores/mileage'
+import { MileageData } from '@/types/mileage'
+import { mileageForRestore, mileageSnapshot } from '@/lib/mileagePersistence'
 
 /**
  * Any new stores should be added to this type to be included in the
@@ -36,6 +39,7 @@ type ImportFile = {
   contactStore?: unknown
   conversationStore?: unknown
   preferencesStore?: unknown
+  mileageStore?: MileageData
 }
 
 const ImportAndExportScreen = () => {
@@ -43,6 +47,7 @@ const ImportAndExportScreen = () => {
   const contactStore = useContacts()
   const conversationStore = useConversations()
   const preferencesStore = usePreferences()
+  const mileageStore = useMileage()
   const timeCache = useTimeCache()
 
   const [loading, setLoading] = useState(false)
@@ -75,41 +80,42 @@ const ImportAndExportScreen = () => {
 
       const exportFileUri = assets[0].uri
 
-      FileSystem.readAsStringAsync(exportFileUri)
-        .then((contents) => {
-          const data = JSON.parse(contents) as ImportFile
+      const contents = await FileSystem.readAsStringAsync(exportFileUri)
+      const data = JSON.parse(contents) as ImportFile
 
-          if (!validImportFile(data)) {
-            Alert.alert(
-              i18n.t('importErrorInvalidFile_title'),
-              i18n.t('importErrorInvalidFile_description')
-            )
-            return
-          }
+      if (!validImportFile(data)) {
+        Alert.alert(
+          i18n.t('importErrorInvalidFile_title'),
+          i18n.t('importErrorInvalidFile_description')
+        )
+        return
+      }
 
-          // If importFile has old serviceReport data structure, update to new before importing.
-          if (
-            data.serviceReportStore &&
-            Array.isArray((data.serviceReportStore as any).serviceReports)
-          ) {
-            const years: any = migrateServiceReports(
-              (data.serviceReportStore as any).serviceReports
-            )
-            ;(data.serviceReportStore as any).serviceReports = years
-          }
+      // Validate mileage before touching any stores so an invalid slice
+      // cannot leave a partially restored backup. Older backups preserve it.
+      const mileage = mileageForRestore(
+        data.mileageStore,
+        useMileage.getState()
+      )
 
-          data.serviceReportStore &&
-            serviceReportStore.set(data.serviceReportStore)
-          data.contactStore && contactStore.set(data.contactStore)
-          data.conversationStore &&
-            conversationStore.set(data.conversationStore)
-          data.preferencesStore && preferencesStore.set(data.preferencesStore)
-          timeCache.invalidateAllCache()
-          setSuccessfulImport(true)
-        })
-        .finally(() => {
-          setLoading(false)
-        })
+      // If importFile has old serviceReport data structure, update to new before importing.
+      if (
+        data.serviceReportStore &&
+        Array.isArray((data.serviceReportStore as any).serviceReports)
+      ) {
+        const years: any = migrateServiceReports(
+          (data.serviceReportStore as any).serviceReports
+        )
+        ;(data.serviceReportStore as any).serviceReports = years
+      }
+
+      data.serviceReportStore && serviceReportStore.set(data.serviceReportStore)
+      data.contactStore && contactStore.set(data.contactStore)
+      data.conversationStore && conversationStore.set(data.conversationStore)
+      data.preferencesStore && preferencesStore.set(data.preferencesStore)
+      useMileage.getState().set(mileage)
+      timeCache.invalidateAllCache()
+      setSuccessfulImport(true)
     } catch (error) {
       Sentry.captureException(error)
       setLoading(false)
@@ -117,6 +123,8 @@ const ImportAndExportScreen = () => {
         i18n.t('importError_title'),
         i18n.t('importError_description')
       )
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -126,24 +134,18 @@ const ImportAndExportScreen = () => {
       contactStore,
       conversationStore,
       preferencesStore,
+      mileageStore: mileageSnapshot(mileageStore),
     }
     setLoading(true)
 
-    if (!Sharing.isAvailableAsync()) {
-      Alert.alert(i18n.t('sharingIsNotAvailable'))
-      return
-    }
-
-    preferencesStore.set({ lastBackupDate: new Date() })
-
     try {
-      FileSystem.writeAsStringAsync(exportFileUri, JSON.stringify(data))
-        .then(async () => {
-          await Sharing.shareAsync(exportFileUri)
-        })
-        .finally(() => {
-          setLoading(false)
-        })
+      if (!(await Sharing.isAvailableAsync())) {
+        Alert.alert(i18n.t('sharingIsNotAvailable'))
+        return
+      }
+      await FileSystem.writeAsStringAsync(exportFileUri, JSON.stringify(data))
+      await Sharing.shareAsync(exportFileUri)
+      preferencesStore.set({ lastBackupDate: new Date() })
     } catch (error) {
       Sentry.captureException(error)
       setLoading(false)
@@ -151,6 +153,8 @@ const ImportAndExportScreen = () => {
         i18n.t('errorExporting'),
         i18n.t('errorExporting_description')
       )
+    } finally {
+      setLoading(false)
     }
   }
 

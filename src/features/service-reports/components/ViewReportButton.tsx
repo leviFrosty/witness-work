@@ -1,53 +1,18 @@
-import { FileText as FileTextIcon } from 'lucide-react-native'
-import LucideIcon from '@/components/ui/LucideIcon'
 import { useNavigation } from '@react-navigation/native'
-import Button from '@/components/ui/Button'
-import Text from '@/components/ui/MyText'
-import useTheme from '@/contexts/theme'
-import i18n from '@/lib/locales'
+import ViewReportAction from '@/components/ViewReportButton'
 import { RootStackNavigation } from '@/types/rootStack'
 
-interface ViewReportButtonProps {
+export default function ViewReportButton({
+  month,
+  year,
+}: {
   month: number
   year: number
-}
-
-const ViewReportButton = ({ month, year }: ViewReportButtonProps) => {
-  const theme = useTheme()
+}) {
   const navigation = useNavigation<RootStackNavigation>()
-
   return (
-    <Button
-      accessibilityLabel={i18n.t('viewReport')}
+    <ViewReportAction
       onPress={() => navigation.navigate('ServiceReportView', { month, year })}
-      style={{
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 6,
-        paddingHorizontal: 10,
-        paddingVertical: 6,
-        borderWidth: 1,
-        borderColor: theme.colors.border,
-        borderRadius: 999,
-        borderCurve: 'continuous',
-      }}
-    >
-      <LucideIcon
-        icon={FileTextIcon}
-        size={theme.fontSize('sm')}
-        style={{ color: theme.colors.textAlt }}
-      />
-      <Text
-        style={{
-          color: theme.colors.textAlt,
-          fontFamily: theme.fonts.semiBold,
-          fontSize: theme.fontSize('sm'),
-        }}
-      >
-        {i18n.t('viewReport')}
-      </Text>
-    </Button>
+    />
   )
 }
-
-export default ViewReportButton

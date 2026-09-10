@@ -1,3 +1,5 @@
+import { useLocales } from 'expo-localization'
+import { resolveMileageDistanceUnit } from '@/lib/mileage'
 import { View } from 'react-native'
 import Section from '@/components/ui/inputs/Section'
 import InputRowContainer from '@/components/ui/inputs/InputRowContainer'
@@ -39,6 +41,8 @@ const AppearancePreferencesSection = () => {
     formatRegion,
     timeFormat,
     dateOrder,
+    mileageDistanceUnit,
+    setMileageDistanceUnit,
   } = usePreferences()
   const theme = useContext(ThemeContext)
   const fontSizeOffsetOptions = [
@@ -64,6 +68,20 @@ const AppearancePreferencesSection = () => {
   const autoStartOfWeek = resolveStartOfWeek({ region: formatRegion })
   const autoTimeFormat = resolveTimeFormat({ region: formatRegion })
   const autoDateOrder = resolveDateOrder({ region: formatRegion })
+
+  const deviceLocales = useLocales()
+  const autoDistance = resolveMileageDistanceUnit(
+    'auto',
+    deviceLocales[0]?.measurementSystem
+  )
+  const distanceOptions: { label: string; value: 'auto' | 'mi' | 'km' }[] = [
+    {
+      label: `${i18n.t('auto')} (${i18n.t(autoDistance === 'mi' ? 'mileage.preferences.miles' : 'mileage.preferences.kilometers')})`,
+      value: 'auto',
+    },
+    { label: i18n.t('mileage.preferences.miles'), value: 'mi' },
+    { label: i18n.t('mileage.preferences.kilometers'), value: 'km' },
+  ]
 
   const now = moment()
 
@@ -153,6 +171,15 @@ const AppearancePreferencesSection = () => {
               data={timeDisplayOptions}
               value={timeDisplayFormat}
               onChange={({ value }) => set({ timeDisplayFormat: value })}
+            />
+          </View>
+        </InputRowContainer>
+        <InputRowContainer label={i18n.t('mileage.preferences.distanceUnit')}>
+          <View style={{ flex: 1 }}>
+            <Select
+              data={distanceOptions}
+              value={mileageDistanceUnit}
+              onChange={({ value }) => setMileageDistanceUnit(value)}
             />
           </View>
         </InputRowContainer>

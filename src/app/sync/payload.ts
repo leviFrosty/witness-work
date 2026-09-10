@@ -2,6 +2,9 @@ import useContacts from '@/stores/contactsStore'
 import useConversations from '@/stores/conversationStore'
 import useServiceReport from '@/stores/serviceReport'
 import useCategories from '@/stores/categories'
+import useMileage from '@/stores/mileage'
+import { MileageData } from '@/types/mileage'
+import { mileageSnapshot, parseMileageData } from '@/lib/mileagePersistence'
 import { usePreferences } from '@/stores/preferences'
 import { NON_SYNCABLE_PREFERENCE_KEYS } from '@/stores/preferences'
 import { useProfile, NON_SYNCABLE_PROFILE_KEYS } from '@/stores/profile'
@@ -62,6 +65,8 @@ export type SyncPayload = {
     categories: any[]
     deletedCategories?: { id: string; deletedAt: number }[]
   }
+  /** Absent on older clients; absence never represents mileage deletion. */
+  mileageStore?: MileageData
   preferencesStore: {
     // Partial because we only sync the allow-listed, cross-device-safe keys.
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -166,6 +171,7 @@ export function buildPayload(args: {
       categories: categories.categories,
       deletedCategories: categories.deletedCategories,
     },
+    mileageStore: mileageSnapshot(useMileage.getState()),
     preferencesStore: {
       values: syncablePrefs,
       updatedAt: prefs.preferenceUpdatedAt ?? {},
@@ -203,6 +209,11 @@ export function parsePayload(json: string): SyncPayload | null {
   if (d.version > PAYLOAD_VERSION) return null
   if (!d.contactStore || !d.conversationStore || !d.serviceReportStore) {
     return null
+  }
+  if (d.mileageStore !== undefined) {
+    const mileage = parseMileageData(d.mileageStore)
+    if (!mileage) return null
+    d.mileageStore = mileage
   }
   normalizeLegacyPayloadFieldNames(d)
   return d as SyncPayload

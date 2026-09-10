@@ -11,6 +11,7 @@ import i18n from '@/lib/locales'
 import Empty from '@/components/ui/Empty'
 import LifetimeHoursCard from '@/features/progress/components/LifetimeHoursCard'
 import YearByYearList from '@/features/progress/components/YearByYearList'
+import MileageProgressCard from '@/features/mileage/components/MileageProgressCard'
 
 /**
  * Progress screen's "All-time" tab. Aggregates every service report the user
@@ -52,19 +53,29 @@ const ProgressAllTimeTab = ({ onYearPress }: ProgressAllTimeTabProps) => {
 
   if (isEmpty) {
     return (
-      <View
-        style={{
-          flex: 1,
-          alignItems: 'center',
-          justifyContent: 'center',
-          paddingBottom: insets.bottom,
+      <KeyboardAwareScrollView
+        contentContainerStyle={{
+          flexGrow: 1,
+          paddingHorizontal: 15,
+          paddingTop: 15,
+          paddingBottom: insets.bottom + 100,
         }}
       >
-        <Empty
-          title={i18n.t('emptyAllTime_title')}
-          description={i18n.t('emptyAllTime_description')}
-        />
-      </View>
+        <MileageProgressCard period={{ kind: 'allTime' }} />
+        <View
+          style={{
+            flex: 1,
+            alignItems: 'center',
+            justifyContent: 'center',
+            paddingBottom: insets.bottom,
+          }}
+        >
+          <Empty
+            title={i18n.t('emptyAllTime_title')}
+            description={i18n.t('emptyAllTime_description')}
+          />
+        </View>
+      </KeyboardAwareScrollView>
     )
   }
 
@@ -76,8 +87,9 @@ const ProgressAllTimeTab = ({ onYearPress }: ProgressAllTimeTabProps) => {
         gap: 24,
       }}
     >
-      <View style={{ paddingHorizontal: 15 }}>
+      <View style={{ paddingHorizontal: 15, gap: 12 }}>
         <LifetimeHoursCard />
+        <MileageProgressCard period={{ kind: 'allTime' }} />
       </View>
       <YearByYearList onYearPress={onYearPress} />
     </KeyboardAwareScrollView>

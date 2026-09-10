@@ -350,6 +350,12 @@ export const PREFERENCE_DEFAULTS = {
   remindMeAboutBackups: true,
   backupNotificationFrequencyAsDays: 120,
   userSpecifiedHasAnnualGoal: 'default' as boolean | 'default',
+  /** Explicit mileage intent survives Publisher changes and disabling. */
+  userSpecifiedMileageTracking: 'default' as boolean | 'default',
+  mileageDistanceUnit: 'auto' as 'auto' | 'mi' | 'km',
+  mileageSubmissionMethod: 'copy' as 'copy' | 'share',
+  mileageLastVehicleId: null as string | null,
+  mileageLastEntryMode: 'distance' as 'distance' | 'odometer',
   fontSizeOffset: 0,
   /**
    * One-shot flag for the legacy-`customContactFields` → `customFieldDefs`
@@ -1231,6 +1237,16 @@ export const usePreferences = create(
 
       return {
         set,
+        setUserSpecifiedMileageTracking: (value: boolean | 'default') =>
+          set({ userSpecifiedMileageTracking: value }),
+        setMileageDistanceUnit: (value: 'auto' | 'mi' | 'km') =>
+          set({ mileageDistanceUnit: value }),
+        setMileageSubmissionMethod: (value: 'copy' | 'share') =>
+          set({ mileageSubmissionMethod: value }),
+        setMileageLastVehicleId: (value: string | null) =>
+          set({ mileageLastVehicleId: value }),
+        setMileageLastEntryMode: (value: 'distance' | 'odometer') =>
+          set({ mileageLastEntryMode: value }),
         /**
          * Updates the User's Publisher role, enforcing the glossary's **Tenure
          * Start Date** reset semantics:

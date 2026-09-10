@@ -10,6 +10,8 @@ import {
 import { Category, CategoryTombstone } from '@/types/category'
 import { RecurringPlan } from '@/lib/serviceReport'
 import { SyncPayload } from '@/app/sync/payload'
+import { MileageData } from '@/types/mileage'
+import { emptyMileageData } from '@/lib/mileagePersistence'
 
 /**
  * Records older than this are dropped from tombstone arrays to keep them
@@ -22,6 +24,7 @@ const TOMBSTONE_RETENTION_MS = 1000 * 60 * 60 * 24 * 90 // 90 days
  * changed into zustand via `set()` without touching the rest.
  */
 export type MergeResult = {
+  mileage: MileageData
   contacts: Contact[]
   deletedContacts: Contact[]
   customFieldDefs: CustomFieldDefinition[]
@@ -42,6 +45,7 @@ export type MergeResult = {
 }
 
 type LocalState = {
+  mileage?: MileageData
   contacts: Contact[]
   deletedContacts: Contact[]
   customFieldDefs: CustomFieldDefinition[]
@@ -172,6 +176,8 @@ export function mergePayload(
     mergedCategoryTombstones
   )
 
+  const mileage = mergeMileageData(local.mileage, remote.mileageStore, now)
+
   // --- Preferences ---
   const {
     values: mergedPrefValues,
@@ -205,6 +211,7 @@ export function mergePayload(
   )
 
   const changed =
+    mileage.changed ||
     contactsChanged ||
     deletedContactsChanged ||
     defsChanged ||
@@ -220,6 +227,7 @@ export function mergePayload(
     mergedCategoryTombstones.length !== local.deletedCategories.length
 
   return {
+    mileage: mileage.data,
     contacts: contactsFinal,
     deletedContacts: deletedContactsFinal,
     customFieldDefs: mergedDefs,
@@ -242,6 +250,99 @@ export function mergePayload(
 // --- Helpers ---------------------------------------------------------------
 
 type WithId = { id: string; updatedAt?: number }
+
+/** Merge all three mileage record families together so references stay intact. */
+export function mergeMileageData(
+  local: MileageData = emptyMileageData(),
+  remote: MileageData = emptyMileageData(),
+  now = Date.now()
+): { data: MileageData; changed: boolean } {
+  // Per-device files can remain stale indefinitely. Preserve mileage deletion
+  // markers until a safe peer watermark exists, or old trips can reappear.
+  const deletedEntries = mergeTombstones(
+    local.deletedEntries,
+    remote.deletedEntries,
+    now,
+    Infinity
+  )
+  const deletedVehicles = mergeTombstones(
+    local.deletedVehicles,
+    remote.deletedVehicles,
+    now,
+    Infinity
+  )
+  const deletedCategories = mergeTombstones(
+    local.deletedCategories,
+    remote.deletedCategories,
+    now,
+    Infinity
+  )
+  const entries = applyTombstones(
+    mergeById(local.entries, remote.entries).merged,
+    deletedEntries
+  )
+  const vehicleIds = new Set(entries.map((entry) => entry.vehicleId))
+  const categoryIds = new Set(
+    entries.flatMap((entry) => (entry.categoryId ? [entry.categoryId] : []))
+  )
+  const vehicles = retainReferencedRecords(
+    mergeById(local.vehicles, remote.vehicles).merged,
+    deletedVehicles,
+    vehicleIds
+  )
+  const categories = retainReferencedRecords(
+    mergeById(local.categories, remote.categories).merged,
+    deletedCategories,
+    categoryIds
+  )
+  const data = {
+    vehicles,
+    categories,
+    entries,
+    deletedVehicles,
+    deletedCategories,
+    deletedEntries,
+  }
+  // Timestamps inside a tombstone can change without its array length changing.
+  const changed = (Object.keys(data) as (keyof MileageData)[]).some((key) => {
+    const previous = new Map(local[key].map((item) => [item.id, item]))
+    return (
+      previous.size !== data[key].length ||
+      data[key].some((item) => {
+        const before = previous.get(item.id)
+        if (!before) return true
+        return 'deletedAt' in item
+          ? !('deletedAt' in before) || before.deletedAt !== item.deletedAt
+          : before !== item
+      })
+    )
+  })
+  return { data, changed }
+}
+
+function retainReferencedRecords<
+  T extends { id: string; updatedAt: number; archivedAt?: number },
+>(
+  records: T[],
+  tombstones: { id: string; deletedAt: number }[],
+  references: Set<string>
+): T[] {
+  const deleted = new Map(tombstones.map((item) => [item.id, item.deletedAt]))
+  return records.flatMap((record) => {
+    const deletedAt = deleted.get(record.id)
+    if (deletedAt === undefined || record.updatedAt > deletedAt) return [record]
+    if (!references.has(record.id)) return []
+    // A peer created an entry while this record was being deleted elsewhere.
+    // Retain it as archived, with a deterministic stamp newer than the deletion.
+    return [
+      {
+        ...record,
+        archivedAt: record.archivedAt ?? deletedAt,
+        updatedAt: deletedAt + 1,
+      },
+    ]
+  })
+}
 
 function mergeById<T extends WithId>(
   local: T[],
@@ -302,7 +403,8 @@ function reconcileActiveAndDeletedContacts(
 function mergeTombstones<T extends { id: string; deletedAt: number }>(
   local: T[],
   remote: T[],
-  now: number
+  now: number,
+  retentionMs = TOMBSTONE_RETENTION_MS
 ): T[] {
   const byId = new Map<string, T>()
   for (const t of [...local, ...remote]) {
@@ -311,7 +413,7 @@ function mergeTombstones<T extends { id: string; deletedAt: number }>(
       byId.set(t.id, t)
     }
   }
-  const cutoff = now - TOMBSTONE_RETENTION_MS
+  const cutoff = now - retentionMs
   return Array.from(byId.values()).filter((t) => t.deletedAt >= cutoff)
 }
 

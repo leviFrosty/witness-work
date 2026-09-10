@@ -14,6 +14,7 @@ import StepDefaultNav from '@/features/onboarding/components/steps/DefaultNav'
 import StepDefaultExportMethod from '@/features/onboarding/components/steps/DefaultExportMethod'
 import PrivacyFirst from '@/features/onboarding/components/steps/PrivacyFirst'
 import ProfileSetup from '@/features/onboarding/components/steps/ProfileSetup'
+import MileageSetup from '@/features/onboarding/components/steps/MileageSetup'
 import ProfileSetupPioneerDate from '@/features/onboarding/components/steps/ProfileSetupPioneerDate'
 import Supporter from '@/features/onboarding/components/steps/Supporter'
 import PickUpWhereLeftOff from '@/features/onboarding/components/steps/PickUpWhereLeftOff'
@@ -28,6 +29,7 @@ import { TimeEntriesByYear } from '@/types/timeEntry'
 import {
   effectiveHasAnnualGoal,
   tracksTenure,
+  offersMileageOnboarding,
 } from '@/lib/publisherCapabilities'
 import { Publisher } from '@/types/publisher'
 import moment from 'moment'
@@ -46,6 +48,7 @@ type StepId =
   | 'intentPicker'
   | 'profileSetup'
   | 'pioneerDate'
+  | 'mileageSetup'
   | 'yourPlanPreview'
   | 'notifications'
   | 'defaultNav'
@@ -100,6 +103,12 @@ const allSteps: StepDef[] = [
     Component: ProfileSetupPioneerDate,
     countsTowardProgress: true,
     showIf: ({ publisher }) => tracksTenure(publisher),
+  },
+  {
+    id: 'mileageSetup',
+    Component: MileageSetup,
+    countsTowardProgress: true,
+    showIf: ({ publisher }) => offersMileageOnboarding(publisher),
   },
   {
     id: 'yourPlanPreview',

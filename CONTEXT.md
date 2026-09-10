@@ -74,6 +74,26 @@ _Avoid_: "month rollover" alone (ambiguous with Onboarding Backfill); confusing 
 A one-time, ephemeral flow shown during onboarding to a User with an annual goal who installs the app mid-Service-Year. Lets them enter prior months of the current Service Year so projections, milestones, and the Year tab aren't broken by zero history. Runs once per Service Year per install; not a recurring screen.
 _Avoid_: "Service Year Catch Up" (legacy file/route name; superseded), "Catch Up" alone (collides with overdue follow-ups in visit context).
 
+### Field activity — mileage
+
+Mileage tracking is optional for every User and defaults on for special pioneers and circuit overseers. It lives within Progress and remains independent of time tracking. See [ADR 0013](docs/adr/0013-mileage-is-independent-vehicle-history.md) and the [implementation specification](docs/mileage-design.md).
+
+**Mileage Entry**:
+A dated record of distance the User intends to report for reimbursement, associated with one **Vehicle**. Distance is entered directly or derived from starting and ending odometer readings. A trip can be started and finished later; unfinished trips persist but do not contribute to totals or reports. The User can edit or delete individual entries; history lists entries rather than combining them into one row per day. Mileage is independent of **Time Entries** and does not contribute to time goals or Credit Time.
+_Avoid_: "Time Entry" for a distance record; "reimbursed mileage" (recording distance does not establish reimbursement or eligibility).
+
+**Vehicle**:
+A User-maintained vehicle identity referenced by **Mileage Entries**. The User can keep multiple Vehicles, each with one name, optional informational combined MPG, and an emoji avatar. New Mileage Entries default to the last-used active Vehicle. Supporters can customize the avatar background color. Vehicles with history can be archived and restored. Distance units are a global preference, not a Vehicle property. Fuel economy is informational; the app does not calculate reimbursement or track fuel purchases.
+_Avoid_: treating an odometer reading as distance driven, or combining different Vehicles' odometer readings into one vehicle total.
+
+**Mileage Category**:
+A User-defined grouping of **Mileage Entries**, independent of the **Categories** used by Time Entries and Plans. Supports mileage breakdowns without Credit Time flags or time-cap semantics.
+_Avoid_: reusing "Category" without qualification when discussing both time and mileage; treating a Mileage Category as an eligibility determination.
+
+**Mileage Report**:
+A calendar-month summary of the User's **Mileage Entries**, with text output and a category breakdown for forwarding separately from the **Service Report**. The User is responsible for applicable reimbursement restrictions. The mileage Year view follows the **Service Year**, but monthly Mileage Reports remain month-based and do not establish compliance with external annual rules.
+_Avoid_: "Service Report" for mileage; "reimbursement request" for merely viewing or copying a summary.
+
 ### AI-powered features
 
 **Scribe AI**:

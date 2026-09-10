@@ -6,6 +6,9 @@ import useContacts from '@/stores/contactsStore'
 import useConversations from '@/stores/conversationStore'
 import useServiceReport from '@/stores/serviceReport'
 import useCategories from '@/stores/categories'
+import useMileage from '@/stores/mileage'
+import { MileageData } from '@/types/mileage'
+import { mileageSnapshot } from '@/lib/mileagePersistence'
 import { usePreferences } from '@/stores/preferences'
 import { useProfile } from '@/stores/profile'
 import { useSupporter } from '@/features/supporter/stores/supporter'
@@ -200,10 +203,17 @@ export function hasMeaningfulLocalData(): boolean {
   const categories = useCategories.getState()
   if (categories.categories.length > 0) return true
   if (categories.deletedCategories.length > 0) return true
+  if (
+    Object.values(mileageSnapshot(useMileage.getState())).some(
+      (records) => records.length > 0
+    )
+  )
+    return true
   return false
 }
 
 type LocalMergeState = {
+  mileage?: MileageData
   contacts: Contact[]
   deletedContacts: Contact[]
   customFieldDefs: CustomFieldDefinition[]
@@ -230,7 +240,9 @@ type LocalMergeState = {
  *
  * Returns null when the input is empty.
  */
-function foldRemotePayloads(payloads: SyncPayload[]): SyncPayload | null {
+export function foldRemotePayloads(
+  payloads: SyncPayload[]
+): SyncPayload | null {
   if (payloads.length === 0) return null
   if (payloads.length === 1) return payloads[0]
 
@@ -248,6 +260,7 @@ function foldRemotePayloads(payloads: SyncPayload[]): SyncPayload | null {
     recurringPlans: (first.serviceReportStore.recurringPlans ??
       []) as RecurringPlan[],
     deletedServiceReports: first.serviceReportStore.deletedServiceReports ?? [],
+    mileage: first.mileageStore,
     categories: (first.categoryStore?.categories ?? []) as Category[],
     deletedCategories: first.categoryStore?.deletedCategories ?? [],
     preferencesValues: first.preferencesStore?.values ?? {},
@@ -268,6 +281,7 @@ function foldRemotePayloads(payloads: SyncPayload[]): SyncPayload | null {
       dayPlans: result.dayPlans,
       recurringPlans: result.recurringPlans,
       deletedServiceReports: result.deletedServiceReports,
+      mileage: result.mileage,
       categories: result.categories,
       deletedCategories: result.deletedCategories,
       preferencesValues: result.preferencesValues,
@@ -307,6 +321,9 @@ function foldRemotePayloads(payloads: SyncPayload[]): SyncPayload | null {
       categories: acc.categories,
       deletedCategories: acc.deletedCategories,
     },
+    ...(payloads.some((payload) => payload.mileageStore !== undefined)
+      ? { mileageStore: acc.mileage }
+      : {}),
     preferencesStore: {
       values: acc.preferencesValues,
       updatedAt: acc.preferenceUpdatedAt,
@@ -334,6 +351,9 @@ function foldRemotePayloads(payloads: SyncPayload[]): SyncPayload | null {
  * merges).
  */
 export function replaceLocalWithRemote(remote: SyncPayload): void {
+  // Old peers do not know about mileage; their missing slice cannot erase it.
+  if (remote.mileageStore !== undefined)
+    useMileage.setState(remote.mileageStore)
   useContacts.setState({
     contacts: remote.contactStore.contacts ?? [],
     deletedContacts: remote.contactStore.deletedContacts ?? [],
@@ -892,6 +912,7 @@ async function pullAndMergeInner(reason: string): Promise<boolean> {
   const conversationsState = useConversations.getState()
   const serviceReportState = useServiceReport.getState()
   const categoriesState = useCategories.getState()
+  const mileageState = useMileage.getState()
   const preferencesState = usePreferences.getState()
   const profileState = useProfile.getState()
 
@@ -932,6 +953,7 @@ async function pullAndMergeInner(reason: string): Promise<boolean> {
     dayPlans: serviceReportState.dayPlans,
     recurringPlans: serviceReportState.recurringPlans,
     deletedServiceReports: serviceReportState.deletedServiceReports,
+    mileage: mileageSnapshot(mileageState),
     categories: categoriesState.categories,
     deletedCategories: categoriesState.deletedCategories,
     preferencesValues: localPrefValues,
@@ -954,6 +976,7 @@ async function pullAndMergeInner(reason: string): Promise<boolean> {
       dayPlans: result.dayPlans,
       recurringPlans: result.recurringPlans,
       deletedServiceReports: result.deletedServiceReports,
+      mileage: result.mileage,
       categories: result.categories,
       deletedCategories: result.deletedCategories,
       preferencesValues: result.preferencesValues,
@@ -1018,6 +1041,7 @@ async function pullAndMergeInner(reason: string): Promise<boolean> {
     recurringPlans: normalizedAcc.recurringPlans,
     deletedServiceReports: acc.deletedServiceReports,
   })
+  if (acc.mileage) mileageState.set(acc.mileage)
   categoriesState.set({
     categories: acc.categories,
     deletedCategories: acc.deletedCategories,
@@ -1160,6 +1184,7 @@ export function installiCloudSync(): () => void {
   const unsubConversations = useConversations.subscribe(() => schedulePush())
   const unsubServiceReports = useServiceReport.subscribe(() => schedulePush())
   const unsubCategories = useCategories.subscribe(() => schedulePush())
+  const unsubMileage = useMileage.subscribe(() => schedulePush())
   // Only schedule a push when a *syncable* preference key changed. The
   // stamping wrapper in `usePreferences` re-allocates `preferenceUpdatedAt`
   // iff a non-bookkeeping key was written, so a reference check on that map
@@ -1227,6 +1252,7 @@ export function installiCloudSync(): () => void {
     unsubConversations()
     unsubServiceReports()
     unsubCategories()
+    unsubMileage()
     unsubPreferences()
     unsubProfile()
     appStateSub.remove()

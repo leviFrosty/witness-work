@@ -1,4 +1,5 @@
 import { NativeStackNavigationProp } from '@react-navigation/native-stack'
+import type { MileagePeriod } from '@/types/mileage'
 
 export type RootStackParamList = {
   Root: undefined
@@ -58,6 +59,14 @@ export type RootStackParamList = {
   MilestoneShowcase: undefined
   FAQ: { scrollToCategory?: string } | undefined
   More: undefined
+  Mileage: { period?: MileagePeriod } | undefined
+  MileageEntry:
+    | { entryId?: string; date?: string; vehicleId?: string }
+    | undefined
+  MileageCategories: undefined
+  MileageVehicles: undefined
+  MileageVehicle: { vehicleId?: string } | undefined
+  MileageReport: { month: number; year: number; vehicleId?: string }
   ServiceReportView: { month: number; year: number }
   OnboardingBackfill: undefined
 }

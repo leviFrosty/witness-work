@@ -4,6 +4,7 @@ import { Pressable, StyleProp, View, ViewStyle } from 'react-native'
 import useTheme from '@/contexts/theme'
 import { rowPaddingVertical } from '@/constants/Inputs'
 import Text from '@/components/ui/MyText'
+import InfoPopover from '@/components/ui/InfoPopover'
 import IconButton from '@/components/ui/IconButton'
 
 export interface InputRowContainerProps {
@@ -12,6 +13,7 @@ export interface InputRowContainerProps {
   lastInSection?: boolean
   noHorizontalPadding?: boolean
   label?: string
+  info?: string
   justifyContent?:
     | 'flex-start'
     | 'flex-end'
@@ -34,6 +36,7 @@ const InputRowContainer: React.FC<
   lastInSection,
   noHorizontalPadding,
   label,
+  info,
   justifyContent,
   gap,
   required,
@@ -41,10 +44,12 @@ const InputRowContainer: React.FC<
   onLabelPress,
 }: InputRowContainerProps) => {
   const theme = useTheme()
+  const hasInfo = Boolean(label && info)
 
   const labelCluster = (leftIcon || label) && (
     <View
       style={{
+        flexShrink: hasInfo ? 1 : undefined,
         alignItems: 'center',
         gap: 5,
         flexDirection: 'row',
@@ -54,6 +59,7 @@ const InputRowContainer: React.FC<
       {label && (
         <Text
           style={{
+            flexShrink: hasInfo ? 1 : undefined,
             fontFamily: theme.fonts.semiBold,
             flexDirection: 'column',
             gap: 10,
@@ -75,6 +81,22 @@ const InputRowContainer: React.FC<
     </View>
   )
 
+  const labelContent =
+    labelCluster &&
+    (onLabelPress ? (
+      <Pressable
+        onPress={onLabelPress}
+        style={hasInfo ? { flexShrink: 1 } : undefined}
+        hitSlop={{ top: 12, bottom: 12, left: 8, right: 4 }}
+        accessibilityRole='button'
+        accessibilityLabel={label}
+      >
+        {labelCluster}
+      </Pressable>
+    ) : (
+      labelCluster
+    ))
+
   return (
     <View
       style={[
@@ -94,19 +116,16 @@ const InputRowContainer: React.FC<
         [style],
       ]}
     >
-      {labelCluster &&
-        (onLabelPress ? (
-          <Pressable
-            onPress={onLabelPress}
-            hitSlop={{ top: 12, bottom: 12, left: 8, right: 4 }}
-            accessibilityRole='button'
-            accessibilityLabel={label}
-          >
-            {labelCluster}
-          </Pressable>
-        ) : (
-          labelCluster
-        ))}
+      {label && info ? (
+        <View
+          style={{ flexDirection: 'row', alignItems: 'center', flexShrink: 1 }}
+        >
+          {labelContent}
+          <InfoPopover title={label} description={info} />
+        </View>
+      ) : (
+        labelContent
+      )}
       {children}
     </View>
   )

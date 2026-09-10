@@ -1,5 +1,4 @@
 import { useState } from 'react'
-import { View } from 'react-native'
 import Button from '@/components/ui/Button'
 import Text from '@/components/ui/MyText'
 import Section from '@/components/ui/inputs/Section'
@@ -27,21 +26,9 @@ const MonthlyMaximumCreditHoursSection = () => {
 
   return (
     <Section>
-      <View style={{ gap: 5, paddingRight: 20 }}>
-        <Text style={{ fontFamily: theme.fonts.semiBold }}>
-          {i18n.t('monthlyMaximumCreditHours')}
-        </Text>
-        <Text
-          style={{
-            fontSize: theme.fontSize('sm'),
-            color: theme.colors.textAlt,
-          }}
-        >
-          {i18n.t('monthlyMaximumCreditHours_description')}
-        </Text>
-      </View>
       <TextInputRow
-        label={i18n.t('maximumHours')}
+        label={i18n.t('monthlyMaximumCreditHours')}
+        info={i18n.t('monthlyMaximumCreditHours_description')}
         lastInSection
         textInputProps={{
           accessibilityLabel: i18n.t('monthlyMaximumCreditHours'),
@@ -52,6 +39,11 @@ const MonthlyMaximumCreditHoursSection = () => {
           keyboardType: 'number-pad',
         }}
       />
+      <Text
+        style={{ fontSize: theme.fontSize('sm'), color: theme.colors.textAlt }}
+      >
+        {i18n.t('creditLimitNoLimitHint')}
+      </Text>
       {overrideCreditLimit && (
         <Button
           onPress={() => {

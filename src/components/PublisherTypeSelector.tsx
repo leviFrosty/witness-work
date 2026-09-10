@@ -11,7 +11,11 @@ import { Publisher } from '@/types/publisher'
 import { useRef, useState } from 'react'
 import { monthlyGoalKey } from '@/lib/monthlyGoals'
 
-const PublisherTypeSelector = () => {
+const PublisherTypeSelector = ({
+  showGoalDescription = true,
+}: {
+  showGoalDescription?: boolean
+}) => {
   const theme = useTheme()
   const items: SelectData<Publisher> = [
     {
@@ -152,7 +156,7 @@ const PublisherTypeSelector = () => {
               })}
         </Text>
       )}
-      {role !== publishers[0] ? (
+      {showGoalDescription && role !== publishers[0] ? (
         <Text
           style={{
             marginTop: 6,

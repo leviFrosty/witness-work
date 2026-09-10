@@ -16,6 +16,7 @@ interface TextInputRowProps {
   setErrors?: React.Dispatch<React.SetStateAction<Errors>>
   id?: string
   label: string
+  info?: string
   lastInSection?: boolean
   noHorizontalPadding?: boolean
   textInputProps?: TextInputProps
@@ -32,6 +33,7 @@ const TextInputRow: React.ForwardRefExoticComponent<
       errors,
       setErrors,
       label,
+      info,
       lastInSection,
       noHorizontalPadding,
       required,
@@ -51,6 +53,7 @@ const TextInputRow: React.ForwardRefExoticComponent<
         lastInSection={lastInSection}
         noHorizontalPadding={noHorizontalPadding}
         label={label}
+        info={info}
         required={required}
         style={style}
         onLabelPress={() => innerRef.current?.focus()}

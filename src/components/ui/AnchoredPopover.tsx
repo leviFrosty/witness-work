@@ -1,5 +1,7 @@
 import { ReactNode, useEffect, useRef, useState } from 'react'
 import {
+  AccessibilityInfo,
+  findNodeHandle,
   Keyboard,
   Modal,
   Pressable,
@@ -45,6 +47,7 @@ interface Props {
    */
   renderTrigger: (props: {
     onPress: () => void
+    expanded: boolean
     anchorRef: React.RefObject<View | null>
   }) => ReactNode
   /**
@@ -52,6 +55,8 @@ interface Props {
    * popover horizontally inside the window.
    */
   contentWidth: number
+  /** Optional initial VoiceOver focus; dismissal returns focus to the trigger. */
+  accessibilityFocusRef?: React.RefObject<View | null>
   /**
    * Customize where the content lands relative to the measured anchor. Defaults
    * to "below the anchor, left-aligned, clamped to a 12pt margin."
@@ -101,7 +106,7 @@ const defaultResolvePosition: ResolveAnchorPosition = ({
 }
 
 /**
- * Anchored popover that opens above its trigger. Built on RN `Modal` (new
+ * Anchored popover positioned relative to its trigger. Built on RN `Modal` (new
  * UIWindow) rather than tamagui `Popover` so the popover stays visible when the
  * host screen is presented as a native modal / form-sheet — tamagui's Portal
  * mounts behind those presentations and the content is never seen.
@@ -116,6 +121,7 @@ const AnchoredPopover = ({
   contentWidth,
   resolvePosition = defaultResolvePosition,
   contentStyle,
+  accessibilityFocusRef,
   children,
 }: Props) => {
   const theme = useTheme()
@@ -330,13 +336,23 @@ const AnchoredPopover = ({
 
   return (
     <>
-      {renderTrigger({ onPress: handlePress, anchorRef })}
+      {renderTrigger({ onPress: handlePress, anchorRef, expanded: open })}
       <Modal
         visible={mounted}
         transparent
         statusBarTranslucent
         animationType='none'
         onRequestClose={close}
+        onShow={() => {
+          const target = accessibilityFocusRef?.current
+          const handle = target && findNodeHandle(target)
+          if (handle) AccessibilityInfo.setAccessibilityFocus(handle)
+        }}
+        onDismiss={() => {
+          if (!accessibilityFocusRef || !navigation.isFocused()) return
+          const handle = anchorRef.current && findNodeHandle(anchorRef.current)
+          if (handle) AccessibilityInfo.setAccessibilityFocus(handle)
+        }}
       >
         <Animated.View
           style={[
@@ -351,9 +367,11 @@ const AnchoredPopover = ({
             backdropAnimatedStyle,
           ]}
         >
-          <Pressable style={{ flex: 1 }} onPress={close} />
+          <Pressable accessible={false} style={{ flex: 1 }} onPress={close} />
         </Animated.View>
         <Animated.View
+          accessibilityViewIsModal
+          onAccessibilityEscape={close}
           style={[
             {
               position: 'absolute',

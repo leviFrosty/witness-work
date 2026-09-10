@@ -187,44 +187,22 @@ const ConversationsPreferencesSection = () => {
           />
         </InputRowContainer>
         <InputRowContainer
+          label={i18n.t('autoFillAddressFromLastContact')}
+          info={i18n.t('autoFillAddressFromLastContact_description')}
           lastInSection
-          style={{
-            flexDirection: 'column',
-            gap: 10,
-            alignItems: 'flex-start',
-          }}
+          style={{ justifyContent: 'space-between' }}
         >
-          <View
-            style={{
-              width: '100%',
-              flexDirection: 'row',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-            }}
-          >
-            <Text style={{ fontFamily: theme.fonts.semiBold }}>
-              {i18n.t('autoFillAddressFromLastContact')}
-            </Text>
-            <Switch
-              value={prefillAddress.enabled}
-              onValueChange={(value) =>
-                set({
-                  prefillAddress: {
-                    ...prefillAddress,
-                    enabled: value,
-                  },
-                })
-              }
-            />
-          </View>
-          <Text
-            style={{
-              fontSize: theme.fontSize('xs'),
-              color: theme.colors.textAlt,
-            }}
-          >
-            {i18n.t('autoFillAddressFromLastContact_description')}
-          </Text>
+          <Switch
+            value={prefillAddress.enabled}
+            onValueChange={(value) =>
+              set({
+                prefillAddress: {
+                  ...prefillAddress,
+                  enabled: value,
+                },
+              })
+            }
+          />
         </InputRowContainer>
       </Section>
     </View>

@@ -1,3 +1,4 @@
+import InfoPopover from '@/components/ui/InfoPopover'
 import { useState } from 'react'
 import { Switch, View } from 'react-native'
 import * as Crypto from 'expo-crypto'
@@ -259,27 +260,32 @@ const TypeSelectorRow = ({ value, onChange, lastInSection }: Props) => {
                       justifyContent: 'space-between',
                     }}
                   >
-                    <Text
+                    <View
                       style={{
-                        fontFamily: theme.fonts.semiBold,
-                        fontSize: theme.fontSize('lg'),
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        flexShrink: 1,
                       }}
                     >
-                      {i18n.t('credit')}
-                    </Text>
+                      <Text
+                        style={{
+                          flexShrink: 1,
+                          fontFamily: theme.fonts.semiBold,
+                          fontSize: theme.fontSize('lg'),
+                        }}
+                      >
+                        {i18n.t('credit')}
+                      </Text>
+                      <InfoPopover
+                        title={i18n.t('credit')}
+                        description={i18n.t('credit_description')}
+                      />
+                    </View>
                     <Switch
                       value={selectedCategory.isCredit}
                       onValueChange={(val) => setCategoryIsCredit(val)}
                     />
                   </View>
-                  <Text
-                    style={{
-                      fontSize: theme.fontSize('sm'),
-                      color: theme.colors.textAlt,
-                    }}
-                  >
-                    {i18n.t('credit_description')}
-                  </Text>
                 </View>
               )}
               {!selectedCategory.builtin && (

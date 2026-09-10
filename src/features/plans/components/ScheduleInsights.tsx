@@ -83,7 +83,14 @@ const GoalInsightContent = ({
           justifyContent: 'space-between',
         }}
       >
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+        <View
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            flexShrink: 1,
+            gap: 8,
+          }}
+        >
           <CircularProgress
             progress={goalProgress}
             size={18}
@@ -94,6 +101,7 @@ const GoalInsightContent = ({
           <Text
             accessibilityRole='header'
             style={{
+              flexShrink: 1,
               color: theme.colors.text,
               fontFamily: theme.fonts.bold,
               fontSize: theme.fontSize('xl'),
@@ -196,7 +204,6 @@ const GoalInsightContent = ({
         style={{
           color: theme.colors.textAlt,
           fontSize: theme.fontSize('sm'),
-          lineHeight: 19,
         }}
       >
         {i18n.t('scheduleInsights.coverageDescription')}

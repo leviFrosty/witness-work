@@ -99,9 +99,16 @@ const PublisherPreferencesSection = () => {
       )}
 
       <Section>
-        <InputRowContainer label={i18n.t('status')}>
+        <InputRowContainer
+          label={i18n.t('status')}
+          info={
+            !isCheckboxMode
+              ? i18n.t('defaultMonthlyGoal_description')
+              : undefined
+          }
+        >
           <View style={{ flex: 1 }}>
-            <PublisherTypeSelector />
+            <PublisherTypeSelector showGoalDescription={false} />
           </View>
         </InputRowContainer>
         {tracksTenure && (
@@ -170,6 +177,7 @@ const PublisherPreferencesSection = () => {
                 <Section>
                   <InputRowContainer
                     label={i18n.t('autoRollover')}
+                    info={i18n.t('autoRollover_description')}
                     lastInSection
                   >
                     <View style={{ flex: 1, alignItems: 'flex-end' }}>
@@ -181,20 +189,13 @@ const PublisherPreferencesSection = () => {
                       />
                     </View>
                   </InputRowContainer>
-                  <Text
-                    style={{
-                      fontSize: theme.fontSize('sm'),
-                      color: theme.colors.textAlt,
-                    }}
-                  >
-                    {i18n.t('autoRollover_description')}
-                  </Text>
                 </Section>
               )}
               {!isCheckboxMode && (
                 <Section>
                   <InputRowContainer
                     label={i18n.t('rolloverIncludesCredit')}
+                    info={i18n.t('rolloverIncludesCredit_description')}
                     lastInSection
                   >
                     <View style={{ flex: 1, alignItems: 'flex-end' }}>
@@ -206,14 +207,6 @@ const PublisherPreferencesSection = () => {
                       />
                     </View>
                   </InputRowContainer>
-                  <Text
-                    style={{
-                      fontSize: theme.fontSize('sm'),
-                      color: theme.colors.textAlt,
-                    }}
-                  >
-                    {i18n.t('rolloverIncludesCredit_description')}
-                  </Text>
                 </Section>
               )}
             </View>

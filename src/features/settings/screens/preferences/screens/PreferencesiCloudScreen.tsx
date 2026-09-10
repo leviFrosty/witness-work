@@ -1,16 +1,7 @@
-import { Info as InfoIcon } from 'lucide-react-native'
-import LucideIcon from '@/components/ui/LucideIcon'
+import InfoPopover from '@/components/ui/InfoPopover'
 import { useEffect, useState } from 'react'
-import {
-  ActivityIndicator,
-  Alert,
-  Linking,
-  Pressable,
-  Switch,
-  View,
-} from 'react-native'
+import { ActivityIndicator, Alert, Linking, Switch, View } from 'react-native'
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
-import { Popover } from 'tamagui'
 import Wrapper from '@/components/ui/layout/Wrapper'
 import Section from '@/components/ui/inputs/Section'
 import InputRowContainer from '@/components/ui/inputs/InputRowContainer'
@@ -84,7 +75,6 @@ const PreferencesiCloudScreenInner = () => {
     boolean | null
   >(null)
   const [migratingImages, setMigratingImages] = useState(false)
-  const [betaInfoOpen, setBetaInfoOpen] = useState(false)
   const toast = useToastController()
 
   // Re-check iCloud availability on mount and whenever the identity changes.
@@ -395,86 +385,51 @@ const PreferencesiCloudScreenInner = () => {
         contentContainerStyle={{ gap: 30, paddingTop: 30, paddingBottom: 30 }}
       >
         <View style={{ paddingHorizontal: 15, gap: 6 }}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-            <Text
+          <View
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              flexWrap: 'wrap',
+              gap: 8,
+            }}
+          >
+            <View
               style={{
-                fontSize: theme.fontSize('lg'),
-                fontFamily: theme.fonts.semiBold,
-                color: theme.colors.text,
+                flexDirection: 'row',
+                alignItems: 'center',
+                flexShrink: 1,
               }}
             >
-              {i18n.t('iCloudSync')}
-            </Text>
-            <Popover
-              open={betaInfoOpen}
-              onOpenChange={setBetaInfoOpen}
-              placement='bottom'
-              allowFlip
-              offset={8}
-            >
-              <Popover.Trigger asChild>
-                <Pressable
-                  onPress={() => setBetaInfoOpen((v) => !v)}
-                  accessibilityRole='button'
-                  accessibilityLabel={i18n.t('iCloudBetaNotice')}
-                  hitSlop={8}
-                >
-                  <Badge color={theme.colors.accentTranslucent}>
-                    <View
-                      style={{
-                        flexDirection: 'row',
-                        alignItems: 'center',
-                        gap: 4,
-                      }}
-                    >
-                      <Text
-                        style={{
-                          fontFamily: theme.fonts.semiBold,
-                          fontSize: theme.fontSize('xs'),
-                          textTransform: 'uppercase',
-                          color: theme.colors.accent,
-                        }}
-                      >
-                        {i18n.t('beta')}
-                      </Text>
-                      <LucideIcon
-                        icon={InfoIcon}
-                        size={theme.fontSize('xs')}
-                        style={{ color: theme.colors.accent }}
-                      />
-                    </View>
-                  </Badge>
-                </Pressable>
-              </Popover.Trigger>
-              <Popover.Content
-                borderWidth={1}
-                borderColor={theme.colors.border}
-                backgroundColor={theme.colors.card}
-                padding={12}
-                elevate
-                transition={['quick', { opacity: { overshootClamping: true } }]}
-                enterStyle={{ y: -8, opacity: 0 }}
-                exitStyle={{ y: -8, opacity: 0 }}
-                maxWidth={300}
+              <Text
+                style={{
+                  flexShrink: 1,
+                  fontSize: theme.fontSize('lg'),
+                  fontFamily: theme.fonts.semiBold,
+                  color: theme.colors.text,
+                }}
               >
-                <Popover.Arrow
-                  borderWidth={1}
-                  borderColor={theme.colors.border}
-                  backgroundColor={theme.colors.card}
-                />
-                <Text
-                  style={{
-                    fontSize: 13,
-                    color: theme.colors.text,
-                  }}
-                >
-                  {i18n.t('iCloudBetaNotice')}
-                </Text>
-              </Popover.Content>
-            </Popover>
+                {i18n.t('iCloudSync')}
+              </Text>
+              <InfoPopover
+                title={i18n.t('iCloudSync')}
+                description={`${i18n.t('iCloudSync_description')} ${i18n.t('iCloudBetaNotice')}`}
+              />
+            </View>
+            <Badge color={theme.colors.accentTranslucent}>
+              <Text
+                style={{
+                  fontFamily: theme.fonts.semiBold,
+                  fontSize: theme.fontSize('xs'),
+                  textTransform: 'uppercase',
+                  color: theme.colors.accent,
+                }}
+              >
+                {i18n.t('beta')}
+              </Text>
+            </Badge>
           </View>
           <Text style={{ fontSize: 13, color: theme.colors.textAlt }}>
-            {i18n.t('iCloudSync_description')}
+            {i18n.t('iCloudSync_summary')}
           </Text>
         </View>
 
@@ -640,7 +595,13 @@ const PreferencesiCloudScreenInner = () => {
 
         {iCloudSyncEnabled && (
           <View style={{ gap: 8 }}>
-            <View style={{ paddingHorizontal: 15 }}>
+            <View
+              style={{
+                paddingHorizontal: 15,
+                flexDirection: 'row',
+                alignItems: 'center',
+              }}
+            >
               <Text
                 style={{
                   fontSize: theme.fontSize('md'),
@@ -650,6 +611,10 @@ const PreferencesiCloudScreenInner = () => {
               >
                 {i18n.t('iCloudImagesSectionTitle')}
               </Text>
+              <InfoPopover
+                title={i18n.t('iCloudImagesSectionTitle')}
+                description={i18n.t('iCloudImagesInfoFooter')}
+              />
             </View>
             <Section>
               <InputRowContainer
@@ -689,11 +654,6 @@ const PreferencesiCloudScreenInner = () => {
             <View style={{ paddingHorizontal: 15 }}>
               <Text style={{ fontSize: 12, color: theme.colors.textAlt }}>
                 {i18n.t('iCloudImagesToggleSubtitle')}
-              </Text>
-            </View>
-            <View style={{ paddingHorizontal: 15 }}>
-              <Text style={{ fontSize: 12, color: theme.colors.textAlt }}>
-                {i18n.t('iCloudImagesInfoFooter')}
               </Text>
             </View>
           </View>

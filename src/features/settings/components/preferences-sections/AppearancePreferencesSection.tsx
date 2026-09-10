@@ -158,6 +158,7 @@ const AppearancePreferencesSection = () => {
         </InputRowContainer>
         <InputRowContainer
           label={i18n.t('fontSizeOffset')}
+          info={i18n.t('thisGloballyOffsetsTextSize')}
           style={{ justifyContent: 'space-between' }}
           lastInSection
         >
@@ -169,14 +170,6 @@ const AppearancePreferencesSection = () => {
             />
           </View>
         </InputRowContainer>
-        <Text
-          style={{
-            fontSize: theme.fontSize('sm'),
-            color: theme.colors.textAlt,
-          }}
-        >
-          {i18n.t('thisGloballyOffsetsTextSize')}
-        </Text>
       </Section>
       <View style={{ gap: 5 }}>
         <SectionTitle text={i18n.t('dateAndTime')} />

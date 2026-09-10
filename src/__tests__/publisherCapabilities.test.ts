@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import {
+  creditCapMinutesFor,
   derivePublisherCapabilities,
   getTenureType,
 } from '@/lib/publisherCapabilities'
@@ -64,7 +65,7 @@ describe('derivePublisherCapabilities', () => {
     })
 
     it('treats an enabled override of 0 hours as unlimited', () => {
-      const caps = derive('publisher', {
+      const caps = derive('custom', {
         overrideCreditLimit: true,
         customCreditLimitHours: 0,
       })
@@ -86,6 +87,41 @@ describe('derivePublisherCapabilities', () => {
       })
       expect(caps.creditCapMinutes).toBe(55 * 60)
     })
+
+    it.each(['publisher', 'regularAuxiliary'] as const)(
+      'ignores a saved override for %s',
+      (publisher) => {
+        for (const customCreditLimitHours of [0, 80]) {
+          const caps = derive(publisher, {
+            overrideCreditLimit: true,
+            customCreditLimitHours,
+          })
+          expect(caps.creditCapMinutes).toBe(55 * 60)
+          expect(
+            creditCapMinutesFor(publisher, {
+              enabled: true,
+              customLimitHours: customCreditLimitHours,
+            })
+          ).toBe(caps.creditCapMinutes)
+        }
+      }
+    )
+  })
+
+  describe('canAdjustCreditLimit', () => {
+    it.each([
+      ['publisher', false],
+      ['regularAuxiliary', false],
+      ['regularPioneer', true],
+      ['circuitOverseer', true],
+      ['specialPioneer', true],
+      ['custom', true],
+    ] as const)(
+      'allows credit limit editing for %s: %s',
+      (publisher, allowed) => {
+        expect(derive(publisher).canAdjustCreditLimit).toBe(allowed)
+      }
+    )
   })
 
   describe('goal hours', () => {

@@ -373,7 +373,7 @@ describe('lib/serviceReport', () => {
         serviceReports,
         moment().month(),
         moment().year(),
-        'publisher',
+        'custom',
         { enabled: true, customLimitHours: 0 } // No limit
       )
 

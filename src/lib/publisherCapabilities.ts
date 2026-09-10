@@ -20,10 +20,11 @@ export type PublisherCapabilities = {
   entryMode: 'checkbox' | 'hours'
   /** `null` means no monthly credit cap (unlimited). */
   creditCapMinutes: number | null
+  /** Whether the User can customize this role's monthly credit cap. */
+  canAdjustCreditLimit: boolean
   /**
    * Whether this role's _base_ monthly credit cap is unlimited — independent of
-   * any user override. Drives settings UI that asks "should we show the
-   * credit-cap override row at all for this role?"
+   * any user override.
    */
   hasUnlimitedCreditDefault: boolean
   monthlyGoalHours: number
@@ -115,12 +116,15 @@ const baseCreditCapMinutes = (publisher: Publisher): number | null => {
   return monthCreditMaxMinutes
 }
 
+const canAdjustCreditLimit = (publisher: Publisher): boolean =>
+  isInFullTimeService(publisher) || publisher === 'custom'
+
 const effectiveCreditCapMinutes = (
   publisher: Publisher,
   overrideCreditLimit: boolean,
   customCreditLimitHours: number
 ): number | null => {
-  if (overrideCreditLimit) {
+  if (canAdjustCreditLimit(publisher) && overrideCreditLimit) {
     return customCreditLimitHours === 0 ? null : customCreditLimitHours * 60
   }
   return baseCreditCapMinutes(publisher)
@@ -185,6 +189,7 @@ export const derivePublisherCapabilities = (
       overrideCreditLimit,
       customCreditLimitHours
     ),
+    canAdjustCreditLimit: canAdjustCreditLimit(publisher),
     hasUnlimitedCreditDefault: baseCreditCapMinutes(publisher) === null,
     monthlyGoalHours,
     annualGoalHours,

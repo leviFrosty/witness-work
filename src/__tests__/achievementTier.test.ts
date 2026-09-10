@@ -54,7 +54,6 @@ const buildServiceReports = (inputs: ReportInput[]): TimeEntriesByYear => {
   return out
 }
 
-const PUBLISHER: Publisher = 'publisher'
 const REGULAR_PIONEER: Publisher = 'regularPioneer'
 const SPECIAL_PIONEER: Publisher = 'specialPioneer'
 const NO_OVERRIDE = { enabled: false, customLimitHours: 0 }
@@ -322,7 +321,7 @@ describe('lib/achievementTier', () => {
         ).toBe(false)
       })
 
-      it('honors a custom credit limit override (regular publisher with 30h cap)', () => {
+      it('honors a custom credit limit override (regular pioneer with 30h cap)', () => {
         // Prior month: 50h all LDC. With a 30h custom credit cap, that's
         // capped to 30h adjusted. Current month: 40h standard → beats it.
         const reports = buildServiceReports([
@@ -330,7 +329,7 @@ describe('lib/achievementTier', () => {
           { month: 3, year: 2026, hours: 40 },
         ])
         expect(
-          isPersonalBest12mo(reports, 3, 2026, 40, PUBLISHER, {
+          isPersonalBest12mo(reports, 3, 2026, 40, REGULAR_PIONEER, {
             enabled: true,
             customLimitHours: 30,
           })
@@ -344,12 +343,28 @@ describe('lib/achievementTier', () => {
           { month: 3, year: 2026, hours: 60 },
         ])
         expect(
-          isPersonalBest12mo(reports, 3, 2026, 60, PUBLISHER, {
+          isPersonalBest12mo(reports, 3, 2026, 60, REGULAR_PIONEER, {
             enabled: true,
             customLimitHours: 0,
           })
         ).toBe(false)
       })
+
+      it.each(['publisher', 'regularAuxiliary'] as const)(
+        'ignores a saved credit override for %s when comparing prior months',
+        (publisher) => {
+          const reports = buildServiceReports([
+            { month: 2, year: 2026, hours: 50, ldc: true },
+            { month: 3, year: 2026, hours: 40 },
+          ])
+          expect(
+            isPersonalBest12mo(reports, 3, 2026, 40, publisher, {
+              enabled: true,
+              customLimitHours: 30,
+            })
+          ).toBe(false)
+        }
+      )
     })
 
     it('still works when current month has reports but they are not part of the prior loop', () => {

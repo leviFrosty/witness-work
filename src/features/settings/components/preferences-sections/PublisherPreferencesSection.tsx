@@ -17,7 +17,7 @@ import useTheme from '@/contexts/theme'
 import Card from '@/components/ui/Card'
 import Divider from '@/components/ui/Divider'
 import CheckboxWithLabel from '@/components/ui/inputs/CheckboxWithLabel'
-import TextInputRow from '@/components/ui/inputs/TextInputRow'
+import MonthlyMaximumCreditHoursSection from '@/features/settings/components/preferences-sections/MonthlyMaximumCreditHoursSection'
 import usePublisher from '@/hooks/usePublisher'
 import useUser from '@/hooks/useUser'
 import { getStartDateLabels } from '@/constants/publisher'
@@ -26,12 +26,8 @@ const PublisherPreferencesSection = () => {
   const {
     role,
     tenureStartDate,
-    overrideCreditLimit,
-    customCreditLimitHours,
     autoRolloverEnabled,
     rolloverIncludesCredit,
-    setOverrideCreditLimit,
-    setCustomCreditLimitHours,
     setAutoRolloverEnabled,
     setRolloverIncludesCredit,
     set,
@@ -42,7 +38,7 @@ const PublisherPreferencesSection = () => {
   const {
     type: publisherType,
     entryMode,
-    hasUnlimitedCreditDefault,
+    canAdjustCreditLimit,
     tracksTenure,
   } = usePublisher()
   const { hasName } = useUser()
@@ -56,7 +52,7 @@ const PublisherPreferencesSection = () => {
     }
   }, [hasCompletedProfileSetup, hasName, setProfile])
 
-  const showAdvanced = !hasUnlimitedCreditDefault || !isCheckboxMode
+  const showAdvanced = canAdjustCreditLimit || !isCheckboxMode
 
   return (
     <View style={{ gap: 5 }}>
@@ -167,47 +163,8 @@ const PublisherPreferencesSection = () => {
 
           {advancedOpen && (
             <View style={{ gap: 5 }}>
-              {!hasUnlimitedCreditDefault && (
-                <Section>
-                  <InputRowContainer
-                    label={i18n.t('overrideCreditLimit')}
-                    lastInSection
-                  >
-                    <View style={{ flex: 1, alignItems: 'flex-end' }}>
-                      <CheckboxWithLabel
-                        value={overrideCreditLimit}
-                        setValue={setOverrideCreditLimit}
-                        label=''
-                        labelPosition='right'
-                      />
-                    </View>
-                  </InputRowContainer>
-                  <Text
-                    style={{
-                      fontSize: theme.fontSize('sm'),
-                      color: theme.colors.textAlt,
-                    }}
-                  >
-                    {i18n.t('overrideCreditLimit_description')}
-                  </Text>
-                  {overrideCreditLimit && (
-                    <TextInputRow
-                      label={i18n.t('customCreditLimitHours')}
-                      lastInSection
-                      textInputProps={{
-                        value: customCreditLimitHours.toString(),
-                        onChangeText: (value) => {
-                          const numValue = parseInt(value) || 0
-                          if (numValue >= 0 && numValue <= 200) {
-                            setCustomCreditLimitHours(numValue)
-                          }
-                        },
-                        type: 'number',
-                        placeholder: '55',
-                      }}
-                    />
-                  )}
-                </Section>
+              {canAdjustCreditLimit && (
+                <MonthlyMaximumCreditHoursSection key={publisherType} />
               )}
               {!isCheckboxMode && (
                 <Section>

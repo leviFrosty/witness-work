@@ -20,6 +20,7 @@ import useServiceReport from '@/stores/serviceReport'
 import { getServiceYearFromDate } from '@/lib/serviceYear'
 import { TimeEntriesByYear } from '@/types/timeEntry'
 import { LDC_BUILTIN_CATEGORY_ID } from '@/constants/categories'
+import { inputLayout } from '@/components/ui/inputs/InputLayout'
 
 interface MonthRow {
   monthIndex: number
@@ -96,9 +97,14 @@ const CatchUpMonthRow = ({
   const inputStyle = {
     backgroundColor: theme.colors.backgroundLighter,
     paddingHorizontal: 10,
-    paddingVertical: 6,
+    paddingVertical: 10,
     borderRadius: theme.numbers.borderRadiusSm,
     minWidth: 90,
+    width: 120,
+    maxWidth: inputLayout.controlMaxWidth,
+    minHeight: inputLayout.controlMinHeight,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
     color: theme.colors.text,
   }
   const labelStyle = { color: theme.colors.textAlt, flex: 1 }

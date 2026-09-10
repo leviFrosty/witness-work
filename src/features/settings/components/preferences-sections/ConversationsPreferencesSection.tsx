@@ -1,9 +1,10 @@
-import { Switch, View } from 'react-native'
+import { View } from 'react-native'
 import Text from '@/components/ui/MyText'
 import useTheme from '@/contexts/theme'
 import i18n, { TranslationKey } from '@/lib/locales'
 import Section from '@/components/ui/inputs/Section'
 import InputRowContainer from '@/components/ui/inputs/InputRowContainer'
+import InputRowSwitch from '@/components/ui/inputs/InputRowSwitch'
 import Select from '@/components/ui/Select'
 import {
   DEFAULT_RETURN_VISIT_NOTIFICATION_OFFSET,
@@ -49,6 +50,9 @@ const ConversationsPreferencesSection = () => {
     <View style={{ gap: 3 }}>
       <Section>
         <InputRowContainer
+          label={i18n.t('followUpOffset')}
+          description={i18n.t('nextVisitOffset_description')}
+          controlWidth='full'
           style={{
             flexDirection: 'column',
             gap: 10,
@@ -62,15 +66,6 @@ const ConversationsPreferencesSection = () => {
               gap: 10,
             }}
           >
-            <Text
-              style={{
-                fontFamily: theme.fonts.semiBold,
-                flexDirection: 'column',
-                gap: 10,
-              }}
-            >
-              {i18n.t('followUpOffset')}
-            </Text>
             <View style={{ flex: 1 }}>
               <Select
                 data={amountOptions}
@@ -101,17 +96,12 @@ const ConversationsPreferencesSection = () => {
               />
             </View>
           </View>
-          <Text
-            style={{
-              fontSize: theme.fontSize('xs'),
-              color: theme.colors.textAlt,
-            }}
-          >
-            {i18n.t('nextVisitOffset_description')}
-          </Text>
         </InputRowContainer>
 
         <InputRowContainer
+          label={i18n.t('notificationOffset')}
+          description={i18n.t('notificationOffset_description')}
+          controlWidth='full'
           lastInSection
           style={{
             flexDirection: 'column',
@@ -126,15 +116,6 @@ const ConversationsPreferencesSection = () => {
               gap: 10,
             }}
           >
-            <Text
-              style={{
-                fontFamily: theme.fonts.semiBold,
-                flexDirection: 'column',
-                gap: 10,
-              }}
-            >
-              {i18n.t('notificationOffset')}
-            </Text>
             <View style={{ flex: 1 }}>
               <Select
                 data={amountOptions}
@@ -168,42 +149,26 @@ const ConversationsPreferencesSection = () => {
               {i18n.t('before')}
             </Text>
           </View>
-          <Text
-            style={{
-              fontSize: theme.fontSize('xs'),
-              color: theme.colors.textAlt,
-            }}
-          >
-            {i18n.t('notificationOffset_description')}
-          </Text>
         </InputRowContainer>
-        <InputRowContainer
+        <InputRowSwitch
           label={i18n.t('alwaysNotify')}
-          style={{ justifyContent: 'space-between' }}
-        >
-          <Switch
-            value={returnVisitAlwaysNotify}
-            onValueChange={(value) => set({ returnVisitAlwaysNotify: value })}
-          />
-        </InputRowContainer>
-        <InputRowContainer
+          value={returnVisitAlwaysNotify}
+          onValueChange={(value) => set({ returnVisitAlwaysNotify: value })}
+        />
+        <InputRowSwitch
           label={i18n.t('autoFillAddressFromLastContact')}
           info={i18n.t('autoFillAddressFromLastContact_description')}
           lastInSection
-          style={{ justifyContent: 'space-between' }}
-        >
-          <Switch
-            value={prefillAddress.enabled}
-            onValueChange={(value) =>
-              set({
-                prefillAddress: {
-                  ...prefillAddress,
-                  enabled: value,
-                },
-              })
-            }
-          />
-        </InputRowContainer>
+          value={prefillAddress.enabled}
+          onValueChange={(value) =>
+            set({
+              prefillAddress: {
+                ...prefillAddress,
+                enabled: value,
+              },
+            })
+          }
+        />
       </Section>
     </View>
   )

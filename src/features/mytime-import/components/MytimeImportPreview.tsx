@@ -5,8 +5,7 @@ import {
   User as UserIcon,
 } from 'lucide-react-native'
 import LucideIcon, { type AppIcon } from '@/components/ui/LucideIcon'
-import { View } from 'react-native'
-import Checkbox from 'expo-checkbox'
+import { Switch, View } from 'react-native'
 import Text from '@/components/ui/MyText'
 import Card from '@/components/ui/Card'
 import Button from '@/components/ui/Button'
@@ -23,7 +22,7 @@ interface Props {
   preview: Preview
   selection: MytimeImportSelection
   onToggle: (key: MytimeImportSelectionKey) => void
-  /** Lock the checkboxes while the import is being written. */
+  /** Lock the selection switches while the import is being written. */
   disabled?: boolean
 }
 
@@ -48,6 +47,9 @@ const Row = ({
       onPress={onToggle}
       disabled={disabled}
       noTransform
+      accessibilityRole='switch'
+      accessibilityState={{ checked, disabled }}
+      accessibilityLabel={`${label}: ${value}`}
       style={{
         flexDirection: 'row',
         alignItems: 'center',
@@ -59,13 +61,15 @@ const Row = ({
         style={{ flexDirection: 'row', alignItems: 'center', gap: 10, flex: 1 }}
       >
         <LucideIcon icon={icon} size={16} color={theme.colors.textAlt} />
-        <Text style={{ color: theme.colors.textAlt }}>{label}</Text>
+        <Text style={{ color: theme.colors.textAlt, flexShrink: 1 }}>
+          {label}
+        </Text>
       </View>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
         <Text style={{ fontFamily: theme.fonts.semiBold }}>{value}</Text>
         {/* Visual only — the whole row is the tap target. */}
         <View pointerEvents='none'>
-          <Checkbox value={checked} color={theme.colors.accent} />
+          <Switch value={checked} disabled={disabled} accessible={false} />
         </View>
       </View>
     </Button>
@@ -74,7 +78,7 @@ const Row = ({
 
 /**
  * The "here's what will be imported" summary shared by both surfaces. Every
- * piece with data gets a checkbox (all checked by default) so the user can
+ * piece with data gets a switch (all enabled by default) so the user can
  * deselect pieces they don't want; the caller's confirm action reads the
  * selection from the hook. Counts come straight from the already-mapped backup
  * (array lengths), so what's shown is exactly what gets written. Time is

@@ -8,6 +8,7 @@ import {
   Alert,
   FlatList,
   ScrollView,
+  Switch,
   TouchableOpacity,
   View,
 } from 'react-native'
@@ -34,7 +35,6 @@ import ActionButton from '@/components/ui/ActionButton'
 import Button from '@/components/ui/Button'
 import { HomeTabStackNavigation } from '@/types/homeStack'
 import MapKey from '@/features/map/components/MapColorKey'
-import Checkbox from 'expo-checkbox'
 
 type FetchStatus = 'idle' | 'loading' | 'success' | 'error'
 
@@ -206,6 +206,12 @@ export default function MapOnboarding() {
     return (
       <TouchableOpacity
         onPress={() => toggleSelect(contact.id)}
+        accessibilityRole='switch'
+        accessibilityLabel={contact.name}
+        accessibilityState={{
+          checked: isSelected,
+          disabled: hasFetched,
+        }}
         style={{
           flexDirection: 'row',
           alignItems: 'center',
@@ -216,12 +222,9 @@ export default function MapOnboarding() {
         disabled={hasFetched}
       >
         {!hasFetched && (
-          <Checkbox
-            value={isSelected}
-            onValueChange={() => toggleSelect(contact.id)}
-            disabled={fetching}
-            color={isSelected ? theme.colors.accent : undefined}
-          />
+          <View pointerEvents='none'>
+            <Switch value={isSelected} disabled={fetching} accessible={false} />
+          </View>
         )}
         <View style={{ flex: 1 }}>
           <Text

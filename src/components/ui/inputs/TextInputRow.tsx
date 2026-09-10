@@ -5,11 +5,11 @@ import {
   ViewStyle,
   StyleProp,
 } from 'react-native'
-import useTheme from '@/contexts/theme'
 import Text from '@/components/ui/MyText'
 import InputRowContainer from '@/components/ui/inputs/InputRowContainer'
 import MyTextInput, { TextInputProps } from '@/components/ui/TextInput'
 import { Errors } from '@/types/textInput'
+import useTheme from '@/contexts/theme'
 
 interface TextInputRowProps {
   errors?: Errors
@@ -17,11 +17,14 @@ interface TextInputRowProps {
   id?: string
   label: string
   info?: string
+  description?: string
   lastInSection?: boolean
   noHorizontalPadding?: boolean
   textInputProps?: TextInputProps
   required?: boolean
   style?: StyleProp<ViewStyle>
+  controlStyle?: StyleProp<ViewStyle>
+  controlWidth?: 'compact' | 'full' | 'auto'
 }
 
 const TextInputRow: React.ForwardRefExoticComponent<
@@ -34,10 +37,13 @@ const TextInputRow: React.ForwardRefExoticComponent<
       setErrors,
       label,
       info,
+      description,
       lastInSection,
       noHorizontalPadding,
       required,
       style,
+      controlStyle,
+      controlWidth,
       textInputProps,
     },
     ref: Ref<RNTextInput>
@@ -54,20 +60,20 @@ const TextInputRow: React.ForwardRefExoticComponent<
         noHorizontalPadding={noHorizontalPadding}
         label={label}
         info={info}
+        description={description}
         required={required}
         style={style}
+        controlStyle={controlStyle}
+        controlWidth={
+          controlWidth ?? (textInputProps?.multiline ? 'full' : 'compact')
+        }
         onLabelPress={() => innerRef.current?.focus()}
       >
         <View style={{ flexGrow: 1, flex: 1, gap: 5 }}>
           <MyTextInput
             ref={innerRef}
-            style={{
-              borderWidth: error ? 1 : 0,
-              padding: 3,
-              borderRadius: theme.numbers.borderRadiusSm,
-              borderColor: theme.colors.error,
-              color: theme.colors.text,
-            }}
+            error={error}
+            accessibilityLabel={label}
             placeholderTextColor={theme.colors.textAlt}
             onChangeText={() => setErrors?.({ ...errors, [id || '']: '' })}
             hitSlop={{ top: 20, bottom: 20 }}

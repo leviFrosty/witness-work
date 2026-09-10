@@ -35,13 +35,19 @@ import {
 } from '@/lib/import/writeMappedData'
 import type { MappedImport } from '@/lib/import/types'
 import type { Contact } from '@/types/contact'
+import type { CustomFieldDefinition } from '@/types/customField'
 
 const AT = new Date('2026-06-08T12:00:00.000Z')
 
-const aContact = (id: string, name = 'Jane'): Contact => ({
+const aContact = (
+  id: string,
+  name = 'Jane',
+  customFields?: Record<string, string>
+): Contact => ({
   id,
   name,
   createdAt: AT,
+  ...(customFields ? { customFields } : {}),
 })
 
 const emptyMapped = (): MappedImport => ({
@@ -299,5 +305,72 @@ describe('undoImport — reference-aware retention (F44)', () => {
     expect(useConversations.getState().conversations).toHaveLength(0)
     expect(useCategories.getState().categories).toHaveLength(0)
     expect(allTimeEntries()).toHaveLength(0)
+  })
+
+  it('keeps deterministic custom-field imports re-importable after undo', () => {
+    const definition: CustomFieldDefinition = {
+      id: 'import-field',
+      label: 'Language',
+      order: 0,
+      createdAt: 1,
+      updatedAt: 1,
+    }
+    const mapped: MappedImport = {
+      ...emptyMapped(),
+      customFieldDefs: [definition],
+      contacts: [
+        aContact('import-field-contact', 'Imported', {
+          [definition.id]: 'Spanish',
+        }),
+      ],
+    }
+
+    const first = writeMappedDataToStores(mapped, {
+      publisherMode: 'overwrite',
+    })
+    expect(first.insertedCustomFieldDefIds).toEqual([definition.id])
+
+    undoImport(first)
+    expect(useContacts.getState().customFieldDefs).toEqual([])
+    expect(useContacts.getState().deletedCustomFieldDefs).toEqual([])
+
+    const second = writeMappedDataToStores(mapped, {
+      publisherMode: 'overwrite',
+    })
+    expect(second.insertedCustomFieldDefIds).toEqual([definition.id])
+    expect(useContacts.getState().customFieldDefs).toHaveLength(1)
+    expect(useContacts.getState().contacts[0].customFields).toEqual({
+      [definition.id]: 'Spanish',
+    })
+  })
+
+  it('does not track or admit a permanently deleted imported definition', () => {
+    const definition: CustomFieldDefinition = {
+      id: 'purged-import-field',
+      label: 'Language',
+      order: 0,
+      createdAt: 1,
+      updatedAt: 1,
+    }
+    useContacts.getState().set({
+      deletedCustomFieldDefs: [{ id: definition.id, deletedAt: Date.now() }],
+    })
+
+    const commit = writeMappedDataToStores(
+      {
+        ...emptyMapped(),
+        customFieldDefs: [definition],
+        contacts: [
+          aContact('purged-import-contact', 'Imported', {
+            [definition.id]: 'Spanish',
+          }),
+        ],
+      },
+      { publisherMode: 'overwrite' }
+    )
+
+    expect(commit.insertedCustomFieldDefIds).toEqual([])
+    expect(useContacts.getState().customFieldDefs).toEqual([])
+    expect(useContacts.getState().contacts[0].customFields).toEqual({})
   })
 })

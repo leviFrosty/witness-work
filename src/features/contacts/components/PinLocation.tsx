@@ -15,6 +15,7 @@ import Button from '@/components/ui/Button'
 import Text from '@/components/ui/MyText'
 import { View } from 'react-native'
 import IconButton from '@/components/ui/IconButton'
+import InfoPopover from '@/components/ui/InfoPopover'
 import useContacts from '@/stores/contactsStore'
 import { usePreferences } from '@/stores/preferences'
 
@@ -99,37 +100,45 @@ export default function PinLocation(props: {
     <>
       <View
         style={{
-          paddingVertical: 10,
-          marginRight: 20,
+          paddingVertical: 12,
+          paddingHorizontal: 12,
         }}
       >
-        <XView style={{ gap: 10, alignItems: 'center' }}>
-          <View style={{ gap: 2, flex: 1 }}>
+        <XView style={{ gap: 12, alignItems: 'center' }}>
+          <View
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              flex: 1,
+              minWidth: 0,
+            }}
+          >
             <Text
               style={{
-                fontFamily: theme.fonts.semiBold,
-                fontSize: theme.fontSize('sm'),
-                color: theme.colors.textAlt,
+                flexShrink: 1,
+                fontFamily: theme.fonts.medium,
+                fontSize: theme.fontSize('md'),
+                color: theme.colors.text,
               }}
             >
               {i18n.t('pinOnMap')}
             </Text>
-            <Text
-              style={{
-                fontSize: theme.fontSize('xs'),
-                color: theme.colors.textAlt,
-              }}
-            >
-              {contact.coordinate
-                ? i18n.t('pinOnMap_customSet')
-                : i18n.t('pinOnMap_descriptionAuto')}
-            </Text>
+            <InfoPopover
+              title={i18n.t('pinOnMap')}
+              description={
+                contact.coordinate
+                  ? i18n.t('pinOnMap_customSet')
+                  : i18n.t('pinOnMap_descriptionAuto')
+              }
+              inline
+            />
           </View>
           <View style={{ flexDirection: 'row', gap: 6 }}>
             {contact.coordinate && (
               <Button
                 variant='outline'
                 style={{
+                  minHeight: 44,
                   paddingVertical: 6,
                   paddingHorizontal: 12,
                   justifyContent: 'center',
@@ -158,6 +167,7 @@ export default function PinLocation(props: {
               onPress={() => setOpen(true)}
               variant='outline'
               style={{
+                minHeight: 44,
                 paddingVertical: 6,
                 paddingHorizontal: 14,
                 justifyContent: 'center',

@@ -5,6 +5,7 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack'
 import Wrapper from '@/components/ui/layout/Wrapper'
 import Text from '@/components/ui/MyText'
 import Card from '@/components/ui/Card'
+import Empty from '@/components/ui/Empty'
 import useTheme from '@/contexts/theme'
 import useContacts from '@/stores/contactsStore'
 import { getDismissedContacts } from '@/lib/dismissedContacts'
@@ -117,19 +118,7 @@ const DismissedContactsScreen: React.FC<Props> = ({ navigation }) => {
 
         <View style={{ paddingHorizontal: 10, flex: 1 }}>
           {dismissedContacts.length === 0 ? (
-            <Card>
-              <Text
-                style={{
-                  color: theme.colors.textAlt,
-                  fontSize: theme.fontSize('sm'),
-                  textAlign: 'center',
-                  paddingVertical: 40,
-                  lineHeight: 20,
-                }}
-              >
-                {i18n.t('noDismissedContacts')}
-              </Text>
-            </Card>
+            <Empty title={i18n.t('noDismissedContacts')} />
           ) : (
             <Card style={{ flex: 1 }}>
               <FlashList

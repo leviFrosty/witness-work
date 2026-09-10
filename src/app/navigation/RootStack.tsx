@@ -216,7 +216,7 @@ const RootStackComponent = () => {
         <RootStack.Screen
           options={{
             header: () => (
-              <Header buttonType='back' title={i18n.t('customFields')} />
+              <Header buttonType='back' title={i18n.t('contactFields')} />
             ),
           }}
           name='PreferencesCustomFields'
@@ -264,7 +264,7 @@ const RootStackComponent = () => {
         <RootStack.Screen
           options={{
             header: () => (
-              <Header buttonType='back' title={i18n.t('appearance')} />
+              <Header buttonType='back' title={i18n.t('regionAndFormats')} />
             ),
           }}
           name='PreferencesAppearance'

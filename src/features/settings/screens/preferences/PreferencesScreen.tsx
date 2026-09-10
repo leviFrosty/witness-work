@@ -18,80 +18,83 @@ import { useNavigation } from '@react-navigation/native'
 import IconButton from '@/components/ui/IconButton'
 import { View } from 'react-native'
 import { RootStackNavigation } from '@/types/rootStack'
+import SettingsInputLayout from '@/features/settings/components/shared/SettingsInputLayout'
 
 const PreferencesScreen = () => {
   const navigation = useNavigation<RootStackNavigation>()
 
   return (
-    <Wrapper insets='bottom'>
-      <KeyboardAwareScrollView
-        contentContainerStyle={{ gap: 30, paddingTop: 30, paddingBottom: 30 }}
-      >
-        <View style={{ gap: 5 }}>
-          <Section>
-            <InputRowButton
-              leftIcon={MessagesSquareIcon}
-              label={i18n.t('conversations')}
-              onPress={() => navigation.navigate('PreferencesConversation')}
-            >
-              <IconButton icon={ChevronRightIcon} />
-            </InputRowButton>
-            <InputRowButton
-              leftIcon={Calendar1Icon}
-              label={i18n.t('plans')}
-              onPress={() => navigation.navigate('PreferencesPlans')}
-            >
-              <IconButton icon={ChevronRightIcon} />
-            </InputRowButton>
-            <InputRowButton
-              leftIcon={RouteIcon}
-              label={i18n.t('navigation')}
-              onPress={() => navigation.navigate('PreferencesNavigation')}
-            >
-              <IconButton icon={ChevronRightIcon} />
-            </InputRowButton>
-            <InputRowButton
-              leftIcon={SlidersHorizontalIcon}
-              label={i18n.t('customFields')}
-              onPress={() => navigation.navigate('PreferencesCustomFields')}
-            >
-              <IconButton icon={ChevronRightIcon} />
-            </InputRowButton>
-            <InputRowButton
-              leftIcon={HouseIcon}
-              label={i18n.t('homeScreen')}
-              onPress={() => navigation.navigate('PreferencesHomeScreen')}
-            >
-              <IconButton icon={ChevronRightIcon} />
-            </InputRowButton>
-            <InputRowButton
-              leftIcon={Calendar1Icon}
-              label={i18n.t('milestoneSecondary_schedule_title')}
-              onPress={() => navigation.navigate('PreferencesScheduleScreen')}
-            >
-              <IconButton icon={ChevronRightIcon} />
-            </InputRowButton>
-            {Platform.OS === 'ios' && (
+    <SettingsInputLayout>
+      <Wrapper insets='bottom'>
+        <KeyboardAwareScrollView
+          contentContainerStyle={{ gap: 30, paddingTop: 30, paddingBottom: 30 }}
+        >
+          <View style={{ gap: 5 }}>
+            <Section>
               <InputRowButton
-                leftIcon={LayoutGridIcon}
-                label={i18n.t('widgets')}
-                onPress={() => navigation.navigate('PreferencesWidgets')}
+                leftIcon={MessagesSquareIcon}
+                label={i18n.t('conversations')}
+                onPress={() => navigation.navigate('PreferencesConversation')}
               >
                 <IconButton icon={ChevronRightIcon} />
               </InputRowButton>
-            )}
-            <InputRowButton
-              leftIcon={FileOutputIcon}
-              label={i18n.t('backups')}
-              onPress={() => navigation.navigate('PreferencesBackups')}
-              lastInSection
-            >
-              <IconButton icon={ChevronRightIcon} />
-            </InputRowButton>
-          </Section>
-        </View>
-      </KeyboardAwareScrollView>
-    </Wrapper>
+              <InputRowButton
+                leftIcon={Calendar1Icon}
+                label={i18n.t('plans')}
+                onPress={() => navigation.navigate('PreferencesPlans')}
+              >
+                <IconButton icon={ChevronRightIcon} />
+              </InputRowButton>
+              <InputRowButton
+                leftIcon={RouteIcon}
+                label={i18n.t('navigation')}
+                onPress={() => navigation.navigate('PreferencesNavigation')}
+              >
+                <IconButton icon={ChevronRightIcon} />
+              </InputRowButton>
+              <InputRowButton
+                leftIcon={SlidersHorizontalIcon}
+                label={i18n.t('contactFields')}
+                onPress={() => navigation.navigate('PreferencesCustomFields')}
+              >
+                <IconButton icon={ChevronRightIcon} />
+              </InputRowButton>
+              <InputRowButton
+                leftIcon={HouseIcon}
+                label={i18n.t('homeScreen')}
+                onPress={() => navigation.navigate('PreferencesHomeScreen')}
+              >
+                <IconButton icon={ChevronRightIcon} />
+              </InputRowButton>
+              <InputRowButton
+                leftIcon={Calendar1Icon}
+                label={i18n.t('milestoneSecondary_schedule_title')}
+                onPress={() => navigation.navigate('PreferencesScheduleScreen')}
+              >
+                <IconButton icon={ChevronRightIcon} />
+              </InputRowButton>
+              {Platform.OS === 'ios' && (
+                <InputRowButton
+                  leftIcon={LayoutGridIcon}
+                  label={i18n.t('widgets')}
+                  onPress={() => navigation.navigate('PreferencesWidgets')}
+                >
+                  <IconButton icon={ChevronRightIcon} />
+                </InputRowButton>
+              )}
+              <InputRowButton
+                leftIcon={FileOutputIcon}
+                label={i18n.t('backups')}
+                onPress={() => navigation.navigate('PreferencesBackups')}
+                lastInSection
+              >
+                <IconButton icon={ChevronRightIcon} />
+              </InputRowButton>
+            </Section>
+          </View>
+        </KeyboardAwareScrollView>
+      </Wrapper>
+    </SettingsInputLayout>
   )
 }
 

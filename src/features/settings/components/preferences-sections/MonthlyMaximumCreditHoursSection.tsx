@@ -29,9 +29,12 @@ const MonthlyMaximumCreditHoursSection = () => {
       <TextInputRow
         label={i18n.t('monthlyMaximumCreditHours')}
         info={i18n.t('monthlyMaximumCreditHours_description')}
-        lastInSection
+        description={i18n.t('creditLimitNoLimitHint')}
+        controlStyle={{ width: 96 }}
+        lastInSection={!overrideCreditLimit}
         textInputProps={{
           accessibilityLabel: i18n.t('monthlyMaximumCreditHours'),
+          accessibilityHint: i18n.t('creditLimitNoLimitHint'),
           value: draft ?? limitHours.toString(),
           onChangeText: changeLimit,
           onEndEditing: () => setDraft(null),
@@ -39,13 +42,9 @@ const MonthlyMaximumCreditHoursSection = () => {
           keyboardType: 'number-pad',
         }}
       />
-      <Text
-        style={{ fontSize: theme.fontSize('sm'), color: theme.colors.textAlt }}
-      >
-        {i18n.t('creditLimitNoLimitHint')}
-      </Text>
       {overrideCreditLimit && (
         <Button
+          style={{ padding: 16, minHeight: 48 }}
           onPress={() => {
             setDraft(null)
             set({ overrideCreditLimit: false })

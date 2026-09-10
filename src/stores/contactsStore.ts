@@ -2,7 +2,14 @@ import { create } from 'zustand'
 import { persist, combine, createJSONStorage } from 'zustand/middleware'
 import * as Crypto from 'expo-crypto'
 import { Contact } from '@/types/contact'
-import { CustomFieldDefinition } from '@/types/customField'
+import {
+  CustomFieldDefinition,
+  CustomFieldTombstone,
+} from '@/types/customField'
+import {
+  stripTombstonedCustomFieldValues,
+  stripTombstonedCustomFields,
+} from '@/lib/customFields'
 import {
   GuardedAsyncStorage,
   hasMigratedFromAsyncStorage,
@@ -18,6 +25,7 @@ const initialState = {
    * reorder / archive operations don't touch contact data.
    */
   customFieldDefs: [] as CustomFieldDefinition[],
+  deletedCustomFieldDefs: [] as CustomFieldTombstone[],
 }
 
 export const useContacts = create(
@@ -25,7 +33,7 @@ export const useContacts = create(
     combine(initialState, (set) => ({
       set,
       addContact: (contact: Contact) =>
-        set(({ contacts, deletedContacts }) => {
+        set(({ contacts, deletedContacts, deletedCustomFieldDefs }) => {
           const foundCurrentContact = contacts.find((c) => c.id === contact.id)
           const foundDeleteContact = deletedContacts.find(
             (delC) => delC.id === contact.id
@@ -36,7 +44,13 @@ export const useContacts = create(
           }
 
           return {
-            contacts: [...contacts, { ...contact, updatedAt: Date.now() }],
+            contacts: [
+              ...contacts,
+              stripTombstonedCustomFields(
+                { ...contact, updatedAt: Date.now() },
+                deletedCustomFieldDefs
+              ),
+            ],
           }
         }),
       deleteContact: (id: string) =>
@@ -54,13 +68,25 @@ export const useContacts = create(
           }
         }),
       updateContact: (contact: Partial<Contact>) => {
-        set(({ contacts }) => {
+        set(({ contacts, deletedCustomFieldDefs }) => {
+          const updatedCustomFields = stripTombstonedCustomFieldValues(
+            contact.customFields,
+            deletedCustomFieldDefs
+          )
+
           return {
             contacts: contacts.map((c) => {
               if (c.id !== contact.id) {
                 return c
               }
-              return { ...c, ...contact, updatedAt: Date.now() }
+              return {
+                ...c,
+                ...contact,
+                ...(contact.customFields
+                  ? { customFields: updatedCustomFields }
+                  : {}),
+                updatedAt: Date.now(),
+              }
             }),
           }
         })
@@ -162,30 +188,94 @@ export const useContacts = create(
       },
       /**
        * Permanently removes a custom field definition AND every contact's value
-       * for that field. Destructive; not exposed in the standard UI — archive
-       * is the user-facing delete. Surfaced only from a confirm flow in the
-       * management screen for users who want to actually purge data.
+       * for that field. Destructive; callers should expose it only from a
+       * confirmation flow for an already archived definition.
        */
       purgeCustomFieldDef: (id: string) => {
-        set(({ contacts, deletedContacts, customFieldDefs }) => ({
-          customFieldDefs: customFieldDefs.filter((d) => d.id !== id),
-          contacts: contacts.map((c) => stripFieldFromContact(c, id)),
-          deletedContacts: deletedContacts.map((c) =>
-            stripFieldFromContact(c, id)
-          ),
-        }))
+        set(
+          ({
+            contacts,
+            deletedContacts,
+            customFieldDefs,
+            deletedCustomFieldDefs,
+          }) => {
+            const target = customFieldDefs.find((d) => d.id === id)
+            if (!target || !target.archived) {
+              return {
+                customFieldDefs,
+                deletedCustomFieldDefs,
+              }
+            }
+
+            const deletedAt = Date.now()
+            const tombstone: CustomFieldTombstone = { id, deletedAt }
+            const tombstones = [
+              ...deletedCustomFieldDefs.filter((t) => t.id !== id),
+              tombstone,
+            ]
+
+            return {
+              customFieldDefs: customFieldDefs.filter((d) => d.id !== id),
+              deletedCustomFieldDefs: tombstones,
+              contacts: contacts.map((c) =>
+                stripTombstonedCustomFields(c, [tombstone], deletedAt)
+              ),
+              deletedContacts: deletedContacts.map((c) =>
+                stripTombstonedCustomFields(c, [tombstone], deletedAt)
+              ),
+            }
+          }
+        )
+      },
+      /**
+       * Removes a definition while undoing an import. Import undo is an
+       * explicit local rollback, so it must not create a sync tombstone that
+       * would block the same deterministic import from being re-run later.
+       */
+      removeCustomFieldDefForUndo: (id: string) => {
+        set(
+          ({
+            contacts,
+            deletedContacts,
+            customFieldDefs,
+            deletedCustomFieldDefs,
+          }) => {
+            const removed = customFieldDefs.some((d) => d.id === id)
+            if (!removed) return { customFieldDefs, deletedCustomFieldDefs }
+            const updatedAt = Date.now()
+            const rollbackTombstone = { id, deletedAt: updatedAt }
+            return {
+              customFieldDefs: customFieldDefs.filter((d) => d.id !== id),
+              deletedCustomFieldDefs: deletedCustomFieldDefs.filter(
+                (tombstone) => tombstone.id !== id
+              ),
+              contacts: contacts.map((c) =>
+                stripTombstonedCustomFields(c, [rollbackTombstone], updatedAt)
+              ),
+              deletedContacts: deletedContacts.map((c) =>
+                stripTombstonedCustomFields(c, [rollbackTombstone], updatedAt)
+              ),
+            }
+          }
+        )
       },
       /**
        * Adds any defs from `incoming` whose id isn't already present locally.
        * Used by share-link import: the recipient's local defs always win on
        * label conflicts, but unknown ids referenced by the imported contact
-       * still need a definition so the data renders.
+       * still need a definition so the data renders. Permanently tombstoned ids
+       * remain blocked so stale exports cannot resurrect them.
        */
       mergeIncomingCustomFieldDefs: (incoming: CustomFieldDefinition[]) => {
         if (incoming.length === 0) return
-        set(({ customFieldDefs }) => {
+        set(({ customFieldDefs, deletedCustomFieldDefs }) => {
           const existingIds = new Set(customFieldDefs.map((d) => d.id))
-          const additions = incoming.filter((d) => !existingIds.has(d.id))
+          const deletedIds = new Set(
+            deletedCustomFieldDefs.map((tombstone) => tombstone.id)
+          )
+          const additions = incoming.filter(
+            (d) => !existingIds.has(d.id) && !deletedIds.has(d.id)
+          )
           if (additions.length === 0) return { customFieldDefs }
           const baseOrder = nextOrder(customFieldDefs)
           const stamped = additions.map((d, i) => ({
@@ -196,7 +286,7 @@ export const useContacts = create(
         })
       },
       recoverContact: (id: string) => {
-        set(({ contacts, deletedContacts }) => {
+        set(({ contacts, deletedContacts, deletedCustomFieldDefs }) => {
           const recoverContact = deletedContacts.find((dC) => dC.id === id)
           if (!recoverContact) {
             return { contacts, deletedContacts }
@@ -206,7 +296,10 @@ export const useContacts = create(
             deletedContacts: deletedContacts.filter((dC) => dC.id !== id),
             contacts: [
               ...contacts,
-              { ...recoverContact, updatedAt: Date.now() },
+              stripTombstonedCustomFields(
+                { ...recoverContact, updatedAt: Date.now() },
+                deletedCustomFieldDefs
+              ),
             ],
           }
         })
@@ -285,13 +378,6 @@ export const useContacts = create(
 function nextOrder(defs: CustomFieldDefinition[]): number {
   if (defs.length === 0) return 0
   return Math.max(...defs.map((d) => d.order)) + 1
-}
-
-function stripFieldFromContact(c: Contact, fieldId: string): Contact {
-  if (!c.customFields || c.customFields[fieldId] === undefined) return c
-  const fields = { ...c.customFields }
-  delete fields[fieldId]
-  return { ...c, customFields: fields, updatedAt: Date.now() }
 }
 
 export default useContacts

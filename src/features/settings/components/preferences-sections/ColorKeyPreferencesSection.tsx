@@ -20,6 +20,8 @@ import { StalenessBreakpoints } from '@/types/staleness'
 import { useMarkerColors } from '@/hooks/useMarkerColors'
 import { usePreferences } from '@/stores/preferences'
 import Section from '@/components/ui/inputs/Section'
+import InputRowContainer from '@/components/ui/inputs/InputRowContainer'
+import { inputLayout } from '@/components/ui/inputs/InputLayout'
 import TextInputRow from '@/components/ui/inputs/TextInputRow'
 import Text from '@/components/ui/MyText'
 import Button from '@/components/ui/Button'
@@ -41,7 +43,7 @@ const SectionHeading = ({
       <Text
         style={{
           fontFamily: theme.fonts.semiBold,
-          fontSize: theme.fontSize('md'),
+          fontSize: theme.fontSize('lg'),
           color: theme.colors.text,
         }}
       >
@@ -49,7 +51,7 @@ const SectionHeading = ({
       </Text>
       <Text
         style={{
-          fontSize: theme.fontSize('xs'),
+          fontSize: theme.fontSize('sm'),
           color: theme.colors.textAlt,
         }}
       >
@@ -67,7 +69,7 @@ const ResetLink = ({ onPress }: { onPress: () => void }) => {
         style={{
           textDecorationLine: 'underline',
           color: theme.colors.textAlt,
-          fontSize: theme.fontSize('xs'),
+          fontSize: theme.fontSize('sm'),
         }}
       >
         {i18n.t('reset')}
@@ -128,83 +130,67 @@ const ColorKeyPreferencesSection = () => {
       <SectionHeading
         title={i18n.t('contacts_stalenessInfo_title')}
         subtitle={i18n.t('contacts_stalenessInfo_subtitle')}
-        style={{ marginHorizontal: 20 }}
+        style={{ marginHorizontal: inputLayout.horizontalPadding }}
       />
       <Section>
-        <View style={{ gap: 14 }}>
-          {STALENESS_DISPLAY_ORDER.map((bucket) => (
-            <View
-              key={bucket}
-              style={{
-                flexDirection: 'row',
-                alignItems: 'center',
-                gap: 10,
-              }}
+        {STALENESS_DISPLAY_ORDER.map((bucket, index) => (
+          <InputRowContainer
+            key={bucket}
+            label={i18n.t(`contacts_pinStaleness_${bucket}` as TranslationKey)}
+            description={getStalenessCriteriaText(bucket, stalenessBreakpoints)}
+            lastInSection={index === STALENESS_DISPLAY_ORDER.length - 1}
+            controlWidth='auto'
+            controlStyle={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              gap: 10,
+              flexShrink: 0,
+            }}
+          >
+            {isColorOverridden(bucket) && (
+              <ResetLink onPress={() => updateBucketColor(bucket, null)} />
+            )}
+            <Pressable
+              onPress={() => setActiveBucket(bucket)}
+              accessibilityLabel={i18n.t('colorKey_edit')}
+              accessibilityRole='button'
+              hitSlop={8}
             >
-              <View style={{ flex: 1 }}>
-                <Text
-                  style={{
-                    fontFamily: theme.fonts.semiBold,
-                    fontSize: theme.fontSize('sm'),
-                    color: theme.colors.text,
-                  }}
-                >
-                  {i18n.t(`contacts_pinStaleness_${bucket}` as TranslationKey)}
-                </Text>
-                <Text
-                  style={{
-                    fontSize: theme.fontSize('xs'),
-                    color: theme.colors.textAlt,
-                  }}
-                >
-                  {getStalenessCriteriaText(bucket, stalenessBreakpoints)}
-                </Text>
-              </View>
-              {isColorOverridden(bucket) && (
-                <ResetLink onPress={() => updateBucketColor(bucket, null)} />
-              )}
-              <Pressable
-                onPress={() => setActiveBucket(bucket)}
-                accessibilityLabel={i18n.t('colorKey_edit')}
-                accessibilityRole='button'
-                hitSlop={8}
+              <View
+                style={{
+                  width: 32,
+                  height: 32,
+                  borderRadius: 16,
+                  backgroundColor: stalenessToColor(bucket, colors),
+                  borderWidth: 1,
+                  borderColor: theme.colors.border,
+                }}
+              />
+              {/* Pencil badge — signals the swatch itself is tappable. */}
+              <View
+                style={{
+                  position: 'absolute',
+                  right: -5,
+                  bottom: -5,
+                  width: 18,
+                  height: 18,
+                  borderRadius: 9,
+                  backgroundColor: theme.colors.card,
+                  borderWidth: 1,
+                  borderColor: theme.colors.border,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
               >
-                <View
-                  style={{
-                    width: 32,
-                    height: 32,
-                    borderRadius: 16,
-                    backgroundColor: stalenessToColor(bucket, colors),
-                    borderWidth: 1,
-                    borderColor: theme.colors.border,
-                  }}
+                <LucideIcon
+                  icon={PencilIcon}
+                  size={9}
+                  color={theme.colors.textAlt}
                 />
-                {/* Pencil badge — signals the swatch itself is tappable. */}
-                <View
-                  style={{
-                    position: 'absolute',
-                    right: -5,
-                    bottom: -5,
-                    width: 18,
-                    height: 18,
-                    borderRadius: 9,
-                    backgroundColor: theme.colors.card,
-                    borderWidth: 1,
-                    borderColor: theme.colors.border,
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
-                >
-                  <LucideIcon
-                    icon={PencilIcon}
-                    size={9}
-                    color={theme.colors.textAlt}
-                  />
-                </View>
-              </Pressable>
-            </View>
-          ))}
-        </View>
+              </View>
+            </Pressable>
+          </InputRowContainer>
+        ))}
       </Section>
 
       <Divider marginVertical={20} />
@@ -214,7 +200,7 @@ const ColorKeyPreferencesSection = () => {
           flexDirection: 'row',
           alignItems: 'flex-start',
           gap: 10,
-          marginHorizontal: 20,
+          marginHorizontal: inputLayout.horizontalPadding,
         }}
       >
         <View style={{ flex: 1 }}>
@@ -234,6 +220,9 @@ const ColorKeyPreferencesSection = () => {
       <Section>
         <TextInputRow
           label={i18n.t('colorKey_recentDays')}
+          description={i18n.t('colorKey_recentDays_description', {
+            label: i18n.t('contacts_pinStaleness_recent'),
+          })}
           textInputProps={{
             value: stalenessBreakpoints.weekDays.toString(),
             onChangeText: (value) => setBreakpoint('weekDays', value),
@@ -242,19 +231,11 @@ const ColorKeyPreferencesSection = () => {
             placeholder: DEFAULT_STALENESS_BREAKPOINTS.weekDays.toString(),
           }}
         />
-        <Text
-          style={{
-            fontSize: theme.fontSize('xs'),
-            color: theme.colors.textAlt,
-            paddingVertical: 10,
-          }}
-        >
-          {i18n.t('colorKey_recentDays_description', {
-            label: i18n.t('contacts_pinStaleness_recent'),
-          })}
-        </Text>
         <TextInputRow
           label={i18n.t('colorKey_staleDays')}
+          description={i18n.t('colorKey_staleDays_description', {
+            label: i18n.t('contacts_pinStaleness_month'),
+          })}
           textInputProps={{
             value: stalenessBreakpoints.monthDays.toString(),
             onChangeText: (value) => setBreakpoint('monthDays', value),
@@ -264,17 +245,6 @@ const ColorKeyPreferencesSection = () => {
           }}
           lastInSection
         />
-        <Text
-          style={{
-            fontSize: theme.fontSize('xs'),
-            color: theme.colors.textAlt,
-            paddingTop: 10,
-          }}
-        >
-          {i18n.t('colorKey_staleDays_description', {
-            label: i18n.t('contacts_pinStaleness_month'),
-          })}
-        </Text>
       </Section>
 
       <ColorPickerSheet

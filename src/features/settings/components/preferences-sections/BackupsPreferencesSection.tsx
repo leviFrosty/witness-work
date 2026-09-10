@@ -1,32 +1,25 @@
-import { Switch, View } from 'react-native'
+import { View } from 'react-native'
 import Section from '@/components/ui/inputs/Section'
 import { usePreferences } from '@/stores/preferences'
 import InputRowContainer from '@/components/ui/inputs/InputRowContainer'
+import InputRowSwitch from '@/components/ui/inputs/InputRowSwitch'
 import i18n from '@/lib/locales'
 import Select from '@/components/ui/Select'
-import Text from '@/components/ui/MyText'
-import XView from '@/components/ui/layout/XView'
-import useTheme from '@/contexts/theme'
 
 const RemindMeAboutBackups = () => {
   const { remindMeAboutBackups, set } = usePreferences()
 
   return (
-    <InputRowContainer
+    <InputRowSwitch
       label={i18n.t('remindMeToBackup')}
-      style={{ justifyContent: 'space-between' }}
-    >
-      <Switch
-        value={remindMeAboutBackups}
-        onValueChange={(value) => set({ remindMeAboutBackups: value })}
-      />
-    </InputRowContainer>
+      value={remindMeAboutBackups}
+      onValueChange={(value) => set({ remindMeAboutBackups: value })}
+    />
   )
 }
 
 const ReminderFrequency = () => {
   const { backupNotificationFrequencyAsDays, set } = usePreferences()
-  const theme = useTheme()
 
   const options = Array.from({ length: 365 }, (_, i) => i + 1).map((_, i) => ({
     label: `${i + 1}`,
@@ -35,35 +28,18 @@ const ReminderFrequency = () => {
 
   return (
     <InputRowContainer
-      style={{
-        flexDirection: 'column',
-        gap: 10,
-        alignItems: 'flex-start',
-      }}
+      label={i18n.t('daysSinceLastBackup')}
+      controlStyle={{ width: 80, flexShrink: 0 }}
+      description={i18n.t('daysSinceLastBackup_description')}
       lastInSection
     >
-      <XView
-        style={{ width: '100%', justifyContent: 'space-between', gap: 20 }}
-      >
-        <Text>{i18n.t('daysSinceLastBackup')}</Text>
-        <View style={{ flex: 1 }}>
-          <Select
-            data={options}
-            value={backupNotificationFrequencyAsDays}
-            onChange={({ value }) =>
-              set({ backupNotificationFrequencyAsDays: value })
-            }
-          />
-        </View>
-      </XView>
-      <Text
-        style={{
-          fontSize: theme.fontSize('xs'),
-          color: theme.colors.textAlt,
-        }}
-      >
-        {i18n.t('daysSinceLastBackup_description')}
-      </Text>
+      <Select
+        data={options}
+        value={backupNotificationFrequencyAsDays}
+        onChange={({ value }) =>
+          set({ backupNotificationFrequencyAsDays: value })
+        }
+      />
     </InputRowContainer>
   )
 }

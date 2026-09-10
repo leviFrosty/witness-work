@@ -1,3 +1,4 @@
+import AppVersionInfo from '@/features/updates/components/AppVersionInfo'
 import {
   Bug as BugIcon,
   Hand as HandIcon,
@@ -23,7 +24,6 @@ import Accordion from '@/components/ui/Accordion'
 import Card from '@/components/ui/Card'
 import IconButton from '@/components/ui/IconButton'
 import Button from '@/components/ui/Button'
-import SectionTitle from '@/features/settings/components/shared/SectionTitle'
 import useTheme from '@/contexts/theme'
 import i18n, { TranslationKey } from '@/lib/locales'
 import links from '@/constants/links'
@@ -268,8 +268,9 @@ const FAQScreen = () => {
               alignItems: 'center',
               gap: 10,
               paddingHorizontal: 12,
-              height: 40,
-              borderRadius: theme.numbers.borderRadiusSm,
+              minHeight: 44,
+              height: 44,
+              borderRadius: theme.numbers.borderRadiusMd,
               borderWidth: 1,
               borderColor: theme.colors.border,
               backgroundColor: theme.colors.backgroundLighter,
@@ -309,15 +310,24 @@ const FAQScreen = () => {
                 flexDirection: 'row',
                 alignItems: 'center',
                 gap: 8,
-                paddingHorizontal: 20,
+                paddingHorizontal: 35,
               }}
             >
+              <Text
+                accessibilityRole='header'
+                style={{
+                  fontFamily: theme.fonts.semiBold,
+                  fontSize: theme.fontSize('sm'),
+                  color: theme.colors.textAlt,
+                }}
+              >
+                {i18n.t('faq_pinnedHeader')}
+              </Text>
               <LucideIcon
                 icon={PinIcon}
                 size={theme.fontSize('xs')}
                 style={{ color: theme.colors.textAlt }}
               />
-              <SectionTitle text={i18n.t('faq_pinnedHeader')} />
             </View>
             <View style={{ gap: 10, paddingHorizontal: 15 }}>
               {pinned.map((entry) => (
@@ -341,7 +351,17 @@ const FAQScreen = () => {
           </View>
         ) : (
           <View style={{ gap: 20 }}>
-            <SectionTitle text={i18n.t('faq_allHeader')} />
+            <Text
+              accessibilityRole='header'
+              style={{
+                paddingHorizontal: 35,
+                fontFamily: theme.fonts.semiBold,
+                fontSize: theme.fontSize('sm'),
+                color: theme.colors.textAlt,
+              }}
+            >
+              {i18n.t('faq_allHeader')}
+            </Text>
             {grouped.map(({ category, entries }) => (
               <View
                 key={category}
@@ -355,7 +375,7 @@ const FAQScreen = () => {
               >
                 <Text
                   style={{
-                    paddingHorizontal: 20,
+                    paddingHorizontal: 35,
                     fontFamily: theme.fonts.semiBold,
                     fontSize: theme.fontSize('sm'),
                     color: theme.colors.textAlt,
@@ -409,7 +429,8 @@ const FAQScreen = () => {
           </Card>
         </View>
 
-        <View style={{ paddingHorizontal: 15, paddingTop: 4 }}>
+        <View style={{ paddingHorizontal: 15, paddingTop: 4, gap: 5 }}>
+          <AppVersionInfo />
           <Button
             onPress={handleCopyAccountId}
             style={{ alignSelf: 'center', paddingVertical: 10 }}

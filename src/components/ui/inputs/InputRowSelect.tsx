@@ -16,7 +16,10 @@ const InputRowSelect = <T extends { label: string; value: unknown }>(
   return (
     <InputRowContainer {...rest}>
       <View style={{ flex: 1 }}>
-        <Select {...selectProps} />
+        <Select
+          {...selectProps}
+          accessibilityLabel={selectProps.accessibilityLabel ?? rest.label}
+        />
       </View>
     </InputRowContainer>
   )

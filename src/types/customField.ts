@@ -37,3 +37,13 @@ export type CustomFieldDefinition = {
    */
   type?: 'text' | 'number' | 'date' | 'url'
 }
+
+/**
+ * Tombstone for a permanently deleted custom field definition. The id is
+ * retained long enough for iCloud peers to learn that the definition and all
+ * values keyed by it must stay deleted.
+ */
+export type CustomFieldTombstone = {
+  id: string
+  deletedAt: number
+}

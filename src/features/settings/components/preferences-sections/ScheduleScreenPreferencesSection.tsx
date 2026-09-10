@@ -1,12 +1,10 @@
-import { ArrowDown, ArrowUp } from 'lucide-react-native'
 import { Switch, View } from 'react-native'
 import Section from '@/components/ui/inputs/Section'
 import Text from '@/components/ui/MyText'
-import IconButton from '@/components/ui/IconButton'
+import ReorderControls from '@/features/settings/components/shared/ReorderControls'
 import XView from '@/components/ui/layout/XView'
 import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
-import { rowPaddingVertical } from '@/constants/Inputs'
 import {
   getEffectiveScheduleScreenOrder,
   type ScheduleScreenElementKey,
@@ -38,50 +36,39 @@ const ScheduleScreenPreferencesSection = () => {
     <Section>
       <View
         style={{
-          paddingRight: 20,
-          paddingVertical: rowPaddingVertical,
-          gap: 15,
+          paddingHorizontal: 12,
+          paddingVertical: 16,
+          gap: 0,
         }}
       >
         <Text style={{ fontFamily: theme.fonts.semiBold }}>
           {i18n.t('sectionsVisibility')}
         </Text>
-        <View style={{ paddingLeft: 20, gap: 12 }}>
+        <View>
           {order.map((key, index) => (
             <XView
               key={key}
-              style={{ justifyContent: 'space-between', gap: 6 }}
+              style={{
+                minHeight: 76,
+                paddingVertical: 16,
+                justifyContent: 'space-between',
+                gap: 6,
+                borderBottomWidth: index === order.length - 1 ? 0 : 1,
+                borderBottomColor: theme.colors.border,
+              }}
             >
-              <XView style={{ gap: 8 }}>
-                <IconButton
-                  icon={ArrowUp}
-                  onPress={index === 0 ? undefined : () => move(index, -1)}
-                  color={
-                    index === 0 ? theme.colors.border : theme.colors.textAlt
-                  }
-                  hitSlop={{ top: 10, bottom: 10, left: 10, right: 0 }}
-                />
-                <IconButton
-                  icon={ArrowDown}
-                  onPress={
-                    index === order.length - 1
-                      ? undefined
-                      : () => move(index, 1)
-                  }
-                  color={
-                    index === order.length - 1
-                      ? theme.colors.border
-                      : theme.colors.textAlt
-                  }
-                  hitSlop={{ top: 10, bottom: 10, left: 0, right: 10 }}
-                />
-              </XView>
-              <Text style={{ flex: 1, marginLeft: 8 }}>
+              <ReorderControls
+                onMoveUp={index === 0 ? undefined : () => move(index, -1)}
+                onMoveDown={
+                  index === order.length - 1 ? undefined : () => move(index, 1)
+                }
+              />
+              <Text style={{ flex: 1, minWidth: 0 }}>
                 {i18n.t('assistant.label')}
               </Text>
               <Switch
                 accessibilityLabel={i18n.t('assistant.label')}
-                value={preferences.scheduleScreenElements.assistant}
+                value={preferences.scheduleScreenElements[key]}
                 onValueChange={(value) => setVisibility(key, value)}
               />
             </XView>

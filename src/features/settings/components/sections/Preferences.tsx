@@ -1,6 +1,6 @@
 import {
   ChevronRight as ChevronRightIcon,
-  Contrast as ContrastIcon,
+  Globe as GlobeIcon,
   Palette as PaletteIcon,
   Settings as SettingsIcon,
   User as UserIcon,
@@ -12,18 +12,20 @@ import i18n from '@/lib/locales'
 import IconButton from '@/components/ui/IconButton'
 import { SettingsSectionProps } from '@/features/settings/screens/settingScreen'
 import LanguageSelector from '@/features/settings/components/sections/LanguageSelector'
+import { useInputLayout } from '@/components/ui/inputs/InputLayout'
 
 const PreferencesSection = ({ handleNavigate }: SettingsSectionProps) => {
+  const layout = useInputLayout()
   return (
     <View style={{ gap: 3 }}>
       <Section>
         <LanguageSelector />
       </Section>
-      <View style={{ height: 12 }} />
+      <View style={{ height: layout === 'drawer' ? 4 : 12 }} />
       <Section>
         <InputRowButton
-          leftIcon={ContrastIcon}
-          label={i18n.t('appearance')}
+          leftIcon={GlobeIcon}
+          label={i18n.t('regionAndFormats')}
           onPress={() => handleNavigate('PreferencesAppearance')}
         >
           <IconButton icon={ChevronRightIcon} />

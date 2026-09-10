@@ -1,34 +1,37 @@
 import { PropsWithChildren } from 'react'
 import { View, ViewProps } from 'react-native'
 import useTheme from '@/contexts/theme'
-import { rowPaddingVertical } from '@/constants/Inputs'
+import {
+  drawerLayout,
+  useInputLayout,
+} from '@/components/ui/inputs/InputLayout'
 
-interface Props extends ViewProps {
-  noPadding?: boolean
-}
+type Props = ViewProps
 
 const Section: React.FC<PropsWithChildren<Props>> = ({
   children,
-  noPadding,
   style,
   ...props
 }) => {
   const theme = useTheme()
+  const layout = useInputLayout()
 
   return (
     <View
       style={[
         {
           borderColor: theme.colors.border,
-          borderTopWidth: 2,
-          borderBottomWidth: 2,
-          backgroundColor: theme.colors.backgroundLighter,
-          paddingVertical: rowPaddingVertical,
-          paddingLeft: noPadding ? 0 : 25,
-          gap: 10,
-          paddingRight: noPadding ? 0 : 3,
+          borderWidth: layout === 'settings' ? 1 : 0,
+          borderRadius: theme.numbers.borderRadiusLg,
+          backgroundColor:
+            layout === 'drawer'
+              ? 'transparent'
+              : theme.colors.backgroundLighter,
+          padding: 0,
+          gap: layout === 'drawer' ? drawerLayout.rowGap : 0,
+          overflow: 'hidden',
         },
-        [style],
+        style,
       ]}
       {...props}
     >

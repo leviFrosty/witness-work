@@ -487,8 +487,14 @@ const MilestoneAdjustSheet = ({ visible, onClose }: Props) => {
                             color: theme.colors.text,
                             fontSize: theme.fontSize('md'),
                             fontFamily: theme.fonts.semiBold,
-                            padding: 4,
-                            minWidth: 48,
+                            paddingHorizontal: 8,
+                            paddingVertical: 6,
+                            minWidth: 56,
+                            minHeight: 44,
+                            borderWidth: 1,
+                            borderColor: theme.colors.border,
+                            borderRadius: theme.numbers.borderRadiusSm,
+                            backgroundColor: theme.colors.backgroundLighter,
                           }}
                         />
                       </View>

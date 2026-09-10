@@ -1,10 +1,10 @@
 import { View } from 'react-native'
 import Text from '@/components/ui/MyText'
+import { TAB_BAR_HEIGHT } from '@/components/ui/TabBar'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import useTheme from '@/contexts/theme'
 import { useNavigation } from '@react-navigation/native'
 import i18n from '@/lib/locales'
-import Constants from 'expo-constants'
 import {
   DrawerContentComponentProps,
   DrawerContentScrollView,
@@ -14,82 +14,63 @@ import AppSection from '@/features/settings/components/sections/App'
 import ContactSection from '@/features/settings/components/sections/Contact'
 import MiscSection from '@/features/settings/components/sections/Misc'
 import SupportSection from '@/features/settings/components/sections/Support'
-import { usePreferences } from '@/stores/preferences'
-import { useState } from 'react'
-import Badge from '@/components/ui/Badge'
 import { RootStackNavigation, RootStackParamList } from '@/types/rootStack'
+import {
+  drawerLayout,
+  InputLayoutProvider,
+} from '@/components/ui/inputs/InputLayout'
 
 const SettingsScreen = (props: DrawerContentComponentProps) => {
   const theme = useTheme()
   const insets = useSafeAreaInsets()
   const navigation = useNavigation<RootStackNavigation>()
-  const { developerTools, set } = usePreferences()
-  const [count, setCount] = useState(0)
 
   const handleNavigate = (destination: keyof RootStackParamList) => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     navigation.navigate(destination as any)
   }
 
-  const incrementHiddenCounter = () => {
-    setCount(count + 1)
-    if (count === 4) {
-      set({ developerTools: !developerTools })
-      setCount(0)
-    }
-  }
-
   return (
-    <View
-      style={{
-        paddingTop: insets.top,
-        paddingBottom: insets.bottom,
-        backgroundColor: theme.colors.background,
-        flexGrow: 1,
-        justifyContent: 'space-between',
-      }}
-    >
-      <DrawerContentScrollView
-        contentContainerStyle={{
-          paddingTop: 60,
-          paddingBottom: 60,
-          paddingStart: 0,
+    <InputLayoutProvider value='drawer'>
+      <View
+        style={{
+          backgroundColor: theme.colors.background,
+          flex: 1,
+          borderRightWidth: 1,
+          borderRightColor: theme.colors.border,
+          justifyContent: 'space-between',
         }}
-        {...props}
       >
-        <View style={{ gap: 25 }}>
-          <PreferencesSection handleNavigate={handleNavigate} />
-          <AppSection handleNavigate={handleNavigate} />
-          <SupportSection />
-          <ContactSection />
-          <MiscSection handleNavigate={handleNavigate} />
-        </View>
-        <View style={{ paddingTop: 15, paddingBottom: 45, gap: 5 }}>
+        <DrawerContentScrollView
+          {...props}
+          contentContainerStyle={{
+            paddingTop: insets.top + 24,
+            paddingBottom: insets.bottom + TAB_BAR_HEIGHT + 24,
+            paddingStart: 12,
+            paddingEnd: 12,
+          }}
+        >
           <Text
+            accessibilityRole='header'
             style={{
-              textAlign: 'center',
-              color: theme.colors.textAlt,
               fontFamily: theme.fonts.semiBold,
-              fontSize: 14,
+              fontSize: theme.fontSize('2xl'),
+              paddingHorizontal: 16,
+              marginBottom: 16,
             }}
-            onPress={incrementHiddenCounter}
           >
-            {Constants.expoConfig?.version
-              ? `v${Constants.expoConfig?.version} (${Constants.expoConfig?.extra?.commitHash ?? '?'})`
-              : i18n.t('versionUnknown')}
+            {i18n.t('settings')}
           </Text>
-          {developerTools && (
-            <View style={{ paddingHorizontal: 20 }}>
-              <Badge>
-                <Text style={{ color: theme.colors.textInverse }}>
-                  {i18n.t('devToolsEnabled')}
-                </Text>
-              </Badge>
-            </View>
-          )}
-        </View>
-      </DrawerContentScrollView>
-    </View>
+          <View style={{ gap: drawerLayout.sectionGap }}>
+            <PreferencesSection handleNavigate={handleNavigate} />
+            <AppSection handleNavigate={handleNavigate} />
+            <SupportSection />
+            <ContactSection />
+            <MiscSection handleNavigate={handleNavigate} />
+          </View>
+        </DrawerContentScrollView>
+      </View>
+    </InputLayoutProvider>
   )
 }
 

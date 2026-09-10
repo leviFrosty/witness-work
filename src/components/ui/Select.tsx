@@ -4,6 +4,7 @@ import { StyleProp, View, ViewStyle } from 'react-native'
 import { MenuView, MenuAction } from '@react-native-menu/menu'
 import useTheme from '@/contexts/theme'
 import Text from '@/components/ui/MyText'
+import { inputLayout, useInputLayout } from '@/components/ui/inputs/InputLayout'
 
 export type SelectDataItem<T> = { label: string; value: T }
 export type SelectData<T> = SelectDataItem<T>[]
@@ -18,6 +19,7 @@ export interface SelectProps<T> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   value: any
   placeholder?: string
+  accessibilityLabel?: string
   style?: StyleProp<ViewStyle>
 }
 
@@ -27,8 +29,10 @@ const Select = <T,>({
   value,
   style,
   placeholder,
+  accessibilityLabel,
 }: SelectProps<T>) => {
   const theme = useTheme()
+  const layout = useInputLayout()
 
   // UIMenu keys actions by string id. Stringify both sides and map back to
   // the original item on selection so callers receive the untouched object.
@@ -55,14 +59,19 @@ const Select = <T,>({
       }}
     >
       <View
+        accessible
+        accessibilityRole='button'
+        accessibilityLabel={accessibilityLabel ?? selectedLabel ?? placeholder}
+        accessibilityValue={{ text: selectedLabel ?? placeholder ?? '' }}
         style={[
           {
             backgroundColor: theme.colors.background,
             borderColor: theme.colors.border,
             borderWidth: 1,
-            paddingHorizontal: 10,
-            borderRadius: theme.numbers.borderRadiusSm,
-            minHeight: 40,
+            paddingHorizontal: layout === 'drawer' ? 16 : 12,
+            borderRadius: theme.numbers.borderRadiusMd,
+            minHeight: inputLayout.controlMinHeight,
+            gap: 8,
             flexDirection: 'row',
             alignItems: 'center',
             justifyContent: 'space-between',
@@ -72,14 +81,18 @@ const Select = <T,>({
       >
         <Text
           numberOfLines={1}
-          style={{ color: theme.colors.text, fontSize: 14, flexShrink: 1 }}
+          style={{
+            color: theme.colors.text,
+            fontSize: theme.fontSize('md'),
+            flexShrink: 1,
+          }}
         >
           {selectedLabel ?? placeholder ?? ''}
         </Text>
         <LucideIcon
           icon={ChevronDownIcon}
           color={theme.colors.text}
-          size={12}
+          size={14}
         />
       </View>
     </MenuView>

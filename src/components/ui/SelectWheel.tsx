@@ -9,6 +9,7 @@ import { SelectDataItem, SelectProps } from '@/components/ui/Select'
 import WheelPicker from '@/components/ui/WheelPicker'
 import i18n from '@/lib/locales'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import { inputLayout } from '@/components/ui/inputs/InputLayout'
 
 const SelectWheel = <T,>({
   data,
@@ -16,6 +17,7 @@ const SelectWheel = <T,>({
   value,
   style,
   placeholder,
+  accessibilityLabel,
 }: SelectProps<T>) => {
   const theme = useTheme()
   const insets = useSafeAreaInsets()
@@ -74,16 +76,23 @@ const SelectWheel = <T,>({
 
   return (
     <>
-      <Pressable onPress={() => setOpen(true)}>
+      <Pressable
+        onPress={() => setOpen(true)}
+        accessible
+        accessibilityRole='button'
+        accessibilityLabel={accessibilityLabel ?? selectedLabel ?? placeholder}
+        accessibilityState={{ expanded: open }}
+        accessibilityValue={{ text: selectedLabel ?? placeholder ?? '' }}
+      >
         <View
           style={[
             {
               backgroundColor: theme.colors.background,
               borderColor: theme.colors.border,
               borderWidth: 1,
-              paddingHorizontal: 10,
-              borderRadius: theme.numbers.borderRadiusSm,
-              minHeight: 40,
+              paddingHorizontal: 12,
+              borderRadius: theme.numbers.borderRadiusMd,
+              minHeight: inputLayout.controlMinHeight,
               flexDirection: 'row',
               alignItems: 'center',
               justifyContent: 'space-between',
@@ -93,14 +102,18 @@ const SelectWheel = <T,>({
         >
           <Text
             numberOfLines={1}
-            style={{ color: theme.colors.text, fontSize: 14, flexShrink: 1 }}
+            style={{
+              color: theme.colors.text,
+              fontSize: theme.fontSize('md'),
+              flexShrink: 1,
+            }}
           >
             {selectedLabel ?? placeholder ?? ''}
           </Text>
           <LucideIcon
             icon={ChevronDownIcon}
             color={theme.colors.text}
-            size={12}
+            size={14}
           />
         </View>
       </Pressable>

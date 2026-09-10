@@ -5,7 +5,13 @@ import {
   Trash2 as Trash2Icon,
   X as XIcon,
 } from 'lucide-react-native'
-import { Modal, Pressable, TextInput as RNTextInput, View } from 'react-native'
+import {
+  Modal,
+  Pressable,
+  Switch,
+  TextInput as RNTextInput,
+  View,
+} from 'react-native'
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
 import ActionButton from '@/components/ui/ActionButton'
 import useServiceReport from '@/stores/serviceReport'
@@ -19,7 +25,6 @@ import Text from '@/components/ui/MyText'
 import useTheme from '@/contexts/theme'
 import Section from '@/components/ui/inputs/Section'
 import InputRowContainer from '@/components/ui/inputs/InputRowContainer'
-import CheckboxWithLabel from '@/components/ui/inputs/CheckboxWithLabel'
 import XView from '@/components/ui/layout/XView'
 import Button from '@/components/ui/Button'
 import IconButton from '@/components/ui/IconButton'
@@ -34,7 +39,6 @@ import Header from '@/components/ui/layout/Header'
 import confirmDeletePlan from '@/lib/confirmDeletePlan'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import moment from 'moment'
-import Checkbox from 'expo-checkbox'
 import { NativeStackScreenProps } from '@react-navigation/native-stack'
 import { RecurringPlanFrequencies } from '@/lib/serviceReport'
 import { formatMinutes } from '@/lib/minutes'
@@ -61,6 +65,7 @@ import TypeSelectorRow, {
   type TypeSelection,
 } from '@/components/TypeSelectorRow'
 import { RootStackParamList } from '@/types/rootStack'
+import { inputLayout } from '@/components/ui/inputs/InputLayout'
 
 type NotifyMeOffset = {
   amount: number
@@ -126,7 +131,7 @@ const PlanKindToggle = (props: {
   const theme = useTheme()
 
   return (
-    <InputRowContainer>
+    <InputRowContainer controlWidth='full'>
       <XView
         style={{
           backgroundColor: theme.colors.background,
@@ -208,37 +213,35 @@ const DurationFields = (props: {
   setMinutes: React.Dispatch<React.SetStateAction<number>>
   lastInSection?: boolean
 }) => (
-  <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-    <View style={{ width: '50%' }}>
-      <InputRowContainer
-        label={i18n.t('hours')}
-        lastInSection={props.lastInSection}
-      >
-        <View style={{ flex: 1 }}>
-          <SelectWheel
-            data={hourOptions}
-            placeholder={props.hours.toString()}
-            onChange={({ value }) => props.setHours(value)}
-            value={props.hours.toString()}
-          />
-        </View>
-      </InputRowContainer>
-    </View>
-    <View style={{ width: '50%' }}>
-      <InputRowContainer
-        label={i18n.t('minutes')}
-        lastInSection={props.lastInSection}
-      >
-        <View style={{ flex: 1 }}>
-          <SelectWheel
-            data={minuteOptions}
-            placeholder={props.minutes.toString()}
-            onChange={({ value }) => props.setMinutes(value)}
-            value={props.minutes.toString()}
-          />
-        </View>
-      </InputRowContainer>
-    </View>
+  <View style={{ flexDirection: 'row' }}>
+    <InputRowContainer
+      label={i18n.t('hours')}
+      lastInSection={props.lastInSection}
+      style={{ width: '50%' }}
+      gap={6}
+    >
+      <SelectWheel
+        data={hourOptions}
+        accessibilityLabel={i18n.t('hours')}
+        placeholder={props.hours.toString()}
+        onChange={({ value }) => props.setHours(value)}
+        value={props.hours.toString()}
+      />
+    </InputRowContainer>
+    <InputRowContainer
+      label={i18n.t('minutes')}
+      style={{ width: '50%' }}
+      gap={6}
+      lastInSection={props.lastInSection}
+    >
+      <SelectWheel
+        data={minuteOptions}
+        accessibilityLabel={i18n.t('minutes')}
+        placeholder={props.minutes.toString()}
+        onChange={({ value }) => props.setMinutes(value)}
+        value={props.minutes.toString()}
+      />
+    </InputRowContainer>
   </View>
 )
 
@@ -252,7 +255,7 @@ const NotificationFields = (props: {
   const theme = useTheme()
 
   return (
-    <InputRowContainer label={i18n.t('notification')} lastInSection>
+    <InputRowContainer lastInSection controlWidth='full' style={{ gap: 8 }}>
       <View style={{ gap: 15, flex: 1 }}>
         <View
           style={{
@@ -261,14 +264,37 @@ const NotificationFields = (props: {
             flexDirection: 'row',
           }}
         >
-          <CheckboxWithLabel
-            label={i18n.t('notifyMe')}
-            value={props.notifyMe}
-            setValue={props.setNotifyMe}
-            disabled={!props.notificationsAllowed}
-            description={i18n.t('notifyMe_description')}
-            descriptionOnlyOnDisabled
-          />
+          <View style={{ gap: 4, flex: 1 }}>
+            <View
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                gap: 12,
+              }}
+            >
+              <Text
+                style={{
+                  flexShrink: 1,
+                  fontFamily: theme.fonts.medium,
+                  fontSize: theme.fontSize('lg'),
+                }}
+              >
+                {i18n.t('notifyMe')}
+              </Text>
+              <Switch
+                accessibilityLabel={i18n.t('notifyMe')}
+                value={props.notifyMe}
+                onValueChange={props.setNotifyMe}
+                disabled={!props.notificationsAllowed}
+              />
+            </View>
+            {!props.notificationsAllowed && (
+              <Text style={{ color: theme.colors.textAlt, fontSize: 12 }}>
+                {i18n.t('notifyMe_description')}
+              </Text>
+            )}
+          </View>
         </View>
         {props.notificationsAllowed && props.notifyMe && (
           <View style={{ flexDirection: 'row', gap: 10, alignItems: 'center' }}>
@@ -404,10 +430,15 @@ const RecurrenceFields = (props: {
 
       <InputRowContainer
         label={i18n.t('endDate')}
+        controlWidth='auto'
         style={{ justifyContent: 'space-between' }}
       >
         <XView>
-          <Checkbox value={props.willEnd} onValueChange={handleSetWillEnd} />
+          <Switch
+            accessibilityLabel={i18n.t('endDate')}
+            value={props.willEnd}
+            onValueChange={handleSetWillEnd}
+          />
           {props.willEnd && props.endDate && (
             <RNDateTimePicker
               locale={getLocales()[0].languageCode || undefined}
@@ -453,7 +484,11 @@ const PlanFields = (props: {
 
   return (
     <>
-      <InputRowContainer label={i18n.t('date')} justifyContent='space-between'>
+      <InputRowContainer
+        label={i18n.t('date')}
+        controlWidth='auto'
+        justifyContent='space-between'
+      >
         <DateTimePicker
           value={props.date}
           onChange={(_, newDate) => newDate && props.setDate(newDate)}
@@ -479,6 +514,8 @@ const PlanFields = (props: {
       <InputRowContainer
         label={i18n.t('note')}
         onLabelPress={() => noteInput.current?.focus()}
+        controlWidth='full'
+        style={{ gap: 8 }}
       >
         <View style={{ flex: 1 }}>
           <TextInput
@@ -1387,6 +1424,10 @@ const PlanDayScreen = ({ route, navigation }: PlanDayScreenProps) => {
             minHeight: 10,
             gap: 20,
             paddingTop: 10,
+            paddingHorizontal: inputLayout.horizontalPadding,
+            width: '100%',
+            maxWidth: inputLayout.contentMaxWidth,
+            alignSelf: 'center',
           }}
         >
           <Section>
@@ -1431,7 +1472,7 @@ const PlanDayScreen = ({ route, navigation }: PlanDayScreenProps) => {
                 {i18n.t('categoryNeeded')}
               </Text>
             )}
-            <View style={{ paddingRight: 20, paddingVertical: 15 }}>
+            <View style={{ paddingHorizontal: 12, paddingVertical: 16 }}>
               <ActionButton onPress={handlePrimarySave} disabled={saveDisabled}>
                 <Text
                   style={{

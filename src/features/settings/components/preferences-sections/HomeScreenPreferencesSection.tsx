@@ -1,11 +1,8 @@
-import {
-  ArrowDown as ArrowDownIcon,
-  ArrowUp as ArrowUpIcon,
-} from 'lucide-react-native'
+import InfoPopover from '@/components/ui/InfoPopover'
 import { Switch, View } from 'react-native'
 import i18n from '@/lib/locales'
 import Section from '@/components/ui/inputs/Section'
-import InputRowContainer from '@/components/ui/inputs/InputRowContainer'
+import InputRowSwitch from '@/components/ui/inputs/InputRowSwitch'
 import {
   getEffectiveHomeScreenOrder,
   HomeScreenElementKey,
@@ -15,24 +12,19 @@ import usePublisher from '@/hooks/usePublisher'
 import Text from '@/components/ui/MyText'
 import useTheme from '@/contexts/theme'
 import XView from '@/components/ui/layout/XView'
-import { rowPaddingVertical } from '@/constants/Inputs'
 import useDevice from '@/hooks/useDevice'
-import IconButton from '@/components/ui/IconButton'
+import ReorderControls from '@/features/settings/components/shared/ReorderControls'
 import { useMemo } from 'react'
 
 const HideDonateHeart = () => {
   const { hideDonateHeart, set } = usePreferences()
 
   return (
-    <InputRowContainer
+    <InputRowSwitch
       label={i18n.t('hideDonateHeart')}
-      style={{ justifyContent: 'space-between' }}
-    >
-      <Switch
-        value={hideDonateHeart}
-        onValueChange={(value) => set({ hideDonateHeart: value })}
-      />
-    </InputRowContainer>
+      value={hideDonateHeart}
+      onValueChange={(value) => set({ hideDonateHeart: value })}
+    />
   )
 }
 
@@ -43,16 +35,12 @@ const HideSupporterNudge = () => {
   const lastInSection = entryMode === 'checkbox'
 
   return (
-    <InputRowContainer
+    <InputRowSwitch
       lastInSection={lastInSection}
       label={i18n.t('hideSupporterNudge')}
-      style={{ justifyContent: 'space-between' }}
-    >
-      <Switch
-        value={hideSupporterNudge}
-        onValueChange={(value) => set({ hideSupporterNudge: value })}
-      />
-    </InputRowContainer>
+      value={hideSupporterNudge}
+      onValueChange={(value) => set({ hideSupporterNudge: value })}
+    />
   )
 }
 
@@ -128,10 +116,10 @@ const HomeElements = () => {
   return (
     <View
       style={{
-        paddingRight: 20,
+        paddingHorizontal: 12,
         borderBottomColor: theme.colors.border,
         borderBottomWidth: 1,
-        paddingVertical: rowPaddingVertical,
+        paddingVertical: 16,
       }}
     >
       <View style={{ paddingBottom: 15, gap: 5 }}>
@@ -147,7 +135,7 @@ const HomeElements = () => {
           {i18n.t('sectionsVisibility_description')}
         </Text>
       </View>
-      <View style={{ paddingLeft: 20, gap: 12 }}>
+      <View style={{ gap: 0 }}>
         {visibleKeys.map((key, idx) => {
           const isFirst = idx === 0
           const isLast = idx === visibleKeys.length - 1
@@ -155,42 +143,43 @@ const HomeElements = () => {
             (homeScreenElements as Record<string, boolean>)[key] ?? true
           const description = descriptionFor(key)
           return (
-            <View key={key}>
+            <View
+              key={key}
+              style={{
+                minHeight: 76,
+                paddingVertical: 16,
+                borderBottomWidth: isLast ? 0 : 1,
+                borderBottomColor: theme.colors.border,
+              }}
+            >
               <XView style={{ justifyContent: 'space-between', gap: 6 }}>
-                <XView style={{ gap: 8 }}>
-                  <IconButton
-                    icon={ArrowUpIcon}
-                    onPress={isFirst ? undefined : () => move(idx, -1)}
-                    color={isFirst ? theme.colors.border : theme.colors.textAlt}
-                    // Asymmetric slop so the up arrow's right-slop and the
-                    // down arrow's left-slop don't overlap (RN resolves
-                    // overlapping siblings to the later one, which made
-                    // taps on the inner half of the up arrow fire down).
-                    hitSlop={{ top: 10, bottom: 10, left: 10, right: 0 }}
-                  />
-                  <IconButton
-                    icon={ArrowDownIcon}
-                    onPress={isLast ? undefined : () => move(idx, 1)}
-                    color={isLast ? theme.colors.border : theme.colors.textAlt}
-                    hitSlop={{ top: 10, bottom: 10, left: 0, right: 10 }}
-                  />
-                </XView>
-                <Text style={{ flex: 1, marginLeft: 8 }}>{labelFor(key)}</Text>
+                <ReorderControls
+                  onMoveUp={isFirst ? undefined : () => move(idx, -1)}
+                  onMoveDown={isLast ? undefined : () => move(idx, 1)}
+                />
+                <View
+                  style={{
+                    flex: 1,
+                    minWidth: 0,
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                  }}
+                >
+                  <Text style={{ flexShrink: 1 }}>{labelFor(key)}</Text>
+                  {description !== null && (
+                    <InfoPopover
+                      title={labelFor(key)}
+                      description={description}
+                      inline
+                    />
+                  )}
+                </View>
                 <Switch
+                  accessibilityLabel={labelFor(key)}
                   value={isOn}
                   onValueChange={(value) => setVisibility(key, value)}
                 />
               </XView>
-              {description !== null && (
-                <Text
-                  style={{
-                    fontSize: theme.fontSize('xs'),
-                    color: theme.colors.textAlt,
-                  }}
-                >
-                  {description}
-                </Text>
-              )}
             </View>
           )
         })}

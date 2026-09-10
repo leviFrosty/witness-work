@@ -32,8 +32,6 @@ const DATE_ORDER_PATTERNS: Record<DateOrder, string> = {
 const AppearancePreferencesSection = () => {
   const {
     set,
-    fontSizeOffset,
-    colorScheme,
     timeDisplayFormat,
     startOfWeek,
     formatRegion,
@@ -41,24 +39,6 @@ const AppearancePreferencesSection = () => {
     dateOrder,
   } = usePreferences()
   const theme = useContext(ThemeContext)
-  const fontSizeOffsetOptions = [
-    { label: '-1', value: -1 },
-    { label: '0', value: 0 },
-    { label: '+1', value: 1 },
-    { label: '+2', value: 2 },
-    { label: '+3', value: 3 },
-    { label: '+4', value: 4 },
-  ]
-
-  const darkModeOptions: {
-    label: string
-    value: 'light' | 'dark' | undefined
-  }[] = [
-    { label: i18n.t('device'), value: undefined },
-    { label: i18n.t('dark'), value: 'dark' },
-    { label: i18n.t('light'), value: 'light' },
-  ]
-
   // What each Auto row currently resolves to (Region → device), so the Auto
   // option can show its effective value.
   const autoStartOfWeek = resolveStartOfWeek({ region: formatRegion })
@@ -133,19 +113,8 @@ const AppearancePreferencesSection = () => {
     <View style={{ gap: 20 }}>
       <Section>
         <InputRowContainer
-          label={i18n.t('colorScheme')}
-          style={{ justifyContent: 'space-between' }}
-        >
-          <View style={{ flex: 1 }}>
-            <Select
-              data={darkModeOptions}
-              value={colorScheme}
-              onChange={({ value }) => set({ colorScheme: value })}
-            />
-          </View>
-        </InputRowContainer>
-        <InputRowContainer
           label={i18n.t('durationFormat')}
+          lastInSection
           style={{ justifyContent: 'space-between' }}
         >
           <View style={{ flex: 1 }}>
@@ -153,20 +122,6 @@ const AppearancePreferencesSection = () => {
               data={timeDisplayOptions}
               value={timeDisplayFormat}
               onChange={({ value }) => set({ timeDisplayFormat: value })}
-            />
-          </View>
-        </InputRowContainer>
-        <InputRowContainer
-          label={i18n.t('fontSizeOffset')}
-          info={i18n.t('thisGloballyOffsetsTextSize')}
-          style={{ justifyContent: 'space-between' }}
-          lastInSection
-        >
-          <View style={{ flex: 1 }}>
-            <Select
-              data={fontSizeOffsetOptions}
-              value={fontSizeOffset}
-              onChange={({ value }) => set({ fontSizeOffset: value })}
             />
           </View>
         </InputRowContainer>
@@ -227,6 +182,8 @@ const AppearancePreferencesSection = () => {
             style={{
               fontSize: theme.fontSize('sm'),
               color: theme.colors.textAlt,
+              paddingHorizontal: 12,
+              paddingBottom: 16,
             }}
           >
             {i18n.t('formatRegion_description')}

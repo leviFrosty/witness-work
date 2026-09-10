@@ -11,6 +11,7 @@ import useTheme from '@/contexts/theme'
 import { useRollover } from '@/features/service-reports/hooks/useRollover'
 import i18n from '@/lib/locales'
 import { RootStackNavigation } from '@/types/rootStack'
+import { useFormattedMinutes } from '@/lib/minutes'
 
 const RolloverScreen = () => {
   const theme = useTheme()
@@ -30,6 +31,7 @@ const RolloverScreen = () => {
   // fractional time available.
   const pending = availablePending
   const totalMinutes = pending.reduce((sum, p) => sum + p.minutes, 0)
+  const totalDisplay = useFormattedMinutes(totalMinutes)
 
   // If somehow opened with nothing pending (e.g. rapid double-fire after auto
   // mode flipped on), close immediately rather than show an empty screen.
@@ -56,126 +58,134 @@ const RolloverScreen = () => {
   }
 
   return (
-    <Wrapper style={{ paddingHorizontal: 24 }}>
+    <Wrapper>
       <ScrollView
-        contentContainerStyle={{ paddingTop: 32, paddingBottom: 24 }}
+        contentContainerStyle={{
+          paddingTop: 32,
+          paddingBottom: 24,
+          paddingHorizontal: 12,
+        }}
         showsVerticalScrollIndicator={false}
       >
-        <Text
-          style={{
-            fontSize: 14,
-            color: theme.colors.textAlt,
-            fontFamily: theme.fonts.semiBold,
-            textTransform: 'uppercase',
-            letterSpacing: 1.5,
-            marginBottom: 8,
-          }}
-        >
-          {i18n.t('timeRollover')}
-        </Text>
-        <Text
-          style={{
-            fontSize: 32,
-            fontFamily: theme.fonts.bold,
-            marginBottom: 16,
-          }}
-        >
-          {totalMinutes} min → {destinationLabel}
-        </Text>
-        <Text
-          style={{
-            fontSize: 15,
-            color: theme.colors.textAlt,
-            marginBottom: 24,
-          }}
-        >
-          {i18n.t('timeRollover_intro')}
-        </Text>
+        <View style={{ width: '100%', maxWidth: 680, alignSelf: 'center' }}>
+          <Text
+            style={{
+              fontSize: 14,
+              color: theme.colors.textAlt,
+              fontFamily: theme.fonts.semiBold,
+              textTransform: 'uppercase',
+              letterSpacing: 1.5,
+              marginBottom: 8,
+            }}
+          >
+            {i18n.t('timeRollover')}
+          </Text>
+          <Text
+            style={{
+              fontSize: 32,
+              fontFamily: theme.fonts.bold,
+              marginBottom: 16,
+            }}
+          >
+            {totalDisplay.formatted} → {destinationLabel}
+          </Text>
+          <Text
+            style={{
+              fontSize: 15,
+              color: theme.colors.textAlt,
+              marginBottom: 24,
+            }}
+          >
+            {i18n.t('timeRollover_intro')}
+          </Text>
 
-        <View
-          style={{
-            backgroundColor: theme.colors.backgroundLighter,
-            borderRadius: theme.numbers.borderRadiusSm,
-            padding: 16,
-            gap: 8,
-            marginBottom: 24,
-          }}
-        >
-          {pending.map((p) => {
-            const sourceLabel = moment({
-              year: p.sourceYear,
-              month: p.sourceMonth,
-            }).format('MMMM YYYY')
-            return (
+          <View
+            style={{
+              backgroundColor: theme.colors.backgroundLighter,
+              borderRadius: theme.numbers.borderRadiusMd,
+              padding: 16,
+              gap: 8,
+              marginBottom: 24,
+            }}
+          >
+            {pending.map((p) => {
+              const sourceLabel = moment({
+                year: p.sourceYear,
+                month: p.sourceMonth,
+              }).format('MMMM YYYY')
+              return (
+                <Text
+                  key={`${p.sourceYear}-${p.sourceMonth}`}
+                  style={{ fontSize: 15 }}
+                >
+                  {i18n.t('timeRollover_movePreview', {
+                    minutes: p.minutes,
+                    from: sourceLabel,
+                    to: destinationLabel,
+                  })}
+                </Text>
+              )
+            })}
+            {excludedCreditMinutes > 0 && (
               <Text
-                key={`${p.sourceYear}-${p.sourceMonth}`}
-                style={{ fontSize: 15 }}
+                style={{
+                  fontSize: 13,
+                  color: theme.colors.textAlt,
+                }}
               >
-                {i18n.t('timeRollover_movePreview', {
-                  minutes: p.minutes,
-                  from: sourceLabel,
-                  to: destinationLabel,
+                {i18n.t('timeRollover_creditExcluded', {
+                  minutes: excludedCreditMinutes,
                 })}
               </Text>
-            )
-          })}
-          {excludedCreditMinutes > 0 && (
-            <Text
-              style={{
-                fontSize: 13,
-                color: theme.colors.textAlt,
-              }}
-            >
-              {i18n.t('timeRollover_creditExcluded', {
-                minutes: excludedCreditMinutes,
-              })}
-            </Text>
-          )}
-        </View>
-
-        <View
-          style={{
-            flexDirection: 'row',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            paddingVertical: 12,
-            borderTopWidth: 1,
-            borderBottomWidth: 1,
-            borderColor: theme.colors.border,
-            marginBottom: 24,
-          }}
-        >
-          <View style={{ flex: 1, paddingRight: 12 }}>
-            <Text style={{ fontSize: 15, fontFamily: theme.fonts.semiBold }}>
-              {i18n.t('timeRollover_autoLabel')}
-            </Text>
-            <Text
-              style={{
-                fontSize: 12,
-                color: theme.colors.textAlt,
-                marginTop: 2,
-              }}
-            >
-              {i18n.t('timeRollover_autoHint')}
-            </Text>
+            )}
           </View>
-          <Switch value={autoEnabled} onValueChange={setAutoEnabled} />
-        </View>
 
-        <ActionButton onPress={handleApply}>
-          {i18n.t('timeRollover_apply')}
-        </ActionButton>
-        <View style={{ alignItems: 'center', marginTop: 16 }}>
-          <Button onPress={handleSkip}>
-            <Text
-              style={{
-                color: theme.colors.textAlt,
-                textDecorationLine: 'underline',
-              }}
-            >
-              {i18n.t('timeRollover_skip')}
-            </Text>
-          </Button>
+          <View
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              minHeight: 76,
+              paddingVertical: 16,
+              paddingHorizontal: 12,
+              borderTopWidth: 1,
+              borderBottomWidth: 1,
+              borderColor: theme.colors.border,
+              marginBottom: 24,
+            }}
+          >
+            <View style={{ flex: 1, paddingRight: 12 }}>
+              <Text style={{ fontSize: 15, fontFamily: theme.fonts.semiBold }}>
+                {i18n.t('timeRollover_autoLabel')}
+              </Text>
+              <Text
+                style={{
+                  fontSize: 12,
+                  color: theme.colors.textAlt,
+                  marginTop: 2,
+                }}
+              >
+                {i18n.t('timeRollover_autoHint')}
+              </Text>
+            </View>
+            <Switch value={autoEnabled} onValueChange={setAutoEnabled} />
+          </View>
+
+          <ActionButton onPress={handleApply}>
+            {i18n.t('timeRollover_apply')}
+          </ActionButton>
+          <View style={{ alignItems: 'center', marginTop: 16 }}>
+            <Button onPress={handleSkip}>
+              <Text
+                style={{
+                  color: theme.colors.textAlt,
+                  textDecorationLine: 'underline',
+                }}
+              >
+                {i18n.t('timeRollover_skip')}
+              </Text>
+            </Button>
+          </View>
         </View>
       </ScrollView>
     </Wrapper>

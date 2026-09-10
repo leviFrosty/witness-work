@@ -8,8 +8,7 @@ import {
   WidgetContactAction,
   WidgetContactSort,
 } from '@/stores/preferences'
-import Text from '@/components/ui/MyText'
-import useTheme from '@/contexts/theme'
+import SectionTitle from '@/features/settings/components/shared/SectionTitle'
 
 const contactSortData: { label: string; value: WidgetContactSort }[] = [
   { label: i18n.t('longestContacted'), value: 'longestContacted' },
@@ -36,7 +35,6 @@ const appointmentWindowData: {
 ]
 
 const WidgetsPreferencesSection = () => {
-  const theme = useTheme()
   const {
     widgetContactSort,
     widgetContactAction,
@@ -44,35 +42,12 @@ const WidgetsPreferencesSection = () => {
     set,
   } = usePreferences()
 
-  if (Platform.OS !== 'ios') {
-    return (
-      <View style={{ paddingHorizontal: 20 }}>
-        <Text style={{ color: theme.colors.textAlt, fontSize: 14 }}>
-          {i18n.t('widgetsDescription')}
-        </Text>
-      </View>
-    )
-  }
+  if (Platform.OS !== 'ios') return null
 
   return (
     <View style={{ gap: 20 }}>
-      <View style={{ paddingHorizontal: 20 }}>
-        <Text style={{ color: theme.colors.textAlt, fontSize: 14 }}>
-          {i18n.t('widgetsDescription')}
-        </Text>
-      </View>
-
-      <View style={{ gap: 5 }}>
-        <Text
-          style={{
-            fontSize: 12,
-            fontFamily: theme.fonts.semiBold,
-            color: theme.colors.textAlt,
-            marginLeft: 20,
-          }}
-        >
-          {i18n.t('contactsWidget')}
-        </Text>
+      <View>
+        <SectionTitle text={i18n.t('contactsWidget')} />
         <Section>
           <InputRowSelect
             label={i18n.t('sortOrder')}
@@ -94,17 +69,8 @@ const WidgetsPreferencesSection = () => {
         </Section>
       </View>
 
-      <View style={{ gap: 5 }}>
-        <Text
-          style={{
-            fontSize: 12,
-            fontFamily: theme.fonts.semiBold,
-            color: theme.colors.textAlt,
-            marginLeft: 20,
-          }}
-        >
-          {i18n.t('appointmentsWidget')}
-        </Text>
+      <View>
+        <SectionTitle text={i18n.t('appointmentsWidget')} />
         <Section>
           <InputRowSelect
             label={i18n.t('timeWindow')}

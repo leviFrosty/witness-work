@@ -49,7 +49,7 @@ export interface MytimeImportPreview {
 
 /**
  * Which pieces of the backup the user has opted to import. Every piece starts
- * checked; the preview surfaces a checkbox per piece that has data. `contacts`
+ * enabled; the preview surfaces a switch per piece that has data. `contacts`
  * also governs custom fields, and `time` also governs imported categories (each
  * rides along with the records that reference it).
  */
@@ -156,7 +156,7 @@ export const useMytimeImport = ({
     // the setState cascade blocks the JS thread (mirrors iCloudRestore).
     requestAnimationFrame(() => {
       try {
-        // Honor the user's checkboxes by zeroing out deselected pieces; the
+        // Honor the user's switches by zeroing out deselected pieces; the
         // writer already no-ops on empty arrays / a null publisher. Custom
         // fields ride with contacts and categories ride with time, since
         // they're only referenced by those records.

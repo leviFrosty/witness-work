@@ -125,12 +125,20 @@ export const writeMappedDataToStores = (
 
   // Custom field defs: mergeIncomingCustomFieldDefs adds only unknown ids.
   const existingDefIds = new Set(contacts.customFieldDefs.map((d) => d.id))
-  const insertedCustomFieldDefIds = mapped.customFieldDefs
-    .filter((d) => !existingDefIds.has(d.id))
-    .map((d) => d.id)
   if (mapped.customFieldDefs.length) {
     contacts.mergeIncomingCustomFieldDefs(mapped.customFieldDefs)
   }
+  // Track only definitions actually admitted by the store. A permanently
+  // deleted definition may be present in stale import data and is rejected by
+  // mergeIncomingCustomFieldDefs; undo must not create a new tombstone for it.
+  const insertedCustomFieldDefIds = useContacts
+    .getState()
+    .customFieldDefs.filter(
+      (d) =>
+        !existingDefIds.has(d.id) &&
+        mapped.customFieldDefs.some((incoming) => incoming.id === d.id)
+    )
+    .map((d) => d.id)
 
   // Contacts (addContact skips ids present in contacts OR deletedContacts).
   const existingContactIds = new Set(
@@ -260,7 +268,7 @@ export const undoImport = (commit: ImportCommitResult): void => {
     categories.deleteCategory(id)
   }
   for (const id of commit.insertedCustomFieldDefIds) {
-    contacts.purgeCustomFieldDef(id)
+    contacts.removeCustomFieldDefForUndo(id)
   }
 
   if (commit.publisherChange) {

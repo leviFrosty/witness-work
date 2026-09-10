@@ -7,7 +7,7 @@ import {
 import LucideIcon, { type AppIcon } from '@/components/ui/LucideIcon'
 import { useEffect, useRef, useState } from 'react'
 import { Pressable, View } from 'react-native'
-import { Input, InputProps } from 'tamagui'
+import { InputProps } from 'tamagui'
 import moment from 'moment'
 import useTheme from '@/contexts/theme'
 import { usePreferences } from '@/stores/preferences'
@@ -23,6 +23,7 @@ import ProfileDetailOverlay, {
 } from '@/features/profile/components/ProfileDetailOverlay'
 import AvatarPickerPopover from '@/components/AvatarPickerPopover'
 import i18n from '@/lib/locales'
+import MyTextInput from '@/components/ui/TextInput'
 
 interface Props {
   /** Disables interaction; used for the live preview inside onboarding. */
@@ -250,8 +251,7 @@ const ProfileCard = ({ preview, editable, onPressIncomplete }: Props) => {
   )
 
   const nameEl = editable ? (
-    <Input
-      unstyled
+    <MyTextInput
       value={name}
       onChangeText={(val) => setProfile({ name: val })}
       placeholder={i18n.t('firstNamePlaceholder')}
@@ -264,12 +264,11 @@ const ProfileCard = ({ preview, editable, onPressIncomplete }: Props) => {
       autoFocusNative={!name}
       maxLength={40}
       enterKeyHint='done'
+      textAlign='left'
       style={{
         fontFamily: theme.fonts.semiBold,
         fontSize: 16,
         color: titleColor,
-        padding: 0,
-        margin: 0,
       }}
     />
   ) : (

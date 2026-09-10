@@ -7,7 +7,7 @@ import {
   TextInput,
   View,
 } from 'react-native'
-import { Input, InputProps } from 'tamagui'
+import { InputProps } from 'tamagui'
 
 import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
@@ -26,6 +26,7 @@ import Text from '@/components/ui/MyText'
 import SegmentedControl, {
   SegmentedOption,
 } from '@/components/ui/SegmentedControl'
+import MyTextInput from '@/components/ui/TextInput'
 
 export type ContactsFilterSheetProps = {
   open: boolean
@@ -512,8 +513,7 @@ const ContactsFilterSheet: React.FC<ContactsFilterSheetProps> = ({
                       {i18n.t('contacts_filterValue')}
                     </Text>
                   </Pressable>
-                  <Input
-                    unstyled
+                  <MyTextInput
                     ref={valueInput}
                     value={value}
                     onChangeText={setValue}
@@ -522,16 +522,7 @@ const ContactsFilterSheet: React.FC<ContactsFilterSheetProps> = ({
                     placeholderTextColor={
                       theme.colors.textAlt as InputProps['placeholderTextColor']
                     }
-                    style={{
-                      backgroundColor: theme.colors.backgroundLighter,
-                      borderColor: theme.colors.border,
-                      borderWidth: 1,
-                      borderRadius: theme.numbers.borderRadiusSm,
-                      padding: 12,
-                      color: theme.colors.text,
-                      fontFamily: theme.fonts.regular,
-                      fontSize: theme.fontSize('md'),
-                    }}
+                    textAlign='left'
                   />
                 </View>
               )}

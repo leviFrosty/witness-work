@@ -15,8 +15,7 @@ import { useProfile } from '@/stores/profile'
 import Text from '@/components/ui/MyText'
 import useTheme from '@/contexts/theme'
 import Card from '@/components/ui/Card'
-import Divider from '@/components/ui/Divider'
-import CheckboxWithLabel from '@/components/ui/inputs/CheckboxWithLabel'
+import InputRowSwitch from '@/components/ui/inputs/InputRowSwitch'
 import MonthlyMaximumCreditHoursSection from '@/features/settings/components/preferences-sections/MonthlyMaximumCreditHoursSection'
 import usePublisher from '@/hooks/usePublisher'
 import useUser from '@/hooks/useUser'
@@ -55,15 +54,14 @@ const PublisherPreferencesSection = () => {
   const showAdvanced = canAdjustCreditLimit || !isCheckboxMode
 
   return (
-    <View style={{ gap: 5 }}>
-      <View style={{ paddingHorizontal: 20 }}>
+    <View style={{ gap: 20 }}>
+      <View>
         <ProfileCard editable />
       </View>
-      <Divider marginVertical={10} />
 
       {isCheckboxMode && (
         <>
-          <View style={{ paddingHorizontal: 20 }}>
+          <View>
             <Card>
               <Text
                 style={{
@@ -76,12 +74,11 @@ const PublisherPreferencesSection = () => {
               <Text>{i18n.t('lookingForViewHours_description')}</Text>
             </Card>
           </View>
-          <Divider marginVertical={10} />
         </>
       )}
       {publisherType === 'custom' && (
         <>
-          <View style={{ paddingHorizontal: 20 }}>
+          <View>
             <Card>
               <Text
                 style={{
@@ -94,23 +91,11 @@ const PublisherPreferencesSection = () => {
               <Text>{i18n.t('dontWantGoal_description')}</Text>
             </Card>
           </View>
-          <Divider marginVertical={10} />
         </>
       )}
 
       <Section>
-        <InputRowContainer
-          label={i18n.t('status')}
-          info={
-            !isCheckboxMode
-              ? i18n.t('defaultMonthlyGoal_description')
-              : undefined
-          }
-        >
-          <View style={{ flex: 1 }}>
-            <PublisherTypeSelector showGoalDescription={false} />
-          </View>
-        </InputRowContainer>
+        <PublisherTypeSelector />
         {tracksTenure && (
           <InputRowContainer label={i18n.t(getStartDateLabels(role).label)}>
             <View style={{ flex: 1, alignItems: 'flex-end' }}>
@@ -138,13 +123,15 @@ const PublisherPreferencesSection = () => {
       {showAdvanced && (
         <View style={{ marginTop: 10 }}>
           <Pressable
+            accessibilityRole='button'
+            accessibilityState={{ expanded: advancedOpen }}
             onPress={() => setAdvancedOpen((v) => !v)}
             style={{
               flexDirection: 'row',
               alignItems: 'center',
               justifyContent: 'space-between',
-              paddingHorizontal: 25,
-              paddingVertical: 12,
+              paddingHorizontal: 16,
+              paddingVertical: 16,
             }}
           >
             <Text
@@ -152,8 +139,6 @@ const PublisherPreferencesSection = () => {
                 fontSize: theme.fontSize('md'),
                 fontFamily: theme.fonts.semiBold,
                 color: theme.colors.textAlt,
-                textTransform: 'uppercase',
-                letterSpacing: 0.5,
               }}
             >
               {i18n.t('advanced')}
@@ -169,44 +154,25 @@ const PublisherPreferencesSection = () => {
           </Pressable>
 
           {advancedOpen && (
-            <View style={{ gap: 5 }}>
+            <View style={{ gap: 20 }}>
               {canAdjustCreditLimit && (
                 <MonthlyMaximumCreditHoursSection key={publisherType} />
               )}
               {!isCheckboxMode && (
                 <Section>
-                  <InputRowContainer
+                  <InputRowSwitch
                     label={i18n.t('autoRollover')}
                     info={i18n.t('autoRollover_description')}
-                    lastInSection
-                  >
-                    <View style={{ flex: 1, alignItems: 'flex-end' }}>
-                      <CheckboxWithLabel
-                        value={autoRolloverEnabled}
-                        setValue={setAutoRolloverEnabled}
-                        label=''
-                        labelPosition='right'
-                      />
-                    </View>
-                  </InputRowContainer>
-                </Section>
-              )}
-              {!isCheckboxMode && (
-                <Section>
-                  <InputRowContainer
+                    value={autoRolloverEnabled}
+                    onValueChange={setAutoRolloverEnabled}
+                  />
+                  <InputRowSwitch
                     label={i18n.t('rolloverIncludesCredit')}
                     info={i18n.t('rolloverIncludesCredit_description')}
+                    value={rolloverIncludesCredit}
+                    onValueChange={setRolloverIncludesCredit}
                     lastInSection
-                  >
-                    <View style={{ flex: 1, alignItems: 'flex-end' }}>
-                      <CheckboxWithLabel
-                        value={rolloverIncludesCredit}
-                        setValue={setRolloverIncludesCredit}
-                        label=''
-                        labelPosition='right'
-                      />
-                    </View>
-                  </InputRowContainer>
+                  />
                 </Section>
               )}
             </View>

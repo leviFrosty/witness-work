@@ -1,11 +1,10 @@
 import {
   Caravan as CaravanIcon,
-  IdCard as IdCardIcon,
   MessagesSquare as MessagesSquareIcon,
   Trash2 as Trash2Icon,
 } from 'lucide-react-native'
 import { useCallback } from 'react'
-import { View, Alert } from 'react-native'
+import { View, Alert, Switch } from 'react-native'
 import Text from '@/components/ui/MyText'
 import * as Notifications from 'expo-notifications'
 import * as Crypto from 'expo-crypto'
@@ -15,20 +14,17 @@ import useContacts from '@/stores/contactsStore'
 import { useEffect, useState } from 'react'
 import Header from '@/components/ui/layout/Header'
 import useTheme from '@/contexts/theme'
-import Divider from '@/components/ui/Divider'
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
 import Section from '@/components/ui/inputs/Section'
 import { Visit, Notification } from '@/types/visit'
 import InputRowContainer from '@/components/ui/inputs/InputRowContainer'
+import InputRowSwitch from '@/components/ui/inputs/InputRowSwitch'
 import { DateTimePickerEvent } from '@react-native-community/datetimepicker'
 import TextInputRow from '@/components/ui/inputs/TextInputRow'
-import CheckboxWithLabel from '@/components/ui/inputs/CheckboxWithLabel'
-import { Contact } from '@/types/contact'
 import moment from 'moment'
 import useConversations from '@/stores/conversationStore'
 import i18n, { TranslationKey } from '@/lib/locales'
 import DateTimePicker from '@/components/ui/DateTimePicker'
-import Checkbox from 'expo-checkbox'
 import Select from '@/components/ui/Select'
 import Wrapper from '@/components/ui/layout/Wrapper'
 import IconButton from '@/components/ui/IconButton'
@@ -92,25 +88,28 @@ const NotificationSection = (props: {
   }))
 
   return (
-    <InputRowContainer label={i18n.t('notification')} lastInSection>
-      <View style={{ gap: 15, flex: 1 }}>
-        <View
-          style={{
-            justifyContent: 'flex-end',
-            flex: 1,
-            flexDirection: 'row',
-          }}
+    <>
+      <InputRowContainer
+        label={i18n.t('notifyMe')}
+        lastInSection={!notificationsAllowed}
+        description={
+          notificationsAllowed ? undefined : i18n.t('notifyMe_description')
+        }
+        controlWidth='auto'
+      >
+        <Switch
+          accessibilityLabel={i18n.t('notifyMe')}
+          value={conversation.followUp?.notifyMe || false}
+          onValueChange={setNotifyMe}
+          disabled={!notificationsAllowed}
+        />
+      </InputRowContainer>
+      {notificationsAllowed && (
+        <InputRowContainer
+          label={i18n.t('notification')}
+          lastInSection
+          controlWidth='full'
         >
-          <CheckboxWithLabel
-            label={i18n.t('notifyMe')}
-            value={conversation.followUp?.notifyMe || false}
-            setValue={setNotifyMe}
-            disabled={!notificationsAllowed}
-            description={i18n.t('notifyMe_description')}
-            descriptionOnlyOnDisabled
-          />
-        </View>
-        {notificationsAllowed && (
           <View style={{ flexDirection: 'row', gap: 10, alignItems: 'center' }}>
             <View style={{ flex: 1 }}>
               <Select
@@ -135,39 +134,9 @@ const NotificationSection = (props: {
               {i18n.t('before')}
             </Text>
           </View>
-        )}
-      </View>
-    </InputRowContainer>
-  )
-}
-
-const ContactRow = ({ selectedContact }: { selectedContact: Contact }) => {
-  const theme = useTheme()
-
-  return (
-    <Section>
-      <View
-        style={{
-          gap: 10,
-          flexDirection: 'row',
-          justifyContent: 'space-between',
-          paddingRight: 20,
-        }}
-      >
-        <View
-          style={{
-            flexDirection: 'row',
-            alignItems: 'center',
-            gap: 10,
-          }}
-        >
-          <IconButton icon={IdCardIcon} />
-          <Text style={{ fontFamily: theme.fonts.semiBold, fontSize: 16 }}>
-            {selectedContact?.name}
-          </Text>
-        </View>
-      </View>
-    </Section>
+        </InputRowContainer>
+      )}
+    </>
   )
 }
 
@@ -555,27 +524,6 @@ const VisitFormScreen = ({ route, navigation }: Props) => {
     updateLastTimeRequestedStoreReview,
   ])
 
-  const IsBibleStudyCheckbox = () => {
-    const setIsBibleStudy = (isBibleStudy: boolean) => {
-      setConversation({
-        ...conversation,
-        isBibleStudy,
-      })
-    }
-
-    return (
-      <Button
-        style={{ flexDirection: 'row', gap: 10, marginLeft: 20 }}
-        onPress={() => setIsBibleStudy(!conversation.isBibleStudy)}
-      >
-        <Checkbox
-          value={conversation.isBibleStudy}
-          onValueChange={(val) => setIsBibleStudy(val)}
-        />
-      </Button>
-    )
-  }
-
   const getTitle = () => {
     if (params?.visitToEditId) {
       if (notAtHome) {
@@ -598,7 +546,17 @@ const VisitFormScreen = ({ route, navigation }: Props) => {
         backgroundColor: theme.colors.background,
       }}
     >
-      <Wrapper insets='none' style={{ gap: 30, marginTop: 20 }}>
+      <Wrapper
+        insets='none'
+        style={{
+          gap: 30,
+          marginTop: 20,
+          paddingHorizontal: 12,
+          alignSelf: 'center',
+          width: '100%',
+          maxWidth: 680,
+        }}
+      >
         <View style={{ padding: 25, paddingBottom: 0, gap: 5 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
             <IconButton
@@ -616,12 +574,11 @@ const VisitFormScreen = ({ route, navigation }: Props) => {
               : i18n.t('addConversation_description')}
           </Text>
         </View>
-        {selectedContact && <ContactRow selectedContact={selectedContact} />}
-        <Divider borderStyle='dashed' />
         <Section>
           <InputRowContainer
             label={i18n.t('date')}
             justifyContent='space-between'
+            controlWidth='auto'
           >
             <DateTimePicker
               maximumDate={moment().toDate()}
@@ -644,19 +601,21 @@ const VisitFormScreen = ({ route, navigation }: Props) => {
             lastInSection={notAtHome}
           />
           {!notAtHome && (
-            <InputRowContainer
+            <InputRowSwitch
               label={i18n.t('conductedBibleStudy')}
-              justifyContent='space-between'
+              value={conversation.isBibleStudy}
+              onValueChange={(isBibleStudy) =>
+                setConversation({ ...conversation, isBibleStudy })
+              }
               lastInSection
-            >
-              <IsBibleStudyCheckbox />
-            </InputRowContainer>
+            />
           )}
         </Section>
         <Section>
           <InputRowContainer
             label={i18n.t('followUp')}
             justifyContent='space-between'
+            controlWidth='auto'
           >
             <DateTimePicker
               value={conversation.followUp!.date}

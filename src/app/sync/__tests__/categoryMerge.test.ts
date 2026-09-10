@@ -11,6 +11,8 @@ type LocalState = {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   customFieldDefs: any[]
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  deletedCustomFieldDefs: any[]
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   conversations: any[]
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   deletedConversations: any[]
@@ -34,6 +36,7 @@ const emptyLocal = (): LocalState => ({
   contacts: [],
   deletedContacts: [],
   customFieldDefs: [],
+  deletedCustomFieldDefs: [],
   conversations: [],
   deletedConversations: [],
   serviceReports: {},

@@ -40,6 +40,7 @@ const ModeSegment: React.FC<{
         alignItems: 'center',
         justifyContent: 'center',
         gap: 8,
+        minHeight: 44,
         paddingVertical: 8,
         borderRadius: theme.numbers.borderRadiusSm,
         backgroundColor: active
@@ -173,9 +174,8 @@ export default function AddressSection({
     <View>
       <View
         style={{
-          paddingLeft: 25,
-          paddingRight: 20,
-          marginBottom: 8,
+          paddingHorizontal: 12,
+          marginBottom: 6,
         }}
       >
         <Text
@@ -190,33 +190,34 @@ export default function AddressSection({
           {i18n.t('address')}
         </Text>
       </View>
-      <View
-        style={{
-          flexDirection: 'row',
-          marginHorizontal: 20,
-          marginBottom: 10,
-          padding: 3,
-          borderRadius: theme.numbers.borderRadiusSm + 3,
-          backgroundColor: theme.colors.background,
-          borderWidth: 1,
-          borderColor: theme.colors.border,
-          gap: 3,
-        }}
-      >
-        <ModeSegment
-          active={mode === 'search'}
-          icon={SearchIcon}
-          labelKey='searchAddress'
-          onPress={() => switchMode('search')}
-        />
-        <ModeSegment
-          active={mode === 'manual'}
-          icon={SquarePenIcon}
-          labelKey='enterManually'
-          onPress={() => switchMode('manual')}
-        />
-      </View>
-      <Section>
+      <Section style={{ overflow: 'visible' }}>
+        <View
+          style={{
+            flexDirection: 'row',
+            marginTop: 12,
+            marginHorizontal: 12,
+            marginBottom: 8,
+            padding: 3,
+            borderRadius: theme.numbers.borderRadiusSm + 3,
+            backgroundColor: theme.colors.background,
+            borderWidth: 1,
+            borderColor: theme.colors.border,
+            gap: 3,
+          }}
+        >
+          <ModeSegment
+            active={mode === 'search'}
+            icon={SearchIcon}
+            labelKey='searchAddress'
+            onPress={() => switchMode('search')}
+          />
+          <ModeSegment
+            active={mode === 'manual'}
+            icon={SquarePenIcon}
+            labelKey='enterManually'
+            onPress={() => switchMode('manual')}
+          />
+        </View>
         {mode === 'search' ? (
           <AddressAutocomplete
             onSelect={handleAddressSelect}
@@ -234,50 +235,63 @@ export default function AddressSection({
             <TextInputRow
               label={i18n.t('addressLine1')}
               ref={line1Input}
+              controlWidth='full'
               textInputProps={{
                 onSubmitEditing: () => line2Input.current?.focus(),
                 onChangeText: (val: string) => setLine1(val),
                 autoCapitalize: 'words',
                 value: contact.address?.line1 || '',
+                textAlign: 'left',
               }}
             />
             <TextInputRow
               label={i18n.t('addressLine2')}
               ref={line2Input}
+              controlWidth='full'
               textInputProps={{
                 onSubmitEditing: () => cityInput.current?.focus(),
                 onChangeText: (val: string) => setLine2(val),
                 value: contact.address?.line2 || '',
                 autoCapitalize: 'words',
+                textAlign: 'left',
               }}
             />
             <View
               style={{
                 flexDirection: 'row',
-                justifyContent: 'space-between',
+                gap: 10,
+                paddingHorizontal: 12,
               }}
             >
-              <View style={{ width: '50%' }}>
+              <View style={{ flex: 1 }}>
                 <TextInputRow
                   label={i18n.t('city')}
                   ref={cityInput}
+                  controlWidth='full'
+                  noHorizontalPadding
+                  style={{ flex: 1 }}
                   textInputProps={{
                     onSubmitEditing: () => stateInput.current?.focus(),
                     onChangeText: (val: string) => setCity(val),
                     autoCapitalize: 'words',
                     value: contact.address?.city || '',
+                    textAlign: 'left',
                   }}
                 />
               </View>
-              <View style={{ width: '50%' }}>
+              <View style={{ flex: 1 }}>
                 <TextInputRow
                   label={i18n.t('state')}
                   ref={stateInput}
+                  controlWidth='full'
+                  noHorizontalPadding
+                  style={{ flex: 1 }}
                   textInputProps={{
                     onSubmitEditing: () => zipInput.current?.focus(),
                     onChangeText: (val: string) => setState(val),
                     value: contact.address?.state || '',
                     autoCapitalize: 'words',
+                    textAlign: 'left',
                   }}
                 />
               </View>
@@ -285,30 +299,39 @@ export default function AddressSection({
             <View
               style={{
                 flexDirection: 'row',
-                justifyContent: 'space-between',
+                gap: 10,
+                paddingHorizontal: 12,
               }}
             >
-              <View style={{ width: '50%' }}>
+              <View style={{ flex: 1 }}>
                 <TextInputRow
                   label={i18n.t('zip')}
                   ref={zipInput}
+                  controlWidth='full'
+                  noHorizontalPadding
+                  style={{ flex: 1 }}
                   textInputProps={{
                     onSubmitEditing: () => countryInput.current?.focus(),
                     onChangeText: (val: string) => setZip(val),
                     value: contact.address?.zip || '',
                     inputMode: 'numeric',
+                    textAlign: 'left',
                   }}
                   lastInSection
                 />
               </View>
-              <View style={{ width: '50%' }}>
+              <View style={{ flex: 1 }}>
                 <TextInputRow
                   label={i18n.t('country')}
                   ref={countryInput}
+                  controlWidth='full'
+                  noHorizontalPadding
+                  style={{ flex: 1 }}
                   textInputProps={{
                     onChangeText: (val: string) => setCountry(val),
                     value: contact.address?.country || '',
                     autoCapitalize: 'words',
+                    textAlign: 'left',
                   }}
                   lastInSection
                 />
@@ -318,10 +341,9 @@ export default function AddressSection({
         )}
         <View
           style={{
-            marginTop: 8,
-            marginRight: 20,
+            marginTop: 4,
+            marginHorizontal: 12,
             borderTopWidth: 1,
-            borderStyle: 'dashed',
             borderColor: theme.colors.border,
           }}
         />
@@ -330,7 +352,7 @@ export default function AddressSection({
       {prefill.enabled && !!keysSameAsPrefill().length && !hasCleared && (
         <View
           style={{
-            marginHorizontal: 20,
+            marginHorizontal: 12,
             marginTop: 8,
             flexDirection: 'row',
             alignItems: 'center',

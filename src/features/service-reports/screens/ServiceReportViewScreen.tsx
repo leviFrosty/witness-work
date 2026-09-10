@@ -884,10 +884,20 @@ const PaperSheet = ({
                   fontSize: 15,
                   color: PAPER_INK_SOFT,
                   lineHeight: 21,
-                  minHeight: 48,
-                  paddingTop: 0,
-                  paddingBottom: 0,
+                  width: '100%',
+                  minHeight: 80,
+                  paddingHorizontal: 10,
+                  paddingTop: 8,
+                  paddingBottom: 8,
+                  borderWidth: 1,
+                  borderColor: PAPER_LINE,
+                  borderRadius: 8,
+                  backgroundColor: PAPER_BG,
                 }}
+                borderWidth={1}
+                borderColor={PAPER_LINE}
+                borderRadius={8}
+                backgroundColor={PAPER_BG}
               />
             ) : (
               <HandwrittenNote text={notes} fontFamily={handwritingFont} />

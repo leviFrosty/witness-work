@@ -766,6 +766,13 @@
       "c8": "O estado de Apoiante passa a acompanhar o seu Apple ID entre dispositivos, as utilizações do Scribe AI renovam-se segundo um calendário e o ecrã de Apoiante foi simplificado.",
       "c9": "Corrigidos registos de tempo e planos que apareciam no dia errado em fusos horários UTC+12 ou superiores, bem como datas erradas ao fim da noite a oeste de UTC. Corrigidos também os marcadores do mapa que abriam o contacto errado depois de deslizar o carrossel de cartões. Por predefinição, a Transferência de Tempo mantém agora o Tempo de Crédito no mês original.",
       "c10": "A opção Crédito nas categorias está agora disponível para todas as funções baseadas em horas. Foi também corrigida uma falha rara ao fechar um seletor, restauradas as estrelas dos favoritos e o ícone de estudo bíblico do mês atual, feita a atualização para o Expo SDK 57 e reduzido o tamanho da aplicação."
+    },
+    "1420": {
+      "c1": "As novas vistas do iPad mostram contactos, mapas e programações ao lado dos respetivos detalhes.",
+      "c2": "Personalize os campos dos contactos: reordene telefone, e-mail e campos personalizados, oculte telefone ou e-mail e elimine permanentemente campos personalizados arquivados.",
+      "c3": "Veja o tempo registado por categoria ao longo do ano de serviço e ajuste o limite mensal de crédito de horas nas preferências dos tipos de publicador que permitem esse ajuste.",
+      "c4": "Os envios para o Hourglass separam agora o tempo de pregação do crédito de horas.",
+      "c5": "O Assistente do calendário está novamente disponível, com controlos nas preferências da programação."
     }
   },
   "installed": "Instalado",
@@ -922,7 +929,7 @@
   "default": "Padrão",
   "appearance": "Aparência",
   "fontSizeOffset": "Deslocamento do tamanho da fonte",
-  "thisGloballyOffsetsTextSize": "É recomendável alterar o tamanho do texto do seu dispositivo se você estiver com problemas para ler o aplicativo. Esta configuração afetará o tamanho da fonte de todo o aplicativo.",
+  "thisGloballyOffsetsTextSize": "Para obter os melhores resultados, ajuste o tamanho do texto nas Definições do iOS. Este controlo altera o tamanho do texto apenas no WitnessWork.",
   "planSchedule": "Planejar Programação",
   "recurring": "Recorrente",
   "planSchedule_description": "Programar seus dias de serviço ajudará você a visualizar seu mês de serviço. Isso é especialmente útil para aqueles que têm uma requisito mensal.",
@@ -1016,7 +1023,7 @@
   "annualSchedule": "Cronograma anual",
   "youHaveCreditOverage": "Você tem um excedente de crédito no valor de {{value}} horas",
   "credit": "Crédito",
-  "credit_description": "O crédito será contabilizado no mês se o seu tempo padrão mais crédito não exceder 55 horas.",
+  "credit_description": "Marca esta categoria como crédito de horas. O crédito de horas conta para o total mensal de acordo com o limite definido nas preferências do publicador.",
   "creditOverageInTheAmountOf": "Crédito excedente no valor de {{count}} horas.",
   "overrideCreditLimit": "Anular o limite de crédito",
   "overrideCreditLimit_description": "Por defeito, as horas de crédito estão limitadas a um total de 55 horas quando combinadas com o horário normal. Os pioneiros especiais e os superintendentes de circuito não têm limite por defeito.",
@@ -1184,7 +1191,7 @@
   "thisWeek": "Esta semana",
   "viewFullSchedule": "Ver calendário completo",
   "categoryBreakdown": "Repartição de categorias",
-  "categoryBreakdown_description": "Como é que as suas horas estão distribuídas pelas categorias de serviço este mês.",
+  "categoryBreakdown_description": "Tempo por categoria neste mês.",
   "aboutCreditCap": "Sobre o seu limite de crédito",
   "aboutCreditCap_description": "O seu limite de crédito limita a quantidade de tempo de crédito que conta para o seu objetivo mensal. As horas registadas para além do limite continuam a ser monitorizadas, mas não reduzem as horas que precisa de atingir.",
   "Progress": "Progresso",
@@ -1192,7 +1199,7 @@
   "highlightGoalTitle": "Acompanhe cada hora em direção ao seu objetivo",
   "highlightGoalDesc": "Cronómetro, etiquetas e relatórios - construídos em torno do seu objetivo.",
   "highlightCheckTitle": "Marque o seu tempo numa torneira",
-  "highlightCheckDesc": "Uma simples caixa de verificação mensal - não é necessário estar a ver o relógio.",
+  "highlightCheckDesc": "Registe a sua atividade mensal sem contar as horas.",
   "highlightConversationsTitle": "Conversas que não se perdem",
   "highlightConversationsDesc": "Capture cada visita de retorno e continue de onde parou.",
   "highlightReportTitle": "O seu mês num relance",
@@ -1310,7 +1317,7 @@
   "profileEditDesc": "Actualize o seu nome ou avatar em qualquer altura. Tudo fica no seu dispositivo.",
   "sync": "Sincronizar",
   "iCloudSync": "sincronização iCloud",
-  "iCloudSync_description": "Mantenha os seus contactos, conversas, relatórios e preferências sincronizados no seu iPhone e iPad utilizando a sua conta iCloud. Os dados permanecem no seu contentor privado - nós nunca os vemos.",
+  "iCloudSync_description": "Sincroniza contactos, visitas, relatórios de serviço e preferências entre o seu iPhone e iPad através da sua conta iCloud.",
   "iCloudEnableLabel": "Sincronizar com o iCloud",
   "iCloudStatusLabel": "Estado",
   "iCloudStatusDisabled": "Desligado",
@@ -1493,7 +1500,7 @@
   "timeRollover_deletePair_title": "Apagar o par de rollover?",
   "timeRollover_deletePair_description": "Isto também irá apagar a entrada correspondente no outro mês para que a matemática se mantenha equilibrada.",
   "autoRollover": "Prolongamento automático de tempo",
-  "autoRollover_description": "Cada mês termina frequentemente com alguns minutos extra que não fazem uma hora limpa - digamos 34 horas e 24 minutos. Com esta opção activada, esses minutos extra são transferidos para o primeiro dia do mês seguinte, para que cada relatório se mantenha com horas completas.\n\nVerá duas entradas correspondentes identificadas como rollover: uma no último dia do mês anterior, subtraindo os minutos, e outra no primeiro dia do novo mês, adicionando-os novamente. Os dois anulam-se sempre - não há tempo ganho ou perdido.\n\nQuando esta opção está desactivada, receberá uma mensagem única no início de cada novo mês a perguntar se pretende fazer o rollover.\n\nPara os pioneiros que seguem um objetivo anual, o rollover nunca ultrapassa o limite do ano de serviço de setembro - cada ciclo anual começa com horas inteiras.",
+  "autoRollover_description": "Transfere automaticamente os minutos restantes para o mês seguinte, mantendo os relatórios de serviço em horas inteiras. Quando desativado, pergunta uma vez no início de cada mês. Com um alvo anual, o tempo nunca é transferido para um novo ano de serviço.",
   "Contacts": "Contactos",
   "contacts_screen_title": "Contactos",
   "contacts_searchHint": "Pesquisar nomes, notas, campos personalizados..",
@@ -1956,7 +1963,7 @@
     "page": "Página {{page}}",
     "morePages": "Mais páginas"
   },
-  "defaultExportMethod": "Método de envio predefinido",
+  "defaultExportMethod": "Método de envio",
   "howDoYouSubmitYourReport": "Como envia o seu relatório?",
   "howDoYouSubmitYourReport_description": "No fim de cada mês, o WitnessWork lembra-o de enviar o relatório e permite fazê-lo com um toque através do seu método preferido. Pode alterá-lo a qualquer momento nas Preferências.",
   "submitMonthsReport": "Enviar relatório de {{month}}",
@@ -1975,7 +1982,7 @@
   "advanced": "Avançado",
   "prefilledFromLastContact_short": "Do último contacto — edite para adicionar um vizinho.",
   "autoFillAddressFromLastContact": "Preencher morada a partir do último contacto",
-  "autoFillAddressFromLastContact_description": "Ao adicionar vários contactos na mesma rua, a morada do contacto anterior é reutilizada para que só tenha de alterar o número da porta. É reposta todos os dias.",
+  "autoFillAddressFromLastContact_description": "Reutiliza a morada do contacto anterior para que só tenha de alterar o número da porta. É reposto diariamente.",
   "pinOnMap": "Marcar no mapa",
   "pinOnMap_descriptionAuto": "Obtida a partir da morada acima. Toque para definir um marcador personalizado.",
   "pinOnMap_customSet": "Marcador personalizado definido.",
@@ -2065,7 +2072,7 @@
   "contactHeroBackgroundColor": "Fundo",
   "contactHeroBackgroundColorHelp": "Aplique uma tonalidade à parte superior do ecrã de detalhes deste contacto, independentemente da cor do avatar.",
   "beta": "Beta",
-  "iCloudBetaNotice": "A Sincronização com o iCloud está em versão beta. Deve ser fiável no uso diário, mas poderá encontrar algumas imperfeições — comunique qualquer comportamento inesperado.",
+  "iCloudBetaNotice": "A sincronização iCloud está em fase beta; comunique qualquer comportamento inesperado.",
   "yourPlanTrackTimeCheckboxHeader": "A sua atividade mensal, registada",
   "yourPlanCheckOffMonthLabel": "Serviço este mês",
   "yourPlanCheckOffMonthHint": "Toque para assinalar quando sair",
@@ -2100,7 +2107,7 @@
   "timeRollover_creditExcluded": "A sua hora parcial inclui {{minutes}} min de Tempo de Crédito. O Tempo de Crédito não é elegível para transferência.",
   "timeRollover_creditOnlyNotice": "A hora parcial do mês passado é Tempo de Crédito, que não é elegível para transferência.",
   "rolloverIncludesCredit": "Transferir Tempo de Crédito",
-  "rolloverIncludesCredit_description": "Por predefinição, só o tempo de serviço normal é transferido — as horas parciais de Tempo de Crédito (como LDC ou Betel) ficam no respetivo mês. Ative esta opção para incluir os minutos de crédito no montante transferido.",
+  "rolloverIncludesCredit_description": "Inclui o crédito de horas no cálculo dos minutos restantes a transferir. Quando desativado, apenas o tempo de pregação regular é incluído.",
   "contacts_stalenessInfo_title": "O que significam as cores",
   "contacts_stalenessInfo_subtitle": "Com base na visita mais recente. As visitas em que ninguém estava em casa também contam.",
   "contacts_stalenessCriteria_never": "Ainda não há visitas registadas",
@@ -2297,7 +2304,8 @@
     "resetFutureGoals": "Repor objetivos futuros",
     "explanation": "Apenas {{month}} é alterado. O Objetivo Mensal habitual e o Objetivo Anual permanecem iguais.",
     "explanationWithoutAnnualGoal": "Apenas {{month}} é alterado. O Objetivo Mensal habitual permanece igual.",
-    "useRegularGoal": "Usar o objetivo habitual de {{goal}}"
+    "useRegularGoal": "Usar o objetivo habitual de {{goal}}",
+    "regularGoalDescription": "Baseado no tipo de publicador selecionado, incluindo qualquer alvo mensal personalizado definido nas Preferências."
   },
   "projectedTotal": {
     "header": "Total projetado",
@@ -2333,5 +2341,20 @@
         "unreachable_gap": "As horas planeadas deixam o total em **{{projected}}**. Faltam **{{gap}}** para o objetivo — será difícil chegar lá."
       }
     }
-  }
+  },
+  "infoPopoverLabel": "Acerca de %{title}",
+  "creditLimitNoLimitHint": "Horas · 0 = Sem limite",
+  "iCloudSync_summary": "Sincronize o seu iPhone e iPad.",
+  "moveUp": "Mover para cima",
+  "moveDown": "Mover para baixo",
+  "regionAndFormats": "Região e formatos",
+  "information": "Informações",
+  "addCustomFields": "Adicionar campos personalizados",
+  "permanentlyDeleteCustomField_warning": "Eliminar permanentemente «{{label}}» remove este campo e os seus valores guardados de todos os contactos. Esta ação não pode ser anulada.",
+  "contactFields": "Campos dos contactos",
+  "manageContactFields": "Gerir campos",
+  "monthlyMaximumCreditHours": "Limite mensal de crédito de horas",
+  "monthlyMaximumCreditHours_description": "O crédito de horas conta até o total mensal combinado atingir este limite. O tempo de pregação regular conta sempre.",
+  "maximumHours": "Máximo de horas",
+  "categoryBreakdown_serviceYear_description": "Tempo registado por categoria, antes dos limites de crédito de horas."
 }

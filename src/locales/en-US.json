@@ -866,6 +866,13 @@
       "c8": "Supporter status now follows your Apple ID across devices, Scribe AI allowances roll over on a schedule, and the Supporter screen has been simplified.",
       "c9": "Fixed time entries and plans landing on the wrong day in time zones at UTC+12 and beyond, plus wrong-day dates late in the evening west of UTC. Fixed map pins opening the wrong contact after swiping the card carousel. Time rollover now keeps Credit Time in its original month by default.",
       "c10": "The Credit toggle on categories is now available to every hours-based role. Also fixed a rare crash when closing a picker, restored favorite stars and the current-month Bible study icon, updated to Expo SDK 57, and trimmed the app size."
+    },
+    "1420": {
+      "c1": "New iPad layouts show contacts, maps, and schedules alongside their details.",
+      "c2": "Customize contact fields: reorder phone, email, and custom fields, hide phone or email, and permanently delete archived custom fields.",
+      "c3": "See your logged time by category across the Service Year, and adjust the monthly credit limit in supported Publisher preferences.",
+      "c4": "Hourglass submissions now separate preaching time from Credit Time.",
+      "c5": "The calendar Assistant is available again, with controls in Schedule preferences."
     }
   },
   "installed": "Installed",

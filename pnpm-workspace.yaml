@@ -10,6 +10,7 @@ allowBuilds:
   '@shopify/react-native-skia': true
   esbuild: true
   protobufjs: false
+  react-native-enriched-markdown: true
   unrs-resolver: true
 onlyBuiltDependencies:
   - '@sentry/cli'

@@ -12,6 +12,7 @@ import * as Sentry from '@sentry/react-native'
 import { logger } from '@/lib/logger'
 import { isOfflineError } from '@/lib/offlineError'
 import { getOrCreateAccountId } from '@/lib/account'
+import { beginStartupWork } from '@/lib/deferUntilNotBlocking'
 
 interface Props {}
 
@@ -44,6 +45,7 @@ const CustomerProvider: React.FC<PropsWithChildren<Props>> = ({ children }) => {
   useEffect(() => {
     if (hasInitialized.current) return
     hasInitialized.current = true
+    const finishStartup = beginStartupWork()
 
     // `configure` returns void synchronously; `setLogLevel` is fire-and-forget.
     // Flip `ready` immediately after so downstream screens can fetch offerings.
@@ -60,6 +62,7 @@ const CustomerProvider: React.FC<PropsWithChildren<Props>> = ({ children }) => {
       )
       logger.error(error.message)
       Sentry.captureException(error)
+      finishStartup()
       return
     }
 
@@ -94,6 +97,7 @@ const CustomerProvider: React.FC<PropsWithChildren<Props>> = ({ children }) => {
       // will fail, but the rest of the app should still load.
       logger.error('[CustomerProvider] Purchases.configure threw', error)
       Sentry.captureException(error)
+      finishStartup()
       return
     }
 
@@ -119,20 +123,22 @@ const CustomerProvider: React.FC<PropsWithChildren<Props>> = ({ children }) => {
         })
       : Purchases.getCustomerInfo().then(seedCustomer)
 
-    identify.catch((error) => {
-      if (accountId && !isOfflineError(error)) {
-        logger.warn('[CustomerProvider] Purchases.logIn failed', error)
-        Sentry.captureException(error)
-      } else {
-        logger.warn('[CustomerProvider] initial customer info failed', error)
-      }
-      // Last-resort fall back to whatever CustomerInfo the SDK has cached.
-      if (accountId) {
-        Purchases.getCustomerInfo()
-          .then(seedCustomer)
-          .catch(() => {})
-      }
-    })
+    identify
+      .catch(async (error) => {
+        if (accountId && !isOfflineError(error)) {
+          logger.warn('[CustomerProvider] Purchases.logIn failed', error)
+          Sentry.captureException(error)
+        } else {
+          logger.warn('[CustomerProvider] initial customer info failed', error)
+        }
+        // Last-resort fall back to whatever CustomerInfo the SDK has cached.
+        if (accountId) {
+          await Purchases.getCustomerInfo()
+            .then(seedCustomer)
+            .catch(() => {})
+        }
+      })
+      .finally(finishStartup)
   }, [])
 
   const hasPurchasedBefore = useMemo(

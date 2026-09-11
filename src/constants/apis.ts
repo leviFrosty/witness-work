@@ -3,8 +3,11 @@ const BASE_URL = 'https://ww-proxy.leviwilkerson.com'
 // Notes Import may target a separate (dev/staging) worker so the App Attest
 // dev-bypass path never touches production. Falls back to the prod proxy.
 const NOTES_BASE_URL = process.env.EXPO_PUBLIC_NOTES_IMPORT_BASE_URL || BASE_URL
+const ANNOUNCEMENTS_BASE_URL =
+  process.env.EXPO_PUBLIC_ANNOUNCEMENTS_BASE_URL || NOTES_BASE_URL
 
 export default {
+  announcements: `${ANNOUNCEMENTS_BASE_URL.replace(/\/$/, '')}/announcements/current.json`,
   geocode: `${BASE_URL}/geocode`,
   autocomplete: `${BASE_URL}/autocomplete`,
   // Unauthenticated worker health probe ({ status, versionId, deployedAt }) —

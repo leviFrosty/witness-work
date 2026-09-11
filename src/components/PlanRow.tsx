@@ -228,7 +228,7 @@ const PlanRow = (props: {
             recurring={isRecurring}
             countingStatus={countingStatus}
           />
-          <View style={{ flex: 1, gap: 8 }}>
+          <View style={{ flex: 1, minWidth: 0, gap: 8 }}>
             <View
               style={{
                 flexDirection: 'row',
@@ -256,8 +256,10 @@ const PlanRow = (props: {
                 style={{
                   color: theme.colors.textAlt,
                   fontSize: theme.fontSize('sm'),
+                  flexShrink: 1,
+                  maxWidth: '45%',
+                  textAlign: 'right',
                 }}
-                numberOfLines={1}
               >
                 {formattedDuration.formatted}
               </Text>

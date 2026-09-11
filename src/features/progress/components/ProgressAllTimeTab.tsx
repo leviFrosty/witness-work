@@ -1,9 +1,10 @@
 import { useMemo } from 'react'
 import { View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
+import AdaptiveSplitScrollView from '@/components/ui/layout/AdaptiveSplitScrollView'
 
 import useServiceReport from '@/stores/serviceReport'
+import useAdaptiveLayout from '@/hooks/useAdaptiveLayout'
 import { getLifetimeHours } from '@/lib/serviceReport'
 import { TimeEntry } from '@/types/timeEntry'
 import i18n from '@/lib/locales'
@@ -29,6 +30,7 @@ interface ProgressAllTimeTabProps {
 
 const ProgressAllTimeTab = ({ onYearPress }: ProgressAllTimeTabProps) => {
   const insets = useSafeAreaInsets()
+  const { isWide, hasSidebar } = useAdaptiveLayout()
   const { serviceReports } = useServiceReport()
 
   const flat = useMemo<TimeEntry[]>(() => {
@@ -69,18 +71,17 @@ const ProgressAllTimeTab = ({ onYearPress }: ProgressAllTimeTabProps) => {
   }
 
   return (
-    <KeyboardAwareScrollView
-      contentContainerStyle={{
-        paddingTop: 15,
-        paddingBottom: insets.bottom + 100,
-        gap: 24,
-      }}
-    >
-      <View style={{ paddingHorizontal: 15 }}>
-        <LifetimeHoursCard />
-      </View>
-      <YearByYearList onYearPress={onYearPress} />
-    </KeyboardAwareScrollView>
+    <AdaptiveSplitScrollView
+      leadingFraction={0.42}
+      paddingBottom={insets.bottom + (hasSidebar ? 30 : 100)}
+      compactPaddingHorizontal={0}
+      leading={
+        <View style={{ paddingHorizontal: isWide ? 0 : 15 }}>
+          <LifetimeHoursCard />
+        </View>
+      }
+      trailing={<YearByYearList onYearPress={onYearPress} />}
+    />
   )
 }
 

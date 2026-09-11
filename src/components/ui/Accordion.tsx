@@ -62,14 +62,23 @@ const Accordion: React.FC<PropsWithChildren<Props>> = ({
 
   return (
     <Card {...props}>
-      <Button style={{ gap: expanded ? 20 : 0 }} onPress={handleToggleExpand}>
+      <Button
+        accessibilityRole='button'
+        accessibilityState={{ expanded }}
+        style={{ gap: expanded ? 20 : 0 }}
+        onPress={handleToggleExpand}
+      >
         <XView style={{ justifyContent: 'space-between' }}>
           {header}
           <Animated.View style={animatedStyle}>
             <IconButton icon={ChevronUpIcon} color={theme.colors.text} />
           </Animated.View>
         </XView>
-        <Animated.View style={[{ height: expanded ? 'auto' : 0 }, [viewStyle]]}>
+        <Animated.View
+          accessibilityElementsHidden={!expanded}
+          importantForAccessibility={expanded ? 'auto' : 'no-hide-descendants'}
+          style={[{ height: expanded ? 'auto' : 0 }, [viewStyle]]}
+        >
           {children}
         </Animated.View>
       </Button>

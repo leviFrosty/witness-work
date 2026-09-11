@@ -274,6 +274,9 @@ export default function MapOnboarding() {
       style={{
         flexGrow: 1,
         paddingHorizontal: 20,
+        width: '100%',
+        maxWidth: 600,
+        alignSelf: 'center',
         paddingTop: insets.top + 60,
         paddingBottom: tabBarHeight + 20,
       }}

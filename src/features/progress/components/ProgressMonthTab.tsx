@@ -1,9 +1,10 @@
 import React, { useMemo } from 'react'
 import { View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
+import AdaptiveSplitScrollView from '@/components/ui/layout/AdaptiveSplitScrollView'
 
 import useServiceReport from '@/stores/serviceReport'
+import useAdaptiveLayout from '@/hooks/useAdaptiveLayout'
 import { getMonthsReports } from '@/lib/serviceReport'
 import type { ProjectedTotalScope } from '@/lib/projectedTotal'
 
@@ -23,7 +24,8 @@ interface ProgressMonthTabProps {
  * Month tab for `ProgressScreen`. Renders the full `MonthSummary` card
  * (categories, hero stats, "+ Add Time") followed by a flat "ALL DAYS" list of
  * every day in the month (most-recent first; current-month caps at today).
- * Wraps its own `KeyboardAwareScrollView` — the parent shell does not scroll.
+ * Summary and records scroll independently in wide windows and together in
+ * compact windows.
  */
 const ProgressMonthTab = ({
   month,
@@ -32,6 +34,7 @@ const ProgressMonthTab = ({
   onSwipeBack,
 }: ProgressMonthTabProps) => {
   const insets = useSafeAreaInsets()
+  const { isWide, hasSidebar } = useAdaptiveLayout()
   const serviceReports = useServiceReport((s) => s.serviceReports)
 
   const thisMonthsReports = useMemo(
@@ -52,27 +55,30 @@ const ProgressMonthTab = ({
       onSwipeBack={onSwipeBack}
       style={{ flex: 1 }}
     >
-      <KeyboardAwareScrollView
-        contentContainerStyle={{
-          paddingTop: 15,
-          paddingBottom: insets.bottom + 100,
-          gap: 24,
-        }}
-      >
-        <View style={{ paddingHorizontal: 15, paddingBottom: 20, gap: 12 }}>
-          <MonthReport
-            month={month}
-            year={year}
-            monthsReports={thisMonthsReports}
-            showReportButton
-            hideTitle
-            allowGoalEditing
-          />
-          <ProjectedTotalCard scope={scope} />
-        </View>
-
-        <AllDaysList month={month} year={year} />
-      </KeyboardAwareScrollView>
+      <AdaptiveSplitScrollView
+        paddingBottom={insets.bottom + (hasSidebar ? 30 : 100)}
+        compactPaddingHorizontal={0}
+        leading={
+          <View
+            style={{
+              paddingHorizontal: isWide ? 0 : 15,
+              paddingBottom: 20,
+              gap: 12,
+            }}
+          >
+            <MonthReport
+              month={month}
+              year={year}
+              monthsReports={thisMonthsReports}
+              showReportButton
+              hideTitle
+              allowGoalEditing
+            />
+            <ProjectedTotalCard scope={scope} />
+          </View>
+        }
+        trailing={<AllDaysList month={month} year={year} />}
+      />
     </SwipeMonthNavigator>
   )
 }

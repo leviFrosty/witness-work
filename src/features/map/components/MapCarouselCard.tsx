@@ -27,12 +27,18 @@ import { RootStackNavigation } from '@/types/rootStack'
 import { ContactMarker } from '@/features/map/types/map'
 
 interface Props {
+  inspector?: boolean
   contact: ContactMarker
   index: ConversationIndex
   setSheet: React.Dispatch<React.SetStateAction<MapShareSheet>>
 }
 
-const MapCarouselCard = ({ contact, index, setSheet }: Props) => {
+const MapCarouselCard = ({
+  contact,
+  index,
+  setSheet,
+  inspector = false,
+}: Props) => {
   const theme = useTheme()
   const navigation = useNavigation<RootStackNavigation>()
   const locales = getLocales()
@@ -62,6 +68,7 @@ const MapCarouselCard = ({ contact, index, setSheet }: Props) => {
 
   return (
     <Button
+      noTransform
       onPress={() => navigation.navigate('Contact Details', { id: contact.id })}
       variant='glass'
       style={{
@@ -70,10 +77,9 @@ const MapCarouselCard = ({ contact, index, setSheet }: Props) => {
         borderWidth: 0,
         flexDirection: 'column',
         alignItems: 'stretch',
-        paddingHorizontal: 15,
-        paddingVertical: 15,
-        gap: 5,
-        flex: 1,
+        padding: 12,
+        gap: 4,
+        flex: inspector ? undefined : 1,
       }}
     >
       <View
@@ -94,12 +100,13 @@ const MapCarouselCard = ({ contact, index, setSheet }: Props) => {
           <Avatar
             avatar={contact.avatar ?? { type: 'none', value: '' }}
             name={contact.name}
-            size={40}
+            size={36}
             background={contact.avatarBackground ?? undefined}
           />
           <Text
+            numberOfLines={2}
             style={{
-              fontSize: theme.fontSize('xl'),
+              fontSize: theme.fontSize('lg'),
               fontFamily: theme.fonts.bold,
               flexShrink: 1,
             }}
@@ -113,18 +120,17 @@ const MapCarouselCard = ({ contact, index, setSheet }: Props) => {
           flexDirection: 'row',
           alignItems: 'center',
           gap: 5,
-          flexGrow: 1,
         }}
       >
         <View
           style={{
-            width: 12,
-            height: 12,
+            width: 8,
+            height: 8,
             borderRadius: 100,
             backgroundColor: contact.pinColor,
           }}
         />
-        <Text>
+        <Text style={{ fontSize: theme.fontSize('sm'), flexShrink: 1 }}>
           {mostRecentDate
             ? formatRelative(mostRecentDate)
             : i18n.t('noConversationYet')}
@@ -134,6 +140,7 @@ const MapCarouselCard = ({ contact, index, setSheet }: Props) => {
         <Text
           style={{
             color: theme.colors.textAlt,
+            fontSize: theme.fontSize('sm'),
           }}
           numberOfLines={2}
         >
@@ -144,17 +151,19 @@ const MapCarouselCard = ({ contact, index, setSheet }: Props) => {
         style={{
           flexDirection: 'row',
           alignItems: 'center',
-          gap: 5,
-          marginTop: 10,
+          gap: 6,
+          marginTop: 8,
         }}
       >
         <Button
+          noTransform
+          hitSlop={0}
           onPress={() => navigateTo(contact, defaultNavigationMapProvider)}
           style={{
-            paddingHorizontal: 20,
-            paddingVertical: 20,
-            flexGrow: 1,
-            gap: 10,
+            paddingHorizontal: 10,
+            minHeight: 48,
+            flex: 1,
+            gap: 8,
             flexDirection: 'row',
             alignItems: 'center',
             justifyContent: 'center',
@@ -164,7 +173,7 @@ const MapCarouselCard = ({ contact, index, setSheet }: Props) => {
         >
           <IconButton
             icon={RouteIcon}
-            size='xl'
+            size={18}
             iconStyle={{
               color: theme.colors.textInverse,
             }}
@@ -172,7 +181,10 @@ const MapCarouselCard = ({ contact, index, setSheet }: Props) => {
           <Text
             style={{
               color: theme.colors.textInverse,
-              fontFamily: theme.fonts.bold,
+              fontFamily: theme.fonts.semiBold,
+              fontSize: theme.fontSize('sm'),
+              flexShrink: 1,
+              textAlign: 'center',
             }}
           >
             {i18n.t('navigate')}
@@ -180,23 +192,43 @@ const MapCarouselCard = ({ contact, index, setSheet }: Props) => {
         </Button>
         {contact.phone && (
           <Button
+            noTransform
+            hitSlop={0}
+            accessibilityLabel={i18n.t('call')}
             onPress={() => handleCall(contact, formatted, navigation)}
             variant='outline'
-            style={{ gap: 10, paddingHorizontal: 20 }}
+            style={{
+              width: 44,
+              height: 48,
+              padding: 0,
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
           >
             <IconButton icon={PhoneIcon} />
           </Button>
         )}
         {contact.phone && (
           <Button
+            noTransform
+            hitSlop={0}
+            accessibilityLabel={i18n.t('message')}
             onPress={() => handleMessage(contact, formatted, navigation)}
             variant='outline'
-            style={{ gap: 10, paddingHorizontal: 20 }}
+            style={{
+              width: 44,
+              height: 48,
+              padding: 0,
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
           >
             <IconButton icon={MessageCircleIcon} />
           </Button>
         )}
         <Button
+          noTransform
+          hitSlop={0}
           accessibilityLabel={i18n.t('share')}
           onPress={() =>
             setSheet({
@@ -206,7 +238,13 @@ const MapCarouselCard = ({ contact, index, setSheet }: Props) => {
             })
           }
           variant='outline'
-          style={{ gap: 10, paddingHorizontal: 20 }}
+          style={{
+            width: 44,
+            height: 48,
+            padding: 0,
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
         >
           <IconButton icon={ShareIcon} />
         </Button>

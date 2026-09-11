@@ -22,14 +22,17 @@ import { useNotesImportManager } from '@/features/notes-import/hooks/useNotesImp
 import { unviewedReadyImportCount } from '@/features/notes-import/lib/notesImportLedger'
 import NotesImportReadyDot from '@/features/notes-import/components/NotesImportReadyDot'
 import i18n from '@/lib/locales'
+import useAdaptiveLayout from '@/hooks/useAdaptiveLayout'
+
+const Drawer = createDrawerNavigator()
 
 const DrawerNavigator = () => {
-  const Drawer = createDrawerNavigator()
   const { hasPurchasedBefore } = useCustomer()
   const { isSupporter } = useIsSupporter()
   const { hideDonateHeart, set } = usePreferences()
   const theme = useTheme()
   const { width } = useWindowDimensions()
+  const { hasSidebar } = useAdaptiveLayout()
   const notesImportReadyCount = useNotesImportManager((s) =>
     unviewedReadyImportCount(s.entries)
   )
@@ -60,31 +63,38 @@ const DrawerNavigator = () => {
   return (
     <Drawer.Navigator
       screenOptions={{
+        // Keep the same navigator across resizing so Home retains its state.
+        // The wide layout has no drawer surface; Settings lives in the sidebar.
+        drawerType: hasSidebar ? 'permanent' : 'front',
+        swipeEnabled: !hasSidebar,
         drawerStyle: {
-          width: Math.min(width * 0.88, 380),
+          width: hasSidebar ? 0 : Math.min(width * 0.88, 380),
           backgroundColor: theme.colors.background,
         },
         header: ({ navigation }) => (
           <Header
+            buttonType={hasSidebar ? 'none' : undefined}
             leftElement={
-              <View style={{ position: 'relative' }}>
-                <IconButton
-                  icon={MenuIcon}
-                  size='xl'
-                  hitSlop={24}
-                  color={theme.colors.text}
-                  accessibilityLabel={
-                    notesImportReadyCount > 0
-                      ? `${i18n.t('settings')}. ${i18n.t('notesImport_readyCount', { count: notesImportReadyCount })}.`
-                      : i18n.t('settings')
-                  }
-                  onPress={() => navigation.toggleDrawer()}
-                />
-                <NotesImportReadyDot
-                  visible={notesImportReadyCount > 0}
-                  style={{ position: 'absolute', top: -2, right: -3 }}
-                />
-              </View>
+              hasSidebar ? undefined : (
+                <View style={{ position: 'relative' }}>
+                  <IconButton
+                    icon={MenuIcon}
+                    size='xl'
+                    hitSlop={24}
+                    color={theme.colors.text}
+                    accessibilityLabel={
+                      notesImportReadyCount > 0
+                        ? `${i18n.t('settings')}. ${i18n.t('notesImport_readyCount', { count: notesImportReadyCount })}.`
+                        : i18n.t('settings')
+                    }
+                    onPress={() => navigation.toggleDrawer()}
+                  />
+                  <NotesImportReadyDot
+                    visible={notesImportReadyCount > 0}
+                    style={{ position: 'absolute', top: -2, right: -3 }}
+                  />
+                </View>
+              )
             }
             onLongPressTitle={onLongPressTitle}
             rightElement={
@@ -126,7 +136,7 @@ const DrawerNavigator = () => {
           />
         ),
       }}
-      drawerContent={SettingsScreen}
+      drawerContent={(props) => <SettingsScreen {...props} />}
       initialRouteName='Dashboard'
     >
       <Drawer.Screen name='Dashboard' component={HomeScreen} />

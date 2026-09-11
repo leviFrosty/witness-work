@@ -18,7 +18,7 @@ import useTheme from '@/contexts/theme'
 import useConversations from '@/stores/conversationStore'
 import { filterActivesContacts } from '@/lib/dismissedContacts'
 import {
-  Dimensions,
+  useWindowDimensions,
   Pressable,
   StyleSheet,
   TextInput,
@@ -65,6 +65,10 @@ import {
   resolveCarouselSnapContact,
 } from '@/features/map/lib/mapCarousel'
 import { addressToString, coordinateAsString } from '@/lib/address'
+import useAdaptiveLayout from '@/hooks/useAdaptiveLayout'
+import MapContactInspector, {
+  type MapContactRowRenderer,
+} from '@/features/map/components/MapContactInspector'
 
 const liquidGlass = isLiquidGlassAvailable()
 
@@ -82,6 +86,7 @@ const CAROUSEL_ANIMATION = {
 }
 
 interface FullMapViewProps {
+  renderContactRow: MapContactRowRenderer
   contactMarkers: ContactMarker[]
   activeContactCount: number
   conversationIndex: ConversationIndex
@@ -91,9 +96,19 @@ const FullMapView = ({
   contactMarkers,
   activeContactCount,
   conversationIndex,
+  renderContactRow,
 }: FullMapViewProps) => {
   const navigation = useNavigation<HomeTabStackNavigation>()
-  const { width, height } = Dimensions.get('window')
+  const { height } = useWindowDimensions()
+  const {
+    isWide,
+    hasSidebar,
+    sidebarWidth,
+    contentWidth: width,
+  } = useAdaptiveLayout()
+  const bottomBarHeight = hasSidebar ? 0 : TAB_BAR_HEIGHT
+  const inspectorWidth = 360
+  const [inspectorRevealRequest, setInspectorRevealRequest] = useState(0)
   const { colorScheme } = usePreferences()
   const mapRef = useRef<MapView>(null)
   const insets = useSafeAreaInsets()
@@ -298,7 +313,7 @@ const FullMapView = ({
     if (currentCarouselIndex !== undefined && currentCarouselIndex !== index) {
       scrollCarouselTo(index, false)
     }
-  }, [activeContactId, scrollCarouselTo, visibleContactMarkers])
+  }, [activeContactId, scrollCarouselTo, visibleContactMarkers, isWide])
 
   useEffect(() => {
     const unsubscribe = navigation.addListener('tabPress', (e) => {
@@ -457,11 +472,11 @@ const FullMapView = ({
   // fixed at CARD_HEIGHT.
   const locationButtonBottom =
     contactMarkers.length === 0
-      ? insets.bottom + TAB_BAR_HEIGHT + 12 + emptyStateHeight + 8
+      ? insets.bottom + bottomBarHeight + 12 + emptyStateHeight + 8
       : visibleContactMarkers.length === 0
-        ? insets.bottom + TAB_BAR_HEIGHT + 4 + noResultsHeight + 8
+        ? insets.bottom + bottomBarHeight + 4 + noResultsHeight + 8
         : insets.bottom +
-          TAB_BAR_HEIGHT +
+          bottomBarHeight +
           LEGAL_LABEL_HEIGHT -
           5 +
           CARD_HEIGHT +
@@ -480,7 +495,9 @@ const FullMapView = ({
   }
 
   const SEARCH_COLLAPSED_WIDTH = 44
-  const SEARCH_EXPANDED_WIDTH = width - 16 - 64
+  const SEARCH_EXPANDED_WIDTH = isWide
+    ? Math.min(360, width - inspectorWidth - 96)
+    : width - 16 - 64
   const SEARCH_SPRING_OPEN = { damping: 18, stiffness: 180, mass: 0.9 }
   const SEARCH_SPRING_CLOSE = { damping: 22, stiffness: 200, mass: 0.9 }
 
@@ -551,9 +568,10 @@ const FullMapView = ({
       onLayout={(e) => setEmptyStateHeight(e.nativeEvent.layout.height)}
       style={{
         position: 'absolute',
-        left: 16,
-        right: 16,
-        bottom: insets.bottom + TAB_BAR_HEIGHT + 12,
+        left: sidebarWidth + 16,
+        right: isWide ? undefined : 16,
+        width: isWide ? 400 : undefined,
+        bottom: insets.bottom + bottomBarHeight + 12,
         alignItems: 'center',
       }}
     >
@@ -561,7 +579,7 @@ const FullMapView = ({
         style={{
           width: '100%',
           maxWidth: isTablet ? 520 : undefined,
-          maxHeight: height - insets.top - insets.bottom - TAB_BAR_HEIGHT - 96,
+          maxHeight: height - insets.top - insets.bottom - bottomBarHeight - 96,
           borderRadius: 24,
           borderCurve: 'continuous',
           overflow: 'hidden',
@@ -735,15 +753,18 @@ const FullMapView = ({
         onPanDrag={handlePanDrag}
         mapPadding={{
           top: 0,
-          right: 0,
-          left: 0,
-          bottom: insets.bottom + TAB_BAR_HEIGHT / 4,
+          right: isWide && contactMarkers.length > 0 ? inspectorWidth + 32 : 0,
+          left: sidebarWidth,
+          bottom: insets.bottom + bottomBarHeight / 4,
         }}
         style={{ height: '100%', width: '100%' }}
       >
         {visibleContactMarkers.map((c) => (
           <Marker
-            onPress={() => handlePinPress(c.id)}
+            onPress={() => {
+              setInspectorRevealRequest((request) => request + 1)
+              handlePinPress(c.id)
+            }}
             identifier={c.id}
             // Include pinColor in the key so the marker remounts when its
             // staleness color changes. react-native-maps only applies
@@ -766,7 +787,7 @@ const FullMapView = ({
             {
               position: 'absolute',
               top: insets.top + 8,
-              left: 16,
+              left: sidebarWidth + 16,
               height: 44,
               borderRadius: 22,
               borderCurve: 'continuous',
@@ -847,8 +868,9 @@ const FullMapView = ({
           onLayout={(e) => setNoResultsHeight(e.nativeEvent.layout.height)}
           style={{
             position: 'absolute',
-            bottom: insets.bottom + TAB_BAR_HEIGHT + 4,
-            width,
+            bottom: insets.bottom + bottomBarHeight + 4,
+            width: isWide ? inspectorWidth : width,
+            right: isWide ? 16 : undefined,
             padding: 10,
           }}
         >
@@ -893,11 +915,34 @@ const FullMapView = ({
             </View>
           </View>
         </View>
+      ) : isWide ? (
+        <View
+          style={{
+            position: 'absolute',
+            right: 16,
+            top: insets.top + 8,
+            bottom: insets.bottom + bottomBarHeight + 28,
+            width: inspectorWidth,
+          }}
+        >
+          <MapContactInspector
+            renderContactRow={renderContactRow}
+            contacts={visibleContactMarkers}
+            activeId={activeContactId}
+            revealRequest={inspectorRevealRequest}
+            index={conversationIndex}
+            onSelect={handlePinPress}
+            setSheet={setSheet}
+          />
+        </View>
       ) : (
         <Carousel
           onSnapToItem={handleCarouselSnap}
           onScrollStart={handleCarouselScrollStart}
-          defaultIndex={0}
+          defaultIndex={Math.max(
+            0,
+            findContactIndexById(visibleContactMarkers, activeContactId)
+          )}
           ref={carouselRef}
           data={visibleContactMarkers}
           keyExtractor={(contact) => contact.id}
@@ -922,7 +967,7 @@ const FullMapView = ({
           loop={visibleContactMarkers.length !== 1}
           style={{
             position: 'absolute',
-            bottom: insets.bottom + TAB_BAR_HEIGHT + LEGAL_LABEL_HEIGHT - 5,
+            bottom: insets.bottom + bottomBarHeight + LEGAL_LABEL_HEIGHT - 5,
             width,
             height: CARD_HEIGHT,
           }}
@@ -933,7 +978,7 @@ const FullMapView = ({
         style={{
           position: 'absolute',
           top: insets.top + (contactMarkers.length > 0 ? 64 : 8),
-          left: 16,
+          left: sidebarWidth + 16,
           gap: 8,
         }}
       >
@@ -994,8 +1039,10 @@ const FullMapView = ({
       <View
         style={{
           position: 'absolute',
-          right: 16,
-          bottom: locationButtonBottom,
+          right: isWide && contactMarkers.length > 0 ? inspectorWidth + 48 : 16,
+          bottom: isWide
+            ? insets.bottom + bottomBarHeight + 32
+            : locationButtonBottom,
         }}
       >
         <Button
@@ -1021,7 +1068,11 @@ const FullMapView = ({
   )
 }
 
-const MapScreen = () => {
+const MapScreen = ({
+  renderContactRow,
+}: {
+  renderContactRow: MapContactRowRenderer
+}) => {
   const { contacts } = useContacts()
   const { conversations } = useConversations()
   const { hasCompletedMapOnboarding, stalenessBreakpoints } = usePreferences()
@@ -1061,6 +1112,7 @@ const MapScreen = () => {
   return (
     <Wrapper insets='none' style={{ flexGrow: 1, position: 'relative' }}>
       <FullMapView
+        renderContactRow={renderContactRow}
         contactMarkers={contactMarkers}
         activeContactCount={activeContacts.length}
         conversationIndex={conversationIndex}

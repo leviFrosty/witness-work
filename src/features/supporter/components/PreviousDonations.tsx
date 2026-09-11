@@ -145,7 +145,7 @@ const PreviousDonations = ({
           >
             {i18n.t('lifetimeSupporter')}
           </Text>
-          <XView style={{ gap: 10 }}>
+          <XView style={{ gap: 10, flexWrap: 'wrap' }}>
             <Text style={{ fontFamily: theme.fonts.bold }}>
               {i18n.t('neverExpires')}
             </Text>
@@ -191,7 +191,7 @@ const PreviousDonations = ({
               >
                 {title}
               </Text>
-              <XView style={{ gap: 10 }}>
+              <XView style={{ gap: 10, flexWrap: 'wrap' }}>
                 {!!product?.priceString && (
                   <Text style={{ fontFamily: theme.fonts.bold }}>
                     {product.priceString}
@@ -235,7 +235,10 @@ const PreviousDonations = ({
           </Text>
           {nonSubscriptions.map((transaction) => {
             return (
-              <XView key={transaction.transactionIdentifier}>
+              <XView
+                key={transaction.transactionIdentifier}
+                style={{ flexWrap: 'wrap', gap: 12 }}
+              >
                 <Text style={{ fontFamily: theme.fonts.bold }}>
                   {transaction.name}
                 </Text>

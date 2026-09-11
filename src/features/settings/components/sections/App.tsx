@@ -28,7 +28,7 @@ const AppSection = ({ handleNavigate }: SettingsSectionProps) => {
   )
   return (
     <View style={{ gap: 3 }}>
-      <SectionTitle text={i18n.t('app')} />
+      <SectionTitle alignWithIcons text={i18n.t('app')} />
       <Section>
         <InputRowButton
           leftIcon={FileOutputIcon}

@@ -13,6 +13,7 @@ export type HomeTabStackParamList = {
     | undefined
   Schedule: { month: number; year: number } | undefined
   Map: undefined
+  Settings: undefined
 }
 
 export type HomeTabStackNavigation =

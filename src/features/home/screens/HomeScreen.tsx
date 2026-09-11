@@ -1,4 +1,5 @@
 import useTheme from '@/contexts/theme'
+import useAdaptiveLayout from '@/hooks/useAdaptiveLayout'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import useConversations from '@/stores/conversationStore'
 import {
@@ -14,6 +15,7 @@ import ServiceReportSection from '@/features/service-reports/components/ServiceR
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import XView from '@/components/ui/layout/XView'
+import AdaptiveColumns from '@/components/ui/layout/AdaptiveColumns'
 import YearMilestoneCard from '@/components/YearMilestoneCard'
 import moment from 'moment'
 import useDevice from '@/hooks/useDevice'
@@ -45,14 +47,15 @@ import { useServiceReport } from '@/stores/serviceReport'
 import { isSupporterNudgeEligible } from '@/features/supporter/lib/supporterNudge'
 import { HomeTabStackNavigation } from '@/types/homeStack'
 import { RootStackNavigation } from '@/types/rootStack'
-import { Fragment } from 'react'
 import type { TimeEntry } from '@/types/timeEntry'
 
 export const HomeScreen = () => {
   const theme = useTheme()
   const insets = useSafeAreaInsets()
+  const { isWide, hasSidebar, contentMaxWidth } = useAdaptiveLayout()
   const {
     backupNotificationFrequencyAsDays,
+    homeChecklistDismissed,
     remindMeAboutBackups,
     lastBackupDate,
     installedOn,
@@ -301,7 +304,12 @@ export const HomeScreen = () => {
     <View style={{ flexGrow: 1, backgroundColor: theme.colors.background }}>
       <KeyboardAwareScrollView
         contentContainerStyle={{
-          paddingBottom: insets.bottom + 85,
+          paddingBottom: insets.bottom + (hasSidebar ? 30 : 85),
+          paddingHorizontal: isWide ? 24 : 15,
+          paddingTop: 15,
+          width: '100%',
+          maxWidth: isWide ? contentMaxWidth : 720,
+          alignSelf: 'center',
           // flexGrow lets the inner View's `flex: 1` actually fill the
           // viewport when the user's home sections are short, which the tip
           // card's `marginTop: 'auto'` relies on to anchor to the bottom.
@@ -310,8 +318,7 @@ export const HomeScreen = () => {
         automaticallyAdjustKeyboardInsets
         style={{
           flex: 1,
-          padding: 15,
-          paddingBottom: insets.bottom + 50,
+          paddingBottom: hasSidebar ? 0 : insets.bottom + 50,
         }}
         refreshControl={
           iCloudSyncEnabled ? (
@@ -325,7 +332,7 @@ export const HomeScreen = () => {
           ) : undefined
         }
       >
-        <View style={{ gap: 20, paddingBottom: insets.bottom, flex: 1 }}>
+        <AdaptiveColumns wide={isWide} style={{ paddingBottom: insets.bottom }}>
           <ProfileCard
             onPressIncomplete={() =>
               rootNavigation.navigate('PreferencesPublisher')
@@ -334,89 +341,101 @@ export const HomeScreen = () => {
           {shouldRemindToBackup && (
             <BackupReminder compact={iCloudSyncEnabled} />
           )}
-          <HomeChecklist />
+          {!homeChecklistDismissed && <HomeChecklist />}
           {showSupporterNudge && <SupporterNudgeCard />}
           {effectiveOrder.map((key: HomeScreenElementKey) => {
-            switch (key) {
-              case 'approachingConversations':
-                if (!homeScreenElements.approachingConversations) return null
-                return (
-                  <Fragment key={key}>
-                    <MissedConversations
-                      conversations={overdueConvosWithActiveContacts}
-                    />
-                    <ApproachingConversations
-                      conversations={approachingConvosWithActiveContacts}
-                    />
-                  </Fragment>
-                )
-              case 'tabletServiceYearSummary':
-                if (
-                  !isTablet ||
-                  !hasAnnualGoal ||
-                  !homeScreenElements.tabletServiceYearSummary
-                ) {
-                  return null
-                }
-                return (
-                  <View key={key} style={{ gap: 10 }}>
-                    <Text
-                      style={{
-                        fontSize: 14,
-                        fontFamily: theme.fonts.semiBold,
-                        marginLeft: 5,
-                      }}
-                    >
-                      {i18n.t('serviceYearSummary')}
-                    </Text>
-                    <XView>
-                      <Button
-                        style={{ flex: 1 }}
-                        onPress={() =>
-                          navigation.navigate('Progress', {
-                            month: moment().month(),
-                            year: moment().year(),
-                          })
-                        }
+            const section = (() => {
+              switch (key) {
+                case 'approachingConversations':
+                  if (
+                    !homeScreenElements.approachingConversations ||
+                    (overdueConvosWithActiveContacts.length === 0 &&
+                      approachingConvosWithActiveContacts.length === 0)
+                  )
+                    return null
+                  return (
+                    <View key={key} style={{ gap: 20 }}>
+                      <MissedConversations
+                        conversations={overdueConvosWithActiveContacts}
+                      />
+                      <ApproachingConversations
+                        conversations={approachingConvosWithActiveContacts}
+                      />
+                    </View>
+                  )
+                case 'tabletServiceYearSummary':
+                  if (
+                    !isTablet ||
+                    !hasAnnualGoal ||
+                    !homeScreenElements.tabletServiceYearSummary
+                  ) {
+                    return null
+                  }
+                  return (
+                    <View key={key} style={{ gap: 10 }}>
+                      <Text
+                        style={{
+                          fontSize: 14,
+                          fontFamily: theme.fonts.semiBold,
+                          marginLeft: 5,
+                        }}
                       >
-                        <YearMilestoneCard year={serviceYear + 1} />
-                      </Button>
-                    </XView>
-                  </View>
-                )
-              case 'serviceReport':
-                if (!homeScreenElements.serviceReport) return null
-                return <ServiceReportSection key={key} />
+                        {i18n.t('serviceYearSummary')}
+                      </Text>
+                      <XView>
+                        <Button
+                          style={{ flex: 1 }}
+                          onPress={() =>
+                            navigation.navigate('Progress', {
+                              month: moment().month(),
+                              year: moment().year(),
+                            })
+                          }
+                        >
+                          <YearMilestoneCard year={serviceYear + 1} />
+                        </Button>
+                      </XView>
+                    </View>
+                  )
+                case 'serviceReport':
+                  if (!homeScreenElements.serviceReport) return null
+                  return <ServiceReportSection key={key} />
 
-              case 'thisWeek':
-                if (!homeScreenElements.thisWeek) return null
-                return (
-                  <WeekStripTeaser
-                    key={key}
-                    month={currentMonth}
-                    year={currentYear}
-                    monthsReports={currentMonthsReports}
-                    onSelectDay={(date) =>
-                      setSelectedDateSheet({ open: true, date })
-                    }
-                  />
-                )
-              case 'timer':
-                if (!showsTimer || !homeScreenElements.timer) return null
-                return <TimerSection key={key} />
-              case 'didYouKnow':
-                if (homeScreenElements.didYouKnow === false) return null
-                return (
-                  <DidYouKnowTipCard
-                    key={key}
-                    style={isDidYouKnowLast ? { marginTop: 'auto' } : undefined}
-                  />
-                )
-              default:
-                return null
-            }
+                case 'thisWeek':
+                  if (!homeScreenElements.thisWeek) return null
+                  return (
+                    <WeekStripTeaser
+                      key={key}
+                      month={currentMonth}
+                      year={currentYear}
+                      monthsReports={currentMonthsReports}
+                      onSelectDay={(date) =>
+                        setSelectedDateSheet({ open: true, date })
+                      }
+                    />
+                  )
+                case 'timer':
+                  if (!showsTimer || !homeScreenElements.timer) return null
+                  return <TimerSection key={key} />
+                case 'didYouKnow':
+                  if (homeScreenElements.didYouKnow === false) return null
+                  return (
+                    <DidYouKnowTipCard
+                      key={key}
+                      style={
+                        !isWide && isDidYouKnowLast
+                          ? { marginTop: 'auto' }
+                          : undefined
+                      }
+                    />
+                  )
+                default:
+                  return null
+              }
+            })()
+            return section
           })}
-        </View>
+        </AdaptiveColumns>
       </KeyboardAwareScrollView>
       <UpgradeLegacyTimeReportsSheet
         sheet={upgradeReportsSheet}

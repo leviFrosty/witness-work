@@ -10,6 +10,7 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack'
 import moment from 'moment'
 
 import useTheme from '@/contexts/theme'
+import useAdaptiveLayout from '@/hooks/useAdaptiveLayout'
 import { usePreferences } from '@/stores/preferences'
 import i18n from '@/lib/locales'
 
@@ -33,6 +34,7 @@ export type ProgressTab = 'month' | 'year' | 'allTime'
 
 const ProgressScreen = ({ route, navigation }: Props) => {
   const theme = useTheme()
+  const { isWide } = useAdaptiveLayout()
   const insets = useSafeAreaInsets()
   const { role, publisherHours } = usePreferences()
 
@@ -150,8 +152,11 @@ const ProgressScreen = ({ route, navigation }: Props) => {
         />
         <View
           style={{
-            paddingTop: 6,
-            paddingBottom: 6,
+            paddingTop: isWide ? 15 : 6,
+            paddingBottom: isWide ? 15 : 6,
+            width: '100%',
+            maxWidth: 720,
+            alignSelf: 'center',
             gap: 6,
           }}
         >

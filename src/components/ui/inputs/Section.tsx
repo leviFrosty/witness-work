@@ -3,6 +3,7 @@ import { View, ViewProps } from 'react-native'
 import useTheme from '@/contexts/theme'
 import {
   drawerLayout,
+  inputLayout,
   useInputLayout,
 } from '@/components/ui/inputs/InputLayout'
 
@@ -21,7 +22,8 @@ const Section: React.FC<PropsWithChildren<Props>> = ({
       style={[
         {
           borderColor: theme.colors.border,
-          borderWidth: layout === 'settings' ? 1 : 0,
+          borderWidth:
+            layout === 'settings' ? inputLayout.sectionBorderWidth : 0,
           borderRadius: theme.numbers.borderRadiusLg,
           backgroundColor:
             layout === 'drawer'

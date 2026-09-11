@@ -63,7 +63,7 @@ const InputRowContainer: React.FC<
     <View
       style={{
         alignItems: 'center',
-        gap: layout === 'drawer' ? drawerLayout.labelGap : 14,
+        gap: layout === 'drawer' ? drawerLayout.labelGap : inputLayout.labelGap,
         flexDirection: 'row',
         flexShrink: layout || hasInfo ? 1 : undefined,
       }}
@@ -71,7 +71,9 @@ const InputRowContainer: React.FC<
       {leftIcon && (
         <LucideIcon
           icon={leftIcon}
-          size={layout === 'drawer' ? drawerLayout.iconSize : 21}
+          size={
+            layout === 'drawer' ? drawerLayout.iconSize : inputLayout.iconSize
+          }
           color={theme.colors.textAlt}
         />
       )}

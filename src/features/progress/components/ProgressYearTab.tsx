@@ -1,13 +1,14 @@
 import { CalendarCheck as TodayIcon } from 'lucide-react-native'
 import { useMemo } from 'react'
 import { Pressable, View } from 'react-native'
-import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
+import AdaptiveSplitScrollView from '@/components/ui/layout/AdaptiveSplitScrollView'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import moment from 'moment'
 
 import useTheme from '@/contexts/theme'
 import usePublisher from '@/hooks/usePublisher'
 import useServiceReport from '@/stores/serviceReport'
+import useAdaptiveLayout from '@/hooks/useAdaptiveLayout'
 import { usePreferences } from '@/stores/preferences'
 import {
   adjustedMinutesForSpecificMonth,
@@ -165,14 +166,14 @@ const MonthRow = ({
       })}
     >
       <XView style={{ justifyContent: 'space-between', gap: 12 }}>
-        <View style={{ gap: 4, flexShrink: 1 }}>
+        <View style={{ gap: 4, flex: 1, minWidth: 0 }}>
           <XView style={{ gap: 8 }}>
             <Text
               style={{
                 fontFamily: theme.fonts.semiBold,
                 fontSize: theme.fontSize('md'),
                 color: theme.colors.text,
-                minWidth: 44,
+                flexShrink: 1,
               }}
             >
               {monthYearLabel}
@@ -203,12 +204,15 @@ const MonthRow = ({
             </View>
           ) : null}
         </View>
-        <XView style={{ gap: 12 }}>
+        <XView style={{ gap: 12, flex: 1, minWidth: 0 }}>
           <Text
             style={{
               fontFamily: theme.fonts.semiBold,
               color: hasActivity ? theme.colors.text : theme.colors.textAlt,
               letterSpacing: -0.3,
+              flex: 1,
+              minWidth: 0,
+              textAlign: 'right',
             }}
           >
             {showFuturePlanned
@@ -221,14 +225,15 @@ const MonthRow = ({
                 fontFamily: theme.fonts.semiBold,
                 color: deltaColor,
                 letterSpacing: -0.3,
-                minWidth: 48,
+                flex: 1,
+                minWidth: 0,
                 textAlign: 'right',
               }}
             >
               {deltaLabel}
             </Text>
           ) : (
-            <View style={{ minWidth: 48 }} />
+            <View style={{ flex: 1 }} />
           )}
         </XView>
       </XView>
@@ -249,6 +254,7 @@ const ProgressYearTab = ({
 }: ProgressYearTabProps) => {
   const theme = useTheme()
   const insets = useSafeAreaInsets()
+  const { hasSidebar } = useAdaptiveLayout()
 
   const now = moment()
   const currentMonth = now.month()
@@ -279,53 +285,38 @@ const ProgressYearTab = ({
   )
 
   return (
-    <KeyboardAwareScrollView
-      contentContainerStyle={{
-        paddingHorizontal: 15,
-        paddingBottom: insets.bottom + 100,
-        gap: 24,
-      }}
-    >
-      {hasAnnualGoal ? (
-        <YearMilestoneCard
-          year={year}
-          onAdjustMilestones={onAdjustMilestones}
-          categoriesSlot={<YearCategoryBreakdownSection year={year} />}
-          separateMilestones
-        />
-      ) : null}
-
-      <ProjectedTotalCard scope={projectedScope} />
-
-      {!hasAnnualGoal ? (
-        <View style={{ paddingHorizontal: 15 }}>
-          <YearCategoryBreakdownSection year={year} />
+    <AdaptiveSplitScrollView
+      paddingTop={0}
+      paddingBottom={insets.bottom + (hasSidebar ? 30 : 100)}
+      leading={
+        <View style={{ gap: 24 }}>
+          {hasAnnualGoal ? (
+            <YearMilestoneCard
+              year={year}
+              onAdjustMilestones={onAdjustMilestones}
+              categoriesSlot={<YearCategoryBreakdownSection year={year} />}
+              separateMilestones
+            />
+          ) : null}
+          <ProjectedTotalCard scope={projectedScope} />
+          {!hasAnnualGoal ? (
+            <View style={{ paddingHorizontal: 15 }}>
+              <YearCategoryBreakdownSection year={year} />
+            </View>
+          ) : null}
         </View>
-      ) : null}
-
-      <View style={{ gap: 8, paddingTop: 10 }}>
-        <View style={{ gap: 6 }}>
-          <XView
-            style={{
-              justifyContent: 'space-between',
-              gap: 12,
-              paddingHorizontal: 15,
-              paddingBottom: 2,
-            }}
-          >
-            <Text
+      }
+      trailing={
+        <View style={{ gap: 8, paddingTop: 10 }}>
+          <View style={{ gap: 6 }}>
+            <XView
               style={{
-                fontFamily: theme.fonts.semiBold,
-                color: theme.colors.textAlt,
-                fontSize: theme.fontSize('xs'),
-                textTransform: 'uppercase',
-                letterSpacing: 0.5,
+                justifyContent: 'space-between',
+                gap: 12,
+                paddingHorizontal: 15,
+                paddingBottom: 2,
               }}
-              numberOfLines={1}
             >
-              {i18n.t('month')}
-            </Text>
-            <XView style={{ gap: 12 }}>
               <Text
                 style={{
                   fontFamily: theme.fonts.semiBold,
@@ -333,13 +324,14 @@ const ProgressYearTab = ({
                   fontSize: theme.fontSize('xs'),
                   textTransform: 'uppercase',
                   letterSpacing: 0.5,
-                  textAlign: 'right',
+                  flex: 1,
+                  minWidth: 0,
                 }}
                 numberOfLines={1}
               >
-                {i18n.t('hours')}
+                {i18n.t('month')}
               </Text>
-              {showDeltaColumn ? (
+              <XView style={{ gap: 12, flex: 1, minWidth: 0 }}>
                 <Text
                   style={{
                     fontFamily: theme.fonts.semiBold,
@@ -347,38 +339,56 @@ const ProgressYearTab = ({
                     fontSize: theme.fontSize('xs'),
                     textTransform: 'uppercase',
                     letterSpacing: 0.5,
-                    minWidth: 48,
                     textAlign: 'right',
+                    flex: 1,
+                    minWidth: 0,
                   }}
                   numberOfLines={1}
                 >
-                  {i18n.t('vsGoal')}
+                  {i18n.t('hours')}
                 </Text>
-              ) : (
-                <View style={{ minWidth: 48 }} />
-              )}
+                {showDeltaColumn ? (
+                  <Text
+                    style={{
+                      fontFamily: theme.fonts.semiBold,
+                      color: theme.colors.textAlt,
+                      fontSize: theme.fontSize('xs'),
+                      textTransform: 'uppercase',
+                      letterSpacing: 0.5,
+                      flex: 1,
+                      minWidth: 0,
+                      textAlign: 'right',
+                    }}
+                    numberOfLines={1}
+                  >
+                    {i18n.t('vsGoal')}
+                  </Text>
+                ) : (
+                  <View style={{ flex: 1 }} />
+                )}
+              </XView>
             </XView>
-          </XView>
-          {months.map(({ month, year: calendarYear }) => {
-            const isCurrent =
-              month === currentMonth && calendarYear === currentYear
-            const isFuture =
-              calendarYear > currentYear ||
-              (calendarYear === currentYear && month > currentMonth)
-            return (
-              <MonthRow
-                key={`${calendarYear}-${month}`}
-                month={month}
-                year={calendarYear}
-                isCurrent={isCurrent}
-                isFuture={isFuture}
-                onPress={() => onMonthPress(month, calendarYear)}
-              />
-            )
-          })}
+            {months.map(({ month, year: calendarYear }) => {
+              const isCurrent =
+                month === currentMonth && calendarYear === currentYear
+              const isFuture =
+                calendarYear > currentYear ||
+                (calendarYear === currentYear && month > currentMonth)
+              return (
+                <MonthRow
+                  key={`${calendarYear}-${month}`}
+                  month={month}
+                  year={calendarYear}
+                  isCurrent={isCurrent}
+                  isFuture={isFuture}
+                  onPress={() => onMonthPress(month, calendarYear)}
+                />
+              )
+            })}
+          </View>
         </View>
-      </View>
-    </KeyboardAwareScrollView>
+      }
+    />
   )
 }
 

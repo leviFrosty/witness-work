@@ -147,7 +147,7 @@
     "typescript": "~6.0.3",
     "typescript-eslint": "8.62.1",
     "typescript-go": "npm:typescript@7.0.1-rc",
-    "vitest": "^4.1.9"
+    "vitest": "^4.1.11"
   },
   "private": true,
   "expo": {

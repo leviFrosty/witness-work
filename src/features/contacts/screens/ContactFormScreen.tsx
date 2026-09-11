@@ -402,6 +402,10 @@ const ContactFormScreen = ({ route, navigation }: Props) => {
                     return false
                   }
                   await submit()
+                  if (editMode && route.params.returnToContacts) {
+                    navigation.goBack()
+                    return
+                  }
                   if (editMode) {
                     navigation.replace('Contact Details', {
                       id: (params as { id: string }).id,
@@ -411,6 +415,7 @@ const ContactFormScreen = ({ route, navigation }: Props) => {
                   navigation.replace('Visit Form', {
                     contactId: (params as { id: string }).id,
                     fromContactForm: true,
+                    returnToContacts: route.params.returnToContacts,
                   })
                 }}
               >
@@ -431,6 +436,7 @@ const ContactFormScreen = ({ route, navigation }: Props) => {
     })
   }, [
     editMode,
+    route.params.returnToContacts,
     fetching,
     navigation,
     submit,

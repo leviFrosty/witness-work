@@ -75,7 +75,9 @@ const PaywallThankYouScreen = () => {
 
   return (
     <Wrapper
+      insets='top'
       style={{
+        flex: 1,
         gap: 10,
         justifyContent: 'space-between',
         position: 'relative',
@@ -93,76 +95,81 @@ const PaywallThankYouScreen = () => {
         }}
         showsVerticalScrollIndicator={false}
       >
-        <View
-          style={{
-            alignItems: 'center',
-            gap: 16,
-            paddingTop: 20,
-            paddingBottom: 30,
-          }}
-        >
-          <Text
+        <View style={{ width: '100%', maxWidth: 640, alignSelf: 'center' }}>
+          <View
             style={{
-              fontSize: theme.fontSize('4xl'),
-              fontFamily: theme.fonts.bold,
+              alignItems: 'center',
+              gap: 16,
+              paddingTop: 20,
+              paddingBottom: 30,
             }}
           >
-            {i18n.t('thankYou')}
-          </Text>
-
-          {showSupporterCelebration && <SupporterBadge size='md' />}
-
-          <Text style={{ textAlign: 'center', maxWidth: 280 }}>
-            {showSupporterCelebration
-              ? i18n.t('thankYou_description')
-              : i18n.t('thankYou_oneTimeDescription')}
-          </Text>
-          {showSupporterCelebration && (
             <Text
               style={{
-                textAlign: 'center',
-                maxWidth: 280,
-                fontSize: theme.fontSize('sm'),
-                color: theme.colors.textAlt,
+                fontSize: theme.fontSize('4xl'),
+                fontFamily: theme.fonts.bold,
               }}
             >
-              {i18n.t('thankYou_benefitsIntro')}
+              {i18n.t('thankYou')}
             </Text>
+
+            {showSupporterCelebration && <SupporterBadge size='md' />}
+
+            <Text style={{ textAlign: 'center', maxWidth: 280 }}>
+              {showSupporterCelebration
+                ? i18n.t('thankYou_description')
+                : i18n.t('thankYou_oneTimeDescription')}
+            </Text>
+            {showSupporterCelebration && (
+              <Text
+                style={{
+                  textAlign: 'center',
+                  maxWidth: 280,
+                  fontSize: theme.fontSize('sm'),
+                  color: theme.colors.textAlt,
+                }}
+              >
+                {i18n.t('thankYou_benefitsIntro')}
+              </Text>
+            )}
+          </View>
+
+          {showSupporterCelebration && <SupporterBenefits />}
+
+          {/*
+           * With iCloud reachable, Supporter status reaches the user's other
+           * devices automatically (ADR 0011) — say nothing. Only when it can't
+           * (signed out, or iCloud Drive disabled for WitnessWork) does the
+           * user have something to do, so only then surface the manual path.
+           */}
+          {showSupporterCelebration && !iCloudSharingAvailable && (
+            <Card style={{ marginTop: 15 }}>
+              <Text
+                style={{
+                  fontFamily: theme.fonts.semiBold,
+                }}
+              >
+                {i18n.t('thankYou_multiDeviceTitle')}
+              </Text>
+              <Text
+                style={{
+                  fontSize: theme.fontSize('sm'),
+                  color: theme.colors.textAlt,
+                }}
+              >
+                {i18n.t('thankYou_multiDeviceBody')}
+              </Text>
+            </Card>
           )}
         </View>
-
-        {showSupporterCelebration && <SupporterBenefits />}
-
-        {/*
-         * With iCloud reachable, Supporter status reaches the user's other
-         * devices automatically (ADR 0011) — say nothing. Only when it can't
-         * (signed out, or iCloud Drive disabled for WitnessWork) does the
-         * user have something to do, so only then surface the manual path.
-         */}
-        {showSupporterCelebration && !iCloudSharingAvailable && (
-          <Card style={{ marginTop: 15 }}>
-            <Text
-              style={{
-                fontFamily: theme.fonts.semiBold,
-              }}
-            >
-              {i18n.t('thankYou_multiDeviceTitle')}
-            </Text>
-            <Text
-              style={{
-                fontSize: theme.fontSize('sm'),
-                color: theme.colors.textAlt,
-              }}
-            >
-              {i18n.t('thankYou_multiDeviceBody')}
-            </Text>
-          </Card>
-        )}
       </ScrollView>
       <View
         style={{
-          paddingHorizontal: 15,
-          paddingBottom: insets.bottom + 10,
+          width: '100%',
+          maxWidth: 680,
+          alignSelf: 'center',
+          paddingHorizontal: 20,
+          paddingBottom: insets.bottom + 16,
         }}
       >
         <ActionButton

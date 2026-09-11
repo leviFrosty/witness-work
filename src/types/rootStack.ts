@@ -7,9 +7,11 @@ export type RootStackParamList = {
     visitToEditId?: string
     notAtHome?: boolean
     fromContactForm?: boolean
+    /** Return to the persistent Contacts detail pane after saving. */
+    returnToContacts?: boolean
   }
   'Contact Details': { id: string; highlightedVisitId?: string } // Contact ID
-  'Contact Form': { id: string; edit?: boolean } // Contact ID
+  'Contact Form': { id: string; edit?: boolean; returnToContacts?: boolean } // Contact ID
   'Contact Selector': undefined
   'Add Time':
     | {

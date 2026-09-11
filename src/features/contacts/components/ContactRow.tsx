@@ -55,7 +55,12 @@ const ContactRow = ({
   onPress,
   searchMatches,
   index,
+  selected = false,
+  showsDisclosure = true,
 }: {
+  selected?: boolean
+  /** False when selecting this row updates an adjacent detail pane. */
+  showsDisclosure?: boolean
   contact: Contact
   onPress?: () => void
   /**
@@ -142,13 +147,15 @@ const ContactRow = ({
   // from the usual arrangement. Left as-is — untangling it changes the row's
   // layout/press behaviour and belongs in its own change.
   return (
-    <Button onPress={onPress}>
+    <Button onPress={onPress} accessibilityState={{ selected }}>
       <Card
         style={{
           paddingHorizontal: 18,
           paddingVertical: 16,
           borderRadius: theme.numbers.borderRadiusSm,
-          backgroundColor: theme.colors.backgroundLighter,
+          backgroundColor: selected
+            ? theme.colors.accentTranslucent
+            : theme.colors.backgroundLighter,
           overflow: 'hidden',
         }}
       >
@@ -165,7 +172,7 @@ const ContactRow = ({
         />
         <Swipeable
           onSwipeableWillOpen={() => Haptics.light()}
-          containerStyle={{ backgroundColor: theme.colors.backgroundLighter }}
+          containerStyle={{ backgroundColor: 'transparent' }}
           renderLeftActions={() => <SwipeableDismiss size='sm' />}
           renderRightActions={() => <SwipeableArchive size='sm' />}
           onSwipeableOpen={handleSwipeOpen}
@@ -255,14 +262,16 @@ const ContactRow = ({
                   size='sm'
                 />
               )}
-              <IconButton
-                iconStyle={{
-                  color: isActiveBibleStudy
-                    ? theme.colors.text
-                    : theme.colors.textAlt,
-                }}
-                icon={ChevronRightIcon}
-              />
+              {showsDisclosure && (
+                <IconButton
+                  iconStyle={{
+                    color: isActiveBibleStudy
+                      ? theme.colors.text
+                      : theme.colors.textAlt,
+                  }}
+                  icon={ChevronRightIcon}
+                />
+              )}
             </View>
           </View>
         </Swipeable>

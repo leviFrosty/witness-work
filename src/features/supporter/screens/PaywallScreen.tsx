@@ -1,17 +1,11 @@
 import {
-  Check as CheckIcon,
   ChevronDown as ChevronDownIcon,
   CircleQuestionMark as CircleQuestionMarkIcon,
-  Gift as GiftIcon,
-  Heart as HeartIcon,
-  Minus as MinusIcon,
   RotateCw as RotateCwIcon,
-  Star as StarIcon,
   Trash2 as Trash2Icon,
 } from 'lucide-react-native'
-import LucideIcon, { type AppIcon } from '@/components/ui/LucideIcon'
-import { Alert, ScrollView, View } from 'react-native'
-import { Image } from 'expo-image'
+import LucideIcon from '@/components/ui/LucideIcon'
+import { Alert, ScrollView, useWindowDimensions, View } from 'react-native'
 import * as Sentry from '@sentry/react-native'
 import Text from '@/components/ui/MyText'
 import useTheme from '@/contexts/theme'
@@ -19,19 +13,17 @@ import i18n from '@/lib/locales'
 import XView from '@/components/ui/layout/XView'
 import Button from '@/components/ui/Button'
 import Wrapper from '@/components/ui/layout/Wrapper'
-import { Sheet, Spinner } from 'tamagui'
+import { Spinner } from 'tamagui'
 import Purchases, {
   PURCHASES_ERROR_CODE,
   PurchasesError,
   PurchasesOfferings,
   PurchasesPackage,
 } from 'react-native-purchases'
-import GlassCard from '@/components/ui/GlassCard'
 import SegmentedControl from '@/components/ui/SegmentedControl'
 import PreviousDonations from '@/features/supporter/components/PreviousDonations'
 import Divider from '@/components/ui/Divider'
 import {
-  type ReactNode,
   useCallback,
   useEffect,
   useLayoutEffect,
@@ -41,7 +33,6 @@ import {
 } from 'react'
 import Header from '@/components/ui/layout/Header'
 import IconButton from '@/components/ui/IconButton'
-import SupporterCtaButton from '@/features/supporter/components/SupporterCtaButton'
 import {
   getPackageKey,
   getVisiblePackages,
@@ -51,9 +42,21 @@ import useCustomer from '@/hooks/useCustomer'
 import { RouteProp, useNavigation, useRoute } from '@react-navigation/native'
 import { RootStackNavigation, RootStackParamList } from '@/types/rootStack'
 import { logger } from '@/lib/logger'
-import { TranslationKey } from '@/lib/locales'
 import { isOfflineError } from '@/lib/offlineError'
 import { clearAdoptedAccountId } from '@/lib/account'
+import {
+  FounderLetter,
+  SocialProofRow,
+  ComparisonChart,
+  type NotesImportPaywallAllowance,
+} from '@/features/supporter/components/PaywallBenefits'
+import {
+  TierSwitchCard,
+  PriceOption,
+  DevPillButton,
+  AllOptionsSheet,
+} from '@/features/supporter/components/PaywallOptions'
+import PaywallPurchaseFooter from '@/features/supporter/components/PaywallPurchaseFooter'
 
 type Tier = 'supporter' | 'tip'
 type SupporterBilling = 'monthly' | 'annual'
@@ -65,611 +68,15 @@ type PriceView = SupporterBilling | 'tip'
 const SUPPORTER_VISIBLE_OPTION_LIMIT = __DEV__ ? 1 : 4
 const TIP_VISIBLE_OPTION_LIMIT = __DEV__ ? 1 : 5
 
-const FEATURE_ROWS: ReadonlyArray<{
-  labelKey: TranslationKey
-  // `true`/`false` render a check/dash; a TranslationKey renders that text
-  // (e.g. the `5` vs. `Unlimited` Notes Import allowance).
-  free: boolean | TranslationKey
-  supporter: boolean | TranslationKey
-}> = [
-  // Differentiators lead; the "always free" rows close the table as a
-  // trust signal rather than opening it with reasons not to pay.
-  { labelKey: 'paywallFeatureSync', free: false, supporter: true },
-  { labelKey: 'paywallFeatureAccent', free: false, supporter: true },
-  { labelKey: 'paywallFeatureAppIcons', free: false, supporter: true },
-  { labelKey: 'paywallFeatureCore', free: true, supporter: true },
-  { labelKey: 'paywallFeaturePrivacy', free: true, supporter: true },
-  { labelKey: 'paywallFeatureWidgets', free: true, supporter: true },
-]
-
-const resolveCell = (value: boolean | TranslationKey): boolean | string =>
-  typeof value === 'boolean' ? value : i18n.t(value)
-
-const FounderLetter = () => {
-  const theme = useTheme()
-  return (
-    <GlassCard padding={18}>
-      <XView style={{ alignItems: 'center', gap: 6, marginBottom: 12 }}>
-        <View
-          style={{
-            width: 22,
-            height: 22,
-            borderRadius: 11,
-            backgroundColor: theme.colors.supporterTranslucent,
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}
-        >
-          <LucideIcon
-            icon={HeartIcon}
-            size={10}
-            color={theme.colors.supporter}
-            fill={theme.colors.supporter}
-          />
-        </View>
-        <Text
-          style={{
-            fontSize: 11,
-            fontFamily: theme.fonts.semiBold,
-            color: theme.colors.supporter,
-            letterSpacing: 1.2,
-            textTransform: 'uppercase',
-          }}
-        >
-          {i18n.t('paywallLetterEyebrow')}
-        </Text>
-      </XView>
-      <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 14 }}>
-        <View
-          style={{
-            padding: 3,
-            borderRadius: 44,
-            backgroundColor: theme.colors.supporterTranslucent,
-          }}
-        >
-          <Image
-            source={require('@/assets/levi-portrait.png')}
-            style={{ width: 80, height: 80, borderRadius: 40 }}
-            contentFit='cover'
-            cachePolicy='memory-disk'
-            transition={150}
-          />
-        </View>
-        <Text
-          style={{
-            flex: 1,
-            fontSize: 14,
-            color: theme.colors.text,
-            lineHeight: 22,
-          }}
-        >
-          {i18n.t('paywallLetterBody')}
-        </Text>
-      </View>
-      <View style={{ marginTop: 12, alignItems: 'flex-start', gap: 2 }}>
-        {/* TODO: replace src/assets/signature.png with actual signature art. */}
-        <Image
-          source={require('@/assets/signature.png')}
-          style={{ width: 140, height: 48 }}
-          contentFit='contain'
-          cachePolicy='memory-disk'
-          tintColor={theme.colors.text}
-        />
-        <XView style={{ alignItems: 'center', gap: 6 }}>
-          <Text
-            style={{
-              fontSize: 13,
-              fontFamily: theme.fonts.semiBold,
-              color: theme.colors.text,
-              letterSpacing: 0.3,
-            }}
-          >
-            {i18n.t('founderNoteSignOff')}
-          </Text>
-          <LucideIcon
-            icon={HeartIcon}
-            size={11}
-            color={theme.colors.supporter}
-            fill={theme.colors.supporter}
-          />
-        </XView>
-      </View>
-    </GlassCard>
-  )
-}
-
-const SocialProofRow = () => {
-  const theme = useTheme()
-  return (
-    <View style={{ alignItems: 'center', gap: 2 }}>
-      <XView style={{ alignItems: 'center', gap: 5 }}>
-        <LucideIcon
-          icon={StarIcon}
-          size={13}
-          color={theme.colors.supporter}
-          fill={theme.colors.supporter}
-        />
-        <Text
-          style={{
-            fontSize: 13,
-            fontFamily: theme.fonts.semiBold,
-            color: theme.colors.text,
-          }}
-        >
-          {i18n.t('paywallSocialProofRating')}
-        </Text>
-      </XView>
-      <Text style={{ fontSize: 12, color: theme.colors.textAlt }}>
-        {i18n.t('paywallSocialProofReach')}
-      </Text>
-    </View>
-  )
-}
-
-const TierSwitchCard = ({
-  targetTier,
-  onPress,
-}: {
-  targetTier: Tier
-  onPress: () => void
-}) => {
-  const theme = useTheme()
-  const isSupporter = targetTier === 'supporter'
-  const tint = isSupporter ? theme.colors.supporter : theme.colors.textAlt
-  const ctaBackground = isSupporter
-    ? theme.colors.supporter
-    : theme.colors.backgroundLighter
-
-  return (
-    <View
-      style={{
-        alignSelf: 'center',
-        maxWidth: '100%',
-        paddingVertical: 8,
-        paddingHorizontal: 10,
-        borderRadius: theme.numbers.borderRadiusMd,
-        borderWidth: 1,
-        borderColor: theme.colors.border,
-        backgroundColor: theme.colors.backgroundLightest,
-        marginVertical: 10,
-      }}
-    >
-      <XView style={{ gap: 8 }}>
-        <View
-          style={{
-            width: 26,
-            height: 26,
-            borderRadius: 13,
-            alignItems: 'center',
-            justifyContent: 'center',
-            backgroundColor: theme.colors.backgroundLighter,
-          }}
-        >
-          <LucideIcon
-            icon={isSupporter ? HeartIcon : GiftIcon}
-            size={14}
-            color={tint}
-            fill={isSupporter ? tint : undefined}
-          />
-        </View>
-        <Text
-          style={{
-            flexShrink: 1,
-            fontSize: theme.fontSize('sm'),
-            fontFamily: theme.fonts.semiBold,
-            color: theme.colors.text,
-          }}
-        >
-          {isSupporter
-            ? i18n.t('becomeSupporter')
-            : i18n.t('paywallTipCardTitle')}
-        </Text>
-        <Button
-          onPress={onPress}
-          style={{
-            paddingVertical: 6,
-            paddingHorizontal: 9,
-            borderRadius: theme.numbers.borderRadiusSm,
-            borderWidth: 1,
-            borderColor: isSupporter ? tint : theme.colors.border,
-            backgroundColor: ctaBackground,
-          }}
-        >
-          <Text
-            style={{
-              fontSize: theme.fontSize('xs'),
-              fontFamily: theme.fonts.semiBold,
-              color: isSupporter ? '#343232' : theme.colors.text,
-            }}
-          >
-            {isSupporter
-              ? i18n.t('paywallSupporterCardCta')
-              : i18n.t('paywallCtaSendTip')}
-          </Text>
-        </Button>
-      </XView>
-    </View>
-  )
-}
-
-const FREE_COL_WIDTH = 80
-const SUPPORTER_COL_WIDTH = 100
-const ROW_PADDING_HORIZONTAL = 18
-
-const CompareCell = ({
-  value,
-  width,
-  highlight,
-}: {
-  value: boolean | string
-  width: number
-  highlight?: boolean
-}) => {
-  const theme = useTheme()
-  const accentColor = highlight ? theme.colors.supporter : theme.colors.textAlt
-  if (typeof value === 'string') {
-    return (
-      <View style={{ width, alignItems: 'center' }}>
-        <Text
-          style={{
-            fontSize: 13,
-            fontFamily: theme.fonts.semiBold,
-            color: accentColor,
-            textAlign: 'center',
-          }}
-        >
-          {value}
-        </Text>
-      </View>
-    )
-  }
-  return (
-    <View style={{ width, alignItems: 'center' }}>
-      <LucideIcon
-        icon={value ? CheckIcon : MinusIcon}
-        size={13}
-        color={value ? accentColor : theme.colors.textAlt}
-      />
-    </View>
-  )
-}
-
-export interface NotesImportPaywallAllowance {
-  free: string
-  supporter: string
-}
-
-const ComparisonChart = ({
-  notesImportAllowance,
-}: {
-  notesImportAllowance?: NotesImportPaywallAllowance
-}) => {
-  const theme = useTheme()
-  const rows: Array<{
-    key: string
-    label: string
-    free: boolean | string
-    supporter: boolean | string
-  }> = FEATURE_ROWS.map((row) => ({
-    key: row.labelKey,
-    label: i18n.t(row.labelKey),
-    free: resolveCell(row.free),
-    supporter: resolveCell(row.supporter),
-  }))
-  if (notesImportAllowance) {
-    rows.splice(1, 0, {
-      key: 'notes-import',
-      label: i18n.t('paywallFeatureNotesImport'),
-      free: notesImportAllowance.free,
-      supporter: notesImportAllowance.supporter,
-    })
-  }
-  return (
-    <GlassCard padding={0}>
-      <View
-        style={{
-          paddingHorizontal: ROW_PADDING_HORIZONTAL,
-          paddingTop: 16,
-          paddingBottom: 8,
-        }}
-      >
-        <Text
-          style={{
-            fontSize: theme.fontSize('md'),
-            fontFamily: theme.fonts.semiBold,
-            color: theme.colors.text,
-          }}
-        >
-          {i18n.t('paywallCompareTitle')}
-        </Text>
-      </View>
-      <View>
-        <View
-          pointerEvents='none'
-          style={{
-            position: 'absolute',
-            top: 0,
-            right: 0,
-            bottom: 0,
-            width: SUPPORTER_COL_WIDTH + ROW_PADDING_HORIZONTAL,
-            backgroundColor: theme.colors.supporterTranslucent,
-          }}
-        />
-        <View
-          style={{
-            flexDirection: 'row',
-            paddingHorizontal: ROW_PADDING_HORIZONTAL,
-            paddingVertical: 10,
-            borderBottomWidth: 1,
-            borderBottomColor: theme.colors.border,
-          }}
-        >
-          <View style={{ flex: 1 }} />
-          <View style={{ width: FREE_COL_WIDTH, alignItems: 'center' }}>
-            <Text
-              style={{
-                fontSize: 11,
-                fontFamily: theme.fonts.semiBold,
-                color: theme.colors.textAlt,
-                letterSpacing: 1,
-                textTransform: 'uppercase',
-              }}
-            >
-              {i18n.t('paywallColFree')}
-            </Text>
-          </View>
-          <View
-            style={{
-              width: SUPPORTER_COL_WIDTH + ROW_PADDING_HORIZONTAL,
-              marginRight: -ROW_PADDING_HORIZONTAL,
-              alignItems: 'center',
-            }}
-          >
-            <View>
-              <Text
-                style={{
-                  fontSize: 11,
-                  fontFamily: theme.fonts.semiBold,
-                  color: theme.colors.supporter,
-                  letterSpacing: 1,
-                  textTransform: 'uppercase',
-                }}
-              >
-                {i18n.t('paywallColSupporter')}
-              </Text>
-            </View>
-          </View>
-        </View>
-        {rows.map((row, index) => (
-          <View
-            key={row.key}
-            style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              paddingHorizontal: ROW_PADDING_HORIZONTAL,
-              paddingVertical: 12,
-              borderBottomWidth: index === rows.length - 1 ? 0 : 1,
-              borderBottomColor: theme.colors.border,
-            }}
-          >
-            <Text
-              style={{
-                flex: 1,
-                fontSize: 14,
-                color: theme.colors.text,
-              }}
-            >
-              {row.label}
-            </Text>
-            <CompareCell value={row.free} width={FREE_COL_WIDTH + 20} />
-            <CompareCell
-              value={row.supporter}
-              width={SUPPORTER_COL_WIDTH - 10}
-              highlight
-            />
-          </View>
-        ))}
-      </View>
-    </GlassCard>
-  )
-}
-
-interface PriceOptionProps {
-  pkg: PurchasesPackage
-  selected: boolean
-  onPress: () => void
-  suffix?: string
-  secondary?: string
-  highlight?: boolean
-}
-
-const PriceOption = ({
-  pkg,
-  selected,
-  onPress,
-  suffix,
-  secondary,
-  highlight,
-}: PriceOptionProps) => {
-  const theme = useTheme()
-  const tint = highlight ? theme.colors.supporter : theme.colors.accent
-  const tintTranslucent = highlight
-    ? theme.colors.supporterTranslucent
-    : theme.colors.accentTranslucent
-  return (
-    <Button
-      onPress={onPress}
-      style={{
-        paddingHorizontal: 16,
-        paddingVertical: 12,
-        borderRadius: theme.numbers.borderRadiusMd,
-        backgroundColor: selected
-          ? tintTranslucent
-          : theme.colors.backgroundLightest,
-        borderWidth: selected ? 1 : 0,
-        borderColor: selected ? tint : 'transparent',
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        gap: 8,
-      }}
-    >
-      <XView style={{ alignItems: 'center', gap: 8 }}>
-        <View
-          style={{
-            width: 18,
-            height: 18,
-            borderRadius: 9,
-            borderWidth: 1.5,
-            borderColor: selected ? tint : theme.colors.border,
-            backgroundColor: selected ? tint : 'transparent',
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}
-        >
-          {selected && (
-            <LucideIcon
-              icon={CheckIcon}
-              size={10}
-              color={theme.colors.textInverse}
-            />
-          )}
-        </View>
-        <View style={{ gap: 2 }}>
-          <Text
-            style={{
-              fontFamily: theme.fonts.semiBold,
-              fontSize: 16,
-              color: theme.colors.text,
-            }}
-          >
-            {pkg.product.priceString}
-            {suffix ? (
-              <Text
-                style={{ fontSize: 13, color: theme.colors.textAlt }}
-              >{` ${suffix}`}</Text>
-            ) : null}
-          </Text>
-          {secondary ? (
-            <Text style={{ fontSize: 12, color: theme.colors.textAlt }}>
-              {secondary}
-            </Text>
-          ) : null}
-        </View>
-      </XView>
-    </Button>
-  )
-}
-
-interface DevPillButtonProps {
-  icon: AppIcon
-  label: string
-  busy: boolean
-  onPress: () => void
-  tint?: string
-}
-
-const DevPillButton = ({
-  icon,
-  label,
-  busy,
-  onPress,
-  tint,
-}: DevPillButtonProps) => {
-  const theme = useTheme()
-  const color = tint ?? theme.colors.textAlt
-  return (
-    <Button
-      onPress={onPress}
-      style={{
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 6,
-        paddingHorizontal: 10,
-        paddingVertical: 6,
-        borderRadius: theme.numbers.borderRadiusSm,
-        backgroundColor: theme.colors.backgroundLighter,
-        opacity: busy ? 0.6 : 1,
-      }}
-    >
-      {busy ? (
-        <Spinner size='small' />
-      ) : (
-        <LucideIcon icon={icon} size={14} color={color} />
-      )}
-      {!busy && (
-        <Text
-          style={{
-            fontSize: 14,
-            fontFamily: theme.fonts.semiBold,
-            color,
-            letterSpacing: 0.8,
-            textTransform: 'uppercase',
-          }}
-        >
-          {label}
-        </Text>
-      )}
-    </Button>
-  )
-}
-
-const AllOptionsSheet = ({
-  visible,
-  onClose,
-  children,
-}: {
-  visible: boolean
-  onClose: () => void
-  children: ReactNode
-}) => {
-  const theme = useTheme()
-  const insets = useSafeAreaInsets()
-  return (
-    <Sheet
-      open={visible}
-      onOpenChange={(o: boolean) => {
-        if (!o) onClose()
-      }}
-      dismissOnSnapToBottom
-      modal
-      snapPoints={[70]}
-      snapPointsMode='percent'
-    >
-      <Sheet.Handle />
-      <Sheet.Overlay zIndex={100_000 - 1} />
-      <Sheet.Frame backgroundColor={theme.colors.backgroundLighter}>
-        <Sheet.ScrollView
-          contentContainerStyle={{
-            paddingHorizontal: 24,
-            paddingTop: 24,
-            paddingBottom: insets.bottom + 24,
-          }}
-        >
-          <View style={{ gap: 16 }}>
-            <Text
-              style={{
-                fontSize: theme.fontSize('xl'),
-                fontFamily: theme.fonts.semiBold,
-                color: theme.colors.text,
-              }}
-            >
-              {i18n.t('paywallAllOptionsTitle')}
-            </Text>
-            <View style={{ gap: 6 }}>{children}</View>
-          </View>
-        </Sheet.ScrollView>
-      </Sheet.Frame>
-    </Sheet>
-  )
-}
-
 const PaywallScreen = ({
   notesImportAllowance,
 }: {
   notesImportAllowance?: NotesImportPaywallAllowance
 }) => {
   const theme = useTheme()
+  const { width, height, fontScale } = useWindowDimensions()
+  const dockFooter = height >= 650 && fontScale <= 1.3
+  const isWide = width >= 1000 && fontScale <= 1.3
   const insets = useSafeAreaInsets()
   const route = useRoute<RouteProp<RootStackParamList, 'Paywall'>>()
   const initialTier: Tier = route.params?.initialTier ?? 'supporter'
@@ -683,10 +90,19 @@ const PaywallScreen = ({
     useState<SupporterBilling>('annual')
   const navigation = useNavigation<RootStackNavigation>()
   const scrollViewRef = useRef<ScrollView>(null)
+  const pricingScrollViewRef = useRef<ScrollView>(null)
   const pendingTierScroll = useRef<Tier | null>(null)
 
+  useEffect(() => {
+    if (!isWide) return
+    const frame = requestAnimationFrame(() => {
+      pricingScrollViewRef.current?.scrollTo({ y: 0, animated: false })
+    })
+    return () => cancelAnimationFrame(frame)
+  }, [isWide, tier])
+
   const handleTierSwitch = (nextTier: Tier) => {
-    pendingTierScroll.current = nextTier
+    pendingTierScroll.current = isWide ? null : nextTier
     setTier(nextTier)
   }
 
@@ -994,7 +410,9 @@ const PaywallScreen = ({
 
   if (!currentOfferings) {
     return (
-      <Wrapper>
+      <Wrapper
+        style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}
+      >
         <Spinner />
       </Wrapper>
     )
@@ -1039,213 +457,267 @@ const PaywallScreen = ({
       ? i18n.t('paywallSupporterTabDesc')
       : i18n.t('paywallTipTabDesc')
 
-  return (
-    <Wrapper
-      insets='none'
-      style={{
-        justifyContent: 'space-between',
+  const benefits = (
+    <View style={{ gap: 16 }}>
+      <FounderLetter spacious={isWide} />
+      <SocialProofRow />
+      {tier === 'supporter' && (
+        <View
+          onLayout={(event) =>
+            handleTierSectionLayout('supporter', event.nativeEvent.layout.y)
+          }
+        >
+          <ComparisonChart
+            spacious={isWide}
+            notesImportAllowance={notesImportAllowance}
+          />
+        </View>
+      )}
+    </View>
+  )
+  const pricing = (
+    <View
+      style={{ gap: 14 }}
+      onLayout={(event) => {
+        if (tier === 'tip')
+          handleTierSectionLayout('tip', event.nativeEvent.layout.y)
       }}
     >
-      <ScrollView
-        ref={scrollViewRef}
-        style={{ flex: 1 }}
-        contentContainerStyle={{
-          paddingTop: 20,
-          paddingBottom: 20,
-          paddingHorizontal: 15,
-          gap: 14,
-        }}
-        showsVerticalScrollIndicator={false}
-      >
-        <FounderLetter />
-        <SocialProofRow />
-        {tier === 'supporter' && (
-          <View
-            onLayout={(event) =>
-              handleTierSectionLayout('supporter', event.nativeEvent.layout.y)
-            }
-          >
-            <ComparisonChart notesImportAllowance={notesImportAllowance} />
-          </View>
-        )}
-
-        {/* Supporter is the primary flow; Tip gets its own heading when selected. */}
-        {tier === 'tip' && (
-          <View
-            onLayout={(event) =>
-              handleTierSectionLayout('tip', event.nativeEvent.layout.y)
-            }
-          >
-            <Text
-              style={{
-                fontSize: theme.fontSize('md'),
-                fontFamily: theme.fonts.semiBold,
-                color: theme.colors.text,
-                paddingHorizontal: 4,
-              }}
-            >
-              {i18n.t('paywallTierTip')}
-            </Text>
-          </View>
-        )}
-
+      {isWide && (
         <Text
           style={{
-            fontSize: 13,
-            color: theme.colors.textAlt,
-            lineHeight: 18,
-            paddingHorizontal: 4,
+            fontFamily: theme.fonts.bold,
+            fontSize: theme.fontSize('xl'),
           }}
         >
-          {tierExplainer}
+          {tier === 'supporter'
+            ? i18n.t('becomeSupporter')
+            : i18n.t('paywallTierTip')}
         </Text>
-        {__DEV__ && (
-          <XView style={{ alignSelf: 'flex-end', gap: 6 }}>
-            <DevPillButton
-              icon={RotateCwIcon}
-              label='Refresh'
-              busy={isRefreshing}
-              onPress={handleDevRefresh}
-            />
-            <DevPillButton
-              icon={Trash2Icon}
-              label='Reset'
-              busy={isResetting}
-              onPress={handleDevReset}
-              tint={theme.colors.error}
-            />
-          </XView>
-        )}
-
-        {showBillingToggle && (
-          <SegmentedControl<SupporterBilling>
-            variant='pill'
-            size='sm'
-            value={supporterBilling}
-            onChange={setSupporterBilling}
-            style={{ alignSelf: 'center' }}
-            options={[
-              { key: 'monthly', label: i18n.t('paywallBillingMonthly') },
-              {
-                key: 'annual',
-                label: i18n.t('paywallBillingAnnual'),
-                subLabel: { text: i18n.t('paywallBillingAnnualSave') },
-              },
-            ]}
-          />
-        )}
-
-        <View style={{ gap: 6 }}>
-          {visiblePackages.map((pkg) => renderPriceOption(pkg))}
-          {hasHiddenOptions && (
-            <Button
-              onPress={() => setShowAllOptions(true)}
-              style={{
-                paddingHorizontal: 16,
-                paddingVertical: 12,
-                borderRadius: theme.numbers.borderRadiusMd,
-                backgroundColor: theme.colors.backgroundLightest,
-                flexDirection: 'row',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: 6,
-              }}
-            >
-              <LucideIcon
-                icon={ChevronDownIcon}
-                size={14}
-                color={theme.colors.textAlt}
-              />
-              <Text
-                style={{
-                  fontSize: 14,
-                  fontFamily: theme.fonts.semiBold,
-                  color: theme.colors.textAlt,
-                }}
-              >
-                {i18n.t('paywallShowAllOptions')}
-              </Text>
-            </Button>
-          )}
-        </View>
-
-        <Divider />
-        <TierSwitchCard
-          targetTier={tier === 'supporter' ? 'tip' : 'supporter'}
-          onPress={() =>
-            handleTierSwitch(tier === 'supporter' ? 'tip' : 'supporter')
-          }
-        />
-        <Divider />
-        {hasPurchasedBefore && customer && (
-          <PreviousDonations customer={customer} revalidate={revalidate} />
-        )}
-
-        {!hasPurchasedBefore && (
-          <Button
-            onPress={handleRestore}
-            style={{ alignSelf: 'center', paddingVertical: 10 }}
+      )}
+      {/* Supporter is the primary flow; Tip gets its own heading when selected. */}
+      {tier === 'tip' && !isWide && (
+        <View>
+          <Text
+            style={{
+              fontSize: theme.fontSize('md'),
+              fontFamily: theme.fonts.semiBold,
+              color: theme.colors.text,
+              paddingHorizontal: 4,
+            }}
           >
+            {i18n.t('paywallTierTip')}
+          </Text>
+        </View>
+      )}
+
+      <Text
+        style={{
+          fontSize: 13,
+          color: theme.colors.textAlt,
+          lineHeight: 18,
+          paddingHorizontal: 4,
+        }}
+      >
+        {tierExplainer}
+      </Text>
+      {__DEV__ && (
+        <XView style={{ alignSelf: 'flex-end', gap: 6 }}>
+          <DevPillButton
+            icon={RotateCwIcon}
+            label='Refresh'
+            busy={isRefreshing}
+            onPress={handleDevRefresh}
+          />
+          <DevPillButton
+            icon={Trash2Icon}
+            label='Reset'
+            busy={isResetting}
+            onPress={handleDevReset}
+            tint={theme.colors.error}
+          />
+        </XView>
+      )}
+
+      {showBillingToggle && (
+        <SegmentedControl<SupporterBilling>
+          variant='pill'
+          size='sm'
+          value={supporterBilling}
+          onChange={setSupporterBilling}
+          style={{ alignSelf: 'center' }}
+          options={[
+            { key: 'monthly', label: i18n.t('paywallBillingMonthly') },
+            {
+              key: 'annual',
+              label: i18n.t('paywallBillingAnnual'),
+              subLabel: { text: i18n.t('paywallBillingAnnualSave') },
+            },
+          ]}
+        />
+      )}
+
+      <View style={{ gap: 6 }}>
+        {(isWide && showAllOptions ? activePackages : visiblePackages).map(
+          (pkg) => renderPriceOption(pkg)
+        )}
+        {hasHiddenOptions && !(isWide && showAllOptions) && (
+          <Button
+            onPress={() => setShowAllOptions(true)}
+            style={{
+              paddingHorizontal: 16,
+              paddingVertical: 12,
+              borderRadius: theme.numbers.borderRadiusMd,
+              backgroundColor: theme.colors.backgroundLightest,
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 6,
+            }}
+          >
+            <LucideIcon
+              icon={ChevronDownIcon}
+              size={14}
+              color={theme.colors.textAlt}
+            />
             <Text
               style={{
-                fontSize: theme.fontSize('sm'),
+                fontSize: 14,
+                fontFamily: theme.fonts.semiBold,
                 color: theme.colors.textAlt,
-                textDecorationLine: 'underline',
               }}
             >
-              {i18n.t('restorePurchase')}
+              {i18n.t('paywallShowAllOptions')}
             </Text>
           </Button>
         )}
-      </ScrollView>
+      </View>
+
+      <Divider />
+      <TierSwitchCard
+        targetTier={tier === 'supporter' ? 'tip' : 'supporter'}
+        onPress={() =>
+          handleTierSwitch(tier === 'supporter' ? 'tip' : 'supporter')
+        }
+      />
+      <Divider />
+      {hasPurchasedBefore && customer && (
+        <PreviousDonations customer={customer} revalidate={revalidate} />
+      )}
+    </View>
+  )
+  const purchaseFooter = (
+    <PaywallPurchaseFooter
+      selected={!!selectedPackage}
+      tier={tier}
+      ctaLabel={ctaLabel}
+      onPurchase={handlePurchase}
+      onRestore={handleRestore}
+      showRestore={!hasPurchasedBefore}
+    />
+  )
+
+  return (
+    <Wrapper insets='none' style={{ flex: 1 }}>
+      {isWide ? (
+        <View
+          style={{
+            flex: 1,
+            width: '100%',
+            maxWidth: 1100,
+            alignSelf: 'center',
+            flexDirection: 'row',
+            gap: 24,
+            paddingHorizontal: 24,
+            paddingTop: 24,
+            paddingBottom: insets.bottom + 16,
+          }}
+        >
+          <ScrollView
+            style={{ flex: 1 }}
+            contentContainerStyle={{ paddingBottom: 16 }}
+          >
+            {benefits}
+          </ScrollView>
+          <View
+            style={{
+              width: 420,
+              height: '100%',
+              maxHeight: 760,
+              alignSelf: 'flex-start',
+              backgroundColor: theme.colors.card,
+              borderRadius: theme.numbers.borderRadiusLg,
+              borderWidth: 1,
+              borderColor: theme.colors.border,
+              overflow: 'hidden',
+            }}
+          >
+            <ScrollView
+              ref={pricingScrollViewRef}
+              style={{ flex: 1 }}
+              contentContainerStyle={{ padding: 20, gap: 20 }}
+            >
+              {pricing}
+              {!dockFooter && purchaseFooter}
+            </ScrollView>
+            {dockFooter && (
+              <View
+                style={{
+                  padding: 20,
+                  borderTopWidth: 1,
+                  borderTopColor: theme.colors.border,
+                }}
+              >
+                {purchaseFooter}
+              </View>
+            )}
+          </View>
+        </View>
+      ) : (
+        <>
+          <ScrollView
+            ref={scrollViewRef}
+            style={{ flex: 1 }}
+            contentContainerStyle={{ paddingVertical: 20 }}
+          >
+            <View
+              style={{
+                width: '100%',
+                maxWidth: 680,
+                alignSelf: 'center',
+                paddingHorizontal: 15,
+                gap: 14,
+              }}
+            >
+              {benefits}
+              {pricing}
+              {!dockFooter && purchaseFooter}
+            </View>
+          </ScrollView>
+          {dockFooter && (
+            <View
+              style={{
+                width: '100%',
+                maxWidth: 680,
+                alignSelf: 'center',
+                paddingHorizontal: 15,
+                paddingTop: 10,
+                paddingBottom: insets.bottom + 10,
+              }}
+            >
+              {purchaseFooter}
+            </View>
+          )}
+        </>
+      )}
       <AllOptionsSheet
-        visible={showAllOptions}
+        visible={!isWide && showAllOptions}
         onClose={() => setShowAllOptions(false)}
       >
         {activePackages.map((pkg) =>
           renderPriceOption(pkg, () => setShowAllOptions(false))
         )}
       </AllOptionsSheet>
-      <View
-        style={{
-          paddingHorizontal: 15,
-          paddingTop: 10,
-          paddingBottom: insets.bottom + 10,
-        }}
-      >
-        <SupporterCtaButton
-          disabled={!selectedPackage}
-          onPress={handlePurchase}
-          shimmer={tier === 'supporter'}
-        >
-          <Text
-            style={{
-              fontSize: theme.fontSize('lg'),
-              // Gold supporter fill needs a dark foreground in both themes —
-              // textInverse flips to white in light mode and fails contrast.
-              // The tip tier keeps the green accent fill, where textInverse is
-              // already the right call.
-              color:
-                tier === 'supporter' ? '#343232' : theme.colors.textInverse,
-              fontFamily: theme.fonts.bold,
-            }}
-          >
-            {ctaLabel}
-          </Text>
-        </SupporterCtaButton>
-        <Text
-          style={{
-            fontSize: 12,
-            color: theme.colors.textAlt,
-            textAlign: 'center',
-            marginTop: 8,
-          }}
-        >
-          {tier === 'supporter'
-            ? i18n.t('paywallCtaReassuranceSupporter')
-            : i18n.t('paywallCtaReassuranceTip')}
-        </Text>
-      </View>
     </Wrapper>
   )
 }

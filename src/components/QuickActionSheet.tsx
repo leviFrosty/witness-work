@@ -1,20 +1,11 @@
-import {
-  Calendar as CalendarIcon,
-  Clock as ClockIcon,
-  IdCard as IdCardIcon,
-  X as XIcon,
-} from 'lucide-react-native'
-import type { AppIcon } from '@/components/ui/LucideIcon'
+import { X as XIcon } from 'lucide-react-native'
 import { Sheet, XStack } from 'tamagui'
-import usePublisher from '@/hooks/usePublisher'
-import * as Crypto from 'expo-crypto'
-import XView from '@/components/ui/layout/XView'
+import { View } from 'react-native'
 import Text from '@/components/ui/MyText'
-import i18n, { TranslationKey } from '@/lib/locales'
+import i18n from '@/lib/locales'
 import useTheme from '@/contexts/theme'
 import IconButton from '@/components/ui/IconButton'
-import { View } from 'react-native'
-import Button from '@/components/ui/Button'
+import QuickActionMenu from '@/components/QuickActionMenu'
 import { RootStackNavigation } from '@/types/rootStack'
 import { HomeTabStackNavigation } from '@/types/homeStack'
 
@@ -24,30 +15,12 @@ export type QuickActionSheetProps = {
   setSheetOpen: React.Dispatch<React.SetStateAction<boolean>>
 }
 
-type QuickActionOption = 'addTime' | 'addContact' | 'addPlan'
-
 export default function QuickActionSheet({
   sheetOpen,
   setSheetOpen,
   navigation,
 }: QuickActionSheetProps) {
-  const { showsTimer } = usePublisher()
   const theme = useTheme()
-
-  const handleQuickAction = (action: QuickActionOption): void => {
-    setSheetOpen(false)
-    switch (action) {
-      case 'addTime':
-        navigation.navigate('Add Time')
-        break
-      case 'addContact':
-        navigation.navigate('Contact Form', { id: Crypto.randomUUID() })
-        break
-      case 'addPlan':
-        navigation.navigate('PlanDay', {})
-        break
-    }
-  }
 
   return (
     <Sheet
@@ -81,61 +54,13 @@ export default function QuickActionSheet({
         </XStack>
         <Sheet.ScrollView contentContainerStyle={{ paddingTop: 10 }}>
           <View style={{ gap: 10, paddingHorizontal: 20 }}>
-            {showsTimer && (
-              <>
-                <ActionButton
-                  text='addTime'
-                  icon={ClockIcon}
-                  onPress={() => handleQuickAction('addTime')}
-                />
-              </>
-            )}
-            <ActionButton
-              text='createPlan'
-              icon={CalendarIcon}
-              onPress={() => handleQuickAction('addPlan')}
-            />
-            <ActionButton
-              text='addContact'
-              icon={IdCardIcon}
-              onPress={() => handleQuickAction('addContact')}
+            <QuickActionMenu
+              navigation={navigation}
+              onAction={() => setSheetOpen(false)}
             />
           </View>
         </Sheet.ScrollView>
       </Sheet.Frame>
     </Sheet>
-  )
-}
-
-function ActionButton(props: {
-  onPress?: () => void
-  text: TranslationKey
-  icon: AppIcon
-}) {
-  const theme = useTheme()
-  return (
-    <Button
-      noTransform
-      onPress={props.onPress}
-      style={{
-        justifyContent: 'flex-start',
-        paddingHorizontal: 20,
-        paddingVertical: 15,
-        backgroundColor: theme.colors.accent,
-        borderRadius: theme.numbers.borderRadiusSm,
-      }}
-    >
-      <XView style={{ gap: 10 }}>
-        <IconButton icon={props.icon} color={theme.colors.textInverse} />
-        <Text
-          style={{
-            fontFamily: theme.fonts.semiBold,
-            color: theme.colors.textInverse,
-          }}
-        >
-          {i18n.t(props.text)}
-        </Text>
-      </XView>
-    </Button>
   )
 }

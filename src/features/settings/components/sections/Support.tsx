@@ -88,7 +88,7 @@ const SupportSection = () => {
 
   return (
     <View style={{ gap: 3 }}>
-      <SectionTitle text={i18n.t('support')} />
+      <SectionTitle alignWithIcons text={i18n.t('support')} />
 
       <SupporterCard />
 

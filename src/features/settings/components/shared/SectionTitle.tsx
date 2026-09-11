@@ -11,9 +11,11 @@ import {
 export const SectionTitle = ({
   text,
   info,
+  alignWithIcons = false,
 }: {
   text: string
   info?: string
+  alignWithIcons?: boolean
 }) => {
   const theme = useTheme()
   const layout = useInputLayout()
@@ -24,12 +26,17 @@ export const SectionTitle = ({
       style={{
         flexDirection: 'row',
         alignItems: 'center',
-        marginLeft: isDrawer
+        marginStart: isDrawer
           ? drawerLayout.horizontalPadding +
             drawerLayout.iconSize +
             drawerLayout.labelGap
-          : inputLayout.horizontalPadding,
-        marginRight: isDrawer
+          : inputLayout.horizontalPadding +
+            (alignWithIcons
+              ? inputLayout.iconSize +
+                inputLayout.labelGap +
+                inputLayout.sectionBorderWidth
+              : 0),
+        marginEnd: isDrawer
           ? drawerLayout.horizontalPadding
           : inputLayout.horizontalPadding,
         marginBottom: isDrawer ? 4 : 8,

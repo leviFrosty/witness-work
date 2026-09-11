@@ -139,7 +139,7 @@ const InputRowButton: React.FC<PropsWithChildren<Props>> = ({
       <View
         style={{
           flexDirection: 'row',
-          gap: 14,
+          gap: inputLayout.labelGap,
           alignItems: 'center',
           flexShrink: 1,
         }}
@@ -147,7 +147,7 @@ const InputRowButton: React.FC<PropsWithChildren<Props>> = ({
         {leftIcon && (
           <LucideIcon
             icon={leftIcon}
-            size={21}
+            size={inputLayout.iconSize}
             color={leftIconColor ?? theme.colors.textAlt}
             fill={leftIconFill}
           />

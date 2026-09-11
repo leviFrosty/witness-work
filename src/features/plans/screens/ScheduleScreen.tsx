@@ -5,7 +5,7 @@ import {
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
+import AdaptiveSplitScrollView from '@/components/ui/layout/AdaptiveSplitScrollView'
 import {
   BottomTabScreenProps,
   useBottomTabBarHeight,
@@ -15,6 +15,8 @@ import moment from 'moment'
 
 import useServiceReport from '@/stores/serviceReport'
 import useTheme from '@/contexts/theme'
+import useAdaptiveLayout from '@/hooks/useAdaptiveLayout'
+import ScheduleDayInspector from '@/features/plans/components/ScheduleDayInspector'
 import { getMonthsReports } from '@/lib/serviceReport'
 import {
   getPlansIntersectingDay,
@@ -55,6 +57,7 @@ type Props = BottomTabScreenProps<HomeTabStackParamList, 'Schedule'>
 
 const ScheduleScreen = ({ route }: Props) => {
   const theme = useTheme()
+  const { isWide, hasSidebar } = useAdaptiveLayout()
   const insets = useSafeAreaInsets()
   const tabBarHeight = useBottomTabBarHeight()
   const rootNavigation = useRootNavigation<RootStackNavigation>()
@@ -72,6 +75,24 @@ const ScheduleScreen = ({ route }: Props) => {
       open: false,
       date: new Date(),
     })
+
+  // Keep the inspector within the displayed month when paging the calendar.
+  useEffect(() => {
+    setSelectedDateSheet((current) => {
+      if (
+        moment(current.date).month() === month &&
+        moment(current.date).year() === year
+      )
+        return current
+      const date = moment().year(year).month(month).startOf('month')
+      if (date.isSame(moment(), 'month')) date.date(moment().date())
+      return { open: false, date: date.toDate() }
+    })
+  }, [month, year])
+
+  useEffect(() => {
+    if (isWide) setSelectedDateSheet((current) => ({ ...current, open: false }))
+  }, [isWide])
 
   const pendingNavigation = useRef<(() => void) | null>(null)
   const selectedMonth = useMemo(
@@ -262,179 +283,212 @@ const ScheduleScreen = ({ route }: Props) => {
         onSwipeBack={() => handleArrowNavigate('back')}
         style={{ flex: 1 }}
       >
-        <KeyboardAwareScrollView
-          contentContainerStyle={{
-            paddingTop: insets.top + 15,
-            paddingHorizontal: 15,
-            paddingBottom: tabBarHeight + 40,
-            gap: 15,
-          }}
-        >
-          <XView
-            style={{
-              justifyContent: 'space-between',
-            }}
-          >
-            <Button
-              onPress={() => handleArrowNavigate('back')}
-              style={navButtonStyle(theme)}
-            >
-              <View
+        <AdaptiveSplitScrollView
+          leadingFraction={0.54}
+          gap={20}
+          paddingTop={insets.top + 15}
+          paddingBottom={(hasSidebar ? insets.bottom : tabBarHeight) + 40}
+          header={
+            <View style={{ gap: 15 }}>
+              <XView
                 style={{
-                  flexDirection: 'row',
-                  gap: 5,
-                  alignItems: 'center',
+                  justifyContent: 'space-between',
                 }}
               >
-                <IconButton icon={ArrowLeftIcon} size={15} />
-                <Text style={{ color: theme.colors.textAlt }}>
-                  {moment(selectedMonth).subtract(1, 'month').format('MMM')}
-                </Text>
-              </View>
-            </Button>
-            <Text
-              style={{
-                fontSize: theme.fontSize('lg'),
-                fontFamily: theme.fonts.semiBold,
-              }}
-            >
-              {selectedMonth.format('MMMM YYYY')}
-            </Text>
-            <Button
-              onPress={() => handleArrowNavigate('forward')}
-              style={navButtonStyle(theme)}
-            >
-              <View
-                style={{
-                  flexDirection: 'row',
-                  gap: 5,
-                  alignItems: 'center',
-                }}
-              >
-                <Text style={{ color: theme.colors.textAlt }}>
-                  {moment(selectedMonth).add(1, 'month').format('MMM')}
-                </Text>
-                <IconButton icon={ArrowRightIcon} size={15} />
-              </View>
-            </Button>
-          </XView>
-          {!isCurrentMonth && (
-            <Button
-              style={{
-                alignSelf: 'center',
-                backgroundColor: theme.colors.accentTranslucent,
-                paddingVertical: 5,
-                paddingHorizontal: 15,
-                borderRadius: theme.numbers.borderRadiusSm,
-              }}
-              onPress={() => {
-                setYear(moment().year())
-                setMonth(moment().month())
-              }}
-            >
-              <Text style={{ textDecorationLine: 'underline' }}>
-                {i18n.t('today')}
-              </Text>
-            </Button>
-          )}
-          <ScheduleInsights
-            month={month}
-            year={year}
-            onEditGoal={
-              baseGoalHours > 0 && !isPastMonth
-                ? () => setGoalEditorOpen(true)
-                : undefined
-            }
-          />
-          <Card>
-            <CalendarHeader
-              viewMode={calendarViewMode}
-              onChangeViewMode={setCalendarViewMode}
-            />
-            <View>
-              <CalendarKey />
-              <MonthTimeReportsCalendar
-                month={month}
-                year={year}
-                monthsReports={thisMonthsReports}
-                setSheet={setSelectedDateSheet}
-                viewMode={calendarViewMode}
-              />
-            </View>
-            <ActionButton
-              onPress={() => rootNavigation.navigate('PlanDay', {})}
-            >
-              {i18n.t('createPlan')}
-            </ActionButton>
-          </Card>
-          <ScheduleScreenSections month={month} year={year} />
-          <View style={{ gap: 8 }}>
-            <XView style={{ justifyContent: 'space-between' }}>
-              <Text
-                style={{
-                  color: theme.colors.textAlt,
-                  textTransform: 'uppercase',
-                  fontSize: theme.fontSize('sm'),
-                  fontFamily: theme.fonts.semiBold,
-                  letterSpacing: 0.5,
-                }}
-              >
-                {i18n.t('plans')}
-              </Text>
-              {isCurrentMonth && pastPlans.length > 0 && (
-                <Button onPress={() => setShowPastPlans((v) => !v)}>
-                  <Text
+                <Button
+                  onPress={() => handleArrowNavigate('back')}
+                  style={navButtonStyle(theme)}
+                >
+                  <View
                     style={{
-                      color: theme.colors.textAlt,
-                      fontSize: theme.fontSize('sm'),
-                      fontFamily: theme.fonts.semiBold,
-                      textDecorationLine: 'underline',
+                      flexDirection: 'row',
+                      gap: 5,
+                      alignItems: 'center',
                     }}
                   >
-                    {showPastPlans
-                      ? i18n.t('hidePreviousPlans')
-                      : i18n.t('showPreviousPlans')}
+                    <IconButton icon={ArrowLeftIcon} size={15} />
+                    <Text style={{ color: theme.colors.textAlt }}>
+                      {moment(selectedMonth).subtract(1, 'month').format('MMM')}
+                    </Text>
+                  </View>
+                </Button>
+                <Text
+                  style={{
+                    fontSize: theme.fontSize('lg'),
+                    fontFamily: theme.fonts.semiBold,
+                  }}
+                >
+                  {selectedMonth.format('MMMM YYYY')}
+                </Text>
+                <Button
+                  onPress={() => handleArrowNavigate('forward')}
+                  style={navButtonStyle(theme)}
+                >
+                  <View
+                    style={{
+                      flexDirection: 'row',
+                      gap: 5,
+                      alignItems: 'center',
+                    }}
+                  >
+                    <Text style={{ color: theme.colors.textAlt }}>
+                      {moment(selectedMonth).add(1, 'month').format('MMM')}
+                    </Text>
+                    <IconButton icon={ArrowRightIcon} size={15} />
+                  </View>
+                </Button>
+              </XView>
+              {!isCurrentMonth && (
+                <Button
+                  style={{
+                    alignSelf: 'center',
+                    backgroundColor: theme.colors.accentTranslucent,
+                    paddingVertical: 5,
+                    paddingHorizontal: 15,
+                    borderRadius: theme.numbers.borderRadiusSm,
+                  }}
+                  onPress={() => {
+                    setYear(moment().year())
+                    setMonth(moment().month())
+                  }}
+                >
+                  <Text style={{ textDecorationLine: 'underline' }}>
+                    {i18n.t('today')}
                   </Text>
                 </Button>
               )}
-            </XView>
-            <View style={{ gap: 10, minHeight: 10 }}>
-              {!hasAnyPlans ? (
-                <Card>
-                  <Text>{i18n.t('noPlansScheduledForThisMonth')}</Text>
-                </Card>
-              ) : (
-                visiblePlans.map((item) => (
-                  <PlanRow
-                    key={`${item.type}-${item.plan.id}-${item.date.toISOString()}`}
-                    item={item}
-                    dateDisplay='monthList'
-                    contextMonth={month}
-                    contextYear={year}
-                    onPress={() => {
-                      if (item.type === 'day') {
-                        handleEditDayPlan(item.plan, item.date)
-                      } else {
-                        handleEditRecurringPlanInstance(item.plan, item.date)
-                      }
-                    }}
-                  />
-                ))
-              )}
             </View>
-          </View>
-        </KeyboardAwareScrollView>
+          }
+          leading={
+            <View style={{ gap: 15 }}>
+              <ScheduleInsights
+                month={month}
+                year={year}
+                onEditGoal={
+                  baseGoalHours > 0 && !isPastMonth
+                    ? () => setGoalEditorOpen(true)
+                    : undefined
+                }
+              />
+              <Card>
+                <CalendarHeader
+                  viewMode={calendarViewMode}
+                  onChangeViewMode={setCalendarViewMode}
+                />
+                <View>
+                  <CalendarKey />
+                  <MonthTimeReportsCalendar
+                    month={month}
+                    year={year}
+                    monthsReports={thisMonthsReports}
+                    setSheet={(next) =>
+                      setSelectedDateSheet((previous) => {
+                        const selected =
+                          typeof next === 'function' ? next(previous) : next
+                        return { ...selected, open: !isWide }
+                      })
+                    }
+                    selectedDate={isWide ? selectedDateSheet.date : undefined}
+                    viewMode={calendarViewMode}
+                  />
+                </View>
+                <ActionButton
+                  onPress={() => rootNavigation.navigate('PlanDay', {})}
+                >
+                  {i18n.t('createPlan')}
+                </ActionButton>
+              </Card>
+              <ScheduleScreenSections month={month} year={year} />
+            </View>
+          }
+          trailing={
+            <View style={{ gap: 20 }}>
+              {isWide && (
+                <ScheduleDayInspector
+                  date={selectedDateSheet.date}
+                  reports={thisMonthsReports || []}
+                />
+              )}
+              <View style={{ gap: 8 }}>
+                <XView
+                  style={{
+                    justifyContent: 'space-between',
+                    flexWrap: 'wrap',
+                    gap: 8,
+                  }}
+                >
+                  <Text
+                    style={{
+                      color: theme.colors.textAlt,
+                      textTransform: 'uppercase',
+                      fontSize: theme.fontSize('sm'),
+                      fontFamily: theme.fonts.semiBold,
+                      letterSpacing: 0.5,
+                    }}
+                  >
+                    {i18n.t('plans')}
+                  </Text>
+                  {isCurrentMonth && pastPlans.length > 0 && (
+                    <Button onPress={() => setShowPastPlans((v) => !v)}>
+                      <Text
+                        style={{
+                          color: theme.colors.textAlt,
+                          fontSize: theme.fontSize('sm'),
+                          fontFamily: theme.fonts.semiBold,
+                          textDecorationLine: 'underline',
+                        }}
+                      >
+                        {showPastPlans
+                          ? i18n.t('hidePreviousPlans')
+                          : i18n.t('showPreviousPlans')}
+                      </Text>
+                    </Button>
+                  )}
+                </XView>
+                <View style={{ gap: 10, minHeight: 10 }}>
+                  {!hasAnyPlans ? (
+                    <Card>
+                      <Text>{i18n.t('noPlansScheduledForThisMonth')}</Text>
+                    </Card>
+                  ) : (
+                    visiblePlans.map((item) => (
+                      <PlanRow
+                        key={`${item.type}-${item.plan.id}-${item.date.toISOString()}`}
+                        item={item}
+                        dateDisplay='monthList'
+                        contextMonth={month}
+                        contextYear={year}
+                        onPress={() => {
+                          if (item.type === 'day') {
+                            handleEditDayPlan(item.plan, item.date)
+                          } else {
+                            handleEditRecurringPlanInstance(
+                              item.plan,
+                              item.date
+                            )
+                          }
+                        }}
+                      />
+                    ))
+                  )}
+                </View>
+              </View>
+            </View>
+          }
+        />
       </SwipeMonthNavigator>
-      <SelectedDateSheet
-        sheet={selectedDateSheet}
-        setSheet={setSelectedDateSheet}
-        thisMonthsReports={thisMonthsReports}
-        onAddTime={handleAddTime}
-        onPlanDay={handlePlanDay}
-        onNavigateToPlanDay={handleNavigateToPlanDay}
-        onNavigateToRecurringPlan={handleNavigateToRecurringPlan}
-        onEditTimeReport={handleEditTimeReport}
-      />
+      {!isWide && (
+        <SelectedDateSheet
+          sheet={selectedDateSheet}
+          setSheet={setSelectedDateSheet}
+          thisMonthsReports={thisMonthsReports}
+          onAddTime={handleAddTime}
+          onPlanDay={handlePlanDay}
+          onNavigateToPlanDay={handleNavigateToPlanDay}
+          onNavigateToRecurringPlan={handleNavigateToRecurringPlan}
+          onEditTimeReport={handleEditTimeReport}
+        />
+      )}
       {baseGoalHours > 0 && !isPastMonth ? (
         <MonthGoalEditorSheet
           open={goalEditorOpen}

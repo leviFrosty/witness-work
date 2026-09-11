@@ -1,132 +1,63 @@
-import AppVersionInfo from '@/features/updates/components/AppVersionInfo'
+import { MessageCircle as MessageCircleIcon } from 'lucide-react-native'
 import {
-  Bug as BugIcon,
-  Hand as HandIcon,
-  MessageCircle as MessageCircleIcon,
-  Pin as PinIcon,
-  Search as SearchIcon,
-} from 'lucide-react-native'
-import LucideIcon from '@/components/ui/LucideIcon'
-import { useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react'
-import { Image, View, ScrollView } from 'react-native'
-import { Input, InputProps } from 'tamagui'
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from 'react'
+import { View, ScrollView, useWindowDimensions } from 'react-native'
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import * as Clipboard from 'expo-clipboard'
 import * as Sentry from '@sentry/react-native'
 import Purchases from 'react-native-purchases'
 import { useToastController } from '@tamagui/toast'
 import { RouteProp, useNavigation, useRoute } from '@react-navigation/native'
-
 import Header from '@/components/ui/layout/Header'
 import Wrapper from '@/components/ui/layout/Wrapper'
 import Text from '@/components/ui/MyText'
-import Accordion from '@/components/ui/Accordion'
-import Card from '@/components/ui/Card'
 import IconButton from '@/components/ui/IconButton'
-import Button from '@/components/ui/Button'
 import useTheme from '@/contexts/theme'
 import i18n, { TranslationKey } from '@/lib/locales'
-import links from '@/constants/links'
-import { email } from '@/constants/contactInformation'
-import { openURL } from '@/lib/links'
 import {
   FAQS,
   FAQ_CATEGORIES,
-  FAQEntry,
   FAQCategory,
 } from '@/features/updates/constants/faqs'
+import {
+  FAQIntro,
+  FAQSearch,
+  FAQItem,
+  FAQSupport,
+} from '@/features/updates/components/FAQContent'
+import FAQTopics, {
+  FAQTopic,
+  faqTopicTitle,
+} from '@/features/updates/components/FAQTopics'
 import { RootStackParamList } from '@/types/rootStack'
-
-const normalize = (s: string) => s.toLowerCase().trim()
-
-const ReportLinks = () => {
-  const theme = useTheme()
-  return (
-    <View style={{ flexDirection: 'row', gap: 10, flexWrap: 'wrap' }}>
-      <Button
-        onPress={() => openURL(links.bugReport)}
-        style={{
-          flexDirection: 'row',
-          alignItems: 'center',
-          gap: 8,
-          paddingHorizontal: 14,
-          paddingVertical: 10,
-          borderRadius: theme.numbers.borderRadiusSm,
-          borderWidth: 1,
-          borderColor: theme.colors.border,
-          backgroundColor: theme.colors.backgroundLighter,
-        }}
-      >
-        <IconButton icon={BugIcon} />
-        <Text style={{ fontFamily: theme.fonts.semiBold }}>
-          {i18n.t('bugReport')}
-        </Text>
-      </Button>
-      <Button
-        onPress={() => openURL(links.featureRequest)}
-        style={{
-          flexDirection: 'row',
-          alignItems: 'center',
-          gap: 8,
-          paddingHorizontal: 14,
-          paddingVertical: 10,
-          borderRadius: theme.numbers.borderRadiusSm,
-          borderWidth: 1,
-          borderColor: theme.colors.border,
-          backgroundColor: theme.colors.backgroundLighter,
-        }}
-      >
-        <IconButton icon={HandIcon} />
-        <Text style={{ fontFamily: theme.fonts.semiBold }}>
-          {i18n.t('featureRequest')}
-        </Text>
-      </Button>
-    </View>
-  )
-}
-
-const FAQItem = ({ entry }: { entry: FAQEntry }) => {
-  const theme = useTheme()
-  const question = i18n.t(`faq_${entry.id}_q` as TranslationKey)
-  const answer = i18n.t(`faq_${entry.id}_a` as TranslationKey)
-
-  return (
-    <Accordion
-      style={{ flexShrink: 1 }}
-      header={
-        <Text
-          style={{
-            fontFamily: theme.fonts.semiBold,
-            flex: 1,
-            paddingRight: 10,
-          }}
-        >
-          {question}
-        </Text>
-      }
-    >
-      <View style={{ gap: 12 }}>
-        <Text style={{ lineHeight: 22 }}>{answer}</Text>
-        {entry.id === 'reportBug' && <ReportLinks />}
-      </View>
-    </Accordion>
-  )
-}
 
 const FAQScreen = () => {
   const theme = useTheme()
+  const insets = useSafeAreaInsets()
+  const { width, fontScale } = useWindowDimensions()
+  const isWide = width >= 1000 && fontScale <= 1.3
   const navigation = useNavigation()
   const route = useRoute<RouteProp<RootStackParamList, 'FAQ'>>()
   const requestedCategory = route.params?.scrollToCategory
-  const targetCategory = (FAQ_CATEGORIES as readonly string[]).includes(
-    requestedCategory ?? ''
+  const targetCategory = FAQ_CATEGORIES.includes(
+    requestedCategory as FAQCategory
   )
     ? (requestedCategory as FAQCategory)
     : undefined
-  const scrollRef = useRef<ScrollView>(null)
-  const categoryRefs = useRef<Partial<Record<FAQCategory, View | null>>>({})
-  const didScrollRef = useRef(false)
+  const [selectedTopic, setSelectedTopic] = useState<FAQTopic>(
+    targetCategory ?? 'pinned'
+  )
   const [search, setSearch] = useState('')
+  const scrollRef = useRef<ScrollView>(null)
+  const answersRef = useRef<ScrollView>(null)
+  const categoryOffsets = useRef<Partial<Record<FAQCategory, number>>>({})
+  const didScrollRef = useRef(false)
   const toast = useToastController()
 
   const handleCopyAccountId = useCallback(async () => {
@@ -143,24 +74,40 @@ const FAQScreen = () => {
     }
   }, [toast])
 
-  const scrollToTargetCategory = useCallback(() => {
-    if (didScrollRef.current) return
-    if (!targetCategory) return
-    const node = categoryRefs.current[targetCategory]
-    const scroll = scrollRef.current
-    if (!node || !scroll) return
+  const scrollToTargetCategory = () => {
+    if (isWide || didScrollRef.current || !targetCategory) return
+    const y = categoryOffsets.current[targetCategory]
+    if (y === undefined || !scrollRef.current) return
     didScrollRef.current = true
-    // measureLayout reports y relative to the inner ScrollView, which is what
-    // scrollTo expects. The 12px offset gives the category title a little
-    // breathing room above the screen edge.
-    node.measureLayout(
-      scroll as unknown as number,
-      (_x, y) => scroll.scrollTo({ y: Math.max(0, y - 12), animated: true }),
-      () => {
-        didScrollRef.current = false
-      }
-    )
+    scrollRef.current.scrollTo({ y: Math.max(0, y + 8), animated: true })
+  }
+
+  useEffect(() => {
+    if (targetCategory) {
+      setSelectedTopic(targetCategory)
+      setSearch('')
+    }
   }, [targetCategory])
+
+  useEffect(() => {
+    didScrollRef.current = false
+    if (isWide || !targetCategory) return
+    // A new route target can have unchanged geometry, so native onLayout and
+    // content-size callbacks may not run. Try cached offsets after commit;
+    // those callbacks still handle first mount and subsequent measurement.
+    const frame = requestAnimationFrame(() => {
+      const y = categoryOffsets.current[targetCategory]
+      if (didScrollRef.current || y === undefined || !scrollRef.current) return
+      didScrollRef.current = true
+      scrollRef.current.scrollTo({ y: Math.max(0, y + 8), animated: true })
+    })
+    return () => cancelAnimationFrame(frame)
+  }, [targetCategory, isWide])
+
+  useEffect(() => {
+    if (!isWide) return
+    answersRef.current?.scrollTo({ y: 0, animated: false })
+  }, [isWide, selectedTopic, search])
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -174,278 +121,221 @@ const FAQScreen = () => {
               icon={MessageCircleIcon}
               size='xl'
               accessibilityLabel={i18n.t('faq_jumpToStillNeedHelp')}
-              onPress={() => scrollRef.current?.scrollToEnd({ animated: true })}
+              onPress={() => {
+                if (isWide) {
+                  setSelectedTopic('support')
+                  setSearch('')
+                } else scrollRef.current?.scrollToEnd({ animated: true })
+              }}
             />
           }
         />
       ),
     })
-  }, [navigation])
+  }, [navigation, isWide])
 
-  const trimmed = normalize(search)
-  const isSearching = trimmed.length > 0
+  const query = search.toLocaleLowerCase().trim()
+  const isSearching = query.length > 0
+  const matches = FAQS.filter(
+    (entry) =>
+      !isSearching ||
+      i18n
+        .t(`faq_${entry.id}_q` as TranslationKey)
+        .toLocaleLowerCase()
+        .includes(query) ||
+      i18n
+        .t(`faq_${entry.id}_a` as TranslationKey)
+        .toLocaleLowerCase()
+        .includes(query)
+  )
+  const pinned = FAQS.filter((entry) => entry.pinned)
+  const visibleAnswers = isSearching
+    ? matches
+    : selectedTopic === 'all'
+      ? FAQS
+      : selectedTopic === 'pinned'
+        ? pinned
+        : FAQS.filter((entry) => entry.category === selectedTopic)
+  const grouped = FAQ_CATEGORIES.map((category) => ({
+    category,
+    entries: FAQS.filter(
+      (entry) =>
+        entry.category === category &&
+        (!entry.pinned || category === targetCategory)
+    ),
+  })).filter((group) => group.entries.length > 0)
 
-  const matches = useMemo(() => {
-    if (!isSearching) return FAQS
-    return FAQS.filter((entry) => {
-      const q = normalize(i18n.t(`faq_${entry.id}_q` as TranslationKey))
-      const a = normalize(i18n.t(`faq_${entry.id}_a` as TranslationKey))
-      return q.includes(trimmed) || a.includes(trimmed)
-    })
-  }, [trimmed, isSearching])
-
-  const pinned = useMemo(() => FAQS.filter((entry) => entry.pinned), [])
-
-  const grouped = useMemo(() => {
-    const map = new Map<FAQCategory, FAQEntry[]>()
-    for (const entry of matches) {
-      if (!isSearching && entry.pinned) continue
-      const list = map.get(entry.category) ?? []
-      list.push(entry)
-      map.set(entry.category, list)
-    }
-    return FAQ_CATEGORIES.map((category) => ({
-      category,
-      entries: map.get(category) ?? [],
-    })).filter((group) => group.entries.length > 0)
-  }, [matches, isSearching])
+  const support = <FAQSupport onCopyAccountId={handleCopyAccountId} />
+  const results = (
+    <View style={{ gap: 10, paddingHorizontal: 15 }}>
+      {(isWide ? visibleAnswers : matches).map((entry) => (
+        <FAQItem key={entry.id} entry={entry} />
+      ))}
+      {matches.length === 0 && (
+        <Text style={{ color: theme.colors.textAlt }}>
+          {i18n.t('faq_noResults')}
+        </Text>
+      )}
+    </View>
+  )
 
   return (
-    <Wrapper insets='bottom'>
-      <KeyboardAwareScrollView
-        innerRef={(ref) => {
-          scrollRef.current = ref as unknown as ScrollView
-        }}
-        keyboardShouldPersistTaps='handled'
-        contentContainerStyle={{
-          paddingTop: 20,
-          paddingBottom: 160,
-          gap: 25,
-        }}
-      >
+    <Wrapper insets='none' style={{ flex: 1 }}>
+      {isWide ? (
         <View
           style={{
-            alignItems: 'center',
-            gap: 10,
-            paddingHorizontal: 25,
-            paddingTop: 5,
-            paddingBottom: 5,
+            flex: 1,
+            flexDirection: 'row',
+            width: '100%',
+            maxWidth: 1100,
+            alignSelf: 'center',
+            paddingTop: 20,
+            paddingBottom: insets.bottom + 16,
+            paddingHorizontal: 20,
+            gap: 24,
           }}
         >
-          <Image
-            source={require('@/assets/icon.png')}
-            style={{
-              width: 64,
-              height: 64,
-              borderRadius: 16,
-            }}
-          />
-          <Text
-            style={{
-              fontFamily: theme.fonts.bold,
-              fontSize: theme.fontSize('xl'),
-              color: theme.colors.text,
-              textAlign: 'center',
-            }}
-          >
-            {i18n.t('helpCenter_intro_title')}
-          </Text>
-          <Text
-            style={{
-              color: theme.colors.textAlt,
-              textAlign: 'center',
-              lineHeight: 22,
-            }}
-          >
-            {i18n.t('helpCenter_intro_blurb')}
-          </Text>
-        </View>
-
-        <View style={{ paddingHorizontal: 15 }}>
           <View
             style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              gap: 10,
-              paddingHorizontal: 12,
-              minHeight: 44,
-              height: 44,
-              borderRadius: theme.numbers.borderRadiusMd,
+              width: 280,
+              borderRadius: theme.numbers.borderRadiusLg,
+              backgroundColor: theme.colors.backgroundLighter,
               borderWidth: 1,
               borderColor: theme.colors.border,
-              backgroundColor: theme.colors.backgroundLighter,
+              overflow: 'hidden',
             }}
           >
-            <LucideIcon
-              icon={SearchIcon}
-              size={theme.fontSize('xs')}
-              style={{ color: theme.colors.textAlt }}
-            />
-            <Input
-              unstyled
-              value={search}
-              onChangeText={setSearch}
-              placeholder={i18n.t('faq_searchPlaceholder')}
-              placeholderTextColor={
-                theme.colors.textAlt as InputProps['placeholderTextColor']
-              }
-              clearButtonMode='while-editing'
-              enterKeyHint='search'
-              autoCorrect={false}
-              autoCapitalize='none'
-              style={{
-                flex: 1,
-                color: theme.colors.text,
-                fontFamily: theme.fonts.regular,
-                fontSize: theme.fontSize('md'),
-              }}
-            />
+            <ScrollView
+              style={{ flex: 1 }}
+              keyboardShouldPersistTaps='handled'
+              contentContainerStyle={{ gap: 16, paddingVertical: 16 }}
+            >
+              <FAQIntro compact />
+              <FAQSearch search={search} setSearch={setSearch} />
+              <FAQTopics
+                selected={isSearching ? undefined : selectedTopic}
+                onSelect={(topic) => {
+                  setSelectedTopic(topic)
+                  setSearch('')
+                }}
+              />
+            </ScrollView>
           </View>
-        </View>
-
-        {!isSearching && pinned.length > 0 && (
-          <View style={{ gap: 10 }}>
+          <ScrollView
+            ref={answersRef}
+            style={{ flex: 1 }}
+            keyboardShouldPersistTaps='handled'
+            contentContainerStyle={{ paddingBottom: 24 }}
+          >
             <View
               style={{
-                flexDirection: 'row',
-                alignItems: 'center',
-                gap: 8,
-                paddingHorizontal: 35,
+                width: '100%',
+                maxWidth: 720,
+                alignSelf: 'center',
+                gap: 20,
               }}
             >
               <Text
                 accessibilityRole='header'
                 style={{
-                  fontFamily: theme.fonts.semiBold,
-                  fontSize: theme.fontSize('sm'),
-                  color: theme.colors.textAlt,
+                  paddingHorizontal: 15,
+                  fontSize: theme.fontSize('xl'),
+                  fontFamily: theme.fonts.bold,
                 }}
               >
-                {i18n.t('faq_pinnedHeader')}
+                {isSearching
+                  ? i18n.t('faq_allHeader')
+                  : faqTopicTitle(selectedTopic)}
               </Text>
-              <LucideIcon
-                icon={PinIcon}
-                size={theme.fontSize('xs')}
-                style={{ color: theme.colors.textAlt }}
-              />
+              {!isSearching && selectedTopic === 'support' ? support : results}
             </View>
-            <View style={{ gap: 10, paddingHorizontal: 15 }}>
-              {pinned.map((entry) => (
-                <FAQItem key={entry.id} entry={entry} />
-              ))}
-            </View>
-          </View>
-        )}
-
-        {grouped.length === 0 ? (
-          <View style={{ paddingHorizontal: 20, paddingTop: 10 }}>
-            <Text style={{ color: theme.colors.textAlt }}>
-              {i18n.t('faq_noResults')}
-            </Text>
-          </View>
-        ) : isSearching ? (
-          <View style={{ gap: 10, paddingHorizontal: 15 }}>
-            {matches.map((entry) => (
-              <FAQItem key={entry.id} entry={entry} />
-            ))}
-          </View>
-        ) : (
-          <View style={{ gap: 20 }}>
-            <Text
-              accessibilityRole='header'
-              style={{
-                paddingHorizontal: 35,
-                fontFamily: theme.fonts.semiBold,
-                fontSize: theme.fontSize('sm'),
-                color: theme.colors.textAlt,
-              }}
-            >
-              {i18n.t('faq_allHeader')}
-            </Text>
-            {grouped.map(({ category, entries }) => (
-              <View
-                key={category}
-                style={{ gap: 8 }}
-                ref={(node) => {
-                  categoryRefs.current[category] = node
-                }}
-                onLayout={() => {
-                  if (category === targetCategory) scrollToTargetCategory()
-                }}
-              >
+          </ScrollView>
+        </View>
+      ) : (
+        <KeyboardAwareScrollView
+          style={{ flex: 1 }}
+          innerRef={(ref) => {
+            scrollRef.current = ref as unknown as ScrollView
+          }}
+          keyboardShouldPersistTaps='handled'
+          onContentSizeChange={scrollToTargetCategory}
+          contentContainerStyle={{
+            paddingTop: 20,
+            paddingBottom: insets.bottom + 32,
+          }}
+        >
+          <View
+            style={{
+              width: '100%',
+              maxWidth: 720,
+              alignSelf: 'center',
+              gap: 25,
+            }}
+          >
+            <FAQIntro />
+            <FAQSearch search={search} setSearch={setSearch} />
+            {isSearching ? (
+              results
+            ) : (
+              <>
+                {pinned.length > 0 && (
+                  <View style={{ gap: 10, paddingHorizontal: 15 }}>
+                    <Text
+                      accessibilityRole='header'
+                      style={{
+                        paddingHorizontal: 20,
+                        fontFamily: theme.fonts.semiBold,
+                        color: theme.colors.textAlt,
+                      }}
+                    >
+                      {i18n.t('faq_pinnedHeader')}
+                    </Text>
+                    {pinned.map((entry) => (
+                      <FAQItem key={entry.id} entry={entry} />
+                    ))}
+                  </View>
+                )}
                 <Text
+                  accessibilityRole='header'
                   style={{
                     paddingHorizontal: 35,
                     fontFamily: theme.fonts.semiBold,
-                    fontSize: theme.fontSize('sm'),
                     color: theme.colors.textAlt,
                   }}
                 >
-                  {i18n.t(`faq_category_${category}` as TranslationKey)}
+                  {i18n.t('faq_allHeader')}
                 </Text>
-                <View style={{ gap: 10, paddingHorizontal: 15 }}>
-                  {entries.map((entry) => (
-                    <FAQItem key={entry.id} entry={entry} />
-                  ))}
-                </View>
-              </View>
-            ))}
+                {grouped.map(({ category, entries }) => (
+                  <View
+                    key={category}
+                    style={{ gap: 10, paddingHorizontal: 15 }}
+                    onLayout={(event) => {
+                      categoryOffsets.current[category] =
+                        event.nativeEvent.layout.y
+                      if (category === targetCategory) scrollToTargetCategory()
+                    }}
+                  >
+                    <Text
+                      accessibilityRole='header'
+                      style={{
+                        paddingHorizontal: 20,
+                        fontFamily: theme.fonts.semiBold,
+                        color: theme.colors.textAlt,
+                      }}
+                    >
+                      {faqTopicTitle(category)}
+                    </Text>
+                    {entries.map((entry) => (
+                      <FAQItem key={entry.id} entry={entry} />
+                    ))}
+                  </View>
+                ))}
+              </>
+            )}
+            {support}
           </View>
-        )}
-
-        <View style={{ paddingHorizontal: 15 }}>
-          <Card>
-            <Text
-              style={{
-                fontFamily: theme.fonts.semiBold,
-                fontSize: theme.fontSize('md'),
-              }}
-            >
-              {i18n.t('faq_stillNeedHelp')}
-            </Text>
-            <Text style={{ color: theme.colors.textAlt, lineHeight: 22 }}>
-              {i18n.t('faq_stillNeedHelp_description')}
-            </Text>
-            <ReportLinks />
-            <Text
-              style={{
-                fontSize: theme.fontSize('xs'),
-                color: theme.colors.textAlt,
-                lineHeight: 18,
-              }}
-            >
-              {i18n.t('faq_emailLevi')}{' '}
-              <Text
-                onPress={() => openURL(`mailto:${email}`)}
-                style={{
-                  fontSize: theme.fontSize('xs'),
-                  color: theme.colors.accent,
-                  textDecorationLine: 'underline',
-                }}
-              >
-                {email}
-              </Text>
-            </Text>
-          </Card>
-        </View>
-
-        <View style={{ paddingHorizontal: 15, paddingTop: 4, gap: 5 }}>
-          <AppVersionInfo />
-          <Button
-            onPress={handleCopyAccountId}
-            style={{ alignSelf: 'center', paddingVertical: 10 }}
-          >
-            <Text
-              style={{
-                fontSize: theme.fontSize('xs'),
-                color: theme.colors.textAlt,
-              }}
-            >
-              {i18n.t('copyAccountId')}
-            </Text>
-          </Button>
-        </View>
-      </KeyboardAwareScrollView>
+        </KeyboardAwareScrollView>
+      )}
     </Wrapper>
   )
 }

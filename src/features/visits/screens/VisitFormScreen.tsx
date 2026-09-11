@@ -415,9 +415,11 @@ const VisitFormScreen = ({ route, navigation }: Props) => {
             params.fromContactForm ? (
               <Button
                 onPress={() =>
-                  navigation.replace('Contact Details', {
-                    id: params.contactId!,
-                  })
+                  params.returnToContacts
+                    ? navigation.goBack()
+                    : navigation.replace('Contact Details', {
+                        id: params.contactId!,
+                      })
                 }
               >
                 <Text style={{ color: theme.colors.text, fontSize: 16 }}>
@@ -481,7 +483,9 @@ const VisitFormScreen = ({ route, navigation }: Props) => {
                     updateLastTimeRequestedStoreReview,
                   })
 
-                  if (isEditing) {
+                  if (params.returnToContacts) {
+                    navigation.goBack()
+                  } else if (isEditing) {
                     navigation.pop()
                   } else if (params.contactId) {
                     navigation.replace('Contact Details', {

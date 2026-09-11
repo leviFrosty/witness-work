@@ -16,7 +16,7 @@ const ContactSection = () => {
 
   return (
     <View style={{ gap: 3 }}>
-      <SectionTitle text={i18n.t('helpCenter')} />
+      <SectionTitle alignWithIcons text={i18n.t('helpCenter')} />
       <Section>
         <InputRowButton
           lastInSection

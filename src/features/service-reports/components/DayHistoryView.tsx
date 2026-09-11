@@ -161,7 +161,13 @@ const DayHistoryView: React.FC<DayHistoryViewProps> = ({
     <View style={{ gap: 20 }}>
       {showHeader && (
         <View style={{ marginBottom: 10, gap: 5 }}>
-          <XView style={{ justifyContent: 'space-between' }}>
+          <XView
+            style={{
+              justifyContent: 'space-between',
+              flexWrap: 'wrap',
+              gap: 8,
+            }}
+          >
             <Text
               style={{
                 color: theme.colors.text,
@@ -172,7 +178,7 @@ const DayHistoryView: React.FC<DayHistoryViewProps> = ({
               {formatDate(date)}
             </Text>
 
-            <XView>
+            <XView style={{ flexShrink: 1 }}>
               {goalMinutes ? (
                 <>
                   <Circle color={statusColor.bg} />
@@ -180,6 +186,7 @@ const DayHistoryView: React.FC<DayHistoryViewProps> = ({
                     style={{
                       color: theme.colors.textAlt,
                       fontSize: theme.fontSize('md'),
+                      flexShrink: 1,
                       fontFamily: theme.fonts.semiBold,
                     }}
                   >

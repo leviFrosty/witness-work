@@ -18,7 +18,7 @@ import { SettingsSectionProps } from '@/features/settings/screens/settingScreen'
 const MiscSection = ({ handleNavigate }: SettingsSectionProps) => {
   return (
     <View style={{ gap: 3 }}>
-      <SectionTitle text={i18n.t('misc')} />
+      <SectionTitle alignWithIcons text={i18n.t('misc')} />
 
       <Section>
         <InputRowButton

@@ -1,6 +1,6 @@
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs'
 import TabBar from '@/components/ui/TabBar'
-import Map from '@/features/map/screens/MapScreen'
+import Map from '@/app/navigation/MapRouteScreen'
 import DrawerNavigator from '@/app/navigation/DrawerNavigator'
 import { usePreferences } from '@/stores/preferences'
 import usePublisher from '@/hooks/usePublisher'
@@ -22,6 +22,8 @@ import { useRollover } from '@/features/service-reports/hooks/useRollover'
 import { RootStackNavigation } from '@/types/rootStack'
 import { useMilestoneRevealStore } from '@/features/milestones/stores/milestoneReveal'
 import { evaluateRevealOnLaunch } from '@/features/updates/lib/evaluateRevealOnLaunch'
+import useAdaptiveLayout from '@/hooks/useAdaptiveLayout'
+import SettingsOverviewScreen from '@/features/settings/screens/SettingsOverviewScreen'
 
 /**
  * Version that, on a returning install with `lastAppVersion` strictly less,
@@ -30,9 +32,10 @@ import { evaluateRevealOnLaunch } from '@/features/updates/lib/evaluateRevealOnL
  * — and reset the matching preference flags in the same migration.
  */
 const MILESTONE_UPDATE_VERSION = '1.38.2'
+const Tab = createBottomTabNavigator<HomeTabStackParamList>()
 
 const HomeTabStack = () => {
-  const Tab = createBottomTabNavigator<HomeTabStackParamList>()
+  const { hasSidebar } = useAdaptiveLayout()
   const {
     lastAppVersion,
     developerTools,
@@ -140,7 +143,10 @@ const HomeTabStack = () => {
       <Tab.Navigator
         initialRouteName='Home'
         tabBar={(props) => <TabBar {...props} />}
-        screenOptions={{ header: () => null }}
+        screenOptions={{
+          header: () => null,
+          tabBarPosition: hasSidebar ? 'left' : 'bottom',
+        }}
       >
         <Tab.Screen name='Home' component={DrawerNavigator} />
         <Tab.Screen name='Contacts' component={ContactsScreen} />
@@ -151,6 +157,7 @@ const HomeTabStack = () => {
         <Tab.Screen name='Schedule' component={ScheduleScreen} />
 
         <Tab.Screen name='Map' component={Map} />
+        <Tab.Screen name='Settings' component={SettingsOverviewScreen} />
       </Tab.Navigator>
       {/* Mounted last so it overlays the tab bar. The global ConfettiProvider
           renders above this tree, so confetti drifts in front of the title — a

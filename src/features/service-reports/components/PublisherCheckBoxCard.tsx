@@ -1,9 +1,12 @@
 import { analytics } from '@/lib/analytics'
-import { CircleCheck as CircleCheckIcon } from 'lucide-react-native'
+import {
+  CircleCheck as CircleCheckIcon,
+  Square as SquareIcon,
+} from 'lucide-react-native'
 import * as Crypto from 'expo-crypto'
 import moment from 'moment'
 import { useMemo, useState } from 'react'
-import { Switch, View } from 'react-native'
+import { View } from 'react-native'
 import Button from '@/components/ui/Button'
 import LucideIcon from '@/components/ui/LucideIcon'
 import Text from '@/components/ui/MyText'
@@ -111,7 +114,7 @@ export default function PublisherCheckBoxCard() {
   return (
     <Button
       accessibilityLabel={i18n.t('sharedTheGoodNews')}
-      accessibilityRole='switch'
+      accessibilityRole='checkbox'
       accessibilityState={{ checked: false }}
       onPress={handleSubmitDidService}
       style={{
@@ -125,8 +128,19 @@ export default function PublisherCheckBoxCard() {
         width: '100%',
       }}
     >
-      <View pointerEvents='none' style={{ minWidth: 64, alignItems: 'center' }}>
-        <Switch value={false} accessible={false} />
+      {/* Participation is a one-time check-in, so keep its checkbox treatment. */}
+      <View
+        pointerEvents='none'
+        style={{
+          width: 58,
+          height: 58,
+          borderRadius: 29,
+          alignItems: 'center',
+          justifyContent: 'center',
+          backgroundColor: theme.colors.accentTranslucent,
+        }}
+      >
+        <LucideIcon icon={SquareIcon} size={30} color={theme.colors.accent} />
       </View>
       <Text
         style={{

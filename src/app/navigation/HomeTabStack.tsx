@@ -157,7 +157,9 @@ const HomeTabStack = () => {
         <Tab.Screen name='Schedule' component={ScheduleScreen} />
 
         <Tab.Screen name='Map' component={Map} />
-        <Tab.Screen name='Settings' component={SettingsOverviewScreen} />
+        {hasSidebar && (
+          <Tab.Screen name='Settings' component={SettingsOverviewScreen} />
+        )}
       </Tab.Navigator>
       {/* Mounted last so it overlays the tab bar. The global ConfettiProvider
           renders above this tree, so confetti drifts in front of the title — a

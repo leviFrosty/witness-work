@@ -47,7 +47,7 @@ export const SectionTitle = ({
         style={{
           flexShrink: 1,
           fontFamily: theme.fonts.semiBold,
-          fontSize: isDrawer ? theme.fontSize('sm') + 1 : theme.fontSize('md'),
+          fontSize: theme.fontSize('sm'),
           color: isDrawer ? theme.colors.text : theme.colors.textAlt,
           opacity: isDrawer ? 0.75 : 1,
           letterSpacing: isDrawer ? 0.8 : 0,

@@ -84,7 +84,7 @@ const InputRowContainer: React.FC<
             gap: 10,
             flexShrink: layout || hasInfo ? 1 : undefined,
             fontFamily: theme.fonts.medium,
-            fontSize: theme.fontSize('lg'),
+            fontSize: theme.fontSize('md'),
           }}
         >
           {label}

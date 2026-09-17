@@ -1,4 +1,7 @@
 {
+  "supporterFeedback_open": "フィードバックを送る",
+  "supporterFeedback_placeholder": "入力してください...",
+  "supporterFeedback_thankYou": "フィードバックありがとうございます！",
   "hello": "こんにちは",
   "goodBye": "さようなら",
   "welcomeTo": "ようこそ",

@@ -87,6 +87,11 @@ submitting, source `.env.production` into the environment and run
 `pnpm sync:widget-shared && eas build -p ios --profile production --local`.
 A newly generated native project is required for the new upload build phase.
 
+The `with-posthog-symbols-last` config plugin keeps the native symbol upload
+after widget and framework embedding using CocoaPods' `post_integrate` hook.
+The upload consumes the app dSYM; placing it before widget embedding creates
+an Xcode archive dependency cycle through the app's Info.plist.
+
 OTA updates do not run Xcode upload hooks. After each `eas update`, run
 `pnpm upload:posthog-sourcemaps` against its unchanged `dist` output before
 removing the artifacts. Do not rebuild between publishing and uploading maps.

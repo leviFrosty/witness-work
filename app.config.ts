@@ -111,6 +111,7 @@ export default ({ config }: ConfigContext): ExpoConfig => {
         },
       ],
       '@bacons/apple-targets',
+      './plugins/with-posthog-symbols-last',
       '@react-native-community/datetimepicker',
       [
         'expo-alternate-app-icons',

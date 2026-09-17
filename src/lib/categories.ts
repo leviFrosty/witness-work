@@ -80,7 +80,7 @@ export type CategoryMigrationResult = {
  *    authoritative (callers now read `Category.isCredit`).
  *
  * The migration is pure: no store access, no side effects. The boot runner in
- * `src/app/App.tsx` is responsible for gating it on
+ * `src/stores/migrations/categories.ts` is responsible for gating it on
  * `preferences.hasMigratedTagsToCategories` and writing the result back to the
  * Categories store, TimeEntry store, and Preferences store.
  */
@@ -291,9 +291,9 @@ export type LdcCollapseMigrationResult = {
  *    it wasn't already present.
  *
  * The migration is pure: no store access, no side effects. The boot runner in
- * `src/app/App.tsx` gates it on `preferences.hasCollapsedLdcIntoCategory` and
- * sequences it after `migrateTagsToCategories` so the categories list is fully
- * populated before LDC is folded in.
+ * `src/stores/migrations/categories.ts` gates it on
+ * `preferences.hasCollapsedLdcIntoCategory` and is called after tag migration
+ * by `src/app/migrations/useAppMigrations.ts`.
  */
 export function migrateLdcToCategory(
   args: LdcCollapseMigrationInput

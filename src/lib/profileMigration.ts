@@ -8,11 +8,11 @@
  * `preferences` but cannot atomically write them to a sibling store. The wave-2
  * Category refactor used the same boot-runner pattern — see
  * `migrateTagsToCategories` and the `hasMigratedTagsToCategories` flag in
- * `src/app/App.tsx`.
+ * `src/stores/migrations/categories.ts`.
  *
  * This module is intentionally a pure transform so it can be unit-tested
  * without pulling in React Native, the storage adapter, or Zustand persist —
- * the runner that calls it lives in `src/app/App.tsx`.
+ * the runner that calls it lives in `src/stores/migrations/profile.ts`.
  */
 
 /**

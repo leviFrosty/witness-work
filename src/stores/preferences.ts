@@ -254,7 +254,7 @@ export const PREFERENCE_DEFAULTS = {
   onboardingComplete: false,
   // `name`, `avatar`, `customAvatarBackground`, and `hasCompletedProfileSetup`
   // moved to `@/stores/profile` in preferences v3 — see `src/lib/profileMigration.ts`
-  // and the boot runner in `src/app/App.tsx`. Glossary disambiguation: those
+  // and the boot runner in `src/stores/migrations/profile.ts`. Glossary disambiguation: those
   // four fields are the User's *identity* (Profile), not the User's *settings*
   // (Preferences).
   /**
@@ -891,7 +891,7 @@ export const NON_SYNCABLE_PREFERENCE_KEYS = new Set<string>([
  *   `customAvatarBackground`, `hasCompletedProfileSetup`) out into the new
  *   Profile store (`@/stores/profile`). This callback only sees the preferences
  *   blob, so it can drop the fields here — but the cross-store _seeding_ runs
- *   in a boot runner (`src/app/App.tsx`) gated on
+ *   in a boot runner (`src/stores/migrations/profile.ts`) gated on
  *   `hasMigratedProfileFromPreferences`. To avoid losing the values between
  *   `migrate` and the boot runner, the persist callback leaves the fields in
  *   place; the boot runner is the single source of truth for both the seeding
@@ -1115,8 +1115,9 @@ const migratePublisherToRole = (state: any): any => {
 
 /**
  * V2 → v3: the persist `migrate` callback is intentionally a no-op for the
- * Profile extraction. The split runs in a boot runner (`src/app/App.tsx`, gated
- * on `hasMigratedProfileFromPreferences`) because:
+ * Profile extraction. The split runs in a boot runner
+ * (`src/stores/migrations/profile.ts`, gated on
+ * `hasMigratedProfileFromPreferences`) because:
  *
  * 1. The boot runner needs to _seed_ a sibling MMKV store (`@/stores/profile`),
  *    which a Zustand persist `migrate` callback can't do — it only sees its own

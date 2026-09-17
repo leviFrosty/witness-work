@@ -57,6 +57,7 @@ import {
   AllOptionsSheet,
 } from '@/features/supporter/components/PaywallOptions'
 import PaywallPurchaseFooter from '@/features/supporter/components/PaywallPurchaseFooter'
+import { analytics } from '@/lib/analytics'
 
 type Tier = 'supporter' | 'tip'
 type SupporterBilling = 'monthly' | 'annual'
@@ -79,6 +80,10 @@ const PaywallScreen = ({
   const isWide = width >= 1000 && fontScale <= 1.3
   const insets = useSafeAreaInsets()
   const route = useRoute<RouteProp<RootStackParamList, 'Paywall'>>()
+  const source = route.params?.source ?? 'unknown'
+  const feature = route.params?.feature
+  const purchased = useRef(false)
+  const openedAt = useRef(Date.now())
   const initialTier: Tier = route.params?.initialTier ?? 'supporter'
   const [currentOfferings, setCurrentOfferings] =
     useState<PurchasesOfferings | null>(null)
@@ -89,6 +94,29 @@ const PaywallScreen = ({
   const [supporterBilling, setSupporterBilling] =
     useState<SupporterBilling>('annual')
   const navigation = useNavigation<RootStackNavigation>()
+  useEffect(() => {
+    analytics.capture('paywall_viewed', {
+      source,
+      feature,
+      initial_tier: initialTier,
+    })
+  }, [source, feature, initialTier])
+
+  useEffect(
+    () =>
+      navigation.addListener('beforeRemove', () => {
+        analytics.capture('paywall_closed', {
+          source,
+          feature,
+          tier,
+          billing: tier === 'tip' ? 'one_time' : supporterBilling,
+          purchased: purchased.current,
+          duration_ms: Date.now() - openedAt.current,
+        })
+      }),
+    [navigation, source, feature, tier, supporterBilling]
+  )
+
   const scrollViewRef = useRef<ScrollView>(null)
   const pricingScrollViewRef = useRef<ScrollView>(null)
   const pendingTierScroll = useRef<Tier | null>(null)
@@ -102,6 +130,11 @@ const PaywallScreen = ({
   }, [isWide, tier])
 
   const handleTierSwitch = (nextTier: Tier) => {
+    analytics.capture('paywall_tier_selected', {
+      source,
+      tier: nextTier,
+      previous_tier: tier,
+    })
     pendingTierScroll.current = isWide ? null : nextTier
     setTier(nextTier)
   }
@@ -141,15 +174,17 @@ const PaywallScreen = ({
               icon={CircleQuestionMarkIcon}
               size='xl'
               accessibilityLabel={i18n.t('paywallLearnMore')}
-              onPress={() =>
+              onPress={() => {
+                analytics.capture('paywall_faq_clicked', { source })
+                analytics.capture('help_center_opened', { source: 'paywall' })
                 navigation.navigate('FAQ', { scrollToCategory: 'supporter' })
-              }
+              }}
             />
           }
         />
       ),
     })
-  }, [navigation])
+  }, [navigation, source])
 
   const allOfferings = useMemo(() => {
     if (!currentOfferings) return []
@@ -221,36 +256,52 @@ const PaywallScreen = ({
   // `getOfferings` is served from the SDK's internal cache (~5 min TTL), so a
   // plain call won't pick up dashboard edits. `force` routes through
   // `syncAttributesAndOfferingsIfNeeded`, which bypasses that cache.
-  const fetchOfferings = useCallback(async (force = false) => {
-    logger.log('[Paywall] calling Purchases.getOfferings', { force })
-    try {
-      const offerings = force
-        ? await Purchases.syncAttributesAndOfferingsIfNeeded()
-        : await Purchases.getOfferings()
-      logger.log('[Paywall] getOfferings success', {
-        force,
-        currentIdentifier: offerings.current?.identifier ?? null,
-        allCount: Object.keys(offerings.all).length,
-        allIdentifiers: Object.keys(offerings.all),
-      })
-      setCurrentOfferings(offerings)
-    } catch (error) {
-      const err = error as PurchasesError
-      logger.error('[Paywall] getOfferings failed', {
-        code: err?.code,
-        message: err?.message,
-        underlying: err?.underlyingErrorMessage,
-        userInfo: err?.userInfo,
-        raw: err,
-      })
-      hasFetchedOfferings.current = false
-      Alert.alert(i18n.t('errorFetchingOfferings'), i18n.t('tryAgainLater'))
-      // Offline is expected, not a bug — surface the Alert but don't page Sentry
-      // (JW-TIME-BW). Other failures still report.
-      if (!isOfflineError(error)) Sentry.captureException(error)
-      throw error
-    }
-  }, [])
+  const fetchOfferings = useCallback(
+    async (force = false) => {
+      logger.log('[Paywall] calling Purchases.getOfferings', { force })
+      try {
+        const offerings = force
+          ? await Purchases.syncAttributesAndOfferingsIfNeeded()
+          : await Purchases.getOfferings()
+        logger.log('[Paywall] getOfferings success', {
+          force,
+          currentIdentifier: offerings.current?.identifier ?? null,
+          allCount: Object.keys(offerings.all).length,
+          allIdentifiers: Object.keys(offerings.all),
+        })
+        analytics.capture('paywall_offerings_loaded', {
+          source,
+          offering_count: Object.keys(offerings.all).length,
+          package_count: Object.values(offerings.all).reduce(
+            (count, offering) => count + offering.availablePackages.length,
+            0
+          ),
+        })
+        setCurrentOfferings(offerings)
+      } catch (error) {
+        const err = error as PurchasesError
+        analytics.capture('paywall_offerings_failed', {
+          source,
+          error_code: err?.code ?? 'unknown',
+          offline: isOfflineError(error),
+        })
+        logger.error('[Paywall] getOfferings failed', {
+          code: err?.code,
+          message: err?.message,
+          underlying: err?.underlyingErrorMessage,
+          userInfo: err?.userInfo,
+          raw: err,
+        })
+        hasFetchedOfferings.current = false
+        Alert.alert(i18n.t('errorFetchingOfferings'), i18n.t('tryAgainLater'))
+        // Offline is expected, not a bug — surface the Alert but don't page Sentry
+        // (JW-TIME-BW). Other failures still report.
+        if (!isOfflineError(error)) Sentry.captureException(error)
+        throw error
+      }
+    },
+    [source]
+  )
 
   useEffect(() => {
     logger.log('[Paywall] effect fired', {
@@ -358,10 +409,23 @@ const PaywallScreen = ({
       return Alert.alert(i18n.t('noOfferingSelected'))
     }
 
+    const purchaseProperties = {
+      source,
+      feature,
+      tier,
+      billing: tier === 'supporter' ? supporterBilling : 'one_time',
+      product_id: selectedPackage.product.identifier,
+      package_id: selectedPackage.identifier,
+      price: selectedPackage.product.price,
+      currency: selectedPackage.product.currencyCode,
+    }
+    analytics.capture('supporter_purchase_started', purchaseProperties)
     try {
       const { productIdentifier } =
         await Purchases.purchasePackage(selectedPackage)
       if (productIdentifier) {
+        purchased.current = true
+        analytics.capture('supporter_purchase_completed', purchaseProperties)
         revalidate()
         // Pass the purchased tier so the Thank You screen shows the right
         // tone — a lifetime supporter who tips one-time should see the tip
@@ -374,6 +438,16 @@ const PaywallScreen = ({
       // User-initiated cancellation from the StoreKit sheet throws here; it's
       // expected flow, not a failure — swallow it without alerting or paging.
       const cancelled = code === PURCHASES_ERROR_CODE.PURCHASE_CANCELLED_ERROR
+      analytics.capture(
+        cancelled
+          ? 'supporter_purchase_cancelled'
+          : 'supporter_purchase_failed',
+        {
+          ...purchaseProperties,
+          error_code: code ?? 'unknown',
+          offline: isOfflineError(error),
+        }
+      )
       if (!cancelled) {
         Alert.alert(i18n.t('error'), i18n.t('errorCheckingOut'))
         // Offline mid-checkout is expected — the Alert already explains the
@@ -381,22 +455,39 @@ const PaywallScreen = ({
         if (!isOfflineError(error)) Sentry.captureException(error)
       }
     }
-  }, [navigation, revalidate, selectedPackage, tier])
+  }, [
+    navigation,
+    revalidate,
+    selectedPackage,
+    supporterBilling,
+    tier,
+    source,
+    feature,
+  ])
 
   const handleRestore = useCallback(async () => {
+    analytics.capture('supporter_restore_started', { source })
     try {
       const restored = await Purchases.restorePurchases()
       if (Object.keys(restored.allPurchaseDates).length === 0) {
+        analytics.capture('supporter_restore_empty', { source })
         Alert.alert(i18n.t('noPurchasesFound'))
+      } else {
+        analytics.capture('supporter_purchases_restored', { source })
       }
       setCustomer(restored)
     } catch (error: unknown) {
+      analytics.capture('supporter_restore_failed', {
+        source,
+        error_code: (error as PurchasesError)?.code ?? 'unknown',
+        offline: isOfflineError(error),
+      })
       // Offline during restore is expected — show the Alert, skip Sentry
       // (JW-TIME-BW).
       if (!isOfflineError(error)) Sentry.captureException(error)
       Alert.alert(i18n.t('error_restoring_account'))
     }
-  }, [setCustomer])
+  }, [setCustomer, source])
 
   const ctaLabel = useMemo(() => {
     if (!selectedPackage) return i18n.t('paywallCtaSelectPrice')
@@ -437,6 +528,15 @@ const PaywallScreen = ({
         pkg={pkg}
         selected={selectedKey === key}
         onPress={() => {
+          analytics.capture('paywall_price_selected', {
+            source,
+            tier,
+            billing: priceView,
+            product_id: pkg.product.identifier,
+            price: pkg.product.price,
+            currency: pkg.product.currencyCode,
+            expanded_options: showAllOptions,
+          })
           setSelectedPackage(pkg)
           afterSelect?.()
         }}
@@ -544,7 +644,10 @@ const PaywallScreen = ({
           variant='pill'
           size='sm'
           value={supporterBilling}
-          onChange={setSupporterBilling}
+          onChange={(billing) => {
+            analytics.capture('paywall_billing_selected', { source, billing })
+            setSupporterBilling(billing)
+          }}
           style={{ alignSelf: 'center' }}
           options={[
             { key: 'monthly', label: i18n.t('paywallBillingMonthly') },
@@ -563,7 +666,14 @@ const PaywallScreen = ({
         )}
         {hasHiddenOptions && !(isWide && showAllOptions) && (
           <Button
-            onPress={() => setShowAllOptions(true)}
+            onPress={() => {
+              analytics.capture('paywall_all_options_opened', {
+                source,
+                tier,
+                billing: priceView,
+              })
+              setShowAllOptions(true)
+            }}
             style={{
               paddingHorizontal: 16,
               paddingVertical: 12,
@@ -608,6 +718,7 @@ const PaywallScreen = ({
   )
   const purchaseFooter = (
     <PaywallPurchaseFooter
+      source={source}
       selected={!!selectedPackage}
       tier={tier}
       ctaLabel={ctaLabel}
@@ -712,7 +823,14 @@ const PaywallScreen = ({
       )}
       <AllOptionsSheet
         visible={!isWide && showAllOptions}
-        onClose={() => setShowAllOptions(false)}
+        onClose={() => {
+          analytics.capture('paywall_all_options_dismissed', {
+            source,
+            tier,
+            billing: priceView,
+          })
+          setShowAllOptions(false)
+        }}
       >
         {activePackages.map((pkg) =>
           renderPriceOption(pkg, () => setShowAllOptions(false))

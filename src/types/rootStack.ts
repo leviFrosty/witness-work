@@ -29,7 +29,9 @@ export type RootStackParamList = {
   Update: undefined
   Preferences: undefined
   'Whats New': undefined
-  Paywall: { initialTier?: 'supporter' | 'tip' } | undefined
+  Paywall:
+    | { initialTier?: 'supporter' | 'tip'; source?: string; feature?: string }
+    | undefined
   'Thank You': { purchaseTier?: 'supporter' | 'tip' } | undefined
   'Import and Export': undefined
   MytimeImport: undefined

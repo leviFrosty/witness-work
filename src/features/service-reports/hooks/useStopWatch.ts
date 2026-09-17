@@ -1,3 +1,4 @@
+import { analytics } from '@/lib/analytics'
 import { useEffect, useRef, useState, useCallback } from 'react'
 import * as Stopwatch from '../../../../modules/stopwatch-bridge'
 
@@ -69,12 +70,17 @@ export const useStopWatch = () => {
   }, [state.isRunning])
 
   const dispatch = useCallback(
-    async (cmd: () => Promise<Stopwatch.StopwatchState>) => {
+    async (
+      action: 'started' | 'paused' | 'reset',
+      cmd: () => Promise<Stopwatch.StopwatchState>
+    ) => {
       try {
         const next = await cmd()
+        analytics.capture('timer_action_completed', { action })
         setState(next)
         setNowMs(Date.now())
       } catch (err) {
+        analytics.capture('timer_action_failed', { action })
         console.warn('[stopwatch] native command failed', err)
       }
     },
@@ -82,16 +88,16 @@ export const useStopWatch = () => {
   )
 
   const start = useCallback(() => {
-    void dispatch(Stopwatch.start)
+    void dispatch('started', Stopwatch.start)
   }, [dispatch])
 
   const stop = useCallback(() => {
     // Preserves legacy semantic: "stop" = pause (keeps accumulated time).
-    void dispatch(Stopwatch.pause)
+    void dispatch('paused', Stopwatch.pause)
   }, [dispatch])
 
   const reset = useCallback(() => {
-    void dispatch(Stopwatch.reset)
+    void dispatch('reset', Stopwatch.reset)
   }, [dispatch])
 
   const ms = computeElapsedMs(state, nowMs)

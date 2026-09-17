@@ -27,6 +27,7 @@ import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view
 import IconButton from '@/components/ui/IconButton'
 import { useTimeCache } from '@/stores/timeCache'
 import SettingsInputLayout from '@/features/settings/components/shared/SettingsInputLayout'
+import { analytics } from '@/lib/analytics'
 
 /**
  * Any new stores should be added to this type to be included in the
@@ -61,6 +62,10 @@ const ImportAndExportScreen = () => {
   const handleImport = async () => {
     setLoading(true)
     setSuccessfulImport(false)
+    analytics.capture('import_started', {
+      import_type: 'backup_json',
+      source: 'settings',
+    })
 
     try {
       const { assets, canceled } = await DocumentPicker.getDocumentAsync({
@@ -70,17 +75,27 @@ const ImportAndExportScreen = () => {
       })
 
       if (canceled) {
+        analytics.capture('import_cancelled', {
+          import_type: 'backup_json',
+          source: 'settings',
+          stage: 'file_picker',
+        })
         setLoading(false)
         return
       }
 
       const exportFileUri = assets[0].uri
 
-      FileSystem.readAsStringAsync(exportFileUri)
+      await FileSystem.readAsStringAsync(exportFileUri)
         .then((contents) => {
           const data = JSON.parse(contents) as ImportFile
 
           if (!validImportFile(data)) {
+            analytics.capture('import_failed', {
+              import_type: 'backup_json',
+              source: 'settings',
+              error_code: 'invalid_file',
+            })
             Alert.alert(
               i18n.t('importErrorInvalidFile_title'),
               i18n.t('importErrorInvalidFile_description')
@@ -107,11 +122,21 @@ const ImportAndExportScreen = () => {
           data.preferencesStore && preferencesStore.set(data.preferencesStore)
           timeCache.invalidateAllCache()
           setSuccessfulImport(true)
+          analytics.capture('backup_imported', {
+            import_type: 'backup_json',
+            source: 'settings',
+          })
         })
         .finally(() => {
           setLoading(false)
         })
     } catch (error) {
+      analytics.capture('import_failed', {
+        import_type: 'backup_json',
+        source: 'settings',
+        error_code:
+          error instanceof SyntaxError ? 'invalid_json' : 'unexpected',
+      })
       Sentry.captureException(error)
       setLoading(false)
       Alert.alert(
@@ -130,22 +155,28 @@ const ImportAndExportScreen = () => {
     }
     setLoading(true)
 
-    if (!Sharing.isAvailableAsync()) {
-      Alert.alert(i18n.t('sharingIsNotAvailable'))
-      return
-    }
-
-    preferencesStore.set({ lastBackupDate: new Date() })
-
     try {
-      FileSystem.writeAsStringAsync(exportFileUri, JSON.stringify(data))
+      if (!(await Sharing.isAvailableAsync())) {
+        setLoading(false)
+        analytics.capture('backup_export_failed', {
+          error_code: 'sharing_unavailable',
+        })
+        Alert.alert(i18n.t('sharingIsNotAvailable'))
+        return
+      }
+
+      preferencesStore.set({ lastBackupDate: new Date() })
+
+      await FileSystem.writeAsStringAsync(exportFileUri, JSON.stringify(data))
         .then(async () => {
           await Sharing.shareAsync(exportFileUri)
+          analytics.capture('backup_exported', { destination: 'share_sheet' })
         })
         .finally(() => {
           setLoading(false)
         })
     } catch (error) {
+      analytics.capture('backup_export_failed', { error_code: 'unexpected' })
       Sentry.captureException(error)
       setLoading(false)
       Alert.alert(

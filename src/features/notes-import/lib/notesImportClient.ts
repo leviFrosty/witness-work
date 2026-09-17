@@ -657,7 +657,7 @@ const streamRunToCompletion = async (
     if (outcome.kind === 'done') return outcome.payload
     if (outcome.kind === 'error') {
       throw new NotesImportClientError(
-        outcome.code as NotesImportErrorCode,
+        isNotesImportErrorCode(outcome.code) ? outcome.code : 'unknown',
         outcome.message,
         undefined,
         undefined,
@@ -684,7 +684,7 @@ const streamRunToCompletion = async (
     if (snap?.status === 'done' && snap.payload) return snap.payload
     if (snap?.status === 'error' && snap.error) {
       throw new NotesImportClientError(
-        snap.error.code as NotesImportErrorCode,
+        isNotesImportErrorCode(snap.error.code) ? snap.error.code : 'unknown',
         snap.error.message,
         undefined,
         undefined,

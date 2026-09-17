@@ -1,3 +1,4 @@
+import { analytics } from '@/lib/analytics'
 import {
   Calendar1 as Calendar1Icon,
   CornerDownRight as CornerDownRightIcon,
@@ -1181,6 +1182,10 @@ const PlanDayScreen = ({ route, navigation }: PlanDayScreenProps) => {
           notifyMe: false,
           notifications: [],
         })
+        analytics.capture('recurring_plan_instance_replaced', {
+          date_changed: !selectedDateMatchesInstance,
+          category_changed: categoryChanged,
+        })
         return
       }
 
@@ -1308,6 +1313,14 @@ const PlanDayScreen = ({ route, navigation }: PlanDayScreenProps) => {
       })
     }
 
+    analytics.capture(isEditMode ? 'plan_updated' : 'plan_created', {
+      plan_kind: oneTime ? 'day' : 'recurring',
+      scope: scope ?? 'all',
+      frequency: oneTime ? undefined : frequency,
+      has_category: !!selectedCategoryId,
+      has_note: !!plannedNote,
+      reminder_enabled: oneTime && notifyMe,
+    })
     setSaveScopeModalOpen(false)
     navigation.goBack()
   }
@@ -1358,6 +1371,10 @@ const PlanDayScreen = ({ route, navigation }: PlanDayScreenProps) => {
           return
         }
 
+        analytics.capture('plan_deleted', {
+          plan_kind: existingDayPlanId ? 'day' : 'recurring',
+          scope,
+        })
         toast.show(i18n.t('success'), {
           message: i18n.t('deleted'),
           native: true,

@@ -1,3 +1,4 @@
+import { analytics } from '@/lib/analytics'
 import { useCallback, useRef, useState } from 'react'
 import * as DocumentPicker from 'expo-document-picker'
 import * as Sentry from '@sentry/react-native'
@@ -93,6 +94,7 @@ export const useMytimeImport = ({
 }: {
   publisherMode: PublisherImportMode
 }) => {
+  const source = publisherMode === 'overwrite' ? 'onboarding' : 'settings'
   const [status, setStatus] = useState<MytimeImportStatus>('idle')
   const [preview, setPreview] = useState<MytimeImportPreview | null>(null)
   const [errorKind, setErrorKind] = useState<MytimeImportErrorKind | null>(null)
@@ -104,12 +106,13 @@ export const useMytimeImport = ({
   const mappedRef = useRef<MappedImport | null>(null)
 
   const reset = useCallback(() => {
+    analytics.capture('import_reset', { import_type: 'mytime', source })
     mappedRef.current = null
     setPreview(null)
     setErrorKind(null)
     setSelection(ALL_SELECTED)
     setStatus('idle')
-  }, [])
+  }, [source])
 
   const toggleSelection = useCallback((key: MytimeImportSelectionKey) => {
     setSelection((s) => ({ ...s, [key]: !s[key] }))
@@ -117,6 +120,7 @@ export const useMytimeImport = ({
 
   const pickAndParse = useCallback(async () => {
     setErrorKind(null)
+    analytics.capture('import_started', { import_type: 'mytime', source })
     try {
       // `.mytimedb` has no registered MIME type, so accept anything and let the
       // reader's validation probe reject non-MyTime files.
@@ -125,7 +129,14 @@ export const useMytimeImport = ({
         copyToCacheDirectory: true,
         type: '*/*',
       })
-      if (canceled || !assets?.length) return
+      if (canceled || !assets?.length) {
+        analytics.capture('import_cancelled', {
+          import_type: 'mytime',
+          source,
+          stage: 'file_picker',
+        })
+        return
+      }
 
       setStatus('parsing')
       const tables = await readMytimeDb(assets[0].uri)
@@ -134,7 +145,21 @@ export const useMytimeImport = ({
       setPreview(buildPreview(mapped))
       setSelection(ALL_SELECTED)
       setStatus('preview')
+      analytics.capture('import_preview_ready', {
+        import_type: 'mytime',
+        source,
+        contact_count: mapped.contacts.length,
+        visit_count: mapped.visits.length,
+        time_entry_count: mapped.timeEntries.length,
+      })
     } catch (e) {
+      analytics.capture('import_failed', {
+        import_type: 'mytime',
+        source,
+        stage: 'parse',
+        error_code:
+          e instanceof MytimeImportError ? 'invalid_file' : 'unexpected',
+      })
       mappedRef.current = null
       setPreview(null)
       if (e instanceof MytimeImportError) {
@@ -146,12 +171,16 @@ export const useMytimeImport = ({
       }
       setStatus('error')
     }
-  }, [])
+  }, [source])
 
   const confirm = useCallback(() => {
     const mapped = mappedRef.current
     if (!mapped) return
     setStatus('committing')
+    analytics.capture('import_commit_started', {
+      import_type: 'mytime',
+      source,
+    })
     // Defer the synchronous store writes one frame so the spinner paints before
     // the setState cascade blocks the JS thread (mirrors iCloudRestore).
     requestAnimationFrame(() => {
@@ -171,14 +200,28 @@ export const useMytimeImport = ({
         writeMappedDataToStores(selected, { publisherMode })
         mappedRef.current = null
         setStatus('success')
+        analytics.capture('import_completed', {
+          import_type: 'mytime',
+          source,
+          contacts_selected: selection.contacts,
+          visits_selected: selection.visits,
+          time_selected: selection.time,
+          publisher_selected: selection.publisher,
+        })
       } catch (e) {
+        analytics.capture('import_failed', {
+          import_type: 'mytime',
+          source,
+          stage: 'commit',
+          error_code: 'unexpected',
+        })
         logger.error('MyTime import: commit failed', e)
         Sentry.captureException(e)
         setErrorKind('unexpected')
         setStatus('error')
       }
     })
-  }, [publisherMode, selection])
+  }, [publisherMode, selection, source])
 
   // Disable the commit when nothing with data is still checked — importing
   // would be a no-op.

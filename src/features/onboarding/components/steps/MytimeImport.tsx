@@ -1,3 +1,4 @@
+import { analytics } from '@/lib/analytics'
 import {
   CircleAlert as CircleAlertIcon,
   CircleCheck as CircleCheckIcon,
@@ -202,7 +203,13 @@ const MytimeImport = ({ goBack, goNext }: Props) => {
               )}
             </ActionButton>
             <Button
-              onPress={goNext}
+              onPress={() => {
+                analytics.capture('onboarding_import_skipped', {
+                  import_type: 'mytime',
+                  status,
+                })
+                goNext()
+              }}
               style={{ alignSelf: 'center', paddingVertical: 10 }}
             >
               <Text

@@ -22,6 +22,7 @@ import AddressSection from '@/features/contacts/components/AddressSection'
 import { RootStackParamList } from '@/types/rootStack'
 import { Errors } from '@/types/textInput'
 import ContactIdentityCard from '@/features/contacts/components/ContactIdentityCard'
+import { analytics } from '@/lib/analytics'
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Contact Form'>
 
@@ -402,6 +403,16 @@ const ContactFormScreen = ({ route, navigation }: Props) => {
                     return false
                   }
                   await submit()
+                  analytics.capture(
+                    editMode ? 'contact_updated' : 'contact_created',
+                    {
+                      custom_field_count: Object.keys(
+                        contact.customFields ?? {}
+                      ).length,
+                      has_address: !!contact.address,
+                      has_location: !!contact.coordinate,
+                    }
+                  )
                   if (editMode && route.params.returnToContacts) {
                     navigation.goBack()
                     return
@@ -435,6 +446,9 @@ const ContactFormScreen = ({ route, navigation }: Props) => {
       ),
     })
   }, [
+    contact.address,
+    contact.coordinate,
+    contact.customFields,
     editMode,
     route.params.returnToContacts,
     fetching,

@@ -1,3 +1,4 @@
+import { analytics } from '@/lib/analytics'
 import {
   Heart as HeartIcon,
   Menu as MenuIcon,
@@ -122,7 +123,14 @@ const DrawerNavigator = () => {
                 ) : (
                   !hideDonateHeart && (
                     <IconButton
-                      onPress={() => navigation.navigate('Paywall')}
+                      onPress={() => {
+                        analytics.capture('paywall_opened', {
+                          source: 'header_heart',
+                        })
+                        navigation.navigate('Paywall', {
+                          source: 'header_heart',
+                        })
+                      }}
                       icon={hasPurchasedBefore ? HeartIcon : HeartIcon}
                       color={
                         hasPurchasedBefore

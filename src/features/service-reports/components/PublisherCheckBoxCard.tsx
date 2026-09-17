@@ -1,3 +1,4 @@
+import { analytics } from '@/lib/analytics'
 import { CircleCheck as CircleCheckIcon } from 'lucide-react-native'
 import * as Crypto from 'expo-crypto'
 import moment from 'moment'
@@ -36,6 +37,10 @@ export default function PublisherCheckBoxCard() {
       id: Crypto.randomUUID(),
     }
     addServiceReport(report)
+    analytics.capture('time_entry_created', {
+      source: 'participation_checkbox',
+      entry_mode: 'checkbox',
+    })
     setUndoReport(report)
     Haptics.heavy()
     setTimeout(() => Haptics.success(), CONFETTI_DELAY_MS + 100)
@@ -79,7 +84,15 @@ export default function PublisherCheckBoxCard() {
           {i18n.t('sharedTheGoodNews')}
         </Text>
         {undoReport ? (
-          <Button onPress={() => deleteServiceReport(undoReport)}>
+          <Button
+            onPress={() => {
+              deleteServiceReport(undoReport)
+              analytics.capture('time_entry_deleted', {
+                source: 'participation_checkbox',
+                entry_mode: 'checkbox',
+              })
+            }}
+          >
             <Text
               style={{
                 color: theme.colors.textAlt,

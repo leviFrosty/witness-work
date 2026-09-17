@@ -1,3 +1,4 @@
+import { analytics } from '@/lib/analytics'
 import {
   ChevronRight as ChevronRightIcon,
   CircleQuestionMark as CircleQuestionMarkIcon,
@@ -22,7 +23,10 @@ const ContactSection = () => {
           lastInSection
           leftIcon={CircleQuestionMarkIcon}
           label={i18n.t('helpCenter')}
-          onPress={() => navigation.navigate('FAQ')}
+          onPress={() => {
+            analytics.capture('help_center_opened', { source: 'settings' })
+            navigation.navigate('FAQ')
+          }}
         >
           <IconButton icon={ChevronRightIcon} />
         </InputRowButton>

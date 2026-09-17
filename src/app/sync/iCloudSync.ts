@@ -1,3 +1,4 @@
+import { analytics } from '@/lib/analytics'
 import { AppState, AppStateStatus, Platform } from 'react-native'
 import * as FileSystem from 'expo-file-system/legacy'
 import debounce from 'lodash/debounce'
@@ -505,9 +506,15 @@ export async function resolveInitialEnable(): Promise<InitialEnableDecision> {
  * caller has first seen `resolveInitialEnable()` return `seed` — otherwise a
  * concurrent writer's file can get shadowed by a fresh-install payload.
  */
-export async function applySeedEnable(): Promise<void> {
+export async function applySeedEnable(
+  source: 'settings' | 'supporter_default' = 'settings'
+): Promise<void> {
   backfillUpdatedAtIfNeeded()
+  const wasEnabled = usePreferences.getState().iCloudSyncEnabled
   usePreferences.getState().set({ iCloudSyncEnabled: true })
+  if (!wasEnabled) {
+    analytics.capture('icloud_sync_enabled_changed', { enabled: true, source })
+  }
   await push('initial-enable-seed')
 }
 
@@ -518,9 +525,16 @@ export async function applySeedEnable(): Promise<void> {
  * replace so ongoing-sync subscribers don't briefly see the half-replaced
  * intermediate state.
  */
-export function applyPullEnable(remote: SyncPayload): void {
+export function applyPullEnable(
+  remote: SyncPayload,
+  source: 'settings' | 'supporter_default' = 'settings'
+): void {
   replaceLocalWithRemote(remote)
+  const wasEnabled = usePreferences.getState().iCloudSyncEnabled
   usePreferences.getState().set({ iCloudSyncEnabled: true })
+  if (!wasEnabled) {
+    analytics.capture('icloud_sync_enabled_changed', { enabled: true, source })
+  }
 }
 
 /**

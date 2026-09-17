@@ -1,3 +1,4 @@
+import { useIsFocused } from '@react-navigation/native'
 import {
   ComponentType,
   useCallback,
@@ -36,6 +37,7 @@ import {
   OnboardingProgressContext,
 } from '@/features/onboarding/components/OnboardingProgressContext'
 import { useOnboardingHandoff } from '@/stores/onboardingHandoff'
+import { analytics } from '@/lib/analytics'
 
 type StepId =
   | 'hero'
@@ -199,24 +201,79 @@ const OnBoarding = () => {
     }
   }, [stepIndex, visibleSteps, onboardingStepId, set])
 
+  const isFocused = useIsFocused()
+  const stepViewedAt = useRef(Date.now())
+  const lastViewedStep = useRef<StepId | null>(null)
+  const initialStepId = useRef(onboardingStepId)
+  useEffect(() => {
+    const step = visibleSteps[stepIndex]
+    if (!isFocused || !step || lastViewedStep.current === step.id) return
+    if (lastViewedStep.current === null) {
+      analytics.capture(
+        initialStepId.current ? 'onboarding_resumed' : 'onboarding_started',
+        {
+          step_id: step.id,
+        }
+      )
+    }
+    lastViewedStep.current = step.id
+    stepViewedAt.current = Date.now()
+    analytics.capture('onboarding_step_viewed', {
+      step_id: step.id,
+      step_index: stepIndex + 1,
+      total_steps: visibleSteps.length,
+      publisher_role: role,
+      has_annual_goal: effectiveHasAnnualGoal(role, userSpecifiedHasAnnualGoal),
+      tenure_step_available: tracksTenure(role),
+      backfill_step_available: visibleSteps.some(
+        (candidate) => candidate.id === 'onboardingBackfill'
+      ),
+    })
+  }, [stepIndex, visibleSteps, isFocused, role, userSpecifiedHasAnnualGoal])
+
   const goNext = useCallback(() => {
+    const preferences = usePreferences.getState()
+    analytics.capture('onboarding_step_completed', {
+      step_id: visibleSteps[stepIndex]?.id,
+      elapsed_ms: Date.now() - stepViewedAt.current,
+      next_step_id: visibleSteps[stepIndex + 1]?.id ?? 'complete',
+      publisher_role: preferences.role,
+      ...(visibleSteps[stepIndex]?.id === 'defaultNav'
+        ? { selected_option: preferences.defaultNavigationMapProvider }
+        : {}),
+      ...(visibleSteps[stepIndex]?.id === 'defaultExportMethod'
+        ? { selected_option: preferences.defaultExportMethod }
+        : {}),
+    })
     if (stepIndex >= visibleSteps.length - 1) {
       set({ onboardingComplete: true, onboardingStepId: null })
+      analytics.capture('onboarding_completed', { completion_method: 'guided' })
       return
     }
     setStepIndex(stepIndex + 1)
-  }, [stepIndex, visibleSteps.length, set])
+  }, [stepIndex, visibleSteps, set])
 
   const goBack = useCallback(() => {
+    analytics.capture('onboarding_step_back', {
+      step_id: visibleSteps[stepIndex]?.id,
+      destination_step_id: visibleSteps[Math.max(0, stepIndex - 1)]?.id,
+      elapsed_ms: Date.now() - stepViewedAt.current,
+    })
     setStepIndex((idx) => (idx === 0 ? 0 : idx - 1))
-  }, [])
+  }, [stepIndex, visibleSteps])
 
   const goToStep = useCallback(
     (id: StepId) => {
       const target = visibleSteps.findIndex((s) => s.id === id)
-      if (target >= 0) setStepIndex(target)
+      if (target >= 0) {
+        analytics.capture('onboarding_step_jumped', {
+          step_id: visibleSteps[stepIndex]?.id,
+          destination_step_id: id,
+        })
+        setStepIndex(target)
+      }
     },
-    [visibleSteps]
+    [visibleSteps, stepIndex]
   )
 
   // A screen pushed over onboarding (the Notes Import composer, opened from the

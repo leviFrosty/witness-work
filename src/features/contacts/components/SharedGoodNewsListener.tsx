@@ -1,3 +1,4 @@
+import { analytics } from '@/lib/analytics'
 import { useEffect } from 'react'
 import * as Linking from 'expo-linking'
 import * as Crypto from 'expo-crypto'
@@ -79,6 +80,10 @@ export default function SharedGoodNewsListener() {
         id: Crypto.randomUUID(),
       }
       useServiceReport.getState().addServiceReport(report)
+      analytics.capture('time_entry_created', {
+        source: 'widget',
+        entry_mode: 'checkbox',
+      })
       Haptics.heavy()
       setTimeout(() => Haptics.success(), CONFETTI_DELAY_MS + 100)
       playConfetti()

@@ -1,12 +1,13 @@
+import { analytics } from '@/lib/analytics'
 import {
   Cloud as CloudIcon,
   FileInput as FileInputIcon,
   FileText as FileTextIcon,
 } from 'lucide-react-native'
 import LucideIcon, { type AppIcon } from '@/components/ui/LucideIcon'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { View } from 'react-native'
-import { useNavigation } from '@react-navigation/native'
+import { useIsFocused, useNavigation } from '@react-navigation/native'
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
 import { styles } from '@/features/onboarding/components/Onboarding.styles'
 import OnboardingNav from '@/features/onboarding/components/OnboardingNav'
@@ -101,10 +102,34 @@ const OptionCard = ({
 const PickUpWhereLeftOff = ({ goBack, goNext }: StepProps) => {
   const theme = useTheme()
   const navigation = useNavigation<RootStackNavigation>()
+  const isFocused = useIsFocused()
   const [mode, setMode] = useState<Mode>('choose')
-  const toChooser = () => setMode('choose')
+  const toChooser = () => {
+    analytics.capture('import_flow_back', {
+      import_type: mode,
+      source: 'onboarding',
+    })
+    setMode('choose')
+  }
   const icloudAvailable = ICloudBridge.isAvailable()
   const notesImport = useNotesImportAvailability()
+
+  useEffect(() => {
+    if (!isFocused || mode !== 'choose') return
+    analytics.capture('onboarding_import_options_viewed', {
+      icloud_available: icloudAvailable,
+      notes_available: notesImport.available,
+    })
+  }, [icloudAvailable, notesImport.available, isFocused, mode])
+  const selectImport = (importType: 'notes' | 'mytime' | 'icloud') => {
+    analytics.capture('import_type_selected', {
+      import_type: importType,
+      source: 'onboarding',
+    })
+    if (importType === 'notes')
+      navigation.navigate('NotesImportComposer', { fromOnboarding: true })
+    else setMode(importType)
+  }
 
   if (mode === 'mytime') {
     return <MytimeImport goBack={toChooser} goNext={goNext} />
@@ -154,18 +179,14 @@ const PickUpWhereLeftOff = ({ goBack, goNext }: StepProps) => {
             descKey='onboardingPickUp_notesDesc'
             disabled={!notesImport.available}
             disabledNoteKey='notesImport_unavailable'
-            onPress={() =>
-              navigation.navigate('NotesImportComposer', {
-                fromOnboarding: true,
-              })
-            }
+            onPress={() => selectImport('notes')}
           />
           <OptionCard
             icon={FileInputIcon}
             color={theme.colors.indigo}
             titleKey='onboardingPickUp_mytime'
             descKey='onboardingPickUp_mytimeDesc'
-            onPress={() => setMode('mytime')}
+            onPress={() => selectImport('mytime')}
           />
           <OptionCard
             icon={CloudIcon}
@@ -174,12 +195,17 @@ const PickUpWhereLeftOff = ({ goBack, goNext }: StepProps) => {
             descKey='onboardingPickUp_icloudDesc'
             disabled={!icloudAvailable}
             disabledNoteKey='onboardingPickUp_icloudUnavailable'
-            onPress={() => setMode('icloud')}
+            onPress={() => selectImport('icloud')}
           />
         </View>
 
         <Button
-          onPress={goNext}
+          onPress={() => {
+            analytics.capture('onboarding_step_skipped', {
+              step_id: 'pickUpWhereLeftOff',
+            })
+            goNext()
+          }}
           style={{ alignSelf: 'center', paddingVertical: 10 }}
         >
           <Text

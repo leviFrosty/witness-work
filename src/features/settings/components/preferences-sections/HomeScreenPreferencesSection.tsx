@@ -1,3 +1,4 @@
+import { analytics } from '@/lib/analytics'
 import InfoPopover from '@/components/ui/InfoPopover'
 import { Switch, View } from 'react-native'
 import i18n from '@/lib/locales'
@@ -23,7 +24,12 @@ const HideDonateHeart = () => {
     <InputRowSwitch
       label={i18n.t('hideDonateHeart')}
       value={hideDonateHeart}
-      onValueChange={(value) => set({ hideDonateHeart: value })}
+      onValueChange={(value) => {
+        analytics.capture('supporter_heart_visibility_changed', {
+          hidden: value,
+        })
+        set({ hideDonateHeart: value })
+      }}
     />
   )
 }
@@ -39,7 +45,12 @@ const HideSupporterNudge = () => {
       lastInSection={lastInSection}
       label={i18n.t('hideSupporterNudge')}
       value={hideSupporterNudge}
-      onValueChange={(value) => set({ hideSupporterNudge: value })}
+      onValueChange={(value) => {
+        analytics.capture('supporter_nudge_visibility_changed', {
+          hidden: value,
+        })
+        set({ hideSupporterNudge: value })
+      }}
     />
   )
 }

@@ -80,7 +80,10 @@ export default ({ config }: ConfigContext): ExpoConfig => {
       appStoreUrl: 'https://apps.apple.com/us/app/jw-time/id6469723047',
     },
     extra: {
+      appVariant: IS_DEV ? 'development' : 'production',
       commitHash: execSync('git rev-parse --short HEAD').toString().trim(),
+      posthogProjectToken: process.env.POSTHOG_PROJECT_TOKEN,
+      posthogHost: process.env.POSTHOG_HOST,
       eas: {
         projectId: 'a67257dc-2fb8-4942-97f2-e9364b80d318',
       },

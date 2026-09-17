@@ -44,6 +44,7 @@ import useCelebrationQueue from '@/features/service-reports/stores/celebrationQu
 import { didCrossMonthlyGoal } from '@/features/service-reports/lib/monthlyGoalCelebration'
 import { resolveMonthlyGoalHours } from '@/lib/monthlyGoals'
 import { inputLayout } from '@/components/ui/inputs/InputLayout'
+import { analytics } from '@/lib/analytics'
 
 type AddTimeScreenProps = NativeStackScreenProps<RootStackParamList, 'Add Time'>
 
@@ -221,6 +222,11 @@ const AddTimeScreen = ({ route }: AddTimeScreenProps) => {
     }
 
     addServiceReport(serviceReport)
+    analytics.capture('time_entry_created', {
+      source: 'time_entry_form',
+      has_category: !!serviceReport.categoryId,
+      has_note: !!serviceReport.note,
+    })
     toast.show(i18n.t('success'), {
       message: i18n.t('timeAdded'),
       native: true,
@@ -230,6 +236,11 @@ const AddTimeScreen = ({ route }: AddTimeScreenProps) => {
 
   const save = () => {
     updateServiceReport(serviceReport)
+    analytics.capture('time_entry_updated', {
+      source: 'time_entry_form',
+      has_category: !!serviceReport.categoryId,
+      has_note: !!serviceReport.note,
+    })
     toast.show(i18n.t('success'), {
       message: i18n.t('updated'),
       native: true,
@@ -249,6 +260,7 @@ const AddTimeScreen = ({ route }: AddTimeScreenProps) => {
         style: 'destructive',
         onPress: () => {
           deleteServiceReport(serviceReport)
+          analytics.capture('time_entry_deleted')
           toast.show(i18n.t('success'), {
             message: i18n.t('deleted'),
             native: true,

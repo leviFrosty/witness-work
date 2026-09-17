@@ -1,3 +1,4 @@
+import { analytics } from '@/lib/analytics'
 import { useEffect } from 'react'
 import { ScrollView, Switch, View } from 'react-native'
 import moment from 'moment'
@@ -49,11 +50,15 @@ const RolloverScreen = () => {
   const handleApply = () => {
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success)
     apply()
+    analytics.capture('time_rollover_apply_requested', {
+      source: 'rollover_screen',
+    })
     navigation.goBack()
   }
 
   const handleSkip = () => {
     dismiss()
+    analytics.capture('time_rollover_dismissed', { source: 'rollover_screen' })
     navigation.goBack()
   }
 
@@ -168,7 +173,13 @@ const RolloverScreen = () => {
                 {i18n.t('timeRollover_autoHint')}
               </Text>
             </View>
-            <Switch value={autoEnabled} onValueChange={setAutoEnabled} />
+            <Switch
+              value={autoEnabled}
+              onValueChange={(enabled) => {
+                setAutoEnabled(enabled)
+                analytics.capture('time_rollover_auto_changed', { enabled })
+              }}
+            />
           </View>
 
           <ActionButton onPress={handleApply}>

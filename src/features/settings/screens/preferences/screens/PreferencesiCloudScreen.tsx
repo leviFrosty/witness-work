@@ -1,3 +1,4 @@
+import { analytics } from '@/lib/analytics'
 import InfoPopover from '@/components/ui/InfoPopover'
 import { useEffect, useState } from 'react'
 import { ActivityIndicator, Alert, Linking, Switch, View } from 'react-native'
@@ -98,7 +99,14 @@ const PreferencesiCloudScreenInner = () => {
    */
   const applyFirstEnableChoice = async (choice: FirstEnableChoice) => {
     iCloudSync.backfillUpdatedAtIfNeeded()
+    const wasEnabled = usePreferences.getState().iCloudSyncEnabled
     set({ iCloudSyncEnabled: true })
+    if (!wasEnabled) {
+      analytics.capture('icloud_sync_enabled_changed', {
+        enabled: true,
+        source: 'settings',
+      })
+    }
     setSyncing(true)
     let shouldPromptForImages = false
     try {
@@ -173,7 +181,14 @@ const PreferencesiCloudScreenInner = () => {
 
   const handleToggle = async (next: boolean) => {
     if (!next) {
+      const wasEnabled = usePreferences.getState().iCloudSyncEnabled
       set({ iCloudSyncEnabled: false, iCloudSyncSetByUser: true })
+      if (wasEnabled) {
+        analytics.capture('icloud_sync_enabled_changed', {
+          enabled: false,
+          source: 'settings',
+        })
+      }
       return
     }
     set({ iCloudSyncSetByUser: true })

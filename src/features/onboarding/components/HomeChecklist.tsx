@@ -1,10 +1,11 @@
+import { analytics } from '@/lib/analytics'
 import {
   Check as CheckIcon,
   Circle as CircleIcon,
   CircleCheck as CircleCheckIcon,
 } from 'lucide-react-native'
 import LucideIcon from '@/components/ui/LucideIcon'
-import { useCallback, useEffect, useMemo } from 'react'
+import { useCallback, useEffect, useMemo, useRef } from 'react'
 import { Pressable, View } from 'react-native'
 import { useIsFocused, useNavigation } from '@react-navigation/native'
 import Animated, {
@@ -154,6 +155,10 @@ const HomeChecklist = () => {
       id: Crypto.randomUUID(),
     }
     addServiceReport(report)
+    analytics.capture('time_entry_created', {
+      source: 'onboarding_checklist',
+      entry_mode: 'checkbox',
+    })
     Haptics.heavy()
     setTimeout(() => Haptics.success(), CONFETTI_DELAY_MS + 100)
     playConfetti()
@@ -213,6 +218,9 @@ const HomeChecklist = () => {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           label: i18n.t(labelKey as any),
           onPress: () => {
+            analytics.capture('onboarding_checklist_item_opened', {
+              item_id: id,
+            })
             switch (id) {
               case 'logFirstMinute':
               case 'trackTime':
@@ -255,9 +263,23 @@ const HomeChecklist = () => {
   const isComplete = (id: HomeChecklistItemId) =>
     autoCompletedIds.has(id) || homeChecklistManualCompletions.includes(id)
 
-  const handleDismiss = () => setPref({ homeChecklistDismissed: true })
+  const handleDismiss = () => {
+    analytics.capture('onboarding_checklist_dismissed', { all_done: allDone })
+    setPref({ homeChecklistDismissed: true })
+  }
 
   const allDone = items.length > 0 && items.every((it) => isComplete(it.id))
+
+  const viewed = useRef(false)
+  useEffect(() => {
+    if (!isFocused || homeChecklistDismissed || !items.length || viewed.current)
+      return
+    viewed.current = true
+    analytics.capture('onboarding_checklist_viewed', {
+      item_count: items.length,
+      all_done: allDone,
+    })
+  }, [isFocused, homeChecklistDismissed, items.length, allDone])
 
   // One-shot celebration. Only fires when the user is actually focused on the
   // Home tab — if `allDone` flips while they're elsewhere (or the app is
@@ -265,6 +287,7 @@ const HomeChecklist = () => {
   // plays the next time they land on Home.
   useEffect(() => {
     if (!isFocused || !allDone || homeChecklistAllDoneCelebrated) return
+    analytics.capture('onboarding_checklist_completed')
     Haptics.success()
     sealScale.value = withSequence(
       withTiming(1.25, { duration: 180 }),

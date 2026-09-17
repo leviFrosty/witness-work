@@ -260,6 +260,31 @@ describe('ledger lifecycle transitions (pure)', () => {
   })
 
   describe('beginWorkingTransition', () => {
+    it('retains onboarding attribution across persisted parse and refinement transitions', () => {
+      const working = beginWorkingTransition(null, {
+        notesText: 'Example',
+        activeRun: null,
+        nowMs: 100,
+        analyticsSource: 'onboarding',
+      })
+      const restored = migrateLedgerEntry(
+        JSON.parse(JSON.stringify(working)),
+        110
+      )
+      const ready = putParsedTransition(restored, result(), 120)
+      const refined = beginWorkingTransition(ready, {
+        notesText: 'Example',
+        activeRun: null,
+        nowMs: 130,
+        analyticsSource: 'app',
+      })
+      expect(refined.analyticsSource).toBe('onboarding')
+      expect(
+        migrateLedgerEntry({ ...refined, analyticsSource: 'private text' }, 140)
+          ?.analyticsSource
+      ).toBeUndefined()
+    })
+
     it('on null creates a fresh Working row (createdAt = nowMs, no result/commit)', () => {
       const e = beginWorkingTransition(null, {
         notesText: 'Visited Maria\nrest',

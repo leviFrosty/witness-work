@@ -1,3 +1,5 @@
+import axios from 'axios'
+import { fetch as expoFetch } from 'expo/fetch'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import {
   NotesImportAppAttestError,
@@ -16,7 +18,10 @@ vi.mock('@/features/notes-import/lib/notesImportAppAttestRuntime', () => ({
   notesImportAppAttest: { post: harness.post },
 }))
 
-import { runNotesImportStreaming } from '@/features/notes-import/lib/notesImportClient'
+import {
+  runNotesImportStreaming,
+  resumeNotesImport,
+} from '@/features/notes-import/lib/notesImportClient'
 
 const request = {
   notesText: 'private notes',
@@ -62,5 +67,53 @@ describe('Notes Import client authorization errors', () => {
       code: 'cancelled',
       message: 'Import cancelled',
     })
+  })
+})
+
+describe('Notes Import terminal error safety', () => {
+  it('normalizes an unrecognized stream error code', async () => {
+    vi.mocked(expoFetch, { partial: true }).mockResolvedValueOnce({
+      status: 200,
+      ok: true,
+      body: new Response(
+        'data: ' +
+          JSON.stringify({
+            type: 'error',
+            code: 'private server text',
+            message: 'failed',
+          }) +
+          '\n\n'
+      ).body,
+    })
+    await expect(
+      resumeNotesImport({
+        ...request,
+        run: { importId: 'run', subscribeToken: 'token' },
+      })
+    ).rejects.toMatchObject({ code: 'unknown' })
+  })
+
+  it('normalizes an unrecognized snapshot error code', async () => {
+    vi.mocked(expoFetch, { partial: true }).mockResolvedValueOnce({
+      status: 200,
+      ok: true,
+      body: new Response('').body,
+    })
+    const get = vi.spyOn(axios, 'get').mockResolvedValueOnce({
+      data: {
+        status: 'error',
+        error: { code: 'private server text', message: 'failed' },
+      },
+    })
+    try {
+      await expect(
+        resumeNotesImport({
+          ...request,
+          run: { importId: 'run', subscribeToken: 'token' },
+        })
+      ).rejects.toMatchObject({ code: 'unknown' })
+    } finally {
+      get.mockRestore()
+    }
   })
 })

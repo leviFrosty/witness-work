@@ -1,5 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage'
-import * as Sentry from '@sentry/react-native'
+import { errorTracking } from '@/lib/errorTracking'
 import { MMKV } from 'react-native-mmkv'
 import { StateStorage } from 'zustand/middleware'
 
@@ -10,11 +10,11 @@ export const hasMigratedFromAsyncStorage = () =>
 
 /**
  * Returns true for transient native AsyncStorage read failures we can't act on
- * — chiefly iOS file-protection errors (NSCocoaErrorDomain 257/513, POSIX
- * EPERM "Operation not permitted") raised when the device is locked, plus
- * generic "Failed to read storage file" IO errors. These are expected, recover
- * on the next read, and should degrade to a cache-miss rather than crash
- * hydration or spam Sentry. See JW-TIME-C5.
+ * — chiefly iOS file-protection errors (NSCocoaErrorDomain 257/513, POSIX EPERM
+ * "Operation not permitted") raised when the device is locked, plus generic
+ * "Failed to read storage file" IO errors. These are expected, recover on the
+ * next read, and should degrade to a cache-miss rather than crash hydration or
+ * flood error tracking. See JW-TIME-C5.
  */
 export function isTransientStorageReadError(error: unknown): boolean {
   const message = error instanceof Error ? error.message : String(error ?? '')
@@ -74,20 +74,21 @@ export async function migrateFromAsyncStorage(): Promise<void> {
  *
  * These failures are transient — the next write once the device is unlocked
  * succeeds — so swallowing them here keeps an unhandled rejection from
- * surfacing to the user and Sentry. We drop a breadcrumb for visibility but do
- * not re-throw. The dropped write is recovered by the next persist cycle.
+ * surfacing to the user and error tracking. We drop a breadcrumb for visibility
+ * but do not re-throw. The dropped write is recovered by the next persist
+ * cycle.
  *
  * Reads are guarded the same way: a transient locked-device read
  * (NSCocoaErrorDomain Code=257, JW-TIME-C5) degrades to a cache-miss (`null`)
  * so hydration doesn't crash; non-transient read errors still throw. Removes
- * pass through unchanged. See Sentry JW-TIME-C8 / JW-TIME-C5.
+ * pass through unchanged. See issues JW-TIME-C8 / JW-TIME-C5.
  */
 export const GuardedAsyncStorage: StateStorage = {
   setItem: async (name, value) => {
     try {
       await AsyncStorage.setItem(name, value)
     } catch (error) {
-      Sentry.addBreadcrumb({
+      errorTracking.addBreadcrumb({
         category: 'storage',
         level: 'warning',
         message: 'AsyncStorage.setItem failed; skipping persist',
@@ -101,7 +102,7 @@ export const GuardedAsyncStorage: StateStorage = {
       return await AsyncStorage.getItem(name)
     } catch (error) {
       if (isTransientStorageReadError(error)) {
-        Sentry.addBreadcrumb({
+        errorTracking.addBreadcrumb({
           category: 'storage',
           level: 'warning',
           message: 'AsyncStorage.getItem failed; treating as cache-miss',

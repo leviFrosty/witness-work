@@ -68,7 +68,9 @@ vi.mock('react-native-mmkv', () => {
   return { MMKV }
 })
 
-vi.mock('@sentry/react-native', () => ({ captureException: vi.fn() }))
+vi.mock('@/lib/errorTracking', () => ({
+  errorTracking: { captureException: vi.fn() },
+}))
 vi.mock('@/lib/logger', () => ({
   logger: { error: vi.fn(), warn: vi.fn(), info: vi.fn() },
 }))

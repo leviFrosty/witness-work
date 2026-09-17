@@ -218,7 +218,7 @@ describe('classifyRunOutcome', () => {
     ).toEqual({ kind: 'cooldown', cooldownMs: 4_000 })
   })
 
-  it('unknown and model_error fail WITH a report (logged + Sentry)', () => {
+  it('unknown and model_error fail WITH a report (logged + error tracking)', () => {
     expect(
       classifyRunOutcome({ aborted: false, code: 'unknown' }, opts)
     ).toEqual({

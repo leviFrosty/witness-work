@@ -174,7 +174,7 @@ Extend `src/lib/widgets/widgetSync.ts`' existing `BGTaskScheduler` registration 
 
 1. **Internal build** (dev variant, `iCloud.com.leviwilkerson.jwtimedev`) — validate on two of the maintainer's devices.
 2. **TestFlight** — opt-in flag off by default. Gather reports.
-3. **Production** — enable the Settings row. Keep opt-in off by default for a release; let users discover it. Monitor Sentry for `iCloudSync` errors.
+3. **Production** — enable the Settings row. Keep opt-in off by default for a release; let users discover it. Monitor PostHog Error Tracking for `iCloudSync` errors.
 4. **Observability**: add breadcrumbs for `push`, `pull`, `merge-conflict-resolved`, `icloud-unavailable`. No PII in breadcrumbs.
 
 ## Open questions
@@ -207,4 +207,4 @@ Gives cross-platform sync but requires auth, hosting, a privacy-policy overhaul,
 3. **Merge + tombstones** — contacts/reports/conversations pass round-trip tests across two simulators.
 4. **Settings UI + opt-in toggle** — user-visible entry point, status, manual controls.
 5. **Background pull + foreground auto-sync** — no user action needed for steady-state sync.
-6. **TestFlight** — real-device validation, Sentry wired up.
+6. **TestFlight** — real-device validation, PostHog error tracking wired up.

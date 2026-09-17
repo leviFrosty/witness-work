@@ -16,7 +16,7 @@ import { useNavigation } from '@react-navigation/native'
 import moment from 'moment'
 import { formatDate, formatTime } from '@/lib/dates'
 import * as Notifications from 'expo-notifications'
-import * as Sentry from '@sentry/react-native'
+import { errorTracking } from '@/lib/errorTracking'
 import useNotifications from '@/hooks/notifications'
 
 export type DismissOption = {
@@ -194,7 +194,7 @@ const DismissContactSheet: React.FC<DismissContactSheetProps> = ({
                 },
               })
             } catch (error) {
-              Sentry.captureException(error)
+              errorTracking.captureException(error)
             }
           }
 

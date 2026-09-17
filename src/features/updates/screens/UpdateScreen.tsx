@@ -5,7 +5,7 @@ import { useEffect, useRef, useState } from 'react'
 import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
 import * as Updates from 'expo-updates'
-import * as Sentry from '@sentry/react-native'
+import { errorTracking } from '@/lib/errorTracking'
 import ActionButton from '@/components/ui/ActionButton'
 import { useNavigation } from '@react-navigation/native'
 import Wrapper from '@/components/ui/layout/Wrapper'
@@ -31,7 +31,7 @@ const UpdateScreen = () => {
         }
       } catch (err) {
         setError(err)
-        Sentry.captureException(err)
+        errorTracking.captureException(err)
       }
     }
 

@@ -2,7 +2,7 @@ import { describe, expect, it, vi, beforeEach } from 'vitest'
 
 // Use the real `@/stores/mmkv` module here (not the test mock) so we exercise
 // the actual GuardedAsyncStorage adapter. `react-native-mmkv` and
-// `@sentry/react-native` are stubbed because they require a native runtime.
+// `@/lib/errorTracking` are stubbed to avoid native runtime dependencies.
 
 const setItem = vi.fn<(k: string, v: string) => Promise<void>>()
 const getItem = vi.fn<(k: string) => Promise<string | null>>()
@@ -31,8 +31,10 @@ vi.mock('react-native-mmkv', () => ({
   },
 }))
 
-vi.mock('@sentry/react-native', () => ({
-  addBreadcrumb: (...args: unknown[]) => addBreadcrumb(...args),
+vi.mock('@/lib/errorTracking', () => ({
+  errorTracking: {
+    addBreadcrumb: (...args: unknown[]) => addBreadcrumb(...args),
+  },
 }))
 
 import { GuardedAsyncStorage, isTransientStorageReadError } from '@/stores/mmkv'

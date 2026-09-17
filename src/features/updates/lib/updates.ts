@@ -1,7 +1,7 @@
 import { Alert } from 'react-native'
 import * as Updates from 'expo-updates'
 import i18n from '@/lib/locales'
-import * as Sentry from '@sentry/react-native'
+import { errorTracking } from '@/lib/errorTracking'
 import { RootStackParamList } from '@/types/rootStack'
 
 export const fetchUpdate = async (
@@ -22,6 +22,6 @@ export const fetchUpdate = async (
       `${i18n.t('updateViaThe')} App Store`,
       `${i18n.t('update_error')} ${error}`
     )
-    Sentry.captureException(error)
+    errorTracking.captureException(error)
   }
 }

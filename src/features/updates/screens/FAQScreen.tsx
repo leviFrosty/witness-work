@@ -10,7 +10,7 @@ import { View, ScrollView, useWindowDimensions } from 'react-native'
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import * as Clipboard from 'expo-clipboard'
-import * as Sentry from '@sentry/react-native'
+import { errorTracking } from '@/lib/errorTracking'
 import Purchases from 'react-native-purchases'
 import { useToastController } from '@tamagui/toast'
 import { RouteProp, useNavigation, useRoute } from '@react-navigation/native'
@@ -69,7 +69,7 @@ const FAQScreen = () => {
       await Clipboard.setStringAsync(id)
       toast.show(i18n.t('accountIdCopied'), { message: '', native: true })
     } catch (error) {
-      Sentry.captureException(error)
+      errorTracking.captureException(error)
       toast.show(i18n.t('copyAccountIdError'), { message: '', native: true })
     }
   }, [toast])

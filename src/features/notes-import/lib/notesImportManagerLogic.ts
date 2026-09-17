@@ -187,7 +187,8 @@ export type RunOutcomeDecision =
  * Classify a failed run. An aborted run was a user/teardown cancel (stays
  * Queued, no error). `active_cap` raced the backend cap — back off and retry.
  * Anything else is a surfaced failure; `unknown`/`model_error` additionally get
- * logged + reported (the store performs the actual Sentry/setTimeout/patch).
+ * logged + reported (the store performs the actual error
+ * tracking/setTimeout/patch).
  */
 export const classifyRunOutcome = (
   args: { aborted: boolean; code: NotesImportErrorCode },

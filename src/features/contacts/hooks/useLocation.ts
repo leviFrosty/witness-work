@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import * as Location from 'expo-location'
-import * as Sentry from '@sentry/react-native'
+import { errorTracking } from '@/lib/errorTracking'
 import { isLocationTemporarilyUnavailableError } from '@/lib/locationError'
 
 export default function useLocation() {
@@ -15,7 +15,7 @@ export default function useLocation() {
       // Location can be temporarily unavailable; don't report the expected
       // transient failure, just leave the previous location in place.
       if (!isLocationTemporarilyUnavailableError(error)) {
-        Sentry.captureException(error)
+        errorTracking.captureException(error)
       }
     }
   }, [])

@@ -41,7 +41,7 @@ const SelectionOverlay = ({
 /**
  * JavaScript-only wheel picker. It preserves the previous 216pt iOS wheel
  * layout without mounting UIPickerView, whose Fabric hit-testing race caused
- * Sentry JW-TIME-BK.
+ * Issue JW-TIME-BK.
  */
 const WheelPicker = <T extends string | number>({
   data,

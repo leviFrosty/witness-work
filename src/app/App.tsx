@@ -4,7 +4,6 @@ import 'react-native-gesture-handler'
 import React, { useRef } from 'react'
 import { NavigationContainer } from '@react-navigation/native'
 import { SafeAreaProvider } from 'react-native-safe-area-context'
-import * as Sentry from '@sentry/react-native'
 import { ActivityIndicator, useColorScheme, View } from 'react-native'
 import { StatusBar } from 'expo-status-bar'
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
@@ -36,6 +35,7 @@ import { useAppFonts } from '@/app/useAppFonts'
 import { initializeApp } from '@/app/initializeApp'
 import { linking, navigationRef } from '@/features/contacts/lib/linking'
 import { analytics } from '@/lib/analytics'
+import { errorTracking } from '@/lib/errorTracking'
 
 initializeApp()
 
@@ -128,6 +128,6 @@ export default function App() {
       </CustomerProvider>
     )
   } catch (error) {
-    Sentry.captureException(error)
+    errorTracking.captureException(error)
   }
 }

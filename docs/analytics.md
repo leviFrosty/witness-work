@@ -9,7 +9,8 @@ provider errors must not block startup or user actions.
 Events describe actions and outcomes, with bounded feature flags, counts, sources,
 and error codes. Never send names, notes, imported text, addresses, coordinates,
 contact identifiers, share tokens, or raw exception messages. Account identity is
-the existing pseudonymous account ID. Sentry continues to own crash diagnostics.
+the existing pseudonymous account ID. Crash diagnostics use the separate
+`errorTracking` module from `@/lib/errorTracking`.
 Screen tracking sends route names only, including the initial route; it does not
 send route parameters. Touch/text autocapture is not enabled.
 
@@ -150,3 +151,31 @@ PostHog manages the two API campaigns, their questions, translations, availabili
 and targeting. RevenueCat-based local eligibility distinguishes current paid
 access from a recent confirmed lapse. See [ADR 0013](adr/0013-supporter-feedback-surveys.md)
 for campaign links, default recurrence/dismissal behavior, and rollout steps.
+
+## Error tracking
+
+Use `errorTracking` from `@/lib/errorTracking` for diagnostics. Feature code must
+not import the provider SDK or pass provider-specific options:
+
+```ts
+errorTracking.captureException(error, { iCloudSync: 'push' })
+errorTracking.captureMessage('Invalid remote payload', { level: 'warning' })
+errorTracking.addBreadcrumb({
+  category: 'sync',
+  message: 'Upload started',
+  data: { itemCount: 3 },
+})
+```
+
+`setContext` supplies app-level metadata for JavaScript diagnostics. Native
+crashes retain the native SDK's app/device metadata and mirrored breadcrumbs;
+the React Native SDK does not mirror custom JavaScript context to native reports.
+Reporting is disabled in development builds. The module owns expected
+error filtering and failure isolation; diagnostic calls must never interrupt a
+user action. Breadcrumbs provide bounded context for errors rather than creating
+separate product-analytics events. Keep their data structural: no contact names,
+addresses, notes, credentials, file contents, or share links.
+
+PostHog is the current implementation. Provider configuration, automatic capture,
+and source-map/native-symbol uploads belong to the shared implementation and
+build setup, so changing providers does not require changing feature call sites.

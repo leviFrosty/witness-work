@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import Purchases from 'react-native-purchases'
-import * as Sentry from '@sentry/react-native'
+import { errorTracking } from '@/lib/errorTracking'
 import useCustomer from '@/hooks/useCustomer'
 import { logger } from '@/lib/logger'
 
@@ -49,7 +49,7 @@ const useCheapestSupporterPrice = () => {
         // available — no user-facing error needed.
         hasFetched.current = false
         logger.warn('[useCheapestSupporterPrice] getOfferings failed', error)
-        Sentry.captureException(error)
+        errorTracking.captureException(error)
       })
   }, [ready])
 

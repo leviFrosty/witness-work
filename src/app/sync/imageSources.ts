@@ -41,8 +41,8 @@ function stripCacheBuster(value: string): string {
  * contactImport validator already strips image avatars off any imported payload
  * — this is the second layer that would catch a future regression which
  * re-opens that door. A foreign `file://` path could otherwise point at MMKV /
- * AsyncStorage / Sentry breadcrumbs / the ubiquity container itself, and the
- * bridge would happily copy that file into iCloud Drive as a JPEG.
+ * AsyncStorage / error tracking breadcrumbs / the ubiquity container itself,
+ * and the bridge would happily copy that file into iCloud Drive as a JPEG.
  *
  * Both inputs are normalized to plain `/path` strings (scheme stripped,
  * traversal segments rejected) and compared by prefix. The cache-buster has

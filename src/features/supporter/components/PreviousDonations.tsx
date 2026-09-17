@@ -1,6 +1,6 @@
 import { RefreshCw as RefreshCwIcon } from 'lucide-react-native'
 import { View } from 'react-native'
-import * as Sentry from '@sentry/react-native'
+import { errorTracking } from '@/lib/errorTracking'
 import Purchases, {
   CustomerInfo,
   PurchasesStoreProduct,
@@ -69,7 +69,7 @@ const PreviousDonations = ({
       setProducts(products)
     }
 
-    getProducts().catch((error) => Sentry.captureException(error))
+    getProducts().catch((error) => errorTracking.captureException(error))
   }, [customer.allPurchaseDates, customer.subscriptionsByProductIdentifier])
 
   const nonSubscriptions = useMemo(() => {

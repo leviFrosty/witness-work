@@ -64,7 +64,7 @@
       "environment": "production",
       "env": {
         "APP_VARIANT": "production",
-        "SENTRY_DISABLE_AUTO_UPLOAD": "true",
+        "POSTHOG_DISABLE_UPLOAD": "true",
         "ENTRY_FILE": "src/index.js"
       }
     }

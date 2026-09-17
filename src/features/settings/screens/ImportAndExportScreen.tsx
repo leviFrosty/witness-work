@@ -13,7 +13,7 @@ import useConversations from '@/stores/conversationStore'
 import { usePreferences } from '@/stores/preferences'
 import useServiceReport, { migrateServiceReports } from '@/stores/serviceReport'
 import * as FileSystem from 'expo-file-system/legacy'
-import * as Sentry from '@sentry/react-native'
+import { errorTracking } from '@/lib/errorTracking'
 import * as Sharing from 'expo-sharing'
 import * as DocumentPicker from 'expo-document-picker'
 import { Alert, View } from 'react-native'
@@ -137,7 +137,7 @@ const ImportAndExportScreen = () => {
         error_code:
           error instanceof SyntaxError ? 'invalid_json' : 'unexpected',
       })
-      Sentry.captureException(error)
+      errorTracking.captureException(error)
       setLoading(false)
       Alert.alert(
         i18n.t('importError_title'),
@@ -177,7 +177,7 @@ const ImportAndExportScreen = () => {
         })
     } catch (error) {
       analytics.capture('backup_export_failed', { error_code: 'unexpected' })
-      Sentry.captureException(error)
+      errorTracking.captureException(error)
       setLoading(false)
       Alert.alert(
         i18n.t('errorExporting'),

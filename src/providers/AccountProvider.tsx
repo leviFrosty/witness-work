@@ -7,7 +7,7 @@ import {
 } from 'react'
 import { AppState, Platform } from 'react-native'
 import Purchases from 'react-native-purchases'
-import * as Sentry from '@sentry/react-native'
+import { errorTracking } from '@/lib/errorTracking'
 import debounce from 'lodash/debounce'
 import * as ICloudBridge from '../../modules/icloud-bridge'
 import { AccountContext, AccountCtx } from '@/contexts/account'
@@ -47,7 +47,7 @@ const AccountProvider: React.FC<PropsWithChildren<Props>> = ({ children }) => {
       return getOrCreateAccountId()
     } catch (error) {
       logger.error('[Account] account id resolution failed', error)
-      Sentry.captureException(error)
+      errorTracking.captureException(error)
       return null
     }
   })
@@ -138,7 +138,7 @@ const AccountProvider: React.FC<PropsWithChildren<Props>> = ({ children }) => {
             }
             await writeAccountFile(mine, entitled)
             logger.log('[Account] claimed account file', { reason, entitled })
-            Sentry.addBreadcrumb({
+            errorTracking.addBreadcrumb({
               category: 'account',
               message: `claim (${reason})`,
               level: 'info',
@@ -151,7 +151,7 @@ const AccountProvider: React.FC<PropsWithChildren<Props>> = ({ children }) => {
             setAccountId(action.accountId)
             setCustomer(customerInfo)
             logger.log('[Account] adopted shared account id', { reason })
-            Sentry.addBreadcrumb({
+            errorTracking.addBreadcrumb({
               category: 'account',
               message: `adopt (${reason})`,
               level: 'info',
@@ -185,7 +185,7 @@ const AccountProvider: React.FC<PropsWithChildren<Props>> = ({ children }) => {
           logger.warn('[Account] reconcile offline', { reason })
         } else {
           logger.error('[Account] reconcile failed', error)
-          Sentry.captureException(error)
+          errorTracking.captureException(error)
         }
       } finally {
         inFlightRef.current = false

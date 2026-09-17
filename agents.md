@@ -12,6 +12,7 @@ If discussing domain-specific items, please read [`CONTEXT.md`](./CONTEXT.md)
 
 ## Guardrails (always apply)
 
+- Use localized strings from i18n. Never hardcode display strings.
 - All dependencies must be pinned to a specific PATCH version only. Do not use lose versions like: ^, >, or ~.
 - Always amend to previous commits when making follow-up fixes. gpf = git push --force-with-lease.
 - **Never destroy unstaged work.** `git checkout/restore <path>`, `git reset --hard`, `git clean` discard working-tree changes with no recoverable trace. Run `git status` + `git diff <path>` before any destructive path-level git op; undo your _own_ edits with `git stash` (recoverable), and treat files dirtied outside this session as off-limits.
